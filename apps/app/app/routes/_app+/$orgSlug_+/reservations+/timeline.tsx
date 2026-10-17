@@ -1092,13 +1092,21 @@ export default function ReservationsTimelineRoute() {
 																		? 'border-slate-400 bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300'
 																		: 'border-blue-500 bg-blue-100 text-blue-950 dark:bg-blue-950/80 dark:text-blue-100'
 
+														const guestName = rsv.guestName
+														const partySize = rsv.partySize
+														const startTime = formatHhmm(startMin)
+														const tableLabel = table.label
+														const barAriaLabel = rsv.locked
+															? t`${guestName}, party of ${partySize}, ${startTime}, ${durationMin} minutes, table ${tableLabel}, locked`
+															: t`${guestName}, party of ${partySize}, ${startTime}, ${durationMin} minutes, table ${tableLabel}`
+
 														return (
 															<div
 																key={rsv.id}
 																draggable={canManage}
 																tabIndex={0}
 																role="button"
-																aria-label={`${rsv.guestName}, party of ${rsv.partySize}, ${formatHhmm(startMin)}, ${durationMin} minutes, table ${table.label}${rsv.locked ? ', locked' : ''}`}
+																aria-label={barAriaLabel}
 																style={{
 																	left: `${leftPx}px`,
 																	width: `${widthPx}px`,
@@ -1264,6 +1272,8 @@ export default function ReservationsTimelineRoute() {
 				fallbackReservation={host.selectedReservation}
 				onClose={host.closeDetail}
 				client={host.client}
+				areas={host.dayFeed?.areas ?? []}
+				timeZone={host.timeZone}
 				tables={dayFeed?.tables ?? []}
 				canManage={canManage}
 				onUpdated={(rsv, notices) =>

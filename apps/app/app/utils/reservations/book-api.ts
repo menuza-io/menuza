@@ -1,3 +1,4 @@
+import { stripTagPrefix } from '#app/utils/reservations/labels.ts'
 import {
 	type ReservationsConditionalResult,
 	type ReservationsScopedClient,
@@ -357,7 +358,17 @@ export type DayFeedResponse = {
 	unassigned: DayReservationView[]
 	conflicts: DayConflictNotice[]
 	moveNotices: DayMoveNotice[]
+	/** Parties and covers of the rows in this (possibly filtered) feed, without cancelled or no-show. */
+	counters: { parties: number; covers: number }
+	/** Reservation and guest tags the operator may filter by. */
+	tags: DayFeedTag[]
 	stats: DaySummaryStats
+}
+
+export type DayFeedTag = {
+	id: string
+	name: string
+	category: string | null
 }
 
 export type CalendarDaySummary = {
@@ -874,10 +885,13 @@ export function normalizeReservationView(
 			(typeof raw.courseStage === 'string' && raw.courseStage) ||
 			(typeof raw.courseStatus === 'string' && raw.courseStatus) ||
 			null,
-		occasion:
-			(typeof raw.occasion === 'string' && raw.occasion) ||
-			(typeof raw.occasionTagId === 'string' && raw.occasionTagId) ||
-			null,
+		occasion: (() => {
+			const code =
+				(typeof raw.occasion === 'string' && raw.occasion) ||
+				(typeof raw.occasionTagId === 'string' && raw.occasionTagId) ||
+				null
+			return code ? stripTagPrefix(code) : null
+		})(),
 		dietaryCodes,
 		dietaryNotes,
 		hasAllergy: Boolean(
@@ -1536,10 +1550,37 @@ export function normalizeDayFeedResponse(
 		tableStates,
 		unassigned,
 		conflicts,
-		moveNotices: Array.isArray(raw.moveNotices)
-			? (raw.moveNotices as DayMoveNotice[])
-			: [],
+		moveNotices: normalizeMovesList(raw.moveNotices),
+		counters: normalizeDayCounters(raw.counters, reservations),
+		tags: (Array.isArray(raw.tags) ? raw.tags : [])
+			.filter((t): t is Record<string, unknown> =>
+				Boolean(t && typeof t === 'object' && (t as { id?: unknown }).id),
+			)
+			.map((t) => ({
+				id: String(t.id),
+				name: String(t.name ?? t.id),
+				category: typeof t.category === 'string' ? t.category : null,
+			})),
 		stats,
+	}
+}
+
+function normalizeDayCounters(
+	raw: unknown,
+	reservations: DayReservationView[],
+): { parties: number; covers: number } {
+	if (raw && typeof raw === 'object') {
+		const c = raw as Record<string, unknown>
+		if (typeof c.parties === 'number' && typeof c.covers === 'number') {
+			return { parties: c.parties, covers: c.covers }
+		}
+	}
+	const counted = reservations.filter(
+		(r) => r.status !== 'cancelled' && r.status !== 'no_show',
+	)
+	return {
+		parties: counted.length,
+		covers: counted.reduce((sum, r) => sum + r.partySize, 0),
 	}
 }
 
@@ -1550,6 +1591,8 @@ export async function fetchBookDayConditional(
 		date?: string
 		serviceId?: string | null
 		areaId?: string | null
+		source?: string | null
+		tag?: string | null
 	},
 	etag?: string | null,
 	signal?: AbortSignal,
@@ -1562,6 +1605,8 @@ export async function fetchBookDayConditional(
 				...(params.date ? { date: params.date } : {}),
 				...(params.serviceId ? { serviceId: params.serviceId } : {}),
 				...(params.areaId ? { areaId: params.areaId } : {}),
+				...(params.source ? { source: params.source } : {}),
+				...(params.tag ? { tag: params.tag } : {}),
 			},
 			ifNoneMatch: etag,
 			signal,
@@ -1963,30 +2008,8 @@ export async function searchBookGuests(
 	}
 }
 
-export async function fetchReservationDetail(
-	client: ReservationsScopedClient,
-	reservationId: string,
-	signal?: AbortSignal,
-): Promise<ReservationDetailResponse> {
-	const raw = await client.request<Record<string, unknown>>(
-		`/operator/reservations/book/reservations/${encodeURIComponent(reservationId)}`,
-		{ signal },
-	)
-	const reservation = normalizeReservationView(
-		(raw.reservation ?? raw) as Record<string, unknown>,
-	)
-	const guest =
-		normalizeGuestSummary(
-			(raw.guest ?? raw.guestDetail ?? reservation.guest) as
-				Record<string, unknown> | null | undefined,
-		) ?? reservation.guest
-
-	const rawEvents = Array.isArray(raw.audit)
-		? raw.audit
-		: Array.isArray(raw.events)
-			? raw.events
-			: []
-	const audit: ReservationAuditEntry[] = rawEvents
+function normalizeAuditEntries(rawEvents: unknown[]): ReservationAuditEntry[] {
+	return rawEvents
 		.filter((e): e is Record<string, unknown> =>
 			Boolean(e && typeof e === 'object'),
 		)
@@ -2009,8 +2032,48 @@ export async function fetchReservationDetail(
 				(e.afterJson as Record<string, unknown> | null) ??
 				(e.data as Record<string, unknown> | null) ??
 				(e.toStatus ? { status: e.toStatus } : null),
-			createdAt: Number(e.createdAt ?? e.at ?? Date.now()),
+			createdAt: Number(e.createdAt ?? e.at ?? 0),
 		}))
+}
+
+/** Change history of one reservation, oldest first. */
+export async function fetchReservationEvents(
+	client: ReservationsScopedClient,
+	reservationId: string,
+	signal?: AbortSignal,
+): Promise<ReservationAuditEntry[]> {
+	const raw = await client.request<Record<string, unknown>>(
+		`/operator/reservations/book/reservations/${encodeURIComponent(reservationId)}/events`,
+		{ signal },
+	)
+	return normalizeAuditEntries(Array.isArray(raw.events) ? raw.events : [])
+}
+
+export async function fetchReservationDetail(
+	client: ReservationsScopedClient,
+	reservationId: string,
+	signal?: AbortSignal,
+): Promise<ReservationDetailResponse> {
+	const raw = await client.request<Record<string, unknown>>(
+		`/operator/reservations/book/reservations/${encodeURIComponent(reservationId)}`,
+		{ signal },
+	)
+	const reservation = normalizeReservationView(
+		(raw.reservation ?? raw) as Record<string, unknown>,
+	)
+	const guest =
+		normalizeGuestSummary(
+			(raw.guest ?? raw.guestDetail ?? reservation.guest) as
+				Record<string, unknown> | null | undefined,
+		) ?? reservation.guest
+
+	const audit = normalizeAuditEntries(
+		Array.isArray(raw.audit)
+			? raw.audit
+			: Array.isArray(raw.events)
+				? raw.events
+				: [],
+	)
 
 	const rawMessages = Array.isArray(raw.messages) ? raw.messages : []
 	const messages = rawMessages
@@ -2063,7 +2126,7 @@ function normalizeMovesList(rawMoves: unknown): DayMoveNotice[] {
 				: Array.isArray(m.toTableIds)
 					? m.toTableIds.map(String)
 					: [],
-			reason: String(m.reason ?? 'Auto-rearranged soft assignment'),
+			reason: String(m.reason ?? 'reflow'),
 		}))
 }
 
@@ -2093,6 +2156,7 @@ export async function createPhoneReservation(
 		}
 		occasion?: string | null
 		dietaryCodes?: string[]
+		dietaryNotes?: string | null
 		guestNotes?: string | null
 		internalNotes?: string | null
 		serverLabel?: string | null
@@ -2119,6 +2183,7 @@ export async function createPhoneReservation(
 	)
 	const dietaryText = [
 		...(input.dietaryCodes ?? []),
+		input.dietaryNotes?.trim() ?? '',
 		input.guest.allergiesText ?? '',
 	]
 		.filter(Boolean)

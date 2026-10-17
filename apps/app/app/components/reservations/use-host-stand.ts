@@ -29,6 +29,8 @@ export function useHostStand({
 	const dateParam = searchParams.get('date') ?? undefined
 	const serviceParam = searchParams.get('service') ?? null
 	const areaParam = searchParams.get('area') ?? null
+	const sourceParam = searchParams.get('source') ?? null
+	const tagParam = searchParams.get('tag') ?? null
 	const detailReservationId = searchParams.get('r') ?? null
 
 	const [bookingSheetOpen, setBookingSheetOpen] = useState(false)
@@ -55,7 +57,7 @@ export function useHostStand({
 		locationId ? [locationId] : undefined,
 	)
 
-	const pollKey = `${locationId}:${dateParam ?? 'today'}:${serviceParam ?? 'all'}:${areaParam ?? 'all'}`
+	const pollKey = `${locationId}:${dateParam ?? 'today'}:${serviceParam ?? 'all'}:${areaParam ?? 'all'}:${sourceParam ?? 'all'}:${tagParam ?? 'all'}`
 
 	const fetcher = useCallback(
 		(etag: string | null, signal: AbortSignal) =>
@@ -66,11 +68,21 @@ export function useHostStand({
 					date: dateParam,
 					serviceId: serviceParam,
 					areaId: areaParam,
+					source: sourceParam,
+					tag: tagParam,
 				},
 				etag,
 				signal,
 			),
-		[areaParam, client, dateParam, locationId, serviceParam],
+		[
+			areaParam,
+			client,
+			dateParam,
+			locationId,
+			serviceParam,
+			sourceParam,
+			tagParam,
+		],
 	)
 
 	const poll = useReservationsPoll<DayFeedResponse>({
@@ -134,6 +146,20 @@ export function useHostStand({
 	const setAreaId = useCallback(
 		(nextAreaId: string | null) => {
 			updateSearchParam({ area: nextAreaId })
+		},
+		[updateSearchParam],
+	)
+
+	const setSource = useCallback(
+		(nextSource: string | null) => {
+			updateSearchParam({ source: nextSource })
+		},
+		[updateSearchParam],
+	)
+
+	const setTag = useCallback(
+		(nextTag: string | null) => {
+			updateSearchParam({ tag: nextTag })
 		},
 		[updateSearchParam],
 	)
@@ -254,10 +280,13 @@ export function useHostStand({
 		feed: dayFeed,
 		liveNow,
 		businessDate,
+		timeZone,
 		selectedDate: businessDate,
 		todayDate: liveNow.businessDate,
 		selectedServiceId: serviceParam,
 		selectedAreaId: areaParam,
+		selectedSource: sourceParam,
+		selectedTag: tagParam,
 		areaFilter: areaParam,
 		detailReservationId,
 		selectedReservation,
@@ -265,6 +294,8 @@ export function useHostStand({
 		setServiceId,
 		setAreaId,
 		setAreaFilter: setAreaId,
+		setSource,
+		setTag,
 		openDetail,
 		closeDetail,
 		openReservationDetail,

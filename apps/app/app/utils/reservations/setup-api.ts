@@ -122,24 +122,93 @@ export type FloorElementDto = {
 	version?: number
 }
 
+export type SetupConflictReason =
+	| 'table_overlap'
+	| 'table_blocked'
+	| 'table_archived'
+	| 'capacity_reduced'
+	| 'unassigned'
+	| 'pacing_exceeded'
+	| 'outside_service_hours'
+	| 'other'
+
 export type SetupConflictDto = {
+	kind: string
+	/** Empty for conflicts that are not tied to one booking (pacing). */
 	reservationId: string
-	confirmationCode: string
-	businessDate: string
-	startAt: number
-	endAt: number
-	partySize: number
-	reason:
-		| 'table_archived'
-		| 'table_capacity_reduced'
-		| 'table_blocked'
-		| 'area_blocked'
-		| 'combo_deleted'
-		| 'combo_capacity_reduced'
-		| 'outside_service_window'
-		| 'special_day_closed'
-		| 'overlapping_assignment'
+	confirmationCode: string | null
+	businessDate: string | null
+	partySize: number | null
+	reason: SetupConflictReason
+	tableId: string | null
+	serviceId: string | null
 	detail?: string
+}
+
+export const SETUP_CONFLICT_REASON_LABELS: Record<
+	SetupConflictReason,
+	MessageDescriptor
+> = {
+	table_overlap: msg`Two bookings share a table at the same time`,
+	table_blocked: msg`The table is blocked during this booking`,
+	table_archived: msg`The assigned table is no longer in use`,
+	capacity_reduced: msg`The party no longer fits the assigned table`,
+	unassigned: msg`No table is assigned`,
+	pacing_exceeded: msg`Pacing limit exceeded`,
+	outside_service_hours: msg`Outside service hours`,
+	other: msg`Needs review`,
+}
+
+const CONFLICT_KIND_TO_REASON: Record<string, SetupConflictReason> = {
+	table_overlap: 'table_overlap',
+	blocked_table: 'table_blocked',
+	table_blocked: 'table_blocked',
+	archived_table: 'table_archived',
+	shrunk_capacity: 'capacity_reduced',
+	unassigned: 'unassigned',
+	pacing_exceeded: 'pacing_exceeded',
+	outside_service_hours: 'outside_service_hours',
+}
+
+/**
+ * Maps one `/conflicts` item (`kind`, `bookingId`, `tableId`/`serviceId`,
+ * `details`) to what the conflicts panel renders. Confirmation code and party
+ * size are not part of the item; `fetchSetupConflicts` fills them in.
+ */
+export function normalizeSetupConflict(rawInput: unknown): SetupConflictDto {
+	const raw =
+		rawInput && typeof rawInput === 'object'
+			? (rawInput as Record<string, unknown>)
+			: {}
+	const details =
+		raw.details && typeof raw.details === 'object'
+			? (raw.details as Record<string, unknown>)
+			: {}
+	const kind = String(raw.kind ?? raw.reason ?? 'other')
+	const partySize =
+		typeof raw.partySize === 'number'
+			? raw.partySize
+			: typeof details.partySize === 'number'
+				? details.partySize
+				: null
+	const businessDate =
+		typeof raw.businessDate === 'string'
+			? raw.businessDate
+			: typeof details.businessDate === 'string'
+				? details.businessDate
+				: null
+	return {
+		kind,
+		reservationId: String(raw.bookingId ?? raw.reservationId ?? ''),
+		confirmationCode:
+			typeof raw.confirmationCode === 'string' ? raw.confirmationCode : null,
+		businessDate,
+		partySize,
+		reason: CONFLICT_KIND_TO_REASON[kind] ?? 'other',
+		tableId: typeof raw.tableId === 'string' ? raw.tableId : null,
+		serviceId: typeof raw.serviceId === 'string' ? raw.serviceId : null,
+		detail: typeof raw.detail === 'string' ? raw.detail : undefined,
+	}
 }
 
 export type ReflowedMoveDto = {
@@ -197,7 +266,7 @@ export type TurnTimeRuleDto = {
 	version: number
 }
 
-export type PacingChannel = 'all' | 'online' | 'phone' | 'walk_in'
+export type PacingChannel = 'all' | 'online'
 
 export type PacingRuleDto = {
 	id: string
@@ -1061,7 +1130,7 @@ export function normalizePacingRule(rawInput: unknown): PacingRuleDto {
 				: typeof raw.rolling_max_covers === 'number'
 					? raw.rolling_max_covers
 					: null,
-		channel: (raw.channel ?? 'all') as PacingChannel,
+		channel: raw.channel === 'online' ? 'online' : 'all',
 		version: Number(raw.version ?? 1),
 	}
 }
@@ -1196,6 +1265,45 @@ export function normalizeBlock(rawInput: unknown): BlockDto {
 		note: typeof raw.note === 'string' ? raw.note : null,
 		version: Number(raw.version ?? 1),
 	}
+}
+
+/**
+ * The API stores a block as epoch instants; the list shows local minutes since
+ * midnight of the block's business date (a window past midnight keeps counting).
+ */
+export function blockLocalWindow(
+	block: Pick<
+		BlockDto,
+		'businessDate' | 'startAt' | 'endAt' | 'startMin' | 'endMin'
+	>,
+	timeZone: string | null | undefined,
+): { startMin: number; endMin: number } {
+	if (block.startMin !== null && block.endMin !== null) {
+		return { startMin: block.startMin, endMin: block.endMin }
+	}
+	const toMinutes = (ms: number): number => {
+		try {
+			const parts = new Intl.DateTimeFormat('en-CA', {
+				timeZone: timeZone || 'UTC',
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+				hourCycle: 'h23',
+			}).formatToParts(new Date(ms))
+			const get = (type: string) =>
+				Number(parts.find((p) => p.type === type)?.value ?? 0)
+			const localDay = Date.UTC(get('year'), get('month') - 1, get('day'))
+			const [y, m, d] = block.businessDate.split('-').map(Number)
+			const businessDay = Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1)
+			const dayOffset = Math.round((localDay - businessDay) / 86_400_000)
+			return dayOffset * 1440 + get('hour') * 60 + get('minute')
+		} catch {
+			return 0
+		}
+	}
+	return { startMin: toMinutes(block.startAt), endMin: toMinutes(block.endAt) }
 }
 
 export function normalizeFloorPlanPayload(rawInput: unknown): FloorPlanPayload {
@@ -2237,18 +2345,73 @@ export async function fetchSetupValidation(
 	}
 }
 
+const MAX_CONFLICT_ENRICHMENTS = 25
+
 export async function fetchSetupConflicts(
 	client: ReservationsScopedClient,
 	locationId: string,
-	options?: { date?: string; from?: string; to?: string },
+	options?: {
+		date?: string
+		from?: string
+		to?: string
+		/** Book-scoped client used to read booking details; defaults to `client`. */
+		detailClient?: ReservationsScopedClient
+	},
 	signal?: AbortSignal,
 ): Promise<{ conflicts: SetupConflictDto[] }> {
-	const res = await client.request<{ conflicts?: SetupConflictDto[] }>(
+	const { detailClient, ...query } = options ?? {}
+	const res = await client.request<{ conflicts?: unknown[] }>(
 		`${SETUP_BASE}/locations/${encodeURIComponent(locationId)}/conflicts`,
 		{
-			query: options,
+			query,
 			signal,
 		},
 	)
-	return { conflicts: Array.isArray(res.conflicts) ? res.conflicts : [] }
+	const conflicts = Array.isArray(res.conflicts)
+		? res.conflicts.map(normalizeSetupConflict)
+		: []
+
+	const missing = [
+		...new Set(
+			conflicts
+				.filter((c) => c.reservationId && !c.confirmationCode)
+				.map((c) => c.reservationId),
+		),
+	].slice(0, MAX_CONFLICT_ENRICHMENTS)
+	const lookups = new Map<
+		string,
+		{ confirmationCode: string | null; partySize: number | null }
+	>()
+	await Promise.all(
+		missing.map(async (id) => {
+			try {
+				const detail = await (detailClient ?? client).request<
+					Record<string, unknown>
+				>(
+					`/operator/reservations/book/reservations/${encodeURIComponent(id)}`,
+					{ signal },
+				)
+				const r = (detail.reservation ?? detail) as Record<string, unknown>
+				lookups.set(id, {
+					confirmationCode:
+						typeof r.confirmationCode === 'string' ? r.confirmationCode : null,
+					partySize: typeof r.partySize === 'number' ? r.partySize : null,
+				})
+			} catch {
+				// A booking the operator cannot read keeps its row without a code.
+			}
+		}),
+	)
+	return {
+		conflicts: conflicts.map((c) => {
+			const found = lookups.get(c.reservationId)
+			return found
+				? {
+						...c,
+						confirmationCode: c.confirmationCode ?? found.confirmationCode,
+						partySize: c.partySize ?? found.partySize,
+					}
+				: c
+		}),
+	}
 }

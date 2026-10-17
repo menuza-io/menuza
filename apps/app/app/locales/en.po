@@ -736,6 +736,14 @@ msgstr "{formCount} forms"
 msgid "{from} to {to}"
 msgstr "{from} to {to}"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1101
+msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}"
+msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1100
+msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
+msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
+
 #: app/components/staff/labor/labor-overview.tsx:543
 msgid "{hours} hours"
 msgstr "{hours} hours"
@@ -1368,7 +1376,7 @@ msgstr "12 hours prior"
 #~ msgid "15 minutes before slot"
 #~ msgstr "15 minutes before slot"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:477
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:478
 msgid "15-Minute Arrival Pacing & Peak Slots"
 msgstr "15-Minute Arrival Pacing & Peak Slots"
 
@@ -1729,7 +1737,7 @@ msgstr ""
 msgid "Accept"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:305
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:306
 msgid "Accept guest reservations from your public website and apps."
 msgstr "Accept guest reservations from your public website and apps."
 
@@ -1808,13 +1816,13 @@ msgstr "Across your organization"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:316
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:360
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:376
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:318
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:403
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:743
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1031
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1219
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1394
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:738
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1013
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1217
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1396
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:739
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1014
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:647
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:941
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1217
@@ -1847,7 +1855,7 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: app/components/reservations/conflict-panel.tsx:108
+#: app/components/reservations/conflict-panel.tsx:131
 msgid "Active Conflicts"
 msgstr "Active Conflicts"
 
@@ -2120,7 +2128,7 @@ msgstr "Add area"
 msgid "Add at least one email block"
 msgstr "Add at least one email block"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:226
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:228
 msgid "Add at least one named section to the layout."
 msgstr "Add at least one named section to the layout."
 
@@ -2337,11 +2345,11 @@ msgstr "Add options to this group first."
 #~ msgid "Add organization"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1368
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1370
 msgid "Add override"
 msgstr "Add override"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1190
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1188
 msgid "Add pacing rule"
 msgstr "Add pacing rule"
 
@@ -2430,7 +2438,7 @@ msgstr ""
 msgid "Add rule"
 msgstr "Add rule"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:390
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:392
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1700
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1706
 msgid "Add section"
@@ -2456,7 +2464,7 @@ msgstr "Add shift"
 msgid "Add social link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:704
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:705
 msgid "Add special day"
 msgstr "Add special day"
 
@@ -2855,17 +2863,17 @@ msgstr "Alignment"
 #: app/components/staff/timesheets/review-queue.tsx:166
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:258
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:66
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:191
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1612
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:223
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1631
 msgid "All"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:384
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:385
 msgid "All / Day"
 msgstr "All / Day"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:654
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:766
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:656
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:768
 msgid "All / Unlinked"
 msgstr "All / Unlinked"
 
@@ -2873,12 +2881,12 @@ msgstr "All / Unlinked"
 msgid "All active reservations are assigned to tables."
 msgstr "All active reservations are assigned to tables."
 
-#: app/components/reservations/conflict-panel.tsx:234
+#: app/components/reservations/conflict-panel.tsx:261
 msgid "All active reservations have assigned tables."
 msgstr "All active reservations have assigned tables."
 
 #: app/components/reservations/host-subnav.tsx:287
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:953
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:966
 msgid "All areas"
 msgstr "All areas"
 
@@ -2900,6 +2908,7 @@ msgid "All changes saved."
 msgstr "All changes saved."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1178
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1240
 msgid "All channels"
 msgstr "All channels"
 
@@ -2989,10 +2998,10 @@ msgstr "All saved"
 
 #: app/components/reservations/host-subnav.tsx:260
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:300
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:182
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:183
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1040
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1111
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1228
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1226
 msgid "All services"
 msgstr "All services"
 
@@ -3000,15 +3009,20 @@ msgstr "All services"
 msgid "All services (default)"
 msgstr "All services (default)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:790
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:791
 msgid "All setup checks passed. Online and host-stand booking have full table, service, and turn-time coverage."
 msgstr "All setup checks passed. Online and host-stand booking have full table, service, and turn-time coverage."
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:346
+msgid "All sources"
+msgstr "All sources"
 
 #: app/components/onboarding-checklist.tsx:129
 msgid "All steps complete"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:309
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:363
 msgid "All tags"
 msgstr "All tags"
 
@@ -3025,12 +3039,16 @@ msgstr "All workplaces"
 msgid "All workplaces (default)"
 msgstr "All workplaces (default)"
 
-#: app/components/reservations/booking-sheet.tsx:438
-#: app/components/reservations/detail-sheet.tsx:748
+#: app/components/reservations/booking-sheet.tsx:454
+#: app/components/reservations/detail-sheet.tsx:871
 msgid "Allergies:"
 msgstr "Allergies:"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:775
+#: app/utils/reservations/labels.ts:73
+msgid "Allergy"
+msgstr "Allergy"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:781
 msgid "Allergy / Dietary"
 msgstr "Allergy / Dietary"
 
@@ -3058,7 +3076,7 @@ msgstr "Allow customers to schedule orders for future dates."
 msgid "Allow guests to add custom preparation notes to items."
 msgstr "Allow guests to add custom preparation notes to items."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:278
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:279
 msgid "Allow host-stand and online reservations for this location."
 msgstr "Allow host-stand and online reservations for this location."
 
@@ -3070,7 +3088,7 @@ msgstr "Allow microphone access"
 msgid "Allow overbook / tight table drop"
 msgstr "Allow overbook / tight table drop"
 
-#: app/components/reservations/walk-in-dialog.tsx:293
+#: app/components/reservations/walk-in-dialog.tsx:302
 msgid "Allow overbooking / seating on blocked or tight table"
 msgstr "Allow overbooking / seating on blocked or tight table"
 
@@ -3078,7 +3096,7 @@ msgstr "Allow overbooking / seating on blocked or tight table"
 msgid "Allow Special Instructions"
 msgstr "Allow Special Instructions"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:329
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:330
 msgid "Allow walk-in and remote waitlist quotes when tables are full."
 msgstr "Allow walk-in and remote waitlist quotes when tables are full."
 
@@ -3171,7 +3189,9 @@ msgstr "Analytics"
 msgid "Analytics and tracking"
 msgstr "Analytics and tracking"
 
-#: app/components/reservations/booking-sheet.tsx:50
+#: app/components/reservations/booking-sheet.tsx:51
+#: app/utils/reservations/labels.ts:64
+#: app/utils/reservations/labels.ts:74
 msgid "Anniversary"
 msgstr "Anniversary"
 
@@ -3237,7 +3257,7 @@ msgstr "Answers to check"
 msgid "Answers to common questions, and how the agent hears and says the names callers use."
 msgstr "Answers to common questions, and how the agent hears and says the names callers use."
 
-#: app/components/reservations/booking-sheet.tsx:550
+#: app/components/reservations/booking-sheet.tsx:566
 msgid "Any Area"
 msgstr "Any Area"
 
@@ -3306,8 +3326,9 @@ msgstr ""
 msgid "Appears on the public site"
 msgstr "Appears on the public site"
 
-#: app/components/reservations/detail-sheet.tsx:37
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:100
+#: app/components/reservations/detail-sheet.tsx:54
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:107
+#: app/utils/reservations/labels.ts:27
 msgid "Appetizer"
 msgstr "Appetizer"
 
@@ -3426,7 +3447,7 @@ msgstr ""
 msgid "Arabic area name"
 msgstr "Arabic area name"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:578
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:579
 msgid "Arabic public note"
 msgstr "Arabic public note"
 
@@ -3493,7 +3514,7 @@ msgid "Are you sure?"
 msgstr ""
 
 #: app/components/reservations/host-subnav.tsx:276
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1021
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1022
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:798
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:929
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:395
@@ -3520,30 +3541,35 @@ msgstr "Area name (EN)"
 msgid "Arrangement"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:480
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:481
 msgid "Arrival distribution across 15-minute intervals"
 msgstr "Arrival distribution across 15-minute intervals"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:544
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:545
 msgid "Arrival grace period (min)"
 msgstr "Arrival grace period (min)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:480
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:576
 msgid "Arrive"
 msgstr "Arrive"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:193
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1025
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1614
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:420
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:225
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1038
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1633
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:441
+#: app/utils/reservations/labels.ts:15
 msgid "Arrived"
 msgstr "Arrived"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:376
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:387
 msgid "Arrived / Waiting"
 msgstr "Arrived / Waiting"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:250
+#: app/utils/reservations/labels.ts:102
+msgid "Arrived, waiting"
+msgstr "Arrived, waiting"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:265
 msgid "Arriving Soon"
 msgstr "Arriving Soon"
 
@@ -3612,8 +3638,8 @@ msgstr "Asked before a transfer when texting the caller back is on."
 msgid "Asset"
 msgstr ""
 
-#: app/components/reservations/conflict-panel.tsx:200
-#: app/components/reservations/conflict-panel.tsx:288
+#: app/components/reservations/conflict-panel.tsx:227
+#: app/components/reservations/conflict-panel.tsx:315
 #: app/components/staff/schedule/shift-editor-sheet.tsx:654
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:673
 msgid "Assign"
@@ -3635,25 +3661,25 @@ msgstr ""
 #~ msgid "Assign sections and items to this drop, and set pooled or per-item limits."
 #~ msgstr "Assign sections and items to this drop, and set pooled or per-item limits."
 
-#: app/components/reservations/detail-sheet.tsx:673
-#: app/components/reservations/walk-in-dialog.tsx:181
+#: app/components/reservations/detail-sheet.tsx:737
+#: app/components/reservations/walk-in-dialog.tsx:185
 msgid "Assign Table"
 msgstr "Assign Table"
 
 #. placeholder {0}: selectedTableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1693
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1712
 msgid "Assign to {0}"
 msgstr "Assign to {0}"
 
 #. placeholder {0}: draggedReservation.guestName
 #. placeholder {1}: targetTable.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:559
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:571
 msgid "Assigned {0} to {1} and reflowed overlapping parties."
 msgstr "Assigned {0} to {1} and reflowed overlapping parties."
 
 #. placeholder {0}: rsv.guestName
 #. placeholder {1}: targetState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:507
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:519
 msgid "Assigned {0} to {1}."
 msgstr "Assigned {0} to {1}."
 
@@ -3697,7 +3723,7 @@ msgstr "Assistant instructions"
 msgid "Assistant paused"
 msgstr "Assistant paused"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:312
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:314
 msgid "At least one section is required."
 msgstr "At least one section is required."
 
@@ -3718,11 +3744,10 @@ msgstr "Attach secondary modifier groups that appear when this modifier item is 
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:310
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:325
 msgid "Attention Needed"
 msgstr "Attention Needed"
 
-#: app/components/reservations/detail-sheet.tsx:922
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
 msgid "Audit Trail"
 msgstr ""
@@ -3757,11 +3782,11 @@ msgid "Authorized Clients"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
-#: app/components/reservations/booking-sheet.tsx:509
+#: app/components/reservations/booking-sheet.tsx:525
 msgid "Auto"
 msgstr "Auto"
 
-#: app/components/reservations/booking-sheet.tsx:530
+#: app/components/reservations/booking-sheet.tsx:546
 msgid "Auto / Any"
 msgstr "Auto / Any"
 
@@ -3769,16 +3794,16 @@ msgstr "Auto / Any"
 msgid "Auto clock-out"
 msgstr "Auto clock-out"
 
-#: app/components/reservations/walk-in-dialog.tsx:190
+#: app/components/reservations/walk-in-dialog.tsx:194
 msgid "Auto-assign best open table"
 msgstr "Auto-assign best open table"
 
-#: app/components/reservations/booking-sheet.tsx:570
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:377
+#: app/components/reservations/booking-sheet.tsx:586
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:378
 msgid "Auto-assign best table"
 msgstr "Auto-assign best table"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:353
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:354
 msgid "Auto-confirm online bookings"
 msgstr "Auto-confirm online bookings"
 
@@ -3794,11 +3819,11 @@ msgstr "Automated assistant notice"
 msgid "Automated lifecycle journey created via visual builder."
 msgstr ""
 
-#: app/components/reservations/conflict-panel.tsx:313
+#: app/components/reservations/conflict-panel.tsx:340
 msgid "Automatic Reflow Notices"
 msgstr "Automatic Reflow Notices"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:380
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:381
 msgid "Automatically place new bookings on the best-fitting table or combination."
 msgstr "Automatically place new bookings on the best-fitting table or combination."
 
@@ -3878,8 +3903,10 @@ msgstr "Availability Status"
 #: app/components/menu/menu-status-badge.tsx:53
 #: app/components/staff/schedule/availability-page.tsx:256
 #: app/components/staff/schedule/availability-sheet.tsx:301
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:311
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1017
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:322
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1030
+#: app/utils/reservations/labels.ts:99
+#: app/utils/reservations/labels.ts:100
 msgid "Available"
 msgstr "Available"
 
@@ -3897,7 +3924,7 @@ msgstr "Available at this location"
 msgid "Available during…"
 msgstr "Available during…"
 
-#: app/components/reservations/booking-sheet.tsx:584
+#: app/components/reservations/booking-sheet.tsx:600
 msgid "Available Slots"
 msgstr "Available Slots"
 
@@ -4055,6 +4082,7 @@ msgid "Bar"
 msgstr "Bar"
 
 #: app/components/reservations/floor-plan-canvas.tsx:96
+#: app/utils/reservations/labels.ts:177
 msgid "Bar counter"
 msgstr "Bar counter"
 
@@ -4123,7 +4151,9 @@ msgstr ""
 msgid "Billing & Subscription"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:49
+#: app/components/reservations/booking-sheet.tsx:50
+#: app/utils/reservations/labels.ts:63
+#: app/utils/reservations/labels.ts:75
 msgid "Birthday"
 msgstr "Birthday"
 
@@ -4135,7 +4165,7 @@ msgstr "Birthdays, large groups, catering, and holidays."
 msgid "Blank"
 msgstr "Blank"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:979
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:980
 msgid "Block"
 msgstr "Block"
 
@@ -4143,15 +4173,15 @@ msgstr "Block"
 msgid "Block clock-in that is too early"
 msgstr "Block clock-in that is too early"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:391
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:392
 msgid "Block removed."
 msgstr "Block removed."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:350
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:351
 msgid "Block start time must be earlier than end time."
 msgstr "Block start time must be earlier than end time."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1586
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1605
 msgid "Block table for service"
 msgstr "Block table for service"
 
@@ -4159,13 +4189,14 @@ msgstr "Block table for service"
 msgid "Block types"
 msgstr "Block types"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:319
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1045
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:330
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1058
+#: app/utils/reservations/labels.ts:111
 msgid "Blocked"
 msgstr "Blocked"
 
 #. placeholder {0}: tableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:694
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:707
 msgid "Blocked table {0} for the rest of the service."
 msgstr "Blocked table {0} for the rest of the service."
 
@@ -4222,19 +4253,23 @@ msgstr "Book, waitlist & table status"
 msgid "Bookable online"
 msgstr "Bookable online"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:727
+#: app/utils/reservations/labels.ts:13
+msgid "Booked"
+msgstr "Booked"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:728
 msgid "Booking & cancellation policy (Arabic)"
 msgstr "Booking & cancellation policy (Arabic)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:705
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:706
 msgid "Booking & cancellation policy (English)"
 msgstr "Booking & cancellation policy (English)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:247
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:248
 msgid "Booking & Channel Rules"
 msgstr "Booking & Channel Rules"
 
-#: app/components/reservations/booking-sheet.tsx:856
+#: app/components/reservations/booking-sheet.tsx:883
 msgid "Booking..."
 msgstr "Booking..."
 
@@ -4243,7 +4278,7 @@ msgstr "Booking..."
 msgid "Booth"
 msgstr "Booth"
 
-#: app/components/reservations/booking-sheet.tsx:756
+#: app/components/reservations/booking-sheet.tsx:783
 msgid "Booth preferred, high chair..."
 msgstr "Booth preferred, high chair..."
 
@@ -4432,7 +4467,7 @@ msgid "Busiest around {peak}"
 msgstr "Busiest around {peak}"
 
 #: app/components/reservations/host-subnav.tsx:213
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:851
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:852
 msgid "Business date"
 msgstr "Business date"
 
@@ -4453,7 +4488,8 @@ msgstr "Business hours"
 msgid "Business info"
 msgstr "Business info"
 
-#: app/components/reservations/booking-sheet.tsx:52
+#: app/components/reservations/booking-sheet.tsx:53
+#: app/utils/reservations/labels.ts:66
 msgid "Business Meal"
 msgstr "Business Meal"
 
@@ -4465,9 +4501,11 @@ msgstr "Business phone"
 msgid "Business type settings"
 msgstr "Business type settings"
 
-#: app/components/reservations/detail-sheet.tsx:41
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:104
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:366
+#: app/components/reservations/detail-sheet.tsx:58
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:111
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:377
+#: app/utils/reservations/labels.ts:31
+#: app/utils/reservations/labels.ts:110
 msgid "Bussing"
 msgstr "Bussing"
 
@@ -4731,8 +4769,8 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/reservations/booking-sheet.tsx:846
-#: app/components/reservations/walk-in-dialog.tsx:305
+#: app/components/reservations/booking-sheet.tsx:873
+#: app/components/reservations/walk-in-dialog.tsx:314
 #: app/components/roles/tenant-role-access-manager.tsx:954
 #: app/components/roles/tenant-role-access-manager.tsx:1477
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
@@ -4788,8 +4826,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1084
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:624
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:675
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:889
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:792
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:902
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:794
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:858
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:680
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1042
@@ -4842,7 +4880,7 @@ msgstr "Cancel reply"
 msgid "Cancel request"
 msgstr "Cancel request"
 
-#: app/components/reservations/detail-sheet.tsx:541
+#: app/components/reservations/detail-sheet.tsx:605
 msgid "Cancel Reservation"
 msgstr "Cancel Reservation"
 
@@ -4854,7 +4892,7 @@ msgstr "Cancel this order? Any captured payment requires a separate refund with 
 msgid "Cancel time off"
 msgstr "Cancel time off"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:586
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:587
 msgid "Cancellation cutoff (hours)"
 msgstr "Cancellation cutoff (hours)"
 
@@ -4863,7 +4901,8 @@ msgstr "Cancellation cutoff (hours)"
 #: app/components/staff/schedule/time-off-page.tsx:286
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:139
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:199
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:231
+#: app/utils/reservations/labels.ts:20
 msgid "Cancelled"
 msgstr ""
 
@@ -5015,7 +5054,8 @@ msgstr "Catering & Large Events"
 msgid "Catering goes to the manager"
 msgstr "Catering goes to the manager"
 
-#: app/components/reservations/booking-sheet.tsx:53
+#: app/components/reservations/booking-sheet.tsx:54
+#: app/utils/reservations/labels.ts:67
 msgid "Celebration"
 msgstr "Celebration"
 
@@ -5062,6 +5102,7 @@ msgstr "Change due date"
 msgid "Change Email"
 msgstr ""
 
+#: app/components/reservations/detail-sheet.tsx:1047
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:413
 msgid "Change history"
 msgstr "Change history"
@@ -5138,11 +5179,14 @@ msgstr "Change voice"
 msgid "Change your password to something new"
 msgstr ""
 
-#. placeholder {0}: lastUndo.guestName
-#. placeholder {1}: lastUndo.status
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:240
-msgid "Changed {0} to {1}. Undo available for 60 seconds."
-msgstr "Changed {0} to {1}. Undo available for 60 seconds."
+#~ msgid "Changed {0} to {1}. Undo available for 60 seconds."
+#~ msgstr "Changed {0} to {1}. Undo available for 60 seconds."
+
+#. placeholder {0}: lastUndo.guestName
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:272
+msgid "Changed {0} to {lastUndoStatusLabel}. Undo available for 60 seconds."
+msgstr "Changed {0} to {lastUndoStatusLabel}. Undo available for 60 seconds."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:408
 msgid "Changed {sections}"
@@ -5167,7 +5211,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/campaign-form.tsx:58
 #: app/components/note/integration-controls.tsx:323
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1167
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1216
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1214
 msgid "Channel"
 msgstr ""
 
@@ -5225,15 +5269,17 @@ msgstr "Chat settings"
 #~ msgid "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
 #~ msgstr "Chat uses Cloudflare Durable Objects. Start the stack with <0>npm run dev</0> (not the Node-only <1>npm run dev:node -w app</1>). If chat still does not load, apply local D1 migrations — see docs/team-chat.md."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:103
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:110
 msgid "Check"
 msgstr "Check"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:364
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:375
 msgid "Check dropped"
 msgstr "Check dropped"
 
-#: app/components/reservations/detail-sheet.tsx:40
+#: app/components/reservations/detail-sheet.tsx:57
+#: app/utils/reservations/labels.ts:30
+#: app/utils/reservations/labels.ts:107
 msgid "Check Dropped"
 msgstr "Check Dropped"
 
@@ -5302,7 +5348,7 @@ msgstr "Checking for staff records…"
 msgid "Checking references…"
 msgstr "Checking references…"
 
-#: app/components/reservations/booking-sheet.tsx:588
+#: app/components/reservations/booking-sheet.tsx:604
 msgid "Checking slots..."
 msgstr "Checking slots..."
 
@@ -5326,7 +5372,7 @@ msgstr "Checkout hold"
 #~ msgid "Checkout Hold Timer"
 #~ msgstr "Checkout Hold Timer"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:565
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:566
 msgid "Checkout hold TTL (seconds)"
 msgstr "Checkout hold TTL (seconds)"
 
@@ -5338,7 +5384,7 @@ msgstr "Checkout payout not connected"
 msgid "Checkout processor"
 msgstr "Checkout processor"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:776
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:777
 msgid "Checks dining areas, active bookable tables, service windows, and turn-time bucket coverage across party sizes."
 msgstr "Checks dining areas, active bookable tables, service windows, and turn-time bucket coverage across party sizes."
 
@@ -5500,7 +5546,7 @@ msgstr "Choose how overtime is counted for people who work at more than one work
 #. placeholder {1}: occupiedDropPrompt.draggedReservation.partySize
 #. placeholder {2}: occupiedDropPrompt.draggedReservation.hhmm
 #. placeholder {3}: occupiedDropPrompt.targetTable.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:873
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:886
 msgid "Choose how to place {0} ({1}p, {2}) onto {3}:"
 msgstr "Choose how to place {0} ({1}p, {2}) onto {3}:"
 
@@ -5655,8 +5701,8 @@ msgid "Claude Desktop Setup"
 msgstr ""
 
 #: app/components/locations/delivery-zone-map.tsx:392
-#: app/components/reservations/conflict-panel.tsx:325
-#: app/components/reservations/detail-sheet.tsx:615
+#: app/components/reservations/conflict-panel.tsx:352
+#: app/components/reservations/detail-sheet.tsx:679
 #: app/components/staff/schedule/schedule-page.tsx:566
 #: app/components/staff/timesheets/bulk-bar.tsx:103
 msgid "Clear"
@@ -5897,8 +5943,8 @@ msgstr "Close, I'll finish later"
 msgid "Closed"
 msgstr "Closed"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:69
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:532
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:70
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:533
 msgid "Closed (all day)"
 msgstr "Closed (all day)"
 
@@ -5906,7 +5952,7 @@ msgstr "Closed (all day)"
 msgid "Closed all day"
 msgstr "Closed all day"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:565
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:566
 msgid "Closed for private event"
 msgstr "Closed for private event"
 
@@ -5976,8 +6022,8 @@ msgstr "Collect a short written answer."
 msgid "Collect a valid email address."
 msgstr "Collect a valid email address."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:437
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:871
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:439
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:873
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:403
 msgid "Color"
 msgstr "Color"
@@ -6079,11 +6125,11 @@ msgstr ""
 
 #: app/components/phone-agent/call-data.ts:141
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:306
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:514
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:610
 msgid "Complete"
 msgstr "Complete"
 
-#: app/components/reservations/detail-sheet.tsx:511
+#: app/components/reservations/detail-sheet.tsx:575
 msgid "Complete & Clear Table"
 msgstr "Complete & Clear Table"
 
@@ -6116,7 +6162,7 @@ msgstr ""
 msgid "Complete these steps to get the most from your workspace."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:536
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:559
 msgid "Complete Turn"
 msgstr "Complete Turn"
 
@@ -6139,12 +6185,13 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:138
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:195
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:295
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:227
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:310
+#: app/utils/reservations/labels.ts:18
 msgid "Completed"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:561
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:584
 msgid "Completed, No-Show & Cancelled"
 msgstr "Completed, No-Show & Cancelled"
 
@@ -6180,7 +6227,7 @@ msgstr ""
 msgid "Configuration required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:335
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:343
 msgid "Configuration valid"
 msgstr "Configuration valid"
 
@@ -6279,19 +6326,24 @@ msgstr ""
 msgid "Confirm your password"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:682
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:683
 msgid "Confirmation message (Arabic)"
 msgstr "Confirmation message (Arabic)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:660
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:661
 msgid "Confirmation message (English)"
 msgstr "Confirmation message (English)"
 
-#: app/components/reservations/detail-sheet.tsx:48
+#: app/utils/reservations/labels.ts:14
+msgid "Confirmed"
+msgstr "Confirmed"
+
+#: app/components/reservations/detail-sheet.tsx:65
+#: app/utils/reservations/labels.ts:38
 msgid "Confirmed by Phone"
 msgstr "Confirmed by Phone"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:405
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:497
 msgid "Conflict"
 msgstr "Conflict"
 
@@ -6299,11 +6351,11 @@ msgstr "Conflict"
 msgid "Conflict detected: {conflictMessage}"
 msgstr "Conflict detected: {conflictMessage}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:322
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:337
 msgid "conflicts"
 msgstr "conflicts"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:197
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:229
 msgid "Conflicts"
 msgstr "Conflicts"
 
@@ -6424,6 +6476,10 @@ msgstr "Contact"
 msgid "Contact form"
 msgstr "Contact form"
 
+#: app/utils/reservations/labels.ts:162
+msgid "Contact status changed"
+msgstr "Contact status changed"
+
 #: app/routes/organizations+/create.tsx:1767
 msgid "Contact support"
 msgstr ""
@@ -6432,7 +6488,7 @@ msgstr ""
 msgid "Contact support for pricing"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:623
+#: app/components/reservations/detail-sheet.tsx:687
 msgid "Contact Tracking"
 msgstr "Contact Tracking"
 
@@ -6528,7 +6584,7 @@ msgstr "Control checkout timing and what customers see."
 #~ msgid "Control lifecycle stage and storefront visibility."
 #~ msgstr "Control lifecycle stage and storefront visibility."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:250
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:251
 msgid "Control online booking availability, slot intervals, party size bounds, and table assignment behavior."
 msgstr "Control online booking availability, slot intervals, party size bounds, and table assignment behavior."
 
@@ -6829,11 +6885,15 @@ msgstr "Country"
 msgid "Country code"
 msgstr "Country code"
 
-#: app/components/reservations/detail-sheet.tsx:550
+#: app/utils/reservations/labels.ts:163
+msgid "Course changed"
+msgstr "Course changed"
+
+#: app/components/reservations/detail-sheet.tsx:614
 msgid "Course Progression"
 msgstr "Course Progression"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1460
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1479
 msgid "Course stage:"
 msgstr "Course stage:"
 
@@ -6859,12 +6919,16 @@ msgstr "Coverage compares the orders you usually get each hour with who is sched
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:272
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:466
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1113
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1381
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:488
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:539
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1126
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1397
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:489
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:540
 msgid "covers"
 msgstr "covers"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:314
+msgid "Covers"
+msgstr "Covers"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/reports.tsx:23
 msgid "Covers, utilization, no-show rates, pacing, and deposit/fee reconciliation."
@@ -7159,7 +7223,7 @@ msgstr "Create prepaid or deposit-backed dining experiences, schedules, and opti
 msgid "Create redirect"
 msgstr "Create redirect"
 
-#: app/components/reservations/booking-sheet.tsx:858
+#: app/components/reservations/booking-sheet.tsx:885
 msgid "Create Reservation"
 msgstr "Create Reservation"
 
@@ -7174,8 +7238,8 @@ msgstr "Create reusable forms, then place them on any website page with a Form b
 msgid "Create role"
 msgstr "Create role"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:612
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:683
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:614
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:685
 msgid "Create Section Layout"
 msgstr "Create Section Layout"
 
@@ -7246,6 +7310,7 @@ msgstr "Create, update, and publish web pages, forms, and redirects."
 
 #: app/components/roles/tenant-role-access-manager.tsx:1324
 #: app/components/roles/tenant-role-access-manager.tsx:1372
+#: app/utils/reservations/labels.ts:153
 msgid "Created"
 msgstr "Created"
 
@@ -7361,8 +7426,8 @@ msgstr ""
 msgid "Current time {time}, {date}"
 msgstr "Current time {time}, {date}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:265
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:468
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:280
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:489
 msgid "Currently Seated"
 msgstr "Currently Seated"
 
@@ -7548,7 +7613,8 @@ msgstr "Daily overtime off · Week starts {weekStart}"
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "Daily overtime on · Week starts {weekStart}"
 
-#: app/components/reservations/booking-sheet.tsx:43
+#: app/components/reservations/booking-sheet.tsx:44
+#: app/utils/reservations/labels.ts:86
 msgid "Dairy-Free"
 msgstr "Dairy-Free"
 
@@ -7597,13 +7663,13 @@ msgstr ""
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:341
-#: app/components/reservations/booking-sheet.tsx:454
+#: app/components/reservations/booking-sheet.tsx:470
 #: app/components/staff/schedule/availability-sheet.tsx:289
 #: app/components/staff/timesheets/card-fields.tsx:101
 #: app/components/staff/timesheets/timesheet-table.tsx:209
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:272
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:276
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:998
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:999
 msgid "Date"
 msgstr "Date"
 
@@ -7612,7 +7678,8 @@ msgstr "Date"
 msgid "Date & time"
 msgstr "Date & time"
 
-#: app/components/reservations/booking-sheet.tsx:51
+#: app/components/reservations/booking-sheet.tsx:52
+#: app/utils/reservations/labels.ts:65
 msgid "Date Night"
 msgstr "Date Night"
 
@@ -7625,7 +7692,7 @@ msgid "Date of birth, address and emergency contact. Each time you view these, i
 msgstr "Date of birth, address and emergency contact. Each time you view these, it is recorded."
 
 #: app/components/staff/schedule/time-off-sheet.tsx:203
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:726
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:727
 msgid "Dates"
 msgstr "Dates"
 
@@ -7790,15 +7857,15 @@ msgstr ""
 msgid "Default language required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:607
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:608
 msgid "Default max covers / slot"
 msgstr "Default max covers / slot"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:632
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:633
 msgid "Default max parties / slot"
 msgstr "Default max parties / slot"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:418
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:419
 msgid "Default turn time (min)"
 msgstr "Default turn time (min)"
 
@@ -7859,12 +7926,12 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:547
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1038
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1096
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:845
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:847
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:885
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1063
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1249
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1448
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:811
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1251
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1450
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:812
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1247
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:774
@@ -8204,7 +8271,7 @@ msgstr "Delivery Zones & Geo-Fencing"
 msgid "Deny"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:819
+#: app/components/reservations/booking-sheet.tsx:846
 msgid "Deposit / Card Hold Policy:"
 msgstr "Deposit / Card Hold Policy:"
 
@@ -8259,13 +8326,19 @@ msgstr "Design email"
 msgid "Desktop"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:39
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:102
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:367
+#: app/components/reservations/detail-sheet.tsx:56
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:109
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:378
+#: app/utils/reservations/labels.ts:29
+#: app/utils/reservations/labels.ts:105
 msgid "Dessert"
 msgstr "Dessert"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1033
+#: app/utils/reservations/labels.ts:106
+msgid "Dessert / check"
+msgstr "Dessert / check"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1046
 msgid "Dessert / Check"
 msgstr "Dessert / Check"
 
@@ -8281,32 +8354,36 @@ msgstr ""
 msgid "Destructive settings that cannot be undone. All your data will be permanently removed from our servers."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1544
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1563
 msgid "Detail"
 msgstr "Detail"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1430
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1449
 msgid "Detail sheet"
 msgstr "Detail sheet"
 
 #: app/components/hiring/candidate-sheet.tsx:343
-#: app/components/reservations/conflict-panel.tsx:213
-#: app/components/reservations/conflict-panel.tsx:299
+#: app/components/reservations/conflict-panel.tsx:240
+#: app/components/reservations/conflict-panel.tsx:326
 #: app/components/staff/details-tab.tsx:123
 #: app/components/staff/details-tab.tsx:128
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
 #: app/components/workspace-breadcrumb.tsx:134
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:524
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:453
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:545
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:620
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:474
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:568
 msgid "Details"
 msgstr "Details"
 
 #: app/components/locations/location-form.tsx:304
 msgid "Details & Address"
 msgstr "Details & Address"
+
+#: app/utils/reservations/labels.ts:155
+msgid "Details changed"
+msgstr "Details changed"
 
 #: app/components/hiring/interview-dialog.tsx:232
 msgid "Details for the applicant"
@@ -8346,11 +8423,11 @@ msgstr "Didn't catch that"
 msgid "Didn't receive the email? Check your spam folder, or try again with a different email address."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:338
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:339
 msgid "Dietary / Allergies"
 msgstr "Dietary / Allergies"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:768
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:774
 msgid "Dietary / allergy flag on file (restricted detail)"
 msgstr "Dietary / allergy flag on file (restricted detail)"
 
@@ -8359,13 +8436,22 @@ msgstr "Dietary / allergy flag on file (restricted detail)"
 msgid "Dietary & Allergens"
 msgstr "Dietary & Allergens"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:721
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:727
 msgid "Dietary & Allergy Alerts"
 msgstr "Dietary & Allergy Alerts"
 
+#: app/components/reservations/booking-sheet.tsx:760
+#: app/components/reservations/detail-sheet.tsx:804
+msgid "Dietary notes"
+msgstr "Dietary notes"
+
+#: app/components/reservations/booking-sheet.tsx:767
+msgid "Dietary notes, e.g. no sesame, severe peanut allergy"
+msgstr "Dietary notes, e.g. no sesame, severe peanut allergy"
+
 #: app/components/menu/modifier-form.tsx:1686
 #: app/components/menu/modifier-form.tsx:2041
-#: app/components/reservations/booking-sheet.tsx:724
+#: app/components/reservations/booking-sheet.tsx:740
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
@@ -8390,12 +8476,13 @@ msgstr "Dine-In / In-House"
 msgid "Dine-In Tips"
 msgstr "Dine-In Tips"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1320
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:876
+#: app/components/reservations/detail-sheet.tsx:788
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1322
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:877
 msgid "Dining area"
 msgstr "Dining area"
 
-#: app/components/reservations/booking-sheet.tsx:541
+#: app/components/reservations/booking-sheet.tsx:557
 msgid "Dining Area"
 msgstr "Dining Area"
 
@@ -8505,7 +8592,7 @@ msgstr "Dishes and beverages in this category."
 
 #: app/components/feature-updates.tsx:134
 #: app/components/feature-updates.tsx:214
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:843
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:856
 msgid "Dismiss"
 msgstr ""
 
@@ -8618,6 +8705,7 @@ msgid "Done {when}"
 msgstr "Done {when}"
 
 #: app/components/reservations/floor-plan-canvas.tsx:100
+#: app/utils/reservations/labels.ts:178
 msgid "Door"
 msgstr "Door"
 
@@ -8768,11 +8856,11 @@ msgstr "Drag and reorder your menu categories and items exactly as they appear t
 msgid "Drag bars to reassign table or shift time in 15-min slots. Focus a bar and press Space/Enter for keyboard move."
 msgstr "Drag bars to reassign table or shift time in 15-min slots. Focus a bar and press Space/Enter for keyboard move."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1606
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1625
 msgid "Drag onto table to seat/assign"
 msgstr "Drag onto table to seat/assign"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1202
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1210
 msgid "Drag right edge to resize duration"
 msgstr "Drag right edge to resize duration"
 
@@ -8887,11 +8975,11 @@ msgstr ""
 msgid "Duration"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:804
+#: app/components/reservations/detail-sheet.tsx:927
 msgid "Duration (m)"
 msgstr "Duration (m)"
 
-#: app/components/reservations/booking-sheet.tsx:501
+#: app/components/reservations/booking-sheet.tsx:517
 msgid "Duration (min)"
 msgstr "Duration (min)"
 
@@ -8943,7 +9031,7 @@ msgstr "e.g. Christmas Day, Summer Festival"
 msgid "e.g. cust_123"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:637
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:639
 msgid "e.g. Dinner 3-server"
 msgstr "e.g. Dinner 3-server"
 
@@ -8963,7 +9051,7 @@ msgstr "e.g. Late Dinner"
 msgid "e.g. Main Dining"
 msgstr "e.g. Main Dining"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:550
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:551
 msgid "e.g. National Day / Ramadan"
 msgstr "e.g. National Day / Ramadan"
 
@@ -9051,7 +9139,7 @@ msgstr "Each option gets its own connection on the canvas. Callers can press the
 msgid "Each set of hours has to end after it starts."
 msgstr "Each set of hours has to end after it starts."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:396
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:398
 msgid "Each table can belong to at most one section in a layout. Clicking a table assigned to another section moves it to the selected section."
 msgstr "Each table can belong to at most one section in a layout. Clicking a table assigned to another section moves it to the selected section."
 
@@ -9096,7 +9184,7 @@ msgstr "Early out"
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:475
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:981
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:831
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:833
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:876
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:750
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1059
@@ -9315,7 +9403,7 @@ msgstr "Eligible for rehire."
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:450
-#: app/components/reservations/booking-sheet.tsx:673
+#: app/components/reservations/booking-sheet.tsx:689
 #: app/components/settings/cards/notification-preferences-card.tsx:26
 #: app/components/settings/cards/profile-card.tsx:132
 #: app/components/staff/details-tab.tsx:166
@@ -9463,7 +9551,7 @@ msgstr "End break"
 msgid "End call"
 msgstr "End call"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:509
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:510
 msgid "End date"
 msgstr "End date"
 
@@ -9478,7 +9566,7 @@ msgstr "End of day"
 msgid "End of the call"
 msgstr "End of the call"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:930
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:931
 msgid "End time"
 msgstr "End time"
 
@@ -9531,7 +9619,7 @@ msgstr "Enter 0.00 for no extra charge (e.g. Free choice)."
 msgid "Enter 6-digit OTP token"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:432
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:433
 msgid "Enter 86'd items, VIP table callouts, or pre-shift notes for {activeServiceName}…"
 msgstr "Enter 86'd items, VIP table callouts, or pre-shift notes for {activeServiceName}…"
 
@@ -9645,7 +9733,7 @@ msgstr "Enter PIN"
 msgid "Enter postal or zip codes where this delivery zone applies."
 msgstr "Enter postal or zip codes where this delivery zone applies."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:244
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:245
 msgid "Enter replacement service name and valid seating times."
 msgstr "Enter replacement service name and valid seating times."
 
@@ -9755,7 +9843,9 @@ msgstr "Entered sales are only used when this workplace's sales source is \"Sale
 msgid "Enterprise Plan"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:38
+#: app/components/reservations/detail-sheet.tsx:55
+#: app/utils/reservations/labels.ts:28
+#: app/utils/reservations/labels.ts:104
 msgid "Entree"
 msgstr "Entree"
 
@@ -9975,7 +10065,7 @@ msgstr "Exempt from Throttling"
 msgid "Existing page"
 msgstr "Existing page"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:263
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:264
 msgid "Expected Covers"
 msgstr "Expected Covers"
 
@@ -9996,6 +10086,7 @@ msgstr ""
 #: app/components/settings/cards/sessions-card.tsx:195
 #: app/components/settings/cards/sessions-card.tsx:253
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:140
+#: app/utils/reservations/labels.ts:22
 msgid "Expired"
 msgstr ""
 
@@ -10046,7 +10137,7 @@ msgstr "Exported {count} rows."
 msgid "Exported {exportedCount} people."
 msgstr "Exported {exportedCount} people."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1190
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1198
 msgid "Extend turn by 15m"
 msgstr "Extend turn by 15m"
 
@@ -10077,8 +10168,8 @@ msgstr "Failed to archive dining area."
 msgid "Failed to archive table."
 msgstr "Failed to archive table."
 
-#: app/components/reservations/detail-sheet.tsx:319
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:513
+#: app/components/reservations/detail-sheet.tsx:369
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:525
 msgid "Failed to assign table."
 msgstr "Failed to assign table."
 
@@ -10094,7 +10185,7 @@ msgstr ""
 msgid "Failed to create and dispatch campaign"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:380
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:381
 msgid "Failed to create block."
 msgstr "Failed to create block."
 
@@ -10110,11 +10201,11 @@ msgstr ""
 msgid "Failed to create pacing rule."
 msgstr "Failed to create pacing rule."
 
-#: app/components/reservations/booking-sheet.tsx:320
+#: app/components/reservations/booking-sheet.tsx:324
 msgid "Failed to create reservation."
 msgstr "Failed to create reservation."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:247
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:249
 msgid "Failed to create section layout."
 msgstr "Failed to create section layout."
 
@@ -10122,7 +10213,7 @@ msgstr "Failed to create section layout."
 msgid "Failed to create service."
 msgstr "Failed to create service."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:283
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:284
 msgid "Failed to create special day."
 msgstr "Failed to create special day."
 
@@ -10154,7 +10245,7 @@ msgstr ""
 msgid "Failed to delete pacing rule."
 msgstr "Failed to delete pacing rule."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:353
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:355
 msgid "Failed to delete section layout."
 msgstr "Failed to delete section layout."
 
@@ -10162,7 +10253,7 @@ msgstr "Failed to delete section layout."
 msgid "Failed to delete service."
 msgstr "Failed to delete service."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:336
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:337
 msgid "Failed to delete special day."
 msgstr "Failed to delete special day."
 
@@ -10194,7 +10285,7 @@ msgstr ""
 msgid "Failed to find original journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:656
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:669
 msgid "Failed to finish reservation."
 msgstr "Failed to finish reservation."
 
@@ -10234,19 +10325,19 @@ msgstr ""
 msgid "Failed to load monthly calendar summary."
 msgstr "Failed to load monthly calendar summary."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:108
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:109
 msgid "Failed to load pre-service overview."
 msgstr "Failed to load pre-service overview."
 
-#: app/components/reservations/detail-sheet.tsx:155
+#: app/components/reservations/detail-sheet.tsx:204
 msgid "Failed to load reservation details."
 msgstr "Failed to load reservation details."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:173
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:181
 msgid "Failed to load reservation setup for this location."
 msgstr "Failed to load reservation setup for this location."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:132
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:134
 msgid "Failed to load section layouts for this location."
 msgstr "Failed to load section layouts for this location."
 
@@ -10254,7 +10345,7 @@ msgstr "Failed to load section layouts for this location."
 msgid "Failed to load services setup."
 msgstr "Failed to load services setup."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:182
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:183
 msgid "Failed to load special days and table blocks."
 msgstr "Failed to load special days and table blocks."
 
@@ -10262,7 +10353,7 @@ msgstr "Failed to load special days and table blocks."
 msgid "Failed to load timeline"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:163
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:178
 msgid "Failed to mark running late."
 msgstr "Failed to mark running late."
 
@@ -10286,11 +10377,11 @@ msgstr ""
 msgid "Failed to publish journey"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:218
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:226
 msgid "Failed to re-derive reservation times."
 msgstr "Failed to re-derive reservation times."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:395
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:396
 msgid "Failed to remove block."
 msgstr "Failed to remove block."
 
@@ -10298,11 +10389,11 @@ msgstr "Failed to remove block."
 msgid "Failed to reorder dining areas."
 msgstr "Failed to reorder dining areas."
 
-#: app/components/reservations/conflict-panel.tsx:72
+#: app/components/reservations/conflict-panel.tsx:95
 msgid "Failed to resolve assignment."
 msgstr "Failed to resolve assignment."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:587
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:599
 msgid "Failed to resolve table conflict."
 msgstr "Failed to resolve table conflict."
 
@@ -10314,7 +10405,7 @@ msgstr ""
 msgid "Failed to save availability rule."
 msgstr "Failed to save availability rule."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:105
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:127
 msgid "Failed to save floor plan."
 msgstr "Failed to save floor plan."
 
@@ -10322,15 +10413,15 @@ msgstr "Failed to save floor plan."
 msgid "Failed to save option. Please check the fields below."
 msgstr "Failed to save option. Please check the fields below."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:140
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:141
 msgid "Failed to save reservation settings."
 msgstr "Failed to save reservation settings."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:734
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:747
 msgid "Failed to save section server assignments."
 msgstr "Failed to save section server assignments."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:170
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:171
 msgid "Failed to save service notes."
 msgstr "Failed to save service notes."
 
@@ -10342,11 +10433,11 @@ msgstr ""
 msgid "Failed to search for users"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:611
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:623
 msgid "Failed to seat party."
 msgstr "Failed to seat party."
 
-#: app/components/reservations/walk-in-dialog.tsx:116
+#: app/components/reservations/walk-in-dialog.tsx:120
 msgid "Failed to seat walk-in."
 msgstr "Failed to seat walk-in."
 
@@ -10354,16 +10445,16 @@ msgstr "Failed to seat walk-in."
 msgid "Failed to trigger test automation"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:227
+#: app/components/reservations/detail-sheet.tsx:277
 msgid "Failed to undo status."
 msgstr "Failed to undo status."
 
-#: app/components/reservations/detail-sheet.tsx:295
+#: app/components/reservations/detail-sheet.tsx:345
 msgid "Failed to update contact status."
 msgstr "Failed to update contact status."
 
-#: app/components/reservations/detail-sheet.tsx:248
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:636
+#: app/components/reservations/detail-sheet.tsx:298
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:649
 msgid "Failed to update course stage."
 msgstr "Failed to update course stage."
 
@@ -10371,15 +10462,15 @@ msgstr "Failed to update course stage."
 msgid "Failed to update dining area."
 msgstr "Failed to update dining area."
 
-#: app/components/reservations/detail-sheet.tsx:271
+#: app/components/reservations/detail-sheet.tsx:321
 msgid "Failed to update late status."
 msgstr "Failed to update late status."
 
-#: app/components/reservations/detail-sheet.tsx:361
+#: app/components/reservations/detail-sheet.tsx:411
 msgid "Failed to update reservation."
 msgstr "Failed to update reservation."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:332
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:334
 msgid "Failed to update section layout."
 msgstr "Failed to update section layout."
 
@@ -10387,11 +10478,11 @@ msgstr "Failed to update section layout."
 msgid "Failed to update service."
 msgstr "Failed to update service."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:316
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:317
 msgid "Failed to update special day."
 msgstr "Failed to update special day."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:700
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:713
 msgid "Failed to update table block."
 msgstr "Failed to update table block."
 
@@ -10541,7 +10632,7 @@ msgstr "Find and reuse images uploaded across notes, comments, your website, and
 msgid "Find potential issues"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1501
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1520
 msgid "Finish & clear table"
 msgstr "Finish & clear table"
 
@@ -10549,8 +10640,16 @@ msgstr "Finish & clear table"
 msgid "Finish onboarding"
 msgstr "Finish onboarding"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:354
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1037
+#: app/utils/reservations/labels.ts:19
+msgid "Finished"
+msgstr "Finished"
+
+#: app/utils/reservations/labels.ts:108
+msgid "Finishing"
+msgstr "Finishing"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:365
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1050
 msgid "Finishing (<15m)"
 msgstr "Finishing (<15m)"
 
@@ -10576,8 +10675,8 @@ msgid "First name"
 msgstr "First name"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:601
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:608
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:660
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:609
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:661
 msgid "First seating"
 msgstr "First seating"
 
@@ -10655,7 +10754,7 @@ msgid "Floor label"
 msgstr "Floor label"
 
 #: app/components/reservations/host-subnav.tsx:84
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:248
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:256
 msgid "Floor Plan"
 msgstr "Floor Plan"
 
@@ -10719,7 +10818,7 @@ msgstr "For our hours, press 1. To speak with our team, press 2."
 msgid "For shifts longer than"
 msgstr "For shifts longer than"
 
-#: app/components/reservations/detail-sheet.tsx:699
+#: app/components/reservations/detail-sheet.tsx:763
 msgid "Force overbook / ignore table overlap"
 msgstr "Force overbook / ignore table overlap"
 
@@ -10814,16 +10913,16 @@ msgid "Frequently asked questions"
 msgstr "Frequently asked questions"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:181
-#: app/utils/reservations/setup-api.ts:382
+#: app/utils/reservations/setup-api.ts:451
 msgid "Fri"
 msgstr "Fri"
 
 #: app/components/phone-agent/business-details-section.tsx:28
-#: app/utils/reservations/setup-api.ts:383
+#: app/utils/reservations/setup-api.ts:452
 msgid "Friday"
 msgstr "Friday"
 
-#: app/components/reservations/booking-sheet.tsx:770
+#: app/components/reservations/booking-sheet.tsx:797
 msgid "Friends of chef, comp welcome drink..."
 msgstr "Friends of chef, comp welcome drink..."
 
@@ -10880,7 +10979,7 @@ msgstr ""
 msgid "Full access to organization settings and members"
 msgstr "Full access to organization settings and members"
 
-#: app/components/reservations/booking-sheet.tsx:651
+#: app/components/reservations/booking-sheet.tsx:667
 msgid "Full name"
 msgstr "Full name"
 
@@ -10897,7 +10996,7 @@ msgstr "Full time"
 msgid "Full width"
 msgstr "Full width"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:836
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:837
 msgid "Future reservations affected by table capacity reductions, archived tables, shortened service windows, or closed special days."
 msgstr "Future reservations affected by table capacity reductions, archived tables, shortened service windows, or closed special days."
 
@@ -10908,7 +11007,7 @@ msgstr "Future reservations affected by table capacity reductions, archived tabl
 msgid "General"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:236
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:244
 msgid "General & Policies"
 msgstr "General & Policies"
 
@@ -10916,7 +11015,7 @@ msgstr "General & Policies"
 msgid "General manager"
 msgstr "General manager"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:127
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:128
 msgid "General reservation settings saved."
 msgstr "General reservation settings saved."
 
@@ -11027,7 +11126,8 @@ msgstr "Give your group a name"
 #: app/components/menu/modifier-form.tsx:1704
 #: app/components/menu/modifier-form.tsx:2059
 #: app/components/menu/option-form.tsx:632
-#: app/components/reservations/booking-sheet.tsx:40
+#: app/components/reservations/booking-sheet.tsx:41
+#: app/utils/reservations/labels.ts:83
 msgid "Gluten-Free"
 msgstr "Gluten-Free"
 
@@ -11050,6 +11150,10 @@ msgstr "Go to switch"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:288
 msgid "Go-live checklist"
 msgstr "Go-live checklist"
+
+#: app/utils/reservations/labels.ts:93
+msgid "Gold"
+msgstr "Gold"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:164
 msgid "Good afternoon, {userName}"
@@ -11163,7 +11267,7 @@ msgstr "Group settings"
 msgid "Group tables by room, patio, bar, or floor level. Guests can choose online-bookable areas when booking."
 msgstr "Group tables by room, patio, bar, or floor level. Guests can choose online-bookable areas when booking."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:615
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:617
 msgid "Group tables into color-coded server sections (tokens 1–8) for floor overlays and shift server assignments."
 msgstr "Group tables into color-coded server sections (tokens 1–8) for floor overlays and shift server assignments."
 
@@ -11179,8 +11283,9 @@ msgstr "Group the schedule"
 msgid "Groups"
 msgstr "Groups"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:303
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:388
 #: app/utils/organization/role-label.ts:21
+#: app/utils/reservations/labels.ts:169
 msgid "Guest"
 msgstr "Guest"
 
@@ -11188,7 +11293,7 @@ msgstr "Guest"
 msgid "Guest checkout"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:713
+#: app/components/reservations/detail-sheet.tsx:836
 msgid "Guest CRM Profile"
 msgstr "Guest CRM Profile"
 
@@ -11205,19 +11310,23 @@ msgstr "Guest directory, VIP tags, dietary preferences, visit history, and profi
 msgid "Guest Live Preview"
 msgstr "Guest Live Preview"
 
-#: app/components/reservations/booking-sheet.tsx:645
+#: app/components/reservations/booking-sheet.tsx:661
 msgid "Guest Name"
 msgstr "Guest Name"
 
-#: app/components/reservations/walk-in-dialog.tsx:232
+#: app/components/reservations/walk-in-dialog.tsx:241
 msgid "Guest Name (Optional)"
 msgstr "Guest Name (Optional)"
 
-#: app/components/reservations/booking-sheet.tsx:265
+#: app/components/reservations/booking-sheet.tsx:267
 msgid "Guest name and phone number are required."
 msgstr "Guest name and phone number are required."
 
-#: app/components/reservations/detail-sheet.tsx:843
+#: app/components/reservations/detail-sheet.tsx:814
+msgid "Guest notes"
+msgstr "Guest notes"
+
+#: app/components/reservations/detail-sheet.tsx:966
 msgid "Guest Notes"
 msgstr "Guest Notes"
 
@@ -11234,7 +11343,7 @@ msgstr "Guest profiles, preferences, visit history, and notes live in your regio
 msgid "Guest relations"
 msgstr "Guest relations"
 
-#: app/components/reservations/booking-sheet.tsx:749
+#: app/components/reservations/booking-sheet.tsx:776
 msgid "Guest Request / Notes"
 msgstr "Guest Request / Notes"
 
@@ -11264,13 +11373,13 @@ msgstr "Guestbook manager"
 msgid "Guestbook profiles & merges"
 msgstr "Guestbook profiles & merges"
 
-#: app/components/reservations/conflict-panel.tsx:136
-#: app/components/reservations/conflict-panel.tsx:255
-#: app/components/reservations/conflict-panel.tsx:345
-#: app/components/reservations/detail-sheet.tsx:413
-#: app/components/reservations/detail-sheet.tsx:906
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:372
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:599
+#: app/components/reservations/conflict-panel.tsx:159
+#: app/components/reservations/conflict-panel.tsx:282
+#: app/components/reservations/conflict-panel.tsx:372
+#: app/components/reservations/detail-sheet.tsx:477
+#: app/components/reservations/detail-sheet.tsx:1029
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:459
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:600
 msgid "guests"
 msgstr "guests"
 
@@ -11309,7 +11418,8 @@ msgstr "Guests: {guestsCount}"
 msgid "h"
 msgstr "h"
 
-#: app/components/reservations/booking-sheet.tsx:41
+#: app/components/reservations/booking-sheet.tsx:42
+#: app/utils/reservations/labels.ts:84
 msgid "Halal"
 msgstr "Halal"
 
@@ -11494,7 +11604,7 @@ msgstr "Hide replies ({replyCount})"
 msgid "High"
 msgstr "High"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:989
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1002
 msgid "High contrast"
 msgstr "High contrast"
 
@@ -11626,13 +11736,17 @@ msgstr ""
 msgid "Host"
 msgstr "Host"
 
-#: app/components/reservations/detail-sheet.tsx:467
+#: app/components/reservations/detail-sheet.tsx:531
 msgid "Host Actions & Status"
 msgstr "Host Actions & Status"
 
-#: app/components/reservations/walk-in-dialog.tsx:273
+#: app/components/reservations/walk-in-dialog.tsx:282
 msgid "Host Notes"
 msgstr "Host Notes"
+
+#: app/utils/reservations/labels.ts:46
+msgid "Host stand"
+msgstr "Host stand"
 
 #: app/components/reservations/host-subnav.tsx:101
 msgid "Host stand views"
@@ -11874,7 +11988,7 @@ msgstr ""
 msgid "Image URL"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:356
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:357
 msgid "Immediately confirm online bookings that do not require a payment step."
 msgstr "Immediately confirm online bookings that do not require a payment step."
 
@@ -11882,7 +11996,7 @@ msgstr "Immediately confirm online bookings that do not require a payment step."
 msgid "Immediately invalidate all tokens for this client"
 msgstr ""
 
-#: app/components/reservations/walk-in-dialog.tsx:131
+#: app/components/reservations/walk-in-dialog.tsx:135
 msgid "Immediately seat a walk-in party at an available table or auto-assign the best open table."
 msgstr "Immediately seat a walk-in party at an available table or auto-assign the best open table."
 
@@ -11936,6 +12050,10 @@ msgstr "Important tags"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:582
 msgid "Important:"
 msgstr ""
+
+#: app/utils/reservations/labels.ts:154
+msgid "Imported"
+msgstr "Imported"
 
 #: app/components/staff/labor/sales-import-dialog.tsx:103
 msgid "Imported: {created} added, {updated} changed, {unchanged} already the same."
@@ -12078,10 +12196,14 @@ msgstr ""
 msgid "Internal channels for your team."
 msgstr "Internal channels for your team."
 
-#: app/components/reservations/booking-sheet.tsx:763
-#: app/components/reservations/detail-sheet.tsx:860
+#: app/components/reservations/booking-sheet.tsx:790
+#: app/components/reservations/detail-sheet.tsx:983
 msgid "Internal Host Notes"
 msgstr "Internal Host Notes"
+
+#: app/components/reservations/detail-sheet.tsx:822
+msgid "Internal notes"
+msgstr "Internal notes"
 
 #: app/components/menu/category-form.tsx:377
 #: app/components/menu/menu-form.tsx:200
@@ -12541,7 +12663,7 @@ msgid "Keyboard shortcuts"
 msgstr "Keyboard shortcuts"
 
 #. placeholder {0}: host.businessDate
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:362
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:363
 msgid "Keyed to {0} · {activeServiceName}"
 msgstr "Keyed to {0} · {activeServiceName}"
 
@@ -12592,6 +12714,7 @@ msgstr "Knowledge management"
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:926
+#: app/utils/reservations/labels.ts:180
 msgid "Label"
 msgstr "Label"
 
@@ -12682,11 +12805,11 @@ msgstr "Large Order Extra Prep Time (minutes)"
 msgid "Large Order Threshold Rule"
 msgstr "Large Order Threshold Rule"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:565
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:566
 msgid "Large Parties (6+ Covers)"
 msgstr "Large Parties (6+ Covers)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:293
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:294
 msgid "Large Parties (6+)"
 msgstr "Large Parties (6+)"
 
@@ -12743,8 +12866,8 @@ msgid "Last opened {lastOpened}."
 msgstr "Last opened {lastOpened}."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:613
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:620
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:672
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:621
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:673
 msgid "Last seating"
 msgstr "Last seating"
 
@@ -12757,7 +12880,7 @@ msgstr ""
 msgid "Last Used"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:393
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:412
 msgid "late"
 msgstr "late"
 
@@ -12778,8 +12901,8 @@ msgstr "Late after {lateMinutes} min · Unscheduled clock-ins allowed"
 msgid "Late arrivals by employee"
 msgstr "Late arrivals by employee"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:410
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:388
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:502
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:407
 msgid "Late Risk"
 msgstr "Late Risk"
 
@@ -12805,12 +12928,12 @@ msgstr ""
 msgid "Layout"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:630
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:744
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:632
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:746
 msgid "Layout Name"
 msgstr "Layout Name"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:298
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:300
 msgid "Layout name is required."
 msgstr "Layout name is required."
 
@@ -12928,7 +13051,8 @@ msgstr "Left or right ($)"
 msgid "Left the team"
 msgstr "Left the team"
 
-#: app/components/reservations/detail-sheet.tsx:47
+#: app/components/reservations/detail-sheet.tsx:64
+#: app/utils/reservations/labels.ts:37
 msgid "Left Voicemail"
 msgstr "Left Voicemail"
 
@@ -13033,8 +13157,8 @@ msgstr "Link sent"
 msgid "Link to a form you host elsewhere. Nothing is collected here."
 msgstr "Link to a form you host elsewhere. Nothing is collected here."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:644
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:756
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:646
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:758
 msgid "Link to Service Period (optional)"
 msgstr "Link to Service Period (optional)"
 
@@ -13068,7 +13192,7 @@ msgstr "Listening"
 msgid "Live"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1001
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1014
 msgid "Live 5s ETag"
 msgstr "Live 5s ETag"
 
@@ -13151,7 +13275,7 @@ msgstr ""
 msgid "Loading dining areas…"
 msgstr "Loading dining areas…"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:131
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:150
 msgid "Loading floor plan designer…"
 msgstr "Loading floor plan designer…"
 
@@ -13219,15 +13343,15 @@ msgstr "Loading profile"
 msgid "Loading requests"
 msgstr "Loading requests"
 
-#: app/components/reservations/detail-sheet.tsx:419
+#: app/components/reservations/detail-sheet.tsx:483
 msgid "Loading reservation details..."
 msgstr "Loading reservation details..."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:159
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:160
 msgid "Loading reservation settings…"
 msgstr "Loading reservation settings…"
 
-#: app/components/reservations/detail-sheet.tsx:949
+#: app/components/reservations/detail-sheet.tsx:1095
 msgid "Loading reservation..."
 msgstr "Loading reservation..."
 
@@ -13239,7 +13363,7 @@ msgstr "Loading results…"
 msgid "Loading reviews"
 msgstr "Loading reviews"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:710
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:712
 msgid "Loading section layouts…"
 msgstr "Loading section layouts…"
 
@@ -13247,7 +13371,7 @@ msgstr "Loading section layouts…"
 msgid "Loading services…"
 msgstr "Loading services…"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:712
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:713
 msgid "Loading special days…"
 msgstr "Loading special days…"
 
@@ -13337,7 +13461,7 @@ msgstr "Location Name"
 msgid "Location Overrides"
 msgstr "Location Overrides"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:275
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:276
 msgid "Location reservations active"
 msgstr "Location reservations active"
 
@@ -13345,7 +13469,7 @@ msgstr "Location reservations active"
 msgid "Location Status"
 msgstr "Location Status"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:376
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:384
 msgid "Location time zone changed"
 msgstr "Location time zone changed"
 
@@ -13368,8 +13492,8 @@ msgstr "Lock"
 msgid "Lock ({lockCount})"
 msgstr "Lock ({lockCount})"
 
-#: app/components/reservations/detail-sheet.tsx:688
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1164
+#: app/components/reservations/detail-sheet.tsx:752
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1172
 msgid "Lock table assignment"
 msgstr "Lock table assignment"
 
@@ -13387,7 +13511,7 @@ msgstr "Locked cards cannot be edited by anyone until they are unlocked, and the
 msgid "Locked timesheets cannot be edited until someone unlocks them."
 msgstr "Locked timesheets cannot be edited until someone unlocks them."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1132
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1140
 msgid "Locked to table"
 msgstr "Locked to table"
 
@@ -13475,7 +13599,7 @@ msgstr "Looks right"
 msgid "Looks right ({reviewCount})"
 msgstr "Looks right ({reviewCount})"
 
-#: app/components/reservations/booking-sheet.tsx:360
+#: app/components/reservations/booking-sheet.tsx:364
 msgid "Lookup Returning Guest (Phone or Name)"
 msgstr "Lookup Returning Guest (Phone or Name)"
 
@@ -13519,7 +13643,7 @@ msgstr "Mailbox"
 msgid "Mailbox sources"
 msgstr "Mailbox sources"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:101
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:108
 msgid "Main"
 msgstr "Main"
 
@@ -13539,8 +13663,8 @@ msgstr "Main position"
 msgid "Main workplace"
 msgstr "Main workplace"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:77
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:953
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:78
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:954
 msgid "Maintenance"
 msgstr "Maintenance"
 
@@ -13596,7 +13720,7 @@ msgstr "Manage channels"
 msgid "Manage chat channels"
 msgstr "Manage chat channels"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:699
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:701
 msgid "Manage existing server section configurations for this location."
 msgstr "Manage existing server section configurations for this location."
 
@@ -13780,7 +13904,7 @@ msgstr "Mark Active"
 msgid "Mark all as read"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:481
+#: app/components/reservations/detail-sheet.tsx:545
 msgid "Mark Arrived"
 msgstr "Mark Arrived"
 
@@ -13800,7 +13924,7 @@ msgstr "Mark as preselected"
 msgid "Mark as read"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:786
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:787
 msgid "Mark Closed"
 msgstr "Mark Closed"
 
@@ -13824,7 +13948,7 @@ msgstr "Mark done: {title}"
 msgid "Mark Inactive"
 msgstr "Mark Inactive"
 
-#: app/components/reservations/detail-sheet.tsx:526
+#: app/components/reservations/detail-sheet.tsx:590
 msgid "Mark No-Show"
 msgstr "Mark No-Show"
 
@@ -13840,14 +13964,17 @@ msgstr "Mark ready"
 msgid "Mark unread"
 msgstr "Mark unread"
 
-#. placeholder {0}: lastUndo.guestName
-#. placeholder {1}: lastUndo.status
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:208
-msgid "Marked {0} as {1}. Undo available for 60s."
-msgstr "Marked {0} as {1}. Undo available for 60s."
+#~ msgid "Marked {0} as {1}. Undo available for 60s."
+#~ msgstr "Marked {0} as {1}. Undo available for 60s."
+
+#. placeholder {0}: lastUndo.guestName
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:223
+msgid "Marked {0} as {lastUndoStatusLabel}. Undo available for 60s."
+msgstr "Marked {0} as {lastUndoStatusLabel}. Undo available for 60s."
 
 #. placeholder {0}: rsv.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:652
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:665
 msgid "Marked {0} as finished."
 msgstr "Marked {0} as finished."
 
@@ -13891,13 +14018,13 @@ msgstr "Marking…"
 msgid "Masculine"
 msgstr "Masculine"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:460
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:461
 msgid "Max advance window (days)"
 msgstr "Max advance window (days)"
 
 #: app/components/reservations/floor-plan-canvas.tsx:1218
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1139
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1210
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1208
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:847
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1140
 msgid "Max covers"
@@ -13924,11 +14051,11 @@ msgid "Max orders per slot"
 msgstr "Max orders per slot"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1153
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1213
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1211
 msgid "Max parties"
 msgstr "Max parties"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:523
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:524
 msgid "Max party size (host stand)"
 msgstr "Max party size (host stand)"
 
@@ -14218,7 +14345,7 @@ msgstr ""
 msgid "Migrate existing org media after saving"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:439
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:440
 msgid "Min advance notice (min)"
 msgstr "Min advance notice (min)"
 
@@ -14306,14 +14433,18 @@ msgstr "Missing something the job needs"
 msgid "Mobile"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1345
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1391
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:732
+#: app/utils/reservations/labels.ts:43
+msgid "Mobile app"
+msgstr "Mobile app"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1347
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1393
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:733
 msgid "Mode"
 msgstr "Mode"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:71
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:537
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:72
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:538
 msgid "Modified hours (patch service)"
 msgstr "Modified hours (patch service)"
 
@@ -14352,17 +14483,17 @@ msgstr "Modify notes created by other team members."
 msgid "Modify organization settings"
 msgstr "Modify organization settings"
 
-#: app/components/reservations/detail-sheet.tsx:762
+#: app/components/reservations/detail-sheet.tsx:885
 msgid "Modify Time, Party Size & Notes"
 msgstr "Modify Time, Party Size & Notes"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:177
-#: app/utils/reservations/setup-api.ts:358
+#: app/utils/reservations/setup-api.ts:427
 msgid "Mon"
 msgstr "Mon"
 
 #: app/components/phone-agent/business-details-section.tsx:24
-#: app/utils/reservations/setup-api.ts:359
+#: app/utils/reservations/setup-api.ts:428
 msgid "Monday"
 msgstr "Monday"
 
@@ -14493,6 +14624,24 @@ msgstr "Moved {tableLabel} to ({currentX}, {nextY})"
 msgid "Moved {tableLabel} to ({nextX}, {currentY})"
 msgstr "Moved {tableLabel} to ({nextX}, {currentY})"
 
+#: app/utils/reservations/labels.ts:165
+msgid "Moved automatically"
+msgstr "Moved automatically"
+
+#: app/utils/reservations/labels.ts:127
+msgid "Moved automatically after a turn was extended"
+msgstr "Moved automatically after a turn was extended"
+
+#: app/utils/reservations/labels.ts:125
+#: app/utils/reservations/labels.ts:126
+msgid "Moved automatically because a table was blocked"
+msgstr "Moved automatically because a table was blocked"
+
+#: app/utils/reservations/labels.ts:123
+#: app/utils/reservations/labels.ts:124
+msgid "Moved automatically to make room"
+msgstr "Moved automatically to make room"
+
 #: app/components/hiring/applicant-labels.ts:99
 #: app/components/hiring/candidate-parts.tsx:422
 msgid "Moved back into the pipeline"
@@ -14558,7 +14707,7 @@ msgstr "My schedule link"
 #: app/components/website/form-builder-sidebar.tsx:673
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:342
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:343
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:729
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:730
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:635
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:387
@@ -14645,6 +14794,7 @@ msgstr "Needs reply"
 #: app/components/staff/timeclock-today.tsx:381
 #: app/components/staff/timesheets/issue-copy.ts:51
 #: app/components/staff/timesheets/timesheets-page.tsx:537
+#: app/utils/reservations/setup-api.ts:159
 msgid "Needs review"
 msgstr "Needs review"
 
@@ -14850,7 +15000,7 @@ msgstr ""
 msgid "New Password"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:340
+#: app/components/reservations/booking-sheet.tsx:344
 msgid "New Phone / Host Reservation"
 msgstr "New Phone / Host Reservation"
 
@@ -14911,7 +15061,7 @@ msgstr "Newer"
 msgid "Next"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:259
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:274
 msgid "next 30m"
 msgstr "next 30m"
 
@@ -14937,7 +15087,7 @@ msgstr "Next shift: {upcomingDay}, <0>{upcomingRange}</0>"
 msgid "Next week"
 msgstr "Next week"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1510
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1529
 msgid "Next:"
 msgstr "Next:"
 
@@ -14972,15 +15122,15 @@ msgstr ""
 msgid "No active subscription"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:991
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:992
 msgid "No active table or area blocks."
 msgstr "No active table or area blocks."
 
-#: app/components/reservations/conflict-panel.tsx:119
+#: app/components/reservations/conflict-panel.tsx:142
 msgid "No active table or schedule conflicts."
 msgstr "No active table or schedule conflicts."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:510
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:512
 msgid "No active tables found. Create tables in the Tables & Areas tab first."
 msgstr "No active tables found. Create tables in the Tables & Areas tab first."
 
@@ -15018,7 +15168,7 @@ msgstr "No applicants yet"
 msgid "No approval needed"
 msgstr "No approval needed"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:500
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:501
 msgid "No arrivals scheduled for this selection."
 msgstr "No arrivals scheduled for this selection."
 
@@ -15120,7 +15270,7 @@ msgstr ""
 msgid "No comments yet"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:569
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:592
 msgid "No completed or cancelled reservations yet."
 msgstr "No completed or cancelled reservations yet."
 
@@ -15172,7 +15322,7 @@ msgstr "No description provided"
 msgid "No description yet."
 msgstr "No description yet."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:731
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:737
 msgid "No dietary or allergy alerts for this service."
 msgstr "No dietary or allergy alerts for this service."
 
@@ -15297,7 +15447,7 @@ msgstr "No items yet"
 msgid "No jobs yet"
 msgstr "No jobs yet"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:575
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:576
 msgid "No large parties (6+) booked."
 msgstr "No large parties (6+) booked."
 
@@ -15599,7 +15749,7 @@ msgstr "No other modifier groups available to nest."
 #~ msgid "No other modifier options found in this organization."
 #~ msgstr "No other modifier options found in this organization."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1197
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1195
 msgid "No pacing rules configured."
 msgstr "No pacing rules configured."
 
@@ -15616,11 +15766,11 @@ msgstr ""
 msgid "No parameters required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:476
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:497
 msgid "No parties currently seated."
 msgstr "No parties currently seated."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1636
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1655
 msgid "No parties match this filter."
 msgstr "No parties match this filter."
 
@@ -15636,7 +15786,7 @@ msgstr "No pay is set yet."
 msgid "No payroll ID"
 msgstr "No payroll ID"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1375
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1377
 msgid "No per-service availability overrides configured."
 msgstr "No per-service availability overrides configured."
 
@@ -15693,7 +15843,7 @@ msgstr "No pronunciations yet."
 msgid "No rate"
 msgstr "No rate"
 
-#: app/components/reservations/conflict-panel.tsx:333
+#: app/components/reservations/conflict-panel.tsx:360
 msgid "No recent turn-extension table reflows."
 msgstr "No recent turn-extension table reflows."
 
@@ -15710,7 +15860,7 @@ msgid "No reminder notifications set."
 msgstr "No reminder notifications set."
 
 #. placeholder {0}: host.businessDate
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:330
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:415
 msgid "No reservations match the current filters for {0}."
 msgstr "No reservations match the current filters for {0}."
 
@@ -15758,7 +15908,7 @@ msgstr "No sales guide"
 msgid "No sales to compare"
 msgstr "No sales to compare"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:443
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:444
 msgid "No saved notes for {activeServiceName} yet."
 msgstr "No saved notes for {activeServiceName} yet."
 
@@ -15766,11 +15916,11 @@ msgstr "No saved notes for {activeServiceName} yet."
 msgid "No screening questions"
 msgstr "No screening questions"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1075
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1088
 msgid "No section layout configured for this location yet. Configure sections under Settings → Sections."
 msgstr "No section layout configured for this location yet. Configure sections under Settings → Sections."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:717
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:719
 msgid "No section layouts configured for this location yet."
 msgstr "No section layouts configured for this location yet."
 
@@ -15798,7 +15948,7 @@ msgstr "No shifts are published for these dates. When your manager publishes the
 msgid "No shifts have been planned for this week."
 msgstr "No shifts have been planned for this week."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:719
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:720
 msgid "No special days configured."
 msgstr "No special days configured."
 
@@ -15806,7 +15956,7 @@ msgstr "No special days configured."
 msgid "No special hours or holiday closures scheduled."
 msgstr "No special hours or holiday closures scheduled."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:683
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:689
 msgid "No special occasions noted for this service."
 msgstr "No special occasions noted for this service."
 
@@ -15827,7 +15977,11 @@ msgstr "No summary for this call."
 msgid "No table combinations configured yet."
 msgstr "No table combinations configured yet."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:877
+#: app/utils/reservations/setup-api.ts:156
+msgid "No table is assigned"
+msgstr "No table is assigned"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:879
 msgid "No tables assigned"
 msgstr "No tables assigned"
 
@@ -15899,11 +16053,11 @@ msgstr "No transfer cases yet."
 msgid "No turn-time buckets configured."
 msgstr "No turn-time buckets configured."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:849
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:850
 msgid "No upcoming reservations are in conflict with the current setup."
 msgstr "No upcoming reservations are in conflict with the current setup."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:345
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:360
 msgid "No upcoming reservations for this filter."
 msgstr "No upcoming reservations for this filter."
 
@@ -15911,11 +16065,11 @@ msgstr "No upcoming reservations for this filter."
 msgid "No upcoming shifts are published."
 msgstr "No upcoming shifts are published."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:785
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:786
 msgid "No validation data available yet."
 msgstr "No validation data available yet."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:622
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:623
 msgid "No VIP or tagged guests booked."
 msgstr "No VIP or tagged guests booked."
 
@@ -15948,13 +16102,17 @@ msgstr ""
 msgid "No written comment"
 msgstr "No written comment"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:198
+#: app/utils/reservations/labels.ts:21
+msgid "No-show"
+msgstr "No-show"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:230
 msgid "No-Show"
 msgstr "No-Show"
 
-#: app/components/reservations/booking-sheet.tsx:403
-#: app/components/reservations/booking-sheet.tsx:431
-#: app/components/reservations/detail-sheet.tsx:726
+#: app/components/reservations/booking-sheet.tsx:413
+#: app/components/reservations/booking-sheet.tsx:447
+#: app/components/reservations/detail-sheet.tsx:849
 msgid "no-shows"
 msgstr "no-shows"
 
@@ -16023,7 +16181,7 @@ msgstr "none"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
-#: app/components/reservations/booking-sheet.tsx:48
+#: app/components/reservations/booking-sheet.tsx:49
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
@@ -16085,7 +16243,8 @@ msgstr "Not available when we need them"
 msgid "Not connected"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:45
+#: app/components/reservations/detail-sheet.tsx:62
+#: app/utils/reservations/labels.ts:35
 msgid "Not Contacted"
 msgstr "Not Contacted"
 
@@ -16183,8 +16342,8 @@ msgstr ""
 #: app/components/staff/timesheets/card-fields.tsx:210
 #: app/components/workspace-breadcrumb.tsx:78
 #: app/routes/_app+/$orgSlug_+/media.tsx:1222
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:963
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1010
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:964
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1011
 msgid "Note"
 msgstr "Note"
 
@@ -16228,6 +16387,10 @@ msgstr ""
 #: app/components/menu/drop-wizard/drop-form.tsx:632
 msgid "Note to Customers"
 msgstr "Note to Customers"
+
+#: app/utils/reservations/labels.ts:164
+msgid "Note updated"
+msgstr "Note updated"
 
 #: app/routes/_auth+/waitlist.tsx:411
 msgid "Note: Discord verification is currently manual. Contact support after joining to claim your points."
@@ -16405,7 +16568,8 @@ msgstr "Numbers"
 msgid "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 msgstr "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 
-#: app/components/reservations/booking-sheet.tsx:42
+#: app/components/reservations/booking-sheet.tsx:43
+#: app/utils/reservations/labels.ts:85
 msgid "Nut Allergy"
 msgstr "Nut Allergy"
 
@@ -16421,16 +16585,17 @@ msgstr "Nutritional Information"
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:690
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:708
+#: app/components/reservations/booking-sheet.tsx:706
+#: app/components/reservations/detail-sheet.tsx:782
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:714
 msgid "Occasion"
 msgstr "Occasion"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:546
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:547
 msgid "Occasion name"
 msgstr "Occasion name"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:323
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:324
 msgid "Occasions"
 msgstr "Occasions"
 
@@ -16616,24 +16781,25 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:709
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:899
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1015
+#: app/utils/reservations/labels.ts:42
 msgid "Online"
 msgstr "Online"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:83
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1356
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1358
 msgid "Online & In-house"
 msgstr "Online & In-house"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:302
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:303
 msgid "Online booking enabled"
 msgstr "Online booking enabled"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:801
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:802
 msgid "Online Closed"
 msgstr "Online Closed"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:70
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:534
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:71
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:535
 msgid "Online closed (walk-ins/phone open)"
 msgstr "Online closed (walk-ins/phone open)"
 
@@ -16649,23 +16815,24 @@ msgstr "Online hours are synced with store hours"
 msgid "Online hours match store hours"
 msgstr "Online hours match store hours"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:502
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:503
 msgid "Online max party size"
 msgstr "Online max party size"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:85
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:86
 msgid "Online maximum party size cannot exceed overall maximum party size."
 msgstr "Online maximum party size cannot exceed overall maximum party size."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:481
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:482
 msgid "Online min party size"
 msgstr "Online min party size"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:77
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:78
 msgid "Online minimum party size cannot exceed online maximum party size."
 msgstr "Online minimum party size cannot exceed online maximum party size."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1179
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1239
 msgid "Online only"
 msgstr "Online only"
 
@@ -17066,11 +17233,15 @@ msgstr ""
 msgid "operator"
 msgstr ""
 
+#: app/utils/reservations/labels.ts:170
+msgid "Operator"
+msgstr "Operator"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:49
 msgid "Operator Invited"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:779
+#: app/components/reservations/booking-sheet.tsx:806
 msgid "Operator Overrides & Deposit Policy"
 msgstr "Operator Overrides & Deposit Policy"
 
@@ -17139,11 +17310,11 @@ msgstr "Optional limits for this item on this drop."
 msgid "Optional limits for this section on this drop."
 msgstr "Optional limits for this section on this drop."
 
-#: app/components/reservations/walk-in-dialog.tsx:279
+#: app/components/reservations/walk-in-dialog.tsx:288
 msgid "Optional note"
 msgstr "Optional note"
 
-#: app/components/reservations/booking-sheet.tsx:715
+#: app/components/reservations/booking-sheet.tsx:731
 msgid "Optional server name"
 msgstr "Optional server name"
 
@@ -17345,8 +17516,8 @@ msgstr "OT {hours}"
 #: app/components/hiring/job-labels.ts:46
 #: app/components/phone-agent/vertical-labels.ts:18
 #: app/components/staff/onboarding/onboarding-labels.ts:52
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:81
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:957
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:82
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:958
 msgid "Other"
 msgstr "Other"
 
@@ -17378,6 +17549,11 @@ msgstr "Outdoor / Patio"
 msgid "Outline"
 msgstr "Outline"
 
+#: app/utils/reservations/labels.ts:119
+#: app/utils/reservations/setup-api.ts:158
+msgid "Outside service hours"
+msgstr "Outside service hours"
+
 #: app/utils/staffing/schedule-errors.ts:65
 msgid "Outside their availability"
 msgstr "Outside their availability"
@@ -17398,6 +17574,10 @@ msgstr "Over {over} h"
 msgid "Over {target}."
 msgstr "Over {target}."
 
+#: app/utils/reservations/labels.ts:117
+msgid "Over capacity"
+msgstr "Over capacity"
+
 #: app/components/staff/labor/labor-parts.tsx:53
 #: app/components/staff/schedule/forecast-strip.tsx:104
 msgid "over target"
@@ -17407,7 +17587,7 @@ msgstr "over target"
 msgid "over the whole range"
 msgstr "over the whole range"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:922
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:935
 msgid "Overbook reason (optional)"
 msgstr "Overbook reason (optional)"
 
@@ -17415,13 +17595,13 @@ msgstr "Overbook reason (optional)"
 msgid "Overbook reason..."
 msgstr "Overbook reason..."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:935
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:948
 msgid "Overbook table"
 msgstr "Overbook table"
 
 #. placeholder {0}: draggedReservation.guestName
 #. placeholder {1}: targetTable.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:578
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:590
 msgid "Overbooked {0} onto {1}."
 msgstr "Overbooked {0} onto {1}."
 
@@ -17429,11 +17609,15 @@ msgstr "Overbooked {0} onto {1}."
 msgid "Overlaps another shift for this person"
 msgstr "Overlaps another shift for this person"
 
-#: app/components/reservations/booking-sheet.tsx:801
+#: app/components/reservations/conflict-panel.tsx:71
+msgid "Overlaps with another booking on {tableNames}"
+msgstr "Overlaps with another booking on {tableNames}"
+
+#: app/components/reservations/booking-sheet.tsx:828
 msgid "Override blocked table"
 msgstr "Override blocked table"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:475
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:476
 msgid "Override recurring services for holidays, Ramadan, private buyouts, or seasonal schedules (`closed`, `online_closed`, `modified`, or `replace`)."
 msgstr "Override recurring services for holidays, Ramadan, private buyouts, or seasonal schedules (`closed`, `online_closed`, `modified`, or `replace`)."
 
@@ -17441,22 +17625,23 @@ msgstr "Override recurring services for holidays, Ramadan, private buyouts, or s
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "Override regular operating hours on holidays, events, or closures."
 
-#: app/components/reservations/booking-sheet.tsx:812
+#: app/components/reservations/booking-sheet.tsx:839
 msgid "Override schedule block"
 msgstr "Override schedule block"
 
-#: app/components/reservations/booking-sheet.tsx:790
+#: app/components/reservations/booking-sheet.tsx:817
 msgid "Override slot pacing cap"
 msgstr "Override slot pacing cap"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1273
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1275
 msgid "Override whether specific dining areas, tables, or combinations are available online, staff-only, walk-in only, or unavailable during a given service."
 msgstr "Override whether specific dining areas, tables, or combinations are available online, staff-only, walk-in only, or unavailable during a given service."
 
 #: app/components/staff/timesheets/payroll-summary.tsx:170
 #: app/components/staff/timesheets/timesheet-table.tsx:224
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:350
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1041
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:361
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1054
+#: app/utils/reservations/labels.ts:109
 msgid "Overtime"
 msgstr "Overtime"
 
@@ -17517,6 +17702,10 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:590
 msgid "Owner"
 msgstr "Owner"
+
+#: app/utils/reservations/setup-api.ts:157
+msgid "Pacing limit exceeded"
+msgstr "Pacing limit exceeded"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:423
 msgid "Pacing rule created."
@@ -17681,19 +17870,27 @@ msgstr "Part of a day is for one date only."
 msgid "Part time"
 msgstr "Part time"
 
+#: app/utils/reservations/labels.ts:16
+msgid "Partially seated"
+msgstr "Partially seated"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:276
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:473
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:539
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:244
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:540
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:259
 msgid "parties"
 msgstr "parties"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:310
+msgid "Parties"
+msgstr "Parties"
+
 #. placeholder {0}: sideReservations.length
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1603
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1622
 msgid "Parties ({0})"
 msgstr "Parties ({0})"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:306
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:391
 msgid "Party"
 msgstr "Party"
 
@@ -17705,9 +17902,13 @@ msgstr "Party max"
 msgid "Party min"
 msgstr "Party min"
 
-#: app/components/reservations/booking-sheet.tsx:468
-#: app/components/reservations/detail-sheet.tsx:767
-#: app/components/reservations/walk-in-dialog.tsx:148
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:873
+msgid "Party of {partySize}"
+msgstr "Party of {partySize}"
+
+#: app/components/reservations/booking-sheet.tsx:484
+#: app/components/reservations/detail-sheet.tsx:890
+#: app/components/reservations/walk-in-dialog.tsx:152
 msgid "Party Size"
 msgstr "Party Size"
 
@@ -17742,7 +17943,7 @@ msgstr ""
 msgid "Password login is disabled because your organization \"{orgName}\" requires SSO."
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:896
+#: app/components/reservations/detail-sheet.tsx:1019
 msgid "Past Visit History"
 msgstr "Past Visit History"
 
@@ -17765,6 +17966,10 @@ msgstr "Pasted."
 #: app/components/staff/schedule/schedule-page.tsx:273
 msgid "Pasted. Warning: {why}"
 msgstr "Pasted. Warning: {why}"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:82
+msgid "Patio"
+msgstr "Patio"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:198
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:437
@@ -17873,11 +18078,11 @@ msgstr "Payroll summary"
 msgid "Payroll summary (CSV)"
 msgstr "Payroll summary (CSV)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:546
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:547
 msgid "Peak"
 msgstr "Peak"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:485
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:486
 msgid "Peak:"
 msgstr "Peak:"
 
@@ -17886,10 +18091,18 @@ msgstr "Peak:"
 msgid "Pending"
 msgstr ""
 
+#: app/utils/reservations/labels.ts:12
+msgid "Pending approval"
+msgstr "Pending approval"
+
 #: app/components/organization-invitations.tsx:336
 #: app/routes/_app+/organizations.tsx:233
 msgid "Pending Invitations"
 msgstr ""
+
+#: app/utils/reservations/labels.ts:11
+msgid "Pending payment"
+msgstr "Pending payment"
 
 #: app/components/chat/chat-compose-dialog.tsx:135
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:373
@@ -17962,7 +18175,7 @@ msgstr "Per year"
 msgid "Per-service availability override saved."
 msgstr "Per-service availability override saved."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1270
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1272
 msgid "Per-Service Table & Area Availability"
 msgstr "Per-Service Table & Area Availability"
 
@@ -18039,10 +18252,11 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:617
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:173
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:238
+#: app/utils/reservations/labels.ts:45
 msgid "Phone"
 msgstr ""
 
-#: app/components/reservations/walk-in-dialog.tsx:245
+#: app/components/reservations/walk-in-dialog.tsx:254
 msgid "Phone (Optional)"
 msgstr "Phone (Optional)"
 
@@ -18082,7 +18296,7 @@ msgstr "Phone number"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 #: app/components/locations/location-form.tsx:371
-#: app/components/reservations/booking-sheet.tsx:659
+#: app/components/reservations/booking-sheet.tsx:675
 msgid "Phone Number"
 msgstr ""
 
@@ -18091,8 +18305,8 @@ msgid "Phone numbers"
 msgstr "Phone numbers"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1180
-msgid "Phone only"
-msgstr "Phone only"
+#~ msgid "Phone only"
+#~ msgstr "Phone only"
 
 #: app/components/phone-agent/restaurant/phone-ordering-section.tsx:51
 msgid "Phone ordering"
@@ -18226,7 +18440,7 @@ msgstr "Pick a time within the next year."
 msgid "Pick name, then PIN"
 msgstr "Pick name, then PIN"
 
-#: app/components/reservations/conflict-panel.tsx:178
+#: app/components/reservations/conflict-panel.tsx:205
 msgid "Pick table..."
 msgstr "Pick table..."
 
@@ -18344,7 +18558,7 @@ msgstr "Pizza Topping"
 msgid "Pizza Toppings (Whole / Halves)"
 msgstr "Pizza Toppings (Whole / Halves)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:836
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:837
 msgid "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 msgstr "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 
@@ -18369,6 +18583,7 @@ msgid "Plan shifts, publish the week to your team, and handle time off and avail
 msgstr "Plan shifts, publish the week to your team, and handle time off and availability."
 
 #: app/components/reservations/floor-plan-canvas.tsx:103
+#: app/utils/reservations/labels.ts:181
 msgid "Plant"
 msgstr "Plant"
 
@@ -18379,6 +18594,10 @@ msgstr ""
 #: app/components/roles/tenant-role-access-manager.tsx:1426
 msgid "Platform-provided role."
 msgstr "Platform-provided role."
+
+#: app/utils/reservations/labels.ts:94
+msgid "Platinum"
+msgstr "Platinum"
 
 #: app/components/menu/menu-form.tsx:282
 msgid "Platters, party bundles, and advanced lead-time catering menus."
@@ -18516,7 +18735,7 @@ msgstr ""
 msgid "Please check your verification link."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:213
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:215
 msgid "Please enter a name for the section layout."
 msgstr "Please enter a name for the section layout."
 
@@ -18576,7 +18795,7 @@ msgstr "Policies"
 msgid "Policy"
 msgstr "Policy"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:999
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1012
 msgid "Polling paused"
 msgstr "Polling paused"
 
@@ -18692,7 +18911,7 @@ msgstr "Postal code"
 msgid "Posted {selectedReplyDate}"
 msgstr "Posted {selectedReplyDate}"
 
-#: app/components/reservations/booking-sheet.tsx:443
+#: app/components/reservations/booking-sheet.tsx:459
 msgid "Preference:"
 msgstr "Preference:"
 
@@ -18888,8 +19107,8 @@ msgstr ""
 msgid "Private"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:76
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:952
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:77
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:953
 msgid "Private event"
 msgstr "Private event"
 
@@ -18961,15 +19180,15 @@ msgstr "Public"
 msgid "Public Access"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:573
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:574
 msgid "Public guest note (AR)"
 msgstr "Public guest note (AR)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:561
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:562
 msgid "Public guest note (EN)"
 msgstr "Public guest note (EN)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:735
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:736
 msgid "Public note"
 msgstr "Public note"
 
@@ -19199,15 +19418,15 @@ msgstr "Rating question"
 msgid "Rating thanks"
 msgstr "Rating thanks"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:403
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:411
 msgid "Re-derive future reservation times"
 msgstr "Re-derive future reservation times"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:379
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:387
 msgid "Re-derive future reservation times so upcoming bookings keep their intended local wall-clock seating time."
 msgstr "Re-derive future reservation times so upcoming bookings keep their intended local wall-clock seating time."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:401
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:409
 msgid "Re-deriving…"
 msgstr "Re-deriving…"
 
@@ -19257,21 +19476,21 @@ msgstr "Read the policy"
 #: app/components/roles/tenant-role-access-manager.tsx:606
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:891
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1067
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1253
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1452
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:816
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1062
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1255
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1454
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:817
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1063
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:764
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1076
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1251
 msgid "Read-only"
 msgstr "Read-only"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:353
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:361
 msgid "Read-only (impersonation)"
 msgstr "Read-only (impersonation)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:355
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:363
 msgid "Read-only access"
 msgstr "Read-only access"
 
@@ -19294,8 +19513,8 @@ msgstr "Ready"
 
 #: app/components/staff/positions-tab.tsx:840
 #: app/components/staff/timesheets/reason-field.tsx:36
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:943
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1007
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:944
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1008
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:96
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:116
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:179
@@ -19311,11 +19530,11 @@ msgid "Reason: {reason}"
 msgstr "Reason: {reason}"
 
 #. placeholder {0}: conflict.suggestedTableLabels.join(', ')
-#: app/components/reservations/conflict-panel.tsx:159
+#: app/components/reservations/conflict-panel.tsx:186
 msgid "Reassign to {0}"
 msgstr "Reassign to {0}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:450
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:451
 msgid "Reassigned upcoming reservations after schedule/block changes"
 msgstr "Reassigned upcoming reservations after schedule/block changes"
 
@@ -19461,7 +19680,7 @@ msgstr "Redirects & 404 History"
 msgid "Referrer"
 msgstr "Referrer"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:915
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:928
 msgid "Reflow later parties"
 msgstr "Reflow later parties"
 
@@ -19521,6 +19740,7 @@ msgstr ""
 
 #: app/components/staff/timesheets/payroll-summary.tsx:169
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3851
+#: app/utils/reservations/labels.ts:76
 msgid "Regular"
 msgstr ""
 
@@ -19554,7 +19774,7 @@ msgstr "Relaxed"
 #: app/components/phone-agent/settings-page.tsx:369
 #: app/components/staff/labor-policy-editor.tsx:1076
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:527
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:418
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:419
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:472
 msgid "Reload"
 msgstr "Reload"
@@ -19563,7 +19783,7 @@ msgstr "Reload"
 msgid "Reload latest floor plan"
 msgstr "Reload latest floor plan"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:210
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:211
 msgid "Reload latest settings"
 msgstr "Reload latest settings"
 
@@ -19634,7 +19854,7 @@ msgstr "Removal not published"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
 #: app/components/website/branding-panel.tsx:314
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1058
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1059
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:2636
 msgid "Remove"
 msgstr ""
@@ -19941,8 +20161,8 @@ msgstr "Replace image"
 msgid "Replace their weekly pattern"
 msgstr "Replace their weekly pattern"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:72
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:540
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:73
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:541
 msgid "Replace with custom service"
 msgstr "Replace with custom service"
 
@@ -19950,7 +20170,7 @@ msgstr "Replace with custom service"
 msgid "Replaced by a newer message"
 msgstr "Replaced by a newer message"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:649
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:650
 msgid "Replacement service name"
 msgstr "Replacement service name"
 
@@ -20114,7 +20334,7 @@ msgstr "Reservation book, waitlist, guestbook, dining room setup, experiences, r
 msgid "Reservation books, guest profiles, floor plans, and waitlist history are not moved to the new region."
 msgstr "Reservation books, guest profiles, floor plans, and waitlist history are not moved to the new region."
 
-#: app/components/reservations/detail-sheet.tsx:385
+#: app/components/reservations/detail-sheet.tsx:449
 msgid "Reservation Details"
 msgstr "Reservation Details"
 
@@ -20150,7 +20370,7 @@ msgstr "Reservations navigation"
 msgid "Reservations role presets"
 msgstr "Reservations role presets"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:294
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:302
 msgid "Reservations setup sections"
 msgstr "Reservations setup sections"
 
@@ -20159,14 +20379,18 @@ msgid "Reservations: {reservationsCount}"
 msgstr "Reservations: {reservationsCount}"
 
 #. placeholder {0}: upcomingRes.hhmm
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:386
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:397
 msgid "Reserved {0}"
 msgstr "Reserved {0}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:382
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1021
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:393
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1034
 msgid "Reserved ≤30m"
 msgstr "Reserved ≤30m"
+
+#: app/utils/reservations/labels.ts:101
+msgid "Reserved soon"
+msgstr "Reserved soon"
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:50
 #: app/components/menu/modifier-guest-preview.tsx:229
@@ -20255,7 +20479,7 @@ msgstr "Resetting…"
 msgid "Resized {itemName} to {nextWidth} by {nextHeight}"
 msgstr "Resized {itemName} to {nextWidth} by {nextHeight}"
 
-#: app/components/reservations/conflict-panel.tsx:90
+#: app/components/reservations/conflict-panel.tsx:113
 msgid "Resolve table overlaps, blocked-table assignments, unassigned parties, and review automatic turn-extension reflows."
 msgstr "Resolve table overlaps, blocked-table assignments, unassigned parties, and review automatic turn-extension reflows."
 
@@ -20341,8 +20565,8 @@ msgstr "Resy"
 #~ msgstr "Retention period"
 
 #: ../../packages/ai/src/components/ai-elements/prompt-input.tsx:171
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:177
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:151
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:178
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:170
 msgid "Retry"
 msgstr ""
 
@@ -20582,7 +20806,11 @@ msgstr ""
 msgid "Running"
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:581
+#: app/utils/reservations/labels.ts:161
+msgid "Running late"
+msgstr "Running late"
+
+#: app/components/reservations/detail-sheet.tsx:645
 msgid "Running Late Hold"
 msgstr "Running Late Hold"
 
@@ -20733,7 +20961,7 @@ msgid "Sans"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:182
-#: app/utils/reservations/setup-api.ts:388
+#: app/utils/reservations/setup-api.ts:457
 msgid "Sat"
 msgstr "Sat"
 
@@ -20743,7 +20971,7 @@ msgid "Saturation"
 msgstr "Saturation"
 
 #: app/components/phone-agent/business-details-section.tsx:29
-#: app/utils/reservations/setup-api.ts:389
+#: app/utils/reservations/setup-api.ts:458
 msgid "Saturday"
 msgstr "Saturday"
 
@@ -20834,8 +21062,8 @@ msgstr ""
 #: app/components/locations/location-form.tsx:1002
 #: app/components/menu/drop-wizard/drop-drawers.tsx:939
 #: app/components/menu/modifier-form.tsx:2181
-#: app/components/reservations/detail-sheet.tsx:883
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:802
+#: app/components/reservations/detail-sheet.tsx:1006
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:804
 msgid "Save Changes"
 msgstr "Save Changes"
 
@@ -20894,7 +21122,7 @@ msgstr "Save pronunciations and key terms"
 msgid "Save rate"
 msgstr "Save rate"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1067
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1080
 msgid "Save section servers"
 msgstr "Save section servers"
 
@@ -20902,12 +21130,12 @@ msgstr "Save section servers"
 #~ msgid "Save section settings"
 #~ msgstr "Save section settings"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:462
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:463
 msgid "Save Service Notes"
 msgstr "Save Service Notes"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:831
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:759
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:760
 msgid "Save settings"
 msgstr "Save settings"
 
@@ -20956,7 +21184,7 @@ msgid "Saved"
 msgstr "Saved"
 
 #. placeholder {0}: activeServiceNote.version
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:439
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:440
 msgid "Saved for {activeServiceName} (v{0})"
 msgstr "Saved for {activeServiceName} (v{0})"
 
@@ -20968,11 +21196,11 @@ msgstr "Saved on this tablet. It will be recorded when the connection is back."
 msgid "Saved reports"
 msgstr "Saved reports"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:696
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:698
 msgid "Saved Section Layouts"
 msgstr "Saved Section Layouts"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:728
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:741
 msgid "Saved section server assignments for this service."
 msgstr "Saved section server assignments for this service."
 
@@ -21037,9 +21265,9 @@ msgstr ""
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:460
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:757
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:681
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:461
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:758
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:683
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:457
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
@@ -21161,7 +21389,7 @@ msgstr "Schedule for {name}, {range}"
 msgid "Schedule limited-time menu drops with inventory limits and pickup slots."
 msgstr "Schedule limited-time menu drops with inventory limits and pickup slots."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:521
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:522
 msgid "Schedule mode"
 msgstr "Schedule mode"
 
@@ -21206,7 +21434,7 @@ msgstr "Scheduled vs actual hours and clock-ins"
 #~ msgid "Scheduling..."
 #~ msgstr "Scheduling..."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:864
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:865
 msgid "Scope"
 msgstr "Scope"
 
@@ -21250,7 +21478,7 @@ msgstr "Search by name"
 msgid "Search by name or email..."
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:367
+#: app/components/reservations/booking-sheet.tsx:371
 msgid "Search by phone (+1...) or guest name..."
 msgstr "Search by phone (+1...) or guest name..."
 
@@ -21262,7 +21490,7 @@ msgstr ""
 msgid "Search for users in your organization"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:267
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:299
 msgid "Search guest, phone, code, table..."
 msgstr "Search guest, phone, code, table..."
 
@@ -21350,7 +21578,7 @@ msgstr "Search redirects..."
 msgid "Search results"
 msgstr "Search results"
 
-#: app/components/reservations/booking-sheet.tsx:343
+#: app/components/reservations/booking-sheet.tsx:347
 msgid "Search returning guests, check live slot availability, and book with optional operator overrides."
 msgstr "Search returning guests, check live slot availability, and book with optional operator overrides."
 
@@ -21392,7 +21620,7 @@ msgstr ""
 msgid "Search…"
 msgstr "Search…"
 
-#: app/components/reservations/booking-sheet.tsx:372
+#: app/components/reservations/booking-sheet.tsx:376
 msgid "Searching..."
 msgstr "Searching..."
 
@@ -21400,54 +21628,57 @@ msgstr "Searching..."
 msgid "Seasonal"
 msgstr "Seasonal"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:496
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1530
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:434
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:592
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1549
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:455
 msgid "Seat"
 msgstr "Seat"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1450
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1469
 msgid "Seat arrived party now"
 msgstr "Seat arrived party now"
 
 #. placeholder {0}: selectedTableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1692
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1711
 msgid "Seat at {0}"
 msgstr "Seat at {0}"
 
-#: app/components/reservations/detail-sheet.tsx:497
+#: app/components/reservations/detail-sheet.tsx:561
 msgid "Seat Party"
 msgstr "Seat Party"
 
 #. placeholder {0}: selectedTableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1565
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1584
 msgid "Seat walk-in at {0}"
 msgstr "Seat walk-in at {0}"
 
-#: app/components/reservations/walk-in-dialog.tsx:317
+#: app/components/reservations/walk-in-dialog.tsx:326
 msgid "Seat Walk-In Now"
 msgstr "Seat Walk-In Now"
 
-#: app/components/reservations/walk-in-dialog.tsx:128
+#: app/components/reservations/walk-in-dialog.tsx:132
 msgid "Seat Walk-In Party"
 msgstr "Seat Walk-In Party"
 
-#: app/components/reservations/detail-sheet.tsx:36
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:194
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:371
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1029
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1616
+#: app/components/reservations/detail-sheet.tsx:53
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:226
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:382
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1042
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1635
+#: app/utils/reservations/labels.ts:17
+#: app/utils/reservations/labels.ts:26
+#: app/utils/reservations/labels.ts:103
 msgid "Seated"
 msgstr "Seated"
 
 #. placeholder {0}: rsv.guestName
 #. placeholder {1}: targetState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:496
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:508
 msgid "Seated {0} at {1}."
 msgstr "Seated {0} at {1}."
 
 #. placeholder {0}: rsv.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:607
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:620
 msgid "Seated {0}."
 msgstr "Seated {0}."
 
@@ -21455,7 +21686,7 @@ msgstr "Seated {0}."
 #~ msgid "Seated parties, upcoming arrivals, and floor status for the selected location and service appear here."
 #~ msgstr "Seated parties, upcoming arrivals, and floor status for the selected location and service appear here."
 
-#: app/components/reservations/detail-sheet.tsx:753
+#: app/components/reservations/detail-sheet.tsx:876
 msgid "Seating Preference:"
 msgstr "Seating Preference:"
 
@@ -21464,7 +21695,7 @@ msgstr "Seating Preference:"
 msgid "Seating times must satisfy firstSeating <= lastSeating <= serviceEnd."
 msgstr "Seating times must satisfy firstSeating <= lastSeating <= serviceEnd."
 
-#: app/components/reservations/walk-in-dialog.tsx:315
+#: app/components/reservations/walk-in-dialog.tsx:324
 msgid "Seating..."
 msgstr "Seating..."
 
@@ -21493,9 +21724,17 @@ msgstr ""
 msgid "Secret Access Key"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:816
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:818
 msgid "section"
 msgstr "section"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:80
+msgid "Section A"
+msgstr "Section A"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:81
+msgid "Section B"
+msgstr "Section B"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:908
 msgid "Section cap"
@@ -21506,29 +21745,29 @@ msgid "Section height"
 msgstr ""
 
 #. placeholder {0}: created.name
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:244
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:246
 msgid "Section layout \"{0}\" created."
 msgstr "Section layout \"{0}\" created."
 
 #. placeholder {0}: layout.name
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:350
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:352
 msgid "Section layout \"{0}\" deleted."
 msgstr "Section layout \"{0}\" deleted."
 
 #. placeholder {0}: updated.name
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:329
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:331
 msgid "Section layout \"{0}\" updated."
 msgstr "Section layout \"{0}\" updated."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:430
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:432
 msgid "Section name (e.g. Section A)"
 msgstr "Section name (e.g. Section A)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:978
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:991
 msgid "Section overlay"
 msgstr "Section overlay"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1055
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1068
 msgid "Section Overlay & Server Assignments"
 msgstr "Section Overlay & Server Assignments"
 
@@ -21544,18 +21783,18 @@ msgstr "Section Overlay & Server Assignments"
 #~ msgid "Section Type"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:817
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:819
 msgid "sections"
 msgstr "sections"
 
 #: app/components/staff/staff-profile-page.tsx:126
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:266
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5124
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5625
 msgid "Sections"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:379
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:381
 msgid "Sections & Table Sets"
 msgstr "Sections & Table Sets"
 
@@ -21714,11 +21953,11 @@ msgstr "Select a review to read it and post a reply."
 msgid "Select a service and target entity."
 msgstr "Select a service and target entity."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:225
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:226
 msgid "Select a service and valid hours for modified schedule."
 msgstr "Select a service and valid hours for modified schedule."
 
-#: app/components/reservations/booking-sheet.tsx:634
+#: app/components/reservations/booking-sheet.tsx:650
 msgid "Select a slot above or enter any time in the Time field."
 msgstr "Select a slot above or enter any time in the Time field."
 
@@ -21738,7 +21977,7 @@ msgstr "Select a submission to read the details and start a reply."
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:360
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:361
 msgid "Select a table or dining area to block."
 msgstr "Select a table or dining area to block."
 
@@ -21856,7 +22095,7 @@ msgstr ""
 msgid "Select sub-modifier group..."
 msgstr "Select sub-modifier group..."
 
-#: app/components/reservations/conflict-panel.tsx:274
+#: app/components/reservations/conflict-panel.tsx:301
 msgid "Select table..."
 msgstr "Select table..."
 
@@ -21996,7 +22235,7 @@ msgstr ""
 msgid "Send SMS"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:833
+#: app/components/reservations/booking-sheet.tsx:860
 msgid "Send SMS payment link"
 msgstr "Send SMS payment link"
 
@@ -22069,35 +22308,35 @@ msgstr "Separate several terms with commas. Up to 100."
 msgid "Serif"
 msgstr ""
 
-#: app/components/reservations/walk-in-dialog.tsx:260
+#: app/components/reservations/walk-in-dialog.tsx:269
 msgid "Server (Optional)"
 msgstr "Server (Optional)"
 
-#: app/components/reservations/booking-sheet.tsx:709
-#: app/components/reservations/detail-sheet.tsx:827
+#: app/components/reservations/booking-sheet.tsx:725
+#: app/components/reservations/detail-sheet.tsx:950
 msgid "Server / Section Label"
 msgstr "Server / Section Label"
 
-#: app/components/reservations/walk-in-dialog.tsx:266
+#: app/components/reservations/walk-in-dialog.tsx:275
 msgid "Server name"
 msgstr "Server name"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1121
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:514
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1134
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:537
 msgid "Server:"
 msgstr "Server:"
 
 #: app/components/note/integration-controls.tsx:296
-#: app/components/reservations/booking-sheet.tsx:521
+#: app/components/reservations/booking-sheet.tsx:537
 #: app/components/reservations/host-subnav.tsx:249
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:289
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:293
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:728
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1022
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1102
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1204
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1289
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1382
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1202
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1291
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1384
 msgid "Service"
 msgstr ""
 
@@ -22106,8 +22345,8 @@ msgid "Service deleted."
 msgstr "Service deleted."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:625
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:632
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:684
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:633
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:685
 msgid "Service end"
 msgstr "Service end"
 
@@ -22123,11 +22362,11 @@ msgstr "Service name (EN)"
 msgid "Service name is required."
 msgstr "Service name is required."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:359
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:360
 msgid "Service Notes & Shift Briefing"
 msgstr "Service Notes & Shift Briefing"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:166
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:167
 msgid "Service notes saved."
 msgstr "Service notes saved."
 
@@ -22147,7 +22386,7 @@ msgstr "Service shift created."
 msgid "Service Shifts"
 msgstr "Service Shifts"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:590
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:591
 msgid "Service to modify"
 msgstr "Service to modify"
 
@@ -22155,7 +22394,7 @@ msgstr "Service to modify"
 msgid "Service updated."
 msgstr "Service updated."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:254
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:262
 msgid "Services & Turn Times"
 msgstr "Services & Turn Times"
 
@@ -22289,7 +22528,7 @@ msgstr "Settle or refund all pending reservation payments before switching regio
 msgid "Setup"
 msgstr "Setup"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:773
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:774
 msgid "Setup Diagnostics & Completeness"
 msgstr "Setup Diagnostics & Completeness"
 
@@ -22299,7 +22538,7 @@ msgstr "Setup Diagnostics & Completeness"
 msgid "Setup incomplete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:344
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:352
 msgid "Setup issues"
 msgstr "Setup issues"
 
@@ -22398,7 +22637,8 @@ msgstr "Shared link"
 msgid "Shared with me"
 msgstr "Shared with me"
 
-#: app/components/reservations/booking-sheet.tsx:44
+#: app/components/reservations/booking-sheet.tsx:45
+#: app/utils/reservations/labels.ts:87
 msgid "Shellfish Allergy"
 msgstr "Shellfish Allergy"
 
@@ -22492,7 +22732,7 @@ msgstr "Short by {short} person-hours and {over} over, against the orders you us
 msgid "Short notice."
 msgstr "Short notice."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1178
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1186
 msgid "Shorten turn by 15m"
 msgstr "Shorten turn by 15m"
 
@@ -22680,6 +22920,10 @@ msgstr ""
 msgid "Signing out..."
 msgstr ""
 
+#: app/utils/reservations/labels.ts:92
+msgid "Silver"
+msgstr "Silver"
+
 #: app/components/staff/timeclock-today.tsx:340
 msgid "Since {since} · {elapsed}"
 msgstr "Since {since} · {elapsed}"
@@ -22748,7 +22992,7 @@ msgstr "Slot conflict: {0}"
 msgid "Slot interval"
 msgstr "Slot interval"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:393
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:394
 msgid "Slot interval (minutes)"
 msgstr "Slot interval (minutes)"
 
@@ -22786,7 +23030,8 @@ msgstr ""
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
-#: app/components/reservations/detail-sheet.tsx:46
+#: app/components/reservations/detail-sheet.tsx:63
+#: app/utils/reservations/labels.ts:36
 msgid "SMS Sent"
 msgstr "SMS Sent"
 
@@ -22881,6 +23126,11 @@ msgstr "Something went wrong. Reload the page and try again."
 msgid "Something went wrong. Try again."
 msgstr "Something went wrong. Try again."
 
+#: app/components/reservations/detail-sheet.tsx:776
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:337
+msgid "Source"
+msgstr "Source"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3835
 msgid "Spacing"
 msgstr ""
@@ -22903,23 +23153,23 @@ msgstr "Speaker"
 msgid "special / closed"
 msgstr "special / closed"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:332
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:333
 msgid "Special day deleted."
 msgstr "Special day deleted."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:279
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:280
 msgid "Special day schedule saved."
 msgstr "Special day schedule saved."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:304
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:305
 msgid "Special day updated."
 msgstr "Special day updated."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:260
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:268
 msgid "Special Days & Blocks"
 msgstr "Special Days & Blocks"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:472
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:473
 msgid "Special Days & Holiday Schedules"
 msgstr "Special Days & Holiday Schedules"
 
@@ -22931,7 +23181,7 @@ msgstr "Special Hours & Holiday Overrides"
 msgid "Special occasions"
 msgstr "Special occasions"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:673
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:679
 msgid "Special Occasions"
 msgstr "Special Occasions"
 
@@ -23012,7 +23262,7 @@ msgstr "Staff members: {staffCount}"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:84
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:836
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1357
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1359
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1019
 msgid "Staff only"
 msgstr "Staff only"
@@ -23054,8 +23304,8 @@ msgstr "Staff transfers"
 msgid "Staff, pay & labor"
 msgstr "Staff, pay & labor"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:80
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:956
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:81
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:957
 msgid "Staffing"
 msgstr "Staffing"
 
@@ -23068,9 +23318,13 @@ msgstr "Stage"
 msgid "Stage changed"
 msgstr "Stage changed"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:100
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:122
 msgid "Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying."
 msgstr "Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying."
+
+#: app/utils/reservations/labels.ts:91
+msgid "Standard"
+msgstr "Standard"
 
 #: app/components/menu/modifier-form.tsx:1129
 #~ msgid "Standard modifier group assigned directly to menu items (e.g. \"Choose your side\", \"Burger Toppings\")."
@@ -23084,7 +23338,7 @@ msgstr "Standard organization member with note access"
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "Standard platform roles. Click any role to review its active permissions."
 
-#: app/components/reservations/booking-sheet.tsx:832
+#: app/components/reservations/booking-sheet.tsx:859
 msgid "Standard policy"
 msgstr "Standard policy"
 
@@ -23145,11 +23399,11 @@ msgstr "Start break"
 msgid "Start conversation"
 msgstr "Start conversation"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:492
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:493
 msgid "Start date"
 msgstr "Start date"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:210
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:211
 msgid "Start date cannot be after end date."
 msgstr "Start date cannot be after end date."
 
@@ -23205,7 +23459,7 @@ msgstr ""
 msgid "Start the new-hire checklist"
 msgstr "Start the new-hire checklist"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:917
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:918
 msgid "Start time"
 msgstr "Start time"
 
@@ -23291,7 +23545,7 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:312
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:356
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:373
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:315
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:400
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:623
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
@@ -23299,21 +23553,28 @@ msgstr "Stats"
 msgid "Status"
 msgstr ""
 
-#. placeholder {0}: reservation.status
-#: app/components/reservations/detail-sheet.tsx:440
-msgid "Status changed to {0}. You can undo within 60 seconds."
-msgstr "Status changed to {0}. You can undo within 60 seconds."
+#: app/utils/reservations/labels.ts:160
+msgid "Status change undone"
+msgstr "Status change undone"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1013
+#: app/components/reservations/detail-sheet.tsx:440
+#~ msgid "Status changed to {0}. You can undo within 60 seconds."
+#~ msgstr "Status changed to {0}. You can undo within 60 seconds."
+
+#: app/components/reservations/detail-sheet.tsx:504
+msgid "Status changed to {statusLabel}. You can undo within 60 seconds."
+msgstr "Status changed to {statusLabel}. You can undo within 60 seconds."
+
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1026
 msgid "Status legend:"
 msgstr "Status legend:"
 
-#: app/components/reservations/detail-sheet.tsx:205
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:162
+#: app/components/reservations/detail-sheet.tsx:255
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:192
 msgid "Status transition failed."
 msgstr "Status transition failed."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:120
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:135
 msgid "Status update failed."
 msgstr "Status update failed."
 
@@ -23550,12 +23811,12 @@ msgid "Summer promo"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:176
-#: app/utils/reservations/setup-api.ts:352
+#: app/utils/reservations/setup-api.ts:421
 msgid "Sun"
 msgstr "Sun"
 
 #: app/components/phone-agent/business-details-section.tsx:30
-#: app/utils/reservations/setup-api.ts:353
+#: app/utils/reservations/setup-api.ts:422
 msgid "Sunday"
 msgstr "Sunday"
 
@@ -23587,7 +23848,7 @@ msgstr "Swap {when} with {who}"
 msgid "Swap it for one of theirs"
 msgstr "Swap it for one of theirs"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:903
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:916
 msgid "Swap tables"
 msgstr "Swap tables"
 
@@ -23602,7 +23863,7 @@ msgstr "Swap, cover and drop requests"
 #. placeholder {0}: draggedReservation.guestName
 #. placeholder {1}: occupantReservation.guestName
 #. placeholder {2}: targetTable.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:543
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:555
 msgid "Swapped {0} with {1} on {2}."
 msgstr "Swapped {0} with {1} on {2}."
 
@@ -23630,26 +23891,27 @@ msgstr "Sync hosted product"
 msgid "Synced {lastSync}"
 msgstr "Synced {lastSync}"
 
-#: app/components/settings/cards/organization/site-theme-card.tsx:345
-#~ msgid "System"
-#~ msgstr ""
+#: app/utils/reservations/labels.ts:171
+msgid "System"
+msgstr ""
 
 #: app/components/nav-user.tsx:91
 msgid "System theme"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1321
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:875
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1020
+#: app/components/reservations/detail-sheet.tsx:794
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1323
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:876
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1021
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:900
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:496
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:517
 msgid "Table"
 msgstr "Table"
 
 #. placeholder {0}: occupiedDropPrompt.targetTable.label
 #. placeholder {1}: occupiedDropPrompt.occupantReservation.guestName
 #. placeholder {2}: occupiedDropPrompt.occupantReservation.partySize
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:866
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:879
 msgid "Table {0} is occupied by {1} ({2}p)"
 msgstr "Table {0} is occupied by {1} ({2}p)"
 
@@ -23669,15 +23931,19 @@ msgstr "Table {nextTableLabel} ({nextTableMin}-{nextTableMax}) for {movedGuestNa
 msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
 msgstr "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
 
+#: app/components/reservations/conflict-panel.tsx:68
+msgid "Table {tableNames} is blocked during this booking"
+msgstr "Table {tableNames} is blocked during this booking"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:346
 msgid "Table {updatedTableLabel} updated."
 msgstr "Table {updatedTableLabel} updated."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:309
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:394
 msgid "Table & Area"
 msgstr "Table & Area"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:833
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:834
 msgid "Table & Area Blocks"
 msgstr "Table & Area Blocks"
 
@@ -23685,12 +23951,24 @@ msgstr "Table & Area Blocks"
 msgid "Table archived."
 msgstr "Table archived."
 
-#: app/components/reservations/booking-sheet.tsx:561
-#: app/components/reservations/detail-sheet.tsx:647
+#: app/utils/reservations/labels.ts:157
+msgid "Table assigned"
+msgstr "Table assigned"
+
+#: app/components/reservations/booking-sheet.tsx:577
+#: app/components/reservations/detail-sheet.tsx:711
 msgid "Table Assignment"
 msgstr "Table Assignment"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1322
+#: app/utils/reservations/labels.ts:115
+msgid "Table blocked"
+msgstr "Table blocked"
+
+#: app/utils/reservations/labels.ts:156
+msgid "Table changed"
+msgstr "Table changed"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1324
 msgid "Table combination"
 msgstr "Table combination"
 
@@ -23718,15 +23996,27 @@ msgstr "Table label"
 msgid "Table label is required."
 msgstr "Table label is required."
 
+#: app/utils/reservations/labels.ts:158
+msgid "Table locked"
+msgstr "Table locked"
+
 #: app/components/locations/location-form.tsx:702
 msgid "Table ordering and in-house steps."
 msgstr "Table ordering and in-house steps."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:376
+#: app/utils/reservations/labels.ts:116
+msgid "Table overlap"
+msgstr "Table overlap"
+
+#: app/utils/reservations/labels.ts:159
+msgid "Table unlocked"
+msgstr "Table unlocked"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:377
 msgid "Table/area block created."
 msgstr "Table/area block created."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1112
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1125
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:980
 msgid "tables"
 msgstr "tables"
@@ -23735,11 +24025,11 @@ msgstr "tables"
 msgid "Tables"
 msgstr "Tables"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:242
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:250
 msgid "Tables & Areas"
 msgstr "Tables & Areas"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:274
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:289
 msgid "tables active"
 msgstr "tables active"
 
@@ -23778,6 +24068,10 @@ msgstr "Tablets"
 msgid "Tablets accept clock-ins"
 msgstr "Tablets accept clock-ins"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:354
+msgid "Tag"
+msgstr "Tag"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:28
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:49
 #~ msgid "Tag Added"
@@ -23795,7 +24089,7 @@ msgstr "Tag name"
 msgid "Tags"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:312
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:397
 msgid "Tags & Notes"
 msgstr "Tags & Notes"
 
@@ -23824,10 +24118,10 @@ msgstr "Talks to customers"
 msgid "Tall"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1327
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1388
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:882
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1001
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1329
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1390
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:883
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1002
 msgid "Target"
 msgstr ""
 
@@ -23843,8 +24137,8 @@ msgstr "Target {target}, not applied"
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1307
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1385
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1309
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1387
 msgid "Target type"
 msgstr "Target type"
 
@@ -24450,6 +24744,10 @@ msgstr ""
 msgid "The applicant is told the time and details you enter here."
 msgstr "The applicant is told the time and details you enter here."
 
+#: app/utils/reservations/setup-api.ts:154
+msgid "The assigned table is no longer in use"
+msgstr "The assigned table is no longer in use"
+
 #: app/components/roles/tenant-role-access-manager.tsx:212
 msgid "The assistant that answers restaurant calls."
 msgstr "The assistant that answers restaurant calls."
@@ -24580,6 +24878,10 @@ msgstr "The first row should name the columns, for example Date and Net sales."
 msgid "The fixed lines the phone system says outside of conversation with the AI assistant. Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
 msgstr "The fixed lines the phone system says outside of conversation with the AI assistant. Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:107
+msgid "The floor plan was saved, but the latest version could not be reloaded."
+msgstr "The floor plan was saved, but the latest version could not be reloaded."
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4374
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
 msgstr ""
@@ -24697,6 +24999,10 @@ msgstr "The order on this link can't be shown."
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "The page will not mention pay. Showing a range tends to bring more applications."
 
+#: app/utils/reservations/setup-api.ts:155
+msgid "The party no longer fits the assigned table"
+msgstr "The party no longer fits the assigned table"
+
 #: app/components/settings/password-form.tsx:33
 msgid "The passwords must match"
 msgstr ""
@@ -24776,6 +25082,10 @@ msgstr "The steps to follow while taking an order."
 #: app/components/staff/timesheets/issue-copy.ts:32
 msgid "The system clocked them out. Check the time is right."
 msgstr "The system clocked them out. Check the time is right."
+
+#: app/utils/reservations/setup-api.ts:153
+msgid "The table is blocked during this booking"
+msgstr "The table is blocked during this booking"
 
 #: app/components/staff/timesheets/issue-copy.ts:35
 msgid "The tablet clock was off when this was punched. Check the times."
@@ -24934,7 +25244,7 @@ msgstr "These hours override the location's normal online ordering hours."
 msgid "These settings changed in another tab or by someone else. Reload to see the latest, then save again."
 msgstr "These settings changed in another tab or by someone else. Reload to see the latest, then save again."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:133
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:134
 msgid "These settings were updated by another operator. Your changes were not saved. Reload to view the latest version."
 msgstr "These settings were updated by another operator. Your changes were not saved. Reload to view the latest version."
 
@@ -25452,7 +25762,7 @@ msgstr "This shift was already removed."
 msgid "This shift would be flagged for review as too long."
 msgstr "This shift would be flagged for review as too long."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:310
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:311
 msgid "This special day was updated by another operator. Reloading latest data."
 msgstr "This special day was updated by another operator. Reloading latest data."
 
@@ -25582,12 +25892,12 @@ msgid "Threshold Unit"
 msgstr "Threshold Unit"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:180
-#: app/utils/reservations/setup-api.ts:376
+#: app/utils/reservations/setup-api.ts:445
 msgid "Thu"
 msgstr "Thu"
 
 #: app/components/phone-agent/business-details-section.tsx:27
-#: app/utils/reservations/setup-api.ts:377
+#: app/utils/reservations/setup-api.ts:446
 msgid "Thursday"
 msgstr "Thursday"
 
@@ -25601,9 +25911,9 @@ msgstr "TikTok Pixel ID"
 
 #: app/components/hiring/interview-dialog.tsx:196
 #: app/components/menu/menu-availability-card.tsx:357
-#: app/components/reservations/booking-sheet.tsx:486
-#: app/components/reservations/detail-sheet.tsx:787
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:300
+#: app/components/reservations/booking-sheet.tsx:502
+#: app/components/reservations/detail-sheet.tsx:910
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:385
 msgid "Time"
 msgstr "Time"
 
@@ -25722,7 +26032,7 @@ msgstr "Time zone"
 msgid "Time zone saved."
 msgstr "Time zone saved."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:210
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:218
 msgid "Time zone synchronized to {syncedTimeZone}. Updated {updatedReservationCount} upcoming reservation(s)."
 msgstr "Time zone synchronized to {syncedTimeZone}. Updated {updatedReservationCount} upcoming reservation(s)."
 
@@ -25944,7 +26254,7 @@ msgstr "Total {totalText} of 100"
 #~ msgid "Total Available"
 #~ msgstr "Total Available"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:235
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:250
 msgid "Total Covers"
 msgstr "Total Covers"
 
@@ -25956,7 +26266,7 @@ msgstr "Total notes"
 msgid "Total notes, the daily average and the trend."
 msgstr "Total notes, the daily average and the trend."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:278
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:279
 msgid "Total Parties"
 msgstr "Total Parties"
 
@@ -26288,12 +26598,12 @@ msgid "Try different filters."
 msgstr "Try different filters."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:178
-#: app/utils/reservations/setup-api.ts:364
+#: app/utils/reservations/setup-api.ts:433
 msgid "Tue"
 msgstr "Tue"
 
 #: app/components/phone-agent/business-details-section.tsx:25
-#: app/utils/reservations/setup-api.ts:365
+#: app/utils/reservations/setup-api.ts:434
 msgid "Tuesday"
 msgstr "Tuesday"
 
@@ -26357,7 +26667,7 @@ msgstr "Turned on training rule \"{title}\""
 msgid "Turning off…"
 msgstr "Turning off…"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:304
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:319
 msgid "turns finished"
 msgstr "turns finished"
 
@@ -26368,6 +26678,10 @@ msgstr "Twice a month"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3797
 msgid "Two"
 msgstr ""
+
+#: app/utils/reservations/setup-api.ts:152
+msgid "Two bookings share a table at the same time"
+msgstr "Two bookings share a table at the same time"
 
 #: app/components/staff/labor-policy-editor.tsx:327
 msgid "Two break rules start at the same point in the shift."
@@ -26437,7 +26751,7 @@ msgstr "Unable to authorize call history. Refresh the page and try again."
 msgid "Unable to load calls. Try again."
 msgstr "Unable to load calls. Try again."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:143
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx:162
 msgid "Unable to load floor plan data."
 msgstr "Unable to load floor plan data."
 
@@ -26475,26 +26789,30 @@ msgstr "Unable to load this call. Try again."
 msgid "Unable to update this order. Refresh and try again."
 msgstr "Unable to update this order. Refresh and try again."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:321
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:336
 msgid "unassigned"
 msgstr "unassigned"
 
-#: app/components/reservations/conflict-panel.tsx:348
-#: app/components/reservations/conflict-panel.tsx:349
-#: app/components/reservations/detail-sheet.tsx:416
-#: app/components/reservations/detail-sheet.tsx:659
+#: app/components/reservations/conflict-panel.tsx:375
+#: app/components/reservations/conflict-panel.tsx:376
+#: app/components/reservations/detail-sheet.tsx:480
+#: app/components/reservations/detail-sheet.tsx:723
+#: app/components/reservations/detail-sheet.tsx:799
+#: app/components/reservations/detail-sheet.tsx:1066
+#: app/components/reservations/detail-sheet.tsx:1066
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:377
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:398
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:196
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:389
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1133
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1613
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1674
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:595
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:660
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:228
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:476
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1146
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1632
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1693
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:596
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:666
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:336
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:373
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:390
+#: app/utils/reservations/labels.ts:118
 msgid "Unassigned"
 msgstr "Unassigned"
 
@@ -26502,7 +26820,7 @@ msgstr "Unassigned"
 msgid "Unassigned & Conflicts"
 msgstr "Unassigned & Conflicts"
 
-#: app/components/reservations/conflict-panel.tsx:227
+#: app/components/reservations/conflict-panel.tsx:254
 msgid "Unassigned Reservations"
 msgstr "Unassigned Reservations"
 
@@ -26510,7 +26828,7 @@ msgstr "Unassigned Reservations"
 msgid "Unassigned Reservations (Drag onto a table row below)"
 msgstr "Unassigned Reservations (Drag onto a table row below)"
 
-#: app/components/reservations/conflict-panel.tsx:87
+#: app/components/reservations/conflict-panel.tsx:110
 msgid "Unassigned, Conflicts & Reflow Notices"
 msgstr "Unassigned, Conflicts & Reflow Notices"
 
@@ -26523,7 +26841,7 @@ msgstr "Unassigned, Conflicts & Reflow Notices"
 #: app/components/staff/schedule/availability-sheet.tsx:300
 #: app/components/staff/schedule/week-grid.tsx:107
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:86
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1359
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1361
 msgid "Unavailable"
 msgstr "Unavailable"
 
@@ -26558,12 +26876,12 @@ msgstr "Unavailable until {formattedUntil}"
 msgid "Unavailable until <0>{0}</0>"
 msgstr "Unavailable until <0>{0}</0>"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1584
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1603
 msgid "Unblock table"
 msgstr "Unblock table"
 
 #. placeholder {0}: tableState.table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:672
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:685
 msgid "Unblocked table {0}."
 msgstr "Unblocked table {0}."
 
@@ -26572,9 +26890,9 @@ msgid "Under"
 msgstr "Under"
 
 #: app/components/locations/delivery-zone-map.tsx:382
-#: app/components/reservations/detail-sheet.tsx:455
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:254
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:222
+#: app/components/reservations/detail-sheet.tsx:519
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:286
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:237
 msgid "Undo"
 msgstr "Undo"
 
@@ -26586,8 +26904,8 @@ msgstr "Undo changes"
 msgid "Undo draft"
 msgstr "Undo draft"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:184
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:142
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:214
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:157
 msgid "Undo failed."
 msgstr "Undo failed."
 
@@ -26637,8 +26955,8 @@ msgstr "Unknown location"
 msgid "Unknown role"
 msgstr "Unknown role"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:615
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:640
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:616
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:641
 msgid "Unlimited"
 msgstr "Unlimited"
 
@@ -26663,7 +26981,7 @@ msgstr "Unlock and move"
 msgid "Unlock card"
 msgstr "Unlock card"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1163
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1171
 msgid "Unlock table assignment"
 msgstr "Unlock table assignment"
 
@@ -26797,20 +27115,20 @@ msgid "Up to 5 addresses."
 msgstr "Up to 5 addresses."
 
 #: app/components/staff/schedule/time-off-page.tsx:182
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:192
-#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1615
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:224
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1634
 msgid "Upcoming"
 msgstr "Upcoming"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:337
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:352
 msgid "Upcoming & Arriving"
 msgstr "Upcoming & Arriving"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:833
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:834
 msgid "Upcoming Reservation Conflicts"
 msgstr "Upcoming Reservation Conflicts"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:458
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:459
 msgid "Upcoming reservations flagged with conflicts (outside hours or blocked table)"
 msgstr "Upcoming reservations flagged with conflicts (outside hours or blocked table)"
 
@@ -26890,8 +27208,12 @@ msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDuratio
 msgstr "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:632
-msgid "Updated course stage to {courseStage}."
-msgstr "Updated course stage to {courseStage}."
+#~ msgid "Updated course stage to {courseStage}."
+#~ msgstr "Updated course stage to {courseStage}."
+
+#: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:645
+msgid "Updated course stage to {stageLabel}."
+msgstr "Updated course stage to {stageLabel}."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:153
 msgid "Updated section"
@@ -27253,7 +27575,8 @@ msgstr "variations"
 msgid "Variations"
 msgstr "Variations"
 
-#: app/components/reservations/booking-sheet.tsx:39
+#: app/components/reservations/booking-sheet.tsx:40
+#: app/utils/reservations/labels.ts:82
 msgid "Vegan"
 msgstr "Vegan"
 
@@ -27261,7 +27584,8 @@ msgstr "Vegan"
 #: app/components/menu/modifier-form.tsx:1722
 #: app/components/menu/modifier-form.tsx:2077
 #: app/components/menu/option-form.tsx:648
-#: app/components/reservations/booking-sheet.tsx:38
+#: app/components/reservations/booking-sheet.tsx:39
+#: app/utils/reservations/labels.ts:81
 msgid "Vegetarian"
 msgstr "Vegetarian"
 
@@ -27485,24 +27809,27 @@ msgstr "Viewer"
 msgid "Violet"
 msgstr "Violet"
 
-#: app/components/reservations/booking-sheet.tsx:54
+#: app/components/reservations/booking-sheet.tsx:55
+#: app/utils/reservations/labels.ts:68
+#: app/utils/reservations/labels.ts:77
+#: app/utils/reservations/labels.ts:95
 msgid "VIP"
 msgstr "VIP"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:968
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:969
 msgid "VIP / repair"
 msgstr "VIP / repair"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:308
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:309
 msgid "VIP & Tagged"
 msgstr "VIP & Tagged"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:612
+#: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:613
 msgid "VIP & Tagged Bookings"
 msgstr "VIP & Tagged Bookings"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:79
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:955
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:80
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:956
 msgid "VIP hold"
 msgstr "VIP hold"
 
@@ -27514,10 +27841,10 @@ msgstr "Visibility"
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:399
-#: app/components/reservations/booking-sheet.tsx:427
-#: app/components/reservations/detail-sheet.tsx:722
-#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:365
+#: app/components/reservations/booking-sheet.tsx:409
+#: app/components/reservations/booking-sheet.tsx:443
+#: app/components/reservations/detail-sheet.tsx:845
+#: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:452
 msgid "visits"
 msgstr "visits"
 
@@ -27529,6 +27856,11 @@ msgstr "Vivid"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:43
 msgid "Voice"
 msgstr "Voice"
+
+#: app/utils/reservations/labels.ts:44
+#: app/utils/reservations/labels.ts:172
+msgid "Voice agent"
+msgstr "Voice agent"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:596
 msgid "Voice ID (optional)"
@@ -27639,10 +27971,11 @@ msgstr "Waiting to send"
 #: app/components/app-sidebar.tsx:496
 #: app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx:148
 #: app/routes/_app+/$orgSlug_+/reservations+/waitlist.tsx:21
+#: app/utils/reservations/labels.ts:48
 msgid "Waitlist"
 msgstr "Waitlist"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:326
+#: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:327
 msgid "Waitlist enabled"
 msgstr "Waitlist enabled"
 
@@ -27654,33 +27987,34 @@ msgstr "Waitlist entries: {waitlistCount}"
 msgid "Waitlist is currently empty"
 msgstr "Waitlist is currently empty"
 
-#: app/components/reservations/booking-sheet.tsx:834
+#: app/components/reservations/booking-sheet.tsx:861
 msgid "Waive deposit / card hold"
 msgstr "Waive deposit / card hold"
 
 #: app/components/reservations/host-subnav.tsx:154
+#: app/utils/reservations/labels.ts:47
 msgid "Walk-in"
 msgstr "Walk-in"
 
-#: app/components/reservations/walk-in-dialog.tsx:238
+#: app/components/reservations/walk-in-dialog.tsx:247
 msgid "Walk-In Guest"
 msgstr "Walk-In Guest"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:85
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1181
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1358
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1360
 msgid "Walk-in only"
 msgstr "Walk-in only"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:289
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:304
 msgid "walk-in parties"
 msgstr "walk-in parties"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:280
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:295
 msgid "Walk-Ins Today"
 msgstr "Walk-Ins Today"
 
 #: app/components/reservations/floor-plan-canvas.tsx:93
+#: app/utils/reservations/labels.ts:176
 msgid "Wall"
 msgstr "Wall"
 
@@ -27922,8 +28256,8 @@ msgstr ""
 msgid "We've sent you a code to verify your email address."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:78
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:954
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:79
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:955
 msgid "Weather"
 msgstr "Weather"
 
@@ -27960,12 +28294,12 @@ msgid "Website visitor"
 msgstr "Website visitor"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:179
-#: app/utils/reservations/setup-api.ts:370
+#: app/utils/reservations/setup-api.ts:439
 msgid "Wed"
 msgstr "Wed"
 
 #: app/components/phone-agent/business-details-section.tsx:26
-#: app/utils/reservations/setup-api.ts:371
+#: app/utils/reservations/setup-api.ts:440
 msgid "Wednesday"
 msgstr "Wednesday"
 
@@ -28443,8 +28777,9 @@ msgstr "Will redirect to"
 
 #: app/components/reservations/floor-plan-canvas.tsx:101
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1121
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1207
-#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1004
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1205
+#: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1005
+#: app/utils/reservations/labels.ts:179
 msgid "Window"
 msgstr "Window"
 
@@ -29126,6 +29461,7 @@ msgid "Zip Codes (comma or space separated)"
 msgstr "Zip Codes (comma or space separated)"
 
 #: app/components/reservations/floor-plan-canvas.tsx:104
+#: app/utils/reservations/labels.ts:182
 msgid "Zone"
 msgstr "Zone"
 

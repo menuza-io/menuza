@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
@@ -29,6 +30,12 @@ import {
 	transitionReservationStatus,
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	COURSE_STAGE_LABELS,
+	ELEMENT_KIND_LABELS,
+	enumLabel,
+	RESERVATION_STATUS_LABELS,
+} from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	createBlock,
@@ -117,6 +124,10 @@ const HIGH_CONTRAST_SECTION_HEX: Record<string, string> = {
 
 export default function ReservationsFloorRoute() {
 	const { t, i18n } = useLingui()
+	const enumText = (
+		labels: Record<string, MessageDescriptor>,
+		value: string | null | undefined,
+	) => enumLabel((d) => i18n._(d), labels, value)
 	const { orgSlug, canManage } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -143,7 +154,7 @@ export default function ReservationsFloorRoute() {
 	const [serverDrafts, setServerDrafts] = useState<Record<string, string>>({})
 	const [savingServers, setSavingServers] = useState(false)
 
-	// Live clock ticking every 30s without network requests (VAL-HOST-013)
+	// Live clock ticking every 15s without network requests (VAL-HOST-013)
 	const liveClock = useLiveNow({
 		timeZone: activeLocation?.timezone ?? 'UTC',
 		intervalMs: 15_000,
@@ -487,11 +498,12 @@ export default function ReservationsFloorRoute() {
 		setBusyAction(true)
 		try {
 			if (rsv.status === 'arrived') {
-				await transitionReservationStatus(host.client, rsv.id, {
+				const seated = await transitionReservationStatus(host.client, rsv.id, {
 					to: 'seated',
 					tableIds: [targetState.table.id],
 					expectedVersion: rsv.version,
 				})
+				host.handleReservationMutated(seated.reservation, seated.moveNotices)
 				setActionBanner(
 					t`Seated ${rsv.guestName} at ${targetState.table.label}.`,
 				)
@@ -599,13 +611,13 @@ export default function ReservationsFloorRoute() {
 		setBusyAction(true)
 		setActionError(null)
 		try {
-			await transitionReservationStatus(host.client, rsv.id, {
+			const seated = await transitionReservationStatus(host.client, rsv.id, {
 				to: 'seated',
 				tableIds: [tableId],
 				expectedVersion: rsv.version,
 			})
+			host.handleReservationMutated(seated.reservation, seated.moveNotices)
 			setActionBanner(t`Seated ${rsv.guestName}.`)
-			await host.refresh()
 		} catch (err) {
 			setActionError(
 				err instanceof Error ? err.message : t`Failed to seat party.`,
@@ -629,7 +641,8 @@ export default function ReservationsFloorRoute() {
 				courseStage,
 				rsv.version,
 			)
-			setActionBanner(t`Updated course stage to ${courseStage}.`)
+			const stageLabel = enumText(COURSE_STAGE_LABELS, courseStage)
+			setActionBanner(t`Updated course stage to ${stageLabel}.`)
 			await host.refresh()
 		} catch (err) {
 			setActionError(
@@ -1182,7 +1195,7 @@ export default function ReservationsFloorRoute() {
 													: undefined,
 											}}
 										>
-											{el.label || el.kind.replace('_', ' ')}
+											{el.label || enumText(ELEMENT_KIND_LABELS, el.kind)}
 										</div>
 									)
 								})}
@@ -1312,7 +1325,10 @@ export default function ReservationsFloorRoute() {
 															className="bg-background/80 inline-flex w-fit items-center rounded px-1 py-0.5 text-[10px] font-medium capitalize"
 															data-testid={`floor-table-course-${table.id}`}
 														>
-															{activeParty.courseStage}
+															{enumText(
+																COURSE_STAGE_LABELS,
+																activeParty.courseStage,
+															)}
 														</span>
 													) : null}
 												</div>
@@ -1413,7 +1429,10 @@ export default function ReservationsFloorRoute() {
 												<p className="text-muted-foreground text-[11px]">
 													{selectedTableState.currentReservation.hhmm} –{' '}
 													{selectedTableState.currentReservation.endHhmm} ·{' '}
-													{selectedTableState.currentReservation.status}
+													{enumText(
+														RESERVATION_STATUS_LABELS,
+														selectedTableState.currentReservation.status,
+													)}
 												</p>
 											</div>
 											<Button
@@ -1663,7 +1682,7 @@ export default function ReservationsFloorRoute() {
 												{rsv.hhmm} · {rsv.guestName} ({rsv.partySize}p)
 											</button>
 											<Badge variant="outline" className="text-[10px]">
-												{rsv.status}
+												{enumText(RESERVATION_STATUS_LABELS, rsv.status)}
 											</Badge>
 										</div>
 
@@ -1744,6 +1763,8 @@ export default function ReservationsFloorRoute() {
 				fallbackReservation={host.selectedReservation}
 				onClose={host.closeDetail}
 				client={host.client}
+				areas={host.dayFeed?.areas ?? []}
+				timeZone={host.timeZone}
 				tables={feed?.tables ?? []}
 				canManage={canManage}
 				onUpdated={(rsv, notices) => {

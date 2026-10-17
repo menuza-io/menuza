@@ -28,6 +28,7 @@ import {
 	fetchBookOverview,
 	saveServiceNotes,
 } from '#app/utils/reservations/book-api.ts'
+import { enumLabel, VIP_TIER_LABELS } from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/overview.ts'
 import { useReservationsLayoutData } from './_layout.tsx'
@@ -62,7 +63,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function ReservationsOverviewRoute() {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
 	const { orgSlug, canManage, canReadGuest } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -640,7 +641,12 @@ export default function ReservationsOverviewRoute() {
 										<div className="flex flex-wrap items-center gap-1">
 											{rsv.guest?.vipTier && rsv.guest.vipTier !== 'none' ? (
 												<Badge variant="default" className="text-[10px]">
-													VIP: {rsv.guest.vipTier}
+													VIP:{' '}
+													{enumLabel(
+														(d) => i18n._(d),
+														VIP_TIER_LABELS,
+														rsv.guest.vipTier,
+													)}
 												</Badge>
 											) : null}
 											{(rsv.guest?.tags ?? []).map((tag) => (
@@ -826,6 +832,8 @@ export default function ReservationsOverviewRoute() {
 				fallbackReservation={host.selectedReservation}
 				onClose={host.closeDetail}
 				client={host.client}
+				areas={host.dayFeed?.areas ?? []}
+				timeZone={host.timeZone}
 				tables={host.dayFeed?.tables ?? []}
 				canManage={canManage}
 				onUpdated={(rsv, notices) => {

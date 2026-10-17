@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
@@ -7,6 +8,7 @@ import { Button } from '@repo/ui/button'
 import { Card } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import { Label } from '@repo/ui/label'
 import { useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
@@ -20,6 +22,20 @@ import {
 	transitionReservationStatus,
 	undoReservationTransition,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	CHANNEL_LABELS,
+	CONTACT_STATUS_LABELS,
+	COURSE_STAGE_LABELS,
+	DAY_CONFLICT_REASON_LABELS,
+	DIETARY_LABELS,
+	enumLabel,
+	OCCASION_LABELS,
+	RESERVATION_STATUS_LABELS,
+	SOURCE_FILTER_OPTIONS,
+	stripTagPrefix,
+	TAG_LABELS,
+	VIP_TIER_LABELS,
+} from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/book.ts'
 import { useReservationsLayoutData } from './_layout.tsx'
@@ -59,7 +75,11 @@ type BookStatusFilter =
 	| 'conflict'
 
 export default function ReservationsBookRoute() {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
+	const label = (
+		labels: Record<string, MessageDescriptor>,
+		value: string | null | undefined,
+	) => enumLabel((d) => i18n._(d), labels, value)
 	const { orgSlug, canManage } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -133,6 +153,16 @@ export default function ReservationsBookRoute() {
 		})
 	}, [reservations, searchQuery, statusFilter])
 
+	const counters = useMemo(() => {
+		const active = filteredReservations.filter(
+			(rsv) => rsv.status !== 'cancelled' && rsv.status !== 'no_show',
+		)
+		return {
+			parties: active.length,
+			covers: active.reduce((sum, rsv) => sum + rsv.partySize, 0),
+		}
+	}, [filteredReservations])
+
 	const handleQuickStatus = async (
 		reservationId: string,
 		guestName: string,
@@ -187,6 +217,8 @@ export default function ReservationsBookRoute() {
 		}
 	}
 
+	const lastUndoStatusLabel = label(RESERVATION_STATUS_LABELS, lastUndo?.status)
+
 	const statusFilters: Array<{ key: BookStatusFilter; label: string }> = [
 		{ key: 'all', label: t`All` },
 		{ key: 'upcoming', label: t`Upcoming` },
@@ -238,8 +270,8 @@ export default function ReservationsBookRoute() {
 				>
 					<span>
 						<Trans>
-							Changed {lastUndo.guestName} to {lastUndo.status}. Undo available
-							for 60 seconds.
+							Changed {lastUndo.guestName} to {lastUndoStatusLabel}. Undo
+							available for 60 seconds.
 						</Trans>
 					</span>
 					<Button
@@ -270,6 +302,20 @@ export default function ReservationsBookRoute() {
 						/>
 					</div>
 
+					<div
+						className="text-muted-foreground flex items-center gap-3 text-xs"
+						data-testid="book-counters"
+					>
+						<span data-testid="book-counter-parties">
+							<Trans>Parties</Trans>:{' '}
+							<strong className="text-foreground">{counters.parties}</strong>
+						</span>
+						<span data-testid="book-counter-covers">
+							<Trans>Covers</Trans>:{' '}
+							<strong className="text-foreground">{counters.covers}</strong>
+						</span>
+					</div>
+
 					<div className="flex flex-wrap items-center gap-1">
 						{statusFilters.map((f) => (
 							<Button
@@ -284,6 +330,45 @@ export default function ReservationsBookRoute() {
 							</Button>
 						))}
 					</div>
+				</div>
+
+				<div className="flex flex-wrap items-center gap-2">
+					<Label htmlFor="book-source-filter" className="text-xs">
+						<Trans>Source</Trans>
+					</Label>
+					<select
+						id="book-source-filter"
+						value={host.selectedSource ?? ''}
+						onChange={(e) => host.setSource(e.target.value || null)}
+						className="border-input bg-background h-8 rounded-md border px-2 text-xs"
+						data-testid="book-source-filter"
+					>
+						<option value="">{t`All sources`}</option>
+						{SOURCE_FILTER_OPTIONS.map((source) => (
+							<option key={source} value={source}>
+								{label(CHANNEL_LABELS, source)}
+							</option>
+						))}
+					</select>
+					<Label htmlFor="book-tag-filter" className="text-xs">
+						<Trans>Tag</Trans>
+					</Label>
+					<select
+						id="book-tag-filter"
+						value={host.selectedTag ?? ''}
+						onChange={(e) => host.setTag(e.target.value || null)}
+						className="border-input bg-background h-8 rounded-md border px-2 text-xs"
+						data-testid="book-tag-filter"
+					>
+						<option value="">{t`All tags`}</option>
+						{(dayFeed?.tags ?? []).map((tag) => (
+							<option key={tag.id} value={tag.id}>
+								{TAG_LABELS[stripTagPrefix(tag.id)]
+									? label(TAG_LABELS, tag.id)
+									: tag.name}
+							</option>
+						))}
+					</select>
 				</div>
 			</Card>
 
@@ -352,7 +437,9 @@ export default function ReservationsBookRoute() {
 											<div className="flex flex-wrap items-center gap-1.5 font-semibold">
 												<span>{rsv.guestName}</span>
 												{rsv.guest?.vipTier && rsv.guest.vipTier !== 'none' ? (
-													<Badge variant="default">{rsv.guest.vipTier}</Badge>
+													<Badge variant="default">
+														{label(VIP_TIER_LABELS, rsv.guest.vipTier)}
+													</Badge>
 												) : null}
 												<Badge variant="outline" className="font-mono">
 													#{rsv.confirmationCode}
@@ -371,7 +458,7 @@ export default function ReservationsBookRoute() {
 										<td className="px-3 py-2.5 font-semibold whitespace-nowrap">
 											{rsv.partySize} <Trans>guests</Trans>
 											<div className="text-muted-foreground text-[11px] font-normal">
-												{rsv.channel}
+												{label(CHANNEL_LABELS, rsv.channel)}
 											</div>
 										</td>
 
@@ -402,7 +489,12 @@ export default function ReservationsBookRoute() {
 											<div className="flex flex-wrap items-center gap-1">
 												{rsv.hasConflict ? (
 													<Badge variant="destructive">
-														{rsv.conflictReason ?? t`Conflict`}
+														{rsv.conflictReason
+															? label(
+																	DAY_CONFLICT_REASON_LABELS,
+																	rsv.conflictReason,
+																)
+															: t`Conflict`}
 													</Badge>
 												) : null}
 												{rsv.lateRisk ? (
@@ -416,14 +508,18 @@ export default function ReservationsBookRoute() {
 													</Badge>
 												) : null}
 												{rsv.contactStatus && rsv.contactStatus !== 'none' ? (
-													<Badge variant="outline">{rsv.contactStatus}</Badge>
+													<Badge variant="outline">
+														{label(CONTACT_STATUS_LABELS, rsv.contactStatus)}
+													</Badge>
 												) : null}
 												{rsv.occasion ? (
-													<Badge variant="outline">{rsv.occasion}</Badge>
+													<Badge variant="outline">
+														{label(OCCASION_LABELS, rsv.occasion)}
+													</Badge>
 												) : null}
 												{rsv.dietaryCodes.map((code) => (
 													<Badge key={code} variant="secondary">
-														{code}
+														{label(DIETARY_LABELS, code)}
 													</Badge>
 												))}
 											</div>
@@ -446,11 +542,11 @@ export default function ReservationsBookRoute() {
 												}
 												data-testid={`book-row-status-${rsv.id}`}
 											>
-												{rsv.status}
+												{label(RESERVATION_STATUS_LABELS, rsv.status)}
 											</Badge>
 											{rsv.courseStage && rsv.status === 'seated' ? (
 												<div className="text-muted-foreground mt-0.5 text-[11px]">
-													{rsv.courseStage}
+													{label(COURSE_STAGE_LABELS, rsv.courseStage)}
 												</div>
 											) : null}
 										</td>
@@ -575,6 +671,8 @@ export default function ReservationsBookRoute() {
 				fallbackReservation={host.selectedReservation}
 				onClose={host.closeDetail}
 				client={host.client}
+				areas={host.dayFeed?.areas ?? []}
+				timeZone={host.timeZone}
 				tables={dayFeed?.tables ?? []}
 				canManage={canManage}
 				onUpdated={(rsv, notices) =>

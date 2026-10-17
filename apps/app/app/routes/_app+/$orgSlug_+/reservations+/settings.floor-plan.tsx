@@ -87,28 +87,47 @@ export default function ReservationsSettingsFloorPlanRoute() {
 			const saveRes = await saveFloorPlan(client, selectedLocationId, draft)
 			if (saveRes.conflicts) setLastConflicts(saveRes.conflicts)
 			if (saveRes.reflowedMoves) setLastReflowedMoves(saveRes.reflowedMoves)
+			// A 200 PUT is a committed save and carries the new version and plan.
+			setFloorPlan(saveRes)
+			const newFloorPlanVersion = saveRes.floorPlanVersion
+			setSavedBanner(_(msg`Floor plan saved (v${newFloorPlanVersion}).`))
+		} catch (err) {
+			return handleSaveFailure(err)
+		}
+
+		try {
 			const refreshed = await fetchFloorPlan(client, selectedLocationId)
 			setFloorPlan(refreshed)
-			const newFloorPlanVersion = refreshed.floorPlanVersion
-			setSavedBanner(_(msg`Floor plan saved (v${newFloorPlanVersion}).`))
 			await refreshSummary()
-			return true
 		} catch (err) {
-			if (isVersionConflictError(err)) {
-				setConflictMessage(
+			setErrorMessage(
+				extractApiErrorMessage(
+					err,
 					_(
-						msg`Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying.`,
+						msg`The floor plan was saved, but the latest version could not be reloaded.`,
 					),
-				)
-			} else {
-				setErrorMessage(
-					extractApiErrorMessage(err, _(msg`Failed to save floor plan.`)),
-				)
-			}
-			return false
+				),
+			)
 		} finally {
 			setSaving(false)
 		}
+		return true
+	}
+
+	const handleSaveFailure = (err: unknown): boolean => {
+		setSaving(false)
+		if (isVersionConflictError(err)) {
+			setConflictMessage(
+				_(
+					msg`Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying.`,
+				),
+			)
+		} else {
+			setErrorMessage(
+				extractApiErrorMessage(err, _(msg`Failed to save floor plan.`)),
+			)
+		}
+		return false
 	}
 
 	const handleReloadAfterConflict = () => {

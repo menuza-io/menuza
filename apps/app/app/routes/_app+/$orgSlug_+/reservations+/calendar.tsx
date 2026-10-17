@@ -544,6 +544,8 @@ export default function ReservationsCalendarRoute() {
 				fallbackReservation={host.selectedReservation}
 				onClose={host.closeDetail}
 				client={host.client}
+				areas={host.dayFeed?.areas ?? []}
+				timeZone={host.timeZone}
 				tables={host.dayFeed?.tables ?? []}
 				canManage={loaderData.canWriteReservation}
 				onUpdated={(rsv, notices) => {

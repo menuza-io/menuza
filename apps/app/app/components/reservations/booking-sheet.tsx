@@ -27,6 +27,7 @@ import {
 	searchBookAvailability,
 	searchBookGuests,
 } from '#app/utils/reservations/book-api.ts'
+import { enumLabel, VIP_TIER_LABELS } from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import {
 	type RsvAreaRecord,
@@ -116,6 +117,7 @@ export function BookingSheet({
 	const [guestEmail, setGuestEmail] = useState('')
 	const [occasion, setOccasion] = useState('')
 	const [dietaryCodes, setDietaryCodes] = useState<string[]>([])
+	const [dietaryNotes, setDietaryNotes] = useState('')
 	const [guestNotes, setGuestNotes] = useState('')
 	const [internalNotes, setInternalNotes] = useState('')
 	const [serverLabel, setServerLabel] = useState('')
@@ -292,6 +294,7 @@ export function BookingSheet({
 					},
 					occasion: occasion || null,
 					dietaryCodes,
+					dietaryNotes: dietaryNotes.trim() || null,
 					guestNotes: guestNotes.trim() || null,
 					internalNotes: internalNotes.trim() || null,
 					serverLabel: serverLabel.trim() || null,
@@ -312,6 +315,7 @@ export function BookingSheet({
 			setGuestEmail('')
 			setOccasion('')
 			setDietaryCodes([])
+			setDietaryNotes('')
 			setGuestNotes('')
 			setInternalNotes('')
 			setServerLabel('')
@@ -393,7 +397,13 @@ export function BookingSheet({
 										</div>
 										<div className="flex flex-wrap items-center gap-1">
 											{g.vipTier && g.vipTier !== 'none' ? (
-												<Badge variant="default">{g.vipTier}</Badge>
+												<Badge variant="default">
+													{enumLabel(
+														(d) => i18n._(d),
+														VIP_TIER_LABELS,
+														g.vipTier,
+													)}
+												</Badge>
 											) : null}
 											<Badge variant="secondary">
 												{g.visitCount} <Trans>visits</Trans>
@@ -421,7 +431,13 @@ export function BookingSheet({
 									<div className="flex items-center gap-1">
 										{selectedGuest.vipTier &&
 										selectedGuest.vipTier !== 'none' ? (
-											<Badge variant="default">{selectedGuest.vipTier}</Badge>
+											<Badge variant="default">
+												{enumLabel(
+													(d) => i18n._(d),
+													VIP_TIER_LABELS,
+													selectedGuest.vipTier,
+												)}
+											</Badge>
 										) : null}
 										<Badge variant="outline">
 											{selectedGuest.visitCount} <Trans>visits</Trans>
@@ -740,6 +756,17 @@ export function BookingSheet({
 								)
 							})}
 						</div>
+						<Label htmlFor="booking-dietary-notes" className="sr-only">
+							<Trans>Dietary notes</Trans>
+						</Label>
+						<Input
+							id="booking-dietary-notes"
+							value={dietaryNotes}
+							maxLength={500}
+							onChange={(e) => setDietaryNotes(e.target.value)}
+							placeholder={t`Dietary notes, e.g. no sesame, severe peanut allergy`}
+							data-testid="booking-dietary-notes"
+						/>
 					</div>
 
 					{/* Guest & Internal Notes */}

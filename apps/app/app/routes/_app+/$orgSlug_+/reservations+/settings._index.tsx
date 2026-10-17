@@ -20,6 +20,7 @@ import {
 	extractApiErrorMessage,
 	isVersionConflictError,
 	type LocationSettingsDto,
+	SETUP_CONFLICT_REASON_LABELS,
 	updateLocationSettings,
 } from '#app/utils/reservations/setup-api.ts'
 import { type Route } from './+types/settings._index.ts'
@@ -855,25 +856,35 @@ export default function ReservationsSettingsIndexRoute() {
 							className="flex flex-col gap-2"
 							data-testid="setup-conflicts-list"
 						>
-							{conflicts.map((conflict) => (
-								<li
-									key={`${conflict.reservationId}-${conflict.reason}`}
-									className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm"
-								>
-									<div className="flex flex-col gap-0.5">
-										<span className="text-foreground font-medium">
-											{conflict.confirmationCode} · {conflict.businessDate} (
-											{conflict.partySize}p)
-										</span>
-										{conflict.detail ? (
-											<span className="text-muted-foreground text-xs">
-												{conflict.detail}
+							{conflicts.map((conflict, index) => {
+								const partySize = conflict.partySize
+								return (
+									<li
+										key={`${conflict.reservationId}-${conflict.kind}-${conflict.tableId ?? conflict.serviceId ?? index}`}
+										className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm"
+										data-testid="setup-conflict-row"
+									>
+										<div className="flex flex-col gap-0.5">
+											<span className="text-foreground font-medium">
+												<bdi dir="ltr">{conflict.confirmationCode ?? '—'}</bdi>
+												{' · '}
+												<bdi dir="ltr">{conflict.businessDate ?? '—'}</bdi>
+												{partySize !== null
+													? ` · ${_(msg`Party of ${partySize}`)}`
+													: ''}
 											</span>
-										) : null}
-									</div>
-									<Badge variant="secondary">{conflict.reason}</Badge>
-								</li>
-							))}
+											{conflict.detail ? (
+												<span className="text-muted-foreground text-xs">
+													{conflict.detail}
+												</span>
+											) : null}
+										</div>
+										<Badge variant="secondary">
+											{_(SETUP_CONFLICT_REASON_LABELS[conflict.reason])}
+										</Badge>
+									</li>
+								)
+							})}
 						</ul>
 					)}
 				</CardContent>

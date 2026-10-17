@@ -7,9 +7,11 @@ import {
 	extractApiErrorCode,
 	extractApiErrorMessage,
 	fetchLocationSettings,
+	fetchSetupConflicts,
 	formatMinutesLabel,
 	isVersionConflictError,
 	minutesToTimeString,
+	normalizeSetupConflict,
 	normalizeRotation,
 	rederiveLocationTimes,
 	saveFloorPlan,
@@ -170,5 +172,65 @@ describe('setup-api helpers', () => {
 				body: {},
 			},
 		)
+	})
+})
+
+describe('setup conflicts', () => {
+	const item = {
+		kind: 'blocked_table',
+		bookingId: 'rsv-1',
+		tableId: 'tbl-1',
+		serviceId: null,
+		slotMin: 1140,
+		details: { businessDate: '2026-04-20', partySize: 4 },
+	}
+
+	it('maps a /conflicts item to code, date, party size and a reason key', () => {
+		const dto = normalizeSetupConflict(item)
+		expect(dto).toMatchObject({
+			kind: 'blocked_table',
+			reservationId: 'rsv-1',
+			reason: 'table_blocked',
+			businessDate: '2026-04-20',
+			partySize: 4,
+			tableId: 'tbl-1',
+			confirmationCode: null,
+		})
+		expect(normalizeSetupConflict({ kind: 'mystery' }).reason).toBe('other')
+	})
+
+	it('fills the confirmation code from the booking for a non-empty list', async () => {
+		const requestMock = vi.fn(async (path: string) => {
+			if (path.endsWith('/conflicts')) {
+				return {
+					conflicts: [
+						item,
+						{ ...item, kind: 'table_overlap', bookingId: 'rsv-2', details: {} },
+					],
+				}
+			}
+			if (path.endsWith('/rsv-1')) {
+				return { reservation: { confirmationCode: 'ABC123', partySize: 4 } }
+			}
+			throw new Error('forbidden')
+		})
+		const client = {
+			scope: 'setup',
+			request: requestMock,
+		} as unknown as ReservationsScopedClient
+
+		const { conflicts } = await fetchSetupConflicts(client, 'loc-1')
+		expect(conflicts).toHaveLength(2)
+		expect(conflicts[0]).toMatchObject({
+			confirmationCode: 'ABC123',
+			businessDate: '2026-04-20',
+			partySize: 4,
+			reason: 'table_blocked',
+		})
+		expect(conflicts[1]).toMatchObject({
+			reason: 'table_overlap',
+			confirmationCode: null,
+			partySize: null,
+		})
 	})
 })

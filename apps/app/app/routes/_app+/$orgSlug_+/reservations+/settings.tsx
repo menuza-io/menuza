@@ -140,6 +140,12 @@ export default function ReservationsSettingsRoute() {
 		selectedLocationId ? [selectedLocationId] : undefined,
 	)
 
+	// Booking details (code, party size) need the book scope, not setup.
+	const bookClient = useReservationsClient(
+		'book',
+		selectedLocationId ? [selectedLocationId] : undefined,
+	)
+
 	const [settings, setSettings] = useState<LocationSettingsDto | null>(null)
 	const [validation, setValidation] = useState<SetupValidationResponse | null>(
 		null,
@@ -161,7 +167,9 @@ export default function ReservationsSettingsRoute() {
 			const [settingsRes, validationRes, conflictsRes] = await Promise.all([
 				fetchLocationSettings(client, selectedLocationId),
 				fetchSetupValidation(client, selectedLocationId),
-				fetchSetupConflicts(client, selectedLocationId),
+				fetchSetupConflicts(client, selectedLocationId, {
+					detailClient: bookClient,
+				}),
 			])
 			setSettings(settingsRes.settings)
 			setValidation(validationRes)
@@ -176,7 +184,7 @@ export default function ReservationsSettingsRoute() {
 		} finally {
 			setLoadingSummary(false)
 		}
-	}, [client, selectedLocationId, _])
+	}, [client, bookClient, selectedLocationId, _])
 
 	useEffect(() => {
 		void refreshSummary()

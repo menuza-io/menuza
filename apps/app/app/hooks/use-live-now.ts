@@ -28,14 +28,14 @@ function normalizeEpochMs(value: number): number {
 }
 
 /**
- * Maintains a 30-second client-side timer for live elapsed seated timers
+ * Maintains a 15-second client-side timer for live elapsed seated timers
  * (`elapsedMin = floor((nowEpoch - seatedAtEpoch) / 60)`), remaining turn-time
  * progress bars, and the Timeline "Now" cursor without triggering extra network fetches.
  */
 export function useLiveNow(options?: UseLiveNowOptions): LiveNowState {
 	const timeZone = options?.timeZone || 'UTC'
 	const dayStartMin = options?.dayStartMin ?? 240
-	const intervalMs = options?.intervalMs ?? 30_000
+	const intervalMs = options?.intervalMs ?? 15_000
 	const [nowMs, setNowMs] = useState<number>(
 		() => options?.initialNowMs ?? Date.now(),
 	)

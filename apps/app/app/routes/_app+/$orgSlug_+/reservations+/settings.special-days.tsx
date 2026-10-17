@@ -27,6 +27,7 @@ import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/secti
 import {
 	type BlockDto,
 	type BlockReason,
+	blockLocalWindow,
 	createBlock,
 	createSpecialDay,
 	deleteBlock,
@@ -83,7 +84,7 @@ const BLOCK_REASON_LABELS: Record<string, MessageDescriptor> = {
 
 export default function ReservationsSettingsSpecialDaysRoute() {
 	const { _ } = useLingui()
-	const { selectedLocationId, canWrite, client, refreshSummary } =
+	const { selectedLocationId, canWrite, client, refreshSummary, settings } =
 		useReservationsSetupContext()
 
 	const [specialDays, setSpecialDays] = useState<SpecialDayDto[]>([])
@@ -1019,8 +1020,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 									const targetLabel = blk.tableId
 										? `${_(msg`Table`)} ${tables.find((t) => t.id === blk.tableId)?.label ?? blk.tableId}`
 										: `${_(msg`Area`)} ${areas.find((a) => a.id === blk.areaId)?.name ?? blk.areaId}`
-									const startMinVal = blk.startMin ?? 0
-									const endMinVal = blk.endMin ?? 0
+									const { startMin: startMinVal, endMin: endMinVal } =
+										blockLocalWindow(blk, settings?.timeZone)
 									return (
 										<TableRow
 											key={blk.id}

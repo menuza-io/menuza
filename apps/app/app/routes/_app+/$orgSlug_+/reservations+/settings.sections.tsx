@@ -73,11 +73,13 @@ const COLOR_TOKENS: ReadonlyArray<{
 	{ token: '8', label: msg`8 · Lime` },
 ]
 
-function makeInitialDraftSections(): DraftSectionRow[] {
+function makeInitialDraftSections(
+	translate: (descriptor: MessageDescriptor) => string,
+): DraftSectionRow[] {
 	return [
-		{ name: 'Section A', colorToken: '1', tableIds: [] },
-		{ name: 'Section B', colorToken: '2', tableIds: [] },
-		{ name: 'Patio', colorToken: '3', tableIds: [] },
+		{ name: translate(msg`Section A`), colorToken: '1', tableIds: [] },
+		{ name: translate(msg`Section B`), colorToken: '2', tableIds: [] },
+		{ name: translate(msg`Patio`), colorToken: '3', tableIds: [] },
 	]
 }
 
@@ -97,8 +99,8 @@ export default function ReservationsSettingsSectionsRoute() {
 	// Create form state
 	const [newLayoutName, setNewLayoutName] = useState('')
 	const [newLayoutServiceId, setNewLayoutServiceId] = useState('')
-	const [draftSections, setDraftSections] = useState<DraftSectionRow[]>(
-		makeInitialDraftSections,
+	const [draftSections, setDraftSections] = useState<DraftSectionRow[]>(() =>
+		makeInitialDraftSections(_),
 	)
 
 	// Edit state
@@ -240,7 +242,7 @@ export default function ReservationsSettingsSectionsRoute() {
 			setLayouts((prev) => [...prev, created])
 			setNewLayoutName('')
 			setNewLayoutServiceId('')
-			setDraftSections(makeInitialDraftSections())
+			setDraftSections(makeInitialDraftSections(_))
 			setFeedbackMessage(_(msg`Section layout "${created.name}" created.`))
 		} catch (err) {
 			setErrorMessage(

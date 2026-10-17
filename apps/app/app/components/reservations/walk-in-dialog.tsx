@@ -21,6 +21,10 @@ import {
 	generateIdempotencyKey,
 	type LiveTableState,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	enumLabel,
+	LIVE_TABLE_STATUS_LABELS,
+} from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 
 export function WalkInDialog({
@@ -49,7 +53,7 @@ export function WalkInDialog({
 		moveNotices: DayMoveNotice[],
 	) => void
 }) {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
 	const [partySize, setPartySize] = useState(initialPartySize)
 	const [selectedTableId, setSelectedTableId] = useState<string>(
 		initialTableId ?? '',
@@ -190,7 +194,12 @@ export function WalkInDialog({
 							<option value="">{t`Auto-assign best open table`}</option>
 							{sortedTables.map((tbl) => (
 								<option key={tbl.tableId} value={tbl.tableId}>
-									{tbl.label} ({tbl.minCovers}-{tbl.maxCovers}) — {tbl.status}
+									{tbl.label} ({tbl.minCovers}-{tbl.maxCovers}) —{' '}
+									{enumLabel(
+										(d) => i18n._(d),
+										LIVE_TABLE_STATUS_LABELS,
+										tbl.status,
+									)}
 									{tbl.serverName ? ` [${tbl.serverName}]` : ''}
 								</option>
 							))}

@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
@@ -20,6 +21,14 @@ import {
 	transitionReservationStatus,
 	undoReservationTransition,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	COURSE_STAGE_LABELS,
+	DIETARY_LABELS,
+	enumLabel,
+	OCCASION_LABELS,
+	RESERVATION_STATUS_LABELS,
+	VIP_TIER_LABELS,
+} from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/today.ts'
 import { useReservationsLayoutData } from './_layout.tsx'
@@ -48,7 +57,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function ReservationsTodayRoute() {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
+	const label = (
+		labels: Record<string, MessageDescriptor>,
+		value: string | null | undefined,
+	) => enumLabel((d) => i18n._(d), labels, value)
 	const { orgSlug, canManage } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -70,6 +83,8 @@ export default function ReservationsTodayRoute() {
 		status: string
 		undoToken: string | null
 	} | null>(null)
+
+	const lastUndoStatusLabel = label(RESERVATION_STATUS_LABELS, lastUndo?.status)
 
 	const dayFeed = host.dayFeed
 	const stats = dayFeed?.stats
@@ -206,8 +221,8 @@ export default function ReservationsTodayRoute() {
 				>
 					<span>
 						<Trans>
-							Marked {lastUndo.guestName} as {lastUndo.status}. Undo available
-							for 60s.
+							Marked {lastUndo.guestName} as {lastUndoStatusLabel}. Undo
+							available for 60s.
 						</Trans>
 					</span>
 					<Button
@@ -362,7 +377,9 @@ export default function ReservationsTodayRoute() {
 										</button>
 										<div className="flex flex-wrap items-center gap-1">
 											{rsv.guest?.vipTier && rsv.guest.vipTier !== 'none' ? (
-												<Badge variant="default">{rsv.guest.vipTier}</Badge>
+												<Badge variant="default">
+													{label(VIP_TIER_LABELS, rsv.guest.vipTier)}
+												</Badge>
 											) : null}
 											{rsv.assignedTableLabels.length > 0 ? (
 												<Badge variant="outline">
@@ -373,7 +390,9 @@ export default function ReservationsTodayRoute() {
 													<Trans>Unassigned</Trans>
 												</Badge>
 											)}
-											<Badge variant="secondary">{rsv.status}</Badge>
+											<Badge variant="secondary">
+												{label(RESERVATION_STATUS_LABELS, rsv.status)}
+											</Badge>
 										</div>
 									</div>
 
@@ -394,11 +413,13 @@ export default function ReservationsTodayRoute() {
 												</Badge>
 											) : null}
 											{rsv.occasion ? (
-												<Badge variant="outline">{rsv.occasion}</Badge>
+												<Badge variant="outline">
+													{label(OCCASION_LABELS, rsv.occasion)}
+												</Badge>
 											) : null}
 											{rsv.dietaryCodes.map((c) => (
 												<Badge key={c} variant="outline">
-													{c}
+													{label(DIETARY_LABELS, c)}
 												</Badge>
 											))}
 										</div>
@@ -504,7 +525,9 @@ export default function ReservationsTodayRoute() {
 													{elapsedMin}m / {rsv.durationMin}m
 												</Badge>
 												{rsv.courseStage ? (
-													<Badge variant="outline">{rsv.courseStage}</Badge>
+													<Badge variant="outline">
+														{label(COURSE_STAGE_LABELS, rsv.courseStage)}
+													</Badge>
 												) : null}
 											</div>
 										</div>
@@ -587,7 +610,7 @@ export default function ReservationsTodayRoute() {
 											rsv.status === 'completed' ? 'secondary' : 'destructive'
 										}
 									>
-										{rsv.status}
+										{label(RESERVATION_STATUS_LABELS, rsv.status)}
 									</Badge>
 								</div>
 							))
@@ -638,6 +661,8 @@ export default function ReservationsTodayRoute() {
 				fallbackReservation={host.selectedReservation}
 				onClose={host.closeDetail}
 				client={host.client}
+				areas={host.dayFeed?.areas ?? []}
+				timeZone={host.timeZone}
 				tables={dayFeed?.tables ?? []}
 				canManage={canManage}
 				onUpdated={(rsv, notices) =>

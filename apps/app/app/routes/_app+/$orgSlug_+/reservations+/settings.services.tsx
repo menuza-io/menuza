@@ -1177,8 +1177,6 @@ export default function ReservationsSettingsServicesRoute() {
 								>
 									<option value="all">{_(msg`All channels`)}</option>
 									<option value="online">{_(msg`Online only`)}</option>
-									<option value="phone">{_(msg`Phone only`)}</option>
-									<option value="walk_in">{_(msg`Walk-in only`)}</option>
 								</select>
 							</div>
 							<Button
@@ -1236,7 +1234,11 @@ export default function ReservationsSettingsServicesRoute() {
 											<TableCell>{bucketVal} min</TableCell>
 											<TableCell>{rule.maxCovers ?? '—'}</TableCell>
 											<TableCell>{rule.maxParties ?? '—'}</TableCell>
-											<TableCell>{rule.channel ?? 'all'}</TableCell>
+											<TableCell>
+												{rule.channel === 'online'
+													? _(msg`Online only`)
+													: _(msg`All channels`)}
+											</TableCell>
 											<TableCell className="text-right">
 												{canWrite ? (
 													<Button

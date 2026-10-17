@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
 	assignReservationTable,
 	fetchBookDayConditional,
+	fetchReservationEvents,
 	normalizeDayFeedResponse,
 	saveSectionServerAssignments,
 	saveServiceNotes,
@@ -248,5 +249,70 @@ describe('book-api', () => {
 				method: 'PUT',
 			}),
 		)
+	})
+
+	it('sends service, area, source and tag filters and reads counters and move notices', async () => {
+		const conditional = vi.fn(async () => ({
+			status: 200,
+			etag: '"e"',
+			data: {
+				locationId: 'loc-1',
+				businessDate: '2026-04-20',
+				reservations: [],
+				counters: { parties: 3, covers: 11 },
+				moveNotices: [
+					{ reservationId: 'r1', fromTableIds: ['t1'], toTableIds: ['t2'] },
+				],
+			},
+		}))
+		const client = createMockClient(undefined, conditional)
+		const res = await fetchBookDayConditional(client, {
+			locationId: 'loc-1',
+			date: '2026-04-20',
+			serviceId: 'svc-1',
+			areaId: 'area-1',
+			source: 'phone',
+			tag: 'tag_acme_vip',
+		})
+		expect(conditional).toHaveBeenCalledWith(
+			'/operator/reservations/book/day',
+			expect.objectContaining({
+				query: {
+					locationId: 'loc-1',
+					date: '2026-04-20',
+					serviceId: 'svc-1',
+					areaId: 'area-1',
+					source: 'phone',
+					tag: 'tag_acme_vip',
+				},
+			}),
+		)
+		if (res.status !== 200) throw new Error('expected 200')
+		expect(res.data.counters).toEqual({ parties: 3, covers: 11 })
+		expect(res.data.moveNotices).toHaveLength(1)
+		expect(res.data.moveNotices[0]).toMatchObject({
+			reservationId: 'r1',
+			toTableIds: ['t2'],
+		})
+	})
+
+	it('loads reservation history from the events endpoint', async () => {
+		const client = createMockClient(async () => ({
+			events: [
+				{
+					id: 'ev1',
+					type: 'seated',
+					actorKind: 'operator',
+					at: 1_790_000_000_000,
+				},
+			],
+		}))
+		const entries = await fetchReservationEvents(client, 'rsv 1')
+		expect(client.request).toHaveBeenCalledWith(
+			'/operator/reservations/book/reservations/rsv%201/events',
+			expect.anything(),
+		)
+		expect(entries).toHaveLength(1)
+		expect(entries[0]).toMatchObject({ id: 'ev1', action: 'seated' })
 	})
 })

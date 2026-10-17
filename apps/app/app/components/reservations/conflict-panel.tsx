@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
@@ -17,6 +18,11 @@ import {
 	type DayMoveNotice,
 	type DayReservationView,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	DAY_CONFLICT_REASON_LABELS,
+	enumLabel,
+	MOVE_NOTICE_REASON_LABELS,
+} from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import { type RsvTableRecord } from '#app/utils/reservations/setup-api.ts'
 
@@ -48,7 +54,24 @@ export function ConflictPanel({
 	) => void
 	onClearMoveNotices?: () => void
 }) {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
+	const label = (
+		labels: Record<string, MessageDescriptor>,
+		value: string | null | undefined,
+	) => enumLabel((d) => i18n._(d), labels, value)
+	const tableLabelById = new Map(tables.map((tbl) => [tbl.id, tbl.label]))
+	const conflictMessage = (conflict: DayConflictNotice): string => {
+		const tableNames = conflict.tableIds
+			.map((id) => tableLabelById.get(id) ?? id)
+			.join(', ')
+		if (conflict.reason === 'table_blocked') {
+			return t`Table ${tableNames} is blocked during this booking`
+		}
+		if (conflict.reason === 'table_overlap') {
+			return t`Overlaps with another booking on ${tableNames}`
+		}
+		return label(DAY_CONFLICT_REASON_LABELS, conflict.reason)
+	}
 	const [busyId, setBusyId] = useState<string | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [tablePicks, setTablePicks] = useState<Record<string, string>>({})
@@ -119,14 +142,14 @@ export function ConflictPanel({
 								<Trans>No active table or schedule conflicts.</Trans>
 							</div>
 						) : (
-							conflicts.map((conflict) => {
+							conflicts.map((conflict, conflictIndex) => {
 								const pickedTableId =
 									tablePicks[conflict.reservationId] ??
 									conflict.suggestedTableIds[0] ??
 									''
 								return (
 									<div
-										key={`${conflict.reservationId}-${conflict.reason}`}
+										key={`${conflict.reservationId}-${conflict.reason}-${conflictIndex}`}
 										className="flex flex-col gap-2 rounded-lg border border-red-300 bg-red-50/50 p-3 text-xs dark:border-red-900 dark:bg-red-950/30"
 										data-testid={`conflict-item-${conflict.reservationId}`}
 									>
@@ -135,9 +158,13 @@ export function ConflictPanel({
 												{conflict.guestName} ({conflict.partySize}{' '}
 												<Trans>guests</Trans>) • {conflict.hhmm}
 											</div>
-											<Badge variant="destructive">{conflict.reason}</Badge>
+											<Badge variant="destructive">
+												{label(DAY_CONFLICT_REASON_LABELS, conflict.reason)}
+											</Badge>
 										</div>
-										<p className="text-muted-foreground">{conflict.message}</p>
+										<p className="text-muted-foreground">
+											{conflictMessage(conflict)}
+										</p>
 
 										{canManage ? (
 											<div className="flex flex-wrap items-center gap-2 pt-1">
@@ -349,7 +376,9 @@ export function ConflictPanel({
 											{notice.toTableLabels.join(', ') || t`Unassigned`}
 										</Badge>
 									</div>
-									<p className="text-muted-foreground">{notice.reason}</p>
+									<p className="text-muted-foreground">
+										{label(MOVE_NOTICE_REASON_LABELS, notice.reason)}
+									</p>
 								</div>
 							))
 						)}

@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
@@ -21,7 +22,9 @@ import {
 	type DayMoveNotice,
 	type DayReservationView,
 	fetchReservationDetail,
+	fetchReservationEvents,
 	markReservationRunningLate,
+	type ReservationAuditEntry,
 	type ReservationDetailResponse,
 	transitionReservationStatus,
 	undoReservationTransition,
@@ -29,8 +32,22 @@ import {
 	updateReservationContactStatus,
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	ACTOR_KIND_LABELS,
+	CHANNEL_LABELS,
+	DIETARY_LABELS,
+	enumLabel,
+	MOVE_NOTICE_REASON_LABELS,
+	EVENT_TYPE_LABELS,
+	OCCASION_LABELS,
+	RESERVATION_STATUS_LABELS,
+	VIP_TIER_LABELS,
+} from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
-import { type RsvTableRecord } from '#app/utils/reservations/setup-api.ts'
+import {
+	type RsvAreaRecord,
+	type RsvTableRecord,
+} from '#app/utils/reservations/setup-api.ts'
 
 const COURSE_STAGES = [
 	{ value: 'seated', label: msg`Seated` },
@@ -64,6 +81,8 @@ export function DetailSheet({
 	onClose,
 	client,
 	tables,
+	areas = [],
+	timeZone,
 	canManage = true,
 	onUpdated,
 }: {
@@ -72,6 +91,9 @@ export function DetailSheet({
 	onClose: () => void
 	client: ReservationsScopedClient
 	tables: RsvTableRecord[]
+	areas?: RsvAreaRecord[]
+	/** Time zone of the location, used for history timestamps. */
+	timeZone?: string
 	canManage?: boolean
 	onUpdated: (
 		reservation: DayReservationView,
@@ -82,6 +104,7 @@ export function DetailSheet({
 	const open = Boolean(reservationId)
 
 	const [detail, setDetail] = useState<ReservationDetailResponse | null>(null)
+	const [events, setEvents] = useState<ReservationAuditEntry[] | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [busy, setBusy] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -106,6 +129,27 @@ export function DetailSheet({
 	const [durationEdit, setDurationEdit] = useState<number>(90)
 
 	const reservation = detail?.reservation ?? fallbackReservation
+
+	const label = (
+		labels: Record<string, MessageDescriptor>,
+		value: string | null | undefined,
+	) => enumLabel((d) => i18n._(d), labels, value)
+
+	const formatTimestamp = (ms: number) => {
+		if (!ms) return ''
+		try {
+			return i18n.date(new Date(ms), {
+				dateStyle: 'medium',
+				timeStyle: 'short',
+				...(timeZone ? { timeZone } : {}),
+			})
+		} catch {
+			return i18n.date(new Date(ms), {
+				dateStyle: 'medium',
+				timeStyle: 'short',
+			})
+		}
+	}
 
 	// Fields the operator edited and has not saved. Incoming props and polls
 	// must never overwrite them.
@@ -137,13 +181,18 @@ export function DetailSheet({
 	const loadDetail = useCallback(async () => {
 		if (!reservationId) {
 			setDetail(null)
+			setEvents(null)
 			return
 		}
 		setLoading(true)
 		setError(null)
 		try {
-			const res = await fetchReservationDetail(client, reservationId)
+			const [res, history] = await Promise.all([
+				fetchReservationDetail(client, reservationId),
+				fetchReservationEvents(client, reservationId).catch(() => null),
+			])
 			setDetail(res)
+			setEvents(history)
 			syncFormFromReservation(res.reservation)
 		} catch (err) {
 			if (fallbackRef.current) {
@@ -176,6 +225,7 @@ export function DetailSheet({
 			void loadDetail()
 		} else {
 			setDetail(null)
+			setEvents(null)
 			setError(null)
 		}
 	}, [loadDetail, reservationId])
@@ -365,7 +415,21 @@ export function DetailSheet({
 		}
 	}
 
+	const statusLabel = label(RESERVATION_STATUS_LABELS, reservation?.status)
 	const guest = detail?.guest ?? reservation?.guest ?? null
+	const history = events ?? detail?.audit ?? []
+	const diningAreaName =
+		reservation?.areaName ??
+		areas.find((area) => area.id === reservation?.areaId)?.name ??
+		null
+	const tableLabelById = new Map(tables.map((tbl) => [tbl.id, tbl.label]))
+	const tableLabels = (value: unknown): string =>
+		Array.isArray(value)
+			? value
+					.filter((v): v is string => typeof v === 'string')
+					.map((id) => tableLabelById.get(id) ?? id)
+					.join(', ')
+			: ''
 	const activeTables = tables.filter((tbl) => tbl.isActive)
 
 	return (
@@ -400,7 +464,7 @@ export function DetailSheet({
 									}
 									data-testid="detail-status-badge"
 								>
-									{reservation.status}
+									{label(RESERVATION_STATUS_LABELS, reservation.status)}
 								</Badge>
 							</>
 						) : null}
@@ -438,7 +502,7 @@ export function DetailSheet({
 						>
 							<span>
 								<Trans>
-									Status changed to {reservation.status}. You can undo within 60
+									Status changed to {statusLabel}. You can undo within 60
 									seconds.
 								</Trans>
 							</span>
@@ -703,6 +767,65 @@ export function DetailSheet({
 								</div>
 							) : null}
 
+							{/* Booking facts */}
+							<dl
+								className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg border p-3 text-xs"
+								data-testid="detail-facts"
+							>
+								<dt className="text-muted-foreground">
+									<Trans>Source</Trans>
+								</dt>
+								<dd data-testid="detail-source">
+									{label(CHANNEL_LABELS, reservation.channel) || '—'}
+								</dd>
+								<dt className="text-muted-foreground">
+									<Trans>Occasion</Trans>
+								</dt>
+								<dd data-testid="detail-occasion">
+									{label(OCCASION_LABELS, reservation.occasion) || '—'}
+								</dd>
+								<dt className="text-muted-foreground">
+									<Trans>Dining area</Trans>
+								</dt>
+								<dd data-testid="detail-dining-area">
+									{diningAreaName ?? '—'}
+								</dd>
+								<dt className="text-muted-foreground">
+									<Trans>Table</Trans>
+								</dt>
+								<dd data-testid="detail-tables">
+									{reservation.assignedTableLabels.length > 0
+										? reservation.assignedTableLabels.join(', ')
+										: t`Unassigned`}
+								</dd>
+								{reservation.dietaryNotes ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Dietary notes</Trans>
+										</dt>
+										<dd data-testid="detail-dietary-notes">
+											{reservation.dietaryNotes}
+										</dd>
+									</>
+								) : null}
+								{reservation.guestNotes ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Guest notes</Trans>
+										</dt>
+										<dd>{reservation.guestNotes}</dd>
+									</>
+								) : null}
+								{reservation.internalNotes ? (
+									<>
+										<dt className="text-muted-foreground">
+											<Trans>Internal notes</Trans>
+										</dt>
+										<dd>{reservation.internalNotes}</dd>
+									</>
+								) : null}
+							</dl>
+
 							{/* Guest CRM Card */}
 							<div
 								className="bg-muted/20 flex flex-col gap-2 rounded-lg border p-3 text-xs"
@@ -715,7 +838,7 @@ export function DetailSheet({
 									<div className="flex flex-wrap items-center gap-1">
 										{guest?.vipTier && guest.vipTier !== 'none' ? (
 											<Badge variant="default" data-testid="detail-vip-badge">
-												{guest.vipTier}
+												{label(VIP_TIER_LABELS, guest.vipTier)}
 											</Badge>
 										) : null}
 										<Badge variant="outline">
@@ -738,7 +861,7 @@ export function DetailSheet({
 									<div className="flex flex-wrap gap-1">
 										{reservation.dietaryCodes.map((code) => (
 											<Badge key={code} variant="secondary">
-												{code}
+												{label(DIETARY_LABELS, code)}
 											</Badge>
 										))}
 									</div>
@@ -905,41 +1028,64 @@ export function DetailSheet({
 													{h.businessDate} {h.hhmm} ({h.partySize}{' '}
 													<Trans>guests</Trans>)
 												</span>
-												<Badge variant="outline">{h.status}</Badge>
+												<Badge variant="outline">
+													{label(RESERVATION_STATUS_LABELS, h.status)}
+												</Badge>
 											</div>
 										))}
 									</div>
 								</div>
 							) : null}
 
-							{/* Audit Trail */}
-							{detail?.audit && detail.audit.length > 0 ? (
+							{/* Change history */}
+							{history.length > 0 ? (
 								<div
 									className="flex flex-col gap-1.5 rounded-lg border p-3 text-xs"
 									data-testid="detail-audit-list"
 								>
 									<span className="font-semibold">
-										<Trans>Audit Trail</Trans>
+										<Trans>Change history</Trans>
 									</span>
-									<div className="max-h-40 divide-y overflow-y-auto">
-										{detail.audit.map((entry) => (
-											<div
-												key={entry.id}
-												className="flex items-center justify-between py-1"
-											>
-												<div>
-													<span className="font-medium">{entry.action}</span>
-													{entry.reason ? (
-														<span className="text-muted-foreground ms-1">
-															({entry.reason})
+									<div className="max-h-48 divide-y overflow-y-auto">
+										{history.map((entry) => {
+											const data = entry.afterJson ?? {}
+											const from = tableLabels(data.fromTableIds)
+											const to = tableLabels(data.toTableIds)
+											return (
+												<div
+													key={entry.id}
+													className="flex items-start justify-between gap-3 py-1"
+													data-testid="detail-audit-entry"
+												>
+													<div>
+														<span className="font-medium">
+															{label(EVENT_TYPE_LABELS, entry.action)}
 														</span>
-													) : null}
+														{from || to ? (
+															<span className="text-muted-foreground ms-1">
+																({from || t`Unassigned`} → {to || t`Unassigned`}
+																)
+															</span>
+														) : null}
+														{entry.reason ? (
+															<span className="text-muted-foreground ms-1">
+																(
+																{label(MOVE_NOTICE_REASON_LABELS, entry.reason)}
+																)
+															</span>
+														) : null}
+													</div>
+													<div className="text-muted-foreground text-end">
+														<div>
+															{label(ACTOR_KIND_LABELS, entry.actorType)}
+														</div>
+														<div data-testid="detail-audit-time">
+															{formatTimestamp(entry.createdAt)}
+														</div>
+													</div>
 												</div>
-												<span className="text-muted-foreground">
-													{entry.actorType}
-												</span>
-											</div>
-										))}
+											)
+										})}
 									</div>
 								</div>
 							) : null}
