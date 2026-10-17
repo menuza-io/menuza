@@ -38,6 +38,7 @@ import { toast } from 'sonner'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
+import { focusFirstInvalidField } from '#app/utils/staffing/staff-form-focus.ts'
 import {
 	minorToInput,
 	parseMoneyToMinor,
@@ -466,7 +467,10 @@ function AddPositionForm({
 	async function add(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
 		setSubmitted(true)
-		if (hasErrors(validate())) return
+		if (hasErrors(validate())) {
+			focusFirstInvalidField(event.currentTarget)
+			return
+		}
 		const rateMinor =
 			canSetPay && amount.trim() ? parseMoneyToMinor(amount) : null
 		const result = await action.run(() =>
@@ -789,8 +793,11 @@ function RateChangeForm({
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
 		setSubmitted(true)
+		if (hasErrors(validate())) {
+			focusFirstInvalidField(event.currentTarget)
+			return
+		}
 		const minor = parseMoneyToMinor(amount)
-		if (hasErrors(validate()) || minor === null) return
 		const result = await action.run(() =>
 			client.request(`/${staffId}/jobs/${job.id}/rate-change`, {
 				method: 'POST',

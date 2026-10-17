@@ -15,11 +15,18 @@ export async function getNoteFavoriteUserIds(noteId: string) {
 }
 
 export async function invalidateFavoritesCaches(userIds: string[]) {
-	await Promise.all(
+	const results = await Promise.allSettled(
 		[...new Set(userIds)].map((userId) => invalidateUserFavoritesCache(userId)),
 	)
+	if (results.some((result) => result.status === 'rejected')) {
+		console.error('Failed to invalidate note favorites cache')
+	}
 }
 
 export async function invalidateNoteFavoritesCaches(noteId: string) {
-	await invalidateFavoritesCaches(await getNoteFavoriteUserIds(noteId))
+	try {
+		await invalidateFavoritesCaches(await getNoteFavoriteUserIds(noteId))
+	} catch {
+		console.error('Failed to look up note favorites for cache invalidation')
+	}
 }

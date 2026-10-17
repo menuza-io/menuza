@@ -39,6 +39,7 @@ import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
 import { requireStaffingAccess } from '#app/utils/staffing/access.server.ts'
 import { STAFF_SECTION_REQUIREMENTS } from '#app/utils/staffing/sections.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
+import { focusFirstInvalidField } from '#app/utils/staffing/staff-form-focus.ts'
 import {
 	minorToInput,
 	parseMoneyToMinor,
@@ -313,7 +314,10 @@ function PositionDialog({
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
 		setSubmitted(true)
-		if (hasErrors(validate())) return
+		if (hasErrors(validate())) {
+			focusFirstInvalidField(event.currentTarget)
+			return
+		}
 		let defaultRateMinor: number | null | undefined
 		if (canSetRate) {
 			defaultRateMinor = rate.trim() === '' ? null : parseMoneyToMinor(rate)

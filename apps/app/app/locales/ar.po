@@ -369,7 +369,7 @@ msgid "{0, plural, one {Reopen # card?} other {Reopen # cards?}}"
 msgstr "{0, plural, one {إعادة فتح بطاقة واحدة؟} two {إعادة فتح بطاقتين؟} few {إعادة فتح # بطاقات؟} many {إعادة فتح # بطاقة؟} other {إعادة فتح # بطاقة؟}}"
 
 #. placeholder {0}: selectedMemberIds.length
-#: app/components/note/share-note-button.tsx:327
+#: app/components/note/share-note-button.tsx:371
 msgid "{0, plural, one {Share with 1 member} other {Share with # members}}"
 msgstr "{0, plural, one {مشاركة مع عضو واحد} other {مشاركة مع # أعضاء}}"
 
@@ -649,7 +649,7 @@ msgstr "{flagged, plural, one {# تحذير:} two {# تحذيران:} few {# ت�
 msgid "{formCount} forms"
 msgstr "{formCount} نموذج"
 
-#: app/components/staff/positions-tab.tsx:697
+#: app/components/staff/positions-tab.tsx:704
 msgid "{from} to {to}"
 msgstr "من {from} إلى {to}"
 
@@ -876,11 +876,11 @@ msgstr "{pairedName} جاهز. يمكن للموظفين تسجيل الحضور
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخصًا}}"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:93
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:98
 msgid "{positionName} archived."
 msgstr "تمت أرشفة {positionName}."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:94
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:99
 msgid "{positionName} restored."
 msgstr "تمت استعادة {positionName}."
 
@@ -1517,12 +1517,12 @@ msgstr "نشط"
 msgid "Active"
 msgstr "نشط"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:684
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "Activity"
 msgstr "النشاط"
 
 #: app/components/staff/labor-policy-editor.tsx:1371
-#: app/components/staff/positions-tab.tsx:369
+#: app/components/staff/positions-tab.tsx:375
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:195
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:140
@@ -1553,7 +1553,7 @@ msgstr "أضف كتلة لترى بريدك الإلكتروني يتشكّل."
 msgid "Add a break"
 msgstr "إضافة استراحة"
 
-#: app/components/staff/onboarding/certificate-form.tsx:85
+#: app/components/staff/onboarding/certificate-form.tsx:86
 msgid "Add a certificate"
 msgstr "إضافة شهادة"
 
@@ -1606,7 +1606,7 @@ msgstr "أضف مسمى الوظيفة."
 msgid "Add a last name."
 msgstr "أضف اسم العائلة."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:462
+#: app/components/settings/cards/organization/announcement-sheet.tsx:480
 msgid "Add a link"
 msgstr "إضافة رابط"
 
@@ -1624,13 +1624,13 @@ msgstr "أضف رقمًا أو بريدًا إلكترونيًا لبدء إرس
 msgid "Add a phone number or an email."
 msgstr "أضف رقم هاتف أو بريدًا إلكترونيًا."
 
-#: app/components/staff/positions-tab.tsx:450
-#: app/components/staff/positions-tab.tsx:507
-#: app/components/staff/positions-tab.tsx:510
+#: app/components/staff/positions-tab.tsx:461
+#: app/components/staff/positions-tab.tsx:509
+#: app/components/staff/positions-tab.tsx:512
 msgid "Add a position"
 msgstr "إضافة منصب"
 
-#: app/components/staff/positions-tab.tsx:434
+#: app/components/staff/positions-tab.tsx:445
 msgid "Add a position on the Positions page first."
 msgstr "أضف منصبًا من صفحة المناصب أولًا."
 
@@ -1638,7 +1638,7 @@ msgstr "أضف منصبًا من صفحة المناصب أولًا."
 msgid "Add a question"
 msgstr "إضافة سؤال"
 
-#: app/components/staff/positions-tab.tsx:791
+#: app/utils/staffing/staff-validation.ts:112
 msgid "Add a reason for the change."
 msgstr "أضف سببًا للتغيير."
 
@@ -1717,7 +1717,7 @@ msgstr "إضافة الموظفين وتعديلهم، وإعادة تعيين �
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "إضافة بطاقات الدوام وتعديلها وتصدير الساعات. يشمل عرض بطاقات الدوام."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:525
+#: app/components/settings/cards/organization/announcement-sheet.tsx:552
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
 msgid "Add announcement"
 msgstr "إضافة إعلان"
@@ -1764,7 +1764,7 @@ msgstr "إضافة كتلة"
 msgid "Add card"
 msgstr "إضافة بطاقة"
 
-#: app/components/staff/onboarding/certificate-form.tsx:149
+#: app/components/staff/onboarding/certificate-form.tsx:150
 #: app/components/staff/onboarding/certificates-tab.tsx:160
 msgid "Add certificate"
 msgstr "إضافة شهادة"
@@ -1819,7 +1819,7 @@ msgstr "إضافة استراحة وجبة"
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
-#: app/components/note/share-note-button.tsx:253
+#: app/components/note/share-note-button.tsx:278
 msgid "Add Members"
 msgstr "إضافة أعضاء"
 
@@ -1844,7 +1844,7 @@ msgstr "إضافة الخطوات التالية"
 msgid "Add note"
 msgstr "إضافة ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:847
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:853
 msgid "Add notes, links, or media to capture what matters."
 msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما يهمك."
 
@@ -1858,7 +1858,7 @@ msgstr "إضافة رقم"
 msgid "Add one in your business settings first."
 msgstr "أضف واحدًا في إعدادات نشاطك التجاري أولًا."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:279
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:304
 msgid "Add option"
 msgstr "إضافة خيار"
 
@@ -1880,9 +1880,9 @@ msgstr "إضافة رقم هاتف"
 msgid "Add photo or video"
 msgstr "إضافة صورة أو فيديو"
 
-#: app/components/staff/positions-tab.tsx:594
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:113
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:178
+#: app/components/staff/positions-tab.tsx:598
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:118
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:183
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:377
 msgid "Add position"
 msgstr "إضافة منصب"
@@ -1978,7 +1978,7 @@ msgstr "أضف رابط النموذج."
 msgid "Add the people who work here with their positions and workplaces. They do not need a login to be on your team."
 msgstr "أضف الأشخاص الذين يعملون هنا مع مناصبهم وأماكن عملهم. لا يحتاجون إلى حساب لتسجيل الدخول ليكونوا ضمن فريقك."
 
-#: app/components/staff/positions-tab.tsx:361
+#: app/components/staff/positions-tab.tsx:367
 msgid "Add them back to the workplace."
 msgstr "أضفهم إلى مكان العمل من جديد."
 
@@ -2009,8 +2009,8 @@ msgstr "إضافة بطاقة دوام"
 msgid "Add time off"
 msgstr "إضافة إجازة"
 
-#: app/components/staff/positions-tab.tsx:345
 #: app/components/staff/positions-tab.tsx:351
+#: app/components/staff/positions-tab.tsx:357
 msgid "Add to a workplace"
 msgstr "إضافة إلى مكان عمل"
 
@@ -2058,7 +2058,7 @@ msgstr "تمت إضافة القسم"
 msgid "Added to new hires"
 msgstr "تُضاف للموظفين الجدد"
 
-#: app/components/staff/positions-tab.tsx:335
+#: app/components/staff/positions-tab.tsx:341
 msgid "Added to the workplace."
 msgstr "تمت الإضافة إلى مكان العمل."
 
@@ -2069,8 +2069,8 @@ msgstr "إضافة قسم"
 #: app/components/staff/notes-tab.tsx:111
 #: app/components/staff/onboarding/onboarding-tab.tsx:170
 #: app/components/staff/onboarding/task-form.tsx:147
-#: app/components/staff/positions-tab.tsx:369
-#: app/components/staff/positions-tab.tsx:592
+#: app/components/staff/positions-tab.tsx:375
+#: app/components/staff/positions-tab.tsx:596
 #: app/components/staff/timesheets/card-sheet.tsx:565
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:196
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:147
@@ -2145,7 +2145,7 @@ msgstr "بعد {days} يوم"
 msgid "After someone clocks in, briefly show their next shifts. Only works once scheduling is on."
 msgstr "بعد تسجيل الحضور، اعرض ورديات الشخص القادمة لثوانٍ. يعمل فقط بعد تفعيل الجدولة."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:420
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:445
 msgid "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 msgstr "بعد انتهاء التكرارات، تتبع المكالمة وصلة «بدون اختيار»، أو يُنهى الاتصال إذا لم تكن موصولة."
 
@@ -2189,7 +2189,7 @@ msgid "AI assistant"
 msgstr "المساعد الذكي"
 
 #: app/components/ai/global-ai-panel.tsx:341
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:685
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:691
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
 
@@ -2302,7 +2302,7 @@ msgstr "جميع الأرقام المخصصة لنشاطك التجاري قي�
 msgid "All of this workplace's sales are online orders, so the share can be judged against the target."
 msgstr "جميع مبيعات مكان العمل هذا طلبات عبر الإنترنت، لذا يمكن تقييم النسبة مقارنةً بالهدف."
 
-#: app/components/note/share-note-button.tsx:193
+#: app/components/note/share-note-button.tsx:212
 msgid "All organization members can view this note"
 msgstr "يمكن لجميع أعضاء المنظمة عرض هذه الملاحظة"
 
@@ -2656,7 +2656,7 @@ msgstr "الموافقة على التبديل أو التغطية تعدّل ا
 msgid "Arabic"
 msgstr "العربية"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:249
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "أرشفة"
 
@@ -2666,7 +2666,7 @@ msgstr "مؤرشف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:199
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 msgid "Archived"
 msgstr "مؤرشف"
 
@@ -3514,7 +3514,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/my-schedule/time-off-sheet.tsx:227
 #: app/components/note/comment-input.tsx:261
 #: app/components/note/comment-item.tsx:299
-#: app/components/note/share-note-button.tsx:317
+#: app/components/note/share-note-button.tsx:357
 #: app/components/phone-agent/call-detail-sheet.tsx:588
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:773
 #: app/components/phone-agent/phone-number-dialogs.tsx:446
@@ -3523,7 +3523,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
 #: app/components/roles/tenant-role-access-manager.tsx:797
 #: app/components/roles/tenant-role-access-manager.tsx:1256
-#: app/components/settings/cards/organization/announcement-sheet.tsx:519
+#: app/components/settings/cards/organization/announcement-sheet.tsx:546
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
 #: app/components/settings/email-form.tsx:82
@@ -3539,14 +3539,14 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/staff/labor/sales-import-dialog.tsx:243
 #: app/components/staff/labor/tip-settings-dialog.tsx:288
 #: app/components/staff/notes-tab.tsx:196
-#: app/components/staff/onboarding/certificate-form.tsx:158
+#: app/components/staff/onboarding/certificate-form.tsx:159
 #: app/components/staff/onboarding/onboarding-tab.tsx:181
 #: app/components/staff/onboarding/remove-dialog.tsx:52
 #: app/components/staff/onboarding/task-form.tsx:155
 #: app/components/staff/onboarding/task-row.tsx:190
-#: app/components/staff/positions-tab.tsx:290
-#: app/components/staff/positions-tab.tsx:603
-#: app/components/staff/positions-tab.tsx:860
+#: app/components/staff/positions-tab.tsx:296
+#: app/components/staff/positions-tab.tsx:610
+#: app/components/staff/positions-tab.tsx:869
 #: app/components/staff/schedule-link-section.tsx:140
 #: app/components/staff/schedule/availability-sheet.tsx:199
 #: app/components/staff/schedule/copy-week-dialog.tsx:228
@@ -3567,12 +3567,12 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1093
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:454
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:130
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:153
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:250
@@ -3705,7 +3705,7 @@ msgstr "التصنيف"
 msgid "Center"
 msgstr "الوسط"
 
-#: app/components/staff/onboarding/certificate-form.tsx:89
+#: app/components/staff/onboarding/certificate-form.tsx:90
 msgid "Certificate"
 msgstr "الشهادة"
 
@@ -3773,8 +3773,8 @@ msgstr "تغيير كلمة المرور"
 msgid "Change pay rates"
 msgstr "تغيير الأجور"
 
-#: app/components/staff/positions-tab.tsx:716
-#: app/components/staff/positions-tab.tsx:815
+#: app/components/staff/positions-tab.tsx:723
+#: app/components/staff/positions-tab.tsx:822
 msgid "Change rate"
 msgstr "تغيير الأجر"
 
@@ -3996,13 +3996,13 @@ msgid "Choose a person"
 msgstr "اختر شخصًا"
 
 #: app/components/hiring/hire-dialog.tsx:233
-#: app/components/staff/positions-tab.tsx:531
+#: app/components/staff/positions-tab.tsx:533
 #: app/components/staff/timesheets/card-fields.tsx:254
 msgid "Choose a position"
 msgstr "اختر منصبًا"
 
 #: app/components/hiring/hire-dialog.tsx:94
-#: app/components/staff/positions-tab.tsx:460
+#: app/utils/staffing/staff-validation.ts:90
 msgid "Choose a position."
 msgstr "اختر منصبًا."
 
@@ -4419,10 +4419,6 @@ msgstr "الختام"
 msgid "Closing time must be after opening time."
 msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 
-#: app/components/phone-agent/settings-page.tsx:154
-msgid "Use a time zone name such as America/New_York."
-msgstr "استخدم اسم منطقة زمنية مثل America/New_York."
-
 #: app/components/settings/cards/organization/site-card.tsx:427
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
@@ -4488,7 +4484,7 @@ msgstr "تعليق"
 msgid "Comment actions"
 msgstr "إجراءات التعليق"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:683
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:689
 msgid "Comments"
 msgstr "التعليقات"
 
@@ -4735,7 +4731,7 @@ msgstr "جهات الاتصال"
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:425
+#: app/components/settings/cards/organization/announcement-sheet.tsx:434
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:613
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3290
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3480
@@ -4791,7 +4787,7 @@ msgstr "التباين"
 msgid "Contributors"
 msgstr "المساهمون"
 
-#: app/components/note/share-note-button.tsx:180
+#: app/components/note/share-note-button.tsx:199
 msgid "Control who can access this note"
 msgstr "التحكم في من يمكنه الوصول إلى هذه الملاحظة"
 
@@ -5346,7 +5342,7 @@ msgstr "Ctrl أو Cmd مع C ينسخ الوردية. ومع V يلصقها في
 
 #: app/components/hiring/job-editor.tsx:747
 #: app/components/staff/timesheets/payroll-summary.tsx:175
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:431
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:432
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:246
 msgid "Currency"
 msgstr "العملة"
@@ -5377,7 +5373,7 @@ msgstr "كلمة المرور الحالية"
 msgid "Current Plan"
 msgstr "الخطة الحالية"
 
-#: app/components/staff/positions-tab.tsx:150
+#: app/components/staff/positions-tab.tsx:156
 msgid "Current rates and the full history. Each time you view these, it is recorded."
 msgstr "الأجور الحالية والسجل الكامل. يتم تسجيل كل مرة تعرض فيها هذه البيانات."
 
@@ -5713,7 +5709,7 @@ msgstr "الأجر الافتراضي بالساعة"
 msgid "Default language"
 msgstr "اللغة الافتراضية"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:430
+#: app/components/settings/cards/organization/announcement-sheet.tsx:439
 msgid "Default language required"
 msgstr "اللغة الافتراضية مطلوبة"
 
@@ -5750,8 +5746,8 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/staff/schedule/templates-dialog.tsx:250
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:469
 #: app/routes/_app+/$orgSlug_+/media.tsx:1591
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1047
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1105
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1053
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1112
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
@@ -5880,7 +5876,7 @@ msgstr "حذف الرسالة؟"
 msgid "Delete node"
 msgstr "حذف العقدة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1082
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1089
 msgid "Delete note?"
 msgstr "هل تريد حذف الملاحظة؟"
 
@@ -5921,7 +5917,7 @@ msgstr "حذف القاعدة"
 msgid "Delete social link"
 msgstr "حذف رابط التواصل الاجتماعي"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:361
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:386
 msgid "Delete step"
 msgstr "حذف الخطوة"
 
@@ -6188,7 +6184,7 @@ msgstr "النطاق"
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:345
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:370
 msgid "Don't replay"
 msgstr "عدم الإعادة"
 
@@ -6203,6 +6199,7 @@ msgstr "عدم إعادة المحاولة"
 #: app/components/hiring/applicant-labels.ts:41
 #: app/components/hiring/hire-dialog.tsx:156
 #: app/components/kiosk/kiosk-screens.tsx:720
+#: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -6440,7 +6437,7 @@ msgstr "مثل أسماء المنتجات أو العلامات التجاري�
 msgid "e.g. Sarah from Marketing"
 msgstr "مثال: سارة من التسويق"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:177
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:202
 msgid "e.g. Speak with our team"
 msgstr "مثل التحدث مع فريقنا"
 
@@ -6476,7 +6473,7 @@ msgstr "كل يوم على حدة"
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "ساعات ومناوبات كل يوم المنشورة بجانب الساعات المعمول بها وبطاقات الوقت التي بدأت، مع الفرق."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:237
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:262
 msgid "Each option gets its own connection on the canvas. Callers can press the key or say the option or one of its words."
 msgstr "يحصل كل خيار على اتصال خاص به في اللوحة. يمكن للمتصلين الضغط على المفتاح أو نطق الخيار أو إحدى كلماته."
 
@@ -6518,9 +6515,9 @@ msgstr "انصراف مبكر"
 #: app/components/staff/timesheets/review-queue.tsx:439
 #: app/components/workspace-breadcrumb.tsx:23
 #: app/routes/_app+/$orgSlug_+/notes-table.tsx:92
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:990
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:996
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:235
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
@@ -6531,7 +6528,7 @@ msgstr "تعديل"
 msgid "Edit \"{ruleTitle}\""
 msgstr "تعديل \"{ruleTitle}\""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:325
+#: app/components/settings/cards/organization/announcement-sheet.tsx:327
 msgid "Edit announcement"
 msgstr "تعديل الإعلان"
 
@@ -6539,7 +6536,7 @@ msgstr "تعديل الإعلان"
 msgid "Edit card"
 msgstr "تعديل البطاقة"
 
-#: app/components/staff/onboarding/certificate-form.tsx:85
+#: app/components/staff/onboarding/certificate-form.tsx:86
 msgid "Edit certificate"
 msgstr "تعديل الشهادة"
 
@@ -6582,7 +6579,7 @@ msgstr "تعديل التخطيط"
 msgid "Edit message"
 msgstr "تعديل الرسالة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:861
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:867
 msgid "Edit note"
 msgstr "تعديل الملاحظة"
 
@@ -6785,7 +6782,7 @@ msgstr "تمكين الدفع المستضاف"
 msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:373
+#: app/components/settings/cards/organization/announcement-sheet.tsx:382
 msgid "Enabled"
 msgstr "مفعّل"
 
@@ -6884,7 +6881,7 @@ msgstr "أدخل رقم الهاتف كاملًا مع رمز الدولة، م�
 msgid "Enter a last name."
 msgstr "أدخل اسم العائلة."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:311
+#: app/utils/staffing/staff-validation.ts:72
 msgid "Enter a name."
 msgstr "أدخل اسمًا."
 
@@ -6917,9 +6914,9 @@ msgstr "أدخل مبلغًا مثل 12.50."
 msgid "Enter an amount like 1250.50."
 msgstr "أدخل مبلغًا مثل 1250.50."
 
-#: app/components/staff/positions-tab.tsx:467
-#: app/components/staff/positions-tab.tsx:787
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:320
+#: app/utils/staffing/staff-validation.ts:78
+#: app/utils/staffing/staff-validation.ts:94
+#: app/utils/staffing/staff-validation.ts:109
 msgid "Enter an amount like 15.50."
 msgstr "أدخل مبلغًا مثل 15.50."
 
@@ -7010,7 +7007,7 @@ msgstr "أدخل وقت البدء."
 msgid "Enter the time they left."
 msgstr "أدخل وقت مغادرته."
 
-#: app/components/staff/positions-tab.tsx:472
+#: app/utils/staffing/staff-validation.ts:97
 msgid "Enter the yearly salary."
 msgstr "أدخل الراتب السنوي."
 
@@ -7093,7 +7090,7 @@ msgstr "مسح البيانات"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
-#: app/components/settings/cards/organization/announcement-sheet.tsx:271
+#: app/components/settings/cards/organization/announcement-sheet.tsx:273
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
 msgid "Error"
 msgstr "خطأ"
@@ -7160,7 +7157,7 @@ msgstr "كل مكالمة"
 msgid "Every call from {erasePhoneLabel} is permanently deleted, with its transcripts, recordings, texted links, requests, and text message history. Use this when a caller asks you to delete their data. This cannot be undone."
 msgstr "تُحذف كل مكالمة من {erasePhoneLabel} نهائيًا، مع نصوصها وتسجيلاتها والروابط المرسلة والطلبات وسجل الرسائل النصية. استخدم هذا عندما يطلب منك متصل حذف بياناته. لا يمكن التراجع عن هذا."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:380
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:405
 msgid "Every call starts here. Connect it to the first thing callers should hear."
 msgstr "كل مكالمة تبدأ من هنا. اربطها بأول ما يجب أن يسمعه المتصلون."
 
@@ -7257,7 +7254,7 @@ msgid "Expired"
 msgstr "منتهي الصلاحية"
 
 #: app/components/settings/cards/sessions-card.tsx:302
-#: app/components/staff/onboarding/certificate-form.tsx:119
+#: app/components/staff/onboarding/certificate-form.tsx:120
 msgid "Expires"
 msgstr "تنتهي الصلاحية"
 
@@ -7362,7 +7359,7 @@ msgstr "فشل العثور على الرحلة الأصلية"
 msgid "Failed to format graph for validation"
 msgstr "فشل تنسيق الرسم البياني للتحقق"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:899
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:905
 msgid "Failed to load AI Assistant"
 msgstr "فشل تحميل مساعد الذكاء الاصطناعي"
 
@@ -7565,7 +7562,7 @@ msgstr "اليوم الأول"
 msgid "First name"
 msgstr "الاسم الأول"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:465
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:490
 msgid "First thing the AI says"
 msgstr "أول ما يقوله الذكاء الاصطناعي"
 
@@ -7658,7 +7655,7 @@ msgstr "لـ"
 msgid "For a shift that was never punched, or a punch that went missing. It is marked as added by a manager."
 msgstr "لوردية لم تُسجَّل أبدًا أو تسجيل مفقود. تُعلَّم على أنها أضافها مدير."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:407
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:432
 msgid "For our hours, press 1. To speak with our team, press 2."
 msgstr "لمعرفة ساعات العمل، اضغط 1. للتحدث مع فريقنا، اضغط 2."
 
@@ -7750,7 +7747,7 @@ msgstr "الجمعة"
 msgid "From"
 msgstr "ابتداءً من"
 
-#: app/components/staff/positions-tab.tsx:701
+#: app/components/staff/positions-tab.tsx:708
 msgid "From {from}"
 msgstr "من {from}"
 
@@ -7758,7 +7755,7 @@ msgstr "من {from}"
 msgid "From a file"
 msgstr "من ملف"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:478
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:503
 msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
 msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع إعداداتك وقواعد التدريب، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
 
@@ -7938,7 +7935,7 @@ msgstr "صباح الخير، {userName}"
 msgid "Goodbye"
 msgstr "الوداع"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:564
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:589
 msgid "Goodbye message"
 msgstr "رسالة الوداع"
 
@@ -8290,12 +8287,12 @@ msgstr "الدفع المستضاف غير متصل"
 msgid "hour"
 msgstr "ساعة"
 
-#: app/components/staff/positions-tab.tsx:551
+#: app/components/staff/positions-tab.tsx:554
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:253
 msgid "Hourly"
 msgstr "بالساعة"
 
-#: app/components/staff/positions-tab.tsx:560
+#: app/components/staff/positions-tab.tsx:563
 #: app/components/staff/timesheets/payroll-summary.tsx:176
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:244
 msgid "Hourly rate"
@@ -8362,7 +8359,7 @@ msgstr "الطريقة"
 msgid "How calls reach the agent"
 msgstr "كيف تصل المكالمات إلى الوكيل"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:474
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:499
 msgid "How can I help you today?"
 msgstr "كيف يمكنني مساعدتك اليوم؟"
 
@@ -8452,7 +8449,7 @@ msgstr "إذا لم يرد أحد"
 msgid "If something looks wrong, talk to your manager."
 msgstr "إذا بدا لك أن هناك خطأ، تحدّث إلى مديرك."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:417
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:442
 msgid "If the caller doesn't choose"
 msgstr "إذا لم يختر المتصل"
 
@@ -8606,7 +8603,7 @@ msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:269
+#: app/components/settings/cards/organization/announcement-sheet.tsx:271
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
 msgid "Info"
 msgstr "معلومات"
@@ -8630,7 +8627,7 @@ msgstr "استعراض"
 #: app/components/app-sidebar.tsx:544
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1029
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
 msgid "Integrations"
 msgstr "التكاملات"
 
@@ -8791,7 +8788,7 @@ msgstr "عنوان IP"
 msgid "Is Verified (True)"
 msgstr "موثّق (صحيح)"
 
-#: app/components/staff/onboarding/certificate-form.tsx:111
+#: app/components/staff/onboarding/certificate-form.tsx:112
 msgid "Issued"
 msgstr "تاريخ الإصدار"
 
@@ -8971,7 +8968,7 @@ msgstr "يحافظ على الفهرسة الأصلية"
 msgid "Kept with the card and shown in its history."
 msgstr "تُحفظ مع البطاقة وتظهر في سجلها."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:157
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:182
 msgid "Key"
 msgstr "الزر"
 
@@ -9219,7 +9216,7 @@ msgid "Lead capture"
 msgstr "جمع العملاء المحتملين"
 
 #: app/components/feature-updates.tsx:205
-#: app/components/settings/cards/organization/announcement-sheet.tsx:486
+#: app/components/settings/cards/organization/announcement-sheet.tsx:512
 msgid "Learn more"
 msgstr "اعرف المزيد"
 
@@ -9237,7 +9234,7 @@ msgstr "أضف رداً..."
 msgid "Leave empty for one rate."
 msgstr "اتركه فارغًا لأجر واحد."
 
-#: app/components/staff/onboarding/certificate-form.tsx:121
+#: app/components/staff/onboarding/certificate-form.tsx:122
 msgid "Leave empty if it never expires."
 msgstr "اتركه فارغًا إذا كانت لا تنتهي صلاحيتها."
 
@@ -9253,15 +9250,15 @@ msgstr "اتركه فارغاً لإبقاء هذه الصفحة في جذر م�
 msgid "Leave empty to skip"
 msgstr "اتركه فارغًا للتخطي"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:566
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:591
 msgid "Leave empty to use the closing line from Setup."
 msgstr "اتركه فارغًا لاستخدام عبارة الختام من الإعداد."
 
-#: app/components/staff/positions-tab.tsx:570
+#: app/components/staff/positions-tab.tsx:574
 msgid "Leave empty to use the position's default rate."
 msgstr "اتركه فارغًا لاستخدام الأجر الافتراضي للمنصب."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:512
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:537
 msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
 msgstr "اتركه فارغًا لاستخدام رقم الفريق من الإعداد. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
 
@@ -9372,7 +9369,7 @@ msgstr "تم نسخ الرابط."
 msgid "Link created"
 msgstr "تم إنشاء الرابط"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:480
+#: app/components/settings/cards/organization/announcement-sheet.tsx:498
 msgid "Link label"
 msgstr "تسمية الرابط"
 
@@ -9390,7 +9387,7 @@ msgstr "رابط لنموذج تستضيفه في مكان آخر. لا يُجم
 msgid "Link to the form"
 msgstr "رابط النموذج"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:468
+#: app/components/settings/cards/organization/announcement-sheet.tsx:486
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
@@ -9444,7 +9441,7 @@ msgstr "تحميل الرسائل الأقدم"
 msgid "Loading"
 msgstr "جاري التحميل"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:923
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:929
 msgid "Loading AI Assistant..."
 msgstr "جاري تحميل مساعد الذكاء الاصطناعي..."
 
@@ -9509,7 +9506,7 @@ msgstr "جارٍ تحميل الملاحظات"
 msgid "Loading onboarding"
 msgstr "جارٍ تحميل التهيئة"
 
-#: app/components/staff/positions-tab.tsx:641
+#: app/components/staff/positions-tab.tsx:648
 msgid "Loading pay"
 msgstr "جارٍ تحميل الأجور"
 
@@ -9517,7 +9514,7 @@ msgstr "جارٍ تحميل الأجور"
 msgid "Loading personal details"
 msgstr "جارٍ تحميل البيانات الشخصية"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:138
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:143
 msgid "Loading positions"
 msgstr "جارٍ تحميل المناصب"
 
@@ -9736,11 +9733,11 @@ msgstr "مصادر صندوق الوارد"
 msgid "Main library"
 msgstr "المكتبة الرئيسية"
 
-#: app/components/staff/positions-tab.tsx:254
+#: app/components/staff/positions-tab.tsx:260
 msgid "Main position"
 msgstr "المنصب الرئيسي"
 
-#: app/components/staff/positions-tab.tsx:211
+#: app/components/staff/positions-tab.tsx:217
 msgid "Main workplace"
 msgstr "مكان العمل الرئيسي"
 
@@ -9760,7 +9757,11 @@ msgstr "إجراء تعديلات على الملاحظات التي أنشأه�
 msgid "Make open"
 msgstr "جعلها شاغرة"
 
-#: app/components/note/share-note-button.tsx:325
+#: app/components/note/share-note-button.tsx:369
+msgid "Make Private"
+msgstr "جعلها خاصة"
+
+#: app/components/note/share-note-button.tsx:367
 msgid "Make Public"
 msgstr "جعلها عامة"
 
@@ -10073,7 +10074,7 @@ msgstr "الأعضاء الذين أنشأوا أكبر عدد من الملاح
 
 #: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:390
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:580
 msgid "Message"
 msgstr "الرسالة"
@@ -10462,7 +10463,7 @@ msgstr "لم يُستخدم أبداً"
 msgid "New"
 msgstr "جديد"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:327
+#: app/components/settings/cards/organization/announcement-sheet.tsx:329
 msgid "New announcement"
 msgstr "إعلان جديد"
 
@@ -10518,7 +10519,7 @@ msgstr "يحصل الموظفون الجدد على قائمة مهام مبدئ
 msgid "New hires will no longer get it. Checklists already added to people stay as they are."
 msgstr "لن يحصل عليه الموظفون الجدد بعد الآن. قوائم المهام المضافة للأشخاص تبقى كما هي."
 
-#: app/components/staff/positions-tab.tsx:823
+#: app/components/staff/positions-tab.tsx:830
 msgid "New hourly rate"
 msgstr "الأجر الجديد بالساعة"
 
@@ -10595,7 +10596,7 @@ msgstr "وسم جديد"
 msgid "New template"
 msgstr "قالب جديد"
 
-#: app/components/staff/positions-tab.tsx:821
+#: app/components/staff/positions-tab.tsx:828
 msgid "New yearly salary"
 msgstr "الراتب السنوي الجديد"
 
@@ -10793,7 +10794,7 @@ msgstr "لا يوجد جهة اتصال مسجّلة"
 msgid "No contacts yet."
 msgstr "لا توجد جهات اتصال بعد."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:844
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:850
 msgid "No content yet"
 msgstr "لا يوجد محتوى بعد"
 
@@ -10942,9 +10943,17 @@ msgstr "لا توجد وسائط تطابق بحثك."
 msgid "No media yet. Upload an image to get started."
 msgstr "لا توجد وسائط حتى الآن. قم بتحميل صورة للبدء."
 
+#: app/components/note/share-note-button.tsx:340
+msgid "No members found"
+msgstr "لم يتم العثور على أعضاء"
+
 #: app/components/organization-members.tsx:158
 msgid "No members found."
 msgstr "لم يتم العثور على أعضاء."
+
+#: app/components/note/share-note-button.tsx:214
+msgid "No members have been given direct access."
+msgstr "لم تُمنح صلاحية الوصول المباشر لأي عضو."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:123
 msgid "No message heard"
@@ -10976,7 +10985,7 @@ msgstr "لا توجد أسماء لعرضها. اطلب من مدير إعداد
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
 msgid "No note with the id \"{noteId}\" exists"
 msgstr "لا توجد ملاحظة بالمعرف \"{noteId}\""
 
@@ -11058,6 +11067,10 @@ msgstr "لم يتم العثور على منظمة"
 msgid "No organization with the slug \"{orgSlug}\" exists"
 msgstr "لا توجد منظمة بالمعرف \"{orgSlug}\""
 
+#: app/components/note/share-note-button.tsx:338
+msgid "No other members to share with"
+msgstr "لا يوجد أعضاء آخرون للمشاركة معهم"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:598
 msgid "No pages match that search"
 msgstr "لا توجد صفحات تطابق هذا البحث"
@@ -11075,7 +11088,7 @@ msgstr "لا توجد معاملات مطلوبة"
 msgid "No passkeys registered yet"
 msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 
-#: app/components/staff/positions-tab.tsx:663
+#: app/components/staff/positions-tab.tsx:670
 msgid "No pay is set yet."
 msgstr "لم يتم تحديد أي أجر بعد."
 
@@ -11103,7 +11116,7 @@ msgstr "لا يوجد رمز سري بعد في {missingCount} أماكن عمل
 msgid "No position"
 msgstr "بلا منصب"
 
-#: app/components/staff/positions-tab.tsx:231
+#: app/components/staff/positions-tab.tsx:237
 msgid "No position here yet."
 msgstr "لا يوجد منصب هنا بعد."
 
@@ -11111,7 +11124,7 @@ msgstr "لا يوجد منصب هنا بعد."
 msgid "No position yet"
 msgstr "بلا منصب بعد"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:161
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
 msgid "No positions yet"
 msgstr "لا توجد مناصب بعد"
 
@@ -11377,7 +11390,7 @@ msgstr "لا يرد: تحقق من الخط"
 msgid "Not approved"
 msgstr "غير موافق عليه"
 
-#: app/components/staff/positions-tab.tsx:103
+#: app/components/staff/positions-tab.tsx:109
 msgid "Not at any workplace yet. Add one below."
 msgstr "ليس في أي مكان عمل بعد. أضف مكانًا أدناه."
 
@@ -11479,7 +11492,7 @@ msgstr "ليس الآن"
 msgid "note"
 msgstr "ملاحظة"
 
-#: app/components/staff/onboarding/certificate-form.tsx:129
+#: app/components/staff/onboarding/certificate-form.tsx:130
 #: app/components/staff/schedule/availability-page.tsx:350
 #: app/components/staff/schedule/availability-sheet.tsx:328
 #: app/components/staff/schedule/time-off-page.tsx:471
@@ -11490,7 +11503,7 @@ msgstr "ملاحظة"
 msgid "Note"
 msgstr "ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1000
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1006
 msgid "Note actions"
 msgstr "إجراءات الملاحظة"
 
@@ -11916,8 +11929,8 @@ msgid "Only scheduled people clock in. Missing breaks are taken off."
 msgstr "يسجّل الحضور المجدولون فقط. تُخصم الاستراحات غير المسجلة."
 
 #: app/components/note/share-note-button.tsx:195
-msgid "Only selected members can access this note"
-msgstr "يمكن للأعضاء المحددين فقط الوصول إلى هذه الملاحظة"
+#~ msgid "Only selected members can access this note"
+#~ msgstr "يمكن للأعضاء المحددين فقط الوصول إلى هذه الملاحظة"
 
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:334
 msgid "Only selected roles and people"
@@ -11954,6 +11967,10 @@ msgstr "فقط حيث لم يضغط أحد على بدء الاستراحة. ي�
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:50
 msgid "Only while you're open"
 msgstr "فقط أثناء ساعات العمل"
+
+#: app/components/note/share-note-button.tsx:
+#~ msgid "Only you can access this note"
+#~ msgstr "أنت فقط يمكنك الوصول إلى هذه الملاحظة"
 
 #: app/components/hiring/candidate-parts.tsx:343
 msgid "Only your team sees notes. The applicant never does."
@@ -12030,7 +12047,7 @@ msgstr "فتح في"
 msgid "Open in email app"
 msgstr "فتح في تطبيق البريد"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:503
+#: app/components/settings/cards/organization/announcement-sheet.tsx:530
 msgid "Open in new tab"
 msgstr "فتح في علامة تبويب جديدة"
 
@@ -12192,7 +12209,7 @@ msgstr "مشغّل"
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:274
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:299
 msgid "Option {nextKey}"
 msgstr "الخيار {nextKey}"
 
@@ -12200,11 +12217,11 @@ msgstr "الخيار {nextKey}"
 msgid "Optional caption for display"
 msgstr "تعليق توضيحي اختياري للعرض"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:467
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:492
 msgid "Optional. The AI always introduces itself as an AI assistant first. Leave empty to ask how it can help."
 msgstr "اختياري. يعرّف الذكاء الاصطناعي نفسه دائمًا كمساعد ذكي أولًا. اتركه فارغًا ليسأل كيف يمكنه المساعدة."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:234
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:259
 msgid "Options"
 msgstr "الخيارات"
 
@@ -12402,7 +12419,7 @@ msgstr "قواعد العمل الإضافي المستخدمة لتقدير ا�
 
 #: app/components/app-sidebar.tsx:329
 #: app/components/staff/labor/labor-page.tsx:196
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:682
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:688
 msgid "Overview"
 msgstr "نظرة عامة"
 
@@ -12616,7 +12633,7 @@ msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 msgid "Pay"
 msgstr "الأجر"
 
-#: app/components/staff/positions-tab.tsx:148
+#: app/components/staff/positions-tab.tsx:154
 msgid "Pay and rates"
 msgstr "الأجر والمعدلات"
 
@@ -12648,7 +12665,7 @@ msgstr "إعدادات فترة الرواتب"
 msgid "Pay rate"
 msgstr "معدل الأجر"
 
-#: app/components/staff/positions-tab.tsx:547
+#: app/components/staff/positions-tab.tsx:550
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:243
 msgid "Pay type"
 msgstr "نوع الأجر"
@@ -12851,7 +12868,7 @@ msgstr "مكالمة هاتفية (للخطوط الأرضية)"
 msgid "Phone links only work on devices that can place phone calls."
 msgstr "تعمل روابط الهاتف فقط على الأجهزة القادرة على إجراء مكالمات هاتفية."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:509
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:534
 #: app/utils/website/field-types.ts:49
 #: app/utils/website/field-types.ts:52
 msgid "Phone number"
@@ -13200,7 +13217,7 @@ msgid "Please enter your email or username"
 msgstr "يرجى إدخال بريدك الإلكتروني أو اسم المستخدم"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:161
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:536
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:561
 msgid "Please hold while we connect you."
 msgstr "يُرجى الانتظار ريثما نوصلك."
 
@@ -13208,7 +13225,7 @@ msgstr "يُرجى الانتظار ريثما نوصلك."
 msgid "Please leave your name, number, and message after this, then press pound or hang up."
 msgstr "يُرجى ترك اسمك ورقمك ورسالتك بعد ذلك، ثم اضغط على مفتاح المربع أو أنهِ المكالمة."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:555
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:580
 msgid "Please leave your name, number, and message after this."
 msgstr "يُرجى ترك اسمك ورقمك ورسالتك بعد ذلك."
 
@@ -13248,14 +13265,14 @@ msgstr "المجموعة حسب اليوم"
 #: app/components/hiring/hire-dialog.tsx:226
 #: app/components/hiring/job-editor.tsx:630
 #: app/components/hiring/job-summary.tsx:40
-#: app/components/staff/positions-tab.tsx:528
+#: app/components/staff/positions-tab.tsx:530
 #: app/components/staff/schedule/shift-editor-sheet.tsx:457
 #: app/components/staff/timesheets/card-fields.tsx:241
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:212
 msgid "Position"
 msgstr "المنصب"
 
-#: app/components/staff/positions-tab.tsx:493
+#: app/components/staff/positions-tab.tsx:494
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:354
 msgid "Position added."
 msgstr "تمت إضافة المنصب."
@@ -13274,7 +13291,7 @@ msgstr "المنصب: من {from} إلى {to}"
 
 #: app/components/staff/staff-roster.tsx:137
 #: app/components/workspace-breadcrumb.tsx:26
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:104
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:109
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:241
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:301
 msgid "Positions"
@@ -13284,7 +13301,7 @@ msgstr "المناصب"
 msgid "Positions and pay"
 msgstr "المناصب والأجر"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:166
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:171
 msgid "Positions such as Server or Line cook let you say what each person does and where."
 msgstr "تتيح لك المناصب مثل النادل أو الطاهي تحديد ما يقوم به كل شخص وأين."
 
@@ -13440,7 +13457,7 @@ msgstr "الخصوصية"
 msgid "Privacy & Data Rights"
 msgstr "الخصوصية وحقوق البيانات"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:707
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:713
 msgid "Private"
 msgstr "خاص"
 
@@ -13486,8 +13503,8 @@ msgstr "إعدادات الملف الشخصي"
 msgid "Project management"
 msgstr "إدارة المشاريع"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:402
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:545
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:427
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:570
 msgid "Prompt"
 msgstr "الرسالة الصوتية"
 
@@ -13496,7 +13513,7 @@ msgstr "الرسالة الصوتية"
 msgid "Pronunciations"
 msgstr "طرق النطق"
 
-#: app/components/note/share-note-button.tsx:189
+#: app/components/note/share-note-button.tsx:208
 msgid "Public Access"
 msgstr "الوصول العام"
 
@@ -13661,7 +13678,7 @@ msgstr "تعديل سريع"
 msgid "Quote"
 msgstr "اقتباس"
 
-#: app/components/staff/positions-tab.tsx:805
+#: app/components/staff/positions-tab.tsx:812
 msgid "Rate updated."
 msgstr "تم تحديث الأجر."
 
@@ -13694,7 +13711,7 @@ msgstr "التفاعل بـ {emoji}"
 msgid "Read a message aloud, then continue."
 msgstr "قراءة رسالة بصوت عالٍ ثم المتابعة."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:391
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:416
 msgid "Read aloud, then the call moves on."
 msgstr "تُقرأ بصوت عالٍ، ثم تنتقل المكالمة إلى الخطوة التالية."
 
@@ -13734,7 +13751,7 @@ msgstr "قراءة تفاصيل الصفحة"
 msgid "Ready"
 msgstr "جاهز"
 
-#: app/components/staff/positions-tab.tsx:840
+#: app/components/staff/positions-tab.tsx:848
 #: app/components/staff/timesheets/reason-field.tsx:36
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.rehire.tsx:96
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:116
@@ -13943,13 +13960,13 @@ msgstr "صلة القرابة"
 msgid "Relaxed"
 msgstr "مرن"
 
-#: app/components/phone-agent/settings-page.tsx:369
+#: app/components/phone-agent/settings-page.tsx:371
 #: app/components/staff/labor-policy-editor.tsx:1094
 msgid "Reload"
 msgstr "إعادة التحميل"
 
 #: app/components/chat/chat-unavailable.tsx:58
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:907
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:913
 msgid "Reload page"
 msgstr "إعادة تحميل الصفحة"
 
@@ -13992,7 +14009,7 @@ msgstr "تذكيرات وليست قيودًا صارمة. لا ساعات إض�
 msgid "Removal not published"
 msgstr "الإزالة غير منشورة"
 
-#: app/components/note/share-note-button.tsx:240
+#: app/components/note/share-note-button.tsx:265
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
@@ -14003,7 +14020,7 @@ msgstr "الإزالة غير منشورة"
 #: app/components/staff/onboarding/certificates-tab.tsx:283
 #: app/components/staff/onboarding/remove-dialog.tsx:60
 #: app/components/staff/onboarding/task-row.tsx:236
-#: app/components/staff/positions-tab.tsx:301
+#: app/components/staff/positions-tab.tsx:307
 #: app/components/staff/schedule/shift-editor-sheet.tsx:710
 #: app/components/staff/schedule/shift-editor-sheet.tsx:743
 #: app/components/website/branding-panel.tsx:314
@@ -14079,11 +14096,11 @@ msgstr "إزالة النطاق"
 msgid "Remove field"
 msgstr "إزالة الحقل"
 
-#: app/components/staff/positions-tab.tsx:274
+#: app/components/staff/positions-tab.tsx:280
 msgid "Remove from {name}?"
 msgstr "إزالة من {name}؟"
 
-#: app/components/staff/positions-tab.tsx:223
+#: app/components/staff/positions-tab.tsx:229
 msgid "Remove from workplace"
 msgstr "إزالة من مكان العمل"
 
@@ -14114,7 +14131,7 @@ msgstr "إزالة العضو"
 msgid "Remove number"
 msgstr "إزالة الرقم"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:188
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:213
 msgid "Remove option"
 msgstr "إزالة الخيار"
 
@@ -14187,7 +14204,7 @@ msgstr "إزالة المتغير"
 msgid "Removed"
 msgstr "تمت الإزالة"
 
-#: app/components/staff/positions-tab.tsx:198
+#: app/components/staff/positions-tab.tsx:204
 msgid "Removed from {name}."
 msgstr "تمت الإزالة من {name}."
 
@@ -14206,7 +14223,7 @@ msgstr "إزالة القسم"
 #: app/components/staff/access-tab.tsx:274
 #: app/components/staff/kiosk-manager.tsx:980
 #: app/components/staff/onboarding/remove-dialog.tsx:60
-#: app/components/staff/positions-tab.tsx:299
+#: app/components/staff/positions-tab.tsx:305
 msgid "Removing…"
 msgstr "جارٍ الإزالة…"
 
@@ -14278,11 +14295,11 @@ msgstr "استبدال نمطه الأسبوعي"
 msgid "Replaced by a newer message"
 msgstr "استُبدلت برسالة أحدث"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:348
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:373
 msgid "Replay {n} times"
 msgstr "إعادة التشغيل {n} مرات"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:347
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:372
 msgid "Replay once"
 msgstr "إعادة التشغيل مرة واحدة"
 
@@ -14482,7 +14499,7 @@ msgstr "راحة (مدفوعة)"
 msgid "Rest break"
 msgstr "استراحة قصيرة"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:247
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:252
 msgid "Restore"
 msgstr "استعادة"
 
@@ -14747,7 +14764,7 @@ msgstr "تُقال أثناء اختيار المتصلين لأحد الخيا�
 msgid "Said while connecting callers to your team."
 msgstr "تُقال أثناء توصيل المتصلين بفريقك."
 
-#: app/components/staff/positions-tab.tsx:552
+#: app/components/staff/positions-tab.tsx:555
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:253
 msgid "Salary"
 msgstr "راتب ثابت"
@@ -14823,7 +14840,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/dashboard/dashboard-options-menu.tsx:153
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:134
-#: app/components/phone-agent/settings-page.tsx:378
+#: app/components/phone-agent/settings-page.tsx:380
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
@@ -14831,7 +14848,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/staff/labor/labor-sales.tsx:203
 #: app/components/staff/labor/labor-settings.tsx:194
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
-#: app/components/staff/onboarding/certificate-form.tsx:147
+#: app/components/staff/onboarding/certificate-form.tsx:148
 #: app/components/staff/onboarding/task-row.tsx:179
 #: app/components/staff/schedule/availability-sheet.tsx:202
 #: app/components/staff/schedule/shift-editor-sheet.tsx:392
@@ -14841,7 +14858,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:457
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
 msgstr "حفظ"
 
@@ -14869,7 +14886,7 @@ msgstr "حفظ العلامة التجارية"
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/roles/tenant-role-access-manager.tsx:803
-#: app/components/settings/cards/organization/announcement-sheet.tsx:523
+#: app/components/settings/cards/organization/announcement-sheet.tsx:550
 #: app/components/settings/cards/organization/general-settings-card.tsx:114
 #: app/components/settings/cards/organization/site-analytics-card.tsx:138
 #: app/components/settings/cards/profile-card.tsx:192
@@ -14916,7 +14933,7 @@ msgstr "حفظ المنتج"
 msgid "Save pronunciations and key terms"
 msgstr "حفظ طرق النطق والمصطلحات الرئيسية"
 
-#: app/components/staff/positions-tab.tsx:852
+#: app/components/staff/positions-tab.tsx:861
 msgid "Save rate"
 msgstr "حفظ الأجر"
 
@@ -14959,7 +14976,7 @@ msgstr "احفظ تغييراتك قبل الإغلاق."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
-#: app/components/phone-agent/settings-page.tsx:374
+#: app/components/phone-agent/settings-page.tsx:376
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -15005,7 +15022,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
-#: app/components/phone-agent/settings-page.tsx:378
+#: app/components/phone-agent/settings-page.tsx:380
 #: app/components/roles/tenant-role-access-manager.tsx:801
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
@@ -15013,9 +15030,9 @@ msgstr "جارٍ الحفظ..."
 #: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/labor/labor-settings.tsx:194
 #: app/components/staff/labor/tip-settings-dialog.tsx:291
-#: app/components/staff/onboarding/certificate-form.tsx:145
+#: app/components/staff/onboarding/certificate-form.tsx:146
 #: app/components/staff/onboarding/template-editor.tsx:92
-#: app/components/staff/positions-tab.tsx:852
+#: app/components/staff/positions-tab.tsx:861
 #: app/components/staff/schedule/availability-sheet.tsx:202
 #: app/components/staff/schedule/shift-editor-sheet.tsx:390
 #: app/components/staff/schedule/time-off-sheet.tsx:175
@@ -15025,16 +15042,16 @@ msgstr "جارٍ الحفظ..."
 #: app/components/staff/timesheets/review-queue.tsx:403
 #: app/components/staff/timesheets/review-queue.tsx:428
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:457
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:476
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:490
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:515
 msgid "Say after sending"
 msgstr "ما يُقال بعد الإرسال"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:533
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:558
 msgid "Say before transferring"
 msgstr "ما يُقال قبل التحويل"
 
@@ -15277,7 +15294,7 @@ msgstr "البحث في الفريق"
 msgid "Search team members"
 msgstr "ابحث في أعضاء الفريق"
 
-#: app/components/note/share-note-button.tsx:261
+#: app/components/note/share-note-button.tsx:286
 msgid "Search team members..."
 msgstr "البحث عن أعضاء الفريق..."
 
@@ -15510,7 +15527,7 @@ msgstr "اختر اللغات التي يمكن للزوار تصفح موقعك
 msgid "Select trigger type"
 msgstr "اختر نوع المحفّز"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:405
+#: app/components/settings/cards/organization/announcement-sheet.tsx:414
 msgid "Select type"
 msgstr "اختر النوع"
 
@@ -15519,7 +15536,7 @@ msgid "Select which event initiates this automated journey."
 msgstr "اختر الحدث الذي يبدأ هذه الرحلة المؤتمتة."
 
 #: app/components/media-library/media-library-picker.tsx:320
-#: app/components/note/share-note-button.tsx:300
+#: app/components/note/share-note-button.tsx:329
 #: app/components/phone-agent/voice-picker.tsx:515
 msgid "Selected"
 msgstr "محدد"
@@ -15528,9 +15545,13 @@ msgstr "محدد"
 msgid "Selected cards"
 msgstr "البطاقات المحددة"
 
-#: app/components/note/share-note-button.tsx:216
+#: app/components/note/share-note-button.tsx:237
 msgid "Selected Members"
 msgstr "الأعضاء المحددون"
+
+#: app/components/note/share-note-button.tsx:216
+msgid "Selected members have direct access."
+msgstr "لدى الأعضاء المحددين صلاحية الوصول المباشر."
 
 #: app/components/settings/cards/organization/shop-card.tsx:73
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
@@ -15779,10 +15800,10 @@ msgstr "عدة أشخاص يكتبون…"
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:229
 #: app/components/dashboard/share-dashboard-dialog.tsx:369
-#: app/components/note/share-note-button.tsx:167
+#: app/components/note/share-note-button.tsx:186
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1024
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1030
 msgid "Share"
 msgstr "مشاركة"
 
@@ -15790,11 +15811,11 @@ msgstr "مشاركة"
 msgid "Share “{name}”"
 msgstr "مشاركة “{name}”"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:446
+#: app/components/settings/cards/organization/announcement-sheet.tsx:463
 msgid "Share an update, maintenance notice, or promotion…"
 msgstr "شارك تحديثاً أو إشعار صيانة أو عرضاً ترويجياً…"
 
-#: app/components/note/share-note-button.tsx:177
+#: app/components/note/share-note-button.tsx:196
 msgid "Share Note"
 msgstr "مشاركة الملاحظة"
 
@@ -15932,7 +15953,7 @@ msgstr "مهلة قصيرة."
 msgid "Show"
 msgstr "إظهار"
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:126
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:131
 msgid "Show archived"
 msgstr "إظهار المؤرشفة"
 
@@ -15985,7 +16006,7 @@ msgstr "عرض الطلبات"
 msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:376
+#: app/components/settings/cards/organization/announcement-sheet.tsx:385
 msgid "Show this banner on your public site"
 msgstr "إظهار هذا الشريط على موقعك العام"
 
@@ -16079,7 +16100,7 @@ msgstr "جاري تسجيل الخروج..."
 msgid "Since {since} · {elapsed}"
 msgstr "منذ {since} · {elapsed}"
 
-#: app/components/staff/positions-tab.tsx:262
+#: app/components/staff/positions-tab.tsx:268
 msgid "Since {startedOn}"
 msgstr "منذ {startedOn}"
 
@@ -16394,7 +16415,7 @@ msgstr "دور نظام قياسي."
 msgid "Standing application"
 msgstr "طلب توظيف دائم"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
 msgid "Star"
 msgstr "تمييز بنجمة"
 
@@ -16502,12 +16523,12 @@ msgstr "جارٍ البدء…"
 msgid "Starts"
 msgstr "تبدأ"
 
-#: app/components/staff/positions-tab.tsx:260
+#: app/components/staff/positions-tab.tsx:266
 msgid "Starts {startedOn}"
 msgstr "يبدأ في {startedOn}"
 
-#: app/components/staff/positions-tab.tsx:538
-#: app/components/staff/positions-tab.tsx:832
+#: app/components/staff/positions-tab.tsx:541
+#: app/components/staff/positions-tab.tsx:840
 msgid "Starts on"
 msgstr "يبدأ في"
 
@@ -16550,7 +16571,7 @@ msgstr "الخطوة {currentStep} من {totalSteps}"
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:366
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:391
 msgid "Step name"
 msgstr "اسم الخطوة"
 
@@ -16662,7 +16683,7 @@ msgstr "الاشتراك غير نشط"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:272
+#: app/components/settings/cards/organization/announcement-sheet.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:347
 msgid "Success"
 msgstr "نجاح"
@@ -16852,7 +16873,7 @@ msgstr "فيروزي"
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
 #: app/components/workspace-breadcrumb.tsx:25
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:102
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:107
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:207
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:281
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:291
@@ -16895,7 +16916,7 @@ msgstr "أعضاء الفريق الذين أنشأوا أكبر عدد من ا�
 msgid "Team Size"
 msgstr "حجم الفريق"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:200
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:225
 msgid "team, person, help"
 msgstr "فريق، شخص، مساعدة"
 
@@ -16903,7 +16924,7 @@ msgstr "فريق، شخص، مساعدة"
 msgid "Teammate"
 msgstr "الزميل"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:403
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:428
 msgid "Tell callers which key does what."
 msgstr "أخبر المتصلين بوظيفة كل مفتاح."
 
@@ -17575,7 +17596,7 @@ msgstr "تم شغل الوظيفة"
 msgid "The job is live."
 msgstr "تم نشر الوظيفة."
 
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:106
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:111
 msgid "The jobs people do here. Assign them from a person's profile."
 msgstr "الوظائف التي يؤديها الناس هنا. عيّنها من الملف الشخصي للشخص."
 
@@ -17595,7 +17616,7 @@ msgstr "يفرض القانون هذه العبارة، لذا لا يمكن ت�
 msgid "The link in their earlier emails stops working right away. They get a new one in the next schedule email."
 msgstr "يتوقف الرابط في رسائلهم السابقة عن العمل فورًا. سيصلهم رابط جديد في رسالة الجدول القادمة."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:492
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:517
 msgid "The link opens your website. It's texted to the number they're calling from."
 msgstr "يفتح الرابط موقعك الإلكتروني. ويُرسل برسالة نصية إلى الرقم الذي يتصلون منه."
 
@@ -17611,7 +17632,7 @@ msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
 msgid "The MCP client will only have access to data from the selected organization"
 msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات المنظمة المحددة"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:547
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:572
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "تنتهي الرسالة عندما يضغط المتصل مفتاح # أو يتوقف عن الكلام أو يُغلق الخط. وتظهر ضمن المكالمات كطلب معاودة اتصال."
 
@@ -17767,11 +17788,11 @@ msgstr "تُحذف بياناتهم في {retentionDate}."
 msgid "Their hours are frozen as shown. You can reopen a card later if something is wrong, and the reason is logged."
 msgstr "تُثبَّت ساعاتهم كما هي معروضة. يمكنك إعادة فتح بطاقة لاحقًا إن كان هناك خطأ، ويُسجَّل السبب."
 
-#: app/components/staff/positions-tab.tsx:582
+#: app/components/staff/positions-tab.tsx:586
 msgid "Their main position at this workplace"
 msgstr "منصبه الرئيسي في مكان العمل هذا"
 
-#: app/components/staff/positions-tab.tsx:277
+#: app/components/staff/positions-tab.tsx:283
 msgid "Their PIN for this workplace stops working and their positions here end today. Their history stays."
 msgstr "يتوقف رمزهم السري لمكان العمل هذا وتنتهي مناصبهم هنا اليوم. يبقى سجلهم محفوظًا."
 
@@ -17932,7 +17953,7 @@ msgstr "ربما تمت إزالتهم، أو لا تملك صلاحية الو�
 msgid "They may have been removed, or you may not have access to them."
 msgstr "ربما تمت إزالتهم، أو لا تملك صلاحية الوصول إليهم."
 
-#: app/components/staff/positions-tab.tsx:102
+#: app/components/staff/positions-tab.tsx:108
 msgid "They no longer work at any workplace."
 msgstr "لم يعودوا يعملون في أي مكان عمل."
 
@@ -17980,7 +18001,7 @@ msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت م�
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف هذا الإعلان؟"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1085
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1092
 msgid "This action cannot be undone. The note and its comments will be permanently removed."
 msgstr "لا يمكن التراجع عن هذا الإجراء. سيتم حذف الملاحظة وتعليقاتها نهائياً."
 
@@ -18593,7 +18614,7 @@ msgstr "حصص الإكراميات"
 
 #: app/components/staff/labor/labor-page.tsx:198
 #: app/components/staff/timesheets/card-fields.tsx:184
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:209
 msgid "Tips"
 msgstr "الإكراميات"
 
@@ -18964,7 +18985,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/staff/timesheets/timesheets-page.tsx:692
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
-#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:154
+#: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:415
 msgid "Try again"
@@ -19066,7 +19087,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/hiring/job-editor.tsx:642
 #: app/components/hiring/job-summary.tsx:41
 #: app/components/my-schedule/time-off-sheet.tsx:153
-#: app/components/settings/cards/organization/announcement-sheet.tsx:388
+#: app/components/settings/cards/organization/announcement-sheet.tsx:397
 #: app/components/staff/schedule/time-off-sheet.tsx:194
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
@@ -19265,7 +19286,7 @@ msgid "Unscheduled"
 msgstr "غير مجدولة"
 
 #: app/components/favorite-notes.tsx:142
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1020
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1026
 msgid "Unstar"
 msgstr "إلغاء التفضيل"
 
@@ -19282,7 +19303,7 @@ msgstr "حتى"
 msgid "Untitled image"
 msgstr "صورة بلا عنوان"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:695
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:701
 msgid "Untitled Note"
 msgstr "ملاحظة بدون عنوان"
 
@@ -19353,7 +19374,7 @@ msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 msgid "Updated"
 msgstr "تم التحديث"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:700
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:706
 msgid "Updated {timeAgo} ago"
 msgstr "تم التحديث منذ {timeAgo}"
 
@@ -19539,6 +19560,10 @@ msgstr "استخدم رقمًا مثل 18 أو 18.50."
 msgid "Use a template"
 msgstr "استخدام قالب"
 
+#: app/components/phone-agent/settings-page.tsx:154
+msgid "Use a time zone name such as America/New_York."
+msgstr "استخدم اسم منطقة زمنية مثل America/New_York."
+
 #: app/components/phone-agent/settings-page.tsx:134
 msgid "Use a US or Canada phone number."
 msgstr "استخدم رقم هاتف من الولايات المتحدة أو كندا."
@@ -19653,7 +19678,7 @@ msgstr "اسم المستخدم أو البريد الإلكتروني"
 msgid "Username or email is required"
 msgstr "اسم المستخدم أو البريد الإلكتروني مطلوب"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:453
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:478
 msgid "Uses your opening hours and special hours for the line the caller reached. Connect the Open and Closed outputs to different steps."
 msgstr "يستخدم ساعات العمل والساعات الخاصة للخط الذي اتصل به المتصل. اربط مخرجي مفتوح ومغلق بخطوات مختلفة."
 
@@ -20000,7 +20025,7 @@ msgstr "تنبيه المديرين بشأن العمل الإضافي"
 msgid "Warn when this close to the limit"
 msgstr "التنبيه عند الاقتراب من الحد بمقدار"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:270
+#: app/components/settings/cards/organization/announcement-sheet.tsx:272
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
 msgid "Warning"
 msgstr "تحذير"
@@ -20166,7 +20191,7 @@ msgid "We found your organization:"
 msgstr "وجدنا منظمتك:"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:158
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:500
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:525
 msgid "We just sent you a text with a link to our website."
 msgstr "أرسلنا لك للتو رسالة نصية تحتوي على رابط إلى موقعنا الإلكتروني."
 
@@ -20327,7 +20352,7 @@ msgstr "كم الأجر؟"
 msgid "What else should I know?"
 msgstr "ماذا يجب أن أعرف أيضاً؟"
 
-#: app/components/staff/onboarding/certificate-form.tsx:101
+#: app/components/staff/onboarding/certificate-form.tsx:102
 msgid "What is it called"
 msgstr "ما اسمها"
 
@@ -20367,7 +20392,7 @@ msgstr "التعليمات المقدّمة للمساعد"
 msgid "What they are asked to read and accept."
 msgstr "ما يُطلب منهم قراءته والموافقة عليه."
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:176
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:201
 msgid "What this option does"
 msgstr "وظيفة هذا الخيار"
 
@@ -20624,7 +20649,7 @@ msgstr "الكلمة"
 msgid "Word, e.g. Nguyen"
 msgstr "الكلمة، مثل Nguyen"
 
-#: app/components/phone-agent/flow-editor/node-inspector.tsx:196
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:221
 msgid "Words callers might say"
 msgstr "كلمات قد يقولها المتصلون"
 
@@ -20673,7 +20698,7 @@ msgstr "جارٍ العمل…"
 #: app/components/hiring/hire-dialog.tsx:196
 #: app/components/staff/kiosk-manager.tsx:582
 #: app/components/staff/labor/labor-page.tsx:280
-#: app/components/staff/positions-tab.tsx:515
+#: app/components/staff/positions-tab.tsx:517
 #: app/components/staff/schedule/schedule-toolbar.tsx:268
 #: app/components/staff/staff-roster.tsx:140
 #: app/components/staff/timeclock-today.tsx:134
@@ -20716,7 +20741,7 @@ msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقو�
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:331
+#: app/components/settings/cards/organization/announcement-sheet.tsx:334
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
 
@@ -20772,7 +20797,7 @@ msgstr "سنة"
 msgid "Yearly"
 msgstr "سنوي"
 
-#: app/components/staff/positions-tab.tsx:558
+#: app/components/staff/positions-tab.tsx:561
 msgid "Yearly salary"
 msgstr "الراتب السنوي"
 
@@ -20894,7 +20919,7 @@ msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة
 msgid "You can view these rules but not change them."
 msgstr "يمكنك عرض هذه القواعد دون تغييرها."
 
-#: app/components/phone-agent/settings-page.tsx:355
+#: app/components/phone-agent/settings-page.tsx:357
 msgid "You can view these settings but not change them."
 msgstr "يمكنك عرض هذه الإعدادات دون تغييرها."
 
@@ -20923,7 +20948,7 @@ msgstr "لا تملك صلاحية الوصول إلى مكان العمل ذل�
 msgid "You do not have permission to do that."
 msgstr "ليست لديك صلاحية لتنفيذ ذلك."
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1184
+#: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1191
 msgid "You do not have permission to view this note"
 msgstr "ليس لديك إذن لعرض هذه الملاحظة"
 
@@ -20963,7 +20988,7 @@ msgstr "لديك تغييرات غير محفوظة على مسار المكال
 msgid "You have unsaved changes."
 msgstr "لديك تغييرات غير محفوظة."
 
-#: app/components/phone-agent/settings-page.tsx:186
+#: app/components/phone-agent/settings-page.tsx:188
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة هذه الصفحة وفقدانها؟"
 
@@ -21197,19 +21222,3 @@ msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الن�
 #: app/components/roles/tenant-role-access-manager.tsx:484
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
-
-#: app/components/note/share-note-button.tsx
-msgid "Only you can access this note"
-msgstr "أنت فقط يمكنك الوصول إلى هذه الملاحظة"
-
-#: app/components/note/share-note-button.tsx
-msgid "Make Private"
-msgstr "جعلها خاصة"
-
-#: app/components/note/share-note-button.tsx
-msgid "No other members to share with"
-msgstr "لا يوجد أعضاء آخرون للمشاركة معهم"
-
-#: app/components/note/share-note-button.tsx
-msgid "No members found"
-msgstr "لم يتم العثور على أعضاء"

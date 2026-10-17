@@ -179,6 +179,11 @@ describe('PositionsTab', () => {
 			'Choose a position.',
 		)
 		expectFieldError(rate, 'Enter an amount like 15.50.')
+		await waitFor(() =>
+			expect(
+				within(form).getByRole('combobox', { name: 'Position' }),
+			).toHaveFocus(),
+		)
 		expect(form.querySelector('[data-slot="alert"]')).toBeNull()
 
 		fireEvent.change(rate, { target: { value: '16.00' } })
@@ -200,9 +205,12 @@ describe('PositionsTab', () => {
 		expectFieldError(amount, 'Enter an amount like 15.50.')
 		const reason = within(form).getByLabelText('Reason')
 		expectFieldError(reason, 'Add a reason for the change.')
+		await waitFor(() => expect(amount).toHaveFocus())
 		expect(form.querySelector('[data-slot="alert"]')).toBeNull()
 
 		fireEvent.change(amount, { target: { value: '16.00' } })
+		fireEvent.click(within(form).getByRole('button', { name: 'Save rate' }))
+		await waitFor(() => expect(reason).toHaveFocus())
 		fireEvent.change(reason, { target: { value: 'Annual raise' } })
 		expect(amount.getAttribute('aria-invalid')).toBeNull()
 		expect(reason.getAttribute('aria-invalid')).toBeNull()

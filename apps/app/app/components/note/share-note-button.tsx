@@ -18,7 +18,7 @@ import { Label } from '@repo/ui/label'
 import { Separator } from '@repo/ui/separator'
 import { StatusButton } from '@repo/ui/status-button'
 import { Switch } from '@repo/ui/switch'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useFetcher } from 'react-router'
 
 type ShareNoteButtonProps = {
@@ -62,22 +62,27 @@ export function ShareNoteButton({
 	const setOpen = onOpenChange ?? setInternalOpen
 	const fetcher = useFetcher()
 	const { _ } = useLingui()
+	const directAccessIds = useMemo(
+		() =>
+			noteAccess
+				.map((access) => access.user.id)
+				.filter((id) => id !== noteOwnerId),
+		[noteAccess, noteOwnerId],
+	)
 
 	// Local state for form changes (not submitted yet)
 	const [localIsPublic, setLocalIsPublic] = useState(isPublic)
-	const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(
-		noteAccess.map((access) => access.user.id),
-	)
+	const [selectedMemberIds, setSelectedMemberIds] = useState(directAccessIds)
 	const [searchQuery, setSearchQuery] = useState('')
 
 	// Reset local state when dialog opens or props change
 	useEffect(() => {
 		if (open) {
 			setLocalIsPublic(isPublic)
-			setSelectedMemberIds(noteAccess.map((access) => access.user.id))
+			setSelectedMemberIds(directAccessIds)
 			setSearchQuery('')
 		}
-	}, [open, isPublic, noteAccess])
+	}, [open, isPublic, directAccessIds])
 
 	// Close dialog on successful submission
 	useEffect(() => {
@@ -102,15 +107,13 @@ export function ShareNoteButton({
 		const formData = new FormData()
 
 		// Handle member access changes
-		const currentAccessIds = new Set(noteAccess.map((access) => access.user.id))
+		const currentAccessIds = new Set(directAccessIds)
 		const newAccessIds = new Set(selectedMemberIds)
 
 		// Members to add
 		const toAdd = selectedMemberIds.filter((id) => !currentAccessIds.has(id))
 		// Members to remove
-		const toRemove = noteAccess
-			.map((access) => access.user.id)
-			.filter((id) => !newAccessIds.has(id))
+		const toRemove = directAccessIds.filter((id) => !newAccessIds.has(id))
 
 		// Check if we only need to update public/private status without member changes
 		const hasPublicStatusChange = localIsPublic !== isPublic
@@ -161,7 +164,7 @@ export function ShareNoteButton({
 			.map((member) => member.user)
 	}
 
-	const initialMemberIds = new Set(noteAccess.map((access) => access.user.id))
+	const initialMemberIds = new Set(directAccessIds)
 	const hasMemberChanges =
 		selectedMemberIds.length !== initialMemberIds.size ||
 		selectedMemberIds.some((id) => !initialMemberIds.has(id))
@@ -208,9 +211,9 @@ export function ShareNoteButton({
 								{localIsPublic ? (
 									<Trans>All organization members can view this note</Trans>
 								) : selectedMemberIds.length === 0 ? (
-									<Trans>Only you can access this note</Trans>
+									<Trans>No members have been given direct access.</Trans>
 								) : (
-									<Trans>Only selected members can access this note</Trans>
+									<Trans>Selected members have direct access.</Trans>
 								)}
 							</div>
 						</div>
@@ -328,15 +331,17 @@ export function ShareNoteButton({
 											)}
 										</button>
 									))}
-									{filteredMembers.length === 0 ? (
-										<p className="text-muted-foreground py-2 text-center text-sm">
-											{shareableMembers.length === 0 ? (
-												<Trans>No other members to share with</Trans>
-											) : (
-												<Trans>No members found</Trans>
-											)}
-										</p>
-									) : null}
+									<div role="status" aria-atomic="true">
+										{filteredMembers.length === 0 ? (
+											<p className="text-muted-foreground py-2 text-center text-sm">
+												{shareableMembers.length === 0 ? (
+													<Trans>No other members to share with</Trans>
+												) : (
+													<Trans>No members found</Trans>
+												)}
+											</p>
+										) : null}
+									</div>
 								</div>
 							</div>
 						</>
@@ -351,29 +356,25 @@ export function ShareNoteButton({
 						>
 							<Trans>Cancel</Trans>
 						</Button>
-						{hasChanges ? (
-							<StatusButton
-								status={fetcher.state !== 'idle' ? 'pending' : 'idle'}
-								onClick={handleSubmit}
-								disabled={fetcher.state !== 'idle'}
-							>
-								{localIsPublic ? (
-									<Trans>Make Public</Trans>
-								) : selectedMemberIds.length === 0 ? (
-									<Trans>Make Private</Trans>
-								) : (
-									<Plural
-										value={selectedMemberIds.length}
-										one="Share with 1 member"
-										other="Share with # members"
-									/>
-								)}
-							</StatusButton>
-						) : (
-							<Button onClick={() => setOpen(false)}>
+						<StatusButton
+							status={fetcher.state !== 'idle' ? 'pending' : 'idle'}
+							onClick={hasChanges ? handleSubmit : () => setOpen(false)}
+							disabled={fetcher.state !== 'idle'}
+						>
+							{!hasChanges ? (
 								<Trans>Done</Trans>
-							</Button>
-						)}
+							) : localIsPublic ? (
+								<Trans>Make Public</Trans>
+							) : selectedMemberIds.length === 0 ? (
+								<Trans>Make Private</Trans>
+							) : (
+								<Plural
+									value={selectedMemberIds.length}
+									one="Share with 1 member"
+									other="Share with # members"
+								/>
+							)}
+						</StatusButton>
 					</div>
 				</div>
 			</DialogContent>
