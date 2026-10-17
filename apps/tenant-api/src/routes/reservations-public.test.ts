@@ -353,7 +353,7 @@ describe('GET /reservations/availability', () => {
 		}
 		const etag = first.res.headers.get('ETag')!
 		expect(etag).toBe(
-			`"${first.body.dayVersion}.${first.body.settingsVersion}"`,
+			`"${first.body.dayVersion}.${first.body.settingsVersion}.11"`,
 		)
 		expect(first.res.headers.get('Cache-Control')).toBe('private, max-age=0')
 
@@ -369,6 +369,23 @@ describe('GET /reservations/availability', () => {
 		})
 		expect(after.status).toBe(200)
 		expect(after.res.headers.get('ETag')).not.toBe(etag)
+	})
+
+	it('changes the ETag when the waitlist or online flag changes, so a 304 cannot hide it', async () => {
+		const first = await availability()
+		const etag = first.res.headers.get('ETag')!
+		expect(
+			(await availability(2, DAY, '', { headers: { 'If-None-Match': etag } }))
+				.status,
+		).toBe(304)
+
+		seedReservationsContextForTest(ORG, publicContext(ORG, { waitlist: false }))
+		const flipped = await availability(2, DAY, '', {
+			headers: { 'If-None-Match': etag },
+		})
+		expect(flipped.status).toBe(200)
+		expect(flipped.res.headers.get('ETag')).not.toBe(etag)
+		expect(flipped.body.notifyMe).toBe(false)
 	})
 
 	it('rejects party sizes outside 1..99 with party_size_invalid and signals large parties (VAL-ONLINE-006)', async () => {

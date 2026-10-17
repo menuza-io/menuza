@@ -327,6 +327,16 @@ describe('Reservations security sweep: operator routes', () => {
 			'GET /operator/reservations/setup/message-texts',
 			'PUT /operator/reservations/setup/message-texts',
 			'GET /operator/reservations/setup/message-texts/preview',
+			'GET /operator/reservations/book/today',
+			'GET /operator/reservations/guests/tags',
+			'POST /operator/reservations/guests/merge',
+			'POST /operator/reservations/guests/:id/notes',
+			'GET /operator/reservations/reports/summary',
+			'GET /operator/reservations/reports/no-shows',
+			'GET /operator/reservations/reports/cancellations',
+			'GET /operator/reservations/reports/turn-times',
+			'GET /operator/reservations/reports/waitlist',
+			'GET /operator/reservations/reports/pacing',
 		]) {
 			expect(keys.has(key), key).toBe(true)
 		}

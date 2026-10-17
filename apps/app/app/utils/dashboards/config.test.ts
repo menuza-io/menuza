@@ -161,26 +161,52 @@ describe('block registry', () => {
 describe('addableBuiltInBlockTypes', () => {
 	const without = (...types: string[]) =>
 		defaultHomeConfig().blocks.filter((block) => !types.includes(block.type))
+	const options = { onboardingAvailable: true, bookingsTodayAvailable: false }
 
 	it('offers only the built-in blocks that are not on the dashboard', () => {
-		const options = { onboardingAvailable: true }
 		expect(
 			addableBuiltInBlockTypes(defaultHomeConfig().blocks, options),
 		).toEqual([])
 		expect(addableBuiltInBlockTypes(without('leaderboard'), options)).toEqual([
 			'leaderboard',
 		])
-		expect(addableBuiltInBlockTypes([], options)).toEqual(BUILT_IN_BLOCK_TYPES)
+		expect(
+			addableBuiltInBlockTypes([], {
+				...options,
+				bookingsTodayAvailable: true,
+			}),
+		).toEqual(BUILT_IN_BLOCK_TYPES)
 	})
 
 	it('offers onboarding only while the viewer would see it', () => {
 		const blocks = without('onboarding', 'stats')
+		expect(addableBuiltInBlockTypes(blocks, options)).toEqual([
+			'stats',
+			'onboarding',
+		])
 		expect(
-			addableBuiltInBlockTypes(blocks, { onboardingAvailable: true }),
-		).toEqual(['stats', 'onboarding'])
-		expect(
-			addableBuiltInBlockTypes(blocks, { onboardingAvailable: false }),
+			addableBuiltInBlockTypes(blocks, {
+				...options,
+				onboardingAvailable: false,
+			}),
 		).toEqual(['stats'])
+	})
+
+	it('offers Bookings today only to viewers who may read reservations, once', () => {
+		const blocks = defaultHomeConfig().blocks
+		expect(
+			addableBuiltInBlockTypes(blocks, {
+				...options,
+				bookingsTodayAvailable: true,
+			}),
+		).toEqual(['bookings-today'])
+		expect(addableBuiltInBlockTypes(blocks, options)).toEqual([])
+		expect(BLOCK_DEFINITIONS['bookings-today'].maxInstances).toBe(1)
+		const withBlock = [
+			...blocks,
+			{ id: 'bookings-today', type: 'bookings-today' as const },
+		]
+		expect(canAddBlockType(withBlock, 'bookings-today')).toBe(false)
 	})
 
 	it('offers nothing once the dashboard is full', () => {
@@ -188,7 +214,10 @@ describe('addableBuiltInBlockTypes', () => {
 			reportBlock(`report-${index}`),
 		)
 		expect(
-			addableBuiltInBlockTypes(full, { onboardingAvailable: true }),
+			addableBuiltInBlockTypes(full, {
+				...options,
+				bookingsTodayAvailable: true,
+			}),
 		).toEqual([])
 	})
 })

@@ -30,6 +30,7 @@ export function publicContext(
 	options: {
 		dataRegion?: 'us' | 'ksa'
 		online?: boolean
+		waitlist?: boolean
 		enabled?: boolean
 	} = {},
 ): ReservationsContext {
@@ -39,7 +40,7 @@ export function publicContext(
 		features: {
 			enabled: options.enabled ?? true,
 			online: options.online ?? true,
-			waitlist: true,
+			waitlist: options.waitlist ?? true,
 			experiences: false,
 			payments: false,
 			voice: false,

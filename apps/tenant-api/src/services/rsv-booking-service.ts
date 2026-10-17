@@ -56,6 +56,7 @@ import {
 	resolveOrCreateGuestForBooking,
 	type DbOrTx,
 } from './rsv-guest-service.ts'
+import { isLateCancellation } from './rsv-late-cancel.ts'
 
 function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
@@ -2743,11 +2744,16 @@ export async function transitionReservationStatus(params: {
 							eq(rsvTableOccupancies.active, true),
 						),
 					)
+				const late = await isLateCancellation(tx, current, now)
+				patch.lateCancel = late
 				if (current.guestId) {
 					await tx
 						.update(rsvGuests)
 						.set({
 							cancels: sql`${rsvGuests.cancels} + 1`,
+							...(late
+								? { lateCancels: sql`${rsvGuests.lateCancels} + 1` }
+								: {}),
 							updatedAt: now,
 						})
 						.where(eq(rsvGuests.id, current.guestId))
@@ -3012,6 +3018,9 @@ export async function undoReservationTransition(params: {
 							.update(rsvGuests)
 							.set({
 								cancels: sql`MAX(0, ${rsvGuests.cancels} - 1)`,
+								...(current.lateCancel
+									? { lateCancels: sql`MAX(0, ${rsvGuests.lateCancels} - 1)` }
+									: {}),
 								updatedAt: now,
 							})
 							.where(eq(rsvGuests.id, current.guestId))
@@ -3037,7 +3046,7 @@ export async function undoReservationTransition(params: {
 						: {}),
 					...(current.status === 'arrived' ? { arrivedAt: null } : {}),
 					...(current.status === 'cancelled'
-						? { cancelledAt: null, cancelReason: null }
+						? { cancelledAt: null, cancelReason: null, lateCancel: false }
 						: {}),
 					...(current.status === 'no_show' ? { noShowAt: null } : {}),
 					version: current.version + 1,

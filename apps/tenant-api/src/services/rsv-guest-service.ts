@@ -58,6 +58,57 @@ export interface SerializedGuestTag {
 	icon: string | null
 	colorToken: string
 	sensitive: boolean
+	systemKey?: string | null
+}
+
+/**
+ * System tags are computed from the guest's counters and never stored as
+ * `rsv_guest_tags` rows, so they can be neither set nor removed by hand. The
+ * catalog rows behind these ids are created on first read (`ensureSystemTags`).
+ */
+export const SYSTEM_GUEST_TAGS = {
+	first_visit: {
+		id: 'tag_sys_first_visit',
+		name: 'First visit',
+		colorToken: 'sky',
+	},
+	frequent_no_show: {
+		id: 'tag_sys_frequent_no_show',
+		name: 'Frequent no-show',
+		colorToken: 'red',
+	},
+} as const
+export type SystemGuestTagKey = keyof typeof SYSTEM_GUEST_TAGS
+
+export const FREQUENT_NO_SHOW_THRESHOLD = 2
+
+export function deriveSystemTagKeys(row: {
+	visits: number
+	noShows: number
+	erasedAt: number | null
+}): SystemGuestTagKey[] {
+	if (row.erasedAt) return []
+	const keys: SystemGuestTagKey[] = []
+	if (row.visits === 0) keys.push('first_visit')
+	if (row.noShows >= FREQUENT_NO_SHOW_THRESHOLD) keys.push('frequent_no_show')
+	return keys
+}
+
+function derivedSystemTags(row: {
+	visits: number
+	noShows: number
+	erasedAt: number | null
+}): SerializedGuestTag[] {
+	return deriveSystemTagKeys(row).map((key) => ({
+		id: SYSTEM_GUEST_TAGS[key].id,
+		scope: 'guest',
+		category: 'system',
+		name: SYSTEM_GUEST_TAGS[key].name,
+		icon: null,
+		colorToken: SYSTEM_GUEST_TAGS[key].colorToken,
+		sensitive: false,
+		systemKey: key,
+	}))
 }
 
 export interface SerializedGuestSummary {
@@ -91,8 +142,43 @@ export interface SerializedGuestSummary {
 	last_visit_at: number | null
 	erasedAt: number | null
 	erased_at: number | null
+	/** Opaque: whether a verified tenant customer is linked (never the id). */
+	customerLinked: boolean
+	mergedIntoId: string | null
 	version: number
 	tags: SerializedGuestTag[]
+	/** Pinned notes shown to hosts; present on book and day-feed summaries. */
+	pinnedNotes?: Array<{ id: string; body: string }>
+}
+
+export async function loadPinnedNotesMap(
+	db: DbOrTx,
+	guestIds: string[],
+): Promise<Map<string, Array<{ id: string; body: string }>>> {
+	const map = new Map<string, Array<{ id: string; body: string }>>()
+	if (guestIds.length === 0) return map
+	const rows = await db
+		.select({
+			id: rsvGuestNotes.id,
+			guestId: rsvGuestNotes.guestId,
+			body: rsvGuestNotes.body,
+		})
+		.from(rsvGuestNotes)
+		.where(
+			and(
+				inArray(rsvGuestNotes.guestId, guestIds),
+				eq(rsvGuestNotes.pinned, true),
+				isNull(rsvGuestNotes.deletedAt),
+			),
+		)
+		.orderBy(desc(rsvGuestNotes.createdAt))
+		.all()
+	for (const row of rows) {
+		const list = map.get(row.guestId) ?? []
+		list.push({ id: row.id, body: row.body })
+		map.set(row.guestId, list)
+	}
+	return map
 }
 
 export async function loadGuestTagsMap(
@@ -182,8 +268,13 @@ export function serializeGuestRow(
 		last_visit_at: row.lastVisitAt,
 		erasedAt: row.erasedAt,
 		erased_at: row.erasedAt,
+		customerLinked: row.customerId !== null,
+		mergedIntoId: row.mergedIntoId,
 		version: row.version,
-		tags,
+		tags: [
+			...tags.filter((tag) => tag.category !== 'system'),
+			...derivedSystemTags(row),
+		],
 	}
 }
 
@@ -235,9 +326,14 @@ export async function searchGuests(
 		resolvedOpts,
 	)
 
-	return rows.map((r) =>
-		serializeGuestRow(r, tagsMap.get(r.id) ?? [], resolvedOpts),
+	const pinned = await loadPinnedNotesMap(
+		db,
+		rows.map((r) => r.id),
 	)
+	return rows.map((r) => ({
+		...serializeGuestRow(r, tagsMap.get(r.id) ?? [], resolvedOpts),
+		pinnedNotes: pinned.get(r.id) ?? [],
+	}))
 }
 
 export const lookupGuests = searchGuests
@@ -495,14 +591,18 @@ export async function getGuestSummary(
 
 	const canReadSensitive = opts?.canReadSensitive ?? true
 	const tagsMap = await loadGuestTagsMap(db, [guestId], { canReadSensitive })
-	const notes = canReadSensitive
-		? await db
-				.select()
-				.from(rsvGuestNotes)
-				.where(eq(rsvGuestNotes.guestId, guestId))
-				.orderBy(desc(rsvGuestNotes.pinned), desc(rsvGuestNotes.createdAt))
-				.all()
-		: []
+	const liveNotes = await db
+		.select()
+		.from(rsvGuestNotes)
+		.where(
+			and(eq(rsvGuestNotes.guestId, guestId), isNull(rsvGuestNotes.deletedAt)),
+		)
+		.orderBy(desc(rsvGuestNotes.pinned), desc(rsvGuestNotes.createdAt))
+		.all()
+	const notes = canReadSensitive ? liveNotes : []
+	const pinnedNotes = liveNotes
+		.filter((n) => n.pinned)
+		.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))
 
 	const reservations = await db
 		.select()
@@ -517,6 +617,7 @@ export async function getGuestSummary(
 			canReadSensitive,
 		}),
 		notes,
+		pinnedNotes,
 		reservations: reservations.map((r) => ({
 			id: r.id,
 			locationId: r.locationId,
@@ -579,14 +680,14 @@ export async function exportGuestProfile(
 	})
 	const tags = tagsMap.get(guestId) ?? []
 
-	const notes = includeSensitive
-		? await db
-				.select()
-				.from(rsvGuestNotes)
-				.where(eq(rsvGuestNotes.guestId, guestId))
-				.orderBy(desc(rsvGuestNotes.createdAt))
-				.all()
-		: []
+	const notes = await db
+		.select()
+		.from(rsvGuestNotes)
+		.where(
+			and(eq(rsvGuestNotes.guestId, guestId), isNull(rsvGuestNotes.deletedAt)),
+		)
+		.orderBy(desc(rsvGuestNotes.createdAt))
+		.all()
 
 	const reservations = await db
 		.select()

@@ -9,7 +9,7 @@ import {
 	rsvWaitlistEntries,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { type ReservationsContext } from '@repo/reservations'
+import { localToInstant, type ReservationsContext } from '@repo/reservations'
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { getNodeRegion } from '../lib/region.ts'
 import {
@@ -139,6 +139,8 @@ type Subject = {
 	token: string | null
 	endMs: number | null
 	quotedWaitMin: number | null
+	/** Query of the booking link that opens the offered slot (notify-me only). */
+	bookQuery: string | null
 }
 
 type Resolved =
@@ -207,6 +209,7 @@ async function resolveSubject(
 				),
 				endMs: reservation.endAt,
 				quotedWaitMin: null,
+				bookQuery: null,
 			},
 		}
 	}
@@ -247,6 +250,7 @@ async function resolveSubject(
 				token: deriveWaitlistToken(orgId, entry.id, entry.statusTokenVersion),
 				endMs: null,
 				quotedWaitMin: entry.quotedMin,
+				bookQuery: null,
 			},
 		}
 	}
@@ -259,6 +263,13 @@ async function resolveSubject(
 		if (!request) {
 			return { ok: false, outcome: 'cancelled', code: 'request_missing' }
 		}
+		// The slot the last notification offered; a request that was never
+		// notified falls back to the start of its window.
+		const slotMin = request.lastNotifiedSlotMin ?? request.fromLocalMin
+		const zone = await locationTimeZone(db, request.locationId)
+		const instant = localToInstant(request.businessDate, slotMin, zone)
+		const hh = String(Math.floor(slotMin / 60) % 24).padStart(2, '0')
+		const mm = String(slotMin % 60).padStart(2, '0')
 		return {
 			ok: true,
 			subject: {
@@ -269,12 +280,18 @@ async function resolveSubject(
 				smsAllowed: true,
 				firstName: null,
 				locale: row.locale || request.locale,
-				whenMs: null,
-				timeZone: null,
+				whenMs: instant?.instantMs ?? null,
+				timeZone: zone,
 				partySize: request.partySize,
 				token: deriveNotifyToken(orgId, request.id, request.tokenVersion),
 				endMs: null,
 				quotedWaitMin: null,
+				bookQuery: new URLSearchParams({
+					location: request.locationId,
+					party: String(request.partySize),
+					date: request.businessDate,
+					time: `${hh}:${mm}`,
+				}).toString(),
 			},
 		}
 	}
@@ -319,7 +336,9 @@ async function sendOne(options: {
 		base && token && subject.kind === 'waitlist'
 			? `${base}/reserve/waitlist#t=${token}`
 			: null
-	const bookUrl = base ? `${base}/reserve` : null
+	const bookUrl = base
+		? `${base}/reserve${subject.bookQuery ? `?${subject.bookQuery}` : ''}`
+		: null
 	const kind = row.kind as ToggleableMessageKind
 
 	if (row.channel === 'sms') {

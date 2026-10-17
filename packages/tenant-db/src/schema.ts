@@ -4359,6 +4359,8 @@ export const rsvNotifyRequests = sqliteTable(
 			.default('active'),
 		notifiedCount: integer('notified_count').notNull().default(0),
 		lastNotifiedAt: integer('last_notified_at'),
+		/** Local start minute of the opening the last notification offered. */
+		lastNotifiedSlotMin: integer('last_notified_slot_min'),
 		expiresAt: integer('expires_at').notNull(),
 		tokenVersion: integer('token_version').notNull().default(1),
 		ipHash: text('ip_hash'),

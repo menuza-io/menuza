@@ -240,6 +240,29 @@ describe('renderReservationEmail: links', () => {
 		expect(notify.html).not.toContain(STATUS)
 	})
 
+	it('names the available date and time, restaurant-local, in notify-me email', () => {
+		const mail = renderReservationEmail(input('notify_available'))
+		expect(mail.text).toContain('opened up on Saturday, June 14, 2031 at 3:30')
+		expect(mail.html).toContain('Saturday, June 14, 2031')
+		const riyadh = renderReservationEmail(
+			input('notify_available', { timeZone: 'Asia/Riyadh' }),
+		)
+		expect(riyadh.text).toContain('at 10:30')
+		const slotLink = `${BOOK}?location=loc&party=4&date=2031-06-14&time=15%3A30`
+		const linked = renderReservationEmail(
+			input('notify_available', { bookUrl: slotLink }),
+		)
+		expect(linked.html).toContain(`href="${slotLink.replace(/&/g, '&amp;')}"`)
+		const ar = renderReservationEmail(
+			input('notify_available', { locale: 'ar' }),
+		)
+		expect(ar.text).toContain('بتاريخ')
+		const undated = renderReservationEmail(
+			input('notify_available', { whenMs: null }),
+		)
+		expect(undated.text).toContain('just opened up')
+	})
+
 	it('has no button on the kinds that end the conversation', () => {
 		for (const kind of [
 			'cancellation_guest',

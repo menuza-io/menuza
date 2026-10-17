@@ -180,10 +180,17 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				data={blockData}
 				reports={reports}
 				savedReportOptions={picker.savedReports}
+				bookingsToday={picker.bookingsToday}
 				organization={organization}
 			/>
 		),
-		[blockData, organization, picker.savedReports, reports],
+		[
+			blockData,
+			organization,
+			picker.bookingsToday,
+			picker.savedReports,
+			reports,
+		],
 	)
 	const blockTitle = useCallback(
 		(block: DashboardBlock) =>

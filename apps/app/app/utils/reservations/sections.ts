@@ -99,8 +99,8 @@ export const RESERVATIONS_SECTIONS: readonly ReservationsSectionDefinition[] = [
 		feature: 'enabled',
 		flag: null,
 		featureKey: null,
-		permissions: [P.READ_RESERVATION_REPORT, P.UPDATE_RESERVATION_PAYMENT],
-		anyOf: [P.READ_RESERVATION_REPORT, P.UPDATE_RESERVATION_PAYMENT],
+		permissions: [P.READ_RESERVATION_REPORT],
+		anyOf: [P.READ_RESERVATION_REPORT],
 	},
 	{
 		id: 'settings',

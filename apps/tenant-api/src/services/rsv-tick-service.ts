@@ -33,6 +33,7 @@ import {
 	nextMessageDueAt,
 	type DeliveryTotals,
 } from './rsv-message-service.ts'
+import { reconcileGuestCounters } from './rsv-guestbook-service.ts'
 import { runNotifyMeMatching } from './rsv-notify-service.ts'
 import {
 	deliverOutbox,
@@ -71,6 +72,7 @@ export const RESERVATIONS_TICK_TASK_NAMES = [
 	'notify_me_match',
 	'deliver_messages',
 	'deliver_outbox',
+	'reconcile_guest_counters',
 	'purge',
 ] as const
 export type ReservationsTickTaskName =
@@ -497,6 +499,17 @@ export async function runReservationsTickForOrg(
 					...(deps.outboxPost ? { post: deps.outboxPost } : {}),
 				})
 				return { status: 'ok', count: outbox.delivered, detail: { ...outbox } }
+			}),
+		)
+
+		tasks.push(
+			await guarded('reconcile_guest_counters', async () => {
+				const out = await reconcileGuestCounters(db, now)
+				return {
+					status: 'ok',
+					count: out.repaired,
+					detail: { checked: out.checked, repaired: out.repaired },
+				}
 			}),
 		)
 

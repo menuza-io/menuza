@@ -1,4 +1,5 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
+import { isReservationsReportSubject } from './catalog-reservations.ts'
 import {
 	STAFF_PAY_REPORT_PERMISSION,
 	isStaffingReportSubject,
@@ -19,6 +20,12 @@ import { type ReportTemplate } from './templates.ts'
  * `granted` is the restricted subjects the reports token lists.
  */
 
+function isGatedSubject(subject: string) {
+	return (
+		isStaffingReportSubject(subject) || isReservationsReportSubject(subject)
+	)
+}
+
 function fieldAvailable(
 	field: { requiresSubject?: string },
 	granted: ReadonlySet<string>,
@@ -37,7 +44,7 @@ export function catalogForGrants(
 	const set = new Set(granted)
 	const subjects: ReportSubject[] = []
 	for (const subject of catalog.subjects) {
-		if (isStaffingReportSubject(subject.id) && !set.has(subject.id)) continue
+		if (isGatedSubject(subject.id) && !set.has(subject.id)) continue
 		subjects.push({
 			...subject,
 			fields: subject.fields.filter((field) => fieldAvailable(field, set)),
@@ -62,7 +69,7 @@ export function definitionAllowed(
 		(item) => item.id === definition.subject,
 	)
 	if (!subject) return true
-	if (isStaffingReportSubject(subject.id) && !set.has(subject.id)) return false
+	if (isGatedSubject(subject.id) && !set.has(subject.id)) return false
 	for (const id of referencedFieldIds(subject, definition)) {
 		const field = getField(subject, id)
 		if (field && !fieldAvailable(field, set)) return false

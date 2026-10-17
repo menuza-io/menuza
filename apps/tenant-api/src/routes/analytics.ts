@@ -23,6 +23,7 @@ import {
 	type ReportRecord,
 } from '@repo/reports'
 import {
+	isReservationsReportSubject,
 	isStaffingReportSubject,
 	operatorTokenAllowsSubject,
 	STAFF_PAY_REPORT_PERMISSION,
@@ -41,6 +42,12 @@ import {
 	loadTextSubscriberRecords,
 	ORDER_REPORT_MAX_ROWS,
 } from '../services/report-records.ts'
+import {
+	auditRsvReportRun,
+	loadBookingRecords,
+	loadWaitlistRecords,
+	type RsvReportContext,
+} from '../services/rsv-report-records.ts'
 import {
 	auditStaffReportRun,
 	loadApplicationRecords,
@@ -71,6 +78,8 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'shifts',
 	'labor_daily',
 	'applications',
+	'bookings',
+	'waitlist_entries',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -422,6 +431,35 @@ analyticsRoutes.post('/query', async (c) => {
 			// A Drizzle error message quotes every bound value, which for staff
 			// data means names and wages: never log or return it.
 			console.error('Staff report failed', describeStaffError(error))
+			return c.json(
+				{ error: 'report_failed', message: 'The report could not be run.' },
+				500,
+			)
+		}
+		records = loaded.records
+		sourceTruncated = loaded.truncated
+		sourceRowLimit = records.length
+	} else if (isReservationsReportSubject(definition.subject)) {
+		const rsvCtx: RsvReportContext = {
+			db,
+			orgId: claims.orgId,
+			userId: claims.userId,
+			locationIds: claims.scopeIds,
+			now: now.getTime(),
+		}
+		let loaded
+		try {
+			loaded =
+				definition.subject === 'bookings'
+					? await loadBookingRecords(rsvCtx, definition)
+					: await loadWaitlistRecords(rsvCtx, definition)
+			await auditRsvReportRun(rsvCtx, {
+				subject: definition.subject,
+				rows: loaded.records.length,
+			})
+		} catch (error) {
+			// A Drizzle error message quotes every bound value: never log it.
+			console.error('Reservations report failed', describeStaffError(error))
 			return c.json(
 				{ error: 'report_failed', message: 'The report could not be run.' },
 				500,

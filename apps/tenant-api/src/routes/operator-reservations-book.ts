@@ -49,6 +49,7 @@ import {
 	upsertServiceNotes,
 } from '../services/rsv-day-feed-service.js'
 import { getGuestSummary, searchGuests } from '../services/rsv-guest-service.js'
+import { getBookingsToday } from '../services/rsv-today-service.ts'
 import {
 	approveReservationRequest,
 	declineReservationRequest,
@@ -261,6 +262,47 @@ const changesQuerySchema = z.object({
 	sinceVersion: z.coerce.number().int().min(0).optional(),
 	dayVersion: z.coerce.number().int().min(0).optional(),
 })
+
+const todayQuerySchema = z.object({
+	locationId: z.string().trim().min(1).max(128),
+})
+
+operatorReservationsBookRoutes.get(
+	'/today',
+	rsvGuard({
+		scope: 'book',
+		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const q = parseQuery(c, todayQuerySchema)
+		if ('error' in q) return q.error
+
+		const locCheck = resolveLocation(ctx, q.data.locationId)
+		if (!locCheck.ok) return locCheck.response
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const now = Date.now()
+			const businessDate = await resolveBusinessDate(
+				ctx.orgId,
+				locCheck.locationId,
+			)
+			const today = await getBookingsToday(db, {
+				locationId: locCheck.locationId,
+				businessDate,
+				now,
+			})
+			c.header('Cache-Control', 'private, no-store')
+			return json({ ok: true, orgId: ctx.orgId, ...today })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
 
 operatorReservationsBookRoutes.get(
 	'/changes',

@@ -107,6 +107,10 @@ export type DayReservationGuestSummary = {
 	totalSpendMinor: number
 	firstVisitAt: number | null
 	lastVisitAt: number | null
+	/** Linked to a storefront customer (the link itself is never sent). */
+	customerLinked: boolean
+	/** Notes a manager pinned on the guest profile. */
+	pinnedNotes: Array<{ id: string; body: string }>
 	tags: DayReservationGuestTag[]
 }
 
@@ -699,6 +703,17 @@ export function normalizeGuestSummary(
 		firstVisitAt:
 			typeof raw.firstVisitAt === 'number' ? raw.firstVisitAt : null,
 		lastVisitAt: typeof raw.lastVisitAt === 'number' ? raw.lastVisitAt : null,
+		customerLinked: raw.customerLinked === true,
+		pinnedNotes: Array.isArray(raw.pinnedNotes)
+			? raw.pinnedNotes.flatMap((note) => {
+					const record = note as Record<string, unknown> | null
+					return record &&
+						typeof record.id === 'string' &&
+						typeof record.body === 'string'
+						? [{ id: record.id, body: record.body }]
+						: []
+				})
+			: [],
 		tags,
 	}
 }
@@ -2061,6 +2076,23 @@ export async function fetchReservationEvents(
 	return normalizeAuditEntries(Array.isArray(raw.events) ? raw.events : [])
 }
 
+/** Reservation detail nests the guest row and its pinned notes under `guestDetail`. */
+function unwrapGuestDetail(
+	value: unknown,
+): Record<string, unknown> | null | undefined {
+	if (!value || typeof value !== 'object') return null
+	const wrapper = value as Record<string, unknown>
+	const inner = wrapper.guest
+	if (inner && typeof inner === 'object') {
+		return {
+			...(inner as Record<string, unknown>),
+			pinnedNotes:
+				wrapper.pinnedNotes ?? (inner as Record<string, unknown>).pinnedNotes,
+		}
+	}
+	return wrapper
+}
+
 export async function fetchReservationDetail(
 	client: ReservationsScopedClient,
 	reservationId: string,
@@ -2075,8 +2107,8 @@ export async function fetchReservationDetail(
 	)
 	const guest =
 		normalizeGuestSummary(
-			(raw.guest ?? raw.guestDetail ?? reservation.guest) as
-				Record<string, unknown> | null | undefined,
+			unwrapGuestDetail(raw.guest ?? raw.guestDetail) ??
+				(reservation.guest as unknown as Record<string, unknown> | null),
 		) ?? reservation.guest
 
 	const audit = normalizeAuditEntries(

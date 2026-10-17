@@ -1,6 +1,5 @@
 import { internalContextChangedSchema } from '@repo/reservations'
-import { getTenantDb, rsvGuests, TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { getTenantDb, TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { json, readJsonBody } from '../lib/http.ts'
@@ -17,6 +16,7 @@ import {
 	voiceAgentTokenProblem,
 } from '../lib/secrets.ts'
 import { getRegionalReservationSummary } from '../services/rsv-day-feed-service.js'
+import { unlinkErasedCustomer } from '../services/rsv-guestbook-service.ts'
 
 function requireInternalAuth(authHeader: string | undefined): Response | null {
 	const token = getInternalCommandToken()
@@ -81,21 +81,13 @@ reservationsInternalRoutes.post('/erase-customer', async (c) => {
 	if (orgErr) return orgErr
 
 	const db = await getTenantDb(parsed.data.orgId)
-	const now = Date.now()
-	await db
-		.update(rsvGuests)
-		.set({
-			firstName: 'Deleted',
-			lastName: 'Guest',
-			phoneE164: null,
-			emailNorm: null,
-			allergyNotes: null,
-			erasedAt: now,
-			updatedAt: now,
-		})
-		.where(eq(rsvGuests.customerId, parsed.data.customerId))
+	const unlinked = await unlinkErasedCustomer(
+		db,
+		parsed.data.customerId,
+		Date.now(),
+	)
 
-	return json({ ok: true, orgId: parsed.data.orgId })
+	return json({ ok: true, orgId: parsed.data.orgId, ...unlinked })
 })
 
 const internalSummarySchema = z.object({

@@ -615,9 +615,10 @@ describe('send-time eligibility', () => {
 		})
 	})
 
-	it('sends notify-available with the booking page link and no manage token', async () => {
+	it('sends notify-available naming the offered date and time with a link to that slot', async () => {
 		const request = await insertNotifyRequest(db, {
 			contactEmailNorm: 'nfy@example.com',
+			lastNotifiedSlotMin: 18 * 60 + 15,
 		})
 		const row = await insertMessageRow(db, {
 			kind: 'notify_available',
@@ -627,7 +628,18 @@ describe('send-time eligibility', () => {
 		await deliver()
 		const mail = sent.email.mock.calls[0]![0]
 		expect(mail.to).toBe('nfy@example.com')
-		expect(mail.html).toContain(`href="${SITE}/reserve"`)
+		const query = new URLSearchParams({
+			location: PUBLIC_LOC,
+			party: '2',
+			date: '2031-06-14',
+			time: '18:15',
+		}).toString()
+		expect(mail.html).toContain(
+			`href="${SITE}/reserve?${query.replace(/&/g, '&amp;')}"`,
+		)
+		expect(mail.html).toContain('Saturday, June 14, 2031')
+		expect(mail.html).toContain('6:15')
+		expect(mail.text).toContain('June 14, 2031 at 6:15')
 		expect(mail.html).not.toContain('#t=')
 		expect(
 			deriveNotifyToken(ORG, request.id, request.tokenVersion),
@@ -649,7 +661,8 @@ describe('send-time eligibility', () => {
 		await deliver()
 		const call = sent.sms.mock.calls[0]![0]
 		expect(call.to).toBe('+14155550105')
-		expect(call.message).toContain(`${SITE}/reserve`)
+		expect(call.message).toContain(`${SITE}/reserve?location=${PUBLIC_LOC}`)
+		expect(call.message).toContain('June 14, 2031')
 		expect(call.message).not.toContain('for .')
 	})
 })

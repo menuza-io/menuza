@@ -1,32 +1,33 @@
-import { t } from '@lingui/macro'
-import { useLingui } from '@lingui/react'
-import { ReservationsSectionPlaceholder } from '#app/components/reservations/section-placeholder.tsx'
+import { useLoaderData } from 'react-router'
+import { ReportsScreen } from '#app/components/reservations/reports/reports-screen.tsx'
+import { useReservationsScopeClient } from '#app/hooks/use-reservations-client.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/reports.ts'
+import { useReservationsLayoutData } from './_layout.tsx'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-	await requireReservationsAccess(
+	const access = await requireReservationsAccess(
 		request,
 		params.orgSlug,
 		RESERVATIONS_SECTION_REQUIREMENTS.reports,
 	)
-	return null
+	return { orgSlug: access.organizationSlug }
 }
 
 export default function ReservationsReportsRoute() {
-	const { _ } = useLingui()
+	const { orgSlug } = useLoaderData<typeof loader>()
+	const { activeLocationId, locations, todayDate } = useReservationsLayoutData()
+	const locationId =
+		locations.find((loc) => loc.id === activeLocationId)?.id ??
+		locations[0]?.id ??
+		''
+	const client = useReservationsScopeClient(
+		orgSlug,
+		'reports',
+		locationId ? [locationId] : undefined,
+	)
 	return (
-		<ReservationsSectionPlaceholder
-			title={_(t`Reports`)}
-			description={_(
-				t`Covers, utilization, no-show rates, pacing, and deposit/fee reconciliation.`,
-			)}
-			emptyTitle={_(t`Reservations analytics`)}
-			emptyDescription={_(
-				t`Track covers by service and channel, turn durations, waitlist conversions, and payment settlements.`,
-			)}
-			icons={['calendar', 'clock', 'users']}
-		/>
+		<ReportsScreen client={client} locationId={locationId} today={todayDate} />
 	)
 }

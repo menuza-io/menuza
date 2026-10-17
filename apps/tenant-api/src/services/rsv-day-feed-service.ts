@@ -38,6 +38,7 @@ import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	loadGuestTagsMap,
+	loadPinnedNotesMap,
 	serializeGuestRow,
 	type DbOrTx,
 	type SerializedGuestSummary,
@@ -340,6 +341,7 @@ export async function serializeReservationsForBook(
 					.all()
 			: []
 	const guestById = new Map(guestRows.map((g) => [g.id, g]))
+	const pinnedNotesMap = await loadPinnedNotesMap(db, guestIds)
 	const tagsMap = await loadGuestTagsMap(db, guestIds, {
 		canReadSensitive,
 	})
@@ -413,9 +415,12 @@ export async function serializeReservationsForBook(
 
 		const guestRow = r.guestId ? guestById.get(r.guestId) : undefined
 		const guestSummary = guestRow
-			? serializeGuestRow(guestRow, tagsMap.get(guestRow.id) ?? [], {
-					canReadSensitive,
-				})
+			? {
+					...serializeGuestRow(guestRow, tagsMap.get(guestRow.id) ?? [], {
+						canReadSensitive,
+					}),
+					pinnedNotes: pinnedNotesMap.get(guestRow.id) ?? [],
+				}
 			: null
 
 		const rawDietary = Boolean(

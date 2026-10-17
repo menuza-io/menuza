@@ -11,6 +11,7 @@ import {
 	type BuiltInBlockData,
 	type DashboardBlockPicker,
 } from '#app/utils/dashboards/block-data.server.ts'
+import { inaccessibleBlockIds } from '#app/utils/dashboards/bookings-today.ts'
 import {
 	type BlockType,
 	type DashboardBlock,
@@ -89,8 +90,15 @@ export function DashboardEditor({
 		const byType = blocks
 			.filter((block) => hiddenBlockTypes.includes(block.type))
 			.map((block) => block.id)
-		return [...fromData, ...byType]
-	}, [blocks, blockData, hiddenBlockTypes, picker.onboardingAvailable])
+		const byAccess = inaccessibleBlockIds(blocks, picker.bookingsToday)
+		return [...fromData, ...byType, ...byAccess]
+	}, [
+		blocks,
+		blockData,
+		hiddenBlockTypes,
+		picker.bookingsToday,
+		picker.onboardingAvailable,
+	])
 
 	useEffect(() => {
 		if (editing && !editable) stopEditing()

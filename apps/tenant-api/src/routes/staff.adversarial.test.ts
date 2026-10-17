@@ -29,6 +29,11 @@ import {
 } from '../../tests/staff-harness.ts'
 import { describeStaffError } from '../services/staff-audit.ts'
 
+// The largest rate the API accepts. Its 11 digits "10000000000" only fit a
+// 13-digit epoch-ms timestamp as 1710000000000 (March 2024), so the text can
+// never appear in a current timestamp, unlike a 4-digit needle.
+const HIDDEN_RATE_MINOR = 10_000_000_000
+
 const orgs = vi.hoisted(() => new Map<string, TestOrg>())
 
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
@@ -1083,7 +1088,7 @@ describe('Adversarial: /operator/staff', () => {
 			})
 			for (const [scopeId, rateMinor] of [
 				[LOC_1, 1111],
-				[LOC_2, 2222],
+				[LOC_2, HIDDEN_RATE_MINOR],
 			] as const) {
 				await h.request('POST', `/${b.staff.id}/jobs`, {
 					body: {
@@ -1107,9 +1112,9 @@ describe('Adversarial: /operator/staff', () => {
 				token,
 			})
 			expect(detail.raw).toContain('1111')
-			expect(detail.raw).not.toContain('2222')
+			expect(detail.raw).not.toContain(String(HIDDEN_RATE_MINOR))
 			const jobs = await h.request('GET', `/${b.staff.id}/jobs`, { token })
-			expect(jobs.raw).not.toContain('2222')
+			expect(jobs.raw).not.toContain(String(HIDDEN_RATE_MINOR))
 			const jobIds = (await h.request('GET', `/${b.staff.id}/jobs`)).body
 				.jobs as Array<{ id: string; scopeId: string }>
 			const hidden = jobIds.find((j) => j.scopeId === LOC_2)!

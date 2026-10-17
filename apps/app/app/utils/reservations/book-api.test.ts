@@ -4,6 +4,7 @@ import {
 	assignReservationTable,
 	declineReservationRequest,
 	fetchBookDayConditional,
+	fetchReservationDetail,
 	fetchReservationEvents,
 	normalizeDayFeedResponse,
 	normalizeReservationView,
@@ -399,5 +400,40 @@ describe('book-api', () => {
 			'/operator/reservations/book/requests/rsv-req/decline',
 			{ method: 'POST', body: {} },
 		)
+	})
+
+	it('reads the guest id, profile link data and pinned notes from the nested guest detail', async () => {
+		const client = createMockClient(async () => ({
+			reservation: {
+				id: 'rsv-1',
+				confirmationCode: 'ABC123',
+				partySize: 2,
+				businessDate: '2026-04-20',
+				localStartMin: 1140,
+				durationMin: 90,
+				status: 'booked',
+				version: 1,
+			},
+			guestDetail: {
+				guest: {
+					id: 'g1',
+					firstName: 'Layla',
+					lastName: 'Al-Mansoor',
+					customerLinked: true,
+					tags: [],
+				},
+				notes: [],
+				pinnedNotes: [{ id: 'n1', body: 'Window table' }],
+				reservations: [],
+			},
+			events: [],
+		}))
+		const detail = await fetchReservationDetail(client, 'rsv-1')
+		expect(detail.guest?.id).toBe('g1')
+		expect(detail.guest?.fullName).toBe('Layla Al-Mansoor')
+		expect(detail.guest?.customerLinked).toBe(true)
+		expect(detail.guest?.pinnedNotes).toEqual([
+			{ id: 'n1', body: 'Window table' },
+		])
 	})
 })

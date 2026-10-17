@@ -1,5 +1,5 @@
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
-import { getTenantDb, rsvExperiences, rsvReservations } from '@repo/tenant-db'
+import { getTenantDb, rsvExperiences } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
@@ -15,6 +15,7 @@ import {
 } from '../lib/reservations-guard.ts'
 import { operatorReservationsBookRoutes } from './operator-reservations-book.ts'
 import { operatorReservationsGuestsRoutes } from './operator-reservations-guests.ts'
+import { operatorReservationsReportsRoutes } from './operator-reservations-reports.ts'
 import { operatorReservationsSetupRoutes } from './operator-reservations-setup.ts'
 import { operatorReservationsWaitlistRoutes } from './reservations-waitlist.ts'
 
@@ -87,37 +88,7 @@ reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
 reservationsOperatorRoutes.route('/guests', operatorReservationsGuestsRoutes)
 
 // 4. Reports scope routes
-reservationsOperatorRoutes.get(
-	'/reports/summary',
-	rsvGuard({
-		scope: 'reports',
-		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION_REPORT,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const query = readQuery(c, requiredLocationQuerySchema)
-		if ('error' in query) return query.error
-
-		const locCheck = await resolveLocationParam(c, ctx, query.data.locationId)
-		if (!locCheck.ok) return locCheck.response
-
-		const db = await getTenantDb(ctx.orgId)
-		const rows = await db
-			.select()
-			.from(rsvReservations)
-			.where(eq(rsvReservations.locationId, locCheck.locationId))
-
-		return json({
-			ok: true,
-			orgId: ctx.orgId,
-			locationId: locCheck.locationId,
-			totalReservations: rows.length,
-		})
-	},
-)
+reservationsOperatorRoutes.route('/reports', operatorReservationsReportsRoutes)
 
 // 5. Payments scope routes
 const refundPaymentBodySchema = z.object({

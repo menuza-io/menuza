@@ -189,7 +189,9 @@ const EN: Dict = {
 	notify_available: (v) => ({
 		subject: `A table opened up at ${v.r}`,
 		heading: 'A table is available',
-		lead: `A table you asked about at ${v.r} just opened up. Book it before it goes.`,
+		lead: v.date
+			? `A table you asked about at ${v.r} opened up on ${v.date} at ${v.time}. Book it before it goes.`
+			: `A table you asked about at ${v.r} just opened up. Book it before it goes.`,
 		cta: 'book',
 		ctaLabel: 'Book now',
 	}),
@@ -270,7 +272,9 @@ const AR: Dict = {
 	notify_available: (v) => ({
 		subject: `توفرت طاولة في ${v.r}`,
 		heading: 'توفرت طاولة',
-		lead: `توفرت طاولة سألت عنها في ${v.r}. احجزها قبل أن تنفد.`,
+		lead: v.date
+			? `توفرت طاولة سألت عنها في ${v.r} بتاريخ ${v.date} الساعة ${v.time}. احجزها قبل أن تنفد.`
+			: `توفرت طاولة سألت عنها في ${v.r}. احجزها قبل أن تنفد.`,
 		cta: 'book',
 		ctaLabel: 'احجز الآن',
 	}),

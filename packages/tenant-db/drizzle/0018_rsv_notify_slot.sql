@@ -1,0 +1,1 @@
+ALTER TABLE `rsv_notify_requests` ADD `last_notified_slot_min` integer;

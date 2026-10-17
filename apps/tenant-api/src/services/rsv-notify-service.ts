@@ -446,6 +446,7 @@ export async function runNotifyMeMatching(
 								status: 'notified',
 								notifiedCount: request.notifiedCount + 1,
 								lastNotifiedAt: now,
+								lastNotifiedSlotMin: opening.slotMin,
 							})
 							.where(eq(rsvNotifyRequests.id, request.id))
 						await enqueueNotifyMessage(

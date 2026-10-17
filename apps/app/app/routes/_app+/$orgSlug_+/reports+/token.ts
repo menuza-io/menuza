@@ -15,6 +15,10 @@ import {
 	ORG_PERMISSIONS,
 	requireAnyUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import {
+	intersectScopeIds,
+	resolveReservationsReportAccess,
+} from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccess } from '#app/utils/staffing/report-access.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/token.ts'
@@ -55,10 +59,24 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organizationId: organization.id,
 		impersonated: await isImpersonating(request),
 	})
+	// Bookings and waitlist reports need the reservation report grant and the
+	// master Reservations flag, limited to the person's locations.
+	const reservations = await resolveReservationsReportAccess({
+		request,
+		userId,
+		organizationId: organization.id,
+	})
+	const scopeIds =
+		staff.subjects.length > 0 && reservations.subjects.length > 0
+			? intersectScopeIds(staff.scopeIds, reservations.scopeIds)
+			: reservations.subjects.length > 0
+				? reservations.scopeIds
+				: staff.scopeIds
 	const subjects: RestrictedReportSubject[] = [
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...staff.subjects,
+		...reservations.subjects,
 	]
 
 	const minted = await mintOperatorAnalyticsToken({
@@ -67,7 +85,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		orgId: organization.id,
 		role: 'operator',
 		subjects,
-		scopeIds: staff.scopeIds,
+		scopeIds,
 	})
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)

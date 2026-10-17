@@ -76,6 +76,9 @@ describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)',
 			'settings.messages.tsx',
 			'settings.waitlist.tsx',
 			'waitlist.tsx',
+			'guests.tsx',
+			'guests.$guestId.tsx',
+			'reports.tsx',
 		]) {
 			expect(files).toContain(required)
 		}

@@ -349,7 +349,11 @@ reservationsPublicRoutes.get(
 			features: g.value.context.features,
 		})
 
-		const etag = `"${result.dayVersion}.${result.settingsVersion}"`
+		// The body's waitlist and notify-me offers follow these flags, which no
+		// day or settings version tracks, so a flag change must change the tag.
+		const { online, waitlist } = g.value.context.features
+		const flagBits = `${online ? 1 : 0}${waitlist ? 1 : 0}`
+		const etag = `"${result.dayVersion}.${result.settingsVersion}.${flagBits}"`
 		const headers = {
 			ETag: etag,
 			'Cache-Control': 'private, max-age=0',

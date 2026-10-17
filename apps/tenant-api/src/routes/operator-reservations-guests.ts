@@ -1,6 +1,5 @@
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
-import { getTenantDb, rsvGuests } from '@repo/tenant-db'
-import { desc } from 'drizzle-orm'
+import { getTenantDb } from '@repo/tenant-db'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { ECHOING_CODES, handleRouteError, json } from '../lib/http.ts'
@@ -20,6 +19,23 @@ import {
 	getGuestSummary,
 	searchGuests,
 } from '../services/rsv-guest-service.js'
+import {
+	addGuestNote,
+	assignGuestTag,
+	createGuestTag,
+	deleteGuestNote,
+	getGuestProfile,
+	GUEST_SORTS,
+	GUEST_TAG_CATEGORIES,
+	GUESTBOOK_PAGE_SIZE,
+	listGuests,
+	listGuestTags,
+	mergeGuests,
+	removeGuestTag,
+	updateGuestNote,
+	updateGuestProfile,
+	updateGuestTag,
+} from '../services/rsv-guestbook-service.ts'
 
 async function parseBody<T extends z.ZodTypeAny>(
 	c: Context,
@@ -94,6 +110,20 @@ const listGuestsQuerySchema = z.object({
 	limit: z.coerce.number().int().min(1).max(100).optional().default(50),
 })
 
+const pagedGuestsQuerySchema = z.object({
+	q: z.string().trim().max(120).optional(),
+	tag: z.string().trim().min(1).max(128).optional(),
+	sort: z.enum(GUEST_SORTS).optional(),
+	cursor: z.string().trim().max(512).optional(),
+	limit: z.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(100)
+		.optional()
+		.default(GUESTBOOK_PAGE_SIZE),
+})
+
 operatorReservationsGuestsRoutes.get(
 	'/',
 	rsvGuard({
@@ -105,22 +135,19 @@ operatorReservationsGuestsRoutes.get(
 		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
 		if (orgErr) return orgErr
 
-		const q = parseQuery(c, listGuestsQuerySchema)
+		const q = parseQuery(c, pagedGuestsQuerySchema)
 		if ('error' in q) return q.error
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			if (q.data.q && q.data.q.length > 0) {
-				const guests = await searchGuests(db, q.data.q, q.data.limit)
-				return json({ ok: true, orgId: ctx.orgId, guests })
-			}
-			const guests = await db
-				.select()
-				.from(rsvGuests)
-				.orderBy(desc(rsvGuests.updatedAt))
-				.limit(q.data.limit)
-				.all()
-			return json({ ok: true, orgId: ctx.orgId, guests })
+			const page = await listGuests(db, {
+				q: q.data.q,
+				tagId: q.data.tag,
+				sort: q.data.sort,
+				cursor: q.data.cursor,
+				limit: q.data.limit,
+			})
+			return json({ ok: true, orgId: ctx.orgId, ...page })
 		} catch (error) {
 			return handleRouteError(error)
 		}
@@ -200,6 +227,131 @@ operatorReservationsGuestsRoutes.post(
 )
 
 operatorReservationsGuestsRoutes.get(
+	'/tags',
+	rsvGuard({
+		scope: 'guests',
+		grant: RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const tags = await listGuestTags(db)
+			return json({ ok: true, orgId: ctx.orgId, tags })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const createTagBodySchema = z.object({
+	name: z.string().trim().min(1).max(60),
+	category: z.enum(GUEST_TAG_CATEGORIES).optional(),
+	colorToken: z.string().trim().min(1).max(32).optional(),
+})
+
+operatorReservationsGuestsRoutes.post(
+	'/tags',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, createTagBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const tag = await createGuestTag(db, {
+				...parsed.data,
+				actorId: ctx.userId,
+			})
+			return json({ ok: true, orgId: ctx.orgId, tag }, 201)
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const updateTagBodySchema = z
+	.object({
+		name: z.string().trim().min(1).max(60).optional(),
+		colorToken: z.string().trim().min(1).max(32).optional(),
+		archived: z.boolean().optional(),
+	})
+	.refine((v) => Object.keys(v).length > 0, { message: 'No changes' })
+
+operatorReservationsGuestsRoutes.patch(
+	'/tags/:tagId',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, updateTagBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const tag = await updateGuestTag(db, c.req.param('tagId'), {
+				...parsed.data,
+				actorId: ctx.userId,
+			})
+			return json({ ok: true, orgId: ctx.orgId, tag })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const mergeBodySchema = z.object({
+	keepId: z.string().trim().min(1).max(128),
+	mergeId: z.string().trim().min(1).max(128),
+	expectedVersions: z.record(z.string(), z.number().int()).optional(),
+})
+
+operatorReservationsGuestsRoutes.post(
+	'/merge',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, mergeBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const merged = await mergeGuests(db, {
+				...parsed.data,
+				actorId: ctx.userId,
+			})
+			return json({ ok: true, orgId: ctx.orgId, ...merged })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+operatorReservationsGuestsRoutes.get(
 	'/:id',
 	rsvGuard({
 		scope: 'guests',
@@ -212,10 +364,205 @@ operatorReservationsGuestsRoutes.get(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const summary = await getGuestSummary(db, c.req.param('id'), {
+			const profile = await getGuestProfile(db, c.req.param('id'), {
 				canReadSensitive: true,
 			})
-			return json({ ok: true, orgId: ctx.orgId, ...summary })
+			return json({ ok: true, orgId: ctx.orgId, ...profile })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const updateGuestBodySchema = z
+	.object({
+		expectedVersion: z.number().int().min(1),
+		firstName: z.string().trim().min(1).max(120).optional(),
+		lastName: z.string().trim().max(120).optional(),
+		phone: z.string().trim().max(32).optional().nullable(),
+		email: z.string().trim().email().max(255).optional().nullable(),
+		locale: z.string().trim().max(16).optional(),
+		allergyNotes: z.string().max(1000).optional().nullable(),
+	})
+	.strict()
+
+operatorReservationsGuestsRoutes.patch(
+	'/:id',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, updateGuestBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const guest = await updateGuestProfile(db, c.req.param('id'), {
+				...parsed.data,
+				actorId: ctx.userId,
+			})
+			return json({ ok: true, orgId: ctx.orgId, guest })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const assignTagBodySchema = z.object({
+	tagId: z.string().trim().min(1).max(128),
+})
+
+operatorReservationsGuestsRoutes.post(
+	'/:id/tags',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, assignTagBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const tags = await assignGuestTag(
+				db,
+				c.req.param('id'),
+				parsed.data.tagId,
+			)
+			return json({ ok: true, orgId: ctx.orgId, tags })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+operatorReservationsGuestsRoutes.delete(
+	'/:id/tags/:tagId',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const tags = await removeGuestTag(
+				db,
+				c.req.param('id'),
+				c.req.param('tagId'),
+			)
+			return json({ ok: true, orgId: ctx.orgId, tags })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const addNoteBodySchema = z.object({
+	body: z.string().trim().min(1).max(2000),
+	pinned: z.boolean().optional(),
+})
+
+operatorReservationsGuestsRoutes.post(
+	'/:id/notes',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, addNoteBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const note = await addGuestNote(db, c.req.param('id'), {
+				...parsed.data,
+				actorId: ctx.userId,
+			})
+			return json({ ok: true, orgId: ctx.orgId, note }, 201)
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+const updateNoteBodySchema = z
+	.object({
+		body: z.string().trim().min(1).max(2000).optional(),
+		pinned: z.boolean().optional(),
+	})
+	.refine((v) => Object.keys(v).length > 0, { message: 'No changes' })
+
+operatorReservationsGuestsRoutes.patch(
+	'/:id/notes/:noteId',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		const parsed = await parseBody(c, updateNoteBodySchema)
+		if ('error' in parsed) return parsed.error
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const note = await updateGuestNote(
+				db,
+				c.req.param('id'),
+				c.req.param('noteId'),
+				parsed.data,
+			)
+			return json({ ok: true, orgId: ctx.orgId, note })
+		} catch (error) {
+			return handleRouteError(error)
+		}
+	},
+)
+
+operatorReservationsGuestsRoutes.delete(
+	'/:id/notes/:noteId',
+	rsvGuard({
+		scope: 'guests',
+		write: true,
+		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST,
+	}),
+	async (c) => {
+		const ctx = getRsvAuth(c)
+		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
+		if (orgErr) return orgErr
+
+		try {
+			const db = await getTenantDb(ctx.orgId)
+			const result = await deleteGuestNote(
+				db,
+				c.req.param('id'),
+				c.req.param('noteId'),
+			)
+			return json({ ok: true, orgId: ctx.orgId, ...result })
 		} catch (error) {
 			return handleRouteError(error)
 		}

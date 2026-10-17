@@ -27,6 +27,7 @@ import {
 } from '@repo/ui/sheet'
 import { Textarea } from '@repo/ui/textarea'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useInRouterContext, useOutletContext } from 'react-router'
 import { toast } from 'sonner'
 import {
 	assignReservationTable,
@@ -119,6 +120,15 @@ export function DetailSheet({
 }) {
 	const { t, i18n } = useLingui()
 	const open = Boolean(reservationId)
+	const inRouter = useInRouterContext()
+	const layout = useOutletContext<{
+		orgSlug?: string
+		nav?: { guests?: boolean }
+	} | null>()
+	const guestsBase =
+		inRouter && layout?.orgSlug && layout.nav?.guests
+			? `/${layout.orgSlug}/reservations/guests`
+			: null
 
 	const [detail, setDetail] = useState<ReservationDetailResponse | null>(null)
 	const [events, setEvents] = useState<ReservationAuditEntry[] | null>(null)
@@ -936,6 +946,50 @@ export function DetailSheet({
 								{guest?.seatingPrefText ? (
 									<div>
 										<Trans>Seating Preference:</Trans> {guest.seatingPrefText}
+									</div>
+								) : null}
+								{guest?.pinnedNotes && guest.pinnedNotes.length > 0 ? (
+									<ul
+										className="flex flex-col gap-1"
+										aria-label={t`Pinned notes`}
+										data-testid="detail-guest-pinned-notes"
+									>
+										{guest.pinnedNotes.map((note) => (
+											<li
+												key={note.id}
+												className="bg-background flex items-start gap-1.5 rounded-md border px-2 py-1"
+											>
+												<Icon
+													name="star"
+													className="mt-0.5 size-3 shrink-0"
+													aria-hidden="true"
+												/>
+												<span className="wrap-anywhere whitespace-pre-wrap">
+													{note.body}
+												</span>
+											</li>
+										))}
+									</ul>
+								) : null}
+								{guest?.customerLinked || (guest?.id && guestsBase) ? (
+									<div className="flex flex-wrap items-center gap-2">
+										{guest?.customerLinked ? (
+											<Badge
+												variant="secondary"
+												data-testid="detail-guest-customer-linked"
+											>
+												<Trans>Linked customer</Trans>
+											</Badge>
+										) : null}
+										{guest?.id && guestsBase ? (
+											<Link
+												to={`${guestsBase}/${encodeURIComponent(guest.id)}`}
+												className="text-primary underline-offset-4 hover:underline"
+												data-testid="detail-guest-profile-link"
+											>
+												<Trans>Open guest profile</Trans>
+											</Link>
+										) : null}
 									</div>
 								) : null}
 							</div>
