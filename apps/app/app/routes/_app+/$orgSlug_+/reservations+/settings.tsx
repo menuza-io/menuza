@@ -111,12 +111,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		locations: scopedLocations,
 		canWrite,
 		isImpersonated: impersonated,
+		waitlistEnabled: access.features.waitlist,
 	}
 }
 
 export default function ReservationsSettingsRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, locations, canWrite, isImpersonated } =
+	const { orgSlug, locations, canWrite, isImpersonated, waitlistEnabled } =
 		useLoaderData<typeof loader>()
 	const location = useLocation()
 	const [searchParams] = useSearchParams()
@@ -275,6 +276,22 @@ export default function ReservationsSettingsRoute() {
 			pathname: `${basePath}/sections`,
 			exact: false,
 		},
+		{
+			id: 'messages',
+			label: _(msg`Guest Messages`),
+			pathname: `${basePath}/messages`,
+			exact: false,
+		},
+		...(waitlistEnabled
+			? [
+					{
+						id: 'waitlist',
+						label: _(msg`Waitlist`),
+						pathname: `${basePath}/waitlist`,
+						exact: false,
+					},
+				]
+			: []),
 	]
 
 	const outletContext: ReservationsSetupOutletContext = {

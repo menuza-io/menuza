@@ -4,6 +4,10 @@ export type DetailsField = 'firstName' | 'phone' | 'email'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export function isPlausibleEmail(value: string): boolean {
+	return EMAIL.test(value.trim())
+}
+
 /** At least 7 digits, only phone punctuation. The server normalizes and has the last word. */
 export function isPlausiblePhone(value: string): boolean {
 	const trimmed = value.trim()

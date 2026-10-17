@@ -3,6 +3,16 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
 import { Alert, AlertDescription } from '@repo/ui/alert'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -17,6 +27,7 @@ import {
 } from '@repo/ui/sheet'
 import { Textarea } from '@repo/ui/textarea'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import {
 	assignReservationTable,
 	type DayMoveNotice,
@@ -26,6 +37,7 @@ import {
 	markReservationRunningLate,
 	type ReservationAuditEntry,
 	type ReservationDetailResponse,
+	resendReservationConfirmation,
 	transitionReservationStatus,
 	undoReservationTransition,
 	updateReservation,
@@ -35,6 +47,7 @@ import {
 import {
 	ACTOR_KIND_LABELS,
 	CHANNEL_LABELS,
+	clientLabel,
 	DIETARY_LABELS,
 	enumLabel,
 	MOVE_NOTICE_REASON_LABELS,
@@ -45,6 +58,7 @@ import {
 } from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import {
+	extractApiErrorCode,
 	type RsvAreaRecord,
 	type RsvTableRecord,
 } from '#app/utils/reservations/setup-api.ts'
@@ -64,6 +78,9 @@ const CONTACT_STATUSES = [
 	{ value: 'no_answer', label: msg`No Answer` },
 	{ value: 'wrong_number', label: msg`Wrong Number` },
 ] as const
+
+/** The backend only re-sends a confirmation for an upcoming booking. */
+const RESENDABLE_STATUSES = new Set(['booked', 'confirmed'])
 
 type EditableField =
 	| 'table'
@@ -108,6 +125,7 @@ export function DetailSheet({
 	const [loading, setLoading] = useState(false)
 	const [busy, setBusy] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [rotateConfirmOpen, setRotateConfirmOpen] = useState(false)
 
 	// 60-second undo state
 	const [undoState, setUndoState] = useState<{
@@ -412,6 +430,35 @@ export function DetailSheet({
 			)
 		} finally {
 			setBusy(false)
+		}
+	}
+
+	const handleResend = async (rotate: boolean) => {
+		if (!reservation) return
+		setBusy(true)
+		try {
+			const res = await resendReservationConfirmation(client, reservation.id, {
+				rotate,
+			})
+			toast.success(
+				rotate
+					? t`Confirmation sent with a new manage link`
+					: t`Confirmation sent`,
+			)
+			if (res.reservation) onUpdated(res.reservation, [])
+			await loadDetail()
+		} catch (err) {
+			const code = extractApiErrorCode(err)
+			toast.error(
+				code === 'no_destination'
+					? t`The guest has no email address or opted-in phone number to send to.`
+					: code === 'invalid_state_for_resend'
+						? t`Only an upcoming booking can be re-sent.`
+						: t`The confirmation could not be sent.`,
+			)
+		} finally {
+			setBusy(false)
+			setRotateConfirmOpen(false)
 		}
 	}
 
@@ -780,8 +827,18 @@ export function DetailSheet({
 								<dt className="text-muted-foreground">
 									<Trans>Source</Trans>
 								</dt>
-								<dd data-testid="detail-source">
-									{label(CHANNEL_LABELS, reservation.channel) || '—'}
+								<dd
+									className="flex flex-wrap items-center gap-1.5"
+									data-testid="detail-source"
+								>
+									<span data-testid="detail-channel">
+										{label(CHANNEL_LABELS, reservation.channel) || '—'}
+									</span>
+									{reservation.client && reservation.client !== 'operator' ? (
+										<Badge variant="outline" data-testid="detail-client">
+											{clientLabel((d) => i18n._(d), reservation.client)}
+										</Badge>
+									) : null}
 								</dd>
 								<dt className="text-muted-foreground">
 									<Trans>Occasion</Trans>
@@ -882,6 +939,48 @@ export function DetailSheet({
 									</div>
 								) : null}
 							</div>
+
+							{/* Guest messages: resend the confirmation, optionally with a new manage link */}
+							{canManage &&
+							RESENDABLE_STATUSES.has(reservation.status) &&
+							(reservation.guestPhone || reservation.guestEmail) ? (
+								<div
+									className="flex flex-col gap-2 rounded-lg border p-3"
+									data-testid="detail-guest-messages"
+								>
+									<span className="text-xs font-semibold">
+										<Trans>Guest messages</Trans>
+									</span>
+									<div className="flex flex-wrap gap-1.5">
+										<Button
+											type="button"
+											size="xs"
+											variant="outline"
+											disabled={busy}
+											onClick={() => void handleResend(false)}
+											data-testid="detail-resend-confirmation"
+										>
+											<Icon name="send" className="size-3.5" />
+											<span>
+												<Trans>Resend confirmation</Trans>
+											</span>
+										</Button>
+										<Button
+											type="button"
+											size="xs"
+											variant="outline"
+											disabled={busy}
+											onClick={() => setRotateConfirmOpen(true)}
+											data-testid="detail-rotate-link"
+										>
+											<Icon name="refresh-cw" className="size-3.5" />
+											<span>
+												<Trans>Rotate manage link</Trans>
+											</span>
+										</Button>
+									</div>
+								</div>
+							) : null}
 
 							{/* Edit Reservation Details & Notes */}
 							{canManage ? (
@@ -1101,6 +1200,39 @@ export function DetailSheet({
 						</div>
 					) : null}
 				</div>
+				<AlertDialog
+					open={rotateConfirmOpen}
+					onOpenChange={(nextOpen) => {
+						if (!busy) setRotateConfirmOpen(nextOpen)
+					}}
+				>
+					<AlertDialogContent data-testid="detail-rotate-dialog">
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								<Trans>Send a new manage link?</Trans>
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								<Trans>
+									The guest gets a new confirmation with a new manage link. The
+									link in every earlier message stops working.
+								</Trans>
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel disabled={busy}>
+								<Trans>Cancel</Trans>
+							</AlertDialogCancel>
+							<AlertDialogAction
+								type="button"
+								disabled={busy}
+								onClick={() => void handleResend(true)}
+								data-testid="detail-rotate-confirm"
+							>
+								<Trans>Send new link</Trans>
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 			</SheetContent>
 		</Sheet>
 	)

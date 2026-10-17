@@ -63,6 +63,7 @@ export function buildReservationLabels(i18n: I18n) {
 		otherDatesHeading: t(msg`Other dates with tables`),
 		otherDateOption: keep(i18n, msg`{date} at {time}`, 'date', 'time'),
 		selectTime: keep(i18n, msg`Book {time}`, 'time'),
+		selectTimeArea: keep(i18n, msg`Book {time}, {area}`, 'time', 'area'),
 
 		// Hold
 		holdHeading: t(msg`Your table is held`),
@@ -208,6 +209,112 @@ export function buildReservationLabels(i18n: I18n) {
 		upcomingManage: t(msg`Manage`),
 		upcomingBook: t(msg`Book a table`),
 
+		// Waitlist: join
+		waitlistTitle: t(msg`Join the waitlist`),
+		waitlistSubtitle: keep(
+			i18n,
+			msg`Join the waitlist at {name} from anywhere. This page shows your place in line.`,
+			'name',
+		),
+		waitlistName: t(msg`Name`),
+		waitlistSubmit: t(msg`Join the waitlist`),
+		waitlistSubmitting: t(msg`Joining…`),
+		waitlistSmsOptIn: t(msg`Text me when my table is ready`),
+		waitlistEmailHint: t(msg`We email you when your table is ready.`),
+		waitlistArea: t(msg`Seating preference`),
+		waitlistAreaAny: t(msg`No preference`),
+		waitlistContactNote: keep(
+			i18n,
+			msg`By joining, you agree that {name} may contact you about your place in line.`,
+			'name',
+		),
+		waitlistUnavailableTitle: t(msg`The waitlist is not available right now`),
+		waitlistUnavailableBody: t(
+			msg`Please call the restaurant, or book a table instead.`,
+		),
+		waitlistSameDayHint: t(
+			msg`Want to dine today? Join the waitlist and we will tell you when a table is ready.`,
+		),
+
+		// Waitlist: status
+		waitlistStatusTitle: t(msg`Your place in line`),
+		waitlistPosition: t(msg`Position in line`),
+		waitlistQuotedWait: t(msg`Estimated wait`),
+		waitlistQuotedMinutes: keep(i18n, msg`About {count} min`, 'count'),
+		waitlistStateWaiting: t(msg`You are on the waitlist`),
+		waitlistStateWaitingBody: t(
+			msg`Keep this page open. It updates by itself, and we will tell you when your table is ready.`,
+		),
+		waitlistStateNotified: t(msg`Your table is ready`),
+		waitlistStateNotifiedBody: keep(
+			i18n,
+			msg`Please tell us you are coming. We can hold your table for {time}.`,
+			'time',
+		),
+		waitlistStateNotifiedNoTimer: t(
+			msg`Please tell us you are coming, then check in with the host.`,
+		),
+		waitlistStateOnTheWay: t(msg`We know you are on your way`),
+		waitlistStateOnTheWayBody: t(
+			msg`Please check in with the host when you arrive.`,
+		),
+		waitlistStateSeated: t(msg`You have been seated`),
+		waitlistStateSeatedBody: t(msg`Enjoy your meal.`),
+		waitlistStateLeft: t(msg`You left the waitlist`),
+		waitlistStateLeftBody: t(msg`You can join again at any time.`),
+		waitlistStateCancelled: t(msg`You were removed from the waitlist`),
+		waitlistStateCancelledBody: t(
+			msg`Please contact the restaurant if you think this is a mistake.`,
+		),
+		waitlistStateNoResponse: t(msg`Your table was released`),
+		waitlistStateNoResponseBody: t(
+			msg`We did not hear back in time. You can join the waitlist again.`,
+		),
+		waitlistOnMyWay: t(msg`I am on my way`),
+		waitlistOnMyWaySent: t(
+			msg`Thanks. The restaurant knows you are on your way.`,
+		),
+		waitlistLeave: t(msg`Leave the waitlist`),
+		waitlistLeaveConfirmTitle: t(msg`Leave the waitlist?`),
+		waitlistLeaveYes: t(msg`Yes, leave`),
+		waitlistLeaveKeep: t(msg`Keep my place`),
+		waitlistRetry: t(msg`Try again`),
+		waitlistJoinAgain: t(msg`Join the waitlist again`),
+		waitlistSaveLinkNote: t(
+			msg`Keep this page's link. Anyone who has it can see your place in line and remove you from it.`,
+		),
+
+		// Notify me
+		notifyTitle: t(msg`Get notified when a table opens`),
+		notifyBody: t(
+			msg`Tell us when you would like to dine. We will contact you if a table becomes available.`,
+		),
+		notifyFrom: t(msg`Earliest time`),
+		notifyTo: t(msg`Latest time`),
+		notifyContactHint: t(msg`Give a phone number, an email address, or both.`),
+		notifySubmit: t(msg`Notify me`),
+		notifySubmitting: t(msg`Sending…`),
+		notifyContactRequired: t(
+			msg`Enter a phone number or an email address so we can reach you.`,
+		),
+		notifyWindowInvalid: t(
+			msg`The latest time must be after the earliest time.`,
+		),
+		notifyContactNote: keep(
+			i18n,
+			msg`By asking to be notified, you agree that {name} may contact you about a table.`,
+			'name',
+		),
+		notifyDoneTitle: t(msg`We will let you know`),
+		notifyDoneBody: t(
+			msg`If a table opens up, we will contact you. You can cancel this request at any time.`,
+		),
+		notifyCancel: t(msg`Cancel this request`),
+		notifyCancelling: t(msg`Cancelling…`),
+		notifyCancelled: t(
+			msg`Your request was cancelled. We will not contact you about it.`,
+		),
+
 		// Block
 		bookATable: t(msg`Book a table`),
 
@@ -248,6 +355,24 @@ export function buildReservationLabels(i18n: I18n) {
 		),
 		errorPartySize: t(msg`That party size is not available online.`),
 		errorInvalid: t(msg`Please check your details and try again.`),
+		errorWaitlistDuplicate: t(
+			msg`This phone number is already on the waitlist today.`,
+		),
+		errorWaitlistFull: t(
+			msg`The waitlist is full right now. Please call the restaurant.`,
+		),
+		errorWaitlistClosed: t(
+			msg`The waitlist is not available right now. Please call the restaurant.`,
+		),
+		errorWaitlistLinkInvalid: t(
+			msg`We could not find your place in line. The link may have expired.`,
+		),
+		errorNotifyClosed: t(
+			msg`Table alerts are not available right now. Please call the restaurant.`,
+		),
+		errorNotifyLimit: t(
+			msg`You already have the most table alerts allowed for these contact details.`,
+		),
 		errorNetwork: t(
 			msg`We could not reach the server. Check your connection and try again.`,
 		),

@@ -16,6 +16,12 @@ export type ReservationErrorKey =
 	| 'errorRequestsClosed'
 	| 'errorPartySize'
 	| 'errorInvalid'
+	| 'errorWaitlistDuplicate'
+	| 'errorWaitlistFull'
+	| 'errorWaitlistClosed'
+	| 'errorWaitlistLinkInvalid'
+	| 'errorNotifyClosed'
+	| 'errorNotifyLimit'
 	| 'errorNetwork'
 	| 'errorGeneric'
 
@@ -34,6 +40,9 @@ const BY_CODE: Record<string, ReservationErrorKey> = {
 	requests_closed: 'errorRequestsClosed',
 	party_size_invalid: 'errorPartySize',
 	invalid: 'errorInvalid',
+	already_on_waitlist: 'errorWaitlistDuplicate',
+	waitlist_full: 'errorWaitlistFull',
+	too_many_active_requests: 'errorNotifyLimit',
 }
 
 /** Chooses which localized message to show; the server stays authoritative. */
@@ -47,6 +56,25 @@ export function reservationErrorKey(error: unknown): ReservationErrorKey {
 		return 'errorGeneric'
 	}
 	return 'errorNetwork'
+}
+
+/**
+ * The waitlist and notify-me routes answer `404 not_found` for "switched off"
+ * and for a bad link alike, so the wording depends on what the guest was doing.
+ */
+export function waitlistErrorKey(
+	error: unknown,
+	scope: 'join' | 'status' | 'notify',
+): ReservationErrorKey {
+	if (
+		error instanceof ReservationsApiError &&
+		(error.status === 404 || error.code === 'not_found')
+	) {
+		if (scope === 'join') return 'errorWaitlistClosed'
+		if (scope === 'notify') return 'errorNotifyClosed'
+		return 'errorWaitlistLinkInvalid'
+	}
+	return reservationErrorKey(error)
 }
 
 /** Field paths the server flagged (`issues[].path`), never any submitted values. */

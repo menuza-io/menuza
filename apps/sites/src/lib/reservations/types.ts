@@ -23,6 +23,8 @@ export type ReservationLocation = {
 	largeParty: LargePartyBlock
 	waitlist: { enabled: boolean; online: boolean }
 	notifyMe: boolean
+	/** Seating areas a guest may pick (empty when the restaurant does not offer a choice). */
+	areas?: ReservationChip[]
 	publicNote: string | null
 }
 
@@ -41,6 +43,9 @@ export type PublicSlot = {
 	time: string
 	serviceId: string
 	serviceName: string
+	/** Set only when the guest may choose the seating area; both fields are already localized. */
+	areaId?: string | null
+	areaLabel?: string | null
 }
 
 export type AvailabilityStatus =
@@ -163,4 +168,57 @@ export type GuestDetails = {
 	lastName: string
 	phone: string
 	email: string
+}
+
+export type WaitlistEntryState =
+	| 'waiting'
+	| 'notified'
+	| 'on_the_way'
+	| 'seated'
+	| 'cancelled'
+	| 'left'
+	| 'no_response'
+
+/** `GET /reservations/waitlist/status` and the leave / on-my-way answers. */
+export type WaitlistStatus = {
+	status: WaitlistEntryState | string
+	position: number | null
+	partySize: number
+	quotedMin: number | null
+	quotedReadyAt: string | null
+	locationName: string | null
+	notifiedAt: string | null
+	responseDeadlineAt: string | null
+	canLeave: boolean
+	canOnMyWay: boolean
+	now: string
+}
+
+export type WaitlistJoinResponse = {
+	entry: {
+		id: string
+		locationId: string
+		locationName: string | null
+		status: WaitlistEntryState | string
+		position: number | null
+		partySize: number
+		quotedMin: number | null
+		quotedReadyAt: string | null
+	}
+	statusToken: string
+	now: string
+}
+
+export type NotifyMeResponse = {
+	request: {
+		id: string
+		status: string
+		locationId: string
+		date: string
+		partySize: number
+		fromLocalMin: number
+		toLocalMin: number
+	}
+	cancelToken: string
+	now: string
 }

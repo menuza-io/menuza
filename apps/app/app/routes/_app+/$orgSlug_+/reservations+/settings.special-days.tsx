@@ -21,8 +21,15 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import {
+	type FormEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { serviceDayBusinessDate } from '#app/utils/reservations/business-date.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	type BlockDto,
@@ -62,10 +69,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return null
 }
 
-function getDefaultDateString(): string {
-	return new Date().toISOString().slice(0, 10)
-}
-
 const SPECIAL_DAY_KIND_LABELS: Record<string, MessageDescriptor> = {
 	closed: msg`Closed (all day)`,
 	online_closed: msg`Online closed (walk-ins/phone open)`,
@@ -84,8 +87,22 @@ const BLOCK_REASON_LABELS: Record<string, MessageDescriptor> = {
 
 export default function ReservationsSettingsSpecialDaysRoute() {
 	const { _ } = useLingui()
-	const { selectedLocationId, canWrite, client, refreshSummary, settings } =
-		useReservationsSetupContext()
+	const {
+		selectedLocationId,
+		selectedLocation,
+		canWrite,
+		client,
+		refreshSummary,
+		settings,
+	} = useReservationsSetupContext()
+
+	// The location's business date, not the UTC date, which is the wrong day for
+	// most of the evening west of UTC.
+	const locationTimeZone = settings?.timeZone ?? selectedLocation?.timezone
+	const defaultDate = useMemo(
+		() => serviceDayBusinessDate(Date.now(), locationTimeZone),
+		[locationTimeZone],
+	)
 
 	const [specialDays, setSpecialDays] = useState<SpecialDayDto[]>([])
 	const [blocks, setBlocks] = useState<BlockDto[]>([])
@@ -103,8 +120,12 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 	const [mutationReflows, setMutationReflows] = useState<ReflowedMoveDto[]>([])
 
 	// Special day form state
-	const [sdStartDate, setSdStartDate] = useState(getDefaultDateString)
-	const [sdEndDate, setSdEndDate] = useState(getDefaultDateString)
+	// Null until the operator picks a date, so the default follows the time zone
+	// once the location settings have loaded.
+	const [sdStartDateEdit, setSdStartDate] = useState<string | null>(null)
+	const [sdEndDateEdit, setSdEndDate] = useState<string | null>(null)
+	const sdStartDate = sdStartDateEdit ?? defaultDate
+	const sdEndDate = sdEndDateEdit ?? defaultDate
 	const [sdKind, setSdKind] = useState<SpecialDayKind>('closed')
 	const [sdName, setSdName] = useState('')
 	const [sdNoteEn, setSdNoteEn] = useState('')
@@ -119,7 +140,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 	const [sdReplaceEndTime, setSdReplaceEndTime] = useState('22:00')
 
 	// Block form state
-	const [blkDate, setBlkDate] = useState(getDefaultDateString)
+	const [blkDateEdit, setBlkDate] = useState<string | null>(null)
+	const blkDate = blkDateEdit ?? defaultDate
 	const [blkTargetType, setBlkTargetType] = useState<'table' | 'area'>('table')
 	const [blkTableId, setBlkTableId] = useState('')
 	const [blkAreaId, setBlkAreaId] = useState('')

@@ -21,6 +21,7 @@ import {
 } from '#app/components/reservations/requests-panel.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
 import { useReservationRequests } from '#app/components/reservations/use-reservation-requests.ts'
+import { TodayWaitlistCard } from '#app/components/reservations/waitlist/today-waitlist-card.tsx'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import {
@@ -52,6 +53,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		canManage:
 			!impersonated &&
 			access.grants.includes(RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION),
+		waitlistEnabled: access.features.waitlist,
 	}
 }
 
@@ -69,7 +71,7 @@ export default function ReservationsTodayRoute() {
 		labels: Record<string, MessageDescriptor>,
 		value: string | null | undefined,
 	) => enumLabel((d) => i18n._(d), labels, value)
-	const { orgSlug, canManage } = useLoaderData<typeof loader>()
+	const { orgSlug, canManage, waitlistEnabled } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
 		locations.find((loc) => loc.id === activeLocationId) ?? locations[0]
@@ -378,7 +380,11 @@ export default function ReservationsTodayRoute() {
 
 					{/* 3-Column Live Shift Board */}
 					<div
-						className="grid grid-cols-1 gap-4 lg:grid-cols-3"
+						className={
+							waitlistEnabled
+								? 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'
+								: 'grid grid-cols-1 gap-4 lg:grid-cols-3'
+						}
 						data-testid="today-board"
 					>
 						{/* Column 1: Upcoming & Arriving */}
@@ -626,7 +632,14 @@ export default function ReservationsTodayRoute() {
 							</CardContent>
 						</Card>
 
-						{/* Column 3: Finished, Waitlist & Attention */}
+						{waitlistEnabled ? (
+							<TodayWaitlistCard
+								entries={dayFeed?.waitlist ?? []}
+								orgSlug={orgSlug}
+							/>
+						) : null}
+
+						{/* Finished: completed, no-show and cancelled */}
 						<Card className="flex flex-col">
 							<CardHeader className="pb-2">
 								<CardTitle className="flex items-center justify-between text-base">

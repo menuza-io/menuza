@@ -23,6 +23,7 @@ if (root) {
 		pageLocation: location,
 		manageHref: (token) =>
 			`${browserLocaleHref('/reserve/manage')}#t=${encodeURIComponent(token)}`,
+		waitlistHref: browserLocaleHref('/reserve/waitlist'),
 		loadPrefill: loadCustomerPrefill,
 		signedIn: () => Boolean(getAccessToken()),
 	})

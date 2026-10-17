@@ -76,3 +76,71 @@ export function takeManageToken(
 	}
 	return readStoredManageToken(storage)
 }
+
+export const WAITLIST_TOKEN_STORAGE_KEY = 'rsv_waitlist_token'
+
+export function readStoredWaitlistToken(storage?: StorageLike): string | null {
+	try {
+		return safeStorage(storage)?.getItem(WAITLIST_TOKEN_STORAGE_KEY) ?? null
+	} catch {
+		return null
+	}
+}
+
+export function storeWaitlistToken(token: string, storage?: StorageLike) {
+	try {
+		safeStorage(storage)?.setItem(WAITLIST_TOKEN_STORAGE_KEY, token)
+	} catch {
+		// Private mode: the status link still works from the address bar.
+	}
+}
+
+export function clearStoredWaitlistToken(storage?: StorageLike) {
+	try {
+		safeStorage(storage)?.removeItem(WAITLIST_TOKEN_STORAGE_KEY)
+	} catch {
+		// Nothing to clear.
+	}
+}
+
+/**
+ * Reads `#t=<token>` (falling back to the token kept for this tab). Unlike a
+ * manage link, the fragment stays in the address bar so the guest can bookmark
+ * the status page; it never reaches a server.
+ */
+export function takeWaitlistToken(
+	location: Pick<Location, 'hash'>,
+	storage?: StorageLike,
+): string | null {
+	const fromFragment = parseFragmentParam(location.hash, 't')
+	if (fromFragment) {
+		storeWaitlistToken(fromFragment, storage)
+		return fromFragment
+	}
+	return readStoredWaitlistToken(storage)
+}
+
+/** Puts the status token in the fragment and remembers it for reloads. */
+export function publishWaitlistToken(
+	token: string,
+	location: LocationLike,
+	history: HistoryLike,
+	storage?: StorageLike,
+) {
+	storeWaitlistToken(token, storage)
+	history.replaceState(
+		history.state,
+		'',
+		`${location.pathname}${location.search}#t=${encodeURIComponent(token)}`,
+	)
+}
+
+/** Drops the status token from the address bar and this tab's storage. */
+export function forgetWaitlistToken(
+	location: LocationLike,
+	history: HistoryLike,
+	storage?: StorageLike,
+) {
+	clearStoredWaitlistToken(storage)
+	stripFragment(location, history)
+}

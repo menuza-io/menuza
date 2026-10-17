@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { ReservationsApiError } from './api.ts'
-import { invalidFieldPaths, reservationErrorKey } from './errors.ts'
+import {
+	invalidFieldPaths,
+	reservationErrorKey,
+	waitlistErrorKey,
+} from './errors.ts'
 
 describe('reservation errors', () => {
 	it('maps API error codes to label keys', () => {
@@ -43,5 +47,30 @@ describe('reservation errors', () => {
 		})
 		expect(invalidFieldPaths(error)).toEqual(['guest.phone'])
 		expect(invalidFieldPaths(new Error('x'))).toEqual([])
+	})
+
+	it('names the waitlist refusals a guest can hit', () => {
+		const cases: Array<[number, string, string]> = [
+			[409, 'already_on_waitlist', 'errorWaitlistDuplicate'],
+			[409, 'waitlist_full', 'errorWaitlistFull'],
+			[409, 'too_many_active_requests', 'errorNotifyLimit'],
+			[429, 'rate_limited', 'errorRateLimited'],
+			[400, 'party_size_invalid', 'errorPartySize'],
+		]
+		for (const [status, code, key] of cases) {
+			expect(
+				waitlistErrorKey(new ReservationsApiError(status, code, {}), 'join'),
+			).toBe(key)
+		}
+	})
+
+	it('words a 404 by what the guest was doing', () => {
+		const notFound = new ReservationsApiError(404, 'not_found', {})
+		expect(waitlistErrorKey(notFound, 'join')).toBe('errorWaitlistClosed')
+		expect(waitlistErrorKey(notFound, 'notify')).toBe('errorNotifyClosed')
+		expect(waitlistErrorKey(notFound, 'status')).toBe(
+			'errorWaitlistLinkInvalid',
+		)
+		expect(waitlistErrorKey(new TypeError('x'), 'status')).toBe('errorNetwork')
 	})
 })

@@ -14,7 +14,7 @@ msgstr ""
 "Plural-Forms: \n"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:93
+#: src/lib/reservations/labels.ts:94
 msgid "(optional)"
 msgstr "(facultatif)"
 
@@ -39,7 +39,7 @@ msgstr "{count} articles"
 msgid "{count} min"
 msgstr "{count} min"
 
-#: src/lib/reservations/labels.ts:191
+#: src/lib/reservations/labels.ts:192
 msgid "{count} minutes late"
 msgstr "{count} minutes de retard"
 
@@ -80,7 +80,7 @@ msgstr "{n} offres limitées ouvertes aux commandes"
 msgid "{n} min"
 msgstr "{n} min"
 
-#: src/lib/reservations/labels.ts:146
+#: src/lib/reservations/labels.ts:147
 msgid "{name} will review your request and get back to you."
 msgstr "{name} examinera votre demande et vous répondra."
 
@@ -88,7 +88,7 @@ msgstr "{name} examinera votre demande et vous répondra."
 msgid "{party} on {date}"
 msgstr "{party} le {date}"
 
-#: src/lib/reservations/labels.ts:72
+#: src/lib/reservations/labels.ts:73
 msgid "{party}, {date} at {time}"
 msgstr "{party}, {date} à {time}"
 
@@ -135,6 +135,10 @@ msgstr "1 offre limitée ouverte aux commandes"
 msgid "1 guest"
 msgstr "1 personne"
 
+#: src/lib/reservations/labels.ts:243
+msgid "About {count} min"
+msgstr "Environ {count} min"
+
 #: src/pages/menu/success.astro.ts:3
 msgid "Accepted"
 msgstr "Acceptée"
@@ -161,7 +165,7 @@ msgstr "Ajouter une adresse de livraison"
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/components/drops/DropSummaryCard.astro.ts:3
-#: src/lib/reservations/labels.ts:150
+#: src/lib/reservations/labels.ts:151
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Add to calendar"
@@ -225,7 +229,7 @@ msgstr "Postuler maintenant"
 msgid "Apt, suite or floor"
 msgstr "Appartement, bureau ou étage"
 
-#: src/lib/reservations/labels.ts:164
+#: src/lib/reservations/labels.ts:165
 msgid "Arrived"
 msgstr "Arrivé"
 
@@ -241,15 +245,15 @@ msgstr "Dès que possible"
 msgid "Available times"
 msgstr "Horaires disponibles"
 
-#: src/lib/reservations/labels.ts:162
+#: src/lib/reservations/labels.ts:163
 msgid "Awaiting approval"
 msgstr "En attente d'approbation"
 
-#: src/lib/reservations/labels.ts:163
+#: src/lib/reservations/labels.ts:164
 msgid "Awaiting payment"
 msgstr "En attente de paiement"
 
-#: src/lib/reservations/labels.ts:79
+#: src/lib/reservations/labels.ts:80
 msgid "Back"
 msgstr "Retour"
 
@@ -275,10 +279,14 @@ msgstr "Soyez les premiers à la prochaine offre limitée"
 msgid "Book {time}"
 msgstr "Réserver à {time}"
 
+#: src/lib/reservations/labels.ts:66
+msgid "Book {time}, {area}"
+msgstr "Réserver {time}, {area}"
+
 #: src/components/blocks/ReservationBlock.astro.ts:3
 #: src/components/reservations/UpcomingReservations.astro.ts:3
-#: src/lib/reservations/labels.ts:209
-#: src/lib/reservations/labels.ts:212
+#: src/lib/reservations/labels.ts:210
+#: src/lib/reservations/labels.ts:319
 msgid "Book a table"
 msgstr "Réserver une table"
 
@@ -287,7 +295,7 @@ msgstr "Réserver une table"
 msgid "Book a table at {name}."
 msgstr "Réservez une table chez {name}."
 
-#: src/lib/reservations/labels.ts:113
+#: src/lib/reservations/labels.ts:114
 msgid "Booking…"
 msgstr "Réservation en cours…"
 
@@ -300,9 +308,17 @@ msgstr "Parcourir la boutique"
 msgid "Buy now"
 msgstr "Acheter maintenant"
 
-#: src/lib/reservations/labels.ts:108
+#: src/lib/reservations/labels.ts:305
+msgid "By asking to be notified, you agree that {name} may contact you about a table."
+msgstr "En demandant à être prévenu, vous acceptez que {name} vous contacte au sujet d’une table."
+
+#: src/lib/reservations/labels.ts:109
 msgid "By booking, you agree that {name} may contact you about this reservation."
 msgstr "En réservant, vous acceptez que {name} vous contacte au sujet de cette réservation."
+
+#: src/lib/reservations/labels.ts:228
+msgid "By joining, you agree that {name} may contact you about your place in line."
+msgstr "En vous inscrivant, vous acceptez que {name} vous contacte au sujet de votre place dans la file."
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "By signing up you agree to receive recurring automated marketing texts from {org} at this number. Consent is not a condition of purchase. Msg & data rates may apply. Reply STOP to opt out."
@@ -312,23 +328,31 @@ msgstr "En vous inscrivant, vous acceptez de recevoir des SMS marketing automati
 msgid "Call"
 msgstr "Appeler"
 
-#: src/lib/reservations/labels.ts:129
-#: src/lib/reservations/labels.ts:202
+#: src/lib/reservations/labels.ts:130
+#: src/lib/reservations/labels.ts:203
 msgid "Call {phone}"
 msgstr "Appeler le {phone}"
 
-#: src/lib/reservations/labels.ts:182
+#: src/lib/reservations/labels.ts:183
 msgid "Cancel reservation"
 msgstr "Annuler la réservation"
 
-#: src/lib/reservations/labels.ts:183
+#: src/lib/reservations/labels.ts:312
+msgid "Cancel this request"
+msgstr "Annuler cette demande"
+
+#: src/lib/reservations/labels.ts:184
 msgid "Cancel this reservation?"
 msgstr "Annuler cette réservation ?"
 
-#: src/lib/reservations/labels.ts:167
+#: src/lib/reservations/labels.ts:168
 #: src/pages/menu/success.astro.ts:3
 msgid "Cancelled"
 msgstr "Annulée"
+
+#: src/lib/reservations/labels.ts:313
+msgid "Cancelling…"
+msgstr "Annulation…"
 
 #: src/pages/shop.astro.ts:3
 msgid "Card number"
@@ -353,11 +377,11 @@ msgstr "Modifier"
 msgid "Change number"
 msgstr "Changer de numéro"
 
-#: src/lib/reservations/labels.ts:78
+#: src/lib/reservations/labels.ts:79
 msgid "Change time"
 msgstr "Changer l'horaire"
 
-#: src/lib/reservations/labels.ts:178
+#: src/lib/reservations/labels.ts:179
 msgid "Change time or party size"
 msgstr "Changer l'horaire ou le nombre de personnes"
 
@@ -418,7 +442,7 @@ msgstr "Choisissez un jour"
 msgid "Choose a location"
 msgstr "Choisissez un lieu"
 
-#: src/lib/reservations/labels.ts:181
+#: src/lib/reservations/labels.ts:182
 msgid "Choose a new time"
 msgstr "Choisissez un nouvel horaire"
 
@@ -503,7 +527,7 @@ msgstr "Finaliser le paiement"
 msgid "Complete payment to keep it."
 msgstr "Finalisez le paiement pour la conserver."
 
-#: src/lib/reservations/labels.ts:122
+#: src/lib/reservations/labels.ts:123
 msgid "Complete the verification check before booking."
 msgstr "Terminez la vérification avant de réserver."
 
@@ -515,7 +539,7 @@ msgstr "Terminez la vérification avant d'envoyer."
 msgid "Complete the verification check before submitting."
 msgstr "Terminez la vérification avant d’envoyer."
 
-#: src/lib/reservations/labels.ts:166
+#: src/lib/reservations/labels.ts:167
 #: src/pages/menu/success.astro.ts:3
 msgid "Completed"
 msgstr "Terminée"
@@ -524,23 +548,23 @@ msgstr "Terminée"
 msgid "Confirm"
 msgstr "Confirmer"
 
-#: src/lib/reservations/labels.ts:188
+#: src/lib/reservations/labels.ts:189
 msgid "Confirm I am coming"
 msgstr "Confirmer ma venue"
 
-#: src/lib/reservations/labels.ts:112
+#: src/lib/reservations/labels.ts:113
 msgid "Confirm reservation"
 msgstr "Confirmer la réservation"
 
-#: src/lib/reservations/labels.ts:149
+#: src/lib/reservations/labels.ts:150
 msgid "Confirmation code"
 msgstr "Code de confirmation"
 
-#: src/lib/reservations/labels.ts:161
+#: src/lib/reservations/labels.ts:162
 msgid "Confirmed"
 msgstr "Confirmée"
 
-#: src/lib/reservations/labels.ts:198
+#: src/lib/reservations/labels.ts:199
 msgid "Contact"
 msgstr "Contact"
 
@@ -572,7 +596,7 @@ msgstr "CVC"
 msgid "Date"
 msgstr "Date"
 
-#: src/lib/reservations/labels.ts:168
+#: src/lib/reservations/labels.ts:169
 msgid "Declined"
 msgstr "Refusée"
 
@@ -634,8 +658,8 @@ msgstr "Commande en livraison"
 msgid "Delivery time"
 msgstr "Heure de livraison"
 
-#: src/lib/reservations/labels.ts:96
-#: src/lib/reservations/labels.ts:201
+#: src/lib/reservations/labels.ts:97
+#: src/lib/reservations/labels.ts:202
 msgid "Dietary needs"
 msgstr "Besoins alimentaires"
 
@@ -659,8 +683,12 @@ msgstr "Alertes activées"
 msgid "Drops"
 msgstr "Offres limitées"
 
+#: src/lib/reservations/labels.ts:292
+msgid "Earliest time"
+msgstr "Heure la plus tôt"
+
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:91
+#: src/lib/reservations/labels.ts:92
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "E-mail"
@@ -669,7 +697,7 @@ msgstr "E-mail"
 msgid "Email address"
 msgstr "Adresse e-mail"
 
-#: src/lib/reservations/labels.ts:102
+#: src/lib/reservations/labels.ts:103
 msgid "Email me news and offers from {name}"
 msgstr "Envoyez-moi par e-mail les actualités et offres de {name}"
 
@@ -682,11 +710,19 @@ msgstr "Terminée"
 msgid "Ended {when}"
 msgstr "Terminée {when}"
 
+#: src/lib/reservations/labels.ts:262
+msgid "Enjoy your meal."
+msgstr "Bon appétit."
+
 #: src/lib/ordering-labels.ts:143
 msgid "Enter a delivery address to continue."
 msgstr "Saisissez une adresse de livraison pour continuer."
 
-#: src/lib/reservations/labels.ts:118
+#: src/lib/reservations/labels.ts:298
+msgid "Enter a phone number or an email address so we can reach you."
+msgstr "Saisissez un numéro de téléphone ou une adresse e-mail pour que nous puissions vous joindre."
+
+#: src/lib/reservations/labels.ts:119
 msgid "Enter a phone number with its country code, like {example}."
 msgstr "Saisissez un numéro de téléphone avec son indicatif de pays, par exemple {example}."
 
@@ -695,7 +731,7 @@ msgid "Enter a phone number with its country code, like +1 415 555 0123."
 msgstr "Saisissez un numéro de téléphone avec son indicatif pays, par exemple +1 415 555 0123."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:121
+#: src/lib/reservations/labels.ts:122
 msgid "Enter a valid email address."
 msgstr "Saisissez une adresse e-mail valide."
 
@@ -716,7 +752,11 @@ msgstr "Taxe estimée"
 msgid "Estimated time"
 msgstr "Délai estimé"
 
-#: src/lib/reservations/labels.ts:170
+#: src/lib/reservations/labels.ts:242
+msgid "Estimated wait"
+msgstr "Attente estimée"
+
+#: src/lib/reservations/labels.ts:171
 msgid "Expired"
 msgstr "Expirée"
 
@@ -743,11 +783,11 @@ msgid "Find a table"
 msgstr "Trouver une table"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:83
+#: src/lib/reservations/labels.ts:84
 msgid "First name"
 msgstr "Prénom"
 
-#: src/lib/reservations/labels.ts:127
+#: src/lib/reservations/labels.ts:128
 msgid "For a larger party, please contact the restaurant directly."
 msgstr "Pour un groupe plus important, veuillez contacter directement le restaurant."
 
@@ -790,6 +830,14 @@ msgstr "Recevez un SMS à l'ouverture des commandes"
 msgid "Get a text when the next drop opens, before it sells out."
 msgstr "Recevez un SMS à l'ouverture de la prochaine offre limitée, avant qu'elle ne soit épuisée."
 
+#: src/lib/reservations/labels.ts:288
+msgid "Get notified when a table opens"
+msgstr "Soyez prévenu quand une table se libère"
+
+#: src/lib/reservations/labels.ts:294
+msgid "Give a phone number, an email address, or both."
+msgstr "Indiquez un numéro de téléphone, une adresse e-mail, ou les deux."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Give us an email or a phone number."
 msgstr "Indiquez une adresse e-mail ou un numéro de téléphone."
@@ -806,11 +854,11 @@ msgstr "Sans gluten"
 msgid "Gluten-Free"
 msgstr "Sans gluten"
 
-#: src/lib/reservations/labels.ts:69
+#: src/lib/reservations/labels.ts:70
 msgid "Held for {time}"
 msgstr "Conservée pendant {time}"
 
-#: src/lib/reservations/labels.ts:177
+#: src/lib/reservations/labels.ts:178
 msgid "Hello, {name}"
 msgstr "Bonjour {name}"
 
@@ -822,16 +870,24 @@ msgstr "heure"
 msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
 msgstr "J'accepte que {organization} conserve mes coordonnées et mes réponses pour examiner ma candidature et me contacter à ce sujet. Elles seront supprimées sur simple demande."
 
-#: src/lib/reservations/labels.ts:190
+#: src/lib/reservations/labels.ts:273
+msgid "I am on my way"
+msgstr "Je suis en route"
+
+#: src/lib/reservations/labels.ts:191
 msgid "I am running late"
 msgstr "Je suis en retard"
+
+#: src/lib/reservations/labels.ts:310
+msgid "If a table opens up, we will contact you. You can cancel this request at any time."
+msgstr "Si une table se libère, nous vous contacterons. Vous pouvez annuler cette demande à tout moment."
 
 #: src/components/drops/DropCard.astro.ts:3
 #: src/pages/drop/[slug].astro.ts:3
 msgid "in {t}"
 msgstr "dans {t}"
 
-#: src/lib/reservations/labels.ts:88
+#: src/lib/reservations/labels.ts:89
 msgid "Include your country code, for example {example}."
 msgstr "Indiquez votre indicatif de pays, par exemple {example}."
 
@@ -851,11 +907,11 @@ msgstr "Stage"
 msgid "Invalid verification code."
 msgstr "Code de vérification invalide."
 
-#: src/lib/reservations/labels.ts:238
+#: src/lib/reservations/labels.ts:345
 msgid "It is too late to cancel online. Please call the restaurant."
 msgstr "Il est trop tard pour annuler en ligne. Veuillez appeler le restaurant."
 
-#: src/lib/reservations/labels.ts:241
+#: src/lib/reservations/labels.ts:348
 msgid "It is too late to change this online. Please call the restaurant."
 msgstr "Il est trop tard pour modifier en ligne. Veuillez appeler le restaurant."
 
@@ -863,17 +919,48 @@ msgstr "Il est trop tard pour modifier en ligne. Veuillez appeler le restaurant.
 msgid "It's outside the delivery area for {location}. You can still order for pickup."
 msgstr "Elle se trouve hors de la zone de livraison de {location}. Vous pouvez toujours commander à emporter."
 
-#: src/lib/reservations/labels.ts:185
+#: src/lib/reservations/labels.ts:213
+#: src/lib/reservations/labels.ts:220
+#: src/pages/reserve/waitlist.astro.ts:3
+msgid "Join the waitlist"
+msgstr "Rejoindre la liste d’attente"
+
+#: src/lib/reservations/labels.ts:282
+msgid "Join the waitlist again"
+msgstr "Rejoindre à nouveau la liste d’attente"
+
+#: src/lib/reservations/labels.ts:216
+#: src/pages/reserve/waitlist.astro.ts:3
+msgid "Join the waitlist at {name} from anywhere. This page shows your place in line."
+msgstr "Rejoignez la liste d’attente de {name} où que vous soyez. Cette page affiche votre place dans la file."
+
+#: src/lib/reservations/labels.ts:221
+msgid "Joining…"
+msgstr "Inscription…"
+
+#: src/lib/reservations/labels.ts:280
+msgid "Keep my place"
+msgstr "Garder ma place"
+
+#: src/lib/reservations/labels.ts:186
 msgid "Keep my reservation"
 msgstr "Garder ma réservation"
 
-#: src/lib/reservations/labels.ts:153
+#: src/lib/reservations/labels.ts:154
 msgid "Keep the manage link. Anyone who has it can change or cancel this booking."
 msgstr "Conservez le lien de gestion. Toute personne qui l'a peut modifier ou annuler cette réservation."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Keep this page open — we'll confirm your order as soon as your payment completes."
 msgstr "Gardez cette page ouverte — nous confirmerons votre commande dès que le paiement sera terminé."
+
+#: src/lib/reservations/labels.ts:246
+msgid "Keep this page open. It updates by itself, and we will tell you when your table is ready."
+msgstr "Gardez cette page ouverte. Elle se met à jour toute seule et nous vous préviendrons dès que votre table sera prête."
+
+#: src/lib/reservations/labels.ts:284
+msgid "Keep this page's link. Anyone who has it can see your place in line and remove you from it."
+msgstr "Conservez le lien de cette page. Toute personne qui l’a peut voir votre place dans la file et vous en retirer."
 
 #: src/lib/ordering-labels.ts:89
 msgid "Keep typing to see matching addresses."
@@ -888,9 +975,21 @@ msgid "Larger party"
 msgstr "Groupe plus important"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:84
+#: src/lib/reservations/labels.ts:85
 msgid "Last name"
 msgstr "Nom"
+
+#: src/lib/reservations/labels.ts:293
+msgid "Latest time"
+msgstr "Heure la plus tardive"
+
+#: src/lib/reservations/labels.ts:277
+msgid "Leave the waitlist"
+msgstr "Quitter la liste d’attente"
+
+#: src/lib/reservations/labels.ts:278
+msgid "Leave the waitlist?"
+msgstr "Quitter la liste d’attente ?"
 
 #: src/lib/ordering-labels.ts:52
 msgid "Left"
@@ -926,6 +1025,7 @@ msgstr "Chargement de votre reçu…"
 #: src/lib/reservations/labels.ts:24
 #: src/pages/reserve/index.astro.ts:3
 #: src/pages/reserve/manage.astro.ts:3
+#: src/pages/reserve/waitlist.astro.ts:3
 msgid "Loading…"
 msgstr "Chargement…"
 
@@ -945,15 +1045,15 @@ msgstr "Recherche de tables…"
 msgid "Looks like you haven't added any dishes to your order yet."
 msgstr "Il semble que vous n'ayez pas encore ajouté de plat à votre commande."
 
-#: src/lib/reservations/labels.ts:155
+#: src/lib/reservations/labels.ts:156
 msgid "Make another reservation"
 msgstr "Faire une autre réservation"
 
-#: src/lib/reservations/labels.ts:208
+#: src/lib/reservations/labels.ts:209
 msgid "Manage"
 msgstr "Gérer"
 
-#: src/lib/reservations/labels.ts:151
+#: src/lib/reservations/labels.ts:152
 msgid "Manage reservation"
 msgstr "Gérer la réservation"
 
@@ -994,6 +1094,7 @@ msgstr "D'autres offres"
 msgid "Most ordered"
 msgstr "Les plus commandés"
 
+#: src/lib/reservations/labels.ts:219
 #: src/pages/profile.astro.ts:3
 msgid "Name"
 msgstr "Nom"
@@ -1042,7 +1143,7 @@ msgstr "Aucune adresse correspondante"
 msgid "No minimum"
 msgstr "Pas de minimum"
 
-#: src/lib/reservations/labels.ts:95
+#: src/lib/reservations/labels.ts:96
 msgid "No occasion"
 msgstr "Aucune occasion"
 
@@ -1058,6 +1159,10 @@ msgstr "Aucune commande pour le moment."
 #: src/pages/drop/[slug].astro.ts:3
 msgid "No pickup times are available right now."
 msgstr "Aucun créneau de retrait n'est disponible pour le moment."
+
+#: src/lib/reservations/labels.ts:225
+msgid "No preference"
+msgstr "Sans préférence"
 
 #: src/pages/profile.astro.ts:3
 msgid "No saved payment methods yet."
@@ -1075,7 +1180,7 @@ msgstr "Aucune table disponible pour cette recherche"
 msgid "No tip"
 msgstr "Sans pourboire"
 
-#: src/lib/reservations/labels.ts:169
+#: src/lib/reservations/labels.ts:170
 msgid "No-show"
 msgstr "Absent"
 
@@ -1087,8 +1192,12 @@ msgstr "Aucun"
 msgid "Not available right now"
 msgstr "Indisponible pour le moment"
 
-#: src/lib/reservations/labels.ts:94
-#: src/lib/reservations/labels.ts:199
+#: src/lib/reservations/labels.ts:295
+msgid "Notify me"
+msgstr "Me prévenir"
+
+#: src/lib/reservations/labels.ts:95
+#: src/lib/reservations/labels.ts:200
 msgid "Occasion"
 msgstr "Occasion"
 
@@ -1104,12 +1213,13 @@ msgstr "La réservation en ligne est fermée à cette date. Veuillez appeler le 
 msgid "Online booking is not available right now"
 msgstr "La réservation en ligne n'est pas disponible pour le moment"
 
-#: src/lib/reservations/labels.ts:226
+#: src/lib/reservations/labels.ts:333
 msgid "Online booking is paused right now. Please call the restaurant."
 msgstr "La réservation en ligne est suspendue pour le moment. Veuillez appeler le restaurant."
 
 #: src/lib/reservations/labels.ts:28
 #: src/pages/reserve/index.astro.ts:3
+#: src/pages/reserve/waitlist.astro.ts:3
 msgid "Online booking needs JavaScript. Please call the restaurant to book a table."
 msgstr "La réservation en ligne nécessite JavaScript. Veuillez appeler le restaurant pour réserver une table."
 
@@ -1137,7 +1247,7 @@ msgstr "Ouvert maintenant"
 msgid "Open positions at {name}"
 msgstr "Postes ouverts chez {name}"
 
-#: src/lib/reservations/labels.ts:175
+#: src/lib/reservations/labels.ts:176
 msgid "Open the link from your confirmation to manage a reservation."
 msgstr "Ouvrez le lien de votre confirmation pour gérer une réservation."
 
@@ -1239,7 +1349,7 @@ msgstr "Commandes ouvertes : {title}"
 msgid "Other dates with tables"
 msgstr "Autres dates avec des tables"
 
-#: src/lib/reservations/labels.ts:97
+#: src/lib/reservations/labels.ts:98
 msgid "Other dietary needs"
 msgstr "Autres besoins alimentaires"
 
@@ -1255,11 +1365,11 @@ msgstr "Notre cuisine prépare de délicieux plats. Revenez bientôt pour notre 
 msgid "Part time"
 msgstr "Temps partiel"
 
-#: src/lib/reservations/labels.ts:125
+#: src/lib/reservations/labels.ts:126
 msgid "Parties larger than {count}"
 msgstr "Groupes de plus de {count}"
 
-#: src/lib/reservations/labels.ts:158
+#: src/lib/reservations/labels.ts:159
 msgid "Party"
 msgstr "Personnes"
 
@@ -1312,7 +1422,7 @@ msgid "Payment methods"
 msgstr "Moyens de paiement"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:85
+#: src/lib/reservations/labels.ts:86
 msgid "Phone"
 msgstr "Téléphone"
 
@@ -1378,11 +1488,19 @@ msgstr "Veuillez accepter pour que nous puissions conserver votre candidature."
 msgid "Please call the restaurant to book a table."
 msgstr "Veuillez appeler le restaurant pour réserver une table."
 
+#: src/lib/reservations/labels.ts:233
+msgid "Please call the restaurant, or book a table instead."
+msgstr "Veuillez appeler le restaurant ou réserver une table à la place."
+
+#: src/lib/reservations/labels.ts:259
+msgid "Please check in with the host when you arrive."
+msgstr "Présentez-vous à l’accueil à votre arrivée."
+
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Please check the answers marked below and try again."
 msgstr "Vérifiez les réponses signalées ci-dessous et réessayez."
 
-#: src/lib/reservations/labels.ts:114
+#: src/lib/reservations/labels.ts:115
 msgid "Please check the fields marked below."
 msgstr "Veuillez vérifier les champs signalés ci-dessous."
 
@@ -1390,9 +1508,13 @@ msgstr "Veuillez vérifier les champs signalés ci-dessous."
 msgid "Please check your connection and try again."
 msgstr "Vérifiez votre connexion et réessayez."
 
-#: src/lib/reservations/labels.ts:250
+#: src/lib/reservations/labels.ts:357
 msgid "Please check your details and try again."
 msgstr "Veuillez vérifier vos informations et réessayer."
+
+#: src/lib/reservations/labels.ts:267
+msgid "Please contact the restaurant if you think this is a mistake."
+msgstr "Veuillez contacter le restaurant si vous pensez qu’il s’agit d’une erreur."
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Please enter your delivery address."
@@ -1418,9 +1540,21 @@ msgstr "Saisissez votre numéro de téléphone."
 msgid "Please review your order details and try again."
 msgstr "Vérifiez les détails de votre commande et réessayez."
 
+#: src/lib/reservations/labels.ts:255
+msgid "Please tell us you are coming, then check in with the host."
+msgstr "Dites-nous que vous venez, puis présentez-vous à l’accueil."
+
+#: src/lib/reservations/labels.ts:251
+msgid "Please tell us you are coming. We can hold your table for {time}."
+msgstr "Dites-nous que vous venez. Nous pouvons garder votre table pendant {time}."
+
 #: src/pages/menu.astro.ts:3
 msgid "Popular"
 msgstr "Populaires"
+
+#: src/lib/reservations/labels.ts:241
+msgid "Position in line"
+msgstr "Position dans la file"
 
 #: src/pages/careers/[slug].astro.ts:3
 msgid "Posted {date}"
@@ -1507,11 +1641,11 @@ msgstr "Les reçus des achats terminés apparaissent ici avec le statut et le mo
 msgid "Remove"
 msgstr "Retirer"
 
-#: src/lib/reservations/labels.ts:132
+#: src/lib/reservations/labels.ts:133
 msgid "Request a table for more than {count} guests"
 msgstr "Demander une table pour plus de {count} personnes"
 
-#: src/lib/reservations/labels.ts:143
+#: src/lib/reservations/labels.ts:144
 msgid "Request received"
 msgstr "Demande reçue"
 
@@ -1541,7 +1675,7 @@ msgstr "Droite"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src/lib/reservations/labels.ts:179
+#: src/lib/reservations/labels.ts:180
 msgid "Save changes"
 msgstr "Enregistrer les modifications"
 
@@ -1574,9 +1708,13 @@ msgstr "Rechercher dans le menu"
 msgid "Seasonal"
 msgstr "Saisonnier"
 
-#: src/lib/reservations/labels.ts:165
+#: src/lib/reservations/labels.ts:166
 msgid "Seated"
 msgstr "Installé"
+
+#: src/lib/reservations/labels.ts:224
+msgid "Seating preference"
+msgstr "Préférence de placement"
 
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Secure checkout. By placing your order you agree to the restaurant's terms."
@@ -1598,7 +1736,7 @@ msgstr "Envoyer la candidature"
 msgid "Send Code"
 msgstr "Envoyer le code"
 
-#: src/lib/reservations/labels.ts:138
+#: src/lib/reservations/labels.ts:139
 msgid "Send request"
 msgstr "Envoyer la demande"
 
@@ -1607,6 +1745,10 @@ msgstr "Envoyer la demande"
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "Envoi..."
+
+#: src/lib/reservations/labels.ts:296
+msgid "Sending…"
+msgstr "Envoi…"
 
 #: src/components/careers/ShareJob.astro.ts:3
 msgid "Share this job"
@@ -1660,7 +1802,7 @@ msgstr "Certains prix ont changé depuis votre appel. Votre panier affiche les p
 msgid "Something went wrong."
 msgstr "Une erreur s’est produite."
 
-#: src/lib/reservations/labels.ts:254
+#: src/lib/reservations/labels.ts:379
 msgid "Something went wrong. Please try again."
 msgstr "Une erreur s'est produite. Veuillez réessayer."
 
@@ -1672,8 +1814,8 @@ msgstr "Instructions spéciales"
 msgid "Special Instructions"
 msgstr "Instructions spéciales"
 
-#: src/lib/reservations/labels.ts:98
-#: src/lib/reservations/labels.ts:200
+#: src/lib/reservations/labels.ts:99
+#: src/lib/reservations/labels.ts:201
 msgid "Special requests"
 msgstr "Demandes particulières"
 
@@ -1692,6 +1834,10 @@ msgstr "Sous-total"
 msgid "Switch to pickup"
 msgstr "Passer au retrait"
 
+#: src/lib/reservations/labels.ts:371
+msgid "Table alerts are not available right now. Please call the restaurant."
+msgstr "Les alertes de table ne sont pas disponibles pour le moment. Veuillez appeler le restaurant."
+
 #: src/pages/menu/checkout.astro.ts:3
 #: src/pages/menu/success.astro.ts:3
 msgid "Tax"
@@ -1700,6 +1846,10 @@ msgstr "Taxe"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Tell us a little about yourself. It takes a couple of minutes."
 msgstr "Parlez-nous un peu de vous. Cela ne prend que quelques minutes."
+
+#: src/lib/reservations/labels.ts:290
+msgid "Tell us when you would like to dine. We will contact you if a table becomes available."
+msgstr "Dites-nous quand vous souhaitez dîner. Nous vous contacterons si une table se libère."
 
 #: src/lib/careers/labels.ts:20
 msgid "Temporary"
@@ -1713,13 +1863,17 @@ msgstr "M’envoyer un SMS"
 msgid "Text me new drops"
 msgstr "Me prévenir par SMS"
 
-#: src/lib/reservations/labels.ts:105
+#: src/lib/reservations/labels.ts:106
 msgid "Text me news and offers from {name}"
 msgstr "Envoyez-moi par SMS les actualités et offres de {name}"
 
-#: src/lib/reservations/labels.ts:99
+#: src/lib/reservations/labels.ts:100
 msgid "Text me reminders about this reservation"
 msgstr "Envoyez-moi des rappels par SMS pour cette réservation"
+
+#: src/lib/reservations/labels.ts:222
+msgid "Text me when my table is ready"
+msgstr "M’envoyer un SMS quand ma table est prête"
 
 #: src/pages/menu/success.astro.ts:3
 msgid "Thank you for your order!"
@@ -1733,19 +1887,23 @@ msgstr "Merci pour votre achat !"
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "Merci. Votre candidature a été envoyée. Si elle correspond, ils vous contacteront."
 
-#: src/lib/reservations/labels.ts:189
+#: src/lib/reservations/labels.ts:190
 msgid "Thanks. The restaurant knows you are coming."
 msgstr "Merci. Le restaurant sait que vous venez."
+
+#: src/lib/reservations/labels.ts:275
+msgid "Thanks. The restaurant knows you are on your way."
+msgstr "Merci. Le restaurant sait que vous êtes en route."
 
 #: src/lib/reservations/labels.ts:61
 msgid "That date is too far ahead to book online."
 msgstr "Cette date est trop éloignée pour réserver en ligne."
 
-#: src/lib/reservations/labels.ts:249
+#: src/lib/reservations/labels.ts:356
 msgid "That party size is not available online."
 msgstr "Ce nombre de personnes n'est pas disponible en ligne."
 
-#: src/lib/reservations/labels.ts:244
+#: src/lib/reservations/labels.ts:351
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "Ce nombre de personnes nécessite une demande. Utilisez l'option grand groupe."
 
@@ -1757,7 +1915,7 @@ msgstr "Ce créneau de retrait vient de se remplir. Choisissez un autre horaire.
 msgid "That pickup time is no longer available. Please choose a different time."
 msgstr "Cet horaire de retrait n'est plus disponible. Choisissez un autre horaire."
 
-#: src/lib/reservations/labels.ts:216
+#: src/lib/reservations/labels.ts:323
 msgid "That time was just taken. Please choose another time."
 msgstr "Cet horaire vient d'être pris. Veuillez en choisir un autre."
 
@@ -1769,6 +1927,10 @@ msgstr "La réservation de votre commande a été libérée. Veuillez passer une
 msgid "The items from your call are no longer available. You can still order from the menu."
 msgstr "Les articles de votre appel ne sont plus disponibles. Vous pouvez toujours commander depuis le menu."
 
+#: src/lib/reservations/labels.ts:301
+msgid "The latest time must be after the earliest time."
+msgstr "L’heure la plus tardive doit être après l’heure la plus tôt."
+
 #: src/pages/menu/success.astro.ts:3
 msgid "The link may be incomplete. You can start a new order from the menu."
 msgstr "Le lien est peut-être incomplet. Vous pouvez commencer une nouvelle commande depuis le menu."
@@ -1777,18 +1939,30 @@ msgstr "Le lien est peut-être incomplet. Vous pouvez commencer une nouvelle com
 msgid "The restaurant is closed on this date."
 msgstr "Le restaurant est fermé à cette date."
 
-#: src/lib/reservations/labels.ts:247
+#: src/lib/reservations/labels.ts:354
 msgid "The restaurant is not taking requests for that date."
 msgstr "Le restaurant n'accepte pas de demandes pour cette date."
 
-#: src/lib/reservations/labels.ts:136
+#: src/lib/reservations/labels.ts:137
 msgid "The restaurant reviews large-party requests and replies to confirm."
 msgstr "Le restaurant examine les demandes de grands groupes et répond pour confirmer."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:223
+#: src/lib/reservations/labels.ts:330
 msgid "The verification check did not pass. Please try again."
 msgstr "La vérification a échoué. Veuillez réessayer."
+
+#: src/lib/reservations/labels.ts:362
+msgid "The waitlist is full right now. Please call the restaurant."
+msgstr "La liste d’attente est complète pour le moment. Veuillez appeler le restaurant."
+
+#: src/lib/reservations/labels.ts:231
+msgid "The waitlist is not available right now"
+msgstr "La liste d’attente n’est pas disponible pour le moment"
+
+#: src/lib/reservations/labels.ts:365
+msgid "The waitlist is not available right now. Please call the restaurant."
+msgstr "La liste d’attente n’est pas disponible pour le moment. Veuillez appeler le restaurant."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
@@ -1815,7 +1989,7 @@ msgid "This form is currently unavailable."
 msgstr "Ce formulaire est actuellement indisponible."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:115
+#: src/lib/reservations/labels.ts:116
 msgid "This is required."
 msgstr "Ce champ est obligatoire."
 
@@ -1839,13 +2013,17 @@ msgstr "Cette commande est inférieure au minimum requis pour la livraison."
 msgid "This order link has expired. You can still order from the menu."
 msgstr "Ce lien de commande a expiré. Vous pouvez toujours commander depuis le menu."
 
-#: src/lib/reservations/labels.ts:232
+#: src/lib/reservations/labels.ts:339
 msgid "This phone number already has a reservation at that time."
 msgstr "Ce numéro de téléphone a déjà une réservation à cet horaire."
 
-#: src/lib/reservations/labels.ts:235
+#: src/lib/reservations/labels.ts:342
 msgid "This phone number has too many upcoming reservations."
 msgstr "Ce numéro de téléphone a trop de réservations à venir."
+
+#: src/lib/reservations/labels.ts:359
+msgid "This phone number is already on the waitlist today."
+msgstr "Ce numéro de téléphone est déjà sur la liste d’attente aujourd’hui."
 
 #: src/pages/menu/success.astro.ts:3
 msgid "This receipt is only available on the device used to place the order."
@@ -1893,7 +2071,7 @@ msgstr "Trop de candidatures ont été envoyées depuis ici. Veuillez réessayer
 msgid "Too many attempts. Please try again later."
 msgstr "Trop de tentatives. Veuillez réessayer plus tard."
 
-#: src/lib/reservations/labels.ts:220
+#: src/lib/reservations/labels.ts:327
 msgid "Too many attempts. Please wait a moment and try again."
 msgstr "Trop de tentatives. Patientez un instant puis réessayez."
 
@@ -1909,6 +2087,7 @@ msgid "Total paid"
 msgstr "Total payé"
 
 #: src/lib/ordering-labels.ts:96
+#: src/lib/reservations/labels.ts:281
 #: src/pages/menu/success.astro.ts:3
 msgid "Try again"
 msgstr "Réessayer"
@@ -1938,7 +2117,7 @@ msgid "Up to {count}"
 msgstr "Jusqu'à {count}"
 
 #: src/components/reservations/UpcomingReservations.astro.ts:3
-#: src/lib/reservations/labels.ts:205
+#: src/lib/reservations/labels.ts:206
 msgid "Upcoming reservations"
 msgstr "Réservations à venir"
 
@@ -2009,15 +2188,23 @@ msgstr "En attente de la confirmation du paiement"
 msgid "Want first dibs next time?"
 msgstr "Envie d’être les premiers la prochaine fois ?"
 
+#: src/lib/reservations/labels.ts:236
+msgid "Want to dine today? Join the waitlist and we will tell you when a table is ready."
+msgstr "Vous voulez dîner aujourd’hui ? Rejoignez la liste d’attente et nous vous préviendrons quand une table sera prête."
+
 #: src/pages/shop/success.astro.ts:3
 msgid "We could not confirm this order."
 msgstr "Nous n'avons pas pu confirmer cette commande."
 
-#: src/lib/reservations/labels.ts:229
+#: src/lib/reservations/labels.ts:336
 msgid "We could not find that reservation. The link may have expired."
 msgstr "Nous n'avons pas trouvé cette réservation. Le lien a peut-être expiré."
 
-#: src/lib/reservations/labels.ts:207
+#: src/lib/reservations/labels.ts:368
+msgid "We could not find your place in line. The link may have expired."
+msgstr "Nous n’avons pas retrouvé votre place dans la file. Le lien a peut-être expiré."
+
+#: src/lib/reservations/labels.ts:208
 msgid "We could not load your reservations."
 msgstr "Impossible de charger vos réservations."
 
@@ -2026,7 +2213,7 @@ msgid "We could not place your order. Please try again."
 msgstr "Nous n'avons pas pu enregistrer votre commande. Veuillez réessayer."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:252
+#: src/lib/reservations/labels.ts:377
 msgid "We could not reach the server. Check your connection and try again."
 msgstr "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez."
 
@@ -2066,23 +2253,35 @@ msgstr "Nous n'avons pas pu démarrer le paiement. Veuillez réessayer."
 msgid "We deliver here"
 msgstr "Nous livrons ici"
 
+#: src/lib/reservations/labels.ts:271
+msgid "We did not hear back in time. You can join the waitlist again."
+msgstr "Nous n’avons pas reçu de réponse à temps. Vous pouvez rejoindre à nouveau la liste d’attente."
+
 #: src/lib/ordering-labels.ts:108
 msgid "We don't deliver to this address yet"
 msgstr "Nous ne livrons pas encore à cette adresse"
 
-#: src/lib/reservations/labels.ts:111
+#: src/lib/reservations/labels.ts:223
+msgid "We email you when your table is ready."
+msgstr "Nous vous envoyons un e-mail quand votre table est prête."
+
+#: src/lib/reservations/labels.ts:112
 msgid "We filled in your details from your profile."
 msgstr "Nous avons rempli vos informations à partir de votre profil."
+
+#: src/lib/reservations/labels.ts:257
+msgid "We know you are on your way"
+msgstr "Nous savons que vous êtes en route"
 
 #: src/pages/menu.astro.ts:3
 msgid "We loaded your order from your call. Review it and check out."
 msgstr "Nous avons chargé la commande de votre appel. Vérifiez-la et passez à la caisse."
 
-#: src/lib/reservations/labels.ts:92
+#: src/lib/reservations/labels.ts:93
 msgid "We send your confirmation here."
 msgstr "Nous y envoyons votre confirmation."
 
-#: src/lib/reservations/labels.ts:142
+#: src/lib/reservations/labels.ts:143
 msgid "We sent a confirmation to your email or phone."
 msgstr "Nous avons envoyé une confirmation à votre e-mail ou téléphone."
 
@@ -2090,9 +2289,13 @@ msgstr "Nous avons envoyé une confirmation à votre e-mail ou téléphone."
 msgid "We texted a 6-digit code to {phone}."
 msgstr "Nous avons envoyé un code à 6 chiffres au {phone}."
 
-#: src/lib/reservations/labels.ts:192
+#: src/lib/reservations/labels.ts:193
 msgid "We told the restaurant you are running late."
 msgstr "Nous avons prévenu le restaurant de votre retard."
+
+#: src/lib/reservations/labels.ts:308
+msgid "We will let you know"
+msgstr "Nous vous préviendrons"
 
 #: src/lib/ordering-labels.ts:149
 msgid "We'll check that your address is in our delivery area before you order."
@@ -2141,7 +2344,7 @@ msgid "What's your name?"
 msgstr "Comment vous appelez-vous ?"
 
 #: src/lib/ordering-labels.ts:130
-#: src/lib/reservations/labels.ts:157
+#: src/lib/reservations/labels.ts:158
 msgid "When"
 msgstr "Quand"
 
@@ -2149,7 +2352,7 @@ msgstr "Quand"
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "Lorsque vous achetez quelque chose dans la boutique, vos reçus s'afficheront ici."
 
-#: src/lib/reservations/labels.ts:156
+#: src/lib/reservations/labels.ts:157
 #: src/pages/drop/[slug].astro.ts:3
 msgid "Where"
 msgstr "Où"
@@ -2174,29 +2377,57 @@ msgstr "an"
 msgid "Yes"
 msgstr "Oui"
 
-#: src/lib/reservations/labels.ts:184
+#: src/lib/reservations/labels.ts:185
 msgid "Yes, cancel it"
 msgstr "Oui, annuler"
 
-#: src/lib/reservations/labels.ts:141
+#: src/lib/reservations/labels.ts:279
+msgid "Yes, leave"
+msgstr "Oui, quitter"
+
+#: src/lib/reservations/labels.ts:374
+msgid "You already have the most table alerts allowed for these contact details."
+msgstr "Vous avez déjà le nombre maximal d’alertes de table autorisé pour ces coordonnées."
+
+#: src/lib/reservations/labels.ts:142
 msgid "You are booked"
 msgstr "Votre réservation est faite"
 
-#: src/lib/reservations/labels.ts:187
+#: src/lib/reservations/labels.ts:244
+msgid "You are on the waitlist"
+msgstr "Vous êtes sur la liste d’attente"
+
+#: src/lib/reservations/labels.ts:188
 msgid "You can cancel until {time}."
 msgstr "Vous pouvez annuler jusqu'à {time}."
+
+#: src/lib/reservations/labels.ts:264
+msgid "You can join again at any time."
+msgstr "Vous pouvez vous réinscrire à tout moment."
 
 #: src/lib/ordering-labels.ts:121
 msgid "You can still order for pickup."
 msgstr "Vous pouvez toujours commander à emporter."
 
-#: src/lib/reservations/labels.ts:206
+#: src/lib/reservations/labels.ts:261
+msgid "You have been seated"
+msgstr "Vous avez été installé"
+
+#: src/lib/reservations/labels.ts:207
 msgid "You have no upcoming reservations."
 msgstr "Vous n'avez aucune réservation à venir."
 
-#: src/lib/reservations/labels.ts:195
+#: src/lib/reservations/labels.ts:263
+msgid "You left the waitlist"
+msgstr "Vous avez quitté la liste d’attente"
+
+#: src/lib/reservations/labels.ts:196
 msgid "You told us you are about {count} minutes late."
 msgstr "Vous nous avez indiqué un retard d’environ {count} minutes."
+
+#: src/lib/reservations/labels.ts:265
+msgid "You were removed from the waitlist"
+msgstr "Vous avez été retiré de la liste d’attente"
 
 #: src/components/drops/DropAlertsSignup.astro.ts:3
 msgid "You're on the list. We'll text you when the next drop opens."
@@ -2211,15 +2442,15 @@ msgid "Your delivery check expired. Confirm your address again."
 msgstr "La vérification de livraison a expiré. Confirmez à nouveau votre adresse."
 
 #: src/lib/reservations/labels.ts:34
-#: src/lib/reservations/labels.ts:82
+#: src/lib/reservations/labels.ts:83
 msgid "Your details"
 msgstr "Vos informations"
 
-#: src/lib/reservations/labels.ts:77
+#: src/lib/reservations/labels.ts:78
 msgid "Your hold expired"
 msgstr "Votre option a expiré"
 
-#: src/lib/reservations/labels.ts:218
+#: src/lib/reservations/labels.ts:325
 msgid "Your hold expired. Please choose a time again."
 msgstr "Votre option a expiré. Veuillez choisir un horaire à nouveau."
 
@@ -2255,20 +2486,28 @@ msgstr "Votre paiement n'a pas abouti. Votre commande est réservée pendant une
 msgid "Your payment window expired"
 msgstr "Votre délai de paiement a expiré"
 
+#: src/lib/reservations/labels.ts:240
+msgid "Your place in line"
+msgstr "Votre place dans la file"
+
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"
 msgstr "Votre profil"
 
-#: src/lib/reservations/labels.ts:173
+#: src/lib/reservations/labels.ts:315
+msgid "Your request was cancelled. We will not contact you about it."
+msgstr "Votre demande a été annulée. Nous ne vous contacterons pas à ce sujet."
+
+#: src/lib/reservations/labels.ts:174
 #: src/pages/reserve/manage.astro.ts:3
 msgid "Your reservation"
 msgstr "Votre réservation"
 
-#: src/lib/reservations/labels.ts:186
+#: src/lib/reservations/labels.ts:187
 msgid "Your reservation has been cancelled."
 msgstr "Votre réservation a été annulée."
 
-#: src/lib/reservations/labels.ts:180
+#: src/lib/reservations/labels.ts:181
 msgid "Your reservation was updated."
 msgstr "Votre réservation a été mise à jour."
 
@@ -2276,6 +2515,14 @@ msgstr "Votre réservation a été mise à jour."
 msgid "Your scheduled time is no longer available. Choose a new time."
 msgstr "L'heure programmée n'est plus disponible. Choisissez-en une autre."
 
-#: src/lib/reservations/labels.ts:68
+#: src/lib/reservations/labels.ts:69
 msgid "Your table is held"
 msgstr "Votre table est conservée"
+
+#: src/lib/reservations/labels.ts:248
+msgid "Your table is ready"
+msgstr "Votre table est prête"
+
+#: src/lib/reservations/labels.ts:269
+msgid "Your table was released"
+msgstr "Votre table a été libérée"

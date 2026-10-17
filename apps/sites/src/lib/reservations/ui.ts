@@ -174,7 +174,11 @@ type TurnstileApi = {
 }
 
 /** Human-check widget. A no-op (always `null`) when the site has no key. */
-export function createChallenge(container: HTMLElement, siteKey: string) {
+export function createChallenge(
+	container: HTMLElement,
+	siteKey: string,
+	action = 'reservations',
+) {
 	let token: string | null = null
 	let widgetId: string | undefined
 	if (siteKey) {
@@ -187,7 +191,7 @@ export function createChallenge(container: HTMLElement, siteKey: string) {
 			}
 			widgetId = turnstile.render(container, {
 				sitekey: siteKey,
-				action: 'reservations',
+				action,
 				callback: (value) => {
 					token = value
 				},

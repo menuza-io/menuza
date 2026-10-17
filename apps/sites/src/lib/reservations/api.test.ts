@@ -161,4 +161,57 @@ describe('reservations api', () => {
 		})
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
+
+	it('joins the waitlist with an Idempotency-Key and reads status by token header', async () => {
+		const { api, fetchImpl } = setup([jsonResponse({}), jsonResponse({})])
+		await api.waitlist.join({ name: 'A' }, 'join-key')
+		let call = lastCall(fetchImpl)
+		expect(call.url).toBe('http://localhost:3007/reservations/waitlist/join')
+		expect(call.init.method).toBe('POST')
+		expect(call.headers.get('Idempotency-Key')).toBe('join-key')
+
+		await api.waitlist.status('wl-token')
+		call = lastCall(fetchImpl)
+		expect(call.url).toBe('http://localhost:3007/reservations/waitlist/status')
+		expect(call.init.method).toBe('GET')
+		expect(call.headers.get('X-Reservation-Token')).toBe('wl-token')
+		expect(call.url).not.toContain('wl-token')
+	})
+
+	it('leaves and signals arrival with POST and the token header only', async () => {
+		const { api, fetchImpl } = setup([jsonResponse({}), jsonResponse({})])
+		await api.waitlist.leave('wl-token')
+		await api.waitlist.onMyWay('wl-token')
+		const calls = fetchImpl.mock.calls.map(([url, init]) => ({
+			url,
+			method: init.method,
+			token: new Headers(init.headers).get('X-Reservation-Token'),
+		}))
+		expect(calls).toEqual([
+			{
+				url: 'http://localhost:3007/reservations/waitlist/status/leave',
+				method: 'POST',
+				token: 'wl-token',
+			},
+			{
+				url: 'http://localhost:3007/reservations/waitlist/status/on-my-way',
+				method: 'POST',
+				token: 'wl-token',
+			},
+		])
+	})
+
+	it('creates and cancels a notify-me request', async () => {
+		const { api, fetchImpl } = setup([jsonResponse({}), jsonResponse({})])
+		await api.notifyMe.create({ date: '2030-01-01' }, 'notify-key')
+		let call = lastCall(fetchImpl)
+		expect(call.url).toBe('http://localhost:3007/reservations/notify-me')
+		expect(call.headers.get('Idempotency-Key')).toBe('notify-key')
+
+		await api.notifyMe.cancel('cancel-token')
+		call = lastCall(fetchImpl)
+		expect(call.url).toBe('http://localhost:3007/reservations/notify-me/cancel')
+		expect(call.init.method).toBe('POST')
+		expect(call.headers.get('X-Reservation-Token')).toBe('cancel-token')
+	})
 })

@@ -139,6 +139,8 @@ export type DayReservationView = {
 	durationMin: number
 	status: string
 	channel: string
+	/** The `X-Client` value recorded at booking (`web`, `ios`, `android`, `operator`). */
+	client: string | null
 	assignment: 'soft' | 'locked' | 'unassigned'
 	locked: boolean
 	overbook: boolean
@@ -869,6 +871,10 @@ export function normalizeReservationView(
 		durationMin,
 		status: rawStatus,
 		channel: String(raw.channel ?? 'host'),
+		client:
+			typeof raw.client === 'string' && raw.client.trim()
+				? raw.client.trim()
+				: null,
 		assignment,
 		locked,
 		overbook: Boolean(raw.overbook ?? raw.overbooked ?? false),
@@ -2872,4 +2878,36 @@ export async function deleteSectionLayout(
 			method: 'DELETE',
 		},
 	)
+}
+
+// --- resend ---
+
+export type ResendConfirmationResult = {
+	queued: number
+	rotated: boolean
+	reservation: DayReservationView | null
+}
+
+/** Sends the guest a fresh confirmation; `rotate` also retires the old manage link. */
+export async function resendReservationConfirmation(
+	client: ReservationsScopedClient,
+	reservationId: string,
+	options: { rotate?: boolean } = {},
+): Promise<ResendConfirmationResult> {
+	const raw = await client.request<Record<string, unknown>>(
+		`/operator/reservations/book/reservations/${encodeURIComponent(reservationId)}/resend`,
+		{
+			method: 'POST',
+			body: options.rotate ? { rotate: true } : {},
+		},
+	)
+	const reservation =
+		raw.reservation && typeof raw.reservation === 'object'
+			? normalizeReservationView(raw.reservation as Record<string, unknown>)
+			: null
+	return {
+		queued: Number(raw.queued ?? 0),
+		rotated: raw.rotated === true,
+		reservation,
+	}
 }

@@ -18,6 +18,16 @@ import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
+import {
+	FloorWaitlistPanel,
+	WAITLIST_DRAG_TYPE,
+	WaitlistOverbookPrompt,
+} from '#app/components/reservations/waitlist/floor-waitlist-panel.tsx'
+import { SeatDialog } from '#app/components/reservations/waitlist/seat-dialog.tsx'
+import {
+	useFloorWaitlist,
+	type WaitlistSeatOutcome,
+} from '#app/components/reservations/waitlist/use-floor-waitlist.ts'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { useLiveNow } from '#app/hooks/use-live-now.ts'
 import { useReservationsScopeClient } from '#app/hooks/use-reservations-client.ts'
@@ -57,6 +67,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		canManage:
 			!impersonated &&
 			access.grants.includes(RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION),
+		waitlistEnabled: access.features.waitlist,
 	}
 }
 
@@ -128,7 +139,7 @@ export default function ReservationsFloorRoute() {
 		labels: Record<string, MessageDescriptor>,
 		value: string | null | undefined,
 	) => enumLabel((d) => i18n._(d), labels, value)
-	const { orgSlug, canManage } = useLoaderData<typeof loader>()
+	const { orgSlug, canManage, waitlistEnabled } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
 		locations.find((loc) => loc.id === activeLocationId) ?? locations[0]
@@ -161,13 +172,27 @@ export default function ReservationsFloorRoute() {
 	})
 	const nowMs = liveClock.nowMs
 
+	const showWaitlist = waitlistEnabled && canManage
+	const bookClient = useReservationsScopeClient(
+		orgSlug,
+		'book',
+		locationId ? [locationId] : undefined,
+	)
+	const floorWaitlist = useFloorWaitlist({
+		client: bookClient,
+		locationId,
+		enabled: showWaitlist,
+	})
+
 	// 5s ETag polling paused during drag or modal activity (VAL-HOST-017)
 	const host = useHostStand({
 		orgSlug,
 		locationId,
 		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
 		pollIntervalMs: 5_000,
-		pausePolling: Boolean(draggingRsvId || occupiedDropPrompt),
+		pausePolling: Boolean(
+			draggingRsvId || occupiedDropPrompt || floorWaitlist.busyUi,
+		),
 	})
 
 	const setupClient = useReservationsScopeClient(
@@ -603,6 +628,38 @@ export default function ReservationsFloorRoute() {
 		}
 	}
 
+	const finishWaitlistSeat = async (outcome: WaitlistSeatOutcome | null) => {
+		if (!outcome) return
+		if (outcome.ok) {
+			const guest = outcome.entry.displayName
+			const tableLabel = outcome.table.label
+			setActionError(null)
+			setActionBanner(t`Seated ${guest} at ${tableLabel} from the waitlist.`)
+			await host.refresh()
+		} else {
+			setActionError(outcome.message)
+		}
+	}
+
+	const handleDropWaitlistOnTable = async (
+		entryId: string,
+		targetState: ComputedTableFloorState,
+	) => {
+		if (!showWaitlist) return
+		setActionError(null)
+		setActionBanner(null)
+		const occupied = Boolean(
+			targetState.currentReservation || targetState.isBlocked,
+		)
+		await finishWaitlistSeat(
+			await floorWaitlist.dropOnTable(
+				entryId,
+				{ id: targetState.table.id, label: targetState.table.label },
+				occupied,
+			),
+		)
+	}
+
 	const handleSeatAssignedReservation = async (
 		rsv: DayReservationView,
 		tableId: string,
@@ -953,6 +1010,17 @@ export default function ReservationsFloorRoute() {
 				</Card>
 			) : null}
 
+			{floorWaitlist.prompt ? (
+				<WaitlistOverbookPrompt
+					prompt={floorWaitlist.prompt}
+					busy={floorWaitlist.waitlist.busyId !== null}
+					onOverbook={(reason) =>
+						void floorWaitlist.resolveOverbook(reason).then(finishWaitlistSeat)
+					}
+					onCancel={floorWaitlist.cancelPrompt}
+				/>
+			) : null}
+
 			{/* Toolbar: Area tabs, Section overlay toggle, High-contrast toggle, Status legend */}
 			<div className="border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
 				<div className="flex flex-wrap items-center gap-1.5">
@@ -1008,7 +1076,7 @@ export default function ReservationsFloorRoute() {
 						data-testid="floor-poll-badge"
 					>
 						<Icon name="refresh-cw" className="mr-1 size-3" />
-						{draggingRsvId || occupiedDropPrompt ? (
+						{draggingRsvId || occupiedDropPrompt || floorWaitlist.busyUi ? (
 							<Trans>Polling paused</Trans>
 						) : (
 							<Trans>Live 5s ETag</Trans>
@@ -1260,6 +1328,14 @@ export default function ReservationsFloorRoute() {
 											onDrop={(e) => {
 												e.preventDefault()
 												setDragOverTableId(null)
+												const waitlistId =
+													e.dataTransfer.getData(WAITLIST_DRAG_TYPE) ||
+													floorWaitlist.draggingId
+												if (waitlistId) {
+													floorWaitlist.setDraggingId(null)
+													void handleDropWaitlistOnTable(waitlistId, ts)
+													return
+												}
 												const rsvId =
 													e.dataTransfer.getData('text/reservation-id') ||
 													draggingRsvId
@@ -1611,6 +1687,46 @@ export default function ReservationsFloorRoute() {
 						</Card>
 					) : null}
 
+					{showWaitlist ? (
+						<FloorWaitlistPanel
+							entries={floorWaitlist.waitlist.active}
+							loading={floorWaitlist.waitlist.loading}
+							error={floorWaitlist.waitlist.loadError}
+							dragging={floorWaitlist.draggingId !== null}
+							busyId={floorWaitlist.waitlist.busyId}
+							selectedTable={
+								selectedTableState
+									? {
+											id: selectedTableState.table.id,
+											label: selectedTableState.table.label,
+										}
+									: null
+							}
+							clockOffsetMs={floorWaitlist.waitlist.clockOffsetMs}
+							announcement={floorWaitlist.waitlist.announcement}
+							onDragStart={(entry) => floorWaitlist.setDraggingId(entry.id)}
+							onDragEnd={() => {
+								floorWaitlist.setDraggingId(null)
+								setDragOverTableId(null)
+							}}
+							onSeatAtSelected={(entry, table) => {
+								setActionError(null)
+								setActionBanner(null)
+								void floorWaitlist
+									.dropOnTable(
+										entry.id,
+										table,
+										Boolean(
+											selectedTableState?.currentReservation ||
+											selectedTableState?.isBlocked,
+										),
+									)
+									.then(finishWaitlistSeat)
+							}}
+							onChooseTable={(entry) => floorWaitlist.setSeatDialogId(entry.id)}
+						/>
+					) : null}
+
 					{/* Side Reservation List (VAL-HOST-014) */}
 					<Card
 						className="flex flex-col"
@@ -1771,6 +1887,29 @@ export default function ReservationsFloorRoute() {
 					host.handleReservationMutated(rsv, notices)
 				}}
 			/>
+
+			{showWaitlist ? (
+				<SeatDialog
+					entry={
+						floorWaitlist.waitlist.active.find(
+							(entry) => entry.id === floorWaitlist.seatDialogId,
+						) ?? null
+					}
+					onClose={() => floorWaitlist.setSeatDialogId(null)}
+					tableStates={feed?.tableStates ?? []}
+					initialTableId={selectedTableId}
+					onSeat={async (entry, input) => {
+						const result = await floorWaitlist.waitlist.seat(entry, input)
+						if (result.ok) {
+							const guest = result.value.entry.displayName
+							setActionError(null)
+							setActionBanner(t`Seated ${guest} from the waitlist.`)
+							void host.refresh()
+						}
+						return result
+					}}
+				/>
+			) : null}
 
 			<ConflictPanel
 				open={host.conflictPanelOpen}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+	clientLabel,
 	CONTACT_STATUS_LABELS,
 	enumLabel,
 	humanizeEnum,
@@ -38,5 +39,21 @@ describe('reservation labels', () => {
 	it('strips the org prefix from tag ids', () => {
 		expect(stripTagPrefix('tag_acme_birthday')).toBe('birthday')
 		expect(humanizeEnum('tag_acme_window_seat')).toBe('Window seat')
+	})
+})
+
+describe('clientLabel', () => {
+	const translate = (d: { message?: string; id?: string }) =>
+		`T:${d.message ?? d.id}`
+
+	it('translates the recorded X-Client values', () => {
+		expect(clientLabel(translate, 'web')).toBe('T:Web')
+		expect(clientLabel(translate, 'ios')).toBe('T:iOS app')
+		expect(clientLabel(translate, 'android')).toBe('T:Android app')
+	})
+
+	it('shows an unknown value exactly as received and nothing when empty', () => {
+		expect(clientLabel(translate, 'kiosk_v2')).toBe('kiosk_v2')
+		expect(clientLabel(translate, null)).toBe('')
 	})
 })

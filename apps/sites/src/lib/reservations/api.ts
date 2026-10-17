@@ -5,8 +5,11 @@ import {
 	type HoldResponse,
 	type ManageView,
 	type MineResponse,
+	type NotifyMeResponse,
 	type ReservationsConfig,
 	type SlotRef,
+	type WaitlistJoinResponse,
+	type WaitlistStatus,
 } from './types.ts'
 import { randomUuid } from './uuid.ts'
 
@@ -255,6 +258,51 @@ export function createReservationsApi(deps: ReservationsApiDeps) {
 		},
 		mine() {
 			return call<MineResponse>('/reservations/mine', { auth: true })
+		},
+		waitlist: {
+			join(body: Record<string, unknown>, key: string = newKey()) {
+				return call<WaitlistJoinResponse>('/reservations/waitlist/join', {
+					method: 'POST',
+					auth: true,
+					body,
+					headers: { 'Idempotency-Key': key },
+				})
+			},
+			status(token: string) {
+				return call<WaitlistStatus>('/reservations/waitlist/status', {
+					headers: tokenHeader(token),
+				})
+			},
+			leave(token: string) {
+				return call<WaitlistStatus>('/reservations/waitlist/status/leave', {
+					method: 'POST',
+					body: {},
+					headers: tokenHeader(token),
+				})
+			},
+			onMyWay(token: string) {
+				return call<WaitlistStatus>('/reservations/waitlist/status/on-my-way', {
+					method: 'POST',
+					body: {},
+					headers: tokenHeader(token),
+				})
+			},
+		},
+		notifyMe: {
+			create(body: Record<string, unknown>, key: string = newKey()) {
+				return call<NotifyMeResponse>('/reservations/notify-me', {
+					method: 'POST',
+					auth: true,
+					body,
+					headers: { 'Idempotency-Key': key },
+				})
+			},
+			cancel(token: string) {
+				return call<{ cancelled: boolean; now: string }>(
+					'/reservations/notify-me/cancel',
+					{ method: 'POST', body: {}, headers: tokenHeader(token) },
+				)
+			},
 		},
 	}
 }

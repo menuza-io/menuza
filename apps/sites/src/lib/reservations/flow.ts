@@ -14,6 +14,11 @@ import { parseFragmentParam, stripFragment } from './fragment.ts'
 import { holdRemainingMs, holdTargetMs, formatHoldClock } from './hold.ts'
 import { type ReservationLabels } from './labels.ts'
 import {
+	createNotifyMeForm,
+	offersNotifyMe,
+	offersWaitlist,
+} from './notify-me-form.ts'
+import {
 	addDaysIso,
 	formatClock,
 	formatDateLong,
@@ -71,6 +76,8 @@ export type FlowDeps = {
 	history?: Pick<History, 'replaceState' | 'state'>
 	pageLocation?: Pick<Location, 'hash' | 'pathname' | 'search'>
 	manageHref: (token: string) => string
+	/** The waitlist page for this site and locale; omitted when the page does not exist. */
+	waitlistHref?: string
 	loadPrefill: () => Promise<{
 		name: string
 		phone: string
@@ -365,19 +372,92 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 
 	// Availability ------------------------------------------------------------
 	function slotChip(slot: PublicSlot, slotDate: string, partySize: number) {
-		const chip = el('button', chipClass, formatClock(slot.localMin, locale))
+		const time = formatClock(slot.localMin, locale)
+		const area = slot.areaLabel?.trim() || null
+		const chip = el('button', chipClass)
 		chip.type = 'button'
 		chip.dataset.time = formatHhmm(slot.localMin)
 		chip.dataset.localMin = String(slot.localMin)
 		chip.setAttribute('aria-pressed', 'false')
+		if (area) {
+			chip.className = `${chipClass} flex-col gap-0.5 py-1.5`
+			chip.append(el('span', undefined, time))
+			const areaText = el(
+				'span',
+				'text-xs font-normal text-muted-foreground',
+				area,
+			)
+			areaText.dataset.area = 'true'
+			chip.append(areaText)
+		} else {
+			chip.textContent = time
+		}
+		const base = area
+			? fillTemplate(labels.selectTimeArea, { time, area })
+			: fillTemplate(labels.selectTime, { time })
 		chip.setAttribute(
 			'aria-label',
-			`${fillTemplate(labels.selectTime, { time: formatClock(slot.localMin, locale) })}${slot.serviceName ? `, ${slot.serviceName}` : ''}`,
+			`${base}${slot.serviceName ? `, ${slot.serviceName}` : ''}`,
 		)
 		chip.addEventListener('click', () => {
 			void chooseSlot(slot, slotDate, partySize, chip)
 		})
 		return chip
+	}
+
+	function renderNoSlotOffers(result: Availability) {
+		if (offersNotifyMe(result)) {
+			const host = el('div', 'flex flex-col gap-3')
+			host.dataset.notifyHost = 'true'
+			const open = el('button', secondaryButtonClass, labels.notifySubmit)
+			open.type = 'button'
+			open.dataset.notifyOpen = 'true'
+			open.addEventListener('click', () => {
+				const today = todayIn(result.timeZone || location.timeZone, serverNow)
+				const form = createNotifyMeForm({
+					api,
+					labels: deps.labels,
+					locale,
+					orgName: deps.orgName,
+					phoneExample: deps.phoneExample ?? '+1 415 555 0123',
+					turnstileSiteKey: deps.turnstileSiteKey,
+					locationId: location.id,
+					partySize: location.partySize,
+					search: {
+						partySize: result.partySize,
+						date: result.date,
+						preferredMin,
+					},
+					dateRange: {
+						min: today,
+						max: addDaysIso(today, location.horizonDays),
+					},
+					signedIn: deps.signedIn,
+				})
+				host.replaceChildren(form.element)
+				form.element.querySelector<HTMLElement>('input, select')?.focus()
+			})
+			host.append(
+				el('p', 'text-sm text-muted-foreground', labels.notifyBody),
+				open,
+			)
+			resultsCard.append(host)
+		}
+		if (deps.waitlistHref && offersWaitlist(result)) {
+			const host = el('div', 'flex flex-col gap-3')
+			host.dataset.waitlistOffer = 'true'
+			const params = new URLSearchParams({
+				location: location.id,
+				party: String(result.partySize),
+			})
+			const link = el('a', secondaryButtonClass, labels.waitlistTitle)
+			link.href = `${deps.waitlistHref}?${params.toString()}`
+			host.append(
+				el('p', 'text-sm text-muted-foreground', labels.waitlistSameDayHint),
+				link,
+			)
+			resultsCard.append(host)
+		}
 	}
 
 	function renderResults(result: Availability) {
@@ -487,6 +567,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 			group.append(buttons)
 			resultsCard.append(group)
 		}
+		renderNoSlotOffers(result)
 	}
 
 	function emptyReason(result: Availability): {

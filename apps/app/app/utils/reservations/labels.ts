@@ -51,6 +51,23 @@ export const CHANNEL_LABELS: Record<string, MessageDescriptor> = {
 	waitlist: msg`Waitlist`,
 }
 
+/** The `X-Client` value recorded when a guest booked (`operator` is a host entry). */
+export const CLIENT_LABELS: Record<string, MessageDescriptor> = {
+	web: msg`Web`,
+	ios: msg`iOS app`,
+	android: msg`Android app`,
+}
+
+/** Client label for display; an unrecognized value is shown as received. */
+export function clientLabel(
+	translate: (descriptor: MessageDescriptor) => string,
+	value: string | null | undefined,
+): string {
+	if (!value) return ''
+	const descriptor = CLIENT_LABELS[value]
+	return descriptor ? translate(descriptor) : value
+}
+
 /** Booking channels the Book list can filter on. */
 export const SOURCE_FILTER_OPTIONS = [
 	'phone',
@@ -164,6 +181,7 @@ export const EVENT_TYPE_LABELS: Record<string, MessageDescriptor> = {
 	running_late: msg`Running late`,
 	contact_status: msg`Contact status changed`,
 	course: msg`Course changed`,
+	confirmation_resent: msg`Confirmation re-sent`,
 	note: msg`Note updated`,
 	auto_reassigned: msg`Moved automatically`,
 }
