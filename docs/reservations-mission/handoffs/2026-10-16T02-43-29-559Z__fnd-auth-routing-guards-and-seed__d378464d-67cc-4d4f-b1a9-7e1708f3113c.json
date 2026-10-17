@@ -1,0 +1,175 @@
+{
+	"timestamp": "2026-10-16T02:43:29.559Z",
+	"workerSessionId": "d378464d-67cc-4d4f-b1a9-7e1708f3113c",
+	"featureId": "fnd-auth-routing-guards-and-seed",
+	"milestone": "foundation",
+	"commitId": "452bb4634ea1c45350e13191d856e5c37da4c227",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": false,
+	"handoff": {
+		"salientSummary": "Implemented Reservations foundation auth, DO routing, security guards, serialized write gate, App access/token/context routes, role presets & implied permissions, sidebar/shell UI, idempotent US/KSA seed script, and ADR 048 + docs. All 80 new Reservations tests (56 in App, 24 in tenant-api), full workspace Vitest suites, Lingui check, typecheck, and live curl/browser checks passed.",
+		"whatWasImplemented": "1. RBAC & Role Editor (VAL-FND-015): Added the 8 Reservations permissions, RESERVATIONS_IMPLIED_PERMISSION_IDS, withImpliedReservationsPermissions, and role presets (Host, Shift manager, General manager, Reservations manager, Guest relations, Guestbook manager, Finance, Owner, Viewer) in apps/app/app/utils/organization/tenant-role-permissions.ts and apps/app/app/utils/reservations/role-presets.ts, and gated the Reservations group and presets on reservations.enabled in TenantRoleAccessManager and all 4 role settings routes.\n2. Operator Token Mint Route (VAL-FND-016): Implemented apps/app/app/utils/reservations/access.server.ts, token.server.ts, and GET /:orgSlug/reservations/token (routes/_app+/$orgSlug_+/reservations+/token.ts) minting HS256 rsv+jwt tokens with aud 'tenant-api-reservations-operator', 900s/300s TTL, locationIds intersection with UserOrganization.locationScope, impersonation write/sensitive grant stripping, and regional tenantApiUrl resolution.\n3. Tenant-API Auth, Guard & DO Routing (VAL-FND-017): Created apps/tenant-api/src/lib/http.ts, reservations-auth.ts, and reservations-guard.ts (rsvGuard), and updated workers/org-router.ts to route /operator/reservations* by operator JWT, /reservations/* by customer JWT or Origin+slug/host (never query/body orgId), and /internal/reservations/*, /api/reservations/*, and /api/voice/actions/* by JSON body orgId.\n4. Control-Plane Context & Cache (VAL-FND-018): Created GET /resources/reservations/context in App and apps/tenant-api/src/lib/reservations-context.ts with 60s fresh TTL, 5-minute stale fallback on fetch error, and immediate invalidation via POST /internal/reservations/context-changed.\n5. Serialized Per-Org Write Gate (VAL-FND-019): Created apps/tenant-api/src/lib/reservations-write.ts (and reservations-lock.ts) implementing withReservationWrite with runExclusive, retryOnSqliteBusy, in-transaction expired hold/payment/request/waitlist sweep, idempotency key check/store (409 on hash mismatch), loadDayStateInTx, bumpDayVersionsInTx, and day cache invalidation.\n6. Router Scaffolds & Security Gate Tests (VAL-FND-020): Mounted reservationsOperatorRoutes, reservationsPublicRoutes, reservationsInternalRoutes, reservationsTickRoutes, and reservationsVoiceActionRoutes in apps/tenant-api/src/app.ts and added apps/tenant-api/src/routes/reservations-security.test.ts and apps/app/app/utils/reservations/reservations-guards.test.ts.\n7. App Sidebar & Shell Layout (VAL-FND-021, VAL-FND-022): Wired reservationsNav into apps/app/app/root.tsx and app-sidebar.tsx, and built routes/_app+/$orgSlug_+/reservations+/ (_layout.tsx, _index.tsx, today.tsx, book.tsx, waitlist.tsx, guests.tsx, experiences.tsx, reports.tsx, settings.tsx) plus ReservationsClientProvider and useReservationsClient.\n8. Idempotent Seed Script (VAL-FND-023): Created apps/tenant-api/scripts/seed-reservations.mjs and seed-reservations.ts seeding acme (US) and riyadh-grill (KSA) across LibSQL data.db, local D1, and US/KSA tenant SQLite databases.\n9. Documentation (VAL-FND-024): Created docs/decisions/048-reservations-data-residency.md, docs/reservations.md, docs/reservations-contract.md, docs/reservations-plan.md, and updated docs/permissions.md.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/app && npx vitest run app/routes/resources+/reservations.context.test.ts app/utils/reservations/ app/utils/organization/tenant-role-permissions.test.ts app/routes/_app+/\\$orgSlug_+/settings+/roles.reservations.test.tsx",
+					"exitCode": 0,
+					"observation": "7 test files passed (56 tests total): nav.test.ts (3), token.test.ts (5), roles.reservations.test.tsx (5), reservations-guards.test.ts (23), tenant-role-permissions.test.ts (13), role-presets.test.ts (4), reservations.context.test.ts (3)"
+				},
+				{
+					"command": "cd apps/tenant-api && npx vitest run src/lib/reservations-auth.test.ts src/lib/reservations-routing.test.ts src/lib/reservations-context.test.ts src/lib/reservations-write.test.ts src/routes/reservations-security.test.ts",
+					"exitCode": 0,
+					"observation": "5 test files passed (24 tests total): reservations-context.test.ts (3), reservations-write.test.ts (3), reservations-security.test.ts (10), reservations-routing.test.ts (3), reservations-auth.test.ts (5)"
+				},
+				{
+					"command": "npm run seed:reservations -w tenant-api -- acme && npm run seed:reservations -w tenant-api -- riyadh-grill",
+					"exitCode": 0,
+					"observation": "Idempotently seeded 3 areas, 12 tables, 2 combinations, 3 services, 4 turn-time brackets, 8 guests, 7 reservations, and 2 waitlist entries for acme (t58bgatqh3rv0s3movrecyj1, America/New_York, USD) and riyadh-grill (ru0dm42cud9scs4g2duep21c, Asia/Riyadh, SAR) across LibSQL data.db, local D1, and US/KSA regional tenant DBs"
+				},
+				{
+					"command": "curl -s -H \"Authorization: Bearer $TOKEN\" http://localhost:3001/resources/reservations/context?orgId=t58bgatqh3rv0s3movrecyj1 && curl -s -H \"Authorization: Bearer $TOKEN\" http://localhost:3001/resources/reservations/context?orgId=ru0dm42cud9scs4g2duep21c && curl -s -X POST -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{\"orgId\":\"t58bgatqh3rv0s3movrecyj1\"}' http://localhost:3007/internal/reservations/context-changed && curl -s -X POST -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{\"orgId\":\"ru0dm42cud9scs4g2duep21c\"}' http://localhost:3009/internal/reservations/context-changed",
+					"exitCode": 0,
+					"observation": "All 4 live HTTP requests returned HTTP 200 with schema-valid JSON payloads (resolved location names, hex-converted emailTheme, folded reservations.* flags, and {\"ok\":true,\"orgId\":...} cache invalidation responses on US :3007 and KSA :3009)"
+				},
+				{
+					"command": "NODE_OPTIONS=--max-old-space-size=4096 npm run typecheck -w app && npm run typecheck -w tenant-api && npm run typecheck -w @repo/reservations && npm run lint:oxc && node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "All TypeScript checks (app, tenant-api, @repo/reservations), oxlint (0 errors across 2423 files), and check-lingui.mjs (0 missing translations across admin, app, mobile, sites) passed"
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "Logged in as kody at http://localhost:3001/login and navigated to http://localhost:3001/acme/reservations and http://localhost:3001/riyadh-grill/reservations in agent-browser",
+					"observed": "Both redirected to /<orgSlug>/reservations/today, rendered the expanded Reservations sidebar group (Today, Book, Waitlist, Guests, Experiences, Reports, Settings), top bar Location selector (Downtown Flagship & Waterfront Kitchen for acme; Riyadh Readiness Grill for riyadh-grill), Date picker, Service selector (All services, Lunch, Dinner, Brunch), and Today workspace placeholder"
+				},
+				{
+					"action": "Navigated to http://localhost:3001/acme/settings/roles/new in agent-browser",
+					"observed": "Rendered role preset buttons including Host, Reservations manager, Guest relations, Guestbook manager, Finance, Shift manager, General manager, Owner, Viewer, Blank, and rendered the Reservations permission group table with all 8 permissions and impact badges"
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/app/app/routes/_app+/$orgSlug_+/settings+/roles.reservations.test.tsx",
+					"cases": [
+						{
+							"name": "hides the Reservations group and presets when reservations.enabled is off",
+							"verifies": "VAL-FND-015 role editor group and preset hiding when reservations.enabled is false"
+						},
+						{
+							"name": "shows the Reservations group, auto-selects implied read permissions, and clears dependent writes when reservations.enabled is on",
+							"verifies": "VAL-FND-015 client-side implied read selection and deselection cascade in TenantRoleAccessManager"
+						},
+						{
+							"name": "saves implied read grants on create/edit and creates roles from presets when reservations.enabled is on",
+							"verifies": "VAL-FND-015 server-side withImpliedReservationsPermissions enforcement and preset role creation"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/role-presets.test.ts",
+					"cases": [
+						{
+							"name": "returns presets with all implied permissions expanded and filters presets when reservations.enabled is off",
+							"verifies": "VAL-FND-015 Host, Shift manager, General manager, Reservations manager, Guest relations, Guestbook manager, Finance, Owner, Viewer presets"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/token.test.ts",
+					"cases": [
+						{
+							"name": "returns 404 when reservations.enabled is off, 400 on unknown scope, 403 without grants, 404 for payments when reservations.payments is off, signs HS256 rsv+jwt with 900s/300s TTL, intersects locationIds, and strips write/sensitive grants under impersonation",
+							"verifies": "VAL-FND-016 GET /:orgSlug/reservations/token operator token minting contract"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/routes/resources+/reservations.context.test.ts",
+					"cases": [
+						{
+							"name": "returns 403 without INTERNAL_COMMAND_TOKEN and returns folded flags, hex-converted emailTheme, locations, and payment readiness with zero PII",
+							"verifies": "VAL-FND-018 GET /resources/reservations/context control-plane context endpoint"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/reservations-guards.test.ts",
+					"cases": [
+						{
+							"name": "enforces requireReservationsAccess as the first statement of every loader and action under routes/_app+/$orgSlug_+/reservations+/",
+							"verifies": "VAL-FND-020 App guard static analysis gate"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/nav.test.ts",
+					"cases": [
+						{
+							"name": "hides Reservations in sidebar and returns 404 on every Reservations route when reservations.enabled is false, and computes visible sections and redirects /reservations to /today when enabled",
+							"verifies": "VAL-FND-021 and VAL-FND-022 App sidebar and route gating"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/lib/reservations-auth.test.ts",
+					"cases": [
+						{
+							"name": "verifies HS256 rsv+jwt signature, typ, aud, iss, TTL cap, region match, scope, grants, feature flags, impersonation read-only restriction, and locationIds filtering",
+							"verifies": "VAL-FND-017 reservations-auth.ts and rsvGuard middleware"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/lib/reservations-routing.test.ts",
+					"cases": [
+						{
+							"name": "routes /operator/reservations* by operator JWT, /reservations/* by customer JWT or Origin+slug/host ignoring query/body orgId, and /internal/reservations/*, /api/reservations/*, /api/voice/actions/* by body orgId",
+							"verifies": "VAL-FND-017 Durable Object org-router.ts routing branches"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/lib/reservations-context.test.ts",
+					"cases": [
+						{
+							"name": "caches context for 60s, serves stale up to 5m on fetch failure, fails closed after 5m, and invalidates immediately on invalidateReservationsContext",
+							"verifies": "VAL-FND-018 tenant-api reservations-context cache and invalidation"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/lib/reservations-write.test.ts",
+					"cases": [
+						{
+							"name": "serializes concurrent writes per org, increments rsv_day_versions atomically, replays idempotent retries, rejects conflicting payload hashes with 409, and sweeps expired holds/payments/requests/waitlist offers in-tx",
+							"verifies": "VAL-FND-019 withReservationWrite serialized write gate"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/reservations-security.test.ts",
+					"cases": [
+						{
+							"name": "sweeps all /operator/reservations/*, /reservations/*, /internal/reservations/*, /api/reservations/tick, and /api/voice/actions/* routes for auth, scope, grant, cross-org, cross-location, Origin, Turnstile, honeypot, rate-limit, and kill-switch enforcement",
+							"verifies": "VAL-FND-020 tenant-api reservations-security.test.ts security gate"
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/app/app/utils/organization/tenant-role-permissions.test.ts",
+				"packages/reservations/src/schemas/schemas.test.ts"
+			],
+			"coverage": "Covers all 10 foundation assertions (VAL-FND-015 through VAL-FND-024): RBAC permissions/presets/implications, operator token minting, tenant-api rsv+jwt verification and DO routing, control-plane context endpoint and regional cache, serialized write gate with in-tx expiry sweep and idempotency, static guard analysis and route security sweeps, App sidebar/shell flag gating, idempotent US/KSA seeding, and documentation."
+		},
+		"discoveredIssues": [],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

@@ -1,0 +1,238 @@
+{
+	"timestamp": "2026-10-17T05:48:03.876Z",
+	"workerSessionId": "7e5df7de-e32b-4646-944a-da17d972a02b",
+	"featureId": "online-booking-sites-and-app-ui",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "05659c95",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Built Sites /reserve and /reserve/manage, the profile Upcoming reservations panel, the Book a table website block, the operator Requests tab with channel badges, 6-locale translations, and both carried-over App fixes. I drove it end to end in agent-browser on acme (EN, US 3007) and riyadh-grill (AR RTL, KSA 3009). Sites vitest, typecheck, lint and check-lingui pass; commit 05659c95.",
+		"whatWasImplemented": "Sites: /reserve (gated by App /resources/sites/reservations, no-store, SSR shell with no guest data) with search, slot chips grouped by service, hold countdown, details form with honeypot, confirmation with 8-char code, .ics and #t= manage link. Also large-party contact/request modes, voice-hold resume via #h=, and release of the hold on leave. /reserve/manage reads the token from location.hash, stores it in sessionStorage and strips the fragment; it handles view, modify, cancel, confirm, running-late and .ics. Profile Upcoming reservations panel and signed-in prefill, ReservationBlock.astro (button/inline), middleware/cache headers, labels JSON block, and 6-locale .po (en, ar, es, fr, de, zh). Added randomUuid fallback for non-secure origins (crypto.randomUUID is missing on http://acme.menuza.test) and a region-based phone example (+1 for US, +966 for KSA) wrapped in bidi isolates. App/common (heavy subagent, then verified): reservation block (site-link, block-types, builder gated on reservations.online, AI chat, reserved slugs reserve/experiences), Requests tab with approve/decline, channel badges, requested/declined labels. Carried-over fixes: (a) header Date control and Jump to Today use the service-day business date and settings.dayStartMin; (b) Lingui breadcrumbs plus 16 ar.po strings.",
+		"whatWasLeftUndone": "The ReservationBlock.astro rendering on a published Sites page was not browser-verified: it needs a publish, and the builder preview iframe returns 404 Organization not found in this environment. It is only covered by astro check, lint and code review. The hold-expiry-at-zero path and the VAL-CROSS-009 3-minute hold_minutes flow were not run live (only unit tests for the hold math, plus verified release on 'Change time'). No live reflow (table block) run for VAL-CROSS-006; the guest side was confirmed by inspecting the GET /reservations/manage JSON, which has no table ids or auto_reassigned events. VAL-CROSS-007 and VAL-CROSS-010 (restarting tenant-api) were not run. Non-English Sites locales other than ar were not browser-checked; es, fr, de and zh are covered by the label tests and check-lingui only.",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/sites && npx vitest run",
+					"exitCode": 0,
+					"observation": "32 files / 224 tests passed"
+				},
+				{
+					"command": "npx turbo typecheck --filter=sites",
+					"exitCode": 0,
+					"observation": "astro check 0 errors"
+				},
+				{
+					"command": "cd apps/sites && npx eslint src",
+					"exitCode": 0,
+					"observation": "0 errors, 1 prefer-dispose-in-tests warning in uuid.test.ts"
+				},
+				{
+					"command": "npx oxlint apps/sites/src packages/common/src/site-link.ts",
+					"exitCode": 0,
+					"observation": "0 errors, 1 warning"
+				},
+				{
+					"command": "node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "Translations complete across admin, app, mobile and sites (also ran by the commit hook)"
+				},
+				{
+					"command": "cd apps/app && npx vitest run app/utils/reservations app/components/reservations app/utils/website/block-types.test.ts",
+					"exitCode": 0,
+					"observation": "15 files / 118 tests passed"
+				},
+				{
+					"command": "cd packages/common && npx vitest run src/site-link",
+					"exitCode": 0,
+					"observation": "9 tests passed"
+				},
+				{
+					"command": "curl /reserve, /reserve/manage on acme.menuza.test:3008",
+					"exitCode": 0,
+					"observation": "200, cache-control no-store, data-tenant-api-url=http://localhost:3007, no guest PII or tokens in HTML"
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "acme /reserve: party 2, Dinner 7:00 PM chip, empty submit, then valid submit",
+					"observed": "POST /holds 201 and a 6:52 countdown; inline 'This is required.' errors with focus on first name; the honeypot is absent from the accessibility tree; confirmation shows an 8-char code, Add to calendar (GET /manage/ics 200) and a Manage link with #t="
+				},
+				{
+					"action": "Opened the manage link; modified to 8:00 PM; cancelled",
+					"observed": "The fragment was stripped from the URL. Modify POST 200 ('Your reservation was updated.'); cancel needs a 'Yes, cancel it' confirmation, then shows Cancelled. Contact is masked (•••• 0177)."
+				},
+				{
+					"action": "Signed in as +15555550123 (OTP), completed name, booked again, opened /profile",
+					"observed": "Form prefilled with the name and phone; the booking appeared in the Upcoming reservations panel and its Manage link opened the manage page"
+				},
+				{
+					"action": "GET /reservations/manage with the stored token from the page",
+					"observed": "Reservation JSON has no table ids and no events or auto_reassigned (VAL-CROSS-006 guest clause)"
+				},
+				{
+					"action": "Closed day, beyond-horizon day, rate-limit 429; hold then 'Change time'",
+					"observed": "Closed-day and beyond-horizon notes shown; 429 shows 'Too many attempts'; POST /holds/release 200 on leaving"
+				},
+				{
+					"action": "riyadh-grill /ar/reserve (after enabling the ar site locale in local D1 and purging its KV cache)",
+					"observed": "dir=rtl, lang=ar, Arabic UI, tenantApiUrl 3009, no SMS opt-in (data-sms-allowed=false), +966 phone example; booked, got code P765YM89, manage page in Arabic"
+				},
+				{
+					"action": "Switched acme large_party_mode to request (restored to contact afterwards); submitted a 9-guest request on Sites; operator opened Today ?date=2026-10-19 Requests tab",
+					"observed": "Request GKTX0QAT shown with 'Online' badge; Approve POST /operator/reservations/book/requests/:id/approve 200 and the Requests count dropped to 0"
+				},
+				{
+					"action": "App Today at 05:40 UTC (01:40 EDT, day start 04:00)",
+					"observed": "Date control showed 2026-10-16 (service-day business date) and Jump to Today returned 2026-10-16; breadcrumb Home > Reservations > Today, and ?lng=ar shows Arabic breadcrumb 'الرئيسية | الحجوزات | دفتر الحجوزات'"
+				},
+				{
+					"action": "Website builder: toggled reservations.online false/true for acme",
+					"observed": "Book a table section appears only when on (11 options vs 10); with the flag on it was added to the FAQ draft and removed again; the Sites gate returns 404 when off and the 4-key JSON when on"
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/sites/src/lib/reservations/api.test.ts",
+					"cases": [
+						{
+							"name": "client calls and headers",
+							"verifies": "Idempotency-Key on book, X-Reservation-Token header, error mapping"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/fragment.test.ts",
+					"cases": [
+						{
+							"name": "takeManageToken",
+							"verifies": "#t= read, sessionStorage fallback and replaceState stripping"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/hold.test.ts",
+					"cases": [
+						{
+							"name": "hold countdown math",
+							"verifies": "server-clock skew, remaining time and the mm:ss clock"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/errors.test.ts",
+					"cases": [
+						{
+							"name": "reservationErrorKey",
+							"verifies": "API error codes map to label keys"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/details.test.ts",
+					"cases": [
+						{
+							"name": "details validation and payload",
+							"verifies": "phone, email, honeypot and body shape"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/time.test.ts",
+					"cases": [
+						{
+							"name": "time and date formatting",
+							"verifies": "Western digits and clock formatting across locales"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/uuid.test.ts",
+					"cases": [
+						{
+							"name": "randomUuid fallbacks",
+							"verifies": "works without crypto.randomUUID on non-secure origins"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/reservations-labels.test.ts",
+					"cases": [
+						{
+							"name": "label keys and per-locale translations",
+							"verifies": "every reservations msgid is translated in ar, es, fr, de, zh"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/business-date.test.ts",
+					"cases": [
+						{
+							"name": "service-day business date",
+							"verifies": "location time zone and day start decide the date"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/requests.test.ts",
+					"cases": [
+						{
+							"name": "request helpers",
+							"verifies": "approve/decline helpers and request filtering"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/requests-panel.test.tsx",
+					"cases": [
+						{
+							"name": "requests panel",
+							"verifies": "list, approve and decline"
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/sites/src/lib/site-headers.test.ts",
+				"packages/common/src/site-link.test.ts",
+				"apps/app/app/utils/website/block-types.test.ts",
+				"apps/app/app/utils/reservations/book-api.test.ts"
+			],
+			"coverage": "Pure Sites client logic (api, fragment, hold, errors, details, time, uuid, labels per locale), App business-date, requests and block gating; browser flows were verified manually with agent-browser."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "Availability slots carry only serviceName (no seating-area label) and /config has no areas, so the chips group by service. VAL-ONLINE-045 can only show service names.",
+				"suggestedFix": "Expose area labels on public slots if the contract needs them."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "The operator day feed and detail do not expose the X-Client value, so the detail sheet shows only the channel as 'Source' (VAL-ONLINE-059).",
+				"suggestedFix": "Return client in the tenant-api day feed and detail payloads."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "settings.special-days.tsx:66 still defaults to the UTC date.",
+				"suggestedFix": "Use the business-date helper from utils/reservations/business-date.ts."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "Reserved slugs reserve/experiences in matchSitePage block a CMS 'reserve' page. The /reserve gate comment mentions a CMS fallback, which can only apply to legacy pages.",
+				"suggestedFix": "Decide whether the fallback should stay."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "Local state changes for validators: riyadh-grill siteLocales is now [\"en\",\"ar\"] in local D1 (needed for /ar/reserve; its KV org cache was purged). acme large_party_mode was flipped to request and restored to contact. Seeded test bookings remain: acme codes CXKM9CAP (cancelled), J6XNSYC9 and GKTX0QAT (approved), customer +15555550123 now named 'Signed Guest', riyadh-grill P765YM89.",
+				"suggestedFix": "None needed; account for them in user testing. Sites 3008 and App 3001 were stopped; tenant-api 3007 and 3009 were left running."
+			},
+			{
+				"severity": "suggestion",
+				"description": "The App site cache in KV lasts 24h, so changing Organization.siteLocales by SQL needs the KV purge. Publishing from the UI invalidates it."
+			}
+		]
+	}
+}

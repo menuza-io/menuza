@@ -1,0 +1,96 @@
+{
+	"featureId": "foh-core-fix-backend",
+	"reviewedAt": "2026-10-16T22:58:28Z",
+	"commitId": "a255e6e854b27b54c593a8bf4435fb8fb8468a6c",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "pass",
+	"codeReview": {
+		"summary": "Re-verified the BOOK/HOST half of foh-core-fix-backend at HEAD 275d4b30 (fix commit a255e6e8, plus the later UI commit for the combined tree) against the eight round-1 blocking findings (synthesis #6-#14 minus the setup-only items). All eight are resolved with concrete evidence. (6) POST /internal/reservations/location-summary now returns the location-scoped shape: getRegionalReservationSummary (rsv-day-feed-service.ts:1730, return block 1893-1917) emits locationId, futureReservations, activeFutureReservations, activeWaitlist, activeHolds, tables, canDelete, and reservations-internal.ts:131-145 spreads it with a top-level locationId; locationReservationsSummarySchema (apps/app/app/utils/reservations/region-confirmation.ts:35-43) requires exactly locationId + futureReservations, both present, so checkLocationReservationsDeleteGuard (region-guard.server.ts:91-140) now reaches its 409/200 paths instead of 503 (VAL-BOOK-031). (7) GET /operator/reservations/book/conflicts is registered (operator-reservations-book.ts:293) over getBookConflicts (rsv-day-feed-service.ts:1499-1691), which returns both `unassigned` (non-terminal reservations with no tables) and `conflicts`/`items` from detectConflicts (VAL-BOOK-012). (8) GET /operator/reservations/book/reservations/:id/events is registered (operator-reservations-book.ts:1065) over getReservationEvents (rsv-day-feed-service.ts:1693-1727), ordered by (at asc, id asc) with actorKind/at/type/data and 404 for an unknown id (VAL-BOOK-013). (9) statusTransitionSchema accepts covers/coversActual/seatedCovers/arrivedCovers (operator-reservations-book.ts:1220-1237); transitionReservationStatus computes explicitCovers = coversActual ?? covers ?? seatedPartySize ?? seatedCovers (rsv-booking-service.ts:2486-2492) and persists covers_actual at `seated` (2506-2516), while `finished` increments rsv_guests.covers by coversActual ?? seatedCovers ?? partySize (2551); the covers_actual column exists in schema (packages/tenant-db/src/schema.ts:3996), in migration 0016, and is added to pre-existing DBs by the idempotent ALTER in refreshReservationsTriggers (packages/tenant-db/src/migrations.ts:212-224), which applyTenantMigrations runs on every tenant-DB open (db.server.ts:139). The fix's own route test asserts coversActual=4 and rsv_guests.covers=4 and passes (verified by running src/routes/reservations-book.test.ts: 7/7). (10) contact_statuses_enabled and course_statuses_enabled are enforced with 409 contact_statuses_disabled / course_statuses_disabled (rsv-booking-service.ts:2967-2977, 3191-3201) (VAL-BOOK-022/023). (11) Soft reflow now writes type='auto_reassigned' in every reflow path (rsv-booking-service.ts:806, 940, 1819, 2278; rsv-setup-service.ts:1393); the only remaining `table_changed` write (rsv-booking-service.ts:1693) is the explicit swap operation, not reflow (VAL-HOST-008). (12) upsertServiceNotes compares expectedVersion and throws 409 stale_version inside withSetupWrite (rsv-day-feed-service.ts:1311-1337); putSectionAssignments now runs inside withSetupWrite with an audit row and day-version bump (1446-1495) and the route passes actorId (operator-reservations-book.ts:727-731); unlock/reflowLaterParties are accepted by the PATCH schema (1112-1114) and used by updateReservation (1519-1541, 2167-2171, 2338-2345), and skipPayment/paymentPolicyMode by the create schema (862-863). (13) seed-reservations.ts now uses exact schema columns (sort, body/updatedBy, arrivedCovers/seatedCovers/coversActual, guestRequests/staffNotes) and the re-seeded US (t58bgatqh3rv0s3movrecyj1) and KSA (ru0dm42cud9scs4g2duep21c) tenant DBs show non-null values, verified read-only with sqlite3 (service-notes body 68 chars + updated_by seed-reservations; section sort 0/1/2; rsv_*_2 seated 4/4/4; rsv_*_4 arrived 3 + '3 of 6 waiting at bar'). (14) The contract aliases /reservations/:id/contact-status (1372) and /reservations/:id/course-status (1478) are registered alongside /contact (1362) and /course (1468), sharing one handler each, so the exact validation-contract paths now answer 200/409. Route coverage: reservations-security.test.ts asserts all six new/aliased routes are mounted (265-290) and the dynamic sweep refuses them without/with wrong tokens, plus a location-summary shape assertion (766-790); I ran reservations-security.test.ts (15/15 pass). No concrete regression found in the combined tree: the explicit-table create path now reflows soft overlapping bookings instead of 409 table_occupied (rsv-booking-service.ts:679-820), which matches architecture §6.2 ('soft ... may be moved by repair at booking time and by reflow') and no assertion requires the old refusal. Residuals are non-blocking and listed below, the most notable being that the covers_actual ALTER is not applied by the Worker/DO runtime (workers/tenant-org.ts ensureDb only runs the durable migrator, which skips an already-applied migration), so a Durable Object that applied m0016 before this change would lack the column; fresh DOs, the Node/OCI runtime and every local tenant DB are unaffected.",
+		"issues": [
+			{
+				"file": "apps/tenant-api/src/services/rsv-day-feed-service.ts",
+				"line": 1428,
+				"severity": "non_blocking",
+				"description": "Residual of finding 12: putSectionAssignments is now atomic (withSetupWrite, audit, day-version bump) but still has no expectedVersion parameter and never compares a version, and the route schema (operator-reservations-book.ts:685-731) does not accept one. The App client sends none either (apps/app/app/utils/reservations/book-api.ts:1846-1857). The fix feature's approved remedy was explicitly 'wrap putSectionAssignments in withSetupWrite', and the mission AGENTS.md write-path rule enumerates versioned mutations as '(location settings, floor-plan save, reservation edits/status/notes/assign, service notes)' without section assignments, so this is not a blocking gap; if the rule is meant to cover it, the change needs both a route field and a service check."
+			},
+			{
+				"file": "apps/tenant-api/workers/tenant-org.ts",
+				"line": 38,
+				"severity": "non_blocking",
+				"description": "Worker/Durable Object runtime cannot pick up covers_actual on a DB that already applied m0016. ensureDb() only calls migrate(this.db, durableSqliteMigrations); drizzle-orm's durable-sqlite migrator skips any migration whose folderMillis <= the newest __drizzle_migrations.created_at and never verifies hashes (node_modules/drizzle-orm/durable-sqlite/migrator.cjs:60-72), and the ALTER that adds the column lives only in refreshReservationsTriggers (packages/tenant-db/src/migrations.ts:212-224), which is called by applyTenantMigrations (the LibSQL/Node path, db.server.ts:139) and by seed-reservations.ts, not by the DO path. Failure mode for such a DO: every Drizzle select of rsv_reservations (serializeReservationsForBook, day feed, detail, events) and every status transition/walk-in write would fail with 'no such column: covers_actual'. Reachable only if an earlier commit of this unmerged branch was deployed to a Worker/DO environment; fresh DOs get the edited 0016 (the generated bundle contains covers_actual, apps/tenant-api/workers/migrations.generated.ts), and all local LibSQL tenant DBs in both roots have the column (verified read-only). Cleanest follow-up: an additive migration file for the column, or a column/trigger refresh call in the DO ensureDb path."
+			},
+			{
+				"file": "apps/tenant-api/src/lib/reservations-write.ts",
+				"line": 53,
+				"severity": "non_blocking",
+				"description": "withSetupWrite defaults orgId to the literal 'setup', so when it is called from the book routes (upsertServiceNotes, putSectionAssignments) it acquires runExclusive('setup') instead of the real org lock and keys the post-commit invalidateReservationDayCache call on 'setup' (reservations-write.ts:861-870). Functionally safe today (writes still go to the correct DB via the passed `db`, and the day-state cache is never populated - it is only cleared), but every org's setup/service-note/section-assignment writes now serialize on one global in-process mutex, and a future use of the day cache would silently miss invalidation. Threading the real orgId through would remove both effects."
+			},
+			{
+				"file": "apps/tenant-api/src/lib/reservations-write.ts",
+				"line": 45,
+				"severity": "non_blocking",
+				"description": "getReservationDb(orgId) was added to let nested service calls reuse the active transaction, but nothing calls it (only the definition appears in the tree). Dead code left by the fix."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-booking-service.ts",
+				"line": 3217,
+				"severity": "non_blocking",
+				"description": "Pre-existing (unchanged by this fix, confirmed against a255e6e8^): the course-status event is written as type 'course' while architecture.md:791 lists 'course_status' and VAL-BOOK-023's pass text says 'course_changed'. The assertion's sqlite evidence line only checks rsv_reservations.course_status and rsv_reservation_events, so this is unlikely to fail user testing, but the three names disagree. Also note COURSE_STATUS_MAP has no 'check_presented' key (DB enum value) and falls back to 'entree'."
+			},
+			{
+				"file": "apps/app/app/utils/reservations/book-api.ts",
+				"line": 1986,
+				"severity": "non_blocking",
+				"description": "The App still reads reservation history inline from the detail response instead of calling GET /operator/reservations/book/reservations/:id/events, so the browser flow will not emit the network call VAL-BOOK-013's evidence line expects even though the endpoint now exists and passes curl. App-side consumption belongs to the book/host UI feature; the backend fix's scope was to serve the contract path, which it does."
+			},
+			{
+				"file": "apps/app/app/utils/reservations/book-api.ts",
+				"line": 2134,
+				"severity": "non_blocking",
+				"description": "skipPayment/paymentPolicyMode are now accepted by POST /operator/reservations/book/reservations (operator-reservations-book.ts:862-863) but createOperatorReservation never reads them (only the interface fields at rsv-booking-service.ts:510-511 exist), and the App's create body omits them entirely (book-api.ts:2134-2196), so the booking sheet's payment-policy choice (booking-sheet.tsx:301-302) is still dropped before it reaches the network. This was explicitly out of the fix's declared scope ('accept ... in operator-reservations-book.ts') and no validation assertion covers it; worth a follow-up so the two sides do not silently diverge."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-booking-service.ts",
+				"line": 679,
+				"severity": "non_blocking",
+				"description": "Behavior change beyond the round-1 finding: creating a reservation with explicit tableIds now auto-reflows a soft overlapping booking (writes an auto_reassigned event, returns moves) instead of returning 409 table_occupied; locked/arrived/seated/inside-freeze occupants still 409. Architecture §6.2 sanctions moving soft bookings at booking time, no assertion requires the old refusal, and no test broke, so this is recorded for validator awareness rather than as a defect."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "knowledge",
+			"observation": "library/staffing-patterns.md's 'Scrutiny findings - foh-core (verified at commit 403e6c0c)' section is now stale for the whole book/host backend half: every bullet it lists (setup writes without withReservationWrite, seed wrong column keys, echoing validation errors, missing /conflicts and /:id/events, /contact vs /contact-status, org-wide /location-summary shape, silently stripped App fields, service-notes expectedVersion) is resolved in the current tree. The section header does say 're-check each one after the foh-core fix features land', but a future worker or validator reading it will trust the bullets as current facts. It should be updated to record the resolved state and commit.",
+			"evidence": "library/staffing-patterns.md:177-188 vs apps/tenant-api/src/services/rsv-day-feed-service.ts:1311-1337 (version check now present), apps/tenant-api/scripts/seed-reservations.ts (exact columns), operator-reservations-book.ts:293, 1065, 1372, 1478, and reservations-internal.ts:131-145."
+		},
+		{
+			"area": "knowledge",
+			"observation": "The migration consequence of editing 0016 in place is not documented anywhere: the mission library says 'Keep migrations additive' (library/staffing-patterns.md:83) but does not explain that the Worker/Durable Object runtime cannot re-apply an edited migration (drizzle durable-sqlite migrator compares only created_at) and that refreshReservationsTriggers - which carries the covers_actual ALTER - runs only on the LibSQL/Node path (applyTenantMigrations) and in the seed script. The next worker adding a column should add a new numbered migration instead of editing 0016, or add the refresh call to workers/tenant-org.ts ensureDb.",
+			"evidence": "packages/tenant-db/src/migrations.ts:212-224 (ALTER + triggers), packages/tenant-db/src/migrations.ts:239-259 (applyTenantMigrations), packages/tenant-db/src/db.server.ts:139 (Node open), apps/tenant-api/workers/tenant-org.ts:36-45 (DO ensureDb only migrates), node_modules/drizzle-orm/durable-sqlite/migrator.cjs:60-72 (created_at comparison, no hash check), commit a255e6e8 editing 0016_reservations_foundation.sql."
+		},
+		{
+			"area": "conventions",
+			"observation": "withSetupWrite's default third parameter orgId = 'setup' means the per-org runExclusive lock and the day-cache invalidation key are the literal string 'setup' for every org whenever a caller does not pass the real orgId (the book routes pass only `db`). Callers should pass the real orgId, or the helper should require it, so per-org serialization stays per-org.",
+			"evidence": "apps/tenant-api/src/lib/reservations-write.ts:53-64 (default), :861-870 (invalidateReservationDayCache(orgId,...)), :638-646 (runExclusive(orgId)), apps/tenant-api/src/lib/concurrency.ts:33-49; call sites apps/tenant-api/src/services/rsv-day-feed-service.ts:1311, 1446."
+		},
+		{
+			"area": "skills",
+			"observation": "backend-worker step 4 says 'Migrations: add a new numbered file; never edit a committed migration unless an orchestrator-approved fix feature explicitly directs an in-place trigger/constraint correction on the current branch'. The fix edited 0016 to add a column (not a trigger/constraint correction) and compensated with the idempotent ALTER in refreshReservationsTriggers plus re-seeding both roots - which satisfies the local-DB refresh requirement but leaves the DO runtime uncovered. The skill should either state that additive-column migrations are required (new numbered file) or add the DO caveat and the required refresh hook.",
+			"evidence": "skills/backend-worker/SKILL.md step 4; commit a255e6e8 touching packages/tenant-db/drizzle/0016_reservations_foundation.sql; packages/tenant-db/src/migrations.ts:212-224; apps/tenant-api/workers/tenant-org.ts:36-45."
+		},
+		{
+			"area": "knowledge",
+			"observation": "Covers precedence for VAL-BOOK-017 is non-obvious and undocumented: the status endpoint's explicit covers value is coversActual ?? covers ?? seatedPartySize ?? seatedCovers; `arrived` stores covers ?? current.arrivedCovers ?? partySize, `seated` stores current.arrivedCovers (unchanged) plus seatedCovers = explicitCovers and covers_actual = explicitCovers ?? current.coversActual ?? seatedCovers, and `finished` increments rsv_guests.covers by coversActual ?? seatedCovers ?? partySize and rsv_guests.visits by 1. A validator seating with covers:4 after arriving with party size 3 should expect covers_actual=4, seated_covers=4, arrived_covers=3, and guest covers +4 only at finish.",
+			"evidence": "apps/tenant-api/src/services/rsv-booking-service.ts:2486-2516, 2546-2560; apps/tenant-api/src/routes/reservations-book.test.ts:1107-1160 (asserts coversActual 4 and guest covers 4)."
+		},
+		{
+			"area": "knowledge",
+			"observation": "Cross-feature integration note for the next validator: the /conflicts and /reservations/:id/events endpoints now exist and pass curl/route tests, but the App still computes the Unassigned and Conflict panel client-side from the day feed and reads reservation history inline from the detail response, so a browser-flow-only evidence check for VAL-BOOK-012/013 will not show those network calls. Curl against the exact contract paths is the right check.",
+			"evidence": "apps/app/app/utils/reservations/book-api.ts:1266-1297 (client-side panel), :1979-1990 (inline events); apps/tenant-api/src/routes/operator-reservations-book.ts:293, 1065; validation-contract.md VAL-BOOK-012/013 evidence lines."
+		}
+	],
+	"addressesFailureFrom": "/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/validation/foh-core/scrutiny/reviews/foh-book-and-host-backend.json",
+	"summary": "Round-2 re-verification of the BOOK/HOST half of foh-core-fix-backend (commit a255e6e8, judged against the combined tree at HEAD 275d4b30). Verdict: pass - all eight round-1 blocking findings assigned to this half are resolved, with file:line evidence and two targeted test runs (reservations-book.test.ts 7/7, reservations-security.test.ts 15/15). /internal/reservations/location-summary now returns the locationReservationsSummarySchema shape (locationId, futureReservations, activeFutureReservations, activeWaitlist, activeHolds, tables, canDelete) so the location-delete guard can 409/200 instead of 503; GET /book/conflicts returns unassigned bookings plus detectConflicts items; GET /book/reservations/:id/events returns chronological events; { status: 'seated', covers: 4 } persists covers_actual=4 and the finish step bumps rsv_guests.covers by the recorded covers (covers_actual column added to schema/migration/DBs); contact_statuses_enabled and course_statuses_enabled now 409; soft reflow writes auto_reassigned in all booking and setup reflow paths; upsertServiceNotes enforces expectedVersion (409 stale_version) and putSectionAssignments is transactional with an audit row; the seed uses exact schema columns and both seeded tenant DBs were verified read-only for non-null values; and the contract aliases /contact-status and /course-status are served. Residual non-blocking items: putSectionAssignments still has no version check (the fix spec asked only for withSetupWrite), the Worker/DO runtime cannot add covers_actual to a DO that already applied m0016 (refreshReservationsTriggers runs only on the LibSQL/Node path; fresh DOs and all local DBs are fine), withSetupWrite defaults its org lock key to 'setup', getReservationDb is dead code, the App does not call /events or send skipPayment/paymentPolicyMode, and course events use type 'course' (pre-existing). The mission library's 'Scrutiny findings' bullets are now stale and should be updated."
+}

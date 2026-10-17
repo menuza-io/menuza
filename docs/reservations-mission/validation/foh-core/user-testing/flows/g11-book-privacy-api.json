@@ -1,0 +1,128 @@
+{
+	"group": "g11-book-privacy-api",
+	"surface": "curl + sqlite",
+	"assertions": {
+		"VAL-BOOK-026": {
+			"status": "pass",
+			"observed": "Created guest gst_4cc4266f-d0c0-4461-b456-72970bd7e132 via a phone booking on 2026-10-24 (owned date) with guest.allergyNotes and reservation dietaryNotes = 'contract-sensitive-book026'. GET /operator/reservations/guests/<id>/export: (a) book-scope token (no guest grants) -> 403 invalid_scope, +0 rsv_audit_log rows; (b) guests-scope read-only token (read:reservation:any,read:reservation_guest:any) default -> 200 with guest.allergyNotes=null and reservation dietaryNotes omitted, +1 audit row; (c) same read-only token ?includeSensitive=1 -> 403 missing_grant, +0 audit rows; (d) full guests-scope token default -> 200 omitted, +1; (e) full guests-scope token ?includeSensitive=1 -> 200 including guest.allergyNotes='contract-sensitive-book026' and reservation dietaryNotes=['contract-sensitive-book026'], +1. 6 successful exports produced exactly 6 guest.export audit rows, every one with entity_id = the guest id and changes = {\"includeSensitive\":true|false}; the 4 refused calls added none.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-026-export-matrix.txt",
+				"foh-core/g11-book-privacy-api/VAL-GUEST-022-025-audit-notes.txt"
+			],
+			"notes": "The book-scope refusal is the scope check (invalid_scope) rather than the guest grant, still 403 as required. A top-level `allergyNotes` in the POST /book/reservations body is not part of createBookingBodySchema (allergy belongs to guest.allergyNotes), so the first run carried the text only on reservation dietary notes; the second run set the guest-level allergy via guest.allergyNotes and re-ran the matrix."
+		},
+		"VAL-BOOK-027": {
+			"status": "pass",
+			"observed": "Created guest gst_d3951c76-10f2-4be4-994c-dd4706215eda with a future `booked` reservation on 2026-10-24 (rsv_a4ec0c11-302f-436e-8330-a972c7029b27) whose `note` event carried staffNotes/dietaryNotes 'contract-erase-note-book027', and a past `finished` reservation on 2026-10-15 (rsv_696d8bf0-e1dc-454d-934a-e3d63dc4e766) with guest counters visits=1, covers=2. POST /operator/reservations/guests/<id>/erase with kody's guests-scope token -> 200 {erased:true, cancelledFutureReservations:1}. After: rsv_guests first_name='Erased', last_name='guest' (serialized name 'Erased guest'), phone_e164/email_norm/allergy_notes NULL, erased_at set; the future reservation is status='cancelled', cancelled_by='restaurant', cancel_reason='guest_erased' and its table occupancy active=0; the past reservation keeps status 'finished' and counters visits=1/covers=2; rsv_reservation_events for the guest's reservations 5 -> 6 (zero rows deleted, one new 'cancelled' event) and every prior payload, including the note event, is now {\"redacted\":true}; rsv_audit_log 77 -> 78 (zero rows deleted) with exactly one new row action='guest.erase', entity_id = the guest id; the guest text no longer appears in events or audit.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-027-erase-before-after.txt",
+				"foh-core/g11-book-privacy-api/VAL-GUEST-022-025-audit-notes.txt"
+			],
+			"notes": "Anonymization is stored as first_name='Erased' + last_name='guest' (the serialized/display name is 'Erased guest'), not as one column value. The erase deletes the guest's rsv_guest_notes/rsv_guest_tags rows by design (contact fields cleared); reservation/event/audit rows are never deleted. No audit row for this guest carried guest text before the erase (no flow writes guest text into rsv_audit_log today), so the audit-side redaction UPDATE ran over zero text-bearing rows; the event-side redaction of real text is directly demonstrated."
+		},
+		"VAL-BOOK-028": {
+			"status": "pass",
+			"observed": "App resource route with a kody operator session cookie (obtained by curl POST /login -> 302 + en_session cookie; value never printed): GET http://localhost:3001/resources/reservations/region-summary?orgSlug=acme -> HTTP 200, cache-control: private, no-store, body {\"summary\":{counts},\"known\":true,\"requiresConfirmation\":true}. Tenant-api internal route: POST http://localhost:3007/internal/reservations/summary with no token -> 401 {\"error\":\"unauthorized\"}; wrong token -> 401; valid INTERNAL_COMMAND_TOKEN -> 200 with counts only. Both bodies match the tenant DB exactly: reservations 27, guests 28 (erased_at IS NULL), tables 19 (archived_at IS NULL), activeWaitlist 2, auditEntries 74, upcomingReservations 18. Neither body contains any guest name, phone, email or note text (checked my g11 values plus 93 field values from 40 real guest rows: 0 hits). Unauthenticated App call: document -> HTTP 302 redirect to /login?redirectTo=..., .data XHR -> HTTP 202 SingleFetchRedirect to /login, no data.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-028-region-summary.txt",
+				"foh-core/g11-book-privacy-api/VAL-BOOK-028-030-vitest-region-summary.txt"
+			],
+			"notes": "Deviation from the literal '401/403' for unauthenticated calls: the internal route returns 401, but the App resource route refuses by redirecting to /login (302 for a document request, 202 SingleFetchRedirect for a .data XHR). That is the repo-standard requireUserId behavior and is identical to the sibling staffing.region-summary route; no data or PII is returned. Flagged for the parent rather than silently treated as 401/403."
+		},
+		"VAL-BOOK-030": {
+			"status": "pass",
+			"observed": "Ran `cd apps/app && CI=true npx vitest run --reporter=verbose _index.reservations-guard` (apps/app/app/routes/_app+/$orgSlug_+/website+/_index.reservations-guard.test.ts, describe 'region switch: reservations guard (VAL-BOOK-030)'): 9/9 passed. The unknown-summary cases assert exactly the contract behavior: with the regional summary call failing (node errors 500, older node 404, malformed answer, node unreachable ECONNREFUSED -> fetchReservationsSummary returns null) `submit({})` -> HTTP 400 with reservationsConfirmationRequired true and deprovisionTenantDatabase not called; then `submit({confirmText: <org slug>})` -> status < 400 and deprovisionTenantDatabase called once. Supporting runs: app/routes/resources+/reservations.region-summary.test.ts 'reports an unknown summary as needing confirmation' -> {summary:null, known:false, requiresConfirmation:true}; app/components/reservations/region-reservations-guard.test.tsx 'treats an unknown summary as requiring confirmation' -> shows the could-not-check text and the slug input; 10/10 passed.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-030-035-vitest-app.txt",
+				"foh-core/g11-book-privacy-api/VAL-BOOK-028-030-vitest-region-summary.txt"
+			],
+			"notes": "There is no dedicated unit file for evaluateReservationsRegionGuard; the unknown case is asserted through the region-switch action plus the resource-route and component tests. Code path: requiresReservationsConfirmation(summary) treats summary===null as 'might hold data' (apps/app/app/utils/reservations/region-confirmation.ts) and evaluateReservationsRegionGuard then requires a matching typed slug."
+		},
+		"VAL-BOOK-033": {
+			"status": "pass",
+			"observed": "Against GET /operator/reservations/book/day, POST /operator/reservations/book/reservations and POST /operator/reservations/book/walk-ins on 3007 (Idempotency-Key supplied so auth failures are unambiguous): (1) no Authorization header -> 401 {\"error\":\"Missing bearer token\"} on all three; (2) JWT signed with the wrong secret -> 401 Invalid or expired on all three; (3) expired token -> 401 on all three; (4) token with exp-iat=3600 (>900) -> 401 Malformed reservations operator token claims on all three; (5) reports-scope token (no reservation grant) -> 403 {\"error\":\"invalid_scope\",\"expected\":[\"book\"],\"actual\":\"reports\"} on all three; (6) riyadh-grill (ksa) token against US node 3007 -> 403 {\"error\":\"region_mismatch\"} with no data, and an acme token against KSA node 3009 -> 403 region_mismatch. Positive control: valid acme book token GET /day -> 200. The negative matrix created no rows (checked the tenant DB for the probe names: 0).",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-033-token-rejection-matrix.txt"
+			],
+			"notes": "The server verifies JWTs with clockTolerance 5s (apps/tenant-api/src/lib/reservations-auth.ts:84), so a --ttl 1 token still passes ~2s after mint; the 401 appears only after sleeping past the tolerance (used 8s). Documented for future validators. Case (4) fails as 'Malformed ... claims' because the claims schema validates the TTL bound, still 401 as required."
+		},
+		"VAL-BOOK-034": {
+			"status": "pass",
+			"observed": "Token minted with locationIds=[v17plv08r5v357bie335lyq8] (Downtown): GET /book/day?locationId=locA -> 200; GET /book/day?locationId=locB (Waterfront) -> 403 {\"error\":\"location_forbidden\"}; POST /book/reservations for locB -> 403; POST /book/walk-ins for locB -> 403; GET /book/reservations/<locA reservation rsv_66c4555b-726f-4762-8bb1-f02e722c7bbe> -> 200. Reverse-direction probe (locB has zero reservations and no tables; booking locB returns 409 no_fitting_candidate): a locB-scoped token against the locA reservation id -> GET 403, POST /notes 403, POST /status 403, while the same locB token GET /book/day?locationId=locB -> 200 (positive control).",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-034-location-scope.txt"
+			],
+			"notes": "I used the minted-token claim boundary (--locations), not a real location-scoped member account; another validator owns the UI-side member setup. The 'reservation ID belonging to Location B' half is exercised in the reverse direction because Location B has no reservations and no floor plan; the same requireReservationsLocation check (apps/tenant-api/src/lib/reservations-auth.ts:338-365) rejects any reservation id outside the token's locationIds."
+		},
+		"VAL-BOOK-035": {
+			"status": "pass",
+			"observed": "Tenant-api half (curl): impersonated book token claims decoded locally -> impersonated:true, exp-iat=300, scope book, grants [read:reservation:any], no update:* and no sensitive grant. GET /book/day -> 200 (read allowed); POST /book/reservations, POST /book/reservations/:id/status, POST /book/reservations/:id/notes, POST /book/walk-ins -> 403 {\"error\":\"impersonated_read_only\"}. An impersonated token that claims scope=guests: GET /guests, GET /guests/lookup and GET /guests/:id/export -> 403 impersonated_read_only. App half (unit tests): apps/app/app/utils/reservations/token.test.ts (5/5 passed) asserts an impersonated scope=book mint has impersonated true, exp-iat 300, grants [read:reservation:any]; packages/reservations/src/permissions.test.ts (5/5 passed) asserts scopeGrantsFor('guests',['update:reservation_guest:any'],true) === [] and maxTokenTtlSeconds(...,true)=300, and the App's mintReservationsToken throws 403 'no grants for requested scope' when no grant survives (apps/app/app/utils/reservations/token.server.ts:55-59).",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-035-impersonated.txt",
+				"foh-core/g11-book-privacy-api/VAL-BOOK-030-035-vitest-app.txt",
+				"foh-core/g11-book-privacy-api/VAL-BOOK-035-vitest-permissions.txt"
+			],
+			"notes": "Which half is which: the tenant-api refusals (writes 403, TTL <= 300, no write/sensitive grants) are mine via curl. The App-side 'minting guests/payments scopes is refused during impersonation' clause could not be exercised end-to-end: it needs an impersonated App session, and starting impersonation requires Admin (3005, not running). The suggested token.test.ts does NOT cover the guests/payments refusal (it only mints scope=book while impersonating); the guests case is covered at package level by scopeGrantsFor returning [] plus the 403-on-empty-grants code path. No route-level test for that clause exists - a real evidence gap, not an observed behavior failure."
+		},
+		"VAL-BOOK-038": {
+			"status": "pass",
+			"observed": "Probed a cp copy (/tmp/menuza-user-testing/g11-appendonly.db); the live acme DB was not touched. DELETE FROM rsv_reservation_events -> Error: stepping, append_only (19); UPDATE rsv_reservation_events SET type='hacked' -> append_only; UPDATE rsv_reservation_events SET data='{\"foo\":1}' -> append_only; DELETE FROM rsv_audit_log -> append_only; UPDATE rsv_audit_log SET action='hacked' -> append_only; UPDATE rsv_audit_log SET changes='{\"foo\":1}' -> append_only. The single permitted redactions succeed: UPDATE rsv_reservation_events SET data='{\"redacted\":true}' stored {\"redacted\":true}; UPDATE rsv_audit_log SET changes='{\"redacted\":true}' stored {\"redacted\":true}. Trigger names and bodies in sqlite_master match the contract: rsv_reservation_events_no_delete / _no_update and rsv_audit_log_no_delete / _no_update, each RAISE(ABORT,'append_only') with the redaction value allowed only when id/owner columns are unchanged.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-038-appendonly-triggers.txt"
+			],
+			"notes": "`cp` copies only the checkpointed main DB file (the live DB has a WAL), so the copy's row counts (52 events / 36 audit) are lower than the live DB; schema and trigger behavior are unaffected. The probe copy is left at /tmp/menuza-user-testing/g11-appendonly.db."
+		},
+		"VAL-GUEST-022": {
+			"status": "pass",
+			"observed": "For export guest gst_4cc4266f-d0c0-4461-b456-72970bd7e132: 0 rsv_audit_log rows with action='guest.export' before; 6 after 6 successful exports, every row naming the guest id in entity_id and carrying changes {\"includeSensitive\":true|false}; the 4 refused exports (book scope, and read-only includeSensitive) added none. No guest.export changes payload contains the guest's name, phone, email, notes or allergy text.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-026-export-matrix.txt",
+				"foh-core/g11-book-privacy-api/VAL-GUEST-022-025-audit-notes.txt"
+			],
+			"notes": null
+		},
+		"VAL-GUEST-025": {
+			"status": "pass",
+			"observed": "For erase guest gst_d3951c76-10f2-4be4-994c-dd4706215eda: rsv_reservation_events rows for its two reservations 5 before -> 6 after (no rows deleted or removed; one new 'cancelled' event), rsv_audit_log total 77 -> 78 (no rows deleted), event data payloads that held the guest's text are now {\"redacted\":true}, and exactly one new audit row with action='guest.erase' and entity_id = the guest id exists.",
+			"evidence": [
+				"foh-core/g11-book-privacy-api/VAL-BOOK-027-erase-before-after.txt",
+				"foh-core/g11-book-privacy-api/VAL-GUEST-022-025-audit-notes.txt"
+			],
+			"notes": "This guest had no prior audit rows (only the new guest.erase row), so the audit-side redaction ran over zero text-bearing rows; no current flow writes guest text into rsv_audit_log. Event-side redaction of real guest text is directly demonstrated."
+		}
+	},
+	"friction": [
+		{
+			"description": "JWT verification allows a 5s clock tolerance (apps/tenant-api/src/lib/reservations-auth.ts:84), so an expired token minted with --ttl 1 and tested after 2s still returns 200. The 401 appears only after sleeping past the tolerance.",
+			"resolved": true,
+			"resolution": "Re-ran the expired case after sleeping 8s; all three book routes then returned 401.",
+			"affectedAssertions": ["VAL-BOOK-033"]
+		},
+		{
+			"description": "VAL-BOOK-028 expects unauthenticated calls to be rejected with 401/403, but the App resource route refuses via a redirect: HTTP 302 to /login for a document request and HTTP 202 SingleFetchRedirect for a .data XHR (requireUserId behavior, identical to the sibling staffing.region-summary route). The tenant-api internal route does return 401.",
+			"resolved": true,
+			"resolution": "Exercised both halves; recorded the exact statuses and judged the assertion on its substance (no data or PII returned, counts match) while flagging the literal mismatch to the parent.",
+			"affectedAssertions": ["VAL-BOOK-028"]
+		},
+		{
+			"description": "The parent-suggested apps/app/app/utils/reservations/token.test.ts does not cover 'minting guests/payments scopes is refused during impersonation' - it only mints scope=book while impersonating. No route-level test covers the clause, and an impersonated App session cannot be started without Admin (3005, not running).",
+			"resolved": true,
+			"resolution": "Ran token.test.ts and packages/reservations/src/permissions.test.ts; the guests case is asserted at package level (scopeGrantsFor -> []) plus the 403-on-empty-grants path in token.server.ts:55-59. Reported the residual evidence gap honestly.",
+			"affectedAssertions": ["VAL-BOOK-035"]
+		},
+		{
+			"description": "VAL-BOOK-034's 'reservation ID belonging to Location B' half is not directly exercisable: Location B (Waterfront) has zero reservations and no tables, and POST /book/reservations for it returns 409 no_fitting_candidate. I also used the minted-token locationIds claim instead of a real scoped member (the UI-side member is another validator's).",
+			"resolved": true,
+			"resolution": "Exercised the same boundary in the reverse direction: a locB-scoped token against a locA reservation id returns 403 for GET, POST /notes and POST /status. Stated the substitution in the report.",
+			"affectedAssertions": ["VAL-BOOK-034"]
+		},
+		{
+			"description": "`cp` of the tenant DB copies only the checkpointed main file (the live DB is in WAL), so the throwaway copy used for VAL-BOOK-038 had fewer rows (52 events / 36 audit) than the live DB. Trigger schema and probes are unaffected.",
+			"resolved": true,
+			"resolution": "Used the copy only for trigger probes (picked existing ids from it) and noted the row-count difference.",
+			"affectedAssertions": ["VAL-BOOK-038"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": ["curl", "sqlite3", "vitest"]
+}

@@ -1,0 +1,123 @@
+{
+	"group": "b1-sites-guest",
+	"surface": "agent-browser+curl",
+	"testedAt": "2026-10-17T11:35:00Z",
+	"isolation": {
+		"browserSession": "276ff6d660b4__b1 (closed at the end)",
+		"sites": "http://acme.menuza.test:3008",
+		"app": "http://localhost:3001 (kody)",
+		"tenantApiUs": "http://localhost:3007",
+		"org": "acme t58bgatqh3rv0s3movrecyj1",
+		"location": "v17plv08r5v357bie335lyq8 (America/New_York)",
+		"ownedPhones": [
+			"+15555552101",
+			"+15555552102",
+			"+15555552103",
+			"+15555552104"
+		],
+		"ownedEmails": [
+			"rsv-b1-1@example.com",
+			"rsv-b1-2@example.com",
+			"rsv-b1-3@example.com",
+			"rsv-b1-4@example.com"
+		],
+		"assignedDate": "2026-11-02",
+		"usedDate": "2026-10-18 (see blockers: 2026-11-02 is closed by a leftover special day; 2026-10-18 is unowned in this round and is the contract's literal \"tomorrow\")"
+	},
+	"toolsUsed": ["agent-browser", "curl", "sqlite3 (read-only)"],
+	"assertions": [
+		{
+			"id": "VAL-ONLINE-035",
+			"status": "pass",
+			"evidence": "Guest booking HS7FH9DD (2026-10-18 21:00, party 2, B1Late GuestTwo, +15555552102) made on Sites. curl POST http://localhost:3007/reservations/manage/late with header X-Reservation-Token: <manage token, 104 chars>, Origin http://acme.menuza.test:3008, body {\"minutes\":20} -> HTTP 200; response reservation {confirmationCode HS7FH9DD, status booked, date 2026-10-18, time 21:00, runningLateMin 20, firstName B1Late}. App (kody, acme) Book for 2026-10-18 (tab left open, 10 s ETag poll) row shows '21:00 ... B1Late GuestTwo #HS7FH9DD +15555552102 | 2 guests | Online | G9-2 G9-Area-Strict - Dinner | +20m | Booked' and the detail sheet (?r=rsv_17b43f31-...) shows 'Running Late Hold +20m'. sqlite: SELECT ... WHERE confirmation_code='HS7FH9DD' -> status booked, running_late_min 20. Files: VAL-ONLINE-035-book-running-late.png, VAL-ONLINE-035-detail-sheet-running-late.png, VAL-ONLINE-035-network.txt (GET /operator/reservations/book/day -> 200/304), VAL-ONLINE-035-api-and-db.txt.",
+			"notes": "The late POST was made with curl because the Sites manage page only renders the running-late control when the booking is today in the restaurant's time zone; the booking is on my owned future date. The operator surface then showed the 20-minute indication within the poll without a reload.",
+			"limitations": "The App's own late buttons offer 15/30/45 (no 20), so the 20-minute value came from the public API call, exactly as the assertion describes."
+		},
+		{
+			"id": "VAL-ONLINE-044",
+			"status": "pass",
+			"evidence": "On http://acme.menuza.test:3008/reserve as an anonymous visitor: party size 2, date 2026-10-18, clicked the 7:00 PM chip -> hold created and 'Your table is held' details step with a countdown; filled B1Val / GuestOne / +15555552101 / rsv-b1-1@example.com, submitted -> confirmation region 'You are booked' with confirmation code ZAR4QBDZ (8 characters), WHERE Downtown Flagship, WHEN Sunday, October 18, 2026, 7:00 PM, PARTY 2 guests, an 'Add to calendar' button and a 'Manage reservation' link whose href is /reserve/manage#t=<104-char token> (fragment token). Network capture during the submit: OPTIONS http://localhost:3007/reservations -> 204 and POST http://localhost:3007/reservations -> 201; no POST/PUT/PATCH to the Sites origin in any capture window (grep of the saved captures). agent-browser errors -> empty (no console errors). Files: VAL-ONLINE-044-confirmation.png, VAL-ONLINE-044-network.txt, CROSS-011-network-all-since-last-clear.txt (contains the same flow's availability/holds/booking calls to 3007).",
+			"notes": "The Sites page exposes the regional API as data-tenant-api-url=http://localhost:3007; guest calls went there directly and the browser never sent guest data to the Sites server (only GET document/asset requests to acme.menuza.test:3008).",
+			"limitations": "The request log was cleared once before the honeypot check, so the availability/holds calls of this first flow are visible in the second flow's capture rather than this one's; the POST /reservations -> 201 window is saved verbatim."
+		},
+		{
+			"id": "VAL-ONLINE-045",
+			"status": "pass",
+			"evidence": "acme has guest-selectable areas (sqlite rsv_areas: area_acme_main 'Main Dining Room', area_acme_patio 'Garden Terrace', area_acme_bar 'Chef Counter & Lounge' all guest_selectable=1/online_bookable=1, plus leftover G*-areas). On /reserve for 2026-10-18 party 2 the chips render the seating-area label inside the chip (aria-label 'Book 8:00 PM, G9-Area-Strict, Dinner'; chip DOM innerText '7:00 PMG4-Area' with a [data-area] span = 'G4-Area'; screenshot VAL-ONLINE-045-time-chips.png). Browser time zone is UTC, location time zone America/New_York (availability payload timeZone), and the page renders the zone note 'All times are in the restaurant's time zone: America/New_York (EDT).' Displayed times are restaurant-local: the 19:00 EDT chip (data-local-min 1140) reads '7:00 PM' while a UTC browser would show 11:00 PM. agent-browser errors -> empty. File: VAL-ONLINE-045-time-chips.txt.",
+			"notes": "The zone note is exactly the behaviour the assertion asks for when the browser zone differs; the browser was left in its default UTC zone (no profile change needed) so the differing-zone case was genuinely exercised.",
+			"limitations": "No area was created or changed by me; labels come from the seeded/leftover areas that are marked guest-selectable."
+		},
+		{
+			"id": "VAL-ONLINE-047",
+			"status": "pass",
+			"evidence": "On the details step of the hold for 2026-10-18 19:00 (party 2) I submitted with an empty first name and phone '123'. The flow stayed on the details step (details card visible, done card hidden), banner role=alert 'Please check the fields marked below.', inline errors 'This is required.' (rsv-first-name, aria-invalid=true) and 'Enter a phone number with its country code, like +1 415 555 0123.' (rsv-phone, aria-invalid=true). The network capture taken immediately before the submit and read after it was empty ('No requests captured'), i.e. no POST /reservations (in fact no request at all) reached tenant-api. Honeypot: input[name=website] is present in the DOM inside a wrapper with class 'hidden' and aria-hidden='true', tabIndex=-1, autocomplete=off, getBoundingClientRect 0x0, wrapper computed display none; calling focus() on it leaves document.activeElement unchanged (not focusable). Files: VAL-ONLINE-047-details-validation.png; console errors: none.",
+			"notes": "Errors are inline and client-side; the server was never called, matching the assertion.",
+			"limitations": "Tab-order was verified via tabIndex=-1 plus a display:none wrapper rather than by simulating Tab keypresses."
+		},
+		{
+			"id": "VAL-ONLINE-049",
+			"status": "pass",
+			"evidence": "Clicked 'Manage reservation' on the ZAR4QBDZ confirmation: document request GET http://acme.menuza.test:3008/reserve/manage (Document) 200 with no query string (token only in the URL fragment #t=...), then GET http://localhost:3007/reservations/manage (Fetch) 200 whose request headers include x-reservation-token: <104-char token> and whose body carries the reservation (status booked, date 2026-10-18, time 19:00, partySize 2, firstName B1Val, canModify/canCancel true, cancelDeadline 2026-10-18T21:00Z). The page renders 'Hello, B1Val', CONFIRMATION CODE ZAR4QBDZ, WHERE Downtown Flagship, WHEN Sunday, October 18, 2026, 7:00 PM, PARTY 2 guests and the policy line 'You can cancel until Sun, Oct 18, 5:00 PM.' Modify to 8:00 PM: POST /reservations/manage/modify -> 200 (localMin 1200, time 20:00), page shows 'Your reservation was updated.' + 8:00 PM; a reload issued a fresh GET /reservations/manage -> 200 that still showed 8:00 PM. Cancel: POST /reservations/manage/cancel -> 200, badge data-status='cancelled', text 'Your reservation has been cancelled.', zero [data-action] buttons and zero buttons inside the manage card. Cancelled slot bookable again in a fresh /reserve search: GET /reservations/availability?date=2026-10-18 -> 200 listing 'Book 8:00 PM, G9-Area-Strict, Dinner'; clicking it created a hold (POST /reservations/holds -> 201) which I then released (POST /reservations/holds/release -> 200). Screenshots: VAL-ONLINE-049-manage-loaded.png, VAL-ONLINE-049-manage-modified.png, VAL-ONLINE-049-manage-cancelled.png. Console errors: none. File: VAL-ONLINE-049-network.txt.",
+			"notes": "Every mutation is confirmed by a matching GET /reservations/manage response (the POST responses are manage views, and the post-modify reload produced a fresh GET 200 with the same values).",
+			"limitations": "The reload that produced the fresh GET was issued with location.reload() from the page (the fragment is kept by the browser); no token was ever placed in a query string."
+		},
+		{
+			"id": "VAL-ONLINE-050",
+			"status": "pass",
+			"evidence": "curl -s -H 'Host: acme.menuza.test:3008' http://localhost:3008/reserve -> 137340 bytes and .../reserve/manage -> 136902 bytes (booking ZAR4QBDZ/GQ4H0W3D existed in the tenant DB at the time). grep -c -F in both bodies: 'B1Val' 0, 'GuestOne' 0, 'rsv-b1-1@example.com' 0, '+15555552101' 0, 'ZAR4QBDZ' 0, '#t=' 0, and the 104-char manage token 0. Both documents carry data-tenant-api-url=\"http://localhost:3007\" on <html>. The only 'confirmationCode' occurrence is a label-bundle key (\"confirmationCode\":\"Confirmation code\") in the inline labels JSON, not booking data. File: VAL-ONLINE-050-ssr-grep.txt.",
+			"notes": "SSR HTML is only the page shell plus label bundles, exactly as required.",
+			"limitations": "None."
+		},
+		{
+			"id": "VAL-ONLINE-051",
+			"status": "pass",
+			"evidence": "App tab (kody, acme) opened at /acme/reservations/book?date=2026-10-18&locationId=v17plv08r5v357bie335lyq8 before the booking; the list read 'No reservations match the current filters for 2026-10-18.' (screenshot VAL-ONLINE-051-book-before.png). I then completed the booking on Sites in another tab (POST /reservations -> 201) and switched back to the App tab without issuing any reload or navigation on it: the row was present - '19:00 | 75m | B1Val GuestOne #ZAR4QBDZ +15555552101 | 2 guests | Online | G9-2 G9-Area-Strict - Dinner | Booked' (screenshot VAL-ONLINE-051-book-poll-arrival.png). Network: GET http://localhost:3007/operator/reservations/book/day?locationId=...&date=2026-10-18 -> 200 followed by 304s (the 10 s ETag poll), saved in VAL-ONLINE-051-network.txt.",
+			"notes": "Guest name, party size, time and the online channel ('Online') are all shown in the row; the row arrived through the poll, with no manual refresh.",
+			"limitations": "The tab was in the background for ~2 minutes between the two screenshots; the tab-switch result did not report a revive/discard, and no reload command was issued."
+		},
+		{
+			"id": "VAL-CROSS-011",
+			"status": "fail",
+			"evidence": "Journey run on 2026-10-18 (see blockers for the date deviation) with guest rsv-b1-3@example.com / +15555552103. Checkpoint 1 PASS: Sites booking GQ4H0W3D, party 2, 19:00, SMS opt-in on; confirmation page shows the code and the manage link /reserve/manage#t=<104-char token> (POST /reservations -> 201). Checkpoint 2 PASS: apps/tenant-api/.dev-mail/us/20261017T111859379-....json meta.messageKind='confirmation', subject 'Your reservation at Downtown Flagship is confirmed', html contains the manage link /reserve/manage#t= (104-char token) and an add-to-calendar link (https://calendar.google.com/calendar/render?action=TEMPLATE...); one [SMS MOCK] line to +15555552103 with the manage link (CROSS-011-email-captures.txt, CROSS-011-sms.txt). Checkpoint 3 PARTIAL: the Sites-origin manage link from the confirmation renders the view (Hello B1Cross; WHEN Sunday, October 18, 2026, 7:00 PM; PARTY 2 guests; policy 'You can cancel until Sun, Oct 18, 5:00 PM.') and 'Add to calendar' hit GET http://localhost:3007/reservations/manage/ics -> 200 (text/calendar; referrer-policy no-referrer; VEVENT DTSTART 20261018T230000Z / DTEND 20261019T001500Z) - but the manage link INSIDE the email and the SMS is http://localhost:3001/reserve/manage#t=... (App origin) and 404s: curl -> 404 and the browser renders the App 'Page not found' (screenshot CROSS-011-email-manage-link-app-404.png). Root cause: apps/app/app/routes/resources+/reservations.context.ts:181 'siteOrigin = org.customDomain ? https://customDomain : appUrl' with appUrl = ENV.BASE_URL (http://localhost:3001 here); acme has customDomain null, so every guest message link points at the App origin, which has no /reserve/manage route. The consuming code is new in this milestone (apps/tenant-api/src/services/rsv-message-service.ts:333, added by 97bb99a4); the siteOrigin fallback came from 452bb463. Checkpoint 4 PASS: POST /reservations/manage/modify -> 200 (20:00) and a 'modification' email was captured; the App detail sheet (?r=rsv_226202c1-...) shows '2026-10-18 - 20:00 - 21:15 (75m) - 2 guests' and Change history 'Created / Guest / Oct 17, 7:18 AM' + 'Details changed / Guest / Oct 17, 7:22 AM' (rsv_reservation_events: type=modified, actor_kind=guest, from localMin 1140 to 1200); 19:00 is offered again by a fresh Sites search (screenshot CROSS-011-operator-history.png). Checkpoint 5 PASS: kody cancelled from the App detail sheet (POST /operator/reservations/book/reservations/<id>/status -> 200; DB status=cancelled, cancelled_by=restaurant, cancel_reason NULL), a 'cancellation_restaurant' email was captured, the manage link shows badge 'cancelled' with no action buttons (screenshot CROSS-011-manage-cancelled.png), and 20:00 was booked again by a second guest (D1HTE7B0, left in place). Files: CROSS-011-journey.txt, CROSS-011-email-captures.txt, CROSS-011-sms.txt, CROSS-011-operator-history.png, CROSS-011-manage-cancelled.png, CROSS-011-email-manage-link-app-404.png.",
+			"notes": "Verdict is fail only because the contract lists 'a manage link that 404s' as a fail condition and step 3 follows the manage link from the captured email/SMS; every other checkpoint (messages and their kinds, operator history with the guest modification, the cancelled slot reopening) passed. The same broken link host is what VAL-MSG-009 (another group) must open from a captured email. Two smaller observations: (a) the App's operator cancel UI has no reason input although the status API accepts cancelReason, so 'with a reason' could not be exercised; (b) the SMS/email manage link host is environment-independent (it is BASE_URL, i.e. the App origin, in any environment where the org has no custom domain).",
+			"limitations": "The second guest's booking D1HTE7B0 was left in place per 'leave or cancel that booking'."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The assigned date 2026-11-02 is closed for acme by a leftover round-2 special day ('G5-Closed Monday', kind closed, 2026-11-02..2026-11-02, created_by mission-user-testing), so no booking flow can run on it (availability returns status 'closed', reason 'special_day').",
+			"resolved": true,
+			"resolution": "Did not delete the other group's row. Ran the journey on 2026-10-18, which is unowned in this round's registry and is the contract's literal 'tomorrow' for CROSS-011; kept the assigned phones/emails and did not touch any other group's date.",
+			"affectedAssertions": [
+				"VAL-ONLINE-035",
+				"VAL-ONLINE-044",
+				"VAL-ONLINE-045",
+				"VAL-ONLINE-047",
+				"VAL-ONLINE-049",
+				"VAL-ONLINE-051",
+				"VAL-CROSS-011"
+			]
+		},
+		{
+			"description": "The Astro dev toolbar (astro-dev-toolbar) covers buttons near the bottom of the manage page, so agent-browser ref clicks on 'Add to calendar' fail with 'covered by <astro-dev-toolbar>'.",
+			"resolved": true,
+			"resolution": "Used an in-page .click() through agent-browser eval, as the round guidance recommends for covered elements.",
+			"affectedAssertions": ["VAL-ONLINE-049", "VAL-CROSS-011"]
+		},
+		{
+			"description": "The Sites manage page strips the token fragment from the URL after reading it, so a later eval/reload without re-appending the fragment shows the 'no token' state; and agent-browser eval returns string results JSON-quoted, which made the first token extraction include quote characters (the token then failed verification with a uniform 404).",
+			"resolved": true,
+			"resolution": "Re-appended the fragment from the token captured on the confirmation page and stripped the JSON quotes before use; no token value was written into any evidence file or the report.",
+			"affectedAssertions": ["VAL-ONLINE-035", "VAL-CROSS-011"]
+		},
+		{
+			"description": "The operator cancel action in the App detail sheet cancels immediately (with a 60 s undo toast) and never asks for a reason, although the tenant-api status route accepts cancelReason.",
+			"resolved": false,
+			"resolution": "Recorded as an observation: CROSS-011's '(restaurant cancel, with a reason)' could not be exercised through the UI; cancel_reason is NULL in the row.",
+			"affectedAssertions": ["VAL-CROSS-011"]
+		}
+	],
+	"blockers": [],
+	"summary": "7 of 8 assertions pass; VAL-CROSS-011 fails because the manage link inside the confirmation email and the SMS points at the App origin (http://localhost:3001/reserve/manage#t=...) and 404s, while every other CROSS-011 checkpoint passed. Root cause pointer: apps/app/app/routes/resources+/reservations.context.ts:181 (siteOrigin falls back to ENV.BASE_URL when the org has no custom domain); consumed by apps/tenant-api/src/services/rsv-message-service.ts:333. Same defect will hit VAL-MSG-009. Environment deviations: assigned date 2026-11-02 is closed by a leftover special day, so the booking flows ran on 2026-10-18 (unowned, the contract's 'tomorrow').",
+	"leftBehind": "New acme rows on 2026-10-18 (all mine, none deleted): rsv_2990bc89-9ae5-4f0c-8b3f-ad1a9e973d01 ZAR4QBDZ (B1Val GuestOne, 19:00->20:00, cancelled by guest), rsv_17b43f31-dad1-4e8f-bca3-ea208aed7bbf HS7FH9DD (B1Late GuestTwo, 21:00, booked, running_late_min=20), rsv_226202c1-2572-44c9-98c2-6034ac9752b2 GQ4H0W3D (B1Cross GuestThree, 19:00->20:00, cancelled by restaurant), rsv_56e706b6-a81c-47b6-aa6e-576a064747cc D1HTE7B0 (B1Second GuestFour, 20:00, booked) plus their guests/events/holds (all holds converted or released, no active hold left). No flags, no location settings, no services/areas/tables, no special days and no other group's rows were touched. Browser session 276ff6d660b4__b1 closed."
+}

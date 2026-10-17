@@ -1,0 +1,127 @@
+{
+	"group": "g5-msg-tick",
+	"surface": "curl",
+	"testedAt": "2026-10-17T12:30:00Z",
+	"isolation": {
+		"org": "acme t58bgatqh3rv0s3movrecyj1",
+		"ownedBusinessDate": "2026-10-24",
+		"ownedPhones": "+155555505x",
+		"ownedEmails": "rsv-g5-1@example.com (lapsed request), rsv-g5-2@example.com (control request), rsv-g5-4@example.com (auto no-show booking), rsv-g5-5@example.com (auto no-show control booking)",
+		"tenantApi": "http://localhost:3007 (US)",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3)",
+		"temporarySettings": {
+			"locationId": "v17plv08r5v357bie335lyq8",
+			"request_deadline_hours": "24 -> 1 -> restored 24",
+			"auto_no_show_after_min": "null -> 30 -> restored null",
+			"otherLocationControl": "b5hymj7733l3wxrg74dytzty (auto_no_show_after_min stays null, untouched)"
+		},
+		"tokens": "internal command token read from apps/app/.dev.vars (never printed); operator tokens minted with the documented /tmp/menuza-user-testing/mint-token.mjs script"
+	},
+	"assertions": [
+		{
+			"id": "VAL-MSG-001",
+			"status": "pass",
+			"evidence": [
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-001-noauth-401.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-001-wrong-bearer-401.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-001-operator-token-401.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-001-tick-authorized-before.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-001-tick-authorized-after.json"
+			],
+			"notes": "POST /api/reservations/tick with body {} and (a) no Authorization header, (b) a wrong bearer value, (c) an operator rsv+jwt token each returned HTTP 401 with JSON body {\"error\":\"unauthorized\"} and header `cache-control: private, no-store`. The operator token (scope book, 630 chars, typ rsv+jwt) was minted with the documented script. Authorized tick for acme ran immediately before (11:10:04Z) and immediately after (11:10:09Z) the refused calls: identical task counts (every task count 0, reconcile checked:19), so no state changed on the refused calls.",
+			"limitations": "The operator token came from the documented /tmp/menuza-user-testing/mint-token.mjs (same secret/claims as the App's GET /<org>/reservations/token route) rather than from a live App session. The before/after authorized ticks ran 5 s apart with all-zero counts, so the 'no state change' check is exactly the comparison the contract names."
+		},
+		{
+			"id": "VAL-MSG-002",
+			"status": "pass",
+			"evidence": [
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-002-hold-created.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-002-availability-slot-before-hold.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-002-availability-slot-during-hold.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-002-availability-slot-after-tick.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-002-tick-after-hold-expiry.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-002-sqlite.txt"
+			],
+			"notes": "Public hold POST /reservations/holds (Sites Origin, X-Client: web) returned 201 with slot 2026-10-24 19:00 America/New_York, party 4, expiresAt 2026-10-17T11:17:22.681Z. Manual tick at 11:17:23Z returned 200 with expire_holds count 1 (detail holds:1). sqlite: rsv_holds hld_4104c8ad-866c-4d31-94fc-204b57afb02c status='expired', its rsv_table_occupancies row active=0. Availability at localMin=1140 partySize=4 offered 19:00 before the hold in area G4-Area, during the hold only from G10-Area (the held G4-Area table was consumed), and after the tick in G4-Area again. Tick JSON contains only counts and short codes; grep over all tick responses found no @ or phone patterns.",
+			"limitations": "POST /reservations/holds answers 201 Created (the contract wrote '-> 200'); same success semantics. The availability engine still offered the 19:00 time from another area while the hold was live, so the released capacity is demonstrated by the same held table/area (G4-Area) coming back after the tick."
+		},
+		{
+			"id": "VAL-MSG-003",
+			"status": "pass",
+			"evidence": [
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-settings-before.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-put-request-deadline-hours-1.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-put-request-deadline-hours-restore.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-request1-created.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-state-before-lapse-tick.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-tick-expired-request.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-operator-get-lapsed.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-operator-get-lapsed-summary.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-state-after-ticks.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-occupancies-after.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-messages-lapsed.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-emails-lapsed.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-tick-control-inside-deadline.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-request2-created.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-operator-get-control.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-operator-get-control-summary.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-messages-control.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-emails-control.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-003-control-first-attempt-409.txt"
+			],
+			"notes": "Set request_deadline_hours 24 -> 1 (minimum) via the operator setup API (PUT, expectedVersion checked; restored to 24 afterwards). Created POST /reservations/requests party 9 (> online_party_max 8) for 2026-10-24 20:30 local -> 201 pending_approval, deadline 2026-10-17T12:18:33Z. The manual tick at 12:18:39Z returned 200 with expire_requests count 1; GET /operator/reservations/book/reservations/rsv_e29e61be-ef5c-49ba-8c68-78b90edfaa04 returned 200 with status 'expired'; sqlite shows status='expired' and its occupancy rows inactive; the dev capture holds exactly one terminal message for rsv-g5-1@example.com (request_declined, subject 'We could not accept your request at Downtown Flagship', 20261017T121839712) besides the earlier request_received. The control request on the same date (2026-10-24 21:00, party 9, deadline 2026-10-17T13:20:13Z) was still pending_approval after the next tick (expire_requests count 0), occupancy active, and only a request_received message - no terminal message.",
+			"limitations": "The control request's first creation attempt 30 s before the lapsed deadline failed with HTTP 409 (rsv_occupancy_no_overlap_insert trigger: the engine picked the table still actively held by the lapsed request). The control was therefore created 12:20:13Z, after the lapse, so the 'inside its deadline is untouched' half is demonstrated by the immediately following tick (expire_requests=0, control unchanged) rather than the identical tick instance that expired the first request. The lapsed request's terminal message was sent by the sweep's after-commit hook, so the tick's deliver_messages count is 0 while the message row is 'sent'. The 1 h wait is inherent: request_deadline_hours minimum is 1 and the request start was 7 days out."
+		},
+		{
+			"id": "VAL-MSG-004",
+			"status": "pass",
+			"evidence": [
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-settings-before.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-put-auto-no-show-30.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-booking-main-created.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-booking-control-created.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-tick.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-operator-get-main.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-operator-get-control.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-sqlite.txt",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-put-auto-no-show-restore.json",
+				"evidence/guest-channels-and-crm/g5-msg-tick/VAL-MSG-004-settings-after-restore.txt"
+			],
+			"notes": "Set auto_no_show_after_min=30 on v17plv08r5v357bie335lyq8 via the operator setup API (before null, expectedVersion checked, restored null afterwards). Two host bookings starting 2026-10-17 06:00 America/New_York (1 h 18 m before the tick) were created through POST /operator/reservations/book/reservations (201): main location rsv_8bb71535-f2ed-43d3-8528-abf9da3fdcd8 and control location b5hymj7733l3wxrg74dytzty rsv_798290e4-a119-473c-9e12-26da9cef5d73 (auto_no_show_after_min null). The manual tick at 11:17:54Z returned 200 with auto_no_show count 6; the main booking is status='no_show' with no_show_at=1792235874652 (= the tick's `at`), its occupancy active=0, and rsv_payments has 0 rows for it; the b5hymj booking is still 'booked' with no_show_at null and its occupancy active=1, i.e. the tick left it alone.",
+			"limitations": "Enabling the setting also made the same tick mark 5 pre-existing overdue 'booked' rows on the main location as no_show (JKXL6G, K29HSW, 9UPJ8C from business date 2026-10-16 and ER2XAT, SP86CZ from 2026-10-17). That is the documented behavior of the task (every overdue booking at locations with the setting) and not a defect. The 06:00 start is outside service windows; the operator API accepted it with the service fallback, so no direct DB write was needed."
+		}
+	],
+	"frictions": [
+		{
+			"description": "VAL-MSG-003: the control request created 30 s before the lapsed deadline failed with HTTP 409 (drizzle 'Failed query: insert into rsv_table_occupancies', rsv_occupancy_no_overlap_insert trigger) because the engine chose the table still actively held by the lapsed request.",
+			"resolved": true,
+			"resolution": "Waited for the lapse tick to release the occupancy, then created the control request and verified it with the next tick; the 409 was recorded as evidence (VAL-MSG-003-control-first-attempt-409.txt).",
+			"affectedAssertions": ["VAL-MSG-003"]
+		},
+		{
+			"description": "The operator book token minted at session start has the default 900 s TTL and expired during the 1 h deadline wait, so the first operator GET after the lapse tick returned 401.",
+			"resolved": true,
+			"resolution": "Re-minted a fresh book token and repeated the GET (200, status 'expired').",
+			"affectedAssertions": ["VAL-MSG-003"]
+		},
+		{
+			"description": "The Node runtime runs an in-process reservations tick every 120 s, which can race a manual tick at an expiry boundary.",
+			"resolved": true,
+			"resolution": "Fired the manual ticks within seconds of each deadline; the manual ticks carried the work in every case (expire_holds=1 at 11:17:23Z, expire_requests=1 at 12:18:39Z, auto_no_show=6 at 11:17:54Z).",
+			"affectedAssertions": ["VAL-MSG-002", "VAL-MSG-003", "VAL-MSG-004"]
+		},
+		{
+			"description": "request_deadline_hours minimum is 1 h and the request start was 7 days out, so VAL-MSG-003 requires a full one-hour wall-clock wait.",
+			"resolved": false,
+			"resolution": "Accepted as inherent (the contract explicitly allows 'set the minimum and wait'); the wait ran in the background while MSG-002/MSG-004 were tested.",
+			"affectedAssertions": ["VAL-MSG-003"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": [
+		"curl",
+		"sqlite3 (read-only)",
+		"node (mint-token.mjs, JSON parsing)"
+	],
+	"leftBehind": "Temporary location settings restored on acme v17plv08r5v357bie335lyq8: request_deadline_hours=24 (was 24), auto_no_show_after_min=null (was null); other baseline fields verified unchanged (hold_minutes=7, large_party_mode=request, contact_phone, guest_modify_cutoff_min=120, waitlist_*, day_start_min=240, min_notice_min=30, horizon_days=60). Test artifacts intentionally left: expired hold hld_4104c8ad-866c-4d31-94fc-204b57afb02c (2026-10-24 19:00, occupancy inactive); expired request rsv_e29e61be-ef5c-49ba-8c68-78b90edfaa04 (2026-10-24 20:30, occupancy inactive, messages request_received+request_declined); pending request rsv_92f1ded9-a34f-43de-a3f2-e6c39081c71e (2026-10-24 21:00, deadline 2026-10-17T13:20:13Z - will lapse on its own and send one request_declined to rsv-g5-2@example.com); no_show booking rsv_8bb71535-f2ed-43d3-8528-abf9da3fdcd8 (2026-10-17 06:00, main location) and booked control booking rsv_798290e4-a119-473c-9e12-26da9cef5d73 (2026-10-17 06:00, b5hymj7733l3wxrg74dytzty). The tick also marked 5 pre-existing overdue rows as no_show when the setting was enabled (rsv_28892aa7/JKXL6G, rsv_d2f40ed3/K29HSW, rsv_cc7f951b/9UPJ8C, rsv_4dd3eab6/ER2XAT, rsv_06e27b5e/SP86CZ). Dev email captures exist for rsv-g5-1/2/4/5@example.com under apps/tenant-api/.dev-mail/us/. Scratch command logs and token files under /tmp/g5-evidence (token files deleted after the run)."
+}

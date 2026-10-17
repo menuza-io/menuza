@@ -1,0 +1,95 @@
+{
+	"timestamp": "2026-10-17T04:09:23.864Z",
+	"workerSessionId": "e1fd6c6d-6da7-4aca-a6a5-5d4ce530291a",
+	"featureId": "user-testing-validator-foh-core",
+	"milestone": "foh-core",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Round 3 of foh-core user testing is a full pass: VAL-BOOK-003 (bare occasion value now returned) and VAL-BOOK-037 (Arabic contact-status chip + canonical selector) both pass on 521df7ed, and the two regression targets (Today business date from the location time zone, Settings conflicts panel dry run) also pass. validation-state.json now has 0 failed assertions for foh-core.",
+		"whatWasImplemented": "Executed round-3 user-testing validation for milestone foh-core. Verified HEAD 521df7ed on both tenant-api nodes, started the App on 3001 (detached), confirmed the live pre-flip business-date probe, wrote the round-3 guidance and isolation registry into library/user-testing.md, spawned three flow-validator subagents in two batches (two App browser groups, then one browser+curl+sqlite group run alone), synthesized their reports into validation/foh-core/user-testing/synthesis.json (round 3, pass), marked VAL-BOOK-003 and VAL-BOOK-037 passed in validation-state.json, appended results/runtime findings/leftovers to user-testing.md, and tore down the App server I started.",
+		"whatWasLeftUndone": "Nothing in round-3 scope. Two non-blocking observations are recorded for the orchestrator: (1) the Today module header Date control (#reservations-date-input, reservations+/_layout.tsx:98) shows the App-shell UTC calendar date and can disagree with the service-day Business date control, and the client 'Jump to Today' target reads dayStartMin from book-api.ts:1526 payload root while the payload carries settings.dayStartMin=240 — no in-scope assertion covers it; (2) Arabic pages still show Latin breadcrumb segments (round-2 observation, outside VAL-BOOK-037's enumerated clauses).",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "curl -s 'http://localhost:3007/operator/reservations/book/day?locationId=v17plv08r5v357bie335lyq8' -H 'Authorization: Bearer <book token>' (parent probe, 03:53 UTC and 04:01 UTC) + no-token control",
+					"exitCode": 0,
+					"observation": "200 with {\"businessDate\":\"2026-10-16\", reservations: 13, counters {parties:11, covers:30}} while `date -u` = 2026-10-17 and `TZ=America/New_York date` = 2026-10-16/17 00:01 EDT; no-token control 401. With day_start_min=240 the service day is 2026-10-16, so the pre-fix UTC fallback (which would return 2026-10-17) is gone. Saved as evidence/foh-core/r3-regress/parent-business-date-probe.txt"
+				},
+				{
+					"command": "node -e \"const d=new Date(Date.now()-240*60000); console.log(new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(d))\"",
+					"exitCode": 0,
+					"observation": "Printed 2026-10-16, matching the live day feed and the Today screen's Business date control"
+				},
+				{
+					"command": "curl -si 'http://localhost:3007/operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/conflicts' -H 'Authorization: Bearer <setup token>' (parent reconnaissance)",
+					"exitCode": 0,
+					"observation": "HTTP 200, object with locationId + a 10-item conflicts array (first: kind table_overlap on 2026-10-16)"
+				},
+				{
+					"command": "git status --short --branch (repo, after all validation)",
+					"exitCode": 0,
+					"observation": "## pr/reservations, no modified/untracked files; HEAD still 521df7ed — validation made no repository changes"
+				},
+				{
+					"command": "kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3001 -sTCP:LISTEN | head -1) | tr -d ' '); ss -Htlnp | grep -E ':(3001|3005|3008|3101)'",
+					"exitCode": 0,
+					"observation": "Teardown: ports 3001/3005/3008/3101 free; tenant-api US 3007 and KSA 3009 left listening as they were found before the session"
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "r3-book003: created a phone booking on /acme/reservations/book (2026-11-12, party 4, Main Dining Room, Duration 120, Occasion Anniversary, dietary contract-dietary-book003, internal contract-internal-book003, guest R3Book Guest One / +15555554001) and opened its detail sheet ?r=rsv_2248ace9-...",
+					"observed": "POST 201 (#YKTPAF); sheet renders 'Anniversary', 'Dining area Main Dining Room', Dietary notes and Internal notes rows; GET .../reservations/:id returns occasion='anniversary' (bare, was tag_acme_anniversary in round 2), occasionTagId='tag_acme_anniversary', diningAreaId='area_acme_main', durationMin=120; sqlite shows duration_min=120, area_pref_id=area_acme_main, notes unchanged, one active occupancy on G4-2 19:00-21:00 EST = 120 min + 0 buffer; console errors []"
+				},
+				{
+					"action": "r3-rtl: opened /acme/reservations/book?lng=ar&date=2026-10-16 and inspected the contact-status chip for seeded rsv_acme_1 (contact_status='left_message'); then created own booking on 2026-11-13 and round-tripped the detail-sheet Contact Tracking selector",
+					"observed": "Chip now reads Arabic 'تم ترك رسالة' (was English 'Left message'); zero English contact-status strings in a full-page scan; selector lists canonical values with Arabic labels (none لم يتم التواصل, left_message تم ترك رسالة, no_answer لا يوجد رد, wrong_number رقم خاطئ) and persisted left_message -> no_answer -> left_message (POST .../contact 200 each, sqlite confirmed); dir=rtl/lang=ar, Arabic tabs/filters/badges, LTR codes/times/phones, zero console errors"
+				},
+				{
+					"action": "r3-regress: opened /acme/reservations/today and /acme/reservations/settings as kody while no other group ran; took read-only sqlite snapshots immediately before and after 3 panel loads plus 2 authenticated conflicts GETs",
+					"observed": "Today's Business date control = 2026-10-16 matching the day feed (13 rows, counters 11 parties/30 covers); conflicts panel rendered 10 rows (code · date · Party of N + localized reason) matching the payload; before/after snapshots identical in every value (24 rsv_day_versions rows with unchanged versions, rsv_reservation_events COUNT 253 with unchanged MAX(at), rsv_table_occupancies COUNT 160, last-5 updated_at) — the GET is read-only. Header Date control showed 2026-10-17 (App-shell UTC default) — reported as a non-blocking issue, not a failure of the regression criterion"
+				}
+			]
+		},
+		"tests": {
+			"added": [],
+			"coverage": "No automated tests were added — this feature is validation-only. Four contract assertions were re-verified through their designated user surfaces (App operator UI, tenant-api curl, read-only sqlite): VAL-BOOK-003 and VAL-BOOK-037 (round-2 failures) and the regression targets VAL-BOOK-011 and VAL-SETUP-025. All four passed on commit 521df7ed. validation-state.json now reports 129 passed / 0 failed / 356 pending across foh-core and later milestones."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "Today has two date controls that can disagree: the list's Business date control and the day feed resolve 2026-10-16 (location tz + day_start_min=240, correct), but the module header Date control (#reservations-date-input, apps/app/app/routes/reservations+/_layout.tsx:98) shows the App-shell UTC calendar date 2026-10-17. The client-computed 'Jump to Today' target has the same problem because apps/app/app/utils/reservations/book-api.ts:1526 reads dayStartMin from the payload root while the response carries it at settings.dayStartMin=240. No contract assertion in round-3 scope covers it.",
+				"suggestedFix": "Thread the resolved business date (or settings.dayStartMin) from the loader into the shell date control and the client day-start computation so both show the service day the day feed uses."
+			},
+			{
+				"severity": "suggestion",
+				"description": "Arabic reservations pages still render Latin breadcrumb segments ('Reservations / Today / Book'), unchanged from round 2. Outside VAL-BOOK-037's enumerated clauses (tabs, filters, badges, actions) but visible in the Arabic screenshots.",
+				"suggestedFix": "Wrap the breadcrumb segments in Lingui messages and translate them in ar.po, or hide them in the reservations shell."
+			},
+			{
+				"severity": "suggestion",
+				"description": "Round-3 leftovers on acme: rsv_2248ace9-f6c9-4905-ac69-06e5e031b022 (#YKTPAF, R3Book Guest One, 2026-11-12) and rsv_9dcf4f57-ed26-40f7-917b-c0090a597b81 (#QL7LZ3, R3Rtl Guest One, 2026-11-13, contact_status='left_message'), plus the unchanged earlier leftovers (floor plan v79 with two wall elements in G15-Area, 'UI Fix Tester' on G10-T1, R2* rows, Waterfront Kitchen tz mismatch). The 13 seeded 2026-10-16 reservations were not modified.",
+				"suggestedFix": "Account for these rows in later guest-channels-and-crm rounds (report counts may include them) or re-seed if a clean baseline is needed; do not delete seeded orgs or tenant DB files."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": [
+				{
+					"step": "Step 2 (setup) — environment probing",
+					"whatIDidInstead": "Ran the decisive business-date probe myself (tenant-api curl with a minted book token + no-token control) before spawning validators, because the pre-flip window (UTC date 2026-10-17 vs service day 2026-10-16) closed at 08:00 UTC and might not have been reproducible for the subagent",
+					"why": "Time-sensitive evidence; the parent probe is saved under evidence/foh-core/r3-regress/ and the r3-regress validator independently re-verified the same behavior post-flip without relying on it"
+				},
+				{
+					"step": "Round-3 scope selection (re-run logic)",
+					"whatIDidInstead": "Tested only the two round-2 failures (VAL-BOOK-003, VAL-BOOK-037) plus the two regression paths the orchestrator named, and reported the regression targets under their contract ids (VAL-BOOK-011, VAL-SETUP-025) with status 'pass' in the flow report",
+					"why": "The orchestrator explicitly narrowed round 3 to this scope and moved VAL-CROSS-006 to the online-booking milestone"
+				}
+			],
+			"suggestedChanges": [
+				"When a milestone's fix commit changes business-date or time-zone behavior, note in the round plan that the business date is a service day (location tz + day_start_min), not the UTC/calendar date, so validators compute the expected value instead of assuming a UTC-midnight flip."
+			]
+		}
+	}
+}

@@ -1,0 +1,70 @@
+{
+	"group": "g1-fnd-engine",
+	"surface": "terminal",
+	"testedAt": "2026-10-16T23:25:00Z",
+	"isolation": {
+		"repo": "/home/factory-user/repos/menuza",
+		"branch": "pr/reservations",
+		"readOnly": true,
+		"note": "No product code, tests, config or databases were modified; git status stayed clean. Instrumentation ran against a throwaway copy of packages/reservations/src under /tmp/g1-instr."
+	},
+	"assertions": {
+		"VAL-FND-006": {
+			"status": "fail",
+			"observed": "Commands: (1) `cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/engine` -> exit 0, 6 files / 24 tests passed, 1.19s; (2) `cd /home/factory-user/repos/menuza && CI=true npm run test -w @repo/reservations` -> exit 0, 19 files / 71 tests passed, 1.89s. All six previously-failed named gaps are CLOSED: (1) online_cap_per_interval is read (engine/pacing.ts:37-38,160-178,312-326), passed into pacing from service availability (rules/resolve-services.ts:210-212,291-296; engine/availability.ts:570-571), filters guest slots and warns staff (availability.ts:574-586); test engine.test.ts:137-279. (2) concurrent_covers_cap enforced over [startAt,endAt) at pacing.ts:328-373 with the same test. (3) rolling_min/rolling_max_covers enforced at pacing.ts:279-310 with the same test (18:15 party 4 rejected). (4) per-table reset_buffer_min read at day-state.ts:310-313, applied as max(location buffer, table reset) on both sides of the fit at assign.ts:511-515,681-687 (also repair paths); test engine.test.ts:281-334. (5) I3 overbook semantics: OccupancyIndex no longer skips overbook entries (occupancy.ts:74-126 counts them; assign.ts:392-411 inserts them); test engine.test.ts:336-382 proves an online party cannot use the table occupied by a host overbook. (6) alternatives() now returns { sameDay, otherDates } (availability.ts:787-796,829-948) and engine.test.ts:448-475 asserts both parts (2026-06-11/2026-06-13). HOWEVER one contract evidence item is still broken: expired-hold ignoring (I4). `searchAvailability` drops `expiresAt` when mapping `existingHolds` into bookings (availability.ts:401-428), and buildOccupancyIndex's kind==='hold' branch has no expiry filter (assign.ts:377-390; the filter only exists for the separate holds input at assign.ts:414-415, which searchAvailability never passes - availability.ts:611). Direct execution (evidence/VAL-FND-006-i4-expired-hold.txt): baseline 9 slots; live hold -> 0 slots (correct); EXPIRED hold -> still 0 slots (expected 9), while assignTables(existingHolds:[expired]) correctly returns assigned=true. No repo test covers expired-hold ignoring (no `expiresAt` in src/engine.test.ts or src/engine/*.test.ts). Secondary: previous-date spill-over intervals are structurally honoured by the engine (spill-over blocks 17:00, frees 18:15 in the same evidence file) but no test asserts it and no app loads spill-over rows (rsv-day-feed-service.ts:1034-1043 filters eq(businessDate)).",
+			"evidence": [
+				"foh-core/g1-fnd-engine/VAL-FND-006-009-engine-suite.txt",
+				"foh-core/g1-fnd-engine/whole-package-suite.txt",
+				"foh-core/g1-fnd-engine/VAL-FND-006-code-evidence.txt",
+				"foh-core/g1-fnd-engine/VAL-FND-006-i4-expired-hold.txt",
+				"foh-core/g1-fnd-engine/instrumentation-val-fnd-006-i4.ts"
+			],
+			"notes": "The six named gaps the previous round failed on are all closed and green; the assertion is failed only on the I4 expired-hold defect (a bug in the exported engine function, found by direct execution) plus the missing expired-hold/spill-over test coverage the contract's evidence bullet asks for. Note the exported searchAvailability/alternatives/calendarSummary are not called anywhere under apps/ (repo-wide grep), so the I4 defect is latent in product paths today; the runtime availability path is bespoke (getOperatorAvailability, rsv-day-feed-service.ts:1001-1147, which also filters reservations by exact business date)."
+		},
+		"VAL-FND-009": {
+			"status": "fail",
+			"observed": "Commands: (1) `cd /home/factory-user/repos/menuza/packages/reservations && CI=true npx vitest run src/engine` -> exit 0, 24/24 tests (engine.property.test.ts 2/2: 300 day scenarios + 100 operation sequences; scale.test.ts 2/2); (2) `cd /home/factory-user/repos/menuza && CI=true npm run test -w @repo/reservations` -> exit 0, 71/71 tests; (3) `CI=true FC_SEED=20261016 npx vitest run src/engine/engine.property.test.ts src/engine/scale.test.ts` -> exit 0, 4/4 tests, 778ms (reproducible). The four semantics the previous round said were missing are NOW asserted per step: I7 search-then-hold - every 'search' step re-holds every returned slot via assignTables against the same state/clock and records failedSlots (arbitraries.ts:684-704; check oracle.ts:462-467); I6 atomic modify - a failed 'modify' attaches before/after snapshots compared at oracle.ts:434-460 (wiring arbitraries.ts:835-840); I8 monotonic release - cancel/finish/no_show attach slotsBefore/slotsAfter (arbitraries.ts:849-855,884-890,899-905; check oracle.ts:469-479); I3 staff-overbook isolation - oracle.ts:285-308 plus engine unit test engine.test.ts:336-382. Labels now match architecture.md 1.2 (oracle.ts:70-80 doc; I1 :109-283, I2 :109-115/:285-308/:310-333, I3 :285-308/:335-372, I4 :374-405, I5 :407-432, I6 :434-460, I7 :462-467, I8 :469-479) and the property test asserts every step's verifier result (engine.property.test.ts:128-147). Non-vacuity was proven with a throwaway instrumented copy (evidence/VAL-FND-009-invariant-instrumentation.txt): direct verifier checks 12/12 PASS (I1/I3/I4 live+expired/I5/I6/I7/I8 fire on violations, stay clean otherwise); over 100 sequences (seed 20261016, 1159 steps) 108 search steps attached 108 I7 checks (0 failures), 17 failed modifies attached 17 I6 checks, 175 release steps attached 175 I8 checks (0 violations). STILL OPEN: the brute-force oracle comparison is once per day scenario, not per step - `bruteForceAssignExists` is called only at engine.property.test.ts:45 (inside the 300-run day-scenario property, with soundness+completeness assertions at :54-99); executeOperationSequence (arbitraries.ts:561-1069) never calls it, so the previous failure reason 'the oracle comparison runs once per scenario rather than per step' remains true. Scale budgets pass: MAX_SEARCH_SLOT_EXPANSIONS=200, MAX_BOOK_EXPANSIONS=2000, MAX_REFLOW_EXPANSIONS=5000 asserted at scale.test.ts:29-31,55,97,113 and exhausted budgets return status 'no_fit' / budgetExhausted with zero moves (scale.test.ts:117-158).",
+			"evidence": [
+				"foh-core/g1-fnd-engine/VAL-FND-006-009-engine-suite.txt",
+				"foh-core/g1-fnd-engine/whole-package-suite.txt",
+				"foh-core/g1-fnd-engine/VAL-FND-009-seeded-property-scale.txt",
+				"foh-core/g1-fnd-engine/VAL-FND-009-code-evidence.txt",
+				"foh-core/g1-fnd-engine/VAL-FND-009-invariant-instrumentation.txt",
+				"foh-core/g1-fnd-engine/instrumentation-run.ts"
+			],
+			"notes": "Split verdict: the substantive semantic checks (search-hold, monotonic release, atomic modify, overbook isolation) are now implemented, wired per step, and proven non-vacuous - this closes the scrutiny blocking finding. The remaining open item is the oracle-comparison frequency the previous synthesis named as a failure cause: the brute-force oracle is still invoked once per scenario (300 runs, zero counterexamples), never inside the per-step sequence loop. If the parent reads the contract clause 'verify invariants I1 through I8 after every step with zero soundness failures against the oracle' as suite-level (oracle soundness shown separately), everything else is green and only this harness detail differs. Minor: the contract prose says \"no fit\" while the stable code string is 'no_fit'; the oracle is a bounded 0/1/2-swap search (oracle.ts:496-733), matching the engine's repair depth rather than an exact solver."
+		},
+		"VAL-FND-024": {
+			"status": "pass",
+			"observed": "File inspection (no test command required by the contract). All five documents exist and are non-empty: docs/decisions/048-reservations-data-residency.md (330 lines), docs/reservations.md (72), docs/reservations-contract.md (80), docs/reservations-plan.md (82), docs/permissions.md (290). The two sections missing in the previous round are now present with real content: 'guest identity without login' at ADR section 3 (:129-147) documents capability tokens (rsv_m_/rsv_w_ prefixes), HMAC-only storage keyed by AUTH_HMAC_SECRET, manage links carried in the URL fragment (never query/Referer), and optional phone-OTP/Bearer sign-in; 'shared org alarm' at ADR section 9 (:283-288) documents lib/org-alarm.ts multiplexing staffing and reservations ticks across one Durable Object storage.setAlarm slot and the Node/OCI interval loop. All 11 contract topics are covered: regional guest PII + settings placement (section 1 :42-80), browser-direct operator tokens (section 2 :82-108), Origin-bound public routes (section 3 :110-128), guest identity without login (:129-147), payments split (section 8 :260-270), shared org alarm (section 9 :283-288), messaging regions (section 9 :272-282), retention/erasure (section 11 :298-308), flags (section 6 :205-224), location scope reuse (section 7 :226-258), platform fee (section 6 :223-224 + section 4 :156 + section 8). Skeleton docs have non-empty headings (reservations.md: What is in it / Feature flags / Kill switches and environment variables / Local demo data; reservations-contract.md: Operator token / Internal & control-plane routes / Operator routes / Public guest routes; reservations-plan.md: Architecture summary / Milestones). docs/permissions.md lists the 8 reservations permissions at :198-205 and the 6 feature flags at :256-261 (plus reservations.platform_fee_bp at :262).",
+			"evidence": ["foh-core/g1-fnd-engine/VAL-FND-024-docs-evidence.txt"],
+			"notes": "Verified by reading the current files at the tested revision (branch pr/reservations, commit 275d4b30 + working tree clean)."
+		}
+	},
+	"friction": [
+		{
+			"description": "The prescribed engine-suite command (`npx vitest run src/engine`) already matches src/engine.test.ts plus src/engine/*.test.ts, so it includes engine.property.test.ts and scale.test.ts; the whole-package run re-executes the same property/scale suites. Test counts must not be double-counted across the two commands.",
+			"resolved": true,
+			"resolution": "Recorded both runs separately; property/scale results reported once under VAL-FND-009.",
+			"affectedAssertions": ["VAL-FND-006", "VAL-FND-009"]
+		},
+		{
+			"description": "fast-check passing runs print no seed or counter, so a green property run does not show that the new I6/I7/I8 checks actually fired (they only attach for modify-failure/search/release steps).",
+			"resolved": true,
+			"resolution": "Ran an instrumented copy of packages/reservations/src under /tmp (repo untouched) with counters at each check site; evidence VAL-FND-009-invariant-instrumentation.txt shows 108 I7 / 17 I6 / 175 I8 checks attached over 100 sequences with zero violations.",
+			"affectedAssertions": ["VAL-FND-009"]
+		},
+		{
+			"description": "The contract quotes the budget-exhaustion status as \"no fit\" while the code's stable error code is 'no_fit' (errors.ts); the scale test asserts the underscore form.",
+			"resolved": true,
+			"resolution": "Treated as prose naming, not a defect; noted for the parent.",
+			"affectedAssertions": ["VAL-FND-009"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": [
+		"terminal",
+		"vitest",
+		"tsx (throwaway /tmp instrumentation copy)"
+	]
+}

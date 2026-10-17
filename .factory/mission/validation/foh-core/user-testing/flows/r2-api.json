@@ -1,0 +1,438 @@
+{
+	"groupId": "r2-api",
+	"testedAt": "2026-10-17T02:56:00Z",
+	"isolation": {
+		"surface": "curl against tenant-api US http://localhost:3007 (no browser, no service start/stop)",
+		"org": "acme (t58bgatqh3rv0s3movrecyj1), region us",
+		"locationId": "v17plv08r5v357bie335lyq8",
+		"otherAcmeLocationForCrossLocationChecks": "vw6s16lrjjvyafd3dc4cqexu",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3 SELECTs)",
+		"ownedBusinessDates": ["2026-10-31 (blocks/bookings)"],
+		"ownedService": "srv_f3aa21cd-6ed6-4bb0-8ccb-bd6eaf9abf15 (name R2-API-Service, effectiveFrom 2026-11-06)",
+		"ownedPhonePrefix": "+155555520xx",
+		"tokens": "minted with /tmp/menuza-user-testing/mint-token.mjs (--scope setup / --scope book); described as <setup token> / <book token>, values never written to evidence or this report",
+		"evidenceDir": "evidence/foh-core/r2-api/"
+	},
+	"toolsUsed": ["curl", "sqlite3", "jq"],
+	"assertions": [
+		{
+			"id": "VAL-SETUP-020",
+			"title": "Pacing rules CRUD (max_covers, max_parties, rolling window, channel scope) incl. location-scoped DELETE alias",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Negative first: DELETE /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/pacing/pac_nope with no Authorization header",
+					"expected": "401 (route exists but refuses; round-1 symptom was 404)",
+					"observed": "401 Unauthorized"
+				},
+				{
+					"action": "POST /operator/reservations/setup/services {locationId, name:'R2-API-Service', daysMask:127, firstSeatingMin:1020, lastSeatingMin:1290, endMin:1380, effectiveFrom:'2026-11-06'} (<setup token>)",
+					"expected": "201; own service created",
+					"observed": "201; srv_f3aa21cd-6ed6-4bb0-8ccb-bd6eaf9abf15"
+				},
+				{
+					"action": "POST /operator/reservations/setup/pacing {serviceId, fromMin:1080, toMin:1260, bucketMin:15, maxCovers:40, maxParties:10, rollingMin:120, rollingMaxCovers:120, channel:'online'}",
+					"expected": "201; row persisted",
+					"observed": "201; pac_505c47cb-f1fc-476f-a353-a4c8bc4f6f28"
+				},
+				{
+					"action": "sqlite3 SELECT row",
+					"expected": "values persisted",
+					"observed": "pac_505c...|srv_f3aa...|1080|1260|15|40|10|120|120|online"
+				},
+				{
+					"action": "PATCH /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/pacing/pac_505c... {maxCovers:50, maxParties:12, channel:'all'}",
+					"expected": "200; location-scoped update alias works",
+					"observed": "200; row now 50|12|120|120|all in sqlite"
+				},
+				{
+					"action": "Cross-location: DELETE /operator/reservations/setup/locations/vw6s16lrjjvyafd3dc4cqexu/pacing/pac_505c... (rule belongs to v17...)",
+					"expected": "refused (404) and row untouched",
+					"observed": "404 Not Found; sqlite COUNT still 1"
+				},
+				{
+					"action": "DELETE /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/pacing/pac_505c... (the path the App UI uses)",
+					"expected": "2xx and row gone",
+					"observed": "200 OK; sqlite COUNT 0"
+				},
+				{
+					"action": "Create second rule and DELETE /operator/reservations/setup/pacing/pac_ad8d... (legacy path)",
+					"expected": "2xx; legacy route still works",
+					"observed": "201 create, 200 delete; sqlite COUNT 0"
+				}
+			],
+			"evidence": {
+				"transcripts": [
+					"evidence/foh-core/r2-api/val-setup-020-neg-no-token.txt",
+					"evidence/foh-core/r2-api/val-setup-020-create-service.txt",
+					"evidence/foh-core/r2-api/val-setup-020-create-pacing.txt",
+					"evidence/foh-core/r2-api/val-setup-020-update-pacing.txt",
+					"evidence/foh-core/r2-api/val-setup-020-cross-location-delete.txt",
+					"evidence/foh-core/r2-api/val-setup-020-delete-pacing-locscope.txt",
+					"evidence/foh-core/r2-api/val-setup-020-create-pacing2.txt",
+					"evidence/foh-core/r2-api/val-setup-020-delete-pacing-legacy.txt"
+				],
+				"sqlite": [
+					"evidence/foh-core/r2-api/val-setup-020-sqlite-after-create.txt",
+					"evidence/foh-core/r2-api/val-setup-020-sqlite-after-update.txt",
+					"evidence/foh-core/r2-api/val-setup-020-sqlite-after-crossloc.txt",
+					"evidence/foh-core/r2-api/val-setup-020-sqlite-after-delete.txt",
+					"evidence/foh-core/r2-api/val-setup-020-sqlite-after-legacy-delete.txt"
+				],
+				"network": "POST /setup/pacing 201; PATCH /setup/locations/:id/pacing/:id 200; DELETE cross-location 404; DELETE location-scoped 200; DELETE legacy 200",
+				"consoleErrors": "n/a (no browser)"
+			},
+			"issues": null,
+			"notExercised": "The availability-cap effect of pacing rules in searchAvailability was not exercised here (CRUD + persistence only, per assignment); no UI check (r2-setup-ui owns that)."
+		},
+		{
+			"id": "VAL-SETUP-021",
+			"title": "Per-service table availability modes + target validation + location-scoped DELETE alias",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Negative first: DELETE /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/service-availability/sa_nope with no token",
+					"expected": "401 (round-1 symptom was 404)",
+					"observed": "401 Unauthorized"
+				},
+				{
+					"action": "Create 4 rules on own service: areaId=area_acme_main mode=online (fromMin 1020, toMin 1260); tableId=tbl_acme_m3 mode=staff_only; comboId=cmb_acme_m3_m4 mode=walk_in_only; tableId=tbl_acme_m4 mode=unavailable",
+					"expected": "201 x4; all four modes persisted",
+					"observed": "201 x4 (sa_7f09..., sa_a864..., sa_25ae..., sa_0a7e...); sqlite rows show each target/mode"
+				},
+				{
+					"action": "POST with zero targets ({serviceId, mode:'online'})",
+					"expected": "400",
+					"observed": "400 {\"error\":\"invalid_target\",\"message\":\"Exactly one of areaId, tableId, or comboId is required\"}"
+				},
+				{
+					"action": "POST with two targets (areaId + tableId)",
+					"expected": "400",
+					"observed": "400 invalid_target (same message)"
+				},
+				{
+					"action": "PATCH /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/service-availability/sa_7f09... {mode:'unavailable'}",
+					"expected": "200; location-scoped update alias works",
+					"observed": "200; sqlite mode=unavailable"
+				},
+				{
+					"action": "DELETE location-scoped sa_a864... and legacy /service-availability/sa_25ae...",
+					"expected": "2xx; rows gone",
+					"observed": "200 + 200; sqlite COUNT 0 for each"
+				},
+				{
+					"action": "Cross-location: DELETE /locations/vw6s16lrjjvyafd3dc4cqexu/service-availability/sa_0a7e...",
+					"expected": "refused; row untouched",
+					"observed": "404 Not Found; sqlite COUNT 1; then deleted normally (200) as cleanup"
+				}
+			],
+			"evidence": {
+				"transcripts": [
+					"evidence/foh-core/r2-api/val-setup-021-neg-no-token.txt",
+					"evidence/foh-core/r2-api/val-setup-021-create-area.txt",
+					"evidence/foh-core/r2-api/val-setup-021-create-table.txt",
+					"evidence/foh-core/r2-api/val-setup-021-create-combo.txt",
+					"evidence/foh-core/r2-api/val-setup-021-create-unavailable.txt",
+					"evidence/foh-core/r2-api/val-setup-021-bad-zero.txt",
+					"evidence/foh-core/r2-api/val-setup-021-bad-two.txt",
+					"evidence/foh-core/r2-api/val-setup-021-update-locscope.txt",
+					"evidence/foh-core/r2-api/val-setup-021-delete-locscope.txt",
+					"evidence/foh-core/r2-api/val-setup-021-delete-legacy.txt",
+					"evidence/foh-core/r2-api/val-setup-021-cross-location-delete.txt",
+					"evidence/foh-core/r2-api/val-setup-021-delete-sa4.txt",
+					"evidence/foh-core/r2-api/val-setup-021-delete-sa1.txt"
+				],
+				"sqlite": [
+					"evidence/foh-core/r2-api/val-setup-021-sqlite-after-create.txt",
+					"evidence/foh-core/r2-api/val-setup-021-sqlite-after-update.txt",
+					"evidence/foh-core/r2-api/val-setup-021-sqlite-after-delete-locscope.txt",
+					"evidence/foh-core/r2-api/val-setup-021-sqlite-after-delete-legacy.txt",
+					"evidence/foh-core/r2-api/val-setup-021-sqlite-after-crossloc.txt",
+					"evidence/foh-core/r2-api/val-setup-021-sqlite-final.txt"
+				],
+				"network": "POST /setup/service-availability 201 x4; invalid target 400 x2; PATCH location-scoped 200; DELETE location-scoped/legacy 200; DELETE cross-location 404",
+				"consoleErrors": "n/a (no browser)"
+			},
+			"issues": null,
+			"notExercised": "No UI check (r2-setup-ui owns the services settings screen). Availability-mode effect on slot search not exercised (CRUD + validation only, per assignment)."
+		},
+		{
+			"id": "VAL-SETUP-023",
+			"title": "Table/area block create with the App-form payload (startMin/endMin), occupancy expansion, soft-booking reflow, day-version bump, delete cleanup",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Baseline sqlite for 2026-10-31",
+					"expected": "no day version row, 0 blocks",
+					"observed": "day_version none; blocks 0; occupancies 0"
+				},
+				{
+					"action": "Create soft booking B1 (phone, party 2, 19:00) on tbl_acme_p2 via POST /book/reservations with Idempotency-Key",
+					"expected": "201; occupancy row",
+					"observed": "201 rsv_54e2c979...; occupancy occ_8af63d0e... active on tbl_acme_p2 (19:00-20:15 EDT)"
+				},
+				{
+					"action": "POST /operator/reservations/setup/blocks exactly as the App form sends it: {locationId, businessDate:'2026-10-31', startMin:1140, endMin:1200, tableId:'tbl_acme_p2', reason, note} (<setup token>)",
+					"expected": "2xx (round-1 root cause: 500 because localToInstant object bound into numeric start_at)",
+					"observed": "201 Created; blk_2f592aa2-...; startAt=1793487600000, endAt=1793491200000"
+				},
+				{
+					"action": "sqlite after single-table block",
+					"expected": "rsv_blocks row; kind='block' occupancy; B1 reflowed; day version incremented",
+					"observed": "block row present; occupancy occ_0fc37a48 table tbl_acme_p2 kind block active=1 overbook=0 19:00-20:00; B1 old occupancy active=0, new active occupancy on tbl_00d903ae (G9-2) same window; dayver 3"
+				},
+				{
+					"action": "POST /setup/blocks area block {businessDate:'2026-10-31', startMin:720, endMin:780, areaId:'area_acme_main'}",
+					"expected": "201; expands to every active table in the area",
+					"observed": "201 blk_c96bbc38-...; 6 active block occupancies M1..M6 (tbl_acme_m1..m6) overbook=0"
+				},
+				{
+					"action": "GET /book/day?date=2026-10-31 (book token)",
+					"expected": "move notice for the reflow",
+					"observed": "moveNotices: B1 from T2 to G9-2, reason 'reflow'; day version 5"
+				},
+				{
+					"action": "DELETE /operator/reservations/setup/blocks/blk_2f592aa2... then DELETE location-scoped /locations/v17.../blocks/blk_c96bbc38...",
+					"expected": "2xx; block + block occupancies removed/deactivated; day version bumps; blocks cleaned up",
+					"observed": "200 + 200; block rows 0; block occupancies active 0 / any 0; dayver 7; blocks_left 0 on 2026-10-31"
+				}
+			],
+			"evidence": {
+				"transcripts": [
+					"evidence/foh-core/r2-api/val-setup-023-neg-no-token.txt",
+					"evidence/foh-core/r2-api/val-setup-023-booking-b1.txt",
+					"evidence/foh-core/r2-api/val-setup-023-create-block-table.txt",
+					"evidence/foh-core/r2-api/val-setup-023-create-block-area.txt",
+					"evidence/foh-core/r2-api/val-setup-023-dayfeed.txt",
+					"evidence/foh-core/r2-api/val-setup-023-dayfeed-summary.txt",
+					"evidence/foh-core/r2-api/val-setup-023-delete-block-table.txt",
+					"evidence/foh-core/r2-api/val-setup-023-delete-block-area-locscope.txt"
+				],
+				"sqlite": [
+					"evidence/foh-core/r2-api/val-setup-023-baseline.txt",
+					"evidence/foh-core/r2-api/val-setup-023-b1-before-block.txt",
+					"evidence/foh-core/r2-api/val-setup-023-sqlite-after-table-block.txt",
+					"evidence/foh-core/r2-api/val-setup-023-sqlite-area-expansion.txt",
+					"evidence/foh-core/r2-api/val-setup-023-sqlite-after-delete-table-block.txt",
+					"evidence/foh-core/r2-api/val-setup-023-sqlite-after-delete-area-block.txt",
+					"evidence/foh-core/r2-api/val-setup-023-b1-after-area-block.txt",
+					"evidence/foh-core/r2-api/val-setup-023-final-cleanup.txt"
+				],
+				"network": "POST /setup/blocks (startMin/endMin form payload) 201 x2; DELETE /blocks/:id 200; DELETE /setup/locations/:id/blocks/:id 200",
+				"consoleErrors": "n/a (no browser)"
+			},
+			"issues": null,
+			"observations": "rsv_day_versions does not bump exactly +1 per block op (first create took none -> 3); the contract only requires an increment. No UI check (r2-setup-ui owns the special-days screen)."
+		},
+		{
+			"id": "VAL-SETUP-025",
+			"title": "Setup conflicts endpoint returns detectConflicts items with kind/bookingId/tableId|serviceId/details.businessDate",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Negative first: GET /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/conflicts with no token",
+					"expected": "401",
+					"observed": "401 Unauthorized"
+				},
+				{
+					"action": "GET conflicts with <setup token> (real state on acme)",
+					"expected": "200 with real conflict items carrying kind/bookingId/tableId|serviceId/details.businessDate",
+					"observed": "200; 6 items: table_overlap x2, archived_table x2, unassigned x1, blocked_table x1; every item has bookingId and details.businessDate (2026-10-16/17/25/27/28); e.g. {\"kind\":\"unassigned\",\"bookingId\":\"rsv_893416df...\",\"serviceId\":\"svc_acme_dinner\",\"details\":{\"businessDate\":\"2026-10-25\"}}"
+				},
+				{
+					"action": "Owned probe: block tbl_acme_p1 19:00-20:00 on 2026-10-31 over my seated booking B2 (non-reflowable), then GET conflicts again",
+					"expected": "blocked_table conflict for B2 on my date with details.businessDate populated",
+					"observed": "8 items; mine: {\"kind\":\"blocked_table\",\"bookingId\":\"rsv_e7d17bb1...\",\"blockId\":\"blk_81311676...\",\"tableId\":\"tbl_acme_p1\",\"details\":{\"businessDate\":\"2026-10-31\"}}; block occupancy written with overbook=1 and B2 occupancy stayed active"
+				},
+				{
+					"action": "DELETE the probe block",
+					"expected": "cleanup",
+					"observed": "200; blocks_left 0 on 2026-10-31"
+				}
+			],
+			"evidence": {
+				"transcripts": [
+					"evidence/foh-core/r2-api/val-setup-025-neg-no-token.txt",
+					"evidence/foh-core/r2-api/val-setup-025-conflicts.txt",
+					"evidence/foh-core/r2-api/val-setup-025-block-over-seated.txt",
+					"evidence/foh-core/r2-api/val-setup-025-conflicts-with-owned.txt",
+					"evidence/foh-core/r2-api/val-setup-025-owned-conflict.txt",
+					"evidence/foh-core/r2-api/val-setup-025-delete-probe-block.txt"
+				],
+				"sqlite": [
+					"evidence/foh-core/r2-api/val-setup-025-sqlite-block-over-seated.txt"
+				],
+				"network": "GET /setup/locations/:id/conflicts 401 without token; 200 with 6 then 8 items; POST /setup/blocks 201; DELETE /setup/blocks/:id 200",
+				"consoleErrors": "n/a (no browser)"
+			},
+			"issues": null,
+			"observations": "GET /conflicts invokes reflowFutureBookingsForLocation, so the 'read' can write reflow moves and bump day versions (observed day-version growth across repeated calls). The UI conflicts panel mapping is r2-setup-ui's scope and was not exercised here.",
+			"notExercised": "UI panel rendering (r2-setup-ui)."
+		},
+		{
+			"id": "VAL-BOOK-008",
+			"title": "Book day feed: serviceId/areaId/source/tag filters, party+cover counters, per-query ETag (API half)",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Negative first: GET /operator/reservations/book/day?locationId=...&date=2026-10-16 with no token",
+					"expected": "401",
+					"observed": "401 Unauthorized"
+				},
+				{
+					"action": "GET day (book token), no filters",
+					"expected": "200; counters = sum over returned active reservations",
+					"observed": "13 rows; counters {parties:11, covers:30} = count/sum of the 11 returned rows not cancelled/no_show; ETag \"v17...:19:29\""
+				},
+				{
+					"action": "serviceId=svc_acme_lunch / serviceId=svc_acme_dinner",
+					"expected": "returned set narrowed to that service",
+					"observed": "lunch -> exactly [rsv_acme_5, rsv_acme_7] counters {1,2}; dinner -> exactly [rsv_acme_1, rsv_acme_2, rsv_204741a8..., rsv_acme_3, rsv_acme_4, rsv_acme_6] counters {5,18}"
+				},
+				{
+					"action": "areaId=area_acme_patio",
+					"expected": "narrowed to patio (table occupancy or area preference)",
+					"observed": "2 rows: rsv_acme_7 (areaPref patio) and rsv_204741a8 (occupies tbl_acme_p2, patio T2); counters {1,2}"
+				},
+				{
+					"action": "source=phone / source=walk_in",
+					"expected": "channel narrowing",
+					"observed": "phone -> 2 rows [rsv_5c55738d, rsv_28892aa7]; walk_in -> 2 rows [rsv_204741a8, rsv_23bf40e5]"
+				},
+				{
+					"action": "tag=Anniversary (name) and tag=tag_acme_birthday (id)",
+					"expected": "tag narrowing",
+					"observed": "Anniversary -> [rsv_acme_1]; tag_acme_birthday -> [rsv_acme_3]"
+				},
+				{
+					"action": "ETag checks: repeat identical queries; If-None-Match",
+					"expected": "ETag differs per query, stable for identical query",
+					"observed": "8 distinct ETags (one per distinct query, suffix .f<sha1-10>); repeated all/lunch queries returned identical ETags; If-None-Match -> 304 for both"
+				}
+			],
+			"evidence": {
+				"transcripts": [
+					"evidence/foh-core/r2-api/val-book-008-neg-no-token.txt",
+					"evidence/foh-core/r2-api/val-book-008-day-all.txt",
+					"evidence/foh-core/r2-api/val-book-008-svc-lunch.txt",
+					"evidence/foh-core/r2-api/val-book-008-svc-dinner.txt",
+					"evidence/foh-core/r2-api/val-book-008-area-patio.txt",
+					"evidence/foh-core/r2-api/val-book-008-source-phone.txt",
+					"evidence/foh-core/r2-api/val-book-008-source-walkin.txt",
+					"evidence/foh-core/r2-api/val-book-008-tag-anniversary.txt",
+					"evidence/foh-core/r2-api/val-book-008-tag-birthday-id.txt",
+					"evidence/foh-core/r2-api/val-book-008-etag-comparison.txt",
+					"evidence/foh-core/r2-api/val-book-008-conditional-304.txt",
+					"evidence/foh-core/r2-api/val-book-008-conditional-304-lunch.txt"
+				],
+				"network": "GET /book/day 401 without token; 200 with filters; 304 on If-None-Match; ETag header present on 200",
+				"consoleErrors": "n/a (no browser)"
+			},
+			"issues": null,
+			"observations": "counters define 'active' as status not in (cancelled, no_show); finished rows are counted. Under that definition counters equal the returned filtered set for every query. Also note the live 2026-10-16 data now contains 5 extra rows on srv_dbfce54a (G5-Dinner leftovers), so 'the rest in svc_acme_dinner' from the round-2 notes no longer holds; expectations were computed from the live data.",
+			"notExercised": "Book list UI (service selector, header counters) — r2-book-ui owns that half."
+		},
+		{
+			"id": "VAL-HOST-014",
+			"title": "arrived -> seated transition honours tableIds (assign + occupancy write; 409 when unavailable without overbook) (API half)",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Create B2 (phone, party 2, 2026-10-31 19:30) with no requested tables; the route auto-assigned tbl_1f1bb120 (G4-1), so unassign via POST /book/reservations/:id/assign {tableIds: [], expectedVersion:1}",
+					"expected": "party with no tables before the seat transition",
+					"observed": "assign 200; B2 version 2, tableIds []"
+				},
+				{
+					"action": "POST /book/reservations/:id/status {status:'arrived', expectedVersion:2}",
+					"expected": "200; arrived",
+					"observed": "200; version 3, arrivedAt 1792205684043, tableIds []"
+				},
+				{
+					"action": "POST /book/reservations/:id/status {status:'seated', tableIds:['tbl_acme_p1'], expectedVersion:3}",
+					"expected": "200 (round-1 root cause: tableIds ignored, no occupancy row)",
+					"observed": "200; status seated, version 5, seatedAt 1792205684109, tableIds ['tbl_acme_p1'], tableLabels ['T1']"
+				},
+				{
+					"action": "sqlite B2 + occupancy",
+					"expected": "occupancy row with right window",
+					"observed": "occ_1a05f337 table tbl_acme_p1 kind reservation active=1 overbook=0 window 1793489400000-1793493900000 (19:30-20:45 EDT)"
+				},
+				{
+					"action": "GET /book/day?date=2026-10-31",
+					"expected": "reservation shown with non-empty tableIds",
+					"observed": "{id: rsv_e7d17bb1..., status: seated, tableIds: ['tbl_acme_p1'], tableLabels: ['T1'], seatedAt: 1792205684109}"
+				},
+				{
+					"action": "Create B3 (no tables, unassigned the same way), arrived; POST status seated {tableIds:['tbl_acme_p1'], expectedVersion:3} while B2 occupies T1, no overbook",
+					"expected": "409; no occupancy written; status unchanged",
+					"observed": "409 {\"error\":\"locked_table_conflict\",\"message\":\"Cannot displace reservation BPVDSD (locked, seated, or within freeze window)\"}; sqlite B3 still arrived, seated_at null, version 3, 0 active occupancies"
+				}
+			],
+			"evidence": {
+				"transcripts": [
+					"evidence/foh-core/r2-api/val-host-014-create-b2.txt",
+					"evidence/foh-core/r2-api/val-host-014-create-b3.txt",
+					"evidence/foh-core/r2-api/val-host-014-b2-unassign.txt",
+					"evidence/foh-core/r2-api/val-host-014-b3-unassign.txt",
+					"evidence/foh-core/r2-api/val-host-014-b2-arrived.txt",
+					"evidence/foh-core/r2-api/val-host-014-b2-seated.txt",
+					"evidence/foh-core/r2-api/val-host-014-dayfeed.txt",
+					"evidence/foh-core/r2-api/val-host-014-dayfeed-b2.txt",
+					"evidence/foh-core/r2-api/val-host-014-b3-arrived.txt",
+					"evidence/foh-core/r2-api/val-host-014-b3-seated-conflict.txt",
+					"evidence/foh-core/r2-api/val-host-014-create-missing-idem.txt"
+				],
+				"sqlite": [
+					"evidence/foh-core/r2-api/val-host-014-after-unassign.txt",
+					"evidence/foh-core/r2-api/val-host-014-sqlite-after-seated.txt",
+					"evidence/foh-core/r2-api/val-host-014-sqlite-b3-after-conflict.txt"
+				],
+				"network": "POST /book/reservations 201 x2; POST /assign 200 x2; POST /status arrived 200 x2; POST /status seated 200 (B2) and 409 (B3); GET /book/day 200",
+				"consoleErrors": "n/a (no browser)"
+			},
+			"issues": null,
+			"observations": "The create route auto-assigns a compatible table even when the caller sends no tableIds; to reach the assertion's 'no tables' precondition I unassigned via POST /assign {tableIds: []} (documented, not a defect). Leftovers: B2 seated on T1 (success case) and B3 arrived/unassigned (409 case), both guest names prefixed R2-API- on my owned date 2026-10-31.",
+			"notExercised": "Floor-canvas drag-and-drop UI — r2-floor owns that half."
+		}
+	],
+	"frictions": [
+		{
+			"description": "POST /operator/reservations/book/reservations requires an Idempotency-Key header; the first create attempt returned 400 missing_idempotency_key (user-testing.md mentions Idempotency-Key only generically).",
+			"resolved": true,
+			"resolution": "Added Idempotency-Key to the create helper; evidence of the 400 kept in val-host-014-create-missing-idem.txt.",
+			"affectedAssertions": ["VAL-SETUP-023", "VAL-HOST-014"]
+		},
+		{
+			"description": "Booking create auto-assigns a table when no tableIds are sent, so 'a booking with no tables' is not directly creatable; the fix's precondition needed an explicit unassign.",
+			"resolved": true,
+			"resolution": "POST /book/reservations/:id/assign {tableIds: [], expectedVersion} returns 200 and clears the assignment (soft); then ran arrived -> seated with tableIds.",
+			"affectedAssertions": ["VAL-HOST-014"]
+		},
+		{
+			"description": "GET /operator/reservations/setup/locations/:id/conflicts runs the reflow engine, so a GET can write (auto_reassigned events, day-version bumps). Observed day versions grow across repeated conflict calls.",
+			"resolved": true,
+			"resolution": "Accepted as product behavior (route is the only way to read conflicts); noted for synthesis because the contract describes it as a read view.",
+			"affectedAssertions": ["VAL-SETUP-025"]
+		},
+		{
+			"description": "rsv_day_versions does not increment exactly +1 per block create/delete (2026-10-31 went none -> 3 on the first block create; +2 per later op).",
+			"resolved": true,
+			"resolution": "Recorded actual increments; the contract requires an increment, which holds.",
+			"affectedAssertions": ["VAL-SETUP-023"]
+		},
+		{
+			"description": "Day-feed counters treat 'active' as status not in (cancelled, no_show) and include 'finished' rows; the contract phrase 'active reservations' is ambiguous.",
+			"resolved": true,
+			"resolution": "Verified counters equal the returned filtered set under the implementation's definition and recorded the exact statuses per query so synthesis can judge.",
+			"affectedAssertions": ["VAL-BOOK-008"]
+		},
+		{
+			"description": "The round-2 notes' 2026-10-16 split ('2 in svc_acme_lunch, the rest in svc_acme_dinner') no longer matches live data: 5 rows now reference the G5 leftover service srv_dbfce54a (2026-11-02..05 effective window).",
+			"resolved": true,
+			"resolution": "Computed filter expectations from the live rows instead of the note; no shared rows were modified.",
+			"affectedAssertions": ["VAL-BOOK-008"]
+		}
+	],
+	"blockers": [],
+	"summary": "Tested 6 assertions (API halves): 6 pass, 0 fail, 0 blocked. Round-1 root causes are fixed on the live tenant-api (3007): location-scoped DELETE aliases for pacing and service-availability answer 401 without a token and 2xx with one (legacy routes still work, cross-location refused with 404); POST /setup/blocks accepts the App form payload {businessDate,startMin,endMin} (201, was 500) and expands area blocks to all 6 active tables, reflows the soft booking (T2 -> G9-2, auto_reassigned + day-feed moveNotice) and increments rsv_day_versions; GET conflicts returns real items with kind/bookingId/tableId|serviceId and details.businessDate (verified 6 real + 1 self-owned blocked_table on 2026-10-31); the book day feed filters by serviceId/areaId/source/tag with counters equal to the filtered active set and per-query ETags (8 distinct, stable, 304 on If-None-Match); arrived -> seated honours tableIds (200, seatedAt set, rsv_table_occupancies row on T1 with the right window, day feed tableIds non-empty) and returns 409 with no occupancy/status change when the table is occupied without overbook. Not exercised here: all UI halves (r2-setup-ui, r2-book-ui, r2-floor), the pacing availability-cap effect, and the service-availability mode effect on slot search. Evidence: 70+ curl transcripts and sqlite SELECT outputs under evidence/foh-core/r2-api/. Leftovers on my owned date 2026-10-31: B1 rsv_54e2c979 (booked, reflowed to G9-2), B2 rsv_e7d17bb1 (seated T1), B3 rsv_680f3f28 (arrived, 409 case), all R2-API- prefixed; R2-API-Service srv_f3aa21cd remains (effective 2026-11-06) with zero pacing/availability rules; no blocks remain on 2026-10-31."
+}

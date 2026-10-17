@@ -1,0 +1,226 @@
+{
+	"timestamp": "2026-10-17T10:20:08.475Z",
+	"workerSessionId": "4f410782-f14c-457f-8424-c04c65aedd4b",
+	"featureId": "guestbook-and-reports-full-stack",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "661d65a5",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Delivered Guestbook CRM, six module reports, the bookings and waitlist_entries report subjects and /book/today in tenant-api, plus App Guests list/profile, Reports screen, bookings-today dashboard block, detail-sheet pinned notes, Arabic translations and a Playwright spec. The three carried-over tenant-api fixes are also in. Typecheck, lint, tenant-api (2509 tests), touched App vitest (553) and the e2e spec (9/9 with repeat) pass, and the flows were checked live on acme and riyadh-grill, including ?lng=ar.",
+		"whatWasImplemented": "Backend: rsv-guestbook-service plus rewritten guest routes (partial search, cursor paging of at most 50, tag CRUD and filter, derived first_visit/frequent_no_show tags, pinned/edited/deleted notes, atomic merge with rsv_guest_merges and booking events, export with includeSensitive, erase), erase-customer unlink hook, reconcile_guest_counters tick task, late-cancel flagging, module report routes (summary, no-shows, cancellations, turn-times, waitlist, pacing) gated on read:reservation_report:any with report.run audit and no contact PII, generic report subjects bookings and waitlist_entries in RESTRICTED_REPORT_SUBJECTS and the App report token, GET /book/today, and pinned notes on guest summaries. Carried-over fixes: notify_available names the restaurant-local date and time with a booking link (migration 0018 and an email render test), availability ETag includes the online and waitlist flags, and the staff test needles no longer collide with epoch-ms timestamps. App: guests.tsx and guests.$guestId.tsx with guest-list-screen, guest-profile-screen, notes panel, merge dialog and guest-profile-card; reports.tsx with reports-screen and panels; the bookings-today block (maxInstances 1, hidden unless reservations.enabled and read:reservation:any, fetches browser-direct, refreshes every 60s); detail-sheet pinned notes, linked-customer badge and profile link; real Arabic msgstr for all new strings. Fixes found during live verification: reservation detail now unwraps the nested guestDetail so the sheet has the guest id and pinned notes, and the block localizes JSON location names.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "typecheck_app (react-router typegen && tsc)",
+					"exitCode": 0,
+					"observation": "Clean after final changes."
+				},
+				{
+					"command": "turbo typecheck --filter=tenant-api --filter=@repo/reports",
+					"exitCode": 0,
+					"observation": "2 tasks successful."
+				},
+				{
+					"command": "eslint on all changed/new App files + prettier --check",
+					"exitCode": 0,
+					"observation": "0 errors. Remaining warnings are three lingui warnings in $orgSlug_+/index.tsx that were there before and one raw-locator warning in the e2e spec (same pattern as the other reservations specs)."
+				},
+				{
+					"command": "npm run lint:oxc",
+					"exitCode": 0,
+					"observation": "19 warnings, 0 errors (pre-existing)."
+				},
+				{
+					"command": "npm run test -w tenant-api",
+					"exitCode": 0,
+					"observation": "115 files, 2509 tests passed."
+				},
+				{
+					"command": "npx vitest run (components/reservations, components/dashboard, utils/dashboards, utils/reservations, reports+, dashboards+, index)",
+					"exitCode": 0,
+					"observation": "55 files, 553 tests passed."
+				},
+				{
+					"command": "npm run build -w app; PORT=3101 playwright test reservations-guestbook-reports.test.ts (also --retries=0 --repeat-each=3)",
+					"exitCode": 0,
+					"observation": "3 passed, then 9/9 passed with repeat."
+				},
+				{
+					"command": "npm run lingui:extract -w app; npm run lingui:check",
+					"exitCode": 0,
+					"observation": "All 139 new ar msgstr filled; check passes across all apps."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "acme guests list: search by name, phone fragment and an empty query, then tag filter VIP and First visit",
+					"observed": "Search narrows the rows, shows the empty-search state on no match, and the tag filter returns only tagged guests. The guest request carries limit=50."
+				},
+				{
+					"action": "Guest profile: create tag, add a pinned note, merge a duplicate, export standard and sensitive, erase",
+					"observed": "The tag appeared on the profile and the pinned note was listed. Merge showed 'Guests merged.' and moved the visit history. Export sent includeSensitive=1 for the sensitive variant. Erase showed the erased notice."
+				},
+				{
+					"action": "Today: open Layla's reservation detail sheet",
+					"observed": "The pinned note, the 'Open guest profile' link to /acme/reservations/guests/gst_acme_1 and the profile link are shown (after the guestDetail unwrap fix)."
+				},
+				{
+					"action": "Reports (acme): six tabs, empty range 2020-01-06..07, ?lng=ar",
+					"observed": "All tabs render data. The empty range shows zeroed totals and empty-state rows. Arabic renders with dir=rtl and localized titles."
+				},
+				{
+					"action": "Dashboard: Edit layout, Add block, Bookings today, then reload",
+					"observed": "The block is added once with counts and next arrivals. Network shows browser-direct GET :3007 /book/today with a Bearer token, and a third request came 60s later. /acme/_.data contains no guest names. Location names showed as raw JSON until I fixed that."
+				},
+				{
+					"action": "Set reservations.enabled=false on acme and reload the dashboard",
+					"observed": "The saved block is hidden and no longer in the page text. Flag re-enabled afterwards."
+				},
+				{
+					"action": "riyadh-grill guests and reports with ?lng=ar; /acme/customers",
+					"observed": "Both pages render RTL with Arabic labels. Customers page still loads normally. The console has no errors on a fresh load."
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/tenant-api/src/routes/reservations-guestbook-reports.test.ts",
+					"cases": [
+						{
+							"name": "guestbook + reports routes (17 cases)",
+							"verifies": "Guest search, paging, tags, notes, merge, erase hook, report endpoints, grants, zeroed ranges, PII-free responses and audit rows"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/analytics.reservations.test.ts",
+					"cases": [
+						{
+							"name": "reservation report subjects (6 cases)",
+							"verifies": "bookings and waitlist_entries subjects are restricted, access-gated and load without contact columns"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/services/rsv-guest-counters.test.ts",
+					"cases": [
+						{
+							"name": "reconcile_guest_counters (4 cases)",
+							"verifies": "Counters are rebuilt from bookings and the tick task is registered"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/guests/guest-list-screen.test.tsx",
+					"cases": [
+						{
+							"name": "list/search/tag/paging (9 cases)",
+							"verifies": "50-per-page, search, empty states, tag filter, load more, denied and error states"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/guests/guest-profile-screen.test.tsx",
+					"cases": [
+						{
+							"name": "profile actions (10 cases)",
+							"verifies": "Tags, pinned notes, merge, export, erase confirm, version conflict and merged states"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/reports/reports-screen.test.tsx",
+					"cases": [
+						{
+							"name": "reports screen (12 cases)",
+							"verifies": "Six tabs, date/service filters, zero states, range, denied and error handling"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/dashboard/blocks/bookings-today-block.test.tsx",
+					"cases": [
+						{
+							"name": "block (5 cases)",
+							"verifies": "Browser-direct fetch, 60s refresh, location select and error state"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/detail-sheet.guest-crm.test.tsx",
+					"cases": [
+						{
+							"name": "guest CRM card (2 cases)",
+							"verifies": "Pinned notes, linked customer badge and the profile link only for guest readers"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/dashboards/bookings-today.server.test.ts",
+					"cases": [
+						{
+							"name": "access loader (4 cases)",
+							"verifies": "Flag off, missing grant, location scope, localized location names"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/dashboards/bookings-today.test.ts",
+					"cases": [
+						{
+							"name": "block helpers (2 cases)",
+							"verifies": "Inaccessible block ids and the default access"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/routes/_app+/$orgSlug_+/reports+/token.reservations.test.ts",
+					"cases": [
+						{
+							"name": "report token subjects (5 cases)",
+							"verifies": "bookings/waitlist_entries are gated by resolveReservationsReportAccess"
+						}
+					]
+				},
+				{
+					"file": "apps/app/tests/e2e/reservations-guestbook-reports.test.ts",
+					"cases": [
+						{
+							"name": "guestbook list/profile, reports tabs + RTL, bookings-today add-once and browser-direct",
+							"verifies": "End-to-end App behaviour with tenant-api stubbed"
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/app/app/utils/reservations/book-api.test.ts (guestDetail unwrap)",
+				"apps/app/app/utils/reservations/reservations-guards.test.ts",
+				"apps/app/app/utils/dashboards/config.test.ts",
+				"apps/app/app/components/dashboard/add-block-dialog.test.tsx",
+				"apps/app/app/components/dashboard/report-block-options.test.tsx",
+				"apps/tenant-api staff.adversarial/staff.scope-limit/reservations-security/reservations-public/rsv-message-service/reservations-email tests"
+			],
+			"coverage": "Backend routes and services, report subjects, App screens, block, detail sheet and the access loader have unit/component tests, plus a Playwright spec that passed 9/9 on repeat."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "The reservations layout header (Location/Date/Service controls) also shows on the Guests and Reports screens, where only the location applies. It was already there for other sections.",
+				"suggestedFix": "Hide the date and service controls on the guests and reports routes."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "Operator and host-without-grant gating (no Reports link, no profile link, 403) was not re-verified in a second browser login. It is covered by the tenant-api security tests (27), component tests and the route guards test.",
+				"suggestedFix": "Have the user-testing validator exercise a host user without guest or report grants."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

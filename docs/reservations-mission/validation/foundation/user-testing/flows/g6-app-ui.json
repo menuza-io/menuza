@@ -1,0 +1,106 @@
+{
+	"group": "g6-app-ui",
+	"milestone": "foundation",
+	"surface": "agent-browser (App)",
+	"testedAt": "2026-10-16T05:33:00Z",
+	"isolation": {
+		"browserSession": "4624c47a301b__appui",
+		"app": "http://localhost:3001",
+		"user": "kody",
+		"orgs": [
+			"acme (t58bgatqh3rv0s3movrecyj1, US)",
+			"riyadh-grill (ru0dm42cud9scs4g2duep21c, KSA)"
+		],
+		"flagsOwned": ["reservations.enabled", "reservations.payments"]
+	},
+	"assertions": [
+		{
+			"id": "VAL-FND-021",
+			"status": "pass",
+			"observed": "Set reservations.enabled=false for acme (script output: 'D1: reservations.enabled=false for acme (t58bgatqh3rv0s3movrecyj1)' and 'data.db: reservations.enabled=false for acme'), then logged in as kody (http://localhost:3001/login, two-step form) and opened http://localhost:3001/acme. Sidebar accessibility snapshot lists Dashboard, Reports, Notes, Media library, Customers, Menu, Mailbox, Marketing, Phone agent, Staff, Website, Settings with no 'Reservations' group; document.body.innerText.includes('Reservations') === false; no 'Reservations'/'Today'/'Waitlist' link anywhere. Direct document navigations, statuses read from the session network capture: GET /acme/reservations (Document) 404; GET /acme/reservations/settings (Document) 404; GET /acme/reservations/token?scope=setup (Document) 404. Rendered content: /acme/reservations shows breadcrumb Home / Reservations with body '404 Not Found'; /acme/reservations/settings shows breadcrumb Home / Reservations / Settings with body '404 Not Found'; the token route shows body 'Not Found'. Console output for these deliberate navigations contains only the expected React Router 404 error lines; no unexpected errors.",
+			"evidence": [
+				"evidence/foundation/g6-app-ui/VAL-FND-021-acme-sidebar-flag-off.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-021-acme-dashboard-flag-off.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-021-404-statuses.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-021-reservations-404.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-021-reservations-404-snapshot.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-021-settings-404.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-021-token-404.png"
+			],
+			"limitations": "The sidebar group is computed in the root loader and cached for 30 s (cachified key reservations-nav:<orgId>:<userId>); the observed absence was taken after a fresh document load with the flag false, and the three document 404s independently prove flag-off behavior at the route level."
+		},
+		{
+			"id": "VAL-FND-022",
+			"status": "pass",
+			"observed": "Set reservations.enabled=true for acme and riyadh-grill (script output confirms D1 + data.db for both). /acme sidebar shows the 'Reservations' group (button, expanded=false) and expanding it lists Today, Book, Waitlist, Guests, Experiences, Reports, Settings. /riyadh-grill sidebar shows the 'Reservations' group. Opening http://localhost:3001/acme/reservations lands on http://localhost:3001/acme/reservations/today; [data-testid=\"reservations-header-controls\"] present, #reservations-location-select present as combobox 'Location' with options 'Downtown Flagship' and 'Waterfront Kitchen (Toronto)' (2 locations), #reservations-date-input present, nav 'Reservations navigation' lists all 7 sections. Opening http://localhost:3001/riyadh-grill/reservations lands on http://localhost:3001/riyadh-grill/reservations/today; header controls present, #reservations-location-select absent (org has 1 location), #reservations-date-input present, section nav lists all 7 sections.",
+			"evidence": [
+				"evidence/foundation/g6-app-ui/VAL-FND-022-acme-sidebar-flag-on.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-acme-sidebar-flag-on.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-acme-sidebar-expanded.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-acme-sidebar-expanded.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-riyadh-sidebar-flag-on.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-riyadh-sidebar-flag-on.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-acme-reservations-today-snapshot.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-acme-reservations-today.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-riyadh-reservations-today-snapshot.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-riyadh-reservations-today.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-022-observations.txt"
+			],
+			"limitations": "After enabling the flag for acme, the sidebar group appeared only once the 30 s root-loader cache TTL for reservations-nav expired (waited ~35 s, then reloaded); see frictions. The section nav and shell checks were done after the redirect settled."
+		},
+		{
+			"id": "VAL-FND-016",
+			"status": "pass",
+			"observed": "With the flag on, in-page fetch (logged in as kody) of GET /acme/reservations/token?scope=setup -> 200, Cache-Control 'private, no-store', JSON keys exactly expiresAt, features, grants, jwt, locationIds, scope, tenantApiUrl, tenantApiUrl http://localhost:3007; decoded JWT header {alg: HS256, typ: 'rsv+jwt'}, payload aud 'tenant-api-reservations-operator', role 'operator', region 'us', scope 'setup', orgId t58bgatqh3rv0s3movrecyj1, locationIds null, impersonated false, folded features {enabled,online,waitlist,payments,experiences,voice all true}, exp-iat = 900 s, expiresAt = exp*1000. GET /riyadh-grill/reservations/token?scope=setup -> 200, same header/claim shape with region 'ksa', tenantApiUrl http://localhost:3009, TTL 900 s. Sensitive scopes on acme: scope=guests -> 200, TTL 300 s, grants [read:reservation:any, read:reservation_guest:any, update:reservation_guest:any]; scope=payments -> 200, TTL 300 s, grants [read:reservation:any, update:reservation_payment:any]. Negative cases: with reservations.enabled=false the document GET /acme/reservations/token?scope=setup returned 404 (see VAL-FND-021); with reservations.payments=false, GET /acme/reservations/token?scope=payments returned 404 body 'Not Found' while scope=setup still returned 200 with Cache-Control private, no-store (flag then restored to true). Terminal: `cd /home/factory-user/repos/menuza/apps/app && CI=true npx vitest run app/utils/reservations/token.test.ts` -> exit 0, Test Files 1 passed (1), Tests 5 passed (5), including 'returns 404 when reservations.enabled is off', 'returns 404 for scope=payments when reservations.payments is off, and mints when on', 'signs HS256 rsv+jwt with aud tenant-api-reservations-operator, private no-store headers, and 900s/300s TTL', 'intersects locationIds with UserOrganization.locationScope and resolves KSA tenantApiUrl'. No token string or signature is recorded; all redacted as <redacted>.",
+			"evidence": [
+				"evidence/foundation/g6-app-ui/VAL-FND-016-token-decodes.json",
+				"evidence/foundation/g6-app-ui/VAL-FND-016-vitest-token.txt"
+			],
+			"limitations": "The 403-when-grantless case was verified only through the unit suite ('returns 400 on unknown scope and 403 when user lacks grants for the scope'), not through a second low-grant operator in the browser (kody holds all 8 grants in both orgs)."
+		},
+		{
+			"id": "VAL-FND-015",
+			"status": "pass",
+			"observed": "Terminal: `cd /home/factory-user/repos/menuza/apps/app && CI=true npx vitest run app/utils/reservations/role-presets.test.ts app/utils/organization/tenant-role-permissions.test.ts` -> exit 0, Test Files 2 passed (2), Tests 17 passed (17). Key cases: 'grants exact expected permissions for Host, Reservations manager, Guest relations, Owner, Shift manager, Guestbook manager, and Finance' (asserts Host = [read:reservation:any, update:reservation:any]; reservations_manager has length 7 and does not contain update:reservation_payment:any; guest_relations and owner lists) and 'expands implied read grants for every reservations update grant'. Source confirmation: packages/reservations/src/permissions.ts RESERVATIONS_ROLE_PRESETS has host=[read_reservation, update_reservation], reservations_manager=7 grants excluding update:reservation_payment:any, guest_relations=[read_reservation, read_reservation_guest, update_reservation_guest], owner=all 8 (RESERVATIONS_PERMISSION_LIST); apps/app/app/utils/organization/tenant-role-permissions.ts RESERVATIONS_IMPLIED_PERMISSION_IDS maps org_perm_update_reservation_any->read_reservation_any, update_settings->read_settings, update_guest->read_guest, update_payment->read_reservation + read_report. Browser: with reservations.enabled=false on acme, /acme/settings/roles shows no 'Reservations role presets' card and no 'Reservations' text, and /acme/settings/roles/new (Create Custom Role) renders 10 permission groups (Notes & Documents, Team & Members, Organization Settings, Website & Publishing, Marketing, AI phone agent, Team chat, Staff, Schedule & time clock, Hiring) with no 'Select all Reservations' aria-label and no 'Reservations' text. After setting the flag true and reloading, /acme/settings/roles shows the 'Reservations role presets' card naming Host, Reservations manager, Guest relations and Owner, and /acme/settings/roles/new shows the 'Select all Reservations' group whose table lists all 8 reservation permissions (View/Manage reservation book & waitlist, View/Manage reservation settings & experiences, View/Manage guestbook, View reservation reports, Charge fees & refund reservation payments).",
+			"evidence": [
+				"evidence/foundation/g6-app-ui/VAL-FND-015-vitest-role-presets.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-roles-index-flag-off.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-role-editor-flag-off.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-role-editor-flag-off-snapshot.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-roles-index-flag-on.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-roles-index-flag-on-snapshot.txt",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-role-editor-flag-on.png",
+				"evidence/foundation/g6-app-ui/VAL-FND-015-role-editor-flag-on-snapshot.txt"
+			],
+			"limitations": "The browser gating check covers the roles index presets card and the role editor permission group; the contract's example URL /acme/settings/members was not needed because the gating component (TenantRoleAccessManager / RoleAccessForm) is the roles editor."
+		}
+	],
+	"frictions": [
+		{
+			"description": "user-testing.md says the reservations flag is read per request and 'No cache flush is needed ... Reload once if the sidebar still shows the old state', but the sidebar nav access is cached in the root loader for 30 s (cachified key reservations-nav:<orgId>:<userId> in apps/app/app/root.tsx). After setting reservations.enabled=true for acme, a plain reload still showed no group; it appeared only after the 30 s TTL expired (~35 s wait) and another reload.",
+			"resolved": true,
+			"resolution": "Waited ~35 s for the cachified TTL, then reloaded; the group appeared. The route-level behavior (404s, redirects) was not affected.",
+			"affectedAssertions": ["VAL-FND-022"]
+		},
+		{
+			"description": "agent-browser screenshot with a relative path resolves against the browser session working directory (the repo root), not the shell's cwd, so 12 PNGs intended for the evidence directory were written to /home/factory-user/repos/menuza. They were moved into the evidence directory and git status is clean again.",
+			"resolved": true,
+			"resolution": "Used absolute paths for later screenshots; moved the stray PNGs into evidence/foundation/g6-app-ui/.",
+			"affectedAssertions": ["VAL-FND-021", "VAL-FND-022", "VAL-FND-015"]
+		},
+		{
+			"description": "The sidebar 'Reservations' group button could not be clicked through its ref: agent-browser reported \"Element '@e49' is covered by <aside.bg-background.text-foreground>\". Clicking the same button through a page eval worked.",
+			"resolved": true,
+			"resolution": "Clicked the group with an in-page document.querySelector eval; the expansion and links were captured normally.",
+			"affectedAssertions": ["VAL-FND-022"]
+		},
+		{
+			"description": "Console log contains React Router 404 error lines from the deliberate negative navigations in VAL-FND-021; these are the expected responses, not defects.",
+			"resolved": true,
+			"resolution": "Recorded as expected; no other console errors (no 'Invalid hook call', no uncaught exceptions).",
+			"affectedAssertions": ["VAL-FND-021"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": ["agent-browser", "terminal"]
+}

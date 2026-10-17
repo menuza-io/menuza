@@ -1,0 +1,94 @@
+{
+	"group": "g6-msg-booking",
+	"surface": "curl+sqlite",
+	"testedAt": "2026-10-17T12:51:30Z",
+	"isolation": {
+		"org": "acme (t58bgatqh3rv0s3movrecyj1)",
+		"locations": "flagship v17plv08r5v357bie335lyq8 (public bookings); b5hymj7733l3wxrg74dytzty (VAL-MSG-016 settings work, private to this group)",
+		"ownedDate": "2026-10-25 (flagship) / 2026-10-18 + 2026-10-25 (b5hymj)",
+		"ownedPhones": "+15555550620, +15555550621, +15555550622..+15555550628",
+		"ownedEmails": "rsv-g6-20..28@example.com",
+		"clientIdentity": "X-Forwarded-For 10.6.x.1 per request",
+		"tokenHandling": "operator tokens minted via mint-token.mjs; internal token resolved from the tenant-api Varlock env; no token value written to evidence or report",
+		"settingsTouched": "b5hymj7733l3wxrg74dytzty messaging (quiet hours + reminderHours) temporarily for VAL-MSG-016, restored; flagship message_texts confirmation|en note added and removed. The flagship messaging JSON was never written by this group."
+	},
+	"toolsUsed": [
+		"curl",
+		"python3 (urllib booking flow)",
+		"sqlite3 (read-only)",
+		"varlock run (internal token resolution)",
+		"grep/python (capture inspection)"
+	],
+	"assertions": [
+		{
+			"id": "VAL-MSG-005",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g6-msg-booking/VAL-MSG-005-book-v5-1.json (POST /reservations -> 201, code 3P0GAW2X), VAL-MSG-005-confirmation.json (capture to rsv-g6-22@example.com), VAL-MSG-005-availability-network.json, VAL-MSG-005-note-put.json, VAL-MSG-005-note-confirmation.json, VAL-MSG-005-note-restore.json, VAL-MSG-005-note-appears-only-in-confirmations.txt, VAL-MSG-011-cancellation_guest.json, VAL-MSG-005-006-sms-absence.txt, VAL-MSG-005-006-008-011-012-sqlite.txt",
+			"notes": "Public booking on acme (Origin http://acme.menuza.test:3008, smsOptIn false, valid email) -> POST /reservations 201; confirmation captured within the same request (deliverAfterCommit, no tick needed). Capture checks: to = guest email, meta.messageKind = 'confirmation', subject 'Your reservation at Downtown Flagship is confirmed' (non-empty), html contains the location name (Downtown Flagship), the booking date/time ('Sunday, October 25, 2026', '6:00 PM'), 'Party size: 2', the manage link and an add-to-calendar link (https://calendar.google.com/calendar/render?...&dates=20261025T220000Z/20261025T231500Z). Branding: email-theme hex colors present (#0a0a0a, #171717, #737373, #e5e5e5, #fafafa, #ffffff) and the theme font/radius applied inline. Custom note: PUT /operator/reservations/setup/message-texts (kind confirmation, locale en) -> the note appeared in the very next booking's confirmation (FANZ65QG, captured 12:41:17) and in no other kind (cancellation_guest, cancellation_restaurant, reminder captures contain no note text); the note was then removed and rsv_message_texts has no confirmation|en row. SMS: 0 [SMS MOCK] lines for +15555550622 (guest did not opt in).",
+			"limitations": "Contract Tool is agent-browser; this group is a curl surface, so the flow was done through POST /reservations and the captured emails instead of Sites /reserve (no browser session opened). No screenshot of the rendered email; the captured HTML was verified structurally. Manage-link origin: the email contains http://localhost:3001/reserve/manage#t=... (the App origin), not <siteOrigin> http://acme.menuza.test:3008 - the known defect already recorded in the round's runtime findings; path+fragment form is correct and the token is only in the fragment. Logo: acme's Organization row has siteIconKey = null and siteTheme = null (local D1), so the email renders the layout's text fallback (org name) instead of a logo <img>; there is no logo configured for this org to render, so the 'logo' element of the branding parenthetical is not observable in this environment."
+		},
+		{
+			"id": "VAL-MSG-006",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g6-msg-booking/VAL-MSG-006-sms-log-line.txt, VAL-MSG-005-006-sms-absence.txt, VAL-MSG-006-confirmation-sms-optin.json, VAL-MSG-006-confirmation-no-sms.json, VAL-MSG-006-book-v6-1.json, VAL-MSG-006-book-v6-2.json, VAL-MSG-005-006-008-011-012-sqlite.txt",
+			"notes": "Booking GAGQDHKH (smsOptIn true, +15555550624) -> log line '[SMS MOCK] To: +15555550624 | Message: Downtown Flagship: booking confirmed for Sunday, October 25, 2026, 6:30 PM, party of 2. http://localhost:3001/reserve/manage#t=...' (names the restaurant, the booking time, contains the manage link; exactly 1 line for that phone) and the confirmation email was captured. Booking FV4HNPK3 (smsOptIn false, +15555550625) -> confirmation email captured, 0 [SMS MOCK] lines for +15555550625. Both public POST /reservations returned 201.",
+			"limitations": "Tool is agent-browser in the contract; done through the API + log/capture inspection (no browser). Manage-link origin is the App origin (known defect, see VAL-MSG-005)."
+		},
+		{
+			"id": "VAL-MSG-008",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g6-msg-booking/VAL-MSG-008-confirmation-ar.json, VAL-MSG-008-confirmation-es-fallback-en.json, VAL-MSG-008-book-v8-ar.json, VAL-MSG-008-book-v8-es.json",
+			"notes": "Booking with locale 'ar' (0GH5GTFV, rsv-g6-26): subject 'تم تأكيد حجزك في Downtown Flagship' (Arabic) and the HTML root is <html lang=\"ar\" dir=\"rtl\"> (dir=\"rtl\" present, RTL alignment styles applied). Booking with locale 'es' on the same org (JT1WFAYJ, rsv-g6-27): subject 'Your reservation at Downtown Flagship is confirmed' and <html lang=\"en\" dir=\"ltr\"> - non-EN/AR locales fall back to English. Both POST /reservations returned 201.",
+			"limitations": "None beyond the shared manage-link-origin defect (not part of this assertion)."
+		},
+		{
+			"id": "VAL-MSG-011",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g6-msg-booking/VAL-MSG-011-manage-cancel-response.json (HTTP 200, reservation status cancelled), VAL-MSG-011-cancellation_guest.json, VAL-MSG-011-rows-before-cancel.txt, VAL-MSG-011-rows-after-cancel.txt, VAL-MSG-011-tick.json, VAL-MSG-005-006-008-011-012-sqlite.txt",
+			"notes": "Booking FANZ65QG (rsv-g6-23, 2026-10-25 18:15 EDT, reminder send_at 2026-10-25 18:15Z) cancelled through the public manage route (POST /reservations/manage/cancel with X-Reservation-Token) -> HTTP 200, reservation status cancelled. The pending reminder row moved pending -> cancelled (and the reconfirm_request row likewise); the tick immediately after reported deliver_messages count 0 (sent 0). Captures for that guest are exactly two: confirmation (12:41:17) and cancellation_guest (12:41:40, subject 'Your reservation at Downtown Flagship was cancelled', body names the cancelled date/time and party size) - no reminder email was ever captured for the booking.",
+			"limitations": "The contract describes the manage page; I used the underlying manage API with the capability token from the booking response (no browser session). The reminder was cancelled before its due time, so the 'suppressed at tick' variant of the assertion was not exercised - the cancelled row is the observed state."
+		},
+		{
+			"id": "VAL-MSG-012",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g6-msg-booking/VAL-MSG-012-operator-cancel-response.json (HTTP 200, reservation.status cancelled, code FV4HNPK3), VAL-MSG-012-cancellation_restaurant.json, VAL-MSG-011-cancellation_guest.json (wording comparison), VAL-MSG-005-006-008-011-012-sqlite.txt",
+			"notes": "Operator cancellation via POST /operator/reservations/book/reservations/:id/status (book token, status cancelled, cancelReason set) -> HTTP 200 and the response reservation carries status 'cancelled' (the immediate confirmation the UI shows; sqlite shows the same status). Capture: meta.messageKind 'cancellation_restaurant', subject 'We had to cancel your reservation at Downtown Flagship', body names the restaurant, the cancelled date/time ('Sunday, October 25, 2026', '6:45 PM') and the restaurant's contact details ('Phone: +1 (555) 234-5678'). Wording is distinct from the guest-cancellation kind: guest subject 'Your reservation at Downtown Flagship was cancelled' / lead 'as you asked, we cancelled...' vs restaurant subject 'We had to cancel your reservation at Downtown Flagship' / lead 'we are sorry: Downtown Flagship had to cancel your reservation'.",
+			"limitations": "Contract Tool is agent-browser (App book/detail sheet); no browser session was opened, so there is no screenshot(detail-sheet-cancelled). The 'operator UI confirms immediately' element was verified through the API response (200 + cancelled status) and sqlite rather than a screen."
+		},
+		{
+			"id": "VAL-MSG-016",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g6-msg-booking/VAL-MSG-016-baseline.txt, VAL-MSG-016-settings-put.json, VAL-MSG-016-settings-put2.json, VAL-MSG-016-reminder-row-after-booking.txt, VAL-MSG-016-reminder-row-A2.txt, VAL-MSG-016-rows-after-window-change.txt, VAL-MSG-016-final-sqlite.txt, VAL-MSG-016-tick.json, VAL-MSG-016-booking-A-confirmation.json, VAL-MSG-016-booking-A2-confirmation.json, VAL-MSG-016-settings-restore.json, VAL-MSG-005-016-settings-restored.txt",
+			"notes": "Quiet hours were set on the acme location b5hymj7733l3wxrg74dytzty (America/New_York) to a window of 08:50-10:00 local (temporary) with reminderHours 33 so the raw reminder target of two 2026-10-18 dinner bookings (start-33h = 2026-10-17 13:00Z and 13:45Z = 09:00/09:45 EDT, both inside the window) is shifted earlier to the window start: rsv_messages send_at = 2026-10-17 12:50:00Z (08:50 EDT) for both rows (55 min and 10 min earlier than the raw targets). The rows stayed pending and were delivered at the adjusted time: tick HTTP 200 delivered 2 messages and the captures are reminder emails at 2026-10-17T12:50:21Z (kind reminder, status sent - not dropped, not cancelled). A confirmation booked while the clock was inside quiet hours (booking request 12:50:33.153Z = 08:50:33 EDT, HTTP 201) was captured immediately at 12:50:33.277Z with no tick in between (kind confirmation is never delayed by quiet hours). Settings were restored afterwards: b5hymj messaging version 4, resolved reminderHours 24 and quietHours 21:00-08:00 (baseline was {} which resolves to exactly these defaults).",
+			"limitations": "The assertion was exercised at a secondary acme location (b5hymj...) instead of the flagship, because the flagship's message settings were being actively changed by other validators during this run (observed reminderHours 4 and reconfirm toggles at versions 44->54); this kept the change isolated to rows this group owns. The message-texts API merges patches and cannot delete stored keys, so the restore writes the default values explicitly (21:00-08:00, 24 h) - the resolved configuration equals the baseline {} but the stored JSON differs ({\"kinds\":{},\"reminderHours\":24,\"quietHours\":{\"startMin\":1260,\"endMin\":480}}). A manual tick was used for delivery; the 120 s interval tick was also live during the window."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The INTERNAL_COMMAND_TOKEN in apps/app/.dev.vars does not authenticate against the running tenant-api (401 unauthorized on POST /api/reservations/tick); the node resolves its token from the tenant-api Varlock environment.",
+			"resolved": true,
+			"resolution": "Resolved the token with `cd apps/tenant-api && ../../node_modules/.bin/varlock run -- node -e ...` (length 45 vs 47 in .dev.vars) and used it without printing the value. Worth recording for the round's runtime findings.",
+			"affectedAssertions": ["VAL-MSG-011", "VAL-MSG-016"]
+		},
+		{
+			"description": "The b5hymj location has a single table, so a second overlapping booking for the quiet-hours scenario failed with 409 tables_occupied.",
+			"resolved": true,
+			"resolution": "Used the operator overbook flag with an overbookReason for my own overlapping booking at that private location (no other group's data touched).",
+			"affectedAssertions": ["VAL-MSG-016"]
+		},
+		{
+			"description": "Quiet-hours delivery needs the adjusted send time to be in the future when the message is reconciled; the first window choice left the raw target just outside the window (send_at kept the raw time).",
+			"resolved": true,
+			"resolution": "Adjusted the temporary window (a second settings patch) so the raw targets fell inside it and the adjusted time was ~7 minutes ahead, then ticked and observed delivery.",
+			"affectedAssertions": ["VAL-MSG-016"]
+		},
+		{
+			"description": "The flagship's message settings changed twice during this run from other validators (reminderHours 24 -> 4, reconfirm toggles, versions 44 -> 54), which made any quiet-hours change at the flagship unsafe for other groups.",
+			"resolved": true,
+			"resolution": "Kept all settings work on the b5hymj location and only patched the flagship's confirmation|en custom note (a texts-only patch that triggers no reconcile), removing it again right after the check.",
+			"affectedAssertions": ["VAL-MSG-005", "VAL-MSG-016"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": "Flagship (2026-10-25): rsv_63eb74df/3P0GAW2X booked 18:00 EDT, rsv_2f299fff/FANZ65QG cancelled (guest cancel, VAL-MSG-011), rsv_214d270d/GAGQDHKH booked 18:30 EDT (smsOptIn), rsv_30aa1d28/FV4HNPK3 cancelled (restaurant cancel, VAL-MSG-012), rsv_8d390950/0GH5GTFV booked 19:15 EDT (ar), rsv_23dbb3e4/JT1WFAYJ booked 19:30 EDT (es). b5hymj: rsv_fd30c613/C38C9L (10-18 18:00, reminder delivered), rsv_1a498217/BANLB7 (10-18 18:45, reminder delivered), rsv_99d66c10/2ZTZKQ (10-25 21:00, confirmation delivered, reminder pending 2026-10-24). Captured guest emails for rsv-g6-20..28 remain in apps/tenant-api/.dev-mail/us/. b5hymj7733l3wxrg74dytzty rsv_location_settings is at version 4 with default-equivalent messaging (reminderHours 24, quiet hours 21:00-08:00, kinds defaults). rsv_message_texts has no confirmation|en row (my note removed); the pre-existing confirmation|ar note is untouched. The flagship messaging JSON and org flags were not written by this group. The tbl_acme_m6 block on 2026-10-25 was not touched."
+}

@@ -1,0 +1,111 @@
+{
+	"group": "g13-calendar-overview-sections",
+	"surface": "agent-browser (App)",
+	"testedAt": "2026-10-17T01:10:00Z",
+	"isolation": {
+		"app": "http://localhost:3001",
+		"operator": "kody (session d15910fb8c20__g13, closed at end)",
+		"org": "acme (t58bgatqh3rv0s3movrecyj1)",
+		"location": "v17plv08r5v357bie335lyq8 (America/New_York)",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3 SELECTs only)",
+		"ownedBusinessDates": "2026-10-26 (bookings, notes, viewport) and 2026-10-29 (G13-Closed special day, cross-date notes check)",
+		"ownedPhonePrefix": "+155555513xx",
+		"labels": "G13-* (layout/sections/special day/bookings)",
+		"writes": "Created via tenant-api operator API with minted rsv+jwt tokens: 6 bookings on 2026-10-26, 1 closed special day on 2026-10-29; UI-created section layout G13-Dinner 3-server (renamed a section, created+deleted G13-Throwaway) and one service-notes row for 2026-10-26 Dinner. No seeded rows, other validators' data, flags, or location settings were touched. git status stayed clean (## pr/reservations, no entries).",
+		"tokens": "minted with /tmp/menuza-user-testing/mint-token.mjs; never printed or stored in evidence"
+	},
+	"assertions": {
+		"VAL-HOST-018": {
+			"status": "pass",
+			"observed": "On /acme/reservations/settings/sections created layout \"G13-Dinner 3-server\" with three sections (Section A color_token 1, Section B color_token 2, Patio color_token 3) and table sets (M1+M2 / M3+M4 / T1+T2); renamed Patio to G13-Patio through the Edit form; created \"G13-Throwaway\" and deleted it. Network: POST /operator/reservations/setup/sections/layouts -> 201 (secl_80c977fd-...), PATCH /operator/reservations/setup/sections/layouts/secl_80c977fd-... -> 200, POST (throwaway) -> 201, DELETE /operator/reservations/setup/sections/layouts/secl_cf92248e-... -> 200 (soft archive: archived_at=1792198626191). SQLite: rsv_section_layouts has secl_80c977fd-... (archived_at NULL) and secl_cf92248e-... (archived); rsv_sections has Section A/1, Section B/2, G13-Patio/3 for secl_80c977fd-...; rsv_section_tables has 6 rows (m1,m2 -> Section A; m3,m4 -> Section B; p1,p2 -> G13-Patio). rsv_audit_log recorded section_layout.create (00:56:36), section_layout.update (00:56:51), section_layout.create (00:57:00), section_layout.delete (00:57:06), actor_kind=operator. Console errors: none.",
+			"evidence": [
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-018-sections-form-filled.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-018-settings-sections-crud.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-018-g13-layout-card.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-018-sqlite-evidence.txt",
+				"foh-core/g13-calendar-overview-sections/network-evidence.txt"
+			],
+			"notes": "DELETE archives the layout (archived_at set, row kept) rather than hard-deleting; the UI list removes it and the POST/PATCH/DELETE all returned the required 200/201. Distinct color_token values 1/2/3 are inside the 1..8 set. Two extra rsv_sections rows ('Section A'/'Section B'/'Patio') seen in a broad query belong to the archived throwaway layout, not duplicates of the kept one."
+		},
+		"VAL-HOST-021": {
+			"status": "pass",
+			"observed": "GET /operator/reservations/book/calendar?locationId=v17plv08r5v357bie335lyq8&month=2026-10 -> 200. Day 2026-10-26: partyCount 6, totalCovers 24, closed false, specialDay null. Day 2026-10-29: closed true, specialDay {kind: closed, name: G13-Closed} (created by this validator via POST /setup/special-days). Calendar grid at /acme/reservations/calendar?month=2026-10 renders the numbers and badges: cell 2026-10-26 shows '24 covers / 6 parties'; cell 2026-10-29 shows a 'Closed' badge plus a 'G13-Closed' special badge and data-closed=true; month header badges show 216 covers, 66 parties, 1 special/closed. Clicking the 2026-10-26 cell navigated to /acme/reservations/book?date=2026-10-26 (drill target defaults to Book; a Book/Timeline toggle is present). Console errors: none.",
+			"evidence": [
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-021-calendar-month-view.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-021-calendar-day-drill-in-2026-10-26.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-021-022-api-evidence.txt",
+				"foh-core/g13-calendar-overview-sections/network-evidence.txt"
+			],
+			"notes": "GET /operator/reservations/book/calendar -> 200 captured in the browser network log (with CORS preflight 204). The month contains other validators' bookings too (e.g. 20-25, 27-28), which is expected shared state; the day cells for this validator's dates were verified individually."
+		},
+		"VAL-HOST-022": {
+			"status": "pass",
+			"observed": "Data created on 2026-10-26 (Dinner) via tenant-api POST /operator/reservations/book/reservations (API path, as tags/occasion/notes are API-only): 8-cover party at 18:30 (G13 BigParty), VIP guest Layla Al-Mansoor at 19:00 (seeded guest gst_acme_1 carrying tag_acme_vip, category vip/status), birthday booking at 19:15 (occasion field -> tag_acme_birthday), dietary/allergy booking at 20:00 (reservation dietaryNotes 'G13 gluten-free; no dairy' + guest allergyNotes 'G13 severe peanut allergy'), and two 4-cover parties at 19:00 to form a peak. GET /operator/reservations/book/overview?locationId=...&date=2026-10-26 -> 200 with stats {partyCount 6, expectedCovers 24, vipsCount 1, allergiesCount 1, occasionsCount 1, largePartiesCount 1}. The Overview screen shows the same totals in its KPI cards (Covers 24, Parties 6, Large Parties 1, VIP & Tagged 1, Occasions 1, Dietary/Allergies 1), lists '18:30 · G13 BigParty | 8 guests' under Large Parties, '19:00 · Layla Al-Mansoor (2) | VIP' under VIP & Tagged, '19:15 · G13 Birthday (4) | tag_acme_birthday' under Special Occasions, '20:00 · G13 Allergy (2) | G13 severe peanut allergy · G13 gluten-free; no dairy' under Dietary & Allergy Alerts, and the peak card marks the 19:00 15-minute slot data-peak=true ('19:00 | 10 covers · 3 parties | Peak') with badge 'Peak: 19:00 (10 covers)'; other slots (18:30, 19:15, 20:00) are not marked. Console errors: none.",
+			"evidence": [
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-022-overview-preservice-brief.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-022-dom-evidence.txt",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-021-022-api-evidence.txt",
+				"foh-core/g13-calendar-overview-sections/network-evidence.txt"
+			],
+			"notes": "VIP path: no tag had to be created; the booking referenced the pre-seeded tagged guest gst_acme_1. Occasion was set through the API `occasion` field, which resolves to the seeded tag_acme_birthday; dietary/allergy text via the API guest.allergyNotes + reservation dietaryNotes fields. The plain book-scope token returned dietary/allergy as null (guest-grant redaction is VAL-HOST-023's scope); the kody-equivalent read (book scope + read:reservation_guest:any) returned both strings, matching the UI."
+		},
+		"VAL-HOST-024": {
+			"status": "pass",
+			"observed": "On /acme/reservations/overview?date=2026-10-26 selected the Dinner service period and saved '86 halibut; Chef table VIP at 20:00' -> PUT /operator/reservations/book/service-notes -> 200; the card then read 'Saved for Dinner (v1)'. SQLite rsv_service_notes row snote_56aef186-0cee-41bf-adfc-c5e3147f003e keyed (location_id=v17plv08r5v357bie335lyq8, business_date=2026-10-26, service_id=svc_acme_dinner), body exact, version 1. Reload with ?date=2026-10-26&service=svc_acme_dinner -> notes intact. Switched to Lunch -> 'No saved notes for Lunch yet.' and empty textarea; switched back to Dinner -> '86 halibut; Chef table VIP at 20:00' restored. Opened a different date (2026-10-29, Dinner) -> 'No saved notes for Dinner yet.' Host stand: /acme/reservations/book?date=2026-10-26&service=svc_acme_dinner shows the amber banner 'Service Notes: [Dinner] 86 halibut; Chef table VIP at 20:00' (host-subnav-service-notes). No bleed across periods or dates.",
+			"evidence": [
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-024-overview-service-notes-saved.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-024-host-stand-service-notes.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-024-sqlite-evidence.txt",
+				"foh-core/g13-calendar-overview-sections/network-evidence.txt"
+			],
+			"notes": "The saved banner clears on service-period change, so the 'overview-note-saved-banner' element was absent on a later read; persistence was confirmed through the textarea value and the 'Saved for Dinner (v1)' caption instead. The service period is selected by the URL query param `service` (not `serviceId`)."
+		},
+		"VAL-HOST-026": {
+			"status": "pass",
+			"observed": "Set the browser viewport to 1024x768 (window.innerWidth/innerHeight = 1024/768, agent-browser `set viewport 1024 768`) and opened /acme/reservations/today, /timeline?date=2026-10-26&service=svc_acme_dinner, /floor?date=2026-10-26&service=svc_acme_dinner, /calendar?month=2026-10 and /overview?date=2026-10-26. On every screen documentElement.scrollWidth == clientWidth == 1024 (document-level horizontal overflow 0; body overflow 0). The reservations primary navigation (nav[aria-label='Reservations navigation']), host subnav, date input, service switcher, Walk-in (open-walk-in-btn) and New reservation (open-booking-sheet-btn) were fully inside the viewport with display flex/block and visibility visible on all five screens; all six host view tabs (Today/Book/Timeline/Floor Plan/Calendar/Overview) fit in one row. Main containers reachable: timeline-grid-container 700px wide with its intended inner horizontal scroll (scrollWidth 1336 / clientWidth 698, overflowX auto); floor-plan-canvas 459x632 reachable by vertical page scroll (after scrollTo bottom, elementFromPoint over the canvas returns floor-plan-stage); calendar-month-grid-card 700x658; overview-kpi-grid 700x130; today kpi cards + board visible. Console errors: none.",
+			"evidence": [
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-026-ipad-1024x768-today.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-026-ipad-1024x768-timeline.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-026-ipad-1024x768-floor.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-026-ipad-1024x768-calendar.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-026-ipad-1024x768-overview.png",
+				"foh-core/g13-calendar-overview-sections/VAL-HOST-026-viewport-measurements.txt"
+			],
+			"notes": "Observation outside the host-stand content: at 1024x768 the global sidebar's pinned user button ('KO Kody kody') paints over the last sidebar list items (Staff y=704, Website y=736) when the Reservations group is expanded; the list is a scroll container (scrollHeight 828 > clientHeight 651) and after scrolling to the bottom Staff is at y=527 and elementFromPoint hits it, so the items stay reachable. This is the shared app shell (same on non-reservations pages), and no host-stand control or document-level overflow is affected, so it is not counted as a failure."
+		}
+	},
+	"friction": [
+		{
+			"description": "agent-browser `find testid \"overview-service-tab-<id>\" click` reported success without applying the service-period change (state stayed on Dinner); the click appears to land before React handles it on those pill buttons.",
+			"resolved": true,
+			"resolution": "Used an in-page `document.querySelector('[data-testid=...]').click()` via `agent-browser eval` for the service-period switches; the tab then switched immediately.",
+			"affectedAssertions": ["VAL-HOST-024"]
+		},
+		{
+			"description": "The Overview service period is selected by the URL query param `service` (use-host-stand.ts reads searchParams.get('service')); a reload with `serviceId=` silently fell back to 'All services'.",
+			"resolved": true,
+			"resolution": "Used ?date=...&service=<serviceId> for deep links; not a product defect, only a param-name discovery.",
+			"affectedAssertions": ["VAL-HOST-024"]
+		},
+		{
+			"description": "First load of each reservations route took roughly 10-12 s (warm dev server) and a couple of early loads rendered without interactive elements until reloaded, as user-testing.md warns.",
+			"resolved": true,
+			"resolution": "Waited for a specific testid/text before interacting; reloaded once after the first sections load.",
+			"affectedAssertions": [
+				"VAL-HOST-018",
+				"VAL-HOST-021",
+				"VAL-HOST-022",
+				"VAL-HOST-026"
+			]
+		},
+		{
+			"description": "The first-visit cookie banner overlays the app shell and its buttons registered as overlapping interactive controls in a raw DOM overlap scan.",
+			"resolved": true,
+			"resolution": "Clicked Accept once before the viewport sweep and excluded off-canvas elements from the overlap scan; documented in the measurement evidence.",
+			"affectedAssertions": ["VAL-HOST-026"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": ["agent-browser", "curl", "sqlite3 (read-only)"],
+	"summary": "Tested 5 assertions: all pass. VAL-HOST-018 section-layout CRUD (POST 201, PATCH 200, DELETE 200, rows in rsv_section_layouts/rsv_sections/rsv_section_tables, audit rows create/update/delete), VAL-HOST-021 month calendar (per-day covers/parties, G13-Closed badge on 2026-10-29, day-cell drill-in to /reservations/book?date=2026-10-26, GET /book/calendar 200), VAL-HOST-022 pre-service overview (24 covers / 6 parties, 8-cover large party, VIP guest, birthday occasion, dietary+allergy notes, 19:00 peak slot marked, GET /book/overview 200), VAL-HOST-024 service notes (PUT /book/service-notes 200, rsv_service_notes row keyed (location, 2026-10-26, svc_acme_dinner), survives reload, no bleed to Lunch or 2026-10-29, shown on Book host stand), VAL-HOST-026 1024x768 viewport sweep on Today/Timeline/Floor/Calendar/Overview (no document-level horizontal overflow on any screen, all switchers/Walk-in/New reservation/primary nav visible, main canvases reachable). Console errors: none on any assertion. Working tree left clean."
+}

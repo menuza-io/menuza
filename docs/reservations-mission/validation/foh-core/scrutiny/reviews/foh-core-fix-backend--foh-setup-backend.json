@@ -1,0 +1,78 @@
+{
+	"featureId": "foh-core-fix-backend",
+	"reviewedAt": "2026-10-16T22:57:00.000Z",
+	"commitId": "a255e6e854b27b54c593a8bf4435fb8fb8468a6c",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "pass",
+	"codeReview": {
+		"summary": "Re-run review of the SETUP half of foh-core-fix-backend (commit a255e6e8, judged against current HEAD 275d4b30; the later UI commit touches no backend file). All five round-1 setup findings are resolved in the current code, verified by reading the combined implementation and by targeted test runs (apps/tenant-api reservations-setup.test.ts 8/8, packages/reservations config.test.ts 5/5). (1) Write path/atomicity: every mutating setup function in rsv-setup-crud.ts (31 withSetupWrite call sites, lines 192-3665) plus updateLocationSettings/rederiveLocationTimes in rsv-setup-service.ts and upsertServiceNotes/putSectionAssignments in rsv-day-feed-service.ts now runs inside withSetupWrite -> withReservationWrite, which acquires runExclusive and wraps the body in db.transaction (rollback on throw); saveFloorPlan's version check (rsv-setup-crud.ts:1433-1449), the rsv_floor_elements delete+reinsert (1767-1793) and the location-settings expectedVersion check (rsv-setup-service.ts:483-497) all execute inside that transaction, with the real org id as the lock key for both. (2) Hold bounds: schemas/setup.ts:74-77 enforces holdMinutes 3..20, holdTtlSec 180..1200, paymentHoldMinutes 10..60, voiceHoldMinutes 5..30, the settings route parses with that schema (routes:415) and updateLocationSettings re-checks service-side (rsv-setup-service.ts:453-479), so out-of-range returns 400. (3) Turn times: schema 15..480 (schemas/setup.ts:246-248), create/update re-check and reject overlapping [partyMin,partyMax] buckets in the same (locationId, serviceId ?? null) scope with 400 (rsv-setup-crud.ts:2229-2258, 2322-2352), validateConfig and turnTimeBucketSchema enforce the same ceiling (config/validate.ts:498-508, config/index.ts:331). (4) Special days: create/update/delete expand the full [fromDate..toDate] range and reflowFutureBookingsForLocation now bumps rsv_day_versions for every explicit affected date even with no reflow or 0 bookings (rsv-setup-service.ts:1305-1311; callers rsv-setup-crud.ts:2870-2877, 2949-2961, 2991-2994). (5) Combos: updateComboForLocation validates >=2 distinct in-location unarchived combinable members and rejects a duplicate canonical member set against other active combos (rsv-setup-crud.ts:1004-1085), and saveFloorPlan validates members and scans all active combos for duplicate canonical sets before returning (1657-1690, 1730-1762). Regression tests exist for findings 2-5 (reservations-setup.test.ts new test at 1526-1847, config.test.ts additions). Residual non-blocking items are listed below: the lock key for most setup CRUD is the constant 'setup' rather than the org id (global over-serialization; no mutual exclusion against org-keyed booking writes), the saveFloorPlan combo negative path and the transaction rollback/serialization behavior have no dedicated regression test, and expandDateRange caps day-version expansion at 370 days. No new defects or regressions found in the setup half; the new route aliases (PATCH/PUT /locations/:locationId/{combos,combinations,turn-times,special-days}/:id) are swept automatically by the dynamic route enumeration in reservations-security.test.ts.",
+		"issues": [
+			{
+				"file": "apps/tenant-api/src/lib/reservations-write.ts",
+				"line": 56,
+				"severity": "non_blocking",
+				"description": "Most setup CRUD functions call `withSetupWrite(db, fn)` without the third argument, so they serialize on the constant mutex key 'setup' (default param) instead of the real org id. Only saveFloorPlan (rsv-setup-crud.ts:1825), updateLocationSettings (rsv-setup-service.ts:658), rederiveLocationTimes (rsv-setup-service.ts:1799) and the service-availability update route (routes/operator-reservations-setup.ts:1570) use the real org key. Consequences: (a) all organizations' setup writes serialize on one global lock (over-serialization, a slow floor-plan reflow for one org blocks setup writes for every other org on the same node); (b) setup writes (e.g. createBlockForLocation, rsv-setup-crud.ts:3035) are not mutually exclusive with org-keyed booking writes, so the round-1 cross-path race is only partially closed - a block create racing a booking create for the same org can still interleave, though SQLite single-writer semantics plus retryOnSqliteBusy degrade the worst case to a retryable 409 and concurrent table-create + floor-plan-save can lose a floor_plan_version increment. Not blocking: VAL-SETUP-011/017 (atomicity, version checks under lock) and setup-vs-setup serialization are met.",
+				"affectedBehavior": "Setup mutations for one org can run concurrently with booking writes for the same org; setup writes across different orgs serialize unnecessarily."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/reservations-setup.test.ts",
+				"line": 1526,
+				"severity": "non_blocking",
+				"description": "The new regression test asserts combo validation on PATCH (duplicate member set -> 400/409, non-combinable member -> 400) but never asserts the saveFloorPlan combo validation added by this fix (fewer than 2 members, archived/non-combinable member, duplicate canonical set via PUT /floor-plan). The handoff's test description claims coverage of 'combo validation on update & saveFloorPlan', which overstates the shipped test. The existing VAL-SETUP-011 floor-plan test (line 798) exercises only the positive combo path, so a future removal of the new saveFloorPlan validation would not fail any test.",
+				"affectedBehavior": "No regression guard for the saveFloorPlan half of VAL-SETUP-010."
+			},
+			{
+				"file": "apps/tenant-api/src/lib/reservations-write.ts",
+				"line": 638,
+				"severity": "non_blocking",
+				"description": "No regression test asserts the transaction/atomicity behavior of setup writes: neither a mid-save failure rolling back the rsv_floor_elements delete+reinsert and the area/table/combo upserts, nor serialization of two concurrent setup mutations. The existing VAL-SETUP-011 test asserts persistence, stale-version 409 and reflow, not rollback; reservations-write.test.ts tests the gate itself, not the setup callers. The implementation is correct by construction (drizzle libsql session rolls back the transaction when the callback throws, node_modules/drizzle-orm/libsql/session.cjs:85-101), so this is a coverage gap, not a defect.",
+				"affectedBehavior": "A regression that drops the withSetupWrite wrapper from a setup mutation would not be caught by the suite."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 2735,
+				"severity": "non_blocking",
+				"description": "expandDateRange stops after 370 dates (`while (curr <= toDate && guard < 370)`), so a special-day range longer than 370 days bumps rsv_day_versions only for the first 370 affected dates. The setupSpecialDayInputSchema places no maximum on fromDate..toDate, so the truncation is silent for extreme ranges.",
+				"affectedBehavior": "Day-feed ETag invalidation is incomplete for special-day ranges longer than 370 days."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 2251,
+				"severity": "non_blocking",
+				"description": "The turn-time overlap rejection additionally requires the two buckets' daysMask values to intersect (maskOverlap at 2251 for create and 2345 for update), so buckets with disjoint day masks may still have overlapping party ranges. This is a sensible refinement (the masks cannot both apply on one day) but is a slightly narrower rule than a literal reading of VAL-SETUP-019 ('reject overlapping buckets'); the contract's evidence path (no daysMask -> 127) still returns 400.",
+				"affectedBehavior": "Two buckets with disjoint daysMask and overlapping party ranges are accepted."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "knowledge",
+			"observation": "library/staffing-patterns.md:177-188 ('Scrutiny findings - foh-core (verified at commit 403e6c0c)') is now stale for the items this fix resolved and says 're-check each one after the foh-core fix features land'. Line 181 still tells future workers that setup writes do not use withReservationWrite and run no transaction and to 'treat multi-row setup saves as non-atomic until fixed' - no longer true. Lines 182 (wrong seed column names), 185 (/conflicts, /:id/events, /contact-status, /course-status), 186 (location-summary shape) and 188 (service-notes expectedVersion) are also resolved by a255e6e8. The new mechanism (withSetupWrite + AsyncLocalStorage nested-transaction reuse, getReservationDb) is undocumented.",
+			"evidence": "library/staffing-patterns.md:177-188 vs apps/tenant-api/src/lib/reservations-write.ts:53-65, 671-694 and the 31 withSetupWrite call sites in apps/tenant-api/src/services/rsv-setup-crud.ts (192, 251, 351, 467, 592, 749, 824, 969, 1169, 1249, 1295, 1429, 1889, 2007, 2140, 2216, 2296, 2381, 2442, 2504, 2574, 2635, 2709, 2810, 2912, 2980, 3035, 3260, 3483, 3568, 3665)."
+		},
+		{
+			"area": "conventions",
+			"observation": "Mission AGENTS.md and the backend-worker skill require every setup/config mutation to go through withReservationWrite so multi-row saves 'execute inside a serialized per-org transaction', but the shipped mechanism keys most setup writes on the constant 'setup' mutex (withSetupWrite default) while booking writes use the real org id. Clarify in AGENTS.md/skill whether the lock key must be the org id and whether setup writes must be mutually exclusive with booking writes, so future workers do not diverge; today only the version-checked paths (settings, floor plan) and rederive-times use the org key.",
+			"evidence": "apps/tenant-api/src/lib/reservations-write.ts:56 (orgId = 'setup'); rsv-setup-crud.ts:1825, rsv-setup-service.ts:658 and 1799 pass the real orgId; rsv-booking-service.ts uses withReservationWrite({orgId: <real>}) at 578/1172/1482/1982/2450/2665/2932/3042/3156/3266."
+		},
+		{
+			"area": "skills",
+			"observation": "The backend-worker skill step 4 phrases the write-path check as 'every setup/config mutation goes through withReservationWrite'. After this fix the setup files satisfy the requirement indirectly (they import and call withSetupWrite, which delegates to withReservationWrite), so a literal grep for withReservationWrite in rsv-setup-crud.ts / rsv-setup-service.ts still returns 0. The skill/library should name withSetupWrite so the check is meaningful for future reviewers and workers.",
+			"evidence": "grep withReservationWrite in apps/tenant-api/src/services/rsv-setup-crud.ts and rsv-setup-service.ts = 0; import { withSetupWrite } from '../lib/reservations-write.ts' at rsv-setup-crud.ts:32 and rsv-setup-service.ts:47; skill step 4 text in mission skills/backend-worker/SKILL.md."
+		},
+		{
+			"area": "skills",
+			"observation": "Positive: unlike round 1, this worker ran the skill's step-6 curl pass over the expectedBehavior refusals (out-of-range holdMinutes, turn-time minutes 600, overlapping buckets, contact/course-status 409, stale service-notes version) against the running :3007/:3009 services, and recorded it in handoff.verification.commandsRun. skillFeedback.followedProcedure = true with no deviations is consistent with the transcript. No skill change needed for this.",
+			"evidence": "handoff.verification.commandsRun third entry (curl against localhost:3007/3009); handoff.skillFeedback { followedProcedure: true, deviations: [] }."
+		},
+		{
+			"area": "services",
+			"observation": "The worker seeded KSA with `TENANT_DB_DIR=.../ksa DATA_REGION=ksa npm run seed:reservations -w tenant-api -- riyadh-grill` while services.yaml seed_reservations_ksa omits DATA_REGION. Harmless today (the seed script derives the region from the 'riyadh-grill' preset, apps/tenant-api/scripts/seed-reservations.ts:85, 201-203) but the two commands are not identical; align them if DATA_REGION ever matters to the seed path.",
+			"evidence": "handoff.verification.commandsRun seed command vs services.yaml commands.seed_reservations_ksa; seed-reservations.ts:85 (preset dataRegion: 'ksa') and :1451 (TENANT_DB_DIR)."
+		}
+	],
+	"addressesFailureFrom": "/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/validation/foh-core/scrutiny/reviews/foh-setup-backend.json",
+	"summary": "PASS. The setup half of the foh-core backend fix resolves all five round-1 blocking findings: (1) every setup mutation now runs through withSetupWrite -> withReservationWrite -> runExclusive + one db.transaction (rollback on throw), with the floor-plan and location-settings expectedVersion checks inside that transaction; (2) hold-duration bounds 3..20 / 10..60 / 5..30 are enforced in the schema and re-checked in the service, returning 400; (3) turn-time minutes are capped at 480 and overlapping party buckets in the same (locationId, serviceId ?? null) scope are rejected with 400 on create and update, with validateConfig updated too; (4) special-day create/update/delete expand [fromDate..toDate] and unconditionally bump rsv_day_versions even when closed or when nothing reflows; (5) combo member sets are validated on PATCH and in the floor-plan save (>=2 distinct in-location unarchived combinable members, duplicate canonical set -> 409). Targeted tests pass (reservations-setup.test.ts 8/8, config.test.ts 5/5). Non-blocking residuals: most setup CRUD serializes on a constant 'setup' lock instead of the org id (no mutual exclusion against booking writes; global over-serialization), the saveFloorPlan combo negative path and setup transaction rollback have no dedicated regression test, expandDateRange caps at 370 days, and the turn-time overlap rule is relaxed for disjoint daysMask. Shared-state notes: the foh-core scrutiny notes in library/staffing-patterns.md are stale for the resolved items and should record the new withSetupWrite mechanism, and AGENTS.md/skill should clarify whether the write-gate lock key must be the org id."
+}

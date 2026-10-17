@@ -1,0 +1,105 @@
+{
+	"milestone": "foh-core",
+	"round": 3,
+	"status": "pass",
+	"assertionsSummary": {
+		"total": 2,
+		"passed": 2,
+		"failed": 0,
+		"blocked": 0
+	},
+	"passedAssertions": ["VAL-BOOK-003", "VAL-BOOK-037"],
+	"failedAssertions": [],
+	"blockedAssertions": [],
+	"scope": "Orchestrator-set round-3 scope: re-test the two assertions that failed in round 2 (VAL-BOOK-003, VAL-BOOK-037) after fix commit 521df7ed, plus quick regression checks on the Today business date and the Settings conflicts panel. VAL-CROSS-006 is out of scope (moved to online-booking-sites-and-app-ui).",
+	"regressionRechecks": [
+		{
+			"id": "VAL-BOOK-011",
+			"status": "pass",
+			"note": "Today host list on the current business date. The service-day date now comes from the location time zone plus day_start_min instead of the UTC calendar date: at 04:01 UTC on 2026-10-17 (00:01 EDT) the day feed (no date parameter) and the Today screen's Business date control both showed 2026-10-16, which is the correct service day for day_start_min=240, while the UTC date was already 2026-10-17. 13 rows and counters 11 parties / 30 covers matched the feed. The parent captured the same probe at 03:53 UTC with a no-token 401 control (evidence/foh-core/r3-regress/parent-business-date-probe.txt).",
+			"evidence": ["validation/foh-core/user-testing/flows/r3-regress.json"]
+		},
+		{
+			"id": "VAL-SETUP-025",
+			"status": "pass",
+			"note": "The conflicts panel on /acme/reservations/settings still renders 10 rows (confirmation code, date, Party of N and a localized reason), matching the 10-item GET payload. The GET is now a dry run: snapshots before and after 3 panel loads plus 2 authenticated GETs were identical in every value (24 rsv_day_versions rows with unchanged versions, rsv_reservation_events COUNT 253 with unchanged MAX(at) and per-type counts, rsv_table_occupancies COUNT 160, last-5 rsv_reservations.updated_at, MAX(rsv_day_versions.updated_at)). A setup-scope token returned byte-identical 200 bodies twice; no token returned 401.",
+			"evidence": ["validation/foh-core/user-testing/flows/r3-regress.json"]
+		}
+	],
+	"flows": [
+		{
+			"group": "r3-book003",
+			"surface": "agent-browser (App operator UI) + sqlite",
+			"assertions": ["VAL-BOOK-003"],
+			"report": "validation/foh-core/user-testing/flows/r3-book003.json",
+			"evidence": "evidence/foh-core/r3-book003/",
+			"result": "pass"
+		},
+		{
+			"group": "r3-rtl",
+			"surface": "agent-browser (App operator UI, ?lng=ar) + sqlite",
+			"assertions": ["VAL-BOOK-037"],
+			"report": "validation/foh-core/user-testing/flows/r3-rtl.json",
+			"evidence": "evidence/foh-core/r3-rtl/",
+			"result": "pass"
+		},
+		{
+			"group": "r3-regress",
+			"surface": "agent-browser (App operator UI) + curl (tenant-api 3007) + sqlite",
+			"assertions": ["VAL-BOOK-011", "VAL-SETUP-025"],
+			"report": "validation/foh-core/user-testing/flows/r3-regress.json",
+			"evidence": "evidence/foh-core/r3-regress/",
+			"result": "pass"
+		}
+	],
+	"executionNotes": [
+		"VAL-BOOK-003: the round-2 miss is fixed. GET /operator/reservations/book/reservations/:id returns occasion='anniversary' (bare value) with occasionTagId='tag_acme_anniversary'; the App no longer strips a tag prefix. Everything else re-verified: diningAreaId='area_acme_main', durationMin=120, dietaryNotes='contract-dietary-book003', internalNotes='contract-internal-book003', and one active occupancy on G4-2 from 19:00 to 21:00 EST (120 minutes + 0 buffer). Created rsv_2248ace9-f6c9-4905-ac69-06e5e031b022 (#YKTPAF) on the group's own date 2026-11-12.",
+		"VAL-BOOK-037: the round-2 miss is fixed. The seeded row rsv_acme_1 (contact_status='left_message') now renders the Arabic chip 'تم ترك رسالة' on the Arabic Book list, with zero English contact-status strings in a full-page scan. The detail sheet's Contact Tracking selector exposes the canonical values none|left_message|no_answer|wrong_number with Arabic labels and round-trips left_message -> no_answer -> left_message (200 each, sqlite confirmed). dir=rtl/lang=ar, Arabic tabs/filters/badges, LTR codes/phones/times and zero console errors all re-verified; the group's own booking is rsv_9dcf4f57-ed26-40f7-917b-c0090a597b81 (#QL7LZ3) on 2026-11-13.",
+		"Three groups ran in two batches (2 browsers, then 1 browser + curl/sqlite alone) inside the round-3 concurrency plan; no group hit a blocker, and every sqlite access was SELECT-only."
+	],
+	"discoveredIssues": [
+		{
+			"severity": "non_blocking",
+			"description": "The Today screen has two date controls that can disagree: the Today list's Business date control and the day feed resolve 2026-10-16 (location tz + day_start_min=240, correct), but the module header Date control (#reservations-date-input) shows the App-shell UTC calendar date 2026-10-17 (apps/app/app/routes/reservations+/_layout.tsx:98). The client-computed 'Jump to Today' target has the same problem because apps/app/app/utils/reservations/book-api.ts:1526 reads dayStartMin from the payload root (raw.dayStartMin) while the response carries it at settings.dayStartMin=240, so the client value collapses to the calendar date. No contract assertion in this round's scope covers the header control, so it is reported rather than failed.",
+			"suggestedFix": "Pass the resolved business date (or settings.dayStartMin) from the loader into the shell date control and the client day-start computation so both controls show the service day the day feed uses."
+		},
+		{
+			"severity": "suggestion",
+			"description": "Breadcrumbs on the Arabic reservations pages still render Latin 'Reservations / Today / Book' breadcrumb segments (same observation as round 2). It is outside VAL-BOOK-037's enumerated clauses (tabs, filters, status badges, action buttons) but visible in Arabic UI screenshots."
+		}
+	],
+	"appliedUpdates": [
+		{
+			"target": "user-testing.md",
+			"description": "Added the round-3 block: verified environment state (HEAD 521df7ed, both tenant-api nodes already serving it, live pre-flip business-date probe, App cold start), what commit 521df7ed changed, the r3 data-isolation registry, flow-validator guidance for round 3, and the two-batch concurrency plan.",
+			"source": "setup"
+		},
+		{
+			"target": "user-testing.md",
+			"description": "Corrected the business-date model after probing: the business date is the service day (location tz + day_start_min=240), so it stays 2026-10-16 until 04:00 EDT / 08:00 UTC on 2026-10-17 — not the 04:00 UTC flip the round-2 notes assumed for the pre-fix UTC fallback.",
+			"source": "setup"
+		},
+		{
+			"target": "user-testing.md",
+			"description": "Appended the round-3 results, runtime findings (the two passing assertions, the dry-run measurement method, the header-date-control observation) and the leftover test data.",
+			"source": "flow-report"
+		},
+		{
+			"target": "services.yaml",
+			"description": "No corrections needed: every start/healthcheck/stop/seed command used this round worked as written. One operational note added to user-testing.md (start dev servers detached; a plain `&` inside a one-shot shell lets the App dev server die with its shell).",
+			"source": "setup"
+		}
+	],
+	"flagStateAfterRun": {
+		"note": "No group changed any reservations.* flag this round. Local D1 still has the system-level reservations.enabled row true and both org rows (acme, riyadh-grill) true, as verified at round start.",
+		"acme_all_reservations_flags": true,
+		"riyadh_grill_all_reservations_flags": true
+	},
+	"servicesAfterRun": "tenant-api US (3007) and KSA (3009) were already running before this session, already served HEAD, and were left running. The App dev server (3001) was started by this validator and is stopped during teardown. Sites (3008) and Admin (3005) were never started.",
+	"knownLeftovers": [
+		"New round-3 test data on acme inside the isolation registry: rsv_2248ace9-f6c9-4905-ac69-06e5e031b022 (#YKTPAF, R3Book Guest One, 2026-11-12) and rsv_9dcf4f57-ed26-40f7-917b-c0090a597b81 (#QL7LZ3, R3Rtl Guest One, 2026-11-13) with contact_status='left_message'.",
+		"Earlier leftovers unchanged: floor plan v79 with two wall elements in G15-Area, 'UI Fix Tester' seated on G10-T1 on 2026-10-17, the R2* rows (2026-10-20, 2026-10-29/30/31), and Waterfront Kitchen (vw6s16lrjjvyafd3dc4cqexu, settings time_zone=UTC) which intentionally shows the settings tz-mismatch banner.",
+		"The 13 seeded 2026-10-16 reservations were not modified; all three groups kept their writes inside their own registry dates."
+	],
+	"previousRound": "validation/foh-core/user-testing/synthesis-round2.json"
+}

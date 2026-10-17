@@ -1,0 +1,61 @@
+{
+	"timestamp": "2026-10-16T04:56:39.687Z",
+	"workerSessionId": "4d991f66-8cb0-4bfc-93fd-44cf73d8997c",
+	"featureId": "fnd-fix-db-backend-app-and-docs-compliance",
+	"milestone": "foundation",
+	"commitId": "d835bc9ed2a8a7363fa6b67a8274e17b635b1553",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": false,
+	"handoff": {
+		"salientSummary": "Resolved all 8 database, backend, App UI, and documentation scrutiny findings (VAL-FND-010/011/012/017/018/020/022/024): updated 0016 SQLite triggers and error mapping, auto-generated DO migrations in tenant-db tests, updated reservations-context TTL/cooldown constants, enforced hasProvisionedDb across reservations routes and expanded security sweeps, hid single-location picker in App Reservations layout, and aligned all 5 docs files with canonical vocabulary and 12 ADR 048 sections.",
+		"whatWasImplemented": "Resolved all 8 database, backend, App UI, and documentation blocking scrutiny findings: (1) updated rsv_occupancy_no_overlap_insert and rsv_occupancy_no_overlap_update in packages/tenant-db/drizzle/0016_reservations_foundation.sql to include AND o.active = 1 AND o.overbook = 0 and raise 'rsv_table_occupancies overlap', tightened rsv_holds_single_conversion to WHEN OLD.status = 'converted', regenerated apps/tenant-api/workers/migrations.generated.ts, updated local tenant DB triggers, and updated mapSqliteConstraintError in apps/tenant-api/src/lib/reservations-write.ts to match 'rsv_table_occupancies overlap' (including error.cause); (2) updated packages/tenant-db/src/reservations-schema.test.ts to generate apps/tenant-api/workers/migrations.generated.ts when absent and added tests for normal-overlaps-overbook and converted hold immutability; (3) updated apps/tenant-api/src/lib/reservations-context.ts and reservations-context.test.ts to enforce 5m (300,000 ms) fresh TTL, 24h (86,400,000 ms) stale TTL, 30s (30,000 ms) failure cooldown, 3s timeout, and redirect: 'error'; (4) enforced Boolean(org?.hasProvisionedDb) in reservations-operator.ts, reservations-public.ts, and reservations-internal.ts (returning uniform 404 { error: 'not_found' }) plus orgId and locationId checks in rsvGuard; (5) expanded apps/tenant-api/src/routes/reservations-security.test.ts to sweep every mounted operator route for tenant-api-operator and tenant-api-staffing audiences, over-long TTL (401), impersonated-write (403), unprovisioned org (404), cross-org ORG_B (403/404), and excluded locationIds (403/404); (6) updated apps/app/app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx to render the location selector only when locations.length > 1; (7) updated docs/permissions.md, docs/reservations-contract.md, docs/reservations-plan.md, docs/reservations.md, and docs/decisions/048-reservations-data-residency.md to match the 8 implemented permissions, 6 feature flags, migration 0025, aud: 'tenant-api-reservations-operator', token claims, Bearer INTERNAL_COMMAND_TOKEN, and all 12 ADR 048 sections.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "rm -f apps/tenant-api/workers/migrations.generated.ts && npm test -w @repo/tenant-db",
+					"exitCode": 0,
+					"observation": "All 13 test files (177 tests) passed, including reservations-schema.test.ts (6 tests: overbook overlap, converted hold immutability, and auto-generating apps/tenant-api/workers/migrations.generated.ts when absent)."
+				},
+				{
+					"command": "cd apps/tenant-api && npx vitest run src/lib/reservations-write.test.ts src/lib/reservations-auth.test.ts src/lib/reservations-context.test.ts src/routes/reservations-security.test.ts",
+					"exitCode": 0,
+					"observation": "4 test files (25 tests) passed: reservations-write.test.ts (4 tests including rsv_table_occupancies overlap -> 409), reservations-context.test.ts (3 tests verifying 5m fresh, 24h stale, 30s failure cooldown, redirect: error), reservations-auth.test.ts (5 tests), and reservations-security.test.ts (13 tests sweeping every mounted route for tenant-api-operator, tenant-api-staffing, over-long TTL, impersonated-write, cross-org ORG_B, excluded locationIds [LOC_2], and hasProvisionedDb=false 404)."
+				},
+				{
+					"command": "cd apps/app && npx vitest run app/utils/reservations/reservations-guards.test.ts app/routes/_app+/\\$orgSlug_+/settings+/roles.reservations.test.tsx app/routes/resources+/reservations.context.test.ts",
+					"exitCode": 0,
+					"observation": "3 test files (32 tests) passed, including the VAL-FND-022 check on _layout.tsx gating #reservations-location-select on locations.length > 1."
+				},
+				{
+					"command": "NODE_OPTIONS=--max-old-space-size=4096 npm run typecheck -w @repo/tenant-db && npm run typecheck -w tenant-api && NODE_OPTIONS=--max-old-space-size=4096 npm run typecheck -w app && npx oxlint packages/tenant-db apps/tenant-api apps/app && node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "All 3 workspaces passed TypeScript typechecking with 0 errors, Oxlint reported 0 warnings/errors on all modified files, and check-lingui.mjs confirmed all Lingui catalogs are complete."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "Signed in as kody on http://localhost:3001/login and opened http://localhost:3001/acme/reservations/today (2 locations) and http://localhost:3001/riyadh-grill/reservations/today (1 location) in agent-browser",
+					"observed": "On /acme/reservations/today, #reservations-location-select rendered (count = 1) with options 'Downtown Flagship' and 'Waterfront Kitchen (Toronto)'. On /riyadh-grill/reservations/today, #reservations-location-select was hidden (count = 0), showing only Date and Service controls."
+				}
+			]
+		},
+		"tests": {
+			"added": [],
+			"updated": [
+				"packages/tenant-db/src/reservations-schema.test.ts",
+				"apps/tenant-api/src/lib/reservations-write.test.ts",
+				"apps/tenant-api/src/lib/reservations-context.test.ts",
+				"apps/tenant-api/src/routes/reservations-security.test.ts",
+				"apps/app/app/utils/reservations/reservations-guards.test.ts"
+			],
+			"coverage": "Verified trigger overlap/overbook/hold-conversion invariants and DO bundle auto-generation in @repo/tenant-db (177 tests pass), mapSqliteConstraintError 409 mapping, 5m/24h/30s/3s reservations-context caching, and full per-route security sweeps in tenant-api (25 tests pass), plus App guard/layout/role/context suites (32 tests pass) and browser verification of multi-location vs single-location picker visibility."
+		},
+		"discoveredIssues": [],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

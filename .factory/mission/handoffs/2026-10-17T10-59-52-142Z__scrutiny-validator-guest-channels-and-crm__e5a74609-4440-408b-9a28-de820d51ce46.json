@@ -1,0 +1,109 @@
+{
+	"timestamp": "2026-10-17T10:59:52.142Z",
+	"workerSessionId": "e5a74609-4440-408b-9a28-de820d51ce46",
+	"featureId": "scrutiny-validator-guest-channels-and-crm",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "2b900e93",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Scrutiny for guest-channels-and-crm: status pass. Typecheck, lint and test gates all pass; 6/6 feature reviews pass with 0 blocking findings. One mechanical lint fix committed (2b900e93). Synthesis: /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/validation/guest-channels-and-crm/scrutiny/synthesis.json",
+		"whatWasImplemented": "Ran the milestone scrutiny validation for guest-channels-and-crm. (1) Programmatic gates, in order: typecheck (25 workspaces, PASSED), lint (first run FAILED on 3 new App ESLint errors in two new test files; mechanical fix applied and committed as 2b900e93; re-run PASSED at the 59-error baseline), test (26 steps, PASSED: @repo/reservations 74 tests, tenant-api 2509 tests/115 files, App 2936 tests/308 files, Android test+build+size, iOS build+test, lingui:check). (2) Spawned 6 scrutiny-feature-reviewer subagents in parallel, one per completed implementation feature (online-booking-backend, online-booking-sites-and-app-ui, messages-and-waitlist-backend, messages-and-waitlist-backend-fix, messages-and-waitlist-ui, guestbook-and-reports-full-stack); all six wrote reports to validation/guest-channels-and-crm/scrutiny/reviews/ and returned pass with 0 blocking findings (18 non-blocking notes total). (3) Adjudicated every finding against the current combined code and the approved contract; all confirmed findings are non-blocking. (4) Triaged 23 shared-state observations: applied 4 library updates (engine-notes.md, app-ui-patterns.md, sites-patterns.md, user-testing.md) plus the repo lint fix; recommended 5 guidance changes to the orchestrator; rejected 6 as already-documented or non-actionable. (5) Wrote synthesis.json with validatorsRun, reviewsSummary, adjudication, appliedUpdates, suggestedGuidanceUpdates and rejectedObservations. No services or browser sessions were started; the tree is clean.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "bash {missionDir}/scripts/gate-typecheck.sh",
+					"exitCode": 0,
+					"observation": "Typecheck gate: 25 workspaces; 'Tasks: 25 successful, 25 total; Time: 53.924s'; printed TYPECHECK GATE PASSED."
+				},
+				{
+					"command": "bash {missionDir}/scripts/gate-lint.sh (first run)",
+					"exitCode": 1,
+					"observation": "'App ESLint errors: 62 (pre-existing baseline: 59)'; the 3 new errors were all jest-dom/prefer-enabled-disabled at detail-sheet.resend.test.tsx:174 and message-settings.test.tsx:104,188; printed LINT GATE FAILED: eslint-app."
+				},
+				{
+					"command": "cd apps/app && npx eslint <the two test files> --fix",
+					"exitCode": 0,
+					"observation": "The auto-fix removed `.disabled` but left unbalanced parentheses, producing 'Parsing error: Expression expected' in both files; the fixer's output had to be corrected by hand."
+				},
+				{
+					"command": "cd apps/app && npx eslint app/components/reservations/detail-sheet.resend.test.tsx app/components/reservations/messages/message-settings.test.tsx",
+					"exitCode": 0,
+					"observation": "0 errors, 1 pre-existing warning (consistent-type-imports at detail-sheet.resend.test.tsx:25). Both assertions rewritten as expect(...).toBeDisabled()."
+				},
+				{
+					"command": "cd apps/app && CI=true npx vitest run app/components/reservations/detail-sheet.resend.test.tsx app/components/reservations/messages/message-settings.test.tsx",
+					"exitCode": 0,
+					"observation": "2 test files passed, 28 tests passed (message-settings 13, detail-sheet.resend 15), 5.9 s."
+				},
+				{
+					"command": "bash {missionDir}/scripts/app-eslint-gate.sh",
+					"exitCode": 0,
+					"observation": "'App ESLint errors: 59 (pre-existing baseline: 59); No new App ESLint errors.'"
+				},
+				{
+					"command": "git commit (the two test files)",
+					"exitCode": 0,
+					"observation": "Commit 2b900e93 'fix(reservations): use jest-dom disabled matchers in two new tests'; pre-commit hook (prettier, oxlint, eslint, check-lingui) passed; git status shows only '## pr/reservations'."
+				},
+				{
+					"command": "bash {missionDir}/scripts/gate-lint.sh (re-run)",
+					"exitCode": 0,
+					"observation": "oxlint 0 errors; ESLint 6/6 packages; App ESLint 59 = baseline; printed LINT GATE PASSED."
+				},
+				{
+					"command": "bash {missionDir}/scripts/gate-test.sh",
+					"exitCode": 0,
+					"observation": "All 26 steps exit=0; test:tenant-api 115 files/2509 tests (135 s), test:app 308 files/2936 tests (373 s), @repo/reservations 19 files/74 tests, android:test/build/size, ios:build/test, lingui:check; printed TEST GATE PASSED and a clean git status."
+				},
+				{
+					"command": "jq -e on validation/guest-channels-and-crm/scrutiny/synthesis.json",
+					"exitCode": 0,
+					"observation": "Valid JSON: status pass, 3/3 validators passed, 6/6 reviews passed, 0 blocking, 5 applied updates, 5 suggested guidance updates, 6 rejected observations."
+				},
+				{
+					"command": "ss -Htlnp | grep mission ports; ps | grep GradleDaemon/vitest/workerd",
+					"exitCode": 0,
+					"observation": "No mission ports in use (3001/3005/3007/3008/3009/3101/24678/24679), 0 Gradle daemons, no stray vitest/playwright/workerd processes."
+				}
+			],
+			"interactiveChecks": []
+		},
+		"tests": {
+			"added": [],
+			"updated": [
+				"apps/app/app/components/reservations/detail-sheet.resend.test.tsx",
+				"apps/app/app/components/reservations/messages/message-settings.test.tsx"
+			],
+			"coverage": "No new tests. The two updated files only had three assertions rewritten from raw `.disabled` checks to jest-dom toBeDisabled() (semantically identical) to clear the App ESLint baseline gate; all 28 tests in those files pass."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "A guest-initiated cancel through the manage link does not set late_cancel (apps/tenant-api/src/services/rsv-public-booking-service.ts:936-950 writes only cancelledBy='guest'), while the operator cancel path does (rsv-booking-service.ts:2747-2756). The cancellations report and the Guestbook lateCancels counter therefore reflect operator cancellations only. VAL-REPORT-006 is satisfiable operator-side, but milestone 10's VAL-PAY-036 expects the guest path to set late_cancel.",
+				"suggestedFix": "Mirror the operator late-cancellation wiring in the public manage-link cancel path, with a route test."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "eraseGuestProfile scrubs waitlist entries and payment card refs but never clears rsv_notify_requests.contact_phone_e164 / contact_email_norm (apps/tenant-api/src/services/rsv-guest-service.ts:1081; schema at packages/tenant-db/src/schema.ts:4351-4352), so an erased guest's notify-me row keeps their phone and email. No contract assertion requires the scrub and the code path predates this milestone.",
+				"suggestedFix": "Clear the notify-request contact fields (or cancel the request) inside the same erasure transaction and note it in the erasure design."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "On the Cloudflare Workers runtime (production US node), an unresolvable Origin on /reservations/* answers 400 and a wrong-region Origin answers 409 region_mismatch with orgRegion (apps/tenant-api/workers/index.ts:307-312, workers/org-router.ts:313-333) instead of the uniform 404 required by VAL-ONLINE-024/025. The Node runtime (the contract's curl tool on 3007/3009) is compliant; the edge path is the inherited /careers/ pattern and discloses no guest data.",
+				"suggestedFix": "Orchestrator decision: either accept the platform behavior (documented in library/engine-notes.md) or make the org-router answer 404 for /reservations* prefixes."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": [],
+			"suggestedChanges": [
+				"Note that ESLint's jest-dom/prefer-enabled-disabled autofix is unsafe: on `expect((el as HTMLButtonElement).disabled).toBe(true)` it removes `.disabled` and leaves unbalanced parentheses, producing a parsing error. Hand-correct the fix (use expect(el).toBeDisabled()) and re-lint.",
+				"The skill could say explicitly that a gate failing only on auto-fixable lint in test files is a permitted mechanical fix; record the original failing command/exit code in validatorsRun (e.g. a `note`) so the history is preserved even though the gate ends green.",
+				"Consider recording the review report paths in the synthesis schema example (a `reviewReports` array), since the orchestrator otherwise has to glob the reviews directory."
+			]
+		}
+	}
+}

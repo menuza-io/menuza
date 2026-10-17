@@ -1,0 +1,249 @@
+{
+	"milestone": "foh-core",
+	"round": 2,
+	"status": "fail",
+	"assertionsSummary": {
+		"total": 12,
+		"passed": 10,
+		"failed": 2,
+		"blocked": 0
+	},
+	"passedAssertions": [
+		"VAL-FND-006",
+		"VAL-FND-009",
+		"VAL-SETUP-020",
+		"VAL-SETUP-021",
+		"VAL-SETUP-023",
+		"VAL-SETUP-025",
+		"VAL-BOOK-008",
+		"VAL-BOOK-009",
+		"VAL-BOOK-013",
+		"VAL-HOST-014"
+	],
+	"failedAssertions": [
+		{
+			"id": "VAL-BOOK-003",
+			"reason": "The API returns occasion='tag_acme_anniversary' instead of the chosen value 'anniversary' (serializer maps occasion to occasion_tag_id); all other clauses of the assertion pass in round 2, including area preference, duration 120 with a 120-minute occupancy, dietary and internal notes, and the sheet's new free-text dietary input.",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-book-ui.json"]
+		},
+		{
+			"id": "VAL-BOOK-037",
+			"reason": "Status and course badges now render Arabic and the RTL layout is correct, but the contact-status chip still renders the English humanized enum 'Left message' (contact_status='left_message') because CONTACT_STATUS_LABELS/detail-sheet CONTACT_STATUSES use keys that do not match the canonical vocabulary left_message|no_answer|wrong_number; the detail sheet's Contact Tracking selector cannot display or set the stored value.",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-today-rtl.json"]
+		}
+	],
+	"blockedAssertions": [],
+	"regressionAssertionsReverified": [
+		{
+			"id": "VAL-FND-021",
+			"status": "pass",
+			"note": "module hidden (404 on /acme/reservations, /acme/reservations/settings, token route) with reservations.enabled=false and restored afterwards; the system-level D1 row was left true and org rows were never deleted",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-flaggate.json"]
+		},
+		{
+			"id": "VAL-SETUP-018",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-setup-ui.json"]
+		},
+		{
+			"id": "VAL-SETUP-019",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-setup-ui.json"]
+		},
+		{
+			"id": "VAL-SETUP-022",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-setup-ui.json"]
+		},
+		{
+			"id": "VAL-SETUP-026",
+			"status": "partial",
+			"note": "browser half not re-exercised end to end: the assigned location is in sync (no banner) and inducing a mismatch would have written outside the group's isolation boundary; the banner does render on the org's second location (Waterfront Kitchen, settings tz UTC vs context America/New_York) and reservations-setup.test.ts (42 tests incl. rederive-times) passes. Round-1 status kept.",
+			"evidence": [
+				"validation/foh-core/user-testing/flows/r2-setup-ui.json",
+				"validation/foh-core/user-testing/flows/r2-suites.json"
+			]
+		},
+		{
+			"id": "VAL-BOOK-001",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-book-ui.json"]
+		},
+		{
+			"id": "VAL-BOOK-002",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-book-ui.json"]
+		},
+		{
+			"id": "VAL-BOOK-006",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-today-rtl.json"]
+		},
+		{
+			"id": "VAL-BOOK-010",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-book-ui.json"]
+		},
+		{
+			"id": "VAL-BOOK-011",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-today-rtl.json"]
+		},
+		{
+			"id": "VAL-BOOK-012",
+			"status": "pass",
+			"note": "the round-1 unassigned/conflict panel mapping defect is fixed (row renders 'Conflicts with another booking on G9-3' with code, time, party size)",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-today-rtl.json"]
+		},
+		{
+			"id": "VAL-HOST-012",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-floor.json"]
+		},
+		{
+			"id": "VAL-HOST-013",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-floor.json"]
+		},
+		{
+			"id": "VAL-HOST-015",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-floor.json"]
+		},
+		{
+			"id": "VAL-HOST-016",
+			"status": "pass",
+			"note": "the floor's block quick action now answers 201 (round 1 saw the 500 from the block payload defect)",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-floor.json"]
+		},
+		{
+			"id": "VAL-HOST-017",
+			"status": "pass",
+			"evidence": ["validation/foh-core/user-testing/flows/r2-floor.json"]
+		}
+	],
+	"flows": [
+		{
+			"group": "r2-flaggate",
+			"surface": "agent-browser (App)",
+			"assertions": ["VAL-FND-021"],
+			"report": "validation/foh-core/user-testing/flows/r2-flaggate.json",
+			"evidence": "evidence/foh-core/r2-flaggate/"
+		},
+		{
+			"group": "r2-engine",
+			"surface": "terminal",
+			"assertions": ["VAL-FND-006", "VAL-FND-009"],
+			"report": "validation/foh-core/user-testing/flows/r2-engine.json",
+			"evidence": "evidence/foh-core/r2-engine/"
+		},
+		{
+			"group": "r2-api",
+			"surface": "curl (tenant-api 3007) + sqlite",
+			"assertions": [
+				"VAL-SETUP-020",
+				"VAL-SETUP-021",
+				"VAL-SETUP-023",
+				"VAL-SETUP-025",
+				"VAL-BOOK-008",
+				"VAL-HOST-014"
+			],
+			"report": "validation/foh-core/user-testing/flows/r2-api.json",
+			"evidence": "evidence/foh-core/r2-api/"
+		},
+		{
+			"group": "r2-suites",
+			"surface": "terminal",
+			"assertions": [],
+			"report": "validation/foh-core/user-testing/flows/r2-suites.json",
+			"evidence": "evidence/foh-core/r2-suites/"
+		},
+		{
+			"group": "r2-setup-ui",
+			"surface": "agent-browser (App) + sqlite",
+			"assertions": [
+				"VAL-SETUP-020",
+				"VAL-SETUP-021",
+				"VAL-SETUP-023",
+				"VAL-SETUP-025",
+				"VAL-SETUP-018",
+				"VAL-SETUP-019",
+				"VAL-SETUP-022",
+				"VAL-SETUP-026"
+			],
+			"report": "validation/foh-core/user-testing/flows/r2-setup-ui.json",
+			"evidence": "evidence/foh-core/r2-setup-ui/"
+		},
+		{
+			"group": "r2-book-ui",
+			"surface": "agent-browser (App) + sqlite",
+			"assertions": [
+				"VAL-BOOK-003",
+				"VAL-BOOK-008",
+				"VAL-BOOK-009",
+				"VAL-BOOK-013",
+				"VAL-BOOK-001",
+				"VAL-BOOK-002",
+				"VAL-BOOK-010"
+			],
+			"report": "validation/foh-core/user-testing/flows/r2-book-ui.json",
+			"evidence": "evidence/foh-core/r2-book-ui/"
+		},
+		{
+			"group": "r2-today-rtl",
+			"surface": "agent-browser (App) + sqlite",
+			"assertions": [
+				"VAL-BOOK-037",
+				"VAL-BOOK-011",
+				"VAL-BOOK-012",
+				"VAL-BOOK-006"
+			],
+			"report": "validation/foh-core/user-testing/flows/r2-today-rtl.json",
+			"evidence": "evidence/foh-core/r2-today-rtl/"
+		},
+		{
+			"group": "r2-floor",
+			"surface": "agent-browser (App) + sqlite",
+			"assertions": [
+				"VAL-HOST-014",
+				"VAL-HOST-012",
+				"VAL-HOST-013",
+				"VAL-HOST-015",
+				"VAL-HOST-016",
+				"VAL-HOST-017"
+			],
+			"report": "validation/foh-core/user-testing/flows/r2-floor.json",
+			"evidence": "evidence/foh-core/r2-floor/"
+		}
+	],
+	"appliedUpdates": [
+		{
+			"target": "user-testing.md",
+			"description": "Added the round-2 block: verified environment state (services, flags, the fix workers' leftovers, the business-date caveat), the D1 flag-toggle recipe (system-level D1 row is true, so deleting org rows does not hide the module), what the two fix commits changed, the r2 data-isolation registry, flow-validator guidance for terminal/curl/agent-browser, and the three-batch concurrency plan.",
+			"source": "setup"
+		},
+		{
+			"target": "user-testing.md",
+			"description": "Appended round-2 results and runtime findings: the two remaining defects with root causes, the residual engine observation about holds passed through the generic occupancies array, the Waterfront Kitchen tz-mismatch leftover, the UTC-vs-location business-date fallback in operator-reservations-book routes, and the r2 leftover data on acme.",
+			"source": "flow-report"
+		},
+		{
+			"target": "services.yaml",
+			"description": "No corrections needed: every start/stop/healthcheck/seed command used this round worked as written (App 3001 via VITE_DIRECT_DEV=1, tenant-api US 3007 / KSA 3009 started by an earlier session and verified live on HEAD).",
+			"source": "setup"
+		}
+	],
+	"flagStateAfterRun": {
+		"note": "Only r2-flaggate touched the module flag; it set reservations.enabled=false for acme in three short windows (observing 404s) and restored true each time. Final local D1 read: system row true, acme and riyadh-grill org rows true. Org rows were never deleted.",
+		"acme_all_reservations_flags": true,
+		"riyadh_grill_all_reservations_flags": true,
+		"system_level_row_note": "Local D1 has reservations.enabled=true at system level (data.db has false); the org-level false is what induces the off state locally."
+	},
+	"servicesAfterRun": "tenant-api US (3007) and KSA (3009) were already running before this session and were left running (verified serving the post-fix code). The App dev server (3001) was started by this validator and is stopped during teardown. Sites (3008) and Admin (3005) were never started.",
+	"knownLeftovers": [
+		"Floor plan: two extra wall elements in G15-Area (rsv_floor_elements rows 9/10) from the UI fix worker; live floor_plan_version 79.",
+		"Reservations on acme now include R2-prefixed test data created inside the isolation registry: R2Book (2026-10-29), R2-API-* (2026-10-31), R2Today (2026-10-17), R2Floor (2026-10-30). Seeded rows untouched.",
+		"Waterfront Kitchen (acme location vw6s16lrjjvyafd3dc4cqexu) has rsv_location_settings.time_zone=UTC while the control plane says America/New_York, so the settings screen shows a genuine tz_mismatch banner there (pre-existing leftover, used as read-only evidence)."
+	],
+	"previousRound": "validation/foh-core/user-testing/synthesis-round1.json"
+}

@@ -1,0 +1,98 @@
+{
+	"featureId": "foh-book-and-host-ui",
+	"reviewedAt": "2026-10-16T19:20:00.000Z",
+	"commitId": "403e6c0cc542e2e5f03213a6e0569ad247927377",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "fail",
+	"codeReview": {
+		"summary": "The commit delivers the full host-stand surface: Today/Book/Timeline/Floor/Calendar/Overview/Section-layouts routes, booking sheet, walk-in dialog, detail sheet (?r=<id> preserving date/service/area), conflict panel, useReservationsPoll/useLiveNow, the region-switch and location-delete guards, Lingui extraction with real Arabic translations, and a stubbed-tenant-api Playwright spec. Architecture alignment is good overall: loaders return ids/flags/location facts only, every route calls requireReservationsAccess first (guards test covers all 16+ routes), every mutation sends expectedVersion, ETag polling is paused during drags (timeline paused=isInteractionActive, floor pausePolling=drag/prompt), 304 preserves state references, the floor canvas is dir=ltr inside an RTL page, and the region guard fails closed on an unknown summary and blocks on unsettled payments (409). Three approved requirements are not met: the floor/timeline live timer runs at 30 s instead of the required 15 s, the detail sheet neither pauses polling nor protects unsaved edits from a 200 poll, and several user-visible labels plus every screen-reader announcement bypass Lingui (English-only in Arabic RTL). Smaller defects: floor course-stage buttons use ids that never match the stored values, so two of five active-stage highlights are wrong; Today polls at 10 s instead of the documented 5 s; drag and drop is native HTML5 (mouse-only) rather than the prescribed shared dnd-kit context, so touch drags will not work on the iPad target; and the PATCH client sends fields the tenant-api schema drops. Test evidence is solid: 12 Vitest suites (95 tests), 3 Playwright specs x 3 repeats green, and agent-browser checks on acme and riyadh-grill including a verified 304 on the 5 s KSA floor poll and loader payloads with no guest PII.",
+		"issues": [
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/floor.tsx",
+				"line": 148,
+				"severity": "blocking",
+				"description": "VAL-HOST-013 requires the live elapsed/remaining turn-time timer to tick via the 15-second useLiveNow hook (architecture.md section 10.3: 'Timers (seated time, late, running long) update every 15 s from useLiveNow'), but floor.tsx passes intervalMs: 30_000 and the comment on line 146 even says 'Live clock ticking every 30s ... (VAL-HOST-013)'. With a 30 s cadence an observer watching a seated table for the required >=16 s can see no tick at all, and the displayed elapsed/remaining minutes can be up to 30 s stale. The same 30 s cadence is used by the shared hook in apps/app/app/components/reservations/use-host-stand.ts:89, so the timeline 'Now' cursor and every host-stand timer share the deviation. Change both to 15_000."
+			},
+			{
+				"file": "apps/app/app/components/reservations/detail-sheet.tsx",
+				"line": 136,
+				"severity": "blocking",
+				"description": "The detail sheet neither pauses background day polling nor protects unsaved edits, which VAL-BOOK-014 and architecture.md section 10.3 ('paused during drags and while a sheet edits'; library/app-ui-patterns.md: 'Polling pauses during drags and while a sheet or editor is open') require. useHostStand pauses only for bookingSheetOpen/walkInOpen (use-host-stand.ts:80) and no caller pauses for ?r=<id>, so the day feed keeps polling every 10 s. When a poll returns 200 (any day change), normalizeDayFeedResponse builds fresh reservation objects, host.selectedReservation gets a new identity, and the effect at detail-sheet.tsx:136-141 re-runs syncFormFromReservation(fallbackReservation) (line 138), silently resetting guestNotes, internalNotes, serverLabel, partySizeEdit, timeEdit and durationEdit that the operator was typing; it also re-fires loadDetail()/fetchReservationDetail on every such poll. Reproduce by opening /acme/reservations/today?r=<id>, typing a guest note, then having a second session change the day. Fix by pausing the poll while the sheet is open (e.g. pass detailReservationId into useHostStand's pause condition) or by only syncing the form when the reservation id/version changes and no field is dirty."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx",
+				"line": 272,
+				"severity": "blocking",
+				"description": "i18n: the mission directive says every user-visible string goes through Lingui, and architecture.md section 10.4 requires 'localized spoken announcements', but the keyboard-DnD live-region messages are hardcoded English template strings (timeline.tsx:272, 303, 333, 370, 376, 411, 422, 437, 452, 468; e.g. `Grabbed ${guestName} ... Use arrow keys ...`). The same bypass affects rendered option labels: floor course buttons (floor.tsx:98-104 rendered at 1462: 'Appetizer/Main/Dessert/Check/Bussing'), detail-sheet course and contact selects (detail-sheet.tsx:34-47 rendered at 509 and 589), booking-sheet occasion and dietary chips (booking-sheet.tsx:36-53 rendered at 698 and 726), and section colour names (settings.sections.tsx:61-70 rendered at 449/456). These strings are invisible to check-lingui.mjs (they are not literal JSX text), so the extract/check gate passes while the Arabic RTL screens required by VAL-HOST-027/VAL-BOOK-037 still show English controls and Arabic screen-reader users hear English. Wrap them in t/msg (the Playwright spec already asserts the English wording at reservations-host-stand.test.ts:1071-1075, so the test will need the translated lookup)."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/floor.tsx",
+				"line": 100,
+				"severity": "non_blocking",
+				"description": "Floor course-stage buttons use ids 'main' and 'check' (COURSE_STAGES at floor.tsx:98-104) while the API stores 'entree' and 'check_dropped' (COURSE_STATUS_MAP in apps/tenant-api/src/services/rsv-booking-service.ts:2899-2916). Writes still land correctly because the backend maps the aliases, but the active-stage highlight compares reservation.courseStage === stage.id (floor.tsx:1468-1476), so the 'Main' and 'Check' buttons never show as active. Use the canonical values ('entree', 'check_dropped') or compare against an alias set."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/today.tsx",
+				"line": 62,
+				"severity": "non_blocking",
+				"description": "Polling cadences differ from the approved table (architecture.md section 10.3 / library/app-ui-patterns.md: host stand, floor and waitlist 5 s; book and timeline 10 s; calendar and overview 60 s). Today uses 10_000 (today.tsx:62) instead of 5 s, calendar uses 30_000 (calendar.tsx:84) and overview 15_000 (overview.tsx:76) instead of 60 s. Floor (5 s) and timeline/book (10 s) match. Faster calendar/overview polling is wasteful rather than wrong; Today is slower than specified."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx",
+				"line": 1080,
+				"severity": "non_blocking",
+				"description": "Timeline and floor drag-and-drop is implemented with native HTML5 DnD (draggable/onDragStart/onDragOver/onDrop + dataTransfer: timeline.tsx:848-860, 1080-1100, 1018; floor.tsx:1246, 1641-1650) instead of the shared dnd-kit context the mission prescribes (architecture.md section 10.4 and library/app-ui-patterns.md:174-190 point at components/staff/schedule/schedule-dnd.tsx, which wires PointerSensor, TouchSensor and KeyboardSensor plus localized Announcements). Mouse and the custom Space/Arrow/Enter keyboard path work, and validators test a desktop viewport, but HTML5 DnD has no touch sensor, so drag-to-assign/resize/seating will not work on the iPad hardware the host stand targets. Reusing schedule-dnd.tsx would also supply the localized announcements noted above."
+			},
+			{
+				"file": "apps/app/app/utils/organization/loader.server.ts",
+				"line": 44,
+				"severity": "non_blocking",
+				"description": "requireUserOrganization and validateOrgAccess now resolve an organization by slug OR id (loader.server.ts:44-50 and 85-92), an app-wide semantic change to a shared helper. Membership is still enforced (the join on UserOrganization.active stays), so there is no authorization bypass, but the feature description did not require it: the region-summary resource already receives orgSlug from site-card (site-card.tsx:177 passes both orgSlug and orgId), so the widening could be dropped in favour of the slug path, or documented."
+			},
+			{
+				"file": "apps/app/app/utils/reservations/book-api.ts",
+				"line": 2351,
+				"severity": "non_blocking",
+				"description": "updateReservation sends `unlock` (and `reflowLaterParties`, line 2306/2399) on PATCH, but the tenant-api PATCH schema accepts neither (apps/tenant-api/src/routes/operator-reservations-book.ts:1027-1055 defines lockTable/assignment only and Zod strips unknown keys), and the update service has no unlock handling (only assignReservationTables does). Consequence: confirming 'Unlock and move?' for a locked reservation that is only shifted in time or resized leaves assignment='locked' even though the prompt promised an unlock. The table-change path is unaffected because it uses POST /assign, which does accept unlock. The client also carries skipPayment/paymentPolicyMode on createPhoneReservation that are never sent (book-api.ts:2103)."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/floor.tsx",
+				"line": 734,
+				"severity": "non_blocking",
+				"description": "Design-system: floor table states are coloured with raw Tailwind palette utilities and inline hex (getStatusStyle at floor.tsx:734-780, HIGH_CONTRAST_SECTION_HEX at 106-115, section badge backgroundColor at 1348-1354), and the timeline/conflict panels mix raw blue/amber/red/slate classes (timeline.tsx:660-700, conflict-panel.tsx:135). The lint gate reports no new errors and status colouring is a functional encoding, but the repo guidance prefers theme tokens; the Mission provides resolveSectionColorHex for section colours, which the statuses do not use."
+			},
+			{
+				"file": "apps/app/app/components/reservations/host-subnav.tsx",
+				"line": 96,
+				"severity": "non_blocking",
+				"description": "Automatic reflow move notices (VAL-HOST-008, VAL-CROSS-006 'an auto-move notice is shown on the timeline') are surfaced only as a count inside the 'Unassigned & Conflicts' badge; the from/to detail is visible only after opening the conflict panel (conflict-panel.tsx:295-330). Functionally present, but a host who never opens the panel does not see which booking moved; a dismissible banner on the timeline/floor would match the assertion wording more directly."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "skills",
+			"observation": "app-ui-worker step 2 says to mirror the staffing equivalent and check library/app-ui-patterns.md before writing custom drag and drop, and the library names components/staff/schedule/schedule-dnd.tsx as the shared DndContext (Pointer/Touch/Keyboard sensors, DragOverlay, localized Announcements). The worker wrote its own HTML5 DnD plus a bespoke keyboard handler for both timeline.tsx and floor.tsx. The skill could name schedule-dnd.tsx explicitly as mandatory for reservations DnD to prevent the touch-sensor and announcement-localization gaps seen here.",
+			"evidence": "apps/app/app/components/staff/schedule/schedule-dnd.tsx:156-161 wires PointerSensor/TouchSensor/KeyboardSensor; apps/app/app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:848-860 and floor.tsx:1641-1650 use native draggable/onDragStart/onDrop with dataTransfer instead; handoff.skillFeedback.followedProcedure is true with no deviations."
+		},
+		{
+			"area": "knowledge",
+			"observation": "The App client sends several request fields the tenant-api silently drops (Zod strips unknown keys), so client authors cannot tell from the shared API layer which options are honoured. Documenting the client-to-route field mapping for reservations writes in library/app-ui-patterns.md would prevent repeats: PATCH /reservations/:id ignores `unlock` and `reflowLaterParties` (only assignReservationTables handles unlock); POST /reservations ignores `skipPayment`/`paymentPolicyMode`; POST /assign ignores `reflowLaterParties` because reflow is unconditional.",
+			"evidence": "apps/app/app/utils/reservations/book-api.ts:2351 and 2103; apps/tenant-api/src/routes/operator-reservations-book.ts:1027-1055 (patchReservationSchema) and 1068-1082 (assignTablesSchema); apps/tenant-api/src/services/rsv-booking-service.ts:1369-1379 (unlock handled only in assignReservationTables)."
+		},
+		{
+			"area": "conventions",
+			"observation": "A shared, widely used helper was widened for a feature-local need: requireUserOrganization/validateOrgAccess now match Organization.id as well as slug, while apps/app/AGENTS.md still documents requireUserOrganization(request, orgSlug, columns?) as slug-based. Either document the id-accepting behaviour in AGENTS.md or keep the helper slug-only and pass orgSlug (site-card already does).",
+			"evidence": "apps/app/app/utils/organization/loader.server.ts:44-50 and 85-92 (or(eq(slug), eq(id))); apps/app/app/components/settings/cards/organization/site-card.tsx:177 passes both orgSlug and orgId to /resources/reservations/region-summary."
+		},
+		{
+			"area": "knowledge",
+			"observation": "The documented polling cadence table (architecture.md section 10.3, library/app-ui-patterns.md) and the implemented cadences diverged in four places (Today 10 s vs 5 s, calendar 30 s vs 60 s, overview 15 s vs 60 s, timers 30 s vs 15 s). If the implementation cadences are acceptable, the shared docs should be updated so later validators and workers do not treat the table as authoritative; if not, the worker deviated from a documented requirement without noting it.",
+			"evidence": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/today.tsx:62, calendar.tsx:84, overview.tsx:76, floor.tsx:148, components/reservations/use-host-stand.ts:89 vs architecture.md:1781-1787 and library/app-ui-patterns.md:161-168."
+		}
+	],
+	"addressesFailureFrom": null,
+	"summary": "Reviewed commit 403e6c0c (44 files, ~19.6k insertions) against VAL-BOOK-023..033/035/038, VAL-HOST-001..004/013..016/021..028 and VAL-CROSS-002..006. Most of the feature is implemented to contract: guards on every loader/action with a source-scanning guards test, browser-direct tenant-api calls with expectedVersion on every mutation, ETag polling at 5 s (floor) and 10 s (book/timeline) with pause during drags and 304 state preservation, keyboard DnD with aria-live, Assign vs Assign & Lock, locked 'Unlock and move?' prompt, 409 VERSION_CONFLICT recovery, floor swap/reflow/overbook, quick actions, section overlays, calendar drill-down, overview KPIs plus per-service notes, section-layout CRUD, typed-slug region guard that fails closed and blocks unsettled payments, location-delete guard (409/503), real Arabic translations, and a realistic stubbed-tenant-api Playwright spec. Status is fail because three approved requirements are unmet: (1) useLiveNow runs at 30 s instead of the required 15 s on floor.tsx and use-host-stand.ts (VAL-HOST-013, architecture 10.3); (2) the detail sheet keeps 10 s polling while open and re-syncs the form from every 200 poll, discarding unsaved guest/internal notes, time, party size and duration edits (VAL-BOOK-014, architecture 10.3, library app-ui-patterns); (3) user-visible option labels (floor course stages, detail-sheet course/contact selects, booking-sheet occasion/dietary chips, section colour names) and every screen-reader announcement bypass Lingui, so the Arabic RTL screens and announcements stay English (mission i18n directive, architecture 10.4 'localized spoken announcements', VAL-HOST-027/VAL-BOOK-037). Non-blocking defects: floor 'Main'/'Check' course buttons never highlight (ids main/check vs stored entree/check_dropped), Today polls at 10 s not 5 s, native HTML5 DnD has no touch sensor for the iPad target, requireUserOrganization was widened to accept org ids app-wide, PATCH unlock/reflowLaterParties fields are silently dropped by tenant-api, raw palette colours for statuses, and move notices visible only behind the conflict-panel badge. Suggested validator spot-checks: watch a seated floor table for >=16 s to see whether the timer ticks at 15 s; open a detail sheet, type a note, force a day change from a second session and confirm the draft survives; open /riyadh-grill/reservations/floor?lng=ar and read the course-stage buttons and the timeline aria-live text."
+}

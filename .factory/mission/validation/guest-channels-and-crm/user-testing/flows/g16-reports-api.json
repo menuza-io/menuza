@@ -1,0 +1,143 @@
+{
+	"group": "g16-reports-api",
+	"surface": "curl+sqlite",
+	"testedAt": "2026-10-17T14:30:00Z",
+	"isolation": {
+		"org": "acme t58bgatqh3rv0s3movrecyj1",
+		"location": "v17plv08r5v357bie335lyq8",
+		"tenantDb": "/home/factory-user/repos/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3)",
+		"dates": "D=2026-10-31, D+1=2026-11-01",
+		"phones": "+1555555160..+1555555169",
+		"emails": "rsv-g16-<n>@example.com",
+		"guestMarker": "Reportprobe g16",
+		"tokens": "book/reports rsv tokens via /tmp/menuza-user-testing/mint-token.mjs; analytics tokens via a local mint script mirroring packages/reports/src/operator-token.ts (never printed)",
+		"notes": "No flags or location settings changed; all sqlite access SELECT-only; no rows deleted"
+	},
+	"toolsUsed": [
+		"curl",
+		"sqlite3 (read-only)",
+		"node (mint-token.mjs, local analytics mint script)",
+		"python3",
+		"grep"
+	],
+	"assertions": [
+		{
+			"id": "VAL-REPORT-003",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-003-book-token-refusals.txt",
+			"notes": "A book-scope rsv token (read:reservation:any + update:reservation:any, no report grant) got 403 on all six endpoints: GET /operator/reservations/reports/{summary,no-shows,cancellations,turn-times,waitlist,pacing} -> 403 {\"error\":\"invalid_scope\",\"expected\":[\"reports\"],\"actual\":\"book\"}. The error bodies carry no aggregate keys (no totals/parties/rows); the guard refuses the scope before any query. Sanity: no token -> 401 {\"error\":\"Missing bearer token\"}.",
+			"limitations": ""
+		},
+		{
+			"id": "VAL-REPORT-004",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-004-baseline-summary-D.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-004-summary-D.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-004-delta-computation.txt; guest-channels-and-crm/g16-reports-api/created-r4a.json; guest-channels-and-crm/g16-reports-api/created-r4b.json; guest-channels-and-crm/g16-reports-api/created-r4c.json",
+			"notes": "Created exactly two online Lunch bookings of 2 covers (12:00 r4a, 12:30 r4b) and one phone Dinner booking of 4 covers (19:00 r4c) on D via POST /operator/reservations/book/reservations. GET /reports/summary?locationId=...&from=2026-10-31&to=2026-10-31 -> 200. The delta from the pre-creation baseline is exactly +3 parties/+8 covers: byService Lunch +2/+4, Dinner +1/+4; bySource online +2/+4, phone +1/+4; byPartySize bucket 2 -> +2 parties (+4 covers), bucket 4 -> +1 party (+4 covers). Nothing from other dates is counted (the D-only run was taken after the D+1 booking existed and excludes it; the D..D+1 run adds exactly one party/2 covers).",
+			"limitations": "The absolute totals for D are 6 parties/14 covers, not 3/8, because my assigned date already held 3 pre-existing R2 leftover rows (phone G5-Dinner party 2, statuses booked/seated/arrived) that I must not delete. The assertion's figures are verified exactly as the baseline->after delta; the leftovers are visible and unchanged in the baseline body."
+		},
+		{
+			"id": "VAL-REPORT-005",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-005-no-shows-D.json; guest-channels-and-crm/g16-reports-api/status-r5a-no-show.json; guest-channels-and-crm/g16-reports-api/status-r5b-seated.json; guest-channels-and-crm/g16-reports-api/status-r5b-finished.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-no-shows.json",
+			"notes": "Created two bookings for validator guests on D (r5a Lunch 13:00 party 3; r5b Dinner 19:30 party 2), marked exactly one no_show via POST /reservations/rsv_401c500f-.../status {status:'no_show'} and seated+finished the other (booked->seated->finished). GET /reports/no-shows?from=2026-10-31&to=2026-10-31 -> 200: total 1, covers 3, byService Lunch {1 party, 3 covers}, byPartySize 3 {1,3}, row 13:00 Lunch party 3 phone. Re-run after the two cancellations existed: still total 1 - the finished and cancelled bookings are not reported as no-shows.",
+			"limitations": ""
+		},
+		{
+			"id": "VAL-REPORT-006",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-006-cancellations-D.json; guest-channels-and-crm/g16-reports-api/status-r6a-cancel.json; guest-channels-and-crm/g16-reports-api/status-r6b-cancel.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-006-supplementary-cancellations-today.json",
+			"notes": "Cancelled two validator bookings on D via POST /reservations/{id}/status {status:'cancelled'}: r6a Lunch 13:30 party 2 online, r6b Dinner 20:00 party 3 phone. GET /reports/cancellations?from=2026-10-31&to=2026-10-31 -> 200: total 2, covers 5, late 0, regular 2, byCancelledBy restaurant {2,5}, rows 13:30 Lunch p2 online and 20:00 Dinner p3 phone, both late=false (matching the DB late_cancel=0 for both); the VAL-REPORT-005 no-show is not counted. Supplementary live proof of the late/regular distinction: the cancellations report for 2026-10-17 returns total 4, late 1, regular 3 and the 08:20 Lunch party-2 row carries late=true, exactly matching DB row rsv_c0f2ee0e-... (late_cancel=1) - that row belongs to another validator's data and was neither created nor modified by me.",
+			"limitations": "A genuinely late cancel cannot be manufactured on a future date D: isLateCancellation (apps/tenant-api/src/services/rsv-late-cancel.ts) marks a cancel late only when now > startAt - cutoff, where cutoff is the location guest_modify_cutoff_min (120 here) or a policy snapshot, and no API writes policy_snapshot. Changing guest_modify_cutoff_min is owned by other groups this round and excluded by my isolation rules, so both of my D cancellations are regular. The report's late/regular split was instead proven with live data on 2026-10-17 (late=1/regular=3 matching the DB); my own two rows are correctly classified as not-late."
+		},
+		{
+			"id": "VAL-REPORT-009",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-009-sqlite-crosscheck.txt; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-pacing.json",
+			"notes": "GET /reports/pacing?from=2026-10-31&to=2026-10-31 -> 200. Every reported slot equals a read-only sqlite aggregation of the same rows (booked = status not in cancelled/declined/expired): 12:00 Lunch 1/2, 12:30 Lunch 1/2, 13:00 Lunch 1/3, 19:00 G5-Dinner 1/2, 19:00 Dinner 1/4, 19:30 G5-Dinner 2/4, 19:30 Dinner 1/2, 20:30 Dinner 1/2; totals 9 bookings/21 covers. My bookings appear only in their own slots; the cancelled 13:30 and 20:00 rows appear in no slot. Configured pacing limits are included: Lunch maxCovers 20/maxParties 6, Dinner 28/8, G5-Dinner none, and the limits array lists the rules.",
+			"limitations": ""
+		},
+		{
+			"id": "VAL-REPORT-010",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-010-summary-D-to-D1.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-010-summary-D-dinner.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-010-summary-D1-alone.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-004-summary-D.json",
+			"notes": "Created one additional validator booking on D+1 at lunch (r10d1, 2026-11-01 12:00 party 2 online). Summary D (run after that booking existed) -> totals 6/14: excludes the D+1 booking. Summary D..D+1 -> 7/16: exactly one more party and its 2 covers. Summary D with serviceId=svc_acme_dinner -> 1 party/4 covers, byService only Dinner: excludes both lunch bookings and keeps the dinner one. Summary D+1 alone -> 1/2.",
+			"limitations": ""
+		},
+		{
+			"id": "VAL-REPORT-012",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-audit-before-after.txt; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-summary.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-no-shows.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-cancellations.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-turn-times.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-waitlist.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-pacing.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-audit-newest-including-analytics.txt",
+			"notes": "Read-only count of rsv_audit_log rows with action='report.run' before: 49; ran each of the six module endpoints once with a reports-scope token (all six -> 200); after: 55 - exactly +6. The six new rows each name the report kind (entity_id summary/no-shows/cancellations/turn-times/waitlist/pacing) and the location v17plv08r5v357bie335lyq8, with changes {report,from,to,serviceId}; no guest name, phone, email or note text appears in any changes value.",
+			"limitations": ""
+		},
+		{
+			"id": "VAL-REPORT-013",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-013-pii-grep.txt; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-summary.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-no-shows.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-cancellations.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-turn-times.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-waitlist.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-012-six-pacing.json; guest-channels-and-crm/g16-reports-api/created-r13probe.json",
+			"notes": "Created the distinctive guest Reportprobe g16 on D (r13, Dinner 20:30 party 2 phone, staff note \"G16-NOTE-7f3a: seat near the window for the report probe\", allergy \"g16 allergy note text\", dietary \"g16 peanut allergy\"; verified stored in the tenant DB by read-only sqlite). Ran all six module reports for D (all 200) and grepped the raw bodies for Reportprobe/reportprobe/g16/55555160/rsv-g16/example.com/G16-NOTE/7f3a/peanut allergy/allergy note: zero matches in any body. The same bodies carry the correct aggregates (summary 9/21, no-shows 1/3, cancellations 2/5, turn-times total 1, waitlist 0, pacing 9/21).",
+			"limitations": ""
+		},
+		{
+			"id": "VAL-REPORT-015",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-016-bookings-subject-D.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-015-bookings-subject-allfields-B.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-015-bookings-subject-allfields-C.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-015-pii-grep.txt; guest-channels-and-crm/g16-reports-api/VAL-REPORT-017-waitlist-subject.json",
+			"notes": "POST /analytics/query subject=bookings over the local day D (custom startsAt 2026-10-31T04:00:00Z..2026-11-01T03:59:59.999Z) with all listable fields selected across two runs -> 200 both. Rows carry business date, time, location, service, party size, covers, status, channel, configured duration, actual turn, late cancel, payment status and collected/refunded amounts; grep of both bodies for the Reportprobe g16 markers (name, phone, email, note, allergy text) found nothing. Repeat for waitlist_entries with my two waitlist parties (party size, channel, quoted wait, actual wait, outcome) -> 200, same result: no contact fields in the body.",
+			"limitations": "The engine caps columns at 8 and marks currency and timeZone as listable:false, so 'every available field' means the 15 listable fields, covered by two runs (a third run selecting currency/timeZone answers 400 invalid_definition 'Cannot show column', saved as the -C file). The waitlist half ran on 2026-10-17, not D: waitlist entries can only be created on the current business date (createWaitlistEntry derives it from now); see VAL-REPORT-017."
+		},
+		{
+			"id": "VAL-REPORT-016",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-016-bookings-subject-D.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-009-sqlite-crosscheck.txt",
+			"notes": "POST /analytics/query subject=bookings for date D -> 200, 11 rows, no truncation. Each of my 8 bookings on D appears exactly once with its date, service, party size, status and channel: 12:00 Lunch p2 Booked Online; 12:30 Lunch p2 Booked Online; 13:00 Lunch p3 No-show Phone; 13:30 Lunch p2 Cancelled Online; 19:00 Dinner p4 Booked Phone; 19:30 Dinner p2 Finished Phone; 20:00 Dinner p3 Cancelled Phone; 20:30 Dinner p2 Booked Phone. No row is duplicated or aggregated away (cancelled rows still appear as rows), and the 11 rows equal the read-only sqlite reservation count for D exactly.",
+			"limitations": "The row count is 11, not 8: my assigned date D already held 3 pre-existing R2 leftover reservations (visible in the read-only sqlite listing) which the subject correctly reports as rows. Every one of my 8 bookings matches one row one-to-one; the count equals the number of reservations in D (proving one-row-per-reservation)."
+		},
+		{
+			"id": "VAL-REPORT-017",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-017-waitlist-subject.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-017-sqlite-crosscheck.txt; guest-channels-and-crm/g16-reports-api/waitlist-add-wl1.json; guest-channels-and-crm/g16-reports-api/waitlist-add-wl2.json; guest-channels-and-crm/g16-reports-api/waitlist-notify-wl1.json; guest-channels-and-crm/g16-reports-api/waitlist-notify-wl2.json; guest-channels-and-crm/g16-reports-api/waitlist-seat-wl1.json; guest-channels-and-crm/g16-reports-api/waitlist-seat-wl2.json",
+			"notes": "Added two operator waitlist parties, notified and seated them: WL1 (Reportprobe g16 WL1, party 2, walk-in, quoted 1m) and WL2 (Reportprobe g16 WL2, party 3, walk-in, quoted 1m); both seated 52s later, actual wait 1m. POST /analytics/query subject=waitlist_entries (joinedAt custom local day 2026-10-17, filter businessDate eq 2026-10-17) -> 200, 34 rows; every report row matches a read-only sqlite row on (joinedAt, party size, channel, status, quoted wait, actual wait) and vice versa (the only two DB rows absent from the report are the seeded wl_acme_1/2 whose joinedAt is 2026-10-15 21:52 EDT, outside the timeframe window). My two entries appear exactly once each with party 2/3, Walk-in, Seated, quoted 1m, actual 1m. No contact fields in the body (grep for the display names/phones/emails found nothing).",
+			"limitations": "The assertion says 'filtered to date D', but waitlist entries can only be created on the current business date (2026-10-17) - the add/join routes derive the business date from the server clock and expose no date parameter - so the one-to-one check ran on 2026-10-17 where my entries actually live. The check against sqlite is exact for that date."
+		},
+		{
+			"id": "VAL-REPORT-018",
+			"status": "pass",
+			"evidence": "guest-channels-and-crm/g16-reports-api/VAL-REPORT-018-restricted-subjects-bookings.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-018-restricted-subjects-waitlist.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-018-granted-bookings-200.json; guest-channels-and-crm/g16-reports-api/VAL-REPORT-018-book-rsv-token-on-analytics.json",
+			"notes": "POST /analytics/query with an analytics token whose subjects list omits bookings/waitlist_entries (the Report-less-operator premise) -> 403 {\"error\":\"forbidden_subject\"} for subject bookings and for subject waitlist_entries. The same call with a token whose subjects include both (kody-equivalent) -> 200 (11 booking rows). Negative context: a book-scope rsv token is refused with 401 {\"error\":\"unauthorized\"} (it is not an analytics token at all - different signing key and audience).",
+			"limitations": "No restricted operator account was available this round, so the analytics tokens were minted locally with the same signing scheme and explicit subjects as the App's mintOperatorAnalyticsToken (key sha256('tenant-operator-analytics-v1:'+INTERNAL_COMMAND_TOKEN), iss menuza-control-plane, aud tenant-api-operator) instead of through GET /acme/reports/token; no operator session cookie was available to curl that route. The App-side minting for a Report-less operator (its subjects list) is VAL-REPORT-014's scope; the tenant-api refusal verified here is the assertion's own pass criterion."
+		}
+	],
+	"frictions": [
+		{
+			"description": "My assigned date D (2026-10-31) already contained 3 pre-existing R2 leftover reservations (phone G5-Dinner party 2) that the contract says never to delete, so absolute report totals cannot equal only my bookings.",
+			"resolved": true,
+			"resolution": "Took a baseline report before creating my bookings and verified the exact baseline->after delta (plus the full-set sqlite cross-checks); documented the leftovers in every affected assertion's limitations.",
+			"affectedAssertions": ["VAL-REPORT-004", "VAL-REPORT-016"]
+		},
+		{
+			"description": "A genuinely late cancellation cannot be produced on a future date: isLateCancellation uses now > startAt - cutoff with the location guest_modify_cutoff_min (120) as fallback, and no API writes the policy snapshot.",
+			"resolved": true,
+			"resolution": "Cancelled two real D bookings through the API (both correctly regular) and additionally ran the cancellations report for 2026-10-17, where live data already holds a late cancel: total 4, late 1, regular 3, with the late row's flag matching the DB. Did not change any location setting (owned by other groups).",
+			"affectedAssertions": ["VAL-REPORT-006"]
+		},
+		{
+			"description": "Waitlist entries (operator add and public join) always take the current business date from the server clock; there is no date parameter, so no waitlist entry can exist on the assigned future date D.",
+			"resolved": true,
+			"resolution": "Created the two entries on 2026-10-17 (today's service day, where every other group's waitlist entries also live), notified and seated them, and ran the waitlist_entries subject there with an exact one-to-one sqlite cross-check.",
+			"affectedAssertions": ["VAL-REPORT-015", "VAL-REPORT-017"]
+		},
+		{
+			"description": "No restricted operator account (Report-less operator) was available, and no operator session cookie was obtainable without a browser, so the App's GET /acme/reports/token mint could not be driven by curl.",
+			"resolved": true,
+			"resolution": "Minted analytics tokens locally with the same signing scheme and explicit subjects (omitting the reservations subjects for the restricted case) to exercise tenant-api's refusal; stated the substitution in the assertion limitations.",
+			"affectedAssertions": ["VAL-REPORT-018"]
+		},
+		{
+			"description": "The report engine caps columns at 8 and marks currency/timeZone listable:false, so 'selecting every available field' needs more than one run.",
+			"resolved": true,
+			"resolution": "Covered all 15 listable fields across two list runs; kept the third run selecting currency/timeZone as evidence of the 400 invalid_definition refusal.",
+			"affectedAssertions": ["VAL-REPORT-015"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": "No flags, settings or seeded rows were changed; all sqlite access was SELECT-only. New rows (never deleted): 8 reservations on 2026-10-31 (rsv_d064b597-884d-4ae9-8e94-18a26172f3c0, rsv_f61436c2-3d5c-48df-b1cc-7a4478726cfd, rsv_bef199b5-bc4b-4d7a-abb4-4aa9f2fb84df, rsv_401c500f-98e6-41fc-b13f-a08c8692d514 no_show, rsv_a85de531-fcc6-4d17-9b5b-c8f895cad0c2 finished, rsv_df012acb-5776-4d18-9972-7eb6bbec9265 cancelled, rsv_7affc971-fe0a-4930-9935-c5d519232081 cancelled, rsv_4a5d2fbc-91a3-4e64-9546-b6c40fda181d Reportprobe g16), 1 reservation on 2026-11-01 (rsv_7953df0a-5f5e-437a-acdb-2c61e1107c27), 2 waitlist entries on 2026-10-17 (wle_f9ca1bd1-d716-4316-961e-14089582cecf, wle_db1835b4-e7a8-4cfa-867c-e90382dfde81) plus their two seat-created walk-in reservations on 2026-10-17 (rsv_3170f630-51b4-4539-aa44-eec0ec93f6b5, rsv_18beb3a6-eca7-44de-9f7f-aafb28d43107, channel waitlist, seated), and the expected rsv_audit_log report.run rows from the report runs. Full step-by-step log: guest-channels-and-crm/g16-reports-api/run-log.txt."
+}

@@ -1,0 +1,103 @@
+{
+	"timestamp": "2026-10-17T19:07:26.217Z",
+	"workerSessionId": "cf9b643b-8455-4899-af3b-40c2ec5ccae9",
+	"featureId": "user-testing-validator-guest-channels-and-crm",
+	"milestone": "guest-channels-and-crm",
+	"successState": "failure",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Round-2 user testing of guest-channels-and-crm: 5 of the 6 round-1 failures now pass (VAL-ONLINE-007, VAL-CROSS-009, VAL-CROSS-011, VAL-MSG-009, VAL-REPORT-014) and the 5 requested regressions pass, but VAL-CROSS-007 still fails: the availability ETag does not change on the first mutation of a never-mutated date, so Sites serves stale time chips. Round-1 synthesis preserved as synthesis-round1.json.",
+		"whatWasImplemented": "Ran the round-2 user-testing validation for milestone guest-channels-and-crm: started the four services (tenant-api US 3007 / KSA 3009, App 3001, Sites 3008), cleared the shared durable rate-limit counters in both tenant DBs, smoke-tested the manage-link fix through the public API, wrote the round-2 guidance block into library/user-testing.md, spawned five flow-validator subagents in two batches (batch A: 2 agent-browser + 2 curl; batch B: 1 agent-browser alone for the pacing/service-availability fixture), independently reproduced the one reported defect, updated validation-state.json for the six re-tested assertions, wrote the round-2 synthesis, appended runtime findings to user-testing.md, and stopped every service and browser session.",
+		"whatWasLeftUndone": "VAL-CROSS-007 still fails (step 2): the public availability ETag is unchanged after the first mutation of a date that has never been mutated (rsv_day_versions has no row, readDayVersion defaults to 1, the first write inserts version 1), so a guest holding the cached body revalidates with If-None-Match, gets 304 and keeps the pre-change time chips. A fix feature is needed. Two secondary items are recorded but did not fail an assertion: the availability payload still reports available=true/pacingWarning=false for a max_parties-only breach (rsv-day-feed-service.ts:1500-1504 only checks maxCovers), and the operator cancel UI has no reason input. VAL-ONLINE-002's 'after any booking ... new ETag' clause is affected by the same root cause but was not re-tested this round.",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "curl -sf http://localhost:300{7,9}/health; curl -sf http://localhost:3001/resources/healthcheck; curl -sf -H 'Host: acme.menuza.test:3008' http://localhost:3008/reserve",
+					"exitCode": 0,
+					"observation": "All four services healthy before testing: tenant-api 200 both nodes, App healthcheck 200, Sites /reserve 200 for acme.menuza.test."
+				},
+				{
+					"command": "sqlite3 <both tenant DBs> \"DELETE FROM rsv_rate_counters; SELECT COUNT(*) ...\"",
+					"exitCode": 0,
+					"observation": "113 shared counter rows (acme) and 7 (KSA) removed at round start so no group started inside another group's durable bucket; verified 0 rows left."
+				},
+				{
+					"command": "curl -X POST /reservations/holds + /reservations (Origin acme.menuza.test:3008, X-Forwarded-For 10.99.1.1) then read apps/tenant-api/.dev-mail/us/*.json",
+					"exitCode": 0,
+					"observation": "Setup smoke test: 201 hold, 201 booking (confirmation 5VWKMSJX, 2026-11-24 19:00) and the captured confirmation email's manage link is http://acme.menuza.test:3008/reserve/manage#t=<token> - the Sites origin, not the App's 3001. The round-1 defect is fixed."
+				},
+				{
+					"command": "curl -D - availability (ETag) then POST setup/special-days closed for 2026-11-26, then curl -H 'If-None-Match: \"1.68.11\"', then DELETE the special day",
+					"exitCode": 0,
+					"observation": "With the closed day present the ETag stayed \"1.68.11\" (same as a client would have cached before the change), the If-None-Match replay returned 304, a fresh fetch returned status closed with 0 slots, and after the delete the version/ETag moved to \"2.68.11\" with 28 slots. The reported staleness defect is real."
+				},
+				{
+					"command": "POST /operator/reservations/book/reservations (Idempotency-Key, 2026-11-27 12:00) then re-fetch the ETag and replay the pre-booking tag",
+					"exitCode": 0,
+					"observation": "201 (C638JJ) and the ETag was still \"1.68.11\" afterwards (rsv_day_versions row version 1); the pre-booking tag replayed as 304. The same defect hides the first booking on a fresh date, which also covers VAL-ONLINE-002's ETag clause. Probe booking cancelled afterwards (cancel 200, row status cancelled)."
+				},
+				{
+					"command": "for port in 3001 3008 3007 3009; kill -- -$(pgid of listener)",
+					"exitCode": 0,
+					"observation": "All four services I started were stopped by process group; ss showed no mission ports in use afterwards. agent-browser session list reported no active sessions. git status is clean (no repo changes from this session)."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "Reviewed the five round-2 flow reports and their evidence directories (r2-backend-rules, r2-manage-links, r2-reports-ui, r2-regress, r2-app-sheet)",
+					"observed": "All reports are valid JSON with per-assertion statuses and evidence paths; the six re-tested assertions resolved to 5 pass / 1 fail and the five regressions all pass. VAL-CROSS-011's report shows all five checkpoints (Sites booking 54F1K1PN, confirmation/modification/cancellation_restaurant emails, one SMS, manage page confirmed->modified->cancelled, .ics 200, operator history with the guest modified event); VAL-REPORT-014's report shows kody's 15-subject builder with Bookings and Waitlist entries plus the restricted operator's 10-subject list without them."
+				}
+			]
+		},
+		"tests": {
+			"added": [],
+			"coverage": "No tests were added or updated: this feature is a validation run. The work was executed through the product's real surfaces (agent-browser on App/Sites, curl against tenant-api US/KSA, read-only sqlite3, dev email capture and the [SMS MOCK] log)."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "blocking",
+				"description": "The public availability ETag does not change on the first mutation of a date that has never been mutated, so the guest channel keeps stale availability. readDayVersion returns 1 when rsv_day_versions has no row (apps/tenant-api/src/services/rsv-public-engine.ts:438-454) and the first write inserts version 1 (rsv-setup-crud.ts:111-132); the route serves ETag \"<dayVersion>.<settingsVersion>.<flagBits>\" with Cache-Control private, max-age=0, so the Sites page's cached body revalidates as 304 and renders the pre-change chips. Parent-reproduced on 2026-11-26 (closed day, ETag \"1.68.11\", replay 304, fresh fetch closed) and on a staff booking for 2026-11-27 (ETag unchanged, replay 304). This is why VAL-CROSS-007 step 2 fails and it also affects VAL-ONLINE-002's 'after any booking ... new ETag' clause.",
+				"suggestedFix": "Bump the day version on every write that can change a day's availability: make the day-version upsert always increment (insert version 2 for a brand-new row, or treat 'no row' as version 0 so the first write stores 1), including the setup/config paths that call it (special days, service availability, pacing, blocks), and add a regression test that the ETag changes after the first mutation of a fresh date. Re-check the Sites page after a plain reload with a warmed cache."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "The operator availability payload still reports available=true and pacingWarning=false for a max_parties-only pacing breach (rsv-day-feed-service.ts:1500-1504 evaluates only maxCovers). The staff channel is still warned at submit time (409 pacing_parties_exceeded; the explicit override returns 201 with a warnings array and the 'Booked over the pacing party limit.' toast), so step 5's channel semantics hold, but the pre-submit warning the round-1 report expected is still missing.",
+				"suggestedFix": "Extend the pacing-warning computation to max_parties (and any other limit the write path enforces) so the availability read and the booking sheet surface it before submit."
+			},
+			{
+				"severity": "suggestion",
+				"description": "The operator cancel UI has no reason input: clicking Cancel Reservation cancels immediately with a 60 s undo and the request carries no reason (cancel_reason NULL), although the API accepts one. VAL-CROSS-011's 'with a reason' wording was satisfied through the API cancel path.",
+				"suggestedFix": "Add an optional reason field to the cancel confirmation dialog and pass it through."
+			},
+			{
+				"severity": "suggestion",
+				"description": "The App's service-availability screen has no bulk path (one create/delete per row), so a fixture that needs many mode rows (13 in the round-2 step-4 fixture) is much faster through the setup API with a setup token. Not a defect, a validation-time cost.",
+				"suggestedFix": "Consider an area-level or service-level bulk editor for service availability modes."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": [
+				{
+					"step": "Step 4 (partition assertions into groups of 3-8)",
+					"whatIDidInstead": "Used five groups of 1-2 assertions each (two browser, two curl, one mixed browser+curl).",
+					"why": "The orchestrator scoped this round to six assertions plus regressions, and isolation decided the split: the two App-booking-sheet/pacing assertions own shared acme settings and service-availability writes and had to run alone, while the manage-link and report-builder journeys each need their own browser session."
+				},
+				{
+					"step": "Step 2/5 (use the tool the contract names for each assertion)",
+					"whatIDidInstead": "VAL-CROSS-009's guest-channel half was verified at the public availability API (which the Sites chips render from) instead of driving the Sites UI, and VAL-ONLINE-007 was verified with curl rather than the contract's curl-only list (that one matched).",
+					"why": "Round 2 re-tested only the half that had failed (the operator read); the Sites-chip half passed in round 1 and the browser budget was spent on the two assertions that need it. The limitation is recorded in the synthesis and in the flow report."
+				},
+				{
+					"step": "Step 2 (setup)",
+					"whatIDidInstead": "Deleted all rows from rsv_rate_counters in both tenant DBs before spawning validators.",
+					"why": "Round-1 precedent: every local client hashes to one durable bucket, so leftovers from the previous round would have starved the browser groups. The deletion was done by the parent (validators were told not to touch the DB), and no other shared state was reset."
+				}
+			],
+			"suggestedChanges": [
+				"State explicitly whether a re-run round should re-verify the guest-channel UI half of an assertion whose API half was the failure, or whether API-level re-verification of the fixed half plus the round-1 UI evidence is acceptable (the current wording allows either reading).",
+				"When a round is scoped by the orchestrator to a subset of assertions, say whether regression checks (not assertion-tracked) belong in the synthesis as a separate list - the current schema has no field for them, so they were recorded in a non-schema 'regressions' key."
+			]
+		}
+	}
+}

@@ -1,0 +1,130 @@
+{
+	"group": "g4-floorplan-ui",
+	"surface": "agent-browser (App)",
+	"testedAt": "2026-10-16T23:50:00Z",
+	"isolation": {
+		"appUrl": "http://localhost:3001",
+		"login": "kody",
+		"org": "acme",
+		"locationId": "v17plv08r5v357bie335lyq8",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db",
+		"ownedArea": "area_5ab0b6be-3f2d-473e-a193-739535e59233 (G4-Area)",
+		"ownedTables": [
+			"tbl_1f1bb120-2308-468c-a6f7-c32cbabe7382 (G4-1, 2-top, round)",
+			"tbl_18b28041-dd82-4e3f-aa9b-9bb866d0289e (G4-2, 4-top, square)"
+		],
+		"ownedElements": "7 rows labelled G4-*, all in G4-Area",
+		"tokenMinting": "node /tmp/menuza-user-testing/mint-token.mjs --org acme --scope setup (value never printed)"
+	},
+	"toolsUsed": [
+		"agent-browser (session d15910fb8c20__g4)",
+		"sqlite3 (read-only SELECTs)",
+		"curl against tenant-api US :3007 (GET + PUT floor-plan)",
+		"node /tmp/menuza-user-testing/mint-token.mjs"
+	],
+	"assertions": {
+		"VAL-SETUP-011": {
+			"status": "pass",
+			"observed": "Editor loaded at floor_plan_version 11. Drag of G4-1 from (100,100) plus one added wall element produced a dirty draft ('Unsaved draft changes' badge, live-region announcement) while SQLite stayed identical: rsv_tables G4-1 still (100,100), 0 rows in rsv_floor_elements for G4-Area, floor_plan_version still 11, floor_plan.save audit count unchanged (4). Reload without saving discarded the draft: the page rendered G4-1 back at (100,100) with 0 elements and no unsaved badge; SQLite still unchanged. 'Leave without saving' -> confirm banner ('You have unsaved floor plan changes. Leave and discard your local draft?') -> 'Discard & leave' navigated to /acme/reservations/settings/tables with SQLite unchanged. An explicit Save then sent PUT /operator/reservations/setup/locations/<id>/floor-plan with expectedFloorPlanVersion 11, returned HTTP 200, and the same request's follow-up GET returned 200; the editor showed 'Floor plan saved (v12).'; rsv_location_settings.floor_plan_version incremented 11 -> 12 and rsv_audit_log gained one row (action='floor_plan.save', entity_type='floor_plan', entity_id=v17plv08r5v357bie335lyq8, at=1792193281786). Two further saves behaved the same (v13, v14, v15, v16).",
+			"evidence": [
+				"foh-core/g4-floorplan-ui/VAL-SETUP-011-draft-dirty-unsaved.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-011-after-reload-draft-discarded.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-011-leave-confirm-banner.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-011-014-015-sqlite-verification.txt",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-save.har (PUT 200 + follow-up GET 200)"
+			],
+			"notes": "Owned fixture: G4-Area + G4-1/G4-2 were created before the UI work via POST /operator/reservations/setup/areas and /tables with a minted setup token (the editor itself has no 'Add area' control). The known non-blocking quirk (post-save follow-up GET failing and showing 'Failed to save floor plan.') did not occur in any of the six saves in this group. Console: no page errors, no console errors or warnings."
+		},
+		"VAL-SETUP-012": {
+			"status": "pass",
+			"observed": "curl PUT /operator/reservations/setup/locations/<id>/floor-plan with expectedFloorPlanVersion 15 while the live value was 16 returned HTTP 409 {\"error\":\"stale_version\",\"message\":\"Floor plan has been modified by another session; reload before saving.\",\"floorPlanVersion\":16,\"currentFloorPlanVersion\":16}; read-only sqlite before and after showed identical rows (G4-1 500/290/90/90/45 although the payload asked for x=510; G4-Wall x=60 although the payload asked for x=430; version still 16). In the editor: loaded at v16, a save by 'another operator' (valid curl PUT with expectedFloorPlanVersion 16) bumped the version to 17 and moved G4-2 x 310 -> 320; a 1-unit keyboard nudge (draft x=501) plus Save then produced PUT 409 (captured in HAR) and the editor rendered role=\"alert\" data-testid=floor-plan-conflict-banner: 'Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying.' with a 'Reload latest floor plan' button. SQLite after the UI 409 was unchanged by the editor (G4-1 still 500/290); the banner's Reload action then loaded v17 and cleared the conflict, showing G4-2 at (320,110).",
+			"evidence": [
+				"foh-core/g4-floorplan-ui/VAL-SETUP-012-curl-stale-409-response.txt",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-012-ui-conflict-banner.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-012-ui-409.har",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-012-no-writes-verification.txt"
+			],
+			"notes": "The concurrent save came from my own curl request because the contract simulates 'another operator'; both the 409 body and the UI banner were produced by the real tenant-api and the real editor."
+		},
+		"VAL-SETUP-013": {
+			"status": "pass",
+			"observed": "Grid size observed: 10 canvas units (FLOOR_GRID_STEP=10; UI copy 'Drag tables on the 10-unit grid'). A drag whose raw pointer delta would have placed G4-1 at (497,293) landed at exactly (500,290) in the DOM/inspector, i.e. x and y snapped to the 10-unit grid. Dragging the resize handle by (+23,+17) changed the drawn size to exactly 90x90 (73 -> 90, 87 -> 90). Setting the inspector rotation to 45 produced transform rotate(45deg). Save returned PUT 200 with the follow-up GET 200 ('Floor plan saved (v12).'); rsv_tables G4-1 became x=500 y=290 w=90 h=90 rotation=45 and GET /floor-plan returned the same values after reload; the reloaded editor rendered style left=500px top=290px width=90px height=90px transform=rotate(45deg).",
+			"evidence": [
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-before-load-v11.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-draft-dragged-resized-rotated.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-save.har",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-after-reload-persisted.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-014-015-get-floor-plan-extract.json",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-015-final-reload-all-persisted.png"
+			],
+			"notes": "The observed snap step is 10 units for drag and resize; the resize handle only exists while the item is selected. Console: no errors."
+		},
+		"VAL-SETUP-014": {
+			"status": "pass",
+			"observed": "With G4-2 selected and the table focused: ArrowRight 300 -> 301, ArrowDown 100 -> 101, ArrowLeft 301 -> 300, ArrowUp 101 -> 100 (1 canvas unit per keypress); Shift+ArrowRight 300 -> 310 and Shift+ArrowDown 100 -> 110 (10 canvas units). Each keypress updated the draft and announced 'Moved G4-2 to (x, y)' in the aria-live region. Save returned 200 ('Floor plan saved (v13).') and rsv_tables shows G4-2 x=310 y=110; GET /floor-plan returns the same.",
+			"evidence": [
+				"foh-core/g4-floorplan-ui/VAL-SETUP-014-nudge-draft-310-110.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-011-014-015-sqlite-verification.txt",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-014-015-get-floor-plan-extract.json"
+			],
+			"notes": "Later, the VAL-SETUP-012 concurrent-save simulation moved G4-2 x 310 -> 320 on purpose (that write is part of 012, not a nudge failure)."
+		},
+		"VAL-SETUP-015": {
+			"status": "pass",
+			"observed": "Added one decor element per supported kind inside G4-Area using the 'Decor element type' select + 'Add element' button, then positioned/labelled/resized/rotated them in the Element Inspector: wall G4-Wall (60,20 160x20), bar G4-Bar (60,60 160x60), door G4-Door (260,20 60x20 rotate 90 via the 90-degree preset), window G4-Window (260,60 120x20), label G4-Label (400,20 120x40), plant G4-Plant (420,80 40x40), zone G4-Zone (60,180, resized to 240x180). Save -> 200 'Floor plan saved (v14).'; rsv_floor_elements holds exactly 7 rows for the area with distinct kinds bar,door,label,plant,wall,window,zone, and rsv_tables for G4-Area still contains only G4-1,G4-2 (no bookable tables created). Delete round trip: an 8th element G4-Plant-Extra was added and saved (v15, 8 rows), then removed with the Element Inspector 'Remove' button and saved again -> v16 with 7 rows and the extra row gone. After a final reload at v17 all 7 elements render at their saved coordinates.",
+			"evidence": [
+				"foh-core/g4-floorplan-ui/VAL-SETUP-015-draft-7-kinds.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-015-final-reload-all-persisted.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-013-014-015-get-floor-plan-extract.json",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-011-014-015-sqlite-verification.txt"
+			],
+			"notes": "Element rows keep the client-generated ids (el_*) after save. The 'Remove' button is labelled 'Remove' (Arabic 'إزالة' equivalent via Lingui) and is the only delete affordance for elements."
+		},
+		"VAL-SETUP-016": {
+			"status": "pass",
+			"observed": "lng=en: document dir=ltr (attribute and computed), canvas viewport dir=ltr, canvas surface dir=ltr, G4-1 at style left/top 500px/290px (90x90, rotate(45deg)), G4-2 at 320px/110px, inspector panel on the right (x=903). lng=ar: document lang=ar, dir=rtl (attribute and computed), the App chrome and inspector mirror (inspector panel x=37, toolbar/headings in Arabic e.g. 'مصمم مخطط الصالة', 'تم الحفظ'), while the canvas viewport and canvas surface keep dir=ltr (attribute and computed) and both tables keep identical canonical geometry: G4-1 500px/290px and G4-2 320px/110px, with identical positions relative to the canvas surface (G4-1 482,272; G4-2 321,111 in both locales).",
+			"evidence": [
+				"foh-core/g4-floorplan-ui/VAL-SETUP-016-en-layout.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-016-ar-layout.png",
+				"foh-core/g4-floorplan-ui/VAL-SETUP-016-en-vs-ar-measurements.txt"
+			],
+			"notes": "Checked on acme (the contract allows acme or riyadh-grill for this assertion). Console: no errors in either locale."
+		}
+	},
+	"friction": [
+		{
+			"description": "The App renders a 6px fixed navigation progress bar (div.fixed.inset-x-0.top-0.z-50) at the top of the viewport. When the editor's 'Save floor plan' button sat in that strip, agent-browser clicks failed with 'covered by <div.fixed.inset-x-0>' and the save silently did not happen (the draft stayed dirty) until the button was scrolled into view.",
+			"resolved": true,
+			"resolution": "Scroll the save control into view (scrollIntoView block:'center') before clicking; then the PUT fired normally. Not documented in user-testing.md.",
+			"affectedAssertions": [
+				"VAL-SETUP-011",
+				"VAL-SETUP-013",
+				"VAL-SETUP-014",
+				"VAL-SETUP-015"
+			]
+		},
+		{
+			"description": "The floor plane editor offers no 'Add dining area' control, so an isolated area for geometry/element work has to be created outside the editor first.",
+			"resolved": true,
+			"resolution": "Created G4-Area and its two tables through POST /operator/reservations/setup/areas and /tables with a minted setup token before doing all editor work inside that area.",
+			"affectedAssertions": [
+				"VAL-SETUP-011",
+				"VAL-SETUP-013",
+				"VAL-SETUP-014",
+				"VAL-SETUP-015"
+			]
+		},
+		{
+			"description": "The first load of the floor-plan route was fast (no 30-66 s compile), but every navigation resets the selected dining area to the first tab, so evidence capture needs a click on the G4-Area tab after each reload.",
+			"resolved": true,
+			"resolution": "Clicked the area tab after each reload before reading DOM state.",
+			"affectedAssertions": [
+				"VAL-SETUP-011",
+				"VAL-SETUP-013",
+				"VAL-SETUP-015",
+				"VAL-SETUP-016"
+			]
+		}
+	],
+	"blockers": []
+}

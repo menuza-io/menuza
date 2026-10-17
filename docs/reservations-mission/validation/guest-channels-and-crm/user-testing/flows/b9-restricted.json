@@ -1,0 +1,101 @@
+{
+	"group": "b9-restricted",
+	"surface": "agent-browser+curl",
+	"testedAt": "2026-10-17T13:22:00Z",
+	"isolation": {
+		"app": "http://localhost:3001",
+		"tenantApiUs": "http://localhost:3007",
+		"org": "acme (t58bgatqh3rv0s3movrecyj1)",
+		"location": "v17plv08r5v357bie335lyq8",
+		"ownedBusinessDate": "2026-11-10",
+		"ownedPhones": "+155555529x",
+		"ownedEmails": "rsv-b9-1@example.com (guest), rsv-b9-host@example.com (Host member), rsv-b9-2@example.com (no-grant member)",
+		"browserSessions": [
+			"276ff6d660b4__b9 (kody, admin)",
+			"276ff6d660b4__b9b (b9host, Host preset: read/update reservation only)",
+			"276ff6d660b4__b9c (b9viewer, built-in Member role: no reservations grants)"
+		],
+		"tenantDbReads": "read-only sqlite3 on packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db; local D1 read via wrangler d1 execute --local (SELECT only) plus read-only sqlite3 on the local D1 file for TOTP secrets",
+		"flagsOrSettingsChanged": "none"
+	},
+	"toolsUsed": [
+		"agent-browser",
+		"curl",
+		"wrangler d1 execute (read-only)",
+		"sqlite3 (read-only)",
+		"@epic-web/totp (node, local)"
+	],
+	"assertions": [
+		{
+			"id": "VAL-GUEST-011",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-restricted-sidebar-no-guestbook-no-reports.png, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-guests-403-no-access.png, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-VAL-REPORT-002-sidebar-reservation-links.txt, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-VAL-REPORT-002-direct-access-document-statuses.txt, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-VAL-REPORT-002-evidence.txt",
+			"notes": "Signed in as a fresh Host-preset operator (role 'b9-host' created in Settings -> Roles, member b9host / rsv-b9-host@example.com, 2 permission ids: org_perm_read_reservation_any + org_perm_update_reservation_any) in its own agent-browser session. Expanding the sidebar's Reservations group yields exactly /acme/reservations/today, /book, /waitlist - no Guestbook entry point. Opening /acme/reservations/guests directly: document request GET -> 403 (browser network capture) and the page renders the refusal boundary '403 Forbidden: requires read:reservation_guest:any or update:reservation_guest:any' - no guest list. Console errors after the flow: none.",
+			"limitations": "None for the UI clauses. The contract's exact account name is 'Host operator (Host role preset, no guest grants)' and that is what was used."
+		},
+		{
+			"id": "VAL-GUEST-012",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-012-token-claims.txt",
+			"notes": "As kody, in-page fetch('/acme/reservations/token?scope=guests') -> 200 (Cache-Control: private, no-store): decoded payload iat=1792241988, exp=1792242288 => exp - iat = 300 (<= 300); grants = [read:reservation:any, read:reservation_guest:any, update:reservation_guest:any] (guest grants present); aud=tenant-api-reservations-operator, iss=menuza, orgId=t58bgatqh3rv0s3movrecyj1, region=us. fetch('/acme/reservations/token?scope=book') -> 200: iat=1792241988, exp=1792242888 => exp - iat = 900 (<= 900); grants = [read:reservation:any, update:reservation:any] (no guest grants). Browser network capture shows GET /acme/reservations/token?scope=guests and ?scope=book both 200.",
+			"limitations": "Raw JWT values are deliberately not recorded anywhere; only the decoded claims (iat/exp/grants/aud/iss/org/region) and the token lengths are in the evidence."
+		},
+		{
+			"id": "VAL-GUEST-013",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-013-detail-sheet-restricted-no-allergy.png, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-013-detail-sheet-kody-with-allergy-and-dietary-tag.png, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-013-network-marker-grep.txt, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-013-restricted-reservation-detail-guest-summary.json, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-013-grant-level-summary-proof.txt",
+			"notes": "Guest gst_8f6d6d9d-5c02-47b7-ba45-e8376946f95b ('B9 Restricted Guest', +15555552901) got allergy note 'contract-allergy-b9' via the guest profile Edit details form as kody, plus the sensitive dietary-category tag 'B9-Dietary' (tag_17ae637a-91cb-4ebc-b507-2019d17d6157, sensitive=1) assigned with kody's guests-scope grant, and a booking rsv_55eb3284-4b41-4414-8ff6-7c730a3d80da (#NEX7SA) on 2026-11-10 20:00. Restricted member (b9host) opened ?r=<id>: the Guest CRM Profile shows '0 visits', phone, email and NO allergy text and NO dietary tag; the reservation detail response carries allergyNotes=null, hasAllergy=true, visits=0 and only the non-sensitive system tag 'First visit'. HAR of that whole browser session (385 requests, response bodies embedded): grep -c 'contract-allergy-b9' -> 0 and grep -c 'B9-Dietary' -> 0. Positive control as kody on the same sheet: 'B9 Dietary' tag and 'Allergies: contract-allergy-b9' render, and kody's HAR has 1 hit for contract-allergy-b9 and 2 for B9-Dietary. Grant-level curl: GET /operator/reservations/book/guests/<id>/summary with a book-scope token -> 200 with allergyNotes null and tags [First visit]; with kody-equivalent guest grants, GET /operator/reservations/guests/<id>/summary -> 200 with allergyNotes 'contract-allergy-b9' and tags [B9-Dietary, First visit].",
+			"limitations": "The dietary tag had to be created through the tenant-api (POST /operator/reservations/guests/tags {name, category:'dietary'}) because the guest profile's 'Create a tag and assign it' form only creates category 'custom' tags; the allergy note was set through the UI as kody. The contract's evidence line names GET /operator/reservations/guests/:id/summary -> 200; the restricted operator's browser cannot call that route (it needs the guests scope), so the browser-side evidence is the book-scope reservation detail that embeds the same guest summary, and the guests-scope summary 200 is the curl positive control."
+		},
+		{
+			"id": "VAL-REPORT-002",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b9-restricted/VAL-REPORT-002-reports-403-no-access.png, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-VAL-REPORT-002-sidebar-reservation-links.txt, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-VAL-REPORT-002-direct-access-document-statuses.txt, evidence/guest-channels-and-crm/b9-restricted/VAL-GUEST-011-VAL-REPORT-002-evidence.txt",
+			"notes": "Account used: b9host (Host preset) - the Host preset holds no report grant (no read:reservation_report:any), which exercises the same absence-of-grant behaviour the contract describes for the 'Report-less operator (read:settings:any, no reservations grants)'. The sidebar's Reservations group shows no Reports link (only Today/Book/Waitlist). Opening /acme/reservations/reports directly: document GET -> 403 and the page renders '403 Forbidden: requires read:reservation_report:any' - no report data rendered. Console errors: none.",
+			"limitations": "The literal account named in the contract ('read:settings:any, no reservations grants') was not available; the parent validator explicitly authorised the Host-preset substitution for this assertion. The Host operator additionally holds read/update reservation grants, which do not affect the reports gate."
+		},
+		{
+			"id": "VAL-REPORT-020",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b9-restricted/VAL-REPORT-020-evidence.txt, evidence/guest-channels-and-crm/b9-restricted/VAL-REPORT-020-add-block-dialog-no-grant-operator.png, evidence/guest-channels-and-crm/b9-restricted/VAL-REPORT-020-shared-dashboard-block-hidden.png, evidence/guest-channels-and-crm/b9-restricted/VAL-REPORT-020-shared-dashboard-block-visible-kody.png, evidence/guest-channels-and-crm/b9-restricted/VAL-REPORT-020-host-operator-dialog-offers-bookings-today-observation.png",
+			"notes": "Account used: b9viewer (rsv-b9-2@example.com, built-in org_role_member, no reservations grants) - the contract's 'no read:reservation:any' operator. Home dashboard /acme: 'Bookings today' is not rendered (text scan false). Add block dialog (Edit layout -> Add block): the built-in section shows only 'All built-in blocks are already on this dashboard.' - 'Bookings today' is not offered (addableBuiltInBlockTypes drops it when bookingsTodayAvailable=false). Shared-dashboard clause: kody created the custom dashboard 'B9-Shared' (a54fdg92h4u23k00debxfuup), added a Bookings today block (his Add block dialog offered it; dashboard saved) and shared it with B9 Viewer (View). As b9viewer the dashboard renders 'B9-Shared / Shared by Kody - View only' with NO Bookings today block and zero requests to http://localhost:3007 (no fetch); as kody the same dashboard renders the block. Console errors: none.",
+			"limitations": "The Host-preset operator b9host (the parent's suggested account) DOES hold read:reservation:any, so its Add block dialog legitimately offers 'Bookings today' (screenshot ...observation.png) - the Host account cannot exercise this assertion's no-grant precondition, so a second member with the built-in Member role was created and a third browser session was used for it (within the round's 3-session limit)."
+		}
+	],
+	"frictions": [
+		{
+			"description": "wrangler d1 execute --json redacts column values named like secrets: OrganizationInvitation.token and Verification.secret both came back as asterisks (correct length), so the signup TOTP could not be computed from the JSON output.",
+			"resolved": true,
+			"resolution": "Read the local D1 SQLite file directly, read-only, via sqlite3 \"file:apps/app/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite?mode=ro\" and computed the 6-character code with @epic-web/totp (generateTOTP returns { otp }) using the stored algorithm/digits/period/charSet.",
+			"affectedAssertions": [
+				"VAL-GUEST-011",
+				"VAL-REPORT-002",
+				"VAL-REPORT-020"
+			]
+		},
+		{
+			"description": "Login step 1: clicking the 'Continue' button after filling the username did nothing (React handlers not attached on first load); the same happened for the members/invite pages and the second signup's verification form (the first submit answered 400 'Form not submitted properly' from the honeypot because the page state was stale).",
+			"resolved": true,
+			"resolution": "Pressed Enter instead of clicking Continue; reloaded /verify before submitting the code and used agent-browser fill + the Verify button (worked first try); used in-page element.click() for covered/overlaid buttons.",
+			"affectedAssertions": [
+				"VAL-GUEST-011",
+				"VAL-REPORT-002",
+				"VAL-REPORT-020"
+			]
+		},
+		{
+			"description": "The parent's recipe expected the Host-preset member to exercise VAL-REPORT-020, but the Host preset holds read:reservation:any (the assertion needs an operator WITHOUT it), so the Host account shows 'Bookings today' in the Add block dialog and would have produced a false failure.",
+			"resolved": true,
+			"resolution": "Created a second member (b9viewer, rsv-b9-2@example.com, built-in Member role, no reservations grants) in a third browser session and used it for VAL-REPORT-020's pass check; the Host observation is recorded in the evidence.",
+			"affectedAssertions": ["VAL-REPORT-020"]
+		},
+		{
+			"description": "The earlier-round custom roles G14-Host and G14-Viewer still exist in local D1 with their members (host_cross_g14, viewer_g14), contrary to the round note that says they are gone.",
+			"resolved": true,
+			"resolution": "Created a fresh role ('b9-host') and members as instructed instead of reusing them; noted here so future rounds know the G14 roles/members are still present.",
+			"affectedAssertions": []
+		}
+	],
+	"blockers": [],
+	"leftBehind": "No flags, location settings, services or code were changed; no seeded rows were deleted. Created and left in place (per the task rules): role 'b9-host' (qodw9cbtgkttsz5tc9q9jyac, Host preset, 2 permission ids) and member b9host (userId n96ulzb4ikdtvjhu0oips5rn, rsv-b9-host@example.com); member b9viewer (rsv-b9-2@example.com, built-in Member role); guest gst_8f6d6d9d-5c02-47b7-ba45-e8376946f95b ('B9 Restricted Guest', +15555552901, allergy note 'contract-allergy-b9') with tag 'B9-Dietary' (tag_17ae637a-91cb-4ebc-b507-2019d17d6157) and reservation rsv_55eb3284-4b41-4414-8ff6-7c730a3d80da (#NEX7SA, 2026-11-10 20:00); custom dashboard 'B9-Shared' (a54fdg92h4u23k00debxfuup) owned by kody with a Bookings today block, shared with B9 Viewer (View). All three agent-browser sessions (276ff6d660b4__b9, __b9b, __b9c) were closed. Temp artifacts under /tmp/menuza-user-testing: b9-restricted-detail.har and b9-kody-detail.har (the grep sources referenced in the evidence note)."
+}

@@ -1,0 +1,167 @@
+{
+	"groupId": "r3-cross007",
+	"group": "r3-cross007",
+	"testedAt": "2026-10-17T19:28:29Z",
+	"isolation": {
+		"location": "acme primary v17plv08r5v357bie335lyq8 (Downtown Flagship), tenant DB packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db",
+		"ownedBusinessDate": "2026-12-03 (verified fresh read-only at start: no rsv_day_versions row, no special day, no block, no reservations)",
+		"phonesEmails": "+1555555461..65 / rsv-r3b-1..5@example.com",
+		"browserSession": "54c29399a486__r3b (closed at end; tab t1 App http://localhost:3001, tab t2 Sites http://acme.menuza.test:3008)",
+		"api": "tenant-api US http://localhost:3007; public curl with Origin http://acme.menuza.test:3008 and private X-Forwarded-For 10.82.<n>.1; operator tokens minted via /tmp/menuza-user-testing/mint-token.mjs (book/setup scopes; never printed)",
+		"restored": "special day (online_closed -> closed -> replace) deleted via the App UI; fixture service removed by FK cascade; 9 service-availability rows, 1 pacing rule deleted via the setup API; 4 bookings cancelled via POST /status; no active occupancies remain; public API and Sites back to baseline (p2 28 slots, p4 26 slots, operator 141 slots, dayState open)",
+		"evidenceBase": "/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/evidence/guest-channels-and-crm/r3-cross007/",
+		"ranAlone": "batch B only (batch A r3-etag-api had finished)"
+	},
+	"toolsUsed": ["agent-browser", "curl", "sqlite3 (read-only)"],
+	"assertions": [
+		{
+			"id": "VAL-CROSS-007",
+			"title": "Setup changes reshape what Sites offers and what staff booking warns about, consistently",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Step 1 baseline: Sites /reserve?date=2026-12-03&party=2 shows time chips; public availability for the same date/party returns slots; operator availability baseline",
+					"expected": "slots on both channels",
+					"observed": "Sites rendered 28 chips (Lunch 12:00-13:45, R2-API-Service 5:00 PM-9:30 PM, Dinner 9:45 PM). Public GET /reservations/availability p2 -> 200, ETag \"0.68.11\", Cache-Control \"private, max-age=0\", dayVersion 0, settingsVersion 68, 28 slots. Browser HAR captured the same request/response (etag \"0.68.11\"). A pre-change plain reload of the warmed tab re-requested the same URL and got 200 \"0.68.11\" (no If-None-Match; the browser re-fetched rather than revalidating its disk cache - see frictions). Operator availability p2/p4 -> 141 slots each, dayState.state \"open\".",
+					"evidence": "VAL-CROSS-007-step1-sites-baseline-p2-2026-12-03.png; step1-baseline-curl-p2-headers.txt; step1-baseline-curl-p2.json; step1-baseline.har; step1b-prerechange-reload.har; step1-baseline-operator-p2.json; step1-baseline-operator-p4.json"
+				},
+				{
+					"action": "Step 2 (heart of round 3): add an online_closed special day for 2026-12-03 via the App UI (Settings > Special days); plain-reload the warmed Sites tab (no cache bypass); check the public API and operator availability; create a staff booking in the App Book sheet",
+					"expected": "Sites shows no online slots (closed note) after a plain reload; the public API answers online_closed/0 slots; staff channel unaffected and the booking succeeds; availability request 200 (not 304) with the ETag moved",
+					"observed": "Special day created (sd_6196c76e-992b-4cdc-95f1-999ec0da799b, kind online_closed, name R3B-OnlineClosed; first write -> rsv_day_versions version 1). PLAIN RELOAD of the warmed Sites tab: availability GET -> 200 (NOT 304), ETag \"1.68.11\" (was \"0.68.11\"), body {\"status\":\"online_closed\",\"slots\":[]}; the page rendered \"Online booking is closed for this date. Please call the restaurant.\" + the note and ZERO time chips (no stale slots). If-None-Match was absent in the capture (fresh fetch; the same capture shows no 304 anywhere). Mechanism proof on the exact round-2 defect path: curl replay with `If-None-Match: \"0.68.11\"` (the pre-change ETag a warmed client holds) -> HTTP 200 with the new body and etag \"1.68.11\" (round 2 returned 304 with the stale 36-slot body); a labelled in-page default-cache fetch (no cache option - not a bypass) returned online_closed/0 slots (round 2's same probe returned the stale body). Public API: 200, status online_closed, 0 slots, onlineClosed{name,note}. Operator availability: 141 slots (staff channel unaffected) with dayState.state \"online_closed\". App Book sheet for 2026-12-03: booking-online-closed notice shown, 32 slots, submit enabled; POST /operator/reservations/book/reservations -> 201 (rsv_57079ed5-7e4e-41fd-9e29-8394f2a48683, confirmation 55B4YJ, 12:15 lunch, R3B OnlineClosed).",
+					"evidence": "VAL-CROSS-007-step2-app-special-day-form-online-closed.png; VAL-CROSS-007-step2-app-special-day-row-online-closed.png; VAL-CROSS-007-step2-sites-online-closed-p2.png; step2-sites-reload-after-online-closed.har; step2-public-p2-online-closed-headers.txt; step2-public-p2-online-closed.json; step2-etag-replay-headers.txt; step2-etag-replay-body.json; step2-operator-p2-online-closed.json; VAL-CROSS-007-step2-app-sheet-online-closed-slots.png; step2-staff-booking-online-closed.har; VAL-CROSS-007-step2-app-sheet-booking-created.png"
+				},
+				{
+					"action": "Step 3: change the same special day to kind closed; check Sites, the public API, operator availability and a staff booking without/with the explicit override",
+					"expected": "Sites closed note; API closed/0 slots; operator 0 slots with the closed state; App sheet shows a closed-day alert with submit disabled; staff booking refused (409 closed_day) without override and allowed (201 + warning) with it",
+					"observed": "Sites plain reload -> \"The restaurant is closed on this date.\" + note, no chips (availability GET -> 200, ETag \"3.68.11\", body status closed, slots []). Public API: status closed, 0 slots, closed{reason:\"special_day\",name,note}. Operator availability: 0 slots, dayState.state \"closed\" with name/note. App Book sheet: booking-closed-day alert \"Closed on this date (R3B-OnlineClosed). No slots are offered. Turn on the override below to book anyway.\", 0 slots, submit disabled, override checkbox present. curl booking 12:45 without override -> 409 closed_day (\"overbook override required\"); with overbook:true -> 201 + warnings [{code:\"closed_day\"}] (rsv_09e9805c-3b66-4eee-ae81-f6816d44a855, C6E9WA).",
+					"evidence": "VAL-CROSS-007-step3-app-special-day-closed-row.png; VAL-CROSS-007-step3-sites-closed-day-p2.png; step3-sites-reload-closed.har; step3-public-p2-closed.json; step3-operator-p2-closed.json; VAL-CROSS-007-step3-app-sheet-closed-day-blocked.png; step3-curl-closed-409.json; step3-curl-closed-override-201.json"
+				},
+				{
+					"action": "Step 4: make party 4 impossible for the date while party 2 still fits and the staff channel still offers party 4 (replace-day dinner fixture + service_availability, then T4 -> staff_only)",
+					"expected": "Sites party-4 slots drop to 0 (or no availability) while party 2 still shows slots; operator availability still offers party 4",
+					"observed": "Deleted the closed day and created a replace day via the App UI (R3B-ReplaceDinner) with replacement service \"R3B Fix Dinner\" 17:30-22:00, end 22:30 (srv_7d15104c-e0d4-46cb-8ae6-ceae64964dca). Created 9 service-availability rows via the setup API (201 each): area_acme_main/patio/bar, G17, G4, G10 and G16 -> staff_only (every area holding a 4+ cover table), tbl_acme_p1 -> online, tbl_acme_p4 -> online. Baseline on the fixture day: public p2 16 slots, public p4 15 slots (Garden Terrace = T4), operator fixture p4 19 slots all available. Flipped tbl_acme_p4 to staff_only (PUT 200). After: public p4 -> 0 slots / status \"full\" (Sites: \"No tables available for that search\"); public p2 -> 16 slots unchanged (Sites still lists 5:30 PM onward); operator fixture p4 -> 19 slots, all available (staff_only still offered to staff).",
+					"evidence": "VAL-CROSS-007-step4-app-replace-day-form.png; step4-availability-rows.txt; step4-baseline-public-p2.json; step4-baseline-public-p4.json; step4-baseline-operator-p4.json; step4-t4-update.json; step4-t4-staffonly-rows-sqlite.txt; step4-staffonly-public-p4.json; step4-staffonly-public-p2.json; step4-staffonly-operator-p4.json; VAL-CROSS-007-step4-sites-p4-no-slots.png; VAL-CROSS-007-step4-sites-p2-still-slots.png"
+				},
+				{
+					"action": "Step 5: pacing rule max_parties=1 (bucket 15, channel all) for the fixture dinner service + one existing 19:00 booking; re-check both channels; staff booking without and with the explicit overbook override in the App sheet",
+					"expected": "Sites omits the 19:00 bucket (18:45/19:15 present); operator availability reports the same-bucket slot with pacingWarning true / available false; staff booking refused 409 without override and 201 + warnings + toast with it",
+					"observed": "Rule pac_be045d5a-3f01-4cd2-a2c1-db278b699873 (maxCovers 30, maxParties 1, bucket 15, channel all) created. First 19:00 bucket booking (party 2, curl) -> 201, warnings [] (rsv_7aba5408-74a4-43cf-92af-fdcddeb4436f, NQB9DX). Public p2: 19:00 ABSENT while 18:45 and 19:15 are present (15 slots). Operator availability (fixture service): 19:00 -> available:false, pacingWarning:true (the newly fixed max_parties clause; round 2 returned available:true/pacingWarning:false); 18:45 and 19:15 -> available:true, pacingWarning:false. Curl booking 19:00 without override -> 409 pacing_parties_exceeded. App sheet: the 19:00 chip renders with the \"*\" marker and the booking-pacing-warning alert (\"This time is over its pacing limit. Creating the booking overbooks the slot.\"); submit with the override unticked -> 409 mapped to the banner \"This time is over its pacing limit. Turn on the pacing override to book anyway.\"; ticking \"Override slot pacing cap\" -> 201 + warnings [{code:\"pacing_parties_exceeded\"}] + toast \"Booked over the pacing party limit.\" (rsv_58694aad-e0c6-4707-82c5-a8a41ec3019a, TPGZAK). Note: the sheet auto-ticks the override when a pacing_full slot is selected, so the refusal run required unticking it first.",
+					"evidence": "step5-pacing-rule.json; step5-first-booking-nooverride.json; step5-public-p2-after-booking.json; step5-operator-p2-after-booking.json; step5-curl-staff-409-pacing-parties.json; VAL-CROSS-007-step5-app-sheet-1900-pacing-warning.png; step5-ui-submit-nooverride.har; VAL-CROSS-007-step5-app-sheet-pacing-409-error.png; step5-ui-submit-override.har; step5-ui-override-booking-201-summary.json; VAL-CROSS-007-step5-app-sheet-pacing-override-toast.png"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step1-sites-baseline-p2-2026-12-03.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step2-app-special-day-form-online-closed.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step2-app-special-day-row-online-closed.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step2-sites-online-closed-p2.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step2-app-sheet-online-closed-slots.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step2-app-sheet-booking-created.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step3-app-special-day-closed-row.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step3-sites-closed-day-p2.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step3-app-sheet-closed-day-blocked.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step4-app-replace-day-form.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step4-sites-p4-no-slots.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step4-sites-p2-still-slots.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step5-app-sheet-1900-pacing-warning.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step5-app-sheet-pacing-409-error.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-step5-app-sheet-pacing-override-toast.png",
+					"guest-channels-and-crm/r3-cross007/VAL-CROSS-007-restore-sites-baseline-p2.png"
+				],
+				"consoleErrors": "none - App tab and Sites tab both returned an empty errors array (console-errors-app.json, console-errors-sites.json)",
+				"network": "GET /reservations/availability p2 2026-12-03: 200 etag \"0.68.11\" 28 slots (baseline) -> 200 etag \"1.68.11\" online_closed 0 slots after the first write (plain reload; not 304) -> 200 etag \"3.68.11\" closed 0 slots -> 200 16 slots (replace-day fixture) -> 200 15 slots with 19:00 absent (pacing) -> 200 28 slots after restore. curl If-None-Match \"0.68.11\" replay after the change -> 200 with the new body (not 304). GET /operator/reservations/book/availability p2: 200 141 slots state open -> 200 141 slots state online_closed -> 200 0 slots state closed -> fixture p4 19 slots available (after T4 staff_only) -> 200 fixture 19:00 available:false pacingWarning:true -> 200 141 slots state open after restore. POST /operator/reservations/book/reservations: 201 (online_closed staff booking), 409 closed_day, 201 + closed_day warning (override), 409 pacing_parties_exceeded, 201 + pacing_parties_exceeded warning (UI override). POST .../:id/status -> 200 cancelled x4.",
+				"files": [
+					"guest-channels-and-crm/r3-cross007/step1-baseline-curl-p2-headers.txt",
+					"guest-channels-and-crm/r3-cross007/step1-baseline-curl-p2.json",
+					"guest-channels-and-crm/r3-cross007/step1-baseline.har",
+					"guest-channels-and-crm/r3-cross007/step1b-prerechange-reload.har",
+					"guest-channels-and-crm/r3-cross007/step1-baseline-operator-p2.json",
+					"guest-channels-and-crm/r3-cross007/step1-baseline-operator-p4.json",
+					"guest-channels-and-crm/r3-cross007/step2-sites-reload-after-online-closed.har",
+					"guest-channels-and-crm/r3-cross007/step2-public-p2-online-closed-headers.txt",
+					"guest-channels-and-crm/r3-cross007/step2-public-p2-online-closed.json",
+					"guest-channels-and-crm/r3-cross007/step2-etag-replay-headers.txt",
+					"guest-channels-and-crm/r3-cross007/step2-etag-replay-body.json",
+					"guest-channels-and-crm/r3-cross007/step2-etag-replay.txt",
+					"guest-channels-and-crm/r3-cross007/step2-operator-p2-online-closed.json",
+					"guest-channels-and-crm/r3-cross007/step2-staff-booking-online-closed.har",
+					"guest-channels-and-crm/r3-cross007/step3-sites-reload-closed.har",
+					"guest-channels-and-crm/r3-cross007/step3-public-p2-closed.json",
+					"guest-channels-and-crm/r3-cross007/step3-operator-p2-closed.json",
+					"guest-channels-and-crm/r3-cross007/step3-curl-closed-409.json",
+					"guest-channels-and-crm/r3-cross007/step3-curl-closed-override-201.json",
+					"guest-channels-and-crm/r3-cross007/step4-availability-rows.txt",
+					"guest-channels-and-crm/r3-cross007/step4-baseline-public-p2.json",
+					"guest-channels-and-crm/r3-cross007/step4-baseline-public-p4.json",
+					"guest-channels-and-crm/r3-cross007/step4-baseline-operator-p4.json",
+					"guest-channels-and-crm/r3-cross007/step4-baseline-operator-p2.json",
+					"guest-channels-and-crm/r3-cross007/step4-t4-update.json",
+					"guest-channels-and-crm/r3-cross007/step4-t4-staffonly-rows-sqlite.txt",
+					"guest-channels-and-crm/r3-cross007/step4-staffonly-public-p4.json",
+					"guest-channels-and-crm/r3-cross007/step4-staffonly-public-p2.json",
+					"guest-channels-and-crm/r3-cross007/step4-staffonly-operator-p4.json",
+					"guest-channels-and-crm/r3-cross007/step5-pacing-rule.json",
+					"guest-channels-and-crm/r3-cross007/step5-first-booking-nooverride.json",
+					"guest-channels-and-crm/r3-cross007/step5-public-p2-after-booking.json",
+					"guest-channels-and-crm/r3-cross007/step5-operator-p2-after-booking.json",
+					"guest-channels-and-crm/r3-cross007/step5-curl-staff-409-pacing-parties.json",
+					"guest-channels-and-crm/r3-cross007/step5-ui-submit-nooverride.har",
+					"guest-channels-and-crm/r3-cross007/step5-ui-submit-override.har",
+					"guest-channels-and-crm/r3-cross007/step5-ui-override-booking-201-summary.json",
+					"guest-channels-and-crm/r3-cross007/restore-cancellations.txt",
+					"guest-channels-and-crm/r3-cross007/restore-deletes.txt",
+					"guest-channels-and-crm/r3-cross007/restore-public-p2.json",
+					"guest-channels-and-crm/r3-cross007/restore-public-p4.json",
+					"guest-channels-and-crm/r3-cross007/restore-operator-p2.json",
+					"guest-channels-and-crm/r3-cross007/restore-leftover-guests.txt",
+					"guest-channels-and-crm/r3-cross007/console-errors-app.json",
+					"guest-channels-and-crm/r3-cross007/console-errors-sites.json",
+					"guest-channels-and-crm/r3-cross007/session-notes.txt"
+				]
+			},
+			"issues": null
+		}
+	],
+	"frictions": [
+		{
+			"description": "The round-2 defect path (a client revalidating its cached availability with If-None-Match and keeping the stale body) could not be reproduced from the browser itself in this session: the pre-change plain reload and the post-change plain reload both issued fresh requests with NO If-None-Match header and got 200s, i.e. agent-browser's Chrome did not serve the disk-cached body across a reload here. So the plain reload alone cannot distinguish \"the fix works\" from \"the browser never cached\".",
+			"resolved": true,
+			"resolution": "Kept the plain reload as the primary guest-channel check (it renders the correct closed state, no chips, 200) and added two labelled mechanism proofs on the exact round-2 defect path: (1) curl replay of the pre-change ETag `If-None-Match: \"0.68.11\"` -> now 200 with the new body/ETag (round 2: 304 + stale body); (2) an in-page `fetch(url)` with the browser DEFAULT cache mode (no cache option, not a bypass) -> online_closed/0 slots (round 2: stale 36-slot body). Both label the browser's If-None-Match absence honestly in the report.",
+			"affectedAssertions": ["VAL-CROSS-007"]
+		},
+		{
+			"description": "The parent's step-2 text says the operator availability 'must return 0 slots with the online-closed state', but the live endpoint returns 141 slots with dayState.state='online_closed' (staff channel unaffected). 0 operator slots is what the CLOSED day returns (verified in step 3).",
+			"resolved": true,
+			"resolution": "Recorded the raw observation for both kinds and judged against the contract text ('staff channel unaffected') and the round-2 passing evidence for VAL-ONLINE-007 ('online_closed: public 0 slots, operator 141 slots + onlineClosed'). Not treated as a failure; flagged for the parent.",
+			"affectedAssertions": ["VAL-CROSS-007"]
+		},
+		{
+			"description": "The App booking-sheet auto-ticks 'Override slot pacing cap' the moment a pacing_full slot is selected (booking-sheet.tsx handleSelectSlot), so the 'without override' UI run required unticking the checkbox first; and the sheet mixes every location service in its slot list unless a service is selected explicitly (round-2 note), so the fixture service had to be selected by name.",
+			"resolved": true,
+			"resolution": "Unticked the override to observe the 409 + banner, then re-ticked it for the override run; selected 'R3B Fix Dinner' in the service select before booking.",
+			"affectedAssertions": ["VAL-CROSS-007"]
+		},
+		{
+			"description": "On the replace day the operator availability read still lists slots for every location service (lunch, brunch, G17-Dinner, G5-Dinner, R2-API-Service), not only the day's resolved services - the known round-2 quirk. The Sites-side (engine) availability correctly suppresses them.",
+			"resolved": true,
+			"resolution": "Filtered the operator payload by the fixture serviceId for the step-4/step-5 observations; recorded as a pre-existing read-side quirk (not part of this assertion's fail conditions).",
+			"affectedAssertions": ["VAL-CROSS-007"]
+		},
+		{
+			"description": "Sites /reserve inputs are React-controlled: the #rsv-date value must be set with the native value setter + input/change events (fill does not stick), and the date deep-link (?date=&party=) is the reload-safe path because plain field changes do not update the URL.",
+			"resolved": true,
+			"resolution": "Used the native-setter recipe and drove the warm-cache check through /reserve?date=2026-12-03&party=2 so a plain reload re-renders and re-fetches the same date.",
+			"affectedAssertions": ["VAL-CROSS-007"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": [
+		"4 cancelled reservations on 2026-12-03 (cancelled via POST /status 200, no active occupancies): rsv_57079ed5-7e4e-41fd-9e29-8394f2a48683 (55B4YJ, 12:15, R3B OnlineClosed), rsv_09e9805c-3b66-4eee-ae81-f6816d44a855 (C6E9WA, 12:45, R3B ClosedOverride), rsv_7aba5408-74a4-43cf-92af-fdcddeb4436f (NQB9DX, 19:00, R3B PacingFirst), rsv_58694aad-e0c6-4707-82c5-a8a41ec3019a (TPGZAK, 19:00, R3B PacingUI).",
+		"4 guest rows (rsv_guests): +1555555461 / rsv-r3b-1@example.com, +1555555462 / rsv-r3b-2@example.com, +1555555463 / rsv-r3b-3@example.com, +1555555465 / rsv-r3b-5@example.com.",
+		"rsv_day_versions for (v17plv08r5v357bie335lyq8, 2026-12-03) is now 33 (bumped by the flow's writes and restore cancellations) - harmless, it only changes the ETag value.",
+		"Audit-log rows for the special-day/service-availability/pacing changes and the bookings (normal).",
+		"No special day, no fixture service, no service-availability rows and no pacing rule remain: verified read-only (special days on 2026-12-03 = 0, 'R3B Fix Dinner' services = 0, fixture availability rows = 0, pacing rule = 0, totals back to 6 availability rows and 4 pacing rules; public p2 28 slots / p4 26 slots / operator 141 slots, dayState open, Sites chips back)."
+	],
+	"summary": "VAL-CROSS-007 re-tested end to end on the fresh business date 2026-12-03 (agent-browser App + Sites, curl, read-only sqlite), with batch A finished. All five steps hold, and the round-2 failure is fixed: after an online_closed special day was added as the FIRST write to the date, a plain reload of the warmed Sites /reserve tab rendered the closed note with no chips and its availability request answered 200 with ETag \"1.68.11\" (was \"0.68.11\"), not 304; the exact round-2 mechanism (a warmed client replaying the pre-change ETag) now returns 200 with the new body, and an in-page default-cache fetch is fresh. The public API answered online_closed/0 slots while the staff channel stayed bookable (141 operator slots, App sheet notice + 201 booking). Step 3: closed day -> Sites closed note, API closed/0, operator 0 slots + closed state, sheet alert with disabled submit, 409 closed_day without override and 201 + closed_day warning with it. Step 4: the replace-day fixture plus service_availability (T4 -> staff_only) took Sites party 4 from 15 slots to 0 (\"No tables available for that search\") while party 2 kept 16 slots and the operator endpoint still offered party 4 (19 fixture slots). Step 5: max_parties=1 hid the 19:00 bucket from Sites (18:45/19:15 present), the operator availability now reports the same-bucket slot as available:false / pacingWarning:true (the newly fixed clause), the staff booking was refused 409 pacing_parties_exceeded without the override and succeeded 201 + warnings + the 'Booked over the pacing party limit.' toast with it; the sheet itself now shows the '*' marker and a pacing warning. No console errors on either surface. Fixtures fully restored (special day deleted, service cascaded, 9 availability rows and the pacing rule deleted, 4 bookings cancelled, all channels back to baseline)."
+}

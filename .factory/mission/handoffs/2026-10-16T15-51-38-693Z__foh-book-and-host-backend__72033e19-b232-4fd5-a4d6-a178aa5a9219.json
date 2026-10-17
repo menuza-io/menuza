@@ -1,0 +1,160 @@
+{
+	"timestamp": "2026-10-16T15:51:38.693Z",
+	"workerSessionId": "72033e19-b232-4fd5-a4d6-a178aa5a9219",
+	"featureId": "foh-book-and-host-backend",
+	"milestone": "foh-core",
+	"commitId": "3c4bfa6b7301ba4a7b6eba164d097b95c7de415b",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": false,
+	"handoff": {
+		"salientSummary": "Implemented the Reservation Book, Host Stand, and Guest backend endpoints and services across tenant-api and App: /operator/reservations/book/*, /operator/reservations/guests/*, section layouts CRUD, /internal/reservations/summary + /resources/reservations/region-summary, and idempotent seed:reservations demo data. All 39 assertions, unit/route/concurrency/security tests, live :3007/:3009 checks, typecheck, and lint pass.",
+		"whatWasImplemented": "1. Implemented Guest Service (`apps/tenant-api/src/services/rsv-guest-service.ts`) and `/operator/reservations/guests/*` router (`apps/tenant-api/src/routes/operator-reservations-guests.ts`): guest lookup/search by name/phone/email, guest creation with E.164 phone and normalized email dedupe, guest summary with recent bookings and stats, JSON export (`GET /guests/:id/export` gating sensitive fields on `includeSensitive=1` + `update:reservation_guest:any` and writing `guest.export` audit log), and right-to-erasure (`POST /guests/:id/erase` anonymizing profile to \"Removed Guest\", deleting notes/tags, cancelling future bookings and releasing table occupancies, scrubbing waitlist/messages/payments, redacting `rsv_reservation_events.data` and `rsv_audit_log.changes` to `{\"redacted\":true}`, and writing `guest.erase` audit log without PII).\n2. Implemented Day Feed, Calendar, Pre-Service Overview, Service Notes, Section Assignments, and Regional Summary Service (`apps/tenant-api/src/services/rsv-day-feed-service.ts`):\n   - `GET /operator/reservations/book/day` with composite ETag `\"<locationId>:<date>:<dayVersion>:<settingsVersion>\"` and `304 Not Modified` on `If-None-Match`.\n   - `GET /operator/reservations/book/changes` returning `{ dayVersion, changed }`.\n   - `GET /operator/reservations/book/availability` returning staff slots (including `staff_only` and `walk_in_only` tables) and `pacingWarning` indicators.\n   - `GET /operator/reservations/book/calendar` returning per-day party/cover counts, peak-slot utilization, and special-day markers.\n   - `GET /operator/reservations/book/overview` returning VIPs, allergies (with allergy text redacted to `null` when operator lacks `read:reservation_guest:any` while keeping `hasAllergy: true`), occasions, large parties, special requests, payment flags, and service notes.\n   - `GET/PUT/POST /operator/reservations/book/service-notes` with `expectedVersion` (409 `stale_version`).\n   - `GET/PUT/POST /operator/reservations/book/section-assignments` supporting both `staff_id` and free-text `server_label`.\n3. Implemented Booking & Host Stand Service (`apps/tenant-api/src/services/rsv-booking-service.ts`) and `/operator/reservations/book/*` router (`apps/tenant-api/src/routes/operator-reservations-book.ts`):\n   - `POST /reservations` and `POST /walk-ins` enforcing `Idempotency-Key`, serialized through `withReservationWrite`, auto-assigning best-fit tables (`assignTables` engine), supporting audited `overbook: true` + `overbookReason`, and preventing double-allocation under concurrent last-table races.\n   - `GET /reservations/:id`, `PATCH /reservations/:id` (time/duration/party/area/table drag/resize with soft-booking reflow and `moves[]`), `POST /reservations/:id/assign` (`Assign` soft, `Assign & Lock` locked, `unlock: true`, 2-party atomic swap, soft-booking reflow outside `freeze_min` returning `moves[]`, overbook), `POST /reservations/:id/status` (state machine enforcement, `covers_actual`, occupancy release, guest visit/cover/cancel/no_show counters), `POST /reservations/:id/undo` (including 30-min `finished -> seated` window and table occupancy re-check returning 409 `table_occupied`), and `/contact`, `/running-late`, `/course`, `/notes` updates with `expectedVersion` (409 `stale_version`) and append-only `rsv_reservation_events`.\n4. Implemented Section Layouts CRUD in `apps/tenant-api/src/services/rsv-setup-crud.ts` and `apps/tenant-api/src/routes/operator-reservations-setup.ts` (`GET/POST /locations/:id/sections`, `PATCH/DELETE /locations/:id/sections/:layoutId`) enforcing unique table membership (`400 table_in_multiple_sections`).\n5. Implemented internal regional summary endpoints (`POST /internal/reservations/summary` and `POST /internal/reservations/location-summary` in `apps/tenant-api/src/routes/reservations-internal.ts`) and App resource route (`GET /resources/reservations/region-summary` in `apps/app/app/routes/resources+/reservations.region-summary.ts` with `regional-internal.server.ts`, `region-confirmation.ts`, and `region-guard.server.ts`).\n6. Extended `apps/tenant-api/scripts/seed-reservations.ts` to seed built-in tags, guest tags, a 3-server dinner section layout, today's server section assignments, pre-service notes, reservation tags, and valid reservation statuses (`arrived`, `finished`).",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "npx vitest run --dir packages/reservations && npx vitest run --dir packages/tenant-db && npx vitest run --dir apps/tenant-api",
+					"exitCode": 0,
+					"observation": "packages/reservations: 19 test files, 71/71 tests passed; packages/tenant-db: 13 test files, 177/177 tests passed; apps/tenant-api: 90 test files, 1586/1586 tests passed (including rsv-booking-service.test.ts, rsv-booking-service.concurrency.test.ts, reservations-book.test.ts, reservations-setup.test.ts, and reservations-security.test.ts)."
+				},
+				{
+					"command": "(cd apps/app && npx vitest run app/routes/resources+/reservations.region-summary.test.ts app/utils/reservations/reservations-guards.test.ts app/utils/reservations/token.test.ts)",
+					"exitCode": 0,
+					"observation": "3 test files, 46/46 tests passed (including static guard check on reservations.region-summary.ts)."
+				},
+				{
+					"command": "npm run seed:reservations -w tenant-api -- acme && npm run seed:reservations -w tenant-api -- acme && npm run seed:reservations -w tenant-api -- riyadh-grill && npm run seed:reservations -w tenant-api -- riyadh-grill",
+					"exitCode": 0,
+					"observation": "Both acme (US) and riyadh-grill (KSA) seeded idempotently twice in a row with 8 tags, 1 section layout (3 server sections), 3 server section assignments, 1 pre-service note, 6 guests, and 7 reservations."
+				},
+				{
+					"command": "curl against live http://localhost:3007 (US) and http://localhost:3009 (KSA) for GET /operator/reservations/book/day, GET /book/overview, GET /book/calendar, and POST /internal/reservations/summary",
+					"exitCode": 0,
+					"observation": "US :3007 and KSA :3009 returned 200 on GET /book/day with composite ETag (\"v17plv08r5v357bie335lyq8:2026-10-16:8:2\" on US, \"oi97w1dxwcpnkpq9m9s8cnu8:2026-10-16:1:1\" on KSA), 304 Not Modified on If-None-Match, 200 on /book/overview and /book/calendar, and 200 with counts on POST /internal/reservations/summary."
+				},
+				{
+					"command": "npm run typecheck -w tenant-api && NODE_OPTIONS=--max-old-space-size=4096 npm run typecheck -w app",
+					"exitCode": 0,
+					"observation": "Both tenant-api and app passed tsc --noEmit with 0 errors."
+				},
+				{
+					"command": "npx oxlint apps/tenant-api/src apps/tenant-api/scripts apps/app/app/utils/reservations apps/app/app/routes/resources+/reservations.region-summary* && (cd apps/app && npx eslint ... --fix) && node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "0 errors and 0 warnings across all modified/added files; Lingui translations check passed across all apps."
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/tenant-api/src/services/rsv-booking-service.test.ts",
+					"cases": [
+						{
+							"name": "Day feed ETag, 304 Not Modified, changes endpoint, and staff availability with pacing warnings",
+							"verifies": "VAL-BOOK-001, VAL-BOOK-002, VAL-BOOK-003, VAL-BOOK-034: composite ETag \"<locationId>:<date>:<dayVersion>:<settingsVersion>\", 304 matching, /changes polling, and staff availability slots including staff_only/walk_in_only and pacingWarning flags"
+						},
+						{
+							"name": "Operator booking creation, idempotency replay/conflict, overbook audit, and walk-in creation with immediate seated status and active occupancy",
+							"verifies": "VAL-BOOK-002, VAL-BOOK-004, VAL-BOOK-005, VAL-BOOK-036, VAL-HOST-005: Idempotency-Key replay (200) and body mismatch (409 idempotency_key_conflict), best-fit table assignment, audited overbook, and walk-in creation"
+						},
+						{
+							"name": "Table assignment (soft, lock, unlock), 2-party atomic swap, and soft-booking reflow outside freeze_min returning moves[]",
+							"verifies": "VAL-BOOK-007, VAL-BOOK-008, VAL-BOOK-009, VAL-BOOK-010, VAL-HOST-006, VAL-HOST-012: assign, Assign & Lock, unlock, atomic swap between two reservations, and reflow of soft bookings outside freeze_min while preserving locked/arrived/seated/inside-freeze bookings"
+						},
+						{
+							"name": "Time and duration drag/resize with expectedVersion (409 stale_version) and soft reflow moves[]",
+							"verifies": "VAL-BOOK-011, VAL-BOOK-012, VAL-BOOK-013, VAL-BOOK-037: drag/resize updates startAt/endAt/localStartMin, reflows conflicting soft bookings, and enforces expectedVersion"
+						},
+						{
+							"name": "Status state machine transitions, covers_actual, guest visit/cover/cancel/no_show stats, and 30-min undo window with occupancy re-check",
+							"verifies": "VAL-BOOK-014, VAL-BOOK-015, VAL-BOOK-016, VAL-BOOK-017, VAL-BOOK-018, VAL-HOST-007, VAL-HOST-008, VAL-HOST-009, VAL-HOST-010: arrived/seated/finished/cancelled/no_show transitions, active occupancy release on finish/cancel/no_show, 30-min finished->seated undo with table conflict check (409 table_occupied), and append-only rsv_reservation_events"
+						},
+						{
+							"name": "Contact status, running-late note/minutes, course progress, and notes updates with expectedVersion",
+							"verifies": "VAL-BOOK-021, VAL-BOOK-022, VAL-HOST-010, VAL-HOST-011: contact_status, running_late_min, course_status, dietary/guest/staff notes updates and append-only events"
+						},
+						{
+							"name": "Month calendar summary, pre-service overview with allergy redaction without read:reservation_guest:any, service notes CRUD, section layouts CRUD (table_in_multiple_sections), and per-service server section assignments",
+							"verifies": "VAL-BOOK-019, VAL-BOOK-020, VAL-HOST-017, VAL-HOST-018, VAL-HOST-019, VAL-HOST-020: calendar summary, pre-service overview redacting allergy text when lacking read:reservation_guest:any, service notes expectedVersion, section layouts uniqueness, and server section assignments with staff_id and server_label"
+						},
+						{
+							"name": "Guest lookup, creation, summary, JSON export (gated on includeSensitive=1 + update:reservation_guest:any), and right-to-erasure anonymization/redaction",
+							"verifies": "VAL-GUEST-022, VAL-GUEST-025: guest export sensitive field gating + guest.export audit, and guest erase anonymizing profile, cancelling future bookings, scrubbing waitlist/messages/payments, redacting events/audit JSON to {\"redacted\":true}, and logging guest.erase without PII"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/services/rsv-booking-service.concurrency.test.ts",
+					"cases": [
+						{
+							"name": "prevents double-allocation when two concurrent requests race for the last remaining table (VAL-BOOK-006)",
+							"verifies": "VAL-BOOK-006: two concurrent createOperatorReservation calls on a real SQLite file for the same 1-table slot result in one 201 assigned and one 409 no_table_available with exactly one active rsv_table_occupancies row"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/reservations-book.test.ts",
+					"cases": [
+						{
+							"name": "GET /book/day returns composite ETag and 304 Not Modified on match, and GET /book/changes tracks dayVersion",
+							"verifies": "VAL-BOOK-034: HTTP route ETag header, If-None-Match 304, and /book/changes"
+						},
+						{
+							"name": "creates booking via POST /book/reservations, transitions status, supports undo, and enforces expectedVersion (409 stale_version)",
+							"verifies": "VAL-BOOK-002, VAL-BOOK-014..018, VAL-BOOK-036, VAL-BOOK-037: HTTP route booking lifecycle and 409 stale_version"
+						},
+						{
+							"name": "enforces guest export sensitive grant (VAL-GUEST-021, VAL-GUEST-022) and guest erase (VAL-BOOK-027, VAL-GUEST-025)",
+							"verifies": "VAL-GUEST-022, VAL-GUEST-025: HTTP route /operator/reservations/guests/:id/export and /erase"
+						},
+						{
+							"name": "POST /internal/reservations/summary returns counts only with no PII",
+							"verifies": "Internal region summary endpoint returns counts only and requires INTERNAL_COMMAND_TOKEN"
+						},
+						{
+							"name": "never echoes rejected input values in 400 validation errors",
+							"verifies": "Zod validation error responses never echo rejected user input values"
+						},
+						{
+							"name": "supports walk-ins, assign/lock/swap/reflow, contact/late/course/notes, calendar, overview allergy redaction, service-notes, and section assignments",
+							"verifies": "VAL-BOOK-005..013, VAL-BOOK-019..022, VAL-HOST-005..012, VAL-HOST-017..020 end-to-end over HTTP routes"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/routes/resources+/reservations.region-summary.test.ts",
+					"cases": [
+						{
+							"name": "returns counts for an admin, from the organization's current region",
+							"verifies": "GET /resources/reservations/region-summary returns counts and requiresConfirmation from the regional tenant-api node"
+						},
+						{
+							"name": "says no confirmation is needed for an empty region",
+							"verifies": "Empty summary returns requiresConfirmation: false"
+						},
+						{
+							"name": "reports an unknown summary as needing confirmation",
+							"verifies": "Unreachable regional node returns summaryKnown: false, requiresConfirmation: true"
+						},
+						{
+							"name": "asks no region for an organization without a database",
+							"verifies": "Unprovisioned org skips regional call and returns zero counts"
+						},
+						{
+							"name": "refuses outsiders, members without settings access, and bad input",
+							"verifies": "Enforces requireUserWithOrganizationPermission(update:settings:any) and validates organizationId"
+						}
+					]
+				}
+			],
+			"updated": ["apps/tenant-api/src/routes/reservations-security.test.ts"],
+			"coverage": "Covers all /operator/reservations/book/*, /operator/reservations/guests/*, /operator/reservations/setup/locations/:id/sections*, /internal/reservations/summary, and /resources/reservations/region-summary endpoints, including real-SQLite concurrency, security sweep (missing/forged/grantless/wrong-scope/cross-org/cross-location/impersonation), and guard static analysis."
+		},
+		"discoveredIssues": [],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

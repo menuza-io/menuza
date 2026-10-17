@@ -1,0 +1,155 @@
+{
+	"timestamp": "2026-10-17T09:11:08.954Z",
+	"workerSessionId": "46543aca-eae0-40d9-83bd-8dc4a34b3130",
+	"featureId": "messages-and-waitlist-ui",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "5e7c5b12",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Finished the remaining items of messages-and-waitlist-ui on top of e5c6e296: server-driven swap/move/overbook on floor drop and the waitlist Seat dialog, Sites time-zone notes, a shared-schema contract test, a Playwright spec, Arabic strings, and live browser checks on acme and riyadh-grill. Lint, typecheck, Vitest, Lingui and the new Playwright spec pass. Committed as 5e7c5b12.",
+		"whatWasImplemented": "(6) Floor-plan drop and the waitlist Seat dialog now ask the server first and read the 409 table_occupied conflict (occupant, resolutions). The new WaitlistSeatPrompt names the occupant and offers Swap, Move or Overbook; the Seat dialog also gets swap/move buttons. (4) Sites notify-me form and waitlist join box show the restaurant time-zone note when the visitor's zone differs. (7) App was already on the @repo/reservations waitlist schemas; Sites gets the @repo/reservations devDependency and a contract test of join, notify-me and status bodies against the shared schemas. (1) New Playwright spec covering message settings save, waitlist notify and swap, waitlist settings, and floor synthetic-DragEvent drop with an RTL check. (5) Arabic strings for all new text, and the waitlist screen was checked in Arabic RTL. (2) KSA org checks and (3) real-browser Sites notify-me were done (see verification).",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/app && npx eslint --quiet <changed waitlist files, floor.tsx, e2e spec>",
+					"exitCode": 0,
+					"observation": "No errors after wrapping AlertDescription content in a div to satisfy shadcn/no-restyle."
+				},
+				{
+					"command": "npm run lint -w sites; npm run lint:oxc; npm run lingui:check",
+					"exitCode": 0,
+					"observation": "Sites lint: 0 errors, 3 pre-existing afterEach warnings. Oxlint: 0 errors, 19 warnings. Lingui complete across all apps."
+				},
+				{
+					"command": "cd apps/app && npx vitest run app/components/reservations app/utils/reservations",
+					"exitCode": 0,
+					"observation": "29 files, 253 tests passed."
+				},
+				{
+					"command": "cd apps/app && npx vitest run app/routes",
+					"exitCode": 0,
+					"observation": "99 files, 803 tests passed, including the guards tests."
+				},
+				{
+					"command": "cd apps/sites && npx vitest run src/lib/reservations",
+					"exitCode": 0,
+					"observation": "12 files, 94 tests passed, including the new shared-schemas.test.ts."
+				},
+				{
+					"command": "cd apps/app && npx react-router typegen && NODE_OPTIONS=--max-old-space-size=6144 npx tsc",
+					"exitCode": 0,
+					"observation": "No type errors. The turbo typecheck hit a Node out-of-memory error at the default heap, so tsc was run directly with a bigger heap."
+				},
+				{
+					"command": "npm run build -w app; PORT=3101 CI=true npx playwright test tests/e2e/reservations-waitlist-messages.test.ts --workers=1 --repeat-each=3",
+					"exitCode": 0,
+					"observation": "4 tests x 3 repeats = 12 passed."
+				},
+				{
+					"command": "git commit (husky lint-staged + check-lingui)",
+					"exitCode": 0,
+					"observation": "Committed 5e7c5b12; working tree clean."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "acme floor with the waitlist panel: dispatched synthetic dragstart/dragenter/dragover/drop/dragend with a DataTransfer on a free table",
+					"observed": "The party was seated directly on the table."
+				},
+				{
+					"action": "acme floor: dropped a waitlist party on a table held by a booking, then chose Swap",
+					"observed": "Prompt named the occupant (name, party size, code) with Swap, Move and Overbook. After Swap the entry was seated, the waitlist reservation was active on the table, the occupant was unassigned, and a waitlist.seat_resolution swap audit row existed."
+				},
+				{
+					"action": "acme floor: repeated on another booked table and chose Move",
+					"observed": "The entry was seated and the occupant was moved to another table, with the audit row recorded."
+				},
+				{
+					"action": "riyadh-grill (KSA, tenant-api 3009) waitlist screen with ?lng=ar",
+					"observed": "dir=rtl, lang=ar, Arabic labels, entries listed, network calls went to port 3009."
+				},
+				{
+					"action": "riyadh-grill message settings with ?lng=ar",
+					"observed": "RTL layout, Arabic email-only note for Saudi, 12 kind rows, and the preview loaded from 3009."
+				},
+				{
+					"action": "Sites acme /reserve: the time chips",
+					"observed": "Chips show the seating-area label (Main Dining Room, G10-Area, ...), which covers VAL-ONLINE-045."
+				},
+				{
+					"action": "Sites acme /reserve on a full day (temporary pacing rule, removed afterwards): clicked Notify me, entered an email, submitted, then cancelled",
+					"observed": "Zone note 'All times are in the restaurant's time zone: America/New_York (EDT)' appeared. The confirmation showed, an active rsv_notify_requests row (19:00-21:00) was created, and Cancel set it to cancelled."
+				},
+				{
+					"action": "Sites acme /reserve/waitlist, and riyadh-grill /ar/reserve/waitlist",
+					"observed": "The zone note shows on both. The KSA page is dir=rtl and lang=ar, fully Arabic, with Asia/Riyadh (GMT+3)."
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/app/tests/e2e/reservations-waitlist-messages.test.ts",
+					"cases": [
+						{
+							"name": "guest messages settings save",
+							"verifies": "Message settings edit saves with expectedVersion."
+						},
+						{
+							"name": "waitlist screen notify and seat dialog swap",
+							"verifies": "Notify action works and the Seat dialog resolves an occupied table with Swap."
+						},
+						{
+							"name": "waitlist settings save",
+							"verifies": "Waitlist settings persist."
+						},
+						{
+							"name": "floor drop on occupied table",
+							"verifies": "Synthetic DragEvent drop opens the swap/move/overbook prompt, and the page renders in Arabic RTL."
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/shared-schemas.test.ts",
+					"cases": [
+						{
+							"name": "join body",
+							"verifies": "The Sites waitlist join request matches the shared schema."
+						},
+						{
+							"name": "notify-me body",
+							"verifies": "The Sites notify-me request matches the shared schema."
+						},
+						{
+							"name": "join then status response",
+							"verifies": "Responses parse with the shared schemas."
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/app/app/components/reservations/waitlist/floor-waitlist.test.tsx",
+				"apps/app/app/components/reservations/waitlist/waitlist-screen.test.tsx",
+				"apps/app/app/components/reservations/waitlist/waitlist-test-client.ts",
+				"apps/sites/src/lib/reservations/notify-me-form.test.ts",
+				"apps/sites/src/lib/reservations/waitlist-box.test.ts"
+			],
+			"coverage": "Occupied-table conflict flow (names occupant, three choices, swap, move, swap hidden when the occupant is already seated) on floor and waitlist screen; Sites zone notes; shared-schema contract; Playwright 4 tests x 3 repeats."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "turbo run typecheck --filter=app runs out of memory at the default Node heap (exit 134) when other dev services are running. tsc passes with --max-old-space-size=6144.",
+				"suggestedFix": "Set NODE_OPTIONS=--max-old-space-size=6144 in the typecheck service command."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "The Sites availability endpoint rate-limits after about 30 requests per minute per client, so scripted scans for a full day return 'Too many attempts'.",
+				"suggestedFix": "Validators should space requests out, or use a temporary rsv_pacing_rules row (max_covers=1) in the acme tenant DB to force a 'full' day and remove it afterwards."
+			}
+		]
+	}
+}

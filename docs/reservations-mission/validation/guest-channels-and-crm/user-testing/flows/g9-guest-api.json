@@ -1,0 +1,97 @@
+{
+	"group": "g9-guest-api",
+	"surface": "curl (tenant-api US :3007) + read-only sqlite",
+	"testedAt": "2026-10-17T12:50:00Z",
+	"isolation": {
+		"org": "acme t58bgatqh3rv0s3movrecyj1",
+		"location": "v17plv08r5v357bie335lyq8",
+		"ownedBusinessDate": "2026-10-28",
+		"ownedPhones": "+155555509xx",
+		"ownedEmails": "rsv-g9-<n>@example.com",
+		"tokens": "minted with /tmp/menuza-user-testing/mint-token.mjs (scope guests / scope book); values never printed or written to evidence"
+	},
+	"toolsUsed": [
+		"curl",
+		"sqlite3 (SELECT only)",
+		"node /tmp/menuza-user-testing/mint-token.mjs",
+		"jq"
+	],
+	"assertions": [
+		{
+			"id": "VAL-GUEST-006",
+			"title": "Guestbook list pages in cursor pages of at most 50",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g9-guest-api/VAL-GUEST-006-list-page1.json (GET /operator/reservations/guests -> 200, 50 guests, nextCursor present, total 148), VAL-GUEST-006-list-page2.json (GET ...?cursor=<90-char cursor> -> 200, 50 guests), VAL-GUEST-006-summary.txt, VAL-GUEST-006-network.txt (raw curl -w statuses: page1 200, page2 200, id overlap 0), VAL-GUEST-006-list-page1-trailing.json (404 body for the contract's trailing-slash URL)",
+			"notes": "First page contains 50 guests and a nextCursor; following the cursor returns the next page of 50 with zero guest ids repeated from page one. Run twice (12:31 and 12:38 UTC) with identical results (second run total 161 as other validators create guests concurrently). No guest creation was needed (org already has >50 guests).",
+			"limitations": "The contract writes the URL with a trailing slash (`GET /operator/reservations/guests/`); on the running server that exact path returns 404 {\"error\":\"Endpoint Not Found\"} (the Hono trailing-slash behaviour already recorded in the round guidance). The canonical path `/operator/reservations/guests` was used; the Pass criteria (<=50 + cursor, cursor page with no repeats) were verified on it."
+		},
+		{
+			"id": "VAL-GUEST-007",
+			"title": "Completing a booking updates profile stats",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g9-guest-api/VAL-GUEST-007-b1-create.json (POST .../book/reservations -> 201, rsv_8336d612-894b-46d5-aaa9-e3af24347280 #NB57WC, guest gst_facfe712-df9a-4849-ba64-778339c3ed0c), VAL-GUEST-007-b1-arrived.json / -seated.json / -finished.json (all 200), VAL-GUEST-007-profile-after-finish.json (GET /operator/reservations/guests/:id -> 200: visits 1, covers 2, lastVisitAt 2026-10-17T12:34:19Z, history row status finished), VAL-GUEST-007-sqlite.txt (rsv_guests visits=1 covers=2 last_visit_at=1792240459084 = 2026-10-17; rsv_reservations status=finished covers_actual=2), VAL-GUEST-007-summary.txt",
+			"notes": "Guest created through a phone/host booking (channel=phone, partySize 2) and moved booked -> arrived -> seated -> finished with the prescribed operator route POST /operator/reservations/book/reservations/:id/status. visits 0 -> 1 (+1), covers 0 -> 2 (+2), last visit date 2026-10-17 equals the booking's businessDate, and the visit history lists the booking with its final status finished.",
+			"limitations": "No browser screenshot was taken: the Guestbook profile screen rendering is verified by groups b5/b6 (per the assignment). Counters and visit history were verified through GET /operator/reservations/guests/:id plus read-only sqlite. The booking was made on the current service day (2026-10-17), not the registry date 2026-10-28: the contract requires the last visit date to equal the booking's business date, and the implementation stamps lastVisitAt when the booking is finished, so only a booking finished on its own business date can satisfy it (the contract's own flow reads \"from the Today list\"). Transitions were driven through the operator status route, not the Today-list UI."
+		},
+		{
+			"id": "VAL-GUEST-008",
+			"title": "No-show and cancellation update profile stats",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g9-guest-api/VAL-GUEST-008-b2-create.json (201, rsv_0745f23f-9dfe-4431-a51a-40afc394c6f3 #V2P54R, 2026-10-28 20:00), VAL-GUEST-008-b2-noshow.json (POST status no_show -> 200), VAL-GUEST-008-b3-create.json (201, rsv_c0f2ee0e-6e8c-40a9-9a08-3548b84bd54c #SAZFEE, 2026-10-17 08:20 local), VAL-GUEST-008-b3-cancel.json (POST status cancelled -> 200, lateCancel true), VAL-GUEST-008-profile-after.json (GET -> 200: noShows 1, lateCancels 1, cancels 1, visits 1 unchanged; history shows one no_show and one cancelled), VAL-GUEST-008-sqlite.txt (late_cancel=1, cancelled_by=restaurant), VAL-GUEST-008-summary.txt",
+			"notes": "Two further bookings for the same guest: B2 (2026-10-28) marked no_show; B3 (2026-10-17 08:20 local, start already inside the 120-minute cutoff) cancelled. no_shows 0 -> 1 and late_cancels 0 -> 1, visits stayed at 1, and the visit history shows one booking as no-show and one as cancelled (lateCancel true).",
+			"limitations": "The contract's wording \"cancel the other inside the free-cancellation window\" conflicts with its own Pass criteria (late_cancels +1): a free, outside-cutoff cancellation would not be late. The late cancel was produced by cancelling a booking whose start was already inside the guest-modify cutoff (acme rsv_location_settings.guest_modify_cutoff_min = 120; rsv_policies is empty), which is what the Pass criteria require. No browser screenshot (profile rendering covered by b5/b6)."
+		},
+		{
+			"id": "VAL-GUEST-009",
+			"title": "System tag \"first visit\" is derived and cannot be set by hand",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g9-guest-api/VAL-GUEST-009-profile-fresh.json (GET /guests/:id -> 200 on the freshly created guest: visits 0 and derived tag tag_sys_first_visit \"First visit\"), VAL-GUEST-009-tags-catalog.json (GET /guests/tags -> 200: first_visit id tag_sys_first_visit, systemKey first_visit, editable false), VAL-GUEST-009-manual-assign-first-visit.json (POST /guests/:id/tags -> 400 {\"error\":\"system_tag\"}), VAL-GUEST-009-sqlite.txt (0 rsv_guest_tags rows for the guest), VAL-GUEST-007-profile-after-finish.json (after one finished visit: tag gone, visits 1)",
+			"notes": "The freshly created guest shows the derived \"First visit\" tag while it has zero completed visits; the manual assignment naming tag_sys_first_visit is refused with 400 (4xx) and no tag row is added; after the VAL-GUEST-007 finish (visits 1) the tag is gone.",
+			"limitations": "Tag rendering on the profile screen was not re-verified in a browser (b5/b6 own the Guestbook UI); verified through GET /operator/reservations/guests/:id and sqlite."
+		},
+		{
+			"id": "VAL-GUEST-010",
+			"title": "System tag \"frequent no-show\" is derived and cannot be removed by hand",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g9-guest-api/VAL-GUEST-010-cycles.jsonl (10 separate bookings on 2026-10-28, each create 201 and no_show 200), VAL-GUEST-010-profile-after-cycles.json (noShows 11, derived tag tag_sys_frequent_no_show present, no first_visit), VAL-GUEST-010-delete-tag.json (DELETE /guests/:id/tags/tag_sys_frequent_no_show -> 400 {\"error\":\"system_tag\"}), VAL-GUEST-010-profile-after-delete-attempt.json (tag still present), VAL-GUEST-010-guestB-profile-1noshow.json (noShows 1, no frequent tag) vs VAL-GUEST-010-guestB-profile-2noshow.json (noShows 2, frequent_no_show present) threshold proof, VAL-GUEST-010-manual-assign-frequent-noshow.json (400), VAL-GUEST-010-sqlite.txt, VAL-GUEST-010-my-rows.txt",
+			"notes": "10 book+no-show cycles on the owned date 2026-10-28 (17:00-19:15 local, one booking per 15-minute slot); with the earlier no-show from VAL-GUEST-008 the guest sits at 11 no-shows and the profile shows the derived \"Frequent no-show\" tag. DELETE of tag_sys_frequent_no_show returns 400 system_tag and the tag remains on the next GET. The derivation threshold is proven at 2 no-shows with a second guest (1 no-show -> no tag; 2 -> tag), so the tag appears far inside the tenth cycle.",
+			"limitations": "No browser check of the \"no remove control\" UI path (b5/b6 own the Guestbook UI); the API refusal and tag persistence were verified. The second guest used for the threshold proof is a pre-existing round-2 leftover guest in the same +155555509xx phone block (my bookings attached to it by phone match); the validator guest itself (gst_facfe712) was created fresh by the VAL-GUEST-007 booking."
+		},
+		{
+			"id": "VAL-GUEST-014",
+			"title": "Guest routes refuse tokens without guest grants",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g9-guest-api/VAL-GUEST-014-matrix.txt (PATCH /guests/:id, POST /guests/merge, POST /guests/:id/erase -> 403 for a book-scope token and for a read:reservation:any-only token, 401 with no Authorization header), VAL-GUEST-014-get-matrix.txt (GET /guests?q=x -> 403 / 403 / 401), per-case response bodies (VAL-GUEST-014-*.json), leak scan: no guest data in any VAL-GUEST-014 response body",
+			"notes": "Both negative tokens (book scope with read+update:reservation only, and a token narrowed to read:reservation:any) get 403 {\"error\":\"invalid_scope\",\"expected\":[\"guests\"],\"actual\":\"book\"} on all four guest routes; the no-header control gets 401 {\"error\":\"Missing bearer token\"}. No response body contains guest data (grep for name/phone/email found nothing), and the refused PATCH/erase left the target guest unchanged (sqlite: name, version and erased_at intact).",
+			"limitations": "The contract's GET URL carries a trailing slash (`/guests/?q=x`), which 404s on the running server (documented Hono behaviour); the canonical `/operator/reservations/guests?q=x` was used. The merge case used two synthetic ids so a hypothetical guard failure could not damage data."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The contract's guest URLs use a trailing slash (`GET /operator/reservations/guests/`, `GET .../guests/?q=x`); both return 404 {\"error\":\"Endpoint Not Found\"} on the running tenant-api. The canonical path without the slash returns 200/403/401.",
+			"resolved": true,
+			"resolution": "Used the canonical route paths (the round guidance already records this Hono trailing-slash behaviour and says to use the exact route paths); the 404 body is kept as evidence.",
+			"affectedAssertions": ["VAL-GUEST-006", "VAL-GUEST-014"]
+		},
+		{
+			"description": "Guest records are matched by phone, so a booking with phone +15555550902 attached to a leftover round-2 guest (\"G9 Guest Two\", created 2026-10-16 23:44) instead of creating a new guest; the same phone block (+155555509xx) is shared with round-2 leftovers.",
+			"resolved": true,
+			"resolution": "The validator guest for VAL-GUEST-007/008/009/010 is guest gst_facfe712 (phone +15555550901), verified fresh (created 2026-10-17 12:33:36, one reservation at creation). The reused leftover was only used for the VAL-GUEST-010 threshold proof and as the VAL-GUEST-014 target.",
+			"affectedAssertions": ["VAL-GUEST-010", "VAL-GUEST-014"]
+		},
+		{
+			"description": "VAL-GUEST-008 says \"cancel the other inside the free-cancellation window\" but requires late_cancels +1; a cancellation outside the cutoff is not late.",
+			"resolved": true,
+			"resolution": "Produced the late cancel the Pass criteria demand: cancelled a booking whose start was already inside the 120-minute guest-modify cutoff.",
+			"affectedAssertions": ["VAL-GUEST-008"]
+		},
+		{
+			"description": "VAL-GUEST-007 requires \"the last visit date is the booking's business date\", but the implementation stamps lastVisitAt when the booking is finished, so a booking on a future date finished today cannot satisfy it.",
+			"resolved": true,
+			"resolution": "Booked and finished the VAL-GUEST-007 booking on the current service day (2026-10-17), matching the contract's \"from the Today list\" flow; the registry date 2026-10-28 was used for the no-show bookings, which are date-independent.",
+			"affectedAssertions": ["VAL-GUEST-007"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": "acme tenant DB rows only, all in the g9 phone/email block. Guests: gst_facfe712-df9a-4849-ba64-778339c3ed0c (\"G9 Guest One\", +15555550901, rsv-g9-1@example.com; visits 1, covers 2, no_shows 11, late_cancels 1, cancels 1) and pre-existing leftover gst_a192cfb7-9b83-474c-b8ed-a106cf680190 (\"G9 Guest Two\", +15555550902; no_shows 0 -> 2 from the threshold demo). 15 reservations created: rsv_8336d612 (NB57WC, 2026-10-17 14:00, finished), rsv_c0f2ee0e (SAZFEE, 2026-10-17 08:20, cancelled late), 11 no_show rows on 2026-10-28 (N4FEZ6, 2KNVM5, F86F5P, PGAEDZ, 99EDWB, FFXHEX, 8KGKB4, 55XB5R, SF3TY2, V6G7D9, V2P54R) and 2 no_show rows for the leftover guest (YCBKCK 12:30, P85KQ4 12:45). No seeded/other-group rows were modified or deleted; no flags, location settings, code, tests or config were changed; no tokens or secrets were written to evidence; git status is clean (branch pr/reservations)."
+}

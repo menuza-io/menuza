@@ -1,0 +1,147 @@
+{
+	"timestamp": "2026-10-17T05:01:38.677Z",
+	"workerSessionId": "4c8b35d9-8615-4bc9-bf30-87e8c1c09495",
+	"featureId": "online-booking-backend",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "c336ca21",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Built the Online Booking backend: public /reservations/* API (Origin-only org, flags, holds, idempotent book, HMAC manage tokens, manage/ics/mine/requests, durable rate limits), operator large-party approve/decline, RESERVATIONS_PUBLIC_ENABLED kill switch, and the App Sites gate. Full tenant-api suite (92 files, 1654 tests) passes, and curl on US 3007 and KSA 3009 confirmed the flows.",
+		"whatWasImplemented": "tenant-api: routes/reservations-public.ts (config, availability with ETag/dayVersion/now, calendar, holds, holds/current, holds/release, POST /reservations book with Idempotency-Key, requests, manage + manage/availability, modify, cancel, confirm, late/running-late, calendar.ics/ics, mine), lib/reservations-public-auth.ts (org gate, kill switch, in-memory + durable rsv_rate_counters limits, capability tokens), services rsv-public-engine, rsv-hold-service, rsv-public-booking-service, rsv-public-service, rsv-ics, rsv-request-service; operator POST approve/decline on both /reservations/:id/* and /requests/:id/* under /operator/reservations/book; staff overbook can take a hold; org-router routes /reservations* only by Origin via the new resolveOrganizationForPublicOrigin; RESERVATIONS_PUBLIC_ENABLED added to .env.schema/.env.example/bindings. App: resources+/sites.reservations.ts gate. Carried-over: scale.test.ts uses a median, birthday/anniversary added to RSV_TAG_SYSTEM_KEY_VALUES, `as never` cast removed.",
+		"whatWasLeftUndone": "Docs were not updated (docs-worker owns them). The Sites page and the operator Requests tab UI are other features. The agent-browser checks VAL-ONLINE-057/058/059 were not run; their backend (approve/decline, channel recording) is covered by route tests.",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "CI=true npm run test -w tenant-api",
+					"exitCode": 0,
+					"observation": "92 files, 1654 tests passed. An earlier run had one unrelated staffing pay-redaction test fail that passed on rerun (flaky), plus reservations-routing.test.ts which I updated for Origin-only routing."
+				},
+				{
+					"command": "vitest run reservations-public, reservations-security, concurrency, reservations-book, reservations-routing",
+					"exitCode": 0,
+					"observation": "5 files, 86 tests passed (44 public route tests, 24 security tests, 3 real-SQLite concurrency tests)."
+				},
+				{
+					"command": "CI=true npm run test -w @repo/reservations and -w @repo/tenant-db",
+					"exitCode": 0,
+					"observation": "74 reservations tests and 179 tenant-db tests passed, including scale.test.ts with the 200/2000/5000 budget assertions unchanged."
+				},
+				{
+					"command": "cd apps/app && npx vitest run app/routes/resources+/sites.reservations.test.ts",
+					"exitCode": 0,
+					"observation": "8 tests passed."
+				},
+				{
+					"command": "turbo typecheck for tenant-api, tenant-db, reservations; App npm run typecheck; npm run lint:oxc; eslint on new App files",
+					"exitCode": 0,
+					"observation": "All clean (0 errors; oxlint's 20 warnings were pre-existing)."
+				},
+				{
+					"command": "curl flow on :3007 and :3009 (config, availability + ETag 304, hold, holds/current, book with X-Client ios, idempotent replay, manage, ics, cancel, forged token, unknown/missing Origin, GET on mutation path, validation)",
+					"exitCode": 0,
+					"observation": "config 200; availability 200 with ETag \"45.29\" and 304 on If-None-Match; hold 201; book 201, replay returned the same confirmationCode, channel native; manage 200; ics text/calendar; forged token, unknown Origin and missing Origin all 404 {error:not_found}; GET on cancel 404; validation 400 with field paths only. KSA node identical; ksa node + acme Origin 404 and us node + riyadh Origin 404; the guest row exists only in the KSA tenant DB file."
+				},
+				{
+					"command": "set-org-flag reservations.online false + context-changed invalidation",
+					"exitCode": 0,
+					"observation": "config/availability/holds/book/requests 404; manage and ics still 200; App gate 404. With reservations.enabled false: config, manage and gate all 404. Restored afterwards."
+				},
+				{
+					"command": "restart tenant-api-us with RESERVATIONS_PUBLIC_ENABLED=false",
+					"exitCode": 0,
+					"observation": "Every /reservations/* route, including unknown Origin, returned 503 {error:unavailable}; /operator/reservations/* still returned 401 (not 503). Restarted normally."
+				},
+				{
+					"command": "14 POSTs /reservations/holds, restart US node, repeat",
+					"exitCode": 0,
+					"observation": "201s until 10 in the 10-minute window then 429 (Retry-After 551); after restart the next call was still 429 (Retry-After 346) from rsv_rate_counters."
+				}
+			],
+			"interactiveChecks": []
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/tenant-api/src/routes/reservations-public.test.ts",
+					"cases": [
+						{
+							"name": "44 route tests (VAL-ONLINE-001..041)",
+							"verifies": "Origin/region resolution, flags and online-off keeping manage/ics, kill switch, config/availability/calendar rules, holds, idempotent book, manage flows, mine, requests with operator approve/decline, honeypot, rate limits, validation never echoing values, data placement."
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/services/rsv-public-booking.concurrency.test.ts",
+					"cases": [
+						{
+							"name": "10 concurrent holds for the last table",
+							"verifies": "Exactly one wins on a real SQLite file."
+						},
+						{
+							"name": "hold converts exactly once under 8 concurrent books",
+							"verifies": "Hold conversion is single-use."
+						},
+						{
+							"name": "idempotent replay",
+							"verifies": "Same Idempotency-Key returns the first result."
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/routes/resources+/sites.reservations.test.ts",
+					"cases": [
+						{
+							"name": "gate follows flags",
+							"verifies": "Payload online/waitlist/experiences/notifyMe; 404 when master off, online off, unpublished or unknown; custom domain lookup."
+						}
+					]
+				},
+				{
+					"file": "packages/tenant-db/src/reservations-tag-keys.test.ts",
+					"cases": [
+						{
+							"name": "system keys",
+							"verifies": "birthday and anniversary are in RSV_TAG_SYSTEM_KEY_VALUES and the column enum."
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/tenant-api/src/routes/reservations-security.test.ts (new public-route sweep, kill-switch 503)",
+				"apps/tenant-api/src/lib/reservations-routing.test.ts (Origin-only routing, customer JWT no longer routes)",
+				"apps/tenant-api/src/routes/reservations-book.test.ts (removed as never)",
+				"packages/reservations/src/engine/scale.test.ts (median timing)"
+			],
+			"coverage": "All VAL-ONLINE-001..041 behaviors covered by route tests; VAL-ONLINE-042 sweep covered by reservations-security.test.ts; concurrency covered on real SQLite."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "commands.set_org_flag writes only the App D1/data.db. tenant-api caches the reservations context for 5 minutes, so a flag flip is not seen by tenant-api until the cache expires or POST /internal/reservations/context-changed {orgId} (Bearer INTERNAL_COMMAND_TOKEN, dev value in packages/cache/.env.schema) is called. Validators should call it after set_org_flag (VAL-ONLINE-027/043, VAL-CROSS-013).",
+				"suggestedFix": "Have scripts/set-org-flag.sh POST context-changed to localhost:3007/3009 after the write."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "Contract choices: API status requested = DB pending_approval. Manage token header is X-Reservation-Token (also ?t= for the .ics only); holds use the same header. Book is POST /reservations with required Idempotency-Key. Aliases /manage/running-late, /manage/ics, and operator /requests/:id/approve|decline are also mounted. Public confirmation codes are 8 chars (Crockford) while operator-created ones are 6. The App gate returns 404 unless master AND online are on (per VAL-ONLINE-043), and notifyMe follows the waitlist flag since the per-location setting lives in the regional DB. org-router no longer routes /reservations* by customer JWT; Origin only.",
+				"suggestedFix": "Docs worker should record these in docs/reservations-contract.md."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "Stale tsx watch processes from earlier sessions (pids 654721, 817306, 817339, 940219 groups) still exist; a pre-existing KSA tenant-api (pid 939855) is still listening on 3009. The US tenant-api and App I started were stopped.",
+				"suggestedFix": "Orchestrator or validators may kill stale watchers before starting services."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": [
+				{
+					"step": "Verify against the running server with curl",
+					"whatIDidInstead": "Did not run operator approve/decline through curl or agent-browser (no operator token captured); covered by route tests.",
+					"why": "Operator-token capture needs the App browser flow, which is the app-ui feature's scope."
+				}
+			]
+		}
+	}
+}

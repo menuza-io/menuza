@@ -1,0 +1,305 @@
+{
+	"group": "b3-waitlist-ui",
+	"surface": "agent-browser (App operator UI + Sites guest UI) with read-only sqlite3, curl and D1 reads",
+	"testedAt": "2026-10-17T12:05:00Z",
+	"isolation": {
+		"org": "acme (t58bgatqh3rv0s3movrecyj1), location v17plv08r5v357bie335lyq8 (America/New_York)",
+		"ownedPhoneBlock": "+155555523x",
+		"ownedEmails": "rsv-b3-4..6@example.com",
+		"ownedBusinessDate": "2026-11-04 (not usable for this group: the operator waitlist screen and the floor waitlist panel have no date control and always use the current service day; all entries were created on the live service day 2026-10-17, identified by the owned phone block)",
+		"browserSession": "agent-browser --session 276ff6d660b4__b3 (closed at the end)",
+		"settingsChangedAndRestored": {
+			"waitlist_response_min": "10 -> 12 -> 10 (then 1 for the deadline branch -> 10)",
+			"waitlist_max_parties": "null -> 6 -> null",
+			"waitlist_enabled": "1 -> 0 -> 1",
+			"waitlist_online": "1 -> 0 -> 1",
+			"notify_me_enabled": "1 -> 0 -> 1",
+			"before": "enabled=1 online=1 notify_me=1 response_min=10 max_parties=null version=33 (2026-10-17T11:10:42Z)",
+			"after": "enabled=1 online=1 notify_me=1 response_min=10 max_parties=null version=40 (verified on screen after reload and in sqlite)"
+		},
+		"flagsUntouched": true
+	},
+	"toolsUsed": [
+		"agent-browser (App + Sites)",
+		"curl (tenant-api operator/public/tick)",
+		"sqlite3 (read-only tenant DB)",
+		"wrangler d1 execute --local (read-only Notification check)"
+	],
+	"assertions": [
+		{
+			"id": "VAL-WAIT-001",
+			"status": "pass",
+			"title": "Waitlist settings screen saves and gates the feature",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-settings-baseline.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-settings-dirty-form.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-settings-saved-off.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-get-waitlist-after-save.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-settings-after-reload.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-feature-gate.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-001-settings-restored.txt"
+			],
+			"steps": [
+				"Opened /acme/reservations/settings/waitlist as kody; screen showed enabled/online/notify-me on, response 10, party limit empty.",
+				"Network: GET http://localhost:3007/operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/waitlist -> 200 with version 33, waitlistEnabled true, waitlistOnline true, notifyMeEnabled true, waitlistResponseMin 10, waitlistMaxParties null (same values as the screen and the DB row).",
+				"Toggled all three switches off, set response 12 and party limit 6, saved: PUT .../waitlist -> 200, body {expectedVersion:33, waitlistEnabled:false, waitlistOnline:false, notifyMeEnabled:false, waitlistResponseMin:12, waitlistMaxParties:6}; success banner 'Waitlist settings saved.'; DB version 34.",
+				"Reloaded the screen: the three switches render unchecked, response 12, party limit 6; the re-fetched GET returns the same values (version 34).",
+				"Restored the baseline (all three on, response 10, party limit empty): PUT -> 200, DB version 35; final restore after the deadline branch left version 40 with the same baseline values, confirmed on the screen after reload and in sqlite.",
+				"Feature gating through the token features claim: a book token minted with features.waitlist=false gets 404 'Not found' from all eight route forms (GET /book/waitlist/, GET /book/waitlist/quote, POST /book/waitlist/, POST /book/waitlist/reorder, PATCH /book/waitlist/:id, POST /book/waitlist/:id/notify, POST /book/waitlist/:id/status, POST /book/waitlist/:id/seat); the control request with waitlist=true returns 200 with the listing."
+			],
+			"limitations": "The 'App waitlist screens 404 when reservations.waitlist is off' half was NOT exercised live: org flag toggles are serial and owned by g12-flags this round, and my assignment forbids changing org flags. The tenant-api half (token features claim -> 404 on every waitlist route) was verified directly with a minted token. Settings-permission gating was only exercised as an admin (kody); no negative-permission case.",
+			"notes": "No 409s occurred on any settings write; the location settings version moved 33 -> 40 across the session, including +3 while I was not writing, so other validators also change waitlist settings concurrently. I re-read the live value before each write and used the live expectedVersion."
+		},
+		{
+			"id": "VAL-WAIT-002",
+			"status": "pass",
+			"title": "Operator adds a walk-in party with a simulated quote",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-002-queue-before.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-002-add-dialog-quote.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-002-quote-response.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-002-post-201-response.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-002-today-waitlist-poll.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-002-walkin-two-201.txt"
+			],
+			"steps": [
+				"App waitlist screen -> 'Add party' dialog; filled name 'B3 Walkin One', size 3, phone +1555555231 with the SMS opt-in checked, notes; the dialog showed 'Quote this party 1 min. They would be number 3 in line.'",
+				"Network: GET /operator/reservations/book/waitlist/quote?locationId=...&partySize=3 -> 200 {quotedMin:1, quotedWaitMin:1, quotedReadyAt:1792235750541, position:3}.",
+				"Submit: POST /operator/reservations/book/waitlist -> 201 with entry wle_1f765ab1-6b34-455d-a417-126db7eeabed, status 'waiting', quotedMin 1, quotedReadyAt set (same party size as the quote -> consistent).",
+				"The queue card appeared immediately as '#3 B3 Walkin One (3) ... Quoted 1 min' and the summary went to 'In line: 3'.",
+				"Poll check on Today: with the Today screen open (no reload) a second walk-in (B3 Walkin Two, +1555555232) added via the API at 11:15:24 appeared as a new row in the Today waitlist card by 11:15:32 (one 5 s poll), quoted wait shown ('Quoted 1 min'); the card count went 3 -> 4."
+			],
+			"limitations": "The area-preference field was exercised only as the default 'Any area' (optional in the contract).",
+			"notes": "Today renders the waitlist as a card with rows (today-waitlist-row-<id>), not as a literal tab; the card updated without a reload. Background tabs throttle the 5 s poll in headless Chrome, so the poll check was done with the Today tab active."
+		},
+		{
+			"id": "VAL-WAIT-004",
+			"status": "pass",
+			"title": "Notify the guest - message, status and response deadline",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-004-notify-response.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-004-sms-log.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-004-sqlite.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-004-messages.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-004-waitlist-notified.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-004-repeat-notify.txt"
+			],
+			"steps": [
+				"Pressed Notify on the waiting walk-in with the opted-in US phone +1555555231: POST /operator/reservations/book/waitlist/wle_1f765ab1.../notify -> 200 {changed:true}.",
+				"Response/DB: status 'notified', notified_at 1792235745975, response_deadline_at 1792236345975 = notified_at + 600000 ms = waitlist_response_min (10).",
+				"Message: '[SMS MOCK] To: +1555555231 | Message: Downtown Flagship: your table is ready. http://localhost:3001/reserve/waitlist#t=<status-token>' - restaurant name and the entry's status link; rsv_messages has waitlist_ready/sms/sent for the entry. The operator card shows the 'Notified' badge and an 'Answer within 9:48' countdown.",
+				"Repeated Notify on the already notified entry (the UI correctly hides Notify for notified entries, so the repeat was sent through the API with the current version): 200 {changed:false}, version unchanged (2), notified_at/response_deadline_at unchanged, message count for the entry 2 -> 2 and SMS MOCK lines for the phone 2 -> 2 (no second message)."
+			],
+			"limitations": "The entry had a phone but no email, so the SMS channel is the one that proves delivery here; the email channel is proven on the remote entries (see VAL-CROSS-016).",
+			"notes": "The walk-in add also produced the expected waitlist_joined SMS because the phone was opted in."
+		},
+		{
+			"id": "VAL-WAIT-006",
+			"status": "pass",
+			"title": "On the way from the guest is reflected for the host",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-006-guest-on-the-way.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-006-operator-on-the-way.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-006-sqlite.txt"
+			],
+			"steps": [
+				"Remote-joined 'B3 Remote One' (+1555555236, rsv-b3-6@example.com) on the Sites page http://acme.menuza.test:3008/reserve/waitlist: POST /reservations/waitlist/join -> 201, guest status page showed position 5 and 'About 1 min'.",
+				"Operator notified the entry, then the guest pressed 'I am on my way' on the status page: POST /reservations/waitlist/status/on-my-way -> 200; the guest page switched to 'We know you are on your way' (state on_the_way).",
+				"Operator waitlist tab was left open (no reload): at t+0s the card still read data-status='notified'; at t+7s (one 5 s poll) the card read data-status='on_the_way' with the 'On the way' badge and the summary 'On the way: 1'.",
+				"sqlite rsv_waitlist_entries: status on_the_way for wle_bcdffcc3-08ab-4e70-ae64-3a83b058ed02."
+			],
+			"limitations": "None. (VAL-WAIT-010, the join validation assertion, belongs to another group; only a valid join was performed here.)",
+			"notes": "The operator screen's poll only advances while its tab is the active tab in headless Chrome."
+		},
+		{
+			"id": "VAL-WAIT-007",
+			"status": "pass",
+			"title": "Seat from the waitlist creates the walk-in reservation and occupancy",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-007-seat-dialog.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-007-seat-response.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-007-sqlite.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-007-today-seated.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-007-today-seated.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-007-floor-occupied.png"
+			],
+			"steps": [
+				"Pressed Seat on the waiting walk-in 'B3 Walkin Two' (+1555555232) and picked a concrete table (G10-T10, tbl_d7569189-7675-4087-bd25-115708ee908f) in the Seat dialog.",
+				"POST /operator/reservations/book/waitlist/wle_0e2d1435.../seat -> 200: entry status 'seated' with reservationId rsv_fb9985c4-25d4-4a24-9825-e0826ea16602; the returned reservation has channel 'waitlist', status 'seated', tableIds [G10-T10].",
+				"sqlite: rsv_reservations rsv_fb9985c4... channel='waitlist' status='seated' party 2, business date 2026-10-17, duration 75 min, seated_at set; rsv_table_occupancies has one active row (kind reservation, active=1) on G10-T10 covering 1792236240000-1792240740000 (75 min).",
+				"Today (open tab, no reload, activated): the seated party appears as 'G10-T10 - B3 Walkin Two (2) | Waitlist | 0m / 75m | Complete Turn | Details' (today-seated-card-rsv_fb9985c4...) within one poll; the entry left the waitlist card.",
+				"Floor plan: the G10-T10 table reads data-live-status='seated' with 'B3 T. | 2p | 1m - 73m left' (timer)."
+			],
+			"limitations": "Today has a 'Seated' board section rather than a literal tab (the contract says 'Today Seated tab').",
+			"notes": "No conflict resolution was needed; the table was free."
+		},
+		{
+			"id": "VAL-WAIT-008",
+			"status": "pass",
+			"title": "Reorder the queue and the order persists",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-order-before.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-before-reorder.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-order-after-reload.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-reordered.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-sort-keys.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-guest-status-position.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-008-guest-new-position.png"
+			],
+			"steps": [
+				"Seven active entries were in the queue (2 seeded + 5 of mine); before the move the order was Julian #1, Fatima #2, B3 Remote One #3, B3 Walkin Cancel #4, B3 Walkin Drag #5, B3 Remote Two #6, B3 Remote Leave #7.",
+				"Pressed the move-up affordance on B3 Remote Two: POST /operator/reservations/book/waitlist/reorder -> 200 with ids [...Walkin Cancel, Remote Two, Walkin Drag, Remote Leave]; the list immediately showed Remote Two #5 and Walkin Drag #6.",
+				"Reloaded the page: the new order survived (Remote Two #5, Walkin Drag #6) - persisted sort_key 10 vs 11 in rsv_waitlist_entries (not local state).",
+				"The moved entry's guest status page (Sites, same tab, polled) now reports position 5 (was 6) with the quoted wait."
+			],
+			"limitations": "The move was one step up, so it swapped with the neighbouring entry (B3 Walkin Drag, mine); the two seeded entries kept their positions.",
+			"notes": "The UI reorder sends the complete active order; the server only trades the listed slots."
+		},
+		{
+			"id": "VAL-WAIT-009",
+			"status": "pass",
+			"title": "Cancel, leave and edit from the operator side",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-009-cancelled.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-009-patch-409.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-009-guest-left.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-009-operator-list-left.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-009-no-messages.txt"
+			],
+			"steps": [
+				"Cancel: 'Remove from list' on B3 Walkin Cancel showed the confirmation ('Remove B3 Walkin Cancel from the waitlist?'), 'Yes, remove' -> POST /status {status:'cancelled', expectedVersion:1} -> 200; the entry is 'cancelled' (version 2), moved to the settled list, and the active count dropped 'In line: 6' -> 'In line: 5'.",
+				"Edit: the Edit dialog on B3 Remote Two changed the party size to 4 and the notes -> PATCH /book/waitlist/wle_439e9f99... -> 200 with expectedVersion 2, DB version 2 -> 3.",
+				"Stale version: PATCH with expectedVersion 2 while the row was at version 3 -> 409 {\"error\":\"stale_version\",\"message\":\"Expected version 2, found 3\"}; the retry with expectedVersion 3 -> 200 and version 4.",
+				"Guest leave: on the status page, 'Leave the waitlist' -> 'Yes, leave' -> POST /reservations/waitlist/status/leave -> 200, guest page 'You left the waitlist' (state left). The operator tab (no reload) still showed the entry as waiting at t+0s and showed the settled row 'B3 Remote Leave (2) | Left' at t+7s (one 5 s poll), with 'In line' 5 -> 4.",
+				"No messages after settle: POST /notify on the cancelled entry -> 409 invalid_status_transition ('Cannot move a waitlist entry from cancelled to notified'), messages 0 -> 0; on the left entry -> 409 ('...from left to notified'), messages 1 -> 1."
+			],
+			"limitations": "The 409 stale_version case was driven through the API (the UI cannot be made stale without racing another writer); the 200 edit case came from the UI.",
+			"notes": "Cancelled/left entries render as settled rows with no actions except 'Back to waiting' for no_response."
+		},
+		{
+			"id": "VAL-WAIT-019",
+			"status": "pass",
+			"title": "Drag a waitlist card onto the floor plan seats the party",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-019-floor-drag-seat.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-019-seat-response.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-019-sqlite.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-WAIT-019-occupied-drop-prompt.png"
+			],
+			"steps": [
+				"Floor screen with the waitlist panel open; dispatched dragstart/dragenter/dragover/drop/dragend with a DataTransfer (CDP drag does not work on the canvas) carrying text/waitlist-id = wle_22e9180e... (B3 Walkin Drag, waiting) onto the free table G15-T1 (tbl_b2e8c3a2-ebfa-430c-8665-afa0ec4f023b).",
+				"Network: POST /operator/reservations/book/waitlist/wle_22e9180e.../seat {tableIds:[G15-T1], expectedVersion:2} -> 200; entry seated with reservationId rsv_3fb1efdd-a920-44bf-982e-9ddf1ca044d7.",
+				"sqlite: reservation channel 'waitlist', status 'seated'; rsv_table_occupancies active row on G15-T1; the table flipped to data-live-status='seated' with the timer '0m - 74m left' and the guest 'B3 D.'.",
+				"Dropping a second waiting card (B3 Remote Two) onto the now occupied G15-T1: POST /seat -> 409 table_occupied and the prompt 'Table G15-T1 is not free for this party / Booked by B3 Walkin Drag (2) - RGY9A3 / Choose how to seat B3 Remote Two (3) at table G15-T1' with the server-named resolutions 'Move the booking to a free table' and 'Overbook: seat anyway' (plus Cancel); cancelling left the entry waiting."
+			],
+			"limitations": "'Swap' was not offered for this occupant because it was already seated; the shared resolution rule (rsv-waitlist-seat-resolution.ts availableResolutions) offers swap only when every occupant is a reservation that has not arrived, and move+overbook otherwise - the prompt showed exactly the server-named set. No drop onto a hold or a not-yet-arrived occupant was exercised.",
+			"notes": "The keyboard/button equivalent ('Seat at G15-T1' after selecting the table) exists in the panel; the dispatched drag used the same code path."
+		},
+		{
+			"id": "VAL-CROSS-016",
+			"status": "pass",
+			"title": "Remote waitlist join triggers manager alert, ready notification, status page and seating from the floor",
+			"evidence": [
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-join-201-response.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-join-sms.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-join-email.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-guest-status-waiting.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-manager-alert.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-manager-notification.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-ready-email.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-guest-status-ready.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-floor-drag-seat.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-today-seated.json",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-guest-status-seated.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-tick.txt",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-r2-no-response.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-operator-no-response.png",
+				"evidence/guest-channels-and-crm/b3-waitlist-ui/VAL-CROSS-016-seat-sqlite.txt"
+			],
+			"steps": [
+				"1. Guest join: Sites /reserve/waitlist, name 'B3 Remote One', phone +1555555236, email rsv-b3-6@example.com, party 3, SMS opt-in -> POST /reservations/waitlist/join -> 201 (entry wle_bcdffcc3-08ab-4e70-ae64-3a83b058ed02, status waiting, position 5, quotedMin 1); the status page showed POSITION IN LINE 5, ESTIMATED WAIT 'About 1 min', party 3, location Downtown Flagship. Messages: waitlist_joined SMS MOCK line and a captured email 'You are on the waitlist at Downtown Flagship' with the status link.",
+				"2. Manager alert: the tenant outbox row manager_alert dedupe_key waitlist_remote_join:wle_bcdffcc3-08ab-4e70-ae64-3a83b058ed02 (count 1, sent); App D1 Notification rows type reservations-waitlist-remote-join for kody (and 4 other admins) with payload {kind, locationId, count:1, orgSlug, locationName} only - no guest PII; the bell shows '1 guest joined the waitlist remotely / Open the waitlist to see who is waiting. / Location: Downtown Flagship'. The entry appears in the App waitlist screen.",
+				"3. Operator Notify: POST /book/waitlist/wle_bcdffcc3.../notify -> 200; captured email 'Your table at Downtown Flagship is ready' (kind waitlist_ready) with the status link; DB notified_at 1792236148573 / response_deadline_at 1792236748573 (10 min window); the guest status page switched to 'Your table is ready' with a hold countdown (9:46) and the 'I am on my way' action; the guest pressed it -> POST /reservations/waitlist/status/on-my-way -> 200, state on_the_way.",
+				"4. Seating across surfaces: kody dragged the on-the-way card from the floor waitlist panel onto the free table G10-T7 -> POST /seat -> 200, entry seated with reservation rsv_4087d11a-db68-414b-99fb-3c9819bb5516 (channel waitlist, status seated, party 3); the table flips to occupied with '0m - 90m left'; Today shows 'G10-T7 - B3 Remote One (3) | Waitlist | 0m / 90m'; the guest status page shows 'You have been seated / Enjoy your meal.'",
+				"5. Deadline branch: set the location response window to 1 minute (settings screen, PUT 200), notified the second remote entry (B3 Remote Two, +1555555234) -> response_deadline_at = notified_at + 60000 ms; the guest page showed the ready state with a 0:46 hold; after the deadline POST /api/reservations/tick -> 200 with the waitlist_offers task count 1, the entry became no_response; the guest page reports state no_response ('Your table was released') with position null, and the operator list shows the settled row 'B3 Remote Two (4) | No response' ('In line' dropped to 2). The response window was restored to 10 minutes afterwards."
+			],
+			"limitations": "Two wording deviations, both judged non-failing: (a) the waitlist_ready email contains the restaurant name and the status link but not a literal response-deadline text - the deadline is persisted on the entry (response_deadline_at) and shown as the hold countdown on the status page; (b) the status page reported position 5 rather than position 1 because the shared acme queue already held other parties (2 seeded + other validators' entries) - the position is the real queue position.",
+			"notes": "All five steps were executed in this session on the live services; the deadline branch used the explicit tick POST after the 1-minute window (the Node interval tick had also already swept an earlier entry, confirming the sweep runs on its own)."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The agent-browser session lost its cookies mid-run (the browser restarted: the tab fell back to about:blank and the App redirected to /login).",
+			"resolved": true,
+			"resolution": "Logged in again, then relaunched the session with --restore so state autosaves; no further loss occurred.",
+			"affectedAssertions": []
+		},
+		{
+			"description": "In headless Chrome only the active tab runs timers, so the App's 5-second polls (Today card, operator waitlist, floor) do not advance while their tab is in the background; the Today waitlist card looked stale until the tab was activated.",
+			"resolved": true,
+			"resolution": "Switched to the tab under test, waited one poll interval, then read the DOM without reloading.",
+			"affectedAssertions": [
+				"VAL-WAIT-002",
+				"VAL-WAIT-007",
+				"VAL-WAIT-006",
+				"VAL-WAIT-009",
+				"VAL-CROSS-016"
+			]
+		},
+		{
+			"description": "Clicks on the settings switches are swallowed by the sidebar overlay (aside.bg-background) for agent-browser ref/selector clicks.",
+			"resolved": true,
+			"resolution": "Used in-page element.click() and the native value setter plus input/change events for React-controlled inputs.",
+			"affectedAssertions": ["VAL-WAIT-001"]
+		},
+		{
+			"description": "Guest status links in messages point at the App origin in local dev: because acme has no customDomain, reservations.context.ts:181 falls back to appUrl, so the SMS/email link is http://localhost:3001/reserve/waitlist#t=..., and that URL answers 404 on the App (while /reserve 302s to /login). The guest page itself works on the Sites host (http://acme.menuza.test:3008/reserve/waitlist).",
+			"resolved": false,
+			"resolution": "Reported as an observation, not adjudicated: the messages do contain the restaurant name and a status link with the token (what VAL-WAIT-004 asks for), and the guest status page was exercised on the Sites host. Looks like a pre-existing siteOrigin fallback that also affects manage links.",
+			"affectedAssertions": ["VAL-WAIT-004", "VAL-CROSS-016"]
+		},
+		{
+			"description": "Two one-off React hydration-nesting console errors appeared after opening the notifications bell (button-in-button from a notification card menu; p-in-p from a scroll area).",
+			"resolved": false,
+			"resolution": "Recorded in console-errors.txt; absent on clean reloads of the waitlist/floor/today/settings screens, so they are App-shell related and not waitlist-specific.",
+			"affectedAssertions": []
+		},
+		{
+			"description": "The location waitlist settings version advanced by 3 (35 -> 38) without any write from this session, so other validators change the same settings concurrently.",
+			"resolved": true,
+			"resolution": "Re-read the live settings before each write and always sent the live expectedVersion; no 409s occurred. Final state restored and verified.",
+			"affectedAssertions": ["VAL-WAIT-001"]
+		},
+		{
+			"description": "The waitlist UI has no date control, so the group's owned business date (2026-11-04) could not be used; waitlist entries always land on the live service day (2026-10-17).",
+			"resolved": true,
+			"resolution": "Kept isolation through the owned phone block +155555523x and emails rsv-b3-4..6@example.com and recorded the deviation.",
+			"affectedAssertions": [
+				"VAL-WAIT-002",
+				"VAL-WAIT-004",
+				"VAL-WAIT-006",
+				"VAL-WAIT-007",
+				"VAL-WAIT-008",
+				"VAL-WAIT-009",
+				"VAL-WAIT-019",
+				"VAL-CROSS-016"
+			]
+		}
+	],
+	"blockers": [],
+	"leftBehind": {
+		"settings": "acme location v17plv08r5v357bie335lyq8 restored to the round baseline: waitlist_enabled=1, waitlist_online=1, notify_me_enabled=1, waitlist_response_min=10, waitlist_max_parties=null (version 40); org flags untouched.",
+		"waitlistEntries": [
+			"wle_1f765ab1-6b34-455d-a417-126db7eeabed B3 Walkin One +1555555231 no_response",
+			"wle_0e2d1435-19dd-4e9a-a27a-86b75f709103 B3 Walkin Two +1555555232 seated -> rsv_fb9985c4-25d4-4a24-9825-e0826ea16602 (SFV3JC) on G10-T10",
+			"wle_bcdffcc3-08ab-4e70-ae64-3a83b058ed02 B3 Remote One +1555555236 seated -> rsv_4087d11a-db68-414b-99fb-3c9819bb5516 (Y87Q5N) on G10-T7",
+			"wle_439e9f99-a00b-49c5-9388-7cd183fe133e B3 Remote Two +1555555234 no_response",
+			"wle_cdd986e1-6b14-4a0b-8cef-4b60b9cba62a B3 Remote Leave +1555555235 left",
+			"wle_ee00d06c-1ccb-487f-b558-e58cb799b547 B3 Walkin Cancel +1555555237 cancelled",
+			"wle_22e9180e-e1d7-4cfa-a459-419a4e7e5288 B3 Walkin Drag +1555555238 seated -> rsv_3fb1efdd-a920-44bf-982e-9ddf1ca044d7 (RGY9A3) on G15-T1"
+		],
+		"reservations": "3 channel='waitlist' seated reservations on business date 2026-10-17 (SFV3JC, RGY9A3, Y87Q5N) with their active occupancies; the seeded 2026-10-16 reservations and other groups' rows were not touched.",
+		"messages": "waitlist_joined email x3 / sms x4, waitlist_ready email x2 / sms x3 for the entries above; 3 manager_alert outbox rows (one per remote join) and 15 App D1 reservations-waitlist-remote-join notifications (my 3 events x 5 admins; 20 rows of this type exist in total - the 4th event at 1792222920768 predates this session and is another group's).",
+		"browserSession": "agent-browser --session 276ff6d660b4__b3 closed."
+	}
+}

@@ -1,0 +1,155 @@
+{
+	"milestone": "foundation",
+	"round": 1,
+	"status": "fail",
+	"assertionsSummary": {
+		"total": 24,
+		"passed": 21,
+		"failed": 3,
+		"blocked": 0
+	},
+	"passedAssertions": [
+		"VAL-FND-001",
+		"VAL-FND-002",
+		"VAL-FND-003",
+		"VAL-FND-004",
+		"VAL-FND-005",
+		"VAL-FND-007",
+		"VAL-FND-008",
+		"VAL-FND-010",
+		"VAL-FND-011",
+		"VAL-FND-012",
+		"VAL-FND-013",
+		"VAL-FND-014",
+		"VAL-FND-015",
+		"VAL-FND-016",
+		"VAL-FND-017",
+		"VAL-FND-018",
+		"VAL-FND-019",
+		"VAL-FND-020",
+		"VAL-FND-021",
+		"VAL-FND-022",
+		"VAL-FND-023"
+	],
+	"failedAssertions": [
+		{
+			"id": "VAL-FND-006",
+			"reason": "Engine does not enforce four capacity rules the contract names. `rsv_service_availability.online_cap_per_interval` and `.concurrent_covers_cap`, `rsv_pacing_rules.rolling_min`/`rolling_max_covers` and `rsv_tables.reset_buffer_min` are referenced nowhere outside `packages/tenant-db/src/schema.ts` (only the seed script writes the first two; only the tenant-db schema test names the third), and the engine input models have no fields for them (`packages/reservations/src/engine/pacing.ts:3-29`, `engine/day-state.ts:60-130`); the only buffer applied is the location-level `settings.bufferMin` (`engine/availability.ts:461`). Invariant I3 overbook semantics are not honoured: `architecture.md:225-227` says overbook rows count as occupying their tables, but `OccupancyIndex` skips every `overbook` entry in all lookups (`engine/occupancy.ts:94,127,139,165`) and the test oracle skips them too (`testing/oracle.ts:233`). `alternatives()` returns same-day slots only (`engine/availability.ts:218,724`) where `architecture.md:1181` defines `{ sameDay, otherDates }` and the contract evidence asks for other dates. Working and asserted (engine suite 19/19, exit 0): per-slot pacing covers/parties incl. per-area windows and per-service online covers, min notice / same-day cutoff / horizon / release, party limits, channel-mode exclusions, expired-hold skipping, experience caps.",
+			"evidence": [
+				"validation/foundation/user-testing/flows/g2-engine-properties.json",
+				"evidence/foundation/g2-engine-properties/coverage-notes.md"
+			]
+		},
+		{
+			"id": "VAL-FND-009",
+			"reason": "Property and scale suites run green (4/4 tests, numRuns 300/100, zero counterexamples; scale fixture 120 tables / 80 combinations / 900 bookings enforces the 200 / 2,000 / 5,000 expansion budgets and returns `no_fit` on exhaustion), but invariants I1-I8 are not verified with the semantics the contract and `architecture.md:216-239` define: there is no search-then-hold agreement check, no monotonic-release check, no atomic-modify check and no staff-overbook isolation check. `verifyDayInvariants` attaches the I6/I7/I8 labels to pacing caps, channel/mode eligibility and service-window checks (`testing/oracle.ts:76-199,229-261`), and the oracle comparison runs once per scenario rather than per step. This is the same gap as scrutiny round-2 blocking issue #2, which the orchestrator folded into `foh-setup-full-stack`; recorded as failed here so a pass is not silently accepted.",
+			"evidence": [
+				"validation/foundation/user-testing/flows/g2-engine-properties.json"
+			]
+		},
+		{
+			"id": "VAL-FND-024",
+			"reason": "All five documents exist and are non-empty (ADR 048 is 286 lines; `docs/reservations.md`, `docs/reservations-contract.md`, `docs/reservations-plan.md` are 67-80 lines; `docs/permissions.md` lists the 8 permissions at lines 198-205 and the 6 flags at 256-261), but the ADR covers only 9 of the 11 topics the contract enumerates: it has no content for `guest identity without login` (no capability-token / manage-link / OTP wording anywhere; section 3 documents only the customer Bearer-JWT path) and none for the `shared org alarm` (section 9 mentions in-process timers and Durable Object alarms for the reservations tick only, never a generic per-organization alarm shared with staffing). Secondary documentation drift (non-existent trigger names in section 5, `24 rsv_* tables` vs 41, implied-read rules, preset count) was already reported by scrutiny as non-blocking and belongs to the same docs fix.",
+			"evidence": [
+				"validation/foundation/user-testing/flows/g5-control-plane-seed-docs.json"
+			]
+		}
+	],
+	"blockedAssertions": [],
+	"flows": [
+		{
+			"group": "g1-domain-packages",
+			"surface": "terminal",
+			"assertions": [
+				"VAL-FND-001",
+				"VAL-FND-002",
+				"VAL-FND-003",
+				"VAL-FND-004",
+				"VAL-FND-005"
+			],
+			"report": "validation/foundation/user-testing/flows/g1-domain-packages.json"
+		},
+		{
+			"group": "g2-engine-properties",
+			"surface": "terminal",
+			"assertions": ["VAL-FND-006", "VAL-FND-007", "VAL-FND-009"],
+			"report": "validation/foundation/user-testing/flows/g2-engine-properties.json"
+		},
+		{
+			"group": "g3-state-routing-write",
+			"surface": "terminal",
+			"assertions": ["VAL-FND-008", "VAL-FND-017", "VAL-FND-019"],
+			"report": "validation/foundation/user-testing/flows/g3-state-routing-write.json"
+		},
+		{
+			"group": "g4-tenant-db-schema",
+			"surface": "terminal",
+			"assertions": ["VAL-FND-010", "VAL-FND-011", "VAL-FND-012"],
+			"report": "validation/foundation/user-testing/flows/g4-tenant-db-schema.json"
+		},
+		{
+			"group": "g5-control-plane-seed-docs",
+			"surface": "terminal",
+			"assertions": [
+				"VAL-FND-013",
+				"VAL-FND-014",
+				"VAL-FND-023",
+				"VAL-FND-024"
+			],
+			"report": "validation/foundation/user-testing/flows/g5-control-plane-seed-docs.json"
+		},
+		{
+			"group": "g6-app-ui",
+			"surface": "agent-browser (App)",
+			"assertions": [
+				"VAL-FND-015",
+				"VAL-FND-016",
+				"VAL-FND-021",
+				"VAL-FND-022"
+			],
+			"report": "validation/foundation/user-testing/flows/g6-app-ui.json"
+		},
+		{
+			"group": "g7-context-guards",
+			"surface": "curl + terminal",
+			"assertions": ["VAL-FND-018", "VAL-FND-020"],
+			"report": "validation/foundation/user-testing/flows/g7-context-guards.json"
+		}
+	],
+	"appliedUpdates": [
+		{
+			"target": "user-testing.md",
+			"description": "Added Flow Validator Guidance sections for the terminal, agent-browser (App) and curl surfaces, the round-1 concurrency plan, and setup runtime findings (App start, services state, flag state).",
+			"source": "setup"
+		},
+		{
+			"target": "user-testing.md",
+			"description": "Runtime findings from flow reports: 30 s root-loader cache on the sidebar nav after a flag flip (~35 s wait); agent-browser relative screenshot paths land in the repo root; seed:reservations always prints 'Successfully provisioned'; generated SQL writes CHECK(( with no space; token tests live in permissions.test.ts; passing property runs print no seed (use FC_SEED); the tenant-api context-cache eviction is only observable through the fetch-spy tests; the KSA tenant DB still holds pre-fix trigger bodies (known deferred item).",
+			"source": "flow-report"
+		},
+		{
+			"target": "user-testing.md",
+			"description": "Correction for future rounds: engine channel-mode exclusions (staff_only / unavailable / walk_in_only) are implemented at day-state.ts:130-146; the g2 flow report listed them as missing and was corrected during synthesis.",
+			"source": "flow-report"
+		}
+	],
+	"flagStateAfterRun": {
+		"note": "reservations.enabled restored to true for acme and riyadh-grill; acme reservations.payments restored to true.",
+		"acme": {
+			"reservations.enabled": true,
+			"reservations.payments": true
+		},
+		"riyadh-grill": {
+			"reservations.enabled": true
+		}
+	},
+	"servicesAfterRun": "App dev (3001) was started by this validator and is stopped during teardown. tenant-api US (3007) and KSA (3009) were already running before this session (started by an earlier session) and were left untouched. Sites (3008) and Admin (3005) were not needed and stayed stopped.",
+	"knownDeferredItemsConfirmed": [
+		"scrutiny round-2 blocking issue #2 (property invariant semantics / I6-I8 labels) matches VAL-FND-009 above; folded into foh-setup-full-stack.",
+		"scrutiny round-2 blocking issue #3 (KSA local tenant DB pre-fix trigger bodies) is still stale (re-confirmed this round); data-only trigger refresh deferred to foh-setup-full-stack; not part of VAL-FND-011/012 criteria (those build a fresh temp DB).",
+		"scrutiny round-2 blocking issue #1 (reflowDay nested placement sub-budget) was not independently re-tested this round; VAL-FND-007's own criteria pass."
+	],
+	"overrideJustification": "21 of 24 foundation assertions passed in Round 1 user testing. Per the user's explicit directive to minimize worker spawns and consolidate remaining work, the 3 non-passed assertions (VAL-FND-006, VAL-FND-009, VAL-FND-024) have been moved into foh-setup-full-stack.fulfills (milestone foh-core) and reset to 'pending' in validation-state.json so that foh-setup-full-stack implements all required fixes in Step 0 and user-testing-validator-foh-core re-validates them without spawning a separate foundation fix + re-validation cycle.",
+	"deferredAssertions": ["VAL-FND-006", "VAL-FND-009", "VAL-FND-024"],
+	"previousRound": null
+}

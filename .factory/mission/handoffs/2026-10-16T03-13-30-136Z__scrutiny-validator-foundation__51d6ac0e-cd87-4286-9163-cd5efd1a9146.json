@@ -1,0 +1,142 @@
+{
+	"timestamp": "2026-10-16T03:13:30.136Z",
+	"workerSessionId": "51d6ac0e-cd87-4286-9163-cd5efd1a9146",
+	"featureId": "scrutiny-validator-foundation",
+	"milestone": "foundation",
+	"successState": "failure",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Scrutiny failed: the typecheck, lint and test gates all pass, and every one of the 3 foundation reviewers independently re-verified against the code, but 16 blocking contract divergences were confirmed. Synthesis: /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/validation/foundation/scrutiny/synthesis.json",
+		"whatWasImplemented": "Ran the milestone gate in order (typecheck 25 workspaces, lint with App ESLint at the 59-error baseline, test gate all 27 steps exit 0: reservations 60 tests, zoned-time 11, tenant-db 13 files, tenant-api 86 files, App 263 files/2560 tests, android/ios/lingui green). Spawned one scrutiny-feature-reviewer per completed foundation feature, then independently re-verified every blocking claim against the working tree (reads, greps, one read-only SQLite reproduction) — all 16 stand, none rejected; one reviewer file path corrected. Wrote synthesis.json (round 1, status fail) with 16 blocking issues, 11 non-blocking observations, 5 applied library updates, 5 orchestrator recommendations and 3 rejected/duplicate observations.",
+		"whatWasLeftUndone": "All 16 blocking defects need fix features before foundation can pass; several VAL-FND assertions (003-009, 011, 017, 018, 020, 022, 024) cannot pass until then. The user-testing-validator (next feature) will run against the current, still-defective code. Non-blocking items (quiet-hours default/direction, MESSAGE_KINDS and status naming, ADR topic gaps, hold-trigger WHEN clause, write-gate bypasses) stay as recommendations in the synthesis.",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "bash .../scripts/gate-typecheck.sh",
+					"exitCode": 0,
+					"observation": "25 workspaces successful (17 cached), TYPECHECK GATE PASSED"
+				},
+				{
+					"command": "bash .../scripts/gate-lint.sh",
+					"exitCode": 0,
+					"observation": "oxlint 0 errors/19 pre-existing warnings; 6 ESLint workspaces pass; App ESLint 59 errors = 59 baseline; LINT GATE PASSED"
+				},
+				{
+					"command": "bash .../scripts/gate-test.sh",
+					"exitCode": 0,
+					"observation": "27/27 steps exit 0; reservations 19 files/60 tests; tenant-api 86 files 0 failures; App 263 files/2560 tests; android budget ok (APK 86.6 KB/156.3 KB); ios build+test; lingui:check; TEST GATE PASSED"
+				},
+				{
+					"command": "grep/read verification of assign.ts, day-state.ts, time.ts, validate.ts, availability.ts, pacing.ts, resolve-services.ts, oracle.ts, engine.property.test.ts, schemas/",
+					"exitCode": 0,
+					"observation": "Confirmed: arrived is soft/movable; planBooking capped at 200 and reflowDay at 2,000; validateConfig misses 1..party_max coverage, the 1440 span and policy refs and returns a report object; localToInstant has no opts and never returns null; pacing breaches drop slots for all channels and walk_in_only excludes waitlist; zero expiresAt/now in schemas; property suite is static-scenario only and the invariant checker covers only I1-I4; no priority ordering"
+				},
+				{
+					"command": "read 0016_reservations_foundation.sql:796-864",
+					"exitCode": 0,
+					"observation": "Overlap trigger EXISTS omits `o.overbook = 0` and both RAISE calls use 'table_overlap' instead of the contract's 'rsv_table_occupancies overlap'; holds trigger WHEN is 'converted'->'converted' only"
+				},
+				{
+					"command": "git check-ignore -v + git ls-files apps/tenant-api/workers/migrations.generated.ts; read .github/workflows/deploy.yml:173-223; read reservations-schema.test.ts:131-144",
+					"exitCode": 0,
+					"observation": "Generated bundle is gitignored (apps/tenant-api/.gitignore:1) and untracked; the test readFileSync is unguarded; CI's vitest job has no build step, so `npm test -w @repo/tenant-db` fails on a clean checkout"
+				},
+				{
+					"command": "read reservations-context.ts, reservations-guard.ts, routes/reservations-operator.ts:20-64; rg hasProvisionedDb apps/tenant-api/src",
+					"exitCode": 0,
+					"observation": "Cache is 60 s fresh/5 min stale with no cooldown vs contract 5 min/24 h/30 s; ensureActiveOrgInNodeRegion (routes/reservations-operator.ts:30) checks active+region only and no reservations path checks hasProvisionedDb (staff-auth.ts:167 does); sweep helpers ttlSeconds/impersonated are defined but unused and only the staffing audience is tested; _layout.tsx always renders the location select; docs/permissions.md:186-242 lists a non-existent vocabulary"
+				}
+			]
+		},
+		"tests": {
+			"added": [],
+			"coverage": "No tests added (validation-only feature). The milestone gate's existing suites were run: reservations 60 tests, zoned-time 11, tenant-db 13 files, tenant-api 86 files, App 2560 tests, plus android/ios/lingui."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: `arrived` reservations are movable by planBooking/tryRepair and reflow — isBookingHardLocked (engine/day-state.ts:118-133) locks only seated/partially_seated/tableLocked/freeze while arrived is in ACTIVE_BOOKING_STATUSES (assign.ts:269-275). Violates I5 as written in VAL-FND-007.",
+				"suggestedFix": "Hard-lock arrived in isBookingHardLocked and add the arrived case to the I5 test."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: expansion budgets attached to the wrong operations — planBooking capped at MAX_REPAIR_EXPANSIONS=200 (assign.ts:23,458-461), reflowDay at MAX_DAY_EXPANSIONS=2_000 (assign.ts:918-921); VAL-FND-009/mission.md §9/architecture.md:1196-1197 require search 200/slot, book 2,000, reflow 5,000. A 201-2,000-expansion book returns a false 'no fit'.",
+				"suggestedFix": "Use per-operation budgets (200/2,000/5,000), relax the min() caps, update scale-test expectations and the features.json wording."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: validateConfig (config/validate.ts) does not detect missing 1..party_max turn-time coverage, the end_min-first_seating_min<=1440 span, or invalid policy references, has no blocks schema, and returns ValidateConfigReport instead of ConfigIssue[] (VAL-FND-004).",
+				"suggestedFix": "Add the missing detections and a ContractConformant ConfigIssue[] return path."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: localToInstant(businessDate, localMin, tz) has no opts and never returns null; gap minutes always resolve post-gap and folds always pick the earlier occurrence, so VAL-FND-003's gap:'skip'/'after' and overlap:'later' semantics are absent; the contract's 2027 DST dates, 90-minute fold and day_start_min ±1 cases are untested.",
+				"suggestedFix": "Add opts and the null/gap/overlap semantics, use gap:'after'/overlap:'later' for service ends, add the contract's dated cases."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: staff channels hide pacing-breached slots (availability.ts:516-518 continues for all channels; no warnings field), walk_in_only is not allowed for waitlist and the channel model lacks native/voice_agent/host/waitlist (day-state.ts:3-4,97-110) — VAL-FND-006.",
+				"suggestedFix": "Surface pacing breaches as warnings for staff channels, extend the channel set, allow walk_in_only for waitlist."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: no deadline response schema includes ISO expiresAt + server now (zero matches in src/schemas) — VAL-FND-008.",
+				"suggestedFix": "Add the deadline response schemas (hold, payment, request, waitlist offer, notify-me) with expiresAt/now and tests."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: the property suite runs 300 static scenarios, not random operation sequences, and verifyDayInvariants (testing/oracle.ts:31-175) checks only I1-I4-equivalents, never I5-I8 — VAL-FND-009 requires operation sequences and I1 through I8 after every step.",
+				"suggestedFix": "Add an operation-sequence property test that re-verifies the full invariant set (I5-I8 included) after every step."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-zoned-time-and-reservations-domain: weekly service templates are sorted by sortOrder/startMin with no priority field, not by latest effective_from then priority — VAL-FND-005.",
+				"suggestedFix": "Add the priority input and sort by effective_from desc, priority, then sortOrder."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-migrations-tenant-and-control-plane: the occupancy overlap triggers (0016_reservations_foundation.sql:807-813,820-827) omit the required `o.overbook = 0` predicate, so a normal occupancy overlapping a staff overbook row aborts (reproduced read-only) although VAL-FND-011 and architecture §4.8 require overbook rows not to block and the engine deliberately skips them (engine/occupancy.ts:94,117,166).",
+				"suggestedFix": "Add `AND o.overbook = 0` to both EXISTS predicates; test the normal-overlaps-overbook case."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-migrations-tenant-and-control-plane: both occupancy triggers RAISE 'table_overlap' instead of VAL-FND-011's 'rsv_table_occupancies overlap'; the test asserts the wrong string and mapSqliteConstraintError (reservations-write.ts:571-581) matches a third string ('overlap_conflict'), so trigger aborts are not mapped to 409.",
+				"suggestedFix": "Pick the contract string and change RAISE, test expectations and the error mapping together; align ADR 048/reservations-plan wording."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-migrations-tenant-and-control-plane: packages/tenant-db/src/reservations-schema.test.ts:131-144 reads the gitignored, untracked apps/tenant-api/workers/migrations.generated.ts unguarded; nothing in the tenant-db test task graph generates it and CI's vitest job has no build, so `npm test -w @repo/tenant-db` fails with ENOENT on a clean checkout/CI.",
+				"suggestedFix": "Generate the bundle in the test setup (or guard with existsSync+skip), or move the sync assertion to a tenant-api-owned test."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-auth-routing-guards-and-seed: reservations-context.ts uses 60 s fresh / 5 min stale with no failure cooldown (lines 10-11,18-21,76-99) instead of VAL-FND-018/architecture.md:456-459's 5 min / 24 h / 30 s cooldown; its test asserts the deviation.",
+				"suggestedFix": "Copy lib/scope-context.ts parameters and update the test."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-auth-routing-guards-and-seed: no reservations path enforces hasProvisionedDb — ensureActiveOrgInNodeRegion (apps/tenant-api/src/routes/reservations-operator.ts:30-47) checks active+region only and rsvGuard/reservations-auth never look up the org; an active unprovisioned org is served a freshly created empty tenant DB instead of a uniform 404 (VAL-FND-017; staff-auth.ts:167 is the mirror).",
+				"suggestedFix": "Return 404 when organization.hasProvisionedDb is false and add a sweep case."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-auth-routing-guards-and-seed: reservations-security.test.ts omits three variants VAL-FND-020 requires across every mounted route — the tenant-api-operator audience (only tenant-api-staffing is tested, line 225), an over-long TTL token and an impersonated-write token (ttlSeconds/impersonated helpers defined at lines 117-118 but unused); cross-org/cross-location are spot-checked on two routes only.",
+				"suggestedFix": "Add the three variants (and cross-org/cross-location) to the existing per-route loops."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-auth-routing-guards-and-seed: _layout.tsx:182-209 always renders the location select and only special-cases zero locations, so the location picker is not hidden for a single-location organization (VAL-FND-022; riyadh-grill shows a one-option selector).",
+				"suggestedFix": "Render the picker only when locations.length > 1 (staffing's scopes pattern)."
+			},
+			{
+				"severity": "blocking",
+				"description": "fnd-auth-routing-guards-and-seed: docs/permissions.md:186-242 (plus docs/reservations-contract.md and ADR 048) list a permission/claim/audience vocabulary that exists nowhere in code (read:reservations:any, read:guestbook:any, refund:reservations_payments:any, aud tenant-api-reservations, imp:true, X-Internal-Token, migration 0023) and never list the 6 flags, so VAL-FND-024's requirement that the 8 implemented permissions and 6 flags be documented is unmet.",
+				"suggestedFix": "Rewrite the reservations sections to the implemented vocabulary (read|update:reservation*, tenant-api-reservations-operator, orgId/region/scope/impersonated, migration 0025, 6 flags)."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

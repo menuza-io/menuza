@@ -1,0 +1,173 @@
+# Single source of truth for commands and services in the Reservations mission.
+#
+# - Every path is absolute. Every service command hardcodes its port.
+# - Each service runs in its own process group. Stop it by killing that group
+#   (the `stop` commands do this). Killing only the npm PID or only the listener
+#   can leave a `tsx watch` or workerd orphan behind.
+# - Service output is appended to /tmp/menuza-logs/<service>.log. Grep those logs
+#   for `[SMS MOCK]` codes and `[OCI EMAIL MOCK]` lines.
+# - Native commands export their toolchain env inline (nothing is in ~/.bash_profile).
+# - `pgrep -f workerd` matches the calling shell. Use lsof or `ps -eo pid,args | grep [w]orkerd`.
+
+commands:
+  # Install. Run ONLY when a feature adds or changes a dependency or a workspace package.
+  # Every `npm install` prunes the Linux ESLint bindings (the script re-adds them) and
+  # makes the next App start a ~14 minute cold start. Review package-lock.json after.
+  install: >-
+    cd /home/factory-user/repos/menuza && PUPPETEER_SKIP_DOWNLOAD=true npm install &&
+    bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/add-linux-bindings.sh
+
+  # Apply control-plane SQL migrations to LibSQL data.db and to App local D1 (App dev reads D1).
+  migrate_control_plane: >-
+    cd /home/factory-user/repos/menuza && npm run db:migrate:deploy &&
+    cd apps/app && npm run db:migrate:d1:local
+
+  # ---- Milestone gate (run verbatim by the scrutiny validator, one at a time, in this order) ----
+  # typecheck: ~25 touched workspaces plus the new mission packages, --concurrency=2, 4 GB heap.
+  typecheck: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/gate-typecheck.sh
+  # lint: oxlint, ESLint for sites/admin/marketing-workflow/payments/ui/notifications (+ new
+  # packages with a lint script), then App ESLint gated on "no errors beyond the 59-error baseline".
+  lint: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/gate-lint.sh
+  # test: small suites, tenant-api, App (alone), Android test+build+size, iOS build+test, lingui:check.
+  # ~12 min warm. Full logs in /tmp/menuza-gate/.
+  test: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/gate-test.sh
+
+  # ---- Scoped commands for workers ----
+  # One workspace's tests: replace <workspace>, e.g. @repo/reservations, tenant-api, sites.
+  test_workspace: cd /home/factory-user/repos/menuza && CI=true npm run test -w <workspace>
+  # Targeted Vitest files (fastest feedback). Run from the workspace directory.
+  test_files_tenant_api: cd /home/factory-user/repos/menuza/apps/tenant-api && CI=true npx vitest run <paths>
+  test_files_app: cd /home/factory-user/repos/menuza/apps/app && CI=true npx vitest run <paths>
+  test_tenant_api: cd /home/factory-user/repos/menuza && CI=true npm run test -w tenant-api
+  # Whole App suite: ~7.5 min, peak ~2.6 GB. Run alone.
+  test_app: cd /home/factory-user/repos/menuza && CI=true npm run test -w app
+  typecheck_workspace: cd /home/factory-user/repos/menuza && npx turbo run typecheck --filter=<workspace>
+  # App typecheck: ~71 s, ~3.4 GB. NEVER at the same time as the App lint.
+  typecheck_app: cd /home/factory-user/repos/menuza/apps/app && NODE_OPTIONS=--max-old-space-size=6144 npm run typecheck
+  # App ESLint on changed files only (fast). NEVER at the same time as the App typecheck.
+  lint_app_files: cd /home/factory-user/repos/menuza/apps/app && NODE_OPTIONS=--max-old-space-size=4096 npx eslint <paths>
+  # Whole App ESLint against the 59-error baseline (~80 s, ~4.1 GB).
+  lint_app_gate: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/app-eslint-gate.sh
+  lint_workspace: cd /home/factory-user/repos/menuza && npm run lint -w <workspace>
+  lint_oxc: cd /home/factory-user/repos/menuza && npm run lint:oxc
+  # Lingui: extract after adding t`...`/<Trans> strings, then fill every non-source msgstr.
+  lingui_extract_app: cd /home/factory-user/repos/menuza && npm run lingui:extract -w app
+  lingui_extract_sites: cd /home/factory-user/repos/menuza && npm run lingui:extract -w sites
+  lingui_extract_admin: cd /home/factory-user/repos/menuza && npm run lingui:extract -w admin
+  lingui_check: cd /home/factory-user/repos/menuza && npm run lingui:check
+  # Rebuild a dist-consumed package after changing it (only @repo/security and @repo/observability are dist-consumed).
+  build_dist_package: cd /home/factory-user/repos/menuza && npm run build -w <@repo/security|@repo/observability>
+  # Restore the formatting of Varlock-regenerated src/env.ts files (keeps real schema changes). Run before every commit.
+  clean_generated: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/clean-generated.sh
+
+  # ---- App Playwright e2e (tenant-api stubbed, like the staffing specs) ----
+  # Build first (~110 s; never beside 3+ browser sessions), then run one spec on port 3101.
+  # The run starts its own App server on 3101 and writes test data to data.db.
+  e2e_build: cd /home/factory-user/repos/menuza && npm run build -w app
+  e2e_spec: cd /home/factory-user/repos/menuza/apps/app && PORT=3101 CI=true npx playwright test tests/e2e/<spec>.test.ts --workers=1 --reporter=line
+  # Check a new spec for flakiness.
+  e2e_spec_repeat: cd /home/factory-user/repos/menuza/apps/app && PORT=3101 CI=true npx playwright test tests/e2e/<spec>.test.ts --workers=1 --reporter=line --retries=0 --repeat-each=3
+
+  # ---- Native (export toolchain env inline) ----
+  android_test: >-
+    cd /home/factory-user/repos/menuza/apps/android &&
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_SDK_ROOT=$HOME/android-sdk ANDROID_HOME=$HOME/android-sdk &&
+    export PATH=$JAVA_HOME/bin:$PATH && npm run android:test
+  android_build: >-
+    cd /home/factory-user/repos/menuza/apps/android &&
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_SDK_ROOT=$HOME/android-sdk ANDROID_HOME=$HOME/android-sdk &&
+    export PATH=$JAVA_HOME/bin:$PATH && npm run android:build
+  android_lint: >-
+    cd /home/factory-user/repos/menuza/apps/android &&
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_SDK_ROOT=$HOME/android-sdk ANDROID_HOME=$HOME/android-sdk &&
+    export PATH=$JAVA_HOME/bin:$PATH && npm run android:lint
+  # Release APK/AAB and the byte budget (planning baseline: APK 88,676 / 160,000 B; AAB 145,554 / 220,000 B).
+  android_size: >-
+    cd /home/factory-user/repos/menuza/apps/android &&
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_SDK_ROOT=$HOME/android-sdk ANDROID_HOME=$HOME/android-sdk &&
+    export PATH=$JAVA_HOME/bin:$PATH &&
+    node scripts/generate-tenant.mjs --tenant ci --no-api && bash scripts/gradle.sh assembleRelease bundleRelease && npm run android:size
+  # The Gradle daemon holds ~2 GB. Stop it after native work.
+  android_stop_gradle: >-
+    cd /home/factory-user/repos/menuza/apps/android &&
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 && ./gradlew --stop
+  ios_build: cd /home/factory-user/repos/menuza/apps/ios && PATH=$HOME/swift/usr/bin:$PATH swift build
+  ios_test: cd /home/factory-user/repos/menuza/apps/ios && PATH=$HOME/swift/usr/bin:$PATH swift test
+
+  # ---- Local data and testing helpers ----
+  # Demo reservations data (exists from the foundation milestone on; local only; idempotent).
+  seed_reservations_acme: cd /home/factory-user/repos/menuza && npm run seed:reservations -w tenant-api -- acme
+  seed_reservations_ksa: >-
+    cd /home/factory-user/repos/menuza &&
+    TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa npm run seed:reservations -w tenant-api -- riyadh-grill
+  seed_staffing_acme: cd /home/factory-user/repos/menuza && npm run seed:staffing -w tenant-api -- acme
+  # Org flags for local testing (writes local D1, and data.db when the org exists there).
+  # Usage: set_org_flag acme reservations.enabled true | ... delete
+  set_org_flag: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/set-org-flag.sh <org-slug> <key> <json-value|delete>
+  # Admin login: log in to the App as kody first, then copy the session into data.db.
+  copy_admin_session: bash /home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/scripts/copy-admin-session.sh
+  # Read the latest OTP code sent to a phone number (replace the number; KSA codes are in tenant-api-ksa.log).
+  read_sms_code: grep -oE 'To: \+15555550123 \| Message: .*[0-9]{6}' /tmp/menuza-logs/tenant-api-us.log | tail -1 | grep -oE '[0-9]{6}$'
+  # Dev email capture (from milestone guest-messages): newest captured guest emails first.
+  list_dev_emails_us: ls -t /home/factory-user/repos/menuza/apps/tenant-api/.dev-mail/us/*.json 2>/dev/null | head -20
+  list_dev_emails_ksa: ls -t /home/factory-user/repos/menuza/apps/tenant-api/.dev-mail/ksa/*.json 2>/dev/null | head -20
+  # Show what is listening on the mission ports.
+  ports: ss -Htlnp | grep -E ':(3001|3005|3007|3008|3009|3101|24678|24679)\b' || echo "no mission ports in use"
+
+services:
+  tenant-api-us:
+    start: >-
+      mkdir -p /tmp/menuza-logs && cd /home/factory-user/repos/menuza/apps/tenant-api &&
+      npm run dev >> /tmp/menuza-logs/tenant-api-us.log 2>&1
+    stop: kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3007 -sTCP:LISTEN | head -1) | tr -d ' ')
+    healthcheck: curl -sf --max-time 30 http://localhost:3007/health
+    port: 3007
+    depends_on: []
+
+  tenant-api-ksa:
+    # Must use its own TENANT_DB_DIR: sharing the US directory makes the KSA node hold
+    # cached connections to files the US node deletes on a region switch.
+    start: >-
+      mkdir -p /tmp/menuza-logs /home/factory-user/repos/menuza/packages/database/db/ksa &&
+      cd /home/factory-user/repos/menuza/apps/tenant-api &&
+      TENANT_DB_DIR=/home/factory-user/repos/menuza/packages/database/db/ksa npm run dev:ksa >> /tmp/menuza-logs/tenant-api-ksa.log 2>&1
+    stop: kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3009 -sTCP:LISTEN | head -1) | tr -d ' ')
+    healthcheck: curl -sf --max-time 30 http://localhost:3009/health
+    port: 3009
+    depends_on: []
+
+  app:
+    # Workers vite dev. Warm start ~69 s; the first start after any npm install takes up to
+    # ~15 min (dependency re-optimization; workerd may restart). Pages that show "Invalid hook
+    # call" or render with no interactive elements were loaded mid-re-optimization: reload.
+    # The first healthcheck can return 500 or take >30 s while warming.
+    start: >-
+      mkdir -p /tmp/menuza-logs && cd /home/factory-user/repos/menuza/apps/app &&
+      VITE_DIRECT_DEV=1 npm run dev >> /tmp/menuza-logs/app.log 2>&1
+    stop: kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3001 -sTCP:LISTEN | head -1) | tr -d ' ')
+    healthcheck: curl -sf --max-time 60 http://localhost:3001/resources/healthcheck
+    port: 3001
+    depends_on: [tenant-api-us, tenant-api-ksa]
+
+  sites:
+    # Listens on [::1] only and resolves the org from the Host header. *.localhost returns 404.
+    # Browsers: --host-resolver-rules="MAP *.menuza.test [::1]" (acme.menuza.test is also in /etc/hosts).
+    start: >-
+      mkdir -p /tmp/menuza-logs && cd /home/factory-user/repos/menuza/apps/sites &&
+      PUBLIC_APP_URL=http://localhost:3001 npm run dev >> /tmp/menuza-logs/sites.log 2>&1
+    stop: kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3008 -sTCP:LISTEN | head -1) | tr -d ' ')
+    healthcheck: curl -sf --max-time 30 -o /dev/null -H 'Host: acme.menuza.test:3008' http://localhost:3008/
+    port: 3008
+    depends_on: [app, tenant-api-us, tenant-api-ksa]
+
+  admin:
+    # Start only when a check needs Admin (platform fee). Fails instead of drifting to another
+    # port when 3005 is busy. Login: see commands.copy_admin_session.
+    start: >-
+      if lsof -ti tcp:3005 -sTCP:LISTEN >/dev/null; then echo "port 3005 busy" >&2; exit 1; fi;
+      mkdir -p /tmp/menuza-logs && cd /home/factory-user/repos/menuza/apps/admin &&
+      PORT=3005 npm run dev >> /tmp/menuza-logs/admin.log 2>&1
+    stop: kill -- -$(ps -o pgid= -p $(lsof -ti tcp:3005 -sTCP:LISTEN | head -1) | tr -d ' ')
+    healthcheck: curl -sf --max-time 60 http://localhost:3005/resources/healthcheck
+    port: 3005
+    depends_on: []

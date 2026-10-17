@@ -1,0 +1,122 @@
+{
+	"timestamp": "2026-10-16T05:48:05.074Z",
+	"workerSessionId": "4624c47a-301b-4471-91ae-e822c4432920",
+	"featureId": "user-testing-validator-foundation",
+	"milestone": "foundation",
+	"successState": "failure",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Round 1 user testing of milestone \"foundation\": 21 of 24 assertions pass, 3 fail (VAL-FND-006, VAL-FND-009, VAL-FND-024). Two of the failures are already-known deferred scrutiny items; VAL-FND-006 is new (four contract-named capacity rules are implemented nowhere). 7 flow validators ran; synthesis and validation-state.json are written.",
+		"whatWasImplemented": "Ran the full user-testing validation for milestone \"foundation\" across 7 flow-validator groups (terminal/Vitest, sqlite reads, agent-browser on App 3001, curl on App internal routes). Started the App dev server, verified tenant-api US/KSA health, verified flag/permission DB state, wrote Flow Validator Guidance sections plus 9 runtime findings into library/user-testing.md, produced 7 flow reports with evidence under evidence/foundation/<group>/, wrote validation/foundation/user-testing/synthesis.json, and updated validation-state.json for VAL-FND-001..024 (21 passed, 3 failed, 0 blocked). Stopped the App and closed all browser sessions; the repo tree is clean.",
+		"whatWasLeftUndone": "No fixes applied (validation only). VAL-FND-006, VAL-FND-009 and VAL-FND-024 remain failed and need either a fix feature or an orchestrator waiver. Sites (3008) and Admin (3005) were not exercised because no foundation assertion needs them. VAL-FND-011/012's criteria were verified against a fresh temp DB built from the migration; the stale KSA local tenant DB trigger bodies (known deferred item) were re-confirmed but are not part of those criteria.",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/app && VITE_DIRECT_DEV=1 npm run dev (then curl -sf http://localhost:3001/resources/healthcheck)",
+					"exitCode": 0,
+					"observation": "App dev served 200 on /resources/healthcheck about 30 s after start (warm). log: 'Local: http://localhost:3001/'."
+				},
+				{
+					"command": "curl -s http://localhost:3007/health ; curl -s http://localhost:3009/health",
+					"exitCode": 0,
+					"observation": "US: {\"status\":\"ok\",\"region\":\"us\"}; KSA: {\"status\":\"ok\",\"region\":\"ksa\"}. Both nodes were already running from an earlier session and were left untouched."
+				},
+				{
+					"command": "sqlite3 packages/database/db/data.db \"SELECT id, action, entity, access FROM Permission WHERE entity LIKE 'reservation%'\" ; \"SELECT A, COUNT(*) FROM _OrganizationPermissionToRole WHERE B LIKE 'org_perm_%_reservation%' GROUP BY A\" ; wrangler d1 execute DB --local (same queries)",
+					"exitCode": 0,
+					"observation": "8 reservation permissions in both data.db and local D1; exactly org_role_admin|8; no org_role_member grant rows. 6 system ConfigFlag rows reservations.* with value='false', one per key; both orgs carry reservations.* org overrides set to true."
+				},
+				{
+					"command": "Flow validator g1 (terminal): CI=true npm run test -w @repo/zoned-time && -w @repo/staffing; -w @repo/reservations; vitest src/time.test.ts, src/config, src/rules",
+					"exitCode": 0,
+					"observation": "zoned-time 11/11, staffing 634/634, reservations 65/65; helpers byte-identical to the pre-extraction tz.ts; zero Date.now(/fetch( in packages/reservations/src → VAL-FND-001..005 pass."
+				},
+				{
+					"command": "Flow validator g2 (terminal): CI=true npx vitest run src/engine (engine, property, scale)",
+					"exitCode": 0,
+					"observation": "19/19 tests pass, numRuns 300/100, zero counterexamples, budgets 200/2,000/5,000 with no_fit on exhaustion. Coverage inspection nonetheless failed VAL-FND-006 (four capacity rules implemented nowhere) and VAL-FND-009 (I1-I8 semantics not verified)."
+				},
+				{
+					"command": "Flow validator g3/g7 (terminal+curl): tenant-api reservations-auth/routing/write/security/context suites, App reservations-guards + token suites; curl context endpoint",
+					"exitCode": 0,
+					"observation": "auth+routing 8/8, write gate 4/4, security sweep 13/13 (10 operator routes enumerated), App guards 24/24, context 3/3; curl /resources/reservations/context unauthenticated → 403, with INTERNAL_COMMAND_TOKEN → 200 with Cache-Control: private, no-store and zero guest PII → VAL-FND-017/018/019/020 pass."
+				},
+				{
+					"command": "Flow validator g4/g5 (terminal): tenant-db reservations-schema test; sqlite3 + wrangler d1 flag/permission queries; seed:reservations acme x2 and riyadh-grill x2; docs inspection",
+					"exitCode": 0,
+					"observation": "Schema 6/6 with 41 rsv_* tables, all named CHECKs and 9 triggers; seed exit 0 on all four runs with identical before/after row counts (1/3/12/2/4/3/4/0/0) → VAL-FND-010..014, 023 pass. ADR 048 covers 9 of 11 contract-listed topics → VAL-FND-024 fail."
+				},
+				{
+					"command": "Flow validator g6 (agent-browser): kody on acme + riyadh-grill with reservations.enabled toggled off then on",
+					"exitCode": 0,
+					"observation": "Flag off: no Reservations sidebar group; /acme/reservations, /acme/reservations/settings, /acme/reservations/token?scope=setup all document-404. Flag on: group present on both orgs, /<org>/reservations → /<org>/reservations/today, location picker absent for riyadh-grill (1 location) and present for acme (2); token route 200 with typ rsv+jwt, aud tenant-api-reservations-operator, region us/ksa, tenantApiUrl 3007/3009, TTL 900/300 s → VAL-FND-015/016/021/022 pass."
+				},
+				{
+					"command": "Coordinator verification of the VAL-FND-006 failure: rg online_cap_per_interval|onlineCapPerInterval|concurrent_covers_cap|concurrentCoversCap|rolling_max_covers|rollingMaxCovers|reset_buffer_min|resetBufferMin (repo-wide, excluding the schema and drizzle dirs); read engine/occupancy.ts, engine/pacing.ts, engine/day-state.ts:130-146,279-322",
+					"exitCode": 0,
+					"observation": "The four capacity columns appear only in the schema, the seed script (first two) and the tenant-db schema test (last one) — no engine enforcement; EnginePacingRuleInput/EngineTableInput have no fields for them; only settings.bufferMin is applied (availability.ts:461). OccupancyIndex skips overbook rows (occupancy.ts:94,127,139,165) although architecture.md:225-227 says overbook rows count as occupying their tables. Channel-mode exclusions ARE implemented (day-state.ts:130-146) — the g2 flow report's claim there was wrong and is corrected in the library."
+				},
+				{
+					"command": "sqlite3 <us-db> and <ksa-db> \"select sql from sqlite_master where name in ('rsv_occupancy_no_overlap_insert','rsv_holds_single_conversion')\"",
+					"exitCode": 0,
+					"observation": "US DB: 'rsv_table_occupancies overlap' + o.overbook = 0 filter, holds trigger WHEN OLD.status='converted'. KSA DB: still 'table_overlap' with no overbook filter and WHEN OLD.status='converted' AND NEW.status='converted' — scrutiney round-2 deferred item #3 re-confirmed."
+				},
+				{
+					"command": "teardown: kill -- -702250 (App dev pgid); agent-browser session list; git status --short",
+					"exitCode": 0,
+					"observation": "Port 3001 free, no leftover processes in the group, no active browser sessions, working tree clean ('## pr/reservations'); tenant-api 3007/3009 still healthy."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "agent-browser: logged in as kody on http://localhost:3001/acme with reservations.enabled=false, inspected the sidebar and navigated to /acme/reservations, /acme/reservations/settings, /acme/reservations/token?scope=setup",
+					"observed": "No \"Reservations\" group in the sidebar (accessibility snapshot + body text check); each of the three navigations returned document status 404 with the 404 error boundary rendered."
+				},
+				{
+					"action": "agent-browser: set reservations.enabled=true for acme and riyadh-grill, opened /acme/reservations and /riyadh-grill/reservations",
+					"observed": "Sidebar group present in both orgs; both URLs redirected to /<org>/reservations/today; the header-controls shell mounted; the Location picker appeared for acme (2 locations) and was absent for riyadh-grill (1 location). The nav group needed a ~35 s wait after the flag flip because of a 30 s root-loader cache."
+				},
+				{
+					"action": "agent-browser: opened /acme/settings/roles with the flag off, then on",
+					"observed": "Flag off: no Reservations permission group and no presets card. Flag on: group with all 8 permissions plus the Host, Reservations manager, Guest relations and Owner presets."
+				},
+				{
+					"action": "agent-browser: called /acme/reservations/token?scope=setup|guests|payments and /riyadh-grill/reservations/token?scope=setup, decoded the JWTs",
+					"observed": "200 with Cache-Control: private, no-store and keys {jwt, tenantApiUrl, scope, grants, locationIds, features, expiresAt}; tenantApiUrl 3007 (US) / 3009 (KSA); header typ rsv+jwt, aud tenant-api-reservations-operator, region us/ksa, locationIds null, TTL 900 s / 300 s; scope=payments returned 404 while reservations.payments was off, then passed after restoring the flag."
+				}
+			]
+		},
+		"tests": {
+			"added": [],
+			"updated": [],
+			"coverage": "No tests were added or changed (validation-only feature). The round ran the existing suites: @repo/zoned-time 11, @repo/staffing 634, @repo/reservations 65, @repo/auth 30, @repo/tenant-db reservations-schema 6, tenant-api auth/routing/write/context/security suites, App token/role-presets/guards suites — all exit 0. Coverage gaps found inside those suites are recorded as discovered issues (validateConfig combination codes; staff_only/unavailable mode exclusions; property run seeds)."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "blocking",
+				"description": "VAL-FND-006: four capacity rules the contract names are enforced nowhere — rsv_service_availability.online_cap_per_interval, rsv_service_availability.concurrent_covers_cap, rsv_pacing_rules.rolling_min/rolling_max_covers and rsv_tables.reset_buffer_min are referenced only by the schema (plus the seed script and the schema test), and the engine's input models have no fields for them (only the location-level settings.bufferMin is applied). Invariant I3's overbook semantics are also unmet: OccupancyIndex skips overbook rows in every lookup (engine/occupancy.ts:94,127,139,165) though architecture.md:225-227 requires overbook rows to count as occupying their tables; the test oracle skips them too, so nothing catches it.",
+				"suggestedFix": "Extend EnginePacingRuleInput/EngineServiceAvailabilityInput/EngineTableInput with the rolling-window, concurrent-cover, per-interval online-cap and per-table reset-buffer fields, enforce them in searchAvailability/planBooking (guest channels filtered, staff channels warned), make overbook rows consume their table's capacity for guest availability per architecture I3, widen alternatives() to return { sameDay, otherDates } per architecture.md:1181, and add tests for each rule."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "VAL-FND-009: the property suite runs green but does not verify I1-I8 with the contract/architecture semantics — no search→hold agreement, monotonic release, atomic modify or staff-overbook isolation check; the oracle attaches I6/I7/I8 labels to pacing caps, channel/mode eligibility and service-window checks (testing/oracle.ts:76-199,229-261), and the oracle comparison runs once per scenario rather than per step. This is the same gap as scrutiny round-2 blocking issue #2, already folded into foh-setup-full-stack.",
+				"suggestedFix": "As in scrutiny issue #2: add the four missing per-step checks, relabel the oracle to one canonical invariant list, and map each invariant to its proving assertion."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "VAL-FND-024: docs/decisions/048-reservations-data-residency.md covers 9 of the 11 topics the contract enumerates; 'guest identity without login' (capability/manage-link/OTP model) and the 'shared org alarm' (generic per-organization alarm running staff and reservations) have no content. Scrutiny also flagged secondary drift in the same docs (non-existent trigger names in section 5, '24 rsv_* tables' vs 41, implied-read rules, preset count).",
+				"suggestedFix": "Add a short section on guest identity without login (HMAC capability tokens, manage links in the URL fragment, hashes only) and one on the shared per-org alarm (Durable Object alarm on Workers, interval on Node, staff + reservations modules) to ADR 048, and correct the drifted trigger names, table count and role-preset/implied-read statements."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "The KSA local tenant DB packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db still carries pre-fix trigger bodies ('table_overlap' with no o.overbook = 0 filter; rsv_holds_single_conversion requiring OLD.status='converted' AND NEW.status='converted') while the US-dir DBs carry the corrected SQL. Re-confirmed read-only this round. Not part of VAL-FND-011/012 criteria (they build a fresh temp DB).",
+				"suggestedFix": "As in scrutiny issue #3, included in foh-setup-full-stack: DROP/CREATE the affected triggers from the 0016 SQL in the KSA DB and verify sqlite_master in both TENANT_DB_DIR roots."
+			},
+			{
+				"severity": "suggestion",
+				"description": "Test-coverage gaps inside suites that otherwise pass: packages/reservations/src/config/config.test.ts never asserts combination_too_few_members, combination_uncombinable_table or the valid-config empty-issues case (verified only by invoking validateConfig directly); staff_only/unavailable mode exclusions are implemented (engine/day-state.ts:130-146) but have no direct assertion; passing property runs print no seed or fast-check counter, so a counterexample repro relies on FC_SEED.",
+				"suggestedFix": "Add the missing config assertions, a mode-exclusion test per channel, and enable fast-check verbose/seed logging (or record seeds in the test name) so failures are reproducible."
+			}
+		]
+	}
+}

@@ -1,0 +1,163 @@
+{
+	"group": "g8-book-list-detail-ui",
+	"surface": "agent-browser (App)",
+	"isolation": {
+		"app": "http://localhost:3001",
+		"login": "kody / acme (admin)",
+		"org": "acme",
+		"locationId": "v17plv08r5v357bie335lyq8",
+		"businessDate": "2026-10-21",
+		"phonePrefix": "+155555508xx",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db",
+		"session": "d15910fb8c20__g8"
+	},
+	"toolsUsed": [
+		"agent-browser",
+		"curl (read-only, minted read:reservation token)",
+		"sqlite3 (read-only)"
+	],
+	"assertions": {
+		"VAL-BOOK-001": {
+			"status": "pass",
+			"observed": "Opened /acme/reservations/book?date=2026-10-21 as kody, opened the New Phone / Host Reservation sheet. Lookup by name 'G8', phone digits '5555508' and email 'rsv-g8-1@' all returned GET /operator/reservations/book/guests/lookup -> 200 with matching guest summaries (name, phone, visit count). Clicking the result populated Guest Name/Phone/Email and rendered the returning-guest card (booking-guest-result-gst_25e25e85... -> booking-returning-guest-card). A fresh name+phone ('G8 Fresh Guest' +15555550802) submitted POST /operator/reservations/book/reservations -> 201 (BJ36WA, booked, 12:30 Lunch) and a new rsv_guests row gst_8b81557b-cda3-462a-a993-ad31276990a0 with first_name 'G8', last_name 'Fresh Guest', phone_e164 +15555550802 exists. Note: multi-word queries ('G8 Two') return an empty list because the server matches one LIKE pattern per field; single-token searches (>=2 chars) work as specified.",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-001-lookup-results.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-001-lookup-populated-form.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-001-lookup-name-response.json"
+			],
+			"notes": "Network: GET /operator/reservations/book/guests/lookup?q=G8+Two&limit=6 -> 200 (empty), q=G8 -> 200 with result; POST /operator/reservations/book/reservations -> 201. Console errors: none."
+		},
+		"VAL-BOOK-002": {
+			"status": "pass",
+			"observed": "Booking sheet on 2026-10-21, party size 4, Dinner: GET /operator/reservations/book/availability?locationId=v17plv08r5v357bie335lyq8&date=2026-10-21&partySize=4 -> 200 (and again with &serviceId=svc_acme_dinner -> 200); 19 dinner slots rendered in the sheet (17:30-22:00) and 91 slots across all services. Submitting the 19:00 slot created rsv_25306d28-8702-4296-8ada-d6b9a0281f0b (N9WFZS) with status booked, party 4, and auto-assigned single best-fit table G4-2 (tbl_18b28041-..., min 2 / max 4). Active rsv_table_occupancies row start_at=1792623600000, end_at=1792629000000 = 90 minutes = turn time 90 min for party 3-4 (tt_acme_3_4) + reset buffer 0 (G4-2 reset_buffer_min=0). No natural pacing warning occurred: all 91 slots for party 2 and 4 report available=true / pacingWarning=false (Lunch cap 20 covers/6 parties, Dinner 28/8; my bookings never approach the caps), so the pacing indicator could not be observed live; the sheet's render path for pacing_full slots (asterisk + auto 'Override slot pacing cap') exists in code but was not triggered.",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-002-booking-sheet-availability.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-002-book-list-assigned-table.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-002-created-reservation.json",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-002-sqlite-evidence.txt",
+				"foh-core/g8-book-list-detail-ui/availability-pacing-check.txt",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-002-availability-pacing-curl.txt"
+			],
+			"notes": "The contract names rsv_reservation_tables; no such table exists in the tenant schema (architecture puts assignment in rsv_table_occupancies). Occupancy window verified there instead. Console errors: none."
+		},
+		"VAL-BOOK-003": {
+			"status": "fail",
+			"observed": "Submitted a phone booking with area Main Dining Room, custom duration 120, occasion Anniversary, dietary tag Nut Allergy, internal notes 'contract-internal-book003' -> POST 201 (SM4DZY). Persisted correctly: rsv_reservations area_pref_id=area_acme_main, duration_min=120, staff_notes='contract-internal-book003', dietary_notes='nut_allergy', occasion_tag_id='tag_acme_anniversary'; occupancy end_at-start_at = 7200000 ms = 120 min + buffer 0. GET /operator/reservations/book/reservations/:id -> 200 returns diningAreaId=area_acme_main, durationMin=120, dietaryNotes='nut_allergy', internalNotes='contract-internal-book003'. Failures vs the pass clause: (1) the detail sheet (?r=<id>) renders no occasion at all and no dining-area name (only the assigned table M4); (2) the API returns occasion as the resolved tag id 'tag_acme_anniversary', not the chosen value 'anniversary'; (3) the phone booking sheet has no free-text dietary-notes input, so the contract's literal 'contract-dietary-book003' cannot be entered through the UI - dietary notes are written only from dietary tag codes ('nut_allergy').",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-003-booking-form.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-003-created-reservation.json",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-detail-sheet-text.txt"
+			],
+			"notes": "Duration + occupancy window, internal notes and the dietary-notes field itself round-trip correctly; the gaps are the detail-sheet rendering of occasion/area, the occasion value form, and the missing free-text dietary-notes input. Console errors: none."
+		},
+		"VAL-BOOK-008": {
+			"status": "fail",
+			"observed": "On /acme/reservations/book?date=2026-10-21 (4 bookings: Lunch 12:30, 13:00, Dinner 19:00, 19:15) switched the service selector All services -> Lunch -> Dinner. The URL changes (?service=svc_acme_lunch / svc_acme_dinner) and the day feed is re-fetched (GET /operator/reservations/book/day?...&serviceId=svc_acme_lunch -> 200), but the list never narrows: all 4 rows render in every mode. The tenant-api /book/day handler ignores serviceId (dayQuerySchema only accepts locationId/date/businessDate) and the client-side filter only applies status + search. Separately, the Book page renders no header summary counters at all: a full document.body.innerText scan found no 'covers'/'parties'/'total' text, and no totalParties/totalCovers element exists in the route (unlike Today, which has its own counters).",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-008-all-services.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-008-lunch-service.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-008-dinner-service.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-008-lunch-day-feed.txt",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-008-009-013-findings.txt"
+			],
+			"notes": "Both halves of the pass clause fail: the list does not update per service window, and the header summary counters (total parties/total covers) do not exist on the Book screen. Console errors: none."
+		},
+		"VAL-BOOK-009": {
+			"status": "fail",
+			"observed": "Search works in all four required modes: name substring 'Fresh' -> 1 row; middle phone digits '5555508' -> 3 rows; confirmation code 'BJ36' -> 1 row; table label 'M4' -> 1 row. Status filters work: All=4 rows, Upcoming=3 booked rows, Cancelled=1 row (the cancelled HDYFUK). Combining works: search 'G8' + Cancelled -> exactly the cancelled row. Failures: (1) the area filter (host-area-select) does not narrow the list - selecting Main Dining Room (area=area_acme_main) leaves all 4 rows rendered, including tables in G9-Area-Strict and G4-Area; (2) no source filter (phone vs walk_in) exists anywhere on the screen; (3) no guest/reservation tag filter exists. The only filter controls present are the search input and the status buttons (testids book-search-input, book-status-filter-*).",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-009-search-and-filters.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-008-009-013-findings.txt"
+			],
+			"notes": "Search and status filtering work; area/source/tag filtering is missing or non-functional. No page errors during any query (console error buffer empty)."
+		},
+		"VAL-BOOK-010": {
+			"status": "pass",
+			"observed": "Entered 'zz-no-match-book010' in the book search: 0 reservation rows and the explicit empty state 'No reservations match the current filters for 2026-10-21.' rendered in the table area. Clearing the search (keyboard clear) restored all 4 reservation rows and removed the empty state; the console error buffer was empty throughout.",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-010-empty-state.png"
+			],
+			"notes": "Reset is by clearing the search input / toggling the status filters; the empty state itself has no explicit reset button but the search input is the documented reset path and works cleanly. Console errors: none."
+		},
+		"VAL-BOOK-013": {
+			"status": "fail",
+			"observed": "Opening /acme/reservations/book?date=2026-10-21&r=<id> opens the detail Sheet with GET /operator/reservations/book/reservations/:id -> 200. Rendered: guest name + confirmation code + status badge (#SM4DZY, booked), date/time/duration ('2026-10-21 - 19:15 - 21:15 (120m)'), party size (4 guests), assigned table (M4), Guest Notes and Internal Host Notes fields, Guest CRM Profile with visit/no-show summary (0 visits), and an 'Audit Trail' listing 'created operator' / 'modified operator'. Failures vs the pass clause: (1) the sheet renders no source/channel; (2) it renders no occasion (SM4DZY has occasion tag_acme_anniversary - it appears only in the list row badge, never in the sheet); (3) audit entries render no timestamps; (4) the change history is not loaded from GET /operator/reservations/book/reservations/:id/events - the UI never calls that endpoint (network capture: only GET /reservations/:id and GET /book/day). The /events endpoint itself works when called directly (curl with a read-only book token -> 200 with type/actorKind/at), so the gap is the UI surface.",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-detail-sheet.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-detail-sheet-events.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-detail-sheet-text.txt",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-detail-response.txt",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-network-summary.txt",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-events-endpoint-curl.txt"
+			],
+			"notes": "Sheet opens via ?r=<id>, shows core details and guest summary; missing source, occasion, event timestamps and the /events-sourced history. Console errors: none."
+		},
+		"VAL-BOOK-014": {
+			"status": "pass",
+			"observed": "Opened /acme/reservations/today?r=rsv_dfab8034-ae93-4356-a573-7c2ee674bec8 (5 s polling screen), focused Internal Host Notes, typed unsaved 'g8-dirty-014-unsaved', and waited 16 s: zero GET /operator/reservations/book/day requests were issued during the wait (background polling paused) and the unsaved value survived intact. Clicking Save Changes sent PATCH /operator/reservations/book/reservations/:id -> 200 and persisted staff_notes='g8-dirty-014-unsaved' (version 3 -> 4). After closing the sheet, polling resumed: 2 GET /book/day requests in the next 13 s (both 304 Not Modified). Console errors: none.",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-014-dirty-field-paused-polling.png"
+			],
+			"notes": "The pause is driven by the open detail sheet (?r=) plus dirty-field protection in syncFormFromReservation; both the 'paused' and 'value survives' halves of the pass clause hold."
+		},
+		"VAL-BOOK-015": {
+			"status": "pass",
+			"observed": "On booked SM4DZY (party 2, 19:00, 120 min, table M4 max 4) edited the detail sheet to party size 4 and time 19:15 with the current version and clicked Save Changes: PATCH /operator/reservations/book/reservations/rsv_0c4fdb8b-... -> 200. Result: party_size 2 -> 4, local_start_min 1140 -> 1155, version 1 -> 2, schedule_version 2; rsv_table_occupancies old row (19:00-21:00) active=0 and a new active row 19:15-21:15 on the same table M4 (the planner excluded the reservation's own occupancy - the overlap trigger would otherwise have aborted - and kept a valid max-4 table); a 'modified' event was appended to rsv_reservation_events. The sheet header updated to '2026-10-21 - 19:15 - 21:15 (120m) - 4 guests - M4'.",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-015-detail-sheet-modified.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-013-detail-sheet-text.txt"
+			],
+			"notes": "Version increment, new occupancy window, self-exclusion and the modified event all verified in the tenant DB. Console errors: none."
+		},
+		"VAL-BOOK-020": {
+			"status": "pass",
+			"observed": "Three cases via the detail sheet Undo button, each POST /operator/reservations/book/reservations/:id/undo -> 200: (a) no_show -> booked: no_show_at cleared, guest no_shows 1 -> 0; (b) seated -> arrived: seated_at cleared, arrived_at retained; (c) cancelled -> booked: cancelled_at cleared and the rsv_table_occupancies row restored to active=1 with the original window (19:00-21:00 on G9-3). Each case appended an undo event to rsv_reservation_events (type 'status_undo').",
+			"evidence": [
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-020a-no-show-banner.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-020c-after-undo-booked.png",
+				"foh-core/g8-book-list-detail-ui/VAL-BOOK-020-sqlite-evidence.txt"
+			],
+			"notes": "Contract says each undo writes an 'undone' event; the implemented event type is 'status_undo' (no 'undone' type exists anywhere in the repo or architecture.md). Behavior - append-only undo event plus the status/counter/occupancy reverts - matches. Console errors: none."
+		}
+	},
+	"friction": [
+		{
+			"description": "agent-browser `fill \"\"` does not clear a React-controlled input in this app: the DOM value empties but React state keeps the old query, and the next poll re-renders the old value (observed on the book search input).",
+			"resolved": true,
+			"resolution": "Cleared with focus + Control+a + Backspace; the list then restored correctly.",
+			"affectedAssertions": ["VAL-BOOK-010"]
+		},
+		{
+			"description": "Guest lookup matches a single LIKE pattern per field, so multi-word queries like 'G8 Two' return no results even though the guest exists.",
+			"resolved": true,
+			"resolution": "Used single-token queries ('G8', '5555508', 'rsv-g8-1@') for the lookup evidence; recorded the behavior as an observation.",
+			"affectedAssertions": ["VAL-BOOK-001"]
+		},
+		{
+			"description": "The first click on the detail sheet's Save Changes did not issue a PATCH and the sheet closed without saving (the ?r= param was dropped); the edit was silently lost.",
+			"resolved": true,
+			"resolution": "Reopened ?r=<id>, re-entered party 4 / 19:15 and clicked Save Changes again - PATCH 200 and the edit persisted. Recorded as intermittent automation/state friction.",
+			"affectedAssertions": ["VAL-BOOK-015"]
+		},
+		{
+			"description": "No slot on 2026-10-21 was near its pacing cap during the session (91/91 slots available, pacingWarning=false for party 2 and 4; Lunch cap 20 covers/6 parties, Dinner 28/8), so the staff pacing warning could not be observed live.",
+			"resolved": false,
+			"resolution": "Reported honestly in VAL-BOOK-002; the pacing render path exists in the booking sheet (asterisk + auto override) but was not triggered.",
+			"affectedAssertions": ["VAL-BOOK-002"]
+		},
+		{
+			"description": "Concurrent setup edits by other validators were visible: the services list included G17-Dinner / G5-Dinner and areas G17-Area / G4-Area / G9-Area-*; my 19:00 dinner row was labelled 'G5-Dinner' by the day feed. No interference with any assertion outcome.",
+			"resolved": true,
+			"resolution": "Noted as observed interference; re-read day/availability data instead of assuming seeded rows.",
+			"affectedAssertions": []
+		},
+		{
+			"description": "The contract names rsv_reservation_tables for the assigned-table span; that table does not exist in the tenant schema (assignment lives in rsv_table_occupancies, per architecture.md).",
+			"resolved": true,
+			"resolution": "Verified the table assignment and window in rsv_table_occupancies instead.",
+			"affectedAssertions": ["VAL-BOOK-002"]
+		}
+	],
+	"blockers": [],
+	"summary": "Tested 10 assertions on the App operator UI for 2026-10-21 (acme): 6 pass (VAL-BOOK-001, 002, 010, 014, 015, 020), 4 fail. Fails: VAL-BOOK-003 (detail sheet renders no occasion/dining area; API returns occasion as tag id 'tag_acme_anniversary'; no free-text dietary-notes input for the contract fixture), VAL-BOOK-008 (service selector never narrows the list - server ignores serviceId and the client does not filter; no total parties/covers header counters exist), VAL-BOOK-009 (area filter does not narrow; no source or tag filters), VAL-BOOK-013 (detail sheet omits source, occasion and event timestamps, and never calls GET .../:id/events - the audit trail is embedded in the detail response). No console errors in any flow; working tree left clean."
+}

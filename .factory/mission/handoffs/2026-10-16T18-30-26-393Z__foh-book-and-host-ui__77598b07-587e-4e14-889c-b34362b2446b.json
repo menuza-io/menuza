@@ -1,0 +1,177 @@
+{
+	"timestamp": "2026-10-16T18:30:26.393Z",
+	"workerSessionId": "77598b07-587e-4e14-889c-b34362b2446b",
+	"featureId": "foh-book-and-host-ui",
+	"milestone": "foh-core",
+	"commitId": "403e6c0cc542e2e5f03213a6e0569ad247927377",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": false,
+	"handoff": {
+		"salientSummary": "Implemented the Reservation Book and Host Stand App UI and guards (`today.tsx`, `book.tsx`, `timeline.tsx`, `floor.tsx`, `calendar.tsx`, `overview.tsx`, `settings.sections.tsx`, `booking-sheet.tsx`, `walk-in-dialog.tsx`, `detail-sheet.tsx`, `conflict-panel.tsx`, `use-live-now.ts`, `use-reservations-poll.ts`, region-switch guard, and location-delete guard), translated all 309 new strings into Arabic (`ar.po`), and verified with Vitest, Playwright E2E (3 repeats), and agent-browser on US and KSA.",
+		"whatWasImplemented": "Implemented the complete Reservation Book and Host Stand App UI and control-plane guards in `apps/app`:\n1. Region-Switch & Location-Delete Guards (`VAL-BOOK-028`..`VAL-BOOK-031`, `VAL-CROSS-001`, `VAL-CROSS-004`):\n   - Created `RegionReservationsGuard` (`apps/app/app/components/reservations/region-reservations-guard.tsx`) and wired it into `site-card.tsx` and `website+/_index.tsx` so switching `dataRegion` displays regional reservation counts, requires typing the organization slug when counts > 0, blocks when unsettled payments exist (409), and fails closed (502/503) when the current regional `tenant-api` cannot be verified.\n   - Added `fetchLocationReservationsSummary` and `checkLocationReservationsDeleteGuard` in `region-guard.server.ts` and wired them into `settings+/locations.$locationId.tsx` and `settings+/locations._index.tsx` to block deleting a location with active future reservations and notify regional `tenant-api` via `notifyReservationsContextChanged` when locations change.\n2. Hooks & Browser-Direct API Layer (`VAL-BOOK-024`, `VAL-HOST-011`, `VAL-HOST-013`, `VAL-HOST-017`):\n   - Created `useLiveNow` (`apps/app/app/hooks/use-live-now.ts`) for location-IANA-timezone business date and minute-of-day timers.\n   - Created `useReservationsPoll` (`apps/app/app/hooks/use-reservations-poll.ts`) and `requestConditional` (`reservations-client.ts`) for `If-None-Match` ETag polling that preserves state references on `304 Not Modified` and pauses during drag/modal interactions.\n   - Created `book-api.ts` (`apps/app/app/utils/reservations/book-api.ts`) normalizing all `/operator/reservations/book/*` responses and mutations.\n3. Host Stand Shared Components & Routes (`VAL-BOOK-023`..`VAL-BOOK-038`, `VAL-HOST-001`..`VAL-HOST-028`, `VAL-CROSS-002`..`VAL-CROSS-006`):\n   - Created `host-subnav.tsx`, `booking-sheet.tsx`, `walk-in-dialog.tsx`, `detail-sheet.tsx`, `conflict-panel.tsx`, and `use-host-stand.ts`.\n   - Implemented `today.tsx`, `book.tsx`, `timeline.tsx` (15-min slot grid, cover pacing strip, unassigned lane, pointer & keyboard DnD with `aria-live`, duration resize, locked-bar Unlock prompt, 409 conflict banner, 10s ETag poll), `floor.tsx` (live 8-state table canvas with `dir=\"ltr\"`, elapsed/remaining timer, section overlays, high-contrast mode, drag-to-seat and occupied Swap/Reflow/Overbook prompt, quick actions with course stage progression and 1-tap block, 5s ETag poll), `calendar.tsx`, `overview.tsx` (with per-service notes saved and displayed on `HostSubnav`), and `settings.sections.tsx`.\n   - Updated `reservations-guards.test.ts` to assert all 16+ reservations routes, extracted and translated all 309 new Arabic strings in `apps/app/app/locales/ar.po`, and added comprehensive Vitest and Playwright E2E tests (`tests/e2e/reservations-host-stand.test.ts`).",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/app && npx vitest run app/utils/reservations/reservations-guards.test.ts app/utils/reservations/region-confirmation.test.ts app/utils/reservations/region-guard.server.test.ts app/utils/reservations/book-api.test.ts app/utils/reservations/setup-api.test.ts app/utils/reservations/reservations-client.test.ts app/hooks/use-live-now.test.ts app/hooks/use-reservations-poll.test.ts app/components/reservations/region-reservations-guard.test.tsx app/routes/_app+/\\$orgSlug_+/website+/_index.reservations-guard.test.ts app/routes/_app+/\\$orgSlug_+/settings+/locations.reservations-guard.test.ts app/routes/resources+/reservations.region-summary.test.ts",
+					"exitCode": 0,
+					"observation": "All 12 test suites passed (95 tests total), including 51 route guard tests in reservations-guards.test.ts, 9 region-switch guard tests, 3 location-delete guard tests, and hook/API unit tests."
+				},
+				{
+					"command": "npm run build -w app && cd apps/app && PORT=3101 CI=true npx playwright test tests/e2e/reservations-host-stand.test.ts --workers=1 --reporter=line --retries=0 --repeat-each=3",
+					"exitCode": 0,
+					"observation": "All 9 test runs (3 E2E specs x 3 repeats) passed in 51.4s on 1024x768 iPad landscape viewport, covering Today, Book, Phone Booking Sheet, Walk-in modal, Detail Sheet (?r=<id>), Undo toast, Conflict Panel, Timeline keyboard DnD + aria-live + locked bar + 409 recovery, Section Layouts, Live Floor Plan in Arabic RTL (?lng=ar), Calendar drill-down, and Pre-Service Overview."
+				},
+				{
+					"command": "NODE_OPTIONS=--max-old-space-size=6144 npm run typecheck -w app && node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "react-router typegen && tsc exited 0 with zero errors; check-lingui.mjs reported Lingui translations complete across all apps (apps/admin, apps/app, apps/mobile, apps/sites)."
+				},
+				{
+					"command": "cd apps/app && npx eslint app/components/reservations app/components/settings/cards/organization/site-card.tsx app/hooks/use-live-now.ts app/hooks/use-live-now.test.ts app/hooks/use-reservations-poll.ts app/hooks/use-reservations-poll.test.ts app/hooks/use-reservations-client.ts app/routes/_app+/\\$orgSlug_+/reservations+ app/routes/_app+/\\$orgSlug_+/settings+/locations.\\$locationId.tsx app/routes/_app+/\\$orgSlug_+/settings+/locations._index.tsx app/routes/_app+/\\$orgSlug_+/settings+/locations.reservations-guard.test.ts app/routes/_app+/\\$orgSlug_+/website+/_index.tsx app/routes/_app+/\\$orgSlug_+/website+/_index.reservations-guard.test.ts app/routes/resources+/reservations.region-summary.ts app/utils/organization/loader.server.ts app/utils/reservations tests/e2e/reservations-host-stand.test.ts && npx oxlint apps/app/app/components/reservations apps/app/app/hooks/use-live-now.ts apps/app/app/hooks/use-reservations-poll.ts apps/app/app/routes/_app+/\\$orgSlug_+/reservations+ apps/app/app/utils/reservations",
+					"exitCode": 0,
+					"observation": "ESLint exited 0 with 0 errors; Oxlint reported Found 0 warnings and 0 errors across 44 files."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "Logged in as kody on http://localhost:3001 at 1024x768 viewport and navigated through /acme/reservations/today, /acme/reservations/calendar, /acme/reservations/book?date=2026-10-16, /acme/reservations/timeline?date=2026-10-16, /acme/reservations/floor?date=2026-10-16, /acme/reservations/overview?date=2026-10-16, and /acme/reservations/settings/sections",
+					"observed": "Calendar showed 18 covers / 5 parties on 2026-10-16 and drilled down to Book; Book rendered 7 seeded reservations (Layla Al-Mansoor VIP, Marcus Vance seated on M3, Nadia Haddad on C2, Tariq Al-Harbi arrived on M5, etc.); clicking Details opened DetailSheet at ?date=2026-10-16&r=rsv_acme_1 preserving query params; Timeline, Floor Plan, Overview, and Section Layouts rendered cleanly with zero console/page errors."
+				},
+				{
+					"action": "Navigated to /riyadh-grill/reservations/floor?date=2026-10-16&lng=ar and inspected DOM attributes, network requests, and .data payload",
+					"observed": "Document dir='rtl' with Arabic navigation and controls while [data-testid='floor-plan-canvas'] kept dir='ltr' and zero horizontal overflow (pageOverflow: false, tableCount: 32). Browser fetched directly from http://localhost:3009/operator/reservations/book/day (200 on initial load, 304 Not Modified on 5s ETag poll), and /riyadh-grill/reservations/floor.data contained zero guest PII."
+				},
+				{
+					"action": "Toggled ConfigFlag reservations.enabled to false on acme in local D1 and requested /acme/reservations/book, then restored reservations.enabled to true",
+					"observed": "GET /acme/reservations/book returned HTTP 404 when reservations.enabled was false, and returned HTTP 200 immediately after restoring reservations.enabled to true."
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/app/tests/e2e/reservations-host-stand.test.ts",
+					"cases": [
+						{
+							"name": "Today, Book list, Phone Booking Sheet, Walk-in modal, Detail Sheet (?r=<id>), Undo toast, and Unassigned & Conflict Panel",
+							"verifies": "Today board KPIs and quick actions, Book list filters and inline actions, Phone Booking Sheet guest autocomplete + availability + overbooking override, Walk-in modal suggested table + instant seat, Detail Sheet ?r=<id> preserving date/service/area, 60s Undo toast, and Conflict Panel auto-assign and manual resolution"
+						},
+						{
+							"name": "Timeline on 1024x768 iPad landscape supports keyboard DnD with aria-live, locked-bar Unlock prompt, and 409 VERSION_CONFLICT recovery",
+							"verifies": "Timeline 15-min slot grid, cover pacing strip, unassigned lane, keyboard DnD (Space/Arrow/Enter) with aria-live announcements, locked-bar explicit Unlock prompt, and 409 VERSION_CONFLICT recovery banner"
+						},
+						{
+							"name": "Live Floor Plan (Arabic RTL), Section Layouts, Monthly Calendar drill-down, and Pre-Service Overview with Service Notes",
+							"verifies": "Section layouts settings tab, Live Floor Plan in Arabic RTL (?lng=ar) with dir='ltr' canvas, section overlays, high-contrast mode, course progression, Swap/Reflow/Overbook occupied drop prompt, Monthly Calendar drill-down to Book, and Pre-Service Overview with saved service notes banner"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/routes/_app+/$orgSlug_+/website+/_index.reservations-guard.test.ts",
+					"cases": [
+						{
+							"name": "blocks the wipe until the slug is typed when the region holds reservation records",
+							"verifies": "Region-switch action requires typing the organization slug when regional reservation counts > 0"
+						},
+						{
+							"name": "fails closed when the node errors / has no route / is malformed / is unreachable",
+							"verifies": "Region-switch action fails closed (502/503) without wiping when regional tenant-api cannot be verified"
+						},
+						{
+							"name": "refuses with 409 payments_unsettled even when the slug is typed",
+							"verifies": "Region-switch action blocks with 409 when active payment holds or deposits exist"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/routes/_app+/$orgSlug_+/settings+/locations.reservations-guard.test.ts",
+					"cases": [
+						{
+							"name": "blocks deleting a location on locations.$locationId when active future reservations exist, then allows deletion once zero remain",
+							"verifies": "Location delete guard blocks deletion with future reservation count and allows deletion once zero remain"
+						},
+						{
+							"name": "also blocks deleting a location on locations._index when active future reservations exist",
+							"verifies": "Location delete guard on index route blocks deletion when active future reservations exist"
+						},
+						{
+							"name": "fails closed with 503 when regional tenant-api is unreachable during location delete",
+							"verifies": "Location delete guard fails closed with 503 when regional tenant-api is unreachable"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/region-reservations-guard.test.tsx",
+					"cases": [
+						{
+							"name": "renders nothing when the selected region equals currentRegion",
+							"verifies": "RegionReservationsGuard is hidden when region has not changed"
+						},
+						{
+							"name": "renders reservation record counts and slug confirmation input when confirmation is required",
+							"verifies": "RegionReservationsGuard displays counts and requires matching org slug"
+						},
+						{
+							"name": "renders unsettled payments alert and disables submit when unsettled payments exist",
+							"verifies": "RegionReservationsGuard blocks submit when unsettled payments exist"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/hooks/use-reservations-poll.test.ts",
+					"cases": [
+						{
+							"name": "fetches initial data and preserves object reference on 304 Not Modified",
+							"verifies": "useReservationsPoll sends If-None-Match ETag and preserves state reference on 304 Not Modified"
+						},
+						{
+							"name": "pauses polling while paused=true and resumes when unpaused",
+							"verifies": "useReservationsPoll pauses interval polling during drag/modal interactions"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/hooks/use-live-now.test.ts",
+					"cases": [
+						{
+							"name": "computes local businessDate, nowMin, and formatted time in the target IANA timezone",
+							"verifies": "useLiveNow computes businessDate and minute-of-day in the location IANA timezone"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/utils/reservations/book-api.test.ts",
+					"cases": [
+						{
+							"name": "normalizes day feed payloads with tables, reservations, waitlist, holds, pacing, and stats",
+							"verifies": "normalizeDayFeedResponse normalizes backend day feed payloads and computes live table states and unassigned/conflict lists"
+						},
+						{
+							"name": "fetchBookDayConditional sends If-None-Match and handles 200 and 304 responses",
+							"verifies": "fetchBookDayConditional passes If-None-Match and falls back to body ETag when CORS omits header ETag"
+						},
+						{
+							"name": "normalizes calendar month and pre-service overview responses",
+							"verifies": "fetchBookCalendar and fetchBookOverview normalize backend responses"
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/app/app/utils/reservations/reservations-guards.test.ts",
+				"apps/app/app/utils/reservations/setup-api.test.ts",
+				"apps/app/app/routes/_app+/$orgSlug_+/website+/_index.test.ts",
+				"apps/app/app/routes/_app+/$orgSlug_+/website+/_index.staff-guard.test.ts"
+			],
+			"coverage": "Unit, route loader/action guard, component, and Playwright E2E coverage across all Book and Host Stand routes, hooks, API normalizers, region-switch guards, and location-delete guards."
+		},
+		"discoveredIssues": [],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": [],
+			"suggestedChanges": []
+		}
+	}
+}

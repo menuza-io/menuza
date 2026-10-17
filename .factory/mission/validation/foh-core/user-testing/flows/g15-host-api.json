@@ -1,0 +1,113 @@
+{
+	"group": "g15-host-api",
+	"surface": "curl",
+	"testedAt": "2026-10-17T00:59:08Z",
+	"isolation": {
+		"tenantApi": "http://localhost:3007 (US node)",
+		"org": "acme t58bgatqh3rv0s3movrecyj1",
+		"location": "v17plv08r5v357bie335lyq8 (America/New_York)",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3 queries only)",
+		"ownedBusinessDate": "2026-10-27 for VAL-HOST-009 cases 1-2 and VAL-HOST-010; 2026-10-16 for the VAL-HOST-009 freeze_min case (the occupant must start within 30 minutes of now)",
+		"ownedPhonePrefix": "+155555515xx",
+		"tokens": "minted with /tmp/menuza-user-testing/mint-token.mjs: <book token, read:reservation:any + update:reservation:any> and <setup token, read/update:reservation_settings:any>; values never printed or written to evidence",
+		"createdResources": "areas G15-Area and G15-Overbook, tables G15-T1..G15-T8, section layout G15-Layout (secl_1f7ded26-996b-4331-99ca-3ab921b16896); all additive and left in place",
+		"writes": "all reservations/occupancies/audit rows created through the tenant-api over HTTP; no shell writes to any database; no product code, tests or config touched (git status stayed clean)"
+	},
+	"toolsUsed": ["curl", "sqlite3", "jq", "terminal"],
+	"assertions": {
+		"VAL-HOST-009": {
+			"status": "pass",
+			"observed": "Three separate occupant reservations, each probed with POST /operator/reservations/book/reservations/:id/assign and overbook:false. Case 1 (locked occupant): R1a 76EAHA (rsv_b26225a2-fa68-4f63-b2b2-9c3e9c96c550) locked on G15-T1 at 2026-10-27 19:00; prober R2a W52K98 (rsv_8904157d-...) on G15-T2 -> HTTP/1.1 409 Conflict {\"error\":\"locked_table_conflict\",\"message\":\"Cannot displace reservation 76EAHA (locked, seated, or within freeze window)\"}; sqlite after: R1a occupancy occ_65ee0132 on T1 active=1 overbook=0 unchanged, R1a assignment=locked version=1, R2a still on T2 version=1. Case 2 (arrived occupant): R1b KZJ6TE (rsv_d72ddafb-...) soft then POST /status arrived on G15-T3; prober R2b Z6RVX7 (rsv_68887237-...) on G15-T4 -> 409 locked_table_conflict; R1b occupancy occ_265d74c4 on T3 active=1 overbook=0 unchanged, R1b still arrived soft, R2b still on T4 v1. Case 3 (freeze_min): R1c K29HSW (rsv_d2f40ed3-...) soft booked on G15-T5 with start_at 21:15 local = now+18.1 min (live freeze_min=30), prober R2c 9UPJ8C (rsv_cc7f951b-...) on G15-T6 -> 409 locked_table_conflict; R1c occupancy occ_fc3d6983 on T5 active=1 overbook=0 unchanged, R1c soft booked v1, R2c still on T6 v1; a second probe at delta 16 min also returned HTTP/1.1 409 Conflict. Each occupant satisfies exactly one hard-lock condition (locked / arrived / inside freeze_min), so all three refusals are attributable to the intended condition and the occupants' rsv_table_occupancies and rsv_reservations rows were untouched in every case.",
+			"evidence": [
+				"foh-core/g15-host-api/VAL-HOST-009-summary.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009a-assign-headers.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009a-assign-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-009-009a-occ-before.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009a-occ-after.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009a-resv-after.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009b-assign-headers.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009b-assign-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-009-009b-status-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-009-009b-occ-before.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009b-occ-after.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009b-resv-after.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009c-window.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009c-assign-headers.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009c-assign-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-009-009c-occ-before.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009c-occ-after.txt",
+				"foh-core/g15-host-api/VAL-HOST-009-009c-resv-after.txt",
+				"foh-core/g15-host-api/live-table-list.txt",
+				"foh-core/g15-host-api/g15-reservations-state.txt"
+			],
+			"notes": "The contract's evidence line names rsv_reservation_tables and locked_assignment; no rsv_reservation_tables table exists and the implemented columns are rsv_table_occupancies + rsv_reservations.assignment ('soft'|'locked'), so verification used those real columns. The three 409s share one message string that does not say which condition fired; disambiguation is by construction (each occupant satisfies exactly one condition) plus before/after sqlite rows. The freeze case necessarily ran on today's business date (2026-10-16) on the group's own G15-T5/T6, because freeze_min is relative to now; the owned date 2026-10-27 was used for cases 1-2 and VAL-HOST-010. Tables used: G15-T1..G15-T6 (ids in VAL-HOST-009-summary.txt)."
+		},
+		"VAL-HOST-010": {
+			"status": "pass",
+			"observed": "Area G15-Overbook (area_771246ad-...) has exactly 3 tables, all occupied at 2026-10-27 19:00 by locked bookings: G15-T5<-WEPXWK, G15-T6<-QC7LWW, G15-T7<-PD7GU7 (all assignment=locked, status booked). Prober P C6PWTQ (rsv_bd8cffbf-b73e-4ff9-b81e-0394645c0158) soft on G15-T8. overbook:false -> HTTP/1.1 409 Conflict {\"error\":\"locked_table_conflict\",\"message\":\"Cannot displace reservation WEPXWK (locked, seated, or within freeze window)\"}; nothing changed: P stayed on T8 version=1 soft overbooked=0, L1-L3 occupancies unchanged, no audit row for P, global rsv_audit_log count 124 -> 124. A re-run with the current expectedVersion also returned 409 and left P at version=2 overbooked=1 with no new audit row. overbook:true + overbookReason -> HTTP 200 {ok:true, moves:[], reservation:{overbooked:true, assignment:\"locked\", version:2}}; sqlite: new occupancy occ_691cd3d9-5b5d-405e-957b-07407a1bd317 on G15-T5 active=1 overbook=1 for P (P's old T8 occupancy active=0), L1 occupancy on T5 still active=1 overbook=0, rsv_reservations P overbooked=1; rsv_audit_log gained exactly one row aud_8c31e0a0-b43a-4ae1-af42-5eebc8d5ec2d action='reservation.overbook' entity_type='reservation' entity_id=P changes={\"reason\":\"G15 host overbook probe: VIP walk-in at fully locked slot\",\"tableIds\":[\"tbl_66329205-2a0a-46c3-a3ed-82f45314590f\"]}. PII: the changes payload contains only reason + tableIds; a scan for the guest name 'G15 Overbook Prober', phone +15555551524 and '@' found no match; the guest name/phone live only in rsv_guests (gst_11e8f57f-...).",
+			"evidence": [
+				"foh-core/g15-host-api/VAL-HOST-010-summary.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-fill-state.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-assign-false-body.json",
+				"foh-core/g15-host-api/VAL-HOST-010-010-assign-false-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-010-010-assign-false-headers.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-assign-false2-body.json",
+				"foh-core/g15-host-api/VAL-HOST-010-010-after-false-occ.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-after-false-resv.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-assign-true-body.json",
+				"foh-core/g15-host-api/VAL-HOST-010-010-assign-true-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-010-010-after-true-occ.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-after-true-resv.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-audit.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-guest-pii-location.txt",
+				"foh-core/g15-host-api/VAL-HOST-010-010-p-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-010-010-l1-resp.json",
+				"foh-core/g15-host-api/g15-reservations-state.txt"
+			],
+			"notes": "'Every compatible table in the area' = the 3 tables of G15-Overbook, all locked-filled; the prober's home table G15-T8 sits in the separate G15-Area so the fill set is unambiguous. Global audit counts drift because other validators write concurrently, so the P-scoped rows (entity_id=P has exactly 1 audit row) are the evidence."
+		},
+		"VAL-HOST-019": {
+			"status": "pass",
+			"observed": "Raw payloads against /operator/reservations/setup/sections/layouts. Layout G15-Layout (secl_1f7ded26-996b-4331-99ca-3ab921b16896) created 201 with sections A{G15-T1,G15-T2} and B{G15-T3}. PUT placing G15-T1 in both A and B -> HTTP/1.1 409 Conflict {\"error\":\"table_in_multiple_sections\",\"message\":\"Table tbl_b2e8c3a2-... is assigned to multiple sections in the same layout\"}; sqlite after shows the failed write rolled back (rows still A{T1,T2}, B{T3}). POST with the same table in two sections -> 409 same error and no G15-Layout-Dup layout row created (count 0). PUT with G15-T1 listed twice inside one section -> HTTP 200 with that section deduplicated to [G15-T1]; rsv_section_tables holds exactly one row per (layout_id, table_id). Global check: 0 duplicate (layout_id, table_id) pairs in rsv_section_tables; the unique index uniq_rsv_section_tables_layout_table (layout_id, table_id) is present.",
+			"evidence": [
+				"foh-core/g15-host-api/VAL-HOST-019-summary.txt",
+				"foh-core/g15-host-api/VAL-HOST-019-019-create-body.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dup-put-body.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dup-put-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dup-put-headers.txt",
+				"foh-core/g15-host-api/VAL-HOST-019-019-after-dup-put.txt",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dup-post-body.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dup-post-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dup-post-headers.txt",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dedupe-body.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-dedupe-resp.json",
+				"foh-core/g15-host-api/VAL-HOST-019-019-after-dedupe.txt",
+				"foh-core/g15-host-api/VAL-HOST-019-019-layouts.txt",
+				"foh-core/g15-host-api/019-uniqueness-final.txt",
+				"foh-core/g15-host-api/019-layout-rows.txt"
+			],
+			"notes": "The contract allows 400/409 or deduplication; the implementation rejects a table placed in two different sections with 409 table_in_multiple_sections and deduplicates repeated ids within a single section. The UI-side duplicate-selection behavior was not tested (curl-only group, no browser)."
+		}
+	},
+	"friction": [
+		{
+			"description": "Validation contract and architecture refer to rsv_reservation_tables and locked_assignment, but no rsv_reservation_tables table exists; the implemented mechanism is rsv_table_occupancies plus rsv_reservations.assignment ('soft'|'locked').",
+			"resolved": true,
+			"resolution": "Mapped the contract vocabulary onto the real columns and verified every DB effect against rsv_table_occupancies and rsv_reservations.assignment.",
+			"affectedAssertions": ["VAL-HOST-009", "VAL-HOST-010"]
+		},
+		{
+			"description": "The 409 for all three hard-lock conditions shares one message string ('Cannot displace reservation <code> (locked, seated, or within freeze window)'), so the response does not identify which condition refused the assign.",
+			"resolved": true,
+			"resolution": "Constructed each occupant so exactly one hard-lock condition applies (locked / arrived / inside freeze_min) and verified before/after sqlite rows per case.",
+			"affectedAssertions": ["VAL-HOST-009"]
+		},
+		{
+			"description": "VAL-HOST-009's freeze_min case cannot use the group's owned business date 2026-10-27, because freeze_min is relative to now and the occupant must start within 30 minutes of the current time.",
+			"resolved": true,
+			"resolution": "Ran the freeze case on today's business date 2026-10-16 (start = now+18 min) using the group's own G15-T5/G15-T6 tables; the owned date stayed reserved for the other cases and other validators' rows were untouched.",
+			"affectedAssertions": ["VAL-HOST-009"]
+		}
+	],
+	"blockers": []
+}

@@ -1,0 +1,69 @@
+{
+	"featureId": "foh-core-fix-ui",
+	"reviewedAt": "2026-10-16T22:52:30.000Z",
+	"commitId": "275d4b3099084e95b093c6d2f02729cd3da1b409",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "pass",
+	"codeReview": {
+		"summary": "Reviewed the Book/Host-Stand half of fix commit 275d4b30 (fix feature foh-core-fix-ui) against the three round-1 blocking findings on foh-book-and-host-ui, on top of the current combined code at HEAD. All three are resolved with code evidence. (13) Timers/cadence: floor.tsx:149 and use-host-stand.ts:94 now pass intervalMs 15_000 to useLiveNow; poll cadences are today.tsx:62 5_000, calendar.tsx:84 60_000, overview.tsx:76 60_000, and floor.tsx:158 5_000, book.tsx:73 10_000, timeline.tsx:118 10_000 now match architecture.md 10.3 and library/app-ui-patterns.md (host stand/floor/waitlist 5 s, book/timeline 10 s, calendar/overview 60 s, timers 15 s). No 30_000 remains in the reservations routes or components (only the generic hook default at hooks/use-live-now.ts:38, unused by reservations). (14) Detail sheet: useHostStand reads ?r= as detailReservationId (use-host-stand.ts:32) and its poll now has paused: ... || Boolean(detailReservationId) (use-host-stand.ts:80-86); useReservationsPoll clears the interval while paused (use-reservations-poll.ts:121-128), and all six host-stand routes pass host.detailReservationId to DetailSheet (book.tsx:574, today.tsx:637, floor.tsx:1743, timeline.tsx:1263, calendar.tsx:543, overview.tsx:825), so background /day polling stops while the sheet is open. Belt-and-braces, detail-sheet.tsx:112-130 keeps a per-field dirty set and syncFormFromReservation skips dirty fields; the set is cleared when the reservation id changes (:163-170) and after a successful assign (:315) or save (:349); loadDetail no longer depends on fallbackReservation (:137-161), so a poll no longer refetches the detail. I re-ran the two focused suites at HEAD (CI=true npx vitest run app/components/reservations/detail-sheet.test.tsx app/components/reservations/use-host-stand.test.tsx): 2 files, 5 tests passed, including 'keeps edited notes, party size and time when the reservation prop refreshes' and 'pauses background day-feed polling while the detail sheet is open'. (15) i18n: all 11 timeline keyboard-DnD announcements use t`...` (timeline.tsx:274, 308, 340, 377, 383, 422, 433, 450, 466, 487; :364 uses a t-derived msg); floor COURSE_STAGES are msg descriptors rendered with i18n._ (floor.tsx:99-104, 1484); detail-sheet course/contact options (:27-47, 566, 635); booking-sheet occasion/dietary chips (booking-sheet.tsx:37-58, 701, 738); section colour names settings.sections.tsx:61-70 rendered via _() at 455/477/478. I independently reconciled the catalogs: en.po and ar.po both have 6325 entries and 0 source msgids with an empty/missing Arabic msgstr; spot-checked the new messages (Appetizer/Main/Check/Bussing/Seated/Entree/Check Dropped/Not Dessert, contact statuses, dietary/occasion chips, '1 \u00b7 Blue'..'8 \u00b7 Lime', and every announcement) all have real Arabic translations. No concrete regression found: the wider pause condition is architecture-aligned, the optimistic-update + force-refresh path after a mutation still runs while paused (use-host-stand.ts:176-218), and the paused/unpause transition does not trigger spurious fetches. Non-blocking residuals are recorded below (raw English aria-label/status enums, stale 30 s comment, and polling-resume semantics). Non-blocking items already on record from round 1 and outside this fix's approved scope (floor course ids main/check vs entree/check_dropped, native HTML5 DnD without a touch sensor, PATCH unlock/reflowLaterParties dropped by tenant-api) are unchanged and still tracked in the round-1 review.",
+		"issues": [
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx",
+				"line": 1101,
+				"severity": "non_blocking",
+				"description": "Residual i18n bypass of the same class as round-1 finding 15, but not among the enumerated lines: the reservation-bar screen-reader label is still a hardcoded English template string, `aria-label={`${rsv.guestName}, party of ${rsv.partySize}, ${formatHhmm(startMin)}, ${durationMin} minutes, table ${table.label}${rsv.locked ? ', locked' : ''}`}`. Under ?lng=ar each timeline bar still announces 'party of/minutes/table/locked' in English while the keyboard-DnD announcements now speak Arabic. VAL-HOST-027's stated pass criteria are dir=rtl, Arabic labels and zero untranslated message IDs, so this literal does not fail the contract as written; wrapping it in t`` with named variables (the pattern used for the fixed announcements) would close the gap."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/floor.tsx",
+				"line": 1185,
+				"severity": "non_blocking",
+				"description": "Floor-plan architectural elements render `{el.label || el.kind.replace('_', ' ')}`: when an element has no stored label the raw English kind (e.g. 'restroom', 'entrance') is shown uppercased on the read-only floor under ?lng=ar. The fix localized the canvas ELEMENT_KINDS (settings scope) but this route-level fallback was not in the enumerated list. Only affects elements saved without a label."
+			},
+			{
+				"file": "apps/app/app/components/reservations/detail-sheet.tsx",
+				"line": 403,
+				"severity": "non_blocking",
+				"description": "Status enums still render untranslated: the header status badge `{reservation.status}` (also the undo-banner interpolation at :441, the history badge at :908, and today.tsx:376 `{rsv.status}`) shows 'booked'/'seated'/'cancelled' in English under ?lng=ar. VAL-BOOK-037 names 'status badges' among the Arabic expectations, but this rendering is pre-existing across the feature and was not part of the enumerated round-1 finding, so it is recorded rather than treated as a fix regression. The re-run validator may want to confirm the contract's expectation for enum badges explicitly."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/floor.tsx",
+				"line": 146,
+				"severity": "non_blocking",
+				"description": "Documentation drift after the interval change: the comment above the live clock still reads 'Live clock ticking every 30s without network requests (VAL-HOST-013)' although line 149 now passes 15_000. Likewise hooks/use-live-now.ts:31-33 documents the hook as 'Maintains a 30-second client-side timer' with default 30_000 (line 38). Cosmetic, but a future grep-based check of the 15 s requirement can be misled by the comment."
+			},
+			{
+				"file": "apps/app/app/components/reservations/use-host-stand.ts",
+				"line": 80,
+				"severity": "non_blocking",
+				"description": "VAL-BOOK-014's wording is 'polling is paused ... saving the edit persists the change and resumes normal polling'. The implementation pauses for the whole time ?r= is set (use-host-stand.ts:80-86), so after a successful save the sheet stays open and /day polling stays paused until the operator closes the sheet; it also does not refetch immediately on unpause, so the first poll after closing arrives one interval later (up to 60 s on Calendar/Overview). This matches architecture.md 10.3 ('paused during drags and while a sheet edits') and library/app-ui-patterns.md, and the mutation path still force-refreshes (use-host-stand.ts:176-218), so I do not treat it as a defect; flagging it because an agent-browser validator watching for the resumption of /day requests immediately after save could read the requirement differently and should verify by closing the sheet."
+			},
+			{
+				"file": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx",
+				"line": 78,
+				"severity": "non_blocking",
+				"description": "Default draft section names 'Section A'/'Section B'/'Patio' (and the canvas default area 'Main Dining', floor-plan-canvas.tsx:258-259) are English strings that render in inputs under ?lng=ar. They are stored data seeding defaults rather than UI labels, and the fix handoff discloses them as a deliberate non-blocking item; recorded for completeness only."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "knowledge",
+			"observation": "library/app-ui-patterns.md still records the pre-fix divergences as current facts, and the fix commit did not update them: 'Implemented polling cadences at 403e6c0c diverge from the table above: Today 10 s ... the host-stand timers use 30 s instead of the documented 15 s', 'The detail sheet does not pause polling while ?r=<id> is open; a day-feed poll replaces selectedReservation ... resetting unsaved edits', and 'The floor-plan canvas marks its draft clean after a failed save'. All three are now false at HEAD 275d4b30, yet the note says 're-check each one after the foh-core fix features land'. A future worker or validator reading the library will believe the defects still exist.",
+			"evidence": "mission library/app-ui-patterns.md lines ~285-300 ('Scrutiny findings - foh-core (verified at commit 403e6c0c)') vs apps/app/app/components/reservations/use-host-stand.ts:80-94, apps/app/app/components/reservations/detail-sheet.tsx:112-170, apps/app/app/routes/_app+/$orgSlug_+/reservations+/today.tsx:62, calendar.tsx:84, overview.tsx:76, and floor-plan-canvas.tsx onSave handling."
+		},
+		{
+			"area": "skills",
+			"observation": "app-ui-worker step 5 makes agent-browser 'the main evidence for this worker' and step 4 requires grepping touched routes for hardcoded English literals before extracting, but the fix worker skipped the browser pass (handoff.skillFeedback.deviations[0]) while still reporting followedProcedure: true. Because the residual English literals in the Book/Host Stand UI (timeline bar aria-label, status enums) only appear under ?lng=ar, a single browser pass on the two Arabic routes would likely have caught them. Suggested skill change: state that any fix touching user-visible strings still needs one ?lng=ar agent-browser pass, and that followedProcedure should be false when a mandated verification step is skipped.",
+			"evidence": "skills/app-ui-worker/SKILL.md step 5 ('Verify in agent-browser (the main evidence for this worker)'); worker transcript skeleton for b7646da2-98ca-4137-b81f-fbdcb7cb138a shows only Vitest/typecheck/lint/extract/build/Playwright commands, no agent-browser tool calls; handoff skillFeedback.followedProcedure=true with the documented deviation."
+		},
+		{
+			"area": "conventions",
+			"observation": "Numeric requirements changed without updating the nearby comments/docs, which makes grep-based verification unreliable: floor.tsx:146 still says the live clock ticks every 30 s, and hooks/use-live-now.ts:31-38 still documents a 30-second timer with a 30_000 default. If the 15 s rule is the standard, the hook default itself is a trap for the next caller.",
+			"evidence": "apps/app/app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:146-149; apps/app/app/hooks/use-live-now.ts:31-38."
+		}
+	],
+	"addressesFailureFrom": "/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500/validation/foh-core/scrutiny/reviews/foh-book-and-host-ui.json",
+	"summary": "PASS for the Book/Host Stand half of foh-core-fix-ui at HEAD 275d4b30. Round-1 findings 13, 14 and 15 are all resolved in the current code: useLiveNow runs at 15_000 on floor.tsx:149 and use-host-stand.ts:94 with today/calendar/overview aligned to 5/60/60 s and floor/book/timeline matching the 5/10 s table; the detail sheet pauses background day polling via Boolean(detailReservationId) in the shared hook (covering all six routes) and additionally protects each dirty field from incoming props, with the previous per-poll detail refetch removed; and every enumerated English literal (10 keyboard-DnD announcements, floor course buttons, detail-sheet course/contact selects, booking-sheet occasion/dietary chips, section colour names) is now in Lingui with a fully translated ar.po (independent catalog reconciliation: 6325 source messages, zero empty Arabic msgstrs). I re-ran the two focused component suites at HEAD (5 tests, all green) and found no concrete regression; the wider pause-while-sheet-open behaviour matches architecture.md 10.3. Six non-blocking residuals are recorded (English timeline bar aria-label, floor element-kind fallback, raw status enum badges, stale 30 s comment/docstring, polling-resume semantics vs VAL-BOOK-014 wording, English default section names). Shared-state notes: the mission library still lists the pre-fix divergences as facts, and the fix worker skipped the skill's mandated agent-browser pass, which is why the residual ?lng=ar literals went unnoticed."
+}

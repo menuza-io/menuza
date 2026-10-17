@@ -1,0 +1,102 @@
+{
+	"group": "b8-dashboard",
+	"surface": "agent-browser+curl",
+	"testedAt": "2026-10-17T14:45:00Z",
+	"isolation": {
+		"app": "http://localhost:3001",
+		"tenantApiUs": "http://localhost:3007",
+		"tenantApiKsa": "http://localhost:3009",
+		"org": "acme (t58bgatqh3rv0s3movrecyj1); riyadh-grill (ru0dm42cud9scs4g2duep21c) for the KSA repeat",
+		"location": "v17plv08r5v357bie335lyq8 (Downtown Flagship); oi97w1dxwcpnkpq9m9s8cnu8 (KSA)",
+		"ownedBusinessDates": "today 2026-10-17 (live service day)",
+		"ownedPhones": "+15555552801/802/803",
+		"ownedEmails": "rsv-b8-1..3@example.com (guests), rsv-b8-host@example.com (Host-preset member)",
+		"guestNameMarker": "Dashprobe B8 One/Two/Three",
+		"browserSessions": [
+			"276ff6d660b4__b8 (kody, admin)",
+			"276ff6d660b4__b8b (b8host, Host preset via reused role 'b9-host') - both closed"
+		],
+		"sharedStateChanged": "acme reservations.enabled toggled false then restored true (verified in D1 and data.db); bookings-today block removed and re-added on kody's acme Home (config identical, same layout coordinates); bookings-today block ADDED to riyadh-grill Home (was absent; left in place); new member b8host created",
+		"readOnlyDbAccess": "sqlite3 on tenant_t58bgatqh3rv0s3movrecyj1.db and the D1 sqlite file; wrangler d1 execute DB --local --json (SELECT only)"
+	},
+	"toolsUsed": [
+		"agent-browser (2 sessions)",
+		"curl (tenant-api + App with session cookie)",
+		"node /tmp/menuza-user-testing/mint-token.mjs",
+		"bash scripts/set-org-flag.sh (master flag only)",
+		"wrangler d1 execute --local --json (read-only)",
+		"sqlite3 (read-only)"
+	],
+	"assertions": [
+		{
+			"id": "VAL-REPORT-019",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b8-dashboard/VAL-REPORT-019-add-block-dialog-offers-bookings-today.png, VAL-REPORT-019-block-added-via-dialog.png, VAL-REPORT-019-block-vs-api.txt, VAL-REPORT-019-today-payload-after-add.json, VAL-REPORT-019-add-block-dialog-no-longer-offers.png, VAL-REPORT-019-console-errors.txt, VAL-REPORT-019-edit-mode-block-present.png, VAL-REPORT-019-acme-home-with-block-baseline.png",
+			"notes": "kody on /acme. The block was already on the Home dashboard from an earlier round, so I first removed it via Edit layout -> Remove block (toolbar showed 'Saved'), reloaded (absent), then exercised the add flow: Edit layout -> Add block offered 'Bookings today' with its description; selecting it added the block at the bottom and it rendered immediately. Rendered content vs GET /operator/reservations/book/today (same moment): Parties 35=35, Covers 86=86, waitlist 4=4; status counts Booked 10, Confirmed 2, Arrived 1, Seated 15, Finished 3, No-show 4, Cancelled 4 (exact match); covers by service Lunch 50, Dinner 20, G5-Dinner 16 (exact match); 8 next-arrival rows with time, party size and first name matching the payload 8/8. Re-opening the Add block dialog after adding showed 'All built-in blocks are already on this dashboard.' - 'Bookings today' is no longer offered (maxInstances 1). Console errors: none.",
+			"limitations": "The contract's parenthetical for the next-arrivals list includes 'status'; the API payload returns a status per arrival (booked/confirmed), but the rendered row shows only time, party size and first name - per-arrival status is not a visible field (statuses appear as the counts badges above). Flagged for the parent validator rather than silently treated as fully met; VAL-CROSS-021's own wording of the same list is 'time, party size, first name'."
+		},
+		{
+			"id": "VAL-REPORT-021",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b8-dashboard/VAL-REPORT-021-flag-off-dashboard-no-block.png, VAL-REPORT-021-flag-off-add-block-dialog.png, VAL-REPORT-021-flag-restored-block-renders.png, VAL-REPORT-021-flag-window-evidence.txt, VAL-REPORT-021-console-errors-flag-window.json",
+			"notes": "bash scripts/set-org-flag.sh acme reservations.enabled false (parent-sanctioned value; the script also POSTed context-changed to 3007 -> 200). Reloaded /acme: the block is not rendered (data-testid=bookings-today-block -> null) and 'Bookings today' text is absent; the Add block dialog's built-in section shows only 'All built-in blocks are already on this dashboard.' - the block is not offered. Console errors: none. Restored true; read-only D1 SELECT confirmed key=reservations.enabled level=organization value='true' for acme, and data.db carries the same; after reload the block renders again (Parties 38, Covers 93, On the waitlist 4...).",
+			"limitations": "Used an explicit org-level 'false' rather than deleting the row (as instructed by the parent); the flag folds to false either way. While off, the block stays in the saved config and is hidden through inaccessibleBlockIds, which is why the dialog says all built-ins are already present - the observable pass criteria (not rendered, not offered, no errors) hold."
+		},
+		{
+			"id": "VAL-REPORT-022",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b8-dashboard/VAL-REPORT-022-browser-network.txt, VAL-REPORT-022-app-response-grep.txt, VAL-REPORT-022-in-browser-app-response-check.txt, VAL-REPORT-022-app-log-check.txt, VAL-REPORT-022-riyadh-grill-block.png, VAL-REPORT-022-riyadh-grill-evidence.txt",
+			"notes": "Three Dashprobe B8 bookings held today on acme (rsv_1ef5c350 19:30, rsv_4c5f8561 13:15, rsv_ec460185 20:30). Browser network capture on /acme: GET http://localhost:3001/acme/reservations/token?scope=book -> 200 (the browser minted the book token) and GET http://localhost:3007/operator/reservations/book/today?locationId=v17plv08r5v357bie335lyq8 -> 200 with 'Authorization: Bearer <rsv+jwt>' (decoded header {alg:HS256,typ:rsv+jwt}; claims aud=tenant-api-reservations-operator, iss=menuza, scope=book, region=us, exp-iat=900); OPTIONS preflight 204. App responses: GET /acme document 200 and GET /acme.data 200 fetched both with curl (kody session cookie) and in-browser with credentials - 'Dashprobe' count 0 in both, no nextArrivals/totalCovers/waitlistCount, no localhost:3007/3009 URL, no JWT, only control-plane location names; /tmp/menuza-logs/app.log has zero /operator/reservations hits. KSA repeat: added the block on kody's riyadh-grill Home; GET http://localhost:3009/operator/reservations/book/today?locationId=oi97w1dxwcpnkpq9m9s8cnu8 -> 200 with Bearer <rsv+jwt> (claims region=ksa, orgId=ru0dm42cud9scs4g2duep21c, scope=book, exp-iat=900), OPTIONS 204, and the block rendered KSA counts (Parties 7, Covers 22, waitlist 3, Arabic guest name in the arrivals). Console errors: none in either session.",
+			"limitations": "The contract's literal check 'the document response contains only tokenUrl, tenantApiUrl, locations' does not match this build: the loader payload has no tokenUrl/tenantApiUrl at all - the block mints through the same-origin App route /<org>/reservations/token?scope=book and reads tenantApiUrl from that response (apps/app/app/utils/reservations/reservations-client.ts; block-data.server.ts passes only the picker's {available, locations}). The substance of the check holds (no guest data, no regional counts, no token or regional URL in the App payload; the regional call is made by the browser with an rsv+jwt Bearer). The network-detail command does not embed response bodies in this agent-browser build, so the body greps come from curl and in-page fetch of the same routes with the same session."
+		},
+		{
+			"id": "VAL-REPORT-023",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b8-dashboard/VAL-REPORT-023-refresh-evidence.txt, VAL-REPORT-023-block-after-auto-refresh.png",
+			"notes": "Block visible on /acme; before-state read at 14:07:5x UTC: Parties 35, Covers 86, Booked 10, Lunch 50, no Dashprobe B8 Two in the arrivals. Created a new same-day booking at 14:07:58 (POST /operator/reservations/book/reservations -> 201, Dashprobe B8 Two 13:15, rsv_4c5f8561) while the page stayed open (no reload, no navigation). Read at 14:09:34: Parties 36, Covers 88, Booked 11, Lunch covers 52, and the next-arrivals list includes '13:15 Dashprobe B8 Two 2' - the block updated on its own. Browser network log of GET /operator/reservations/book/today: 14:05:03, 14:06:03 (+60s), 14:07:12 (+69s), 14:08:12 (+60s), 14:09:12 (+60s) - repeat polls roughly every 60 s, and the new booking appeared in the 14:08:12 poll 14 s after creation.",
+			"limitations": "The new booking was created through the operator API (the contract allows any channel); the page was never reloaded during the observation - the continuing poll timestamps and the absence of a document request in the network log confirm this."
+		},
+		{
+			"id": "VAL-CROSS-021",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b8-dashboard/VAL-REPORT-019-add-block-dialog-offers-bookings-today.png, VAL-REPORT-019-block-vs-api.txt, VAL-REPORT-022-browser-network.txt, VAL-REPORT-022-in-browser-app-response-check.txt, VAL-CROSS-021-today-seated-dashprobe-b8-three.png, VAL-CROSS-021-dashboard-block-seated-count-incremented.png, VAL-CROSS-021-seat-live-update.txt, VAL-CROSS-021-today-payload-live-seat.json, VAL-CROSS-021-host-preset-add-block-dialog-offers-block.png, VAL-CROSS-021-host-preset-block-renders.png, VAL-CROSS-021-host-and-no-grant-evidence.txt, VAL-CROSS-021-b8-bookings-created-trimmed.txt",
+			"notes": "Step 1: covered by VAL-REPORT-019/022 - block offered in the add-block dialog, added, counts by status/covers by service/next arrivals/waitlist count match the API, the browser minted a book token and called 3007 directly (200), and the App document/.data carried no guest data or regional counts. Step 2 (live update): seated booking rsv_ec460185 (Dashprobe B8 Three, 20:30) from Today's Seat quick action (assigned G15-T5; read-only sqlite: status=seated, occupancy active=1); back on /acme the block showed Seated 15->16 and Booked 11->10. Also demonstrated without a reload: with the dashboard mounted in one tab, seating booking rsv_1ef5c350 (Dashprobe B8 One, 19:30 -> G15-T6) from a second Today tab moved the block to Seated 18 on its own (this delta includes one seat from a concurrent validator on the shared today date; both my bookings are status=seated per sqlite). Step 3: fresh Host-preset operator b8host (reused role 'b9-host': read:reservation:any + update:reservation:any) - the Add block dialog offered 'Bookings today' and, after adding, the block rendered real counts exactly matching the API (Parties 38, Covers 93, counts, waitlist 4) with a browser-direct 3007 call (rsv+jwt, 200); console errors none. The no-grant member clause is group b9's VAL-REPORT-020 evidence (b9viewer: not rendered, not offered) and was not re-executed. Step 4: covered by VAL-REPORT-021 (flag off hides the block and the dialog offer with no errors; re-enable restores it).",
+			"limitations": "The Host operator was created fresh for this check (b8host / rsv-b8-host@example.com, joined acme with the existing Host-preset role left by b9); the no-grant clause relies on b9's screenshots rather than a fresh run, per the parent's instruction not to repeat VAL-REPORT-020. The live seat observation on the shared today date includes one concurrent seat by another validator."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The agent-browser daemon for session 276ff6d660b4__b8 was relaunched mid-session (its own message '[agent-browser] launched browser' appeared during a curl/flag step) and came back on about:blank with cookies gone, so kody had to log in again.",
+			"resolved": true,
+			"resolution": "Re-ran the two-step login on /login (fill username, Enter, fill password, Sign in) and continued; afterwards the session stayed stable for the rest of the flow.",
+			"affectedAssertions": ["VAL-REPORT-021", "VAL-CROSS-021"]
+		},
+		{
+			"description": "The bookings-today block was already present on kody's acme Home dashboard (left by an earlier round), so the add-via-dialog path of VAL-REPORT-019 could not be exercised on a fresh dashboard.",
+			"resolved": true,
+			"resolution": "Removed the block in Edit layout (saved), verified it was gone after reload, then added it back through the Add block dialog exactly as the contract describes; the final config is identical to the original including layout coordinates (lg bookings-today x0 y20 w6 h8).",
+			"affectedAssertions": ["VAL-REPORT-019"]
+		},
+		{
+			"description": "wrangler d1 execute --json redacts the OrganizationInvitation.token column (asterisks), so the invite link for the fresh Host member could not be built from that output.",
+			"resolved": true,
+			"resolution": "Read the local D1 SQLite file read-only (sqlite3 'file:...miniflare-D1DatabaseObject/<hash>.sqlite?mode=ro') for the invite token and used it to open /join/<token> in a second session; the token value was never written to evidence.",
+			"affectedAssertions": ["VAL-CROSS-021"]
+		},
+		{
+			"description": "agent-browser network request <id> does not embed response bodies in this build, so the App-response grep could not be taken from the network detail payload.",
+			"resolved": true,
+			"resolution": "Fetched /acme and /acme.data with the kody session cookie via curl and again with an in-page fetch (credentials: same-origin) from the /acme page, and grepped both; results agree (0 Dashprobe, no regional counts, no JWT).",
+			"affectedAssertions": ["VAL-REPORT-022"]
+		},
+		{
+			"description": "The signup verification code for the new Host member is delivered by email; App-dev sends are captured by the App-side mock viewer, not the tenant-api capture.",
+			"resolved": true,
+			"resolution": "Read the 'Welcome to Menuza!' message from GET /mock-email/dev/messages?to=rsv-b8-host@example.com with kody's session cookie and used the 6-character code on /verify.",
+			"affectedAssertions": ["VAL-CROSS-021"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": "Flags: acme reservations.enabled restored to true (read-only D1 SELECT value='true'; data.db row value='true'); all reservations.enabled rows (system, acme, riyadh-grill) are true. Dashboards: kody's acme Home has the bookings-today block with the original layout coordinates (block removed and re-added during the flow); kody's riyadh-grill Home gained the bookings-today block (was absent before the KSA repeat - left in place). New member b8host (rsv-b8-host@example.com) joined acme with the existing 'b9-host' role (qodw9cbtgkttsz5tc9q9jyac, Host preset); the invitation was consumed. New bookings on acme business date 2026-10-17 (guest name marker Dashprobe B8): rsv_1ef5c350-9ec2-4410-9c4a-302d3e05c20d (#GAUP7A, 19:30, seated G15-T6), rsv_4c5f8561-b7d6-484b-90d9-6bbb176f925d (#6WGYSR, 13:15, booked), rsv_ec460185-6943-4260-8ac3-8fa9d9696d25 (#9SAZ8T, 20:30, seated G15-T5); guests +15555552801/802/803 with rsv-b8-1..3@example.com. Both browser sessions (276ff6d660b4__b8, 276ff6d660b4__b8b) are closed; git status is clean (no product code, tests or config changed). Temp artifacts under /tmp: b8-*.json/txt.",
+	"summary": "Tested 5 assertions (VAL-REPORT-019, VAL-REPORT-021, VAL-REPORT-022, VAL-REPORT-023, VAL-CROSS-021): 5 pass, 0 fail, 0 blocked. One noted deviation for synthesis: the block's next-arrivals rows render time, party size and first name but not the per-arrival status (status is present in the API payload and shown as the counts badges); VAL-REPORT-019's parenthetical lists status. The contract's literal 'tokenUrl, tenantApiUrl' App-payload wording also does not match this build (the browser mints through the same-origin token route), but the substance of VAL-REPORT-022 holds (no guest data or regional counts in the App responses; browser-direct 200 with an rsv+jwt on both 3007 and 3009)."
+}

@@ -1,0 +1,109 @@
+{
+	"featureId": "foh-book-and-host-backend",
+	"reviewedAt": "2026-10-16T19:10:26.000Z",
+	"commitId": "3c4bfa6b7301ba4a7b6eba164d097b95c7de415b",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "fail",
+	"codeReview": {
+		"summary": "Reviewed commit 3c4bfa6b (22 files, +10,988/-260) against VAL-BOOK-001..022/034/036/037, VAL-GUEST-022/025 and VAL-HOST-005..012/017..020, and re-checked the current combined tree (HEAD 403e6c0c) where a later feature consumes this backend. What is solid: the day feed's composite ETag plus short ETag, 304 handling and /changes polling; withReservationWrite (exclusive run, busy retry, idempotency replay/conflict with request hash, day-version bump, SQLite constraint mapping); expectedVersion -> 409 stale_version on every reservation mutation; audited overbooking with a required reason and a PII-free audit payload; engine reflow that refuses locked/arrived/seated/inside-freeze bookings and returns moves[] with fromTableIds/toTableIds; guest export sensitive gating with guest.export/guest.erase audits and full erase redaction ({redacted:true}); location-scoped token enforcement (403 location_forbidden); the dynamic security sweep over every mounted operator route (missing/forged token, wrong audience/typ/TTL, region mismatch, grantless, wrong scope, impersonated write, unprovisioned 404, cross-org, excluded locationIds); the real-SQLite last-table race (1 winner, 9x409) with idempotent replay; section-layout CRUD with table_in_multiple_sections (409); and the App region-summary counts route. Fail because approved requirements are unmet: the location-delete guard cannot work against the /location-summary response this feature added; GET /book/conflicts and GET /reservations/:id/events do not exist; actual covers cannot be set through the status API (covers_actual and rsv_guests.covers end up as party size, not the passed value); contact_statuses_enabled / course_statuses_enabled are never enforced; the reflow event is written as table_changed instead of the required auto_reassigned; the service-notes expectedVersion is accepted but ignored; and the extended seed silently drops five fields (empty pre-service note body, section sort all 0, NULL arrived/seated covers and notes) because it uses column names that do not exist and Drizzle ignores unknown keys.",
+		"issues": [
+			{
+				"file": "apps/tenant-api/scripts/seed-reservations.ts",
+				"line": 985,
+				"severity": "blocking",
+				"description": "The demo seed data this feature added is silently dropped because five object keys are not real Drizzle columns: `sortOrder` (should be `sort`) at 985, 997, 1005, 1013, 1031; `notes`/`updatedByUserId` (should be `body`/`updatedBy`) at 1082-1084; and `arrivedPartySize`/`guestNotes`/`internalNotes` (should be `arrivedCovers`/`guestRequests`/`staffNotes`) at 1106, 1111-1112, 1123, 1128-1129, 1145-1146, 1157, 1163, 1174, 1241, 1247-1248, and again in the `onConflictDoUpdate.set` at 1265, 1269-1270. Drizzle 0.45.2 builds inserts and conflict-update SET clauses by iterating the table's columns (node_modules/drizzle-orm/sqlite-core/dialect.cjs:84-102), so unknown keys are ignored with no error, and apps/tenant-api/tsconfig.json only includes src/** and workers/**, so scripts/ is never typechecked. Verified read-only in the seeded tenant DBs: rsv_service_notes.body = '' with updated_by NULL, rsv_sections.sort = 0 for all three sections, and every seeded reservation has NULL arrived_covers/seated_covers/guest_requests/staff_notes. The feature description explicitly includes 'seed:reservations demo guests/bookings', so the demo pre-service note renders blank on the Overview screen and the intended '3 of 6 waiting at bar' / 'Birthday celebration' demo fields never exist."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/reservations-internal.ts",
+				"line": 139,
+				"severity": "blocking",
+				"description": "POST /internal/reservations/location-summary is registered as an alias of /summary (both call handleInternalSummary at 115-140), so it returns the org-wide shape from getRegionalReservationSummary (apps/tenant-api/src/services/rsv-day-feed-service.ts:1629-1642: activeLocations, reservations, upcomingReservations, guests, tables, auditEntries, activeWaitlist, activeHolds, byLocation) and never a top-level `locationId` or `futureReservations`. The consumer added in the same commit, fetchLocationReservationsSummary (apps/app/app/utils/reservations/region-guard.server.ts:60-70), parses the response with locationReservationsSummarySchema (apps/app/app/utils/reservations/region-confirmation.ts:35-43), which requires both fields, and treats a parse failure as 'regional service unreachable', returning 503. Result: checkLocationReservationsDeleteGuard (region-guard.server.ts:91-140) can never return the 409/200 paths for a provisioned org - location deletion is always blocked with 'Could not reach the regional reservation service' (VAL-BOOK-031). The App unit test passes only because it mocks the tenant-api response with the expected shape (apps/app/app/routes/_app+/$orgSlug_+/settings+/locations.reservations-guard.test.ts:101-114); no test exercises the real /location-summary shape. Fix either side: return { locationId, futureReservations, activeFutureReservations, activeWaitlist, activeHolds, tables, canDelete } from /location-summary, or derive it from byLocation in the guard."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-book.ts",
+				"line": 152,
+				"severity": "blocking",
+				"description": "GET /operator/reservations/book/conflicts (architecture.md:1352, VAL-BOOK-012) is not implemented. The full registration block (lines 164-1404) has /day, /changes, /availability, /calendar, /overview, /service-notes, /section-assignments, /sections/assignments, /guests/lookup, /guests/:id/summary, /reservations, /walk-ins, /reservations/:id (GET/PATCH), /assign, /status, /undo, /contact, /running-late, /course, /notes - no /conflicts. Nothing server-side produces a conflicts payload either: rsv-day-feed-service.ts has no conflict handling and the App computes the Unassigned & Conflict panel client-side from the day feed (apps/app/app/utils/reservations/book-api.ts:1266-1297). VAL-BOOK-012's pass condition and its network evidence (GET /operator/reservations/book/conflicts -> 200) therefore cannot be satisfied."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-book.ts",
+				"line": 964,
+				"severity": "blocking",
+				"description": "GET /operator/reservations/book/reservations/:id/events (architecture.md:1349, VAL-BOOK-013) is not implemented; the only GET on that path is the detail route at 964. Events are returned inline by getReservationDetail (apps/tenant-api/src/services/rsv-booking-service.ts:1266-1299 returns `events` with the reservation), which is why the App's detail sheet works (apps/app/app/utils/reservations/book-api.ts:1979-1990 reads raw.events), but VAL-BOOK-013 requires the dedicated endpoint and its network evidence (GET .../reservations/:id/events -> 200). A curl to that path currently falls through to Hono's 404."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-book.ts",
+				"line": 1128,
+				"severity": "blocking",
+				"description": "Actual covers cannot be set through the status endpoint (VAL-BOOK-017). statusTransitionSchema accepts only `coversActual` (1121-1133) and the handler forwards `...parsed.data` unchanged (1164), while transitionReservationStatus reads `seatedPartySize`/`seatedCovers`/`arrivedPartySize`/`arrivedCovers` and has no `coversActual` input (apps/tenant-api/src/services/rsv-booking-service.ts:2237-2246). The contract's payload `covers: 4` is stripped by Zod (unknown key), and `coversActual: 4` is accepted but dead, so seatedCovers falls back to current.seatedCovers ?? arrivedCovers ?? current.partySize (2298-2303): `covers_actual` is stored as the party size and rsv_guests.covers is incremented by party size (2343-2348) instead of the passed 4. The worker's own test hides this by calling the service directly with seatedPartySize (apps/tenant-api/src/services/rsv-booking-service.test.ts:676), and the App client never sends covers either (apps/app/app/utils/reservations/book-api.ts:2410-2431), so there is no path anywhere that records actual covers."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-booking-service.ts",
+				"line": 2749,
+				"severity": "blocking",
+				"description": "contact_statuses_enabled and course_statuses_enabled are never enforced (VAL-BOOK-022; VAL-BOOK-023 is the UI feature's but the gate belongs here). updateReservationContactStatus only checks that the status is pre-arrival (2749-2754) and updateReservationCourseStatus only checks `seated` (2961-2966); the settings are written by setup (apps/tenant-api/src/services/rsv-setup-service.ts:587-591) but no booking-service code reads them (grep for contactStatusesEnabled/courseStatusesEnabled finds only setup routes/service). On the seeded acme location (contact_statuses_enabled = 1, course_statuses_enabled = 0) turning the setting off still lets POST /contact and POST /course return 200 and append contact_status/course events, where VAL-BOOK-022 requires 409/400 once contact_statuses_enabled = 0."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-booking-service.ts",
+				"line": 1669,
+				"severity": "blocking",
+				"description": "Soft reflow writes event type `table_changed` with data.reason='reflow' (1663-1677; the swap path at 1537-1551 also writes `table_changed`) instead of the canonical `auto_reassigned` that architecture.md:789-791 lists and VAL-HOST-008 requires ('records an auto_reassigned event on R1', evidence sqlite(rsv_reservation_events auto_reassigned)). The string `auto_reassigned` appears nowhere in the code (grep over apps and packages), so the assertion's sqlite evidence fails even though the behavior itself works: R1 is reflowed inside the same transaction and moves[] carries reservationId/fromTableIds/toTableIds (1679-1690)."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-day-feed-service.ts",
+				"line": 1292,
+				"severity": "blocking",
+				"description": "upsertServiceNotes declares `expectedVersion` (1292) and the route forwards it (apps/tenant-api/src/routes/operator-reservations-book.ts:472, 512), but the function never compares it to the stored rsv_service_notes.version before updating (1295-1339), so a stale write silently overwrites another operator's shift notes instead of returning 409 stale_version. This violates the mission write-path rule 'Every operator mutation sends and checks expectedVersion' and contradicts the worker's own handoff ('service-notes with expectedVersion (409 stale_version)') and the library note it added. Related: putSectionAssignments (1400-1467) performs an unversioned delete+insert with no expectedVersion parameter at all. No assertion covers staleness for these two endpoints, which is why the worker's tests pass."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-book.ts",
+				"line": 111,
+				"severity": "non_blocking",
+				"description": "The route-local parseBody/parseQuery helpers (90-122 and 124-150) always include Zod's `issue.message`, while the shared helper suppresses messages for echoing codes (apps/tenant-api/src/lib/http.ts:19-43, ECHOING_CODES = invalid_enum_value/invalid_literal/invalid_union/invalid_union_discriminator). The book router validates enums (assignment at 797/1015/1077, channel/source at 815-816), so a rejected value such as an invalid channel is echoed back as \"Invalid enum value. Expected 'host' | 'phone' | 'online' | 'walk_in', received '...'\", against the mission rule 'Validation errors never echo rejected values'. The worker's test only covers a regex case (apps/tenant-api/src/routes/reservations-book.test.ts:536-548), and the same helper copy exists in operator-reservations-guests.ts:24-83. Using readJsonBody/readQuery (or ECHOING_CODES) fixes it."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-book.ts",
+				"line": 666,
+				"severity": "non_blocking",
+				"description": "handlePutSectionAssignments calls putSectionAssignments without `actorId` (666-677) although the service supports it (apps/tenant-api/src/services/rsv-day-feed-service.ts:1406) and writes it to the audit row (1445-1459). Every `section_assignment.put` rsv_audit_log row therefore has actorId NULL, unlike the section-layout audits which pass ctx.userId. Pass actorId: ctx.userId for traceability."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-book.ts",
+				"line": 1225,
+				"severity": "non_blocking",
+				"description": "Path naming drift to reconcile in the mission docs: the validation contract and architecture.md:1348 name POST /reservations/:id/contact-status and /course-status, but this implementation registers /contact (1225) and /course (1320) - matching the feature's own expectedBehavior and the App client (apps/app/app/utils/reservations/book-api.ts uses /contact, /running-late, /course). A validator curling the contract paths gets 404, not the documented 200/409. Either add the contract aliases or reconcile architecture.md/validation-contract.md with the shipped paths so the two documents do not contradict each other."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "knowledge",
+			"observation": "The library section this worker added to library/staffing-patterns.md documents behavior that does not exist: it says `GET/PUT/POST /service-notes` has `expectedVersion` (409 `stale_version`), but upsertServiceNotes never checks it. Later workers and validators will trust this line. If the fix feature adds the check, the note becomes true; otherwise the note must be corrected.",
+			"evidence": "library/staffing-patterns.md, 'Reservations Book, Host Stand & Guest Backend Notes' bullet for /service-notes vs apps/tenant-api/src/services/rsv-day-feed-service.ts:1281-1339 (no version comparison) and apps/tenant-api/src/routes/operator-reservations-book.ts:472,512 (field forwarded)."
+		},
+		{
+			"area": "skills",
+			"observation": "backend-worker step 7 says to extend seed:reservations 'through the same services as the API', but the reservations seed has always used raw Drizzle inserts, and apps/tenant-api/tsconfig.json includes only src/** and workers/** - so scripts/seed-reservations.ts is never typechecked and Drizzle silently ignores unknown object keys in both .values() and onConflictDoUpdate.set. The worker's verification was count-based ('8 tags, 1 section layout, ... 7 reservations'), which cannot catch wrong column names. The skill (or library/environment.md) should require spot-checking seeded field values with sqlite3, or moving seed inserts through typed helpers.",
+			"evidence": "Transcript: three Execute calls 'Run seed:reservations twice on acme and riyadh-grill to verify idempotency' with count-only observations; apps/tenant-api/scripts/seed-reservations.ts:985,1082-1084,1106,1241,1265; node_modules/drizzle-orm/sqlite-core/dialect.cjs:84-102; apps/tenant-api/tsconfig.json include list."
+		},
+		{
+			"area": "conventions",
+			"observation": "The new reservations routers copy a local parseBody/parseQuery that echoes Zod messages, while the shared helpers in src/lib/http.ts deliberately suppress messages for echoing codes. Nothing in the mission AGENTS.md or library points at readJsonBody/readQuery or ECHOING_CODES, so every new backend worker re-invents the weaker helper (it also exists in operator-reservations-guests.ts). Adding one line to the library's 'Gotchas' ('errors never echo values: use readJsonBody/readQuery, or ECHOING_CODES') would make the existing rule actionable.",
+			"evidence": "apps/tenant-api/src/routes/operator-reservations-book.ts:90-150 vs apps/tenant-api/src/lib/http.ts:19-43; enums at operator-reservations-book.ts:797,815-816; the worker's own negative test only covers a date regex (reservations-book.test.ts:536-548)."
+		},
+		{
+			"area": "knowledge",
+			"observation": "Cross-feature integration contract for the location-delete guard is not written down: the backend owns /internal/reservations/location-summary, the App owns the guard schema that consumes it, and the two shipped in different commits with incompatible shapes. The library's internal-summary bullet lists only 'POST /internal/reservations/summary' and the App region-summary route, so nothing records what /location-summary must return. Add the exact response contract (locationId, futureReservations, activeFutureReservations, activeWaitlist, activeHolds, tables, canDelete) to the library so the next worker can keep the two sides aligned.",
+			"evidence": "apps/tenant-api/src/routes/reservations-internal.ts:139-140; apps/tenant-api/src/services/rsv-day-feed-service.ts:1629-1642; apps/app/app/utils/reservations/region-guard.server.ts:60-70; apps/app/app/utils/reservations/region-confirmation.ts:35-43; library/staffing-patterns.md reservations section."
+		},
+		{
+			"area": "knowledge",
+			"observation": "Mission documents disagree on three book-stand endpoints, which makes it ambiguous whether the backend or the contract is wrong: architecture.md/validation-contract require GET /conflicts, GET /reservations/:id/events and /contact-status//course-status, while the feature's expectedBehavior and the App client use /contact and /course and load events inline. Either the docs should be reconciled or the endpoints added; recording the decision in the library prevents the next feature from re-litigating it.",
+			"evidence": "architecture.md:1348-1352; validation-contract.md VAL-BOOK-012/013/022/023; apps/tenant-api/src/routes/operator-reservations-book.ts route list (164-1404); apps/app/app/utils/reservations/book-api.ts:2410 (status path) and 1979-1990 (events inline)."
+		}
+	],
+	"addressesFailureFrom": null,
+	"summary": "Reviewed foh-book-and-host-backend (commit 3c4bfa6b, worker 72033e19, backend-worker skill, no skillFeedback deviations reported) against its 39 fulfilled assertions, reading the full booking/day-feed/guest services and routes, the security sweep, the concurrency test, the seed script and the current combined tree (HEAD 403e6c0c). Verdict: fail. The core write path is strong - withReservationWrite with idempotency replay/conflict, expectedVersion -> 409 stale_version on every reservation mutation, composite ETag + 304 and /changes polling, audited overbooking with a required reason and no PII, reflow that refuses locked/arrived/seated/inside-freeze bookings and returns moves[], guest export/erase with audits and full redaction, dynamic per-route security sweep, and a real-SQLite last-table race test - but eight approved requirements are unmet: (1) the extended seed writes five fields under non-existent column names, so the demo pre-service note is empty, section sort is 0 and seeded reservations lose arrived/seated covers and notes (Drizzle silently drops unknown keys; scripts/ is outside tsconfig); (2) /internal/reservations/location-summary returns the org-wide shape while the App's location-delete guard requires { locationId, futureReservations }, so the guard always answers 503 (VAL-BOOK-031); (3) GET /book/conflicts is missing (VAL-BOOK-012); (4) GET /reservations/:id/events is missing (VAL-BOOK-013); (5) `covers`/`coversActual` never reach the transition service, so covers_actual and rsv_guests.covers use the party size instead of the passed value (VAL-BOOK-017); (6) contact_statuses_enabled/course_statuses_enabled are never enforced (VAL-BOOK-022, VAL-BOOK-023); (7) reflow writes table_changed instead of the required auto_reassigned event (VAL-HOST-008); (8) service-notes expectedVersion is accepted but ignored (mission write-path directive; also unversioned section-assignment PUT). Non-blocking: route-local validation echoes rejected enum values, section-assignment audits have actorId null, and the contract/architecture names (/contact-status, /course-status) differ from the shipped /contact and /course paths. Suggested validator spot-checks: sqlite3 the seeded tenant DB for rsv_service_notes.body/rsv_sections.sort/arrived_covers; curl /internal/reservations/location-summary and compare with the App guard schema; curl GET /operator/reservations/book/conflicts and .../reservations/<id>/events; POST /status with covers:4 and read rsv_reservations.seated_covers and rsv_guests.covers; set contact_statuses_enabled=0 and call /contact; assign onto an occupied soft table and query rsv_reservation_events for auto_reassigned."
+}

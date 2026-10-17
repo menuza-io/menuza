@@ -1,0 +1,71 @@
+{
+	"group": "r2-regress",
+	"surface": "curl + read-only sqlite3 (tenant-api US :3007)",
+	"round": 2,
+	"testedAt": "2026-10-17T18:23:04Z",
+	"isolation": {
+		"ownedDates": [
+			"2026-11-25 (booking + block probe)",
+			"2026-11-21 (large-party requests)",
+			"2026-11-22 (availability + staff booking)"
+		],
+		"ownedPhoneBlock": "+155555544xx",
+		"ownedEmailPrefix": "rsv-r2e-<n>@example.com",
+		"privateClientIdentity": "X-Forwarded-For: 10.62.1.1 on every public request",
+		"org": "acme t58bgatqh3rv0s3movrecyj1",
+		"locationId": "v17plv08r5v357bie335lyq8",
+		"operatorTokens": "node /tmp/menuza-user-testing/mint-token.mjs --org acme --scope book|setup (values never printed or stored)",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (SELECT only)"
+	},
+	"toolsUsed": ["curl", "sqlite3", "mint-token.mjs"],
+	"assertions": [],
+	"regressions": [
+		{
+			"name": "Public availability on a normal day (2026-11-22, party 2)",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/check1-public-availability-2026-11-22.trimmed.json, check1-negative-no-origin.json, commands-and-results.txt",
+			"notes": "GET /reservations/availability with Origin http://acme.menuza.test:3008 and XFF 10.62.1.1 -> 200; dayVersion=1, settingsVersion=66, status=available, 36 slots (brunch Sunday), 19:00 offered, no 'closed' object in the body. Negative case first: the same call with no Origin -> 404 {\"error\":\"not_found\"} (uniform)."
+		},
+		{
+			"name": "Public booking end to end (2026-11-25 19:00 party 2) + manage view + public cancel + release",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/check2-hold-201.json, check2-booking-201.json, check2-manage-view-200.json, check2-manage-cancel-200.json, check2-availability-after-cancel.trimmed.json, sqlite-final-state.txt, commands-and-results.txt",
+			"notes": "POST /reservations/holds -> 201 with holdToken; POST /reservations with Idempotency-Key -> 201, confirmation NBDSJWYN, id rsv_e0956615-dcd4-459b-9f81-5ca6fdd9c40a, manageToken present; GET /reservations/manage with X-Reservation-Token -> 200 showing firstName R2E, date 2026-11-25, time 19:00, party 2, status booked; POST /reservations/manage/cancel -> 200 status cancelled; the reservation's occupancy row went active 1 -> 0 and availability after cancel -> 200 with 19:00 offered. Negative: GET /reservations/manage without a token -> 404 uniform. Caveat: 19:00 was also offered before the cancel because many tables fit party 2; the release is proven by the occupancy row, not by the slot appearing."
+		},
+		{
+			"name": "Public large-party request (2026-11-21 party 12) with overlap probe, no raw driver text, operator list + decline",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/check3-requestA-201.json, check3-requestB-201.json, check3-day-feed-pending.trimmed.json, check3-decline-A-200.json, check3-decline-B-200.json, check3-negative-no-origin.json, sqlite-final-state.txt",
+			"notes": "POST /reservations/requests (party 12, 19:00, +15555554402) -> 201 status requested, id rsv_28f70a73-8780-44f0-8978-75acf40818e6, code YG860XCS; raw body contains no 'Failed query' / 'rsv_table_occupancies'. Probe: a second overlapping request at 19:30 (+15555554403) -> 201 requested (id rsv_3e454cf2-8195-4fc4-b786-e485aa524147) with a clean body — with pending_approval now occupying tables the engine placed it on another unit instead of colliding with the first request. Both rows appear in the operator day feed for 2026-11-21 (GET /operator/reservations/book/day, book token) as pending_approval (YG860XCS 19:00 p12, 84BWC8CB 19:30 p12) and were declined with reason 'R2E regression check tidy-up' -> 200 declined each; occupancies released (active=0). Negative: requests with no Origin -> 404 uniform."
+		},
+		{
+			"name": "Operator availability on a normal day (2026-11-22) + staff booking round-trip",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/check4-operator-availability-2026-11-22.trimmed.json, check4-staff-booking-201.json, check4-staff-cancel-200.json, check4-negative-no-token.json, commands-and-results.txt",
+			"notes": "Negative: GET /operator/reservations/book/availability without a token -> 401 {\"error\":\"Missing bearer token\"}. With a book token -> 200, closed=false, specialDay=null (no false closed day), 141 slots and all 141 carry suggestedTableIds. Staff write path: POST /operator/reservations/book/reservations (2026-11-22 12:00 party 2) -> 201 booked, assignment soft, warnings []; cancelled through POST .../reservations/:id/status -> 200 cancelled, occupancy active=0."
+		},
+		{
+			"name": "Typed 409 block_conflict on 2026-11-25 (no raw driver text, nothing persisted)",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/check5-staff-booking-pinned-201.json, check5-block-conflict-409.json, check5-booking-cancel-200.json, check5-negative-block-no-token.json, sqlite-final-state.txt",
+			"notes": "Fresh staff booking pinned to tbl_acme_m1 (Main Dining Room), 2026-11-25 19:00 party 2 -> 201 booked (id rsv_f4b41899-be80-4e6a-9f90-7a05977bff29). POST /operator/reservations/setup/blocks with the setup token, area block area_acme_main 18:00-21:30 -> 409 {\"error\":\"block_conflict\",\"message\":\"The block conflicts with existing reservations\",\"reservationIds\":[\"rsv_f4b41899-be80-4e6a-9f90-7a05977bff29\"]}; the raw body contains no 'Failed query' / 'rsv_table_occupancies' text. Nothing persisted: rsv_blocks count for 2026-11-21/22/25 is 0 and the booking was untouched (still booked, occupancy active) — so there was no block to delete. Negatives: POST .../book/reservations without a token -> 401; POST .../setup/blocks without a token -> 401. The probe booking was cancelled afterwards -> 200."
+		}
+	],
+	"frictions": [
+		{
+			"description": "GET /operator/reservations/book/requests does not exist as a GET route (only POST .../requests/:id/approve|decline); the App's Requests panel filters the day feed for pending_approval. The parent's check named it as an option.",
+			"resolved": true,
+			"resolution": "Used GET /operator/reservations/book/day?locationId=...&date=2026-11-21 with the book token and filtered the reservation rows for pending_approval; both requests were listed.",
+			"affectedAssertions": []
+		},
+		{
+			"description": "The public availability endpoint offered the 19:00 slot both before and after cancelling the 2026-11-25 booking because many tables fit party 2, so 'the slot is offered again' cannot by itself prove capacity was released.",
+			"resolved": true,
+			"resolution": "Corroborated the release with a read-only sqlite check of rsv_table_occupancies (active 1 -> 0 for the cancelled reservation).",
+			"affectedAssertions": []
+		}
+	],
+	"blockers": [],
+	"leftBehind": "All five rows created on the owned dates are closed and no blocks remain. Declined requests 2026-11-21: rsv_28f70a73-8780-44f0-8978-75acf40818e6 (19:00, declined, occupancy inactive), rsv_3e454cf2-8195-4fc4-b786-e485aa524147 (19:30, declined, occupancy inactive). Cancelled bookings: rsv_35175d07-dcce-466f-9038-bed20b7c6d47 (2026-11-22 12:00), rsv_e0956615-dcd4-459b-9f81-5ca6fdd9c40a (2026-11-25 19:00, public), rsv_f4b41899-be80-4e6a-9f90-7a05977bff29 (2026-11-25 19:00, staff block probe); all occupancies active=0. No rsv_blocks rows on 2026-11-21/22/25 (the 409 rolled back and no block was ever created). The single hold (hld_074252c4-1a2c-40d3-b0a6-148829354b74) is status converted, not active. Guests/rows from earlier rounds untouched; no settings, flags, special days or other groups' dates were modified.",
+	"summary": "5/5 regression checks pass after af7ffb5a/c043ba8f. Public availability 2026-11-22 -> 200 with slots/dayVersion/settingsVersion and no closed state (no-Origin -> 404); public booking 2026-11-25 19:00 end to end (hold 201 -> book 201 NBDSJWYN -> manage 200 R2E/19:00/p2/booked -> public cancel 200) with the occupancy released; large-party requests on 2026-11-21 -> 201 requested with no raw driver text (an overlapping probe request also booked cleanly), visible in the day feed and declined with a reason; operator availability 2026-11-22 -> 200, closed=false, 141 slots all with suggestedTableIds, plus a staff booking 201 -> cancel 200; the area block over a live booking -> 409 typed block_conflict listing the reservation id with no raw SQL text and nothing persisted. No regressions found; no tokens written to evidence (all saved bodies redacted as <redacted>)."
+}

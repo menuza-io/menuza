@@ -1,0 +1,108 @@
+{
+	"group": "g17-first-visit",
+	"surface": "agent-browser (App)",
+	"assertions": {
+		"VAL-CROSS-001": {
+			"status": "pass",
+			"observed": "All four checkpoints held. Checkpoint 1 (module invisible while off): with the six acme reservations flags off (org-level false at 23:11:55Z), the sidebar accessibility snapshot had 0 'reservation' matches (screenshot VAL-CROSS-001-off-sidebar.png), GET /acme/reservations document returned 404 (HAR VAL-CROSS-001-off-typed-404.har), the org_role_admin role editor page text had 0 'reservation' matches (no permission group), and the Downtown Flagship location page had 0 matches (no Reservations card). Checkpoint 2 (enabled): after restoring flags true at 23:12:37Z and waiting out the 30s root-loader nav cache (reload 23:13:12Z), the sidebar 'Reservations' group appeared; its first link 'Today' was clicked in-page (not typed) and navigated to /acme/reservations/today; typed /acme/reservations redirects (fetch redirect:'error' throws; follow lands on /today, document 200; HAR VAL-CROSS-001-on-typed-redirect.har, off-state 404 contrasts); the role editor showed the Reservations group with '8 of 8 allowed' and the eight canonical permission labels; the location page showed the Reservations card with href /acme/reservations/settings?location=v17plv08r5v357bie335lyq8. Checkpoint 3 (setup through the sidebar): opened Reservations > Settings via the sidebar (not typed); saved general settings with defaults ('General reservation settings saved.', PUT http://localhost:3007/operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/settings -> 200, settings version 6->7); created area G17-Area; added tables G17-T2 (2-2 covers) and G17-T4 (4-4 covers) (POST .../tables 201); saved the floor plan with the explicit Save ('Floor plan saved (v8).', PUT .../floor-plan 200, follow-up GET 200, no failure banner); created service G17-Dinner with all seven weekdays selected ('Every day', daysMask 127, 17:00-21:30 ends 23:00, POST .../services 201); validation view shows 'Configuration valid' on the settings tab and the API returns valid:true, errors:[], conflicts:[] with one pre-existing non-blocking warning (turn_time_bucket_gap on seeded bucket tt_acme_7_10). No console errors at any step. Checkpoint 4 (regional persistence): GET .../setup/locations/<id>/settings with a setup token -> 200 with the saved values (dayStartMin 240, intervalMin 15, horizonDays 60, minNoticeMin 30, version 7, floor_plan_version 8); no token -> 401; the control-plane D1 OrganizationLocation table has no reservation columns and D1 has no reservations* tables; the regional tenant DB holds rsv_location_settings (version 7, floor_plan_version 8), rsv_areas (G17-Area), rsv_tables (G17-T2, G17-T4) and rsv_services (G17-Dinner mask 127).",
+			"evidence": [
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-sidebar.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-sidebar-a11y-snapshot.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-typed-404.har",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-typed-reservations-404.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-role-editor-no-group.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-role-editor-page-text.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-location-no-card.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-off-location-page-text.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-sidebar.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-today-after-click.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-typed-redirect.har",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-redirect-proof.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-role-editor-8-perms.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-role-editor-page-text.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-location-card.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-on-location-page-text.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-setup-general-saved.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-setup-area-tables.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-setup-floorplan-saved.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-setup-service-every-day.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-setup-settings-configuration-valid.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-curl-settings-regional.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-regional-tenant-db-rows.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-final-acme-flag-rows.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-flag-transition-log.txt",
+				"foh-core/g17-first-visit/VAL-CROSS-001-delete-only-still-on.har",
+				"foh-core/g17-first-visit/VAL-CROSS-001-delete-only-still-on.png",
+				"foh-core/g17-first-visit/VAL-CROSS-001-retest-after-delete.har"
+			],
+			"notes": "MECHANISM DEVIATION (environment drift, within-boundary workaround): the contract precondition expects deleting the six acme organization-level rows to fall back to 'seeded system false rows'. In local D1 (what App dev reads) the system-level reservations.enabled row is TRUE (data.db has false), and getFeatureFlag resolves user -> organization -> system (packages/common/src/feature-flags.server.ts). Deleting the six org rows therefore did NOT hide the module for acme: navigations at 23:10:14Z and 23:11:12Z still redirected /acme/reservations -> /acme/reservations/today with 200 and issued a book-scope token (evidence: VAL-CROSS-001-delete-only-still-on.har/.png and VAL-CROSS-001-retest-after-delete.har). The off state for checkpoint 1 was therefore induced with the six acme ORGANIZATION rows set to false (an org override beats the system row; still exclusively acme rows), and then restored to true. Changing the D1 system row would affect every org (including riyadh-grill) and other validators, so it was left untouched. FLAG-OFF WINDOW (as requested): the module was actually hidden only from 2026-10-16 23:11:55Z to 23:12:37Z UTC (42 s); the earlier 23:10:08Z-23:11:55Z period had the org rows deleted but produced no user-visible change for any org. Follow-up for the mission owner: set D1's system reservations.enabled row to false to match the contract's assumption, or amend the contract to say 'set the six acme org rows to false' instead of delete. Other notes: (1) the sidebar nav cache (root loader, 30 s TTL) required waiting ~35 s before the group appeared/disappeared - confirmed. (2) agent-browser ref clicks on the Reservations sidebar group and submenu links are covered by an aside overlay / the Get-started card; in-page document.querySelector click() was used (known runtime finding). (3) The services create form defaults to Sun-Fri selected and the row edit flow cannot change days (name/times only), so a first create ended as Sat-only (daysMask 64); it was deleted (archived, srv_f823e4d5-1220-46e9-b331-168c65b81bc7) and recreated correctly (active srv_0e694cd5-32b7-40b2-8eb9-4950ad5f2b7a, mask 127). (4) The service UI has no effective_from/effective_to fields (weekday mask only), so the date-confinement isolation instruction could not be applied literally; the label G17- prefix was used. (5) HAR records the document server-redirect hop as status 0 with no headers; the redirect was proven with fetch redirect:'error' (throws) plus the followed final URL and the 404 contrast while off. (6) The cookie banner overlays the lower sidebar in screenshots; the accessibility snapshot (0 reservation matches) is the definitive sidebar-off evidence. Console errors: none throughout all flows."
+		}
+	},
+	"friction": [
+		{
+			"description": "Contract precondition unreachable in this environment: deleting the six acme organization rows does not hide the module because local D1's system-level reservations.enabled row is true (data.db has false). Verified with two navigations and HAR captures.",
+			"resolved": true,
+			"resolution": "Induced the off state with the six acme organization-level rows set to false (org override beats system), kept the off window to 42 s (23:11:55Z-23:12:37Z), and restored all six to true. Reported the D1 system-row drift for the mission owner to fix.",
+			"affectedAssertions": ["VAL-CROSS-001"]
+		},
+		{
+			"description": "Sidebar group visibility lags flag changes by the root-loader nav cache TTL (30 s); a reload right after a flag change shows the old sidebar.",
+			"resolved": true,
+			"resolution": "Waited ~35 s before reloading (documented round-1 runtime finding).",
+			"affectedAssertions": ["VAL-CROSS-001"]
+		},
+		{
+			"description": "agent-browser ref clicks on the Reservations sidebar group button and its submenu links are intercepted by an aside overlay / Get-started card.",
+			"resolved": true,
+			"resolution": "Clicked via in-page document.querySelector(...).click() as the runtime findings suggest.",
+			"affectedAssertions": ["VAL-CROSS-001"]
+		},
+		{
+			"description": "Service creation form defaults to Sun-Fri selected; row edit cannot change days (name/times only), so the first create produced a Sat-only service; there is also no effective-from/to field in the services UI, so the per-date isolation rule could not be applied literally.",
+			"resolved": true,
+			"resolution": "Deleted (archived) the Sat-only service and recreated G17-Dinner with all seven weekdays selected (daysMask 127, 'Every day'); labeled all new resources with the G17- prefix.",
+			"affectedAssertions": ["VAL-CROSS-001"]
+		},
+		{
+			"description": "HAR captures record the document server-redirect hop (/acme/reservations -> /today) as status 0 with no headers, so the redirect cannot be read from the HAR alone.",
+			"resolved": true,
+			"resolution": "Proved the redirect with an in-page fetch({redirect:'error'}) that throws, plus the followed final URL (200 at /acme/reservations/today) and the contrast with the off-state 404 HAR.",
+			"affectedAssertions": ["VAL-CROSS-001"]
+		},
+		{
+			"description": "The cookie banner overlays the lower sidebar in screenshots of the off state, exactly where the Reservations group would sit.",
+			"resolved": true,
+			"resolution": "Used the sidebar accessibility snapshot (0 'reservation' matches) as the definitive off-state evidence and saved it alongside the screenshot.",
+			"affectedAssertions": ["VAL-CROSS-001"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": [
+		"agent-browser (session d15910fb8c20__g17; closed after the run)",
+		"bash scripts/set-org-flag.sh (six acme org keys: delete, false, true)",
+		"curl (tenant-api 3007 operator settings, validation, conflicts)",
+		"node /tmp/menuza-user-testing/mint-token.mjs (setup token; value never printed)",
+		"sqlite3 read-only (regional tenant DB rows)",
+		"npx wrangler d1 execute DB --local read-only (control-plane schema and flags)"
+	],
+	"flagStateAfterRun": {
+		"leftBehind": {
+			"reservations.enabled": true,
+			"reservations.online": true,
+			"reservations.waitlist": true,
+			"reservations.payments": true,
+			"reservations.experiences": true,
+			"reservations.voice": true
+		},
+		"scope": "organization-level rows for acme (t58bgatqh3rv0s3movrecyj1) in local D1 and packages/database/db/data.db",
+		"untouchedKeysStillTrue": [
+			"reservations.book",
+			"reservations.guests",
+			"reservations.host_stand",
+			"reservations.analytics",
+			"reservations.deposits",
+			"reservations.phone_agent"
+		],
+		"note": "No system-level or other-org rows were modified. Actual off window for the module: 2026-10-16 23:11:55Z-23:12:37Z UTC (42 s)."
+	}
+}

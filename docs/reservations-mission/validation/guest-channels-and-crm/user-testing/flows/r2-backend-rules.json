@@ -1,0 +1,128 @@
+{
+	"group": "r2-backend-rules",
+	"surface": "curl (tenant-api US :3007) + read-only sqlite3",
+	"testedAt": "2026-10-17T18:27:35Z",
+	"isolation": {
+		"org": "acme (t58bgatqh3rv0s3movrecyj1)",
+		"location": "v17plv08r5v357bie335lyq8",
+		"ownedDates": {
+			"D1 closed special day": "2026-11-18",
+			"D2 online_closed special day": "2026-11-19",
+			"hold test": "2026-11-20"
+		},
+		"ownedPhones": ["+15555554001", "+15555554002", "+15555554003"],
+		"ownedEmails": [
+			"rsv-r2a-1@example.com",
+			"rsv-r2a-2@example.com",
+			"rsv-r2a-3@example.com"
+		],
+		"clientIdentity": "X-Forwarded-For: 10.61.7.1 on every public request (private durable-limit identity)",
+		"tokens": "<setup token> and <book token> minted with /tmp/menuza-user-testing/mint-token.mjs; values never recorded",
+		"internalToken": "<internal-token> from apps/app/.dev.vars (never printed)",
+		"tenantDb": "/home/factory-user/repos/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (SELECT only)",
+		"round1ReferencesReused": [
+			"evidence/guest-channels-and-crm/g4-rules/007-special-days.sh",
+			"evidence/guest-channels-and-crm/g14-holds/VAL-CROSS-009-*.json"
+		]
+	},
+	"toolsUsed": [
+		"curl",
+		"sqlite3",
+		"node /tmp/menuza-user-testing/mint-token.mjs"
+	],
+	"assertions": [
+		{
+			"id": "VAL-ONLINE-007",
+			"title": "Closed and online-closed special days behave differently",
+			"status": "pass",
+			"evidence": {
+				"terminal": [
+					"guest-channels-and-crm/r2-backend-rules/VAL-ONLINE-007-run.log",
+					"guest-channels-and-crm/r2-backend-rules/VAL-ONLINE-007-script.sh"
+				],
+				"network": [
+					"POST /operator/reservations/setup/special-days -> 200, sd_0bf0a500 (closed, 2026-11-18) and sd_39ae1861 (online_closed, 2026-11-19) (VAL-ONLINE-007-create-d1.json, VAL-ONLINE-007-create-d2.json)",
+					"GET /reservations/availability date=2026-11-18 -> 200 status=closed, 0 slots, closed={reason:'special_day',note:'R2A validation: closed for a private event',name:'R2A-Closed'} (VAL-ONLINE-007-public-d1-after.json)",
+					"GET /reservations/availability date=2026-11-19 -> 200 status=online_closed, 0 slots, onlineClosed={note,name} (VAL-ONLINE-007-public-d2-after.json)",
+					"GET /operator/reservations/book/availability date=2026-11-18 (book token) -> 200, slots=[] closed=true dayState={state:'closed',name:'R2A-Closed',note:...} (VAL-ONLINE-007-operator-d1.json)",
+					"GET /operator/reservations/book/availability date=2026-11-19 (book token) -> 200, 141 slots, closed=false onlineClosed=true dayState.state='online_closed' (VAL-ONLINE-007-operator-d2.json)",
+					"POST /operator/reservations/book/reservations 2026-11-18 19:00 party 2 -> 409 {\"error\":\"closed_day\",\"message\":\"The location is closed on this date (R2A-Closed); overbook override required\",\"specialDay\":{...}} (VAL-ONLINE-007-book-d1-refused.json)",
+					"same booking with overbook:true + overbookReason -> 201 warnings=[{code:'closed_day'}] confirmation U2EB35 (VAL-ONLINE-007-book-d1-override.json)",
+					"POST /operator/reservations/book/reservations 2026-11-19 19:00 party 2 -> 201 warnings=[] confirmation LS76UD (VAL-ONLINE-007-book-d2.json)",
+					"DELETE setup/special-days/<D1ID>, <D2ID> -> {\"deleted\":true} both (VAL-ONLINE-007-delete-d1.json, VAL-ONLINE-007-delete-d2.json)",
+					"after delete: availability 2026-11-18 -> 28 slots, 2026-11-19 -> 28 slots (VAL-ONLINE-007-restored-d1.json, VAL-ONLINE-007-restored-d2.json)"
+				],
+				"sqlite": "rsv_special_days after cleanup holds only the five pre-existing leftover days (2026-10-29, 11-02..11-05) plus the 2020 archived row; my two rows are gone",
+				"consoleErrors": "n/a (curl-only assertion)"
+			},
+			"notes": "Round-1 failure fixed. Public channel: D1 returns status=closed with the closed object (reason special_day + the public note) and 0 slots; D2 returns status=online_closed with 0 slots and the onlineClosed object. Operator channel: D1 returns 0 slots with closed=true and dayState={state:'closed',name,note}; D2 still returns 141 slots with onlineClosed=true and dayState.state='online_closed'. Extra staff-booking behavior: a 19:00 party-2 booking on the closed D1 is refused 409 closed_day with a plain message (checked the raw body for 'Failed query', 'insert into', 'SQLITE', 'D1_ERROR', 'SqliteError' - none present) and the specialDay name/note in the details; the same booking with overbook:true + overbookReason succeeds 201 and the response carries warnings=[{code:'closed_day'}]; a booking on the online_closed D2 succeeds 201 with warnings=[] (no override needed).",
+			"limitations": "One phrasing in the round-2 brief ('a booking on an online_closed day ... the response carries a closed-day flag') does not match the implemented/expected shape: the 201 booking response has warnings=[] and no closedDay field; the online-closed day flag is exposed by the operator availability payload (onlineClosed=true, dayState.state='online_closed'), which is what the App booking sheet reads. The fix's own route tests assert warnings=[] for this case, and the validation contract only requires operator availability to return slots for D2, so this is recorded as an observation, not a failure. The staff-booking checks were done through the API; the App booking-sheet half is r2-app-sheet's assertion."
+		},
+		{
+			"id": "VAL-CROSS-009",
+			"title": "An abandoned hold returns its slot to both the guest and staff channels",
+			"status": "pass",
+			"evidence": {
+				"terminal": [
+					"guest-channels-and-crm/r2-backend-rules/VAL-CROSS-009-run.log",
+					"guest-channels-and-crm/r2-backend-rules/VAL-CROSS-009-script-a.sh",
+					"guest-channels-and-crm/r2-backend-rules/VAL-CROSS-009-script-b.sh",
+					"guest-channels-and-crm/r2-backend-rules/VAL-CROSS-009-tick.json"
+				],
+				"network": [
+					"PUT setup settings holdMinutes 3 (expectedVersion 66) -> v67; later holdMinutes 7 -> v68 (VAL-CROSS-009-settings-{before,put-3,live-before-restore,restore-7}.json)",
+					"POST setup/areas + setup/tables -> R2A-Area area_32d5fe6b + R2A-T1 tbl_e4e2a7bb (max 2, priority -50) (VAL-CROSS-009-area-create.json, VAL-CROSS-009-table-create.json)",
+					"POST /reservations/holds (public, areaPref=R2A-Area) 2026-11-20 19:00 p2 -> 201 H1 expires 18:26:18Z (VAL-CROSS-009-hold-h1-create.redacted.json)",
+					"public availability before H1: 19:00 offered with areaLabel 'R2A-Area'; during H1: 19:00 no longer in R2A-Area, engine falls back to 'G9-Area-Strict'; after release/after expiry: 19:00 back in 'R2A-Area' (VAL-CROSS-009-public-{before-hold,during-hold,after-release,during-h2,after-expiry}.json)",
+					"operator availability during H1 (area-scoped areaId=R2A-Area): 19:00 available=false, held=true, heldTableIds=[tbl_e4e2a7bb], suggestedTableIds=[]; before/after: available=true, suggestedTableIds=[tbl_e4e2a7bb] (VAL-CROSS-009-operator-{before-hold,during-hold,after-release}-area-scoped.json)",
+					"operator availability during H1 (unscoped): 19:00 held=true, heldTableIds=[tbl_e4e2a7bb], suggestedTableIds=[tbl_08a45749] (held table withheld, slot still available elsewhere) (VAL-CROSS-009-operator-during-hold.json)",
+					"second guest hold for the same slot+area while H1 live -> 409 slot_unavailable with alternatives (VAL-CROSS-009-hold-second-guest-refused.json)",
+					"POST /reservations/holds/release with H1 token -> 200 {\"released\":true} (VAL-CROSS-009-hold-h1-release.json); fresh hold H2 for the same slot+area -> 201 (VAL-CROSS-009-hold-h2-create.redacted.json)",
+					"operator availability after H2's expiresAt but before the sweep: 19:00 available=true, held=false, suggested=[tbl_e4e2a7bb] - expired holds ignored (VAL-CROSS-009-operator-expired-pre-sweep-area-scoped.json)",
+					"POST /api/reservations/tick (internal token) -> 200, expire_holds ok count 1 (VAL-CROSS-009-tick.json)"
+				],
+				"sqlite": [
+					"before tick: H2 hld_f5db1be3 status=active, expires_at 1792261579047 (VAL-CROSS-009-sqlite-holds-before-tick.txt)",
+					"after tick: contract checkpoint 'select status from rsv_holds order by created_at desc limit 1' -> expired; H1 hld_5782dd46 status=released, H2 status=expired; both occupancies active=0; no active occupancy on tbl_e4e2a7bb (VAL-CROSS-009-sqlite-after-tick.txt)"
+				],
+				"consoleErrors": "n/a (curl/sqlite-only assertion)"
+			},
+			"notes": "Round-1 failure fixed. The decisive staff-channel check is the area-scoped operator availability: with a live guest hold on the last table of R2A-Area, 19:00 flips to available=false with held=true, heldTableIds=[R2A-T1] and suggestedTableIds=[] (round 1 returned available=true and suggested the held table). Unscoped, the held table is still withheld from suggestions and flagged held=true while the slot stays available through other tables. Guest channel: a second hold for the same slot+area is refused 409 slot_unavailable while the hold is live, the public availability 19:00 entry moves off R2A-Area to a fallback area, and after release and after expiry the 19:00 entry is offered in R2A-Area again and a fresh hold succeeds (201). Expiry half: the hold lapsed (3-minute hold_minutes), was already ignored by the availability read before the sweep, the tick marked it expired (expire_holds ok 1) and deactivated its occupancy; no slot was lost. hold_minutes was set to 3 through the setup settings API for the test (v66 7 -> v67 3) and restored to 7 (v68). The temporary R2A-Area/R2A-T1 fixture was archived afterwards.",
+			"limitations": "No browser was used (per the round-2 brief): the Sites time chips were not driven, and the public availability endpoint response is the evidence for the guest channel - it is the endpoint the Sites chips render from (round-1 g14 network capture). Note that the global public slot list keeps the 19:00 time while the hold is live because the engine falls back to another table/area (the location is not full); the guest-visible effect is per-area: the R2A-Area 19:00 offer disappears and a second guest cannot hold that slot+area until the hold is released/expired. The literal 'no longer offers that slot' therefore holds for the area-scoped channels, not for the location-wide slot time."
+		}
+	],
+	"frictions": [
+		{
+			"description": "A decisive single-table-area hold fixture is not documented in user-testing.md: round 1 relied on a leftover G9-Area-Strict area. To keep the hold on the last unit of its own area, I had to add a custom area + table through the setup API and give the table priority -50 so it wins candidate scoring for party 2.",
+			"resolved": true,
+			"resolution": "Created R2A-Area/R2A-T1 via POST setup/areas + setup/tables, used areaPref on the public hold, and archived both (DELETE) after the test.",
+			"affectedAssertions": ["VAL-CROSS-009"]
+		},
+		{
+			"description": "While a hold is live, the global public availability list keeps the held time by falling back to another table/area, so 'the slot is withheld' is only observable per-area (area label flip and strict-area hold refusal), not as a missing time in the location-wide list.",
+			"resolved": true,
+			"resolution": "Recorded the area label flip before/during/after and used the strict-area second-hold refusal plus the area-scoped operator availability as the decisive evidence; stated the limitation in the assertion.",
+			"affectedAssertions": ["VAL-CROSS-009"]
+		},
+		{
+			"description": "The part-B summary helper (a throwaway python parser) errored on the archive response because that curl had no HTTP-code suffix, after every request in the script had already run.",
+			"resolved": true,
+			"resolution": "All raw JSON/text evidence files are intact; the archive results were re-read directly and appended to VAL-CROSS-009-run.log.",
+			"affectedAssertions": []
+		}
+	],
+	"blockers": [],
+	"leftBehind": {
+		"restored": [
+			"Special days for 2026-11-18 (closed) and 2026-11-19 (online_closed) deleted; both dates public-available again (28 slots each). Verified in rsv_special_days: only the five pre-existing leftover days remain.",
+			"hold_minutes restored to 7 (settings version 66 before my change, 68 after the restore; no other validator's settings fields were touched - the PUT is a partial update).",
+			"Temporary fixture R2A-Area (area_32d5fe6b-665b-471b-97aa-cb0c8891fe4e) and R2A-T1 (tbl_e4e2a7bb-f82f-4e07-aa85-4774a62f10bb) archived (archived_at set) after the test."
+		],
+		"leftBehind": [
+			"Staff bookings on my owned dates: U2EB35 (2026-11-18 19:00 party 2, overbooked=1, closed-day override) and LS76UD (2026-11-19 19:00 party 2). The refused D1 booking created no row.",
+			"Hold rows on 2026-11-20: hld_5782dd46 (released) and hld_f5db1be3 (expired), both occupancies active=0; no active occupancy on the archived table.",
+			"No flags, message settings, pacing, services, seeded rows or other dates were changed. /tmp helper files: r2a-env.sh, r2a-007.sh, r2a-009a.sh, r2a-009b.sh, r2a-area.id, r2a-tbl.id (the two hold-token files were deleted after the test; the holds are released/expired)."
+		]
+	},
+	"summary": "Re-tested the two previously failing assertions on HEAD c043ba8f: both pass. VAL-ONLINE-007 - operator availability now honours special days (closed: 0 slots + closed dayState; online_closed: 141 slots + onlineClosed flag), staff bookings on a closed day are refused 409 closed_day with no raw driver text unless overbooked (201 + closed_day warning), and an online_closed-day booking succeeds. VAL-CROSS-009 - with a live guest hold on the last table of its area, the operator availability read withholds the held table (area-scoped available:false, held:true, heldTableIds) and a second guest is refused 409; after release and after the hold expires and is tick-swept, both channels offer the slot again and the expired hold is ignored before the sweep. All settings restored (hold_minutes 7, special days deleted, temp area/table archived)."
+}

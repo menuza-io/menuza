@@ -1,0 +1,270 @@
+{
+	"groupId": "r2-today-rtl",
+	"testedAt": "2026-10-17T03:23:50Z",
+	"isolation": {
+		"browserSession": "c7e026d0d5c8__r2-today-rtl (closed)",
+		"app": "http://localhost:3001",
+		"user": "kody",
+		"orgs": [
+			"acme (US, tenant-api http://localhost:3007)",
+			"riyadh-grill (KSA, tenant-api http://localhost:3009)"
+		],
+		"businessDateUsed": "2026-10-17 (read from the Today screen; the server default day is the UTC date — see frictions)",
+		"ownedData": {
+			"phonePrefix": "+155555523xx",
+			"guestNamePrefix": "R2Today",
+			"createdReservations": [
+				"rsv_f806421f-6a62-458c-aee2-3f34ca08662e (R2Today Booked A, booked, G9-2)",
+				"rsv_1face160-fd06-4308-8b86-7107573a1459 (R2Today Booked B, seated via quick action, G4-1)",
+				"rsv_a323fa8b-e98d-418d-9cb0-7e4ca3189c5c (R2Today Booked C, cancelled, G9-3)",
+				"rsv_b60cc563-4fb4-4355-a060-f70ff2c9763e (anonymous walk-in, seated, G9-1 walk_in_only)",
+				"rsv_e6907e49-ecc2-4292-b8cb-5882b30bc1a4 (R2Today Conflict A, booked, G9-3)",
+				"rsv_73c7321f-4fbf-4132-a4e5-5f262eeaec9d (R2Today Conflict B, overbooked overlap, G9-3)"
+			],
+			"noSeededRowsModified": true,
+			"note": "No table block was created (the overlap was produced with the built-in overbook override), so there was no block to clean up. Seeded 2026-10-16 rows, the UI Fix Tester / Walk-in Guest 2026-10-17 rows, and other groups' rows were left untouched."
+		},
+		"dbsReadOnly": [
+			"packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (sqlite3 SELECT only)",
+			"packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db (not queried this session; KSA UI read-only)"
+		],
+		"evidenceDir": "evidence/foh-core/r2-today-rtl"
+	},
+	"toolsUsed": [
+		"agent-browser",
+		"curl",
+		"sqlite3",
+		"node (/tmp/menuza-user-testing/mint-token.mjs helper; token values never recorded)"
+	],
+	"assertions": [
+		{
+			"id": "VAL-BOOK-037",
+			"title": "Today and Book screens render right-to-left in Arabic (?lng=ar) without reversing numbers or codes",
+			"status": "fail",
+			"steps": [
+				{
+					"action": "Open /acme/reservations/today?lng=ar (default business day 2026-10-17)",
+					"expected": "dir=rtl, Arabic tabs/filters/actions, no raw enums, zero console errors",
+					"observed": "documentElement dir=rtl lang=ar; tabs اليوم/دفتر الحجوزات/الجدول الزمني/مخطط الصالة/التقويم/نظرة عامة; filters الخدمة=جميع الفترات / القسم=جميع المناطق; actions حضور مباشر / حجز جديد / التفاصيل / إكمال الدورة; KPIs إجمالي الضيوف، يصل قريباً، جالسون حالياً، الحضور المباشر اليوم، مكتمل، يتطلب الانتباه; raw-enum scan clean; console errors []"
+				},
+				{
+					"action": "Open /acme/reservations/today?lng=ar&date=2026-10-16 to see every status (the default day only has seated rows)",
+					"expected": "All reservation status and course badges in Arabic, none a raw English enum",
+					"observed": "Badge inventory (32 badges): محجوز (booked), مؤكد (confirmed), وصل (arrived), منتهي (finished), لم يحضر (no_show), ملغى (cancelled), طبق رئيسي (entree course), كبار الشخصيات (VIP), خطر التأخير (Late Risk), ذكرى سنوية (Anniversary), عيد ميلاد (Birthday), إجلاس (Seat), التفاصيل (Details), إكمال الدورة (Complete Turn), النادل (Server). Raw-enum scan of the view text is empty; the only case-insensitive hits elsewhere in body text were a guest name ('G9 Booked011') and a service note ('VIP guests at 18:00…') — user content, not labels. Times LTR correct (12:30,13:00,18:00,19:00,19:30,20:00,21:00,21:15); no character reversal."
+				},
+				{
+					"action": "Open /acme/reservations/book?lng=ar&date=2026-10-16 and inventory badges/codes/phones",
+					"expected": "Arabic status badges, LTR codes/times/phones, no untranslated labels",
+					"observed": "dir=rtl lang=ar. Status badges Arabic: غير مسند/منتهي/لم يحضر/كبار الشخصيات/مؤكد/جالس/محجوز/وصل/ملغى/خطر التأخير/ذكرى سنوية/عيد ميلاد. Confirmation codes LTR with # prefix (#RSVACM105, #UZ45JF, #R76QJ9, #JKXL6G…); phones LTR (+12125550145, +966501112207); times LTR. BUT row rsv_acme_1 (Layla Al-Mansoor) renders the contact-status badge as English 'Left message' (see issues). Only English badge on the whole list."
+				},
+				{
+					"action": "Open a detail sheet in Arabic: /acme/reservations/today?lng=ar&date=2026-10-16&r=rsv_acme_1",
+					"expected": "Sheet mirrors, status/course badges Arabic, timeline Arabic, no English labels",
+					"observed": "Sheet badges #RSVACM101 / مؤكد / 0 زيارات; actions تسجيل الوصول / إجلاس المجموعة / تسجيل عدم الحضور / إلغاء الحجز / تمديد انتظار التأخير / تتبع التواصل; timeline سجل التغييرات with مستورد/النظام/المشغّل and Arabic timestamps; englishLabelHits=[] and rawEnums=[] in the sheet text; date/time string 2026-10-16 • 18:00 – 19:30 (90m) • 2 ضيوف renders correctly."
+				},
+				{
+					"action": "Re-check Arabic Today with my own freshly created rows and the conflict panel",
+					"expected": "New rows' statuses Arabic; conflict reason badge Arabic",
+					"observed": "My rows show محجوز (Booked A / Conflict A / Conflict B) and ملغى (cancelled C); conflict panel badge تداخل الطاولات (Table overlap) with 'يتداخل مع حجز آخر على G9-3'; raw-enum scan clean"
+				},
+				{
+					"action": "English spot check: /acme/reservations/today?date=2026-10-16&lng=en and /acme/reservations/book?date=2026-10-16&lng=en",
+					"expected": "No regression — proper English labels, never raw lowercase enums",
+					"observed": "dir=ltr lang=en. Today badges: Booked, Confirmed, Arrived, Finished, No-show, Cancelled, VIP, Late Risk, Anniversary, Birthday, Entree, Unassigned; Book badges: Finished, No-show, Seated, Booked, Arrived, Cancelled, Unassigned, Left message. lowercaseEnumBadges=[] on both; console errors []"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"foh-core/r2-today-rtl/VAL-BOOK-037-today-ar-default-2026-10-17.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-037-today-ar-2026-10-16-all-statuses.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-037-book-ar-rtl.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-037-detail-sheet-ar-rtl.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-037-today-ar-own-rows.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-037-conflict-panel-ar.png"
+				],
+				"consoleErrors": "none (agent-browser errors empty after every navigation, final check after KSA pages: [])",
+				"network": "document GETs 200; day feed GET http://localhost:3007/operator/reservations/book/day 200/304; badge inventory saved to evidence/foh-core/r2-today-rtl/VAL-BOOK-037-badge-inventory.txt"
+			},
+			"issues": "NARROW FAILURE — everything in the round-1 defect is fixed (raw reservation-status and course enums now render Arabic: محجوز/مؤكد/وصل/جالس/منتهي/لم يحضر/ملغى, course طبق رئيسي, plus VIP/occasion/dietary/late-risk and the conflict reason تداخل الطاولات), dir=rtl/lang=ar hold, numbers/codes/times/phones render LTR with no reversal, zero console errors. The remaining defect: on the Arabic Book list the contact-status badge for rsv_acme_1 renders English 'Left message'. Root cause: apps/app/app/utils/reservations/labels.ts CONTACT_STATUS_LABELS keys are left_voicemail/confirmed_by_phone/sms_sent/none, but the canonical contact_status vocabulary is left_message | no_answer | wrong_number (architecture.md:716; packages/tenant-db/src/schema.ts:2974; apps/tenant-api/src/services/rsv-booking-service.ts:2941). enumLabel() falls back to humanizeEnum() -> 'Left message' in the Arabic UI (and would render 'No answer'/'Wrong number' too). Repro: DB has contact_status='left_message' for rsv_acme_1; book.tsx:512 renders label(CONTACT_STATUS_LABELS, rsv.contactStatus). The same key mismatch also means the detail sheet's Contact Tracking selector (detail-sheet.tsx:61-68) has no option for the value the backend stores."
+		},
+		{
+			"id": "VAL-BOOK-011",
+			"title": "Today screen groups reservations into Upcoming, Seated, and Finished tabs with live counters and quick actions",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Baseline /acme/reservations/today?lng=en on the screen's business date 2026-10-17",
+					"expected": "Counters match the day's rows",
+					"observed": "Upcoming & Arriving 0, Currently Seated 2 (UI Fix Tester, P-9 Walk-in Guest), Completed/No-Show/Cancelled 0; KPIs total covers 4 / seated 4 / walk-in 2; sqlite for 2026-10-17: seated 2 rows, 4 covers — exact match"
+				},
+				{
+					"action": "Create three of my own parties via New Reservation (R2Today Booked A/B/C, +15555552301/302/303, party 2, 19:00, auto-assign)",
+					"expected": "Each appears in Upcoming and the counters update",
+					"observed": "POST http://localhost:3007/operator/reservations/book/reservations -> 201 (x3). Upcoming badge went 0 -> 1 -> 2 -> 3 (A on G9-2, B on G4-1, C on G9-3); no error banner"
+				},
+				{
+					"action": "Quick action: click Seat on R2Today Booked B",
+					"expected": "Row moves to Seated, counters update immediately, POST status -> 200",
+					"observed": "POST http://localhost:3007/operator/reservations/book/reservations/rsv_1face160-fd06-4308-8b86-7107573a1459/status -> 200. B moved from Upcoming to Currently Seated (card 'G4-1 • R2Today Booked B (2) | 0m / 75m'); Upcoming badge 3 -> 2, Seated badge 2 -> 3 immediately; undo banner 'Marked R2Today Booked B as Seated. Undo available for 60s.'"
+				},
+				{
+					"action": "Open R2Today Booked C's detail sheet and Cancel Reservation",
+					"expected": "Row moves to Finished, counters update, POST status -> 200",
+					"observed": "POST .../reservations/rsv_a323fa8b-e98d-418d-9cb0-7e4ca3189c5c/status -> 200. C appeared in 'Completed, No-Show & Cancelled' with Cancelled badge; Upcoming 2 -> 1, Finished 0 -> 1"
+				},
+				{
+					"action": "Compare final tab badges and KPI counters against sqlite",
+					"expected": "Exact counts for the three groups",
+					"observed": "UI Upcoming 1 (= booked/confirmed/arrived/pending: only my booked A), Seated 3 (2 pre-existing + B), Finished 1 (cancelled C); KPIs total covers 8 (4 base + A 2 + B 2, cancelled excluded), seated covers 6, walk-in 2, completed 0, attention 0. sqlite at that moment: booked 1, seated 3, cancelled 1 — exact match. Screenshots before/after quick action and final board captured"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"foh-core/r2-today-rtl/VAL-BOOK-011-today-before-quick-action.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-011-today-after-quick-action.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-011-today-tabs-and-counters-final.png"
+				],
+				"consoleErrors": "none",
+				"network": "POST .../book/reservations/:id/status -> 200 (x2: seat and cancel); POST .../book/reservations -> 201 (x3); lines saved in foh-core/r2-today-rtl/VAL-BOOK-006-011-012-036-network.txt",
+				"sqlite": "foh-core/r2-today-rtl/VAL-BOOK-006-011-012-sqlite.txt"
+			},
+			"issues": null
+		},
+		{
+			"id": "VAL-BOOK-012",
+			"title": "Today screen surfaces unassigned and conflicting bookings in the Unassigned and Conflict panel",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Create R2Today Conflict A (party 2, 19:00, auto-assign) via New Reservation",
+					"expected": "Booking created and assigned a table",
+					"observed": "POST .../book/reservations -> 201; card '19:00 • R2Today Conflict A (2) | G9-3 | Booked'"
+				},
+				{
+					"action": "Create R2Today Conflict B with Table Assignment = G9-3 (same table, same 19:00 slot) and 'Override blocked table' checked",
+					"expected": "Overbooked overlap accepted; Today surfaces a conflict with a badge count",
+					"observed": "POST .../book/reservations -> 201. Card '19:00 • R2Today Conflict B (2) | G9-3'. Header button changed to 'Unassigned & Conflicts 1' immediately. sqlite: two active occupancies on tbl_55b3d779 (G9-3), Conflict B's row overbook=1, Conflict A's overbook=0"
+				},
+				{
+					"action": "Open the Unassigned & Conflicts panel",
+					"expected": "Entry listed with badge count, real payload data",
+					"observed": "Panel badge 1; entry conflict-item-rsv_73c7321f… = 'R2Today Conflict B (2 guests) • 19:00 | Table overlap | Overlaps with another booking on G9-3' plus resolution controls (Pick table… select, Assign, Details). Unassigned section 0, Reflow notices 0. No '· (p)' placeholder rows — the round-1 panel mapping defect is fixed"
+				},
+				{
+					"action": "Click the entry's Details button",
+					"expected": "Detail sheet opens with ?r=<id>",
+					"observed": "URL became /acme/reservations/today?lng=en&r=rsv_73c7321f-4fbf-4132-a4e5-5f262eeaec9d and the sheet rendered 'R2Today Conflict B | #DTD5BR | Booked | 2026-10-17 • 19:00 – 20:15 (75m) • 2 guests • G9-3' with host actions; GET .../reservations/:id and .../events -> 200"
+				},
+				{
+					"action": "Call GET /operator/reservations/book/conflicts?locationId=v17plv08r5v357bie335lyq8&date=2026-10-17 (read-only book token)",
+					"expected": "200 and the overlap listed",
+					"observed": "HTTP 200; conflicts[] contains {kind:'table_overlap', bookingId:'rsv_e6907e49…', otherBookingId:'rsv_73c7321f…', tableId:'tbl_55b3d779… (G9-3)', reservationId:'rsv_e6907e49…'}; unassigned[] empty. JSON saved as evidence"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"foh-core/r2-today-rtl/VAL-BOOK-012-today-unassigned-conflict-panel.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-012-conflict-detail-sheet.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-037-conflict-panel-ar.png"
+				],
+				"consoleErrors": "none",
+				"network": "GET .../book/conflicts -> 200; GET .../book/day -> 200 (feed badge 1); GET .../book/reservations/rsv_73c7321f… (+ /events) -> 200",
+				"sqlite": "foh-core/r2-today-rtl/VAL-BOOK-006-011-012-sqlite.txt",
+				"endpointJson": "foh-core/r2-today-rtl/VAL-BOOK-012-conflicts-endpoint.json"
+			},
+			"issues": null
+		},
+		{
+			"id": "VAL-BOOK-006",
+			"title": "Walk-in modal seats a party immediately and can allocate walk-in-only tables",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Click Walk-in on /acme/reservations/today (2026-10-17), party size 2, Assign Table = G9-1 (tbl_ffa285d6…, the table carrying the walk_in_only Dinner rule sa_8c87056d 17:00-23:59), name/phone entered",
+					"expected": "Dialog lists the walk-in-only table and seats immediately",
+					"observed": "Dialog 'Seat Walk-In Party' listed G9-1 (1-2) — Available; selecting it set the combo label 'G9-1 (1-2) — Available'. (The typed guest name/phone did not persist into the created row — see frictions — so the walk-in is anonymous, which the assertion allows.)"
+				},
+				{
+					"action": "Submit 'Seat Walk-In Now'",
+					"expected": "POST /operator/reservations/book/walk-ins -> 200|201 and the party seated",
+					"observed": "POST http://localhost:3007/operator/reservations/book/walk-ins -> 201. Today showed 'G9-1 • Walk-in Guest (2) | 0m / 75m | Complete Turn | Details'; Seated badge 3 -> 4; 'Walk-Ins Today' KPI 2 -> 4 covers / 1 -> 2 walk-in parties; no error"
+				},
+				{
+					"action": "Read the row and occupancy from sqlite (SELECT only)",
+					"expected": "status seated, source walk_in, non-null arrived_at/seated_at, covers_actual=2, active occupancy",
+					"observed": "rsv_b60cc563-4fb4-4355-a060-f70ff2c9763e: status='seated', channel='walk_in', covers_actual=2, party_size=2, arrived_at=seated_at=1792207296115, assignment='locked'; occupancy occ_3a22db68… on tbl_ffa285d6 (G9-1), kind='reservation', active=1, overbook=0"
+				},
+				{
+					"action": "Confirm online availability never offers the walk_in_only table",
+					"expected": "GET availability excludes G9-1",
+					"observed": "GET http://localhost:3007/operator/reservations/book/availability?…&partySize=2&serviceId=svc_acme_dinner -> 200 and tbl_ffa285d6 (G9-1) is absent from the suggested table ids. The public guest route GET /reservations/availability answers 404 — not implemented in foh-core (guest channels are a later milestone), so that half of the clause is not exercisable yet, per mission guidance"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"foh-core/r2-today-rtl/VAL-BOOK-006-walkin-dialog-filled.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-006-today-walk-in-seated.png"
+				],
+				"consoleErrors": "none",
+				"network": "POST .../book/walk-ins -> 201; GET .../book/availability -> 200",
+				"sqlite": "foh-core/r2-today-rtl/VAL-BOOK-006-011-012-sqlite.txt"
+			},
+			"issues": null
+		},
+		{
+			"id": "VAL-BOOK-036",
+			"title": "KSA routing clause — spot-check only (parent instruction: regression evidence, not a full verdict)",
+			"status": "skipped",
+			"steps": [
+				{
+					"action": "Open /riyadh-grill/reservations/today?lng=ar and /riyadh-grill/reservations/book?lng=ar as kody",
+					"expected": "Both load in Arabic and every /operator/reservations/book/* request goes to tenant-api KSA (3009)",
+					"observed": "Both pages rendered (Book view present, dir=rtl lang=ar). Network capture: 6 operator/reservations requests, all to http://localhost:3009/operator/reservations/book/day?locationId=oi97w1dxwcpnkpq9m9s8cnu8 (200/304, CORS preflight 204). Cross-checks: requests to 3007 carrying the KSA locationId = 0; requests to 3009 carrying the acme locationId = 0. Console errors: none"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"foh-core/r2-today-rtl/VAL-BOOK-036-ksa-today-ar.png",
+					"foh-core/r2-today-rtl/VAL-BOOK-036-ksa-book-ar.png"
+				],
+				"consoleErrors": "none",
+				"network": "see foh-core/r2-today-rtl/VAL-BOOK-006-011-012-036-network.txt"
+			},
+			"issues": "Spot-check only, as instructed — no booking/walk-in/transition was performed on the KSA org and no full pass/fail verdict is claimed for VAL-BOOK-036."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The Today screen's business date does not follow the documented 04:00 UTC flip: the day-feed route falls back to the UTC calendar date (apps/tenant-api/src/routes/operator-reservations-book.ts:199,278,377 — 'new Date().toISOString().slice(0, 10)', pre-existing from commit 3c4bfa6b, not from the round-2 fix). At 03:15 UTC on 2026-10-17 (23:15 EDT 2026-10-16) the screen already showed 2026-10-17 and the seeded 2026-10-16 'today' fixtures were not visible.",
+			"resolved": true,
+			"resolution": "Followed the parent instruction to read the business date from the screen and ran all data work on 2026-10-17; verified counts against that date in sqlite. Reported here as an out-of-scope observation for the orchestrator.",
+			"affectedAssertions": ["VAL-BOOK-011", "VAL-BOOK-012", "VAL-BOOK-037"]
+		},
+		{
+			"description": "Walk-in dialog: the typed Guest Name and Phone did not persist (row created as anonymous 'Walk-in Guest' with empty phone_e164), likely the known React-controlled input behavior.",
+			"resolved": true,
+			"resolution": "The assertion explicitly allows an anonymous walk-in, so the flow was accepted as-is.",
+			"affectedAssertions": ["VAL-BOOK-006"]
+		},
+		{
+			"description": "The booking sheet's time-slot button '19:30' (booking-slot-1170) could not be clicked — agent-browser reported it 'covered by <label…>' — so booking B used the default 19:00 slot instead.",
+			"resolved": true,
+			"resolution": "Kept the default 19:00 slot; all count checks are time-independent.",
+			"affectedAssertions": ["VAL-BOOK-011"]
+		},
+		{
+			"description": "Observation (not counted as a failure): GET /operator/reservations/book/conflicts returned 3 items for the day (table_overlap, archived_table, outside_service_hours) while the Today panel badge count came from the day feed's own detection (blocked/overlap only) and showed 1. My overlap was listed and shown, so VAL-BOOK-012's criteria are met.",
+			"resolved": true,
+			"resolution": "Verified both surfaces separately (panel 1 + endpoint 200 with the table_overlap entry).",
+			"affectedAssertions": ["VAL-BOOK-012"]
+		},
+		{
+			"description": "Code-read observation: today.tsx's list filters (upcomingList) omit 'pending_approval' and 'partially_seated', which the contract lists in the Upcoming group. Not observable today because operator flows cannot create those statuses in foh-core (public request channel is a later milestone).",
+			"resolved": true,
+			"resolution": "Recorded as a latent gap only; no observed count mismatch.",
+			"affectedAssertions": ["VAL-BOOK-011"]
+		}
+	],
+	"blockers": [],
+	"summary": "Re-tested 4 assertions + 1 optional spot-check on the round-2 build. VAL-BOOK-011 pass: my booked/seated/cancelled parties drove Upcoming/Seated/Finished badges 1/3/1 exactly matching sqlite, and the Seat quick action (POST status 200) moved the row and updated counters immediately. VAL-BOOK-012 pass: an overbooked overlap (R2Today Conflict A+B on G9-3, overbook=1 occupancy) showed as 'Unassigned & Conflicts 1', the panel rendered the entry properly (round-1 mapping defect fixed), clicking Details opened ?r=rsv_73c7321f, and GET /book/conflicts -> 200 lists the table_overlap. VAL-BOOK-006 pass: walk-in seated immediately on the walk_in_only table G9-1 (POST walk-ins 201; sqlite seated/walk_in/covers_actual=2/active occupancy; availability never suggests G9-1). VAL-BOOK-037 FAIL (narrow): all round-1 raw status/course enums are now Arabic (محجوز/مؤكد/وصل/جالس/منتهي/لم يحضر/ملغى, course طبق رئيسي, conflict تداخل الطاولات), dir=rtl/lang=ar hold on Today/Book/detail sheet, codes/times/phones/party numbers render LTR without reversal, zero console errors — but the contact-status badge still renders English 'Left message' on the Arabic Book list because labels.ts CONTACT_STATUS_LABELS keys (left_voicemail/confirmed_by_phone/sms_sent) do not match the canonical values left_message/no_answer/wrong_number (architecture.md:716), so humanizeEnum falls back to English. Optional KSA spot-check: both KSA pages load in Arabic and every browser /operator/reservations/book/* request went to localhost:3009 with zero cross-routing."
+}

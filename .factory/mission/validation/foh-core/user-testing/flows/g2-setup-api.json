@@ -1,0 +1,109 @@
+{
+	"group": "g2-setup-api",
+	"surface": "curl",
+	"testedAt": "2026-10-16T23:16:42Z",
+	"isolation": {
+		"tenantApiUs": "http://localhost:3007",
+		"tenantApiKsa": "http://localhost:3009",
+		"org": "acme (t58bgatqh3rv0s3movrecyj1), location v17plv08r5v357bie335lyq8 (Downtown Flagship)",
+		"crossOrgToken": "riyadh-grill (ru0dm42cud9scs4g2duep21c) setup token sent to 3007",
+		"crossLocationToken": "acme setup token with locationIds=[vw6s16lrjjvyafd3dc4cqexu]",
+		"ownedBusinessDate": "2026-10-19",
+		"writesPerformed": "none (stale-version probe only; settings row version stayed 6; no audit rows added)",
+		"tokens": "minted via /tmp/menuza-user-testing/mint-token.mjs; values never written to evidence or report"
+	},
+	"assertions": {
+		"VAL-SETUP-007": {
+			"status": "pass",
+			"observed": "GET /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/settings with a setup token returned 200 with version=6 (floorPlanVersion=4). PUT on the same URL with {\"expectedVersion\":1} returned HTTP 409, cache-control private,no-store, body {\"error\":\"stale_version\",\"current\":{...version:6...},\"settings\":{...},\"version\":6} (current row included). A re-GET returned version 6, and sqlite3 rsv_location_settings showed version 6 / floor_plan_version 4 unchanged. No-token request first returned 401 {\"error\":\"Missing bearer token\"}. No audit row was added by the probe (newest rsv_audit_log row predates the session).",
+			"evidence": [
+				"foh-core/g2-setup-api/007-initial.txt",
+				"foh-core/g2-setup-api/007-no-token.json",
+				"foh-core/g2-setup-api/007-get-settings.json",
+				"foh-core/g2-setup-api/007-stale-put-raw.txt",
+				"foh-core/g2-setup-api/007-stale-put.json",
+				"foh-core/g2-setup-api/007-get-after.json",
+				"foh-core/g2-setup-api/007-run.txt"
+			],
+			"notes": "API clause fully verified live. The UI clause (stale_version surfaces a conflict notification and reloads the latest settings) was not driven by me; code inspection shows settings._index.tsx handles isVersionConflictError with a conflict banner and a reload action that calls refreshSummary. No row was mutated by the stale PUT."
+		},
+		"VAL-SETUP-017": {
+			"status": "pass",
+			"observed": "cd apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts -> exit 0, 8/8 tests passed. Test 'VAL-SETUP-011..017' seeds a 6-cover soft booking on tbl_fp_1, PUTs /operator/reservations/setup/locations/<LOC>/floor-plan reducing that table's maxCovers 6 -> 4, and asserts 200, floorPlanVersion 2 -> 3, and reflowedMoves containing {bookingId:'res_fp_shrink', fromTableIds:['tbl_fp_1'], toTableIds:['tbl_fp_2']} (soft booking reflowed to a fitting table). In the same file, archiving an occupied table via DELETE /tables/:id asserts archived=true plus a reflowedMoves move to another table, and the blocks test drives an unplaceable soft booking to unassigned and asserts GET /locations/:id/conflicts returns kind:'unassigned'.",
+			"evidence": [
+				"foh-core/g2-setup-api/vitest-setup-summary.txt",
+				"foh-core/g2-setup-api/vitest-setup-raw.txt",
+				"foh-core/g2-setup-api/commands.txt"
+			],
+			"notes": "The named Vitest file proves reflow-on-shrink through PUT /floor-plan and proves the unplaceable-booking conflict through the same shared reflow service (blocks -> GET /conflicts). Two sub-details are not directly asserted by a test: the PUT /floor-plan response's own `conflicts` array and the rsv_day_versions bump on that path (the code spreads the shared reflow result into the floor-plan response, rsv-setup-crud.ts:1800-1821; the same function bumps day versions, and day-version assertions exist for the rederive-times and special-days paths). No live write was performed for this assertion (read-only live checks only, per assignment). No functional failure observed."
+		},
+		"VAL-SETUP-025": {
+			"status": "pass",
+			"observed": "Live: GET /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/conflicts without a token -> 401; with a setup token -> 200 {\"locationId\":\"v17plv08r5v357bie335lyq8\",\"conflicts\":[]} (acme is currently conflict-free); ?date=2026-10-19 -> 200. GET .../validate and .../validation -> 200 {valid:true, issues:[turn_time_bucket_gap]}. Vitest: reservations-setup.test.ts 8/8 pass; the blocks test asserts GET /conflicts returns items with kind:'unassigned' and bookingId after the assigned tables are blocked. The endpoint runs the engine detectConflicts per upcoming business date and enriches each item with details.businessDate (rsv-setup-service.ts:1552-1592, 2435-2442).",
+			"evidence": [
+				"foh-core/g2-setup-api/025-run.txt",
+				"foh-core/g2-setup-api/025-conflicts.json",
+				"foh-core/g2-setup-api/025-conflicts-no-token.json",
+				"foh-core/g2-setup-api/025-conflicts-date.json",
+				"foh-core/g2-setup-api/025-validate.json",
+				"foh-core/g2-setup-api/025-validation.json",
+				"foh-core/g2-setup-api/vitest-setup-summary.txt"
+			],
+			"notes": "Endpoint + Vitest verified. The App conflicts panel (/acme/reservations/settings) was NOT driven by me; browser groups own that check. Risk found by code inspection, flagged for browser confirmation: the panel expects SetupConflictDto {reservationId, confirmationCode, businessDate, partySize, reason} (apps/app/app/utils/reservations/setup-api.ts:124-141, apps/app/app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:855-876) while the API returns engine items {kind, bookingId, tableId, details.businessDate}; fetchSetupConflicts raw-casts the response with no mapping, and the E2E spec stubs /conflicts with an empty list. A non-empty conflicts panel would therefore likely render blank date/reason fields. Not counted as a failure of the endpoint behavior I was assigned; needs browser validation."
+		},
+		"VAL-SETUP-028": {
+			"status": "pass",
+			"observed": "Live on 3007: a riyadh-grill setup token hit 13 acme GET tails (/settings /floor-plan /areas /tables /combos /services /turn-times /pacing /service-availability /special-days /blocks /conflicts /validate) and 5 write tails -> all 403 region_mismatch. An acme setup token with locationIds=[vw6s16lrjjvyafd3dc4cqexu] targeting the excluded location -> 13 GET tails and 13 write tails (PUT settings, PUT floor-plan, POST areas/tables/services/special-days/blocks/turn-times/pacing/service-availability/rederive-times/elements/combinations) all 403 location_forbidden. No-token GETs -> 401. Vitest: reservations-security.test.ts -> exit 0, 15/15 pass, including the sweep of every mounted operator reservation route for cross-org (ORG_B) and excluded locationIds that must be 403/404 and never 5xx, plus entity-ID cases (cross-location area PATCH/DELETE 403, cross-org ORG_B DELETE 404); reservations-setup.test.ts -> 8/8 pass.",
+			"evidence": [
+				"foh-core/g2-setup-api/028-sweep.txt",
+				"foh-core/g2-setup-api/028-entity-checks.txt",
+				"foh-core/g2-setup-api/vitest-security-summary.txt",
+				"foh-core/g2-setup-api/vitest-security-raw.txt",
+				"foh-core/g2-setup-api/vitest-setup-summary.txt",
+				"foh-core/g2-setup-api/commands.txt"
+			],
+			"notes": "All live refusals were 403 with an explicit code (region_mismatch / location_forbidden); no 5xx and no data leak observed. Contract text says both named files contain cross-org/cross-location cases; in practice they live only in reservations-security.test.ts (whose sweep enumerates every mounted route), and reservations-setup.test.ts has none. Both files pass 100%."
+		},
+		"VAL-SETUP-030": {
+			"status": "pass",
+			"observed": "With a valid setup token: PUT /locations/<id>/settings {\"interval_min\":\"ECHO_SECRET_SENTINEL_999\"} -> 400 {\"error\":\"invalid\",\"fields\":[\"intervalMin\",\"interval_min\"],\"issues\":[{\"path\":\"intervalMin\",\"code\":\"invalid_type\"}]}; POST /locations/<id>/tables with shape \"ECHO_SECRET_SENTINEL_999\" -> 400 fields [\"shape\"], code invalid_enum_value; POST /locations/<id>/special-days with from_date \"ECHO_SECRET_SENTINEL_999\" -> 400 fields [\"fromDate\",\"from_date\",\"toDate\",\"to_date\"], codes invalid_string/custom. grep found 0 occurrences of ECHO_SECRET_SENTINEL_999 in all three response bodies. Read-only sqlite3 before/after: rsv_tables 12 -> 12, rsv_special_days 0 -> 0, rsv_location_settings version 6 -> 6; no audit rows added. Vitest 'VAL-SETUP-030' also passes (rejects marker + '99999', asserts error='invalid' with field paths).",
+			"evidence": [
+				"foh-core/g2-setup-api/030-run.txt",
+				"foh-core/g2-setup-api/030-put-settings-invalid-interval.json",
+				"foh-core/g2-setup-api/030-post-table-invalid-shape.json",
+				"foh-core/g2-setup-api/030-post-special-day-invalid-date.json",
+				"foh-core/g2-setup-api/vitest-setup-summary.txt",
+				"foh-core/g2-setup-api/commands.txt"
+			],
+			"notes": "Field paths only, no rejected values echoed; invalid mutations created no rows."
+		}
+	},
+	"friction": [
+		{
+			"description": "Contract text for VAL-SETUP-028 states that both reservations-security.test.ts and reservations-setup.test.ts include cross-organization and cross-location cases for every setup route tail; only reservations-security.test.ts contains them (its sweep enumerates every mounted operator route).",
+			"resolved": true,
+			"resolution": "Verified the sweep in the security file plus live curl refusals; both suites pass 100%. Reported as a contract/code wording nuance, not a defect.",
+			"affectedAssertions": ["VAL-SETUP-028"]
+		},
+		{
+			"description": "Entity-id GET routes under /locations/:locationId/<entity>/:id do not exist (404 Endpoint Not Found); entity routes are mounted only as PUT/PATCH/DELETE.",
+			"resolved": true,
+			"resolution": "Used write tails for the live sweep and the Vitest entity-ID cases (cross-location PATCH/DELETE 403, cross-org DELETE 404). Informational only.",
+			"affectedAssertions": ["VAL-SETUP-028"]
+		},
+		{
+			"description": "Suspected UI data-shape mismatch for the setup conflicts panel: tenant-api /conflicts returns engine items {kind, bookingId, details.businessDate} while the App panel expects {reservationId, confirmationCode, businessDate, partySize, reason}; no mapping exists and the E2E spec stubs an empty conflicts list.",
+			"resolved": false,
+			"resolution": "Not driven by me (browser groups own UI checks). Flagged with file references for browser confirmation and parent adjudication; the endpoint behavior I was assigned passes.",
+			"affectedAssertions": ["VAL-SETUP-025"]
+		},
+		{
+			"description": "VAL-SETUP-017 evidence nuance: the PUT /floor-plan response's own `conflicts` array and the rsv_day_versions bump on that path are not directly asserted by a test; reflow-on-shrink is asserted through PUT /floor-plan and the unplaceable-booking conflict through the same shared reflow service via blocks + GET /conflicts.",
+			"resolved": true,
+			"resolution": "Stated plainly in the assertion notes; no live write was performed (assignment required read-only live checks for this assertion).",
+			"affectedAssertions": ["VAL-SETUP-017"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": ["curl", "terminal (Vitest, sqlite3, node)"]
+}

@@ -1,0 +1,145 @@
+{
+	"timestamp": "2026-10-17T01:53:56.801Z",
+	"workerSessionId": "d15910fb-8c20-4fc8-99a9-c1e27fac1d9f",
+	"featureId": "user-testing-validator-foh-core",
+	"milestone": "foh-core",
+	"successState": "failure",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Round 1 user testing of foh-core: 109 assertions tested through the real surfaces (17 flow validators, 5 batches) — 96 pass, 13 fail, 0 blocked. Failures need fix features: VAL-FND-006 (expired holds in existingHolds), VAL-FND-009 (per-step oracle), VAL-SETUP-020/021 (UI delete 404s), VAL-SETUP-023 (UI block create 500), VAL-SETUP-025 (conflicts panel unmapped payload), VAL-BOOK-003/008/009/013 (detail sheet + filters), VAL-BOOK-037 (raw English status enums in Arabic), VAL-HOST-014 (arrived→seat ignores tableIds), VAL-CROSS-006 (block 500, no reflow notice).",
+		"whatWasImplemented": "Ran the user-testing validation round for milestone foh-core. Determined the 109 testable assertions from the foh-core features' fulfills (Setup 32, Reservation book 38, Host stand 28, FND-006/009/024, GUEST-022/025, CROSS-001..006), started App (3001) and Sites (3008) alongside the pre-existing tenant-api US (3007) and KSA (3009), seeded demo reservations and guestbook data for acme and riyadh-grill, built an operator-token mint helper for the curl/terminal groups, and wrote the round's isolation registry, guidance sections and concurrency plan into library/user-testing.md. Spawned 17 flow-validator subagents over 5 batches (max 3 browsers) across terminal, curl, sqlite, agent-browser and Playwright surfaces, independently re-verified the two highest-risk findings, synthesized all 17 flow reports, wrote validation/foh-core/user-testing/synthesis.json and updated validation-state.json, then stopped the two dev servers it started.",
+		"whatWasLeftUndone": "No fix features were created (orchestrator's step); the 13 failed assertions are marked failed in validation-state.json with root causes and file:line evidence so fix features can be written directly. The guest-side clause of VAL-CROSS-006 cannot be exercised until the guest-channels-and-crm milestone implements /reservations/manage (both tenant-api and Sites routes 404 today); it is recorded inside the failed assertion rather than as a separate blocker. One environment issue needs a mission-owner decision: local D1's system-level reservations.enabled row is true while data.db has false, so the contract's flag-off precondition does not hold locally (workaround documented in library/user-testing.md). No second user-testing round was run.",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "aggregate all 17 flow reports with python/jq",
+					"exitCode": 0,
+					"observation": "109 unique assertion IDs with no duplicates across groups; per-group report statuses summed to 97 pass / 12 fail; SETUP-025 adjudicated to fail after cross-checking two independent groups, giving 96 pass / 13 fail."
+				},
+				{
+					"command": "python3 write of validation-state.json",
+					"exitCode": 0,
+					"observation": "96 assertions set to passed with validatedAtMilestone foh-core; 13 set to failed with an issues entry naming the root cause and file:line; state-wide counts are now passed 117, failed 13, pending 355."
+				},
+				{
+					"command": "python3 write of validation/foh-core/user-testing/synthesis.json + re-parse",
+					"exitCode": 0,
+					"observation": "Synthesis carries milestone/round/status fail, assertionsSummary 109/96/13/0, 17 flow entries summing to 109 assertions, passedAssertions, failedAssertions with reasons, appliedUpdates, flagStateAfterRun, servicesAfterRun and overrideJustification."
+				},
+				{
+					"command": "CI=true npm run test -w @repo/reservations (run by g1)",
+					"exitCode": 0,
+					"observation": "19 files / 71 tests passed; engine.property.test.ts runs 300 day scenarios and 100 operation sequences, scale.test.ts enforces the 200/2000/5000 expansion budgets."
+				},
+				{
+					"command": "cd apps/tenant-api && CI=true npx vitest run src/routes/reservations-setup.test.ts (run by g2)",
+					"exitCode": 0,
+					"observation": "8/8 passed, including the conflicts endpoint returning kind:unassigned items after tables are blocked."
+				},
+				{
+					"command": "curl matrix against tenant-api 3007 (g2, g6, g11, g14, g15)",
+					"exitCode": 0,
+					"observation": "401 without a token; setup GETs 200 with a read-only setup token and PUT/POST 403 insufficient_permissions; Host-preset book token gets 403 on setup settings and guests; region-summary 200 with counts 83 upcoming/69/80 tables 39/waitlist 2, internal summary 200 with the token and 401 without it."
+				},
+				{
+					"command": "agent-browser session list / ss -Htlnp after teardown",
+					"exitCode": 0,
+					"observation": "No browser sessions remain; App 3001 and Sites 3008 no longer listen; tenant-api US 3007 and KSA 3009 still listening (pre-existing, left untouched)."
+				},
+				{
+					"command": "git status --short --branch",
+					"exitCode": 0,
+					"observation": "Working tree clean on pr/reservations; no product code, tests or config were modified by this validation round."
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "Dragged an arrived, unassigned party from the side list onto empty table M2 on Host stand > Floor (g12)",
+					"observed": "Banner said 'Seated G12Arrive G12 at M2.' and POST /status returned 200 with seatedAt set, but no occupancy row was created, the day feed kept tableIds=[] and the canvas still showed M2 Available."
+				},
+				{
+					"action": "Opened Settings > conflicts panel with 5 real conflicts present (g16)",
+					"observed": "Each row rendered as '· (p)' with no confirmation code, no date, no party size and an empty reason badge, while GET /conflicts returned 5 items with kind and details.businessDate."
+				},
+				{
+					"action": "Switched the Book page service selector from All services to Lunch then Dinner on 2026-10-21 (g8)",
+					"observed": "The URL changed and the day feed re-fetched with serviceId, but all 4 reservations stayed visible in every mode; no party/cover counters exist on the page."
+				},
+				{
+					"action": "Opened Today, Book and the detail sheet with ?lng=ar (g9)",
+					"observed": "dir=rtl, Arabic tabs/filters/quick actions rendered, but status badges still showed the raw English enums booked, arrived, seated, no_show, cancelled."
+				},
+				{
+					"action": "Created a block from Settings > Special days through the UI (g16)",
+					"observed": "POST to /operator/reservations/setup/locations/<id>/blocks with startMin/endMin returned HTTP 500 every time; the same route with epoch startAt/endAt returned 201, which is how the group proceeded."
+				}
+			]
+		},
+		"tests": {
+			"added": [],
+			"coverage": "This round authored no test files; it exercised the product through its real surfaces. Existing suites were run as assertion evidence: @repo/reservations engine + package tests (g1), tenant-api reservations-setup tests (g2), and an App Playwright spec (g7). Everything else was verified live against App 3001, Sites 3008 and tenant-api 3007/3009 with agent-browser sessions, curl and read-only sqlite probes."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "blocking",
+				"description": "VAL-FND-006: the engine honours I4 for holds passed in input.holds but not for holds passed through existingHolds — searchAvailability folds them in without filtering expiresAt (packages/reservations/src/availability.ts:395-435) and the kind==='hold' branch of the assignment path has no expiry filter (packages/reservations/src/assign.ts:370-420), unlike the loop at :414. Expired holds therefore keep consuming capacity.",
+				"suggestedFix": "Filter existingHolds by expiresAt before folding them into occupancies in searchAvailability, and add the same expiry check to the kind==='hold' branch in assign.ts; add an engine test that an expired hold does not block a slot."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-SETUP-020: the UI pacing-rule Delete builds a location-scoped path /locations/:id/pacing/:ruleId (apps/app/app/utils/reservations/setup-api.ts:1958-1966) while tenant-api registers DELETE only at /pacing/:id (apps/tenant-api/src/routes/operator-reservations-setup.ts:1482-1507), so deleting a pacing rule from Settings > Services returns 404.",
+				"suggestedFix": "Point the client at /pacing/:ruleId, or register the location-scoped DELETE on the server; keep the API and UI paths identical."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-SETUP-021: the same path-shape mismatch for service availability — the UI deletes via /locations/:id/service-availability/:id (setup-api.ts:2045-2053) but tenant-api only registers /service-availability/:id (operator-reservations-setup.ts:1644-1649), returning 404.",
+				"suggestedFix": "Align the client path with the registered route (or add the alias) and cover the delete in the setup UI test."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-SETUP-023 and part of VAL-CROSS-006: creating a table block through the UI always returns HTTP 500 — the form posts startMin/endMin and createBlockForLocation assigns a localToInstant() resolution object into the numeric start_at/end_at columns (apps/tenant-api/src/services/rsv-setup-crud.ts:3049-3056).",
+				"suggestedFix": "Convert the resolved LocalInstant to epoch milliseconds before the insert (or accept startMin/endMin and resolve internally); add a Vitest case that posts the UI payload shape."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-SETUP-025: the conflicts panel on /acme/reservations/settings renders rows as '· (p)' because it reads confirmationCode/businessDate/partySize/reason (setup-api.ts:124-141, settings._index.tsx:855-876) while the endpoint returns kind/bookingId/tableId|serviceId/details.businessDate and fetchSetupConflicts raw-casts the response without mapping.",
+				"suggestedFix": "Map the engine conflict items to the DTO the panel renders (or render kind plus details.businessDate directly) and add a Playwright case with a non-empty conflicts list instead of the stubbed empty array."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-HOST-014: the arrived→seated path claims an assignment that is never persisted — the App sends tableIds in the status transition but transitionReservationStatus in apps/tenant-api/src/services/rsv-booking-service.ts ignores them, so POST /status returns 200 and sets seatedAt while no rsv_table_occupancies row is created and the day feed keeps tableIds=[].",
+				"suggestedFix": "Read tableIds in the status transition and run the same assignment/occupancy write the /assign path uses; assert an occupancy row exists after seating from the floor."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-BOOK-003/008/009/013: the Book surface is incomplete versus the contract — the detail sheet renders no occasion, no dining-area name and no source, and its audit entries carry no timestamps (it never calls /book/reservations/:id/events); the day query ignores serviceId so the service selector does not narrow rows; there are no party/cover counters and no source or tag filters; the area filter does not narrow.",
+				"suggestedFix": "Thread serviceId (and area/source/tag) through the day query and apply them, add the header counters, render occasion/dining area/source plus event timestamps from the events endpoint in the detail sheet, and give the phone booking sheet a free-text dietary field."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-BOOK-037: in the Arabic UI the status and course badges still render raw English enums (booked, confirmed, arrived, seated, finished, no_show, cancelled) at apps/app/app/routes/_app+/$orgSlug_+/reservations+/today.tsx:376,507,590, book.tsx:449,453 and detail-sheet.tsx:403; everything else in the RTL pass (dir, tabs, filters, quick actions, LTR-correct codes/times) is correct.",
+				"suggestedFix": "Translate the status/course label maps with Lingui messages and extract them into the ar catalog."
+			},
+			{
+				"severity": "blocking",
+				"description": "VAL-CROSS-006: after a block, a soft booking is auto-reassigned and emits auto_reassigned with from/to table ids, but no move notice reaches hosts (the day feed has no moveNotices key and the timeline shows 'Automatic Reflow Notices 0'), and a locked booking displaced by the block is not surfaced in the timeline's Unassigned & Conflicts panel (badge 0) even though the settings conflicts endpoint reports it as blocked_table.",
+				"suggestedFix": "Surface reflow moves (including auto_reassigned events) and displaced locked bookings in the host feed/timeline conflict panel; the block-creation 500 above must be fixed first for the UI path to be testable."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "VAL-FND-009: the sequence property suite verifies I1-I8 after every step and the day-scenario suite compares against the brute-force oracle, but the oracle is called once per day scenario (apps/tenant-api/src/services/engine.property.test.ts:45), not after every step of executeOperationSequence as the assertion's wording requires. Test-side gap, not user-visible behavior.",
+				"suggestedFix": "Call bruteForceAssignExists (or its per-step check) after each step of the sequence generator for small floors, or amend the assertion wording to match the two-suite design."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "Local D1's system-level reservations.enabled row is true while packages/database/db/data.db has false, so deleting the organization rows does not hide the module and the validation contract's flag-off precondition silently fails; the App watchdog also restores .wrangler/state rows to true within about 40 s of a write.",
+				"suggestedFix": "Set the system-level ConfigFlag row to false in apps/app/.wrangler/state (or document the workaround in the contract's preconditions); library/user-testing.md now records the toggle/observe/restore recipe."
+			},
+			{
+				"severity": "suggestion",
+				"description": "Two smaller observations that were not counted as assertion failures: the sidebar renders Waitlist for a Host-preset role (VAL-CROSS-002's text says 'only Today and Book', though the waitlist link shares read:reservation:any and no forbidden surface appears), and deleting a location leaves its regional tenant rows behind (deleteScopeData only clears phone-agent data).",
+				"suggestedFix": "Decide whether the waitlist entry is intended for the Host preset and, if not, gate it; if location deletion is meant to drop regional reservation data, extend deleteScopeData."
+			}
+		]
+	}
+}

@@ -1,0 +1,103 @@
+{
+	"group": "b10-ksa",
+	"surface": "agent-browser+curl+terminal",
+	"testedAt": "2026-10-17T14:15:00Z",
+	"isolation": {
+		"org": "riyadh-grill (ru0dm42cud9scs4g2duep21c), location oi97w1dxwcpnkpq9m9s8cnu8, tz Asia/Riyadh",
+		"ksaNode": "http://localhost:3009",
+		"usNode": "http://localhost:3007",
+		"ownedBusinessDate": "2026-11-11",
+		"ownedPhones": ["+96655661101", "+96655661103"],
+		"ownedEmails": ["rsv-b10-1@example.com", "rsv-b10-3@example.com"],
+		"tenantDb": "/home/factory-user/repos/menuza/packages/database/db/ksa/tenant_ru0dm42cud9scs4g2duep21c.db",
+		"browserSession": "276ff6d660b4__b10 (launched with --host-resolver-rules=MAP *.menuza.test [::1]; closed at end)",
+		"tokensUsed": "<book/setup/guests operator tokens minted via /tmp/menuza-user-testing/mint-token.mjs; never printed>"
+	},
+	"toolsUsed": [
+		"agent-browser",
+		"curl",
+		"sqlite3",
+		"wrangler d1 execute (read-only)",
+		"grep",
+		"python3"
+	],
+	"assertions": [
+		{
+			"id": "VAL-ONLINE-041",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b10-ksa/VAL-ONLINE-041-residency.txt; evidence/guest-channels-and-crm/b10-ksa/VAL-ONLINE-056-booking.har",
+			"notes": "Public booking on riyadh-grill via 3009 (Origin http://riyadh-grill.menuza.test:3008) completed: POST /reservations -> 201; row rsv_08460d3d-4f0d-48e9-8775-bf1fbf6ef6c4 (code FMG3JPEK, 2026-11-11 18:00, party 2, guest_locale ar) and guest gst_ee309846-dbbc-4264-898c-2de9a5899a71 (B10AR GuestOne, +96655661101, rsv-b10-1@example.com) exist in the KSA tenant DB; the waitlist entry wle_20c87888-5a18-4b83-befd-614756f2ec14 (B10WAIT, +96655661103) also only in KSA. US tenant DB (tenant_t58bgatqh3rv0s3movrecyj1.db): SQL counts 0 for first_name='B10AR', phone +96655661101, email rsv-b10-1, code FMG3JPEK, and the waitlist entry; raw byte grep of the DB file AND its -wal for B10AR / FMG3JPEK / 96655661101 / rsv-b10- all 0 (method sanity: the same grep finds B10AR twice in the KSA -wal). /tmp/menuza-logs/tenant-api-us.log: 0 hits for B10AR, the KSA phones and rsv-b10-; /tmp/menuza-logs/app.log: 0 hits for B10AR, 5566110, rsv-b10-, FMG3JPEK; /tmp/menuza-logs/sites.log: 0 hits. Local D1: Notification payload 0 matches for B10AR/FMG3JPEK, StaffingOutbox 0; raw grep of the whole apps/app/.wrangler/state tree (incl. -wal/-shm) finds none of B10AR, FMG3JPEK, 96655661101, rsv-b10-1@example.com, B10WAIT.",
+			"limitations": "The US-log grep is corroboration, not proof by itself: the KSA node also never logs the guest name (guest PII is not logged at all), so absence in the US log is expected either way. The decisive residency evidence is the tenant-DB presence/absence plus the D1 state scan."
+		},
+		{
+			"id": "VAL-ONLINE-056",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b10-ksa/VAL-ONLINE-056-sites-ar-reserve.png; VAL-ONLINE-056-ar-details-no-sms-optin.png; VAL-ONLINE-056-ar-confirmation.png; VAL-ONLINE-056-booking.har; VAL-MSG-007-ksa-confirmation-email-meta.json",
+			"notes": "Session launched with the resolver rule on http://riyadh-grill.menuza.test:3008/ar/reserve: documentElement dir=rtl, lang=ar; data-tenant-api-url=http://localhost:3009 (curl SSR confirms data-sms-allowed=\"false\" on KSA vs \"true\" on acme /reserve). Search for 2026-11-11 party 2 returned slots from GET :3009/reservations/availability 200; selecting 18:00 created a hold; the details step rendered in Arabic with firstName/lastName/phone/email/occasion/allergy/dietary/requests/marketing-email fields and NO SMS opt-in control (checkbox list is only tag_riyadh_grill_allergy + marketingEmail; page text contains no SMS/رسالة نصية consent). Confirm produced POST http://localhost:3009/reservations -> 201 (HAR payload smsOptIn=false, locale=ar). Confirmation renders in Arabic (تم حجزك / رمز التأكيد / المكان) with code FMG3JPEK in a DD element with computed direction ltr; Arabic date 'الأربعاء، 11 نوفمبر 2026, 6:00 م'. Row verified in KSA tenant DB (see VAL-ONLINE-041). Console errors: none (only Vite/React dev-info logs).",
+			"limitations": "The acme 'offers it' contrast was checked via SSR data-sms-allowed=\"true\" and the smsAllowed code path (apps/sites/src/pages/reserve/index.astro:44), not by opening acme's details step (other groups own acme writes)."
+		},
+		{
+			"id": "VAL-MSG-007",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b10-ksa/VAL-MSG-007-ksa-confirmation-email-meta.json; VAL-MSG-007-VAL-CROSS-015-confirmation-email-redacted.html; VAL-MSG-007-email-rtl-browser.png; VAL-ONLINE-056-booking.har",
+			"notes": "Confirmation email captured in apps/tenant-api/.dev-mail/ksa/ (20261017T140225631-46ccb4d2-68f2-49c9-8d28-cfb583c4bb3e.json, to rsv-b10-1@example.com, kind=confirmation). Subject Arabic: 'تم تأكيد حجزك في Riyadh Readiness Grill'. HTML root <html lang=\"ar\" dir=\"rtl\">; opened in the browser the layout renders right-to-left while date/time/party digits stay LTR ('الأربعاء، 11 نوفمبر 2026', '6:00 م', 'عدد الأشخاص: 2'). No [SMS MOCK] line for +96655661101 in /tmp/menuza-logs/tenant-api-ksa.log (grep 0); the single [SMS MOCK] line in the KSA log is an OTP for +966500000123 from an earlier session, not a reservation SMS. Guest saw no error: the Arabic confirmation page rendered normally and the request returned 201.",
+			"limitations": "None for this assertion; the manage link inside the email points at the App origin (known defect, see VAL-CROSS-015 notes)."
+		},
+		{
+			"id": "VAL-WAIT-020",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b10-ksa/VAL-WAIT-020-join.har; VAL-WAIT-020-notify.har; VAL-WAIT-020-ksa-waitlist-emails-meta.json; VAL-WAIT-020-waitlist_joined-email-redacted.html; VAL-WAIT-020-waitlist_ready-email-redacted.html; VAL-WAIT-020-ar-waitlist-status.png",
+			"notes": "Remote join from the Arabic /ar/reserve/waitlist page (RTL, numbers unmirrored, party 2, phone +96655661103, email rsv-b10-3@example.com): POST http://localhost:3009/reservations/waitlist/join -> 201; status page showed 'دورك في القائمة' with position 3 and quoted wait 'حوالي 1 دقيقة', party '2 ضيوف', and the on-my-way / leave actions. Operator Notify from /riyadh-grill/reservations/waitlist (POST :3009/operator/reservations/book/waitlist/wle_.../notify -> 200); the status page (opened with the token on the Sites origin) then showed 'طاولتك جاهزة' with a live countdown '9:43'. Both messages captured as emails only, in .dev-mail/ksa: waitlist_joined subject 'أنت في قائمة الانتظار في Riyadh Readiness Grill' and waitlist_ready subject 'طاولتك في Riyadh Readiness Grill جاهزة', both <html lang=\"ar\" dir=\"rtl\"> with Arabic body text. No [SMS MOCK] line for +96655661103 in the KSA log (grep 0); the guest saw no error.",
+			"limitations": "The status links inside both emails point at http://localhost:3001/... (App origin, the known siteOrigin defect); the token itself works when applied on the Sites origin, which is how the status page was verified. Not counted against this assertion, whose pass criteria are email-only delivery, Arabic RTL, no SMS, no error, status page works."
+		},
+		{
+			"id": "VAL-GUEST-028",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b10-ksa/VAL-GUEST-028-ksa-guestbook.png; VAL-GUEST-028-ksa-guestbook-search.png; VAL-GUEST-028-cross-region-refusal-curl.txt; VAL-GUEST-028-cross-region-refusal.txt; VAL-ONLINE-041-residency.txt",
+			"notes": "/riyadh-grill/reservations/guests lists KSA guests; searching 'B10AR' filters to the single B10AR GuestOne row (+96655661101, rsv-b10-1@example.com, tags 'B10-VIP' and 'First visit'); the profile page (gst_ee309846-...) shows Visits/Covers/No-shows stats, the visit-history table with the 2026-11-11 booking, and a tag created in the UI: filling 'B10-VIP' -> Create produced rsv_tags row tag_2232105d-ae4f-4d30-9f64-e636d223af66 and rsv_guest_tags assignment, visible as a removable chip after reload. Cross-region: a riyadh-grill guests-scope token sent to the US node http://localhost:3007/operator/reservations/guests -> HTTP 403 {\"error\":\"region_mismatch\"}; the same token to the KSA node -> 200 with the KSA guest list; no token -> 401. SQLite: KSA DB has the guest row, US DB has none (see VAL-ONLINE-041).",
+			"limitations": "Feature parity was judged on the KSA surface itself (list/search/filter/profile/stats/tags all worked); no side-by-side diff against the live acme Guestbook was run (acme guestbook assertions belong to other groups). The guest and its 'First visit' tag came from my own public booking, the custom B10-VIP tag was created through the profile UI."
+		},
+		{
+			"id": "VAL-CROSS-015",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/b10-ksa/VAL-CROSS-015-app-ar-rtl.png; VAL-CROSS-015-app-ar-today-booking.png; VAL-CROSS-015-floor-ar-live.png; VAL-CROSS-015-floor-en-live.png; VAL-CROSS-015-floor-ar-geometry.json; VAL-CROSS-015-floor-en-live-geometry.json; VAL-CROSS-015-floor-editor-ar.png; VAL-CROSS-015-floor-editor-ar-geometry.json; VAL-CROSS-015-floor-editor-en-geometry.json; VAL-CROSS-015-manage-link-as-captured-app-origin.png; VAL-CROSS-015-manage-sites-origin-works.png; VAL-MSG-007-VAL-CROSS-015-confirmation-email-redacted.html; VAL-ONLINE-056-ar-confirmation.png; VAL-WAIT-020-ar-waitlist-status.png",
+			"notes": "1) Operator: /riyadh-grill/reservations/today?lng=ar renders dir=rtl with mirrored sidebar/tabs/buttons and Arabic labels. Floor geometry identical between ?lng=ar and ?lng=en: live floor 12 tables byte-identical left/top/width/height (JSON diff true); editor 6 tables identical (80/80, 200/80, 80/200, 200/200, 340/120, 340/240 px, 72x72, rotate 0). Times/numbers not mirrored (18:00, party digits). 2) Guest: /ar/reserve RTL Arabic; slot chips in restaurant-local times (12:00 م … 9:45 م, numerals LTR); booking completed party 2 (rsv-b10-1@example.com, +96655661101) -> POST :3009/reservations 201; confirmation Arabic with code FMG3JPEK unmirrored (dir=ltr). 3) Email: newest .dev-mail/ksa capture for rsv-b10-1@example.com has the Arabic subject 'تم تأكيد حجزك في Riyadh Readiness Grill', <html lang=\"ar\" dir=\"rtl\">, theme colors converted to email-safe hex (#0a0a0a, #171717, #fafafa, #e5e5e5, #737373, #ffffff), and a manage link containing the literal substring '/ar/reserve/manage#t='. Exact captured href: http://localhost:3001/ar/reserve/manage#t=<redacted-token> — the path/fragment clause is met, but the origin is the App (known siteOrigin -> ENV.BASE_URL defect): opening it as captured shows the App 404 page (screenshot), while the same token opened on http://riyadh-grill.menuza.test:3008/ar/reserve/manage renders the Arabic manage page with the booking details (screenshot). This is the same defect already reported under VAL-MSG-009/VAL-CROSS-011; per instructions it was not re-diagnosed. 4) No SMS: grep of tenant-api-ksa.log for the guest phone finds no [SMS MOCK] reservation line. 5) Operator cross-check: the Arabic Today list for 2026-11-11 shows '18:00 • B10AR GuestOne (2)' on table C1. Console errors across the flows: none.",
+			"limitations": "riyadh-grill has no custom siteTheme/logo (D1 siteTheme=null), so 'org branding colors' are its effective default theme's colors converted to hex by the email theme — the same tokens the site renders in oklch. The manage-link origin defect is documented above; the assertion is judged pass because the four explicit fail conditions (unmirrored Arabic UI, mirrored floor geometry, English-only email, KSA reservation SMS) are all absent and the journey's literal '/ar/reserve/manage#t=' substring is present in the capture."
+		}
+	],
+	"frictions": [
+		{
+			"description": "Opening /riyadh-grill/reservations?lng=ar redirects to /riyadh-grill/reservations/today and drops the ?lng=ar query, so the page loads in English; the Arabic URL must be entered directly (/today?lng=ar).",
+			"resolved": true,
+			"resolution": "Navigated to http://localhost:3001/riyadh-grill/reservations/today?lng=ar directly (dir=rtl confirmed).",
+			"affectedAssertions": ["VAL-CROSS-015"]
+		},
+		{
+			"description": "The operator Waitlist 'Notify' button for the target card is covered by an aside.bg-background overlay for agent-browser ref clicks ('Element is covered by ...').",
+			"resolved": true,
+			"resolution": "Clicked the button with an in-page document.querySelector-based click inside eval (documented workaround from earlier rounds).",
+			"affectedAssertions": ["VAL-WAIT-020"]
+		},
+		{
+			"description": "Recent KSA tenant-DB writes live in the -wal file; a raw byte grep of the main .db file alone finds nothing even for rows present via SQL.",
+			"resolved": true,
+			"resolution": "Grepped the .db, -wal (and D1 state dir incl. -wal/-shm); validated the method by finding the guest string in the KSA -wal.",
+			"affectedAssertions": ["VAL-ONLINE-041", "VAL-GUEST-028"]
+		},
+		{
+			"description": "Schema naming differs from the obvious guesses: rsv_guests has phone_e164/email_norm (not phone/email), rsv_reservations has business_date (not date), Notification has payload/entityId (not body/title).",
+			"resolved": true,
+			"resolution": "Read the table schemas first, then wrote the SELECTs against real columns.",
+			"affectedAssertions": ["VAL-ONLINE-041", "VAL-GUEST-028"]
+		},
+		{
+			"description": "The operator waitlist entry GET /operator/reservations/guests with a trailing slash returns Hono's default {\"error\":\"Endpoint Not Found\"} 404 on both nodes, which is easy to mistake for a route that does not exist.",
+			"resolved": true,
+			"resolution": "Used the exact route path without the trailing slash (403 region_mismatch on US, 200 on KSA).",
+			"affectedAssertions": ["VAL-GUEST-028"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": "KSA tenant DB (riyadh-grill): reservation rsv_08460d3d-4f0d-48e9-8775-bf1fbf6ef6c4 (code FMG3JPEK, B10AR GuestOne, 2026-11-11 18:00, party 2, booked, guest_locale ar); guest gst_ee309846-dbbc-4264-898c-2de9a5899a71 (+96655661101, rsv-b10-1@example.com); waitlist entry wle_20c87888-5a18-4b83-befd-614756f2ec14 (B10WAIT, +96655661103, status=notified with a response deadline); tag tag_2232105d-ae4f-4d30-9f64-e636d223af66 'B10-VIP' assigned to the guest. Three captured emails in apps/tenant-api/.dev-mail/ksa/ (confirmation, waitlist_joined, waitlist_ready). No org flags, location settings, services or seeded rows were changed; no node restarts; no direct DB writes (all rows were created through the product surfaces). Browser session 276ff6d660b4__b10 closed; temporary token files under /tmp removed.",
+	"summary": "Tested 6 assertions on the KSA surface (agent-browser + curl + read-only sqlite): 6 pass, 0 fail, 0 blocked. KSA booking (FMG3JPEK) and waitlist entry exist only in the KSA tenant DB with no trace in the US tenant DB, US/App/Sites logs or local D1; Arabic RTL verified across operator, guest site and captured emails with identical floor geometry in ar/en and no KSA reservation SMS; the only caveat is the known manage-link App-origin defect, documented precisely under VAL-CROSS-015."
+}

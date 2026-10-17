@@ -1,0 +1,151 @@
+{
+	"timestamp": "2026-10-16T13:09:57.327Z",
+	"workerSessionId": "18759bd8-22cd-4f09-8018-f4e50d3bd3e2",
+	"featureId": "foh-setup-ui",
+	"milestone": "foh-core",
+	"commitId": "d6dd3084bc5554531a5b9b3dc52879714144d584",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": false,
+	"handoff": {
+		"salientSummary": "Implemented the App Reservations Setup UI (`settings*.tsx`), full-screen Floor Plan Designer (`FloorPlanCanvas`), Location Settings Reservations status card + time-zone nudge, Arabic RTL translations (`ar.po`), guard/unit/component tests, and Playwright E2E spec (`reservations-setup.test.ts`), verified across both US (`acme`) and KSA (`riyadh-grill`, `?lng=ar`) tenants.",
+		"whatWasImplemented": "Implemented the App Reservations Setup UI and Floor Plan Designer for milestone `foh-core`:\n1. Updated `apps/app/app/routes/_app+/$orgSlug_+/settings+/locations.$locationId.tsx` to render the Reservations status card (`[data-testid=\"location-reservations-status-card\"]`) and deep link (`/reservations/settings?location=<id>`) when `reservations.enabled` is true, and to fire `notifyReservationsContextChanged(organization.id, 'locations')` when location settings are saved.\n2. Updated `apps/app/app/routes/_app+/$orgSlug_+/reservations+/_layout.tsx` to accept `?location=` as an alias for `?locationId=` so deep links from Location settings pre-select the target location.\n3. Created `apps/app/app/utils/reservations/setup-api.ts` providing typed DTOs, request/response normalizers bridging `tenant-api` and App UI models, grid/canvas/rotation/time/contiguity helpers, conflict/error extractors, and browser-direct `fetch` functions for `/operator/reservations/setup/locations/:locationId/*`.\n4. Implemented `apps/app/app/routes/_app+/$orgSlug_+/reservations+/settings.tsx` parent shell route with sub-tab navigation (General & Policies, Tables & Areas, Floor Plan Designer, Services & Turn Times, Special Days & Blocks), location switcher, read-only badge, and the time-zone mismatch banner (`[data-testid=\"setup-timezone-mismatch-banner\"]`) that calls `POST .../timezone/re-derive`.\n5. Implemented `settings._index.tsx` (General & Policies), `settings.tables.tsx` (Dining Areas, Tables, and Table Combinations CRUD with 409 future-reservation conflict listing), `settings.services.tsx` (Services CRUD with cross-midnight validation, contiguous Turn-Time rules editor, Pacing rules, and Service Availability windows), and `settings.special-days.tsx` (Special Days & Holidays and Table/Area Blocks with 409 conflicting reservation surfacing and force-override).\n6. Implemented `apps/app/app/components/reservations/floor-plan-canvas.tsx` and `settings.floor-plan.tsx` providing a full-screen local-draft floor-plan editor with `dir=\"ltr\"` canvas and viewport, area tabs, 10-unit grid snap drag and resize, rotation presets (0/90/180/270) and custom angle input, keyboard arrow nudge (`+1` unit, `Shift+Arrow` `+10` units) with `aria-live=\"polite\"` coordinate announcements, decor elements (`wall`, `bar`, `door`, `window`, `label`, `plant`, `zone`), explicit Save, Leave-without-saving confirmation/discard, 409 stale-version conflict banner, and read-only mode.\n7. Extracted and translated all 310 new Lingui messages into Arabic (`apps/app/app/locales/ar.po`), added unit/component/guard tests, and added Playwright E2E spec `apps/app/tests/e2e/reservations-setup.test.ts`.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/app && npx vitest run app/utils/reservations/reservations-guards.test.ts app/utils/reservations/setup-api.test.ts app/components/reservations/floor-plan-canvas.test.tsx app/utils/locations.cache.test.ts",
+					"exitCode": 0,
+					"observation": "3 test files (44 tests) passed: reservations-guards.test.ts (35 tests), setup-api.test.ts (6 tests), and floor-plan-canvas.test.tsx (3 tests)"
+				},
+				{
+					"command": "NODE_OPTIONS=\"--max-old-space-size=4096\" npm run typecheck -w app",
+					"exitCode": 0,
+					"observation": "react-router typegen && tsc completed with 0 errors"
+				},
+				{
+					"command": "cd apps/app && npx eslint app/utils/reservations/setup-api.ts app/utils/reservations/setup-api.test.ts app/utils/reservations/reservations-guards.test.ts app/components/reservations/floor-plan-canvas.tsx app/components/reservations/floor-plan-canvas.test.tsx \"app/routes/_app+/\\$orgSlug_+/settings+/locations.\\$locationId.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/_layout.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/settings.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/settings._index.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/settings.tables.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/settings.floor-plan.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/settings.services.tsx\" \"app/routes/_app+/\\$orgSlug_+/reservations+/settings.special-days.tsx\" tests/e2e/reservations-setup.test.ts",
+					"exitCode": 0,
+					"observation": "ESLint completed with 0 errors and 0 warnings across all 14 touched files (including @shadcn/lint rules)"
+				},
+				{
+					"command": "npx oxlint apps/app/app/utils/reservations apps/app/app/components/reservations \"apps/app/app/routes/_app+/\\$orgSlug_+/reservations+\" \"apps/app/app/routes/_app+/\\$orgSlug_+/settings+/locations.\\$locationId.tsx\" apps/app/tests/e2e/reservations-setup.test.ts",
+					"exitCode": 0,
+					"observation": "Found 0 warnings and 0 errors across 26 files in 252ms"
+				},
+				{
+					"command": "npm run lingui:extract -w app && node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "Catalog statistics for app/locales/{locale}: en 6294, ar 6294 (0 missing); Lingui translations complete across all apps (apps/admin, apps/app, apps/mobile, apps/sites)"
+				},
+				{
+					"command": "npm run build -w app && cd apps/app && PORT=3101 CI=true npx playwright test tests/e2e/reservations-setup.test.ts --workers=1 --retries=0 --repeat-each=3",
+					"exitCode": 0,
+					"observation": "Production build succeeded and all 12 Playwright E2E runs (4 tests × 3 repeats) passed in 46.8s"
+				}
+			],
+			"interactiveChecks": [
+				{
+					"action": "Logged in as kody on http://localhost:3001 and navigated to /acme/settings/locations/v17plv08r5v357bie335lyq8",
+					"observed": "Verified [data-testid=location-reservations-status-card] is visible with time-zone badge America/New_York and Configure reservations deep link to /acme/reservations/settings?location=v17plv08r5v357bie335lyq8"
+				},
+				{
+					"action": "Walked through /acme/reservations/settings (General, Tables & Areas, Services & Turn Times, Special Days & Blocks) against live US tenant-api (:3007)",
+					"observed": "Verified General settings load and save (v1 -> v2), Tables & Areas displays 3 seeded dining areas and 13 active tables across Main Dining Room/Patio/Bar Counter, Services & Turn Times displays Lunch and Dinner (17:00-22:00) with party-size turn times, and Special Days & Blocks displays Holiday/Special Day and Table/Area Block management"
+				},
+				{
+					"action": "Opened /acme/reservations/settings/floor-plan?location=v17plv08r5v357bie335lyq8, selected table M1, pressed ArrowRight and Shift+ArrowDown, added a Wall decor element, and clicked Save floor plan",
+					"observed": "Table M1 moved from (70, 80) to (81, 90), [data-testid=floor-plan-live-region] announced 'Moved M1 to (81, 90)', Wall element was added to Main Dining Room, and Save floor plan persisted v4 via PUT /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/floor-plan with banner 'Floor plan saved (v4).'"
+				},
+				{
+					"action": "Opened /riyadh-grill/reservations/settings/floor-plan?lng=ar against live KSA tenant-api (:3009)",
+					"observed": "Verified document.documentElement.dir === 'rtl', Arabic chrome ('مصمم مخطط الصالة', 'حفظ مخطط الصالة', 'مغادرة دون حفظ'), [data-testid=floor-plan-canvas-surface] dir === 'ltr', and 6 tables visible in the floor-plan canvas viewport"
+				},
+				{
+					"action": "Fetched single-fetch loader payload /acme/reservations/settings.data and toggled reservations.enabled=0 on acme in local D1",
+					"observed": "Verified /acme/reservations/settings.data returned status 200 with control-plane data only (hasGuestPhone: false, hasOrgSlug: true), and when reservations.enabled=0, /acme/reservations/settings returned 404 (no reservations-setup-shell) and /acme/settings/locations/v17plv08r5v357bie335lyq8 hid location-reservations-status-card before restoring reservations.enabled=1"
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/app/app/utils/reservations/setup-api.test.ts",
+					"cases": [
+						{
+							"name": "clampGridCoordinate snaps and clamps coordinates to 0..2000",
+							"verifies": "Grid snapping (10-unit or 1-unit step) and 0..2000 canvas boundary clamping"
+						},
+						{
+							"name": "clampCanvasDimension clamps width/height to 20..2000 with optional snapping",
+							"verifies": "Table and decor element width/height clamping between 20 and 2000 units"
+						},
+						{
+							"name": "normalizeRotation wraps angles to 0..359",
+							"verifies": "Rotation angle normalization across 0..359 degrees including negative angles"
+						},
+						{
+							"name": "minutesFromMidnightToTimeInput and timeInputToMinutesFromMidnight round-trip including cross-midnight values",
+							"verifies": "Service seating time input conversion including cross-midnight minutes (>1440)"
+						},
+						{
+							"name": "validateTurnTimeContiguity detects gaps, overlaps, and contiguous ranges",
+							"verifies": "Client-side party-size contiguity validation for turn-time brackets"
+						},
+						{
+							"name": "saveFloorPlan sends PUT /floor-plan with version and tables/elements payload",
+							"verifies": "Browser-direct operator JWT bearer request to PUT /operator/reservations/setup/locations/:locationId/floor-plan"
+						}
+					]
+				},
+				{
+					"file": "apps/app/app/components/reservations/floor-plan-canvas.test.tsx",
+					"cases": [
+						{
+							"name": "renders the floor plan canvas with dir=\"ltr\", nudges selected table via keyboard arrows (+1 and +10 with Shift), and announces coordinates via aria-live",
+							"verifies": "Canvas renders dir=\"ltr\", keyboard ArrowRight (+1) and Shift+ArrowDown (+10) nudge selected table, aria-live region announces coordinates, and Save submits updated draft"
+						},
+						{
+							"name": "discards unsaved changes when Leave without saving is confirmed",
+							"verifies": "Local draft edits do not call onSave when Leave without saving is clicked and confirmed"
+						},
+						{
+							"name": "disables mutation controls in read-only mode and renders 409 conflict banner when provided",
+							"verifies": "Read-only operators have Save/add/delete/rotate controls disabled and see 409 conflict banner when version conflict occurs"
+						}
+					]
+				},
+				{
+					"file": "apps/app/tests/e2e/reservations-setup.test.ts",
+					"cases": [
+						{
+							"name": "Location settings renders Reservations status card when enabled and Setup screens cover General, Tables, Services, Special Days, and time-zone re-derive banner",
+							"verifies": "VAL-SETUP-001, VAL-SETUP-002, VAL-SETUP-023, VAL-SETUP-024, VAL-SETUP-026, VAL-SETUP-027, VAL-CROSS-001 across Location settings and all Setup tabs"
+						},
+						{
+							"name": "Full-screen floor-plan editor supports local draft, keyboard nudge with aria-live, decor elements, Leave-without-saving discard, explicit Save, and 409 conflict banner",
+							"verifies": "VAL-SETUP-025 and VAL-SETUP-028 for full-screen floor-plan local draft, keyboard nudge, aria-live, Leave without saving discard, Save, and 409 stale-version conflict banner"
+						},
+						{
+							"name": "Arabic (?lng=ar) mirrors Setup UI chrome while keeping floor-plan canvas dir=\"ltr\"",
+							"verifies": "VAL-SETUP-032 RTL layout mirroring with floor-plan canvas remaining dir=\"ltr\""
+						},
+						{
+							"name": "Read-only operator sees Setup screens and floor-plan editor with mutation controls disabled/hidden",
+							"verifies": "VAL-SETUP-031 read-only operator view with mutation controls disabled across Setup tabs and floor-plan designer"
+						}
+					]
+				}
+			],
+			"updated": [
+				"apps/app/app/utils/reservations/reservations-guards.test.ts"
+			],
+			"coverage": "Unit tests for setup-api helpers and client requests (`setup-api.test.ts`), component tests for `FloorPlanCanvas` (`floor-plan-canvas.test.tsx`), static guard tests (`reservations-guards.test.ts`) verifying all 6 setup routes and location settings integration, and Playwright E2E tests (`reservations-setup.test.ts`, 4 tests × 3 repeats = 12 runs) covering CRUD, floor-plan designer, timezone mismatch banner, RTL `?lng=ar`, and read-only gating."
+		},
+		"discoveredIssues": [],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

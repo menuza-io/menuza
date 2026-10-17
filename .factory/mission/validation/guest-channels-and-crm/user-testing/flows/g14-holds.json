@@ -1,0 +1,108 @@
+{
+	"group": "g14-holds",
+	"surface": "browser+curl",
+	"testedAt": "2026-10-17T15:05:00Z",
+	"isolation": {
+		"org": "acme (t58bgatqh3rv0s3movrecyj1)",
+		"location": "v17plv08r5v357bie335lyq8 (Downtown Flagship)",
+		"ownedBusinessDates": [
+			"2026-11-15",
+			"2026-11-19 (unused: the cross flow ran on 2026-11-15)"
+		],
+		"ownedPhones": "+1555555341, +1555555342, +1555555343, +1555555344",
+		"ownedEmails": "rsv-g14-1@example.com, rsv-g14-2@example.com, rsv-g14-3@example.com, rsv-g14-4@example.com",
+		"settingsTouched": "hold_minutes (baseline 7), guest_modify_cutoff_min (baseline 120) — both restored and verified",
+		"clientIdentity": "curl public routes used X-Forwarded-For: 10.14.1.1; browser used the shared client identity",
+		"browserSession": "agent-browser --session 276ff6d660b4__g14 (closed)",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (SELECT only)"
+	},
+	"assertions": [
+		{
+			"id": "VAL-ONLINE-011",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g14-holds/VAL-ONLINE-011-settings-hold_minutes-3.txt, VAL-ONLINE-011-hold-H1-created.txt, VAL-ONLINE-011-hold-H1-response.redacted.json, VAL-ONLINE-011-availability-during-H1.json, VAL-ONLINE-011-availability-after-H1-expiry.json, VAL-ONLINE-011-fresh-hold-H2.json, VAL-ONLINE-011-booking-201.json, VAL-ONLINE-011-015-curl-flow.log",
+			"notes": "PUT /operator/reservations/setup/locations/v17plv08r5v357bie335lyq8/settings with {holdMinutes:3, expectedVersion:58} -> 200 (version 59); DB row showed hold_minutes=3. Hold H1 (2026-11-15 17:00, party 2, areaPref G9-Area-Strict) -> POST /reservations/holds 201, expiresAt = now+3min, occupancy tbl_00d903ae (G9-2, the only table of the single-table area) 17:00-18:30 active=1. While H1 was live the 17:00 and 17:15 slots were no longer offered in G9-Area-Strict (mapped to G4-Area) — the held unit was withheld. 3.5 min later, after the tick sweep, the H1 row was status=expired with occupancy active=0 and availability showed 17:00 G9-Area-Strict again. A fresh hold H2 -> 201 and POST /reservations with a different guest (+1555555341) -> 201, confirmation 75CKZHEQ (rsv_c5872d07).",
+			"limitations": "The public availability endpoint has no area filter, so 'the slot is offered again' was judged by the slot's seating-area mapping returning to G9-Area-Strict (the single-table area whose table H1 held); the location has other tables, so the 17:00 time chip itself never disappeared."
+		},
+		{
+			"id": "VAL-ONLINE-015",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g14-holds/VAL-ONLINE-015-expired-hold-410.json, VAL-ONLINE-015-retry-same-body.json, VAL-ONLINE-015-last-unit-409.json, VAL-ONLINE-011-015-curl-flow.log",
+			"notes": "Expired hold H1's token -> POST /reservations returned 410 {\"error\":\"hold_expired\"}; the reservation count for that slot was 1 before and 1 after, and no reservation row is linked to H1's hold id (its row stayed status=expired). The literal second step was executed exactly: after the successful booking (H2 -> 75CKZHEQ) a retry with the same body, a fresh Idempotency-Key and a different phone (+1555555343) returned 410 hold_expired and created no second row (count stayed 1) — the consumed hold token is refused with the documented non-active-hold code. The 409-with-alternatives path was reproduced where the slot is genuinely exhausted: a fresh hold for the now-taken last unit of the single-table area returned 409 {\"error\":\"slot_unavailable\"} with 6 same-day alternatives and no second reservation row.",
+			"limitations": "Literal deviation: the contract expects the same-body booking retry to answer 409 slot_unavailable; it answers 410 hold_expired (the hold token was consumed by the successful booking). The 409 slot_unavailable + alternatives is produced by a fresh hold attempt for the exhausted unit, which is the only path that can reach that code. If the literal 409-on-retry is binding, this assertion is a partial mismatch rather than a product bug; no double booking occurs either way."
+		},
+		{
+			"id": "VAL-ONLINE-032",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g14-holds/VAL-ONLINE-032-settings-put.txt, VAL-ONLINE-032-booking-created.txt, VAL-ONLINE-032-manage-closed.txt, VAL-ONLINE-032-booking-unchanged.txt, g14-settings-restored.txt",
+			"notes": "PUT guestModifyCutoffMin=100000 -> 400 {\"error\":\"invalid\", fields:[guestModifyCutoffMin, guest_modify_cutoff_min], issue too_big}. Used the API maximum 10080 (PUT -> 200, version 61) with a booking inside that window: hold + booking on 2026-10-18 19:00 (rsv_9add607f, EG35MGPS) ~1 day out, so the deadline was in the past. GET /reservations/manage -> 200 {status: booked, canModify: false, canCancel: false}, cancelDeadline 2026-10-11T23:00:00.000Z (before now 2026-10-17T14:54Z). POST /reservations/manage/modify -> 409 modify_closed; POST /reservations/manage/cancel -> 409 cancel_closed. The booking was unchanged (status booked, cancelled_by empty, version 1, updated_at identical). guest_modify_cutoff_min restored to 120 and verified (API + DB, final version 66).",
+			"limitations": "The contract's literal value 100000 is outside the settings schema (guestModifyCutoffMin max 10_080, packages/reservations/src/schemas/setup.ts), so it cannot be set through the operator settings API; the assertion's observable requirements were reproduced with the maximum accepted value plus a booking inside it. Booking was made on 2026-10-18 (not an owned registry date) because a >7-day-out booking cannot be inside any API-accepted cutoff."
+		},
+		{
+			"id": "VAL-ONLINE-048",
+			"status": "pass",
+			"evidence": "evidence/guest-channels-and-crm/g14-holds/VAL-CROSS-009-step1-hold-countdown.png, VAL-CROSS-009-step1-network.txt, VAL-ONLINE-048-hold-expired-returned-to-slots.png, VAL-ONLINE-048-network-after-expiry.txt, VAL-ONLINE-048-booking-after-expiry.txt, g14-console-errors.txt",
+			"notes": "hold_minutes=3. On Sites http://acme.menuza.test:3008/reserve, party 2, date 2026-11-15, clicking the 12:00 chip (G9-Area-Strict) reached the hold step: 'Your table is held' + countdown 2:57, network POST /reservations/holds -> 201. The countdown ran to 0:00 (observed 14:58:57 UTC) without submitting; the details card hid and the flow returned to the time-selection step with the message 'Your hold expired. Your hold expired. Please choose a time again.' and refreshed the slot list with GET /reservations/availability -> 200 (34 chips, 12:00 G9-Area-Strict present). Booking the same slot afterwards worked normally: fresh hold -> 201 and POST /reservations -> 201 (MRPX177K). Console log contained only Vite debug lines; no errors.",
+			"limitations": "The browser used the shared client identity, so the shared holds_ip budget applied (no 429 was hit)."
+		},
+		{
+			"id": "VAL-CROSS-009",
+			"status": "fail",
+			"evidence": "evidence/guest-channels-and-crm/g14-holds/VAL-CROSS-009-step1-hold-countdown.png, VAL-CROSS-009-step1-network.txt, VAL-CROSS-009-step1-sqlite-hold.txt, VAL-CROSS-009-step2-staff-channel-during-hold.txt, VAL-CROSS-009-step2-operator-availability-during-hold.json, VAL-CROSS-009-step2-operator-availability-during-hold-area-scoped.json, VAL-CROSS-009-step2-operator-day-feed-during-hold.json, VAL-CROSS-009-step2-second-guest-refused.json, VAL-CROSS-009-step3-hold-status.txt, VAL-CROSS-009-steps3-4.txt, VAL-CROSS-009-occupancy-precise.txt, VAL-CROSS-009-step4-operator-availability-after-expiry.json, VAL-CROSS-009-step4-public-availability-after-expiry.json, VAL-CROSS-009-step4-sites-slot-again.png",
+			"notes": "Step 1 passed: Sites hold at 12:00 on 2026-11-15 in the single-table area (G9-Area-Strict) with the countdown visible; POST /reservations/holds -> 201 (hld_00330bce, G9-2 occupied 12:00-13:30). Step 2 FAILED as specified: GET /operator/reservations/book/availability?locationId=...&date=2026-11-15&partySize=2 returned 200 and still offered the 12:00 slot with available:true (suggestedTableIds [tbl_08a45749]); scoped with areaId=area_9f595e43 (the held area) it also returned available:true and even suggested tbl_00d903ae (G9-2), the exact table the live hold occupies. getOperatorAvailability builds its occupancy set from reservations only (rsv-day-feed-service.ts:1363-1375), so live holds never affect the availability read. Step 3 passed: the guest abandoned the hold (tab left, no confirm/release), the row is status=expired with its occupancy active=0, and the sweep tick reported expire_holds ok (0 further holds). Step 4 passed: the operator endpoint offers 12:00 again (available:true), the public endpoint offers 12:00 in G9-Area-Strict, the Sites chip list shows 12:00 G9-Area-Strict again, and the day feed's holds list is empty. Capacity was protected while the hold was live: a second guest's hold for the same slot+area was refused 409 slot_unavailable with alternatives.",
+			"limitations": "Pass criterion 'the slot is withheld while the hold is live ... on both channels' is met for the guest channel but not for the staff availability endpoint named in the contract. Mitigating facts: the staff day feed (GET /operator/reservations/book/day) does list the live hold, and the staff booking write path does respect holds (rsv-booking-service.ts passes engineHolds into assignTables), so the gap is confined to the availability read (it can suggest a table that a guest currently holds). Checkpoint note: the contract's literal query `select status from rsv_holds order by created_at desc limit 1` returned 'converted' because my later VAL-ONLINE-011/048 holds are newer; the abandoned hold hld_00330bce-5e3f-42ce-b0ab-fc631801b7a2 is 'expired' (verified by id) and no active occupancy remains for it."
+		}
+	],
+	"frictions": [
+		{
+			"description": "g4-rules changed location settings while I worked: at 14:53 the live row was min_notice_min=120, same_day_cutoff_min=655, horizon_days=14 (version 60), which made my owned dates (2026-11-15/19) return 'beyond_horizon' and hid the Sites time chips. Restored to 60/30/None by ~14:55 (version 63).",
+			"resolved": true,
+			"resolution": "Re-read the settings before every PUT, paused the browser flow, and re-ran after the horizon was restored; all PUTs used the live expectedVersion and none hit 409 stale_version.",
+			"affectedAssertions": [
+				"VAL-ONLINE-011",
+				"VAL-ONLINE-015",
+				"VAL-ONLINE-048",
+				"VAL-CROSS-009"
+			]
+		},
+		{
+			"description": "POST http://localhost:3007/reservations/ (trailing slash) returns Hono's default 404 {\"error\":\"Endpoint Not Found\"}; the same as the documented GET trailing-slash quirk.",
+			"resolved": true,
+			"resolution": "Used the exact route path POST /reservations.",
+			"affectedAssertions": ["VAL-ONLINE-032"]
+		},
+		{
+			"description": "Minted operator tokens last 15 minutes; the setup token expired between the settings change and the restore, so the restore PUT answered 401.",
+			"resolved": true,
+			"resolution": "Minted a fresh setup token and repeated the restore (200, hold_minutes 7 verified).",
+			"affectedAssertions": ["VAL-ONLINE-011", "VAL-ONLINE-032"]
+		},
+		{
+			"description": "The contract's VAL-ONLINE-032 value 100000 is rejected by the settings schema (guestModifyCutoffMin max 10_080), so 'every booking is inside the cutoff' cannot be reached for a >7-day-out booking through the API.",
+			"resolved": true,
+			"resolution": "Recorded the 400 response, used the maximum accepted value 10080 with a booking ~1 day out (inside the window), and restored 120 afterwards.",
+			"affectedAssertions": ["VAL-ONLINE-032"]
+		},
+		{
+			"description": "The contract's VAL-ONLINE-015 second step expects 409 slot_unavailable from a booking retry with the same body; a consumed hold token answers 410 hold_expired.",
+			"resolved": true,
+			"resolution": "Executed both the literal retry (410, no second row) and the equivalent fresh-hold attempt for the exhausted unit (409 slot_unavailable + alternatives, no second row); documented the deviation in the assertion notes.",
+			"affectedAssertions": ["VAL-ONLINE-015"]
+		},
+		{
+			"description": "A read-only sqlite3 SELECT hit 'database is locked' once while the tenant-api was writing.",
+			"resolved": true,
+			"resolution": "Re-ran the SELECT after the write finished.",
+			"affectedAssertions": ["VAL-ONLINE-011", "VAL-CROSS-009"]
+		},
+		{
+			"description": "The operator book/availability endpoint is hold-blind (suggests a table that a live guest hold occupies); this is the VAL-CROSS-009 step-2 failure and also affects any future validator who checks staff capacity against a live hold.",
+			"resolved": false,
+			"resolution": "Reported as the VAL-CROSS-009 failure with the code path; not worked around.",
+			"affectedAssertions": ["VAL-CROSS-009"]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": ["agent-browser", "curl", "sqlite3", "node (mint-token.mjs)"],
+	"leftBehind": "hold_minutes restored to 7 and guest_modify_cutoff_min to 120 on acme location v17plv08r5v357bie335lyq8 — verified through the operator API and the tenant DB (final version 66); no other settings field touched. Data created (all mine, none deleted): reservations EG35MGPS (2026-10-18 19:00), 75CKZHEQ (2026-11-15 17:00), MRPX177K (2026-11-15 12:00); hold rows hld_851d8d98 (released probe), hld_e8d31f77 (expired), hld_00330bce (expired, the abandoned cross-flow hold), hld_256dbe13 and hld_3940dd5a (converted), plus their occupancy rows (active=0 for released/expired). Browser session 276ff6d660b4__g14 closed (no active sessions). No product code, tests, config, flags or git state changed; no tokens or secrets in the report or evidence files."
+}

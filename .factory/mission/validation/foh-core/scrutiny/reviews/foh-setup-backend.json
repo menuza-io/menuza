@@ -1,0 +1,120 @@
+{
+	"featureId": "foh-setup-backend",
+	"reviewedAt": "2026-10-16T18:53:10.000Z",
+	"commitId": "bf30dd0ce642eec549317414ae3bb5ad539b3d25",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"transcriptSkeletonReviewed": true,
+	"diffReviewed": true,
+	"status": "fail",
+	"codeReview": {
+		"summary": "The Setup backend is broadly wired and largely aligned with architecture.md: every /operator/reservations/setup/* endpoint exists (settings, areas, tables, combos, floor elements, atomic floor-plan save, services, turn times, pacing, service availability, special days, blocks, validation, conflicts, rederive-times, plus section layouts added by the later Book/Host Stand commit), mounted at /setup in reservations-operator.ts (routes/reservations-operator.ts:52), guarded by rsvGuard('setup') with read vs update grants, impersonation refusal, location filtering and per-entity allowsLocation checks; reservations-security.test.ts enumerates every mounted route and sweeps 401/403/404 paths (including VAL-SETUP-027/028). Location settings enforce expectedVersion 409 stale_version with the current row (rsv-setup-service.ts:451), the floor-plan save enforces floorPlanVersion 409 before any write (rsv-setup-crud.ts:1343), reflow/archive re-plans soft bookings via reflowDay and returns conflicts/moves (rsv-setup-crud.ts:749, 1105, rsv-setup-service.ts:1046-1261), validateConfig and detectConflicts are surfaced (rsv-setup-service.ts:1338, 1485), the US and KSA tenant DBs were re-seeded with refreshReservationsTriggers (tenant-db migrations.ts:212, seed-reservations.ts:334), and ADR 048 has the contract's sections. However, the implementation misses several explicitly approved requirements and the mission's write-path directive: no setup write (configuration, blocks, floor-plan save, reflow, rederive) goes through withReservationWrite or any SQLite transaction; the hold-minute ranges of VAL-SETUP-005 and the turn-time bounds/overlap rules of VAL-SETUP-019 are not enforced; special-day create/update/delete do not bump rsv_day_versions as VAL-SETUP-022 requires; and the combination update path does not reject a duplicate active member set (VAL-SETUP-010). Details and non-blocking findings below.",
+		"issues": [
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 1601,
+				"severity": "blocking",
+				"description": "No setup write path goes through `withReservationWrite` or any transaction; every setup mutation is a sequence of independent SQLite statements. `grep -c withReservationWrite` is 0 in operator-reservations-setup.ts, rsv-setup-service.ts and rsv-setup-crud.ts, and no file contains `db.transaction`. This defeats the mission AGENTS.md directive 'every reservation write goes through withReservationWrite' and architecture.md section 8, and concretely breaks the approved atomicity requirements: VAL-SETUP-011 ('atomically persists the floor plan') and VAL-SETUP-017 ('the save transaction deactivates the invalid occupancy…'). In saveFloorPlan the element layer is wiped first and re-inserted row by row (`rsv-setup-crud.ts:1601-1611`), so a failure or crash between those statements (or during the area/table/combo upserts at :1380-1590) leaves rsv_floor_elements empty and the plan partially written with no rollback; createBlockForLocation inserts the rsv_blocks row (:2778), deactivates overlapping soft occupancies (:2839-2880), inserts block occupancies (:2880) and only then reflows (:2896) — a failure mid-way leaves a block with no occupancies and bookings deactivated without reassignment. The version checks are read-then-write with no lock/serialization (bumpFloorPlanVersion reads and re-writes at :78-95; settings at rsv-setup-service.ts:451), so two concurrent saves both pass the stale check and one silently overwrites the other while both compute version+1. Setup writes are also not serialized against booking writes that DO use withReservationWrite (rsv-booking-service.ts), so a concurrent booking/block can interleave and hit the rsv_table_occupancies overlap trigger as an error instead of being handled inside the write gate.",
+				"affectedBehavior": "Non-atomic floor-plan/block saves (partial state, decor-layer loss), lost updates under concurrent operator saves, and unsynchronized reads/writes vs. booking writes."
+			},
+			{
+				"file": "packages/reservations/src/schemas/setup.ts",
+				"line": 74,
+				"severity": "blocking",
+				"description": "VAL-SETUP-005 requires hold_minutes 3..20 (default 7), payment_hold_minutes 10..60 (default 20) and voice_hold_minutes 5..30 (default 15), with out-of-range values rejected with HTTP 400 (evidence: '400 error on out-of-range hold_minutes'). The schema accepts holdMinutes/paymentHoldMinutes/voiceHoldMinutes 1..120 (`setup.ts:74-77`), `holdTtlSec` is rounded and clamped to >= 1 (routes/operator-reservations-setup.ts:451-452), and updateLocationSettings applies any value without re-validation (rsv-setup-service.ts:441-618). `PUT /operator/reservations/setup/locations/:id/settings` with holdMinutes: 1 or 25, or paymentHoldMinutes: 5, returns 200 and persists. The worker's own test only covers holdMinutes 99999 (its VAL-SETUP-005 test at reservations-setup.test.ts:345).",
+				"affectedBehavior": "The contract's 400 rejection for out-of-range hold durations does not happen; operators can persist hold timings outside the approved envelope."
+			},
+			{
+				"file": "packages/reservations/src/schemas/setup.ts",
+				"line": 246,
+				"severity": "blocking",
+				"description": "VAL-SETUP-019 requires the API and validateConfig to reject turn-time minutes outside 15..480 and overlapping buckets (evidence: '400 rejection when submitting minutes: 10 or minutes: 600 or overlapping ranges'). The route schema allows minutes 15..720 (`setup.ts:246`), createTurnTimeForLocation only rejects <15 or >720 (rsv-setup-crud.ts:2024) and updateTurnTimeForLocation checks only the party range, and validateConfig's turn_time_bucket_invalid_range check only rejects durationMin <= 0 (packages/reservations/src/config/validate.ts:498-508) — the 480 ceiling exists nowhere. Overlapping buckets are reported by validateConfig (error severity) but are not rejected by create/update (rsv-setup-crud.ts:1998-2103): two buckets covering party 1-4 and 3-6 are persisted with 201/200. POST /turn-times { minutes: 600 } returns 201.",
+				"affectedBehavior": "Invalid turn-time configuration is accepted by the API and only surfaced later in the validation view; the approved 15..480 bound is unenforced."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 2566,
+				"severity": "blocking",
+				"description": "VAL-SETUP-022: 'Creating or deleting a special day bumps rsv_day_versions for the affected dates.' createSpecialDayForLocation (:2486-2580), updateSpecialDayForLocation (:2587-2656) and deleteSpecialDayForLocation (:2658-2682) never call bumpDayVersion directly; they only call reflowFutureBookingsForLocation with affectedDates [fromDate, toDate]. Inside the reflow, the day version bump is guarded by `if (needsReflow && resIds.length > 0)` (rsv-setup-service.ts:1046 and :1261), and needsReflow only becomes true when a soft reservation's table assignment is archived/shrunk/blocked — a `closed`, `online_closed`, `modified` or `replace` day does not make assignments invalid, so in the normal case no rsv_day_versions row is created or incremented. Even when a bump does occur, only the range's from/to dates (plus dates that already have reservations) are bumped, not every affected date in between. The setup test at reservations-setup.test.ts:1286-1341 never asserts a day-version bump, so the gap is untested.",
+				"affectedBehavior": "Special-day creation/deletion does not invalidate the day feed ETag for the affected dates; the App/day-feed can keep serving stale per-day data (and the contract's sqlite evidence fails)."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 997,
+				"severity": "blocking",
+				"description": "VAL-SETUP-010 requires the service to reject a combination whose member table set exactly matches another active combination in the same location. createComboForLocation enforces the canonical duplicate check (:856-870), but updateComboForLocation re-inserts members (:997-1006) without any duplicate-member-set check and there is no DB constraint on member sets (only idx_rsv_table_combo_members_table in drizzle/0016), so PATCH /operator/reservations/setup/combos/:id { tableIds: [same set as another active combo] } returns 200. The floor-plan save also upserts combos with no member validation at all (rsv-setup-crud.ts:1528-1586): a combo with one member or a duplicate canonical set can be persisted via PUT /locations/:id/floor-plan, which is the same data model the engine scores.",
+				"affectedBehavior": "Duplicate or invalid combinations can exist and be chosen by the assignment engine, double-counting capacity and contradicting the approved uniqueness rule."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/operator-reservations-setup.ts",
+				"line": 1552,
+				"severity": "non_blocking",
+				"description": "PUT/PATCH /service-availability/:id bypasses upsertServiceAvailabilityForLocation: it only applies mode/fromMin/toMin when `parsed.mode` is present (routes:1552-1562), ignores areaId/tableId/comboId changes, performs no XOR-target validation (a body with both areaId and tableId is accepted, only mode is written), returns 200 unchanged when mode is absent, writes with no audit entry and no expectedVersion. The create path enforces the VAL-SETUP-021 XOR rule (rsv-setup-crud.ts:2361-2368), so the gap is limited to the update route.",
+				"affectedBehavior": "A rule submission with zero or two targets on the update route is not rejected as VAL-SETUP-021 requires."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-service.ts",
+				"line": 1527,
+				"severity": "non_blocking",
+				"description": "GET /locations/:id/conflicts (read grant read:reservation_settings:any) calls reflowFutureBookingsForLocation (:1527), which performs writes: it deactivates invalid occupancies, re-inserts occupancy rows, bumps reservation version/scheduleVersion and bumps rsv_day_versions (:950-1261). A read-only operator (or an impersonated read-only session, which only loses write routes) can therefore move soft bookings and mutate day versions through a GET. VAL-SETUP-025 describes the conflicts view as an inspection, and VAL-SETUP-027 treats every GET as read-only.",
+				"affectedBehavior": "Read-only setup access has write side effects on reservations; a conflicts refresh can silently reassign bookings."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 1668,
+				"severity": "non_blocking",
+				"description": "Configuration mutations never bump rsv_location_settings.version: createServiceForLocation (:1668), updateServiceForLocation (:1777), archiveServiceForLocation (:1953), turn times, pacing, service-availability, and the table/area/combo paths (which only bump floor_plan_version via bumpFloorPlanVersion :78-95) all leave the day-feed ETag input unchanged. rsv-day-feed-service.ts:511-515 builds `settingsVersion` from `settings.version` for the ETag `\"<dayVersion>.<settingsVersion>\"`, so after adding a service, changing turn times/pacing, or setting a table unavailable, a client polling GET /operator/reservations/book/day with If-None-Match gets 304 and keeps stale data until a reflow/block/special-day/booking bumps the day version.",
+				"affectedBehavior": "App day-feed consumers can display stale setup configuration after a Setup save."
+			},
+			{
+				"file": "apps/tenant-api/src/services/rsv-setup-crud.ts",
+				"line": 2528,
+				"severity": "non_blocking",
+				"description": "Special days of kind 'modified' store `serviceId`/`patch` from the request (create :2486-2536, update :2587-2656) but the patch is never validated (the route schema is z.record(z.unknown()), schemas/setup.ts:287) and is never consumed: resolveServices applies 'modified' days from customServices/links (packages/reservations/src/rules/resolve-services.ts:493-522), and no engine code reads rsv_special_days.patch. VAL-SETUP-022 specifies 'modified (targeting a service_id with a validated patch)'.",
+				"affectedBehavior": "A malformed or meaningless patch is accepted and ignored; the approved 'validated patch' behavior is absent."
+			},
+			{
+				"file": "apps/tenant-api/src/routes/reservations-security.test.ts",
+				"line": 545,
+				"severity": "non_blocking",
+				"description": "Security sweep coverage is structurally good (the per-route loops iterate every mounted route, reservations-security.test.ts:207-544), but the cross-location-by-entity-ID case is exercised only for areas (:545-659). For services/tables/combos/turn-times/pacing/special-days/blocks/elements the generic sweep substitutes LOC_1 for `:id`, so the handler 404s and the isolation assertion passes without ever exercising a real cross-location entity. Handlers do call assertAllowedLocation(c, current.locationId) after loading the row, so this is a coverage gap rather than a known bypass, but VAL-SETUP-028 asks for cross-location cases on every setup route tail segment.",
+				"affectedBehavior": "A future regression that drops assertAllowedLocation on an entity route would not be caught by the sweep."
+			},
+			{
+				"file": "packages/reservations/src/schemas/setup.ts",
+				"line": 29,
+				"severity": "non_blocking",
+				"description": "Only location settings (:29) and the floor-plan payload (operator-reservations-setup.ts:261-262) accept expectedVersion/floorPlanVersion, and both are optional, so a client that omits them bypasses the conflict check entirely (rsv-setup-service.ts:451, rsv-setup-crud.ts:1338-1345). Every other setup mutation (areas, tables, combos, services, turn-times, pacing, availability, special days, blocks) accepts no expectedVersion at all. Mission AGENTS.md states 'Every operator mutation sends and checks expectedVersion'.",
+				"affectedBehavior": "Optimistic-concurrency protection is opt-in and absent for most setup resources; concurrent edits are silently last-writer-wins."
+			}
+		]
+	},
+	"sharedStateObservations": [
+		{
+			"area": "skills",
+			"observation": "The backend-worker skill (step 4: 'Every reservation write goes through withReservationWrite (lock, busy retry, one transaction…)') conflicts with what was actually built: every setup write bypasses the gate, yet the handoff records skillFeedback.followedProcedure = true with no deviations. Either the skill needs an explicit carve-out for setup/config writes that still requires atomic multi-row saves and per-org serialization, or the worker deviated and should have recorded it.",
+			"evidence": "grep -c withReservationWrite = 0 in apps/tenant-api/src/routes/operator-reservations-setup.ts, apps/tenant-api/src/services/rsv-setup-service.ts and rsv-setup-crud.ts; handoff skillFeedback { followedProcedure: true, deviations: [] }; mission AGENTS.md 'Write path: every reservation write goes through withReservationWrite'."
+		},
+		{
+			"area": "skills",
+			"observation": "The worker skipped the skill's running-server verification (step 5 apply/inspect migrations, step 6 'Verify against the running server with curl… including refusals (bad token, wrong Origin, stale version, rate limit, kill switch)') and did not record it as a deviation. The handoff's commandsRun contains only vitest/typecheck/oxlint/seed commands; no tenant-api service was started. A curl pass over the expectedBehavior refusals would have caught the hold-minute and turn-time bound failures found in this review.",
+			"evidence": "handoff.verification.commandsRun lists only CI test runs, typecheck, oxlint and the two seed commands; skillFeedback.deviations is empty; skill steps 5-6."
+		},
+		{
+			"area": "skills",
+			"observation": "The skill requires service-level behavior tests on real SQLite files including concurrency ('a stale expectedVersion gets the conflict code and changes nothing'). The feature added route-level integration tests (reservations-setup.test.ts) but no tests beside rsv-setup-service.ts / rsv-setup-crud.ts and no concurrent-write tests for setup (the settings/floor-plan version checks are only exercised serially), so the missing serialization/locking has no failing test.",
+			"evidence": "Only apps/tenant-api/src/routes/reservations-setup.test.ts and reservations-security.test.ts cover setup; reservations-setup.test.ts:285-310 tests stale expectedVersion serially; no *.test.ts exists beside the two setup services."
+		},
+		{
+			"area": "conventions",
+			"observation": "Mission AGENTS.md says 'Every operator mutation sends and checks expectedVersion', but the setup config CRUD (areas, tables, combos, services, turn-times, pacing, service-availability, special days, blocks) accepts and checks no version at all; only location settings and floor-plan do. The rule should either be clarified for setup resources in AGENTS.md/architecture.md, or these routes should accept expectedVersion.",
+			"evidence": "packages/reservations/src/schemas/setup.ts:29 (settings only) and operator-reservations-setup.ts:261-262 (floor plan only); area/table/combo/service/turn-time/pacing/special-day/block schemas have no expectedVersion field."
+		},
+		{
+			"area": "knowledge",
+			"observation": "The day-feed ETag contract is not captured in library/ or AGENTS.md: rsv-day-feed-service.ts:511-515 derives the settings part of the ETag from rsv_location_settings.version, but setup configuration writes (services, turn times, pacing, availability modes, tables/areas/combos) never bump that column, so ETag-cached clients keep stale data after a Setup save. Future setup or day-feed work needs this coupling documented (or fixed by bumping the settings version on config writes).",
+			"evidence": "rsv-day-feed-service.ts:511-515; rsv-setup-crud.ts:1668/1777/1953 and 78-95 (only floor_plan_version); rsv-setup-service.ts:441-618 and :1665-1696 (only settings update and rederive bump version)."
+		}
+	],
+	"addressesFailureFrom": null,
+	"summary": "Reviewed foh-setup-backend (commit bf30dd0c, branch pr/reservations) against its fulfills list (VAL-FND-006/009/024, VAL-SETUP-003..022, 029, 030) and the current combined code. The feature is largely present and well covered by the route-level security sweep, with working expectedVersion 409 semantics for settings and floor plan, reflow/archive behavior for soft bookings, validateConfig/detectConflicts endpoints, rederive-times, both US/KSA tenant DB trigger refreshes and a complete ADR 048. It fails on five blocking issues: (1) no setup write goes through withReservationWrite or any transaction, so the 'atomic' floor-plan save can wipe rsv_floor_elements on a mid-save failure and concurrent saves defeat the version checks while setup writes are unsynchronized with the booking write gate (VAL-SETUP-011/017, mission AGENTS.md write-path directive); (2) hold-minute ranges are not enforced (1..120 accepted instead of 3..20/10..60/5..30) so VAL-SETUP-005's 400 checks fail; (3) turn-time minutes allow 15..720 instead of 15..480 and overlapping buckets are not rejected by the API, failing VAL-SETUP-019; (4) special-day create/update/delete do not bump rsv_day_versions for affected dates, failing VAL-SETUP-022; (5) updateComboForLocation (and the floor-plan save) do not reject duplicate/invalid combination member sets, failing VAL-SETUP-010. Non-blocking issues cover the service-availability update bypassing XOR validation, GET /conflicts performing reflow writes under a read-only grant, config writes not bumping the settings version used by the day-feed ETag, the unvalidated/unused special-day 'modified' patch, cross-location sweep coverage limited to areas by entity ID, and optional/absent expectedVersion on most setup mutations. Shared-state notes cover the skill-vs-implementation write-path conflict, the skipped curl verification step, missing service-level/concurrency tests, expectedVersion documentation, and the undocumented day-feed ETag coupling."
+}

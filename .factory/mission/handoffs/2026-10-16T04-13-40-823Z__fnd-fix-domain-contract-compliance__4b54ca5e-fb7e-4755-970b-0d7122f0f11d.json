@@ -1,0 +1,106 @@
+{
+	"timestamp": "2026-10-16T04:13:40.823Z",
+	"workerSessionId": "4b54ca5e-fb7e-4755-970b-0d7122f0f11d",
+	"featureId": "fnd-fix-domain-contract-compliance",
+	"milestone": "foundation",
+	"commitId": "abcd20719cc15c089fc584afdfb9b785ead43dbe",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": false,
+	"handoff": {
+		"salientSummary": "Resolved all 8 blocking scrutiny findings and downstream alignment items in `@repo/reservations` (`packages/reservations`): hard-locked `arrived` (and `partially_arrived`/`partially_seated`/`seated`/`finished`), enforced 200/2,000/5,000 expansion budgets, updated `validateConfig` to return `ConfigIssue[]` directly with contiguous `1..party_max` bucket and policy/block checks, implemented `gap: 'skip' | 'after'` and `overlap: 'earlier' | 'later'` in `localToInstant`, added full `BookingChannel` + staff pacing warnings, deadline schemas, template priority sorting, and I1–I8 operation-sequence property tests.",
+		"whatWasImplemented": "Resolved all 8 foundation scrutiny blocking findings and downstream domain contract alignments in `packages/reservations`:\n1. Hard-locked `arrived`, `partially_arrived`, `partially_seated`, `seated`, and `finished` in `isBookingHardLocked` (`src/engine/day-state.ts`) so neither `tryRepair` nor `reflowDay` moves an `arrived` reservation (`VAL-FND-007`, I5).\n2. Set operation expansion budgets to `MAX_SEARCH_SLOT_EXPANSIONS = 200` per slot in `searchAvailability`, `MAX_BOOK_EXPANSIONS = 2_000` in `assignTables`/`planBooking`, and `MAX_REFLOW_EXPANSIONS = 5_000` in `reflowDay`/`reflow`, returning `status: 'no_fit'` and `budgetExhausted: true` without partial reflow plans when exhausted (`VAL-FND-009`).\n3. Updated `src/config/index.ts` and `src/config/validate.ts` with `tableBlockSchema` (`blockSchema`, `blockConfigSchema`), `policyRuleSchema` superRefines, `firstSeatingMin` and `endMin - firstSeatingMin <= 1440` checks, contiguous `1..party_max` turn-time bucket coverage (catching leading, middle, and trailing gaps), policy service reference checks, and direct `ConfigIssue[]` return from `validateConfig` (`VAL-FND-004`).\n4. Updated `localToInstant(date, localMin, tz, opts)` in `src/time.ts` to support `opts?: { gap?: 'skip' | 'after'; overlap?: 'earlier' | 'later' }`, returning `null` for `gap: 'skip'` in spring-forward gaps and post-transition instants for `gap: 'after'`, and resolving fall-back folds via `overlap: 'earlier' | 'later'`; updated `resolveServiceWindow` and `searchAvailability` and added tests for `2027-03-14`, `2027-03-28`, `2026-11-01`, `2026-10-25`, 90-min fold (`01:15` -> second `01:45`), `day_start_min` (`240 ± 1`), and `Asia/Riyadh` (`VAL-FND-003`).\n5. Extended `BookingChannel` to `'online' | 'native' | 'voice_agent' | 'phone' | 'host' | 'walk_in' | 'waitlist' | 'operator' | 'voice'`, allowed `walk_in_only` tables only for `'walk_in'` and `'waitlist'`, and surfaced pacing breaches as `warnings` on returned slots for staff channels instead of dropping slots (`VAL-FND-006`).\n6. Added strict Zod deadline response schemas (`createHoldResponseSchema`, `paymentSessionResponseSchema`, `largePartyRequestResponseSchema`, `waitlistOfferResponseSchema`, `notifyMeOfferResponseSchema`) requiring ISO `expiresAt` and server `now` (`VAL-FND-008`).\n7. Added `priority` and `effectiveFrom` to weekly service templates in `src/rules/resolve-services.ts` and sorted templates by latest `effectiveFrom` descending then `priority` descending (`VAL-FND-005`).\n8. Extended `verifyDayInvariants` in `src/testing/oracle.ts` to check all invariants I1 through I8 and added random operation sequence generation/execution (`search`, `hold`, `book`, `modify`, `cancel`, `seat`, `finish`, `no_show`, `block`, `settings`, `clock`) in `src/testing/arbitraries.ts` and `src/engine/engine.property.test.ts`, plus aligned `src/messages.ts` quiet hours (`21:00`–`08:00`, move-earlier/skip) and `src/state-machine.ts` with `architecture.md`.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "CI=true npm run test -w @repo/reservations",
+					"exitCode": 0,
+					"observation": "All 19 test files and 65 tests in @repo/reservations passed (1.79s), including time.test.ts, config.test.ts, resolve-services.test.ts, availability.test.ts, assign.test.ts, scale.test.ts, engine.property.test.ts, schemas.test.ts, state-machine.test.ts, and messages.test.ts."
+				},
+				{
+					"command": "for seed in 101 202 303 404 505; do FC_SEED=$seed CI=true npx vitest run packages/reservations/src/engine/engine.property.test.ts || exit 1; done && CI=true npm run test -w @repo/zoned-time",
+					"exitCode": 0,
+					"observation": "All 5 seeded fast-check runs (FC_SEED=101, 202, 303, 404, 505) passed both property suites (300 day scenarios + 100 operation sequences verifying I1-I8 after every step) with zero counterexamples, and all 11 tests in @repo/zoned-time passed."
+				},
+				{
+					"command": "npx turbo run typecheck --filter=@repo/reservations --filter=@repo/zoned-time --filter=tenant-api && NODE_OPTIONS=\"--max-old-space-size=4096\" npm run typecheck -w app",
+					"exitCode": 0,
+					"observation": "TypeScript typecheck passed with zero errors across @repo/reservations, @repo/zoned-time, tenant-api, and app."
+				},
+				{
+					"command": "npm run lint:oxc && npx oxlint packages/reservations && node scripts/check-lingui.mjs",
+					"exitCode": 0,
+					"observation": "Oxlint reported 0 errors and 0 warnings in packages/reservations (0 errors across the workspace), and Lingui translation check passed across all 4 apps."
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "packages/reservations/src/config/config.test.ts",
+					"cases": [
+						{
+							"name": "validates blockSchema, policyRuleSchema, contiguous 1..party_max turn-time buckets, service duration <= 1440m, and returns ConfigIssue[] directly",
+							"verifies": "VAL-FND-004: strict blockSchema and policyRuleSchema, contiguous 1..party_max turn-time bucket coverage, service endMin - firstSeatingMin <= 1440, policy serviceId/party/window validation, and direct ConfigIssue[] return from validateConfig"
+						}
+					]
+				},
+				{
+					"file": "packages/reservations/src/rules/resolve-services.test.ts",
+					"cases": [
+						{
+							"name": "sorts active weekly service templates by latest effectiveFrom descending, then priority descending (VAL-FND-005)",
+							"verifies": "VAL-FND-005: weekly service template resolution sorts by latest effectiveFrom descending, then priority descending"
+						}
+					]
+				},
+				{
+					"file": "packages/reservations/src/engine/availability.test.ts",
+					"cases": [
+						{
+							"name": "allows walk_in_only tables only for walk_in and waitlist channels, and skips spring-forward gap slots (VAL-FND-003, VAL-FND-006)",
+							"verifies": "VAL-FND-003 & VAL-FND-006: walk_in_only tables are eligible only for walk_in and waitlist channels, and spring-forward gap slots are skipped during availability search"
+						}
+					]
+				},
+				{
+					"file": "packages/reservations/src/schemas/schemas.test.ts",
+					"cases": [
+						{
+							"name": "enforces ISO expiresAt and server now on hold, payment, large-party request, waitlist offer, and notify-me deadline response schemas (VAL-FND-008)",
+							"verifies": "VAL-FND-008: strict Zod deadline response schemas require valid ISO expiresAt and server now timestamps"
+						}
+					]
+				},
+				{
+					"file": "packages/reservations/src/engine/engine.property.test.ts",
+					"cases": [
+						{
+							"name": "preserves invariants I1-I8 after every step of random operation sequences (search, hold, book, modify, cancel, seat, finish, no_show, block, settings, clock) (VAL-FND-009)",
+							"verifies": "VAL-FND-009: random operation sequence property tests verify invariants I1 through I8 after every step across 100 fast-check runs"
+						}
+					]
+				}
+			],
+			"updated": [
+				"packages/reservations/src/time.test.ts",
+				"packages/reservations/src/config/config.test.ts",
+				"packages/reservations/src/rules/resolve-services.test.ts",
+				"packages/reservations/src/engine/availability.test.ts",
+				"packages/reservations/src/engine/assign.test.ts",
+				"packages/reservations/src/engine/scale.test.ts",
+				"packages/reservations/src/engine/engine.property.test.ts",
+				"packages/reservations/src/schemas/schemas.test.ts",
+				"packages/reservations/src/state-machine.test.ts",
+				"packages/reservations/src/messages.test.ts"
+			],
+			"coverage": "65 unit, scale, and property tests across 19 test files in @repo/reservations covering VAL-FND-003 through VAL-FND-009, plus 11 tests in @repo/zoned-time and 5 multi-seed fast-check property runs."
+		},
+		"discoveredIssues": [],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

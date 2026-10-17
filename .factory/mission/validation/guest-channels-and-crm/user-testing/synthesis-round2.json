@@ -1,0 +1,106 @@
+{
+	"milestone": "guest-channels-and-crm",
+	"round": 2,
+	"status": "fail",
+	"assertionsSummary": {
+		"total": 6,
+		"passed": 5,
+		"failed": 1,
+		"blocked": 0
+	},
+	"passedAssertions": [
+		"VAL-ONLINE-007",
+		"VAL-CROSS-009",
+		"VAL-CROSS-011",
+		"VAL-MSG-009",
+		"VAL-REPORT-014"
+	],
+	"failedAssertions": [
+		{
+			"id": "VAL-CROSS-007",
+			"reason": "Step 2 (online_closed day) fails on a new defect: after the first mutation of a date that has never been mutated, the guest channel keeps serving stale availability. The public availability ETag is \"<dayVersion>.<settingsVersion>.<flagBits>\"; readDayVersion defaults to 1 when rsv_day_versions has no row and the first write inserts version 1 (apps/tenant-api/src/services/rsv-public-engine.ts:438-454, rsv-setup-crud.ts:111-132), so closing the day leaves the ETag unchanged (\"1.68.11\"). The Sites page's cached availability body revalidates with If-None-Match and gets 304 (Cache-Control: private, max-age=0), so the guest sees the pre-change 36 time chips while a cache-bypassing fetch returns the correct closed note. Parent reproduced independently on 2026-11-26: create closed special day -> ETag \"1.68.11\", If-None-Match replay -> 304, fresh fetch -> status closed / 0 slots; delete -> \"2.68.11\". The same root cause hides the first booking on a never-mutated date from the ETag (staff booking on 2026-11-27 -> ETag still \"1.68.11\", replay 304), which also breaks VAL-ONLINE-002's 'after any booking... new ETag' clause (not re-tested this round). Everything else in the assertion is fixed: step 3 (closed day) blocks staff booking with the sheet alert + disabled submit, 409 closed_day without override and 201 with a closed_day warning on the explicit override; step 4 (staff_only 4-top) removes public party-4 slots (17 -> 0) while party 2 keeps slots and staff availability still offers party 4; step 5 hides the pacing bucket from Sites and warns the staff channel at submit time (409 pacing_parties_exceeded; 201 + warnings array + 'Booked over the pacing party limit.' toast on the explicit override) - the only step-5 deviation is the persisting round-1 gap that the availability payload still reports available=true / pacingWarning=false for a max_parties-only breach (rsv-day-feed-service.ts:1500-1504 evaluates only maxCovers).",
+			"group": "r2-app-sheet",
+			"evidence": "evidence/guest-channels-and-crm/r2-app-sheet/step2-sites-stale-availability-defect.txt, step2-stale-cache-evidence.txt, step2-public-p2-online-closed.json, step2-sites-online-closed-p2.png, step1-baseline-public-p2.json; parent verification /tmp/r2-parent-verify (ETag \"1.68.11\" with the closed day present, If-None-Match -> 304, delete -> \"2.68.11\")"
+		}
+	],
+	"blockedAssertions": [],
+	"regressions": [
+		{
+			"name": "Public availability on a normal day (acme 2026-11-22, party 2)",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/ (200, 36 slots, dayVersion/settingsVersion present, no closed object; no-Origin -> uniform 404)"
+		},
+		{
+			"name": "Public booking end to end (hold -> book -> manage -> cancel -> slot released)",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/ (201/201/200/200, confirmation NBDSJWYN, occupancy active 1->0, availability offers 19:00 again)"
+		},
+		{
+			"name": "Public large-party request (party 12) with overlap probe, no raw driver text",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/ (both requests 201, no 'Failed query'/'rsv_table_occupancies' in the raw bodies, both visible as pending_approval in the day feed and declined with a reason)"
+		},
+		{
+			"name": "Operator availability on a normal day + staff booking round trip",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/ (no token 401; 200 closed=false, 141 slots with suggestedTableIds; staff booking 201 with warnings: [], cancel 200)"
+		},
+		{
+			"name": "Typed 409 block_conflict for a block overlapping reservations",
+			"result": "pass",
+			"evidence": "evidence/guest-channels-and-crm/r2-regress/ (409 block_conflict listing reservationIds, no raw SQL text, nothing persisted in rsv_blocks)"
+		}
+	],
+	"documentedDeviations": [
+		{
+			"id": "VAL-ONLINE-013",
+			"note": "Carried forward from round 1: the second conversion attempt with the same hold token answered 410 hold_expired (the contract only requires that it fail)."
+		},
+		{
+			"id": "VAL-ONLINE-015",
+			"note": "Carried forward from round 1 and accepted: the contract's literal second step answers 410 hold_expired because the hold token was consumed; the expected 409 slot_unavailable + alternatives was produced by a fresh hold attempt. Not re-opened in round 2."
+		},
+		{
+			"id": "VAL-ONLINE-016",
+			"note": "Carried forward from round 1: the single-unit slot was constructed for the test (the Main Dining block attempt 409ed on the known block/reflow defect)."
+		},
+		{
+			"id": "VAL-ONLINE-032",
+			"note": "Carried forward from round 1 and accepted: guest_modify_cutoff_min 100000 exceeds the settings schema maximum (10_080), so the observable requirements were reproduced with 10080. Not re-opened in round 2."
+		},
+		{
+			"id": "VAL-ONLINE-046",
+			"note": "Carried forward from round 1: the waitlist-off half was verified end to end; the alternatives half was verified at the API payload because the same-day alternatives branch cannot render."
+		},
+		{
+			"id": "VAL-CROSS-009",
+			"note": "Round 2 was API-level for the guest channel (group r2-backend-rules, curl): the Sites time chips were not driven in a browser, because the round-2 brief scoped the re-test to the fixed operator read and the chips render from the public availability endpoint that was exercised. The UI half passed in round 1 (b1/g14 evidence) and the public availability behavior was re-confirmed here."
+		},
+		{
+			"id": "VAL-ONLINE-007",
+			"note": "The brief's extra phrasing 'a booking on an online_closed day carries a closed-day flag' does not match the implemented shape: the onlineClosed flag lives in the availability payload/day state, not in the booking response. The contract itself only requires operator availability to return slots for D2, which it does."
+		},
+		{
+			"id": "VAL-CROSS-011",
+			"note": "The operator cancel UI still has no reason input (cancels immediately with a 60 s undo; cancel_reason NULL), so the 'with a reason' wording was satisfied through the API cancel path. Same observation as round 1; no assertion failed on it."
+		},
+		{
+			"id": "VAL-MSG-009",
+			"note": "The contract names GET /reservations/manage/calendar.ics while the manage page's own button calls the alias /reservations/manage/ics; both were exercised and both return text/calendar."
+		}
+	],
+	"appliedUpdates": [
+		{
+			"target": "user-testing.md",
+			"description": "Added the \"Round: guest-channels-and-crm user testing, ROUND 2 (re-test after fixes)\" block: scope (the six failed assertions plus regressions), the verified environment state (four services, cleared rate counters, the parent's manage-link smoke booking on 2026-11-24), a round-2 data-isolation registry (five groups), serial/interference rules, Flow Validator Guidance for agent-browser/curl/terminal (round 2) and the two-batch concurrency plan.",
+			"source": "setup"
+		},
+		{
+			"target": "user-testing.md",
+			"description": "Runtime findings (round 2): the ETag staleness defect and how to reproduce it (If-None-Match replay plus a fresh fetch), the confirmed manage-link fix, the restricted-operator recipe change (Verification has no `code` column; the onboarding code arrives by App dev email capture, usernames reject hyphens), the operator requests list being the day feed filtered to pending_approval, the staff booking route requiring an Idempotency-Key, the round-2 restore list, and the batch-B fixture note that the App service-availability screen has no bulk path.",
+			"source": "flow-report"
+		}
+	],
+	"previousRound": "validation/guest-channels-and-crm/user-testing/synthesis-round1.json",
+	"notes": "Round 2 re-tested exactly the six assertions that failed round 1, plus the orchestrator-requested regressions on public booking/requests and operator availability. Five groups in two batches (batch A: r2-manage-links and r2-reports-ui on agent-browser, r2-backend-rules and r2-regress on curl; batch B: r2-app-sheet alone because it owns acme pacing and service-availability writes). Result: 5 of 6 assertions now pass; VAL-CROSS-007 still fails on one newly isolated defect (the ETag does not change on the first mutation of a never-mutated date, so the guest channel serves stale availability), which the parent reproduced independently and which also affects the first booking on a fresh date (VAL-ONLINE-002's ETag clause). The five regressions pass with no raw driver text anywhere. Round-1 synthesis preserved as synthesis-round1.json; validation-state.json now has 5 of the 6 re-tested assertions passed and VAL-CROSS-007 failed with the new issue recorded. Environment left in place for a possible round 3: four services still running (the parent tears them down at the end of this session), rate counters cleared at round start, all group-owned special days/settings/pacing/service-availability rows restored, and the inert leftover rows listed in the round-2 guidance block (parent smoke booking 2026-11-24, r2b cancelled rows on 2026-11-23, r2c booking S87XKRY9 on 2026-10-18, the r2d restricted operator rsv-r2d-1@example.com with role 'R2D Reports no reservation' and the saved report 'R2D Bookings subject check')."
+}

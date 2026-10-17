@@ -1,0 +1,105 @@
+{
+	"timestamp": "2026-10-17T08:42:38.048Z",
+	"workerSessionId": "30fd96f5-14e6-4c35-b1fe-3affbfd2ae20",
+	"featureId": "messages-and-waitlist-backend-fix",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "2c411941",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Fixed all four items: waitlist routes answer with and without a trailing slash, @repo/reservations waitlist/notify-me schemas now match real route payloads (tenant-api and App import them), the waitlist seat endpoint handles occupied tables (409 with occupant; swap/move/overbook resolve atomically and are audited), and the public hold accepts areaPref which Sites now sends. Full tenant-api suite (2480), reservations (74), Sites reservations (88) and App waitlist/reservation tests (202) pass.",
+		"whatWasImplemented": "(1) Operator waitlist router registers every route in both slash forms (`both()` helper; router mounted at /book/waitlist and /book/waitlist/); public waitlist and notify-me routes use `bothForms()` with matching method-not-allowed guards. (2) Rewrote packages/reservations/src/schemas/waitlist.ts and public.ts (real 7 statuses, operator add/update/notify/status/seat/reorder/list/quote requests, entry/listing/quote/seat/seat-conflict responses, public join/status, notify-me request/response/cancel) and switched tenant-api routes and App waitlist-api/fixtures to import them. (3) createWalkIn gained an onOccupied hook (and a reservation.overbook audit row); new services/rsv-waitlist-seat-resolution.ts: no resolution -> 409 table_occupied with occupant, occupants, resolutions; swap (unseat/move occupant via assignReservationTables), move (occupant to moveToTableIds or best free table; no_move_target / locked_table_conflict errors), overbook (walk-in overbook, default reason); writes waitlist.seat_resolution audit; all in the outer withReservationWrite transaction under the org lock; guest name only for tokens with guest-read grant. seatWaitlistEntry/route accept resolution and moveToTableIds. (4) holdSchema accepts areaPref; createHold restricts the engine search to that area (ignored if not selectable) via searchPublicDay(areaId); Sites api.createHold input and flow.chooseSlot send areaPref: slot.areaId.",
+		"whatWasLeftUndone": "The App seat dialog / floor drop UI still only uses overbook; it does not yet present the swap/move choice (backend contract and App API client types with resolution/moveToTableIds are in place). App waitlist-errors.ts does not yet map the new error codes (no_move_target, swap_target_seated, locked_table_conflict).",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/tenant-api && CI=true npx vitest run --silent",
+					"exitCode": 0,
+					"observation": "112 files, 2480 tests passed (includes reservations-waitlist, reservations-public, reservations-security)"
+				},
+				{
+					"command": "cd packages/reservations && npx vitest run && npx tsc --noEmit",
+					"exitCode": 0,
+					"observation": "19 files, 74 tests pass; typecheck clean"
+				},
+				{
+					"command": "cd apps/tenant-api && npx tsc --noEmit",
+					"exitCode": 0,
+					"observation": "no errors"
+				},
+				{
+					"command": "cd apps/sites && npx vitest run src/lib/reservations",
+					"exitCode": 0,
+					"observation": "11 files, 88 tests pass (incl. areaPref hold test)"
+				},
+				{
+					"command": "cd apps/app && npx vitest run app/utils/reservations app/components/reservations/waitlist; npx tsc --noEmit | grep reservations",
+					"exitCode": 0,
+					"observation": "22 files, 202 tests pass; no reservations/waitlist type errors"
+				},
+				{
+					"command": "npx oxlint + prettier --check on changed files; git commit (husky lint-staged + lingui check)",
+					"exitCode": 0,
+					"observation": "no warnings on changed files, hook passed, commit 2c411941"
+				}
+			]
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/tenant-api/src/routes/reservations-waitlist.test.ts",
+					"cases": [
+						{
+							"name": "trailing slash (operator + public)",
+							"verifies": "every operator and public waitlist/notify-me route answers identically with and without a trailing slash, wrong method still 404 with Allow"
+						},
+						{
+							"name": "@repo/reservations waitlist schemas parse real route payloads",
+							"verifies": "listing, quote, entry, change, seat and public join/status/notify-me responses parse with the shared Zod schemas"
+						},
+						{
+							"name": "seating a waitlist party on an occupied table",
+							"verifies": "409 with occupant when no resolution; move (free/explicit/no target/locked rollback), swap (booked ok, seated refused), overbook with/without reason, audit rows, resolution on a free table, unknown resolution not echoed"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/reservations-public.test.ts",
+					"cases": [
+						{
+							"name": "hold areaPref (3 tests)",
+							"verifies": "hold honours areaPref when assigning the table, ignores unselectable area, null/empty accepted"
+						}
+					]
+				},
+				{
+					"file": "apps/sites/src/lib/reservations/api.test.ts",
+					"cases": [
+						{
+							"name": "createHold sends areaPref",
+							"verifies": "Sites hold request carries the chosen slot's areaId as areaPref"
+						}
+					]
+				}
+			],
+			"coverage": "Routes, services and schemas for all four parts; rollback of failed move resolution covered; security sweep still passes."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "App seat dialog and floor drop on an occupied table still only offer overbook; swap/move choice UI and error-code mapping for no_move_target/swap_target_seated/locked_table_conflict are not wired.",
+				"suggestedFix": "Small app-ui follow-up: on 409 table_occupied read occupant/resolutions from the body and offer swap/move/overbook, passing resolution (and moveToTableIds) to seatWaitlistEntry, which already supports them."
+			},
+			{
+				"severity": "non_blocking",
+				"description": "apps/sites `tsc --noEmit` fails with missing '@astrojs/check/types' type definition (pre-existing environment issue, unrelated to this change).",
+				"suggestedFix": "Use `astro check` where available."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": []
+		}
+	}
+}

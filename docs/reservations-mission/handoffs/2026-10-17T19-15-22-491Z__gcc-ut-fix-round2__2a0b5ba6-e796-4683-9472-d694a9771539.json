@@ -1,0 +1,92 @@
+{
+	"timestamp": "2026-10-17T19:15:22.491Z",
+	"workerSessionId": "2a0b5ba6-e796-4683-9472-d694a9771539",
+	"featureId": "gcc-ut-fix-round2",
+	"milestone": "guest-channels-and-crm",
+	"commitId": "d8b41f4e",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Fixed the stale public availability ETag: a date with no rsv_day_versions row now reads as version 0, so the first write (booking, hold, special day) changes the ETag and the old If-None-Match returns 200. Pacing and service-availability writes now bump the whole booking horizon. Operator availability now checks max_parties (and rolling caps) through the same check the booking write path uses. Full tenant-api suite passes (2520 tests).",
+		"whatWasImplemented": "(1) rsv-public-engine.ts readDayVersion returns 0 when no row exists (first write stores 1). rsv-setup-crud.ts gets bumpBookingHorizonDayVersions (today..horizonDays, capped at 366), called from create/update/delete pacing rule and upsert/delete service availability, because those writes only bumped dates that already had bookings, leaving fresh dates with a stale ETag. Bookings, holds, special days and blocks already bumped through bumpDayVersion* and are fixed by the 0-default. (2) New services/rsv-operator-pacing.ts holds ACTIVE_OCCUPANCY_STATUSES and findOperatorPacingBreaches (per-bucket maxCovers and maxParties, service and window filtering) extracted from the booking write path. rsv-booking-service.ts now uses it (same error codes pacing_exceeded and pacing_parties_exceeded). getOperatorAvailability in rsv-day-feed-service.ts computes pacingWarning from that helper plus evaluatePacing (rolling cap and exact-slot caps), counting only reservations in active occupancy statuses, so available=false whenever the write would 409.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "cd apps/tenant-api && CI=true npx vitest run src/routes/reservations-public.test.ts",
+					"exitCode": 0,
+					"observation": "57 tests passed before adding the pacing test, 58 after; all green."
+				},
+				{
+					"command": "temporarily reverted readDayVersion default to 1 and ran -t VAL-CROSS-007",
+					"exitCode": 1,
+					"observation": "Both new first-write ETag tests failed without the fix (hold on fresh date, special day on fresh date), confirming they catch the defect; fix restored."
+				},
+				{
+					"command": "cd apps/tenant-api && CI=true npx vitest run src/services/rsv-booking-service.test.ts",
+					"exitCode": 0,
+					"observation": "9 tests passed including the new max_parties availability test (19:00 pacingWarning true, available false; 19:15 false; write path rejects 409 pacing_parties_exceeded)."
+				},
+				{
+					"command": "CI=true npm run test -w tenant-api",
+					"exitCode": 0,
+					"observation": "115 files, 2520 tests passed."
+				},
+				{
+					"command": "npx turbo run typecheck --filter=tenant-api",
+					"exitCode": 0,
+					"observation": "1 task successful."
+				},
+				{
+					"command": "npm run lint:oxc; npx oxlint <changed files>",
+					"exitCode": 0,
+					"observation": "0 errors; 19 pre-existing warnings repo-wide, 0 in changed files."
+				},
+				{
+					"command": "git commit (lint-staged, prettier, lingui check hook)",
+					"exitCode": 0,
+					"observation": "Commit d8b41f4e created; pre-commit hook passed; working tree clean."
+				}
+			],
+			"interactiveChecks": []
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "apps/tenant-api/src/routes/reservations-public.test.ts",
+					"cases": [
+						{
+							"name": "changes the ETag on the very first write for a never-mutated date, so the old tag gets 200 (VAL-CROSS-007)",
+							"verifies": "Fresh date reads dayVersion 0, If-None-Match 304; after the first hold the old tag gets 200, dayVersion 1 and a new ETag."
+						},
+						{
+							"name": "changes the ETag on the first special-day write for a fresh date (VAL-CROSS-007)",
+							"verifies": "Creating a closed special day through the operator setup route on a never-mutated date changes the ETag, old tag gets 200 with status closed."
+						},
+						{
+							"name": "changes the ETag on a never-mutated date after a pacing rule or service availability write",
+							"verifies": "Pacing rule create and service-availability upsert each change the public ETag on a date with no bookings."
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/services/rsv-booking-service.test.ts",
+					"cases": [
+						{
+							"name": "operator availability flags a max_parties breach the same way the booking write rejects it",
+							"verifies": "With maxParties=1 and an existing 19:00 booking, availability reports pacingWarning=true/available=false at 19:00 only, and the booking write returns 409 pacing_parties_exceeded."
+						}
+					]
+				}
+			],
+			"coverage": "ETag first-write behavior for holds, special days, pacing rules and service availability on fresh dates; operator availability max_parties parity with the write path."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "suggestion",
+				"description": "The engine pacing mapper (booking-service, day-feed, setup-service) passes bucketMin as windowMinutes, which evaluatePacing ignores (it reads bucketMin), so the engine's slot caps use exact-slot buckets. The operator write path's explicit bucket check is what enforces bucketed caps. Left unchanged to keep behavior identical; worth aligning in a later cleanup."
+			}
+		]
+	}
+}

@@ -1,0 +1,90 @@
+{
+	"group": "b7-reports-ui",
+	"surface": "agent-browser",
+	"testedAt": "2026-10-17T13:20:00Z",
+	"isolation": {
+		"org": "acme (t58bgatqh3rv0s3movrecyj1), location v17plv08r5v357bie335lyq8",
+		"ownedBusinessDate": "2026-11-08 (not needed: the waitlist/report journey lands on the live service day 2026-10-17 by design)",
+		"ownedPhones": ["+15555552711", "+15555552712", "+15555552713"],
+		"ownedEmails": "rsv-b7-<n>@example.com (not used this session)",
+		"browserSession": "agent-browser --session 276ff6d660b4__b7 (closed)",
+		"appUrl": "http://localhost:3001",
+		"login": "kody / KodyLovesYou!2026 on acme",
+		"tenantDb": "packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3)"
+	},
+	"toolsUsed": ["agent-browser", "sqlite3 (read-only)", "grep (SMS mock log)"],
+	"assertions": [
+		{
+			"id": "VAL-REPORT-001",
+			"status": "pass",
+			"evidence": "Screenshots: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-001-summary.png, -no-shows.png, -cancellations.png, -turn-times.png, -waitlist.png, -pacing.png. Network: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-001-network-evidence.txt (GET /operator/reservations/reports/{summary,no-shows,cancellations,turn-times,waitlist,pacing} -> 200 each, plus OPTIONS 204 CORS preflights). Console: no page errors (agent-browser errors empty); console buffer holds only vite/react-devtools debug lines.",
+			"notes": "Opened /acme/reservations/reports as kody. The tab list offers exactly the six module reports: Summary, No-shows, Cancellations, Turn times, Waitlist, Pacing. Ran each against the page's default range (2026-10-11..2026-10-17, i.e. the seeded-date window the page loads with). Every tab rendered a table without an error state: Summary shows By service / By source / By party size / By status; No-shows and Cancellations show rate/covers tables; Turn times shows Actual versus configured by party size plus the configured rules; Waitlist shows quoted/actual averages, outcomes and the entry rows; Pacing shows bookings by slot and the pacing limits.",
+			"limitations": "The page default range (7 days ending today) was used as the 'seeded date range'; the contract does not name exact dates."
+		},
+		{
+			"id": "VAL-REPORT-007",
+			"status": "pass",
+			"evidence": "Screenshot: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-007-turn-times-today.png. Network: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-007-008-network-evidence.txt (GET /operator/reservations/reports/turn-times?...from=2026-10-17&to=2026-10-17 -> 200). Measured values: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-007-008-measured-intervals.txt and -report-vs-db.txt (sqlite rsv_c884e4d0-e4ef-49a9-a3c6-300fca1fd5d8 seated_at=1792242128416 finished_at=1792242701909 = 9.56 min, party size 4).",
+			"notes": "Seated the walk-in party of 4 (Crosswalk b7, channel waitlist) at 13:02:08 UTC and finished it from the Today detail sheet at 13:11:41 UTC; wall clock 9 min 33 s, DB interval 9.56 min. The turn-times report for 2026-10-17 shows party-size bucket 4 with 1 party, Actual (min) 9.6, Configured (min) 90, Booked (min) 90, Difference -80.4. 9.6 is within one minute of the measured 9.56 and the bucket is the party's own size; 90 matches the rsv_turn_times rule 3-4 (90 min).",
+			"limitations": "The party-size 2 bucket also contains another validator's finished party (actual 0), so only the size-4 bucket is the decisive measured pair. There is no identity column in the report (aggregates only), so the pairing relies on the unique party size + the DB timestamp match."
+		},
+		{
+			"id": "VAL-REPORT-008",
+			"status": "pass",
+			"evidence": "Screenshot: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-008-waitlist-today.png. Network: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-007-008-network-evidence.txt (GET /operator/reservations/reports/waitlist?...from=2026-10-17&to=2026-10-17 -> 200 and the 2026-10-16 isolation run -> 200). Measured values: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-008-waitlist-entries.txt and -report-vs-db.txt.",
+			"notes": "Three owned parties were added on the live service day and all three seated: Crosswalk b7 (party 4, quoted 1, actual 1.11 -> report 1), B7 WL One (party 2, quoted 1, actual 7.90 -> report 8), B7 WL Two (party 3, quoted 1, actual 7.52 -> report 8). All three appear in the waitlist report rows as Outcome Seated with Quoted (min) 1 and Actual (min) 1/8/8 - each actual within one minute of the measured interval. The 34 rendered rows replicate the DB-derived expected rows 1:1 (verified by re-deriving every row's status/quoted/actual from sqlite). Date isolation: the same report for 2026-10-16 returned exactly one row (wle_d1f39d89, phone +15555550166, not owned by b7) and none of the 2026-10-17 entries.",
+			"limitations": "The live service day is shared with other validators (34 entries), so my rows were identified by exact DB replication rather than by name (the report carries no guest identity). The queue was quiet, so every quote on the day was 1 minute; the quoted-vs-actual pair is still meaningful (1 vs 1/8/8) but the quoted column cannot show a large spread on this queue."
+		},
+		{
+			"id": "VAL-REPORT-011",
+			"status": "pass",
+			"evidence": "Screenshots: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-011-empty-range-summary.png, -pacing.png, -turn-times.png. Network: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-011-network-evidence.txt (all six endpoints 200 for from=2020-01-06&to=2020-01-07). Observed per-report text: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-011-observed.txt. Console: buffers cleared immediately before the run; zero page errors and zero console error/warn lines afterwards.",
+			"notes": "Ran all six reports for 2020-01-06..2020-01-07. Every report returned 200 and rendered explicit zeros/empty states: Summary 0 parties / 0 covers with 'No bookings in this range.' in all four sections; No-shows 0/0/0%; Cancellations all zeros; Turn times 0 finished parties with 'No finished parties in this range.'; Waitlist 0 entries with '—' averages; Pacing 0 bookings / 0 covers. No report-error element, no 5xx, no console errors. The turn-times 'Configured turn times' and pacing 'Pacing limits' tables still render their configuration rows, which are location settings rather than booking data.",
+			"limitations": null
+		},
+		{
+			"id": "VAL-REPORT-014",
+			"status": "fail",
+			"evidence": "Screenshots: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-014-subject-list-no-bookings.png (subject dropdown: Orders, Items sold, Options sold, Customers, Text subscribers, Reviews, Shop orders, Phone calls, Time cards, Scheduled shifts, Notes, Members, Feedback - no Bookings, no Waitlist entries), guest-channels-and-crm/b7-reports-ui/VAL-REPORT-014-builder-state.png. Cross-check JSON: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-014-subjects-token-vs-ui.json (GET /acme/reports/token -> 200, subjects [phone_calls, orders, order_items, order_options, time_entries, shifts, bookings, waitlist_entries]).",
+			"notes": "As kody (admin, acme, read:reservation_report:any, master flag on) the report builder at /acme/reports/new does NOT offer the bookings or waitlist_entries subjects, while the minted reports token for the same user does list both. Cause (read from code, not fixed): all three App report routes filter the catalog with only the staffing grant set - apps/app/app/routes/_app+/$orgSlug_+/reports+/new.tsx:35, _index.tsx:38 and $reportId.tsx:48 all call catalogForGrants(fullCatalog, staff.subjects) where staff comes from resolveStaffReportAccessForRequest; the reservations subjects are granted by resolveReservationsReportAccess (used for the token) and never added to that set, so catalogForGrants drops them (packages/reports/src/access.ts:44-48 isGatedSubject).",
+			"limitations": "Only the positive half of the assertion was tested (kody sees the subjects). The second half (Report-less operator token without the subjects, builder not offering them) is owned by the VAL-REPORT-002/020 gating group; I did not create a restricted account."
+		},
+		{
+			"id": "VAL-REPORT-024",
+			"status": "pass",
+			"evidence": "Screenshot: guest-channels-and-crm/b7-reports-ui/VAL-REPORT-024-reports-ar-rtl.png (RTL mirrored layout, Arabic tabs التقارير/الملخص/حالات عدم الحضور/الإلغاءات/مدد الجلوس/قائمة الانتظار/الوتيرة, English service names Dinner/Lunch and figures 33/82/7/22 intact). Console: no page errors, no console error/warn lines (buffers cleared before opening the Arabic page).",
+			"notes": "Opened /acme/reservations/reports?lng=ar and ran the summary report for 2026-10-17. documentElement dir=rtl, lang=ar; the page chrome (sidebar on the right, breadcrumbs, filters) mirrors while the numbers, dates (10/17/2026 in the date inputs) and times are not reversed and table figures stay LTR. Arabic column headers with Arabic enum labels (منصة الاستقبال، متصل، الهاتف، قائمة الانتظار، حضور مباشر). Console clean. Switching back with ?lng=en restored the English page.",
+			"limitations": null
+		},
+		{
+			"id": "VAL-CROSS-018",
+			"status": "pass",
+			"evidence": "Screenshots: guest-channels-and-crm/b7-reports-ui/VAL-CROSS-018-add-party-dialog-quote.png (quote 'Quote this party 1 min. They would be number 4 in line.'), -waitlist-on-the-way.png, -guestbook-search.png, -guestbook-profile.png, -summary-source-today.png. Text: VAL-CROSS-018-sms-mock.txt ([SMS MOCK] lines for +15555552711), -audit-report-run.txt, -guest-counters.txt, -summary-source-crosscheck.txt, VAL-REPORT-008-waitlist-entries.txt.",
+			"notes": "(1) Added 'Crosswalk b7', party 4, phone +15555552711, SMS opt-in, from the Waitlist screen; the dialog quoted 1 min (number 4 in line) at 13:00:55 UTC. (2) Notify: entry status waiting->notified and the SMS log shows '[SMS MOCK] To: +15555552711 | Message: Downtown Flagship: your table is ready.' Then 'Mark on the way' (status on_the_way). (3) Seated via the seat dialog on G17-T4 at 13:02:08 UTC (actual wait 1.11 min), then finished from the Today detail sheet at 13:11:41 UTC (turn 9.56 min). (4) Waitlist report for today shows the row Oct 17, 2026 | Oct 17, 2026 | 4 | Seated | 1 | 1, and the latest rsv_audit_log row is action=report.run with changes {\"report\":\"summary\",\"from\":\"2026-10-17\",\"to\":\"2026-10-17\"} (no PII). (5) Guestbook: search +15555552711 -> profile shows Visits 1, Covers 4, visit history 'Oct 17, 2026 09:02 4 Lunch Waitlist Finished'. (6) Summary source breakdown for today: Waitlist 11 parties / 30 covers, matching sqlite exactly (all five channel rows match 1:1); my party (channel waitlist, covers_actual 4) is inside that row.",
+			"limitations": "The ready-message link points at http://localhost:3001/reserve/waitlist (the known App-origin manage-link defect recorded in the round's runtime findings); this assertion only requires the [SMS MOCK] ready text, which is present. The seat step used the seat dialog rather than the Floor drag, as the task allowed. Report rows carry no guest identity, so the row attribution is by exact DB replication."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The report builder's config cards (Subject/Timeframe) did not respond to agent-browser ref clicks or synthetic pointer events on the first load; clicking them only toggled the Visualization panel. After a full page reload the same click worked and the Subject panel opened.",
+			"resolved": true,
+			"resolution": "Reloaded /acme/reports/new, then a plain .click() on the Subject card opened the panel (also verified the subject list via the combobox ref click).",
+			"affectedAssertions": ["VAL-REPORT-014"]
+		},
+		{
+			"description": "The report builder page had to be reloaded once after navigating to it from another route: the config-card state stayed on the Visualization panel and DOM clicks had no React effect.",
+			"resolved": true,
+			"resolution": "Reload of the route restored interactivity (consistent with the documented Vite on-demand compile / re-optimization behavior).",
+			"affectedAssertions": ["VAL-REPORT-014"]
+		},
+		{
+			"description": "The ?lng=ar switch sets an httpOnly cookie, so later ?lng=en is needed to return the session to English; page scripts cannot change it.",
+			"resolved": true,
+			"resolution": "Opened the reports route with ?lng=en to restore English before finishing.",
+			"affectedAssertions": ["VAL-REPORT-024"]
+		}
+	],
+	"blockers": [],
+	"leftBehind": "Three waitlist entries on acme for the live service day 2026-10-17, all seated: wle_d82de451-976a-4c52-89c2-babc3435b845 (Crosswalk b7, party 4, phone +15555552711) seated then finished on G17-T4 with reservation rsv_c884e4d0-e4ef-49a9-a3c6-300fca1fd5d8 (#Y7WGZF, channel waitlist, covers_actual 4, guest gst_f9f43bdb-5999-434d-be66-3650b996f480 now Visits 1 / Covers 4); wle_8de8223a-f1dd-4e49-b70a-6a88316df4cf (B7 WL One, party 2, +15555552712) seated on G10-T8 as rsv_b9a93d57-f41f-4281-8e07-a5c009d44d6d (still seated); wle_dc4b0dc0-7580-4c00-afb7-394f4b7d27f6 (B7 WL Two, party 3, +15555552713) seated on G4-2 as rsv_d7741cda-34bd-4c9c-a488-32dc11474f28 (still seated). New rsv_audit_log report.run rows for the runs performed. No flags, location settings, or other groups' rows were changed; the language cookie was returned to English and the browser session was closed.",
+	"summary": "7 assertions: 6 pass (VAL-REPORT-001, -007, -008, -011, -024, VAL-CROSS-018), 1 fail (VAL-REPORT-014: the report builder never offers the bookings / waitlist_entries subjects even though the minted reports token lists them, because all three App report routes pass only the staffing subjects to catalogForGrants). No blockers."
+}

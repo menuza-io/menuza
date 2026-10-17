@@ -1,0 +1,111 @@
+{
+	"group": "t1-suites",
+	"surface": "terminal",
+	"isolation": {
+		"missionDir": "/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500",
+		"repository": "/home/factory-user/repos/menuza",
+		"branch": "pr/reservations",
+		"head": "2b900e93",
+		"workspaces": ["apps/tenant-api", "apps/app", "apps/jobs-cron"],
+		"servicesStartedOrStopped": "none",
+		"writes": "none (read-only sqlite SELECTs, git check-ignore, Vitest)",
+		"notes": "One of at most two terminal validators; no App build, typecheck, lint, whole-App suite or full gate was run. CI=true for every Vitest invocation."
+	},
+	"assertions": [
+		{
+			"id": "VAL-ONLINE-042",
+			"status": "pass",
+			"evidence": "`cd apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts` -> exit 0, Test Files 1 passed (1), Tests 27 passed (27) in 6.84s (verbose re-run identical counts). Named coverage observed in the verbose list: 'refuses every route with no token (401)', 'refuses a token signed with wrong secret, wrong audience (tenant-api-staffing or tenant-api-operator), wrong typ, or over-long TTL (401)', 'refuses a signed token with no grants in every scope (403)', 'refuses a token with the wrong scope on every route (403)', 'refuses an impersonated token on every write route (403 impersonated_read_only)', 'refuses an active but unprovisioned organization (hasProvisionedDb = false) with uniform 404 across every route', 'sweeps every mounted route for cross-org (ORG_B) and excluded locationIds ([LOC_2]) and never returns 5xx', 'answers the identical 404 without an Origin binding on every route (VAL-ONLINE-024)', 'treats forged, cross-org, rotated and expired capability tokens as 404 (VAL-ONLINE-026)', 'requires a customer token or Turnstile for holds and requests when Turnstile is configured (VAL-ONLINE-042)', 'requires a customer token or Turnstile for waitlist join and notify-me when Turnstile is configured', 'never mutates through GET and never accepts other methods on POST routes (VAL-ONLINE-023)', 'names invalid fields and never echoes submitted values (VAL-ONLINE-018)', 'answers 503 unavailable on every public route when the switch is off (VAL-ONLINE-029)'. Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-ONLINE-042-security-sweep.txt",
+			"notes": "The contract says 'plus the abuse test file(s) it references'. No reservations abuse/adversarial test file exists (find apps -iname '*abuse*' is empty; grep 'abuse' in reservations* sources is empty); the sweep file itself contains the adversarial cases and is self-contained, so no substitute file was needed.",
+			"limitations": null
+		},
+		{
+			"id": "VAL-WAIT-024",
+			"status": "pass",
+			"evidence": "1) `cd apps/tenant-api && CI=true npx vitest run src/routes/reservations-security.test.ts` -> exit 0, 27 passed. Waitlist/notify-me coverage: 'treats forged, cross-org, rotated and missing waitlist and notify-me tokens as the uniform 404 (VAL-WAIT-014, VAL-WAIT-024)', 'requires a customer token or Turnstile for waitlist join and notify-me when Turnstile is configured', plus the generic sweeps that iterate every route mounted under `/operator/reservations` (the waitlist sub-router is mounted at `/book/waitlist` in reservations-operator.ts:76-82; the setup waitlist settings route `GET/PUT /locations/:locationId/waitlist` is registered in operator-reservations-setup.ts:563-590) and every public route (the public discovery test lists `/reservations/waitlist/join`, `/reservations/waitlist/status`, `/reservations/waitlist/status/leave`, `/reservations/waitlist/status/on-my-way`, `/reservations/notify-me`, `/reservations/notify-me/cancel`). 2) `cd apps/app && CI=true npx vitest run app/utils/reservations/reservations-guards.test.ts` -> exit 0, Test Files 1 passed (1), Tests 58 passed (58) in 3.05s; the test enumerates the reservations+ routes including settings.messages.tsx, settings.waitlist.tsx and waitlist.tsx (lines 70-80) and asserts every loader/action awaits requireReservationsAccess first, plus guarded resource routes. Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-WAIT-024-security-and-guards.txt",
+			"notes": "The security file's operator route-discovery test does not name the `/book/waitlist` paths explicitly, but the 401/403/cross-org/cross-location/impersonated/no-5xx sweeps all iterate the complete `app.routes` list of the operator mount, so those routes are swept; the public discovery test does name every waitlist/notify-me route. The contract's 'waitlist-settings routes' is the `.../setup/locations/:locationId/waitlist` GET/PUT pair (there is no path literally named waitlist-settings).",
+			"limitations": null
+		},
+		{
+			"id": "VAL-MSG-020",
+			"status": "pass",
+			"evidence": "Boot lines: `grep -n 'DEV EMAIL CAPTURE ACTIVE' /tmp/menuza-logs/tenant-api-us.log /tmp/menuza-logs/tenant-api-ksa.log` -> us log line 57475 `DEV EMAIL CAPTURE ACTIVE -> .dev-mail/us` immediately after the current run's `> DEV_EMAIL_CAPTURE_DIR=.dev-mail/us tsx watch src/index.ts`; ksa log line 9365 `DEV EMAIL CAPTURE ACTIVE -> .dev-mail/ksa` immediately after `> DATA_REGION=ksa PORT=3009 DEV_EMAIL_CAPTURE_DIR=.dev-mail/ksa tsx watch src/index.ts`. Format: every one of the 25 captured files in apps/tenant-api/.dev-mail/us/ (count grew 16->25 while other validators worked) has exactly the keys capturedAt,from,html,id,meta,region,source,subject,text,to, source='tenant-api', region='us', meta keys exactly messageId,messageKind,orgId, and no '@' or phone-like digits inside meta (checked with jq for all files). Newest example meta: {\"orgId\":\"t58bgatqh3rv0s3movrecyj1\",\"messageKind\":\"cancellation_restaurant\",\"messageId\":\"3125efac-2e51-4e1e-ae3d-9e838f1ae9af\"}. Git: `git check-ignore apps/tenant-api/.dev-mail` -> prints the path, exit 0. Tests: `cd apps/tenant-api && CI=true npx vitest run src/lib/dev-email-capture.test.ts` -> exit 0, 14 passed, including 'is on only outside production and only while OCI email is not configured' and 'writes nothing without a directory, in production, or when OCI is configured' (and 'does not capture when no sink is registered (the Workers entry)'). Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-MSG-020-boot-lines-and-dev-mail.txt, VAL-MSG-020-capture-record-format.txt, VAL-MSG-020-capture-format-all-files.txt, VAL-MSG-020-dev-email-capture-tests.txt",
+			"notes": "Record format and production/OCI inactivity verified on the live US capture set and the unit tests.",
+			"limitations": "apps/tenant-api/.dev-mail/ksa/ does not exist yet (it is created lazily on the first KSA capture, per the test 'creates nested directories'); no KSA captured file was available to inspect in this session. The KSA node is healthy on 3009 and logged the boot line pointing at .dev-mail/ksa, so only the per-file format claim is unverified for KSA."
+		},
+		{
+			"id": "VAL-MSG-022",
+			"status": "pass",
+			"evidence": "Contract command: `cd apps/tenant-api && CI=true npx vitest run src/services/rsv-tick-service.test.ts src/lib/reservations-email.test.ts src/lib/reservations-sms.test.ts` -> exit 0, Test Files 3 passed (3), Tests 155 passed (155). Message-delivery files (substituted for the contract's '<message-delivery test file>'): `cd apps/tenant-api && CI=true npx vitest run src/services/rsv-message-service.test.ts src/services/rsv-message-queue.test.ts` -> exit 0, 55 + 46 tests passed. Backoff: test 'backs off 1, 5 and 30 minutes, then ends failed after the fourth attempt' asserts RETRY_BACKOFF_MIN=[1,5,30], attempts 1/2/3, next_attempt_at = now + 1/5/30 min, not due before its time, then {status:'failed', attempts:4, lastErrorCode:'send_failed'} and a final row that never sends again. Error code: 'stores only an error code, never provider text or the destination' (lastErrorCode='send_failed'; the row dump contains neither 'hunter2' nor the guest email). Retry success: 'succeeds on a retry and records the attempt'. Dedupe: rsv_messages.dedupe_key has a unique constraint and enqueue uses onConflictDoNothing (rsv-message-queue.ts:80,103); tests 'is idempotent per schedule version and starts a new key when the version moves' (second enqueue returns []), 'treats each variant as a separate deliberate send' (repeat returns []) and 'never touches a row that was already sent'. Tick-side delivery: 'deliver_messages > sends a due message and counts it', 'leaves a message that is not due yet', 'retries a failed send after a minute and says when'. Transport failures on the dev surface are asserted by these tests, as the contract allows. Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-MSG-022-delivery-backoff.txt",
+			"notes": null,
+			"limitations": null
+		},
+		{
+			"id": "VAL-MSG-023",
+			"status": "pass",
+			"evidence": "Contract command: `cd apps/tenant-api && CI=true npx vitest run src/lib/staff-alarm.test.ts src/lib/org-alarm.test.ts src/lib/staff-tick-interval.test.ts src/lib/reservations-tick-interval.test.ts` (the '<reservations interval test>' is src/lib/reservations-tick-interval.test.ts) -> exit 0, Test Files 4 passed (4), Tests 98 passed (98): staff-alarm 30, org-alarm 51, reservations-tick-interval 11, staff-tick-interval 6. Both modules: 'module registry > lists registered modules and replaces one registered twice by name' registers 'staff' then 'reservations'; 'when the alarm fires > runs every module for the remembered organization with the current time' runs both with ('org_1', NOW); DO wiring (extra run): `CI=true npx vitest run src/lib/tenant-org-alarm.test.ts src/lib/reservations-alarm.test.ts` -> exit 0, 56 passed, including 'TenantOrg alarm wiring > alarm > runs both registered modules for the stored organization with the current time'. Legacy key: org-alarm.test.ts 'falls back to the legacy staffing key' asserts ORG_ALARM_LEGACY_ORG_KEY === 'staffTickOrgId' and 'still honours an alarm armed under the legacy staffing key' runs both modules for the legacy-stored org. Clamping: 'never schedules sooner than the minimum delay' (ORG_ALARM_MIN_DELAY_MS=30_000), 'never schedules later than the maximum delay' (ORG_ALARM_MAX_DELAY_MS=60*MINUTE), 'moves a pending alarm earlier, never later'. Interval: 'defaults to two minutes when unset or blank', 'turns off at zero or anything that is not a positive number', 'never goes below the minimum, so a typo cannot hammer the node' (MIN=60), 'reads the period from RESERVATIONS_TICK_INTERVAL_SECONDS', 'stays off when RESERVATIONS_TICK_INTERVAL_SECONDS is 0'. Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-MSG-023-org-alarm-and-intervals.txt",
+			"notes": "staff-alarm.test.ts (pre-existing) passed unchanged as part of the 4-file run.",
+			"limitations": null
+		},
+		{
+			"id": "VAL-MSG-026",
+			"status": "pass",
+			"evidence": "Bulk alert (tenant-api): `cd apps/tenant-api && CI=true npx vitest run src/services/rsv-message-service.test.ts` -> exit 0, 55 passed; describe 'bulk failure alert' contains 'stays quiet below the threshold' (BULK_FAILURE_THRESHOLD=10), 'enqueues exactly one alert with ids and counts only when ten rows fail for one location in 15 minutes' (dedupeKey `alert:message_failed_bulk:${PUBLIC_LOC}:${bucket}`, payload keys exactly count,eventId,kind,locationId,orgId; JSON contains no '@'/'example.com'/'Rana'), 'does not alert again for a later burst in the same window', 'counts failures per location', 'ignores failures older than the window', 'alerts again in a later window', 'does not alert for retries that have not ended the row'. App notify route mapping: `cd apps/app && CI=true npx vitest run app/routes/resources+/reservations.notify.test.ts` -> exit 0, 41 passed, including 'every alert kind > delivers message_failed_bulk with a count and no personal data' ({inApp:1, emailed:1}, notification type reservations-message-failed-bulk, no '@'/phone), 'who is told > tells members with read:reservation:any or update:reservation_settings:any, in the app and by email, and nobody else' and 'writes an in-app notification with only a kind, a location id and a count'. Live system: `sqlite3 packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db \"SELECT kind,status,COUNT(*) FROM rsv_outbox GROUP BY kind,status\"` -> manager_alert/sent 3; `SELECT COUNT(*) ... WHERE kind='manager_alert' AND payload LIKE '%message_failed_bulk%'` -> 0 (no spurious bulk alerts). Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-MSG-026-bulk-alert-tests.txt, VAL-MSG-026-rsv-outbox-kinds.txt",
+			"notes": "The App notify route test covers all seven alert kinds via it.each(RESERVATION_ALERT_KINDS) so message_failed_bulk is explicitly exercised.",
+			"limitations": null
+		},
+		{
+			"id": "VAL-MSG-027",
+			"status": "pass",
+			"evidence": "`cd apps/jobs-cron && CI=true npx vitest run src/index.test.ts` -> exit 0, Test Files 1 passed (1), Tests 25 passed (25). Reservations-tick tests: 'hourly regional fan-out > runs the engagement sync, the staff tick and the reservations tick on every regional node' (asserts POST to https://tenant-us.example.com/api/reservations/tick and https://tenant-ksa.example.com/api/reservations/tick with Authorization `Bearer <internal token>`), 'sends the reservations tick an empty body so each node runs every organization', 'lists the reservations tick in the hourly fan-out after the staff tick', 'keeps the reservations tick running when the staff tick fails, and names it when it fails itself'; a wrangler.jsonc-reading test asserts the cron set. `grep -n crons -A 10 apps/jobs-cron/wrangler.jsonc` -> \"crons\": [\"0 2 * * *\", \"0 3 * * *\", \"0 4 * * *\", \"0 * * * *\"] (four slots, no new slot). Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-MSG-027-jobs-cron-and-live-limitation.txt",
+			"notes": "jobs-cron half fully verified: the reservations tick rides the existing hourly fan-out on every configured tenant node with the internal command token.",
+			"limitations": "The running-system half ('the reservations tick also fires by itself via the Node interval: with no manual tick, a due reminder is delivered within roughly two interval periods') could not be observed: at 2026-10-17 11:12 UTC the live acme tenant DB had 0 pending messages due (earliest pending reminder send_at 2026-10-18 23:00 UTC, 29 pending reminders all in the future), so no due reminder existed to be delivered within two 120 s periods. The interval itself is proven by the passing unit tests (default 120 s, min 60, 0 off) and by the code path (startReservationsTickInterval, no RESERVATIONS_TICK_INTERVAL_SECONDS override on the running node); per the parent's instruction I did not wait indefinitely."
+		},
+		{
+			"id": "VAL-MSG-028",
+			"status": "pass",
+			"evidence": "Delivery re-check tests: `cd apps/tenant-api && CI=true npx vitest run src/services/rsv-message-service.test.ts src/services/rsv-tick-service.test.ts` -> exit 0, 55 + 71 passed; describe 'send-time eligibility' includes 'cancels a reminder for a booking that was cancelled, with no send' (status cancelled, lastErrorCode not_eligible, no send), 'cancels a reminder for a booking whose start has passed', 'cancels a stale reminder after the schedule version moved on' (stale_schedule; the fresh row still sends), 'sends a reminder for a confirmed booking but cancels a reconfirmation for it' (the guest-already-confirmed case), 'suppresses a late confirmation or modification for a dead booking but still sends the cancellation notices' (status suppressed, not_eligible), 'suppresses a message for an erased guest, with only a code stored'. Live sqlite (`sqlite3 .../tenant_t58bgatqh3rv0s3movrecyj1.db`, SELECT only, now 2026-10-17 11:11 UTC): message statuses cancelled 1 / pending 29 / sent 19; the single non-pending scheduled row is reminder a7780f4a-edc6-47b3-868e-79a467e0b816 for reservation rsv_3bb0023e-9ce6-46f8-bb43-cb60720fcdbd (status cancelled, start 2026-10-28 22:30 UTC), i.e. a message that left the eligible status before its send_at and was never delivered. Capture absence: `grep -rl a7780f4a apps/tenant-api/.dev-mail/` -> no capture file references it; capture meta.messageKind counts are cancellation_restaurant 1, confirmation 12, notify_available 1, waitlist_joined 3, waitlist_ready 2 — no reminder capture exists. Evidence: evidence/guest-channels-and-crm/t1-suites/VAL-MSG-028-suppressed-tests-and-live.txt, VAL-MSG-028-suppressed-live-sqlite.txt, VAL-MSG-028-capture-absence.txt",
+			"notes": "Vocabulary note for synthesis: for scheduled rows the terminal status is 'cancelled' with last_error_code 'not_eligible' (stale reminder/reconfirm), and 'suppressed' is used for confirmation/modification of a dead booking and for erased guests; the contract phrase 'marked suppressed' does not literally match the reminder/reconfirm path. The behavior the assertion protects — a message that left the eligible status before send_at is stopped at the tick/write path and never appears in the capture — is implemented and proven by the tests and the live row. No row in the live DB currently has status='suppressed' (the suppression population of VAL-MSG-013/014 is not preserved in the live DB).",
+			"limitations": "The live half could not freshly observe a tick-time suppression because no stale pending row existed during this session; it observed the surviving stale row's outcome (never sent, absent from the capture) instead."
+		}
+	],
+	"frictions": [
+		{
+			"description": "The contract's VAL-ONLINE-042 mentions 'the abuse test file(s) it references', but no reservations abuse/adversarial test file exists in the repo; the security sweep file itself carries the adversarial cases (Turnstile refusal, uniform 404, GET-never-mutates, no-echo validation, no 5xx).",
+			"resolved": true,
+			"resolution": "Ran src/routes/reservations-security.test.ts as the single sweep file and stated in the report that no separate abuse file exists or is referenced.",
+			"affectedAssertions": ["VAL-ONLINE-042"]
+		},
+		{
+			"description": "The contract names a 'waitlist-settings' route and a '<reservations interval test>' / '<message-delivery test file>' without paths.",
+			"resolved": true,
+			"resolution": "Mapped them to the actual files/routes: waitlist settings is GET/PUT /operator/reservations/setup/locations/:locationId/waitlist (operator-reservations-setup.ts:563-590); the reservations interval test is src/lib/reservations-tick-interval.test.ts; the message-delivery files are rsv-message-service.test.ts + rsv-message-queue.test.ts (in addition to the contract's rsv-tick-service/email/sms trio).",
+			"affectedAssertions": ["VAL-WAIT-024", "VAL-MSG-022", "VAL-MSG-023"]
+		},
+		{
+			"description": "The default Vitest reporter only prints names of slow tests, so per-test names (the strongest evidence for specific behavior claims) are missing from the first runs.",
+			"resolved": true,
+			"resolution": "Re-ran the same files with --reporter=verbose (identical pass counts) and saved the verbose lists under the evidence directory.",
+			"affectedAssertions": [
+				"VAL-ONLINE-042",
+				"VAL-WAIT-024",
+				"VAL-MSG-020",
+				"VAL-MSG-022",
+				"VAL-MSG-023",
+				"VAL-MSG-026",
+				"VAL-MSG-027",
+				"VAL-MSG-028"
+			]
+		}
+	],
+	"blockers": [],
+	"toolsUsed": [
+		"vitest (CI=true)",
+		"sqlite3 (read-only SELECT)",
+		"grep",
+		"jq",
+		"git check-ignore"
+	],
+	"leftBehind": "No product code, test or config was modified; git status is clean before and after the session (no env.ts formatting noise). No service was started or stopped. No secret was printed. Read-only sqlite queries only. Test-created temp tenant DBs are removed by the suites themselves. Other validators continued to add dev-email captures while this session ran (16 -> 25 files); that is not my output.",
+	"summary": "Tested 8 assertions: 8 pass, 0 fail, 0 blocked. Commands and results: reservations-security 27/27; App guards 58/58; rsv-tick-service + reservations-email + reservations-sms 155/155; rsv-message-service 55/55; rsv-message-queue 46/46; dev-email-capture 14/14; staff-alarm + org-alarm + staff-tick-interval + reservations-tick-interval 98/98 (+ tenant-org-alarm + reservations-alarm 56/56); App reservations.notify 41/41; jobs-cron index 25/25. Live checks: both node boot lines and all 25 US capture records match the documented format, .dev-mail is git-ignored; rsv_outbox has 0 message_failed_bulk rows; a stale scheduled reminder was never sent and never captured. Two honest limitations: the KSA capture directory has no file yet (only the boot line), and VAL-MSG-027's live interval delivery could not be observed because no reminder was due (earliest pending 2026-10-18 23:00 UTC); both are noted per assertion."
+}

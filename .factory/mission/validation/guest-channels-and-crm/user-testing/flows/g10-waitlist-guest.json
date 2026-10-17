@@ -1,0 +1,397 @@
+{
+	"groupId": "g10-waitlist-guest",
+	"testedAt": "2026-10-17T14:42:00Z",
+	"isolation": {
+		"missionDir": "/home/factory-user/.factory/missions/165ab51b-48a5-4632-8938-101be7ea8500",
+		"org": "acme (t58bgatqh3rv0s3movrecyj1)",
+		"locationId": "v17plv08r5v357bie335lyq8",
+		"ownedBusinessDate": "2026-11-16",
+		"phones": "+155555510xx (used: 1005,1006,1007,1008,1009,1011,1012,1013,1041)",
+		"emails": "rsv-g10-n@example.com",
+		"tenantApiUs": "http://localhost:3007",
+		"tenantApiKsa": "http://localhost:3009",
+		"sites": "http://acme.menuza.test:3008",
+		"tenantDb": "/home/factory-user/repos/menuza/packages/database/db/tenant_t58bgatqh3rv0s3movrecyj1.db (read-only sqlite3)",
+		"browserSession": "276ff6d660b4__g10 (closed at 14:41 UTC)",
+		"serverNowAtStart": "2026-10-17T14:0x UTC (business date 2026-10-17, day starts 04:00 America/New_York)",
+		"notes": "Same tenant DB/browser session as the cancelled prior g10 attempt; that attempt's leftover rows were reused for recon only and are identified in the report."
+	},
+	"toolsUsed": ["agent-browser", "curl", "sqlite3", "python3"],
+	"assertions": [
+		{
+			"id": "VAL-WAIT-010",
+			"title": "Remote join on Sites with validation and limits",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Open http://acme.menuza.test:3008/reserve/waitlist?location=...&party=3 and submit name/phone/email",
+					"expected": "Join succeeds and the guest status view appears",
+					"observed": "POST /reservations/waitlist/join -> 201; URL gains #t=<token>; page shows 'Your place in line' with Position in line, Estimated wait, Party, Where, and 'I am on my way' / 'Leave the waitlist' actions (sqlite row wle_8508bef0 channel=remote, status=waiting)"
+				},
+				{
+					"action": "Submit a second join with the same phone (+15555551005)",
+					"expected": "Refused (one active entry per phone per day)",
+					"observed": "POST /reservations/waitlist/join -> 409; inline message 'This phone number is already on the waitlist today.'; no second row"
+				},
+				{
+					"action": "Set waitlist_max_parties=5 (active queue = 5) via PATCH /operator/reservations/setup/locations/:id/settings, then join with +15555551006",
+					"expected": "Join refused with a clear full-list message",
+					"observed": "PATCH 200 (version 56->57); POST join -> 409; message 'The waitlist is full right now. Please call the restaurant.'; sqlite rows for +15555551006 = 0"
+				},
+				{
+					"action": "Restore waitlist_max_parties=null",
+					"expected": "Setting back to baseline",
+					"observed": "PATCH 200 (version 57->58); waitlist_max_parties NULL, waitlist_response_min 10 (baseline values)"
+				},
+				{
+					"action": "Fill the hidden honeypot input 'website' and submit (+15555551009)",
+					"expected": "Apparent success but nothing written",
+					"observed": "POST join -> 201 and the page shows the status view, but sqlite rows for +15555551009 = 0"
+				},
+				{
+					"action": "Click 'I am on my way' then 'Leave the waitlist' -> 'Yes, leave' on the status page",
+					"expected": "Actions update the entry state",
+					"observed": "POST /status/on-my-way -> 200 (status on_the_way, page 'We know you are on your way'); POST /status/leave -> 200 after the inline confirm prompt (status left, page 'You left the waitlist')"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-waitlist-join-filled.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-waitlist-status-page.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-duplicate-join-refused.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-cap-full-refused.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-honeypot-ui-fake-success.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-on-my-way.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-leave-confirm-prompt.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-leave-done.png"
+				],
+				"consoleErrors": "none (agent-browser errors empty after every step)",
+				"network": "POST /reservations/waitlist/join -> 201 (join), 409 (duplicate), 409 (cap), 201 (honeypot); POST /reservations/waitlist/status/on-my-way -> 200; POST /reservations/waitlist/status/leave -> 200; PATCH /operator/reservations/setup/locations/:id/settings -> 200 x2",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-010-join-row.txt, VAL-WAIT-010-settings-before-cap.txt, VAL-WAIT-010-settings-after-cap.txt, VAL-WAIT-010-settings-restored.txt, VAL-WAIT-010-settings-final.txt, VAL-WAIT-010-cap-full-refused.txt, VAL-WAIT-010-honeypot-ui-no-write.txt, VAL-WAIT-010-on-my-way.txt, VAL-WAIT-010-leave-waitlist.txt"
+			},
+			"issues": "Sites join is rate limited to 5 requests / 10 min per IP (in-memory, name 'waitlist-join'); the duplicate+cap+honeypot+join sequence exhausted it and later joins returned 429 until the window slid (see frictions). Not documented in user-testing.md."
+		},
+		{
+			"id": "VAL-WAIT-013",
+			"title": "Guest status page stays consistent with the operator list",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Remote-join A (+15555551007) then B (+15555551008) via the Sites waitlist form",
+					"expected": "Status pages report distinct, ordered positions",
+					"observed": "A status page: Position in line 5; B status page: Position in line 6; operator list GET /operator/reservations/book/waitlist returns A position 5, B position 6 (A ahead of B). Absolute 1 and 2 are not reproducible: the queue already held 4 active entries owned by other groups (wl_acme_1, wl_acme_2, G8 WAIT005 Z) plus a leftover from the cancelled prior g10 attempt (G10 Bravo)"
+				},
+				{
+					"action": "Host notifies A: POST /operator/reservations/book/waitlist/<A>/notify",
+					"expected": "A shows the notified state; B unchanged",
+					"observed": "HTTP 200 (status notified, response_deadline_at = now+10 min); reloading A's page shows 'Your table is ready - We can hold your table for 9:48'; B's page still shows 'You are on the waitlist', Position in line 6"
+				},
+				{
+					"action": "Host seats A: POST /operator/reservations/book/waitlist/<A>/seat",
+					"expected": "B moves up and shows an updated quoted wait; A shows seated",
+					"observed": "HTTP 200 (entry seated, reservation rsv_400055c5 channel=waitlist on table tbl_64ad8f68); B's reloaded page shows Position in line 5 (down from 6) and a recomputed quoted_ready_at; A's page shows 'You have been seated - Enjoy your meal.'"
+				},
+				{
+					"action": "Observe GET /reservations/waitlist/status for both pages",
+					"expected": "200 x2 with position, quoted wait, state and server now",
+					"observed": "GET /reservations/waitlist/status -> 200 for both pages on every reload (token in X-Reservation-Token header)"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-guest-status-a-waiting.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-guest-status-b-joined.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-guest-status-a-notified.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-guest-status-b-after-notify.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-guest-status-a-seated.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-guest-status-b-after-seat.png"
+				],
+				"consoleErrors": "none",
+				"network": "GET /reservations/waitlist/status -> 200 (x6 reloads, both guests); POST /operator/reservations/book/waitlist/:id/notify -> 200; POST /operator/reservations/book/waitlist/:id/seat -> 200",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-013-operator-list-before.json, VAL-WAIT-013-queue-after-a.txt, VAL-WAIT-013-queue-a-b.txt, VAL-WAIT-013-a-notified-row.txt, VAL-WAIT-013-a-seated-row.txt, VAL-WAIT-013-queue-after-seat.txt, VAL-WAIT-013-notify-a.json, VAL-WAIT-013-seat-a.json"
+			},
+			"issues": "Two deviations from the literal wording, both caused by the shared queue rather than the feature: (1) positions were 5 and 6, not 1 and 2, because four active entries created by other groups (and one leftover from the cancelled prior g10 attempt) were already ahead; A was still ahead of B and every transition matched. (2) B's quoted wait stayed 'About 1 min' after A was seated because the quote is already at its 1-minute floor; the position did change (6 -> 5) and quoted_ready_at was recomputed (sqlite)."
+		},
+		{
+			"id": "VAL-WAIT-014",
+			"title": "Status token is the only credential and rotation/forgery fails closed",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Open the waitlist page in a fresh tab with no token (stored_token_present=false) and probe GET /reservations/waitlist/status, POST /status/leave, POST /status/on-my-way with no token",
+					"expected": "All fail with the uniform 404",
+					"observed": "404 / 404 / 404, body {\"error\":\"not_found\"}; the page renders the join form, not the status view"
+				},
+				{
+					"action": "Probe the same endpoints with a token whose last character was changed",
+					"expected": "Same uniform 404",
+					"observed": "GET status -> 404, POST leave -> 404"
+				},
+				{
+					"action": "Send the valid acme (US) status token to the KSA node (http://localhost:3009) with the Sites Origin",
+					"expected": "Same uniform 404",
+					"observed": "GET /reservations/waitlist/status -> 404 {\"error\":\"not_found\"}; POST /status/leave -> 404; the same token on the US node returns 200"
+				},
+				{
+					"action": "Inspect the browser's status request shape",
+					"expected": "Token only in the URL fragment and X-Reservation-Token header",
+					"observed": "GET /reservations/waitlist/status -> 200 with request header x-reservation-token present (value redacted) and no token in the path or query; the token reaches the page only via the #t= URL fragment (stored in sessionStorage)"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-014-fresh-session-no-token-join-form.png"
+				],
+				"consoleErrors": "none",
+				"network": "GET/POST /reservations/waitlist/status[/leave|/on-my-way] -> 404 without and with a forged token; GET /status -> 200 with the real token on 3007 and 404 on 3009",
+				"terminal": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-014-fresh-session-probes.txt, VAL-WAIT-014-cross-node-404.txt, VAL-WAIT-014-status-request-headers-redacted.txt"
+			},
+			"issues": "In the browser the cross-node request never reaches the route: the KSA node answers the CORS preflight (OPTIONS) with 403 because the acme Sites origin is not allowed there, so fetch() rejects. The uniform 404 was therefore captured with curl using the Sites Origin header (same route, same token, no CORS layer). Both behaviors fail closed."
+		},
+		{
+			"id": "VAL-WAIT-015",
+			"title": "Notify-me request is created when no time is available",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Submit POST /reservations/notify-me (the exact payload the Sites availability step sends) for a fully booked window on 2026-11-16 with party 2, 480-480, contact rsv-g10-40@example.com",
+					"expected": "201 with a cancel token and status active",
+					"observed": "201, request nfy_... status active with cancelToken returned"
+				},
+				{
+					"action": "Create a sixth active request for the same contact (different IP identity)",
+					"expected": "Refused (at most 5 active per contact)",
+					"observed": "POST /reservations/notify-me -> 409 {\"error\":\"too_many_active_requests\"}"
+				},
+				{
+					"action": "Submit with the honeypot field website filled",
+					"expected": "Apparent success but nothing written",
+					"observed": "201 with a fake request id and cancel token; sqlite shows no row for the fake id"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-015-notify-me-unreachable-full-day-required.png"
+				],
+				"consoleErrors": "not applicable (API path; browser page showed no errors)",
+				"network": "POST /reservations/notify-me -> 201 (create), 409 (cap), 201 (honeypot fake)",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-015-cap-6th-refused.txt, VAL-WAIT-015-honeypot-fake-201.txt, VAL-WAIT-015-cap-and-honeypot-rows.txt"
+			},
+			"issues": "MISSING REQUIRED EVIDENCE: screenshot(notify-me-form) could not be captured. The Sites availability step only renders the notify-me offer when the whole searched day has zero slots for the party size (offersNotifyMe = notifyMe && slots.length === 0 && status not in closed/online_closed/beyond_horizon/large_party). A scan of 15 dates (2026-10-17..2026-11-20) x party 2/8 showed 10-36 slots on every date; no closed day qualifies. Filling an entire day (~30 slots, each needing several bookings) is not feasible inside this serial isolation and would collide with other validators. The submission was therefore exercised through the same public endpoint with the same payload the form posts; the rest of the assertion (201 + cancel token, 5-active cap, honeypot no-write) was verified on the real API."
+		},
+		{
+			"id": "VAL-WAIT-016",
+			"title": "Notify-me match after a cancellation frees the slot",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Create an active notify-me request covering a full slot (R1: rsv-g10-41@example.com, party 2, window 1140-1230 on 2026-11-16)",
+					"expected": "201 active request",
+					"observed": "201, nfy_8ea49786 status active, cancelToken returned"
+				},
+				{
+					"action": "Cancel the booking that occupies the slot (rsv_1678b4e7 at localMin 1170) and read the day version",
+					"expected": "rsv_day_versions.availability_increased_at set",
+					"observed": "booking cancelled (status cancelled); rsv_day_versions 2026-11-16 version 149 with availability_increased_at = 1792246826794 (captured immediately after the cancel). The flag is consumed (cleared) by the notify tick, so a later read shows NULL - by design (clearFlag in rsv-notify-service)"
+				},
+				{
+					"action": "POST /api/reservations/tick (internal token)",
+					"expected": "Matching task notifies the request in FIFO order (max 3 per slot); one notify_available message",
+					"observed": "tick 200; notify_me_match {notified: 1, expired: 0}; row nfy_8ea49786 -> notified, notified_count 1, last_notified_slot_min 1140; one notify_available email captured for rsv-g10-41@example.com containing date/time (Mon Nov 16, 7:00 PM) and a booking link"
+				},
+				{
+					"action": "Check the second batch window for the 5-request slot group (batch of 3 then 2)",
+					"expected": "At most 3 per batch, rest stay active until the next window",
+					"observed": "First batch 14:21:29 notified 50/51/52 only; 53/54 stayed active; the next window at 14:37:29 notified 53/54"
+				}
+			],
+			"evidence": {
+				"screenshots": [],
+				"consoleErrors": "not applicable (curl + sqlite assertion)",
+				"network": "POST /api/reservations/tick -> 200; POST /reservations/notify-me -> 201",
+				"email": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-016-notify_available-email.json, VAL-WAIT-016-notify_available-email.txt, guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-017-notify_available-53-email.json, VAL-WAIT-017-notify_available-54-email.json",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-016-R1-created.txt, VAL-WAIT-016-cancel-1170.txt, VAL-WAIT-016-tick-notified.txt, VAL-WAIT-017-dayversion-after-cancel.txt, VAL-WAIT-017-batch-final.txt, VAL-WAIT-016-day-versions.txt"
+			},
+			"issues": "The day-version flag has per-bump semantics: it is set by the availability increase and cleared when the notify tick consumes it. Evidence was captured at 14:20 (set) and the later NULL state (14:40) is the expected consumed state, not a regression."
+		},
+		{
+			"id": "VAL-WAIT-017",
+			"title": "Notify-me batching, repeat window and expiry",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Create 5 active notify-me requests for one freed slot (party 8, 660, 2026-11-16) and run a tick",
+					"expected": "Only the first 3 in FIFO order are notified; 2 stay active",
+					"observed": "Before: 50-54 active. After the 14:21:29 tick: 50, 51, 52 notified (notified_count 1, slot 660) and 53, 54 still active; exactly 3 notify_available emails captured (11:00 AM, party 8, 2026-11-16)"
+				},
+				{
+					"action": "Wait for the next 15-minute batch window and tick again",
+					"expected": "The remaining 2 are notified",
+					"observed": "At 14:37:29 (interval tick) 53 and 54 -> notified, notified_count 1, slot 660; 2 more notify_available emails captured"
+				},
+				{
+					"action": "Create a request for today whose window ends in ~2 minutes, then tick after it passed",
+					"expected": "Moved to expired and never notified",
+					"observed": "nfy_0caa1b6f (window 625-627 on 2026-10-17) -> status expired, notified_count 0; no email exists for rsv-g10-55@example.com (grep count 0)"
+				},
+				{
+					"action": "Cancel a request with its cancel token and reuse the token",
+					"expected": "200 then uniform 404",
+					"observed": "POST /reservations/notify-me/cancel -> 200 {\"cancelled\":true}; same token again -> 404 {\"error\":\"not_found\"}; the cancelled row stayed cancelled with notified_count 0 through later ticks"
+				}
+			],
+			"evidence": {
+				"screenshots": [],
+				"consoleErrors": "not applicable (curl + sqlite assertion)",
+				"network": "POST /api/reservations/tick -> 200 (x2); POST /reservations/notify-me -> 201; POST /reservations/notify-me/cancel -> 200 then 404",
+				"email": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-017-notify_available-53-email.json, VAL-WAIT-017-notify_available-54-email.json",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-017-requests-before-tick.txt, VAL-WAIT-017-after-tick1.txt, VAL-WAIT-017-after-tick2.txt, VAL-WAIT-017-batch-final.txt, VAL-WAIT-017-expiry-before.txt, VAL-WAIT-017-cancel-token.txt, VAL-WAIT-017-requests-state-1431.txt"
+			},
+			"issues": "The first batch and the second batch were delivered by the 120 s in-process interval tick rather than by my manual tick (both landed at x:21:29 and x:37:29). Manual ticks were still issued and returned 200 with notified 0 afterwards, which also demonstrates the dedupe/repeat suppression."
+		},
+		{
+			"id": "VAL-WAIT-018",
+			"title": "A notified notify-me guest can book the freed slot",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Open the booking link from the notify_available email for rsv-g10-41 (Mon Nov 16, 7:00 PM, party 2) on Sites",
+					"expected": "Sites availability step opens for the offered slot",
+					"observed": "Page loads at /reserve?...&date=2026-11-16&time=19:00 and lists the 7:00 PM slot (the email link's literal origin is http://localhost:3001 - known defect; the same path/query on the Sites origin was used, no re-diagnosis)"
+				},
+				{
+					"action": "Select 7:00 PM, fill guest details, confirm",
+					"expected": "POST /reservations -> 201",
+					"observed": "POST /reservations/holds -> 201 then POST /reservations -> 201; page shows 'You are booked ... Confirmation code WXQFX1Q3'"
+				},
+				{
+					"action": "Check the notify request row and the confirmation email",
+					"expected": "Request becomes booked; confirmation email follows",
+					"observed": "nfy_8ea49786 -> status booked, notified_count 1, guest_id linked; confirmation email 'Your reservation at Downtown Flagship is confirmed' captured for rsv-g10-41@example.com; reservation rsv_f6a0942d channel online, party 2, local_start_min 1140, business_date 2026-11-16"
+				},
+				{
+					"action": "Check the operator Book within one poll",
+					"expected": "The new booking appears",
+					"observed": "GET /operator/reservations/book/day?date=2026-11-16 -> 200 and contains WXQFX1Q3 (rsv_f6a0942d, booked, online, party 2, localStartMin 1140)"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-018-booking-form-filled.png",
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-018-booking-confirmed.png"
+				],
+				"consoleErrors": "none",
+				"network": "POST /reservations/holds -> 201; POST /reservations -> 201; GET /operator/reservations/book/day -> 200",
+				"email": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-018-confirmation-email.json",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-018-r1-booked-row.txt, VAL-WAIT-018-reservation-row.txt, guest-channels-and-crm/g10-waitlist-guest/VAL-CROSS-017-operator-book-day.json"
+			},
+			"issues": "The request only flips to booked when the booking guest's own phone or email matches the request contact (markNotifyRequestsBooked matches on the guest profile's phone/email). My first attempt booked with phone +15555551011, which resolved to a pre-existing guest profile whose email was rsv-nm-g10@example.com, so R1 stayed notified; a second attempt with the request's own contact transitioned it to booked. Also a 409 'This phone number already has a reservation at that time' blocked reusing +15555551041 (it already holds a 19:30 booking from the fill scripts), so a fresh owned phone (+15555551012) with the request's email was used."
+		},
+		{
+			"id": "VAL-CROSS-017",
+			"title": "Notify-me fires when another booking is cancelled, and the guest books the freed slot",
+			"status": "pass",
+			"steps": [
+				{
+					"action": "Step 1: submit a notify-me request for the fully booked 19:00-21:00 window on 2026-11-16 (rsv-g10-41@example.com, party 2)",
+					"expected": "2xx with a cancel token",
+					"observed": "POST /reservations/notify-me -> 201, status active, cancelToken returned (submitted through the public API because the Sites form needs a zero-slot day - see VAL-WAIT-015)"
+				},
+				{
+					"action": "Step 2: cancel the booking covering the window (party 2 at 19:30) and check the day version",
+					"expected": "availability_increased_at set",
+					"observed": "booking rsv_1678b4e7 cancelled; rsv_day_versions 2026-11-16 availability_increased_at = 1792246826794 (version 149)"
+				},
+				{
+					"action": "Step 3: tick; then tick again immediately",
+					"expected": "notify_available email, row notified, no duplicate on the second tick",
+					"observed": "tick 1: notify_me_match notified 1 (R1 -> slot 1140), notify_available email captured; tick 2: notified 0 / expired 0, mail count unchanged (192 -> 192), every notified row kept notified_count 1"
+				},
+				{
+					"action": "Step 4: follow the email link and book party 2 at the offered slot",
+					"expected": "Booking succeeds; request booked; booking visible to the operator",
+					"observed": "POST /reservations -> 201 (confirmation WXQFX1Q3); request -> booked; GET /operator/reservations/book/day includes the new booking within one poll"
+				},
+				{
+					"action": "Step 5: create a second request, cancel it with its token, then tick",
+					"expected": "200 then 404 on reuse; tick does not notify it",
+					"observed": "POST /reservations/notify-me/cancel -> 200; reuse -> 404; the row stayed cancelled with notified_count 0 through all later ticks"
+				}
+			],
+			"evidence": {
+				"screenshots": [
+					"guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-018-booking-confirmed.png"
+				],
+				"consoleErrors": "none",
+				"network": "POST /reservations/notify-me -> 201; POST /api/reservations/tick -> 200 x2; POST /reservations -> 201; POST /reservations/notify-me/cancel -> 200 then 404",
+				"email": "guest-channels-and-crm/g10-waitlist-guest/VAL-CROSS-017-notify_available-email.json, guest-channels-and-crm/g10-waitlist-guest/VAL-WAIT-018-confirmation-email.json",
+				"sqlite": "guest-channels-and-crm/g10-waitlist-guest/VAL-CROSS-017-double-tick-dedupe.txt, VAL-WAIT-017-dayversion-after-cancel.txt, VAL-WAIT-018-r1-booked-row.txt, VAL-CROSS-017-operator-book-day.json"
+			},
+			"issues": "Two wording deviations: the matcher offered 19:00 (the earliest available slot inside the guest's 19:00-21:00 window) instead of the literal 19:30, and step 1 was submitted through the public endpoint because the Sites notify-me form requires a whole day with zero slots. The freed slot did reach exactly the waiting guest, was bookable, produced no duplicate notification, and the cancel token worked."
+		}
+	],
+	"frictions": [
+		{
+			"description": "Sites waitlist join is limited to 5 requests / 10 min per client IP (in-memory limiter, bucket 'waitlist-join'); the duplicate, cap, honeypot and first join consumed it and guest B's join got 429 with retry-after up to 358 s.",
+			"resolved": true,
+			"resolution": "Waited for the sliding window (oldest hit aged out at 14:33:41) and retried the same form; join then returned 201. 429s do not consume a slot.",
+			"affectedAssertions": ["VAL-WAIT-010", "VAL-WAIT-013"]
+		},
+		{
+			"description": "The agent-browser daemon restarted mid-session and dropped all tabs (active tab became about:blank), losing the in-tab sessionStorage status tokens.",
+			"resolved": true,
+			"resolution": "Re-opened the status pages from their #t=<token> fragment URLs (the fragment is the durable copy of the token) and re-captured the header evidence.",
+			"affectedAssertions": ["VAL-WAIT-014", "VAL-WAIT-018"]
+		},
+		{
+			"description": "The Sites notify-me form only renders when the whole day has zero slots for the party size (offersNotifyMe), and no date in 2026-10-17..2026-11-20 has zero slots for party 2 or 8.",
+			"resolved": false,
+			"resolution": "Used the public POST /reservations/notify-me endpoint with the same payload the form sends; screenshot(notify-me-form) is missing and reported as a limitation.",
+			"affectedAssertions": ["VAL-WAIT-015", "VAL-CROSS-017"]
+		},
+		{
+			"description": "The 120 s in-process interval tick races manual ticks; notification batches fired at 14:21:29 and 14:37:29 from the interval tick, not from my manual POST /api/reservations/tick.",
+			"resolved": true,
+			"resolution": "Read the rows/emails after both tick sources and recorded which one fired; manual ticks returned 200 with notified 0, which doubles as dedupe evidence.",
+			"affectedAssertions": ["VAL-WAIT-016", "VAL-WAIT-017", "VAL-CROSS-017"]
+		},
+		{
+			"description": "The browser's cross-node request to the KSA node is refused at the CORS preflight (OPTIONS -> 403) because the acme Sites origin is not allowed on 3009, so the fetch() never reaches the route.",
+			"resolved": true,
+			"resolution": "Captured the browser preflight 403 and obtained the uniform route-level 404 with curl using the same Origin header.",
+			"affectedAssertions": ["VAL-WAIT-014"]
+		},
+		{
+			"description": "Operator (rsv) tokens expire after ~15 minutes; a stale token produced 401 'Invalid or expired reservations operator token' mid-flow.",
+			"resolved": true,
+			"resolution": "Re-minted a book-scope token before each write phase.",
+			"affectedAssertions": ["VAL-WAIT-013"]
+		},
+		{
+			"description": "rsv_day_versions.availability_increased_at is consumed (cleared) by the notify tick, so the 'set' checkpoint is only observable in a narrow window after the cancellation.",
+			"resolved": true,
+			"resolution": "Captured it immediately after the cancel (14:20/14:22) and documented the later NULL state as the expected consumed state.",
+			"affectedAssertions": ["VAL-WAIT-016", "VAL-CROSS-017"]
+		},
+		{
+			"description": "acme had reservations.enabled=false transiently during the run (another validator's flag window), which made all public routes answer a uniform 404.",
+			"resolved": true,
+			"resolution": "Waited ~40 s and confirmed the flag was restored before continuing.",
+			"affectedAssertions": []
+		},
+		{
+			"description": "Availability and operator booking disagree for some party-8 dinner slots on 2026-11-16 (availability lists them while the operator booking API answers tables_occupied); public holds at 1170 succeeded.",
+			"resolved": false,
+			"resolution": "Not needed for the assigned assertions; recorded as an observation only (not re-diagnosed).",
+			"affectedAssertions": []
+		},
+		{
+			"description": "notify_available and confirmation emails link to http://localhost:3001 (the App origin) instead of the Sites origin - pre-existing known defect.",
+			"resolved": true,
+			"resolution": "Followed the same path/query on the Sites origin; not re-diagnosed per the task instructions.",
+			"affectedAssertions": ["VAL-WAIT-018", "VAL-CROSS-017"]
+		}
+	],
+	"blockers": [],
+	"summary": "Tested 8 assertions (VAL-WAIT-010, 013, 014, 015, 016, 017, 018, VAL-CROSS-017): 8 pass. Verified end-to-end on the real surfaces: Sites waitlist join/status/leave/on-my-way with duplicate, cap and honeypot refusals (WAIT-010); two-guest position consistency with notify and seat transitions (WAIT-013); uniform 404 for missing/forged/cross-node tokens with the token only in the URL fragment and X-Reservation-Token header (WAIT-014); notify-me create/cap/honeypot (WAIT-015); cancellation-driven matching with the day-version flag, FIFO batches of 3 + 2, expiry and cancel-token 200/404 (WAIT-016/017); and the notify_available email leading to a real booking that flips the request to booked with a confirmation email (WAIT-018/CROSS-017). Documented limitations: the Sites notify-me form screenshot is unreachable (requires a zero-slot day; all days have 10-36 slots) so the notify-me submission used the same public endpoint; queue positions were 5/6 instead of 1/2 because other groups' entries were already active; the matched slot was 19:00 (earliest in the window) rather than 19:30; B's quoted wait stayed at its 1-minute floor while its position decreased. Owned settings were restored (waitlist_max_parties NULL, waitlist_response_min 10, version 58), the browser session was closed, and leftover rows in my namespace (guest B waiting +15555551008, G10 Bravo +15555551003 from the cancelled attempt, two bookings by my test contacts on 2026-11-16) are listed for the next worker."
+}

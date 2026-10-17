@@ -1,0 +1,156 @@
+{
+	"timestamp": "2026-10-17T02:10:50.926Z",
+	"workerSessionId": "84abefa4-a1de-49de-87c1-4301454a5025",
+	"featureId": "foh-core-ut-fix-backend",
+	"milestone": "foh-core",
+	"commitId": "5826f11d",
+	"repoPath": "/home/factory-user/repos/menuza",
+	"successState": "success",
+	"returnToOrchestrator": true,
+	"handoff": {
+		"salientSummary": "Fixed all 8 foh-core UT round-1 backend/engine defects (expired holds, per-step oracle, location-scoped DELETE aliases, block UI payload, seat-with-tableIds, day-feed filters/counters/moveNotices/conflicts, withSetupWrite org-id lock key + rollback). Tests added for each; typecheck and oxlint clean; reservations/tenant-db/tenant-api suites pass (one pre-existing flaky timing test aside); verified live on tenant-api 3007 with curl and sqlite3.",
+		"whatWasImplemented": "(1) Engine: `packages/reservations/src/engine/availability.ts` drops `existingHolds` with expiresAt<=now; `assign.ts` has `expiresAt` on AssignBookingRecord and skips expired holds in the `kind==='hold'` branch. (2) `src/testing/arbitraries.ts` `executeOperationSequence` now probes the brute-force oracle after every step; `engine.property.test.ts` asserts zero mismatches per step. (3) `operator-reservations-setup.ts`: `/locations/:locationId/{pacing,pacing-rules}/:id` and `/locations/:locationId/service-availability/:id` PUT/PATCH/DELETE aliases with `assertRowInRequestedLocation` (404 for other location); legacy routes kept. (4) `rsv-setup-crud.ts` createBlockForLocation uses `localToInstant().instantMs`; block handler accepts `date` as alias of `businessDate`. (5) `transitionReservationStatus` honours tableIds/comboId/overbook on seated (also from arrived), reusing assignReservationTables in the same tx; 409 rolls back. (6/7) `rsv-day-feed-service.ts` + `/book/day`: serviceId/areaId/source/tag filters, `counters {parties, covers}`, `filters`, per-query ETag suffix `.f<hash>` (unfiltered ETag unchanged), `moveNotices` (auto_reassigned events: reservationId, confirmationCode, guestName, partySize, localStartMin, hhmm, fromTableIds/Labels, toTableIds/Labels, reason, at) and `conflicts` with `kind:'blocked_table'` (locked bookings included) / `table_overlap`. (8) `packages/tenant-db/src/resolver.ts` WeakMap registry `getTenantDbOrgId`; `withSetupWrite` locks on the real org id (throws if unresolved) instead of 'setup'.",
+		"whatWasLeftUndone": "",
+		"verification": {
+			"commandsRun": [
+				{
+					"command": "npx turbo run typecheck --filter=tenant-api --filter=@repo/reservations --filter=@repo/tenant-db",
+					"exitCode": 0,
+					"observation": "3 successful tasks, no type errors."
+				},
+				{
+					"command": "npm run lint:oxc; npx oxlint <changed files>; npx prettier --check <changed files>",
+					"exitCode": 0,
+					"observation": "0 errors (19 pre-existing warnings repo-wide, 0 in changed files); prettier clean after formatting rsv-day-feed-service.ts. The three workspaces have no `lint` script."
+				},
+				{
+					"command": "cd packages/reservations && CI=true npx vitest run",
+					"exitCode": 0,
+					"observation": "72/73 pass; only src/engine/scale.test.ts '<50ms per day' timing assertion failed once (86ms under load), passes 2/2 in isolation and also failed on a stashed clean baseline, so it is a pre-existing flaky timing test."
+				},
+				{
+					"command": "cd packages/tenant-db && CI=true npx vitest run",
+					"exitCode": 0,
+					"observation": "13 files, 177 tests pass."
+				},
+				{
+					"command": "cd apps/tenant-api && CI=true npx vitest run",
+					"exitCode": 0,
+					"observation": "90 files, 1596 tests pass."
+				},
+				{
+					"command": "live curl + sqlite3 against tenant-api 3007 (acme, location v17plv08r5v357bie335lyq8, date 2031-05-15)",
+					"exitCode": 0,
+					"observation": "Scoped pacing/service-availability DELETE: other location 404, own location 200, repeat 404. Booked, arrived, then seated with tableIds -> 200, rsv_table_occupancies old row active=0 and new table active=1, day feed tableIds shows the new table; second party seated onto same table -> 409. Filters: source=phone counters {1,2}, source=online {0,0}; ETag unfiltered unchanged and filtered carries .f<hash> suffix. Block POST with {date,startMin,endMin,tableId} -> 201, start_at/end_at stored as integer epoch ms (1936648800000/1936654200000); day feed conflicts show blocked_table for the seated booking. Cleaned up (block deleted, bookings cancelled/finished)."
+				}
+			],
+			"interactiveChecks": []
+		},
+		"tests": {
+			"added": [
+				{
+					"file": "packages/reservations/src/engine/availability.test.ts",
+					"cases": [
+						{
+							"name": "ignores holds whose expiresAt has passed",
+							"verifies": "expired existingHolds do not block a slot (fails without the fix)"
+						}
+					]
+				},
+				{
+					"file": "packages/reservations/src/engine/assign.test.ts",
+					"cases": [
+						{
+							"name": "ignores expired holds in occupancies and in existingHolds (I4)",
+							"verifies": "assignment skips expired holds"
+						}
+					]
+				},
+				{
+					"file": "packages/reservations/src/engine/engine.property.test.ts",
+					"cases": [
+						{
+							"name": "per-step oracle check in operation sequences",
+							"verifies": "brute-force oracle agrees with assignTables after every step"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/reservations-security.test.ts",
+					"cases": [
+						{
+							"name": "VAL-SETUP-020 & VAL-SETUP-021 location-scoped deletes",
+							"verifies": "200 for own location, 404 for other location, 404 on repeat, legacy unscoped routes still work; route discovery lists the new aliases"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/reservations-setup.test.ts",
+					"cases": [
+						{
+							"name": "POST /locations/:id/blocks accepts { date, startMin, endMin }",
+							"verifies": "201, epoch start_at/end_at, soft booking reflowed, auto_reassigned event emitted"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/routes/reservations-book.test.ts",
+					"cases": [
+						{
+							"name": "seats from arrived with tableIds",
+							"verifies": "active occupancy row, day-feed tableIds, 409 when table taken"
+						},
+						{
+							"name": "day feed filters/counters/ETag",
+							"verifies": "serviceId/areaId/source/tag filters, { parties, covers }, per-query ETag and 304"
+						},
+						{
+							"name": "moveNotices and blocked_table conflicts",
+							"verifies": "auto_reassigned notices and locked booking displaced by a block appear in conflicts"
+						}
+					]
+				},
+				{
+					"file": "apps/tenant-api/src/lib/reservations-write.test.ts",
+					"cases": [
+						{
+							"name": "withSetupWrite locks on the org id",
+							"verifies": "setup write serializes with the same org's reservation writes"
+						},
+						{
+							"name": "withSetupWrite does not serialize against another org",
+							"verifies": "no global 'setup' lock"
+						},
+						{
+							"name": "withSetupWrite rolls back every row when the mutation fails part-way",
+							"verifies": "no partial rows after a thrown error"
+						}
+					]
+				}
+			],
+			"coverage": "Each of the 8 fixes has at least one new Vitest case; engine expiry test verified to fail without the fix; HTTP-level fixes also verified live with curl/sqlite3."
+		},
+		"discoveredIssues": [
+			{
+				"severity": "non_blocking",
+				"description": "packages/reservations/src/engine/scale.test.ts asserts '< 50ms per day' and is flaky under load (86ms observed once; fails on clean baseline too).",
+				"suggestedFix": "Loosen the threshold or measure a median of several runs."
+			},
+			{
+				"severity": "suggestion",
+				"description": "Task paths were stale: engine files live at packages/reservations/src/engine/{availability,assign}.ts and the operation-sequence property test lives in packages/reservations (src/testing/arbitraries.ts + src/engine/engine.property.test.ts), not apps/tenant-api. Also resolveServiceForTime falls back to services[0], so a booking's stored serviceId can differ from the service whose window contains its time; the serviceId day filter matches on the stored serviceId first.",
+				"suggestedFix": "UI-fix feature should read the day feed keys `counters`, `moveNotices`, `conflicts` (kind 'blocked_table' with reservationId, tableIds, blockId, message), and `filters` as added here."
+			}
+		],
+		"skillFeedback": {
+			"followedProcedure": true,
+			"deviations": [
+				{
+					"step": "Verification with curl",
+					"whatIDidInstead": "Used pre-running tenant-api 3007 (tsx watch picked up changes) and cleaned up created rows through the API rather than starting a new service.",
+					"why": "Services were already running; shell DB writes are disallowed."
+				}
+			]
+		}
+	}
+}
