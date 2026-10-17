@@ -171,9 +171,7 @@ describe('DetailSheet resend', () => {
 		)) as HTMLButtonElement
 		fireEvent.click(button)
 		await waitFor(() => expect(button.disabled).toBe(true))
-		expect(
-			(screen.getByTestId('detail-rotate-link') as HTMLButtonElement).disabled,
-		).toBe(true)
+		expect(screen.getByTestId('detail-rotate-link')).toBeDisabled()
 		finish({ queued: 1, rotated: false, reservation: null })
 		await waitFor(() => expect(button.disabled).toBe(false))
 	})

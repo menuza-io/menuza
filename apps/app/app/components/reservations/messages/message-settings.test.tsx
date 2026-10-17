@@ -101,9 +101,7 @@ describe('MessageSettingsScreen', () => {
 		expect(input('message-note-confirmation-en').value).toBe('See you soon')
 		expect(input('message-note-confirmation-ar').value).toBe('')
 		expect(screen.queryByTestId('message-dirty-badge')).toBeNull()
-		expect(
-			(screen.getByTestId('message-save') as HTMLButtonElement).disabled,
-		).toBe(true)
+		expect(screen.getByTestId('message-save')).toBeDisabled()
 	})
 
 	it('hides waitlist kinds unless the waitlist is on', async () => {
@@ -185,9 +183,7 @@ describe('MessageSettingsScreen', () => {
 		fireEvent.change(input('message-reminder-hours'), {
 			target: { value: '0' },
 		})
-		expect(
-			(screen.getByTestId('message-save') as HTMLButtonElement).disabled,
-		).toBe(true)
+		expect(screen.getByTestId('message-save')).toBeDisabled()
 		expect(
 			screen.getByText(/Enter a whole number of hours from 1 to 168/),
 		).toBeTruthy()
