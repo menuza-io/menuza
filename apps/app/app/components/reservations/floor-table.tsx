@@ -203,6 +203,7 @@ function FloorTableBase({
 						className="text-muted-foreground shrink-0 text-xs tabular-nums"
 						data-testid={`floor-table-party-size-${table.id}`}
 					>
+						{state.currentReservation ? null : `${activeParty.hhmm} · `}
 						{activeParty.partySize}p
 					</span>
 				</div>

@@ -1,3 +1,7 @@
+import {
+	SETUP_EXPERIENCE_KINDS,
+	SETUP_EXPERIENCE_STATUSES,
+} from '@repo/reservations'
 import { z } from 'zod'
 import {
 	ReservationsApiError,
@@ -14,9 +18,9 @@ import {
 
 const BASE = '/operator/reservations/setup/locations'
 
-export const EXPERIENCE_KINDS = ['ticketed', 'prix_fixe'] as const
+export const EXPERIENCE_KINDS = SETUP_EXPERIENCE_KINDS
 export type ExperienceKind = (typeof EXPERIENCE_KINDS)[number]
-export const EXPERIENCE_STATUSES = ['draft', 'published', 'archived'] as const
+export const EXPERIENCE_STATUSES = SETUP_EXPERIENCE_STATUSES
 export type ExperienceStatus = (typeof EXPERIENCE_STATUSES)[number]
 export const EXPERIENCE_LOCALES = ['en', 'ar', 'es', 'fr', 'de', 'zh'] as const
 export type ExperienceLocale = (typeof EXPERIENCE_LOCALES)[number]
@@ -120,13 +124,35 @@ export async function fetchExperiences(
 	client: ReservationsScopedClient,
 	locationId: string,
 	signal?: AbortSignal,
-): Promise<ExperienceDto[]> {
+): Promise<ExperiencesList> {
 	const raw = await client.request<{ experiences?: unknown }>(
 		root(locationId),
 		{ signal },
 	)
-	const parsed = z.array(experienceSchema).safeParse(raw.experiences ?? [])
-	return parsed.success ? parsed.data : malformed()
+	return parseExperiencesList(raw.experiences)
+}
+
+export type ExperiencesList = {
+	experiences: ExperienceDto[]
+	/** Rows the API sent that did not match the schema (hidden, not fatal). */
+	invalidCount: number
+}
+
+/**
+ * Rows are parsed one by one: a single bad row must not hide the others. Only
+ * a payload that is not a list at all counts as a malformed response.
+ */
+export function parseExperiencesList(raw: unknown): ExperiencesList {
+	const rows = raw ?? []
+	if (!Array.isArray(rows)) return malformed()
+	const experiences: ExperienceDto[] = []
+	let invalidCount = 0
+	for (const row of rows) {
+		const parsed = experienceSchema.safeParse(row)
+		if (parsed.success) experiences.push(parsed.data)
+		else invalidCount += 1
+	}
+	return { experiences, invalidCount }
 }
 
 export async function fetchExperience(

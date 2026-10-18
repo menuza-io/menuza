@@ -374,7 +374,6 @@ export function WaitlistSettingsScreen({
 
 			{canWrite ? (
 				<SettingsSaveBar
-					persistent
 					submit
 					dirty={dirty}
 					pending={saving}

@@ -258,7 +258,14 @@ export default function ReservationsSettingsIndexRoute() {
 
 			{/* Setup diagnostics: one summary with a link per issue */}
 			<div data-testid="setup-validation-panel">
-				{!validation ? null : issues.length === 0 ? (
+				{loadingSummary || !validation ? (
+					loadingSummary ? (
+						<Skeleton
+							className="h-12 w-full rounded-xl"
+							data-testid="setup-validation-skeleton"
+						/>
+					) : null
+				) : issues.length === 0 ? (
 					<p className="text-muted-foreground flex items-center gap-2 text-sm">
 						<Icon name="check-circle" className="text-success size-4" />
 						<Trans>
@@ -276,7 +283,11 @@ export default function ReservationsSettingsIndexRoute() {
 					>
 						<Icon name="shield-check" />
 						<AlertTitle>
-							<Trans>Finish setting up before guests can book</Trans>
+							{issues.some((issue) => issue.severity === 'error') ? (
+								<Trans>Finish setting up before guests can book</Trans>
+							) : (
+								<Trans>Recommended setup improvements</Trans>
+							)}
 						</AlertTitle>
 						<AlertDescription>
 							<ul
@@ -783,7 +794,6 @@ export default function ReservationsSettingsIndexRoute() {
 
 					{canWrite ? (
 						<SettingsSaveBar
-							persistent
 							submit
 							dirty={dirty}
 							pending={saving}

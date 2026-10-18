@@ -42,6 +42,7 @@ import {
 	rsvTurnTimes,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
+import { buildDemoTags } from './seed-reservations-data.ts'
 
 function fail(message: string): never {
 	console.error(message)
@@ -783,7 +784,7 @@ async function seedTenantReservations(params: {
 			id: expId,
 			locationId: locId,
 			slug: 'chefs-tasting',
-			kind: 'tasting',
+			kind: 'prix_fixe',
 			nameI18n: {
 				en: "Chef's Seasonal Tasting",
 				ar: 'قائمة تذوق الشيف الموسمية',
@@ -908,65 +909,20 @@ async function seedTenantReservations(params: {
 	}
 
 	// 9b. Demo Tags + Guest Tags
-	const demoTags = [
-		{
-			id: `tag_${prefix}_vip`,
-			scope: 'guest',
-			category: 'status',
-			name: 'VIP',
-			systemKey: 'vip',
-			colorToken: 'amber',
-			sensitive: false,
-			guestSelectable: false,
-		},
-		{
-			id: `tag_${prefix}_regular`,
-			scope: 'guest',
-			category: 'status',
-			name: 'Regular',
-			systemKey: 'regular',
-			colorToken: 'emerald',
-			sensitive: false,
-			guestSelectable: false,
-		},
-		{
-			id: `tag_${prefix}_birthday`,
-			scope: 'visit',
-			category: 'occasion',
-			name: 'Birthday',
-			systemKey: 'birthday',
-			colorToken: 'pink',
-			sensitive: false,
-			guestSelectable: true,
-		},
-		{
-			id: `tag_${prefix}_anniversary`,
-			scope: 'visit',
-			category: 'occasion',
-			name: 'Anniversary',
-			systemKey: 'anniversary',
-			colorToken: 'purple',
-			sensitive: false,
-			guestSelectable: true,
-		},
-		{
-			id: `tag_${prefix}_allergy`,
-			scope: 'visit',
-			category: 'dietary',
-			name: 'Allergy',
-			systemKey: 'allergy',
-			colorToken: 'red',
-			sensitive: true,
-			guestSelectable: true,
-		},
-	]
+	const demoTags = buildDemoTags(prefix)
 	for (const tag of demoTags) {
 		await tenantDb
 			.insert(rsvTags)
 			.values(tag)
 			.onConflictDoUpdate({
 				target: rsvTags.id,
-				set: { name: tag.name, colorToken: tag.colorToken },
+				set: {
+					scope: tag.scope,
+					category: tag.category,
+					name: tag.name,
+					systemKey: tag.systemKey,
+					colorToken: tag.colorToken,
+				},
 			})
 	}
 	await tenantDb

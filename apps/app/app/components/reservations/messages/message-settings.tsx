@@ -196,6 +196,10 @@ export function MessageSettingsScreen({
 		[draft, noteMaxLength],
 	)
 	const dirty = Boolean(draft && base && isDraftDirty(draft, base))
+	// An invalid edit is not "dirty" to the patch builder but still unsaved.
+	const edited = Boolean(
+		draft && base && JSON.stringify(draft) !== JSON.stringify(base),
+	)
 	const previewKindValue = kinds.some((k) => k.kind === previewKind)
 		? previewKind
 		: (kinds[0]?.kind ?? previewKind)
@@ -680,7 +684,7 @@ export function MessageSettingsScreen({
 				</FramePanel>
 			</Frame>
 
-			{canWrite && (dirty || hasIssues(issues)) ? (
+			{canWrite && (dirty || (edited && hasIssues(issues))) ? (
 				<div
 					className="bg-background/95 sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur md:-mx-6 md:px-6"
 					data-testid="message-save-bar"

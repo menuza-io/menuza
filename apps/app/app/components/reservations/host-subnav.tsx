@@ -129,6 +129,10 @@ export function HostSubnav({
 	]
 	const visibleViewTabs = viewTabs.filter((tab) => tab.visible)
 
+	// The Calendar steps by month with its own navigation, and its month summary
+	// is not filtered by service or area, so those controls do not apply there.
+	const dayControls = activeView !== 'calendar'
+
 	const totalAttention = unassignedCount + conflictCount + moveNoticeCount
 
 	const visibleNotes = (
@@ -238,7 +242,7 @@ export function HostSubnav({
 					</nav>
 				) : null}
 
-				{onDateChange ? (
+				{dayControls && onDateChange ? (
 					<DateStepper
 						date={businessDate}
 						today={todayDate}
@@ -247,7 +251,7 @@ export function HostSubnav({
 				) : null}
 
 				<div className="flex flex-wrap items-center gap-2 sm:ms-auto">
-					{services.length > 0 && onServiceChange ? (
+					{dayControls && services.length > 0 && onServiceChange ? (
 						<FilterSelect
 							label={t`Service`}
 							testId="host-service-select"
@@ -258,7 +262,7 @@ export function HostSubnav({
 							}
 						/>
 					) : null}
-					{areas.length > 0 && onAreaChange ? (
+					{dayControls && areas.length > 0 && onAreaChange ? (
 						<FilterSelect
 							label={t`Area`}
 							testId="host-area-select"

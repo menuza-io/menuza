@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
@@ -42,7 +42,12 @@ type LoadState =
 	| { status: 'loading' }
 	| { status: 'denied' }
 	| { status: 'failed' }
-	| { status: 'ready'; experiences: ExperienceDto[]; currency: string }
+	| {
+			status: 'ready'
+			experiences: ExperienceDto[]
+			invalidCount: number
+			currency: string
+	  }
 
 const STATUS_DOT: Record<ExperienceDto['status'], string> = {
 	published: 'bg-success',
@@ -76,7 +81,7 @@ export function ExperiencesScreen({
 		async (signal?: AbortSignal) => {
 			const current = (requestId.current += 1)
 			try {
-				const [experiences, context] = await Promise.all([
+				const [list, context] = await Promise.all([
 					fetchExperiences(client, locationId, signal),
 					fetchExperienceContext(
 						client,
@@ -86,7 +91,12 @@ export function ExperiencesScreen({
 					),
 				])
 				if (current !== requestId.current) return
-				setState({ status: 'ready', experiences, currency: context.currency })
+				setState({
+					status: 'ready',
+					experiences: list.experiences,
+					invalidCount: list.invalidCount,
+					currency: context.currency,
+				})
 			} catch (error) {
 				if (signal?.aborted || current !== requestId.current) return
 				const status = experienceErrorStatus(error)
@@ -118,6 +128,7 @@ export function ExperiencesScreen({
 			? experience.status !== 'archived'
 			: experience.status === filter,
 	)
+	const invalidCount = state.status === 'ready' ? state.invalidCount : 0
 	const currency = state.status === 'ready' ? state.currency : 'USD'
 
 	function priceText(experience: ExperienceDto): string {
@@ -168,6 +179,19 @@ export function ExperiencesScreen({
 						<Trans>New experience</Trans>
 					</Button>
 				</ReservationsHeaderActions>
+			) : null}
+
+			{invalidCount > 0 ? (
+				<Alert data-testid="experiences-invalid-warning">
+					<Icon name="alert-triangle" />
+					<AlertDescription>
+						<Plural
+							value={invalidCount}
+							one="# experience could not be displayed."
+							other="# experiences could not be displayed."
+						/>
+					</AlertDescription>
+				</Alert>
 			) : null}
 
 			{state.status === 'ready' && all.length > 0 ? (

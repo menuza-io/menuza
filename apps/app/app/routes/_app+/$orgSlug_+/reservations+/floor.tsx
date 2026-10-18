@@ -70,7 +70,8 @@ import {
 	floorElementsForArea,
 	floorPlacement,
 	floorPlacementWithFallback,
-	floorStageSize,
+	floorFitScale,
+	floorRoomBounds,
 	floorTablesForArea,
 	isReservationOnFloor,
 	pickFloorAreaId,
@@ -141,7 +142,7 @@ const LEGEND_STATES = [
 	'blocked',
 ] as const
 
-/** Scales the stage down to fit the viewport, never below 0.7 (text stays readable; the rest scrolls). */
+/** Fits the room's bounding box to the container width (see `floorFitScale`). */
 function useFitScale(stageWidth: number) {
 	const viewportRef = useRef<HTMLDivElement | null>(null)
 	const [scale, setScale] = useState(1)
@@ -151,7 +152,7 @@ function useFitScale(stageWidth: number) {
 		const update = () => {
 			const available = node.clientWidth - 32
 			if (available > 0) {
-				setScale(Math.max(0.7, Math.min(1, available / stageWidth)))
+				setScale(floorFitScale(available, stageWidth))
 			}
 		}
 		update()
@@ -350,7 +351,7 @@ export default function ReservationsFloorRoute() {
 		: null
 
 	const stage = useMemo(
-		() => floorStageSize(areaTables, areaElements),
+		() => floorRoomBounds(areaTables, areaElements),
 		[areaTables, areaElements],
 	)
 	const { viewportRef, scale } = useFitScale(stage.width)
@@ -1060,6 +1061,7 @@ export default function ReservationsFloorRoute() {
 							) : (
 								<div
 									className="mx-auto"
+									dir="ltr"
 									style={{
 										width: stage.width * scale,
 										height: stage.height * scale,
@@ -1070,7 +1072,7 @@ export default function ReservationsFloorRoute() {
 										style={{
 											width: stage.width,
 											height: stage.height,
-											transform: scale === 1 ? undefined : `scale(${scale})`,
+											transform: `scale(${scale}) translate(${-stage.x}px, ${-stage.y}px)`,
 										}}
 										data-testid="floor-plan-stage"
 									>

@@ -444,7 +444,7 @@ export default function ReservationsTodayRoute() {
 							}
 							data-testid="today-board"
 						>
-							<Card className="flex flex-col">
+							<Card className="flex min-w-0 flex-col">
 								<CardHeader className="pb-2">
 									<CardTitle className="flex items-center justify-between text-base">
 										<span>
@@ -474,7 +474,7 @@ export default function ReservationsTodayRoute() {
 								</CardContent>
 							</Card>
 
-							<Card className="flex flex-col">
+							<Card className="flex min-w-0 flex-col">
 								<CardHeader className="pb-2">
 									<CardTitle className="flex items-center justify-between text-base">
 										<span>
@@ -514,7 +514,7 @@ export default function ReservationsTodayRoute() {
 								/>
 							) : null}
 
-							<Card className="flex flex-col">
+							<Card className="flex min-w-0 flex-col">
 								<CardHeader className="pb-2">
 									<CardTitle className="flex items-center justify-between gap-2 text-base">
 										<span>

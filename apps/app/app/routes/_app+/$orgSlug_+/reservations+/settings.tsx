@@ -345,7 +345,7 @@ export default function ReservationsSettingsRoute() {
 					</Badge>
 				) : null}
 
-				{validation ? (
+				{validation && !loadingSummary ? (
 					validation.valid ? (
 						<Badge
 							variant="success"

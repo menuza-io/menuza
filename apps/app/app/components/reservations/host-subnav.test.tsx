@@ -68,6 +68,24 @@ describe('HostSubnav', () => {
 		expect(screen.queryByRole('navigation', { name: 'Day views' })).toBeNull()
 	})
 
+	it('hides the day stepper, service and area filters on Calendar', () => {
+		renderStaff(
+			<HostSubnav
+				orgSlug="acme"
+				activeView="calendar"
+				businessDate="2026-10-20"
+				onDateChange={() => {}}
+				services={[{ id: 's1', name: 'Dinner' } as never]}
+				onServiceChange={() => {}}
+				areas={[{ id: 'a1', name: 'Main' } as never]}
+				onAreaChange={() => {}}
+			/>,
+		)
+		expect(screen.queryByTestId('host-service-select')).toBeNull()
+		expect(screen.queryByTestId('host-area-select')).toBeNull()
+		expect(screen.queryByTestId('host-prev-day-btn')).toBeNull()
+	})
+
 	it('hides views the member cannot open', () => {
 		renderStaff(
 			<ReservationsShellProvider

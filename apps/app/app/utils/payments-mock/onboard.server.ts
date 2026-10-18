@@ -1,5 +1,6 @@
 import { db, eq, isNotNull, Organization } from '@repo/database'
 import { shopProcessorToDbValue } from '@repo/payments'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import {
 	ensureConnectAccount,
 	inviteCheckoutSubEntityOnboarding,
@@ -73,6 +74,7 @@ export async function mockOnboardOrganization(options: {
 				})
 				.where(eq(Organization.id, organization.id))
 			accountId = null
+			await notifyReservationsContextChanged(organization.id, 'payments')
 		}
 		accountId = await ensureConnectAccount({
 			...organization,
@@ -87,6 +89,7 @@ export async function mockOnboardOrganization(options: {
 				updatedAt: new Date(),
 			})
 			.where(eq(Organization.id, organization.id))
+		await notifyReservationsContextChanged(organization.id, 'payments')
 		return { ok: true, provider: 'stripe', organizationId: organization.id }
 	}
 
@@ -102,6 +105,7 @@ export async function mockOnboardOrganization(options: {
 			})
 			.where(eq(Organization.id, organization.id))
 		entityId = null
+		await notifyReservationsContextChanged(organization.id, 'payments')
 	}
 	const entity = await inviteCheckoutSubEntityOnboarding(
 		{
@@ -123,7 +127,7 @@ export async function mockOnboardOrganization(options: {
 export async function clearMockOnboardingColumns() {
 	const status = getPaymentsMockStatus()
 	if (status.stripe) {
-		await db
+		const cleared = await db
 			.update(Organization)
 			.set({
 				stripeConnectAccountId: null,
@@ -132,9 +136,13 @@ export async function clearMockOnboardingColumns() {
 				updatedAt: new Date(),
 			})
 			.where(isNotNull(Organization.stripeConnectAccountId))
+			.returning({ id: Organization.id })
+		for (const { id } of cleared) {
+			await notifyReservationsContextChanged(id, 'payments')
+		}
 	}
 	if (status.checkout) {
-		await db
+		const cleared = await db
 			.update(Organization)
 			.set({
 				checkoutSubEntityId: null,
@@ -143,5 +151,9 @@ export async function clearMockOnboardingColumns() {
 				updatedAt: new Date(),
 			})
 			.where(isNotNull(Organization.checkoutSubEntityId))
+			.returning({ id: Organization.id })
+		for (const { id } of cleared) {
+			await notifyReservationsContextChanged(id, 'payments')
+		}
 	}
 }

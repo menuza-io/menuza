@@ -10,6 +10,10 @@ import {
 	floorElementsForArea,
 	floorPlacement,
 	floorStageSize,
+	floorRoomBounds,
+	floorFitScale,
+	FLOOR_MAX_SCALE,
+	FLOOR_MIN_SCALE,
 	floorTablesForArea,
 	isBlockActive,
 	pickFloorAreaId,
@@ -318,5 +322,24 @@ describe('stage geometry', () => {
 			table({ x: 700, y: 400, width: 100, height: 100 }),
 		])
 		expect(wide).toEqual({ width: 824, height: 524 })
+	})
+})
+
+describe('room fit', () => {
+	it('bounds the actual tables, not the whole canvas', () => {
+		const b = floorRoomBounds([
+			table({ x: 200, y: 100, width: 100, height: 100 }),
+			table({ x: 400, y: 300, width: 100, height: 100 }),
+		])
+		expect(b).toEqual({ x: 184, y: 84, width: 332, height: 332 })
+	})
+
+	it('clamps the fit scale and survives zero sizes', () => {
+		expect(floorFitScale(1400, 332)).toBe(FLOOR_MAX_SCALE)
+		expect(floorFitScale(100, 1000)).toBe(FLOOR_MIN_SCALE)
+		expect(floorFitScale(664, 332)).toBe(
+			2 > FLOOR_MAX_SCALE ? FLOOR_MAX_SCALE : 2,
+		)
+		expect(floorFitScale(0, 332)).toBe(1)
 	})
 })

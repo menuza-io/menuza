@@ -108,12 +108,12 @@ export function TodayPartyCard({
 	return (
 		<div
 			className={cn(
-				'bg-background flex flex-col gap-1.5 rounded-lg border p-3',
+				'bg-background flex min-w-0 flex-col gap-1.5 rounded-lg border p-3',
 				kind === 'finished' && 'bg-muted/20',
 			)}
 			data-testid={rowTestId}
 		>
-			<div className="flex items-start justify-between gap-2">
+			<div className="flex min-w-0 items-start justify-between gap-2">
 				<Button
 					type="button"
 					variant="link"
@@ -131,71 +131,75 @@ export function TodayPartyCard({
 						{guest} ({size})
 					</span>
 				</Button>
-				{canManage ? (
-					<div className="flex shrink-0 items-center gap-1">
-						{primary && primary.to ? (
-							<Button
-								type="button"
-								size="sm"
-								variant={primary.action === 'seat' ? 'default' : 'outline'}
-								className="h-11 md:h-8"
-								disabled={busy}
-								onClick={() => onAction(rsv, primary)}
-								data-testid={`${ACTION_TEST_ID[primary.action] ?? 'today-action'}-${rsv.id}`}
-							>
-								{primary.action === 'seat' || primary.action === 'finish' ? (
-									<Icon name="check" className="size-3.5" />
-								) : null}
-								{tx(HOST_ACTION_LABELS[primary.action])}
-							</Button>
-						) : null}
-						{showMenu ? (
-							<DropdownMenu>
-								<DropdownMenuTrigger
-									render={
-										<Button
-											type="button"
-											size="icon"
-											variant="ghost"
-											className="size-11 md:size-8"
-											aria-label={t`More actions for ${guest}`}
-											disabled={busy}
-											data-testid={`today-menu-${rsv.id}`}
-										>
-											<Icon name="more-horizontal" className="size-4" />
-										</Button>
-									}
-								/>
-								<DropdownMenuContent align="end">
-									{secondary.map((item) => (
-										<DropdownMenuItem
-											key={item.action}
-											onClick={() =>
-												item.to ? onAction(rsv, item) : onOpenDetail(rsv.id)
-											}
-											data-testid={`today-menu-${item.action}-${rsv.id}`}
-										>
-											{tx(HOST_ACTION_LABELS[item.action])}
-										</DropdownMenuItem>
-									))}
-									{canMarkRunningLate(rsv.status) ? (
-										<DropdownMenuItem
-											onClick={() => onRunningLate(rsv, 15)}
-											data-testid={`today-late-${rsv.id}`}
-										>
-											{t`Running late: add 15 minutes`}
-										</DropdownMenuItem>
-									) : null}
-									{secondary.length > 0 ? <DropdownMenuSeparator /> : null}
-									<DropdownMenuItem onClick={() => onOpenDetail(rsv.id)}>
-										{t`Open details`}
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
-						) : null}
-					</div>
-				) : null}
 			</div>
+
+			{canManage && (primary?.to || showMenu) ? (
+				<div
+					className="flex min-w-0 flex-wrap items-center justify-end gap-1"
+					data-testid={`today-actions-${rsv.id}`}
+				>
+					{primary && primary.to ? (
+						<Button
+							type="button"
+							size="sm"
+							variant={primary.action === 'seat' ? 'default' : 'outline'}
+							className="h-11 max-w-full min-w-0 md:h-8"
+							disabled={busy}
+							onClick={() => onAction(rsv, primary)}
+							data-testid={`${ACTION_TEST_ID[primary.action] ?? 'today-action'}-${rsv.id}`}
+						>
+							{primary.action === 'seat' || primary.action === 'finish' ? (
+								<Icon name="check" className="size-3.5" />
+							) : null}
+							{tx(HOST_ACTION_LABELS[primary.action])}
+						</Button>
+					) : null}
+					{showMenu ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button
+										type="button"
+										size="icon"
+										variant="ghost"
+										className="size-11 md:size-8"
+										aria-label={t`More actions for ${guest}`}
+										disabled={busy}
+										data-testid={`today-menu-${rsv.id}`}
+									>
+										<Icon name="more-horizontal" className="size-4" />
+									</Button>
+								}
+							/>
+							<DropdownMenuContent align="end">
+								{secondary.map((item) => (
+									<DropdownMenuItem
+										key={item.action}
+										onClick={() =>
+											item.to ? onAction(rsv, item) : onOpenDetail(rsv.id)
+										}
+										data-testid={`today-menu-${item.action}-${rsv.id}`}
+									>
+										{tx(HOST_ACTION_LABELS[item.action])}
+									</DropdownMenuItem>
+								))}
+								{canMarkRunningLate(rsv.status) ? (
+									<DropdownMenuItem
+										onClick={() => onRunningLate(rsv, 15)}
+										data-testid={`today-late-${rsv.id}`}
+									>
+										{t`Running late: add 15 minutes`}
+									</DropdownMenuItem>
+								) : null}
+								{secondary.length > 0 ? <DropdownMenuSeparator /> : null}
+								<DropdownMenuItem onClick={() => onOpenDetail(rsv.id)}>
+									{t`Open details`}
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : null}
+				</div>
+			) : null}
 
 			<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
 				<StatusLabel status={rsv.status} />

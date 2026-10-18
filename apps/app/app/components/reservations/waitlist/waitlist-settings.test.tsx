@@ -54,7 +54,9 @@ describe('WaitlistSettingsScreen', () => {
 		expect(screen.getByTestId('waitlist-setting-enabled')).toBeChecked()
 		expect(screen.getByTestId('waitlist-setting-online')).not.toBeChecked()
 		expect(screen.getByTestId('waitlist-setting-response-min')).toHaveValue(10)
-		expect(screen.getByTestId('waitlist-settings-save')).toBeDisabled()
+		expect(screen.queryByTestId('waitlist-settings-save')).toBeNull()
+		fireEvent.click(screen.getByTestId('waitlist-setting-online'))
+		expect(screen.getByTestId('waitlist-settings-save')).toBeEnabled()
 	})
 
 	it('saves the changed values with the version it loaded', async () => {
@@ -90,7 +92,7 @@ describe('WaitlistSettingsScreen', () => {
 			},
 		])
 		expect(onSaved).toHaveBeenCalled()
-		expect(screen.getByTestId('waitlist-settings-save')).toBeDisabled()
+		expect(screen.queryByTestId('waitlist-settings-save')).toBeNull()
 	})
 
 	it('rejects an answer window outside 1 to 120 without calling the server', async () => {

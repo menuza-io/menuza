@@ -38,6 +38,7 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { summaryHasUnsettledPayments } from '#app/utils/reservations/region-confirmation.ts'
 import {
 	evaluateReservationsRegionGuard,
@@ -155,6 +156,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					...(published ? { hasProvisionedDb: true } : {}),
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
@@ -236,6 +238,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					sitePublished: true,
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
@@ -277,6 +280,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					cloudflareHostnameId: null,
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
 				organization.id,
@@ -536,6 +540,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					siteDefaultLocale: defaultLocale,
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(

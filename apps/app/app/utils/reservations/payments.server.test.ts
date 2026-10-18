@@ -123,6 +123,7 @@ vi.mock('#app/utils/reservations/platform-fee.server.ts', () => ({
 
 vi.mock('#app/utils/reservations/access.server.ts', () => ({
 	isReservationsFeatureEnabled: vi.fn(async () => fake.flagOn),
+	notifyReservationsContextChanged: vi.fn(async () => undefined),
 }))
 
 const { RegionalPaymentsApiError } =

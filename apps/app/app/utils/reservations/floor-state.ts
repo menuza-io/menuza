@@ -385,6 +385,62 @@ export function floorStageSize(
 	}
 }
 
+/** Padding around the room's tables, in stage units. */
+const ROOM_PADDING = 16
+/** Never magnify the room beyond this, so a one-table area does not become a poster. */
+export const FLOOR_MAX_SCALE = 1.75
+/** Below this the tiles stop being legible; the room scrolls sideways instead. */
+export const FLOOR_MIN_SCALE = 0.8
+
+/**
+ * Bounding box of what is actually on the area (tables and elements), padded.
+ * The live floor fits THIS box to its container instead of the full canvas, so
+ * a small room is not left floating in empty space. Geometry stays in stage
+ * units and is never mirrored (RTL does not flip a floor plan).
+ */
+export function floorRoomBounds(
+	tables: readonly PlacedBox[],
+	elements: readonly PlacedBox[] = [],
+): { x: number; y: number; width: number; height: number } {
+	const placements = [
+		...tables.map((item, index) => floorPlacementWithFallback(item, index)),
+		...elements.map((item) => floorPlacement(item)),
+	]
+	if (placements.length === 0) {
+		return { x: 0, y: 0, width: STAGE_MIN.width, height: STAGE_MIN.height }
+	}
+	let minX = Number.POSITIVE_INFINITY
+	let minY = Number.POSITIVE_INFINITY
+	let maxX = 0
+	let maxY = 0
+	for (const p of placements) {
+		minX = Math.min(minX, p.x)
+		minY = Math.min(minY, p.y)
+		maxX = Math.max(maxX, p.x + p.width)
+		maxY = Math.max(maxY, p.y + p.height)
+	}
+	const x = Math.max(0, minX - ROOM_PADDING)
+	const y = Math.max(0, minY - ROOM_PADDING)
+	return {
+		x,
+		y,
+		width: maxX + ROOM_PADDING - x,
+		height: maxY + ROOM_PADDING - y,
+	}
+}
+
+/** Fit-to-width scale for a room, clamped to `[FLOOR_MIN_SCALE, FLOOR_MAX_SCALE]`. */
+export function floorFitScale(
+	availableWidth: number,
+	roomWidth: number,
+): number {
+	if (!(availableWidth > 0) || !(roomWidth > 0)) return 1
+	return Math.max(
+		FLOOR_MIN_SCALE,
+		Math.min(FLOOR_MAX_SCALE, availableWidth / roomWidth),
+	)
+}
+
 export type FloorFeed = Pick<
 	DayFeedResponse,
 	'businessDate' | 'tables' | 'blocks' | 'reservations'

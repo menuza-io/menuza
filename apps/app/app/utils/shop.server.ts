@@ -39,6 +39,7 @@ import {
 	customerPaymentMethods,
 } from '@repo/tenant-db'
 import { withPaymentsMock } from '#app/utils/payments-mock/config.server.ts'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { resolveVerifiedShopCustomer } from '#app/utils/tenant-customer-auth.server.ts'
 import { type ShopOrganization } from './shop.types.ts'
 
@@ -239,6 +240,8 @@ export async function syncConnectAccountStatus(organizationId: string) {
 		.select({
 			id: OrganizationTable.id,
 			stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
+			stripeConnectChargesEnabled:
+				OrganizationTable.stripeConnectChargesEnabled,
 		})
 		.from(OrganizationTable)
 		.where(eq(OrganizationTable.id, organizationId))
@@ -258,6 +261,12 @@ export async function syncConnectAccountStatus(organizationId: string) {
 			updatedAt: new Date(),
 		})
 		.where(eq(OrganizationTable.id, organizationId))
+
+	if (
+		Boolean(organization.stripeConnectChargesEnabled) !== status.chargesEnabled
+	) {
+		await notifyReservationsContextChanged(organizationId, 'payments')
+	}
 
 	return status
 }
@@ -302,6 +311,7 @@ export async function ensureConnectAccount(
 
 	if (claimed?.stripeConnectAccountId) {
 		accountId = claimed.stripeConnectAccountId
+		await notifyReservationsContextChanged(organization.id, 'payments')
 	} else {
 		const [refreshed] = await db
 			.select({
@@ -340,6 +350,7 @@ export async function syncCheckoutSubEntityStatus(organizationId: string) {
 		.select({
 			id: OrganizationTable.id,
 			checkoutSubEntityId: OrganizationTable.checkoutSubEntityId,
+			checkoutChargesEnabled: OrganizationTable.checkoutChargesEnabled,
 		})
 		.from(OrganizationTable)
 		.where(eq(OrganizationTable.id, organizationId))
@@ -359,6 +370,10 @@ export async function syncCheckoutSubEntityStatus(organizationId: string) {
 			updatedAt: new Date(),
 		})
 		.where(eq(OrganizationTable.id, organizationId))
+
+	if (Boolean(organization.checkoutChargesEnabled) !== status.chargesEnabled) {
+		await notifyReservationsContextChanged(organizationId, 'payments')
+	}
 
 	return status
 }
@@ -390,6 +405,8 @@ export async function inviteCheckoutSubEntityOnboarding(
 			updatedAt: new Date(),
 		})
 		.where(eq(OrganizationTable.id, organization.id))
+
+	await notifyReservationsContextChanged(organization.id, 'payments')
 
 	return entity
 }
@@ -432,6 +449,8 @@ export async function syncHostedShopProduct(
 		})
 		.where(eq(OrganizationTable.id, organization.id))
 
+	await notifyReservationsContextChanged(organization.id, 'payments')
+
 	return product
 }
 
@@ -449,6 +468,15 @@ export async function updateShopProduct(
 		? normalizeShopProcessor(data.paymentProvider)
 		: undefined
 
+	const [before] = await db
+		.select({
+			shopPaymentProvider: OrganizationTable.shopPaymentProvider,
+			shopEnabled: OrganizationTable.shopEnabled,
+		})
+		.from(OrganizationTable)
+		.where(eq(OrganizationTable.id, organizationId))
+		.limit(1)
+
 	await db
 		.update(OrganizationTable)
 		.set({
@@ -462,6 +490,13 @@ export async function updateShopProduct(
 			updatedAt: new Date(),
 		})
 		.where(eq(OrganizationTable.id, organizationId))
+
+	const providerChanged =
+		provider !== undefined &&
+		before?.shopPaymentProvider !== shopProcessorToDbValue(provider)
+	if (providerChanged || Boolean(before?.shopEnabled) !== data.enabled) {
+		await notifyReservationsContextChanged(organizationId, 'payments')
+	}
 }
 
 export async function createPublicShopCheckoutSession(options: {
@@ -723,6 +758,21 @@ export async function handleConnectAccountUpdated(event: unknown) {
 	)
 	if (!update) return
 
+	const [before] = await db
+		.select({
+			stripeConnectChargesEnabled:
+				OrganizationTable.stripeConnectChargesEnabled,
+		})
+		.from(OrganizationTable)
+		.where(
+			and(
+				eq(OrganizationTable.id, update.organizationId),
+				eq(OrganizationTable.stripeConnectAccountId, update.accountId),
+			),
+		)
+		.limit(1)
+	if (!before) return
+
 	await db
 		.update(OrganizationTable)
 		.set({
@@ -736,6 +786,10 @@ export async function handleConnectAccountUpdated(event: unknown) {
 				eq(OrganizationTable.stripeConnectAccountId, update.accountId),
 			),
 		)
+
+	if (Boolean(before.stripeConnectChargesEnabled) !== update.chargesEnabled) {
+		await notifyReservationsContextChanged(update.organizationId, 'payments')
+	}
 }
 
 export async function getPublicShopOrderStatus(options: {

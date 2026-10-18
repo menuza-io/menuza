@@ -11,7 +11,7 @@ import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Skeleton } from '@repo/ui/skeleton'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
@@ -35,6 +35,10 @@ import {
 } from '#app/utils/reservations/host-errors.ts'
 import { ReservationsApiError } from '#app/utils/reservations/reservations-client.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
+import {
+	pickTimelineFocusMin,
+	pickTimelineScrollLeft,
+} from '#app/utils/reservations/timeline-scroll.ts'
 import { type Route } from './+types/timeline.ts'
 import { useReservationsLayoutData } from './_layout.tsx'
 
@@ -632,6 +636,54 @@ export default function ReservationsTimelineRoute() {
 
 	const unassignedReservations = dayFeed?.unassigned ?? []
 
+	// Bring "now" (today) or the earliest booking (other days) into view when
+	// the date, service or first data arrives; never fight the user afterwards.
+	const scrollRef = useRef<HTMLDivElement | null>(null)
+	const autoScrolledKey = useRef<string | null>(null)
+	const isToday = host.businessDate === host.todayDate
+	const nowLocalMin = host.liveNow.localStartMin
+	const earliestBookingMin = useMemo(
+		() =>
+			activeReservations.length
+				? Math.min(...activeReservations.map((r) => r.localStartMin))
+				: null,
+		[activeReservations],
+	)
+	const hasData = Boolean(dayFeed) && slots.length > 0
+	useEffect(() => {
+		const node = scrollRef.current
+		if (!node || !hasData) return
+		const key = `${host.businessDate}|${host.selectedServiceId ?? ''}|${
+			isToday ? 'now' : earliestBookingMin === null ? 'none' : 'booking'
+		}`
+		if (autoScrolledKey.current === key) return
+		autoScrolledKey.current = key
+		const left = pickTimelineScrollLeft({
+			focusMin: pickTimelineFocusMin({
+				isToday,
+				nowLocalMin,
+				bookingStartMins:
+					earliestBookingMin === null ? [] : [earliestBookingMin],
+			}),
+			gridStartMin,
+			gridEndMin,
+			stepMin: SLOT_STEP_MIN,
+			slotWidthPx: SLOT_WIDTH_PX,
+			viewportWidthPx: node.clientWidth,
+			labelWidthPx: 192,
+		})
+		node.scrollLeft = left
+	}, [
+		hasData,
+		host.businessDate,
+		host.selectedServiceId,
+		isToday,
+		nowLocalMin,
+		earliestBookingMin,
+		gridStartMin,
+		gridEndMin,
+	])
+
 	return (
 		<div
 			className="flex flex-col gap-4"
@@ -935,7 +987,11 @@ export default function ReservationsTimelineRoute() {
 
 			{/* Main Horizontal Gantt / Timeline Grid */}
 			<Card className="overflow-hidden" data-testid="timeline-grid-container">
-				<div className="overflow-x-auto">
+				<div
+					className="overflow-x-auto"
+					ref={scrollRef}
+					data-testid="timeline-scroll"
+				>
 					<div
 						className="relative min-w-max"
 						dir="ltr"

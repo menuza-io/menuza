@@ -79,4 +79,16 @@ describe('TodayPartyCard', () => {
 		expect(screen.queryByTestId('today-arrive-r1')).toBeNull()
 		expect(screen.queryByTestId('today-menu-r1')).toBeNull()
 	})
+
+	it('puts the action in its own wrapping row, outside the name row', () => {
+		renderStaff(
+			<TodayPartyCard reservation={rsv()} kind="upcoming" {...props()} />,
+		)
+		const actions = screen.getByTestId('today-actions-r1')
+		const name = screen.getByTestId('today-open-detail-r1')
+		expect(actions.contains(screen.getByTestId('today-arrive-r1'))).toBe(true)
+		expect(actions.contains(name)).toBe(false)
+		expect(actions.className).toContain('flex-wrap')
+		expect(actions.className).toContain('min-w-0')
+	})
 })

@@ -149,7 +149,10 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
-import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
+import {
+	getReservationsFeatureState,
+	notifyReservationsContextChanged,
+} from '#app/utils/reservations/access.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 import { signSitePreviewToken } from '#app/utils/sites/preview-token.server.ts'
 import {
@@ -839,6 +842,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					.set({ siteIconKey })
 					.where(eq(Organization.id, organization.id))
 				await invalidateUserOrganizationsCache(userId)
+				await notifyReservationsContextChanged(organization.id, 'branding')
 				await purgeOrganizationSiteCache(
 					organization.id,
 					organization.slug,
@@ -927,6 +931,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					})
 					.where(eq(Organization.id, organization.id))
 				await invalidateUserOrganizationsCache(userId)
+				await notifyReservationsContextChanged(organization.id, 'branding')
 				await purgeOrganizationSiteCache(
 					organization.id,
 					organization.slug,
@@ -1523,6 +1528,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				} catch {}
 			}
 		})
+		await notifyReservationsContextChanged(organization.id, 'branding')
 		await purgeOrganizationSiteCache(
 			organization.id,
 			organization.slug,
@@ -1590,6 +1596,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})
 				.where(eq(Organization.id, organization.id))
 			await invalidateUserOrganizationsCache(userId)
+			await notifyReservationsContextChanged(organization.id, 'branding')
 			await purgeOrganizationSiteCache(
 				organization.id,
 				organization.slug,
@@ -1622,6 +1629,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.set({ siteIconKey: null })
 				.where(eq(Organization.id, organization.id))
 			await invalidateUserOrganizationsCache(userId)
+			await notifyReservationsContextChanged(organization.id, 'branding')
 			await purgeOrganizationSiteCache(
 				organization.id,
 				organization.slug,
@@ -1673,6 +1681,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				})
 				.where(eq(Organization.id, organization.id))
 			await invalidateUserOrganizationsCache(userId)
+			await notifyReservationsContextChanged(organization.id, 'branding')
 			await purgeOrganizationSiteCache(
 				organization.id,
 				organization.slug,

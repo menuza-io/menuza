@@ -828,7 +828,7 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		await expect(page.getByTestId('setup-readonly-banner')).toBeVisible()
 		await expect(page.getByTestId('setup-general-form')).toBeVisible()
 		await expect(page.getByTestId('setup-general-loading')).toHaveCount(0)
-		await expect(page.getByTestId('setup-save-general-button')).toBeDisabled()
+		await expect(page.getByTestId('setup-save-general-button')).toHaveCount(0)
 
 		await page.getByTestId('setup-group-floor').click()
 		await page.getByTestId('setup-tab-floor-plan').click()

@@ -12,7 +12,6 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
 import { Skeleton } from '@repo/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -226,13 +225,6 @@ export default function ReservationsCalendarRoute() {
 				activeView="calendar"
 				businessDate={host.businessDate}
 				todayDate={host.todayDate}
-				onDateChange={host.setDate}
-				services={host.dayFeed?.services ?? []}
-				selectedServiceId={host.selectedServiceId}
-				onServiceChange={host.setServiceId}
-				areas={host.dayFeed?.areas ?? []}
-				selectedAreaId={host.selectedAreaId}
-				onAreaChange={host.setAreaId}
 				unassignedCount={host.dayFeed?.unassigned.length ?? 0}
 				conflictCount={host.dayFeed?.conflicts.length ?? 0}
 				moveNoticeCount={host.allMoveNotices.length}
@@ -282,20 +274,6 @@ export default function ReservationsCalendarRoute() {
 						<Trans>Next</Trans>
 						<Icon name="chevron-right" className="size-4" />
 					</Button>
-
-					<Input
-						type="month"
-						value={selectedMonth}
-						onChange={(e) => {
-							if (e.target.value) {
-								handleChangeMonth(e.target.value)
-							}
-						}}
-						className="w-40"
-						dir="ltr"
-						aria-label={_(msg`Select month`)}
-						data-testid="calendar-month-input"
-					/>
 				</div>
 
 				<div className="flex flex-wrap items-center gap-3">
@@ -339,7 +317,7 @@ export default function ReservationsCalendarRoute() {
 							className="h-11 md:h-7"
 							data-testid="calendar-drill-target-book"
 						>
-							<Trans>Open in Book</Trans>
+							<Trans>Open in List</Trans>
 						</ToggleGroupItem>
 						<ToggleGroupItem
 							value="timeline"

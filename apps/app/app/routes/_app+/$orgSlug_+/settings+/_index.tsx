@@ -61,6 +61,7 @@ import {
 	updateSeatQuantity,
 	deleteSubscription,
 } from '#app/utils/payments.server.ts'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import {
 	countOrgMediaObjectKeys,
 	createAndStartStorageMigration,
@@ -278,6 +279,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				.update(Organization)
 				.set({ name, slug })
 				.where(eq(Organization.id, organization.id))
+			if (name !== organization.name || slug !== organization.slug) {
+				await notifyReservationsContextChanged(organization.id, 'branding')
+			}
 
 			// Track onboarding step completion for completing profile
 			// Check if organization now has both name and description (or just name for basic completion)

@@ -185,6 +185,21 @@ describe('ExperiencesScreen', () => {
 		expect(screen.queryByTestId('experience-new')).toBeNull()
 	})
 
+	it('shows the valid rows and a warning when one row is malformed', async () => {
+		setup({
+			experiences: [
+				experience(),
+				experience({ id: 'exp_bad', kind: 'tasting' }),
+				experience({ id: 'exp_2', slug: 'second' }),
+			],
+		})
+		expect(await screen.findAllByTestId('experience-row')).toHaveLength(2)
+		expect(screen.getByTestId('experiences-invalid-warning')).toHaveTextContent(
+			'1 experience could not be displayed',
+		)
+		expect(screen.queryByTestId('experiences-error')).toBeNull()
+	})
+
 	it('decides access from the answer', async () => {
 		setup({ listError: apiError(404, 'not_found') })
 		expect(await screen.findByTestId('experiences-denied')).toBeTruthy()
