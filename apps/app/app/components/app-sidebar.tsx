@@ -481,22 +481,20 @@ function OrganizationSidebar({
 			icon: CalendarIcon,
 			items: [
 				{
+					// Every day view (Board, Timeline, Floor, List, Overview) is
+					// reached from Today; it is one entry, not five.
 					title: _(msg`Today`),
 					url: `/${orgSlug}/reservations/today`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/reservations/today`,
+					isActive: ['today', 'book', 'timeline', 'floor', 'overview'].some(
+						(view) =>
+							location.pathname.includes(`/${orgSlug}/reservations/${view}`),
 					),
 				},
 				{
-					title: _(msg`Book`),
-					url: `/${orgSlug}/reservations/book`,
-					isActive: location.pathname.includes(`/${orgSlug}/reservations/book`),
-				},
-				{
-					title: _(msg`Waitlist`),
-					url: `/${orgSlug}/reservations/waitlist`,
+					title: _(msg`Calendar`),
+					url: `/${orgSlug}/reservations/calendar`,
 					isActive: location.pathname.includes(
-						`/${orgSlug}/reservations/waitlist`,
+						`/${orgSlug}/reservations/calendar`,
 					),
 				},
 				{
@@ -507,10 +505,10 @@ function OrganizationSidebar({
 					),
 				},
 				{
-					title: _(msg`Experiences`),
-					url: `/${orgSlug}/reservations/experiences`,
+					title: _(msg`Waitlist`),
+					url: `/${orgSlug}/reservations/waitlist`,
 					isActive: location.pathname.includes(
-						`/${orgSlug}/reservations/experiences`,
+						`/${orgSlug}/reservations/waitlist`,
 					),
 				},
 				{
@@ -518,6 +516,13 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/reservations/reports`,
 					isActive: location.pathname.includes(
 						`/${orgSlug}/reservations/reports`,
+					),
+				},
+				{
+					title: _(msg`Experiences`),
+					url: `/${orgSlug}/reservations/experiences`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/experiences`,
 					),
 				},
 				{
@@ -748,7 +753,7 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/reservations`) {
 				const allowedByUrl: Record<string, boolean> = {
 					[`/${orgSlug}/reservations/today`]: reservationsNav.today,
-					[`/${orgSlug}/reservations/book`]: reservationsNav.book,
+					[`/${orgSlug}/reservations/calendar`]: reservationsNav.book,
 					[`/${orgSlug}/reservations/waitlist`]: reservationsNav.waitlist,
 					[`/${orgSlug}/reservations/guests`]: reservationsNav.guests,
 					[`/${orgSlug}/reservations/experiences`]: reservationsNav.experiences,

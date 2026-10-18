@@ -2,12 +2,35 @@ import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@repo/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import {
 	type KeyboardEvent as ReactKeyboardEvent,
 	type PointerEvent as ReactPointerEvent,
@@ -16,6 +39,8 @@ import {
 	useRef,
 	useState,
 } from 'react'
+import { SelectField, TextField } from '#app/components/staff/controls.tsx'
+import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import {
 	clampCanvasCoord,
 	clampCanvasDimension,
@@ -31,6 +56,10 @@ import {
 	type TableDto,
 	type TableShape,
 } from '#app/utils/reservations/setup-api.ts'
+import {
+	NumberField,
+	RotationPresets,
+} from './floor-plan-editor/editor-fields.tsx'
 
 export type FloorPlanSaveDraft = {
 	expectedFloorPlanVersion: number
@@ -55,6 +84,8 @@ export type FloorPlanCanvasProps = {
 	onSave: (draft: FloorPlanSaveDraft) => Promise<boolean>
 	onReloadLatest: () => void
 	onLeave: () => void
+	/** Optional: lets the route guard navigation while the draft is dirty. */
+	onDirtyChange?: (dirty: boolean) => void
 }
 
 type SelectedItem =
@@ -124,8 +155,17 @@ export function FloorPlanCanvas({
 	onSave,
 	onReloadLatest,
 	onLeave,
+	onDirtyChange,
 }: FloorPlanCanvasProps) {
 	const { _ } = useLingui()
+	const tableShapeOptions = TABLE_SHAPES.map((shape) => ({
+		value: shape.value,
+		label: _(shape.label),
+	}))
+	const elementKindOptions = ELEMENT_KINDS.map((kind) => ({
+		value: kind.value,
+		label: _(kind.label),
+	}))
 
 	const activeAreas = useMemo(
 		() =>
@@ -157,6 +197,10 @@ export function FloorPlanCanvas({
 	const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false)
 
 	const dragRef = useRef<DragSession | null>(null)
+
+	useEffect(() => {
+		onDirtyChange?.(dirty)
+	}, [dirty, onDirtyChange])
 
 	// Sync baseline when server floorPlanVersion advances and user has not made dirty edits
 	useEffect(() => {
@@ -637,7 +681,7 @@ export function FloorPlanCanvas({
 
 	return (
 		<div
-			className="border-border bg-background flex min-h-[720px] flex-col rounded-xl border"
+			className="bg-muted fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden"
 			data-testid="floor-plan-editor"
 		>
 			{/* Screen reader live region for keyboard/pointer coordinates */}
@@ -650,46 +694,59 @@ export function FloorPlanCanvas({
 				{liveAnnouncement}
 			</div>
 
-			{/* Top Full-Screen Header Bar */}
-			<div className="border-border bg-card flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
-				<div className="flex flex-wrap items-center gap-3">
-					<div>
-						<div className="flex items-center gap-2">
-							<h2 className="text-foreground text-base font-semibold">
-								<Trans>Floor Plan Designer</Trans>
-							</h2>
-							<Badge variant="outline">
-								{locationName} · v{floorPlanVersion}
-							</Badge>
+			<header className="bg-background flex h-12 shrink-0 items-center gap-3 border-b px-3">
+				<Tooltip>
+					<TooltipTrigger
+						render={
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-xs"
+								aria-label={_(msg`Back to tables`)}
+								onClick={handleLeaveClick}
+								data-testid="floor-plan-leave-button"
+							>
+								<Icon name="arrow-left" className="size-4 rtl:rotate-180" />
+							</Button>
+						}
+					/>
+					<TooltipContent>
+						<Trans>Back to tables</Trans>
+					</TooltipContent>
+				</Tooltip>
+				<div className="bg-border h-5 w-px" aria-hidden="true" />
+				<div className="flex min-w-0 flex-1 items-center gap-3">
+					<h2 className="truncate text-sm font-medium">
+						<Trans>Floor plan</Trans>
+						<span className="text-muted-foreground"> · {locationName}</span>
+					</h2>
+					{!canWrite ? (
+						<Badge variant="secondary">
+							<Trans>Read-only</Trans>
+						</Badge>
+					) : (
+						<span
+							role="status"
+							className="text-muted-foreground flex items-center gap-1.5 text-xs"
+						>
+							<span
+								aria-hidden="true"
+								className={cn(
+									'size-1.5 rounded-full',
+									dirty ? 'bg-warning' : 'bg-success',
+								)}
+							/>
 							{dirty ? (
-								<Badge
-									variant="secondary"
-									data-testid="floor-plan-unsaved-badge"
-								>
-									<Trans>Unsaved draft changes</Trans>
-								</Badge>
+								<span data-testid="floor-plan-unsaved-badge">
+									<Trans>Unsaved changes</Trans>
+								</span>
 							) : (
-								<Badge variant="outline">
-									<Trans>Saved</Trans>
-								</Badge>
+								<Trans>Saved</Trans>
 							)}
-							{!canWrite ? (
-								<Badge variant="secondary">
-									<Trans>Read-only</Trans>
-								</Badge>
-							) : null}
-						</div>
-						<p className="text-muted-foreground text-xs">
-							<Trans>
-								Drag tables on the 10-unit grid, or use Arrow keys (1 unit) and
-								Shift+Arrow (10 units). Changes stay in a local draft until you
-								click Save.
-							</Trans>
-						</p>
-					</div>
+						</span>
+					)}
 				</div>
-
-				<div className="flex flex-wrap items-center gap-2">
+				<div className="flex items-center gap-2">
 					{dirty && canWrite ? (
 						<Button
 							type="button"
@@ -699,20 +756,9 @@ export function FloorPlanCanvas({
 							data-testid="floor-plan-discard-button"
 						>
 							<Icon name="undo-2" className="size-4" />
-							<Trans>Discard draft</Trans>
+							<Trans>Discard changes</Trans>
 						</Button>
 					) : null}
-
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={handleLeaveClick}
-						data-testid="floor-plan-leave-button"
-					>
-						<Trans>Leave without saving</Trans>
-					</Button>
-
 					<Button
 						type="button"
 						size="sm"
@@ -721,66 +767,57 @@ export function FloorPlanCanvas({
 						data-testid="floor-plan-save-button"
 					>
 						<Icon name="check" className="size-4" />
-						{saving ? <Trans>Saving…</Trans> : <Trans>Save floor plan</Trans>}
+						{saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
 					</Button>
 				</div>
-			</div>
+			</header>
 
-			{/* Leave confirmation banner when draft has unsaved changes */}
-			{confirmLeaveOpen ? (
-				<div
-					className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm"
-					data-testid="floor-plan-leave-confirm-banner"
-				>
-					<span className="text-foreground font-medium">
-						<Trans>
-							You have unsaved floor plan changes. Leave and discard your local
-							draft?
-						</Trans>
-					</span>
-					<div className="flex items-center gap-2">
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onClick={() => setConfirmLeaveOpen(false)}
-						>
+			<AlertDialog open={confirmLeaveOpen} onOpenChange={setConfirmLeaveOpen}>
+				<AlertDialogContent data-testid="floor-plan-leave-confirm-banner">
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Trans>Discard your changes?</Trans>
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							<Trans>
+								You have unsaved floor plan changes. If you leave now they are
+								lost.
+							</Trans>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>
 							<Trans>Keep editing</Trans>
-						</Button>
-						<Button
-							type="button"
+						</AlertDialogCancel>
+						<AlertDialogAction
 							variant="destructive"
-							size="sm"
 							onClick={handleConfirmLeaveWithoutSaving}
 							data-testid="floor-plan-confirm-leave-button"
 						>
-							<Trans>Discard & leave</Trans>
-						</Button>
-					</div>
-				</div>
-			) : null}
+							<Trans>Discard and leave</Trans>
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 
-			{/* 409 Stale Version Conflict Banner */}
+			{/* Someone else saved first */}
 			{conflictMessage ? (
-				<div
-					role="alert"
-					className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/40 bg-amber-500/15 px-4 py-3 text-sm"
+				<Alert
+					variant="destructive"
+					className="mx-3 mt-3 w-auto shrink-0"
 					data-testid="floor-plan-conflict-banner"
 				>
-					<div className="flex items-center gap-2">
-						<Icon
-							name="alert-triangle"
-							className="size-4 shrink-0 text-amber-600 dark:text-amber-400"
-						/>
-						<span className="text-foreground font-medium">
-							{conflictMessage}
-						</span>
-					</div>
-					<div className="flex items-center gap-2">
+					<Icon name="alert-triangle" className="size-4" />
+					<AlertTitle>
+						<Trans>This floor plan was changed by someone else</Trans>
+					</AlertTitle>
+					<AlertDescription>
+						<p>{conflictMessage}</p>
 						<Button
 							type="button"
 							variant="outline"
 							size="sm"
+							className="mt-2"
 							onClick={() => {
 								setDirty(false)
 								onReloadLatest()
@@ -790,24 +827,24 @@ export function FloorPlanCanvas({
 							<Icon name="refresh-cw" className="size-3.5" />
 							<Trans>Reload latest floor plan</Trans>
 						</Button>
-					</div>
-				</div>
+					</AlertDescription>
+				</Alert>
 			) : null}
 
 			{/* Reflowed moves & conflicts feedback after save */}
 			{lastReflowedMoves.length > 0 || lastConflicts.length > 0 ? (
 				<div
-					className="border-border bg-muted/40 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2 text-xs"
+					className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 px-4 pt-3 text-xs"
 					data-testid="floor-plan-reflow-summary"
 				>
 					{lastReflowedMoves.length > 0 ? (
-						<span className="text-emerald-700 dark:text-emerald-300">
+						<span className="text-success">
 							<Trans>Reassigned upcoming reservations automatically</Trans> (
 							{lastReflowedMoves.length})
 						</span>
 					) : null}
 					{lastConflicts.length > 0 ? (
-						<span className="text-amber-700 dark:text-amber-300">
+						<span className="text-warning">
 							<Trans>
 								Upcoming reservations need manual attention after this
 								floor-plan change
@@ -818,8 +855,8 @@ export function FloorPlanCanvas({
 				</div>
 			) : null}
 
-			{/* Area Tabs & Canvas Toolbar */}
-			<div className="border-border bg-muted/30 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5">
+			{/* Area tabs and canvas toolbar */}
+			<div className="bg-background flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
 				<div
 					className="flex flex-wrap items-center gap-1.5"
 					role="tablist"
@@ -836,7 +873,7 @@ export function FloorPlanCanvas({
 								type="button"
 								role="tab"
 								aria-selected={isActive}
-								variant={isActive ? 'default' : 'outline'}
+								variant={isActive ? 'secondary' : 'ghost'}
 								size="sm"
 								onClick={() => {
 									setSelectedAreaId(area.id)
@@ -845,9 +882,9 @@ export function FloorPlanCanvas({
 								data-testid={`floor-area-tab-${area.name}`}
 							>
 								<span>{area.name}</span>
-								<Badge variant="secondary" className="ml-1.5">
+								<span className="text-muted-foreground tabular-nums">
 									{areaTableCount}
-								</Badge>
+								</span>
 							</Button>
 						)
 					})}
@@ -868,21 +905,29 @@ export function FloorPlanCanvas({
 							</Button>
 
 							<div className="flex items-center gap-1">
-								<select
-									aria-label={_(msg`Decor element type`)}
+								<Select
 									value={newElementKind}
-									onChange={(e) =>
-										setNewElementKind(e.target.value as FloorElementKind)
+									items={elementKindOptions}
+									onValueChange={(next) =>
+										next !== null && setNewElementKind(next as FloorElementKind)
 									}
-									className="border-input bg-background text-foreground h-8 rounded-md border px-2 text-xs"
-									data-testid="floor-plan-element-kind-select"
 								>
-									{ELEMENT_KINDS.map((kind) => (
-										<option key={kind.value} value={kind.value}>
-											{_(kind.label)}
-										</option>
-									))}
-								</select>
+									<SelectTrigger
+										size="sm"
+										className="w-36"
+										aria-label={_(msg`Decor element type`)}
+										data-testid="floor-plan-element-kind-select"
+									>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{elementKindOptions.map((kind) => (
+											<SelectItem key={kind.value} value={kind.value}>
+												{kind.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 								<Button
 									type="button"
 									variant="outline"
@@ -891,17 +936,17 @@ export function FloorPlanCanvas({
 									data-testid="floor-plan-add-element-button"
 								>
 									<Icon name="plus" className="size-3.5" />
-									<Trans>Add element</Trans>
+									<Trans>Add decor</Trans>
 								</Button>
 							</div>
 						</>
 					) : null}
 
-					<div className="border-border flex items-center gap-1 border-l pl-2">
+					<div className="flex items-center gap-1 border-s ps-2">
 						<Button
 							type="button"
-							variant="outline"
-							size="sm"
+							variant="ghost"
+							size="icon-sm"
 							onClick={() =>
 								setZoom((z) =>
 									Math.max(0.5, Math.round((z - 0.25) * 100) / 100),
@@ -916,6 +961,7 @@ export function FloorPlanCanvas({
 							type="button"
 							variant="ghost"
 							size="sm"
+							className="tabular-nums"
 							onClick={() => setZoom(1)}
 							data-testid="floor-plan-zoom-reset"
 						>
@@ -923,8 +969,8 @@ export function FloorPlanCanvas({
 						</Button>
 						<Button
 							type="button"
-							variant="outline"
-							size="sm"
+							variant="ghost"
+							size="icon-sm"
 							onClick={() =>
 								setZoom((z) => Math.min(2, Math.round((z + 0.25) * 100) / 100))
 							}
@@ -935,8 +981,9 @@ export function FloorPlanCanvas({
 						</Button>
 						<Button
 							type="button"
-							variant={showGrid ? 'secondary' : 'outline'}
+							variant={showGrid ? 'secondary' : 'ghost'}
 							size="sm"
+							aria-pressed={showGrid}
 							onClick={() => setShowGrid((g) => !g)}
 							data-testid="floor-plan-toggle-grid"
 						>
@@ -948,11 +995,11 @@ export function FloorPlanCanvas({
 			</div>
 
 			{/* Main Body: Canvas (dir="ltr") + Inspector */}
-			<div className="grid flex-1 grid-cols-1 lg:grid-cols-[1fr_340px]">
+			<div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[1fr_340px] lg:overflow-hidden">
 				{/* Canvas Viewport */}
 				<div
 					dir="ltr"
-					className="bg-muted/20 relative min-h-[560px] overflow-auto p-4"
+					className="relative min-h-[420px] overflow-auto p-4 lg:min-h-0"
 					onPointerMove={handleCanvasPointerMove}
 					onPointerUp={handleCanvasPointerUp}
 					onClick={() => setSelected(null)}
@@ -967,7 +1014,7 @@ export function FloorPlanCanvas({
 							transform: `scale(${zoom})`,
 							transformOrigin: '0 0',
 							backgroundImage: showGrid
-								? 'radial-gradient(circle, rgba(148, 163, 184, 0.45) 1px, transparent 1px)'
+								? 'radial-gradient(circle, var(--border-strong) 1px, transparent 1px)'
 								: 'none',
 							backgroundSize: `${FLOOR_GRID_STEP * 2}px ${FLOOR_GRID_STEP * 2}px`,
 						}}
@@ -1008,10 +1055,10 @@ export function FloorPlanCanvas({
 									className={cn(
 										'absolute flex items-center justify-center border text-xs font-medium transition-shadow focus-visible:ring-2 focus-visible:outline-none',
 										el.kind === 'zone'
-											? 'border-dashed border-slate-400/50 bg-slate-500/10 text-slate-700 dark:text-slate-300'
+											? 'border-border-strong bg-muted/60 text-muted-foreground border-dashed'
 											: el.kind === 'plant'
-												? 'rounded-full border-emerald-500/40 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200'
-												: 'rounded border-slate-500/50 bg-slate-500/20 text-slate-800 dark:text-slate-200',
+												? 'border-position-green/40 bg-position-green/15 text-foreground rounded-full'
+												: 'border-border-strong bg-muted text-foreground rounded',
 										isSelected && 'ring-primary z-20 ring-2',
 									)}
 									style={{
@@ -1034,7 +1081,7 @@ export function FloorPlanCanvas({
 											onPointerDown={(e) =>
 												startPointerDrag(e, 'element', el, 'resize')
 											}
-											className="bg-primary absolute right-0 bottom-0 size-3 cursor-se-resize rounded-tl"
+											className="bg-primary absolute end-0 bottom-0 size-3 cursor-se-resize rounded-tl"
 										/>
 									) : null}
 								</div>
@@ -1086,8 +1133,8 @@ export function FloorPlanCanvas({
 										'border-border bg-background text-foreground absolute flex flex-col items-center justify-center border shadow-sm transition-shadow focus-visible:ring-2 focus-visible:outline-none',
 										shapeClass,
 										table.isBookableOnline
-											? 'border-emerald-500/60 bg-emerald-500/10'
-											: 'border-amber-500/60 bg-amber-500/10',
+											? 'border-success/60 bg-success/10'
+											: 'border-warning/60 bg-warning/10',
 										isSelected && 'ring-primary z-30 shadow-md ring-2',
 									)}
 									style={{
@@ -1100,7 +1147,7 @@ export function FloorPlanCanvas({
 									}}
 								>
 									<span className="text-xs font-bold">{table.label}</span>
-									<span className="text-muted-foreground text-[10px]">
+									<span className="text-muted-foreground text-2xs">
 										{table.minCovers}–{table.maxCovers}p
 									</span>
 
@@ -1111,7 +1158,7 @@ export function FloorPlanCanvas({
 											onPointerDown={(e) =>
 												startPointerDrag(e, 'table', table, 'resize')
 											}
-											className="bg-primary absolute right-0 bottom-0 size-3.5 cursor-se-resize rounded-tl"
+											className="bg-primary absolute end-0 bottom-0 size-3.5 cursor-se-resize rounded-tl"
 										/>
 									) : null}
 								</div>
@@ -1120,452 +1167,361 @@ export function FloorPlanCanvas({
 					</div>
 				</div>
 
-				{/* Right Inspector Panel */}
-				<div className="border-border bg-card border-t p-4 lg:border-t-0 lg:border-l">
+				{/* Right inspector panel */}
+				<aside className="bg-background min-h-0 overflow-y-auto border-t p-4 lg:border-s lg:border-t-0">
 					{selectedTable ? (
-						<Card>
-							<CardHeader className="pb-3">
-								<div className="flex items-center justify-between">
-									<CardTitle className="text-sm font-semibold">
-										<Trans>Table Inspector</Trans>: {selectedTable.label}
-									</CardTitle>
-									{canWrite ? (
+						<div className="flex flex-col gap-5">
+							<div className="flex items-center justify-between gap-2">
+								<h3 className="truncate text-sm font-semibold">
+									<Trans>Table</Trans>: {selectedTable.label}
+								</h3>
+								{canWrite ? (
+									<AlertDialog>
+										<AlertDialogTrigger
+											render={
+												<Button
+													type="button"
+													variant="destructive"
+													size="sm"
+													data-testid="floor-inspector-delete-table"
+												>
+													<Icon name="trash-2" className="size-3.5" />
+													<Trans>Archive</Trans>
+												</Button>
+											}
+										/>
+										<AlertDialogContent>
+											<AlertDialogHeader>
+												<AlertDialogTitle>
+													<Trans>Archive this table?</Trans>
+												</AlertDialogTitle>
+												<AlertDialogDescription>
+													<Trans>
+														The table leaves the floor plan when you save. Past
+														reservations keep their history.
+													</Trans>
+												</AlertDialogDescription>
+											</AlertDialogHeader>
+											<AlertDialogFooter>
+												<AlertDialogCancel>
+													<Trans>Cancel</Trans>
+												</AlertDialogCancel>
+												<AlertDialogAction
+													variant="destructive"
+													onClick={handleArchiveSelectedTable}
+													data-testid="floor-inspector-delete-table-confirm"
+												>
+													<Trans>Archive table</Trans>
+												</AlertDialogAction>
+											</AlertDialogFooter>
+										</AlertDialogContent>
+									</AlertDialog>
+								) : null}
+							</div>
+
+							<div className="grid grid-cols-2 gap-3">
+								<TextField
+									id="inspector-table-label"
+									label={<Trans>Label</Trans>}
+									value={selectedTable.label}
+									disabled={!canWrite}
+									onChange={(e) =>
+										updateDraftTable(selectedTable.id, {
+											label: e.target.value,
+										})
+									}
+									data-testid="floor-inspector-label-input"
+								/>
+								<SelectField
+									id="inspector-table-shape"
+									label={<Trans>Shape</Trans>}
+									value={selectedTable.shape}
+									disabled={!canWrite}
+									options={tableShapeOptions}
+									onValueChange={(shape) =>
+										updateDraftTable(selectedTable.id, {
+											shape: shape as TableShape,
+										})
+									}
+								/>
+								<NumberField
+									id="inspector-min-covers"
+									label={<Trans>Min covers</Trans>}
+									min={1}
+									max={99}
+									disabled={!canWrite}
+									value={selectedTable.minCovers}
+									onValueChange={(raw) => {
+										const minCovers = Math.max(1, Math.min(99, raw || 1))
+										updateDraftTable(selectedTable.id, {
+											minCovers,
+											maxCovers: Math.max(minCovers, selectedTable.maxCovers),
+										})
+									}}
+								/>
+								<NumberField
+									id="inspector-max-covers"
+									label={<Trans>Max covers</Trans>}
+									min={1}
+									max={99}
+									disabled={!canWrite}
+									value={selectedTable.maxCovers}
+									onValueChange={(raw) => {
+										const maxCovers = Math.max(
+											selectedTable.minCovers,
+											Math.min(99, raw || 1),
+										)
+										updateDraftTable(selectedTable.id, { maxCovers })
+									}}
+								/>
+							</div>
+
+							<div className="flex flex-col">
+								<SwitchField
+									label={<Trans>Bookable online</Trans>}
+									checked={selectedTable.isBookableOnline}
+									disabled={!canWrite}
+									onCheckedChange={(isBookableOnline) =>
+										updateDraftTable(selectedTable.id, { isBookableOnline })
+									}
+								/>
+								<SwitchField
+									label={<Trans>Can be combined with other tables</Trans>}
+									checked={selectedTable.combinable}
+									disabled={!canWrite}
+									onCheckedChange={(combinable) =>
+										updateDraftTable(selectedTable.id, { combinable })
+									}
+								/>
+								<SwitchField
+									label={<Trans>Wheelchair accessible</Trans>}
+									checked={selectedTable.isAccessible}
+									disabled={!canWrite}
+									onCheckedChange={(isAccessible) =>
+										updateDraftTable(selectedTable.id, { isAccessible })
+									}
+								/>
+							</div>
+
+							<RotationPresets
+								value={selectedTable.rotation}
+								presets={ROTATION_PRESETS}
+								disabled={!canWrite}
+								onPick={(deg) => {
+									const tableLabel = selectedTable.label
+									updateDraftTable(
+										selectedTable.id,
+										{ rotation: deg },
+										_(msg`Rotated ${tableLabel} to ${deg} degrees`),
+									)
+								}}
+							>
+								<Input
+									id="inspector-rotation"
+									type="number"
+									min={0}
+									max={359}
+									disabled={!canWrite}
+									aria-label={_(msg`Rotation (degrees)`)}
+									value={selectedTable.rotation}
+									onChange={(e) =>
+										updateDraftTable(selectedTable.id, {
+											rotation: normalizeRotation(Number(e.target.value)),
+										})
+									}
+									className="w-20"
+									data-testid="floor-inspector-rotation-input"
+								/>
+							</RotationPresets>
+
+							<Collapsible>
+								<CollapsibleTrigger
+									render={
 										<Button
 											type="button"
-											variant="destructive"
+											variant="ghost"
 											size="sm"
-											onClick={handleArchiveSelectedTable}
-											data-testid="floor-inspector-delete-table"
-										>
-											<Icon name="trash-2" className="size-3.5" />
-											<Trans>Archive</Trans>
-										</Button>
-									) : null}
-								</div>
-							</CardHeader>
-							<CardContent className="flex flex-col gap-3">
-								<div className="grid grid-cols-2 gap-2">
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-table-label">
-											<Trans>Label</Trans>
-										</Label>
-										<Input
-											id="inspector-table-label"
-											value={selectedTable.label}
-											disabled={!canWrite}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													label: e.target.value,
-												})
-											}
-											data-testid="floor-inspector-label-input"
+											className="self-start"
 										/>
-									</div>
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-table-shape">
-											<Trans>Shape</Trans>
-										</Label>
-										<select
-											id="inspector-table-shape"
-											value={selectedTable.shape}
-											disabled={!canWrite}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													shape: e.target.value as TableShape,
-												})
-											}
-											className="border-input bg-background text-foreground h-9 rounded-md border px-2 text-sm"
-											data-testid="floor-inspector-shape-select"
-										>
-											{TABLE_SHAPES.map((s) => (
-												<option key={s.value} value={s.value}>
-													{_(s.label)}
-												</option>
-											))}
-										</select>
-									</div>
-								</div>
-
-								<div className="grid grid-cols-2 gap-2">
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-min-covers">
-											<Trans>Min covers</Trans>
-										</Label>
-										<Input
-											id="inspector-min-covers"
-											type="number"
-											min={1}
-											max={99}
-											disabled={!canWrite}
-											value={selectedTable.minCovers}
-											onChange={(e) => {
-												const minCovers = Math.max(
-													1,
-													Math.min(99, Number(e.target.value) || 1),
-												)
-												updateDraftTable(selectedTable.id, {
-													minCovers,
-													maxCovers: Math.max(
-														minCovers,
-														selectedTable.maxCovers,
-													),
-												})
-											}}
-										/>
-									</div>
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-max-covers">
-											<Trans>Max covers</Trans>
-										</Label>
-										<Input
-											id="inspector-max-covers"
-											type="number"
-											min={1}
-											max={99}
-											disabled={!canWrite}
-											value={selectedTable.maxCovers}
-											onChange={(e) => {
-												const maxCovers = Math.max(
-													selectedTable.minCovers,
-													Math.min(99, Number(e.target.value) || 1),
-												)
-												updateDraftTable(selectedTable.id, { maxCovers })
-											}}
-										/>
-									</div>
-								</div>
-
-								<div className="grid grid-cols-2 gap-2">
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-x">
-											<Trans>X (0–1200)</Trans>
-										</Label>
-										<Input
-											id="inspector-x"
-											type="number"
-											min={0}
-											max={1200}
-											disabled={!canWrite}
-											value={selectedTable.x}
-											onChange={(e) => {
-												const nextX = clampCanvasCoord(Number(e.target.value))
-												const tableLabel = selectedTable.label
-												const currentY = selectedTable.y
-												updateDraftTable(
-													selectedTable.id,
-													{ x: nextX },
-													_(
-														msg`Moved ${tableLabel} to (${nextX}, ${currentY})`,
-													),
-												)
-											}}
-											data-testid="floor-inspector-x-input"
-										/>
-									</div>
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-y">
-											<Trans>Y (0–1200)</Trans>
-										</Label>
-										<Input
-											id="inspector-y"
-											type="number"
-											min={0}
-											max={1200}
-											disabled={!canWrite}
-											value={selectedTable.y}
-											onChange={(e) => {
-												const nextY = clampCanvasCoord(Number(e.target.value))
-												const tableLabel = selectedTable.label
-												const currentX = selectedTable.x
-												updateDraftTable(
-													selectedTable.id,
-													{ y: nextY },
-													_(
-														msg`Moved ${tableLabel} to (${currentX}, ${nextY})`,
-													),
-												)
-											}}
-											data-testid="floor-inspector-y-input"
-										/>
-									</div>
-								</div>
-
-								<div className="grid grid-cols-2 gap-2">
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-width">
-											<Trans>Width (20–600)</Trans>
-										</Label>
-										<Input
-											id="inspector-width"
-											type="number"
-											min={20}
-											max={600}
-											step={10}
-											disabled={!canWrite}
-											value={selectedTable.width}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													width: clampCanvasDimension(Number(e.target.value)),
-												})
-											}
-											data-testid="floor-inspector-width-input"
-										/>
-									</div>
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-height">
-											<Trans>Height (20–600)</Trans>
-										</Label>
-										<Input
-											id="inspector-height"
-											type="number"
-											min={20}
-											max={600}
-											step={10}
-											disabled={!canWrite}
-											value={selectedTable.height}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													height: clampCanvasDimension(Number(e.target.value)),
-												})
-											}
-											data-testid="floor-inspector-height-input"
-										/>
-									</div>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="inspector-rotation">
-										<Trans>Rotation (degrees)</Trans>
-									</Label>
-									<div className="flex items-center gap-1.5">
-										{ROTATION_PRESETS.map((deg) => (
-											<Button
-												key={deg}
-												type="button"
-												size="sm"
-												variant={
-													selectedTable.rotation === deg ? 'default' : 'outline'
-												}
+									}
+								>
+									<Icon name="chevron-down" className="size-3.5" />
+									<Trans>Position and size</Trans>
+								</CollapsibleTrigger>
+								<CollapsibleContent>
+									<div className="flex flex-col gap-3 pt-2">
+										<div className="grid grid-cols-2 gap-3">
+											<NumberField
+												id="inspector-x"
+												label={<Trans>X (0–1200)</Trans>}
+												min={0}
+												max={1200}
 												disabled={!canWrite}
-												onClick={() => {
+												value={selectedTable.x}
+												testId="floor-inspector-x-input"
+												onValueChange={(raw) => {
+													const nextX = clampCanvasCoord(raw)
 													const tableLabel = selectedTable.label
+													const currentY = selectedTable.y
 													updateDraftTable(
 														selectedTable.id,
-														{ rotation: deg },
-														_(msg`Rotated ${tableLabel} to ${deg} degrees`),
+														{ x: nextX },
+														_(
+															msg`Moved ${tableLabel} to (${nextX}, ${currentY})`,
+														),
 													)
 												}}
-											>
-												{deg}°
-											</Button>
-										))}
-										<Input
-											id="inspector-rotation"
-											type="number"
-											min={0}
-											max={359}
-											disabled={!canWrite}
-											value={selectedTable.rotation}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													rotation: normalizeRotation(Number(e.target.value)),
-												})
-											}
-											className="w-20"
-											data-testid="floor-inspector-rotation-input"
-										/>
-									</div>
-								</div>
-
-								<div className="flex flex-col gap-2 pt-1">
-									<label className="flex items-center gap-2 text-xs">
-										<input
-											type="checkbox"
-											checked={selectedTable.isBookableOnline}
-											disabled={!canWrite}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													isBookableOnline: e.target.checked,
-												})
-											}
-										/>
-										<Trans>Bookable online</Trans>
-									</label>
-									<label className="flex items-center gap-2 text-xs">
-										<input
-											type="checkbox"
-											checked={selectedTable.combinable}
-											disabled={!canWrite}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													combinable: e.target.checked,
-												})
-											}
-										/>
-										<Trans>Combinable with other tables</Trans>
-									</label>
-									<label className="flex items-center gap-2 text-xs">
-										<input
-											type="checkbox"
-											checked={selectedTable.isAccessible}
-											disabled={!canWrite}
-											onChange={(e) =>
-												updateDraftTable(selectedTable.id, {
-													isAccessible: e.target.checked,
-												})
-											}
-										/>
-										<Trans>Wheelchair accessible</Trans>
-									</label>
-								</div>
-							</CardContent>
-						</Card>
-					) : selectedElement ? (
-						<Card>
-							<CardHeader className="pb-3">
-								<div className="flex items-center justify-between">
-									<CardTitle className="text-sm font-semibold">
-										<Trans>Element Inspector</Trans>:{' '}
-										{selectedElement.label || selectedElement.kind}
-									</CardTitle>
-									{canWrite ? (
-										<Button
-											type="button"
-											variant="destructive"
-											size="sm"
-											onClick={handleDeleteSelectedElement}
-											data-testid="floor-inspector-delete-element"
-										>
-											<Icon name="trash-2" className="size-3.5" />
-											<Trans>Remove</Trans>
-										</Button>
-									) : null}
-								</div>
-							</CardHeader>
-							<CardContent className="flex flex-col gap-3">
-								<div className="flex flex-col gap-1">
-									<Label htmlFor="inspector-element-label">
-										<Trans>Element label</Trans>
-									</Label>
-									<Input
-										id="inspector-element-label"
-										disabled={!canWrite}
-										value={selectedElement.label ?? ''}
-										onChange={(e) =>
-											updateDraftElement(selectedElement.id, {
-												label: e.target.value,
-											})
-										}
-									/>
-								</div>
-
-								<div className="grid grid-cols-2 gap-2">
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-el-x">
-											<Trans>X (0–1200)</Trans>
-										</Label>
-										<Input
-											id="inspector-el-x"
-											type="number"
-											min={0}
-											max={1200}
-											disabled={!canWrite}
-											value={selectedElement.x}
-											onChange={(e) =>
-												updateDraftElement(selectedElement.id, {
-													x: clampCanvasCoord(Number(e.target.value)),
-												})
-											}
-										/>
-									</div>
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-el-y">
-											<Trans>Y (0–1200)</Trans>
-										</Label>
-										<Input
-											id="inspector-el-y"
-											type="number"
-											min={0}
-											max={1200}
-											disabled={!canWrite}
-											value={selectedElement.y}
-											onChange={(e) =>
-												updateDraftElement(selectedElement.id, {
-													y: clampCanvasCoord(Number(e.target.value)),
-												})
-											}
-										/>
-									</div>
-								</div>
-
-								<div className="grid grid-cols-2 gap-2">
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-el-width">
-											<Trans>Width</Trans>
-										</Label>
-										<Input
-											id="inspector-el-width"
-											type="number"
-											min={20}
-											max={600}
-											disabled={!canWrite}
-											value={selectedElement.width}
-											onChange={(e) =>
-												updateDraftElement(selectedElement.id, {
-													width: clampCanvasDimension(Number(e.target.value)),
-												})
-											}
-										/>
-									</div>
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="inspector-el-height">
-											<Trans>Height</Trans>
-										</Label>
-										<Input
-											id="inspector-el-height"
-											type="number"
-											min={20}
-											max={600}
-											disabled={!canWrite}
-											value={selectedElement.height}
-											onChange={(e) =>
-												updateDraftElement(selectedElement.id, {
-													height: clampCanvasDimension(Number(e.target.value)),
-												})
-											}
-										/>
-									</div>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label>
-										<Trans>Rotation</Trans>
-									</Label>
-									<div className="flex items-center gap-1.5">
-										{ROTATION_PRESETS.map((deg) => (
-											<Button
-												key={deg}
-												type="button"
-												size="sm"
-												variant={
-													selectedElement.rotation === deg
-														? 'default'
-														: 'outline'
-												}
+											/>
+											<NumberField
+												id="inspector-y"
+												label={<Trans>Y (0–1200)</Trans>}
+												min={0}
+												max={1200}
 												disabled={!canWrite}
-												onClick={() =>
-													updateDraftElement(selectedElement.id, {
-														rotation: deg,
+												value={selectedTable.y}
+												testId="floor-inspector-y-input"
+												onValueChange={(raw) => {
+													const nextY = clampCanvasCoord(raw)
+													const tableLabel = selectedTable.label
+													const currentX = selectedTable.x
+													updateDraftTable(
+														selectedTable.id,
+														{ y: nextY },
+														_(
+															msg`Moved ${tableLabel} to (${currentX}, ${nextY})`,
+														),
+													)
+												}}
+											/>
+											<NumberField
+												id="inspector-width"
+												label={<Trans>Width (20–600)</Trans>}
+												min={20}
+												max={600}
+												step={10}
+												disabled={!canWrite}
+												value={selectedTable.width}
+												testId="floor-inspector-width-input"
+												onValueChange={(raw) =>
+													updateDraftTable(selectedTable.id, {
+														width: clampCanvasDimension(raw),
 													})
 												}
-											>
-												{deg}°
-											</Button>
-										))}
+											/>
+											<NumberField
+												id="inspector-height"
+												label={<Trans>Height (20–600)</Trans>}
+												min={20}
+												max={600}
+												step={10}
+												disabled={!canWrite}
+												value={selectedTable.height}
+												testId="floor-inspector-height-input"
+												onValueChange={(raw) =>
+													updateDraftTable(selectedTable.id, {
+														height: clampCanvasDimension(raw),
+													})
+												}
+											/>
+										</div>
 									</div>
-								</div>
-							</CardContent>
-						</Card>
+								</CollapsibleContent>
+							</Collapsible>
+						</div>
+					) : selectedElement ? (
+						<div className="flex flex-col gap-5">
+							<div className="flex items-center justify-between gap-2">
+								<h3 className="truncate text-sm font-semibold">
+									<Trans>Decor</Trans>:{' '}
+									{selectedElement.label || selectedElement.kind}
+								</h3>
+								{canWrite ? (
+									<Button
+										type="button"
+										variant="destructive"
+										size="sm"
+										onClick={handleDeleteSelectedElement}
+										data-testid="floor-inspector-delete-element"
+									>
+										<Icon name="trash-2" className="size-3.5" />
+										<Trans>Remove</Trans>
+									</Button>
+								) : null}
+							</div>
+							<TextField
+								id="inspector-element-label"
+								label={<Trans>Element label</Trans>}
+								disabled={!canWrite}
+								value={selectedElement.label ?? ''}
+								onChange={(e) =>
+									updateDraftElement(selectedElement.id, {
+										label: e.target.value,
+									})
+								}
+							/>
+							<div className="grid grid-cols-2 gap-3">
+								<NumberField
+									id="inspector-el-x"
+									label={<Trans>X (0–1200)</Trans>}
+									min={0}
+									max={1200}
+									disabled={!canWrite}
+									value={selectedElement.x}
+									onValueChange={(raw) =>
+										updateDraftElement(selectedElement.id, {
+											x: clampCanvasCoord(raw),
+										})
+									}
+								/>
+								<NumberField
+									id="inspector-el-y"
+									label={<Trans>Y (0–1200)</Trans>}
+									min={0}
+									max={1200}
+									disabled={!canWrite}
+									value={selectedElement.y}
+									onValueChange={(raw) =>
+										updateDraftElement(selectedElement.id, {
+											y: clampCanvasCoord(raw),
+										})
+									}
+								/>
+								<NumberField
+									id="inspector-el-width"
+									label={<Trans>Width</Trans>}
+									min={20}
+									max={600}
+									disabled={!canWrite}
+									value={selectedElement.width}
+									onValueChange={(raw) =>
+										updateDraftElement(selectedElement.id, {
+											width: clampCanvasDimension(raw),
+										})
+									}
+								/>
+								<NumberField
+									id="inspector-el-height"
+									label={<Trans>Height</Trans>}
+									min={20}
+									max={600}
+									disabled={!canWrite}
+									value={selectedElement.height}
+									onValueChange={(raw) =>
+										updateDraftElement(selectedElement.id, {
+											height: clampCanvasDimension(raw),
+										})
+									}
+								/>
+							</div>
+							<RotationPresets
+								value={selectedElement.rotation}
+								presets={ROTATION_PRESETS}
+								disabled={!canWrite}
+								onPick={(deg) =>
+									updateDraftElement(selectedElement.id, { rotation: deg })
+								}
+							/>
+						</div>
 					) : (
 						<div className="text-muted-foreground flex flex-col gap-2 py-8 text-center text-sm">
 							<p className="text-foreground font-medium">
@@ -1573,13 +1529,19 @@ export function FloorPlanCanvas({
 							</p>
 							<p className="text-xs">
 								<Trans>
-									Click a table or decor element on the canvas to inspect,
-									resize, rotate, or nudge it with the keyboard.
+									Click a table or decor element on the canvas to edit, resize,
+									rotate, or nudge it with the keyboard.
+								</Trans>
+							</p>
+							<p className="text-xs">
+								<Trans>
+									Drag items on the 10-unit grid, or use Arrow keys (1 unit) and
+									Shift+Arrow (10 units). Nothing is saved until you click Save.
 								</Trans>
 							</p>
 						</div>
 					)}
-				</div>
+				</aside>
 			</div>
 		</div>
 	)

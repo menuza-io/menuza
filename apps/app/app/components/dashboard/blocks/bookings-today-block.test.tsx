@@ -135,6 +135,23 @@ describe('BookingsTodayBlock', () => {
 		expect(dataCalls()).toHaveLength(2)
 	})
 
+	it('pauses while the tab is hidden and catches up when it returns', async () => {
+		mount()
+		await screen.findByTestId('bookings-today-parties')
+		const visibility = vi.spyOn(document, 'visibilityState', 'get')
+		visibility.mockReturnValue('hidden')
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(BOOKINGS_TODAY_REFRESH_MS * 3)
+		})
+		expect(dataCalls()).toHaveLength(1)
+		visibility.mockReturnValue('visible')
+		await act(async () => {
+			document.dispatchEvent(new Event('visibilitychange'))
+		})
+		await vi.waitFor(() => expect(dataCalls()).toHaveLength(2))
+		visibility.mockRestore()
+	})
+
 	it('shows a quiet message when the data cannot be loaded', async () => {
 		fetchMock.mockImplementation(async (input: unknown) => {
 			const url = String(input instanceof Request ? input.url : input)

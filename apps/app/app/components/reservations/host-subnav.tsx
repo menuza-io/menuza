@@ -1,10 +1,15 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { addDays } from '@repo/reservations'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
 import { Link, useSearchParams } from 'react-router'
+import { DateStepper } from '#app/components/reservations/date-stepper.tsx'
+import { ReservationsHeaderControls } from '#app/components/reservations/header-controls.tsx'
+import {
+	ReservationsHeaderActions,
+	useReservationsShell,
+} from '#app/components/reservations/shell-context.tsx'
+import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { type RsvServiceNoteRow } from '#app/utils/reservations/book-api.ts'
 import {
 	type RsvAreaRecord,
@@ -14,6 +19,16 @@ import {
 export type HostViewKey =
 	'today' | 'book' | 'timeline' | 'floor' | 'calendar' | 'overview'
 
+const ALL = 'all'
+
+/**
+ * The day-view chrome under the layout's page header and section tabs.
+ *
+ * Actions (Needs attention, Walk-in, New reservation) go into the layout's
+ * single page header through a portal; this block renders the context bar:
+ * location, the day views as a segmented control, date stepper, service,
+ * area and refresh. Date, service and area belong to the day views only.
+ */
 export function HostSubnav({
 	orgSlug,
 	activeView,
@@ -61,6 +76,7 @@ export function HostSubnav({
 }) {
 	const { t } = useLingui()
 	const [searchParams] = useSearchParams()
+	const shell = useReservationsShell()
 
 	const buildViewHref = (viewPath: string) => {
 		const next = new URLSearchParams()
@@ -73,272 +89,233 @@ export function HostSubnav({
 		return `/${orgSlug}/reservations/${viewPath}${qs ? `?${qs}` : ''}`
 	}
 
+	// Calendar is its own section tab (month level), not one of the day views.
 	const viewTabs: Array<{
 		key: HostViewKey
 		path: string
 		label: string
+		visible: boolean
 	}> = [
-		{ key: 'today', path: 'today', label: t`Today` },
-		{ key: 'book', path: 'book', label: t`Book` },
-		{ key: 'timeline', path: 'timeline', label: t`Timeline` },
-		{ key: 'floor', path: 'floor', label: t`Floor Plan` },
-		{ key: 'calendar', path: 'calendar', label: t`Calendar` },
-		{ key: 'overview', path: 'overview', label: t`Overview` },
+		{
+			key: 'today',
+			path: 'today',
+			label: t`Board`,
+			visible: shell ? shell.nav.today : true,
+		},
+		{
+			key: 'timeline',
+			path: 'timeline',
+			label: t`Timeline`,
+			visible: shell ? shell.nav.book : true,
+		},
+		{
+			key: 'floor',
+			path: 'floor',
+			label: t`Floor`,
+			visible: shell ? shell.nav.book : true,
+		},
+		{
+			key: 'book',
+			path: 'book',
+			label: t`List`,
+			visible: shell ? shell.nav.book : true,
+		},
+		{
+			key: 'overview',
+			path: 'overview',
+			label: t`Overview`,
+			visible: shell ? shell.nav.book : true,
+		},
 	]
+	const visibleViewTabs = viewTabs.filter((tab) => tab.visible)
 
 	const totalAttention = unassignedCount + conflictCount + moveNoticeCount
 
+	const visibleNotes = (
+		selectedServiceId
+			? serviceNotes.filter((n) => n.serviceId === selectedServiceId)
+			: serviceNotes
+	).filter((n) => n.body.trim().length > 0)
+
+	const serviceOptions = [
+		{ value: ALL, label: t`All services` },
+		...services.map((svc) => ({ value: svc.id, label: svc.name })),
+	]
+	const areaOptions = [
+		{ value: ALL, label: t`All areas` },
+		...areas.map((area) => ({ value: area.id, label: area.name })),
+	]
+
 	return (
 		<div
-			className="bg-card flex flex-col gap-3 rounded-xl border p-3 shadow-xs"
+			className="bg-background sticky top-0 z-20 flex flex-col gap-3 py-2 print:hidden"
 			data-testid="host-subnav"
 		>
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				{/* View switcher tabs */}
-				<div
-					className="bg-muted inline-flex flex-wrap items-center gap-1 rounded-lg p-1"
-					role="tablist"
-					aria-label={t`Host stand views`}
-				>
-					{viewTabs.map((tab) => {
-						const isActive = activeView === tab.key
-						return (
-							<Button
-								key={tab.key}
-								variant={isActive ? 'default' : 'ghost'}
-								size="sm"
-								render={<Link to={buildViewHref(tab.path)} />}
-								data-testid={`host-view-tab-${tab.key}`}
-								aria-selected={isActive}
-								role="tab"
-							>
-								{tab.label}
-							</Button>
-						)
-					})}
-				</div>
-
-				{/* Action buttons */}
-				<div className="flex flex-wrap items-center gap-2">
-					{onOpenConflictPanel ? (
-						<Button
-							type="button"
-							variant={conflictCount > 0 ? 'destructive' : 'outline'}
-							size="sm"
-							onClick={onOpenConflictPanel}
-							data-testid="open-conflict-panel-btn"
-						>
-							<Icon name="alert-triangle" className="size-4" />
-							<span>
-								<Trans>Unassigned & Conflicts</Trans>
-							</span>
+			<ReservationsHeaderActions>
+				{onOpenConflictPanel ? (
+					<Button
+						type="button"
+						variant="outline"
+						className="h-11 md:h-8"
+						onClick={onOpenConflictPanel}
+						data-testid="open-conflict-panel-btn"
+					>
+						<Icon name="alert-triangle" />
+						<Trans>Needs attention</Trans>
+						{totalAttention > 0 ? (
 							<Badge
-								variant={totalAttention > 0 ? 'secondary' : 'outline'}
+								variant="warning"
+								className="tabular-nums"
 								data-testid="conflict-panel-badge"
 							>
 								{totalAttention}
 							</Badge>
-						</Button>
-					) : null}
+						) : null}
+					</Button>
+				) : null}
+				{canManage && onOpenWalkIn ? (
+					<Button
+						type="button"
+						variant="outline"
+						className="h-11 md:h-8"
+						onClick={onOpenWalkIn}
+						data-testid="open-walk-in-btn"
+					>
+						<Icon name="user-plus" />
+						<Trans>Walk-in</Trans>
+					</Button>
+				) : null}
+				{canManage && onOpenBookingSheet ? (
+					<Button
+						type="button"
+						className="h-11 md:h-8"
+						onClick={onOpenBookingSheet}
+						data-testid="open-booking-sheet-btn"
+					>
+						<Icon name="plus" />
+						<Trans>New reservation</Trans>
+					</Button>
+				) : null}
+			</ReservationsHeaderActions>
 
-					{canManage && onOpenWalkIn ? (
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onClick={onOpenWalkIn}
-							data-testid="open-walk-in-btn"
-						>
-							<Icon name="user-plus" className="size-4" />
-							<span>
-								<Trans>Walk-in</Trans>
-							</span>
-						</Button>
-					) : null}
+			<div
+				role="toolbar"
+				aria-label={t`Day controls`}
+				className="flex flex-wrap items-center gap-x-3 gap-y-2"
+				data-testid="host-context-bar"
+			>
+				{shell ? (
+					<ReservationsHeaderControls
+						locations={shell.locations}
+						selectedLocationId={shell.selectedLocationId}
+						onChange={(_key, value) => shell.onLocationChange(value)}
+					/>
+				) : null}
 
-					{canManage && onOpenBookingSheet ? (
-						<Button
-							type="button"
-							size="sm"
-							onClick={onOpenBookingSheet}
-							data-testid="open-booking-sheet-btn"
-						>
-							<Icon name="plus" className="size-4" />
-							<span>
-								<Trans>New Reservation</Trans>
-							</span>
-						</Button>
-					) : null}
+				{activeView !== 'calendar' && visibleViewTabs.length > 1 ? (
+					<nav
+						aria-label={t`Day views`}
+						className="bg-muted inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg p-0.5"
+					>
+						{visibleViewTabs.map((tab) => {
+							const isActive = activeView === tab.key
+							return (
+								<Link
+									key={tab.key}
+									to={buildViewHref(tab.path)}
+									aria-current={isActive ? 'page' : undefined}
+									data-testid={`host-view-tab-${tab.key}`}
+									className={
+										isActive
+											? 'bg-background text-foreground flex h-11 items-center rounded-md px-3 text-sm font-medium shadow-xs md:h-7'
+											: 'text-muted-foreground hover:text-foreground flex h-11 items-center rounded-md px-3 text-sm font-medium md:h-7'
+									}
+								>
+									{tab.label}
+								</Link>
+							)
+						})}
+					</nav>
+				) : null}
 
+				{onDateChange ? (
+					<DateStepper
+						date={businessDate}
+						today={todayDate}
+						onChange={onDateChange}
+					/>
+				) : null}
+
+				<div className="flex flex-wrap items-center gap-2 sm:ms-auto">
+					{services.length > 0 && onServiceChange ? (
+						<FilterSelect
+							label={t`Service`}
+							testId="host-service-select"
+							options={serviceOptions}
+							value={selectedServiceId ?? ALL}
+							onValueChange={(value) =>
+								onServiceChange(value === ALL ? null : value)
+							}
+						/>
+					) : null}
+					{areas.length > 0 && onAreaChange ? (
+						<FilterSelect
+							label={t`Area`}
+							testId="host-area-select"
+							options={areaOptions}
+							value={selectedAreaId ?? ALL}
+							onValueChange={(value) =>
+								onAreaChange(value === ALL ? null : value)
+							}
+						/>
+					) : null}
 					{onRefresh ? (
 						<Button
 							type="button"
 							variant="ghost"
-							size="icon-sm"
+							size="icon"
 							onClick={onRefresh}
 							aria-label={t`Refresh`}
 							data-testid="host-refresh-btn"
 						>
 							<Icon
 								name="refresh-cw"
-								className={refreshing ? 'size-4 animate-spin' : 'size-4'}
+								className={refreshing ? 'animate-spin' : undefined}
 							/>
 						</Button>
 					) : null}
 				</div>
 			</div>
 
-			{/* Filters row: Date navigation, Service filter, Area filter */}
-			{onDateChange || services.length > 0 || areas.length > 0 ? (
-				<div className="flex flex-wrap items-center justify-between gap-2 border-t pt-2">
-					{onDateChange ? (
-						<div className="flex flex-wrap items-center gap-1.5">
-							<Button
-								type="button"
-								variant="outline"
-								size="icon-sm"
-								onClick={() => onDateChange(addDays(businessDate, -1))}
-								aria-label={t`Previous day`}
-								data-testid="host-prev-day-btn"
+			{visibleNotes.length > 0 ? (
+				<div
+					className="bg-muted/50 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border px-3 py-2 text-xs"
+					data-testid="host-subnav-service-notes"
+				>
+					<Icon
+						name="file-text"
+						className="text-muted-foreground size-3.5 shrink-0"
+					/>
+					<span className="sr-only">
+						<Trans>Service notes</Trans>
+					</span>
+					{visibleNotes.map((noteItem) => {
+						const svcName = noteItem.serviceId
+							? services.find((s) => s.id === noteItem.serviceId)?.name
+							: null
+						return (
+							<span
+								key={`${noteItem.serviceId ?? 'all'}-${noteItem.id}`}
+								className="text-foreground flex items-center gap-1.5"
+								data-testid={`host-subnav-service-note-${noteItem.serviceId ?? 'all'}`}
 							>
-								<Icon name="chevron-left" className="size-4 rtl:rotate-180" />
-							</Button>
-							<Input
-								type="date"
-								value={businessDate}
-								onChange={(e) => {
-									if (e.target.value) onDateChange(e.target.value)
-								}}
-								className="h-8 w-40 text-sm"
-								aria-label={t`Business date`}
-								data-testid="host-date-input"
-							/>
-							<Button
-								type="button"
-								variant="outline"
-								size="icon-sm"
-								onClick={() => onDateChange(addDays(businessDate, 1))}
-								aria-label={t`Next day`}
-								data-testid="host-next-day-btn"
-							>
-								<Icon name="chevron-right" className="size-4 rtl:rotate-180" />
-							</Button>
-							{todayDate && businessDate !== todayDate ? (
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									onClick={() => onDateChange(todayDate)}
-									data-testid="host-today-jump-btn"
-								>
-									<Trans>Jump to Today</Trans>
-								</Button>
-							) : null}
-						</div>
-					) : (
-						<div />
-					)}
-
-					<div className="flex flex-wrap items-center gap-2">
-						{services.length > 0 && onServiceChange ? (
-							<div className="flex items-center gap-1.5">
-								<label
-									htmlFor="host-service-filter"
-									className="text-muted-foreground text-xs font-medium"
-								>
-									<Trans>Service</Trans>
-								</label>
-								<select
-									id="host-service-filter"
-									value={selectedServiceId ?? ''}
-									onChange={(e) =>
-										onServiceChange(e.target.value ? e.target.value : null)
-									}
-									className="border-input bg-background h-8 rounded-md border px-2.5 text-xs"
-									data-testid="host-service-select"
-								>
-									<option value="">{t`All services`}</option>
-									{services.map((svc) => (
-										<option key={svc.id} value={svc.id}>
-											{svc.name}
-										</option>
-									))}
-								</select>
-							</div>
-						) : null}
-
-						{areas.length > 0 && onAreaChange ? (
-							<div className="flex items-center gap-1.5">
-								<label
-									htmlFor="host-area-filter"
-									className="text-muted-foreground text-xs font-medium"
-								>
-									<Trans>Area</Trans>
-								</label>
-								<select
-									id="host-area-filter"
-									value={selectedAreaId ?? ''}
-									onChange={(e) =>
-										onAreaChange(e.target.value ? e.target.value : null)
-									}
-									className="border-input bg-background h-8 rounded-md border px-2.5 text-xs"
-									data-testid="host-area-select"
-								>
-									<option value="">{t`All areas`}</option>
-									{areas.map((area) => (
-										<option key={area.id} value={area.id}>
-											{area.name}
-										</option>
-									))}
-								</select>
-							</div>
-						) : null}
-					</div>
+								{svcName ? <Badge variant="outline">{svcName}</Badge> : null}
+								{noteItem.body}
+							</span>
+						)
+					})}
 				</div>
 			) : null}
-
-			{(() => {
-				const visibleNotes = selectedServiceId
-					? serviceNotes.filter(
-							(n) =>
-								n.serviceId === selectedServiceId && n.body.trim().length > 0,
-						)
-					: serviceNotes.filter((n) => n.body.trim().length > 0)
-				if (visibleNotes.length === 0) return null
-				return (
-					<div
-						className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs"
-						data-testid="host-subnav-service-notes"
-					>
-						<Icon
-							name="file-text"
-							className="size-3.5 shrink-0 text-amber-700 dark:text-amber-300"
-						/>
-						<span className="font-semibold text-amber-900 dark:text-amber-200">
-							<Trans>Service Notes:</Trans>
-						</span>
-						<div className="flex flex-wrap items-center gap-3">
-							{visibleNotes.map((noteItem) => {
-								const svcName = noteItem.serviceId
-									? services.find((s) => s.id === noteItem.serviceId)?.name
-									: null
-								return (
-									<span
-										key={`${noteItem.serviceId ?? 'all'}-${noteItem.id}`}
-										className="text-foreground"
-										data-testid={`host-subnav-service-note-${noteItem.serviceId ?? 'all'}`}
-									>
-										{svcName ? (
-											<strong className="me-1 font-medium">[{svcName}]</strong>
-										) : null}
-										{noteItem.body}
-									</span>
-								)
-							})}
-						</div>
-					</div>
-				)
-			})()}
 		</div>
 	)
 }

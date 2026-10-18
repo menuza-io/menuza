@@ -1,25 +1,27 @@
 import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
 import { Alert, AlertDescription } from '@repo/ui/alert'
-import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
-import { useMemo, useState } from 'react'
+import { Skeleton } from '@repo/ui/skeleton'
+import { WorkspaceMetric, WorkspaceMetricGrid } from '@repo/ui/workspace'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData } from 'react-router'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
-import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
-import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import {
 	RequestsPanel,
 	RequestsTabs,
 	type ReservationsViewTab,
 } from '#app/components/reservations/requests-panel.tsx'
+import { TodayPartyCard } from '#app/components/reservations/today-party-card.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
 import { useReservationRequests } from '#app/components/reservations/use-reservation-requests.ts'
 import { TodayWaitlistCard } from '#app/components/reservations/waitlist/today-waitlist-card.tsx'
@@ -27,16 +29,21 @@ import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import {
 	markReservationRunningLate,
+	type DayReservationView,
 	transitionReservationStatus,
 	undoReservationTransition,
 } from '#app/utils/reservations/book-api.ts'
 import {
-	COURSE_STAGE_LABELS,
-	DIETARY_LABELS,
-	enumLabel,
-	OCCASION_LABELS,
+	boardColumnFor,
+	type HostAction,
+} from '#app/utils/reservations/host-actions.ts'
+import {
+	hostErrorMessage,
+	hostLoadErrorMessage,
+} from '#app/utils/reservations/host-errors.ts'
+import {
 	RESERVATION_STATUS_LABELS,
-	VIP_TIER_LABELS,
+	enumLabel,
 } from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/today.ts'
@@ -66,12 +73,45 @@ export async function action({ request, params }: Route.ActionArgs) {
 	return { ok: true }
 }
 
+const UNDO_WINDOW_MS = 60_000
+
+function ColumnEmpty({
+	icon,
+	children,
+}: {
+	icon: 'calendar' | 'users' | 'check'
+	children: React.ReactNode
+}) {
+	return (
+		<div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center text-sm">
+			<Icon name={icon} className="size-5" />
+			{children}
+		</div>
+	)
+}
+
+function BoardSkeleton() {
+	return (
+		<div
+			className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4"
+			data-testid="today-board-skeleton"
+			aria-busy="true"
+		>
+			{[0, 1, 2, 3].map((col) => (
+				<div key={col} className="flex flex-col gap-2.5 rounded-xl border p-4">
+					<Skeleton className="h-5 w-32" />
+					<Skeleton className="h-20" />
+					<Skeleton className="h-20" />
+					<Skeleton className="h-20" />
+				</div>
+			))}
+		</div>
+	)
+}
+
 export default function ReservationsTodayRoute() {
 	const { t, i18n } = useLingui()
-	const label = (
-		labels: Record<string, MessageDescriptor>,
-		value: string | null | undefined,
-	) => enumLabel((d) => i18n._(d), labels, value)
+	const tx = (d: MessageDescriptor) => i18n._(d)
 	const { orgSlug, canManage, waitlistEnabled } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -88,6 +128,7 @@ export default function ReservationsTodayRoute() {
 	const [view, setView] = useState<ReservationsViewTab>('reservations')
 	const [actionBusyId, setActionBusyId] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
+	const [showFinished, setShowFinished] = useState(false)
 	const [lastUndo, setLastUndo] = useState<{
 		reservationId: string
 		guestName: string
@@ -95,7 +136,11 @@ export default function ReservationsTodayRoute() {
 		undoToken: string | null
 	} | null>(null)
 
-	const lastUndoStatusLabel = label(RESERVATION_STATUS_LABELS, lastUndo?.status)
+	const lastUndoStatusLabel = enumLabel(
+		tx,
+		RESERVATION_STATUS_LABELS,
+		lastUndo?.status,
+	)
 
 	const dayFeed = host.dayFeed
 	const stats = dayFeed?.stats
@@ -103,6 +148,8 @@ export default function ReservationsTodayRoute() {
 		() => dayFeed?.reservations ?? [],
 		[dayFeed?.reservations],
 	)
+	const reservationsRef = useRef(reservations)
+	reservationsRef.current = reservations
 	const requests = useReservationRequests({
 		client: host.client,
 		locationId,
@@ -110,50 +157,58 @@ export default function ReservationsTodayRoute() {
 		onMutated: host.handleReservationMutated,
 	})
 
-	const upcomingList = reservations.filter(
-		(r) =>
-			r.status === 'booked' ||
-			r.status === 'confirmed' ||
-			r.status === 'arrived' ||
-			r.status === 'pending_payment',
-	)
-	const seatedList = reservations.filter((r) => r.status === 'seated')
-	const finishedList = reservations.filter(
-		(r) =>
-			r.status === 'completed' ||
-			r.status === 'finished' ||
-			r.status === 'cancelled' ||
-			r.status === 'no_show',
-	)
+	// The undo belongs to one day and location, and lapses after a minute.
+	useEffect(() => {
+		setLastUndo(null)
+	}, [host.businessDate, locationId])
+	useEffect(() => {
+		if (!lastUndo) return
+		const id = window.setTimeout(() => setLastUndo(null), UNDO_WINDOW_MS)
+		return () => window.clearTimeout(id)
+	}, [lastUndo])
 
-	const handleQuickStatus = async (
-		reservationId: string,
-		guestName: string,
-		to: string,
-	) => {
-		setActionBusyId(reservationId)
+	const columns = useMemo(() => {
+		const upcoming = []
+		const seated = []
+		const finished = []
+		for (const r of reservations) {
+			const column = boardColumnFor(r.status)
+			if (column === 'upcoming') upcoming.push(r)
+			else if (column === 'seated') seated.push(r)
+			else if (column === 'finished') finished.push(r)
+		}
+		return { upcoming, seated, finished }
+	}, [reservations])
+
+	const findVersion = (id: string) =>
+		reservationsRef.current.find((r) => r.id === id)?.version
+
+	const handleAction = async (rsv: DayReservationView, action: HostAction) => {
+		if (!action.to) {
+			host.openDetail(rsv.id)
+			return
+		}
+		const to = action.to
+		setActionBusyId(rsv.id)
 		setActionError(null)
 		try {
-			const current = reservations.find((r) => r.id === reservationId)
-			const res = await transitionReservationStatus(
-				host.client,
-				reservationId,
-				{
-					to,
-					...(current?.version ? { expectedVersion: current.version } : {}),
-				},
-			)
+			const version = findVersion(rsv.id)
+			const res = await transitionReservationStatus(host.client, rsv.id, {
+				to,
+				...(version ? { expectedVersion: version } : {}),
+			})
 			setLastUndo({
-				reservationId,
-				guestName,
+				reservationId: rsv.id,
+				guestName: rsv.guestName || t`Guest`,
 				status: to,
 				undoToken: res.undoToken,
 			})
 			host.handleReservationMutated(res.reservation, res.moveNotices)
 		} catch (err) {
 			setActionError(
-				err instanceof Error ? err.message : t`Status update failed.`,
+				hostErrorMessage(err, tx, msg`Could not update the status.`),
 			)
+			void host.refresh()
 		} finally {
 			setActionBusyId(null)
 		}
@@ -164,42 +219,69 @@ export default function ReservationsTodayRoute() {
 		setActionBusyId(lastUndo.reservationId)
 		setActionError(null)
 		try {
-			const current = reservations.find((r) => r.id === lastUndo.reservationId)
 			const res = await undoReservationTransition(
 				host.client,
 				lastUndo.reservationId,
 				lastUndo.undoToken,
-				current?.version,
+				findVersion(lastUndo.reservationId),
 			)
 			setLastUndo(null)
 			host.handleReservationMutated(res.reservation, [])
 		} catch (err) {
-			setActionError(err instanceof Error ? err.message : t`Undo failed.`)
+			setActionError(hostErrorMessage(err, tx, msg`Could not undo.`))
+			void host.refresh()
 		} finally {
 			setActionBusyId(null)
 		}
 	}
 
-	const handleQuickLate = async (reservationId: string, minutes: number) => {
-		setActionBusyId(reservationId)
+	const handleQuickLate = async (rsv: DayReservationView, minutes: number) => {
+		setActionBusyId(rsv.id)
 		setActionError(null)
 		try {
-			const current = reservations.find((r) => r.id === reservationId)
 			const res = await markReservationRunningLate(
 				host.client,
-				reservationId,
+				rsv.id,
 				minutes,
 				true,
-				current?.version,
+				findVersion(rsv.id),
 			)
 			host.handleReservationMutated(res.reservation, res.moveNotices)
 		} catch (err) {
 			setActionError(
-				err instanceof Error ? err.message : t`Failed to mark running late.`,
+				hostErrorMessage(
+					err,
+					tx,
+					msg`Could not mark the party as running late.`,
+				),
 			)
+			void host.refresh()
 		} finally {
 			setActionBusyId(null)
 		}
+	}
+
+	const loadFailure =
+		host.poll.error && !dayFeed
+			? hostLoadErrorMessage(
+					{ status: host.poll.errorStatus, code: host.poll.errorCode },
+					tx,
+				)
+			: null
+	const loading = !dayFeed && host.poll.loading
+	const attentionCount =
+		(stats?.unassignedCount ?? 0) +
+		(stats?.conflictCount ?? 0) +
+		(stats?.lateRiskCount ?? 0)
+	const waitlistCount = (dayFeed?.waitlist ?? []).length
+	const dayIsEmpty =
+		Boolean(dayFeed) && reservations.length === 0 && waitlistCount === 0
+	const cardProps = {
+		canManage,
+		nowMs: host.liveNow.nowMs,
+		onOpenDetail: host.openDetail,
+		onAction: handleAction,
+		onRunningLate: handleQuickLate,
 	}
 
 	return (
@@ -228,10 +310,23 @@ export default function ReservationsTodayRoute() {
 				serviceNotes={dayFeed?.serviceNotes ?? []}
 			/>
 
-			{host.poll.error || actionError || requests.error ? (
+			{loadFailure || actionError || requests.error ? (
 				<Alert variant="destructive" data-testid="today-error-banner">
 					<AlertDescription>
-						{actionError ?? requests.error ?? host.poll.error}
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<span>{actionError ?? requests.error ?? loadFailure}</span>
+							{loadFailure && !host.poll.accessDenied ? (
+								<Button
+									type="button"
+									size="sm"
+									variant="outline"
+									className="h-11 md:h-8"
+									onClick={() => void host.poll.refresh({ force: true })}
+								>
+									<Trans>Try again</Trans>
+								</Button>
+							) : null}
+						</div>
 					</AlertDescription>
 				</Alert>
 			) : null}
@@ -241,32 +336,6 @@ export default function ReservationsTodayRoute() {
 				onValueChange={setView}
 				pendingCount={requests.pending.length}
 			/>
-
-			{lastUndo ? (
-				<div
-					className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
-					data-testid="today-undo-banner"
-				>
-					<span>
-						<Trans>
-							Marked {lastUndo.guestName} as {lastUndoStatusLabel}. Undo
-							available for 60s.
-						</Trans>
-					</span>
-					<Button
-						type="button"
-						size="xs"
-						variant="outline"
-						onClick={handleQuickUndo}
-						data-testid="today-undo-btn"
-					>
-						<Icon name="undo-2" className="size-3.5" />
-						<span>
-							<Trans>Undo</Trans>
-						</span>
-					</Button>
-				</div>
-			) : null}
 
 			{view === 'requests' ? (
 				<RequestsPanel
@@ -280,430 +349,253 @@ export default function ReservationsTodayRoute() {
 				/>
 			) : (
 				<>
-					{/* KPI Summary Cards */}
-					<div
-						className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
-						data-testid="today-kpi-cards"
-					>
-						<Card className="p-3">
-							<div className="text-muted-foreground text-xs">
-								<Trans>Total Covers</Trans>
-							</div>
-							<div
-								className="mt-1 text-xl font-bold"
-								data-testid="today-kpi-total-covers"
-							>
-								{stats?.totalCovers ?? 0}
-							</div>
-							<div className="text-muted-foreground text-xs">
-								{stats?.totalParties ?? 0} <Trans>parties</Trans>
-							</div>
-						</Card>
-
-						<Card className="p-3">
-							<div className="text-muted-foreground text-xs">
-								<Trans>Arriving Soon</Trans>
-							</div>
-							<div
-								className="mt-1 text-xl font-bold"
-								data-testid="today-kpi-arriving-covers"
-							>
-								{stats?.arrivingSoonCovers ?? 0}
-							</div>
-							<div className="text-muted-foreground text-xs">
-								{stats?.arrivingSoonParties ?? 0} <Trans>next 30m</Trans>
-							</div>
-						</Card>
-
-						<Card className="p-3">
-							<div className="text-muted-foreground text-xs">
-								<Trans>Currently Seated</Trans>
-							</div>
-							<div
-								className="mt-1 text-xl font-bold text-emerald-600 dark:text-emerald-400"
-								data-testid="today-kpi-seated-covers"
-							>
-								{stats?.seatedCovers ?? 0}
-							</div>
-							<div className="text-muted-foreground text-xs">
-								{stats?.seatedParties ?? 0} <Trans>tables active</Trans>
-							</div>
-						</Card>
-
-						<Card className="p-3">
-							<div className="text-muted-foreground text-xs">
-								<Trans>Walk-Ins Today</Trans>
-							</div>
-							<div
-								className="mt-1 text-xl font-bold"
-								data-testid="today-kpi-walkin-covers"
-							>
-								{stats?.walkInCovers ?? 0}
-							</div>
-							<div className="text-muted-foreground text-xs">
-								{stats?.walkInParties ?? 0} <Trans>walk-in parties</Trans>
-							</div>
-						</Card>
-
-						<Card className="p-3">
-							<div className="text-muted-foreground text-xs">
-								<Trans>Completed</Trans>
-							</div>
-							<div
-								className="mt-1 text-xl font-bold"
-								data-testid="today-kpi-completed-covers"
-							>
-								{stats?.completedCovers ?? 0}
-							</div>
-							<div className="text-muted-foreground text-xs">
-								{stats?.completedParties ?? 0} <Trans>turns finished</Trans>
-							</div>
-						</Card>
-
-						<Card className="p-3">
-							<div className="text-muted-foreground text-xs">
-								<Trans>Attention Needed</Trans>
-							</div>
-							<div
-								className="mt-1 text-xl font-bold text-amber-600 dark:text-amber-400"
-								data-testid="today-kpi-attention"
-							>
-								{(stats?.unassignedCount ?? 0) +
-									(stats?.conflictCount ?? 0) +
-									(stats?.lateRiskCount ?? 0)}
-							</div>
-							<div className="text-muted-foreground text-xs">
-								{stats?.unassignedCount ?? 0} <Trans>unassigned</Trans> •{' '}
-								{stats?.conflictCount ?? 0} <Trans>conflicts</Trans>
-							</div>
-						</Card>
-					</div>
-
-					{/* 3-Column Live Shift Board */}
-					<div
-						className={
-							waitlistEnabled
-								? 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'
-								: 'grid grid-cols-1 gap-4 lg:grid-cols-3'
-						}
-						data-testid="today-board"
-					>
-						{/* Column 1: Upcoming & Arriving */}
-						<Card className="flex flex-col">
-							<CardHeader className="pb-2">
-								<CardTitle className="flex items-center justify-between text-base">
-									<span>
-										<Trans>Upcoming & Arriving</Trans>
+					<div data-testid="today-kpi-cards">
+						<WorkspaceMetricGrid className="xl:grid-cols-4">
+							<WorkspaceMetric
+								label={<Trans>Covers</Trans>}
+								value={
+									<span data-testid="today-kpi-total-covers">
+										{stats?.totalCovers ?? 0}
 									</span>
-									<Badge variant="secondary">{upcomingList.length}</Badge>
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="flex flex-col gap-2.5">
-								{upcomingList.length === 0 ? (
-									<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-										<Trans>No upcoming reservations for this filter.</Trans>
-									</div>
-								) : (
-									upcomingList.map((rsv) => (
-										<div
-											key={rsv.id}
-											className="bg-background hover:bg-muted/40 flex flex-col gap-2 rounded-lg border p-3 text-xs transition"
-											data-testid={`today-upcoming-card-${rsv.id}`}
-										>
-											<div className="flex items-start justify-between gap-2">
-												<button
-													type="button"
-													onClick={() => host.openDetail(rsv.id)}
-													className="text-start font-semibold hover:underline"
-													data-testid={`today-open-detail-${rsv.id}`}
-												>
-													{rsv.hhmm} • {rsv.guestName} ({rsv.partySize})
-												</button>
-												<div className="flex flex-wrap items-center gap-1">
-													{rsv.guest?.vipTier &&
-													rsv.guest.vipTier !== 'none' ? (
-														<Badge variant="default">
-															{label(VIP_TIER_LABELS, rsv.guest.vipTier)}
-														</Badge>
-													) : null}
-													{rsv.assignedTableLabels.length > 0 ? (
-														<Badge variant="outline">
-															{rsv.assignedTableLabels.join(', ')}
-														</Badge>
-													) : (
-														<Badge variant="destructive">
-															<Trans>Unassigned</Trans>
-														</Badge>
-													)}
-													<ChannelBadge
-														channel={rsv.channel}
-														testId={`today-channel-${rsv.id}`}
-													/>
-													<Badge variant="secondary">
-														{label(RESERVATION_STATUS_LABELS, rsv.status)}
-													</Badge>
-													<PaymentBadge
-														paymentStatus={rsv.paymentStatus}
-														experience={Boolean(rsv.experienceId)}
-													/>
-												</div>
-											</div>
-
-											{(rsv.lateRisk ||
-												rsv.runningLateMin ||
-												rsv.dietaryCodes.length > 0 ||
-												rsv.occasion ||
-												rsv.guestNotes) && (
-												<div className="flex flex-wrap items-center gap-1.5">
-													{rsv.lateRisk ? (
-														<Badge variant="destructive">
-															<Trans>Late Risk</Trans>
-														</Badge>
-													) : null}
-													{rsv.runningLateMin ? (
-														<Badge variant="secondary">
-															+{rsv.runningLateMin}m <Trans>late</Trans>
-														</Badge>
-													) : null}
-													{rsv.occasion ? (
-														<Badge variant="outline">
-															{label(OCCASION_LABELS, rsv.occasion)}
-														</Badge>
-													) : null}
-													{rsv.dietaryCodes.map((c) => (
-														<Badge key={c} variant="outline">
-															{label(DIETARY_LABELS, c)}
-														</Badge>
-													))}
-												</div>
-											)}
-
-											{canManage ? (
-												<div className="flex flex-wrap items-center gap-1.5 pt-1">
-													{rsv.status !== 'arrived' ? (
-														<Button
-															type="button"
-															size="xs"
-															variant="outline"
-															disabled={actionBusyId === rsv.id}
-															onClick={() =>
-																handleQuickStatus(
-																	rsv.id,
-																	rsv.guestName,
-																	'arrived',
-																)
-															}
-															data-testid={`today-arrive-${rsv.id}`}
-														>
-															<Trans>Arrived</Trans>
-														</Button>
-													) : null}
-													<Button
-														type="button"
-														size="xs"
-														disabled={actionBusyId === rsv.id}
-														onClick={() =>
-															handleQuickStatus(rsv.id, rsv.guestName, 'seated')
-														}
-														data-testid={`today-seat-${rsv.id}`}
-													>
-														<Icon name="check" className="size-3.5" />
-														<span>
-															<Trans>Seat</Trans>
-														</span>
-													</Button>
-													<Button
-														type="button"
-														size="xs"
-														variant="ghost"
-														disabled={actionBusyId === rsv.id}
-														onClick={() => handleQuickLate(rsv.id, 15)}
-														data-testid={`today-late-${rsv.id}`}
-													>
-														+15m
-													</Button>
-													<Button
-														type="button"
-														size="xs"
-														variant="ghost"
-														onClick={() => host.openDetail(rsv.id)}
-													>
-														<Trans>Details</Trans>
-													</Button>
-												</div>
-											) : null}
-										</div>
-									))
-								)}
-							</CardContent>
-						</Card>
-
-						{/* Column 2: Currently Seated */}
-						<Card className="flex flex-col">
-							<CardHeader className="pb-2">
-								<CardTitle className="flex items-center justify-between text-base">
-									<span>
-										<Trans>Currently Seated</Trans>
-									</span>
-									<Badge variant="default">{seatedList.length}</Badge>
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="flex flex-col gap-2.5">
-								{seatedList.length === 0 ? (
-									<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-										<Trans>No parties currently seated.</Trans>
-									</div>
-								) : (
-									seatedList.map((rsv) => {
-										const elapsedMin = host.liveNow.elapsedMinutesSince(
-											rsv.seatedAt ?? rsv.slotStartAt,
-										)
-										const overTurn = elapsedMin > rsv.durationMin
-										return (
-											<div
-												key={rsv.id}
-												className="bg-background flex flex-col gap-2 rounded-lg border p-3 text-xs"
-												data-testid={`today-seated-card-${rsv.id}`}
-											>
-												<div className="flex items-start justify-between gap-2">
-													<button
-														type="button"
-														onClick={() => host.openDetail(rsv.id)}
-														className="text-start font-semibold hover:underline"
-													>
-														{rsv.assignedTableLabels.join(', ') || t`Table`} •{' '}
-														{rsv.guestName} ({rsv.partySize})
-													</button>
-													<div className="flex items-center gap-1">
-														<ChannelBadge
-															channel={rsv.channel}
-															testId={`today-channel-${rsv.id}`}
-														/>
-														<PaymentBadge
-															paymentStatus={rsv.paymentStatus}
-															experience={Boolean(rsv.experienceId)}
-														/>
-														<Badge
-															variant={overTurn ? 'destructive' : 'secondary'}
-															data-testid={`today-elapsed-${rsv.id}`}
-														>
-															{elapsedMin}m / {rsv.durationMin}m
-														</Badge>
-														{rsv.courseStage ? (
-															<Badge variant="outline">
-																{label(COURSE_STAGE_LABELS, rsv.courseStage)}
-															</Badge>
-														) : null}
-													</div>
-												</div>
-
-												{rsv.serverLabel ? (
-													<div className="text-muted-foreground">
-														<Trans>Server:</Trans> {rsv.serverLabel}
-													</div>
-												) : null}
-
-												{canManage ? (
-													<div className="flex items-center justify-between gap-2 pt-1">
-														<Button
-															type="button"
-															size="xs"
-															variant="outline"
-															disabled={actionBusyId === rsv.id}
-															onClick={() =>
-																handleQuickStatus(
-																	rsv.id,
-																	rsv.guestName,
-																	'completed',
-																)
-															}
-															data-testid={`today-complete-${rsv.id}`}
-														>
-															<Icon name="check" className="size-3.5" />
-															<span>
-																<Trans>Complete Turn</Trans>
-															</span>
-														</Button>
-														<Button
-															type="button"
-															size="xs"
-															variant="ghost"
-															onClick={() => host.openDetail(rsv.id)}
-														>
-															<Trans>Details</Trans>
-														</Button>
-													</div>
-												) : null}
-											</div>
-										)
-									})
-								)}
-							</CardContent>
-						</Card>
-
-						{waitlistEnabled ? (
-							<TodayWaitlistCard
-								entries={dayFeed?.waitlist ?? []}
-								orgSlug={orgSlug}
+								}
+								hint={
+									<>
+										{stats?.totalParties ?? 0} <Trans>parties</Trans>
+									</>
+								}
 							/>
-						) : null}
-
-						{/* Finished: completed, no-show and cancelled */}
-						<Card className="flex flex-col">
-							<CardHeader className="pb-2">
-								<CardTitle className="flex items-center justify-between text-base">
-									<span>
-										<Trans>Completed, No-Show & Cancelled</Trans>
+							<WorkspaceMetric
+								label={<Trans>Arriving soon</Trans>}
+								value={
+									<span data-testid="today-kpi-arriving-covers">
+										{stats?.arrivingSoonCovers ?? 0}
 									</span>
-									<Badge variant="outline">{finishedList.length}</Badge>
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="flex flex-col gap-2.5">
-								{finishedList.length === 0 ? (
-									<div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-										<Trans>No completed or cancelled reservations yet.</Trans>
-									</div>
-								) : (
-									finishedList.map((rsv) => (
-										<div
-											key={rsv.id}
-											className="bg-muted/20 flex items-center justify-between gap-2 rounded-lg border p-2.5 text-xs"
-											data-testid={`today-finished-card-${rsv.id}`}
-										>
-											<button
-												type="button"
-												onClick={() => host.openDetail(rsv.id)}
-												className="text-start font-medium hover:underline"
-											>
-												{rsv.hhmm} • {rsv.guestName} ({rsv.partySize})
-											</button>
-											<div className="flex items-center gap-1">
-												<ChannelBadge
-													channel={rsv.channel}
-													testId={`today-channel-${rsv.id}`}
-												/>
-												<Badge
-													variant={
-														rsv.status === 'completed'
-															? 'secondary'
-															: 'destructive'
-													}
-												>
-													{label(RESERVATION_STATUS_LABELS, rsv.status)}
-												</Badge>
-												<PaymentBadge
-													paymentStatus={rsv.paymentStatus}
-													experience={Boolean(rsv.experienceId)}
-												/>
-											</div>
-										</div>
-									))
-								)}
-							</CardContent>
-						</Card>
+								}
+								hint={
+									<>
+										{stats?.arrivingSoonParties ?? 0}{' '}
+										<Trans>in the next 30 min</Trans>
+									</>
+								}
+							/>
+							<WorkspaceMetric
+								label={<Trans>Seated</Trans>}
+								value={
+									<span data-testid="today-kpi-seated-covers">
+										{stats?.seatedCovers ?? 0}
+									</span>
+								}
+								hint={
+									<>
+										{stats?.seatedParties ?? 0} <Trans>tables active</Trans>
+									</>
+								}
+							/>
+							<WorkspaceMetric
+								label={<Trans>Needs attention</Trans>}
+								tone={attentionCount > 0 ? 'warning' : 'default'}
+								value={
+									<span data-testid="today-kpi-attention">
+										{attentionCount}
+									</span>
+								}
+								hint={
+									<>
+										{stats?.unassignedCount ?? 0} <Trans>unassigned</Trans> ·{' '}
+										{stats?.conflictCount ?? 0} <Trans>conflicts</Trans>
+									</>
+								}
+							/>
+						</WorkspaceMetricGrid>
 					</div>
+
+					{loading ? (
+						<BoardSkeleton />
+					) : dayIsEmpty ? (
+						<EmptyState
+							icons={['calendar', 'users', 'clock']}
+							title={<Trans>No bookings for this day yet</Trans>}
+							description={
+								<Trans>
+									New reservations and walk-ins appear here as soon as they are
+									added.
+								</Trans>
+							}
+						>
+							{canManage ? (
+								<>
+									<Button onClick={() => host.openBookingSheet()}>
+										<Icon name="plus" />
+										<Trans>New reservation</Trans>
+									</Button>
+									<Button variant="outline" onClick={() => host.openWalkIn()}>
+										<Icon name="user-plus" />
+										<Trans>Add walk-in</Trans>
+									</Button>
+								</>
+							) : null}
+						</EmptyState>
+					) : (
+						<div
+							className={
+								waitlistEnabled
+									? 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'
+									: 'grid grid-cols-1 gap-4 lg:grid-cols-3'
+							}
+							data-testid="today-board"
+						>
+							<Card className="flex flex-col">
+								<CardHeader className="pb-2">
+									<CardTitle className="flex items-center justify-between text-base">
+										<span>
+											<Trans>Upcoming & arriving</Trans>
+										</span>
+										<span className="text-muted-foreground text-sm font-normal tabular-nums">
+											{columns.upcoming.length}
+										</span>
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="flex flex-col gap-2.5">
+									{columns.upcoming.length === 0 ? (
+										<ColumnEmpty icon="calendar">
+											<Trans>No upcoming reservations for this filter.</Trans>
+										</ColumnEmpty>
+									) : (
+										columns.upcoming.map((rsv) => (
+											<TodayPartyCard
+												key={rsv.id}
+												reservation={rsv}
+												kind="upcoming"
+												busy={actionBusyId === rsv.id}
+												{...cardProps}
+											/>
+										))
+									)}
+								</CardContent>
+							</Card>
+
+							<Card className="flex flex-col">
+								<CardHeader className="pb-2">
+									<CardTitle className="flex items-center justify-between text-base">
+										<span>
+											<Trans>Seated</Trans>
+										</span>
+										<span className="text-muted-foreground text-sm font-normal tabular-nums">
+											{columns.seated.length}
+										</span>
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="flex flex-col gap-2.5">
+									{columns.seated.length === 0 ? (
+										<ColumnEmpty icon="users">
+											<Trans>No parties currently seated.</Trans>
+										</ColumnEmpty>
+									) : (
+										columns.seated.map((rsv) => (
+											<TodayPartyCard
+												key={rsv.id}
+												reservation={rsv}
+												kind="seated"
+												busy={actionBusyId === rsv.id}
+												elapsedMin={host.liveNow.elapsedMinutesSince(
+													rsv.seatedAt ?? rsv.slotStartAt,
+												)}
+												{...cardProps}
+											/>
+										))
+									)}
+								</CardContent>
+							</Card>
+
+							{waitlistEnabled ? (
+								<TodayWaitlistCard
+									entries={dayFeed?.waitlist ?? []}
+									orgSlug={orgSlug}
+								/>
+							) : null}
+
+							<Card className="flex flex-col">
+								<CardHeader className="pb-2">
+									<CardTitle className="flex items-center justify-between gap-2 text-base">
+										<span>
+											<Trans>Finished</Trans>
+										</span>
+										<span className="flex items-center gap-2">
+											<span className="text-muted-foreground text-sm font-normal tabular-nums">
+												{columns.finished.length}
+											</span>
+											{columns.finished.length > 0 ? (
+												<Button
+													type="button"
+													size="sm"
+													variant="ghost"
+													className="h-11 md:h-8"
+													aria-expanded={showFinished}
+													onClick={() => setShowFinished((v) => !v)}
+													data-testid="today-finished-toggle"
+												>
+													{showFinished ? (
+														<Trans>Hide</Trans>
+													) : (
+														<Trans>Show</Trans>
+													)}
+												</Button>
+											) : null}
+										</span>
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="flex flex-col gap-2.5">
+									{columns.finished.length === 0 ? (
+										<ColumnEmpty icon="check">
+											<Trans>No completed or cancelled reservations yet.</Trans>
+										</ColumnEmpty>
+									) : showFinished ? (
+										columns.finished.map((rsv) => (
+											<TodayPartyCard
+												key={rsv.id}
+												reservation={rsv}
+												kind="finished"
+												busy={actionBusyId === rsv.id}
+												{...cardProps}
+											/>
+										))
+									) : (
+										<p className="text-muted-foreground text-sm">
+											<Trans>Hidden to keep the board calm.</Trans>
+										</p>
+									)}
+								</CardContent>
+							</Card>
+						</div>
+					)}
 				</>
 			)}
+
+			{lastUndo ? (
+				<div
+					role="status"
+					className="bg-card text-foreground fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl border p-3 text-sm shadow-lg"
+					data-testid="today-undo-banner"
+				>
+					<span className="wrap-anywhere">
+						<Trans>
+							Marked {lastUndo.guestName} as {lastUndoStatusLabel}.
+						</Trans>
+					</span>
+					<Button
+						type="button"
+						size="sm"
+						variant="outline"
+						className="h-11 shrink-0 md:h-8"
+						disabled={actionBusyId === lastUndo.reservationId}
+						onClick={handleQuickUndo}
+						data-testid="today-undo-btn"
+					>
+						<Icon name="undo-2" className="size-3.5" />
+						<Trans>Undo</Trans>
+					</Button>
+				</div>
+			) : null}
 
 			{/* Shared Host Sheets & Dialogs */}
 			<BookingSheet

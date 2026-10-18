@@ -1,12 +1,19 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
+import { Icon } from '@repo/ui/icon'
+import { Skeleton } from '@repo/ui/skeleton'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import {
 	FloorPlanCanvas,
 	type FloorPlanSaveDraft,
 } from '#app/components/reservations/floor-plan-canvas.tsx'
+import {
+	useConfirmBlocker,
+	useDirtyBeforeUnload,
+} from '#app/utils/navigation-guards.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
@@ -48,6 +55,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 	const [saving, setSaving] = useState(false)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [conflictMessage, setConflictMessage] = useState<string | null>(null)
+	const [isDirty, setIsDirty] = useState(false)
 	const [savedBanner, setSavedBanner] = useState<string | null>(null)
 	const [lastConflicts, setLastConflicts] = useState<SetupConflictDto[]>([])
 	const [lastReflowedMoves, setLastReflowedMoves] = useState<ReflowedMoveDto[]>(
@@ -89,8 +97,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 			if (saveRes.reflowedMoves) setLastReflowedMoves(saveRes.reflowedMoves)
 			// A 200 PUT is a committed save and carries the new version and plan.
 			setFloorPlan(saveRes)
-			const newFloorPlanVersion = saveRes.floorPlanVersion
-			setSavedBanner(_(msg`Floor plan saved (v${newFloorPlanVersion}).`))
+			setSavedBanner(_(msg`Floor plan saved.`))
 		} catch (err) {
 			return handleSaveFailure(err)
 		}
@@ -119,7 +126,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 		if (isVersionConflictError(err)) {
 			setConflictMessage(
 				_(
-					msg`Stale floor plan version (409 conflict): another operator saved changes since you opened this floor plan. Reload the latest floor plan or inspect your draft before re-applying.`,
+					msg`Someone else saved a newer floor plan since you opened it. Your changes were not saved. Reload the latest floor plan, then redo your edits.`,
 				),
 			)
 		} else {
@@ -136,6 +143,12 @@ export default function ReservationsSettingsFloorPlanRoute() {
 		void loadFloorPlan()
 	}
 
+	useConfirmBlocker(
+		isDirty,
+		_(msg`You have unsaved floor plan changes. Leave and discard them?`),
+	)
+	useDirtyBeforeUnload(isDirty)
+
 	const handleLeave = () => {
 		const suffix = searchParams.toString() ? `?${searchParams.toString()}` : ''
 		void navigate(`/${orgSlug}/reservations/settings/tables${suffix}`)
@@ -144,41 +157,46 @@ export default function ReservationsSettingsFloorPlanRoute() {
 	if (loading && !floorPlan) {
 		return (
 			<div
-				className="border-border bg-card rounded-xl border p-6 text-sm"
+				className="flex flex-col gap-3"
 				data-testid="floor-plan-loading"
+				role="status"
+				aria-label={_(msg`Loading floor plan`)}
 			>
-				<Trans>Loading floor plan designer…</Trans>
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-96 w-full" />
 			</div>
 		)
 	}
 
 	if (!floorPlan) {
 		return (
-			<div
-				className="border-destructive/40 bg-destructive/10 text-destructive flex items-center justify-between gap-4 rounded-xl border p-6 text-sm"
-				data-testid="floor-plan-error"
-			>
-				<span>
-					{errorMessage ?? <Trans>Unable to load floor plan data.</Trans>}
-				</span>
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={() => void loadFloorPlan()}
-				>
-					<Trans>Retry</Trans>
-				</Button>
-			</div>
+			<Alert variant="destructive" data-testid="floor-plan-error">
+				<Icon name="alert-triangle" className="size-4" />
+				<AlertDescription>
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<span>
+							{errorMessage ?? <Trans>Unable to load floor plan data.</Trans>}
+						</span>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() => void loadFloorPlan()}
+						>
+							<Trans>Retry</Trans>
+						</Button>
+					</div>
+				</AlertDescription>
+			</Alert>
 		)
 	}
 
 	return (
-		<div className="flex flex-col gap-3" data-testid="setup-floor-plan-page">
+		<div data-testid="setup-floor-plan-page">
 			{errorMessage ? (
 				<div
 					role="alert"
-					className="border-destructive/40 bg-destructive/10 text-destructive rounded-xl border px-4 py-3 text-sm"
+					className="bg-background text-destructive fixed inset-x-0 top-12 z-[60] border-b px-4 py-2 text-sm"
 					data-testid="floor-plan-save-error"
 				>
 					{errorMessage}
@@ -188,7 +206,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 			{savedBanner ? (
 				<div
 					role="status"
-					className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-800 dark:text-emerald-200"
+					className="bg-background text-success fixed inset-x-0 top-12 z-[60] border-b px-4 py-2 text-sm"
 					data-testid="floor-plan-saved-banner"
 				>
 					{savedBanner}
@@ -209,6 +227,7 @@ export default function ReservationsSettingsFloorPlanRoute() {
 				onSave={handleSave}
 				onReloadLatest={handleReloadAfterConflict}
 				onLeave={handleLeave}
+				onDirtyChange={setIsDirty}
 			/>
 		</div>
 	)

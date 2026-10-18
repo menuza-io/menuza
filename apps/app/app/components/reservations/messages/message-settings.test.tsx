@@ -101,7 +101,8 @@ describe('MessageSettingsScreen', () => {
 		expect(input('message-note-confirmation-en').value).toBe('See you soon')
 		expect(input('message-note-confirmation-ar').value).toBe('')
 		expect(screen.queryByTestId('message-dirty-badge')).toBeNull()
-		expect(screen.getByTestId('message-save')).toBeDisabled()
+		// The save bar only appears once something changed.
+		expect(screen.queryByTestId('message-save')).toBeNull()
 	})
 
 	it('hides waitlist kinds unless the waitlist is on', async () => {
@@ -277,12 +278,8 @@ describe('MessageSettingsScreen', () => {
 			calls.find((c) => c.path === `${PATH}/preview`)!.options.query,
 		).toEqual({ locationId: 'loc_1', kind: 'confirmation', locale: 'en' })
 
-		fireEvent.change(screen.getByTestId('message-preview-kind'), {
-			target: { value: 'reminder' },
-		})
-		fireEvent.change(screen.getByTestId('message-preview-locale'), {
-			target: { value: 'ar' },
-		})
+		fireEvent.click(screen.getByTestId('message-preview-pick-reminder'))
+		fireEvent.click(screen.getByTestId('message-preview-locale-ar'))
 		await waitFor(() =>
 			expect(
 				screen.getByTestId('message-preview-frame').getAttribute('srcdoc'),

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export type PollResult<T> =
 	| {
@@ -27,15 +27,52 @@ export type UseReservationsPollOptions<T> = {
 }
 
 export type UseReservationsPollReturn<T> = {
+	/** Data for the current `key` only: a key change never shows the previous key's data. */
 	data: T | null
 	etag: string | null
 	loading: boolean
 	refreshing: boolean
+	/** Raw failure message, for logs only; screens show `errorCode` / `errorStatus` copy. */
 	error: string | null
+	/** HTTP status of the last failure (`ReservationsApiError.status`), when there was one. */
+	errorStatus: number | null
+	/** Server error code from the response body, when there was one. */
+	errorCode: string | null
+	/** 401 or 403: polling has stopped until the host retries. */
+	accessDenied: boolean
 	lastUpdatedAt: number | null
 	notModifiedCount: number
 	refresh: (options?: { force?: boolean }) => Promise<void>
 	setOptimisticData: (updater: T | ((prev: T | null) => T | null)) => void
+}
+
+type FetchFailure = {
+	key: string
+	message: string
+	status: number | null
+	code: string | null
+}
+
+/** Reads `status` and the body's error code off a `ReservationsApiError`-shaped failure. */
+export function describeFetchFailure(err: unknown): {
+	message: string
+	status: number | null
+	code: string | null
+} {
+	const message =
+		err instanceof Error ? err.message : 'Failed to load reservations'
+	if (!err || typeof err !== 'object')
+		return { message, status: null, code: null }
+	const rawStatus = (err as { status?: unknown }).status
+	const body = (err as { body?: unknown }).body
+	const bodyObject =
+		body && typeof body === 'object' ? (body as Record<string, unknown>) : null
+	const rawCode = bodyObject?.error ?? bodyObject?.code
+	return {
+		message,
+		status: typeof rawStatus === 'number' ? rawStatus : null,
+		code: typeof rawCode === 'string' ? rawCode : null,
+	}
 }
 
 /**
@@ -43,6 +80,11 @@ export type UseReservationsPollReturn<T> = {
  * On `304 Not Modified`, preserves the existing `data` reference so open sheets,
  * scroll positions, and active selections are never reset.
  * Pauses automatically while `paused` is true (e.g. active drag) or the tab is hidden.
+ *
+ * Data and errors are keyed: after `key` changes (another date, location or
+ * filter) the previous key's data is not returned, and a response that
+ * resolves for an old key is dropped, so the host never sees or acts on stale
+ * rows. A 401 or 403 stops the interval.
  */
 export function useReservationsPoll<T>({
 	key,
@@ -52,93 +94,100 @@ export function useReservationsPoll<T>({
 	enabled = true,
 	initialData = null,
 }: UseReservationsPollOptions<T>): UseReservationsPollReturn<T> {
-	const [data, setData] = useState<T | null>(initialData)
-	const [etag, setEtag] = useState<string | null>(null)
-	const [loading, setLoading] = useState<boolean>(
-		initialData === null && enabled,
-	)
+	const [slot, setSlot] = useState<{ key: string; data: T | null }>(() => ({
+		key,
+		data: initialData,
+	}))
+	const [etagSlot, setEtagSlot] = useState<{
+		key: string
+		etag: string | null
+	} | null>(null)
 	const [refreshing, setRefreshing] = useState<boolean>(false)
-	const [error, setError] = useState<string | null>(null)
+	const [failure, setFailure] = useState<FetchFailure | null>(null)
 	const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null)
 	const [notModifiedCount, setNotModifiedCount] = useState<number>(0)
 
+	const data = slot.key === key ? slot.data : null
+	const etag = etagSlot && etagSlot.key === key ? etagSlot.etag : null
+	const currentFailure = failure && failure.key === key ? failure : null
+	const accessDenied =
+		currentFailure !== null &&
+		(currentFailure.status === 401 || currentFailure.status === 403)
+
 	const etagRef = useRef<string | null>(null)
-	const hasDataRef = useRef<boolean>(initialData !== null)
+	const keyRef = useRef(key)
+	keyRef.current = key
+	const hasDataRef = useRef<boolean>(data !== null)
+	hasDataRef.current = data !== null
 	const fetcherRef = useRef(fetcher)
 	fetcherRef.current = fetcher
 	const abortRef = useRef<AbortController | null>(null)
 	const prevKeyRef = useRef<string>(key)
 
 	const runFetch = useCallback(
-		async (opts?: { force?: boolean; isInitial?: boolean }) => {
+		async (opts?: { force?: boolean }) => {
 			if (!enabled) return
 			abortRef.current?.abort()
 			const controller = new AbortController()
 			abortRef.current = controller
+			const fetchKey = keyRef.current
 
 			const sendEtag = opts?.force ? null : etagRef.current
-			if (opts?.isInitial || !hasDataRef.current) {
-				setLoading(true)
-			} else {
-				setRefreshing(true)
-			}
+			if (hasDataRef.current) setRefreshing(true)
+
+			const stale = () =>
+				controller.signal.aborted || keyRef.current !== fetchKey
 
 			try {
 				const result = await fetcherRef.current(sendEtag, controller.signal)
-				if (controller.signal.aborted) return
+				if (stale()) return
 
 				if (result.status === 304) {
 					if (result.etag) {
 						etagRef.current = result.etag
-						setEtag(result.etag)
+						setEtagSlot({ key: fetchKey, etag: result.etag })
 					}
 					setNotModifiedCount((c) => c + 1)
-					setError(null)
+					setFailure(null)
 				} else {
 					etagRef.current = result.etag
 					hasDataRef.current = true
-					setEtag(result.etag)
-					setData(result.data)
+					setEtagSlot({ key: fetchKey, etag: result.etag })
+					setSlot({ key: fetchKey, data: result.data })
 					setLastUpdatedAt(Date.now())
-					setError(null)
+					setFailure(null)
 				}
 			} catch (err) {
-				if (controller.signal.aborted) return
-				setError(
-					err instanceof Error ? err.message : 'Failed to load reservations',
-				)
+				if (stale()) return
+				setFailure({ key: fetchKey, ...describeFetchFailure(err) })
 			} finally {
-				if (!controller.signal.aborted) {
-					setLoading(false)
-					setRefreshing(false)
-				}
+				if (!stale()) setRefreshing(false)
 			}
 		},
 		[enabled],
 	)
 
-	// Reset ETag and fetch immediately when `key` or `enabled` changes
+	// Reset the ETag and fetch immediately when `key` or `enabled` changes
 	useEffect(() => {
 		if (!enabled) {
 			abortRef.current?.abort()
-			setLoading(false)
 			setRefreshing(false)
 			return
 		}
 		if (prevKeyRef.current !== key) {
 			prevKeyRef.current = key
 			etagRef.current = null
-			setEtag(null)
+			setRefreshing(false)
 		}
-		void runFetch({ force: true, isInitial: !hasDataRef.current })
+		void runFetch({ force: true })
 		return () => {
 			abortRef.current?.abort()
 		}
 	}, [enabled, key, runFetch])
 
-	// Periodic ETag polling when not paused
+	// Periodic ETag polling when not paused, stopped after a 401 or 403
 	useEffect(() => {
-		if (!enabled || paused || intervalMs <= 0) return
+		if (!enabled || paused || intervalMs <= 0 || accessDenied) return
 
 		const tick = () => {
 			if (
@@ -162,7 +211,7 @@ export function useReservationsPoll<T>({
 			window.clearInterval(id)
 			document.removeEventListener('visibilitychange', handleVisibility)
 		}
-	}, [enabled, intervalMs, paused, runFetch])
+	}, [enabled, paused, intervalMs, accessDenied, runFetch])
 
 	const refresh = useCallback(
 		async (opts?: { force?: boolean }) => {
@@ -174,28 +223,48 @@ export function useReservationsPoll<T>({
 	const setOptimisticData = useCallback(
 		(updater: T | ((prev: T | null) => T | null)) => {
 			etagRef.current = null
-			setEtag(null)
-			setData((prev) => {
+			setEtagSlot({ key: keyRef.current, etag: null })
+			setSlot((prev) => {
+				const prevData = prev.key === keyRef.current ? prev.data : null
 				const next =
 					typeof updater === 'function'
-						? (updater as (prev: T | null) => T | null)(prev)
+						? (updater as (prev: T | null) => T | null)(prevData)
 						: updater
 				hasDataRef.current = next !== null
-				return next
+				return { key: keyRef.current, data: next }
 			})
 		},
 		[],
 	)
 
-	return {
-		data,
-		etag,
-		loading,
-		refreshing,
-		error,
-		lastUpdatedAt,
-		notModifiedCount,
-		refresh,
-		setOptimisticData,
-	}
+	const loading = enabled && data === null && currentFailure === null
+
+	return useMemo(
+		() => ({
+			data,
+			etag,
+			loading,
+			refreshing,
+			error: currentFailure?.message ?? null,
+			errorStatus: currentFailure?.status ?? null,
+			errorCode: currentFailure?.code ?? null,
+			accessDenied,
+			lastUpdatedAt,
+			notModifiedCount,
+			refresh,
+			setOptimisticData,
+		}),
+		[
+			data,
+			etag,
+			loading,
+			refreshing,
+			currentFailure,
+			accessDenied,
+			lastUpdatedAt,
+			notModifiedCount,
+			refresh,
+			setOptimisticData,
+		],
+	)
 }

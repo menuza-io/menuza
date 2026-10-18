@@ -1,19 +1,26 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
+	Frame,
+	FrameDescription,
+	FrameHeader,
+	FramePanel,
+	FrameTitle,
+} from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
-import { Textarea } from '@repo/ui/textarea'
-import { type FormEvent, useEffect, useState } from 'react'
+import { Skeleton } from '@repo/ui/skeleton'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router'
+import { SettingsSaveBar } from '#app/components/reservations/settings/save-bar.tsx'
+import { SwitchRow } from '#app/components/reservations/settings/settings-fields.tsx'
+import {
+	SelectField,
+	TextAreaField,
+	TextField,
+} from '#app/components/staff/controls.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
@@ -37,6 +44,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 const SLOT_INTERVAL_OPTIONS = [5, 10, 15, 20, 30, 60] as const
 
+function sameSettings(a: LocationSettingsDto, b: LocationSettingsDto) {
+	return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/** Maps a diagnostics issue to the settings tab where it is fixed. */
+function issueTarget(code: string) {
+	const key = code.toLowerCase()
+	if (key.includes('special') || key.includes('block')) return 'special-days'
+	if (key.includes('section')) return 'sections'
+	if (key.includes('service') || key.includes('turn')) return 'services'
+	if (key.includes('area') || key.includes('table') || key.includes('combo'))
+		return 'tables'
+	return null
+}
+
 export default function ReservationsSettingsIndexRoute() {
 	const { _ } = useLingui()
 	const {
@@ -57,6 +79,13 @@ export default function ReservationsSettingsIndexRoute() {
 	const [formError, setFormError] = useState<string | null>(null)
 	const [conflictBanner, setConflictBanner] = useState<string | null>(null)
 	const [saveSuccess, setSaveSuccess] = useState<string | null>(null)
+	const [showAdvanced, setShowAdvanced] = useState(false)
+	const { search } = useLocation()
+
+	const dirty = useMemo(
+		() => Boolean(draft && settings && !sameSettings(draft, settings)),
+		[draft, settings],
+	)
 
 	useEffect(() => {
 		if (settings) {
@@ -131,7 +160,7 @@ export default function ReservationsSettingsIndexRoute() {
 			if (isVersionConflictError(err)) {
 				setConflictBanner(
 					_(
-						msg`These settings were updated by another operator. Your changes were not saved. Reload to view the latest version.`,
+						msg`These settings were changed by someone else. Your changes were not saved. Reload to see the latest version.`,
 					),
 				)
 			} else {
@@ -147,6 +176,17 @@ export default function ReservationsSettingsIndexRoute() {
 		}
 	}
 
+	const handleDiscard = () => {
+		setDraft(settings)
+		setFormError(null)
+		setSaveSuccess(null)
+	}
+
+	const edit = (patch: Partial<LocationSettingsDto>) => {
+		setSaveSuccess(null)
+		setDraft((prev) => (prev ? { ...prev, ...patch } : prev))
+	}
+
 	const handleReloadAfterConflict = async () => {
 		setConflictBanner(null)
 		setFormError(null)
@@ -155,20 +195,27 @@ export default function ReservationsSettingsIndexRoute() {
 
 	if (loadingSummary && !draft) {
 		return (
-			<Card data-testid="setup-general-loading">
-				<CardContent className="text-muted-foreground py-8">
-					<Trans>Loading reservation settings…</Trans>
-				</CardContent>
-			</Card>
+			<div
+				className="flex flex-col gap-4"
+				data-testid="setup-general-loading"
+				role="status"
+				aria-label={_(msg`Loading reservation settings`)}
+			>
+				<Skeleton className="h-48 w-full rounded-xl" />
+				<Skeleton className="h-40 w-full rounded-xl" />
+			</div>
 		)
 	}
 
 	if (summaryError && !draft) {
 		return (
-			<Card data-testid="setup-general-error">
-				<CardContent className="flex flex-col gap-3 py-8">
-					<p className="text-destructive font-medium">{summaryError}</p>
-					<div>
+			<Alert variant="destructive" data-testid="setup-general-error">
+				<AlertTitle>
+					<Trans>Could not load reservation settings</Trans>
+				</AlertTitle>
+				<AlertDescription>
+					<div className="flex flex-col items-start gap-3">
+						<span>{summaryError}</span>
 						<Button
 							type="button"
 							variant="outline"
@@ -178,446 +225,442 @@ export default function ReservationsSettingsIndexRoute() {
 							<Trans>Retry</Trans>
 						</Button>
 					</div>
-				</CardContent>
-			</Card>
+				</AlertDescription>
+			</Alert>
 		)
 	}
+
+	const disabled = !canWrite
+	const issues = validation?.issues ?? []
 
 	return (
 		<div className="flex flex-col gap-6" data-testid="setup-general-page">
 			{conflictBanner ? (
-				<div
-					role="alert"
-					className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/15 p-4 text-sm"
+				<Alert
+					variant="destructive"
 					data-testid="setup-settings-conflict-banner"
 				>
-					<div className="flex items-center gap-2">
-						<Icon
-							name="alert-triangle"
-							className="size-4 shrink-0 text-amber-600 dark:text-amber-400"
-						/>
-						<span className="text-foreground font-medium">
-							{conflictBanner}
-						</span>
-					</div>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => void handleReloadAfterConflict()}
-						data-testid="setup-settings-reload-button"
-					>
-						<Icon name="refresh-cw" className="size-3.5" />
-						<Trans>Reload latest settings</Trans>
-					</Button>
-				</div>
+					<Icon name="alert-triangle" />
+					<AlertTitle>{conflictBanner}</AlertTitle>
+					<AlertDescription>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() => void handleReloadAfterConflict()}
+							data-testid="setup-settings-reload-button"
+						>
+							<Icon name="refresh-cw" />
+							<Trans>Reload latest settings</Trans>
+						</Button>
+					</AlertDescription>
+				</Alert>
 			) : null}
 
 			{formError ? (
-				<div
-					role="alert"
-					className="border-destructive/40 bg-destructive/10 text-destructive rounded-xl border px-4 py-3 text-sm"
-					data-testid="setup-general-form-error"
-				>
-					{formError}
-				</div>
+				<Alert variant="destructive" data-testid="setup-general-form-error">
+					<AlertDescription>{formError}</AlertDescription>
+				</Alert>
 			) : null}
 
-			{saveSuccess ? (
-				<div
-					role="status"
-					className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200"
-					data-testid="setup-general-save-success"
-				>
-					{saveSuccess}
-				</div>
-			) : null}
+			{/* Setup diagnostics: one summary with a link per issue */}
+			<div data-testid="setup-validation-panel">
+				{!validation ? null : issues.length === 0 ? (
+					<p className="text-muted-foreground flex items-center gap-2 text-sm">
+						<Icon name="check-circle" className="text-success size-4" />
+						<Trans>
+							All setup checks passed. Online and host-stand booking have full
+							table, service, and turn-time coverage.
+						</Trans>
+					</p>
+				) : (
+					<Alert
+						variant={
+							issues.some((issue) => issue.severity === 'error')
+								? 'destructive'
+								: 'default'
+						}
+					>
+						<Icon name="shield-check" />
+						<AlertTitle>
+							<Trans>Finish setting up before guests can book</Trans>
+						</AlertTitle>
+						<AlertDescription>
+							<ul
+								className="flex flex-col gap-1.5"
+								data-testid="setup-validation-issues-list"
+							>
+								{issues.map((issue, idx) => {
+									const target = issueTarget(issue.code)
+									return (
+										<li
+											key={`${issue.code}-${idx}`}
+											className="flex flex-wrap items-center gap-x-2"
+										>
+											<span
+												className={
+													issue.severity === 'error'
+														? 'text-destructive'
+														: 'text-warning'
+												}
+											>
+												<Icon
+													name={
+														issue.severity === 'error'
+															? 'octagon-alert'
+															: 'alert-triangle'
+													}
+													className="size-3.5"
+												/>
+											</span>
+											<span>{issue.message}</span>
+											{target ? (
+												<Link
+													to={{ pathname: target, search }}
+													className="text-foreground font-medium underline underline-offset-2"
+												>
+													<Trans>Fix this</Trans>
+												</Link>
+											) : null}
+										</li>
+									)
+								})}
+							</ul>
+						</AlertDescription>
+					</Alert>
+				)}
+			</div>
 
-			{/* General & Online Booking Form */}
 			{draft ? (
 				<form
 					onSubmit={(e) => void handleSubmit(e)}
 					className="flex flex-col gap-6"
 					data-testid="setup-general-form"
 				>
-					<Card>
-						<CardHeader>
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<div>
-									<CardTitle>
-										<Trans>Booking & Channel Rules</Trans>
-									</CardTitle>
-									<CardDescription>
-										<Trans>
-											Control online booking availability, slot intervals, party
-											size bounds, and table assignment behavior.
-										</Trans>
-									</CardDescription>
-								</div>
-								<Badge variant="outline">v{draft.version}</Badge>
+					<Frame>
+						<FrameHeader>
+							<FrameTitle>
+								<Trans>Taking reservations</Trans>
+							</FrameTitle>
+							<FrameDescription>
+								<Trans>
+									Choose where guests can book and how bookings are confirmed.
+								</Trans>
+							</FrameDescription>
+						</FrameHeader>
+						<FramePanel className="flex flex-col gap-2">
+							<SwitchRow
+								testId="setup-toggle-enabled"
+								checked={draft.enabled}
+								disabled={disabled}
+								onCheckedChange={(enabled) => edit({ enabled })}
+								label={<Trans>Location reservations active</Trans>}
+								description={
+									<Trans>
+										Allow host-stand and online reservations for this location.
+									</Trans>
+								}
+							/>
+							<SwitchRow
+								testId="setup-toggle-online-booking"
+								checked={draft.onlineBookingEnabled}
+								disabled={disabled}
+								onCheckedChange={(onlineBookingEnabled) =>
+									edit({ onlineBookingEnabled })
+								}
+								label={<Trans>Online booking enabled</Trans>}
+								description={
+									<Trans>
+										Accept guest reservations from your public website and apps.
+									</Trans>
+								}
+							/>
+							<SwitchRow
+								testId="setup-toggle-auto-confirm"
+								checked={draft.autoConfirmOnline}
+								disabled={disabled}
+								onCheckedChange={(autoConfirmOnline) =>
+									edit({ autoConfirmOnline })
+								}
+								label={<Trans>Auto-confirm online bookings</Trans>}
+								description={
+									<Trans>
+										Immediately confirm online bookings that do not require a
+										payment step.
+									</Trans>
+								}
+							/>
+							<SwitchRow
+								testId="setup-toggle-waitlist"
+								checked={draft.waitlistEnabled}
+								disabled={disabled}
+								onCheckedChange={(waitlistEnabled) => edit({ waitlistEnabled })}
+								label={<Trans>Waitlist enabled</Trans>}
+								description={
+									<Trans>
+										Allow walk-in and remote waitlist quotes when tables are
+										full.
+									</Trans>
+								}
+							/>
+						</FramePanel>
+						<FramePanel className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+							<div data-testid="setup-slot-interval-select">
+								<SelectField
+									id="setup-slot-interval"
+									label={<Trans>Time between slots</Trans>}
+									hint={<Trans>How often guests can pick a start time.</Trans>}
+									disabled={disabled}
+									value={String(draft.slotIntervalMin)}
+									onValueChange={(value) =>
+										edit({ slotIntervalMin: Number(value) })
+									}
+									options={SLOT_INTERVAL_OPTIONS.map((val) => {
+										const minutes = val
+										return {
+											value: String(val),
+											label: _(msg`${minutes} min`),
+										}
+									})}
+								/>
 							</div>
-						</CardHeader>
-						<CardContent className="flex flex-col gap-6">
-							{/* Toggles */}
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-								<label className="border-border flex items-start gap-3 rounded-lg border p-3 text-sm">
-									<input
-										type="checkbox"
-										checked={draft.enabled}
-										disabled={!canWrite}
-										onChange={(e) =>
-											setDraft({ ...draft, enabled: e.target.checked })
-										}
-										className="mt-0.5"
-										data-testid="setup-toggle-enabled"
-									/>
-									<div>
-										<div className="text-foreground font-medium">
-											<Trans>Location reservations active</Trans>
-										</div>
-										<div className="text-muted-foreground text-xs">
-											<Trans>
-												Allow host-stand and online reservations for this
-												location.
-											</Trans>
-										</div>
-									</div>
-								</label>
+							<TextField
+								id="setup-min-advance"
+								type="number"
+								inputMode="numeric"
+								min={0}
+								max={43200}
+								label={<Trans>Minimum notice (minutes)</Trans>}
+								hint={<Trans>0 allows bookings up to the last minute.</Trans>}
+								disabled={disabled}
+								value={draft.minAdvanceMinutes}
+								onChange={(e) =>
+									edit({ minAdvanceMinutes: Number(e.target.value) || 0 })
+								}
+								data-testid="setup-min-advance-input"
+							/>
+							<TextField
+								id="setup-max-advance"
+								type="number"
+								inputMode="numeric"
+								min={1}
+								max={365}
+								label={<Trans>Book up to (days ahead)</Trans>}
+								disabled={disabled}
+								value={draft.maxAdvanceDays}
+								onChange={(e) =>
+									edit({ maxAdvanceDays: Number(e.target.value) || 30 })
+								}
+								data-testid="setup-max-advance-input"
+							/>
+						</FramePanel>
+					</Frame>
 
-								<label className="border-border flex items-start gap-3 rounded-lg border p-3 text-sm">
-									<input
-										type="checkbox"
-										checked={draft.onlineBookingEnabled}
-										disabled={!canWrite}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												onlineBookingEnabled: e.target.checked,
-											})
-										}
-										className="mt-0.5"
-										data-testid="setup-toggle-online-booking"
-									/>
-									<div>
-										<div className="text-foreground font-medium">
-											<Trans>Online booking enabled</Trans>
-										</div>
-										<div className="text-muted-foreground text-xs">
-											<Trans>
-												Accept guest reservations from your public website and
-												apps.
-											</Trans>
-										</div>
-									</div>
-								</label>
+					<Frame>
+						<FrameHeader>
+							<FrameTitle>
+								<Trans>Party size</Trans>
+							</FrameTitle>
+							<FrameDescription>
+								<Trans>
+									Larger parties can still be booked by your team at the host
+									stand.
+								</Trans>
+							</FrameDescription>
+						</FrameHeader>
+						<FramePanel className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+							<TextField
+								id="setup-online-party-min"
+								type="number"
+								inputMode="numeric"
+								min={1}
+								max={50}
+								label={<Trans>Online minimum</Trans>}
+								disabled={disabled}
+								value={draft.onlinePartyMin}
+								onChange={(e) =>
+									edit({ onlinePartyMin: Number(e.target.value) || 1 })
+								}
+								data-testid="setup-online-party-min-input"
+							/>
+							<TextField
+								id="setup-online-party-max"
+								type="number"
+								inputMode="numeric"
+								min={1}
+								max={50}
+								label={<Trans>Online maximum</Trans>}
+								disabled={disabled}
+								value={draft.onlinePartyMax}
+								onChange={(e) =>
+									edit({ onlinePartyMax: Number(e.target.value) || 8 })
+								}
+								data-testid="setup-online-party-max-input"
+							/>
+							<TextField
+								id="setup-party-max"
+								type="number"
+								inputMode="numeric"
+								min={1}
+								max={99}
+								label={<Trans>Host stand maximum</Trans>}
+								disabled={disabled}
+								value={draft.partyMax}
+								onChange={(e) =>
+									edit({ partyMax: Number(e.target.value) || 20 })
+								}
+								data-testid="setup-party-max-input"
+							/>
+						</FramePanel>
+					</Frame>
 
-								<label className="border-border flex items-start gap-3 rounded-lg border p-3 text-sm">
-									<input
-										type="checkbox"
-										checked={draft.waitlistEnabled}
-										disabled={!canWrite}
-										onChange={(e) =>
-											setDraft({ ...draft, waitlistEnabled: e.target.checked })
-										}
-										className="mt-0.5"
-										data-testid="setup-toggle-waitlist"
-									/>
-									<div>
-										<div className="text-foreground font-medium">
-											<Trans>Waitlist enabled</Trans>
-										</div>
-										<div className="text-muted-foreground text-xs">
-											<Trans>
-												Allow walk-in and remote waitlist quotes when tables are
-												full.
-											</Trans>
-										</div>
-									</div>
-								</label>
-
-								<label className="border-border flex items-start gap-3 rounded-lg border p-3 text-sm">
-									<input
-										type="checkbox"
-										checked={draft.autoConfirmOnline}
-										disabled={!canWrite}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												autoConfirmOnline: e.target.checked,
-											})
-										}
-										className="mt-0.5"
-										data-testid="setup-toggle-auto-confirm"
-									/>
-									<div>
-										<div className="text-foreground font-medium">
-											<Trans>Auto-confirm online bookings</Trans>
-										</div>
-										<div className="text-muted-foreground text-xs">
-											<Trans>
-												Immediately confirm online bookings that do not require
-												a payment step.
-											</Trans>
-										</div>
-									</div>
-								</label>
-
-								<label className="border-border flex items-start gap-3 rounded-lg border p-3 text-sm">
-									<input
-										type="checkbox"
-										checked={draft.autoAssignTables}
-										disabled={!canWrite}
-										onChange={(e) =>
-											setDraft({ ...draft, autoAssignTables: e.target.checked })
-										}
-										className="mt-0.5"
-										data-testid="setup-toggle-auto-assign"
-									/>
-									<div>
-										<div className="text-foreground font-medium">
-											<Trans>Auto-assign best table</Trans>
-										</div>
-										<div className="text-muted-foreground text-xs">
-											<Trans>
-												Automatically place new bookings on the best-fitting
-												table or combination.
-											</Trans>
-										</div>
-									</div>
-								</label>
-							</div>
-
-							{/* Numeric settings */}
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-slot-interval">
-										<Trans>Slot interval (minutes)</Trans>
-									</Label>
-									<select
-										id="setup-slot-interval"
-										disabled={!canWrite}
-										value={draft.slotIntervalMin}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												slotIntervalMin: Number(e.target.value),
-											})
-										}
-										className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-										data-testid="setup-slot-interval-select"
-									>
-										{SLOT_INTERVAL_OPTIONS.map((val) => (
-											<option key={val} value={val}>
-												{val} min
-											</option>
-										))}
-									</select>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-default-turn-time">
-										<Trans>Default turn time (min)</Trans>
-									</Label>
-									<Input
-										id="setup-default-turn-time"
-										type="number"
-										min={15}
-										max={720}
-										disabled={!canWrite}
-										value={draft.defaultTurnTimeMin}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												defaultTurnTimeMin: Number(e.target.value) || 90,
-											})
-										}
-										data-testid="setup-default-turn-time-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-min-advance">
-										<Trans>Min advance notice (min)</Trans>
-									</Label>
-									<Input
-										id="setup-min-advance"
-										type="number"
-										min={0}
-										max={43200}
-										disabled={!canWrite}
-										value={draft.minAdvanceMinutes}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												minAdvanceMinutes: Number(e.target.value) || 0,
-											})
-										}
-										data-testid="setup-min-advance-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-max-advance">
-										<Trans>Max advance window (days)</Trans>
-									</Label>
-									<Input
-										id="setup-max-advance"
-										type="number"
-										min={1}
-										max={365}
-										disabled={!canWrite}
-										value={draft.maxAdvanceDays}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												maxAdvanceDays: Number(e.target.value) || 30,
-											})
-										}
-										data-testid="setup-max-advance-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-online-party-min">
-										<Trans>Online min party size</Trans>
-									</Label>
-									<Input
-										id="setup-online-party-min"
-										type="number"
-										min={1}
-										max={50}
-										disabled={!canWrite}
-										value={draft.onlinePartyMin}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												onlinePartyMin: Number(e.target.value) || 1,
-											})
-										}
-										data-testid="setup-online-party-min-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-online-party-max">
-										<Trans>Online max party size</Trans>
-									</Label>
-									<Input
-										id="setup-online-party-max"
-										type="number"
-										min={1}
-										max={50}
-										disabled={!canWrite}
-										value={draft.onlinePartyMax}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												onlinePartyMax: Number(e.target.value) || 8,
-											})
-										}
-										data-testid="setup-online-party-max-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-party-max">
-										<Trans>Max party size (host stand)</Trans>
-									</Label>
-									<Input
-										id="setup-party-max"
-										type="number"
-										min={1}
-										max={99}
-										disabled={!canWrite}
-										value={draft.partyMax}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												partyMax: Number(e.target.value) || 20,
-											})
-										}
-										data-testid="setup-party-max-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-grace-period">
-										<Trans>Arrival grace period (min)</Trans>
-									</Label>
-									<Input
+					<Frame>
+						<FrameHeader>
+							<FrameTitle>
+								<Trans>Tables and timing</Trans>
+							</FrameTitle>
+							<FrameDescription>
+								<Trans>
+									How long a party keeps a table and how new bookings find one.
+								</Trans>
+							</FrameDescription>
+						</FrameHeader>
+						<FramePanel className="flex flex-col gap-5">
+							<SwitchRow
+								testId="setup-toggle-auto-assign"
+								checked={draft.autoAssignTables}
+								disabled={disabled}
+								onCheckedChange={(autoAssignTables) =>
+									edit({ autoAssignTables })
+								}
+								label={<Trans>Auto-assign best table</Trans>}
+								description={
+									<Trans>
+										Automatically place new bookings on the best-fitting table
+										or combination.
+									</Trans>
+								}
+							/>
+							<TextField
+								id="setup-default-turn-time"
+								type="number"
+								inputMode="numeric"
+								min={15}
+								max={720}
+								className="sm:max-w-xs"
+								label={<Trans>Default dining time (minutes)</Trans>}
+								hint={
+									<Trans>
+										Used when a service has no turn-time rule for the party
+										size.
+									</Trans>
+								}
+								disabled={disabled}
+								value={draft.defaultTurnTimeMin}
+								onChange={(e) =>
+									edit({ defaultTurnTimeMin: Number(e.target.value) || 90 })
+								}
+								data-testid="setup-default-turn-time-input"
+							/>
+						</FramePanel>
+						<FramePanel className="flex flex-col gap-5">
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								className="-ms-2 self-start"
+								aria-expanded={showAdvanced}
+								aria-controls="setup-advanced-settings"
+								onClick={() => setShowAdvanced((open) => !open)}
+								data-testid="setup-advanced-toggle"
+							>
+								<Icon
+									name="chevron-right"
+									className={
+										showAdvanced
+											? 'size-4 rotate-90 transition-transform'
+											: 'size-4 transition-transform rtl:rotate-180'
+									}
+								/>
+								<Trans>Advanced: grace, holds, cancellation and pacing</Trans>
+							</Button>
+							{showAdvanced ? (
+								<div
+									id="setup-advanced-settings"
+									className="grid grid-cols-1 gap-5 sm:grid-cols-2"
+								>
+									<TextField
 										id="setup-grace-period"
 										type="number"
+										inputMode="numeric"
 										min={0}
 										max={120}
-										disabled={!canWrite}
+										label={<Trans>Late arrival grace (minutes)</Trans>}
+										hint={
+											<Trans>
+												How long a table is kept before a no-show is flagged.
+											</Trans>
+										}
+										disabled={disabled}
 										value={draft.gracePeriodMinutes}
 										onChange={(e) =>
-											setDraft({
-												...draft,
-												gracePeriodMinutes: Number(e.target.value) || 0,
-											})
+											edit({ gracePeriodMinutes: Number(e.target.value) || 0 })
 										}
 										data-testid="setup-grace-period-input"
 									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-hold-ttl">
-										<Trans>Checkout hold TTL (seconds)</Trans>
-									</Label>
-									<Input
-										id="setup-hold-ttl"
-										type="number"
-										min={60}
-										max={1800}
-										disabled={!canWrite}
-										value={draft.holdTtlSeconds}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												holdTtlSeconds: Number(e.target.value) || 300,
-											})
-										}
-										data-testid="setup-hold-ttl-input"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-late-cancel">
-										<Trans>Cancellation cutoff (hours)</Trans>
-									</Label>
-									<Input
+									<TextField
 										id="setup-late-cancel"
 										type="number"
+										inputMode="numeric"
 										min={0}
 										max={720}
-										disabled={!canWrite}
+										label={<Trans>Cancellation cutoff (hours)</Trans>}
+										hint={
+											<Trans>
+												Guests cancel and change freely until this long before
+												the booking.
+											</Trans>
+										}
+										disabled={disabled}
 										value={draft.lateCancelHours}
 										onChange={(e) =>
-											setDraft({
-												...draft,
-												lateCancelHours: Number(e.target.value) || 0,
-											})
+											edit({ lateCancelHours: Number(e.target.value) || 0 })
 										}
 										data-testid="setup-late-cancel-input"
 									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-pacing-covers">
-										<Trans>Default max covers / slot</Trans>
-									</Label>
-									<Input
+									<TextField
+										id="setup-hold-ttl"
+										type="number"
+										inputMode="numeric"
+										min={60}
+										max={1800}
+										label={<Trans>Checkout hold (seconds)</Trans>}
+										hint={
+											<Trans>
+												How long a slot is reserved while a guest pays.
+											</Trans>
+										}
+										disabled={disabled}
+										value={draft.holdTtlSeconds}
+										onChange={(e) =>
+											edit({ holdTtlSeconds: Number(e.target.value) || 300 })
+										}
+										data-testid="setup-hold-ttl-input"
+									/>
+									<div className="hidden sm:block" />
+									<TextField
 										id="setup-pacing-covers"
 										type="number"
+										inputMode="numeric"
 										min={1}
 										max={500}
-										disabled={!canWrite}
+										label={<Trans>Guests per time slot</Trans>}
+										hint={<Trans>Empty means no limit.</Trans>}
+										disabled={disabled}
 										placeholder={_(msg`Unlimited`)}
 										value={draft.pacingMaxCoversPerSlot ?? ''}
 										onChange={(e) =>
-											setDraft({
-												...draft,
+											edit({
 												pacingMaxCoversPerSlot:
 													e.target.value === ''
 														? null
@@ -626,23 +669,19 @@ export default function ReservationsSettingsIndexRoute() {
 										}
 										data-testid="setup-pacing-covers-input"
 									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-pacing-parties">
-										<Trans>Default max parties / slot</Trans>
-									</Label>
-									<Input
+									<TextField
 										id="setup-pacing-parties"
 										type="number"
+										inputMode="numeric"
 										min={1}
 										max={100}
-										disabled={!canWrite}
+										label={<Trans>Parties per time slot</Trans>}
+										hint={<Trans>Empty means no limit.</Trans>}
+										disabled={disabled}
 										placeholder={_(msg`Unlimited`)}
 										value={draft.pacingMaxPartiesPerSlot ?? ''}
 										onChange={(e) =>
-											setDraft({
-												...draft,
+											edit({
 												pacingMaxPartiesPerSlot:
 													e.target.value === ''
 														? null
@@ -652,196 +691,135 @@ export default function ReservationsSettingsIndexRoute() {
 										data-testid="setup-pacing-parties-input"
 									/>
 								</div>
-							</div>
+							) : null}
+						</FramePanel>
+					</Frame>
 
-							{/* Guest confirmation & policy copy */}
-							<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-confirmation-copy-en">
-										<Trans>Confirmation message (English)</Trans>
-									</Label>
-									<Textarea
-										id="setup-confirmation-copy-en"
-										rows={2}
-										disabled={!canWrite}
-										value={draft.confirmationCopyI18n?.en ?? ''}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												confirmationCopyI18n: {
-													...draft.confirmationCopyI18n,
-													en: e.target.value,
-												},
-											})
-										}
-										data-testid="setup-confirmation-copy-en"
-									/>
-								</div>
+					<Frame>
+						<FrameHeader>
+							<FrameTitle>
+								<Trans>What guests read</Trans>
+							</FrameTitle>
+							<FrameDescription>
+								<Trans>
+									Shown on the booking page and in confirmation messages. Write
+									it in each language your guests use.
+								</Trans>
+							</FrameDescription>
+						</FrameHeader>
+						<FramePanel className="grid grid-cols-1 gap-5 md:grid-cols-2">
+							<TextAreaField
+								id="setup-confirmation-copy-en"
+								rows={3}
+								label={<Trans>Confirmation message (English)</Trans>}
+								disabled={disabled}
+								value={draft.confirmationCopyI18n?.en ?? ''}
+								onChange={(e) =>
+									edit({
+										confirmationCopyI18n: {
+											...draft.confirmationCopyI18n,
+											en: e.target.value,
+										},
+									})
+								}
+								data-testid="setup-confirmation-copy-en"
+							/>
+							<TextAreaField
+								id="setup-confirmation-copy-ar"
+								rows={3}
+								dir="rtl"
+								label={<Trans>Confirmation message (Arabic)</Trans>}
+								disabled={disabled}
+								value={draft.confirmationCopyI18n?.ar ?? ''}
+								onChange={(e) =>
+									edit({
+										confirmationCopyI18n: {
+											...draft.confirmationCopyI18n,
+											ar: e.target.value,
+										},
+									})
+								}
+								data-testid="setup-confirmation-copy-ar"
+							/>
+							<TextAreaField
+								id="setup-policy-copy-en"
+								rows={3}
+								label={<Trans>Booking & cancellation policy (English)</Trans>}
+								disabled={disabled}
+								value={draft.policyCopyI18n?.en ?? ''}
+								onChange={(e) =>
+									edit({
+										policyCopyI18n: {
+											...draft.policyCopyI18n,
+											en: e.target.value,
+										},
+									})
+								}
+								data-testid="setup-policy-copy-en"
+							/>
+							<TextAreaField
+								id="setup-policy-copy-ar"
+								rows={3}
+								dir="rtl"
+								label={<Trans>Booking & cancellation policy (Arabic)</Trans>}
+								disabled={disabled}
+								value={draft.policyCopyI18n?.ar ?? ''}
+								onChange={(e) =>
+									edit({
+										policyCopyI18n: {
+											...draft.policyCopyI18n,
+											ar: e.target.value,
+										},
+									})
+								}
+								data-testid="setup-policy-copy-ar"
+							/>
+						</FramePanel>
+					</Frame>
 
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-confirmation-copy-ar">
-										<Trans>Confirmation message (Arabic)</Trans>
-									</Label>
-									<Textarea
-										id="setup-confirmation-copy-ar"
-										rows={2}
-										dir="rtl"
-										disabled={!canWrite}
-										value={draft.confirmationCopyI18n?.ar ?? ''}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												confirmationCopyI18n: {
-													...draft.confirmationCopyI18n,
-													ar: e.target.value,
-												},
-											})
-										}
-										data-testid="setup-confirmation-copy-ar"
-									/>
-								</div>
+					{saveSuccess ? (
+						<p
+							role="status"
+							className="text-success flex items-center gap-2 text-sm"
+							data-testid="setup-general-save-success"
+						>
+							<Icon name="check-circle" className="size-4" />
+							{saveSuccess}
+						</p>
+					) : null}
 
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-policy-copy-en">
-										<Trans>Booking & cancellation policy (English)</Trans>
-									</Label>
-									<Textarea
-										id="setup-policy-copy-en"
-										rows={2}
-										disabled={!canWrite}
-										value={draft.policyCopyI18n?.en ?? ''}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												policyCopyI18n: {
-													...draft.policyCopyI18n,
-													en: e.target.value,
-												},
-											})
-										}
-										data-testid="setup-policy-copy-en"
-									/>
-								</div>
-
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="setup-policy-copy-ar">
-										<Trans>Booking & cancellation policy (Arabic)</Trans>
-									</Label>
-									<Textarea
-										id="setup-policy-copy-ar"
-										rows={2}
-										dir="rtl"
-										disabled={!canWrite}
-										value={draft.policyCopyI18n?.ar ?? ''}
-										onChange={(e) =>
-											setDraft({
-												...draft,
-												policyCopyI18n: {
-													...draft.policyCopyI18n,
-													ar: e.target.value,
-												},
-											})
-										}
-										data-testid="setup-policy-copy-ar"
-									/>
-								</div>
-							</div>
-
-							<div className="flex items-center justify-end gap-3">
-								<Button
-									type="submit"
-									disabled={!canWrite || saving}
-									data-testid="setup-save-general-button"
-								>
-									<Icon name="check" className="size-4" />
-									{saving ? (
-										<Trans>Saving…</Trans>
-									) : (
-										<Trans>Save settings</Trans>
-									)}
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
+					{canWrite ? (
+						<SettingsSaveBar
+							persistent
+							submit
+							dirty={dirty}
+							pending={saving}
+							onDiscard={handleDiscard}
+							saveTestId="setup-save-general-button"
+						/>
+					) : (
+						<p className="text-muted-foreground text-sm">
+							<Trans>You can view these settings but not change them.</Trans>
+						</p>
+					)}
 				</form>
 			) : null}
 
-			{/* Setup Validation Panel */}
-			<Card data-testid="setup-validation-panel">
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2 text-base">
-						<Icon name="shield-check" className="size-4" />
-						<Trans>Setup Diagnostics & Completeness</Trans>
-					</CardTitle>
-					<CardDescription>
-						<Trans>
-							Checks dining areas, active bookable tables, service windows, and
-							turn-time bucket coverage across party sizes.
-						</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					{!validation ? (
-						<p className="text-muted-foreground text-sm">
-							<Trans>No validation data available yet.</Trans>
-						</p>
-					) : validation.issues.length === 0 ? (
-						<div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
-							<Icon name="check-circle" className="size-4" />
-							<Trans>
-								All setup checks passed. Online and host-stand booking have full
-								table, service, and turn-time coverage.
-							</Trans>
-						</div>
-					) : (
-						<ul
-							className="flex flex-col gap-2"
-							data-testid="setup-validation-issues-list"
-						>
-							{validation.issues.map((issue, idx) => (
-								<li
-									key={`${issue.code}-${idx}`}
-									className={
-										issue.severity === 'error'
-											? 'border-destructive/30 bg-destructive/10 text-destructive flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm'
-											: 'flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-200'
-									}
-								>
-									<div className="flex items-center gap-2">
-										<Icon
-											name={
-												issue.severity === 'error'
-													? 'octagon-alert'
-													: 'alert-triangle'
-											}
-											className="size-4 shrink-0"
-										/>
-										<span>{issue.message}</span>
-									</div>
-									<Badge variant="outline">{issue.code}</Badge>
-								</li>
-							))}
-						</ul>
-					)}
-				</CardContent>
-			</Card>
-
-			{/* Upcoming Reservation Conflicts Panel */}
-			<Card data-testid="setup-conflicts-panel">
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2 text-base">
-						<Icon name="alert-triangle" className="size-4" />
-						<Trans>Upcoming Reservation Conflicts</Trans>
-					</CardTitle>
-					<CardDescription>
+			{/* Upcoming Reservation Conflicts */}
+			<Frame data-testid="setup-conflicts-panel">
+				<FrameHeader>
+					<FrameTitle>
+						<Trans>Upcoming reservation conflicts</Trans>
+					</FrameTitle>
+					<FrameDescription>
 						<Trans>
 							Future reservations affected by table capacity reductions,
 							archived tables, shortened service windows, or closed special
 							days.
 						</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
+					</FrameDescription>
+				</FrameHeader>
+				<FramePanel>
 					{conflicts.length === 0 ? (
 						<p
 							className="text-muted-foreground text-sm"
@@ -861,7 +839,7 @@ export default function ReservationsSettingsIndexRoute() {
 								return (
 									<li
 										key={`${conflict.reservationId}-${conflict.kind}-${conflict.tableId ?? conflict.serviceId ?? index}`}
-										className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm"
+										className="bg-warning/10 flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm"
 										data-testid="setup-conflict-row"
 									>
 										<div className="flex flex-col gap-0.5">
@@ -887,8 +865,8 @@ export default function ReservationsSettingsIndexRoute() {
 							})}
 						</ul>
 					)}
-				</CardContent>
-			</Card>
+				</FramePanel>
+			</Frame>
 		</div>
 	)
 }

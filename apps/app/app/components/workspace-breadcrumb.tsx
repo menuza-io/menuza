@@ -72,7 +72,7 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	// Reservations
 	reservations: <Trans>Reservations</Trans>,
 	today: <Trans>Today</Trans>,
-	book: <Trans>Book</Trans>,
+	book: <Trans>List</Trans>,
 	timeline: <Trans>Timeline</Trans>,
 	floor: <Trans>Floor</Trans>,
 	calendar: <Trans>Calendar</Trans>,

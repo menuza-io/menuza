@@ -66,6 +66,11 @@ export function useHostStand({
 
 	const pollKey = `${locationId}:${dateParam ?? 'today'}:${serviceParam ?? 'all'}:${areaParam ?? 'all'}:${sourceParam ?? 'all'}:${tagParam ?? 'all'}`
 
+	// Move notices belong to the day, location and filters they came from.
+	useEffect(() => {
+		setRecentMoveNotices([])
+	}, [pollKey])
+
 	const fetcher = useCallback(
 		(etag: string | null, signal: AbortSignal) =>
 			fetchBookDayConditional(
@@ -125,8 +130,10 @@ export function useHostStand({
 		intervalMs: 15_000,
 	})
 
+	// The URL date wins: the feed is keyed to it, so the header never shows the
+	// previous day's date while the new day loads.
 	const businessDate =
-		dayFeed?.businessDate ?? dateParam ?? liveNow.businessDate
+		dateParam ?? dayFeed?.businessDate ?? liveNow.businessDate
 
 	const updateSearchParam = useCallback(
 		(updates: Record<string, string | null | undefined>) => {
@@ -216,6 +223,7 @@ export function useHostStand({
 		[],
 	)
 
+	const { refresh: pollRefresh, setOptimisticData } = poll
 	const handleReservationMutated = useCallback(
 		(
 			updatedReservation?: DayReservationView,
@@ -226,8 +234,8 @@ export function useHostStand({
 					[...newMoveNotices, ...prev].slice(0, 20),
 				)
 			}
-			if (updatedReservation && dayFeed) {
-				poll.setOptimisticData((prev) => {
+			if (updatedReservation) {
+				setOptimisticData((prev) => {
 					if (!prev) return prev
 					const exists = prev.reservations.some(
 						(r) => r.id === updatedReservation.id,
@@ -245,9 +253,9 @@ export function useHostStand({
 					}
 				})
 			}
-			void poll.refresh({ force: true })
+			void pollRefresh({ force: true })
 		},
-		[dayFeed, poll],
+		[pollRefresh, setOptimisticData],
 	)
 
 	const allMoveNotices = useMemo(() => {
@@ -290,7 +298,8 @@ export function useHostStand({
 		}
 	}, [])
 
-	const refresh = useCallback(() => poll.refresh({ force: true }), [poll])
+	const refresh = useCallback(() => pollRefresh({ force: true }), [pollRefresh])
+	const clearMoveNotices = useCallback(() => setRecentMoveNotices([]), [])
 
 	return {
 		client,
@@ -302,6 +311,8 @@ export function useHostStand({
 		timeZone,
 		selectedDate: businessDate,
 		todayDate: liveNow.businessDate,
+		/** The viewed day is the location's current business day, so live clocks apply. */
+		isToday: businessDate === liveNow.businessDate,
 		selectedServiceId: serviceParam,
 		selectedAreaId: areaParam,
 		selectedSource: sourceParam,
@@ -331,7 +342,7 @@ export function useHostStand({
 		allMoveNotices,
 		moveNotices: allMoveNotices,
 		appendMoveNotices,
-		clearMoveNotices: () => setRecentMoveNotices([]),
+		clearMoveNotices,
 		handleReservationMutated,
 		refresh,
 	}

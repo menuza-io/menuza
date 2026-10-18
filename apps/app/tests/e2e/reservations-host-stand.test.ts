@@ -1131,6 +1131,7 @@ test.describe('Reservations Book & Host Stand UI', () => {
 			page.getByTestId('section-layout-card-layout-dinner-1'),
 		).toBeVisible()
 
+		await page.getByTestId('section-layout-open-create').click()
 		await page.getByTestId('section-layout-name-input').fill('Weekend 2-Server')
 		await page.getByTestId('create-section-name-input-0').fill('Front Room')
 		await page.getByTestId('create-section-table-toggle-0-table-1').click()

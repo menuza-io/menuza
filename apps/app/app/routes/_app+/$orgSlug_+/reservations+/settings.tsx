@@ -3,6 +3,8 @@ import { useLingui } from '@lingui/react'
 import { isImpersonating } from '@repo/auth'
 import { asc, db, desc, eq, OrganizationLocation } from '@repo/database'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import { cn } from '@repo/ui'
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -16,6 +18,7 @@ import {
 	useSearchParams,
 } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { ReservationsHeaderMeta } from '#app/components/reservations/shell-context.tsx'
 import { useReservationsClient } from '#app/hooks/use-reservations-client.ts'
 import {
 	displayLocationName,
@@ -246,70 +249,67 @@ export default function ReservationsSettingsRoute() {
 			? `?location=${encodeURIComponent(selectedLocationId)}`
 			: ''
 
-	const subTabs = [
+	// Five groups instead of nine flat tabs. Every sub-section keeps its route.
+	type SetupLeaf = {
+		id: string
+		label: string
+		pathname: string
+		exact: boolean
+	}
+	const leaf = (
+		id: string,
+		label: string,
+		suffix: string,
+		exact = false,
+	): SetupLeaf => ({ id, label, pathname: `${basePath}${suffix}`, exact })
+	const groups: Array<{ id: string; label: string; leaves: SetupLeaf[] }> = [
 		{
-			id: 'general',
-			label: _(msg`General & Policies`),
-			pathname: basePath,
-			exact: true,
-		},
-		{
-			id: 'tables',
-			label: _(msg`Tables & Areas`),
-			pathname: `${basePath}/tables`,
-			exact: false,
-		},
-		{
-			id: 'floor-plan',
-			label: _(msg`Floor Plan`),
-			pathname: `${basePath}/floor-plan`,
-			exact: false,
+			id: 'rules',
+			label: _(msg`Rules`),
+			leaves: [
+				leaf('general', _(msg`Booking rules`), '', true),
+				...(paymentsEnabled
+					? [leaf('policies', _(msg`Payment policies`), '/policies')]
+					: []),
+			],
 		},
 		{
 			id: 'services',
-			label: _(msg`Services & Turn Times`),
-			pathname: `${basePath}/services`,
-			exact: false,
+			label: _(msg`Services`),
+			leaves: [
+				leaf('services', _(msg`Services & turn times`), '/services'),
+				leaf('special-days', _(msg`Special days & blocks`), '/special-days'),
+			],
 		},
 		{
-			id: 'special-days',
-			label: _(msg`Special Days & Blocks`),
-			pathname: `${basePath}/special-days`,
-			exact: false,
-		},
-		{
-			id: 'sections',
-			label: _(msg`Sections`),
-			pathname: `${basePath}/sections`,
-			exact: false,
+			id: 'floor',
+			label: _(msg`Floor`),
+			leaves: [
+				leaf('tables', _(msg`Tables & areas`), '/tables'),
+				leaf('sections', _(msg`Sections`), '/sections'),
+				leaf('floor-plan', _(msg`Floor plan`), '/floor-plan'),
+			],
 		},
 		{
 			id: 'messages',
-			label: _(msg`Guest Messages`),
-			pathname: `${basePath}/messages`,
-			exact: false,
+			label: _(msg`Messages`),
+			leaves: [leaf('messages', _(msg`Guest messages`), '/messages')],
 		},
-		...(paymentsEnabled
-			? [
-					{
-						id: 'policies',
-						label: _(msg`Payment Policies`),
-						pathname: `${basePath}/policies`,
-						exact: false,
-					},
-				]
-			: []),
 		...(waitlistEnabled
 			? [
 					{
 						id: 'waitlist',
 						label: _(msg`Waitlist`),
-						pathname: `${basePath}/waitlist`,
-						exact: false,
+						leaves: [leaf('waitlist', _(msg`Waitlist`), '/waitlist')],
 					},
 				]
 			: []),
 	]
+	const isLeafActive = (tab: SetupLeaf) =>
+		tab.exact
+			? location.pathname === tab.pathname ||
+				location.pathname === `${tab.pathname}/`
+			: location.pathname.startsWith(tab.pathname)
 
 	const outletContext: ReservationsSetupOutletContext = {
 		orgSlug,
@@ -328,146 +328,173 @@ export default function ReservationsSettingsRoute() {
 		setSettingsState: setSettings,
 	}
 
+	const linkClass = (active: boolean) =>
+		cn(
+			'flex h-11 items-center rounded-md px-2.5 text-sm font-medium whitespace-nowrap md:h-8',
+			active
+				? 'bg-muted text-foreground'
+				: 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
+		)
+
 	return (
 		<div className="flex flex-col gap-6" data-testid="reservations-setup-shell">
-			{/* Sub-navigation bar */}
-			<div className="border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
-				<nav
-					aria-label={_(msg`Reservations setup sections`)}
-					className="flex flex-wrap items-center gap-1"
-					data-testid="reservations-setup-subnav"
-				>
-					{subTabs.map((tab) => {
-						const isActive = tab.exact
-							? location.pathname === tab.pathname ||
-								location.pathname === `${tab.pathname}/`
-							: location.pathname.startsWith(tab.pathname)
-						return (
-							<Link
-								key={tab.id}
-								to={`${tab.pathname}${searchSuffix}`}
-								data-testid={`setup-tab-${tab.id}`}
-								className={
-									isActive
-										? 'bg-secondary text-secondary-foreground rounded-md px-3 py-1.5 text-sm font-medium'
-										: 'text-muted-foreground hover:text-foreground rounded-md px-3 py-1.5 text-sm font-medium'
-								}
-							>
-								{tab.label}
-							</Link>
-						)
-					})}
-				</nav>
+			<ReservationsHeaderMeta>
+				{selectedLocation ? (
+					<Badge variant="outline" data-testid="setup-location-badge">
+						{selectedLocation.name} ({selectedLocation.timezone})
+					</Badge>
+				) : null}
 
-				<div className="flex flex-wrap items-center gap-2">
-					{selectedLocation ? (
-						<Badge variant="outline" data-testid="setup-location-badge">
-							{selectedLocation.name} ({selectedLocation.timezone})
+				{validation ? (
+					validation.valid ? (
+						<Badge
+							variant="success"
+							data-testid="setup-validation-status-badge"
+						>
+							<Icon name="check-circle" />
+							<Trans>Configuration valid</Trans>
 						</Badge>
-					) : null}
+					) : (
+						<Badge
+							variant="warning"
+							data-testid="setup-validation-status-badge"
+						>
+							<Icon name="alert-triangle" />
+							<Trans>Setup issues</Trans> ({validation.errors.length})
+						</Badge>
+					)
+				) : null}
 
-					{validation ? (
-						validation.valid ? (
-							<Badge
-								variant="outline"
-								className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-								data-testid="setup-validation-status-badge"
-							>
-								<Icon name="check-circle" className="mr-1 size-3.5" />
-								<Trans>Configuration valid</Trans>
-							</Badge>
+				{!canWrite ? (
+					<Badge variant="secondary" data-testid="setup-readonly-banner">
+						<Icon name="lock" />
+						{isImpersonated ? (
+							<Trans>Read-only (impersonation)</Trans>
 						) : (
-							<Badge
-								variant="outline"
-								className="border-amber-500/40 bg-amber-500/15 text-amber-800 dark:text-amber-300"
-								data-testid="setup-validation-status-badge"
-							>
-								<Icon name="alert-triangle" className="mr-1 size-3.5" />
-								<Trans>Setup issues</Trans> ({validation.errors.length})
-							</Badge>
-						)
-					) : null}
-
-					{!canWrite ? (
-						<Badge variant="secondary" data-testid="setup-readonly-banner">
-							<Icon name="lock" className="mr-1 size-3" />
-							{isImpersonated ? (
-								<Trans>Read-only (impersonation)</Trans>
-							) : (
-								<Trans>Read-only access</Trans>
-							)}
-						</Badge>
-					) : null}
-				</div>
-			</div>
+							<Trans>Read-only access</Trans>
+						)}
+					</Badge>
+				) : null}
+			</ReservationsHeaderMeta>
 
 			{/* Time-zone mismatch re-derive banner */}
 			{hasTzMismatch ? (
-				<div
-					role="alert"
-					className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-500/40 bg-amber-500/15 p-4 text-sm"
-					data-testid="setup-tz-mismatch-banner"
-				>
-					<div className="flex items-start gap-3">
-						<Icon
-							name="alert-triangle"
-							className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400"
-						/>
-						<div className="flex flex-col gap-1">
-							<p className="text-foreground font-semibold">
-								<Trans>Location time zone changed</Trans>
-							</p>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Re-derive future reservation times so upcoming bookings keep
-									their intended local wall-clock seating time.
-								</Trans>{' '}
-								({settings?.timeZone ?? 'previous'} →{' '}
-								{selectedLocation?.timezone ??
-									settings?.contextTimeZone ??
-									'updated'}
-								)
-							</p>
-						</div>
-					</div>
-					{canWrite ? (
-						<Button
-							type="button"
-							size="sm"
-							disabled={rederiving}
-							onClick={() => void handleRederiveTimes()}
-							data-testid="setup-rederive-times-button"
-						>
-							<Icon name="refresh-cw" className="size-4" />
-							{rederiving ? (
-								<Trans>Re-deriving…</Trans>
-							) : (
-								<Trans>Re-derive future reservation times</Trans>
-							)}
-						</Button>
-					) : null}
-				</div>
+				<Alert data-testid="setup-tz-mismatch-banner">
+					<Icon name="alert-triangle" className="text-warning" />
+					<AlertTitle>
+						<Trans>Location time zone changed</Trans>
+					</AlertTitle>
+					<AlertDescription>
+						<Trans>
+							Re-derive future reservation times so upcoming bookings keep their
+							intended local wall-clock seating time.
+						</Trans>{' '}
+						({settings?.timeZone ?? 'previous'} →{' '}
+						{selectedLocation?.timezone ??
+							settings?.contextTimeZone ??
+							'updated'}
+						)
+						{canWrite ? (
+							<div className="mt-2">
+								<Button
+									type="button"
+									disabled={rederiving}
+									onClick={() => void handleRederiveTimes()}
+									data-testid="setup-rederive-times-button"
+								>
+									<Icon name="refresh-cw" />
+									{rederiving ? (
+										<Trans>Re-deriving…</Trans>
+									) : (
+										<Trans>Re-derive future reservation times</Trans>
+									)}
+								</Button>
+							</div>
+						) : null}
+					</AlertDescription>
+				</Alert>
 			) : null}
 
 			{rederiveResult ? (
-				<div
-					role="status"
-					className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200"
-					data-testid="setup-rederive-success-banner"
-				>
-					<span>{rederiveResult}</span>
+				<Alert role="status" data-testid="setup-rederive-success-banner">
+					<Icon name="check-circle" className="text-success" />
+					<AlertDescription>{rederiveResult}</AlertDescription>
 					<Button
 						type="button"
 						variant="ghost"
-						size="sm"
+						size="icon"
+						className="absolute end-1.5 top-1.5"
+						aria-label={_(msg`Dismiss`)}
 						onClick={() => setRederiveResult(null)}
 					>
-						<Icon name="x" className="size-4" />
+						<Icon name="x" />
 					</Button>
-				</div>
+				</Alert>
 			) : null}
 
-			<Outlet context={outletContext} />
+			<div className="flex flex-col gap-6 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
+				<nav
+					aria-label={_(msg`Reservations setup sections`)}
+					className="lg:sticky lg:top-4"
+					data-testid="reservations-setup-subnav"
+				>
+					<ul className="flex flex-wrap items-center gap-1 lg:flex-col lg:items-stretch">
+						{groups.map((group) => {
+							const groupActive = group.leaves.some(isLeafActive)
+							const first = group.leaves[0]!
+							const single = group.leaves.length === 1
+							return (
+								<li key={group.id} className="contents lg:block">
+									<Link
+										to={`${first.pathname}${searchSuffix}`}
+										data-testid={
+											single
+												? `setup-tab-${first.id}`
+												: `setup-group-${group.id}`
+										}
+										aria-current={
+											single && groupActive
+												? 'page'
+												: groupActive
+													? 'true'
+													: undefined
+										}
+										className={cn(
+											linkClass(groupActive && single),
+											groupActive && !single && 'text-foreground',
+										)}
+									>
+										{group.label}
+									</Link>
+									{!single && groupActive ? (
+										<ul className="contents lg:ms-2.5 lg:mt-0.5 lg:flex lg:flex-col lg:gap-0.5 lg:border-s lg:ps-1.5">
+											{group.leaves.map((tab) => {
+												const active = isLeafActive(tab)
+												return (
+													<li key={tab.id} className="contents lg:block">
+														<Link
+															to={`${tab.pathname}${searchSuffix}`}
+															data-testid={`setup-tab-${tab.id}`}
+															aria-current={active ? 'page' : undefined}
+															className={linkClass(active)}
+														>
+															{tab.label}
+														</Link>
+													</li>
+												)
+											})}
+										</ul>
+									) : null}
+								</li>
+							)
+						})}
+					</ul>
+				</nav>
+
+				<div className="min-w-0">
+					<Outlet context={outletContext} />
+				</div>
+			</div>
 		</div>
 	)
 }

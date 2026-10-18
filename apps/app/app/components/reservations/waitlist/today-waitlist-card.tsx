@@ -1,26 +1,25 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
+import { Icon } from '@repo/ui/icon'
+import { Skeleton } from '@repo/ui/skeleton'
 import { Link } from 'react-router'
+import { StatusLabel } from '#app/components/reservations/status-style.tsx'
 import { useFormatMinutes } from '#app/components/reservations/waitlist/waitlist-clock.tsx'
 import { type DayWaitlistView } from '#app/utils/reservations/book-api.ts'
-import { enumLabel } from '#app/utils/reservations/labels.ts'
-import {
-	isActiveWaitlistStatus,
-	WAITLIST_STATUS_LABELS,
-	waitlistStatusVariant,
-} from '#app/utils/reservations/waitlist-view.ts'
+import { isActiveWaitlistStatus } from '#app/utils/reservations/waitlist-view.ts'
 
 /** Read-only glance at the live queue for the Today board; the full tools live on the Waitlist screen. */
 export function TodayWaitlistCard({
 	entries,
 	orgSlug,
+	loading = false,
 }: {
 	entries: readonly DayWaitlistView[]
 	orgSlug: string
+	loading?: boolean
 }) {
-	const { i18n } = useLingui()
+	const { t } = useLingui()
 	const formatMinutes = useFormatMinutes()
 	const queue = entries
 		.filter((entry) => isActiveWaitlistStatus(entry.status))
@@ -33,17 +32,26 @@ export function TodayWaitlistCard({
 					<span>
 						<Trans>Waitlist</Trans>
 					</span>
-					<Badge variant="secondary" data-testid="today-waitlist-count">
+					<span
+						className="text-muted-foreground text-sm font-normal tabular-nums"
+						data-testid="today-waitlist-count"
+					>
 						{queue.length}
-					</Badge>
+					</span>
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-2.5">
-				{queue.length === 0 ? (
+				{loading ? (
+					<>
+						<Skeleton className="h-14" />
+						<Skeleton className="h-14" />
+					</>
+				) : queue.length === 0 ? (
 					<div
-						className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs"
+						className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center text-sm"
 						data-testid="today-waitlist-empty"
 					>
+						<Icon name="users" className="size-5" />
 						<Trans>Nobody is waiting right now.</Trans>
 					</div>
 				) : (
@@ -52,39 +60,34 @@ export function TodayWaitlistCard({
 							entry.quotedWaitMin === null
 								? null
 								: formatMinutes(entry.quotedWaitMin)
+						const guest = entry.guestName || t`Guest`
 						return (
 							<div
 								key={entry.id}
-								className="bg-background flex flex-col gap-1.5 rounded-lg border p-3 text-xs"
+								className="bg-background flex flex-col gap-1 rounded-lg border p-3"
 								data-testid={`today-waitlist-row-${entry.id}`}
 							>
-								<div className="flex items-start justify-between gap-2">
-									<span className="font-semibold wrap-anywhere">
-										#{entry.position} {entry.guestName} ({entry.partySize})
-									</span>
-									<Badge variant={waitlistStatusVariant(entry.status)}>
-										{enumLabel(
-											(d) => i18n._(d),
-											WAITLIST_STATUS_LABELS,
-											entry.status,
+								<span className="text-sm font-semibold wrap-anywhere">
+									#{entry.position} {guest} ({entry.partySize})
+								</span>
+								<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+									<StatusLabel kind="waitlist" status={entry.status} />
+									<span>
+										{quoted === null ? (
+											<Trans>No quote</Trans>
+										) : (
+											<Trans>Quoted {quoted}</Trans>
 										)}
-									</Badge>
-								</div>
-								<div className="text-muted-foreground">
-									{quoted === null ? (
-										<Trans>No quote</Trans>
-									) : (
-										<Trans>Quoted {quoted}</Trans>
-									)}
+									</span>
 								</div>
 							</div>
 						)
 					})
 				)}
 				<Button
-					size="xs"
+					size="sm"
 					variant="outline"
-					className="self-start"
+					className="h-11 self-start md:h-8"
 					render={<Link to={`/${orgSlug}/reservations/waitlist`} />}
 					data-testid="today-waitlist-open"
 				>

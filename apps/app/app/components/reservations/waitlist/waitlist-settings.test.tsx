@@ -150,7 +150,10 @@ describe('WaitlistSettingsScreen', () => {
 		)
 		await screen.findByTestId('waitlist-settings-form')
 		expect(screen.getByTestId('waitlist-settings-read-only')).toBeTruthy()
-		expect(screen.getByTestId('waitlist-setting-enabled')).toBeDisabled()
+		expect(screen.getByTestId('waitlist-setting-enabled')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		)
 		expect(screen.queryByTestId('waitlist-settings-save')).toBeNull()
 	})
 

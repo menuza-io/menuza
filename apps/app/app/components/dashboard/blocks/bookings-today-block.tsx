@@ -1,20 +1,21 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Badge } from '@repo/ui/badge'
 import { Card, CardContent } from '@repo/ui/card'
 import { Skeleton } from '@repo/ui/skeleton'
-import { useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { ReservationsClientContext } from '#app/components/reservations/reservations-client-provider.tsx'
+import { StatusLabel } from '#app/components/reservations/status-style.tsx'
+import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { type BookingsTodayLocation } from '#app/utils/dashboards/bookings-today.ts'
 import {
 	type BookingsToday,
 	fetchBookingsToday,
 } from '#app/utils/reservations/bookings-today-api.ts'
 import {
-	enumLabel,
-	RESERVATION_STATUS_LABELS,
-} from '#app/utils/reservations/labels.ts'
-import { createReservationsClientPool } from '#app/utils/reservations/reservations-client.ts'
+	createReservationsClientPool,
+	type ReservationsClientPool,
+} from '#app/utils/reservations/reservations-client.ts'
 
 export const BOOKINGS_TODAY_REFRESH_MS = 60_000
 
@@ -46,6 +47,21 @@ function orderedCounts(counts: Record<string, number>) {
 	}))
 }
 
+/**
+ * The Reservations layout provides one client pool; the dashboard is outside
+ * it, so blocks share one pool per organization instead of each building its
+ * own (and fetching its own token).
+ */
+const SHARED_POOLS = new Map<string, ReservationsClientPool>()
+function sharedPool(orgSlug: string): ReservationsClientPool {
+	let pool = SHARED_POOLS.get(orgSlug)
+	if (!pool) {
+		pool = createReservationsClientPool({ orgSlug })
+		SHARED_POOLS.set(orgSlug, pool)
+	}
+	return pool
+}
+
 type State =
 	| { kind: 'loading' }
 	| { kind: 'ready'; data: BookingsToday }
@@ -65,9 +81,10 @@ export function BookingsTodayBlock({
 	const { _ } = useLingui()
 	const [locationId, setLocationId] = useState(locations[0]?.id ?? '')
 	const [state, setState] = useState<State>({ kind: 'loading' })
+	const providedPool = useContext(ReservationsClientContext)
 	const client = useMemo(
-		() => createReservationsClientPool({ orgSlug }).forScope('book'),
-		[orgSlug],
+		() => (providedPool ?? sharedPool(orgSlug)).forScope('book'),
+		[providedPool, orgSlug],
 	)
 
 	useEffect(() => {
@@ -90,14 +107,20 @@ export function BookingsTodayBlock({
 			}
 		}
 		void load()
-		const timer = window.setInterval(
-			() => void load(),
-			BOOKINGS_TODAY_REFRESH_MS,
-		)
+		// Nobody is looking at a hidden tab: skip the tick, refresh on return.
+		const timer = window.setInterval(() => {
+			if (document.visibilityState === 'hidden') return
+			void load()
+		}, BOOKINGS_TODAY_REFRESH_MS)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible') void load()
+		}
+		document.addEventListener('visibilitychange', onVisible)
 		return () => {
 			cancelled = true
 			controller.abort()
 			window.clearInterval(timer)
+			document.removeEventListener('visibilitychange', onVisible)
 		}
 	}, [client, locationId])
 
@@ -109,22 +132,19 @@ export function BookingsTodayBlock({
 						<Trans>Bookings today</Trans>
 					</h3>
 					{locations.length > 1 ? (
-						<select
+						<FilterSelect
+							label={_(msg`Location`)}
+							options={locations.map((location) => ({
+								value: location.id,
+								label: location.name,
+							}))}
 							value={locationId}
-							onChange={(event) => {
+							onValueChange={(next) => {
 								setState({ kind: 'loading' })
-								setLocationId(event.target.value)
+								setLocationId(next)
 							}}
-							aria-label={_(msg`Location`)}
-							className="border-input bg-background text-foreground h-8 rounded-md border px-2 text-xs"
-							data-testid="bookings-today-location"
-						>
-							{locations.map((location) => (
-								<option key={location.id} value={location.id}>
-									{location.name}
-								</option>
-							))}
-						</select>
+							testId="bookings-today-location"
+						/>
 					) : null}
 				</div>
 				{state.kind === 'loading' ? (
@@ -202,16 +222,16 @@ function BookingsTodayBody({
 						<Trans>No bookings today.</Trans>
 					</p>
 				) : (
-					<ul className="flex flex-wrap gap-1.5">
+					<ul className="flex flex-wrap gap-x-4 gap-y-1">
 						{counts.map(({ status, count }) => (
 							<li key={status}>
-								<Badge
-									variant="secondary"
+								<span
+									className="inline-flex items-center gap-1.5 text-sm"
 									data-testid={`bookings-today-status-${status}`}
 								>
-									{enumLabel(_, RESERVATION_STATUS_LABELS, status)}{' '}
+									<StatusLabel status={status} className="text-sm" />{' '}
 									<bdi className="tabular-nums">{count}</bdi>
-								</Badge>
+								</span>
 							</li>
 						))}
 					</ul>

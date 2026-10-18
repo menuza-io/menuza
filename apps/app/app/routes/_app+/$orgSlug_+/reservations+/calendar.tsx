@@ -12,7 +12,10 @@ import {
 	CardTitle,
 } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Input } from '@repo/ui/input'
+import { Skeleton } from '@repo/ui/skeleton'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData, useNavigate, useSearchParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
@@ -27,6 +30,7 @@ import {
 	type CalendarMonthResponse,
 	fetchBookCalendar,
 } from '#app/utils/reservations/book-api.ts'
+import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/calendar.ts'
 import { useReservationsLayoutData } from './_layout.tsx'
@@ -68,7 +72,7 @@ function shiftYearMonth(ym: string, deltaMonths: number): string {
 }
 
 export default function ReservationsCalendarRoute() {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const loaderData = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -98,29 +102,46 @@ export default function ReservationsCalendarRoute() {
 	const [calendarError, setCalendarError] = useState<string | null>(null)
 	const [drillTarget, setDrillTarget] = useState<'book' | 'timeline'>('book')
 
+	// Only the latest request may write state: a slow answer for an earlier
+	// month or location is aborted and ignored.
+	const calendarAbortRef = useRef<AbortController | null>(null)
 	const loadCalendar = useCallback(async () => {
+		calendarAbortRef.current?.abort()
 		if (!locationId) {
 			setLoadingCalendar(false)
 			return
 		}
+		const controller = new AbortController()
+		calendarAbortRef.current = controller
 		setLoadingCalendar(true)
 		setCalendarError(null)
 		try {
-			const res = await fetchBookCalendar(host.client, {
-				locationId,
-				month: selectedMonth,
-			})
+			const res = await fetchBookCalendar(
+				host.client,
+				{ locationId, month: selectedMonth },
+				controller.signal,
+			)
+			if (controller.signal.aborted) return
 			setCalendarData(res)
 		} catch (err) {
+			if (controller.signal.aborted) return
 			setCalendarError(
-				err instanceof Error
-					? err.message
-					: _(msg`Failed to load monthly calendar summary.`),
+				hostErrorMessage(
+					err,
+					(d) => _(d),
+					msg`Could not load the monthly calendar.`,
+				),
 			)
 		} finally {
-			setLoadingCalendar(false)
+			if (!controller.signal.aborted) setLoadingCalendar(false)
 		}
 	}, [host.client, locationId, selectedMonth, _])
+
+	// Never show another month's or location's numbers while the next ones load.
+	useEffect(() => {
+		setCalendarData(null)
+		return () => calendarAbortRef.current?.abort()
+	}, [locationId, selectedMonth])
 
 	useEffect(() => {
 		void loadCalendar()
@@ -172,6 +193,19 @@ export default function ReservationsCalendarRoute() {
 		return { totalCovers, totalParties, closedDays, specialDays }
 	}, [calendarData])
 
+	const monthLabel = useMemo(() => {
+		const [year, month] = selectedMonth.split('-').map(Number)
+		try {
+			return new Intl.DateTimeFormat(i18n.locale, {
+				month: 'long',
+				year: 'numeric',
+				timeZone: 'UTC',
+			}).format(new Date(Date.UTC(year!, month! - 1, 1)))
+		} catch {
+			return selectedMonth
+		}
+	}, [i18n.locale, selectedMonth])
+
 	const weekdayLabels = [
 		_(msg`Sun`),
 		_(msg`Mon`),
@@ -221,6 +255,7 @@ export default function ReservationsCalendarRoute() {
 						type="button"
 						variant="outline"
 						size="sm"
+						className="h-11 md:h-8"
 						onClick={() => handleChangeMonth(shiftYearMonth(selectedMonth, -1))}
 						data-testid="calendar-prev-month"
 					>
@@ -229,17 +264,18 @@ export default function ReservationsCalendarRoute() {
 					</Button>
 
 					<span
-						className="min-w-28 text-center text-base font-semibold"
-						dir="ltr"
+						className="min-w-32 text-center text-base font-semibold"
+						data-month={selectedMonth}
 						data-testid="calendar-current-month-label"
 					>
-						{selectedMonth}
+						{monthLabel}
 					</span>
 
 					<Button
 						type="button"
 						variant="outline"
 						size="sm"
+						className="h-11 md:h-8"
 						onClick={() => handleChangeMonth(shiftYearMonth(selectedMonth, 1))}
 						data-testid="calendar-next-month"
 					>
@@ -247,7 +283,7 @@ export default function ReservationsCalendarRoute() {
 						<Icon name="chevron-right" className="size-4" />
 					</Button>
 
-					<input
+					<Input
 						type="month"
 						value={selectedMonth}
 						onChange={(e) => {
@@ -255,7 +291,7 @@ export default function ReservationsCalendarRoute() {
 								handleChangeMonth(e.target.value)
 							}
 						}}
-						className="border-input bg-background h-8 rounded-md border px-2 text-xs"
+						className="w-40"
 						dir="ltr"
 						aria-label={_(msg`Select month`)}
 						data-testid="calendar-month-input"
@@ -277,8 +313,7 @@ export default function ReservationsCalendarRoute() {
 						</Badge>
 						{monthTotals.specialDays > 0 ? (
 							<Badge
-								variant="outline"
-								className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+								variant="warning"
 								data-testid="calendar-month-special-badge"
 							>
 								<span dir="ltr">{monthTotals.specialDays}</span>{' '}
@@ -287,35 +322,33 @@ export default function ReservationsCalendarRoute() {
 						) : null}
 					</div>
 
-					<div
-						className="border-border bg-muted/40 flex items-center gap-1 rounded-lg border p-0.5 text-xs"
+					<ToggleGroup
+						variant="segmented"
+						aria-label={_(msg`Open a day in`)}
+						value={[drillTarget]}
+						onValueChange={(next) => {
+							const picked = next[0]
+							if (picked === 'book' || picked === 'timeline') {
+								setDrillTarget(picked)
+							}
+						}}
 						data-testid="calendar-drill-target-toggle"
 					>
-						<button
-							type="button"
-							onClick={() => setDrillTarget('book')}
+						<ToggleGroupItem
+							value="book"
+							className="h-11 md:h-7"
 							data-testid="calendar-drill-target-book"
-							className={`rounded-md px-2.5 py-1 font-medium transition ${
-								drillTarget === 'book'
-									? 'bg-background text-foreground shadow-xs'
-									: 'text-muted-foreground hover:text-foreground'
-							}`}
 						>
 							<Trans>Open in Book</Trans>
-						</button>
-						<button
-							type="button"
-							onClick={() => setDrillTarget('timeline')}
+						</ToggleGroupItem>
+						<ToggleGroupItem
+							value="timeline"
+							className="h-11 md:h-7"
 							data-testid="calendar-drill-target-timeline"
-							className={`rounded-md px-2.5 py-1 font-medium transition ${
-								drillTarget === 'timeline'
-									? 'bg-background text-foreground shadow-xs'
-									: 'text-muted-foreground hover:text-foreground'
-							}`}
 						>
 							<Trans>Open in Timeline</Trans>
-						</button>
-					</div>
+						</ToggleGroupItem>
+					</ToggleGroup>
 				</div>
 			</div>
 
@@ -345,10 +378,13 @@ export default function ReservationsCalendarRoute() {
 				<CardContent>
 					{loadingCalendar ? (
 						<div
-							className="text-muted-foreground py-12 text-center text-sm"
+							className="grid grid-cols-7 gap-2"
 							data-testid="calendar-loading"
+							aria-busy="true"
 						>
-							<Trans>Loading monthly calendar…</Trans>
+							{Array.from({ length: 35 }, (_unused, i) => (
+								<Skeleton key={i} className="min-h-24" />
+							))}
 						</div>
 					) : (
 						<div className="flex flex-col gap-2">
@@ -402,7 +438,7 @@ export default function ReservationsCalendarRoute() {
 											data-closed={cell.isClosed ? 'true' : 'false'}
 											data-covers={cell.totalCovers}
 											data-parties={cell.totalParties}
-											className={`group flex min-h-24 cursor-pointer flex-col justify-between rounded-lg border p-2 text-left transition ${
+											className={`group flex min-h-24 cursor-pointer flex-col justify-between rounded-lg border p-2 text-start transition ${
 												isSelectedDate
 													? 'border-primary bg-primary/5 ring-primary/30 ring-2'
 													: cell.isClosed
@@ -428,7 +464,6 @@ export default function ReservationsCalendarRoute() {
 													{cell.isClosed ? (
 														<Badge
 															variant="destructive"
-															className="px-1.5 py-0 text-[10px]"
 															data-testid={`calendar-day-closed-${cell.date}`}
 														>
 															<Trans>Closed</Trans>
@@ -436,8 +471,7 @@ export default function ReservationsCalendarRoute() {
 													) : null}
 													{!cell.isClosed && isSpecial ? (
 														<Badge
-															variant="outline"
-															className="border-amber-500/40 bg-amber-500/15 px-1.5 py-0 text-[10px] text-amber-800 dark:text-amber-300"
+															variant="warning"
 															data-testid={`calendar-day-special-${cell.date}`}
 														>
 															{cell.specialLabel ?? cell.specialKind}
@@ -448,7 +482,7 @@ export default function ReservationsCalendarRoute() {
 
 											{cell.isClosed && cell.specialLabel ? (
 												<p
-													className="text-muted-foreground truncate text-[11px]"
+													className="text-muted-foreground truncate text-xs"
 													title={cell.specialLabel}
 													data-testid={`calendar-day-special-${cell.date}`}
 												>
@@ -466,7 +500,7 @@ export default function ReservationsCalendarRoute() {
 														<Trans>covers</Trans>
 													</span>
 													<span
-														className="text-muted-foreground text-[11px]"
+														className="text-muted-foreground text-xs"
 														data-testid={`calendar-day-parties-${cell.date}`}
 													>
 														<span dir="ltr">{cell.totalParties}</span>{' '}
@@ -480,9 +514,9 @@ export default function ReservationsCalendarRoute() {
 														<div
 															className={`h-full rounded-full transition-all ${
 																cell.pacingPct >= 85
-																	? 'bg-amber-500'
+																	? 'bg-warning'
 																	: cell.pacingPct > 0
-																		? 'bg-emerald-500'
+																		? 'bg-primary'
 																		: 'bg-transparent'
 															}`}
 															style={{

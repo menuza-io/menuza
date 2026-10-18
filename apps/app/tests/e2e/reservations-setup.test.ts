@@ -652,10 +652,11 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		await expect(page.getByTestId('setup-general-save-success')).toBeVisible()
 
 		// 4. Switch to Areas, Tables & Combos tab
-		await page.getByTestId('setup-tab-tables').click()
+		await page.getByTestId('setup-group-floor').click()
 		await expect(page.getByTestId('setup-tables-page')).toBeVisible()
 
 		// Create Dining Area
+		await page.getByTestId('setup-open-add-area').click()
 		await page.getByTestId('setup-area-name-input').fill('Rooftop Terrace')
 		await page.getByTestId('setup-add-area-button').click()
 		await expect(
@@ -663,18 +664,22 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		).toBeVisible()
 
 		// Create Table
+		await page.getByTestId('setup-open-add-table').click()
 		await page.getByTestId('setup-table-label-input').fill('T10')
 		await page.getByTestId('setup-add-table-button').click()
 		await expect(page.getByTestId('setup-table-row-T10')).toBeVisible()
 
-		// Duplicate table label returns 409 error banner
+		// Duplicate table label returns 409 error banner (inside the sheet)
+		await page.getByTestId('setup-open-add-table').click()
 		await page.getByTestId('setup-table-label-input').fill('T10')
 		await page.getByTestId('setup-add-table-button').click()
 		await expect(page.getByTestId('setup-tables-error-banner')).toContainText(
 			'T10',
 		)
+		await page.keyboard.press('Escape')
 
 		// Create Table Combination
+		await page.getByTestId('setup-open-add-combo').click()
 		await page.getByTestId('setup-combo-name-input').fill('T1 + T2 Combo')
 		await page.getByTestId('setup-combo-pick-T1').click()
 		await page.getByTestId('setup-combo-pick-T2').click()
@@ -684,16 +689,18 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		).toBeVisible()
 
 		// 5. Switch to Services, Turn Times & Pacing tab
-		await page.getByTestId('setup-tab-services').click()
+		await page.getByTestId('setup-group-services').click()
 		await expect(page.getByTestId('setup-services-page')).toBeVisible()
 		await expect(page.getByTestId('turn-times-contiguous-badge')).toBeVisible()
 
+		await page.getByTestId('setup-new-service-button').click()
 		await page.getByTestId('setup-service-name-input').fill('Weekend Brunch')
 		await page.getByTestId('setup-add-service-button').click()
 		await expect(
 			page.getByTestId('setup-service-row-Weekend Brunch'),
 		).toBeVisible()
 
+		await page.getByTestId('setup-section-pacing-toggle').click()
 		await page.getByTestId('setup-add-pacing-button').click()
 		await expect(page.getByTestId('setup-pacing-row-15')).toBeVisible()
 
@@ -701,6 +708,7 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		await page.getByTestId('setup-tab-special-days').click()
 		await expect(page.getByTestId('setup-special-days-page')).toBeVisible()
 
+		await page.getByTestId('setup-open-special-day-sheet').click()
 		await page
 			.getByTestId('setup-special-day-name-input')
 			.fill('Private Buyout')
@@ -709,6 +717,7 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 			page.getByTestId('setup-special-days-feedback-banner'),
 		).toBeVisible()
 
+		await page.getByTestId('setup-open-block-sheet').click()
 		await page.getByTestId('setup-block-note-input').fill('AC maintenance')
 		await page.getByTestId('setup-add-block-button').click()
 		await expect(page.getByText('AC maintenance')).toBeVisible()
@@ -821,6 +830,7 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		await expect(page.getByTestId('setup-general-loading')).toHaveCount(0)
 		await expect(page.getByTestId('setup-save-general-button')).toBeDisabled()
 
+		await page.getByTestId('setup-group-floor').click()
 		await page.getByTestId('setup-tab-floor-plan').click()
 		await expect(page.getByTestId('floor-plan-save-button')).toBeDisabled()
 	})

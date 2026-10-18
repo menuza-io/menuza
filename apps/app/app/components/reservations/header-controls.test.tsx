@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { fireEvent, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import {
 	ReservationsHeaderControls,
@@ -22,7 +22,7 @@ describe('reservationsHeaderShowsDate', () => {
 		['/acme/reservations/floor', true],
 		['/acme/reservations/calendar', true],
 		['/acme/reservations/overview', true],
-		['/acme/reservations/waitlist', true],
+		['/acme/reservations/waitlist', false],
 		['/acme/reservations/guests', false],
 		['/acme/reservations/guests/g-1', false],
 		['/acme/reservations/reports', false],
@@ -35,55 +35,31 @@ describe('reservationsHeaderShowsDate', () => {
 })
 
 describe('ReservationsHeaderControls', () => {
-	it('keeps Location and hides Date on the guests and reports routes', () => {
+	it('renders nothing for a single location', () => {
+		const { container } = renderStaff(
+			<ReservationsHeaderControls
+				locations={locations.slice(0, 1)}
+				selectedLocationId="loc-1"
+				onChange={vi.fn()}
+			/>,
+		)
+		expect(container.textContent).toBe('')
+	})
+
+	it('shows the Location picker for several locations and never a date or service', () => {
 		renderStaff(
 			<ReservationsHeaderControls
 				locations={locations}
 				selectedLocationId="loc-1"
-				selectedDate="2026-10-20"
-				showDate={reservationsHeaderShowsDate(
-					'/acme/reservations/guests',
-					'acme',
-				)}
 				onChange={vi.fn()}
 			/>,
 		)
 		expect(screen.getByLabelText('Location')).toBeTruthy()
 		expect(screen.queryByLabelText('Date')).toBeNull()
-	})
-
-	it('shows Date on a host view and reports changes', () => {
-		const onChange = vi.fn()
-		renderStaff(
-			<ReservationsHeaderControls
-				locations={locations}
-				selectedLocationId="loc-1"
-				selectedDate="2026-10-20"
-				showDate
-				onChange={onChange}
-			/>,
-		)
-		fireEvent.change(screen.getByLabelText('Date'), {
-			target: { value: '2026-10-21' },
-		})
-		expect(onChange).toHaveBeenCalledWith('date', '2026-10-21')
-		fireEvent.change(screen.getByLabelText('Location'), {
-			target: { value: 'loc-2' },
-		})
-		expect(onChange).toHaveBeenCalledWith('locationId', 'loc-2')
-	})
-
-	it('has no Service control: the header never writes a made-up service id', () => {
-		renderStaff(
-			<ReservationsHeaderControls
-				locations={locations}
-				selectedLocationId="loc-1"
-				selectedDate="2026-10-20"
-				showDate
-				onChange={vi.fn()}
-			/>,
-		)
 		expect(screen.queryByLabelText('Service')).toBeNull()
+	})
+
+	it('has no made-up service id in the layout', () => {
 		const layout = readFileSync(
 			path.resolve(
 				import.meta.dirname,

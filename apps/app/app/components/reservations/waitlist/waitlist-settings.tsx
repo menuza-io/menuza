@@ -1,18 +1,20 @@
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Alert, AlertDescription } from '@repo/ui/alert'
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@repo/ui/card'
+	Frame,
+	FrameDescription,
+	FrameHeader,
+	FramePanel,
+	FrameTitle,
+} from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
+import { Skeleton } from '@repo/ui/skeleton'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { SettingsSaveBar } from '#app/components/reservations/settings/save-bar.tsx'
+import { SwitchRow } from '#app/components/reservations/settings/settings-fields.tsx'
+import { TextField } from '#app/components/staff/controls.tsx'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import {
 	extractApiErrorMessage,
@@ -109,6 +111,13 @@ export function WaitlistSettingsScreen({
 		setDraft((prev) => (prev ? { ...prev, ...patch } : prev))
 	}
 
+	const discard = () => {
+		if (!saved) return
+		setDraft(draftFor(saved))
+		setFormError(null)
+		setSuccess(false)
+	}
+
 	const reloadAfterConflict = async () => {
 		setConflict(false)
 		setFormError(null)
@@ -175,20 +184,26 @@ export function WaitlistSettingsScreen({
 
 	if (loading && !draft) {
 		return (
-			<Card data-testid="waitlist-settings-loading">
-				<CardContent className="text-muted-foreground py-8">
-					<Trans>Loading waitlist settings...</Trans>
-				</CardContent>
-			</Card>
+			<div
+				className="flex flex-col gap-4"
+				data-testid="waitlist-settings-loading"
+				role="status"
+				aria-label={t`Loading waitlist settings`}
+			>
+				<Skeleton className="h-56 w-full rounded-xl" />
+			</div>
 		)
 	}
 
 	if (!draft || !saved) {
 		return (
-			<Card data-testid="waitlist-settings-error">
-				<CardContent className="flex flex-col gap-3 py-8">
-					<p className="text-destructive font-medium">{loadError}</p>
-					<div>
+			<Alert variant="destructive" data-testid="waitlist-settings-error">
+				<AlertTitle>
+					<Trans>Could not load the waitlist settings</Trans>
+				</AlertTitle>
+				<AlertDescription>
+					<div className="flex flex-col items-start gap-3">
+						<span>{loadError}</span>
 						<Button
 							type="button"
 							variant="outline"
@@ -198,40 +213,39 @@ export function WaitlistSettingsScreen({
 							<Trans>Retry</Trans>
 						</Button>
 					</div>
-				</CardContent>
-			</Card>
+				</AlertDescription>
+			</Alert>
 		)
 	}
 
 	return (
 		<form
 			onSubmit={(event) => void handleSubmit(event)}
-			className="flex flex-col gap-4"
+			className="flex flex-col gap-6"
 			data-testid="waitlist-settings-form"
 		>
 			{conflict ? (
-				<div
-					role="alert"
-					className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/15 p-4 text-sm"
-					data-testid="waitlist-settings-conflict"
-				>
-					<span className="font-medium">
+				<Alert variant="destructive" data-testid="waitlist-settings-conflict">
+					<Icon name="alert-triangle" />
+					<AlertTitle>
 						<Trans>
 							These settings were changed by someone else. Your changes were not
 							saved. Reload to see the latest version.
 						</Trans>
-					</span>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => void reloadAfterConflict()}
-						data-testid="waitlist-settings-reload"
-					>
-						<Icon name="refresh-cw" className="size-3.5" />
-						<Trans>Reload latest settings</Trans>
-					</Button>
-				</div>
+					</AlertTitle>
+					<AlertDescription>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() => void reloadAfterConflict()}
+							data-testid="waitlist-settings-reload"
+						>
+							<Icon name="refresh-cw" />
+							<Trans>Reload latest settings</Trans>
+						</Button>
+					</AlertDescription>
+				</Alert>
 			) : null}
 
 			{formError ? (
@@ -240,185 +254,142 @@ export function WaitlistSettingsScreen({
 				</Alert>
 			) : null}
 
+			<Frame>
+				<FrameHeader>
+					<FrameTitle>
+						<Trans>Waitlist</Trans>
+					</FrameTitle>
+					<FrameDescription>
+						<Trans>
+							Control the walk-in queue and whether guests can join it online.
+						</Trans>
+					</FrameDescription>
+				</FrameHeader>
+				<FramePanel className="flex flex-col gap-2">
+					<SwitchRow
+						testId="waitlist-setting-enabled"
+						checked={draft.waitlistEnabled}
+						disabled={!canWrite}
+						onCheckedChange={(checked) => update({ waitlistEnabled: checked })}
+						label={<Trans>Waitlist enabled</Trans>}
+						description={
+							<Trans>
+								Let the host stand keep a live queue for this location.
+							</Trans>
+						}
+					/>
+					<SwitchRow
+						testId="waitlist-setting-online"
+						checked={draft.waitlistOnline}
+						disabled={!canWrite}
+						onCheckedChange={(checked) => update({ waitlistOnline: checked })}
+						label={<Trans>Guests can join online</Trans>}
+						description={
+							<Trans>
+								Show a join button on your website. Online booking must also be
+								on for the button to appear.
+							</Trans>
+						}
+					/>
+					<SwitchRow
+						testId="waitlist-setting-notify-me"
+						checked={draft.notifyMeEnabled}
+						disabled={!canWrite}
+						onCheckedChange={(checked) => update({ notifyMeEnabled: checked })}
+						label={<Trans>Notify me when a table opens</Trans>}
+						description={
+							<Trans>
+								When a time is full, guests can ask to be told if it frees up.
+							</Trans>
+						}
+					/>
+				</FramePanel>
+			</Frame>
+
+			<Frame>
+				<FrameHeader>
+					<FrameTitle>
+						<Trans>Offers and limits</Trans>
+					</FrameTitle>
+					<FrameDescription>
+						<Trans>
+							How long guests have to answer a table-ready message, and how long
+							the line can get.
+						</Trans>
+					</FrameDescription>
+				</FrameHeader>
+				<FramePanel className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+					<TextField
+						id="waitlist-setting-response-min"
+						type="number"
+						inputMode="numeric"
+						min={MIN_RESPONSE}
+						max={MAX_RESPONSE}
+						label={<Trans>Answer window (minutes)</Trans>}
+						hint={
+							<Trans>
+								After a table-ready message, the party has this long to answer
+								before the offer expires.
+							</Trans>
+						}
+						value={draft.responseMin}
+						disabled={!canWrite}
+						onChange={(event) => update({ responseMin: event.target.value })}
+						data-testid="waitlist-setting-response-min"
+					/>
+					<TextField
+						id="waitlist-setting-max-parties"
+						type="number"
+						inputMode="numeric"
+						min={1}
+						max={MAX_PARTIES}
+						optional
+						label={<Trans>Party limit</Trans>}
+						hint={
+							<Trans>
+								Most parties allowed in line at once. Guests joining online are
+								turned away when it is full. The host stand can still add
+								walk-ins.
+							</Trans>
+						}
+						value={draft.maxParties}
+						disabled={!canWrite}
+						placeholder={t`No limit`}
+						onChange={(event) => update({ maxParties: event.target.value })}
+						data-testid="waitlist-setting-max-parties"
+					/>
+				</FramePanel>
+			</Frame>
+
 			{success ? (
-				<div
+				<p
 					role="status"
-					className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200"
+					className="text-success flex items-center gap-2 text-sm"
 					data-testid="waitlist-settings-saved"
 				>
+					<Icon name="check-circle" className="size-4" />
 					<Trans>Waitlist settings saved.</Trans>
-				</div>
+				</p>
 			) : null}
 
-			<Card>
-				<CardHeader>
-					<CardTitle>
-						<Trans>Waitlist</Trans>
-					</CardTitle>
-					<CardDescription>
-						<Trans>
-							Control the walk-in queue, whether guests can join it online, and
-							how long they have to answer a table-ready message.
-						</Trans>
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="flex flex-col gap-5">
-					<div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-						<ToggleCard
-							testId="waitlist-setting-enabled"
-							checked={draft.waitlistEnabled}
-							disabled={!canWrite}
-							onChange={(checked) => update({ waitlistEnabled: checked })}
-							title={<Trans>Waitlist enabled</Trans>}
-							description={
-								<Trans>
-									Let the host stand keep a live queue for this location.
-								</Trans>
-							}
-						/>
-						<ToggleCard
-							testId="waitlist-setting-online"
-							checked={draft.waitlistOnline}
-							disabled={!canWrite}
-							onChange={(checked) => update({ waitlistOnline: checked })}
-							title={<Trans>Guests can join online</Trans>}
-							description={
-								<Trans>
-									Show a join button on your website. Online booking must also
-									be on for the button to appear.
-								</Trans>
-							}
-						/>
-						<ToggleCard
-							testId="waitlist-setting-notify-me"
-							checked={draft.notifyMeEnabled}
-							disabled={!canWrite}
-							onChange={(checked) => update({ notifyMeEnabled: checked })}
-							title={<Trans>Notify me when a table opens</Trans>}
-							description={
-								<Trans>
-									When a time is full, guests can ask to be told if it frees up.
-								</Trans>
-							}
-						/>
-					</div>
-
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="waitlist-setting-response-min">
-								<Trans>Answer window (minutes)</Trans>
-							</Label>
-							<Input
-								id="waitlist-setting-response-min"
-								type="number"
-								min={MIN_RESPONSE}
-								max={MAX_RESPONSE}
-								value={draft.responseMin}
-								disabled={!canWrite}
-								onChange={(event) =>
-									update({ responseMin: event.target.value })
-								}
-								className="w-32"
-								data-testid="waitlist-setting-response-min"
-							/>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									After a table-ready message, the party has this long to answer
-									before the offer expires.
-								</Trans>
-							</p>
-						</div>
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="waitlist-setting-max-parties">
-								<Trans>Party limit (optional)</Trans>
-							</Label>
-							<Input
-								id="waitlist-setting-max-parties"
-								type="number"
-								min={1}
-								max={MAX_PARTIES}
-								value={draft.maxParties}
-								disabled={!canWrite}
-								placeholder={t`No limit`}
-								onChange={(event) => update({ maxParties: event.target.value })}
-								className="w-32"
-								data-testid="waitlist-setting-max-parties"
-							/>
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Most parties allowed in line at once. Guests joining online
-									are turned away when it is full. The host stand can still add
-									walk-ins.
-								</Trans>
-							</p>
-						</div>
-					</div>
-
-					{canWrite ? (
-						<div className="flex items-center gap-3">
-							<Button
-								type="submit"
-								disabled={!dirty || saving}
-								data-testid="waitlist-settings-save"
-							>
-								{saving ? (
-									<Trans>Saving...</Trans>
-								) : (
-									<Trans>Save changes</Trans>
-								)}
-							</Button>
-							{dirty ? (
-								<span
-									className="text-muted-foreground text-xs"
-									data-testid="waitlist-settings-dirty"
-								>
-									<Trans>You have unsaved changes.</Trans>
-								</span>
-							) : null}
-						</div>
-					) : (
-						<p
-							className="text-muted-foreground text-xs"
-							data-testid="waitlist-settings-read-only"
-						>
-							<Trans>You can view these settings but not change them.</Trans>
-						</p>
-					)}
-				</CardContent>
-			</Card>
+			{canWrite ? (
+				<SettingsSaveBar
+					persistent
+					submit
+					dirty={dirty}
+					pending={saving}
+					onDiscard={discard}
+					saveTestId="waitlist-settings-save"
+					dirtyTestId={dirty ? 'waitlist-settings-dirty' : undefined}
+				/>
+			) : (
+				<p
+					className="text-muted-foreground text-sm"
+					data-testid="waitlist-settings-read-only"
+				>
+					<Trans>You can view these settings but not change them.</Trans>
+				</p>
+			)}
 		</form>
-	)
-}
-
-function ToggleCard({
-	testId,
-	checked,
-	disabled,
-	onChange,
-	title,
-	description,
-}: {
-	testId: string
-	checked: boolean
-	disabled: boolean
-	onChange: (checked: boolean) => void
-	title: React.ReactNode
-	description: React.ReactNode
-}) {
-	return (
-		<label className="border-border flex items-start gap-3 rounded-lg border p-3 text-sm">
-			<input
-				type="checkbox"
-				className="mt-0.5"
-				checked={checked}
-				disabled={disabled}
-				onChange={(event) => onChange(event.target.checked)}
-				data-testid={testId}
-			/>
-			<div>
-				<div className="text-foreground font-medium">{title}</div>
-				<div className="text-muted-foreground text-xs">{description}</div>
-			</div>
-		</label>
 	)
 }

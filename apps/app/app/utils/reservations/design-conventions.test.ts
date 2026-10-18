@@ -16,15 +16,48 @@ const FILES = [
 	'components/reservations/payment-badge.tsx',
 	'components/reservations/payment-panel.tsx',
 	'components/reservations/header-controls.tsx',
+	'components/reservations/host-subnav.tsx',
+	'components/reservations/date-stepper.tsx',
+	'components/reservations/shell-context.tsx',
+	'components/reservations/reservations-chrome.tsx',
+	'utils/reservations/shell-routes.ts',
+	'routes/_app+/$orgSlug_+/reservations+/_layout.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/settings.tsx',
 	'components/reservations/policies/policies-screen.tsx',
 	'components/reservations/policies/policy-sheet.tsx',
 	'components/reservations/experiences/experiences-screen.tsx',
 	'components/reservations/experiences/experience-create-sheet.tsx',
 	'components/reservations/experiences/experience-editor.tsx',
 	'components/reservations/experiences/schedule-sheet.tsx',
+	'components/reservations/floor-plan-canvas.tsx',
+	'components/reservations/floor-plan-editor/editor-fields.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/settings.floor-plan.tsx',
 	'routes/_app+/$orgSlug_+/reservations+/settings.policies.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx',
+	'components/reservations/settings/setup-list-chrome.tsx',
+	'components/reservations/messages/message-settings.tsx',
+	'components/reservations/messages/message-preview.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx',
 	'routes/_app+/$orgSlug_+/reservations+/experiences.tsx',
 	'routes/_app+/$orgSlug_+/reservations+/experiences.$id.tsx',
+	'components/reservations/status-style.tsx',
+	'components/reservations/floor-table.tsx',
+	'components/reservations/today-party-card.tsx',
+	'components/reservations/use-host-stand.ts',
+	'components/reservations/use-host-transitions.ts',
+	'components/reservations/waitlist/today-waitlist-card.tsx',
+	'components/dashboard/blocks/bookings-today-block.tsx',
+	'hooks/use-reservations-poll.ts',
+	'utils/reservations/floor-state.ts',
+	'utils/reservations/host-actions.ts',
+	'utils/reservations/host-errors.ts',
+	'routes/_app+/$orgSlug_+/reservations+/today.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/floor.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/timeline.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/calendar.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/overview.tsx',
+	'routes/_app+/$orgSlug_+/reservations+/book.tsx',
 ]
 
 const RAW_COLOR =
@@ -43,13 +76,9 @@ describe('payments and experiences UI follows the design conventions', () => {
 			expect(source).not.toMatch(TINY_TEXT)
 			expect(source).not.toMatch(PHYSICAL)
 		})
-		// The layout header controls are the existing header markup, moved as is.
-		it.skipIf(file.endsWith('header-controls.tsx'))(
-			`${file}: no native select, checkbox or table`,
-			() => {
-				expect(source).not.toMatch(/<select\b|<table\b|type="checkbox"/)
-			},
-		)
+		it(`${file}: no native select, checkbox or table`, () => {
+			expect(source).not.toMatch(/<select\b|<table\b|type="checkbox"/)
+		})
 		it(`${file}: no hard-coded locale`, () => {
 			expect(source).not.toMatch(/en-GB|en-US/)
 		})

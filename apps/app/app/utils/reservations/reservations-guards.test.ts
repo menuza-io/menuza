@@ -142,8 +142,13 @@ describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)',
 		const layoutSource = read(
 			path.join(APP_DIR, 'components/reservations/header-controls.tsx'),
 		)
+		expect(
+			read(
+				path.join(APP_DIR, 'components/reservations/reservations-chrome.tsx'),
+			),
+		).toMatch(/ReservationsHeaderControls/)
 		expect(read(path.join(RESERVATIONS_ROUTES, '_layout.tsx'))).toMatch(
-			/ReservationsHeaderControls/,
+			/ReservationsChrome/,
 		)
 		expect(layoutSource).toMatch(
 			/locations\.length\s*>\s*1\s*\?[\s\S]*?reservations-location-select/,

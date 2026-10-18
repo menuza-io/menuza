@@ -2,17 +2,33 @@ import { type MessageDescriptor } from '@lingui/core'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card } from '@repo/ui/card'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@repo/ui/dropdown-menu'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
+import { Skeleton } from '@repo/ui/skeleton'
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@repo/ui/table'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
-import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
@@ -22,14 +38,21 @@ import {
 	RequestsTabs,
 	type ReservationsViewTab,
 } from '#app/components/reservations/requests-panel.tsx'
+import {
+	reservationStatusStyle,
+	StatusLabel,
+} from '#app/components/reservations/status-style.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
+import { useHostTransitions } from '#app/components/reservations/use-host-transitions.ts'
 import { useReservationRequests } from '#app/components/reservations/use-reservation-requests.ts'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
+import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import {
-	transitionReservationStatus,
-	undoReservationTransition,
-} from '#app/utils/reservations/book-api.ts'
+	HOST_ACTION_LABELS,
+	hostActionsFor,
+} from '#app/utils/reservations/host-actions.ts'
+import { hostLoadErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import {
 	CHANNEL_LABELS,
 	CONTACT_STATUS_LABELS,
@@ -38,10 +61,10 @@ import {
 	DIETARY_LABELS,
 	enumLabel,
 	OCCASION_LABELS,
-	RESERVATION_STATUS_LABELS,
 	SOURCE_FILTER_OPTIONS,
 	stripTagPrefix,
 	TAG_LABELS,
+	RESERVATION_STATUS_LABELS,
 	VIP_TIER_LABELS,
 } from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
@@ -82,12 +105,21 @@ type BookStatusFilter =
 	| 'unassigned'
 	| 'conflict'
 
+const ACTION_TEST_ID: Record<string, string> = {
+	arrive: 'book-arrive',
+	seat: 'book-seat',
+	finish: 'book-complete',
+}
+
+const ALL = 'all'
+
 export default function ReservationsBookRoute() {
 	const { t, i18n } = useLingui()
+	const tx = (d: MessageDescriptor) => i18n._(d)
 	const label = (
 		labels: Record<string, MessageDescriptor>,
 		value: string | null | undefined,
-	) => enumLabel((d) => i18n._(d), labels, value)
+	) => enumLabel(tx, labels, value)
 	const { orgSlug, canManage } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -104,14 +136,6 @@ export default function ReservationsBookRoute() {
 	const [view, setView] = useState<ReservationsViewTab>('reservations')
 	const [searchQuery, setSearchQuery] = useState('')
 	const [statusFilter, setStatusFilter] = useState<BookStatusFilter>('all')
-	const [busyId, setBusyId] = useState<string | null>(null)
-	const [actionError, setActionError] = useState<string | null>(null)
-	const [lastUndo, setLastUndo] = useState<{
-		reservationId: string
-		guestName: string
-		status: string
-		undoToken: string | null
-	} | null>(null)
 
 	const dayFeed = host.dayFeed
 	const reservations = useMemo(
@@ -124,6 +148,14 @@ export default function ReservationsBookRoute() {
 		locationId,
 		reservations,
 		onMutated: host.handleReservationMutated,
+	})
+
+	const transitions = useHostTransitions({
+		client: host.client,
+		reservations,
+		resetKey: `${locationId}:${host.businessDate}`,
+		onMutated: host.handleReservationMutated,
+		onFailed: () => void host.refresh(),
 	})
 
 	const filteredReservations = useMemo(() => {
@@ -179,60 +211,7 @@ export default function ReservationsBookRoute() {
 		}
 	}, [filteredReservations])
 
-	const handleQuickStatus = async (
-		reservationId: string,
-		guestName: string,
-		to: string,
-	) => {
-		setBusyId(reservationId)
-		setActionError(null)
-		try {
-			const current = reservations.find((r) => r.id === reservationId)
-			const res = await transitionReservationStatus(
-				host.client,
-				reservationId,
-				{
-					to,
-					...(current?.version ? { expectedVersion: current.version } : {}),
-				},
-			)
-			setLastUndo({
-				reservationId,
-				guestName,
-				status: to,
-				undoToken: res.undoToken,
-			})
-			host.handleReservationMutated(res.reservation, res.moveNotices)
-		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : t`Status transition failed.`,
-			)
-		} finally {
-			setBusyId(null)
-		}
-	}
-
-	const handleQuickUndo = async () => {
-		if (!lastUndo) return
-		setBusyId(lastUndo.reservationId)
-		setActionError(null)
-		try {
-			const current = reservations.find((r) => r.id === lastUndo.reservationId)
-			const res = await undoReservationTransition(
-				host.client,
-				lastUndo.reservationId,
-				lastUndo.undoToken,
-				current?.version,
-			)
-			setLastUndo(null)
-			host.handleReservationMutated(res.reservation, [])
-		} catch (err) {
-			setActionError(err instanceof Error ? err.message : t`Undo failed.`)
-		} finally {
-			setBusyId(null)
-		}
-	}
-
+	const lastUndo = transitions.lastUndo
 	const lastUndoStatusLabel = label(RESERVATION_STATUS_LABELS, lastUndo?.status)
 
 	const statusFilters: Array<{ key: BookStatusFilter; label: string }> = [
@@ -243,9 +222,37 @@ export default function ReservationsBookRoute() {
 		{ key: 'completed', label: t`Completed` },
 		{ key: 'unassigned', label: t`Unassigned` },
 		{ key: 'conflict', label: t`Conflicts` },
-		{ key: 'no_show', label: t`No-Show` },
+		{ key: 'no_show', label: t`No-show` },
 		{ key: 'cancelled', label: t`Cancelled` },
 	]
+
+	const sourceOptions = [
+		{ value: ALL, label: t`All sources` },
+		...SOURCE_FILTER_OPTIONS.map((source) => ({
+			value: source,
+			label: label(CHANNEL_LABELS, source),
+		})),
+	]
+	const tagOptions = [
+		{ value: ALL, label: t`All tags` },
+		...(dayFeed?.tags ?? []).map((tag) => ({
+			value: tag.id,
+			label: TAG_LABELS[stripTagPrefix(tag.id)]
+				? label(TAG_LABELS, tag.id)
+				: tag.name,
+		})),
+	]
+
+	const filtersActive = statusFilter !== 'all' || searchQuery.trim() !== ''
+	const loadFailure =
+		host.poll.error && !dayFeed
+			? hostLoadErrorMessage(
+					{ status: host.poll.errorStatus, code: host.poll.errorCode },
+					tx,
+				)
+			: null
+	const loading = !dayFeed && host.poll.loading
+	const errorText = transitions.error ?? requests.error ?? loadFailure
 
 	return (
 		<div className="flex flex-col gap-4" data-testid="reservations-book-view">
@@ -273,10 +280,23 @@ export default function ReservationsBookRoute() {
 				serviceNotes={dayFeed?.serviceNotes ?? []}
 			/>
 
-			{host.poll.error || actionError || requests.error ? (
+			{errorText ? (
 				<Alert variant="destructive" data-testid="book-error-banner">
 					<AlertDescription>
-						{actionError ?? requests.error ?? host.poll.error}
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<span>{errorText}</span>
+							{loadFailure && !host.poll.accessDenied ? (
+								<Button
+									type="button"
+									size="sm"
+									variant="outline"
+									className="h-11 md:h-8"
+									onClick={() => void host.poll.refresh({ force: true })}
+								>
+									<Trans>Try again</Trans>
+								</Button>
+							) : null}
+						</div>
 					</AlertDescription>
 				</Alert>
 			) : null}
@@ -286,32 +306,6 @@ export default function ReservationsBookRoute() {
 				onValueChange={setView}
 				pendingCount={requests.pending.length}
 			/>
-
-			{lastUndo ? (
-				<div
-					className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
-					data-testid="book-undo-banner"
-				>
-					<span>
-						<Trans>
-							Changed {lastUndo.guestName} to {lastUndoStatusLabel}. Undo
-							available for 60 seconds.
-						</Trans>
-					</span>
-					<Button
-						type="button"
-						size="xs"
-						variant="outline"
-						onClick={handleQuickUndo}
-						data-testid="book-undo-btn"
-					>
-						<Icon name="undo-2" className="size-3.5" />
-						<span>
-							<Trans>Undo</Trans>
-						</span>
-					</Button>
-				</div>
-			) : null}
 
 			{view === 'requests' ? (
 				<RequestsPanel
@@ -327,370 +321,373 @@ export default function ReservationsBookRoute() {
 
 			{view === 'reservations' ? (
 				<>
-					{/* Filter & Search Bar */}
-					<Card
-						className="flex flex-col gap-3 p-3"
-						data-testid="book-filter-bar"
-					>
+					<div className="flex flex-col gap-3" data-testid="book-filter-bar">
 						<div className="flex flex-wrap items-center justify-between gap-2">
-							<div className="relative w-full sm:max-w-xs">
-								<Input
-									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
-									placeholder={t`Search guest, phone, code, table...`}
-									className="h-8 text-xs"
-									data-testid="book-search-input"
-								/>
-							</div>
-
+							<Input
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								placeholder={t`Search guest, phone, code, table...`}
+								aria-label={t`Search reservations`}
+								className="w-full sm:max-w-xs"
+								data-testid="book-search-input"
+							/>
 							<div
-								className="text-muted-foreground flex items-center gap-3 text-xs"
+								className="text-muted-foreground flex items-center gap-3 text-sm"
 								data-testid="book-counters"
 							>
 								<span data-testid="book-counter-parties">
 									<Trans>Parties</Trans>:{' '}
-									<strong className="text-foreground">
+									<strong className="text-foreground tabular-nums">
 										{counters.parties}
 									</strong>
 								</span>
 								<span data-testid="book-counter-covers">
 									<Trans>Covers</Trans>:{' '}
-									<strong className="text-foreground">{counters.covers}</strong>
+									<strong className="text-foreground tabular-nums">
+										{counters.covers}
+									</strong>
 								</span>
-							</div>
-
-							<div className="flex flex-wrap items-center gap-1">
-								{statusFilters.map((f) => (
-									<Button
-										key={f.key}
-										type="button"
-										size="xs"
-										variant={statusFilter === f.key ? 'default' : 'outline'}
-										onClick={() => setStatusFilter(f.key)}
-										data-testid={`book-status-filter-${f.key}`}
-									>
-										{f.label}
-									</Button>
-								))}
 							</div>
 						</div>
 
 						<div className="flex flex-wrap items-center gap-2">
-							<Label htmlFor="book-source-filter" className="text-xs">
-								<Trans>Source</Trans>
-							</Label>
-							<select
-								id="book-source-filter"
-								value={host.selectedSource ?? ''}
-								onChange={(e) => host.setSource(e.target.value || null)}
-								className="border-input bg-background h-8 rounded-md border px-2 text-xs"
-								data-testid="book-source-filter"
+							<ToggleGroup
+								variant="segmented"
+								aria-label={t`Filter by status`}
+								className="flex-wrap"
+								value={[statusFilter]}
+								onValueChange={(next) => {
+									const picked = next[0] as BookStatusFilter | undefined
+									if (picked) setStatusFilter(picked)
+								}}
 							>
-								<option value="">{t`All sources`}</option>
-								{SOURCE_FILTER_OPTIONS.map((source) => (
-									<option key={source} value={source}>
-										{label(CHANNEL_LABELS, source)}
-									</option>
+								{statusFilters.map((f) => (
+									<ToggleGroupItem
+										key={f.key}
+										value={f.key}
+										className="h-11 md:h-7"
+										data-testid={`book-status-filter-${f.key}`}
+									>
+										{f.label}
+									</ToggleGroupItem>
 								))}
-							</select>
-							<Label htmlFor="book-tag-filter" className="text-xs">
-								<Trans>Tag</Trans>
-							</Label>
-							<select
-								id="book-tag-filter"
-								value={host.selectedTag ?? ''}
-								onChange={(e) => host.setTag(e.target.value || null)}
-								className="border-input bg-background h-8 rounded-md border px-2 text-xs"
-								data-testid="book-tag-filter"
-							>
-								<option value="">{t`All tags`}</option>
-								{(dayFeed?.tags ?? []).map((tag) => (
-									<option key={tag.id} value={tag.id}>
-										{TAG_LABELS[stripTagPrefix(tag.id)]
-											? label(TAG_LABELS, tag.id)
-											: tag.name}
-									</option>
-								))}
-							</select>
+							</ToggleGroup>
+							<FilterSelect
+								label={t`Source`}
+								options={sourceOptions}
+								value={host.selectedSource ?? ALL}
+								onValueChange={(v) => host.setSource(v === ALL ? null : v)}
+								testId="book-source-filter"
+							/>
+							<FilterSelect
+								label={t`Tag`}
+								options={tagOptions}
+								value={host.selectedTag ?? ALL}
+								onValueChange={(v) => host.setTag(v === ALL ? null : v)}
+								testId="book-tag-filter"
+							/>
 						</div>
-					</Card>
+					</div>
 
-					{/* Reservations Table */}
-					<Card className="overflow-hidden">
-						<div className="overflow-x-auto">
-							<table
-								className="w-full border-collapse text-start text-xs"
-								data-testid="book-reservations-table"
-							>
-								<thead>
-									<tr className="bg-muted/50 border-b text-start font-medium">
-										<th className="px-3 py-2.5 text-start">
-											<Trans>Time</Trans>
-										</th>
-										<th className="px-3 py-2.5 text-start">
-											<Trans>Guest</Trans>
-										</th>
-										<th className="px-3 py-2.5 text-start">
-											<Trans>Party</Trans>
-										</th>
-										<th className="px-3 py-2.5 text-start">
-											<Trans>Table & Area</Trans>
-										</th>
-										<th className="px-3 py-2.5 text-start">
-											<Trans>Tags & Notes</Trans>
-										</th>
-										<th className="px-3 py-2.5 text-start">
-											<Trans>Status</Trans>
-										</th>
-										<th className="px-3 py-2.5 text-end">
-											<Trans>Actions</Trans>
-										</th>
-									</tr>
-								</thead>
-								<tbody className="divide-y">
-									{filteredReservations.length === 0 ? (
-										<tr>
-											<td
-												colSpan={7}
-												className="text-muted-foreground px-4 py-8 text-center"
-												data-testid="book-empty-state"
-											>
-												<Trans>
-													No reservations match the current filters for{' '}
-													{host.businessDate}.
-												</Trans>
-											</td>
-										</tr>
+					{loading ? (
+						<div
+							className="flex flex-col gap-2"
+							aria-busy="true"
+							data-testid="book-skeleton"
+						>
+							<Skeleton className="h-14" />
+							<Skeleton className="h-14" />
+							<Skeleton className="h-14" />
+							<Skeleton className="h-14" />
+						</div>
+					) : filteredReservations.length === 0 ? (
+						<div data-testid="book-empty-state">
+							<EmptyState
+								icons={['calendar']}
+								title={
+									filtersActive ? (
+										<Trans>No reservations match these filters</Trans>
 									) : (
-										filteredReservations.map((rsv) => (
-											<tr
+										<Trans>No reservations for this day yet</Trans>
+									)
+								}
+								description={<Trans>Showing {host.businessDate}.</Trans>}
+							>
+								{filtersActive ? (
+									<Button
+										variant="outline"
+										onClick={() => {
+											setStatusFilter('all')
+											setSearchQuery('')
+										}}
+									>
+										<Trans>Clear filters</Trans>
+									</Button>
+								) : canManage ? (
+									<Button onClick={() => host.openBookingSheet()}>
+										<Icon name="plus" />
+										<Trans>New reservation</Trans>
+									</Button>
+								) : null}
+							</EmptyState>
+						</div>
+					) : (
+						<Card className="overflow-hidden p-0">
+							<Table variant="card" data-testid="book-reservations-table">
+								<TableHeader>
+									<TableRow>
+										<TableHead>
+											<Trans>Time</Trans>
+										</TableHead>
+										<TableHead>
+											<Trans>Guest</Trans>
+										</TableHead>
+										<TableHead>
+											<Trans>Party</Trans>
+										</TableHead>
+										<TableHead>
+											<Trans>Table</Trans>
+										</TableHead>
+										<TableHead>
+											<Trans>Status</Trans>
+										</TableHead>
+										<TableHead className="text-end">
+											<Trans>Actions</Trans>
+										</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{filteredReservations.map((rsv) => {
+										const guest = rsv.guestName || t`Guest`
+										const style = reservationStatusStyle(rsv.status)
+										const { primary, secondary } = hostActionsFor(rsv.status, {
+											nowMs: host.liveNow.nowMs,
+											finishedAtMs: rsv.completedAt,
+										})
+										const note = rsv.guestNotes ?? rsv.internalNotes
+										const attention = rsv.hasConflict
+											? {
+													variant: 'destructive' as const,
+													text: rsv.conflictReason
+														? label(
+																DAY_CONFLICT_REASON_LABELS,
+																rsv.conflictReason,
+															)
+														: t`Conflict`,
+												}
+											: rsv.assignedTableLabels.length === 0 &&
+												  style.tone !== 'muted' &&
+												  style.tone !== 'destructive'
+												? { variant: 'warning' as const, text: t`Unassigned` }
+												: rsv.lateRisk
+													? { variant: 'warning' as const, text: t`Late risk` }
+													: null
+										const meta = [
+											rsv.guestPhone || null,
+											rsv.guest?.vipTier && rsv.guest.vipTier !== 'none'
+												? label(VIP_TIER_LABELS, rsv.guest.vipTier)
+												: null,
+											rsv.occasion
+												? label(OCCASION_LABELS, rsv.occasion)
+												: null,
+											...rsv.dietaryCodes.map((c) => label(DIETARY_LABELS, c)),
+											rsv.contactStatus && rsv.contactStatus !== 'none'
+												? label(CONTACT_STATUS_LABELS, rsv.contactStatus)
+												: null,
+										].filter(Boolean)
+										return (
+											<TableRow
 												key={rsv.id}
-												className="hover:bg-muted/30 cursor-pointer transition"
+												className="cursor-pointer"
 												onClick={() => host.openDetail(rsv.id)}
 												data-testid={`book-row-${rsv.id}`}
 											>
-												<td className="px-3 py-2.5 font-mono font-semibold whitespace-nowrap">
-													<div>{rsv.hhmm}</div>
-													<div className="text-muted-foreground font-sans text-[11px] font-normal">
-														{rsv.durationMin}m
+												<TableCell className="whitespace-nowrap tabular-nums">
+													<div className="font-semibold">{rsv.hhmm}</div>
+													<div className="text-muted-foreground text-xs">
+														{t`${rsv.durationMin} min`}
 													</div>
-												</td>
-
-												<td className="px-3 py-2.5">
-													<div className="flex flex-wrap items-center gap-1.5 font-semibold">
-														<span>{rsv.guestName}</span>
-														{rsv.guest?.vipTier &&
-														rsv.guest.vipTier !== 'none' ? (
-															<Badge variant="default">
-																{label(VIP_TIER_LABELS, rsv.guest.vipTier)}
-															</Badge>
-														) : null}
-														<Badge variant="outline" className="font-mono">
+												</TableCell>
+												<TableCell>
+													<div
+														className={cn(
+															'font-semibold wrap-anywhere',
+															style.strike && 'line-through',
+														)}
+													>
+														{guest}{' '}
+														<span className="text-muted-foreground font-mono text-xs font-normal">
 															#{rsv.confirmationCode}
-														</Badge>
+														</span>
 													</div>
-													<div className="text-muted-foreground">
-														{rsv.guestPhone || '—'}
-														{rsv.guest?.visitCount ? (
-															<span className="ms-2">
-																• {rsv.guest.visitCount} <Trans>visits</Trans>
+													{meta.length > 0 ? (
+														<div className="text-muted-foreground text-xs">
+															{meta.join(' · ')}
+														</div>
+													) : null}
+													{note ? (
+														<div className="text-muted-foreground line-clamp-1 max-w-xs text-xs">
+															{note}
+														</div>
+													) : null}
+												</TableCell>
+												<TableCell className="whitespace-nowrap">
+													<div className="font-semibold tabular-nums">
+														{rsv.partySize} <Trans>guests</Trans>
+													</div>
+													<div
+														className="text-muted-foreground text-xs"
+														data-testid={`book-row-channel-${rsv.id}`}
+													>
+														{label(CHANNEL_LABELS, rsv.channel)}
+													</div>
+												</TableCell>
+												<TableCell className="whitespace-nowrap">
+													<div data-testid={`book-row-table-${rsv.id}`}>
+														{rsv.assignedTableLabels.length > 0 ? (
+															rsv.assignedTableLabels.join(', ')
+														) : (
+															<span className="text-muted-foreground">—</span>
+														)}
+													</div>
+													<div className="text-muted-foreground text-xs">
+														{[rsv.areaName, rsv.serviceName]
+															.filter(Boolean)
+															.join(' · ')}
+													</div>
+												</TableCell>
+												<TableCell>
+													<div className="flex flex-col items-start gap-1">
+														<span data-testid={`book-row-status-${rsv.id}`}>
+															<StatusLabel status={rsv.status} />
+														</span>
+														{rsv.courseStage && rsv.status === 'seated' ? (
+															<span className="text-muted-foreground text-xs">
+																{label(COURSE_STAGE_LABELS, rsv.courseStage)}
 															</span>
 														) : null}
-													</div>
-												</td>
-
-												<td className="px-3 py-2.5 font-semibold whitespace-nowrap">
-													{rsv.partySize} <Trans>guests</Trans>
-													<div className="mt-0.5">
-														<ChannelBadge
-															channel={rsv.channel}
-															testId={`book-row-channel-${rsv.id}`}
-														/>
-													</div>
-												</td>
-
-												<td className="px-3 py-2.5 whitespace-nowrap">
-													<div className="flex flex-wrap items-center gap-1">
-														{rsv.assignedTableLabels.length > 0 ? (
-															<Badge
-																variant="outline"
-																data-testid={`book-row-table-${rsv.id}`}
-															>
-																{rsv.assignedTableLabels.join(', ')}
-															</Badge>
-														) : (
-															<Badge variant="destructive">
-																<Trans>Unassigned</Trans>
-															</Badge>
-														)}
-														{rsv.serverLabel ? (
-															<Badge variant="secondary">
-																{rsv.serverLabel}
-															</Badge>
-														) : null}
-													</div>
-													<div className="text-muted-foreground mt-0.5 text-[11px]">
-														{rsv.areaName ?? '—'} • {rsv.serviceName ?? '—'}
-													</div>
-												</td>
-
-												<td className="px-3 py-2.5">
-													<div className="flex flex-wrap items-center gap-1">
-														{rsv.hasConflict ? (
-															<Badge variant="destructive">
-																{rsv.conflictReason
-																	? label(
-																			DAY_CONFLICT_REASON_LABELS,
-																			rsv.conflictReason,
-																		)
-																	: t`Conflict`}
-															</Badge>
-														) : null}
-														{rsv.lateRisk ? (
-															<Badge variant="destructive">
-																<Trans>Late Risk</Trans>
-															</Badge>
-														) : null}
-														{rsv.runningLateMin ? (
-															<Badge variant="secondary">
-																+{rsv.runningLateMin}m
-															</Badge>
-														) : null}
-														{rsv.contactStatus &&
-														rsv.contactStatus !== 'none' ? (
-															<Badge variant="outline">
-																{label(
-																	CONTACT_STATUS_LABELS,
-																	rsv.contactStatus,
-																)}
-															</Badge>
-														) : null}
-														{rsv.occasion ? (
-															<Badge variant="outline">
-																{label(OCCASION_LABELS, rsv.occasion)}
-															</Badge>
-														) : null}
-														{rsv.dietaryCodes.map((code) => (
-															<Badge key={code} variant="secondary">
-																{label(DIETARY_LABELS, code)}
-															</Badge>
-														))}
-													</div>
-													{rsv.guestNotes || rsv.internalNotes ? (
-														<div className="text-muted-foreground mt-1 line-clamp-1 max-w-xs text-[11px]">
-															{rsv.guestNotes ?? rsv.internalNotes}
+														<div className="flex flex-wrap items-center gap-1">
+															{attention ? (
+																<Badge variant={attention.variant}>
+																	{attention.text}
+																</Badge>
+															) : null}
+															<PaymentBadge
+																paymentStatus={rsv.paymentStatus}
+																experience={Boolean(rsv.experienceId)}
+															/>
 														</div>
-													) : null}
-												</td>
-
-												<td className="px-3 py-2.5 whitespace-nowrap">
-													<Badge
-														variant={
-															rsv.status === 'seated'
-																? 'default'
-																: rsv.status === 'cancelled' ||
-																	  rsv.status === 'no_show'
-																	? 'destructive'
-																	: 'secondary'
-														}
-														data-testid={`book-row-status-${rsv.id}`}
-													>
-														{label(RESERVATION_STATUS_LABELS, rsv.status)}
-													</Badge>
-													<PaymentBadge
-														paymentStatus={rsv.paymentStatus}
-														experience={Boolean(rsv.experienceId)}
-														className="ms-1"
-													/>
-													{rsv.courseStage && rsv.status === 'seated' ? (
-														<div className="text-muted-foreground mt-0.5 text-[11px]">
-															{label(COURSE_STAGE_LABELS, rsv.courseStage)}
-														</div>
-													) : null}
-												</td>
-
-												<td
-													className="px-3 py-2.5 text-end whitespace-nowrap"
+													</div>
+												</TableCell>
+												<TableCell
+													className="text-end whitespace-nowrap"
 													onClick={(e) => e.stopPropagation()}
 												>
 													<div className="flex items-center justify-end gap-1">
-														{canManage &&
-														(rsv.status === 'booked' ||
-															rsv.status === 'confirmed') ? (
+														{canManage && primary?.to ? (
 															<Button
 																type="button"
-																size="xs"
-																variant="outline"
-																disabled={busyId === rsv.id}
-																onClick={() =>
-																	handleQuickStatus(
-																		rsv.id,
-																		rsv.guestName,
-																		'arrived',
-																	)
+																size="sm"
+																variant={
+																	primary.action === 'seat'
+																		? 'default'
+																		: 'outline'
 																}
-																data-testid={`book-arrive-${rsv.id}`}
-															>
-																<Trans>Arrive</Trans>
-															</Button>
-														) : null}
-														{canManage &&
-														(rsv.status === 'booked' ||
-															rsv.status === 'confirmed' ||
-															rsv.status === 'arrived') ? (
-															<Button
-																type="button"
-																size="xs"
-																disabled={busyId === rsv.id}
+																className="h-11 md:h-8"
+																disabled={transitions.busyId === rsv.id}
 																onClick={() =>
-																	handleQuickStatus(
-																		rsv.id,
-																		rsv.guestName,
-																		'seated',
-																	)
+																	void transitions.run(rsv, primary, guest)
 																}
-																data-testid={`book-seat-${rsv.id}`}
+																data-testid={`${ACTION_TEST_ID[primary.action] ?? 'book-action'}-${rsv.id}`}
 															>
-																<Trans>Seat</Trans>
-															</Button>
-														) : null}
-														{canManage && rsv.status === 'seated' ? (
-															<Button
-																type="button"
-																size="xs"
-																variant="outline"
-																disabled={busyId === rsv.id}
-																onClick={() =>
-																	handleQuickStatus(
-																		rsv.id,
-																		rsv.guestName,
-																		'completed',
-																	)
-																}
-																data-testid={`book-complete-${rsv.id}`}
-															>
-																<Trans>Complete</Trans>
+																{tx(HOST_ACTION_LABELS[primary.action])}
 															</Button>
 														) : null}
 														<Button
 															type="button"
-															size="xs"
+															size="sm"
 															variant="ghost"
+															className="h-11 md:h-8"
 															onClick={() => host.openDetail(rsv.id)}
 															data-testid={`book-details-${rsv.id}`}
 														>
 															<Trans>Details</Trans>
 														</Button>
+														{canManage && secondary.some((a) => a.to) ? (
+															<DropdownMenu>
+																<DropdownMenuTrigger
+																	render={
+																		<Button
+																			type="button"
+																			size="icon"
+																			variant="ghost"
+																			className="size-11 md:size-8"
+																			aria-label={t`More actions for ${guest}`}
+																			disabled={transitions.busyId === rsv.id}
+																		>
+																			<Icon
+																				name="more-horizontal"
+																				className="size-4"
+																			/>
+																		</Button>
+																	}
+																/>
+																<DropdownMenuContent align="end">
+																	{secondary.map((item) => (
+																		<DropdownMenuItem
+																			key={item.action}
+																			onClick={() =>
+																				item.to
+																					? void transitions.run(
+																							rsv,
+																							item,
+																							guest,
+																						)
+																					: host.openDetail(rsv.id)
+																			}
+																		>
+																			{tx(HOST_ACTION_LABELS[item.action])}
+																		</DropdownMenuItem>
+																	))}
+																</DropdownMenuContent>
+															</DropdownMenu>
+														) : null}
 													</div>
-												</td>
-											</tr>
-										))
-									)}
-								</tbody>
-							</table>
-						</div>
-					</Card>
+												</TableCell>
+											</TableRow>
+										)
+									})}
+								</TableBody>
+							</Table>
+						</Card>
+					)}
 				</>
+			) : null}
+
+			{lastUndo ? (
+				<div
+					role="status"
+					className="bg-card text-foreground fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl border p-3 text-sm shadow-lg"
+					data-testid="book-undo-banner"
+				>
+					<span className="wrap-anywhere">
+						<Trans>
+							Changed {lastUndo.guestName} to {lastUndoStatusLabel}.
+						</Trans>
+					</span>
+					<Button
+						type="button"
+						size="sm"
+						variant="outline"
+						className="h-11 shrink-0 md:h-8"
+						disabled={transitions.busyId === lastUndo.reservationId}
+						onClick={() => void transitions.undo()}
+						data-testid="book-undo-btn"
+					>
+						<Icon name="undo-2" className="size-3.5" />
+						<Trans>Undo</Trans>
+					</Button>
+				</div>
 			) : null}
 
 			{/* Shared Host Sheets & Dialogs */}

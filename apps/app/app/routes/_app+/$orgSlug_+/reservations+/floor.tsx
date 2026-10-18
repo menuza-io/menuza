@@ -8,15 +8,39 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
-import { Icon, type IconName } from '@repo/ui/icon'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@repo/ui/dropdown-menu'
+import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { useEffect, useMemo, useState } from 'react'
+import { Skeleton } from '@repo/ui/skeleton'
+import {
+	type DragEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
 import { useLoaderData } from 'react-router'
+import { toast } from 'sonner'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
+import {
+	FLOOR_STATUS_ICONS,
+	FloorTable,
+} from '#app/components/reservations/floor-table.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
+import {
+	StatusLabel,
+	TABLE_STATE_STYLES,
+	reservationStatusStyle,
+} from '#app/components/reservations/status-style.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
 import {
 	FloorWaitlistPanel,
@@ -29,7 +53,6 @@ import {
 	type WaitlistSeatOutcome,
 } from '#app/components/reservations/waitlist/use-floor-waitlist.ts'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
-import { useLiveNow } from '#app/hooks/use-live-now.ts'
 import { useReservationsScopeClient } from '#app/hooks/use-reservations-client.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import {
@@ -41,17 +64,30 @@ import {
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
 import {
+	type ComputedTableFloorState,
+	computeTableFloorState,
+	type FloorClock,
+	floorElementsForArea,
+	floorPlacement,
+	floorPlacementWithFallback,
+	floorStageSize,
+	floorTablesForArea,
+	isReservationOnFloor,
+	pickFloorAreaId,
+	restOfServiceWindow,
+	type TableSectionInfo,
+} from '#app/utils/reservations/floor-state.ts'
+import {
+	hostErrorMessage,
+	hostLoadErrorMessage,
+} from '#app/utils/reservations/host-errors.ts'
+import {
 	COURSE_STAGE_LABELS,
 	ELEMENT_KIND_LABELS,
 	enumLabel,
-	RESERVATION_STATUS_LABELS,
 } from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
-import {
-	createBlock,
-	deleteBlock,
-	type RsvTableRecord,
-} from '#app/utils/reservations/setup-api.ts'
+import { createBlock, deleteBlock } from '#app/utils/reservations/setup-api.ts'
 import { type Route } from './+types/floor.ts'
 import { useReservationsLayoutData } from './_layout.tsx'
 
@@ -79,38 +115,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 	return { ok: true }
 }
 
-type FloorLiveStatus =
-	| 'available'
-	| 'reserved_soon'
-	| 'arrived_waiting'
-	| 'seated'
-	| 'dessert_check'
-	| 'finishing'
-	| 'overtime'
-	| 'blocked'
-
-type ComputedTableFloorState = {
-	table: RsvTableRecord
-	liveStatus: FloorLiveStatus
-	statusLabel: string
-	statusIcon: IconName
-	currentReservation: DayReservationView | null
-	nextReservation: DayReservationView | null
-	elapsedMin: number | null
-	remainingMin: number | null
-	timerText: string | null
-	isBlocked: boolean
-	blockId: string | null
-	blockReason: string | null
-	sectionId: string | null
-	sectionName: string | null
-	sectionColorToken: string | null
-	serverLabel: string | null
-}
-
 type OccupiedDropPromptState = {
 	draggedReservation: DayReservationView
-	targetTable: RsvTableRecord
+	targetTable: ComputedTableFloorState['table']
 	occupantReservation: DayReservationView
 }
 
@@ -122,15 +129,37 @@ const COURSE_STAGES = [
 	{ id: 'bussing', label: msg`Bussing` },
 ] as const
 
-const HIGH_CONTRAST_SECTION_HEX: Record<string, string> = {
-	'1': '#0072B2',
-	'2': '#009E73',
-	'3': '#E69F00',
-	'4': '#CC79A7',
-	'5': '#56B4E9',
-	'6': '#D55E00',
-	'7': '#F0E442',
-	'8': '#332288',
+/** Floor states in the legend order: quiet first, attention last. */
+const LEGEND_STATES = [
+	'available',
+	'reserved_soon',
+	'arrived_waiting',
+	'seated',
+	'dessert_check',
+	'finishing',
+	'overtime',
+	'blocked',
+] as const
+
+/** Scales the stage down to fit the viewport, never below 0.7 (text stays readable; the rest scrolls). */
+function useFitScale(stageWidth: number) {
+	const viewportRef = useRef<HTMLDivElement | null>(null)
+	const [scale, setScale] = useState(1)
+	useEffect(() => {
+		const node = viewportRef.current
+		if (!node || typeof ResizeObserver === 'undefined') return
+		const update = () => {
+			const available = node.clientWidth - 32
+			if (available > 0) {
+				setScale(Math.max(0.7, Math.min(1, available / stageWidth)))
+			}
+		}
+		update()
+		const observer = new ResizeObserver(update)
+		observer.observe(node)
+		return () => observer.disconnect()
+	}, [stageWidth])
+	return { viewportRef, scale }
 }
 
 export default function ReservationsFloorRoute() {
@@ -139,6 +168,7 @@ export default function ReservationsFloorRoute() {
 		labels: Record<string, MessageDescriptor>,
 		value: string | null | undefined,
 	) => enumLabel((d) => i18n._(d), labels, value)
+	const tx = useCallback((d: MessageDescriptor) => i18n._(d), [i18n])
 	const { orgSlug, canManage, waitlistEnabled } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -159,18 +189,10 @@ export default function ReservationsFloorRoute() {
 	const [sideFilter, setSideFilter] = useState<
 		'all' | 'unassigned' | 'arrived' | 'upcoming' | 'seated'
 	>('all')
-	const [actionBanner, setActionBanner] = useState<string | null>(null)
 	const [actionError, setActionError] = useState<string | null>(null)
 	const [busyAction, setBusyAction] = useState(false)
 	const [serverDrafts, setServerDrafts] = useState<Record<string, string>>({})
 	const [savingServers, setSavingServers] = useState(false)
-
-	// Live clock ticking every 15s without network requests (VAL-HOST-013)
-	const liveClock = useLiveNow({
-		timeZone: activeLocation?.timezone ?? 'UTC',
-		intervalMs: 15_000,
-	})
-	const nowMs = liveClock.nowMs
 
 	const showWaitlist = waitlistEnabled && canManage
 	const bookClient = useReservationsScopeClient(
@@ -202,8 +224,27 @@ export default function ReservationsFloorRoute() {
 	)
 
 	const feed = host.feed
+	const notify = (message: string) => {
+		setActionError(null)
+		toast.success(message)
+	}
+	const fail = (err: unknown, fallback: MessageDescriptor) =>
+		setActionError(hostErrorMessage(err, tx, fallback))
 
-	// Active section layout for current service (or default layout)
+	// Live clock: business-day minutes, and "live" only on the current business date.
+	const clock = useMemo<FloorClock>(
+		() => ({
+			nowMs: host.liveNow.nowMs,
+			nowLocalMin: host.liveNow.localStartMin,
+			live: host.isToday,
+		}),
+		[host.liveNow.nowMs, host.liveNow.localStartMin, host.isToday],
+	)
+	const feedBusinessDate = feed?.businessDate ?? host.businessDate
+
+	// One area at a time: each area has its own coordinate space.
+	const floorAreaId = pickFloorAreaId(feed?.areas ?? [], host.selectedAreaId)
+
 	const activeLayout = useMemo(() => {
 		const layouts = feed?.sections ?? []
 		if (layouts.length === 0) return null
@@ -214,20 +255,14 @@ export default function ReservationsFloorRoute() {
 		return layouts.find((l) => l.isDefault) ?? layouts[0] ?? null
 	}, [feed?.sections, host.selectedServiceId])
 
-	// Map sectionId -> serverLabel from day feed sectionAssignments + layout defaults
 	const sectionServerMap = useMemo(() => {
 		const map = new Map<string, string>()
-		if (activeLayout) {
-			for (const a of activeLayout.assignments ?? []) {
-				if (a.sectionId && a.serverName) {
-					map.set(a.sectionId, a.serverName)
-				}
-			}
+		for (const a of activeLayout?.assignments ?? []) {
+			if (a.sectionId && a.serverName) map.set(a.sectionId, a.serverName)
 		}
 		for (const row of feed?.sectionAssignments ?? []) {
-			if (row.sectionId && row.serverLabel) {
+			if (row.sectionId && row.serverLabel)
 				map.set(row.sectionId, row.serverLabel)
-			}
 		}
 		return map
 	}, [activeLayout, feed?.sectionAssignments])
@@ -241,38 +276,9 @@ export default function ReservationsFloorRoute() {
 		setServerDrafts(nextDrafts)
 	}, [activeLayout, sectionServerMap])
 
-	// Compute current minute of day in location timezone
-	const nowLocalMin = useMemo(() => {
-		const tz = feed?.timezone ?? activeLocation?.timezone ?? 'UTC'
-		try {
-			const parts = new Intl.DateTimeFormat('en-GB', {
-				timeZone: tz,
-				hour: '2-digit',
-				minute: '2-digit',
-				hour12: false,
-			}).formatToParts(new Date(nowMs))
-			const hh = Number(parts.find((p) => p.type === 'hour')?.value ?? 0)
-			const mm = Number(parts.find((p) => p.type === 'minute')?.value ?? 0)
-			return hh * 60 + mm
-		} catch {
-			const d = new Date(nowMs)
-			return d.getUTCHours() * 60 + d.getUTCMinutes()
-		}
-	}, [nowMs, feed?.timezone, activeLocation?.timezone])
-
-	// Map tableId -> section details
 	const tableSectionMap = useMemo(() => {
-		const map = new Map<
-			string,
-			{
-				sectionId: string
-				sectionName: string
-				colorToken: string
-				serverLabel: string | null
-			}
-		>()
-		if (!activeLayout) return map
-		for (const sec of activeLayout.sections ?? []) {
+		const map = new Map<string, TableSectionInfo>()
+		for (const sec of activeLayout?.sections ?? []) {
 			const serverLabel =
 				serverDrafts[sec.id]?.trim() || sectionServerMap.get(sec.id) || null
 			for (const tid of sec.tableIds) {
@@ -287,207 +293,85 @@ export default function ReservationsFloorRoute() {
 		return map
 	}, [activeLayout, sectionServerMap, serverDrafts])
 
-	// Active reservations filtered by service
-	const activeReservations = useMemo(() => {
-		const list = feed?.reservations ?? []
-		return list.filter((r) => {
-			if (
-				r.status === 'cancelled' ||
-				r.status === 'no_show' ||
-				r.status === 'completed' ||
-				r.status === 'finished'
-			) {
-				return false
-			}
-			if (
-				host.selectedServiceId &&
-				r.serviceId &&
-				r.serviceId !== host.selectedServiceId
-			) {
-				return false
-			}
-			return true
-		})
-	}, [feed?.reservations, host.selectedServiceId])
-
-	// Compute live state per table (VAL-HOST-012, VAL-HOST-013)
-	const tableStates = useMemo<ComputedTableFloorState[]>(() => {
-		const tables = (feed?.tables ?? []).filter(
-			(tbl) =>
-				tbl.isActive !== false &&
-				(!host.areaFilter || tbl.areaId === host.areaFilter),
-		)
-		const blocks = feed?.blocks ?? []
-
-		return tables.map((table) => {
-			const assignedRes = activeReservations
-				.filter((r) => r.assignedTableIds.includes(table.id))
-				.sort((a, b) => a.localStartMin - b.localStartMin)
-
-			const seatedRes = assignedRes.find((r) => r.status === 'seated') ?? null
-			const arrivedRes = assignedRes.find((r) => r.status === 'arrived') ?? null
-			const upcomingRes =
-				assignedRes.find(
-					(r) =>
-						r.status === 'booked' ||
-						r.status === 'confirmed' ||
-						r.status === 'pending_payment' ||
-						r.status === 'pending_approval',
-				) ?? null
-
-			const currentReservation = seatedRes ?? arrivedRes ?? null
-			const nextReservation = seatedRes
-				? (arrivedRes ?? upcomingRes)
-				: upcomingRes
-
-			const activeBlock = blocks.find((b) => b.tableId === table.id) ?? null
-			const isBlocked = Boolean(activeBlock)
-
-			let liveStatus: FloorLiveStatus = 'available'
-			let statusLabel = t`Available`
-			let statusIcon: IconName = 'check'
-			let elapsedMin: number | null = null
-			let remainingMin: number | null = null
-			let timerText: string | null = null
-
-			if (isBlocked) {
-				liveStatus = 'blocked'
-				statusLabel = t`Blocked`
-				statusIcon = 'ban'
-			} else if (seatedRes) {
-				const startEpoch =
-					seatedRes.seatedAt ??
-					(seatedRes.slotStartAt > 0 ? seatedRes.slotStartAt : null)
-				if (startEpoch && startEpoch <= nowMs) {
-					elapsedMin = Math.max(0, Math.round((nowMs - startEpoch) / 60_000))
-				} else {
-					elapsedMin = Math.max(0, nowLocalMin - seatedRes.localStartMin)
-				}
-				const endEpoch =
-					seatedRes.slotEndAt > 0
-						? seatedRes.slotEndAt
-						: startEpoch
-							? startEpoch + seatedRes.durationMin * 60_000
-							: null
-				if (endEpoch) {
-					remainingMin = Math.round((endEpoch - nowMs) / 60_000)
-				} else {
-					remainingMin = seatedRes.durationMin - elapsedMin
-				}
-
-				timerText =
-					remainingMin < 0
-						? `${elapsedMin}m · +${Math.abs(remainingMin)}m over`
-						: `${elapsedMin}m · ${remainingMin}m left`
-
-				const stage = seatedRes.courseStage?.toLowerCase() ?? ''
-				if (remainingMin < 0) {
-					liveStatus = 'overtime'
-					statusLabel = t`Overtime`
-					statusIcon = 'alert-triangle'
-				} else if (remainingMin <= 15) {
-					liveStatus = 'finishing'
-					statusLabel = t`Finishing (<15m)`
-					statusIcon = 'clock'
-				} else if (
-					stage === 'dessert' ||
-					stage === 'check' ||
-					stage === 'bussing'
-				) {
-					liveStatus = 'dessert_check'
-					statusLabel =
-						stage === 'check'
-							? t`Check dropped`
-							: stage === 'bussing'
-								? t`Bussing`
-								: t`Dessert`
-					statusIcon = 'tag'
-				} else {
-					liveStatus = 'seated'
-					statusLabel = t`Seated`
-					statusIcon = 'users'
-				}
-			} else if (arrivedRes) {
-				liveStatus = 'arrived_waiting'
-				statusLabel = t`Arrived / Waiting`
-				statusIcon = 'circle-check'
-			} else if (upcomingRes) {
-				const minsUntil = upcomingRes.localStartMin - nowLocalMin
-				if (minsUntil >= -15 && minsUntil <= 30) {
-					liveStatus = 'reserved_soon'
-					statusLabel = t`Reserved ≤30m`
-					statusIcon = 'calendar'
-				} else {
-					liveStatus = 'available'
-					statusLabel = t`Reserved ${upcomingRes.hhmm}`
-					statusIcon = 'calendar'
-				}
-			}
-
-			const secInfo = tableSectionMap.get(table.id)
-
-			return {
-				table,
-				liveStatus,
-				statusLabel,
-				statusIcon,
-				currentReservation,
-				nextReservation,
-				elapsedMin,
-				remainingMin,
-				timerText,
-				isBlocked,
-				blockId: activeBlock?.id ?? null,
-				blockReason: activeBlock?.reason ?? activeBlock?.note ?? null,
-				sectionId: secInfo?.sectionId ?? null,
-				sectionName: secInfo?.sectionName ?? null,
-				sectionColorToken: secInfo?.colorToken ?? null,
-				serverLabel:
-					secInfo?.serverLabel ??
-					currentReservation?.serverLabel ??
-					nextReservation?.serverLabel ??
-					null,
-			}
-		})
-	}, [
-		feed?.tables,
-		feed?.blocks,
-		host.areaFilter,
-		activeReservations,
-		nowMs,
-		nowLocalMin,
-		tableSectionMap,
-		t,
-	])
-
-	const selectedTableState = useMemo(
-		() => tableStates.find((ts) => ts.table.id === selectedTableId) ?? null,
-		[tableStates, selectedTableId],
+	const activeReservations = useMemo(
+		() =>
+			(feed?.reservations ?? []).filter((r) => {
+				if (!isReservationOnFloor(r.status)) return false
+				return !(
+					host.selectedServiceId &&
+					r.serviceId &&
+					r.serviceId !== host.selectedServiceId
+				)
+			}),
+		[feed?.reservations, host.selectedServiceId],
 	)
 
-	// Side reservation list
-	const sideReservations = useMemo(() => {
-		return activeReservations
-			.filter((r) => {
-				if (host.areaFilter && r.areaId && r.areaId !== host.areaFilter) {
-					return false
-				}
-				if (sideFilter === 'unassigned') {
-					return r.assignedTableIds.length === 0
-				}
-				if (sideFilter === 'arrived') {
-					return r.status === 'arrived'
-				}
-				if (sideFilter === 'upcoming') {
-					return r.status === 'booked' || r.status === 'confirmed'
-				}
-				if (sideFilter === 'seated') {
-					return r.status === 'seated'
-				}
-				return true
-			})
-			.sort((a, b) => a.localStartMin - b.localStartMin)
-	}, [activeReservations, host.areaFilter, sideFilter])
+	const areaTables = useMemo(
+		() => floorTablesForArea(feed?.tables ?? [], floorAreaId),
+		[feed?.tables, floorAreaId],
+	)
+	const areaElements = useMemo(
+		() =>
+			floorElementsForArea(
+				feed?.elements ?? feed?.floorElements ?? [],
+				floorAreaId,
+			),
+		[feed?.elements, feed?.floorElements, floorAreaId],
+	)
+
+	const tableStates = useMemo<ComputedTableFloorState[]>(
+		() =>
+			areaTables.map((table) =>
+				computeTableFloorState({
+					table,
+					reservations: activeReservations,
+					blocks: feed?.blocks ?? [],
+					clock,
+					businessDate: feedBusinessDate,
+					section: tableSectionMap.get(table.id) ?? null,
+				}),
+			),
+		[
+			areaTables,
+			activeReservations,
+			feed?.blocks,
+			clock,
+			feedBusinessDate,
+			tableSectionMap,
+		],
+	)
+	const tableStateById = useMemo(
+		() => new Map(tableStates.map((ts) => [ts.table.id, ts])),
+		[tableStates],
+	)
+
+	const selectedTableState = selectedTableId
+		? (tableStateById.get(selectedTableId) ?? null)
+		: null
+
+	const stage = useMemo(
+		() => floorStageSize(areaTables, areaElements),
+		[areaTables, areaElements],
+	)
+	const { viewportRef, scale } = useFitScale(stage.width)
+
+	const sideReservations = useMemo(
+		() =>
+			activeReservations
+				.filter((r) => {
+					if (floorAreaId && r.areaId && r.areaId !== floorAreaId) return false
+					if (sideFilter === 'unassigned')
+						return r.assignedTableIds.length === 0
+					if (sideFilter === 'arrived') return r.status === 'arrived'
+					if (sideFilter === 'upcoming') {
+						return r.status === 'booked' || r.status === 'confirmed'
+					}
+					if (sideFilter === 'seated') return r.status === 'seated'
+					return true
+				})
+				.sort((a, b) => a.localStartMin - b.localStartMin),
+		[activeReservations, floorAreaId, sideFilter],
+	)
 
 	const handleDropReservationOnTable = async (
 		rsv: DayReservationView,
@@ -495,9 +379,6 @@ export default function ReservationsFloorRoute() {
 	) => {
 		if (!canManage) return
 		setActionError(null)
-		setActionBanner(null)
-
-		// Check if target table is occupied by another reservation right now or overlapping
 		const existingOccupant =
 			targetState.currentReservation &&
 			targetState.currentReservation.id !== rsv.id
@@ -521,6 +402,8 @@ export default function ReservationsFloorRoute() {
 		}
 
 		setBusyAction(true)
+		const guest = rsv.guestName
+		const tableLabel = targetState.table.label
 		try {
 			if (rsv.status === 'arrived') {
 				const seated = await transitionReservationStatus(host.client, rsv.id, {
@@ -529,26 +412,18 @@ export default function ReservationsFloorRoute() {
 					expectedVersion: rsv.version,
 				})
 				host.handleReservationMutated(seated.reservation, seated.moveNotices)
-				setActionBanner(
-					t`Seated ${rsv.guestName} at ${targetState.table.label}.`,
-				)
+				notify(t`Seated ${guest} at ${tableLabel}.`)
 			} else {
 				const res = await assignReservationTable(host.client, rsv.id, {
 					tableIds: [targetState.table.id],
 					expectedVersion: rsv.version,
 				})
-				if (res.moveNotices.length > 0) {
-					host.appendMoveNotices(res.moveNotices)
-				}
-				setActionBanner(
-					t`Assigned ${rsv.guestName} to ${targetState.table.label}.`,
-				)
+				if (res.moveNotices.length > 0) host.appendMoveNotices(res.moveNotices)
+				notify(t`Assigned ${guest} to ${tableLabel}.`)
 			}
 			await host.refresh()
 		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : t`Failed to assign table.`,
-			)
+			fail(err, msg`Could not assign the table.`)
 		} finally {
 			setBusyAction(false)
 		}
@@ -560,69 +435,43 @@ export default function ReservationsFloorRoute() {
 		if (!occupiedDropPrompt || !canManage) return
 		const { draggedReservation, targetTable, occupantReservation } =
 			occupiedDropPrompt
+		const guest = draggedReservation.guestName
+		const other = occupantReservation.guestName
+		const tableLabel = targetTable.label
 		setBusyAction(true)
 		setActionError(null)
 		try {
-			if (choice === 'swap') {
-				const res = await assignReservationTable(
-					host.client,
-					draggedReservation.id,
-					{
-						tableIds: [targetTable.id],
-						swapWithReservationId: occupantReservation.id,
-						expectedVersion: draggedReservation.version,
-					},
-				)
-				if (res.moveNotices.length > 0) {
-					host.appendMoveNotices(res.moveNotices)
-				}
-				setActionBanner(
-					t`Swapped ${draggedReservation.guestName} with ${occupantReservation.guestName} on ${targetTable.label}.`,
-				)
-			} else if (choice === 'reflow') {
-				const res = await assignReservationTable(
-					host.client,
-					draggedReservation.id,
-					{
-						tableIds: [targetTable.id],
-						reflowLaterParties: true,
-						expectedVersion: draggedReservation.version,
-					},
-				)
-				if (res.moveNotices.length > 0) {
-					host.appendMoveNotices(res.moveNotices)
-				}
-				setActionBanner(
-					t`Assigned ${draggedReservation.guestName} to ${targetTable.label} and reflowed overlapping parties.`,
-				)
-			} else {
-				const res = await assignReservationTable(
-					host.client,
-					draggedReservation.id,
-					{
-						tableIds: [targetTable.id],
-						forceOverbook: true,
-						reason:
-							overbookReason.trim() ||
-							`Overbooked onto ${targetTable.label} alongside ${occupantReservation.guestName}`,
-						expectedVersion: draggedReservation.version,
-					},
-				)
-				if (res.moveNotices.length > 0) {
-					host.appendMoveNotices(res.moveNotices)
-				}
-				setActionBanner(
-					t`Overbooked ${draggedReservation.guestName} onto ${targetTable.label}.`,
-				)
+			const base = {
+				tableIds: [targetTable.id],
+				expectedVersion: draggedReservation.version,
 			}
+			const res = await assignReservationTable(
+				host.client,
+				draggedReservation.id,
+				choice === 'swap'
+					? { ...base, swapWithReservationId: occupantReservation.id }
+					: choice === 'reflow'
+						? { ...base, reflowLaterParties: true }
+						: {
+								...base,
+								forceOverbook: true,
+								reason:
+									overbookReason.trim() ||
+									`Overbooked onto ${tableLabel} alongside ${other}`,
+							},
+			)
+			if (res.moveNotices.length > 0) host.appendMoveNotices(res.moveNotices)
+			notify(
+				choice === 'swap'
+					? t`Swapped ${guest} with ${other} on ${tableLabel}.`
+					: choice === 'reflow'
+						? t`Assigned ${guest} to ${tableLabel} and reflowed overlapping parties.`
+						: t`Overbooked ${guest} onto ${tableLabel}.`,
+			)
 			setOccupiedDropPrompt(null)
 			await host.refresh()
 		} catch (err) {
-			setActionError(
-				err instanceof Error
-					? err.message
-					: t`Failed to resolve table conflict.`,
-			)
+			fail(err, msg`Could not resolve the table conflict.`)
 		} finally {
 			setBusyAction(false)
 		}
@@ -633,8 +482,7 @@ export default function ReservationsFloorRoute() {
 		if (outcome.ok) {
 			const guest = outcome.entry.displayName
 			const tableLabel = outcome.table.label
-			setActionError(null)
-			setActionBanner(t`Seated ${guest} at ${tableLabel} from the waitlist.`)
+			notify(t`Seated ${guest} at ${tableLabel} from the waitlist.`)
 			await host.refresh()
 		} else {
 			setActionError(outcome.message)
@@ -647,7 +495,6 @@ export default function ReservationsFloorRoute() {
 	) => {
 		if (!showWaitlist) return
 		setActionError(null)
-		setActionBanner(null)
 		await finishWaitlistSeat(
 			await floorWaitlist.dropOnTable(entryId, {
 				id: targetState.table.id,
@@ -663,6 +510,7 @@ export default function ReservationsFloorRoute() {
 		if (!canManage) return
 		setBusyAction(true)
 		setActionError(null)
+		const guest = rsv.guestName
 		try {
 			const seated = await transitionReservationStatus(host.client, rsv.id, {
 				to: 'seated',
@@ -670,11 +518,9 @@ export default function ReservationsFloorRoute() {
 				expectedVersion: rsv.version,
 			})
 			host.handleReservationMutated(seated.reservation, seated.moveNotices)
-			setActionBanner(t`Seated ${rsv.guestName}.`)
+			notify(t`Seated ${guest}.`)
 		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : t`Failed to seat party.`,
-			)
+			fail(err, msg`Could not seat the party.`)
 		} finally {
 			setBusyAction(false)
 		}
@@ -695,12 +541,10 @@ export default function ReservationsFloorRoute() {
 				rsv.version,
 			)
 			const stageLabel = enumText(COURSE_STAGE_LABELS, courseStage)
-			setActionBanner(t`Updated course stage to ${stageLabel}.`)
+			notify(t`Updated course stage to ${stageLabel}.`)
 			await host.refresh()
 		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : t`Failed to update course stage.`,
-			)
+			fail(err, msg`Could not update the course stage.`)
 		} finally {
 			setBusyAction(false)
 		}
@@ -710,17 +554,16 @@ export default function ReservationsFloorRoute() {
 		if (!canManage) return
 		setBusyAction(true)
 		setActionError(null)
+		const guest = rsv.guestName
 		try {
 			await transitionReservationStatus(host.client, rsv.id, {
-				to: 'completed',
+				to: 'finished',
 				expectedVersion: rsv.version,
 			})
-			setActionBanner(t`Marked ${rsv.guestName} as finished.`)
+			notify(t`Marked ${guest} as finished.`)
 			await host.refresh()
 		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : t`Failed to finish reservation.`,
-			)
+			fail(err, msg`Could not finish the reservation.`)
 		} finally {
 			setBusyAction(false)
 		}
@@ -732,39 +575,41 @@ export default function ReservationsFloorRoute() {
 		if (!canManage || !locationId) return
 		setBusyAction(true)
 		setActionError(null)
+		const tableLabel = tableState.table.label
 		try {
 			if (tableState.isBlocked && tableState.blockId) {
 				await deleteBlock(setupClient, locationId, tableState.blockId)
-				setActionBanner(t`Unblocked table ${tableState.table.label}.`)
+				notify(t`Unblocked table ${tableLabel}.`)
 			} else {
+				const services = feed?.services ?? []
 				const activeService =
-					(feed?.services ?? []).find((s) => s.id === host.selectedServiceId) ??
-					(feed?.services ?? [])[0]
-				const startMin = Math.max(
-					0,
-					Math.min(1380, activeService?.startMin ?? nowLocalMin),
-				)
-				const endMin = Math.max(
-					startMin + 30,
-					Math.min(1440, activeService?.endMin ?? 1410),
-				)
+					services.find((s) => s.id === host.selectedServiceId) ??
+					services.find(
+						(s) =>
+							clock.live &&
+							s.firstSeatingMin <= clock.nowLocalMin &&
+							clock.nowLocalMin < s.endMin,
+					) ??
+					services[0] ??
+					null
+				const { startMin, endMin } = restOfServiceWindow({
+					service: activeService,
+					clock,
+					dayStartMin: feed?.dayStartMin ?? 240,
+				})
 				await createBlock(setupClient, locationId, {
-					businessDate: host.selectedDate,
+					businessDate: host.businessDate,
 					tableId: tableState.table.id,
 					startMin,
 					endMin,
 					reason: 'maintenance',
-					note: `Blocked from Live Floor Plan for rest of service`,
+					note: 'Blocked from Live Floor Plan for rest of service',
 				})
-				setActionBanner(
-					t`Blocked table ${tableState.table.label} for the rest of the service.`,
-				)
+				notify(t`Blocked table ${tableLabel} for the rest of the service.`)
 			}
 			await host.refresh()
 		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : t`Failed to update table block.`,
-			)
+			fail(err, msg`Could not update the table block.`)
 		} finally {
 			setBusyAction(false)
 		}
@@ -781,86 +626,88 @@ export default function ReservationsFloorRoute() {
 		setSavingServers(true)
 		setActionError(null)
 		try {
-			const assignments = activeLayout.sections.map((sec) => ({
-				sectionId: sec.id,
-				serverLabel: serverDrafts[sec.id]?.trim() || null,
-			}))
 			await saveSectionServerAssignments(host.client, {
 				locationId,
-				date: host.selectedDate,
+				date: host.businessDate,
 				serviceId,
-				assignments,
+				assignments: activeLayout.sections.map((sec) => ({
+					sectionId: sec.id,
+					serverLabel: serverDrafts[sec.id]?.trim() || null,
+				})),
 			})
-			setActionBanner(t`Saved section server assignments for this service.`)
+			notify(t`Saved section server assignments for this service.`)
 			await host.refresh()
 		} catch (err) {
-			setActionError(
-				err instanceof Error
-					? err.message
-					: t`Failed to save section server assignments.`,
-			)
+			fail(err, msg`Could not save the section servers.`)
 		} finally {
 			setSavingServers(false)
 		}
 	}
 
-	const getStatusStyle = (liveStatus: FloorLiveStatus) => {
-		if (highContrast) {
-			switch (liveStatus) {
-				case 'available':
-					return 'border-slate-700 bg-slate-900/5 text-foreground dark:border-slate-300 dark:bg-slate-100/10'
-				case 'reserved_soon':
-					return 'border-[#0072B2] bg-[#0072B2]/15 text-foreground ring-2 ring-[#0072B2]/40'
-				case 'arrived_waiting':
-					return 'border-[#E69F00] bg-[#E69F00]/20 text-foreground ring-2 ring-[#E69F00]/50'
-				case 'seated':
-					return 'border-[#009E73] bg-[#009E73]/20 text-foreground'
-				case 'dessert_check':
-					return 'border-[#CC79A7] bg-[#CC79A7]/20 text-foreground'
-				case 'finishing':
-					return 'border-[#56B4E9] bg-[#56B4E9]/25 text-foreground ring-2 ring-[#56B4E9]/50'
-				case 'overtime':
-					return 'border-[#D55E00] bg-[#D55E00]/25 text-foreground ring-2 ring-[#D55E00]/60'
-				case 'blocked':
-					return 'border-dashed border-slate-600 bg-slate-500/25 text-muted-foreground'
-			}
+	const getSectionColor = (token: string | null) =>
+		token ? resolveSectionColorHex(token) : null
+
+	// Stable handlers so memoized tiles only redraw when their own state changes.
+	const feedReservations = feed?.reservations
+	const { setFloorDragOver, clearFloorDragOver } = useMemo(
+		() => ({
+			setFloorDragOver: (tableId: string) => setDragOverTableId(tableId),
+			clearFloorDragOver: (tableId: string) =>
+				setDragOverTableId((prev) => (prev === tableId ? null : prev)),
+		}),
+		[],
+	)
+	const onSelectTable = useCallback(
+		(tableId: string) =>
+			setSelectedTableId((prev) => (prev === tableId ? null : tableId)),
+		[],
+	)
+	const onDragOverTable = useCallback(
+		(event: DragEvent<HTMLButtonElement>, tableId: string) => {
+			event.preventDefault()
+			setFloorDragOver(tableId)
+		},
+		[setFloorDragOver],
+	)
+	const dropHandlerRef = useRef<
+		(event: DragEvent<HTMLButtonElement>, ts: ComputedTableFloorState) => void
+	>(() => {})
+	dropHandlerRef.current = (event, ts) => {
+		event.preventDefault()
+		setDragOverTableId(null)
+		const waitlistId =
+			event.dataTransfer.getData(WAITLIST_DRAG_TYPE) || floorWaitlist.draggingId
+		if (waitlistId) {
+			floorWaitlist.setDraggingId(null)
+			void handleDropWaitlistOnTable(waitlistId, ts)
+			return
 		}
-
-		switch (liveStatus) {
-			case 'available':
-				return 'border-emerald-500/40 bg-emerald-500/10 text-foreground'
-			case 'reserved_soon':
-				return 'border-sky-500/50 bg-sky-500/15 text-foreground'
-			case 'arrived_waiting':
-				return 'border-amber-500/60 bg-amber-500/20 text-foreground ring-2 ring-amber-500/30'
-			case 'seated':
-				return 'border-indigo-500/60 bg-indigo-500/15 text-foreground'
-			case 'dessert_check':
-				return 'border-purple-500/60 bg-purple-500/15 text-foreground'
-			case 'finishing':
-				return 'border-teal-500/60 bg-teal-500/20 text-foreground'
-			case 'overtime':
-				return 'border-destructive bg-destructive/15 text-foreground ring-2 ring-destructive/40'
-			case 'blocked':
-				return 'border-dashed border-muted-foreground/50 bg-muted/60 text-muted-foreground'
-		}
+		const rsvId =
+			event.dataTransfer.getData('text/reservation-id') || draggingRsvId
+		setDraggingRsvId(null)
+		if (!rsvId) return
+		const rsv = feedReservations?.find((r) => r.id === rsvId)
+		if (rsv) void handleDropReservationOnTable(rsv, ts)
 	}
+	const onDropOnTable = useCallback(
+		(event: DragEvent<HTMLButtonElement>, ts: ComputedTableFloorState) =>
+			dropHandlerRef.current(event, ts),
+		[],
+	)
 
-	const getSectionColor = (token: string | null) => {
-		if (!token) return '#64748b'
-		if (highContrast && HIGH_CONTRAST_SECTION_HEX[token]) {
-			return HIGH_CONTRAST_SECTION_HEX[token]!
-		}
-		return resolveSectionColorHex(token)
-	}
-
-	const formatShortGuestName = (fullName: string) => {
-		const parts = fullName.trim().split(/\s+/)
-		if (parts.length <= 1) return fullName
-		return `${parts[0]} ${parts[parts.length - 1]?.[0] ?? ''}.`
-	}
-
-	const elements = feed?.elements ?? feed?.floorElements ?? []
+	const pollPaused = Boolean(
+		draggingRsvId || occupiedDropPrompt || floorWaitlist.busyUi,
+	)
+	const loadFailure =
+		host.poll.error && !feed
+			? hostLoadErrorMessage(
+					{ status: host.poll.errorStatus, code: host.poll.errorCode },
+					tx,
+				)
+			: null
+	const areas = (feed?.areas ?? []).filter(
+		(a) => a.isActive !== false && !a.archivedAt,
+	)
 
 	return (
 		<div
@@ -895,18 +742,18 @@ export default function ReservationsFloorRoute() {
 				serviceNotes={feed?.serviceNotes ?? []}
 			/>
 
-			{actionBanner ? (
-				<Alert data-testid="floor-action-banner">
+			{loadFailure ? (
+				<Alert variant="destructive" data-testid="floor-load-error">
 					<AlertDescription>
-						<div className="flex items-center justify-between gap-2">
-							<span>{actionBanner}</span>
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<span>{loadFailure}</span>
 							<Button
 								type="button"
 								size="sm"
-								variant="ghost"
-								onClick={() => setActionBanner(null)}
+								variant="outline"
+								onClick={() => void host.poll.refresh({ force: true })}
 							>
-								<Trans>Dismiss</Trans>
+								<Trans>Try again</Trans>
 							</Button>
 						</div>
 					</AlertDescription>
@@ -922,7 +769,7 @@ export default function ReservationsFloorRoute() {
 			{/* Occupied table drop resolution prompt (VAL-HOST-014) */}
 			{occupiedDropPrompt ? (
 				<Card
-					className="border-amber-500 bg-amber-500/10 p-4"
+					className="border-warning/50 bg-warning/10 p-4"
 					data-testid="floor-occupied-drop-dialog"
 				>
 					<div className="flex flex-col gap-3">
@@ -965,10 +812,9 @@ export default function ReservationsFloorRoute() {
 								data-testid="floor-occupied-choice-swap"
 								onClick={() => handleResolveOccupiedDrop('swap')}
 							>
-								<Icon name="refresh-cw" className="mr-1.5 size-3.5" />
+								<Icon name="refresh-cw" className="size-3.5" />
 								<Trans>Swap tables</Trans>
 							</Button>
-
 							<Button
 								type="button"
 								size="sm"
@@ -977,27 +823,27 @@ export default function ReservationsFloorRoute() {
 								data-testid="floor-occupied-choice-reflow"
 								onClick={() => handleResolveOccupiedDrop('reflow')}
 							>
-								<Icon name="route" className="mr-1.5 size-3.5" />
+								<Icon name="route" className="size-3.5" />
 								<Trans>Reflow later parties</Trans>
 							</Button>
-
 							<div className="flex items-center gap-1.5">
 								<Input
 									value={overbookReason}
 									onChange={(e) => setOverbookReason(e.target.value)}
 									placeholder={t`Overbook reason (optional)`}
-									className="h-8 w-48 text-xs"
+									aria-label={t`Overbook reason (optional)`}
+									className="w-48"
 									data-testid="floor-occupied-overbook-reason"
 								/>
 								<Button
 									type="button"
 									size="sm"
-									variant="default"
+									variant="outline"
 									disabled={busyAction}
 									data-testid="floor-occupied-choice-overbook"
 									onClick={() => handleResolveOccupiedDrop('overbook')}
 								>
-									<Icon name="alert-triangle" className="mr-1.5 size-3.5" />
+									<Icon name="alert-triangle" className="size-3.5" />
 									<Trans>Overbook table</Trans>
 								</Button>
 							</div>
@@ -1017,110 +863,77 @@ export default function ReservationsFloorRoute() {
 				/>
 			) : null}
 
-			{/* Toolbar: Area tabs, Section overlay toggle, High-contrast toggle, Status legend */}
-			<div className="border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+			{/* Toolbar: one area at a time, overlays, live state */}
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex flex-wrap items-center gap-1.5">
-					<Button
-						type="button"
-						size="sm"
-						variant={host.areaFilter === null ? 'default' : 'outline'}
-						onClick={() => host.setAreaFilter(null)}
-						data-testid="floor-area-all"
-					>
-						<Trans>All areas</Trans>
-					</Button>
-					{(feed?.areas ?? []).map((area) => (
-						<Button
-							key={area.id}
-							type="button"
-							size="sm"
-							variant={host.areaFilter === area.id ? 'default' : 'outline'}
-							onClick={() => host.setAreaFilter(area.id)}
-							data-testid={`floor-area-${area.id}`}
-						>
-							{area.name}
-						</Button>
-					))}
+					{areas.length > 1
+						? areas.map((area) => (
+								<Button
+									key={area.id}
+									type="button"
+									size="sm"
+									variant={floorAreaId === area.id ? 'secondary' : 'outline'}
+									aria-pressed={floorAreaId === area.id}
+									className="h-11 md:h-8"
+									onClick={() => host.setAreaFilter(area.id)}
+									data-testid={`floor-area-${area.id}`}
+								>
+									{area.name}
+								</Button>
+							))
+						: null}
 				</div>
 
 				<div className="flex flex-wrap items-center gap-2">
 					<Button
 						type="button"
 						size="sm"
-						variant={sectionOverlay ? 'default' : 'outline'}
+						variant={sectionOverlay ? 'secondary' : 'outline'}
+						aria-pressed={sectionOverlay}
+						className="h-11 md:h-8"
 						onClick={() => setSectionOverlay((v) => !v)}
 						data-testid="floor-section-overlay-toggle"
 					>
-						<Icon name="blocks" className="mr-1.5 size-4" />
+						<Icon name="blocks" className="size-4" />
 						<Trans>Section overlay</Trans>
 					</Button>
-
 					<Button
 						type="button"
 						size="sm"
-						variant={highContrast ? 'default' : 'outline'}
+						variant={highContrast ? 'secondary' : 'outline'}
+						aria-pressed={highContrast}
+						className="h-11 md:h-8"
 						onClick={() => setHighContrast((v) => !v)}
 						data-testid="floor-high-contrast-toggle"
 					>
-						<Icon name="sun" className="mr-1.5 size-4" />
+						<Icon name="sun" className="size-4" />
 						<Trans>High contrast</Trans>
 					</Button>
-
-					<Badge
-						variant="outline"
-						className="text-xs"
-						data-testid="floor-poll-badge"
-					>
-						<Icon name="refresh-cw" className="mr-1 size-3" />
-						{draggingRsvId || occupiedDropPrompt || floorWaitlist.busyUi ? (
-							<Trans>Polling paused</Trans>
-						) : (
-							<Trans>Live 5s ETag</Trans>
-						)}
+					<Badge variant="outline" data-testid="floor-poll-badge">
+						<Icon name="refresh-cw" className="size-3" />
+						{pollPaused ? <Trans>Updates paused</Trans> : <Trans>Live</Trans>}
 					</Badge>
 				</div>
 			</div>
 
-			{/* Status color & icon legend (VAL-HOST-012, VAL-HOST-020) */}
+			{/* One-line key for the table states */}
 			<div
-				className="flex flex-wrap items-center gap-2 text-xs"
+				className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs"
 				data-testid="floor-status-legend"
 			>
-				<span className="text-muted-foreground font-medium">
-					<Trans>Status legend:</Trans>
-				</span>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="check" className="size-3 text-emerald-600" />
-					<Trans>Available</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="calendar" className="text-chart-5 size-3" />
-					<Trans>Reserved ≤30m</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="circle-check" className="size-3 text-amber-600" />
-					<Trans>Arrived</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="users" className="text-chart-2 size-3" />
-					<Trans>Seated</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="tag" className="text-chart-4 size-3" />
-					<Trans>Dessert / Check</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="clock" className="text-chart-3 size-3" />
-					<Trans>Finishing (&lt;15m)</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="alert-triangle" className="text-destructive size-3" />
-					<Trans>Overtime</Trans>
-				</Badge>
-				<Badge variant="outline" className="gap-1">
-					<Icon name="ban" className="text-muted-foreground size-3" />
-					<Trans>Blocked</Trans>
-				</Badge>
+				{LEGEND_STATES.map((state) => (
+					<span key={state} className="inline-flex items-center gap-1.5">
+						<span
+							aria-hidden="true"
+							className={cn(
+								'size-2.5 rounded-sm border',
+								TABLE_STATE_STYLES[state].surface,
+							)}
+						/>
+						<Icon name={FLOOR_STATUS_ICONS[state]} className="size-3.5" />
+						{i18n._(TABLE_STATE_STYLES[state].label)}
+					</span>
+				))}
 			</div>
 
 			{/* Section Overlay Legend & Server Assignment Bar (VAL-HOST-016) */}
@@ -1129,7 +942,7 @@ export default function ReservationsFloorRoute() {
 					<CardHeader className="pb-2">
 						<div className="flex flex-wrap items-center justify-between gap-2">
 							<CardTitle className="text-sm font-semibold">
-								<Trans>Section Overlay & Server Assignments</Trans>
+								<Trans>Section overlay & server assignments</Trans>
 								{activeLayout ? ` — ${activeLayout.name}` : ''}
 							</CardTitle>
 							{canManage && activeLayout ? (
@@ -1140,7 +953,7 @@ export default function ReservationsFloorRoute() {
 									data-testid="floor-section-save-servers"
 									onClick={handleSaveSectionServers}
 								>
-									<Icon name="check" className="mr-1.5 size-3.5" />
+									<Icon name="check" className="size-3.5" />
 									<Trans>Save section servers</Trans>
 								</Button>
 							) : null}
@@ -1168,7 +981,7 @@ export default function ReservationsFloorRoute() {
 												: 0),
 										0,
 									)
-									const colorHex = getSectionColor(sec.colorToken)
+									const tableCount = secTables.length
 									return (
 										<div
 											key={sec.id}
@@ -1176,18 +989,24 @@ export default function ReservationsFloorRoute() {
 											data-testid={`floor-section-card-${sec.id}`}
 										>
 											<div className="flex items-center justify-between gap-2">
-												<div className="flex items-center gap-2">
+												<div className="flex min-w-0 items-center gap-2">
 													<span
-														className="inline-block size-3.5 rounded-full border"
-														style={{ backgroundColor: colorHex }}
+														aria-hidden="true"
+														className="inline-block size-3.5 shrink-0 rounded-full border"
+														style={{
+															backgroundColor:
+																getSectionColor(sec.colorToken) ??
+																'var(--muted-foreground)',
+														}}
 													/>
-													<span className="text-sm font-medium">
+													<span className="truncate text-sm font-medium">
 														{sec.name}
 													</span>
 												</div>
-												<Badge variant="secondary" className="text-xs">
-													{secTables.length} {t`tables`} · {seatedCovers}{' '}
-													{t`covers`}
+												<Badge variant="secondary">
+													<Trans>
+														{tableCount} tables · {seatedCovers} covers
+													</Trans>
 												</Badge>
 											</div>
 											<div className="flex items-center gap-1.5">
@@ -1208,7 +1027,6 @@ export default function ReservationsFloorRoute() {
 														}))
 													}
 													placeholder={t`Unassigned`}
-													className="h-7 text-xs"
 													data-testid={`floor-section-server-input-${sec.id}`}
 												/>
 											</div>
@@ -1221,255 +1039,110 @@ export default function ReservationsFloorRoute() {
 				</Card>
 			) : null}
 
-			{/* Main 2-column layout: Floor Plan Canvas + Side Reservation List & Quick Actions */}
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				{/* Floor Plan Canvas (8 cols on lg / 1024px iPad landscape) */}
 				<div className="lg:col-span-8">
 					<Card className="overflow-hidden">
 						<div
-							className="bg-muted/20 relative min-h-[540px] w-full overflow-auto p-4"
+							ref={viewportRef}
+							className="bg-muted/20 relative min-h-96 w-full overflow-auto p-4"
 							dir="ltr"
 							data-testid="floor-plan-canvas"
 						>
-							<div
-								className="relative mx-auto"
-								style={{ width: 920, height: 600 }}
-								data-testid="floor-plan-stage"
-							>
-								{/* Architectural floor elements (VAL-HOST-012) */}
-								{elements.map((el) => {
-									const x = Number(el.x ?? el.posX ?? 0)
-									const y = Number(el.y ?? el.posY ?? 0)
-									const width = Math.max(24, Number(el.width ?? el.w ?? 100))
-									const height = Math.max(16, Number(el.height ?? el.h ?? 32))
-									const rotation = Number(el.rotation ?? el.rotDeg ?? 0)
-									return (
-										<div
-											key={el.id}
-											data-testid={`floor-element-${el.id}`}
-											data-element-kind={el.kind}
-											className="border-border/70 bg-muted/60 text-muted-foreground pointer-events-none absolute flex items-center justify-center rounded border px-1.5 text-[10px] font-medium tracking-wider uppercase"
-											style={{
-												left: x,
-												top: y,
-												width,
-												height,
-												transform: rotation
-													? `rotate(${rotation}deg)`
-													: undefined,
-											}}
-										>
-											{el.label || enumText(ELEMENT_KIND_LABELS, el.kind)}
-										</div>
-									)
-								})}
-
-								{/* Tables on the floor canvas */}
-								{tableStates.map((ts, index) => {
-									const {
-										table,
-										liveStatus,
-										currentReservation,
-										nextReservation,
-									} = ts
-									const rawX = Number(table.x ?? table.posX ?? 0)
-									const rawY = Number(table.y ?? table.posY ?? 0)
-									// Fallback grid position if coordinates are 0,0 for multiple tables
-									const fallbackCol = index % 4
-									const fallbackRow = Math.floor(index / 4)
-									const x =
-										rawX > 0 || index === 0 ? rawX : 40 + fallbackCol * 210
-									const y =
-										rawY > 0 || index === 0 ? rawY : 40 + fallbackRow * 145
-									const width = Math.max(
-										96,
-										Number(table.width ?? table.w ?? 120),
-									)
-									const height = Math.max(
-										84,
-										Number(table.height ?? table.h ?? 96),
-									)
-									const rotation = Number(table.rotation ?? table.rotDeg ?? 0)
-									const isRound = table.shape === 'round'
-									const isSelected = selectedTableId === table.id
-									const isDragOver = dragOverTableId === table.id
-									const sectionColor = sectionOverlay
-										? getSectionColor(ts.sectionColorToken)
-										: null
-									const activeParty = currentReservation ?? nextReservation
-
-									return (
-										<button
-											key={table.id}
-											type="button"
-											data-testid={`floor-table-${table.id}`}
-											data-table-label={table.label}
-											data-live-status={liveStatus}
-											data-section-id={ts.sectionId ?? ''}
-											onClick={() =>
-												setSelectedTableId((prev) =>
-													prev === table.id ? null : table.id,
-												)
-											}
-											onDragOver={(e) => {
-												if (!canManage) return
-												e.preventDefault()
-												setDragOverTableId(table.id)
-											}}
-											onDragLeave={() => {
-												if (dragOverTableId === table.id) {
-													setDragOverTableId(null)
-												}
-											}}
-											onDrop={(e) => {
-												e.preventDefault()
-												setDragOverTableId(null)
-												const waitlistId =
-													e.dataTransfer.getData(WAITLIST_DRAG_TYPE) ||
-													floorWaitlist.draggingId
-												if (waitlistId) {
-													floorWaitlist.setDraggingId(null)
-													void handleDropWaitlistOnTable(waitlistId, ts)
-													return
-												}
-												const rsvId =
-													e.dataTransfer.getData('text/reservation-id') ||
-													draggingRsvId
-												setDraggingRsvId(null)
-												if (!rsvId) return
-												const rsv = feed?.reservations.find(
-													(r) => r.id === rsvId,
-												)
-												if (rsv) {
-													void handleDropReservationOnTable(rsv, ts)
-												}
-											}}
-											className={cn(
-												'absolute flex flex-col justify-between border-2 p-2 text-left shadow-xs transition-all focus-visible:ring-2 focus-visible:outline-none',
-												isRound ? 'rounded-full px-3 py-2.5' : 'rounded-xl',
-												getStatusStyle(liveStatus),
-												isSelected && 'ring-primary ring-2 ring-offset-2',
-												sectionColor && !isSelected && 'ring-primary/40 ring-1',
-												isDragOver &&
-													'border-primary bg-primary/15 scale-105 ring-2',
-											)}
-											style={{
-												left: x,
-												top: y,
-												width,
-												height,
-												transform: rotation
-													? `rotate(${rotation}deg)`
-													: undefined,
-											}}
-										>
-											{/* Top row: Table label, capacity, status icon */}
-											<div className="flex w-full items-center justify-between gap-1">
-												<span className="truncate text-xs font-bold">
-													{table.label}
-												</span>
-												<span className="text-muted-foreground flex items-center gap-0.5 text-[10px] font-medium">
-													<Icon name={ts.statusIcon} className="size-3" />
-													{table.minCovers}-{table.maxCovers}p
-												</span>
-											</div>
-
-											{/* Middle row: Guest short name + party size + course badge (VAL-HOST-013) */}
-											{activeParty ? (
-												<div className="my-0.5 flex flex-col gap-0.5 overflow-hidden">
-													<div className="flex items-center justify-between gap-1">
-														<span
-															className="truncate text-xs font-semibold"
-															data-testid={`floor-table-guest-${table.id}`}
-														>
-															{formatShortGuestName(activeParty.guestName)}
-														</span>
-														<Badge
-															variant="secondary"
-															className="h-4 px-1 text-[10px]"
-															data-testid={`floor-table-party-size-${table.id}`}
-														>
-															{activeParty.partySize}p
-														</Badge>
-													</div>
-													{activeParty.courseStage ? (
-														<span
-															className="bg-background/80 inline-flex w-fit items-center rounded px-1 py-0.5 text-[10px] font-medium capitalize"
-															data-testid={`floor-table-course-${table.id}`}
-														>
-															{enumText(
-																COURSE_STAGE_LABELS,
-																activeParty.courseStage,
-															)}
-														</span>
-													) : null}
+							{!feed && host.poll.loading ? (
+								<Skeleton className="mx-auto h-96 w-full max-w-3xl" />
+							) : feed && tableStates.length === 0 ? (
+								<p className="text-muted-foreground py-16 text-center text-sm">
+									<Trans>
+										No tables in this area yet. Add tables under Settings →
+										Floor plan.
+									</Trans>
+								</p>
+							) : (
+								<div
+									className="mx-auto"
+									style={{
+										width: stage.width * scale,
+										height: stage.height * scale,
+									}}
+								>
+									<div
+										className="relative origin-top-left"
+										style={{
+											width: stage.width,
+											height: stage.height,
+											transform: scale === 1 ? undefined : `scale(${scale})`,
+										}}
+										data-testid="floor-plan-stage"
+									>
+										{areaElements.map((el) => {
+											const p = floorPlacement(el)
+											return (
+												<div
+													key={el.id}
+													data-testid={`floor-element-${el.id}`}
+													data-element-kind={el.kind}
+													className="border-border/70 bg-muted/60 text-muted-foreground pointer-events-none absolute flex items-center justify-center rounded border px-1.5 text-xs font-medium"
+													style={{
+														left: p.x,
+														top: p.y,
+														width: p.width,
+														height: p.height,
+														transform: p.rotation
+															? `rotate(${p.rotation}deg)`
+															: undefined,
+													}}
+												>
+													<span className="truncate">
+														{el.label || enumText(ELEMENT_KIND_LABELS, el.kind)}
+													</span>
 												</div>
-											) : (
-												<div className="text-muted-foreground my-0.5 truncate text-[11px]">
-													{ts.statusLabel}
-												</div>
-											)}
+											)
+										})}
 
-											{/* Bottom row: Elapsed/remaining timer or section badge (VAL-HOST-013, VAL-HOST-016) */}
-											<div className="flex w-full items-center justify-between gap-1">
-												{ts.timerText ? (
-													<span
-														className={cn(
-															'truncate rounded px-1 py-0.5 font-mono text-[10px] font-semibold',
-															liveStatus === 'overtime'
-																? 'bg-destructive/20 text-destructive'
-																: liveStatus === 'finishing'
-																	? 'bg-chart-3/20 text-foreground'
-																	: 'bg-background/70 text-foreground',
-														)}
-														data-testid={`floor-table-timer-${table.id}`}
-													>
-														{ts.timerText}
-													</span>
-												) : (
-													<span
-														className="truncate text-[10px] font-medium"
-														data-testid={`floor-table-status-text-${table.id}`}
-													>
-														{ts.statusLabel}
-													</span>
-												)}
-
-												{sectionOverlay && ts.sectionName ? (
-													<span
-														className="truncate rounded px-1 py-0.5 text-[9px] font-semibold text-white"
-														style={{
-															backgroundColor: sectionColor ?? '#3b82f6',
-														}}
-														data-testid={`floor-table-section-badge-${table.id}`}
-													>
-														{ts.sectionName}
-													</span>
-												) : null}
-											</div>
-										</button>
-									)
-								})}
-							</div>
+										{tableStates.map((ts, index) => (
+											<FloorTable
+												key={ts.table.id}
+												state={ts}
+												placement={floorPlacementWithFallback(ts.table, index)}
+												isRound={ts.table.shape === 'round'}
+												selected={selectedTableId === ts.table.id}
+												dragOver={dragOverTableId === ts.table.id}
+												highContrast={highContrast}
+												canManage={canManage}
+												showSection={sectionOverlay}
+												sectionColor={
+													sectionOverlay
+														? getSectionColor(ts.sectionColorToken)
+														: null
+												}
+												onSelect={onSelectTable}
+												onDragOverTable={onDragOverTable}
+												onDragLeaveTable={clearFloorDragOver}
+												onDropOnTable={onDropOnTable}
+											/>
+										))}
+									</div>
+								</div>
+							)}
 						</div>
 					</Card>
 				</div>
 
-				{/* Right column: Selected Table Quick Actions + Draggable Side Reservation List (4 cols) */}
 				<div className="flex flex-col gap-4 lg:col-span-4">
-					{/* Selected Table Quick Actions (VAL-HOST-015) */}
 					{selectedTableState ? (
 						<Card data-testid="floor-table-quick-actions">
 							<CardHeader className="pb-2">
 								<div className="flex items-center justify-between gap-2">
-									<div>
+									<div className="min-w-0">
 										<CardTitle className="text-sm font-semibold">
 											{selectedTableState.table.label} ·{' '}
 											{selectedTableState.table.minCovers}-
 											{selectedTableState.table.maxCovers} <Trans>covers</Trans>
 										</CardTitle>
 										<p className="text-muted-foreground text-xs">
-											{selectedTableState.statusLabel}
+											{i18n._(
+												TABLE_STATE_STYLES[selectedTableState.liveStatus].label,
+											)}
 											{selectedTableState.sectionName
 												? ` · ${selectedTableState.sectionName}`
 												: ''}
@@ -1480,8 +1153,10 @@ export default function ReservationsFloorRoute() {
 									</div>
 									<Button
 										type="button"
-										size="sm"
+										size="icon"
 										variant="ghost"
+										aria-label={t`Close table details`}
+										className="size-11 md:size-8"
 										onClick={() => setSelectedTableId(null)}
 									>
 										<Icon name="x" className="size-4" />
@@ -1489,28 +1164,31 @@ export default function ReservationsFloorRoute() {
 								</div>
 							</CardHeader>
 							<CardContent className="flex flex-col gap-3">
-								{/* Current / Next Reservation info & actions */}
 								{selectedTableState.currentReservation ? (
 									<div className="border-border bg-muted/30 flex flex-col gap-2 rounded-lg border p-2.5">
 										<div className="flex items-center justify-between gap-2">
-											<div>
-												<p className="text-xs font-semibold">
+											<div className="min-w-0">
+												<p className="text-sm font-semibold wrap-anywhere">
 													{selectedTableState.currentReservation.guestName} (
 													{selectedTableState.currentReservation.partySize}p)
 												</p>
-												<p className="text-muted-foreground text-[11px]">
-													{selectedTableState.currentReservation.hhmm} –{' '}
-													{selectedTableState.currentReservation.endHhmm} ·{' '}
-													{enumText(
-														RESERVATION_STATUS_LABELS,
-														selectedTableState.currentReservation.status,
-													)}
+												<p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
+													<span>
+														{selectedTableState.currentReservation.hhmm} –{' '}
+														{selectedTableState.currentReservation.endHhmm}
+													</span>
+													<StatusLabel
+														status={
+															selectedTableState.currentReservation.status
+														}
+													/>
 												</p>
 											</div>
 											<Button
 												type="button"
 												size="sm"
 												variant="outline"
+												className="h-11 md:h-8"
 												data-testid="floor-action-open-detail"
 												onClick={() =>
 													host.openReservationDetail(
@@ -1518,7 +1196,7 @@ export default function ReservationsFloorRoute() {
 													)
 												}
 											>
-												<Trans>Detail sheet</Trans>
+												<Trans>Details</Trans>
 											</Button>
 										</div>
 
@@ -1528,6 +1206,7 @@ export default function ReservationsFloorRoute() {
 											<Button
 												type="button"
 												size="sm"
+												className="h-11 md:h-8"
 												disabled={busyAction}
 												data-testid="floor-action-seat-assigned"
 												onClick={() =>
@@ -1537,49 +1216,53 @@ export default function ReservationsFloorRoute() {
 													)
 												}
 											>
-												<Icon name="users" className="mr-1.5 size-3.5" />
+												<Icon name="users" className="size-3.5" />
 												<Trans>Seat arrived party now</Trans>
 											</Button>
 										) : null}
 
-										{/* Course stage buttons for seated reservation */}
 										{canManage &&
 										selectedTableState.currentReservation.status ===
 											'seated' ? (
 											<div className="flex flex-col gap-1.5">
-												<span className="text-muted-foreground text-[11px] font-medium">
+												<span className="text-muted-foreground text-xs font-medium">
 													<Trans>Course stage:</Trans>
 												</span>
 												<div className="flex flex-wrap gap-1">
-													{COURSE_STAGES.map((stage) => (
+													{COURSE_STAGES.map((courseStage) => (
 														<Button
-															key={stage.id}
+															key={courseStage.id}
 															type="button"
 															size="sm"
 															variant={
 																selectedTableState.currentReservation
-																	?.courseStage === stage.id
-																	? 'default'
+																	?.courseStage === courseStage.id
+																	? 'secondary'
 																	: 'outline'
 															}
+															aria-pressed={
+																selectedTableState.currentReservation
+																	?.courseStage === courseStage.id
+															}
 															disabled={busyAction}
-															className="h-7 px-2 text-xs"
-															data-testid={`floor-action-course-${stage.id}`}
+															className="h-11 md:h-8"
+															data-testid={`floor-action-course-${courseStage.id}`}
 															onClick={() =>
 																handleCourseUpdate(
 																	selectedTableState.currentReservation!,
-																	stage.id,
+																	courseStage.id,
 																)
 															}
 														>
-															{i18n._(stage.label)}
+															{i18n._(courseStage.label)}
 														</Button>
 													))}
 												</div>
 												<Button
 													type="button"
 													size="sm"
-													variant="secondary"
+													variant="outline"
+													className="h-11 md:h-8"
 													disabled={busyAction}
 													data-testid="floor-action-finish"
 													onClick={() =>
@@ -1588,7 +1271,7 @@ export default function ReservationsFloorRoute() {
 														)
 													}
 												>
-													<Icon name="check" className="mr-1.5 size-3.5" />
+													<Icon name="check" className="size-3.5" />
 													<Trans>Finish & clear table</Trans>
 												</Button>
 											</div>
@@ -1596,19 +1279,18 @@ export default function ReservationsFloorRoute() {
 									</div>
 								) : selectedTableState.nextReservation ? (
 									<div className="border-border bg-muted/30 flex items-center justify-between gap-2 rounded-lg border p-2.5">
-										<div>
-											<p className="text-xs font-semibold">
-												<Trans>Next:</Trans>{' '}
-												{selectedTableState.nextReservation.guestName} (
-												{selectedTableState.nextReservation.partySize}p at{' '}
-												{selectedTableState.nextReservation.hhmm})
-											</p>
-										</div>
+										<p className="min-w-0 text-sm font-semibold wrap-anywhere">
+											<Trans>Next:</Trans>{' '}
+											{selectedTableState.nextReservation.guestName} (
+											{selectedTableState.nextReservation.partySize}p ·{' '}
+											{selectedTableState.nextReservation.hhmm})
+										</p>
 										<div className="flex items-center gap-1">
 											{canManage ? (
 												<Button
 													type="button"
 													size="sm"
+													className="h-11 md:h-8"
 													disabled={busyAction}
 													data-testid="floor-action-seat-assigned"
 													onClick={() =>
@@ -1625,6 +1307,7 @@ export default function ReservationsFloorRoute() {
 												type="button"
 												size="sm"
 												variant="outline"
+												className="h-11 md:h-8"
 												data-testid="floor-action-open-detail"
 												onClick={() =>
 													host.openReservationDetail(
@@ -1632,19 +1315,18 @@ export default function ReservationsFloorRoute() {
 													)
 												}
 											>
-												<Trans>Detail</Trans>
+												<Trans>Details</Trans>
 											</Button>
 										</div>
 									</div>
 								) : null}
 
-								{/* Walk-in & Block table buttons */}
 								{canManage ? (
 									<div className="flex flex-wrap gap-2">
 										<Button
 											type="button"
 											size="sm"
-											variant="default"
+											className="h-11 md:h-8"
 											disabled={selectedTableState.isBlocked || busyAction}
 											data-testid="floor-action-walk-in"
 											onClick={() => {
@@ -1652,25 +1334,23 @@ export default function ReservationsFloorRoute() {
 												host.setWalkInOpen(true)
 											}}
 										>
-											<Icon name="user-plus" className="mr-1.5 size-3.5" />
+											<Icon name="user-plus" className="size-3.5" />
 											<Trans>
 												Seat walk-in at {selectedTableState.table.label}
 											</Trans>
 										</Button>
-
 										<Button
 											type="button"
 											size="sm"
-											variant={
-												selectedTableState.isBlocked ? 'secondary' : 'outline'
-											}
+											variant="outline"
+											className="h-11 md:h-8"
 											disabled={busyAction}
 											data-testid="floor-action-block-table"
 											onClick={() =>
 												handleBlockTableForService(selectedTableState)
 											}
 										>
-											<Icon name="ban" className="mr-1.5 size-3.5" />
+											<Icon name="ban" className="size-3.5" />
 											{selectedTableState.isBlocked ? (
 												<Trans>Unblock table</Trans>
 											) : (
@@ -1707,7 +1387,6 @@ export default function ReservationsFloorRoute() {
 							}}
 							onSeatAtSelected={(entry, table) => {
 								setActionError(null)
-								setActionBanner(null)
 								void floorWaitlist
 									.dropOnTable(entry.id, table)
 									.then(finishWaitlistSeat)
@@ -1716,7 +1395,6 @@ export default function ReservationsFloorRoute() {
 						/>
 					) : null}
 
-					{/* Side Reservation List (VAL-HOST-014) */}
 					<Card
 						className="flex flex-col"
 						data-testid="floor-side-reservation-list"
@@ -1726,9 +1404,11 @@ export default function ReservationsFloorRoute() {
 								<CardTitle className="text-sm font-semibold">
 									<Trans>Parties ({sideReservations.length})</Trans>
 								</CardTitle>
-								<span className="text-muted-foreground text-[11px]">
-									<Trans>Drag onto table to seat/assign</Trans>
-								</span>
+								{canManage ? (
+									<span className="text-muted-foreground text-xs">
+										<Trans>Drag onto a table, or use Assign to table</Trans>
+									</span>
+								) : null}
 							</div>
 							<div className="flex flex-wrap gap-1 pt-1">
 								{(
@@ -1744,8 +1424,9 @@ export default function ReservationsFloorRoute() {
 										key={tab.id}
 										type="button"
 										size="sm"
-										variant={sideFilter === tab.id ? 'default' : 'outline'}
-										className="h-7 px-2 text-xs"
+										variant={sideFilter === tab.id ? 'secondary' : 'outline'}
+										aria-pressed={sideFilter === tab.id}
+										className="h-11 md:h-8"
 										data-testid={`floor-side-filter-${tab.id}`}
 										onClick={() => setSideFilter(tab.id)}
 									>
@@ -1755,71 +1436,140 @@ export default function ReservationsFloorRoute() {
 							</div>
 						</CardHeader>
 						<CardContent className="flex max-h-[460px] flex-col gap-2 overflow-y-auto">
-							{sideReservations.length === 0 ? (
-								<p className="text-muted-foreground py-6 text-center text-xs">
+							{!feed && host.poll.loading ? (
+								<>
+									<Skeleton className="h-14" />
+									<Skeleton className="h-14" />
+									<Skeleton className="h-14" />
+								</>
+							) : sideReservations.length === 0 ? (
+								<p className="text-muted-foreground py-6 text-center text-sm">
 									<Trans>No parties match this filter.</Trans>
 								</p>
 							) : (
-								sideReservations.map((rsv) => (
-									<div
-										key={rsv.id}
-										draggable={canManage}
-										onDragStart={(e) => {
-											e.dataTransfer.setData('text/reservation-id', rsv.id)
-											setDraggingRsvId(rsv.id)
-										}}
-										onDragEnd={() => {
-											setDraggingRsvId(null)
-											setDragOverTableId(null)
-										}}
-										data-testid={`floor-side-rsv-${rsv.id}`}
-										className={cn(
-											'border-border bg-card hover:border-primary/50 flex flex-col gap-1.5 rounded-lg border p-2.5 transition-colors',
-											canManage && 'cursor-grab active:cursor-grabbing',
-										)}
-									>
-										<div className="flex items-center justify-between gap-2">
-											<button
-												type="button"
-												onClick={() => host.openReservationDetail(rsv.id)}
-												className="truncate text-left text-xs font-semibold hover:underline"
-											>
-												{rsv.hhmm} · {rsv.guestName} ({rsv.partySize}p)
-											</button>
-											<Badge variant="outline" className="text-[10px]">
-												{enumText(RESERVATION_STATUS_LABELS, rsv.status)}
-											</Badge>
-										</div>
-
-										<div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
-											<span className="text-muted-foreground">
-												{rsv.assignedTableLabels.length > 0
-													? rsv.assignedTableLabels.join(', ')
-													: t`Unassigned`}
-											</span>
-
-											{canManage && selectedTableState ? (
+								sideReservations.map((rsv) => {
+									const tableLabels = rsv.assignedTableLabels.join(', ')
+									return (
+										<div
+											key={rsv.id}
+											draggable={canManage}
+											onDragStart={(e) => {
+												e.dataTransfer.setData('text/reservation-id', rsv.id)
+												setDraggingRsvId(rsv.id)
+											}}
+											onDragEnd={() => {
+												setDraggingRsvId(null)
+												setDragOverTableId(null)
+											}}
+											data-testid={`floor-side-rsv-${rsv.id}`}
+											className={cn(
+												'border-border bg-card hover:border-primary/50 flex flex-col gap-1.5 rounded-lg border p-2.5 transition-colors',
+												canManage && 'cursor-grab active:cursor-grabbing',
+											)}
+										>
+											<div className="flex items-center justify-between gap-2">
 												<Button
 													type="button"
-													size="sm"
-													variant="secondary"
-													className="h-6 px-2 text-[11px]"
-													data-testid={`floor-assign-to-selected-${rsv.id}`}
-													onClick={() =>
-														handleDropReservationOnTable(
-															rsv,
-															selectedTableState,
-														)
-													}
+													variant="link"
+													className="h-auto min-h-11 min-w-0 justify-start p-0 text-start text-sm font-semibold md:min-h-0"
+													onClick={() => host.openReservationDetail(rsv.id)}
 												>
-													{rsv.status === 'arrived'
-														? t`Seat at ${selectedTableState.table.label}`
-														: t`Assign to ${selectedTableState.table.label}`}
+													<span className="truncate">
+														{rsv.hhmm} · {rsv.guestName} ({rsv.partySize}p)
+													</span>
 												</Button>
-											) : null}
+												<StatusLabel status={rsv.status} />
+											</div>
+
+											<div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+												<span
+													className={cn(
+														rsv.assignedTableLabels.length === 0
+															? 'text-warning'
+															: 'text-muted-foreground',
+														reservationStatusStyle(rsv.status).strike &&
+															'line-through',
+													)}
+												>
+													{tableLabels || t`Unassigned`}
+												</span>
+
+												{canManage ? (
+													<div className="flex items-center gap-1">
+														{selectedTableState ? (
+															<Button
+																type="button"
+																size="sm"
+																variant="secondary"
+																className="h-11 md:h-8"
+																data-testid={`floor-assign-to-selected-${rsv.id}`}
+																onClick={() =>
+																	handleDropReservationOnTable(
+																		rsv,
+																		selectedTableState,
+																	)
+																}
+															>
+																{rsv.status === 'arrived'
+																	? t`Seat at ${selectedTableState.table.label}`
+																	: t`Assign to ${selectedTableState.table.label}`}
+															</Button>
+														) : null}
+														<DropdownMenu>
+															<DropdownMenuTrigger
+																render={
+																	<Button
+																		type="button"
+																		size="sm"
+																		variant="outline"
+																		className="h-11 md:h-8"
+																		data-testid={`floor-assign-menu-${rsv.id}`}
+																	>
+																		<Icon
+																			name="layout-grid"
+																			className="size-3.5"
+																		/>
+																		<Trans>Assign to table</Trans>
+																	</Button>
+																}
+															/>
+															<DropdownMenuContent
+																align="end"
+																className="max-h-72 overflow-y-auto"
+															>
+																{tableStates.map((ts) => {
+																	const tableName = ts.table.label
+																	return (
+																		<DropdownMenuItem
+																			key={ts.table.id}
+																			disabled={ts.isBlocked}
+																			data-testid={`floor-assign-${rsv.id}-${ts.table.id}`}
+																			onClick={() =>
+																				handleDropReservationOnTable(rsv, ts)
+																			}
+																		>
+																			<span className="font-medium">
+																				{tableName}
+																			</span>
+																			<span className="text-muted-foreground ms-auto text-xs">
+																				{ts.table.minCovers}-
+																				{ts.table.maxCovers} ·{' '}
+																				{i18n._(
+																					TABLE_STATE_STYLES[ts.liveStatus]
+																						.label,
+																				)}
+																			</span>
+																		</DropdownMenuItem>
+																	)
+																})}
+															</DropdownMenuContent>
+														</DropdownMenu>
+													</div>
+												) : null}
+											</div>
 										</div>
-									</div>
-								))
+									)
+								})
 							)}
 						</CardContent>
 					</Card>
@@ -1891,8 +1641,7 @@ export default function ReservationsFloorRoute() {
 						const result = await floorWaitlist.waitlist.seat(entry, input)
 						if (result.ok) {
 							const guest = result.value.entry.displayName
-							setActionError(null)
-							setActionBanner(t`Seated ${guest} from the waitlist.`)
+							notify(t`Seated ${guest} from the waitlist.`)
 							void host.refresh()
 						}
 						return result

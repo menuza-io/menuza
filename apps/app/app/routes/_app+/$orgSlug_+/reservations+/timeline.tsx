@@ -1,3 +1,5 @@
+import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { formatHhmm, RESERVATIONS_PERMISSIONS } from '@repo/reservations'
@@ -5,13 +7,20 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card } from '@repo/ui/card'
+import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
+import { Input } from '@repo/ui/input'
+import { Skeleton } from '@repo/ui/skeleton'
 import { useCallback, useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
+import {
+	ATTENTION_RING,
+	reservationStatusStyle,
+} from '#app/components/reservations/status-style.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
@@ -20,6 +29,10 @@ import {
 	type DayReservationView,
 	updateReservation,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	hostErrorMessage,
+	hostLoadErrorMessage,
+} from '#app/utils/reservations/host-errors.ts'
 import { ReservationsApiError } from '#app/utils/reservations/reservations-client.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/timeline.ts'
@@ -48,6 +61,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 	return { ok: true }
 }
 
+/** Sent to the server when the host gives no reason; the server stores it as data. */
+const OVERBOOK_REASON_FALLBACK = 'Host stand manual override'
+
 const SLOT_STEP_MIN = 15
 const SLOT_WIDTH_PX = 52
 
@@ -61,7 +77,8 @@ type KeyboardGrabState = {
 }
 
 export default function ReservationsTimelineRoute() {
-	const { t } = useLingui()
+	const { t, i18n } = useLingui()
+	const tx = (d: MessageDescriptor) => i18n._(d)
 	const { orgSlug, canManage } = useLoaderData<typeof loader>()
 	const { activeLocationId, locations } = useReservationsLayoutData()
 	const activeLocation =
@@ -79,9 +96,7 @@ export default function ReservationsTimelineRoute() {
 	const [ariaAnnouncement, setAriaAnnouncement] = useState<string>('')
 	const [mutationError, setMutationError] = useState<string | null>(null)
 	const [allowOverbookDrop, setAllowOverbookDrop] = useState<boolean>(false)
-	const [overbookReasonInput, setOverbookReasonInput] = useState<string>(
-		'Host stand manual override',
-	)
+	const [overbookReasonInput, setOverbookReasonInput] = useState<string>('')
 
 	// VAL-HOST-003: Assign vs Assign & Lock choice banner after dropping unassigned reservation
 	const [assignLockChoice, setAssignLockChoice] = useState<{
@@ -142,7 +157,8 @@ export default function ReservationsTimelineRoute() {
 	const activeReservations = useMemo(
 		() =>
 			(dayFeed?.reservations ?? []).filter(
-				(r) => r.status !== 'cancelled' && r.status !== 'no_show',
+				(r) =>
+					!['cancelled', 'no_show', 'declined', 'expired'].includes(r.status),
 			),
 		[dayFeed?.reservations],
 	)
@@ -292,7 +308,8 @@ export default function ReservationsTimelineRoute() {
 							unlock: unlockConfirmed || reservation.locked,
 							forceOverbook,
 							overbookReason: forceOverbook
-								? (overbookReason ?? overbookReasonInput)
+								? (overbookReason ??
+									(overbookReasonInput.trim() || OVERBOOK_REASON_FALLBACK))
 								: null,
 							reflowLaterParties: true,
 							expectedVersion: reservation.version,
@@ -326,7 +343,8 @@ export default function ReservationsTimelineRoute() {
 						unlock: unlockConfirmed || reservation.locked,
 						forceOverbook,
 						overbookReason: forceOverbook
-							? (overbookReason ?? overbookReasonInput)
+							? (overbookReason ??
+								(overbookReasonInput.trim() || OVERBOOK_REASON_FALLBACK))
 							: null,
 						reflowLaterParties: true,
 						expectedVersion: reservation.version,
@@ -359,9 +377,9 @@ export default function ReservationsTimelineRoute() {
 					const errCode = typeof bodyObj.error === 'string' ? bodyObj.error : ''
 					if (errCode === 'VERSION_CONFLICT') {
 						// VAL-HOST-010: Version mismatch snaps back, shows banner, and refreshes day feed
-						const msg = t`Another host modified this reservation. The timeline has been refreshed.`
-						setMutationError(msg)
-						setAriaAnnouncement(msg)
+						const staleMessage = t`Another host modified this reservation. The timeline has been refreshed.`
+						setMutationError(staleMessage)
+						setAriaAnnouncement(staleMessage)
 						void host.poll.refresh({ force: true })
 						return
 					}
@@ -371,19 +389,30 @@ export default function ReservationsTimelineRoute() {
 						targetTableId,
 						targetStartMin,
 						targetDurationMin,
-						message: err.message,
+						message: hostErrorMessage(
+							err,
+							tx,
+							msg`That placement conflicts with another booking.`,
+						),
 					})
-					const conflictMessage = err.message
+					const conflictMessage = hostErrorMessage(
+						err,
+						tx,
+						msg`That placement conflicts with another booking.`,
+					)
 					setAriaAnnouncement(t`Conflict detected: ${conflictMessage}`)
 					return
 				}
-				const msg =
-					err instanceof Error ? err.message : t`Failed to move reservation.`
-				setMutationError(msg)
-				setAriaAnnouncement(t`Move failed: ${msg}`)
+				const failMessage = hostErrorMessage(
+					err,
+					tx,
+					msg`Could not move the reservation.`,
+				)
+				setMutationError(failMessage)
+				setAriaAnnouncement(t`Move failed: ${failMessage}`)
 			}
 		},
-		[allowOverbookDrop, host, overbookReasonInput, t, tables],
+		[allowOverbookDrop, host, i18n, overbookReasonInput, t, tables],
 	)
 
 	const handleBarKeyDown = async (
@@ -642,10 +671,17 @@ export default function ReservationsTimelineRoute() {
 				serviceNotes={dayFeed?.serviceNotes ?? []}
 			/>
 
-			{host.poll.error || mutationError ? (
+			{(host.poll.error && !dayFeed) || mutationError ? (
 				<Alert variant="destructive" data-testid="timeline-error-banner">
 					<AlertDescription>
-						{mutationError ?? host.poll.error}
+						{mutationError ??
+							hostLoadErrorMessage(
+								{
+									status: host.poll.errorStatus,
+									code: host.poll.errorCode,
+								},
+								tx,
+							)}
 					</AlertDescription>
 				</Alert>
 			) : null}
@@ -653,7 +689,7 @@ export default function ReservationsTimelineRoute() {
 			{/* VAL-HOST-003: Assign vs Assign & Lock banner after dropping an unassigned reservation */}
 			{assignLockChoice ? (
 				<div
-					className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs text-blue-950 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-100"
+					className="border-primary/30 bg-primary/10 text-foreground flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
 					data-testid="timeline-assign-choice-banner"
 				>
 					<span>
@@ -665,7 +701,8 @@ export default function ReservationsTimelineRoute() {
 					<div className="flex items-center gap-1.5">
 						<Button
 							type="button"
-							size="xs"
+							size="sm"
+							className="h-11 md:h-8"
 							variant="outline"
 							onClick={() => setAssignLockChoice(null)}
 							data-testid="timeline-assign-unlocked-btn"
@@ -674,7 +711,8 @@ export default function ReservationsTimelineRoute() {
 						</Button>
 						<Button
 							type="button"
-							size="xs"
+							size="sm"
+							className="h-11 md:h-8"
 							onClick={async () => {
 								const choice = assignLockChoice
 								setAssignLockChoice(null)
@@ -701,7 +739,7 @@ export default function ReservationsTimelineRoute() {
 			{/* VAL-HOST-004: Locked reservation move confirmation ("Unlock and move?") */}
 			{pendingLockedMove ? (
 				<div
-					className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400 bg-amber-50 px-3 py-2.5 text-xs text-amber-950 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-100"
+					className="border-warning/40 bg-warning/12 text-foreground flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm"
 					data-testid="timeline-unlock-move-prompt"
 				>
 					<div className="flex items-center gap-2 font-medium">
@@ -716,7 +754,8 @@ export default function ReservationsTimelineRoute() {
 					<div className="flex items-center gap-1.5">
 						<Button
 							type="button"
-							size="xs"
+							size="sm"
+							className="h-11 md:h-8"
 							variant="outline"
 							onClick={() => setPendingLockedMove(null)}
 							data-testid="timeline-cancel-unlock-move"
@@ -725,7 +764,8 @@ export default function ReservationsTimelineRoute() {
 						</Button>
 						<Button
 							type="button"
-							size="xs"
+							size="sm"
+							className="h-11 md:h-8"
 							onClick={async () => {
 								const pending = pendingLockedMove
 								setPendingLockedMove(null)
@@ -748,7 +788,7 @@ export default function ReservationsTimelineRoute() {
 			{/* VAL-HOST-005: Conflict / Overbook confirmation with reason */}
 			{pendingConflictMove ? (
 				<div
-					className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-400 bg-red-50 px-3 py-2.5 text-xs text-red-950 dark:border-red-800 dark:bg-red-950/60 dark:text-red-100"
+					className="border-destructive/40 bg-destructive/10 text-foreground flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm"
 					data-testid="timeline-overbook-prompt"
 				>
 					<div className="flex flex-col gap-1">
@@ -762,17 +802,19 @@ export default function ReservationsTimelineRoute() {
 						</span>
 					</div>
 					<div className="flex flex-wrap items-center gap-1.5">
-						<input
+						<Input
 							type="text"
 							value={overbookReasonInput}
 							onChange={(e) => setOverbookReasonInput(e.target.value)}
 							placeholder={t`Overbook reason...`}
-							className="border-input bg-background text-foreground h-7 rounded border px-2 text-xs"
+							aria-label={t`Overbook reason`}
+							className="w-56"
 							data-testid="timeline-overbook-reason-input"
 						/>
 						<Button
 							type="button"
-							size="xs"
+							size="sm"
+							className="h-11 md:h-8"
 							variant="outline"
 							onClick={() => setPendingConflictMove(null)}
 							data-testid="timeline-cancel-overbook-btn"
@@ -781,7 +823,8 @@ export default function ReservationsTimelineRoute() {
 						</Button>
 						<Button
 							type="button"
-							size="xs"
+							size="sm"
+							className="h-11 md:h-8"
 							variant="destructive"
 							onClick={async () => {
 								const pending = pendingConflictMove
@@ -794,8 +837,7 @@ export default function ReservationsTimelineRoute() {
 									unlockConfirmed: true,
 									forceOverbook: true,
 									overbookReason:
-										overbookReasonInput.trim() ||
-										'Host stand overbook override',
+										overbookReasonInput.trim() || OVERBOOK_REASON_FALLBACK,
 								})
 							}}
 							data-testid="timeline-confirm-overbook-btn"
@@ -807,7 +849,7 @@ export default function ReservationsTimelineRoute() {
 			) : null}
 
 			{/* Timeline Toolbar & Keyboard / Overbook Controls */}
-			<div className="bg-card flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs">
+			<div className="bg-card flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
 				<div className="flex flex-wrap items-center gap-3">
 					<span className="text-muted-foreground">
 						<Trans>
@@ -823,11 +865,12 @@ export default function ReservationsTimelineRoute() {
 				</div>
 
 				{canManage ? (
-					<label className="flex items-center gap-1.5 font-medium">
-						<input
-							type="checkbox"
+					<label className="flex min-h-11 items-center gap-2 font-medium md:min-h-8">
+						<Checkbox
 							checked={allowOverbookDrop}
-							onChange={(e) => setAllowOverbookDrop(e.target.checked)}
+							onCheckedChange={(checked) =>
+								setAllowOverbookDrop(Boolean(checked))
+							}
 							data-testid="timeline-allow-overbook"
 						/>
 						<span>
@@ -842,7 +885,7 @@ export default function ReservationsTimelineRoute() {
 				className="flex flex-col gap-2 p-3"
 				data-testid="timeline-unassigned-lane"
 			>
-				<div className="flex items-center justify-between text-xs font-semibold">
+				<div className="flex items-center justify-between text-sm font-semibold">
 					<span>
 						<Trans>Unassigned Reservations (Drag onto a table row below)</Trans>
 					</span>
@@ -874,7 +917,7 @@ export default function ReservationsTimelineRoute() {
 								onDragEnd={() => setDraggingRsvId(null)}
 								onKeyDown={(e) => void handleBarKeyDown(e, rsv)}
 								onClick={() => host.openDetail(rsv.id)}
-								className="bg-background hover:bg-muted flex cursor-grab items-center gap-2 rounded-md border border-amber-400 px-2.5 py-1.5 text-xs shadow-xs"
+								className="bg-background hover:bg-muted border-warning/50 flex cursor-grab items-center gap-2 rounded-md border px-2.5 py-2 text-sm shadow-xs"
 								data-testid={`timeline-unassigned-chip-${rsv.id}`}
 							>
 								<span className="font-mono font-semibold">{rsv.hhmm}</span>
@@ -886,16 +929,21 @@ export default function ReservationsTimelineRoute() {
 				)}
 			</Card>
 
+			{!dayFeed && host.poll.loading ? (
+				<Skeleton className="h-96 w-full" data-testid="timeline-skeleton" />
+			) : null}
+
 			{/* Main Horizontal Gantt / Timeline Grid */}
 			<Card className="overflow-hidden" data-testid="timeline-grid-container">
 				<div className="overflow-x-auto">
 					<div
 						className="relative min-w-max"
+						dir="ltr"
 						style={{ width: `${192 + totalGridWidthPx}px` }}
 					>
 						{/* Header Row: Time Slots & Covers Pacing */}
 						<div className="bg-muted/60 sticky top-0 z-20 flex border-b">
-							<div className="bg-muted/90 sticky left-0 z-30 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs font-semibold">
+							<div className="bg-muted/90 sticky start-0 z-30 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs font-semibold">
 								<span>
 									<Trans>Table</Trans>
 								</span>
@@ -924,12 +972,10 @@ export default function ReservationsTimelineRoute() {
 											style={{ width: `${SLOT_WIDTH_PX}px` }}
 											className={`${
 												isHour
-													? 'flex shrink-0 flex-col justify-between border-e px-1 py-1.5 text-[11px] font-semibold'
-													: 'text-muted-foreground flex shrink-0 flex-col justify-between border-e px-1 py-1.5 text-[10px]'
+													? 'flex shrink-0 flex-col justify-between border-e px-1 py-1.5 text-xs font-semibold'
+													: 'text-muted-foreground flex shrink-0 flex-col justify-between border-e px-1 py-1.5 text-xs'
 											} ${
-												isOverPaced
-													? 'bg-red-100/80 text-red-900 dark:bg-red-950/60 dark:text-red-200'
-													: ''
+												isOverPaced ? 'bg-destructive/10 text-destructive' : ''
 											}`}
 											data-testid={`timeline-header-slot-${slotMin}`}
 											data-over-paced={isOverPaced ? 'true' : 'false'}
@@ -938,10 +984,10 @@ export default function ReservationsTimelineRoute() {
 											<span
 												className={
 													isOverPaced
-														? 'font-mono text-[10px] font-bold text-red-600 dark:text-red-400'
+														? 'text-destructive text-xs font-semibold tabular-nums'
 														: coversInSlot > 0
-															? 'font-mono text-[10px] font-medium text-emerald-600 dark:text-emerald-400'
-															: 'text-muted-foreground/60 font-mono text-[9px]'
+															? 'text-foreground text-xs font-medium tabular-nums'
+															: 'text-muted-foreground/60 text-xs tabular-nums'
 												}
 												data-testid={`timeline-pacing-slot-${slotMin}`}
 											>
@@ -958,11 +1004,11 @@ export default function ReservationsTimelineRoute() {
 						{/* Live "Now" Cursor Line */}
 						{showNowLine ? (
 							<div
-								className="pointer-events-none absolute top-0 bottom-0 z-20 w-0.5 bg-red-500"
+								className="bg-primary pointer-events-none absolute top-0 bottom-0 z-20 w-0.5"
 								style={{ left: `${192 + nowOffsetPx}px` }}
 								data-testid="timeline-now-line"
 							>
-								<span className="rounded-b bg-red-500 px-1 py-0.5 text-[9px] font-bold text-white">
+								<span className="bg-primary text-primary-foreground rounded-b px-1 py-0.5 text-xs font-semibold">
 									{host.liveNow.hhmm}
 								</span>
 							</div>
@@ -997,16 +1043,17 @@ export default function ReservationsTimelineRoute() {
 												data-table-label={table.label}
 											>
 												{/* Sticky Left Table Cell */}
-												<div className="bg-card sticky left-0 z-10 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs">
+												<div className="bg-card sticky start-0 z-10 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs">
 													<div className="flex items-center gap-1.5">
 														<span className="font-semibold">{table.label}</span>
-														<span className="text-muted-foreground text-[11px]">
+														<span className="text-muted-foreground text-xs">
 															({table.minCovers}-{table.maxCovers})
 														</span>
 													</div>
 													<Button
 														type="button"
-														size="icon-xs"
+														size="icon"
+														className="size-11 md:size-8"
 														variant="ghost"
 														aria-label={t`Book on ${table.label}`}
 														onClick={() =>
@@ -1023,7 +1070,7 @@ export default function ReservationsTimelineRoute() {
 
 												{/* 15-Minute Slot Cells + Reservation Bars */}
 												<div
-													className="relative flex h-12"
+													className="relative flex h-14"
 													style={{ width: `${totalGridWidthPx}px` }}
 												>
 													{slots.map((slotMin) => (
@@ -1081,16 +1128,16 @@ export default function ReservationsTimelineRoute() {
 																2,
 														)
 
+														const statusStyle = reservationStatusStyle(
+															rsv.status,
+														)
 														const barTone = rsv.hasConflict
-															? 'border-red-500 bg-red-100 text-red-950 dark:bg-red-950/80 dark:text-red-100'
-															: rsv.status === 'seated'
-																? 'border-emerald-500 bg-emerald-100 text-emerald-950 dark:bg-emerald-950/80 dark:text-emerald-100'
-																: rsv.status === 'arrived'
-																	? 'border-amber-500 bg-amber-100 text-amber-950 dark:bg-amber-950/80 dark:text-amber-100'
-																	: rsv.status === 'completed' ||
-																		  rsv.status === 'finished'
-																		? 'border-slate-400 bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300'
-																		: 'border-blue-500 bg-blue-100 text-blue-950 dark:bg-blue-950/80 dark:text-blue-100'
+															? 'border-destructive/50 bg-destructive/10 text-foreground'
+															: `${statusStyle.surface} ${statusStyle.surfaceText} ${
+																	rsv.lateRisk || rsv.runningLateMin
+																		? ATTENTION_RING
+																		: ''
+																}`
 
 														const guestName = rsv.guestName
 														const partySize = rsv.partySize
@@ -1125,8 +1172,8 @@ export default function ReservationsTimelineRoute() {
 																	e.stopPropagation()
 																	host.openDetail(rsv.id)
 																}}
-																className={`absolute top-1.5 bottom-1.5 z-10 flex cursor-grab items-center justify-between gap-1 overflow-hidden rounded-md border px-2 text-[11px] shadow-xs transition select-none focus:ring-2 focus:outline-none ${barTone} ${
-																	isGrabbed ? 'ring-2 ring-amber-500' : ''
+																className={`absolute top-1.5 bottom-1.5 z-10 flex cursor-grab items-center justify-between gap-1 overflow-hidden rounded-md border px-2 text-xs shadow-xs transition select-none focus:ring-2 focus:outline-none ${barTone} ${
+																	isGrabbed ? 'ring-primary ring-2' : ''
 																}`}
 																data-testid={`timeline-bar-${rsv.id}`}
 																data-table-id={table.id}
@@ -1146,7 +1193,10 @@ export default function ReservationsTimelineRoute() {
 																			/>
 																		</span>
 																	) : null}
-																	<span className="truncate font-semibold">
+																	<span
+																		className="truncate font-semibold"
+																		dir="auto"
+																	>
 																		{rsv.guestName}
 																	</span>
 																	<span className="opacity-80">
@@ -1172,12 +1222,12 @@ export default function ReservationsTimelineRoute() {
 																					: t`Lock table assignment`
 																			}
 																			onClick={() => void handleToggleLock(rsv)}
-																			className="rounded px-1 text-[10px] hover:bg-black/10"
+																			className="hover:bg-foreground/10 inline-flex h-8 min-w-8 items-center justify-center rounded px-1 text-xs"
 																			data-testid={`timeline-toggle-lock-${rsv.id}`}
 																		>
 																			<Icon
 																				name="lock"
-																				className={`size-2.5 ${rsv.locked ? 'opacity-100' : 'opacity-40'}`}
+																				className={`size-3.5 ${rsv.locked ? 'opacity-100' : 'opacity-40'}`}
 																			/>
 																		</button>
 																		{durationMin > 30 ? (
@@ -1187,7 +1237,7 @@ export default function ReservationsTimelineRoute() {
 																				onClick={() =>
 																					void handleResizeDelta(rsv, -15)
 																				}
-																				className="rounded px-1 font-mono text-[10px] hover:bg-black/10"
+																				className="hover:bg-foreground/10 inline-flex h-8 min-w-8 items-center justify-center rounded px-1 text-xs tabular-nums"
 																				data-testid={`timeline-shrink-${rsv.id}`}
 																			>
 																				-15m
@@ -1199,7 +1249,7 @@ export default function ReservationsTimelineRoute() {
 																			onClick={() =>
 																				void handleResizeDelta(rsv, 15)
 																			}
-																			className="rounded px-1 font-mono text-[10px] hover:bg-black/10"
+																			className="hover:bg-foreground/10 inline-flex h-8 min-w-8 items-center justify-center rounded px-1 text-xs tabular-nums"
 																			data-testid={`timeline-extend-${rsv.id}`}
 																		>
 																			+15m
@@ -1211,7 +1261,7 @@ export default function ReservationsTimelineRoute() {
 																			onPointerDown={(e) =>
 																				startPointerResize(e, rsv)
 																			}
-																			className="h-5 w-1.5 cursor-ew-resize rounded-e bg-black/20 hover:bg-black/40"
+																			className="bg-foreground/20 hover:bg-foreground/40 h-8 w-2 cursor-ew-resize rounded-e"
 																			data-testid={`timeline-resize-handle-${rsv.id}`}
 																		/>
 																	</div>
