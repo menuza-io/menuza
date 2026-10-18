@@ -30,6 +30,7 @@ import {
 	SETUP_CONFLICT_REASON_LABELS,
 	updateLocationSettings,
 } from '#app/utils/reservations/setup-api.ts'
+import { setupIssueTab } from '#app/utils/reservations/setup-issue-target.ts'
 import { type Route } from './+types/settings._index.ts'
 import { useReservationsSetupContext } from './settings.tsx'
 
@@ -48,16 +49,8 @@ function sameSettings(a: LocationSettingsDto, b: LocationSettingsDto) {
 	return JSON.stringify(a) === JSON.stringify(b)
 }
 
-/** Maps a diagnostics issue to the settings tab where it is fixed. */
-function issueTarget(code: string) {
-	const key = code.toLowerCase()
-	if (key.includes('special') || key.includes('block')) return 'special-days'
-	if (key.includes('section')) return 'sections'
-	if (key.includes('service') || key.includes('turn')) return 'services'
-	if (key.includes('area') || key.includes('table') || key.includes('combo'))
-		return 'tables'
-	return null
-}
+/** Maps a diagnostics issue to the settings tab where it is fixed (null: on this page). */
+const issueTarget = setupIssueTab
 
 export default function ReservationsSettingsIndexRoute() {
 	const { _ } = useLingui()

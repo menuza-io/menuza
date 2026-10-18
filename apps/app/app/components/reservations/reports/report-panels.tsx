@@ -1,7 +1,7 @@
 import { Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
-import { Frame } from '@repo/ui/frame'
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@repo/ui/frame'
 import {
 	Table,
 	TableBody,
@@ -10,7 +10,8 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { type ReactNode } from 'react'
+import { WorkspaceMetric, WorkspaceMetricGrid } from '@repo/ui/workspace'
+import { Children, type ReactNode, useId } from 'react'
 import {
 	formatBusinessDate,
 	formatInstantDate,
@@ -46,17 +47,35 @@ function Stat({
 	testId: string
 }) {
 	return (
-		<div className="bg-card flex flex-col gap-1 rounded-xl border p-4">
-			<dt className="text-muted-foreground text-xs">{label}</dt>
-			<dd className="text-2xl font-semibold tabular-nums" data-testid={testId}>
-				<bdi>{value}</bdi>
-			</dd>
-		</div>
+		<WorkspaceMetric
+			label={label}
+			value={
+				<span data-testid={testId}>
+					<bdi>{value}</bdi>
+				</span>
+			}
+		/>
 	)
 }
 
+/** The KPI strip: at most four figures, sized to fit without empty cells. */
 function Stats({ children }: { children: ReactNode }) {
-	return <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">{children}</dl>
+	const count = Children.count(children)
+	if (count <= 2) {
+		return (
+			<WorkspaceMetricGrid className="sm:grid-cols-2 xl:grid-cols-2">
+				{children}
+			</WorkspaceMetricGrid>
+		)
+	}
+	if (count === 3) {
+		return (
+			<WorkspaceMetricGrid className="sm:grid-cols-3 xl:grid-cols-3">
+				{children}
+			</WorkspaceMetricGrid>
+		)
+	}
+	return <WorkspaceMetricGrid>{children}</WorkspaceMetricGrid>
 }
 
 function Section({
@@ -68,11 +87,16 @@ function Section({
 	children: ReactNode
 	testId: string
 }) {
+	const titleId = useId()
 	return (
-		<section className="flex flex-col gap-2" data-testid={testId}>
-			<h3 className="text-sm font-semibold">{title}</h3>
+		<Frame role="region" aria-labelledby={titleId} data-testid={testId}>
+			<FrameHeader>
+				<FrameTitle id={titleId} className="font-medium">
+					{title}
+				</FrameTitle>
+			</FrameHeader>
 			{children}
-		</section>
+		</Frame>
 	)
 }
 
@@ -86,39 +110,41 @@ function DataTable({
 	empty?: ReactNode
 }) {
 	if (rows.length === 0 && empty) {
-		return <p className="text-muted-foreground text-sm">{empty}</p>
+		return (
+			<FramePanel>
+				<p className="text-muted-foreground text-sm">{empty}</p>
+			</FramePanel>
+		)
 	}
 	return (
-		<Frame>
-			<Table variant="card">
-				<TableHeader>
-					<TableRow>
-						{head.map((cell, index) => (
-							<TableHead
+		<Table variant="card">
+			<TableHeader>
+				<TableRow>
+					{head.map((cell, index) => (
+						<TableHead
+							key={index}
+							className={index === 0 ? undefined : 'text-end'}
+						>
+							{cell}
+						</TableHead>
+					))}
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{rows.map((row) => (
+					<TableRow key={row.key}>
+						{row.cells.map((cell, index) => (
+							<TableCell
 								key={index}
-								className={index === 0 ? undefined : 'text-end'}
+								className={index === 0 ? undefined : 'text-end tabular-nums'}
 							>
 								{cell}
-							</TableHead>
+							</TableCell>
 						))}
 					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{rows.map((row) => (
-						<TableRow key={row.key}>
-							{row.cells.map((cell, index) => (
-								<TableCell
-									key={index}
-									className={index === 0 ? undefined : 'text-end tabular-nums'}
-								>
-									{cell}
-								</TableCell>
-							))}
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-		</Frame>
+				))}
+			</TableBody>
+		</Table>
 	)
 }
 
@@ -139,7 +165,7 @@ function useFormat() {
 export function SummaryPanel({ report }: { report: SummaryReport }) {
 	const f = useFormat()
 	return (
-		<div className="flex flex-col gap-5" data-testid="report-summary">
+		<div className="flex flex-col gap-6" data-testid="report-summary">
 			<Stats>
 				<Stat
 					label={<Trans>Parties</Trans>}
@@ -230,7 +256,7 @@ export function SummaryPanel({ report }: { report: SummaryReport }) {
 export function NoShowsPanel({ report }: { report: NoShowsReport }) {
 	const f = useFormat()
 	return (
-		<div className="flex flex-col gap-5" data-testid="report-no-shows">
+		<div className="flex flex-col gap-6" data-testid="report-no-shows">
 			<Stats>
 				<Stat
 					label={<Trans>No-shows</Trans>}
@@ -316,7 +342,7 @@ export function CancellationsPanel({
 }) {
 	const f = useFormat()
 	return (
-		<div className="flex flex-col gap-5" data-testid="report-cancellations">
+		<div className="flex flex-col gap-6" data-testid="report-cancellations">
 			<Stats>
 				<Stat
 					label={<Trans>Cancellations</Trans>}
@@ -397,7 +423,7 @@ export function CancellationsPanel({
 export function TurnTimesPanel({ report }: { report: TurnTimesReport }) {
 	const f = useFormat()
 	return (
-		<div className="flex flex-col gap-5" data-testid="report-turn-times">
+		<div className="flex flex-col gap-6" data-testid="report-turn-times">
 			<Stats>
 				<Stat
 					label={<Trans>Finished parties</Trans>}
@@ -463,7 +489,7 @@ export function TurnTimesPanel({ report }: { report: TurnTimesReport }) {
 export function WaitlistPanel({ report }: { report: WaitlistReport }) {
 	const f = useFormat()
 	return (
-		<div className="flex flex-col gap-5" data-testid="report-waitlist">
+		<div className="flex flex-col gap-6" data-testid="report-waitlist">
 			<Stats>
 				<Stat
 					label={<Trans>Waitlist entries</Trans>}
@@ -530,7 +556,7 @@ export function WaitlistPanel({ report }: { report: WaitlistReport }) {
 export function PacingPanel({ report }: { report: PacingReport }) {
 	const f = useFormat()
 	return (
-		<div className="flex flex-col gap-5" data-testid="report-pacing">
+		<div className="flex flex-col gap-6" data-testid="report-pacing">
 			<Stats>
 				<Stat
 					label={<Trans>Bookings</Trans>}

@@ -273,7 +273,8 @@ test.describe('Reservations guestbook, reports and Bookings today block', () => 
 
 		await page.getByTestId('guests-search').fill('')
 		await expect(page.getByTestId('guest-row-g1')).toBeVisible()
-		await page.getByTestId('guests-tag-filter').selectOption('tag_vip')
+		await page.getByTestId('guests-tag-filter').click()
+		await page.getByRole('option', { name: 'VIP' }).click()
 		await expect(page.getByTestId('guest-row-g1')).toHaveCount(0)
 		await expect(page.getByTestId('guest-row-g2')).toBeVisible()
 

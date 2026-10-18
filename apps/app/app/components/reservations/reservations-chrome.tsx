@@ -12,11 +12,11 @@ import {
 } from '#app/components/reservations/shell-context.tsx'
 import { type ReservationsNavAccess } from '#app/utils/reservations/nav.ts'
 import {
+	isDetailRoute,
 	isHostRoute,
 	type ReservationsRouteKey,
 	reservationsRouteKey,
 	reservationsSectionTab,
-	SELF_HEADED_ROUTE_KEYS,
 } from '#app/utils/reservations/shell-routes.ts'
 
 /**
@@ -25,9 +25,10 @@ import {
  * bar (location, day views, date, service, area) through `HostSubnav`. Screens
  * fill the header's actions and meta slots with a portal.
  *
- * Screens that still render their own `PageHeader` (waitlist, guests, reports,
- * experiences; see `SELF_HEADED_ROUTE_KEYS`) get no layout header, so the page
- * never shows two. Remove a key from that list once its screen drops its own.
+ * Every section screen (waitlist, guests, reports, experiences included) puts
+ * its actions in the header with `ReservationsHeaderActions`. Detail pages (a
+ * guest profile, an experience editor; see `isDetailRoute`) render their own
+ * header with a back link, so the layout adds neither header nor tabs there.
  */
 export function ReservationsChrome({
 	orgSlug,
@@ -53,7 +54,7 @@ export function ReservationsChrome({
 	const routeKey = reservationsRouteKey(location.pathname, orgSlug)
 	const activeSectionTab = reservationsSectionTab(routeKey)
 	const hostRoute = isHostRoute(routeKey)
-	const selfHeaded = SELF_HEADED_ROUTE_KEYS.includes(routeKey)
+	const detail = isDetailRoute(location.pathname, orgSlug)
 
 	// Day views and Calendar carry a date; the other sections do not read it.
 	const sectionHref = (path: string, keepDate: boolean) => {
@@ -149,6 +150,24 @@ export function ReservationsChrome({
 			title: _(msg`Overview`),
 			description: _(msg`Covers, pacing and notes for the day.`),
 		},
+		waitlist: {
+			title: _(msg`Waitlist`),
+			description: _(msg`Live walk-in queue, quoted waits and seating.`),
+		},
+		guests: {
+			title: _(msg`Guests`),
+			description: _(
+				msg`Everyone who has booked, with notes and visit history.`,
+			),
+		},
+		reports: {
+			title: _(msg`Reports`),
+			description: _(msg`Covers, no-shows and pacing over a date range.`),
+		},
+		experiences: {
+			title: _(msg`Experiences`),
+			description: _(msg`Ticketed events and set menus guests can book.`),
+		},
 		settings: {
 			title: _(msg`Settings`),
 			description: _(
@@ -156,7 +175,7 @@ export function ReservationsChrome({
 			),
 		},
 	}
-	const header = headers[routeKey]
+	const header = detail ? undefined : headers[routeKey]
 
 	const shell: ReservationsShell = {
 		orgSlug,
@@ -203,15 +222,13 @@ export function ReservationsChrome({
 						/>
 					) : null}
 
-					<WorkspaceTabBar
-						label={_(msg`Reservations sections`)}
-						className="print:hidden"
-						tabs={tabs}
-					/>
-
-					{selfHeaded && locations.length > 1 ? (
-						<div className="flex justify-end">{locationControls}</div>
-					) : null}
+					{detail ? null : (
+						<WorkspaceTabBar
+							label={_(msg`Reservations sections`)}
+							className="print:hidden"
+							tabs={tabs}
+						/>
+					)}
 
 					{children}
 				</div>

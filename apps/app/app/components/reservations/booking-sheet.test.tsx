@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import {
@@ -258,6 +258,62 @@ describe('BookingSheet availability states', () => {
 		expect(calls.find((c) => c.method === 'POST')!.body).not.toHaveProperty(
 			'overbook',
 		)
+	})
+})
+
+describe('BookingSheet flow', () => {
+	beforeEach(() => {
+		toasts.warning.mockReset()
+	})
+
+	it('lists what is still missing once a booking is attempted without a guest', async () => {
+		const { calls } = renderSheet((call) =>
+			call.method === 'GET' ? availability({ slots: [slot(1140)] }) : created,
+		)
+		await screen.findByTestId('booking-slot-1140')
+		expect(screen.queryByTestId('booking-validation-summary')).toBeNull()
+		fireEvent.click(screen.getByTestId('booking-submit-btn'))
+		expect(
+			await screen.findByTestId('booking-validation-summary'),
+		).toHaveTextContent('phone number')
+		expect(calls.some((c) => c.method === 'POST')).toBe(false)
+	})
+
+	it('keeps the newest availability when an older request answers last', async () => {
+		const resolvers: Array<(value: unknown) => void> = []
+		const scripted = createScriptedClient((call) => {
+			if (call.method !== 'GET') return created
+			return new Promise((resolve) => {
+				resolvers.push(resolve)
+			})
+		})
+		renderStaff(
+			<BookingSheet
+				open
+				onOpenChange={vi.fn()}
+				client={scripted.client}
+				locationId="loc-1"
+				defaultDate="2026-10-20"
+				services={[]}
+				areas={[]}
+				tables={[]}
+				initialLocalStartMin={1140}
+				onCreated={vi.fn()}
+			/>,
+		)
+		await waitFor(() => expect(resolvers).toHaveLength(1))
+		fireEvent.click(screen.getByRole('button', { name: 'More guests' }))
+		await waitFor(() => expect(resolvers).toHaveLength(2))
+		// eslint-disable-next-line testing-library/no-unnecessary-act
+		await act(async () => {
+			resolvers[1]!(availability({ slots: [slot(1200)] }))
+		})
+		// eslint-disable-next-line testing-library/no-unnecessary-act
+		await act(async () => {
+			resolvers[0]!(availability({ slots: [slot(1140)] }))
+		})
+		expect(screen.getByTestId('booking-slot-1200')).toBeVisible()
+		expect(screen.queryByTestId('booking-slot-1140')).toBeNull()
 	})
 })
 

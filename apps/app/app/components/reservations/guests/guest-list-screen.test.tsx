@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderStaff } from '#tests/staff-render.tsx'
 import {
@@ -114,10 +115,8 @@ describe('GuestListScreen', () => {
 	it('filters by tag with the tag id', async () => {
 		const { calls } = setup()
 		await screen.findByTestId('guest-row-g1')
-		await screen.findByRole('option', { name: 'VIP' })
-		fireEvent.change(screen.getByTestId('guests-tag-filter'), {
-			target: { value: 'tag_vip' },
-		})
+		await userEvent.click(await screen.findByTestId('guests-tag-filter'))
+		await userEvent.click(await screen.findByRole('option', { name: 'VIP' }))
 		await waitFor(() =>
 			expect(listCalls(calls).at(-1)!.query).toMatchObject({ tag: 'tag_vip' }),
 		)
@@ -125,12 +124,28 @@ describe('GuestListScreen', () => {
 
 	it('translates the automatic tags in the filter', async () => {
 		setup()
-		const filter = await screen.findByTestId('guests-tag-filter')
-		await waitFor(() =>
-			expect(
-				within(filter).getByRole('option', { name: 'First visit' }),
-			).toBeInTheDocument(),
+		await screen.findByTestId('guest-row-g1')
+		await userEvent.click(await screen.findByTestId('guests-tag-filter'))
+		expect(
+			await screen.findByRole('option', { name: 'First visit' }),
+		).toBeInTheDocument()
+	})
+
+	it('clears the search and tag filters in one step', async () => {
+		setup((call) =>
+			call.query?.q
+				? { guests: [], nextCursor: null, total: 0 }
+				: { guests: [guest('g1', 'Rana')], nextCursor: null, total: 1 },
 		)
+		await screen.findByTestId('guest-row-g1')
+		fireEvent.change(screen.getByTestId('guests-search'), {
+			target: { value: 'zzz' },
+		})
+		fireEvent.click(await screen.findByTestId('guests-clear-filters'))
+		expect(await screen.findByTestId('guest-row-g1')).toBeInTheDocument()
+		expect(
+			(screen.getByTestId('guests-search') as HTMLInputElement).value,
+		).toBe('')
 	})
 
 	it('loads the next page with the cursor', async () => {

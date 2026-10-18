@@ -1,6 +1,6 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import {
@@ -16,16 +16,15 @@ import {
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
 import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
+	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 } from '@repo/ui/sheet'
-import { Textarea } from '@repo/ui/textarea'
+import { Skeleton } from '@repo/ui/skeleton'
 import {
 	useCallback,
 	useContext,
@@ -39,7 +38,17 @@ import { toast } from 'sonner'
 import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import { PaymentPanel } from '#app/components/reservations/payment-panel.tsx'
 import { ReservationsClientContext } from '#app/components/reservations/reservations-client-provider.tsx'
-import { TextAreaField } from '#app/components/staff/controls.tsx'
+import {
+	CheckRow,
+	PartyStepper,
+	SheetSection,
+} from '#app/components/reservations/sheet-parts.tsx'
+import { StatusLabel } from '#app/components/reservations/status-style.tsx'
+import {
+	SelectField,
+	TextAreaField,
+	TextField,
+} from '#app/components/staff/controls.tsx'
 import {
 	assignReservationTable,
 	type DayMoveNotice,
@@ -56,6 +65,7 @@ import {
 	updateReservationContactStatus,
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
+import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import {
 	ACTOR_KIND_LABELS,
 	CHANNEL_LABELS,
@@ -74,6 +84,7 @@ import {
 	type RsvAreaRecord,
 	type RsvTableRecord,
 } from '#app/utils/reservations/setup-api.ts'
+import { waitlistErrorInfo } from '#app/utils/reservations/waitlist-errors.ts'
 
 const COURSE_STAGES = [
 	{ value: 'seated', label: msg`Seated` },
@@ -103,6 +114,9 @@ type EditableField =
 	| 'partySize'
 	| 'time'
 	| 'duration'
+
+/** Select items cannot carry an empty value, so "no table" travels as this. */
+const NO_TABLE = '__none'
 
 export function DetailSheet({
 	reservationId,
@@ -151,6 +165,7 @@ export function DetailSheet({
 	const [rotateConfirmOpen, setRotateConfirmOpen] = useState(false)
 	const [cancelOpen, setCancelOpen] = useState(false)
 	const [cancelReason, setCancelReason] = useState('')
+	const [noShowOpen, setNoShowOpen] = useState(false)
 
 	// 60-second undo state
 	const [undoState, setUndoState] = useState<{
@@ -171,7 +186,10 @@ export function DetailSheet({
 	const [timeEdit, setTimeEdit] = useState<string>('19:00')
 	const [durationEdit, setDurationEdit] = useState<number>(90)
 
-	const reservation = detail?.reservation ?? fallbackReservation
+	// A response for another booking must never paint over the open one.
+	const openDetail =
+		detail && detail.reservation.id === reservationId ? detail : null
+	const reservation = openDetail?.reservation ?? fallbackReservation
 
 	// Payment rows are read in the browser with a `payments` token, never through
 	// the App server. The panel stays out of the way when payments are off.
@@ -235,36 +253,72 @@ export function DetailSheet({
 	const fallbackRef = useRef(fallbackReservation)
 	fallbackRef.current = fallbackReservation
 
-	const loadDetail = useCallback(async () => {
-		if (!reservationId) {
-			setDetail(null)
-			setEvents(null)
-			return
-		}
-		setLoading(true)
-		setError(null)
-		try {
-			const [res, history] = await Promise.all([
-				fetchReservationDetail(client, reservationId),
-				fetchReservationEvents(client, reservationId).catch(() => null),
-			])
-			setDetail(res)
-			setEvents(history)
-			syncFormFromReservation(res.reservation)
-		} catch (err) {
-			if (fallbackRef.current) {
-				syncFormFromReservation(fallbackRef.current)
-			} else {
-				setError(
-					err instanceof Error
-						? err.message
-						: t`Failed to load reservation details.`,
-				)
+	// Only the newest detail request for the open reservation may write state:
+	// a slow response for a booking that is no longer open is dropped.
+	const loadSeq = useRef(0)
+	const openIdRef = useRef(reservationId)
+	openIdRef.current = reservationId
+
+	const loadDetail =
+		useCallback(async (): Promise<DayReservationView | null> => {
+			const requestedId = reservationId
+			const seq = ++loadSeq.current
+			if (!requestedId) {
+				setDetail(null)
+				setEvents(null)
+				return null
 			}
-		} finally {
-			setLoading(false)
+			setLoading(true)
+			setError(null)
+			try {
+				const [res, history] = await Promise.all([
+					fetchReservationDetail(client, requestedId),
+					fetchReservationEvents(client, requestedId).catch(() => null),
+				])
+				if (seq !== loadSeq.current || openIdRef.current !== requestedId) {
+					return null
+				}
+				setDetail(res)
+				setEvents(history)
+				syncFormFromReservation(res.reservation)
+				return res.reservation
+			} catch (err) {
+				if (seq !== loadSeq.current || openIdRef.current !== requestedId) {
+					return null
+				}
+				if (fallbackRef.current) {
+					syncFormFromReservation(fallbackRef.current)
+				} else {
+					setError(
+						hostErrorMessage(
+							err,
+							(d) => i18n._(d),
+							msg`Failed to load reservation details.`,
+						),
+					)
+				}
+				return null
+			} finally {
+				if (seq === loadSeq.current) setLoading(false)
+			}
+		}, [client, i18n, reservationId, syncFormFromReservation])
+
+	// A refused change (someone else edited first, the booking moved on):
+	// say so in plain words and pull the latest version of the booking.
+	const fail = (err: unknown, fallback: MessageDescriptor) => {
+		setError(hostErrorMessage(err, (d) => i18n._(d), fallback))
+		const { code, status } = waitlistErrorInfo(err)
+		if (
+			code === 'stale_version' ||
+			code === 'invalid_transition' ||
+			code === 'not_found' ||
+			status === 409
+		) {
+			void loadDetail().then((fresh) => {
+				if (fresh) onUpdated(fresh)
+			})
 		}
-	}, [client, reservationId, syncFormFromReservation, t])
+	}
 
 	const syncedReservationIdRef = useRef<string | null>(null)
 	useEffect(() => {
@@ -281,6 +335,7 @@ export function DetailSheet({
 		if (reservationId) {
 			void loadDetail()
 		} else {
+			loadSeq.current++
 			setDetail(null)
 			setEvents(null)
 			setError(null)
@@ -309,9 +364,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, res.moveNotices)
 			await loadDetail()
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : t`Status transition failed.`,
-			)
+			fail(err, msg`Status transition failed.`)
 		} finally {
 			setBusy(false)
 		}
@@ -332,7 +385,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, [])
 			await loadDetail()
 		} catch (err) {
-			setError(err instanceof Error ? err.message : t`Failed to undo status.`)
+			fail(err, msg`Failed to undo status.`)
 		} finally {
 			setBusy(false)
 		}
@@ -352,9 +405,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, [])
 			await loadDetail()
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : t`Failed to update course stage.`,
-			)
+			fail(err, msg`Failed to update course stage.`)
 		} finally {
 			setBusy(false)
 		}
@@ -375,9 +426,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, res.moveNotices)
 			await loadDetail()
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : t`Failed to update late status.`,
-			)
+			fail(err, msg`Failed to update late status.`)
 		} finally {
 			setBusy(false)
 		}
@@ -397,11 +446,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, [])
 			await loadDetail()
 		} catch (err) {
-			setError(
-				err instanceof Error
-					? err.message
-					: t`Failed to update contact status.`,
-			)
+			fail(err, msg`Failed to update contact status.`)
 		} finally {
 			setBusy(false)
 		}
@@ -424,7 +469,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, res.moveNotices)
 			await loadDetail()
 		} catch (err) {
-			setError(err instanceof Error ? err.message : t`Failed to assign table.`)
+			fail(err, msg`Failed to assign table.`)
 		} finally {
 			setBusy(false)
 		}
@@ -465,9 +510,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, res.moveNotices)
 			await loadDetail()
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : t`Failed to update reservation.`,
-			)
+			fail(err, msg`Failed to update reservation.`)
 		} finally {
 			setBusy(false)
 		}
@@ -503,8 +546,8 @@ export function DetailSheet({
 	}
 
 	const statusLabel = label(RESERVATION_STATUS_LABELS, reservation?.status)
-	const guest = detail?.guest ?? reservation?.guest ?? null
-	const history = events ?? detail?.audit ?? []
+	const guest = openDetail?.guest ?? reservation?.guest ?? null
+	const history = events ?? openDetail?.audit ?? []
 	const diningAreaName =
 		reservation?.areaName ??
 		areas.find((area) => area.id === reservation?.areaId)?.name ??
@@ -518,6 +561,76 @@ export function DetailSheet({
 					.join(', ')
 			: ''
 	const activeTables = tables.filter((tbl) => tbl.isActive)
+	const unassignedLabel = t`Unassigned`
+	const tableOptions = [
+		{ value: NO_TABLE, label: unassignedLabel },
+		...activeTables.map((tbl) => ({
+			value: tbl.id,
+			label: `${tbl.label} (${tbl.minCovers}-${tbl.maxCovers})`,
+		})),
+	]
+	const contactOptions = CONTACT_STATUSES.map((cs) => ({
+		value: cs.value,
+		label: i18n._(cs.label),
+	}))
+
+	const status = reservation?.status ?? ''
+	const nextAction: 'arrived' | 'seated' | 'completed' | null =
+		status === 'booked' ||
+		status === 'confirmed' ||
+		status === 'pending_payment'
+			? 'arrived'
+			: status === 'arrived'
+				? 'seated'
+				: status === 'seated'
+					? 'completed'
+					: null
+	const canSeatEarly =
+		status === 'booked' ||
+		status === 'confirmed' ||
+		status === 'pending_payment'
+	const canNoShow =
+		status === 'booked' || status === 'confirmed' || status === 'arrived'
+	const canCancel =
+		status !== '' &&
+		status !== 'cancelled' &&
+		status !== 'completed' &&
+		status !== 'finished' &&
+		status !== 'no_show'
+	const guestFirstName =
+		(reservation?.guestName ?? '').trim().split(/\s+/)[0] || t`the guest`
+	const showFooter = Boolean(canManage && reservation && nextAction)
+	const hasPayment = Boolean(
+		paymentsClient &&
+		layout?.orgSlug &&
+		reservation &&
+		(reservation.paymentStatus !== 'none' ||
+			reservation.status === 'pending_payment'),
+	)
+	const showMessages = Boolean(
+		canManage &&
+		reservation &&
+		RESENDABLE_STATUSES.has(reservation.status) &&
+		(reservation.guestPhone || reservation.guestEmail),
+	)
+	const visibleTags = (guest?.tags ?? []).filter(
+		(tag) => canManage || !tag.sensitive,
+	)
+
+	const whenLabel = (() => {
+		if (!reservation) return ''
+		const parsed = new Date(`${reservation.businessDate}T12:00:00`)
+		if (Number.isNaN(parsed.getTime())) return reservation.businessDate
+		return i18n.date(parsed, {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric',
+		})
+	})()
+	const tablesText =
+		reservation && reservation.assignedTableLabels.length > 0
+			? reservation.assignedTableLabels.join(', ')
+			: unassignedLabel
 
 	return (
 		<Sheet
@@ -527,64 +640,57 @@ export function DetailSheet({
 			}}
 		>
 			<SheetContent
-				className="w-full overflow-y-auto sm:max-w-xl"
+				className="w-full gap-0 sm:max-w-lg"
 				data-testid="reservation-detail-sheet"
 			>
-				<SheetHeader>
-					<SheetTitle className="flex flex-wrap items-center gap-2">
+				<SheetHeader className="border-b pe-12 rtl:ps-12 rtl:pe-4">
+					<SheetTitle className="text-base wrap-anywhere">
 						<span data-testid="detail-guest-name">
 							{reservation?.guestName ?? t`Reservation Details`}
 						</span>
+					</SheetTitle>
+					<SheetDescription className="tabular-nums">
 						{reservation ? (
 							<>
-								<Badge variant="outline" data-testid="detail-confirmation-code">
-									#{reservation.confirmationCode}
-								</Badge>
-								<Badge
-									variant={
-										reservation.status === 'seated'
-											? 'default'
-											: reservation.status === 'cancelled' ||
-												  reservation.status === 'no_show'
-												? 'destructive'
-												: 'secondary'
-									}
-									data-testid="detail-status-badge"
-								>
-									{label(RESERVATION_STATUS_LABELS, reservation.status)}
-								</Badge>
-								<PaymentBadge
-									paymentStatus={reservation.paymentStatus}
-									experience={Boolean(reservation.experienceId)}
-								/>
-								{reservation.experienceId ? (
-									<Badge
-										variant="outline"
-										data-testid="detail-experience-badge"
-									>
-										<Trans>Experience</Trans>
-									</Badge>
-								) : null}
+								{whenLabel} · {reservation.hhmm}–{reservation.endHhmm} ·{' '}
+								<Plural
+									value={reservation.partySize}
+									one="# guest"
+									other="# guests"
+								/>{' '}
+								· {tablesText}
 							</>
-						) : null}
-					</SheetTitle>
-					<SheetDescription>
-						{reservation ? (
-							<span>
-								{reservation.businessDate} • {reservation.hhmm} –{' '}
-								{reservation.endHhmm} ({reservation.durationMin}m) •{' '}
-								{reservation.partySize} <Trans>guests</Trans>
-								{reservation.assignedTableLabels.length > 0
-									? ` • ${reservation.assignedTableLabels.join(', ')}`
-									: ` • ${t`Unassigned`}`}
-							</span>
 						) : (
 							<Trans>Loading reservation details...</Trans>
 						)}
 					</SheetDescription>
+					{reservation ? (
+						<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-1">
+							<StatusLabel
+								status={reservation.status}
+								testId="detail-status-badge"
+								className="text-sm"
+							/>
+							<PaymentBadge
+								paymentStatus={reservation.paymentStatus}
+								experience={Boolean(reservation.experienceId)}
+							/>
+							{reservation.experienceId ? (
+								<Badge variant="outline" data-testid="detail-experience-badge">
+									<Trans>Experience</Trans>
+								</Badge>
+							) : null}
+							<span
+								className="text-muted-foreground text-xs tabular-nums"
+								data-testid="detail-confirmation-code"
+							>
+								#{reservation.confirmationCode}
+							</span>
+						</div>
+					) : null}
 				</SheetHeader>
 
-				<div className="flex flex-col gap-4 px-4 pb-6">
+				<div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
 					{error ? (
 						<Alert variant="destructive" data-testid="detail-error">
 							<AlertDescription>{error}</AlertDescription>
@@ -596,7 +702,8 @@ export function DetailSheet({
 					reservation &&
 					undoState.reservationId === reservation.id ? (
 						<div
-							className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
+							role="status"
+							className="bg-muted/50 flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"
 							data-testid="detail-undo-banner"
 						>
 							<span>
@@ -607,13 +714,13 @@ export function DetailSheet({
 							</span>
 							<Button
 								type="button"
-								size="xs"
 								variant="outline"
+								className="h-11 shrink-0 md:h-8"
 								disabled={busy}
 								onClick={handleUndo}
 								data-testid="detail-undo-btn"
 							>
-								<Icon name="undo-2" className="size-3.5" />
+								<Icon name="undo-2" className="size-4" />
 								<span>
 									<Trans>Undo</Trans>
 								</span>
@@ -623,163 +730,321 @@ export function DetailSheet({
 
 					{reservation ? (
 						<>
-							{/* Quick Status Transitions */}
-							{canManage ? (
-								<div className="bg-muted/30 flex flex-col gap-2 rounded-lg border p-3">
-									<span className="text-xs font-semibold">
-										<Trans>Host Actions & Status</Trans>
-									</span>
-									<div className="flex flex-wrap gap-1.5">
-										{(reservation.status === 'booked' ||
-											reservation.status === 'confirmed' ||
-											reservation.status === 'pending_payment') && (
-											<Button
-												type="button"
-												size="xs"
-												variant="outline"
-												disabled={busy}
-												onClick={() => handleStatusTransition('arrived')}
-												data-testid="detail-status-arrived"
+							{/* Overview */}
+							<SheetSection title={<Trans>Overview</Trans>}>
+								<dl
+									className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm"
+									data-testid="detail-facts"
+								>
+									<dt className="text-muted-foreground">
+										<Trans>Source</Trans>
+									</dt>
+									<dd
+										className="flex flex-wrap items-center gap-1.5"
+										data-testid="detail-source"
+									>
+										<span data-testid="detail-channel">
+											{label(CHANNEL_LABELS, reservation.channel) || '—'}
+										</span>
+										{reservation.client && reservation.client !== 'operator' ? (
+											<Badge variant="outline" data-testid="detail-client">
+												{clientLabel((d) => i18n._(d), reservation.client)}
+											</Badge>
+										) : null}
+									</dd>
+									<dt className="text-muted-foreground">
+										<Trans>Occasion</Trans>
+									</dt>
+									<dd data-testid="detail-occasion">
+										{label(OCCASION_LABELS, reservation.occasion) || '—'}
+									</dd>
+									<dt className="text-muted-foreground">
+										<Trans>Dining area</Trans>
+									</dt>
+									<dd data-testid="detail-dining-area">
+										{diningAreaName ?? '—'}
+									</dd>
+									<dt className="text-muted-foreground">
+										<Trans>Table</Trans>
+									</dt>
+									<dd data-testid="detail-tables">{tablesText}</dd>
+									{reservation.dietaryNotes ? (
+										<>
+											<dt className="text-muted-foreground">
+												<Trans>Dietary notes</Trans>
+											</dt>
+											<dd
+												className="wrap-anywhere"
+												data-testid="detail-dietary-notes"
 											>
-												<Trans>Mark Arrived</Trans>
-											</Button>
-										)}
-										{(reservation.status === 'booked' ||
-											reservation.status === 'confirmed' ||
-											reservation.status === 'arrived' ||
-											reservation.status === 'pending_payment') && (
-											<Button
-												type="button"
-												size="xs"
-												disabled={busy}
-												onClick={() => handleStatusTransition('seated')}
-												data-testid="detail-status-seated"
-											>
-												<Icon name="check" className="size-3.5" />
-												<span>
-													<Trans>Seat Party</Trans>
-												</span>
-											</Button>
-										)}
-										{reservation.status === 'seated' && (
-											<Button
-												type="button"
-												size="xs"
-												disabled={busy}
-												onClick={() => handleStatusTransition('completed')}
-												data-testid="detail-status-completed"
-											>
-												<Icon name="check" className="size-3.5" />
-												<span>
-													<Trans>Complete & Clear Table</Trans>
-												</span>
-											</Button>
-										)}
-										{(reservation.status === 'booked' ||
-											reservation.status === 'confirmed' ||
-											reservation.status === 'arrived') && (
-											<Button
-												type="button"
-												size="xs"
-												variant="destructive"
-												disabled={busy}
-												onClick={() => handleStatusTransition('no_show')}
-												data-testid="detail-status-no_show"
-											>
-												<Trans>Mark No-Show</Trans>
-											</Button>
-										)}
-										{reservation.status !== 'cancelled' &&
-											reservation.status !== 'completed' &&
-											reservation.status !== 'finished' &&
-											reservation.status !== 'no_show' && (
-												<Button
-													type="button"
-													size="xs"
-													variant="outline"
-													disabled={busy}
-													onClick={() => {
-														setCancelReason('')
-														setCancelOpen(true)
-													}}
-													data-testid="detail-status-cancelled"
-												>
-													<Trans>Cancel Reservation</Trans>
-												</Button>
-											)}
-									</div>
+												{reservation.dietaryNotes}
+											</dd>
+										</>
+									) : null}
+									{reservation.guestNotes ? (
+										<>
+											<dt className="text-muted-foreground">
+												<Trans>Guest notes</Trans>
+											</dt>
+											<dd className="wrap-anywhere">
+												{reservation.guestNotes}
+											</dd>
+										</>
+									) : null}
+									{reservation.internalNotes ? (
+										<>
+											<dt className="text-muted-foreground">
+												<Trans>Internal notes</Trans>
+											</dt>
+											<dd className="wrap-anywhere">
+												{reservation.internalNotes}
+											</dd>
+										</>
+									) : null}
+								</dl>
 
-									{/* Course Stage progression when seated */}
-									{reservation.status === 'seated' ? (
-										<div className="flex flex-col gap-1 border-t pt-2">
-											<span className="text-muted-foreground text-xs">
-												<Trans>Course Progression</Trans>
+								{/* Course stage progression when seated */}
+								{canManage && reservation.status === 'seated' ? (
+									<div className="flex flex-col gap-2">
+										<span className="text-muted-foreground text-xs">
+											<Trans>Course Progression</Trans>
+										</span>
+										<div className="flex flex-wrap gap-2">
+											{COURSE_STAGES.map((st) => {
+												const active =
+													(reservation.courseStage ?? 'seated') === st.value
+												return (
+													<Button
+														key={st.value}
+														type="button"
+														variant={active ? 'default' : 'outline'}
+														className="h-11 md:h-8"
+														aria-pressed={active}
+														disabled={busy}
+														onClick={() => handleCourseStage(st.value)}
+														data-testid={`detail-course-${st.value}`}
+													>
+														{i18n._(st.label)}
+													</Button>
+												)
+											})}
+										</div>
+									</div>
+								) : null}
+							</SheetSection>
+
+							{/* Guest */}
+							<SheetSection title={<Trans>Guest</Trans>}>
+								<div
+									className="bg-muted/30 flex flex-col gap-2.5 rounded-lg border p-3 text-sm"
+									data-testid="detail-guest-crm"
+								>
+									<div className="flex flex-wrap items-center gap-1.5">
+										{guest?.vipTier && guest.vipTier !== 'none' ? (
+											<Badge variant="default" data-testid="detail-vip-badge">
+												{label(VIP_TIER_LABELS, guest.vipTier)}
+											</Badge>
+										) : null}
+										<Badge variant="outline">
+											<Plural
+												value={guest?.visitCount ?? 0}
+												one="# visit"
+												other="# visits"
+											/>
+										</Badge>
+										{(guest?.noShowCount ?? 0) > 0 ? (
+											<Badge variant="destructive">
+												<Plural
+													value={guest?.noShowCount ?? 0}
+													one="# no-show"
+													other="# no-shows"
+												/>
+											</Badge>
+										) : null}
+									</div>
+									<div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums">
+										<span>{reservation.guestPhone || '—'}</span>
+										{reservation.guestEmail ? (
+											<span className="wrap-anywhere">
+												{reservation.guestEmail}
 											</span>
-											<div className="flex flex-wrap gap-1">
-												{COURSE_STAGES.map((st) => {
-													const active =
-														(reservation.courseStage ?? 'seated') === st.value
-													return (
-														<Button
-															key={st.value}
-															type="button"
-															size="xs"
-															variant={active ? 'default' : 'outline'}
-															disabled={busy}
-															onClick={() => handleCourseStage(st.value)}
-															data-testid={`detail-course-${st.value}`}
-														>
-															{i18n._(st.label)}
-														</Button>
-													)
-												})}
-											</div>
+										) : null}
+									</div>
+									{reservation.dietaryCodes.length > 0 ? (
+										<div className="flex flex-wrap gap-1">
+											{reservation.dietaryCodes.map((code) => (
+												<Badge key={code} variant="secondary">
+													{label(DIETARY_LABELS, code)}
+												</Badge>
+											))}
+										</div>
+									) : null}
+									{guest?.allergiesText ? (
+										<p className="text-destructive text-sm">
+											<Trans>Allergies:</Trans> {guest.allergiesText}
+										</p>
+									) : null}
+									{guest?.seatingPrefText ? (
+										<p>
+											<Trans>Seating Preference:</Trans> {guest.seatingPrefText}
+										</p>
+									) : null}
+									{visibleTags.length > 0 ? (
+										<ul
+											className="flex flex-wrap gap-1"
+											aria-label={t`Guest tags`}
+											data-testid="detail-guest-tags"
+										>
+											{visibleTags.map((tag) => (
+												<li key={tag.id}>
+													<Badge variant="outline">{tag.name}</Badge>
+												</li>
+											))}
+										</ul>
+									) : null}
+									{guest?.pinnedNotes && guest.pinnedNotes.length > 0 ? (
+										<ul
+											className="flex flex-col gap-1"
+											aria-label={t`Pinned notes`}
+											data-testid="detail-guest-pinned-notes"
+										>
+											{guest.pinnedNotes.map((note) => (
+												<li
+													key={note.id}
+													className="bg-card flex items-start gap-1.5 rounded-md border px-2 py-1.5 text-sm"
+												>
+													<Icon
+														name="star"
+														className="mt-0.5 size-3.5 shrink-0"
+														aria-hidden="true"
+													/>
+													<span className="wrap-anywhere whitespace-pre-wrap">
+														{note.body}
+													</span>
+												</li>
+											))}
+										</ul>
+									) : null}
+									{guest?.customerLinked || (guest?.id && guestsBase) ? (
+										<div className="flex flex-wrap items-center gap-2">
+											{guest?.customerLinked ? (
+												<Badge
+													variant="secondary"
+													data-testid="detail-guest-customer-linked"
+												>
+													<Trans>Linked customer</Trans>
+												</Badge>
+											) : null}
+											{guest?.id && guestsBase ? (
+												<Link
+													to={`${guestsBase}/${encodeURIComponent(guest.id)}`}
+													className="text-primary inline-flex min-h-11 items-center underline-offset-4 hover:underline md:min-h-0"
+													data-testid="detail-guest-profile-link"
+												>
+													<Trans>Open guest profile</Trans>
+												</Link>
+											) : null}
 										</div>
 									) : null}
 								</div>
-							) : null}
 
-							{paymentsClient &&
-							layout?.orgSlug &&
-							(reservation.paymentStatus !== 'none' ||
-								reservation.status === 'pending_payment') ? (
-								<PaymentPanel
-									reservationId={reservation.id}
-									client={paymentsClient}
-									orgSlug={layout.orgSlug}
-									canAct={Boolean(layout.payments?.canAct)}
-									guestLabel={
-										(reservation.guestName ?? '').trim().split(/\s+/)[0] ||
-										t`the guest`
-									}
-									timeZone={timeZone}
-									onChanged={() => void loadDetail()}
-								/>
-							) : null}
+								{canManage ? (
+									<SelectField
+										label={<Trans>Contact Tracking</Trans>}
+										id="detail-contact-select"
+										testId="detail-contact-select"
+										options={contactOptions}
+										disabled={busy}
+										value={
+											reservation.contactStatus &&
+											reservation.contactStatus !== 'not_contacted'
+												? reservation.contactStatus
+												: 'none'
+										}
+										onValueChange={(next) => void handleContactStatus(next)}
+									/>
+								) : null}
+							</SheetSection>
 
-							{/* Running Late & Contact Tracking (VAL-BOOK-028) */}
+							{/* Table & timing */}
 							{canManage ? (
-								<div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:grid-cols-2">
-									<div className="flex flex-col gap-1.5">
-										<Label className="text-xs">
+								<SheetSection title={<Trans>Table & timing</Trans>}>
+									<div className="flex items-end gap-2">
+										<SelectField
+											className="min-w-0 flex-1"
+											label={<Trans>Table Assignment</Trans>}
+											id="detail-table-select"
+											testId="detail-table-select"
+											options={tableOptions}
+											value={selectedTableId || NO_TABLE}
+											onValueChange={(next) => {
+												markDirty('table')
+												setSelectedTableId(next === NO_TABLE ? '' : next)
+											}}
+										/>
+										<Button
+											type="button"
+											variant="outline"
+											className="h-11 md:h-8"
+											disabled={busy}
+											onClick={handleAssignTable}
+											data-testid="detail-assign-table-btn"
+										>
+											<Trans>Assign Table</Trans>
+										</Button>
+									</div>
+									<div className="flex flex-col">
+										<CheckRow
+											label={<Trans>Lock table assignment</Trans>}
+											description={
+												<Trans>
+													Keeps this party on the table when the board
+													reshuffles.
+												</Trans>
+											}
+											checked={lockAssignment}
+											onCheckedChange={(next) => {
+												markDirty('lock')
+												setLockAssignment(next)
+											}}
+											testId="detail-lock-assignment"
+										/>
+										<CheckRow
+											label={
+												<Trans>Force overbook / ignore table overlap</Trans>
+											}
+											description={
+												<Trans>
+													Staff override. Applies to table and time changes.
+												</Trans>
+											}
+											checked={forceOverbook}
+											onCheckedChange={setForceOverbook}
+											testId="detail-force-overbook"
+										/>
+									</div>
+
+									<div className="flex flex-col gap-2">
+										<div className="flex items-center gap-2 text-sm font-medium">
 											<Trans>Running Late Hold</Trans>
 											{reservation.runningLateMin ? (
-												<Badge variant="secondary" className="ms-1.5">
+												<Badge variant="warning">
 													+{reservation.runningLateMin}m
 												</Badge>
 											) : null}
-										</Label>
-										<div className="flex flex-wrap gap-1">
+										</div>
+										<div className="flex flex-wrap gap-2">
 											{[15, 30, 45].map((mins) => (
 												<Button
 													key={mins}
 													type="button"
-													size="xs"
 													variant={
 														reservation.runningLateMin === mins
 															? 'default'
 															: 'outline'
 													}
+													className="h-11 md:h-8"
+													aria-pressed={reservation.runningLateMin === mins}
 													disabled={busy}
 													onClick={() => handleRunningLate(mins)}
 													data-testid={`detail-late-${mins}`}
@@ -790,8 +1055,8 @@ export function DetailSheet({
 											{reservation.runningLateMin ? (
 												<Button
 													type="button"
-													size="xs"
 													variant="ghost"
+													className="h-11 md:h-8"
 													disabled={busy}
 													onClick={() => handleRunningLate(0)}
 													data-testid="detail-late-0"
@@ -802,335 +1067,26 @@ export function DetailSheet({
 										</div>
 									</div>
 
-									<div className="flex flex-col gap-1.5">
-										<Label htmlFor="detail-contact-select" className="text-xs">
-											<Trans>Contact Tracking</Trans>
-										</Label>
-										<select
-											id="detail-contact-select"
-											value={
-												reservation.contactStatus &&
-												reservation.contactStatus !== 'not_contacted'
-													? reservation.contactStatus
-													: 'none'
-											}
-											onChange={(e) => handleContactStatus(e.target.value)}
-											disabled={busy}
-											className="border-input bg-background h-8 rounded-md border px-2 text-xs"
-											data-testid="detail-contact-select"
-										>
-											{CONTACT_STATUSES.map((cs) => (
-												<option key={cs.value} value={cs.value}>
-													{i18n._(cs.label)}
-												</option>
-											))}
-										</select>
-									</div>
-								</div>
-							) : null}
-
-							{/* Table Assignment */}
-							{canManage ? (
-								<div className="flex flex-col gap-2 rounded-lg border p-3">
-									<span className="text-xs font-semibold">
-										<Trans>Table Assignment</Trans>
-									</span>
-									<div className="flex flex-wrap items-center gap-2">
-										<select
-											value={selectedTableId}
-											onChange={(e) => {
-												markDirty('table')
-												setSelectedTableId(e.target.value)
-											}}
-											className="border-input bg-background h-8 flex-1 rounded-md border px-2 text-xs"
-											data-testid="detail-table-select"
-										>
-											<option value="">{t`Unassigned`}</option>
-											{activeTables.map((tbl) => (
-												<option key={tbl.id} value={tbl.id}>
-													{tbl.label} ({tbl.minCovers}-{tbl.maxCovers})
-												</option>
-											))}
-										</select>
-										<Button
-											type="button"
-											size="xs"
-											disabled={busy}
-											onClick={handleAssignTable}
-											data-testid="detail-assign-table-btn"
-										>
-											<Trans>Assign Table</Trans>
-										</Button>
-									</div>
-									<div className="flex flex-wrap items-center gap-4">
-										<label className="flex items-center gap-1.5 text-xs">
-											<input
-												type="checkbox"
-												checked={lockAssignment}
-												onChange={(e) => {
-													markDirty('lock')
-													setLockAssignment(e.target.checked)
-												}}
-												data-testid="detail-lock-assignment"
-											/>
-											<span>
-												<Trans>Lock table assignment</Trans>
-											</span>
-										</label>
-										<label className="flex items-center gap-1.5 text-xs">
-											<input
-												type="checkbox"
-												checked={forceOverbook}
-												onChange={(e) => setForceOverbook(e.target.checked)}
-												data-testid="detail-force-overbook"
-											/>
-											<span>
-												<Trans>Force overbook / ignore table overlap</Trans>
-											</span>
-										</label>
-									</div>
-								</div>
-							) : null}
-
-							{/* Booking facts */}
-							<dl
-								className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-lg border p-3 text-xs"
-								data-testid="detail-facts"
-							>
-								<dt className="text-muted-foreground">
-									<Trans>Source</Trans>
-								</dt>
-								<dd
-									className="flex flex-wrap items-center gap-1.5"
-									data-testid="detail-source"
-								>
-									<span data-testid="detail-channel">
-										{label(CHANNEL_LABELS, reservation.channel) || '—'}
-									</span>
-									{reservation.client && reservation.client !== 'operator' ? (
-										<Badge variant="outline" data-testid="detail-client">
-											{clientLabel((d) => i18n._(d), reservation.client)}
-										</Badge>
-									) : null}
-								</dd>
-								<dt className="text-muted-foreground">
-									<Trans>Occasion</Trans>
-								</dt>
-								<dd data-testid="detail-occasion">
-									{label(OCCASION_LABELS, reservation.occasion) || '—'}
-								</dd>
-								<dt className="text-muted-foreground">
-									<Trans>Dining area</Trans>
-								</dt>
-								<dd data-testid="detail-dining-area">
-									{diningAreaName ?? '—'}
-								</dd>
-								<dt className="text-muted-foreground">
-									<Trans>Table</Trans>
-								</dt>
-								<dd data-testid="detail-tables">
-									{reservation.assignedTableLabels.length > 0
-										? reservation.assignedTableLabels.join(', ')
-										: t`Unassigned`}
-								</dd>
-								{reservation.dietaryNotes ? (
-									<>
-										<dt className="text-muted-foreground">
-											<Trans>Dietary notes</Trans>
-										</dt>
-										<dd data-testid="detail-dietary-notes">
-											{reservation.dietaryNotes}
-										</dd>
-									</>
-								) : null}
-								{reservation.guestNotes ? (
-									<>
-										<dt className="text-muted-foreground">
-											<Trans>Guest notes</Trans>
-										</dt>
-										<dd>{reservation.guestNotes}</dd>
-									</>
-								) : null}
-								{reservation.internalNotes ? (
-									<>
-										<dt className="text-muted-foreground">
-											<Trans>Internal notes</Trans>
-										</dt>
-										<dd>{reservation.internalNotes}</dd>
-									</>
-								) : null}
-							</dl>
-
-							{/* Guest CRM Card */}
-							<div
-								className="bg-muted/20 flex flex-col gap-2 rounded-lg border p-3 text-xs"
-								data-testid="detail-guest-crm"
-							>
-								<div className="flex items-center justify-between">
-									<span className="font-semibold">
-										<Trans>Guest CRM Profile</Trans>
-									</span>
-									<div className="flex flex-wrap items-center gap-1">
-										{guest?.vipTier && guest.vipTier !== 'none' ? (
-											<Badge variant="default" data-testid="detail-vip-badge">
-												{label(VIP_TIER_LABELS, guest.vipTier)}
-											</Badge>
-										) : null}
-										<Badge variant="outline">
-											{guest?.visitCount ?? 0} <Trans>visits</Trans>
-										</Badge>
-										{(guest?.noShowCount ?? 0) > 0 ? (
-											<Badge variant="destructive">
-												{guest?.noShowCount} <Trans>no-shows</Trans>
-											</Badge>
-										) : null}
-									</div>
-								</div>
-								<div className="text-muted-foreground flex flex-wrap gap-3">
-									<span>{reservation.guestPhone || '—'}</span>
-									{reservation.guestEmail ? (
-										<span>{reservation.guestEmail}</span>
-									) : null}
-								</div>
-								{reservation.dietaryCodes.length > 0 ? (
-									<div className="flex flex-wrap gap-1">
-										{reservation.dietaryCodes.map((code) => (
-											<Badge key={code} variant="secondary">
-												{label(DIETARY_LABELS, code)}
-											</Badge>
-										))}
-									</div>
-								) : null}
-								{guest?.allergiesText ? (
-									<div className="text-red-600 dark:text-red-400">
-										<Trans>Allergies:</Trans> {guest.allergiesText}
-									</div>
-								) : null}
-								{guest?.seatingPrefText ? (
-									<div>
-										<Trans>Seating Preference:</Trans> {guest.seatingPrefText}
-									</div>
-								) : null}
-								{guest?.pinnedNotes && guest.pinnedNotes.length > 0 ? (
-									<ul
-										className="flex flex-col gap-1"
-										aria-label={t`Pinned notes`}
-										data-testid="detail-guest-pinned-notes"
-									>
-										{guest.pinnedNotes.map((note) => (
-											<li
-												key={note.id}
-												className="bg-background flex items-start gap-1.5 rounded-md border px-2 py-1"
-											>
-												<Icon
-													name="star"
-													className="mt-0.5 size-3 shrink-0"
-													aria-hidden="true"
-												/>
-												<span className="wrap-anywhere whitespace-pre-wrap">
-													{note.body}
+									<div className="flex flex-col gap-4 border-t pt-4">
+										<div className="grid grid-cols-2 items-end gap-3">
+											<div className="flex flex-col gap-1.5">
+												<span className="text-sm font-medium">
+													<Trans>Party Size</Trans>
 												</span>
-											</li>
-										))}
-									</ul>
-								) : null}
-								{guest?.customerLinked || (guest?.id && guestsBase) ? (
-									<div className="flex flex-wrap items-center gap-2">
-										{guest?.customerLinked ? (
-											<Badge
-												variant="secondary"
-												data-testid="detail-guest-customer-linked"
-											>
-												<Trans>Linked customer</Trans>
-											</Badge>
-										) : null}
-										{guest?.id && guestsBase ? (
-											<Link
-												to={`${guestsBase}/${encodeURIComponent(guest.id)}`}
-												className="text-primary underline-offset-4 hover:underline"
-												data-testid="detail-guest-profile-link"
-											>
-												<Trans>Open guest profile</Trans>
-											</Link>
-										) : null}
-									</div>
-								) : null}
-							</div>
-
-							{/* Guest messages: resend the confirmation, optionally with a new manage link */}
-							{canManage &&
-							RESENDABLE_STATUSES.has(reservation.status) &&
-							(reservation.guestPhone || reservation.guestEmail) ? (
-								<div
-									className="flex flex-col gap-2 rounded-lg border p-3"
-									data-testid="detail-guest-messages"
-								>
-									<span className="text-xs font-semibold">
-										<Trans>Guest messages</Trans>
-									</span>
-									<div className="flex flex-wrap gap-1.5">
-										<Button
-											type="button"
-											size="xs"
-											variant="outline"
-											disabled={busy}
-											onClick={() => void handleResend(false)}
-											data-testid="detail-resend-confirmation"
-										>
-											<Icon name="send" className="size-3.5" />
-											<span>
-												<Trans>Resend confirmation</Trans>
-											</span>
-										</Button>
-										<Button
-											type="button"
-											size="xs"
-											variant="outline"
-											disabled={busy}
-											onClick={() => setRotateConfirmOpen(true)}
-											data-testid="detail-rotate-link"
-										>
-											<Icon name="refresh-cw" className="size-3.5" />
-											<span>
-												<Trans>Rotate manage link</Trans>
-											</span>
-										</Button>
-									</div>
-								</div>
-							) : null}
-
-							{/* Edit Reservation Details & Notes */}
-							{canManage ? (
-								<div className="flex flex-col gap-2.5 rounded-lg border p-3">
-									<span className="text-xs font-semibold">
-										<Trans>Modify Time, Party Size & Notes</Trans>
-									</span>
-									<div className="grid grid-cols-3 gap-2">
-										<div className="flex flex-col gap-1">
-											<Label htmlFor="detail-party-size" className="text-xs">
-												<Trans>Party Size</Trans>
-											</Label>
-											<Input
-												id="detail-party-size"
-												type="number"
-												min={1}
-												max={40}
-												value={partySizeEdit}
-												onChange={(e) => {
-													markDirty('partySize')
-													setPartySizeEdit(
-														Math.max(1, Number(e.target.value) || 1),
-													)
-												}}
-												className="h-8 text-xs"
-												data-testid="detail-party-size-input"
-											/>
-										</div>
-										<div className="flex flex-col gap-1">
-											<Label htmlFor="detail-time-edit" className="text-xs">
-												<Trans>Time</Trans>
-											</Label>
-											<Input
+												<PartyStepper
+													value={partySizeEdit}
+													onChange={(next) => {
+														markDirty('partySize')
+														setPartySizeEdit(next)
+													}}
+													inputTestId="detail-party-size-input"
+													inputLabel={t`Party Size`}
+													decreaseLabel={t`Fewer guests`}
+													increaseLabel={t`More guests`}
+												/>
+											</div>
+											<TextField
+												label={<Trans>Time</Trans>}
 												id="detail-time-edit"
 												type="time"
 												step={900}
@@ -1139,15 +1095,12 @@ export function DetailSheet({
 													markDirty('time')
 													setTimeEdit(e.target.value)
 												}}
-												className="h-8 text-xs"
 												data-testid="detail-time-input"
 											/>
 										</div>
-										<div className="flex flex-col gap-1">
-											<Label htmlFor="detail-duration-edit" className="text-xs">
-												<Trans>Duration (m)</Trans>
-											</Label>
-											<Input
+										<div className="grid grid-cols-2 gap-3">
+											<TextField
+												label={<Trans>Duration (m)</Trans>}
 												id="detail-duration-edit"
 												type="number"
 												min={15}
@@ -1160,33 +1113,21 @@ export function DetailSheet({
 														Math.max(15, Number(e.target.value) || 60),
 													)
 												}}
-												className="h-8 text-xs"
 												data-testid="detail-duration-input"
 											/>
+											<TextField
+												label={<Trans>Server / Section Label</Trans>}
+												id="detail-server-input"
+												value={serverLabel}
+												onChange={(e) => {
+													markDirty('server')
+													setServerLabel(e.target.value)
+												}}
+												data-testid="detail-server-input"
+											/>
 										</div>
-									</div>
-
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="detail-server-input" className="text-xs">
-											<Trans>Server / Section Label</Trans>
-										</Label>
-										<Input
-											id="detail-server-input"
-											value={serverLabel}
-											onChange={(e) => {
-												markDirty('server')
-												setServerLabel(e.target.value)
-											}}
-											className="h-8 text-xs"
-											data-testid="detail-server-input"
-										/>
-									</div>
-
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="detail-guest-notes" className="text-xs">
-											<Trans>Guest Notes</Trans>
-										</Label>
-										<Textarea
+										<TextAreaField
+											label={<Trans>Guest Notes</Trans>}
 											id="detail-guest-notes"
 											rows={2}
 											value={guestNotes}
@@ -1194,129 +1135,271 @@ export function DetailSheet({
 												markDirty('guestNotes')
 												setGuestNotes(e.target.value)
 											}}
-											className="text-xs"
 											data-testid="detail-guest-notes-input"
 										/>
-									</div>
-
-									<div className="flex flex-col gap-1">
-										<Label htmlFor="detail-internal-notes" className="text-xs">
-											<Trans>Internal Host Notes</Trans>
-										</Label>
-										<Textarea
+										<TextAreaField
+											label={<Trans>Internal Host Notes</Trans>}
 											id="detail-internal-notes"
 											rows={2}
 											value={internalNotes}
+											hint={<Trans>Only staff see these notes.</Trans>}
 											onChange={(e) => {
 												markDirty('internalNotes')
 												setInternalNotes(e.target.value)
 											}}
-											className="text-xs"
 											data-testid="detail-internal-notes-input"
 										/>
+										<div className="flex justify-end">
+											<Button
+												type="button"
+												className="h-11 md:h-8"
+												disabled={busy}
+												onClick={handleSaveEdits}
+												data-testid="detail-save-notes-btn"
+											>
+												<Trans>Save Changes</Trans>
+											</Button>
+										</div>
 									</div>
+								</SheetSection>
+							) : null}
 
-									<div className="flex justify-end">
+							{/* Payment */}
+							{hasPayment && paymentsClient && layout?.orgSlug ? (
+								<PaymentPanel
+									reservationId={reservation.id}
+									client={paymentsClient}
+									orgSlug={layout.orgSlug}
+									canAct={Boolean(layout.payments?.canAct)}
+									guestLabel={guestFirstName}
+									timeZone={timeZone}
+									onChanged={() => void loadDetail()}
+								/>
+							) : null}
+
+							{/* Messages: resend the confirmation, optionally with a new manage link */}
+							{showMessages ? (
+								<SheetSection
+									title={<Trans>Guest messages</Trans>}
+									testId="detail-guest-messages"
+								>
+									<div className="flex flex-wrap gap-2">
 										<Button
 											type="button"
-											size="xs"
+											variant="outline"
+											className="h-11 md:h-8"
 											disabled={busy}
-											onClick={handleSaveEdits}
-											data-testid="detail-save-notes-btn"
+											onClick={() => void handleResend(false)}
+											data-testid="detail-resend-confirmation"
 										>
-											<Trans>Save Changes</Trans>
+											<Icon name="send" className="size-4" />
+											<span>
+												<Trans>Resend confirmation</Trans>
+											</span>
+										</Button>
+										<Button
+											type="button"
+											variant="outline"
+											className="h-11 md:h-8"
+											disabled={busy}
+											onClick={() => setRotateConfirmOpen(true)}
+											data-testid="detail-rotate-link"
+										>
+											<Icon name="refresh-cw" className="size-4" />
+											<span>
+												<Trans>Rotate manage link</Trans>
+											</span>
 										</Button>
 									</div>
-								</div>
+								</SheetSection>
 							) : null}
 
-							{/* Past Visit History */}
-							{detail?.history && detail.history.length > 0 ? (
-								<div
-									className="flex flex-col gap-1.5 rounded-lg border p-3 text-xs"
-									data-testid="detail-history-list"
-								>
-									<span className="font-semibold">
-										<Trans>Past Visit History</Trans>
-									</span>
-									<div className="divide-y">
-										{detail.history.slice(0, 5).map((h) => (
-											<div
-												key={h.id}
-												className="flex items-center justify-between py-1.5"
-											>
-												<span>
-													{h.businessDate} {h.hhmm} ({h.partySize}{' '}
-													<Trans>guests</Trans>)
-												</span>
-												<Badge variant="outline">
-													{label(RESERVATION_STATUS_LABELS, h.status)}
-												</Badge>
-											</div>
-										))}
-									</div>
-								</div>
-							) : null}
-
-							{/* Change history */}
-							{history.length > 0 ? (
-								<div
-									className="flex flex-col gap-1.5 rounded-lg border p-3 text-xs"
-									data-testid="detail-audit-list"
-								>
-									<span className="font-semibold">
-										<Trans>Change history</Trans>
-									</span>
-									<div className="max-h-48 divide-y overflow-y-auto">
-										{history.map((entry) => {
-											const data = entry.afterJson ?? {}
-											const from = tableLabels(data.fromTableIds)
-											const to = tableLabels(data.toTableIds)
-											return (
-												<div
-													key={entry.id}
-													className="flex items-start justify-between gap-3 py-1"
-													data-testid="detail-audit-entry"
-												>
-													<div>
-														<span className="font-medium">
-															{label(EVENT_TYPE_LABELS, entry.action)}
+							{/* History */}
+							{(openDetail?.history && openDetail.history.length > 0) ||
+							history.length > 0 ? (
+								<SheetSection title={<Trans>History</Trans>}>
+									{openDetail?.history && openDetail.history.length > 0 ? (
+										<div
+											className="flex flex-col gap-1"
+											data-testid="detail-history-list"
+										>
+											<span className="text-muted-foreground text-xs">
+												<Trans>Past Visit History</Trans>
+											</span>
+											<div className="divide-y text-sm">
+												{openDetail.history.slice(0, 5).map((h) => (
+													<div
+														key={h.id}
+														className="flex items-center justify-between gap-3 py-2"
+													>
+														<span className="tabular-nums">
+															{h.businessDate} {h.hhmm} (
+															<Plural
+																value={h.partySize}
+																one="# guest"
+																other="# guests"
+															/>
+															)
 														</span>
-														{from || to ? (
-															<span className="text-muted-foreground ms-1">
-																({from || t`Unassigned`} → {to || t`Unassigned`}
-																)
-															</span>
-														) : null}
-														{entry.reason ? (
-															<span className="text-muted-foreground ms-1">
-																(
-																{label(MOVE_NOTICE_REASON_LABELS, entry.reason)}
-																)
-															</span>
-														) : null}
+														<StatusLabel status={h.status} />
 													</div>
-													<div className="text-muted-foreground text-end">
-														<div>
-															{label(ACTOR_KIND_LABELS, entry.actorType)}
+												))}
+											</div>
+										</div>
+									) : null}
+
+									{history.length > 0 ? (
+										<div
+											className="flex flex-col gap-1"
+											data-testid="detail-audit-list"
+										>
+											<span className="text-muted-foreground text-xs">
+												<Trans>Change history</Trans>
+											</span>
+											<div className="max-h-56 divide-y overflow-y-auto text-sm">
+												{history.map((entry) => {
+													const data = entry.afterJson ?? {}
+													const from = tableLabels(data.fromTableIds)
+													const to = tableLabels(data.toTableIds)
+													return (
+														<div
+															key={entry.id}
+															className="flex items-start justify-between gap-3 py-2"
+															data-testid="detail-audit-entry"
+														>
+															<div className="min-w-0">
+																<span className="font-medium">
+																	{label(EVENT_TYPE_LABELS, entry.action)}
+																</span>
+																{from || to ? (
+																	<span className="text-muted-foreground ms-1">
+																		({from || unassignedLabel} →{' '}
+																		{to || unassignedLabel})
+																	</span>
+																) : null}
+																{entry.reason ? (
+																	<span className="text-muted-foreground ms-1">
+																		(
+																		{label(
+																			MOVE_NOTICE_REASON_LABELS,
+																			entry.reason,
+																		)}
+																		)
+																	</span>
+																) : null}
+															</div>
+															<div className="text-muted-foreground shrink-0 text-end text-xs">
+																<div>
+																	{label(ACTOR_KIND_LABELS, entry.actorType)}
+																</div>
+																<div data-testid="detail-audit-time">
+																	{formatTimestamp(entry.createdAt)}
+																</div>
+															</div>
 														</div>
-														<div data-testid="detail-audit-time">
-															{formatTimestamp(entry.createdAt)}
-														</div>
-													</div>
-												</div>
-											)
-										})}
+													)
+												})}
+											</div>
+										</div>
+									) : null}
+								</SheetSection>
+							) : null}
+
+							{/* Destructive actions, last and behind a confirm */}
+							{canManage && (canNoShow || canCancel) ? (
+								<SheetSection
+									title={<Trans>End this booking</Trans>}
+									description={
+										<Trans>
+											The guest is told about a cancellation. Both are recorded
+											in the history.
+										</Trans>
+									}
+									className="border-t pt-6"
+									testId="detail-danger-zone"
+								>
+									<div className="flex flex-wrap gap-2">
+										{canNoShow ? (
+											<Button
+												type="button"
+												variant="destructive"
+												className="h-11 md:h-8"
+												disabled={busy}
+												onClick={() => setNoShowOpen(true)}
+												data-testid="detail-status-no_show"
+											>
+												<Trans>Mark No-Show</Trans>
+											</Button>
+										) : null}
+										{canCancel ? (
+											<Button
+												type="button"
+												variant="destructive"
+												className="h-11 md:h-8"
+												disabled={busy}
+												onClick={() => {
+													setCancelReason('')
+													setCancelOpen(true)
+												}}
+												data-testid="detail-status-cancelled"
+											>
+												<Trans>Cancel Reservation</Trans>
+											</Button>
+										) : null}
 									</div>
-								</div>
+								</SheetSection>
 							) : null}
 						</>
 					) : loading ? (
-						<div className="text-muted-foreground py-8 text-center text-sm">
-							<Trans>Loading reservation...</Trans>
+						<div
+							className="flex flex-col gap-4"
+							role="status"
+							aria-label={t`Loading reservation...`}
+						>
+							<Skeleton className="h-5 w-1/3" />
+							<Skeleton className="h-24 w-full" />
+							<Skeleton className="h-5 w-1/4" />
+							<Skeleton className="h-32 w-full" />
 						</div>
 					) : null}
 				</div>
+
+				{/* Sticky footer: the ONE next step, plus seating straight away */}
+				{showFooter ? (
+					<SheetFooter className="border-t sm:flex-row sm:justify-end">
+						{nextAction === 'arrived' && canSeatEarly ? (
+							<Button
+								type="button"
+								variant="outline"
+								className="h-11 md:h-8"
+								disabled={busy}
+								onClick={() => handleStatusTransition('seated')}
+								data-testid="detail-status-seated"
+							>
+								<Trans>Seat Party</Trans>
+							</Button>
+						) : null}
+						<Button
+							type="button"
+							className="h-11 md:h-8"
+							disabled={busy}
+							onClick={() => handleStatusTransition(nextAction!)}
+							data-testid={`detail-status-${nextAction}`}
+						>
+							<Icon name="check" className="size-4" />
+							<span>
+								{nextAction === 'arrived' ? (
+									<Trans>Mark Arrived</Trans>
+								) : nextAction === 'seated' ? (
+									<Trans>Seat Party</Trans>
+								) : (
+									<Trans>Complete & Clear Table</Trans>
+								)}
+							</span>
+						</Button>
+					</SheetFooter>
+				) : null}
+
 				<AlertDialog
 					open={cancelOpen}
 					onOpenChange={(nextOpen) => {
@@ -1362,6 +1445,44 @@ export function DetailSheet({
 								data-testid="detail-cancel-confirm"
 							>
 								<Trans>Cancel reservation</Trans>
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
+				<AlertDialog
+					open={noShowOpen}
+					onOpenChange={(nextOpen) => {
+						if (!busy) setNoShowOpen(nextOpen)
+					}}
+				>
+					<AlertDialogContent data-testid="detail-no-show-dialog">
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								<Trans>Mark {guestFirstName} as a no-show?</Trans>
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								<Trans>
+									The table is released and the visit counts toward the guest's
+									no-shows. You can undo this for the next 60 seconds.
+								</Trans>
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel disabled={busy}>
+								<Trans>Keep reservation</Trans>
+							</AlertDialogCancel>
+							<AlertDialogAction
+								type="button"
+								variant="destructive"
+								disabled={busy}
+								onClick={() => {
+									void handleStatusTransition('no_show').finally(() =>
+										setNoShowOpen(false),
+									)
+								}}
+								data-testid="detail-no-show-confirm"
+							>
+								<Trans>Mark No-Show</Trans>
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>

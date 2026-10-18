@@ -2,7 +2,16 @@ import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import {
+	Frame,
+	FrameAction,
+	FrameDescription,
+	FrameHeader,
+	FramePanel,
+	FrameTitle,
+} from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
+import { type ReactNode } from 'react'
 import { GuestTagBadge } from '#app/components/reservations/guests/guest-tag-badge.tsx'
 import { type GuestRow } from '#app/utils/reservations/guests-api.ts'
 import { formatInstantDate } from '#app/utils/reservations/guests-view.ts'
@@ -12,8 +21,8 @@ function Stat({
 	value,
 	testId,
 }: {
-	label: React.ReactNode
-	value: React.ReactNode
+	label: ReactNode
+	value: ReactNode
 	testId: string
 }) {
 	return (
@@ -27,9 +36,10 @@ function Stat({
 }
 
 /**
- * Contact details, visit counters, tags, and pinned notes of one guest. Pure
- * display: the screen owns every write, so the same card can sit in a sheet
- * or on the profile page.
+ * The Overview section of a guest profile: contact details, visit counters,
+ * allergies, pinned notes and tags. Pure display: the screen owns every write,
+ * so the same card can sit in a sheet or on the profile page. `children` render
+ * under the tags (the tag manager).
  */
 export function GuestProfileCard({
 	guest,
@@ -38,6 +48,7 @@ export function GuestProfileCard({
 	busy,
 	onEdit,
 	onRemoveTag,
+	children,
 }: {
 	guest: GuestRow
 	pinnedNotes: Array<{ id: string; body: string }>
@@ -45,25 +56,23 @@ export function GuestProfileCard({
 	busy?: boolean
 	onEdit?: () => void
 	onRemoveTag?: (tagId: string) => void
+	children?: ReactNode
 }) {
 	const { _, i18n } = useLingui()
 	const removeTagLabel = (name: string) => _(msg`Remove tag ${name}`)
 	const erased = guest.erasedAt !== null
 	return (
-		<section
-			className="bg-card flex flex-col gap-4 rounded-xl border p-5"
-			aria-label={guest.name}
+		<Frame
+			role="region"
+			aria-labelledby="guest-overview-title"
 			data-testid="guest-profile-card"
 		>
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div className="flex min-w-0 flex-col gap-1">
-					<h2
-						className="text-xl font-semibold wrap-anywhere"
-						data-testid="guest-profile-name"
-					>
-						{erased ? <Trans>Erased guest</Trans> : guest.name}
-					</h2>
-					<div className="text-muted-foreground flex flex-col text-sm">
+			<FrameHeader>
+				<FrameTitle id="guest-overview-title">
+					<Trans>Overview</Trans>
+				</FrameTitle>
+				<FrameDescription>
+					<span className="flex flex-col">
 						{guest.phone ? (
 							<bdi dir="ltr" className="text-start" data-testid="guest-phone">
 								{guest.phone}
@@ -83,114 +92,121 @@ export function GuestProfileCard({
 								<Trans>No contact details</Trans>
 							</span>
 						) : null}
+					</span>
+				</FrameDescription>
+				<FrameAction>
+					<div className="flex flex-wrap items-center gap-2">
+						{guest.customerLinked ? (
+							<Badge variant="secondary" data-testid="guest-customer-linked">
+								<Icon name="link-2" />
+								<Trans>Linked customer</Trans>
+							</Badge>
+						) : null}
+						{canManage && !erased && onEdit ? (
+							<Button
+								type="button"
+								variant="outline"
+								disabled={busy}
+								onClick={onEdit}
+								data-testid="guest-edit"
+							>
+								<Trans>Edit details</Trans>
+							</Button>
+						) : null}
 					</div>
-				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					{guest.customerLinked ? (
-						<Badge variant="secondary" data-testid="guest-customer-linked">
-							<Icon name="link-2" />
-							<Trans>Linked customer</Trans>
-						</Badge>
-					) : null}
-					{canManage && !erased && onEdit ? (
-						<Button
-							type="button"
-							size="sm"
-							variant="outline"
-							disabled={busy}
-							onClick={onEdit}
-							data-testid="guest-edit"
-						>
-							<Trans>Edit details</Trans>
-						</Button>
-					) : null}
-				</div>
-			</div>
+				</FrameAction>
+			</FrameHeader>
 
-			<dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-				<Stat
-					testId="guest-stat-visits"
-					label={<Trans>Visits</Trans>}
-					value={guest.visits}
-				/>
-				<Stat
-					testId="guest-stat-covers"
-					label={<Trans>Covers</Trans>}
-					value={guest.covers}
-				/>
-				<Stat
-					testId="guest-stat-no-shows"
-					label={<Trans>No-shows</Trans>}
-					value={guest.noShows}
-				/>
-				<Stat
-					testId="guest-stat-late-cancels"
-					label={<Trans>Late cancels</Trans>}
-					value={guest.lateCancels}
-				/>
-				<Stat
-					testId="guest-stat-cancels"
-					label={<Trans>Cancellations</Trans>}
-					value={guest.cancels}
-				/>
-				<Stat
-					testId="guest-stat-last-visit"
-					label={<Trans>Last visit</Trans>}
-					value={formatInstantDate(guest.lastVisitAt, i18n.locale) ?? '—'}
-				/>
-			</dl>
+			<FramePanel className="flex flex-col gap-5">
+				<dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+					<Stat
+						testId="guest-stat-visits"
+						label={<Trans>Visits</Trans>}
+						value={guest.visits}
+					/>
+					<Stat
+						testId="guest-stat-covers"
+						label={<Trans>Covers</Trans>}
+						value={guest.covers}
+					/>
+					<Stat
+						testId="guest-stat-no-shows"
+						label={<Trans>No-shows</Trans>}
+						value={guest.noShows}
+					/>
+					<Stat
+						testId="guest-stat-late-cancels"
+						label={<Trans>Late cancels</Trans>}
+						value={guest.lateCancels}
+					/>
+					<Stat
+						testId="guest-stat-cancels"
+						label={<Trans>Cancellations</Trans>}
+						value={guest.cancels}
+					/>
+					<Stat
+						testId="guest-stat-last-visit"
+						label={<Trans>Last visit</Trans>}
+						value={formatInstantDate(guest.lastVisitAt, i18n.locale) ?? '—'}
+					/>
+				</dl>
 
-			{guest.allergyNotes ? (
-				<div
-					className="bg-warning/12 text-warning rounded-md px-3 py-2 text-sm"
-					data-testid="guest-allergy"
-				>
-					<span className="font-medium">
-						<Trans>Allergies and dietary needs:</Trans>
-					</span>{' '}
-					<span className="wrap-anywhere">{guest.allergyNotes}</span>
-				</div>
-			) : null}
+				{guest.allergyNotes ? (
+					<div
+						className="bg-warning/12 text-warning rounded-md px-3 py-2 text-sm"
+						data-testid="guest-allergy"
+					>
+						<span className="font-medium">
+							<Trans>Allergies and dietary needs:</Trans>
+						</span>{' '}
+						<span className="wrap-anywhere">{guest.allergyNotes}</span>
+					</div>
+				) : null}
 
-			{pinnedNotes.length > 0 ? (
-				<ul
-					className="flex flex-col gap-1.5"
-					aria-label={_(msg`Pinned notes`)}
-					data-testid="guest-pinned-notes"
-				>
-					{pinnedNotes.map((note) => (
-						<li
-							key={note.id}
-							className="bg-muted flex items-start gap-2 rounded-md px-3 py-2 text-sm"
-						>
-							<Icon name="star" className="mt-0.5 size-3.5 shrink-0" />
-							<span className="wrap-anywhere">{note.body}</span>
-						</li>
-					))}
-				</ul>
-			) : null}
+				{pinnedNotes.length > 0 ? (
+					<ul
+						className="flex flex-col gap-1.5"
+						aria-label={_(msg`Pinned notes`)}
+						data-testid="guest-pinned-notes"
+					>
+						{pinnedNotes.map((note) => (
+							<li
+								key={note.id}
+								className="bg-muted flex items-start gap-2 rounded-md px-3 py-2 text-sm"
+							>
+								<Icon name="star" className="mt-0.5 size-3.5 shrink-0" />
+								<span className="wrap-anywhere">{note.body}</span>
+							</li>
+						))}
+					</ul>
+				) : null}
 
-			{guest.tags.length > 0 ? (
-				<div className="flex flex-wrap gap-1.5" data-testid="guest-tags">
-					{guest.tags.map((tag) => (
-						<span key={tag.id} className="inline-flex items-center gap-0.5">
-							<GuestTagBadge tag={tag} />
-							{canManage && !erased && !tag.system && onRemoveTag ? (
-								<button
-									type="button"
-									className="text-muted-foreground hover:text-foreground rounded p-0.5"
-									disabled={busy}
-									aria-label={removeTagLabel(tag.name)}
-									onClick={() => onRemoveTag(tag.id)}
-									data-testid={`guest-tag-remove-${tag.id}`}
-								>
-									<Icon name="x" className="size-3" />
-								</button>
-							) : null}
-						</span>
-					))}
-				</div>
-			) : null}
-		</section>
+				{guest.tags.length > 0 ? (
+					<div className="flex flex-wrap gap-1.5" data-testid="guest-tags">
+						{guest.tags.map((tag) => (
+							<span key={tag.id} className="inline-flex items-center gap-0.5">
+								<GuestTagBadge tag={tag} />
+								{canManage && !erased && !tag.system && onRemoveTag ? (
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-xs"
+										className="text-muted-foreground"
+										disabled={busy}
+										aria-label={removeTagLabel(tag.name)}
+										onClick={() => onRemoveTag(tag.id)}
+										data-testid={`guest-tag-remove-${tag.id}`}
+									>
+										<Icon name="x" />
+									</Button>
+								) : null}
+							</span>
+						))}
+					</div>
+				) : null}
+
+				{children}
+			</FramePanel>
+		</Frame>
 	)
 }

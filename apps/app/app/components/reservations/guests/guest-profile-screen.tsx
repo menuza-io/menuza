@@ -12,7 +12,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@repo/ui/alert-dialog'
-import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
 	Dialog,
@@ -22,11 +21,29 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@repo/ui/dialog'
-import { Frame } from '@repo/ui/frame'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@repo/ui/dropdown-menu'
+import {
+	Frame,
+	FrameDescription,
+	FrameHeader,
+	FramePanel,
+	FrameTitle,
+} from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemDescription,
+	ItemTitle,
+} from '@repo/ui/item'
 import { PageHeader } from '@repo/ui/page-header'
+import { Skeleton } from '@repo/ui/skeleton'
 import {
 	Table,
 	TableBody,
@@ -35,13 +52,18 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { Textarea } from '@repo/ui/textarea'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { GuestProfileCard } from '#app/components/reservations/guest-profile-card.tsx'
 import { GuestMergeDialog } from '#app/components/reservations/guests/guest-merge-dialog.tsx'
 import { GuestNotesPanel } from '#app/components/reservations/guests/guest-notes-panel.tsx'
+import { StatusLabel } from '#app/components/reservations/status-style.tsx'
+import {
+	SelectField,
+	TextAreaField,
+	TextField,
+} from '#app/components/staff/controls.tsx'
 import {
 	addGuestNote,
 	assignGuestTag,
@@ -70,11 +92,7 @@ import {
 	formatLocalMinutes,
 	guestTagName,
 } from '#app/utils/reservations/guests-view.ts'
-import {
-	CHANNEL_LABELS,
-	enumLabel,
-	RESERVATION_STATUS_LABELS,
-} from '#app/utils/reservations/labels.ts'
+import { CHANNEL_LABELS, enumLabel } from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 
 type LoadState =
@@ -166,25 +184,31 @@ export function GuestProfileScreen({
 
 	if (state === 'loading' && !profile) {
 		return (
-			<p
-				className="text-muted-foreground text-sm"
+			<div
+				className="flex flex-col gap-6"
 				role="status"
+				aria-busy="true"
 				data-testid="guest-profile-loading"
 			>
-				<Trans>Loading guest...</Trans>
-			</p>
+				<span className="sr-only">
+					<Trans>Loading guest...</Trans>
+				</span>
+				<Skeleton className="h-8 w-56" />
+				<Skeleton className="h-40 w-full rounded-xl" />
+				<Skeleton className="h-32 w-full rounded-xl" />
+			</div>
 		)
 	}
 
 	const backLink = (
 		<Button
-			variant="ghost"
-			size="sm"
+			variant="outline"
+			size="icon"
 			render={<Link to={`/${orgSlug}/reservations/guests`} />}
+			aria-label={_(msg`Back to guests`)}
 			data-testid="guest-back"
 		>
 			<Icon name="arrow-left" className="rtl:rotate-180" />
-			<Trans>All guests</Trans>
 		</Button>
 	)
 
@@ -196,7 +220,7 @@ export function GuestProfileScreen({
 		!profile
 	) {
 		return (
-			<div className="flex flex-col gap-4" data-testid="guest-profile-error">
+			<div className="flex flex-col gap-6" data-testid="guest-profile-error">
 				<div>{backLink}</div>
 				<Alert variant="destructive">
 					<Icon name="alert-triangle" />
@@ -241,70 +265,59 @@ export function GuestProfileScreen({
 		}
 	}
 
+	const assignOptions = assignable.map((tag) => ({
+		value: tag.id,
+		label: guestTagName(_, tag),
+	}))
+
 	return (
-		<div className="flex flex-col gap-4" data-testid="guest-profile-screen">
-			<div>{backLink}</div>
-			<PageHeader
-				title={erased ? <Trans>Erased guest</Trans> : guest.name}
-				description={
-					<Trans>
-						Visit history, tags, and notes for this guest. Details stay in your
-						regional database.
-					</Trans>
-				}
-				actions={
-					<div className="flex flex-wrap gap-2">
-						<Button
-							type="button"
-							size="sm"
-							variant="outline"
-							disabled={busy || erased}
-							onClick={() => void exportJson(false)}
-							data-testid="guest-export"
-						>
-							<Icon name="download" />
-							<Trans>Export JSON</Trans>
-						</Button>
-						{canManage ? (
-							<Button
-								type="button"
-								size="sm"
-								variant="outline"
-								disabled={busy || erased}
-								onClick={() => void exportJson(true)}
-								data-testid="guest-export-sensitive"
-							>
-								<Icon name="download" />
-								<Trans>Export with sensitive data</Trans>
-							</Button>
-						) : null}
-						{writable ? (
-							<Button
-								type="button"
-								size="sm"
-								variant="outline"
-								disabled={busy}
-								onClick={() => setMergeOpen(true)}
-								data-testid="guest-merge"
-							>
-								<Trans>Merge duplicate</Trans>
-							</Button>
-						) : null}
-						{writable ? (
-							<Button
-								type="button"
-								size="sm"
-								variant="destructive"
-								disabled={busy}
-								onClick={() => setEraseOpen(true)}
-								data-testid="guest-erase"
-							>
-								<Trans>Erase guest</Trans>
-							</Button>
-						) : null}
-					</div>
-				}
-			/>
+		<div className="flex flex-col gap-6" data-testid="guest-profile-screen">
+			<div className="flex items-start gap-3">
+				{backLink}
+				<div className="min-w-0 flex-1">
+					<PageHeader
+						title={
+							<span data-testid="guest-profile-name">
+								{erased ? <Trans>Erased guest</Trans> : guest.name}
+							</span>
+						}
+						description={<Trans>Visits, notes and tags for this guest.</Trans>}
+						actions={
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={
+										<Button
+											type="button"
+											variant="outline"
+											disabled={busy || erased}
+											data-testid="guest-export-menu"
+										/>
+									}
+								>
+									<Icon name="download" />
+									<Trans>Export</Trans>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuItem
+										onClick={() => void exportJson(false)}
+										data-testid="guest-export"
+									>
+										<Trans>Export JSON</Trans>
+									</DropdownMenuItem>
+									{canManage ? (
+										<DropdownMenuItem
+											onClick={() => void exportJson(true)}
+											data-testid="guest-export-sensitive"
+										>
+											<Trans>Export with sensitive data</Trans>
+										</DropdownMenuItem>
+									) : null}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						}
+					/>
+				</div>
+			</div>
 
 			{erased ? (
 				<Alert data-testid="guest-erased-notice">
@@ -329,41 +342,30 @@ export function GuestProfileScreen({
 						failure: FAIL_TAG,
 					})
 				}
-			/>
-
-			{writable ? (
-				<section
-					className="bg-card flex flex-col gap-3 rounded-xl border p-5"
-					aria-labelledby="guest-tags-title"
-					data-testid="guest-tag-manager"
-				>
-					<h3 id="guest-tags-title" className="text-sm font-semibold">
-						<Trans>Tags</Trans>
-					</h3>
-					<div className="flex flex-wrap items-end gap-3">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="guest-assign-tag" className="text-xs">
-								<Trans>Assign a tag</Trans>
-							</Label>
-							<div className="flex gap-2">
-								<select
+			>
+				{writable ? (
+					<div
+						className="border-border flex flex-col gap-4 border-t pt-5"
+						data-testid="guest-tag-manager"
+					>
+						<h3 className="text-sm font-medium">
+							<Trans>Tags</Trans>
+						</h3>
+						<div className="grid gap-4 sm:grid-cols-2">
+							<div className="flex items-end gap-2">
+								<SelectField
+									className="min-w-0 flex-1"
 									id="guest-assign-tag"
+									label={<Trans>Assign a tag</Trans>}
+									options={assignOptions}
 									value={assignTagId}
-									onChange={(event) => setAssignTagId(event.target.value)}
-									className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-									data-testid="guest-assign-tag"
-								>
-									<option value="">{_(msg`Choose a tag`)}</option>
-									{assignable.map((tag) => (
-										<option key={tag.id} value={tag.id}>
-											{guestTagName(_, tag)}
-										</option>
-									))}
-								</select>
+									placeholder={_(msg`Choose a tag`)}
+									onValueChange={setAssignTagId}
+								/>
 								<Button
 									type="button"
-									size="sm"
 									variant="outline"
+									className="h-11 md:h-8"
 									disabled={busy || !assignTagId}
 									onClick={async () => {
 										if (
@@ -380,29 +382,26 @@ export function GuestProfileScreen({
 									<Trans>Assign</Trans>
 								</Button>
 							</div>
-						</div>
-						<form
-							className="flex flex-col gap-1"
-							onSubmit={async (event) => {
-								event.preventDefault()
-								const name = newTagName.trim()
-								if (!name) return
-								const ok = await write(
-									async () => {
-										const tag = await createGuestTag(client, { name })
-										await assignGuestTag(client, guest.id, tag.id)
-									},
-									{ failure: FAIL_TAG },
-								)
-								if (ok) setNewTagName('')
-							}}
-						>
-							<Label htmlFor="guest-new-tag" className="text-xs">
-								<Trans>Create a tag and assign it</Trans>
-							</Label>
-							<div className="flex gap-2">
-								<Input
+							<form
+								className="flex items-end gap-2"
+								onSubmit={async (event) => {
+									event.preventDefault()
+									const name = newTagName.trim()
+									if (!name) return
+									const ok = await write(
+										async () => {
+											const tag = await createGuestTag(client, { name })
+											await assignGuestTag(client, guest.id, tag.id)
+										},
+										{ failure: FAIL_TAG },
+									)
+									if (ok) setNewTagName('')
+								}}
+							>
+								<TextField
+									className="min-w-0 flex-1"
 									id="guest-new-tag"
+									label={<Trans>Create a tag and assign it</Trans>}
 									value={newTagName}
 									maxLength={60}
 									onChange={(event) => setNewTagName(event.target.value)}
@@ -411,17 +410,17 @@ export function GuestProfileScreen({
 								/>
 								<Button
 									type="submit"
-									size="sm"
+									className="h-11 md:h-8"
 									disabled={busy || newTagName.trim() === ''}
 									data-testid="guest-new-tag-submit"
 								>
 									<Trans>Create</Trans>
 								</Button>
-							</div>
-						</form>
+							</form>
+						</div>
 					</div>
-				</section>
-			) : null}
+				) : null}
+			</GuestProfileCard>
 
 			<GuestNotesPanel
 				notes={profile.notes}
@@ -444,95 +443,158 @@ export function GuestProfileScreen({
 				}
 			/>
 
-			<section
-				className="flex flex-col gap-2"
+			<Frame
+				role="region"
 				aria-labelledby="guest-history-title"
 				data-testid="guest-history"
 			>
-				<h3 id="guest-history-title" className="text-sm font-semibold">
-					<Trans>Visit history</Trans>
-				</h3>
+				<FrameHeader>
+					<FrameTitle id="guest-history-title">
+						<Trans>Visit history</Trans>
+					</FrameTitle>
+				</FrameHeader>
 				{profile.visits.length === 0 ? (
-					<p
-						className="text-muted-foreground text-sm"
-						data-testid="guest-history-empty"
-					>
-						<Trans>No bookings yet.</Trans>
-					</p>
+					<FramePanel>
+						<p
+							className="text-muted-foreground text-sm"
+							data-testid="guest-history-empty"
+						>
+							<Trans>No bookings yet.</Trans>
+						</p>
+					</FramePanel>
 				) : (
-					<Frame>
-						<Table variant="card">
-							<TableHeader>
-								<TableRow>
-									<TableHead>
-										<Trans>Date</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Time</Trans>
-									</TableHead>
-									<TableHead className="text-end">
-										<Trans>Party</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Service</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Source</Trans>
-									</TableHead>
-									<TableHead>
-										<Trans>Status</Trans>
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{profile.visits.map((visit) => (
-									<TableRow
-										key={visit.id}
-										data-testid={`guest-visit-${visit.id}`}
-									>
-										<TableCell>
-											{formatBusinessDate(visit.businessDate, i18n.locale)}
-										</TableCell>
-										<TableCell className="tabular-nums">
-											<bdi dir="ltr">
-												{formatLocalMinutes(visit.localStartMin)}
-											</bdi>
-										</TableCell>
-										<TableCell className="text-end tabular-nums">
-											<bdi>{visit.partySize}</bdi>
-										</TableCell>
-										<TableCell>{visit.serviceName ?? '—'}</TableCell>
-										<TableCell>
-											{enumLabel(_, CHANNEL_LABELS, visit.channel)}
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant={
-													visit.status === 'finished'
-														? 'success'
-														: visit.status === 'no_show'
-															? 'destructive'
-															: visit.status === 'cancelled'
-																? 'warning'
-																: 'secondary'
-												}
-												data-testid={`guest-visit-status-${visit.id}`}
-											>
-												{enumLabel(_, RESERVATION_STATUS_LABELS, visit.status)}
-											</Badge>
+					<Table variant="card">
+						<TableHeader>
+							<TableRow>
+								<TableHead>
+									<Trans>Date</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Time</Trans>
+								</TableHead>
+								<TableHead className="text-end">
+									<Trans>Party</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Service</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Source</Trans>
+								</TableHead>
+								<TableHead>
+									<Trans>Status</Trans>
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{profile.visits.map((visit) => (
+								<TableRow
+									key={visit.id}
+									data-testid={`guest-visit-${visit.id}`}
+								>
+									<TableCell>
+										{formatBusinessDate(visit.businessDate, i18n.locale)}
+									</TableCell>
+									<TableCell className="tabular-nums">
+										<bdi dir="ltr">
+											{formatLocalMinutes(visit.localStartMin)}
+										</bdi>
+									</TableCell>
+									<TableCell className="text-end tabular-nums">
+										<bdi>{visit.partySize}</bdi>
+									</TableCell>
+									<TableCell>{visit.serviceName ?? '—'}</TableCell>
+									<TableCell>
+										{enumLabel(_, CHANNEL_LABELS, visit.channel)}
+									</TableCell>
+									<TableCell>
+										<span className="inline-flex flex-wrap items-center gap-x-2">
+											<StatusLabel
+												status={visit.status}
+												testId={`guest-visit-status-${visit.id}`}
+											/>
 											{visit.lateCancel ? (
-												<Badge variant="warning" className="ms-1">
+												<span className="text-warning text-xs">
 													<Trans>Late</Trans>
-												</Badge>
+												</span>
 											) : null}
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</Frame>
+										</span>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
 				)}
-			</section>
+			</Frame>
+
+			{writable ? (
+				<Frame
+					role="region"
+					aria-labelledby="guest-data-title"
+					data-testid="guest-data-section"
+				>
+					<FrameHeader>
+						<FrameTitle id="guest-data-title">
+							<Trans>Duplicates and data</Trans>
+						</FrameTitle>
+						<FrameDescription>
+							<Trans>
+								Changes here affect the whole profile and cannot be undone.
+							</Trans>
+						</FrameDescription>
+					</FrameHeader>
+					<FramePanel className="flex flex-col gap-3">
+						<Item variant="muted">
+							<ItemContent>
+								<ItemTitle>
+									<Trans>Merge a duplicate</Trans>
+								</ItemTitle>
+								<ItemDescription>
+									<Trans>
+										Move another profile's bookings, tags and notes into this
+										one and close the duplicate.
+									</Trans>
+								</ItemDescription>
+							</ItemContent>
+							<ItemActions>
+								<Button
+									type="button"
+									variant="outline"
+									disabled={busy}
+									onClick={() => setMergeOpen(true)}
+									data-testid="guest-merge"
+								>
+									<Trans>Merge duplicate</Trans>
+								</Button>
+							</ItemActions>
+						</Item>
+						<Item variant="muted">
+							<ItemContent>
+								<ItemTitle>
+									<Trans>Erase this guest</Trans>
+								</ItemTitle>
+								<ItemDescription>
+									<Trans>
+										Removes the name, contact details, tags and notes. Visit
+										counts and past bookings stay.
+									</Trans>
+								</ItemDescription>
+							</ItemContent>
+							<ItemActions>
+								<Button
+									type="button"
+									variant="destructive"
+									disabled={busy}
+									onClick={() => setEraseOpen(true)}
+									data-testid="guest-erase"
+								>
+									<Trans>Erase guest</Trans>
+								</Button>
+							</ItemActions>
+						</Item>
+					</FramePanel>
+				</Frame>
+			) : null}
 
 			<EditGuestDialog
 				open={editOpen}
@@ -656,7 +718,7 @@ function EditGuestDialog({
 					</DialogDescription>
 				</DialogHeader>
 				<form
-					className="flex flex-col gap-3"
+					className="flex flex-col gap-5"
 					onSubmit={async (event) => {
 						event.preventDefault()
 						const ok = await onSave({
@@ -671,70 +733,50 @@ function EditGuestDialog({
 					}}
 				>
 					<div className="grid grid-cols-2 gap-3">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="guest-first-name" className="text-xs">
-								<Trans>First name</Trans>
-							</Label>
-							<Input
-								id="guest-first-name"
-								value={firstName}
-								maxLength={120}
-								required
-								onChange={(event) => setFirstName(event.target.value)}
-								data-testid="guest-first-name"
-							/>
-						</div>
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="guest-last-name" className="text-xs">
-								<Trans>Last name</Trans>
-							</Label>
-							<Input
-								id="guest-last-name"
-								value={lastName}
-								maxLength={120}
-								onChange={(event) => setLastName(event.target.value)}
-								data-testid="guest-last-name"
-							/>
-						</div>
-					</div>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="guest-phone-input" className="text-xs">
-							<Trans>Phone</Trans>
-						</Label>
-						<Input
-							id="guest-phone-input"
-							type="tel"
-							dir="ltr"
-							value={phone}
-							onChange={(event) => setPhone(event.target.value)}
-							data-testid="guest-phone-input"
+						<TextField
+							id="guest-first-name"
+							label={<Trans>First name</Trans>}
+							value={firstName}
+							maxLength={120}
+							required
+							onChange={(event) => setFirstName(event.target.value)}
+							data-testid="guest-first-name"
+						/>
+						<TextField
+							id="guest-last-name"
+							label={<Trans>Last name</Trans>}
+							value={lastName}
+							maxLength={120}
+							onChange={(event) => setLastName(event.target.value)}
+							data-testid="guest-last-name"
 						/>
 					</div>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="guest-email-input" className="text-xs">
-							<Trans>Email</Trans>
-						</Label>
-						<Input
-							id="guest-email-input"
-							type="email"
-							dir="ltr"
-							value={email}
-							onChange={(event) => setEmail(event.target.value)}
-							data-testid="guest-email-input"
-						/>
-					</div>
-					<div className="flex flex-col gap-1">
-						<Label htmlFor="guest-allergy-input" className="text-xs">
-							<Trans>Allergies and dietary needs</Trans>
-						</Label>
-						<Textarea
-							id="guest-allergy-input"
-							value={allergy}
-							maxLength={1000}
-							onChange={(event) => setAllergy(event.target.value)}
-							data-testid="guest-allergy-input"
-						/>
-					</div>
+					<TextField
+						id="guest-phone-input"
+						label={<Trans>Phone</Trans>}
+						type="tel"
+						dir="ltr"
+						value={phone}
+						onChange={(event) => setPhone(event.target.value)}
+						data-testid="guest-phone-input"
+					/>
+					<TextField
+						id="guest-email-input"
+						label={<Trans>Email</Trans>}
+						type="email"
+						dir="ltr"
+						value={email}
+						onChange={(event) => setEmail(event.target.value)}
+						data-testid="guest-email-input"
+					/>
+					<TextAreaField
+						id="guest-allergy-input"
+						label={<Trans>Allergies and dietary needs</Trans>}
+						value={allergy}
+						maxLength={1000}
+						onChange={(event) => setAllergy(event.target.value)}
+						data-testid="guest-allergy-input"
+					/>
 					<DialogFooter>
 						<Button
 							type="button"

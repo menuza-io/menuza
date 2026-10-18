@@ -453,8 +453,12 @@ test.describe('Reservations messages and waitlist UI', () => {
 			),
 		).toBe(true)
 
+		// A waiting party's Seat lives in its row menu; the row's one primary
+		// button is Notify.
+		await page.getByTestId('waitlist-more-w2').click()
 		await page.getByTestId('waitlist-seat-w2').click()
-		await page.getByTestId('waitlist-seat-table').selectOption('table-1')
+		await page.getByRole('combobox', { name: 'Table' }).click()
+		await page.getByRole('option', { name: /^T1/ }).click()
 		await page.getByTestId('waitlist-seat-submit').click()
 		await expect(page.getByTestId('waitlist-seat-swap')).toBeVisible()
 		await expect(page.getByTestId('waitlist-seat-move')).toBeVisible()

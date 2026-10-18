@@ -2,11 +2,16 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyTitle,
+} from '@repo/ui/empty'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { useState } from 'react'
 import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
+import { TextField } from '#app/components/staff/controls.tsx'
 import { type DayReservationView } from '#app/utils/reservations/book-api.ts'
 import { type DecidedRequest } from '#app/utils/reservations/requests.ts'
 
@@ -79,7 +84,7 @@ export function RequestsPanel({
 					</span>
 					<Badge variant="secondary">{requests.length}</Badge>
 				</CardTitle>
-				<p className="text-muted-foreground text-xs">
+				<p className="text-muted-foreground text-sm text-pretty">
 					<Trans>
 						Guests asked for these parties on your website. Approve a request to
 						confirm the booking.
@@ -89,10 +94,22 @@ export function RequestsPanel({
 			<CardContent className="flex flex-col gap-2.5">
 				{requests.length === 0 ? (
 					<div
-						className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs"
+						className="rounded-lg border border-dashed"
 						data-testid="requests-empty"
 					>
-						<Trans>No requests are waiting for a decision.</Trans>
+						<Empty>
+							<EmptyHeader>
+								<EmptyTitle>
+									<Trans>No requests are waiting for a decision.</Trans>
+								</EmptyTitle>
+								<EmptyDescription>
+									<Trans>
+										Large-party requests from your website appear here for you
+										to approve or decline.
+									</Trans>
+								</EmptyDescription>
+							</EmptyHeader>
+						</Empty>
 					</div>
 				) : (
 					requests.map((request) => {
@@ -101,17 +118,18 @@ export function RequestsPanel({
 						return (
 							<div
 								key={request.id}
-								className="bg-background flex flex-col gap-2 rounded-lg border p-3 text-xs"
+								className="bg-background flex flex-col gap-2 rounded-lg border p-3 text-sm"
 								data-testid={`request-row-${request.id}`}
 							>
 								<div className="flex flex-wrap items-start justify-between gap-2">
-									<button
+									<Button
 										type="button"
+										variant="link"
 										onClick={() => onOpenDetail(request.id)}
-										className="text-start font-semibold wrap-anywhere hover:underline"
+										className="h-auto min-h-11 justify-start p-0 text-start font-medium wrap-anywhere whitespace-normal md:min-h-0"
 									>
 										{request.hhmm} • {request.guestName} ({request.partySize})
-									</button>
+									</Button>
 									<div className="flex flex-wrap items-center gap-1">
 										<ChannelBadge channel={request.channel} />
 										<Badge variant="outline" className="font-mono">
@@ -119,7 +137,7 @@ export function RequestsPanel({
 										</Badge>
 									</div>
 								</div>
-								<div className="text-muted-foreground">
+								<div className="text-muted-foreground tabular-nums">
 									{request.guestPhone || '—'}
 								</div>
 								{note ? (
@@ -141,25 +159,19 @@ export function RequestsPanel({
 											})
 										}}
 									>
-										<Label
-											htmlFor={`request-decline-reason-${request.id}`}
-											className="text-xs"
-										>
-											<Trans>Reason (optional)</Trans>
-										</Label>
-										<Input
+										<TextField
+											label={<Trans>Reason (optional)</Trans>}
 											id={`request-decline-reason-${request.id}`}
 											value={reason}
 											maxLength={500}
 											onChange={(event) => setReason(event.target.value)}
 											placeholder={t`Why are you declining?`}
-											className="h-8 text-xs"
 											data-testid={`request-decline-reason-${request.id}`}
 										/>
-										<div className="flex items-center gap-1.5">
+										<div className="flex items-center gap-2">
 											<Button
 												type="submit"
-												size="xs"
+												className="h-11 md:h-8"
 												variant="destructive"
 												disabled={busy}
 												data-testid={`request-decline-confirm-${request.id}`}
@@ -168,7 +180,7 @@ export function RequestsPanel({
 											</Button>
 											<Button
 												type="button"
-												size="xs"
+												className="h-11 md:h-8"
 												variant="ghost"
 												disabled={busy}
 												onClick={closeDecline}
@@ -178,10 +190,10 @@ export function RequestsPanel({
 										</div>
 									</form>
 								) : canManage ? (
-									<div className="flex flex-wrap items-center gap-1.5 pt-1">
+									<div className="flex flex-wrap items-center gap-2 pt-1">
 										<Button
 											type="button"
-											size="xs"
+											className="h-11 md:h-8"
 											disabled={busy}
 											onClick={() => void onApprove(request)}
 											data-testid={`request-approve-${request.id}`}
@@ -190,7 +202,7 @@ export function RequestsPanel({
 										</Button>
 										<Button
 											type="button"
-											size="xs"
+											className="h-11 md:h-8"
 											variant="outline"
 											disabled={busy}
 											onClick={() => {
@@ -213,13 +225,13 @@ export function RequestsPanel({
 						className="flex flex-col gap-1.5 border-t pt-3"
 						data-testid="requests-decided"
 					>
-						<div className="text-muted-foreground text-xs font-medium">
+						<div className="text-muted-foreground text-xs">
 							<Trans>Decided in this session</Trans>
 						</div>
 						{decided.map((item) => (
 							<div
 								key={item.id}
-								className="bg-muted/20 flex items-center justify-between gap-2 rounded-lg border p-2.5 text-xs"
+								className="bg-muted/30 flex items-center justify-between gap-2 rounded-lg border p-2.5 text-sm"
 								data-testid={`request-decided-${item.id}`}
 							>
 								<span className="wrap-anywhere">

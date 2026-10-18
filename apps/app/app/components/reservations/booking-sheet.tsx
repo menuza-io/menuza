@@ -1,23 +1,31 @@
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
+import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-} from '@repo/ui/sheet'
-import { Textarea } from '@repo/ui/textarea'
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
+import { Field, FieldLabel } from '@repo/ui/field'
+import { Icon } from '@repo/ui/icon'
+import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import {
+	CheckRow,
+	PartyStepper,
+	SheetSection,
+} from '#app/components/reservations/sheet-parts.tsx'
+import {
+	SelectField,
+	TextAreaField,
+	TextField,
+} from '#app/components/staff/controls.tsx'
+import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import {
 	createPhoneReservation,
 	type DayMoveNotice,
@@ -29,21 +37,22 @@ import {
 	searchBookAvailability,
 	searchBookGuests,
 } from '#app/utils/reservations/book-api.ts'
+import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import { enumLabel, VIP_TIER_LABELS } from '#app/utils/reservations/labels.ts'
 import {
 	ReservationsApiError,
 	type ReservationsScopedClient,
 } from '#app/utils/reservations/reservations-client.ts'
 import {
-	afterFailedSubmit,
-	keyForSubmit,
-	newSubmitKey,
-} from '#app/utils/reservations/submit-key.ts'
-import {
 	type RsvAreaRecord,
 	type RsvServiceRecord,
 	type RsvTableRecord,
 } from '#app/utils/reservations/setup-api.ts'
+import {
+	afterFailedSubmit,
+	keyForSubmit,
+	newSubmitKey,
+} from '#app/utils/reservations/submit-key.ts'
 
 const DIETARY_OPTIONS = [
 	{ code: 'vegetarian', label: msg`Vegetarian` },
@@ -54,6 +63,9 @@ const DIETARY_OPTIONS = [
 	{ code: 'dairy_free', label: msg`Dairy-Free` },
 	{ code: 'shellfish_allergy', label: msg`Shellfish Allergy` },
 ] as const
+
+/** Select items cannot carry an empty value, so "no choice" travels as this. */
+const ANY = '__any'
 
 const OPEN_DAY: OperatorDayState = { state: 'open', name: null, note: null }
 
@@ -70,7 +82,7 @@ function apiErrorCode(err: unknown): string | null {
 }
 
 const OCCASION_OPTIONS = [
-	{ value: '', label: msg`None` },
+	{ value: ANY, label: msg`None` },
 	{ value: 'birthday', label: msg`Birthday` },
 	{ value: 'anniversary', label: msg`Anniversary` },
 	{ value: 'date_night', label: msg`Date Night` },
@@ -78,6 +90,8 @@ const OCCASION_OPTIONS = [
 	{ value: 'celebration', label: msg`Celebration` },
 	{ value: 'vip', label: msg`VIP` },
 ] as const
+
+type PaymentPolicyMode = 'none' | 'send_link' | 'waive'
 
 export function BookingSheet({
 	open,
@@ -151,17 +165,21 @@ export function BookingSheet({
 	const [overrideBlockedTable, setOverrideBlockedTable] = useState(false)
 	const [overrideScheduleBlock, setOverrideScheduleBlock] = useState(false)
 	const [overrideClosedDay, setOverrideClosedDay] = useState(false)
-	const [paymentPolicyMode, setPaymentPolicyMode] = useState<
-		'none' | 'send_link' | 'waive'
-	>('none')
+	const [overbookReason, setOverbookReason] = useState('')
+	const [paymentPolicyMode, setPaymentPolicyMode] =
+		useState<PaymentPolicyMode>('none')
+	const [extrasOpen, setExtrasOpen] = useState(false)
 
 	// Availability slots
 	const [slots, setSlots] = useState<OperatorAvailabilitySlot[]>([])
 	const [dayState, setDayState] = useState<OperatorDayState>(OPEN_DAY)
 	const [loadingSlots, setLoadingSlots] = useState(false)
+	// Only the newest availability request may write state (out-of-order guard).
+	const availabilityRequest = useRef(0)
 
 	// Submission state
 	const [submitting, setSubmitting] = useState(false)
+	const [attempted, setAttempted] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const keyRef = useRef(newSubmitKey('book'))
 
@@ -178,6 +196,8 @@ export function BookingSheet({
 		setTableId(initialTableId ?? '')
 		setDurationMin('')
 		setOverrideClosedDay(false)
+		setOverbookReason('')
+		setAttempted(false)
 		setError(null)
 		keyRef.current = newSubmitKey('book')
 	}, [
@@ -193,6 +213,7 @@ export function BookingSheet({
 	// Live availability search
 	const loadAvailability = useCallback(async () => {
 		if (!open || !locationId || !date || partySize < 1) return
+		const request = ++availabilityRequest.current
 		setLoadingSlots(true)
 		try {
 			const res = await searchBookAvailability(client, {
@@ -203,13 +224,15 @@ export function BookingSheet({
 				areaId: areaId || null,
 				includePacingOverride: true,
 			})
+			if (request !== availabilityRequest.current) return
 			setSlots(res.slots ?? [])
 			setDayState(res.dayState)
 		} catch {
+			if (request !== availabilityRequest.current) return
 			setSlots([])
 			setDayState(OPEN_DAY)
 		} finally {
-			setLoadingSlots(false)
+			if (request === availabilityRequest.current) setLoadingSlots(false)
 		}
 	}, [areaId, client, date, locationId, open, partySize, serviceId])
 
@@ -295,6 +318,12 @@ export function BookingSheet({
 
 	const dayName = dayState.name
 	const heldTables = heldTableLabels.join(', ')
+	const anyOverride =
+		overridePacing ||
+		overrideBlockedTable ||
+		overrideScheduleBlock ||
+		(closedDay && overrideClosedDay) ||
+		slotIsHeld
 
 	const warningText = (code: BookingWarning['code']) => {
 		switch (code) {
@@ -315,9 +344,11 @@ export function BookingSheet({
 			case 'pacing_parties_exceeded':
 				return t`This time is over its pacing limit. Turn on the pacing override to book anyway.`
 			default:
-				return err instanceof Error
-					? err.message
-					: t`Failed to create reservation.`
+				return hostErrorMessage(
+					err,
+					(d) => i18n._(d),
+					msg`Failed to create reservation.`,
+				)
 		}
 	}
 
@@ -332,9 +363,17 @@ export function BookingSheet({
 		}
 	}
 
+	const nameMissing = !guestName.trim()
+	const phoneMissing = !guestPhone.trim()
+	const missing: string[] = []
+	if (phoneMissing) missing.push(t`phone number`)
+	if (nameMissing) missing.push(t`guest name`)
+	const missingList = missing.join(', ')
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		if (!guestName.trim() || !guestPhone.trim()) {
+		setAttempted(true)
+		if (nameMissing || phoneMissing) {
 			setError(t`Guest name and phone number are required.`)
 			return
 		}
@@ -377,6 +416,7 @@ export function BookingSheet({
 				overrideBlockedTable,
 				overrideScheduleBlock,
 				overrideClosedDay: closedDay && overrideClosedDay,
+				overbookReason: overbookReason.trim() || null,
 				skipPayment: paymentPolicyMode === 'waive',
 				paymentPolicyMode,
 			}
@@ -404,6 +444,7 @@ export function BookingSheet({
 			setGuestNotes('')
 			setInternalNotes('')
 			setServerLabel('')
+			setOverbookReason('')
 		} catch (err) {
 			setError(errorText(err))
 			afterFailedSubmit(keyRef, 'book', err)
@@ -416,143 +457,124 @@ export function BookingSheet({
 		(tbl) => tbl.isActive && (!areaId || tbl.areaId === areaId),
 	)
 
+	const dateLabel = (() => {
+		const parsed = new Date(`${date}T12:00:00`)
+		if (Number.isNaN(parsed.getTime())) return date
+		return new Intl.DateTimeFormat(i18n.locale, {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric',
+		}).format(parsed)
+	})()
+
+	const serviceOptions = [
+		{ value: ANY, label: t`Auto / Any` },
+		...services.map((svc) => ({ value: svc.id, label: svc.name })),
+	]
+	const areaOptions = [
+		{ value: ANY, label: t`Any Area` },
+		...areas.map((a) => ({ value: a.id, label: a.name })),
+	]
+	const tableOptions = [
+		{ value: ANY, label: t`Auto-assign best table` },
+		...activeTables.map((tbl) => ({
+			value: tbl.id,
+			label: `${tbl.label} (${tbl.minCovers}-${tbl.maxCovers})`,
+		})),
+	]
+	const occasionOptions = OCCASION_OPTIONS.map((opt) => ({
+		value: opt.value,
+		label: i18n._(opt.label),
+	}))
+	const paymentOptions = [
+		{ value: 'none', label: t`Standard policy` },
+		{ value: 'send_link', label: t`Send SMS payment link` },
+		{ value: 'waive', label: t`Waive deposit / card hold` },
+	]
+
+	const offeredSlots = slots
+		.filter(
+			(s) =>
+				s.status === 'available' ||
+				s.held ||
+				(s.status === 'pacing_full' && s.canOverridePacing),
+		)
+		.slice(0, 32)
+	const hasOverLimitSlot = offeredSlots.some((s) => s.status === 'pacing_full')
+
+	const extrasCount =
+		(occasion ? 1 : 0) +
+		(dietaryCodes.length > 0 || dietaryNotes.trim() ? 1 : 0) +
+		(guestNotes.trim() ? 1 : 0) +
+		(internalNotes.trim() ? 1 : 0) +
+		(tableId ? 1 : 0) +
+		(paymentPolicyMode !== 'none' ? 1 : 0) +
+		(anyOverride ? 1 : 0)
+
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
-				className="w-full overflow-y-auto sm:max-w-xl"
+				className="w-full gap-0 sm:max-w-md"
 				data-testid="booking-sheet"
 			>
-				<SheetHeader>
-					<SheetTitle>
-						<Trans>New Phone / Host Reservation</Trans>
-					</SheetTitle>
-					<SheetDescription>
-						<Trans>
-							Search returning guests, check live slot availability, and book
-							with optional operator overrides.
-						</Trans>
-					</SheetDescription>
-				</SheetHeader>
-
-				<form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
-					{error ? (
-						<Alert variant="destructive" data-testid="booking-sheet-error">
-							<AlertDescription>{error}</AlertDescription>
-						</Alert>
-					) : null}
-
-					{/* Returning Guest Lookup */}
-					<div className="bg-muted/40 flex flex-col gap-2 rounded-lg border p-3">
-						<Label htmlFor="booking-guest-search">
-							<Trans>Lookup Returning Guest (Phone or Name)</Trans>
-						</Label>
-						<div className="relative">
-							<Input
-								id="booking-guest-search"
-								value={guestQuery}
-								onChange={(e) => setGuestQuery(e.target.value)}
-								placeholder={t`Search by phone (+1...) or guest name...`}
-								data-testid="booking-guest-search"
-							/>
-							{searchingGuests ? (
-								<span className="text-muted-foreground absolute top-2 right-3 text-xs">
-									<Trans>Searching...</Trans>
-								</span>
+				<SheetForm
+					title={<Trans>New reservation</Trans>}
+					description={
+						<span className="tabular-nums">
+							{dateLabel} ·{' '}
+							<Plural value={partySize} one="# guest" other="# guests" />
+						</span>
+					}
+					onSubmit={handleSubmit}
+					footer={
+						<div className="flex w-full flex-col gap-3">
+							{error ? (
+								<Alert variant="destructive" data-testid="booking-sheet-error">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
 							) : null}
-						</div>
-
-						{guestResults.length > 0 ? (
-							<div
-								className="bg-card divide-y rounded-md border"
-								data-testid="booking-guest-results"
-							>
-								{guestResults.map((g) => (
-									<button
-										key={g.id}
-										type="button"
-										onClick={() => handleSelectReturningGuest(g)}
-										className="hover:bg-muted flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-xs"
-										data-testid={`booking-guest-result-${g.id}`}
+							<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+								{attempted && missing.length > 0 ? (
+									<p
+										role="status"
+										className="text-destructive text-sm sm:me-auto"
+										data-testid="booking-validation-summary"
 									>
-										<div>
-											<div className="font-medium">{g.fullName}</div>
-											<div className="text-muted-foreground">{g.phoneE164}</div>
-										</div>
-										<div className="flex flex-wrap items-center gap-1">
-											{g.vipTier && g.vipTier !== 'none' ? (
-												<Badge variant="default">
-													{enumLabel(
-														(d) => i18n._(d),
-														VIP_TIER_LABELS,
-														g.vipTier,
-													)}
-												</Badge>
-											) : null}
-											<Badge variant="secondary">
-												{g.visitCount} <Trans>visits</Trans>
-											</Badge>
-											{g.noShowCount > 0 ? (
-												<Badge variant="destructive">
-													{g.noShowCount} <Trans>no-shows</Trans>
-												</Badge>
-											) : null}
-										</div>
-									</button>
-								))}
-							</div>
-						) : null}
-
-						{selectedGuest ? (
-							<div
-								className="bg-card flex flex-col gap-1 rounded-md border p-2.5 text-xs"
-								data-testid="booking-returning-guest-card"
-							>
-								<div className="flex items-center justify-between">
-									<span className="font-semibold">
-										{selectedGuest.fullName} ({selectedGuest.phoneE164})
+										<Trans>Still needed: {missingList}</Trans>
+									</p>
+								) : null}
+								<Button
+									type="button"
+									variant="ghost"
+									className="h-11 md:h-8"
+									onClick={() => onOpenChange(false)}
+								>
+									<Trans>Cancel</Trans>
+								</Button>
+								<Button
+									type="submit"
+									className="h-11 md:h-8"
+									disabled={submitting || (closedDay && !overrideClosedDay)}
+									data-testid="booking-submit-btn"
+								>
+									<Icon name="check" className="size-4" />
+									<span>
+										{submitting ? (
+											<Trans>Booking...</Trans>
+										) : (
+											<Trans>Book</Trans>
+										)}
 									</span>
-									<div className="flex items-center gap-1">
-										{selectedGuest.vipTier &&
-										selectedGuest.vipTier !== 'none' ? (
-											<Badge variant="default">
-												{enumLabel(
-													(d) => i18n._(d),
-													VIP_TIER_LABELS,
-													selectedGuest.vipTier,
-												)}
-											</Badge>
-										) : null}
-										<Badge variant="outline">
-											{selectedGuest.visitCount} <Trans>visits</Trans>
-										</Badge>
-										{selectedGuest.noShowCount > 0 ? (
-											<Badge variant="destructive">
-												{selectedGuest.noShowCount} <Trans>no-shows</Trans>
-											</Badge>
-										) : null}
-									</div>
-								</div>
-								{selectedGuest.allergiesText ? (
-									<div className="text-red-600 dark:text-red-400">
-										<Trans>Allergies:</Trans> {selectedGuest.allergiesText}
-									</div>
-								) : null}
-								{selectedGuest.seatingPrefText ? (
-									<div className="text-muted-foreground">
-										<Trans>Preference:</Trans> {selectedGuest.seatingPrefText}
-									</div>
-								) : null}
+								</Button>
 							</div>
-						) : null}
-					</div>
-
-					{/* Date, Party Size, Time, Duration */}
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-date-input">
-								<Trans>Date</Trans>
-							</Label>
-							<Input
+						</div>
+					}
+				>
+					{/* Step 1: when */}
+					<SheetSection title={<Trans>When</Trans>}>
+						<div className="grid grid-cols-2 items-end gap-3">
+							<TextField
+								label={<Trans>Date</Trans>}
 								id="booking-date-input"
 								type="date"
 								value={date}
@@ -560,148 +582,60 @@ export function BookingSheet({
 								data-testid="booking-date-input"
 								required
 							/>
+							<Field>
+								<FieldLabel htmlFor="booking-party-size-input">
+									<Trans>Party Size</Trans>
+								</FieldLabel>
+								<PartyStepper
+									value={partySize}
+									onChange={setPartySize}
+									inputId="booking-party-size-input"
+									inputTestId="booking-party-size-input"
+									inputLabel={t`Party Size`}
+									decreaseLabel={t`Fewer guests`}
+									increaseLabel={t`More guests`}
+								/>
+							</Field>
 						</div>
 
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-party-size-input">
-								<Trans>Party Size</Trans>
-							</Label>
-							<Input
-								id="booking-party-size-input"
-								type="number"
-								min={1}
-								max={40}
-								value={partySize}
-								onChange={(e) =>
-									setPartySize(Math.max(1, Number(e.target.value) || 1))
-								}
-								data-testid="booking-party-size-input"
-								required
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-time-input">
-								<Trans>Time</Trans>
-							</Label>
-							<Input
-								id="booking-time-input"
-								type="time"
-								step={900}
-								value={timeInput}
-								onChange={(e) => handleTimeChange(e.target.value)}
-								data-testid="booking-time-input"
-								required
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-duration-input">
-								<Trans>Duration (min)</Trans>
-							</Label>
-							<Input
-								id="booking-duration-input"
-								type="number"
-								min={15}
-								max={360}
-								step={15}
-								placeholder={t`Auto`}
-								value={durationMin}
-								onChange={(e) => setDurationMin(e.target.value)}
-								data-testid="booking-duration-input"
-							/>
-						</div>
-					</div>
-
-					{/* Service, Area, Table */}
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-service-select">
-								<Trans>Service</Trans>
-							</Label>
-							<select
+						{services.length > 0 ? (
+							<SelectField
+								label={<Trans>Service</Trans>}
 								id="booking-service-select"
-								value={serviceId}
-								onChange={(e) => setServiceId(e.target.value)}
-								className="border-input bg-background h-9 rounded-md border px-2.5 text-sm"
-								data-testid="booking-service-select"
-							>
-								<option value="">{t`Auto / Any`}</option>
-								{services.map((svc) => (
-									<option key={svc.id} value={svc.id}>
-										{svc.name}
-									</option>
-								))}
-							</select>
-						</div>
+								testId="booking-service-select"
+								options={serviceOptions}
+								value={serviceId || ANY}
+								onValueChange={(next) => setServiceId(next === ANY ? '' : next)}
+							/>
+						) : null}
 
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-area-select">
-								<Trans>Dining Area</Trans>
-							</Label>
-							<select
-								id="booking-area-select"
-								value={areaId}
-								onChange={(e) => setAreaId(e.target.value)}
-								className="border-input bg-background h-9 rounded-md border px-2.5 text-sm"
-								data-testid="booking-area-select"
-							>
-								<option value="">{t`Any Area`}</option>
-								{areas.map((a) => (
-									<option key={a.id} value={a.id}>
-										{a.name}
-									</option>
-								))}
-							</select>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-table-select">
-								<Trans>Table Assignment</Trans>
-							</Label>
-							<select
-								id="booking-table-select"
-								value={tableId}
-								onChange={(e) => setTableId(e.target.value)}
-								className="border-input bg-background h-9 rounded-md border px-2.5 text-sm"
-								data-testid="booking-table-select"
-							>
-								<option value="">{t`Auto-assign best table`}</option>
-								{activeTables.map((tbl) => (
-									<option key={tbl.id} value={tbl.id}>
-										{tbl.label} ({tbl.minCovers}-{tbl.maxCovers})
-									</option>
-								))}
-							</select>
-						</div>
-					</div>
-
-					{/* Available Slots Grid */}
-					<div className="flex flex-col gap-1.5">
-						<div className="flex items-center justify-between">
-							<Label>
-								<Trans>Available Slots</Trans>
-							</Label>
-							{loadingSlots ? (
-								<span className="text-muted-foreground text-xs">
-									<Trans>Checking slots...</Trans>
-								</span>
-							) : null}
-						</div>
 						{closedDay ? (
 							<Alert variant="destructive" data-testid="booking-closed-day">
 								<AlertDescription>
-									{dayState.name ? (
-										<Trans>
-											Closed on this date ({dayName}). No slots are offered.
-											Turn on the override below to book anyway.
-										</Trans>
-									) : (
-										<Trans>
-											Closed on this date. No slots are offered. Turn on the
-											override below to book anyway.
-										</Trans>
-									)}
+									<div className="flex flex-col gap-2">
+										<span>
+											{dayState.name ? (
+												<Trans>
+													Closed on this date ({dayName}). No times are offered.
+												</Trans>
+											) : (
+												<Trans>
+													Closed on this date. No times are offered.
+												</Trans>
+											)}
+										</span>
+										<CheckRow
+											label={<Trans>Book anyway (staff override)</Trans>}
+											description={
+												<Trans>
+													The booking is marked as made on a closed day.
+												</Trans>
+											}
+											checked={overrideClosedDay}
+											onCheckedChange={setOverrideClosedDay}
+											testId="booking-override-closed-day"
+										/>
+									</div>
 								</AlertDescription>
 							</Alert>
 						) : null}
@@ -715,34 +649,33 @@ export function BookingSheet({
 								</AlertDescription>
 							</Alert>
 						) : null}
-						{slots.length > 0 ? (
-							<div
-								className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto rounded-lg border p-2"
-								data-testid="booking-slots-grid"
-							>
-								{slots
-									.filter(
-										(s) =>
-											s.status === 'available' ||
-											s.held ||
-											(s.status === 'pacing_full' && s.canOverridePacing),
-									)
-									.slice(0, 32)
-									.map((slot) => {
+
+						<div className="flex flex-col gap-2">
+							<div className="flex items-center justify-between gap-2">
+								<span className="text-sm font-medium">
+									<Trans>Available times</Trans>
+								</span>
+								{loadingSlots ? (
+									<span role="status" className="text-muted-foreground text-xs">
+										<Trans>Checking times...</Trans>
+									</span>
+								) : null}
+							</div>
+							{offeredSlots.length > 0 ? (
+								<div
+									className="flex flex-wrap gap-2"
+									data-testid="booking-slots-grid"
+								>
+									{offeredSlots.map((slot) => {
 										const isSelected = slot.localStartMin === localStartMin
 										const isPacingFull = slot.status === 'pacing_full'
 										return (
 											<Button
 												key={`${slot.serviceId}-${slot.localStartMin}`}
 												type="button"
-												size="xs"
-												variant={
-													isSelected
-														? 'default'
-														: isPacingFull || slot.held
-															? 'secondary'
-															: 'outline'
-												}
+												variant={isSelected ? 'default' : 'outline'}
+												className="h-11 min-w-16 tabular-nums md:h-8"
+												aria-pressed={isSelected}
 												onClick={() => handleSelectSlot(slot)}
 												data-testid={`booking-slot-${slot.localStartMin}`}
 												data-held={slot.held ? 'true' : undefined}
@@ -750,30 +683,53 @@ export function BookingSheet({
 												<span>{slot.hhmm}</span>
 												{slot.held ? (
 													<span
-														className="inline-flex items-center gap-0.5"
+														className="inline-flex items-center gap-0.5 text-xs"
 														data-testid={`booking-slot-held-${slot.localStartMin}`}
 													>
 														<Icon name="lock" className="size-3" />
 														<Trans>Held</Trans>
 													</span>
 												) : isPacingFull ? (
-													<span className="text-amber-600 dark:text-amber-400">
-														*
+													<span className="text-xs">
+														<Trans>Over limit</Trans>
 													</span>
 												) : null}
 											</Button>
 										)
 									})}
-							</div>
-						) : closedDay ? null : (
-							<p className="text-muted-foreground text-xs">
-								<Trans>
-									Select a slot above or enter any time in the Time field.
-								</Trans>
-							</p>
-						)}
+								</div>
+							) : closedDay || loadingSlots ? null : (
+								<p className="text-muted-foreground text-sm">
+									<Trans>
+										No open times for this date and party size. Enter another
+										time below, or change the date.
+									</Trans>
+								</p>
+							)}
+							{hasOverLimitSlot ? (
+								<p className="text-muted-foreground text-xs">
+									<Trans>
+										Over limit times are past their pacing limit. Picking one
+										overbooks the slot.
+									</Trans>
+								</p>
+							) : null}
+						</div>
+
+						<TextField
+							label={<Trans>Other time</Trans>}
+							id="booking-time-input"
+							type="time"
+							step={900}
+							value={timeInput}
+							onChange={(e) => handleTimeChange(e.target.value)}
+							data-testid="booking-time-input"
+							required
+						/>
+
 						{slotHasHeldTables ? (
 							<Alert data-testid="booking-held-warning">
+								<Icon name="lock" />
 								<AlertDescription>
 									{!slotIsHeld ? (
 										<Trans>
@@ -796,6 +752,7 @@ export function BookingSheet({
 						) : null}
 						{slotIsOverPaced ? (
 							<Alert data-testid="booking-pacing-warning">
+								<Icon name="alert-triangle" />
 								<AlertDescription>
 									<Trans>
 										This time is over its pacing limit. Creating the booking
@@ -804,256 +761,373 @@ export function BookingSheet({
 								</AlertDescription>
 							</Alert>
 						) : null}
-					</div>
+					</SheetSection>
 
-					{/* Guest Details */}
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-guest-name">
-								<Trans>Guest Name</Trans> *
-							</Label>
-							<Input
-								id="booking-guest-name"
-								value={guestName}
-								onChange={(e) => setGuestName(e.target.value)}
-								placeholder={t`Full name`}
-								data-testid="booking-guest-name"
-								required
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-guest-phone">
-								<Trans>Phone Number</Trans> *
-							</Label>
-							<Input
-								id="booking-guest-phone"
-								value={guestPhone}
-								onChange={(e) => setGuestPhone(e.target.value)}
-								placeholder="+14155550100"
-								data-testid="booking-guest-phone"
-								required
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-guest-email">
-								<Trans>Email</Trans>
-							</Label>
-							<Input
-								id="booking-guest-email"
-								type="email"
-								value={guestEmail}
-								onChange={(e) => setGuestEmail(e.target.value)}
-								placeholder="guest@example.com"
-								data-testid="booking-guest-email"
-							/>
-						</div>
-					</div>
-
-					{/* Occasion & Server Label */}
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-occasion-select">
-								<Trans>Occasion</Trans>
-							</Label>
-							<select
-								id="booking-occasion-select"
-								value={occasion}
-								onChange={(e) => setOccasion(e.target.value)}
-								className="border-input bg-background h-9 rounded-md border px-2.5 text-sm"
-								data-testid="booking-occasion-select"
-							>
-								{OCCASION_OPTIONS.map((opt) => (
-									<option key={opt.value} value={opt.value}>
-										{i18n._(opt.label)}
-									</option>
-								))}
-							</select>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-server-input">
-								<Trans>Server / Section Label</Trans>
-							</Label>
-							<Input
-								id="booking-server-input"
-								value={serverLabel}
-								onChange={(e) => setServerLabel(e.target.value)}
-								placeholder={t`Optional server name`}
-								data-testid="booking-server-input"
-							/>
-						</div>
-					</div>
-
-					{/* Dietary Tags */}
-					<div className="flex flex-col gap-1.5">
-						<Label>
-							<Trans>Dietary Tags</Trans>
-						</Label>
-						<div className="flex flex-wrap gap-1.5">
-							{DIETARY_OPTIONS.map((opt) => {
-								const active = dietaryCodes.includes(opt.code)
-								return (
-									<Button
-										key={opt.code}
-										type="button"
-										size="xs"
-										variant={active ? 'default' : 'outline'}
-										onClick={() => toggleDietary(opt.code)}
-										data-testid={`booking-dietary-${opt.code}`}
-									>
-										{i18n._(opt.label)}
-									</Button>
-								)
-							})}
-						</div>
-						<Label htmlFor="booking-dietary-notes" className="sr-only">
-							<Trans>Dietary notes</Trans>
-						</Label>
-						<Input
-							id="booking-dietary-notes"
-							value={dietaryNotes}
-							maxLength={500}
-							onChange={(e) => setDietaryNotes(e.target.value)}
-							placeholder={t`Dietary notes, e.g. no sesame, severe peanut allergy`}
-							data-testid="booking-dietary-notes"
+					{/* Step 2: who */}
+					<SheetSection title={<Trans>Who</Trans>}>
+						<TextField
+							label={<Trans>Find a returning guest</Trans>}
+							id="booking-guest-search"
+							value={guestQuery}
+							onChange={(e) => setGuestQuery(e.target.value)}
+							placeholder={t`Search by phone or name`}
+							hint={searchingGuests ? <Trans>Searching...</Trans> : undefined}
+							data-testid="booking-guest-search"
+							optional
 						/>
-					</div>
 
-					{/* Guest & Internal Notes */}
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-guest-notes">
-								<Trans>Guest Request / Notes</Trans>
-							</Label>
-							<Textarea
-								id="booking-guest-notes"
-								rows={2}
-								value={guestNotes}
-								onChange={(e) => setGuestNotes(e.target.value)}
-								placeholder={t`Booth preferred, high chair...`}
-								data-testid="booking-guest-notes"
-							/>
-						</div>
+						{guestResults.length > 0 ? (
+							<div
+								className="bg-card flex flex-col divide-y rounded-lg border"
+								data-testid="booking-guest-results"
+							>
+								{guestResults.map((g) => (
+									<Button
+										key={g.id}
+										type="button"
+										variant="ghost"
+										onClick={() => handleSelectReturningGuest(g)}
+										className="h-auto min-h-11 w-full justify-between gap-2 rounded-none px-3 py-2 text-start font-normal first:rounded-t-lg last:rounded-b-lg"
+										data-testid={`booking-guest-result-${g.id}`}
+									>
+										<span className="flex min-w-0 flex-col">
+											<span className="text-sm font-medium wrap-anywhere">
+												{g.fullName}
+											</span>
+											<span className="text-muted-foreground text-xs tabular-nums">
+												{g.phoneE164}
+											</span>
+										</span>
+										<span className="flex flex-wrap items-center justify-end gap-1">
+											{g.vipTier && g.vipTier !== 'none' ? (
+												<Badge variant="default">
+													{enumLabel(
+														(d) => i18n._(d),
+														VIP_TIER_LABELS,
+														g.vipTier,
+													)}
+												</Badge>
+											) : null}
+											<Badge variant="secondary">
+												<Plural
+													value={g.visitCount}
+													one="# visit"
+													other="# visits"
+												/>
+											</Badge>
+											{g.noShowCount > 0 ? (
+												<Badge variant="destructive">
+													<Plural
+														value={g.noShowCount}
+														one="# no-show"
+														other="# no-shows"
+													/>
+												</Badge>
+											) : null}
+										</span>
+									</Button>
+								))}
+							</div>
+						) : null}
 
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="booking-internal-notes">
-								<Trans>Internal Host Notes</Trans>
-							</Label>
-							<Textarea
-								id="booking-internal-notes"
-								rows={2}
-								value={internalNotes}
-								onChange={(e) => setInternalNotes(e.target.value)}
-								placeholder={t`Friends of chef, comp welcome drink...`}
-								data-testid="booking-internal-notes"
-							/>
-						</div>
-					</div>
+						{selectedGuest ? (
+							<div
+								className="bg-muted/40 flex flex-col gap-1.5 rounded-lg border p-3 text-sm"
+								data-testid="booking-returning-guest-card"
+							>
+								<div className="flex items-start justify-between gap-2">
+									<div className="flex min-w-0 flex-col">
+										<span className="font-medium wrap-anywhere">
+											{selectedGuest.fullName}
+										</span>
+										<span className="text-muted-foreground text-xs tabular-nums">
+											{selectedGuest.phoneE164}
+										</span>
+									</div>
+									<div className="flex flex-wrap items-center justify-end gap-1">
+										{selectedGuest.vipTier &&
+										selectedGuest.vipTier !== 'none' ? (
+											<Badge variant="default">
+												{enumLabel(
+													(d) => i18n._(d),
+													VIP_TIER_LABELS,
+													selectedGuest.vipTier,
+												)}
+											</Badge>
+										) : null}
+										<Badge variant="outline">
+											<Plural
+												value={selectedGuest.visitCount}
+												one="# visit"
+												other="# visits"
+											/>
+										</Badge>
+										{selectedGuest.noShowCount > 0 ? (
+											<Badge variant="destructive">
+												<Plural
+													value={selectedGuest.noShowCount}
+													one="# no-show"
+													other="# no-shows"
+												/>
+											</Badge>
+										) : null}
+									</div>
+								</div>
+								{selectedGuest.allergiesText ? (
+									<p className="text-destructive text-xs">
+										<Trans>Allergies:</Trans> {selectedGuest.allergiesText}
+									</p>
+								) : null}
+								{selectedGuest.seatingPrefText ? (
+									<p className="text-muted-foreground text-xs">
+										<Trans>Preference:</Trans> {selectedGuest.seatingPrefText}
+									</p>
+								) : null}
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									className="h-11 self-start md:h-7"
+									onClick={() => setSelectedGuest(null)}
+								>
+									<Trans>Not this guest</Trans>
+								</Button>
+							</div>
+						) : null}
 
-					{/* Operator Overrides & Deposit Policy */}
-					<div className="bg-muted/30 flex flex-col gap-2 rounded-lg border p-3">
-						<span className="text-xs font-semibold">
-							<Trans>Operator Overrides & Deposit Policy</Trans>
-						</span>
-						<div className="flex flex-wrap gap-4 text-xs">
-							<label className="flex items-center gap-1.5">
-								<input
-									type="checkbox"
-									checked={overridePacing}
-									onChange={(e) => setOverridePacing(e.target.checked)}
-									data-testid="booking-override-pacing"
-								/>
-								<span>
-									<Trans>Override slot pacing cap</Trans>
-								</span>
-							</label>
-							{closedDay ? (
-								<label className="flex items-center gap-1.5 font-medium">
-									<input
-										type="checkbox"
-										checked={overrideClosedDay}
-										onChange={(e) => setOverrideClosedDay(e.target.checked)}
-										data-testid="booking-override-closed-day"
+						<TextField
+							label={<Trans>Phone Number</Trans>}
+							id="booking-guest-phone"
+							type="tel"
+							inputMode="tel"
+							value={guestPhone}
+							onChange={(e) => setGuestPhone(e.target.value)}
+							placeholder="+14155550100"
+							error={
+								attempted && phoneMissing ? t`Enter a phone number.` : null
+							}
+							data-testid="booking-guest-phone"
+							required
+						/>
+						<TextField
+							label={<Trans>Guest Name</Trans>}
+							id="booking-guest-name"
+							value={guestName}
+							onChange={(e) => setGuestName(e.target.value)}
+							placeholder={t`Full name`}
+							error={
+								attempted && nameMissing ? t`Enter the guest's name.` : null
+							}
+							data-testid="booking-guest-name"
+							required
+						/>
+						<TextField
+							label={<Trans>Email</Trans>}
+							id="booking-guest-email"
+							type="email"
+							value={guestEmail}
+							onChange={(e) => setGuestEmail(e.target.value)}
+							placeholder="guest@example.com"
+							data-testid="booking-guest-email"
+							optional
+						/>
+					</SheetSection>
+
+					{/* Step 3: extras, collapsed */}
+					<Collapsible open={extrasOpen} onOpenChange={setExtrasOpen}>
+						<div className="flex flex-col gap-3">
+							<CollapsibleTrigger
+								render={
+									<Button
+										type="button"
+										variant="outline"
+										className="h-11 justify-between md:h-8"
+										data-testid="booking-extras-toggle"
 									/>
-									<span>
-										<Trans>Override closed day</Trans>
-									</span>
-								</label>
-							) : null}
-							<label className="flex items-center gap-1.5">
-								<input
-									type="checkbox"
-									checked={overrideBlockedTable}
-									onChange={(e) => setOverrideBlockedTable(e.target.checked)}
-									data-testid="booking-override-blocked-table"
-								/>
-								<span>
-									<Trans>Override blocked table</Trans>
-								</span>
-							</label>
-							<label className="flex items-center gap-1.5">
-								<input
-									type="checkbox"
-									checked={overrideScheduleBlock}
-									onChange={(e) => setOverrideScheduleBlock(e.target.checked)}
-									data-testid="booking-override-schedule-block"
-								/>
-								<span>
-									<Trans>Override schedule block</Trans>
-								</span>
-							</label>
-						</div>
-
-						<div className="flex items-center gap-2 pt-1">
-							<Label htmlFor="booking-payment-policy" className="text-xs">
-								<Trans>Deposit / Card Hold Policy:</Trans>
-							</Label>
-							<select
-								id="booking-payment-policy"
-								value={paymentPolicyMode}
-								onChange={(e) =>
-									setPaymentPolicyMode(
-										e.target.value as 'none' | 'send_link' | 'waive',
-									)
 								}
-								className="border-input bg-background h-8 rounded-md border px-2 text-xs"
-								data-testid="booking-payment-policy"
 							>
-								<option value="none">{t`Standard policy`}</option>
-								<option value="send_link">{t`Send SMS payment link`}</option>
-								<option value="waive">{t`Waive deposit / card hold`}</option>
-							</select>
-						</div>
-					</div>
-
-					<SheetFooter className="px-0 pt-2">
-						<div className="flex w-full items-center justify-end gap-2">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => onOpenChange(false)}
-							>
-								<Trans>Cancel</Trans>
-							</Button>
-							<Button
-								type="submit"
-								disabled={submitting || (closedDay && !overrideClosedDay)}
-								data-testid="booking-submit-btn"
-							>
-								<Icon name="check" className="size-4" />
-								<span>
-									{submitting ? (
-										<Trans>Booking...</Trans>
-									) : (
-										<Trans>Create Reservation</Trans>
-									)}
+								<span className="flex items-center gap-2">
+									<Trans>Extras</Trans>
+									{extrasCount > 0 ? (
+										<Badge variant="secondary">{extrasCount}</Badge>
+									) : null}
 								</span>
-							</Button>
+								<Icon
+									name="chevron-down"
+									className={cn(
+										'size-4 transition-transform',
+										extrasOpen && 'rotate-180',
+									)}
+								/>
+							</CollapsibleTrigger>
+							<CollapsibleContent>
+								<div className="flex flex-col gap-5">
+									<SelectField
+										label={<Trans>Occasion</Trans>}
+										id="booking-occasion-select"
+										testId="booking-occasion-select"
+										options={occasionOptions}
+										value={occasion || ANY}
+										onValueChange={(next) =>
+											setOccasion(next === ANY ? '' : next)
+										}
+									/>
+
+									<div className="flex flex-col gap-2">
+										<span className="text-sm font-medium">
+											<Trans>Dietary Tags</Trans>
+										</span>
+										<div className="flex flex-wrap gap-2">
+											{DIETARY_OPTIONS.map((opt) => {
+												const active = dietaryCodes.includes(opt.code)
+												return (
+													<Button
+														key={opt.code}
+														type="button"
+														variant={active ? 'default' : 'outline'}
+														className="h-11 md:h-8"
+														aria-pressed={active}
+														onClick={() => toggleDietary(opt.code)}
+														data-testid={`booking-dietary-${opt.code}`}
+													>
+														{i18n._(opt.label)}
+													</Button>
+												)
+											})}
+										</div>
+										<TextField
+											label={<Trans>Dietary notes</Trans>}
+											id="booking-dietary-notes"
+											value={dietaryNotes}
+											maxLength={500}
+											onChange={(e) => setDietaryNotes(e.target.value)}
+											placeholder={t`No sesame, severe peanut allergy`}
+											data-testid="booking-dietary-notes"
+											optional
+										/>
+									</div>
+
+									<TextAreaField
+										label={<Trans>Guest Request / Notes</Trans>}
+										id="booking-guest-notes"
+										rows={2}
+										value={guestNotes}
+										onChange={(e) => setGuestNotes(e.target.value)}
+										placeholder={t`Booth preferred, high chair...`}
+										data-testid="booking-guest-notes"
+										optional
+									/>
+									<TextAreaField
+										label={<Trans>Internal Host Notes</Trans>}
+										id="booking-internal-notes"
+										rows={2}
+										value={internalNotes}
+										onChange={(e) => setInternalNotes(e.target.value)}
+										placeholder={t`Friends of chef, comp welcome drink...`}
+										hint={<Trans>Only staff see these notes.</Trans>}
+										data-testid="booking-internal-notes"
+										optional
+									/>
+
+									<SelectField
+										label={<Trans>Dining Area</Trans>}
+										id="booking-area-select"
+										testId="booking-area-select"
+										options={areaOptions}
+										value={areaId || ANY}
+										onValueChange={(next) => {
+											setAreaId(next === ANY ? '' : next)
+											setTableId('')
+										}}
+									/>
+									<SelectField
+										label={<Trans>Table preference</Trans>}
+										id="booking-table-select"
+										testId="booking-table-select"
+										options={tableOptions}
+										value={tableId || ANY}
+										onValueChange={(next) =>
+											setTableId(next === ANY ? '' : next)
+										}
+									/>
+									<div className="grid grid-cols-2 gap-3">
+										<TextField
+											label={<Trans>Duration (min)</Trans>}
+											id="booking-duration-input"
+											type="number"
+											min={15}
+											max={360}
+											step={15}
+											placeholder={t`Auto`}
+											value={durationMin}
+											onChange={(e) => setDurationMin(e.target.value)}
+											data-testid="booking-duration-input"
+											optional
+										/>
+										<TextField
+											label={<Trans>Server / Section Label</Trans>}
+											id="booking-server-input"
+											value={serverLabel}
+											onChange={(e) => setServerLabel(e.target.value)}
+											placeholder={t`Optional server name`}
+											data-testid="booking-server-input"
+											optional
+										/>
+									</div>
+
+									<SelectField
+										label={<Trans>Deposit / Card Hold Policy</Trans>}
+										id="booking-payment-policy"
+										testId="booking-payment-policy"
+										options={paymentOptions}
+										value={paymentPolicyMode}
+										onValueChange={(next) =>
+											setPaymentPolicyMode(next as PaymentPolicyMode)
+										}
+									/>
+
+									<div className="flex flex-col gap-1 rounded-lg border p-3">
+										<span className="text-sm font-medium">
+											<Trans>Staff overrides</Trans>
+										</span>
+										<CheckRow
+											label={<Trans>Override slot pacing cap</Trans>}
+											checked={overridePacing}
+											onCheckedChange={setOverridePacing}
+											testId="booking-override-pacing"
+										/>
+										<CheckRow
+											label={<Trans>Override blocked table</Trans>}
+											checked={overrideBlockedTable}
+											onCheckedChange={setOverrideBlockedTable}
+											testId="booking-override-blocked-table"
+										/>
+										<CheckRow
+											label={<Trans>Override schedule block</Trans>}
+											checked={overrideScheduleBlock}
+											onCheckedChange={setOverrideScheduleBlock}
+											testId="booking-override-schedule-block"
+										/>
+										{anyOverride ? (
+											<TextField
+												label={<Trans>Overbook reason</Trans>}
+												id="booking-overbook-reason"
+												value={overbookReason}
+												maxLength={200}
+												onChange={(e) => setOverbookReason(e.target.value)}
+												hint={
+													<Trans>Saved with the booking for the manager.</Trans>
+												}
+												data-testid="booking-overbook-reason"
+												optional
+											/>
+										) : null}
+									</div>
+								</div>
+							</CollapsibleContent>
 						</div>
-					</SheetFooter>
-				</form>
+					</Collapsible>
+				</SheetForm>
 			</SheetContent>
 		</Sheet>
 	)

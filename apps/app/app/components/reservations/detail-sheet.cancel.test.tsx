@@ -99,6 +99,27 @@ describe('DetailSheet cancel reason', () => {
 		)
 	})
 
+	it('asks before marking a no-show, then sends the transition', async () => {
+		renderSheet(makeReservation())
+		fireEvent.click(await screen.findByTestId('detail-status-no_show'))
+		expect(api.transition).not.toHaveBeenCalled()
+		await screen.findByTestId('detail-no-show-dialog')
+		fireEvent.click(screen.getByTestId('detail-no-show-confirm'))
+		await waitFor(() => expect(api.transition).toHaveBeenCalledTimes(1))
+		expect(api.transition.mock.calls[0]![2]).toMatchObject({ to: 'no_show' })
+	})
+
+	it('offers one primary next step in the footer and keeps destructive actions out of it', async () => {
+		renderSheet(makeReservation())
+		const arrived = await screen.findByTestId('detail-status-arrived')
+		expect(arrived.closest('[data-slot="sheet-footer"]')).not.toBeNull()
+		expect(
+			screen
+				.getByTestId('detail-status-cancelled')
+				.closest('[data-slot="sheet-footer"]'),
+		).toBeNull()
+	})
+
 	it('cancels without a reason when the field is left empty', async () => {
 		renderSheet(makeReservation())
 		fireEvent.click(await screen.findByTestId('detail-status-cancelled'))

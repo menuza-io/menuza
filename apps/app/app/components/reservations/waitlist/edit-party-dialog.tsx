@@ -104,7 +104,7 @@ export function EditPartyDialog({
 				</DialogHeader>
 
 				{values ? (
-					<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+					<form onSubmit={handleSubmit} className="flex flex-col gap-5">
 						{error ? (
 							<Alert variant="destructive" data-testid="waitlist-edit-error">
 								<AlertDescription>
@@ -132,11 +132,17 @@ export function EditPartyDialog({
 						/>
 
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={onClose}>
+							<Button
+								type="button"
+								variant="outline"
+								className="h-11 md:h-8"
+								onClick={onClose}
+							>
 								<Trans>Cancel</Trans>
 							</Button>
 							<Button
 								type="submit"
+								className="h-11 md:h-8"
 								disabled={submitting || !values.displayName.trim()}
 								data-testid="waitlist-edit-submit"
 							>

@@ -182,7 +182,10 @@ export function useWaitlist({
 				FALLBACKS.add,
 				() =>
 					addWaitlistEntry(client, { ...input, locationId }, idempotencyKey),
-				(entry) => t`${entry.displayName} was added to the waitlist.`,
+				(entry) => {
+					const name = entry.displayName
+					return t`${name} was added to the waitlist.`
+				},
 			),
 		[client, locationId, run, t],
 	)
@@ -200,7 +203,10 @@ export function useWaitlist({
 						expectedVersion: entry.version,
 						...patch,
 					}),
-				(saved) => t`Saved changes for ${saved.displayName}.`,
+				(saved) => {
+					const name = saved.displayName
+					return t`Saved changes for ${name}.`
+				},
 			),
 		[client, run, t],
 	)
@@ -213,9 +219,10 @@ export function useWaitlist({
 				() => notifyWaitlistEntry(client, entry.id, entry.version),
 				({ entry: saved, changed }) => {
 					const minutes = listing?.waitlistResponseMin ?? 0
+					const name = saved.displayName
 					return changed
-						? t`Notified ${saved.displayName}. They have ${minutes} min to answer.`
-						: t`${saved.displayName} was already notified.`
+						? t`Notified ${name}. They have ${minutes} min to answer.`
+						: t`${name} was already notified.`
 				},
 			),
 		[client, listing?.waitlistResponseMin, run, t],
@@ -229,7 +236,8 @@ export function useWaitlist({
 				() => setWaitlistEntryStatus(client, entry.id, status, entry.version),
 				({ entry: saved }) => {
 					const label = translate(WAITLIST_STATUS_LABELS[saved.status]!)
-					return t`${saved.displayName} is now ${label}.`
+					const name = saved.displayName
+					return t`${name} is now ${label}.`
 				},
 			),
 		[client, run, t, translate],
@@ -245,7 +253,10 @@ export function useWaitlist({
 						...input,
 						expectedVersion: entry.version,
 					}),
-				({ entry: saved }) => t`Seated ${saved.displayName}.`,
+				({ entry: saved }) => {
+					const name = saved.displayName
+					return t`Seated ${name}.`
+				},
 			),
 		[client, run, t],
 	)
@@ -271,9 +282,8 @@ export function useWaitlist({
 				const total = next.counts.active
 				if (moved?.position) {
 					const position = moved.position
-					setAnnouncement(
-						t`${moved.displayName} moved to position ${position} of ${total}.`,
-					)
+					const name = moved.displayName
+					setAnnouncement(t`${name} moved to position ${position} of ${total}.`)
 				}
 				return { ok: true, value: undefined }
 			} catch (err) {

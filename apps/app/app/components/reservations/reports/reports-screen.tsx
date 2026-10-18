@@ -4,10 +4,12 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
-import { PageHeader } from '@repo/ui/page-header'
+import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
+import { WorkspaceToolbar } from '@repo/ui/workspace'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import {
 	CancellationsPanel,
 	NoShowsPanel,
@@ -16,6 +18,8 @@ import {
 	TurnTimesPanel,
 	WaitlistPanel,
 } from '#app/components/reservations/reports/report-panels.tsx'
+import { ReservationsHeaderActions } from '#app/components/reservations/shell-context.tsx'
+import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { guestsErrorInfo } from '#app/utils/reservations/guests-errors.ts'
 import {
 	fetchReport,
@@ -23,6 +27,11 @@ import {
 	type ReportByKind,
 	type ReportKind,
 } from '#app/utils/reservations/reports-api.ts'
+import {
+	downloadCsv,
+	reportCsv,
+	reportTable,
+} from '#app/utils/reservations/reports-export.ts'
 import {
 	addDays,
 	REPORT_ERROR_MESSAGES,
@@ -36,6 +45,9 @@ type Loaded = {
 type Failure = { kind: 'denied' | 'failed' | 'range'; code: string | null }
 
 const DEFAULT_RANGE_DAYS = 7
+const PRESET_DAYS = [7, 30, 90] as const
+/** `FilterSelect` cannot hold an empty value, so "all services" travels as this key. */
+const ALL_SERVICES = 'all'
 
 export function ReportsScreen({
 	client,
@@ -112,90 +124,46 @@ export function ReportsScreen({
 		return () => controller.abort()
 	}, [run])
 
-	return (
-		<div className="flex flex-col gap-4" data-testid="reports-screen">
-			<PageHeader
-				title={<Trans>Reports</Trans>}
-				description={
-					<Trans>
-						Covers, no-shows, cancellations, turn times, waitlist, and pacing
-						for one location. Reports carry no guest contact details.
-					</Trans>
-				}
-			/>
+	const serviceOptions = [
+		{ value: ALL_SERVICES, label: _(msg`All services`) },
+		...services.map((service) => ({ value: service.id, label: service.name })),
+	]
+	const presetValue =
+		PRESET_DAYS.find(
+			(days) => to === today && from === addDays(today, 1 - days),
+		) ?? null
 
-			<form
-				className="flex flex-wrap items-end gap-3"
-				onSubmit={(event) => event.preventDefault()}
-				aria-label={_(msg`Report filters`)}
-			>
-				<div className="flex flex-col gap-1">
-					<Label htmlFor="report-from" className="text-xs">
-						<Trans>From</Trans>
-					</Label>
-					<Input
-						id="report-from"
-						type="date"
-						value={from}
-						max={to || undefined}
-						onChange={(event) => setFrom(event.target.value)}
-						data-testid="report-from"
-					/>
-				</div>
-				<div className="flex flex-col gap-1">
-					<Label htmlFor="report-to" className="text-xs">
-						<Trans>To</Trans>
-					</Label>
-					<Input
-						id="report-to"
-						type="date"
-						value={to}
-						min={from || undefined}
-						onChange={(event) => setTo(event.target.value)}
-						data-testid="report-to"
-					/>
-				</div>
-				<div className="flex flex-col gap-1">
-					<Label htmlFor="report-service" className="text-xs">
-						<Trans>Service</Trans>
-					</Label>
-					<select
-						id="report-service"
-						value={serviceId}
-						onChange={(event) => setServiceId(event.target.value)}
-						disabled={kind === 'waitlist'}
-						className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-						data-testid="report-service"
-					>
-						<option value="">{_(msg`All services`)}</option>
-						{services.map((service) => (
-							<option key={service.id} value={service.id}>
-								{service.name}
-							</option>
-						))}
-					</select>
-				</div>
+	const exportCsv = () => {
+		if (!loaded || loaded.kind !== kind) return
+		const table = reportTable(kind, loaded.report as never)
+		const ok = downloadCsv(
+			`reservations-${kind}-${from}-${to}.csv`,
+			reportCsv(table, _),
+		)
+		if (ok) toast.success(_(msg`Report exported.`))
+	}
+
+	return (
+		<div className="flex flex-col gap-6" data-testid="reports-screen">
+			<ReservationsHeaderActions>
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
-					disabled={loading}
-					onClick={() => {
-						const controller = new AbortController()
-						void run(controller.signal)
-					}}
-					data-testid="report-refresh"
+					disabled={loading || !loaded || loaded.kind !== kind}
+					onClick={exportCsv}
+					data-testid="report-export"
 				>
-					<Icon name="refresh-cw" />
-					<Trans>Run again</Trans>
+					<Icon name="download" />
+					<Trans>Export CSV</Trans>
 				</Button>
-			</form>
+			</ReservationsHeaderActions>
 
 			<Tabs
 				value={kind}
 				onValueChange={(value) => setKind(value as ReportKind)}
 			>
 				<TabsList
+					variant="line"
 					className="h-auto flex-wrap"
 					aria-label={_(msg`Reports`)}
 					data-testid="report-tabs"
@@ -211,6 +179,92 @@ export function ReportsScreen({
 					))}
 				</TabsList>
 			</Tabs>
+
+			<WorkspaceToolbar>
+				<form
+					className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center"
+					onSubmit={(event) => event.preventDefault()}
+					aria-label={_(msg`Report filters`)}
+				>
+					<ToggleGroup
+						aria-label={_(msg`Date range`)}
+						variant="segmented"
+						value={presetValue === null ? [] : [String(presetValue)]}
+						onValueChange={(next) => {
+							const days = Number(next[0])
+							if (!PRESET_DAYS.some((preset) => preset === days)) return
+							setTo(today)
+							setFrom(addDays(today, 1 - days))
+						}}
+					>
+						{PRESET_DAYS.map((days) => (
+							<ToggleGroupItem
+								key={days}
+								value={String(days)}
+								className="h-11 md:h-7"
+								data-testid={`report-range-${days}`}
+							>
+								{days === 7 ? (
+									<Trans>7 days</Trans>
+								) : days === 30 ? (
+									<Trans>30 days</Trans>
+								) : (
+									<Trans>90 days</Trans>
+								)}
+							</ToggleGroupItem>
+						))}
+					</ToggleGroup>
+					<div className="flex items-center gap-2">
+						<Input
+							id="report-from"
+							type="date"
+							aria-label={_(msg`From`)}
+							value={from}
+							max={to || undefined}
+							onChange={(event) => setFrom(event.target.value)}
+							className="h-11 md:h-8 md:w-40"
+							data-testid="report-from"
+						/>
+						<span aria-hidden className="text-muted-foreground">
+							–
+						</span>
+						<Input
+							id="report-to"
+							type="date"
+							aria-label={_(msg`To`)}
+							value={to}
+							min={from || undefined}
+							onChange={(event) => setTo(event.target.value)}
+							className="h-11 md:h-8 md:w-40"
+							data-testid="report-to"
+						/>
+					</div>
+					{kind === 'waitlist' ? null : (
+						<FilterSelect
+							label={_(msg`Service`)}
+							options={serviceOptions}
+							value={serviceId || ALL_SERVICES}
+							onValueChange={(next) =>
+								setServiceId(next === ALL_SERVICES ? '' : next)
+							}
+							testId="report-service"
+						/>
+					)}
+				</form>
+				<Button
+					type="button"
+					variant="ghost"
+					disabled={loading}
+					onClick={() => {
+						const controller = new AbortController()
+						void run(controller.signal)
+					}}
+					data-testid="report-refresh"
+				>
+					<Icon name="refresh-cw" />
+					<Trans>Run again</Trans>
+				</Button>
+			</WorkspaceToolbar>
 
 			<div
 				aria-live="polite"
@@ -234,13 +288,17 @@ export function ReportsScreen({
 				) : loaded && loaded.kind === kind ? (
 					<ReportPanel loaded={loaded} />
 				) : (
-					<p
-						className="text-muted-foreground text-sm"
+					<div
+						className="flex flex-col gap-6"
 						role="status"
 						data-testid="report-loading"
 					>
-						<Trans>Loading report...</Trans>
-					</p>
+						<span className="sr-only">
+							<Trans>Loading report...</Trans>
+						</span>
+						<Skeleton className="h-24 w-full rounded-xl" />
+						<Skeleton className="h-48 w-full rounded-xl" />
+					</div>
 				)}
 			</div>
 		</div>

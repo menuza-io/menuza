@@ -136,27 +136,71 @@ describe('DetailSheet contact tracking', () => {
 		fetchReservationDetail.mockRejectedValue(new Error('offline'))
 	})
 
-	it('offers the canonical contact statuses and shows the stored one', async () => {
+	it('shows the stored contact status on the select', async () => {
 		renderSheet(makeReservation({ contactStatus: 'left_message' }))
 
-		const select = (await screen.findByTestId(
-			'detail-contact-select',
-		)) as unknown as HTMLSelectElement
-		expect(Array.from(select.options).map((o) => o.value)).toEqual([
-			'none',
-			'left_message',
-			'no_answer',
-			'wrong_number',
-		])
-		expect(select.value).toBe('left_message')
+		const select = await screen.findByTestId('detail-contact-select')
+		expect(select).toHaveTextContent('Left Message')
 	})
 
 	it('treats not_contacted as the unset option', async () => {
 		renderSheet(makeReservation({ contactStatus: 'not_contacted' }))
 
-		const select = (await screen.findByTestId(
-			'detail-contact-select',
-		)) as unknown as HTMLSelectElement
-		expect(select.value).toBe('none')
+		const select = await screen.findByTestId('detail-contact-select')
+		expect(select).toHaveTextContent('Not Contacted')
+	})
+})
+
+describe('DetailSheet late responses', () => {
+	beforeEach(() => {
+		fetchReservationDetail.mockReset()
+	})
+
+	it('ignores a detail response for a booking that is no longer open', async () => {
+		let resolveFirst: (value: unknown) => void = () => {}
+		fetchReservationDetail.mockImplementation((_client, id: string) =>
+			id === 'rsv_1'
+				? new Promise((resolve) => {
+						resolveFirst = resolve
+					})
+				: Promise.resolve({
+						reservation: makeReservation({
+							id: 'rsv_2',
+							guestName: 'Grace Hopper',
+						}),
+						guest: null,
+						history: [],
+						audit: [],
+					}),
+		)
+		let setId: (id: string) => void = () => {}
+		function Harness() {
+			const [id, set] = useState('rsv_1')
+			setId = set
+			return (
+				<DetailSheet
+					reservationId={id}
+					fallbackReservation={null}
+					onClose={vi.fn()}
+					client={{} as ReservationsScopedClient}
+					tables={[]}
+					onUpdated={vi.fn()}
+				/>
+			)
+		}
+		renderStaff(<Harness />)
+		act(() => setId('rsv_2'))
+		expect(await screen.findByText('Grace Hopper')).toBeTruthy()
+		await act(async () => {
+			resolveFirst({
+				reservation: makeReservation({ guestName: 'Ada Lovelace' }),
+				guest: null,
+				history: [],
+				audit: [],
+			})
+		})
+		expect(screen.getByTestId('detail-guest-name')).toHaveTextContent(
+			'Grace Hopper',
+		)
 	})
 })

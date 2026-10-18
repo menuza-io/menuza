@@ -122,10 +122,38 @@ describe('ReservationsChrome', () => {
 		expect(screen.queryByTestId('host-context-bar')).toBeNull()
 	})
 
-	it('leaves the header to screens that render their own, never two h1', () => {
-		renderChrome('/acme/reservations/guests', {
-			children: <h1>Guests</h1>,
+	it.each([
+		['waitlist', 'Waitlist'],
+		['guests', 'Guests'],
+		['reports', 'Reports'],
+		['experiences', 'Experiences'],
+	])('renders the layout header, then one tab bar, on %s', (segment, title) => {
+		renderChrome(`/acme/reservations/${segment}`, {
+			children: <p data-testid="screen-body">screen</p>,
+		})
+		const h1 = screen.getByRole('heading', { level: 1 })
+		expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+		expect(h1.textContent).toBe(title)
+		const tabs = screen.getByRole('navigation', {
+			name: 'Reservations sections',
+		})
+		// header, then tabs, then the screen
+		expect(
+			h1.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy()
+		expect(
+			tabs.compareDocumentPosition(screen.getByTestId('screen-body')) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy()
+	})
+
+	it('leaves detail pages their own header and adds no tab bar above it', () => {
+		renderChrome('/acme/reservations/guests/g1', {
+			children: <h1>Rana Haddad</h1>,
 		})
 		expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+		expect(
+			screen.queryByRole('navigation', { name: 'Reservations sections' }),
+		).toBeNull()
 	})
 })

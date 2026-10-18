@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderStaff } from '#tests/staff-render.tsx'
 import {
@@ -110,6 +111,11 @@ function setup(reply?: (call: ScriptedCall, kind: string) => unknown) {
 	return fake
 }
 
+async function pickService(name: string) {
+	await userEvent.click(await screen.findByTestId('report-service'))
+	await userEvent.click(await screen.findByRole('option', { name }))
+}
+
 describe('ReportsScreen', () => {
 	it('offers exactly the six module reports', async () => {
 		setup()
@@ -155,10 +161,7 @@ describe('ReportsScreen', () => {
 	it('re-runs with the chosen dates and service', async () => {
 		const { calls } = setup()
 		await screen.findByTestId('report-summary')
-		await screen.findByRole('option', { name: 'Dinner' })
-		fireEvent.change(screen.getByTestId('report-service'), {
-			target: { value: 'svc_dinner' },
-		})
+		await pickService('Dinner')
 		await waitFor(() =>
 			expect(calls.at(-1)!.query).toMatchObject({ serviceId: 'svc_dinner' }),
 		)
@@ -176,10 +179,7 @@ describe('ReportsScreen', () => {
 	it('sends no service to the waitlist report, which has none', async () => {
 		const { calls } = setup()
 		await screen.findByTestId('report-summary')
-		await screen.findByRole('option', { name: 'Dinner' })
-		fireEvent.change(screen.getByTestId('report-service'), {
-			target: { value: 'svc_dinner' },
-		})
+		await pickService('Dinner')
 		fireEvent.click(screen.getByTestId('report-tab-waitlist'))
 		await screen.findByTestId('report-waitlist')
 		expect(calls.at(-1)!.query?.serviceId).toBeUndefined()
@@ -194,6 +194,22 @@ describe('ReportsScreen', () => {
 		expect(
 			screen.getAllByText('No bookings in this range.').length,
 		).toBeGreaterThan(0)
+	})
+
+	it('picks a preset range and offers a CSV export of the loaded report', async () => {
+		const { calls } = setup()
+		await screen.findByTestId('report-summary')
+		fireEvent.click(screen.getByTestId('report-range-30'))
+		await waitFor(() =>
+			expect(calls.at(-1)!.query).toMatchObject({
+				from: '2026-03-22',
+				to: '2026-04-20',
+			}),
+		)
+		await screen.findByTestId('report-summary')
+		await waitFor(() =>
+			expect(screen.getByTestId('report-export')).toBeEnabled(),
+		)
 	})
 
 	it('explains a refused range', async () => {

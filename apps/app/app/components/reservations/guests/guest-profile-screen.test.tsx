@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderStaff } from '#tests/staff-render.tsx'
@@ -189,7 +190,10 @@ describe('GuestProfileScreen', () => {
 		]) {
 			expect(screen.queryByTestId(id)).not.toBeInTheDocument()
 		}
-		expect(screen.getByTestId('guest-export')).toBeInTheDocument()
+		expect(screen.getByTestId('guest-export-menu')).toBeInTheDocument()
+		await userEvent.click(screen.getByTestId('guest-export-menu'))
+		expect(await screen.findByTestId('guest-export')).toBeInTheDocument()
+		expect(screen.queryByTestId('guest-export-sensitive')).toBeNull()
 	})
 
 	it('adds a pinned note that leads the list and the profile card', async () => {
@@ -294,7 +298,9 @@ describe('GuestProfileScreen', () => {
 			target: { value: 'rana' },
 		})
 		fireEvent.click(await screen.findByTestId('guest-merge-option-g2'))
-		fireEvent.click(screen.getByTestId('guest-merge-confirm'))
+		fireEvent.click(screen.getByTestId('guest-merge-continue'))
+		expect(writes(calls)).toHaveLength(0)
+		fireEvent.click(await screen.findByTestId('guest-merge-confirm'))
 		await waitFor(() => expect(writes(calls)).toHaveLength(1))
 		expect(writes(calls)[0]).toMatchObject({
 			path: '/operator/reservations/guests/merge',
@@ -321,14 +327,15 @@ describe('GuestProfileScreen', () => {
 
 	it('downloads the sensitive export only when asked', async () => {
 		const { calls } = setup()
-		await screen.findByTestId('guest-export')
+		await screen.findByTestId('guest-export-menu')
 		const create = vi.fn(() => 'blob:x')
 		Object.assign(URL, { createObjectURL: create, revokeObjectURL: vi.fn() })
 		const click = vi
 			.spyOn(HTMLAnchorElement.prototype, 'click')
 			.mockImplementation(() => {})
 		const original = calls.length
-		fireEvent.click(screen.getByTestId('guest-export-sensitive'))
+		await userEvent.click(screen.getByTestId('guest-export-menu'))
+		await userEvent.click(await screen.findByTestId('guest-export-sensitive'))
 		await waitFor(() => expect(calls.length).toBeGreaterThan(original))
 		expect(calls.at(-1)!.query).toMatchObject({ includeSensitive: '1' })
 		await waitFor(() => expect(click).toHaveBeenCalled())

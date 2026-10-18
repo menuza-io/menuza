@@ -1,23 +1,23 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Empty, EmptyHeader, EmptyTitle } from '@repo/ui/empty'
 import { Icon } from '@repo/ui/icon'
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-} from '@repo/ui/sheet'
+import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { useState } from 'react'
+import { SheetSection } from '#app/components/reservations/sheet-parts.tsx'
+import { FilterSelect } from '#app/components/staff/controls.tsx'
+import { SheetPanel } from '#app/components/staff/sheet-frame.tsx'
 import {
 	assignReservationTable,
 	type DayConflictNotice,
 	type DayMoveNotice,
 	type DayReservationView,
 } from '#app/utils/reservations/book-api.ts'
+import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import {
 	DAY_CONFLICT_REASON_LABELS,
 	enumLabel,
@@ -25,6 +25,9 @@ import {
 } from '#app/utils/reservations/labels.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import { type RsvTableRecord } from '#app/utils/reservations/setup-api.ts'
+
+/** Select items cannot carry an empty value, so "no pick" travels as this. */
+const NO_TABLE = '__none'
 
 export function ConflictPanel({
 	open,
@@ -77,6 +80,13 @@ export function ConflictPanel({
 	const [tablePicks, setTablePicks] = useState<Record<string, string>>({})
 
 	const activeTables = tables.filter((tbl) => tbl.isActive)
+	const pickTableOptions = (placeholder: string) => [
+		{ value: NO_TABLE, label: placeholder },
+		...activeTables.map((tbl) => ({
+			value: tbl.id,
+			label: `${tbl.label} (${tbl.minCovers}-${tbl.maxCovers})`,
+		})),
+	]
 
 	const handleAssign = async (reservationId: string, tableIds: string[]) => {
 		if (tableIds.length === 0) return
@@ -92,7 +102,11 @@ export function ConflictPanel({
 			onResolved(res.reservation, res.moveNotices)
 		} catch (err) {
 			setError(
-				err instanceof Error ? err.message : t`Failed to resolve assignment.`,
+				hostErrorMessage(
+					err,
+					(d) => i18n._(d),
+					msg`Failed to resolve assignment.`,
+				),
 			)
 		} finally {
 			setBusyId(null)
@@ -102,44 +116,45 @@ export function ConflictPanel({
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
-				className="w-full overflow-y-auto sm:max-w-lg"
+				className="w-full gap-0 sm:max-w-lg"
 				data-testid="conflict-panel"
 			>
-				<SheetHeader>
-					<SheetTitle>
-						<Trans>Unassigned, Conflicts & Reflow Notices</Trans>
-					</SheetTitle>
-					<SheetDescription>
+				<SheetPanel
+					title={<Trans>Needs attention</Trans>}
+					description={
 						<Trans>
-							Resolve table overlaps, blocked-table assignments, unassigned
-							parties, and review automatic turn-extension reflows.
+							Fix table overlaps and unassigned parties, and review the tables
+							that moved automatically.
 						</Trans>
-					</SheetDescription>
-				</SheetHeader>
-
-				<div className="flex flex-col gap-5 px-4 pb-6">
+					}
+				>
 					{error ? (
 						<Alert variant="destructive" data-testid="conflict-panel-error">
 							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					) : null}
 
-					{/* Section 1: Active Conflicts */}
-					<div className="flex flex-col gap-2" data-testid="conflict-list">
-						<div className="flex items-center justify-between">
-							<h3 className="text-sm font-semibold">
-								<Trans>Active Conflicts</Trans>
-							</h3>
+					{/* Active conflicts */}
+					<SheetSection
+						title={<Trans>Active Conflicts</Trans>}
+						testId="conflict-list"
+						action={
 							<Badge
 								variant={conflicts.length > 0 ? 'destructive' : 'secondary'}
 							>
 								{conflicts.length}
 							</Badge>
-						</div>
-
+						}
+					>
 						{conflicts.length === 0 ? (
-							<div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-								<Trans>No active table or schedule conflicts.</Trans>
+							<div className="rounded-lg border border-dashed">
+								<Empty>
+									<EmptyHeader>
+										<EmptyTitle>
+											<Trans>No active table or schedule conflicts.</Trans>
+										</EmptyTitle>
+									</EmptyHeader>
+								</Empty>
 							</div>
 						) : (
 							conflicts.map((conflict, conflictIndex) => {
@@ -147,16 +162,23 @@ export function ConflictPanel({
 									tablePicks[conflict.reservationId] ??
 									conflict.suggestedTableIds[0] ??
 									''
+								const suggestedLabels = conflict.suggestedTableLabels.join(', ')
 								return (
 									<div
 										key={`${conflict.reservationId}-${conflict.reason}-${conflictIndex}`}
-										className="flex flex-col gap-2 rounded-lg border border-red-300 bg-red-50/50 p-3 text-xs dark:border-red-900 dark:bg-red-950/30"
+										className="border-destructive/50 bg-destructive/10 flex flex-col gap-2 rounded-lg border p-3 text-sm"
 										data-testid={`conflict-item-${conflict.reservationId}`}
 									>
-										<div className="flex items-center justify-between gap-2">
-											<div className="font-semibold">
-												{conflict.guestName} ({conflict.partySize}{' '}
-												<Trans>guests</Trans>) • {conflict.hhmm}
+										<div className="flex items-start justify-between gap-2">
+											<div className="font-medium wrap-anywhere">
+												{conflict.guestName} (
+												<Plural
+													value={conflict.partySize}
+													one="# guest"
+													other="# guests"
+												/>
+												) •{' '}
+												<span className="tabular-nums">{conflict.hhmm}</span>
 											</div>
 											<Badge variant="destructive">
 												{label(DAY_CONFLICT_REASON_LABELS, conflict.reason)}
@@ -171,7 +193,7 @@ export function ConflictPanel({
 												{conflict.suggestedTableIds.length > 0 ? (
 													<Button
 														type="button"
-														size="xs"
+														className="h-11 md:h-8"
 														disabled={busyId === conflict.reservationId}
 														onClick={() =>
 															handleAssign(
@@ -181,39 +203,31 @@ export function ConflictPanel({
 														}
 														data-testid={`conflict-reassign-suggested-${conflict.reservationId}`}
 													>
-														<Icon name="check" className="size-3.5" />
+														<Icon name="check" className="size-4" />
 														<span>
-															<Trans>
-																Reassign to{' '}
-																{conflict.suggestedTableLabels.join(', ')}
-															</Trans>
+															<Trans>Reassign to {suggestedLabels}</Trans>
 														</span>
 													</Button>
 												) : null}
 
-												<select
-													value={pickedTableId}
-													onChange={(e) =>
+												<FilterSelect
+													label={t`Pick table`}
+													options={pickTableOptions(t`Pick table...`)}
+													value={pickedTableId || NO_TABLE}
+													onValueChange={(next) =>
 														setTablePicks((prev) => ({
 															...prev,
-															[conflict.reservationId]: e.target.value,
+															[conflict.reservationId]:
+																next === NO_TABLE ? '' : next,
 														}))
 													}
-													className="border-input bg-background h-7 rounded-md border px-2 text-xs"
-													data-testid={`conflict-table-select-${conflict.reservationId}`}
-												>
-													<option value="">{t`Pick table...`}</option>
-													{activeTables.map((tbl) => (
-														<option key={tbl.id} value={tbl.id}>
-															{tbl.label} ({tbl.minCovers}-{tbl.maxCovers})
-														</option>
-													))}
-												</select>
+													testId={`conflict-table-select-${conflict.reservationId}`}
+												/>
 
 												<Button
 													type="button"
-													size="xs"
 													variant="outline"
+													className="h-11 md:h-8"
 													disabled={
 														!pickedTableId || busyId === conflict.reservationId
 													}
@@ -229,8 +243,8 @@ export function ConflictPanel({
 
 												<Button
 													type="button"
-													size="xs"
 													variant="ghost"
+													className="h-11 md:h-8"
 													onClick={() => {
 														onSelectReservation(conflict.reservationId)
 														onOpenChange(false)
@@ -245,20 +259,29 @@ export function ConflictPanel({
 								)
 							})
 						)}
-					</div>
+					</SheetSection>
 
-					{/* Section 2: Unassigned Parties */}
-					<div className="flex flex-col gap-2" data-testid="unassigned-list">
-						<div className="flex items-center justify-between">
-							<h3 className="text-sm font-semibold">
-								<Trans>Unassigned Reservations</Trans>
-							</h3>
-							<Badge variant="secondary">{unassigned.length}</Badge>
-						</div>
-
+					{/* Unassigned parties */}
+					<SheetSection
+						title={<Trans>Unassigned Reservations</Trans>}
+						testId="unassigned-list"
+						action={
+							<Badge variant={unassigned.length > 0 ? 'warning' : 'secondary'}>
+								{unassigned.length}
+							</Badge>
+						}
+					>
 						{unassigned.length === 0 ? (
-							<div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-								<Trans>All active reservations have assigned tables.</Trans>
+							<div className="rounded-lg border border-dashed">
+								<Empty>
+									<EmptyHeader>
+										<EmptyTitle>
+											<Trans>
+												All active reservations have assigned tables.
+											</Trans>
+										</EmptyTitle>
+									</EmptyHeader>
+								</Empty>
 							</div>
 						) : (
 							unassigned.map((rsv) => {
@@ -274,40 +297,42 @@ export function ConflictPanel({
 								return (
 									<div
 										key={rsv.id}
-										className="bg-card flex flex-col gap-2 rounded-lg border p-3 text-xs"
+										className="bg-card flex flex-col gap-2 rounded-lg border p-3 text-sm"
 										data-testid={`unassigned-item-${rsv.id}`}
 									>
-										<div className="flex items-center justify-between">
-											<span className="font-semibold">
-												{rsv.guestName} ({rsv.partySize} <Trans>guests</Trans>)
-												• {rsv.hhmm}
+										<div className="flex items-start justify-between gap-2">
+											<span className="font-medium wrap-anywhere">
+												{rsv.guestName} (
+												<Plural
+													value={rsv.partySize}
+													one="# guest"
+													other="# guests"
+												/>
+												) • <span className="tabular-nums">{rsv.hhmm}</span>
 											</span>
-											<Badge variant="outline">#{rsv.confirmationCode}</Badge>
+											<span className="text-muted-foreground text-xs tabular-nums">
+												#{rsv.confirmationCode}
+											</span>
 										</div>
 
 										{canManage ? (
 											<div className="flex flex-wrap items-center gap-2">
-												<select
-													value={pickedTableId}
-													onChange={(e) =>
+												<FilterSelect
+													label={t`Select table`}
+													className="flex-1"
+													options={pickTableOptions(t`Select table...`)}
+													value={pickedTableId || NO_TABLE}
+													onValueChange={(next) =>
 														setTablePicks((prev) => ({
 															...prev,
-															[rsv.id]: e.target.value,
+															[rsv.id]: next === NO_TABLE ? '' : next,
 														}))
 													}
-													className="border-input bg-background h-7 flex-1 rounded-md border px-2 text-xs"
-													data-testid={`unassigned-table-select-${rsv.id}`}
-												>
-													<option value="">{t`Select table...`}</option>
-													{activeTables.map((tbl) => (
-														<option key={tbl.id} value={tbl.id}>
-															{tbl.label} ({tbl.minCovers}-{tbl.maxCovers})
-														</option>
-													))}
-												</select>
+													testId={`unassigned-table-select-${rsv.id}`}
+												/>
 												<Button
 													type="button"
-													size="xs"
+													className="h-11 md:h-8"
 													disabled={!pickedTableId || busyId === rsv.id}
 													onClick={() => handleAssign(rsv.id, [pickedTableId])}
 													data-testid={`unassigned-assign-btn-${rsv.id}`}
@@ -316,8 +341,8 @@ export function ConflictPanel({
 												</Button>
 												<Button
 													type="button"
-													size="xs"
 													variant="ghost"
+													className="h-11 md:h-8"
 													onClick={() => {
 														onSelectReservation(rsv.id)
 														onOpenChange(false)
@@ -331,21 +356,20 @@ export function ConflictPanel({
 								)
 							})
 						)}
-					</div>
+					</SheetSection>
 
-					{/* Section 3: Reflow Move Notices */}
-					<div className="flex flex-col gap-2" data-testid="move-notices-list">
-						<div className="flex items-center justify-between">
-							<h3 className="text-sm font-semibold">
-								<Trans>Automatic Reflow Notices</Trans>
-							</h3>
-							<div className="flex items-center gap-1.5">
+					{/* Automatic reflow notices */}
+					<SheetSection
+						title={<Trans>Automatic Reflow Notices</Trans>}
+						testId="move-notices-list"
+						action={
+							<div className="flex items-center gap-2">
 								<Badge variant="outline">{moveNotices.length}</Badge>
 								{moveNotices.length > 0 && onClearMoveNotices ? (
 									<Button
 										type="button"
-										size="xs"
 										variant="ghost"
+										className="h-11 md:h-8"
 										onClick={onClearMoveNotices}
 										data-testid="clear-move-notices-btn"
 									>
@@ -353,37 +377,53 @@ export function ConflictPanel({
 									</Button>
 								) : null}
 							</div>
-						</div>
-
+						}
+					>
 						{moveNotices.length === 0 ? (
-							<div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-								<Trans>No recent turn-extension table reflows.</Trans>
+							<div className="rounded-lg border border-dashed">
+								<Empty>
+									<EmptyHeader>
+										<EmptyTitle>
+											<Trans>No recent turn-extension table reflows.</Trans>
+										</EmptyTitle>
+									</EmptyHeader>
+								</Empty>
 							</div>
 						) : (
-							moveNotices.map((notice, idx) => (
-								<div
-									key={`${notice.reservationId}-${idx}`}
-									className="flex flex-col gap-1 rounded-lg border border-amber-300 bg-amber-50/50 p-3 text-xs dark:border-amber-900 dark:bg-amber-950/30"
-									data-testid={`move-notice-${notice.reservationId}`}
-								>
-									<div className="flex items-center justify-between">
-										<span className="font-semibold">
-											{notice.guestName} ({notice.partySize}{' '}
-											<Trans>guests</Trans>) • {notice.hhmm}
-										</span>
-										<Badge variant="secondary">
-											{notice.fromTableLabels.join(', ') || t`Unassigned`} →{' '}
-											{notice.toTableLabels.join(', ') || t`Unassigned`}
-										</Badge>
+							moveNotices.map((notice, idx) => {
+								const fromLabels =
+									notice.fromTableLabels.join(', ') || t`Unassigned`
+								const toLabels =
+									notice.toTableLabels.join(', ') || t`Unassigned`
+								return (
+									<div
+										key={`${notice.reservationId}-${idx}`}
+										className="bg-muted/50 flex flex-col gap-1 rounded-lg border p-3 text-sm"
+										data-testid={`move-notice-${notice.reservationId}`}
+									>
+										<div className="flex items-start justify-between gap-2">
+											<span className="font-medium wrap-anywhere">
+												{notice.guestName} (
+												<Plural
+													value={notice.partySize}
+													one="# guest"
+													other="# guests"
+												/>
+												) • <span className="tabular-nums">{notice.hhmm}</span>
+											</span>
+											<Badge variant="secondary">
+												{fromLabels} → {toLabels}
+											</Badge>
+										</div>
+										<p className="text-muted-foreground">
+											{label(MOVE_NOTICE_REASON_LABELS, notice.reason)}
+										</p>
 									</div>
-									<p className="text-muted-foreground">
-										{label(MOVE_NOTICE_REASON_LABELS, notice.reason)}
-									</p>
-								</div>
-							))
+								)
+							})
 						)}
-					</div>
-				</div>
+					</SheetSection>
+				</SheetPanel>
 			</SheetContent>
 		</Sheet>
 	)

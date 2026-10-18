@@ -1,9 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { PageHeader } from '@repo/ui/page-header'
 import { Skeleton } from '@repo/ui/skeleton'
 import {
 	Table,
@@ -13,10 +13,12 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
+import { WorkspaceToolbar } from '@repo/ui/workspace'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { ExperienceCreateSheet } from '#app/components/reservations/experiences/experience-create-sheet.tsx'
+import { ReservationsHeaderActions } from '#app/components/reservations/shell-context.tsx'
 import { FilterSelect, type Option } from '#app/components/staff/controls.tsx'
 import {
 	type ExperienceDto,
@@ -154,38 +156,29 @@ export function ExperiencesScreen({
 
 	return (
 		<div className="flex flex-col gap-6" data-testid="experiences-screen">
-			<PageHeader
-				title={<Trans>Experiences</Trans>}
-				description={
-					<Trans>
-						Prepaid tasting menus, chef&apos;s tables and ticketed events, with
-						their own schedules, prices and limits.
-					</Trans>
-				}
-				actions={
-					canWrite ? (
-						<Button
-							type="button"
-							onClick={() => setCreating(true)}
-							disabled={state.status !== 'ready'}
-							data-testid="experience-new"
-						>
-							<Icon name="plus" />
-							<Trans>New experience</Trans>
-						</Button>
-					) : null
-				}
-			/>
+			{canWrite ? (
+				<ReservationsHeaderActions>
+					<Button
+						type="button"
+						onClick={() => setCreating(true)}
+						disabled={state.status !== 'ready'}
+						data-testid="experience-new"
+					>
+						<Icon name="plus" />
+						<Trans>New experience</Trans>
+					</Button>
+				</ReservationsHeaderActions>
+			) : null}
 
 			{state.status === 'ready' && all.length > 0 ? (
-				<div className="flex flex-wrap items-center gap-2">
+				<WorkspaceToolbar>
 					<FilterSelect
 						label={t`Show`}
 						options={filterOptions}
 						value={filter}
 						onValueChange={(value) => setFilter(value as Filter)}
 					/>
-				</div>
+				</WorkspaceToolbar>
 			) : null}
 
 			{state.status === 'loading' ? (
@@ -294,7 +287,10 @@ export function ExperiencesScreen({
 										<span className="text-muted-foreground inline-flex items-center gap-2 text-sm">
 											<span
 												aria-hidden="true"
-												className={`size-1.5 rounded-full ${STATUS_DOT[experience.status]}`}
+												className={cn(
+													'size-1.5 rounded-full',
+													STATUS_DOT[experience.status],
+												)}
 											/>
 											{i18n._(EXPERIENCE_STATUS_LABELS[experience.status])}
 										</span>

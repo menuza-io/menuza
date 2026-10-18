@@ -1,6 +1,16 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Alert, AlertDescription } from '@repo/ui/alert'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@repo/ui/alert-dialog'
 import { Button } from '@repo/ui/button'
 import {
 	Dialog,
@@ -10,9 +20,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@repo/ui/dialog'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
 import { useEffect, useState } from 'react'
+import { TextField } from '#app/components/staff/controls.tsx'
 import {
 	fetchGuestPage,
 	type GuestRow,
@@ -44,6 +53,8 @@ export function GuestMergeDialog({
 	const [selected, setSelected] = useState<GuestRow | null>(null)
 	const selectedName = selected?.name ?? ''
 	const [failed, setFailed] = useState(false)
+	const [confirming, setConfirming] = useState(false)
+	const currentName = current.name
 
 	useEffect(() => {
 		if (!open) {
@@ -51,6 +62,7 @@ export function GuestMergeDialog({
 			setResults([])
 			setSelected(null)
 			setFailed(false)
+			setConfirming(false)
 		}
 	}, [open])
 
@@ -91,23 +103,19 @@ export function GuestMergeDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex flex-col gap-1">
-					<Label htmlFor="guest-merge-search" className="text-xs">
-						<Trans>Search for the duplicate</Trans>
-					</Label>
-					<Input
-						id="guest-merge-search"
-						type="search"
-						value={query}
-						onChange={(event) => {
-							setQuery(event.target.value)
-							setSelected(null)
-						}}
-						placeholder={_(msg`Name, phone, or email`)}
-						autoComplete="off"
-						data-testid="guest-merge-search"
-					/>
-				</div>
+				<TextField
+					id="guest-merge-search"
+					label={<Trans>Search for the duplicate</Trans>}
+					type="search"
+					value={query}
+					onChange={(event) => {
+						setQuery(event.target.value)
+						setSelected(null)
+					}}
+					placeholder={_(msg`Name, phone or email`)}
+					autoComplete="off"
+					data-testid="guest-merge-search"
+				/>
 
 				{failed ? (
 					<Alert variant="destructive">
@@ -130,22 +138,24 @@ export function GuestMergeDialog({
 					>
 						{results.map((guest) => (
 							<li key={guest.id}>
-								<button
+								<Button
 									type="button"
-									className="hover:bg-muted data-[selected=true]:bg-muted data-[selected=true]:ring-ring flex w-full flex-col rounded-md px-3 py-2 text-start data-[selected=true]:ring-2"
+									variant="ghost"
+									className="data-[selected=true]:bg-muted data-[selected=true]:ring-ring h-auto min-h-11 w-full flex-col items-start gap-0 py-2 text-start data-[selected=true]:ring-2"
 									data-selected={selected?.id === guest.id}
+									aria-pressed={selected?.id === guest.id}
 									onClick={() => setSelected(guest)}
 									data-testid={`guest-merge-option-${guest.id}`}
 								>
 									<span className="font-medium wrap-anywhere">
 										{guest.name}
 									</span>
-									<span className="text-muted-foreground text-xs">
+									<span className="text-muted-foreground text-xs font-normal">
 										{guest.phone ? <bdi dir="ltr">{guest.phone}</bdi> : null}
 										{guest.phone && guest.email ? ' · ' : null}
 										{guest.email ? <bdi dir="ltr">{guest.email}</bdi> : null}
 									</span>
-								</button>
+								</Button>
 							</li>
 						))}
 					</ul>
@@ -162,21 +172,52 @@ export function GuestMergeDialog({
 					</Button>
 					<Button
 						type="button"
-						variant="destructive"
 						disabled={busy || !selected}
-						onClick={async () => {
-							if (selected && (await onMerge(selected))) onOpenChange(false)
-						}}
-						data-testid="guest-merge-confirm"
+						onClick={() => setConfirming(true)}
+						data-testid="guest-merge-continue"
 					>
-						{selected ? (
-							<Trans>Merge {selectedName} into this guest</Trans>
-						) : (
-							<Trans>Merge</Trans>
-						)}
+						<Trans>Continue</Trans>
 					</Button>
 				</DialogFooter>
 			</DialogContent>
+
+			<AlertDialog open={confirming} onOpenChange={setConfirming}>
+				<AlertDialogContent data-testid="guest-merge-confirm-dialog">
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Trans>
+								Merge {selectedName} into {currentName}?
+							</Trans>
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							<Trans>
+								The bookings, tags and notes of {selectedName} move to{' '}
+								{currentName}, and the duplicate profile is closed. This cannot
+								be undone.
+							</Trans>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={busy}>
+							<Trans>Go back</Trans>
+						</AlertDialogCancel>
+						<AlertDialogAction
+							type="button"
+							variant="destructive"
+							disabled={busy || !selected}
+							onClick={async () => {
+								if (selected && (await onMerge(selected))) {
+									setConfirming(false)
+									onOpenChange(false)
+								}
+							}}
+							data-testid="guest-merge-confirm"
+						>
+							<Trans>Merge guests</Trans>
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</Dialog>
 	)
 }

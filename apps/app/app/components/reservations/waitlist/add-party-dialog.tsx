@@ -145,15 +145,23 @@ export function AddPartyDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+				<form onSubmit={handleSubmit} className="flex flex-col gap-5">
 					{error ? (
 						<Alert variant="destructive" data-testid="waitlist-add-error">
 							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					) : null}
 
+					<PartyFields
+						idPrefix="waitlist-add"
+						values={values}
+						onChange={change}
+						areas={areas}
+						disabled={submitting}
+					/>
+
 					<div
-						className="bg-muted/40 rounded-lg border p-3 text-sm"
+						className="bg-muted/40 rounded-lg border px-3 py-2.5 text-sm font-medium"
 						role="status"
 						data-testid="waitlist-add-quote"
 					>
@@ -182,24 +190,18 @@ export function AddPartyDialog({
 						)}
 					</div>
 
-					<PartyFields
-						idPrefix="waitlist-add"
-						values={values}
-						onChange={change}
-						areas={areas}
-						disabled={submitting}
-					/>
-
 					<DialogFooter>
 						<Button
 							type="button"
 							variant="outline"
+							className="h-11 md:h-8"
 							onClick={() => onOpenChange(false)}
 						>
 							<Trans>Cancel</Trans>
 						</Button>
 						<Button
 							type="submit"
+							className="h-11 md:h-8"
 							disabled={submitting || !values.displayName.trim()}
 							data-testid="waitlist-add-submit"
 						>

@@ -1,15 +1,18 @@
 import { Trans } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
-import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
-import { PageHeader } from '@repo/ui/page-header'
+import { Skeleton } from '@repo/ui/skeleton'
+import { WorkspaceMetric, WorkspaceMetricGrid } from '@repo/ui/workspace'
 import { useCallback, useState } from 'react'
+import { EmptyState } from '#app/components/empty-state.tsx'
+import { ReservationsHeaderActions } from '#app/components/reservations/shell-context.tsx'
 import { AddPartyDialog } from '#app/components/reservations/waitlist/add-party-dialog.tsx'
 import { EditPartyDialog } from '#app/components/reservations/waitlist/edit-party-dialog.tsx'
 import { SeatDialog } from '#app/components/reservations/waitlist/seat-dialog.tsx'
-import { useWaitlist } from '#app/components/reservations/waitlist/use-waitlist.ts'
 import { useWaitlistVenue } from '#app/components/reservations/waitlist/use-waitlist-venue.ts'
+import { useWaitlist } from '#app/components/reservations/waitlist/use-waitlist.ts'
 import { useFormatMinutes } from '#app/components/reservations/waitlist/waitlist-clock.tsx'
 import { WaitlistQueue } from '#app/components/reservations/waitlist/waitlist-queue.tsx'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
@@ -59,70 +62,66 @@ export function WaitlistScreen({
 	const responseWindow = formatMinutes(listing?.waitlistResponseMin ?? 0)
 
 	return (
-		<div className="flex flex-col gap-4" data-testid="waitlist-screen">
-			<PageHeader
-				title={<Trans>Waitlist</Trans>}
-				description={
-					<Trans>
-						Live walk-in queue, quoted wait times, table-ready notifications,
-						and seating.
-					</Trans>
-				}
-				actions={
-					<>
-						<Button
-							type="button"
-							size="sm"
-							variant="outline"
-							onClick={() => void waitlist.refresh()}
-							disabled={waitlist.refreshing}
-							data-testid="waitlist-refresh"
-						>
-							<Icon name="refresh-cw" className="size-4" />
-							<span>
-								<Trans>Refresh</Trans>
-							</span>
-						</Button>
-						{canManage ? (
-							<Button
-								type="button"
-								size="sm"
-								onClick={() => setAddOpen(true)}
-								data-testid="waitlist-add-button"
-							>
-								<Icon name="user-plus" className="size-4" />
-								<span>
-									<Trans>Add party</Trans>
-								</span>
-							</Button>
-						) : null}
-					</>
-				}
-			/>
+		<div className="flex flex-col gap-6" data-testid="waitlist-screen">
+			<ReservationsHeaderActions>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={() => void waitlist.refresh()}
+					disabled={waitlist.refreshing}
+					data-testid="waitlist-refresh"
+				>
+					<Icon name="refresh-cw" />
+					<Trans>Refresh</Trans>
+				</Button>
+				{canManage ? (
+					<Button
+						type="button"
+						onClick={() => setAddOpen(true)}
+						data-testid="waitlist-add-button"
+					>
+						<Icon name="user-plus" />
+						<Trans>Add party</Trans>
+					</Button>
+				) : null}
+			</ReservationsHeaderActions>
 
 			<div role="status" aria-live="polite" className="sr-only">
 				{waitlist.announcement}
 			</div>
 
 			{listing ? (
-				<div
-					className="flex flex-wrap items-center gap-2 text-xs"
-					data-testid="waitlist-summary"
-				>
-					<Badge variant="secondary" data-testid="waitlist-count-active">
-						<Trans>In line: {activeCount}</Trans>
-					</Badge>
-					<Badge variant="warning" data-testid="waitlist-count-notified">
-						<Trans>Notified: {notifiedCount}</Trans>
-					</Badge>
-					<Badge variant="success" data-testid="waitlist-count-on-the-way">
-						<Trans>On the way: {onTheWayCount}</Trans>
-					</Badge>
-					<span className="text-muted-foreground">
-						<Trans>
-							Guests have {responseWindow} to answer a table-ready message.
-						</Trans>
-					</span>
+				<div data-testid="waitlist-summary">
+					<WorkspaceMetricGrid className="sm:grid-cols-3 xl:grid-cols-3">
+						<WorkspaceMetric
+							label={<Trans>In line</Trans>}
+							value={
+								<span data-testid="waitlist-count-active">{activeCount}</span>
+							}
+						/>
+						<WorkspaceMetric
+							label={<Trans>Notified</Trans>}
+							tone={notifiedCount > 0 ? 'warning' : 'default'}
+							value={
+								<span data-testid="waitlist-count-notified">
+									{notifiedCount}
+								</span>
+							}
+							hint={
+								<Trans>
+									Guests have {responseWindow} to answer a table-ready message.
+								</Trans>
+							}
+						/>
+						<WorkspaceMetric
+							label={<Trans>On the way</Trans>}
+							value={
+								<span data-testid="waitlist-count-on-the-way">
+									{onTheWayCount}
+								</span>
+							}
+						/>
+					</WorkspaceMetricGrid>
 				</div>
 			) : null}
 
@@ -144,7 +143,7 @@ export function WaitlistScreen({
 							<span>{waitlist.actionError}</span>
 							<Button
 								type="button"
-								size="xs"
+								size="sm"
 								variant="ghost"
 								onClick={waitlist.clearActionError}
 							>
@@ -156,19 +155,27 @@ export function WaitlistScreen({
 			) : null}
 
 			{!locationId ? (
-				<div
-					className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm"
-					data-testid="waitlist-no-location"
-				>
-					<Trans>Pick a location to see its waitlist.</Trans>
+				<div data-testid="waitlist-no-location">
+					<EmptyState
+						icons={['building', 'users', 'clock']}
+						title={<Trans>Pick a location</Trans>}
+						description={<Trans>Choose a location to see its waitlist.</Trans>}
+					/>
 				</div>
 			) : !listing && waitlist.loading ? (
-				<div
-					className="text-muted-foreground p-8 text-center text-sm"
-					data-testid="waitlist-loading"
-				>
-					<Trans>Loading the waitlist...</Trans>
-				</div>
+				<Frame data-testid="waitlist-loading" aria-busy="true">
+					<div className="divide-border flex flex-col divide-y">
+						{[0, 1, 2].map((row) => (
+							<div key={row} className="flex items-center gap-4 px-3 py-3">
+								<div className="flex flex-1 flex-col gap-2">
+									<Skeleton className="h-4 w-40" />
+									<Skeleton className="h-3 w-56" />
+								</div>
+								<Skeleton className="h-8 w-16" />
+							</div>
+						))}
+					</div>
+				</Frame>
 			) : !listing ? (
 				<Alert variant="destructive" data-testid="waitlist-load-error">
 					<AlertDescription>
@@ -176,7 +183,7 @@ export function WaitlistScreen({
 							<span>{waitlist.loadError}</span>
 							<Button
 								type="button"
-								size="xs"
+								size="sm"
 								variant="outline"
 								onClick={() => void waitlist.refresh()}
 							>
@@ -206,6 +213,7 @@ export function WaitlistScreen({
 						clockOffsetMs={waitlist.clockOffsetMs}
 						areaName={areaName}
 						onDraggingChange={setDragging}
+						onAdd={canManage ? () => setAddOpen(true) : undefined}
 						onNotify={(entry) => void waitlist.notify(entry)}
 						onSeat={(entry) => setSeatingId(entry.id)}
 						onEdit={(entry) => setEditingId(entry.id)}

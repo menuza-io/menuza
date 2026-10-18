@@ -5,8 +5,7 @@ import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
-import { PageHeader } from '@repo/ui/page-header'
+import { Skeleton } from '@repo/ui/skeleton'
 import {
 	Table,
 	TableBody,
@@ -15,10 +14,12 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
+import { WorkspaceToolbar } from '@repo/ui/workspace'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GuestTagBadge } from '#app/components/reservations/guests/guest-tag-badge.tsx'
+import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
 	fetchGuestPage,
 	fetchGuestTags,
@@ -36,6 +37,8 @@ import {
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 
 const SEARCH_DEBOUNCE_MS = 300
+/** `FilterSelect` cannot hold an empty value, so "all guests" travels as this key. */
+const ALL_TAGS = 'all'
 
 export function GuestListScreen({
 	client,
@@ -113,71 +116,80 @@ export function GuestListScreen({
 
 	const filtering = debouncedQuery.trim() !== '' || tagId !== ''
 
-	return (
-		<div className="flex flex-col gap-4" data-testid="guests-screen">
-			<PageHeader
-				title={<Trans>Guests</Trans>}
-				description={
-					<Trans>
-						Everyone who has booked or walked in, with visit history, tags, and
-						notes. Guest details stay in your regional database.
-					</Trans>
-				}
-			/>
+	const tagOptions = [
+		{ value: ALL_TAGS, label: _(msg`All guests`) },
+		...tags.map((tag) => ({ value: tag.id, label: guestTagName(_, tag) })),
+	]
+	const sortOptions = GUEST_SORTS.map((value) => ({
+		value,
+		label: _(GUEST_SORT_LABELS[value]),
+	}))
 
-			<div className="flex flex-wrap items-end gap-3">
-				<div className="flex min-w-60 flex-1 flex-col gap-1">
-					<Label htmlFor="guests-search" className="text-xs">
-						<Trans>Search</Trans>
-					</Label>
-					<Input
-						id="guests-search"
-						type="search"
-						value={query}
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder={_(msg`Name, phone, or email`)}
-						autoComplete="off"
-						data-testid="guests-search"
+	return (
+		<div className="flex flex-col gap-6" data-testid="guests-screen">
+			<WorkspaceToolbar>
+				<div
+					role="search"
+					className="flex flex-col gap-2 md:flex-row md:items-center"
+				>
+					<div className="relative md:w-72">
+						<Icon
+							name="search"
+							className="text-muted-foreground pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2"
+						/>
+						<Input
+							id="guests-search"
+							type="search"
+							value={query}
+							onChange={(event) => setQuery(event.target.value)}
+							placeholder={_(msg`Name, phone or email`)}
+							aria-label={_(msg`Search guests`)}
+							autoComplete="off"
+							className="ps-8"
+							data-testid="guests-search"
+						/>
+					</div>
+					<FilterSelect
+						label={_(msg`Tag`)}
+						options={tagOptions}
+						value={tagId || ALL_TAGS}
+						onValueChange={(next) => setTagId(next === ALL_TAGS ? '' : next)}
+						testId="guests-tag-filter"
 					/>
-				</div>
-				<div className="flex flex-col gap-1">
-					<Label htmlFor="guests-tag-filter" className="text-xs">
-						<Trans>Tag</Trans>
-					</Label>
-					<select
-						id="guests-tag-filter"
-						value={tagId}
-						onChange={(event) => setTagId(event.target.value)}
-						className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-						data-testid="guests-tag-filter"
-					>
-						<option value="">{_(msg`All guests`)}</option>
-						{tags.map((tag) => (
-							<option key={tag.id} value={tag.id}>
-								{guestTagName(_, tag)}
-							</option>
-						))}
-					</select>
-				</div>
-				<div className="flex flex-col gap-1">
-					<Label htmlFor="guests-sort" className="text-xs">
-						<Trans>Sort by</Trans>
-					</Label>
-					<select
-						id="guests-sort"
+					<FilterSelect
+						label={_(msg`Sort by`)}
+						options={sortOptions}
 						value={sort}
-						onChange={(event) => setSort(event.target.value as GuestSort)}
-						className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-						data-testid="guests-sort"
-					>
-						{GUEST_SORTS.map((value) => (
-							<option key={value} value={value}>
-								{_(GUEST_SORT_LABELS[value])}
-							</option>
-						))}
-					</select>
+						onValueChange={(next) => setSort(next as GuestSort)}
+						testId="guests-sort"
+					/>
+					{filtering ? (
+						<Button
+							type="button"
+							variant="ghost"
+							className="h-11 md:h-8"
+							onClick={() => {
+								setQuery('')
+								setDebouncedQuery('')
+								setTagId('')
+							}}
+							data-testid="guests-clear-filters"
+						>
+							<Trans>Clear</Trans>
+						</Button>
+					) : null}
 				</div>
-			</div>
+				{guests.length > 0 ? (
+					<p
+						className="text-muted-foreground text-sm"
+						data-testid="guests-count"
+					>
+						<Trans>
+							<bdi>{shownCount}</bdi> of <bdi>{total}</bdi> guests
+						</Trans>
+					</p>
+				) : null}
+			</WorkspaceToolbar>
 
 			{error === 'denied' ? (
 				<Alert variant="destructive" data-testid="guests-denied">
@@ -209,13 +221,20 @@ export function GuestListScreen({
 			) : null}
 
 			{loading && guests.length === 0 && !error ? (
-				<p
-					className="text-muted-foreground text-sm"
-					role="status"
-					data-testid="guests-loading"
-				>
-					<Trans>Loading guests...</Trans>
-				</p>
+				<Frame data-testid="guests-loading" aria-busy="true">
+					<div role="status" className="divide-border flex flex-col divide-y">
+						<span className="sr-only">
+							<Trans>Loading guests...</Trans>
+						</span>
+						{[0, 1, 2, 3, 4].map((row) => (
+							<div key={row} className="flex items-center gap-4 px-3 py-2.5">
+								<Skeleton className="h-4 w-36" />
+								<Skeleton className="h-4 w-28" />
+								<Skeleton className="ms-auto h-4 w-12" />
+							</div>
+						))}
+					</div>
+				</Frame>
 			) : null}
 
 			{!loading && !error && guests.length === 0 ? (
@@ -247,14 +266,6 @@ export function GuestListScreen({
 
 			{guests.length > 0 ? (
 				<>
-					<p
-						className="text-muted-foreground text-sm"
-						data-testid="guests-count"
-					>
-						<Trans>
-							<bdi>{shownCount}</bdi> of <bdi>{total}</bdi> guests
-						</Trans>
-					</p>
 					<Frame>
 						<Table variant="card">
 							<TableHeader>

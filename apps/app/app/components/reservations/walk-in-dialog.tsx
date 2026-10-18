@@ -1,7 +1,13 @@
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
-import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
 import {
 	Dialog,
 	DialogContent,
@@ -12,14 +18,16 @@ import {
 } from '@repo/ui/dialog'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
 import { useEffect, useRef, useState } from 'react'
+import { CheckRow } from '#app/components/reservations/sheet-parts.tsx'
+import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import {
 	createWalkInReservation,
 	type DayMoveNotice,
 	type DayReservationView,
 	type LiveTableState,
 } from '#app/utils/reservations/book-api.ts'
+import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import {
 	enumLabel,
 	LIVE_TABLE_STATUS_LABELS,
@@ -67,6 +75,7 @@ export function WalkInDialog({
 	const [serverLabel, setServerLabel] = useState('')
 	const [notes, setNotes] = useState('')
 	const [forceOverbook, setForceOverbook] = useState(false)
+	const [moreOpen, setMoreOpen] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const keyRef = useRef(newSubmitKey('walkin'))
@@ -121,47 +130,71 @@ export function WalkInDialog({
 			onCreated(res.reservation, res.moveNotices ?? [])
 			onOpenChange(false)
 		} catch (err) {
-			setError(err instanceof Error ? err.message : t`Failed to seat walk-in.`)
+			setError(
+				hostErrorMessage(err, (d) => i18n._(d), msg`Failed to seat walk-in.`),
+			)
 			afterFailedSubmit(keyRef, 'walkin', err)
 		} finally {
 			setSubmitting(false)
 		}
 	}
 
+	const NO_TABLE = '__none'
+	const tableOptions = [
+		{ value: NO_TABLE, label: t`Auto-assign best open table` },
+		...sortedTables.map((tbl) => {
+			const status = enumLabel(
+				(d) => i18n._(d),
+				LIVE_TABLE_STATUS_LABELS,
+				tbl.status,
+			)
+			const server = tbl.serverName ? ` [${tbl.serverName}]` : ''
+			return {
+				value: tbl.tableId,
+				label: `${tbl.label} (${tbl.minCovers}-${tbl.maxCovers}) · ${status}${server}`,
+			}
+		}),
+	]
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-md" data-testid="walk-in-dialog">
 				<DialogHeader>
 					<DialogTitle>
-						<Trans>Seat Walk-In Party</Trans>
+						<Trans>Seat a walk-in</Trans>
 					</DialogTitle>
 					<DialogDescription>
 						<Trans>
-							Immediately seat a walk-in party at an available table or
-							auto-assign the best open table.
+							Pick the party size. The best open table is assigned unless you
+							choose one.
 						</Trans>
 					</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 					{error ? (
 						<Alert variant="destructive" data-testid="walk-in-error">
 							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					) : null}
 
-					{/* Party Size Quick Picker */}
-					<div className="flex flex-col gap-1.5">
-						<Label htmlFor="walk-in-party-size">
+					{/* Party size: big tap targets, 1 to 8, then a typed number */}
+					<div className="flex flex-col gap-2">
+						<span id="walk-in-party-label" className="text-sm font-medium">
 							<Trans>Party Size</Trans>
-						</Label>
-						<div className="flex flex-wrap items-center gap-1.5">
-							{[1, 2, 3, 4, 5, 6, 8].map((n) => (
+						</span>
+						<div
+							role="group"
+							aria-labelledby="walk-in-party-label"
+							className="flex flex-wrap items-center gap-2"
+						>
+							{[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
 								<Button
 									key={n}
 									type="button"
-									size="sm"
 									variant={partySize === n ? 'default' : 'outline'}
+									className="size-11 tabular-nums md:size-8"
+									aria-pressed={partySize === n}
 									onClick={() => setPartySize(n)}
 									data-testid={`walk-in-size-${n}`}
 								>
@@ -171,154 +204,161 @@ export function WalkInDialog({
 							<Input
 								id="walk-in-party-size"
 								type="number"
+								inputMode="numeric"
 								min={1}
 								max={30}
 								value={partySize}
+								aria-label={t`Party size`}
 								onChange={(e) =>
 									setPartySize(Math.max(1, Number(e.target.value) || 1))
 								}
-								className="h-8 w-20"
+								className="h-11 w-20 tabular-nums md:h-8"
 								data-testid="walk-in-party-size"
 							/>
 						</div>
 					</div>
 
-					{/* Table Selector */}
-					<div className="flex flex-col gap-1.5">
-						<Label htmlFor="walk-in-table-select">
-							<Trans>Assign Table</Trans>
-						</Label>
-						<select
-							id="walk-in-table-select"
-							value={selectedTableId}
-							onChange={(e) => setSelectedTableId(e.target.value)}
-							className="border-input bg-background h-9 rounded-md border px-2.5 text-sm"
-							data-testid="walk-in-table-select"
-						>
-							<option value="">{t`Auto-assign best open table`}</option>
-							{sortedTables.map((tbl) => (
-								<option key={tbl.tableId} value={tbl.tableId}>
-									{tbl.label} ({tbl.minCovers}-{tbl.maxCovers}) —{' '}
-									{enumLabel(
-										(d) => i18n._(d),
-										LIVE_TABLE_STATUS_LABELS,
-										tbl.status,
-									)}
-									{tbl.serverName ? ` [${tbl.serverName}]` : ''}
-								</option>
-							))}
-						</select>
-						{sortedTables.length > 0 ? (
-							<div className="flex flex-wrap gap-1 pt-0.5">
-								{sortedTables
-									.filter((tbl) => tbl.status === 'open')
-									.slice(0, 6)
-									.map((tbl) => {
-										const fits =
-											tbl.minCovers <= partySize && partySize <= tbl.maxCovers
-										return (
-											<Badge
-												key={tbl.tableId}
-												variant={
-													selectedTableId === tbl.tableId
-														? 'default'
-														: fits
-															? 'secondary'
-															: 'outline'
-												}
-												className="cursor-pointer"
-												onClick={() => setSelectedTableId(tbl.tableId)}
-												data-testid={`walk-in-table-chip-${tbl.label}`}
-											>
-												{tbl.label} ({tbl.maxCovers})
-											</Badge>
-										)
-									})}
-							</div>
-						) : null}
-					</div>
-
-					{/* Optional Guest Name & Phone */}
-					<div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="walk-in-guest-name">
-								<Trans>Guest Name (Optional)</Trans>
-							</Label>
-							<Input
-								id="walk-in-guest-name"
-								value={guestName}
-								onChange={(e) => setGuestName(e.target.value)}
-								placeholder={t`Walk-In Guest`}
-								data-testid="walk-in-guest-name"
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="walk-in-guest-phone">
-								<Trans>Phone (Optional)</Trans>
-							</Label>
-							<Input
-								id="walk-in-guest-phone"
-								value={guestPhone}
-								onChange={(e) => setGuestPhone(e.target.value)}
-								placeholder="+1..."
-								data-testid="walk-in-guest-phone"
-							/>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="walk-in-server-label">
-								<Trans>Server (Optional)</Trans>
-							</Label>
-							<Input
-								id="walk-in-server-label"
-								value={serverLabel}
-								onChange={(e) => setServerLabel(e.target.value)}
-								placeholder={t`Server name`}
-								data-testid="walk-in-server-label"
-							/>
-						</div>
-
-						<div className="flex flex-col gap-1">
-							<Label htmlFor="walk-in-notes">
-								<Trans>Host Notes</Trans>
-							</Label>
-							<Input
-								id="walk-in-notes"
-								value={notes}
-								onChange={(e) => setNotes(e.target.value)}
-								placeholder={t`Optional note`}
-								data-testid="walk-in-notes"
-							/>
-						</div>
-					</div>
-
-					<label className="flex items-center gap-2 text-xs">
-						<input
-							type="checkbox"
-							checked={forceOverbook}
-							onChange={(e) => setForceOverbook(e.target.checked)}
-							data-testid="walk-in-force-overbook"
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						<TextField
+							label={<Trans>Name</Trans>}
+							optional
+							id="walk-in-guest-name"
+							value={guestName}
+							onChange={(e) => setGuestName(e.target.value)}
+							placeholder={t`Walk-In Guest`}
+							data-testid="walk-in-guest-name"
 						/>
-						<span>
-							<Trans>
-								Allow overbooking / seating on blocked or tight table
-							</Trans>
-						</span>
-					</label>
+						<TextField
+							label={<Trans>Phone</Trans>}
+							optional
+							id="walk-in-guest-phone"
+							type="tel"
+							inputMode="tel"
+							value={guestPhone}
+							onChange={(e) => setGuestPhone(e.target.value)}
+							placeholder="+1..."
+							data-testid="walk-in-guest-phone"
+						/>
+					</div>
+
+					<Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
+						<div className="flex flex-col gap-4">
+							<CollapsibleTrigger
+								render={
+									<Button
+										type="button"
+										variant="ghost"
+										className="h-11 justify-between md:h-8"
+										data-testid="walk-in-more-toggle"
+									/>
+								}
+							>
+								<span>
+									<Trans>Choose a table or add details</Trans>
+								</span>
+								<Icon
+									name="chevron-down"
+									className={cn(
+										'size-4 transition-transform',
+										moreOpen && 'rotate-180',
+									)}
+								/>
+							</CollapsibleTrigger>
+							<CollapsibleContent>
+								<div className="flex flex-col gap-4">
+									<div className="flex flex-col gap-2">
+										<SelectField
+											label={<Trans>Assign Table</Trans>}
+											id="walk-in-table-select"
+											testId="walk-in-table-select"
+											options={tableOptions}
+											value={selectedTableId || NO_TABLE}
+											onValueChange={(next) =>
+												setSelectedTableId(next === NO_TABLE ? '' : next)
+											}
+										/>
+										{sortedTables.some((tbl) => tbl.status === 'open') ? (
+											<div className="flex flex-wrap gap-2">
+												{sortedTables
+													.filter((tbl) => tbl.status === 'open')
+													.slice(0, 6)
+													.map((tbl) => {
+														const fits =
+															tbl.minCovers <= partySize &&
+															partySize <= tbl.maxCovers
+														return (
+															<Button
+																key={tbl.tableId}
+																type="button"
+																variant={
+																	selectedTableId === tbl.tableId
+																		? 'default'
+																		: fits
+																			? 'secondary'
+																			: 'outline'
+																}
+																className="h-11 md:h-8"
+																aria-pressed={selectedTableId === tbl.tableId}
+																onClick={() => setSelectedTableId(tbl.tableId)}
+																data-testid={`walk-in-table-chip-${tbl.label}`}
+															>
+																{tbl.label} ({tbl.maxCovers})
+															</Button>
+														)
+													})}
+											</div>
+										) : null}
+									</div>
+
+									<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+										<TextField
+											label={<Trans>Server</Trans>}
+											optional
+											id="walk-in-server-label"
+											value={serverLabel}
+											onChange={(e) => setServerLabel(e.target.value)}
+											placeholder={t`Server name`}
+											data-testid="walk-in-server-label"
+										/>
+										<TextField
+											label={<Trans>Host Notes</Trans>}
+											optional
+											id="walk-in-notes"
+											value={notes}
+											onChange={(e) => setNotes(e.target.value)}
+											placeholder={t`Optional note`}
+											data-testid="walk-in-notes"
+										/>
+									</div>
+
+									<CheckRow
+										label={<Trans>Allow overbooking</Trans>}
+										description={
+											<Trans>
+												Staff override: seat on a blocked or tight table.
+											</Trans>
+										}
+										checked={forceOverbook}
+										onCheckedChange={setForceOverbook}
+										testId="walk-in-force-overbook"
+									/>
+								</div>
+							</CollapsibleContent>
+						</div>
+					</Collapsible>
 
 					<DialogFooter>
 						<Button
 							type="button"
-							variant="outline"
+							variant="ghost"
+							className="h-11 md:h-8"
 							onClick={() => onOpenChange(false)}
 						>
 							<Trans>Cancel</Trans>
 						</Button>
 						<Button
 							type="submit"
+							className="h-11 md:h-8"
 							disabled={submitting}
 							data-testid="walk-in-submit-btn"
 						>

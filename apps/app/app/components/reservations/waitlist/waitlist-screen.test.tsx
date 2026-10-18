@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { type LiveTableState } from '#app/utils/reservations/book-api.ts'
 import { makeWaitlistEntry } from '#app/utils/reservations/waitlist-fixtures.ts'
@@ -80,6 +81,17 @@ function setup(
 	return fake
 }
 
+/** A waiting party's Seat sits in its menu: only a notified party has it as the primary button. */
+async function pickFromMenu(id: string, item: string) {
+	await userEvent.click(screen.getByTestId(`waitlist-more-${id}`))
+	await userEvent.click(await screen.findByTestId(item))
+}
+
+async function chooseTable(name: RegExp) {
+	await userEvent.click(await screen.findByRole('combobox', { name: 'Table' }))
+	await userEvent.click(await screen.findByRole('option', { name }))
+}
+
 function queueOrder() {
 	return within(screen.getByTestId('waitlist-queue'))
 		.getAllByTestId(/^waitlist-card-/)
@@ -100,7 +112,7 @@ describe('WaitlistScreen', () => {
 		expect(queueOrder()).toEqual(['w1', 'w2', 'w3'])
 		await waitFor(() =>
 			expect(screen.getByTestId('waitlist-quote-w2')).toHaveTextContent(
-				'Quoted 40 min',
+				'40 min',
 			),
 		)
 		expect(screen.getByTestId('waitlist-position-w2')).toHaveTextContent('#2')
@@ -145,13 +157,8 @@ describe('WaitlistScreen', () => {
 	it('seats a party at the chosen table', async () => {
 		const fake = setup()
 		await screen.findByTestId('waitlist-card-w2')
-		fireEvent.click(screen.getByTestId('waitlist-seat-w2'))
-
-		const select = await screen.findByTestId('waitlist-seat-table')
-		await waitFor(() =>
-			expect(within(select).getAllByRole('option').length).toBeGreaterThan(1),
-		)
-		fireEvent.change(select, { target: { value: 't1' } })
+		await pickFromMenu('w2', 'waitlist-seat-w2')
+		await chooseTable(/^T1/)
 		fireEvent.click(screen.getByTestId('waitlist-seat-submit'))
 
 		await waitFor(() => expect(fake.callsTo('/w2/seat')).toHaveLength(1))
@@ -167,12 +174,8 @@ describe('WaitlistScreen', () => {
 	it('offers to seat over a booking only after the table is refused', async () => {
 		const fake = setup({ occupiedTableIds: ['t1'] })
 		await screen.findByTestId('waitlist-card-w1')
-		fireEvent.click(screen.getByTestId('waitlist-seat-w1'))
-		const select = await screen.findByTestId('waitlist-seat-table')
-		await waitFor(() =>
-			expect(within(select).getAllByRole('option').length).toBeGreaterThan(1),
-		)
-		fireEvent.change(select, { target: { value: 't1' } })
+		await pickFromMenu('w1', 'waitlist-seat-w1')
+		await chooseTable(/^T1/)
 		fireEvent.click(screen.getByTestId('waitlist-seat-submit'))
 
 		expect(await screen.findByTestId('waitlist-seat-error')).toHaveTextContent(
@@ -195,12 +198,8 @@ describe('WaitlistScreen', () => {
 	it('offers swap and move from the Seat dialog once the table is refused', async () => {
 		const fake = setup({ occupiedTableIds: ['t1'] })
 		await screen.findByTestId('waitlist-card-w1')
-		fireEvent.click(screen.getByTestId('waitlist-seat-w1'))
-		const select = await screen.findByTestId('waitlist-seat-table')
-		await waitFor(() =>
-			expect(within(select).getAllByRole('option').length).toBeGreaterThan(1),
-		)
-		fireEvent.change(select, { target: { value: 't1' } })
+		await pickFromMenu('w1', 'waitlist-seat-w1')
+		await chooseTable(/^T1/)
 		fireEvent.click(screen.getByTestId('waitlist-seat-submit'))
 
 		fireEvent.click(await screen.findByTestId('waitlist-seat-swap'))
@@ -215,7 +214,7 @@ describe('WaitlistScreen', () => {
 	it('reorders with the Move buttons and keeps the order after a refresh', async () => {
 		const fake = setup()
 		await screen.findByTestId('waitlist-card-w1')
-		fireEvent.click(screen.getByTestId('waitlist-move-down-w1'))
+		await pickFromMenu('w1', 'waitlist-move-down-w1')
 
 		await waitFor(() => expect(fake.callsTo('/reorder')).toHaveLength(1))
 		expect(fake.callsTo('/reorder')[0]?.body).toEqual({
@@ -242,9 +241,15 @@ describe('WaitlistScreen', () => {
 	it('disables the edge Move buttons', async () => {
 		setup()
 		await screen.findByTestId('waitlist-card-w1')
-		expect(screen.getByTestId('waitlist-move-up-w1')).toBeDisabled()
-		expect(screen.getByTestId('waitlist-move-down-w3')).toBeDisabled()
-		expect(screen.getByTestId('waitlist-move-up-w2')).toBeEnabled()
+		await userEvent.click(screen.getByTestId('waitlist-more-w1'))
+		expect(await screen.findByTestId('waitlist-move-up-w1')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		)
+		expect(screen.getByTestId('waitlist-move-down-w1')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		)
 	})
 
 	it('reloads and explains when another host changed the party first', async () => {
@@ -321,7 +326,7 @@ describe('WaitlistScreen', () => {
 	it('edits a party with its version', async () => {
 		const fake = setup()
 		await screen.findByTestId('waitlist-card-w1')
-		fireEvent.click(screen.getByTestId('waitlist-edit-w1'))
+		await pickFromMenu('w1', 'waitlist-edit-w1')
 		fireEvent.click(await screen.findByTestId('waitlist-edit-size-6'))
 		fireEvent.click(screen.getByTestId('waitlist-edit-submit'))
 
@@ -339,9 +344,9 @@ describe('WaitlistScreen', () => {
 	it('asks before removing a party and changes status on confirm', async () => {
 		const fake = setup()
 		await screen.findByTestId('waitlist-card-w1')
-		fireEvent.click(screen.getByTestId('waitlist-action-cancelled-w1'))
+		await pickFromMenu('w1', 'waitlist-action-cancelled-w1')
 		expect(fake.callsTo('/w1/status')).toHaveLength(0)
-		fireEvent.click(screen.getByTestId('waitlist-confirm-yes-w1'))
+		fireEvent.click(await screen.findByTestId('waitlist-confirm-yes-w1'))
 
 		await waitFor(() => expect(fake.callsTo('/w1/status')).toHaveLength(1))
 		expect(fake.callsTo('/w1/status')[0]?.body).toEqual({
@@ -371,6 +376,33 @@ describe('WaitlistScreen', () => {
 		})
 	})
 
+	it('gives each party one primary action and keeps the rest in its menu', async () => {
+		setup()
+		await screen.findByTestId('waitlist-card-w1')
+		// Waiting: Notify is the primary. Seat waits in the menu.
+		expect(screen.getByTestId('waitlist-notify-w1')).toBeTruthy()
+		expect(screen.queryByTestId('waitlist-seat-w1')).toBeNull()
+		// Already on the way: Seat is the primary.
+		expect(screen.getByTestId('waitlist-seat-w3')).toBeTruthy()
+		expect(screen.queryByTestId('waitlist-notify-w3')).toBeNull()
+		expect(screen.queryByTestId('waitlist-edit-w1')).toBeNull()
+		for (const id of ['w1', 'w2', 'w3']) {
+			const row = screen.getByTestId(`waitlist-card-${id}`)
+			expect(within(row).getAllByRole('button').length).toBeLessThanOrEqual(3)
+		}
+	})
+
+	it('starts the add dialog with name, size and phone and tucks the rest under More', async () => {
+		setup({ entries: [] })
+		await screen.findByTestId('waitlist-empty')
+		fireEvent.click(screen.getByTestId('waitlist-add-button'))
+		await screen.findByTestId('waitlist-add-name')
+		expect(screen.getByTestId('waitlist-add-phone')).toBeTruthy()
+		expect(screen.queryByTestId('waitlist-add-notes')).toBeNull()
+		await userEvent.click(screen.getByTestId('waitlist-add-more'))
+		expect(await screen.findByTestId('waitlist-add-notes')).toBeTruthy()
+	})
+
 	it('is read only without permission to edit', async () => {
 		setup({ canManage: false })
 		await screen.findByTestId('waitlist-card-w1')
@@ -378,7 +410,7 @@ describe('WaitlistScreen', () => {
 		expect(screen.queryByTestId('waitlist-add-button')).toBeNull()
 		expect(screen.queryByTestId('waitlist-notify-w1')).toBeNull()
 		expect(screen.queryByTestId('waitlist-seat-w1')).toBeNull()
-		expect(screen.queryByTestId('waitlist-move-down-w1')).toBeNull()
+		expect(screen.queryByTestId('waitlist-more-w1')).toBeNull()
 		expect(screen.queryByTestId('waitlist-drag-handle-w1')).toBeNull()
 	})
 

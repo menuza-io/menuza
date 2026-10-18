@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { useState } from 'react'
+import { StatusLabel } from '#app/components/reservations/status-style.tsx'
 import {
 	type FloorTableRef,
 	type OverbookPrompt,
@@ -15,12 +16,7 @@ import {
 	useFormatMinutes,
 	WaitlistCountdown,
 } from '#app/components/reservations/waitlist/waitlist-clock.tsx'
-import { enumLabel } from '#app/utils/reservations/labels.ts'
 import { type WaitlistEntry } from '#app/utils/reservations/waitlist-api.ts'
-import {
-	WAITLIST_STATUS_LABELS,
-	waitlistStatusVariant,
-} from '#app/utils/reservations/waitlist-view.ts'
 
 /** The drag payload type; floor tables read it on drop. */
 export const WAITLIST_DRAG_TYPE = 'text/waitlist-id'
@@ -53,7 +49,7 @@ export function FloorWaitlistPanel({
 	onSeatAtSelected: (entry: WaitlistEntry, table: FloorTableRef) => void
 	onChooseTable: (entry: WaitlistEntry) => void
 }) {
-	const { t, i18n } = useLingui()
+	const { t } = useLingui()
 	const formatMinutes = useFormatMinutes()
 	const [open, setOpen] = useState(true)
 	const count = entries.length
@@ -64,9 +60,11 @@ export function FloorWaitlistPanel({
 			<CardHeader className="pb-2">
 				<div className="flex items-center justify-between gap-2">
 					<CardTitle className="text-sm font-semibold">
-						<button
+						<Button
 							type="button"
-							className="flex items-center gap-1.5 text-start"
+							variant="ghost"
+							size="sm"
+							className="-ms-2 h-11 gap-1.5 text-start md:h-7"
 							aria-expanded={open}
 							aria-controls="floor-waitlist-body"
 							onClick={() => setOpen((value) => !value)}
@@ -80,9 +78,9 @@ export function FloorWaitlistPanel({
 							<Badge variant="secondary" data-testid="floor-waitlist-count">
 								{count}
 							</Badge>
-						</button>
+						</Button>
 					</CardTitle>
-					<span className="text-muted-foreground text-[11px]">
+					<span className="text-muted-foreground text-2xs">
 						<Trans>Drag onto a table to seat</Trans>
 					</span>
 				</div>
@@ -143,19 +141,10 @@ export function FloorWaitlistPanel({
 												entry={entry}
 												offsetMs={clockOffsetMs}
 											/>
-											<Badge
-												variant={waitlistStatusVariant(entry.status)}
-												className="text-[10px]"
-											>
-												{enumLabel(
-													(d) => i18n._(d),
-													WAITLIST_STATUS_LABELS,
-													entry.status,
-												)}
-											</Badge>
+											<StatusLabel kind="waitlist" status={entry.status} />
 										</div>
 									</div>
-									<div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+									<div className="flex flex-wrap items-center justify-between gap-1 text-xs">
 										<span className="text-muted-foreground">
 											{quoted ? (
 												<Trans>Quoted {quoted}</Trans>
@@ -167,9 +156,8 @@ export function FloorWaitlistPanel({
 											{selectedTable ? (
 												<Button
 													type="button"
-													size="sm"
 													variant="secondary"
-													className="h-6 px-2 text-[11px]"
+													className="h-11 md:h-8"
 													disabled={busyId === entry.id}
 													aria-label={t`Seat ${guest} at ${tableLabel}`}
 													onClick={() => onSeatAtSelected(entry, selectedTable)}
@@ -180,9 +168,8 @@ export function FloorWaitlistPanel({
 											) : null}
 											<Button
 												type="button"
-												size="sm"
 												variant="outline"
-												className="h-6 px-2 text-[11px]"
+												className="h-11 md:h-8"
 												disabled={busyId === entry.id}
 												aria-label={t`Choose a table for ${guest}`}
 												onClick={() => onChooseTable(entry)}
@@ -227,7 +214,7 @@ export function WaitlistSeatPrompt({
 	const occupants = prompt.conflict?.occupants ?? []
 	return (
 		<Card
-			className="border-amber-500 bg-amber-500/10 p-4"
+			className="border-warning/50 bg-warning/10 p-4"
 			role="alertdialog"
 			aria-label={t`Table ${tableLabel} is not free`}
 			data-testid="floor-waitlist-overbook-prompt"
@@ -273,7 +260,7 @@ export function WaitlistSeatPrompt({
 							onClick={() => onChoose({ resolution: 'swap' })}
 							data-testid="floor-waitlist-resolve-swap"
 						>
-							<Icon name="refresh-cw" className="me-1.5 size-3.5" />
+							<Icon name="refresh-cw" />
 							<Trans>Swap: unseat the booking</Trans>
 						</Button>
 					) : null}
@@ -286,7 +273,7 @@ export function WaitlistSeatPrompt({
 							onClick={() => onChoose({ resolution: 'move' })}
 							data-testid="floor-waitlist-resolve-move"
 						>
-							<Icon name="move-up-right" className="me-1.5 size-3.5" />
+							<Icon name="move-up-right" />
 							<Trans>Move the booking to a free table</Trans>
 						</Button>
 					) : null}
@@ -297,7 +284,7 @@ export function WaitlistSeatPrompt({
 						onChange={(event) => setReason(event.target.value)}
 						placeholder={t`Overbook reason (optional)`}
 						aria-label={t`Overbook reason (optional)`}
-						className="h-8 w-56 text-xs"
+						className="h-11 w-56 md:h-8"
 						data-testid="floor-waitlist-overbook-reason"
 					/>
 					<Button
@@ -307,7 +294,7 @@ export function WaitlistSeatPrompt({
 						onClick={() => onChoose({ resolution: 'overbook', reason })}
 						data-testid="floor-waitlist-overbook-confirm"
 					>
-						<Icon name="alert-triangle" className="me-1.5 size-3.5" />
+						<Icon name="alert-triangle" />
 						<Trans>Overbook: seat anyway</Trans>
 					</Button>
 				</div>
