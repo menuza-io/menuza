@@ -575,6 +575,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `VOICE_AGENT_TOKEN` - Shared by App, tenant-api, and `apps/voice-agent` (≥32
   chars, distinct from `INTERNAL_COMMAND_TOKEN`). Authenticates
   `/resources/phone-agent-config` and tenant-api `/api/voice/*`.
+- `SITES_RESERVATION_PAYMENT_TOKEN` - Sites and App only (≥32 chars, distinct
+  from `INTERNAL_COMMAND_TOKEN` and every other token). Authenticates only
+  `/resources/sites/reservation/checkout` and `/status`; never give Sites
+  `INTERNAL_COMMAND_TOKEN`.
 - `LIVEKIT_*` / `CARTESIA_API_KEY` - App and `apps/voice-agent` (US only). Empty
   in App hides browser test calls and the voice picker.
 - `STAFFING_KIOSK_ENABLED` - Tenant-api only, optional (unset or `true` is on).

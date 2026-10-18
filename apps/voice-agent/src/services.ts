@@ -10,6 +10,8 @@ import {
 	type PhoneAgentPassthrough,
 	type PhoneAgentRuntimeConfig,
 	SUPPORTED_AGENT_LANGUAGES,
+	VERTICAL_ACTION_FAILURES,
+	type VerticalActionResult,
 } from '@repo/phone-agent'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
@@ -325,6 +327,20 @@ async function tenantPost<T>(path: string, body: unknown): Promise<T> {
 	return readJson<T>(response)
 }
 
+const ActionResponseSchema = z.union([
+	z
+		.object({ ok: z.literal(true), data: z.unknown() })
+		.transform((value): VerticalActionResult => ({
+			ok: true,
+			data: value.data,
+		})),
+	z.object({
+		ok: z.literal(false),
+		reason: z.enum(VERTICAL_ACTION_FAILURES),
+		explanation: z.string().max(500),
+	}),
+])
+
 /**
  * Only the call id is used. Any customer name tenant-api sends is ignored:
  * it would come from caller ID, which can be spoofed.
@@ -405,6 +421,8 @@ export const tenantApi = {
 		scopeId: string | null
 		path: string
 		payload: unknown
+		/** Raw URL fragment the link carries instead of a stored payload. */
+		fragment?: string
 		message: string
 		sendTo: string | null
 	}) {
@@ -429,6 +447,49 @@ export const tenantApi = {
 		sendTo: string | null
 	}) {
 		return tenantPost<TextLinkResult>('/website-links', input)
+	},
+
+	/**
+	 * Runs a named action on tenant-api for this call. Never throws: every
+	 * refusal, limit and outage is a typed failure the assistant can explain.
+	 */
+	async runAction(input: {
+		orgId: string
+		callId: string
+		scopeId: string | null
+		channel: CallChannel
+		name: string
+		input: unknown
+	}): Promise<VerticalActionResult> {
+		const unavailable: VerticalActionResult = {
+			ok: false,
+			reason: 'unavailable',
+			explanation: "I can't do that right now.",
+		}
+		let response: Response
+		try {
+			response = await send(
+				`${ENV.TENANT_API_URL}/api/voice/actions/${encodeURIComponent(input.name)}`,
+				{
+					method: 'POST',
+					headers: authHeaders(),
+					body: JSON.stringify({
+						orgId: input.orgId,
+						callId: input.callId,
+						scopeId: input.scopeId,
+						channel: input.channel,
+						input: input.input,
+					}),
+				},
+			)
+		} catch {
+			return unavailable
+		}
+		const parsed = ActionResponseSchema.safeParse(
+			await response.json().catch(() => null),
+		)
+		if (parsed.success) return parsed.data
+		return unavailable
 	},
 
 	createRequest(input: {

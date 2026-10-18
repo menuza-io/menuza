@@ -1,0 +1,145 @@
+import {
+	customers,
+	customerSubscriptions,
+	rsvGuests,
+	type RsvGuestRow,
+} from '@repo/tenant-db'
+import { and, eq } from 'drizzle-orm'
+import { type DbOrTx } from './rsv-guest-service.ts'
+
+/**
+ * A guest who ticked the marketing box becomes eligible for reservation
+ * journeys. Nothing here creates a login: the customer row it may create is
+ * unverified and keyed by the phone the guest typed.
+ *
+ * Anyone can type someone else's phone number, so an existing customer is
+ * never rewritten and a verified one (the owner already proved the number) is
+ * never linked from a booking form: it joins journeys by signing in.
+ */
+export const RESERVATION_CONSENT_TOPIC = 'reservations' as const
+export const RESERVATION_CONSENT_SOURCE = 'reservation_booking' as const
+
+type ConsentChannel = 'email' | 'sms'
+
+type ConsentGuest = Pick<
+	RsvGuestRow,
+	'id' | 'customerId' | 'marketingCustomerId' | 'phoneE164' | 'emailNorm'
+> &
+	Pick<RsvGuestRow, 'firstName' | 'lastName'>
+
+async function recordSubscriptions(
+	tx: DbOrTx,
+	customerId: string,
+	channels: readonly ConsentChannel[],
+	now: number,
+) {
+	const at = new Date(now)
+	for (const channel of channels) {
+		await tx
+			.insert(customerSubscriptions)
+			.values({
+				customerId,
+				topic: RESERVATION_CONSENT_TOPIC,
+				channel,
+				source: RESERVATION_CONSENT_SOURCE,
+				subscribedAt: at,
+				unsubscribedAt: null,
+				updatedAt: at,
+			})
+			.onConflictDoUpdate({
+				target: [
+					customerSubscriptions.customerId,
+					customerSubscriptions.topic,
+					customerSubscriptions.channel,
+				],
+				set: {
+					source: RESERVATION_CONSENT_SOURCE,
+					subscribedAt: at,
+					unsubscribedAt: null,
+					updatedAt: at,
+				},
+			})
+	}
+}
+
+/**
+ * Records explicit marketing consent given on a booking form for the address
+ * the guest profile holds. Returns the customer the journeys run for, or null
+ * when the booking is not eligible.
+ */
+export async function recordReservationMarketingConsent(
+	tx: DbOrTx,
+	params: {
+		guest: ConsentGuest
+		/** The consent covers only this address (already normalized). */
+		email: string | null
+		channels: readonly ConsentChannel[]
+		now: number
+	},
+): Promise<string | null> {
+	const { guest, channels, now } = params
+	if (channels.length === 0) return null
+	if (channels.includes('email')) {
+		// Consent only counts for the address the profile holds.
+		if (!params.email || guest.emailNorm !== params.email) return null
+	}
+
+	// A signed-in (verified) guest: the consent attaches to their own account.
+	if (guest.customerId) {
+		await recordSubscriptions(tx, guest.customerId, channels, now)
+		return guest.customerId
+	}
+
+	if (guest.marketingCustomerId) {
+		await recordSubscriptions(tx, guest.marketingCustomerId, channels, now)
+		return guest.marketingCustomerId
+	}
+
+	if (!guest.phoneE164) return null
+	const existing = await tx
+		.select({
+			id: customers.id,
+			email: customers.email,
+			phoneVerified: customers.phoneVerified,
+		})
+		.from(customers)
+		.where(eq(customers.phone, guest.phoneE164))
+		.get()
+
+	let customerId: string
+	if (existing) {
+		if (existing.phoneVerified) return null
+		const sameEmail = !existing.email || existing.email === guest.emailNorm
+		if (!sameEmail) return null
+		customerId = existing.id
+		if (!existing.email && guest.emailNorm) {
+			await tx
+				.update(customers)
+				.set({ email: guest.emailNorm, updatedAt: new Date(now) })
+				.where(
+					and(
+						eq(customers.id, existing.id),
+						eq(customers.phoneVerified, false),
+					),
+				)
+		}
+	} else {
+		const [created] = await tx
+			.insert(customers)
+			.values({
+				name: `${guest.firstName} ${guest.lastName}`.trim(),
+				email: guest.emailNorm,
+				phone: guest.phoneE164,
+				phoneVerified: false,
+			})
+			.returning({ id: customers.id })
+		customerId = created!.id
+	}
+
+	await tx
+		.update(rsvGuests)
+		.set({ marketingCustomerId: customerId, updatedAt: now })
+		.where(eq(rsvGuests.id, guest.id))
+	await recordSubscriptions(tx, customerId, channels, now)
+	return customerId
+}

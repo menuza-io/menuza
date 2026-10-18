@@ -5,6 +5,7 @@ import {
 	detectConflicts,
 	isValidTimeZone,
 	localToInstant,
+	policyRequiresPayment,
 	reflowDay,
 	resolveServices,
 	validateConfig,
@@ -25,6 +26,7 @@ import {
 	rsvAuditLog,
 	rsvBlocks,
 	rsvDayVersions,
+	rsvExperiences,
 	rsvFloorElements,
 	rsvHolds,
 	rsvLocationSettings,
@@ -399,6 +401,51 @@ export async function getLocationSettingsWithContext(
 	})
 }
 
+type PolicyReader = Pick<TenantDatabase, 'select'>
+
+/**
+ * Whether any policy that applies at the location (its default, or one on a
+ * service or experience) takes a deposit, a prepayment or a card guarantee.
+ */
+export async function locationUsesPaymentPolicy(
+	tx: PolicyReader,
+	locationId: string,
+	defaultPolicyId: string | null,
+): Promise<boolean> {
+	const [serviceRows, experienceRows] = await Promise.all([
+		tx
+			.select({ policyId: rsvServices.policyId })
+			.from(rsvServices)
+			.where(eq(rsvServices.locationId, locationId))
+			.all(),
+		tx
+			.select({ policyId: rsvExperiences.policyId })
+			.from(rsvExperiences)
+			.where(eq(rsvExperiences.locationId, locationId))
+			.all(),
+	])
+	const ids = new Set<string>()
+	if (defaultPolicyId) ids.add(defaultPolicyId)
+	for (const row of [...serviceRows, ...experienceRows]) {
+		if (row.policyId) ids.add(row.policyId)
+	}
+	if (ids.size === 0) return false
+	const policies = await queryInChunks([...ids], (chunk) =>
+		tx
+			.select({ kind: rsvPolicies.kind })
+			.from(rsvPolicies)
+			.where(
+				and(
+					inArray(rsvPolicies.id, chunk),
+					eq(rsvPolicies.locationId, locationId),
+					isNull(rsvPolicies.archivedAt),
+				),
+			)
+			.all(),
+	)
+	return policies.some((policy) => policyRequiresPayment(policy.kind))
+}
+
 export type UpdateLocationSettingsPatch = {
 	expectedVersion?: number
 	enabled?: boolean
@@ -494,6 +541,23 @@ export async function updateLocationSettings(
 					current: serializedCurrent,
 					settings: serializedCurrent,
 					version: current.version,
+				})
+			}
+
+			if (
+				patch.voiceMode === 'confirm_on_call' &&
+				(await locationUsesPaymentPolicy(
+					db,
+					locationId,
+					patch.defaultPolicyId !== undefined
+						? patch.defaultPolicyId
+						: current.defaultPolicyId,
+				))
+			) {
+				// Booking on the call cannot take a deposit or a card.
+				throw badRequest('invalid', 'invalid', {
+					fields: ['voiceMode'],
+					issues: [{ path: 'voiceMode', code: 'payment_policy_active' }],
 				})
 			}
 

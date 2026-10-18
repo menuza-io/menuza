@@ -112,13 +112,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		canWrite,
 		isImpersonated: impersonated,
 		waitlistEnabled: access.features.waitlist,
+		paymentsEnabled: access.features.payments,
 	}
 }
 
 export default function ReservationsSettingsRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, locations, canWrite, isImpersonated, waitlistEnabled } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		locations,
+		canWrite,
+		isImpersonated,
+		waitlistEnabled,
+		paymentsEnabled,
+	} = useLoaderData<typeof loader>()
 	const location = useLocation()
 	const [searchParams] = useSearchParams()
 
@@ -282,6 +289,16 @@ export default function ReservationsSettingsRoute() {
 			pathname: `${basePath}/messages`,
 			exact: false,
 		},
+		...(paymentsEnabled
+			? [
+					{
+						id: 'policies',
+						label: _(msg`Payment Policies`),
+						pathname: `${basePath}/policies`,
+						exact: false,
+					},
+				]
+			: []),
 		...(waitlistEnabled
 			? [
 					{

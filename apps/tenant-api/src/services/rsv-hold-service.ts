@@ -86,7 +86,9 @@ export function slotUnavailable(alternatives?: PublicAlternatives): HttpError {
 export function channelFor(
 	source: RsvHoldSource | 'web' | 'native',
 ): BookingChannel {
-	return source === 'native' ? 'native' : 'online'
+	if (source === 'native') return 'native'
+	// A voice hold follows the guest-channel rules like an online one.
+	return source === 'voice_agent' ? 'voice_agent' : 'online'
 }
 
 export async function insertOccupancyRows(
@@ -178,8 +180,12 @@ export async function createHold(params: {
 	areaPref?: string | null
 	/** Holds a seating of this published experience instead of a regular slot (cover caps apply). */
 	experienceId?: string | null
-	source: 'web' | 'native'
-	ipHash: string
+	source: 'web' | 'native' | 'voice_agent'
+	/** The phone-agent call that took the hold (voice holds only). */
+	voiceCallId?: string | null
+	/** Overrides the location's hold length (phone-agent holds live longer). */
+	holdMinutes?: number
+	ipHash: string | null
 	now?: number
 }): Promise<CreatedHold> {
 	const now = params.now ?? Date.now()
@@ -289,7 +295,8 @@ export async function createHold(params: {
 			}
 
 			const endAt = match.startAt + match.turnMin * 60_000
-			const expiresAt = now + state.settings.holdMinutes * 60_000
+			const expiresAt =
+				now + (params.holdMinutes ?? state.settings.holdMinutes) * 60_000
 			const holdId = `hld_${randomUUID()}`
 			await tx.insert(rsvHolds).values({
 				id: holdId,
@@ -304,6 +311,7 @@ export async function createHold(params: {
 				experienceId: params.experienceId ?? null,
 				comboId: match.combinationId,
 				source: params.source,
+				voiceCallId: params.voiceCallId ?? null,
 				status: 'active',
 				expiresAt,
 				ipHash: params.ipHash,

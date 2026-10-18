@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { laborFixture, type LaborFixture } from '../../tests/labor-harness.ts'
+import {
+	type DemandSource,
+	registerDemandSource,
+} from '../services/demand-sources.ts'
 import { registerOrderSource } from '../services/order-source.ts'
 import {
 	createFakeOrderSource,
@@ -167,6 +171,7 @@ describe('forecast against the schedule, and the sales source in the week footer
 				{
 					positionId: a.positionIds[0],
 					ordersPerLaborHour: 10,
+					standards: { orders: 10 },
 					neededHours: 4,
 					scheduledHours: 5,
 				},
@@ -362,6 +367,106 @@ describe('forecast against the schedule, and the sales source in the week footer
 			await scheduleWeek()
 			const week = await s.get(WEEK, { grants: SCH_EDIT })
 			expect(week.body).not.toHaveProperty('laborTarget')
+		})
+	})
+	describe('with a visits demand source', () => {
+		const VISITS_DAY = '2026-03-09'
+		/** 24 people booked for 19:xx next Monday, 12 typically seated at 19:xx. */
+		const visitsSource: DemandSource = {
+			id: 'visits',
+			unit: 'visits',
+			async loadBuckets(_db, scopeId, window) {
+				if (scopeId !== LOC_1) return []
+				// Eight past Mondays at 19:00 local, 12 people each.
+				const rows = []
+				for (let i = 0; i < 8; i++) {
+					const day = new Date(Date.UTC(2026, 0, 5 + 7 * i))
+						.toISOString()
+						.slice(0, 10)
+					const seconds = Math.floor(at(day, '19:00') / 1000)
+					if (seconds < window.fromSeconds || seconds >= window.toSeconds) {
+						continue
+					}
+					rows.push({
+						bucket: Math.floor((seconds - window.alignSeconds) / 900),
+						units: 12,
+					})
+				}
+				return rows
+			},
+			async loadBooked(_db, scopeId) {
+				return scopeId === LOC_1
+					? [{ date: VISITS_DAY, hour: 19, units: 24 }]
+					: []
+			},
+		}
+		afterEach(() => registerDemandSource({ id: 'visits', remove: true }))
+
+		it('reports booked units per source, with counts only, even before any standard is set', async () => {
+			registerDemandSource(visitsSource)
+			const res = await s.get(FORECAST, { grants: SCH_LABOR })
+			expect(res.status).toBe(200)
+			expect(res.body.sources).toEqual([
+				{ id: 'orders', unit: 'orders' },
+				{ id: 'visits', unit: 'visits' },
+			])
+			const slot = res.body.days[0].hours[19]
+			expect(slot.bookedBySource).toEqual({ orders: 0, visits: 24 })
+			expect(slot.unitsBySource).toEqual({ orders: 0, visits: 24 })
+			expect(res.body.configured).toBe(false)
+			// Counts only: no names, phones or emails anywhere in the payload.
+			expect(res.raw).not.toMatch(/name|phone|email|guest/i)
+		})
+
+		it('turns visits into people with the visits standard, summed with orders', async () => {
+			registerDemandSource(visitsSource)
+			await seedMondays()
+			const a = await s.staff()
+			const position = a.positionIds[0]!
+			const saved = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: {
+					orders: { [position]: 10 },
+					visits: { [position]: 8 },
+				},
+			})
+			expect(saved.status).toBe(200)
+			const res = await s.get(FORECAST, { grants: SCH_LABOR })
+			const monday = res.body.days[0]
+			// 19:00: 24 booked visits at 8 per person-hour need 3 people; no
+			// orders at that hour.
+			expect(monday.hours[19]).toMatchObject({
+				bookedBySource: { orders: 0, visits: 24 },
+				needed: 3,
+				short: 3,
+				status: 'short',
+			})
+			// 12:00: 20 orders at 10 need 2 people; visits add nothing there.
+			expect(monday.hours[12]).toMatchObject({ orders: 20, needed: 2 })
+			expect(monday.byPosition).toEqual([
+				expect.objectContaining({
+					positionId: position,
+					ordersPerLaborHour: 10,
+					standards: { orders: 10, visits: 8 },
+				}),
+			])
+		})
+
+		it('keeps the orders forecast identical when visits is registered', async () => {
+			await seedMondays()
+			const a = await s.staff()
+			await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				ordersPerLaborHour: { [a.positionIds[0]!]: 10 },
+			})
+			const before = await s.get(FORECAST, { grants: SCH_LABOR })
+			registerDemandSource(visitsSource)
+			const after = await s.get(FORECAST, { grants: SCH_LABOR })
+			const orderFigures = (body: any) =>
+				body.days.map((day: any) =>
+					day.hours.map((h: any) => [h.orders, h.booked, h.needed, h.status]),
+				)
+			expect(orderFigures(after.body)).toEqual(orderFigures(before.body))
 		})
 	})
 })

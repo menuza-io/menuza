@@ -6,6 +6,7 @@ import {
 	readReservationLabels,
 } from '~/lib/reservations/client'
 import { initReserveFlow } from '~/lib/reservations/flow'
+import { createPaymentApi } from '~/lib/reservations/pay'
 
 const root = document.getElementById('reserve-root')
 if (root) {
@@ -23,6 +24,9 @@ if (root) {
 		pageLocation: location,
 		manageHref: (token) =>
 			`${browserLocaleHref('/reserve/manage')}#t=${encodeURIComponent(token)}`,
+		bookHref: browserLocaleHref('/reserve'),
+		payApi: createPaymentApi(),
+		redirect: (url) => location.assign(url),
 		waitlistHref: browserLocaleHref('/reserve/waitlist'),
 		loadPrefill: loadCustomerPrefill,
 		signedIn: () => Boolean(getAccessToken()),

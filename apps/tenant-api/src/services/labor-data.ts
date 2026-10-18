@@ -18,6 +18,7 @@ import {
 	tipPoolSettings,
 	type SalesManualEntryRow,
 } from '@repo/tenant-db'
+import { getDemandSource } from './demand-sources.ts'
 import { getOrderSource, type OrderBucketRow } from './order-source.ts'
 import { type StaffDb } from './staff-audit.ts'
 
@@ -36,6 +37,29 @@ import { type StaffDb } from './staff-audit.ts'
 /** The sales source a scope starts with when a vertical registered an order source. */
 const ORDER_SOURCE_SALES_SOURCE = 'online_orders' as const
 
+/**
+ * Standards by demand unit. `orders` mirrors the older `orders_per_labor_hour`
+ * column, which older code still writes: it wins only while it holds something
+ * the per-unit column does not.
+ */
+function standardsOf(
+	row:
+		| {
+				ordersPerLaborHour: Record<string, number>
+				demandPerLaborHour: Record<string, Record<string, number>>
+		  }
+		| undefined,
+): Pick<LaborSettingsView, 'ordersPerLaborHour' | 'demandPerLaborHour'> {
+	const demand = { ...row?.demandPerLaborHour }
+	const legacy = row?.ordersPerLaborHour ?? {}
+	const orders =
+		demand.orders && Object.keys(demand.orders).length > 0
+			? demand.orders
+			: legacy
+	if (Object.keys(orders).length > 0) demand.orders = orders
+	return { ordersPerLaborHour: orders, demandPerLaborHour: demand }
+}
+
 export async function loadLaborSettings(
 	db: StaffDb,
 	scopeId: string,
@@ -51,7 +75,7 @@ export async function loadLaborSettings(
 		salesSource:
 			row?.salesSource ??
 			(getOrderSource() ? ORDER_SOURCE_SALES_SOURCE : DEFAULT_SALES_SOURCE),
-		ordersPerLaborHour: row?.ordersPerLaborHour ?? {},
+		...standardsOf(row),
 		configured: row !== undefined,
 		updatedAt: row?.updatedAt ?? null,
 	}
@@ -183,6 +207,36 @@ export async function loadOrderBuckets(
 		toSeconds,
 		alignSeconds: bucketAlignSeconds(workdayStartMinute),
 	})
+}
+
+/**
+ * Counted units of another demand source (for example `visits`) in the same
+ * rows the order buckets use, so one guide computation serves every unit. No
+ * money rides along. Empty when no such source is registered.
+ */
+export async function loadSourceBuckets(
+	db: StaffDb,
+	sourceId: string,
+	scopeId: string,
+	fromSeconds: number,
+	toSeconds: number,
+	workdayStartMinute = 0,
+): Promise<OrderBucketRow[]> {
+	const source = getDemandSource(sourceId)
+	if (!source) return []
+	const rows = await source.loadBuckets(db, scopeId, {
+		fromSeconds,
+		toSeconds,
+		alignSeconds: bucketAlignSeconds(workdayStartMinute),
+	})
+	return rows.map((row) => ({
+		bucket: row.bucket,
+		currency: '',
+		fulfillment: 'pickup' as const,
+		orders: row.units,
+		subtotalMinor: 0,
+		tipMinor: 0,
+	}))
 }
 
 /** The business date a bucket belongs to (by the bucket's first instant, see `bucketAlignSeconds`). */

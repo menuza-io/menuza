@@ -16,8 +16,9 @@ import { Input } from '@repo/ui/input'
 import { Item, ItemActions, ItemContent, ItemGroup } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { toast } from 'sonner'
+import { useScopeLabel } from '#app/components/staff/scope-wording-provider.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { saveSettings } from '#app/utils/staffing/labor-api.ts'
 import { describeLaborError } from '#app/utils/staffing/labor-errors.ts'
@@ -33,9 +34,43 @@ import {
 } from '#app/utils/staffing/labor-view.ts'
 import { type StaffClient } from '#app/utils/staffing/staff-client.ts'
 
+/** Standards typed as text, by position id. */
+type StandardsText = Record<string, string>
+
+function standardsText(
+	positions: readonly LaborPosition[],
+	standards: Readonly<Record<string, number>> | undefined,
+): StandardsText {
+	return Object.fromEntries(
+		positions.map((position) => [
+			position.id,
+			standards?.[position.id] !== undefined
+				? String(standards[position.id])
+				: '',
+		]),
+	)
+}
+
+/** The typed standards as numbers, or null when one is not a valid figure. */
+function readStandards(
+	positions: readonly LaborPosition[],
+	text: StandardsText,
+): Record<string, number> | null {
+	const next: Record<string, number> = {}
+	for (const position of positions) {
+		const typed = text[position.id] ?? ''
+		if (typed.trim() === '') continue
+		const value = readOrdersPerHour(typed)
+		if (value === null) return null
+		next[position.id] = value
+	}
+	return next
+}
+
 /**
- * Where a scope's sales come from, and how many orders one person in each
- * position handles in an hour. The source decides what the labor share is built
+ * Where a scope's sales come from, and how many orders (and, for a
+ * restaurant, how many guests) one person in each position handles in an
+ * hour. The source decides what the labor share is built
  * on (and whether it may be judged against a target); the standards feed the
  * "coverage against expected orders" strip in the schedule.
  */
@@ -55,35 +90,32 @@ export function LaborSettingsForm({
 	const { _, i18n } = useLingui()
 	const locale = i18n.locale
 	const [source, setSource] = useState<SalesSource>(settings.salesSource)
-	const [standards, setStandards] = useState<Record<string, string>>(
-		Object.fromEntries(
-			positions.map((position) => [
-				position.id,
-				settings.ordersPerLaborHour[position.id] !== undefined
-					? String(settings.ordersPerLaborHour[position.id])
-					: '',
-			]),
-		),
+	// Guests (covers) only exist where scopes are restaurant locations.
+	const { isLocation } = useScopeLabel()
+	const [standards, setStandards] = useState<StandardsText>(
+		standardsText(positions, settings.ordersPerLaborHour),
+	)
+	const [visitStandards, setVisitStandards] = useState<StandardsText>(
+		standardsText(positions, settings.demandPerLaborHour.visits),
 	)
 	const [problem, setProblem] = useState<string | null>(null)
 	const save = useStaffAction(describeLaborError)
 
 	async function submit() {
 		if (save.pending || !canEdit) return
-		const next: Record<string, number> = {}
-		for (const position of positions) {
-			const text = standards[position.id] ?? ''
-			if (text.trim() === '') continue
-			const value = readOrdersPerHour(text)
-			if (value === null) {
-				setProblem(
-					_(
-						t`Enter orders per hour from 0.5 to 200, with at most one decimal.`,
-					),
-				)
-				return
-			}
-			next[position.id] = value
+		const next = readStandards(positions, standards)
+		if (next === null) {
+			setProblem(
+				_(t`Enter orders per hour from 0.5 to 200, with at most one decimal.`),
+			)
+			return
+		}
+		const visits = isLocation ? readStandards(positions, visitStandards) : null
+		if (isLocation && visits === null) {
+			setProblem(
+				_(t`Enter covers per hour from 0.5 to 200, with at most one decimal.`),
+			)
+			return
 		}
 		setProblem(null)
 		const result = await save.run(() =>
@@ -91,6 +123,8 @@ export function LaborSettingsForm({
 				scopeId: settings.scopeId,
 				salesSource: source,
 				ordersPerLaborHour: next,
+				// Only a restaurant edits covers; other businesses keep what is saved.
+				...(visits ? { demandPerLaborHour: { visits } } : {}),
 			}),
 		)
 		if (result.ok) {
@@ -131,59 +165,49 @@ export function LaborSettingsForm({
 				</RadioGroup>
 			</FieldSet>
 
-			<FieldSet disabled={!canEdit}>
-				<FieldLegend>
-					<Trans>Orders one person handles in an hour</Trans>
-				</FieldLegend>
-				<FieldDescription>
+			<StandardsFieldSet
+				legend={<Trans>Orders one person handles in an hour</Trans>}
+				description={
 					<Trans>
 						The schedule compares the orders you usually get each hour with the
 						people you have scheduled. Set how many orders one person in a
 						position handles in an hour; leave a position empty to leave it out.
 					</Trans>
-				</FieldDescription>
-				{positions.length === 0 ? (
-					<FieldDescription>
-						<Trans>Add positions on the Team page first.</Trans>
-					</FieldDescription>
-				) : (
-					<ItemGroup className="gap-2">
-						{positions.map((position) => (
-							<Item key={position.id} variant="outline">
-								<ItemContent>
-									<Label
-										htmlFor={`standard-${position.id}`}
-										className="min-w-0 truncate"
-									>
-										{positionLabel(position, locale)}
-									</Label>
-								</ItemContent>
-								<ItemActions>
-									<Input
-										id={`standard-${position.id}`}
-										inputMode="decimal"
-										dir="ltr"
-										value={standards[position.id] ?? ''}
-										placeholder="–"
-										className="h-11 w-24 text-end tabular-nums md:h-8"
-										onChange={(event) => {
-											const value = event.target.value
-											setStandards((current) => ({
-												...current,
-												[position.id]: value,
-											}))
-											setProblem(null)
-										}}
-									/>
-									<span className="text-muted-foreground text-xs">
-										<Trans>orders/h</Trans>
-									</span>
-								</ItemActions>
-							</Item>
-						))}
-					</ItemGroup>
-				)}
-			</FieldSet>
+				}
+				unit={<Trans>orders/h</Trans>}
+				idPrefix="standard"
+				positions={positions}
+				values={standards}
+				locale={locale}
+				canEdit={canEdit}
+				onChange={(id, value) => {
+					setStandards((current) => ({ ...current, [id]: value }))
+					setProblem(null)
+				}}
+			/>
+
+			{isLocation ? (
+				<StandardsFieldSet
+					legend={<Trans>Covers one person handles in an hour</Trans>}
+					description={
+						<Trans>
+							Covers are the guests at your tables. The schedule adds the people
+							this needs for booked and typical covers to what orders need.
+							Leave a position empty to leave covers out for it.
+						</Trans>
+					}
+					unit={<Trans>covers/h</Trans>}
+					idPrefix="standard-visits"
+					positions={positions}
+					values={visitStandards}
+					locale={locale}
+					canEdit={canEdit}
+					onChange={(id, value) => {
+						setVisitStandards((current) => ({ ...current, [id]: value }))
+						setProblem(null)
+					}}
+				/>
+			) : null}
 
 			{problem || save.error ? (
 				<FieldError>{problem ?? save.error}</FieldError>
@@ -200,5 +224,68 @@ export function LaborSettingsForm({
 				</p>
 			)}
 		</form>
+	)
+}
+
+function StandardsFieldSet({
+	legend,
+	description,
+	unit,
+	idPrefix,
+	positions,
+	values,
+	locale,
+	canEdit,
+	onChange,
+}: {
+	legend: ReactNode
+	description: ReactNode
+	unit: ReactNode
+	idPrefix: string
+	positions: readonly LaborPosition[]
+	values: StandardsText
+	locale: string
+	canEdit: boolean
+	onChange: (positionId: string, value: string) => void
+}) {
+	return (
+		<FieldSet disabled={!canEdit}>
+			<FieldLegend>{legend}</FieldLegend>
+			<FieldDescription>{description}</FieldDescription>
+			{positions.length === 0 ? (
+				<FieldDescription>
+					<Trans>Add positions on the Team page first.</Trans>
+				</FieldDescription>
+			) : (
+				<ItemGroup className="gap-2">
+					{positions.map((position) => (
+						<Item key={position.id} variant="outline">
+							<ItemContent>
+								<Label
+									htmlFor={`${idPrefix}-${position.id}`}
+									className="min-w-0 truncate"
+								>
+									{positionLabel(position, locale)}
+								</Label>
+							</ItemContent>
+							<ItemActions>
+								<Input
+									id={`${idPrefix}-${position.id}`}
+									inputMode="decimal"
+									dir="ltr"
+									value={values[position.id] ?? ''}
+									placeholder="–"
+									className="h-11 w-24 text-end tabular-nums md:h-8"
+									onChange={(event) =>
+										onChange(position.id, event.target.value)
+									}
+								/>
+								<span className="text-muted-foreground text-xs">{unit}</span>
+							</ItemActions>
+						</Item>
+					))}
+				</ItemGroup>
+			)}
+		</FieldSet>
 	)
 }

@@ -1,0 +1,158 @@
+---
+import { getLocaleHref } from '@repo/common/site-locales'
+import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedReservations, fetchPublishedSitePage } from '~/lib/org'
+import {
+	fetchPublicExperiences,
+	partyText,
+	priceText,
+	safeImageUrl,
+	seatingPreview,
+	snippet,
+} from '~/lib/reservations/experiences'
+import { buildReservationLabels } from '~/lib/reservations/labels'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const defaultLocale = organization.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization.locale || defaultLocale
+const labels = buildReservationLabels(i18n)
+
+// Experiences exist only while `reservations.experiences` and online booking
+// are both on. Until then `/experiences` stays whatever the organization
+// published there, if anything. Only the public catalog is read here: no
+// guest data is fetched or rendered on the server.
+const gate = await fetchPublishedReservations({ slug: orgSlug, host: customHost })
+const experiences =
+	gate?.experiences
+		? await fetchPublicExperiences({
+				tenantApiUrl: getTenantApiUrl(organization.dataRegion),
+				origin: Astro.url.origin,
+				locale,
+			})
+		: null
+const cmsPage = experiences
+	? null
+	: await fetchPublishedSitePage({
+			slug: orgSlug,
+			host: customHost,
+			pageSlug: 'experiences',
+			lng: Astro.locals.requestedLocale,
+		})
+if (!experiences && !cmsPage) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const heading = labels.expTitle
+const subtitle = labels.expSubtitle.replace('{name}', organization.name)
+const reserveHref = getLocaleHref('/reserve', locale, locale, defaultLocale)
+const cards = (experiences ?? []).map((experience) => ({
+	experience,
+	href: getLocaleHref(
+		`/experiences/${encodeURIComponent(experience.slug)}`,
+		locale,
+		locale,
+		defaultLocale,
+	),
+	image: safeImageUrl(experience.imageUrl),
+	price: priceText(experience, labels, locale),
+	party: partyText(experience, labels),
+	text: snippet(experience.description),
+	seatings: seatingPreview(experience, locale),
+}))
+---
+
+{cmsPage ? (
+	<SitePage
+		organization={organization}
+		page={cmsPage}
+		title={`${cmsPage.seo?.title || cmsPage.title} - ${organization.name}`}
+		description={cmsPage.seo?.description || undefined}
+		noIndex={cmsPage.seo?.noIndex ?? false}
+	>
+		<RenderBlocks sections={cmsPage.sections} />
+	</SitePage>
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: 'experiences', title: heading, slug: 'experiences', isHomePage: false, sections: [] }}
+		title={`${heading} - ${organization.name}`}
+		description={subtitle}
+	>
+		<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+			<header class="pt-6 pb-6 sm:pt-10 sm:pb-8">
+				<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+					{heading}
+				</h1>
+				<p class="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{subtitle}</p>
+			</header>
+
+			{cards.length > 0 ? (
+				<ul class="grid gap-6 sm:grid-cols-2" data-experiences-list>
+					{cards.map((card) => (
+						<li class="surface flex flex-col overflow-hidden">
+							{card.image ? (
+								<img
+									src={card.image}
+									alt={labels.expImageAlt.replace('{name}', card.experience.name)}
+									loading="lazy"
+									class="aspect-video w-full object-cover"
+								/>
+							) : null}
+							<div class="flex flex-1 flex-col gap-3 p-5">
+								<h2 class="text-xl font-semibold text-foreground text-balance">{card.experience.name}</h2>
+								<p class="text-sm text-muted-foreground">
+									{card.party}
+									{card.experience.locationName ? ` · ${card.experience.locationName}` : ''}
+								</p>
+								{card.price ? <p class="price text-base font-medium text-foreground" dir="auto">{card.price}</p> : null}
+								{card.text ? <p class="text-sm text-muted-foreground wrap-anywhere">{card.text}</p> : null}
+								<div class="text-sm text-foreground">
+									<p class="font-medium">{labels.expNextSeatings}</p>
+									{card.seatings.length > 0 ? (
+										<ul class="mt-1 flex flex-col gap-1 text-muted-foreground">
+											{card.seatings.map((day) => (
+												<li>
+													<span>{day.label}</span>
+													<span>: </span>
+													<bdi dir="ltr">{day.times.join(', ')}</bdi>
+												</li>
+											))}
+										</ul>
+									) : (
+										<p class="mt-1 text-muted-foreground">{labels.expNoSeatings}</p>
+									)}
+								</div>
+								<a
+									href={card.href}
+									class="focus-ring mt-auto inline-flex h-11 w-fit items-center justify-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+								>
+									{labels.expViewDetails}
+									<span class="sr-only">: {card.experience.name}</span>
+								</a>
+							</div>
+						</li>
+					))}
+				</ul>
+			) : (
+				<div class="surface flex flex-col gap-3 px-6 py-10">
+					<p class="text-base font-semibold text-foreground">{labels.expEmptyTitle}</p>
+					<p class="text-sm text-muted-foreground">{labels.expEmptyBody}</p>
+					<a href={reserveHref} class="focus-ring w-fit text-sm font-medium text-primary underline underline-offset-4">
+						{labels.expBookTable}
+					</a>
+				</div>
+			)}
+		</div>
+	</SitePage>
+)}

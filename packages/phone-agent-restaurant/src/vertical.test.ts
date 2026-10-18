@@ -22,6 +22,7 @@ import {
 	trainingRuleCategoryIds,
 	type TrainingRule,
 	validateFlowGraph,
+	type VerticalActionResult,
 	verticalKeyterms,
 	type VerticalToolContext,
 	websitePathFor,
@@ -177,14 +178,25 @@ function toolContext(
 		url: 'https://luigis.example/menu',
 		shownOnScreen: false,
 	}))
+	const action = vi.fn(
+		async (
+			ignoredName: string,
+			ignoredInput: unknown,
+		): Promise<VerticalActionResult> => ({
+			ok: false,
+			reason: 'unavailable',
+			explanation: 'No actions in this test.',
+		}),
+	)
 	return {
 		sendLink,
+		action,
 		context: {
 			...contextAt(time),
 			state: createRestaurantCallState(),
 			channel: 'phone' as const,
 			callerPhone: '+15550000000',
-			services: { sendLink },
+			services: { sendLink, action },
 			...overrides,
 		},
 	}
@@ -241,6 +253,7 @@ describe('restaurant definitions', () => {
 	it('defaults upsells and order read-backs on', () => {
 		expect(defaultSettingsFor(restaurantVertical).vertical).toEqual({
 			upsellsEnabled: true,
+			reservationBooking: false,
 			ordering: {
 				excludedCategoryIds: [],
 				readBackSummary: true,
@@ -435,6 +448,267 @@ describe('restaurant tools', () => {
 			error: 'The order is empty. Take the order first.',
 		})
 		expect(sendLink).not.toHaveBeenCalled()
+	})
+})
+
+describe('restaurant reservation tools', () => {
+	function bookingContext(
+		overrides: Partial<ReturnType<typeof toolContext>['context']> = {},
+		enabled = { toggle: true, available: true },
+	) {
+		const base = toolContext('12:00', overrides)
+		const context = {
+			...base.context,
+			data: {
+				...base.context.data,
+				reservations: { available: enabled.available },
+			},
+			verticalSettings: {
+				...base.context.verticalSettings,
+				reservationBooking: enabled.toggle,
+			},
+		}
+		return { ...base, context }
+	}
+	const names = (context: ReturnType<typeof contextAt>) =>
+		restaurantVertical.tools!(context).map((tool) => tool.name)
+
+	it('hides the booking tools and keeps request capture unless both switches are on', () => {
+		for (const enabled of [
+			{ toggle: false, available: true },
+			{ toggle: true, available: false },
+			{ toggle: false, available: false },
+		]) {
+			const { context } = bookingContext({}, enabled)
+			expect(names(context)).not.toContain('check_table_availability')
+			expect(names(context)).not.toContain('book_table')
+			const prompt = buildAgentInstructions(
+				promptContextFor(restaurantVertical, context),
+			)
+			expect(prompt).toContain('then save it with record_request')
+			expect(prompt).not.toContain('check_table_availability')
+		}
+	})
+
+	it('offers the booking tools and switches the prompt when both switches are on', () => {
+		const { context } = bookingContext()
+		expect(names(context)).toEqual(
+			expect.arrayContaining(['check_table_availability', 'book_table']),
+		)
+		const prompt = buildAgentInstructions(
+			promptContextFor(restaurantVertical, context),
+		)
+		expect(prompt).toContain('call check_table_availability')
+		expect(prompt).toContain('never say it is confirmed before that')
+		expect(prompt).toContain("you can't verify who is calling")
+		expect(prompt).toContain('record_request (type reservation)')
+	})
+
+	it('checks availability through reservations.availability and never exposes guest data', async () => {
+		const { context, action } = bookingContext()
+		action.mockResolvedValueOnce({
+			ok: true,
+			data: {
+				mode: 'hold_link',
+				slots: [
+					{ localTime: '19:00', partySizeFits: true, requiresPayment: false },
+					{ localTime: '19:30', partySizeFits: true, requiresPayment: true },
+				],
+			},
+		})
+		const result = await toolNamed(context, 'check_table_availability').execute(
+			{ date: '2025-01-17', time: '19:00', partySize: 4 },
+			context,
+		)
+		expect(action).toHaveBeenCalledWith('reservations.availability', {
+			date: '2025-01-17',
+			time: '19:00',
+			partySize: 4,
+			locationId: 'loc_1',
+		})
+		expect(result).toMatchObject({
+			available: true,
+			slots: [
+				{ localTime: '19:00', say: '7:00 pm', needsDeposit: false },
+				{ localTime: '19:30', say: '7:30 pm', needsDeposit: true },
+			],
+		})
+		expect(context.state.bookingMode).toBe('hold_link')
+	})
+
+	it('falls back to a request when availability fails', async () => {
+		const { context, action } = bookingContext()
+		action.mockResolvedValueOnce({
+			ok: false,
+			reason: 'rate_limited',
+			explanation: 'Too many checks.',
+		})
+		const result = (await toolNamed(
+			context,
+			'check_table_availability',
+		).execute({ date: '2025-01-17', partySize: 2 }, context)) as {
+			error: string
+		}
+		expect(result.error).toContain('Too many checks.')
+		expect(result.error).toContain('record_request with type reservation')
+	})
+
+	it('holds the table and texts the /reserve link by default', async () => {
+		const { context, action, sendLink } = bookingContext()
+		action.mockResolvedValueOnce({
+			ok: true,
+			data: { held: true, holdMinutes: 15, resumeFragment: 'h=abc123' },
+		})
+		const result = await toolNamed(context, 'book_table').execute(
+			{
+				date: '2025-01-17',
+				time: '19:30',
+				partySize: 4,
+				firstName: 'Sam',
+			},
+			context,
+		)
+		expect(action).toHaveBeenCalledWith('reservations.hold', {
+			locationId: 'loc_1',
+			slot: { date: '2025-01-17', localTime: '19:30' },
+			partySize: 4,
+			firstName: 'Sam',
+		})
+		expect(sendLink).toHaveBeenCalledWith({
+			path: '/reserve',
+			payload: {},
+			fragment: 'h=abc123',
+			phone: null,
+		})
+		expect(result).toMatchObject({ held: true, linkSent: true })
+		// The token never reaches the model.
+		expect(JSON.stringify(result)).not.toContain('abc123')
+		expect(context.state.booking).toEqual({
+			outcome: 'held',
+			partySize: 4,
+			date: '2025-01-17',
+			localTime: '19:30',
+		})
+	})
+
+	it('books directly in confirm-on-call mode and falls back to hold and link when not enabled', async () => {
+		const { context, action, sendLink } = bookingContext()
+		context.state.bookingMode = 'confirm_on_call'
+		action.mockResolvedValueOnce({ ok: true, data: { booked: true } })
+		const args = {
+			date: '2025-01-17',
+			time: '19:30',
+			partySize: 2,
+			firstName: 'Sam',
+			lastName: 'Lee',
+		}
+		const booked = await toolNamed(context, 'book_table').execute(args, context)
+		expect(action).toHaveBeenCalledWith('reservations.book', {
+			locationId: 'loc_1',
+			slot: { date: '2025-01-17', localTime: '19:30' },
+			partySize: 2,
+			firstName: 'Sam',
+			lastName: 'Lee',
+		})
+		expect(booked).toMatchObject({ booked: true })
+		expect(sendLink).not.toHaveBeenCalled()
+		expect(context.state.booking?.outcome).toBe('booked')
+
+		// A deposit policy turns direct booking off: hold and link instead.
+		context.state.booking = null
+		action
+			.mockResolvedValueOnce({
+				ok: false,
+				reason: 'not_enabled',
+				explanation: 'Needs a deposit.',
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				data: { held: true, resumeFragment: 'h=zzz' },
+			})
+		const held = await toolNamed(context, 'book_table').execute(args, context)
+		expect(held).toMatchObject({ held: true, linkSent: true })
+		expect(sendLink).toHaveBeenCalledTimes(1)
+	})
+
+	it('runs dry on test calls: no link, nothing recorded', async () => {
+		const { context, action, sendLink } = bookingContext({
+			channel: 'web_test',
+		})
+		action.mockResolvedValueOnce({
+			ok: true,
+			data: { held: true, simulated: true },
+		})
+		const result = await toolNamed(context, 'book_table').execute(
+			{ date: '2025-01-17', time: '19:30', partySize: 2, firstName: 'Sam' },
+			context,
+		)
+		expect(result).toMatchObject({ held: true, simulated: true })
+		expect(sendLink).not.toHaveBeenCalled()
+		expect(context.state.booking).toBeNull()
+	})
+
+	it('reports a failed hold as a request fallback and a failed text without claiming a booking', async () => {
+		const { context, action, sendLink } = bookingContext()
+		const args = {
+			date: '2025-01-17',
+			time: '19:30',
+			partySize: 2,
+			firstName: 'Sam',
+		}
+		action.mockResolvedValueOnce({
+			ok: false,
+			reason: 'conflict',
+			explanation: 'That time was just taken.',
+		})
+		const taken = (await toolNamed(context, 'book_table').execute(
+			args,
+			context,
+		)) as { error: string }
+		expect(taken.error).toContain('That time was just taken.')
+		expect(taken.error).toContain('record_request')
+		expect(context.state.booking).toBeNull()
+
+		action.mockResolvedValueOnce({
+			ok: true,
+			data: { held: true, resumeFragment: 'h=q' },
+		})
+		sendLink.mockResolvedValueOnce({
+			ok: false,
+			reason: 'text_limit',
+			explanation: 'No more texts.',
+		})
+		const noText = (await toolNamed(context, 'book_table').execute(
+			args,
+			context,
+		)) as { error: string }
+		expect(noText.error).toContain('not sent')
+		expect(context.state.booking).toBeNull()
+	})
+
+	it('classifies a call that ran a booking tool as a reservation and summarizes without the name', () => {
+		expect(
+			classifyCallPurpose(restaurantVertical, {
+				declaredPurpose: null,
+				requests: [],
+				toolsUsed: new Set(['check_table_availability']),
+				linkSent: false,
+				menuChoices: [],
+				state: createRestaurantCallState(),
+			}),
+		).toBe('reservation')
+		const state = createRestaurantCallState()
+		state.booking = {
+			outcome: 'held',
+			partySize: 4,
+			date: '2026-10-23',
+			localTime: '19:30',
+		}
+		const lines = restaurantVertical.summarizeCall!({
+			state,
+			formatPrice: (cents: number) => `$${cents / 100}`,
+		})
+		expect(lines).toEqual(['Held a table for 4 on Fri 7:30 pm.'])
 	})
 })
 

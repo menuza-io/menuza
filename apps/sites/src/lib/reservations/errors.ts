@@ -22,6 +22,8 @@ export type ReservationErrorKey =
 	| 'errorWaitlistLinkInvalid'
 	| 'errorNotifyClosed'
 	| 'errorNotifyLimit'
+	| 'errorPolicyRequired'
+	| 'errorPaymentUnavailable'
 	| 'errorNetwork'
 	| 'errorGeneric'
 
@@ -43,6 +45,8 @@ const BY_CODE: Record<string, ReservationErrorKey> = {
 	already_on_waitlist: 'errorWaitlistDuplicate',
 	waitlist_full: 'errorWaitlistFull',
 	too_many_active_requests: 'errorNotifyLimit',
+	policy_required: 'errorPolicyRequired',
+	policy_unavailable: 'errorPaymentUnavailable',
 }
 
 /** Chooses which localized message to show; the server stays authoritative. */

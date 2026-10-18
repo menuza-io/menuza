@@ -4,16 +4,17 @@
  * `POST /resources/sites/reservation/status` with the same strict body as the
  * checkout route. The App performs the trusted provider lookup, pushes any
  * terminal state to the org's region and reports the region's view. A redirect
- * alone never marks a payment paid. Authenticated with `INTERNAL_COMMAND_TOKEN`.
+ * alone never marks a payment paid. Authenticated with `SITES_RESERVATION_PAYMENT_TOKEN`
+ * (never INTERNAL_COMMAND_TOKEN).
  */
 
 import { reservationCheckoutRequestSchema } from '@repo/reservations'
 import { type ActionFunctionArgs } from 'react-router'
-import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import {
 	getReservationPaymentStatus,
 	logReservationPaymentFailure,
 } from '#app/utils/reservations/payments.server.ts'
+import { requireSitesReservationPaymentAuth } from '#app/utils/reservations/sites-payment-auth.server.ts'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 
@@ -22,11 +23,9 @@ export async function action({ request }: ActionFunctionArgs) {
 		return Response.json({ error: 'method_not_allowed' }, { status: 405 })
 	}
 	try {
-		await requireInternalCommandAuth(request)
+		requireSitesReservationPaymentAuth(request)
 	} catch (error) {
-		if (error instanceof Response && error.status === 302) {
-			return Response.json({ error: 'unauthorized' }, { status: 401 })
-		}
+		if (error instanceof Response) return error
 		throw error
 	}
 

@@ -102,6 +102,7 @@
     "@repo/phone-agent": "*",
     "@repo/phone-agent-restaurant": "*",
     "@repo/reports": "*",
+    "@repo/reservations": "*",
     "@repo/seo": "*",
     "@repo/staffing": "*",
     "@repo/staffing-restaurant": "*",

@@ -124,3 +124,23 @@ tools, and honors `rejectDuplicates` and `blockedDuringTransfer`.
    vertical where the worker and App pick one by id.
 4. Keep business-type words in your package; the core vocabulary test rejects
    them.
+
+## Named actions (`services.action`)
+
+A vertical tool can run a named action on the regional tenant-api with
+`context.services.action(name, input)`. It returns `{ ok: true, data }` or
+`{ ok: false, reason, explanation }` with `reason` one of `unavailable`,
+`rate_limited`, `not_enabled`, `invalid`, `conflict`; it never throws. The
+worker posts `{ orgId, callId, scopeId, channel, input }` to
+`POST /api/voice/actions/:name` (`VOICE_AGENT_TOKEN`). tenant-api resolves the
+organization itself, refuses non-US organizations (404), finished calls (409),
+and counts a per-call cap in `voice_call_actions`. Test calls (`web_test`) run
+dry. Register actions with `registerVoiceAction` in both entry points
+(`apps/tenant-api/src/restaurant/reservations-voice-actions.ts` is the model).
+
+A texted link may carry a URL fragment (`sendLink({ fragment })`, for example
+`h=<token>`). tenant-api texts it only when the vertical's
+`registerVoiceLinkFragment` verifier confirms the fragment belongs to that call.
+The restaurant booking tools (`check_table_availability`, `book_table`) are
+offered only when the owner turns on "Book tables by phone" and the organization
+is US with `reservations.voice` on.

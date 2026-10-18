@@ -57,6 +57,7 @@ import {
 	enqueueReservationMessage,
 } from './rsv-message-queue.ts'
 import { enqueueManagerAlert } from './rsv-outbox.ts'
+import { queueReservationJourney } from '../restaurant/reservations-journeys.ts'
 import {
 	computeFeeReversal,
 	enqueuePaymentOutbox,
@@ -738,6 +739,13 @@ async function settleBookingPayment(
 				reservationId: reservation.id,
 				kind: 'payment_received',
 				paymentId: payment.id,
+			})
+		}
+		if (toStatus === 'booked') {
+			queueReservationJourney(helpers.afterCommit, {
+				orgId,
+				reservationId: reservation.id,
+				trigger: 'reservation_booked',
 			})
 		}
 	}

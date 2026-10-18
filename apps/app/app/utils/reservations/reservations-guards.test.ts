@@ -28,6 +28,11 @@ const RESOURCES = path.join(APP_DIR, 'routes/resources+')
 const WRAPPERS = ['requireReservationsAccess']
 const GUARD_CALL = new RegExp(`\\b(${WRAPPERS.join('|')})\\(`)
 
+const RESERVATIONS_SECTIONS_SOURCE = fs.readFileSync(
+	path.resolve(import.meta.dirname, 'sections.ts'),
+	'utf8',
+)
+
 function read(file: string) {
 	return fs.readFileSync(file, 'utf8')
 }
@@ -78,6 +83,9 @@ describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)',
 			'settings.sections.tsx',
 			'settings.messages.tsx',
 			'settings.waitlist.tsx',
+			'settings.policies.tsx',
+			'experiences.tsx',
+			'experiences.$id.tsx',
 			'waitlist.tsx',
 			'guests.tsx',
 			'guests.$guestId.tsx',
@@ -115,8 +123,28 @@ describe('reservations guards: reservations+ loaders and actions (VAL-FND-020)',
 			).toBe(true)
 		})
 	}
-	it('_layout.tsx renders the location picker only when locations.length > 1 (VAL-FND-022)', () => {
-		const layoutSource = read(path.join(RESERVATIONS_ROUTES, '_layout.tsx'))
+	it('the payment policies and experience routes demand their feature flags (VAL-EXP-013)', () => {
+		const policies = read(
+			path.join(RESERVATIONS_ROUTES, 'settings.policies.tsx'),
+		)
+		expect(policies).toMatch(/feature: 'payments'/)
+		for (const file of ['experiences.tsx', 'experiences.$id.tsx']) {
+			expect(read(path.join(RESERVATIONS_ROUTES, file))).toMatch(
+				/RESERVATIONS_SECTION_REQUIREMENTS\.experiences/,
+			)
+		}
+		expect(RESERVATIONS_SECTIONS_SOURCE).toMatch(
+			/id: 'experiences'[\s\S]*?feature: 'experiences'/,
+		)
+	})
+
+	it('the layout header renders the location picker only when locations.length > 1 (VAL-FND-022)', () => {
+		const layoutSource = read(
+			path.join(APP_DIR, 'components/reservations/header-controls.tsx'),
+		)
+		expect(read(path.join(RESERVATIONS_ROUTES, '_layout.tsx'))).toMatch(
+			/ReservationsHeaderControls/,
+		)
 		expect(layoutSource).toMatch(
 			/locations\.length\s*>\s*1\s*\?[\s\S]*?reservations-location-select/,
 		)
@@ -183,13 +211,22 @@ describe('reservation payment routes: authentication first (VAL-PAY-052)', () =>
 			const source = read(path.join(RESOURCES, file))
 			const body = exportedFunctionBody(source, 'action')
 			expect(body, 'no action').not.toBeNull()
+			// The Sites payment routes use a dedicated, synchronous guard that must
+			// run before any await; the others await their guard first.
+			const syncGuarded = file.startsWith('sites.reservation.')
 			const pattern = operatorRoutes.includes(file)
 				? /\brequireReservationsAccess\(/
-				: /\brequireInternalCommandAuth\(/
+				: syncGuarded
+					? /\brequireSitesReservationPaymentAuth\(/
+					: /\brequireInternalCommandAuth\(/
 			const guard = body!.search(pattern)
 			expect(guard, 'no guard call').toBeGreaterThanOrEqual(0)
 			const firstAwait = body!.indexOf('await ')
-			expect(body!.slice(firstAwait, firstAwait + 80)).toMatch(pattern)
+			if (syncGuarded) {
+				expect(firstAwait === -1 || guard < firstAwait).toBe(true)
+			} else {
+				expect(body!.slice(firstAwait, firstAwait + 80)).toMatch(pattern)
+			}
 			const before = body!.slice(0, guard)
 			expect(before).not.toMatch(/request\.(formData|json|text)\(/)
 			expect(before).not.toMatch(/\b(db|fetch)\b/)

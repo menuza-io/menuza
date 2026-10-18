@@ -16,6 +16,7 @@ import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
+import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import {
 	RequestsPanel,
 	RequestsTabs,
@@ -596,6 +597,11 @@ export default function ReservationsBookRoute() {
 													>
 														{label(RESERVATION_STATUS_LABELS, rsv.status)}
 													</Badge>
+													<PaymentBadge
+														paymentStatus={rsv.paymentStatus}
+														experience={Boolean(rsv.experienceId)}
+														className="ms-1"
+													/>
 													{rsv.courseStage && rsv.status === 'seated' ? (
 														<div className="text-muted-foreground mt-0.5 text-[11px]">
 															{label(COURSE_STAGE_LABELS, rsv.courseStage)}

@@ -85,6 +85,7 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	sections: <Trans>Sections</Trans>,
 	services: <Trans>Services</Trans>,
 	'special-days': <Trans>Special days</Trans>,
+	policies: <Trans>Payment policies</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.
@@ -102,6 +103,7 @@ const RECORD_LABELS: Record<string, ReactNode> = {
 	hiring: <Trans>Job post</Trans>,
 	applicants: <Trans>Applicant</Trans>,
 	timesheets: <Trans>Time card</Trans>,
+	experiences: <Trans>Experience</Trans>,
 }
 
 // Path prefixes with no page of their own. `notes/status` would be read as a

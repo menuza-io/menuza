@@ -8,6 +8,7 @@ import {
 import { and, eq } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
+import { queueReservationJourney } from '../restaurant/reservations-journeys.ts'
 import {
 	deactivateOccupancies,
 	insertOccupancyRows,
@@ -128,6 +129,11 @@ export async function approveReservationRequest(params: {
 				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
 				{ reservationId: current.id, kind: 'request_approved' },
 			)
+			queueReservationJourney(helpers.afterCommit, {
+				orgId: params.orgId,
+				reservationId: current.id,
+				trigger: 'reservation_booked',
+			})
 			return { reservationId: current.id }
 		},
 	)

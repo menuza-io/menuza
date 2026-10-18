@@ -23,6 +23,7 @@ import {
 	describeRestaurantLocation,
 	restaurantAvailability,
 } from './location.ts'
+import { describeBooking } from './booking.ts'
 import { cartSubtotal, flattenMenuItems } from './menu.ts'
 import { restaurantPrompt } from './prompt.ts'
 import {
@@ -35,6 +36,7 @@ import {
 	createRestaurantCallState,
 	type RestaurantCallState,
 	RestaurantHandoffPayloadSchema,
+	reservationBookingOn,
 	restaurantMenuPath,
 	restaurantTools,
 } from './tools.ts'
@@ -59,6 +61,12 @@ export function classifyRestaurantPurpose(
 	signals: PurposeSignals<RestaurantCallState | undefined>,
 ): CallPurpose | null {
 	if (signals.requests.includes('reservation')) return 'reservation'
+	if (
+		signals.toolsUsed.has('book_table') ||
+		signals.toolsUsed.has('check_table_availability')
+	) {
+		return 'reservation'
+	}
 	if ((signals.state?.cart.length ?? 0) > 0 || signals.linkSent) {
 		return 'ordering'
 	}
@@ -117,6 +125,7 @@ export const restaurantVertical: PhoneAgentVertical<
 			afterHoursMode: settings.afterHoursMode,
 			isOpen,
 			orderingOpen: data.orderingOpen,
+			reservationBooking: reservationBookingOn(data, verticalSettings),
 		}),
 	tools: restaurantTools,
 	createCallState: createRestaurantCallState,
@@ -135,10 +144,14 @@ export const restaurantVertical: PhoneAgentVertical<
 	classifyPurpose: classifyRestaurantPurpose,
 	inferPurpose: inferRestaurantPurpose,
 	summarizeCall({ state, formatPrice }) {
-		if (!state?.cart.length) return []
-		const count = state.cart.reduce((sum, line) => sum + line.quantity, 0)
-		return [
-			`Order: ${count} item${count === 1 ? '' : 's'}, ${formatPrice(cartSubtotal(state.cart))} before tax.`,
-		]
+		const lines: string[] = []
+		if (state?.booking) lines.push(`${describeBooking(state.booking)}.`)
+		if (state?.cart.length) {
+			const count = state.cart.reduce((sum, line) => sum + line.quantity, 0)
+			lines.push(
+				`Order: ${count} item${count === 1 ? '' : 's'}, ${formatPrice(cartSubtotal(state.cart))} before tax.`,
+			)
+		}
+		return lines
 	},
 }

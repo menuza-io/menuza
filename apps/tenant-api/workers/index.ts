@@ -4,6 +4,8 @@ import {
 	TENANT_ORG_ID_PATTERN,
 } from '@repo/tenant-db'
 import { createTenantApiApp } from '../src/app.ts'
+import { registerReservationsDemandSource } from '../src/restaurant/reservations-demand-source.ts'
+import { registerReservationVoiceActions } from '../src/restaurant/reservations-voice-actions.ts'
 import { registerRestaurantOrderSource } from '../src/restaurant/staffing-order-source.ts'
 import { organizationFromProvisionPayload } from '../src/lib/origin.ts'
 import {
@@ -37,6 +39,8 @@ export { TenantOrg, TenantRegistry }
 
 // Restaurant orders feed the demand guide, forecast, labor sales and tip pools.
 registerRestaurantOrderSource()
+registerReservationVoiceActions()
+registerReservationsDemandSource()
 
 const edgeApp = createTenantApiApp()
 

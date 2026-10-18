@@ -56,6 +56,30 @@ export function statusLabel(labels: ReservationLabels, status: string): string {
 	return key ? labels[key] : status
 }
 
+const PAYMENT_STATUS_KEYS: Record<string, keyof ReservationLabels> = {
+	paid: 'payStatusPaid',
+	guaranteed: 'payStatusGuaranteed',
+	pending: 'payStatusPending',
+	refund_pending: 'payStatusRefundPending',
+	refunded: 'payStatusRefunded',
+	partially_refunded: 'payStatusPartiallyRefunded',
+	fee_pending: 'payStatusFeePending',
+	fee_charged: 'payStatusFeeCharged',
+	fee_failed: 'payStatusFeeFailed',
+	review: 'payStatusReview',
+	disputed: 'payStatusDisputed',
+}
+
+/** The guest-facing word for a payment state, or `null` when there is nothing to say. */
+export function paymentStatusLabel(
+	labels: ReservationLabels,
+	status: string | null | undefined,
+): string | null {
+	if (!status || status === 'none') return null
+	const key = PAYMENT_STATUS_KEYS[status]
+	return key ? labels[key] : null
+}
+
 /** A labelled input with an inline error slot tied to it by `aria-describedby`. */
 export function field(options: {
 	id: string

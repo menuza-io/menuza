@@ -136,6 +136,11 @@ export function isSitesReservationsRoute(pathname: string) {
 	return slug === 'reserve' || slug.startsWith('reserve/')
 }
 
+export function isSitesExperiencesRoute(pathname: string) {
+	const slug = pathname.replace(/^\/+|\/+$/g, '')
+	return slug === 'experiences' || slug.startsWith('experiences/')
+}
+
 export function isSitesAppRoute(pathname: string) {
 	const slug = pathname.replace(/^\/+|\/+$/g, '')
 	if (APP_ROUTE_SLUGS.has(slug)) return true
@@ -143,7 +148,8 @@ export function isSitesAppRoute(pathname: string) {
 		isSitesShopRoute(pathname) ||
 		isSitesMenuRoute(pathname) ||
 		isSitesCareersRoute(pathname) ||
-		isSitesReservationsRoute(pathname)
+		isSitesReservationsRoute(pathname) ||
+		isSitesExperiencesRoute(pathname)
 	)
 }
 

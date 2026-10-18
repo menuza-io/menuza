@@ -7,6 +7,7 @@ import {
 	type WorkflowGraph,
 	type JourneyStatus,
 } from '@repo/marketing-workflow'
+import { isReservationJourneyTrigger } from '@repo/tenant-db/types/journey'
 import {
 	useLoaderData,
 	useNavigate,
@@ -26,6 +27,10 @@ import {
 	resolveEmailBrandingForOrg,
 	type OrganizationEmailBranding,
 } from '#app/utils/email-branding.server.ts'
+import {
+	reservationTriggerBlocked,
+	reservationTriggersEnabled,
+} from '#app/utils/marketing/reservation-triggers.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import {
 	ORG_PERMISSIONS,
@@ -107,6 +112,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return {
 		orgSlug,
+		reservationTriggers: await reservationTriggersEnabled(orgId),
 		journey: {
 			id: String(journey.id),
 			name: String(journey.name),
@@ -118,6 +124,22 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			edges,
 		},
 	}
+}
+
+async function currentTriggerType(
+	fetchTenant: Awaited<
+		ReturnType<typeof getOperatorTenantClient>
+	>['fetchTenant'],
+	journeyId: string,
+) {
+	const res = await fetchTenant(`/operator/journeys/${journeyId}`)
+	if (!res.ok) return null
+	const data = (await res.json().catch(() => null)) as {
+		journey?: { triggerType?: unknown }
+	} | null
+	return typeof data?.journey?.triggerType === 'string'
+		? data.journey.triggerType
+		: null
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -175,6 +197,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const triggerConfig =
 			((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
 		const serializedGraph = JSON.stringify(renderedGraph)
+
+		if (isReservationJourneyTrigger(triggerType)) {
+			const enabled = await reservationTriggersEnabled(orgId)
+			if (
+				reservationTriggerBlocked({
+					triggerType,
+					enabled,
+					currentTriggerType: enabled
+						? null
+						: await currentTriggerType(fetchTenant, journeyId),
+				})
+			) {
+				return { error: i18n._(t`Turn on Reservations to use this trigger`) }
+			}
+		}
 
 		const updateRes = await fetchTenant(`/operator/journeys/${journeyId}`, {
 			method: 'PUT',
@@ -286,7 +323,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function JourneyBuilderRoute() {
 	const { _ } = useLingui()
-	const { orgSlug, journey } = useLoaderData<typeof loader>()
+	const { orgSlug, journey, reservationTriggers } =
+		useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher()
 
@@ -355,6 +393,7 @@ export default function JourneyBuilderRoute() {
 				initialGraph={initialGraph}
 				journeyName={journey.name}
 				journeyStatus={journey.status}
+				reservationTriggers={reservationTriggers}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}

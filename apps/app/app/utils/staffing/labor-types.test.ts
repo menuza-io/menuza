@@ -85,10 +85,14 @@ describe('wire shapes', () => {
 			scopeId: 'loc-1',
 			salesSource: 'online_only',
 			ordersPerLaborHour: { cook: 12.5 },
+			demandPerLaborHour: { orders: { cook: 12.5 }, visits: { cook: 8 } },
 			configured: true,
 			updatedAt: 1,
 		}
 		expect(settingsSchema.parse(settings)).toEqual(settings)
+		// An older server sends no per-unit standards.
+		const { demandPerLaborHour: ignoredDemand, ...older } = settings
+		expect(settingsSchema.parse(older).demandPerLaborHour).toEqual({})
 		const entry: SalesEntryView = {
 			id: 'e1',
 			scopeId: 'loc-1',
@@ -170,6 +174,10 @@ describe('wire shapes', () => {
 			estimate: true,
 			method: 'median_orders_per_labor_hour',
 			source: 'online_orders',
+			sources: [
+				{ id: 'orders', unit: 'orders' },
+				{ id: 'visits', unit: 'visits' },
+			],
 			weeks: 8,
 			windowStart: '2026-01-05',
 			windowEnd: '2026-03-01',
@@ -182,6 +190,8 @@ describe('wire shapes', () => {
 						hour,
 						orders: 0,
 						booked: 0,
+						unitsBySource: { orders: 0, visits: 0 },
+						bookedBySource: { orders: 0, visits: 0 },
 						needed: 0,
 						scheduled: 0,
 						short: 0,
@@ -198,5 +208,53 @@ describe('wire shapes', () => {
 			],
 		}
 		expect(forecastSchema.parse(forecast)).toEqual(forecast)
+	})
+})
+
+describe('forecast payloads from before demand sources', () => {
+	it('parses a slot with no per-source figures', () => {
+		const slot = {
+			hour: 12,
+			orders: 5,
+			booked: 0,
+			needed: 1,
+			scheduled: 1,
+			short: 0,
+			surplus: 0,
+			status: 'ok' as const,
+		}
+		const parsed = forecastSchema.parse({
+			kind: 'forecast_gap',
+			estimate: true,
+			method: 'median_orders_per_labor_hour',
+			source: 'online_orders',
+			weeks: 8,
+			windowStart: '2026-01-05',
+			windowEnd: '2026-03-01',
+			timeZone: 'UTC',
+			configured: true,
+			days: [
+				{
+					date: '2026-03-09',
+					hours: [slot],
+					neededHours: 1,
+					scheduledHours: 1,
+					shortHours: 0,
+					surplusHours: 0,
+					unpositionedHours: 0,
+					byPosition: [
+						{
+							positionId: 'cook',
+							ordersPerLaborHour: 10,
+							neededHours: 1,
+							scheduledHours: 1,
+						},
+					],
+				},
+			],
+		})
+		expect(parsed.sources).toEqual([])
+		expect(parsed.days[0]!.hours[0]!.bookedBySource).toEqual({})
+		expect(parsed.days[0]!.byPosition[0]!.standards).toEqual({})
 	})
 })

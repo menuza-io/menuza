@@ -1,8 +1,8 @@
-import { Trans, msg } from '@lingui/macro'
+import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { isImpersonating } from '@repo/auth'
 import { asc, db, desc, eq, OrganizationLocation } from '@repo/database'
-import { Input } from '@repo/ui/input'
-import { Label } from '@repo/ui/label'
+import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
 import { WorkspacePage } from '@repo/ui/workspace'
 import { useCallback, useState } from 'react'
 import {
@@ -14,6 +14,10 @@ import {
 	useSearchParams,
 } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import {
+	ReservationsHeaderControls,
+	reservationsHeaderShowsDate,
+} from '#app/components/reservations/header-controls.tsx'
 import { ReservationsClientProvider } from '#app/components/reservations/reservations-client-provider.tsx'
 import { useLiveNow } from '#app/hooks/use-live-now.ts'
 import {
@@ -48,8 +52,12 @@ export type ReservationsLayoutContext = {
 	selectedDate: string
 	/** Business date "now" falls on for the active location (time zone and day start). */
 	todayDate: string
-	selectedService: string
 	nav: ReservationsNavAccess
+	/**
+	 * Whether payment rows show in the detail sheet and whether this member may
+	 * act on them. Flags and booleans only; the rows are read in the browser.
+	 */
+	payments: { enabled: boolean; canAct: boolean }
 	/** Screens report the active location's day start once its feed has loaded. */
 	reportServiceClock: (clock: {
 		locationId: string
@@ -101,17 +109,30 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		grants: access.grants,
 	})
 
+	const impersonated = await isImpersonating(request)
+	const payments = {
+		enabled: access.features.payments,
+		canAct:
+			!impersonated &&
+			access.features.payments &&
+			access.grants.includes(
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+			),
+	}
+
 	return {
 		orgSlug: access.organizationSlug,
 		locations: scopedLocations,
 		nav,
+		payments,
 		nowMs: Date.now(),
 	}
 }
 
 export default function ReservationsLayout() {
 	const { _ } = useLingui()
-	const { orgSlug, locations, nav, nowMs } = useLoaderData<typeof loader>()
+	const { orgSlug, locations, nav, payments, nowMs } =
+		useLoaderData<typeof loader>()
 	const location = useLocation()
 	const [searchParams, setSearchParams] = useSearchParams()
 
@@ -152,7 +173,6 @@ export default function ReservationsLayout() {
 	})
 	const todayDate = liveNow.businessDate
 	const selectedDate = searchParams.get('date') ?? todayDate
-	const selectedService = searchParams.get('service') ?? 'all'
 
 	const updateParam = (key: string, value: string) => {
 		const next = new URLSearchParams(searchParams)
@@ -230,8 +250,8 @@ export default function ReservationsLayout() {
 		activeLocationId,
 		selectedDate,
 		todayDate,
-		selectedService,
 		nav,
+		payments,
 		reportServiceClock,
 	}
 
@@ -271,77 +291,13 @@ export default function ReservationsLayout() {
 							})}
 						</nav>
 
-						<div className="flex flex-wrap items-center gap-3">
-							{locations.length > 1 ? (
-								<div className="flex items-center gap-2">
-									<Label
-										htmlFor="reservations-location-select"
-										className="text-muted-foreground text-xs font-medium"
-									>
-										<Trans>Location</Trans>
-									</Label>
-									<select
-										id="reservations-location-select"
-										aria-label={_(msg`Location`)}
-										value={selectedLocationId}
-										onChange={(event) =>
-											updateParam('locationId', event.target.value)
-										}
-										className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-									>
-										{locations.length === 0 ? (
-											<option value="all">{_(msg`Main location`)}</option>
-										) : (
-											locations.map((loc) => (
-												<option key={loc.id} value={loc.id}>
-													{loc.name}
-												</option>
-											))
-										)}
-									</select>
-								</div>
-							) : null}
-
-							<div className="flex items-center gap-2">
-								<Label
-									htmlFor="reservations-date-input"
-									className="text-muted-foreground text-xs font-medium"
-								>
-									<Trans>Date</Trans>
-								</Label>
-								<Input
-									id="reservations-date-input"
-									aria-label={_(msg`Date`)}
-									type="date"
-									value={selectedDate}
-									onChange={(event) => updateParam('date', event.target.value)}
-									className="h-9 w-40"
-								/>
-							</div>
-
-							<div className="flex items-center gap-2">
-								<Label
-									htmlFor="reservations-service-select"
-									className="text-muted-foreground text-xs font-medium"
-								>
-									<Trans>Service</Trans>
-								</Label>
-								<select
-									id="reservations-service-select"
-									aria-label={_(msg`Service`)}
-									value={selectedService}
-									onChange={(event) =>
-										updateParam('service', event.target.value)
-									}
-									className="border-input bg-background text-foreground h-9 rounded-md border px-2.5 text-sm"
-								>
-									<option value="all">{_(msg`All services`)}</option>
-									<option value="lunch">{_(msg`Lunch`)}</option>
-									<option value="dinner">{_(msg`Dinner`)}</option>
-									<option value="brunch">{_(msg`Brunch`)}</option>
-								</select>
-							</div>
-						</div>
+						<ReservationsHeaderControls
+							locations={locations}
+							selectedLocationId={selectedLocationId}
+							selectedDate={selectedDate}
+							showDate={reservationsHeaderShowsDate(location.pathname, orgSlug)}
+							onChange={updateParam}
+						/>
 					</div>
 
 					<Outlet context={layoutContext} />

@@ -1,4 +1,5 @@
 import { type ReservationsApi } from './api.ts'
+import { createAttemptKeys } from './attempt.ts'
 import {
 	buildBookingFields,
 	type DetailsErrors,
@@ -18,6 +19,8 @@ import {
 	offersNotifyMe,
 	offersWaitlist,
 } from './notify-me-form.ts'
+import { type PayApi } from './pay.ts'
+import { buildPolicyPanel, createPaymentStep } from './payment-step.ts'
 import {
 	addDaysIso,
 	formatClock,
@@ -31,6 +34,8 @@ import {
 import {
 	type Availability,
 	type BookingResponse,
+	type HoldPolicy,
+	type PublicExperience,
 	type PublicSlot,
 	type ReservationLocation,
 	type ReservationsConfig,
@@ -76,6 +81,12 @@ export type FlowDeps = {
 	history?: Pick<History, 'replaceState' | 'state'>
 	pageLocation?: Pick<Location, 'hash' | 'pathname' | 'search'>
 	manageHref: (token: string) => string
+	/** The booking page for this site and locale (the way back from a lapsed payment). */
+	bookHref?: string
+	/** Same-origin payment forwarders (`/api/reservations/payment`). */
+	payApi?: PayApi
+	/** Leaves for the hosted payment page. */
+	redirect?: (url: string) => void
 	/** The waitlist page for this site and locale; omitted when the page does not exist. */
 	waitlistHref?: string
 	loadPrefill: () => Promise<{
@@ -141,11 +152,37 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 
 	const query = new URLSearchParams(deps.search)
 	const firstLocation = config.locations[0]!
+	let experience: PublicExperience | null = null
+	const experienceParam = query.get('experience')
+	if (experienceParam) {
+		try {
+			const catalog = await api.experiences(locale)
+			experience =
+				catalog.experiences.find((item) => item.id === experienceParam) ?? null
+		} catch {
+			experience = null
+		}
+		const place = experience
+			? config.locations.find((item) => item.id === experience!.locationId)
+			: null
+		if (!experience || !place) {
+			renderExperienceUnavailable(
+				root,
+				labels,
+				deps.bookHref ?? deps.pageLocation?.pathname ?? '/reserve',
+			)
+			return
+		}
+	}
 	let location: ReservationLocation =
+		(experience
+			? config.locations.find((item) => item.id === experience!.locationId)
+			: null) ??
 		config.locations.find((item) => item.id === query.get('location')) ??
 		firstLocation
 	let partyValue: number | typeof LARGE = clampParty(
-		Number(query.get('party')) || Math.min(2, location.partySize.max),
+		Number(query.get('party')) ||
+			Math.max(partyMin(), Math.min(2, maxOnline(location))),
 	)
 	const serverNow = Date.parse(config.now) || now()
 	let date =
@@ -154,24 +191,32 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 
 	let hold: ActiveHold | null = null
 	let holdTimer: ReturnType<typeof setInterval> | undefined
-	let attemptKey: string | null = null
+	const attempts = createAttemptKeys()
+	let activePolicy: HoldPolicy | null = null
+	let policyPanel: ReturnType<typeof buildPolicyPanel> | null = null
+	let clockOffsetMs = 0
 	let searchSeq = 0
 	let step: Step = 'search'
 
 	function maxOnline(place: ReservationLocation) {
-		return place.partySize.max
+		return experience
+			? Math.min(place.partySize.max, experience.partyMax)
+			: place.partySize.max
+	}
+	function partyMin() {
+		return experience
+			? Math.max(location.partySize.min, experience.partyMin)
+			: location.partySize.min
 	}
 	function clampParty(value: number): number | typeof LARGE {
 		if (
+			!experience &&
 			value > maxOnline(location) &&
 			location.largeParty.mode !== 'disabled'
 		) {
 			return LARGE
 		}
-		return Math.min(
-			Math.max(value, location.partySize.min),
-			maxOnline(location),
-		)
+		return Math.min(Math.max(value, partyMin()), maxOnline(location))
 	}
 	function validDate(value: string | null) {
 		return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null
@@ -222,7 +267,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		labels.fieldLocation,
 		locationSelect,
 	)
-	locationField.hidden = config.locations.length < 2
+	locationField.hidden = config.locations.length < 2 || experience !== null
 	searchForm.append(
 		locationField,
 		selectField('rsv-party', labels.fieldParty, partySelect),
@@ -240,8 +285,17 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 	zoneBox.hidden = true
 	const publicNote = el('p', 'text-sm text-muted-foreground')
 	publicNote.hidden = true
+	const experienceNote = el('p', 'text-base font-medium text-foreground')
+	experienceNote.hidden = !experience
+	if (experience) {
+		experienceNote.textContent = fillTemplate(labels.expFlowHeading, {
+			name: experience.name,
+		})
+		experienceNote.dataset.experience = experience.id
+	}
 	searchCard.append(
 		findHeading,
+		experienceNote,
 		searchForm,
 		searchChallengeBox,
 		zoneBox,
@@ -305,16 +359,12 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 	// Search controls ---------------------------------------------------------
 	function fillPartyOptions() {
 		partySelect.replaceChildren()
-		for (
-			let size = location.partySize.min;
-			size <= maxOnline(location);
-			size++
-		) {
+		for (let size = partyMin(); size <= maxOnline(location); size++) {
 			const option = el('option', undefined, guestsLabel(labels, size))
 			option.value = String(size)
 			partySelect.append(option)
 		}
-		if (location.largeParty.mode !== 'disabled') {
+		if (!experience && location.largeParty.mode !== 'disabled') {
 			const option = el('option', undefined, labels.largerParty)
 			option.value = LARGE
 			partySelect.append(option)
@@ -346,8 +396,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 			config.locations.find((item) => item.id === locationSelect.value) ??
 			location
 		const chosen = partySelect.value
-		partyValue =
-			chosen === LARGE ? LARGE : Number(chosen) || location.partySize.min
+		partyValue = chosen === LARGE ? LARGE : Number(chosen) || partyMin()
 		date = dateInput.value || date
 	}
 
@@ -501,6 +550,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 				group.append(chips)
 				resultsCard.append(group)
 			}
+			appendSoldOut(result)
 			const preferred =
 				preferredMin === null
 					? null
@@ -517,6 +567,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 
 		const reason = emptyReason(result)
 		resultsCard.append(el('p', 'font-medium text-foreground', reason.title))
+		appendSoldOut(result)
 		if (reason.body)
 			resultsCard.append(el('p', 'text-sm text-muted-foreground', reason.body))
 
@@ -571,6 +622,34 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		renderNoSlotOffers(result)
 	}
 
+	/** Experience seatings that exist but cannot take this party, shown disabled. */
+	function appendSoldOut(result: Availability) {
+		const soldOut = result.soldOut ?? []
+		if (soldOut.length === 0) return
+		const group = el('div', 'flex flex-wrap gap-2')
+		group.dataset.soldOut = 'true'
+		for (const item of soldOut) {
+			const time = formatClock(item.localMin, locale)
+			const chip = el('button', `${chipClass} flex-col gap-0.5 py-1.5`)
+			chip.type = 'button'
+			chip.disabled = true
+			chip.setAttribute(
+				'aria-label',
+				fillTemplate(labels.expSoldOutTime, { time }),
+			)
+			chip.append(
+				el('span', undefined, time),
+				el(
+					'span',
+					'text-xs font-normal text-muted-foreground',
+					labels.expSoldOut,
+				),
+			)
+			group.append(chip)
+		}
+		resultsCard.append(group)
+	}
+
 	function emptyReason(result: Availability): {
 		title: string
 		body: string | null
@@ -608,6 +687,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 				date,
 				partySize: partyValue,
 				locale,
+				experienceId: experience?.id ?? null,
 			})
 			if (seq !== searchSeq) return
 			renderResults(result)
@@ -650,6 +730,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 					serviceId: slot.serviceId || null,
 				},
 				areaPref: slot.areaId || null,
+				experienceId: experience?.id ?? null,
 				replaceHoldToken: hold?.token ?? null,
 				website: '',
 				turnstileToken: searchChallenge.token(),
@@ -661,6 +742,8 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 				now: created.now,
 				locationId: created.locationId ?? location.id,
 				slot: created.slot,
+				requiresPayment: created.requiresPayment,
+				policy: created.policy,
 			})
 		} catch (error) {
 			searchChallenge.reset()
@@ -693,11 +776,13 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		labels.holdHeading,
 	)
 	detailsHeading.id = 'rsv-details-heading'
+	const policyBox = el('div', 'flex flex-col gap-3')
 	detailsCard.append(
 		detailsHeading,
 		countdown,
 		holdSummary,
 		holdBanner,
+		policyBox,
 		bookingForm.element,
 	)
 
@@ -707,6 +792,8 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		now: string
 		locationId: string
 		slot: SlotRef
+		requiresPayment?: boolean
+		policy?: HoldPolicy | null
 	}) {
 		const target = holdTargetMs(created, now())
 		if (target === null) {
@@ -719,7 +806,24 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 			slot: created.slot,
 			locationId: created.locationId,
 		}
-		attemptKey = randomUuid()
+		attempts.reset()
+		clockOffsetMs = (Date.parse(created.now) || now()) - now()
+		activePolicy = created.requiresPayment ? (created.policy ?? null) : null
+		policyBox.replaceChildren()
+		policyPanel = activePolicy
+			? buildPolicyPanel({
+					labels,
+					policy: activePolicy,
+					locale,
+					partySize: created.slot.partySize,
+				})
+			: null
+		if (policyPanel) policyBox.append(policyPanel.element)
+		bookingForm.setSubmitLabel(
+			activePolicy && activePolicy.purpose !== 'guarantee'
+				? labels.payContinue
+				: labels.submit,
+		)
 		clearInterval(holdTimer)
 		holdSummary.textContent = fillTemplate(labels.holdSummary, {
 			party: guestsLabel(labels, created.slot.partySize),
@@ -749,7 +853,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		clearInterval(holdTimer)
 		holdTimer = undefined
 		hold = null
-		attemptKey = null
+		attempts.reset()
 	}
 
 	async function expireHold() {
@@ -785,27 +889,45 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 			bookingForm.banner(labels.verifyFirst)
 			return
 		}
+		if (activePolicy && policyPanel && !policyPanel.check()) {
+			bookingForm.banner(labels.policyConsentRequired)
+			return
+		}
 		bookingForm.setBusy(true, labels.submitting)
 		try {
+			const fields = buildBookingFields({
+				guest: values.guest,
+				occasionTagId: values.occasionTagId,
+				requests: values.requests,
+				dietaryNames: values.dietaryNames,
+				dietaryNotes: values.dietaryNotes,
+				smsOptIn: values.smsOptIn,
+				marketingEmail: values.marketingEmail,
+				marketingSms: values.marketingSms,
+				locale,
+				honeypot: values.honeypot,
+				turnstileToken: bookingForm.challenge.token(),
+				termsVersion: TERMS_VERSION,
+			})
+			const body = {
+				holdToken: hold.token,
+				...fields,
+				...(activePolicy
+					? {
+							policyAccepted: {
+								termsVersion: String(activePolicy.termsVersion),
+							},
+						}
+					: {}),
+			}
+			// A retry of the same request (network drop, 5xx) keeps its key so the
+			// server replays the first answer; a changed request gets a new one. The
+			// one-time human-check token is not part of what makes a request "the same".
+			const { turnstileToken: ignoredToken, ...signed } = body
+			void ignoredToken
 			const result = await api.book(
-				{
-					holdToken: hold.token,
-					...buildBookingFields({
-						guest: values.guest,
-						occasionTagId: values.occasionTagId,
-						requests: values.requests,
-						dietaryNames: values.dietaryNames,
-						dietaryNotes: values.dietaryNotes,
-						smsOptIn: values.smsOptIn,
-						marketingEmail: values.marketingEmail,
-						marketingSms: values.marketingSms,
-						locale,
-						honeypot: values.honeypot,
-						turnstileToken: bookingForm.challenge.token(),
-						termsVersion: TERMS_VERSION,
-					}),
-				},
-				attemptKey ?? undefined,
+				body,
+				attempts.keyFor(JSON.stringify(signed)),
 			)
 			bookingForm.challenge.reset()
 			dropHold()
@@ -819,6 +941,14 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 	function handleSubmitError(form: DetailsForm, error: unknown) {
 		const key = reservationErrorKey(error)
 		form.setBusy(false)
+		if (key === 'errorPolicyRequired' && !activePolicy) {
+			// A resumed voice hold does not carry its terms: choose the time again to see them.
+			dropHold()
+			say(labels[key], 'error')
+			showStep('search')
+			void search({ announce: false })
+			return
+		}
 		if (SLOT_LOST.includes(key)) {
 			dropHold()
 			say(labels[key], 'error')
@@ -830,7 +960,29 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		form.banner(labels[key])
 	}
 
+	function renderPayment(result: BookingResponse) {
+		doneCard.replaceChildren()
+		const step = createPaymentStep({
+			labels,
+			locale,
+			booking: result,
+			clockOffsetMs,
+			api: deps.payApi,
+			redirect: deps.redirect ?? ((url) => globalThis.location.assign(url)),
+			bookHref: deps.bookHref ?? deps.pageLocation?.pathname ?? '/reserve',
+			now,
+		})
+		doneCard.append(step.element)
+		say(null)
+		showStep('done')
+		focusHeading(doneCard)
+	}
+
 	function renderDone(result: BookingResponse) {
+		if (result.payment && result.reservation.status === 'pending_payment') {
+			renderPayment(result)
+			return
+		}
 		const summary = result.reservation
 		const requested = summary.status === 'requested'
 		doneCard.replaceChildren()
@@ -884,6 +1036,7 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 			`${formatDateLong(summary.date, locale)}, ${formatClock(summary.localMin, locale)}`,
 		)
 		addRow(labels.partyLabel, guestsLabel(labels, summary.partySize))
+		if (experience) addRow(labels.manageExperience, experience.name)
 		if (requested) addRow('', statusLabel(labels, summary.status))
 
 		const actions = el('div', 'flex flex-wrap gap-3')
@@ -1212,7 +1365,8 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 		form.append(challengeBox)
 
 		const bannerBox = el('div')
-		const submit = el('button', primaryButtonClass, options.submitLabel)
+		let submitText = options.submitLabel
+		const submit = el('button', primaryButtonClass, submitText)
 		submit.type = 'submit'
 		const actions = el('div', 'flex flex-wrap gap-3')
 		actions.append(submit)
@@ -1322,11 +1476,15 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 				banner(null)
 				showErrors({})
 				submit.disabled = false
-				submit.textContent = options.submitLabel
+				submit.textContent = submitText
+			},
+			setSubmitLabel(text: string) {
+				submitText = text
+				submit.textContent = text
 			},
 			setBusy(busy: boolean, text?: string) {
 				submit.disabled = busy
-				submit.textContent = busy && text ? text : options.submitLabel
+				submit.textContent = busy && text ? text : submitText
 			},
 			markServerFields(paths: string[]) {
 				if (paths.some((path) => path.includes('phone'))) {
@@ -1374,6 +1532,24 @@ export async function initReserveFlow(root: HTMLElement, deps: FlowDeps) {
 	}
 
 	await search({ announce: false })
+}
+
+function renderExperienceUnavailable(
+	root: HTMLElement,
+	labels: ReservationLabels,
+	bookHref: string,
+) {
+	root.replaceChildren()
+	const card = el('section', cardClass)
+	card.setAttribute('role', 'status')
+	card.dataset.unavailable = 'experience'
+	const link = el('a', secondaryButtonClass, labels.expBookTable)
+	link.href = bookHref
+	card.append(
+		el('h2', 'text-lg font-semibold text-foreground', labels.expUnavailable),
+		link,
+	)
+	root.append(card)
 }
 
 function renderUnavailable(

@@ -2,6 +2,7 @@ import { type ReservationsApi } from './api.ts'
 import { reservationErrorKey } from './errors.ts'
 import { clearStoredManageToken } from './fragment.ts'
 import { type ReservationLabels } from './labels.ts'
+import { freeCancelText } from './payment-step.ts'
 import {
 	addDaysIso,
 	formatClock,
@@ -24,6 +25,7 @@ import {
 	guestsLabel,
 	inputClass,
 	labelClass,
+	paymentStatusLabel,
 	primaryButtonClass,
 	secondaryButtonClass,
 	statusLabel,
@@ -148,6 +150,13 @@ export async function initManagePage(root: HTMLElement, deps: ManageDeps) {
 			`${formatDateLong(r.date, locale)}, ${formatClock(r.localMin, locale)}`,
 		)
 		add(labels.partyLabel, guestsLabel(labels, r.partySize))
+		if (r.experience) add(labels.manageExperience, r.experience.name)
+		const payment = paymentStatusLabel(labels, view.paymentStatus)
+		if (payment) {
+			add(labels.payStatusLabel, payment)
+			const last = rows.lastElementChild
+			if (last) (last as HTMLElement).dataset.paymentStatus = view.paymentStatus
+		}
 		add(
 			labels.contactHeading,
 			[view.contact.phone, view.contact.email].filter(Boolean).join(' · '),
@@ -177,12 +186,51 @@ export async function initManagePage(root: HTMLElement, deps: ManageDeps) {
 			)
 		}
 
+		if (
+			view.policy &&
+			(view.policy.terms || view.policy.freeCancelUntilMin !== null)
+		) {
+			const terms = el(
+				'section',
+				'flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-4',
+			)
+			terms.dataset.policyTerms = ''
+			terms.append(
+				el('h3', 'text-base font-semibold text-foreground', labels.manageTerms),
+			)
+			if (view.policy.freeCancelUntilMin !== null) {
+				terms.append(
+					el(
+						'p',
+						'text-sm text-foreground',
+						freeCancelText(labels, view.policy.freeCancelUntilMin),
+					),
+				)
+			}
+			if (view.policy.terms) {
+				terms.append(
+					el(
+						'p',
+						'whitespace-pre-line text-sm text-muted-foreground wrap-anywhere',
+						view.policy.terms,
+					),
+				)
+			}
+			card.append(terms)
+		}
+
 		const live = LIVE.has(view.status)
 		if (view.status === 'cancelled') {
 			card.append(
 				el('p', 'text-sm font-medium text-foreground', labels.cancelledBody),
-				bookAgain(),
 			)
+			const refund = refundNote(view.paymentStatus)
+			if (refund) {
+				const note = el('p', 'text-sm text-foreground', refund)
+				note.dataset.refundNote = view.paymentStatus
+				card.append(note)
+			}
+			card.append(bookAgain())
 		}
 		if (live && view.cancelDeadline && view.canCancel) {
 			card.append(
@@ -259,6 +307,17 @@ export async function initManagePage(root: HTMLElement, deps: ManageDeps) {
 			h.tabIndex = -1
 			h.focus()
 		}
+	}
+
+	function refundNote(paymentStatus: string): string | null {
+		if (paymentStatus === 'refund_pending') return labels.manageRefundPending
+		if (
+			paymentStatus === 'refunded' ||
+			paymentStatus === 'partially_refunded'
+		) {
+			return labels.manageRefunded
+		}
+		return null
 	}
 
 	function lateControl() {

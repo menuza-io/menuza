@@ -18,6 +18,8 @@ describe('reservation errors', () => {
 			[409, 'phone_overlap', 'errorPhoneOverlap'],
 			[409, 'cancel_closed', 'errorCancelClosed'],
 			[400, 'invalid', 'errorInvalid'],
+			[400, 'policy_required', 'errorPolicyRequired'],
+			[409, 'policy_unavailable', 'errorPaymentUnavailable'],
 		]
 		for (const [status, code, key] of cases) {
 			expect(

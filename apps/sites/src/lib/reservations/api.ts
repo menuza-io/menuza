@@ -6,6 +6,7 @@ import {
 	type ManageView,
 	type MineResponse,
 	type NotifyMeResponse,
+	type PublicExperience,
 	type ReservationsConfig,
 	type SlotRef,
 	type WaitlistJoinResponse,
@@ -143,9 +144,23 @@ export function createReservationsApi(deps: ReservationsApiDeps) {
 			partySize: number
 			localMin?: number | null
 			locale?: string
+			experienceId?: string | null
 		}) {
 			return call<Availability>(
 				`/reservations/availability${query({ ...params })}`,
+			)
+		},
+		experiences(locale?: string) {
+			return call<{ now: string; experiences: PublicExperience[] }>(
+				`/reservations/experiences${query({ locale })}`,
+			)
+		},
+		experience(
+			slug: string,
+			params: { locale?: string; locationId?: string } = {},
+		) {
+			return call<{ now: string; experience: PublicExperience }>(
+				`/reservations/experiences/${encodeURIComponent(slug)}${query({ ...params })}`,
 			)
 		},
 		calendar(params: {
@@ -162,6 +177,7 @@ export function createReservationsApi(deps: ReservationsApiDeps) {
 			locationId: string
 			slot: SlotRef
 			areaPref?: string | null
+			experienceId?: string | null
 			replaceHoldToken?: string | null
 			turnstileToken?: string | null
 			website?: string
@@ -227,6 +243,14 @@ export function createReservationsApi(deps: ReservationsApiDeps) {
 					body,
 					headers: tokenHeader(token),
 				})
+			},
+			/** Payment state by manage or payment token (the tenant-api poll). */
+			payment(token: string) {
+				return call<{
+					paymentStatus: string
+					reservationStatus: string
+					now: string
+				}>('/reservations/manage/payment', { headers: tokenHeader(token) })
 			},
 			cancel(token: string) {
 				return call<ManageView>('/reservations/manage/cancel', {

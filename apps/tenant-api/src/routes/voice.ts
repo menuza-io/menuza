@@ -79,6 +79,7 @@ import {
 	VOICE_AGENT_TOKEN_MIN_LENGTH,
 	voiceAgentTokenProblem,
 } from '../lib/secrets.ts'
+import { getVoiceLinkFragmentVerifier } from '../services/voice-actions.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { placeVerificationCall } from '../lib/twilio-voice.ts'
 import { authenticateOperator } from './operator.ts'
@@ -188,6 +189,12 @@ const handoffSchema = z.object({
 		(value) => value !== null,
 		'The link data is missing or too large',
 	),
+	// A fragment link (`#h=<token>`) carries a token the business type verifies
+	// for this call instead of a stored payload.
+	fragment: z
+		.string()
+		.regex(/^[A-Za-z0-9_=&.-]{1,200}$/)
+		.optional(),
 	message: linkMessageSchema,
 	sendTo: E164Schema.nullable().optional(),
 })
@@ -282,7 +289,7 @@ export function fillLinkMessage(
 		.replaceAll('{url}', values.url)
 }
 
-async function requireVoiceAgent(c: Context, next: Next) {
+export async function requireVoiceAgent(c: Context, next: Next) {
 	const problem = voiceAgentTokenProblem()
 	if (problem) {
 		logVoiceAgentTokenProblem(problem)
@@ -309,7 +316,7 @@ async function requireInternal(c: Context, next: Next) {
 	await next()
 }
 
-async function regionalOrganization(orgId: string) {
+export async function regionalOrganization(orgId: string) {
 	const organization = await findActiveOrganizationById(orgId)
 	if (!organization || !orgMatchesNodeRegion(organization.dataRegion)) {
 		return null
@@ -317,7 +324,7 @@ async function regionalOrganization(orgId: string) {
 	return organization
 }
 
-function regionUnavailable(c: Context) {
+export function regionUnavailable(c: Context) {
 	return c.json({ error: 'Organization is not available in this region' }, 404)
 }
 
@@ -862,6 +869,46 @@ voiceSystemRoutes.post('/handoffs', requireVoiceAgent, async (c) => {
 	if (!call) return c.json({ error: 'Call not found' }, 404)
 
 	const recipient = parsed.data.sendTo ?? call.callerPhone
+
+	if (parsed.data.fragment) {
+		const verifier = getVoiceLinkFragmentVerifier(parsed.data.path)
+		const verified =
+			verifier &&
+			(await verifier.verify(
+				{ orgId: organization.id, db, callId: call.id, now: Date.now() },
+				parsed.data.fragment,
+			))
+		if (!verified) return c.json({ error: 'Invalid link' }, 400)
+		const fragmentUrl = `${publicSiteOrigin(organization)}${parsed.data.path}#${parsed.data.fragment}`
+		const sent: { smsSent: boolean; smsBlockedReason?: SmsBlockedReason } =
+			recipient
+				? await sendCallSms({
+						db,
+						call,
+						kind: 'handoff_link',
+						to: recipient,
+						message: fillLinkMessage(parsed.data.message, {
+							business: organizationName(organization),
+							url: fragmentUrl,
+						}),
+					})
+				: {
+						smsSent: false,
+						smsBlockedReason:
+							call.channel === 'web_test' ? 'test_call' : 'not_allowed_number',
+					}
+		if (!sent.smsSent && call.channel !== 'web_test') {
+			return c.json(
+				{ handoffId: null, url: null, expiresAt: null, ...sent },
+				201,
+			)
+		}
+		return c.json(
+			{ handoffId: null, url: fragmentUrl, expiresAt: null, ...sent },
+			201,
+		)
+	}
+
 	const token = randomBytes(24).toString('base64url')
 	const expiresAt = new Date(Date.now() + LINK_HANDOFF_TTL_HOURS * 3_600_000)
 	// Inserted before texting so the link already resolves when the SMS lands;

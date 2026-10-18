@@ -315,6 +315,170 @@ export function buildReservationLabels(i18n: I18n) {
 			msg`Your request was cancelled. We will not contact you about it.`,
 		),
 
+		// Payment policy at the details step
+		policyHeading: t(msg`Booking terms`),
+		policyPayDeposit: keep(
+			i18n,
+			msg`You will pay a deposit of {amount} to confirm this booking.`,
+			'amount',
+		),
+		policyPayPrepay: keep(
+			i18n,
+			msg`You will pay {amount} now. This is the full price of your booking.`,
+			'amount',
+		),
+		policyPayExperience: keep(
+			i18n,
+			msg`You will pay {amount} now for this experience.`,
+			'amount',
+		),
+		policyGuarantee: t(
+			msg`Your card is saved to hold the booking. Nothing is charged now.`,
+		),
+		policyPerCover: keep(
+			i18n,
+			msg`{unit} per guest for {count} guests.`,
+			'unit',
+			'count',
+		),
+		policyFreeCancelStart: t(msg`Free cancellation until your booking time.`),
+		policyFreeCancelMinutes: keep(
+			i18n,
+			msg`Free cancellation up to {count} minutes before your booking.`,
+			'count',
+		),
+		policyFreeCancelHours: keep(
+			i18n,
+			msg`Free cancellation up to {count} hours before your booking.`,
+			'count',
+		),
+		policyFreeCancelDays: keep(
+			i18n,
+			msg`Free cancellation up to {count} days before your booking.`,
+			'count',
+		),
+		policyLateCancelFee: keep(
+			i18n,
+			msg`Late cancellation fee: {amount}.`,
+			'amount',
+		),
+		policyNoShowFee: keep(i18n, msg`No-show fee: {amount}.`, 'amount'),
+		policyConsent: t(
+			msg`I accept these terms and the payment or card hold described above.`,
+		),
+		policyConsentRequired: t(msg`Please accept the booking terms to continue.`),
+
+		// Payment step and the pay page
+		payStepTitle: t(msg`One more step: payment`),
+		payStepBody: t(
+			msg`Your table is held while you pay. It is released if the payment is not completed in time.`,
+		),
+		payStepHeldFor: keep(i18n, msg`Held for {time}`, 'time'),
+		payStepExpired: t(msg`The time to pay ran out and the table was released.`),
+		payAmountDue: t(msg`Amount due now`),
+		payAmountCard: t(msg`Nothing is charged now`),
+		payPageTitle: t(msg`Complete your payment`),
+		payPageSubtitle: t(
+			msg`You will pay on the payment provider's secure page.`,
+		),
+		payContinue: t(msg`Continue to payment`),
+		payTryAgain: t(msg`Try again`),
+		payRedirecting: t(msg`Taking you to the secure payment page…`),
+		payChecking: t(msg`Checking your payment…`),
+		payCheckAgain: t(msg`Check again`),
+		payNetworkNote: t(msg`We could not check your payment. Trying again…`),
+		payPurposeDeposit: t(msg`Deposit`),
+		payPurposePrepay: t(msg`Prepayment`),
+		payPurposeExperience: t(msg`Experience ticket`),
+		payPurposeGuarantee: t(msg`Card guarantee`),
+		payPurposeFee: t(msg`Fee`),
+		paySuccessTitle: t(msg`Payment received`),
+		paySuccessGuaranteeTitle: t(msg`Your card is saved`),
+		paySuccessFeeTitle: t(msg`Fee paid`),
+		paySuccessBody: t(msg`Thank you. Your reservation is confirmed.`),
+		paySuccessFeeBody: t(msg`Thank you. The restaurant has your payment.`),
+		payViewReservation: t(msg`View your reservation`),
+		payPendingTitle: t(msg`Waiting for your payment`),
+		payPendingBody: t(
+			msg`We have not received your payment yet. If you just paid, this can take a moment.`,
+		),
+		payStillProcessing: t(
+			msg`This is taking longer than usual. Check again in a moment, or come back to this page later.`,
+		),
+		payFailedTitle: t(msg`The payment did not go through`),
+		payFailedBody: t(
+			msg`Your card was declined or needed extra verification. Try again or use another card.`,
+		),
+		payExpiredTitle: t(msg`This payment is no longer open`),
+		payExpiredBody: t(
+			msg`The time to pay ran out, or the booking was cancelled, and the table was released. You can book again.`,
+		),
+		payUnavailableTitle: t(msg`Online payment is not available`),
+		payUnavailableBody: t(
+			msg`Please call the restaurant to complete your payment.`,
+		),
+		payInvalidTitle: t(msg`We could not find this payment`),
+		payInvalidBody: t(msg`The link may be incomplete or may have expired.`),
+		payReviewTitle: t(msg`Your payment is being reviewed`),
+		payReviewBody: t(
+			msg`The restaurant will contact you if anything else is needed.`,
+		),
+		payExpiresIn: keep(i18n, msg`Pay within {time}`, 'time'),
+		payAlreadyPaid: t(msg`This has already been paid.`),
+
+		// Payment status words (manage view)
+		payStatusLabel: t(msg`Payment`),
+		payStatusPaid: t(msg`Paid`),
+		payStatusGuaranteed: t(msg`Card on file`),
+		payStatusPending: t(msg`Waiting for payment`),
+		payStatusRefundPending: t(msg`Refund on its way`),
+		payStatusRefunded: t(msg`Refunded`),
+		payStatusPartiallyRefunded: t(msg`Partially refunded`),
+		payStatusFeePending: t(msg`Fee pending`),
+		payStatusFeeCharged: t(msg`Fee charged`),
+		payStatusFeeFailed: t(msg`Fee not collected`),
+		payStatusReview: t(msg`Under review`),
+		payStatusDisputed: t(msg`Disputed`),
+		manageTerms: t(msg`Booking terms`),
+		manageExperience: t(msg`Experience`),
+		manageRefundPending: t(
+			msg`Your cancellation is recorded. The refund is being processed and should reach your card soon.`,
+		),
+		manageRefunded: t(msg`Your payment was refunded.`),
+
+		// Experiences
+		expTitle: t(msg`Experiences`),
+		expSubtitle: keep(
+			i18n,
+			msg`Tasting menus, chef's tables and special events at {name}.`,
+			'name',
+		),
+		expEmptyTitle: t(msg`No experiences right now`),
+		expEmptyBody: t(msg`Check back soon, or book a regular table.`),
+		expBookTable: t(msg`Book a regular table`),
+		expPricePerGuest: keep(i18n, msg`{price} per guest`, 'price'),
+		expPricePerBooking: keep(i18n, msg`{price} per booking`, 'price'),
+		expPartyRange: keep(i18n, msg`{min} to {max} guests`, 'min', 'max'),
+		expPartyExact: keep(i18n, msg`{count} guests`, 'count'),
+		expNextSeatings: t(msg`Next seatings`),
+		expNoSeatings: t(msg`No upcoming seatings`),
+		expViewDetails: t(msg`View details`),
+		expBack: t(msg`All experiences`),
+		expAtLocation: keep(i18n, msg`At {name}`, 'name'),
+		expBookHeading: t(msg`Book this experience`),
+		expFieldParty: t(msg`Guests`),
+		expFieldDate: t(msg`Date`),
+		expSoldOut: t(msg`Sold out`),
+		expSoldOutTime: keep(i18n, msg`{time}, sold out`, 'time'),
+		expNoTimes: t(msg`No seatings are available on this date.`),
+		expNoDates: t(msg`There are no upcoming seatings to book right now.`),
+		expContinueHint: t(
+			msg`You will confirm your details and pay on the next step.`,
+		),
+		expFlowHeading: keep(i18n, msg`Experience: {name}`, 'name'),
+		expUnavailable: t(msg`Experiences are not available right now.`),
+		expImageAlt: keep(i18n, msg`Photo of {name}`, 'name'),
+
 		// Block
 		bookATable: t(msg`Book a table`),
 
@@ -372,6 +536,10 @@ export function buildReservationLabels(i18n: I18n) {
 		),
 		errorNotifyLimit: t(
 			msg`You already have the most table alerts allowed for these contact details.`,
+		),
+		errorPolicyRequired: t(msg`Please accept the booking terms to continue.`),
+		errorPaymentUnavailable: t(
+			msg`Online payment is not available right now. Please call the restaurant.`,
 		),
 		errorNetwork: t(
 			msg`We could not reach the server. Check your connection and try again.`,

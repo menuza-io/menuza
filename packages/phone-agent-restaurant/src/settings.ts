@@ -21,12 +21,19 @@ export const DEFAULT_ORDERING: RestaurantOrdering = {
 export const RestaurantSettingsSchema = z.object({
 	upsellsEnabled: z.boolean().default(true),
 	ordering: RestaurantOrderingSchema.default(DEFAULT_ORDERING),
+	/**
+	 * Lets the assistant check tables and hold or book them. Off keeps
+	 * reservations as a request the team confirms. Only takes effect while
+	 * the business has table booking switched on for phone calls.
+	 */
+	reservationBooking: z.boolean().default(false),
 })
 export type RestaurantSettings = z.infer<typeof RestaurantSettingsSchema>
 
 export const DEFAULT_RESTAURANT_SETTINGS: RestaurantSettings = {
 	upsellsEnabled: true,
 	ordering: DEFAULT_ORDERING,
+	reservationBooking: false,
 }
 
 /** The restaurant settings in `settings.vertical`, defaults filled in. */

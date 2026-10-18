@@ -42,7 +42,10 @@ export function testLocation(): AgentLocation {
  */
 export function restaurantTestConfig(
 	overrides: Partial<PhoneAgentRuntimeConfig['settings']> = {},
-	{ menus = [] as AgentMenu[] } = {},
+	{
+		menus = [] as AgentMenu[],
+		reservationsAvailable = false,
+	}: { menus?: AgentMenu[]; reservationsAvailable?: boolean } = {},
 ): PhoneAgentRuntimeConfig {
 	const base = baseConfig({
 		...defaultSettingsFor(restaurantVertical),
@@ -57,6 +60,7 @@ export function restaurantTestConfig(
 			businessName: 'Luigi',
 			location: testLocation(),
 			menus,
+			reservationsAvailable,
 		}),
 	}
 }

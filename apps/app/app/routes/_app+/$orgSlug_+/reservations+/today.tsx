@@ -14,6 +14,7 @@ import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
+import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import {
 	RequestsPanel,
 	RequestsTabs,
@@ -441,6 +442,10 @@ export default function ReservationsTodayRoute() {
 													<Badge variant="secondary">
 														{label(RESERVATION_STATUS_LABELS, rsv.status)}
 													</Badge>
+													<PaymentBadge
+														paymentStatus={rsv.paymentStatus}
+														experience={Boolean(rsv.experienceId)}
+													/>
 												</div>
 											</div>
 
@@ -574,6 +579,10 @@ export default function ReservationsTodayRoute() {
 															channel={rsv.channel}
 															testId={`today-channel-${rsv.id}`}
 														/>
+														<PaymentBadge
+															paymentStatus={rsv.paymentStatus}
+															experience={Boolean(rsv.experienceId)}
+														/>
 														<Badge
 															variant={overTurn ? 'destructive' : 'secondary'}
 															data-testid={`today-elapsed-${rsv.id}`}
@@ -682,6 +691,10 @@ export default function ReservationsTodayRoute() {
 												>
 													{label(RESERVATION_STATUS_LABELS, rsv.status)}
 												</Badge>
+												<PaymentBadge
+													paymentStatus={rsv.paymentStatus}
+													experience={Boolean(rsv.experienceId)}
+												/>
 											</div>
 										</div>
 									))

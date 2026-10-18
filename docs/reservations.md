@@ -46,14 +46,15 @@ links. When a user lacks the required permission, App routes return **403**.
 
 ## Kill switches and environment variables
 
-| Variable                      | Service                      | Effect                                                                                                                                           |
-| ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `RESERVATIONS_PUBLIC_ENABLED` | `apps/tenant-api`            | Public booking kill switch. Setting `false` (`0`, `off`, `no`, `disabled`) returns `503` on every `/reservations/*` public endpoint immediately. |
-| `RESERVATIONS_SMS_ENABLED`    | `apps/tenant-api`            | Guest SMS kill switch. Setting `false` drops outbound confirmation/reminder/waitlist SMS without queuing a backlog.                              |
-| `RESERVATIONS_EMAIL_ENABLED`  | `apps/tenant-api` & `app`    | Guest email kill switch. Setting `false` drops outbound reservation emails without failing the booking write.                                    |
-| `TENANT_OPERATOR_TOKEN`       | `apps/app` & `tenant-api`    | Shared secret signing short-lived `rsv+jwt` operator tokens (`aud: 'tenant-api-reservations-operator'`).                                         |
-| `INTERNAL_COMMAND_TOKEN`      | `apps/app` & `tenant-api`    | Shared secret authenticating `/resources/reservations/context`, `/internal/reservations/*`, and `/api/reservations/tick`.                        |
-| `VOICE_AGENT_TOKEN`           | `voice-agent` & `tenant-api` | Shared secret authenticating `/api/voice/actions/reservation-*`.                                                                                 |
+| Variable                          | Service                      | Effect                                                                                                                                                            |
+| --------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RESERVATIONS_PUBLIC_ENABLED`     | `apps/tenant-api`            | Public booking kill switch. Setting `false` (`0`, `off`, `no`, `disabled`) returns `503` on every `/reservations/*` public endpoint immediately.                  |
+| `RESERVATIONS_SMS_ENABLED`        | `apps/tenant-api`            | Guest SMS kill switch. Setting `false` drops outbound confirmation/reminder/waitlist SMS without queuing a backlog.                                               |
+| `RESERVATIONS_EMAIL_ENABLED`      | `apps/tenant-api` & `app`    | Guest email kill switch. Setting `false` drops outbound reservation emails without failing the booking write.                                                     |
+| `TENANT_OPERATOR_TOKEN`           | `apps/app` & `tenant-api`    | Shared secret signing short-lived `rsv+jwt` operator tokens (`aud: 'tenant-api-reservations-operator'`).                                                          |
+| `INTERNAL_COMMAND_TOKEN`          | `apps/app` & `tenant-api`    | Shared secret authenticating `/resources/reservations/context`, `/internal/reservations/*`, and `/api/reservations/tick`.                                         |
+| `VOICE_AGENT_TOKEN`               | `voice-agent` & `tenant-api` | Shared secret authenticating `/api/voice/actions/reservation-*`.                                                                                                  |
+| `SITES_RESERVATION_PAYMENT_TOKEN` | `apps/sites` & `app`         | ≥32 chars, distinct from every other token. Authenticates only `/resources/sites/reservation/checkout` and `/status`. Sites never holds `INTERNAL_COMMAND_TOKEN`. |
 
 ## Local demo data (`seed:reservations`)
 

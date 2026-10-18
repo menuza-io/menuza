@@ -45,6 +45,11 @@ describe('isSitesAppRoute', () => {
 		expect(isSitesAppRoute('/careers-and-more')).toBe(false)
 		expect(isSitesAppRoute('/reserve')).toBe(true)
 		expect(isSitesAppRoute('/reserve/manage')).toBe(true)
+		expect(isSitesAppRoute('/reserve/pay')).toBe(true)
+		expect(isSitesAppRoute('/reserve/pay/done')).toBe(true)
+		expect(isSitesAppRoute('/experiences')).toBe(true)
+		expect(isSitesAppRoute('/experiences/chefs-counter')).toBe(true)
+		expect(isSitesAppRoute('/experiencesx')).toBe(false)
 		expect(isSitesAppRoute('/reserved')).toBe(false)
 		expect(isSitesAppRoute('/')).toBe(false)
 		expect(isSitesAppRoute('/about')).toBe(false)
@@ -188,7 +193,13 @@ describe('reservations pages', () => {
 	})
 
 	it('are never served from the HTML edge cache', () => {
-		for (const path of ['/reserve', '/reserve/manage', '/ar/reserve']) {
+		for (const path of [
+			'/reserve',
+			'/reserve/manage',
+			'/reserve/pay',
+			'/reserve/pay/done',
+			'/ar/reserve',
+		]) {
 			expect(
 				shouldCachePublishedHtml(
 					new Request(`https://acme.example${path}`),
@@ -196,6 +207,25 @@ describe('reservations pages', () => {
 					true,
 				),
 			).toBe(false)
+		}
+	})
+})
+
+describe('experiences pages', () => {
+	it('are public catalog pages cached for a minute, never the reserve flow', () => {
+		for (const path of [
+			'/experiences',
+			'/experiences/chefs-counter',
+			'/ar/experiences',
+		]) {
+			expect(isReservationsPage(path)).toBe(false)
+			expect(
+				shouldCachePublishedHtml(
+					new Request(`https://acme.example${path}`),
+					new URL(`https://acme.example${path}`),
+					true,
+				),
+			).toBe(true)
 		}
 	})
 })

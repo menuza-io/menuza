@@ -70,6 +70,9 @@ export type Availability = {
 		sameDay: PublicSlot[]
 		otherDates: Array<{ date: string; firstLocalMin: number }>
 	}
+	/** Experience seatings that exist but cannot take the party. */
+	soldOut?: Array<{ localMin: number; time: string }>
+	experienceId?: string
 	largeParty?: LargePartyBlock
 	closed?: { reason: string; note: string | null; name: string | null }
 	onlineClosed?: { note: string | null; name: string | null }
@@ -98,12 +101,43 @@ export type SlotRef = {
 	serviceId?: string | null
 }
 
+/** What the guest accepts before booking a slot that needs a payment or a card. */
+export type HoldPolicy = {
+	kind: string
+	purpose: PaymentPurpose
+	termsVersion: number
+	terms: string | null
+	amountMinor: number
+	totalAmountMinor: number
+	perCover: boolean
+	currency: string
+	freeCancelUntilMin: number
+	lateCancelFeeMinor: number
+	noShowFeeMinor: number
+}
+
+export type PaymentPurpose =
+	'deposit' | 'prepay' | 'experience' | 'guarantee' | 'fee'
+
 export type HoldResponse = {
 	holdToken: string
 	expiresAt: string
 	now: string
 	locationId?: string
 	slot: SlotRef
+	experienceId?: string
+	requiresPayment?: boolean
+	policy?: HoldPolicy | null
+}
+
+/** The payment block a booking answers with while it waits for payment. */
+export type PaymentBlock = {
+	paymentToken: string
+	purpose: PaymentPurpose
+	amountMinor: number
+	currency: string
+	expiresAt: string
+	payUrl: string | null
 }
 
 export type ReservationSummary = {
@@ -123,13 +157,15 @@ export type ReservationSummary = {
 }
 
 export type BookingResponse = {
-	reservation: ReservationSummary
+	reservation: ReservationSummary & { paymentStatus?: string }
 	manageToken: string
+	payment?: PaymentBlock
 }
 
 export type ManageView = {
 	now: string
 	reservation: ReservationSummary & {
+		experience?: { id: string; slug: string; name: string } | null
 		firstName: string | null
 		occasion: { id: string; name: string } | null
 		requests: string | null
@@ -150,6 +186,7 @@ export type ManageView = {
 		kind: string
 		terms: string | null
 		freeCancelUntilMin: number | null
+		currency?: string
 	} | null
 	paymentStatus: string
 	canModify: boolean
@@ -221,4 +258,25 @@ export type NotifyMeResponse = {
 	}
 	cancelToken: string
 	now: string
+}
+
+/** A published experience, as `GET /reservations/experiences` presents it (no guest data). */
+export type PublicExperience = {
+	id: string
+	slug: string
+	locationId: string
+	locationName: string | null
+	kind: string
+	name: string
+	description: string | null
+	imageUrl: string | null
+	price: { priceMinor: number; perCover: boolean; currency: string } | null
+	partyMin: number
+	partyMax: number
+	timeZone: string
+	seatings: Array<{
+		date: string
+		times: Array<{ localMin: number; time: string }>
+	}>
+	policy: { terms: string | null; termsVersion: number } | null
 }

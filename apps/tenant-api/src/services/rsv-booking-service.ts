@@ -69,6 +69,7 @@ import {
 } from './rsv-guest-service.ts'
 import { isLateCancellation } from './rsv-late-cancel.ts'
 import { handleCancellationPayments } from './rsv-payment-refunds.ts'
+import { queueReservationJourney } from '../restaurant/reservations-journeys.ts'
 
 function guestAccess(params: { canReadGuestSensitive?: boolean }) {
 	return { canReadGuestSensitive: params.canReadGuestSensitive === true }
@@ -1140,6 +1141,11 @@ export async function createOperatorReservation(params: {
 				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
 				{ reservationId: resId, kind: 'confirmation' },
 			)
+			queueReservationJourney(helpers.afterCommit, {
+				orgId: params.orgId,
+				reservationId: resId,
+				trigger: 'reservation_booked',
+			})
 
 			const createdRow = await tx
 				.select()
@@ -2637,6 +2643,16 @@ const VALID_STATUS_TRANSITIONS: Record<string, Set<string>> = {
 	no_show: new Set([]),
 }
 
+/** Status changes that start a reservation journey (fired once per booking). */
+const JOURNEY_TRIGGER_FOR_STATUS: Record<
+	string,
+	'reservation_completed' | 'reservation_no_show' | 'reservation_cancelled'
+> = {
+	finished: 'reservation_completed',
+	no_show: 'reservation_no_show',
+	cancelled: 'reservation_cancelled',
+}
+
 export async function transitionReservationStatus(params: {
 	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
 	canReadGuestSensitive?: boolean
@@ -2926,6 +2942,15 @@ export async function transitionReservationStatus(params: {
 						: {}),
 				},
 			})
+
+			const journeyTrigger = JOURNEY_TRIGGER_FOR_STATUS[targetStatus]
+			if (journeyTrigger) {
+				queueReservationJourney(helpers.afterCommit, {
+					orgId: params.orgId,
+					reservationId: current.id,
+					trigger: journeyTrigger,
+				})
+			}
 
 			if (targetStatus === 'cancelled') {
 				await enqueueReservationMessage(

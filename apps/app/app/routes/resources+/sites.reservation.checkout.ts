@@ -7,17 +7,17 @@
  * client-supplied URL) are rejected. The response is
  * `{ checkoutUrl, sessionId, processor, purpose, mode }`.
  *
- * Authenticated with `INTERNAL_COMMAND_TOKEN` (the Sites server calls it; the
- * browser never does). Amounts come from the region's quote, never the caller.
+ * Authenticated with `SITES_RESERVATION_PAYMENT_TOKEN` (the Sites server calls
+ * it; the browser never does; INTERNAL_COMMAND_TOKEN is rejected). Amounts come from the region's quote, never the caller.
  */
 
 import { reservationCheckoutRequestSchema } from '@repo/reservations'
 import { type ActionFunctionArgs } from 'react-router'
-import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import {
 	createReservationHostedCheckout,
 	logReservationPaymentFailure,
 } from '#app/utils/reservations/payments.server.ts'
+import { requireSitesReservationPaymentAuth } from '#app/utils/reservations/sites-payment-auth.server.ts'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
 
@@ -26,11 +26,9 @@ export async function action({ request }: ActionFunctionArgs) {
 		return Response.json({ error: 'method_not_allowed' }, { status: 405 })
 	}
 	try {
-		await requireInternalCommandAuth(request)
+		requireSitesReservationPaymentAuth(request)
 	} catch (error) {
-		if (error instanceof Response && error.status === 302) {
-			return Response.json({ error: 'unauthorized' }, { status: 401 })
-		}
+		if (error instanceof Response) return error
 		throw error
 	}
 

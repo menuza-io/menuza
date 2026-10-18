@@ -24,6 +24,8 @@ export async function saveSettings(
 		scopeId: string
 		salesSource?: SalesSource
 		ordersPerLaborHour?: Record<string, number>
+		/** A unit that is present replaces that unit's whole set of standards. */
+		demandPerLaborHour?: Record<string, Record<string, number>>
 	},
 ): Promise<LaborSettings> {
 	return settingsSchema.parse(

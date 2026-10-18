@@ -7,6 +7,8 @@ import {
 	devEmailCaptureDir,
 	isDevEmailCaptureOn,
 } from './lib/dev-email-capture.ts'
+import { registerReservationsDemandSource } from './restaurant/reservations-demand-source.ts'
+import { registerReservationVoiceActions } from './restaurant/reservations-voice-actions.ts'
 import { registerRestaurantOrderSource } from './restaurant/staffing-order-source.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
@@ -18,6 +20,8 @@ assertTenantApiSecrets()
 assertDataRegion()
 
 registerRestaurantOrderSource()
+registerReservationVoiceActions()
+registerReservationsDemandSource()
 
 if (process.env.NODE_ENV === 'production' && devEmailCaptureDir()) {
 	console.warn('DEV_EMAIL_CAPTURE_DIR is ignored in production')

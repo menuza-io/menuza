@@ -28,6 +28,22 @@ const TENANT_TRIGGER_MSGS: Record<
 		label: msg`Manual Trigger`,
 		desc: msg`Triggered via operator test or API`,
 	},
+	reservation_booked: {
+		label: msg`Reservation Booked`,
+		desc: msg`Runs when a guest who agreed to hear from you books a table`,
+	},
+	reservation_completed: {
+		label: msg`Reservation Completed`,
+		desc: msg`Runs after a guest who agreed to hear from you finishes a visit`,
+	},
+	reservation_no_show: {
+		label: msg`Reservation No-Show`,
+		desc: msg`Runs when a guest who agreed to hear from you does not arrive`,
+	},
+	reservation_cancelled: {
+		label: msg`Reservation Cancelled`,
+		desc: msg`Runs when a guest who agreed to hear from you cancels`,
+	},
 }
 
 const TENANT_TRIGGER_OPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
@@ -35,7 +51,13 @@ const TENANT_TRIGGER_OPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
 	profile_completed: msg`Profile Completed (Name/Email)`,
 	custom_event: msg`Custom Event`,
 	manual: msg`Manual Trigger`,
+	reservation_booked: msg`Reservation Booked`,
+	reservation_completed: msg`Reservation Completed`,
+	reservation_no_show: msg`Reservation No-Show`,
+	reservation_cancelled: msg`Reservation Cancelled`,
 }
+
+export { TENANT_TRIGGER_MSGS, TENANT_TRIGGER_OPTION_MSGS }
 
 const PLATFORM_TRIGGER_MSGS: Record<
 	string,

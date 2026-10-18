@@ -26,9 +26,20 @@ import {
 	SheetTitle,
 } from '@repo/ui/sheet'
 import { Textarea } from '@repo/ui/textarea'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
 import { Link, useInRouterContext, useOutletContext } from 'react-router'
 import { toast } from 'sonner'
+import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
+import { PaymentPanel } from '#app/components/reservations/payment-panel.tsx'
+import { ReservationsClientContext } from '#app/components/reservations/reservations-client-provider.tsx'
+import { TextAreaField } from '#app/components/staff/controls.tsx'
 import {
 	assignReservationTable,
 	type DayMoveNotice,
@@ -124,7 +135,9 @@ export function DetailSheet({
 	const layout = useOutletContext<{
 		orgSlug?: string
 		nav?: { guests?: boolean }
+		payments?: { enabled: boolean; canAct: boolean }
 	} | null>()
+	const clientPool = useContext(ReservationsClientContext)
 	const guestsBase =
 		inRouter && layout?.orgSlug && layout.nav?.guests
 			? `/${layout.orgSlug}/reservations/guests`
@@ -136,6 +149,8 @@ export function DetailSheet({
 	const [busy, setBusy] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [rotateConfirmOpen, setRotateConfirmOpen] = useState(false)
+	const [cancelOpen, setCancelOpen] = useState(false)
+	const [cancelReason, setCancelReason] = useState('')
 
 	// 60-second undo state
 	const [undoState, setUndoState] = useState<{
@@ -157,6 +172,20 @@ export function DetailSheet({
 	const [durationEdit, setDurationEdit] = useState<number>(90)
 
 	const reservation = detail?.reservation ?? fallbackReservation
+
+	// Payment rows are read in the browser with a `payments` token, never through
+	// the App server. The panel stays out of the way when payments are off.
+	const paymentsLocationId = reservation?.locationId ?? null
+	const paymentsClient = useMemo(
+		() =>
+			layout?.payments?.enabled && clientPool
+				? clientPool.forScope(
+						'payments',
+						paymentsLocationId ? [paymentsLocationId] : undefined,
+					)
+				: null,
+		[layout?.payments?.enabled, clientPool, paymentsLocationId],
+	)
 
 	const label = (
 		labels: Record<string, MessageDescriptor>,
@@ -258,7 +287,7 @@ export function DetailSheet({
 		}
 	}, [loadDetail, reservationId])
 
-	const handleStatusTransition = async (toStatus: string) => {
+	const handleStatusTransition = async (toStatus: string, reason?: string) => {
 		if (!reservation) return
 		setBusy(true)
 		setError(null)
@@ -266,6 +295,7 @@ export function DetailSheet({
 			const res = await transitionReservationStatus(client, reservation.id, {
 				to: toStatus,
 				expectedVersion: reservation.version,
+				...(reason ? { reason } : {}),
 				...(selectedTableId ? { tableIds: [selectedTableId] } : {}),
 				...(serverLabel.trim() ? { serverLabel: serverLabel.trim() } : {}),
 				forceOverbook,
@@ -523,6 +553,18 @@ export function DetailSheet({
 								>
 									{label(RESERVATION_STATUS_LABELS, reservation.status)}
 								</Badge>
+								<PaymentBadge
+									paymentStatus={reservation.paymentStatus}
+									experience={Boolean(reservation.experienceId)}
+								/>
+								{reservation.experienceId ? (
+									<Badge
+										variant="outline"
+										data-testid="detail-experience-badge"
+									>
+										<Trans>Experience</Trans>
+									</Badge>
+								) : null}
 							</>
 						) : null}
 					</SheetTitle>
@@ -656,7 +698,10 @@ export function DetailSheet({
 													size="xs"
 													variant="outline"
 													disabled={busy}
-													onClick={() => handleStatusTransition('cancelled')}
+													onClick={() => {
+														setCancelReason('')
+														setCancelOpen(true)
+													}}
 													data-testid="detail-status-cancelled"
 												>
 													<Trans>Cancel Reservation</Trans>
@@ -692,6 +737,24 @@ export function DetailSheet({
 										</div>
 									) : null}
 								</div>
+							) : null}
+
+							{paymentsClient &&
+							layout?.orgSlug &&
+							(reservation.paymentStatus !== 'none' ||
+								reservation.status === 'pending_payment') ? (
+								<PaymentPanel
+									reservationId={reservation.id}
+									client={paymentsClient}
+									orgSlug={layout.orgSlug}
+									canAct={Boolean(layout.payments?.canAct)}
+									guestLabel={
+										(reservation.guestName ?? '').trim().split(/\s+/)[0] ||
+										t`the guest`
+									}
+									timeZone={timeZone}
+									onChanged={() => void loadDetail()}
+								/>
 							) : null}
 
 							{/* Running Late & Contact Tracking (VAL-BOOK-028) */}
@@ -1254,6 +1317,55 @@ export function DetailSheet({
 						</div>
 					) : null}
 				</div>
+				<AlertDialog
+					open={cancelOpen}
+					onOpenChange={(nextOpen) => {
+						if (!busy) setCancelOpen(nextOpen)
+					}}
+				>
+					<AlertDialogContent data-testid="detail-cancel-dialog">
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								<Trans>Cancel this reservation?</Trans>
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								<Trans>
+									The guest is told it was cancelled. A reason is optional and
+									stays in your records.
+								</Trans>
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<TextAreaField
+							label={<Trans>Reason</Trans>}
+							optional
+							value={cancelReason}
+							onChange={(event) => setCancelReason(event.target.value)}
+							maxLength={500}
+							rows={3}
+							data-testid="detail-cancel-reason"
+						/>
+						<AlertDialogFooter>
+							<AlertDialogCancel disabled={busy}>
+								<Trans>Keep reservation</Trans>
+							</AlertDialogCancel>
+							<AlertDialogAction
+								type="button"
+								variant="destructive"
+								disabled={busy}
+								onClick={() => {
+									const reason = cancelReason.trim()
+									void handleStatusTransition(
+										'cancelled',
+										reason || undefined,
+									).finally(() => setCancelOpen(false))
+								}}
+								data-testid="detail-cancel-confirm"
+							>
+								<Trans>Cancel reservation</Trans>
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 				<AlertDialog
 					open={rotateConfirmOpen}
 					onOpenChange={(nextOpen) => {

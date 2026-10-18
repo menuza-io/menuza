@@ -23,7 +23,7 @@ function call(
 	const url = new URL(`http://localhost:3001${path}`)
 	const headers: Record<string, string> = {}
 	if (init.token !== null) {
-		headers.Authorization = `Bearer ${init.token ?? ENV.INTERNAL_COMMAND_TOKEN}`
+		headers.Authorization = `Bearer ${init.token ?? ENV.SITES_RESERVATION_PAYMENT_TOKEN}`
 	}
 	return route({
 		request: new Request(url, {
@@ -82,10 +82,22 @@ describe.each([
 		})
 	})
 
-	it('answers 401 without the internal token and never reads the body or calls the payment code', async () => {
+	it('answers 401 without the Sites payment token and never reads the body or calls the payment code', async () => {
 		expect((await route(DEPOSIT, { token: null })).status).toBe(401)
 		expect((await route(DEPOSIT, { token: 'y'.repeat(40) })).status).toBe(401)
 		expect((await route('garbage', { token: null })).status).toBe(401)
+		expect(payments.checkout).not.toHaveBeenCalled()
+		expect(payments.status).not.toHaveBeenCalled()
+	})
+
+	it('rejects INTERNAL_COMMAND_TOKEN, which the Sites worker must never hold', async () => {
+		expect(ENV.INTERNAL_COMMAND_TOKEN).not.toBe(
+			ENV.SITES_RESERVATION_PAYMENT_TOKEN,
+		)
+		const response = await route(DEPOSIT, {
+			token: ENV.INTERNAL_COMMAND_TOKEN,
+		})
+		expect(response.status).toBe(401)
 		expect(payments.checkout).not.toHaveBeenCalled()
 		expect(payments.status).not.toHaveBeenCalled()
 	})

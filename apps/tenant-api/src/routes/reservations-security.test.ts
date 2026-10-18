@@ -1041,7 +1041,7 @@ describe('Reservations security sweep: mounts and non-operator surfaces', () => 
 		expect(res2.status).toBe(401)
 
 		const res3 = await otherApp.request(
-			'/api/voice/actions/reservation-availability',
+			'/api/voice/actions/reservations.availability',
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

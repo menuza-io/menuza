@@ -23,6 +23,13 @@ function orderGuidance(ordering: RestaurantSettings['ordering']) {
 	}`
 }
 
+function reservationTask(booking: boolean) {
+	if (!booking) {
+		return 'Reservations: collect the party size, date, time, and a name, then save it with record_request. Make clear it is a request and the team will confirm it.'
+	}
+	return "Reservations: collect the party size, date, and preferred time, then call check_table_availability and offer only the times it returns. When the caller picks one and gives a first name, call book_table. A held table is confirmed only when the caller opens the texted link, so never say it is confirmed before that; say how long it is held. Never look up, read back, change, or cancel a booking by phone: you can't verify who is calling, so text the booking link instead. If a tool fails, the party is large, or nothing fits, take it as a request with record_request (type reservation) and say the team will confirm."
+}
+
 function afterHours(mode: AfterHoursMode) {
 	switch (mode) {
 		case 'answer_only':
@@ -49,6 +56,8 @@ export function restaurantPrompt(input: {
 	isOpen: boolean
 	/** Online ordering can be paused while the store is open. */
 	orderingOpen: boolean
+	/** The booking tools are offered on this call. */
+	reservationBooking?: boolean
 }): VerticalPromptContributions {
 	const { verticalSettings } = input
 	return {
@@ -63,7 +72,7 @@ export function restaurantPrompt(input: {
 			orderGuidance(verticalSettings.ordering),
 			"Order link: you can't take payment by phone. Once the order is confirmed, ask permission to text a link to the number they're calling from, then call send_order_link. They review, pay, and choose pickup or delivery from that link.",
 			'Store questions: answer using the store details, the common questions below, and get_business_info. Never make up hours, fees, policies, or delivery areas.',
-			'Reservations: collect the party size, date, time, and a name, then save it with record_request. Make clear it is a request and the team will confirm it.',
+			reservationTask(input.reservationBooking === true),
 		],
 		businessQuestions: null,
 		sections: [

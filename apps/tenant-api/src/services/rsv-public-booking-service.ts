@@ -21,6 +21,8 @@ import {
 import { and, desc, eq, inArray, gt, sql } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
+import { queueReservationJourney } from '../restaurant/reservations-journeys.ts'
+import { recordReservationMarketingConsent } from './rsv-marketing-consent.ts'
 import { isLateCancellation } from './rsv-late-cancel.ts'
 import { enqueueReservationMessage } from './rsv-message-queue.ts'
 import { markNotifyRequestsBooked } from './rsv-notify-service.ts'
@@ -476,6 +478,8 @@ export async function bookFromHold(params: {
 	input: PublicBookingInput
 	client: string
 	channel: 'online' | 'native'
+	/** Idempotency scope; a phone-agent booking uses `voice_book`. */
+	idempotencyScope?: string
 	customerId: string | null
 	/** The signed-in customer's verified phone, when there is one. */
 	customerPhone?: string | null
@@ -495,7 +499,7 @@ export async function bookFromHold(params: {
 			locationId: pre.locationId,
 			dates: pre.businessDate,
 			now,
-			scope: 'POST /reservations',
+			scope: params.idempotencyScope ?? 'POST /reservations',
 			idempotencyKey: params.idempotencyKey,
 			requestHash: params.requestHash,
 		},
@@ -575,6 +579,14 @@ export async function bookFromHold(params: {
 				{ startAt: hold.startAt, endAt: hold.endAt },
 				now,
 			)
+			if (params.input.marketing) {
+				await recordReservationMarketingConsent(tx, {
+					guest,
+					email: params.input.guest.email?.trim().toLowerCase() || null,
+					channels: ['email'],
+					now,
+				})
+			}
 
 			const paymentPlan = await planBookingPayment(tx, {
 				context: params.context,
@@ -592,6 +604,9 @@ export async function bookFromHold(params: {
 				: null
 			const initialStatus = paymentPlan.required ? 'pending_payment' : 'booked'
 
+			// A hold a phone-agent call took books as that call's reservation.
+			const channel =
+				hold.source === 'voice_agent' ? 'voice_agent' : params.channel
 			const reservationId = `rsv_${randomUUID()}`
 			await deactivateOccupancies(tx, { holdId: hold.id })
 			await tx.insert(rsvReservations).values({
@@ -610,8 +625,9 @@ export async function bookFromHold(params: {
 				experienceId: hold.experienceId,
 				partySize: hold.partySize,
 				status: initialStatus,
-				channel: params.channel,
+				channel,
 				client: params.client,
+				voiceCallId: hold.voiceCallId,
 				// Automatic repair must never move a table-using experience booking.
 				assignment:
 					hold.experienceId && match.tableIds.length > 0 ? 'locked' : 'soft',
@@ -672,7 +688,7 @@ export async function bookFromHold(params: {
 				fromStatus: null,
 				toStatus: initialStatus,
 				data: {
-					channel: params.channel,
+					channel,
 					partySize: hold.partySize,
 					...bookingContactData(params.input.guest),
 				},
@@ -692,6 +708,14 @@ export async function bookFromHold(params: {
 				guestId: guest.id,
 				now,
 			})
+			// An unpaid booking fires `reservation_booked` once payment lands.
+			if (!paymentPlan.required) {
+				queueReservationJourney(helpers.afterCommit, {
+					orgId: params.orgId,
+					reservationId,
+					trigger: 'reservation_booked',
+				})
+			}
 			return { reservationId }
 		},
 	)
@@ -1089,6 +1113,11 @@ export async function guestCancelReservation(params: {
 				cancelledBy: 'guest',
 				late,
 				now,
+			})
+			queueReservationJourney(helpers.afterCommit, {
+				orgId: params.orgId,
+				reservationId: current.id,
+				trigger: 'reservation_cancelled',
 			})
 			return { reservationId: current.id }
 		},

@@ -73,14 +73,15 @@ export const customerRefreshTokens = sqliteTable(
 	],
 )
 
-export const CUSTOMER_SUBSCRIPTION_TOPICS = ['drops'] as const
-export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms'] as const
+export const CUSTOMER_SUBSCRIPTION_TOPICS = ['drops', 'reservations'] as const
+export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms', 'email'] as const
 export const CUSTOMER_SUBSCRIPTION_SOURCES = [
 	'menu',
 	'drops_page',
 	'drop_page',
 	'order_success',
 	'profile',
+	'reservation_booking',
 ] as const
 
 // Explicit marketing consent, one row per customer + topic + channel. Opting
@@ -137,7 +138,16 @@ export const marketingJourneys = sqliteTable(
 			.notNull()
 			.default('draft'),
 		triggerType: text('trigger_type', {
-			enum: ['phone_verified', 'profile_completed', 'custom_event', 'manual'],
+			enum: [
+				'phone_verified',
+				'profile_completed',
+				'custom_event',
+				'manual',
+				'reservation_booked',
+				'reservation_completed',
+				'reservation_no_show',
+				'reservation_cancelled',
+			],
 		})
 			.notNull()
 			.default('phone_verified'),
@@ -882,6 +892,39 @@ export const voiceCalls = sqliteTable(
 		index('idx_voice_calls_recording_expires').on(table.recordingExpiresAt),
 		index('idx_voice_calls_transcript_expires').on(table.transcriptExpiresAt),
 		uniqueIndex('voice_calls_room_name_unique').on(table.roomName),
+	],
+)
+
+export const VOICE_CALL_ACTION_OUTCOME_VALUES = [
+	'pending',
+	'ok',
+	'refused',
+	'failed',
+] as const
+
+// One row per action the voice agent asked tenant-api to run during a call.
+// The rows are the per-call cap: an action is reserved here (counted against
+// its cap) before it runs. Holds no caller data: ids and outcomes only.
+export const voiceCallActions = sqliteTable(
+	'voice_call_actions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		callId: text('call_id')
+			.notNull()
+			.references(() => voiceCalls.id, { onDelete: 'cascade' }),
+		action: text('action').notNull(),
+		outcome: text('outcome', { enum: VOICE_CALL_ACTION_OUTCOME_VALUES })
+			.notNull()
+			.default('pending'),
+		dryRun: integer('dry_run', { mode: 'boolean' }).notNull().default(false),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_voice_call_actions_call_action').on(table.callId, table.action),
 	],
 )
 
@@ -2290,6 +2333,13 @@ export const laborScopeSettings = sqliteTable('labor_scope_settings', {
 		.$type<Record<string, number>>()
 		.notNull()
 		.default(sql`'{}'`),
+	// JSON object: demand source id (`orders`, `visits`) -> position id ->
+	// units one person in the position handles per hour. `orders` mirrors
+	// `orders_per_labor_hour`, which older code still reads.
+	demandPerLaborHour: text('demand_per_labor_hour', { mode: 'json' })
+		.$type<Record<string, Record<string, number>>>()
+		.notNull()
+		.default(sql`'{}'`),
 	updatedBy: text('updated_by'),
 	updatedAt: integer('updated_at').notNull().default(nowMs),
 })
@@ -3153,9 +3203,15 @@ export const RSV_OUTBOX_KIND_VALUES = [
 ] as const
 export type RsvOutboxKind = (typeof RSV_OUTBOX_KIND_VALUES)[number]
 
+// The two dotted values predate the journey triggers and stay valid; the four
+// `reservation_*` values are the journey trigger types and the dedupe key.
 export const RSV_JOURNEY_EVENT_TYPE_VALUES = [
 	'reservation.visited',
 	'reservation.no_show',
+	'reservation_booked',
+	'reservation_completed',
+	'reservation_no_show',
+	'reservation_cancelled',
 ] as const
 export type RsvJourneyEventType = (typeof RSV_JOURNEY_EVENT_TYPE_VALUES)[number]
 
@@ -4687,6 +4743,7 @@ export type StaffAvailabilityRow = typeof staffAvailability.$inferSelect
 export type TimeOffRequestRow = typeof timeOffRequests.$inferSelect
 export type ShiftRequestRow = typeof shiftRequests.$inferSelect
 
+export type VoiceCallActionRow = typeof voiceCallActions.$inferSelect
 export type LaborScopeSettingsRow = typeof laborScopeSettings.$inferSelect
 export type SalesManualEntryRow = typeof salesManualEntries.$inferSelect
 export type TipPoolSettingsRow = typeof tipPoolSettings.$inferSelect
