@@ -956,7 +956,7 @@ test.describe('Reservations Book & Host Stand UI', () => {
 		await expect(page).toHaveURL(/area=area-main/)
 		await expect(page.getByTestId('detail-guest-crm')).toBeVisible()
 
-		// Mark Arrived -> 60s Undo banner appears -> Undo restores status (VAL-BOOK-028, VAL-BOOK-035)
+		// Mark arrived -> 60s Undo banner appears -> Undo restores status (VAL-BOOK-028, VAL-BOOK-035)
 		await page.getByTestId('detail-status-arrived').click()
 		await expect(page.getByTestId('detail-undo-banner')).toBeVisible()
 		await page.getByTestId('detail-undo-btn').click()

@@ -56,6 +56,15 @@ describe('TodayPartyCard', () => {
 		)
 	})
 
+	it('labels the primary action of a confirmed party with a verb, not a status', () => {
+		renderStaff(
+			<TodayPartyCard reservation={rsv()} kind="upcoming" {...props()} />,
+		)
+		expect(screen.getByTestId('today-arrive-r1').textContent).toBe(
+			'Mark arrived',
+		)
+	})
+
 	it('offers Seat for an arrived party and hides actions when read-only', () => {
 		renderStaff(
 			<TodayPartyCard

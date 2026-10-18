@@ -34,6 +34,11 @@ import {
 	saveServiceNotes,
 } from '#app/utils/reservations/book-api.ts'
 import {
+	coversLabel,
+	guestsCountLabel,
+	partiesLabel,
+} from '#app/utils/reservations/count-labels.ts'
+import {
 	hostErrorMessage,
 	hostLoadErrorMessage,
 } from '#app/utils/reservations/host-errors.ts'
@@ -471,8 +476,8 @@ export default function ReservationsOverviewRoute() {
 								<Badge variant="default" data-testid="overview-peak-slot-badge">
 									<Trans>Peak:</Trans>{' '}
 									<span dir="ltr" className="ms-1 font-mono">
-										{peakSlots.map((s) => s.hhmm).join(', ')} ({peakCovers}{' '}
-										{t`covers`})
+										{peakSlots.map((s) => s.hhmm).join(', ')} (
+										{coversLabel(peakCovers)})
 									</span>
 								</Badge>
 							) : null}
@@ -523,7 +528,8 @@ export default function ReservationsOverviewRoute() {
 												/>
 											</div>
 											<span className="w-28 shrink-0 text-end" dir="ltr">
-												{slot.covers} {t`covers`} · {slot.parties} {t`parties`}
+												{coversLabel(slot.covers)} ·{' '}
+												{partiesLabel(slot.parties)}
 											</span>
 											{isPeak ? (
 												<Badge variant="secondary">
@@ -650,7 +656,7 @@ export default function ReservationsOverviewRoute() {
 										</span>
 									</div>
 									<Badge variant="default" dir="ltr">
-										{rsv.partySize} {t`guests`}
+										{guestsCountLabel(rsv.partySize)}
 									</Badge>
 								</div>
 							))

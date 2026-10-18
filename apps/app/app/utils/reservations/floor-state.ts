@@ -351,6 +351,52 @@ export function floorPlacementWithFallback(
 	}
 }
 
+/** Smallest a live table tile is drawn (stage units, scale 1): below this its text cannot fit. */
+export const FLOOR_TABLE_MIN = 72
+
+/**
+ * Placement of a table tile on the live floor: `floorPlacementWithFallback`,
+ * grown (to the right and down, so the room never moves left or up) to at
+ * least `FLOOR_TABLE_MIN` each way. The room bounds and fit scale use the same
+ * size, so a grown tile never spills out of the stage.
+ */
+export function floorTablePlacement(
+	item: PlacedBox,
+	index: number,
+): FloorPlacement {
+	const p = floorPlacementWithFallback(item, index)
+	return {
+		...p,
+		width: Math.max(FLOOR_TABLE_MIN, p.width),
+		height: Math.max(FLOOR_TABLE_MIN, p.height),
+	}
+}
+
+export type FloorTileLayout = {
+	/** `tight` tiles print the table, one compact status word and the party; `roomy` ones add time, timer, capacity and section. */
+	tier: 'tight' | 'roomy'
+	/** Lines the party name may wrap to before it is clamped. */
+	partyLines: 1 | 2
+}
+
+/**
+ * What a tile can hold, from its own size (never from a fixed text width):
+ * roomy needs 104x88 (a round tile loses its corners, so it needs 128x112),
+ * and the party name gets a second line once the tile is 80 or more tall.
+ */
+export function floorTileLayout(
+	width: number,
+	height: number,
+	isRound = false,
+): FloorTileLayout {
+	const needW = isRound ? 128 : 104
+	const needH = isRound ? 112 : 88
+	return {
+		tier: width >= needW && height >= needH ? 'roomy' : 'tight',
+		partyLines: height >= 80 ? 2 : 1,
+	}
+}
+
 /**
  * Stage size: wraps what is on the area with some padding, never larger than
  * the editor canvas (`FLOOR_CANVAS_MAX` wide, 720 high), so a layout drawn in
@@ -366,7 +412,7 @@ export function floorStageSize(
 	let maxX = 0
 	let maxY = 0
 	const placements = [
-		...tables.map((item, index) => floorPlacementWithFallback(item, index)),
+		...tables.map((item, index) => floorTablePlacement(item, index)),
 		...elements.map((item) => floorPlacement(item)),
 	]
 	for (const p of placements) {
@@ -387,8 +433,8 @@ export function floorStageSize(
 
 /** Padding around the room's tables, in stage units. */
 const ROOM_PADDING = 16
-/** Never magnify the room beyond this, so a one-table area does not become a poster. */
-export const FLOOR_MAX_SCALE = 1.75
+/** Never magnify the room beyond this, so a one-table area does not become a poster (wide screens still fill). */
+export const FLOOR_MAX_SCALE = 2.2
 /** Below this the tiles stop being legible; the room scrolls sideways instead. */
 export const FLOOR_MIN_SCALE = 0.8
 
@@ -403,7 +449,7 @@ export function floorRoomBounds(
 	elements: readonly PlacedBox[] = [],
 ): { x: number; y: number; width: number; height: number } {
 	const placements = [
-		...tables.map((item, index) => floorPlacementWithFallback(item, index)),
+		...tables.map((item, index) => floorTablePlacement(item, index)),
 		...elements.map((item) => floorPlacement(item)),
 	]
 	if (placements.length === 0) {

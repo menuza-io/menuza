@@ -68,7 +68,7 @@ export function SheetForm({
 				noValidate
 				className="flex min-h-0 flex-1 flex-col"
 			>
-				<div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
+				<div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 *:shrink-0">
 					{children}
 				</div>
 				<SheetFooter className="border-t sm:flex-row sm:justify-end">

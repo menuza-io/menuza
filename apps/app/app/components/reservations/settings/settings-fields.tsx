@@ -28,7 +28,7 @@ export function SwitchRow({
 	return (
 		<div
 			className={cn(
-				'flex min-h-11 items-start justify-between gap-4 py-1',
+				'flex min-h-11 shrink-0 items-start justify-between gap-4 py-1',
 				className,
 			)}
 		>

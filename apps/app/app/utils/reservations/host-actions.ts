@@ -34,7 +34,7 @@ export const HOST_ACTION_LABELS: Record<QuickAction, MessageDescriptor> = {
 	approve: msg`Approve`,
 	decline: msg`Decline`,
 	confirm: msg`Confirm`,
-	arrive: msg`Arrived`,
+	arrive: msg`Mark arrived`,
 	partially_seat: msg`Seat part of the party`,
 	seat: msg`Seat`,
 	finish: msg`Finish`,

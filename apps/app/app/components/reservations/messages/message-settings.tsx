@@ -85,7 +85,7 @@ function MessageSwitchRow({
 	const id = useId()
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="flex min-h-11 items-start justify-between gap-4 py-1">
+			<div className="flex min-h-11 shrink-0 items-start justify-between gap-4 py-1">
 				<div className="flex min-w-0 flex-col gap-0.5">
 					<FieldLabel
 						id={`${id}-label`}

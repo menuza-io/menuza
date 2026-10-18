@@ -29,6 +29,11 @@ import {
 	type CalendarMonthResponse,
 	fetchBookCalendar,
 } from '#app/utils/reservations/book-api.ts'
+import {
+	coversLabel,
+	partiesLabel,
+	specialClosedDaysLabel,
+} from '#app/utils/reservations/count-labels.ts'
 import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/calendar.ts'
@@ -282,20 +287,17 @@ export default function ReservationsCalendarRoute() {
 							variant="secondary"
 							data-testid="calendar-month-covers-badge"
 						>
-							<span dir="ltr">{monthTotals.totalCovers}</span>{' '}
-							<Trans>covers</Trans>
+							{coversLabel(monthTotals.totalCovers)}
 						</Badge>
 						<Badge variant="outline" data-testid="calendar-month-parties-badge">
-							<span dir="ltr">{monthTotals.totalParties}</span>{' '}
-							<Trans>parties</Trans>
+							{partiesLabel(monthTotals.totalParties)}
 						</Badge>
 						{monthTotals.specialDays > 0 ? (
 							<Badge
 								variant="warning"
 								data-testid="calendar-month-special-badge"
 							>
-								<span dir="ltr">{monthTotals.specialDays}</span>{' '}
-								<Trans>special / closed</Trans>
+								{specialClosedDaysLabel(monthTotals.specialDays)}
 							</Badge>
 						) : null}
 					</div>
@@ -474,15 +476,13 @@ export default function ReservationsCalendarRoute() {
 														className="text-foreground font-semibold"
 														data-testid={`calendar-day-covers-${cell.date}`}
 													>
-														<span dir="ltr">{cell.totalCovers}</span>{' '}
-														<Trans>covers</Trans>
+														{coversLabel(cell.totalCovers)}
 													</span>
 													<span
 														className="text-muted-foreground text-xs"
 														data-testid={`calendar-day-parties-${cell.date}`}
 													>
-														<span dir="ltr">{cell.totalParties}</span>{' '}
-														<Trans>parties</Trans>
+														{partiesLabel(cell.totalParties)}
 													</span>
 												</div>
 

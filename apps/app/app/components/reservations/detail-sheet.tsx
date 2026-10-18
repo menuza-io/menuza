@@ -1389,7 +1389,7 @@ export function DetailSheet({
 							<Icon name="check" className="size-4" />
 							<span>
 								{nextAction === 'arrived' ? (
-									<Trans>Mark Arrived</Trans>
+									<Trans>Mark arrived</Trans>
 								) : nextAction === 'seated' ? (
 									<Trans>Seat Party</Trans>
 								) : (

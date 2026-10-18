@@ -29,6 +29,7 @@ import {
 	type DayReservationView,
 	updateReservation,
 } from '#app/utils/reservations/book-api.ts'
+import { tablesCountLabel } from '#app/utils/reservations/count-labels.ts'
 import {
 	hostErrorMessage,
 	hostLoadErrorMessage,
@@ -1079,7 +1080,7 @@ export default function ReservationsTimelineRoute() {
 									<div className="bg-muted/30 flex items-center border-b px-3 py-1 text-xs font-semibold">
 										<span>{area.name}</span>
 										<Badge variant="outline" className="ms-2">
-											{areaTables.length} <Trans>tables</Trans>
+											{tablesCountLabel(areaTables.length)}
 										</Badge>
 									</div>
 

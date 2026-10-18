@@ -343,3 +343,44 @@ describe('room fit', () => {
 		expect(floorFitScale(0, 332)).toBe(1)
 	})
 })
+
+describe('floor tile sizing', () => {
+	it('grows a small table to the readable minimum and keeps larger ones', async () => {
+		const { floorTablePlacement, FLOOR_TABLE_MIN } =
+			await import('./floor-state.ts')
+		const small = floorTablePlacement(
+			{ x: 40, y: 50, width: 40, height: 30 },
+			0,
+		)
+		expect(small).toMatchObject({
+			x: 40,
+			y: 50,
+			width: FLOOR_TABLE_MIN,
+			height: FLOOR_TABLE_MIN,
+		})
+		expect(
+			floorTablePlacement({ x: 10, y: 10, width: 120, height: 90 }, 0),
+		).toMatchObject({ width: 120, height: 90 })
+	})
+
+	it('counts the grown tile in the room bounds so the fit scale never clips it', async () => {
+		const { floorRoomBounds, FLOOR_TABLE_MIN } =
+			await import('./floor-state.ts')
+		const b = floorRoomBounds([{ x: 100, y: 100, width: 40, height: 40 }])
+		expect(b.x + b.width).toBeGreaterThanOrEqual(100 + FLOOR_TABLE_MIN)
+	})
+
+	it('chooses the tile tier and party-name lines from the tile size', async () => {
+		const { floorTileLayout } = await import('./floor-state.ts')
+		expect(floorTileLayout(72, 72)).toEqual({ tier: 'tight', partyLines: 1 })
+		expect(floorTileLayout(88, 88)).toEqual({ tier: 'tight', partyLines: 2 })
+		expect(floorTileLayout(120, 96)).toEqual({ tier: 'roomy', partyLines: 2 })
+		expect(floorTileLayout(120, 96, true).tier).toBe('tight')
+		expect(floorTileLayout(140, 120, true).tier).toBe('roomy')
+	})
+
+	it('lets a narrow room magnify up to 2.2 and no further', () => {
+		expect(FLOOR_MAX_SCALE).toBe(2.2)
+		expect(floorFitScale(3000, 300)).toBe(2.2)
+	})
+})

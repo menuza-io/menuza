@@ -34,6 +34,12 @@ import {
 	undoReservationTransition,
 } from '#app/utils/reservations/book-api.ts'
 import {
+	inNextMinutesLabel,
+	partiesLabel,
+	tablesActiveLabel,
+	unassignedAndConflictsLabel,
+} from '#app/utils/reservations/count-labels.ts'
+import {
 	boardColumnFor,
 	type HostAction,
 } from '#app/utils/reservations/host-actions.ts'
@@ -358,11 +364,7 @@ export default function ReservationsTodayRoute() {
 										{stats?.totalCovers ?? 0}
 									</span>
 								}
-								hint={
-									<>
-										{stats?.totalParties ?? 0} <Trans>parties</Trans>
-									</>
-								}
+								hint={partiesLabel(stats?.totalParties ?? 0)}
 							/>
 							<WorkspaceMetric
 								label={<Trans>Arriving soon</Trans>}
@@ -371,12 +373,7 @@ export default function ReservationsTodayRoute() {
 										{stats?.arrivingSoonCovers ?? 0}
 									</span>
 								}
-								hint={
-									<>
-										{stats?.arrivingSoonParties ?? 0}{' '}
-										<Trans>in the next 30 min</Trans>
-									</>
-								}
+								hint={inNextMinutesLabel(stats?.arrivingSoonParties ?? 0)}
 							/>
 							<WorkspaceMetric
 								label={<Trans>Seated</Trans>}
@@ -385,11 +382,7 @@ export default function ReservationsTodayRoute() {
 										{stats?.seatedCovers ?? 0}
 									</span>
 								}
-								hint={
-									<>
-										{stats?.seatedParties ?? 0} <Trans>tables active</Trans>
-									</>
-								}
+								hint={tablesActiveLabel(stats?.seatedParties ?? 0)}
 							/>
 							<WorkspaceMetric
 								label={<Trans>Needs attention</Trans>}
@@ -399,12 +392,10 @@ export default function ReservationsTodayRoute() {
 										{attentionCount}
 									</span>
 								}
-								hint={
-									<>
-										{stats?.unassignedCount ?? 0} <Trans>unassigned</Trans> ·{' '}
-										{stats?.conflictCount ?? 0} <Trans>conflicts</Trans>
-									</>
-								}
+								hint={unassignedAndConflictsLabel(
+									stats?.unassignedCount ?? 0,
+									stats?.conflictCount ?? 0,
+								)}
 							/>
 						</WorkspaceMetricGrid>
 					</div>

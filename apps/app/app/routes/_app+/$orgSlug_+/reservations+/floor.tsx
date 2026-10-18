@@ -63,13 +63,14 @@ import {
 	transitionReservationStatus,
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
+import { coversRangeLabel } from '#app/utils/reservations/count-labels.ts'
 import {
 	type ComputedTableFloorState,
 	computeTableFloorState,
 	type FloorClock,
 	floorElementsForArea,
 	floorPlacement,
-	floorPlacementWithFallback,
+	floorTablePlacement,
 	floorFitScale,
 	floorRoomBounds,
 	floorTablesForArea,
@@ -1105,7 +1106,7 @@ export default function ReservationsFloorRoute() {
 											<FloorTable
 												key={ts.table.id}
 												state={ts}
-												placement={floorPlacementWithFallback(ts.table, index)}
+												placement={floorTablePlacement(ts.table, index)}
 												isRound={ts.table.shape === 'round'}
 												selected={selectedTableId === ts.table.id}
 												dragOver={dragOverTableId === ts.table.id}
@@ -1138,8 +1139,10 @@ export default function ReservationsFloorRoute() {
 									<div className="min-w-0">
 										<CardTitle className="text-sm font-semibold">
 											{selectedTableState.table.label} ·{' '}
-											{selectedTableState.table.minCovers}-
-											{selectedTableState.table.maxCovers} <Trans>covers</Trans>
+											{coversRangeLabel(
+												selectedTableState.table.minCovers,
+												selectedTableState.table.maxCovers,
+											)}
 										</CardTitle>
 										<p className="text-muted-foreground text-xs">
 											{i18n._(

@@ -1,12 +1,18 @@
+import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@repo/ui'
 import { Icon, type IconName } from '@repo/ui/icon'
 import { memo, type DragEvent } from 'react'
-import { TABLE_STATE_STYLES } from '#app/components/reservations/status-style.tsx'
+import {
+	TABLE_STATE_STYLES,
+	type TableStateKey,
+} from '#app/components/reservations/status-style.tsx'
 import {
 	type ComputedTableFloorState,
 	type FloorLiveStatus,
 	type FloorPlacement,
+	floorTileLayout,
 } from '#app/utils/reservations/floor-state.ts'
 import {
 	COURSE_STAGE_LABELS,
@@ -80,8 +86,29 @@ export type FloorTableProps = {
 	) => void
 }
 
-/** Width below which the capacity and section chip are left to the quick-actions panel. */
-const COMPACT_WIDTH = 96
+/**
+ * One short word per state for the tile's status line. The long label
+ * ("Arrived, waiting") stays in the aria-label, the title and the side panel.
+ */
+const FREE_TABLE = msg({ message: 'Free', context: 'Table is free' })
+
+export const FLOOR_COMPACT_STATUS: Partial<
+	Record<TableStateKey, MessageDescriptor>
+> = {
+	available: FREE_TABLE,
+	open: FREE_TABLE,
+	reserved_soon: msg`Reserved`,
+	arrived_waiting: msg`Waiting`,
+	seated: msg`Seated`,
+	entree: msg`Entree`,
+	dessert: msg`Dessert`,
+	dessert_check: msg`Dessert`,
+	check_dropped: msg`Check`,
+	finishing: msg`Finishing`,
+	overtime: msg`Overtime`,
+	bussing: msg`Bussing`,
+	blocked: msg`Blocked`,
+}
 
 function FloorTableBase({
 	state,
@@ -101,9 +128,10 @@ function FloorTableBase({
 	const { t, i18n } = useLingui()
 	const { table, liveStatus } = state
 	const activeParty = state.currentReservation ?? state.nextReservation
-	const compact = placement.width < COMPACT_WIDTH
+	const layout = floorTileLayout(placement.width, placement.height, isRound)
+	const roomy = layout.tier === 'roomy'
 
-	const stateKey =
+	const stateKey: TableStateKey =
 		liveStatus === 'dessert_check'
 			? state.stage === 'check'
 				? 'check_dropped'
@@ -111,12 +139,28 @@ function FloorTableBase({
 					? 'bussing'
 					: 'dessert'
 			: liveStatus
-	const baseLabel = i18n._(TABLE_STATE_STYLES[stateKey].label)
+	const style = TABLE_STATE_STYLES[stateKey]
+	const baseLabel = i18n._(style.label)
 	const reservedAt = state.reservedAtHhmm
 	const statusLabel =
 		liveStatus === 'available' && reservedAt
 			? t`Reserved ${reservedAt}`
 			: baseLabel
+	const compactDescriptor = FLOOR_COMPACT_STATUS[stateKey]
+	const compactWord = compactDescriptor
+		? i18n._(
+				liveStatus === 'available' && reservedAt
+					? FLOOR_COMPACT_STATUS.reserved_soon!
+					: compactDescriptor,
+			)
+		: baseLabel
+	/** Time of the next booking, shown beside the status word when the tile has room. */
+	const statusTime =
+		liveStatus === 'available' && reservedAt
+			? reservedAt
+			: !state.currentReservation && activeParty
+				? activeParty.hhmm
+				: null
 
 	let timerText: string | null = null
 	if (state.elapsedMin !== null && state.remainingMin !== null) {
@@ -135,16 +179,18 @@ function FloorTableBase({
 	const ariaLabel = guestName
 		? t`Table ${tableLabel}, ${statusLabel}, ${guestName}`
 		: t`Table ${tableLabel}, ${statusLabel}`
+	const title = timerText ? `${ariaLabel} · ${timerText}` : ariaLabel
 
 	return (
 		<button
 			type="button"
 			aria-label={ariaLabel}
 			aria-pressed={selected}
-			title={ariaLabel}
+			title={title}
 			data-testid={`floor-table-${table.id}`}
 			data-table-label={table.label}
 			data-live-status={liveStatus}
+			data-tile-tier={layout.tier}
 			data-section-id={state.sectionId ?? ''}
 			onClick={() => onSelect(table.id)}
 			onDragOver={(e) => {
@@ -154,8 +200,10 @@ function FloorTableBase({
 			onDragLeave={() => onDragLeaveTable(table.id)}
 			onDrop={(e) => onDropOnTable(e, state)}
 			className={cn(
-				'absolute flex flex-col justify-between overflow-hidden border-2 p-1.5 text-start shadow-xs transition-colors focus-visible:ring-2 focus-visible:outline-none',
-				isRound ? 'rounded-full px-2.5 py-2' : 'rounded-xl',
+				'absolute flex min-w-0 flex-col gap-0.5 overflow-hidden border-2 p-1.5 text-start text-xs leading-tight shadow-xs transition-colors focus-visible:ring-2 focus-visible:outline-none',
+				isRound
+					? 'items-center justify-center rounded-full p-3 text-center'
+					: 'rounded-xl',
 				floorTableSurface(liveStatus, highContrast),
 				selected && 'ring-primary ring-2 ring-offset-2',
 				dragOver && 'border-primary bg-primary/15 ring-2',
@@ -170,96 +218,119 @@ function FloorTableBase({
 					: undefined,
 			}}
 		>
-			<div className="flex w-full items-center justify-between gap-1">
+			<div
+				className={cn(
+					'flex w-full min-w-0 items-center gap-1',
+					isRound ? 'justify-center' : 'justify-between',
+				)}
+			>
 				<span className="flex min-w-0 items-center gap-1">
-					{showSection && compact && sectionColor ? (
+					{showSection && sectionColor ? (
 						<span
 							aria-hidden="true"
 							className="size-2 shrink-0 rounded-full"
 							style={{ backgroundColor: sectionColor }}
 						/>
 					) : null}
-					<span className="truncate text-xs font-semibold">{table.label}</span>
+					<span
+						className="truncate font-semibold"
+						data-testid={`floor-table-label-${table.id}`}
+					>
+						{table.label}
+					</span>
 				</span>
-				<span className="text-muted-foreground flex shrink-0 items-center gap-0.5 text-xs">
-					<Icon name={FLOOR_STATUS_ICONS[liveStatus]} className="size-3.5" />
-					{compact ? null : (
-						<span>
-							{table.minCovers}-{table.maxCovers}
-						</span>
-					)}
+				{isRound && !roomy ? null : (
+					<span className="text-muted-foreground flex shrink-0 items-center gap-0.5">
+						<Icon name={FLOOR_STATUS_ICONS[liveStatus]} className="size-3.5" />
+						{roomy ? (
+							<span>
+								{table.minCovers}-{table.maxCovers}
+							</span>
+						) : null}
+					</span>
+				)}
+			</div>
+
+			<div
+				className={cn(
+					'flex w-full min-w-0 items-center gap-1',
+					style.text,
+					isRound && 'justify-center',
+				)}
+			>
+				<span
+					aria-hidden="true"
+					className={cn('size-1.5 shrink-0 rounded-full', style.dot)}
+				/>
+				<span
+					className="min-w-0 wrap-anywhere"
+					data-testid={`floor-table-status-text-${table.id}`}
+				>
+					{compactWord}
+					{roomy && statusTime ? (
+						<span className="tabular-nums"> {statusTime}</span>
+					) : null}
 				</span>
 			</div>
 
 			{activeParty ? (
-				<div className="flex items-center justify-between gap-1 overflow-hidden">
+				<div
+					className={cn(
+						'min-w-0 font-medium wrap-anywhere',
+						layout.partyLines === 2 ? 'line-clamp-2' : 'line-clamp-1',
+					)}
+				>
+					<span data-testid={`floor-table-guest-${table.id}`}>{guestName}</span>{' '}
 					<span
-						className="truncate text-xs font-medium"
-						data-testid={`floor-table-guest-${table.id}`}
-					>
-						{guestName}
-					</span>
-					<span
-						className="text-muted-foreground shrink-0 text-xs tabular-nums"
+						className="text-muted-foreground font-normal tabular-nums"
 						data-testid={`floor-table-party-size-${table.id}`}
 					>
-						{state.currentReservation ? null : `${activeParty.hhmm} · `}
+						{!roomy && !state.currentReservation
+							? `${activeParty.hhmm} · `
+							: null}
 						{activeParty.partySize}p
 					</span>
 				</div>
-			) : (
-				<div className="text-muted-foreground truncate text-xs">
-					{statusLabel}
-				</div>
-			)}
+			) : null}
 
-			<div className="flex w-full items-center justify-between gap-1">
-				{timerText ? (
-					<span
-						className={cn(
-							'truncate text-xs font-medium tabular-nums',
-							liveStatus === 'overtime' && 'text-warning',
-						)}
-						data-testid={`floor-table-timer-${table.id}`}
-					>
-						{timerText}
-					</span>
-				) : activeParty?.courseStage ? (
-					<span
-						className="text-muted-foreground truncate text-xs"
-						data-testid={`floor-table-course-${table.id}`}
-					>
-						{enumLabel(
-							(d) => i18n._(d),
-							COURSE_STAGE_LABELS,
-							activeParty.courseStage,
-						)}
-					</span>
-				) : (
-					<span
-						className="text-muted-foreground truncate text-xs"
-						data-testid={`floor-table-status-text-${table.id}`}
-					>
-						{activeParty ? statusLabel : null}
-					</span>
-				)}
+			{roomy && timerText ? (
+				<span
+					className={cn(
+						'truncate font-medium tabular-nums',
+						liveStatus === 'overtime' && 'text-warning',
+					)}
+					data-testid={`floor-table-timer-${table.id}`}
+				>
+					{timerText}
+				</span>
+			) : roomy && activeParty?.courseStage ? (
+				<span
+					className="text-muted-foreground truncate"
+					data-testid={`floor-table-course-${table.id}`}
+				>
+					{enumLabel(
+						(d) => i18n._(d),
+						COURSE_STAGE_LABELS,
+						activeParty.courseStage,
+					)}
+				</span>
+			) : null}
 
-				{showSection && state.sectionName && !compact ? (
+			{roomy && showSection && state.sectionName ? (
+				<span
+					className="bg-background/80 text-foreground mt-auto inline-flex min-w-0 items-center gap-1 self-start rounded-sm px-1"
+					data-testid={`floor-table-section-badge-${table.id}`}
+				>
 					<span
-						className="bg-background/80 text-foreground inline-flex min-w-0 items-center gap-1 rounded-sm px-1 text-xs"
-						data-testid={`floor-table-section-badge-${table.id}`}
-					>
-						<span
-							aria-hidden="true"
-							className="size-2 shrink-0 rounded-full"
-							style={{
-								backgroundColor: sectionColor ?? 'var(--muted-foreground)',
-							}}
-						/>
-						<span className="truncate">{state.sectionName}</span>
-					</span>
-				) : null}
-			</div>
+						aria-hidden="true"
+						className="size-2 shrink-0 rounded-full"
+						style={{
+							backgroundColor: sectionColor ?? 'var(--muted-foreground)',
+						}}
+					/>
+					<span className="truncate">{state.sectionName}</span>
+				</span>
+			) : null}
 		</button>
 	)
 }

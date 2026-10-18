@@ -48,6 +48,7 @@ import { useReservationRequests } from '#app/components/reservations/use-reserva
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { guestsCountLabel } from '#app/utils/reservations/count-labels.ts'
 import {
 	HOST_ACTION_LABELS,
 	hostActionsFor,
@@ -533,7 +534,7 @@ export default function ReservationsBookRoute() {
 												</TableCell>
 												<TableCell className="whitespace-nowrap">
 													<div className="font-semibold tabular-nums">
-														{rsv.partySize} <Trans>guests</Trans>
+														{guestsCountLabel(rsv.partySize)}
 													</div>
 													<div
 														className="text-muted-foreground text-xs"
