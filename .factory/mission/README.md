@@ -11,12 +11,12 @@ The same snapshot lives in `docs/reservations-mission/` and `.factory/mission/`.
 All four pending features are implemented and committed on `pr/reservations`.
 The mission is **not closed**: the 175 assertions stay `pending` in
 `validation-state.json`, because the formal scrutiny and user-testing validators
-were not run (no browser login on the dev machine, and the disk filled up at the
-end). `validation-state.json` carries two extra fields per pending assertion:
-`implementedAtCommit` and `verification` (`tests-cite-id` when a test file cites
-the id, `no-id-tagged-test` otherwise). That is a lower bound, not a verdict:
-many tests cover an assertion without citing its id. The per-assertion test
-files are in `validation/payments-integrations-and-native/evidence.json`.
+were not run (no browser login on the dev machine). `validation-state.json`
+carries two extra fields per pending assertion: `implementedAtCommit` and
+`verification` (`tests-cite-id` when a test file cites the id,
+`no-id-tagged-test` otherwise). That is a lower bound, not a verdict: many tests
+cover an assertion without citing its id. The per-assertion test files are in
+`validation/payments-integrations-and-native/evidence.json`.
 
 | Milestone                          | State                                                                       |
 | ---------------------------------- | --------------------------------------------------------------------------- |
@@ -38,14 +38,23 @@ files are in `validation/payments-integrations-and-native/evidence.json`.
 
 ### What is verified
 
-- Last full green runs: tenant-api 2,722 tests, `@repo/tenant-db` 183,
-  `@repo/reservations` 142, `@repo/payments` 264, `@repo/staffing` 641, Sites
-  339, jobs-cron 96, voice-agent 209, phone-agent 101, phone-agent-restaurant
-  54, marketing-workflow 19. Nothing outside `apps/app` changed after the
-  native/docs commit, so these still describe the tree.
-- App: 939 tests pass across `components/reservations`, `utils/reservations`,
-  `hooks`, `components/dashboard` and the reservation routes; typecheck is
-  clean; `node scripts/check-lingui.mjs` passes.
+Full gate run on the final tree (after freeing disk space):
+
+- tenant-api 2,726 passed (1 skipped); `@repo/tenant-db` 183; typecheck clean
+  for tenant-api, sites, admin, jobs-cron, voice-agent, `@repo/reservations`,
+  `@repo/payments`, `@repo/database`.
+- Earlier green runs, unchanged since: `@repo/reservations` 142,
+  `@repo/payments` 264, `@repo/staffing` 641, Sites 339, jobs-cron 96,
+  voice-agent 209, phone-agent 101, phone-agent-restaurant 54,
+  marketing-workflow 19.
+- App: 349 of 352 test files pass. The 3 failing files (38 tests) are the
+  staffing `kiosk-app`, `my-schedule-page` and `my-schedule-session` tests,
+  which fail on `localStorage` because this machine runs Node 26 while the repo
+  pins 22.18. They do not touch reservations. 939 reservation-area tests pass;
+  App typecheck and `node scripts/check-lingui.mjs` pass.
+- `@repo/database`: 1 failing test, the seed check for 0025/0026 against the
+  stale `packages/database/db/data.db` (see below). The migration test itself
+  passes.
 - Android: 116 JVM tests, `assembleDebug`, lint (warnings only). iOS:
   `swift build`.
 
@@ -55,14 +64,9 @@ files are in `validation/payments-integrations-and-native/evidence.json`.
    the seed into local D1 is allowed only with the owner's consent (AGENTS.md);
    the recipe is in `apps/app/AGENTS.md`. Then drive the screens in a browser
    and mark assertions passed with the `user-testing` skill.
-2. **Free disk space first.** The machine hit 100%, which made the tenant-api,
-   `@repo/tenant-db` and `@repo/database` suites fail with `SQLITE_FULL` and
-   `ENOSPC` in the last gate run (not a code failure). The largest item is
-   `apps/app/.wrangler/state/v3/observability/miniflare-wobs-trace-store/*.sqlite`
-   (about 5.3 GB of local worker traces, still growing). It is telemetry, not
-   app data; stop the dev server, delete that one file, restart. Re-run the gate
-   afterwards (`npm run test -w tenant-api`, `@repo/tenant-db`, whole App
-   suite).
+2. **Disk space.** The machine hit 100% once during this work (a 5.3 GB local
+   worker trace store under `apps/app/.wrangler/state/v3/observability`); it was
+   freed by the owner and the gates were re-run. Keep an eye on it.
 3. **Playwright specs** (written, not run): `payment-mocks`, and the edited
    reservations specs (`reservations-setup`, `-host-stand`,
    `-waitlist-messages`, `-guestbook-reports`); they use the new `setup-group-*`
