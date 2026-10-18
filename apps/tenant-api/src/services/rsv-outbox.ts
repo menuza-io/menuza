@@ -1,6 +1,7 @@
 import { rsvOutbox, type TenantDatabase } from '@repo/tenant-db'
 import { and, asc, eq, inArray, lte } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
+import { reservationPaymentCommandSchema } from '@repo/reservations'
 import { z } from 'zod'
 import { forEachInChunks } from '../lib/chunked-in.ts'
 import { getInternalCommandToken, syncEnvFromProcess } from '../lib/secrets.ts'
@@ -230,6 +231,115 @@ export async function deliverOutbox(
 			if (giveUp) totals.failed++
 			else totals.retried++
 		}
+	}
+	return totals
+}
+
+export const RESERVATIONS_PAYMENTS_PATH = '/resources/reservations/payments'
+export const PAYMENT_OUTBOX_KINDS = [
+	'refund_request',
+	'checkout_expire',
+] as const
+
+export async function postPaymentCommand(
+	payload: Record<string, unknown>,
+): Promise<AlertOutcome> {
+	const parsed = reservationPaymentCommandSchema.safeParse(payload)
+	if (!parsed.success) return { status: 'rejected', code: 'invalid_command' }
+	const base = appUrl()
+	const token = getInternalCommandToken()
+	if (!base || token.length < 16) {
+		return { status: 'retry', code: 'not_configured' }
+	}
+	try {
+		const response = await fetch(`${base}${RESERVATIONS_PAYMENTS_PATH}`, {
+			method: 'POST',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify(parsed.data),
+			redirect: 'error',
+			// Refunds call the provider: give the App more time than an alert.
+			signal: AbortSignal.timeout(20_000),
+		})
+		if (!response.ok) {
+			return {
+				status: RETRYABLE.has(response.status) ? 'retry' : 'rejected',
+				code: `http_${response.status}`,
+			}
+		}
+		return { status: 'delivered' }
+	} catch {
+		return { status: 'retry', code: 'network_error' }
+	}
+}
+
+/**
+ * Posts due `refund_request` and `checkout_expire` rows to the App one at a
+ * time (the App claims the refund regionally, so each is idempotent and a
+ * retry never refunds twice). The App call happens outside any write
+ * transaction.
+ */
+export async function deliverPaymentOutbox(
+	db: TenantDatabase,
+	options: {
+		now: number
+		limit?: number
+		post?: (payload: Record<string, unknown>) => Promise<AlertOutcome>
+	},
+): Promise<OutboxTotals> {
+	const { now } = options
+	const post = options.post ?? postPaymentCommand
+	const totals: OutboxTotals = {
+		groups: 0,
+		delivered: 0,
+		retried: 0,
+		failed: 0,
+	}
+	const rows = await db
+		.select()
+		.from(rsvOutbox)
+		.where(
+			and(
+				inArray(rsvOutbox.kind, [...PAYMENT_OUTBOX_KINDS]),
+				eq(rsvOutbox.status, 'pending'),
+				lte(rsvOutbox.nextAttemptAt, now),
+			),
+		)
+		.orderBy(asc(rsvOutbox.nextAttemptAt))
+		.limit(options.limit ?? 50)
+	for (const row of rows) {
+		totals.groups++
+		const outcome = await post(row.payload as Record<string, unknown>)
+		if (outcome.status === 'delivered') {
+			await db
+				.update(rsvOutbox)
+				.set({ status: 'sent', deliveredAt: now, lastError: null })
+				.where(eq(rsvOutbox.id, row.id))
+			totals.delivered++
+			continue
+		}
+		const attempts = row.attempts + 1
+		const giveUp =
+			outcome.status === 'rejected' || attempts >= OUTBOX_MAX_ATTEMPTS
+		await db
+			.update(rsvOutbox)
+			.set({
+				attempts,
+				status: giveUp ? 'failed' : 'pending',
+				lastError: outcome.code,
+				nextAttemptAt:
+					now +
+					(OUTBOX_BACKOFF_MIN[
+						Math.min(attempts - 1, OUTBOX_BACKOFF_MIN.length - 1)
+					] ?? 480) *
+						60_000,
+			})
+			.where(eq(rsvOutbox.id, row.id))
+		if (giveUp) totals.failed++
+		else totals.retried++
 	}
 	return totals
 }

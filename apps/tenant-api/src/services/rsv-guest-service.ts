@@ -2,10 +2,12 @@ import { randomUUID } from 'node:crypto'
 import {
 	rsvAuditLog,
 	rsvDayVersions,
+	rsvGuestMerges,
 	rsvGuestNotes,
 	rsvGuests,
 	rsvGuestTags,
 	rsvMessages,
+	rsvNotifyRequests,
 	rsvPayments,
 	rsvReservationEvents,
 	rsvReservations,
@@ -13,6 +15,8 @@ import {
 	rsvTags,
 	rsvWaitlistEntries,
 	getTenantDbOrgId,
+	RSV_NOTIFY_STATUS_VALUES,
+	RSV_WAITLIST_STATUS_VALUES,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm'
@@ -819,6 +823,62 @@ export async function exportGuestProfile(
 	}
 }
 
+const TERMINAL_WAITLIST_STATUSES: readonly string[] = [
+	'seated',
+	'cancelled',
+	'left',
+	'no_response',
+]
+const OPEN_WAITLIST_STATUSES = RSV_WAITLIST_STATUS_VALUES.filter(
+	(status) => !TERMINAL_WAITLIST_STATUSES.includes(status),
+)
+const TERMINAL_NOTIFY_STATUSES: readonly string[] = [
+	'booked',
+	'expired',
+	'cancelled',
+]
+const OPEN_NOTIFY_STATUSES = RSV_NOTIFY_STATUS_VALUES.filter(
+	(status) => !TERMINAL_NOTIFY_STATUSES.includes(status),
+)
+
+/**
+ * The guest plus every guest merged into it, following both merge links
+ * (`mergedIntoId` and `rsv_guest_merges`) recursively. A visited set stops a
+ * cycle from looping.
+ */
+async function collectMergedGuestIds(
+	db: DbOrTx,
+	rootId: string,
+): Promise<string[]> {
+	const seen = new Set<string>([rootId])
+	let frontier = [rootId]
+	while (frontier.length > 0) {
+		const found = new Set<string>()
+		const byColumn = await queryInChunks(frontier, (chunk) =>
+			db
+				.select({ id: rsvGuests.id })
+				.from(rsvGuests)
+				.where(inArray(rsvGuests.mergedIntoId, chunk))
+				.all(),
+		)
+		const byLink = await queryInChunks(frontier, (chunk) =>
+			db
+				.select({ id: rsvGuestMerges.mergedGuestId })
+				.from(rsvGuestMerges)
+				.where(inArray(rsvGuestMerges.keptGuestId, chunk))
+				.all(),
+		)
+		for (const row of [...byColumn, ...byLink]) {
+			if (!seen.has(row.id)) {
+				seen.add(row.id)
+				found.add(row.id)
+			}
+		}
+		frontier = [...found]
+	}
+	return [...seen]
+}
+
 const CANCELLABLE_FUTURE_STATUSES = new Set([
 	'pending_payment',
 	'pending_approval',
@@ -937,215 +997,261 @@ export async function eraseGuestProfile(
 	if (!existing) throw notFound('Guest not found')
 
 	const now = opts.now ?? Date.now()
+	const orgId = getTenantDbOrgId(db)
 
-	// Find any secondary guest rows merged into this guest
-	const mergedRows = await db
-		.select()
-		.from(rsvGuests)
-		.where(eq(rsvGuests.mergedIntoId, guestId))
-		.all()
-	const allGuestIds = [guestId, ...mergedRows.map((m) => m.id)]
-
-	await notifyGuestBeforeErasure(db, allGuestIds, now)
-
-	// Delete guest notes and tags
-	await forEachInChunks(allGuestIds, async (chunk) => {
-		await db.delete(rsvGuestNotes).where(inArray(rsvGuestNotes.guestId, chunk))
-		await db.delete(rsvGuestTags).where(inArray(rsvGuestTags.guestId, chunk))
-	})
-
-	// Anonymize guest row(s)
-	const erasedAt = existing.erasedAt ?? now
-	await forEachInChunks(
-		allGuestIds,
-		(chunk) =>
-			db
-				.update(rsvGuests)
-				.set({
-					firstName: 'Erased',
-					lastName: 'guest',
-					phoneE164: null,
-					emailNorm: null,
-					allergyNotes: null,
-					customerId: null,
-					marketingCustomerId: null,
-					erasedAt,
-					updatedAt: now,
-					version: existing.version + 1,
-				})
-				.where(inArray(rsvGuests.id, chunk)),
-		70,
+	// The cancellation notice needs the contact data, so it goes out first,
+	// outside the erase transaction; a failed send never blocks the erasure.
+	await notifyGuestBeforeErasure(
+		db,
+		await collectMergedGuestIds(db, guestId),
+		now,
 	)
 
-	// Inspect all reservations for this guest
-	const guestReservations = await queryInChunks(allGuestIds, (chunk) =>
-		db
-			.select()
-			.from(rsvReservations)
-			.where(inArray(rsvReservations.guestId, chunk))
-			.all(),
-	)
+	// Everything below is one serialized transaction through the write gate.
+	return withSetupWrite(
+		db,
+		async (db) => {
+			const allGuestIds = await collectMergedGuestIds(db, guestId)
 
-	let cancelledFutureCount = 0
-	const affectedDayKeys = new Set<string>()
+			// Delete guest notes and tags
+			await forEachInChunks(allGuestIds, async (chunk) => {
+				await db
+					.delete(rsvGuestNotes)
+					.where(inArray(rsvGuestNotes.guestId, chunk))
+				await db
+					.delete(rsvGuestTags)
+					.where(inArray(rsvGuestTags.guestId, chunk))
+			})
 
-	for (const r of guestReservations) {
-		const isFutureActive = CANCELLABLE_FUTURE_STATUSES.has(r.status)
-		if (isFutureActive) {
-			await db
-				.update(rsvTableOccupancies)
-				.set({ active: false })
-				.where(
-					and(
-						eq(rsvTableOccupancies.reservationId, r.id),
-						eq(rsvTableOccupancies.active, true),
+			// Anonymize guest row(s)
+			const erasedAt = existing.erasedAt ?? now
+			await forEachInChunks(
+				allGuestIds,
+				(chunk) =>
+					db
+						.update(rsvGuests)
+						.set({
+							firstName: 'Erased',
+							lastName: 'guest',
+							phoneE164: null,
+							emailNorm: null,
+							allergyNotes: null,
+							customerId: null,
+							marketingCustomerId: null,
+							erasedAt,
+							updatedAt: now,
+							version: existing.version + 1,
+						})
+						.where(inArray(rsvGuests.id, chunk)),
+				70,
+			)
+
+			// Inspect all reservations for this guest
+			const guestReservations = await queryInChunks(allGuestIds, (chunk) =>
+				db
+					.select()
+					.from(rsvReservations)
+					.where(inArray(rsvReservations.guestId, chunk))
+					.all(),
+			)
+
+			let cancelledFutureCount = 0
+			const affectedDayKeys = new Set<string>()
+
+			for (const r of guestReservations) {
+				const isFutureActive = CANCELLABLE_FUTURE_STATUSES.has(r.status)
+				if (isFutureActive) {
+					await db
+						.update(rsvTableOccupancies)
+						.set({ active: false })
+						.where(
+							and(
+								eq(rsvTableOccupancies.reservationId, r.id),
+								eq(rsvTableOccupancies.active, true),
+							),
+						)
+
+					await db
+						.update(rsvReservations)
+						.set({
+							status: 'cancelled',
+							cancelledAt: now,
+							cancelledBy: 'restaurant',
+							cancelReason: 'guest_erased',
+							dietaryNotes: null,
+							guestRequests: null,
+							staffNotes: null,
+							manageTokenVersion: r.manageTokenVersion + 1,
+							version: r.version + 1,
+							updatedAt: now,
+						})
+						.where(eq(rsvReservations.id, r.id))
+
+					await db.insert(rsvReservationEvents).values({
+						id: createId('rev'),
+						reservationId: r.id,
+						at: now,
+						actorKind: 'system',
+						actorId: opts.actorId,
+						type: 'cancelled',
+						fromStatus: r.status,
+						toStatus: 'cancelled',
+						data: { redacted: true },
+					})
+
+					cancelledFutureCount += 1
+					affectedDayKeys.add(`${r.locationId}::${r.businessDate}`)
+				} else {
+					await db
+						.update(rsvReservations)
+						.set({
+							dietaryNotes: null,
+							guestRequests: null,
+							staffNotes: null,
+							manageTokenVersion: r.manageTokenVersion + 1,
+							updatedAt: now,
+						})
+						.where(eq(rsvReservations.id, r.id))
+				}
+			}
+
+			// Bump day versions for any dates where future reservations were cancelled
+			for (const key of affectedDayKeys) {
+				const [locId, bDate] = key.split('::')
+				if (locId && bDate) {
+					await db
+						.insert(rsvDayVersions)
+						.values({
+							locationId: locId,
+							businessDate: bDate,
+							version: 1,
+							updatedAt: now,
+						})
+						.onConflictDoUpdate({
+							target: [rsvDayVersions.locationId, rsvDayVersions.businessDate],
+							set: {
+								version: sql`${rsvDayVersions.version} + 1`,
+								updatedAt: now,
+							},
+						})
+				}
+			}
+
+			const resIds = guestReservations.map((r) => r.id)
+			if (resIds.length > 0) {
+				// Redact reservation events payload JSON (allowed by rsv_reservation_events_no_update trigger)
+				await forEachInChunks(resIds, (chunk) =>
+					db.run(
+						sql`UPDATE rsv_reservation_events SET data = '{"redacted":true}' WHERE reservation_id IN (${sql.join(
+							chunk.map((id) => sql`${id}`),
+							sql`, `,
+						)})`,
 					),
 				)
 
-			await db
-				.update(rsvReservations)
-				.set({
-					status: 'cancelled',
-					cancelledAt: now,
-					cancelledBy: 'restaurant',
-					cancelReason: 'guest_erased',
-					dietaryNotes: null,
-					guestRequests: null,
-					staffNotes: null,
-					manageTokenVersion: r.manageTokenVersion + 1,
-					version: r.version + 1,
-					updatedAt: now,
-				})
-				.where(eq(rsvReservations.id, r.id))
+				// Scrub any stored card metadata on payment records for this guest's reservations
+				await forEachInChunks(resIds, (chunk) =>
+					db
+						.update(rsvPayments)
+						.set({
+							customerRef: null,
+							paymentMethodRef: null,
+							cardBrand: null,
+							cardLast4: null,
+							updatedAt: now,
+						})
+						.where(inArray(rsvPayments.reservationId, chunk)),
+				)
+			}
 
-			await db.insert(rsvReservationEvents).values({
-				id: createId('rev'),
-				reservationId: r.id,
+			// Scrub waitlist entries for this guest and cancel the ones still open
+			await forEachInChunks(allGuestIds, async (chunk) => {
+				await db
+					.update(rsvWaitlistEntries)
+					.set({
+						displayName: 'Removed Guest',
+						phoneE164: null,
+						emailNorm: null,
+						notes: null,
+					})
+					.where(inArray(rsvWaitlistEntries.guestId, chunk))
+				await db
+					.update(rsvWaitlistEntries)
+					.set({
+						status: 'cancelled',
+						statusTokenVersion: sql`${rsvWaitlistEntries.statusTokenVersion} + 1`,
+						version: sql`${rsvWaitlistEntries.version} + 1`,
+					})
+					.where(
+						and(
+							inArray(rsvWaitlistEntries.guestId, chunk),
+							inArray(rsvWaitlistEntries.status, [...OPEN_WAITLIST_STATUSES]),
+						),
+					)
+			})
+
+			// Back-in-stock requests keep a phone and email: clear them and stop the
+			// ones still waiting for an opening.
+			await forEachInChunks(allGuestIds, async (chunk) => {
+				await db
+					.update(rsvNotifyRequests)
+					.set({ contactPhoneE164: null, contactEmailNorm: null })
+					.where(inArray(rsvNotifyRequests.guestId, chunk))
+				await db
+					.update(rsvNotifyRequests)
+					.set({
+						status: 'cancelled',
+						tokenVersion: sql`${rsvNotifyRequests.tokenVersion} + 1`,
+					})
+					.where(
+						and(
+							inArray(rsvNotifyRequests.guestId, chunk),
+							inArray(rsvNotifyRequests.status, [...OPEN_NOTIFY_STATUSES]),
+						),
+					)
+			})
+
+			// Redact prior audit log entries for this guest or their reservations (allowed by rsv_audit_log_no_update trigger)
+			const entityIdsToRedact = [...allGuestIds, ...resIds]
+			if (entityIdsToRedact.length > 0) {
+				await forEachInChunks(entityIdsToRedact, (chunk) =>
+					db.run(
+						sql`UPDATE rsv_audit_log SET changes = '{"redacted":true}' WHERE entity_id IN (${sql.join(
+							chunk.map((id) => sql`${id}`),
+							sql`, `,
+						)})`,
+					),
+				)
+			}
+
+			// Append fresh guest.erase audit entry without PII
+			await db.insert(rsvAuditLog).values({
+				id: createId('aud'),
 				at: now,
-				actorKind: 'system',
+				actorKind: 'operator',
 				actorId: opts.actorId,
-				type: 'cancelled',
-				fromStatus: r.status,
-				toStatus: 'cancelled',
-				data: { redacted: true },
+				locationId: guestReservations[0]?.locationId ?? null,
+				action: 'guest.erase',
+				entityType: 'guest',
+				entityId: guestId,
+				changes: {
+					erasedAt,
+					cancelledFutureReservations: cancelledFutureCount,
+				},
 			})
 
-			cancelledFutureCount += 1
-			affectedDayKeys.add(`${r.locationId}::${r.businessDate}`)
-		} else {
-			await db
-				.update(rsvReservations)
-				.set({
-					dietaryNotes: null,
-					guestRequests: null,
-					staffNotes: null,
-					manageTokenVersion: r.manageTokenVersion + 1,
-					updatedAt: now,
-				})
-				.where(eq(rsvReservations.id, r.id))
-		}
-	}
+			const updated = await db
+				.select()
+				.from(rsvGuests)
+				.where(eq(rsvGuests.id, guestId))
+				.get()
 
-	// Bump day versions for any dates where future reservations were cancelled
-	for (const key of affectedDayKeys) {
-		const [locId, bDate] = key.split('::')
-		if (locId && bDate) {
-			await db
-				.insert(rsvDayVersions)
-				.values({
-					locationId: locId,
-					businessDate: bDate,
-					version: 1,
-					updatedAt: now,
-				})
-				.onConflictDoUpdate({
-					target: [rsvDayVersions.locationId, rsvDayVersions.businessDate],
-					set: {
-						version: sql`${rsvDayVersions.version} + 1`,
-						updatedAt: now,
-					},
-				})
-		}
-	}
-
-	const resIds = guestReservations.map((r) => r.id)
-	if (resIds.length > 0) {
-		// Redact reservation events payload JSON (allowed by rsv_reservation_events_no_update trigger)
-		await forEachInChunks(resIds, (chunk) =>
-			db.run(
-				sql`UPDATE rsv_reservation_events SET data = '{"redacted":true}' WHERE reservation_id IN (${sql.join(
-					chunk.map((id) => sql`${id}`),
-					sql`, `,
-				)})`,
-			),
-		)
-
-		// Scrub any stored card metadata on payment records for this guest's reservations
-		await forEachInChunks(resIds, (chunk) =>
-			db
-				.update(rsvPayments)
-				.set({
-					customerRef: null,
-					paymentMethodRef: null,
-					cardBrand: null,
-					cardLast4: null,
-					updatedAt: now,
-				})
-				.where(inArray(rsvPayments.reservationId, chunk)),
-		)
-	}
-
-	// Scrub waitlist entries for this guest
-	await forEachInChunks(allGuestIds, (chunk) =>
-		db
-			.update(rsvWaitlistEntries)
-			.set({
-				displayName: 'Removed Guest',
-				phoneE164: null,
-				emailNorm: null,
-				notes: null,
-			})
-			.where(inArray(rsvWaitlistEntries.guestId, chunk)),
-	)
-
-	// Redact prior audit log entries for this guest or their reservations (allowed by rsv_audit_log_no_update trigger)
-	const entityIdsToRedact = [...allGuestIds, ...resIds]
-	if (entityIdsToRedact.length > 0) {
-		await forEachInChunks(entityIdsToRedact, (chunk) =>
-			db.run(
-				sql`UPDATE rsv_audit_log SET changes = '{"redacted":true}' WHERE entity_id IN (${sql.join(
-					chunk.map((id) => sql`${id}`),
-					sql`, `,
-				)})`,
-			),
-		)
-	}
-
-	// Append fresh guest.erase audit entry without PII
-	await db.insert(rsvAuditLog).values({
-		id: createId('aud'),
-		at: now,
-		actorKind: 'operator',
-		actorId: opts.actorId,
-		locationId: guestReservations[0]?.locationId ?? null,
-		action: 'guest.erase',
-		entityType: 'guest',
-		entityId: guestId,
-		changes: {
-			erasedAt,
-			cancelledFutureReservations: cancelledFutureCount,
+			return {
+				erased: true,
+				cancelledFutureReservations: cancelledFutureCount,
+				guest: serializeGuestRow(updated!, []),
+			}
 		},
-	})
-
-	const updated = await db
-		.select()
-		.from(rsvGuests)
-		.where(eq(rsvGuests.id, guestId))
-		.get()
-
-	return {
-		erased: true,
-		cancelledFutureReservations: cancelledFutureCount,
-		guest: serializeGuestRow(updated!, []),
-	}
+		orgId,
+	)
 }

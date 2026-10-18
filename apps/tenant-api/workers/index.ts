@@ -20,6 +20,9 @@ import {
 import {
 	assertKioskOrgOnUsNode,
 	assertOrgOnUsNode,
+	assertReservationsOrgOnUsNode,
+	isPublicReservationsPath,
+	reservationsPublicNotFound,
 	resolveOrgId,
 } from './org-router.ts'
 import { fanOutReservationsTick } from '../src/services/rsv-tick-fanout.ts'
@@ -304,6 +307,9 @@ export default {
 				{ status: 401 },
 			)
 		}
+		if (!orgId && isPublicReservationsPath(url.pathname)) {
+			return reservationsPublicNotFound()
+		}
 		if (!orgId) {
 			return Response.json(
 				{ error: 'Could not resolve tenant organization for this request' },
@@ -317,7 +323,9 @@ export default {
 			return forwardToOrg(request, env, orgId)
 		}
 
-		const regionDenied = await assertOrgOnUsNode(orgId, env)
+		const regionDenied = isPublicReservationsPath(url.pathname)
+			? await assertReservationsOrgOnUsNode(orgId)
+			: await assertOrgOnUsNode(orgId, env)
 		if (regionDenied) return regionDenied
 
 		return forwardToOrg(request, env, orgId)

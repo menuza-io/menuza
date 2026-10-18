@@ -141,6 +141,13 @@
 			"when": 1792266143098,
 			"tag": "0019_rsv_occupancy_location_window",
 			"breakpoints": true
+		},
+		{
+			"idx": 20,
+			"version": "6",
+			"when": 1792286174165,
+			"tag": "0020_rsv_payments_contract",
+			"breakpoints": true
 		}
 	]
 }

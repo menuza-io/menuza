@@ -21,8 +21,15 @@ import {
 import { and, desc, eq, inArray, gt, sql } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
+import { isLateCancellation } from './rsv-late-cancel.ts'
 import { enqueueReservationMessage } from './rsv-message-queue.ts'
 import { markNotifyRequestsBooked } from './rsv-notify-service.ts'
+import { handleCancellationPayments } from './rsv-payment-refunds.ts'
+import {
+	insertBookingPaymentRow,
+	paymentHoldMinutes,
+	planBookingPayment,
+} from './rsv-payment-booking.ts'
 import { enqueueManagerAlert } from './rsv-outbox.ts'
 import {
 	buildAlternatives,
@@ -38,6 +45,10 @@ import {
 	loadBookingContacts,
 } from './rsv-booking-contact.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
+import {
+	loadManageExperience,
+	matchExperienceSeating,
+} from './rsv-experience-engine.ts'
 import {
 	loadPublicEngineState,
 	pickI18n,
@@ -199,10 +210,14 @@ export async function buildManageView(
 	const cutoff = cutoffState(row, settings?.guestModifyCutoffMin ?? 120, now)
 	const location = findContextLocation(ctx, row.locationId)
 	const summary = summarizeReservation(row, ctx)
+	const experience = row.experienceId
+		? await loadManageExperience(db, row.experienceId, row.guestLocale)
+		: null
 	return {
 		now: new Date(now).toISOString(),
 		reservation: {
 			...summary,
+			experience,
 			firstName,
 			occasion: occasion
 				? {
@@ -240,7 +255,8 @@ export async function buildManageView(
 					}
 				: null,
 		paymentStatus: row.paymentStatus,
-		canModify: cutoff.canModify,
+		// A seating of an experience cannot be moved to a regular slot by the guest.
+		canModify: cutoff.canModify && !row.experienceId,
 		canCancel: cutoff.canCancel,
 		cancelDeadline: isoOrNull(cutoff.deadline),
 	}
@@ -466,6 +482,8 @@ export async function bookFromHold(params: {
 	ipHash: string
 	idempotencyKey: string
 	requestHash: string
+	/** Organization facts: with payments on, a money policy parks the booking in `pending_payment`. */
+	context?: ReservationsContext | null
 	now?: number
 }): Promise<{ reservationId: string }> {
 	const now = params.now ?? Date.now()
@@ -502,6 +520,19 @@ export async function bookFromHold(params: {
 			})
 			if (!state) throw new HttpError(404, 'not_found')
 
+			// An experience hold is re-checked against its seating, caps and areas.
+			const experienceMatch = hold.experienceId
+				? await matchExperienceSeating(tx, state, {
+						locationId: hold.locationId,
+						experienceId: hold.experienceId,
+						businessDate: hold.businessDate,
+						localMin: hold.localStartMin,
+						partySize: hold.partySize,
+						now: rulesAt,
+						channel: channelFor(hold.source),
+						excludeHoldIds: new Set([hold.id]),
+					})
+				: null
 			const result = searchPublicDay(state, {
 				businessDate: hold.businessDate,
 				partySize: hold.partySize,
@@ -509,11 +540,13 @@ export async function bookFromHold(params: {
 				preferredSlotMin: hold.localStartMin,
 				channel: channelFor(hold.source),
 			})
-			const match = result.slots.find(
-				(s: AvailableSlot) =>
-					s.slotMin === hold.localStartMin &&
-					(!hold.serviceId || s.serviceId === hold.serviceId),
-			)
+			const match =
+				experienceMatch ??
+				result.slots.find(
+					(s: AvailableSlot) =>
+						s.slotMin === hold.localStartMin &&
+						(!hold.serviceId || s.serviceId === hold.serviceId),
+				)
 			if (!match) {
 				throw slotUnavailable(
 					buildAlternatives(state, result, {
@@ -543,6 +576,22 @@ export async function bookFromHold(params: {
 				now,
 			)
 
+			const paymentPlan = await planBookingPayment(tx, {
+				context: params.context,
+				locationId: hold.locationId,
+				serviceId: match.serviceId,
+				experienceId: hold.experienceId,
+				partySize: hold.partySize,
+				locale: params.input.guest.locale || 'en',
+			})
+			if (paymentPlan.required && !params.input.policyAccepted) {
+				throw new HttpError(400, 'policy_required')
+			}
+			const paymentExpiresAt = paymentPlan.required
+				? now + (await paymentHoldMinutes(tx, hold.locationId)) * 60_000
+				: null
+			const initialStatus = paymentPlan.required ? 'pending_payment' : 'booked'
+
 			const reservationId = `rsv_${randomUUID()}`
 			await deactivateOccupancies(tx, { holdId: hold.id })
 			await tx.insert(rsvReservations).values({
@@ -558,16 +607,24 @@ export async function bookFromHold(params: {
 				endAt: hold.endAt,
 				durationMin: match.turnMin,
 				serviceId: match.serviceId,
+				experienceId: hold.experienceId,
 				partySize: hold.partySize,
-				status: 'booked',
+				status: initialStatus,
 				channel: params.channel,
 				client: params.client,
-				assignment: 'soft',
+				// Automatic repair must never move a table-using experience booking.
+				assignment:
+					hold.experienceId && match.tableIds.length > 0 ? 'locked' : 'soft',
 				comboId: match.combinationId,
 				occasionTagId,
 				guestRequests: params.input.requests?.trim() || null,
 				dietaryNotes: params.input.dietary?.trim() || null,
-				paymentStatus: 'none',
+				paymentStatus: paymentPlan.required ? 'pending' : 'none',
+				paymentExpiresAt,
+				policySnapshot: paymentPlan.required
+					? (paymentPlan.snapshot as unknown as Record<string, unknown>)
+					: null,
+				policyTextHash: paymentPlan.required ? paymentPlan.termsHash : null,
 				policyAcceptedAt: params.input.policyAccepted ? now : null,
 				holdId: hold.id,
 				smsOptIn: params.input.smsOptIn,
@@ -589,8 +646,23 @@ export async function bookFromHold(params: {
 			})
 			await tx
 				.update(rsvHolds)
-				.set({ status: 'converted', reservationId })
+				.set({
+					status: 'converted',
+					reservationId,
+					// The unpaid booking keeps its capacity for the payment window.
+					...(paymentExpiresAt !== null
+						? { extendedForPayment: true, expiresAt: paymentExpiresAt }
+						: {}),
+				})
 				.where(eq(rsvHolds.id, hold.id))
+			if (paymentPlan.required) {
+				await insertBookingPaymentRow(tx, {
+					reservationId,
+					locationId: hold.locationId,
+					plan: paymentPlan,
+					now,
+				})
+			}
 			await tx.insert(rsvReservationEvents).values({
 				id: `rev_${randomUUID()}`,
 				reservationId,
@@ -598,18 +670,22 @@ export async function bookFromHold(params: {
 				actorKind: 'guest',
 				type: 'created',
 				fromStatus: null,
-				toStatus: 'booked',
+				toStatus: initialStatus,
 				data: {
 					channel: params.channel,
 					partySize: hold.partySize,
 					...bookingContactData(params.input.guest),
 				},
 			})
-			await enqueueReservationMessage(
-				tx,
-				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
-				{ reservationId, kind: 'confirmation' },
-			)
+			// An unpaid booking is confirmed by `payment_received` (or the
+			// guarantee confirmation) once the payment lands.
+			if (!paymentPlan.required) {
+				await enqueueReservationMessage(
+					tx,
+					{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
+					{ reservationId, kind: 'confirmation' },
+				)
+			}
 			await markNotifyRequestsBooked(tx, {
 				locationId: hold.locationId,
 				businessDate: hold.businessDate,
@@ -971,6 +1047,7 @@ export async function guestCancelReservation(params: {
 			)
 			if (!cutoff.canCancel) throw new HttpError(409, 'cancel_closed')
 
+			const late = await isLateCancellation(tx, current, now)
 			await deactivateOccupancies(tx, { reservationId: current.id })
 			await tx
 				.update(rsvReservations)
@@ -978,13 +1055,18 @@ export async function guestCancelReservation(params: {
 					status: 'cancelled',
 					cancelledAt: now,
 					cancelledBy: 'guest',
+					lateCancel: late,
 					version: current.version + 1,
 					updatedAt: now,
 				})
 				.where(eq(rsvReservations.id, current.id))
 			await tx
 				.update(rsvGuests)
-				.set({ cancels: sql`${rsvGuests.cancels} + 1`, updatedAt: now })
+				.set({
+					cancels: sql`${rsvGuests.cancels} + 1`,
+					...(late ? { lateCancels: sql`${rsvGuests.lateCancels} + 1` } : {}),
+					updatedAt: now,
+				})
 				.where(eq(rsvGuests.id, current.guestId))
 			await tx.insert(rsvReservationEvents).values({
 				id: `rev_${randomUUID()}`,
@@ -1001,6 +1083,13 @@ export async function guestCancelReservation(params: {
 				{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
 				{ reservationId: current.id, kind: 'cancellation_guest' },
 			)
+			await handleCancellationPayments(tx, {
+				orgId: params.orgId,
+				reservation: current,
+				cancelledBy: 'guest',
+				late,
+				now,
+			})
 			return { reservationId: current.id }
 		},
 	)
@@ -1120,6 +1209,8 @@ export async function guestModifyReservation(params: {
 			if (current.status !== 'booked' && current.status !== 'confirmed') {
 				throw notManageable('not_modifiable')
 			}
+			// The regular search below cannot place a seating of an experience.
+			if (current.experienceId) throw notManageable('not_modifiable')
 			const settings = await loadSettings(tx, current.locationId)
 			const cutoff = cutoffState(
 				current,

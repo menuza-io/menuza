@@ -4,167 +4,239 @@ import {
 	currencyMinimum,
 	noShowFee,
 	platformFeeMinor,
+	policyTotalMinor,
 	proportionalFeeRefund,
-	refundAmount,
+	refundOnCancel,
+	resolveFeeAmount,
 	selectPolicy,
 	snapshotPolicy,
-	type ReservationPolicyRuleInput,
+	type PolicyInput,
 } from './policy.ts'
 
-describe('policy selection, snapshot, cancellation terms, no-show fees, refunds, and platform fee math', () => {
-	const rules: ReservationPolicyRuleInput[] = [
-		{
-			id: 'pol_default',
-			name: 'Standard Free',
-			mode: 'none',
-			amountMinor: 0,
-			perCover: false,
-			currency: 'USD',
-			minParty: 1,
-			serviceId: null,
-			daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-			windowStartMin: null,
-			windowEndMin: null,
-			cancelCutoffMin: 120,
-			noShowFeeMinor: 0,
-			priority: 0,
-			active: true,
-		},
-		{
-			id: 'pol_fri_sat_large',
-			name: 'Weekend Large Party Deposit',
-			mode: 'deposit',
-			amountMinor: 2500, // $25.00 per cover
-			perCover: true,
-			currency: 'USD',
-			minParty: 6,
-			serviceId: 'srv_dinner',
-			daysOfWeek: [5, 6],
-			windowStartMin: 18 * 60,
-			windowEndMin: 22 * 60,
-			cancelCutoffMin: 24 * 60, // 24h cutoff
-			noShowFeeMinor: 2500,
-			priority: 10,
-			active: true,
-		},
-	]
+const base: PolicyInput = {
+	id: 'pol_1',
+	name: 'Deposit',
+	kind: 'deposit',
+	amountMinor: 2500,
+	perCover: true,
+	currency: 'usd',
+	freeCancelUntilMin: 1440,
+	lateCancelFeeMinor: 5000,
+	noShowFeeMinor: 2500,
+	feePerCover: true,
+	feeCapMinor: 10_000,
+	refundRule: 'full_before_window',
+	partialRefundBp: null,
+	appliesPartyMin: null,
+	termsVersion: 2,
+}
 
-	it('selects the highest-priority matching policy rule and snapshots immutable terms', () => {
-		const matched = selectPolicy(rules, {
-			serviceId: 'srv_dinner',
-			dayOfWeek: 6, // Saturday
-			slotMin: 19 * 60,
-			partySize: 6,
-		})
-		expect(matched?.id).toBe('pol_fri_sat_large')
+const START = Date.UTC(2030, 0, 10, 19, 0)
+const HOUR = 3_600_000
 
-		const snap = snapshotPolicy(matched!, 6)
-		expect(snap).toEqual({
-			policyId: 'pol_fri_sat_large',
-			name: 'Weekend Large Party Deposit',
-			mode: 'deposit',
-			amountMinor: 2500,
-			perCover: true,
-			partySize: 6,
-			totalAmountMinor: 15_000, // 6 * 2500 = $150.00
-			currency: 'USD',
-			cancelCutoffMin: 1440,
-			noShowFeeMinor: 15_000,
-		})
-
-		// Small party on Tuesday falls back to pol_default
-		const fallback = selectPolicy(rules, {
-			serviceId: 'srv_dinner',
-			dayOfWeek: 2,
-			slotMin: 19 * 60,
-			partySize: 2,
-		})
-		expect(fallback?.id).toBe('pol_default')
+describe('policy selection and snapshot', () => {
+	it('prefers experience, then service, then the location default', () => {
+		const exp = { ...base, id: 'e' }
+		const svc = { ...base, id: 's' }
+		const loc = { ...base, id: 'l' }
+		expect(
+			selectPolicy({ experience: exp, service: svc, location: loc }, 2)?.id,
+		).toBe('e')
+		expect(selectPolicy({ service: svc, location: loc }, 2)?.id).toBe('s')
+		expect(selectPolicy({ location: loc }, 2)?.id).toBe('l')
+		expect(selectPolicy({}, 2)).toBeNull()
 	})
 
-	it('computes cancellationTerms, refundAmount, and noShowFee before and after cutoff', () => {
-		const snap = snapshotPolicy(rules[1]!, 6) // totalAmountMinor = 15_000, cancelCutoffMin = 1440 (24h)
-		const startAtMs = Date.parse('2026-06-13T23:00:00.000Z')
-		const beforeCutoffMs = startAtMs - 30 * 3600_000 // 30h before
-		const afterCutoffMs = startAtMs - 6 * 3600_000 // 6h before
+	it('skips none, archived and below applies_party_min policies', () => {
+		const small = { ...base, id: 'small', appliesPartyMin: 6 }
+		const loc = { ...base, id: 'loc' }
+		expect(selectPolicy({ service: small, location: loc }, 4)?.id).toBe('loc')
+		expect(selectPolicy({ service: small, location: loc }, 6)?.id).toBe('small')
+		expect(selectPolicy({ location: { ...base, kind: 'none' } }, 4)).toBeNull()
+		expect(selectPolicy({ location: { ...base, archivedAt: 5 } }, 4)).toBeNull()
+	})
 
-		const termsEarly = cancellationTerms({
+	it('snapshots amounts for the party, per cover or flat; guarantees charge nothing', () => {
+		expect(snapshotPolicy(base, 4).totalAmountMinor).toBe(10_000)
+		expect(snapshotPolicy(base, 4).currency).toBe('USD')
+		expect(snapshotPolicy(base, 4).cancelCutoffMin).toBe(1440)
+		expect(policyTotalMinor({ ...base, perCover: false }, 4)).toBe(2500)
+		expect(policyTotalMinor({ ...base, kind: 'card_guarantee' }, 4)).toBe(0)
+	})
+})
+
+describe('cancellation terms and refunds', () => {
+	const snap = snapshotPolicy(base, 4)
+
+	it('is free up to the deadline and late after it', () => {
+		const deadline = START - 1440 * 60_000
+		expect(
+			cancellationTerms({ snapshot: snap, startAtMs: START, nowMs: deadline })
+				.free,
+		).toBe(true)
+		const late = cancellationTerms({
 			snapshot: snap,
-			startAtMs,
-			nowMs: beforeCutoffMs,
+			startAtMs: START,
+			nowMs: deadline + 1,
+			paidMinor: 10_000,
 		})
-		expect(termsEarly.withinFreeWindow).toBe(true)
-		expect(termsEarly.refundableMinor).toBe(15_000)
-		expect(termsEarly.forfeitedMinor).toBe(0)
+		expect(late).toMatchObject({
+			free: false,
+			lateCancel: true,
+			feeMinor: 5000 * 4 > 10_000 ? 10_000 : 20_000,
+			refundMinor: 0,
+		})
+	})
 
-		const termsLate = cancellationTerms({
+	it('refunds the full payment when free, per rule when late', () => {
+		const free = cancellationTerms({
 			snapshot: snap,
-			startAtMs,
-			nowMs: afterCutoffMs,
+			startAtMs: START,
+			nowMs: START - 48 * HOUR,
+			paidMinor: 10_000,
 		})
-		expect(termsLate.withinFreeWindow).toBe(false)
-		expect(termsLate.refundableMinor).toBe(0)
-		expect(termsLate.forfeitedMinor).toBe(15_000)
-
-		expect(
-			refundAmount({
-				snapshot: snap,
-				capturedMinor: 15_000,
-				startAtMs,
-				nowMs: beforeCutoffMs,
-			}),
-		).toBe(15_000)
-		expect(
-			refundAmount({
-				snapshot: snap,
-				capturedMinor: 15_000,
-				startAtMs,
-				nowMs: afterCutoffMs,
-			}),
-		).toBe(0)
-		expect(
-			refundAmount({
-				snapshot: snap,
-				capturedMinor: 15_000,
-				startAtMs,
-				nowMs: afterCutoffMs,
-				overrideFullRefund: true,
-			}),
-		).toBe(15_000)
-
-		// Card hold no-show fee vs deposit retention
-		const holdSnap = snapshotPolicy(
-			{
-				...rules[1]!,
-				mode: 'card_hold',
-			},
+		expect(free.refundMinor).toBe(10_000)
+		const partial = snapshotPolicy(
+			{ ...base, refundRule: 'partial', partialRefundBp: 5000 },
 			4,
 		)
-		expect(noShowFee({ snapshot: holdSnap, capturedMinor: 0 })).toEqual({
-			amountToChargeMinor: 10_000,
-			amountRetainedMinor: 0,
-		})
-		expect(noShowFee({ snapshot: snap, capturedMinor: 15_000 })).toEqual({
-			amountToChargeMinor: 0,
-			amountRetainedMinor: 15_000,
-		})
+		expect(
+			cancellationTerms({
+				snapshot: partial,
+				startAtMs: START,
+				nowMs: START - HOUR,
+				paidMinor: 10_000,
+			}).refundMinor,
+		).toBe(5000)
+		const none = snapshotPolicy({ ...base, refundRule: 'none' }, 4)
+		expect(
+			cancellationTerms({
+				snapshot: none,
+				startAtMs: START,
+				nowMs: START - HOUR,
+				paidMinor: 10_000,
+			}).refundMinor,
+		).toBe(0)
 	})
 
-	it('computes platformFeeMinor, proportionalFeeRefund, and currencyMinimum (VAL-PAY-051)', () => {
-		// floor(gross * bp / 10_000)
-		expect(platformFeeMinor(10_000, 250)).toBe(250) // 2.5% of $100.00 = $2.50
-		expect(platformFeeMinor(999, 250)).toBe(24) // floor(24.975) = 24
-		expect(platformFeeMinor(10_000, 0)).toBe(0)
+	it('a restaurant cancellation always refunds in full', () => {
+		const none = snapshotPolicy({ ...base, refundRule: 'none' }, 4)
+		expect(
+			refundOnCancel({
+				snapshot: none,
+				startAtMs: START,
+				nowMs: START - HOUR,
+				paidMinor: 10_000,
+				cancelledBy: 'restaurant',
+			}),
+		).toBe(10_000)
+		expect(
+			refundOnCancel({
+				snapshot: none,
+				startAtMs: START,
+				nowMs: START - HOUR,
+				paidMinor: 10_000,
+				cancelledBy: 'guest',
+			}),
+		).toBe(0)
+	})
+})
 
-		// Proportional fee refund on partial and full refunds
-		expect(proportionalFeeRefund(250, 10_000, 10_000)).toBe(250)
-		expect(proportionalFeeRefund(250, 5_000, 10_000)).toBe(125)
-		expect(proportionalFeeRefund(250, 0, 10_000)).toBe(0)
+describe('fees', () => {
+	it('no-show fee is per cover or flat, clamped to the cap', () => {
+		expect(noShowFee(snapshotPolicy(base, 2))).toBe(5000)
+		expect(noShowFee(snapshotPolicy(base, 4))).toBe(10_000)
+		expect(noShowFee(snapshotPolicy(base, 8))).toBe(10_000)
+		expect(noShowFee(snapshotPolicy({ ...base, feePerCover: false }, 8))).toBe(
+			2500,
+		)
+		expect(noShowFee(snapshotPolicy({ ...base, feeCapMinor: null }, 8))).toBe(
+			20_000,
+		)
+	})
 
-		// Currency minimums
+	it('an operator amount may only lower the fee, never below the minimum', () => {
+		const snap = snapshotPolicy(base, 4)
+		const args = { snapshot: snap, kind: 'no_show_fee' as const }
+		expect(resolveFeeAmount(args)).toEqual({ ok: true, amountMinor: 10_000 })
+		expect(resolveFeeAmount({ ...args, requestedMinor: 8000 })).toEqual({
+			ok: true,
+			amountMinor: 8000,
+		})
+		expect(resolveFeeAmount({ ...args, requestedMinor: 10_001 })).toMatchObject(
+			{ ok: false, code: 'fee_not_allowed', reason: 'above_policy_fee' },
+		)
+		expect(resolveFeeAmount({ ...args, requestedMinor: 49 })).toMatchObject({
+			ok: false,
+			code: 'fee_not_allowed',
+			reason: 'below_minimum',
+		})
+		expect(resolveFeeAmount({ ...args, requestedMinor: 1.5 })).toMatchObject({
+			ok: false,
+			code: 'invalid',
+		})
+		expect(
+			resolveFeeAmount({
+				snapshot: snapshotPolicy({ ...base, noShowFeeMinor: 0 }, 4),
+				kind: 'no_show_fee',
+			}),
+		).toMatchObject({ ok: false, code: 'fee_not_allowed' })
+	})
+
+	it('late-cancel fee uses the late-cancel amount', () => {
+		const snap = snapshotPolicy({ ...base, feePerCover: false }, 4)
+		expect(
+			resolveFeeAmount({ snapshot: snap, kind: 'late_cancel_fee' }),
+		).toEqual({ ok: true, amountMinor: 5000 })
+	})
+
+	it('currency minimums: 50 for USD and CAD, 200 for SAR', () => {
 		expect(currencyMinimum('USD')).toBe(50)
+		expect(currencyMinimum('cad')).toBe(50)
 		expect(currencyMinimum('SAR')).toBe(200)
-		expect(currencyMinimum('GBP')).toBe(30)
-		expect(currencyMinimum('EUR')).toBe(50)
+		expect(currencyMinimum('XXX')).toBe(50)
+	})
+})
+
+describe('platform fee math (floor, snapshot, proportional reversal)', () => {
+	it('floors the fee in basis points', () => {
+		expect(platformFeeMinor(10_000, 250)).toBe(250)
+		expect(platformFeeMinor(3333, 150)).toBe(49) // floor(49.995)
+		expect(platformFeeMinor(999, 250)).toBe(24)
+		expect(platformFeeMinor(10_000, 0)).toBe(0)
+		expect(platformFeeMinor(0, 500)).toBe(0)
+		expect(platformFeeMinor(10_000, 10_000)).toBe(10_000)
+		expect(platformFeeMinor(10_000, 20_000)).toBe(10_000)
+	})
+
+	it('rounds each reversal on the cumulative share so the parts sum to the snapshot', () => {
+		const gross = 3333
+		const fee = platformFeeMinor(gross, 1000)
+		expect(fee).toBe(333)
+		const first = proportionalFeeRefund(fee, 1667, gross, 0, 0)
+		expect(first).toBe(167) // round(166.55)
+		const second = proportionalFeeRefund(fee, 1666, gross, 1667, first)
+		expect(second).toBe(166)
+		expect(first + second).toBe(fee)
+	})
+
+	it('a full refund reverses the whole fee and zero amounts reverse nothing', () => {
+		expect(proportionalFeeRefund(250, 10_000, 10_000)).toBe(250)
+		expect(proportionalFeeRefund(250, 5000, 10_000)).toBe(125)
+		expect(proportionalFeeRefund(250, 0, 10_000)).toBe(0)
+		expect(proportionalFeeRefund(0, 5000, 10_000)).toBe(0)
+	})
+
+	it('three uneven partial refunds always sum to the fee', () => {
+		const gross = 10_000
+		const fee = 1001
+		let refunded = 0
+		let reversed = 0
+		for (const part of [3333, 3333, 3334]) {
+			const r = proportionalFeeRefund(fee, part, gross, refunded, reversed)
+			refunded += part
+			reversed += r
+		}
+		expect(reversed).toBe(fee)
 	})
 })

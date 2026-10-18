@@ -1,5 +1,6 @@
 import {
 	addDays,
+	isGuestChannel,
 	resolveServices,
 	searchAvailability,
 	suggestAlternatives,
@@ -20,6 +21,7 @@ import {
 } from '@repo/tenant-db'
 import { and, eq, gt, gte, inArray, lte } from 'drizzle-orm'
 import { loadLocationSchedulingState } from './rsv-booking-service.ts'
+import { loadExclusiveWindowBlocks } from './rsv-experience-engine.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import {
 	loadSpecialDayRows,
@@ -60,6 +62,8 @@ export type PublicEngineState = {
 		{ name: string; nameI18n: Record<string, string> | null }
 	>
 	occupanciesFor: (businessDate: string) => ExistingOccupancyInput[]
+	/** Closed windows of exclusive experiences; only the guest search of regular slots sees them. */
+	exclusiveBlocksFor: (businessDate: string) => ExistingOccupancyInput[]
 }
 
 export function toEngineSettings(
@@ -178,6 +182,19 @@ export async function loadPublicEngineState(
 
 	for (const r of reservationRows) {
 		if (params.excludeReservationIds?.has(r.id)) continue
+		if (r.experienceId) {
+			// Experience bookings hold their tables but are not regular demand: as
+			// blocks they stay out of pacing and are never moved by repair.
+			push(r.businessDate, {
+				id: r.id,
+				kind: 'block',
+				experienceId: r.experienceId,
+				startAt: r.startAt,
+				endAt: r.endAt,
+				tableIds: tablesByOwner.get(r.id) ?? [],
+			})
+			continue
+		}
 		push(r.businessDate, {
 			id: r.id,
 			kind: 'reservation',
@@ -197,6 +214,17 @@ export async function loadPublicEngineState(
 	}
 	for (const h of holdRows) {
 		if (params.excludeHoldIds?.has(h.id)) continue
+		if (h.experienceId) {
+			push(h.businessDate, {
+				id: h.id,
+				kind: 'block',
+				experienceId: h.experienceId,
+				startAt: h.startAt,
+				endAt: h.endAt,
+				tableIds: tablesByOwner.get(h.id) ?? [],
+			})
+			continue
+		}
 		push(h.businessDate, {
 			id: h.id,
 			kind: 'hold',
@@ -222,6 +250,14 @@ export async function loadPublicEngineState(
 			tableIds,
 		})
 	}
+
+	const exclusiveByDate = await loadExclusiveWindowBlocks(db, {
+		locationId,
+		fromDate: windowFrom,
+		toDate: windowTo,
+		timeZone: sched.timeZone,
+		tables: sched.tables.map((t) => ({ id: t.id, areaId: t.areaId })),
+	})
 
 	const services: WeeklyServiceTemplateInput[] = sched.services.map((s) => ({
 		id: s.id,
@@ -287,6 +323,11 @@ export async function loadPublicEngineState(
 			...(byDate.get(businessDate) ?? []),
 			...(byDate.get(addDays(businessDate, 1)) ?? []),
 		],
+		exclusiveBlocksFor: (businessDate) => [
+			...(exclusiveByDate.get(addDays(businessDate, -1)) ?? []),
+			...(exclusiveByDate.get(businessDate) ?? []),
+			...(exclusiveByDate.get(addDays(businessDate, 1)) ?? []),
+		],
 	}
 }
 
@@ -309,7 +350,13 @@ export function searchPublicDay(
 		nowMs: params.now,
 		channel: params.channel ?? 'online',
 		areaId: params.areaId ?? null,
-		occupancies: state.occupanciesFor(params.businessDate),
+		occupancies: [
+			...state.occupanciesFor(params.businessDate),
+			// Exclusive experience windows are bookable only through the experience.
+			...(isGuestChannel(params.channel ?? 'online')
+				? state.exclusiveBlocksFor(params.businessDate)
+				: []),
+		],
 		allowRepair: false,
 	})
 }

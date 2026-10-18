@@ -5,6 +5,7 @@ import {
 	rsvMessages,
 	rsvMessageTexts,
 	rsvNotifyRequests,
+	rsvPayments,
 	rsvReservations,
 	rsvWaitlistEntries,
 	type TenantDatabase,
@@ -17,10 +18,12 @@ import {
 	buildCalendarUrl,
 	normalizeReservationLocale,
 	renderReservationEmail,
+	type PaymentEmailKind,
 } from '../lib/reservations-email.ts'
 import { type ToggleableMessageKind } from '../lib/reservations-messaging-settings.ts'
 import { getReservationsContext } from '../lib/reservations-context.ts'
 import {
+	deriveFeePayToken,
 	deriveManageToken,
 	deriveNotifyToken,
 	deriveWaitlistToken,
@@ -35,6 +38,7 @@ import {
 } from '../lib/reservations-switches.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { loadBookingContacts } from './rsv-booking-contact.ts'
+import { isPaymentMessageKind } from './rsv-message-queue.ts'
 import { enqueueManagerAlert } from './rsv-outbox.ts'
 
 /**
@@ -143,6 +147,12 @@ type Subject = {
 	quotedWaitMin: number | null
 	/** Query of the booking link that opens the offered slot (notify-me only). */
 	bookQuery: string | null
+	/** Amount and id of the payment a payment message is about. */
+	payment: {
+		id: string
+		amountMinor: number
+		currency: string
+	} | null
 }
 
 type Resolved =
@@ -191,6 +201,23 @@ async function resolveSubject(
 		if (!guest || guest.erasedAt) {
 			return { ok: false, outcome: 'suppressed', code: 'guest_erased' }
 		}
+		let payment: Subject['payment'] = null
+		if (isPaymentMessageKind(row.kind)) {
+			const paymentRow = await db
+				.select({
+					id: rsvPayments.id,
+					amountMinor: rsvPayments.amountMinor,
+					currency: rsvPayments.currency,
+					reservationId: rsvPayments.reservationId,
+				})
+				.from(rsvPayments)
+				.where(eq(rsvPayments.id, milestoneOf(row.dedupeKey)))
+				.get()
+			if (!paymentRow || paymentRow.reservationId !== reservation.id) {
+				return { ok: false, outcome: 'cancelled', code: 'payment_missing' }
+			}
+			payment = paymentRow
+		}
 		// A public booking messages the contact typed for THAT booking, not
 		// whatever a profile with the same phone number holds.
 		const bookingContact = (
@@ -217,6 +244,7 @@ async function resolveSubject(
 				endMs: reservation.endAt,
 				quotedWaitMin: null,
 				bookQuery: null,
+				payment,
 			},
 		}
 	}
@@ -258,6 +286,7 @@ async function resolveSubject(
 				endMs: null,
 				quotedWaitMin: entry.quotedMin,
 				bookQuery: null,
+				payment: null,
 			},
 		}
 	}
@@ -293,6 +322,7 @@ async function resolveSubject(
 				token: deriveNotifyToken(orgId, request.id, request.tokenVersion),
 				endMs: null,
 				quotedWaitMin: null,
+				payment: null,
 				bookQuery: new URLSearchParams({
 					location: request.locationId,
 					party: String(request.partySize),
@@ -346,7 +376,11 @@ async function sendOne(options: {
 	const bookUrl = base
 		? `${base}/reserve${subject.bookQuery ? `?${subject.bookQuery}` : ''}`
 		: null
-	const kind = row.kind as ToggleableMessageKind
+	const kind = row.kind as ToggleableMessageKind | PaymentEmailKind
+	const payUrl =
+		base && subject.payment && kind === 'fee_action_required'
+			? `${base}/reserve/pay#f=${subject.payment.id}&t=${deriveFeePayToken(orgId, subject.payment.id)}`
+			: null
 
 	if (row.channel === 'sms') {
 		if (!subject.phone) throw new Error('no_destination')
@@ -365,8 +399,15 @@ async function sendOne(options: {
 				whenMs: subject.whenMs,
 				timeZone,
 				partySize: subject.partySize,
-				url: url && kind !== 'cancellation_restaurant' ? url : null,
+				url:
+					kind === 'fee_action_required'
+						? payUrl
+						: url && kind !== 'cancellation_restaurant'
+							? url
+							: null,
 				quotedWaitMin: subject.quotedWaitMin,
+				amountMinor: subject.payment?.amountMinor ?? null,
+				currency: subject.payment?.currency ?? null,
 			}),
 		})
 		return
@@ -405,6 +446,9 @@ async function sendOne(options: {
 		bookUrl,
 		calendarUrl,
 		quotedWaitMin: subject.quotedWaitMin,
+		payUrl,
+		amountMinor: subject.payment?.amountMinor ?? null,
+		currency: subject.payment?.currency ?? null,
 		customNote,
 	})
 	const result = await sendTenantEmail({

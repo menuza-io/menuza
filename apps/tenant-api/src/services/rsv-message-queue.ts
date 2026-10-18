@@ -497,3 +497,83 @@ export async function enqueueNotifyMessage(
 	)
 	return ids
 }
+
+/** Payment-flow message kinds: they follow the payment state, not a message setting. */
+export const PAYMENT_MESSAGE_KINDS = [
+	'payment_received',
+	'refund_issued',
+	'fee_charged',
+	'fee_action_required',
+	'late_payment_refunded',
+] as const
+export type PaymentMessageKind = (typeof PAYMENT_MESSAGE_KINDS)[number]
+
+export function isPaymentMessageKind(kind: string): kind is PaymentMessageKind {
+	return (PAYMENT_MESSAGE_KINDS as readonly string[]).includes(kind)
+}
+
+/**
+ * Queues one payment message for a reservation. The payment row id is the
+ * dedupe milestone, so a duplicate webhook, poll or flush queues nothing new.
+ * Channels follow the regional rule (SMS only in the US, only with opt-in);
+ * the amount and pay link are resolved from the payment row at send time.
+ */
+export async function enqueuePaymentMessage(
+	tx: Tx,
+	ctx: QueueContext,
+	input: {
+		reservationId: string
+		kind: PaymentMessageKind
+		paymentId: string
+	},
+): Promise<string[]> {
+	const reservation = await tx
+		.select()
+		.from(rsvReservations)
+		.where(eq(rsvReservations.id, input.reservationId))
+		.get()
+	if (!reservation) return []
+	const guest = await tx
+		.select({
+			emailNorm: rsvGuests.emailNorm,
+			phoneE164: rsvGuests.phoneE164,
+			locale: rsvGuests.locale,
+			erasedAt: rsvGuests.erasedAt,
+		})
+		.from(rsvGuests)
+		.where(eq(rsvGuests.id, reservation.guestId))
+		.get()
+	if (!guest || guest.erasedAt) return []
+	const settings = await loadMessagingSettings(tx, reservation.locationId)
+	const bookingContact = (await loadBookingContacts(tx, [reservation.id])).get(
+		reservation.id,
+	)
+	const channels = channelsFor({
+		dataRegion: nodeRegion(),
+		smsOptIn: reservation.smsOptIn && settings.smsEnabled && !!guest.phoneE164,
+		emailProvided: bookingContact ? !!bookingContact.email : !!guest.emailNorm,
+	})
+	const rows = channels.map((channel) =>
+		messageRow({
+			locationId: reservation.locationId,
+			reservationId: reservation.id,
+			kind: input.kind,
+			channel,
+			locale: reservation.guestLocale || guest.locale || 'en',
+			sendAt: ctx.now,
+			now: ctx.now,
+			key: dedupeKey({
+				reservationId: reservation.id,
+				kind: input.kind,
+				channel,
+				milestone: input.paymentId,
+			}),
+		}),
+	)
+	const ids = await insertMessages(tx, rows)
+	deliverAfterCommit(
+		ctx,
+		ids.map((id) => ({ id, sendAt: ctx.now })),
+	)
+	return ids
+}

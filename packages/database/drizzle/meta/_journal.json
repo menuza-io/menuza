@@ -183,6 +183,13 @@
 			"when": 1792109306954,
 			"tag": "0025_reservations_foundation",
 			"breakpoints": true
+		},
+		{
+			"idx": 26,
+			"version": "6",
+			"when": 1792195706954,
+			"tag": "0026_reservations_platform_fee",
+			"breakpoints": true
 		}
 	]
 }

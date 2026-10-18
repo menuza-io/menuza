@@ -499,7 +499,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				return { ctx, promises }
 			}
 
-			it('runs the engagement sync, the staff tick and the reservations tick on every regional node', async () => {
+			it('runs the engagement sync, the staff tick and the reservations tick on every regional node, plus the payments reconcile on the App', async () => {
 				const fetchMock = vi.fn(
 					async () => new Response(JSON.stringify({ success: true })),
 				)
@@ -510,6 +510,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				const results = await Promise.allSettled(promises)
 
 				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
@@ -544,9 +545,64 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						[
+							'https://app.example.com/resources/jobs/reservation-payments-reconcile',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(6)
+				expect(calls).toHaveLength(7)
+			})
+
+			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
+				const fetchMock = vi.fn(
+					async () => new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				await Promise.allSettled(promises)
+				const reconcile = fetchMock.mock.calls.filter(([url]: any) =>
+					String(url).endsWith(
+						'/resources/jobs/reservation-payments-reconcile',
+					),
+				) as any[]
+				expect(reconcile).toHaveLength(1)
+				const [url, init] = reconcile[0]
+				expect(url).toBe(
+					'https://app.example.com/resources/jobs/reservation-payments-reconcile',
+				)
+				expect(init.method).toBe('POST')
+				expect(init.headers.Authorization).toBe(`Bearer ${mockInternalToken}`)
+				expect(init.body).toBeUndefined()
+			})
+
+			it('keeps the other hourly jobs running when the payments reconcile fails, and names it', async () => {
+				const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+				const fetchMock = vi.fn(async (url: string) =>
+					url.endsWith('/resources/jobs/reservation-payments-reconcile')
+						? new Response('down', { status: 502, statusText: 'Bad Gateway' })
+						: new Response(JSON.stringify({ success: true })),
+				)
+				globalThis.fetch = fetchMock as any
+				const { ctx, promises } = waited()
+				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
+				const results = await Promise.allSettled(promises)
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+					'rejected',
+				])
+				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
+					'Job /resources/jobs/reservation-payments-reconcile failed: 502',
+				)
+				expect(errorSpy).toHaveBeenCalledWith(
+					'Reservation payments reconcile failed',
+					expect.objectContaining({ cron: '0 * * * *' }),
+				)
+				errorSpy.mockRestore()
 			})
 
 			it('sends the reservations tick an empty body so each node runs every organization', async () => {
@@ -611,11 +667,12 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
 				const results = await Promise.allSettled(promises)
 
-				// Engagement sync and reservations tick fulfilled; the staff tick failed
-				// on one node.
+				// Engagement sync, reservations tick and payments reconcile fulfilled;
+				// the staff tick failed on one node.
 				expect(results.map((r) => r.status)).toEqual([
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 					'fulfilled',
 				])
 				// The healthy node still ran its tick.
@@ -644,6 +701,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 				])
 				expect(String((results[2] as PromiseRejectedResult).reason)).toContain(
 					'Tenant reservations tick failed for https://tenant-us.example.com',
@@ -651,8 +709,11 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				errorSpy.mockRestore()
 			})
 
-			it('does nothing for a node that is not configured', async () => {
-				const fetchMock = vi.fn()
+			it('does nothing for a node that is not configured (only the App job runs)', async () => {
+				const fetchMock = vi.fn(
+					async (_url: string) =>
+						new Response(JSON.stringify({ success: true })),
+				)
 				globalThis.fetch = fetchMock as any
 				const { ctx, promises } = waited()
 				await worker.scheduled(
@@ -661,7 +722,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					ctx,
 				)
 				await Promise.allSettled(promises)
-				expect(fetchMock).not.toHaveBeenCalled()
+				expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+					'https://app.example.com/resources/jobs/reservation-payments-reconcile',
+				])
 			})
 		})
 

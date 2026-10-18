@@ -9,6 +9,7 @@ import {
 import { and, eq, gt, sql } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
+import { matchExperienceSeating } from './rsv-experience-engine.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import {
 	loadPublicEngineState,
@@ -175,6 +176,8 @@ export async function createHold(params: {
 	replaceTokenHash?: string | null
 	/** A guest-selectable seating area the hold must sit in; ignored when the area is not selectable. */
 	areaPref?: string | null
+	/** Holds a seating of this published experience instead of a regular slot (cover caps apply). */
+	experienceId?: string | null
 	source: 'web' | 'native'
 	ipHash: string
 	now?: number
@@ -229,17 +232,36 @@ export async function createHold(params: {
 			})
 			if (!state) throw new HttpError(404, 'not_found')
 
-			const result = searchPublicDay(state, {
-				businessDate: slot.date,
-				partySize: slot.partySize,
-				now,
-				preferredSlotMin: slot.localMin,
-				channel: channelFor(params.source),
-				areaId:
-					params.areaPref && state.selectableAreas.has(params.areaPref)
-						? params.areaPref
-						: null,
-			})
+			const experienceMatch = params.experienceId
+				? await matchExperienceSeating(tx, state, {
+						locationId: params.locationId,
+						experienceId: params.experienceId,
+						businessDate: slot.date,
+						localMin: slot.localMin,
+						partySize: slot.partySize,
+						now,
+						channel: channelFor(params.source),
+					})
+				: null
+			const result: SearchAvailabilityResult = experienceMatch
+				? {
+						businessDate: slot.date,
+						status: 'available',
+						slots: [],
+						alternatives: [],
+						expansionsUsed: 0,
+					}
+				: searchPublicDay(state, {
+						businessDate: slot.date,
+						partySize: slot.partySize,
+						now,
+						preferredSlotMin: slot.localMin,
+						channel: channelFor(params.source),
+						areaId:
+							params.areaPref && state.selectableAreas.has(params.areaPref)
+								? params.areaPref
+								: null,
+					})
 			if (result.status === 'disabled') throw new HttpError(404, 'not_found')
 			if (result.status === 'party_out_of_bounds') {
 				throw new HttpError(400, 'party_size_invalid')
@@ -248,11 +270,13 @@ export async function createHold(params: {
 				throw new HttpError(409, 'large_party')
 			}
 
-			const match = result.slots.find(
-				(s: AvailableSlot) =>
-					s.slotMin === slot.localMin &&
-					(!slot.serviceId || s.serviceId === slot.serviceId),
-			)
+			const match =
+				experienceMatch ??
+				result.slots.find(
+					(s: AvailableSlot) =>
+						s.slotMin === slot.localMin &&
+						(!slot.serviceId || s.serviceId === slot.serviceId),
+				)
 			if (!match) {
 				throw slotUnavailable(
 					buildAlternatives(state, result, {
@@ -277,6 +301,7 @@ export async function createHold(params: {
 				endAt,
 				partySize: slot.partySize,
 				serviceId: match.serviceId,
+				experienceId: params.experienceId ?? null,
 				comboId: match.combinationId,
 				source: params.source,
 				status: 'active',

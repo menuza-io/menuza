@@ -1167,6 +1167,56 @@ describe('manage', () => {
 		expect(view.body.status).toBe('cancelled')
 	})
 
+	it('marks a guest cancel inside the booking policy cutoff as late and counts it', async () => {
+		const db = await getTenantDb(ORG)
+		await db.delete(rsvTables).where(eq(rsvTables.id, 'tbl_pub_4'))
+		const b = await booked(19 * 60)
+		const before = await db.select().from(rsvReservations).get()
+		// Policy cutoff is wider than the guest modify cutoff, so the guest can
+		// still cancel but the cancellation is late.
+		await db
+			.update(rsvReservations)
+			.set({ policySnapshot: { cancelCutoffMin: 100_000 } })
+			.where(eq(rsvReservations.id, before!.id))
+		const cancel = await call('POST', '/reservations/manage/cancel', {
+			token: b.manageToken,
+			body: {},
+		})
+		expect(cancel.status).toBe(200)
+		const row = await db.select().from(rsvReservations).get()
+		expect(row!.status).toBe('cancelled')
+		expect(row!.cancelledBy).toBe('guest')
+		expect(row!.lateCancel).toBe(true)
+		const guest = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, row!.guestId))
+			.get()
+		expect(guest!.cancels).toBe(1)
+		expect(guest!.lateCancels).toBe(1)
+	})
+
+	it('does not mark a guest cancel outside the cutoff as late', async () => {
+		const db = await getTenantDb(ORG)
+		await db.delete(rsvTables).where(eq(rsvTables.id, 'tbl_pub_4'))
+		const b = await booked(19 * 60)
+		const cancel = await call('POST', '/reservations/manage/cancel', {
+			token: b.manageToken,
+			body: {},
+		})
+		expect(cancel.status).toBe(200)
+		const row = await db.select().from(rsvReservations).get()
+		expect(row!.cancelledBy).toBe('guest')
+		expect(row!.lateCancel).toBe(false)
+		const guest = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, row!.guestId))
+			.get()
+		expect(guest!.cancels).toBe(1)
+		expect(guest!.lateCancels).toBe(0)
+	})
+
 	it('confirms idempotently (VAL-ONLINE-034)', async () => {
 		const b = await booked()
 		for (let i = 0; i < 2; i++) {

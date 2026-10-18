@@ -4,6 +4,7 @@ import {
 	parseHostedShopWebhook,
 } from '@repo/payments'
 import { type ActionFunctionArgs } from 'react-router'
+import { handleReservationCheckoutWebhookEvent } from '#app/utils/reservations/payment-webhooks.server.ts'
 import { handleRestaurantOrderCheckoutWebhookEvent } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
 import { getShopCommerce, recordShopOrder } from '#app/utils/shop.server.ts'
 
@@ -49,6 +50,10 @@ export async function action({ request }: ActionFunctionArgs) {
 			// org's regional tenant service. A regional failure throws so this
 			// handler returns non-2xx and Checkout.com retries.
 			await handleRestaurantOrderCheckoutWebhookEvent(verifiedEvent)
+
+			// Reservation payments, refunds and disputes: ids and amounts only,
+			// same retry rule (a regional failure throws, the provider retries).
+			await handleReservationCheckoutWebhookEvent(verifiedEvent)
 
 			const event = shopCommerce.parseCheckoutWebhookEvent(verifiedEvent)
 			if (event) {

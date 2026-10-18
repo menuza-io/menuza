@@ -31,7 +31,14 @@ export function publicContext(
 		dataRegion?: 'us' | 'ksa'
 		online?: boolean
 		waitlist?: boolean
+		experiences?: boolean
 		enabled?: boolean
+		/** Turns the payments feature on and sets the processor capability. */
+		payments?: {
+			processor: 'connect' | 'checkout' | null
+			deposit: boolean
+			guarantee: boolean
+		}
 	} = {},
 ): ReservationsContext {
 	return {
@@ -41,8 +48,8 @@ export function publicContext(
 			enabled: options.enabled ?? true,
 			online: options.online ?? true,
 			waitlist: options.waitlist ?? true,
-			experiences: false,
-			payments: false,
+			experiences: options.experiences ?? false,
+			payments: Boolean(options.payments),
 			voice: false,
 		},
 		organization: {
@@ -91,7 +98,11 @@ export function publicContext(
 				isActive: true,
 			},
 		],
-		payments: { processor: null, deposit: false, guarantee: false },
+		payments: options.payments ?? {
+			processor: null,
+			deposit: false,
+			guarantee: false,
+		},
 		staffing: { enabled: false },
 		voice: { enabled: false },
 	}

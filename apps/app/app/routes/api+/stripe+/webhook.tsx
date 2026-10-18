@@ -7,6 +7,12 @@ import {
 	handleTrialEnd,
 } from '#app/utils/payments.server.ts'
 import {
+	handleReservationStripeDisputeEvent,
+	handleReservationStripeRefundEvent,
+	handleReservationStripeSessionEvent,
+	isReservationStripeMetadata,
+} from '#app/utils/reservations/payment-webhooks.server.ts'
+import {
 	handleRestaurantOrderStripeSessionEvent,
 	isRestaurantStripeMetadata,
 } from '#app/utils/restaurant-orders/payment-webhooks.server.ts'
@@ -120,6 +126,12 @@ export async function action({ request }: ActionFunctionArgs) {
 			case 'checkout.session.async_payment_failed':
 			case 'checkout.session.expired': {
 				const session = event.data.object as Stripe.Checkout.Session
+				if (isReservationStripeMetadata(session.metadata)) {
+					// Reservation payments: ids and amounts go to the org's region;
+					// a regional failure throws so Stripe retries.
+					await handleReservationStripeSessionEvent(session, event.type)
+					break
+				}
 				if (isRestaurantStripeMetadata(session.metadata)) {
 					// Restaurant orders: forward the non-PII payment facts to the
 					// org's regional tenant service. A regional failure throws so
@@ -135,6 +147,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
 			case 'payment_intent.succeeded': {
 				const paymentIntent = event.data.object as Stripe.PaymentIntent
+				if (isReservationStripeMetadata(paymentIntent.metadata)) {
+					// Reservation payments settle on the session (or, for staff fee
+					// charges, synchronously); the intent event adds nothing.
+					break
+				}
 				if (isRestaurantStripeMetadata(paymentIntent.metadata)) {
 					// Restaurant order payment intents carry no checkout session
 					// reference, so they cannot be verified against the regionally
@@ -142,6 +159,24 @@ export async function action({ request }: ActionFunctionArgs) {
 					break
 				}
 				await recordShopOrderFromConnectWebhook(paymentIntent, event.type)
+				break
+			}
+
+			case 'refund.updated':
+			case 'refund.failed':
+			case 'charge.refund.updated': {
+				await handleReservationStripeRefundEvent(
+					event.data.object as Stripe.Refund,
+				)
+				break
+			}
+
+			case 'charge.dispute.created':
+			case 'charge.dispute.closed': {
+				await handleReservationStripeDisputeEvent(
+					event.data.object as Stripe.Dispute,
+					event.type,
+				)
 				break
 			}
 

@@ -219,7 +219,7 @@ export async function resolveOrgId(
 	// Public/guest reservations routes: the organization is the one the
 	// browser's Origin names (plus slug/host hints outside production), never a
 	// customer JWT, query or body orgId.
-	if (pathname === '/reservations' || pathname.startsWith('/reservations/')) {
+	if (isPublicReservationsPath(pathname)) {
 		const organization = await resolveOrganizationForPublicOrigin(
 			request.headers.get('Origin') ?? undefined,
 			{
@@ -331,6 +331,42 @@ export async function assertOrgOnUsNode(
 			},
 			{ status: 409 },
 		)
+	}
+	return null
+}
+
+export function isPublicReservationsPath(pathname: string): boolean {
+	return pathname === '/reservations' || pathname.startsWith('/reservations/')
+}
+
+/**
+ * The same body, status and headers the Node runtime answers on
+ * `/reservations/*` when the Origin names no organization on this node
+ * (`notFoundResponse` in `src/lib/reservations-public-auth.ts`), so a caller
+ * learns nothing about which organizations exist.
+ */
+export function reservationsPublicNotFound(): Response {
+	return Response.json(
+		{ error: 'not_found' },
+		{ status: 404, headers: { 'Cache-Control': 'private, no-store' } },
+	)
+}
+
+/**
+ * Public reservations routes: an organization that is unknown, lives in
+ * another region or has no provisioned database answers the uniform 404, never
+ * a `region_mismatch` that would reveal where the organization lives.
+ */
+export async function assertReservationsOrgOnUsNode(
+	orgId: string,
+): Promise<Response | null> {
+	const organization = await findActiveOrganizationById(orgId)
+	if (
+		!organization ||
+		organization.dataRegion !== 'us' ||
+		!organization.hasProvisionedDb
+	) {
+		return reservationsPublicNotFound()
 	}
 	return null
 }

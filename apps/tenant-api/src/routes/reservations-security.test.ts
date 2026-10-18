@@ -38,13 +38,20 @@ import { type PublishedOrganization } from '../lib/origin.ts'
 import {
 	getReservationsContext,
 	resetReservationsContextCache,
+	seedReservationsContextForTest,
 } from '../lib/reservations-context.ts'
+import {
+	createExperience,
+	createExperienceSchedule,
+	publishExperience,
+} from '../services/rsv-experience-service.ts'
 import {
 	reservationsInternalRoutes,
 	reservationsTickRoutes,
 	reservationsVoiceActionRoutes,
 } from './reservations-internal.ts'
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
+import { reservationsPaymentsInternalRoutes } from './reservations-payments-internal.ts'
 import {
 	deriveManageToken,
 	deriveNotifyToken,
@@ -54,6 +61,7 @@ import {
 import {
 	dateAhead,
 	PUBLIC_LOC,
+	publicContext,
 	seedPublicOrg,
 } from './reservations-public-fixture.ts'
 import { reservationsPublicRoutes } from './reservations-public.ts'
@@ -107,6 +115,7 @@ const OPERATOR_MOUNTS = {
 const OTHER_MOUNTS = {
 	'/reservations': reservationsPublicRoutes,
 	'/internal/reservations': reservationsInternalRoutes,
+	'/api/reservations/payments': reservationsPaymentsInternalRoutes,
 	'/api/reservations': reservationsTickRoutes,
 	'/api/voice/actions': reservationsVoiceActionRoutes,
 } as const
@@ -195,6 +204,7 @@ async function mintRsvToken(overrides?: {
 	locationIds?: string[] | null
 	impersonated?: boolean
 	ttlSeconds?: number
+	experiences?: boolean
 }) {
 	const now = Math.floor(Date.now() / 1000)
 	const ttl = overrides?.ttlSeconds ?? 300
@@ -216,7 +226,7 @@ async function mintRsvToken(overrides?: {
 			online: true,
 			waitlist: true,
 			payments: true,
-			experiences: true,
+			experiences: overrides?.experiences ?? true,
 			voice: false,
 		},
 		impersonated,
@@ -337,6 +347,18 @@ describe('Reservations security sweep: operator routes', () => {
 			'GET /operator/reservations/reports/turn-times',
 			'GET /operator/reservations/reports/waitlist',
 			'GET /operator/reservations/reports/pacing',
+			'GET /operator/reservations/setup/locations/:locationId/experiences',
+			'POST /operator/reservations/setup/locations/:locationId/experiences',
+			'GET /operator/reservations/setup/locations/:locationId/experiences/:id',
+			'PATCH /operator/reservations/setup/locations/:locationId/experiences/:id',
+			'PUT /operator/reservations/setup/locations/:locationId/experiences/:id',
+			'POST /operator/reservations/setup/locations/:locationId/experiences/:id/publish',
+			'POST /operator/reservations/setup/locations/:locationId/experiences/:id/unpublish',
+			'POST /operator/reservations/setup/locations/:locationId/experiences/:id/archive',
+			'POST /operator/reservations/setup/locations/:locationId/experiences/:id/schedules',
+			'PATCH /operator/reservations/setup/locations/:locationId/experiences/:id/schedules/:scheduleId',
+			'PUT /operator/reservations/setup/locations/:locationId/experiences/:id/schedules/:scheduleId',
+			'DELETE /operator/reservations/setup/locations/:locationId/experiences/:id/schedules/:scheduleId',
 		]) {
 			expect(keys.has(key), key).toBe(true)
 		}
@@ -494,6 +516,32 @@ describe('Reservations security sweep: operator routes', () => {
 			}
 		}
 		expect(failures).toEqual([])
+	})
+
+	it('hides every Experiences setup route behind the experiences feature (VAL-EXP-013)', async () => {
+		const experienceRoutes = list.filter((r) =>
+			r.path.includes('/setup/locations/:locationId/experiences'),
+		)
+		expect(experienceRoutes.length).toBeGreaterThanOrEqual(12)
+		const off = await mintRsvToken({ scope: 'setup', experiences: false })
+		const failures: string[] = []
+		for (const route of experienceRoutes) {
+			const response = await app.request(
+				fill(route.path),
+				buildRouteInit(route, { Authorization: `Bearer ${off}` }),
+			)
+			if (response.status !== 404) {
+				failures.push(`${route.method} ${route.path} -> ${response.status}`)
+			}
+		}
+		expect(failures).toEqual([])
+		// With the feature on the same token passes the guard (the list route answers).
+		const on = await mintRsvToken({ scope: 'setup' })
+		const listRes = await app.request(
+			`/operator/reservations/setup/locations/${LOC_1}/experiences`,
+			{ headers: { Authorization: `Bearer ${on}` } },
+		)
+		expect(listRes.status).toBe(200)
 	})
 
 	it('refuses an active but unprovisioned organization (hasProvisionedDb = false) with uniform 404 across every route', async () => {
@@ -1003,6 +1051,48 @@ describe('Reservations security sweep: mounts and non-operator surfaces', () => 
 		expect(res3.status).toBe(401)
 	})
 
+	it('every payment broker endpoint refuses a missing, wrong or operator token with 401', async () => {
+		const operatorToken = await mintRsvToken({
+			orgId: ORG_A,
+			scope: 'payments',
+			grants: [RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT],
+			ttlSeconds: 300,
+		})
+		const failures: string[] = []
+		for (const route of [
+			'quote',
+			'bind',
+			'status',
+			'fee-claim',
+			'fee-result',
+			'refund-claim',
+			'refund-result',
+			'dispute',
+			'pending',
+		]) {
+			for (const authorization of [
+				undefined,
+				'Bearer wrong-internal-token-0123456789',
+				`Bearer ${operatorToken}`,
+			]) {
+				const res = await otherApp.request(
+					`/api/reservations/payments/${route}`,
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'x-forwarded-for': '10.20.0.1',
+							...(authorization ? { Authorization: authorization } : {}),
+						},
+						body: JSON.stringify({ orgId: ORG_A }),
+					},
+				)
+				if (res.status !== 401) failures.push(`${route} -> ${res.status}`)
+			}
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('POST /internal/reservations/context-changed invalidates the org cache with valid INTERNAL_COMMAND_TOKEN', async () => {
 		process.env.APP_URL = 'https://app.menuza.test'
 		const fetchMock = vi.fn().mockResolvedValue(
@@ -1255,6 +1345,8 @@ describe('Reservations security sweep: public /reservations/* routes', () => {
 			'POST /reservations/waitlist/status/on-my-way',
 			'POST /reservations/notify-me',
 			'POST /reservations/notify-me/cancel',
+			'GET /reservations/experiences',
+			'GET /reservations/experiences/:slug',
 		]) {
 			expect(keys.has(expected), expected).toBe(true)
 		}
@@ -1353,6 +1445,115 @@ describe('Reservations security sweep: public /reservations/* routes', () => {
 				const res = await request(method, urlPath, { token })
 				expect(res.status).toBe(404)
 			}
+		}
+	})
+
+	it('serves published experiences only, behind both flags, with the uniform 404 otherwise (VAL-EXP-013)', async () => {
+		const db = await getTenantDb(ORG_PUB)
+		const base = {
+			orgId: ORG_PUB,
+			actorId: 'usr_sweep',
+			locationId: PUBLIC_LOC,
+		}
+		const input = (slug: string) => ({
+			slug,
+			kind: 'ticketed' as const,
+			nameI18n: { en: slug },
+			priceMinor: 7500,
+			pricePerCover: true,
+			partyMin: 1,
+			partyMax: 6,
+			usesTables: false,
+			exclusive: false,
+			sort: 0,
+		})
+		const live = await createExperience(db, {
+			...base,
+			input: input('sweep-live'),
+		})
+		await createExperienceSchedule(db, {
+			...base,
+			experienceId: live.id,
+			input: {
+				fromDate: DAY,
+				toDate: DAY,
+				daysMask: 127,
+				seatingMins: [19 * 60],
+				turnMin: 90,
+				coversCapPerSeating: 8,
+				areaIds: null,
+				serviceId: null,
+			},
+		})
+		await publishExperience(db, { ...base, experienceId: live.id })
+		await createExperience(db, { ...base, input: input('sweep-draft') })
+		try {
+			// experiences off: uniform 404 on both routes.
+			for (const urlPath of [
+				'/reservations/experiences',
+				'/reservations/experiences/sweep-live',
+			]) {
+				const res = await request('GET', urlPath)
+				expect(res.status, urlPath).toBe(404)
+				await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+			}
+
+			seedReservationsContextForTest(
+				ORG_PUB,
+				publicContext(ORG_PUB, { experiences: true }),
+			)
+			const list = await request('GET', '/reservations/experiences')
+			expect(list.status).toBe(200)
+			expect(list.headers.get('Cache-Control')).toBe('public, max-age=60')
+			const body = (await list.json()) as {
+				experiences: Array<Record<string, unknown>>
+			}
+			expect(body.experiences.map((e) => e.slug)).toEqual(['sweep-live'])
+			// No drafts, no internals.
+			const serialized = JSON.stringify(body)
+			for (const secret of [
+				'usesTables',
+				'exclusive',
+				'coversCap',
+				'areaIds',
+			]) {
+				expect(serialized).not.toContain(secret)
+			}
+			expect(
+				(await request('GET', '/reservations/experiences/sweep-draft')).status,
+			).toBe(404)
+			expect(
+				(await request('GET', '/reservations/experiences/sweep-live')).status,
+			).toBe(200)
+			expect(
+				(await request('GET', '/reservations/experiences/Bad_Slug')).status,
+			).toBe(404)
+
+			// online off: still the uniform 404 (the public part needs both flags).
+			seedReservationsContextForTest(
+				ORG_PUB,
+				publicContext(ORG_PUB, { experiences: true, online: false }),
+			)
+			for (const urlPath of [
+				'/reservations/experiences',
+				'/reservations/experiences/sweep-live',
+			]) {
+				const res = await request('GET', urlPath)
+				expect(res.status, urlPath).toBe(404)
+				await expect(res.json()).resolves.toEqual({ error: 'not_found' })
+			}
+
+			// Another organization's Origin never sees this organization's catalog.
+			seedReservationsContextForTest(
+				ORG_PUB,
+				publicContext(ORG_PUB, { experiences: true }),
+			)
+			const other = await request('GET', '/reservations/experiences', {
+				origin: OTHER_ORIGIN,
+			})
+			expect(other.status).toBe(404)
+		} finally {
+			seedReservationsContextForTest(ORG_PUB, publicContext(ORG_PUB))
 		}
 	})
 

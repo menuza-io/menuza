@@ -14,7 +14,10 @@ import {
 	rsvGuard,
 } from '../lib/reservations-guard.ts'
 import { operatorReservationsBookRoutes } from './operator-reservations-book.ts'
+import { operatorReservationsExperiencesRoutes } from './operator-reservations-experiences.ts'
 import { operatorReservationsGuestsRoutes } from './operator-reservations-guests.ts'
+import { operatorReservationsPaymentsRoutes } from './operator-reservations-payments.ts'
+import { operatorReservationsPoliciesRoutes } from './operator-reservations-policies.ts'
 import { operatorReservationsReportsRoutes } from './operator-reservations-reports.ts'
 import { operatorReservationsSetupRoutes } from './operator-reservations-setup.ts'
 import { operatorReservationsWaitlistRoutes } from './reservations-waitlist.ts'
@@ -41,7 +44,19 @@ const requiredLocationQuerySchema = z.object({
 		.optional(),
 })
 
+// 0. Payments scope routes
+reservationsOperatorRoutes.route(
+	'/payments',
+	operatorReservationsPaymentsRoutes,
+)
+
 // 1. Setup scope routes
+// Experiences mount first so the setup router never answers their paths.
+reservationsOperatorRoutes.route(
+	'/setup/locations/:locationId/experiences',
+	operatorReservationsExperiencesRoutes,
+)
+reservationsOperatorRoutes.route('/setup', operatorReservationsPoliciesRoutes)
 reservationsOperatorRoutes.route('/setup', operatorReservationsSetupRoutes)
 
 reservationsOperatorRoutes.get(

@@ -3,6 +3,7 @@ import {
 	detectConflicts,
 	evaluatePacing,
 	resolveServices,
+	type AvailableSlot,
 	type ConflictBlockInput,
 	type ConflictBookingInput,
 	type EngineAreaInput,
@@ -70,6 +71,8 @@ import {
 	ACTIVE_OCCUPANCY_STATUSES,
 	findOperatorPacingBreaches,
 } from './rsv-operator-pacing.ts'
+import { loadPublicEngineState, searchPublicDay } from './rsv-public-engine.ts'
+import { getPaymentSummaryCounts } from './rsv-payment-summary.ts'
 import { loadStaffDayState } from './rsv-special-days.ts'
 
 function createId(prefix: string): string {
@@ -1475,6 +1478,31 @@ export async function getOperatorAvailability(
 		status: r.status,
 	}))
 
+	const engineSlots = new Map<string, AvailableSlot>()
+	const engineState =
+		targetServices.length > 0
+			? await loadPublicEngineState(db, {
+					locationId,
+					fromDate: input.date,
+					toDate: input.date,
+					now: Date.now(),
+				})
+			: null
+	if (engineState) {
+		const found = searchPublicDay(engineState, {
+			businessDate: input.date,
+			partySize: input.partySize,
+			now: Date.now(),
+			channel: 'host',
+			areaId: input.areaId ?? null,
+		})
+		for (const slot of found.slots) {
+			if (slot.tableIds.length === 0) continue
+			const key = `${slot.serviceId}:${slot.slotMin}`
+			if (!engineSlots.has(key)) engineSlots.set(key, slot)
+		}
+	}
+
 	for (const svc of targetServices) {
 		const interval = svc.intervalMin ?? 15
 		const svcPacingRules = pacingRules.filter((pr) => pr.serviceId === svc.id)
@@ -1522,10 +1550,12 @@ export async function getOperatorAvailability(
 			const heldEligibleIds = eligibleTables
 				.filter((t) => heldTids.has(t.id) && !occupiedTids.has(t.id))
 				.map((t) => t.id)
-			const freeTable = eligibleTables.find(
-				(t) => !occupiedTids.has(t.id) && !heldTids.has(t.id),
-			)
+			// The public engine decides which tables are free: it sees blocks,
+			// area-wide blocks, service table modes and pacing the same way for
+			// every channel. Only the host channel's looser notice rules differ.
+			const engineSlot = engineSlots.get(`${svc.id}:${m}`)
 			const pacingWarning =
+				(engineSlot?.warnings?.length ?? 0) > 0 ||
 				findOperatorPacingBreaches({
 					rules: svcPacingRules,
 					serviceId: svc.id,
@@ -1551,12 +1581,12 @@ export async function getOperatorAvailability(
 				slotLocal: hhmm,
 				time: hhmm,
 				serviceId: svc.id,
-				available: Boolean(freeTable) && !pacingWarning,
+				available: Boolean(engineSlot) && !pacingWarning,
 				pacingWarning,
 				overbookAvailable: true,
 				held: heldEligibleIds.length > 0,
 				heldTableIds: heldEligibleIds,
-				suggestedTableIds: freeTable ? [freeTable.id] : [],
+				suggestedTableIds: engineSlot ? [engineSlot.tableIds[0]!] : [],
 			})
 		}
 	}
@@ -2310,6 +2340,7 @@ export async function getRegionalReservationSummary(
 		}
 	}
 
+	const paymentCounts = await getPaymentSummaryCounts(db, locFilter, now)
 	const activeLocations = Object.values(byLocation).filter(
 		(l) => l.hasSetup || l.upcomingReservations > 0 || l.activeWaitlist > 0,
 	).length
@@ -2341,6 +2372,9 @@ export async function getRegionalReservationSummary(
 		waitlistEntries: activeWaitlistRows.length,
 		activeHolds: activeHoldRows.length,
 		holds: activeHoldRows.length,
+		payments: paymentCounts.payments,
+		unsettledPayments: paymentCounts.unsettledPayments,
+		experiences: paymentCounts.experiences,
 		canDelete,
 		byLocation,
 	}

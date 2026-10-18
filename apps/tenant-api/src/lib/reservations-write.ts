@@ -32,6 +32,7 @@ import {
 	enqueueReservationMessage,
 	reconcileScheduledMessages,
 } from '../services/rsv-message-queue.ts'
+import { releaseExpiredPaymentSessions } from '../services/rsv-payment-refunds.ts'
 import { conflict, HttpError } from './http.ts'
 import { retryOnSqliteBusy } from './sqlite-retry.ts'
 
@@ -112,6 +113,8 @@ export type SweepSummary = {
 	expiredWaitlistOffers: number
 	/** Ids of requests that lapsed unanswered, so the guest can be told. */
 	expiredRequestIds: string[]
+	/** Ids of unpaid bookings whose payment hold lapsed (provider sessions are closed). */
+	expiredPaymentReservationIds: string[]
 	affectedLocationDates: Array<{ locationId: string; businessDate: string }>
 }
 
@@ -454,6 +457,7 @@ export async function sweepExpiredInTx(
 		expiredPendingRequests: expiredRequestRows.length,
 		expiredWaitlistOffers: expiredWaitlistRows.length,
 		expiredRequestIds: expiredRequestRows.map((row) => row.id),
+		expiredPaymentReservationIds: expiredPaymentRows.map((row) => row.id),
 		affectedLocationDates: Array.from(affected.values()),
 	}
 }
@@ -826,6 +830,13 @@ export async function withReservationWrite<T>(
 						await enqueueReservationMessage(tx, queueCtx, {
 							reservationId: requestId,
 							kind: 'request_declined',
+						})
+					}
+					if (swept.expiredPaymentReservationIds.length > 0) {
+						await releaseExpiredPaymentSessions(tx, {
+							orgId,
+							reservationIds: swept.expiredPaymentReservationIds,
+							now,
 						})
 					}
 

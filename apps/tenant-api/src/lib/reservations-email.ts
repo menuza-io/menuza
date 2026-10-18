@@ -1,6 +1,14 @@
 import { type ReservationsContext } from '@repo/reservations'
 import { type ToggleableMessageKind } from './reservations-messaging-settings.ts'
 
+/** Payment-flow kinds: they follow the payment state, not a message setting. */
+export type PaymentEmailKind =
+	| 'payment_received'
+	| 'refund_issued'
+	| 'fee_charged'
+	| 'fee_action_required'
+	| 'late_payment_refunded'
+
 /**
  * Guest reservation email as plain HTML strings: tenant-api also runs inside a
  * Durable Object, so there is no React here, and mail clients support neither
@@ -15,7 +23,7 @@ export type ReservationEmailTheme =
 	ReservationsContext['organization']['emailTheme']
 
 export type ReservationEmailInput = {
-	kind: ToggleableMessageKind
+	kind: ToggleableMessageKind | PaymentEmailKind
 	locale: string
 	theme: ReservationEmailTheme
 	restaurantName: string
@@ -27,6 +35,11 @@ export type ReservationEmailInput = {
 	timeZone?: string | null
 	partySize?: number | null
 	manageUrl?: string | null
+	/** Pay link for a fee the card on file could not cover. */
+	payUrl?: string | null
+	/** Amount of the payment, refund or fee, in minor units, with its currency. */
+	amountMinor?: number | null
+	currency?: string | null
 	statusUrl?: string | null
 	bookUrl?: string | null
 	calendarUrl?: string | null
@@ -101,18 +114,19 @@ type Vars = {
 	time: string
 	party: string
 	wait: string
+	amount: string
 }
 
 type Copy = {
 	subject: string
 	heading: string
 	lead: string
-	cta?: 'manage' | 'confirm' | 'status' | 'book'
+	cta?: 'manage' | 'confirm' | 'status' | 'book' | 'pay'
 	ctaLabel?: string
 	footer?: string
 }
 
-type Dict = Record<ToggleableMessageKind, (v: Vars) => Copy>
+type Dict = Record<ToggleableMessageKind | PaymentEmailKind, (v: Vars) => Copy>
 
 const EN: Dict = {
 	confirmation: (v) => ({
@@ -194,6 +208,35 @@ const EN: Dict = {
 			: `A table you asked about at ${v.r} just opened up. Book it before it goes.`,
 		cta: 'book',
 		ctaLabel: 'Book now',
+	}),
+	payment_received: (v) => ({
+		subject: `Payment received for your reservation at ${v.r}`,
+		heading: 'Payment received',
+		lead: `Hi ${v.name}, we received your payment of ${v.amount}. Your reservation at ${v.r} is confirmed.`,
+		cta: 'manage',
+		ctaLabel: 'Manage reservation',
+	}),
+	refund_issued: (v) => ({
+		subject: `Your refund from ${v.r}`,
+		heading: 'Refund issued',
+		lead: `Hi ${v.name}, ${v.r} refunded ${v.amount} to your original payment method. Your bank may take a few days to show it.`,
+	}),
+	fee_charged: (v) => ({
+		subject: `A fee was charged by ${v.r}`,
+		heading: 'Fee charged',
+		lead: `Hi ${v.name}, ${v.r} charged a fee of ${v.amount} to the card you left to guarantee your reservation, as described in the terms you accepted.`,
+	}),
+	fee_action_required: (v) => ({
+		subject: `Action needed to pay a fee to ${v.r}`,
+		heading: 'Your bank needs you to confirm a payment',
+		lead: `Hi ${v.name}, ${v.r} charged a fee of ${v.amount} under the terms you accepted, and your bank asked you to confirm it. Please complete the payment.`,
+		cta: 'pay',
+		ctaLabel: 'Pay now',
+	}),
+	late_payment_refunded: (v) => ({
+		subject: `Your payment to ${v.r} was refunded`,
+		heading: 'Payment refunded',
+		lead: `Hi ${v.name}, your payment of ${v.amount} reached us after your table was released and it is no longer available. We refunded the full amount.`,
 	}),
 }
 
@@ -278,6 +321,35 @@ const AR: Dict = {
 		cta: 'book',
 		ctaLabel: 'احجز الآن',
 	}),
+	payment_received: (v) => ({
+		subject: `تم استلام الدفعة لحجزك في ${v.r}`,
+		heading: 'تم استلام الدفعة',
+		lead: `مرحباً ${v.name}، استلمنا دفعتك بمبلغ ${v.amount}. تم تأكيد حجزك في ${v.r}.`,
+		cta: 'manage',
+		ctaLabel: 'إدارة الحجز',
+	}),
+	refund_issued: (v) => ({
+		subject: `استرداد المبلغ من ${v.r}`,
+		heading: 'تم استرداد المبلغ',
+		lead: `مرحباً ${v.name}، أعاد ${v.r} مبلغ ${v.amount} إلى وسيلة الدفع الأصلية. قد يستغرق ظهوره في حسابك بضعة أيام.`,
+	}),
+	fee_charged: (v) => ({
+		subject: `تم خصم رسوم من ${v.r}`,
+		heading: 'تم خصم الرسوم',
+		lead: `مرحباً ${v.name}، خصم ${v.r} رسوماً بمبلغ ${v.amount} من البطاقة التي قدمتها لضمان حجزك، وفق الشروط التي وافقت عليها.`,
+	}),
+	fee_action_required: (v) => ({
+		subject: `مطلوب إجراء لدفع رسوم إلى ${v.r}`,
+		heading: 'مصرفك يطلب منك تأكيد الدفعة',
+		lead: `مرحباً ${v.name}، خصم ${v.r} رسوماً بمبلغ ${v.amount} وفق الشروط التي وافقت عليها، وطلب مصرفك تأكيدها. يرجى إتمام الدفع.`,
+		cta: 'pay',
+		ctaLabel: 'ادفع الآن',
+	}),
+	late_payment_refunded: (v) => ({
+		subject: `تم استرداد دفعتك إلى ${v.r}`,
+		heading: 'تم استرداد الدفعة',
+		lead: `مرحباً ${v.name}، وصلت دفعتك بمبلغ ${v.amount} بعد تحرير طاولتك ولم تعد متاحة. أعدنا المبلغ كاملاً.`,
+	}),
 }
 
 const LABELS = {
@@ -328,6 +400,25 @@ function safeUrl(value: string | null | undefined): string | null {
 	}
 }
 
+/** An amount in minor units with its currency symbol; two decimals, as the providers charge them. */
+export function formatMoney(
+	amountMinor: number | null | undefined,
+	currency: string | null | undefined,
+	locale: ReservationEmailLocale,
+): string {
+	if (typeof amountMinor !== 'number' || !currency) return ''
+	try {
+		return new Intl.NumberFormat(intlLocale(locale), {
+			style: 'currency',
+			currency,
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		}).format(amountMinor / 100)
+	} catch {
+		return `${(amountMinor / 100).toFixed(2)} ${currency}`
+	}
+}
+
 function formatWait(minutes: number, locale: ReservationEmailLocale): string {
 	return `${Math.max(0, Math.round(minutes))} ${LABELS[locale].minutes}`
 }
@@ -374,6 +465,7 @@ export function renderReservationEmail(
 			typeof input.quotedWaitMin === 'number'
 				? formatWait(input.quotedWaitMin, locale)
 				: '',
+		amount: formatMoney(input.amountMinor, input.currency, locale),
 	}
 	const copy = (locale === 'ar' ? AR : EN)[input.kind](vars)
 
@@ -392,7 +484,9 @@ export function renderReservationEmail(
 			? input.statusUrl
 			: copy.cta === 'book'
 				? input.bookUrl
-				: input.manageUrl,
+				: copy.cta === 'pay'
+					? input.payUrl
+					: input.manageUrl,
 	)
 	const calendarUrl =
 		input.kind === 'confirmation' ||

@@ -3120,11 +3120,22 @@ export const RSV_PAYMENT_KIND_VALUES = [
 export type RsvPaymentKind = (typeof RSV_PAYMENT_KIND_VALUES)[number]
 
 export const RSV_PAYMENT_RECORD_STATUS_VALUES = [
+	// `created`: row exists, no provider session bound yet. `charging`: a fee
+	// or refund claimed by the App and in flight. `requested`: a refund waiting
+	// for the App. `refund_pending`: the provider accepted a refund that has not
+	// settled. `refunded` / `partially_refunded` live on the original payment.
+	'created',
 	'pending',
+	'charging',
 	'requires_action',
 	'succeeded',
 	'failed',
 	'cancelled',
+	'expired',
+	'requested',
+	'refund_pending',
+	'refunded',
+	'partially_refunded',
 	'disputed',
 	'review',
 ] as const
@@ -3137,6 +3148,8 @@ export type RsvOutboxStatus = (typeof RSV_OUTBOX_STATUS_VALUES)[number]
 export const RSV_OUTBOX_KIND_VALUES = [
 	'manager_alert',
 	'payment_command',
+	'refund_request',
+	'checkout_expire',
 ] as const
 export type RsvOutboxKind = (typeof RSV_OUTBOX_KIND_VALUES)[number]
 
@@ -4461,8 +4474,27 @@ export const rsvPayments = sqliteTable(
 		createdBy: text('created_by'),
 		createdAt: integer('created_at').notNull().default(nowMs),
 		updatedAt: integer('updated_at').notNull().default(nowMs),
+		// 0020: payments contract columns.
+		purpose: text('purpose'),
+		providerSessionId: text('provider_session_id'),
+		refundedMinor: integer('refunded_minor').notNull().default(0),
+		platformFeeBp: integer('platform_fee_bp').notNull().default(0),
+		attempt: integer('attempt').notNull().default(1),
+		declineCode: text('decline_code'),
+		previousPaymentRef: text('previous_payment_ref'),
+		cardExpMonth: integer('card_exp_month'),
+		cardExpYear: integer('card_exp_year'),
+		disputeStatus: text('dispute_status'),
+		disputeRef: text('dispute_ref'),
+		parentPaymentId: text('parent_payment_id'),
+		refundRef: text('refund_ref'),
+		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		uniqueIndex('uniq_rsv_payments_provider_session')
+			.on(table.providerSessionId)
+			.where(sql`${table.providerSessionId} IS NOT NULL`),
+		index('idx_rsv_payments_parent').on(table.parentPaymentId),
 		uniqueIndex('uniq_rsv_payments_idempotency_key').on(table.idempotencyKey),
 		uniqueIndex('uniq_rsv_payments_provider_ref')
 			.on(table.provider, table.providerRef)

@@ -38,7 +38,7 @@ msgstr "{0} numbers"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:119
+#: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -73,7 +73,7 @@ msgstr "{days} days"
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr ""
 
-#: ../../packages/reports/src/ui/report-chart.tsx:149
+#: ../../packages/reports/src/ui/report-chart.tsx:156
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 
@@ -356,6 +356,10 @@ msgstr "Add number"
 msgid "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 msgstr "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:107
+msgid "Add or change an override"
+msgstr "Add or change an override"
+
 #: app/components/admin/feature-flags.tsx:536
 #: app/components/admin/feature-flags.tsx:714
 msgid "Add Override"
@@ -382,8 +386,8 @@ msgstr "Add points to {0}'s current total of {1}."
 msgid "Add waitlist points"
 msgstr "Add waitlist points"
 
-#: app/components/admin-sidebar.tsx:145
-#: app/components/admin-sidebar.tsx:153
+#: app/components/admin-sidebar.tsx:155
+#: app/components/admin-sidebar.tsx:163
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
@@ -391,7 +395,7 @@ msgstr "Add waitlist points"
 msgid "Admin"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:171
+#: app/components/admin-sidebar.tsx:181
 #: app/routes/_admin+/index.tsx:126
 msgid "Admin Dashboard"
 msgstr ""
@@ -433,7 +437,7 @@ msgstr ""
 #~ msgid "All plans"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:32
+#: ../../packages/marketing/src/components/campaign-detail.tsx:34
 msgid "All recipients"
 msgstr ""
 
@@ -489,6 +493,10 @@ msgstr "Applications at each stage, from new to hired, over the last 3 months."
 #: ../../packages/reports/src/ui/report-labels.ts:76
 msgid "Applications by source"
 msgstr "Applications by source"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:53
+msgid "Applies to every organization without its own override. Basis points: 100 is 1.00%."
+msgstr "Applies to every organization without its own override. Basis points: 100 is 1.00%."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:339
 msgid "Apply Preset"
@@ -630,7 +638,7 @@ msgstr ""
 msgid "Back to blocks"
 msgstr "Back to blocks"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:29
+#: ../../packages/marketing/src/components/campaign-detail.tsx:31
 msgid "Back to broadcasts"
 msgstr ""
 
@@ -681,6 +689,11 @@ msgstr ""
 #: app/routes/_admin+/roles+/system.$roleId.tsx:292
 msgid "Basic information"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:67
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:141
+msgid "Basis points"
+msgstr "Basis points"
 
 #: app/routes/_admin+/ip-addresses+/index.tsx:359
 msgid "Blacklist"
@@ -739,7 +752,7 @@ msgstr ""
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
@@ -848,7 +861,7 @@ msgid "Click rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:50
 msgid "Clicked {0}"
 msgstr ""
 
@@ -1490,6 +1503,11 @@ msgstr "End date"
 msgid "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
 msgstr "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:80
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:153
+msgid "Enter a whole number of basis points from 0 to 10000."
+msgstr "Enter a whole number of basis points from 0 to 10000."
+
 #: app/routes/_admin+/roles+/$roleId.tsx:800
 msgid "Enter feature description"
 msgstr ""
@@ -1645,6 +1663,10 @@ msgstr ""
 #: app/routes/_admin+/roles+/$roleId.tsx:843
 msgid "Feature: {selectedEntity}"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:202
+msgid "Fee"
+msgstr "Fee"
 
 #: app/components/admin-sidebar.tsx:129
 msgid "Feedback"
@@ -1932,6 +1954,10 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:218
 msgid "Integrations"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:213
+msgid "Invalid"
+msgstr "Invalid"
 
 #: app/routes/_admin+/marketing+/automations.$journeyId.tsx:138
 #: app/routes/_admin+/marketing+/automations.new.tsx:100
@@ -2237,7 +2263,7 @@ msgstr ""
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:88
+#: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr ""
@@ -2396,11 +2422,11 @@ msgstr ""
 msgid "No connected accounts"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "No contact on file"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:127
+#: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr ""
 
@@ -2437,6 +2463,10 @@ msgstr ""
 #: app/routes/_admin+/phone-numbers.tsx:337
 msgid "No numbers yet"
 msgstr "No numbers yet"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:192
+msgid "No organization has its own fee."
+msgstr "No organization has its own fee."
 
 #: app/routes/_admin+/roles+/index.tsx:420
 msgid "No organization roles found"
@@ -2527,6 +2557,10 @@ msgstr ""
 msgid "None"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:61
+msgid "Not set"
+msgstr "Not set"
+
 #: app/components/admin-user-detail.tsx:678
 msgid "Not Set"
 msgstr ""
@@ -2577,7 +2611,7 @@ msgid "Open rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:51
+#: ../../packages/marketing/src/components/campaign-detail.tsx:53
 msgid "Opened {0}"
 msgstr ""
 
@@ -2606,6 +2640,8 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:139
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:744
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/phone-numbers.tsx:353
 msgid "Organization"
 msgstr ""
@@ -2622,6 +2658,10 @@ msgstr ""
 #: app/components/admin/feature-flags.tsx:519
 msgid "Organization Override"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:186
+msgid "Organization overrides"
+msgstr "Organization overrides"
 
 #: app/routes/_admin+/roles+/index.tsx:279
 msgid "Organization Role"
@@ -2820,6 +2860,10 @@ msgstr "Pick a block to add to your email."
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:110
+msgid "Pick an organization by name or slug. Saving again replaces its override."
+msgstr "Pick an organization by name or slug. Saving again replaces its override."
+
 #: app/components/sso-configuration-form.tsx:329
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
@@ -3014,7 +3058,7 @@ msgstr "Recently released"
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:115
+#: ../../packages/marketing/src/components/campaign-detail.tsx:117
 msgid "Recipients"
 msgstr ""
 
@@ -3025,6 +3069,10 @@ msgstr ""
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:225
+msgid "Remove"
+msgstr "Remove"
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
@@ -3072,6 +3120,14 @@ msgstr ""
 #: app/routes/_admin+/gdpr-requests.tsx:478
 msgid "Requires attention"
 msgstr ""
+
+#: app/components/admin-sidebar.tsx:143
+msgid "Reservations fees"
+msgstr "Reservations fees"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:173
+msgid "Reservations platform fee"
+msgstr "Reservations platform fee"
 
 #: app/routes/_admin+/cache.tsx:406
 msgid "Reset"
@@ -3247,9 +3303,17 @@ msgstr ""
 msgid "Save Configuration"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:85
+msgid "Save default"
+msgstr "Save default"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 msgid "Save draft"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:158
+msgid "Save override"
+msgstr "Save override"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:483
 msgid "Save Policy"
@@ -3424,8 +3488,8 @@ msgstr ""
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:80
-#: ../../packages/marketing/src/components/campaign-detail.tsx:143
+#: ../../packages/marketing/src/components/campaign-detail.tsx:81
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
 msgid "Sent {0}"
 msgstr ""
 
@@ -3710,6 +3774,10 @@ msgstr "Swap variable"
 msgid "System"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:50
+msgid "System default"
+msgstr "System default"
+
 #: app/components/admin/feature-flags.tsx:521
 #: app/components/admin/feature-flags.tsx:698
 msgid "System Default"
@@ -3719,7 +3787,7 @@ msgstr ""
 msgid "System Flags"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:174
+#: app/components/admin-sidebar.tsx:184
 msgid "System Management"
 msgstr ""
 
@@ -3838,6 +3906,10 @@ msgstr "The previous organization may still forward its line to this number, so 
 #: app/routes/_admin+/phone-numbers.tsx:212
 #~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 #~ msgstr "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
+msgid "The share of each Reservations payment kept by the platform, in basis points."
+msgstr "The share of each Reservations payment kept by the platform, in basis points."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -4011,7 +4083,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:140
 msgid "Unnamed recipient"
 msgstr ""
 
@@ -4175,7 +4247,7 @@ msgstr ""
 msgid "Visitor IP addresses will appear here."
 msgstr "Visitor IP addresses will appear here."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:161
+#: ../../packages/reports/src/ui/report-chart.tsx:168
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 

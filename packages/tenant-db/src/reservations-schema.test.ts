@@ -1105,6 +1105,43 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			'UNIQUE',
 		)
 
+		// 0020: a provider session binds to one payment row, and the new
+		// columns default so older rows stay valid.
+		await db.insert(schema.rsvPayments).values({
+			id: 'pay_s1',
+			locationId: 'loc_1',
+			reservationId: 'rsv_ok',
+			provider: 'stripe',
+			kind: 'deposit_charge',
+			providerSessionId: 'cs_uniq_1',
+			idempotencyKey: 'idem_s1',
+		})
+		await expectRejectsWith(
+			db.insert(schema.rsvPayments).values({
+				id: 'pay_s2',
+				locationId: 'loc_1',
+				reservationId: 'rsv_ok',
+				provider: 'stripe',
+				kind: 'deposit_charge',
+				providerSessionId: 'cs_uniq_1',
+				idempotencyKey: 'idem_s2',
+			}),
+			'UNIQUE',
+		)
+		const defaults = await db
+			.select()
+			.from(schema.rsvPayments)
+			.where(eq(schema.rsvPayments.id, 'pay_s1'))
+			.get()
+		expect(defaults).toMatchObject({
+			refundedMinor: 0,
+			platformFeeBp: 0,
+			attempt: 1,
+			version: 1,
+			declineCode: null,
+			parentPaymentId: null,
+		})
+
 		// rsv_outbox (dedupe_key)
 		await db.insert(schema.rsvOutbox).values({
 			id: 'out_u1',

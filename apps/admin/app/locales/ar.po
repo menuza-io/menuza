@@ -38,7 +38,7 @@ msgstr "{0} أرقام"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:119
+#: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
@@ -73,7 +73,7 @@ msgstr "{days} يومًا"
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء تحقق}}"
 
-#: ../../packages/reports/src/ui/report-chart.tsx:149
+#: ../../packages/reports/src/ui/report-chart.tsx:156
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم استبعاد سجل واحد من هذه النسبة لأنه لا يوجد ما يقارن به، مثل يوم فيه أجور ولم تُدخل له مبيعات، أو أجور بعملة مختلفة عن المبيعات.} two {تم استبعاد سجلين من هذه النسبة لأنه لا يوجد ما يقارن بهما، مثل يومين فيهما أجور ولم تُدخل لهما مبيعات، أو أجور بعملة مختلفة عن المبيعات.} few {تم استبعاد # سجلات من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} many {تم استبعاد # سجلًا من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} other {تم استبعاد # سجل من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.}}"
 
@@ -356,6 +356,10 @@ msgstr "إضافة الرقم"
 msgid "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 msgstr "أضف الأرقام المشتراة من Twilio والموجَّهة إلى خط SIP الخاص بـ LiveKit."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:107
+msgid "Add or change an override"
+msgstr "إضافة أو تعديل استثناء"
+
 #: app/components/admin/feature-flags.tsx:536
 #: app/components/admin/feature-flags.tsx:714
 msgid "Add Override"
@@ -382,8 +386,8 @@ msgstr "أضف نقاطاً إلى إجمالي {0} الحالي البالغ {1
 msgid "Add waitlist points"
 msgstr "إضافة نقاط قائمة الانتظار"
 
-#: app/components/admin-sidebar.tsx:145
-#: app/components/admin-sidebar.tsx:153
+#: app/components/admin-sidebar.tsx:155
+#: app/components/admin-sidebar.tsx:163
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
@@ -391,7 +395,7 @@ msgstr "إضافة نقاط قائمة الانتظار"
 msgid "Admin"
 msgstr "مدير"
 
-#: app/components/admin-sidebar.tsx:171
+#: app/components/admin-sidebar.tsx:181
 #: app/routes/_admin+/index.tsx:126
 msgid "Admin Dashboard"
 msgstr "لوحة تحكم المدير"
@@ -433,7 +437,7 @@ msgstr "جميع المؤسسات"
 #~ msgid "All plans"
 #~ msgstr "جميع الخطط"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:32
+#: ../../packages/marketing/src/components/campaign-detail.tsx:34
 msgid "All recipients"
 msgstr "جميع المستلمين"
 
@@ -489,6 +493,10 @@ msgstr "الطلبات في كل مرحلة، من الجديد إلى التع�
 #: ../../packages/reports/src/ui/report-labels.ts:76
 msgid "Applications by source"
 msgstr "الطلبات حسب المصدر"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:53
+msgid "Applies to every organization without its own override. Basis points: 100 is 1.00%."
+msgstr "ينطبق على كل منظمة ليس لها استثناء خاص بها. النقاط الأساسية: 100 تعني 1.00%."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:339
 msgid "Apply Preset"
@@ -630,7 +638,7 @@ msgstr "العودة إلى الأتمتة"
 msgid "Back to blocks"
 msgstr "العودة إلى الكتل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:29
+#: ../../packages/marketing/src/components/campaign-detail.tsx:31
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
@@ -681,6 +689,11 @@ msgstr "جاري الحظر..."
 #: app/routes/_admin+/roles+/system.$roleId.tsx:292
 msgid "Basic information"
 msgstr "المعلومات الأساسية"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:67
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:141
+msgid "Basis points"
+msgstr "النقاط الأساسية"
 
 #: app/routes/_admin+/ip-addresses+/index.tsx:359
 msgid "Blacklist"
@@ -739,7 +752,7 @@ msgstr "منطقي"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
@@ -848,7 +861,7 @@ msgid "Click rate"
 msgstr "معدل النقر"
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:50
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
@@ -1490,6 +1503,11 @@ msgstr "تاريخ النهاية"
 msgid "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
 msgstr "أدخل عدداً صحيحاً من 1 إلى {MAX_ADMIN_POINTS_ADJUSTMENT}."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:80
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:153
+msgid "Enter a whole number of basis points from 0 to 10000."
+msgstr "أدخل عددًا صحيحًا من النقاط الأساسية بين 0 و10000."
+
 #: app/routes/_admin+/roles+/$roleId.tsx:800
 msgid "Enter feature description"
 msgstr "أدخل وصف الميزة"
@@ -1645,6 +1663,10 @@ msgstr "صلاحيات الميزات"
 #: app/routes/_admin+/roles+/$roleId.tsx:843
 msgid "Feature: {selectedEntity}"
 msgstr "الميزة: {selectedEntity}"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:202
+msgid "Fee"
+msgstr "الرسوم"
 
 #: app/components/admin-sidebar.tsx:129
 msgid "Feedback"
@@ -1932,6 +1954,10 @@ msgstr "المثيل:"
 #: app/components/admin-organizations-table.tsx:218
 msgid "Integrations"
 msgstr "التكاملات"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:213
+msgid "Invalid"
+msgstr "غير صالح"
 
 #: app/routes/_admin+/marketing+/automations.$journeyId.tsx:138
 #: app/routes/_admin+/marketing+/automations.new.tsx:100
@@ -2237,7 +2263,7 @@ msgstr "فريق Menuza"
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:88
+#: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr "الرسالة"
@@ -2396,11 +2422,11 @@ msgstr "لا توجد حملات بعد."
 msgid "No connected accounts"
 msgstr "لا توجد حسابات متصلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:127
+#: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -2437,6 +2463,10 @@ msgstr "لم يتم إنشاء ملاحظات"
 #: app/routes/_admin+/phone-numbers.tsx:337
 msgid "No numbers yet"
 msgstr "لا توجد أرقام بعد"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:192
+msgid "No organization has its own fee."
+msgstr "لا توجد منظمة لها رسوم خاصة بها."
 
 #: app/routes/_admin+/roles+/index.tsx:420
 msgid "No organization roles found"
@@ -2527,6 +2557,10 @@ msgstr "العُقد"
 msgid "None"
 msgstr "بلا"
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:61
+msgid "Not set"
+msgstr "غير محدد"
+
 #: app/components/admin-user-detail.tsx:678
 msgid "Not Set"
 msgstr "غير محدد"
@@ -2577,7 +2611,7 @@ msgid "Open rate"
 msgstr "معدل الفتح"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:51
+#: ../../packages/marketing/src/components/campaign-detail.tsx:53
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
@@ -2606,6 +2640,8 @@ msgstr "org - موارد المؤسسة"
 #: app/components/admin-organizations-table.tsx:139
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:744
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/phone-numbers.tsx:353
 msgid "Organization"
 msgstr "المؤسسة"
@@ -2622,6 +2658,10 @@ msgstr "تم إنشاء المنظمة"
 #: app/components/admin/feature-flags.tsx:519
 msgid "Organization Override"
 msgstr "تجاوز المؤسسة"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:186
+msgid "Organization overrides"
+msgstr "استثناءات المنظمات"
 
 #: app/routes/_admin+/roles+/index.tsx:279
 msgid "Organization Role"
@@ -2820,6 +2860,10 @@ msgstr "اختر كتلة لإضافتها إلى بريدك."
 msgid "Pick a layout, then customize the blocks."
 msgstr "اختر تخطيطًا ثم خصّص الكتل."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:110
+msgid "Pick an organization by name or slug. Saving again replaces its override."
+msgstr "اختر منظمة بالاسم أو المعرّف النصي. الحفظ مرة أخرى يستبدل استثناءها."
+
 #: app/components/sso-configuration-form.tsx:329
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
@@ -3014,7 +3058,7 @@ msgstr "أُعيد مؤخرًا"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:115
+#: ../../packages/marketing/src/components/campaign-detail.tsx:117
 msgid "Recipients"
 msgstr "المستلمون"
 
@@ -3025,6 +3069,10 @@ msgstr "الإحالات"
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr "رفض"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:225
+msgid "Remove"
+msgstr "إزالة"
 
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
@@ -3072,6 +3120,14 @@ msgstr "الطلبات"
 #: app/routes/_admin+/gdpr-requests.tsx:478
 msgid "Requires attention"
 msgstr "يتطلب الانتباه"
+
+#: app/components/admin-sidebar.tsx:143
+msgid "Reservations fees"
+msgstr "رسوم الحجوزات"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:173
+msgid "Reservations platform fee"
+msgstr "رسوم منصة الحجوزات"
 
 #: app/routes/_admin+/cache.tsx:406
 msgid "Reset"
@@ -3247,9 +3303,17 @@ msgstr "حفظ التغييرات"
 msgid "Save Configuration"
 msgstr "حفظ الإعداد"
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:85
+msgid "Save default"
+msgstr "حفظ الافتراضي"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 msgid "Save draft"
 msgstr "حفظ المسودة"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:158
+msgid "Save override"
+msgstr "حفظ الاستثناء"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:483
 msgid "Save Policy"
@@ -3424,8 +3488,8 @@ msgstr "جارٍ الإرسال..."
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:80
-#: ../../packages/marketing/src/components/campaign-detail.tsx:143
+#: ../../packages/marketing/src/components/campaign-detail.tsx:81
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
@@ -3710,6 +3774,10 @@ msgstr "تبديل المتغير"
 msgid "System"
 msgstr "النظام"
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:50
+msgid "System default"
+msgstr "الافتراضي للنظام"
+
 #: app/components/admin/feature-flags.tsx:521
 #: app/components/admin/feature-flags.tsx:698
 msgid "System Default"
@@ -3719,7 +3787,7 @@ msgstr "الافتراضي للنظام"
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
-#: app/components/admin-sidebar.tsx:174
+#: app/components/admin-sidebar.tsx:184
 msgid "System Management"
 msgstr "إدارة النظام"
 
@@ -3838,6 +3906,10 @@ msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى ه�
 #: app/routes/_admin+/phone-numbers.tsx:212
 #~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 #~ msgstr "قد يظل المطعم السابق يحوّل خطه إلى هذا الرقم، لذا قد يصل المتصلون به إلى وكيل المؤسسة الجديدة."
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
+msgid "The share of each Reservations payment kept by the platform, in basis points."
+msgstr "حصة المنصة من كل دفعة حجز، بالنقاط الأساسية."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -4011,7 +4083,7 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:140
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -4175,7 +4247,7 @@ msgstr "عارض"
 msgid "Visitor IP addresses will appear here."
 msgstr "ستظهر عناوين IP للزوار هنا."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:161
+#: ../../packages/reports/src/ui/report-chart.tsx:168
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "الأجور تقديرات مبنية على معدلات الأجر وليست كشف رواتب. المبيعات هي الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، أو المبيعات التي أدخلها فريقك، بحسب مصدر المبيعات في كل مكان عمل. مكان العمل الذي يحتسب الطلبات عبر الإنترنت فقط ستظهر نسبته أعلى من حصة العمالة الفعلية."
 

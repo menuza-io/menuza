@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
-import { customers, getTenantDb, rsvHolds } from '@repo/tenant-db'
-import { and, eq, gt } from 'drizzle-orm'
+import { customers, getTenantDb, rsvHolds, rsvPayments } from '@repo/tenant-db'
+import { and, asc, eq, gt, ne } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { HttpError, json } from '../lib/http.ts'
@@ -16,6 +16,7 @@ import {
 	newHoldToken,
 	notFoundResponse,
 	parseManageTokenId,
+	parseReservationPayTokenId,
 	purgeStaleRateCounters,
 	randomFakeId,
 	readCapabilityToken,
@@ -27,6 +28,7 @@ import {
 	type ResolvedPublicOrg,
 	verificationFailedResponse,
 	verifyManageToken,
+	verifyReservationPayToken,
 	verifyPublicChallenge,
 } from '../lib/reservations-public-auth.ts'
 import { hashIdempotencyPayload } from '../lib/reservations-write.ts'
@@ -37,6 +39,11 @@ import {
 	releaseHoldByTokenHash,
 } from '../services/rsv-hold-service.ts'
 import { buildReservationIcs } from '../services/rsv-ics.ts'
+import { getGuestPaymentStatus } from '../services/rsv-payment-service.ts'
+import {
+	buildPaymentBlock,
+	describeBookingPolicy,
+} from '../services/rsv-payment-booking.ts'
 import {
 	bookFromHold,
 	buildManageView,
@@ -58,7 +65,9 @@ import {
 	getPublicConfig,
 	requireBookableLocation,
 } from '../services/rsv-public-service.ts'
+import { getPublicExperienceAvailability } from '../services/rsv-experience-public.ts'
 import { authenticateCustomer } from './auth.ts'
+import { registerPublicExperienceRoutes } from './reservations-public-experiences.ts'
 import { registerPublicWaitlistRoutes } from './reservations-public-waitlist.ts'
 
 export const reservationsPublicRoutes = new Hono()
@@ -212,6 +221,8 @@ const bookingDetailsShape = {
 const holdSchema = z.object({
 	locationId: idField,
 	slot: slotSchema,
+	/** Holds a seating of this published experience (cover caps apply). */
+	experienceId: idField.nullish(),
 	areaPref: z.preprocess(emptyToNull, idField.nullish()),
 	replaceHoldToken: z.string().max(256).nullish(),
 	website: z.string().max(500).optional(),
@@ -236,6 +247,8 @@ const availabilityQuerySchema = z.object({
 	date: dateField,
 	partySize: z.coerce.number().int(),
 	localMin: z.coerce.number().int().min(0).max(2880).optional(),
+	/** Offers the seatings of this published experience instead of regular slots. */
+	experienceId: idField.optional(),
 })
 
 const calendarQuerySchema = z.object({
@@ -349,16 +362,26 @@ reservationsPublicRoutes.get(
 			query.data.locationId,
 		)
 		const now = Date.now()
-		const result = await getPublicAvailability(db, {
-			locationId: query.data.locationId,
-			date: query.data.date,
-			partySize: query.data.partySize,
-			localMin: query.data.localMin ?? null,
-			locale: readLocale(c),
-			now,
-			location,
-			features: g.value.context.features,
-		})
+		const result = query.data.experienceId
+			? await getPublicExperienceAvailability(db, {
+					locationId: query.data.locationId,
+					experienceId: query.data.experienceId,
+					date: query.data.date,
+					partySize: query.data.partySize,
+					now,
+					location,
+					features: g.value.context.features,
+				})
+			: await getPublicAvailability(db, {
+					locationId: query.data.locationId,
+					date: query.data.date,
+					partySize: query.data.partySize,
+					localMin: query.data.localMin ?? null,
+					locale: readLocale(c),
+					now,
+					location,
+					features: g.value.context.features,
+				})
 
 		// The body's waitlist and notify-me offers follow these flags, which no
 		// day or settings version tracks, so a flag change must change the tag.
@@ -479,6 +502,21 @@ reservationsPublicRoutes.post(
 		await purgeStaleRateCounters(db).catch(() => undefined)
 
 		await requireBookableLocation(db, g.value.context, body.data.locationId)
+		if (body.data.experienceId && !g.value.context.features.experiences) {
+			return notFoundResponse()
+		}
+		const policyParams = {
+			context: g.value.context,
+			locationId: body.data.locationId,
+			experienceId: body.data.experienceId ?? null,
+			partySize: body.data.slot.partySize,
+			locale: readLocale(c) ?? 'en',
+		}
+		// Fail closed before anything is held.
+		await describeBookingPolicy(db, {
+			...policyParams,
+			serviceId: body.data.slot.serviceId ?? null,
+		})
 		const holdToken = newHoldToken()
 		const replace = body.data.replaceHoldToken
 		const created = await createHold({
@@ -486,6 +524,7 @@ reservationsPublicRoutes.post(
 			locationId: body.data.locationId,
 			slot: body.data.slot,
 			areaPref: body.data.areaPref ?? null,
+			experienceId: body.data.experienceId ?? null,
 			tokenHash: hashHoldToken(holdToken),
 			replaceTokenHash: isWellFormedHoldToken(replace)
 				? hashHoldToken(replace)
@@ -493,6 +532,18 @@ reservationsPublicRoutes.post(
 			source: client.channel === 'native' ? 'native' : 'web',
 			ipHash,
 		})
+		let policyView: Awaited<ReturnType<typeof describeBookingPolicy>>
+		try {
+			policyView = await describeBookingPolicy(db, {
+				...policyParams,
+				serviceId: created.slot.serviceId,
+			})
+		} catch (error) {
+			await releaseHoldByTokenHash(org.id, hashHoldToken(holdToken)).catch(
+				() => undefined,
+			)
+			throw error
+		}
 		return json(
 			{
 				holdToken,
@@ -500,6 +551,15 @@ reservationsPublicRoutes.post(
 				now: isoNow(created.now),
 				locationId: created.locationId,
 				slot: created.slot,
+				...(body.data.experienceId
+					? { experienceId: body.data.experienceId }
+					: {}),
+				...(policyView.requiresPayment
+					? {
+							requiresPayment: true,
+							policy: policyView.policy,
+						}
+					: {}),
 			},
 			201,
 		)
@@ -579,13 +639,47 @@ async function bookingResponse(
 	const db = await getTenantDb(g.org.id)
 	const row = await loadReservationById(db, reservationId)
 	if (!row) throw new HttpError(404, 'not_found')
+	let payment: ReturnType<typeof buildPaymentBlock> | undefined
+	if (row.status === 'pending_payment') {
+		const payRow = await db
+			.select({
+				purpose: rsvPayments.purpose,
+				amountMinor: rsvPayments.amountMinor,
+				currency: rsvPayments.currency,
+			})
+			.from(rsvPayments)
+			.where(
+				and(
+					eq(rsvPayments.reservationId, row.id),
+					ne(rsvPayments.kind, 'refund'),
+				),
+			)
+			.orderBy(asc(rsvPayments.createdAt))
+			.limit(1)
+		const first = payRow[0]
+		if (first) {
+			payment = buildPaymentBlock({
+				orgId: g.org.id,
+				context: g.context,
+				reservation: row,
+				purpose: (first.purpose as 'deposit') ?? 'deposit',
+				amountMinor: first.amountMinor,
+				currency: first.currency,
+			})
+		}
+	}
 	return json(
 		{
 			reservation: {
 				...summarizeReservation(row, g.context),
 				confirmationCode: row.confirmationCode,
+				paymentStatus: row.paymentStatus,
+				...(row.paymentExpiresAt
+					? { paymentExpiresAt: isoNow(row.paymentExpiresAt) }
+					: {}),
 			},
 			manageToken: deriveManageToken(g.org.id, row.id, row.manageTokenVersion),
+			...(payment ? { payment } : {}),
 		},
 		status,
 	)
@@ -634,6 +728,7 @@ reservationsPublicRoutes.post(
 			customerPhone: customer.verifiedPhone,
 			ipHash,
 			idempotencyKey: key,
+			context: g.value.context,
 			// The Turnstile token is single use and the honeypot is not part of the
 			// booking: a retry with a fresh token must replay, not conflict.
 			requestHash: hashIdempotencyPayload({
@@ -812,6 +907,49 @@ reservationsPublicRoutes.get(
 		const { g, row, now } = managed.value
 		const db = await getTenantDb(g.org.id)
 		return json(await buildManageView(db, g.context, row, now))
+	}),
+)
+
+/**
+ * Payment status poll for the payment step and the manage page. The capability
+ * is the manage token or the payment token the booking returned (a pay link
+ * carries only the latter); anything else answers the uniform 404.
+ */
+reservationsPublicRoutes.get(
+	'/manage/payment',
+	guarded(async (c) => {
+		const g = await gate(c, 'manage', {
+			name: 'manage-payment',
+			max: 120,
+			windowMs: MINUTE,
+		})
+		if (!g.ok) return g.response
+		const token = readCapabilityToken(c, {})
+		if (!token) return notFoundResponse()
+		const id = parseManageTokenId(token) ?? parseReservationPayTokenId(token)
+		if (!id) return notFoundResponse()
+		const db = await getTenantDb(g.value.org.id)
+		const row = await loadReservationById(db, id)
+		if (
+			!row ||
+			!(
+				verifyManageToken(
+					g.value.org.id,
+					row.id,
+					row.manageTokenVersion,
+					token,
+				) ||
+				verifyReservationPayToken(
+					g.value.org.id,
+					row.id,
+					row.manageTokenVersion,
+					token,
+				)
+			)
+		) {
+			return notFoundResponse()
+		}
+		return json(await getGuestPaymentStatus(g.value.org.id, row.id))
 	}),
 )
 
@@ -999,6 +1137,12 @@ registerPublicWaitlistRoutes(reservationsPublicRoutes, {
 	optionalCustomer,
 	readLocale,
 	missingIdempotencyKey,
+})
+
+registerPublicExperienceRoutes(reservationsPublicRoutes, {
+	gate,
+	guarded,
+	readLocale,
 })
 
 // Mutation paths answer every other method with a non-2xx and never run.

@@ -1,270 +1,218 @@
-import { type PolicyMode } from './config.ts'
+/**
+ * Payment policy math (pure: no I/O, no provider calls, no UI strings).
+ *
+ * Money is integer minor units. A policy row is snapshotted onto the
+ * reservation at booking time (`rsv_reservations.policy_snapshot`); every later
+ * decision (cancellation terms, refunds, fees) reads the snapshot, never the
+ * live policy, so editing a policy never changes a booking already made.
+ */
 
-export type ReservationPolicyRuleInput = {
+export const POLICY_KINDS = [
+	'none',
+	'card_guarantee',
+	'deposit',
+	'prepay',
+] as const
+export type PolicyKind = (typeof POLICY_KINDS)[number]
+export type PolicyRefundRule = 'full_before_window' | 'none' | 'partial'
+
+/** The columns of an `rsv_policies` row the math needs. */
+export type PolicyInput = {
 	id: string
 	name: string
-	mode: PolicyMode
-	amountMinor?: number
-	amount_minor?: number
-	perCover?: boolean | number
-	per_cover?: boolean | number
+	kind: string
+	amountMinor: number
+	perCover: boolean
 	currency: string
-	minParty?: number
-	min_party?: number
-	serviceId?: string | null
-	service_id?: string | null
-	daysOfWeek?: readonly number[] | null
-	days_of_week?: readonly number[] | null
-	windowStartMin?: number | null
-	window_start_min?: number | null
-	windowEndMin?: number | null
-	window_end_min?: number | null
-	cancelCutoffMin?: number
-	cancel_cutoff_min?: number
-	noShowFeeMinor?: number | null
-	no_show_fee_minor?: number | null
-	priority?: number
-	active?: boolean | number
-}
-
-export type PolicySelectionContext = {
-	serviceId?: string | null
-	dayOfWeek: number
-	slotMin: number
-	partySize: number
+	freeCancelUntilMin: number
+	lateCancelFeeMinor: number
+	noShowFeeMinor: number
+	feePerCover: boolean
+	feeCapMinor: number | null
+	refundRule: PolicyRefundRule
+	partialRefundBp: number | null
+	appliesPartyMin: number | null
+	termsVersion: number
+	archivedAt?: number | null
 }
 
 export type PolicySnapshot = {
 	policyId: string
 	name: string
-	mode: PolicyMode
+	kind: PolicyKind
+	termsVersion: number
+	partySize: number
 	amountMinor: number
 	perCover: boolean
-	partySize: number
+	/** What is charged at booking (0 for a card guarantee). */
 	totalAmountMinor: number
 	currency: string
+	freeCancelUntilMin: number
+	/** Same number as `freeCancelUntilMin`; the late-cancel check reads this key. */
 	cancelCutoffMin: number
+	lateCancelFeeMinor: number
 	noShowFeeMinor: number
+	feePerCover: boolean
+	feeCapMinor: number | null
+	refundRule: PolicyRefundRule
+	partialRefundBp: number | null
 }
 
-function toBool(v: boolean | number | undefined, fallback = true): boolean {
-	if (v === undefined) return fallback
-	return v === true || v === 1
+export type PolicyCandidates = {
+	experience?: PolicyInput | null
+	service?: PolicyInput | null
+	location?: PolicyInput | null
+}
+
+function appliesTo(policy: PolicyInput, partySize: number): boolean {
+	if (policy.archivedAt) return false
+	if (policy.kind === 'none') return false
+	return partySize >= (policy.appliesPartyMin ?? 1)
 }
 
 /**
- * Select the most specific active policy rule matching `{ serviceId, dayOfWeek, slotMin, partySize }`.
- * Higher `priority` wins; ties break by specificity (service match, window match, higher `minParty`) and `id`.
+ * Precedence: experience policy, then service policy, then the location
+ * default. A policy that does not apply to the party (`applies_party_min`) is
+ * skipped, so a narrower policy never hides the default for small parties.
  */
 export function selectPolicy(
-	rules: readonly ReservationPolicyRuleInput[],
-	context: PolicySelectionContext,
-): ReservationPolicyRuleInput | null {
-	const matching = rules.filter((r) => {
-		if (!toBool(r.active, true)) return false
-		const minParty = r.minParty ?? r.min_party ?? 1
-		if (context.partySize < minParty) return false
-
-		const sId = r.serviceId ?? r.service_id ?? null
-		if (sId !== null && sId !== context.serviceId) return false
-
-		const dows = r.daysOfWeek ?? r.days_of_week ?? null
-		if (dows && dows.length > 0 && !dows.includes(context.dayOfWeek)) {
-			return false
-		}
-
-		const wStart = r.windowStartMin ?? r.window_start_min ?? null
-		const wEnd = r.windowEndMin ?? r.window_end_min ?? null
-		if (wStart !== null && context.slotMin < wStart) return false
-		if (wEnd !== null && context.slotMin >= wEnd) return false
-
-		return true
-	})
-
-	if (matching.length === 0) return null
-
-	matching.sort((a, b) => {
-		const prioA = a.priority ?? 0
-		const prioB = b.priority ?? 0
-		if (prioA !== prioB) return prioB - prioA
-
-		const specA =
-			((a.serviceId ?? a.service_id) ? 4 : 0) +
-			((a.windowStartMin ?? a.window_start_min) !== null ? 2 : 0) +
-			(a.minParty ?? a.min_party ?? 1)
-		const specB =
-			((b.serviceId ?? b.service_id) ? 4 : 0) +
-			((b.windowStartMin ?? b.window_start_min) !== null ? 2 : 0) +
-			(b.minParty ?? b.min_party ?? 1)
-		if (specA !== specB) return specB - specA
-
-		return a.id.localeCompare(b.id)
-	})
-
-	return matching[0] ?? null
+	candidates: PolicyCandidates,
+	partySize: number,
+): PolicyInput | null {
+	for (const policy of [
+		candidates.experience,
+		candidates.service,
+		candidates.location,
+	]) {
+		if (policy && appliesTo(policy, partySize)) return policy
+	}
+	return null
 }
 
-/**
- * Build an immutable `PolicySnapshot` stored on `reservation.policy_snapshot` at booking time.
- */
+export function policyRequiresPayment(kind: string): boolean {
+	return kind === 'deposit' || kind === 'prepay' || kind === 'card_guarantee'
+}
+
+/** Gross charged at booking: per cover or flat; a card guarantee charges nothing. */
+export function policyTotalMinor(
+	policy: Pick<PolicyInput, 'kind' | 'amountMinor' | 'perCover'>,
+	partySize: number,
+): number {
+	if (policy.kind !== 'deposit' && policy.kind !== 'prepay') return 0
+	return policy.perCover ? policy.amountMinor * partySize : policy.amountMinor
+}
+
 export function snapshotPolicy(
-	rule: ReservationPolicyRuleInput,
+	policy: PolicyInput,
 	partySize: number,
 ): PolicySnapshot {
-	const amountMinor = rule.amountMinor ?? rule.amount_minor ?? 0
-	const perCover = toBool(rule.perCover ?? rule.per_cover, true)
-	const totalAmountMinor =
-		rule.mode === 'none' ? 0 : perCover ? amountMinor * partySize : amountMinor
-	const rawNoShow = rule.noShowFeeMinor ?? rule.no_show_fee_minor
-	const noShowBase =
-		rawNoShow !== undefined && rawNoShow !== null ? rawNoShow : amountMinor
-	const noShowFeeMinor =
-		rule.mode === 'none' ? 0 : perCover ? noShowBase * partySize : noShowBase
-
 	return {
-		policyId: rule.id,
-		name: rule.name,
-		mode: rule.mode,
-		amountMinor,
-		perCover,
+		policyId: policy.id,
+		name: policy.name,
+		kind: policy.kind as PolicyKind,
+		termsVersion: policy.termsVersion,
 		partySize,
-		totalAmountMinor,
-		currency: rule.currency.toUpperCase(),
-		cancelCutoffMin: rule.cancelCutoffMin ?? rule.cancel_cutoff_min ?? 0,
-		noShowFeeMinor,
+		amountMinor: policy.amountMinor,
+		perCover: policy.perCover,
+		totalAmountMinor: policyTotalMinor(policy, partySize),
+		currency: policy.currency.toUpperCase(),
+		freeCancelUntilMin: policy.freeCancelUntilMin,
+		cancelCutoffMin: policy.freeCancelUntilMin,
+		lateCancelFeeMinor: policy.lateCancelFeeMinor,
+		noShowFeeMinor: policy.noShowFeeMinor,
+		feePerCover: policy.feePerCover,
+		feeCapMinor: policy.feeCapMinor,
+		refundRule: policy.refundRule,
+		partialRefundBp: policy.partialRefundBp,
 	}
 }
 
-export type CancellationTermsResult = {
-	freeCancelDeadlineMs: number
-	withinFreeWindow: boolean
-	refundableMinor: number
-	forfeitedMinor: number
+export type CancellationTerms = {
+	/** The free-cancellation deadline (epoch ms). */
+	freeUntilMs: number
+	/** Cancelled before the deadline: nothing is forfeited. */
+	free: boolean
+	lateCancel: boolean
+	/** Late-cancel fee the restaurant may charge (guarantee on file), clamped. */
+	feeMinor: number
+	/** Share of `paidMinor` refunded on a guest cancel at `nowMs`. */
+	refundMinor: number
+}
+
+function clampFee(
+	snapshot: Pick<PolicySnapshot, 'feePerCover' | 'feeCapMinor' | 'partySize'>,
+	baseMinor: number,
+): number {
+	const gross = snapshot.feePerCover
+		? baseMinor * snapshot.partySize
+		: baseMinor
+	const capped =
+		snapshot.feeCapMinor !== null && snapshot.feeCapMinor !== undefined
+			? Math.min(gross, snapshot.feeCapMinor)
+			: gross
+	return Math.max(0, capped)
 }
 
 /**
- * Evaluate cancellation window and refund/forfeiture terms at `nowMs`.
+ * Terms of a GUEST cancellation at `nowMs` (a restaurant cancellation is
+ * always a full refund: see `refundOnCancel`). Free until
+ * `start - freeCancelUntilMin`; inside the window the refund follows the rule:
+ * `none` and `full_before_window` refund nothing, `partial` refunds
+ * `partialRefundBp` of what was paid (floor).
  */
 export function cancellationTerms(input: {
 	snapshot: PolicySnapshot
 	startAtMs: number
 	nowMs: number
-	capturedMinor?: number
-}): CancellationTermsResult {
+	paidMinor?: number
+}): CancellationTerms {
 	const { snapshot, startAtMs, nowMs } = input
-	const captured =
-		input.capturedMinor ??
-		(snapshot.mode === 'deposit' || snapshot.mode === 'prepay'
-			? snapshot.totalAmountMinor
-			: 0)
-	const freeCancelDeadlineMs = startAtMs - snapshot.cancelCutoffMin * 60_000
-	const withinFreeWindow = nowMs <= freeCancelDeadlineMs
-
-	if (snapshot.mode === 'none') {
-		return {
-			freeCancelDeadlineMs,
-			withinFreeWindow: true,
-			refundableMinor: 0,
-			forfeitedMinor: 0,
-		}
+	const paid = Math.max(0, input.paidMinor ?? 0)
+	const freeUntilMs = startAtMs - snapshot.cancelCutoffMin * 60_000
+	const free = nowMs <= freeUntilMs
+	let refundMinor = 0
+	if (free) refundMinor = paid
+	else if (snapshot.refundRule === 'partial' && snapshot.partialRefundBp) {
+		refundMinor = Math.floor(
+			(paid * Math.min(10_000, snapshot.partialRefundBp)) / 10_000,
+		)
 	}
-
-	if (withinFreeWindow) {
-		return {
-			freeCancelDeadlineMs,
-			withinFreeWindow: true,
-			refundableMinor: captured,
-			forfeitedMinor: 0,
-		}
-	}
-
 	return {
-		freeCancelDeadlineMs,
-		withinFreeWindow: false,
-		refundableMinor: 0,
-		forfeitedMinor:
-			snapshot.mode === 'card_hold' ? snapshot.noShowFeeMinor : captured,
+		freeUntilMs,
+		free,
+		lateCancel: !free,
+		feeMinor: free ? 0 : clampFee(snapshot, snapshot.lateCancelFeeMinor),
+		refundMinor,
 	}
 }
 
-/**
- * Compute refund amount in minor units on cancellation.
- */
-export function refundAmount(input: {
+/** Refund on cancellation: the restaurant always refunds in full. */
+export function refundOnCancel(input: {
 	snapshot: PolicySnapshot
-	capturedMinor: number
 	startAtMs: number
 	nowMs: number
-	overrideFullRefund?: boolean
+	paidMinor: number
+	cancelledBy: 'guest' | 'restaurant' | 'system' | string
 }): number {
-	if (input.capturedMinor <= 0) return 0
-	if (input.overrideFullRefund) return input.capturedMinor
-	const terms = cancellationTerms({
-		snapshot: input.snapshot,
-		startAtMs: input.startAtMs,
-		nowMs: input.nowMs,
-		capturedMinor: input.capturedMinor,
-	})
-	return terms.withinFreeWindow ? input.capturedMinor : 0
+	if (input.paidMinor <= 0) return 0
+	if (input.cancelledBy !== 'guest') return input.paidMinor
+	return cancellationTerms(input).refundMinor
 }
 
-/**
- * Compute off-session charge (`amountToChargeMinor`) or retained deposit (`amountRetainedMinor`)
- * when a reservation is marked `no_show`.
- */
-export function noShowFee(input: {
-	snapshot: PolicySnapshot
-	capturedMinor: number
-}): {
-	amountToChargeMinor: number
-	amountRetainedMinor: number
-} {
-	const { snapshot, capturedMinor } = input
-	if (snapshot.mode === 'none') {
-		return { amountToChargeMinor: 0, amountRetainedMinor: 0 }
-	}
-	if (snapshot.mode === 'card_hold') {
-		return {
-			amountToChargeMinor: Math.max(0, snapshot.noShowFeeMinor - capturedMinor),
-			amountRetainedMinor: capturedMinor,
-		}
-	}
-	return {
-		amountToChargeMinor: 0,
-		amountRetainedMinor: capturedMinor,
-	}
+/** The no-show fee: per cover or flat, clamped to the cap. */
+export function noShowFee(snapshot: PolicySnapshot): number {
+	return clampFee(snapshot, snapshot.noShowFeeMinor)
 }
 
-/**
- * Compute platform application fee in minor units (`Math.floor(grossMinor * feeBp / 10_000)`) (`VAL-PAY-051`).
- */
-export function platformFeeMinor(grossMinor: number, feeBp: number): number {
-	if (grossMinor <= 0 || feeBp <= 0) return 0
-	const clampedBp = Math.max(0, Math.min(10_000, Math.trunc(feeBp)))
-	return Math.floor((Math.trunc(grossMinor) * clampedBp) / 10_000)
-}
-
-/**
- * Compute proportional platform fee refund on full or partial refunds (`VAL-PAY-051`).
- */
-export function proportionalFeeRefund(
-	originalFeeMinor: number,
-	refundMinor: number,
-	grossMinor: number,
-): number {
-	if (originalFeeMinor <= 0 || refundMinor <= 0 || grossMinor <= 0) return 0
-	if (refundMinor >= grossMinor) return originalFeeMinor
-	return Math.min(
-		originalFeeMinor,
-		Math.floor((originalFeeMinor * refundMinor) / grossMinor),
-	)
+export function currencyMinimum(currency: string): number {
+	return CURRENCY_MINIMUM_MINOR[currency.toUpperCase()] ?? 50
 }
 
 const CURRENCY_MINIMUM_MINOR: Readonly<Record<string, number>> = {
 	USD: 50,
+	CAD: 50,
 	EUR: 50,
 	GBP: 30,
-	CAD: 50,
 	AUD: 50,
 	SAR: 200,
 	AED: 200,
@@ -273,9 +221,70 @@ const CURRENCY_MINIMUM_MINOR: Readonly<Record<string, number>> = {
 	QAR: 200,
 }
 
+export type FeeAmountResult =
+	| { ok: true; amountMinor: number }
+	| { ok: false; code: 'fee_not_allowed' | 'invalid'; reason: string }
+
 /**
- * Return the minimum chargeable minor units for `currency` (`VAL-PAY-051`).
+ * The amount to charge for a fee: the snapshot amount, or a LOWER amount the
+ * operator chose. Never higher, never below the currency minimum, never zero.
  */
-export function currencyMinimum(currency: string): number {
-	return CURRENCY_MINIMUM_MINOR[currency.toUpperCase()] ?? 50
+export function resolveFeeAmount(input: {
+	snapshot: PolicySnapshot
+	kind: 'no_show_fee' | 'late_cancel_fee'
+	requestedMinor?: number | null
+}): FeeAmountResult {
+	const maxMinor =
+		input.kind === 'no_show_fee'
+			? noShowFee(input.snapshot)
+			: clampFee(input.snapshot, input.snapshot.lateCancelFeeMinor)
+	if (maxMinor <= 0) {
+		return { ok: false, code: 'fee_not_allowed', reason: 'no_fee_configured' }
+	}
+	const amount = input.requestedMinor ?? maxMinor
+	if (!Number.isInteger(amount) || amount <= 0) {
+		return { ok: false, code: 'invalid', reason: 'amount_invalid' }
+	}
+	if (amount > maxMinor) {
+		return { ok: false, code: 'fee_not_allowed', reason: 'above_policy_fee' }
+	}
+	if (amount < currencyMinimum(input.snapshot.currency)) {
+		return { ok: false, code: 'fee_not_allowed', reason: 'below_minimum' }
+	}
+	return { ok: true, amountMinor: amount }
+}
+
+/**
+ * Platform fee on a gross amount in basis points: `floor(gross * bp / 10000)`.
+ * Always rounds down, so the platform never takes more than the stated rate.
+ */
+export function platformFeeMinor(grossMinor: number, feeBp: number): number {
+	if (grossMinor <= 0 || feeBp <= 0) return 0
+	const clampedBp = Math.max(0, Math.min(10_000, Math.trunc(feeBp)))
+	return Math.floor((Math.trunc(grossMinor) * clampedBp) / 10_000)
+}
+
+/**
+ * Fee reversed by one refund, from the cumulative share refunded so far:
+ * `round(fee * refundedAfter / gross) - alreadyReversed`. Rounding half up on
+ * the cumulative amount makes the parts sum to exactly the snapshot once the
+ * payment is fully refunded (333 on 3333: 167 for 1667, then 166 for 1666).
+ */
+export function proportionalFeeRefund(
+	originalFeeMinor: number,
+	refundMinor: number,
+	grossMinor: number,
+	refundedBeforeMinor = 0,
+	feeReversedBeforeMinor = 0,
+): number {
+	if (originalFeeMinor <= 0 || refundMinor <= 0 || grossMinor <= 0) return 0
+	const refundedAfter = Math.min(grossMinor, refundedBeforeMinor + refundMinor)
+	const target =
+		refundedAfter >= grossMinor
+			? originalFeeMinor
+			: Math.round((originalFeeMinor * refundedAfter) / grossMinor)
+	return Math.max(
+		0,
+		Math.min(originalFeeMinor, target) - Math.max(0, feeReversedBeforeMinor),
+	)
 }

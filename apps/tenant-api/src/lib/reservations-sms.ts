@@ -1,5 +1,10 @@
 import { sendSms } from '@repo/sms'
-import { formatWhen, normalizeReservationLocale } from './reservations-email.ts'
+import {
+	formatMoney,
+	formatWhen,
+	normalizeReservationLocale,
+	type PaymentEmailKind,
+} from './reservations-email.ts'
 import { getNodeRegion } from './region.ts'
 import { type ToggleableMessageKind } from './reservations-messaging-settings.ts'
 
@@ -10,7 +15,9 @@ import { type ToggleableMessageKind } from './reservations-messaging-settings.ts
  */
 
 export type ReservationSmsInput = {
-	kind: ToggleableMessageKind
+	kind: ToggleableMessageKind | PaymentEmailKind
+	amountMinor?: number | null
+	currency?: string | null
 	locale: string
 	restaurantName: string
 	whenMs?: number | null
@@ -20,7 +27,7 @@ export type ReservationSmsInput = {
 	quotedWaitMin?: number | null
 }
 
-const EN: Record<ToggleableMessageKind, string> = {
+const EN: Record<ToggleableMessageKind | PaymentEmailKind, string> = {
 	confirmation: '{r}: booking confirmed for {when}, party of {n}.',
 	modification: '{r}: your booking changed to {when}, party of {n}.',
 	cancellation_guest: '{r}: your booking for {when} was cancelled.',
@@ -34,9 +41,15 @@ const EN: Record<ToggleableMessageKind, string> = {
 	waitlist_joined: "{r}: you're on the waitlist.{wait}",
 	waitlist_ready: '{r}: your table is ready.',
 	notify_available: '{r}: a table opened up for {when}. Book now.',
+	payment_received:
+		'{r}: payment of {amount} received, booking confirmed for {when}.',
+	refund_issued: '{r}: we refunded {amount} to your payment method.',
+	fee_charged: '{r}: a fee of {amount} was charged to your card on file.',
+	fee_action_required: '{r}: your bank needs you to confirm a fee of {amount}.',
+	late_payment_refunded: '{r}: your payment of {amount} was refunded in full.',
 }
 
-const AR: Record<ToggleableMessageKind, string> = {
+const AR: Record<ToggleableMessageKind | PaymentEmailKind, string> = {
 	confirmation: '{r}: تم تأكيد حجزك في {when} لـ {n} أشخاص.',
 	modification: '{r}: تم تعديل حجزك إلى {when} لـ {n} أشخاص.',
 	cancellation_guest: '{r}: تم إلغاء حجزك في {when}.',
@@ -50,6 +63,11 @@ const AR: Record<ToggleableMessageKind, string> = {
 	waitlist_joined: '{r}: أنت في قائمة الانتظار.{wait}',
 	waitlist_ready: '{r}: طاولتك جاهزة.',
 	notify_available: '{r}: توفرت طاولة في {when}. احجز الآن.',
+	payment_received: '{r}: تم استلام دفعة {amount}، وتم تأكيد حجزك في {when}.',
+	refund_issued: '{r}: أعدنا مبلغ {amount} إلى وسيلة الدفع.',
+	fee_charged: '{r}: تم خصم رسوم {amount} من بطاقتك المسجلة.',
+	fee_action_required: '{r}: يطلب مصرفك تأكيد رسوم بمبلغ {amount}.',
+	late_payment_refunded: '{r}: تم استرداد دفعتك {amount} بالكامل.',
 }
 
 const NOTIFY_WITHOUT_TIME = {
@@ -79,6 +97,7 @@ export function renderReservationSms(input: ReservationSmsInput): string {
 		.replace('{when}', when ? `${when.date}, ${when.time}` : '')
 		.replace('{n}', input.partySize ? String(input.partySize) : '')
 		.replace('{wait}', wait)
+		.replace('{amount}', formatMoney(input.amountMinor, input.currency, locale))
 	return input.url ? `${base} ${input.url}` : base
 }
 

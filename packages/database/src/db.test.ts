@@ -56,7 +56,7 @@ describeDb('Drizzle control-plane client', () => {
 		}
 	})
 
-	test('seeds the 8 reservations permissions, org_role_admin grants, and 6 system-level false ConfigFlag rows (VAL-FND-013, VAL-FND-014)', async () => {
+	test('seeds the 8 reservations permissions, org_role_admin grants, 6 system-level false ConfigFlag rows and the 250 bp platform fee (VAL-FND-013, VAL-FND-014)', async () => {
 		const expectedPermissions = [
 			'org_perm_read_reservation_any',
 			'org_perm_read_reservation_guest_any',
@@ -106,11 +106,14 @@ describeDb('Drizzle control-plane client', () => {
 			'reservations.experiences',
 			'reservations.online',
 			'reservations.payments',
+			'reservations.platform_fee_bp',
 			'reservations.voice',
 			'reservations.waitlist',
 		])
 		for (const flag of flags) {
-			expect(flag.value).toBe(false)
+			expect(flag.value).toBe(
+				flag.key === 'reservations.platform_fee_bp' ? 250 : false,
+			)
 			expect(flag.level).toBe('system')
 			expect(flag.organizationId).toBeNull()
 		}

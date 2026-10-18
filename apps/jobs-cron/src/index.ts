@@ -33,6 +33,14 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 // staff tick. They are independent, so one failing never blocks the other.
 const TENANT_HOURLY_CRON = '0 * * * *'
 
+// Also hourly, but an App job: re-checks reservation payment sessions and
+// refunds the regions still list as pending (the App is the only caller of the
+// payment providers).
+// Not exported: workerd requires every named export of a Worker entry module
+// to be a handler or ExportedHandler, and a string constant fails startup.
+const RESERVATION_PAYMENTS_RECONCILE_PATH =
+	'/resources/jobs/reservation-payments-reconcile'
+
 async function safeCompareAsync(
 	a: string | null | undefined,
 	b: string | null | undefined,
@@ -378,6 +386,11 @@ export default {
 				['Tenant engagement sync', invokeTenantEngagementSync],
 				['Tenant staff tick', invokeTenantStaffTick],
 				['Tenant reservations tick', invokeTenantReservationsTick],
+				[
+					'Reservation payments reconcile',
+					(jobEnv: Env) =>
+						invokeJob(jobEnv, RESERVATION_PAYMENTS_RECONCILE_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {

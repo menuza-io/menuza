@@ -324,6 +324,73 @@ export function verifyNotifyToken(
 	)
 }
 
+export const PAY_TOKEN_PREFIX = 'rsv_p_'
+export const FEE_TOKEN_PREFIX = 'rsv_f_'
+
+/** Payment-link token for a reservation: derived from the id and `manage_token_version`. */
+export function deriveReservationPayToken(
+	orgId: string,
+	reservationId: string,
+	version: number,
+): string {
+	return deriveBoundToken(
+		PAY_TOKEN_PREFIX,
+		'pay',
+		orgId,
+		reservationId,
+		version,
+	)
+}
+
+export function parseReservationPayTokenId(
+	token: string | undefined | null,
+): string | null {
+	return parseBoundTokenId(PAY_TOKEN_PREFIX, token)
+}
+
+export function verifyReservationPayToken(
+	orgId: string,
+	reservationId: string,
+	version: number,
+	presented: string,
+): boolean {
+	return timingSafeEqualString(
+		deriveReservationPayToken(orgId, reservationId, version),
+		presented,
+	)
+}
+
+/** Pay link for a fee the card on file could not cover: derived from the fee row id. */
+export function deriveFeePayToken(orgId: string, feeId: string): string {
+	return deriveBoundToken(FEE_TOKEN_PREFIX, 'feepay', orgId, feeId, 1)
+}
+
+export function parseFeePayTokenId(
+	token: string | undefined | null,
+): string | null {
+	return parseBoundTokenId(FEE_TOKEN_PREFIX, token)
+}
+
+export function verifyFeePayToken(
+	orgId: string,
+	feeId: string,
+	presented: string,
+): boolean {
+	return timingSafeEqualString(deriveFeePayToken(orgId, feeId), presented)
+}
+
+/**
+ * Opaque guest reference for provider customers: an HMAC of the guest id, so
+ * the App can key a PII-free Stripe Customer without ever seeing the id.
+ */
+export function deriveGuestRef(orgId: string, guestId: string): string {
+	return b64url(
+		createHmac('sha256', capabilityKey())
+			.update(`guestref:${orgId}:${guestId}`)
+			.digest(),
+	)
+}
+
 export function newHoldToken(): string {
 	return `${HOLD_TOKEN_PREFIX}${randomBytes(16).toString('base64url')}`
 }

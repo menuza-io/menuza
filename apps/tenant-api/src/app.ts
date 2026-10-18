@@ -47,6 +47,7 @@ import {
 	reservationsVoiceActionRoutes,
 } from './routes/reservations-internal.ts'
 import { reservationsOperatorRoutes } from './routes/reservations-operator.ts'
+import { reservationsPaymentsInternalRoutes } from './routes/reservations-payments-internal.ts'
 import { reservationsPublicRoutes } from './routes/reservations-public.ts'
 
 import { rateLimit } from './lib/rate-limit.ts'
@@ -253,6 +254,7 @@ export function createTenantApiApp() {
 	app.route('/operator/reservations', reservationsOperatorRoutes)
 	app.route('/reservations', reservationsPublicRoutes)
 	app.route('/internal/reservations', reservationsInternalRoutes)
+	app.route('/api/reservations/payments', reservationsPaymentsInternalRoutes)
 	app.route('/api/reservations', reservationsTickRoutes)
 	app.route('/api/voice/actions', reservationsVoiceActionRoutes)
 

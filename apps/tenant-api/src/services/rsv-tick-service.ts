@@ -37,6 +37,8 @@ import { reconcileGuestCounters } from './rsv-guestbook-service.ts'
 import { runNotifyMeMatching } from './rsv-notify-service.ts'
 import {
 	deliverOutbox,
+	deliverPaymentOutbox,
+	PAYMENT_OUTBOX_KINDS,
 	type AlertOutcome,
 	type ManagerAlertEvent,
 	type OutboxTotals,
@@ -122,6 +124,7 @@ export type ReservationsTickDeps = {
 	) => Promise<ReservationsContext | null>
 	regionMatches: (dataRegion: string | null) => boolean
 	outboxPost?: (event: ManagerAlertEvent) => Promise<AlertOutcome>
+	paymentPost?: (payload: Record<string, unknown>) => Promise<AlertOutcome>
 }
 
 const defaultDeps: ReservationsTickDeps = {
@@ -297,7 +300,10 @@ async function earliestDue(
 		// Only what `deliverOutbox` posts: a pending row of another kind would
 		// look due forever and keep the alarm re-arming.
 		.where(
-			and(eq(rsvOutbox.kind, 'manager_alert'), eq(rsvOutbox.status, 'pending')),
+			and(
+				inArray(rsvOutbox.kind, ['manager_alert', ...PAYMENT_OUTBOX_KINDS]),
+				eq(rsvOutbox.status, 'pending'),
+			),
 		)
 	push(outbox?.at)
 	const [holds] = await db
@@ -498,6 +504,16 @@ export async function runReservationsTickForOrg(
 					now,
 					...(deps.outboxPost ? { post: deps.outboxPost } : {}),
 				})
+				const payments = await deliverPaymentOutbox(db, {
+					now,
+					...(deps.paymentPost ? { post: deps.paymentPost } : {}),
+				})
+				outbox = {
+					groups: outbox.groups + payments.groups,
+					delivered: outbox.delivered + payments.delivered,
+					retried: outbox.retried + payments.retried,
+					failed: outbox.failed + payments.failed,
+				}
 				return { status: 'ok', count: outbox.delivered, detail: { ...outbox } }
 			}),
 		)

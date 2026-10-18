@@ -68,6 +68,7 @@ import {
 	type DbOrTx,
 } from './rsv-guest-service.ts'
 import { isLateCancellation } from './rsv-late-cancel.ts'
+import { handleCancellationPayments } from './rsv-payment-refunds.ts'
 
 function guestAccess(params: { canReadGuestSensitive?: boolean }) {
 	return { canReadGuestSensitive: params.canReadGuestSensitive === true }
@@ -1171,6 +1172,28 @@ export type WalkInOccupiedInfo = {
 	occupancies: Array<typeof rsvTableOccupancies.$inferSelect>
 }
 
+/**
+ * Staff writes onto a closed day need the same explicit override as
+ * `createOperatorReservation`: `overbook` (with its reason) turns the refusal
+ * into a recorded override. `online_closed` only stops the guest channel.
+ */
+async function requireStaffDayOpenOrOverride(
+	tx: DbOrTx,
+	locationId: string,
+	businessDate: string,
+	isOverbook: boolean,
+) {
+	const dayState = await loadStaffDayState(tx, locationId, businessDate)
+	if (dayState.state !== 'closed' || isOverbook) return
+	throw conflict(
+		'closed_day',
+		dayState.name
+			? `The location is closed on this date (${dayState.name}); overbook override required`
+			: 'The location is closed on this date; overbook override required',
+		{ specialDay: { name: dayState.name, note: dayState.note } },
+	)
+}
+
 export async function createWalkIn(params: {
 	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
 	canReadGuestSensitive?: boolean
@@ -1307,6 +1330,13 @@ export async function createWalkIn(params: {
 					'overbookReason is required when overbook is true',
 				)
 			}
+
+			await requireStaffDayOpenOrOverride(
+				tx,
+				locationId,
+				businessDate,
+				isOverbook,
+			)
 
 			let assignedTableIds: string[] = []
 			let assignedComboId: string | null = null
@@ -2239,6 +2269,19 @@ export async function updateReservation(params: {
 			const moves: ReservationMoveReport[] = []
 			const isOverbook = Boolean(params.input.overbook)
 
+			if (
+				ACTIVE_OCCUPANCY_STATUSES.has(current.status) &&
+				(targetBusinessDate !== current.businessDate ||
+					nextLocalStartMin !== current.localStartMin)
+			) {
+				await requireStaffDayOpenOrOverride(
+					tx,
+					current.locationId,
+					targetBusinessDate,
+					isOverbook,
+				)
+			}
+
 			if (scheduleChanged && ACTIVE_OCCUPANCY_STATUSES.has(current.status)) {
 				// Deactivate current occupancies first
 				if (currentOccs.length > 0) {
@@ -2890,6 +2933,14 @@ export async function transitionReservationStatus(params: {
 					{ orgId: params.orgId, now, afterCommit: helpers.afterCommit },
 					{ reservationId: current.id, kind: 'cancellation_restaurant' },
 				)
+				// A restaurant cancellation always refunds a payment in full.
+				await handleCancellationPayments(tx, {
+					orgId: params.orgId,
+					reservation: current,
+					cancelledBy: 'restaurant',
+					late: patch.lateCancel === true,
+					now,
+				})
 			}
 
 			const updatedRow = await tx
@@ -2953,6 +3004,27 @@ export async function undoReservationTransition(params: {
 					'stale_version',
 					`Expected version ${params.input.expectedVersion}, found ${current.version}`,
 				)
+			}
+
+			// A refund already requested for a cancelled booking cannot be taken
+			// back by undoing the cancellation.
+			if (current.status === 'cancelled' || current.status === 'no_show') {
+				const settledMoney = await tx
+					.select({ id: rsvPayments.id })
+					.from(rsvPayments)
+					.where(
+						and(
+							eq(rsvPayments.reservationId, current.id),
+							sql`(${rsvPayments.kind} = 'refund' AND ${rsvPayments.status} <> 'failed') OR (${rsvPayments.kind} IN ('no_show_fee_charge', 'cancel_fee_charge') AND ${rsvPayments.status} IN ('succeeded', 'charging', 'pending'))`,
+						),
+					)
+					.limit(1)
+				if (settledMoney.length > 0) {
+					throw conflict(
+						'cannot_undo',
+						'Money already moved for this reservation',
+					)
+				}
 			}
 
 			// Find the status transition to reverse. An earlier `status_undo` never

@@ -11,8 +11,11 @@ import { describe, expect, it } from 'vitest'
  *    `requireReservationsAccess` before anything else is awaited, so a flag
  *    that is off or a missing grant answers before any work happens;
  *  - every reservations resource route in `routes/resources+/reservations.*.ts`
- *    authenticates with `requireInternalCommandAuth` or
- *    `requireUserWithOrganizationPermission` first.
+ *    authenticates with `requireInternalCommandAuth`,
+ *    `requireUserWithOrganizationPermission` or `requireReservationsAccess`
+ *    first;
+ *  - the payment routes (`sites.reservation.*`, `jobs.reservation-payments-*`)
+ *    authenticate with `requireInternalCommandAuth` before anything else.
  */
 
 const APP_DIR = path.resolve(import.meta.dirname, '../..')
@@ -150,7 +153,9 @@ describe('reservations guards: resource routes (VAL-FND-020)', () => {
 			for (const body of entries) {
 				const internal = body.search(/\brequireInternalCommandAuth\(/)
 				const member = body.search(/\brequireUserWithOrganizationPermission\(/)
-				const guard = internal >= 0 ? internal : member
+				const access = body.search(/\brequireReservationsAccess\(/)
+				const guard =
+					[internal, member, access].find((index) => index >= 0) ?? -1
 				expect(guard, 'no authentication call').toBeGreaterThanOrEqual(0)
 				const firstAwait = body.indexOf('await ')
 				expect(firstAwait).toBeGreaterThanOrEqual(0)
@@ -159,4 +164,44 @@ describe('reservations guards: resource routes (VAL-FND-020)', () => {
 			}
 		})
 	}
+})
+
+describe('reservation payment routes: authentication first (VAL-PAY-052)', () => {
+	const internalRoutes = [
+		'reservations.payments.ts',
+		'sites.reservation.checkout.ts',
+		'sites.reservation.status.ts',
+		'jobs.reservation-payments-reconcile.ts',
+	]
+	const operatorRoutes = [
+		'reservations.payments.fee.ts',
+		'reservations.payments.refund.ts',
+	]
+
+	for (const file of [...internalRoutes, ...operatorRoutes]) {
+		it(`${file} awaits its guard before reading the body or touching data`, () => {
+			const source = read(path.join(RESOURCES, file))
+			const body = exportedFunctionBody(source, 'action')
+			expect(body, 'no action').not.toBeNull()
+			const pattern = operatorRoutes.includes(file)
+				? /\brequireReservationsAccess\(/
+				: /\brequireInternalCommandAuth\(/
+			const guard = body!.search(pattern)
+			expect(guard, 'no guard call').toBeGreaterThanOrEqual(0)
+			const firstAwait = body!.indexOf('await ')
+			expect(body!.slice(firstAwait, firstAwait + 80)).toMatch(pattern)
+			const before = body!.slice(0, guard)
+			expect(before).not.toMatch(/request\.(formData|json|text)\(/)
+			expect(before).not.toMatch(/\b(db|fetch)\b/)
+		})
+	}
+
+	it('the operator routes demand the payments feature and grant and refuse impersonation', () => {
+		for (const file of operatorRoutes) {
+			const source = read(path.join(RESOURCES, file))
+			expect(source).toMatch(/feature: 'payments'/)
+			expect(source).toMatch(/UPDATE_RESERVATION_PAYMENT/)
+			expect(source).toMatch(/isImpersonating\(request\)/)
+		}
+	})
 })
