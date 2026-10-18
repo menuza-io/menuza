@@ -370,7 +370,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 						),
 					)
 					.limit(1)
-				if (!actorAdmin) {
+				// The sole admin falls through to the last-admin check below.
+				const [otherAdmin] = actorAdmin
+					? []
+					: await db
+							.select({ userId: UserOrganization.userId })
+							.from(UserOrganization)
+							.where(
+								and(
+									eq(UserOrganization.organizationId, organization.id),
+									eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+									eq(UserOrganization.active, true),
+									ne(UserOrganization.userId, memberUserId),
+								),
+							)
+							.limit(1)
+				if (!actorAdmin && otherAdmin) {
 					return Response.json(
 						{ error: 'Only organization admins can remove admins' },
 						{ status: 403 },
