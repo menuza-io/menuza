@@ -4,7 +4,7 @@ import { db, eq, User, UserImage } from '@repo/database'
 import { NameSchema, UsernameSchema } from '@repo/validation'
 import { data } from 'react-router'
 import { z } from 'zod'
-import { requireAuth } from '#app/utils/jwt.server.ts'
+import { isAuthenticationError, requireAuth } from '#app/utils/jwt.server.ts'
 import { type Route } from './+types/profile.ts'
 
 const ProfileFormSchema = z.object({
@@ -116,7 +116,7 @@ export async function action({ request }: Route.ActionArgs) {
 			},
 		})
 	} catch (error) {
-		if (error instanceof Error && error.message.includes('authorization')) {
+		if (isAuthenticationError(error)) {
 			return data(
 				{
 					success: false,

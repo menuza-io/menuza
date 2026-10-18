@@ -130,11 +130,16 @@ export async function handleVerification({
 	const unverifiedSessionId = verifySession.get(unverifiedSessionIdKey)
 	if (unverifiedSessionId) {
 		const [session] = await db
-			.select({ expirationDate: Session.expirationDate })
+			.select({
+				expirationDate: Session.expirationDate,
+				userId: Session.userId,
+			})
 			.from(Session)
 			.where(eq(Session.id, unverifiedSessionId))
 			.limit(1)
-		if (!session) {
+		// The code must belong to the user whose session is being unlocked;
+		// otherwise a valid 2FA code for any other account would complete login.
+		if (!session || session.userId !== submission.value.target) {
 			throw await redirectWithToast('/login', {
 				type: 'error',
 				title: 'Invalid session',
@@ -204,6 +209,6 @@ export async function shouldRequestTwoFA(request: Request) {
 		.limit(1)
 	if (!userHasTwoFA) return false
 	const verifiedTime = authSession.get(verifiedTimeKey) ?? new Date(0)
-	const twoHours = 1000 * 60 * 2
+	const twoHours = 1000 * 60 * 60 * 2
 	return Date.now() - verifiedTime > twoHours
 }

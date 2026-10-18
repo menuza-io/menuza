@@ -152,6 +152,8 @@ export async function action({ request }: ActionFunctionArgs) {
 			translation: Array.isArray(text) ? translations : translations[0],
 		})
 	} catch (error) {
+		// Membership and permission failures are 404/403 responses, not 500s.
+		if (error instanceof Response) throw error
 		console.error('Translation error:', error)
 		return Response.json(
 			{ error: 'Failed to translate text.' },

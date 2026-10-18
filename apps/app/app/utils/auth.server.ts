@@ -291,7 +291,11 @@ export async function signupWithConnection({
 			ipAddress,
 			userAgent,
 		})
-		.returning({ id: Session.id, expirationDate: Session.expirationDate })
+		.returning({
+			id: Session.id,
+			expirationDate: Session.expirationDate,
+			userId: Session.userId,
+		})
 
 	return session!
 }

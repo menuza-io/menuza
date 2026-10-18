@@ -10,6 +10,7 @@ import {
 	createAuthenticatedSessionResponse,
 	create2FAToken,
 } from '#app/utils/jwt.server.ts'
+import { checkSSOEnforcementByIdentifier } from '#app/utils/sso/enforcement.server.ts'
 import { type Route } from './+types/auth.login.ts'
 
 const LoginFormSchema = z.object({
@@ -36,6 +37,17 @@ export async function action({ request }: Route.ActionArgs) {
 
 	const submission = await parseWithZod(formData, {
 		schema: LoginFormSchema.transform(async (data, ctx) => {
+			// Password login is not allowed for members of an SSO-enforced org.
+			const ssoEnforcement = await checkSSOEnforcementByIdentifier(
+				data.username,
+			)
+			if (ssoEnforcement.enforced) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'Your organization requires SSO login',
+				})
+				return z.NEVER
+			}
 			const session = await login({ ...data, request })
 			if (!session) {
 				ctx.addIssue({
