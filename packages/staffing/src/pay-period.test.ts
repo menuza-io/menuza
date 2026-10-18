@@ -212,3 +212,14 @@ describe('anchor validation', () => {
 		}
 	})
 })
+
+describe('payPeriodFor: semimonthly anchor day 14 in a short February', () => {
+	it('clamps the second boundary to a real date and stays contiguous', () => {
+		const c = config({ type: 'semimonthly', anchor: '2026-01-14' })
+		const first = payPeriodFor('2026-02-20', c)
+		expect(first).toMatchObject({ start: '2026-02-14', end: '2026-02-27' })
+		const second = payPeriodFor('2026-02-28', c)
+		expect(second).toMatchObject({ start: '2026-02-28', end: '2026-03-13' })
+		expect(payPeriodFor('2026-03-01', c).start).toBe('2026-02-28')
+	})
+})
