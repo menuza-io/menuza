@@ -18,8 +18,11 @@ import com.epicstartup.tenant.core.support.SiteAddress
 import com.epicstartup.tenant.core.theme.SiteTheme
 import com.epicstartup.tenant.platform.AndroidTenantConfiguration
 import com.epicstartup.tenant.platform.AppPreferences
+import com.epicstartup.tenant.core.reservations.ReservationsClient
+import com.epicstartup.tenant.platform.KeystoreReservationTokenStorage
 import com.epicstartup.tenant.platform.KeystoreTokenStorage
 import com.epicstartup.tenant.platform.TaskRunner
+import com.epicstartup.tenant.ui.reservations.ReservationsController
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -71,6 +74,17 @@ class AppState(private val context: Context) {
 	var errorMessage: String? = null
 		private set
 	var pendingPhone: String? = null
+		private set
+
+	/** The reservations flow of the signed-in customer; null until the session exists. */
+	internal var reservations: ReservationsController? = null
+		private set
+
+	/**
+	 * The reservations screens on top of the profile, as `res:*` keys (see
+	 * `ReservationScreens`). Empty means the profile is showing.
+	 */
+	var resStack: List<String> = emptyList()
 		private set
 
 	private var configuration: TenantConfiguration = AndroidTenantConfiguration.from(context)
@@ -241,6 +255,11 @@ class AppState(private val context: Context) {
 			},
 			onSuccess = { (tokens, session) ->
 				this.session = session
+				reservations = ReservationsController(
+					app = this,
+					client = ReservationsClient(configuration, session),
+					storage = { KeystoreReservationTokenStorage(context) },
+				)
 				isSignedIn = tokens != null
 				notifyChanged()
 				if (tokens != null) loadProfile()
@@ -339,6 +358,7 @@ class AppState(private val context: Context) {
 				this.profile = profile
 				needsName = false
 				isBusy = false
+				reservations?.loadConfig()
 				notifyChanged()
 			},
 			onFailure = { error ->
@@ -357,6 +377,8 @@ class AppState(private val context: Context) {
 		needsName = false
 		pendingPhone = null
 		errorMessage = null
+		reservations?.onSignedOut()
+		resStack = emptyList()
 		notifyChanged()
 
 		if (session != null) TaskRunner.run(work = { session.signOut() })
@@ -373,6 +395,7 @@ class AppState(private val context: Context) {
 			onSuccess = { profile ->
 				this.profile = profile
 				if (profile.needsName == true) needsName = true
+				else reservations?.loadConfig()
 				notifyChanged()
 			},
 			onFailure = { error ->
@@ -416,6 +439,35 @@ class AppState(private val context: Context) {
 		didSaveProfile = false
 		notifyChanged()
 	}
+
+	// MARK: - Reservations navigation
+
+	fun pushRes(key: String) {
+		resStack = resStack + key
+		notifyChanged()
+	}
+
+	/** Swaps the top screen (the booking result replaces the review). */
+	fun replaceRes(key: String) {
+		resStack = resStack.dropLast(1) + key
+		notifyChanged()
+	}
+
+	/** Pops one reservations screen; false when the profile is already showing. */
+	fun popRes(): Boolean {
+		if (resStack.isEmpty()) return false
+		resStack = resStack.dropLast(1)
+		notifyChanged()
+		return true
+	}
+
+	fun popResTo(key: String) {
+		val index = resStack.indexOf(key)
+		resStack = if (index >= 0) resStack.take(index + 1) else listOf(key)
+		notifyChanged()
+	}
+
+	internal fun notifyReservationsChanged() = notifyChanged()
 
 	// MARK: - Listeners
 

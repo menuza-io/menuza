@@ -41,3 +41,27 @@ Canonical guide:
 [docs/tenant-data-residency.md](../../docs/tenant-data-residency.md). Deploy:
 [docs/deployment.md](../../docs/deployment.md#regional-tenant-data-plane). ADR:
 [docs/decisions/045-tenant-data-residency.md](../../docs/decisions/045-tenant-data-residency.md).
+
+## Reservations routes
+
+| Mount                          | Auth                                       | Purpose                                                                                         |
+| ------------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `/reservations/*`              | `Origin` (organization), capability tokens | Public booking, manage, waitlist, notify-me, experiences. `X-Client: ios \| android` is native. |
+| `/operator/reservations/*`     | `rsv+jwt` minted by the App                | Setup, book, waitlist, guests, reports, payments (browser-direct)                               |
+| `/internal/reservations/*`     | `INTERNAL_COMMAND_TOKEN`                   | `context-changed`, `erase-customer`, `summary`, `location-summary`                              |
+| `/api/reservations/tick`       | `INTERNAL_COMMAND_TOKEN`                   | Regional tick                                                                                   |
+| `/api/reservations/payments/*` | `INTERNAL_COMMAND_TOKEN`                   | App to region payment bridge (ids and amounts only)                                             |
+| `/api/voice/actions/:name`     | `VOICE_AGENT_TOKEN`                        | Phone agent actions (`reservations.availability`, `.hold`, `.book`), US only                    |
+
+Kill switches: `RESERVATIONS_PUBLIC_ENABLED` (503 on public routes),
+`RESERVATIONS_SMS_ENABLED`, `RESERVATIONS_EMAIL_ENABLED`; interval
+`RESERVATIONS_TICK_INTERVAL_SECONDS`. Other settings: `AUTH_HMAC_SECRET`,
+`TENANT_OPERATOR_TOKEN`, `APP_URL`.
+
+Dev email capture: set `DEV_EMAIL_CAPTURE_DIR` (the dev scripts use
+`.dev-mail/us` and `.dev-mail/ksa`) and every email the node would only log is
+written there as JSON. Demo data:
+`npm run seed:reservations -w tenant-api -- <org-slug>`. Re-record the public
+API fixtures with `npm run fixtures:reservations -w tenant-api`. Docs:
+[reservations guide](../../docs/reservations.md),
+[contract](../../docs/reservations-contract.md).

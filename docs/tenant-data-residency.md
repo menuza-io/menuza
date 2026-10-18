@@ -137,6 +137,41 @@ above. Declined applicants are purged by the regional tick after the
 organization's retention period (365 days by default); the audit log is never
 purged.
 
+**Regional tenant SQLite, reservations tables** (Reservations module, see
+[ADR 048](./decisions/048-reservations-data-residency.md) and the
+[guide](./reservations.md)): 41 `rsv_*` tables (migration
+`0016_reservations_foundation`, extended by `0017` to `0020`): guests
+(`rsv_guests`, tags, notes, merges), reservations and their events, holds, table
+occupancies, waitlist entries, notify-me requests, messages, payments, outbox,
+location settings, floor plan, services, policies, experiences and the audit
+log. **Guest data is guest PII:** names, phones, emails, dietary and allergy
+notes, occasions, private staff notes, visit and no-show history and payment
+references exist **only** in the regional database, and the rules are:
+
+- Never in the control plane, logs, cross-plane payloads, Sites SSR or App
+  loaders. The US control plane keeps the `reservations.*` flags, the eight
+  permissions, `OrganizationLocation` rows, `UserOrganization.locationScope` and
+  payment connection state. It receives only ids, counts, amounts, currencies
+  and kinds (manager alerts, payment status, region summaries).
+- Operators reach it browser-direct with a short-lived `rsv+jwt` (15 minutes; 5
+  for guest or payment grants and impersonation); guests reach it browser-direct
+  on `/reservations/*` with the organization taken from the `Origin` header
+  only. Sites SSR never proxies it.
+- Guests need no account: capability tokens (`rsv_m_`, `rsv_w_`, `rsv_n_`,
+  `rsv_p_`) are derived by HMAC from `AUTH_HMAC_SECRET` and are not stored;
+  links put the token in the URL fragment.
+- Guest SMS is US node only (never KSA); email works in both regions. Validation
+  errors never echo values.
+- Payments: the region decides amounts and state, the US App is the only
+  provider caller, and provider webhooks terminate at the App and forward ids
+  and amounts only (ADR 048 section 8).
+- Changing the region wipes the old reservations data (no migration), is blocked
+  while payments are unsettled, and needs the organization slug typed when data
+  exists or the count is unknown.
+- Customer erasure unlinks `customer_id` on guests and reservations; operator
+  guest erasure scrubs the profile, cancels future bookings and redacts event
+  and audit payloads.
+
 ## Code map
 
 | Concern                                    | Path                                                                                                          |
@@ -257,6 +292,11 @@ migrated.
 6. Staffing outbox events still pending for the organization are marked `failed`
    (`region_changed`): they addressed a database that no longer exists. Staff
    records are not moved; the new region starts with none.
+7. **Reservations guard.** The dialog also asks the old region for reservations
+   counts (`POST /internal/reservations/summary`; counts only). Unsettled
+   reservation payments block the switch. When any reservations data exists, or
+   the answer is unknown (fails closed), the admin must type the organization
+   slug. Reservations, guests and waitlist entries are not moved.
 
 ### Staff login links, removal and erasure
 
@@ -310,28 +350,32 @@ linking adds none; clock-only staff cost none. Regression tests:
 Browser CORS is allowlisted only for origins that resolve to an org in **this**
 node’s `DATA_REGION` (slug subdomain or published custom domain).
 
-| Method | Path                                                                                                            | Who                    | Notes                                                                                                                                                                                                   |
-| ------ | --------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/health`                                                                                                       | Anyone                 | Returns `{ region }` for the node.                                                                                                                                                                      |
-| POST   | `/auth/send-code`                                                                                               | Browser                | Body: `phone`, optional `slug`/`host`. Same success for new and existing numbers (no enumeration).                                                                                                      |
-| POST   | `/auth/verify`                                                                                                  | Browser                | Issues JWTs. `needsName: true` when the customer has no name yet.                                                                                                                                       |
-| POST   | `/auth/refresh`                                                                                                 | Browser                | Rotates refresh token.                                                                                                                                                                                  |
-| POST   | `/auth/logout`                                                                                                  | Browser                | Clears refresh hash.                                                                                                                                                                                    |
-| GET    | `/auth/me`                                                                                                      | Browser                | Bearer access token.                                                                                                                                                                                    |
-| POST   | `/auth/profile`                                                                                                 | Browser                | Update name/email.                                                                                                                                                                                      |
-| POST   | `/api/provision`                                                                                                | App only               | `{ orgId, slug, dataRegion }`. Bearer `INTERNAL_COMMAND_TOKEN`.                                                                                                                                         |
-| POST   | `/api/deprovision`                                                                                              | App only               | Same payload. Deletes that org’s SQLite on this node.                                                                                                                                                   |
-| POST   | `/internal/staff/summary`                                                                                       | App only               | `{ orgId }` → counts only (region-switch guard).                                                                                                                                                        |
-| POST   | `/internal/staff/link-user`                                                                                     | App only               | `{ orgId, staffMemberId, userId }`. Idempotent.                                                                                                                                                         |
-| POST   | `/internal/staff/unlink-user`                                                                                   | App only               | `{ orgId, userId }`. Not termination.                                                                                                                                                                   |
-| POST   | `/internal/staff/erase-user`                                                                                    | App only               | `{ orgId, userId }`. Anonymizes the linked row.                                                                                                                                                         |
-| POST   | `/internal/staff/export-user`                                                                                   | App only               | `{ orgId, userId }`. US node only; the Saudi node answers 409.                                                                                                                                          |
-| GET    | `/operator/staff/export`                                                                                        | Operator (staff token) | Full regional export, browser-direct; pay/private by grant; needs an unrestricted token.                                                                                                                |
-| ANY    | `/operator/staff/*`, `/operator/timeclock/*`, `/operator/schedule/*`, `/operator/labor/*`, `/operator/hiring/*` | Operator (staff token) | Browser-direct, short-lived scoped token minted by the App after the flag and permission checks. Every route refuses a missing, wrong-scope or grantless token (locked by `staffing-security.test.ts`). |
-| ANY    | `/kiosk/*`                                                                                                      | Paired tablet          | Device secret + PIN. Off per node with `STAFFING_KIOSK_ENABLED=false`.                                                                                                                                  |
-| ANY    | `/schedule-link/*`                                                                                              | Staff (link token)     | Own schedule, own time cards, own requests. The token is in the page's URL fragment.                                                                                                                    |
-| POST   | `/careers/apply`                                                                                                | Browser (public)       | Applicant form. Origin-resolved organization, Turnstile, honeypot, durable rate limits, consent.                                                                                                        |
-| POST   | `/api/staff/tick`                                                                                               | App cron fan-out       | Bearer `INTERNAL_COMMAND_TOKEN`. Counts only. See [Staff tick](scheduled-jobs.md#staff-tick).                                                                                                           |
+| Method | Path                                                                                                            | Who                      | Notes                                                                                                                                                                                                      |
+| ------ | --------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/health`                                                                                                       | Anyone                   | Returns `{ region }` for the node.                                                                                                                                                                         |
+| POST   | `/auth/send-code`                                                                                               | Browser                  | Body: `phone`, optional `slug`/`host`. Same success for new and existing numbers (no enumeration).                                                                                                         |
+| POST   | `/auth/verify`                                                                                                  | Browser                  | Issues JWTs. `needsName: true` when the customer has no name yet.                                                                                                                                          |
+| POST   | `/auth/refresh`                                                                                                 | Browser                  | Rotates refresh token.                                                                                                                                                                                     |
+| POST   | `/auth/logout`                                                                                                  | Browser                  | Clears refresh hash.                                                                                                                                                                                       |
+| GET    | `/auth/me`                                                                                                      | Browser                  | Bearer access token.                                                                                                                                                                                       |
+| POST   | `/auth/profile`                                                                                                 | Browser                  | Update name/email.                                                                                                                                                                                         |
+| POST   | `/api/provision`                                                                                                | App only                 | `{ orgId, slug, dataRegion }`. Bearer `INTERNAL_COMMAND_TOKEN`.                                                                                                                                            |
+| POST   | `/api/deprovision`                                                                                              | App only                 | Same payload. Deletes that org’s SQLite on this node.                                                                                                                                                      |
+| POST   | `/internal/staff/summary`                                                                                       | App only                 | `{ orgId }` → counts only (region-switch guard).                                                                                                                                                           |
+| POST   | `/internal/staff/link-user`                                                                                     | App only                 | `{ orgId, staffMemberId, userId }`. Idempotent.                                                                                                                                                            |
+| POST   | `/internal/staff/unlink-user`                                                                                   | App only                 | `{ orgId, userId }`. Not termination.                                                                                                                                                                      |
+| POST   | `/internal/staff/erase-user`                                                                                    | App only                 | `{ orgId, userId }`. Anonymizes the linked row.                                                                                                                                                            |
+| POST   | `/internal/staff/export-user`                                                                                   | App only                 | `{ orgId, userId }`. US node only; the Saudi node answers 409.                                                                                                                                             |
+| GET    | `/operator/staff/export`                                                                                        | Operator (staff token)   | Full regional export, browser-direct; pay/private by grant; needs an unrestricted token.                                                                                                                   |
+| ANY    | `/operator/staff/*`, `/operator/timeclock/*`, `/operator/schedule/*`, `/operator/labor/*`, `/operator/hiring/*` | Operator (staff token)   | Browser-direct, short-lived scoped token minted by the App after the flag and permission checks. Every route refuses a missing, wrong-scope or grantless token (locked by `staffing-security.test.ts`).    |
+| ANY    | `/kiosk/*`                                                                                                      | Paired tablet            | Device secret + PIN. Off per node with `STAFFING_KIOSK_ENABLED=false`.                                                                                                                                     |
+| ANY    | `/schedule-link/*`                                                                                              | Staff (link token)       | Own schedule, own time cards, own requests. The token is in the page's URL fragment.                                                                                                                       |
+| POST   | `/careers/apply`                                                                                                | Browser (public)         | Applicant form. Origin-resolved organization, Turnstile, honeypot, durable rate limits, consent.                                                                                                           |
+| POST   | `/api/staff/tick`                                                                                               | App cron fan-out         | Bearer `INTERNAL_COMMAND_TOKEN`. Counts only. See [Staff tick](scheduled-jobs.md#staff-tick).                                                                                                              |
+| ANY    | `/reservations/*`                                                                                               | Browser, native (public) | Booking, manage, waitlist. Organization from `Origin` only; capability tokens in `X-Reservation-Token`. See the [contract](reservations-contract.md#4-public-guest-routes-reservations-on-appstenant-api). |
+| ANY    | `/operator/reservations/*`                                                                                      | Operator (rsv token)     | Browser-direct, `rsv+jwt` minted by the App. Locked by `reservations-security.test.ts`.                                                                                                                    |
+| POST   | `/internal/reservations/*`, `/api/reservations/*`                                                               | App, cron                | `INTERNAL_COMMAND_TOKEN`: context-changed, erase-customer, summary, tick, payments bridge. Counts and ids only.                                                                                            |
+| POST   | `/api/voice/actions/:name`                                                                                      | Voice agent              | `VOICE_AGENT_TOKEN`; US organizations only.                                                                                                                                                                |
 
 Access tokens last 15 minutes. Refresh tokens last 30 days (stored hashed with
 `AUTH_HMAC_SECRET`).

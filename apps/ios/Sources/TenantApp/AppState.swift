@@ -65,6 +65,8 @@ final class AppState: ObservableObject {
 	@Published private(set) var didSaveProfile = false
 	@Published private(set) var errorMessage: String?
 	@Published var pendingPhone: String?
+	/// Reservations for the signed-in customer; nil until a site is bound.
+	@Published private(set) var reservations: ReservationsStore?
 
 	private(set) var configuration: TenantConfiguration
 	private var client: TenantAPIClient
@@ -193,12 +195,18 @@ final class AppState: ObservableObject {
 		let session = CustomerSession(client: client)
 		self.client = client
 		self.session = session
+		reservations = ReservationsStore(
+			client: ReservationsClient(configuration: configuration, session: session),
+			tokens: ReservationTokenStoreFactory.makeDefault(),
+			localeCode: language.code
+		)
 
 		Task {
 			let tokens = await session.restore()
 			// A stored session belongs to one org; drop it when the tenant changes.
 			if let tokens, tokens.orgId != organization.id {
 				await session.signOut()
+				reservations?.forgetTokens()
 				isSignedIn = false
 				return
 			}
@@ -288,6 +296,8 @@ final class AppState: ObservableObject {
 	func signOut() async {
 		authAttempt += 1
 		await session?.signOut()
+		// Capability tokens for this customer's bookings leave the device with them.
+		reservations?.forgetTokens()
 		isSignedIn = false
 		profile = nil
 		needsName = false

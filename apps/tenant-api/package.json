@@ -19,7 +19,8 @@
     "seed:schedule": "../../node_modules/.bin/varlock run -- tsx scripts/seed-schedule.ts",
     "seed:staffing-history": "../../node_modules/.bin/varlock run -- tsx scripts/seed-staffing-history.ts",
     "seed:staffing": "node scripts/seed-staffing.mjs",
-    "seed:reservations": "node scripts/seed-reservations.mjs"
+    "seed:reservations": "node scripts/seed-reservations.mjs",
+    "fixtures:reservations": "RECORD_RESERVATIONS_FIXTURES=1 CI=true ../../node_modules/.bin/varlock run -- vitest run src/routes/reservations-contract.test.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",

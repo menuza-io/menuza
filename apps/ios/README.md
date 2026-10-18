@@ -10,8 +10,35 @@ same public contracts as `apps/sites` and `apps/tenant-api`:
 | Profile                                            | `GET {TENANT_API}/auth/me`, `POST {TENANT_API}/auth/profile`                               |
 | Session                                            | Access token (15 min) + rotating refresh token, stored in the **Keychain**                 |
 
-Scope is intentionally small: a branded shell, phone-OTP login, and the customer
-profile. CMS pages, blocks, and shop stay on the org's website.
+Scope is intentionally small: a branded shell, phone-OTP login, the customer
+profile, and table reservations (below). CMS pages, blocks, and shop stay on the
+org's website.
+
+## Reservations
+
+Signed-in customers book tables from the app. It calls the same public
+`/reservations/*` routes as Sites, directly on the regional tenant-api, with
+`X-Client: ios` (the server records channel `native`), the site `Origin` (https
+sites) or the `slug`/`host` binding (local), and the customer's Bearer token,
+which stands in for Turnstile. Contract:
+[docs/reservations-contract.md](../../docs/reservations-contract.md).
+
+| Piece                                                                                              | Where                                                        |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `ReservationsClient` (POST-only mutations, `Idempotency-Key`, `X-Reservation-Token`)               | `Sources/TenantKit/Reservations/ReservationsClient.swift`    |
+| Decodable models for every contract fixture                                                        | `Sources/TenantKit/Reservations/ReservationModels.swift`     |
+| `BookingFlow` / `WaitlistFlow` state machines, hold countdown on the server clock                  | `Sources/TenantKit/Reservations/BookingFlow.swift`           |
+| Manage and waitlist tokens in the Keychain                                                         | `Sources/TenantKit/Reservations/ReservationTokenStore.swift` |
+| SwiftUI screens (home, location, search, details, review, payment, confirmation, manage, waitlist) | `Sources/TenantApp/Reservations/`                            |
+| Contract fixtures (byte-identical copies of `packages/reservations/contract-fixtures`)             | `Tests/TenantKitTests/Fixtures/Reservations/`                |
+
+Deposits and card guarantees open `payment.payUrl` in the system browser; the
+app polls `GET /reservations/manage/payment` on return (`scenePhase`) and only a
+status answer confirms the booking. There are no deep links. A booking request
+that fails on the network is retried with the same `Idempotency-Key`. Tokens are
+never logged and never put in a URL. Re-record the fixtures with
+`npm run fixtures:reservations -w tenant-api`; its contract test fails when a
+copy drifts.
 
 ## Two build modes (read this first)
 

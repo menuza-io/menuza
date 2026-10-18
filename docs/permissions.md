@@ -202,7 +202,7 @@ groups, and `packages/database/setup-roles.ts`.
 | `read:reservation_settings:any`   | View floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
 | `update:reservation_settings:any` | Edit floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
 | `read:reservation_report:any`     | View covers, utilization, no-show/cancellation analytics, and export CSVs                    |
-| `update:reservation_payment:any`  | Refund, capture, or release reservation deposits, no-show holds, and experience prepayments  |
+| `update:reservation_payment:any`  | Charge cancellation or no-show fees and request reservation refunds                          |
 
 Rules:
 
@@ -211,39 +211,45 @@ Rules:
   roles receive none automatically.
 - **Implied read permissions.** `update:reservation:any` implies
   `read:reservation:any`; `update:reservation_guest:any` implies
-  `read:reservation_guest:any` and `read:reservation:any`;
-  `update:reservation_settings:any` implies `read:reservation_settings:any`;
-  `update:reservation_payment:any` implies `read:reservation:any`. The role
-  editor and server-side save actions enforce these implications, and
-  `grantsSatisfying` in `@repo/reservations` honors them at runtime.
+  `read:reservation_guest:any`; `update:reservation_settings:any` implies
+  `read:reservation_settings:any` (`IMPLIED_READ_BY_UPDATE` in
+  `@repo/reservations`). `update:reservation_payment:any` implies nothing: the
+  `payments` token scope needs `read:reservation:any` as well, so grant both
+  (the `finance` preset does). The role editor and server-side save actions
+  enforce these implications, and `hasGrantSatisfying` honors them at runtime.
 - **Role presets.** When `reservations.enabled` is on, Settings → Roles offers
-  one-click presets for _Host_ (`read:reservation:any`,
-  `update:reservation:any`, `read:reservation_guest:any`), _Reservations
-  manager_ (all 8 permissions except `update:reservation_payment:any`), and
-  _Guest relations_ (`read:reservation:any`, `read:reservation_guest:any`,
-  `update:reservation_guest:any`, `read:reservation_report:any`). The _Shift
-  manager_ staffing preset also includes `read:reservation:any`,
-  `update:reservation:any`, and `read:reservation_guest:any` when both Staffing
-  and Reservations are enabled.
+  one-click presets (`RESERVATIONS_ROLE_PRESETS`; they are not seeded in a
+  migration): `host` (`read` and `update:reservation:any`), `shift_manager`
+  (`read` and `update:reservation:any`, `read:reservation_guest:any`,
+  `read:reservation_report:any`), `reservations_manager` (reservation, settings
+  and guest read and update, `read:reservation_report:any`), `guest_relations`
+  and `guestbook_manager` (`read:reservation:any`, guest read and update),
+  `finance` (`read:reservation:any`, `read:reservation_report:any`,
+  `update:reservation_payment:any`) and `owner` (all 8). The Staffing role
+  presets do not include reservation permissions.
 - **Hidden while Reservations is off.** The role editor, role view page, and
   preset panels show the Reservations permission group and presets only when
   `reservations.enabled` is on for the organization. Editing a role while
   `reservations.enabled` is off preserves any existing Reservations permissions
   on that role.
-- **Location scoping (`UserOrganization.locationScope`).** When a member's
-  `locationScope` is `null`, they can access all active locations in the
-  organization (`locationIds: null` in `rsv+jwt`). When `locationScope` is a
-  JSON array of `OrganizationLocation.id` strings, `requireReservationsAccess`
-  and `GET /:orgSlug/reservations/token` intersect it with the organization's
-  active locations (`403` when the intersection is empty), and `rsvGuard` in
-  `apps/tenant-api` enforces `locationIds` on every location-scoped endpoint.
+- **Location scoping (`UserOrganization.locationScope`).** The scope is `all` or
+  `selected` (with `UserOrganizationLocation` rows), the same one Staffing uses.
+  `all` means every active location (`locationIds: null` in `rsv+jwt`).
+  `selected` becomes a non-empty `locationIds` array:
+  `requireReservationsAccess` and `GET /:orgSlug/reservations/token` intersect
+  it with the organization's active locations (`403` when the intersection is
+  empty), and `rsvGuard` in `apps/tenant-api` enforces `locationIds` on every
+  location-scoped endpoint. The guestbook is organization-wide and is not
+  filtered by location (known issue in
+  [the guide](./reservations.md#known-issues-and-known-gaps)).
 - **Shorter TTL and impersonation restrictions.** Operator `rsv+jwt` tokens have
-  a 15-minute TTL, shortened to **5 minutes** when carrying sensitive grants
-  (`update:reservation_payment:any`, `update:reservation_settings:any`,
-  `update:reservation_guest:any`) or during support impersonation
-  (`impersonated: true`). Under impersonation, all write (`update:*`) and
-  sensitive grants are stripped so support sessions are strictly read-only and
-  cannot mutate settings/guests or issue refunds.
+  a 15-minute TTL, shortened to **5 minutes** when carrying a sensitive grant
+  (`read:reservation_guest:any`, `update:reservation_guest:any`,
+  `update:reservation_payment:any`; `SENSITIVE_GRANTS`) or during support
+  impersonation (`impersonated: true`). Settings grants are not sensitive. Under
+  impersonation, all write (`update:*`) and sensitive grants are stripped so
+  support sessions are strictly read-only and cannot mutate settings or guests
+  or issue refunds.
 
 #### Reservations feature flags
 
@@ -251,15 +257,15 @@ Permissions alone never open the Reservations module. Every Reservations surface
 and token mint is behind org-level feature flags read with `getFeatureFlag`
 (`@repo/common/feature-flags`) that **default to off**:
 
-| Flag                           | Gates                                                                                          |
-| ------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `reservations.enabled`         | Master: sidebar group, every `/<orgSlug>/reservations/*` route, operator token mint            |
-| `reservations.online`          | Public `/reserve` widget on Sites, iOS/Android booking flows, and public hold/booking routes   |
-| `reservations.waitlist`        | Operator Waitlist section and public online waitlist join                                      |
-| `reservations.payments`        | Deposit, no-show card hold, and prepaid policies (`rsv_policies`) plus payment action routes   |
-| `reservations.experiences`     | Operator Experiences section and public ticketed experiences                                   |
-| `reservations.voice`           | AI phone agent reservation availability, hold + SMS link, and direct voice booking             |
-| `reservations.platform_fee_bp` | Numeric platform application fee in basis points (`0..2000`, default `0`) on reservation funds |
+| Flag                           | Gates                                                                                               |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `reservations.enabled`         | Master: sidebar group, every `/<orgSlug>/reservations/*` route, operator token mint                 |
+| `reservations.online`          | Public `/reserve` widget on Sites, iOS/Android booking flows, and public hold/booking routes        |
+| `reservations.waitlist`        | Operator Waitlist section and public online waitlist join                                           |
+| `reservations.payments`        | Deposit, card guarantee and prepaid policies (`rsv_policies`) plus refund and fee routes            |
+| `reservations.experiences`     | Operator Experiences section and public ticketed experiences                                        |
+| `reservations.voice`           | AI phone agent reservation availability, hold + SMS link, and direct voice booking                  |
+| `reservations.platform_fee_bp` | Numeric platform fee in basis points (`0..10000`, system default `250`) on deposits and prepayments |
 
 Enforcement lives in `apps/app/app/utils/reservations/access.server.ts` via
 `requireReservationsAccess(request, params.orgSlug, { feature, anyOf })`, which

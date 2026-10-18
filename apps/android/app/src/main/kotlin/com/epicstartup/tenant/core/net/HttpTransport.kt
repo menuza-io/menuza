@@ -66,7 +66,7 @@ class HttpUrlConnectionTransport : HttpTransport {
 }
 
 /** Errors surfaced by the tenant APIs. */
-class ApiException(
+open class ApiException(
 	val statusCode: Int,
 	override val message: String,
 ) : Exception(message) {

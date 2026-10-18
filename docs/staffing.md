@@ -248,3 +248,15 @@ the need per source and sums it per position; a position with no standard for a
 unit ignores that unit. The forecast response carries `sources` and per-hour
 `bookedBySource`: counts only, never a guest. Registering `visits` does not
 change `hasOrderSource()`, labor sales or the report catalog wording.
+
+## Shared alarm with Reservations
+
+The staff tick no longer owns the organization's Durable Object alarm: it is the
+`staff` module of the shared scheduler `apps/tenant-api/src/lib/org-alarm.ts`,
+next to the `reservations` module, so one never clobbers the other's pending
+alarm (see
+[scheduled jobs](./scheduled-jobs.md#shared-organization-alarm-staffing-and-reservations)).
+The `visits` demand source reads Reservations bookings (counts per hour only),
+and the forecast units and standards are described above. Workplaces stay opaque
+**scopes** (`main` by default); reservation locations are not staffing scopes
+unless a vertical maps them.

@@ -1,0 +1,60 @@
+{
+	"organization": {
+		"name": "Acme Bistro",
+		"defaultLocale": "en"
+	},
+	"locations": [
+		{
+			"id": "loc_pub_main",
+			"name": "Acme Downtown",
+			"address": {
+				"formattedAddress": "100 Main St, New York",
+				"city": "New York"
+			},
+			"timeZone": "UTC",
+			"phone": "+12125550100",
+			"partySize": {
+				"min": 1,
+				"max": 4
+			},
+			"horizonDays": 60,
+			"intervalMin": 15,
+			"holdMinutes": 7,
+			"largeParty": {
+				"mode": "request",
+				"maxOnlinePartySize": 4,
+				"phone": "+12125550100",
+				"contact": {
+					"name": "Acme Downtown",
+					"phone": "+12125550100"
+				},
+				"note": null
+			},
+			"waitlist": {
+				"enabled": true,
+				"online": true
+			},
+			"notifyMe": true,
+			"areas": [
+				{
+					"id": "area_pub_main",
+					"name": "Main Room"
+				}
+			],
+			"publicNote": null
+		}
+	],
+	"occasions": [
+		{
+			"id": "tag_pub_birthday",
+			"name": "Birthday"
+		}
+	],
+	"dietary": [
+		{
+			"id": "tag_pub_nuts",
+			"name": "Nut allergy"
+		}
+	],
+	"now": "2030-06-14T16:00:00.000Z"
+}

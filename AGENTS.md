@@ -597,6 +597,27 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   emails (dropped, not held); in the App it stops manager-alert emails (in-app
   notifications are unaffected). `false` (also `0`, `off`, `no`, `disabled`).
   See `docs/scheduled-jobs.md#reservations-tick`.
+- `RESERVATIONS_PUBLIC_ENABLED` - Tenant-api only, optional (unset or `true` is
+  on). Kill switch for the public booking API: `false` (also `0`, `off`, `no`,
+  `disabled`) answers 503 on every `/reservations/*` route of that node, manage
+  links included. Operator routes are unaffected.
+- `RESERVATIONS_SMS_ENABLED` - Tenant-api only, optional (unset or `true` is
+  on). Kill switch for guest reservation SMS (US node only; the KSA node never
+  sends it): `false` drops texts instead of holding them.
+- `RESERVATIONS_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
+  optional. Seconds between in-process reservation ticks (default 120, minimum
+  60, `0` off). The hourly cron fan-out always runs; the Workers runtime uses
+  Durable Object alarms. See `docs/scheduled-jobs.md#reservations-tick`.
+- `DEV_EMAIL_CAPTURE_DIR` - Tenant-api, development only: folder (relative to
+  `apps/tenant-api`) that receives one JSON file per email the node would only
+  log. Ignored in production or when OCI email is configured.
+- `STRIPE_CONNECT_WEBHOOK_SECRET` - App only, optional: second Stripe webhook
+  secret for Connect events (the Stripe webhook route accepts either secret).
+- `PAYMENTS_MOCK` / `PAYMENTS_MOCK_ORIGIN` / `PAYMENTS_MOCK_WEBHOOKS` /
+  `PAYMENTS_MOCK_WEBHOOKS_HTTP` / `PAYMENTS_MOCK_CKO_SESSION_ID` - App only:
+  local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
+  Startup refuses live keys; mock routes are stripped from Worker builds. See
+  `docs/payments-mock.md`.
 - `STAFFING_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
@@ -768,6 +789,11 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - `@repo/security` - Security utilities (encryption, rate limiting)
 - `@repo/phone-agent` - AI phone agent core: flow model, vertical contract,
   prompts, and call reports (see `docs/phone-agent-verticals.md`)
+- `@repo/reservations` - Reservations domain code shared by App, tenant-api and
+  Sites: flags, permissions and role presets, token claims, availability engine,
+  table assignment, policy and message math, request and response Zod schemas
+  (including `schemas/public-contract.ts`), error codes. No UI strings, no I/O.
+  `@repo/zoned-time` holds the DST-safe time math.
 - `@repo/staffing` - Staff module domain code shared by App and tenant-api: Zod
   schemas, permission and `staffing.*` flag keys, PIN rules, formula-safe CSV
   export, time math (`computeTimecard` / `computeWeek`), clock state machine,
@@ -788,13 +814,16 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   loads config from App and logs calls through tenant-api
 - `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):
   branded shell, phone-OTP sign-in, and profile, reusing the published org
-  branding and the regional tenant-api. Keychain session; no PII proxy. Swift
+  branding and the regional tenant-api, plus table booking
+  (`Sources/TenantKit/Reservations/`, SwiftUI in
+  `Sources/TenantApp/Reservations/`). Keychain session; no PII proxy. Swift
   tasks are opt-in (`npm run ios:test -w ios`) so Linux CI stays green
 - `apps/android` - Tenant customer Android app (Kotlin, framework views only: no
   AndroidX/Compose/OkHttp — see its README for the size budget): same branded
   shell, phone-OTP sign-in, and profile as iOS, with the session in the Android
-  Keystore. Opt-in via `npm run android:* -w android`; the Android toolchain is
-  installed by `.agents/setup`
+  Keystore, plus table booking (`core/reservations/`, `ui/reservations/`).
+  Opt-in via `npm run android:* -w android`; the Android toolchain is installed
+  by `.agents/setup`
 
 **Staff module (hiring, scheduling, staff management, time clock):**
 
@@ -846,6 +875,65 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   both.
 - Canonical docs: `docs/staffing.md` (operator guide and runbook),
   `docs/decisions/047-staffing-data-residency.md` and `docs/staffing-plan.md`.
+
+**Reservations module (tables, bookings, waitlist, guestbook, experiences):**
+
+- Regional data in `packages/tenant-db` (41 `rsv_*` tables, migrations `0016` to
+  `0021`); control plane keeps flags, permissions, locations and payment
+  connection state (migrations `0025`, `0026`). Pure domain code in
+  `@repo/reservations` and `@repo/zoned-time` (never hand-roll time-zone math).
+  Guest PII (names, phones, emails, notes, allergies, tags) lives only in the
+  regional DB: never in the control plane, logs, cross-plane payloads, Sites SSR
+  or App loaders. Validation errors never echo rejected values.
+- Everything user-visible is behind org flags read with `getFeatureFlag`
+  (`reservations.enabled` master, plus `.online`, `.waitlist`, `.payments`,
+  `.experiences`, `.voice`; `reservations.platform_fee_bp` is a number, default
+  250 from migration `0026`). Only a literal `true` counts and child flags need
+  the master. Enforce at token mint and in every loader and action.
+- Operators: App mints a short-lived `rsv+jwt`
+  (`GET /<orgSlug>/reservations/token?scope=`; 15 minutes, 5 for guest or
+  payment grants and impersonation); the browser calls tenant-api
+  `/operator/reservations/*` directly. Eight permissions
+  (`read|update:reservation[_guest|_settings|_payment]:any`,
+  `read:reservation_report:any`); `UserOrganization.locationScope` becomes the
+  `locationIds` claim.
+- Guests: tenant-api `/reservations/*` resolves the organization from the
+  browser `Origin` only (never a client `orgId`, never a customer token) and
+  answers a uniform 404 otherwise. Capability tokens (`X-Reservation-Token`) are
+  derived by HMAC from `AUTH_HMAC_SECRET`, not stored. Mutations are POST with
+  an `Idempotency-Key`. A verified customer token replaces Turnstile; native
+  apps send `X-Client: ios | android` (channel `native`). Sites never proxies
+  guest data; the only Sites-to-App call is the payment hand-off, authenticated
+  with `SITES_RESERVATION_PAYMENT_TOKEN`.
+- Writes: every reservation write and setup mutation goes through
+  `withReservationWrite` (`apps/tenant-api/src/lib/reservations-write.ts`),
+  which runs a real transaction through `runTenantTransaction` (the Durable
+  Object runtime needs the async storage transaction). Data-sized `IN (...)`
+  lists must use `queryInChunks` / `forEachInChunks`
+  (`apps/tenant-api/src/lib/chunked-in.ts`): Durable Object SQLite allows 100
+  bound parameters per statement. Versioned operator mutations send and check
+  `expectedVersion` (409 `stale_version`).
+- Payments: the region decides amounts and state; the App is the only caller of
+  Stripe and Checkout.com and forwards only ids and amounts back. Provider
+  webhooks terminate at the US App, not at the region (ADR 048 section 8).
+- Security gates in CI:
+  `apps/tenant-api/src/routes/reservations-security.test.ts` (every operator and
+  public route: forged, wrong-audience, over-long, grantless, wrong-scope,
+  impersonated, cross-organization and excluded-location cases) and
+  `apps/app/app/utils/reservations/reservations-guards.test.ts` (every App
+  loader and action awaits `requireReservationsAccess` first). A new route must
+  pass both.
+- Public API fixtures: `npm run fixtures:reservations -w tenant-api` re-records
+  `packages/reservations/contract-fixtures` and the iOS and Android copies;
+  `reservations-contract.test.ts` (tenant-api and `@repo/reservations`) fails on
+  drift.
+- Local dev: App at `https://app.menuza.test:2999` through the root dev proxy
+  (this file still mentions the older `epic-startup.test` host in places). Mock
+  payments need no keys (`docs/payments-mock.md`). Demo data:
+  `npm run seed:reservations -w tenant-api -- acme` (local only, idempotent).
+- Canonical docs: `docs/reservations.md` (operator guide, runbook, known
+  issues), `docs/reservations-contract.md`, `docs/reservations-plan.md` and
+  `docs/decisions/048-reservations-data-residency.md`.
 
 ## Known issues
 

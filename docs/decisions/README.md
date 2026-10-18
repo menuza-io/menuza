@@ -8,6 +8,10 @@ way for someone to come up to speed on why certain decisions were made.
 
 Recent additions:
 
+- [048 - Reservations data residency](./048-reservations-data-residency.md) —
+  why reservations and guest data live in the regional tenant database, how
+  guests and operators reach it browser-direct, and where payments and webhooks
+  cross planes.
 - [047 - Staffing data residency and identity](./047-staffing-data-residency.md)
   — why staff, pay, punch, schedule and applicant data lives in the regional
   tenant database, why staff are not members, and which flags gate the module.

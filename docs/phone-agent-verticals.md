@@ -138,6 +138,28 @@ and counts a per-call cap in `voice_call_actions`. Test calls (`web_test`) run
 dry. Register actions with `registerVoiceAction` in both entry points
 (`apps/tenant-api/src/restaurant/reservations-voice-actions.ts` is the model).
 
+### The tenant-api action registry
+
+`apps/tenant-api/src/services/voice-actions.ts` is the registry:
+`registerVoiceAction({ name, ... })` adds an action, `getVoiceAction(name)`
+resolves it for `POST /api/voice/actions/:name`, and a per-call cap per action
+name is counted in `voice_call_actions` (tenant migration `0021`). An action
+receives the call context (organization, call, caller, channel, location scope)
+from the call row, never from model output, and returns `VoiceActionResult`. The
+restaurant vertical registers three, in
+`apps/tenant-api/src/restaurant/reservations-voice-actions.ts` (US only, behind
+`reservations.voice`):
+
+| Action                      | Cap per call | What it does                                                  |
+| --------------------------- | ------------ | ------------------------------------------------------------- |
+| `reservations.availability` | 10           | Offers up to 3 slots for a date, time and party               |
+| `reservations.hold`         | 2            | Holds a slot and texts the caller a link (fragment token)     |
+| `reservations.book`         | 1            | Books directly with the guest-channel rules and policy checks |
+
+They use the same engine and services as the public booking routes and never
+look up or return guest data (caller ID is spoofable). Full contract:
+[reservations contract](./reservations-contract.md#6-voice-apivoiceactionsname).
+
 A texted link may carry a URL fragment (`sendLink({ fragment })`, for example
 `h=<token>`). tenant-api texts it only when the vertical's
 `registerVoiceLinkFragment` verifier confirms the fragment belongs to that call.
