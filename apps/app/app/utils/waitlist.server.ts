@@ -5,6 +5,7 @@ import {
 	db,
 	eq,
 	gt,
+	isNull,
 	lt,
 	or,
 	sql,
@@ -97,21 +98,12 @@ export async function calculateUserRank(
 }
 
 export async function awardReferralPoints(referrerId: string) {
-	const [entry] = await db
-		.select({ id: WaitlistEntry.id })
-		.from(WaitlistEntry)
-		.where(eq(WaitlistEntry.userId, referrerId))
-		.limit(1)
-	if (!entry) throw new Error('Referrer waitlist entry not found')
-	const current = await db
-		.select({ points: WaitlistEntry.points })
-		.from(WaitlistEntry)
-		.where(eq(WaitlistEntry.id, entry.id))
-		.limit(1)
-	await db
+	const updated = await db
 		.update(WaitlistEntry)
-		.set({ points: (current[0]?.points ?? 0) + REFERRAL_POINTS })
-		.where(eq(WaitlistEntry.id, entry.id))
+		.set({ points: sql`${WaitlistEntry.points} + ${REFERRAL_POINTS}` })
+		.where(eq(WaitlistEntry.userId, referrerId))
+		.returning({ id: WaitlistEntry.id })
+	if (updated.length === 0) throw new Error('Referrer waitlist entry not found')
 }
 
 export async function awardDiscordPoints(userId: string) {
@@ -134,10 +126,21 @@ export async function awardDiscordPoints(userId: string) {
 		if (!existing) throw new Error('Waitlist entry not found')
 		throw new Error('Discord points already awarded')
 	}
-	await db
+	// Re-check the flag in the write so two parallel requests award once.
+	const awarded = await db
 		.update(WaitlistEntry)
-		.set({ hasJoinedDiscord: true, points: entry.points + DISCORD_POINTS })
-		.where(eq(WaitlistEntry.id, entry.id))
+		.set({
+			hasJoinedDiscord: true,
+			points: sql`${WaitlistEntry.points} + ${DISCORD_POINTS}`,
+		})
+		.where(
+			and(
+				eq(WaitlistEntry.id, entry.id),
+				eq(WaitlistEntry.hasJoinedDiscord, false),
+			),
+		)
+		.returning({ id: WaitlistEntry.id })
+	if (awarded.length === 0) throw new Error('Discord points already awarded')
 }
 
 export async function addWaitlistPoints(userId: string, points: number) {
@@ -179,16 +182,21 @@ export async function linkReferral(userId: string, referralCode: string) {
 	if (entry?.referredById)
 		return { success: false, message: 'Already referred by someone' }
 	if (!entry) return { success: false, message: 'Waitlist entry not found' }
-	await db.transaction(async (tx) => {
-		await tx
-			.update(WaitlistEntry)
-			.set({ referredById: referrer.id })
-			.where(eq(WaitlistEntry.id, entry.id))
-		await tx
-			.update(WaitlistEntry)
-			.set({ points: referrer.points + REFERRAL_POINTS })
-			.where(eq(WaitlistEntry.id, referrer.id))
-	})
+	// The guard makes a racing second link a no-op, so the referrer is paid once.
+	const linked = await db
+		.update(WaitlistEntry)
+		.set({ referredById: referrer.id })
+		.where(
+			and(eq(WaitlistEntry.id, entry.id), isNull(WaitlistEntry.referredById)),
+		)
+		.returning({ id: WaitlistEntry.id })
+	if (linked.length === 0) {
+		return { success: false, message: 'Already referred by someone' }
+	}
+	await db
+		.update(WaitlistEntry)
+		.set({ points: sql`${WaitlistEntry.points} + ${REFERRAL_POINTS}` })
+		.where(eq(WaitlistEntry.id, referrer.id))
 	return { success: true, message: 'Referral linked successfully' }
 }
 
