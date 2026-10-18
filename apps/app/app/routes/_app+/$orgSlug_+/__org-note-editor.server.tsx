@@ -272,7 +272,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							...upload,
 							id: upload.objectKey ? cuid() : upload.id,
 						})
-						.where(eq(OrganizationNoteUpload.id, upload.id))
+						.where(
+							and(
+								eq(OrganizationNoteUpload.id, upload.id),
+								eq(OrganizationNoteUpload.noteId, noteId),
+							),
+						)
 				}
 			}
 		}
