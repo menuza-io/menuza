@@ -12,6 +12,8 @@ export {
 	isTerminalRestaurantPaymentStatus,
 	mapConnectSessionToRestaurantOrder,
 	mapCheckoutWebhookToRestaurantOrder,
+	mapCheckoutPaymentToRestaurantOrder,
+	restaurantOrderCheckoutReference,
 	type RestaurantOrderProcessor,
 	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderPaymentStatus,
@@ -54,6 +56,7 @@ export {
 
 export {
 	type ShopCommerceConfig,
+	type ShopCommerceMockConfig,
 	createShopCommerceConfigFromEnv,
 } from './config'
 

@@ -21,7 +21,12 @@ import {
 export class StripeProvider implements PaymentProvider {
 	private stripe: Stripe
 
-	constructor(config: { apiKey: string; apiVersion?: string }) {
+	constructor(config: {
+		apiKey: string
+		apiVersion?: string
+		/** Override the transport (the local payment mock). */
+		httpClient?: Stripe.HttpClient
+	}) {
 		if (!config.apiKey) {
 			throw new Error('Stripe API key is required')
 		}
@@ -35,7 +40,7 @@ export class StripeProvider implements PaymentProvider {
 		this.stripe = new Stripe(config.apiKey, {
 			apiVersion:
 				(config.apiVersion as Stripe.LatestApiVersion) || '2025-08-27.basil',
-			httpClient: Stripe.createFetchHttpClient(),
+			httpClient: config.httpClient ?? Stripe.createFetchHttpClient(),
 		})
 	}
 

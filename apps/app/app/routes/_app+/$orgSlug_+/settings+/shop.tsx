@@ -18,6 +18,10 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import {
+	getPaymentsMockStatus,
+	requirePaymentsMock,
+} from '#app/utils/payments-mock/gate.server.ts'
+import {
 	checkRateLimit,
 	SHOP_CONNECT_ONBOARDING_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
@@ -113,6 +117,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		orders,
 		configuredProcessors: listConfiguredShopProcessors(),
+		// Dev and CI only: always `enabled: false` in a production build.
+		paymentsMock: getPaymentsMockStatus(request),
 	}
 }
 
@@ -213,14 +219,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	if (intent === 'invite-checkout-payout') {
-		if (organization.dataRegion !== 'us') {
-			return redirectWithToast(`/${organization.slug}/settings/shop`, {
-				title: 'US only',
-				description: 'Shop payouts are available for US organizations only.',
-				type: 'error',
-			})
-		}
-
+		// Open to every region: KSA organizations pay through Checkout.com.
 		const userId = await requireUserId(request)
 		const [user] = await db
 			.select({ email: UserTable.email })
@@ -268,6 +267,41 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			})
 		}
 		return redirect(url)
+	}
+
+	if (intent === 'mock-onboard-stripe' || intent === 'mock-onboard-checkout') {
+		// Dev and CI only. The branch is compiled out of the Cloudflare
+		// production build; elsewhere the gate answers 404 unless the mock is on
+		// and the request is local.
+		if (
+			typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&
+			__PAYMENTS_MOCK_BUNDLED__
+		) {
+			const provider = intent === 'mock-onboard-stripe' ? 'stripe' : 'checkout'
+			requirePaymentsMock(request, provider)
+			const { mockOnboardOrganization } =
+				await import('#app/utils/payments-mock/onboard.server.ts')
+			const result = await mockOnboardOrganization({
+				orgSlug: organization.slug,
+				provider,
+			})
+			if (!result.ok) {
+				return redirectWithToast(`/${organization.slug}/settings/shop`, {
+					title: 'Mock setup failed',
+					description:
+						result.error === 'stripe_us_only'
+							? 'Stripe payouts are only available for US organizations.'
+							: 'The mock could not enable this provider.',
+					type: 'error',
+				})
+			}
+			return redirectWithToast(`/${organization.slug}/settings/shop`, {
+				title: 'Mock payments enabled',
+				description: 'This organization can now take mock online payments.',
+				type: 'success',
+			})
+		}
+		throw new Response('Not Found', { status: 404 })
 	}
 
 	if (intent === 'enable-hosted-checkout') {
@@ -377,7 +411,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ShopSettingsRoute() {
-	const { organization, orders, configuredProcessors } =
+	const { organization, orders, configuredProcessors, paymentsMock } =
 		useLoaderData<typeof loader>()
 
 	return (
@@ -387,6 +421,7 @@ export default function ShopSettingsRoute() {
 					organization={organization}
 					orders={orders}
 					configuredProcessors={configuredProcessors}
+					paymentsMock={paymentsMock}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>

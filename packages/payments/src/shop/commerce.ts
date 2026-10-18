@@ -9,8 +9,10 @@ import {
 	createShopCheckoutSession,
 	createShopPaymentIntent,
 	createCheckoutShopClient,
-	createCheckoutShopPaymentSession,
+	createCheckoutShopHostedPayment,
 	expireShopCheckoutSession,
+	findCheckoutShopPaymentsByReference,
+	retrieveCheckoutHostedPayment,
 	getCheckoutDashboardUrl,
 	getPolarDashboardUrl,
 	inviteCheckoutSubEntity,
@@ -215,6 +217,9 @@ export class ShopCommerce {
 			return getPolarDashboardUrl(this.config.polarServer ?? 'sandbox')
 		}
 		if (processor === 'checkout' && this.isProcessorConfigured('checkout')) {
+			if (this.config.mock?.checkoutDashboardUrl) {
+				return this.config.mock.checkoutDashboardUrl
+			}
 			return getCheckoutDashboardUrl(
 				this.config.checkoutEnvironment ?? 'sandbox',
 			)
@@ -249,6 +254,7 @@ export class ShopCommerce {
 				subdomain: this.config.checkoutSubdomain,
 				processingChannelId: this.config.checkoutProcessingChannelId,
 				environment: this.config.checkoutEnvironment,
+				host: this.config.mock?.checkoutHost,
 			})
 		}
 		return this.checkoutClient
@@ -259,7 +265,11 @@ export class ShopCommerce {
 			throw new Error('Connect checkout is not configured on this platform.')
 		}
 		if (!this.stripeProvider) {
-			this.stripeProvider = createStripeProvider(this.config.stripeSecretKey)
+			this.stripeProvider = createStripeProvider(
+				this.config.stripeSecretKey,
+				undefined,
+				this.config.mock?.stripeHttpClient,
+			)
 		}
 		return this.stripeProvider.getClient()
 	}
@@ -297,13 +307,25 @@ export class ShopCommerce {
 		return this.cachedPublishableKey
 	}
 
+	/**
+	 * Run a Stripe call. Provider errors are rethrown as the same instance with
+	 * the secret redacted from the message, so callers keep the error class,
+	 * `code`, `decline_code` and `raw.payment_intent` (an off-session
+	 * `authentication_required` carries the PaymentIntent there).
+	 */
 	private async withConnect<T>(operation: () => Promise<T>): Promise<T> {
 		try {
 			return await operation()
 		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : 'Connect checkout failed'
-			throw new Error(redactSecret(message, this.config.stripeSecretKey))
+			if (error instanceof Error) {
+				const redacted = redactSecret(
+					error.message,
+					this.config.stripeSecretKey,
+				)
+				if (redacted !== error.message) error.message = redacted
+				throw error
+			}
+			throw new Error('Connect checkout failed')
 		}
 	}
 
@@ -323,9 +345,15 @@ export class ShopCommerce {
 		try {
 			return await operation()
 		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : 'Checkout.com request failed'
-			throw new Error(redactSecret(message, this.config.checkoutSecretKey))
+			if (error instanceof Error) {
+				const redacted = redactSecret(
+					error.message,
+					this.config.checkoutSecretKey,
+				)
+				if (redacted !== error.message) error.message = redacted
+				throw error
+			}
+			throw new Error('Checkout.com request failed')
 		}
 	}
 
@@ -463,7 +491,7 @@ export class ShopCommerce {
 			}
 
 			const session = await this.withCheckoutCommerce(() =>
-				createCheckoutShopPaymentSession(this.getCheckoutShop(), {
+				createCheckoutShopHostedPayment(this.getCheckoutShop(), {
 					subEntityId: options.checkoutSubEntityId!,
 					productName: options.productName,
 					amountCents: options.amountCents,
@@ -471,6 +499,7 @@ export class ShopCommerce {
 					processingChannelId: this.config.checkoutProcessingChannelId!,
 					successUrl: options.successUrl,
 					failureUrl: options.cancelUrl,
+					cancelUrl: options.cancelUrl,
 					metadata: options.metadata,
 					customerEmail: options.customerEmail,
 					reference: options.reference,
@@ -605,6 +634,20 @@ export class ShopCommerce {
 	async retrieveConnectCheckoutSession(sessionId: string) {
 		return this.withConnect(() =>
 			this.getStripe().checkout.sessions.retrieve(sessionId),
+		)
+	}
+
+	/** Hosted page status plus its payment id once paid (no webhook needed). */
+	async retrieveCheckoutHostedPayment(hostedPaymentId: string) {
+		return this.withCheckoutCommerce(() =>
+			retrieveCheckoutHostedPayment(this.getCheckoutShop(), hostedPaymentId),
+		)
+	}
+
+	/** Checkout.com payments for one merchant reference, newest first. */
+	async findCheckoutPaymentsByReference(reference: string) {
+		return this.withCheckoutCommerce(() =>
+			findCheckoutShopPaymentsByReference(this.getCheckoutShop(), reference),
 		)
 	}
 

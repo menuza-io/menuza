@@ -52,8 +52,9 @@ export function createPaymentProvider(
 export function createStripeProvider(
 	apiKey: string,
 	apiVersion?: string,
+	httpClient?: ConstructorParameters<typeof StripeProvider>[0]['httpClient'],
 ): StripeProvider {
-	return new StripeProvider({ apiKey, apiVersion })
+	return new StripeProvider({ apiKey, apiVersion, httpClient })
 }
 
 /**

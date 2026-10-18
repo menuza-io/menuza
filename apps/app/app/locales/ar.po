@@ -766,7 +766,7 @@ msgstr "{guestName}، مجموعة من {partySize}، {startTime}، {durationMin
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 msgstr "{guestName}، مجموعة من {partySize}، {startTime}، {durationMin} دقيقة، الطاولة {tableLabel}، مقفلة"
 
-#: app/components/reservations/booking-sheet.tsx:775
+#: app/components/reservations/booking-sheet.tsx:779
 msgid "{heldTables} is held by a guest who is checking out. The booking uses another table."
 msgstr "{heldTables} محجوزة مؤقتًا لضيف يُكمل الحجز. سيستخدم الحجز طاولة أخرى."
 
@@ -1617,11 +1617,11 @@ msgstr "يوجد عضو سابق في الفريق بهذا البريد الإ�
 msgid "A general application stays open all the time, so people can apply even when no job is posted."
 msgstr "يبقى الطلب العام مفتوحًا دائمًا، فيستطيع الناس التقديم حتى عندما لا تكون هناك وظيفة معلنة."
 
-#: app/components/reservations/booking-sheet.tsx:780
+#: app/components/reservations/booking-sheet.tsx:784
 msgid "A guest is checking out with {heldTables} at this time. Booking it overrides their hold."
 msgstr "ضيف يُكمل الحجز حاليًا على {heldTables} في هذا الوقت. الحجز هنا يتجاوز حجزه المؤقت."
 
-#: app/components/reservations/booking-sheet.tsx:785
+#: app/components/reservations/booking-sheet.tsx:789
 msgid "A guest is checking out with a table at this time. Booking it overrides their hold."
 msgstr "ضيف يُكمل الحجز حاليًا على طاولة في هذا الوقت. الحجز هنا يتجاوز حجزه المؤقت."
 
@@ -1847,6 +1847,10 @@ msgstr "قبول"
 msgid "Accept guest reservations from your public website and apps."
 msgstr "قبول حجوزات الضيوف من موقعك العام وتطبيقاتك."
 
+#: app/components/settings/cards/organization/shop-card.tsx:92
+msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
+msgstr "اقبل المدفوعات عبر الإنترنت لطلباتك. تتم معالجة المدفوعات عبر Checkout.com ويتم تحويلها إليك."
+
 #: app/components/locations/location-form.tsx:429
 msgid "Accept orders and show this location on the website."
 msgstr "استقبال الطلبات وإظهار هذا الفرع على الموقع."
@@ -1945,6 +1949,18 @@ msgstr "على مستوى مؤسستك"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1046
 msgid "Actions"
 msgstr "الإجراءات"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:104
+msgid "Activate a sub-entity to let it take payments and receive payouts."
+msgstr "فعّل كيانًا فرعيًا ليتمكن من قبول المدفوعات واستلام التحويلات."
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:163
+msgid "Activate payments"
+msgstr "تفعيل المدفوعات"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:191
+msgid "Activate payouts"
+msgstr "تفعيل التحويلات"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:298
 msgid "active"
@@ -3212,7 +3228,7 @@ msgstr "الحساسية والاحتياجات الغذائية"
 msgid "Allergies and dietary needs:"
 msgstr "الحساسية والاحتياجات الغذائية:"
 
-#: app/components/reservations/booking-sheet.tsx:533
+#: app/components/reservations/booking-sheet.tsx:537
 #: app/components/reservations/detail-sheet.tsx:943
 msgid "Allergies:"
 msgstr "الحساسية:"
@@ -3224,6 +3240,10 @@ msgstr "حساسية"
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:781
 msgid "Allergy / Dietary"
 msgstr "الحساسية / النظام الغذائي"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:228
+msgid "Allocation"
+msgstr "التخصيص"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1386
 msgid "Allow browsing items before launch"
@@ -3261,7 +3281,7 @@ msgstr "اسمح بالوصول إلى الميكروفون"
 msgid "Allow overbook / tight table drop"
 msgstr "السماح بالحجز الزائد / الإفلات على طاولة ضيقة"
 
-#: app/components/reservations/walk-in-dialog.tsx:302
+#: app/components/reservations/walk-in-dialog.tsx:306
 msgid "Allow overbooking / seating on blocked or tight table"
 msgstr "السماح بالحجز الزائد / الإجلاس على طاولة محظورة أو ضيقة"
 
@@ -3315,6 +3335,11 @@ msgstr "النص البديل"
 msgid "Amber"
 msgstr "كهرماني"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:225
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:89
+msgid "Amount"
+msgstr "المبلغ"
+
 #: app/utils/staffing/labor-errors.ts:41
 msgid "Amounts can have at most two decimal places."
 msgstr "يمكن أن تحتوي المبالغ على خانتين عشريتين كحد أقصى."
@@ -3366,7 +3391,7 @@ msgstr "التحليلات والتتبع"
 msgid "Android app"
 msgstr "تطبيق أندرويد"
 
-#: app/components/reservations/booking-sheet.tsx:71
+#: app/components/reservations/booking-sheet.tsx:75
 #: app/utils/reservations/labels.ts:84
 #: app/utils/reservations/labels.ts:94
 msgid "Anniversary"
@@ -3446,7 +3471,7 @@ msgstr "إجابات الأسئلة الشائعة، وكيف يسمع الوك�
 msgid "Any area"
 msgstr "أي منطقة"
 
-#: app/components/reservations/booking-sheet.tsx:645
+#: app/components/reservations/booking-sheet.tsx:649
 msgid "Any Area"
 msgstr "أي منطقة"
 
@@ -3552,6 +3577,14 @@ msgstr "يجب على المتقدمين الإجابة قبل أن يتمكنو
 #: app/components/hiring/candidate-sheet.tsx:512
 msgid "Application deleted."
 msgstr "تم حذف الطلب."
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:178
+msgid "Application fee refunds"
+msgstr "استردادات رسوم التطبيق"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:163
+msgid "Application fees"
+msgstr "رسوم التطبيق"
 
 #: ../../packages/reports/src/ui/report-labels.ts:73
 msgid "Applications at each stage, from new to hired, over the last 3 months."
@@ -3867,7 +3900,7 @@ msgstr "تعيين المسؤوليات"
 #~ msgstr "عيّن الأقسام والعناصر لهذا الطرح، وحدد حدودًا مجمعة أو لكل عنصر."
 
 #: app/components/reservations/detail-sheet.tsx:799
-#: app/components/reservations/walk-in-dialog.tsx:185
+#: app/components/reservations/walk-in-dialog.tsx:189
 msgid "Assign Table"
 msgstr "تعيين طاولة"
 
@@ -3949,6 +3982,10 @@ msgstr "إرفاق مجموعات معدِّلات فرعية تظهر عندم�
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
+#: app/routes/mock-payments+/dashboard.tsx:161
+msgid "Attempts"
+msgstr "المحاولات"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:364
 msgid "Attention Needed"
 msgstr "يتطلب الانتباه"
@@ -3964,6 +4001,11 @@ msgstr "سجل التدقيق"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:231
 #~ msgid "Audit trail and step execution history triggered by \"{triggerLabel}\"."
 #~ msgstr "سجل التدقيق وتاريخ تنفيذ الخطوات المُفعَّل بواسطة \"{triggerLabel}\"."
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:70
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:76
+msgid "Authenticate this payment"
+msgstr "صادق على هذه الدفعة"
 
 #: app/components/settings/two-factor-form.tsx:87
 #: app/components/settings/two-factor-form.tsx:241
@@ -3987,11 +4029,11 @@ msgid "Authorized Clients"
 msgstr "العملاء المصرح لهم"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
-#: app/components/reservations/booking-sheet.tsx:604
+#: app/components/reservations/booking-sheet.tsx:608
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/components/reservations/booking-sheet.tsx:625
+#: app/components/reservations/booking-sheet.tsx:629
 msgid "Auto / Any"
 msgstr "تلقائي / أي طاولة"
 
@@ -4000,11 +4042,11 @@ msgid "Auto clock-out"
 msgstr "انصراف تلقائي"
 
 #: app/components/reservations/waitlist/seat-dialog.tsx:168
-#: app/components/reservations/walk-in-dialog.tsx:194
+#: app/components/reservations/walk-in-dialog.tsx:198
 msgid "Auto-assign best open table"
 msgstr "تعيين أفضل طاولة متاحة تلقائياً"
 
-#: app/components/reservations/booking-sheet.tsx:665
+#: app/components/reservations/booking-sheet.tsx:669
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:378
 msgid "Auto-assign best table"
 msgstr "تعيين أفضل طاولة تلقائياً"
@@ -4134,7 +4176,7 @@ msgstr "متوفر في هذا الفرع"
 msgid "Available during…"
 msgstr "متاح خلال…"
 
-#: app/components/reservations/booking-sheet.tsx:679
+#: app/components/reservations/booking-sheet.tsx:683
 msgid "Available Slots"
 msgstr "الأوقات المتاحة"
 
@@ -4184,6 +4226,9 @@ msgstr "أبيض وأسود"
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:218
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:157
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:221
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:111
 msgid "Back"
 msgstr "رجوع"
 
@@ -4378,7 +4423,7 @@ msgstr "الفواتير"
 msgid "Billing & Subscription"
 msgstr "الفوترة والاشتراك"
 
-#: app/components/reservations/booking-sheet.tsx:70
+#: app/components/reservations/booking-sheet.tsx:74
 #: app/utils/reservations/labels.ts:83
 #: app/utils/reservations/labels.ts:95
 msgid "Birthday"
@@ -4505,15 +4550,15 @@ msgstr "محجوزة باسم {name} ({size}){codeSuffix}."
 msgid "Booked by a party of {size}{codeSuffix}."
 msgstr "محجوزة لمجموعة من {size}{codeSuffix}."
 
-#: app/components/reservations/booking-sheet.tsx:300
+#: app/components/reservations/booking-sheet.tsx:302
 msgid "Booked on a closed day."
 msgstr "تم الحجز في يوم مغلق."
 
-#: app/components/reservations/booking-sheet.tsx:302
+#: app/components/reservations/booking-sheet.tsx:304
 msgid "Booked over the pacing cover limit."
 msgstr "تم الحجز فوق حد عدد الضيوف لكل فترة."
 
-#: app/components/reservations/booking-sheet.tsx:304
+#: app/components/reservations/booking-sheet.tsx:306
 msgid "Booked over the pacing party limit."
 msgstr "تم الحجز فوق حد عدد الحجوزات لكل فترة."
 
@@ -4541,7 +4586,7 @@ msgstr "تعديل الحجز"
 msgid "Booking confirmation"
 msgstr "تأكيد الحجز"
 
-#: app/components/reservations/booking-sheet.tsx:1044
+#: app/components/reservations/booking-sheet.tsx:1048
 msgid "Booking..."
 msgstr "جارٍ الحجز..."
 
@@ -4570,7 +4615,7 @@ msgstr "حجوزات اليوم"
 msgid "Booth"
 msgstr "كابينة"
 
-#: app/components/reservations/booking-sheet.tsx:931
+#: app/components/reservations/booking-sheet.tsx:935
 msgid "Booth preferred, high chair..."
 msgstr "يفضل مقصورة، كرسي أطفال..."
 
@@ -4780,7 +4825,7 @@ msgstr "ساعات العمل"
 msgid "Business info"
 msgstr "معلومات النشاط التجاري"
 
-#: app/components/reservations/booking-sheet.tsx:73
+#: app/components/reservations/booking-sheet.tsx:77
 #: app/utils/reservations/labels.ts:86
 msgid "Business Meal"
 msgstr "وجبة عمل"
@@ -5082,7 +5127,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/reservations/booking-sheet.tsx:1034
+#: app/components/reservations/booking-sheet.tsx:1038
 #: app/components/reservations/detail-sheet.tsx:1277
 #: app/components/reservations/guests/guest-merge-dialog.tsx:161
 #: app/components/reservations/guests/guest-notes-panel.tsx:106
@@ -5093,7 +5138,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:136
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:263
 #: app/components/reservations/waitlist/seat-dialog.tsx:257
-#: app/components/reservations/walk-in-dialog.tsx:314
+#: app/components/reservations/walk-in-dialog.tsx:318
 #: app/components/roles/tenant-role-access-manager.tsx:954
 #: app/components/roles/tenant-role-access-manager.tsx:1477
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
@@ -5301,6 +5346,10 @@ msgstr "رسوم البطاقة المخصومة"
 msgid "Card fee withheld from online tips (%)"
 msgstr "رسوم البطاقة المخصومة من إكراميات الطلبات عبر الإنترنت (%)"
 
+#: app/routes/mock-payments+/__card-form.tsx:40
+msgid "Card number"
+msgstr "رقم البطاقة"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4391
 msgid "Card position"
 msgstr "موضع البطاقة"
@@ -5398,7 +5447,7 @@ msgstr "التموين والمناسبات الكبيرة"
 msgid "Catering goes to the manager"
 msgstr "طلبات التموين تُحوَّل إلى المدير"
 
-#: app/components/reservations/booking-sheet.tsx:74
+#: app/components/reservations/booking-sheet.tsx:78
 #: app/utils/reservations/labels.ts:87
 msgid "Celebration"
 msgstr "احتفال"
@@ -5588,9 +5637,21 @@ msgstr "تحصيل ضريبة المبيعات على هذا الخيار عند
 msgid "Charge tax at checkout."
 msgstr "تحصيل الضريبة عند الدفع."
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:153
+msgid "Charges"
+msgstr "الرسوم"
+
 #: app/components/roles/tenant-role-access-manager.tsx:430
 msgid "Charges & refunds"
 msgstr "الرسوم والمبالغ المستردة"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:140
+msgid "Charges disabled"
+msgstr "الرسوم معطلة"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:138
+msgid "Charges enabled"
+msgstr "الرسوم مفعلة"
 
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
@@ -5704,7 +5765,7 @@ msgstr "جارٍ التحقق من سجلات الموظفين…"
 msgid "Checking references…"
 msgstr "جارٍ التحقق من المراجع…"
 
-#: app/components/reservations/booking-sheet.tsx:683
+#: app/components/reservations/booking-sheet.tsx:687
 msgid "Checking slots..."
 msgstr "جارٍ فحص الأوقات..."
 
@@ -5732,13 +5793,25 @@ msgstr "مهلة حجز الطلب"
 msgid "Checkout hold TTL (seconds)"
 msgstr "مدة الاحتفاظ المؤقت بالحجز (ثوانٍ)"
 
-#: app/components/settings/cards/organization/shop-card.tsx:101
+#: app/components/settings/cards/organization/shop-card.tsx:115
 msgid "Checkout payout not connected"
 msgstr "دفعات الخروج غير متصلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:228
+#: app/components/settings/cards/organization/shop-card.tsx:257
 msgid "Checkout processor"
 msgstr "معالج الدفع عند الخروج"
+
+#: app/routes/mock-payments+/dashboard.tsx:117
+msgid "Checkout.com dashboard"
+msgstr "لوحة Checkout.com"
+
+#: app/routes/mock-payments+/dashboard.tsx:102
+msgid "Checkout.com: mocked"
+msgstr "Checkout.com: وهمي"
+
+#: app/routes/mock-payments+/dashboard.tsx:104
+msgid "Checkout.com: real"
+msgstr "Checkout.com: حقيقي"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:777
 msgid "Checks dining areas, active bookable tables, service windows, and turn-time bucket coverage across party sizes."
@@ -6332,7 +6405,7 @@ msgstr "مغلق (طوال اليوم)"
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
 
-#: app/components/reservations/booking-sheet.tsx:707
+#: app/components/reservations/booking-sheet.tsx:711
 msgid "Closed for online bookings on this date. Staff can still book."
 msgstr "الحجز عبر الإنترنت مغلق في هذا التاريخ. يمكن للموظفين الحجز."
 
@@ -6340,11 +6413,11 @@ msgstr "الحجز عبر الإنترنت مغلق في هذا التاريخ. 
 msgid "Closed for private event"
 msgstr "مغلق لمناسبة خاصة"
 
-#: app/components/reservations/booking-sheet.tsx:691
+#: app/components/reservations/booking-sheet.tsx:695
 msgid "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
 msgstr "مغلق في هذا التاريخ ({dayName}). لا توجد أوقات متاحة. فعّل التجاوز أدناه للحجز رغم ذلك."
 
-#: app/components/reservations/booking-sheet.tsx:696
+#: app/components/reservations/booking-sheet.tsx:700
 msgid "Closed on this date. No slots are offered. Turn on the override below to book anyway."
 msgstr "مغلق في هذا التاريخ. لا توجد أوقات متاحة. فعّل التجاوز أدناه للحجز رغم ذلك."
 
@@ -6482,6 +6555,10 @@ msgstr "إجراءات التعليق"
 msgid "Comments"
 msgstr "التعليقات"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:231
+msgid "Commission"
+msgstr "العمولة"
+
 #: app/components/menu/menu-allergen-selector.tsx:36
 #: app/components/menu/menu-allergen-selector.tsx:84
 msgid "Common Allergens"
@@ -6518,6 +6595,7 @@ msgstr "مكتمل"
 #: app/components/phone-agent/call-data.ts:141
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:306
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:666
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:82
 msgid "Complete"
 msgstr "مكتملة"
 
@@ -6532,6 +6610,10 @@ msgstr "تعبئة نموذج"
 #: app/components/roles/tenant-role-access-manager.tsx:234
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "إكمال المكالمات والطلبات وإعادة فتحها، ووسم المكالمات. يتطلب صلاحية عرض المكالمات."
+
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:94
+msgid "Complete authentication"
+msgstr "إكمال المصادقة"
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:397
 msgid "Complete order"
@@ -6809,7 +6891,7 @@ msgstr "ربط نطاق"
 msgid "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy in Settings to view and reply to customer reviews here."
 msgstr "قم بربط Google أو Yelp أو TripAdvisor أو Deliveroo أو Just Eat أو OpenTable أو Resy في الإعدادات لعرض تقييمات العملاء والرد عليها هنا."
 
-#: app/components/settings/cards/organization/shop-card.tsx:130
+#: app/components/settings/cards/organization/shop-card.tsx:149
 msgid "Connect payout account"
 msgstr "ربط حساب المدفوعات"
 
@@ -6850,6 +6932,10 @@ msgstr "اربط نظام نقاط البيع"
 #: app/components/staff/kiosk-manager.tsx:718
 msgid "Connected"
 msgstr "متصل"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:73
+msgid "Connected account"
+msgstr "الحساب المتصل"
 
 #: app/components/settings/cards/connections-card.tsx:39
 msgid "Connected Accounts"
@@ -6943,11 +7029,12 @@ msgstr "تغطية متصلة 1–{onlinePartyMax} ضيوف"
 #: app/components/kiosk/pin-pad.tsx:127
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:680
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:95
 #: app/routes/organizations+/create.tsx:1060
 msgid "Continue"
 msgstr "متابعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:128
+#: app/components/settings/cards/organization/shop-card.tsx:147
 msgid "Continue payout setup"
 msgstr "متابعة إعداد المدفوعات"
 
@@ -7721,7 +7808,7 @@ msgstr "أنشئ تجارب طعام مدفوعة مسبقاً أو بضمان �
 msgid "Create redirect"
 msgstr "إنشاء إعادة توجيه"
 
-#: app/components/reservations/booking-sheet.tsx:1046
+#: app/components/reservations/booking-sheet.tsx:1050
 msgid "Create Reservation"
 msgstr "إنشاء حجز"
 
@@ -8079,7 +8166,7 @@ msgstr "العملاء"
 #~ msgid "Customers have this much time to finish checkout before their items are released back to inventory."
 #~ msgstr "لدى العملاء هذا الوقت لإتمام الدفع قبل إعادة عناصرهم إلى المخزون."
 
-#: app/components/settings/cards/organization/shop-card.tsx:295
+#: app/components/settings/cards/organization/shop-card.tsx:324
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent}% بعد رسوم المنصة."
 
@@ -8090,6 +8177,10 @@ msgstr "يستلم العملاء الطلبات من المطعم."
 #: app/components/data-table.tsx:509
 #~ msgid "Customize Columns"
 #~ msgstr "تخصيص الأعمدة"
+
+#: app/routes/mock-payments+/__card-form.tsx:70
+msgid "CVC"
+msgstr "رمز الأمان"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
@@ -8115,7 +8206,7 @@ msgstr "الساعات الإضافية اليومية متوقفة · يبدأ 
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "الساعات الإضافية اليومية مفعّلة · يبدأ الأسبوع {weekStart}"
 
-#: app/components/reservations/booking-sheet.tsx:50
+#: app/components/reservations/booking-sheet.tsx:54
 #: app/utils/reservations/labels.ts:106
 msgid "Dairy-Free"
 msgstr "خالٍ من الألبان"
@@ -8165,7 +8256,7 @@ msgstr "خطأ في الاتصال بقاعدة البيانات"
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:341
-#: app/components/reservations/booking-sheet.tsx:549
+#: app/components/reservations/booking-sheet.tsx:553
 #: app/components/reservations/guests/guest-profile-screen.tsx:468
 #: app/components/reservations/reports/report-panels.tsx:289
 #: app/components/reservations/reports/report-panels.tsx:366
@@ -8185,7 +8276,7 @@ msgstr "التاريخ"
 msgid "Date & time"
 msgstr "التاريخ والوقت"
 
-#: app/components/reservations/booking-sheet.tsx:72
+#: app/components/reservations/booking-sheet.tsx:76
 #: app/utils/reservations/labels.ts:85
 msgid "Date Night"
 msgstr "أمسية رومانسية"
@@ -8730,6 +8821,18 @@ msgstr "تم حذف قاعدة التدريب \"{title}\""
 msgid "Deleting…"
 msgstr "جارٍ الحذف…"
 
+#: app/routes/mock-payments+/dashboard.tsx:140
+msgid "Deliver queued events"
+msgstr "تسليم الأحداث المنتظرة"
+
+#: app/routes/mock-payments+/dashboard.tsx:180
+#~ msgid "Delivered ({0})"
+#~ msgstr "تم التسليم ({0})"
+
+#: app/routes/mock-payments+/dashboard.tsx:182
+msgid "Delivered ({lastStatus})"
+msgstr "تم التسليم ({lastStatus})"
+
 #: app/components/mailbox/reviews-tab.tsx:76
 msgid "Deliveroo"
 msgstr "Deliveroo"
@@ -8740,6 +8843,7 @@ msgstr "Deliveroo"
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:307
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
+#: app/routes/mock-payments+/dashboard.tsx:158
 msgid "Delivery"
 msgstr "التوصيل"
 
@@ -8795,7 +8899,7 @@ msgstr "مناطق التوصيل والنطاق الجغرافي"
 msgid "Deny"
 msgstr "رفض"
 
-#: app/components/reservations/booking-sheet.tsx:1007
+#: app/components/reservations/booking-sheet.tsx:1011
 msgid "Deposit / Card Hold Policy:"
 msgstr "سياسة العربون / تفويض البطاقة:"
 
@@ -8822,7 +8926,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/components/roles/tenant-role-access-manager.tsx:1065
 #: app/components/roles/tenant-role-access-manager.tsx:1224
 #: app/components/roles/tenant-role-access-manager.tsx:1406
-#: app/components/settings/cards/organization/shop-card.tsx:268
+#: app/components/settings/cards/organization/shop-card.tsx:297
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
@@ -8899,6 +9003,7 @@ msgstr "لوحة التفاصيل"
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:676
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:526
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:624
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:92
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -8965,18 +9070,18 @@ msgstr "النظام الغذائي ومسببات الحساسية"
 msgid "Dietary & Allergy Alerts"
 msgstr "تنبيهات النظام الغذائي والحساسية"
 
-#: app/components/reservations/booking-sheet.tsx:908
+#: app/components/reservations/booking-sheet.tsx:912
 #: app/components/reservations/detail-sheet.tsx:876
 msgid "Dietary notes"
 msgstr "ملاحظات غذائية"
 
-#: app/components/reservations/booking-sheet.tsx:915
+#: app/components/reservations/booking-sheet.tsx:919
 msgid "Dietary notes, e.g. no sesame, severe peanut allergy"
 msgstr "ملاحظات غذائية، مثل بدون سمسم أو حساسية شديدة من الفول السوداني"
 
 #: app/components/menu/modifier-form.tsx:1686
 #: app/components/menu/modifier-form.tsx:2041
-#: app/components/reservations/booking-sheet.tsx:888
+#: app/components/reservations/booking-sheet.tsx:892
 msgid "Dietary Tags"
 msgstr "العلامات الغذائية"
 
@@ -9011,7 +9116,7 @@ msgstr "بقشيش تناول الطعام في المطعم"
 msgid "Dining area"
 msgstr "منطقة الطعام"
 
-#: app/components/reservations/booking-sheet.tsx:636
+#: app/components/reservations/booking-sheet.tsx:640
 msgid "Dining Area"
 msgstr "منطقة الطعام"
 
@@ -9165,6 +9270,10 @@ msgstr "اعرض تاريخ الفتح أسفل العد التنازلي"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:368
 msgid "Displayed"
 msgstr "معروض"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:183
+msgid "Disputes"
+msgstr "النزاعات"
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:174
 msgid "Divide tips"
@@ -9517,7 +9626,7 @@ msgstr "المدة"
 msgid "Duration (m)"
 msgstr "المدة (د)"
 
-#: app/components/reservations/booking-sheet.tsx:596
+#: app/components/reservations/booking-sheet.tsx:600
 msgid "Duration (min)"
 msgstr "المدة (دقيقة)"
 
@@ -9960,7 +10069,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:450
-#: app/components/reservations/booking-sheet.tsx:837
+#: app/components/reservations/booking-sheet.tsx:841
 #: app/components/reservations/guests/guest-profile-screen.tsx:715
 #: app/components/settings/cards/notification-preferences-card.tsx:27
 #: app/components/settings/cards/profile-card.tsx:132
@@ -9973,6 +10082,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
 #: app/routes/_auth+/login.tsx:773
 #: app/routes/_auth+/signup.tsx:225
+#: app/routes/mock-payments+/__card-form.tsx:27
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
@@ -10086,7 +10196,7 @@ msgstr "تفعيل تخزين S3 مخصص"
 msgid "Enable gift card redemptions on this drop"
 msgstr "تفعيل استرداد بطاقات الهدايا في هذا الطرح"
 
-#: app/components/settings/cards/organization/shop-card.tsx:194
+#: app/components/settings/cards/organization/shop-card.tsx:215
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
@@ -10099,6 +10209,8 @@ msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:373
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:144
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:171
 msgid "Enabled"
 msgstr "مفعّل"
 
@@ -10427,6 +10539,10 @@ msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما 
 msgid "Enterprise Plan"
 msgstr "الخطة المؤسسية"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:119
+msgid "Entity"
+msgstr "الكيان"
+
 #: app/components/reservations/detail-sheet.tsx:70
 #: app/utils/reservations/labels.ts:30
 #: app/utils/reservations/labels.ts:124
@@ -10524,6 +10640,10 @@ msgstr "الأجور التقديرية حسب الوظيفة خلال آخر 30
 #: app/components/hiring/job-editor.tsx:598
 msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "طاهٍ مسائي على الخط، ثلاث ليالٍ في الأسبوع، يجيد العمل على الشواية"
+
+#: app/routes/mock-payments+/dashboard.tsx:125
+msgid "Event log"
+msgstr "سجل الأحداث"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:111
 msgid "Event-driven workflows"
@@ -10707,6 +10827,14 @@ msgstr "تنتهي الصلاحية"
 msgid "Expires {expireDate}"
 msgstr "تنتهي صلاحيته {expireDate}"
 
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:181
+msgid "Expires at {expiresAt}"
+msgstr "ينتهي في {expiresAt}"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:180
+#~ msgid "Expires at <0>{0}</0>"
+#~ msgstr "ينتهي في <0>{0}</0>"
+
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -10715,6 +10843,10 @@ msgstr "تنتهي صلاحيته خلال {left}"
 #: app/components/staff/onboarding/certificates-tab.tsx:237
 msgid "Expires today"
 msgstr "تنتهي اليوم"
+
+#: app/routes/mock-payments+/__card-form.tsx:56
+msgid "Expiry (MM/YY)"
+msgstr "تاريخ الانتهاء (شهر/سنة)"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:86
 #~ msgid "Explain this platform"
@@ -10769,12 +10901,24 @@ msgstr "معرّف بكسل Facebook"
 msgid "Fade up"
 msgstr "التلاشي للأعلى"
 
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:104
+msgid "Fail authentication"
+msgstr "إفشال المصادقة"
+
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 msgid "Failed"
 msgstr "فشل"
+
+#: app/routes/mock-payments+/dashboard.tsx:184
+#~ msgid "Failed ({0})"
+#~ msgstr "فشل ({0})"
+
+#: app/routes/mock-payments+/dashboard.tsx:186
+msgid "Failed ({lastStatus})"
+msgstr "فشل ({lastStatus})"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:276
 msgid "Failed to archive dining area."
@@ -10817,7 +10961,7 @@ msgstr "فشل إنشاء الرحلة"
 msgid "Failed to create pacing rule."
 msgstr "فشل في إنشاء قاعدة التدفق."
 
-#: app/components/reservations/booking-sheet.tsx:318
+#: app/components/reservations/booking-sheet.tsx:320
 msgid "Failed to create reservation."
 msgstr "فشل إنشاء الحجز."
 
@@ -11053,7 +11197,7 @@ msgstr "فشل البحث عن المستخدمين"
 msgid "Failed to seat party."
 msgstr "فشل إجلاس المجموعة."
 
-#: app/components/reservations/walk-in-dialog.tsx:120
+#: app/components/reservations/walk-in-dialog.tsx:124
 msgid "Failed to seat walk-in."
 msgstr "فشل إجلاس الضيف المباشر."
 
@@ -11560,7 +11704,7 @@ msgstr "الجمعة"
 msgid "Friday"
 msgstr "الجمعة"
 
-#: app/components/reservations/booking-sheet.tsx:945
+#: app/components/reservations/booking-sheet.tsx:949
 msgid "Friends of chef, comp welcome drink..."
 msgstr "أصدقاء الشيف، مشروب ترحيبي مجاني..."
 
@@ -11618,7 +11762,7 @@ msgstr "كامل"
 msgid "Full access to organization settings and members"
 msgstr "وصول كامل إلى إعدادات المؤسسة وأعضائها"
 
-#: app/components/reservations/booking-sheet.tsx:815
+#: app/components/reservations/booking-sheet.tsx:819
 msgid "Full name"
 msgstr "الاسم الكامل"
 
@@ -11765,7 +11909,7 @@ msgstr "أدخل اسمًا لمجموعتك"
 #: app/components/menu/modifier-form.tsx:1704
 #: app/components/menu/modifier-form.tsx:2059
 #: app/components/menu/option-form.tsx:632
-#: app/components/reservations/booking-sheet.tsx:47
+#: app/components/reservations/booking-sheet.tsx:51
 #: app/utils/reservations/labels.ts:103
 msgid "Gluten-Free"
 msgstr "خالٍ من الغلوتين"
@@ -11930,7 +12074,7 @@ msgstr "مجموعات"
 msgid "Guest"
 msgstr "ضيف"
 
-#: app/components/settings/cards/organization/shop-card.tsx:367
+#: app/components/settings/cards/organization/shop-card.tsx:397
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -11985,15 +12129,15 @@ msgstr "رسائل الضيوف"
 msgid "Guest Messages"
 msgstr "رسائل الضيوف"
 
-#: app/components/reservations/booking-sheet.tsx:809
+#: app/components/reservations/booking-sheet.tsx:813
 msgid "Guest Name"
 msgstr "اسم الضيف"
 
-#: app/components/reservations/walk-in-dialog.tsx:241
+#: app/components/reservations/walk-in-dialog.tsx:245
 msgid "Guest Name (Optional)"
 msgstr "اسم الضيف (اختياري)"
 
-#: app/components/reservations/booking-sheet.tsx:336
+#: app/components/reservations/booking-sheet.tsx:338
 msgid "Guest name and phone number are required."
 msgstr "اسم الضيف ورقم الهاتف مطلوبان."
 
@@ -12018,7 +12162,7 @@ msgstr "البيانات الشخصية للضيوف"
 msgid "Guest relations"
 msgstr "علاقات الضيوف"
 
-#: app/components/reservations/booking-sheet.tsx:924
+#: app/components/reservations/booking-sheet.tsx:928
 msgid "Guest Request / Notes"
 msgstr "طلبات / ملاحظات الضيف"
 
@@ -12118,7 +12262,7 @@ msgstr "الضيوف: {guestsCount}"
 msgid "h"
 msgstr "س"
 
-#: app/components/reservations/booking-sheet.tsx:48
+#: app/components/reservations/booking-sheet.tsx:52
 #: app/utils/reservations/labels.ts:104
 msgid "Halal"
 msgstr "حلال"
@@ -12181,7 +12325,7 @@ msgstr "الارتفاع"
 msgid "Height (20–600)"
 msgstr "الارتفاع (20–600)"
 
-#: app/components/reservations/booking-sheet.tsx:753
+#: app/components/reservations/booking-sheet.tsx:757
 msgid "Held"
 msgstr "محجوز مؤقتًا"
 
@@ -12445,7 +12589,7 @@ msgstr "مضيف استقبال"
 msgid "Host Actions & Status"
 msgstr "إجراءات المضيف والحالة"
 
-#: app/components/reservations/walk-in-dialog.tsx:282
+#: app/components/reservations/walk-in-dialog.tsx:286
 msgid "Host Notes"
 msgstr "ملاحظات المضيف"
 
@@ -12457,11 +12601,11 @@ msgstr "منصة الاستقبال"
 msgid "Host stand views"
 msgstr "عروض منصة الاستقبال"
 
-#: app/components/settings/cards/organization/shop-card.tsx:211
+#: app/components/settings/cards/organization/shop-card.tsx:232
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
 msgstr "يصبح الدفع المستضاف متاحاً بمجرد قيام المنصة بتهيئة معالج التاجر المسجل."
 
-#: app/components/settings/cards/organization/shop-card.tsx:95
+#: app/components/settings/cards/organization/shop-card.tsx:109
 msgid "Hosted checkout not connected"
 msgstr "الدفع المستضاف غير متصل"
 
@@ -12635,6 +12779,10 @@ msgstr "لن أتمكن بعد الآن من الوصول إلى المطعم و
 msgid "I've Copied the Key"
 msgstr "لقد نسخت المفتاح"
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:86
+msgid "ID"
+msgstr "المعرّف"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:461
 msgid "Identify risks"
 msgstr "تحديد المخاطر"
@@ -12701,7 +12849,7 @@ msgstr "تأكيد الحجوزات عبر الإنترنت فوراً عندم�
 msgid "Immediately invalidate all tokens for this client"
 msgstr "إبطال جميع الرموز المميزة لهذا العميل فوراً"
 
-#: app/components/reservations/walk-in-dialog.tsx:135
+#: app/components/reservations/walk-in-dialog.tsx:139
 msgid "Immediately seat a walk-in party at an available table or auto-assign the best open table."
 msgstr "قم بإجلاس ضيوف الحضور المباشر فوراً على طاولة متاحة أو تعيين أفضل طاولة مفتوحة تلقائياً."
 
@@ -12898,6 +13046,14 @@ msgstr "إدراج حقل هنا"
 msgid "Inspect"
 msgstr "استعراض"
 
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:61
+msgid "Instantly enable Checkout.com (mock)"
+msgstr "تفعيل Checkout.com فورًا (وهمي)"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:45
+msgid "Instantly enable Stripe (mock)"
+msgstr "تفعيل Stripe فورًا (وهمي)"
+
 #: app/components/app-sidebar.tsx:660
 #: app/components/settings/cards/organization/integrations-card.tsx:181
 #: app/components/workspace-breadcrumb.tsx:65
@@ -12909,7 +13065,7 @@ msgstr "التكاملات"
 msgid "Internal channels for your team."
 msgstr "قنوات داخلية لفريقك."
 
-#: app/components/reservations/booking-sheet.tsx:938
+#: app/components/reservations/booking-sheet.tsx:942
 #: app/components/reservations/detail-sheet.tsx:1141
 msgid "Internal Host Notes"
 msgstr "ملاحظات المضيف الداخلية"
@@ -13041,7 +13197,7 @@ msgstr "الدعوات غير متاحة لهذه المؤسسة."
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
-#: app/components/settings/cards/organization/shop-card.tsx:163
+#: app/components/settings/cards/organization/shop-card.tsx:182
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
@@ -14416,7 +14572,7 @@ msgstr "تبدو سليمة"
 msgid "Looks right ({reviewCount})"
 msgstr "تبدو سليمة ({reviewCount})"
 
-#: app/components/reservations/booking-sheet.tsx:443
+#: app/components/reservations/booking-sheet.tsx:447
 msgid "Lookup Returning Guest (Phone or Name)"
 msgstr "البحث عن ضيف سابق (بالهاتف أو الاسم)"
 
@@ -15290,6 +15446,51 @@ msgstr "الجوال"
 msgid "Mobile app"
 msgstr "تطبيق الجوال"
 
+#: app/routes/mock-payments+/__mock-page.tsx:29
+msgid "Mock"
+msgstr "وهمي"
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:65
+msgid "Mock Checkout.com 3D Secure (local)"
+msgstr "Checkout.com 3D Secure وهمي (محلي)"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:96
+msgid "Mock Checkout.com dashboard (local)"
+msgstr "لوحة Checkout.com وهمية (محلي)"
+
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:102
+msgid "Mock Checkout.com HPP (local)"
+msgstr "صفحة دفع Checkout.com وهمية (محلي)"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:137
+msgid "Mock merchant"
+msgstr "تاجر وهمي"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:27
+#: app/components/settings/cards/organization/shop-card.tsx:126
+msgid "Mock payments"
+msgstr "مدفوعات وهمية"
+
+#: app/routes/mock-payments+/dashboard.tsx:78
+msgid "Mock payments (local)"
+msgstr "مدفوعات وهمية (محلي)"
+
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:71
+msgid "Mock Stripe 3D Secure (local)"
+msgstr "Stripe 3D Secure وهمي (محلي)"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:132
+msgid "Mock Stripe Checkout (local)"
+msgstr "Stripe Checkout وهمي (محلي)"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:62
+msgid "Mock Stripe Connect onboarding (local)"
+msgstr "تسجيل Stripe Connect وهمي (محلي)"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:124
+msgid "Mock Stripe Express dashboard (local)"
+msgstr "لوحة Stripe Express وهمية (محلي)"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1347
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1393
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:755
@@ -15600,6 +15801,10 @@ msgstr "الاسم"
 msgid "Name it so you can tell tablets apart, then open the pairing page on it."
 msgstr "سمِّه لتميّز بين الأجهزة، ثم افتح صفحة الربط عليه."
 
+#: app/routes/mock-payments+/__card-form.tsx:86
+msgid "Name on card"
+msgstr "الاسم على البطاقة"
+
 #: app/utils/staffing/onboarding-view.ts:222
 #: app/utils/staffing/onboarding-view.ts:343
 msgid "Name the task."
@@ -15881,7 +16086,7 @@ msgstr "صفحة جديدة"
 msgid "New Password"
 msgstr "كلمة المرور الجديدة"
 
-#: app/components/reservations/booking-sheet.tsx:423
+#: app/components/reservations/booking-sheet.tsx:427
 msgid "New Phone / Host Reservation"
 msgstr "حجز هاتفي / مضيف جديد"
 
@@ -16273,6 +16478,10 @@ msgstr "لا يوجد بريد إلكتروني مسجّل، لذا لم يُر�
 #: app/components/note/emoji-list.tsx:34
 msgid "No emojis found"
 msgstr "لم يتم العثور على رموز تعبيرية"
+
+#: app/routes/mock-payments+/dashboard.tsx:145
+msgid "No events yet."
+msgstr "لا توجد أحداث بعد."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
 msgid "No execution runs recorded yet for this automation."
@@ -16730,6 +16939,10 @@ msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 msgid "No pay is set yet."
 msgstr "لم يتم تحديد أي أجر بعد."
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:212
+msgid "No payments yet."
+msgstr "لا توجد مدفوعات بعد."
+
 #: app/components/staff/timesheets/payroll-summary.tsx:351
 msgid "No payroll ID"
 msgstr "لا يوجد رقم رواتب"
@@ -16932,6 +17145,10 @@ msgstr "لا توجد مناسبات خاصة مسجلة لهذه الخدمة."
 msgid "No staff phone is set, so only the transfer cases below can transfer calls."
 msgstr "لم يتم تعيين رقم هاتف للفريق، لذا يمكن تحويل المكالمات فقط في حالات التحويل أدناه."
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:112
+msgid "No sub-entities yet."
+msgstr "لا توجد كيانات فرعية بعد."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:389
 msgid "No submissions yet"
 msgstr "لا توجد ردود بعد"
@@ -17099,8 +17316,8 @@ msgstr "لم يحضر"
 msgid "No-show rate"
 msgstr "نسبة عدم الحضور"
 
-#: app/components/reservations/booking-sheet.tsx:492
-#: app/components/reservations/booking-sheet.tsx:526
+#: app/components/reservations/booking-sheet.tsx:496
+#: app/components/reservations/booking-sheet.tsx:530
 #: app/components/reservations/detail-sheet.tsx:921
 msgid "no-shows"
 msgstr "حالات عدم حضور"
@@ -17185,7 +17402,7 @@ msgstr "لا شيء"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
-#: app/components/reservations/booking-sheet.tsx:69
+#: app/components/reservations/booking-sheet.tsx:73
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
@@ -17243,7 +17460,7 @@ msgid "Not available when we need them"
 msgstr "غير متاح عندما نحتاج إليه"
 
 #: app/components/settings/cards/organization/review-integrations-card.tsx:60
-#: app/components/settings/cards/organization/shop-card.tsx:106
+#: app/components/settings/cards/organization/shop-card.tsx:120
 msgid "Not connected"
 msgstr "غير متصل"
 
@@ -17537,6 +17754,10 @@ msgstr "لا يوجد ما يُعرض هنا"
 msgid "Nothing waiting for a manager."
 msgstr "لا شيء بانتظار المدير."
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
+msgid "Nothing yet."
+msgstr "لا شيء بعد."
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:908
 msgid "Notification Message"
 msgstr "رسالة الإشعار"
@@ -17607,7 +17828,7 @@ msgstr "أرقام"
 msgid "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 msgstr "الأرقام التي يرد عليها الوكيل. نخصص أرقام الوكيل لنشاطك التجاري، وتبدأ الخطوط المحوّلة في الرد بمجرد التحقق منها."
 
-#: app/components/reservations/booking-sheet.tsx:49
+#: app/components/reservations/booking-sheet.tsx:53
 #: app/utils/reservations/labels.ts:105
 msgid "Nut Allergy"
 msgstr "حساسية المكسرات"
@@ -17624,7 +17845,7 @@ msgstr "المعلومات الغذائية"
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 
-#: app/components/reservations/booking-sheet.tsx:854
+#: app/components/reservations/booking-sheet.tsx:858
 #: app/components/reservations/detail-sheet.tsx:854
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:714
 msgid "Occasion"
@@ -17929,6 +18150,10 @@ msgstr "الطلبات عبر الإنترنت فقط، وليست كل المب
 msgid "Online orders, and this workplace sells nothing else"
 msgstr "الطلبات عبر الإنترنت، ولا يبيع مكان العمل هذا شيئًا آخر"
 
+#: app/components/settings/cards/organization/shop-card.tsx:82
+msgid "Online payments"
+msgstr "المدفوعات عبر الإنترنت"
+
 #: app/utils/staffing/onboarding-errors.ts:22
 msgid "Only a form task has a link."
 msgstr "مهمة النموذج فقط لها رابط."
@@ -18051,7 +18276,7 @@ msgstr "فتح مسار المكالمة"
 msgid "Open checklist"
 msgstr "فتح قائمة المهام"
 
-#: app/components/settings/cards/organization/shop-card.tsx:174
+#: app/components/settings/cards/organization/shop-card.tsx:193
 msgid "Open Checkout dashboard"
 msgstr "فتح لوحة تحكم الدفع"
 
@@ -18087,7 +18312,7 @@ msgstr "صورة Open Graph"
 msgid "Open guest profile"
 msgstr "فتح ملف الضيف"
 
-#: app/components/settings/cards/organization/shop-card.tsx:205
+#: app/components/settings/cards/organization/shop-card.tsx:226
 msgid "Open hosted dashboard"
 msgstr "فتح لوحة التحكم المستضافة"
 
@@ -18129,6 +18354,10 @@ msgstr "فتح الرابط"
 msgid "Open menu"
 msgstr "فتح القائمة"
 
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:70
+msgid "Open mock payments dashboard"
+msgstr "فتح لوحة المدفوعات الوهمية"
+
 #. placeholder {0}: selected.providerDisplayName
 #: app/components/mailbox/reviews-tab.tsx:601
 msgid "Open on {0}"
@@ -18146,7 +18375,7 @@ msgstr "مفتوح أو مغلق"
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "فتح الصفحات والنماذج والسمات في منشئ الموقع."
 
-#: app/components/settings/cards/organization/shop-card.tsx:142
+#: app/components/settings/cards/organization/shop-card.tsx:161
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
@@ -18338,7 +18567,7 @@ msgstr "المشغّل"
 msgid "Operator Invited"
 msgstr "تمت دعوة المشغّل"
 
-#: app/components/reservations/booking-sheet.tsx:954
+#: app/components/reservations/booking-sheet.tsx:958
 msgid "Operator Overrides & Deposit Policy"
 msgstr "تجاوزات المشغل وسياسة العربون"
 
@@ -18407,11 +18636,11 @@ msgstr "حدود اختيارية لهذا العنصر في هذا الطرح."
 msgid "Optional limits for this section on this drop."
 msgstr "حدود اختيارية لهذا القسم في هذا الطرح."
 
-#: app/components/reservations/walk-in-dialog.tsx:288
+#: app/components/reservations/walk-in-dialog.tsx:292
 msgid "Optional note"
 msgstr "ملاحظة اختيارية"
 
-#: app/components/reservations/booking-sheet.tsx:879
+#: app/components/reservations/booking-sheet.tsx:883
 msgid "Optional server name"
 msgstr "اسم النادل (اختياري)"
 
@@ -18532,7 +18761,7 @@ msgstr "فتح الطلبات"
 msgid "orders per slot"
 msgstr "طلبات لكل موعد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:345
+#: app/components/settings/cards/organization/shop-card.tsx:375
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
 
@@ -18733,11 +18962,11 @@ msgstr "يتداخل مع وردية أخرى لهذا الشخص"
 msgid "Overlaps with another booking on {tableNames}"
 msgstr "يتداخل مع حجز آخر على {tableNames}"
 
-#: app/components/reservations/booking-sheet.tsx:989
+#: app/components/reservations/booking-sheet.tsx:993
 msgid "Override blocked table"
 msgstr "تجاوز الطاولة المحظورة"
 
-#: app/components/reservations/booking-sheet.tsx:977
+#: app/components/reservations/booking-sheet.tsx:981
 msgid "Override closed day"
 msgstr "تجاوز اليوم المغلق"
 
@@ -18749,11 +18978,11 @@ msgstr "تجاوز فترات الخدمة المتكررة للعطلات أو 
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "تجاوز ساعات العمل المعتادة في الأعياد أو المناسبات أو الإغلاقات."
 
-#: app/components/reservations/booking-sheet.tsx:1000
+#: app/components/reservations/booking-sheet.tsx:1004
 msgid "Override schedule block"
 msgstr "تجاوز حظر الجدول"
 
-#: app/components/reservations/booking-sheet.tsx:965
+#: app/components/reservations/booking-sheet.tsx:969
 msgid "Override slot pacing cap"
 msgstr "تجاوز حد إيقاع الفترة"
 
@@ -19063,9 +19292,9 @@ msgstr "مجموعة من {partySize}"
 msgid "Party size"
 msgstr "عدد الأشخاص"
 
-#: app/components/reservations/booking-sheet.tsx:563
+#: app/components/reservations/booking-sheet.tsx:567
 #: app/components/reservations/detail-sheet.tsx:1048
-#: app/components/reservations/walk-in-dialog.tsx:152
+#: app/components/reservations/walk-in-dialog.tsx:156
 msgid "Party Size"
 msgstr "عدد الضيوف"
 
@@ -19088,6 +19317,7 @@ msgstr "مفاتيح المرور هي طريقة آمنة وبدون كلمة �
 #: app/components/settings/password-form.tsx:112
 #: app/routes/_auth+/login.tsx:801
 #: app/routes/_auth+/onboarding.tsx:467
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:83
 msgid "Password"
 msgstr "كلمة المرور"
 
@@ -19160,6 +19390,8 @@ msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 #: app/components/hiring/job-editor.tsx:763
 #: app/components/hiring/job-summary.tsx:61
 #: app/components/staff/staff-roster.tsx:147
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:140
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
 msgid "Pay"
 msgstr "الأجر"
 
@@ -19204,6 +19436,14 @@ msgstr "نوع الأجر"
 msgid "Pay week"
 msgstr "أسبوع الأجور"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
+msgid "Payment"
+msgstr "الدفعة"
+
+#: app/routes/mock-payments+/dashboard.tsx:83
+msgid "Payment mock"
+msgstr "المدفوعات الوهمية"
+
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:141
 msgid "Payment needs review"
 msgstr "الدفع يحتاج إلى مراجعة"
@@ -19212,13 +19452,32 @@ msgstr "الدفع يحتاج إلى مراجعة"
 msgid "Payment not yet received"
 msgstr "لم يُستلم الدفع بعد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:90
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:125
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:206
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:129
+msgid "Payments"
+msgstr "المدفوعات"
+
+#: app/components/settings/cards/organization/shop-card.tsx:104
 msgid "Payments enabled"
 msgstr "المدفوعات مفعّلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:115
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:128
+msgid "Payouts"
+msgstr "التحويلات"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:146
+msgid "Payouts disabled"
+msgstr "التحويلات معطلة"
+
+#: app/components/settings/cards/organization/shop-card.tsx:132
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:144
 msgid "Payouts enabled"
 msgstr "التحويلات مفعّلة"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:102
+msgid "Payouts restricted"
+msgstr "التحويلات مقيّدة"
 
 #: app/components/hiring/hire-dialog.tsx:279
 #: app/components/staff/details-tab.tsx:177
@@ -19419,7 +19678,7 @@ msgstr "الهاتف"
 msgid "Phone (optional)"
 msgstr "الهاتف (اختياري)"
 
-#: app/components/reservations/walk-in-dialog.tsx:254
+#: app/components/reservations/walk-in-dialog.tsx:258
 msgid "Phone (Optional)"
 msgstr "الهاتف (اختياري)"
 
@@ -19459,7 +19718,7 @@ msgstr "رقم الهاتف"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 #: app/components/locations/location-form.tsx:371
-#: app/components/reservations/booking-sheet.tsx:823
+#: app/components/reservations/booking-sheet.tsx:827
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
@@ -20107,7 +20366,7 @@ msgstr "الرمز البريدي"
 msgid "Posted {selectedReplyDate}"
 msgstr "نُشر في {selectedReplyDate}"
 
-#: app/components/reservations/booking-sheet.tsx:538
+#: app/components/reservations/booking-sheet.tsx:542
 msgid "Preference:"
 msgstr "التفضيل:"
 
@@ -20229,7 +20488,7 @@ msgstr "السعر"
 msgid "Price ($)"
 msgstr "السعر ($)"
 
-#: app/components/settings/cards/organization/shop-card.tsx:283
+#: app/components/settings/cards/organization/shop-card.tsx:312
 msgid "Price (USD)"
 msgstr "السعر (USD)"
 
@@ -20324,7 +20583,7 @@ msgstr "قيد المعالجة"
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
-#: app/components/settings/cards/organization/shop-card.tsx:254
+#: app/components/settings/cards/organization/shop-card.tsx:283
 msgid "Product name"
 msgstr "اسم المنتج"
 
@@ -20369,6 +20628,14 @@ msgstr "الرسالة الصوتية"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:596
 msgid "Pronunciations"
 msgstr "طرق النطق"
+
+#: app/routes/mock-payments+/dashboard.tsx:152
+msgid "Provider"
+msgstr "المزوّد"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:31
+msgid "Provider calls go to the built-in emulators. No real money moves and no real keys are used."
+msgstr "تذهب طلبات المزوّد إلى المحاكيات المدمجة. لا تتحرك أموال حقيقية ولا تُستخدم مفاتيح حقيقية."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:502
 msgid "Public"
@@ -20448,7 +20715,7 @@ msgstr "نشر هذا الأسبوع"
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:327
+#: app/components/settings/cards/organization/shop-card.tsx:356
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
@@ -20571,6 +20838,10 @@ msgstr "أسئلة حول الفوترة؟"
 #: app/components/hiring/screener-editor.tsx:98
 msgid "Questions are optional. A short yes or no on weekends or experience saves you reading every application."
 msgstr "الأسئلة اختيارية. سؤال قصير بنعم أو لا عن العمل في عطلة نهاية الأسبوع أو الخبرة يوفّر عليك قراءة كل طلب."
+
+#: app/routes/mock-payments+/dashboard.tsx:190
+msgid "Queued"
+msgstr "في الانتظار"
 
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:350
 msgid "Quick edit"
@@ -20798,7 +21069,7 @@ msgstr "يتلقى الإكراميات"
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:342
+#: app/components/settings/cards/organization/shop-card.tsx:372
 msgid "Recent orders"
 msgstr "الطلبات الأخيرة"
 
@@ -20902,6 +21173,10 @@ msgstr "مستطيل"
 msgid "Red"
 msgstr "أحمر"
 
+#: app/routes/mock-payments+/dashboard.tsx:223
+msgid "Redeliver"
+msgstr "إعادة التسليم"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
 msgid "Redirect actions"
 msgstr "إجراءات إعادة التوجيه"
@@ -20947,7 +21222,7 @@ msgstr "تحديث"
 msgid "Refresh calls"
 msgstr "تحديث المكالمات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:161
+#: app/components/settings/cards/organization/shop-card.tsx:180
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
@@ -20962,6 +21237,10 @@ msgstr "تحديث التقييمات"
 #: app/components/settings/cards/organization/site-card.tsx:509
 msgid "Refresh status"
 msgstr "تحديث الحالة"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
+msgid "Refunds"
+msgstr "المبالغ المستردة"
 
 #: app/components/settings/backup-codes-display.tsx:151
 msgid "Regenerate Codes"
@@ -22382,6 +22661,14 @@ msgstr "حفظ كمسودة"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
+msgid "Save card"
+msgstr "حفظ البطاقة"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:141
+msgid "Save card for later charges"
+msgstr "حفظ البطاقة للرسوم اللاحقة"
+
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:442
 #: app/components/menu/drop-wizard/drop-form.tsx:456
@@ -22455,7 +22742,7 @@ msgstr "حفظ البيانات الشخصية"
 msgid "Save phrases"
 msgstr "حفظ العبارات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:313
+#: app/components/settings/cards/organization/shop-card.tsx:342
 msgid "Save product"
 msgstr "حفظ المنتج"
 
@@ -22836,7 +23123,7 @@ msgstr "البحث بالاسم"
 msgid "Search by name or email..."
 msgstr "البحث بالاسم أو البريد الإلكتروني..."
 
-#: app/components/reservations/booking-sheet.tsx:450
+#: app/components/reservations/booking-sheet.tsx:454
 msgid "Search by phone (+1...) or guest name..."
 msgstr "ابحث بالهاتف (+1...) أو اسم الضيف..."
 
@@ -22940,7 +23227,7 @@ msgstr "ابحث في عمليات إعادة التوجيه..."
 msgid "Search results"
 msgstr "نتائج البحث"
 
-#: app/components/reservations/booking-sheet.tsx:426
+#: app/components/reservations/booking-sheet.tsx:430
 msgid "Search returning guests, check live slot availability, and book with optional operator overrides."
 msgstr "ابحث عن الضيوف السابقين، وتحقق من توفر الأوقات مباشرة، واحجز مع خيارات تجاوز المشغل."
 
@@ -22982,7 +23269,7 @@ msgstr "البحث..."
 msgid "Search…"
 msgstr "بحث…"
 
-#: app/components/reservations/booking-sheet.tsx:455
+#: app/components/reservations/booking-sheet.tsx:459
 msgid "Searching..."
 msgstr "جارٍ البحث..."
 
@@ -23043,11 +23330,11 @@ msgstr "أجلس هذه المجموعة رغم أن الطاولة محجوزة
 msgid "Seat walk-in at {0}"
 msgstr "إجلاس ضيف مباشر على {0}"
 
-#: app/components/reservations/walk-in-dialog.tsx:326
+#: app/components/reservations/walk-in-dialog.tsx:330
 msgid "Seat Walk-In Now"
 msgstr "إجلاس ضيف مباشر الآن"
 
-#: app/components/reservations/walk-in-dialog.tsx:132
+#: app/components/reservations/walk-in-dialog.tsx:136
 msgid "Seat Walk-In Party"
 msgstr "إجلاس مجموعة حضور مباشر"
 
@@ -23102,7 +23389,7 @@ msgid "Seating times must satisfy firstSeating <= lastSeating <= serviceEnd."
 msgstr "يجب أن تحقق أوقات الجلوس الشرط: أول جلوس <= آخر جلوس <= نهاية الخدمة."
 
 #: app/components/reservations/waitlist/seat-dialog.tsx:267
-#: app/components/reservations/walk-in-dialog.tsx:324
+#: app/components/reservations/walk-in-dialog.tsx:328
 msgid "Seating..."
 msgstr "جارٍ الإجلاس..."
 
@@ -23365,7 +23652,7 @@ msgstr "حدد فترة خدمة وعنصراً مستهدفاً."
 msgid "Select a service and valid hours for modified schedule."
 msgstr "حدد فترة خدمة وساعات صالحة للجدول المعدل."
 
-#: app/components/reservations/booking-sheet.tsx:766
+#: app/components/reservations/booking-sheet.tsx:770
 msgid "Select a slot above or enter any time in the Time field."
 msgstr "اختر وقتاً أعلاه أو أدخل أي وقت في حقل الوقت."
 
@@ -23562,7 +23849,7 @@ msgstr "سلوك الاختيار والحدود"
 msgid "Selection Mode"
 msgstr "وضع الاختيار"
 
-#: app/components/settings/cards/organization/shop-card.tsx:71
+#: app/components/settings/cards/organization/shop-card.tsx:87
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ المنصة بنسبة {SHOP_PLATFORM_FEE_PERCENT}% ويتم دفع الباقي لك."
 
@@ -23651,7 +23938,7 @@ msgstr "إرسال تعليمات إعادة التعيين"
 msgid "Send SMS"
 msgstr "إرسال رسالة نصية"
 
-#: app/components/reservations/booking-sheet.tsx:1021
+#: app/components/reservations/booking-sheet.tsx:1025
 msgid "Send SMS payment link"
 msgstr "إرسال رابط الدفع عبر رسالة نصية"
 
@@ -23752,16 +24039,16 @@ msgstr "افصل بين المصطلحات بفواصل. بحد أقصى 100."
 msgid "Serif"
 msgstr "بزوائد"
 
-#: app/components/reservations/walk-in-dialog.tsx:269
+#: app/components/reservations/walk-in-dialog.tsx:273
 msgid "Server (Optional)"
 msgstr "النادل (اختياري)"
 
-#: app/components/reservations/booking-sheet.tsx:873
+#: app/components/reservations/booking-sheet.tsx:877
 #: app/components/reservations/detail-sheet.tsx:1108
 msgid "Server / Section Label"
 msgstr "اسم النادل / القسم"
 
-#: app/components/reservations/walk-in-dialog.tsx:275
+#: app/components/reservations/walk-in-dialog.tsx:279
 msgid "Server name"
 msgstr "اسم النادل"
 
@@ -23771,7 +24058,7 @@ msgid "Server:"
 msgstr "النادل:"
 
 #: app/components/note/integration-controls.tsx:296
-#: app/components/reservations/booking-sheet.tsx:616
+#: app/components/reservations/booking-sheet.tsx:620
 #: app/components/reservations/guests/guest-profile-screen.tsx:477
 #: app/components/reservations/host-subnav.tsx:249
 #: app/components/reservations/reports/report-panels.tsx:158
@@ -23943,6 +24230,10 @@ msgstr "إعداد جهاز لوحي"
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:67
+msgid "Set up payouts"
+msgstr "إعداد التحويلات"
+
 #: app/components/staff/onboarding/onboarding-labels.ts:42
 msgid "Set up their clock-in PIN"
 msgstr "إعداد رمز الحضور الخاص بهم"
@@ -23988,9 +24279,9 @@ msgstr "الإعداد"
 msgid "Setup Diagnostics & Completeness"
 msgstr "تشخيص واكتمال الإعدادات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:93
-#: app/components/settings/cards/organization/shop-card.tsx:99
-#: app/components/settings/cards/organization/shop-card.tsx:104
+#: app/components/settings/cards/organization/shop-card.tsx:107
+#: app/components/settings/cards/organization/shop-card.tsx:113
+#: app/components/settings/cards/organization/shop-card.tsx:118
 msgid "Setup incomplete"
 msgstr "الإعداد غير مكتمل"
 
@@ -24093,7 +24384,7 @@ msgstr "رابط مشارَك"
 msgid "Shared with me"
 msgstr "تمت مشاركتها معي"
 
-#: app/components/reservations/booking-sheet.tsx:51
+#: app/components/reservations/booking-sheet.tsx:55
 #: app/utils/reservations/labels.ts:107
 msgid "Shellfish Allergy"
 msgstr "حساسية المحار"
@@ -24165,8 +24456,8 @@ msgid "Shop order reports are only available for US organizations."
 msgstr "تقارير طلبات المتجر متاحة للمؤسسات الأمريكية فقط."
 
 #: app/components/settings/cards/organization/shop-card.tsx:80
-msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
-msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكية فقط. سيتم دعم الدفع في السعودية بشكل منفصل."
+#~ msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
+#~ msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكية فقط. سيتم دعم الدفع في السعودية بشكل منفصل."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5106
 msgid "Short"
@@ -24258,7 +24549,7 @@ msgstr "عرض المزيد"
 msgid "Show opening date"
 msgstr "إظهار تاريخ الفتح"
 
-#: app/components/settings/cards/organization/shop-card.tsx:309
+#: app/components/settings/cards/organization/shop-card.tsx:338
 msgid "Show product on your public site"
 msgstr "إظهار المنتج على موقعك العام"
 
@@ -24371,6 +24662,10 @@ msgstr "تم تسجيل الدخول"
 msgid "Signed in as"
 msgstr "تم تسجيل الدخول كـ"
 
+#: app/routes/mock-payments+/dashboard.tsx:128
+msgid "Signed webhook deliveries, newest first."
+msgstr "عمليات تسليم الـ webhook الموقّعة، الأحدث أولًا."
+
 #: app/routes/_auth+/login.tsx:566
 #: app/routes/_auth+/login.tsx:740
 msgid "Signing in as"
@@ -24414,7 +24709,7 @@ msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخص
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
-#: app/components/settings/cards/organization/shop-card.tsx:68
+#: app/components/settings/cards/organization/shop-card.tsx:80
 msgid "Site shop"
 msgstr "متجر الموقع"
 
@@ -24825,7 +25120,7 @@ msgstr "عضو عادي في المؤسسة مع إمكانية الوصول إ�
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
-#: app/components/reservations/booking-sheet.tsx:1020
+#: app/components/reservations/booking-sheet.tsx:1024
 msgid "Standard policy"
 msgstr "السياسة القياسية"
 
@@ -25039,6 +25334,8 @@ msgstr "الإحصائيات"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:122
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:222
 msgid "Status"
 msgstr "الحالة"
 
@@ -25152,6 +25449,18 @@ msgstr "عنوان الشارع"
 msgid "Strict"
 msgstr "صارم"
 
+#: app/routes/mock-payments+/dashboard.tsx:86
+msgid "Stripe and Checkout.com are emulated in this app. Nothing here is real."
+msgstr "يتم محاكاة Stripe وCheckout.com في هذا التطبيق. لا شيء هنا حقيقي."
+
+#: app/routes/mock-payments+/dashboard.tsx:95
+msgid "Stripe: mocked"
+msgstr "Stripe: وهمي"
+
+#: app/routes/mock-payments+/dashboard.tsx:97
+msgid "Stripe: real"
+msgstr "Stripe: حقيقي"
+
 #: app/components/hiring/applicant-labels.ts:87
 msgid "Strong match"
 msgstr "مطابقة قوية"
@@ -25177,6 +25486,10 @@ msgstr "النمط"
 #: app/components/menu/modifier-form.tsx:2104
 msgid "Sub / Nested Modifier Groups"
 msgstr "مجموعات معدّلات فرعية / متداخلة"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:101
+msgid "Sub-entities"
+msgstr "الكيانات الفرعية"
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:391
 #~ msgid "Sub-Group"
@@ -25227,6 +25540,10 @@ msgstr "تُحفظ المشاركات في قاعدة بيانات المستأ�
 #: app/components/core/feedback-modal.tsx:112
 msgid "Submit"
 msgstr "إرسال"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:92
+msgid "Submit with requirements due"
+msgstr "إرسال مع وجود متطلبات مستحقة"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:624
 msgid "Submitted"
@@ -25382,7 +25699,7 @@ msgstr "مزامنة"
 msgid "Sync details"
 msgstr "مزامنة التفاصيل"
 
-#: app/components/settings/cards/organization/shop-card.tsx:192
+#: app/components/settings/cards/organization/shop-card.tsx:213
 msgid "Sync hosted product"
 msgstr "مزامنة المنتج المستضاف"
 
@@ -25464,7 +25781,7 @@ msgstr "تمت أرشفة الطاولة."
 msgid "Table assigned"
 msgstr "تم تعيين الطاولة"
 
-#: app/components/reservations/booking-sheet.tsx:656
+#: app/components/reservations/booking-sheet.tsx:660
 #: app/components/reservations/detail-sheet.tsx:773
 msgid "Table Assignment"
 msgstr "تعيين الطاولة"
@@ -26569,8 +26886,8 @@ msgstr "تم إيقاف الرابط."
 msgid "The list could not be refreshed. What you see may be out of date."
 msgstr "تعذر تحديث القائمة. قد يكون ما تراه قديمًا."
 
-#: app/components/reservations/booking-sheet.tsx:311
-#: app/components/reservations/booking-sheet.tsx:341
+#: app/components/reservations/booking-sheet.tsx:313
+#: app/components/reservations/booking-sheet.tsx:343
 msgid "The location is closed on this date. Turn on the closed-day override to book anyway."
 msgstr "الموقع مغلق في هذا التاريخ. فعّل تجاوز اليوم المغلق للحجز رغم ذلك."
 
@@ -27063,6 +27380,11 @@ msgstr "لم يعد هذا المتقدّم قيد المنافسة."
 msgid "This applicant was declined. Move them back into the pipeline first."
 msgstr "تم رفض هذا المتقدّم. أعده إلى مسار التقديم أولًا."
 
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:100
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:110
+msgid "This authentication is no longer active"
+msgstr "لم تعد هذه المصادقة نشطة"
+
 #: app/components/kiosk/kiosk-pair.tsx:171
 msgid "This browser will not keep the pairing. Turn off private browsing and try again."
 msgstr "لن يحتفظ هذا المتصفح بالربط. أوقف التصفح الخاص وحاول مرة أخرى."
@@ -27126,6 +27448,10 @@ msgstr "هذه البطاقة لا تزال مفتوحة. أضف وقت الان
 #: app/utils/staffing/onboarding-errors.ts:18
 msgid "This checklist was already added for them."
 msgstr "سبق أن أُضيفت هذه القائمة لهم."
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:209
+msgid "This Checkout Session is no longer active"
+msgstr "لم تعد جلسة الدفع هذه نشطة"
 
 #: app/routes/mcp+/authorize.tsx:374
 msgid "This client will have access to:"
@@ -27303,6 +27629,10 @@ msgstr "تُفتح هذه الصفحة من الرابط في رسالة الج�
 #: app/utils/reservations/waitlist-errors.ts:17
 msgid "This party is no longer on the waitlist. The list has been reloaded."
 msgstr "لم تعد هذه المجموعة في قائمة الانتظار. أُعيد تحميل القائمة."
+
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:146
+msgid "This payment page is no longer active"
+msgstr "لم تعد صفحة الدفع هذه نشطة"
 
 #: app/components/staff/timesheets/period-nav.tsx:150
 msgid "This period"
@@ -27502,11 +27832,11 @@ msgstr "هذا الجهاز اللوحي غير جاهز بعد. اسأل مدي
 msgid "This tablet was disconnected"
 msgstr "تم فصل هذا الجهاز اللوحي"
 
-#: app/components/reservations/booking-sheet.tsx:796
+#: app/components/reservations/booking-sheet.tsx:800
 msgid "This time is over its pacing limit. Creating the booking overbooks the slot."
 msgstr "هذا الوقت تجاوز حد الحجوزات المسموح به. إنشاء الحجز سيزيد الحجز عن السعة."
 
-#: app/components/reservations/booking-sheet.tsx:314
+#: app/components/reservations/booking-sheet.tsx:316
 msgid "This time is over its pacing limit. Turn on the pacing override to book anyway."
 msgstr "هذا الوقت تجاوز حد الحجوزات المسموح به. فعّل تجاوز الحد للحجز رغم ذلك."
 
@@ -27627,7 +27957,7 @@ msgstr "معرّف بكسل TikTok"
 
 #: app/components/hiring/interview-dialog.tsx:196
 #: app/components/menu/menu-availability-card.tsx:357
-#: app/components/reservations/booking-sheet.tsx:581
+#: app/components/reservations/booking-sheet.tsx:585
 #: app/components/reservations/detail-sheet.tsx:1068
 #: app/components/reservations/guests/guest-profile-screen.tsx:471
 #: app/components/reservations/reports/report-panels.tsx:290
@@ -28077,6 +28407,10 @@ msgstr "جهات اتصال التحويل"
 msgid "Transfer options"
 msgstr "خيارات التحويل"
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:173
+msgid "Transfer reversals"
+msgstr "عكس التحويلات"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:504
 msgid "Transfer to"
 msgstr "التحويل إلى"
@@ -28101,6 +28435,7 @@ msgstr "التحويل عندما"
 #: app/components/workspace-breadcrumb.tsx:50
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:143
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:158
 msgid "Transfers"
 msgstr "التحويلات"
 
@@ -28458,6 +28793,7 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3990
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
+#: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
 msgstr "النوع"
 
@@ -29330,7 +29666,7 @@ msgstr "تنويعات"
 msgid "Variations"
 msgstr "التنويعات"
 
-#: app/components/reservations/booking-sheet.tsx:46
+#: app/components/reservations/booking-sheet.tsx:50
 #: app/utils/reservations/labels.ts:102
 msgid "Vegan"
 msgstr "نباتي صرف"
@@ -29339,7 +29675,7 @@ msgstr "نباتي صرف"
 #: app/components/menu/modifier-form.tsx:1722
 #: app/components/menu/modifier-form.tsx:2077
 #: app/components/menu/option-form.tsx:648
-#: app/components/reservations/booking-sheet.tsx:45
+#: app/components/reservations/booking-sheet.tsx:49
 #: app/utils/reservations/labels.ts:101
 msgid "Vegetarian"
 msgstr "نباتي"
@@ -29564,7 +29900,7 @@ msgstr "مشاهد"
 msgid "Violet"
 msgstr "بنفسجي"
 
-#: app/components/reservations/booking-sheet.tsx:75
+#: app/components/reservations/booking-sheet.tsx:79
 #: app/utils/reservations/labels.ts:88
 #: app/utils/reservations/labels.ts:97
 #: app/utils/reservations/labels.ts:115
@@ -29604,8 +29940,8 @@ msgstr "سجل الزيارات والوسوم والملاحظات لهذا ا�
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم وبريدهم الإلكتروني في هذه المنطقة. تغييرها بعد تسجيل دخول العملاء يحذف تلك البيانات نهائياً — فهي لا تُنقل."
 
-#: app/components/reservations/booking-sheet.tsx:488
-#: app/components/reservations/booking-sheet.tsx:522
+#: app/components/reservations/booking-sheet.tsx:492
+#: app/components/reservations/booking-sheet.tsx:526
 #: app/components/reservations/detail-sheet.tsx:917
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:495
 msgid "visits"
@@ -29788,7 +30124,7 @@ msgstr "قائمة الانتظار: انضم ضيف"
 msgid "Waitlist: table is ready"
 msgstr "قائمة الانتظار: الطاولة جاهزة"
 
-#: app/components/reservations/booking-sheet.tsx:1022
+#: app/components/reservations/booking-sheet.tsx:1026
 msgid "Waive deposit / card hold"
 msgstr "الإعفاء من العربون / تفويض البطاقة"
 
@@ -29797,7 +30133,7 @@ msgstr "الإعفاء من العربون / تفويض البطاقة"
 msgid "Walk-in"
 msgstr "حضور مباشر"
 
-#: app/components/reservations/walk-in-dialog.tsx:247
+#: app/components/reservations/walk-in-dialog.tsx:251
 msgid "Walk-In Guest"
 msgstr "ضيف حضور مباشر"
 
@@ -29864,6 +30200,11 @@ msgstr "تحذيرات"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:425
 msgid "Warnings do not stop you from saving or publishing."
 msgstr "التحذيرات لا تمنعك من الحفظ أو النشر."
+
+#: app/routes/mock-payments+/__card-errors.ts:16
+#: app/routes/mock-payments+/__card-errors.ts:17
+msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
+msgstr "تعذرت مصادقة طريقة الدفع. يرجى اختيار طريقة دفع أخرى والمحاولة مرة أخرى."
 
 #: app/components/reservations/region-reservations-guard.tsx:95
 msgid "We could not check how many reservation records there are, so assume there are some."
@@ -30066,6 +30407,10 @@ msgstr "الطقس"
 #: app/utils/reservations/labels.ts:56
 msgid "Web"
 msgstr "الويب"
+
+#: app/routes/mock-payments+/dashboard.tsx:108
+msgid "Webhooks: {webhookMode}"
+msgstr "Webhooks: {webhookMode}"
 
 #: app/components/app-sidebar.tsx:566
 #: app/components/workspace-breadcrumb.tsx:13
@@ -31066,7 +31411,7 @@ msgstr "تحتاج إلى صلاحية الأجور لتغيير الإكرام�
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "لم يعد لديك حق الوصول إلى هذه الدردشة. أعد تحميل الصفحة للتحقق من قنواتك."
 
-#: app/components/settings/cards/organization/shop-card.tsx:384
+#: app/components/settings/cards/organization/shop-card.tsx:414
 msgid "You receive"
 msgstr "تستلم"
 
@@ -31126,6 +31471,10 @@ msgstr "وكيلك يرد على المكالمات."
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن تتمكن من رؤيته مرة أخرى."
 
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:84
+msgid "Your bank needs to confirm it is you."
+msgstr "يحتاج مصرفك إلى التأكد من هويتك."
+
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:33
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 msgstr "ستُستبدل كتلك وترتيبها بالكتل الافتراضية. لا يمكن التراجع عن ذلك."
@@ -31138,11 +31487,35 @@ msgstr "أوقف متصفحك صوت الوكيل مؤقتًا. اضغط على 
 msgid "Your business line"
 msgstr "خط نشاطك التجاري"
 
+#: app/routes/mock-payments+/__card-errors.ts:14
+msgid "Your card has insufficient funds."
+msgstr "رصيد بطاقتك غير كافٍ."
+
+#: app/routes/mock-payments+/__card-errors.ts:10
+msgid "Your card number is invalid."
+msgstr "رقم بطاقتك غير صالح."
+
+#: app/routes/mock-payments+/__card-errors.ts:13
+msgid "Your card was declined."
+msgstr "تم رفض بطاقتك."
+
+#: app/routes/mock-payments+/__card-errors.ts:15
+msgid "Your card was declined. Your request was in test mode, but used a non test card."
+msgstr "تم رفض بطاقتك. كان طلبك في وضع الاختبار لكنه استخدم بطاقة غير تجريبية."
+
+#: app/routes/mock-payments+/__card-errors.ts:11
+msgid "Your card's expiration date is incomplete or in the past."
+msgstr "تاريخ انتهاء بطاقتك غير مكتمل أو في الماضي."
+
+#: app/routes/mock-payments+/__card-errors.ts:12
+msgid "Your card's security code is incomplete."
+msgstr "رمز أمان بطاقتك غير مكتمل."
+
 #: app/components/hiring/job-editor.tsx:472
 msgid "Your changes to this job will be lost."
 msgstr "ستفقد تغييراتك على هذه الوظيفة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:319
+#: app/components/settings/cards/organization/shop-card.tsx:348
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
 
@@ -31289,6 +31662,10 @@ msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الن�
 #: app/components/roles/tenant-role-access-manager.tsx:618
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
+
+#: app/routes/mock-payments+/__card-form.tsx:98
+msgid "ZIP"
+msgstr "الرمز البريدي"
 
 #: app/components/locations/delivery-zone-map.tsx:360
 msgid "Zip Code Zone"

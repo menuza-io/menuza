@@ -21,9 +21,15 @@ vi.mock('#app/utils/restaurant-orders/payment-webhooks.server.ts', () => ({
 	handleRestaurantOrderCheckoutWebhookEvent: restaurantDispatch,
 }))
 
-vi.mock('#app/utils/shop.server.ts', () => ({
-	recordShopOrder,
-}))
+vi.mock('#app/utils/shop.server.ts', async () => {
+	const { createShopCommerce, createShopCommerceConfigFromEnv } =
+		await import('@repo/payments')
+	// The route verifies with the App-wide commerce; build it from the env above.
+	const commerce = createShopCommerce(
+		createShopCommerceConfigFromEnv(process.env),
+	)
+	return { recordShopOrder, getShopCommerce: () => commerce }
+})
 
 function checkoutWebhookRequest(payload: string, signature: string) {
 	return action({

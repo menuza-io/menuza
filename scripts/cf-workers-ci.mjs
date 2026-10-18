@@ -211,6 +211,12 @@ function buildApp(appKey) {
 		})
 	}
 
+	// Exclusion layer 4: a Worker bundle that contains the payment mock must
+	// never be deployed.
+	if (appKey === 'app') {
+		run('node', ['scripts/check-no-payment-mocks.mjs', 'apps/app/build'])
+	}
+
 	patchWrangler(appKey, deployEnv)
 }
 

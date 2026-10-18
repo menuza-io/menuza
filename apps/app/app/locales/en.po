@@ -768,7 +768,7 @@ msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, t
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 
-#: app/components/reservations/booking-sheet.tsx:775
+#: app/components/reservations/booking-sheet.tsx:779
 msgid "{heldTables} is held by a guest who is checking out. The booking uses another table."
 msgstr "{heldTables} is held by a guest who is checking out. The booking uses another table."
 
@@ -1623,11 +1623,11 @@ msgstr "A general application stays open all the time, so people can apply even 
 #~ msgid "A guest is checking out with {0} at this time. Booking it overrides their hold."
 #~ msgstr "A guest is checking out with {0} at this time. Booking it overrides their hold."
 
-#: app/components/reservations/booking-sheet.tsx:780
+#: app/components/reservations/booking-sheet.tsx:784
 msgid "A guest is checking out with {heldTables} at this time. Booking it overrides their hold."
 msgstr "A guest is checking out with {heldTables} at this time. Booking it overrides their hold."
 
-#: app/components/reservations/booking-sheet.tsx:785
+#: app/components/reservations/booking-sheet.tsx:789
 msgid "A guest is checking out with a table at this time. Booking it overrides their hold."
 msgstr "A guest is checking out with a table at this time. Booking it overrides their hold."
 
@@ -1853,6 +1853,10 @@ msgstr ""
 msgid "Accept guest reservations from your public website and apps."
 msgstr "Accept guest reservations from your public website and apps."
 
+#: app/components/settings/cards/organization/shop-card.tsx:92
+msgid "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
+msgstr "Accept online payments for your orders. Payments are taken through Checkout.com and paid out to you."
+
 #: app/components/locations/location-form.tsx:429
 msgid "Accept orders and show this location on the website."
 msgstr "Accept orders and show this location on the website."
@@ -1951,6 +1955,18 @@ msgstr "Across your organization"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1046
 msgid "Actions"
 msgstr ""
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:104
+msgid "Activate a sub-entity to let it take payments and receive payouts."
+msgstr "Activate a sub-entity to let it take payments and receive payouts."
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:163
+msgid "Activate payments"
+msgstr "Activate payments"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:191
+msgid "Activate payouts"
+msgstr "Activate payouts"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:298
 msgid "active"
@@ -3218,7 +3234,7 @@ msgstr "Allergies and dietary needs"
 msgid "Allergies and dietary needs:"
 msgstr "Allergies and dietary needs:"
 
-#: app/components/reservations/booking-sheet.tsx:533
+#: app/components/reservations/booking-sheet.tsx:537
 #: app/components/reservations/detail-sheet.tsx:943
 msgid "Allergies:"
 msgstr "Allergies:"
@@ -3230,6 +3246,10 @@ msgstr "Allergy"
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:781
 msgid "Allergy / Dietary"
 msgstr "Allergy / Dietary"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:228
+msgid "Allocation"
+msgstr "Allocation"
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1386
 msgid "Allow browsing items before launch"
@@ -3267,7 +3287,7 @@ msgstr "Allow microphone access"
 msgid "Allow overbook / tight table drop"
 msgstr "Allow overbook / tight table drop"
 
-#: app/components/reservations/walk-in-dialog.tsx:302
+#: app/components/reservations/walk-in-dialog.tsx:306
 msgid "Allow overbooking / seating on blocked or tight table"
 msgstr "Allow overbooking / seating on blocked or tight table"
 
@@ -3321,6 +3341,11 @@ msgstr "Alt Text"
 msgid "Amber"
 msgstr "Amber"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:225
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:89
+msgid "Amount"
+msgstr "Amount"
+
 #: app/utils/staffing/labor-errors.ts:41
 msgid "Amounts can have at most two decimal places."
 msgstr "Amounts can have at most two decimal places."
@@ -3372,7 +3397,7 @@ msgstr "Analytics and tracking"
 msgid "Android app"
 msgstr "Android app"
 
-#: app/components/reservations/booking-sheet.tsx:71
+#: app/components/reservations/booking-sheet.tsx:75
 #: app/utils/reservations/labels.ts:84
 #: app/utils/reservations/labels.ts:94
 msgid "Anniversary"
@@ -3452,7 +3477,7 @@ msgstr "Answers to common questions, and how the agent hears and says the names 
 msgid "Any area"
 msgstr "Any area"
 
-#: app/components/reservations/booking-sheet.tsx:645
+#: app/components/reservations/booking-sheet.tsx:649
 msgid "Any Area"
 msgstr "Any Area"
 
@@ -3558,6 +3583,14 @@ msgstr "Applicants must answer before they can apply."
 #: app/components/hiring/candidate-sheet.tsx:512
 msgid "Application deleted."
 msgstr "Application deleted."
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:178
+msgid "Application fee refunds"
+msgstr "Application fee refunds"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:163
+msgid "Application fees"
+msgstr "Application fees"
 
 #: ../../packages/reports/src/ui/report-labels.ts:73
 msgid "Applications at each stage, from new to hired, over the last 3 months."
@@ -3873,7 +3906,7 @@ msgstr ""
 #~ msgstr "Assign sections and items to this drop, and set pooled or per-item limits."
 
 #: app/components/reservations/detail-sheet.tsx:799
-#: app/components/reservations/walk-in-dialog.tsx:185
+#: app/components/reservations/walk-in-dialog.tsx:189
 msgid "Assign Table"
 msgstr "Assign Table"
 
@@ -3955,6 +3988,10 @@ msgstr "Attach secondary modifier groups that appear when this modifier item is 
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
 
+#: app/routes/mock-payments+/dashboard.tsx:161
+msgid "Attempts"
+msgstr "Attempts"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:364
 msgid "Attention Needed"
 msgstr "Attention Needed"
@@ -3970,6 +4007,11 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:231
 #~ msgid "Audit trail and step execution history triggered by \"{triggerLabel}\"."
 #~ msgstr ""
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:70
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:76
+msgid "Authenticate this payment"
+msgstr "Authenticate this payment"
 
 #: app/components/settings/two-factor-form.tsx:87
 #: app/components/settings/two-factor-form.tsx:241
@@ -3993,11 +4035,11 @@ msgid "Authorized Clients"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
-#: app/components/reservations/booking-sheet.tsx:604
+#: app/components/reservations/booking-sheet.tsx:608
 msgid "Auto"
 msgstr "Auto"
 
-#: app/components/reservations/booking-sheet.tsx:625
+#: app/components/reservations/booking-sheet.tsx:629
 msgid "Auto / Any"
 msgstr "Auto / Any"
 
@@ -4006,11 +4048,11 @@ msgid "Auto clock-out"
 msgstr "Auto clock-out"
 
 #: app/components/reservations/waitlist/seat-dialog.tsx:168
-#: app/components/reservations/walk-in-dialog.tsx:194
+#: app/components/reservations/walk-in-dialog.tsx:198
 msgid "Auto-assign best open table"
 msgstr "Auto-assign best open table"
 
-#: app/components/reservations/booking-sheet.tsx:665
+#: app/components/reservations/booking-sheet.tsx:669
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:378
 msgid "Auto-assign best table"
 msgstr "Auto-assign best table"
@@ -4140,7 +4182,7 @@ msgstr "Available at this location"
 msgid "Available during…"
 msgstr "Available during…"
 
-#: app/components/reservations/booking-sheet.tsx:679
+#: app/components/reservations/booking-sheet.tsx:683
 msgid "Available Slots"
 msgstr "Available Slots"
 
@@ -4190,6 +4232,9 @@ msgstr "B&W"
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:218
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:157
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:221
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:111
 msgid "Back"
 msgstr ""
 
@@ -4384,7 +4429,7 @@ msgstr ""
 msgid "Billing & Subscription"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:70
+#: app/components/reservations/booking-sheet.tsx:74
 #: app/utils/reservations/labels.ts:83
 #: app/utils/reservations/labels.ts:95
 msgid "Birthday"
@@ -4511,15 +4556,15 @@ msgstr "Booked by {name} ({size}){codeSuffix}."
 msgid "Booked by a party of {size}{codeSuffix}."
 msgstr "Booked by a party of {size}{codeSuffix}."
 
-#: app/components/reservations/booking-sheet.tsx:300
+#: app/components/reservations/booking-sheet.tsx:302
 msgid "Booked on a closed day."
 msgstr "Booked on a closed day."
 
-#: app/components/reservations/booking-sheet.tsx:302
+#: app/components/reservations/booking-sheet.tsx:304
 msgid "Booked over the pacing cover limit."
 msgstr "Booked over the pacing cover limit."
 
-#: app/components/reservations/booking-sheet.tsx:304
+#: app/components/reservations/booking-sheet.tsx:306
 msgid "Booked over the pacing party limit."
 msgstr "Booked over the pacing party limit."
 
@@ -4547,7 +4592,7 @@ msgstr "Booking changed"
 msgid "Booking confirmation"
 msgstr "Booking confirmation"
 
-#: app/components/reservations/booking-sheet.tsx:1044
+#: app/components/reservations/booking-sheet.tsx:1048
 msgid "Booking..."
 msgstr "Booking..."
 
@@ -4576,7 +4621,7 @@ msgstr "Bookings today"
 msgid "Booth"
 msgstr "Booth"
 
-#: app/components/reservations/booking-sheet.tsx:931
+#: app/components/reservations/booking-sheet.tsx:935
 msgid "Booth preferred, high chair..."
 msgstr "Booth preferred, high chair..."
 
@@ -4786,7 +4831,7 @@ msgstr "Business hours"
 msgid "Business info"
 msgstr "Business info"
 
-#: app/components/reservations/booking-sheet.tsx:73
+#: app/components/reservations/booking-sheet.tsx:77
 #: app/utils/reservations/labels.ts:86
 msgid "Business Meal"
 msgstr "Business Meal"
@@ -5088,7 +5133,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/reservations/booking-sheet.tsx:1034
+#: app/components/reservations/booking-sheet.tsx:1038
 #: app/components/reservations/detail-sheet.tsx:1277
 #: app/components/reservations/guests/guest-merge-dialog.tsx:161
 #: app/components/reservations/guests/guest-notes-panel.tsx:106
@@ -5099,7 +5144,7 @@ msgstr "Can't text that number"
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:136
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:263
 #: app/components/reservations/waitlist/seat-dialog.tsx:257
-#: app/components/reservations/walk-in-dialog.tsx:314
+#: app/components/reservations/walk-in-dialog.tsx:318
 #: app/components/roles/tenant-role-access-manager.tsx:954
 #: app/components/roles/tenant-role-access-manager.tsx:1477
 #: app/components/settings/cards/organization/announcement-sheet.tsx:519
@@ -5307,6 +5352,10 @@ msgstr "Card fee withheld"
 msgid "Card fee withheld from online tips (%)"
 msgstr "Card fee withheld from online tips (%)"
 
+#: app/routes/mock-payments+/__card-form.tsx:40
+msgid "Card number"
+msgstr "Card number"
+
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4391
 msgid "Card position"
 msgstr ""
@@ -5404,7 +5453,7 @@ msgstr "Catering & Large Events"
 msgid "Catering goes to the manager"
 msgstr "Catering goes to the manager"
 
-#: app/components/reservations/booking-sheet.tsx:74
+#: app/components/reservations/booking-sheet.tsx:78
 #: app/utils/reservations/labels.ts:87
 msgid "Celebration"
 msgstr "Celebration"
@@ -5594,9 +5643,21 @@ msgstr "Charge sales tax on this option at checkout."
 msgid "Charge tax at checkout."
 msgstr "Charge tax at checkout."
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:153
+msgid "Charges"
+msgstr "Charges"
+
 #: app/components/roles/tenant-role-access-manager.tsx:430
 msgid "Charges & refunds"
 msgstr "Charges & refunds"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:140
+msgid "Charges disabled"
+msgstr "Charges disabled"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:138
+msgid "Charges enabled"
+msgstr "Charges enabled"
 
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
@@ -5710,7 +5771,7 @@ msgstr "Checking for staff records…"
 msgid "Checking references…"
 msgstr "Checking references…"
 
-#: app/components/reservations/booking-sheet.tsx:683
+#: app/components/reservations/booking-sheet.tsx:687
 msgid "Checking slots..."
 msgstr "Checking slots..."
 
@@ -5738,13 +5799,25 @@ msgstr "Checkout hold"
 msgid "Checkout hold TTL (seconds)"
 msgstr "Checkout hold TTL (seconds)"
 
-#: app/components/settings/cards/organization/shop-card.tsx:101
+#: app/components/settings/cards/organization/shop-card.tsx:115
 msgid "Checkout payout not connected"
 msgstr "Checkout payout not connected"
 
-#: app/components/settings/cards/organization/shop-card.tsx:228
+#: app/components/settings/cards/organization/shop-card.tsx:257
 msgid "Checkout processor"
 msgstr "Checkout processor"
+
+#: app/routes/mock-payments+/dashboard.tsx:117
+msgid "Checkout.com dashboard"
+msgstr "Checkout.com dashboard"
+
+#: app/routes/mock-payments+/dashboard.tsx:102
+msgid "Checkout.com: mocked"
+msgstr "Checkout.com: mocked"
+
+#: app/routes/mock-payments+/dashboard.tsx:104
+msgid "Checkout.com: real"
+msgstr "Checkout.com: real"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:777
 msgid "Checks dining areas, active bookable tables, service windows, and turn-time bucket coverage across party sizes."
@@ -6338,7 +6411,7 @@ msgstr "Closed (all day)"
 msgid "Closed all day"
 msgstr "Closed all day"
 
-#: app/components/reservations/booking-sheet.tsx:707
+#: app/components/reservations/booking-sheet.tsx:711
 msgid "Closed for online bookings on this date. Staff can still book."
 msgstr "Closed for online bookings on this date. Staff can still book."
 
@@ -6350,11 +6423,11 @@ msgstr "Closed for private event"
 #~ msgid "Closed on this date ({0}). No slots are offered. Turn on the override below to book anyway."
 #~ msgstr "Closed on this date ({0}). No slots are offered. Turn on the override below to book anyway."
 
-#: app/components/reservations/booking-sheet.tsx:691
+#: app/components/reservations/booking-sheet.tsx:695
 msgid "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
 msgstr "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
 
-#: app/components/reservations/booking-sheet.tsx:696
+#: app/components/reservations/booking-sheet.tsx:700
 msgid "Closed on this date. No slots are offered. Turn on the override below to book anyway."
 msgstr "Closed on this date. No slots are offered. Turn on the override below to book anyway."
 
@@ -6492,6 +6565,10 @@ msgstr "Comment actions"
 msgid "Comments"
 msgstr ""
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:231
+msgid "Commission"
+msgstr "Commission"
+
 #: app/components/menu/menu-allergen-selector.tsx:36
 #: app/components/menu/menu-allergen-selector.tsx:84
 msgid "Common Allergens"
@@ -6528,6 +6605,7 @@ msgstr ""
 #: app/components/phone-agent/call-data.ts:141
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:306
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:666
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:82
 msgid "Complete"
 msgstr "Complete"
 
@@ -6542,6 +6620,10 @@ msgstr "Complete a form"
 #: app/components/roles/tenant-role-access-manager.tsx:234
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls."
+
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:94
+msgid "Complete authentication"
+msgstr "Complete authentication"
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:397
 msgid "Complete order"
@@ -6819,7 +6901,7 @@ msgstr ""
 msgid "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy in Settings to view and reply to customer reviews here."
 msgstr "Connect Google, Yelp, TripAdvisor, Deliveroo, Just Eat, OpenTable, or Resy in Settings to view and reply to customer reviews here."
 
-#: app/components/settings/cards/organization/shop-card.tsx:130
+#: app/components/settings/cards/organization/shop-card.tsx:149
 msgid "Connect payout account"
 msgstr "Connect payout account"
 
@@ -6860,6 +6942,10 @@ msgstr "Connect your POS"
 #: app/components/staff/kiosk-manager.tsx:718
 msgid "Connected"
 msgstr "Connected"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:73
+msgid "Connected account"
+msgstr "Connected account"
 
 #: app/components/settings/cards/connections-card.tsx:39
 msgid "Connected Accounts"
@@ -6953,11 +7039,12 @@ msgstr "Contiguous 1–{onlinePartyMax}p"
 #: app/components/kiosk/pin-pad.tsx:127
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:680
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:95
 #: app/routes/organizations+/create.tsx:1060
 msgid "Continue"
 msgstr ""
 
-#: app/components/settings/cards/organization/shop-card.tsx:128
+#: app/components/settings/cards/organization/shop-card.tsx:147
 msgid "Continue payout setup"
 msgstr "Continue payout setup"
 
@@ -7731,7 +7818,7 @@ msgstr "Create prepaid or deposit-backed dining experiences, schedules, and opti
 msgid "Create redirect"
 msgstr "Create redirect"
 
-#: app/components/reservations/booking-sheet.tsx:1046
+#: app/components/reservations/booking-sheet.tsx:1050
 msgid "Create Reservation"
 msgstr "Create Reservation"
 
@@ -8089,7 +8176,7 @@ msgstr ""
 #~ msgid "Customers have this much time to finish checkout before their items are released back to inventory."
 #~ msgstr "Customers have this much time to finish checkout before their items are released back to inventory."
 
-#: app/components/settings/cards/organization/shop-card.tsx:295
+#: app/components/settings/cards/organization/shop-card.tsx:324
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr ""
 
@@ -8100,6 +8187,10 @@ msgstr "Customers pick up orders in-store."
 #: app/components/data-table.tsx:509
 #~ msgid "Customize Columns"
 #~ msgstr ""
+
+#: app/routes/mock-payments+/__card-form.tsx:70
+msgid "CVC"
+msgstr "CVC"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
@@ -8125,7 +8216,7 @@ msgstr "Daily overtime off · Week starts {weekStart}"
 msgid "Daily overtime on · Week starts {weekStart}"
 msgstr "Daily overtime on · Week starts {weekStart}"
 
-#: app/components/reservations/booking-sheet.tsx:50
+#: app/components/reservations/booking-sheet.tsx:54
 #: app/utils/reservations/labels.ts:106
 msgid "Dairy-Free"
 msgstr "Dairy-Free"
@@ -8175,7 +8266,7 @@ msgstr ""
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:341
-#: app/components/reservations/booking-sheet.tsx:549
+#: app/components/reservations/booking-sheet.tsx:553
 #: app/components/reservations/guests/guest-profile-screen.tsx:468
 #: app/components/reservations/reports/report-panels.tsx:289
 #: app/components/reservations/reports/report-panels.tsx:366
@@ -8195,7 +8286,7 @@ msgstr "Date"
 msgid "Date & time"
 msgstr "Date & time"
 
-#: app/components/reservations/booking-sheet.tsx:72
+#: app/components/reservations/booking-sheet.tsx:76
 #: app/utils/reservations/labels.ts:85
 msgid "Date Night"
 msgstr "Date Night"
@@ -8740,6 +8831,18 @@ msgstr "Deleted training rule \"{title}\""
 msgid "Deleting…"
 msgstr "Deleting…"
 
+#: app/routes/mock-payments+/dashboard.tsx:140
+msgid "Deliver queued events"
+msgstr "Deliver queued events"
+
+#: app/routes/mock-payments+/dashboard.tsx:180
+#~ msgid "Delivered ({0})"
+#~ msgstr "Delivered ({0})"
+
+#: app/routes/mock-payments+/dashboard.tsx:182
+msgid "Delivered ({lastStatus})"
+msgstr "Delivered ({lastStatus})"
+
 #: app/components/mailbox/reviews-tab.tsx:76
 msgid "Deliveroo"
 msgstr "Deliveroo"
@@ -8750,6 +8853,7 @@ msgstr "Deliveroo"
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:307
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:680
+#: app/routes/mock-payments+/dashboard.tsx:158
 msgid "Delivery"
 msgstr "Delivery"
 
@@ -8805,7 +8909,7 @@ msgstr "Delivery Zones & Geo-Fencing"
 msgid "Deny"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:1007
+#: app/components/reservations/booking-sheet.tsx:1011
 msgid "Deposit / Card Hold Policy:"
 msgstr "Deposit / Card Hold Policy:"
 
@@ -8832,7 +8936,7 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/components/roles/tenant-role-access-manager.tsx:1065
 #: app/components/roles/tenant-role-access-manager.tsx:1224
 #: app/components/roles/tenant-role-access-manager.tsx:1406
-#: app/components/settings/cards/organization/shop-card.tsx:268
+#: app/components/settings/cards/organization/shop-card.tsx:297
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
@@ -8909,6 +9013,7 @@ msgstr "Detail sheet"
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:676
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:526
 #: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:624
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:92
 msgid "Details"
 msgstr "Details"
 
@@ -8975,18 +9080,18 @@ msgstr "Dietary & Allergens"
 msgid "Dietary & Allergy Alerts"
 msgstr "Dietary & Allergy Alerts"
 
-#: app/components/reservations/booking-sheet.tsx:908
+#: app/components/reservations/booking-sheet.tsx:912
 #: app/components/reservations/detail-sheet.tsx:876
 msgid "Dietary notes"
 msgstr "Dietary notes"
 
-#: app/components/reservations/booking-sheet.tsx:915
+#: app/components/reservations/booking-sheet.tsx:919
 msgid "Dietary notes, e.g. no sesame, severe peanut allergy"
 msgstr "Dietary notes, e.g. no sesame, severe peanut allergy"
 
 #: app/components/menu/modifier-form.tsx:1686
 #: app/components/menu/modifier-form.tsx:2041
-#: app/components/reservations/booking-sheet.tsx:888
+#: app/components/reservations/booking-sheet.tsx:892
 msgid "Dietary Tags"
 msgstr "Dietary Tags"
 
@@ -9021,7 +9126,7 @@ msgstr "Dine-In Tips"
 msgid "Dining area"
 msgstr "Dining area"
 
-#: app/components/reservations/booking-sheet.tsx:636
+#: app/components/reservations/booking-sheet.tsx:640
 msgid "Dining Area"
 msgstr "Dining Area"
 
@@ -9175,6 +9280,10 @@ msgstr "Display the opening date below the countdown"
 #: app/routes/_app+/$orgSlug_+/menu+/menus._index.tsx:368
 msgid "Displayed"
 msgstr "Displayed"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:183
+msgid "Disputes"
+msgstr "Disputes"
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:174
 msgid "Divide tips"
@@ -9527,7 +9636,7 @@ msgstr ""
 msgid "Duration (m)"
 msgstr "Duration (m)"
 
-#: app/components/reservations/booking-sheet.tsx:596
+#: app/components/reservations/booking-sheet.tsx:600
 msgid "Duration (min)"
 msgstr "Duration (min)"
 
@@ -9970,7 +10079,7 @@ msgstr "Eligible for rehire."
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:450
-#: app/components/reservations/booking-sheet.tsx:837
+#: app/components/reservations/booking-sheet.tsx:841
 #: app/components/reservations/guests/guest-profile-screen.tsx:715
 #: app/components/settings/cards/notification-preferences-card.tsx:27
 #: app/components/settings/cards/profile-card.tsx:132
@@ -9983,6 +10092,7 @@ msgstr "Eligible for rehire."
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
 #: app/routes/_auth+/login.tsx:773
 #: app/routes/_auth+/signup.tsx:225
+#: app/routes/mock-payments+/__card-form.tsx:27
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
@@ -10096,7 +10206,7 @@ msgstr ""
 msgid "Enable gift card redemptions on this drop"
 msgstr "Enable gift card redemptions on this drop"
 
-#: app/components/settings/cards/organization/shop-card.tsx:194
+#: app/components/settings/cards/organization/shop-card.tsx:215
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
@@ -10109,6 +10219,8 @@ msgid "Enable redirect immediately"
 msgstr "Enable redirect immediately"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:373
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:144
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:171
 msgid "Enabled"
 msgstr ""
 
@@ -10437,6 +10549,10 @@ msgstr "Entered sales are only used when this workplace's sales source is \"Sale
 msgid "Enterprise Plan"
 msgstr ""
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:119
+msgid "Entity"
+msgstr "Entity"
+
 #: app/components/reservations/detail-sheet.tsx:70
 #: app/utils/reservations/labels.ts:30
 #: app/utils/reservations/labels.ts:124
@@ -10534,6 +10650,10 @@ msgstr "Estimated wages by position over the last 30 days. Needs permission to s
 #: app/components/hiring/job-editor.tsx:598
 msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "Evening line cook, three nights a week, must be comfortable on grill"
+
+#: app/routes/mock-payments+/dashboard.tsx:125
+msgid "Event log"
+msgstr "Event log"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:111
 msgid "Event-driven workflows"
@@ -10717,6 +10837,14 @@ msgstr ""
 msgid "Expires {expireDate}"
 msgstr ""
 
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:181
+msgid "Expires at {expiresAt}"
+msgstr "Expires at {expiresAt}"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:180
+#~ msgid "Expires at <0>{0}</0>"
+#~ msgstr "Expires at <0>{0}</0>"
+
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -10725,6 +10853,10 @@ msgstr "Expires in {left}"
 #: app/components/staff/onboarding/certificates-tab.tsx:237
 msgid "Expires today"
 msgstr "Expires today"
+
+#: app/routes/mock-payments+/__card-form.tsx:56
+msgid "Expiry (MM/YY)"
+msgstr "Expiry (MM/YY)"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:86
 #~ msgid "Explain this platform"
@@ -10779,12 +10911,24 @@ msgstr "Facebook Pixel ID"
 msgid "Fade up"
 msgstr ""
 
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:104
+msgid "Fail authentication"
+msgstr "Fail authentication"
+
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 msgid "Failed"
 msgstr ""
+
+#: app/routes/mock-payments+/dashboard.tsx:184
+#~ msgid "Failed ({0})"
+#~ msgstr "Failed ({0})"
+
+#: app/routes/mock-payments+/dashboard.tsx:186
+msgid "Failed ({lastStatus})"
+msgstr "Failed ({lastStatus})"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:276
 msgid "Failed to archive dining area."
@@ -10827,7 +10971,7 @@ msgstr ""
 msgid "Failed to create pacing rule."
 msgstr "Failed to create pacing rule."
 
-#: app/components/reservations/booking-sheet.tsx:318
+#: app/components/reservations/booking-sheet.tsx:320
 msgid "Failed to create reservation."
 msgstr "Failed to create reservation."
 
@@ -11063,7 +11207,7 @@ msgstr ""
 msgid "Failed to seat party."
 msgstr "Failed to seat party."
 
-#: app/components/reservations/walk-in-dialog.tsx:120
+#: app/components/reservations/walk-in-dialog.tsx:124
 msgid "Failed to seat walk-in."
 msgstr "Failed to seat walk-in."
 
@@ -11570,7 +11714,7 @@ msgstr "Fri"
 msgid "Friday"
 msgstr "Friday"
 
-#: app/components/reservations/booking-sheet.tsx:945
+#: app/components/reservations/booking-sheet.tsx:949
 msgid "Friends of chef, comp welcome drink..."
 msgstr "Friends of chef, comp welcome drink..."
 
@@ -11628,7 +11772,7 @@ msgstr ""
 msgid "Full access to organization settings and members"
 msgstr "Full access to organization settings and members"
 
-#: app/components/reservations/booking-sheet.tsx:815
+#: app/components/reservations/booking-sheet.tsx:819
 msgid "Full name"
 msgstr "Full name"
 
@@ -11775,7 +11919,7 @@ msgstr "Give your group a name"
 #: app/components/menu/modifier-form.tsx:1704
 #: app/components/menu/modifier-form.tsx:2059
 #: app/components/menu/option-form.tsx:632
-#: app/components/reservations/booking-sheet.tsx:47
+#: app/components/reservations/booking-sheet.tsx:51
 #: app/utils/reservations/labels.ts:103
 msgid "Gluten-Free"
 msgstr "Gluten-Free"
@@ -11940,7 +12084,7 @@ msgstr "Groups"
 msgid "Guest"
 msgstr "Guest"
 
-#: app/components/settings/cards/organization/shop-card.tsx:367
+#: app/components/settings/cards/organization/shop-card.tsx:397
 msgid "Guest checkout"
 msgstr ""
 
@@ -11995,15 +12139,15 @@ msgstr "Guest messages"
 msgid "Guest Messages"
 msgstr "Guest Messages"
 
-#: app/components/reservations/booking-sheet.tsx:809
+#: app/components/reservations/booking-sheet.tsx:813
 msgid "Guest Name"
 msgstr "Guest Name"
 
-#: app/components/reservations/walk-in-dialog.tsx:241
+#: app/components/reservations/walk-in-dialog.tsx:245
 msgid "Guest Name (Optional)"
 msgstr "Guest Name (Optional)"
 
-#: app/components/reservations/booking-sheet.tsx:336
+#: app/components/reservations/booking-sheet.tsx:338
 msgid "Guest name and phone number are required."
 msgstr "Guest name and phone number are required."
 
@@ -12028,7 +12172,7 @@ msgstr "Guest personal data"
 msgid "Guest relations"
 msgstr "Guest relations"
 
-#: app/components/reservations/booking-sheet.tsx:924
+#: app/components/reservations/booking-sheet.tsx:928
 msgid "Guest Request / Notes"
 msgstr "Guest Request / Notes"
 
@@ -12128,7 +12272,7 @@ msgstr "Guests: {guestsCount}"
 msgid "h"
 msgstr "h"
 
-#: app/components/reservations/booking-sheet.tsx:48
+#: app/components/reservations/booking-sheet.tsx:52
 #: app/utils/reservations/labels.ts:104
 msgid "Halal"
 msgstr "Halal"
@@ -12191,7 +12335,7 @@ msgstr "Height"
 msgid "Height (20–600)"
 msgstr "Height (20–600)"
 
-#: app/components/reservations/booking-sheet.tsx:753
+#: app/components/reservations/booking-sheet.tsx:757
 msgid "Held"
 msgstr "Held"
 
@@ -12455,7 +12599,7 @@ msgstr "Host"
 msgid "Host Actions & Status"
 msgstr "Host Actions & Status"
 
-#: app/components/reservations/walk-in-dialog.tsx:282
+#: app/components/reservations/walk-in-dialog.tsx:286
 msgid "Host Notes"
 msgstr "Host Notes"
 
@@ -12467,11 +12611,11 @@ msgstr "Host stand"
 msgid "Host stand views"
 msgstr "Host stand views"
 
-#: app/components/settings/cards/organization/shop-card.tsx:211
+#: app/components/settings/cards/organization/shop-card.tsx:232
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
 msgstr "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
 
-#: app/components/settings/cards/organization/shop-card.tsx:95
+#: app/components/settings/cards/organization/shop-card.tsx:109
 msgid "Hosted checkout not connected"
 msgstr "Hosted checkout not connected"
 
@@ -12645,6 +12789,10 @@ msgstr "I'll not be able to access the restaurant and its data anymore"
 msgid "I've Copied the Key"
 msgstr ""
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:86
+msgid "ID"
+msgstr "ID"
+
 #: ../../packages/ai/src/components/ai-chat.tsx:461
 msgid "Identify risks"
 msgstr ""
@@ -12711,7 +12859,7 @@ msgstr "Immediately confirm online bookings that do not require a payment step."
 msgid "Immediately invalidate all tokens for this client"
 msgstr ""
 
-#: app/components/reservations/walk-in-dialog.tsx:135
+#: app/components/reservations/walk-in-dialog.tsx:139
 msgid "Immediately seat a walk-in party at an available table or auto-assign the best open table."
 msgstr "Immediately seat a walk-in party at an available table or auto-assign the best open table."
 
@@ -12908,6 +13056,14 @@ msgstr "Insert field here"
 msgid "Inspect"
 msgstr "Inspect"
 
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:61
+msgid "Instantly enable Checkout.com (mock)"
+msgstr "Instantly enable Checkout.com (mock)"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:45
+msgid "Instantly enable Stripe (mock)"
+msgstr "Instantly enable Stripe (mock)"
+
 #: app/components/app-sidebar.tsx:660
 #: app/components/settings/cards/organization/integrations-card.tsx:181
 #: app/components/workspace-breadcrumb.tsx:65
@@ -12919,7 +13075,7 @@ msgstr ""
 msgid "Internal channels for your team."
 msgstr "Internal channels for your team."
 
-#: app/components/reservations/booking-sheet.tsx:938
+#: app/components/reservations/booking-sheet.tsx:942
 #: app/components/reservations/detail-sheet.tsx:1141
 msgid "Internal Host Notes"
 msgstr "Internal Host Notes"
@@ -13051,7 +13207,7 @@ msgstr "Invitations are not available for this organization."
 msgid "Invite by email"
 msgstr ""
 
-#: app/components/settings/cards/organization/shop-card.tsx:163
+#: app/components/settings/cards/organization/shop-card.tsx:182
 msgid "Invite Checkout payout contact"
 msgstr "Invite Checkout payout contact"
 
@@ -14426,7 +14582,7 @@ msgstr "Looks right"
 msgid "Looks right ({reviewCount})"
 msgstr "Looks right ({reviewCount})"
 
-#: app/components/reservations/booking-sheet.tsx:443
+#: app/components/reservations/booking-sheet.tsx:447
 msgid "Lookup Returning Guest (Phone or Name)"
 msgstr "Lookup Returning Guest (Phone or Name)"
 
@@ -15300,6 +15456,51 @@ msgstr ""
 msgid "Mobile app"
 msgstr "Mobile app"
 
+#: app/routes/mock-payments+/__mock-page.tsx:29
+msgid "Mock"
+msgstr "Mock"
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:65
+msgid "Mock Checkout.com 3D Secure (local)"
+msgstr "Mock Checkout.com 3D Secure (local)"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:96
+msgid "Mock Checkout.com dashboard (local)"
+msgstr "Mock Checkout.com dashboard (local)"
+
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:102
+msgid "Mock Checkout.com HPP (local)"
+msgstr "Mock Checkout.com HPP (local)"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:137
+msgid "Mock merchant"
+msgstr "Mock merchant"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:27
+#: app/components/settings/cards/organization/shop-card.tsx:126
+msgid "Mock payments"
+msgstr "Mock payments"
+
+#: app/routes/mock-payments+/dashboard.tsx:78
+msgid "Mock payments (local)"
+msgstr "Mock payments (local)"
+
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:71
+msgid "Mock Stripe 3D Secure (local)"
+msgstr "Mock Stripe 3D Secure (local)"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:132
+msgid "Mock Stripe Checkout (local)"
+msgstr "Mock Stripe Checkout (local)"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:62
+msgid "Mock Stripe Connect onboarding (local)"
+msgstr "Mock Stripe Connect onboarding (local)"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:124
+msgid "Mock Stripe Express dashboard (local)"
+msgstr "Mock Stripe Express dashboard (local)"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1347
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1393
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:755
@@ -15610,6 +15811,10 @@ msgstr ""
 msgid "Name it so you can tell tablets apart, then open the pairing page on it."
 msgstr "Name it so you can tell tablets apart, then open the pairing page on it."
 
+#: app/routes/mock-payments+/__card-form.tsx:86
+msgid "Name on card"
+msgstr "Name on card"
+
 #: app/utils/staffing/onboarding-view.ts:222
 #: app/utils/staffing/onboarding-view.ts:343
 msgid "Name the task."
@@ -15891,7 +16096,7 @@ msgstr ""
 msgid "New Password"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:423
+#: app/components/reservations/booking-sheet.tsx:427
 msgid "New Phone / Host Reservation"
 msgstr "New Phone / Host Reservation"
 
@@ -16283,6 +16488,10 @@ msgstr "No email on file, so nothing was sent"
 #: app/components/note/emoji-list.tsx:34
 msgid "No emojis found"
 msgstr ""
+
+#: app/routes/mock-payments+/dashboard.tsx:145
+msgid "No events yet."
+msgstr "No events yet."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
 msgid "No execution runs recorded yet for this automation."
@@ -16740,6 +16949,10 @@ msgstr ""
 msgid "No pay is set yet."
 msgstr "No pay is set yet."
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:212
+msgid "No payments yet."
+msgstr "No payments yet."
+
 #: app/components/staff/timesheets/payroll-summary.tsx:351
 msgid "No payroll ID"
 msgstr "No payroll ID"
@@ -16942,6 +17155,10 @@ msgstr "No special occasions noted for this service."
 msgid "No staff phone is set, so only the transfer cases below can transfer calls."
 msgstr "No staff phone is set, so only the transfer cases below can transfer calls."
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:112
+msgid "No sub-entities yet."
+msgstr "No sub-entities yet."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:389
 msgid "No submissions yet"
 msgstr "No submissions yet"
@@ -17109,8 +17326,8 @@ msgstr "No-Show"
 msgid "No-show rate"
 msgstr "No-show rate"
 
-#: app/components/reservations/booking-sheet.tsx:492
-#: app/components/reservations/booking-sheet.tsx:526
+#: app/components/reservations/booking-sheet.tsx:496
+#: app/components/reservations/booking-sheet.tsx:530
 #: app/components/reservations/detail-sheet.tsx:921
 msgid "no-shows"
 msgstr "no-shows"
@@ -17195,7 +17412,7 @@ msgstr "none"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:314
 #: app/components/hiring/job-summary.tsx:66
 #: app/components/menu/modifier-form.tsx:282
-#: app/components/reservations/booking-sheet.tsx:69
+#: app/components/reservations/booking-sheet.tsx:73
 #: app/components/settings/cards/organization/site-theme-card.tsx:748
 #: app/components/staff/empty-value.tsx:14
 #: app/components/staff/labor-example.tsx:163
@@ -17253,7 +17470,7 @@ msgid "Not available when we need them"
 msgstr "Not available when we need them"
 
 #: app/components/settings/cards/organization/review-integrations-card.tsx:60
-#: app/components/settings/cards/organization/shop-card.tsx:106
+#: app/components/settings/cards/organization/shop-card.tsx:120
 msgid "Not connected"
 msgstr ""
 
@@ -17547,6 +17764,10 @@ msgstr "Nothing to show here"
 msgid "Nothing waiting for a manager."
 msgstr "Nothing waiting for a manager."
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
+msgid "Nothing yet."
+msgstr "Nothing yet."
+
 #: app/components/menu/drop-wizard/drop-drawers.tsx:908
 msgid "Notification Message"
 msgstr "Notification Message"
@@ -17617,7 +17838,7 @@ msgstr "Numbers"
 msgid "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 msgstr "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 
-#: app/components/reservations/booking-sheet.tsx:49
+#: app/components/reservations/booking-sheet.tsx:53
 #: app/utils/reservations/labels.ts:105
 msgid "Nut Allergy"
 msgstr "Nut Allergy"
@@ -17634,7 +17855,7 @@ msgstr "Nutritional Information"
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:854
+#: app/components/reservations/booking-sheet.tsx:858
 #: app/components/reservations/detail-sheet.tsx:854
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:714
 msgid "Occasion"
@@ -17939,6 +18160,10 @@ msgstr "Online orders only, not all sales"
 msgid "Online orders, and this workplace sells nothing else"
 msgstr "Online orders, and this workplace sells nothing else"
 
+#: app/components/settings/cards/organization/shop-card.tsx:82
+msgid "Online payments"
+msgstr "Online payments"
+
 #: app/utils/staffing/onboarding-errors.ts:22
 msgid "Only a form task has a link."
 msgstr "Only a form task has a link."
@@ -18061,7 +18286,7 @@ msgstr "Open call flow"
 msgid "Open checklist"
 msgstr "Open checklist"
 
-#: app/components/settings/cards/organization/shop-card.tsx:174
+#: app/components/settings/cards/organization/shop-card.tsx:193
 msgid "Open Checkout dashboard"
 msgstr "Open Checkout dashboard"
 
@@ -18097,7 +18322,7 @@ msgstr ""
 msgid "Open guest profile"
 msgstr "Open guest profile"
 
-#: app/components/settings/cards/organization/shop-card.tsx:205
+#: app/components/settings/cards/organization/shop-card.tsx:226
 msgid "Open hosted dashboard"
 msgstr "Open hosted dashboard"
 
@@ -18139,6 +18364,10 @@ msgstr "Open link"
 msgid "Open menu"
 msgstr ""
 
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:70
+msgid "Open mock payments dashboard"
+msgstr "Open mock payments dashboard"
+
 #. placeholder {0}: selected.providerDisplayName
 #: app/components/mailbox/reviews-tab.tsx:601
 msgid "Open on {0}"
@@ -18156,7 +18385,7 @@ msgstr "Open or closed"
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "Open pages, forms, and themes in the site builder."
 
-#: app/components/settings/cards/organization/shop-card.tsx:142
+#: app/components/settings/cards/organization/shop-card.tsx:161
 msgid "Open payout dashboard"
 msgstr "Open payout dashboard"
 
@@ -18348,7 +18577,7 @@ msgstr "Operator"
 msgid "Operator Invited"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:954
+#: app/components/reservations/booking-sheet.tsx:958
 msgid "Operator Overrides & Deposit Policy"
 msgstr "Operator Overrides & Deposit Policy"
 
@@ -18417,11 +18646,11 @@ msgstr "Optional limits for this item on this drop."
 msgid "Optional limits for this section on this drop."
 msgstr "Optional limits for this section on this drop."
 
-#: app/components/reservations/walk-in-dialog.tsx:288
+#: app/components/reservations/walk-in-dialog.tsx:292
 msgid "Optional note"
 msgstr "Optional note"
 
-#: app/components/reservations/booking-sheet.tsx:879
+#: app/components/reservations/booking-sheet.tsx:883
 msgid "Optional server name"
 msgstr "Optional server name"
 
@@ -18542,7 +18771,7 @@ msgstr "Orders open"
 msgid "orders per slot"
 msgstr "orders per slot"
 
-#: app/components/settings/cards/organization/shop-card.tsx:345
+#: app/components/settings/cards/organization/shop-card.tsx:375
 msgid "Orders placed on your public site."
 msgstr ""
 
@@ -18743,11 +18972,11 @@ msgstr "Overlaps another shift for this person"
 msgid "Overlaps with another booking on {tableNames}"
 msgstr "Overlaps with another booking on {tableNames}"
 
-#: app/components/reservations/booking-sheet.tsx:989
+#: app/components/reservations/booking-sheet.tsx:993
 msgid "Override blocked table"
 msgstr "Override blocked table"
 
-#: app/components/reservations/booking-sheet.tsx:977
+#: app/components/reservations/booking-sheet.tsx:981
 msgid "Override closed day"
 msgstr "Override closed day"
 
@@ -18759,11 +18988,11 @@ msgstr "Override recurring services for holidays, Ramadan, private buyouts, or s
 msgid "Override regular operating hours on holidays, events, or closures."
 msgstr "Override regular operating hours on holidays, events, or closures."
 
-#: app/components/reservations/booking-sheet.tsx:1000
+#: app/components/reservations/booking-sheet.tsx:1004
 msgid "Override schedule block"
 msgstr "Override schedule block"
 
-#: app/components/reservations/booking-sheet.tsx:965
+#: app/components/reservations/booking-sheet.tsx:969
 msgid "Override slot pacing cap"
 msgstr "Override slot pacing cap"
 
@@ -19073,9 +19302,9 @@ msgstr "Party of {partySize}"
 msgid "Party size"
 msgstr "Party size"
 
-#: app/components/reservations/booking-sheet.tsx:563
+#: app/components/reservations/booking-sheet.tsx:567
 #: app/components/reservations/detail-sheet.tsx:1048
-#: app/components/reservations/walk-in-dialog.tsx:152
+#: app/components/reservations/walk-in-dialog.tsx:156
 msgid "Party Size"
 msgstr "Party Size"
 
@@ -19098,6 +19327,7 @@ msgstr ""
 #: app/components/settings/password-form.tsx:112
 #: app/routes/_auth+/login.tsx:801
 #: app/routes/_auth+/onboarding.tsx:467
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:83
 msgid "Password"
 msgstr ""
 
@@ -19170,6 +19400,8 @@ msgstr ""
 #: app/components/hiring/job-editor.tsx:763
 #: app/components/hiring/job-summary.tsx:61
 #: app/components/staff/staff-roster.tsx:147
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:140
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
 msgid "Pay"
 msgstr "Pay"
 
@@ -19214,6 +19446,14 @@ msgstr "Pay type"
 msgid "Pay week"
 msgstr "Pay week"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
+msgid "Payment"
+msgstr "Payment"
+
+#: app/routes/mock-payments+/dashboard.tsx:83
+msgid "Payment mock"
+msgstr "Payment mock"
+
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:141
 msgid "Payment needs review"
 msgstr "Payment needs review"
@@ -19222,13 +19462,32 @@ msgstr "Payment needs review"
 msgid "Payment not yet received"
 msgstr "Payment not yet received"
 
-#: app/components/settings/cards/organization/shop-card.tsx:90
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:125
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:206
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:129
+msgid "Payments"
+msgstr "Payments"
+
+#: app/components/settings/cards/organization/shop-card.tsx:104
 msgid "Payments enabled"
 msgstr ""
 
-#: app/components/settings/cards/organization/shop-card.tsx:115
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:128
+msgid "Payouts"
+msgstr "Payouts"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:146
+msgid "Payouts disabled"
+msgstr "Payouts disabled"
+
+#: app/components/settings/cards/organization/shop-card.tsx:132
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:144
 msgid "Payouts enabled"
 msgstr ""
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:102
+msgid "Payouts restricted"
+msgstr "Payouts restricted"
 
 #: app/components/hiring/hire-dialog.tsx:279
 #: app/components/staff/details-tab.tsx:177
@@ -19429,7 +19688,7 @@ msgstr ""
 msgid "Phone (optional)"
 msgstr "Phone (optional)"
 
-#: app/components/reservations/walk-in-dialog.tsx:254
+#: app/components/reservations/walk-in-dialog.tsx:258
 msgid "Phone (Optional)"
 msgstr "Phone (Optional)"
 
@@ -19469,7 +19728,7 @@ msgstr "Phone number"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:460
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:305
 #: app/components/locations/location-form.tsx:371
-#: app/components/reservations/booking-sheet.tsx:823
+#: app/components/reservations/booking-sheet.tsx:827
 msgid "Phone Number"
 msgstr ""
 
@@ -20117,7 +20376,7 @@ msgstr "Postal code"
 msgid "Posted {selectedReplyDate}"
 msgstr "Posted {selectedReplyDate}"
 
-#: app/components/reservations/booking-sheet.tsx:538
+#: app/components/reservations/booking-sheet.tsx:542
 msgid "Preference:"
 msgstr "Preference:"
 
@@ -20239,7 +20498,7 @@ msgstr "Price"
 msgid "Price ($)"
 msgstr "Price ($)"
 
-#: app/components/settings/cards/organization/shop-card.tsx:283
+#: app/components/settings/cards/organization/shop-card.tsx:312
 msgid "Price (USD)"
 msgstr ""
 
@@ -20334,7 +20593,7 @@ msgstr ""
 msgid "Processing…"
 msgstr "Processing…"
 
-#: app/components/settings/cards/organization/shop-card.tsx:254
+#: app/components/settings/cards/organization/shop-card.tsx:283
 msgid "Product name"
 msgstr ""
 
@@ -20379,6 +20638,14 @@ msgstr "Prompt"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:596
 msgid "Pronunciations"
 msgstr "Pronunciations"
+
+#: app/routes/mock-payments+/dashboard.tsx:152
+msgid "Provider"
+msgstr "Provider"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:31
+msgid "Provider calls go to the built-in emulators. No real money moves and no real keys are used."
+msgstr "Provider calls go to the built-in emulators. No real money moves and no real keys are used."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:502
 msgid "Public"
@@ -20458,7 +20725,7 @@ msgstr "Publish this week"
 msgid "Publish updates"
 msgstr ""
 
-#: app/components/settings/cards/organization/shop-card.tsx:327
+#: app/components/settings/cards/organization/shop-card.tsx:356
 msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
@@ -20581,6 +20848,10 @@ msgstr ""
 #: app/components/hiring/screener-editor.tsx:98
 msgid "Questions are optional. A short yes or no on weekends or experience saves you reading every application."
 msgstr "Questions are optional. A short yes or no on weekends or experience saves you reading every application."
+
+#: app/routes/mock-payments+/dashboard.tsx:190
+msgid "Queued"
+msgstr "Queued"
 
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:350
 msgid "Quick edit"
@@ -20808,7 +21079,7 @@ msgstr "Receives tips"
 msgid "Recent campaigns"
 msgstr ""
 
-#: app/components/settings/cards/organization/shop-card.tsx:342
+#: app/components/settings/cards/organization/shop-card.tsx:372
 msgid "Recent orders"
 msgstr ""
 
@@ -20912,6 +21183,10 @@ msgstr "Rectangle"
 msgid "Red"
 msgstr "Red"
 
+#: app/routes/mock-payments+/dashboard.tsx:223
+msgid "Redeliver"
+msgstr "Redeliver"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
 msgid "Redirect actions"
 msgstr "Redirect actions"
@@ -20957,7 +21232,7 @@ msgstr "Refresh"
 msgid "Refresh calls"
 msgstr "Refresh calls"
 
-#: app/components/settings/cards/organization/shop-card.tsx:161
+#: app/components/settings/cards/organization/shop-card.tsx:180
 msgid "Refresh Checkout setup"
 msgstr "Refresh Checkout setup"
 
@@ -20972,6 +21247,10 @@ msgstr "Refresh reviews"
 #: app/components/settings/cards/organization/site-card.tsx:509
 msgid "Refresh status"
 msgstr ""
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
+msgid "Refunds"
+msgstr "Refunds"
 
 #: app/components/settings/backup-codes-display.tsx:151
 msgid "Regenerate Codes"
@@ -22392,6 +22671,14 @@ msgstr "Save as draft"
 msgid "Save Branding"
 msgstr ""
 
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
+msgid "Save card"
+msgstr "Save card"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:141
+msgid "Save card for later charges"
+msgstr "Save card for later charges"
+
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:442
 #: app/components/menu/drop-wizard/drop-form.tsx:456
@@ -22465,7 +22752,7 @@ msgstr "Save personal details"
 msgid "Save phrases"
 msgstr "Save phrases"
 
-#: app/components/settings/cards/organization/shop-card.tsx:313
+#: app/components/settings/cards/organization/shop-card.tsx:342
 msgid "Save product"
 msgstr ""
 
@@ -22846,7 +23133,7 @@ msgstr "Search by name"
 msgid "Search by name or email..."
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:450
+#: app/components/reservations/booking-sheet.tsx:454
 msgid "Search by phone (+1...) or guest name..."
 msgstr "Search by phone (+1...) or guest name..."
 
@@ -22950,7 +23237,7 @@ msgstr "Search redirects..."
 msgid "Search results"
 msgstr "Search results"
 
-#: app/components/reservations/booking-sheet.tsx:426
+#: app/components/reservations/booking-sheet.tsx:430
 msgid "Search returning guests, check live slot availability, and book with optional operator overrides."
 msgstr "Search returning guests, check live slot availability, and book with optional operator overrides."
 
@@ -22992,7 +23279,7 @@ msgstr ""
 msgid "Search…"
 msgstr "Search…"
 
-#: app/components/reservations/booking-sheet.tsx:455
+#: app/components/reservations/booking-sheet.tsx:459
 msgid "Searching..."
 msgstr "Searching..."
 
@@ -23053,11 +23340,11 @@ msgstr "Seat this party even though the table is booked or in use."
 msgid "Seat walk-in at {0}"
 msgstr "Seat walk-in at {0}"
 
-#: app/components/reservations/walk-in-dialog.tsx:326
+#: app/components/reservations/walk-in-dialog.tsx:330
 msgid "Seat Walk-In Now"
 msgstr "Seat Walk-In Now"
 
-#: app/components/reservations/walk-in-dialog.tsx:132
+#: app/components/reservations/walk-in-dialog.tsx:136
 msgid "Seat Walk-In Party"
 msgstr "Seat Walk-In Party"
 
@@ -23112,7 +23399,7 @@ msgid "Seating times must satisfy firstSeating <= lastSeating <= serviceEnd."
 msgstr "Seating times must satisfy firstSeating <= lastSeating <= serviceEnd."
 
 #: app/components/reservations/waitlist/seat-dialog.tsx:267
-#: app/components/reservations/walk-in-dialog.tsx:324
+#: app/components/reservations/walk-in-dialog.tsx:328
 msgid "Seating..."
 msgstr "Seating..."
 
@@ -23375,7 +23662,7 @@ msgstr "Select a service and target entity."
 msgid "Select a service and valid hours for modified schedule."
 msgstr "Select a service and valid hours for modified schedule."
 
-#: app/components/reservations/booking-sheet.tsx:766
+#: app/components/reservations/booking-sheet.tsx:770
 msgid "Select a slot above or enter any time in the Time field."
 msgstr "Select a slot above or enter any time in the Time field."
 
@@ -23572,7 +23859,7 @@ msgstr "Selection Behavior & Limits"
 msgid "Selection Mode"
 msgstr "Selection Mode"
 
-#: app/components/settings/cards/organization/shop-card.tsx:71
+#: app/components/settings/cards/organization/shop-card.tsx:87
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 
@@ -23661,7 +23948,7 @@ msgstr ""
 msgid "Send SMS"
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:1021
+#: app/components/reservations/booking-sheet.tsx:1025
 msgid "Send SMS payment link"
 msgstr "Send SMS payment link"
 
@@ -23762,16 +24049,16 @@ msgstr "Separate several terms with commas. Up to 100."
 msgid "Serif"
 msgstr ""
 
-#: app/components/reservations/walk-in-dialog.tsx:269
+#: app/components/reservations/walk-in-dialog.tsx:273
 msgid "Server (Optional)"
 msgstr "Server (Optional)"
 
-#: app/components/reservations/booking-sheet.tsx:873
+#: app/components/reservations/booking-sheet.tsx:877
 #: app/components/reservations/detail-sheet.tsx:1108
 msgid "Server / Section Label"
 msgstr "Server / Section Label"
 
-#: app/components/reservations/walk-in-dialog.tsx:275
+#: app/components/reservations/walk-in-dialog.tsx:279
 msgid "Server name"
 msgstr "Server name"
 
@@ -23781,7 +24068,7 @@ msgid "Server:"
 msgstr "Server:"
 
 #: app/components/note/integration-controls.tsx:296
-#: app/components/reservations/booking-sheet.tsx:616
+#: app/components/reservations/booking-sheet.tsx:620
 #: app/components/reservations/guests/guest-profile-screen.tsx:477
 #: app/components/reservations/host-subnav.tsx:249
 #: app/components/reservations/reports/report-panels.tsx:158
@@ -23953,6 +24240,10 @@ msgstr "Set up a tablet"
 msgid "Set up authenticator app"
 msgstr ""
 
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:67
+msgid "Set up payouts"
+msgstr "Set up payouts"
+
 #: app/components/staff/onboarding/onboarding-labels.ts:42
 msgid "Set up their clock-in PIN"
 msgstr "Set up their clock-in PIN"
@@ -23998,9 +24289,9 @@ msgstr "Setup"
 msgid "Setup Diagnostics & Completeness"
 msgstr "Setup Diagnostics & Completeness"
 
-#: app/components/settings/cards/organization/shop-card.tsx:93
-#: app/components/settings/cards/organization/shop-card.tsx:99
-#: app/components/settings/cards/organization/shop-card.tsx:104
+#: app/components/settings/cards/organization/shop-card.tsx:107
+#: app/components/settings/cards/organization/shop-card.tsx:113
+#: app/components/settings/cards/organization/shop-card.tsx:118
 msgid "Setup incomplete"
 msgstr ""
 
@@ -24103,7 +24394,7 @@ msgstr "Shared link"
 msgid "Shared with me"
 msgstr "Shared with me"
 
-#: app/components/reservations/booking-sheet.tsx:51
+#: app/components/reservations/booking-sheet.tsx:55
 #: app/utils/reservations/labels.ts:107
 msgid "Shellfish Allergy"
 msgstr "Shellfish Allergy"
@@ -24175,8 +24466,8 @@ msgid "Shop order reports are only available for US organizations."
 msgstr "Shop order reports are only available for US organizations."
 
 #: app/components/settings/cards/organization/shop-card.tsx:80
-msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
-msgstr ""
+#~ msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
+#~ msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5106
 msgid "Short"
@@ -24268,7 +24559,7 @@ msgstr "Show more"
 msgid "Show opening date"
 msgstr "Show opening date"
 
-#: app/components/settings/cards/organization/shop-card.tsx:309
+#: app/components/settings/cards/organization/shop-card.tsx:338
 msgid "Show product on your public site"
 msgstr ""
 
@@ -24381,6 +24672,10 @@ msgstr ""
 msgid "Signed in as"
 msgstr ""
 
+#: app/routes/mock-payments+/dashboard.tsx:128
+msgid "Signed webhook deliveries, newest first."
+msgstr "Signed webhook deliveries, newest first."
+
 #: app/routes/_auth+/login.tsx:566
 #: app/routes/_auth+/login.tsx:740
 msgid "Signing in as"
@@ -24424,7 +24719,7 @@ msgstr ""
 msgid "Site icon"
 msgstr ""
 
-#: app/components/settings/cards/organization/shop-card.tsx:68
+#: app/components/settings/cards/organization/shop-card.tsx:80
 msgid "Site shop"
 msgstr ""
 
@@ -24835,7 +25130,7 @@ msgstr "Standard organization member with note access"
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "Standard platform roles. Click any role to review its active permissions."
 
-#: app/components/reservations/booking-sheet.tsx:1020
+#: app/components/reservations/booking-sheet.tsx:1024
 msgid "Standard policy"
 msgstr "Standard policy"
 
@@ -25049,6 +25344,8 @@ msgstr "Stats"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:122
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:222
 msgid "Status"
 msgstr ""
 
@@ -25162,6 +25459,18 @@ msgstr "Street Address"
 msgid "Strict"
 msgstr "Strict"
 
+#: app/routes/mock-payments+/dashboard.tsx:86
+msgid "Stripe and Checkout.com are emulated in this app. Nothing here is real."
+msgstr "Stripe and Checkout.com are emulated in this app. Nothing here is real."
+
+#: app/routes/mock-payments+/dashboard.tsx:95
+msgid "Stripe: mocked"
+msgstr "Stripe: mocked"
+
+#: app/routes/mock-payments+/dashboard.tsx:97
+msgid "Stripe: real"
+msgstr "Stripe: real"
+
 #: app/components/hiring/applicant-labels.ts:87
 msgid "Strong match"
 msgstr "Strong match"
@@ -25187,6 +25496,10 @@ msgstr ""
 #: app/components/menu/modifier-form.tsx:2104
 msgid "Sub / Nested Modifier Groups"
 msgstr "Sub / Nested Modifier Groups"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:101
+msgid "Sub-entities"
+msgstr "Sub-entities"
 
 #: app/routes/_app+/$orgSlug_+/menu+/modifiers._index.tsx:391
 #~ msgid "Sub-Group"
@@ -25237,6 +25550,10 @@ msgstr "Submissions are stored in this organization’s regional tenant database
 #: app/components/core/feedback-modal.tsx:112
 msgid "Submit"
 msgstr ""
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:92
+msgid "Submit with requirements due"
+msgstr "Submit with requirements due"
 
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:624
 msgid "Submitted"
@@ -25392,7 +25709,7 @@ msgstr "Sync"
 msgid "Sync details"
 msgstr "Sync details"
 
-#: app/components/settings/cards/organization/shop-card.tsx:192
+#: app/components/settings/cards/organization/shop-card.tsx:213
 msgid "Sync hosted product"
 msgstr "Sync hosted product"
 
@@ -25474,7 +25791,7 @@ msgstr "Table archived."
 msgid "Table assigned"
 msgstr "Table assigned"
 
-#: app/components/reservations/booking-sheet.tsx:656
+#: app/components/reservations/booking-sheet.tsx:660
 #: app/components/reservations/detail-sheet.tsx:773
 msgid "Table Assignment"
 msgstr "Table Assignment"
@@ -26579,8 +26896,8 @@ msgstr "The link was turned off."
 msgid "The list could not be refreshed. What you see may be out of date."
 msgstr "The list could not be refreshed. What you see may be out of date."
 
-#: app/components/reservations/booking-sheet.tsx:311
-#: app/components/reservations/booking-sheet.tsx:341
+#: app/components/reservations/booking-sheet.tsx:313
+#: app/components/reservations/booking-sheet.tsx:343
 msgid "The location is closed on this date. Turn on the closed-day override to book anyway."
 msgstr "The location is closed on this date. Turn on the closed-day override to book anyway."
 
@@ -27073,6 +27390,11 @@ msgstr "This applicant is no longer in the running."
 msgid "This applicant was declined. Move them back into the pipeline first."
 msgstr "This applicant was declined. Move them back into the pipeline first."
 
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:100
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:110
+msgid "This authentication is no longer active"
+msgstr "This authentication is no longer active"
+
 #: app/components/kiosk/kiosk-pair.tsx:171
 msgid "This browser will not keep the pairing. Turn off private browsing and try again."
 msgstr "This browser will not keep the pairing. Turn off private browsing and try again."
@@ -27136,6 +27458,10 @@ msgstr "This card is still open. Add the end time first."
 #: app/utils/staffing/onboarding-errors.ts:18
 msgid "This checklist was already added for them."
 msgstr "This checklist was already added for them."
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:209
+msgid "This Checkout Session is no longer active"
+msgstr "This Checkout Session is no longer active"
 
 #: app/routes/mcp+/authorize.tsx:374
 msgid "This client will have access to:"
@@ -27313,6 +27639,10 @@ msgstr "This page opens from the link in your schedule email. Find the latest em
 #: app/utils/reservations/waitlist-errors.ts:17
 msgid "This party is no longer on the waitlist. The list has been reloaded."
 msgstr "This party is no longer on the waitlist. The list has been reloaded."
+
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:146
+msgid "This payment page is no longer active"
+msgstr "This payment page is no longer active"
 
 #: app/components/staff/timesheets/period-nav.tsx:150
 msgid "This period"
@@ -27512,11 +27842,11 @@ msgstr "This tablet is not ready yet. Ask a manager."
 msgid "This tablet was disconnected"
 msgstr "This tablet was disconnected"
 
-#: app/components/reservations/booking-sheet.tsx:796
+#: app/components/reservations/booking-sheet.tsx:800
 msgid "This time is over its pacing limit. Creating the booking overbooks the slot."
 msgstr "This time is over its pacing limit. Creating the booking overbooks the slot."
 
-#: app/components/reservations/booking-sheet.tsx:314
+#: app/components/reservations/booking-sheet.tsx:316
 msgid "This time is over its pacing limit. Turn on the pacing override to book anyway."
 msgstr "This time is over its pacing limit. Turn on the pacing override to book anyway."
 
@@ -27637,7 +27967,7 @@ msgstr "TikTok Pixel ID"
 
 #: app/components/hiring/interview-dialog.tsx:196
 #: app/components/menu/menu-availability-card.tsx:357
-#: app/components/reservations/booking-sheet.tsx:581
+#: app/components/reservations/booking-sheet.tsx:585
 #: app/components/reservations/detail-sheet.tsx:1068
 #: app/components/reservations/guests/guest-profile-screen.tsx:471
 #: app/components/reservations/reports/report-panels.tsx:290
@@ -28087,6 +28417,10 @@ msgstr "Transfer contacts"
 msgid "Transfer options"
 msgstr "Transfer options"
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:173
+msgid "Transfer reversals"
+msgstr "Transfer reversals"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:504
 msgid "Transfer to"
 msgstr "Transfer to"
@@ -28111,6 +28445,7 @@ msgstr "Transfer when"
 #: app/components/workspace-breadcrumb.tsx:50
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:143
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:158
 msgid "Transfers"
 msgstr "Transfers"
 
@@ -28468,6 +28803,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3990
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
+#: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
 msgstr ""
 
@@ -29340,7 +29676,7 @@ msgstr "variations"
 msgid "Variations"
 msgstr "Variations"
 
-#: app/components/reservations/booking-sheet.tsx:46
+#: app/components/reservations/booking-sheet.tsx:50
 #: app/utils/reservations/labels.ts:102
 msgid "Vegan"
 msgstr "Vegan"
@@ -29349,7 +29685,7 @@ msgstr "Vegan"
 #: app/components/menu/modifier-form.tsx:1722
 #: app/components/menu/modifier-form.tsx:2077
 #: app/components/menu/option-form.tsx:648
-#: app/components/reservations/booking-sheet.tsx:45
+#: app/components/reservations/booking-sheet.tsx:49
 #: app/utils/reservations/labels.ts:101
 msgid "Vegetarian"
 msgstr "Vegetarian"
@@ -29574,7 +29910,7 @@ msgstr "Viewer"
 msgid "Violet"
 msgstr "Violet"
 
-#: app/components/reservations/booking-sheet.tsx:75
+#: app/components/reservations/booking-sheet.tsx:79
 #: app/utils/reservations/labels.ts:88
 #: app/utils/reservations/labels.ts:97
 #: app/utils/reservations/labels.ts:115
@@ -29614,8 +29950,8 @@ msgstr "Visit history, tags, and notes for this guest. Details stay in your regi
 msgid "Visitor names, phone numbers, and emails are stored in this region. Changing it after customers have signed in permanently deletes that data — it is not moved."
 msgstr ""
 
-#: app/components/reservations/booking-sheet.tsx:488
-#: app/components/reservations/booking-sheet.tsx:522
+#: app/components/reservations/booking-sheet.tsx:492
+#: app/components/reservations/booking-sheet.tsx:526
 #: app/components/reservations/detail-sheet.tsx:917
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:495
 msgid "visits"
@@ -29798,7 +30134,7 @@ msgstr "Waitlist: guest joined"
 msgid "Waitlist: table is ready"
 msgstr "Waitlist: table is ready"
 
-#: app/components/reservations/booking-sheet.tsx:1022
+#: app/components/reservations/booking-sheet.tsx:1026
 msgid "Waive deposit / card hold"
 msgstr "Waive deposit / card hold"
 
@@ -29807,7 +30143,7 @@ msgstr "Waive deposit / card hold"
 msgid "Walk-in"
 msgstr "Walk-in"
 
-#: app/components/reservations/walk-in-dialog.tsx:247
+#: app/components/reservations/walk-in-dialog.tsx:251
 msgid "Walk-In Guest"
 msgstr "Walk-In Guest"
 
@@ -29874,6 +30210,11 @@ msgstr ""
 #: app/components/staff/schedule/shift-editor-sheet.tsx:425
 msgid "Warnings do not stop you from saving or publishing."
 msgstr "Warnings do not stop you from saving or publishing."
+
+#: app/routes/mock-payments+/__card-errors.ts:16
+#: app/routes/mock-payments+/__card-errors.ts:17
+msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
+msgstr "We are unable to authenticate your payment method. Please choose a different payment method and try again."
 
 #: app/components/reservations/region-reservations-guard.tsx:95
 msgid "We could not check how many reservation records there are, so assume there are some."
@@ -30076,6 +30417,10 @@ msgstr "Weather"
 #: app/utils/reservations/labels.ts:56
 msgid "Web"
 msgstr "Web"
+
+#: app/routes/mock-payments+/dashboard.tsx:108
+msgid "Webhooks: {webhookMode}"
+msgstr "Webhooks: {webhookMode}"
 
 #: app/components/app-sidebar.tsx:566
 #: app/components/workspace-breadcrumb.tsx:13
@@ -31076,7 +31421,7 @@ msgstr "You need pay access to change tips or rates."
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "You no longer have access to this chat. Reload the page to check your channels."
 
-#: app/components/settings/cards/organization/shop-card.tsx:384
+#: app/components/settings/cards/organization/shop-card.tsx:414
 msgid "You receive"
 msgstr ""
 
@@ -31136,6 +31481,10 @@ msgstr "Your agent is answering calls."
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr ""
 
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:84
+msgid "Your bank needs to confirm it is you."
+msgstr "Your bank needs to confirm it is you."
+
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:33
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 msgstr "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
@@ -31148,11 +31497,35 @@ msgstr "Your browser paused the agent's audio. Tap Speaker to hear it."
 msgid "Your business line"
 msgstr "Your business line"
 
+#: app/routes/mock-payments+/__card-errors.ts:14
+msgid "Your card has insufficient funds."
+msgstr "Your card has insufficient funds."
+
+#: app/routes/mock-payments+/__card-errors.ts:10
+msgid "Your card number is invalid."
+msgstr "Your card number is invalid."
+
+#: app/routes/mock-payments+/__card-errors.ts:13
+msgid "Your card was declined."
+msgstr "Your card was declined."
+
+#: app/routes/mock-payments+/__card-errors.ts:15
+msgid "Your card was declined. Your request was in test mode, but used a non test card."
+msgstr "Your card was declined. Your request was in test mode, but used a non test card."
+
+#: app/routes/mock-payments+/__card-errors.ts:11
+msgid "Your card's expiration date is incomplete or in the past."
+msgstr "Your card's expiration date is incomplete or in the past."
+
+#: app/routes/mock-payments+/__card-errors.ts:12
+msgid "Your card's security code is incomplete."
+msgstr "Your card's security code is incomplete."
+
 #: app/components/hiring/job-editor.tsx:472
 msgid "Your changes to this job will be lost."
 msgstr "Your changes to this job will be lost."
 
-#: app/components/settings/cards/organization/shop-card.tsx:319
+#: app/components/settings/cards/organization/shop-card.tsx:348
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr ""
 
@@ -31299,6 +31672,10 @@ msgstr "Your website is not published yet, so people cannot see this job. <0>Pub
 #: app/components/roles/tenant-role-access-manager.tsx:618
 msgid "Zero permissions"
 msgstr "Zero permissions"
+
+#: app/routes/mock-payments+/__card-form.tsx:98
+msgid "ZIP"
+msgstr "ZIP"
 
 #: app/components/locations/delivery-zone-map.tsx:360
 msgid "Zip Code Zone"

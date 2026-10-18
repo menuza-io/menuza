@@ -148,9 +148,53 @@ export function mapConnectSessionToRestaurantOrder(
 }
 
 /**
+ * The merchant reference a Checkout.com restaurant order is created with. It
+ * is also the session id bound regionally: payment events and searches echo
+ * the reference, while a hosted page id only comes back when the provider
+ * chooses to include it.
+ */
+export function restaurantOrderCheckoutReference(
+	orgId: string,
+	orderId: string,
+): string {
+	return `${RESTAURANT_ORDER_METADATA_TYPE}:${orgId}:${orderId}`
+}
+
+/**
+ * Map a Checkout.com payment (webhook or trusted lookup) to a restaurant order
+ * payment event. Returns null for non-restaurant payments, or when the
+ * payment's reference does not match the order its metadata names.
+ */
+export function mapCheckoutPaymentToRestaurantOrder(
+	payment: CheckoutShopPayment,
+): RestaurantOrderPaymentEvent | null {
+	if (!isRestaurantOrderMetadata(payment.metadata)) return null
+	const orgId = payment.metadata.orgId
+	const orderId = payment.metadata.orderId
+	if (!orgId || !orderId) return null
+	const reference = restaurantOrderCheckoutReference(orgId, orderId)
+	if (payment.reference !== reference) return null
+
+	const status: RestaurantOrderPaymentStatus = payment.paid
+		? 'paid'
+		: payment.declined
+			? 'failed'
+			: 'pending'
+
+	return {
+		orgId,
+		orderId,
+		sessionId: reference,
+		processor: 'checkout',
+		status,
+		amountCents: payment.amountCents,
+		currency: payment.currency.toLowerCase(),
+	}
+}
+
+/**
  * Map a verified Checkout.com webhook event to a restaurant order payment
- * event. Returns null for non-restaurant payments, or payments without the
- * session reference needed to verify the regional binding.
+ * event. Returns null for non-restaurant payments.
  */
 export function mapCheckoutWebhookToRestaurantOrder(event: {
 	type: string
@@ -158,27 +202,7 @@ export function mapCheckoutWebhookToRestaurantOrder(event: {
 }): RestaurantOrderPaymentEvent | null {
 	const payment: CheckoutShopPayment | null = mapCheckoutWebhookToPayment(event)
 	if (!payment) return null
-	if (!isRestaurantOrderMetadata(payment.metadata)) return null
-	const orgId = payment.metadata.orgId
-	const orderId = payment.metadata.orderId
-	if (!orgId || !orderId) return null
-	if (!payment.sessionId) return null
-
-	const status: RestaurantOrderPaymentStatus = payment.paid
-		? 'paid'
-		: event.type === 'payment_pending'
-			? 'pending'
-			: 'failed'
-
-	return {
-		orgId,
-		orderId,
-		sessionId: payment.sessionId,
-		processor: 'checkout',
-		status,
-		amountCents: payment.amountCents,
-		currency: payment.currency.toLowerCase(),
-	}
+	return mapCheckoutPaymentToRestaurantOrder(payment)
 }
 
 /** Terminal statuses are the only ones worth reporting to the regional service. */

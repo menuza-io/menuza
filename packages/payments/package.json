@@ -12,6 +12,16 @@
       "import": "./index.ts",
       "default": "./index.ts"
     },
+    "./mock": {
+      "types": "./src/mocks/index.ts",
+      "import": "./src/mocks/index.ts",
+      "default": "./src/mocks/index.ts"
+    },
+    "./mock/store-contract": {
+      "types": "./src/mocks/store-contract.ts",
+      "import": "./src/mocks/store-contract.ts",
+      "default": "./src/mocks/store-contract.ts"
+    },
     "./shop/client": {
       "types": "./src/shop/client.ts",
       "import": "./src/shop/client.ts",

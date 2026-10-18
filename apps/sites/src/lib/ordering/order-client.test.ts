@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+	acceptCheckoutUrl,
 	checkoutAttemptKey,
 	clearCheckoutAttempt,
 	fetchOrderingOptions,
@@ -162,5 +163,71 @@ describe('regional order client', () => {
 		await expect(
 			fetchOrderingOptions({ locationId: 'loc-1' }),
 		).rejects.toMatchObject({ code: 'options_unavailable' })
+	})
+})
+
+describe('checkout url (VAL-PMOCK-038)', () => {
+	it('always accepts https', () => {
+		for (const production of [false, true]) {
+			expect(
+				acceptCheckoutUrl('https://checkout.stripe.com/c/pay/cs_1', {
+					production,
+				}),
+			).toBe('https://checkout.stripe.com/c/pay/cs_1')
+		}
+	})
+
+	it('accepts loopback http outside production (the local payment mock)', () => {
+		for (const url of [
+			'http://localhost:3001/mock-payments/stripe/checkout/cs_test_1',
+			'http://127.0.0.1:3001/mock-payments/checkout-com/hpp/hpp_1',
+			'http://app.localhost:3001/mock-payments/stripe/checkout/cs_test_1',
+		]) {
+			expect(acceptCheckoutUrl(url, { production: false })).toBe(url)
+		}
+	})
+
+	it('refuses any other http address with payment_unavailable', () => {
+		for (const url of [
+			'http://example.com/pay',
+			'http://localhost.evil.com/pay',
+			'http://evil-localhost/pay',
+			'http://10.0.0.5/pay',
+			'http://[::1]:3001/pay',
+		]) {
+			expect(() => acceptCheckoutUrl(url, { production: false })).toThrow(
+				expect.objectContaining({ code: 'payment_unavailable', status: 502 }),
+			)
+		}
+	})
+
+	it('refuses even loopback http in production', () => {
+		expect(() =>
+			acceptCheckoutUrl(
+				'http://localhost:3001/mock-payments/stripe/checkout/cs_1',
+				{
+					production: true,
+				},
+			),
+		).toThrow(expect.objectContaining({ code: 'payment_unavailable' }))
+	})
+
+	it('refuses other schemes and malformed values', () => {
+		for (const url of [
+			'javascript:alert(1)',
+			'ftp://localhost/x',
+			'not a url',
+			'',
+		]) {
+			expect(() => acceptCheckoutUrl(url, { production: false })).toThrow(
+				expect.objectContaining({ code: 'payment_unavailable' }),
+			)
+		}
+	})
+
+	it('the default follows the build: this test run is not a production build', () => {
+		expect(acceptCheckoutUrl('http://localhost:3001/x')).toBe(
+			'http://localhost:3001/x',
+		)
 	})
 })

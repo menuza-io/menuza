@@ -155,8 +155,32 @@ export {
 	isTerminalRestaurantPaymentStatus,
 	mapConnectSessionToRestaurantOrder,
 	mapCheckoutWebhookToRestaurantOrder,
+	mapCheckoutPaymentToRestaurantOrder,
+	restaurantOrderCheckoutReference,
 	type RestaurantOrderProcessor,
 	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderPaymentStatus,
 	type RestaurantTerminalPaymentStatus,
 } from './src/shop'
+
+// Payment mock activation (tiny and pure: never pulls in the emulators)
+export {
+	paymentsMockMode,
+	isPaymentsMockOn,
+	getStripeWebhookSecrets,
+	isLocalHostname,
+	isLocalUrl,
+	isRealSecret,
+	parseMockWebhookMode,
+	mockWebhookSecrets,
+	MOCK_CHECKOUT_HOST,
+	type PaymentsMockEnv,
+	type PaymentsMockMode,
+	type MockWebhookMode,
+} from './src/mocks/env'
+export {
+	applyPaymentsMockConfig,
+	type PaymentsMockTransports,
+} from './src/shop/mock-config'
+// Type only: erased at build time, so this never pulls the emulators in.
+export type { PaymentsEmulator } from './src/mocks/emulator'

@@ -91,6 +91,14 @@ function stubCacheServerPlugin(): Plugin {
 }
 
 export default defineConfig((config) => ({
+	// Payment mock exclusion, layer 1: the Cloudflare production build compiles
+	// the mock branches out (dev, the Node build used by CI and Vitest keep them).
+	// Anything that does not see this define keeps the mock off.
+	define: {
+		__PAYMENTS_MOCK_BUNDLED__: JSON.stringify(
+			!(isCloudflare && config.command === 'build'),
+		),
+	},
 	base: MODE === 'test' ? 'http://localhost:3001' : undefined,
 	build: {
 		target: 'es2022',
