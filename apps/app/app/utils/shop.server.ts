@@ -11,7 +11,9 @@ import {
 	eq,
 	inArray,
 	isNull,
+	or,
 	Organization as OrganizationTable,
+	sql,
 } from '@repo/database'
 import {
 	calculateShopFees,
@@ -948,9 +950,53 @@ async function upsertShopOrder(
 	customerId: string | null,
 ) {
 	const paymentProvider = shopProcessorToDbValue(order.processor)
+	// A later event for the same order (e.g. payment_intent.succeeded after
+	// checkout.session.completed) often carries only some identifiers. Keep the
+	// identifiers and customer already stored, and never move a settled order
+	// back to pending/failed on an out-of-order delivery.
+	const keepOrSet = <T>(column: unknown, value: T | null) =>
+		value === null ? sql`${column}` : value
 	const updateSet = {
-		status: order.status,
+		status:
+			order.status === 'paid'
+				? order.status
+				: sql`CASE WHEN ${shopOrders.status} IN ('paid', 'refunded') THEN ${shopOrders.status} ELSE ${order.status} END`,
+		customerId: keepOrSet(shopOrders.customerId, customerId),
+		paymentProvider,
+		stripeCheckoutSessionId: keepOrSet(
+			shopOrders.stripeCheckoutSessionId,
+			order.processor === 'connect' ? order.processorCheckoutId : null,
+		),
+		stripePaymentIntentId: keepOrSet(
+			shopOrders.stripePaymentIntentId,
+			order.processor === 'connect' ? order.processorPaymentId : null,
+		),
+		polarCheckoutId: keepOrSet(
+			shopOrders.polarCheckoutId,
+			order.processor === 'mor' ? order.processorCheckoutId : null,
+		),
+		polarOrderId: keepOrSet(
+			shopOrders.polarOrderId,
+			order.processor === 'mor' ? order.processorOrderId : null,
+		),
+		checkoutSessionId: keepOrSet(
+			shopOrders.checkoutSessionId,
+			order.processor === 'checkout' ? order.processorCheckoutId : null,
+		),
+		checkoutPaymentId: keepOrSet(
+			shopOrders.checkoutPaymentId,
+			order.processor === 'checkout' ? order.processorPaymentId : null,
+		),
+		updatedAt: new Date(),
+	}
+
+	const values = {
 		customerId,
+		productName: order.productName,
+		amountCents: order.amountCents,
+		platformFeeCents: order.platformFeeCents,
+		orgPayoutCents: order.orgPayoutCents,
+		currency: order.currency,
 		paymentProvider,
 		stripeCheckoutSessionId:
 			order.processor === 'connect' ? order.processorCheckoutId : null,
@@ -963,24 +1009,33 @@ async function upsertShopOrder(
 			order.processor === 'checkout' ? order.processorCheckoutId : null,
 		checkoutPaymentId:
 			order.processor === 'checkout' ? order.processorPaymentId : null,
-		updatedAt: new Date(),
+		status: order.status,
 	}
 
-	const values = {
-		customerId,
-		productName: order.productName,
-		amountCents: order.amountCents,
-		platformFeeCents: order.platformFeeCents,
-		orgPayoutCents: order.orgPayoutCents,
-		currency: order.currency,
-		paymentProvider,
-		stripeCheckoutSessionId: updateSet.stripeCheckoutSessionId,
-		stripePaymentIntentId: updateSet.stripePaymentIntentId,
-		polarCheckoutId: updateSet.polarCheckoutId,
-		polarOrderId: updateSet.polarOrderId,
-		checkoutSessionId: updateSet.checkoutSessionId,
-		checkoutPaymentId: updateSet.checkoutPaymentId,
-		status: order.status,
+	// The same Connect order can arrive keyed by session only, by payment intent
+	// only, or by both. Attach to the row either identifier already owns, or the
+	// insert would violate the other unique index.
+	if (values.stripeCheckoutSessionId && values.stripePaymentIntentId) {
+		const [existing] = await tenantDb
+			.select({ id: shopOrders.id })
+			.from(shopOrders)
+			.where(
+				or(
+					eq(
+						shopOrders.stripeCheckoutSessionId,
+						values.stripeCheckoutSessionId,
+					),
+					eq(shopOrders.stripePaymentIntentId, values.stripePaymentIntentId),
+				),
+			)
+			.limit(1)
+		if (existing) {
+			await tenantDb
+				.update(shopOrders)
+				.set(updateSet)
+				.where(eq(shopOrders.id, existing.id))
+			return existing.id
+		}
 	}
 
 	if (values.stripeCheckoutSessionId) {

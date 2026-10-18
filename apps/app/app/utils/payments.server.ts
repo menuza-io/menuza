@@ -238,7 +238,12 @@ export async function createCheckoutSession(
 					)
 					return daysRemaining > 0 ? daysRemaining : undefined
 				})()
-			: trialConfig.trialDays
+			: trialConfig.trialDays > 0
+				? trialConfig.trialDays
+				: undefined
+
+	const checkoutCustomerId =
+		organization.stripeCustomerId || testCustomerId || undefined
 
 	const session = await paymentProvider.createCheckoutSession({
 		priceId,
@@ -248,7 +253,7 @@ export async function createCheckoutSession(
 			from === 'checkout'
 				? `${getDomainUrl(request)}/${organization.slug}/settings/billing`
 				: `${getDomainUrl(request)}/pricing`,
-		customerId: organization.stripeCustomerId || testCustomerId || undefined,
+		customerId: checkoutCustomerId,
 		clientReferenceId: userId.toString(),
 		allowPromotionCodes: true,
 		trialPeriodDays,
@@ -258,7 +263,18 @@ export async function createCheckoutSession(
 			organizationId: organization.id,
 			isCreationFlow: isCreationFlow ? 'true' : 'false',
 		},
-		idempotencyKey: `checkout-${organization.id}-${priceId}`,
+		// Stripe rejects a reused key whose parameters differ, so every parameter
+		// that can change between attempts must be part of the key.
+		idempotencyKey: [
+			'checkout',
+			organization.id,
+			priceId,
+			userId,
+			from,
+			quantity,
+			trialPeriodDays ?? 'none',
+			checkoutCustomerId ?? 'none',
+		].join('-'),
 	})
 
 	return redirect(session.url!)
@@ -483,7 +499,7 @@ export async function getTrialStatus(userId: string, organizationSlug: string) {
 				(trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
 			)
 
-			return { isActive: true, daysRemaining }
+			return { isActive: true, daysRemaining: Math.max(0, daysRemaining) }
 		} else if (subscription && subscription.status === 'active') {
 			return { isActive: true, daysRemaining: 0 }
 		} else {

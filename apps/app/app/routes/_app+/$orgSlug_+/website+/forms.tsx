@@ -130,7 +130,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (intent === 'delete') {
 		const id = String(formData.get('id') || '')
 		if (!id) return { error: 'Form not found.' }
-		const response = await fetchTenant(`/operator/forms/${id}`, {
+		const response = await fetchTenant(`/operator/forms/${encodeURIComponent(id)}`, {
 			method: 'DELETE',
 		})
 		if (!response.ok) return { error: 'Unable to delete the form.' }
