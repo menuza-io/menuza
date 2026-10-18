@@ -34,7 +34,7 @@ npm run dev
 Or start an individual app:
 
 ```sh
-npm run dev:app        # Operator app on :3001 (Workers dev — same as `npm run dev`)
+npm run dev:app        # Operator app only on :3001 (Workers dev, through Turbo)
 npm run dev:web        # Marketing site on :3002
 npm run dev:sites      # Public tenant sites on :3008
 npm run dev:tenant-api # US tenant API on :3007

@@ -6,8 +6,9 @@ We use Playwright for our End-to-End tests in this project. You'll find those in
 the `tests` directory. As you make changes, add to an existing file or create a
 new file in the `tests` directory to test your changes.
 
-To run these tests in development, run `npm run test:e2e:dev` which will start
-the dev server for the app and run Playwright on it.
+To run these tests interactively, run `npm run test:e2e:dev -w app` (or
+`-w admin`), which opens the Playwright UI. The script exists only in `apps/app`
+and `apps/admin`, not at the repo root.
 
 ### Running against the production build (what CI does)
 

@@ -48,9 +48,9 @@ kit, i18n, tests).
 **Developer machine or sandbox? Decide first.**
 
 - A _developer machine_ is a person's own computer, usually macOS, where they
-  run root `npm run dev` and use App at `https://app.epic-startup.test:2999`
-  through the HTTPS proxy. Treat the machine as one if you are on macOS, if
-  `curl -sk -o /dev/null -w '%{http_code}\n' https://app.epic-startup.test:2999/login`
+  run root `npm run dev` and use App at `https://app.menuza.test:2999` through
+  the HTTPS proxy. Treat the machine as one if you are on macOS, if
+  `curl -sk -o /dev/null -w '%{http_code}\n' https://app.menuza.test:2999/login`
   prints anything but `000`, or if root `npm run dev` is running. A _headless
   Linux sandbox_ is a disposable VM or container made for an agent, with no
   proxy. A proxy or root dev that you, or an earlier agent session, started
@@ -97,9 +97,12 @@ copies seed data into local D1.
 
 **Check your work.**
 
-- Types and lint: `npm run typecheck -w app`, `npm run lint -w app`, and
-  `npx oxlint <paths>`. Run ESLint from inside a workspace; from the repo root
-  it ignores every file.
+- Types and lint:
+  `cd apps/app && NODE_OPTIONS=--max-old-space-size=6144 npm run typecheck`,
+  ESLint on the files you changed, and `npx oxlint <paths>`. Run ESLint from
+  inside a workspace; from the repo root it ignores every file. See "Running
+  commands as an agent" below for heap sizes, the App ESLint baseline and
+  workspaces without a `lint` script.
 - Unit tests: `cd apps/app && npx vitest run <paths>`.
 - E2E: `npm run build -w app`, then
   `cd apps/app && PORT=3101 CI=true npx playwright test <spec> --workers=1`. On
@@ -108,6 +111,76 @@ copies seed data into local D1.
 - Tests, builds and dev servers can rewrite tracked files (Varlock `env.ts`
   files, icon sprites). Compare `git status` with what you noted at the start
   and revert only generated changes you caused.
+
+### Running commands as an agent
+
+These apply on both kinds of machine. Per-workspace commands are in the
+`project-agent-commands` skill (`docs/skills/project-agent-commands/SKILL.md`).
+
+- **Typecheck.** App and Admin run `react-router typegen && tsc`, which runs out
+  of memory at Node's default heap. Use
+  `cd apps/app && NODE_OPTIONS=--max-old-space-size=6144 npm run typecheck`
+  (about 70 s and 3.4 GB). Never run it at the same time as App ESLint, a build
+  or Playwright. Sites and web typecheck with `astro check`. The tenant-api
+  typecheck first runs `codegen` and `generate:do-migrations`, which rewrite
+  `env.d.ts` and the gitignored `workers/migrations.generated.ts`.
+- **Lint.** Only app, admin, sites, web, mobile, chrome-extension, docs and the
+  packages audit, flow-editor, marketing-workflow, notifications, payments,
+  types, ui and validation have a `lint` script. For tenant-api, jobs-cron,
+  voice-agent and the other packages, use `npx oxlint <paths>` and
+  `npx prettier --check <files>`. In App, lint only the files you changed:
+  `cd apps/app && NODE_OPTIONS=--max-old-space-size=4096 npx eslint <paths>`.
+  The whole-workspace `npm run lint -w app` reports pre-existing errors (59 at
+  the time of writing, all `shadcn/*` design-system rules in
+  `app/components/menu/` and the `menu+` routes), so compare against that
+  baseline instead of expecting exit 0. ESLint aborts the whole run if any path
+  you pass does not exist.
+- **ESLint `--fix` hazard.** The `jest-dom/prefer-enabled-disabled` autofix on
+  `expect((el as HTMLButtonElement).disabled).toBe(true)` leaves unbalanced
+  parentheses. Write `expect(el).toBeDisabled()` by hand, and lint again after
+  any `--fix`.
+- **Tests.** Run Vitest from inside a workspace, never from the repo root (there
+  is no root Vitest config). Set `CI=true` (App then uses 2 workers). App's test
+  config is in `apps/app/vite.config.ts`. tenant-api, auth, cache, common,
+  database, email, observability, reports, security, sso, tenant-db and
+  validation wrap Vitest in `varlock run`, so run one file there with
+  `CI=true npm run test -w <workspace> -- <path>` to load the env. Add
+  `--reporter=verbose` to see test names. mobile uses Jest
+  (`npm run testing -w mobile`), so `npm run test` skips it. The whole App suite
+  takes about 7.5 min and 2.6 GB; run it alone.
+- **Timeouts.** App typecheck, whole-suite tests, `npm run build -w app` (about
+  110 s) and Playwright take longer than a 60 s default; allow 300-600 s. Start
+  dev servers with your tool's background mode or `setsid`; a plain
+  `nohup ... &` in a one-shot shell dies with that shell. Poll health with
+  `curl --max-time 5`.
+- **Exit codes.** Do not pipe test, typecheck or lint output into `tail` or
+  `grep` and then read `$?`. Redirect instead:
+  `<cmd> > /tmp/x.log 2>&1; echo EXIT=$?`, then search the log.
+- **Varlock trailer.** A failing command under Varlock ends with "try running
+  the same command without varlock...". Ignore it and read the error above it.
+- **One-off TypeScript.** `tsx -e` compiles to CommonJS, so top-level `await`
+  fails. Write a `.mts` file and run it with `node_modules/.bin/tsx`, or wrap
+  the code in `;(async () => { ... })()`. A script that imports a repo
+  dependency (for example `jose`) must live inside the repo tree, not `/tmp`.
+  Pass multi-line programs through a heredoc.
+- **SQLite.** Use the `sqlite3` CLI (`better-sqlite3` is not installed). Run
+  `.schema <table>` first, or read `packages/database/src/schema.ts` and
+  `packages/tenant-db/src/schema.ts`, instead of guessing column names. Use
+  absolute paths. Recent writes may still be in the `-wal` file, so copy with
+  `sqlite3 <src> ".backup /tmp/x.db"`, not `cp`, and open a live file read-only
+  as `"file:<path>?mode=ro"`. Local App D1 is
+  `apps/app/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`; query it
+  with
+  `cd apps/app && npx wrangler d1 execute DB --local --json --command "<sql>"`
+  (5-15 s per call, and it masks secret-looking columns as asterisks).
+- **Generated files.** Varlock rewrites tracked `src/env.ts` files without
+  formatting. Restore them with
+  `npx prettier --write $(git ls-files -m | grep -E '(^|/)src/env\.ts$')`, which
+  keeps genuine schema changes, instead of `git checkout`. Check
+  `git diff --quiet -- package-lock.json` for stray lockfile changes.
+- **Secret scanners.** A fixture named like `secret*` with a long random-looking
+  literal can be blocked when you push. Use obviously fake values such as
+  `test-only-not-a-secret`.
 
 ### Headless Linux sandbox setup
 
@@ -133,9 +206,9 @@ install hook nor `npm run dev -w app` creates them.
 **2. Run App on localhost.**
 
 - Add `BASE_URL=http://localhost:3001` to `apps/app/.env`. The default
-  `BASE_URL` is the HTTPS proxy (`https://app.epic-startup.test:2999`), which
-  gives the session cookie `Domain=.epic-startup.test`, so sign-in on localhost
-  fails without an error.
+  `BASE_URL` is the HTTPS proxy (`https://app.menuza.test:2999`), which gives
+  the session cookie `Domain=.menuza.test`, so sign-in on localhost fails
+  without an error.
 - Start: `VITE_DIRECT_DEV=1 VITE_HMR_PORT=3001 npm run dev -w app`. Without
   `VITE_DIRECT_DEV=1` the HMR client connects to the proxy on 2999 and logs
   WebSocket errors. `npm run dev:app` goes through Turbo, which drops these
@@ -144,12 +217,67 @@ install hook nor `npm run dev -w app` creates them.
   `http://localhost:3001` (health check: `/resources/healthcheck`). Reports and
   staffing also need `npm run dev:tenant-api` (port 3007).
 - Root `npm run dev` first kills whatever listens on the dev ports (2999,
-  3001-3005, 3007-3009, 8787, 24678, 24679). Stop the server you started by its
-  listening port: `lsof -nP -tiTCP:3001 -sTCP:LISTEN | xargs -r kill`. Without
-  `-sTCP:LISTEN`, `lsof` also matches client connections such as the dev
-  proxy's. Without `lsof`, use
-  `ss -Htlnp 'sport = :3001' | grep -o 'pid=[0-9]*' | cut -d= -f2 | xargs -r kill`
-  (`-l` lists listeners only).
+  3001-3005, 3007-3009, 8787, 24678, 24679). Stop a server you started by its
+  process group, as described under "Local services (headless)" below.
+
+**3. Local services (headless).**
+
+These recipes are for a headless sandbox only. On a developer machine, use the
+running root `npm run dev` and follow the rules above. Check `ss -Htlnp` first
+and reuse a service that is already running.
+
+| Service        | Start                                                                                                            | Port | Health check                                                     | Notes                                                                                                                                                                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| App            | `cd apps/app && VITE_DIRECT_DEV=1 VITE_HMR_PORT=3001 npm run dev`                                                | 3001 | `/resources/healthcheck`                                         | Needs the localhost `BASE_URL` (step 2). A warm start takes about 70 s; the first start after `npm install` can take about 15 min. Early checks can return 500 "Call bindCloudflareD1()" while it warms up. Reload a page that shows "Invalid hook call" or no controls. |
+| Admin          | `cd apps/admin && PORT=3005 npm run dev`                                                                         | 3005 | `/resources/healthcheck`                                         | Needs `apps/admin/.env`. Moves to the next free port (up to +100) without failing if 3005 is busy, so check the port first. Shares App's local D1 when it exists (`apps/admin/scripts/dev.mjs`), so start App once first.                                                |
+| Sites          | `cd apps/sites && PUBLIC_APP_URL=http://localhost:3001 npm run dev`                                              | 3008 | `curl -H 'Host: <slug>.menuza.test:3008' http://localhost:3008/` | Resolves the org from the Host header; `localhost` never resolves to an org. See the Sites notes below.                                                                                                                                                                  |
+| tenant-api US  | `npm run dev -w tenant-api`                                                                                      | 3007 | `/health` (region `us`)                                          | Tenant DBs default to `packages/database/db/tenant_<orgId>.db`.                                                                                                                                                                                                          |
+| tenant-api KSA | `mkdir -p packages/database/db/ksa && TENANT_DB_DIR=$PWD/packages/database/db/ksa npm run dev:ksa -w tenant-api` | 3009 | `/health` (region `ksa`)                                         | `dev:ksa` sets no `TENANT_DB_DIR`, so without it both nodes share the same tenant DB files.                                                                                                                                                                              |
+| jobs-cron      | `cd apps/jobs-cron && npm run dev`                                                                               | 8787 | `/health`                                                        | `wrangler dev`.                                                                                                                                                                                                                                                          |
+
+Dev ports (`scripts/kill-dev-ports.mjs`): 2999 proxy, 3001 app, 3002 web, 3003
+studio, 3004 docs, 3005 admin, 3007 tenant-api US, 3008 sites, 3009 tenant-api
+KSA, 8787 jobs-cron, 24678 Admin Vite HMR, 24679 App Vite HMR.
+
+- **Stopping.** Kill the process group, not only the listener:
+  `kill -- -$(ps -o pgid= -p "$(lsof -nP -tiTCP:<port> -sTCP:LISTEN | head -1)" | tr -d ' ')`.
+  Killing only the listener leaves `tsx watch` or `workerd` children behind, and
+  the next start fails with `EADDRINUSE`. Without `lsof`, find the listener PID
+  with `ss -Htlnp 'sport = :<port>'` (`-l` lists listeners only; without
+  `-sTCP:LISTEN`, `lsof` also matches client connections).
+- **Sites hosts.** Sites accepts `<slug>.<suffix>` where the suffix is the brand
+  domain, `ROOT_APP` (default `menuza.test`, `apps/sites/.env.schema`) or a
+  `PUBLIC_SITE_HOST_SUFFIXES` entry (`apps/sites/src/lib/resolve-host.ts`).
+  Observed: the dev server listens on IPv6 `[::1]`, so in a browser use Chromium
+  `--host-resolver-rules="MAP *.menuza.test [::1]"`, not `127.0.0.1`.
+
+**4. Local auth, OTP and email in dev.**
+
+- Customer OTP SMS without Twilio prints `[SMS MOCK] To: <phone> | Message: ...`
+  to tenant-api stdout (`packages/sms`). Search the log for the 6-digit code.
+- tenant-api email without OCI logs `[OCI EMAIL MOCK] To: ... | Subject: ...`,
+  with no body.
+- App email under Workers dev calls the real Resend API and fails with
+  placeholder keys. The Node/MSW server writes each email to
+  `packages/test-utils/fixtures/email/<recipient>.json`.
+- The App `Verification` table stores a TOTP secret, not a code. Compute the
+  code with `generateTOTP` from `@epic-web/totp` and the stored secret,
+  algorithm, digits, period and charSet.
+- Usernames allow only letters, digits and `_`
+  (`packages/validation/src/user-validation.ts`); hyphens are rejected.
+- Local tenant-api rate limits see every local client as one identity:
+  `resolveClientIp` (`apps/tenant-api/src/lib/rate-limit.ts`) falls back to
+  `unknown` without `cf-connecting-ip` or `x-forwarded-for`. Give each curl
+  caller its own `-H 'X-Forwarded-For: 10.0.0.<n>'`. Browsers share one bucket,
+  and it persists in the org DB across restarts.
+- Public tenant-api routes resolve the org from the `Origin` header. Hono routes
+  are strict about trailing slashes: `/x/` returns a generic 404 that looks like
+  a missing route.
+- Org feature flags are `ConfigFlag` rows. `value` is JSON text. The unique
+  index includes the nullable `userId`, so delete then insert instead of
+  upserting. `getFeatureFlag` (`packages/common/src/feature-flags.server.ts`)
+  falls back from user to organization to system rows, so deleting an org row
+  exposes the system row, which can differ between local D1 and `data.db`.
 
 ## Setup Commands
 
@@ -852,10 +980,12 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - **The pre-commit ESLint step checks nothing.** lint-staged runs from the repo
   root, and the root `eslint.config.js` ignores every file. Run
   `npm run lint -w <workspace>` before committing. Remove when fixed.
-- **The lockfile lacks the Linux `unrs` binding.** `package-lock.json` lists
-  only `@unrs/resolver-binding-darwin-arm64` (used by ESLint's `import-x`
-  plugin). On Linux, install with the `npm_config_*` flags from Agent
-  quickstart. Remove when fixed.
+- **The lockfile lacks the Linux resolver bindings.** `package-lock.json`
+  installs only `@unrs/resolver-binding-darwin-arm64` (used by ESLint's
+  `import-x` plugin) and `@oxc-resolver/binding-darwin-arm64`, so `npm ci` on
+  Linux misses `@unrs/resolver-binding-linux-x64-gnu` and
+  `@oxc-resolver/binding-linux-x64-gnu`. On Linux, install with the
+  `npm_config_*` flags from Agent quickstart. Remove when fixed.
 
 ## Additional Resources
 
@@ -867,7 +997,50 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   `docs/getting-started.md`
 - **Design-system lint policy**: the header of
   `packages/config/eslint-preset.js`
-- **Project skills**: `docs/skills/` (`project-*` guides by area)
+- **Project skills** in `docs/skills/`, also exposed to Droid at
+  `.factory/skills/` (a symlink):
+  - `project-agent-commands`: per-workspace verify commands, memory and
+    timeouts, exit codes, SQLite, Lingui, Playwright and native builds
+  - `project-browser-testing`: manual browser testing of App, Admin and Sites in
+    a headless sandbox
+  - `project-auth`: authentication, sessions, OAuth, passkeys, 2FA and regional
+    customer auth
+  - `project-caching`: cache selection, cachified, invalidation and safety
+  - `project-database`: Drizzle schema, SQLite/D1 migrations, tenant databases
+    and data residency
+  - `project-deployment`: builds, CI/CD, Cloudflare, Pages, OCI and health
+    checks
+  - `project-email-marketing`: transactional email, campaigns, block email
+    design and merge tags
+  - `project-forms`: Zod and Conform forms, validation, uploads, honeypots and
+    public tenant forms
+  - `project-integrations`: OAuth integrations, encrypted tokens, adapters and
+    callbacks
+  - `project-jobs-observability`: cron triggers, Workflows, internal jobs,
+    logging and telemetry
+  - `project-mcp`: MCP OAuth, PKCE, client registration and scoped tools
+  - `project-mobile`: Expo operator app and white-label iOS/Android tenant apps
+  - `project-monorepo`: workspaces, Turbo tasks, shared packages and generated
+    artifacts
+  - `project-payments-commerce`: billing, checkout, shop processors, webhooks
+    and orders
+  - `project-permissions`: system and organization RBAC and permission-aware UI
+  - `project-public-sites`: Astro tenant sites, host and locale resolution,
+    caching, CSP and forms
+  - `project-react-patterns`: React 19 and React Router 8 data APIs and
+    TypeScript patterns
+  - `project-routing`: flat routes, layouts, resource routes, loaders and
+    actions
+  - `project-security`: validation, XSS, CSP, rate limits, secrets and audit
+    logging
+  - `project-sso`: organization OIDC/SSO configuration and provisioning
+  - `project-storage-media`: S3 storage, media, signed URLs and storage
+    migrations
+  - `project-tenant-data`: regional tenant-api, PII boundaries, provisioning and
+    browser auth
+  - `project-testing`: Vitest, Testing Library, Playwright, MSW and fixtures
+  - `project-ui-guidelines`: accessible UI, shared components, Tailwind 4, i18n
+    and design lint
 - **Docs**: `/docs` directory
 - **Contributing**: See `CONTRIBUTING.md`
 - **Security**: See `docs/security.md`
