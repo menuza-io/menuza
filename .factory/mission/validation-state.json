@@ -1157,493 +1157,819 @@
 			"validatedAtMilestone": "guest-channels-and-crm"
 		},
 		"VAL-PMOCK-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-008": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-009": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-010": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-011": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-012": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-013": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-014": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-015": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-016": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-017": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-018": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-019": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-020": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-021": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-022": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-023": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-024": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-025": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-026": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-027": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-028": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-029": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-030": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-031": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-032": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-033": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-034": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-035": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-036": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-037": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-038": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PMOCK-039": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PMOCK-040": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-008": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-009": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-010": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-011": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-012": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-013": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-014": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-015": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-016": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-017": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-018": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-019": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-020": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-021": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-022": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-023": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-024": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-025": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-026": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-027": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-028": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-029": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-030": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-031": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-032": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-033": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-034": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-035": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-036": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-037": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-038": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-039": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-040": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-041": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-042": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-043": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-044": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-045": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-046": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-047": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-048": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-049": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-050": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-PAY-051": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-PAY-052": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-008": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-009": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-010": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-011": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8b544867",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-012": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-013": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-EXP-014": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-015": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-EXP-016": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-VOICE-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-008": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-009": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-010": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-011": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-012": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-013": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-VOICE-014": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-VOICE-015": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-VOICE-016": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-FCST-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-FCST-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-FCST-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-FCST-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-FCST-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-FCST-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-FCST-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-JRNY-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-JRNY-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-JRNY-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-JRNY-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-JRNY-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-JRNY-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-JRNY-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-JRNY-008": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "tests-cite-id"
 		},
 		"VAL-JRNY-009": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-006": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-007": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-008": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-009": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-010": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-011": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-012": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-013": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-014": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-015": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-016": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-017": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-NATIVE-018": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-DOCS-001": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-DOCS-002": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-DOCS-003": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-DOCS-004": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-DOCS-005": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-001": {
 			"status": "passed",
@@ -1730,40 +2056,64 @@
 			"validatedAtMilestone": "guest-channels-and-crm"
 		},
 		"VAL-CROSS-022": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "72032cc7",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-023": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-024": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-025": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-026": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-027": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-028": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-029": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-030": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-031": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-032": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "8cac7e43",
+			"verification": "no-id-tagged-test"
 		},
 		"VAL-CROSS-033": {
-			"status": "pending"
+			"status": "pending",
+			"implementedAtCommit": "9947dff9",
+			"verification": "no-id-tagged-test"
 		}
 	}
 }

@@ -1,0 +1,1214 @@
+{
+	"VAL-PMOCK-001": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-002": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"apps/app/app/routes/mock-payments+/mock-payments.test.ts",
+			"apps/app/app/utils/payments-mock/gate.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-003": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"apps/app/app/utils/payments-mock/gate.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-004": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": ["packages/payments/src/mocks/env.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-005": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-006": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-007": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-008": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-009": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-010": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-011": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-012": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-013": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-014": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-015": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-016": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-017": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-018": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-019": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-020": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-021": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-022": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/stripe/off-session.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-023": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/stripe/off-session.test.ts",
+			"packages/payments/src/shop/commerce.mock.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-024": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/stripe/off-session.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-025": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": ["packages/payments/src/mocks/stripe/refunds.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-026": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": ["packages/payments/src/mocks/stripe/refunds.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-027": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-028": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/stripe/protocol.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-029": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-030": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-031": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-032": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-033": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-034": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/checkout-com/stored-instrument.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-035": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/checkout-com/allocations.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-036": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/checkout-com/refunds.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-037": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [
+			"packages/payments/src/mocks/checkout-com/protocol.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-038": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": ["apps/sites/src/lib/ordering/order-client.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PMOCK-039": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PMOCK-040": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-001": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-002": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-003": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-004": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-005": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"packages/payments/src/connect/reservation-stripe.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-006": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-007": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"packages/payments/src/connect/reservation-stripe.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-008": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"packages/payments/src/connect/reservation-stripe.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-009": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"packages/payments/src/connect/reservation-stripe.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-010": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"packages/payments/src/connect/reservation-stripe.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-011": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"packages/payments/src/connect/reservation-stripe.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-012": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-policies.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-013": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-014": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-015": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-016": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-017": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-018": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-019": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-020": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-021": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts",
+			"apps/tenant-api/src/services/rsv-payment-messages.test.ts",
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-022": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-023": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-024": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts",
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-025": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-026": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts",
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-027": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts",
+			"packages/payments/src/connect/reservation-checkout.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-028": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-029": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-030": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-031": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts",
+			"apps/tenant-api/src/services/rsv-payment-messages.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-032": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-033": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-034": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-035": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-036": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-037": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-038": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-039": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-040": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-041": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/payments.server.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-042": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-043": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-044": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-045": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-046": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-047": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/services/rsv-payment-messages.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-048": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-049": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-050": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-PAY-051": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-PAY-052": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/reservations-guards.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-001": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-experiences.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-002": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-experiences.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-003": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-experiences.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-004": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-experiences.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-005": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-006": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-experiences.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-007": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-008": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-009": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-010": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-011": {
+		"feature": "reservation-payments-and-experiences-backend",
+		"implementedAtCommit": "8b544867",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/routes/reservations-experiences.test.ts",
+			"apps/tenant-api/src/routes/reservations-payments.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-012": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-013": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/app/app/utils/reservations/reservations-guards.test.ts",
+			"apps/tenant-api/src/routes/reservations-security.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-EXP-014": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-015": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-EXP-016": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-VOICE-001": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-002": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-003": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-004": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-005": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-006": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-007": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-008": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-009": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-010": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-011": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/app/app/components/phone-agent/restaurant/phone-ordering-section.test.tsx",
+			"apps/app/app/utils/phone-agent/restaurant/vertical.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-012": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/app/app/components/phone-agent/restaurant/phone-ordering-section.test.tsx",
+			"apps/app/app/utils/phone-agent/restaurant/vertical.server.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-013": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-VOICE-014": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-VOICE-015": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-VOICE-016": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": ["apps/tenant-api/src/routes/voice-actions.test.ts"],
+		"verification": "tests-cite-id"
+	},
+	"VAL-FCST-001": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/restaurant/reservations-demand-source.test.ts",
+			"apps/tenant-api/src/services/demand-sources.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-FCST-002": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/app/app/components/staff/schedule/forecast-strip.test.tsx"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-FCST-003": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-FCST-004": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-FCST-005": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-FCST-006": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-FCST-007": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-JRNY-001": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-JRNY-002": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-JRNY-003": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/restaurant/reservations-journeys.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-JRNY-004": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/restaurant/reservations-journeys.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-JRNY-005": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/restaurant/reservations-journeys.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-JRNY-006": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/restaurant/reservations-journeys.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-JRNY-007": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-JRNY-008": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [
+			"apps/tenant-api/src/restaurant/reservations-journeys.test.ts"
+		],
+		"verification": "tests-cite-id"
+	},
+	"VAL-JRNY-009": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-001": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-002": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-003": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-004": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-005": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-006": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-007": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-008": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-009": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-010": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-011": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-012": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-013": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-014": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-015": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-016": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-017": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-NATIVE-018": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-DOCS-001": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-DOCS-002": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-DOCS-003": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-DOCS-004": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-DOCS-005": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-022": {
+		"feature": "payment-mocks-full-stack",
+		"implementedAtCommit": "72032cc7",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-023": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-024": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-025": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-026": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-027": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-028": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-029": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-030": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-031": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-032": {
+		"feature": "reservation-payments-experiences-and-integrations-ui",
+		"implementedAtCommit": "8cac7e43",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	},
+	"VAL-CROSS-033": {
+		"feature": "native-and-docs",
+		"implementedAtCommit": "9947dff9",
+		"testFilesCitingId": [],
+		"verification": "no-id-tagged-test"
+	}
+}

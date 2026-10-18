@@ -6,16 +6,97 @@ the worker instructions and the validation reports. It is not product code.
 
 The same snapshot lives in `docs/reservations-mission/` and `.factory/mission/`.
 
-## Status at snapshot time
+## Status
 
-| Milestone                          | State                                           |
-| ---------------------------------- | ----------------------------------------------- |
-| `foundation`                       | Validated                                       |
-| `foh-core`                         | Validated                                       |
-| `guest-channels-and-crm`           | Validated (scrutiny and 3 user-testing rounds)  |
-| `payments-integrations-and-native` | Not started: 4 pending features, 175 assertions |
+All four pending features are implemented and committed on `pr/reservations`.
+The mission is **not closed**: the 175 assertions stay `pending` in
+`validation-state.json`, because the formal scrutiny and user-testing validators
+were not run (no browser login on the dev machine, and the disk filled up at the
+end). `validation-state.json` carries two extra fields per pending assertion:
+`implementedAtCommit` and `verification` (`tests-cite-id` when a test file cites
+the id, `no-id-tagged-test` otherwise). That is a lower bound, not a verdict:
+many tests cover an assertion without citing its id. The per-assertion test
+files are in `validation/payments-integrations-and-native/evidence.json`.
 
-`validation-state.json`: 310 assertions passed, 175 pending, 0 failed.
+| Milestone                          | State                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `foundation`                       | Validated                                                                   |
+| `foh-core`                         | Validated                                                                   |
+| `guest-channels-and-crm`           | Validated (scrutiny and 3 user-testing rounds)                              |
+| `payments-integrations-and-native` | Implemented and unit-tested; assertions pending live validation (see below) |
+
+### Commits since the 4-feature handover
+
+| Commit                 | Content                                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `6c8ec334`             | Hardening from a principal-engineer review (write gate, undo, guest privacy, retries, ETag)                    |
+| `72032cc7`             | `payment-mocks-full-stack`                                                                                     |
+| `8b544867`             | `reservation-payments-and-experiences-backend` (+ carry-overs a to e)                                          |
+| `8cac7e43`             | `reservation-payments-experiences-and-integrations-ui` (+ carry-overs)                                         |
+| `9947dff9`             | `native-and-docs` (iOS, Android, contract fixtures, final docs)                                                |
+| `064fe45a`, `c195c48b` | UI polish: shell, host stand, settings, sheets, waitlist, guests, reports (`library/ui-design-conventions.md`) |
+
+### What is verified
+
+- Last full green runs: tenant-api 2,722 tests, `@repo/tenant-db` 183,
+  `@repo/reservations` 142, `@repo/payments` 264, `@repo/staffing` 641, Sites
+  339, jobs-cron 96, voice-agent 209, phone-agent 101, phone-agent-restaurant
+  54, marketing-workflow 19. Nothing outside `apps/app` changed after the
+  native/docs commit, so these still describe the tree.
+- App: 939 tests pass across `components/reservations`, `utils/reservations`,
+  `hooks`, `components/dashboard` and the reservation routes; typecheck is
+  clean; `node scripts/check-lingui.mjs` passes.
+- Android: 116 JVM tests, `assembleDebug`, lint (warnings only). iOS:
+  `swift build`.
+
+### Not verified (do these next)
+
+1. **Log in.** The local D1 has no demo user, so `kody` is rejected. Importing
+   the seed into local D1 is allowed only with the owner's consent (AGENTS.md);
+   the recipe is in `apps/app/AGENTS.md`. Then drive the screens in a browser
+   and mark assertions passed with the `user-testing` skill.
+2. **Free disk space first.** The machine hit 100%, which made the tenant-api,
+   `@repo/tenant-db` and `@repo/database` suites fail with `SQLITE_FULL` and
+   `ENOSPC` in the last gate run (not a code failure). The largest item is
+   `apps/app/.wrangler/state/v3/observability/miniflare-wobs-trace-store/*.sqlite`
+   (about 5.3 GB of local worker traces, still growing). It is telemetry, not
+   app data; stop the dev server, delete that one file, restart. Re-run the gate
+   afterwards (`npm run test -w tenant-api`, `@repo/tenant-db`, whole App
+   suite).
+3. **Playwright specs** (written, not run): `payment-mocks`, and the edited
+   reservations specs (`reservations-setup`, `-host-stand`,
+   `-waitlist-messages`, `-guestbook-reports`); they use the new `setup-group-*`
+   and menu testids.
+4. **Production build exclusion**:
+   `npm run build:cf -w app && node scripts/check-no-payment-mocks.mjs apps/app/build`.
+5. **iOS**: real `swift test` and a simulator pass (needs Xcode); **Android**:
+   device pass for RTL, Keystore and the payment round trip.
+6. **Live curl checks** against tenant-api (NATIVE-003, CROSS-033) and the Sites
+   `/experiences` pages with a published experience.
+7. Apply control-plane migration `0026` to `packages/database/db/data.db`: its
+   migration journal has drifted (`JobPosting` already exists), so
+   `npm run db:migrate:deploy` fails on this machine. Local D1 is migrated.
+
+### Decisions to confirm
+
+- Android release AAB budget raised from 220,000 to 255,000 bytes (measured
+  248,389; APK 154,504 of 160,000). Reason is in
+  `apps/android/size-budget.json`.
+- Provider webhooks terminate at the US App, which forwards only ids and amounts
+  to the regional node (documented deviation from ADR 048's first wording).
+- Checkout.com guarantee charges and refunds a 100-minor verification.
+- Production needs a new secret, `SITES_RESERVATION_PAYMENT_TOKEN` (App and
+  Sites, 32+ chars, distinct from every other token); `scripts/launch-setup.mjs`
+  does not generate it yet. Sites no longer receives `INTERNAL_COMMAND_TOKEN`.
+- The busy_timeout fix for extra libsql connections was reverted (it blocks the
+  event loop); see `docs/reservations.md` Known issues.
+- The root `esbuild` override (`^0.28.1`) breaks Admin dev (Vite 6) on a fresh
+  install; locally worked around in `apps/admin/node_modules` only.
+- `AGENTS.md` still names `app.epic-startup.test`; this machine uses
+  `https://app.menuza.test:2999`.
+
+Known issues that were reviewed and not fixed are listed in
+`docs/reservations.md` (Known issues).
 
 ## What is here
 
