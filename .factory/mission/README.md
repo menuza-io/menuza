@@ -27,14 +27,19 @@ cover an assertion without citing its id. The per-assertion test files are in
 
 ### Commits since the 4-feature handover
 
-| Commit                 | Content                                                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `6c8ec334`             | Hardening from a principal-engineer review (write gate, undo, guest privacy, retries, ETag)                    |
-| `72032cc7`             | `payment-mocks-full-stack`                                                                                     |
-| `8b544867`             | `reservation-payments-and-experiences-backend` (+ carry-overs a to e)                                          |
-| `8cac7e43`             | `reservation-payments-experiences-and-integrations-ui` (+ carry-overs)                                         |
-| `9947dff9`             | `native-and-docs` (iOS, Android, contract fixtures, final docs)                                                |
-| `064fe45a`, `c195c48b` | UI polish: shell, host stand, settings, sheets, waitlist, guests, reports (`library/ui-design-conventions.md`) |
+| Commit                 | Content                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `6c8ec334`             | Hardening from a principal-engineer review (write gate, undo, guest privacy, retries, ETag)                  |
+| `72032cc7`             | `payment-mocks-full-stack`                                                                                   |
+| `8b544867`             | `reservation-payments-and-experiences-backend` (+ carry-overs a to e)                                        |
+| `8cac7e43`             | `reservation-payments-experiences-and-integrations-ui` (+ carry-overs)                                       |
+| `9947dff9`             | `native-and-docs` (iOS, Android, contract fixtures, final docs)                                              |
+| `064fe45a`, `c195c48b` | UI polish waves 1 and 2: shell, host stand, settings, sheets, waitlist, guests, reports                      |
+| `623f50cf`, `5d941353` | Fixes from a live browser pass (kody in the demo org `acme-demo`), translatable count labels, floor tiles    |
+| `a93a571f`             | Host-first UX polish from a design critique (allergy flags, touch targets, setup checklist, Guests, Reports) |
+| layout polish commit   | Board grid, floor tiles, settings retry and discard guards                                                   |
+
+The design critique and conventions are in `library/ui-design-conventions.md`.
 
 ### What is verified
 
@@ -80,6 +85,18 @@ Full gate run on the final tree (after freeing disk space):
 7. Apply control-plane migration `0026` to `packages/database/db/data.db`: its
    migration journal has drifted (`JobPosting` already exists), so
    `npm run db:migrate:deploy` fails on this machine. Local D1 is migrated.
+
+### Known gaps found in the live pass
+
+- Admin feature-flag changes do not evict tenant-api's cached reservations
+  context (needs an App endpoint plus an Admin helper); it expires after 5
+  minutes.
+- Guests list filters (VIP, allergy, not visited in 90 days) apply to loaded
+  pages only; the API has no server-side filters.
+- Public Sites bookings with custom tag names set the allergy flag but carry no
+  coded allergen value.
+- The dev App shows English for Arabic mode on parts of the shell (catalog
+  coverage outside reservations).
 
 ### Decisions to confirm
 
