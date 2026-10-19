@@ -224,8 +224,8 @@ msgstr "{0, plural, one {وردية جديدة واحدة} two {ورديتان �
 #. placeholder {0}: g.noShowCount
 #. placeholder {0}: guest?.noShowCount ?? 0
 #. placeholder {0}: selectedGuest.noShowCount
-#: app/components/reservations/booking-sheet.tsx:878
-#: app/components/reservations/booking-sheet.tsx:925
+#: app/components/reservations/booking-sheet.tsx:881
+#: app/components/reservations/booking-sheet.tsx:928
 #: app/components/reservations/detail-sheet.tsx:950
 msgid "{0, plural, one {# no-show} other {# no-shows}}"
 msgstr "{0, plural, one {حالة عدم حضور واحدة} two {حالتا عدم حضور} few {# حالات عدم حضور} many {# حالة عدم حضور} other {# حالة عدم حضور}}"
@@ -337,8 +337,8 @@ msgstr "{0, plural, one {نُقل حجز قادم واحد إلى طاولة أ�
 #. placeholder {0}: g.visitCount
 #. placeholder {0}: guest?.visitCount ?? 0
 #. placeholder {0}: selectedGuest.visitCount
-#: app/components/reservations/booking-sheet.tsx:870
-#: app/components/reservations/booking-sheet.tsx:917
+#: app/components/reservations/booking-sheet.tsx:873
+#: app/components/reservations/booking-sheet.tsx:920
 #: app/components/reservations/detail-sheet.tsx:942
 msgid "{0, plural, one {# visit} other {# visits}}"
 msgstr "{0, plural, one {زيارة واحدة} two {زيارتان} few {# زيارات} many {# زيارة} other {# زيارة}}"
@@ -843,7 +843,7 @@ msgstr "{elapsed} د · متبقي {remaining} د"
 msgid "{elapsed}m · +{remaining}m over"
 msgstr "{elapsed} د · تجاوز {remaining} د"
 
-#: app/components/reservations/today-party-card.tsx:153
+#: app/components/reservations/today-party-card.tsx:154
 msgid "{elapsed}m / {planned}m"
 msgstr "{elapsed} د / {planned} د"
 
@@ -921,7 +921,7 @@ msgstr "{guestName}، مجموعة من {partySize}، {startTime}، {durationMin
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 msgstr "{guestName}، مجموعة من {partySize}، {startTime}، {durationMin} دقيقة، الطاولة {tableLabel}، مقفلة"
 
-#: app/components/reservations/booking-sheet.tsx:793
+#: app/components/reservations/booking-sheet.tsx:796
 msgid "{heldTables} is held by a guest who is checking out. The booking uses another table."
 msgstr "{heldTables} محجوزة مؤقتًا لضيف يُكمل الحجز. سيستخدم الحجز طاولة أخرى."
 
@@ -1291,7 +1291,7 @@ msgstr "{paidHours} ساعات مدفوعة"
 msgid "{pairedName} is ready. People can clock in with their PIN."
 msgstr "{pairedName} جاهز. يمكن للموظفين تسجيل الحضور بالرقم السري."
 
-#: app/components/reservations/booking-sheet.tsx:555
+#: app/components/reservations/booking-sheet.tsx:558
 msgid "{partySize, plural, one {# guest} other {# guests}}"
 msgstr "{partySize, plural, one {ضيف واحد} two {ضيفان} few {# ضيوف} many {# ضيفًا} other {# ضيف}}"
 
@@ -1945,11 +1945,11 @@ msgstr "يوجد عضو سابق في الفريق بهذا البريد الإ�
 msgid "A general application stays open all the time, so people can apply even when no job is posted."
 msgstr "يبقى الطلب العام مفتوحًا دائمًا، فيستطيع الناس التقديم حتى عندما لا تكون هناك وظيفة معلنة."
 
-#: app/components/reservations/booking-sheet.tsx:798
+#: app/components/reservations/booking-sheet.tsx:801
 msgid "A guest is checking out with {heldTables} at this time. Booking it overrides their hold."
 msgstr "ضيف يُكمل الحجز حاليًا على {heldTables} في هذا الوقت. الحجز هنا يتجاوز حجزه المؤقت."
 
-#: app/components/reservations/booking-sheet.tsx:803
+#: app/components/reservations/booking-sheet.tsx:806
 msgid "A guest is checking out with a table at this time. Booking it overrides their hold."
 msgstr "ضيف يُكمل الحجز حاليًا على طاولة في هذا الوقت. الحجز هنا يتجاوز حجزه المؤقت."
 
@@ -2232,7 +2232,7 @@ msgstr "يمكن أن يحتوي القالب على 30 مهمة كحد أقصى
 msgid "A template with that name already exists."
 msgstr "يوجد قالب بهذا الاسم مسبقًا."
 
-#: app/components/reservations/booking-sheet.tsx:390
+#: app/components/reservations/booking-sheet.tsx:393
 msgid "a time"
 msgstr "وقتًا"
 
@@ -2249,6 +2249,10 @@ msgstr "وردية نهارية معتادة."
 #: app/routes/_auth+/onboarding.tsx:120
 msgid "A user already exists with this username"
 msgstr "يوجد مستخدم بالفعل بهذا اسم المستخدم"
+
+#: app/components/reservations/booking-sheet.tsx:390
+msgid "a valid phone number"
+msgstr "رقم هاتف صالح"
 
 #: app/components/phone-agent/call-data.ts:135
 msgid "Abandoned"
@@ -3779,7 +3783,7 @@ msgstr "الحساسية والملاحظات"
 msgid "Allergies tonight ({allergyCount})"
 msgstr "حساسية الليلة ({allergyCount})"
 
-#: app/components/reservations/booking-sheet.tsx:936
+#: app/components/reservations/booking-sheet.tsx:939
 #: app/components/reservations/detail-sheet.tsx:788
 msgid "Allergies:"
 msgstr "الحساسية:"
@@ -4070,7 +4074,7 @@ msgstr "إجابات الأسئلة الشائعة، وكيف يسمع الوك�
 msgid "Any area"
 msgstr "أي منطقة"
 
-#: app/components/reservations/booking-sheet.tsx:495
+#: app/components/reservations/booking-sheet.tsx:498
 msgid "Any Area"
 msgstr "أي منطقة"
 
@@ -4710,11 +4714,11 @@ msgid "Authorized Clients"
 msgstr "العملاء المصرح لهم"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:110
-#: app/components/reservations/booking-sheet.tsx:1122
+#: app/components/reservations/booking-sheet.tsx:1125
 msgid "Auto"
 msgstr "تلقائي"
 
-#: app/components/reservations/booking-sheet.tsx:491
+#: app/components/reservations/booking-sheet.tsx:494
 msgid "Auto / Any"
 msgstr "تلقائي / أي طاولة"
 
@@ -4727,7 +4731,7 @@ msgstr "انصراف تلقائي"
 msgid "Auto-assign best open table"
 msgstr "تعيين أفضل طاولة متاحة تلقائياً"
 
-#: app/components/reservations/booking-sheet.tsx:499
+#: app/components/reservations/booking-sheet.tsx:502
 #: app/routes/_app+/$orgSlug_+/reservations+/settings._index.tsx:484
 msgid "Auto-assign best table"
 msgstr "تعيين أفضل طاولة تلقائياً"
@@ -4864,7 +4868,7 @@ msgstr "متاح خلال…"
 msgid "Available then"
 msgstr "متاح في ذلك الوقت"
 
-#: app/components/reservations/booking-sheet.tsx:690
+#: app/components/reservations/booking-sheet.tsx:693
 msgid "Available times"
 msgstr "الأوقات المتاحة"
 
@@ -5204,15 +5208,15 @@ msgstr "نص المحتوى"
 msgid "Bold"
 msgstr "غامق"
 
-#: app/components/reservations/booking-sheet.tsx:599
+#: app/components/reservations/booking-sheet.tsx:602
 msgid "Book"
 msgstr "دفتر الحجوزات"
 
-#: app/components/reservations/booking-sheet.tsx:662
+#: app/components/reservations/booking-sheet.tsx:665
 msgid "Book anyway (staff override)"
 msgstr "احجز على أي حال (تجاوز من الموظف)"
 
-#: app/components/reservations/booking-sheet.tsx:1167
+#: app/components/reservations/booking-sheet.tsx:1170
 msgid "Book into a blocked time"
 msgstr "الحجز في وقت محظور"
 
@@ -5221,7 +5225,7 @@ msgstr "الحجز في وقت محظور"
 msgid "Book on {0}"
 msgstr "حجز على {0}"
 
-#: app/components/reservations/booking-sheet.tsx:1155
+#: app/components/reservations/booking-sheet.tsx:1158
 msgid "Book over the pacing limit"
 msgstr "الحجز فوق حد الوتيرة"
 
@@ -5328,7 +5332,7 @@ msgstr "قواعد الحجز والخدمات والصالة ورسائل ال�
 msgid "Booking times every"
 msgstr "أوقات الحجز كل"
 
-#: app/components/reservations/booking-sheet.tsx:597
+#: app/components/reservations/booking-sheet.tsx:600
 msgid "Booking..."
 msgstr "جارٍ الحجز..."
 
@@ -5366,7 +5370,7 @@ msgstr "حجوزات بلا طاولة"
 msgid "Booth"
 msgstr "كابينة"
 
-#: app/components/reservations/booking-sheet.tsx:1077
+#: app/components/reservations/booking-sheet.tsx:1080
 msgid "Booth preferred, high chair..."
 msgstr "يفضل مقصورة، كرسي أطفال..."
 
@@ -5888,7 +5892,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
-#: app/components/reservations/booking-sheet.tsx:582
+#: app/components/reservations/booking-sheet.tsx:585
 #: app/components/reservations/detail-sheet.tsx:1632
 #: app/components/reservations/experiences/experience-create-sheet.tsx:156
 #: app/components/reservations/experiences/schedule-sheet.tsx:171
@@ -6626,7 +6630,7 @@ msgstr "جارٍ التحقق من المراجع…"
 #~ msgid "Checking slots..."
 #~ msgstr "جارٍ فحص الأوقات..."
 
-#: app/components/reservations/booking-sheet.tsx:694
+#: app/components/reservations/booking-sheet.tsx:697
 msgid "Checking times..."
 msgstr "جارٍ التحقق من الأوقات..."
 
@@ -7322,7 +7326,7 @@ msgstr "مغلق (طوال اليوم)"
 msgid "Closed all day"
 msgstr "مغلق طوال اليوم"
 
-#: app/components/reservations/booking-sheet.tsx:679
+#: app/components/reservations/booking-sheet.tsx:682
 msgid "Closed for online bookings on this date. Staff can still book."
 msgstr "الحجز عبر الإنترنت مغلق في هذا التاريخ. يمكن للموظفين الحجز."
 
@@ -7334,7 +7338,7 @@ msgstr "مغلق لمناسبة خاصة"
 #~ msgid "Closed on this date ({dayName}). No slots are offered. Turn on the override below to book anyway."
 #~ msgstr "مغلق في هذا التاريخ ({dayName}). لا توجد أوقات متاحة. فعّل التجاوز أدناه للحجز رغم ذلك."
 
-#: app/components/reservations/booking-sheet.tsx:652
+#: app/components/reservations/booking-sheet.tsx:655
 msgid "Closed on this date ({dayName}). No times are offered."
 msgstr "مغلق في هذا التاريخ ({dayName}). لا توجد أوقات متاحة."
 
@@ -7342,7 +7346,7 @@ msgstr "مغلق في هذا التاريخ ({dayName}). لا توجد أوقا�
 #~ msgid "Closed on this date. No slots are offered. Turn on the override below to book anyway."
 #~ msgstr "مغلق في هذا التاريخ. لا توجد أوقات متاحة. فعّل التجاوز أدناه للحجز رغم ذلك."
 
-#: app/components/reservations/booking-sheet.tsx:656
+#: app/components/reservations/booking-sheet.tsx:659
 msgid "Closed on this date. No times are offered."
 msgstr "مغلق في هذا التاريخ. لا توجد أوقات متاحة."
 
@@ -9319,7 +9323,7 @@ msgstr "خطأ في الاتصال بقاعدة البيانات"
 #: app/components/locations/special-hours-picker.tsx:122
 #: app/components/menu/drop-wizard/drop-drawers.tsx:204
 #: app/components/menu/menu-availability-card.tsx:341
-#: app/components/reservations/booking-sheet.tsx:611
+#: app/components/reservations/booking-sheet.tsx:614
 #: app/components/reservations/guests/guest-profile-screen.tsx:470
 #: app/components/reservations/reports/report-panels.tsx:315
 #: app/components/reservations/reports/report-panels.tsx:392
@@ -10047,7 +10051,7 @@ msgstr "رفض"
 msgid "Deposit"
 msgstr "وديعة"
 
-#: app/components/reservations/booking-sheet.tsx:1140
+#: app/components/reservations/booking-sheet.tsx:1143
 msgid "Deposit / Card Hold Policy"
 msgstr "سياسة العربون / حجز البطاقة"
 
@@ -10243,7 +10247,7 @@ msgstr "تنبيهات النظام الغذائي والحساسية"
 msgid "Dietary needs"
 msgstr "الاحتياجات الغذائية"
 
-#: app/components/reservations/booking-sheet.tsx:1060
+#: app/components/reservations/booking-sheet.tsx:1063
 #: app/components/reservations/detail-sheet.tsx:797
 msgid "Dietary notes"
 msgstr "ملاحظات غذائية"
@@ -10254,7 +10258,7 @@ msgstr "ملاحظات غذائية"
 
 #: app/components/menu/modifier-form.tsx:1686
 #: app/components/menu/modifier-form.tsx:2041
-#: app/components/reservations/booking-sheet.tsx:1039
+#: app/components/reservations/booking-sheet.tsx:1042
 msgid "Dietary Tags"
 msgstr "العلامات الغذائية"
 
@@ -10292,7 +10296,7 @@ msgstr "بقشيش تناول الطعام في المطعم"
 msgid "Dining area"
 msgstr "منطقة الطعام"
 
-#: app/components/reservations/booking-sheet.tsx:1094
+#: app/components/reservations/booking-sheet.tsx:1097
 msgid "Dining Area"
 msgstr "منطقة الطعام"
 
@@ -10861,7 +10865,7 @@ msgstr "المدة"
 msgid "Duration (m)"
 msgstr "المدة (د)"
 
-#: app/components/reservations/booking-sheet.tsx:1116
+#: app/components/reservations/booking-sheet.tsx:1119
 msgid "Duration (min)"
 msgstr "المدة (دقيقة)"
 
@@ -11361,7 +11365,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:14
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:450
-#: app/components/reservations/booking-sheet.tsx:986
+#: app/components/reservations/booking-sheet.tsx:989
 #: app/components/reservations/guests/guest-profile-screen.tsx:765
 #: app/components/settings/cards/notification-preferences-card.tsx:27
 #: app/components/settings/cards/profile-card.tsx:132
@@ -11690,8 +11694,8 @@ msgid "Enter a percentage from 1 to 100."
 msgstr "أدخل نسبة مئوية من 1 إلى 100."
 
 #: app/components/reservations/booking-sheet.tsx:967
-msgid "Enter a phone number with at least 7 digits."
-msgstr "أدخل رقم هاتف من 7 أرقام على الأقل."
+#~ msgid "Enter a phone number with at least 7 digits."
+#~ msgstr "أدخل رقم هاتف من 7 أرقام على الأقل."
 
 #: app/components/reservations/booking-sheet.tsx:907
 #~ msgid "Enter a phone number."
@@ -11721,6 +11725,10 @@ msgstr "أدخل وقتًا مثل 21:00."
 #: app/utils/staffing/staff-validation.ts:44
 msgid "Enter a valid email address."
 msgstr "أدخل عنوان بريد إلكتروني صالحًا."
+
+#: app/components/reservations/booking-sheet.tsx:970
+msgid "Enter a valid phone number, e.g. +14155550100"
+msgstr "أدخل رقم هاتف صالحًا، مثل ‎+14155550100"
 
 #: app/utils/reservations/waitlist-errors.ts:21
 msgid "Enter a valid phone number, including the country code."
@@ -11844,7 +11852,7 @@ msgstr "أدخل الاستراحة بالدقائق الكاملة، حتى 720
 msgid "Enter the end time."
 msgstr "أدخل وقت الانتهاء."
 
-#: app/components/reservations/booking-sheet.tsx:980
+#: app/components/reservations/booking-sheet.tsx:983
 msgid "Enter the guest's name."
 msgstr "أدخل اسم الضيف."
 
@@ -12363,7 +12371,7 @@ msgstr "تمديد الدورة 15 دقيقة"
 msgid "Extra charge when this topping is added to the whole pizza."
 msgstr "رسوم إضافية عند إضافة هذه الإضافة إلى البيتزا كاملة."
 
-#: app/components/reservations/booking-sheet.tsx:1011
+#: app/components/reservations/booking-sheet.tsx:1014
 msgid "Extras"
 msgstr "إضافات"
 
@@ -12814,7 +12822,7 @@ msgstr "الرسوم تُحسب لكل ضيف"
 msgid "Feminine"
 msgstr "أنثوي"
 
-#: app/components/reservations/booking-sheet.tsx:629
+#: app/components/reservations/booking-sheet.tsx:632
 #: app/components/reservations/detail-sheet.tsx:1091
 msgid "Fewer guests"
 msgstr "عدد أقل من الضيوف"
@@ -12910,7 +12918,7 @@ msgstr "تصفية حسب مكان العمل"
 msgid "Finance"
 msgstr "المالية"
 
-#: app/components/reservations/booking-sheet.tsx:827
+#: app/components/reservations/booking-sheet.tsx:830
 msgid "Find a returning guest"
 msgstr "ابحث عن ضيف عائد"
 
@@ -13316,7 +13324,7 @@ msgstr "الجمعة"
 msgid "Friday"
 msgstr "الجمعة"
 
-#: app/components/reservations/booking-sheet.tsx:1087
+#: app/components/reservations/booking-sheet.tsx:1090
 msgid "Friends of chef, comp welcome drink..."
 msgstr "أصدقاء الشيف، مشروب ترحيبي مجاني..."
 
@@ -13373,7 +13381,7 @@ msgstr "كامل"
 msgid "Full access to organization settings and members"
 msgstr "وصول كامل إلى إعدادات المؤسسة وأعضائها"
 
-#: app/components/reservations/booking-sheet.tsx:978
+#: app/components/reservations/booking-sheet.tsx:981
 msgid "Full name"
 msgstr "الاسم الكامل"
 
@@ -13772,11 +13780,11 @@ msgstr "رسائل الضيوف"
 #~ msgid "Guest Messages"
 #~ msgstr "رسائل الضيوف"
 
-#: app/components/reservations/booking-sheet.tsx:389
+#: app/components/reservations/booking-sheet.tsx:392
 msgid "guest name"
 msgstr "اسم الضيف"
 
-#: app/components/reservations/booking-sheet.tsx:974
+#: app/components/reservations/booking-sheet.tsx:977
 msgid "Guest Name"
 msgstr "اسم الضيف"
 
@@ -13788,7 +13796,7 @@ msgstr "اسم الضيف"
 #~ msgid "Guest name and phone number are required."
 #~ msgstr "اسم الضيف ورقم الهاتف مطلوبان."
 
-#: app/components/reservations/booking-sheet.tsx:397
+#: app/components/reservations/booking-sheet.tsx:400
 msgid "Guest name, phone number and time are required."
 msgstr "اسم الضيف ورقم الهاتف والوقت مطلوبة."
 
@@ -13813,7 +13821,7 @@ msgstr "البيانات الشخصية للضيوف"
 msgid "Guest relations"
 msgstr "علاقات الضيوف"
 
-#: app/components/reservations/booking-sheet.tsx:1072
+#: app/components/reservations/booking-sheet.tsx:1075
 msgid "Guest Request / Notes"
 msgstr "طلبات / ملاحظات الضيف"
 
@@ -14068,7 +14076,7 @@ msgstr "الارتفاع"
 msgid "Height (20–600)"
 msgstr "الارتفاع (20–600)"
 
-#: app/components/reservations/booking-sheet.tsx:724
+#: app/components/reservations/booking-sheet.tsx:727
 #: app/components/reservations/floor-table.tsx:101
 msgid "Held"
 msgstr "محجوز مؤقتًا"
@@ -14896,7 +14904,7 @@ msgstr "التكاملات"
 msgid "Internal channels for your team."
 msgstr "قنوات داخلية لفريقك."
 
-#: app/components/reservations/booking-sheet.tsx:1082
+#: app/components/reservations/booking-sheet.tsx:1085
 #: app/components/reservations/detail-sheet.tsx:1148
 msgid "Internal Host Notes"
 msgstr "ملاحظات المضيف الداخلية"
@@ -17650,7 +17658,7 @@ msgstr "المزيد"
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
-#: app/components/reservations/today-party-card.tsx:234
+#: app/components/reservations/today-party-card.tsx:235
 #: app/components/reservations/waitlist/waitlist-queue.tsx:264
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:633
 msgid "More actions for {guest}"
@@ -17666,7 +17674,7 @@ msgstr "مزيد من الإجراءات لـ {name}"
 msgid "More actions for {title}"
 msgstr "المزيد من الإجراءات لـ {title}"
 
-#: app/components/reservations/booking-sheet.tsx:630
+#: app/components/reservations/booking-sheet.tsx:633
 #: app/components/reservations/detail-sheet.tsx:1092
 msgid "More guests"
 msgstr "عدد أكبر من الضيوف"
@@ -18281,7 +18289,7 @@ msgstr "إعادة توجيه جديدة"
 msgid "New report"
 msgstr "تقرير جديد"
 
-#: app/components/reservations/booking-sheet.tsx:551
+#: app/components/reservations/booking-sheet.tsx:554
 #: app/components/reservations/guests/guest-list-screen.tsx:194
 #: app/components/reservations/host-subnav.tsx:205
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:440
@@ -19095,7 +19103,7 @@ msgstr "لا توجد طلبات عبر الإنترنت في يوم عادي"
 msgid "No open requests"
 msgstr "لا توجد طلبات مفتوحة"
 
-#: app/components/reservations/booking-sheet.tsx:737
+#: app/components/reservations/booking-sheet.tsx:740
 msgid "No open times for this date and party size. Enter another time below, or change the date."
 msgstr "لا توجد أوقات متاحة لهذا التاريخ وعدد الضيوف. أدخل وقتًا آخر أدناه أو غيّر التاريخ."
 
@@ -19434,7 +19442,7 @@ msgstr "لا توجد فترات خدمة بعد"
 msgid "No services yet. Add the hours guests can book."
 msgstr "لا توجد خدمات بعد. أضف الساعات التي يمكن للضيوف الحجز فيها."
 
-#: app/components/reservations/booking-sheet.tsx:1065
+#: app/components/reservations/booking-sheet.tsx:1068
 msgid "No sesame, severe peanut allergy"
 msgstr "بدون سمسم، حساسية شديدة من الفول السوداني"
 
@@ -19450,7 +19458,7 @@ msgstr "لا توجد ورديات منشورة لهذه التواريخ. عن�
 msgid "No shifts have been planned for this week."
 msgstr "لم يتم تخطيط أي ورديات لهذا الأسبوع."
 
-#: app/components/reservations/booking-sheet.tsx:780
+#: app/components/reservations/booking-sheet.tsx:783
 msgid "No single table seats {partySize}. The largest seats {largestSeating}, so tables need to be combined."
 msgstr "لا توجد طاولة واحدة تتسع لـ {partySize}. أكبر طاولة تتسع لـ {largestSeating}، لذا يلزم دمج الطاولات."
 
@@ -19937,7 +19945,7 @@ msgstr "لم يبدأ"
 msgid "Not the right fit"
 msgstr "غير مناسب"
 
-#: app/components/reservations/booking-sheet.tsx:951
+#: app/components/reservations/booking-sheet.tsx:954
 msgid "Not this guest"
 msgstr "ليس هذا الضيف"
 
@@ -20261,7 +20269,7 @@ msgstr "المعلومات الغذائية"
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 
-#: app/components/reservations/booking-sheet.tsx:1027
+#: app/components/reservations/booking-sheet.tsx:1030
 #: app/components/reservations/detail-sheet.tsx:887
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:785
 msgid "Occasion"
@@ -20669,7 +20677,7 @@ msgstr "يمكن للأعضاء المحددين فقط الوصول إلى هذ
 msgid "Only selected roles and people"
 msgstr "الأدوار والأشخاص المحددون فقط"
 
-#: app/components/reservations/booking-sheet.tsx:1088
+#: app/components/reservations/booking-sheet.tsx:1091
 #: app/components/reservations/detail-sheet.tsx:1152
 msgid "Only staff see these notes."
 msgstr "يراها الموظفون فقط."
@@ -20775,7 +20783,7 @@ msgstr "فتح قائمة الأوامر"
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 
-#: app/components/reservations/today-party-card.tsx:264
+#: app/components/reservations/today-party-card.tsx:265
 msgid "Open details"
 msgstr "فتح التفاصيل"
 
@@ -21132,7 +21140,7 @@ msgstr "حدود اختيارية لهذا القسم في هذا الطرح."
 msgid "Optional note"
 msgstr "ملاحظة اختيارية"
 
-#: app/components/reservations/booking-sheet.tsx:1133
+#: app/components/reservations/booking-sheet.tsx:1136
 msgid "Optional server name"
 msgstr "اسم النادل (اختياري)"
 
@@ -21355,8 +21363,8 @@ msgstr "أخرى"
 msgid "Other integrations"
 msgstr "تكاملات أخرى"
 
-#: app/components/reservations/booking-sheet.tsx:761
-#: app/components/reservations/booking-sheet.tsx:765
+#: app/components/reservations/booking-sheet.tsx:764
+#: app/components/reservations/booking-sheet.tsx:768
 msgid "Other time"
 msgstr "وقت آخر"
 
@@ -21428,12 +21436,12 @@ msgstr "فوق {target}."
 msgid "Over capacity"
 msgstr "تجاوز السعة"
 
-#: app/components/reservations/booking-sheet.tsx:728
+#: app/components/reservations/booking-sheet.tsx:731
 #: app/components/reservations/reports/report-panels.tsx:603
 msgid "Over limit"
 msgstr "فوق الحد"
 
-#: app/components/reservations/booking-sheet.tsx:745
+#: app/components/reservations/booking-sheet.tsx:748
 msgid "Over limit times are past their pacing limit. Picking one overbooks the slot."
 msgstr "الأوقات المتجاوزة للحد تخطّت حد الوتيرة. اختيار أحدها يعني حجزًا زائدًا للفترة."
 
@@ -21450,7 +21458,7 @@ msgstr "فوق الهدف"
 msgid "over the whole range"
 msgstr "على الفترة كاملة"
 
-#: app/components/reservations/booking-sheet.tsx:1174
+#: app/components/reservations/booking-sheet.tsx:1177
 #: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:864
 msgid "Overbook reason"
 msgstr "سبب الحجز الزائد"
@@ -21872,8 +21880,8 @@ msgstr "مجموعة من {partySize}"
 msgid "Party size"
 msgstr "عدد الأشخاص"
 
-#: app/components/reservations/booking-sheet.tsx:621
-#: app/components/reservations/booking-sheet.tsx:628
+#: app/components/reservations/booking-sheet.tsx:624
+#: app/components/reservations/booking-sheet.tsx:631
 #: app/components/reservations/detail-sheet.tsx:1081
 #: app/components/reservations/detail-sheet.tsx:1090
 #: app/components/reservations/walk-in-dialog.tsx:199
@@ -22337,7 +22345,7 @@ msgstr "تعمل روابط الهاتف فقط على الأجهزة القاد
 #~ msgid "Phone menu"
 #~ msgstr "قائمة الهاتف"
 
-#: app/components/reservations/booking-sheet.tsx:388
+#: app/components/reservations/booking-sheet.tsx:390
 msgid "phone number"
 msgstr "رقم الهاتف"
 
@@ -22350,7 +22358,7 @@ msgstr "رقم الهاتف"
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:466
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:327
 #: app/components/locations/location-form.tsx:371
-#: app/components/reservations/booking-sheet.tsx:957
+#: app/components/reservations/booking-sheet.tsx:960
 msgid "Phone Number"
 msgstr "رقم الهاتف"
 
@@ -23044,7 +23052,7 @@ msgstr "الرمز البريدي"
 msgid "Posted {selectedReplyDate}"
 msgstr "نُشر في {selectedReplyDate}"
 
-#: app/components/reservations/booking-sheet.tsx:941
+#: app/components/reservations/booking-sheet.tsx:944
 msgid "Preference:"
 msgstr "التفضيل:"
 
@@ -25340,7 +25348,7 @@ msgstr "متأخر"
 #~ msgid "Running Late Hold"
 #~ msgstr "تمديد انتظار التأخير"
 
-#: app/components/reservations/today-party-card.tsx:259
+#: app/components/reservations/today-party-card.tsx:260
 msgid "Running late: add 15 minutes"
 msgstr "متأخر: إضافة 15 دقيقة"
 
@@ -25803,7 +25811,7 @@ msgstr "تم حفظ تعيينات نادلين الأقسام لهذه الخد
 msgid "Saved training rule \"{title}\""
 msgstr "تم حفظ قاعدة التدريب \"{title}\""
 
-#: app/components/reservations/booking-sheet.tsx:1180
+#: app/components/reservations/booking-sheet.tsx:1183
 msgid "Saved with the booking for the manager."
 msgstr "يُحفظ مع الحجز للمدير."
 
@@ -26104,7 +26112,7 @@ msgstr "البحث بالاسم أو البريد الإلكتروني..."
 #~ msgid "Search by phone (+1...) or guest name..."
 #~ msgstr "ابحث بالهاتف (+1...) أو اسم الضيف..."
 
-#: app/components/reservations/booking-sheet.tsx:831
+#: app/components/reservations/booking-sheet.tsx:834
 msgid "Search by phone or name"
 msgstr "ابحث بالهاتف أو الاسم"
 
@@ -26258,7 +26266,7 @@ msgstr "البحث..."
 msgid "Search…"
 msgstr "بحث…"
 
-#: app/components/reservations/booking-sheet.tsx:832
+#: app/components/reservations/booking-sheet.tsx:835
 msgid "Searching..."
 msgstr "جارٍ البحث..."
 
@@ -27000,7 +27008,7 @@ msgstr "إرسال تعليمات إعادة التعيين"
 msgid "Send SMS"
 msgstr "إرسال رسالة نصية"
 
-#: app/components/reservations/booking-sheet.tsx:511
+#: app/components/reservations/booking-sheet.tsx:514
 msgid "Send SMS payment link"
 msgstr "إرسال رابط الدفع عبر رسالة نصية"
 
@@ -27109,7 +27117,7 @@ msgstr "النادل"
 #~ msgid "Server (Optional)"
 #~ msgstr "النادل (اختياري)"
 
-#: app/components/reservations/booking-sheet.tsx:1129
+#: app/components/reservations/booking-sheet.tsx:1132
 #: app/components/reservations/detail-sheet.tsx:1126
 msgid "Server / Section Label"
 msgstr "اسم النادل / القسم"
@@ -27127,7 +27135,7 @@ msgid "Server:"
 msgstr "النادل:"
 
 #: app/components/note/integration-controls.tsx:296
-#: app/components/reservations/booking-sheet.tsx:637
+#: app/components/reservations/booking-sheet.tsx:640
 #: app/components/reservations/guests/guest-profile-screen.tsx:479
 #: app/components/reservations/host-subnav.tsx:261
 #: app/components/reservations/reports/report-panels.tsx:184
@@ -28261,7 +28269,7 @@ msgstr "تجاوز من الموظف: الإجلاس على طاولة محجو�
 #~ msgid "Staff override. Applies to table and time changes."
 #~ msgstr "تجاوز من الموظف. ينطبق على تغييرات الطاولة والوقت."
 
-#: app/components/reservations/booking-sheet.tsx:1152
+#: app/components/reservations/booking-sheet.tsx:1155
 msgid "Staff overrides"
 msgstr "تجاوزات الموظفين"
 
@@ -28335,7 +28343,7 @@ msgstr "عضو عادي في المؤسسة مع إمكانية الوصول إ�
 msgid "Standard platform roles. Click any role to review its active permissions."
 msgstr "أدوار المنصة القياسية. انقر أي دور لمراجعة صلاحياته الفعّالة."
 
-#: app/components/reservations/booking-sheet.tsx:510
+#: app/components/reservations/booking-sheet.tsx:513
 msgid "Standard policy"
 msgstr "السياسة القياسية"
 
@@ -28612,7 +28620,7 @@ msgstr "الخطوات"
 msgid "Still clocked in"
 msgstr "ما زال في الدوام"
 
-#: app/components/reservations/booking-sheet.tsx:573
+#: app/components/reservations/booking-sheet.tsx:576
 msgid "Still needed: {missingList}"
 msgstr "لا يزال مطلوبًا: {missingList}"
 
@@ -29101,7 +29109,7 @@ msgstr "الطلب من الطاولة وخطوات الخدمة الداخلي�
 msgid "Table overlap"
 msgstr "تداخل الطاولات"
 
-#: app/components/reservations/booking-sheet.tsx:1105
+#: app/components/reservations/booking-sheet.tsx:1108
 msgid "Table preference"
 msgstr "تفضيل الطاولة"
 
@@ -30016,7 +30024,7 @@ msgstr "يحتاج المصرف إلى أن يؤكد الضيف عملية ال�
 msgid "The bank needs the guest to confirm this charge. The guest was sent a link to confirm it."
 msgstr "يحتاج المصرف إلى أن يؤكد الضيف عملية الخصم هذه. أُرسل إلى الضيف رابط لتأكيدها."
 
-#: app/components/reservations/booking-sheet.tsx:664
+#: app/components/reservations/booking-sheet.tsx:667
 msgid "The booking is marked as made on a closed day."
 msgstr "يُسجَّل الحجز على أنه تم في يوم مغلق."
 
@@ -30384,7 +30392,7 @@ msgid "The list could not be refreshed. What you see may be out of date."
 msgstr "تعذر تحديث القائمة. قد يكون ما تراه قديمًا."
 
 #: app/components/reservations/booking-sheet.tsx:353
-#: app/components/reservations/booking-sheet.tsx:402
+#: app/components/reservations/booking-sheet.tsx:405
 msgid "The location is closed on this date. Turn on the closed-day override to book anyway."
 msgstr "الموقع مغلق في هذا التاريخ. فعّل تجاوز اليوم المغلق للحجز رغم ذلك."
 
@@ -31536,7 +31544,7 @@ msgstr "هذا الجهاز اللوحي غير جاهز بعد. اسأل مدي
 msgid "This tablet was disconnected"
 msgstr "تم فصل هذا الجهاز اللوحي"
 
-#: app/components/reservations/booking-sheet.tsx:815
+#: app/components/reservations/booking-sheet.tsx:818
 msgid "This time is over its pacing limit. Creating the booking overbooks the slot."
 msgstr "هذا الوقت تجاوز حد الحجوزات المسموح به. إنشاء الحجز سيزيد الحجز عن السعة."
 
@@ -33285,7 +33293,7 @@ msgstr "استخدم 80 حرفًا أو أقل."
 msgid "Use a backup code instead"
 msgstr "استخدم رمز احتياطي بدلاً من ذلك"
 
-#: app/components/reservations/booking-sheet.tsx:1161
+#: app/components/reservations/booking-sheet.tsx:1164
 msgid "Use a blocked table"
 msgstr "استخدام طاولة محظورة"
 
@@ -33981,7 +33989,7 @@ msgstr "قائمة الانتظار: انضم ضيف"
 msgid "Waitlist: table is ready"
 msgstr "قائمة الانتظار: الطاولة جاهزة"
 
-#: app/components/reservations/booking-sheet.tsx:512
+#: app/components/reservations/booking-sheet.tsx:515
 msgid "Waive deposit / card hold"
 msgstr "الإعفاء من العربون / تفويض البطاقة"
 
@@ -34513,7 +34521,7 @@ msgstr "ما الذي ينقص؟"
 msgid "Wheelchair accessible"
 msgstr "ملائم للكراسي المتحركة"
 
-#: app/components/reservations/booking-sheet.tsx:608
+#: app/components/reservations/booking-sheet.tsx:611
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:547
 msgid "When"
 msgstr "عندما"
@@ -34702,7 +34710,7 @@ msgstr "أثناء الإغلاق"
 msgid "While open"
 msgstr "أثناء ساعات العمل"
 
-#: app/components/reservations/booking-sheet.tsx:825
+#: app/components/reservations/booking-sheet.tsx:828
 #: app/components/staff/schedule/availability-sheet.tsx:213
 #: app/components/staff/schedule/time-off-sheet.tsx:186
 msgid "Who"

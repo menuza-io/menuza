@@ -385,7 +385,10 @@ export function BookingSheet({
 		}
 	})()
 	const missing: string[] = []
-	if (phoneMissing) missing.push(t`phone number`)
+	const phoneFilled = guestPhone.trim().length > 0
+	if (phoneMissing) {
+		missing.push(phoneFilled ? t`a valid phone number` : t`phone number`)
+	}
 	if (nameMissing) missing.push(t`guest name`)
 	if (timeMissing) missing.push(t`a time`)
 	const missingList = missing.join(', ')
@@ -963,8 +966,8 @@ export function BookingSheet({
 							onChange={(e) => setGuestPhone(e.target.value)}
 							placeholder="+14155550100"
 							error={
-								attempted && phoneMissing
-									? t`Enter a phone number with at least 7 digits.`
+								phoneMissing && (attempted || phoneFilled)
+									? t`Enter a valid phone number, e.g. +14155550100`
 									: null
 							}
 							data-testid="booking-guest-phone"
