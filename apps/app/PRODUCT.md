@@ -60,6 +60,9 @@ Sidebar surface (route names as shipped):
 - Menu: Overview, Menus, Categories, Items, Modifier Groups, Options, Drops
   (scheduled order windows with inventory limits, checkout holds, and pickup
   windows).
+- Orders (its own item after Menu, `/orders`; the old `/menu/orders` redirects):
+  the order inbox with status actions. Each order links to its customer, and the
+  customer profile lists all of their orders (`/orders?order=<id>` opens one).
 - Marketing: Overview, Broadcasts, Automations (journeys with runs; the email
   designer is a full-screen overlay with an explicit save).
 - Website: General Settings, Pages, Forms, Analytics, Branding, Announcements,

@@ -75,9 +75,24 @@ underneath in the same regional database (`customers`: sign-in, orders, consent;
   reservation** is a header action only when reservations are on and the member
   can book.
 - **Profile** (sections, not tabs): Contact (edit), Dining (counters, tags,
-  allergy, pinned notes), Notes, Reservation history, Marketing messages
+  allergy, pinned notes), Notes, Orders (all of the customer's orders, 20 a
+  page; see below), Reservation history, Marketing messages
   (`customer_subscriptions`, the one consent source), Duplicates and data (merge
   a duplicate, export, **erase**).
+- **Orders on the profile.** The Orders section lists every restaurant order of
+  the customer, newest first, with number, date, status, fulfillment, item count
+  and total, plus the order count and lifetime spend (cancelled, expired and
+  payment-review orders are not spend). Each number opens
+  `/<orgSlug>/orders?order=<id>`. Rule: an order is the customer's when its
+  `customer_id` is theirs, or, for a customer with a VERIFIED phone, when it has
+  no `customer_id` and the same contact phone. Never by name or email. Needs the
+  customers claim (`GET /operator/people/:key/orders`).
+- **Customer on an order.** The Orders page links an order to its person
+  (`customerKey`, `c_<id>` or `g_<id>`): by `customer_id`, else by verified
+  phone to a customer, else to a guest with no customer and the same phone. A
+  guest checkout with no match shows **Guest checkout**. The key is returned
+  only when the Orders token carries `linkCustomers` / `linkGuests`, signed by
+  App from the same access as the Customers screen.
 - **Who sees what** (claims of one browser-direct `people` token, see the
   [contract](./reservations-contract.md#4-people-api-operatorpeople)): contact,
   orders and consent need `read:settings:any`; the dining facet needs

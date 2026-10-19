@@ -480,3 +480,49 @@ export async function erasePerson(
 		{ method: 'POST', body: {} },
 	)
 }
+
+export type PersonOrder = {
+	id: string
+	number: string
+	status: string
+	paymentStatus: string
+	fulfillment: string
+	currency: string
+	totalCents: number
+	itemCount: number
+	createdAt: string | null
+	/** `customer`: bound at checkout. `phone`: matched by the verified phone. */
+	matchedBy: 'customer' | 'phone'
+}
+
+export type PersonOrdersPage = {
+	orders: PersonOrder[]
+	nextCursor: string | null
+	totals: {
+		count: number
+		spend: Array<{ currency: string; cents: number }>
+	}
+}
+
+export const PERSON_ORDERS_PAGE_SIZE = 20
+
+/** One page of a customer's orders, newest first (keyset `cursor`). */
+export async function fetchPersonOrders(
+	client: PeopleClient,
+	key: string,
+	cursor?: string | null,
+	signal?: AbortSignal,
+): Promise<PersonOrdersPage> {
+	const raw = await client.request<Partial<PersonOrdersPage>>(
+		`/${encodeURIComponent(key)}/orders`,
+		{
+			query: { cursor: cursor || undefined, limit: PERSON_ORDERS_PAGE_SIZE },
+			signal,
+		},
+	)
+	return {
+		orders: raw.orders ?? [],
+		nextCursor: raw.nextCursor ?? null,
+		totals: raw.totals ?? { count: 0, spend: [] },
+	}
+}

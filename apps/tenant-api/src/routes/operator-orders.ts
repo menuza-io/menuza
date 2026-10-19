@@ -4,7 +4,11 @@ import { z } from 'zod'
 
 import { operatorOrderPatchSchema } from '@repo/common/restaurant-orders'
 import { brand } from '@repo/config/brand'
-import { TENANT_ORG_ID_PATTERN, type RestaurantOrder } from '@repo/tenant-db'
+import {
+	getTenantDb,
+	TENANT_ORG_ID_PATTERN,
+	type RestaurantOrder,
+} from '@repo/tenant-db'
 
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from '../lib/region.ts'
@@ -15,6 +19,10 @@ import {
 	operatorOrder,
 	updateOperatorOrder,
 } from '../services/order-service.ts'
+import {
+	resolveOrderCustomerKeys,
+	type OrderLinkAccess,
+} from '../services/order-customer-link.ts'
 
 export const operatorOrderRoutes = new Hono()
 
@@ -24,6 +32,8 @@ export type OperatorOrderAuth = {
 	orgId: string
 	role: string
 	scope: 'orders:read' | 'orders:write'
+	/** Signed claims from App: which person pages the operator may open. */
+	link: OrderLinkAccess
 }
 
 /**
@@ -50,7 +60,13 @@ async function authenticateOrdersOperator(
 		}
 	}
 
-	let decoded: { orgId?: string; role?: string; scope?: string }
+	let decoded: {
+		orgId?: string
+		role?: string
+		scope?: string
+		linkCustomers?: boolean
+		linkGuests?: boolean
+	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
 		const { payload } = await jwtVerify(token, secret, {
@@ -88,8 +104,24 @@ async function authenticateOrdersOperator(
 			orgId: decoded.orgId,
 			role: decoded.role,
 			scope: decoded.scope,
+			link: {
+				linkCustomers: decoded.linkCustomers === true,
+				linkGuests: decoded.linkGuests === true,
+			},
 		},
 	}
+}
+
+async function withCustomerKeys(
+	auth: OperatorOrderAuth,
+	orders: RestaurantOrder[],
+) {
+	if (!auth.link.linkCustomers && !auth.link.linkGuests) {
+		return orders.map((order) => operatorOrder(order))
+	}
+	const db = await getTenantDb(auth.orgId)
+	const keys = await resolveOrderCustomerKeys(db, orders, auth.link)
+	return orders.map((order) => operatorOrder(order, keys.get(order.id) ?? null))
 }
 
 /**
@@ -175,7 +207,11 @@ operatorOrderRoutes.get('/', async (c) => {
 			limit: parsed.data.limit ?? OPERATOR_LIST_LIMIT,
 			status: status ?? undefined,
 		})
-		return c.json({ orders: orders.map(operatorOrder) }, 200, noStoreHeaders())
+		return c.json(
+			{ orders: await withCustomerKeys(auth.auth, orders) },
+			200,
+			noStoreHeaders(),
+		)
 	} catch (error) {
 		console.error(
 			`Failed to list orders for org ${auth.auth.orgId}:`,
@@ -204,7 +240,8 @@ operatorOrderRoutes.get('/:id', async (c) => {
 				noStoreHeaders(),
 			)
 		}
-		return c.json({ order: operatorOrder(result.data) }, 200, noStoreHeaders())
+		const [order] = await withCustomerKeys(auth.auth, [result.data])
+		return c.json({ order }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to load order for org ${auth.auth.orgId}:`,
@@ -248,7 +285,8 @@ operatorOrderRoutes.patch('/:id', async (c) => {
 				noStoreHeaders(),
 			)
 		}
-		return c.json({ order: operatorOrder(result.data) }, 200, noStoreHeaders())
+		const [order] = await withCustomerKeys(auth.auth, [result.data])
+		return c.json({ order }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to update order for org ${auth.auth.orgId}:`,

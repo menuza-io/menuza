@@ -61,6 +61,7 @@ import { toast } from 'sonner'
 import { StatusBadge } from '#app/components/customers/people-list-screen.tsx'
 import { PersonMergeDialog } from '#app/components/customers/person-merge-dialog.tsx'
 import { PersonNotesPanel } from '#app/components/customers/person-notes-panel.tsx'
+import { PersonOrdersPanel } from '#app/components/customers/person-orders-panel.tsx'
 import { PersonTagBadge } from '#app/components/customers/person-tag-badge.tsx'
 import { StatusLabel } from '#app/components/reservations/status-style.tsx'
 import {
@@ -455,6 +456,14 @@ export function PersonProfileScreen({
 						</FramePanel>
 					) : null}
 				</Frame>
+
+				{customer ? (
+					<PersonOrdersPanel
+						client={client}
+						orgSlug={orgSlug}
+						personKey={profile.canonicalKey}
+					/>
+				) : null}
 
 				{hasDiningAccess ? (
 					<Frame

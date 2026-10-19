@@ -150,7 +150,10 @@ App menu-read/menu-write authorization. Endpoint checks node region and active
 provisioned organization, and uses `private, no-store`.
 
 - `GET /operator/orders`: recent orders.
-- `GET /operator/orders/:id`: full regional receipt.
+- `GET /operator/orders/:id`: full regional receipt. Both reads add
+  `customerKey` (`c_<id>`, `g_<id>` or null) only when the token carries the
+  `linkCustomers` / `linkGuests` claims App signs; matching is `customer_id`,
+  then verified phone, never name or email.
 - `PATCH /operator/orders/:id`:
   `{ status: 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled', markPaid?: boolean }`.
 

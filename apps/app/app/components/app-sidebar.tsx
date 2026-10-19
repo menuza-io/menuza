@@ -56,6 +56,7 @@ import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
 import { PhoneIcon } from './icons/phone-icon'
+import { ReceiptIcon } from './icons/receipt-icon'
 import { SendIcon } from './icons/send-icon'
 import { UserRoundGroupIcon } from './icons/user-round-group-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
@@ -363,6 +364,12 @@ function OrganizationSidebar({
 					isActive: location.pathname.includes(`/${orgSlug}/menu/drops`),
 				},
 			],
+		},
+		{
+			title: _(msg`Orders`),
+			url: `/${orgSlug}/orders`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/orders`),
+			icon: ReceiptIcon,
 		},
 		{
 			title: _(msg`Mailbox`),
@@ -697,7 +704,10 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/website`) {
 				return canReadWebsite || canReadAnnouncements
 			}
-			if (item.url === `/${orgSlug}/menu`) {
+			if (
+				item.url === `/${orgSlug}/menu` ||
+				item.url === `/${orgSlug}/orders`
+			) {
 				return canReadMenu
 			}
 			if (item.url === `/${orgSlug}/phone-agent`) {

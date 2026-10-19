@@ -9,6 +9,7 @@ import { breadcrumbFromHandle } from '#app/utils/breadcrumb.ts'
 const SEGMENT_LABELS: Record<string, ReactNode> = {
 	notes: <Trans>Notes</Trans>,
 	customers: <Trans>Customers</Trans>,
+	orders: <Trans>Orders</Trans>,
 	settings: <Trans>Settings</Trans>,
 	website: <Trans>Website</Trans>,
 	marketing: <Trans>Marketing</Trans>,

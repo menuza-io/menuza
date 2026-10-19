@@ -1350,12 +1350,17 @@ export function receiptOrder(order: RestaurantOrder) {
 	}
 }
 
-export function operatorOrder(order: RestaurantOrder) {
+export function operatorOrder(
+	order: RestaurantOrder,
+	customerKey: string | null = null,
+) {
 	return {
 		...receiptOrder(order),
 		id: order.id,
 		orgId: order.orgId,
 		customerId: order.customerId,
+		/** `c_<id>` / `g_<id>` person key the Orders screen links to, or null. */
+		customerKey,
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,

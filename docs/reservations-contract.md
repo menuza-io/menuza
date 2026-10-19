@@ -465,6 +465,12 @@ minutes, others 15. The guestbook is organization-wide, so no location claim.
   `dining` facet (counters, next booking, tags, notes, allergy, history per
   grants), `marketing` (from `customer_subscriptions`), `canonicalKey`,
   `access`.
+- `GET /operator/people/:key/orders`: `cursor`, `limit` (default 20, max 50).
+  Needs `peopleCustomers` (else 403). Returns `orders[]` (`id`, `number`,
+  `status`, `paymentStatus`, `fulfillment`, `currency`, `totalCents`,
+  `itemCount`, `createdAt`, `matchedBy`), `nextCursor` and
+  `totals { count, spend[] }`. Matches `customer_id`, plus orders with no
+  `customer_id` and the customer's verified phone.
 - `PATCH /operator/people/:key`: `name`, `email`, `phone` (guest-only people),
   `allergyNotes` (`full`), `expectedVersion`. A customer's phone is refused
   (`phone_managed_by_sign_in`).

@@ -28,11 +28,6 @@ export default function MenuLayout() {
 
 	const tabs = [
 		{
-			label: _(t`Orders`),
-			href: `/${orgSlug}/menu/orders`,
-			isActive: location.pathname.startsWith(`/${orgSlug}/menu/orders`),
-		},
-		{
 			label: _(t`Overview`),
 			href: `/${orgSlug}/menu`,
 			isActive:

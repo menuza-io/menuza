@@ -15,9 +15,10 @@ brokered by App: the browser sends an opaque `paymentToken` to Sites
 `/api/orders/payment`, which forwards it to App
 `POST /resources/sites/order/checkout`; App quotes the regional API, creates the
 hosted processor session, and signed webhooks push terminal payment status back
-to the regional API. Operators work the order inbox in App
-(`/<org>/menu/orders`), which holds scoped regional JWTs minted by
-`/<org>/orders-token` and calls `GET/PATCH /operator/orders` directly.
+to the regional API. Operators work the order inbox in App (`/<org>/orders`, its
+own sidebar item; `/<org>/menu/orders` redirects), which holds scoped regional
+JWTs minted by `/<org>/orders-token` and calls `GET/PATCH /operator/orders`
+directly.
 
 ## Environment checklist
 

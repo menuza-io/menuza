@@ -25,6 +25,7 @@ import {
 	updatePerson,
 	type PeopleAccess,
 } from '../services/people-service.ts'
+import { listPersonOrders } from '../services/people-orders-service.ts'
 import { erasePerson } from '../services/person-erasure-service.ts'
 import {
 	exportGuestProfile,
@@ -200,6 +201,35 @@ operatorPeopleRoutes.get('/:key', async (c) => {
 		const db = await getTenantDb(ctx.orgId)
 		const profile = await getPersonProfile(db, ctx.access, c.req.param('key'))
 		return json({ ok: true, orgId: ctx.orgId, ...profile })
+	} catch (error) {
+		return fail(error)
+	}
+})
+
+const ordersQuerySchema = z.object({
+	cursor: z.string().trim().max(512).optional(),
+	limit: z.coerce.number().int().min(1).max(50).optional(),
+})
+
+/**
+ * All of one customer's orders, newest first, keyset-paged. Needs the
+ * customers facet claim (a host-only token is refused). See
+ * `listPersonOrders` for the matching rule.
+ */
+operatorPeopleRoutes.get('/:key/orders', async (c) => {
+	const ctx = await authenticate(c)
+	if ('response' in ctx) return ctx.response
+	const q = readQuery(c, ordersQuerySchema)
+	if ('error' in q) return q.error
+	try {
+		const db = await getTenantDb(ctx.orgId)
+		const page = await listPersonOrders(
+			db,
+			ctx.access,
+			c.req.param('key'),
+			q.data,
+		)
+		return json({ ok: true, orgId: ctx.orgId, ...page })
 	} catch (error) {
 		return fail(error)
 	}
