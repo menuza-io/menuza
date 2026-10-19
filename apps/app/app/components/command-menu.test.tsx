@@ -2,7 +2,7 @@
 
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -64,6 +64,9 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+	// Unmount while the fetch stub is still in place, so an unmount-time
+	// request cannot reach MSW's patched fetch.
+	cleanup()
 	vi.unstubAllGlobals()
 	Element.prototype.scrollIntoView = originalScrollIntoView
 })
