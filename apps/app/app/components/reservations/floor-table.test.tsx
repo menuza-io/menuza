@@ -54,9 +54,12 @@ describe('FloorTable', () => {
 		render(72, 72)
 		const tile = screen.getByTestId('floor-table-t1')
 		expect(tile.getAttribute('data-tile-tier')).toBe('tight')
+		// A tight tile shows the clock and the time, never a word that could
+		// break mid-word; the full status stays in the aria-label.
 		expect(screen.getByTestId('floor-table-status-text-t1').textContent).toBe(
-			'Reserved',
+			'18:00',
 		)
+		expect(tile.getAttribute('aria-label')).toContain('Reserved')
 		expect(screen.getByTestId('floor-table-label-t1').textContent).toBe('M12')
 		expect(
 			screen.getByTestId('floor-table-party-size-t1').textContent,

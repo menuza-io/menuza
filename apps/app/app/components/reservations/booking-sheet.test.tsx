@@ -266,17 +266,61 @@ describe('BookingSheet flow', () => {
 		toasts.warning.mockReset()
 	})
 
-	it('lists what is still missing once a booking is attempted without a guest', async () => {
+	it('lists what is still needed from the start and keeps Book off until it is filled', async () => {
 		const { calls } = renderSheet((call) =>
 			call.method === 'GET' ? availability({ slots: [slot(1140)] }) : created,
 		)
 		await screen.findByTestId('booking-slot-1140')
+		expect(screen.getByTestId('booking-validation-summary')).toHaveTextContent(
+			'phone number',
+		)
+		const submit = screen.getByTestId('booking-submit-btn')
+		expect(submit).toBeDisabled()
+		await fillGuest()
 		expect(screen.queryByTestId('booking-validation-summary')).toBeNull()
-		fireEvent.click(screen.getByTestId('booking-submit-btn'))
-		expect(
-			await screen.findByTestId('booking-validation-summary'),
-		).toHaveTextContent('phone number')
+		expect(submit).toBeEnabled()
 		expect(calls.some((c) => c.method === 'POST')).toBe(false)
+	})
+
+	it('focuses the phone field when the sheet opens', async () => {
+		renderSheet(() => availability({ slots: [slot(1140)] }))
+		await waitFor(() =>
+			expect(screen.getByTestId('booking-guest-phone')).toHaveFocus(),
+		)
+	})
+
+	it('hides Other time behind a link while time chips exist', async () => {
+		renderSheet(() => availability({ slots: [slot(1140)] }))
+		await screen.findByTestId('booking-slot-1140')
+		expect(screen.queryByTestId('booking-time-input')).toBeNull()
+		fireEvent.click(screen.getByTestId('booking-other-time-link'))
+		expect(screen.getByTestId('booking-time-input')).toBeVisible()
+	})
+
+	it('shows the time field straight away when no times are offered', async () => {
+		renderSheet(() => availability({ slots: [] }))
+		expect(await screen.findByTestId('booking-time-input')).toBeVisible()
+	})
+
+	it('writes dietary chips into the stored dietary text, in front of the typed notes', async () => {
+		const { calls } = renderSheet((call) =>
+			call.method === 'GET' ? availability({ slots: [slot(1140)] }) : created,
+		)
+		await screen.findByTestId('booking-slot-1140')
+		await fillGuest()
+		fireEvent.click(screen.getByTestId('booking-extras-toggle'))
+		fireEvent.click(await screen.findByTestId('booking-dietary-nut_allergy'))
+		fireEvent.click(screen.getByTestId('booking-dietary-vegan'))
+		fireEvent.change(screen.getByTestId('booking-dietary-notes'), {
+			target: { value: 'No sesame' },
+		})
+		fireEvent.click(screen.getByTestId('booking-submit-btn'))
+		await waitFor(() =>
+			expect(calls.some((c) => c.method === 'POST')).toBe(true),
+		)
+		expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+			dietaryNotes: 'nut_allergy, vegan, No sesame',
+		})
 	})
 
 	it('keeps the newest availability when an older request answers last', async () => {
@@ -327,7 +371,9 @@ describe('BookingSheet idempotency key', () => {
 		fireEvent.click(screen.getByTestId('booking-submit-btn'))
 		await waitFor(() => expect(postKeys(calls)).toHaveLength(count))
 		await waitFor(() =>
-			expect(screen.getByTestId('booking-submit-btn')).toBeEnabled(),
+			expect(screen.getByTestId('booking-submit-btn')).not.toHaveTextContent(
+				'Booking...',
+			),
 		)
 	}
 

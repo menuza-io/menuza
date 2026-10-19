@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+	mergeDietaryText,
 	approveReservationRequest,
 	assignReservationTable,
 	declineReservationRequest,
@@ -435,5 +436,15 @@ describe('book-api', () => {
 		expect(detail.guest?.pinnedNotes).toEqual([
 			{ id: 'n1', body: 'Window table' },
 		])
+	})
+})
+
+describe('mergeDietaryText', () => {
+	it('puts coded values first, drops duplicates and keeps the written notes', () => {
+		expect(
+			mergeDietaryText(['nut_allergy', 'vegan', 'vegan'], ' No sesame ', null),
+		).toBe('nut_allergy, vegan, No sesame')
+		expect(mergeDietaryText([], null, undefined)).toBe('')
+		expect(mergeDietaryText([], 'Only words')).toBe('Only words')
 	})
 })

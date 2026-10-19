@@ -31,6 +31,10 @@ import { EmptyState } from '#app/components/empty-state.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
+import {
+	countAllergyParties,
+	GuestFlags,
+} from '#app/components/reservations/guest-flags.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
 import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import {
@@ -59,14 +63,11 @@ import {
 	CONTACT_STATUS_LABELS,
 	COURSE_STAGE_LABELS,
 	DAY_CONFLICT_REASON_LABELS,
-	DIETARY_LABELS,
 	enumLabel,
-	OCCASION_LABELS,
 	SOURCE_FILTER_OPTIONS,
 	stripTagPrefix,
 	TAG_LABELS,
 	RESERVATION_STATUS_LABELS,
-	VIP_TIER_LABELS,
 } from '#app/utils/reservations/labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/book.ts'
@@ -105,6 +106,7 @@ type BookStatusFilter =
 	| 'no_show'
 	| 'unassigned'
 	| 'conflict'
+	| 'allergy'
 
 const ACTION_TEST_ID: Record<string, string> = {
 	arrive: 'book-arrive',
@@ -186,6 +188,8 @@ export default function ReservationsBookRoute() {
 				}
 			} else if (statusFilter === 'conflict') {
 				if (!rsv.hasConflict) return false
+			} else if (statusFilter === 'allergy') {
+				if (countAllergyParties([rsv]) === 0) return false
 			} else if (statusFilter !== 'all') {
 				if (rsv.status !== statusFilter) return false
 			}
@@ -212,6 +216,10 @@ export default function ReservationsBookRoute() {
 		}
 	}, [filteredReservations])
 
+	const allergyCount = useMemo(
+		() => countAllergyParties(reservations),
+		[reservations],
+	)
 	const lastUndo = transitions.lastUndo
 	const lastUndoStatusLabel = label(RESERVATION_STATUS_LABELS, lastUndo?.status)
 
@@ -223,6 +231,7 @@ export default function ReservationsBookRoute() {
 		{ key: 'completed', label: t`Completed` },
 		{ key: 'unassigned', label: t`Unassigned` },
 		{ key: 'conflict', label: t`Conflicts` },
+		{ key: 'allergy', label: t`Allergies tonight (${allergyCount})` },
 		{ key: 'no_show', label: t`No-show` },
 		{ key: 'cancelled', label: t`Cancelled` },
 	]
@@ -278,6 +287,7 @@ export default function ReservationsBookRoute() {
 				canManage={canManage}
 				refreshing={host.poll.refreshing}
 				onRefresh={() => void host.poll.refresh({ force: true })}
+				lastUpdatedAt={host.poll.lastUpdatedAt}
 				serviceNotes={dayFeed?.serviceNotes ?? []}
 			/>
 
@@ -291,7 +301,7 @@ export default function ReservationsBookRoute() {
 									type="button"
 									size="sm"
 									variant="outline"
-									className="h-11 md:h-8"
+									className="h-8 max-md:h-11 pointer-coarse:h-11"
 									onClick={() => void host.poll.refresh({ force: true })}
 								>
 									<Trans>Try again</Trans>
@@ -366,7 +376,7 @@ export default function ReservationsBookRoute() {
 									<ToggleGroupItem
 										key={f.key}
 										value={f.key}
-										className="h-11 md:h-7"
+										className="h-8 max-md:h-11 pointer-coarse:h-11"
 										data-testid={`book-status-filter-${f.key}`}
 									>
 										{f.label}
@@ -485,13 +495,6 @@ export default function ReservationsBookRoute() {
 													: null
 										const meta = [
 											rsv.guestPhone || null,
-											rsv.guest?.vipTier && rsv.guest.vipTier !== 'none'
-												? label(VIP_TIER_LABELS, rsv.guest.vipTier)
-												: null,
-											rsv.occasion
-												? label(OCCASION_LABELS, rsv.occasion)
-												: null,
-											...rsv.dietaryCodes.map((c) => label(DIETARY_LABELS, c)),
 											rsv.contactStatus && rsv.contactStatus !== 'none'
 												? label(CONTACT_STATUS_LABELS, rsv.contactStatus)
 												: null,
@@ -526,6 +529,10 @@ export default function ReservationsBookRoute() {
 															{meta.join(' · ')}
 														</div>
 													) : null}
+													<GuestFlags
+														reservation={rsv}
+														className="mt-1 max-w-xs"
+													/>
 													{note ? (
 														<div className="text-muted-foreground line-clamp-1 max-w-xs text-xs">
 															{note}
@@ -594,7 +601,7 @@ export default function ReservationsBookRoute() {
 																		? 'default'
 																		: 'outline'
 																}
-																className="h-11 md:h-8"
+																className="h-8 max-md:h-11 pointer-coarse:h-11"
 																disabled={transitions.busyId === rsv.id}
 																onClick={() =>
 																	void transitions.run(rsv, primary, guest)
@@ -608,7 +615,7 @@ export default function ReservationsBookRoute() {
 															type="button"
 															size="sm"
 															variant="ghost"
-															className="h-11 md:h-8"
+															className="h-8 max-md:h-11 pointer-coarse:h-11"
 															onClick={() => host.openDetail(rsv.id)}
 															data-testid={`book-details-${rsv.id}`}
 														>
@@ -622,7 +629,7 @@ export default function ReservationsBookRoute() {
 																			type="button"
 																			size="icon"
 																			variant="ghost"
-																			className="size-11 md:size-8"
+																			className="size-8 max-md:size-11 pointer-coarse:size-11"
 																			aria-label={t`More actions for ${guest}`}
 																			disabled={transitions.busyId === rsv.id}
 																		>
@@ -680,7 +687,7 @@ export default function ReservationsBookRoute() {
 						type="button"
 						size="sm"
 						variant="outline"
-						className="h-11 shrink-0 md:h-8"
+						className="h-8 shrink-0 max-md:h-11 pointer-coarse:h-11"
 						disabled={transitions.busyId === lastUndo.reservationId}
 						onClick={() => void transitions.undo()}
 						data-testid="book-undo-btn"

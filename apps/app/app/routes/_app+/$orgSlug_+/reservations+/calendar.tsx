@@ -31,6 +31,7 @@ import {
 } from '#app/utils/reservations/book-api.ts'
 import {
 	coversLabel,
+	coversLeftLabel,
 	partiesLabel,
 	specialClosedDaysLabel,
 } from '#app/utils/reservations/count-labels.ts'
@@ -104,7 +105,7 @@ export default function ReservationsCalendarRoute() {
 		useState<CalendarMonthResponse | null>(null)
 	const [loadingCalendar, setLoadingCalendar] = useState(true)
 	const [calendarError, setCalendarError] = useState<string | null>(null)
-	const [drillTarget, setDrillTarget] = useState<'book' | 'timeline'>('book')
+	const [drillTarget, setDrillTarget] = useState<'today' | 'timeline'>('today')
 
 	// Only the latest request may write state: a slow answer for an earlier
 	// month or location is aborted and ignored.
@@ -243,6 +244,7 @@ export default function ReservationsCalendarRoute() {
 					void loadCalendar()
 				}}
 				serviceNotes={host.dayFeed?.serviceNotes ?? []}
+				lastUpdatedAt={host.poll.lastUpdatedAt}
 			/>
 
 			{/* Month toolbar and summary KPIs */}
@@ -252,7 +254,7 @@ export default function ReservationsCalendarRoute() {
 						type="button"
 						variant="outline"
 						size="sm"
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={() => handleChangeMonth(shiftYearMonth(selectedMonth, -1))}
 						data-testid="calendar-prev-month"
 					>
@@ -272,7 +274,7 @@ export default function ReservationsCalendarRoute() {
 						type="button"
 						variant="outline"
 						size="sm"
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={() => handleChangeMonth(shiftYearMonth(selectedMonth, 1))}
 						data-testid="calendar-next-month"
 					>
@@ -308,22 +310,22 @@ export default function ReservationsCalendarRoute() {
 						value={[drillTarget]}
 						onValueChange={(next) => {
 							const picked = next[0]
-							if (picked === 'book' || picked === 'timeline') {
+							if (picked === 'today' || picked === 'timeline') {
 								setDrillTarget(picked)
 							}
 						}}
 						data-testid="calendar-drill-target-toggle"
 					>
 						<ToggleGroupItem
-							value="book"
-							className="h-11 md:h-7"
+							value="today"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							data-testid="calendar-drill-target-book"
 						>
-							<Trans>Open in List</Trans>
+							<Trans>Open in Board</Trans>
 						</ToggleGroupItem>
 						<ToggleGroupItem
 							value="timeline"
-							className="h-11 md:h-7"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							data-testid="calendar-drill-target-timeline"
 						>
 							<Trans>Open in Timeline</Trans>
@@ -350,8 +352,8 @@ export default function ReservationsCalendarRoute() {
 					</CardTitle>
 					<CardDescription>
 						<Trans>
-							Select any day cell to drill directly into that business date in
-							Book or Timeline view.
+							Select any day cell to open that business date in the Board or
+							Timeline.
 						</Trans>
 					</CardDescription>
 				</CardHeader>
@@ -424,7 +426,13 @@ export default function ReservationsCalendarRoute() {
 													: cell.isClosed
 														? 'border-destructive/30 bg-destructive/5 hover:border-destructive/60'
 														: hasBookings
-															? 'border-border bg-card hover:border-primary/60 hover:shadow-xs'
+															? `border-border hover:border-primary/60 hover:shadow-xs ${
+																	cell.pacingPct >= 85
+																		? 'bg-primary/15'
+																		: cell.pacingPct >= 50
+																			? 'bg-primary/10'
+																			: 'bg-primary/5'
+																}`
 															: 'border-border/70 bg-muted/10 hover:border-border'
 											}`}
 										>
@@ -470,40 +478,55 @@ export default function ReservationsCalendarRoute() {
 												</p>
 											) : null}
 
-											<div className="mt-1 flex flex-col gap-1">
-												<div className="flex items-baseline justify-between gap-1 text-xs">
-													<span
-														className="text-foreground font-semibold"
-														data-testid={`calendar-day-covers-${cell.date}`}
-													>
-														{coversLabel(cell.totalCovers)}
-													</span>
-													<span
-														className="text-muted-foreground text-xs"
-														data-testid={`calendar-day-parties-${cell.date}`}
-													>
-														{partiesLabel(cell.totalParties)}
-													</span>
-												</div>
-
-												{/* Pacing bar */}
-												{!cell.isClosed ? (
-													<div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-														<div
-															className={`h-full rounded-full transition-all ${
-																cell.pacingPct >= 85
-																	? 'bg-warning'
-																	: cell.pacingPct > 0
-																		? 'bg-primary'
-																		: 'bg-transparent'
-															}`}
-															style={{
-																width: `${Math.min(100, Math.max(0, cell.pacingPct))}%`,
-															}}
-														/>
+											{hasBookings ? (
+												<div className="mt-1 flex flex-col gap-1">
+													<div className="flex items-baseline justify-between gap-1 text-xs">
+														<span
+															className="text-foreground font-semibold tabular-nums"
+															data-testid={`calendar-day-covers-${cell.date}`}
+														>
+															{coversLabel(cell.totalCovers)}
+														</span>
+														<span
+															className="text-muted-foreground hidden text-xs sm:inline"
+															data-testid={`calendar-day-parties-${cell.date}`}
+														>
+															{partiesLabel(cell.totalParties)}
+														</span>
 													</div>
-												) : null}
-											</div>
+													{!cell.isClosed && cell.maxCapacityCovers > 0 ? (
+														<span
+															className="text-muted-foreground text-xs tabular-nums"
+															data-testid={`calendar-day-left-${cell.date}`}
+														>
+															{coversLeftLabel(
+																Math.max(
+																	0,
+																	cell.maxCapacityCovers - cell.totalCovers,
+																),
+															)}
+														</span>
+													) : null}
+
+													{/* Pacing bar */}
+													{!cell.isClosed ? (
+														<div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+															<div
+																className={`h-full rounded-full transition-all ${
+																	cell.pacingPct >= 85
+																		? 'bg-warning'
+																		: cell.pacingPct > 0
+																			? 'bg-primary'
+																			: 'bg-transparent'
+																}`}
+																style={{
+																	width: `${Math.min(100, Math.max(0, cell.pacingPct))}%`,
+																}}
+															/>
+														</div>
+													) : null}
+												</div>
+											) : null}
 										</div>
 									)
 								})}

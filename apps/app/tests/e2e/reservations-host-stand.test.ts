@@ -1189,7 +1189,7 @@ test.describe('Reservations Book & Host Stand UI', () => {
 		).toBeVisible()
 		await page.getByTestId('calendar-day-cell-2026-04-20').click()
 		await expect(page).toHaveURL(
-			new RegExp(`/${org.slug}/reservations/book.*date=2026-04-20`),
+			new RegExp(`/${org.slug}/reservations/(today|book).*date=2026-04-20`),
 		)
 
 		// 4. Pre-Service Overview & Per-Service Notes (VAL-HOST-022..024)

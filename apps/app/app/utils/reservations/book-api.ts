@@ -821,14 +821,15 @@ export function normalizeReservationView(
 			: typeof raw.dietary_notes === 'string'
 				? raw.dietary_notes
 				: null
-	const dietaryCodes = Array.isArray(raw.dietaryCodes)
-		? raw.dietaryCodes.map(String)
-		: dietaryNotes
-			? dietaryNotes
-					.split(',')
-					.map((s) => s.trim())
-					.filter(Boolean)
-			: (guest?.dietaryCodes ?? [])
+	const dietaryCodes =
+		Array.isArray(raw.dietaryCodes) && raw.dietaryCodes.length > 0
+			? raw.dietaryCodes.map(String)
+			: dietaryNotes
+				? dietaryNotes
+						.split(',')
+						.map((s) => s.trim())
+						.filter(Boolean)
+				: (guest?.dietaryCodes ?? [])
 
 	const guestNotes =
 		typeof raw.guestNotes === 'string'
@@ -2226,6 +2227,22 @@ function normalizeBookingWarnings(raw: unknown): BookingWarning[] {
 		}))
 }
 
+/**
+ * The one stored form of a booking's dietary needs: coded values first
+ * (`nut_allergy, vegan`), then the host's own words. The reservation has a
+ * single text column for this, and the day feed reads the allergy flag and the
+ * coded values back out of it, so a chip must always be written in this form.
+ */
+export function mergeDietaryText(
+	codes: readonly string[],
+	...notes: Array<string | null | undefined>
+): string {
+	const unique = [...new Set(codes.map((code) => code.trim()).filter(Boolean))]
+	return [...unique, ...notes.map((note) => note?.trim() ?? '')]
+		.filter(Boolean)
+		.join(', ')
+}
+
 export async function createPhoneReservation(
 	client: ReservationsScopedClient,
 	input: {
@@ -2281,13 +2298,11 @@ export async function createPhoneReservation(
 		input.overrideScheduleBlock ||
 		input.overrideClosedDay,
 	)
-	const dietaryText = [
-		...(input.dietaryCodes ?? []),
-		input.dietaryNotes?.trim() ?? '',
-		input.guest.allergiesText ?? '',
-	]
-		.filter(Boolean)
-		.join(', ')
+	const dietaryText = mergeDietaryText(
+		input.dietaryCodes ?? [],
+		input.dietaryNotes,
+		input.guest.allergiesText,
+	)
 
 	const raw = await client.request<Record<string, unknown>>(
 		'/operator/reservations/book/reservations',
@@ -2460,7 +2475,9 @@ export async function updateReservation(
 		locked?: boolean
 		unlock?: boolean
 		occasion?: string | null
+		/** Coded dietary values. Replaces the stored dietary text, so pass `dietaryNotes` too to keep the written notes. */
 		dietaryCodes?: string[]
+		dietaryNotes?: string | null
 		guestNotes?: string | null
 		internalNotes?: string | null
 		serverLabel?: string | null
@@ -2520,8 +2537,13 @@ export async function updateReservation(
 				...(patch.occasion !== undefined
 					? { occasion: patch.occasion, occasionTagId: patch.occasion }
 					: {}),
-				...(patch.dietaryCodes !== undefined
-					? { dietaryNotes: patch.dietaryCodes.join(', ') }
+				...(patch.dietaryCodes !== undefined || patch.dietaryNotes !== undefined
+					? {
+							dietaryNotes: mergeDietaryText(
+								patch.dietaryCodes ?? [],
+								patch.dietaryNotes,
+							),
+						}
 					: {}),
 				...(patch.guestNotes !== undefined
 					? { guestRequests: patch.guestNotes }

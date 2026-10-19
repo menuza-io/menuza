@@ -34,6 +34,7 @@ import {
 	policyFormToBody,
 	policyIssueFields,
 	policyToForm,
+	summarizePolicyForm,
 	policyErrorMessage,
 } from '#app/utils/reservations/policies-view.ts'
 
@@ -126,6 +127,10 @@ function Body({
 		[i18n, form.terms],
 	)
 
+	const summary = useMemo(
+		() => summarizePolicyForm(form, currency, i18n.locale, (d) => i18n._(d)),
+		[form, currency, i18n],
+	)
 	const takesMoney = form.kind === 'deposit' || form.kind === 'prepay'
 	const message = (field: PolicyFormField) =>
 		errors[field] ? i18n._(errors[field]!) : null
@@ -177,6 +182,15 @@ function Body({
 				</>
 			}
 		>
+			{summary ? (
+				<p
+					className="bg-muted text-foreground rounded-lg px-3 py-2 text-sm text-pretty"
+					data-testid="policy-summary"
+					aria-live="polite"
+				>
+					{summary}
+				</p>
+			) : null}
 			{banner ? (
 				<Alert variant="destructive" data-testid="policy-error">
 					<AlertDescription>{banner}</AlertDescription>

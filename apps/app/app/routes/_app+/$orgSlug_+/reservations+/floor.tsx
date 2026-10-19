@@ -741,6 +741,7 @@ export default function ReservationsFloorRoute() {
 				canManage={canManage}
 				refreshing={host.poll.refreshing}
 				onRefresh={() => void host.poll.refresh({ force: true })}
+				lastUpdatedAt={host.poll.lastUpdatedAt}
 				serviceNotes={feed?.serviceNotes ?? []}
 			/>
 
@@ -752,6 +753,7 @@ export default function ReservationsFloorRoute() {
 							<Button
 								type="button"
 								size="sm"
+								className="h-8 max-md:h-11 pointer-coarse:h-11"
 								variant="outline"
 								onClick={() => void host.poll.refresh({ force: true })}
 							>
@@ -797,6 +799,7 @@ export default function ReservationsFloorRoute() {
 							<Button
 								type="button"
 								size="sm"
+								className="h-8 max-md:h-11 pointer-coarse:h-11"
 								variant="ghost"
 								data-testid="floor-occupied-choice-cancel"
 								onClick={() => setOccupiedDropPrompt(null)}
@@ -809,6 +812,7 @@ export default function ReservationsFloorRoute() {
 							<Button
 								type="button"
 								size="sm"
+								className="h-8 max-md:h-11 pointer-coarse:h-11"
 								variant="outline"
 								disabled={busyAction}
 								data-testid="floor-occupied-choice-swap"
@@ -820,6 +824,7 @@ export default function ReservationsFloorRoute() {
 							<Button
 								type="button"
 								size="sm"
+								className="h-8 max-md:h-11 pointer-coarse:h-11"
 								variant="outline"
 								disabled={busyAction}
 								data-testid="floor-occupied-choice-reflow"
@@ -840,6 +845,7 @@ export default function ReservationsFloorRoute() {
 								<Button
 									type="button"
 									size="sm"
+									className="h-8 max-md:h-11 pointer-coarse:h-11"
 									variant="outline"
 									disabled={busyAction}
 									data-testid="floor-occupied-choice-overbook"
@@ -876,7 +882,7 @@ export default function ReservationsFloorRoute() {
 									size="sm"
 									variant={floorAreaId === area.id ? 'secondary' : 'outline'}
 									aria-pressed={floorAreaId === area.id}
-									className="h-11 md:h-8"
+									className="h-8 max-md:h-11 pointer-coarse:h-11"
 									onClick={() => host.setAreaFilter(area.id)}
 									data-testid={`floor-area-${area.id}`}
 								>
@@ -892,7 +898,7 @@ export default function ReservationsFloorRoute() {
 						size="sm"
 						variant={sectionOverlay ? 'secondary' : 'outline'}
 						aria-pressed={sectionOverlay}
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={() => setSectionOverlay((v) => !v)}
 						data-testid="floor-section-overlay-toggle"
 					>
@@ -904,7 +910,7 @@ export default function ReservationsFloorRoute() {
 						size="sm"
 						variant={highContrast ? 'secondary' : 'outline'}
 						aria-pressed={highContrast}
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={() => setHighContrast((v) => !v)}
 						data-testid="floor-high-contrast-toggle"
 					>
@@ -951,6 +957,7 @@ export default function ReservationsFloorRoute() {
 								<Button
 									type="button"
 									size="sm"
+									className="h-8 max-md:h-11 pointer-coarse:h-11"
 									disabled={savingServers}
 									data-testid="floor-section-save-servers"
 									onClick={handleSaveSectionServers}
@@ -1161,7 +1168,7 @@ export default function ReservationsFloorRoute() {
 										size="icon"
 										variant="ghost"
 										aria-label={t`Close table details`}
-										className="size-11 md:size-8"
+										className="size-8 max-md:size-11 pointer-coarse:size-11"
 										onClick={() => setSelectedTableId(null)}
 									>
 										<Icon name="x" className="size-4" />
@@ -1193,7 +1200,7 @@ export default function ReservationsFloorRoute() {
 												type="button"
 												size="sm"
 												variant="outline"
-												className="h-11 md:h-8"
+												className="h-8 max-md:h-11 pointer-coarse:h-11"
 												data-testid="floor-action-open-detail"
 												onClick={() =>
 													host.openReservationDetail(
@@ -1211,7 +1218,7 @@ export default function ReservationsFloorRoute() {
 											<Button
 												type="button"
 												size="sm"
-												className="h-11 md:h-8"
+												className="h-8 max-md:h-11 pointer-coarse:h-11"
 												disabled={busyAction}
 												data-testid="floor-action-seat-assigned"
 												onClick={() =>
@@ -1250,7 +1257,7 @@ export default function ReservationsFloorRoute() {
 																	?.courseStage === courseStage.id
 															}
 															disabled={busyAction}
-															className="h-11 md:h-8"
+															className="h-8 max-md:h-11 pointer-coarse:h-11"
 															data-testid={`floor-action-course-${courseStage.id}`}
 															onClick={() =>
 																handleCourseUpdate(
@@ -1267,7 +1274,7 @@ export default function ReservationsFloorRoute() {
 													type="button"
 													size="sm"
 													variant="outline"
-													className="h-11 md:h-8"
+													className="h-8 max-md:h-11 pointer-coarse:h-11"
 													disabled={busyAction}
 													data-testid="floor-action-finish"
 													onClick={() =>
@@ -1295,7 +1302,7 @@ export default function ReservationsFloorRoute() {
 												<Button
 													type="button"
 													size="sm"
-													className="h-11 md:h-8"
+													className="h-8 max-md:h-11 pointer-coarse:h-11"
 													disabled={busyAction}
 													data-testid="floor-action-seat-assigned"
 													onClick={() =>
@@ -1312,7 +1319,7 @@ export default function ReservationsFloorRoute() {
 												type="button"
 												size="sm"
 												variant="outline"
-												className="h-11 md:h-8"
+												className="h-8 max-md:h-11 pointer-coarse:h-11"
 												data-testid="floor-action-open-detail"
 												onClick={() =>
 													host.openReservationDetail(
@@ -1331,7 +1338,7 @@ export default function ReservationsFloorRoute() {
 										<Button
 											type="button"
 											size="sm"
-											className="h-11 md:h-8"
+											className="h-8 max-md:h-11 pointer-coarse:h-11"
 											disabled={selectedTableState.isBlocked || busyAction}
 											data-testid="floor-action-walk-in"
 											onClick={() => {
@@ -1348,7 +1355,7 @@ export default function ReservationsFloorRoute() {
 											type="button"
 											size="sm"
 											variant="outline"
-											className="h-11 md:h-8"
+											className="h-8 max-md:h-11 pointer-coarse:h-11"
 											disabled={busyAction}
 											data-testid="floor-action-block-table"
 											onClick={() =>
@@ -1431,7 +1438,7 @@ export default function ReservationsFloorRoute() {
 										size="sm"
 										variant={sideFilter === tab.id ? 'secondary' : 'outline'}
 										aria-pressed={sideFilter === tab.id}
-										className="h-11 md:h-8"
+										className="h-8 max-md:h-11 pointer-coarse:h-11"
 										data-testid={`floor-side-filter-${tab.id}`}
 										onClick={() => setSideFilter(tab.id)}
 									>
@@ -1476,7 +1483,7 @@ export default function ReservationsFloorRoute() {
 												<Button
 													type="button"
 													variant="link"
-													className="h-auto min-h-11 min-w-0 justify-start p-0 text-start text-sm font-semibold md:min-h-0"
+													className="h-auto min-h-8 min-w-0 justify-start p-0 text-start text-sm font-semibold max-md:min-h-11 pointer-coarse:min-h-11"
 													onClick={() => host.openReservationDetail(rsv.id)}
 												>
 													<span className="truncate">
@@ -1506,7 +1513,7 @@ export default function ReservationsFloorRoute() {
 																type="button"
 																size="sm"
 																variant="secondary"
-																className="h-11 md:h-8"
+																className="h-8 max-md:h-11 pointer-coarse:h-11"
 																data-testid={`floor-assign-to-selected-${rsv.id}`}
 																onClick={() =>
 																	handleDropReservationOnTable(
@@ -1527,7 +1534,7 @@ export default function ReservationsFloorRoute() {
 																		type="button"
 																		size="sm"
 																		variant="outline"
-																		className="h-11 md:h-8"
+																		className="h-8 max-md:h-11 pointer-coarse:h-11"
 																		data-testid={`floor-assign-menu-${rsv.id}`}
 																	>
 																		<Icon

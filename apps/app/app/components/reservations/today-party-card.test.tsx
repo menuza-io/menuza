@@ -89,7 +89,7 @@ describe('TodayPartyCard', () => {
 		expect(screen.queryByTestId('today-menu-r1')).toBeNull()
 	})
 
-	it('puts the action in its own wrapping row, outside the name row', () => {
+	it('pins the actions in a fixed-width column beside the name block', () => {
 		renderStaff(
 			<TodayPartyCard reservation={rsv()} kind="upcoming" {...props()} />,
 		)
@@ -97,7 +97,25 @@ describe('TodayPartyCard', () => {
 		const name = screen.getByTestId('today-open-detail-r1')
 		expect(actions.contains(screen.getByTestId('today-arrive-r1'))).toBe(true)
 		expect(actions.contains(name)).toBe(false)
-		expect(actions.className).toContain('flex-wrap')
-		expect(actions.className).toContain('min-w-0')
+		expect(actions.className).toContain('w-28')
+		expect(actions.className).toContain('shrink-0')
+	})
+
+	it('shows the allergen in full and VIP as chips on the card', () => {
+		renderStaff(
+			<TodayPartyCard
+				reservation={rsv({
+					hasAllergy: true,
+					dietaryCodes: ['shellfish_allergy'],
+					guest: { vipTier: 'vip' } as never,
+				})}
+				kind="upcoming"
+				{...props()}
+			/>,
+		)
+		expect(screen.getByTestId('guest-flag-allergy').textContent).toContain(
+			'Shellfish Allergy',
+		)
+		expect(screen.getByTestId('guest-flag-vip')).toBeTruthy()
 	})
 })

@@ -13,7 +13,11 @@ import { EditPartyDialog } from '#app/components/reservations/waitlist/edit-part
 import { SeatDialog } from '#app/components/reservations/waitlist/seat-dialog.tsx'
 import { useWaitlistVenue } from '#app/components/reservations/waitlist/use-waitlist-venue.ts'
 import { useWaitlist } from '#app/components/reservations/waitlist/use-waitlist.ts'
-import { useFormatMinutes } from '#app/components/reservations/waitlist/waitlist-clock.tsx'
+import {
+	UpdatedAgo,
+	useFormatMinutes,
+	useSlowLoad,
+} from '#app/components/reservations/waitlist/waitlist-clock.tsx'
 import { WaitlistQueue } from '#app/components/reservations/waitlist/waitlist-queue.tsx'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 
@@ -51,6 +55,7 @@ export function WaitlistScreen({
 	)
 
 	const listing = waitlist.listing
+	const slowLoad = useSlowLoad(!listing && waitlist.loading)
 	const editing = waitlist.active
 		.concat(waitlist.settled)
 		.find((entry) => entry.id === editingId)
@@ -64,6 +69,7 @@ export function WaitlistScreen({
 	return (
 		<div className="flex flex-col gap-6" data-testid="waitlist-screen">
 			<ReservationsHeaderActions>
+				<UpdatedAgo at={waitlist.lastUpdatedAt} />
 				<Button
 					type="button"
 					variant="outline"
@@ -175,12 +181,29 @@ export function WaitlistScreen({
 							</div>
 						))}
 					</div>
+					{slowLoad ? (
+						<p
+							role="status"
+							className="text-muted-foreground border-t px-3 py-3 text-sm"
+							data-testid="waitlist-slow-hint"
+						>
+							<Trans>
+								This is taking longer than usual. Check your connection; the
+								list keeps trying and appears as soon as it loads.
+							</Trans>
+						</p>
+					) : null}
 				</Frame>
 			) : !listing ? (
 				<Alert variant="destructive" data-testid="waitlist-load-error">
 					<AlertDescription>
 						<div className="flex items-center justify-between gap-2">
-							<span>{waitlist.loadError}</span>
+							<span>
+								<Trans>
+									The waitlist could not be loaded. Check your connection and
+									try again.
+								</Trans>
+							</span>
 							<Button
 								type="button"
 								size="sm"

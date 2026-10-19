@@ -11,9 +11,9 @@ const SETTINGS_ROUTE = path.resolve(
 /** The leaf routes of the five-group settings navigation, from `settings.tsx`. */
 function settingsLeafSuffixes(): string[] {
 	const source = fs.readFileSync(SETTINGS_ROUTE, 'utf8')
-	return [...source.matchAll(/leaf\(\s*'[^']+',\s*[^,]+,\s*'\/([^']+)'/g)].map(
-		(match) => match[1]!,
-	)
+	return [
+		...source.matchAll(/leaf\(\s*'[^']+',[\s\S]*?,\s*'\/([^']+)',?\s*\)/g),
+	].map((match) => match[1]!)
 }
 
 describe('setup issue targets', () => {

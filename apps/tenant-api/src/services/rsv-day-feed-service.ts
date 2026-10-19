@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import {
 	detectConflicts,
 	evaluatePacing,
+	extractDietaryCodes,
 	resolveServices,
 	type AvailableSlot,
 	type ConflictBlockInput,
@@ -250,6 +251,10 @@ export interface SerializedBookReservation {
 	internalNotes: string | null
 	hasAllergy: boolean
 	has_allergy: boolean
+	/** Same as `hasAllergy`: operational flag for every `read:reservation` token. */
+	allergyFlag: boolean
+	/** Coded dietary/allergen values only (never free text); safe without the guest grant. */
+	dietaryCodes: string[]
 	paymentStatus: string
 	payment_status: string
 	lateCancel: boolean
@@ -445,6 +450,8 @@ export async function serializeReservationsForBook(
 		)
 		const hasAllergy = Boolean(guestSummary?.hasAllergy || rawDietary)
 		const dietaryNotes = canReadSensitive ? r.dietaryNotes : null
+		// Coded values only: free text stays behind the guest grant.
+		const dietaryCodes: string[] = extractDietaryCodes(r.dietaryNotes)
 		const runningLateNote =
 			runningLateNoteByRes.get(r.id) ??
 			(r.runningLateMin !== null
@@ -533,6 +540,8 @@ export async function serializeReservationsForBook(
 			internalNotes: r.staffNotes,
 			hasAllergy,
 			has_allergy: hasAllergy,
+			allergyFlag: hasAllergy,
+			dietaryCodes,
 			paymentStatus: r.paymentStatus,
 			payment_status: r.paymentStatus,
 			lateCancel: r.lateCancel,

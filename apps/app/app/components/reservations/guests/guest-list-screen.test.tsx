@@ -170,4 +170,84 @@ describe('GuestListScreen', () => {
 		setup(() => apiError(403, 'missing_grant'))
 		expect(await screen.findByTestId('guests-denied')).toBeInTheDocument()
 	})
+
+	it('shows last visit, next booking and an allergy chip per row', async () => {
+		const day = 86_400_000
+		setup(() => ({
+			guests: [
+				guest('g1', 'Rana', {
+					hasAllergy: true,
+					allergyNotes: 'Peanuts',
+					lastVisitAt: Date.now() - 10 * day,
+					nextBookingAt: Date.now() + 3 * day,
+				}),
+				guest('g2', 'Omar'),
+			],
+			nextCursor: null,
+			total: 2,
+		}))
+		await screen.findByTestId('guest-row-g1')
+		expect(screen.getByTestId('guest-allergy-g1')).toHaveTextContent('Peanuts')
+		expect(screen.queryByTestId('guest-allergy-g2')).toBeNull()
+		expect(screen.getByTestId('guest-next-g1')).not.toHaveTextContent('—')
+		expect(screen.getByTestId('guest-next-g2')).toHaveTextContent('—')
+	})
+
+	it('filters the loaded guests by VIP, allergy and not visited in 90 days', async () => {
+		const day = 86_400_000
+		setup(() => ({
+			guests: [
+				guest('g1', 'Rana', {
+					tags: [
+						{
+							id: 'tag_vip',
+							name: 'VIP',
+							category: 'general',
+							colorToken: 'amber',
+						},
+					],
+				}),
+				guest('g2', 'Omar', { hasAllergy: true }),
+				guest('g3', 'Lina', { lastVisitAt: Date.now() - 120 * day }),
+				guest('g4', 'Sami', { lastVisitAt: Date.now() - 5 * day }),
+			],
+			nextCursor: null,
+			total: 4,
+		}))
+		await screen.findByTestId('guest-row-g1')
+		fireEvent.click(screen.getByTestId('guests-filter-vip'))
+		expect(screen.queryByTestId('guest-row-g2')).toBeNull()
+		expect(screen.getByTestId('guest-row-g1')).toBeInTheDocument()
+		expect(screen.getByTestId('guests-count')).toHaveTextContent(
+			'1 guest matches',
+		)
+		fireEvent.click(screen.getByTestId('guests-filter-vip'))
+		fireEvent.click(screen.getByTestId('guests-filter-allergy'))
+		expect(screen.getAllByTestId(/^guest-row-/)).toHaveLength(1)
+		expect(screen.getByTestId('guest-row-g2')).toBeInTheDocument()
+		fireEvent.click(screen.getByTestId('guests-filter-allergy'))
+		fireEvent.click(screen.getByTestId('guests-filter-lapsed'))
+		expect(screen.getAllByTestId(/^guest-row-/)).toHaveLength(1)
+		expect(screen.getByTestId('guest-row-g3')).toBeInTheDocument()
+	})
+
+	it('links New reservation to the booking page when the operator may book', async () => {
+		const fake = createScriptedClient(() => ({
+			guests: [],
+			nextCursor: null,
+			total: 0,
+		}))
+		renderStaff(<GuestListScreen client={fake.client} orgSlug="acme" canBook />)
+		await screen.findByTestId('guests-empty')
+		expect(screen.getByTestId('guests-new-reservation')).toHaveAttribute(
+			'href',
+			'/acme/reservations/book',
+		)
+	})
+
+	it('has no New reservation action without the booking access', async () => {
+		setup(() => ({ guests: [], nextCursor: null, total: 0 }))
+		await screen.findByTestId('guests-empty')
+		expect(screen.queryByTestId('guests-new-reservation')).toBeNull()
+	})
 })

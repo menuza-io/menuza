@@ -60,3 +60,18 @@ export function coversRangeLabel(min: number, max: number): string {
 	if (min >= max) return coversLabel(max)
 	return t`${min}-${max} covers`
 }
+
+export function finishedCountLabel(count: number): string {
+	return plural(count, { one: '# finished', other: '# finished' })
+}
+
+export function allergiesTonightLabel(count: number): string {
+	return plural(count, {
+		one: '# party with an allergy',
+		other: '# parties with an allergy',
+	})
+}
+
+export function coversLeftLabel(count: number): string {
+	return plural(count, { one: '# cover left', other: '# covers left' })
+}

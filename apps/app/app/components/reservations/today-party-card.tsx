@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from '@repo/ui/dropdown-menu'
 import { Icon } from '@repo/ui/icon'
+import { GuestFlags } from '#app/components/reservations/guest-flags.tsx'
 import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import {
 	reservationStatusStyle,
@@ -27,8 +28,6 @@ import {
 	CHANNEL_LABELS,
 	DIETARY_LABELS,
 	enumLabel,
-	OCCASION_LABELS,
-	VIP_TIER_LABELS,
 } from '#app/utils/reservations/labels.ts'
 
 export type PartyCardKind = 'upcoming' | 'seated' | 'finished'
@@ -80,10 +79,6 @@ export function TodayPartyCard({
 	const overTurn = kind === 'seated' && elapsedMin > rsv.durationMin
 	const unassigned = kind === 'upcoming' && rsv.assignedTableLabels.length === 0
 	const lateMin = rsv.runningLateMin
-	const vip =
-		rsv.guest?.vipTier && rsv.guest.vipTier !== 'none'
-			? enumLabel(tx, VIP_TIER_LABELS, rsv.guest.vipTier)
-			: null
 
 	// Badge 1: the one thing that needs attention. Badge 2: payment, else VIP.
 	const attention = unassigned
@@ -94,9 +89,12 @@ export function TodayPartyCard({
 				? { variant: 'warning' as const, label: t`+${lateMin}m late` }
 				: null
 
+	// Allergy, VIP and occasion are chips (`GuestFlags`); the quiet line keeps
+	// the other dietary preferences and the guest's request.
 	const noteBits = [
-		rsv.occasion ? enumLabel(tx, OCCASION_LABELS, rsv.occasion) : null,
-		...rsv.dietaryCodes.map((c) => enumLabel(tx, DIETARY_LABELS, c)),
+		...rsv.dietaryCodes
+			.filter((c) => c in DIETARY_LABELS && !c.endsWith('_allergy'))
+			.map((c) => enumLabel(tx, DIETARY_LABELS, c)),
 		rsv.guestNotes,
 	].filter(Boolean)
 
@@ -105,20 +103,23 @@ export function TodayPartyCard({
 	const elapsed = elapsedMin
 	const planned = rsv.durationMin
 
+	const hasActions = canManage && Boolean(primary?.to || showMenu)
+
 	return (
 		<div
 			className={cn(
-				'bg-background flex min-w-0 flex-col gap-1.5 rounded-lg border p-3',
+				'bg-background flex min-w-0 items-start gap-3 rounded-lg border p-3',
 				kind === 'finished' && 'bg-muted/20',
 			)}
 			data-testid={rowTestId}
 		>
-			<div className="flex min-w-0 items-start justify-between gap-2">
+			<div className="flex min-w-0 flex-1 flex-col gap-1.5">
 				<Button
 					type="button"
 					variant="link"
 					className={cn(
-						'h-auto min-h-11 min-w-0 justify-start p-0 text-start text-sm font-semibold whitespace-normal md:min-h-8',
+						'h-auto min-w-0 justify-start p-0 text-start text-sm font-semibold whitespace-normal hover:underline focus-visible:underline',
+						'min-h-8 max-md:min-h-11 pointer-coarse:min-h-11',
 						style.strike && 'line-through',
 					)}
 					onClick={() => onOpenDetail(rsv.id)}
@@ -131,11 +132,54 @@ export function TodayPartyCard({
 						{guest} ({size})
 					</span>
 				</Button>
+
+				<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+					<StatusLabel status={rsv.status} />
+					{kind === 'seated' ? (
+						<span
+							className={cn('tabular-nums', overTurn && 'text-warning')}
+							data-testid={`today-elapsed-${rsv.id}`}
+						>
+							{t`${elapsed}m / ${planned}m`}
+						</span>
+					) : tableLabels ? (
+						<span>{tableLabels}</span>
+					) : null}
+					{kind === 'seated' && rsv.serverLabel ? (
+						<span>{rsv.serverLabel}</span>
+					) : null}
+					{rsv.channel ? (
+						<span data-testid={`today-channel-${rsv.id}`}>
+							{enumLabel(tx, CHANNEL_LABELS, rsv.channel)}
+						</span>
+					) : null}
+				</div>
+
+				{attention || rsv.paymentStatus !== 'none' ? (
+					<div className="flex flex-wrap items-center gap-1">
+						{attention ? (
+							<Badge variant={attention.variant}>{attention.label}</Badge>
+						) : null}
+						<PaymentBadge
+							paymentStatus={rsv.paymentStatus}
+							experience={Boolean(rsv.experienceId)}
+						/>
+					</div>
+				) : null}
+
+				{kind !== 'finished' ? <GuestFlags reservation={rsv} /> : null}
+
+				{kind !== 'finished' && noteBits.length > 0 ? (
+					<p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+						<Icon name="info" className="size-3.5 shrink-0" />
+						<span className="truncate">{noteBits.join(' · ')}</span>
+					</p>
+				) : null}
 			</div>
 
-			{canManage && (primary?.to || showMenu) ? (
+			{hasActions ? (
 				<div
-					className="flex min-w-0 flex-wrap items-center justify-end gap-1"
+					className="flex w-28 shrink-0 flex-col items-stretch gap-1"
 					data-testid={`today-actions-${rsv.id}`}
 				>
 					{primary && primary.to ? (
@@ -143,7 +187,10 @@ export function TodayPartyCard({
 							type="button"
 							size="sm"
 							variant={primary.action === 'seat' ? 'default' : 'outline'}
-							className="h-11 max-w-full min-w-0 md:h-8"
+							className={cn(
+								'h-8 max-md:h-11 pointer-coarse:h-11',
+								'w-full min-w-0 px-2',
+							)}
 							disabled={busy}
 							onClick={() => onAction(rsv, primary)}
 							data-testid={`${ACTION_TEST_ID[primary.action] ?? 'today-action'}-${rsv.id}`}
@@ -151,7 +198,9 @@ export function TodayPartyCard({
 							{primary.action === 'seat' || primary.action === 'finish' ? (
 								<Icon name="check" className="size-3.5" />
 							) : null}
-							{tx(HOST_ACTION_LABELS[primary.action])}
+							<span className="truncate">
+								{tx(HOST_ACTION_LABELS[primary.action])}
+							</span>
 						</Button>
 					) : null}
 					{showMenu ? (
@@ -162,7 +211,10 @@ export function TodayPartyCard({
 										type="button"
 										size="icon"
 										variant="ghost"
-										className="size-11 md:size-8"
+										className={cn(
+											'size-8 max-md:size-11 pointer-coarse:size-11',
+											'self-end',
+										)}
 										aria-label={t`More actions for ${guest}`}
 										disabled={busy}
 										data-testid={`today-menu-${rsv.id}`}
@@ -199,50 +251,6 @@ export function TodayPartyCard({
 						</DropdownMenu>
 					) : null}
 				</div>
-			) : null}
-
-			<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-				<StatusLabel status={rsv.status} />
-				{kind === 'seated' ? (
-					<span
-						className={cn('tabular-nums', overTurn && 'text-warning')}
-						data-testid={`today-elapsed-${rsv.id}`}
-					>
-						{t`${elapsed}m / ${planned}m`}
-					</span>
-				) : tableLabels ? (
-					<span>{tableLabels}</span>
-				) : null}
-				{kind === 'seated' && rsv.serverLabel ? (
-					<span>{rsv.serverLabel}</span>
-				) : null}
-				{rsv.channel ? (
-					<span data-testid={`today-channel-${rsv.id}`}>
-						{enumLabel(tx, CHANNEL_LABELS, rsv.channel)}
-					</span>
-				) : null}
-			</div>
-
-			{attention || vip || rsv.paymentStatus !== 'none' ? (
-				<div className="flex flex-wrap items-center gap-1">
-					{attention ? (
-						<Badge variant={attention.variant}>{attention.label}</Badge>
-					) : null}
-					<PaymentBadge
-						paymentStatus={rsv.paymentStatus}
-						experience={Boolean(rsv.experienceId)}
-					/>
-					{vip && !attention && rsv.paymentStatus === 'none' ? (
-						<Badge variant="default">{vip}</Badge>
-					) : null}
-				</div>
-			) : null}
-
-			{kind !== 'finished' && noteBits.length > 0 ? (
-				<p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-					<Icon name="info" className="size-3.5 shrink-0" />
-					<span className="truncate">{noteBits.join(' · ')}</span>
-				</p>
 			) : null}
 		</div>
 	)

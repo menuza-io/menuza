@@ -225,8 +225,9 @@ const READ_ONLY_CELL = (
 
 export default function ReservationsSettingsServicesRoute() {
 	const { _ } = useLingui()
-	const { selectedLocationId, canWrite, client, refreshSummary } =
+	const { selectedLocationId, canWrite, client, refreshSummary, settings } =
 		useReservationsSetupContext()
+	const defaultTurnMin = settings?.defaultTurnTimeMin ?? 90
 
 	const [services, setServices] = useState<ServiceDto[]>([])
 	const [turnBuckets, setTurnBuckets] = useState<TurnTimeRuleDto[]>([])
@@ -863,7 +864,7 @@ export default function ReservationsSettingsServicesRoute() {
 			<RuleSection
 				testId="setup-turn-times-card"
 				toggleTestId="setup-section-turn-times-toggle"
-				title={<Trans>Dining time by party size</Trans>}
+				title={<Trans>Dining time by party size (advanced)</Trans>}
 				description={
 					<Trans>
 						How long each party usually stays. The system uses this to know when
@@ -871,12 +872,16 @@ export default function ReservationsSettingsServicesRoute() {
 						needs a time.
 					</Trans>
 				}
-				defaultOpen={turnBuckets.length > 0 || !contiguity.covered}
+				defaultOpen={false}
 				badge={
-					contiguity.covered ? (
+					turnBuckets.length === 0 ? (
+						<Badge variant="secondary" data-testid="turn-times-default-badge">
+							{_(msg`Default ${defaultTurnMin} min`)}
+						</Badge>
+					) : contiguity.covered ? (
 						<Badge variant="success" data-testid="turn-times-contiguous-badge">
 							<Icon name="check" className="size-3.5" />
-							<Trans>Covers 1–{onlinePartyMax} guests</Trans>
+							<Trans>Custom for 1–{onlinePartyMax}</Trans>
 						</Badge>
 					) : (
 						<Badge variant="destructive" data-testid="turn-times-gap-badge">
@@ -1026,7 +1031,7 @@ export default function ReservationsSettingsServicesRoute() {
 			<RuleSection
 				testId="setup-pacing-card"
 				toggleTestId="setup-section-pacing-toggle"
-				title={<Trans>Pacing</Trans>}
+				title={<Trans>Pacing (advanced)</Trans>}
 				description={
 					<Trans>
 						Optional. Limit how many guests or parties can be seated in the same

@@ -317,6 +317,7 @@ export function useWaitlist({
 		settled,
 		loading: poll.loading,
 		refreshing: poll.refreshing,
+		lastUpdatedAt: poll.lastUpdatedAt,
 		loadError: poll.error,
 		actionError,
 		clearActionError: () => setActionError(null),

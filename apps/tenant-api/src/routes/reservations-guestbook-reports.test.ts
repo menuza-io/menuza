@@ -294,6 +294,13 @@ describe('Guestbook and Reservations reports', () => {
 			expect(ids.size).toBe(55)
 		})
 
+		it('carries nextBookingAt on every list row, null without an upcoming booking', async () => {
+			await insertGuest({ firstName: 'Nora', lastName: 'Quiet' })
+			const res = await api('GET', guestsUrl('?q=Nora'), await guestsToken())
+			expect(res.body.guests).toHaveLength(1)
+			expect(res.body.guests[0].nextBookingAt).toBeNull()
+		})
+
 		it('creates, assigns, filters by and archives custom tags, and derives system tags', async () => {
 			const fresh = await insertGuest({ firstName: 'Fresh' })
 			const regular = await insertGuest({ firstName: 'Regular', visits: 4 })

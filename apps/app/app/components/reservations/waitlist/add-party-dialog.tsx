@@ -158,6 +158,7 @@ export function AddPartyDialog({
 						onChange={change}
 						areas={areas}
 						disabled={submitting}
+						autoFocusName
 					/>
 
 					<div

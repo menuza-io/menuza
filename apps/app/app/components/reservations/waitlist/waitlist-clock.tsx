@@ -19,6 +19,46 @@ export function useTick(intervalMs: number, offsetMs = 0): number {
 	return now + offsetMs
 }
 
+/** True once `active` has stayed true for `afterMs` (a slow load), false again when it ends. */
+export function useSlowLoad(active: boolean, afterMs = 10_000): boolean {
+	const [slow, setSlow] = useState(false)
+	useEffect(() => {
+		setSlow(false)
+		if (!active) return
+		const id = window.setTimeout(() => setSlow(true), afterMs)
+		return () => window.clearTimeout(id)
+	}, [active, afterMs])
+	return slow
+}
+
+/** "Updated 12 seconds ago", in the app language; re-renders every 5 seconds. */
+export function UpdatedAgo({ at }: { at: number | null }) {
+	const { t, i18n } = useLingui()
+	const now = useTick(5_000)
+	if (at === null) return null
+	const seconds = Math.max(0, Math.round((now - at) / 1000))
+	let ago: string
+	try {
+		const rtf = new Intl.RelativeTimeFormat(i18n.locale, { numeric: 'auto' })
+		ago =
+			seconds < 5
+				? rtf.format(0, 'second')
+				: seconds < 60
+					? rtf.format(-Math.round(seconds / 5) * 5, 'second')
+					: rtf.format(-Math.floor(seconds / 60), 'minute')
+	} catch {
+		ago = `${seconds}s`
+	}
+	return (
+		<span
+			className="text-muted-foreground text-xs tabular-nums"
+			data-testid="waitlist-updated-ago"
+		>
+			{t`Updated ${ago}`}
+		</span>
+	)
+}
+
 /** "25 min" or "1 h 5 min". */
 export function useFormatMinutes() {
 	const { t } = useLingui()

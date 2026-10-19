@@ -33,6 +33,7 @@ import {
 } from '@repo/ui/table'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import { ScheduleSheet } from '#app/components/reservations/experiences/schedule-sheet.tsx'
 import {
 	type Option,
@@ -854,15 +855,28 @@ export function ExperienceEditor({
 					) : null}
 				</FrameHeader>
 				{experience.schedules.length === 0 ? (
-					<FramePanel>
-						<p
-							className="text-muted-foreground text-sm"
-							data-testid="schedules-empty"
+					<FramePanel data-testid="schedules-empty">
+						<EmptyState
+							icons={['calendar', 'clock', 'users']}
+							title={<Trans>No schedules yet</Trans>}
+							description={
+								<Trans>
+									Add the days and times guests can book. Guests cannot book
+									this experience until it has a schedule.
+								</Trans>
+							}
+							className="border-0 bg-transparent"
 						>
-							<Trans>
-								No schedules yet. Add one so guests can choose a seating.
-							</Trans>
-						</p>
+							{editable ? (
+								<Button
+									type="button"
+									onClick={() => setSheet({ mode: 'create' })}
+								>
+									<Icon name="plus" />
+									<Trans>Add schedule</Trans>
+								</Button>
+							) : null}
+						</EmptyState>
 					</FramePanel>
 				) : (
 					<Table variant="card" data-testid="schedules-table">

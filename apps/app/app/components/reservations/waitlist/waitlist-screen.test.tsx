@@ -424,4 +424,21 @@ describe('WaitlistScreen', () => {
 		fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
 		expect(await screen.findByTestId('waitlist-empty')).toBeTruthy()
 	})
+
+	it('opens Add party with the name field focused and a telephone keypad for the phone', async () => {
+		setup()
+		await screen.findByTestId('waitlist-card-w1')
+		fireEvent.click(screen.getByTestId('waitlist-add-button'))
+		const name = await screen.findByTestId('waitlist-add-name')
+		await waitFor(() => expect(name).toHaveFocus())
+		const phone = screen.getByTestId('waitlist-add-phone')
+		expect(phone).toHaveAttribute('type', 'tel')
+		expect(phone).toHaveAttribute('inputmode', 'tel')
+	})
+
+	it('shows when the list was last updated', async () => {
+		setup()
+		await screen.findByTestId('waitlist-card-w1')
+		expect(await screen.findByTestId('waitlist-updated-ago')).toBeTruthy()
+	})
 })

@@ -24,6 +24,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
+import { GuestFlags } from '#app/components/reservations/guest-flags.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
 import { useHostStand } from '#app/components/reservations/use-host-stand.ts'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
@@ -275,6 +276,7 @@ export default function ReservationsOverviewRoute() {
 				onOpenConflictPanel={() => host.setConflictPanelOpen(true)}
 				canManage={canManage}
 				refreshing={host.poll.refreshing || loadingOverview}
+				lastUpdatedAt={host.poll.lastUpdatedAt}
 				onRefresh={() => {
 					void host.poll.refresh({ force: true })
 					void loadOverview()
@@ -378,7 +380,7 @@ export default function ReservationsOverviewRoute() {
 								>
 									<ToggleGroupItem
 										value=""
-										className="h-11 md:h-7"
+										className="h-8 max-md:h-11 pointer-coarse:h-11"
 										data-testid="overview-service-tab-all"
 									>
 										<Trans>All / Day</Trans>
@@ -387,7 +389,7 @@ export default function ReservationsOverviewRoute() {
 										<ToggleGroupItem
 											key={svc.id}
 											value={svc.id}
-											className="h-11 md:h-7"
+											className="h-8 max-md:h-11 pointer-coarse:h-11"
 											data-testid={`overview-service-tab-${svc.id}`}
 										>
 											{svc.name}
@@ -440,6 +442,7 @@ export default function ReservationsOverviewRoute() {
 								<Button
 									type="button"
 									size="sm"
+									className="h-8 max-md:h-11 pointer-coarse:h-11"
 									disabled={
 										savingNote || (!noteDirty && Boolean(activeServiceNote))
 									}
@@ -582,12 +585,13 @@ export default function ReservationsOverviewRoute() {
 											<Button
 												type="button"
 												variant="link"
-												className="h-auto min-h-11 justify-start p-0 text-start text-sm font-semibold md:min-h-8"
+												className="h-auto min-h-8 justify-start p-0 text-start text-sm font-semibold max-md:min-h-11 pointer-coarse:min-h-11"
 												onClick={() => host.openDetail(rsv.id)}
 											>
 												<span dir="ltr">{rsv.hhmm}</span> · {rsv.guestName} (
 												<span dir="ltr">{rsv.partySize}</span>)
 											</Button>
+											<GuestFlags reservation={rsv} showOccasion={false} />
 											{canReadGuest && allergyDetail ? (
 												<span
 													className="text-destructive text-xs font-medium"
@@ -644,7 +648,7 @@ export default function ReservationsOverviewRoute() {
 										<Button
 											type="button"
 											variant="link"
-											className="h-auto min-h-11 justify-start p-0 text-start text-sm font-semibold md:min-h-8"
+											className="h-auto min-h-8 justify-start p-0 text-start text-sm font-semibold max-md:min-h-11 pointer-coarse:min-h-11"
 											onClick={() => host.openDetail(rsv.id)}
 										>
 											<span dir="ltr">{rsv.hhmm}</span> · {rsv.guestName}
@@ -696,7 +700,7 @@ export default function ReservationsOverviewRoute() {
 										<Button
 											type="button"
 											variant="link"
-											className="h-auto min-h-11 justify-start p-0 text-start text-sm font-semibold md:min-h-8"
+											className="h-auto min-h-8 justify-start p-0 text-start text-sm font-semibold max-md:min-h-11 pointer-coarse:min-h-11"
 											onClick={() => host.openDetail(rsv.id)}
 										>
 											<span dir="ltr">{rsv.hhmm}</span> · {rsv.guestName} (
@@ -763,7 +767,7 @@ export default function ReservationsOverviewRoute() {
 										<Button
 											type="button"
 											variant="link"
-											className="h-auto min-h-11 justify-start p-0 text-start text-sm font-semibold md:min-h-8"
+											className="h-auto min-h-8 justify-start p-0 text-start text-sm font-semibold max-md:min-h-11 pointer-coarse:min-h-11"
 											onClick={() => host.openDetail(rsv.id)}
 										>
 											<span dir="ltr">{rsv.hhmm}</span> · {rsv.guestName} (

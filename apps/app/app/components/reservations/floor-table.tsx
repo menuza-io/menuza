@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { cn } from '@repo/ui'
 import { Icon, type IconName } from '@repo/ui/icon'
 import { memo, type DragEvent } from 'react'
+import { GuestFlags } from '#app/components/reservations/guest-flags.tsx'
 import {
 	TABLE_STATE_STYLES,
 	type TableStateKey,
@@ -239,6 +240,9 @@ function FloorTableBase({
 						{table.label}
 					</span>
 				</span>
+				{activeParty && !roomy ? (
+					<GuestFlags reservation={activeParty} tier="tight" />
+				) : null}
 				{isRound && !roomy ? null : (
 					<span className="text-muted-foreground flex shrink-0 items-center gap-0.5">
 						<Icon name={FLOOR_STATUS_ICONS[liveStatus]} className="size-3.5" />
@@ -263,10 +267,21 @@ function FloorTableBase({
 					className={cn('size-1.5 shrink-0 rounded-full', style.dot)}
 				/>
 				<span
-					className="min-w-0 wrap-anywhere"
+					className="flex min-w-0 items-center gap-1 break-normal"
 					data-testid={`floor-table-status-text-${table.id}`}
 				>
-					{compactWord}
+					{!roomy && liveStatus === 'available' && reservedAt ? (
+						<>
+							<Icon
+								name="clock"
+								className="size-3 shrink-0"
+								aria-hidden="true"
+							/>
+							<span className="tabular-nums">{reservedAt}</span>
+						</>
+					) : (
+						<span className="truncate">{compactWord}</span>
+					)}
 					{roomy && statusTime ? (
 						<span className="tabular-nums"> {statusTime}</span>
 					) : null}
@@ -314,6 +329,14 @@ function FloorTableBase({
 						activeParty.courseStage,
 					)}
 				</span>
+			) : null}
+
+			{roomy && activeParty ? (
+				<GuestFlags
+					reservation={activeParty}
+					showOccasion={false}
+					className="text-start"
+				/>
 			) : null}
 
 			{roomy && showSection && state.sectionName ? (

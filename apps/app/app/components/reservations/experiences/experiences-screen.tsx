@@ -181,6 +181,17 @@ export function ExperiencesScreen({
 				</ReservationsHeaderActions>
 			) : null}
 
+			<p
+				className="text-muted-foreground max-w-prose text-sm text-pretty"
+				data-testid="experiences-intro"
+			>
+				<Trans>
+					An experience is a dining event guests book in advance, such as a
+					tasting menu or a brunch, with its own price, party sizes and seating
+					times.
+				</Trans>
+			</p>
+
 			{invalidCount > 0 ? (
 				<Alert data-testid="experiences-invalid-warning">
 					<Icon name="alert-triangle" />

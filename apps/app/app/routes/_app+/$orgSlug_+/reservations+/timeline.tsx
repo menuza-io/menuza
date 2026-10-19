@@ -687,7 +687,7 @@ export default function ReservationsTimelineRoute() {
 
 	return (
 		<div
-			className="flex flex-col gap-4"
+			className="flex max-w-full min-w-0 flex-col gap-4"
 			data-testid="reservations-timeline-view"
 		>
 			{/* Screen-reader live region for keyboard DnD announcements */}
@@ -721,6 +721,7 @@ export default function ReservationsTimelineRoute() {
 				canManage={canManage}
 				refreshing={host.poll.refreshing}
 				onRefresh={() => void host.poll.refresh({ force: true })}
+				lastUpdatedAt={host.poll.lastUpdatedAt}
 				serviceNotes={dayFeed?.serviceNotes ?? []}
 			/>
 
@@ -755,7 +756,7 @@ export default function ReservationsTimelineRoute() {
 						<Button
 							type="button"
 							size="sm"
-							className="h-11 md:h-8"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							variant="outline"
 							onClick={() => setAssignLockChoice(null)}
 							data-testid="timeline-assign-unlocked-btn"
@@ -765,7 +766,7 @@ export default function ReservationsTimelineRoute() {
 						<Button
 							type="button"
 							size="sm"
-							className="h-11 md:h-8"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							onClick={async () => {
 								const choice = assignLockChoice
 								setAssignLockChoice(null)
@@ -808,7 +809,7 @@ export default function ReservationsTimelineRoute() {
 						<Button
 							type="button"
 							size="sm"
-							className="h-11 md:h-8"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							variant="outline"
 							onClick={() => setPendingLockedMove(null)}
 							data-testid="timeline-cancel-unlock-move"
@@ -818,7 +819,7 @@ export default function ReservationsTimelineRoute() {
 						<Button
 							type="button"
 							size="sm"
-							className="h-11 md:h-8"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							onClick={async () => {
 								const pending = pendingLockedMove
 								setPendingLockedMove(null)
@@ -867,7 +868,7 @@ export default function ReservationsTimelineRoute() {
 						<Button
 							type="button"
 							size="sm"
-							className="h-11 md:h-8"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							variant="outline"
 							onClick={() => setPendingConflictMove(null)}
 							data-testid="timeline-cancel-overbook-btn"
@@ -877,7 +878,7 @@ export default function ReservationsTimelineRoute() {
 						<Button
 							type="button"
 							size="sm"
-							className="h-11 md:h-8"
+							className="h-8 max-md:h-11 pointer-coarse:h-11"
 							variant="destructive"
 							onClick={async () => {
 								const pending = pendingConflictMove
@@ -905,10 +906,7 @@ export default function ReservationsTimelineRoute() {
 			<div className="bg-card flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
 				<div className="flex flex-wrap items-center gap-3">
 					<span className="text-muted-foreground">
-						<Trans>
-							Drag bars to reassign table or shift time in 15-min slots. Focus a
-							bar and press Space/Enter for keyboard move.
-						</Trans>
+						<Trans>Drag a bar to move it. Keyboard: Space or Enter.</Trans>
 					</span>
 					{isInteractionActive ? (
 						<Badge variant="secondary" data-testid="timeline-poll-paused-badge">
@@ -918,7 +916,7 @@ export default function ReservationsTimelineRoute() {
 				</div>
 
 				{canManage ? (
-					<label className="flex min-h-11 items-center gap-2 font-medium md:min-h-8">
+					<label className="flex min-h-8 items-center gap-2 font-medium max-md:min-h-11 pointer-coarse:min-h-11">
 						<Checkbox
 							checked={allowOverbookDrop}
 							onCheckedChange={(checked) =>
@@ -933,63 +931,71 @@ export default function ReservationsTimelineRoute() {
 				) : null}
 			</div>
 
-			{/* Unassigned Drag Lane (VAL-HOST-001: Always rendered at the top) */}
-			<Card
-				className="flex flex-col gap-2 p-3"
-				data-testid="timeline-unassigned-lane"
-			>
-				<div className="flex items-center justify-between text-sm font-semibold">
-					<span>
-						<Trans>Unassigned Reservations (Drag onto a table row below)</Trans>
-					</span>
-					<Badge
-						variant={
-							unassignedReservations.length > 0 ? 'destructive' : 'secondary'
-						}
-					>
-						{unassignedReservations.length}
-					</Badge>
-				</div>
-				{unassignedReservations.length === 0 ? (
-					<div className="text-muted-foreground text-xs">
-						<Trans>All active reservations are assigned to tables.</Trans>
+			{/* Unassigned drag lane: shown only while something is unassigned */}
+			{unassignedReservations.length > 0 ? (
+				<Card
+					className="flex flex-col gap-2 p-3"
+					data-testid="timeline-unassigned-lane"
+				>
+					<div className="flex items-center justify-between text-sm font-semibold">
+						<span>
+							<Trans>Unassigned: drag onto a table row below</Trans>
+						</span>
+						<Badge
+							variant={
+								unassignedReservations.length > 0 ? 'destructive' : 'secondary'
+							}
+						>
+							{unassignedReservations.length}
+						</Badge>
 					</div>
-				) : (
-					<div className="flex flex-wrap gap-2">
-						{unassignedReservations.map((rsv) => (
-							<div
-								key={rsv.id}
-								draggable={canManage}
-								tabIndex={0}
-								role="button"
-								onDragStart={(e) => {
-									setDraggingRsvId(rsv.id)
-									e.dataTransfer.setData('text/plain', rsv.id)
-									e.dataTransfer.setData('application/x-reservation-id', rsv.id)
-								}}
-								onDragEnd={() => setDraggingRsvId(null)}
-								onKeyDown={(e) => void handleBarKeyDown(e, rsv)}
-								onClick={() => host.openDetail(rsv.id)}
-								className="bg-background hover:bg-muted border-warning/50 flex cursor-grab items-center gap-2 rounded-md border px-2.5 py-2 text-sm shadow-xs"
-								data-testid={`timeline-unassigned-chip-${rsv.id}`}
-							>
-								<span className="font-mono font-semibold">{rsv.hhmm}</span>
-								<span className="font-medium">{rsv.guestName}</span>
-								<Badge variant="secondary">{rsv.partySize}</Badge>
-							</div>
-						))}
-					</div>
-				)}
-			</Card>
+					{unassignedReservations.length === 0 ? (
+						<div className="text-muted-foreground text-xs">
+							<Trans>All active reservations are assigned to tables.</Trans>
+						</div>
+					) : (
+						<div className="flex flex-wrap gap-2">
+							{unassignedReservations.map((rsv) => (
+								<div
+									key={rsv.id}
+									draggable={canManage}
+									tabIndex={0}
+									role="button"
+									onDragStart={(e) => {
+										setDraggingRsvId(rsv.id)
+										e.dataTransfer.setData('text/plain', rsv.id)
+										e.dataTransfer.setData(
+											'application/x-reservation-id',
+											rsv.id,
+										)
+									}}
+									onDragEnd={() => setDraggingRsvId(null)}
+									onKeyDown={(e) => void handleBarKeyDown(e, rsv)}
+									onClick={() => host.openDetail(rsv.id)}
+									className="bg-background hover:bg-muted border-warning/50 flex cursor-grab items-center gap-2 rounded-md border px-2.5 py-2 text-sm shadow-xs"
+									data-testid={`timeline-unassigned-chip-${rsv.id}`}
+								>
+									<span className="font-mono font-semibold">{rsv.hhmm}</span>
+									<span className="font-medium">{rsv.guestName}</span>
+									<Badge variant="secondary">{rsv.partySize}</Badge>
+								</div>
+							))}
+						</div>
+					)}
+				</Card>
+			) : null}
 
 			{!dayFeed && host.poll.loading ? (
 				<Skeleton className="h-96 w-full" data-testid="timeline-skeleton" />
 			) : null}
 
 			{/* Main Horizontal Gantt / Timeline Grid */}
-			<Card className="overflow-hidden" data-testid="timeline-grid-container">
+			<Card
+				className="max-w-full min-w-0 overflow-hidden"
+				data-testid="timeline-grid-container"
+			>
 				<div
-					className="overflow-x-auto"
+					className="max-w-full min-w-0 overflow-x-auto"
 					ref={scrollRef}
 					data-testid="timeline-scroll"
 				>
@@ -1047,6 +1053,16 @@ export default function ReservationsTimelineRoute() {
 															: 'text-muted-foreground/60 text-xs tabular-nums'
 												}
 												data-testid={`timeline-pacing-slot-${slotMin}`}
+												title={
+													maxCovers !== null
+														? t`Seats used / capacity: ${coversInSlot} / ${maxCovers}`
+														: undefined
+												}
+												aria-label={
+													maxCovers !== null
+														? t`${coversInSlot} of ${maxCovers} seats used`
+														: undefined
+												}
 											>
 												{maxCovers !== null
 													? `${coversInSlot}/${maxCovers}`
@@ -1110,7 +1126,7 @@ export default function ReservationsTimelineRoute() {
 													<Button
 														type="button"
 														size="icon"
-														className="size-11 md:size-8"
+														className="size-8 max-md:size-11 pointer-coarse:size-11"
 														variant="ghost"
 														aria-label={t`Book on ${table.label}`}
 														onClick={() =>

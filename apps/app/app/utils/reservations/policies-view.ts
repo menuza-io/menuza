@@ -2,6 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import {
 	currencyFractionDigits,
+	formatMoney,
 	parseMoneyInput,
 } from '#app/utils/reservations/payments-view.ts'
 import {
@@ -299,4 +300,78 @@ export function policyIssueFields(err: unknown): PolicyFormField[] {
 		const field = typeof path === 'string' ? ISSUE_FIELDS[path] : undefined
 		return field ? [field] : []
 	})
+}
+
+/**
+ * One plain-language sentence for the policy being edited, so a host can read
+ * back what guests will experience ("Guests pay $10 per guest to book. Free
+ * cancellation until 24 h before; after that the deposit is kept."). Returns
+ * `null` while the form is too empty to describe. Pure; `translate` is the
+ * Lingui `i18n._`.
+ */
+export function summarizePolicyForm(
+	form: PolicyFormValues,
+	currency: string,
+	locale: string,
+	translate: (descriptor: MessageDescriptor) => string,
+): string | null {
+	const parts: string[] = []
+	const money = (text: string) => {
+		const minor = parseMoneyInput(text, currency)
+		return minor === null ? null : formatMoney(minor, currency, locale)
+	}
+	const hours = Number.parseInt(form.freeCancelHours, 10)
+	const hasWindow = Number.isFinite(hours) && hours >= 0
+
+	if (form.kind === 'none') {
+		return translate(msg`Guests book without paying or leaving a card.`)
+	}
+	if (form.kind === 'card_guarantee') {
+		parts.push(
+			translate(msg`Guests leave a card to book. Nothing is charged up front.`),
+		)
+		const fee = money(form.lateCancelFee)
+		const noShow = money(form.noShowFee)
+		if (hasWindow && fee) {
+			parts.push(
+				translate(
+					msg`Free cancellation until ${hours} h before; after that a ${fee} fee may be charged.`,
+				),
+			)
+		}
+		if (noShow) {
+			parts.push(translate(msg`A no-show may be charged ${noShow}.`))
+		}
+		return parts.join(' ')
+	}
+	const amount = money(form.amount)
+	if (!amount) return null
+	parts.push(
+		form.perCover
+			? translate(
+					form.kind === 'prepay'
+						? msg`Guests prepay ${amount} per guest to book.`
+						: msg`Guests pay ${amount} per guest to book.`,
+				)
+			: translate(
+					form.kind === 'prepay'
+						? msg`Guests prepay ${amount} per booking.`
+						: msg`Guests pay ${amount} per booking to book.`,
+				),
+	)
+	if (form.refundRule === 'none') {
+		parts.push(translate(msg`The payment is not refundable.`))
+	} else if (hasWindow) {
+		const percent = Number.parseInt(form.partialRefundPercent, 10)
+		parts.push(
+			form.refundRule === 'partial' && Number.isFinite(percent)
+				? translate(
+						msg`Free cancellation until ${hours} h before; after that ${percent}% is refunded.`,
+					)
+				: translate(
+						msg`Free cancellation until ${hours} h before; after that the payment is kept.`,
+					),
+		)
+	}
+	return parts.join(' ')
 }

@@ -1407,6 +1407,113 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			)
 		}
 
+		it('day feed gives a host token coded dietary values and the allergy flag, but never free text or guest notes', async () => {
+			const app = buildApp()
+			const full = await mintToken()
+			const hostToken = await mintToken({
+				grants: [
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+					RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+				],
+			})
+			const coded = await book(app, full, 'allergy-coded', {
+				dietaryNotes: 'nut_allergy, vegan',
+				time: '17:00',
+			})
+			const free = await book(app, full, 'allergy-free-text', {
+				dietaryNotes: 'Severe peanut reaction, carries EpiPen',
+				time: '19:00',
+			})
+			const plain = await book(app, full, 'allergy-none', { time: '21:00' })
+
+			const res = await getDay(app, hostToken)
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as {
+				reservations: Array<{
+					id: string
+					allergyFlag: boolean
+					hasAllergy: boolean
+					dietaryCodes: string[]
+					dietaryNotes: string | null
+				}>
+			}
+			const byId = new Map(body.reservations.map((r) => [r.id, r]))
+			expect(byId.get(coded.id)?.allergyFlag).toBe(true)
+			expect(byId.get(coded.id)?.dietaryCodes).toEqual(['nut_allergy', 'vegan'])
+			expect(byId.get(coded.id)?.dietaryNotes).toBeNull()
+			expect(byId.get(free.id)?.allergyFlag).toBe(true)
+			expect(byId.get(free.id)?.dietaryCodes).toEqual([])
+			expect(byId.get(free.id)?.dietaryNotes).toBeNull()
+			expect(byId.get(plain.id)?.allergyFlag).toBe(false)
+			expect(JSON.stringify(body)).not.toContain('EpiPen')
+
+			const fullBody = (await (await getDay(app, full)).json()) as typeof body
+			expect(
+				fullBody.reservations.find((r) => r.id === free.id)?.dietaryNotes,
+			).toContain('EpiPen')
+		})
+
+		it('an allergen chip written as dietary text flags the day feed, and an update that removes it clears the flag', async () => {
+			const app = buildApp()
+			const full = await mintToken()
+			const hostToken = await mintToken({
+				grants: [
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION,
+					RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
+				],
+			})
+			// What the booking sheet sends: chip codes, then the typed words.
+			const created = await book(app, full, 'chip-roundtrip', {
+				dietaryNotes: 'nut_allergy, vegan, No sesame',
+			})
+			const flagFor = async () => {
+				const res = await getDay(app, hostToken)
+				const body = (await res.json()) as {
+					reservations: Array<{
+						id: string
+						allergyFlag: boolean
+						dietaryCodes: string[]
+					}>
+				}
+				return body.reservations.find((r) => r.id === created.id)!
+			}
+			expect(await flagFor()).toMatchObject({
+				allergyFlag: true,
+				dietaryCodes: ['nut_allergy', 'vegan'],
+			})
+			const patch = await app.request(
+				`/operator/reservations/book/reservations/${created.id}`,
+				{
+					method: 'PATCH',
+					headers: {
+						Authorization: `Bearer ${full}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ dietaryNotes: 'vegan, No sesame' }),
+				},
+			)
+			expect(patch.status).toBe(200)
+			const after = await flagFor()
+			expect(after.dietaryCodes).toEqual(['vegan'])
+			expect(after.allergyFlag).toBe(true) // free text still counts as an allergy note
+			const cleared = await app.request(
+				`/operator/reservations/book/reservations/${created.id}`,
+				{
+					method: 'PATCH',
+					headers: {
+						Authorization: `Bearer ${full}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ dietaryNotes: null }),
+				},
+			)
+			expect(cleared.status).toBe(200)
+			expect(await flagFor()).toMatchObject({
+				allergyFlag: false,
+				dietaryCodes: [],
+			})
+		})
+
 		it('seats from arrived with tableIds: writes an active occupancy row, shows the table in the day feed, and 409s when the table is taken (VAL-HOST-014)', async () => {
 			const app = buildApp()
 			const token = await mintToken()

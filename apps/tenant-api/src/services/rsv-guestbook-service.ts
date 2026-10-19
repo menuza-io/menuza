@@ -14,7 +14,17 @@ import {
 	rsvWaitlistEntries,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, asc, desc, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm'
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	inArray,
+	isNull,
+	sql,
+	type SQL,
+} from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
@@ -308,7 +318,7 @@ export async function listGuests(
 		canReadSensitive?: boolean
 	},
 ): Promise<{
-	guests: SerializedGuestSummary[]
+	guests: Array<SerializedGuestSummary & { nextBookingAt: number | null }>
 	nextCursor: string | null
 	total: number
 }> {
@@ -367,12 +377,41 @@ export async function listGuests(
 		page.map((r) => r.guest.id),
 		{ canReadSensitive },
 	)
+	// The soonest upcoming booking per guest, so the list can show who is
+	// coming next without opening each profile.
+	const nextRows = await queryInChunks(
+		page.map((r) => r.guest.id),
+		(chunk) =>
+			db
+				.select({
+					guestId: rsvReservations.guestId,
+					nextAt: sql<number>`MIN(${rsvReservations.startAt})`,
+				})
+				.from(rsvReservations)
+				.where(
+					and(
+						inArray(rsvReservations.guestId, chunk),
+						gte(rsvReservations.startAt, Date.now()),
+						inArray(rsvReservations.status, [
+							'booked',
+							'confirmed',
+							'pending_payment',
+						]),
+					),
+				)
+				.groupBy(rsvReservations.guestId)
+				.all(),
+	)
+	const nextByGuest = new Map(
+		nextRows.map((r) => [r.guestId, Number(r.nextAt)]),
+	)
 	return {
-		guests: page.map((r) =>
-			serializeGuestRow(r.guest, tagsMap.get(r.guest.id) ?? [], {
+		guests: page.map((r) => ({
+			...serializeGuestRow(r.guest, tagsMap.get(r.guest.id) ?? [], {
 				canReadSensitive,
 			}),
-		),
+			nextBookingAt: nextByGuest.get(r.guest.id) ?? null,
+		})),
 		nextCursor,
 		total: Number(totalRow?.n ?? 0),
 	}

@@ -2,6 +2,12 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
+import { Icon } from '@repo/ui/icon'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { type FormEvent, useMemo, useState } from 'react'
 import {
@@ -84,6 +90,7 @@ function Body({
 	const [errors, setErrors] = useState<ExperienceFormErrors>({})
 	const [banner, setBanner] = useState<string[]>([])
 	const [pending, setPending] = useState(false)
+	const [moreOpen, setMoreOpen] = useState(false)
 
 	const kindOptions: Option[] = useMemo(
 		() =>
@@ -163,14 +170,6 @@ function Body({
 					<AlertDescription>{banner.join(' ')}</AlertDescription>
 				</Alert>
 			) : null}
-			<SelectField
-				label={<Trans>Name language</Trans>}
-				hint={<Trans>You can add more languages later.</Trans>}
-				value={nameLocale}
-				options={localeOptions}
-				onValueChange={(value) => setNameLocale(value as ExperienceLocale)}
-				id="experience-name-locale"
-			/>
 			<TextField
 				label={<Trans>Name</Trans>}
 				value={form.names[nameLocale] ?? ''}
@@ -179,24 +178,6 @@ function Body({
 				error={message('name')}
 				dir={nameLocale === 'ar' ? 'rtl' : 'ltr'}
 				data-testid="experience-name"
-			/>
-			<TextField
-				label={<Trans>Link name</Trans>}
-				hint={
-					<Trans>
-						Used in the web address of the page. Lowercase letters, numbers and
-						dashes.
-					</Trans>
-				}
-				value={form.slug}
-				onChange={(event) => {
-					setSlugTouched(true)
-					setForm((current) => ({ ...current, slug: event.target.value }))
-				}}
-				maxLength={64}
-				error={message('slug')}
-				dir="ltr"
-				data-testid="experience-slug"
 			/>
 			<SelectField
 				label={<Trans>Type</Trans>}
@@ -218,14 +199,81 @@ function Body({
 				error={message('price')}
 				data-testid="experience-price"
 			/>
-			<SwitchField
-				label={<Trans>Price is per guest</Trans>}
-				description={<Trans>Off: one price for the whole booking.</Trans>}
-				checked={form.pricePerCover}
-				onCheckedChange={(value) =>
-					setForm((current) => ({ ...current, pricePerCover: value }))
-				}
-			/>
+			<div className="grid grid-cols-2 gap-4">
+				<TextField
+					label={<Trans>Smallest party</Trans>}
+					inputMode="numeric"
+					value={form.partyMin}
+					onChange={(event) =>
+						setForm((current) => ({ ...current, partyMin: event.target.value }))
+					}
+					error={message('partyMin')}
+					data-testid="experience-party-min"
+				/>
+				<TextField
+					label={<Trans>Largest party</Trans>}
+					inputMode="numeric"
+					value={form.partyMax}
+					onChange={(event) =>
+						setForm((current) => ({ ...current, partyMax: event.target.value }))
+					}
+					error={message('partyMax')}
+					data-testid="experience-party-max"
+				/>
+			</div>
+			<Collapsible
+				open={moreOpen || Boolean(errors.slug)}
+				onOpenChange={setMoreOpen}
+			>
+				<CollapsibleTrigger
+					render={<Button type="button" variant="ghost" size="sm" />}
+					className="-ms-2 self-start"
+					data-testid="experience-more-toggle"
+				>
+					<Icon name="chevron-down" className="size-4" />
+					<Trans>More options</Trans>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<div className="flex flex-col gap-4 pt-2">
+						<SelectField
+							label={<Trans>Name language</Trans>}
+							hint={<Trans>You can add more languages later.</Trans>}
+							value={nameLocale}
+							options={localeOptions}
+							onValueChange={(value) =>
+								setNameLocale(value as ExperienceLocale)
+							}
+							id="experience-name-locale"
+						/>
+						<TextField
+							label={<Trans>Link name</Trans>}
+							hint={
+								<Trans>
+									Used in the web address of the page. Lowercase letters,
+									numbers and dashes.
+								</Trans>
+							}
+							value={form.slug}
+							onChange={(event) => {
+								setSlugTouched(true)
+								setForm((current) => ({ ...current, slug: event.target.value }))
+							}}
+							maxLength={64}
+							error={message('slug')}
+							dir="ltr"
+							data-testid="experience-slug"
+						/>
+						<SwitchField
+							label={<Trans>Price is per guest</Trans>}
+							description={<Trans>Off: one price for the whole booking.</Trans>}
+							checked={form.pricePerCover}
+							onCheckedChange={(value) =>
+								setForm((current) => ({ ...current, pricePerCover: value }))
+							}
+						/>
+					</div>
+				</CollapsibleContent>
+			</Collapsible>
 		</SheetForm>
 	)
 }

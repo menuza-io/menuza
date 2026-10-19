@@ -18,6 +18,8 @@ import {
 	useSearchParams,
 } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { SetupStatusBadge } from '#app/components/reservations/settings/setup-diagnostics.tsx'
+import { useSetupFlag } from '#app/components/reservations/settings/use-setup-flag.ts'
 import { ReservationsHeaderMeta } from '#app/components/reservations/shell-context.tsx'
 import { useReservationsClient } from '#app/hooks/use-reservations-client.ts'
 import {
@@ -25,11 +27,15 @@ import {
 	orgDefaultLocale,
 } from '#app/utils/location-name.server.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { fetchMessageSettings } from '#app/utils/reservations/messages-api.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
+	type ServiceDto,
 	extractApiErrorMessage,
 	fetchLocationSettings,
+	fetchServices,
+	fetchTables,
 	fetchSetupConflicts,
 	fetchSetupValidation,
 	type LocationSettingsDto,
@@ -37,6 +43,15 @@ import {
 	type SetupConflictDto,
 	type SetupValidationResponse,
 } from '#app/utils/reservations/setup-api.ts'
+import {
+	deriveSetupSteps,
+	describeSetupIssues,
+	type SetupStep,
+	type SetupStepId,
+	summarizeSetupStatus,
+	type SetupIssueItem,
+	type SetupStatus,
+} from '#app/utils/reservations/setup-progress.ts'
 import { type Route } from './+types/settings.ts'
 
 export type SetupLocationItem = {
@@ -62,6 +77,13 @@ export type ReservationsSetupOutletContext = {
 	loadingSummary: boolean
 	summaryError: string | null
 	refreshSummary: () => Promise<void>
+	/** Single source of truth for "can guests book?"; null until loaded. */
+	setupStatus: SetupStatus | null
+	setupIssues: SetupIssueItem[]
+	setupSteps: SetupStep[]
+	markSetupStep: (id: SetupStepId) => void
+	setupChecklistDismissed: boolean
+	dismissSetupChecklist: () => void
 	setSettingsState: (next: LocationSettingsDto) => void
 }
 
@@ -164,6 +186,16 @@ export default function ReservationsSettingsRoute() {
 	const [conflicts, setConflicts] = useState<SetupConflictDto[]>([])
 	const [loadingSummary, setLoadingSummary] = useState<boolean>(true)
 	const [summaryError, setSummaryError] = useState<string | null>(null)
+	const [serviceList, setServiceList] = useState<ServiceDto[] | null>(null)
+	const [tableCount, setTableCount] = useState<number | null>(null)
+	const [enabledMessages, setEnabledMessages] = useState<number | null>(null)
+	const flagKey = (name: string) =>
+		`menuza:rsv-setup:${selectedLocationId}:${name}`
+	const [rulesReviewed, setRulesReviewed] = useSetupFlag(flagKey('rules'))
+	const [bookingTested, setBookingTested] = useSetupFlag(flagKey('test'))
+	const [checklistDismissed, setChecklistDismissed] = useSetupFlag(
+		flagKey('dismissed'),
+	)
 	const [rederiving, setRederiving] = useState(false)
 	const [rederiveResult, setRederiveResult] = useState<string | null>(null)
 
@@ -175,13 +207,32 @@ export default function ReservationsSettingsRoute() {
 		setLoadingSummary(true)
 		setSummaryError(null)
 		try {
-			const [settingsRes, validationRes, conflictsRes] = await Promise.all([
+			// The checklist inputs reuse the clients the sub-pages already use.
+			// A failure there only leaves that step "unknown"; it never blocks.
+			const [
+				settingsRes,
+				validationRes,
+				conflictsRes,
+				servicesRes,
+				tablesRes,
+				messagesRes,
+			] = await Promise.all([
 				fetchLocationSettings(client, selectedLocationId),
 				fetchSetupValidation(client, selectedLocationId),
 				fetchSetupConflicts(client, selectedLocationId, {
 					detailClient: bookClient,
 				}),
+				fetchServices(client, selectedLocationId).catch(() => null),
+				fetchTables(client, selectedLocationId).catch(() => null),
+				fetchMessageSettings(client, selectedLocationId).catch(() => null),
 			])
+			setServiceList(servicesRes ? servicesRes.services : null)
+			setTableCount(
+				tablesRes ? tablesRes.tables.filter((t) => !t.archivedAt).length : null,
+			)
+			setEnabledMessages(
+				messagesRes ? messagesRes.kinds.filter((k) => k.enabled).length : null,
+			)
 			setSettings(settingsRes.settings)
 			setValidation(validationRes)
 			setConflicts(conflictsRes.conflicts ?? [])
@@ -242,6 +293,57 @@ export default function ReservationsSettingsRoute() {
 		}
 	}
 
+	const activeServices = useMemo(
+		() => (serviceList ? serviceList.filter((x) => !x.archivedAt) : null),
+		[serviceList],
+	)
+	const setupIssueInputs = validation?.issues
+	const setupStatus = useMemo(() => {
+		if (loadingSummary || !validation) return null
+		return summarizeSetupStatus(validation.issues, {
+			noServices: activeServices !== null && activeServices.length === 0,
+			noTables: tableCount === 0,
+		})
+	}, [loadingSummary, validation, activeServices, tableCount])
+	const setupIssues = useMemo(
+		() =>
+			describeSetupIssues(
+				setupIssueInputs ?? [],
+				new Map((activeServices ?? []).map((x) => [x.id, x.name])),
+				{
+					noServices: activeServices !== null && activeServices.length === 0,
+					noTables: tableCount === 0,
+				},
+			),
+		[setupIssueInputs, activeServices, tableCount],
+	)
+	const setupSteps = useMemo(
+		() =>
+			deriveSetupSteps({
+				serviceCount: activeServices ? activeServices.length : null,
+				tableCount,
+				enabledMessageCount: enabledMessages,
+				settingsVersion: settings ? settings.version : null,
+				rulesReviewed,
+				bookingTested,
+				issues: validation?.issues ?? [],
+			}),
+		[
+			activeServices,
+			tableCount,
+			enabledMessages,
+			settings,
+			rulesReviewed,
+			bookingTested,
+			validation,
+		],
+	)
+	const markSetupStep = (id: SetupStepId) => {
+		if (id === 'rules') setRulesReviewed(true)
+		if (id === 'test') setBookingTested(true)
+	}
+	const nextStepId = setupSteps.find((x) => x.next)?.id ?? null
+
 	const basePath = `/${orgSlug}/reservations/settings`
 	const searchSuffix = searchParams.toString()
 		? `?${searchParams.toString()}`
@@ -253,23 +355,48 @@ export default function ReservationsSettingsRoute() {
 	type SetupLeaf = {
 		id: string
 		label: string
+		purpose: string
 		pathname: string
 		exact: boolean
 	}
 	const leaf = (
 		id: string,
 		label: string,
+		purpose: string,
 		suffix: string,
 		exact = false,
-	): SetupLeaf => ({ id, label, pathname: `${basePath}${suffix}`, exact })
+	): SetupLeaf => ({
+		id,
+		label,
+		purpose,
+		pathname: `${basePath}${suffix}`,
+		exact,
+	})
 	const groups: Array<{ id: string; label: string; leaves: SetupLeaf[] }> = [
 		{
 			id: 'rules',
 			label: _(msg`Rules`),
 			leaves: [
-				leaf('general', _(msg`Booking rules`), '', true),
+				leaf(
+					'general',
+					_(msg`Booking rules`),
+					_(
+						msg`Who can book online, how far ahead, and how bookings are confirmed.`,
+					),
+					'',
+					true,
+				),
 				...(paymentsEnabled
-					? [leaf('policies', _(msg`Payment policies`), '/policies')]
+					? [
+							leaf(
+								'policies',
+								_(msg`Payment policies`),
+								_(
+									msg`Ask guests for a deposit and set when they can cancel for free.`,
+								),
+								'/policies',
+							),
+						]
 					: []),
 			],
 		},
@@ -277,30 +404,75 @@ export default function ReservationsSettingsRoute() {
 			id: 'services',
 			label: _(msg`Services`),
 			leaves: [
-				leaf('services', _(msg`Services & turn times`), '/services'),
-				leaf('special-days', _(msg`Special days & blocks`), '/special-days'),
+				leaf(
+					'services',
+					_(msg`Services & turn times`),
+					_(
+						msg`The meal periods guests can book and how long they keep a table.`,
+					),
+					'/services',
+				),
+				leaf(
+					'special-days',
+					_(msg`Special days & blocks`),
+					_(
+						msg`Holidays, private events and times when tables are not available.`,
+					),
+					'/special-days',
+				),
 			],
 		},
 		{
 			id: 'floor',
 			label: _(msg`Floor`),
 			leaves: [
-				leaf('tables', _(msg`Tables & areas`), '/tables'),
-				leaf('sections', _(msg`Sections`), '/sections'),
-				leaf('floor-plan', _(msg`Floor plan`), '/floor-plan'),
+				leaf(
+					'tables',
+					_(msg`Tables & areas`),
+					_(msg`The tables guests sit at, grouped into dining areas.`),
+					'/tables',
+				),
+				leaf(
+					'sections',
+					_(msg`Sections`),
+					_(
+						msg`Split the floor between servers so each one owns a group of tables.`,
+					),
+					'/sections',
+				),
+				leaf(
+					'floor-plan',
+					_(msg`Floor plan`),
+					_(msg`Arrange tables as they are in your room.`),
+					'/floor-plan',
+				),
 			],
 		},
 		{
 			id: 'messages',
 			label: _(msg`Messages`),
-			leaves: [leaf('messages', _(msg`Guest messages`), '/messages')],
+			leaves: [
+				leaf(
+					'messages',
+					_(msg`Guest messages`),
+					_(msg`The confirmations and reminders guests receive.`),
+					'/messages',
+				),
+			],
 		},
 		...(waitlistEnabled
 			? [
 					{
 						id: 'waitlist',
 						label: _(msg`Waitlist`),
-						leaves: [leaf('waitlist', _(msg`Waitlist`), '/waitlist')],
+						leaves: [
+							leaf(
+								'waitlist',
+								_(msg`Waitlist`),
+								_(msg`Quote waits and message guests when tables are full.`),
+								'/waitlist',
+							),
+						],
 					},
 				]
 			: []),
@@ -310,6 +482,17 @@ export default function ReservationsSettingsRoute() {
 			? location.pathname === tab.pathname ||
 				location.pathname === `${tab.pathname}/`
 			: location.pathname.startsWith(tab.pathname)
+
+	const activeLeaf =
+		groups.flatMap((g) => g.leaves).find((l) => isLeafActive(l)) ?? null
+	const STEP_LEAF: Record<string, SetupStepId> = {
+		services: 'hours',
+		tables: 'tables',
+		general: 'rules',
+		messages: 'messages',
+	}
+	const isNextLeaf = (id: string) =>
+		nextStepId !== null && STEP_LEAF[id] === nextStepId
 
 	const outletContext: ReservationsSetupOutletContext = {
 		orgSlug,
@@ -325,6 +508,12 @@ export default function ReservationsSettingsRoute() {
 		loadingSummary,
 		summaryError,
 		refreshSummary,
+		setupStatus,
+		setupIssues,
+		setupSteps,
+		markSetupStep,
+		setupChecklistDismissed: checklistDismissed,
+		dismissSetupChecklist: () => setChecklistDismissed(true),
 		setSettingsState: setSettings,
 	}
 
@@ -345,25 +534,10 @@ export default function ReservationsSettingsRoute() {
 					</Badge>
 				) : null}
 
-				{validation && !loadingSummary ? (
-					validation.valid ? (
-						<Badge
-							variant="success"
-							data-testid="setup-validation-status-badge"
-						>
-							<Icon name="check-circle" />
-							<Trans>Configuration valid</Trans>
-						</Badge>
-					) : (
-						<Badge
-							variant="warning"
-							data-testid="setup-validation-status-badge"
-						>
-							<Icon name="alert-triangle" />
-							<Trans>Setup issues</Trans> ({validation.errors.length})
-						</Badge>
-					)
-				) : null}
+				<SetupStatusBadge
+					status={setupStatus}
+					loading={loadingSummary && !validation}
+				/>
 
 				{!canWrite ? (
 					<Badge variant="secondary" data-testid="setup-readonly-banner">
@@ -465,6 +639,10 @@ export default function ReservationsSettingsRoute() {
 										)}
 									>
 										{group.label}
+										{group.leaves.some((l) => isNextLeaf(l.id)) &&
+										!groupActive ? (
+											<NextStepDot />
+										) : null}
 									</Link>
 									{!single && groupActive ? (
 										<ul className="contents lg:ms-2.5 lg:mt-0.5 lg:flex lg:flex-col lg:gap-0.5 lg:border-s lg:ps-1.5">
@@ -479,6 +657,7 @@ export default function ReservationsSettingsRoute() {
 															className={linkClass(active)}
 														>
 															{tab.label}
+															{isNextLeaf(tab.id) ? <NextStepDot /> : null}
 														</Link>
 													</li>
 												)
@@ -491,11 +670,34 @@ export default function ReservationsSettingsRoute() {
 					</ul>
 				</nav>
 
-				<div className="min-w-0">
+				<div className="flex min-w-0 flex-col gap-6">
+					{activeLeaf ? (
+						<div
+							className="flex flex-col gap-0.5"
+							data-testid="setup-page-intro"
+						>
+							<h2 className="text-sm font-semibold">{activeLeaf.label}</h2>
+							<p className="text-muted-foreground max-w-prose text-sm text-pretty">
+								{activeLeaf.purpose}
+							</p>
+						</div>
+					) : null}
 					<Outlet context={outletContext} />
 				</div>
 			</div>
 		</div>
+	)
+}
+
+function NextStepDot() {
+	const { _ } = useLingui()
+	return (
+		<span
+			className="bg-primary ms-1.5 inline-block size-1.5 shrink-0 rounded-full"
+			role="img"
+			aria-label={_(msg`Next setup step`)}
+			data-testid="setup-next-dot"
+		/>
 	)
 }
 

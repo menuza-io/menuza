@@ -220,7 +220,8 @@ describe('ExperiencesScreen', () => {
 		fireEvent.change(screen.getByTestId('experience-name'), {
 			target: { value: "Chef's Counter" },
 		})
-		// The link name follows the name until the person edits it.
+		// The link name sits under "More options" and follows the name.
+		fireEvent.click(screen.getByTestId('experience-more-toggle'))
 		expect(
 			(screen.getByTestId('experience-slug') as HTMLInputElement).value,
 		).toBe('chefs-counter')

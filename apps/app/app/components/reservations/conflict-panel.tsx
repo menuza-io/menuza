@@ -136,7 +136,7 @@ export function ConflictPanel({
 
 					{/* Active conflicts */}
 					<SheetSection
-						title={<Trans>Active Conflicts</Trans>}
+						title={<Trans>Table conflicts</Trans>}
 						testId="conflict-list"
 						action={
 							<Badge
@@ -263,7 +263,7 @@ export function ConflictPanel({
 
 					{/* Unassigned parties */}
 					<SheetSection
-						title={<Trans>Unassigned Reservations</Trans>}
+						title={<Trans>Bookings without a table</Trans>}
 						testId="unassigned-list"
 						action={
 							<Badge variant={unassigned.length > 0 ? 'warning' : 'secondary'}>
@@ -360,7 +360,7 @@ export function ConflictPanel({
 
 					{/* Automatic reflow notices */}
 					<SheetSection
-						title={<Trans>Automatic Reflow Notices</Trans>}
+						title={<Trans>Tables moved automatically</Trans>}
 						testId="move-notices-list"
 						action={
 							<div className="flex items-center gap-2">
@@ -384,7 +384,7 @@ export function ConflictPanel({
 								<Empty>
 									<EmptyHeader>
 										<EmptyTitle>
-											<Trans>No recent turn-extension table reflows.</Trans>
+											<Trans>No tables were moved automatically.</Trans>
 										</EmptyTitle>
 									</EmptyHeader>
 								</Empty>

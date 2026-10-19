@@ -3,13 +3,14 @@ import { useLingui } from '@lingui/react'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
-import { Input } from '@repo/ui/input'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { WorkspaceToolbar } from '@repo/ui/workspace'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { EmptyState } from '#app/components/empty-state.tsx'
+import { ReportInsight } from '#app/components/reservations/reports/report-insight.tsx'
 import {
 	CancellationsPanel,
 	NoShowsPanel,
@@ -20,6 +21,7 @@ import {
 } from '#app/components/reservations/reports/report-panels.tsx'
 import { ReservationsHeaderActions } from '#app/components/reservations/shell-context.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
+import { DateRangeField } from '#app/components/staff/schedule/date-range-field.tsx'
 import { guestsErrorInfo } from '#app/utils/reservations/guests-errors.ts'
 import {
 	fetchReport,
@@ -59,7 +61,7 @@ export function ReportsScreen({
 	/** Business date "now" falls on at the active location. */
 	today: string
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const [kind, setKind] = useState<ReportKind>('summary')
 	const [to, setTo] = useState(today)
 	const [from, setFrom] = useState(addDays(today, 1 - DEFAULT_RANGE_DAYS))
@@ -69,6 +71,7 @@ export function ReportsScreen({
 	)
 	const [loaded, setLoaded] = useState<Loaded | null>(null)
 	const [failure, setFailure] = useState<Failure | null>(null)
+	const [previous, setPrevious] = useState<ReportByKind['summary'] | null>(null)
 	const [loading, setLoading] = useState(true)
 	const requestId = useRef(0)
 
@@ -82,6 +85,17 @@ export function ReportsScreen({
 			if (!locationId || !from || !to) return
 			const id = ++requestId.current
 			setLoading(true)
+			// The period just before this one, for the insight line (summary only).
+			// Started first so the report the screen shows is always the last call.
+			const priorPromise: Promise<ReportByKind['summary'] | null> =
+				kind === 'summary'
+					? fetchReport(
+							client,
+							'summary',
+							{ locationId, ...priorRange(from, to), serviceId },
+							signal,
+						).catch(() => null)
+					: Promise.resolve(null)
 			try {
 				const report = await fetchReport(
 					client,
@@ -96,12 +110,16 @@ export function ReportsScreen({
 				)
 				if (signal.aborted || id !== requestId.current) return
 				setLoaded({ kind, report } as Loaded)
+				void priorPromise.then((prior) => {
+					if (!signal.aborted && id === requestId.current) setPrevious(prior)
+				})
 				setServices(report.services)
 				setFailure(null)
 			} catch (err) {
 				if (signal.aborted || id !== requestId.current) return
 				const { status, code } = guestsErrorInfo(err)
 				setLoaded(null)
+				setPrevious(null)
 				setFailure({
 					kind:
 						status === 403 || status === 401
@@ -214,29 +232,16 @@ export function ReportsScreen({
 							</ToggleGroupItem>
 						))}
 					</ToggleGroup>
-					<div className="flex items-center gap-2">
-						<Input
-							id="report-from"
-							type="date"
-							aria-label={_(msg`From`)}
-							value={from}
-							max={to || undefined}
-							onChange={(event) => setFrom(event.target.value)}
-							className="h-11 md:h-8 md:w-40"
-							data-testid="report-from"
-						/>
-						<span aria-hidden className="text-muted-foreground">
-							–
-						</span>
-						<Input
-							id="report-to"
-							type="date"
-							aria-label={_(msg`To`)}
-							value={to}
-							min={from || undefined}
-							onChange={(event) => setTo(event.target.value)}
-							className="h-11 md:h-8 md:w-40"
-							data-testid="report-to"
+					<div className="md:w-72" data-testid="report-dates">
+						<DateRangeField
+							label={_(msg`Dates`)}
+							value={{ from, to }}
+							locale={i18n.locale}
+							onChange={(next) => {
+								if (!next.from) return
+								setFrom(next.from)
+								setTo(next.to ?? next.from)
+							}}
 						/>
 					</div>
 					{kind === 'waitlist' ? null : (
@@ -286,7 +291,28 @@ export function ReportsScreen({
 						</AlertDescription>
 					</Alert>
 				) : loaded && loaded.kind === kind ? (
-					<ReportPanel loaded={loaded} />
+					<div className="flex flex-col gap-4">
+						{reportIsEmpty(loaded) ? (
+							<ReportEmpty
+								kind={kind}
+								canWiden={presetValue !== 90}
+								serviceFiltered={Boolean(serviceId) && kind !== 'waitlist'}
+								onWiden={() => {
+									setTo(today)
+									setFrom(addDays(today, 1 - 90))
+								}}
+								onAllServices={() => setServiceId('')}
+							/>
+						) : (
+							<>
+								<ReportInsight
+									loaded={loaded}
+									previous={kind === 'summary' ? previous : null}
+								/>
+								<ReportPanel loaded={loaded} />
+							</>
+						)}
+					</div>
 				) : (
 					<div
 						className="flex flex-col gap-6"
@@ -320,4 +346,91 @@ function ReportPanel({ loaded }: { loaded: Loaded }) {
 		case 'pacing':
 			return <PacingPanel report={loaded.report} />
 	}
+}
+
+/** The span of days from `from` to `to`, counting both ends. */
+function spanDays(from: string, to: string): number {
+	const start = Date.parse(`${from}T00:00:00Z`)
+	const end = Date.parse(`${to}T00:00:00Z`)
+	if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 1
+	return Math.round((end - start) / 86_400_000) + 1
+}
+
+/** The equally long period that ends the day before `from`. */
+function priorRange(from: string, to: string) {
+	const days = spanDays(from, to)
+	return { from: addDays(from, -days), to: addDays(from, -1) }
+}
+
+function reportIsEmpty(loaded: Loaded): boolean {
+	switch (loaded.kind) {
+		case 'summary':
+			return loaded.report.totals.parties === 0
+		case 'pacing':
+			return loaded.report.totals.bookings === 0
+		default:
+			return loaded.report.total === 0
+	}
+}
+
+function ReportEmpty({
+	kind,
+	canWiden,
+	serviceFiltered,
+	onWiden,
+	onAllServices,
+}: {
+	kind: ReportKind
+	canWiden: boolean
+	serviceFiltered: boolean
+	onWiden: () => void
+	onAllServices: () => void
+}) {
+	const title =
+		kind === 'no-shows' ? (
+			<Trans>No no-shows in this range</Trans>
+		) : kind === 'cancellations' ? (
+			<Trans>No cancellations in this range</Trans>
+		) : kind === 'waitlist' ? (
+			<Trans>No waitlist parties in this range</Trans>
+		) : (
+			<Trans>No bookings in this range</Trans>
+		)
+	return (
+		<div data-testid="report-empty">
+			<EmptyState
+				title={title}
+				description={
+					<Trans>
+						Pick a longer range or another service, or check back after your
+						next service.
+					</Trans>
+				}
+				icons={['calendar', 'trending-up', 'clock']}
+			>
+				<div className="flex flex-wrap justify-center gap-2">
+					{canWiden ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onWiden}
+							data-testid="report-empty-widen"
+						>
+							<Trans>Show the last 90 days</Trans>
+						</Button>
+					) : null}
+					{serviceFiltered ? (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onAllServices}
+							data-testid="report-empty-all-services"
+						>
+							<Trans>Show all services</Trans>
+						</Button>
+					) : null}
+				</div>
+			</EmptyState>
+		</div>
+	)
 }

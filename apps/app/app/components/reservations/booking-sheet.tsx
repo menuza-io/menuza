@@ -169,6 +169,8 @@ export function BookingSheet({
 	const [paymentPolicyMode, setPaymentPolicyMode] =
 		useState<PaymentPolicyMode>('none')
 	const [extrasOpen, setExtrasOpen] = useState(false)
+	const [otherTimeOpen, setOtherTimeOpen] = useState(false)
+	const phoneRef = useRef<HTMLInputElement>(null)
 
 	// Availability slots
 	const [slots, setSlots] = useState<OperatorAvailabilitySlot[]>([])
@@ -199,6 +201,7 @@ export function BookingSheet({
 		setOverbookReason('')
 		setAttempted(false)
 		setError(null)
+		setOtherTimeOpen(false)
 		keyRef.current = newSubmitKey('book')
 	}, [
 		defaultDate,
@@ -209,6 +212,14 @@ export function BookingSheet({
 		initialTableId,
 		open,
 	])
+
+	// The host usually has the guest on the phone: land on the phone field, not
+	// the date. Waits a tick so the sheet's own focus handling runs first.
+	useEffect(() => {
+		if (!open) return
+		const id = window.setTimeout(() => phoneRef.current?.focus(), 60)
+		return () => window.clearTimeout(id)
+	}, [open])
 
 	// Live availability search
 	const loadAvailability = useCallback(async () => {
@@ -364,17 +375,26 @@ export function BookingSheet({
 	}
 
 	const nameMissing = !guestName.trim()
-	const phoneMissing = !guestPhone.trim()
+	const phoneMissing = guestPhone.replace(/\D/g, '').length < 7
+	const timeMissing = (() => {
+		try {
+			parseHhmm(timeInput)
+			return false
+		} catch {
+			return true
+		}
+	})()
 	const missing: string[] = []
 	if (phoneMissing) missing.push(t`phone number`)
 	if (nameMissing) missing.push(t`guest name`)
+	if (timeMissing) missing.push(t`a time`)
 	const missingList = missing.join(', ')
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setAttempted(true)
-		if (nameMissing || phoneMissing) {
-			setError(t`Guest name and phone number are required.`)
+		if (nameMissing || phoneMissing || timeMissing) {
+			setError(t`Guest name, phone number and time are required.`)
 			return
 		}
 		if (closedDay && !overrideClosedDay) {
@@ -502,6 +522,16 @@ export function BookingSheet({
 		.slice(0, 32)
 	const hasOverLimitSlot = offeredSlots.some((s) => s.status === 'pacing_full')
 
+	const largestSeating = Math.max(
+		0,
+		...tables.filter((tbl) => tbl.isActive).map((tbl) => tbl.maxCovers),
+		...slots.flatMap((s) =>
+			(s.candidateCombinations ?? []).map((combo) => combo.maxCovers),
+		),
+	)
+	const partyTooLarge =
+		largestSeating > 0 && partySize > largestSeating && !loadingSlots
+
 	const extrasCount =
 		(occasion ? 1 : 0) +
 		(dietaryCodes.length > 0 || dietaryNotes.trim() ? 1 : 0) +
@@ -534,7 +564,7 @@ export function BookingSheet({
 								</Alert>
 							) : null}
 							<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-								{attempted && missing.length > 0 ? (
+								{missing.length > 0 ? (
 									<p
 										role="status"
 										className="text-destructive text-sm sm:me-auto"
@@ -554,7 +584,11 @@ export function BookingSheet({
 								<Button
 									type="submit"
 									className="h-11 md:h-8"
-									disabled={submitting || (closedDay && !overrideClosedDay)}
+									disabled={
+										submitting ||
+										missing.length > 0 ||
+										(closedDay && !overrideClosedDay)
+									}
 									data-testid="booking-submit-btn"
 								>
 									<Icon name="check" className="size-4" />
@@ -716,16 +750,40 @@ export function BookingSheet({
 							) : null}
 						</div>
 
-						<TextField
-							label={<Trans>Other time</Trans>}
-							id="booking-time-input"
-							type="time"
-							step={900}
-							value={timeInput}
-							onChange={(e) => handleTimeChange(e.target.value)}
-							data-testid="booking-time-input"
-							required
-						/>
+						{offeredSlots.length > 0 && !otherTimeOpen ? (
+							<Button
+								type="button"
+								variant="link"
+								className="h-auto self-start px-0 py-1"
+								onClick={() => setOtherTimeOpen(true)}
+								data-testid="booking-other-time-link"
+							>
+								<Trans>Other time</Trans>
+							</Button>
+						) : (
+							<TextField
+								label={<Trans>Other time</Trans>}
+								id="booking-time-input"
+								type="time"
+								step={900}
+								value={timeInput}
+								onChange={(e) => handleTimeChange(e.target.value)}
+								data-testid="booking-time-input"
+								required
+							/>
+						)}
+
+						{partyTooLarge ? (
+							<Alert data-testid="booking-party-size-warning">
+								<Icon name="alert-triangle" />
+								<AlertDescription>
+									<Trans>
+										No single table seats {partySize}. The largest seats{' '}
+										{largestSeating}, so tables need to be combined.
+									</Trans>
+								</AlertDescription>
+							</Alert>
+						) : null}
 
 						{slotHasHeldTables ? (
 							<Alert data-testid="booking-held-warning">
@@ -898,13 +956,16 @@ export function BookingSheet({
 						<TextField
 							label={<Trans>Phone Number</Trans>}
 							id="booking-guest-phone"
+							ref={phoneRef}
 							type="tel"
 							inputMode="tel"
 							value={guestPhone}
 							onChange={(e) => setGuestPhone(e.target.value)}
 							placeholder="+14155550100"
 							error={
-								attempted && phoneMissing ? t`Enter a phone number.` : null
+								attempted && phoneMissing
+									? t`Enter a phone number with at least 7 digits.`
+									: null
 							}
 							data-testid="booking-guest-phone"
 							required
@@ -1091,19 +1152,19 @@ export function BookingSheet({
 											<Trans>Staff overrides</Trans>
 										</span>
 										<CheckRow
-											label={<Trans>Override slot pacing cap</Trans>}
+											label={<Trans>Book over the pacing limit</Trans>}
 											checked={overridePacing}
 											onCheckedChange={setOverridePacing}
 											testId="booking-override-pacing"
 										/>
 										<CheckRow
-											label={<Trans>Override blocked table</Trans>}
+											label={<Trans>Use a blocked table</Trans>}
 											checked={overrideBlockedTable}
 											onCheckedChange={setOverrideBlockedTable}
 											testId="booking-override-blocked-table"
 										/>
 										<CheckRow
-											label={<Trans>Override schedule block</Trans>}
+											label={<Trans>Book into a blocked time</Trans>}
 											checked={overrideScheduleBlock}
 											onCheckedChange={setOverrideScheduleBlock}
 											testId="booking-override-schedule-block"

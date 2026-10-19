@@ -130,7 +130,7 @@ describe('DetailSheet unsaved edits', () => {
 	})
 })
 
-describe('DetailSheet contact tracking', () => {
+describe('DetailSheet reminder status', () => {
 	beforeEach(() => {
 		fetchReservationDetail.mockReset()
 		fetchReservationDetail.mockRejectedValue(new Error('offline'))
@@ -140,14 +140,14 @@ describe('DetailSheet contact tracking', () => {
 		renderSheet(makeReservation({ contactStatus: 'left_message' }))
 
 		const select = await screen.findByTestId('detail-contact-select')
-		expect(select).toHaveTextContent('Left Message')
+		expect(select).toHaveTextContent('Left a message')
 	})
 
 	it('treats not_contacted as the unset option', async () => {
 		renderSheet(makeReservation({ contactStatus: 'not_contacted' }))
 
 		const select = await screen.findByTestId('detail-contact-select')
-		expect(select).toHaveTextContent('Not Contacted')
+		expect(select).toHaveTextContent('Not reached yet')
 	})
 })
 
@@ -201,6 +201,51 @@ describe('DetailSheet late responses', () => {
 		})
 		expect(screen.getByTestId('detail-guest-name')).toHaveTextContent(
 			'Grace Hopper',
+		)
+	})
+})
+
+describe('DetailSheet above the fold', () => {
+	beforeEach(() => {
+		fetchReservationDetail.mockReset()
+		fetchReservationDetail.mockRejectedValue(new Error('offline'))
+	})
+
+	it('puts allergies and notes first, in full, with one VIP chip and the next step beside the table', async () => {
+		renderSheet(
+			makeReservation({
+				dietaryCodes: ['nut_allergy', 'shellfish_allergy', 'dairy_free'],
+				dietaryNotes: 'No sesame at all',
+				guest: { vipTier: 'vip' } as never,
+			}),
+		)
+		const block = await screen.findByTestId('detail-allergy-block')
+		expect(block).toHaveTextContent('Nut Allergy')
+		expect(block).toHaveTextContent('Shellfish Allergy')
+		expect(block).toHaveTextContent('Dairy-Free')
+		expect(block).toHaveTextContent('No sesame at all')
+		expect(screen.getAllByTestId('detail-vip-badge')).toHaveLength(1)
+		expect(screen.getByTestId('detail-primary-action')).toHaveTextContent(
+			'Mark arrived',
+		)
+	})
+
+	it('omits the allergy block when there is nothing to flag', async () => {
+		renderSheet(makeReservation())
+		await screen.findByTestId('detail-primary-action')
+		expect(screen.queryByTestId('detail-allergy-block')).toBeNull()
+	})
+
+	it('keeps overrides in Advanced and asks before allowing a double-booking', async () => {
+		renderSheet(makeReservation())
+		const toggle = await screen.findByTestId('detail-advanced-toggle')
+		expect(toggle).toHaveAttribute('aria-expanded', 'false')
+		fireEvent.click(screen.getByTestId('detail-force-overbook'))
+		expect(await screen.findByTestId('detail-overbook-dialog')).toBeTruthy()
+		expect(screen.getByTestId('detail-force-overbook')).not.toBeChecked()
+		fireEvent.click(screen.getByTestId('detail-overbook-confirm'))
+		await waitFor(() =>
+			expect(screen.getByTestId('detail-force-overbook')).toBeChecked(),
 		)
 	})
 })

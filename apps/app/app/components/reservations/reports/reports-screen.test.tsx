@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderStaff } from '#tests/staff-render.tsx'
@@ -136,10 +136,14 @@ describe('ReportsScreen', () => {
 	it('runs the summary for the last seven days at the active location', async () => {
 		const { calls } = setup()
 		await screen.findByTestId('report-summary')
-		expect(calls[0]).toMatchObject({
+		expect(
+			calls.find((call) => call.query?.from === '2026-04-14'),
+		).toMatchObject({
 			path: '/operator/reservations/reports/summary',
 			query: { locationId: 'loc_1', from: '2026-04-14', to: '2026-04-20' },
 		})
+		// The period before it, for the insight line.
+		expect(calls.find((call) => call.query?.to === '2026-04-13')).toBeTruthy()
 		expect(screen.getByTestId('report-total-parties')).toHaveTextContent('3')
 		expect(screen.getByTestId('report-total-covers')).toHaveTextContent('9')
 	})
@@ -165,12 +169,16 @@ describe('ReportsScreen', () => {
 		await waitFor(() =>
 			expect(calls.at(-1)!.query).toMatchObject({ serviceId: 'svc_dinner' }),
 		)
-		fireEvent.change(screen.getByTestId('report-from'), {
-			target: { value: '2026-04-01' },
-		})
+		await userEvent.click(
+			within(screen.getByTestId('report-dates')).getByRole('button'),
+		)
+		await userEvent.click(
+			await screen.findByRole('button', { name: /April 1st, 2026/ }),
+		)
 		await waitFor(() =>
 			expect(calls.at(-1)!.query).toMatchObject({
 				from: '2026-04-01',
+				to: '2026-04-20',
 				serviceId: 'svc_dinner',
 			}),
 		)
@@ -185,15 +193,20 @@ describe('ReportsScreen', () => {
 		expect(calls.at(-1)!.query?.serviceId).toBeUndefined()
 	})
 
-	it('renders zeros for an empty range, not an error', async () => {
+	it('shows a helpful empty state for an empty range, not an error', async () => {
 		setup((_call, kind) => EMPTY[kind])
-		expect(await screen.findByTestId('report-total-parties')).toHaveTextContent(
-			'0',
+		expect(await screen.findByTestId('report-empty')).toHaveTextContent(
+			'No bookings in this range',
 		)
 		expect(screen.queryByTestId('report-error')).not.toBeInTheDocument()
-		expect(
-			screen.getAllByText('No bookings in this range.').length,
-		).toBeGreaterThan(0)
+		expect(screen.getByTestId('report-empty-widen')).toBeInTheDocument()
+	})
+
+	it('writes one insight sentence from the loaded summary, with the earlier period when it exists', async () => {
+		setup()
+		await screen.findByTestId('report-summary')
+		const insight = await screen.findByTestId('report-insight')
+		expect(insight).toHaveTextContent(/No-show rate/)
 	})
 
 	it('picks a preset range and offers a CSV export of the loaded report', async () => {

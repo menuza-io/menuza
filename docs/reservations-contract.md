@@ -32,6 +32,14 @@ the same flag and permission checks as the pages.
   `update:reservation_payment:any` (`SENSITIVE_GRANTS` in
   `packages/reservations/src/permissions.ts`). Settings grants are not
   sensitive: a `setup` token lives 15 minutes.
+- **Allergy visibility on the day feed:** every reservation row in
+  `GET /operator/reservations/book/day` carries `allergyFlag` / `hasAllergy`
+  (boolean) and `dietaryCodes` (coded values from `RSV_DIETARY_CODES` in
+  `packages/reservations/src/dietary.ts`, never free text) for any
+  `read:reservation:any` token, so a host can see an allergy and its coded
+  allergen without the guest grant. `dietaryNotes`, guest allergy notes, pinned
+  notes and sensitive tags stay `null` / filtered without
+  `read:reservation_guest:any`.
 - **Impersonation:** all `update:*` and sensitive grants are stripped at mint
   time and again by `rsvGuard`; impersonated writes answer 403.
 - **Writes:** routes with `write: true` need the matching `update:*` grant (an

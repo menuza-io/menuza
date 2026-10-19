@@ -31,18 +31,28 @@ export function RequestsTabs({
 			value={value}
 			onValueChange={(next) => onValueChange(next as ReservationsViewTab)}
 		>
-			<TabsList data-testid="reservations-view-tabs">
-				<TabsTrigger value="reservations" data-testid="tab-reservations">
+			<TabsList
+				data-testid="reservations-view-tabs"
+				className="max-md:h-11 pointer-coarse:h-11"
+			>
+				<TabsTrigger
+					value="reservations"
+					className="pointer-coarse:min-h-10"
+					data-testid="tab-reservations"
+				>
 					<Trans>Reservations</Trans>
 				</TabsTrigger>
-				<TabsTrigger value="requests" data-testid="tab-requests">
+				<TabsTrigger
+					value="requests"
+					className="pointer-coarse:min-h-10"
+					data-testid="tab-requests"
+				>
 					<Trans>Requests</Trans>
-					<Badge
-						variant={pendingCount > 0 ? 'warning' : 'secondary'}
-						data-testid="requests-pending-count"
-					>
-						{pendingCount}
-					</Badge>
+					{pendingCount > 0 ? (
+						<Badge variant="warning" data-testid="requests-pending-count">
+							{pendingCount}
+						</Badge>
+					) : null}
 				</TabsTrigger>
 			</TabsList>
 		</Tabs>

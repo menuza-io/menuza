@@ -13,9 +13,11 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { useLocation } from 'react-router'
 import { SettingsSaveBar } from '#app/components/reservations/settings/save-bar.tsx'
 import { SwitchRow } from '#app/components/reservations/settings/settings-fields.tsx'
+import { SetupChecklist } from '#app/components/reservations/settings/setup-checklist.tsx'
+import { SetupDiagnostics } from '#app/components/reservations/settings/setup-diagnostics.tsx'
 import {
 	SelectField,
 	TextAreaField,
@@ -30,7 +32,6 @@ import {
 	SETUP_CONFLICT_REASON_LABELS,
 	updateLocationSettings,
 } from '#app/utils/reservations/setup-api.ts'
-import { setupIssueTab } from '#app/utils/reservations/setup-issue-target.ts'
 import { type Route } from './+types/settings._index.ts'
 import { useReservationsSetupContext } from './settings.tsx'
 
@@ -49,9 +50,6 @@ function sameSettings(a: LocationSettingsDto, b: LocationSettingsDto) {
 	return JSON.stringify(a) === JSON.stringify(b)
 }
 
-/** Maps a diagnostics issue to the settings tab where it is fixed (null: on this page). */
-const issueTarget = setupIssueTab
-
 export default function ReservationsSettingsIndexRoute() {
 	const { _ } = useLingui()
 	const {
@@ -59,8 +57,14 @@ export default function ReservationsSettingsIndexRoute() {
 		canWrite,
 		client,
 		settings,
-		validation,
 		conflicts,
+		setupStatus,
+		setupIssues,
+		setupSteps,
+		markSetupStep,
+		setupChecklistDismissed,
+		dismissSetupChecklist,
+		orgSlug,
 		loadingSummary,
 		summaryError,
 		refreshSummary,
@@ -224,7 +228,6 @@ export default function ReservationsSettingsIndexRoute() {
 	}
 
 	const disabled = !canWrite
-	const issues = validation?.issues ?? []
 
 	return (
 		<div className="flex flex-col gap-6" data-testid="setup-general-page">
@@ -256,83 +259,23 @@ export default function ReservationsSettingsIndexRoute() {
 				</Alert>
 			) : null}
 
-			{/* Setup diagnostics: one summary with a link per issue */}
+			<SetupChecklist
+				steps={setupSteps}
+				orgSlug={orgSlug}
+				search={search}
+				dismissed={setupChecklistDismissed}
+				onGo={markSetupStep}
+				onDismiss={dismissSetupChecklist}
+			/>
+
+			{/* One status for the header and this list: specific items, each with its own Fix link */}
 			<div data-testid="setup-validation-panel">
-				{loadingSummary || !validation ? (
-					loadingSummary ? (
-						<Skeleton
-							className="h-12 w-full rounded-xl"
-							data-testid="setup-validation-skeleton"
-						/>
-					) : null
-				) : issues.length === 0 ? (
-					<p className="text-muted-foreground flex items-center gap-2 text-sm">
-						<Icon name="check-circle" className="text-success size-4" />
-						<Trans>
-							All setup checks passed. Online and host-stand booking have full
-							table, service, and turn-time coverage.
-						</Trans>
-					</p>
-				) : (
-					<Alert
-						variant={
-							issues.some((issue) => issue.severity === 'error')
-								? 'destructive'
-								: 'default'
-						}
-					>
-						<Icon name="shield-check" />
-						<AlertTitle>
-							{issues.some((issue) => issue.severity === 'error') ? (
-								<Trans>Finish setting up before guests can book</Trans>
-							) : (
-								<Trans>Recommended setup improvements</Trans>
-							)}
-						</AlertTitle>
-						<AlertDescription>
-							<ul
-								className="flex flex-col gap-1.5"
-								data-testid="setup-validation-issues-list"
-							>
-								{issues.map((issue, idx) => {
-									const target = issueTarget(issue.code)
-									return (
-										<li
-											key={`${issue.code}-${idx}`}
-											className="flex flex-wrap items-center gap-x-2"
-										>
-											<span
-												className={
-													issue.severity === 'error'
-														? 'text-destructive'
-														: 'text-warning'
-												}
-											>
-												<Icon
-													name={
-														issue.severity === 'error'
-															? 'octagon-alert'
-															: 'alert-triangle'
-													}
-													className="size-3.5"
-												/>
-											</span>
-											<span>{issue.message}</span>
-											{target ? (
-												<Link
-													to={{ pathname: target, search }}
-													className="text-foreground font-medium underline underline-offset-2"
-												>
-													<Trans>Fix this</Trans>
-												</Link>
-											) : null}
-										</li>
-									)
-								})}
-							</ul>
-						</AlertDescription>
-					</Alert>
-				)}
+				<SetupDiagnostics
+					items={setupIssues}
+					status={setupStatus}
+					loading={loadingSummary && !setupStatus}
+					search={search}
+				/>
 			</div>
 
 			{draft ? (
@@ -358,10 +301,11 @@ export default function ReservationsSettingsIndexRoute() {
 								checked={draft.enabled}
 								disabled={disabled}
 								onCheckedChange={(enabled) => edit({ enabled })}
-								label={<Trans>Location reservations active</Trans>}
+								label={<Trans>Reservations open</Trans>}
 								description={
 									<Trans>
-										Allow host-stand and online reservations for this location.
+										Turn off to stop all new bookings, online and at the host
+										stand.
 									</Trans>
 								}
 							/>
@@ -412,8 +356,8 @@ export default function ReservationsSettingsIndexRoute() {
 							<div data-testid="setup-slot-interval-select">
 								<SelectField
 									id="setup-slot-interval"
-									label={<Trans>Time between slots</Trans>}
-									hint={<Trans>How often guests can pick a start time.</Trans>}
+									label={<Trans>How often guests can pick a start time</Trans>}
+									hint={<Trans>For example, every 15 minutes.</Trans>}
 									disabled={disabled}
 									value={String(draft.slotIntervalMin)}
 									onValueChange={(value) =>
@@ -507,7 +451,7 @@ export default function ReservationsSettingsIndexRoute() {
 								inputMode="numeric"
 								min={1}
 								max={99}
-								label={<Trans>Host stand maximum</Trans>}
+								label={<Trans>Largest party at the host stand</Trans>}
 								disabled={disabled}
 								value={draft.partyMax}
 								onChange={(e) =>
@@ -586,7 +530,9 @@ export default function ReservationsSettingsIndexRoute() {
 											: 'size-4 transition-transform rtl:rotate-180'
 									}
 								/>
-								<Trans>Advanced: grace, holds, cancellation and pacing</Trans>
+								<Trans>
+									Advanced: late arrivals, cancellation and limits per time slot
+								</Trans>
 							</Button>
 							{showAdvanced ? (
 								<div
@@ -638,7 +584,7 @@ export default function ReservationsSettingsIndexRoute() {
 										inputMode="numeric"
 										min={60}
 										max={1800}
-										label={<Trans>Checkout hold (seconds)</Trans>}
+										label={<Trans>Payment hold (seconds)</Trans>}
 										hint={
 											<Trans>
 												How long a slot is reserved while a guest pays.

@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { DateStepper } from '#app/components/reservations/date-stepper.tsx'
 import { ReservationsHeaderControls } from '#app/components/reservations/header-controls.tsx'
@@ -51,6 +52,7 @@ export function HostSubnav({
 	refreshing = false,
 	onRefresh,
 	serviceNotes = [],
+	lastUpdatedAt = null,
 }: {
 	orgSlug: string
 	activeView: HostViewKey
@@ -73,10 +75,13 @@ export function HostSubnav({
 	refreshing?: boolean
 	onRefresh?: () => void
 	serviceNotes?: RsvServiceNoteRow[]
+	/** Epoch ms of the last successful poll; shows "Updated Xs ago" by the refresh button. */
+	lastUpdatedAt?: number | null
 }) {
 	const { t } = useLingui()
 	const [searchParams] = useSearchParams()
 	const shell = useReservationsShell()
+	const [notesOpen, setNotesOpen] = useState(false)
 
 	const buildViewHref = (viewPath: string) => {
 		const next = new URLSearchParams()
@@ -160,7 +165,7 @@ export function HostSubnav({
 					<Button
 						type="button"
 						variant="outline"
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={onOpenConflictPanel}
 						data-testid="open-conflict-panel-btn"
 					>
@@ -181,7 +186,7 @@ export function HostSubnav({
 					<Button
 						type="button"
 						variant="outline"
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={onOpenWalkIn}
 						data-testid="open-walk-in-btn"
 					>
@@ -192,7 +197,7 @@ export function HostSubnav({
 				{canManage && onOpenBookingSheet ? (
 					<Button
 						type="button"
-						className="h-11 md:h-8"
+						className="h-8 max-md:h-11 pointer-coarse:h-11"
 						onClick={onOpenBookingSheet}
 						data-testid="open-booking-sheet-btn"
 					>
@@ -231,8 +236,8 @@ export function HostSubnav({
 									data-testid={`host-view-tab-${tab.key}`}
 									className={
 										isActive
-											? 'bg-background text-foreground flex h-11 items-center rounded-md px-3 text-sm font-medium shadow-xs md:h-7'
-											: 'text-muted-foreground hover:text-foreground flex h-11 items-center rounded-md px-3 text-sm font-medium md:h-7'
+											? 'bg-background text-foreground flex h-8 items-center rounded-md px-3 text-sm font-medium shadow-xs max-md:h-11 pointer-coarse:h-11'
+											: 'text-muted-foreground hover:text-foreground flex h-8 items-center rounded-md px-3 text-sm font-medium max-md:h-11 pointer-coarse:h-11'
 									}
 								>
 									{tab.label}
@@ -274,52 +279,114 @@ export function HostSubnav({
 						/>
 					) : null}
 					{onRefresh ? (
-						<Button
-							type="button"
-							variant="ghost"
-							size="icon"
-							onClick={onRefresh}
-							aria-label={t`Refresh`}
-							data-testid="host-refresh-btn"
-						>
-							<Icon
-								name="refresh-cw"
-								className={refreshing ? 'animate-spin' : undefined}
-							/>
-						</Button>
+						<div className="flex items-center gap-1">
+							<UpdatedAgo at={lastUpdatedAt} />
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon"
+								className="max-md:size-11 pointer-coarse:size-11"
+								onClick={onRefresh}
+								aria-label={t`Refresh`}
+								data-testid="host-refresh-btn"
+							>
+								<Icon
+									name="refresh-cw"
+									className={refreshing ? 'animate-spin' : undefined}
+								/>
+							</Button>
+						</div>
 					) : null}
 				</div>
 			</div>
 
 			{visibleNotes.length > 0 ? (
 				<div
-					className="bg-muted/50 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border px-3 py-2 text-xs"
+					className="bg-muted/50 flex items-start gap-2 rounded-lg border px-3 py-1.5 text-xs"
 					data-testid="host-subnav-service-notes"
 				>
 					<Icon
 						name="file-text"
-						className="text-muted-foreground size-3.5 shrink-0"
+						className="text-muted-foreground mt-0.5 size-3.5 shrink-0"
 					/>
 					<span className="sr-only">
 						<Trans>Service notes</Trans>
 					</span>
-					{visibleNotes.map((noteItem) => {
-						const svcName = noteItem.serviceId
-							? services.find((s) => s.id === noteItem.serviceId)?.name
-							: null
-						return (
-							<span
-								key={`${noteItem.serviceId ?? 'all'}-${noteItem.id}`}
-								className="text-foreground flex items-center gap-1.5"
-								data-testid={`host-subnav-service-note-${noteItem.serviceId ?? 'all'}`}
-							>
-								{svcName ? <Badge variant="outline">{svcName}</Badge> : null}
-								{noteItem.body}
-							</span>
-						)
-					})}
+					<div
+						className={
+							notesOpen
+								? 'flex min-w-0 flex-1 flex-col gap-1'
+								: 'flex min-w-0 flex-1 items-center gap-3 overflow-hidden'
+						}
+					>
+						{visibleNotes.map((noteItem) => {
+							const svcName = noteItem.serviceId
+								? services.find((s) => s.id === noteItem.serviceId)?.name
+								: null
+							return (
+								<span
+									key={`${noteItem.serviceId ?? 'all'}-${noteItem.id}`}
+									className={
+										notesOpen
+											? 'text-foreground flex items-start gap-1.5'
+											: 'text-foreground flex min-w-0 items-center gap-1.5'
+									}
+									data-testid={`host-subnav-service-note-${noteItem.serviceId ?? 'all'}`}
+								>
+									{svcName ? <Badge variant="outline">{svcName}</Badge> : null}
+									<span className={notesOpen ? 'wrap-anywhere' : 'truncate'}>
+										{noteItem.body}
+									</span>
+								</span>
+							)
+						})}
+					</div>
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon-xs"
+						className="-my-1 size-8 shrink-0 max-md:size-11 pointer-coarse:size-11"
+						aria-expanded={notesOpen}
+						aria-label={
+							notesOpen ? t`Collapse service notes` : t`Expand service notes`
+						}
+						onClick={() => setNotesOpen((v) => !v)}
+						data-testid="host-service-notes-toggle"
+					>
+						<Icon name={notesOpen ? 'chevron-up' : 'chevron-down'} />
+					</Button>
 				</div>
 			) : null}
 		</div>
+	)
+}
+
+/** "Updated 12 seconds ago", refreshed every 10 seconds, in the app locale. */
+export function UpdatedAgo({ at }: { at: number | null }) {
+	const { i18n, t } = useLingui()
+	const [now, setNow] = useState(() => Date.now())
+	useEffect(() => {
+		setNow(Date.now())
+		const id = window.setInterval(() => setNow(Date.now()), 10_000)
+		return () => window.clearInterval(id)
+	}, [at])
+	if (at === null) return null
+	const seconds = Math.max(0, Math.round((now - at) / 1000))
+	const rtf = new Intl.RelativeTimeFormat(i18n.locale, { numeric: 'auto' })
+	const text =
+		seconds < 10
+			? rtf.format(0, 'second')
+			: seconds < 90
+				? rtf.format(-Math.round(seconds / 10) * 10, 'second')
+				: seconds < 5400
+					? rtf.format(-Math.round(seconds / 60), 'minute')
+					: rtf.format(-Math.round(seconds / 3600), 'hour')
+	return (
+		<span
+			className="text-muted-foreground hidden text-xs whitespace-nowrap tabular-nums sm:inline"
+			data-testid="host-updated-ago"
+		>
+			{t`Updated ${text}`}
+		</span>
 	)
 }

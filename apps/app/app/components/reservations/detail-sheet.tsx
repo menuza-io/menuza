@@ -2,6 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
+import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import {
 	AlertDialog,
@@ -15,6 +16,11 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
 import { Icon } from '@repo/ui/icon'
 import {
 	Sheet,
@@ -96,10 +102,10 @@ const COURSE_STAGES = [
 ] as const
 
 const CONTACT_STATUSES = [
-	{ value: 'none', label: msg`Not Contacted` },
-	{ value: 'left_message', label: msg`Left Message` },
-	{ value: 'no_answer', label: msg`No Answer` },
-	{ value: 'wrong_number', label: msg`Wrong Number` },
+	{ value: 'none', label: msg`Not reached yet` },
+	{ value: 'left_message', label: msg`Left a message` },
+	{ value: 'no_answer', label: msg`No answer` },
+	{ value: 'wrong_number', label: msg`Wrong number` },
 ] as const
 
 /** The backend only re-sends a confirmation for an upcoming booking. */
@@ -166,6 +172,8 @@ export function DetailSheet({
 	const [cancelOpen, setCancelOpen] = useState(false)
 	const [cancelReason, setCancelReason] = useState('')
 	const [noShowOpen, setNoShowOpen] = useState(false)
+	const [overbookConfirmOpen, setOverbookConfirmOpen] = useState(false)
+	const [advancedOpen, setAdvancedOpen] = useState(false)
 
 	// 60-second undo state
 	const [undoState, setUndoState] = useState<{
@@ -446,7 +454,7 @@ export function DetailSheet({
 			onUpdated(res.reservation, [])
 			await loadDetail()
 		} catch (err) {
-			fail(err, msg`Failed to update contact status.`)
+			fail(err, msg`Failed to update reminder status.`)
 		} finally {
 			setBusy(false)
 		}
@@ -617,6 +625,21 @@ export function DetailSheet({
 		(tag) => canManage || !tag.sensitive,
 	)
 
+	const hasAlertContent = Boolean(
+		reservation &&
+		(reservation.dietaryCodes.length > 0 ||
+			guest?.allergiesText ||
+			reservation.dietaryNotes ||
+			reservation.guestNotes ||
+			reservation.internalNotes),
+	)
+	const primaryLabel =
+		nextAction === 'arrived'
+			? t`Mark arrived`
+			: nextAction === 'seated'
+				? t`Seat Party`
+				: t`Complete & Clear Table`
+
 	const whenLabel = (() => {
 		if (!reservation) return ''
 		const parsed = new Date(`${reservation.businessDate}T12:00:00`)
@@ -671,6 +694,11 @@ export function DetailSheet({
 								testId="detail-status-badge"
 								className="text-sm"
 							/>
+							{guest?.vipTier && guest.vipTier !== 'none' ? (
+								<Badge variant="default" data-testid="detail-vip-badge">
+									{label(VIP_TIER_LABELS, guest.vipTier)}
+								</Badge>
+							) : null}
 							<PaymentBadge
 								paymentStatus={reservation.paymentStatus}
 								experience={Boolean(reservation.experienceId)}
@@ -730,6 +758,109 @@ export function DetailSheet({
 
 					{reservation ? (
 						<>
+							{/* Allergies and notes: what the host must know before seating */}
+							{hasAlertContent ? (
+								<SheetSection
+									title={<Trans>Allergies and notes</Trans>}
+									testId="detail-allergy-block"
+								>
+									<div className="bg-muted/30 flex flex-col gap-2.5 rounded-lg border p-3 text-sm">
+										{reservation.dietaryCodes.length > 0 ? (
+											<ul
+												className="flex flex-wrap gap-1.5"
+												aria-label={t`Dietary needs`}
+												data-testid="detail-dietary-codes"
+											>
+												{reservation.dietaryCodes.map((code) => (
+													<li key={code}>
+														<Badge
+															variant="warning"
+															className="h-auto min-h-5 whitespace-normal"
+														>
+															{label(DIETARY_LABELS, code)}
+														</Badge>
+													</li>
+												))}
+											</ul>
+										) : null}
+										{guest?.allergiesText ? (
+											<p className="text-destructive wrap-anywhere">
+												<Trans>Allergies:</Trans> {guest.allergiesText}
+											</p>
+										) : null}
+										{reservation.dietaryNotes ? (
+											<p
+												className="wrap-anywhere"
+												data-testid="detail-dietary-notes"
+											>
+												<span className="text-muted-foreground">
+													<Trans>Dietary notes</Trans>:{' '}
+												</span>
+												{reservation.dietaryNotes}
+											</p>
+										) : null}
+										{reservation.guestNotes ? (
+											<p className="wrap-anywhere whitespace-pre-wrap">
+												<span className="text-muted-foreground">
+													<Trans>Guest notes</Trans>:{' '}
+												</span>
+												{reservation.guestNotes}
+											</p>
+										) : null}
+										{reservation.internalNotes ? (
+											<p className="wrap-anywhere whitespace-pre-wrap">
+												<span className="text-muted-foreground">
+													<Trans>Internal notes</Trans>:{' '}
+												</span>
+												{reservation.internalNotes}
+											</p>
+										) : null}
+									</div>
+								</SheetSection>
+							) : null}
+
+							{/* Table, with the one next step within reach */}
+							{canManage ? (
+								<SheetSection title={<Trans>Table</Trans>}>
+									<div className="flex items-end gap-2">
+										<SelectField
+											className="min-w-0 flex-1"
+											label={<Trans>Table Assignment</Trans>}
+											id="detail-table-select"
+											testId="detail-table-select"
+											options={tableOptions}
+											value={selectedTableId || NO_TABLE}
+											onValueChange={(next) => {
+												markDirty('table')
+												setSelectedTableId(next === NO_TABLE ? '' : next)
+											}}
+										/>
+										<Button
+											type="button"
+											variant="outline"
+											className="h-11 md:h-8"
+											disabled={busy}
+											onClick={handleAssignTable}
+											data-testid="detail-assign-table-btn"
+										>
+											<Trans>Assign Table</Trans>
+										</Button>
+									</div>
+									{showFooter && nextAction ? (
+										<Button
+											type="button"
+											className="h-11 w-full md:h-8"
+											disabled={busy}
+											onClick={() => handleStatusTransition(nextAction)}
+											data-testid="detail-primary-action"
+										>
+											<Icon name="check" className="size-4" />
+											<span>{primaryLabel}</span>
+										</Button>
+									) : null}
+								</SheetSection>
+							) : null}
+
 							{/* Overview */}
 							<SheetSection title={<Trans>Overview</Trans>}>
 								<dl
@@ -768,39 +899,6 @@ export function DetailSheet({
 										<Trans>Table</Trans>
 									</dt>
 									<dd data-testid="detail-tables">{tablesText}</dd>
-									{reservation.dietaryNotes ? (
-										<>
-											<dt className="text-muted-foreground">
-												<Trans>Dietary notes</Trans>
-											</dt>
-											<dd
-												className="wrap-anywhere"
-												data-testid="detail-dietary-notes"
-											>
-												{reservation.dietaryNotes}
-											</dd>
-										</>
-									) : null}
-									{reservation.guestNotes ? (
-										<>
-											<dt className="text-muted-foreground">
-												<Trans>Guest notes</Trans>
-											</dt>
-											<dd className="wrap-anywhere">
-												{reservation.guestNotes}
-											</dd>
-										</>
-									) : null}
-									{reservation.internalNotes ? (
-										<>
-											<dt className="text-muted-foreground">
-												<Trans>Internal notes</Trans>
-											</dt>
-											<dd className="wrap-anywhere">
-												{reservation.internalNotes}
-											</dd>
-										</>
-									) : null}
 								</dl>
 
 								{/* Course stage progression when seated */}
@@ -840,11 +938,6 @@ export function DetailSheet({
 									data-testid="detail-guest-crm"
 								>
 									<div className="flex flex-wrap items-center gap-1.5">
-										{guest?.vipTier && guest.vipTier !== 'none' ? (
-											<Badge variant="default" data-testid="detail-vip-badge">
-												{label(VIP_TIER_LABELS, guest.vipTier)}
-											</Badge>
-										) : null}
 										<Badge variant="outline">
 											<Plural
 												value={guest?.visitCount ?? 0}
@@ -870,20 +963,6 @@ export function DetailSheet({
 											</span>
 										) : null}
 									</div>
-									{reservation.dietaryCodes.length > 0 ? (
-										<div className="flex flex-wrap gap-1">
-											{reservation.dietaryCodes.map((code) => (
-												<Badge key={code} variant="secondary">
-													{label(DIETARY_LABELS, code)}
-												</Badge>
-											))}
-										</div>
-									) : null}
-									{guest?.allergiesText ? (
-										<p className="text-destructive text-sm">
-											<Trans>Allergies:</Trans> {guest.allergiesText}
-										</p>
-									) : null}
 									{guest?.seatingPrefText ? (
 										<p>
 											<Trans>Seating Preference:</Trans> {guest.seatingPrefText}
@@ -947,86 +1026,14 @@ export function DetailSheet({
 										</div>
 									) : null}
 								</div>
-
-								{canManage ? (
-									<SelectField
-										label={<Trans>Contact Tracking</Trans>}
-										id="detail-contact-select"
-										testId="detail-contact-select"
-										options={contactOptions}
-										disabled={busy}
-										value={
-											reservation.contactStatus &&
-											reservation.contactStatus !== 'not_contacted'
-												? reservation.contactStatus
-												: 'none'
-										}
-										onValueChange={(next) => void handleContactStatus(next)}
-									/>
-								) : null}
 							</SheetSection>
 
 							{/* Table & timing */}
 							{canManage ? (
-								<SheetSection title={<Trans>Table & timing</Trans>}>
-									<div className="flex items-end gap-2">
-										<SelectField
-											className="min-w-0 flex-1"
-											label={<Trans>Table Assignment</Trans>}
-											id="detail-table-select"
-											testId="detail-table-select"
-											options={tableOptions}
-											value={selectedTableId || NO_TABLE}
-											onValueChange={(next) => {
-												markDirty('table')
-												setSelectedTableId(next === NO_TABLE ? '' : next)
-											}}
-										/>
-										<Button
-											type="button"
-											variant="outline"
-											className="h-11 md:h-8"
-											disabled={busy}
-											onClick={handleAssignTable}
-											data-testid="detail-assign-table-btn"
-										>
-											<Trans>Assign Table</Trans>
-										</Button>
-									</div>
-									<div className="flex flex-col">
-										<CheckRow
-											label={<Trans>Lock table assignment</Trans>}
-											description={
-												<Trans>
-													Keeps this party on the table when the board
-													reshuffles.
-												</Trans>
-											}
-											checked={lockAssignment}
-											onCheckedChange={(next) => {
-												markDirty('lock')
-												setLockAssignment(next)
-											}}
-											testId="detail-lock-assignment"
-										/>
-										<CheckRow
-											label={
-												<Trans>Force overbook / ignore table overlap</Trans>
-											}
-											description={
-												<Trans>
-													Staff override. Applies to table and time changes.
-												</Trans>
-											}
-											checked={forceOverbook}
-											onCheckedChange={setForceOverbook}
-											testId="detail-force-overbook"
-										/>
-									</div>
-
+								<SheetSection title={<Trans>Timing and notes</Trans>}>
 									<div className="flex flex-col gap-2">
 										<div className="flex items-center gap-2 text-sm font-medium">
-											<Trans>Running Late Hold</Trans>
+											<Trans>Running late</Trans>
 											{reservation.runningLateMin ? (
 												<Badge variant="warning">
 													+{reservation.runningLateMin}m
@@ -1162,6 +1169,94 @@ export function DetailSheet({
 										</div>
 									</div>
 								</SheetSection>
+							) : null}
+
+							{/* Advanced: rarely needed, so collapsed */}
+							{canManage ? (
+								<Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+									<div className="flex flex-col gap-3">
+										<CollapsibleTrigger
+											render={
+												<Button
+													type="button"
+													variant="outline"
+													className="h-11 justify-between md:h-8"
+													data-testid="detail-advanced-toggle"
+												/>
+											}
+										>
+											<span>
+												<Trans>Advanced</Trans>
+											</span>
+											<Icon
+												name="chevron-down"
+												className={cn(
+													'size-4 transition-transform',
+													advancedOpen && 'rotate-180',
+												)}
+											/>
+										</CollapsibleTrigger>
+										<CollapsibleContent keepMounted>
+											<div
+												className="flex flex-col gap-4"
+												data-testid="detail-advanced"
+											>
+												<CheckRow
+													label={<Trans>Lock table assignment</Trans>}
+													description={
+														<Trans>
+															Keeps this party on the table when the board
+															reshuffles.
+														</Trans>
+													}
+													checked={lockAssignment}
+													onCheckedChange={(next) => {
+														markDirty('lock')
+														setLockAssignment(next)
+													}}
+													testId="detail-lock-assignment"
+												/>
+												<CheckRow
+													label={<Trans>Allow double-booking a table</Trans>}
+													description={
+														<Trans>
+															Ignores table overlap for table and time changes.
+															Use only when you know the table frees up.
+														</Trans>
+													}
+													checked={forceOverbook}
+													onCheckedChange={(next) => {
+														if (next) setOverbookConfirmOpen(true)
+														else setForceOverbook(false)
+													}}
+													testId="detail-force-overbook"
+												/>
+												<SelectField
+													label={<Trans>Reminder status</Trans>}
+													id="detail-contact-select"
+													testId="detail-contact-select"
+													options={contactOptions}
+													disabled={busy}
+													hint={
+														<Trans>
+															Record whether you reached the guest about this
+															booking.
+														</Trans>
+													}
+													value={
+														reservation.contactStatus &&
+														reservation.contactStatus !== 'not_contacted'
+															? reservation.contactStatus
+															: 'none'
+													}
+													onValueChange={(next) =>
+														void handleContactStatus(next)
+													}
+												/>
+											</div>
+										</CollapsibleContent>
+									</div>
+								</Collapsible>
 							) : null}
 
 							{/* Payment */}
@@ -1387,15 +1482,7 @@ export function DetailSheet({
 							data-testid={`detail-status-${nextAction}`}
 						>
 							<Icon name="check" className="size-4" />
-							<span>
-								{nextAction === 'arrived' ? (
-									<Trans>Mark arrived</Trans>
-								) : nextAction === 'seated' ? (
-									<Trans>Seat Party</Trans>
-								) : (
-									<Trans>Complete & Clear Table</Trans>
-								)}
-							</span>
+							<span>{primaryLabel}</span>
 						</Button>
 					</SheetFooter>
 				) : null}
@@ -1483,6 +1570,41 @@ export function DetailSheet({
 								data-testid="detail-no-show-confirm"
 							>
 								<Trans>Mark No-Show</Trans>
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
+				<AlertDialog
+					open={overbookConfirmOpen}
+					onOpenChange={setOverbookConfirmOpen}
+				>
+					<AlertDialogContent data-testid="detail-overbook-dialog">
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								<Trans>Allow double-booking this table?</Trans>
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								<Trans>
+									Table and time changes you save next will ignore overlaps with
+									other parties. Two parties may end up on the same table at the
+									same time.
+								</Trans>
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>
+								<Trans>Keep overlap checks</Trans>
+							</AlertDialogCancel>
+							<AlertDialogAction
+								type="button"
+								variant="destructive"
+								onClick={() => {
+									setForceOverbook(true)
+									setOverbookConfirmOpen(false)
+								}}
+								data-testid="detail-overbook-confirm"
+							>
+								<Trans>Allow double-booking</Trans>
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>

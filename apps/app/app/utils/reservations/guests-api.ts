@@ -34,6 +34,8 @@ export type GuestRow = {
 	lateCancels: number
 	firstVisitAt: number | null
 	lastVisitAt: number | null
+	/** Soonest upcoming booking (list rows only; null when none or unknown). */
+	nextBookingAt: number | null
 	erasedAt: number | null
 	customerLinked: boolean
 	version: number
@@ -120,6 +122,7 @@ export function normalizeGuestRow(raw: unknown): GuestRow {
 		lateCancels: num(r.lateCancels),
 		firstVisitAt: nullableNum(r.firstVisitAt),
 		lastVisitAt: nullableNum(r.lastVisitAt),
+		nextBookingAt: nullableNum(r.nextBookingAt),
 		erasedAt: nullableNum(r.erasedAt),
 		customerLinked: Boolean(r.customerLinked),
 		version: num(r.version, 1),

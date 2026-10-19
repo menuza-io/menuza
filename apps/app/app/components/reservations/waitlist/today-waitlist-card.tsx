@@ -67,9 +67,12 @@ export function TodayWaitlistCard({
 								className="bg-background flex flex-col gap-1 rounded-lg border p-3"
 								data-testid={`today-waitlist-row-${entry.id}`}
 							>
-								<span className="text-sm font-semibold wrap-anywhere">
+								<Link
+									to={`/${orgSlug}/reservations/waitlist`}
+									className="text-foreground text-sm font-semibold wrap-anywhere underline-offset-4 hover:underline focus-visible:underline"
+								>
 									#{entry.position} {guest} ({entry.partySize})
-								</span>
+								</Link>
 								<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
 									<StatusLabel kind="waitlist" status={entry.status} />
 									<span>
@@ -87,7 +90,7 @@ export function TodayWaitlistCard({
 				<Button
 					size="sm"
 					variant="outline"
-					className="h-11 self-start md:h-8"
+					className="h-8 self-start max-md:h-11 pointer-coarse:h-11"
 					render={<Link to={`/${orgSlug}/reservations/waitlist`} />}
 					data-testid="today-waitlist-open"
 				>

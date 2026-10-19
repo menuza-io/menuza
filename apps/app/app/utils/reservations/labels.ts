@@ -105,6 +105,12 @@ export const DIETARY_LABELS: Record<string, MessageDescriptor> = {
 	nut_allergy: msg`Nut Allergy`,
 	dairy_free: msg`Dairy-Free`,
 	shellfish_allergy: msg`Shellfish Allergy`,
+	kosher: msg`Kosher`,
+	peanut_allergy: msg`Peanut Allergy`,
+	egg_allergy: msg`Egg Allergy`,
+	soy_allergy: msg`Soy Allergy`,
+	fish_allergy: msg`Fish Allergy`,
+	sesame_allergy: msg`Sesame Allergy`,
 }
 
 export const VIP_TIER_LABELS: Record<string, MessageDescriptor> = {

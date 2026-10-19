@@ -1,6 +1,7 @@
-import { Trans, msg } from '@lingui/macro'
+import { Plural, Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Alert, AlertDescription } from '@repo/ui/alert'
+import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Frame } from '@repo/ui/frame'
 import { Icon } from '@repo/ui/icon'
@@ -15,10 +16,11 @@ import {
 	TableRow,
 } from '@repo/ui/table'
 import { WorkspaceToolbar } from '@repo/ui/workspace'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GuestTagBadge } from '#app/components/reservations/guests/guest-tag-badge.tsx'
+import { ReservationsHeaderActions } from '#app/components/reservations/shell-context.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import {
 	fetchGuestPage,
@@ -39,13 +41,45 @@ import { type ReservationsScopedClient } from '#app/utils/reservations/reservati
 const SEARCH_DEBOUNCE_MS = 300
 /** `FilterSelect` cannot hold an empty value, so "all guests" travels as this key. */
 const ALL_TAGS = 'all'
+const LAPSED_DAYS = 90
+const DAY_MS = 86_400_000
+
+type QuickFilter = 'vip' | 'allergy' | 'lapsed'
+
+/** A guest tagged VIP (the same rule the booking sheet uses). */
+export function isVipGuest(guest: GuestRow): boolean {
+	return guest.tags.some(
+		(tag) => tag.category === 'vip' || tag.name.toLowerCase().includes('vip'),
+	)
+}
+
+/** Seen before, but not within the last 90 days. Guests with no recorded visit are not lapsed. */
+export function isLapsedGuest(guest: GuestRow, now: number): boolean {
+	return (
+		guest.lastVisitAt !== null && guest.lastVisitAt < now - LAPSED_DAYS * DAY_MS
+	)
+}
+
+export function matchesQuickFilters(
+	guest: GuestRow,
+	active: ReadonlySet<QuickFilter>,
+	now: number,
+): boolean {
+	if (active.has('vip') && !isVipGuest(guest)) return false
+	if (active.has('allergy') && !guest.hasAllergy) return false
+	if (active.has('lapsed') && !isLapsedGuest(guest, now)) return false
+	return true
+}
 
 export function GuestListScreen({
 	client,
 	orgSlug,
+	canBook = false,
 }: {
 	client: ReservationsScopedClient
 	orgSlug: string
+	/** Show the New reservation action (the operator may book). */
+	canBook?: boolean
 }) {
 	const { _, i18n } = useLingui()
 	const [query, setQuery] = useState('')
@@ -54,7 +88,11 @@ export function GuestListScreen({
 	const [sort, setSort] = useState<GuestSort>('updated')
 	const [tags, setTags] = useState<GuestTag[]>([])
 	const [guests, setGuests] = useState<GuestRow[]>([])
-	const shownCount = guests.length
+	const [quick, setQuick] = useState<ReadonlySet<QuickFilter>>(
+		new Set<QuickFilter>(),
+	)
+	// Stable for the life of the screen: filters compare against load time.
+	const [now] = useState(() => Date.now())
 	const [nextCursor, setNextCursor] = useState<string | null>(null)
 	const [total, setTotal] = useState(0)
 	const [loading, setLoading] = useState(true)
@@ -114,7 +152,26 @@ export function GuestListScreen({
 		return () => controller.abort()
 	}, [load])
 
-	const filtering = debouncedQuery.trim() !== '' || tagId !== ''
+	const quickActive = quick.size > 0
+	const visibleGuests = useMemo(
+		() => guests.filter((guest) => matchesQuickFilters(guest, quick, now)),
+		[guests, quick, now],
+	)
+	const shownCount = visibleGuests.length
+	const loadedCount = guests.length
+	const filtering = debouncedQuery.trim() !== '' || tagId !== '' || quickActive
+	const toggleQuick = (key: QuickFilter) =>
+		setQuick((prev) => {
+			const next = new Set(prev)
+			if (next.has(key)) next.delete(key)
+			else next.add(key)
+			return next
+		})
+	const quickOptions: Array<{ key: QuickFilter; label: string }> = [
+		{ key: 'vip', label: _(msg`VIP`) },
+		{ key: 'allergy', label: _(msg`Has allergy`) },
+		{ key: 'lapsed', label: _(msg`Not visited in 90 days`) },
+	]
 
 	const tagOptions = [
 		{ value: ALL_TAGS, label: _(msg`All guests`) },
@@ -127,6 +184,17 @@ export function GuestListScreen({
 
 	return (
 		<div className="flex flex-col gap-6" data-testid="guests-screen">
+			{canBook ? (
+				<ReservationsHeaderActions>
+					<Button
+						render={<Link to={`/${orgSlug}/reservations/book`} />}
+						data-testid="guests-new-reservation"
+					>
+						<Icon name="plus" />
+						<Trans>New reservation</Trans>
+					</Button>
+				</ReservationsHeaderActions>
+			) : null}
 			<WorkspaceToolbar>
 				<div
 					role="search"
@@ -163,6 +231,25 @@ export function GuestListScreen({
 						onValueChange={(next) => setSort(next as GuestSort)}
 						testId="guests-sort"
 					/>
+					<div
+						role="group"
+						aria-label={_(msg`Quick filters`)}
+						className="flex flex-wrap gap-1.5"
+					>
+						{quickOptions.map((option) => (
+							<Button
+								key={option.key}
+								type="button"
+								variant={quick.has(option.key) ? 'secondary' : 'outline'}
+								className="h-11 md:h-8"
+								aria-pressed={quick.has(option.key)}
+								onClick={() => toggleQuick(option.key)}
+								data-testid={`guests-filter-${option.key}`}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
 					{filtering ? (
 						<Button
 							type="button"
@@ -172,6 +259,7 @@ export function GuestListScreen({
 								setQuery('')
 								setDebouncedQuery('')
 								setTagId('')
+								setQuick(new Set<QuickFilter>())
 							}}
 							data-testid="guests-clear-filters"
 						>
@@ -184,9 +272,26 @@ export function GuestListScreen({
 						className="text-muted-foreground text-sm"
 						data-testid="guests-count"
 					>
-						<Trans>
-							<bdi>{shownCount}</bdi> of <bdi>{total}</bdi> guests
-						</Trans>
+						{quickActive ? (
+							<Trans>
+								<Plural
+									value={shownCount}
+									one="# guest matches"
+									other="# guests match"
+								/>{' '}
+								among the <bdi>{loadedCount}</bdi> loaded
+							</Trans>
+						) : (
+							<Trans>
+								<bdi>{shownCount}</bdi> of <bdi>{total}</bdi> guests
+							</Trans>
+						)}
+						{quickActive && nextCursor ? (
+							<>
+								{' '}
+								<Trans>Load more to search further.</Trans>
+							</>
+						) : null}
 					</p>
 				) : null}
 			</WorkspaceToolbar>
@@ -237,7 +342,7 @@ export function GuestListScreen({
 				</Frame>
 			) : null}
 
-			{!loading && !error && guests.length === 0 ? (
+			{!loading && !error && visibleGuests.length === 0 ? (
 				<div data-testid={filtering ? 'guests-empty-search' : 'guests-empty'}>
 					<EmptyState
 						title={
@@ -264,7 +369,7 @@ export function GuestListScreen({
 				</div>
 			) : null}
 
-			{guests.length > 0 ? (
+			{visibleGuests.length > 0 ? (
 				<>
 					<Frame>
 						<Table variant="card">
@@ -286,12 +391,18 @@ export function GuestListScreen({
 										<Trans>Last visit</Trans>
 									</TableHead>
 									<TableHead>
+										<Trans>Next booking</Trans>
+									</TableHead>
+									<TableHead>
+										<Trans>Flags</Trans>
+									</TableHead>
+									<TableHead>
 										<Trans>Tags</Trans>
 									</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{guests.map((guest) => (
+								{visibleGuests.map((guest) => (
 									<TableRow
 										key={guest.id}
 										data-testid={`guest-row-${guest.id}`}
@@ -327,6 +438,29 @@ export function GuestListScreen({
 										</TableCell>
 										<TableCell className="text-muted-foreground text-sm">
 											{formatInstantDate(guest.lastVisitAt, i18n.locale) ?? '—'}
+										</TableCell>
+										<TableCell
+											className="text-muted-foreground text-sm"
+											data-testid={`guest-next-${guest.id}`}
+										>
+											{formatInstantDate(guest.nextBookingAt, i18n.locale) ??
+												'—'}
+										</TableCell>
+										<TableCell>
+											{guest.hasAllergy ? (
+												<Badge
+													variant="warning"
+													className="h-auto max-w-48 whitespace-normal"
+													title={guest.allergyNotes ?? undefined}
+													data-testid={`guest-allergy-${guest.id}`}
+												>
+													<span className="wrap-anywhere">
+														{guest.allergyNotes
+															? guest.allergyNotes
+															: _(msg`Allergy`)}
+													</span>
+												</Badge>
+											) : null}
 										</TableCell>
 										<TableCell>
 											<div className="flex flex-wrap gap-1">

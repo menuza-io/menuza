@@ -37,12 +37,15 @@ export function PartyFields({
 	onChange,
 	areas = [],
 	disabled = false,
+	autoFocusName = false,
 }: {
 	idPrefix: string
 	values: PartyFieldValues
 	onChange: (patch: Partial<PartyFieldValues>) => void
 	areas?: ReadonlyArray<{ id: string; name: string }>
 	disabled?: boolean
+	/** Put the cursor in the name field when the form appears. */
+	autoFocusName?: boolean
 }) {
 	const { t } = useLingui()
 	const [moreOpen, setMoreOpen] = useState(
@@ -60,6 +63,8 @@ export function PartyFields({
 				value={values.displayName}
 				maxLength={120}
 				required
+				autoFocus={autoFocusName}
+				autoComplete="off"
 				disabled={disabled}
 				onChange={(event) => onChange({ displayName: event.target.value })}
 				data-testid={`${idPrefix}-name`}

@@ -54,6 +54,7 @@ export function DateStepper({
 				type="button"
 				variant="outline"
 				size="icon"
+				className="pointer-coarse:size-11"
 				onClick={() => onChange(addDays(date, -1))}
 				aria-label={t`Previous day`}
 				data-testid={`${testIdPrefix}-prev-day-btn`}
@@ -66,7 +67,7 @@ export function DateStepper({
 						<Button
 							type="button"
 							variant="outline"
-							className="h-11 min-w-0 flex-1 justify-between gap-3 rounded-md sm:min-w-44 sm:flex-none md:h-8"
+							className="h-8 min-w-0 flex-1 justify-between gap-3 rounded-md max-md:h-11 sm:min-w-44 sm:flex-none pointer-coarse:h-11"
 							aria-label={pickerLabel}
 							data-testid={`${testIdPrefix}-date-input`}
 						>
@@ -94,6 +95,7 @@ export function DateStepper({
 				type="button"
 				variant="outline"
 				size="icon"
+				className="pointer-coarse:size-11"
 				onClick={() => onChange(addDays(date, 1))}
 				aria-label={t`Next day`}
 				data-testid={`${testIdPrefix}-next-day-btn`}
@@ -104,12 +106,13 @@ export function DateStepper({
 				<Button
 					type="button"
 					variant="ghost"
-					className="h-11 md:h-8"
+					className="h-8 max-md:h-11 pointer-coarse:h-11"
 					disabled={date === today}
 					onClick={() => onChange(today)}
 					data-testid={`${testIdPrefix}-today-jump-btn`}
 				>
-					{t`Today`}
+					<Icon name="clock" />
+					{t`Jump to today`}
 				</Button>
 			) : null}
 		</div>

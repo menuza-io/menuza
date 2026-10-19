@@ -8,13 +8,13 @@ import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
-import { WorkspaceMetric, WorkspaceMetricGrid } from '@repo/ui/workspace'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
+import { countAllergyParties } from '#app/components/reservations/guest-flags.tsx'
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
 import {
 	RequestsPanel,
@@ -34,10 +34,10 @@ import {
 	undoReservationTransition,
 } from '#app/utils/reservations/book-api.ts'
 import {
-	inNextMinutesLabel,
+	allergiesTonightLabel,
+	finishedCountLabel,
 	partiesLabel,
 	tablesActiveLabel,
-	unassignedAndConflictsLabel,
 } from '#app/utils/reservations/count-labels.ts'
 import {
 	boardColumnFor,
@@ -92,6 +92,38 @@ function ColumnEmpty({
 		<div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center text-sm">
 			<Icon name={icon} className="size-5" />
 			{children}
+		</div>
+	)
+}
+
+function KpiItem({
+	label,
+	value,
+	hint,
+	tone = 'default',
+}: {
+	label: React.ReactNode
+	value: React.ReactNode
+	hint?: string
+	tone?: 'default' | 'destructive'
+}) {
+	return (
+		<div className="flex min-w-0 flex-col px-3 py-1.5">
+			<span className="text-muted-foreground truncate text-xs">{label}</span>
+			<span
+				className={
+					tone === 'destructive'
+						? 'text-destructive text-lg leading-tight font-semibold tabular-nums'
+						: 'text-lg leading-tight font-semibold tabular-nums'
+				}
+			>
+				{value}
+			</span>
+			{hint ? (
+				<span className="text-muted-foreground hidden truncate text-xs md:block">
+					{hint}
+				</span>
+			) : null}
 		</div>
 	)
 }
@@ -275,11 +307,20 @@ export default function ReservationsTodayRoute() {
 				)
 			: null
 	const loading = !dayFeed && host.poll.loading
-	const attentionCount =
-		(stats?.unassignedCount ?? 0) +
-		(stats?.conflictCount ?? 0) +
-		(stats?.lateRiskCount ?? 0)
 	const waitlistCount = (dayFeed?.waitlist ?? []).length
+	const allergyCount = useMemo(
+		() => countAllergyParties(reservations),
+		[reservations],
+	)
+	const nextArrival = useMemo(() => {
+		const floor = host.liveNow.nowMs - 15 * 60_000
+		let next: DayReservationView | null = null
+		for (const r of columns.upcoming) {
+			if (r.slotStartAt < floor) continue
+			if (!next || r.slotStartAt < next.slotStartAt) next = r
+		}
+		return next
+	}, [columns.upcoming, host.liveNow.nowMs])
 	const dayIsEmpty =
 		Boolean(dayFeed) && reservations.length === 0 && waitlistCount === 0
 	const cardProps = {
@@ -314,6 +355,7 @@ export default function ReservationsTodayRoute() {
 				refreshing={host.poll.refreshing}
 				onRefresh={() => void host.poll.refresh({ force: true })}
 				serviceNotes={dayFeed?.serviceNotes ?? []}
+				lastUpdatedAt={host.poll.lastUpdatedAt}
 			/>
 
 			{loadFailure || actionError || requests.error ? (
@@ -326,7 +368,7 @@ export default function ReservationsTodayRoute() {
 									type="button"
 									size="sm"
 									variant="outline"
-									className="h-11 md:h-8"
+									className="h-8 max-md:h-11 pointer-coarse:h-11"
 									onClick={() => void host.poll.refresh({ force: true })}
 								>
 									<Trans>Try again</Trans>
@@ -337,11 +379,62 @@ export default function ReservationsTodayRoute() {
 				</Alert>
 			) : null}
 
-			<RequestsTabs
-				value={view}
-				onValueChange={setView}
-				pendingCount={requests.pending.length}
-			/>
+			<div
+				className="flex flex-wrap items-center gap-x-4 gap-y-2"
+				data-testid="today-board-header"
+			>
+				<RequestsTabs
+					value={view}
+					onValueChange={setView}
+					pendingCount={requests.pending.length}
+				/>
+				{view === 'reservations' ? (
+					<div
+						className="bg-card grid min-w-0 flex-1 grid-cols-4 divide-x rounded-lg border rtl:divide-x-reverse"
+						data-testid="today-kpi-cards"
+					>
+						<KpiItem
+							label={<Trans>Covers</Trans>}
+							value={
+								<span data-testid="today-kpi-total-covers">
+									{stats?.totalCovers ?? 0}
+								</span>
+							}
+							hint={partiesLabel(stats?.totalParties ?? 0)}
+						/>
+						<KpiItem
+							label={<Trans>Next arrival</Trans>}
+							value={
+								<span data-testid="today-kpi-next-arrival">
+									{nextArrival?.hhmm ?? '\u2013'}
+								</span>
+							}
+							hint={
+								nextArrival
+									? `${nextArrival.guestName || ''} (${nextArrival.partySize})`
+									: undefined
+							}
+						/>
+						<KpiItem
+							label={<Trans>Seated</Trans>}
+							value={
+								<span data-testid="today-kpi-seated-covers">
+									{stats?.seatedCovers ?? 0}
+								</span>
+							}
+							hint={tablesActiveLabel(stats?.seatedParties ?? 0)}
+						/>
+						<KpiItem
+							label={<Trans>Allergies</Trans>}
+							tone={allergyCount > 0 ? 'destructive' : 'default'}
+							value={
+								<span data-testid="today-kpi-allergies">{allergyCount}</span>
+							}
+							hint={allergiesTonightLabel(allergyCount)}
+						/>
+					</div>
+				) : null}
+			</div>
 
 			{view === 'requests' ? (
 				<RequestsPanel
@@ -355,51 +448,6 @@ export default function ReservationsTodayRoute() {
 				/>
 			) : (
 				<>
-					<div data-testid="today-kpi-cards">
-						<WorkspaceMetricGrid className="xl:grid-cols-4">
-							<WorkspaceMetric
-								label={<Trans>Covers</Trans>}
-								value={
-									<span data-testid="today-kpi-total-covers">
-										{stats?.totalCovers ?? 0}
-									</span>
-								}
-								hint={partiesLabel(stats?.totalParties ?? 0)}
-							/>
-							<WorkspaceMetric
-								label={<Trans>Arriving soon</Trans>}
-								value={
-									<span data-testid="today-kpi-arriving-covers">
-										{stats?.arrivingSoonCovers ?? 0}
-									</span>
-								}
-								hint={inNextMinutesLabel(stats?.arrivingSoonParties ?? 0)}
-							/>
-							<WorkspaceMetric
-								label={<Trans>Seated</Trans>}
-								value={
-									<span data-testid="today-kpi-seated-covers">
-										{stats?.seatedCovers ?? 0}
-									</span>
-								}
-								hint={tablesActiveLabel(stats?.seatedParties ?? 0)}
-							/>
-							<WorkspaceMetric
-								label={<Trans>Needs attention</Trans>}
-								tone={attentionCount > 0 ? 'warning' : 'default'}
-								value={
-									<span data-testid="today-kpi-attention">
-										{attentionCount}
-									</span>
-								}
-								hint={unassignedAndConflictsLabel(
-									stats?.unassignedCount ?? 0,
-									stats?.conflictCount ?? 0,
-								)}
-							/>
-						</WorkspaceMetricGrid>
-					</div>
-
 					{loading ? (
 						<BoardSkeleton />
 					) : dayIsEmpty ? (
@@ -508,54 +556,53 @@ export default function ReservationsTodayRoute() {
 							<Card className="flex min-w-0 flex-col">
 								<CardHeader className="pb-2">
 									<CardTitle className="flex items-center justify-between gap-2 text-base">
-										<span>
-											<Trans>Finished</Trans>
-										</span>
-										<span className="flex items-center gap-2">
-											<span className="text-muted-foreground text-sm font-normal tabular-nums">
-												{columns.finished.length}
-											</span>
+										<span data-testid="today-finished-count">
 											{columns.finished.length > 0 ? (
-												<Button
-													type="button"
-													size="sm"
-													variant="ghost"
-													className="h-11 md:h-8"
-													aria-expanded={showFinished}
-													onClick={() => setShowFinished((v) => !v)}
-													data-testid="today-finished-toggle"
-												>
-													{showFinished ? (
-														<Trans>Hide</Trans>
-													) : (
-														<Trans>Show</Trans>
-													)}
-												</Button>
-											) : null}
+												finishedCountLabel(columns.finished.length)
+											) : (
+												<Trans>Finished</Trans>
+											)}
 										</span>
+										{columns.finished.length > 0 ? (
+											<Button
+												type="button"
+												size="sm"
+												variant="ghost"
+												className="h-8 max-md:h-11 pointer-coarse:h-11"
+												aria-expanded={showFinished}
+												onClick={() => setShowFinished((v) => !v)}
+												data-testid="today-finished-toggle"
+											>
+												{showFinished ? (
+													<Trans>Hide</Trans>
+												) : (
+													<Trans>Show</Trans>
+												)}
+											</Button>
+										) : null}
 									</CardTitle>
 								</CardHeader>
-								<CardContent className="flex flex-col gap-2.5">
-									{columns.finished.length === 0 ? (
-										<ColumnEmpty icon="check">
-											<Trans>No completed or cancelled reservations yet.</Trans>
-										</ColumnEmpty>
-									) : showFinished ? (
-										columns.finished.map((rsv) => (
-											<TodayPartyCard
-												key={rsv.id}
-												reservation={rsv}
-												kind="finished"
-												busy={actionBusyId === rsv.id}
-												{...cardProps}
-											/>
-										))
-									) : (
-										<p className="text-muted-foreground text-sm">
-											<Trans>Hidden to keep the board calm.</Trans>
-										</p>
-									)}
-								</CardContent>
+								{columns.finished.length === 0 || showFinished ? (
+									<CardContent className="flex flex-col gap-2.5">
+										{columns.finished.length === 0 ? (
+											<ColumnEmpty icon="check">
+												<Trans>
+													No completed or cancelled reservations yet.
+												</Trans>
+											</ColumnEmpty>
+										) : (
+											columns.finished.map((rsv) => (
+												<TodayPartyCard
+													key={rsv.id}
+													reservation={rsv}
+													kind="finished"
+													busy={actionBusyId === rsv.id}
+													{...cardProps}
+												/>
+											))
+										)}
+									</CardContent>
+								) : null}
 							</Card>
 						</div>
 					)}
@@ -577,7 +624,7 @@ export default function ReservationsTodayRoute() {
 						type="button"
 						size="sm"
 						variant="outline"
-						className="h-11 shrink-0 md:h-8"
+						className="h-8 shrink-0 max-md:h-11 pointer-coarse:h-11"
 						disabled={actionBusyId === lastUndo.reservationId}
 						onClick={handleQuickUndo}
 						data-testid="today-undo-btn"
