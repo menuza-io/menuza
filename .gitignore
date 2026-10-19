@@ -109,3 +109,6 @@ apps/app/tests/fixtures/openimg/**/mock-bucket/orgs/
 .bugpatrol/runs/
 .bugpatrol/routines/
 .bugpatrol/appmap.json
+
+# Reservations mission orchestration logs and scratch docs
+docs/reservations-mission/
