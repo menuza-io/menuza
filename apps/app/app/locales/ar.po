@@ -872,7 +872,7 @@ msgstr "{elapsed} د · متبقي {remaining} د"
 msgid "{elapsed}m · +{remaining}m over"
 msgstr "{elapsed} د · تجاوز {remaining} د"
 
-#: app/components/reservations/today-party-card.tsx:154
+#: app/components/reservations/today-party-card.tsx:221
 msgid "{elapsed}m / {planned}m"
 msgstr "{elapsed} د / {planned} د"
 
@@ -1599,7 +1599,7 @@ msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 #~ msgid "+ Add nested modifier group"
 #~ msgstr "+ Add nested modifier group"
 
-#: app/components/reservations/today-party-card.tsx:90
+#: app/components/reservations/today-party-card.tsx:89
 msgid "+{lateMin}m late"
 msgstr "متأخر +{lateMin} د"
 
@@ -8338,7 +8338,7 @@ msgstr "تعذر تحميل إعدادات قائمة الانتظار."
 msgid "Could not make a PIN. Try again."
 msgstr "تعذّر إنشاء رمز PIN. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:349
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:337
 msgid "Could not mark the party as running late."
 msgstr "تعذّر تسجيل تأخر المجموعة."
 
@@ -8400,7 +8400,7 @@ msgid "Could not start the conversation. Try again."
 msgstr "تعذّر بدء المحادثة. حاول مرة أخرى."
 
 #: app/components/reservations/use-host-transitions.ts:110
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:325
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:313
 msgid "Could not undo."
 msgstr "تعذّر التراجع."
 
@@ -8413,7 +8413,7 @@ msgid "Could not update the course stage."
 msgstr "تعذّر تحديث مرحلة الطلب."
 
 #: app/components/reservations/use-host-transitions.ts:87
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:303
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:291
 msgid "Could not update the status."
 msgstr "تعذّر تحديث الحالة."
 
@@ -9444,7 +9444,7 @@ msgstr "يوم"
 msgid "Day controls"
 msgstr "عناصر التحكم في اليوم"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:160
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:144
 msgid "Day summary"
 msgstr "ملخص اليوم"
 
@@ -13108,7 +13108,7 @@ msgstr "إنهاء الإعداد"
 #~ msgstr "أكمل الإعداد قبل أن يتمكن الضيوف من الحجز"
 
 #: app/components/reservations/status-style.tsx:142
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:570
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:542
 #: app/utils/reservations/labels.ts:21
 msgid "Finished"
 msgstr "منتهي"
@@ -13874,11 +13874,11 @@ msgstr "مجموعات"
 
 #: app/components/reservations/detail-sheet.tsx:929
 #: app/components/reservations/guests/guest-list-screen.tsx:379
-#: app/components/reservations/today-party-card.tsx:78
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:66
+#: app/components/reservations/today-party-card.tsx:77
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:70
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:478
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:296
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:284
 #: app/utils/organization/role-label.ts:21
 #: app/utils/reservations/labels.ts:196
 msgid "Guest"
@@ -14348,7 +14348,7 @@ msgstr "مخفي عن الظهور العام. مناسب للطروحات ال�
 #: app/components/phone-agent/test-call-phone.tsx:319
 #: app/components/staff/reveal-gate.tsx:46
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:207
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:584
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:557
 msgid "Hide"
 msgstr "إخفاء"
 
@@ -15933,7 +15933,7 @@ msgstr "الإلغاءات المتأخرة، آخر 30 يومًا"
 msgid "Late cancels"
 msgstr "إلغاءات متأخرة"
 
-#: app/components/reservations/today-party-card.tsx:88
+#: app/components/reservations/today-party-card.tsx:87
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:500
 msgid "Late risk"
 msgstr "خطر التأخر"
@@ -17195,7 +17195,7 @@ msgstr "تحديد كغير مقروء"
 #~ msgstr "تم تحديد {0} كـ {1}. التراجع متاح لمدة 60 ثانية."
 
 #. placeholder {0}: lastUndo.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:618
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:584
 msgid "Marked {0} as {lastUndoStatusLabel}."
 msgstr "تم تسجيل {0} كـ {lastUndoStatusLabel}."
 
@@ -17852,7 +17852,7 @@ msgstr "المزيد"
 msgid "More actions"
 msgstr "المزيد من الإجراءات"
 
-#: app/components/reservations/today-party-card.tsx:235
+#: app/components/reservations/today-party-card.tsx:145
 #: app/components/reservations/waitlist/waitlist-queue.tsx:264
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:639
 msgid "More actions for {guest}"
@@ -18555,7 +18555,7 @@ msgstr "التالي"
 #~ msgid "Next arrival"
 #~ msgstr "الوصول التالي"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:139
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:123
 msgid "Next arrival {nextArrival}"
 msgstr "الوصول التالي {nextArrival}"
 
@@ -18712,7 +18712,7 @@ msgstr "لم يتم إنشاء رموز احتياطية"
 msgid "No blocks"
 msgstr "لا يوجد حظر"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:479
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:467
 msgid "No bookings for {emptyDayLabel}"
 msgstr "لا توجد حجوزات ليوم {emptyDayLabel}"
 
@@ -19403,7 +19403,7 @@ msgstr "لا توجد صفحات بعد"
 msgid "No parameters required"
 msgstr "لا توجد معاملات مطلوبة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:534
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:507
 msgid "No parties currently seated."
 msgstr "لا توجد مجموعات جالسة حالياً."
 
@@ -19498,7 +19498,7 @@ msgid "No pronunciations yet."
 msgstr "لا توجد طرق نطق بعد."
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:152
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:83
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:93
 #: app/components/reservations/waitlist/waitlist-queue.tsx:216
 msgid "No quote"
 msgstr "لا يوجد وقت مذكور"
@@ -19818,7 +19818,7 @@ msgstr "لا توجد حالات تحويل بعد."
 msgid "No upcoming reservations are in conflict with the current setup."
 msgstr "لا توجد حجوزات قادمة متعارضة مع الإعدادات الحالية."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:504
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:485
 msgid "No upcoming reservations for this filter."
 msgstr "لا توجد حجوزات قادمة لهذا الفلتر."
 
@@ -19975,7 +19975,7 @@ msgid "Nobody is waiting right now"
 msgstr "لا أحد في الانتظار الآن"
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:112
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:58
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:54
 msgid "Nobody is waiting right now."
 msgstr "لا أحد في الانتظار الآن."
 
@@ -20998,7 +20998,7 @@ msgstr "فتح قائمة الأوامر"
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 
-#: app/components/reservations/today-party-card.tsx:265
+#: app/components/reservations/today-party-card.tsx:175
 msgid "Open details"
 msgstr "فتح التفاصيل"
 
@@ -21224,7 +21224,7 @@ msgstr "فتح المنشئ المرئي"
 #~ msgid "Open Visual Builder"
 #~ msgstr "فتح المُنشئ المرئي"
 
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:100
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:47
 msgid "Open waitlist"
 msgstr "فتح قائمة الانتظار"
 
@@ -23838,7 +23838,7 @@ msgstr "مقدّر"
 #~ msgstr "المقدَّر (دقيقة)"
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:150
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:85
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:95
 msgid "Quoted {quoted}"
 msgstr "الوقت المذكور {quoted}"
 
@@ -25555,7 +25555,7 @@ msgstr "متأخر"
 #~ msgid "Running Late Hold"
 #~ msgstr "تمديد انتظار التأخير"
 
-#: app/components/reservations/today-party-card.tsx:260
+#: app/components/reservations/today-party-card.tsx:170
 msgid "Running late: add 15 minutes"
 msgstr "متأخر: إضافة 15 دقيقة"
 
@@ -26558,7 +26558,7 @@ msgstr "إجلاس ضيف مباشر الآن"
 #: app/components/reservations/status-style.tsx:210
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:236
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1458
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:524
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:502
 #: app/utils/reservations/labels.ts:19
 #: app/utils/reservations/labels.ts:28
 #: app/utils/reservations/labels.ts:129
@@ -27805,7 +27805,7 @@ msgstr "تقليص الدورة 15 دقيقة"
 #: app/components/reservations/experiences/experiences-screen.tsx:213
 #: app/components/staff/reveal-gate.tsx:46
 #: app/components/staff/timeclock-today.tsx:141
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:586
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:557
 msgid "Show"
 msgstr "إظهار"
 
@@ -32658,7 +32658,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:313
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:779
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:436
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:424
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:154
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:415
@@ -32920,7 +32920,7 @@ msgstr "تعذّر تحديث هذا الطلب. حدّث الصفحة وحاو�
 #: app/components/reservations/conflict-panel.tsx:395
 #: app/components/reservations/conflict-panel.tsx:397
 #: app/components/reservations/detail-sheet.tsx:573
-#: app/components/reservations/today-party-card.tsx:86
+#: app/components/reservations/today-party-card.tsx:208
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:377
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:398
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
@@ -33019,7 +33019,7 @@ msgstr "تحت"
 #: app/components/locations/delivery-zone-map.tsx:382
 #: app/components/reservations/detail-sheet.tsx:747
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:702
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:632
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:598
 msgid "Undo"
 msgstr "تراجع"
 
@@ -33264,7 +33264,7 @@ msgstr "حتى 5 عناوين."
 msgid "Upcoming"
 msgstr "القادمة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:494
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:480
 msgid "Upcoming & arriving"
 msgstr "القادمة والواصلة"
 
@@ -34208,7 +34208,7 @@ msgstr "بانتظار الإرسال"
 #: app/components/reservations/reservations-chrome.tsx:94
 #: app/components/reservations/reservations-chrome.tsx:160
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:77
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:36
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:33
 #: app/components/reservations/waitlist/waitlist-settings.tsx:274
 #: app/components/workspace-breadcrumb.tsx:80
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:466

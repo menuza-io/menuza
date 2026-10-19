@@ -51,7 +51,9 @@ describe('TodayWaitlistCard', () => {
 			'today-waitlist-row-a',
 			'today-waitlist-row-b',
 		])
-		expect(rows[0]).toHaveTextContent('#1 Rana (2)')
+		expect(rows[0]).toHaveTextContent('#1')
+		expect(rows[0]).toHaveTextContent('Rana')
+		expect(rows[0]).toHaveTextContent('2 guests')
 		expect(rows[0]).toHaveTextContent('Quoted 25 min')
 		expect(rows[1]).toHaveTextContent('No quote')
 		expect(screen.queryByRole('button', { name: /notify|seat/i })).toBeNull()

@@ -874,7 +874,7 @@ msgstr "{elapsed}m · {remaining}m left"
 msgid "{elapsed}m · +{remaining}m over"
 msgstr "{elapsed}m · +{remaining}m over"
 
-#: app/components/reservations/today-party-card.tsx:154
+#: app/components/reservations/today-party-card.tsx:221
 msgid "{elapsed}m / {planned}m"
 msgstr "{elapsed}m / {planned}m"
 
@@ -1601,7 +1601,7 @@ msgstr ""
 #~ msgid "+ Add nested modifier group"
 #~ msgstr "+ Add nested modifier group"
 
-#: app/components/reservations/today-party-card.tsx:90
+#: app/components/reservations/today-party-card.tsx:89
 msgid "+{lateMin}m late"
 msgstr "+{lateMin}m late"
 
@@ -8348,7 +8348,7 @@ msgstr "Could not load the waitlist settings."
 msgid "Could not make a PIN. Try again."
 msgstr "Could not make a PIN. Try again."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:349
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:337
 msgid "Could not mark the party as running late."
 msgstr "Could not mark the party as running late."
 
@@ -8410,7 +8410,7 @@ msgid "Could not start the conversation. Try again."
 msgstr "Could not start the conversation. Try again."
 
 #: app/components/reservations/use-host-transitions.ts:110
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:325
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:313
 msgid "Could not undo."
 msgstr "Could not undo."
 
@@ -8423,7 +8423,7 @@ msgid "Could not update the course stage."
 msgstr "Could not update the course stage."
 
 #: app/components/reservations/use-host-transitions.ts:87
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:303
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:291
 msgid "Could not update the status."
 msgstr "Could not update the status."
 
@@ -9454,7 +9454,7 @@ msgstr "Day"
 msgid "Day controls"
 msgstr "Day controls"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:160
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:144
 msgid "Day summary"
 msgstr "Day summary"
 
@@ -13118,7 +13118,7 @@ msgstr "Finish onboarding"
 #~ msgstr "Finish setting up before guests can book"
 
 #: app/components/reservations/status-style.tsx:142
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:570
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:542
 #: app/utils/reservations/labels.ts:21
 msgid "Finished"
 msgstr "Finished"
@@ -13884,11 +13884,11 @@ msgstr "Groups"
 
 #: app/components/reservations/detail-sheet.tsx:929
 #: app/components/reservations/guests/guest-list-screen.tsx:379
-#: app/components/reservations/today-party-card.tsx:78
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:66
+#: app/components/reservations/today-party-card.tsx:77
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:70
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:460
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:478
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:296
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:284
 #: app/utils/organization/role-label.ts:21
 #: app/utils/reservations/labels.ts:196
 msgid "Guest"
@@ -14358,7 +14358,7 @@ msgstr "Hidden from public discovery. Ideal for exclusive drops, secret menus, a
 #: app/components/phone-agent/test-call-phone.tsx:319
 #: app/components/staff/reveal-gate.tsx:46
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:207
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:584
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:557
 msgid "Hide"
 msgstr "Hide"
 
@@ -15943,7 +15943,7 @@ msgstr "Late cancellations, last 30 days"
 msgid "Late cancels"
 msgstr "Late cancels"
 
-#: app/components/reservations/today-party-card.tsx:88
+#: app/components/reservations/today-party-card.tsx:87
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:500
 msgid "Late risk"
 msgstr "Late risk"
@@ -17205,7 +17205,7 @@ msgstr "Mark unread"
 #~ msgstr "Marked {0} as {1}. Undo available for 60s."
 
 #. placeholder {0}: lastUndo.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:618
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:584
 msgid "Marked {0} as {lastUndoStatusLabel}."
 msgstr "Marked {0} as {lastUndoStatusLabel}."
 
@@ -17862,7 +17862,7 @@ msgstr ""
 msgid "More actions"
 msgstr ""
 
-#: app/components/reservations/today-party-card.tsx:235
+#: app/components/reservations/today-party-card.tsx:145
 #: app/components/reservations/waitlist/waitlist-queue.tsx:264
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:639
 msgid "More actions for {guest}"
@@ -18565,7 +18565,7 @@ msgstr ""
 #~ msgid "Next arrival"
 #~ msgstr "Next arrival"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:139
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:123
 msgid "Next arrival {nextArrival}"
 msgstr "Next arrival {nextArrival}"
 
@@ -18722,7 +18722,7 @@ msgstr ""
 msgid "No blocks"
 msgstr "No blocks"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:479
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:467
 msgid "No bookings for {emptyDayLabel}"
 msgstr "No bookings for {emptyDayLabel}"
 
@@ -19413,7 +19413,7 @@ msgstr ""
 msgid "No parameters required"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:534
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:507
 msgid "No parties currently seated."
 msgstr "No parties currently seated."
 
@@ -19508,7 +19508,7 @@ msgid "No pronunciations yet."
 msgstr "No pronunciations yet."
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:152
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:83
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:93
 #: app/components/reservations/waitlist/waitlist-queue.tsx:216
 msgid "No quote"
 msgstr "No quote"
@@ -19828,7 +19828,7 @@ msgstr "No transfer cases yet."
 msgid "No upcoming reservations are in conflict with the current setup."
 msgstr "No upcoming reservations are in conflict with the current setup."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:504
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:485
 msgid "No upcoming reservations for this filter."
 msgstr "No upcoming reservations for this filter."
 
@@ -19985,7 +19985,7 @@ msgid "Nobody is waiting right now"
 msgstr "Nobody is waiting right now"
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:112
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:58
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:54
 msgid "Nobody is waiting right now."
 msgstr "Nobody is waiting right now."
 
@@ -21008,7 +21008,7 @@ msgstr "Open command menu"
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr ""
 
-#: app/components/reservations/today-party-card.tsx:265
+#: app/components/reservations/today-party-card.tsx:175
 msgid "Open details"
 msgstr "Open details"
 
@@ -21234,7 +21234,7 @@ msgstr "Open visual builder"
 #~ msgid "Open Visual Builder"
 #~ msgstr ""
 
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:100
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:47
 msgid "Open waitlist"
 msgstr "Open waitlist"
 
@@ -23848,7 +23848,7 @@ msgstr "quoted"
 #~ msgstr "Quoted (min)"
 
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:150
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:85
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:95
 msgid "Quoted {quoted}"
 msgstr "Quoted {quoted}"
 
@@ -25565,7 +25565,7 @@ msgstr "Running late"
 #~ msgid "Running Late Hold"
 #~ msgstr "Running Late Hold"
 
-#: app/components/reservations/today-party-card.tsx:260
+#: app/components/reservations/today-party-card.tsx:170
 msgid "Running late: add 15 minutes"
 msgstr "Running late: add 15 minutes"
 
@@ -26568,7 +26568,7 @@ msgstr "Seat Walk-In Now"
 #: app/components/reservations/status-style.tsx:210
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:236
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1458
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:524
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:502
 #: app/utils/reservations/labels.ts:19
 #: app/utils/reservations/labels.ts:28
 #: app/utils/reservations/labels.ts:129
@@ -27815,7 +27815,7 @@ msgstr "Shorten turn by 15m"
 #: app/components/reservations/experiences/experiences-screen.tsx:213
 #: app/components/staff/reveal-gate.tsx:46
 #: app/components/staff/timeclock-today.tsx:141
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:586
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:557
 msgid "Show"
 msgstr "Show"
 
@@ -32668,7 +32668,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:313
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:779
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:436
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:424
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:154
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:415
@@ -32930,7 +32930,7 @@ msgstr "Unable to update this order. Refresh and try again."
 #: app/components/reservations/conflict-panel.tsx:395
 #: app/components/reservations/conflict-panel.tsx:397
 #: app/components/reservations/detail-sheet.tsx:573
-#: app/components/reservations/today-party-card.tsx:86
+#: app/components/reservations/today-party-card.tsx:208
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:377
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:398
 #: app/routes/_app+/$orgSlug_+/menu+/options._index.tsx:506
@@ -33029,7 +33029,7 @@ msgstr "Under"
 #: app/components/locations/delivery-zone-map.tsx:382
 #: app/components/reservations/detail-sheet.tsx:747
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:702
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:632
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:598
 msgid "Undo"
 msgstr "Undo"
 
@@ -33274,7 +33274,7 @@ msgstr "Up to 5 addresses."
 msgid "Upcoming"
 msgstr "Upcoming"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:494
+#: app/routes/_app+/$orgSlug_+/reservations+/today.tsx:480
 msgid "Upcoming & arriving"
 msgstr "Upcoming & arriving"
 
@@ -34218,7 +34218,7 @@ msgstr "Waiting to send"
 #: app/components/reservations/reservations-chrome.tsx:94
 #: app/components/reservations/reservations-chrome.tsx:160
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:77
-#: app/components/reservations/waitlist/today-waitlist-card.tsx:36
+#: app/components/reservations/waitlist/today-waitlist-card.tsx:33
 #: app/components/reservations/waitlist/waitlist-settings.tsx:274
 #: app/components/workspace-breadcrumb.tsx:80
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:466

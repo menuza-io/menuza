@@ -89,17 +89,18 @@ describe('TodayPartyCard', () => {
 		expect(screen.queryByTestId('today-menu-r1')).toBeNull()
 	})
 
-	it('pins the actions in a fixed-width column (stacked on narrow cards) beside the name block', () => {
+	it('puts the action and the menu at the end of the first line, beside the time', () => {
 		renderStaff(
 			<TodayPartyCard reservation={rsv()} kind="upcoming" {...props()} />,
 		)
 		const actions = screen.getByTestId('today-actions-r1')
 		const name = screen.getByTestId('today-open-detail-r1')
+		const time = screen.getByTestId('today-time-r1')
 		expect(actions.contains(screen.getByTestId('today-arrive-r1'))).toBe(true)
+		expect(actions.contains(screen.getByTestId('today-menu-r1'))).toBe(true)
 		expect(actions.contains(name)).toBe(false)
-		expect(actions.className).toContain('w-24')
-		// Below 14rem of card width the actions drop under the name instead.
-		expect(actions.className).toContain('flex-row')
+		// Same row as the time, so the card needs no separate action column.
+		expect(actions.parentElement).toBe(time.parentElement)
 		expect(actions.className).toContain('shrink-0')
 	})
 
@@ -136,17 +137,39 @@ describe('TodayPartyCard', () => {
 		expect(name.textContent).toBe('Layla Al-Mansoor')
 	})
 
-	it('clamps the notes to two lines and keeps the full text in a title', () => {
-		const note = 'Window table please, celebrating a promotion with colleagues'
+	it('keeps notes and the booking channel off the card', () => {
 		renderStaff(
 			<TodayPartyCard
-				reservation={rsv({ guestNotes: note })}
+				reservation={rsv({
+					guestNotes: 'Window table please',
+					channel: 'host_stand',
+				})}
 				kind="upcoming"
 				{...props()}
 			/>,
 		)
-		const notes = screen.getByTestId('today-notes-r1')
-		expect(notes.getAttribute('title')).toContain(note)
-		expect(notes.innerHTML).toContain('line-clamp-2')
+		expect(screen.queryByTestId('today-notes-r1')).toBeNull()
+		expect(screen.queryByTestId('today-channel-r1')).toBeNull()
+		expect(screen.queryByText(/Window table/)).toBeNull()
+	})
+
+	it('shows one status line: table and status, with elapsed time when seated', () => {
+		renderStaff(
+			<TodayPartyCard
+				reservation={rsv({
+					status: 'seated',
+					assignedTableLabels: ['T2'],
+					durationMin: 90,
+				})}
+				kind="seated"
+				elapsedMin={182}
+				{...props()}
+			/>,
+		)
+		expect(screen.getByTestId('today-time-r1').textContent).toContain('T2')
+		const elapsed = screen.getByTestId('today-elapsed-r1')
+		expect(elapsed.textContent).toBe('182m / 90m')
+		expect(elapsed.parentElement?.textContent).toContain('Seated')
+		expect(elapsed.className).toContain('text-warning')
 	})
 })

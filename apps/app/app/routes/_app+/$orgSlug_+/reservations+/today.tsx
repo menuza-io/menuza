@@ -6,11 +6,11 @@ import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
 import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData } from 'react-router'
+import { KanbanColumn } from '#app/components/kanban/kanban.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
@@ -83,24 +83,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 const UNDO_WINDOW_MS = 60_000
 
-/** Each board column; on phones the columns snap-scroll sideways. */
-const BOARD_CARD =
-	'flex min-w-0 flex-col max-md:w-[88%] max-md:shrink-0 max-md:snap-start'
-
-function ColumnEmpty({
-	icon,
-	children,
-}: {
-	icon: 'calendar' | 'users' | 'check'
-	children: React.ReactNode
-}) {
-	return (
-		<div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center text-sm">
-			<Icon name={icon} className="size-5" />
-			{children}
-		</div>
-	)
-}
+/** Added to each board column; on phones the columns snap-scroll sideways. */
+const BOARD_COLUMN = 'max-md:w-[88%] max-md:shrink-0 max-md:snap-start'
 
 /**
  * The day in one quiet line: covers and parties always, then only the items
@@ -192,11 +176,15 @@ function BoardSkeleton() {
 			aria-busy="true"
 		>
 			{[0, 1, 2, 3].map((col) => (
-				<div key={col} className="flex flex-col gap-2.5 rounded-xl border p-4">
-					<Skeleton className="h-5 w-32" />
-					<Skeleton className="h-20" />
-					<Skeleton className="h-20" />
-					<Skeleton className="h-20" />
+				<div
+					key={col}
+					className="bg-muted/30 flex flex-col gap-2 rounded-lg p-2 shadow-xs"
+				>
+					<Skeleton className="m-1 h-5 w-24" />
+					<div className="flex flex-col gap-2 p-1">
+						<Skeleton className="h-24" />
+						<Skeleton className="h-24" />
+					</div>
 				</div>
 			))}
 		</div>
@@ -487,122 +475,100 @@ export default function ReservationsTodayRoute() {
 							data-testid="today-board"
 							data-finished-open={finishedExpanded}
 						>
-							<Card className={BOARD_CARD}>
-								<CardHeader className="pb-2">
-									<CardTitle className="flex items-center justify-between text-base">
-										<span>
-											<Trans>Upcoming & arriving</Trans>
-										</span>
-										<span className="text-muted-foreground text-sm font-normal tabular-nums">
-											{columns.upcoming.length}
-										</span>
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="flex flex-col gap-2.5">
-									{columns.upcoming.length === 0 ? (
-										<ColumnEmpty icon="calendar">
-											<Trans>No upcoming reservations for this filter.</Trans>
-										</ColumnEmpty>
-									) : (
-										columns.upcoming.map((rsv) => (
-											<TodayPartyCard
-												key={rsv.id}
-												reservation={rsv}
-												kind="upcoming"
-												busy={actionBusyId === rsv.id}
-												{...cardProps}
-											/>
-										))
-									)}
-								</CardContent>
-							</Card>
+							<KanbanColumn
+								className={BOARD_COLUMN}
+								title={<Trans>Upcoming & arriving</Trans>}
+								count={columns.upcoming.length}
+								empty={
+									<>
+										<Icon name="calendar" className="size-4" />
+										<Trans>No upcoming reservations for this filter.</Trans>
+									</>
+								}
+							>
+								{columns.upcoming.map((rsv) => (
+									<TodayPartyCard
+										key={rsv.id}
+										reservation={rsv}
+										kind="upcoming"
+										busy={actionBusyId === rsv.id}
+										{...cardProps}
+									/>
+								))}
+							</KanbanColumn>
 
-							<Card className={BOARD_CARD}>
-								<CardHeader className="pb-2">
-									<CardTitle className="flex items-center justify-between text-base">
-										<span>
-											<Trans>Seated</Trans>
-										</span>
-										<span className="text-muted-foreground text-sm font-normal tabular-nums">
-											{columns.seated.length}
-										</span>
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="flex flex-col gap-2.5">
-									{columns.seated.length === 0 ? (
-										<ColumnEmpty icon="users">
-											<Trans>No parties currently seated.</Trans>
-										</ColumnEmpty>
-									) : (
-										columns.seated.map((rsv) => (
-											<TodayPartyCard
-												key={rsv.id}
-												reservation={rsv}
-												kind="seated"
-												busy={actionBusyId === rsv.id}
-												elapsedMin={host.liveNow.elapsedMinutesSince(
-													rsv.seatedAt ?? rsv.slotStartAt,
-												)}
-												{...cardProps}
-											/>
-										))
-									)}
-								</CardContent>
-							</Card>
+							<KanbanColumn
+								className={BOARD_COLUMN}
+								title={<Trans>Seated</Trans>}
+								count={columns.seated.length}
+								empty={
+									<>
+										<Icon name="users" className="size-4" />
+										<Trans>No parties currently seated.</Trans>
+									</>
+								}
+							>
+								{columns.seated.map((rsv) => (
+									<TodayPartyCard
+										key={rsv.id}
+										reservation={rsv}
+										kind="seated"
+										busy={actionBusyId === rsv.id}
+										elapsedMin={host.liveNow.elapsedMinutesSince(
+											rsv.seatedAt ?? rsv.slotStartAt,
+										)}
+										{...cardProps}
+									/>
+								))}
+							</KanbanColumn>
 
 							{waitlistEnabled ? (
 								<TodayWaitlistCard
+									className={BOARD_COLUMN}
 									entries={dayFeed?.waitlist ?? []}
 									orgSlug={orgSlug}
 								/>
 							) : null}
 
-							<Card
-								className={cn(BOARD_CARD, !finishedExpanded && 'self-start')}
-								data-testid="today-finished-column"
+							<KanbanColumn
+								className={cn(BOARD_COLUMN, !finishedExpanded && 'self-start')}
+								testId="today-finished-column"
+								titleTestId="today-finished-count"
+								collapsed={!finishedExpanded}
+								title={
+									columns.finished.length > 0 ? (
+										finishedCountLabel(columns.finished.length)
+									) : (
+										<Trans>Finished</Trans>
+									)
+								}
+								count={columns.finished.length === 0 ? 0 : undefined}
+								headerAction={
+									columns.finished.length > 0 ? (
+										<Button
+											type="button"
+											size="xs"
+											variant="ghost"
+											className="text-muted-foreground -me-1 pointer-coarse:h-11"
+											aria-expanded={showFinished}
+											onClick={() => setShowFinished((v) => !v)}
+											data-testid="today-finished-toggle"
+										>
+											{showFinished ? <Trans>Hide</Trans> : <Trans>Show</Trans>}
+										</Button>
+									) : undefined
+								}
 							>
-								<CardHeader className={finishedExpanded ? 'pb-2' : 'py-0'}>
-									<CardTitle className="flex items-center justify-between gap-2 text-base">
-										<span data-testid="today-finished-count">
-											{columns.finished.length > 0 ? (
-												finishedCountLabel(columns.finished.length)
-											) : (
-												<Trans>Finished</Trans>
-											)}
-										</span>
-										{columns.finished.length > 0 ? (
-											<Button
-												type="button"
-												size="sm"
-												variant="ghost"
-												className="h-8 max-md:h-11 pointer-coarse:h-11"
-												aria-expanded={showFinished}
-												onClick={() => setShowFinished((v) => !v)}
-												data-testid="today-finished-toggle"
-											>
-												{showFinished ? (
-													<Trans>Hide</Trans>
-												) : (
-													<Trans>Show</Trans>
-												)}
-											</Button>
-										) : null}
-									</CardTitle>
-								</CardHeader>
-								{finishedExpanded ? (
-									<CardContent className="flex flex-col gap-2.5">
-										{columns.finished.map((rsv) => (
-											<TodayPartyCard
-												key={rsv.id}
-												reservation={rsv}
-												kind="finished"
-												busy={actionBusyId === rsv.id}
-												{...cardProps}
-											/>
-										))}
-									</CardContent>
-								) : null}
-							</Card>
+								{columns.finished.map((rsv) => (
+									<TodayPartyCard
+										key={rsv.id}
+										reservation={rsv}
+										kind="finished"
+										busy={actionBusyId === rsv.id}
+										{...cardProps}
+									/>
+								))}
+							</KanbanColumn>
 						</div>
 					)}
 				</>

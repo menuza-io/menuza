@@ -11,12 +11,14 @@ import {
 	DropdownMenuTrigger,
 } from '@repo/ui/dropdown-menu'
 import { Icon } from '@repo/ui/icon'
-import { GuestFlags } from '#app/components/reservations/guest-flags.tsx'
-import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
+import { KanbanCard } from '#app/components/kanban/kanban.tsx'
 import {
-	reservationStatusStyle,
-	StatusLabel,
-} from '#app/components/reservations/status-style.tsx'
+	deriveGuestFlags,
+	GuestFlags,
+	hasGuestFlags,
+} from '#app/components/reservations/guest-flags.tsx'
+import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
+import { reservationStatusStyle } from '#app/components/reservations/status-style.tsx'
 import { type DayReservationView } from '#app/utils/reservations/book-api.ts'
 import { guestsCountLabel } from '#app/utils/reservations/count-labels.ts'
 import {
@@ -25,11 +27,6 @@ import {
 	type HostAction,
 	hostActionsFor,
 } from '#app/utils/reservations/host-actions.ts'
-import {
-	CHANNEL_LABELS,
-	DIETARY_LABELS,
-	enumLabel,
-} from '#app/utils/reservations/labels.ts'
 
 export type PartyCardKind = 'upcoming' | 'seated' | 'finished'
 
@@ -53,8 +50,10 @@ const ACTION_TEST_ID: Record<string, string> = {
 }
 
 /**
- * One party on the host board: name, size, time, table, ONE primary action
- * and everything else in the menu. At most two badges; notes are one muted line.
+ * One party on the host board, in the shared kanban card look. Line 1: time (or
+ * table when seated) and party size, with the primary action and the menu at
+ * the end. Line 2: the guest, a quiet link. One status line. One row of chips.
+ * Notes and the booking channel live in the detail sheet.
  */
 export function TodayPartyCard({
 	reservation: rsv,
@@ -80,140 +79,54 @@ export function TodayPartyCard({
 	const overTurn = kind === 'seated' && elapsedMin > rsv.durationMin
 	const unassigned = kind === 'upcoming' && rsv.assignedTableLabels.length === 0
 	const lateMin = rsv.runningLateMin
-
-	// Badge 1: the one thing that needs attention. Badge 2: payment, else VIP.
-	const attention = unassigned
-		? { variant: 'destructive' as const, label: t`Unassigned` }
-		: rsv.lateRisk
-			? { variant: 'warning' as const, label: t`Late risk` }
-			: lateMin
-				? { variant: 'warning' as const, label: t`+${lateMin}m late` }
-				: null
-
-	// Allergy, VIP and occasion are chips (`GuestFlags`); the quiet line keeps
-	// the other dietary preferences and the guest's request.
-	const noteBits = [
-		...rsv.dietaryCodes
-			.filter((c) => c in DIETARY_LABELS && !c.endsWith('_allergy'))
-			.map((c) => enumLabel(tx, DIETARY_LABELS, c)),
-		rsv.guestNotes,
-	].filter(Boolean)
-
-	const showMenu = canManage && (secondary.length > 0 || kind !== 'finished')
-	const rowTestId = `today-${kind === 'upcoming' ? 'upcoming' : kind}-card-${rsv.id}`
 	const elapsed = elapsedMin
 	const planned = rsv.durationMin
 
+	// The one thing that needs attention, as a chip beside the guest flags.
+	const attention = rsv.lateRisk
+		? { variant: 'warning' as const, label: t`Late risk` }
+		: lateMin
+			? { variant: 'warning' as const, label: t`+${lateMin}m late` }
+			: null
+	const showPayment = rsv.paymentStatus !== 'none'
+	const showFlags = kind !== 'finished' && hasGuestFlags(deriveGuestFlags(rsv))
+
+	const showMenu = canManage && (secondary.length > 0 || kind !== 'finished')
+	const rowTestId = `today-${kind === 'upcoming' ? 'upcoming' : kind}-card-${rsv.id}`
 	const hasActions = canManage && Boolean(primary?.to || showMenu)
+	const statusLabel = tx(style.label)
+	const place = kind === 'seated' ? null : tableLabels
 
 	return (
-		<div className="@container/card min-w-0">
-			<div
-				className={cn(
-					'bg-background flex min-w-0 flex-col items-stretch gap-2 rounded-lg border p-3 @[14rem]/card:flex-row @[14rem]/card:items-start @[14rem]/card:gap-3',
-					kind === 'finished' && 'bg-muted/20',
-				)}
-				data-testid={rowTestId}
-			>
-				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-					<div className="flex min-w-0 flex-col">
-						<span
-							className="text-muted-foreground flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-xs"
-							data-testid={`today-time-${rsv.id}`}
-						>
-							<span className="text-foreground font-medium tabular-nums">
-								{kind === 'seated' && tableLabels ? tableLabels : rsv.hhmm}
-							</span>
-							<span aria-hidden="true">·</span>
-							<span>{guestsCountLabel(size)}</span>
-						</span>
-						<Button
-							type="button"
-							variant="link"
-							className={cn(
-								'h-auto min-w-0 justify-start p-0 text-start text-sm font-semibold whitespace-normal hover:underline focus-visible:underline',
-								'min-h-8 max-md:min-h-11 pointer-coarse:min-h-11',
-								style.strike && 'line-through',
-							)}
-							onClick={() => onOpenDetail(rsv.id)}
-							data-testid={`today-open-detail-${rsv.id}`}
-						>
-							<span className="line-clamp-2 wrap-anywhere" title={guest}>
-								{guest}
-							</span>
-						</Button>
-					</div>
-
-					<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-						<StatusLabel status={rsv.status} />
-						{kind === 'seated' ? (
-							<span
-								className={cn('tabular-nums', overTurn && 'text-warning')}
-								data-testid={`today-elapsed-${rsv.id}`}
-							>
-								{t`${elapsed}m / ${planned}m`}
-							</span>
-						) : tableLabels ? (
-							<span>{tableLabels}</span>
-						) : null}
-						{kind === 'seated' && rsv.serverLabel ? (
-							<span>{rsv.serverLabel}</span>
-						) : null}
-						{rsv.channel ? (
-							<span data-testid={`today-channel-${rsv.id}`}>
-								{enumLabel(tx, CHANNEL_LABELS, rsv.channel)}
-							</span>
-						) : null}
-					</div>
-
-					{attention || rsv.paymentStatus !== 'none' ? (
-						<div className="flex flex-wrap items-center gap-1">
-							{attention ? (
-								<Badge variant={attention.variant}>{attention.label}</Badge>
-							) : null}
-							<PaymentBadge
-								paymentStatus={rsv.paymentStatus}
-								experience={Boolean(rsv.experienceId)}
-							/>
-						</div>
-					) : null}
-
-					{kind !== 'finished' ? <GuestFlags reservation={rsv} /> : null}
-
-					{kind !== 'finished' && noteBits.length > 0 ? (
-						<p
-							className="text-muted-foreground flex items-start gap-1.5 text-xs"
-							title={noteBits.join(' · ')}
-							data-testid={`today-notes-${rsv.id}`}
-						>
-							<Icon name="info" className="mt-px size-3.5 shrink-0" />
-							<span className="line-clamp-2 min-w-0 wrap-anywhere">
-								{noteBits.join(' · ')}
-							</span>
-						</p>
-					) : null}
-				</div>
-
+		<KanbanCard testId={rowTestId} muted={kind === 'finished'}>
+			<div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+				<span
+					className="text-muted-foreground flex min-w-0 items-baseline gap-x-1.5 text-xs"
+					data-testid={`today-time-${rsv.id}`}
+				>
+					<span className="text-foreground font-medium tabular-nums">
+						{kind === 'seated' && tableLabels ? tableLabels : rsv.hhmm}
+					</span>
+					<span aria-hidden="true">·</span>
+					<span>{guestsCountLabel(size)}</span>
+				</span>
 				{hasActions ? (
 					<div
-						className="flex shrink-0 flex-row items-center gap-1 @[14rem]/card:w-24 @[14rem]/card:flex-col @[14rem]/card:items-stretch"
+						className="-me-1 flex shrink-0 items-center gap-1"
 						data-testid={`today-actions-${rsv.id}`}
 					>
 						{primary && primary.to ? (
 							<Button
 								type="button"
-								size="sm"
+								size="xs"
 								variant={primary.action === 'seat' ? 'default' : 'outline'}
-								className={cn(
-									'h-8 max-md:h-11 pointer-coarse:h-11',
-									'w-full min-w-0 flex-1 px-2 @[14rem]/card:flex-none',
-								)}
+								className="pointer-coarse:h-11 pointer-coarse:px-3"
 								disabled={busy}
 								onClick={() => onAction(rsv, primary)}
 								data-testid={`${ACTION_TEST_ID[primary.action] ?? 'today-action'}-${rsv.id}`}
 							>
 								{primary.action === 'seat' || primary.action === 'finish' ? (
-									<Icon name="check" className="size-3.5" />
+									<Icon name="check" />
 								) : null}
 								<span className="truncate">
 									{tx(HOST_ACTION_LABELS[primary.action])}
@@ -226,17 +139,14 @@ export function TodayPartyCard({
 									render={
 										<Button
 											type="button"
-											size="icon"
+											size="icon-xs"
 											variant="ghost"
-											className={cn(
-												'size-8 max-md:size-11 pointer-coarse:size-11',
-												'@[14rem]/card:self-end',
-											)}
+											className="text-muted-foreground pointer-coarse:size-11"
 											aria-label={t`More actions for ${guest}`}
 											disabled={busy}
 											data-testid={`today-menu-${rsv.id}`}
 										>
-											<Icon name="more-horizontal" className="size-4" />
+											<Icon name="more-horizontal" />
 										</Button>
 									}
 								/>
@@ -270,6 +180,66 @@ export function TodayPartyCard({
 					</div>
 				) : null}
 			</div>
-		</div>
+
+			<button
+				type="button"
+				className={cn(
+					'text-foreground focus-visible:ring-ring/50 -my-1 block w-full min-w-0 rounded-sm py-1 text-start text-sm font-medium outline-none hover:underline focus-visible:underline focus-visible:ring-3 pointer-coarse:min-h-11',
+					style.strike && 'line-through',
+				)}
+				onClick={() => onOpenDetail(rsv.id)}
+				data-testid={`today-open-detail-${rsv.id}`}
+			>
+				<span className="line-clamp-2 wrap-anywhere" title={guest}>
+					{guest}
+				</span>
+			</button>
+
+			<p
+				className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs"
+				data-status-tone={style.tone}
+			>
+				<span
+					aria-hidden="true"
+					className={cn('size-1.5 shrink-0 rounded-full', style.dot)}
+				/>
+				<span className="min-w-0 truncate">
+					{unassigned ? (
+						<span className="text-destructive">{t`Unassigned`}</span>
+					) : place ? (
+						place
+					) : null}
+					{unassigned || place ? ' · ' : null}
+					{statusLabel}
+					{kind === 'seated' ? (
+						<>
+							{' '}
+							<span
+								className={cn('tabular-nums', overTurn && 'text-warning')}
+								data-testid={`today-elapsed-${rsv.id}`}
+							>
+								{t`${elapsed}m / ${planned}m`}
+							</span>
+							{rsv.serverLabel ? ` · ${rsv.serverLabel}` : null}
+						</>
+					) : null}
+				</span>
+			</p>
+
+			{showFlags || attention || showPayment ? (
+				<div className="flex min-w-0 flex-wrap items-start gap-1">
+					{showFlags ? (
+						<GuestFlags reservation={rsv} className="contents" />
+					) : null}
+					{attention ? (
+						<Badge variant={attention.variant}>{attention.label}</Badge>
+					) : null}
+					<PaymentBadge
+						paymentStatus={rsv.paymentStatus}
+						experience={Boolean(rsv.experienceId)}
+					/>
+				</div>
+			) : null}
+		</KanbanCard>
 	)
 }
