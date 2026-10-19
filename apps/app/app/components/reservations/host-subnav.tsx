@@ -2,15 +2,16 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { DateStepper } from '#app/components/reservations/date-stepper.tsx'
 import { ReservationsHeaderControls } from '#app/components/reservations/header-controls.tsx'
+import { HostFilters } from '#app/components/reservations/host-filters.tsx'
 import {
 	ReservationsHeaderActions,
 	useReservationsShell,
 } from '#app/components/reservations/shell-context.tsx'
-import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { type RsvServiceNoteRow } from '#app/utils/reservations/book-api.ts'
 import {
 	type RsvAreaRecord,
@@ -19,8 +20,6 @@ import {
 
 export type HostViewKey =
 	'today' | 'book' | 'timeline' | 'floor' | 'calendar' | 'overview'
-
-const ALL = 'all'
 
 /**
  * The day-view chrome under the layout's page header and section tabs.
@@ -75,7 +74,7 @@ export function HostSubnav({
 	refreshing?: boolean
 	onRefresh?: () => void
 	serviceNotes?: RsvServiceNoteRow[]
-	/** Epoch ms of the last successful poll; shows "Updated Xs ago" by the refresh button. */
+	/** Epoch ms of the last successful poll; read from the refresh button, shown in text once stale. */
 	lastUpdatedAt?: number | null
 }) {
 	const { t } = useLingui()
@@ -146,18 +145,9 @@ export function HostSubnav({
 			: serviceNotes
 	).filter((n) => n.body.trim().length > 0)
 
-	const serviceOptions = [
-		{ value: ALL, label: t`All services` },
-		...services.map((svc) => ({ value: svc.id, label: svc.name })),
-	]
-	const areaOptions = [
-		{ value: ALL, label: t`All areas` },
-		...areas.map((area) => ({ value: area.id, label: area.name })),
-	]
-
 	return (
 		<div
-			className="bg-background sticky top-0 z-20 flex flex-col gap-3 py-2 print:hidden"
+			className="bg-background sticky top-0 z-20 flex flex-col gap-3 py-1 print:hidden"
 			data-testid="host-subnav"
 		>
 			<ReservationsHeaderActions>
@@ -213,91 +203,70 @@ export function HostSubnav({
 				className="flex flex-wrap items-center gap-x-3 gap-y-2"
 				data-testid="host-context-bar"
 			>
-				{shell ? (
-					<ReservationsHeaderControls
-						locations={shell.locations}
-						selectedLocationId={shell.selectedLocationId}
-						onChange={(_key, value) => shell.onLocationChange(value)}
-					/>
-				) : null}
-
-				{activeView !== 'calendar' && visibleViewTabs.length > 1 ? (
-					<nav
-						aria-label={t`Day views`}
-						className="bg-muted inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg p-0.5"
-					>
-						{visibleViewTabs.map((tab) => {
-							const isActive = activeView === tab.key
-							return (
-								<Link
-									key={tab.key}
-									to={buildViewHref(tab.path)}
-									aria-current={isActive ? 'page' : undefined}
-									data-testid={`host-view-tab-${tab.key}`}
-									className={
-										isActive
-											? 'bg-background text-foreground flex h-8 items-center rounded-md px-3 text-sm font-medium shadow-xs max-md:h-11 pointer-coarse:h-11'
-											: 'text-muted-foreground hover:text-foreground flex h-8 items-center rounded-md px-3 text-sm font-medium max-md:h-11 pointer-coarse:h-11'
-									}
-								>
-									{tab.label}
-								</Link>
-							)
-						})}
-					</nav>
-				) : null}
-
-				{dayControls && onDateChange ? (
-					<DateStepper
-						date={businessDate}
-						today={todayDate}
-						onChange={onDateChange}
-					/>
-				) : null}
-
-				<div className="flex flex-wrap items-center gap-2 sm:ms-auto">
-					{dayControls && services.length > 0 && onServiceChange ? (
-						<FilterSelect
-							label={t`Service`}
-							testId="host-service-select"
-							options={serviceOptions}
-							value={selectedServiceId ?? ALL}
-							onValueChange={(value) =>
-								onServiceChange(value === ALL ? null : value)
-							}
+				<div className="flex min-w-0 items-center gap-3 max-lg:w-full">
+					{shell ? (
+						<ReservationsHeaderControls
+							locations={shell.locations}
+							selectedLocationId={shell.selectedLocationId}
+							onChange={(_key, value) => shell.onLocationChange(value)}
 						/>
 					) : null}
-					{dayControls && areas.length > 0 && onAreaChange ? (
-						<FilterSelect
-							label={t`Area`}
-							testId="host-area-select"
-							options={areaOptions}
-							value={selectedAreaId ?? ALL}
-							onValueChange={(value) =>
-								onAreaChange(value === ALL ? null : value)
-							}
-						/>
-					) : null}
-					{onRefresh ? (
-						<div className="flex items-center gap-1">
-							<UpdatedAgo at={lastUpdatedAt} />
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon"
-								className="max-md:size-11 pointer-coarse:size-11"
-								onClick={onRefresh}
-								aria-label={t`Refresh`}
-								data-testid="host-refresh-btn"
-							>
-								<Icon
-									name="refresh-cw"
-									className={refreshing ? 'animate-spin' : undefined}
-								/>
-							</Button>
-						</div>
+
+					{activeView !== 'calendar' && visibleViewTabs.length > 1 ? (
+						<nav
+							aria-label={t`Day views`}
+							className="bg-muted inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg p-0.5"
+						>
+							{visibleViewTabs.map((tab) => {
+								const isActive = activeView === tab.key
+								return (
+									<Link
+										key={tab.key}
+										to={buildViewHref(tab.path)}
+										aria-current={isActive ? 'page' : undefined}
+										data-testid={`host-view-tab-${tab.key}`}
+										className={
+											isActive
+												? 'bg-background text-foreground flex h-8 items-center rounded-md px-3 text-sm font-medium shadow-xs max-md:h-11 pointer-coarse:h-11'
+												: 'text-muted-foreground hover:text-foreground flex h-8 items-center rounded-md px-3 text-sm font-medium max-md:h-11 pointer-coarse:h-11'
+										}
+									>
+										{tab.label}
+									</Link>
+								)
+							})}
+						</nav>
 					) : null}
 				</div>
+
+				{dayControls ? (
+					<div className="flex flex-wrap items-center gap-x-2 gap-y-2 lg:ms-auto">
+						{onDateChange ? (
+							<DateStepper
+								date={businessDate}
+								today={todayDate}
+								onChange={onDateChange}
+							/>
+						) : null}
+						<div className="flex items-center gap-1 sm:ms-2">
+							<HostFilters
+								services={services}
+								selectedServiceId={selectedServiceId}
+								onServiceChange={onServiceChange}
+								areas={areas}
+								selectedAreaId={selectedAreaId}
+								onAreaChange={onAreaChange}
+							/>
+							{onRefresh ? (
+								<RefreshButton
+									at={lastUpdatedAt}
+									refreshing={refreshing}
+									onRefresh={onRefresh}
+								/>
+							) : null}
+						</div>
+					</div>
+				) : null}
 			</div>
 
 			{visibleNotes.length > 0 ? (
@@ -361,9 +330,8 @@ export function HostSubnav({
 	)
 }
 
-/** "Updated 12 seconds ago", refreshed every 10 seconds, in the app locale. */
-export function UpdatedAgo({ at }: { at: number | null }) {
-	const { i18n, t } = useLingui()
+/** Seconds since the last poll, re-read every 10 seconds; null before the first one. */
+function useSecondsSince(at: number | null): number | null {
 	const [now, setNow] = useState(() => Date.now())
 	useEffect(() => {
 		setNow(Date.now())
@@ -371,22 +339,71 @@ export function UpdatedAgo({ at }: { at: number | null }) {
 		return () => window.clearInterval(id)
 	}, [at])
 	if (at === null) return null
-	const seconds = Math.max(0, Math.round((now - at) / 1000))
-	const rtf = new Intl.RelativeTimeFormat(i18n.locale, { numeric: 'auto' })
-	const text =
-		seconds < 10
-			? rtf.format(0, 'second')
-			: seconds < 90
+	return Math.max(0, Math.round((now - at) / 1000))
+}
+
+const STALE_AFTER_SECONDS = 60
+
+/**
+ * Refresh as an icon-only ghost button. "Updated just now" / "Updated 2 min
+ * ago" lives in its tooltip and accessible name; a quiet visible "Updated 3 min
+ * ago" appears only once the data is more than a minute old.
+ */
+export function RefreshButton({
+	at,
+	refreshing,
+	onRefresh,
+}: {
+	at: number | null
+	refreshing: boolean
+	onRefresh: () => void
+}) {
+	const { i18n, t } = useLingui()
+	const seconds = useSecondsSince(at)
+	let updated: string | null = null
+	if (seconds !== null) {
+		const rtf = new Intl.RelativeTimeFormat(i18n.locale, { numeric: 'auto' })
+		const ago =
+			seconds < 90
 				? rtf.format(-Math.round(seconds / 10) * 10, 'second')
 				: seconds < 5400
 					? rtf.format(-Math.round(seconds / 60), 'minute')
 					: rtf.format(-Math.round(seconds / 3600), 'hour')
+		updated = seconds < 10 ? t`Updated just now` : t`Updated ${ago}`
+	}
+	const stale = seconds !== null && seconds > STALE_AFTER_SECONDS
+	const label = updated ?? t`Refresh`
 	return (
-		<span
-			className="text-muted-foreground hidden text-xs whitespace-nowrap tabular-nums sm:inline"
-			data-testid="host-updated-ago"
-		>
-			{t`Updated ${text}`}
-		</span>
+		<div className="flex items-center gap-1">
+			{stale && updated ? (
+				<span
+					className="text-muted-foreground hidden text-xs whitespace-nowrap tabular-nums sm:inline"
+					data-testid="host-updated-ago"
+				>
+					{updated}
+				</span>
+			) : null}
+			<Tooltip>
+				<TooltipTrigger
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="max-md:size-11 pointer-coarse:size-11"
+							onClick={onRefresh}
+							aria-label={updated ? t`Refresh. ${updated}` : t`Refresh`}
+							data-testid="host-refresh-btn"
+						>
+							<Icon
+								name="refresh-cw"
+								className={refreshing ? 'animate-spin' : undefined}
+							/>
+						</Button>
+					}
+				/>
+				<TooltipContent>{label}</TooltipContent>
+			</Tooltip>
+		</div>
 	)
 }

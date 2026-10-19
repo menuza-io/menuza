@@ -21,7 +21,7 @@ function fromLocalDate(value: Date): string {
 }
 
 /**
- * Previous day, a date picker, next day and a jump to today: the same
+ * Previous day, a date picker, next day and, only away from today, a Today button: the same
  * control as the Staff schedule toolbar, 44px on touch widths. Dates are
  * plain `YYYY-MM-DD` business dates.
  */
@@ -63,7 +63,7 @@ export function DateStepper({
 						<Button
 							type="button"
 							variant="outline"
-							className="h-8 min-w-0 flex-1 justify-between gap-3 rounded-md max-md:h-11 sm:min-w-44 sm:flex-none pointer-coarse:h-11"
+							className="h-8 min-w-0 flex-1 justify-between gap-3 rounded-md max-md:h-11 sm:min-w-40 sm:flex-none pointer-coarse:h-11"
 							aria-label={pickerLabel}
 							data-testid={`${testIdPrefix}-date-input`}
 						>
@@ -98,17 +98,15 @@ export function DateStepper({
 			>
 				<Icon name={rtl ? 'chevron-left' : 'chevron-right'} />
 			</Button>
-			{today ? (
+			{today && date !== today ? (
 				<Button
 					type="button"
 					variant="ghost"
 					className="h-8 max-md:h-11 pointer-coarse:h-11"
-					disabled={date === today}
 					onClick={() => onChange(today)}
 					data-testid={`${testIdPrefix}-today-jump-btn`}
 				>
-					<Icon name="clock" />
-					{t`Jump to today`}
+					{t`Today`}
 				</Button>
 			) : null}
 		</div>

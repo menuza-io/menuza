@@ -39,7 +39,7 @@ import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
 import { PaymentBadge } from '#app/components/reservations/payment-badge.tsx'
 import {
 	RequestsPanel,
-	RequestsTabs,
+	RequestsNotice,
 	type ReservationsViewTab,
 } from '#app/components/reservations/requests-panel.tsx'
 import {
@@ -318,7 +318,7 @@ export default function ReservationsBookRoute() {
 				</Alert>
 			) : null}
 
-			<RequestsTabs
+			<RequestsNotice
 				value={view}
 				onValueChange={setView}
 				pendingCount={requests.pending.length}

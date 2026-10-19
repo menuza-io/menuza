@@ -9,9 +9,8 @@ import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData } from 'react-router'
-import { EmptyState } from '#app/components/empty-state.tsx'
 import { BookingSheet } from '#app/components/reservations/booking-sheet.tsx'
 import { ConflictPanel } from '#app/components/reservations/conflict-panel.tsx'
 import { DetailSheet } from '#app/components/reservations/detail-sheet.tsx'
@@ -19,7 +18,7 @@ import { countAllergyParties } from '#app/components/reservations/guest-flags.ts
 import { HostSubnav } from '#app/components/reservations/host-subnav.tsx'
 import {
 	RequestsPanel,
-	RequestsTabs,
+	RequestsNotice,
 	type ReservationsViewTab,
 } from '#app/components/reservations/requests-panel.tsx'
 import { TodayPartyCard } from '#app/components/reservations/today-party-card.tsx'
@@ -35,11 +34,12 @@ import {
 	transitionReservationStatus,
 	undoReservationTransition,
 } from '#app/utils/reservations/book-api.ts'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import {
-	allergiesTonightLabel,
+	allergyCountLabel,
+	coversAndPartiesLabel,
 	finishedCountLabel,
-	partiesLabel,
-	tablesActiveLabel,
+	seatedCoversLabel,
 } from '#app/utils/reservations/count-labels.ts'
 import {
 	boardColumnFor,
@@ -102,34 +102,84 @@ function ColumnEmpty({
 	)
 }
 
-function KpiItem({
-	label,
-	value,
-	hint,
-	tone = 'default',
+/**
+ * The day in one quiet line: covers and parties always, then only the items
+ * that have something to say. Not drawn at all on an empty day.
+ */
+function DaySummary({
+	covers,
+	parties,
+	nextArrival,
+	seatedCovers,
+	allergies,
 }: {
-	label: React.ReactNode
-	value: React.ReactNode
-	hint?: string
-	tone?: 'default' | 'destructive'
+	covers: number
+	parties: number
+	nextArrival: string | null
+	seatedCovers: number
+	allergies: number
 }) {
+	const { t } = useLingui()
+	const items: Array<{
+		key: string
+		testId: string
+		text: string
+		destructive?: boolean
+	}> = [
+		{
+			key: 'covers',
+			testId: 'today-kpi-total-covers',
+			text: coversAndPartiesLabel(covers, parties),
+		},
+	]
+	if (nextArrival) {
+		items.push({
+			key: 'next',
+			testId: 'today-kpi-next-arrival',
+			text: t`Next arrival ${nextArrival}`,
+		})
+	}
+	if (seatedCovers > 0) {
+		items.push({
+			key: 'seated',
+			testId: 'today-kpi-seated-covers',
+			text: seatedCoversLabel(seatedCovers),
+		})
+	}
+	if (allergies > 0) {
+		items.push({
+			key: 'allergies',
+			testId: 'today-kpi-allergies',
+			text: allergyCountLabel(allergies),
+			destructive: true,
+		})
+	}
 	return (
-		<div className="flex min-w-0 flex-col px-3 py-1.5">
-			<span className="text-muted-foreground truncate text-xs">{label}</span>
-			<span
-				className={
-					tone === 'destructive'
-						? 'text-destructive text-lg leading-tight font-semibold tabular-nums'
-						: 'text-lg leading-tight font-semibold tabular-nums'
-				}
-			>
-				{value}
-			</span>
-			{hint ? (
-				<span className="text-muted-foreground hidden truncate text-xs md:block">
-					{hint}
-				</span>
-			) : null}
+		<div
+			role="group"
+			aria-label={t`Day summary`}
+			className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums"
+			data-testid="today-kpi-cards"
+		>
+			{items.map((item, index) => (
+				<Fragment key={item.key}>
+					{index > 0 ? (
+						<span aria-hidden className="bg-border h-3.5 w-px" />
+					) : null}
+					<span
+						className={
+							item.destructive
+								? 'text-destructive font-medium'
+								: index === 0
+									? 'text-foreground font-medium'
+									: undefined
+						}
+						data-testid={item.testId}
+					>
+						{item.text}
+					</span>
+				</Fragment>
+			))}
 		</div>
 	)
 }
@@ -330,6 +380,11 @@ export default function ReservationsTodayRoute() {
 	const finishedExpanded = columns.finished.length > 0 && showFinished
 	const dayIsEmpty =
 		Boolean(dayFeed) && reservations.length === 0 && waitlistCount === 0
+	const emptyDayLabel = formatBusinessDate(host.businessDate, i18n.locale, {
+		weekday: 'long',
+		month: 'short',
+		day: 'numeric',
+	})
 	const cardProps = {
 		canManage,
 		nowMs: host.liveNow.nowMs,
@@ -386,62 +441,21 @@ export default function ReservationsTodayRoute() {
 				</Alert>
 			) : null}
 
-			<div
-				className="flex flex-wrap items-center gap-x-4 gap-y-2"
-				data-testid="today-board-header"
-			>
-				<RequestsTabs
-					value={view}
-					onValueChange={setView}
-					pendingCount={requests.pending.length}
+			<RequestsNotice
+				value={view}
+				onValueChange={setView}
+				pendingCount={requests.pending.length}
+			/>
+
+			{view === 'reservations' && dayFeed && !dayIsEmpty ? (
+				<DaySummary
+					covers={stats?.totalCovers ?? 0}
+					parties={stats?.totalParties ?? 0}
+					nextArrival={nextArrival?.hhmm ?? null}
+					seatedCovers={stats?.seatedCovers ?? 0}
+					allergies={allergyCount}
 				/>
-				{view === 'reservations' ? (
-					<div
-						className="bg-card grid min-w-0 flex-1 grid-cols-4 divide-x rounded-lg border rtl:divide-x-reverse"
-						data-testid="today-kpi-cards"
-					>
-						<KpiItem
-							label={<Trans>Covers</Trans>}
-							value={
-								<span data-testid="today-kpi-total-covers">
-									{stats?.totalCovers ?? 0}
-								</span>
-							}
-							hint={partiesLabel(stats?.totalParties ?? 0)}
-						/>
-						<KpiItem
-							label={<Trans>Next arrival</Trans>}
-							value={
-								<span data-testid="today-kpi-next-arrival">
-									{nextArrival?.hhmm ?? '\u2013'}
-								</span>
-							}
-							hint={
-								nextArrival
-									? `${nextArrival.guestName || ''} (${nextArrival.partySize})`
-									: undefined
-							}
-						/>
-						<KpiItem
-							label={<Trans>Seated</Trans>}
-							value={
-								<span data-testid="today-kpi-seated-covers">
-									{stats?.seatedCovers ?? 0}
-								</span>
-							}
-							hint={tablesActiveLabel(stats?.seatedParties ?? 0)}
-						/>
-						<KpiItem
-							label={<Trans>Allergies</Trans>}
-							tone={allergyCount > 0 ? 'destructive' : 'default'}
-							value={
-								<span data-testid="today-kpi-allergies">{allergyCount}</span>
-							}
-							hint={allergiesTonightLabel(allergyCount)}
-						/>
-					</div>
-				) : null}
-			</div>
+			) : null}
 
 			{view === 'requests' ? (
 				<RequestsPanel
@@ -458,29 +472,12 @@ export default function ReservationsTodayRoute() {
 					{loading ? (
 						<BoardSkeleton />
 					) : dayIsEmpty ? (
-						<EmptyState
-							icons={['calendar', 'users', 'clock']}
-							title={<Trans>No bookings for this day yet</Trans>}
-							description={
-								<Trans>
-									New reservations and walk-ins appear here as soon as they are
-									added.
-								</Trans>
-							}
+						<p
+							className="text-muted-foreground py-10 text-center text-sm"
+							data-testid="today-empty"
 						>
-							{canManage ? (
-								<>
-									<Button onClick={() => host.openBookingSheet()}>
-										<Icon name="plus" />
-										<Trans>New reservation</Trans>
-									</Button>
-									<Button variant="outline" onClick={() => host.openWalkIn()}>
-										<Icon name="user-plus" />
-										<Trans>Add walk-in</Trans>
-									</Button>
-								</>
-							) : null}
-						</EmptyState>
+							<Trans>No bookings for {emptyDayLabel}</Trans>
+						</p>
 					) : (
 						<div
 							className={boardGridClass({

@@ -76,3 +76,25 @@ export function allergiesTonightLabel(count: number): string {
 export function guestsLeftLabel(count: number): string {
 	return plural(count, { one: '# guest left', other: '# guests left' })
 }
+
+/** "18 covers · 5 parties": the day summary's lead item, one message. */
+export function coversAndPartiesLabel(covers: number, parties: number): string {
+	const coversText = plural(covers, { one: '# cover', other: '# covers' })
+	const partiesText = partiesLabel(parties)
+	return t`${coversText} · ${partiesText}`
+}
+
+export function seatedCoversLabel(count: number): string {
+	return plural(count, { one: '# seated', other: '# seated' })
+}
+
+export function allergyCountLabel(count: number): string {
+	return plural(count, { one: '# allergy', other: '# allergies' })
+}
+
+export function requestsNeedApprovalLabel(count: number): string {
+	return plural(count, {
+		one: '# request needs approval',
+		other: '# requests need approval',
+	})
+}

@@ -200,7 +200,7 @@ export function ReservationsChrome({
 		<ReservationsShellProvider value={shell}>
 			<WorkspacePage>
 				<div
-					className="flex flex-col gap-6"
+					className={hostRoute ? 'flex flex-col gap-4' : 'flex flex-col gap-6'}
 					data-testid="reservations-header-controls"
 				>
 					{header ? (

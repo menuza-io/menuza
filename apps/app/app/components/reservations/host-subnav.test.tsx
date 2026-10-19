@@ -151,6 +151,99 @@ describe('HostSubnav', () => {
 		expect(onDateChange).toHaveBeenLastCalledWith('2026-10-18')
 	})
 
+	it('shows Today only away from today', () => {
+		const props = {
+			orgSlug: 'acme',
+			activeView: 'today' as const,
+			todayDate: '2026-10-18',
+			onDateChange: vi.fn(),
+		}
+		const away = renderStaff(
+			<HostSubnav {...props} businessDate="2026-10-20" />,
+		)
+		expect(screen.getByTestId('host-today-jump-btn')).toBeTruthy()
+		away.unmount()
+		renderStaff(<HostSubnav {...props} businessDate="2026-10-18" />)
+		expect(screen.queryByTestId('host-today-jump-btn')).toBeNull()
+	})
+
+	it('collapses service and area into one Filters control, hidden for a single choice', async () => {
+		const services = [
+			{ id: 's1', name: 'Dinner' },
+			{ id: 's2', name: 'Lunch' },
+		] as never[]
+		const areas = [
+			{ id: 'a1', name: 'Main room' },
+			{ id: 'a2', name: 'Patio' },
+		] as never[]
+		const base = {
+			orgSlug: 'acme',
+			activeView: 'today' as const,
+			businessDate: '2026-10-20',
+			onDateChange: vi.fn(),
+			onServiceChange: vi.fn(),
+			onAreaChange: vi.fn(),
+		}
+		const one = renderStaff(
+			<HostSubnav
+				{...base}
+				services={[services[0]!] as never[]}
+				areas={[areas[0]!] as never[]}
+			/>,
+		)
+		expect(screen.queryByTestId('host-filters-btn')).toBeNull()
+		one.unmount()
+		const idle = renderStaff(
+			<HostSubnav {...base} services={services} areas={areas} />,
+		)
+		expect(screen.getByTestId('host-filters-btn').textContent).toBe('Filters')
+		expect(screen.queryByTestId('host-filters-dot')).toBeNull()
+		idle.unmount()
+		renderStaff(
+			<HostSubnav
+				{...base}
+				services={services}
+				areas={areas}
+				selectedServiceId="s1"
+				selectedAreaId="a1"
+			/>,
+		)
+		expect(screen.getByTestId('host-filters-btn').textContent).toBe(
+			'Dinner \u00b7 Main room',
+		)
+		expect(screen.getByTestId('host-filters-dot')).toBeTruthy()
+		fireEvent.click(screen.getByTestId('host-filters-btn'))
+		expect(await screen.findByTestId('host-service-select')).toBeTruthy()
+		expect(screen.getByTestId('host-area-select')).toBeTruthy()
+	})
+
+	it('names freshness on the refresh button and prints it only when stale', () => {
+		const fresh = renderStaff(
+			<HostSubnav
+				orgSlug="acme"
+				activeView="today"
+				businessDate="2026-10-20"
+				onRefresh={vi.fn()}
+				lastUpdatedAt={Date.now()}
+			/>,
+		)
+		expect(
+			screen.getByTestId('host-refresh-btn').getAttribute('aria-label'),
+		).toContain('Updated just now')
+		expect(screen.queryByTestId('host-updated-ago')).toBeNull()
+		fresh.unmount()
+		renderStaff(
+			<HostSubnav
+				orgSlug="acme"
+				activeView="today"
+				businessDate="2026-10-20"
+				onRefresh={vi.fn()}
+				lastUpdatedAt={Date.now() - 180_000}
+			/>,
+		)
+		expect(screen.getByTestId('host-updated-ago').textContent).toMatch(/3/)
+	})
+
 	it('shows one primary action and hides write actions for read-only members', () => {
 		const props = {
 			orgSlug: 'acme',

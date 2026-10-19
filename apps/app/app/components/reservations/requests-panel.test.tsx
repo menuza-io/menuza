@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { RequestsPanel } from '#app/components/reservations/requests-panel.tsx'
+import {
+	RequestsNotice,
+	RequestsPanel,
+} from '#app/components/reservations/requests-panel.tsx'
 import { useReservationRequests } from '#app/components/reservations/use-reservation-requests.ts'
 import { type DayReservationView } from '#app/utils/reservations/book-api.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
@@ -107,5 +110,45 @@ describe('RequestsPanel', () => {
 		await waitFor(() => expect(api.approve).toHaveBeenCalled())
 		expect(screen.getByTestId('request-row-a')).toBeTruthy()
 		expect(screen.queryByTestId('request-decided-a')).toBeNull()
+	})
+})
+
+describe('RequestsNotice', () => {
+	it('shows only when something is pending and opens the requests view', () => {
+		const onValueChange = vi.fn()
+		const none = renderStaff(
+			<RequestsNotice
+				value="reservations"
+				onValueChange={onValueChange}
+				pendingCount={0}
+			/>,
+		)
+		expect(screen.queryByTestId('requests-notice')).toBeNull()
+		none.unmount()
+		renderStaff(
+			<RequestsNotice
+				value="reservations"
+				onValueChange={onValueChange}
+				pendingCount={2}
+			/>,
+		)
+		expect(screen.getByTestId('requests-pending-count').textContent).toBe(
+			'2 requests need approval',
+		)
+		fireEvent.click(screen.getByTestId('requests-review-btn'))
+		expect(onValueChange).toHaveBeenCalledWith('requests')
+	})
+
+	it('offers a way back from the requests view', () => {
+		const onValueChange = vi.fn()
+		renderStaff(
+			<RequestsNotice
+				value="requests"
+				onValueChange={onValueChange}
+				pendingCount={0}
+			/>,
+		)
+		fireEvent.click(screen.getByTestId('requests-back-btn'))
+		expect(onValueChange).toHaveBeenCalledWith('reservations')
 	})
 })

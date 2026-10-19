@@ -8,16 +8,23 @@ import {
 	EmptyHeader,
 	EmptyTitle,
 } from '@repo/ui/empty'
-import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { Icon } from '@repo/ui/icon'
 import { useState } from 'react'
 import { ChannelBadge } from '#app/components/reservations/channel-badge.tsx'
 import { TextField } from '#app/components/staff/controls.tsx'
 import { type DayReservationView } from '#app/utils/reservations/book-api.ts'
+import { requestsNeedApprovalLabel } from '#app/utils/reservations/count-labels.ts'
 import { type DecidedRequest } from '#app/utils/reservations/requests.ts'
 
 export type ReservationsViewTab = 'reservations' | 'requests'
 
-export function RequestsTabs({
+/**
+ * Large-party requests are not a permanent control. While some wait for a
+ * decision the board shows one slim notice with a Review button; inside the
+ * requests view the same slot holds a way back. With nothing pending (and the
+ * board showing) it renders nothing.
+ */
+export function RequestsNotice({
 	value,
 	onValueChange,
 	pendingCount,
@@ -26,36 +33,47 @@ export function RequestsTabs({
 	onValueChange: (value: ReservationsViewTab) => void
 	pendingCount: number
 }) {
+	if (value === 'requests') {
+		return (
+			<div>
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					className="h-8 max-md:h-11 pointer-coarse:h-11"
+					onClick={() => onValueChange('reservations')}
+					data-testid="requests-back-btn"
+				>
+					<Icon name="arrow-left" className="rtl:rotate-180" />
+					<Trans>Back to reservations</Trans>
+				</Button>
+			</div>
+		)
+	}
+	if (pendingCount === 0) return null
 	return (
-		<Tabs
-			value={value}
-			onValueChange={(next) => onValueChange(next as ReservationsViewTab)}
+		<div
+			role="status"
+			className="bg-warning/10 flex items-center justify-between gap-3 rounded-lg border px-3 py-1 text-sm"
+			data-testid="requests-notice"
 		>
-			<TabsList
-				data-testid="reservations-view-tabs"
-				className="max-md:h-11 pointer-coarse:h-11"
+			<span className="flex min-w-0 items-center gap-2">
+				<Icon name="bell" className="text-warning size-4 shrink-0" />
+				<span data-testid="requests-pending-count">
+					{requestsNeedApprovalLabel(pendingCount)}
+				</span>
+			</span>
+			<Button
+				type="button"
+				variant="ghost"
+				size="sm"
+				className="h-8 max-md:h-11 pointer-coarse:h-11"
+				onClick={() => onValueChange('requests')}
+				data-testid="requests-review-btn"
 			>
-				<TabsTrigger
-					value="reservations"
-					className="pointer-coarse:min-h-10"
-					data-testid="tab-reservations"
-				>
-					<Trans>Reservations</Trans>
-				</TabsTrigger>
-				<TabsTrigger
-					value="requests"
-					className="pointer-coarse:min-h-10"
-					data-testid="tab-requests"
-				>
-					<Trans>Requests</Trans>
-					{pendingCount > 0 ? (
-						<Badge variant="warning" data-testid="requests-pending-count">
-							{pendingCount}
-						</Badge>
-					) : null}
-				</TabsTrigger>
-			</TabsList>
-		</Tabs>
+				<Trans context="Open the pending requests">Review</Trans>
+			</Button>
+		</div>
 	)
 }
 
