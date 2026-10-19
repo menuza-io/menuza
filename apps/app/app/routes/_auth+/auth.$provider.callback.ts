@@ -20,7 +20,10 @@ import {
 	authenticator,
 	getSessionExpirationDate,
 } from '#app/utils/auth.server.ts'
-import { checkSSOEnforcementByEmail } from '#app/utils/sso/enforcement.server.ts'
+import {
+	checkSSOEnforcementByEmail,
+	checkSSOEnforcementByUserId,
+} from '#app/utils/sso/enforcement.server.ts'
 import { type Route } from './+types/auth.$provider.callback.ts'
 import { handleNewSession } from './login.server.ts'
 import { onboardingEmailSessionKey } from './onboarding.tsx'
@@ -139,7 +142,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	// Connection exists already? Make a new session
 	if (existingConnection) {
 		// Check SSO enforcement before allowing social login
-		const ssoEnforcement = await checkSSOEnforcementByEmail(profile.email)
+		const ssoEnforcement = await checkSSOEnforcementByUserId(
+			existingConnection.userId,
+		)
 		if (ssoEnforcement.enforced) {
 			throw await redirectWithToast(
 				`/auth/sso/${ssoEnforcement.organizationSlug}`,

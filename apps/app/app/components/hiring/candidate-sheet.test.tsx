@@ -82,6 +82,22 @@ function stubApi(options: {
 	return calls
 }
 
+/**
+ * A successful change reloads the application behind the sheet, and that reload
+ * is fire-and-forget: wait for it before the test ends. A reload GET that
+ * slips out after the test runs on MSW's fetch again (the stub is gone), and
+ * its unhandled-request warning fails the whole run.
+ */
+async function waitForDetailReload(calls: Call[]) {
+	await waitFor(() =>
+		expect(
+			calls.filter(
+				(c) => c.method === 'GET' && c.url.endsWith('/applications/a1'),
+			).length,
+		).toBeGreaterThan(1),
+	)
+}
+
 function view(overrides: Partial<ApplicantsContext> = {}, canWrite = true) {
 	const reload = vi.fn()
 	const close = vi.fn()
@@ -239,10 +255,20 @@ describe('CandidateSheet', () => {
 			body: { reason: 'not_a_fit', template: 'thanks' },
 		})
 		await waitFor(() => expect(reload).toHaveBeenCalled())
+		await waitForDetailReload(calls)
 	})
 
 	it('cannot send a message to someone with no email', async () => {
-		const calls = stubApi({ detail: detail({ email: null }) })
+		const calls = stubApi({
+			detail: detail({ email: null }),
+			respond: (call) =>
+				call.url.endsWith('/decline')
+					? Response.json({
+							application: applicant({ stage: 'declined' }),
+							email: 'no_email',
+						})
+					: undefined,
+		})
 		view()
 		await screen.findByText('Sara Ali')
 		fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
@@ -260,6 +286,7 @@ describe('CandidateSheet', () => {
 		expect(calls.find((c) => c.url.endsWith('/decline'))!.body).toMatchObject({
 			template: 'none',
 		})
+		await waitForDetailReload(calls)
 	})
 
 	it("books the interview in the workplace's time zone, not the browser's", async () => {
@@ -319,6 +346,7 @@ describe('CandidateSheet', () => {
 		})
 		// The applicant has a workplace already, so none is sent.
 		expect(call.body).not.toHaveProperty('scopeId')
+		await waitForDetailReload(calls)
 	})
 
 	it('does not book a time that has passed, and says so', async () => {
@@ -397,10 +425,11 @@ describe('CandidateSheet', () => {
 			screen.getByText('Open profile').closest('a')?.getAttribute('href'),
 		).toBe('/acme/staff/team/staff-1')
 		await waitFor(() => expect(reload).toHaveBeenCalled())
+		await waitForDetailReload(calls)
 	})
 
 	it('leaves out the app invitation when this member cannot send one', async () => {
-		stubApi({
+		const calls = stubApi({
 			respond: (call) =>
 				call.url.endsWith('/positions')
 					? Response.json({
@@ -429,6 +458,7 @@ describe('CandidateSheet', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: 'Hire' }))
 		await screen.findByText('Sara Ali is on your team')
 		expect(screen.queryByRole('button', { name: 'Send invitation' })).toBeNull()
+		await waitForDetailReload(calls)
 	})
 
 	it('tells a manager with no positions to add one first', async () => {
@@ -487,6 +517,12 @@ describe('CandidateSheet', () => {
 				declinedAt: 1,
 				retentionExpiresAt: Date.UTC(2027, 0, 5),
 			}),
+			respond: (call) =>
+				call.url.endsWith('/stage')
+					? Response.json({
+							application: applicant({ id: 'a1', stage: 'new' }),
+						})
+					: undefined,
 		})
 		view()
 		await screen.findByText('Sara Ali')
@@ -502,6 +538,7 @@ describe('CandidateSheet', () => {
 		expect(calls.find((c) => c.url.endsWith('/stage'))!.body).toEqual({
 			stage: 'new',
 		})
+		await waitForDetailReload(calls)
 	})
 
 	it('links a hired candidate to their profile', async () => {
@@ -570,6 +607,7 @@ describe('CandidateSheet', () => {
 		expect(calls.find((c) => c.url.endsWith('/notes'))!.body).toEqual({
 			body: 'Great knife skills',
 		})
+		await waitForDetailReload(calls)
 	})
 
 	it('reads the timeline in plain words', async () => {
@@ -676,6 +714,7 @@ describe('CandidateSheet', () => {
 		const patch = calls.find((c) => c.method === 'PATCH')!
 		expect(patch.url).toContain('/applications/a1/interviews/i1')
 		expect(patch.body).toEqual({ status: 'completed' })
+		await waitForDetailReload(calls)
 	})
 
 	it('confirms before deleting an application, and says what goes', async () => {

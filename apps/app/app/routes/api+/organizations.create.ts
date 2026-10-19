@@ -3,7 +3,7 @@ import { invalidateUserOrganizationsCache } from '@repo/cache'
 import { db, eq, Organization } from '@repo/database'
 import { data } from 'react-router'
 import { z } from 'zod'
-import { requireAuth } from '#app/utils/jwt.server.ts'
+import { isAuthenticationError, requireAuth } from '#app/utils/jwt.server.ts'
 import {
 	createOrganization,
 	setUserDefaultOrganization,
@@ -98,7 +98,7 @@ export async function action({ request }: Route.ActionArgs) {
 			},
 		})
 	} catch (error) {
-		if (error instanceof Error && error.message.includes('authorization')) {
+		if (isAuthenticationError(error)) {
 			return data(
 				{
 					success: false,

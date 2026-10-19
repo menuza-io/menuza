@@ -8,6 +8,7 @@ import { and, db, eq, Connection, User } from '@repo/database'
 import { data } from 'react-router'
 import { authenticator } from '#app/utils/auth.server.ts'
 import { createAuthenticatedSessionResponse } from '#app/utils/jwt.server.ts'
+import { checkSSOEnforcementByUserId } from '#app/utils/sso/enforcement.server.ts'
 import { type Route } from './+types/auth.$provider.callback.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -99,6 +100,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				)
 			}
 
+			const ssoEnforcement = await checkSSOEnforcementByUserId(
+				existingConnection.userId,
+			)
+			if (ssoEnforcement.enforced) {
+				return data(
+					{
+						success: false,
+						error: 'sso_required',
+						message: 'Your organization requires SSO login',
+					},
+					{ status: 403 },
+				)
+			}
+
 			// Use shared helper to create authenticated session response
 			const response = await createAuthenticatedSessionResponse(
 				existingConnection.userId,
@@ -128,6 +143,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 						success: false,
 						error: 'user_banned',
 						message: 'User account is banned',
+					},
+					{ status: 403 },
+				)
+			}
+
+			const ssoEnforcement = await checkSSOEnforcementByUserId(existingUser.id)
+			if (ssoEnforcement.enforced) {
+				return data(
+					{
+						success: false,
+						error: 'sso_required',
+						message: 'Your organization requires SSO login',
 					},
 					{ status: 403 },
 				)
@@ -189,7 +216,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 		// Use shared helper to create authenticated session response
 		const response = await createAuthenticatedSessionResponse(
-			session.id,
+			session.userId,
 			request,
 		)
 

@@ -79,6 +79,22 @@ function stubApi(
 	return calls
 }
 
+/**
+ * The save is fire-and-forget, and the editor reloads the policy once the save
+ * lands: wait for that reload before the test ends. A reload GET that slips out
+ * after the test runs on MSW's fetch again (the stub is gone), and its
+ * unhandled-request warning fails the whole run.
+ */
+async function waitForSaveReload(calls: Call[]) {
+	await waitFor(() =>
+		expect(
+			calls.filter(
+				(call) => call.method === 'GET' && call.url.endsWith('/policies/loc-1'),
+			).length,
+		).toBeGreaterThan(1),
+	)
+}
+
 const scopes = [{ id: 'loc-1', name: 'Downtown', timeZone: 'America/Chicago' }]
 
 function view(props: Partial<Parameters<typeof LaborPolicyEditor>[0]> = {}) {
@@ -190,6 +206,7 @@ describe('LaborPolicyEditor', () => {
 				screen.getByRole('button', { name: 'Save changes' }),
 			).toBeDisabled(),
 		)
+		await waitForSaveReload(calls)
 	})
 
 	it('sends the version it saw when changing an existing policy', async () => {
@@ -209,6 +226,7 @@ describe('LaborPolicyEditor', () => {
 			lateGraceMinutes: 9,
 			expectedVersion: 3,
 		})
+		await waitForSaveReload(calls)
 	})
 
 	it('shows the alert settings with their defaults and saves a change to one', async () => {
@@ -240,6 +258,7 @@ describe('LaborPolicyEditor', () => {
 		expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
 			noClockInAlertMinutes: null,
 		})
+		await waitForSaveReload(calls)
 	})
 
 	it('turns the other alerts off independently', async () => {
@@ -262,6 +281,7 @@ describe('LaborPolicyEditor', () => {
 			preShiftReminderMinutes: null,
 			overtimeAlertMinutes: null,
 		})
+		await waitForSaveReload(calls)
 	})
 
 	it('turns overtime on with a starting point', async () => {
@@ -431,6 +451,7 @@ describe('LaborPolicyEditor', () => {
 		expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
 			longShiftMinutes: 600,
 		})
+		await waitForSaveReload(calls)
 	})
 
 	it('explains an out-of-range sentence value and lets you discard it', async () => {

@@ -344,6 +344,55 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		try {
+			// Like role changes, removing a built-in admin is reserved for built-in
+			// admins: a tenant role with DELETE_MEMBER_ANY must not be able to lock
+			// admins out of the organization.
+			const [targetMembership] = await db
+				.select({ roleId: UserOrganization.organizationRoleId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, memberUserId),
+						eq(UserOrganization.organizationId, organization.id),
+					),
+				)
+				.limit(1)
+			if (targetMembership?.roleId === 'org_role_admin') {
+				const [actorAdmin] = await db
+					.select({ userId: UserOrganization.userId })
+					.from(UserOrganization)
+					.where(
+						and(
+							eq(UserOrganization.userId, userId),
+							eq(UserOrganization.organizationId, organization.id),
+							eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+							eq(UserOrganization.active, true),
+						),
+					)
+					.limit(1)
+				// The sole admin falls through to the last-admin check below.
+				const [otherAdmin] = actorAdmin
+					? []
+					: await db
+							.select({ userId: UserOrganization.userId })
+							.from(UserOrganization)
+							.where(
+								and(
+									eq(UserOrganization.organizationId, organization.id),
+									eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+									eq(UserOrganization.active, true),
+									ne(UserOrganization.userId, memberUserId),
+								),
+							)
+							.limit(1)
+				if (!actorAdmin && otherAdmin) {
+					return Response.json(
+						{ error: 'Only organization admins can remove admins' },
+						{ status: 403 },
+					)
+				}
+			}
+
 			// Removing an already-inactive member is an idempotent no-op; only the
 			// first removal is an auditable event.
 			const [before] = await db

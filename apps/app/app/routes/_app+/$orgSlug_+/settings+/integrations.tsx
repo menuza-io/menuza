@@ -14,6 +14,10 @@ import {
 } from '#app/components/settings/cards/organization/integrations-card.tsx'
 
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import {
+	requireUserWithOrganizationPermission,
+	ORG_PERMISSIONS,
+} from '#app/utils/organization/permissions.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
@@ -40,6 +44,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		name: true,
 		slug: true,
 	})
+
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+	)
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')
