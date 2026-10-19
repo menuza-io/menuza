@@ -13,7 +13,6 @@ export type ReservationsRouteKey =
 	| 'calendar'
 	| 'overview'
 	| 'waitlist'
-	| 'guests'
 	| 'experiences'
 	| 'settings'
 	| 'other'
@@ -29,12 +28,12 @@ export const HOST_ROUTE_KEYS: readonly ReservationsRouteKey[] = [
 ]
 
 /**
- * Detail pages (a guest profile, an experience editor) are a focused task with
+ * Detail pages (an experience editor) are a focused task with
  * a back link and the record's own title, so they render their own
  * `PageHeader` and the layout adds no header and no section tabs. Every other
  * route gets the layout header, then one tab bar.
  */
-const DETAIL_PARENTS: ReadonlySet<string> = new Set(['guests', 'experiences'])
+const DETAIL_PARENTS: ReadonlySet<string> = new Set(['experiences'])
 
 const KNOWN: ReadonlySet<string> = new Set([
 	'today',
@@ -44,7 +43,6 @@ const KNOWN: ReadonlySet<string> = new Set([
 	'calendar',
 	'overview',
 	'waitlist',
-	'guests',
 	'experiences',
 	'settings',
 ])
@@ -66,14 +64,7 @@ export function isHostRoute(key: ReservationsRouteKey): boolean {
 /** The section tab a route belongs to: every day view sits under Today. */
 export function reservationsSectionTab(
 	key: ReservationsRouteKey,
-):
-	| 'today'
-	| 'calendar'
-	| 'waitlist'
-	| 'guests'
-	| 'experiences'
-	| 'settings'
-	| null {
+): 'today' | 'calendar' | 'waitlist' | 'experiences' | 'settings' | null {
 	switch (key) {
 		case 'today':
 		case 'book':
@@ -83,7 +74,6 @@ export function reservationsSectionTab(
 			return 'today'
 		case 'calendar':
 		case 'waitlist':
-		case 'guests':
 		case 'experiences':
 		case 'settings':
 			return key
@@ -92,7 +82,7 @@ export function reservationsSectionTab(
 	}
 }
 
-/** True for `guests/<id>` and `experiences/<id>`: the screen owns its header. */
+/** True for `experiences/<id>`: the screen owns its header. */
 export function isDetailRoute(pathname: string, orgSlug: string): boolean {
 	const prefix = `/${orgSlug}/reservations/`
 	if (!pathname.startsWith(prefix)) return false

@@ -21,7 +21,7 @@ const fullNav = {
 	today: true,
 	book: true,
 	waitlist: true,
-	guests: true,
+	customers: true,
 	reports: true,
 	settings: true,
 }
@@ -293,7 +293,6 @@ describe('shell routes', () => {
 		['/acme/reservations/overview', 'overview', true, 'today'],
 		['/acme/reservations/calendar', 'calendar', true, 'calendar'],
 		['/acme/reservations/waitlist', 'waitlist', false, 'waitlist'],
-		['/acme/reservations/guests/g-1', 'guests', false, 'guests'],
 		['/acme/reservations/experiences/e-1', 'experiences', false, 'experiences'],
 		['/acme/reservations/settings/tables', 'settings', false, 'settings'],
 	])('%s', (pathname, key, host, tab) => {

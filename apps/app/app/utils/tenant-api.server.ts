@@ -65,11 +65,16 @@ export async function getOperatorTenantClient(
 	request: Request,
 	orgSlug: string,
 	options: {
-		scope?: 'mailbox' | 'phone_calls' | 'orders:read' | 'orders:write'
+		scope?:
+			'mailbox' | 'phone_calls' | 'orders:read' | 'orders:write' | 'people'
 		/** Lets tenant-api accept changes (e.g. completing or tagging calls). */
 		canUpdate?: boolean
 		/** Lets tenant-api accept destructive calls (e.g. deleting call logs). */
 		canDelete?: boolean
+		/** Extra signed claims for a scope that carries facets (`people`). */
+		claims?: Record<string, unknown>
+		/** Token lifetime; sensitive scopes use a short one. Default 15m. */
+		expiresIn?: '5m' | '15m'
 	} = {},
 ): Promise<OperatorTenantClient> {
 	const userId = await requireUserId(request)
@@ -111,6 +116,7 @@ export async function getOperatorTenantClient(
 
 	const secret = new TextEncoder().encode(operatorToken)
 	const jwt = await new SignJWT({
+		...options.claims,
 		orgId: organization.id,
 		role: 'operator',
 		scope: options.scope,
@@ -121,7 +127,7 @@ export async function getOperatorTenantClient(
 		.setProtectedHeader({ alg: 'HS256' })
 		.setAudience('tenant-api-operator')
 		.setIssuer(brand.shortName)
-		.setExpirationTime('15m')
+		.setExpirationTime(options.expiresIn ?? '15m')
 		.sign(secret)
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)

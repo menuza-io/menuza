@@ -44,14 +44,15 @@ Canonical guide:
 
 ## Reservations routes
 
-| Mount                          | Auth                                       | Purpose                                                                                               |
-| ------------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `/reservations/*`              | `Origin` (organization), capability tokens | Public booking, manage, waitlist, notify-me, experiences. `X-Client: ios \| android` is native.       |
-| `/operator/reservations/*`     | `rsv+jwt` minted by the App                | Setup, book, waitlist, guests, reports, payments (browser-direct)                                     |
-| `/internal/reservations/*`     | `INTERNAL_COMMAND_TOKEN`                   | `context-changed`, `erase-customer` (complete erase), `link-customers`, `summary`, `location-summary` |
-| `/api/reservations/tick`       | `INTERNAL_COMMAND_TOKEN`                   | Regional tick                                                                                         |
-| `/api/reservations/payments/*` | `INTERNAL_COMMAND_TOKEN`                   | App to region payment bridge (ids and amounts only)                                                   |
-| `/api/voice/actions/:name`     | `VOICE_AGENT_TOKEN`                        | Phone agent actions (`reservations.availability`, `.hold`, `.book`), US only                          |
+| Mount                          | Auth                                       | Purpose                                                                                                      |
+| ------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `/reservations/*`              | `Origin` (organization), capability tokens | Public booking, manage, waitlist, notify-me, experiences. `X-Client: ios \| android` is native.              |
+| `/operator/people/*`           | operator JWT, `scope: people`              | Customers screen: customers and reservation guests as one list, profile, edit, merge, erase (browser-direct) |
+| `/operator/reservations/*`     | `rsv+jwt` minted by the App                | Setup, book, waitlist, guests, reports, payments (browser-direct)                                            |
+| `/internal/reservations/*`     | `INTERNAL_COMMAND_TOKEN`                   | `context-changed`, `erase-customer` (complete erase), `link-customers`, `summary`, `location-summary`        |
+| `/api/reservations/tick`       | `INTERNAL_COMMAND_TOKEN`                   | Regional tick                                                                                                |
+| `/api/reservations/payments/*` | `INTERNAL_COMMAND_TOKEN`                   | App to region payment bridge (ids and amounts only)                                                          |
+| `/api/voice/actions/:name`     | `VOICE_AGENT_TOKEN`                        | Phone agent actions (`reservations.availability`, `.hold`, `.book`), US only                                 |
 
 Kill switches: `RESERVATIONS_PUBLIC_ENABLED` (503 on public routes),
 `RESERVATIONS_SMS_ENABLED`, `RESERVATIONS_EMAIL_ENABLED`; interval

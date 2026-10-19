@@ -1,6 +1,6 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
-import { type GuestTag } from '#app/utils/reservations/guests-api.ts'
+import { type PersonTag } from '#app/utils/people/people-api.ts'
 
 export const SYSTEM_TAG_LABELS: Record<string, MessageDescriptor> = {
 	first_visit: msg`First visit`,
@@ -9,17 +9,17 @@ export const SYSTEM_TAG_LABELS: Record<string, MessageDescriptor> = {
 
 const SYSTEM_TAG_ID_PREFIX = 'tag_sys_'
 
-export const GUEST_SORT_LABELS = {
-	updated: msg`Recently updated`,
+export const PEOPLE_SORT_LABELS = {
+	recent: msg`Recent activity`,
 	name: msg`Name`,
 	visits: msg`Most visits`,
 	last_visit: msg`Latest visit`,
 } as const
 
 /** Name of a tag for display: system tags are translated, custom ones keep their own name. */
-export function guestTagName(
+export function personTagName(
 	translate: (descriptor: MessageDescriptor) => string,
-	tag: Pick<GuestTag, 'id' | 'name' | 'system'>,
+	tag: Pick<PersonTag, 'id' | 'name' | 'system'>,
 ): string {
 	if (tag.system || tag.id.startsWith(SYSTEM_TAG_ID_PREFIX)) {
 		const key = tag.id.slice(SYSTEM_TAG_ID_PREFIX.length)
@@ -32,8 +32,8 @@ export function guestTagName(
 export type TagBadgeVariant =
 	'default' | 'secondary' | 'destructive' | 'warning'
 
-export function guestTagVariant(
-	tag: Pick<GuestTag, 'colorToken' | 'category' | 'system'>,
+export function personTagVariant(
+	tag: Pick<PersonTag, 'colorToken' | 'category' | 'system'>,
 ): TagBadgeVariant {
 	if (tag.colorToken === 'red') return 'destructive'
 	if (tag.category === 'dietary' || tag.colorToken === 'amber') return 'warning'

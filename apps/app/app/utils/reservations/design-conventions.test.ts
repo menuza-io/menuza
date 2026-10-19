@@ -66,12 +66,11 @@ const FILES = [
 	'components/reservations/waitlist/seat-dialog.tsx',
 	'components/reservations/waitlist/party-fields.tsx',
 	'components/reservations/waitlist/waitlist-clock.tsx',
-	'components/reservations/guests/guest-list-screen.tsx',
-	'components/reservations/guests/guest-profile-screen.tsx',
-	'components/reservations/guests/guest-notes-panel.tsx',
-	'components/reservations/guests/guest-merge-dialog.tsx',
-	'components/reservations/guests/guest-tag-badge.tsx',
-	'components/reservations/guest-profile-card.tsx',
+	'components/customers/people-list-screen.tsx',
+	'components/customers/person-profile-screen.tsx',
+	'components/customers/person-notes-panel.tsx',
+	'components/customers/person-merge-dialog.tsx',
+	'components/customers/person-tag-badge.tsx',
 	'utils/reservations/setup-issue-target.ts',
 	'routes/_app+/$orgSlug_+/reservations+/waitlist.tsx',
 	'routes/_app+/$orgSlug_+/reservations+/guests.tsx',
@@ -86,7 +85,6 @@ const SHEET_FILES = [
 	'components/reservations/conflict-panel.tsx',
 	'components/reservations/requests-panel.tsx',
 	'components/reservations/sheet-parts.tsx',
-	'components/reservations/guest-profile-card.tsx',
 	'components/reservations/channel-badge.tsx',
 	'components/reservations/payment-badge.tsx',
 ]
@@ -145,7 +143,6 @@ describe('payments and experiences UI follows the design conventions', () => {
 /** Screens that live under the layout header: they put actions in the header slot, never their own page header. */
 const HEADERLESS_SCREENS = [
 	'components/reservations/waitlist/waitlist-screen.tsx',
-	'components/reservations/guests/guest-list-screen.tsx',
 	'components/reservations/experiences/experiences-screen.tsx',
 ]
 
@@ -167,11 +164,10 @@ const NO_NATIVE_CONTROLS = [
 	'components/reservations/waitlist/edit-party-dialog.tsx',
 	'components/reservations/waitlist/seat-dialog.tsx',
 	'components/reservations/waitlist/party-fields.tsx',
-	'components/reservations/guests/guest-list-screen.tsx',
-	'components/reservations/guests/guest-profile-screen.tsx',
-	'components/reservations/guests/guest-notes-panel.tsx',
-	'components/reservations/guests/guest-merge-dialog.tsx',
-	'components/reservations/guest-profile-card.tsx',
+	'components/customers/people-list-screen.tsx',
+	'components/customers/person-profile-screen.tsx',
+	'components/customers/person-notes-panel.tsx',
+	'components/customers/person-merge-dialog.tsx',
 ]
 
 describe('polished screens use the shared controls', () => {

@@ -23,8 +23,6 @@ describe('reservationsHeaderShowsDate', () => {
 		['/acme/reservations/calendar', true],
 		['/acme/reservations/overview', true],
 		['/acme/reservations/waitlist', false],
-		['/acme/reservations/guests', false],
-		['/acme/reservations/guests/g-1', false],
 		['/acme/reservations/experiences', false],
 		['/acme/reservations/experiences/exp-1', false],
 		['/acme/reservations/settings/policies', false],

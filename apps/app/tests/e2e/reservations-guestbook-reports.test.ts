@@ -57,33 +57,34 @@ function json(route: any, data: unknown, status = 200) {
 	})
 }
 
-function guestRow(
-	id: string,
-	firstName: string,
-	lastName: string,
+function personRow(
+	key: string,
+	name: string,
 	overrides: Record<string, unknown> = {},
 ) {
 	return {
-		id,
-		firstName,
-		lastName,
-		name: `${firstName} ${lastName}`,
-		phoneE164: '+15555550101',
-		email: `${firstName.toLowerCase()}@example.test`,
-		locale: 'en',
-		allergyNotes: null,
-		hasAllergy: false,
-		visits: 3,
-		covers: 8,
-		noShows: 0,
-		cancels: 0,
-		lateCancels: 0,
-		firstVisitAt: null,
-		lastVisitAt: null,
-		erasedAt: null,
+		key,
+		kind: 'guest',
+		name,
+		phone: '+15555550101',
+		email: `${name.split(' ')[0]!.toLowerCase()}@example.test`,
+		status: 'guest_no_sign_in',
+		signedIn: false,
+		hasDining: true,
 		customerLinked: false,
-		version: 1,
+		walkIn: false,
+		dining: {
+			visits: 3,
+			covers: 8,
+			noShows: 0,
+			lastVisitAt: null,
+			nextBookingAt: null,
+		},
+		orders: null,
+		flags: { vip: false, allergy: false, noShowRisk: false },
 		tags: [] as unknown[],
+		createdAt: 1,
+		lastActivityAt: 1,
 		...overrides,
 	}
 }
@@ -93,13 +94,17 @@ async function stubApi(page: Page, locationId: string) {
 	const vip = {
 		id: 'tag_vip',
 		name: 'VIP',
-		category: 'general',
+		category: 'vip',
 		colorToken: 'amber',
 		sensitive: false,
+		system: false,
 	}
-	const guests = [
-		guestRow('g1', 'Rana', 'Saleh'),
-		guestRow('g2', 'Omar', 'Fadel', { tags: [vip] }),
+	const people = [
+		personRow('g_g1', 'Rana Saleh'),
+		personRow('g_g2', 'Omar Fadel', {
+			tags: [vip],
+			flags: { vip: true, allergy: false, noShowRisk: false },
+		}),
 	]
 	let notes: Array<{
 		id: string
@@ -108,6 +113,120 @@ async function stubApi(page: Page, locationId: string) {
 		createdAt: number
 	}> = []
 	let nextNote = 1
+
+	await page.route('**/operator/people**', async (route) => {
+		const request = route.request()
+		if (request.method() === 'OPTIONS') {
+			return route.fulfill({ status: 204, headers: CORS })
+		}
+		const url = new URL(request.url())
+		const path = url.pathname
+		const method = request.method()
+		const body = request.postDataJSON?.() ?? null
+		requests.push({
+			method,
+			path,
+			search: url.search,
+			body,
+			authorization: request.headers()['authorization'],
+		})
+		if (path === '/operator/people/tags') {
+			return json(route, { tags: [vip] })
+		}
+		if (path === '/operator/people' && method === 'GET') {
+			const q = (url.searchParams.get('q') ?? '').toLowerCase()
+			const onlyVip = url.searchParams.get('vip') === '1'
+			const rows = people.filter(
+				(p) =>
+					(!q || p.name.toLowerCase().includes(q)) && (!onlyVip || p.flags.vip),
+			)
+			return json(route, {
+				people: rows,
+				nextCursor: null,
+				total: rows.length,
+				meta: { hasOrders: false, walkInCount: 0 },
+			})
+		}
+		const notesPath = path.match(/^\/operator\/people\/([^/]+)\/notes$/)
+		if (notesPath && method === 'POST') {
+			const note = {
+				id: `n${nextNote++}`,
+				body: body.body,
+				pinned: Boolean(body.pinned),
+				createdAt: Date.now(),
+			}
+			notes = [note, ...notes]
+			return json(route, { note }, 201)
+		}
+		const profile = path.match(/^\/operator\/people\/([^/]+)$/)
+		if (profile && method === 'GET') {
+			const person = people.find(
+				(p) => p.key === decodeURIComponent(profile[1]!),
+			)
+			if (!person) return json(route, { error: 'not_found' }, 404)
+			return json(route, {
+				key: person.key,
+				canonicalKey: person.key,
+				kind: 'guest',
+				status: 'guest_no_sign_in',
+				signedIn: false,
+				customerLinked: false,
+				walkIn: false,
+				name: person.name,
+				phone: person.phone,
+				email: person.email,
+				customer: null,
+				marketing: null,
+				access: {
+					customers: true,
+					dining: 'full',
+					canUpdateCustomers: true,
+					canUpdateDining: true,
+					canDelete: false,
+				},
+				dining: {
+					guest: {
+						id: person.key.slice(2),
+						firstName: person.name.split(' ')[0],
+						lastName: person.name.split(' ')[1],
+						phone: person.phone,
+						email: person.email,
+						locale: 'en',
+						allergyNotes: null,
+						hasAllergy: false,
+						visits: 3,
+						covers: 8,
+						noShows: 0,
+						lateCancels: 0,
+						cancels: 0,
+						firstVisitAt: null,
+						lastVisitAt: null,
+						version: 1,
+						tags: person.tags,
+					},
+					nextBookingAt: null,
+					notes,
+					pinnedNotes: notes.filter((n) => n.pinned),
+					reservations: [
+						{
+							id: 'r1',
+							locationId,
+							businessDate: TODAY,
+							localStartMin: 1110,
+							partySize: 2,
+							status: 'completed',
+							channel: 'online',
+							lateCancel: false,
+							serviceName: 'Dinner',
+							guestRequests: null,
+							dietaryNotes: null,
+						},
+					],
+				},
+			})
+		}
+		return json(route, { ok: true })
+	})
 
 	await page.route('**/operator/reservations/**', async (route) => {
 		const request = route.request()
@@ -150,65 +269,14 @@ async function stubApi(page: Page, locationId: string) {
 			})
 		}
 
-		if (path === '/operator/reservations/guests/tags') {
-			return json(route, { tags: [vip] })
-		}
-		if (path === '/operator/reservations/guests' && method === 'GET') {
-			const q = (url.searchParams.get('q') ?? '').toLowerCase()
-			const tag = url.searchParams.get('tag')
-			const rows = guests.filter(
-				(g) =>
-					(!q || g.name.toLowerCase().includes(q)) &&
-					(!tag || g.tags.length > 0),
-			)
-			return json(route, { guests: rows, nextCursor: null, total: rows.length })
-		}
-
-		const profile = path.match(/^\/operator\/reservations\/guests\/([^/]+)$/)
-		if (profile && method === 'GET') {
-			const guest = guests.find((g) => g.id === profile[1])
-			if (!guest) return json(route, { error: 'not_found' }, 404)
-			return json(route, {
-				guest,
-				notes,
-				pinnedNotes: notes.filter((n) => n.pinned),
-				reservations: [
-					{
-						id: 'r1',
-						locationId,
-						businessDate: TODAY,
-						localStartMin: 1110,
-						partySize: 2,
-						status: 'completed',
-						channel: 'online',
-						lateCancel: false,
-						serviceName: 'Dinner',
-					},
-				],
-			})
-		}
-		const notesPath = path.match(
-			/^\/operator\/reservations\/guests\/([^/]+)\/notes$/,
-		)
-		if (notesPath && method === 'POST') {
-			const note = {
-				id: `n${nextNote++}`,
-				body: body.body,
-				pinned: Boolean(body.pinned),
-				createdAt: Date.now(),
-			}
-			notes = [note, ...notes]
-			return json(route, { note }, 201)
-		}
-
 		return json(route, { ok: true })
 	})
 
 	return { requests }
 }
 
-test.describe('Reservations guestbook, generic reports link and Bookings today block', () => {
-	test('Guestbook lists, searches, filters by tag and keeps notes with the profile', async ({
+test.describe('Customers people list, reservation reports on the main Reports page and Bookings today block', () => {
+	test('Customers lists guests and customers together, searches and filters on the server and keeps notes with the profile', async ({
 		page,
 		login,
 		navigate,
@@ -220,18 +288,19 @@ test.describe('Reservations guestbook, generic reports link and Bookings today b
 		await enableFlags(org.id)
 		const { requests } = await stubApi(page, location.id)
 
-		await navigate('/:slug/reservations/guests', { slug: org.slug })
-		await expect(page.getByTestId('guest-row-g1')).toBeVisible()
-		await expect(page.getByTestId('guest-row-g2')).toBeVisible()
-		await expect(page.getByTestId('guests-count')).toContainText('2')
+		await navigate('/:slug/customers', { slug: org.slug })
+		await expect(page.getByTestId('person-row-g_g1')).toBeVisible()
+		await expect(page.getByTestId('person-row-g_g2')).toBeVisible()
+		await expect(page.getByTestId('person-status-guest').first()).toBeVisible()
+		await expect(page.getByTestId('customers-count')).toContainText('2')
 
-		await page.getByTestId('guests-search').fill('omar')
-		await expect(page.getByTestId('guest-row-g1')).toHaveCount(0)
-		await expect(page.getByTestId('guest-row-g2')).toBeVisible()
+		await page.getByTestId('customers-search').fill('omar')
+		await expect(page.getByTestId('person-row-g_g1')).toHaveCount(0)
+		await expect(page.getByTestId('person-row-g_g2')).toBeVisible()
 		expect(
 			requests.some(
 				(r) =>
-					r.path === '/operator/reservations/guests' &&
+					r.path === '/operator/people' &&
 					r.search.includes('q=omar') &&
 					r.search.includes('limit=50'),
 			),
@@ -240,16 +309,15 @@ test.describe('Reservations guestbook, generic reports link and Bookings today b
 			true,
 		)
 
-		await page.getByTestId('guests-search').fill('')
-		await expect(page.getByTestId('guest-row-g1')).toBeVisible()
-		await page.getByTestId('guests-tag-filter').click()
-		await page.getByRole('option', { name: 'VIP' }).click()
-		await expect(page.getByTestId('guest-row-g1')).toHaveCount(0)
-		await expect(page.getByTestId('guest-row-g2')).toBeVisible()
+		await page.getByTestId('customers-search').fill('')
+		await expect(page.getByTestId('person-row-g_g1')).toBeVisible()
+		await page.getByTestId('customers-filter-vip').click()
+		await expect(page.getByTestId('person-row-g_g1')).toHaveCount(0)
+		await expect(page.getByTestId('person-row-g_g2')).toBeVisible()
 
-		await page.getByTestId('guest-link-g2').click()
-		await expect(page.getByTestId('guest-profile-screen')).toBeVisible()
-		await expect(page.getByTestId('guest-history')).toBeVisible()
+		await page.getByTestId('person-link-g_g2').click()
+		await expect(page.getByTestId('person-profile-screen')).toBeVisible()
+		await expect(page.getByTestId('person-history')).toBeVisible()
 		await page.getByTestId('guest-note-input').fill('Prefers the window')
 		await page.getByTestId('guest-note-pin-new').click()
 		await page.getByTestId('guest-note-add').click()
@@ -257,15 +325,19 @@ test.describe('Reservations guestbook, generic reports link and Bookings today b
 			'Prefers the window',
 		)
 		const note = requests.find(
-			(r) => r.method === 'POST' && r.path.endsWith('/g2/notes'),
+			(r) => r.method === 'POST' && r.path.endsWith('/g_g2/notes'),
 		)
 		expect(note?.body).toMatchObject({
 			body: 'Prefers the window',
 			pinned: true,
 		})
+
+		// The old Guests address lands on Customers.
+		await page.goto(`/${org.slug}/reservations/guests`)
+		await expect(page).toHaveURL(new RegExp(`/${org.slug}/customers`))
 	})
 
-	test('Reservations Reports links to the generic Reports page, opens the Reservations templates and runs one straight from tenant-api', async ({
+	test('Reservation reports live on the main Reports page (no Reservations tab or menu item) and run one straight from tenant-api', async ({
 		page,
 		login,
 		navigate,
@@ -316,15 +388,12 @@ test.describe('Reservations guestbook, generic reports link and Bookings today b
 		})
 
 		await navigate('/:slug/reservations/today', { slug: org.slug })
-		// Reports is a plain link out of Reservations, not a screen of its own.
-		await page
-			.getByRole('navigation', { name: 'Reservations sections' })
-			.getByRole('link', { name: 'Reports' })
-			.click()
-		await expect(page).toHaveURL(
-			new RegExp(`/${org.slug}/reports\\?category=Reservations`),
-		)
-		await expect(page).toHaveURL(new RegExp(`location=${location.id}`))
+		// Reports is not a Reservations tab: it is the "Reservations" group on the
+		// main Reports page, reached from the Reports sidebar entry.
+		const tabs = page.getByRole('navigation', { name: 'Reservations sections' })
+		await expect(tabs.getByRole('link', { name: 'Reports' })).toHaveCount(0)
+		await expect(tabs.getByRole('link', { name: 'Guests' })).toHaveCount(0)
+		await page.goto(`/${org.slug}/reports?location=${location.id}`)
 		await expect(
 			page.getByRole('link', { name: /No-shows & cancellations/ }),
 		).toBeVisible()

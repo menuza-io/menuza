@@ -12,7 +12,8 @@ const nav = {
 	today: true,
 	book: true,
 	waitlist: true,
-	guests: true,
+	customers: true,
+	experiences: true,
 	reports: true,
 	settings: true,
 }
@@ -60,14 +61,7 @@ describe('ReservationsChrome', () => {
 			within(tabs)
 				.getAllByRole('link')
 				.map((link) => link.textContent),
-		).toEqual([
-			'Today',
-			'Calendar',
-			'Guests',
-			'Waitlist',
-			'Reports',
-			'Settings',
-		])
+		).toEqual(['Today', 'Calendar', 'Waitlist', 'Experiences', 'Settings'])
 		expect(tabs.innerHTML).not.toMatch(/bg-primary/)
 	})
 
@@ -124,7 +118,6 @@ describe('ReservationsChrome', () => {
 
 	it.each([
 		['waitlist', 'Waitlist'],
-		['guests', 'Guests'],
 		['experiences', 'Experiences'],
 	])('renders the layout header, then one tab bar, on %s', (segment, title) => {
 		renderChrome(`/acme/reservations/${segment}`, {
@@ -146,25 +139,24 @@ describe('ReservationsChrome', () => {
 		).toBeTruthy()
 	})
 
-	it('links the Reports tab to the generic Reports page on its Reservations category, keeping the location', () => {
+	it('has neither a Reports tab (it is a group on the main Reports page) nor a Guests tab (it is Customers)', () => {
 		renderChrome('/acme/reservations/waitlist', {
 			children: <p>screen</p>,
 		})
 		const tabs = screen.getByRole('navigation', {
 			name: 'Reservations sections',
 		})
-		const link = within(tabs).getByRole('link', { name: 'Reports' })
-		const href = link.getAttribute('href')!
-		expect(href.startsWith('/acme/reports?')).toBe(true)
-		const query = new URLSearchParams(href.split('?')[1])
-		expect(query.get('category')).toBe('Reservations')
-		expect(query.get('location')).toBeTruthy()
-		// It is a link out, never the current section.
-		expect(link.getAttribute('aria-current')).toBeNull()
+		expect(within(tabs).queryByRole('link', { name: 'Reports' })).toBeNull()
+		expect(within(tabs).queryByRole('link', { name: 'Guests' })).toBeNull()
+		expect(
+			within(tabs)
+				.getAllByRole('link')
+				.map((link) => link.textContent),
+		).toEqual(['Today', 'Calendar', 'Waitlist', 'Experiences', 'Settings'])
 	})
 
 	it('leaves detail pages their own header and adds no tab bar above it', () => {
-		renderChrome('/acme/reservations/guests/g1', {
+		renderChrome('/acme/reservations/experiences/e1', {
 			children: <h1>Rana Haddad</h1>,
 		})
 		expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)

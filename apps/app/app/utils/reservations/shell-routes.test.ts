@@ -6,21 +6,22 @@ describe('shell routes', () => {
 		expect(reservationsRouteKey('/acme/reservations/waitlist', 'acme')).toBe(
 			'waitlist',
 		)
+		// Guests moved to Customers, so the old path is no Reservations screen.
 		expect(reservationsRouteKey('/acme/reservations/guests/g1', 'acme')).toBe(
-			'guests',
+			'other',
 		)
 		expect(reservationsRouteKey('/other/reservations/waitlist', 'acme')).toBe(
 			'other',
 		)
 	})
 
-	it('treats only guest and experience records as detail pages', () => {
-		expect(isDetailRoute('/acme/reservations/guests/g1', 'acme')).toBe(true)
+	it('treats only experience records as detail pages', () => {
+		expect(isDetailRoute('/acme/reservations/guests/g1', 'acme')).toBe(false)
 		expect(isDetailRoute('/acme/reservations/experiences/e1', 'acme')).toBe(
 			true,
 		)
-		expect(isDetailRoute('/acme/reservations/guests', 'acme')).toBe(false)
-		expect(isDetailRoute('/acme/reservations/guests/', 'acme')).toBe(false)
+		expect(isDetailRoute('/acme/reservations/experiences', 'acme')).toBe(false)
+		expect(isDetailRoute('/acme/reservations/experiences/', 'acme')).toBe(false)
 		expect(isDetailRoute('/acme/reservations/waitlist', 'acme')).toBe(false)
 		expect(isDetailRoute('/acme/reservations/settings/tables', 'acme')).toBe(
 			false,

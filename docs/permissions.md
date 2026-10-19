@@ -185,19 +185,19 @@ device secret lives on the tablet), so revoke kiosks before turning a flag off.
 
 ### Reservations permissions
 
-The Reservations module (host stand, booking sheet, waitlist, guestbook CRM,
-setup, experiences, reports, and deposit/prepayment refunds) uses 8 organization
-permissions added by control-plane migration `0025_reservations_foundation` and
-mirrored in `ORG_PERMISSIONS`
-(`packages/auth/src/organization-permissions.server.ts`), `@repo/reservations`
-(`RESERVATIONS_PERMISSIONS`), `TENANT_ROLE_PERMISSION_IDS`, the role editor
-groups, and `packages/database/setup-roles.ts`.
+The Reservations module (host stand, booking sheet, waitlist, guest profiles in
+Customers, setup, experiences, reports (the Reservations group of the main
+Reports page), and deposit/prepayment refunds) uses 8 organization permissions
+added by control-plane migration `0025_reservations_foundation` and mirrored in
+`ORG_PERMISSIONS` (`packages/auth/src/organization-permissions.server.ts`),
+`@repo/reservations` (`RESERVATIONS_PERMISSIONS`), `TENANT_ROLE_PERMISSION_IDS`,
+the role editor groups, and `packages/database/setup-roles.ts`.
 
 | Permission                        | Covers                                                                                                                |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `read:reservation:any`            | View Today host stand, Book day sheet, floor availability, and Waitlist                                               |
 | `update:reservation:any`          | Create/edit/cancel bookings, seat/unseat/move tables, manage walk-ins and waitlist                                    |
-| `read:reservation_guest:any`      | View Guestbook CRM profiles, tags, visit/no-show history, and notes                                                   |
+| `read:reservation_guest:any`      | View the dining facet of Customers: allergy, tags, visit/no-show history, and notes (guests are part of Customers)    |
 | `update:reservation_guest:any`    | Edit guest profiles, tags, dietary/private notes, and merge duplicate guests                                          |
 | `read:reservation_settings:any`   | View floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences                          |
 | `update:reservation_settings:any` | Edit floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences                          |

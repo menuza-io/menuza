@@ -47,7 +47,7 @@ function reservation(): DayReservationView {
 	} as unknown as DayReservationView
 }
 
-function renderSheet(nav: { guests: boolean }) {
+function renderSheet(nav: { customers: boolean }) {
 	renderStaff(
 		<Routes>
 			<Route element={<Outlet context={{ orgSlug: 'acme', nav }} />} path="*">
@@ -75,8 +75,8 @@ describe('DetailSheet guest summary', () => {
 		fetchReservationDetail.mockRejectedValue(new Error('offline'))
 	})
 
-	it('shows pinned notes and the linked customer, with a link for guest readers', async () => {
-		renderSheet({ guests: true })
+	it('shows pinned notes and the linked customer, with a customer profile link for guest readers', async () => {
+		renderSheet({ customers: true })
 		expect(
 			await screen.findByTestId('detail-guest-pinned-notes'),
 		).toHaveTextContent('Celebrating an anniversary')
@@ -85,12 +85,12 @@ describe('DetailSheet guest summary', () => {
 		).toBeInTheDocument()
 		expect(screen.getByTestId('detail-guest-profile-link')).toHaveAttribute(
 			'href',
-			'/acme/reservations/guests/g_1',
+			'/acme/customers/g_g_1',
 		)
 	})
 
 	it('offers no profile link without the guest grant', async () => {
-		renderSheet({ guests: false })
+		renderSheet({ customers: false })
 		await screen.findByTestId('detail-guest-pinned-notes')
 		expect(
 			screen.queryByTestId('detail-guest-profile-link'),

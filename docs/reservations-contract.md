@@ -114,6 +114,8 @@ Route families (aliases such as `/combos` and `/combinations` are not listed):
   `/:id/status`, `/:id/seat`.
 - **Guests:** list, `lookup`, create, `tags` (+ `/:tagId`), `merge`, `/:id`,
   `/:id/tags`, `/:id/notes`, `/:id/summary`, `/:id/export`, `POST /:id/erase`.
+  These are the facet API (booking sheet search, detail sheet); the Customers
+  screen uses `/operator/people` (section 4) instead.
 - **Reports:** none. Reservation reports run through the generic report token
   (`GET /<orgSlug>/reports/token`, subjects `bookings`, `waitlist_entries`,
   `pacing_slots`) and tenant-api `POST /analytics/query`; see
@@ -430,3 +432,44 @@ byte identity, no database) and
 `apps/tenant-api/src/routes/reservations-contract.test.ts` (live responses must
 match the fixtures key for key; a verified customer token passes with the
 Turnstile secret set, the same call without it answers 403).
+
+## 4. People API (`/operator/people` on `apps/tenant-api`)
+
+The Customers screen's API, browser-direct. Auth is the operator token with
+`scope: 'people'` (`aud: tenant-api-operator`, HS256 with
+`TENANT_OPERATOR_TOKEN`) minted by `GET /<orgSlug>/people-token`. One token
+carries the claims for both facets, and the API decides field by field; a
+request can never widen them:
+
+| Claim             | Meaning                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `peopleCustomers` | Customer facet: contact, orders summary, consent (`read:settings:any`)             |
+| `peopleDining`    | `flags` (counters, non-sensitive tags) or `full` (`read:reservation_guest:any`)    |
+| `canUpdate`       | Edit customer name and email (`update:settings:any`)                               |
+| `canUpdateGuest`  | Edit dining data, tags, notes, merge (`update:reservation_guest:any`, `full` only) |
+| `canDelete`       | Erase a person                                                                     |
+
+No claim means no facet (`403 insufficient_permissions`). `full` tokens last 5
+minutes, others 15. The guestbook is organization-wide, so no location claim.
+
+- `GET /operator/people`: `q`, `vip`, `allergy` (needs `full`), `lapsed` +
+  `lapsedDays`, `upcoming`, `noShowRisk`, `hasDining`, `account`
+  (`signed_in|guest_only`), `includeWalkIns`, `sort`
+  (`recent|name|visits|last_visit`), `cursor`, `limit` (max 50). Returns
+  `{ people, nextCursor, total, meta: { hasOrders, walkInCount } }`. A row has
+  `key` (`c_<customerId>` or `g_<guestId>`), `status`
+  (`signed_in|guest_no_sign_in|unverified`), `signedIn`, `customerLinked`,
+  `hasDining`, `walkIn`, `dining`, `orders`, `flags` (`allergy` is `null`
+  without the guest grant), `tags`.
+- `GET /operator/people/:key`: contact, `customer` facet (orders summary),
+  `dining` facet (counters, next booking, tags, notes, allergy, history per
+  grants), `marketing` (from `customer_subscriptions`), `canonicalKey`,
+  `access`.
+- `PATCH /operator/people/:key`: `name`, `email`, `phone` (guest-only people),
+  `allergyNotes` (`full`), `expectedVersion`. A customer's phone is refused
+  (`phone_managed_by_sign_in`).
+- `GET|POST /tags`, `POST|DELETE /:key/tags`, `POST|PATCH|DELETE /:key/notes`,
+  `GET /:key/export`, `POST /merge` (`{ keepKey, mergeKey, keepVersion? }`),
+  `POST /:key/erase` (the single erase flow, needs `canDelete`).
+- Errors: `409 merge_conflicting_customers`, `409 no_dining_profile`,
+  `409 stale_version`, `404 not_found`, `403 insufficient_permissions`.

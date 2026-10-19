@@ -1,4 +1,6 @@
 import {
+	hasGrantSatisfying,
+	RESERVATIONS_PERMISSIONS,
 	type ReservationsFeatureState,
 	type ReservationsPermission,
 } from '@repo/reservations'
@@ -15,7 +17,8 @@ export type ReservationsNavAccess = {
 	today: boolean
 	book: boolean
 	waitlist: boolean
-	guests: boolean
+	/** May open the Customers screen's dining facet (guest read grant). */
+	customers: boolean
 	experiences: boolean
 	reports: boolean
 	settings: boolean
@@ -26,7 +29,7 @@ export const HIDDEN_RESERVATIONS_NAV: ReservationsNavAccess = {
 	today: false,
 	book: false,
 	waitlist: false,
-	guests: false,
+	customers: false,
 	experiences: false,
 	reports: false,
 	settings: false,
@@ -67,17 +70,19 @@ export function computeReservationsNavAccess(
 	const today = canSeeReservationsSection('today', features, grants)
 	const book = canSeeReservationsSection('book', features, grants)
 	const waitlist = canSeeReservationsSection('waitlist', features, grants)
-	const guests = canSeeReservationsSection('guests', features, grants)
+	const customers = hasGrantSatisfying(
+		Array.from(grants),
+		RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+	)
 	const experiences = canSeeReservationsSection('experiences', features, grants)
 	const reports = canSeeReservationsSection('reports', features, grants)
 	const settings = canSeeReservationsSection('settings', features, grants)
 	return {
-		visible:
-			today || book || waitlist || guests || experiences || reports || settings,
+		visible: today || book || waitlist || experiences || reports || settings,
 		today,
 		book,
 		waitlist,
-		guests,
+		customers,
 		experiences,
 		reports,
 		settings,

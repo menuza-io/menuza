@@ -1,8 +1,9 @@
 # Reservations module
 
 The Reservations module is a restaurant reservations, floor-plan and table
-management, waitlist, guestbook CRM, prepaid experiences and booking-protection
-system. It is **off for every organization until a feature flag turns it on**.
+management, waitlist, guest profiles (shown in Customers), prepaid experiences
+and booking-protection system. It is **off for every organization until a
+feature flag turns it on**.
 
 This page is the operator guide and runbook. Architectural decisions and the
 data-residency split live in
@@ -13,19 +14,27 @@ and grants live in [permissions](./permissions.md).
 
 ## Features
 
-| Section     | Route                                      | What operators can do                                                                                                                                    | Flag                       |
-| ----------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Overview    | `/<orgSlug>/reservations/overview`         | Location summary, today's covers, pending requests                                                                                                       | `reservations.enabled`     |
-| Today       | `/<orgSlug>/reservations/today`            | Live host stand: floor canvas, party drawer, seat/unseat/move tables, walk-ins, table blocks                                                             | `reservations.enabled`     |
-| Floor       | `/<orgSlug>/reservations/floor`            | Floor canvas on its own                                                                                                                                  | `reservations.enabled`     |
-| Timeline    | `/<orgSlug>/reservations/timeline`         | Table-by-time grid for the business date                                                                                                                 | `reservations.enabled`     |
-| Book        | `/<orgSlug>/reservations/book`             | Day sheet, create/edit bookings, approve or decline large-party requests, overbook with a reason                                                         | `reservations.enabled`     |
-| Calendar    | `/<orgSlug>/reservations/calendar`         | Month view with availability per day                                                                                                                     | `reservations.enabled`     |
-| Waitlist    | `/<orgSlug>/reservations/waitlist`         | Walk-in and online waitlist queue, quoted waits, notify/summon, seat directly to a table                                                                 | `reservations.waitlist`    |
-| Guests      | `/<orgSlug>/reservations/guests`           | Guestbook CRM, tags, visit/no-show/spend counters, dietary notes, merge (blocked for two different customers), export, erase (the complete person erase) | `reservations.enabled`     |
-| Experiences | `/<orgSlug>/reservations/experiences`      | Ticketed tastings and events with schedules, occurrences, and per-cover or flat pricing                                                                  | `reservations.experiences` |
-| Reports     | `/<orgSlug>/reports?category=Reservations` | A link to the generic Reports page on its Reservations templates (see Reservation reports below); `/reservations/reports` redirects there                | `reservations.enabled`     |
-| Settings    | `/<orgSlug>/reservations/settings`         | Floor plan, tables, sections, services, special days, pacing, waitlist, policies (deposit, card guarantee), messages                                     | `reservations.enabled`     |
+| Section     | Route                                 | What operators can do                                                                                                | Flag                       |
+| ----------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Overview    | `/<orgSlug>/reservations/overview`    | Location summary, today's covers, pending requests                                                                   | `reservations.enabled`     |
+| Today       | `/<orgSlug>/reservations/today`       | Live host stand: floor canvas, party drawer, seat/unseat/move tables, walk-ins, table blocks                         | `reservations.enabled`     |
+| Floor       | `/<orgSlug>/reservations/floor`       | Floor canvas on its own                                                                                              | `reservations.enabled`     |
+| Timeline    | `/<orgSlug>/reservations/timeline`    | Table-by-time grid for the business date                                                                             | `reservations.enabled`     |
+| Book        | `/<orgSlug>/reservations/book`        | Day sheet, create/edit bookings, approve or decline large-party requests, overbook with a reason                     | `reservations.enabled`     |
+| Calendar    | `/<orgSlug>/reservations/calendar`    | Month view with availability per day                                                                                 | `reservations.enabled`     |
+| Waitlist    | `/<orgSlug>/reservations/waitlist`    | Walk-in and online waitlist queue, quoted waits, notify/summon, seat directly to a table                             | `reservations.waitlist`    |
+| Experiences | `/<orgSlug>/reservations/experiences` | Ticketed tastings and events with schedules, occurrences, and per-cover or flat pricing                              | `reservations.experiences` |
+| Settings    | `/<orgSlug>/reservations/settings`    | Floor plan, tables, sections, services, special days, pacing, waitlist, policies (deposit, card guarantee), messages | `reservations.enabled`     |
+
+Guests and reports are not screens of this module. **Guests are now part of
+Customers** (see [People](#people-customers-is-the-one-people-screen) below) and
+reports are the **Reservations** group on the main Reports page (see Reservation
+reports). `/reservations/guests` and `/reservations/guests/<id>` redirect to
+`/<orgSlug>/customers` and `/<orgSlug>/customers/g_<id>`;
+`/reservations/reports` redirects to
+`/<orgSlug>/reports?category=Reservations&location=<active>`. The sidebar group
+and the page tab bar are Today, Calendar, Waitlist, Experiences and Settings
+(each gated by its flag and permission).
 
 Guest-facing surfaces: the Sites `/reserve` pages (book, `/reserve/manage`,
 `/reserve/waitlist`, `/reserve/pay`), the native iOS and Android booking flows
@@ -38,6 +47,59 @@ Also in the module: marketing journeys (`reservation_booked`,
 [Staffing](./staffing.md#demand-sources-and-standards-per-unit)), manager alerts
 (large-party request, remote waitlist join, unassigned conflict, payment failed
 or in review, dispute opened) and the hourly payment reconcile job.
+
+## People: Customers is the one people screen
+
+There is one people screen, **Customers** (`/<orgSlug>/customers`, profile at
+`/<orgSlug>/customers/<key>`). Reservation guests are a facet of it, not a
+second list: the Reservations Guests screen is gone. Two tables remain
+underneath in the same regional database (`customers`: sign-in, orders, consent;
+`rsv_guests`: dining history) and the screen joins them through
+`GET /operator/people`.
+
+- **One row per person.** `c_<customerId>` is a customer, with the guest linked
+  to it (strict verified-phone link, `rsv_guests.customer_id`) as its dining
+  facet. `g_<guestId>` is a guest with no linked customer, labelled **Guest, no
+  sign-in** (a customer who never verified is **Not verified**). The unverified
+  customer row a booking-form consent creates is a consent shadow of its guest:
+  hidden, and its key resolves to the guest. A guest key resolves to its
+  customer, a merged guest to the survivor.
+- **Walk-ins** (a guest with no phone and no email) are hidden by default; the
+  filter **Show walk-ins without contact details** reveals them.
+- **List:** server paging (keyset cursor, 50 a page), server search by name,
+  phone or email, server filters (VIP, Has allergy, Lapsed 90 days, Upcoming
+  booking, Signed in, Guest only, Show walk-ins) and sorts (recent activity,
+  name, visits, last visit). Columns: Name with status, Contact, Visits, Last
+  visit, Next booking, Orders (when the organization has orders) and Flags (VIP,
+  Allergy, No-show risk). Visits and orders are never summed. **New
+  reservation** is a header action only when reservations are on and the member
+  can book.
+- **Profile** (sections, not tabs): Contact (edit), Dining (counters, tags,
+  allergy, pinned notes), Notes, Reservation history, Marketing messages
+  (`customer_subscriptions`, the one consent source), Duplicates and data (merge
+  a duplicate, export, **erase**).
+- **Who sees what** (claims of one browser-direct `people` token, see the
+  [contract](./reservations-contract.md#4-people-api-operatorpeople)): contact,
+  orders and consent need `read:settings:any`; the dining facet needs
+  reservations on and `read:reservation_guest:any`. Allergy flag and text,
+  sensitive tags, pinned and full notes and free-text booking requests need that
+  guest grant; hosts (`read:reservation` only) get no free text. A
+  guest-grant-only member sees only people with a guest record and no orders.
+  Editing needs `update:settings:any` (contact) and
+  `update:reservation_guest:any` (dining); tokens that carry the guest grant
+  live 5 minutes.
+- **One erase flow.** The profile's **Erase customer** asks for the person's
+  name and erases reservations contact data, order contact data, marketing
+  choices, sign-in and call/message records through `erasePerson`; it needs a
+  token minted with `canDelete` (`update:settings:any`, plus
+  `update:reservation_guest:any` when reservations are on).
+- **Merge** moves bookings, tags and notes of a duplicate into the profile on
+  screen. Orders and sign-in never move. Two people signed in as different
+  customers cannot be merged (`409 merge_conflicting_customers`, shown as a
+  plain explanation).
+- The booking sheet's returning-guest search and the detail sheet keep using
+  `/operator/reservations/guests/*`; the detail sheet's **Open customer
+  profile** opens `/<orgSlug>/customers/g_<guestId>`.
 
 ## Feature flags
 
@@ -381,10 +443,12 @@ code when this page was written.
 Reservation reports are not a screen of their own. They are the **Reservations**
 template category of the generic Reports page (`/<orgSlug>/reports`), built on
 three regional subjects: `bookings`, `waitlist_entries` and `pacing_slots`. The
-Reservations **Reports** tab and sidebar item are plain links to
-`/<orgSlug>/reports?category=Reservations&location=<active location>`; the old
-`/reservations/reports` route only redirects there (keeping `lng`), and the
-active location becomes a `location` filter on the template you open.
+Reservations has no Reports tab or sidebar item: the **Reservations** group sits
+on the main Reports page with the other groups, for people who have
+`reservations.enabled` and `read:reservation_report:any`. The old
+`/reservations/reports` route only redirects to
+`/<orgSlug>/reports?category=Reservations&location=<active location>` (keeping
+`lng`), and the location becomes a `location` filter on the template you open.
 
 - Data path: the browser fetches `/<orgSlug>/reports/token` and posts the report
   straight to tenant-api `POST /analytics/query`. Nothing passes through the App
@@ -432,7 +496,7 @@ active location becomes a `location` filter on the template you open.
   object is not deleted at the provider, and website form submissions are
   redacted only when they contain the erased phone or email.
 - The guestbook is organization-wide: `locationIds` scoping is not applied to
-  guests (needs a product decision).
+  guests or to `/operator/people` (needs a product decision).
 - A report keeps the oldest 20,000 rows when it truncates (a notice shows), and
   the no-show rate denominator counts every booking that is not cancelled,
   declined or expired, including upcoming ones.

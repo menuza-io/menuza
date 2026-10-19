@@ -12,17 +12,17 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { useState } from 'react'
 import { TextAreaField } from '#app/components/staff/controls.tsx'
-import { type GuestNote } from '#app/utils/reservations/guests-api.ts'
-import { formatInstantDate } from '#app/utils/reservations/guests-view.ts'
+import { type PersonNote } from '#app/utils/people/people-api.ts'
+import { formatInstantDate } from '#app/utils/people/people-view.ts'
 
 const MAX_NOTE = 2000
 
 /**
- * Notes of one guest, pinned ones first. Pinned notes also appear in the
+ * Notes of one customer, pinned ones first. Pinned notes also appear in the
  * guest summary of the Book and the host stand. Edits and deletes go through
  * the screen so a failed write never leaves the list out of step.
  */
-export function GuestNotesPanel({
+export function PersonNotesPanel({
 	notes,
 	canManage,
 	busy,
@@ -30,7 +30,7 @@ export function GuestNotesPanel({
 	onUpdate,
 	onDelete,
 }: {
-	notes: GuestNote[]
+	notes: PersonNote[]
 	canManage: boolean
 	busy: boolean
 	onAdd: (body: string, pinned: boolean) => Promise<boolean>
@@ -61,7 +61,9 @@ export function GuestNotesPanel({
 					<Trans>Notes</Trans>
 				</FrameTitle>
 				<FrameDescription>
-					<Trans>Pinned notes show up for hosts when this guest books.</Trans>
+					<Trans>
+						Pinned notes show up for hosts when this customer books.
+					</Trans>
 				</FrameDescription>
 			</FrameHeader>
 

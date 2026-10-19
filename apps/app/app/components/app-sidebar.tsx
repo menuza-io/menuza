@@ -254,6 +254,7 @@ function OrganizationSidebar({
 	const canReadMenu = hasOrgPermission('read', 'menu')
 	const canReadPhoneAgent = hasOrgPermission('read', 'phone_agent')
 	const canReadPhoneCalls = hasOrgPermission('read', 'phone_call')
+	const canReadSettings = hasOrgPermission('read', 'settings')
 	// Computed on the server from the org's staffing flags plus the member's
 	// permissions; the Staff group does not exist until both allow it.
 	const staffingNav: StaffingNavAccess =
@@ -284,10 +285,6 @@ function OrganizationSidebar({
 			}
 		}
 	}, [extensionId])
-	const reservationsReportsUrl = `/${orgSlug}/reports?category=Reservations`
-	const isReservationsReportsLocation =
-		location.pathname.startsWith(`/${orgSlug}/reports`) &&
-		new URLSearchParams(location.search).get('category') === 'Reservations'
 	const navMain = [
 		{
 			title: _(msg`Dashboard`),
@@ -300,10 +297,8 @@ function OrganizationSidebar({
 		{
 			title: _(msg`Reports`),
 			url: `/${orgSlug}/reports`,
-			// The Reservations link below opens this same page on its own category.
-			isActive:
-				location.pathname.includes(`/${orgSlug}/reports`) &&
-				!isReservationsReportsLocation,
+			// Reservation reports are the "Reservations" group on this page.
+			isActive: location.pathname.includes(`/${orgSlug}/reports`),
 			icon: ChartPieIcon,
 		},
 		{
@@ -505,25 +500,11 @@ function OrganizationSidebar({
 					),
 				},
 				{
-					title: _(msg`Guests`),
-					url: `/${orgSlug}/reservations/guests`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/reservations/guests`,
-					),
-				},
-				{
 					title: _(msg`Waitlist`),
 					url: `/${orgSlug}/reservations/waitlist`,
 					isActive: location.pathname.includes(
 						`/${orgSlug}/reservations/waitlist`,
 					),
-				},
-				{
-					title: _(msg`Reports`),
-					// Reports is the generic Reports page on its Reservations category,
-					// not a Reservations screen.
-					url: reservationsReportsUrl,
-					isActive: isReservationsReportsLocation,
 				},
 				{
 					title: _(msg`Experiences`),
@@ -725,6 +706,11 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/reservations`) {
 				return reservationsNav.visible
 			}
+			// Customers is the one people screen: contact data (settings read) or
+			// the reservation guest grant opens it.
+			if (item.url === `/${orgSlug}/customers`) {
+				return canReadSettings || reservationsNav.customers
+			}
 			if (item.url === `/${orgSlug}/staff`) {
 				return staffingNav.visible
 			}
@@ -762,9 +748,7 @@ function OrganizationSidebar({
 					[`/${orgSlug}/reservations/today`]: reservationsNav.today,
 					[`/${orgSlug}/reservations/calendar`]: reservationsNav.book,
 					[`/${orgSlug}/reservations/waitlist`]: reservationsNav.waitlist,
-					[`/${orgSlug}/reservations/guests`]: reservationsNav.guests,
 					[`/${orgSlug}/reservations/experiences`]: reservationsNav.experiences,
-					[reservationsReportsUrl]: reservationsNav.reports,
 					[`/${orgSlug}/reservations/settings`]: reservationsNav.settings,
 				}
 				const visibleItems = item.items.filter(

@@ -155,13 +155,15 @@ export function DetailSheet({
 	const inRouter = useInRouterContext()
 	const layout = useOutletContext<{
 		orgSlug?: string
-		nav?: { guests?: boolean }
+		nav?: { customers?: boolean }
 		payments?: { enabled: boolean; canAct: boolean }
 	} | null>()
 	const clientPool = useContext(ReservationsClientContext)
-	const guestsBase =
-		inRouter && layout?.orgSlug && layout.nav?.guests
-			? `/${layout.orgSlug}/reservations/guests`
+	// Guests live in Customers: the link opens the person (`g_<id>` resolves to
+	// the linked customer when there is one).
+	const customersBase =
+		inRouter && layout?.orgSlug && layout.nav?.customers
+			? `/${layout.orgSlug}/customers`
 			: null
 
 	const [detail, setDetail] = useState<ReservationDetailResponse | null>(null)
@@ -998,7 +1000,7 @@ export function DetailSheet({
 											))}
 										</ul>
 									) : null}
-									{guest?.customerLinked || (guest?.id && guestsBase) ? (
+									{guest?.customerLinked || (guest?.id && customersBase) ? (
 										<div className="flex flex-wrap items-center gap-2">
 											{guest?.customerLinked ? (
 												<Badge
@@ -1008,13 +1010,13 @@ export function DetailSheet({
 													<Trans>Linked customer</Trans>
 												</Badge>
 											) : null}
-											{guest?.id && guestsBase ? (
+											{guest?.id && customersBase ? (
 												<Link
-													to={`${guestsBase}/${encodeURIComponent(guest.id)}`}
+													to={`${customersBase}/${encodeURIComponent(`g_${guest.id}`)}`}
 													className="text-primary inline-flex min-h-11 items-center underline-offset-4 hover:underline md:min-h-0"
 													data-testid="detail-guest-profile-link"
 												>
-													<Trans>Open guest profile</Trans>
+													<Trans>Open customer profile</Trans>
 												</Link>
 											) : null}
 										</div>

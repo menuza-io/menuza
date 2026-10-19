@@ -432,7 +432,8 @@ connected Stripe account (US) or Checkout.com sub-entity (KSA, SAR):
   `apps/tenant-api/src/services/person-erasure-service.ts`). The operator guest
   erase (`POST /operator/reservations/guests/:id/erase`, needs
   `update:reservation_guest:any`), the operator customer erase
-  (`POST /operator/customers/:id/erase`, needs a token minted with `canDelete`)
+  (`POST /operator/customers/:id/erase` and the Customers screen's
+  `POST /operator/people/:key/erase`, both need a token minted with `canDelete`)
   and the internal route (`POST /internal/reservations/erase-customer`, body
   `{ orgId, customerId }`) all call it, so erasing a person from either side
   does the same complete job. A person is a set grown to a fixed point from the
@@ -538,6 +539,26 @@ default, canonical name. Guest SMS and email use the guest's booking language
 when enabled, else the default, from shipped templates in all six languages.
 Nothing here puts text or language data in the control plane. See
 `docs/reservations.md#languages`.
+
+### 14. People model: Customers is the one people screen
+
+Guests are a facet of Customers, not a second screen (the Reservations Guests
+screen was removed). Both tables stay in the same regional database; a person is
+one row keyed `c_<customerId>` (customer, with the guest linked to it by the
+verified phone as its dining facet) or `g_<guestId>` (a guest with no linked
+customer, "Guest, no sign-in"). The unverified customer a booking-form consent
+creates is the consent shadow of its guest and is not a person. Nothing is
+auto-created in `customers` for guests, nothing links on an unverified phone,
+and the US App never handles the data: the browser calls tenant-api
+`/operator/people` with one short-lived `people` token whose claims carry both
+facets (`peopleCustomers`, `peopleDining` of `flags` or `full`, `canUpdate`,
+`canUpdateGuest`, `canDelete`). Allergy, sensitive tags and notes stay behind
+`read:reservation_guest:any` (5-minute tokens); hosts get no free text. Walk-ins
+without contact details are hidden by default. Visits and orders are never
+summed. Erase is the single `erasePerson` flow; merge is the guest facet only
+and refuses two different customers (`409 merge_conflicting_customers`).
+Contract: [`docs/reservations-contract.md`](../reservations-contract.md); guide:
+[`docs/reservations.md`](../reservations.md#people-customers-is-the-one-people-screen).
 
 ## Consequences
 

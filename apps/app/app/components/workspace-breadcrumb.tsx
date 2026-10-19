@@ -78,7 +78,6 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	calendar: <Trans>Calendar</Trans>,
 	overview: <Trans>Overview</Trans>,
 	waitlist: <Trans>Waitlist</Trans>,
-	guests: <Trans>Guests</Trans>,
 	experiences: <Trans>Experiences</Trans>,
 	tables: <Trans>Tables</Trans>,
 	'floor-plan': <Trans>Floor plan</Trans>,
@@ -92,6 +91,7 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 const RECORD_LABELS: Record<string, ReactNode> = {
 	dashboards: <Trans>Dashboard</Trans>,
 	reports: <Trans>Report</Trans>,
+	customers: <Trans>Customer</Trans>,
 	notes: <Trans>Note</Trans>,
 	status: <Trans>Status</Trans>,
 	campaigns: <Trans>Broadcast</Trans>,

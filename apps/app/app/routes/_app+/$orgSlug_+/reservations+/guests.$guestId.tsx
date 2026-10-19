@@ -1,37 +1,23 @@
-import { isImpersonating } from '@repo/auth'
-import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
-import { useLoaderData } from 'react-router'
-import { GuestProfileScreen } from '#app/components/reservations/guests/guest-profile-screen.tsx'
-import { useReservationsScopeClient } from '#app/hooks/use-reservations-client.ts'
+import { RESERVATIONS_PERMISSIONS as P } from '@repo/reservations'
+import { redirect } from 'react-router'
+import { customersHref } from '#app/utils/people/customers-link.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
-import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/guests.$guestId.ts'
 
+/**
+ * Old guest profile links land on the Customers profile (`g_<guestId>`; the
+ * profile resolves it to the linked customer or the surviving merged guest).
+ */
 export async function loader({ request, params }: Route.LoaderArgs) {
-	const access = await requireReservationsAccess(
-		request,
-		params.orgSlug,
-		RESERVATIONS_SECTION_REQUIREMENTS.guests,
-	)
-	const impersonated = await isImpersonating(request)
-	return {
-		orgSlug: access.organizationSlug,
-		guestId: params.guestId,
-		canManage:
-			!impersonated &&
-			access.grants.includes(RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_GUEST),
-	}
-}
-
-export default function ReservationsGuestProfileRoute() {
-	const { orgSlug, guestId, canManage } = useLoaderData<typeof loader>()
-	const client = useReservationsScopeClient(orgSlug, 'guests')
-	return (
-		<GuestProfileScreen
-			client={client}
-			orgSlug={orgSlug}
-			guestId={guestId}
-			canManage={canManage}
-		/>
+	const access = await requireReservationsAccess(request, params.orgSlug, {
+		feature: 'enabled',
+		anyOf: [P.READ_RESERVATION_GUEST, P.UPDATE_RESERVATION_GUEST],
+	})
+	const url = new URL(request.url)
+	throw redirect(
+		customersHref(access.organizationSlug, {
+			personKey: `g_${params.guestId}`,
+			lng: url.searchParams.get('lng'),
+		}),
 	)
 }

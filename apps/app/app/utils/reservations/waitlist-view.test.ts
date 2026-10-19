@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { WAITLIST_NOW, makeWaitlistEntry } from './waitlist-fixtures.ts'
+import { type LiveTableState } from './book-api.ts'
 import { waitlistErrorMessage } from './waitlist-errors.ts'
+import { WAITLIST_NOW, makeWaitlistEntry } from './waitlist-fixtures.ts'
 import {
 	applyOrder,
 	availableActions,
@@ -17,7 +18,6 @@ import {
 	tableCandidates,
 	waitlistChannelKey,
 } from './waitlist-view.ts'
-import { type LiveTableState } from './book-api.ts'
 
 describe('waitlist-view', () => {
 	it('puts the active queue in position order and settled parties after it', () => {

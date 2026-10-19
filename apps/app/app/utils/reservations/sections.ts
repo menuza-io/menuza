@@ -9,13 +9,7 @@ import {
 } from '@repo/reservations'
 
 export type ReservationsSectionKey =
-	| 'today'
-	| 'book'
-	| 'waitlist'
-	| 'guests'
-	| 'experiences'
-	| 'reports'
-	| 'settings'
+	'today' | 'book' | 'waitlist' | 'experiences' | 'reports' | 'settings'
 
 export type ReservationsSectionDefinition = {
 	id: ReservationsSectionKey
@@ -71,16 +65,6 @@ export const RESERVATIONS_SECTIONS: readonly ReservationsSectionDefinition[] = [
 		featureKey: 'waitlist',
 		permissions: [P.READ_RESERVATION, P.UPDATE_RESERVATION],
 		anyOf: [P.READ_RESERVATION, P.UPDATE_RESERVATION],
-	},
-	{
-		id: 'guests',
-		key: 'guests',
-		path: 'guests',
-		feature: 'enabled',
-		flag: null,
-		featureKey: null,
-		permissions: [P.READ_RESERVATION_GUEST, P.UPDATE_RESERVATION_GUEST],
-		anyOf: [P.READ_RESERVATION_GUEST, P.UPDATE_RESERVATION_GUEST],
 	},
 	{
 		id: 'experiences',
