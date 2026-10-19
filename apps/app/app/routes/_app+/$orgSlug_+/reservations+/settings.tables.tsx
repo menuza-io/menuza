@@ -31,6 +31,12 @@ import {
 } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
 import {
 	ConfirmDialog,
@@ -44,6 +50,11 @@ import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import { guestsRangeLabel } from '#app/utils/reservations/count-labels.ts'
+import {
+	cleanLocalizedMap,
+	defaultEntry,
+	type LocalizedMap,
+} from '#app/utils/reservations/localized.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	createArea,
@@ -66,6 +77,7 @@ import {
 	updateArea,
 	updateTable,
 } from '#app/utils/reservations/setup-api.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 import { type Route } from './+types/settings.tables.ts'
 import { useReservationsSetupContext } from './settings.tsx'
 
@@ -103,6 +115,7 @@ type PendingConfirm =
 
 export default function ReservationsSettingsTablesRoute() {
 	const { _ } = useLingui()
+	const siteLocales = useReservationLocales()
 	const shapeLabel = (shape: string) => {
 		const option = SHAPE_OPTIONS.find((s) => s.value === shape)
 		return option ? _(option.label) : shape
@@ -131,8 +144,7 @@ export default function ReservationsSettingsTablesRoute() {
 	const [loadFailed, setLoadFailed] = useState(false)
 
 	// Area form
-	const [areaName, setAreaName] = useState('')
-	const [areaNameAr, setAreaNameAr] = useState('')
+	const [areaNames, setAreaNames] = useState<LocalizedMap>({})
 	const [areaFloorLabel, setAreaFloorLabel] = useState('')
 	const [areaOutdoor, setAreaOutdoor] = useState(false)
 	const [areaOnline, setAreaOnline] = useState(true)
@@ -166,7 +178,7 @@ export default function ReservationsSettingsTablesRoute() {
 			string
 		>
 	> = {}
-	if (sheet.kind === 'area' && !areaName.trim()) {
+	if (sheet.kind === 'area' && !defaultEntry(areaNames, siteLocales)) {
 		liveFieldErrors.areaName = _(msg`Enter a name for the dining area.`)
 	}
 	if (sheet.kind === 'table') {
@@ -267,8 +279,16 @@ export default function ReservationsSettingsTablesRoute() {
 
 	const openArea = (area: DiningAreaDto | null) => {
 		startNotices()
-		setAreaName(area?.name ?? '')
-		setAreaNameAr(area?.nameI18n?.ar ?? '')
+		setAreaNames(
+			area
+				? {
+						...area.nameI18n,
+						// The canonical name is the default-language text.
+						[siteLocales.defaultLocale]:
+							area.nameI18n?.[siteLocales.defaultLocale] ?? area.name,
+					}
+				: {},
+		)
 		setAreaFloorLabel(area?.floorLabel ?? '')
 		setAreaOutdoor(area?.isOutdoor ?? false)
 		setAreaOnline(area?.isBookableOnline ?? true)
@@ -301,18 +321,15 @@ export default function ReservationsSettingsTablesRoute() {
 		if (!canWrite || !selectedLocationId || sheet.kind !== 'area' || saving)
 			return
 		startNotices()
-		const name = areaName.trim()
 		if (!attemptSubmit()) return
+		const nameI18n = cleanLocalizedMap(areaNames, siteLocales)
+		const name = defaultEntry(nameI18n, siteLocales)
 		const editing = sheet.areaId
 			? areas.find((a) => a.id === sheet.areaId)
 			: null
 		setSaving(true)
 		try {
-			const nameAr = areaNameAr.trim()
 			if (editing) {
-				const nameI18n = { ...editing.nameI18n, en: name }
-				if (nameAr) nameI18n.ar = nameAr
-				else delete nameI18n.ar
 				const res = await updateArea(client, selectedLocationId, editing.id, {
 					expectedVersion: editing.version,
 					name,
@@ -326,7 +343,7 @@ export default function ReservationsSettingsTablesRoute() {
 			} else {
 				await createArea(client, selectedLocationId, {
 					name,
-					nameI18n: { en: name, ...(nameAr ? { ar: nameAr } : {}) },
+					nameI18n,
 					floorLabel: areaFloorLabel.trim() || null,
 					sortOrder: areas.length,
 					isOutdoor: areaOutdoor,
@@ -574,7 +591,7 @@ export default function ReservationsSettingsTablesRoute() {
 	const dirty = useSheetDirty(
 		sheetId,
 		sheet.kind === 'area'
-			? [areaName, areaNameAr, areaFloorLabel, areaOutdoor, areaOnline]
+			? [areaNames, areaFloorLabel, areaOutdoor, areaOnline]
 			: sheet.kind === 'table'
 				? [
 						tableAreaId,
@@ -773,14 +790,6 @@ export default function ReservationsSettingsTablesRoute() {
 									<TableCell className="font-medium">
 										<div className="flex flex-wrap items-center gap-x-2">
 											<span className="wrap-anywhere">{area.name}</span>
-											{area.nameI18n?.ar ? (
-												<span
-													className="text-muted-foreground text-xs"
-													dir="rtl"
-												>
-													{area.nameI18n.ar}
-												</span>
-											) : null}
 										</div>
 									</TableCell>
 									<TableCell className="text-muted-foreground">
@@ -1139,79 +1148,76 @@ export default function ReservationsSettingsTablesRoute() {
 
 			{/* Area sheet */}
 			<EditSheet open={sheet.kind === 'area'} onClose={requestClose}>
-				<SheetForm
-					title={
-						sheet.kind === 'area' && sheet.areaId ? (
-							<Trans>Edit dining area</Trans>
-						) : (
-							<Trans>New dining area</Trans>
-						)
-					}
-					onSubmit={(event) => void handleSubmitArea(event)}
-					footer={
-						<SheetFooterButtons
-							saving={saving}
-							onCancel={requestClose}
-							submitTestId={
-								sheet.kind === 'area' && sheet.areaId
-									? 'setup-save-area-edit-button'
-									: 'setup-add-area-button'
-							}
-							createLabel={<Trans>Add area</Trans>}
-							isEdit={sheet.kind === 'area' && Boolean(sheet.areaId)}
-						/>
-					}
+				<ReservationLocaleProvider
+					key={sheet.kind === 'area' ? (sheet.areaId ?? 'new') : 'closed'}
 				>
-					{sheetNotices}
-					<div
-						className="flex flex-col gap-5"
-						data-testid="setup-create-area-form"
+					<SheetForm
+						headerExtra={<ReservationLocaleSwitcher />}
+						title={
+							sheet.kind === 'area' && sheet.areaId ? (
+								<Trans>Edit dining area</Trans>
+							) : (
+								<Trans>New dining area</Trans>
+							)
+						}
+						onSubmit={(event) => void handleSubmitArea(event)}
+						footer={
+							<SheetFooterButtons
+								saving={saving}
+								onCancel={requestClose}
+								submitTestId={
+									sheet.kind === 'area' && sheet.areaId
+										? 'setup-save-area-edit-button'
+										: 'setup-add-area-button'
+								}
+								createLabel={<Trans>Add area</Trans>}
+								isEdit={sheet.kind === 'area' && Boolean(sheet.areaId)}
+							/>
+						}
 					>
-						<TextField
-							label={<Trans>Name</Trans>}
-							placeholder={_(msg`e.g. Main dining`)}
-							value={areaName}
-							error={fieldErrors.areaName}
-							onBlur={() => touchField('areaName')}
-							onChange={(e) => setAreaName(e.target.value)}
-							data-testid={
-								sheet.kind === 'area' && sheet.areaId
-									? 'setup-edit-area-name-input'
-									: 'setup-area-name-input'
-							}
-						/>
-						<TextField
-							label={<Trans>Name in Arabic</Trans>}
-							optional
-							dir="rtl"
-							placeholder={_(msg`Arabic area name`)}
-							value={areaNameAr}
-							onChange={(e) => setAreaNameAr(e.target.value)}
-							data-testid="setup-area-name-ar-input"
-						/>
-						<TextField
-							label={<Trans>Floor</Trans>}
-							optional
-							placeholder={_(msg`e.g. Ground floor`)}
-							value={areaFloorLabel}
-							onChange={(e) => setAreaFloorLabel(e.target.value)}
-						/>
-						<SwitchField
-							label={<Trans>Outdoor</Trans>}
-							description={<Trans>A patio, terrace or garden.</Trans>}
-							checked={areaOutdoor}
-							onCheckedChange={setAreaOutdoor}
-						/>
-						<SwitchField
-							label={<Trans>Open for online booking</Trans>}
-							description={
-								<Trans>Guests can choose this area when they book.</Trans>
-							}
-							checked={areaOnline}
-							onCheckedChange={setAreaOnline}
-						/>
-					</div>
-				</SheetForm>
+						{sheetNotices}
+						<div
+							className="flex flex-col gap-5"
+							data-testid="setup-create-area-form"
+						>
+							<LocalizedMapField
+								label={<Trans>Name (guest-facing)</Trans>}
+								placeholder={_(msg`e.g. Main dining`)}
+								value={areaNames}
+								error={fieldErrors.areaName}
+								onBlur={() => touchField('areaName')}
+								onChange={setAreaNames}
+								data-testid={
+									sheet.kind === 'area' && sheet.areaId
+										? 'setup-edit-area-name-input'
+										: 'setup-area-name-input'
+								}
+							/>
+							<WritingLanguageNote />
+							<TextField
+								label={<Trans>Floor</Trans>}
+								optional
+								placeholder={_(msg`e.g. Ground floor`)}
+								value={areaFloorLabel}
+								onChange={(e) => setAreaFloorLabel(e.target.value)}
+							/>
+							<SwitchField
+								label={<Trans>Outdoor</Trans>}
+								description={<Trans>A patio, terrace or garden.</Trans>}
+								checked={areaOutdoor}
+								onCheckedChange={setAreaOutdoor}
+							/>
+							<SwitchField
+								label={<Trans>Open for online booking</Trans>}
+								description={
+									<Trans>Guests can choose this area when they book.</Trans>
+								}
+								checked={areaOnline}
+								onCheckedChange={setAreaOnline}
+							/>
+						</div>
+					</SheetForm>
+				</ReservationLocaleProvider>
 			</EditSheet>
 
 			{/* Table sheet */}

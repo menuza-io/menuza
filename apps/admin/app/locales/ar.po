@@ -622,6 +622,10 @@ msgstr "متوفر"
 msgid "Average Size"
 msgstr "الحجم المتوسط"
 
+#: ../../packages/reports/src/ui/report-labels.ts:140
+msgid "Average waitlist wait, last 7 days"
+msgstr "متوسط الانتظار في قائمة الانتظار، آخر 7 أيام"
+
 #: app/routes/_admin+/phone-numbers.tsx:171
 msgid "Awaiting line verification"
 msgstr "بانتظار التحقق من الخط"
@@ -744,6 +748,14 @@ msgstr "الكتل"
 msgid "Body text"
 msgstr "نص المحتوى"
 
+#: ../../packages/reports/src/ui/report-labels.ts:88
+msgid "Booking sources"
+msgstr "مصادر الحجز"
+
+#: ../../packages/reports/src/ui/report-labels.ts:137
+msgid "Bookings cancelled after the free-cancellation window over the last 30 days."
+msgstr "الحجوزات الملغاة بعد انتهاء فترة الإلغاء المجاني خلال آخر 30 يومًا."
+
 #: app/components/admin/feature-flags.tsx:144
 msgid "Boolean"
 msgstr "منطقي"
@@ -814,6 +826,10 @@ msgstr "إلغاء"
 #: app/components/admin-organizations-table.tsx:102
 msgid "Canceled"
 msgstr "ملغي"
+
+#: ../../packages/reports/src/ui/report-labels.ts:96
+msgid "Cancellations by who"
+msgstr "الإلغاءات حسب الجهة"
 
 #: app/routes/_admin+/gdpr-requests.tsx:365
 msgid "Cancelled"
@@ -1008,6 +1024,30 @@ msgstr "يحتوي (تطابق جزئي)"
 msgid "Core System Role"
 msgstr "دور النظام الأساسي"
 
+#: ../../packages/reports/src/ui/report-labels.ts:81
+msgid "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
+msgstr "عدد الضيوف المحجوزين لكل يوم خدمة خلال آخر 7 أيام، دون احتساب الحجوزات الملغاة أو المرفوضة أو المنتهية."
+
+#: ../../packages/reports/src/ui/report-labels.ts:85
+msgid "Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings."
+msgstr "عدد الضيوف المحجوزين لكل خدمة خلال آخر 30 يومًا، دون احتساب الحجوزات الملغاة أو المرفوضة أو المنتهية."
+
+#: ../../packages/reports/src/ui/report-labels.ts:129
+msgid "Covers booked for today, not counting cancelled, declined or expired bookings."
+msgstr "عدد الضيوف المحجوزين لليوم، دون احتساب الحجوزات الملغاة أو المرفوضة أو المنتهية."
+
+#: ../../packages/reports/src/ui/report-labels.ts:84
+msgid "Covers by service"
+msgstr "عدد الضيوف حسب الخدمة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:125
+msgid "Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it."
+msgstr "عدد الضيوف في كل وقت بدء مقارنة بحد الوتيرة خلال آخر 7 أيام، وعدد الفترات التي تجاوزته."
+
+#: ../../packages/reports/src/ui/report-labels.ts:128
+msgid "Covers today"
+msgstr "ضيوف اليوم"
+
 #: app/components/admin/feature-flags.tsx:100
 msgid "Create a new feature flag at system level."
 msgstr "إنشاء مؤشر ميزة جديد على مستوى النظام."
@@ -1148,6 +1188,10 @@ msgstr "معرّف العميل"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
 msgstr "دورات"
+
+#: ../../packages/reports/src/ui/report-labels.ts:80
+msgid "Daily summary"
+msgstr "الملخص اليومي"
 
 #: app/routes/resources+/theme-switch.tsx:73
 msgid "Dark"
@@ -1580,6 +1624,10 @@ msgstr "الحدث"
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr "سير عمل قائم على الأحداث لدورة حياة مشغّل المستأجر."
 
+#: ../../packages/reports/src/ui/report-labels.ts:105
+msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
+msgstr "كل حالات عدم الحضور خلال آخر 30 يومًا مع التاريخ والخدمة وحجم المجموعة والمصدر. دون تفاصيل الضيوف."
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:517
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
@@ -1830,7 +1878,7 @@ msgstr "مرحباً {{name}}، منظمتك {{organizationName}} جاهزة."
 msgid "Higher level roles can manage lower level roles"
 msgstr "الأدوار ذات المستوى الأعلى يمكنها إدارة الأدوار ذات المستوى الأقل"
 
-#: ../../packages/reports/src/ui/report-labels.ts:83
+#: ../../packages/reports/src/ui/report-labels.ts:147
 msgid "Hiring"
 msgstr "التوظيف"
 
@@ -1858,6 +1906,14 @@ msgstr "الساعات حسب الموظف"
 msgid "Hours worked by day"
 msgstr "ساعات العمل حسب اليوم"
 
+#: ../../packages/reports/src/ui/report-labels.ts:113
+msgid "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
+msgstr "مدى انحراف مدد الجلوس الفعلية عن المدة التي حددتها، لكل حجم مجموعة خلال آخر 30 يومًا. القيمة السالبة تعني أن المجموعات غادرت مبكرًا."
+
+#: ../../packages/reports/src/ui/report-labels.ts:109
+msgid "How long parties of each size stayed, from seated to finished, over the last 30 days."
+msgstr "مدة بقاء المجموعات من كل حجم، من الجلوس حتى المغادرة، خلال آخر 30 يومًا."
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:380
 msgid "How long to keep logs before permanent deletion"
 msgstr "المدة المراد الاحتفاظ بالسجلات قبل الحذف الدائم"
@@ -1866,9 +1922,17 @@ msgstr "المدة المراد الاحتفاظ بالسجلات قبل الح�
 msgid "How long to keep logs readily searchable"
 msgstr "المدة المراد الاحتفاظ بالسجلات قابلة للبحث بسهولة"
 
+#: ../../packages/reports/src/ui/report-labels.ts:141
+msgid "How long waitlist parties waited before they were seated over the last 7 days."
+msgstr "مدة انتظار مجموعات قائمة الانتظار قبل جلوسها خلال آخر 7 أيام."
+
 #: ../../packages/reports/src/ui/report-labels.ts:57
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "عدد مرات تسجيل الحضور في الوقت المحدد للمناوبات المجدولة."
+
+#: ../../packages/reports/src/ui/report-labels.ts:117
+msgid "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
+msgstr "كيف انتهت مجموعات قائمة الانتظار خلال آخر 30 يومًا: جلست أو غادرت أو ألغت أو لم تردّ."
 
 #: app/components/sso-configuration-form.tsx:168
 msgid "https://your-domain.okta.com"
@@ -2048,7 +2112,7 @@ msgstr "التسمية"
 msgid "Label (optional)"
 msgstr "التسمية (اختياري)"
 
-#: ../../packages/reports/src/ui/report-labels.ts:82
+#: ../../packages/reports/src/ui/report-labels.ts:146
 msgid "Labor"
 msgstr "العمالة"
 
@@ -2112,6 +2176,14 @@ msgstr "آخر وكيل مستخدم"
 #: ../../packages/reports/src/ui/report-labels.ts:60
 msgid "Late arrivals by employee"
 msgstr "حالات التأخر حسب الموظف"
+
+#: ../../packages/reports/src/ui/report-labels.ts:100
+msgid "Late cancellations"
+msgstr "الإلغاءات المتأخرة"
+
+#: ../../packages/reports/src/ui/report-labels.ts:136
+msgid "Late cancellations, last 30 days"
+msgstr "الإلغاءات المتأخرة، آخر 30 يومًا"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
@@ -2545,6 +2617,18 @@ msgstr "لا يوجد مستخدمون بعد"
 msgid "No waitlist entries found"
 msgstr "لم يتم العثور على إدخالات قائمة الانتظار"
 
+#: ../../packages/reports/src/ui/report-labels.ts:104
+msgid "No-show list"
+msgstr "قائمة عدم الحضور"
+
+#: ../../packages/reports/src/ui/report-labels.ts:132
+msgid "No-show rate, last 30 days"
+msgstr "معدل عدم الحضور، آخر 30 يومًا"
+
+#: ../../packages/reports/src/ui/report-labels.ts:92
+msgid "No-shows & cancellations"
+msgstr "عدم الحضور والإلغاءات"
+
 #: ../../packages/marketing-workflow/src/node-palette.tsx:50
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
@@ -2730,6 +2814,10 @@ msgstr "own - موارد المستخدم الخاصة"
 #: app/components/sso-user-management.tsx:92
 msgid "Owner"
 msgstr "المالك"
+
+#: ../../packages/reports/src/ui/report-labels.ts:124
+msgid "Pacing"
+msgstr "الوتيرة"
 
 #: app/components/admin-organizations-table.tsx:599
 #: app/components/admin-users-table.tsx:486
@@ -3124,22 +3212,26 @@ msgstr "يتطلب الانتباه"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:32
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:54
 msgid "Reservation Booked"
-msgstr msgstr "تم حجز طاولة"
+msgstr "تم حجز طاولة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:44
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:57
 msgid "Reservation Cancelled"
-msgstr msgstr "أُلغي الحجز"
+msgstr "أُلغي الحجز"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:36
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:55
 msgid "Reservation Completed"
-msgstr msgstr "اكتملت الزيارة"
+msgstr "اكتملت الزيارة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:40
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:56
 msgid "Reservation No-Show"
-msgstr msgstr "لم يحضر صاحب الحجز"
+msgstr "لم يحضر صاحب الحجز"
+
+#: ../../packages/reports/src/ui/report-labels.ts:148
+msgid "Reservations"
+msgstr "الحجوزات"
 
 #: app/components/admin-sidebar.tsx:143
 msgid "Reservations fees"
@@ -3263,7 +3355,7 @@ msgstr "تشغيلات"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:37
 msgid "Runs after a guest who agreed to hear from you finishes a visit"
-msgstr msgstr "يعمل بعد أن ينهي ضيف وافق على تلقي رسائلكم زيارته"
+msgstr "يعمل بعد أن ينهي ضيف وافق على تلقي رسائلكم زيارته"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:33
 #~ msgid "Runs on website form submission"
@@ -3271,15 +3363,15 @@ msgstr msgstr "يعمل بعد أن ينهي ضيف وافق على تلقي ر�
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:33
 msgid "Runs when a guest who agreed to hear from you books a table"
-msgstr msgstr "يعمل عندما يحجز ضيف وافق على تلقي رسائلكم طاولة"
+msgstr "يعمل عندما يحجز ضيف وافق على تلقي رسائلكم طاولة"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:45
 msgid "Runs when a guest who agreed to hear from you cancels"
-msgstr msgstr "يعمل عندما يلغي ضيف وافق على تلقي رسائلكم حجزه"
+msgstr "يعمل عندما يلغي ضيف وافق على تلقي رسائلكم حجزه"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:41
 msgid "Runs when a guest who agreed to hear from you does not arrive"
-msgstr msgstr "يعمل عندما لا يحضر ضيف وافق على تلقي رسائلكم"
+msgstr "يعمل عندما لا يحضر ضيف وافق على تلقي رسائلكم"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:17
 #~ msgid "Runs when a new customer registers"
@@ -3943,9 +4035,25 @@ msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى ه�
 #~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 #~ msgstr "قد يظل المطعم السابق يحوّل خطه إلى هذا الرقم، لذا قد يصل المتصلون به إلى وكيل المؤسسة الجديدة."
 
+#: ../../packages/reports/src/ui/report-labels.ts:133
+msgid "The share of booked parties that did not show up over the last 30 days."
+msgstr "نسبة المجموعات المحجوزة التي لم تحضر خلال آخر 30 يومًا."
+
+#: ../../packages/reports/src/ui/report-labels.ts:93
+msgid "The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked."
+msgstr "نسبة المجموعات المحجوزة التي لم تحضر، لكل خدمة خلال آخر 30 يومًا. لا تُحتسب الحجوزات الملغاة والمرفوضة والمنتهية ضمن المحجوزة."
+
+#: ../../packages/reports/src/ui/report-labels.ts:101
+msgid "The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days."
+msgstr "نسبة الإلغاءات التي جاءت بعد انتهاء فترة الإلغاء المجاني، لكل خدمة خلال آخر 30 يومًا."
+
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
 msgid "The share of each Reservations payment kept by the platform, in basis points."
 msgstr "حصة المنصة من كل دفعة حجز، بالنقاط الأساسية."
+
+#: ../../packages/reports/src/ui/report-labels.ts:121
+msgid "The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days."
+msgstr "مدة الانتظار التي ذكرتها ومدة الانتظار الفعلية قبل الجلوس، حسب حجم المجموعة، خلال آخر 30 يومًا."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -4082,6 +4190,14 @@ msgstr "جرّب مرشحات مختلفة أو أزلها."
 #: app/routes/_admin+/cache.tsx:616
 msgid "TTL"
 msgstr "TTL"
+
+#: ../../packages/reports/src/ui/report-labels.ts:108
+msgid "Turn times"
+msgstr "مدد الجلوس"
+
+#: ../../packages/reports/src/ui/report-labels.ts:112
+msgid "Turn times against target"
+msgstr "مدد الجلوس مقابل الهدف"
 
 #: app/components/admin/feature-flags.tsx:134
 #: app/routes/_admin+/gdpr-requests.tsx:496
@@ -4317,6 +4433,14 @@ msgstr "قائمة الانتظار"
 msgid "Waitlist Management"
 msgstr "إدارة قائمة الانتظار"
 
+#: ../../packages/reports/src/ui/report-labels.ts:116
+msgid "Waitlist outcomes"
+msgstr "نتائج قائمة الانتظار"
+
+#: ../../packages/reports/src/ui/report-labels.ts:120
+msgid "Waitlist waits"
+msgstr "مدد الانتظار في قائمة الانتظار"
+
 #: app/routes/_admin+/audit-logs.tsx:157
 msgid "Warning"
 msgstr "تحذير"
@@ -4348,6 +4472,14 @@ msgstr "مرحباً بك في Menuza، {{organizationName}}"
 #: ../../packages/reports/src/ui/report-labels.ts:77
 msgid "Where applicants found the job."
 msgstr "أين عثر المتقدمون على الوظيفة."
+
+#: ../../packages/reports/src/ui/report-labels.ts:89
+msgid "Where bookings come from over the last 30 days: online, phone, host, walk-in and more."
+msgstr "من أين تأتي الحجوزات خلال آخر 30 يومًا: عبر الإنترنت أو الهاتف أو المضيف أو الزيارة المباشرة وغيرها."
+
+#: ../../packages/reports/src/ui/report-labels.ts:97
+msgid "Who cancelled over the last 30 days: the guest, the restaurant or the system."
+msgstr "من ألغى خلال آخر 30 يومًا: الضيف أو المطعم أو النظام."
 
 #: ../../packages/reports/src/ui/report-labels.ts:49
 msgid "Who worked overtime over the last 30 days, and how much."

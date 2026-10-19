@@ -1,17 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import {
 	rsvAuditLog,
-	rsvDayVersions,
 	rsvGuestMerges,
 	rsvGuestNotes,
 	rsvGuests,
 	rsvGuestTags,
 	rsvMessages,
-	rsvNotifyRequests,
 	rsvPayments,
-	rsvReservationEvents,
 	rsvReservations,
-	rsvTableOccupancies,
 	rsvTags,
 	rsvWaitlistEntries,
 	getTenantDbOrgId,
@@ -19,14 +15,16 @@ import {
 	RSV_WAITLIST_STATUS_VALUES,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm'
-import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
+import { and, desc, eq, inArray, isNull, like, or } from 'drizzle-orm'
+import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, forbidden, notFound } from '../lib/http.ts'
+import { normalizeGuestPhone as normalizeSharedPhone } from '../lib/phone.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	cancelPendingReservationMessages,
 	enqueueReservationMessage,
 } from './rsv-message-queue.ts'
+import { linkGuestToVerifiedCustomer } from './rsv-customer-link.ts'
 import { deliverMessagesByIds } from './rsv-message-service.ts'
 
 export type DbOrTx =
@@ -36,15 +34,21 @@ function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
 }
 
+/**
+ * Lenient guest phone normalization for operator-typed numbers. Region-aware
+ * through the shared normalizer (a Saudi `05XXXXXXXX` is `+966...` on a KSA
+ * node, never `+1...`); other numbers of 7+ digits keep the historical
+ * `+digits` reading and shorter input is returned as typed.
+ */
 export function normalizeGuestPhone(phone?: string | null): string | null {
 	if (!phone) return null
 	const trimmed = phone.trim()
 	if (!trimmed) return null
 	const digits = trimmed.replace(/[^\d+]/g, '')
 	if (!digits) return null
-	if (digits.startsWith('+')) return digits
+	const regional = normalizeSharedPhone(digits)
+	if (regional.startsWith('+')) return regional
 	const onlyDigits = digits.replace(/\D/g, '')
-	if (onlyDigits.length === 10) return `+1${onlyDigits}`
 	if (onlyDigits.length >= 7) return `+${onlyDigits}`
 	return trimmed
 }
@@ -380,7 +384,7 @@ export async function createGuestProfile(
 		lastName,
 		phoneE164,
 		emailNorm,
-		locale: input.locale?.trim() || 'en',
+		locale: input.locale?.trim() ?? '',
 		allergyNotes: input.allergyNotes ?? null,
 		createdAt: now,
 		updatedAt: now,
@@ -410,6 +414,13 @@ export async function createGuestProfile(
 		})
 	}
 
+	await linkGuestToVerifiedCustomer(db, {
+		id,
+		customerId: null,
+		phoneE164,
+		erasedAt: null,
+		mergedIntoId: null,
+	})
 	const row = await db
 		.select()
 		.from(rsvGuests)
@@ -419,7 +430,7 @@ export async function createGuestProfile(
 	return serializeGuestRow(row!, tagsMap.get(id) ?? [], opts)
 }
 
-export async function resolveOrCreateGuestForBooking(
+async function resolveOrCreateGuestInner(
 	db: DbOrTx,
 	input: {
 		guestId?: string | null
@@ -564,7 +575,7 @@ export async function resolveOrCreateGuestForBooking(
 		lastName,
 		phoneE164,
 		emailNorm,
-		locale: g?.locale?.trim() || 'en',
+		locale: g?.locale?.trim() ?? '',
 		allergyNotes: g?.allergyNotes ?? null,
 		createdAt: now,
 		updatedAt: now,
@@ -584,6 +595,21 @@ export async function resolveOrCreateGuestForBooking(
 	}
 
 	return (await db.select().from(rsvGuests).where(eq(rsvGuests.id, id)).get())!
+}
+
+/**
+ * Resolves (or creates) the guest an operator-made booking is for. A guest
+ * that carries the verified phone of a customer is linked to it (never on an
+ * unverified phone, name or email); a walk-in without contact stays guest-only.
+ */
+export async function resolveOrCreateGuestForBooking(
+	db: DbOrTx,
+	input: Parameters<typeof resolveOrCreateGuestInner>[1],
+): Promise<typeof rsvGuests.$inferSelect> {
+	const guest = await resolveOrCreateGuestInner(db, input)
+	if (guest.customerId) return guest
+	const customerId = await linkGuestToVerifiedCustomer(db, guest)
+	return customerId ? { ...guest, customerId } : guest
 }
 
 export async function getGuestSummary(
@@ -829,7 +855,7 @@ const TERMINAL_WAITLIST_STATUSES: readonly string[] = [
 	'left',
 	'no_response',
 ]
-const OPEN_WAITLIST_STATUSES = RSV_WAITLIST_STATUS_VALUES.filter(
+export const OPEN_WAITLIST_STATUSES = RSV_WAITLIST_STATUS_VALUES.filter(
 	(status) => !TERMINAL_WAITLIST_STATUSES.includes(status),
 )
 const TERMINAL_NOTIFY_STATUSES: readonly string[] = [
@@ -837,7 +863,7 @@ const TERMINAL_NOTIFY_STATUSES: readonly string[] = [
 	'expired',
 	'cancelled',
 ]
-const OPEN_NOTIFY_STATUSES = RSV_NOTIFY_STATUS_VALUES.filter(
+export const OPEN_NOTIFY_STATUSES = RSV_NOTIFY_STATUS_VALUES.filter(
 	(status) => !TERMINAL_NOTIFY_STATUSES.includes(status),
 )
 
@@ -846,7 +872,7 @@ const OPEN_NOTIFY_STATUSES = RSV_NOTIFY_STATUS_VALUES.filter(
  * (`mergedIntoId` and `rsv_guest_merges`) recursively. A visited set stops a
  * cycle from looping.
  */
-async function collectMergedGuestIds(
+export async function collectMergedGuestIds(
 	db: DbOrTx,
 	rootId: string,
 ): Promise<string[]> {
@@ -879,7 +905,7 @@ async function collectMergedGuestIds(
 	return [...seen]
 }
 
-const CANCELLABLE_FUTURE_STATUSES = new Set([
+export const CANCELLABLE_FUTURE_STATUSES = new Set([
 	'pending_payment',
 	'pending_approval',
 	'booked',
@@ -892,7 +918,7 @@ const CANCELLABLE_FUTURE_STATUSES = new Set([
  * anonymized there is nobody left to write to. A failed send is not allowed to
  * block the erasure.
  */
-async function notifyGuestBeforeErasure(
+export async function notifyGuestBeforeErasure(
 	db: TenantDatabase,
 	guestIds: readonly string[],
 	now: number,
@@ -948,6 +974,12 @@ async function notifyGuestBeforeErasure(
 	}
 }
 
+/**
+ * Erases a guest and everything that identifies the same person: see
+ * `erasePerson` (`person-erasure-service.ts`), which this delegates to so the
+ * operator guest erase, the customer erase and the internal route are one
+ * flow. The import is lazy because that module builds on this one.
+ */
 export async function eraseGuestProfile(
 	dbOrOpts:
 		| TenantDatabase
@@ -989,269 +1021,13 @@ export async function eraseGuestProfile(
 		opts = { actorId: obj.actorId, now: obj.now }
 	}
 
-	const existing = await db
-		.select()
-		.from(rsvGuests)
-		.where(eq(rsvGuests.id, guestId))
-		.get()
-	if (!existing) throw notFound('Guest not found')
-
-	const now = opts.now ?? Date.now()
-	const orgId = getTenantDbOrgId(db)
-
-	// The cancellation notice needs the contact data, so it goes out first,
-	// outside the erase transaction; a failed send never blocks the erasure.
-	await notifyGuestBeforeErasure(
-		db,
-		await collectMergedGuestIds(db, guestId),
-		now,
-	)
-
-	// Everything below is one serialized transaction through the write gate.
-	return withSetupWrite(
-		db,
-		async (db) => {
-			const allGuestIds = await collectMergedGuestIds(db, guestId)
-
-			// Delete guest notes and tags
-			await forEachInChunks(allGuestIds, async (chunk) => {
-				await db
-					.delete(rsvGuestNotes)
-					.where(inArray(rsvGuestNotes.guestId, chunk))
-				await db
-					.delete(rsvGuestTags)
-					.where(inArray(rsvGuestTags.guestId, chunk))
-			})
-
-			// Anonymize guest row(s)
-			const erasedAt = existing.erasedAt ?? now
-			await forEachInChunks(
-				allGuestIds,
-				(chunk) =>
-					db
-						.update(rsvGuests)
-						.set({
-							firstName: 'Erased',
-							lastName: 'guest',
-							phoneE164: null,
-							emailNorm: null,
-							allergyNotes: null,
-							customerId: null,
-							marketingCustomerId: null,
-							erasedAt,
-							updatedAt: now,
-							version: existing.version + 1,
-						})
-						.where(inArray(rsvGuests.id, chunk)),
-				70,
-			)
-
-			// Inspect all reservations for this guest
-			const guestReservations = await queryInChunks(allGuestIds, (chunk) =>
-				db
-					.select()
-					.from(rsvReservations)
-					.where(inArray(rsvReservations.guestId, chunk))
-					.all(),
-			)
-
-			let cancelledFutureCount = 0
-			const affectedDayKeys = new Set<string>()
-
-			for (const r of guestReservations) {
-				const isFutureActive = CANCELLABLE_FUTURE_STATUSES.has(r.status)
-				if (isFutureActive) {
-					await db
-						.update(rsvTableOccupancies)
-						.set({ active: false })
-						.where(
-							and(
-								eq(rsvTableOccupancies.reservationId, r.id),
-								eq(rsvTableOccupancies.active, true),
-							),
-						)
-
-					await db
-						.update(rsvReservations)
-						.set({
-							status: 'cancelled',
-							cancelledAt: now,
-							cancelledBy: 'restaurant',
-							cancelReason: 'guest_erased',
-							dietaryNotes: null,
-							guestRequests: null,
-							staffNotes: null,
-							manageTokenVersion: r.manageTokenVersion + 1,
-							version: r.version + 1,
-							updatedAt: now,
-						})
-						.where(eq(rsvReservations.id, r.id))
-
-					await db.insert(rsvReservationEvents).values({
-						id: createId('rev'),
-						reservationId: r.id,
-						at: now,
-						actorKind: 'system',
-						actorId: opts.actorId,
-						type: 'cancelled',
-						fromStatus: r.status,
-						toStatus: 'cancelled',
-						data: { redacted: true },
-					})
-
-					cancelledFutureCount += 1
-					affectedDayKeys.add(`${r.locationId}::${r.businessDate}`)
-				} else {
-					await db
-						.update(rsvReservations)
-						.set({
-							dietaryNotes: null,
-							guestRequests: null,
-							staffNotes: null,
-							manageTokenVersion: r.manageTokenVersion + 1,
-							updatedAt: now,
-						})
-						.where(eq(rsvReservations.id, r.id))
-				}
-			}
-
-			// Bump day versions for any dates where future reservations were cancelled
-			for (const key of affectedDayKeys) {
-				const [locId, bDate] = key.split('::')
-				if (locId && bDate) {
-					await db
-						.insert(rsvDayVersions)
-						.values({
-							locationId: locId,
-							businessDate: bDate,
-							version: 1,
-							updatedAt: now,
-						})
-						.onConflictDoUpdate({
-							target: [rsvDayVersions.locationId, rsvDayVersions.businessDate],
-							set: {
-								version: sql`${rsvDayVersions.version} + 1`,
-								updatedAt: now,
-							},
-						})
-				}
-			}
-
-			const resIds = guestReservations.map((r) => r.id)
-			if (resIds.length > 0) {
-				// Redact reservation events payload JSON (allowed by rsv_reservation_events_no_update trigger)
-				await forEachInChunks(resIds, (chunk) =>
-					db.run(
-						sql`UPDATE rsv_reservation_events SET data = '{"redacted":true}' WHERE reservation_id IN (${sql.join(
-							chunk.map((id) => sql`${id}`),
-							sql`, `,
-						)})`,
-					),
-				)
-
-				// Scrub any stored card metadata on payment records for this guest's reservations
-				await forEachInChunks(resIds, (chunk) =>
-					db
-						.update(rsvPayments)
-						.set({
-							customerRef: null,
-							paymentMethodRef: null,
-							cardBrand: null,
-							cardLast4: null,
-							updatedAt: now,
-						})
-						.where(inArray(rsvPayments.reservationId, chunk)),
-				)
-			}
-
-			// Scrub waitlist entries for this guest and cancel the ones still open
-			await forEachInChunks(allGuestIds, async (chunk) => {
-				await db
-					.update(rsvWaitlistEntries)
-					.set({
-						displayName: 'Removed Guest',
-						phoneE164: null,
-						emailNorm: null,
-						notes: null,
-					})
-					.where(inArray(rsvWaitlistEntries.guestId, chunk))
-				await db
-					.update(rsvWaitlistEntries)
-					.set({
-						status: 'cancelled',
-						statusTokenVersion: sql`${rsvWaitlistEntries.statusTokenVersion} + 1`,
-						version: sql`${rsvWaitlistEntries.version} + 1`,
-					})
-					.where(
-						and(
-							inArray(rsvWaitlistEntries.guestId, chunk),
-							inArray(rsvWaitlistEntries.status, [...OPEN_WAITLIST_STATUSES]),
-						),
-					)
-			})
-
-			// Back-in-stock requests keep a phone and email: clear them and stop the
-			// ones still waiting for an opening.
-			await forEachInChunks(allGuestIds, async (chunk) => {
-				await db
-					.update(rsvNotifyRequests)
-					.set({ contactPhoneE164: null, contactEmailNorm: null })
-					.where(inArray(rsvNotifyRequests.guestId, chunk))
-				await db
-					.update(rsvNotifyRequests)
-					.set({
-						status: 'cancelled',
-						tokenVersion: sql`${rsvNotifyRequests.tokenVersion} + 1`,
-					})
-					.where(
-						and(
-							inArray(rsvNotifyRequests.guestId, chunk),
-							inArray(rsvNotifyRequests.status, [...OPEN_NOTIFY_STATUSES]),
-						),
-					)
-			})
-
-			// Redact prior audit log entries for this guest or their reservations (allowed by rsv_audit_log_no_update trigger)
-			const entityIdsToRedact = [...allGuestIds, ...resIds]
-			if (entityIdsToRedact.length > 0) {
-				await forEachInChunks(entityIdsToRedact, (chunk) =>
-					db.run(
-						sql`UPDATE rsv_audit_log SET changes = '{"redacted":true}' WHERE entity_id IN (${sql.join(
-							chunk.map((id) => sql`${id}`),
-							sql`, `,
-						)})`,
-					),
-				)
-			}
-
-			// Append fresh guest.erase audit entry without PII
-			await db.insert(rsvAuditLog).values({
-				id: createId('aud'),
-				at: now,
-				actorKind: 'operator',
-				actorId: opts.actorId,
-				locationId: guestReservations[0]?.locationId ?? null,
-				action: 'guest.erase',
-				entityType: 'guest',
-				entityId: guestId,
-				changes: {
-					erasedAt,
-					cancelledFutureReservations: cancelledFutureCount,
-				},
-			})
-
-			const updated = await db
-				.select()
-				.from(rsvGuests)
-				.where(eq(rsvGuests.id, guestId))
-				.get()
-
-			return {
-				erased: true,
-				cancelledFutureReservations: cancelledFutureCount,
-				guest: serializeGuestRow(updated!, []),
-			}
-		},
-		orgId,
-	)
+	const { erasePerson } = await import('./person-erasure-service.ts')
+	const result = await erasePerson(db, { guestId }, opts)
+	return {
+		erased: true as const,
+		cancelledFutureReservations: result.cancelledFutureReservations,
+		guest: result.guest!,
+		guestsErased: result.guestsErased,
+		customersErased: result.customersErased,
+	}
 }

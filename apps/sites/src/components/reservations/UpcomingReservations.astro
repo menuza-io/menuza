@@ -30,7 +30,7 @@ const book = i18n._(msg`Book a table`)
 
 <script>
 	import { getAccessToken } from '~/lib/client-auth'
-	import { browserLocaleHref } from '~/lib/locale'
+	import { browserLocale, browserLocaleHref } from '~/lib/locale'
 	import {
 		createBrowserReservationsApi,
 		readReservationLabels,
@@ -44,7 +44,7 @@ const book = i18n._(msg`Book a table`)
 		void initUpcomingPanel(list, {
 			api: createBrowserReservationsApi(),
 			labels: readReservationLabels(),
-			locale: document.documentElement.lang || 'en',
+			locale: browserLocale(),
 			manageHref: (token) =>
 				`${browserLocaleHref('/reserve/manage')}#t=${encodeURIComponent(token)}`,
 			bookHref: browserLocaleHref('/reserve'),

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import {
+	customers,
 	rsvAuditLog,
 	rsvDayVersions,
 	rsvGuestMerges,
@@ -28,6 +29,8 @@ import {
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
+import { linkGuestToVerifiedCustomer } from './rsv-customer-link.ts'
+import { loadGuestMarketingConsent } from './rsv-marketing-consent.ts'
 import {
 	deriveSystemTagKeys,
 	FREQUENT_NO_SHOW_THRESHOLD,
@@ -427,6 +430,15 @@ export async function getGuestProfile(
 	opts: { canReadSensitive: boolean },
 ) {
 	const base = await getGuestSummary(db, guestId, opts)
+	const links = await db
+		.select({
+			customerId: rsvGuests.customerId,
+			marketingCustomerId: rsvGuests.marketingCustomerId,
+		})
+		.from(rsvGuests)
+		.where(eq(rsvGuests.id, guestId))
+		.get()
+	const marketing = await loadGuestMarketingConsent(db, links ?? null)
 	const history = await db
 		.select({
 			id: rsvReservations.id,
@@ -455,6 +467,8 @@ export async function getGuestProfile(
 		guest: base.guest,
 		notes: base.notes,
 		pinnedNotes: base.pinnedNotes,
+		/** Marketing consent from the linked customer's subscriptions; null when unlinked. */
+		marketing,
 		reservations: history.map((r) => ({
 			...r,
 			dietaryNotes: opts.canReadSensitive ? r.dietaryNotes : null,
@@ -507,11 +521,31 @@ export async function updateGuestProfile(
 		if (input.email !== undefined) {
 			patch.emailNorm = normalizeGuestEmail(input.email)
 		}
-		if (input.locale !== undefined) patch.locale = input.locale.trim() || 'en'
+		if (input.locale !== undefined) patch.locale = input.locale.trim()
 		if (input.allergyNotes !== undefined) {
 			patch.allergyNotes = input.allergyNotes?.trim() || null
 		}
 		const now = Date.now()
+		// The link to a customer is the verified phone: when the guest's phone
+		// changes it stops holding unless it still equals that customer's phone.
+		if (
+			patch.phoneE164 !== undefined &&
+			patch.phoneE164 !== row.phoneE164 &&
+			row.customerId
+		) {
+			const customer = await tx
+				.select({ phone: customers.phone, verified: customers.phoneVerified })
+				.from(customers)
+				.where(eq(customers.id, row.customerId))
+				.get()
+			if (
+				!customer ||
+				!customer.verified ||
+				customer.phone !== patch.phoneE164
+			) {
+				patch.customerId = null
+			}
+		}
 		const updated = await tx
 			.update(rsvGuests)
 			.set({ ...patch, updatedAt: now, version: row.version + 1 })
@@ -519,6 +553,22 @@ export async function updateGuestProfile(
 			.returning({ id: rsvGuests.id })
 		if (updated.length === 0) {
 			throw conflict('stale_version', 'The guest changed since it was loaded')
+		}
+		if (
+			patch.phoneE164 &&
+			!(patch.customerId === undefined && row.customerId)
+		) {
+			await linkGuestToVerifiedCustomer(
+				tx,
+				{
+					id: guestId,
+					customerId: null,
+					phoneE164: patch.phoneE164,
+					erasedAt: null,
+					mergedIntoId: null,
+				},
+				now,
+			)
 		}
 		await tx.insert(rsvAuditLog).values({
 			id: createId('aud'),
@@ -809,6 +859,19 @@ export async function mergeGuests(
 				)
 			}
 		}
+		// Two people with a verified sign-in each are never silently joined: the
+		// merged guest's customer link would be dropped and that customer would
+		// become unrelated to the survivor.
+		if (
+			keep.customerId !== null &&
+			merged.customerId !== null &&
+			keep.customerId !== merged.customerId
+		) {
+			throw conflict(
+				'merge_conflicting_customers',
+				'Both guests are linked to different customers and cannot be merged',
+			)
+		}
 		const keepExpected = expectedVersionFor(
 			input.expectedVersions,
 			'keep',
@@ -940,10 +1003,6 @@ export async function mergeGuests(
 				...(takeCustomer ? { customerId: merged.customerId } : {}),
 				marketingCustomerId:
 					keep.marketingCustomerId ?? merged.marketingCustomerId,
-				marketingEmailConsentAt:
-					keep.marketingEmailConsentAt ?? merged.marketingEmailConsentAt,
-				marketingSmsConsentAt:
-					keep.marketingSmsConsentAt ?? merged.marketingSmsConsentAt,
 				updatedAt: now,
 				version: keep.version + 1,
 			})
@@ -996,43 +1055,6 @@ export async function mergeGuests(
 				canReadSensitive: true,
 			}),
 			movedCounts,
-		}
-	})
-}
-
-// ---------------------------------------------------------------------------
-// Tenant customer erasure
-// ---------------------------------------------------------------------------
-
-/**
- * A tenant customer was erased: drop the opaque links to it and keep
- * everything else. The guests and their visit history stay, because they
- * belong to the restaurant's records and hold no customer data of their own.
- */
-export async function unlinkErasedCustomer(
-	db: TenantDatabase,
-	customerId: string,
-	now: number,
-): Promise<{ guestsUnlinked: number; reservationsUnlinked: number }> {
-	return withSetupWrite(db, async (tx) => {
-		const guests = await tx
-			.update(rsvGuests)
-			.set({ customerId: null, updatedAt: now })
-			.where(eq(rsvGuests.customerId, customerId))
-			.returning({ id: rsvGuests.id })
-		const marketing = await tx
-			.update(rsvGuests)
-			.set({ marketingCustomerId: null, updatedAt: now })
-			.where(eq(rsvGuests.marketingCustomerId, customerId))
-			.returning({ id: rsvGuests.id })
-		const reservations = await tx
-			.update(rsvReservations)
-			.set({ customerId: null })
-			.where(eq(rsvReservations.customerId, customerId))
-			.returning({ id: rsvReservations.id })
-		return {
-			guestsUnlinked: new Set([...guests, ...marketing].map((g) => g.id)).size,
-			reservationsUnlinked: reservations.length,
 		}
 	})
 }

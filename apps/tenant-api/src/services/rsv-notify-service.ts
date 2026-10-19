@@ -184,7 +184,7 @@ export async function createNotifyRequest(params: {
 				areaPrefId: input.areaPrefId ?? null,
 				contactPhoneE164: phone,
 				contactEmailNorm: email,
-				locale: input.locale || 'en',
+				locale: input.locale ?? '',
 				status: 'active',
 				expiresAt: end.instantMs,
 				tokenVersion: 1,

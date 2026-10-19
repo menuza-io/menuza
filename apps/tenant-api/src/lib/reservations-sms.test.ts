@@ -54,10 +54,20 @@ describe('renderReservationSms', () => {
 		},
 	)
 
-	it('renders Arabic copy for an Arabic locale and English otherwise', () => {
+	it('renders each site language in its own words, English for an unknown one', () => {
 		expect(sms('confirmation', { locale: 'ar' })).toMatch(/[\u0600-\u06FF]/)
 		expect(sms('confirmation', { locale: 'ar-SA' })).toMatch(/[\u0600-\u06FF]/)
-		expect(sms('confirmation', { locale: 'fr' })).toBe(sms('confirmation'))
+		expect(sms('confirmation', { locale: 'fr' })).toContain(
+			'réservation confirmée',
+		)
+		expect(sms('confirmation', { locale: 'es' })).toContain(
+			'reserva confirmada',
+		)
+		expect(sms('confirmation', { locale: 'de' })).toContain(
+			'Reservierung bestätigt',
+		)
+		expect(sms('confirmation', { locale: 'zh' })).toContain('预订已确认')
+		expect(sms('confirmation', { locale: 'xx' })).toBe(sms('confirmation'))
 		expect(sms('confirmation', { locale: 'fr' })).not.toMatch(/[\u0600-\u06FF]/)
 	})
 

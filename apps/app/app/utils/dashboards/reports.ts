@@ -2,6 +2,7 @@ import {
 	getCatalog,
 	getSubject,
 	organizationTemplates,
+	templatesForGrants,
 	templateCategories,
 	type ReportDefinition,
 	type ReportRunError,
@@ -60,13 +61,8 @@ export function reportSubjectLabel(subjectId: string) {
 	return getSubject(ORGANIZATION_REPORT_CATALOG, subjectId)?.label ?? subjectId
 }
 
-let templateGroups: ReportTemplateGroup[] | undefined
-
-/** The organization templates by category, in the order the reports page uses. */
-export function reportTemplateGroups(): ReportTemplateGroup[] {
-	if (templateGroups) return templateGroups
-	const templates = organizationTemplates()
-	templateGroups = templateCategories(templates).map((category) => ({
+function groupTemplates(templates: readonly ReportTemplate[]) {
+	return templateCategories([...templates]).map((category) => ({
 		category,
 		templates: templates
 			.filter((template) => template.category === category)
@@ -77,7 +73,24 @@ export function reportTemplateGroups(): ReportTemplateGroup[] {
 				subjectLabel: reportSubjectLabel(template.definition.subject),
 			})),
 	}))
-	return templateGroups
+}
+
+/**
+ * The organization templates a person may run, by category, in the order the
+ * reports page uses. `grants` is the restricted subjects their reports token
+ * lists (`resolveReportGrantsForRequest`): staff and Reservations templates
+ * are left out for anyone it does not cover, so the Add block dialog never
+ * offers a report that cannot run. Without `grants`, every template is listed.
+ */
+export function reportTemplateGroups(
+	grants?: readonly string[],
+): ReportTemplateGroup[] {
+	const templates = organizationTemplates()
+	return groupTemplates(
+		grants
+			? templatesForGrants(ORGANIZATION_REPORT_CATALOG, templates, grants)
+			: templates,
+	)
 }
 
 /** Where "Open report" goes: the saved report, or the template in the builder. */

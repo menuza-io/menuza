@@ -67,12 +67,16 @@ function input(
 const ATTACK = `<script>alert("x")</script><img src=x onerror=alert(1)> & 'q'`
 
 describe('locale and formatting helpers', () => {
-	it('maps Arabic locales to ar and everything else to en', () => {
+	it('keeps every site language and falls back only for unknown values', () => {
 		expect(normalizeReservationLocale('ar')).toBe('ar')
 		expect(normalizeReservationLocale('AR-SA')).toBe('ar')
 		expect(normalizeReservationLocale('en')).toBe('en')
-		expect(normalizeReservationLocale('fr')).toBe('en')
-		expect(normalizeReservationLocale('zh-CN')).toBe('en')
+		expect(normalizeReservationLocale('fr')).toBe('fr')
+		expect(normalizeReservationLocale('es_MX')).toBe('es')
+		expect(normalizeReservationLocale('de')).toBe('de')
+		expect(normalizeReservationLocale('zh-CN')).toBe('zh')
+		expect(normalizeReservationLocale('xx')).toBe('en')
+		expect(normalizeReservationLocale('xx', 'ar')).toBe('ar')
 		expect(normalizeReservationLocale('')).toBe('en')
 		expect(normalizeReservationLocale(undefined)).toBe('en')
 		expect(normalizeReservationLocale(42)).toBe('en')
@@ -156,8 +160,16 @@ describe('renderReservationEmail: kinds and languages', () => {
 		expect(new Set(subjects).size).toBe(TOGGLEABLE_MESSAGE_KINDS.length)
 	})
 
-	it('falls back to English for an unsupported locale and stays left to right', () => {
+	it('renders a non-English, non-Arabic site language in its own words', () => {
 		const mail = renderReservationEmail(input('confirmation', { locale: 'fr' }))
+		expect(mail.html).toContain('<html lang="fr" dir="ltr">')
+		expect(mail.subject).toBe(
+			'Votre réservation chez Acme Downtown est confirmée',
+		)
+	})
+
+	it('falls back to English for a language that is not a site language', () => {
+		const mail = renderReservationEmail(input('confirmation', { locale: 'xx' }))
 		expect(mail.html).toContain('<html lang="en" dir="ltr">')
 		expect(mail.subject).toBe('Your reservation at Acme Downtown is confirmed')
 	})

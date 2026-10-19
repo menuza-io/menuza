@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { localizedTextSchema } from '../i18n.ts'
 import {
 	areaConfigSchema,
 	businessDateSchema,
@@ -50,11 +51,11 @@ export const setupLocationSettingsObjectSchema = z.object({
 	largePartyMode: z
 		.enum([...LARGE_PARTY_MODES, 'contact'] as [string, ...string[]])
 		.optional(),
-	largePartyNoteI18n: z.record(z.string()).nullable().optional(),
+	largePartyNoteI18n: localizedTextSchema(2000).nullable().optional(),
 	requestHoldsCapacity: z.boolean().optional(),
 	requestDeadlineHours: z.number().int().min(1).max(720).optional(),
 	contactPhone: z.string().trim().max(40).nullable().optional(),
-	publicNoteI18n: z.record(z.string()).nullable().optional(),
+	publicNoteI18n: localizedTextSchema(2000).nullable().optional(),
 	seatingPrefMode: z
 		.enum([
 			...SEATING_PREFERENCE_MODES,
@@ -127,7 +128,7 @@ export const setupLocationSettingsPatchSchema = setupLocationSettingsSchema
 export const setupAreaInputSchema = z.object({
 	locationId: z.string().min(1).max(64),
 	name: z.string().trim().min(1).max(120),
-	nameI18n: z.record(z.string()).optional(),
+	nameI18n: localizedTextSchema(120).optional(),
 	color: hexColorSchema.optional(),
 	isOutdoor: z.boolean().optional(),
 	onlineBookable: z.boolean().optional(),
@@ -198,7 +199,7 @@ export const setupFloorElementInputSchema = z.object({
 export const setupServiceInputSchema = z.object({
 	locationId: z.string().min(1).max(64),
 	name: z.string().trim().min(1).max(120),
-	nameI18n: z.record(z.string()).optional(),
+	nameI18n: localizedTextSchema(120).optional(),
 	slug: z.string().trim().min(1).max(80).optional(),
 	color: z.string().trim().min(1).max(40).optional(),
 	colorToken: z.string().trim().min(1).max(40).optional(),
@@ -290,7 +291,7 @@ export const setupSpecialDayInputSchema = z.object({
 	patch: z.record(z.unknown()).nullable().optional(),
 	name: z.string().trim().min(1).max(120).nullable().optional(),
 	label: z.string().trim().min(1).max(120).nullable().optional(),
-	publicNoteI18n: z.record(z.string()).nullable().optional(),
+	publicNoteI18n: localizedTextSchema(2000).nullable().optional(),
 	note: z.string().trim().max(500).nullable().optional(),
 	services: z.array(z.record(z.unknown())).nullable().optional(),
 	customServices: z.array(z.record(z.unknown())).nullable().optional(),

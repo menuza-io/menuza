@@ -202,10 +202,13 @@ describe('what a person is offered', () => {
 				STAFF_TEMPLATE_CATEGORIES.has(template.category),
 			),
 		).toEqual([])
-		// Everything else is untouched.
+		// Everything else is untouched, except the Reservations templates, which
+		// need their own grant.
 		expect(offered.length).toBe(
 			organizationTemplates().filter(
-				(template) => !STAFF_TEMPLATE_CATEGORIES.has(template.category),
+				(template) =>
+					!STAFF_TEMPLATE_CATEGORIES.has(template.category) &&
+					template.category !== 'Reservations',
 			).length,
 		)
 	})

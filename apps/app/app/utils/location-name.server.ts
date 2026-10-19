@@ -1,4 +1,8 @@
-import { pickLocalized } from '@repo/common/site-locales'
+import {
+	parseSiteLocalesConfig,
+	pickLocalized,
+	type SiteLocalesConfig,
+} from '@repo/common/site-locales'
 import { db, eq, Organization } from '@repo/database'
 
 /**
@@ -24,4 +28,22 @@ export async function orgDefaultLocale(
 		.where(eq(Organization.id, organizationId))
 		.limit(1)
 	return org?.siteDefaultLocale || 'en'
+}
+
+/**
+ * The languages the organization enabled in Website settings (site locales plus
+ * the default language): the one list Menu, Drops and Reservations edit in.
+ */
+export async function orgSiteLocales(
+	organizationId: string,
+): Promise<SiteLocalesConfig> {
+	const [org] = await db
+		.select({
+			siteLocales: Organization.siteLocales,
+			siteDefaultLocale: Organization.siteDefaultLocale,
+		})
+		.from(Organization)
+		.where(eq(Organization.id, organizationId))
+		.limit(1)
+	return parseSiteLocalesConfig(org?.siteLocales, org?.siteDefaultLocale)
 }

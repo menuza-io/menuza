@@ -3,10 +3,6 @@ import { type ReservationsScopedClient } from '#app/utils/reservations/reservati
 
 const MESSAGE_TEXTS_PATH = '/operator/reservations/setup/message-texts'
 
-/** Locales a custom note can be written in (guest emails fall back to English otherwise). */
-export const MESSAGE_LOCALES = ['en', 'ar'] as const
-export type MessageLocale = (typeof MESSAGE_LOCALES)[number]
-
 /** Kinds an operator can switch on or off, in display order. */
 export const MESSAGE_SETTING_KINDS = [
 	'confirmation',
@@ -32,16 +28,14 @@ export const WAITLIST_MESSAGE_SETTING_KINDS: ReadonlySet<string> = new Set([
 
 export const DEFAULT_NOTE_MAX_LENGTH = 500
 
-const notesSchema = z.object({
-	en: z.string().default(''),
-	ar: z.string().default(''),
-})
+/** Custom note per language: only languages that have one are present. */
+const notesSchema = z.record(z.string(), z.string())
 
 const kindEntrySchema = z.object({
 	kind: z.string(),
 	enabled: z.boolean(),
 	waitlist: z.boolean().default(false),
-	notes: notesSchema.default({ en: '', ar: '' }),
+	notes: notesSchema.default({}),
 })
 
 const messagingSchema = z.object({
@@ -86,7 +80,7 @@ export type MessageSettingsPatch = {
 		quietHours?: { startMin: number; endMin: number }
 		smsEnabled?: boolean
 	}
-	texts?: Array<{ kind: string; locale: MessageLocale; customNote: string }>
+	texts?: Array<{ kind: string; locale: string; customNote: string }>
 }
 
 export async function fetchMessageSettings(
@@ -117,7 +111,7 @@ export async function saveMessageSettings(
 export async function fetchMessagePreview(
 	client: ReservationsScopedClient,
 	locationId: string,
-	input: { kind: string; locale: MessageLocale },
+	input: { kind: string; locale: string },
 	signal?: AbortSignal,
 ): Promise<MessagePreview> {
 	const raw = await client.request<unknown>(`${MESSAGE_TEXTS_PATH}/preview`, {

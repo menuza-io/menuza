@@ -1,16 +1,19 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import {
+	cleanLocalizedMap,
+	type LocalesLike,
+	type LocalizedMap,
+} from '#app/utils/reservations/localized.ts'
+import {
 	currencyFractionDigits,
 	formatMoney,
 	parseMoneyInput,
 } from '#app/utils/reservations/payments-view.ts'
 import {
-	POLICY_LOCALES,
 	type PolicyBody,
 	type PolicyDto,
 	type PolicyKind,
-	type PolicyLocale,
 	type PolicyRefundRule,
 } from '#app/utils/reservations/policies-api.ts'
 
@@ -37,15 +40,6 @@ export const POLICY_REFUND_RULE_LABELS: Record<
 	none: msg`No refund`,
 }
 
-export const POLICY_LOCALE_LABELS: Record<PolicyLocale, MessageDescriptor> = {
-	en: msg`English`,
-	ar: msg`Arabic`,
-	es: msg`Spanish`,
-	fr: msg`French`,
-	de: msg`German`,
-	zh: msg`Chinese`,
-}
-
 export type PolicyFormValues = {
 	name: string
 	kind: PolicyKind
@@ -59,7 +53,8 @@ export type PolicyFormValues = {
 	refundRule: PolicyRefundRule
 	partialRefundPercent: string
 	appliesPartyMin: string
-	terms: Partial<Record<PolicyLocale, string>>
+	/** Terms per language; the languages come from Website settings. */
+	terms: LocalizedMap
 }
 
 export type PolicyFormField =
@@ -112,9 +107,8 @@ export function policyToForm(
 	policy: PolicyDto,
 	currency: string,
 ): PolicyFormValues {
-	const terms: Partial<Record<PolicyLocale, string>> = {}
-	for (const locale of POLICY_LOCALES) {
-		const text = policy.termsI18n[locale]
+	const terms: LocalizedMap = {}
+	for (const [locale, text] of Object.entries(policy.termsI18n)) {
 		if (text) terms[locale] = text
 	}
 	return {
@@ -149,6 +143,8 @@ type Parsed =
 export function policyFormToBody(
 	form: PolicyFormValues,
 	currency: string,
+	/** The organization's Website settings languages; omitted, no language is dropped. */
+	languages?: LocalesLike,
 ): Parsed {
 	const errors: PolicyFormErrors = {}
 	const name = form.name.trim()
@@ -219,11 +215,13 @@ export function policyFormToBody(
 
 	if (Object.keys(errors).length > 0) return { ok: false, errors }
 
-	const termsI18n: Partial<Record<PolicyLocale, string>> = {}
-	for (const locale of POLICY_LOCALES) {
-		const text = form.terms[locale]?.trim()
-		if (text) termsI18n[locale] = text
-	}
+	// Languages the organization no longer enables are dropped on save.
+	const termsI18n = languages
+		? cleanLocalizedMap(form.terms, languages)
+		: cleanLocalizedMap(form.terms, {
+				locales: Object.keys(form.terms),
+				defaultLocale: '',
+			})
 
 	return {
 		ok: true,

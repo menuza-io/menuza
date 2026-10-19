@@ -12,6 +12,7 @@ import {
 	User,
 	UserOrganization,
 } from '@repo/database'
+import { parseSiteLocalesConfig } from '@repo/common/site-locales'
 import { RESERVATIONS_FLAG_KEYS } from '@repo/reservations'
 import { businessDayStartMs } from '@repo/zoned-time'
 import {
@@ -331,12 +332,33 @@ function syncToLocalD1IfPresent(params: {
 	}
 }
 
+/**
+ * Demo copy as a locale map in the organization's own languages: the default
+ * language is always present (English text when it has no translation), other
+ * enabled languages only where a translation exists.
+ */
+function demoCopy(
+	org: { locales: readonly string[]; defaultLocale: string },
+	copy: Record<string, string>,
+): Record<string, string> {
+	const out: Record<string, string> = {}
+	for (const locale of org.locales) {
+		const text = copy[locale]
+		if (text) out[locale] = text
+	}
+	out[org.defaultLocale] ??= copy[org.defaultLocale] ?? copy.en ?? ''
+	return out
+}
+
 async function seedTenantReservations(params: {
 	orgId: string
 	slug: string
 	locationId: string
 	timeZone: string
 	currency: string
+	/** The organization's Website settings languages. */
+	locales: readonly string[]
+	defaultLocale: string
 }) {
 	await provisionTenantDb(params.orgId)
 	const tenantDb = await getTenantDb(params.orgId)
@@ -785,14 +807,14 @@ async function seedTenantReservations(params: {
 			locationId: locId,
 			slug: 'chefs-tasting',
 			kind: 'prix_fixe',
-			nameI18n: {
+			nameI18n: demoCopy(params, {
 				en: "Chef's Seasonal Tasting",
 				ar: 'قائمة تذوق الشيف الموسمية',
-			},
-			descriptionI18n: {
+			}),
+			descriptionI18n: demoCopy(params, {
 				en: 'Seven-course seasonal tasting menu at the chef counter.',
 				ar: 'قائمة تذوق موسمية من سبعة أطباق.',
-			},
+			}),
 			priceMinor: params.currency === 'SAR' ? 25000 : 8500,
 			pricePerCover: true,
 			currency: params.currency,
@@ -892,7 +914,7 @@ async function seedTenantReservations(params: {
 			.insert(rsvGuests)
 			.values({
 				...guest,
-				locale: params.currency === 'SAR' ? 'ar' : 'en',
+				locale: params.defaultLocale,
 				createdAt: now,
 				updatedAt: now,
 			})
@@ -1350,7 +1372,7 @@ async function seedTenantReservations(params: {
 				quotedMin: wl.quotedMin,
 				status: 'waiting',
 				sortKey: wl.sortKey,
-				locale: params.currency === 'SAR' ? 'ar' : 'en',
+				locale: params.defaultLocale,
 				createdAt: now,
 			})
 			.onConflictDoUpdate({
@@ -1394,7 +1416,21 @@ async function main() {
 	}
 
 	const orgInfo = await ensureControlPlaneOrgAndLocation(slug)
+	const [siteRow] = await db
+		.select({
+			siteLocales: Organization.siteLocales,
+			siteDefaultLocale: Organization.siteDefaultLocale,
+		})
+		.from(Organization)
+		.where(eq(Organization.id, orgInfo.orgId))
+		.limit(1)
+	const siteLocales = parseSiteLocalesConfig(
+		siteRow?.siteLocales,
+		siteRow?.siteDefaultLocale,
+	)
 	await seedTenantReservations({
+		locales: siteLocales.locales,
+		defaultLocale: siteLocales.defaultLocale,
 		orgId: orgInfo.orgId,
 		slug,
 		locationId: orgInfo.locationId,

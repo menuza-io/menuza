@@ -8,6 +8,10 @@ import { and, eq } from 'drizzle-orm'
 import { type DbOrTx } from './rsv-guest-service.ts'
 
 /**
+ * `customer_subscriptions` is the ONLY marketing consent store. Nothing here
+ * (or anywhere) reads or writes the deprecated `rsv_guests.marketing_*_consent_at`
+ * columns.
+ *
  * A guest who ticked the marketing box becomes eligible for reservation
  * journeys. Nothing here creates a login: the customer row it may create is
  * unverified and keyed by the phone the guest typed.
@@ -142,4 +146,53 @@ export async function recordReservationMarketingConsent(
 		.where(eq(rsvGuests.id, guest.id))
 	await recordSubscriptions(tx, customerId, channels, now)
 	return customerId
+}
+
+export type GuestMarketingConsent = {
+	subscriptions: Array<{
+		topic: string
+		channel: string
+		/** True while the subscription is active (not unsubscribed). */
+		subscribed: boolean
+		subscribedAt: number
+		unsubscribedAt: number | null
+		source: string
+	}>
+}
+
+/**
+ * Marketing consent of a guest, read ONLY from `customer_subscriptions` of the
+ * customer row the guest is linked to (`customer_id`, else the
+ * `marketing_customer_id` a booking-form consent created). `null` when the
+ * guest has no customer row: there is no consent to show, never a guess from
+ * the deprecated `rsv_guests.marketing_*_consent_at` columns.
+ */
+export async function loadGuestMarketingConsent(
+	db: DbOrTx,
+	guest: {
+		customerId: string | null
+		marketingCustomerId: string | null
+	} | null,
+): Promise<GuestMarketingConsent | null> {
+	const customerId = guest?.customerId ?? guest?.marketingCustomerId ?? null
+	if (!customerId) return null
+	const rows = await db
+		.select()
+		.from(customerSubscriptions)
+		.where(eq(customerSubscriptions.customerId, customerId))
+		.all()
+	return {
+		subscriptions: rows
+			.map((row) => ({
+				topic: row.topic,
+				channel: row.channel,
+				subscribed: row.unsubscribedAt === null,
+				subscribedAt: row.subscribedAt.getTime(),
+				unsubscribedAt: row.unsubscribedAt?.getTime() ?? null,
+				source: row.source,
+			}))
+			.sort((a, b) =>
+				`${a.topic}:${a.channel}`.localeCompare(`${b.topic}:${b.channel}`),
+			),
+	}
 }

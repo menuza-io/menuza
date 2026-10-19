@@ -705,7 +705,7 @@ export function normalizeGuestSummary(
 		phoneE164,
 		phone: phoneE164 || null,
 		email,
-		locale: typeof raw.locale === 'string' ? raw.locale : 'en',
+		locale: typeof raw.locale === 'string' ? raw.locale : '',
 		vipTier,
 		dietaryCodes,
 		allergiesText: allergyNotes,
@@ -900,7 +900,7 @@ export function normalizeReservationView(
 		guestLocale:
 			(typeof raw.guestLocale === 'string' && raw.guestLocale) ||
 			guest?.locale ||
-			'en',
+			'',
 		partySize: Number(raw.partySize ?? raw.party_size ?? 2),
 		arrivedCovers:
 			typeof raw.arrivedCovers === 'number' ? raw.arrivedCovers : null,
@@ -2261,7 +2261,8 @@ export async function createPhoneReservation(
 			fullName: string
 			phone: string
 			email?: string | null
-			preferredLocale?: 'en' | 'ar'
+			/** A site language; omitted, the guest gets the organization's default. */
+			preferredLocale?: string
 			dietaryCodes?: string[]
 			allergiesText?: string | null
 			seatingPrefText?: string | null
@@ -2336,7 +2337,9 @@ export async function createPhoneReservation(
 						? { phone: input.guest.phone, phoneE164: input.guest.phone }
 						: {}),
 					...(input.guest.email ? { email: input.guest.email } : {}),
-					locale: input.guest.preferredLocale ?? 'en',
+					...(input.guest.preferredLocale
+						? { locale: input.guest.preferredLocale }
+						: {}),
 					...(input.guest.allergiesText
 						? { allergyNotes: input.guest.allergiesText }
 						: {}),

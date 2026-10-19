@@ -78,6 +78,11 @@ type ActiveReservationWriteContext = {
 const activeWriteStorage =
 	new AsyncLocalStorage<ActiveReservationWriteContext>()
 
+/** Org id of the active reservation write (inside a transaction) or of a `getTenantDb` handle. */
+export function resolveReservationOrgId(db: object): string | undefined {
+	return activeWriteStorage.getStore()?.orgId ?? getTenantDbOrgId(db)
+}
+
 export async function getReservationDb(orgId: string): Promise<TenantDatabase> {
 	const active = activeWriteStorage.getStore()
 	if (active && active.orgId === orgId) {

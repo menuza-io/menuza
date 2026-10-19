@@ -10,6 +10,7 @@ import {
 } from '@repo/reservations'
 import {
 	customers,
+	customerSubscriptions,
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
@@ -17,11 +18,9 @@ import {
 	rsvGuestMerges,
 	rsvGuests,
 	rsvLocationSettings,
-	rsvPacingRules,
 	rsvReservationEvents,
 	rsvReservations,
 	rsvServices,
-	rsvTurnTimes,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
@@ -45,11 +44,7 @@ const ORG_ID = 'org_guestbook_reports'
 const LOC = 'loc_gb'
 const OTHER_LOC = 'loc_gb_other'
 const D = '2031-03-10'
-const D2 = '2031-03-11'
 const PROBE = 'Reportprobe Zed'
-const PROBE_PHONE = '+14155550177'
-const PROBE_EMAIL = 'reportprobe@example.com'
-const PROBE_NOTE = 'seat by the secret window'
 
 const orgs = vi.hoisted(() => new Map<string, PublishedOrganization>())
 
@@ -100,8 +95,6 @@ const guestsToken = () =>
 		scope: 'guests',
 		grants: [P.READ_RESERVATION_GUEST, P.UPDATE_RESERVATION_GUEST],
 	})
-const reportsToken = (locationIds: string[] | null = null) =>
-	mint({ scope: 'reports', grants: [P.READ_RESERVATION_REPORT], locationIds })
 
 async function api(method: string, url: string, token: string, body?: unknown) {
 	const res = await app.request(url, {
@@ -121,8 +114,6 @@ async function api(method: string, url: string, token: string, body?: unknown) {
 }
 
 const guestsUrl = (suffix = '') => `/operator/reservations/guests${suffix}`
-const reportUrl = (kind: string, query: string) =>
-	`/operator/reservations/reports/${kind}?locationId=${LOC}&${query}`
 
 let seq = 0
 async function insertGuest(patch: Partial<typeof rsvGuests.$inferInsert> = {}) {
@@ -166,7 +157,7 @@ async function insertBooking(
 	return id
 }
 
-describe('Guestbook and Reservations reports', () => {
+describe('Guestbook and Bookings today', () => {
 	beforeEach(async () => {
 		tempDir = mkdtempSync(path.join(tmpdir(), 'rsv-gb-reports-'))
 		process.env.TENANT_DB_DIR = tempDir
@@ -448,37 +439,62 @@ describe('Guestbook and Reservations reports', () => {
 			expect(again.status).toBeGreaterThanOrEqual(400)
 		})
 
-		it('erase-customer unlinks customer and marketing ids but keeps visit history', async () => {
+		it('erase-customer performs the complete erase: customer, linked guest, subscriptions and contact', async () => {
 			const db = await getTenantDb(ORG_ID)
-			await db
-				.insert(customers)
-				.values([
-					{ id: 'cus_1', phone: '+14155550999', name: 'Linked' },
-				] as never)
+			await db.insert(customers).values([
+				{
+					id: 'cus_1',
+					phone: '+14155550999',
+					email: 'linked@example.com',
+					name: 'Linked',
+					phoneVerified: true,
+				},
+			] as never)
+			await db.insert(customerSubscriptions).values({
+				customerId: 'cus_1',
+				topic: 'reservations',
+				channel: 'email',
+				source: 'reservation_booking',
+				subscribedAt: new Date(),
+			})
 			const id = await insertGuest({
 				firstName: 'Linked',
+				phoneE164: '+14155550999',
 				customerId: 'cus_1',
 				marketingCustomerId: 'cus_1',
 				visits: 3,
 			})
 			const resId = await insertBooking({ guestId: id, status: 'finished' })
-			const res = await app.request('/internal/reservations/erase-customer', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${INTERNAL_SECRET}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ orgId: ORG_ID, customerId: 'cus_1' }),
-			})
+			const call = () =>
+				app.request('/internal/reservations/erase-customer', {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${INTERNAL_SECRET}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ orgId: ORG_ID, customerId: 'cus_1' }),
+				})
+			const res = await call()
 			expect(res.status).toBe(200)
+			const body = (await res.json()) as Record<string, unknown>
+			expect(body).toMatchObject({
+				ok: true,
+				customersErased: 1,
+				guestsErased: 1,
+			})
+			expect(JSON.stringify(body)).not.toContain('linked@example.com')
 			const guest = await db
 				.select()
 				.from(rsvGuests)
 				.where(eq(rsvGuests.id, id))
 				.get()
+			expect(guest!.erasedAt).not.toBeNull()
 			expect(guest!.customerId).toBeNull()
 			expect(guest!.marketingCustomerId).toBeNull()
-			expect(guest!.visits).toBe(3)
+			expect(guest!.phoneE164).toBeNull()
+			expect(await db.select().from(customers)).toHaveLength(0)
+			expect(await db.select().from(customerSubscriptions)).toHaveLength(0)
+			// Visit history stays (anonymized) and a re-run is a safe no-op.
 			expect(
 				(await db
 					.select()
@@ -486,347 +502,43 @@ describe('Guestbook and Reservations reports', () => {
 					.where(eq(rsvReservations.id, resId))
 					.get())!.status,
 			).toBe('finished')
-		})
-	})
-
-	describe('Module reports', () => {
-		const KINDS = [
-			'summary',
-			'no-shows',
-			'cancellations',
-			'turn-times',
-			'waitlist',
-			'pacing',
-		] as const
-
-		async function seedKnownDay() {
-			const probe = await insertGuest({
-				firstName: 'Reportprobe',
-				lastName: 'Zed',
-				phoneE164: PROBE_PHONE,
-				emailNorm: PROBE_EMAIL,
-				allergyNotes: 'peanut allergy',
-			})
-			await insertBooking({
-				guestId: probe,
-				serviceId: 'svc_lunch',
-				localStartMin: 12 * 60,
-				channel: 'online',
-				staffNotes: PROBE_NOTE,
-			})
-			await insertBooking({
-				guestId: probe,
-				serviceId: 'svc_lunch',
-				localStartMin: 12 * 60,
-				channel: 'online',
-			})
-			await insertBooking({
-				guestId: probe,
-				serviceId: 'svc_dinner',
-				localStartMin: 19 * 60,
-				channel: 'phone',
-				partySize: 4,
-			})
-			await insertBooking({
-				guestId: probe,
-				businessDate: D2,
-				serviceId: 'svc_lunch',
-				localStartMin: 12 * 60,
-			})
-			return probe
-		}
-
-		it('refuses a book token and a grantless token on all six endpoints without leaking data', async () => {
-			await seedKnownDay()
-			const book = await mint({ scope: 'book', grants: [P.READ_RESERVATION] })
-			const wrongGrant = await mint({
-				scope: 'reports',
-				grants: [P.READ_RESERVATION],
-			})
-			for (const kind of KINDS) {
-				for (const token of [book, wrongGrant]) {
-					const res = await api(
-						'GET',
-						reportUrl(kind, `from=${D}&to=${D}`),
-						token,
-					)
-					// A wrong-scope token is forbidden; a reports token lacking the grant
-					// is not a valid token for the scope at all.
-					expect(res.status, kind).toBe(token === book ? 403 : 401)
-					expect(res.text).not.toContain('parties')
-				}
-			}
-		})
-
-		it('summary matches a known data set and honours date range and service filters', async () => {
-			await seedKnownDay()
-			const token = await reportsToken()
-			const day = await api(
-				'GET',
-				reportUrl('summary', `from=${D}&to=${D}`),
-				token,
-			)
-			expect(day.status).toBe(200)
-			expect(day.body.totals).toEqual({ parties: 3, covers: 8 })
-			const lunch = day.body.byService.find((s: any) => s.name === 'Lunch')
-			const dinner = day.body.byService.find((s: any) => s.name === 'Dinner')
-			expect(lunch).toMatchObject({ parties: 2, covers: 4 })
-			expect(dinner).toMatchObject({ parties: 1, covers: 4 })
+			const again = await call()
+			expect(again.status).toBe(200)
 			expect(
-				Object.fromEntries(
-					day.body.bySource.map((s: any) => [s.channel, [s.parties, s.covers]]),
-				),
-			).toEqual({ online: [2, 4], phone: [1, 4] })
-			expect(
-				day.body.byPartySize.map((s: any) => [s.partySize, s.parties]),
-			).toEqual([
-				[2, 2],
-				[4, 1],
-			])
-
-			const wide = await api(
-				'GET',
-				reportUrl('summary', `from=${D}&to=${D2}`),
-				token,
-			)
-			expect(wide.body.totals).toEqual({ parties: 4, covers: 10 })
-			const dinnerOnly = await api(
-				'GET',
-				reportUrl('summary', `from=${D}&to=${D}&serviceId=svc_dinner`),
-				token,
-			)
-			expect(dinnerOnly.body.totals).toEqual({ parties: 1, covers: 4 })
+				((await again.json()) as { alreadyErased: boolean }).alreadyErased,
+			).toBe(true)
 		})
 
-		it('no-shows and cancellations report only their own statuses, separating late cancels', async () => {
-			const g = await insertGuest()
-			await insertBooking({ guestId: g, status: 'no_show', partySize: 3 })
-			await insertBooking({ guestId: g, status: 'finished' })
-			await insertBooking({
-				guestId: g,
-				status: 'cancelled',
-				lateCancel: true,
-				cancelledBy: 'guest',
+		it('erase-customer refuses a missing or wrong internal token', async () => {
+			const res = await app.request('/internal/reservations/erase-customer', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ orgId: ORG_ID, customerId: 'cus_1' }),
 			})
-			await insertBooking({
-				guestId: g,
-				status: 'cancelled',
-				lateCancel: false,
-				cancelledBy: 'operator',
-			})
-			const token = await reportsToken()
-			const noShows = await api(
-				'GET',
-				reportUrl('no-shows', `from=${D}&to=${D}`),
-				token,
-			)
-			expect(noShows.body.total).toBe(1)
-			expect(noShows.body.rows[0]).toMatchObject({
-				partySize: 3,
-				service: 'Dinner',
-			})
-			const cancels = await api(
-				'GET',
-				reportUrl('cancellations', `from=${D}&to=${D}`),
-				token,
-			)
-			expect(cancels.body).toMatchObject({ total: 2, late: 1, regular: 1 })
+			expect(res.status).toBe(401)
 		})
 
-		it('turn-times compares the actual average to the configured bucket', async () => {
+		it('merging two guests linked to different customers answers 409 merge_conflicting_customers', async () => {
+			const token = await guestsToken()
 			const db = await getTenantDb(ORG_ID)
-			await db.insert(rsvTurnTimes).values({
-				id: 'tt_1',
-				locationId: LOC,
-				serviceId: null,
-				partyMin: 1,
-				partyMax: 2,
-				minutes: 75,
+			await db.insert(customers).values([
+				{ id: 'cus_a', phone: '+14155550001', name: 'A', phoneVerified: true },
+				{ id: 'cus_b', phone: '+14155550002', name: 'B', phoneVerified: true },
+			] as never)
+			const keep = await insertGuest({
+				customerId: 'cus_a',
+				phoneE164: '+14155550001',
 			})
-			const g = await insertGuest()
-			const seatedAt = Date.parse(`${D}T19:00:00Z`)
-			await insertBooking({
-				guestId: g,
-				status: 'finished',
-				seatedAt,
-				finishedAt: seatedAt + 50 * 60_000,
+			const dupe = await insertGuest({
+				customerId: 'cus_b',
+				phoneE164: '+14155550002',
 			})
-			const token = await reportsToken()
-			const res = await api(
-				'GET',
-				reportUrl('turn-times', `from=${D}&to=${D}`),
-				token,
-			)
-			expect(res.body.byPartySize).toEqual([
-				expect.objectContaining({
-					partySize: 2,
-					count: 1,
-					actualAvgMin: 50,
-					configuredMin: 75,
-					varianceMin: -25,
-				}),
-			])
-		})
-
-		it('waitlist compares quoted and actual waits and ignores other dates', async () => {
-			const db = await getTenantDb(ORG_ID)
-			const g = await insertGuest()
-			const joinedAt = Date.parse(`${D}T18:00:00Z`)
-			const resId = await insertBooking({
-				guestId: g,
-				status: 'seated',
-				seatedAt: joinedAt + 22 * 60_000,
+			const res = await api('POST', guestsUrl('/merge'), token, {
+				keepId: keep,
+				mergeId: dupe,
 			})
-			await db.insert(rsvWaitlistEntries).values([
-				{
-					id: 'wl_1',
-					locationId: LOC,
-					businessDate: D,
-					displayName: 'Waitprobe',
-					phoneE164: '+14155550188',
-					partySize: 4,
-					joinedAt,
-					quotedMin: 20,
-					status: 'seated',
-					reservationId: resId,
-				},
-				{
-					id: 'wl_2',
-					locationId: LOC,
-					businessDate: D2,
-					displayName: 'Other day',
-					partySize: 2,
-					joinedAt: joinedAt + 86_400_000,
-				},
-			])
-			const token = await reportsToken()
-			const res = await api(
-				'GET',
-				reportUrl('waitlist', `from=${D}&to=${D}`),
-				token,
-			)
-			expect(res.body.total).toBe(1)
-			expect(res.body.rows[0]).toMatchObject({
-				partySize: 4,
-				quotedMin: 20,
-				actualMin: 22,
-				outcome: 'seated',
-			})
-			expect(res.text).not.toContain('Waitprobe')
-			expect(res.text).not.toContain('+14155550188')
-		})
-
-		it('pacing counts bookings per slot beside the configured limits', async () => {
-			const db = await getTenantDb(ORG_ID)
-			await db.insert(rsvPacingRules).values({
-				id: 'pr_1',
-				serviceId: 'svc_lunch',
-				bucketMin: 15,
-				maxCovers: 3,
-				maxParties: 5,
-				channel: 'all',
-			})
-			await seedKnownDay()
-			const token = await reportsToken()
-			const res = await api(
-				'GET',
-				reportUrl('pacing', `from=${D}&to=${D}`),
-				token,
-			)
-			const lunchSlot = res.body.slots.find((s: any) => s.time === '12:00')
-			expect(lunchSlot).toMatchObject({
-				service: 'Lunch',
-				bookings: 2,
-				covers: 4,
-				maxCovers: 3,
-				maxParties: 5,
-				overLimit: true,
-			})
-			const dinnerSlot = res.body.slots.find((s: any) => s.time === '19:00')
-			expect(dinnerSlot).toMatchObject({ bookings: 1, covers: 4 })
-			expect(res.body.limits).toHaveLength(1)
-		})
-
-		it('returns zeroed structures on an empty range', async () => {
-			const token = await reportsToken()
-			for (const kind of KINDS) {
-				const res = await api(
-					'GET',
-					reportUrl(kind, 'from=2020-01-06&to=2020-01-07'),
-					token,
-				)
-				expect(res.status, kind).toBe(200)
-			}
-			const summary = await api(
-				'GET',
-				reportUrl('summary', 'from=2020-01-06&to=2020-01-07'),
-				token,
-			)
-			expect(summary.body.totals).toEqual({ parties: 0, covers: 0 })
-			expect(summary.body.byService).toEqual([])
-		})
-
-		it('carries no guest contact data and writes one report.run audit row per run', async () => {
-			await seedKnownDay()
-			const db = await getTenantDb(ORG_ID)
-			const before = (
-				await db
-					.select()
-					.from(rsvAuditLog)
-					.where(eq(rsvAuditLog.action, 'report.run'))
-			).length
-			const token = await reportsToken()
-			for (const kind of KINDS) {
-				const res = await api(
-					'GET',
-					reportUrl(kind, `from=${D}&to=${D2}`),
-					token,
-				)
-				expect(res.status).toBe(200)
-				for (const marker of [
-					PROBE,
-					'Reportprobe',
-					PROBE_PHONE,
-					PROBE_EMAIL,
-					PROBE_NOTE,
-					'peanut',
-				]) {
-					expect(res.text, `${kind} leaked ${marker}`).not.toContain(marker)
-				}
-			}
-			const rows = await db
-				.select()
-				.from(rsvAuditLog)
-				.where(eq(rsvAuditLog.action, 'report.run'))
-			expect(rows.length - before).toBe(6)
-			for (const row of rows) {
-				expect(row.locationId).toBe(LOC)
-				const serialized = JSON.stringify(row.changes)
-				expect(serialized).not.toContain('Reportprobe')
-				expect(KINDS).toContain(row.entityId)
-			}
-		})
-
-		it('refuses a location outside the token and rejects absurd ranges', async () => {
-			const token = await reportsToken([OTHER_LOC])
-			expect(
-				(await api('GET', reportUrl('summary', `from=${D}&to=${D}`), token))
-					.status,
-			).toBe(403)
-			const open = await reportsToken()
-			expect(
-				(
-					await api(
-						'GET',
-						reportUrl('summary', 'from=2020-01-01&to=2031-01-01'),
-						open,
-					)
-				).status,
-			).toBe(400)
-			expect(
-				(await api('GET', reportUrl('summary', `from=${D2}&to=${D}`), open))
-					.status,
-			).toBe(400)
+			expect(res.status).toBe(409)
+			expect(JSON.stringify(res.body)).toContain('merge_conflicting_customers')
 		})
 	})
 

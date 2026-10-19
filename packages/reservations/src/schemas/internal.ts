@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { reservationsFeaturesSchema } from '../flags.ts'
 import { ianaTimeZoneStringSchema } from './common.ts'
 import { paymentProviderSchema } from './payments.ts'
+import { parseSpecialHours, parseWeeklyHours } from '../rules/location-hours.ts'
 
 /**
  * Schemas for US control-plane <-> regional `tenant-api` internal endpoints
@@ -54,8 +55,10 @@ export const reservationsContextLocationSchema = z.strictObject({
 	currency: z.enum(['USD', 'CAD', 'SAR']),
 	phone: z.string().nullable(),
 	address: reservationsContextAddressSchema.nullable(),
-	storeHours: z.unknown().nullable(),
-	specialHours: z.unknown().nullable(),
+	// Tolerant: a malformed value (or the raw JSON string) fails open to `null`
+	// for this location only, never rejecting the whole context.
+	storeHours: z.unknown().transform((raw) => parseWeeklyHours(raw).value),
+	specialHours: z.unknown().transform((raw) => parseSpecialHours(raw).value),
 	isActive: z.boolean(),
 })
 

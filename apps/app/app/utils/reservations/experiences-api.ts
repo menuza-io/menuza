@@ -22,8 +22,6 @@ export const EXPERIENCE_KINDS = SETUP_EXPERIENCE_KINDS
 export type ExperienceKind = (typeof EXPERIENCE_KINDS)[number]
 export const EXPERIENCE_STATUSES = SETUP_EXPERIENCE_STATUSES
 export type ExperienceStatus = (typeof EXPERIENCE_STATUSES)[number]
-export const EXPERIENCE_LOCALES = ['en', 'ar', 'es', 'fr', 'de', 'zh'] as const
-export type ExperienceLocale = (typeof EXPERIENCE_LOCALES)[number]
 
 export const scheduleSchema = z.object({
 	id: z.string(),
@@ -72,8 +70,9 @@ export type ExperienceDto = z.infer<typeof experienceSchema>
 export type ExperienceInput = {
 	slug: string
 	kind: ExperienceKind
-	nameI18n: Partial<Record<ExperienceLocale, string>>
-	descriptionI18n?: Partial<Record<ExperienceLocale, string>> | null
+	/** Name per language (Website settings languages); the default language is required. */
+	nameI18n: Record<string, string>
+	descriptionI18n?: Record<string, string> | null
 	imageUrl?: string | null
 	priceMinor?: number | null
 	pricePerCover?: boolean

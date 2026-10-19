@@ -74,7 +74,10 @@ Payment events are columns and rows of `rsv_payments` (there is no separate
 payment-events table), rate limits are `rsv_rate_counters`, policy rules are
 `rsv_policies`, and message templates are the guest-visible overrides in
 `rsv_message_texts` (the defaults live in code). There are no daily statistics
-tables: reports are computed from the booking rows.
+tables: reports are computed from the booking rows. They run through the generic
+report token and tenant-api `POST /analytics/query` (subjects `bookings`,
+`waitlist_entries`, `pacing_slots`), browser-direct, with the same location
+limit and no guest fields.
 
 Settings that belong to a location (booking interval, horizon, party range, hold
 minutes, cancellation cutoff, large-party mode, messaging, waitlist) are
@@ -199,6 +202,23 @@ control plane and mirrored into `rsv_location_settings` per tenant database:
 - When an operator updates locations, flags, branding or payment accounts in
   `apps/app`, App posts `POST /internal/reservations/context-changed` to evict
   the regional cache immediately and sync location time zones.
+- **Location hours ride in this context and drive availability.** Each context
+  location carries `timeZone`, `isActive`, `storeHours` (weekly) and
+  `specialHours` (dated), typed and tolerantly parsed (a malformed value for one
+  location parses to `null`, which fails open for that location only; App and
+  tenant-api log a count). These are business opening hours, not PII, so no new
+  data crosses regions. `onlineHours` (ordering) is not sent.
+- **Precedence** (`buildEffectiveDay`, `packages/reservations`): location
+  inactive, then location closed for the whole business day (special hours
+  closed, closed weekday, no open instant), then the reservations special day
+  (`closed`, `online_closed`, `modified`/`replace`), then the location hours
+  clipping the day's slots, then the weekly service templates. Slots are checked
+  per start instant in the **location's** zone, so overnight ranges, the
+  reservation time zone and `dayStartMin` stay exact. Location hours are the
+  single source of "when are we open": services only operate inside them, a
+  special day can never open reservations on a closed location, and staff keep
+  the explicit `overbook` override (`closed_day`, `outside_location_hours`
+  warning). Enforcement has no flag.
 
 ### 5. Concurrency, single-writer discipline (`withReservationWrite`), and SQLite invariants
 
@@ -408,14 +428,84 @@ connected Stripe account (US) or Checkout.com sub-entity (KSA, SAR):
   days, delivered outbox rows 30 days. Reservations, events and the audit log
   are kept. A manage link stops answering 7 days after the booking ends; a
   waitlist link 2 days after joining.
-- **Guest erasure** (`POST /operator/reservations/guests/:id/erase`, needs
-  `update:reservation_guest:any`): the profile's personal fields are scrubbed,
-  future bookings and waitlist entries are cancelled, and the payloads of
-  `rsv_reservation_events` and `rsv_audit_log` rows are redacted to
-  `'{"redacted":true}'` while the append-only history stays.
-- **Customer erasure** (`POST /internal/reservations/erase-customer`): drops the
-  opaque `customer_id` and `marketing_customer_id` links on guests and
-  reservations; the restaurant's own guest records stay.
+- **One erasure flow** (`erasePerson`,
+  `apps/tenant-api/src/services/person-erasure-service.ts`). The operator guest
+  erase (`POST /operator/reservations/guests/:id/erase`, needs
+  `update:reservation_guest:any`), the operator customer erase
+  (`POST /operator/customers/:id/erase`, needs a token minted with `canDelete`)
+  and the internal route (`POST /internal/reservations/erase-customer`, body
+  `{ orgId, customerId }`) all call it, so erasing a person from either side
+  does the same complete job. A person is a set grown to a fixed point from the
+  guest ids (with every guest merged into them, recursively, and the survivor of
+  a merge), the linked customer ids (`customer_id`, `marketing_customer_id`) and
+  the phones and emails they hold: a guest found by phone brings its customer, a
+  customer brings the guests that carry its phone. In one regional write
+  transaction (`withSetupWrite`, chunked `IN` lists of 90 or fewer) it:
+  - anonymizes every guest row and deletes their notes and tags;
+  - cancels future bookings (the cancellation notice goes out first, outside the
+    transaction), scrubs reservation text, `client` and `ip_hash`, card metadata
+    on payments, and deletes the holds that became those bookings (their token
+    and address hashes go with them);
+  - nulls contact data on waitlist entries and notify requests (matched by guest
+    id, phone or email) and cancels the open ones;
+  - stops every pending or sending `rsv_messages` row of those bookings,
+    waitlist entries and notify requests (the table holds no address: it was
+    read from the guest, which is gone), so nothing is sent after the erasure;
+  - deletes the customer row and, explicitly, its subscriptions, refresh tokens,
+    payment methods, journey runs, journey step executions and marketing
+    messages (no reliance on the foreign-key pragma);
+  - scrubs order contact and delivery fields (`restaurant_orders`: name, phone,
+    email, address, notes, postal code, coordinates, receipt token) for orders
+    by customer id, phone or email, and keeps totals; nulls
+    `shop_orders.customer_id`;
+  - redacts website form submissions that contain the erased phone or email
+    (best effort: free text);
+  - redacts earlier `rsv_reservation_events` and `rsv_audit_log` payloads and
+    appends one PII-free `guest.erase` audit entry, only when something changed.
+
+  Voice calls tied to the phone or customer (with their requests, SMS log and
+  recordings) are erased first through `eraseCallerVoiceData`, because
+  recordings live in object storage: a failed recording deletion answers 502 and
+  stops before any row is touched. The flow is idempotent and safe to re-run (a
+  second run changes nothing). `person-erasure-pii-columns.test.ts` lists every
+  PII-looking column of the tenant schema and fails when a new one is neither
+  covered by the erase nor allow-listed; `person-erasure.test.ts` seeds one
+  person across the tables and scans a dump of the whole database. Not covered:
+  access tokens already issued (15 minutes, stateless) and the Stripe customer
+  object at the provider.
+
+- **Single consent source.** `customer_subscriptions` is the only marketing
+  consent store. `rsv_guests.marketing_email_consent_at`,
+  `marketing_sms_consent_at`, `consent_source` and `consent_text_version` are
+  deprecated: nothing reads or writes them (kept one release, then dropped). A
+  booking-form consent writes only subscription rows
+  (`recordReservationMarketingConsent`), and the guest profile reports consent
+  from the linked customer's subscriptions (`marketing`, null when the guest has
+  no customer row). A broadcast campaign's audience (`loadBroadcastAudience`) is
+  customers with an active subscription (`unsubscribed_at IS NULL`) for the
+  campaign's channel; texts also need a verified phone. Having a customer row, a
+  verified phone or a past booking is not consent.
+- **Linking rule.** `rsv_guests.customer_id` is set only when a customer's
+  verified phone (E.164) equals the guest's phone and the customer owns no other
+  guest. Never on an unverified phone, a name or an email; a guest never creates
+  a `customers` row as a link (the unverified row a marketing consent may create
+  is reachable only through `marketing_customer_id`). Link points: phone
+  verification (`/auth/verify`, best effort, never fails sign-in), signed-in
+  public booking, operator booking and guest create or phone edit
+  (`resolveOrCreateGuestForBooking`, `createGuestProfile`, `updateGuestProfile`;
+  a phone edit that no longer equals the customer's phone drops the link), and
+  the idempotent pass `linkGuestsToCustomers`
+  (`POST /internal/reservations/link-customers`, counts only; ties go to the
+  guest with the latest visit). Merging two guests linked to different customers
+  is refused with `409 merge_conflicting_customers`; merging when one is linked
+  keeps the link.
+- **Phone normalization is region-aware.** Input with a country code (`+` or
+  `00`) is never reinterpreted. A number typed without one is read in the node's
+  data region: `05XXXXXXXX`, `5XXXXXXXX` and `9665XXXXXXXX` are `+966...` on a
+  KSA node, 10 digits (or 11 with a leading 1) are `+1...` on a US node. One
+  shared function (`normalizeGuestPhone` in `@repo/reservations`, wrapped by
+  `apps/tenant-api/src/lib/phone.ts`) serves customers, guests and the
+  guestbook.
 - **Region switch** follows ADR 045: the old regional database is destroyed and
   an empty one is provisioned. The App guard reads counts only
   (`/internal/reservations/summary`), refuses while unsettled payments exist and
@@ -435,6 +525,19 @@ connected Stripe account (US) or Checkout.com sub-entity (KSA, SAR):
 - `RESERVATIONS_TICK_INTERVAL_SECONDS` (`apps/tenant-api` Node runtime): seconds
   between in-process ticks (default 120, minimum 60, `0` disables the timer and
   keeps the cron and alarm paths).
+
+### 13. Languages follow Website settings
+
+Reservations stores no language list. Guest-facing operator text is a locale map
+whose languages are the organization's Website settings languages (site locales
+plus the default language, limited to `SITE_CONTENT_LOCALES`); the default
+language is required for names. tenant-api reads the same list from the non-PII
+control-plane context (`organization.locales`, `organization.defaultLocale`),
+validates every map against it and resolves requested language, organization
+default, canonical name. Guest SMS and email use the guest's booking language
+when enabled, else the default, from shipped templates in all six languages.
+Nothing here puts text or language data in the control plane. See
+`docs/reservations.md#languages`.
 
 ## Consequences
 

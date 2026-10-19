@@ -1,13 +1,36 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { i18n } from '@lingui/core'
+import { I18nProvider } from '@lingui/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { type ReactElement } from 'react'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeSettingsResponse } from '#app/utils/reservations/messages-fixtures.ts'
 import {
 	ReservationsApiError,
 	type ReservationsScopedClient,
 } from '#app/utils/reservations/reservations-client.ts'
-import { renderStaff } from '#tests/staff-render.tsx'
 import { MessageSettingsScreen } from './message-settings.tsx'
+
+const languages = vi.hoisted(() => ({
+	locales: ['en', 'ar'] as string[],
+	defaultLocale: 'en',
+}))
+vi.mock('#app/utils/reservations/use-reservation-locales.ts', () => ({
+	useReservationLocales: () => languages,
+}))
+
+/** The translate helper behind the language switcher needs a data router. */
+function renderStaff(ui: ReactElement) {
+	i18n.load('en', {})
+	i18n.activate('en')
+	const router = createMemoryRouter([{ path: '/', element: ui }])
+	return render(
+		<I18nProvider i18n={i18n}>
+			<RouterProvider router={router} />
+		</I18nProvider>,
+	)
+}
 
 const PATH = '/operator/reservations/setup/message-texts'
 
@@ -75,7 +98,12 @@ function input(testId: string) {
 describe('MessageSettingsScreen', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
+		languages.locales = ['en', 'ar']
+		languages.defaultLocale = 'en'
 	})
+
+	const pickLanguage = (name: string) =>
+		fireEvent.click(screen.getByRole('radio', { name }))
 
 	it('shows the saved values', async () => {
 		setup()
@@ -98,11 +126,46 @@ describe('MessageSettingsScreen', () => {
 		expect(
 			screen.getByTestId('message-sms-switch').getAttribute('aria-checked'),
 		).toBe('true')
-		expect(input('message-note-confirmation-en').value).toBe('See you soon')
-		expect(input('message-note-confirmation-ar').value).toBe('')
+		expect(input('message-note-confirmation').value).toBe('See you soon')
+		// Another language starts empty; the default text is its placeholder.
+		pickLanguage('Arabic')
+		expect(input('message-note-confirmation').value).toBe('')
+		expect(input('message-note-confirmation').placeholder).toBe('See you soon')
 		expect(screen.queryByTestId('message-dirty-badge')).toBeNull()
 		// The save bar only appears once something changed.
 		expect(screen.queryByTestId('message-save')).toBeNull()
+	})
+
+	it('shows one note field per kind and no switcher for a one-language organization', async () => {
+		languages.locales = ['en']
+		setup()
+		await screen.findByTestId('message-kinds-card')
+		expect(screen.queryByRole('radiogroup')).toBeNull()
+		expect(input('message-note-confirmation').value).toBe('See you soon')
+		expect(screen.queryByTestId('message-preview-locale-ar')).toBeNull()
+		expect(screen.queryByText(/Arabic/)).toBeNull()
+	})
+
+	it('offers every language of the organization, not a fixed pair', async () => {
+		languages.locales = ['es', 'fr', 'zh']
+		languages.defaultLocale = 'es'
+		const { calls } = setup()
+		await screen.findByTestId('message-kinds-card')
+		expect(screen.getAllByRole('radio').map((r) => r.textContent)).toEqual([
+			'es',
+			'fr',
+			'zh',
+		])
+		// The preview starts in the organization default language.
+		await screen.findByTestId('message-preview-frame')
+		expect(
+			calls.find((c) => c.path === `${PATH}/preview`)!.options.query,
+		).toEqual({ locationId: 'loc_1', kind: 'confirmation', locale: 'es' })
+		pickLanguage('French')
+		fireEvent.change(input('message-note-reminder'), {
+			target: { value: 'À bientôt' },
+		})
+		expect(input('message-note-reminder').value).toBe('À bientôt')
 	})
 
 	it('hides waitlist kinds unless the waitlist is on', async () => {
@@ -162,7 +225,8 @@ describe('MessageSettingsScreen', () => {
 		fireEvent.change(input('message-reminder-hours'), {
 			target: { value: '12' },
 		})
-		fireEvent.change(input('message-note-reminder-ar'), {
+		pickLanguage('Arabic')
+		fireEvent.change(input('message-note-reminder'), {
 			target: { value: 'نراكم قريبا' },
 		})
 		fireEvent.click(screen.getByTestId('message-save'))
@@ -379,7 +443,7 @@ describe('MessageSettingsScreen', () => {
 		await screen.findByTestId('message-kinds-card')
 		expect(screen.queryByTestId('message-save')).toBeNull()
 		expect(input('message-reminder-hours').disabled).toBe(true)
-		expect(input('message-note-confirmation-en').disabled).toBe(true)
+		expect(input('message-note-confirmation').disabled).toBe(true)
 		expect(
 			screen
 				.getByTestId('message-kind-switch-reminder')

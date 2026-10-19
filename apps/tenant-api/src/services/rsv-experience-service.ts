@@ -23,6 +23,7 @@ import {
 import { and, asc, eq, inArray, isNull, ne } from 'drizzle-orm'
 import { type z } from 'zod'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
+import { assertLocalizedMap, loadLocaleOrg } from '../lib/reservations-i18n.ts'
 import {
 	bumpDayVersionsInTx,
 	withSetupWrite,
@@ -422,7 +423,21 @@ export async function createExperience(
 	},
 ): Promise<SerializedExperience> {
 	const now = params.now ?? Date.now()
-	const { input, locationId } = params
+	const { locationId } = params
+	const localeOrg = await loadLocaleOrg(params.orgId)
+	const input = {
+		...params.input,
+		nameI18n: assertLocalizedMap(params.input.nameI18n, localeOrg, 'nameI18n', {
+			requireDefault: true,
+		}),
+		descriptionI18n: params.input.descriptionI18n
+			? assertLocalizedMap(
+					params.input.descriptionI18n,
+					localeOrg,
+					'descriptionI18n',
+				)
+			: params.input.descriptionI18n,
+	}
 	return withSetupWrite(
 		db,
 		async (tx) => {
@@ -500,7 +515,30 @@ export async function updateExperience(
 	},
 ): Promise<SerializedExperience> {
 	const now = params.now ?? Date.now()
-	const { locationId, patch } = params
+	const { locationId } = params
+	const localeOrg = await loadLocaleOrg(params.orgId)
+	const patch = {
+		...params.patch,
+		...(params.patch.nameI18n
+			? {
+					nameI18n: assertLocalizedMap(
+						params.patch.nameI18n,
+						localeOrg,
+						'nameI18n',
+						{ requireDefault: true },
+					),
+				}
+			: {}),
+		...(params.patch.descriptionI18n
+			? {
+					descriptionI18n: assertLocalizedMap(
+						params.patch.descriptionI18n,
+						localeOrg,
+						'descriptionI18n',
+					),
+				}
+			: {}),
+	}
 	return withSetupWrite(
 		db,
 		async (tx) => {

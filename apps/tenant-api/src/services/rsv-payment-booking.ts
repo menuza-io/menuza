@@ -18,6 +18,7 @@ import {
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
+import { pickText, type LocaleOrg } from '../lib/reservations-i18n.ts'
 import { deriveReservationPayToken } from '../lib/reservations-public-auth.ts'
 import { type ReservationWriteTx } from '../lib/reservations-write.ts'
 
@@ -136,15 +137,15 @@ export function processorToProvider(
 function pickTerms(
 	terms: Record<string, string> | null | undefined,
 	locale: string,
+	org: LocaleOrg,
 ): string | null {
-	if (!terms) return null
-	const lang = locale.toLowerCase().split('-')[0] ?? 'en'
+	// The legal text is never dropped: requested language, organization default,
+	// then whatever the operator did write.
 	return (
-		terms[lang]?.trim() ||
-		terms.en?.trim() ||
-		Object.values(terms)
+		pickText(terms, locale, org) ??
+		Object.values(terms ?? {})
 			.find((value) => value?.trim())
-			?.trim() ||
+			?.trim() ??
 		null
 	)
 }
@@ -223,7 +224,11 @@ export async function planBookingPayment(
 		.from(rsvPolicies)
 		.where(eq(rsvPolicies.id, policy.id))
 		.get()
-	const termsText = pickTerms(termsRow?.termsI18n, params.locale)
+	const termsText = pickTerms(
+		termsRow?.termsI18n,
+		params.locale,
+		context.organization,
+	)
 	const purpose: PaymentPurpose =
 		policy.kind === 'card_guarantee'
 			? 'guarantee'

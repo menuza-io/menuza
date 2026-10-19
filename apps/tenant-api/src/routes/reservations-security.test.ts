@@ -138,9 +138,6 @@ function scopeForRoute(routePath: string): ReservationsScope {
 	if (routePath.startsWith('/operator/reservations/guests')) {
 		return 'guests'
 	}
-	if (routePath.startsWith('/operator/reservations/reports')) {
-		return 'reports'
-	}
 	if (routePath.startsWith('/operator/reservations/payments')) {
 		return 'payments'
 	}
@@ -341,12 +338,6 @@ describe('Reservations security sweep: operator routes', () => {
 			'GET /operator/reservations/guests/tags',
 			'POST /operator/reservations/guests/merge',
 			'POST /operator/reservations/guests/:id/notes',
-			'GET /operator/reservations/reports/summary',
-			'GET /operator/reservations/reports/no-shows',
-			'GET /operator/reservations/reports/cancellations',
-			'GET /operator/reservations/reports/turn-times',
-			'GET /operator/reservations/reports/waitlist',
-			'GET /operator/reservations/reports/pacing',
 			'GET /operator/reservations/setup/locations/:locationId/experiences',
 			'POST /operator/reservations/setup/locations/:locationId/experiences',
 			'GET /operator/reservations/setup/locations/:locationId/experiences/:id',

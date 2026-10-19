@@ -1,4 +1,4 @@
-import { browserLocaleHref } from '~/lib/locale'
+import { browserLocale, browserLocaleHref } from '~/lib/locale'
 import {
 	createBrowserReservationsApi,
 	readReservationLabels,
@@ -15,7 +15,7 @@ if (root?.dataset.experience) {
 		void initExperienceBooking(root, {
 			api: createBrowserReservationsApi(),
 			labels: readReservationLabels(),
-			locale: document.documentElement.lang || 'en',
+			locale: browserLocale(),
 			data,
 			reserveHref: browserLocaleHref('/reserve'),
 			navigate: (href) => location.assign(href),

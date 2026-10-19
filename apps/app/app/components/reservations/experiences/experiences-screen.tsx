@@ -30,11 +30,12 @@ import {
 	EXPERIENCE_STATUS_LABELS,
 	experienceErrorStatus,
 	formatCalendarDate,
-	pickExperienceText,
 	seatingSummary,
 } from '#app/utils/reservations/experiences-view.ts'
+import { displayText } from '#app/utils/reservations/localized.ts'
 import { formatMoney } from '#app/utils/reservations/payments-view.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 
 type Filter = 'active' | 'published' | 'draft' | 'archived'
 
@@ -71,6 +72,7 @@ export function ExperiencesScreen({
 	canWrite: boolean
 }) {
 	const { t, i18n } = useLingui()
+	const languages = useReservationLocales()
 	const navigate = useNavigate()
 	const [state, setState] = useState<LoadState>({ status: 'loading' })
 	const [filter, setFilter] = useState<Filter>('active')
@@ -310,7 +312,7 @@ export function ExperiencesScreen({
 												className="font-medium wrap-anywhere hover:underline focus-visible:underline"
 												data-testid="experience-link"
 											>
-												{pickExperienceText(experience.nameI18n, i18n.locale) ||
+												{displayText(experience.nameI18n, languages) ||
 													experience.slug}
 											</Link>
 											<span className="text-muted-foreground text-xs">

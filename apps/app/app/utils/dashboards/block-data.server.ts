@@ -18,13 +18,14 @@ import {
 	User,
 	UserImage,
 } from '@repo/database'
-import { type ReportDefinition } from '@repo/reports'
+import { definitionAllowed, type ReportDefinition } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { loadBookingsTodayAccess } from './bookings-today.server.ts'
 import { type BookingsTodayAccess } from './bookings-today.ts'
 import { type BlockType, type DashboardBlock } from './config.ts'
 import {
+	ORGANIZATION_REPORT_CATALOG,
 	reportSubjectLabel,
 	reportTemplateGroups,
 	type ReportBlockData,
@@ -332,6 +333,7 @@ export async function loadReportBlockData({
 
 async function loadSavedReportOptions(
 	organizationId: string,
+	grants: readonly string[],
 ): Promise<SavedReportOption[]> {
 	const reports = await listSavedReports({
 		scope: 'organization',
@@ -340,6 +342,10 @@ async function loadSavedReportOptions(
 	return reports.flatMap((report) => {
 		const definition = readSavedDefinition(report.definition)
 		if (!definition) return []
+		// A saved report on a subject the person cannot run is not offered.
+		if (!definitionAllowed(ORGANIZATION_REPORT_CATALOG, definition, grants)) {
+			return []
+		}
 		return [
 			{
 				id: report.id,
@@ -358,20 +364,23 @@ export async function loadBlockPicker({
 	userId,
 	organizationId,
 	blockData,
+	grants,
 }: {
 	userId: string
 	organizationId: string
 	blockData: BuiltInBlockData
+	/** Restricted report subjects the person's reports token lists. */
+	grants: readonly string[]
 }): Promise<DashboardBlockPicker> {
 	const [onboarding, savedReports, bookingsToday] = await Promise.all([
 		blockData.onboarding ?? loadOnboarding(userId, organizationId),
-		loadSavedReportOptions(organizationId),
+		loadSavedReportOptions(organizationId, grants),
 		loadBookingsTodayAccess({ userId, organizationId }),
 	])
 	return {
 		onboardingAvailable: isOnboardingVisible(onboarding),
 		bookingsToday,
 		savedReports,
-		templateGroups: reportTemplateGroups(),
+		templateGroups: reportTemplateGroups(grants),
 	}
 }

@@ -1,4 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import { getSiteLocaleLabel } from '@repo/common/site-locales'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { FieldLabel } from '@repo/ui/field'
@@ -23,14 +24,16 @@ import {
 	useState,
 } from 'react'
 import {
-	SelectField,
-	TextAreaField,
-	TextField,
-} from '#app/components/staff/controls.tsx'
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	useActiveLocale,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
+import { SelectField, TextField } from '#app/components/staff/controls.tsx'
+import { type LocalizedMap } from '#app/utils/reservations/localized.ts'
 import {
 	fetchMessageSettings,
-	MESSAGE_LOCALES,
-	type MessageLocale,
 	type MessageSettings,
 	saveMessageSettings,
 	settingsFromConflict,
@@ -53,10 +56,10 @@ import {
 	extractApiErrorMessage,
 	isVersionConflictError,
 } from '#app/utils/reservations/setup-api.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 import {
 	MESSAGE_KIND_DESCRIPTIONS,
 	MESSAGE_KIND_LABELS,
-	MESSAGE_LOCALE_LABELS,
 } from './message-labels.ts'
 import { MessagePreview } from './message-preview.tsx'
 
@@ -130,6 +133,66 @@ type Props = {
 	dataRegion: 'us' | 'ksa'
 }
 
+/** One kind's note: the active language's text, with a counter and a preview shortcut. */
+function NoteRow({
+	kind,
+	label,
+	notes,
+	noteMaxLength,
+	tooLongSlots,
+	disabled,
+	onPreview,
+	onChange,
+}: {
+	kind: string
+	label: string
+	notes: LocalizedMap
+	noteMaxLength: number
+	tooLongSlots: string[]
+	disabled: boolean
+	onPreview: () => void
+	onChange: (next: LocalizedMap) => void
+}) {
+	const { t } = useLingui()
+	const { activeLocale } = useActiveLocale()
+	const length = (notes[activeLocale] ?? '').length
+	const tooLong = tooLongSlots.includes(noteSlot(kind, activeLocale))
+	const counter = t`${length} of ${noteMaxLength} characters`
+	return (
+		<div
+			className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0"
+			data-testid={`message-note-row-${kind}`}
+		>
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<span className="text-sm font-medium">{label}</span>
+				<Button
+					type="button"
+					variant="ghost"
+					size="xs"
+					onClick={onPreview}
+					data-testid={`message-preview-pick-${kind}`}
+				>
+					<Trans>Preview</Trans>
+				</Button>
+			</div>
+			<LocalizedMapField
+				multiline
+				id={`message-note-${kind}`}
+				label={t`${label} note (guest-facing)`}
+				rows={2}
+				value={notes}
+				disabled={disabled}
+				hint={
+					tooLong ? undefined : <bdi className="tabular-nums">{counter}</bdi>
+				}
+				error={tooLong ? counter : null}
+				onChange={onChange}
+				data-testid={`message-note-${kind}`}
+			/>
+		</div>
+	)
+}
+
 export function MessageSettingsScreen({
 	client,
 	locationId,
@@ -138,6 +201,7 @@ export function MessageSettingsScreen({
 	dataRegion,
 }: Props) {
 	const { t, i18n } = useLingui()
+	const languages = useReservationLocales()
 	const [settings, setSettings] = useState<MessageSettings | null>(null)
 	const [draft, setDraft] = useState<MessageDraft | null>(null)
 	const [loading, setLoading] = useState(true)
@@ -146,7 +210,11 @@ export function MessageSettingsScreen({
 	const [saveError, setSaveError] = useState<string | null>(null)
 	const [notice, setNotice] = useState<'saved' | 'conflict' | null>(null)
 	const [previewKind, setPreviewKind] = useState('confirmation')
-	const [previewLocale, setPreviewLocale] = useState<MessageLocale>('en')
+	const [chosenPreviewLocale, setPreviewLocale] = useState<string | null>(null)
+	const previewLocale =
+		chosenPreviewLocale && languages.locales.includes(chosenPreviewLocale)
+			? chosenPreviewLocale
+			: languages.defaultLocale
 	const previewCardRef = useRef<HTMLDivElement>(null)
 
 	const base = useMemo(
@@ -219,7 +287,7 @@ export function MessageSettingsScreen({
 		})
 		card.focus({ preventScroll: true })
 	}
-	const savedNote = (kind: string, locale: MessageLocale) =>
+	const savedNote = (kind: string, locale: string) =>
 		settings?.kinds.find((entry) => entry.kind === kind)?.notes[locale] ?? ''
 	const previewHasNote =
 		savedNote(previewKindValue, previewLocale).trim() !== ''
@@ -549,95 +617,51 @@ export function MessageSettingsScreen({
 				</FramePanel>
 			</Frame>
 
-			<Frame data-testid="message-notes-card">
-				<FrameHeader>
-					<FrameTitle>
-						<Trans>Custom notes</Trans>
-					</FrameTitle>
-					<FrameDescription>
-						<Trans>
-							Add a short plain-text note to the end of a message, in English
-							and Arabic. Guests whose language is not Arabic receive the
-							English note.
-						</Trans>
-					</FrameDescription>
-				</FrameHeader>
-				<FramePanel>
-					<div className="flex flex-col divide-y">
-						{kinds.map((entry) => {
-							const kind = entry.kind
-							return (
-								<div
-									key={kind}
-									className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0"
-									data-testid={`message-note-row-${kind}`}
-								>
-									<div className="flex flex-wrap items-center justify-between gap-2">
-										<span className="text-sm font-medium">
-											{kindLabel(kind)}
-										</span>
-										<Button
-											type="button"
-											variant="ghost"
-											size="xs"
-											onClick={() => openPreview(kind)}
-											data-testid={`message-preview-pick-${kind}`}
-										>
-											<Trans>Preview</Trans>
-										</Button>
-									</div>
-									<div className="grid gap-3 md:grid-cols-2">
-										{MESSAGE_LOCALES.map((locale) => {
-											const value = draft.notes[kind]?.[locale] ?? ''
-											const tooLong = issues.longNotes.includes(
-												noteSlot(kind, locale),
-											)
-											const id = `message-note-${kind}-${locale}`
-											const localeLabel = i18n._(MESSAGE_LOCALE_LABELS[locale])
-											const kindName = kindLabel(kind)
-											const length = value.length
-											const counter = t`${length} of ${noteMaxLength} characters`
-											return (
-												<TextAreaField
-													key={locale}
-													id={id}
-													label={t`${kindName} note (${localeLabel})`}
-													rows={2}
-													dir={locale === 'ar' ? 'rtl' : 'ltr'}
-													lang={locale}
-													value={value}
-													disabled={controlsDisabled}
-													hint={
-														tooLong ? undefined : (
-															<bdi className="tabular-nums">{counter}</bdi>
-														)
-													}
-													error={tooLong ? counter : null}
-													onChange={(event) => {
-														const next = event.target.value
-														update((d) => ({
-															...d,
-															notes: {
-																...d.notes,
-																[kind]: {
-																	en: d.notes[kind]?.en ?? '',
-																	ar: d.notes[kind]?.ar ?? '',
-																	[locale]: next,
-																},
-															},
-														}))
-													}}
-													data-testid={id}
-												/>
-											)
-										})}
-									</div>
-								</div>
-							)
-						})}
-					</div>
-				</FramePanel>
-			</Frame>
+			<ReservationLocaleProvider>
+				<Frame data-testid="message-notes-card">
+					<FrameHeader>
+						<div className="flex items-start justify-between gap-3">
+							<div className="flex min-w-0 flex-col gap-1">
+								<FrameTitle>
+									<Trans>Custom notes</Trans>
+								</FrameTitle>
+								<FrameDescription>
+									<Trans>
+										Add a short plain-text note to the end of a message. Write
+										it in each language your website offers. A guest gets the
+										note in their language, or in the default language when
+										there is none.
+									</Trans>
+								</FrameDescription>
+							</div>
+							<ReservationLocaleSwitcher />
+						</div>
+					</FrameHeader>
+					<FramePanel>
+						<WritingLanguageNote />
+						<div className="flex flex-col divide-y">
+							{kinds.map((entry) => (
+								<NoteRow
+									key={entry.kind}
+									kind={entry.kind}
+									label={kindLabel(entry.kind)}
+									notes={draft.notes[entry.kind] ?? {}}
+									noteMaxLength={noteMaxLength}
+									tooLongSlots={issues.longNotes}
+									disabled={controlsDisabled}
+									onPreview={() => openPreview(entry.kind)}
+									onChange={(next) =>
+										update((d) => ({
+											...d,
+											notes: { ...d.notes, [entry.kind]: next },
+										}))
+									}
+								/>
+							))}
+						</div>
+					</FramePanel>
+				</Frame>
+			</ReservationLocaleProvider>
 
 			<div
 				ref={previewCardRef}
@@ -671,20 +695,20 @@ export function MessageSettingsScreen({
 								aria-label={t`Language`}
 								value={[previewLocale]}
 								onValueChange={(next) => {
-									const picked = next[0] as MessageLocale | undefined
+									const picked = next[0]
 									if (picked) setPreviewLocale(picked)
 								}}
 								variant="segmented"
 								data-testid="message-preview-locale"
 							>
-								{MESSAGE_LOCALES.map((locale) => (
+								{languages.locales.map((locale) => (
 									<ToggleGroupItem
 										key={locale}
 										value={locale}
 										className="h-11 md:h-7"
 										data-testid={`message-preview-locale-${locale}`}
 									>
-										{i18n._(MESSAGE_LOCALE_LABELS[locale])}
+										{getSiteLocaleLabel(locale)}
 									</ToggleGroupItem>
 								))}
 							</ToggleGroup>

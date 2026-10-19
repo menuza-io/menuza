@@ -1,5 +1,5 @@
 import { getAccessToken } from '~/lib/client-auth'
-import { browserLocaleHref } from '~/lib/locale'
+import { browserLocale, browserLocaleHref } from '~/lib/locale'
 import {
 	createBrowserReservationsApi,
 	loadCustomerPrefill,
@@ -12,7 +12,7 @@ if (root) {
 	void initWaitlistPage(root, {
 		api: createBrowserReservationsApi(),
 		labels: readReservationLabels(),
-		locale: document.documentElement.lang || 'en',
+		locale: browserLocale(),
 		smsAllowed: root.dataset.smsAllowed !== 'false',
 		phoneExample: root.dataset.phoneExample || undefined,
 		turnstileSiteKey: root.dataset.turnstileSiteKey || '',

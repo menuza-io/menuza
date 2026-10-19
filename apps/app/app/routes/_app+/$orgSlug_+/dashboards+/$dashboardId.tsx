@@ -32,6 +32,7 @@ import {
 } from '#app/utils/dashboards/queries.server.ts'
 import { resolveReportBlock } from '#app/utils/dashboards/reports.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/reservations/report-access.server.ts'
 import { type Route } from './+types/$dashboardId.ts'
 
 export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
@@ -77,6 +78,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId,
 		organizationId: organization.id,
 		blockData,
+		grants: await resolveReportGrantsForRequest(
+			request,
+			userId,
+			organization.id,
+		),
 	})
 
 	return {

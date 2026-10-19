@@ -1,7 +1,11 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createReportDefinition, organizationCatalog } from '@repo/reports'
+import {
+	createReportDefinition,
+	organizationCatalog,
+	type ReportDefinition,
+} from '@repo/reports'
 import {
 	mintOperatorAnalyticsToken,
 	RESTRICTED_REPORT_SUBJECTS,
@@ -14,9 +18,11 @@ import {
 	rsvAuditLog,
 	rsvGuests,
 	rsvLocationSettings,
+	rsvPacingRules,
 	rsvPayments,
 	rsvReservations,
 	rsvServices,
+	rsvTurnTimes,
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
@@ -77,7 +83,11 @@ async function query(
 		userId: 'usr_analytics',
 		orgId: ORG,
 		role: 'operator',
-		subjects: options.subjects ?? ['bookings', 'waitlist_entries'],
+		subjects: options.subjects ?? [
+			'bookings',
+			'waitlist_entries',
+			'pacing_slots',
+		],
 		scopeIds: options.scopeIds === undefined ? null : options.scopeIds,
 	})
 	const res = await app.request('/analytics/query', {
@@ -217,7 +227,8 @@ describe('/analytics/query on reservations subjects', () => {
 		rmSync(tempDir, { recursive: true, force: true })
 	})
 
-	it('registers both subjects as restricted and in the catalog', () => {
+	it('registers the subjects as restricted and in the catalog', () => {
+		expect(RESTRICTED_REPORT_SUBJECTS).toContain('pacing_slots')
 		expect(RESTRICTED_REPORT_SUBJECTS).toContain('bookings')
 		expect(RESTRICTED_REPORT_SUBJECTS).toContain('waitlist_entries')
 		const ids = organizationCatalog.subjects.map((s) => s.id)
@@ -290,6 +301,181 @@ describe('/analytics/query on reservations subjects', () => {
 			expect(res.text, marker).not.toContain(marker)
 		}
 		expect(res.text).toContain('Left')
+	})
+
+	function measured(
+		subject: string,
+		timeframeField: string,
+		measure: 'sum' | 'average' | 'ratio',
+		valueField: string,
+		groupBy: string[] = [],
+		filters?: ReportDefinition['filters'],
+	) {
+		return createReportDefinition({
+			subject,
+			timeframe: { field: timeframeField, ...RANGE },
+			groupBy,
+			...(filters ? { filters } : {}),
+			visualization: {
+				chartStyle: groupBy.length > 0 ? 'table' : 'single_number',
+				measure,
+				valueField,
+				sortBy: 'none',
+				hideCounts: false,
+			},
+			settings: { title: 'Test', notes: '', timezone: 'UTC' },
+		})
+	}
+
+	const valueOf = (res: { body: any }) =>
+		res.body.value ?? res.body.total ?? res.body.count
+
+	it('counts covers as the actual covers when recorded, else the party size, never the seated count', async () => {
+		const db = await getTenantDb(ORG)
+		const base = Date.parse('2031-03-10T19:00:00Z')
+		const common = {
+			locationId: LOC,
+			businessDate: '2031-03-10',
+			localStartMin: 19 * 60,
+			timeZone: 'UTC',
+			startAt: base,
+			endAt: base + 90 * 60_000,
+			durationMin: 90,
+			serviceId: 'svc_a',
+			channel: 'online' as const,
+			status: 'finished' as const,
+		}
+		await db.insert(rsvReservations).values([
+			{
+				...common,
+				id: 'c1',
+				guestId: 'gst_probe',
+				confirmationCode: 'COV1',
+				partySize: 6,
+				seatedCovers: 3,
+				coversActual: null,
+			},
+			{
+				...common,
+				id: 'c2',
+				guestId: 'gst_probe',
+				confirmationCode: 'COV2',
+				partySize: 6,
+				seatedCovers: 3,
+				coversActual: 5,
+			},
+		])
+		const res = await query(
+			measured('bookings', 'startsAt', 'sum', 'covers', ['status'], {
+				combinator: 'and',
+				conditions: [
+					{ field: 'startsAt', operator: 'is_not_empty', value: '' },
+					{ field: 'partySize', operator: 'eq', value: '6' },
+				],
+			}),
+		)
+		expect(res.status).toBe(200)
+		const finished = (res.body.segments as any[]).find(
+			(s) => s.label === 'Finished',
+		)
+		// 6 (party size, seated count ignored) + 5 (actual covers).
+		expect(finished.value).toBe(11)
+	})
+
+	it('reports cancelled-by, flags and rates over the seeded bookings', async () => {
+		const db = await getTenantDb(ORG)
+		await db
+			.update(rsvReservations)
+			.set({ cancelledBy: 'guest', lateCancel: true })
+			.where(eq(rsvReservations.id, 'r3'))
+		const byWho = await query(
+			measured('bookings', 'startsAt', 'sum', 'isCancelled', ['cancelledBy']),
+		)
+		expect(byWho.status).toBe(200)
+		const guest = (byWho.body.segments as any[]).find(
+			(s) => s.label === 'Guest',
+		)
+		expect(guest.value).toBe(1)
+		// 4 bookings in range: finished, no-show, cancelled, other location.
+		const rate = await query(
+			measured('bookings', 'startsAt', 'ratio', 'noShowRate'),
+		)
+		expect(rate.status).toBe(200)
+		// 1 no-show over 3 booked parties (the cancelled one is not booked).
+		expect(valueOf(rate)).toBeCloseTo(100 / 3)
+		const share = await query(
+			measured('bookings', 'startsAt', 'ratio', 'lateCancelShare'),
+		)
+		expect(valueOf(share)).toBeCloseTo(100)
+	})
+
+	it('adds the configured turn time and its variance from the location rules', async () => {
+		const db = await getTenantDb(ORG)
+		await db.insert(rsvTurnTimes).values({
+			id: 'tt1',
+			locationId: LOC,
+			serviceId: null,
+			partyMin: 1,
+			partyMax: 4,
+			minutes: 45,
+			daysMask: null,
+		})
+		const res = await query(
+			measured('bookings', 'startsAt', 'average', 'turnVarianceMinutes'),
+		)
+		expect(res.status).toBe(200)
+		// r1 sat 50 minutes against a 45 minute rule.
+		expect(valueOf(res)).toBe(5)
+		const configured = await query(
+			measured('bookings', 'startsAt', 'average', 'configuredTurnMinutes'),
+		)
+		expect(valueOf(configured)).toBe(45)
+	})
+
+	it('serves pacing slots against the limits, location scoped and without guest data', async () => {
+		const db = await getTenantDb(ORG)
+		await db.insert(rsvPacingRules).values({
+			id: 'pr1',
+			serviceId: 'svc_a',
+			fromMin: null,
+			toMin: null,
+			bucketMin: 15,
+			maxCovers: 6,
+			maxParties: null,
+			channel: 'all',
+		})
+		const columns = organizationCatalog.subjects
+			.find((s) => s.id === 'pacing_slots')!
+			.fields.filter((f) => f.listable !== false)
+			.map((f) => f.id)
+			.slice(0, 8)
+		const list = await query(definition('pacing_slots', 'startsAt', columns))
+		expect(list.status).toBe(200)
+		const rows = list.body.rows as Array<Record<string, unknown>>
+		// svc_a 19:00 holds r1 (2) and r2 (5, no-show still booked): 7 covers over 6.
+		// The cancelled booking does not count. The other location has its own slot.
+		expect(rows).toHaveLength(2)
+		const dinner = rows.find((r) => r.service === 'Dinner')!
+		expect(dinner).toMatchObject({ bookings: '2', covers: '7' })
+		for (const marker of ['Reportprobe', '+14155550177', 'peanut']) {
+			expect(list.text, marker).not.toContain(marker)
+		}
+		const over = await query(
+			measured('pacing_slots', 'startsAt', 'ratio', 'overLimitShare'),
+		)
+		expect(valueOf(over)).toBeCloseTo(50)
+		const scoped = await query(definition('pacing_slots', 'startsAt'), {
+			scopeIds: [LOC_B],
+		})
+		expect(valueOf(scoped)).toBe(1)
+		const none = await query(definition('pacing_slots', 'startsAt'), {
+			scopeIds: [],
+		})
+		expect(valueOf(none)).toBe(0)
+		const denied = await query(definition('pacing_slots', 'startsAt'), {
+			subjects: ['bookings', 'waitlist_entries'],
+		})
+		expect(denied.status).toBe(403)
 	})
 
 	it('writes a report.run audit row naming the subject and no guest data', async () => {

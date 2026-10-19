@@ -18,10 +18,13 @@ import {
 	marketingMessages,
 } from '@repo/tenant-db'
 import { z } from 'zod'
+import { HttpError } from '../lib/http.ts'
 import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
+import { loadBroadcastAudience } from '../services/marketing-audience.ts'
+import { erasePerson } from '../services/person-erasure-service.ts'
 
 export const operatorRoutes = new Hono()
 
@@ -197,6 +200,52 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 		return c.json({ customer: updated })
 	} catch (error) {
 		console.error('Error updating customer:', error)
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * Erases a customer completely (the one erasure flow, shared with the guest
+ * erase and the internal route): customer row, linked guests, subscriptions,
+ * tokens, order contact fields, waitlist, notify and voice data. Needs a
+ * token minted with `canDelete`; a token without it is refused.
+ */
+operatorRoutes.post('/customers/:customerId/erase', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c)
+	} catch (response) {
+		return response as Response
+	}
+	if (auth.canDelete !== true) {
+		return c.json({ error: 'Forbidden' }, 403)
+	}
+
+	const customerId = c.req.param('customerId')
+	try {
+		const db = await getTenantDb(auth.orgId)
+		const existing = await db
+			.select({ id: customers.id })
+			.from(customers)
+			.where(eq(customers.id, customerId))
+			.get()
+		if (!existing) {
+			return c.json({ error: 'Customer not found' }, 404)
+		}
+		const { guest: ignoredGuest, ...counts } = await erasePerson(
+			db,
+			{ customerId },
+			{ actorId: auth.sub ?? 'operator' },
+		)
+		return c.json({ ok: true, ...counts })
+	} catch (error) {
+		if (error instanceof HttpError) {
+			return c.json({ error: error.code }, error.status as 502)
+		}
+		console.error(
+			'Error erasing customer:',
+			error instanceof Error ? error.name : 'error',
+		)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })
@@ -482,15 +531,10 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		const campaign = campaignArr[0]
 		if (!campaign) return
 
-		// 1. Fetch audience and evaluate segmentation rules
-		const allCustomers = await db.select().from(customers).all()
-		let targetCustomers = allCustomers
-		// A phone number is only trusted once its owner proved control of it via
-		// OTP; texting unverified numbers is unsolicited messaging to whoever
-		// typed them into a sign-in form.
-		if (campaign.channel === 'sms') {
-			targetCustomers = targetCustomers.filter((c) => Boolean(c.phoneVerified))
-		}
+		// 1. Fetch the audience: only customers with an ACTIVE subscription for
+		// the channel (customer_subscriptions is the single consent store), then
+		// the segmentation rule narrows it further.
+		let audienceRule: string | undefined
 		if (campaign.segmentationRules) {
 			try {
 				const rules =
@@ -499,17 +543,15 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 								audience?: string
 							})
 						: (campaign.segmentationRules as { audience?: string })
-				if (rules?.audience === 'verified') {
-					targetCustomers = targetCustomers.filter((c) =>
-						Boolean(c.phoneVerified),
-					)
-				} else if (rules?.audience === 'unverified') {
-					targetCustomers = targetCustomers.filter((c) => !c.phoneVerified)
-				}
+				audienceRule = rules?.audience
 			} catch {
 				// Fallback to all
 			}
 		}
+		const targetCustomers = await loadBroadcastAudience(db, {
+			channel: campaign.channel,
+			audience: audienceRule,
+		})
 
 		// Update target audience count
 		await db

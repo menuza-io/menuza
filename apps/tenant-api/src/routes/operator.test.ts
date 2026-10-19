@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import {
 	customers,
+	customerSubscriptions,
 	destroyTenantDb,
 	getTenantDb,
 	marketingCampaigns,
@@ -157,18 +158,53 @@ describe('Operator Routes', () => {
 
 	it('dispatches campaigns and respects segmentation rules', async () => {
 		const db = await getTenantDb(testOrgId)
-		await db.insert(customers).values([
+		const created = await db
+			.insert(customers)
+			.values([
+				{
+					name: 'Verified User',
+					phone: '+15550000031',
+					email: 'verified@example.com',
+					phoneVerified: true,
+				},
+				{
+					name: 'Unverified User',
+					phone: '+15550000032',
+					email: 'unverified@example.com',
+					phoneVerified: false,
+				},
+				{
+					// Verified but never consented: must not receive the broadcast.
+					name: 'No Consent User',
+					phone: '+15550000033',
+					email: 'noconsent@example.com',
+					phoneVerified: true,
+				},
+				{
+					// Verified, consented, then opted out.
+					name: 'Opted Out User',
+					phone: '+15550000034',
+					email: 'optedout@example.com',
+					phoneVerified: true,
+				},
+			])
+			.returning({ id: customers.id, name: customers.name })
+		const idOf = (name: string) => created.find((c) => c.name === name)!.id
+		await db.insert(customerSubscriptions).values([
+			...['Verified User', 'Unverified User'].map((name) => ({
+				customerId: idOf(name),
+				topic: 'drops' as const,
+				channel: 'email' as const,
+				source: 'profile' as const,
+				subscribedAt: new Date(),
+			})),
 			{
-				name: 'Verified User',
-				phone: '+15550000031',
-				email: 'verified@example.com',
-				phoneVerified: true,
-			},
-			{
-				name: 'Unverified User',
-				phone: '+15550000032',
-				email: 'unverified@example.com',
-				phoneVerified: false,
+				customerId: idOf('Opted Out User'),
+				topic: 'drops' as const,
+				channel: 'email' as const,
+				source: 'profile' as const,
+				subscribedAt: new Date(),
+				unsubscribedAt: new Date(),
 			},
 		])
 
@@ -210,5 +246,6 @@ describe('Operator Routes', () => {
 			.where(eq(marketingMessages.campaignId, body.campaignId))
 		expect(messages).toHaveLength(1)
 		expect(messages[0]!.status).toBe('Sent')
+		expect(messages[0]!.customerId).toBe(idOf('Verified User'))
 	})
 })

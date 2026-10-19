@@ -41,6 +41,13 @@ const TARGETS: Record<ConfigValidationIssueCode, SetupIssueTab | null> = {
 	turn_time_bucket_invalid_range: 'services',
 	turn_time_bucket_overlap: 'services',
 	turn_time_bucket_gap: 'services',
+	// Location hours: services outside opening hours are fixed on the service;
+	// an inactive location or missing hours are fixed in Location settings
+	// (not a Reservations tab, so no link here).
+	service_on_closed_weekday: 'services',
+	service_outside_location_hours: 'services',
+	location_inactive: null,
+	location_no_hours: null,
 	// Rules group: payment policies.
 	policy_unknown_service: 'policies',
 	policy_party_bounds_inverted: 'policies',

@@ -41,6 +41,12 @@ import {
 } from 'react'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
@@ -49,7 +55,14 @@ import {
 	formatBusinessDateRange,
 	serviceDayBusinessDate,
 } from '#app/utils/reservations/business-date.ts'
+import {
+	cleanLocalizedMap,
+	defaultEntry,
+	displayText,
+	type LocalizedMap,
+} from '#app/utils/reservations/localized.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 import {
 	type BlockDto,
 	type BlockReason,
@@ -106,6 +119,7 @@ const BLOCK_REASON_LABELS: Record<string, MessageDescriptor> = {
 
 export default function ReservationsSettingsSpecialDaysRoute() {
 	const { _, i18n } = useLingui()
+	const siteLocales = useReservationLocales()
 	const {
 		selectedLocationId,
 		selectedLocation,
@@ -156,13 +170,14 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 	const sdEndDate = sdEndDateEdit ?? defaultDate
 	const [sdKind, setSdKind] = useState<SpecialDayKind>('closed')
 	const [sdName, setSdName] = useState('')
-	const [sdNoteEn, setSdNoteEn] = useState('')
-	const [sdNoteAr, setSdNoteAr] = useState('')
+	const [sdNotes, setSdNotes] = useState<LocalizedMap>({})
 	const [sdPatchServiceId, setSdPatchServiceId] = useState('')
 	const [sdPatchFirstTime, setSdPatchFirstTime] = useState('17:00')
 	const [sdPatchLastTime, setSdPatchLastTime] = useState('21:00')
 	const [sdPatchEndTime, setSdPatchEndTime] = useState('22:30')
-	const [sdReplaceName, setSdReplaceName] = useState('Holiday Service')
+	const [sdReplaceNames, setSdReplaceNames] = useState<LocalizedMap>({
+		[siteLocales.defaultLocale]: 'Holiday Service',
+	})
 	const [sdReplaceFirstTime, setSdReplaceFirstTime] = useState('12:00')
 	const [sdReplaceLastTime, setSdReplaceLastTime] = useState('20:00')
 	const [sdReplaceEndTime, setSdReplaceEndTime] = useState('22:00')
@@ -204,7 +219,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			liveSdErrors.times = hoursMessage
 		}
 		if (sdKind === 'replace') {
-			if (!sdReplaceName.trim()) {
+			if (!defaultEntry(sdReplaceNames, siteLocales)) {
 				liveSdErrors.replaceName = _(
 					msg`Enter a name for the replacement service.`,
 				)
@@ -352,8 +367,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			const endMin = timeStringToMinutes(sdReplaceEndTime, { nextDay: false })
 			replacementServices = [
 				{
-					name: sdReplaceName.trim(),
-					nameI18n: { en: sdReplaceName.trim() },
+					name: defaultEntry(sdReplaceNames, siteLocales),
+					nameI18n: cleanLocalizedMap(sdReplaceNames, siteLocales),
 					firstSeatingMin: firstMin,
 					lastSeatingMin: lastMin,
 					endMin,
@@ -369,18 +384,14 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 				toDate: sdEndDate,
 				kind: sdKind,
 				name: sdName.trim() || null,
-				publicNoteI18n: {
-					...(sdNoteEn.trim() ? { en: sdNoteEn.trim() } : {}),
-					...(sdNoteAr.trim() ? { ar: sdNoteAr.trim() } : {}),
-				},
+				publicNoteI18n: cleanLocalizedMap(sdNotes, siteLocales),
 				serviceId,
 				patch,
 				services: replacementServices,
 			})
 			recordMutationSideEffects(res)
 			setSdName('')
-			setSdNoteEn('')
-			setSdNoteAr('')
+			setSdNotes({})
 			setSpecialDaySheetOpen(false)
 			setFeedbackMessage(_(msg`Special day schedule saved.`))
 			await Promise.all([loadAll(), refreshSummary()])
@@ -735,7 +746,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 											</Badge>
 										</TableCell>
 										<TableCell className="text-muted-foreground max-w-56 truncate text-sm">
-											{sd.publicNoteI18n?.en || sd.publicNoteI18n?.ar || '—'}
+											{displayText(sd.publicNoteI18n, siteLocales) || '—'}
 										</TableCell>
 										<TableCell className="text-end">
 											{canWrite ? (
@@ -935,196 +946,192 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 					className="sm:max-w-lg"
 					data-testid="setup-special-day-sheet"
 				>
-					<SheetForm
-						title={<Trans>Add special day</Trans>}
-						description={
-							<Trans>
-								Pick the dates and what changes. Guests see the public note when
-								they try to book.
-							</Trans>
-						}
-						onSubmit={(e) => void handleCreateSpecialDay(e)}
-						footer={
-							<>
-								<Button
-									type="button"
-									variant="ghost"
-									onClick={() => setSpecialDaySheetOpen(false)}
-								>
-									<Trans>Cancel</Trans>
-								</Button>
-								<Button
-									type="submit"
-									data-testid="setup-add-special-day-button"
-								>
-									<Trans>Add special day</Trans>
-								</Button>
-							</>
-						}
-					>
-						<div
-							className="flex flex-col gap-5"
-							data-testid="setup-create-special-day-form"
+					<ReservationLocaleProvider key={String(specialDaySheetOpen)}>
+						<SheetForm
+							headerExtra={<ReservationLocaleSwitcher />}
+							title={<Trans>Add special day</Trans>}
+							description={
+								<Trans>
+									Pick the dates and what changes. Guests see the public note
+									when they try to book.
+								</Trans>
+							}
+							onSubmit={(e) => void handleCreateSpecialDay(e)}
+							footer={
+								<>
+									<Button
+										type="button"
+										variant="ghost"
+										onClick={() => setSpecialDaySheetOpen(false)}
+									>
+										<Trans>Cancel</Trans>
+									</Button>
+									<Button
+										type="submit"
+										data-testid="setup-add-special-day-button"
+									>
+										<Trans>Add special day</Trans>
+									</Button>
+								</>
+							}
 						>
-							{errorMessage ? (
-								<Alert
-									variant="destructive"
-									data-testid="setup-special-days-sheet-error"
-								>
-									<AlertDescription>{errorMessage}</AlertDescription>
-								</Alert>
-							) : null}
-							<div className="grid grid-cols-2 gap-3">
-								<TextField
-									id="sd-start-date"
-									label={<Trans>Start date</Trans>}
-									type="date"
-									value={sdStartDate}
-									onChange={(e) => {
-										setSdStartDate(e.target.value)
-										if (sdEndDate < e.target.value) {
-											setSdEndDate(e.target.value)
-										}
-									}}
-									data-testid="setup-special-day-start-date"
-								/>
-								<TextField
-									id="sd-end-date"
-									label={<Trans>End date</Trans>}
-									type="date"
-									value={sdEndDate}
-									error={sdErrors.dates}
-									onBlur={() => touchSd('dates')}
-									onChange={(e) => setSdEndDate(e.target.value)}
-									data-testid="setup-special-day-end-date"
-								/>
-							</div>
-							<TextField
-								id="sd-name"
-								label={<Trans>Occasion name</Trans>}
-								optional
-								placeholder={_(msg`e.g. National Day / Ramadan`)}
-								value={sdName}
-								onChange={(e) => setSdName(e.target.value)}
-								data-testid="setup-special-day-name-input"
-							/>
-							<SelectField
-								id="sd-mode"
-								label={<Trans>What happens on these days</Trans>}
-								options={kindOptions}
-								value={sdKind}
-								onValueChange={(value) => setSdKind(value as SpecialDayKind)}
-							/>
-
-							{sdKind === 'modified' ? (
-								<div className="flex flex-col gap-4 rounded-lg border p-3">
-									<SelectField
-										id="sd-patch-svc"
-										label={<Trans>Service to modify</Trans>}
-										options={serviceOptions}
-										value={sdPatchServiceId || services[0]?.id || ''}
-										onValueChange={setSdPatchServiceId}
-									/>
-									<div className="grid grid-cols-3 gap-3">
-										<TextField
-											id="sd-patch-first"
-											label={<Trans>First seating</Trans>}
-											type="time"
-											value={sdPatchFirstTime}
-											onChange={(e) => setSdPatchFirstTime(e.target.value)}
-											data-testid="setup-special-day-patch-first"
-										/>
-										<TextField
-											id="sd-patch-last"
-											label={<Trans>Last seating</Trans>}
-											type="time"
-											value={sdPatchLastTime}
-											onChange={(e) => setSdPatchLastTime(e.target.value)}
-											data-testid="setup-special-day-patch-last"
-										/>
-										<TextField
-											id="sd-patch-end"
-											label={<Trans>Service end</Trans>}
-											type="time"
-											value={sdPatchEndTime}
-											onChange={(e) => setSdPatchEndTime(e.target.value)}
-											data-testid="setup-special-day-patch-end"
-										/>
-									</div>
-									{sdErrors.times ? (
-										<FieldError data-testid="setup-special-day-times-error">
-											{sdErrors.times}
-										</FieldError>
-									) : null}
-								</div>
-							) : null}
-
-							{sdKind === 'replace' ? (
-								<div className="flex flex-col gap-4 rounded-lg border p-3">
+							<div
+								className="flex flex-col gap-5"
+								data-testid="setup-create-special-day-form"
+							>
+								{errorMessage ? (
+									<Alert
+										variant="destructive"
+										data-testid="setup-special-days-sheet-error"
+									>
+										<AlertDescription>{errorMessage}</AlertDescription>
+									</Alert>
+								) : null}
+								<div className="grid grid-cols-2 gap-3">
 									<TextField
-										id="sd-replace-name"
-										label={<Trans>Replacement service name</Trans>}
-										value={sdReplaceName}
-										error={sdErrors.replaceName}
-										onBlur={() => touchSd('replaceName')}
-										onChange={(e) => setSdReplaceName(e.target.value)}
-										data-testid="setup-special-day-replace-name"
+										id="sd-start-date"
+										label={<Trans>Start date</Trans>}
+										type="date"
+										value={sdStartDate}
+										onChange={(e) => {
+											setSdStartDate(e.target.value)
+											if (sdEndDate < e.target.value) {
+												setSdEndDate(e.target.value)
+											}
+										}}
+										data-testid="setup-special-day-start-date"
 									/>
-									<div className="grid grid-cols-3 gap-3">
-										<TextField
-											id="sd-replace-first"
-											label={<Trans>First seating</Trans>}
-											type="time"
-											value={sdReplaceFirstTime}
-											onChange={(e) => setSdReplaceFirstTime(e.target.value)}
-											data-testid="setup-special-day-replace-first"
-										/>
-										<TextField
-											id="sd-replace-last"
-											label={<Trans>Last seating</Trans>}
-											type="time"
-											value={sdReplaceLastTime}
-											onChange={(e) => setSdReplaceLastTime(e.target.value)}
-											data-testid="setup-special-day-replace-last"
-										/>
-										<TextField
-											id="sd-replace-end"
-											label={<Trans>Service end</Trans>}
-											type="time"
-											value={sdReplaceEndTime}
-											onChange={(e) => setSdReplaceEndTime(e.target.value)}
-											data-testid="setup-special-day-replace-end"
-										/>
-									</div>
-									{sdErrors.times ? (
-										<FieldError data-testid="setup-special-day-times-error">
-											{sdErrors.times}
-										</FieldError>
-									) : null}
+									<TextField
+										id="sd-end-date"
+										label={<Trans>End date</Trans>}
+										type="date"
+										value={sdEndDate}
+										error={sdErrors.dates}
+										onBlur={() => touchSd('dates')}
+										onChange={(e) => setSdEndDate(e.target.value)}
+										data-testid="setup-special-day-end-date"
+									/>
 								</div>
-							) : null}
+								<TextField
+									id="sd-name"
+									label={<Trans>Occasion name</Trans>}
+									optional
+									placeholder={_(msg`e.g. National Day / Ramadan`)}
+									value={sdName}
+									onChange={(e) => setSdName(e.target.value)}
+									data-testid="setup-special-day-name-input"
+								/>
+								<SelectField
+									id="sd-mode"
+									label={<Trans>What happens on these days</Trans>}
+									options={kindOptions}
+									value={sdKind}
+									onValueChange={(value) => setSdKind(value as SpecialDayKind)}
+								/>
 
-							<TextField
-								id="sd-note-en"
-								label={<Trans>Public guest note (English)</Trans>}
-								optional
-								placeholder={_(msg`Closed for private event`)}
-								value={sdNoteEn}
-								onChange={(e) => setSdNoteEn(e.target.value)}
-								data-testid="setup-special-day-note-en"
-							/>
-							<TextField
-								id="sd-note-ar"
-								label={<Trans>Public guest note (Arabic)</Trans>}
-								optional
-								dir="rtl"
-								placeholder={_(msg`Arabic public note`)}
-								value={sdNoteAr}
-								onChange={(e) => setSdNoteAr(e.target.value)}
-								data-testid="setup-special-day-note-ar"
-							/>
-						</div>
-					</SheetForm>
+								{sdKind === 'modified' ? (
+									<div className="flex flex-col gap-4 rounded-lg border p-3">
+										<SelectField
+											id="sd-patch-svc"
+											label={<Trans>Service to modify</Trans>}
+											options={serviceOptions}
+											value={sdPatchServiceId || services[0]?.id || ''}
+											onValueChange={setSdPatchServiceId}
+										/>
+										<div className="grid grid-cols-3 gap-3">
+											<TextField
+												id="sd-patch-first"
+												label={<Trans>First seating</Trans>}
+												type="time"
+												value={sdPatchFirstTime}
+												onChange={(e) => setSdPatchFirstTime(e.target.value)}
+												data-testid="setup-special-day-patch-first"
+											/>
+											<TextField
+												id="sd-patch-last"
+												label={<Trans>Last seating</Trans>}
+												type="time"
+												value={sdPatchLastTime}
+												onChange={(e) => setSdPatchLastTime(e.target.value)}
+												data-testid="setup-special-day-patch-last"
+											/>
+											<TextField
+												id="sd-patch-end"
+												label={<Trans>Service end</Trans>}
+												type="time"
+												value={sdPatchEndTime}
+												onChange={(e) => setSdPatchEndTime(e.target.value)}
+												data-testid="setup-special-day-patch-end"
+											/>
+										</div>
+										{sdErrors.times ? (
+											<FieldError data-testid="setup-special-day-times-error">
+												{sdErrors.times}
+											</FieldError>
+										) : null}
+									</div>
+								) : null}
+
+								{sdKind === 'replace' ? (
+									<div className="flex flex-col gap-4 rounded-lg border p-3">
+										<LocalizedMapField
+											id="sd-replace-name"
+											label={
+												<Trans>Replacement service name (guest-facing)</Trans>
+											}
+											value={sdReplaceNames}
+											error={sdErrors.replaceName}
+											onBlur={() => touchSd('replaceName')}
+											onChange={setSdReplaceNames}
+											data-testid="setup-special-day-replace-name"
+										/>
+										<div className="grid grid-cols-3 gap-3">
+											<TextField
+												id="sd-replace-first"
+												label={<Trans>First seating</Trans>}
+												type="time"
+												value={sdReplaceFirstTime}
+												onChange={(e) => setSdReplaceFirstTime(e.target.value)}
+												data-testid="setup-special-day-replace-first"
+											/>
+											<TextField
+												id="sd-replace-last"
+												label={<Trans>Last seating</Trans>}
+												type="time"
+												value={sdReplaceLastTime}
+												onChange={(e) => setSdReplaceLastTime(e.target.value)}
+												data-testid="setup-special-day-replace-last"
+											/>
+											<TextField
+												id="sd-replace-end"
+												label={<Trans>Service end</Trans>}
+												type="time"
+												value={sdReplaceEndTime}
+												onChange={(e) => setSdReplaceEndTime(e.target.value)}
+												data-testid="setup-special-day-replace-end"
+											/>
+										</div>
+										{sdErrors.times ? (
+											<FieldError data-testid="setup-special-day-times-error">
+												{sdErrors.times}
+											</FieldError>
+										) : null}
+									</div>
+								) : null}
+
+								<LocalizedMapField
+									id="sd-note"
+									label={<Trans>Public guest note (guest-facing)</Trans>}
+									optional
+									placeholder={_(msg`Closed for private event`)}
+									value={sdNotes}
+									onChange={setSdNotes}
+									data-testid="setup-special-day-note"
+								/>
+								<WritingLanguageNote />
+							</div>
+						</SheetForm>
+					</ReservationLocaleProvider>
 				</SheetContent>
 			</Sheet>
 

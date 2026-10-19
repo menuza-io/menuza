@@ -11,12 +11,12 @@ import {
 } from '@repo/tenant-db'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
+import { pickText, type LocaleOrg } from '../lib/reservations-i18n.ts'
 import { buildAlternatives, alternativesWindow } from './rsv-hold-service.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import {
 	describeClosedDay,
 	loadPublicEngineState,
-	pickI18n,
 	readDayVersion,
 	searchPublicDay,
 	publicSlotMapper,
@@ -69,7 +69,11 @@ export async function requireBookableLocation(
 	return found
 }
 
-function largePartyBlock(location: BookableLocation, locale: string | null) {
+function largePartyBlock(
+	location: BookableLocation,
+	locale: string | null,
+	org: LocaleOrg,
+) {
 	const { settings, facts } = location
 	const phone = settings.contactPhone ?? facts.phone ?? null
 	return {
@@ -77,7 +81,7 @@ function largePartyBlock(location: BookableLocation, locale: string | null) {
 		maxOnlinePartySize: settings.onlinePartyMax,
 		phone,
 		contact: { name: facts.name, phone },
-		note: pickI18n(settings.largePartyNoteI18n, locale),
+		note: pickText(settings.largePartyNoteI18n, locale, org),
 	}
 }
 
@@ -116,7 +120,7 @@ export async function getPublicConfig(
 			.filter((t) => t.category === category)
 			.map((t) => ({
 				id: t.id,
-				name: pickI18n(t.nameI18n, locale, false) ?? t.name,
+				name: pickText(t.nameI18n, locale, ctx.organization, t.name) ?? t.name,
 			}))
 	return {
 		organization: {
@@ -141,7 +145,7 @@ export async function getPublicConfig(
 			horizonDays: l.settings.horizonDays,
 			intervalMin: l.settings.intervalMin,
 			holdMinutes: l.settings.holdMinutes,
-			largeParty: largePartyBlock(l, locale),
+			largeParty: largePartyBlock(l, locale, ctx.organization),
 			waitlist: {
 				enabled: ctx.features.waitlist && l.settings.waitlistEnabled,
 				online:
@@ -155,9 +159,10 @@ export async function getPublicConfig(
 				.filter((a) => a.locationId === l.facts.id)
 				.map((a) => ({
 					id: a.id,
-					name: pickI18n(a.nameI18n, locale, false) ?? a.name,
+					name:
+						pickText(a.nameI18n, locale, ctx.organization, a.name) ?? a.name,
 				})),
-			publicNote: pickI18n(l.settings.publicNoteI18n, locale),
+			publicNote: pickText(l.settings.publicNoteI18n, locale, ctx.organization),
 		})),
 		occasions: chips('occasion'),
 		dietary: chips('dietary'),
@@ -170,6 +175,8 @@ export type AvailabilityParams = {
 	partySize: number
 	localMin?: number | null
 	locale?: string | null
+	/** Languages of the organization (Website settings); omitted, only `locale` is known. */
+	organization?: LocaleOrg
 	now?: number
 	excludeReservationId?: string
 	location: BookableLocation
@@ -190,6 +197,12 @@ export async function getPublicAvailability(
 		now,
 		excludeReservationIds: params.excludeReservationId
 			? new Set([params.excludeReservationId])
+			: undefined,
+		i18n: params.organization
+			? {
+					locale: params.locale,
+					defaultLocale: params.organization.defaultLocale,
+				}
 			: undefined,
 	})
 	if (!state) throw new HttpError(404, 'not_found')
@@ -225,7 +238,9 @@ export async function getPublicAvailability(
 			: { sameDay: [], otherDates: [] }
 
 	const closedDay =
-		result.status === 'closed' ? describeClosedDay(state, params.date) : null
+		result.status === 'closed'
+			? describeClosedDay(state, params.date, result)
+			: null
 	const onlineClosedDay =
 		result.status === 'online_closed'
 			? describeOnlineClosed(state, params.date)
@@ -243,7 +258,16 @@ export async function getPublicAvailability(
 		slots: slots.map(publicSlotMapper(state, params.locale)),
 		alternatives,
 		...(result.status === 'large_party'
-			? { largeParty: largePartyBlock(params.location, params.locale ?? null) }
+			? {
+					largeParty: largePartyBlock(
+						params.location,
+						params.locale ?? null,
+						params.organization ?? {
+							locales: [],
+							defaultLocale: params.locale ?? '',
+						},
+					),
+				}
 			: {}),
 		...(closedDay
 			? {
@@ -251,6 +275,7 @@ export async function getPublicAvailability(
 						reason: closedDay.reason,
 						note: closedDay.note,
 						name: closedDay.name,
+						...(closedDay.source ? { source: closedDay.source } : {}),
 					},
 				}
 			: {}),
@@ -317,6 +342,14 @@ export async function getPublicCalendar(
 			hasAvailability: slots.length > 0,
 			status: result.status,
 			closed: result.status === 'closed',
+			...(result.closed
+				? {
+						closedSource:
+							result.closed.source === 'location_closed'
+								? ('location_hours' as const)
+								: ('reservation_special_day' as const),
+					}
+				: {}),
 			slotCount: slots.length,
 			firstLocalMin: slots[0]?.slotMin ?? null,
 			lastLocalMin: slots.at(-1)?.slotMin ?? null,

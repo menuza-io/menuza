@@ -2148,4 +2148,42 @@ describe('/operator/reservations/setup/* routes', () => {
 		)
 		expect(nonCombPatchRes.status).toBe(400)
 	})
+	it('keeps service, area and note languages inside the organization languages', async () => {
+		const app = buildApp()
+		const token = await mintToken()
+		const post = (path: string, body: unknown) =>
+			app.request(`/operator/reservations/setup/${path}`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			})
+		// The seeded organization enables English and Arabic, default English.
+		const area = await post('areas', {
+			locationId: LOC_MAIN,
+			name: 'Patio',
+			nameI18n: { ar: 'الشرفة' },
+		})
+		expect(area.status).toBe(201)
+		// The canonical name is the default-language text.
+		expect(((await area.json()) as any).area.name_i18n).toEqual({
+			ar: 'الشرفة',
+			en: 'Patio',
+		})
+		const blank = await post('areas', { locationId: LOC_MAIN, name: 'Bar' })
+		expect(((await blank.json()) as any).area.name_i18n).toEqual({ en: 'Bar' })
+		const disabled = await post('services', {
+			locationId: LOC_MAIN,
+			name: 'Brunch',
+			nameI18n: { en: 'Brunch', es: 'Almuerzo' },
+			daysMask: 127,
+			firstSeatingMin: 600,
+			lastSeatingMin: 840,
+			endMin: 900,
+		})
+		expect(disabled.status).toBe(400)
+		expect(((await disabled.json()) as any).error).toBe('locale_not_enabled')
+	})
 })

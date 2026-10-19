@@ -112,7 +112,7 @@ export function normalizeGuestRow(raw: unknown): GuestRow {
 		name: str(r.name) || `${firstName} ${lastName}`.trim(),
 		phone: nullableStr(r.phoneE164) ?? nullableStr(r.phone),
 		email: nullableStr(r.email) ?? nullableStr(r.emailNorm),
-		locale: str(r.locale, 'en'),
+		locale: str(r.locale, ''),
 		allergyNotes: nullableStr(r.allergyNotes),
 		hasAllergy: Boolean(r.hasAllergy),
 		visits: num(r.visits),

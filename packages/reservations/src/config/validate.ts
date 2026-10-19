@@ -29,6 +29,10 @@ export type ConfigValidationIssueCode =
 	| 'policy_invalid_window'
 	| 'block_invalid_window'
 	| 'block_unknown_table'
+	| 'service_on_closed_weekday'
+	| 'service_outside_location_hours'
+	| 'location_inactive'
+	| 'location_no_hours'
 
 export type ConfigValidationIssue = {
 	code: ConfigValidationIssueCode

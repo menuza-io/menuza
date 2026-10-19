@@ -4,7 +4,6 @@ import { Icon } from '@repo/ui/icon'
 import { useEffect, useState } from 'react'
 import {
 	fetchMessagePreview,
-	type MessageLocale,
 	type MessagePreview as MessagePreviewData,
 } from '#app/utils/reservations/messages-api.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
@@ -26,7 +25,7 @@ export function MessagePreview({
 	client: ReservationsScopedClient
 	locationId: string
 	kind: string
-	locale: MessageLocale
+	locale: string
 	/** Changes when the saved settings change, so the preview is fetched again. */
 	refreshKey: number
 }) {

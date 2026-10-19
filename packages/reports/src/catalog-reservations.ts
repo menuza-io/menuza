@@ -13,6 +13,7 @@ import { type ReportField, type ReportSubject } from './catalog.ts'
 export const RESERVATIONS_REPORT_SUBJECTS = [
 	'bookings',
 	'waitlist_entries',
+	'pacing_slots',
 ] as const
 export type ReservationsReportSubject =
 	(typeof RESERVATIONS_REPORT_SUBJECTS)[number]
@@ -47,6 +48,27 @@ const businessDateField: ReportField = {
 	groupable: true,
 	description:
 		'The restaurant’s service day (YYYY-MM-DD) in the location’s time zone.',
+}
+
+const BOOKED_NOTE = 'Booked means not cancelled, declined or expired.'
+
+/** A 0/1 number per booking. Summed it counts; divided it makes a rate. */
+function flagField(
+	id: string,
+	label: string,
+	sumLabel: string,
+	description: string,
+): ReportField {
+	return {
+		id,
+		label,
+		type: 'number',
+		filterable: true,
+		listable: false,
+		sumLabel,
+		averageLabel: false,
+		description,
+	}
 }
 
 const bookingFields: ReportField[] = [
@@ -153,6 +175,109 @@ const bookingFields: ReportField[] = [
 		filterable: true,
 		groupable: true,
 		description: 'Cancelled after the free-cancellation window closed.',
+	},
+	{
+		id: 'cancelledBy',
+		label: 'Cancelled by',
+		type: 'enum',
+		filterable: true,
+		groupable: true,
+		description:
+			'Who cancelled the booking. Empty for bookings never cancelled.',
+		options: [
+			{ value: 'guest', label: 'Guest' },
+			{ value: 'restaurant', label: 'Restaurant' },
+			{ value: 'system', label: 'System' },
+			{ value: 'unknown', label: 'Unknown' },
+		],
+	},
+	{
+		id: 'slotTime',
+		label: 'Start time',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description:
+			'The booking’s start time of day (HH:MM) in the location’s zone.',
+	},
+	flagField('isBooked', 'Booked', 'Booked parties', BOOKED_NOTE),
+	flagField('isNoShow', 'No-show', 'No-shows', 'Counts 1 for a no-show.'),
+	flagField(
+		'isCancelled',
+		'Cancelled',
+		'Cancellations',
+		'Counts 1 for a cancelled booking.',
+	),
+	flagField(
+		'isLateCancel',
+		'Late cancelled',
+		'Late cancellations',
+		'Counts 1 for a booking cancelled after the free-cancellation window.',
+	),
+	flagField(
+		'isFinished',
+		'Finished',
+		'Finished parties',
+		'Counts 1 for a party that was seated and has left.',
+	),
+	{
+		id: 'bookingCount',
+		label: 'Bookings',
+		type: 'number',
+		listable: false,
+		sumLabel: 'Bookings',
+		averageLabel: false,
+		description: 'Counts 1 for every booking, whatever its status.',
+	},
+	{
+		id: 'noShowRate',
+		label: 'No-show rate',
+		type: 'ratio',
+		listable: false,
+		description: `No-shows as a share of booked parties. ${BOOKED_NOTE} Upcoming bookings count as booked, so use a date range that has passed.`,
+		ratio: { numerator: 'isNoShow', denominator: 'isBooked', unit: 'percent' },
+	},
+	{
+		id: 'cancellationRate',
+		label: 'Cancellation rate',
+		type: 'ratio',
+		listable: false,
+		description: 'Cancelled bookings as a share of all bookings.',
+		ratio: {
+			numerator: 'isCancelled',
+			denominator: 'bookingCount',
+			unit: 'percent',
+		},
+	},
+	{
+		id: 'lateCancelShare',
+		label: 'Late cancellation share',
+		type: 'ratio',
+		listable: false,
+		description: 'Late cancellations as a share of cancelled bookings.',
+		ratio: {
+			numerator: 'isLateCancel',
+			denominator: 'isCancelled',
+			unit: 'percent',
+		},
+	},
+	{
+		id: 'configuredTurnMinutes',
+		label: 'Configured turn time',
+		type: 'duration',
+		sumLabel: false,
+		averageLabel: 'Average configured turn time',
+		description:
+			'The turn time the restaurant set for this party size, service and day. Empty when no rule applies.',
+	},
+	{
+		id: 'turnVarianceMinutes',
+		label: 'Difference from configured turn time',
+		type: 'number',
+		sumLabel: false,
+		averageLabel: 'Average difference from configured turn time',
+		description:
+			'Actual turn time minus the configured one, in minutes. Negative means the party left early. Empty until the party has left or when no rule applies.',
 	},
 	{
 		id: 'paymentStatus',
@@ -267,6 +392,114 @@ const waitlistFields: ReportField[] = [
 	timeZoneField,
 ]
 
+const pacingFields: ReportField[] = [
+	{
+		id: 'startsAt',
+		label: 'Slot starts at',
+		type: 'datetime',
+		timeframe: true,
+		groupable: true,
+		showTime: true,
+		description: 'The start of the slot, in the location’s time zone.',
+	},
+	businessDateField,
+	locationField,
+	{
+		id: 'service',
+		label: 'Service',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+	},
+	{
+		id: 'slotTime',
+		label: 'Slot',
+		type: 'string',
+		filterable: true,
+		groupable: true,
+		description: 'The slot’s start time of day (HH:MM).',
+	},
+	{
+		id: 'bookings',
+		label: 'Bookings',
+		type: 'number',
+		sumLabel: 'Bookings',
+		averageLabel: 'Average bookings per slot',
+	},
+	{
+		id: 'covers',
+		label: 'Covers',
+		type: 'number',
+		sumLabel: 'Covers',
+		averageLabel: 'Average covers per slot',
+	},
+	{
+		id: 'maxCovers',
+		label: 'Covers limit',
+		type: 'number',
+		sumLabel: false,
+		averageLabel: 'Average covers limit',
+		description:
+			'The pacing limit on covers for the slot. Empty when none is set.',
+	},
+	{
+		id: 'maxParties',
+		label: 'Bookings limit',
+		type: 'number',
+		sumLabel: false,
+		averageLabel: 'Average bookings limit',
+		description:
+			'The pacing limit on bookings for the slot. Empty when none is set.',
+	},
+	{
+		id: 'overLimit',
+		label: 'Over limit',
+		type: 'boolean',
+		filterable: true,
+		groupable: true,
+		description: 'The slot has more covers or bookings than its pacing limit.',
+	},
+	{
+		id: 'slotCount',
+		label: 'Slots',
+		type: 'number',
+		listable: false,
+		sumLabel: 'Slots',
+		averageLabel: false,
+		description: 'Counts 1 for every slot.',
+	},
+	{
+		id: 'overLimitSlots',
+		label: 'Slots over limit',
+		type: 'number',
+		listable: false,
+		sumLabel: 'Slots over limit',
+		averageLabel: false,
+		description: 'Counts 1 for a slot over its pacing limit.',
+	},
+	{
+		id: 'coversUtilization',
+		label: 'Covers against limit',
+		type: 'ratio',
+		listable: false,
+		description:
+			'Covers as a share of the covers limit. Slots with no covers limit are left out.',
+		ratio: { numerator: 'covers', denominator: 'maxCovers', unit: 'percent' },
+	},
+	{
+		id: 'overLimitShare',
+		label: 'Share of slots over limit',
+		type: 'ratio',
+		listable: false,
+		ratio: {
+			numerator: 'overLimitSlots',
+			denominator: 'slotCount',
+			unit: 'percent',
+		},
+	},
+	timeZoneField,
+]
+
 export const reservationsSubjects: ReportSubject[] = [
 	{
 		id: 'bookings',
@@ -303,6 +536,25 @@ export const reservationsSubjects: ReportSubject[] = [
 			'quotedMinutes',
 			'actualMinutes',
 			'status',
+		],
+	},
+	{
+		id: 'pacing_slots',
+		label: 'Pacing slots',
+		description:
+			'One row per date, service and start time: bookings and covers against the pacing limit. No guest contact details. Needs reservation report access.',
+		scope: 'organization',
+		source: 'tenant-api',
+		fields: pacingFields,
+		timeZoneField: 'timeZone',
+		defaultColumns: [
+			'startsAt',
+			'location',
+			'service',
+			'bookings',
+			'covers',
+			'maxCovers',
+			'overLimit',
 		],
 	},
 ]

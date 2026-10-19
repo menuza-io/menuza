@@ -1,33 +1,26 @@
-import { useLoaderData } from 'react-router'
-import { ReportsScreen } from '#app/components/reservations/reports/reports-screen.tsx'
-import { useReservationsScopeClient } from '#app/hooks/use-reservations-client.ts'
+import { redirect } from 'react-router'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { reservationsReportsHref } from '#app/utils/reservations/reports-link.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import { type Route } from './+types/reports.ts'
-import { useReservationsLayoutData } from './_layout.tsx'
 
+/**
+ * Reservation reports live in the generic Reports page. This route only keeps
+ * old links and bookmarks working: it sends the person to Reports on the
+ * Reservations category, keeping the location and the language.
+ */
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const access = await requireReservationsAccess(
 		request,
 		params.orgSlug,
 		RESERVATIONS_SECTION_REQUIREMENTS.reports,
 	)
-	return { orgSlug: access.organizationSlug }
-}
-
-export default function ReservationsReportsRoute() {
-	const { orgSlug } = useLoaderData<typeof loader>()
-	const { activeLocationId, locations, todayDate } = useReservationsLayoutData()
-	const locationId =
-		locations.find((loc) => loc.id === activeLocationId)?.id ??
-		locations[0]?.id ??
-		''
-	const client = useReservationsScopeClient(
-		orgSlug,
-		'reports',
-		locationId ? [locationId] : undefined,
-	)
-	return (
-		<ReportsScreen client={client} locationId={locationId} today={todayDate} />
+	const url = new URL(request.url)
+	throw redirect(
+		reservationsReportsHref(access.organizationSlug, {
+			locationId:
+				url.searchParams.get('locationId') ?? url.searchParams.get('location'),
+			lng: url.searchParams.get('lng'),
+		}),
 	)
 }

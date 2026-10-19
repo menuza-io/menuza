@@ -217,7 +217,7 @@ export async function enqueueReservationMessage(
 			reservationId: reservation.id,
 			kind: input.kind,
 			channel,
-			locale: reservation.guestLocale || guest.locale || 'en',
+			locale: reservation.guestLocale || guest.locale || '',
 			sendAt: ctx.now,
 			now: ctx.now,
 			key: dedupeKey({
@@ -382,7 +382,7 @@ export async function reconcileScheduledMessages(
 						reservationId: reservation.id,
 						kind,
 						channel,
-						locale: reservation.guestLocale || guest.locale || 'en',
+						locale: reservation.guestLocale || guest.locale || '',
 						sendAt: schedule.scheduledForMs,
 						now: ctx.now,
 						key: dedupeKey({
@@ -435,7 +435,7 @@ export async function enqueueWaitlistMessage(
 			waitlistEntryId: entry.id,
 			kind: input.kind,
 			channel,
-			locale: entry.locale || 'en',
+			locale: entry.locale || '',
 			sendAt: ctx.now,
 			now: ctx.now,
 			key: dedupeKey({
@@ -479,7 +479,7 @@ export async function enqueueNotifyMessage(
 			notifyRequestId: request.id,
 			kind: 'notify_available',
 			channel,
-			locale: request.locale || 'en',
+			locale: request.locale || '',
 			sendAt: ctx.now,
 			now: ctx.now,
 			key: dedupeKey({
@@ -559,7 +559,7 @@ export async function enqueuePaymentMessage(
 			reservationId: reservation.id,
 			kind: input.kind,
 			channel,
-			locale: reservation.guestLocale || guest.locale || 'en',
+			locale: reservation.guestLocale || guest.locale || '',
 			sendAt: ctx.now,
 			now: ctx.now,
 			key: dedupeKey({

@@ -8,9 +8,11 @@ import {
 	rsvAuditLog,
 	rsvExperiences,
 	rsvLocationSettings,
+	rsvPacingRules,
 	rsvPayments,
 	rsvReservations,
 	rsvServices,
+	rsvTurnTimes,
 	rsvWaitlistEntries,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -24,10 +26,18 @@ import {
 	type SQL,
 } from 'drizzle-orm'
 import { getReservationsContext } from '../lib/reservations-context.ts'
+import { formatMinutesToHHMM } from './rsv-day-feed-service.ts'
+import {
+	bookingCovers,
+	computePacingSlots,
+	configuredTurnMinutes,
+	isBookedStatus,
+	type TurnRule,
+} from './rsv-report-shared.ts'
 
 /**
- * Report records for the Reservations subjects `bookings` and
- * `waitlist_entries`. They read the regional tenant database only and apply
+ * Report records for the Reservations subjects `bookings`,
+ * `waitlist_entries` and `pacing_slots`. They read the regional tenant database only and apply
  * the token's location limit on every query.
  *
  * Records carry aggregate facts only. Nothing here selects a guest's name,
@@ -100,19 +110,6 @@ const COLLECTED_KINDS = new Set([
 	'no_show_fee_charge',
 ])
 
-export function bookingCovers(row: {
-	status: string
-	partySize: number
-	coversActual: number | null
-	seatedCovers: number | null
-}): number {
-	if (row.coversActual !== null) return row.coversActual
-	if (row.status === 'finished' && row.seatedCovers !== null) {
-		return row.seatedCovers
-	}
-	return row.partySize
-}
-
 export function bookingRecord(
 	row: typeof rsvReservations.$inferSelect,
 	names: {
@@ -122,8 +119,14 @@ export function bookingRecord(
 		currency: string
 		collectedMinor: number
 		refundedMinor: number
+		/** The turn time the location's rules set for this party, if any. */
+		configuredTurn: number | null
 	},
 ): ReportRecord {
+	const actualMinutes =
+		row.seatedAt !== null && row.finishedAt !== null
+			? Math.max(0, Math.round((row.finishedAt - row.seatedAt) / 60_000))
+			: null
 	return {
 		startsAt: new Date(row.startAt),
 		businessDate: row.businessDate,
@@ -134,10 +137,21 @@ export function bookingRecord(
 		covers: bookingCovers(row),
 		status: row.status,
 		channel: row.channel,
+		cancelledBy:
+			row.status === 'cancelled' ? (row.cancelledBy ?? 'unknown') : null,
+		slotTime: formatMinutesToHHMM(row.localStartMin),
+		isBooked: isBookedStatus(row.status) ? 1 : 0,
+		isNoShow: row.status === 'no_show' ? 1 : 0,
+		isCancelled: row.status === 'cancelled' ? 1 : 0,
+		isLateCancel: row.status === 'cancelled' && row.lateCancel ? 1 : 0,
+		isFinished: row.status === 'finished' ? 1 : 0,
+		bookingCount: 1,
 		durationMinutes: row.durationMin,
-		actualMinutes:
-			row.seatedAt !== null && row.finishedAt !== null
-				? Math.max(0, Math.round((row.finishedAt - row.seatedAt) / 60_000))
+		actualMinutes,
+		configuredTurnMinutes: names.configuredTurn,
+		turnVarianceMinutes:
+			actualMinutes !== null && names.configuredTurn !== null
+				? actualMinutes - names.configuredTurn
 				: null,
 		lateCancel: row.lateCancel,
 		paymentStatus: row.paymentStatus,
@@ -170,28 +184,34 @@ export async function loadBookingRecords(
 	const kept = truncated ? rows.slice(0, maxRows) : rows
 	if (kept.length === 0) return { records: [], truncated }
 
-	const [services, experiences, settings, names] = await Promise.all([
-		ctx.db
-			.select({ id: rsvServices.id, name: rsvServices.name })
-			.from(rsvServices),
-		ctx.db
-			.select({
-				id: rsvExperiences.id,
-				slug: rsvExperiences.slug,
-				nameI18n: rsvExperiences.nameI18n,
-			})
-			.from(rsvExperiences),
-		ctx.db
-			.select({
-				locationId: rsvLocationSettings.locationId,
-				currency: rsvLocationSettings.currency,
-			})
-			.from(rsvLocationSettings),
-		locationNames(ctx),
-	])
+	const [services, experiences, settings, names, turnRules] = await Promise.all(
+		[
+			ctx.db
+				.select({ id: rsvServices.id, name: rsvServices.name })
+				.from(rsvServices),
+			ctx.db
+				.select({
+					id: rsvExperiences.id,
+					slug: rsvExperiences.slug,
+					nameI18n: rsvExperiences.nameI18n,
+				})
+				.from(rsvExperiences),
+			ctx.db
+				.select({
+					locationId: rsvLocationSettings.locationId,
+					currency: rsvLocationSettings.currency,
+				})
+				.from(rsvLocationSettings),
+			locationNames(ctx),
+			loadTurnRules(ctx),
+		],
+	)
 	const serviceName = new Map(services.map((s) => [s.id, s.name]))
 	const experienceName = new Map(
-		experiences.map((e) => [e.id, e.nameI18n?.en ?? e.slug]),
+		experiences.map((e) => [
+			e.id,
+			Object.values(e.nameI18n ?? {}).find(Boolean) ?? e.slug,
+		]),
 	)
 	const currencyOf = new Map(settings.map((s) => [s.locationId, s.currency]))
 
@@ -236,8 +256,118 @@ export async function loadBookingRecords(
 			currency: paid?.currency ?? currencyOf.get(row.locationId) ?? 'USD',
 			collectedMinor: paid?.collected ?? 0,
 			refundedMinor: paid?.refunded ?? 0,
+			configuredTurn: configuredTurnMinutes(
+				turnRules.get(row.locationId) ?? [],
+				row.partySize,
+				row.serviceId,
+				row.businessDate,
+			),
 		})
 	})
+	return { records, truncated }
+}
+
+/** Turn-time rules by location, read once per run. */
+async function loadTurnRules(ctx: RsvReportContext) {
+	const rows = await ctx.db
+		.select({
+			locationId: rsvTurnTimes.locationId,
+			serviceId: rsvTurnTimes.serviceId,
+			partyMin: rsvTurnTimes.partyMin,
+			partyMax: rsvTurnTimes.partyMax,
+			minutes: rsvTurnTimes.minutes,
+			daysMask: rsvTurnTimes.daysMask,
+		})
+		.from(rsvTurnTimes)
+	const byLocation = new Map<string, TurnRule[]>()
+	for (const { locationId, ...rule } of rows) {
+		byLocation.set(locationId, [...(byLocation.get(locationId) ?? []), rule])
+	}
+	return byLocation
+}
+
+export function pacingSlotRecord(
+	slot: ReturnType<typeof computePacingSlots>[number],
+	names: { location: string; service: string },
+): ReportRecord {
+	return {
+		startsAt: new Date(slot.startAt ?? 0),
+		businessDate: slot.businessDate,
+		location: names.location,
+		service: names.service,
+		slotTime: formatMinutesToHHMM(slot.localStartMin),
+		bookings: slot.bookings,
+		covers: slot.covers,
+		maxCovers: slot.maxCovers,
+		maxParties: slot.maxParties,
+		overLimit: slot.overLimit,
+		slotCount: 1,
+		overLimitSlots: slot.overLimit ? 1 : 0,
+		timeZone: slot.timeZone ?? 'UTC',
+	}
+}
+
+/**
+ * One record per date, service and start time with the bookings and covers in
+ * it against the service's pacing limits. Built from the reservation rows with
+ * the same slot math as every other pacing figure (`computePacingSlots`).
+ */
+export async function loadPacingSlotRecords(
+	ctx: RsvReportContext,
+	definition: ReportDefinition,
+	maxRows = BOOKING_REPORT_MAX_ROWS,
+): Promise<LoadedRecords> {
+	const dates = loadDates(definition, ctx.now)
+	const rows = await ctx.db
+		.select({
+			locationId: rsvReservations.locationId,
+			businessDate: rsvReservations.businessDate,
+			localStartMin: rsvReservations.localStartMin,
+			serviceId: rsvReservations.serviceId,
+			partySize: rsvReservations.partySize,
+			coversActual: rsvReservations.coversActual,
+			status: rsvReservations.status,
+			startAt: rsvReservations.startAt,
+			timeZone: rsvReservations.timeZone,
+		})
+		.from(rsvReservations)
+		.where(
+			and(
+				dates.fromDate
+					? between(rsvReservations.businessDate, dates.fromDate, dates.toDate)
+					: lte(rsvReservations.businessDate, dates.toDate),
+				locationWhere(ctx, rsvReservations.locationId),
+			),
+		)
+		.orderBy(rsvReservations.startAt)
+		.limit(maxRows + 1)
+	const truncated = rows.length > maxRows
+	const kept = truncated ? rows.slice(0, maxRows) : rows
+	if (kept.length === 0) return { records: [], truncated }
+
+	const [services, rules, names] = await Promise.all([
+		ctx.db
+			.select({ id: rsvServices.id, name: rsvServices.name })
+			.from(rsvServices),
+		ctx.db
+			.select({
+				serviceId: rsvPacingRules.serviceId,
+				channel: rsvPacingRules.channel,
+				fromMin: rsvPacingRules.fromMin,
+				toMin: rsvPacingRules.toMin,
+				maxCovers: rsvPacingRules.maxCovers,
+				maxParties: rsvPacingRules.maxParties,
+			})
+			.from(rsvPacingRules),
+		locationNames(ctx),
+	])
+	const serviceName = new Map(services.map((s) => [s.id, s.name]))
+	const records = computePacingSlots(kept, rules).map((slot) =>
+		pacingSlotRecord(slot, {
+			location: names.get(slot.locationId ?? '') ?? slot.locationId ?? '',
+			service: slot.serviceId ? (serviceName.get(slot.serviceId) ?? '') : '',
+		}),
+	)
 	return { records, truncated }
 }
 

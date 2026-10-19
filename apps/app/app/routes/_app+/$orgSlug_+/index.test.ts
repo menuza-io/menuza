@@ -323,11 +323,16 @@ describe('Home dashboard loader', () => {
 		expect(data.picker.savedReports).toEqual([
 			{ id: own.id, title: 'Our notes', subjectLabel: 'Notes' },
 		])
-		expect(
-			data.picker.templateGroups.flatMap((group) =>
-				group.templates.map((template) => template.id),
-			),
-		).toEqual(organizationTemplates().map((template) => template.id))
+		// The picker only offers templates the person's grants can run: this
+		// admin has no staff or reservation grants, so those templates are left out.
+		const offered = data.picker.templateGroups.flatMap((group) =>
+			group.templates.map((template) => template.id),
+		)
+		const all = organizationTemplates().map((template) => template.id)
+		expect(offered.length).toBeGreaterThan(0)
+		expect(offered.length).toBeLessThan(all.length)
+		for (const id of offered) expect(all).toContain(id)
+		expect(offered).toContain('sales-total')
 	})
 
 	it('only loads report data when Home has report blocks', async () => {

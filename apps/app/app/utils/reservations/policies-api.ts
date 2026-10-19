@@ -27,9 +27,6 @@ export const POLICY_REFUND_RULES = [
 ] as const
 export type PolicyRefundRule = (typeof POLICY_REFUND_RULES)[number]
 
-export const POLICY_LOCALES = ['en', 'ar', 'es', 'fr', 'de', 'zh'] as const
-export type PolicyLocale = (typeof POLICY_LOCALES)[number]
-
 export const policySchema = z.object({
 	id: z.string(),
 	locationId: z.string(),
@@ -66,7 +63,8 @@ export type PolicyBody = {
 	refundRule: PolicyRefundRule
 	partialRefundBp: number | null
 	appliesPartyMin: number | null
-	termsI18n: Partial<Record<PolicyLocale, string>>
+	/** Terms per language (Website settings languages). */
+	termsI18n: Record<string, string>
 }
 
 function malformed(): never {

@@ -6,8 +6,15 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, eq, gt, isNull } from 'drizzle-orm'
+import {
+	isSiteContentLocale,
+	SITE_CONTENT_LOCALES,
+} from '@repo/common/site-locales'
+import { LOCALE_KEY_PATTERN, resolveGuestLocale } from '@repo/reservations'
 import { z } from 'zod'
 import { badRequest, conflict } from '../lib/http.ts'
+import { loadLocaleOrg } from '../lib/reservations-i18n.ts'
+import { messageCopyFor } from '../lib/reservations-copy/index.ts'
 import {
 	isToggleableKind,
 	messagingSettingsSchema,
@@ -32,7 +39,6 @@ import {
 } from './rsv-setup-service.ts'
 
 export const MESSAGE_NOTE_MAX_LENGTH = 500
-export const MESSAGE_LOCALES = ['en', 'ar'] as const
 
 function hasControlCharacters(value: string): boolean {
 	for (const char of value) {
@@ -72,11 +78,11 @@ export const messageSettingsPatchSchema = z.strictObject({
 		.array(
 			z.strictObject({
 				kind: z.enum(TOGGLEABLE_MESSAGE_KINDS),
-				locale: z.enum(MESSAGE_LOCALES),
+				locale: z.string().regex(LOCALE_KEY_PATTERN),
 				customNote: noteText,
 			}),
 		)
-		.max(TOGGLEABLE_MESSAGE_KINDS.length * MESSAGE_LOCALES.length)
+		.max(TOGGLEABLE_MESSAGE_KINDS.length * SITE_CONTENT_LOCALES.length)
 		.optional(),
 })
 
@@ -112,9 +118,6 @@ async function serialize(
 		})
 		.from(rsvMessageTexts)
 		.where(eq(rsvMessageTexts.locationId, locationId))
-	const notes = new Map(
-		rows.map((r) => [`${r.kind}:${r.locale}`, r.customNote]),
-	)
 	return {
 		locationId,
 		version,
@@ -123,10 +126,11 @@ async function serialize(
 			kind,
 			enabled: messaging.kinds[kind],
 			waitlist: WAITLIST_MESSAGE_KINDS.has(kind),
-			notes: {
-				en: notes.get(`${kind}:en`) ?? '',
-				ar: notes.get(`${kind}:ar`) ?? '',
-			},
+			notes: Object.fromEntries(
+				rows
+					.filter((r) => r.kind === kind && r.customNote)
+					.map((r) => [r.locale, r.customNote]),
+			) as Record<string, string>,
 		})),
 		texts: rows.map((r) => ({
 			kind: r.kind,
@@ -202,7 +206,16 @@ export async function updateMessageSettings(
 
 			if (patch.texts?.length) {
 				const changed: string[] = []
+				const localeOrg = await loadLocaleOrg(orgId)
 				for (const text of patch.texts) {
+					const enabled = localeOrg
+						? localeOrg.locales.includes(text.locale)
+						: isSiteContentLocale(text.locale)
+					if (!enabled || !isSiteContentLocale(text.locale)) {
+						throw badRequest('locale_not_enabled', undefined, {
+							fields: ['texts'],
+						})
+					}
 					const note = text.customNote.trim()
 					const existing = await tx
 						.select({ id: rsvMessageTexts.id })
@@ -305,11 +318,17 @@ export async function previewMessage(
 		})
 	}
 	const kind: ToggleableMessageKind = input.kind
+	const context = await getReservationsContext(orgId)
 	const locale: ReservationEmailLocale = normalizeReservationLocale(
-		input.locale,
+		context
+			? resolveGuestLocale(
+					input.locale,
+					context.organization.locales,
+					context.organization.defaultLocale,
+				)
+			: input.locale,
 	)
 	const settings = await ensureLocationSettingsRow(db, orgId, locationId)
-	const context = await getReservationsContext(orgId)
 	const location = context?.locations.find((l) => l.id === locationId)
 	const note = await db
 		.select({ customNote: rsvMessageTexts.customNote })
@@ -336,14 +355,15 @@ export async function previewMessage(
 				)
 				.get()
 	const customNote = (note ?? orgWide)?.customNote?.trim() || null
-	const restaurantName = location?.name ?? 'Your restaurant'
+	const copyLabels = messageCopyFor(locale).labels
+	const restaurantName = location?.name ?? copyLabels.sampleRestaurant
 	const sample = {
 		kind,
 		locale,
 		restaurantName,
 		address: location?.address?.formattedAddress ?? null,
 		phone: location?.phone ?? null,
-		firstName: locale === 'ar' ? 'سارة' : 'Sam',
+		firstName: copyLabels.sampleName,
 		whenMs: SAMPLE_START_MS,
 		timeZone: settings.timeZone,
 		partySize: 4,

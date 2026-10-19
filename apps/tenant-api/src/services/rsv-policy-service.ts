@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { type ReservationsContext } from '@repo/reservations'
 import {
-	RSV_MESSAGE_LOCALE_VALUES,
+	localizedTextSchema,
+	type ReservationsContext,
+} from '@repo/reservations'
+import {
 	RSV_POLICY_REFUND_RULE_VALUES,
 	rsvLocationSettings,
 	rsvPolicies,
@@ -10,6 +12,7 @@ import {
 import { and, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { HttpError } from '../lib/http.ts'
+import { assertLocalizedMap, localeOrgOf } from '../lib/reservations-i18n.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import { writeSetupAuditLog } from './rsv-setup-service.ts'
 
@@ -29,9 +32,7 @@ export const POLICY_SAVABLE_KINDS = [
 	'prepay',
 ] as const
 
-const termsSchema = z
-	.record(z.enum(RSV_MESSAGE_LOCALE_VALUES), z.string().trim().max(4000))
-	.refine((value) => Object.keys(value).length <= 6)
+const termsSchema = localizedTextSchema(4000)
 
 const minor = z.number().int().min(0).max(10_000_000)
 
@@ -207,7 +208,13 @@ export async function createPolicy(params: {
 						? (params.input.partialRefundBp ?? null)
 						: null,
 				appliesPartyMin: params.input.appliesPartyMin ?? null,
-				termsI18n: params.input.termsI18n ?? null,
+				termsI18n: params.input.termsI18n
+					? assertLocalizedMap(
+							params.input.termsI18n,
+							localeOrgOf(params.context),
+							'termsI18n',
+						)
+					: null,
 				termsVersion: 1,
 				version: 1,
 			})
@@ -282,7 +289,15 @@ export async function updatePolicy(params: {
 						? patch.appliesPartyMin
 						: row.appliesPartyMin,
 				termsI18n:
-					patch.termsI18n !== undefined ? patch.termsI18n : row.termsI18n,
+					patch.termsI18n !== undefined
+						? patch.termsI18n
+							? assertLocalizedMap(
+									patch.termsI18n,
+									localeOrgOf(params.context),
+									'termsI18n',
+								)
+							: patch.termsI18n
+						: row.termsI18n,
 			}
 			const check = policyInputSchema.safeParse({
 				...next,

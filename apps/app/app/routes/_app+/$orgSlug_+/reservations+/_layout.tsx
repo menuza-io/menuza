@@ -14,7 +14,7 @@ import { ReservationsClientProvider } from '#app/components/reservations/reserva
 import { useLiveNow } from '#app/hooks/use-live-now.ts'
 import {
 	displayLocationName,
-	orgDefaultLocale,
+	orgSiteLocales,
 } from '#app/utils/location-name.server.ts'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import { DEFAULT_DAY_START_MIN } from '#app/utils/reservations/business-date.ts'
@@ -64,7 +64,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		anyOf: RESERVATIONS_SECTION_PERMISSIONS,
 	})
 
-	const [locationRows, defaultLocale] = await Promise.all([
+	const [locationRows, siteLocales] = await Promise.all([
 		db
 			.select({
 				id: OrganizationLocation.id,
@@ -80,8 +80,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				desc(OrganizationLocation.isDefault),
 				asc(OrganizationLocation.createdAt),
 			),
-		orgDefaultLocale(access.organizationId),
+		orgSiteLocales(access.organizationId),
 	])
+	const { defaultLocale } = siteLocales
 
 	const scopedLocations = (
 		access.locationIds === null
@@ -112,6 +113,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	return {
 		orgSlug: access.organizationSlug,
 		locations: scopedLocations,
+		/** Website settings languages: the one list every guest-facing field edits in. */
+		siteLocales,
 		nav,
 		payments,
 		nowMs: Date.now(),

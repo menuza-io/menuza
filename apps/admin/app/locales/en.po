@@ -622,6 +622,10 @@ msgstr "Available"
 msgid "Average Size"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:140
+msgid "Average waitlist wait, last 7 days"
+msgstr "Average waitlist wait, last 7 days"
+
 #: app/routes/_admin+/phone-numbers.tsx:171
 msgid "Awaiting line verification"
 msgstr "Awaiting line verification"
@@ -744,6 +748,14 @@ msgstr "Blocks"
 msgid "Body text"
 msgstr "Body text"
 
+#: ../../packages/reports/src/ui/report-labels.ts:88
+msgid "Booking sources"
+msgstr "Booking sources"
+
+#: ../../packages/reports/src/ui/report-labels.ts:137
+msgid "Bookings cancelled after the free-cancellation window over the last 30 days."
+msgstr "Bookings cancelled after the free-cancellation window over the last 30 days."
+
 #: app/components/admin/feature-flags.tsx:144
 msgid "Boolean"
 msgstr ""
@@ -814,6 +826,10 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:102
 msgid "Canceled"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:96
+msgid "Cancellations by who"
+msgstr "Cancellations by who"
 
 #: app/routes/_admin+/gdpr-requests.tsx:365
 msgid "Cancelled"
@@ -1008,6 +1024,30 @@ msgstr ""
 msgid "Core System Role"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:81
+msgid "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
+msgstr "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
+
+#: ../../packages/reports/src/ui/report-labels.ts:85
+msgid "Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings."
+msgstr "Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings."
+
+#: ../../packages/reports/src/ui/report-labels.ts:129
+msgid "Covers booked for today, not counting cancelled, declined or expired bookings."
+msgstr "Covers booked for today, not counting cancelled, declined or expired bookings."
+
+#: ../../packages/reports/src/ui/report-labels.ts:84
+msgid "Covers by service"
+msgstr "Covers by service"
+
+#: ../../packages/reports/src/ui/report-labels.ts:125
+msgid "Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it."
+msgstr "Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it."
+
+#: ../../packages/reports/src/ui/report-labels.ts:128
+msgid "Covers today"
+msgstr "Covers today"
+
 #: app/components/admin/feature-flags.tsx:100
 msgid "Create a new feature flag at system level."
 msgstr ""
@@ -1148,6 +1188,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:80
+msgid "Daily summary"
+msgstr "Daily summary"
 
 #: app/routes/resources+/theme-switch.tsx:73
 msgid "Dark"
@@ -1580,6 +1624,10 @@ msgstr "Event"
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:105
+msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
+msgstr "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
+
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:517
 msgid "Exactly Equals"
 msgstr ""
@@ -1830,7 +1878,7 @@ msgstr ""
 msgid "Higher level roles can manage lower level roles"
 msgstr ""
 
-#: ../../packages/reports/src/ui/report-labels.ts:83
+#: ../../packages/reports/src/ui/report-labels.ts:147
 msgid "Hiring"
 msgstr "Hiring"
 
@@ -1858,6 +1906,14 @@ msgstr "Hours by employee"
 msgid "Hours worked by day"
 msgstr "Hours worked by day"
 
+#: ../../packages/reports/src/ui/report-labels.ts:113
+msgid "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
+msgstr "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
+
+#: ../../packages/reports/src/ui/report-labels.ts:109
+msgid "How long parties of each size stayed, from seated to finished, over the last 30 days."
+msgstr "How long parties of each size stayed, from seated to finished, over the last 30 days."
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:380
 msgid "How long to keep logs before permanent deletion"
 msgstr ""
@@ -1866,9 +1922,17 @@ msgstr ""
 msgid "How long to keep logs readily searchable"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:141
+msgid "How long waitlist parties waited before they were seated over the last 7 days."
+msgstr "How long waitlist parties waited before they were seated over the last 7 days."
+
 #: ../../packages/reports/src/ui/report-labels.ts:57
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "How often people clock in on time for the shifts they were scheduled on."
+
+#: ../../packages/reports/src/ui/report-labels.ts:117
+msgid "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
+msgstr "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
 
 #: app/components/sso-configuration-form.tsx:168
 msgid "https://your-domain.okta.com"
@@ -2048,7 +2112,7 @@ msgstr "Label"
 msgid "Label (optional)"
 msgstr "Label (optional)"
 
-#: ../../packages/reports/src/ui/report-labels.ts:82
+#: ../../packages/reports/src/ui/report-labels.ts:146
 msgid "Labor"
 msgstr "Labor"
 
@@ -2112,6 +2176,14 @@ msgstr ""
 #: ../../packages/reports/src/ui/report-labels.ts:60
 msgid "Late arrivals by employee"
 msgstr "Late arrivals by employee"
+
+#: ../../packages/reports/src/ui/report-labels.ts:100
+msgid "Late cancellations"
+msgstr "Late cancellations"
+
+#: ../../packages/reports/src/ui/report-labels.ts:136
+msgid "Late cancellations, last 30 days"
+msgstr "Late cancellations, last 30 days"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
@@ -2545,6 +2617,18 @@ msgstr "No users yet"
 msgid "No waitlist entries found"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:104
+msgid "No-show list"
+msgstr "No-show list"
+
+#: ../../packages/reports/src/ui/report-labels.ts:132
+msgid "No-show rate, last 30 days"
+msgstr "No-show rate, last 30 days"
+
+#: ../../packages/reports/src/ui/report-labels.ts:92
+msgid "No-shows & cancellations"
+msgstr "No-shows & cancellations"
+
 #: ../../packages/marketing-workflow/src/node-palette.tsx:50
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
@@ -2730,6 +2814,10 @@ msgstr ""
 #: app/components/sso-user-management.tsx:92
 msgid "Owner"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:124
+msgid "Pacing"
+msgstr "Pacing"
 
 #: app/components/admin-organizations-table.tsx:599
 #: app/components/admin-users-table.tsx:486
@@ -3140,6 +3228,10 @@ msgstr "Reservation Completed"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:56
 msgid "Reservation No-Show"
 msgstr "Reservation No-Show"
+
+#: ../../packages/reports/src/ui/report-labels.ts:148
+msgid "Reservations"
+msgstr "Reservations"
 
 #: app/components/admin-sidebar.tsx:143
 msgid "Reservations fees"
@@ -3943,9 +4035,25 @@ msgstr "The previous organization may still forward its line to this number, so 
 #~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 #~ msgstr "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 
+#: ../../packages/reports/src/ui/report-labels.ts:133
+msgid "The share of booked parties that did not show up over the last 30 days."
+msgstr "The share of booked parties that did not show up over the last 30 days."
+
+#: ../../packages/reports/src/ui/report-labels.ts:93
+msgid "The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked."
+msgstr "The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked."
+
+#: ../../packages/reports/src/ui/report-labels.ts:101
+msgid "The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days."
+msgstr "The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days."
+
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
 msgid "The share of each Reservations payment kept by the platform, in basis points."
 msgstr "The share of each Reservations payment kept by the platform, in basis points."
+
+#: ../../packages/reports/src/ui/report-labels.ts:121
+msgid "The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days."
+msgstr "The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -4082,6 +4190,14 @@ msgstr "Try different filters or clear them."
 #: app/routes/_admin+/cache.tsx:616
 msgid "TTL"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:108
+msgid "Turn times"
+msgstr "Turn times"
+
+#: ../../packages/reports/src/ui/report-labels.ts:112
+msgid "Turn times against target"
+msgstr "Turn times against target"
 
 #: app/components/admin/feature-flags.tsx:134
 #: app/routes/_admin+/gdpr-requests.tsx:496
@@ -4317,6 +4433,14 @@ msgstr ""
 msgid "Waitlist Management"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:116
+msgid "Waitlist outcomes"
+msgstr "Waitlist outcomes"
+
+#: ../../packages/reports/src/ui/report-labels.ts:120
+msgid "Waitlist waits"
+msgstr "Waitlist waits"
+
 #: app/routes/_admin+/audit-logs.tsx:157
 msgid "Warning"
 msgstr ""
@@ -4348,6 +4472,14 @@ msgstr ""
 #: ../../packages/reports/src/ui/report-labels.ts:77
 msgid "Where applicants found the job."
 msgstr "Where applicants found the job."
+
+#: ../../packages/reports/src/ui/report-labels.ts:89
+msgid "Where bookings come from over the last 30 days: online, phone, host, walk-in and more."
+msgstr "Where bookings come from over the last 30 days: online, phone, host, walk-in and more."
+
+#: ../../packages/reports/src/ui/report-labels.ts:97
+msgid "Who cancelled over the last 30 days: the guest, the restaurant or the system."
+msgstr "Who cancelled over the last 30 days: the guest, the restaurant or the system."
 
 #: ../../packages/reports/src/ui/report-labels.ts:49
 msgid "Who worked overtime over the last 30 days, and how much."

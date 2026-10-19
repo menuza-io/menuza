@@ -8,7 +8,9 @@ import {
 	policyRequiresPayment,
 	reflowDay,
 	resolveServices,
+	businessDateOf,
 	validateConfig,
+	validateLocationHoursSetup,
 	type AssignBlockRecord,
 	type AssignBookingRecord,
 	type AssignHoldRecord,
@@ -19,6 +21,8 @@ import {
 	type EnginePacingRuleInput,
 	type EngineServiceAvailabilityInput,
 	type EngineTableInput,
+	type LocationHours,
+	type LocationHoursIssueInfo,
 	type TableSwap,
 } from '@repo/reservations'
 import {
@@ -50,6 +54,7 @@ import { queryInChunks } from '../lib/chunked-in.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import { badRequest, conflict, notFound } from '../lib/http.js'
 import { getReservationsContext } from '../lib/reservations-context.js'
+import { locationHoursFromContext } from './rsv-location-hours.ts'
 
 export type ReflowMove = TableSwap & {
 	reservationId?: string
@@ -1439,6 +1444,8 @@ export async function validateLocationSetup(
 	issues: ConfigValidationIssue[]
 	errors: ConfigValidationIssue[]
 	warnings: ConfigValidationIssue[]
+	/** Informational notes (for example a redundant special-day closure); never block. */
+	infos: LocationHoursIssueInfo[]
 }> {
 	const settings = await ensureLocationSettingsRow(db, orgId, locationId)
 	const areas = await db
@@ -1571,10 +1578,74 @@ export async function validateLocationSetup(
 		})),
 	})
 
-	const errors = issues.filter((i) => i.severity === 'error')
-	const warnings = issues.filter((i) => i.severity === 'warning')
+	// Services only operate inside the location hours (control-plane context,
+	// best effort: no context means no hours checks, never an error).
+	const locationHoursIssues = await validateAgainstLocationHours(
+		db,
+		orgId,
+		locationId,
+		settings.dayStartMin,
+		services,
+	)
+	const allIssues = [...issues, ...locationHoursIssues.issues]
+	const errors = allIssues.filter((i) => i.severity === 'error')
+	const warnings = allIssues.filter((i) => i.severity === 'warning')
 	const valid = errors.length === 0
-	return { valid, issues: [...issues], errors, warnings }
+	return {
+		valid,
+		issues: allIssues,
+		errors,
+		warnings,
+		infos: locationHoursIssues.infos,
+	}
+}
+
+async function validateAgainstLocationHours(
+	db: TenantDatabase,
+	orgId: string,
+	locationId: string,
+	dayStartMin: number,
+	services: Array<typeof rsvServices.$inferSelect>,
+) {
+	const empty = {
+		issues: [] as ConfigValidationIssue[],
+		infos: [] as LocationHoursIssueInfo[],
+	}
+	let hours: LocationHours | null = null
+	try {
+		hours = locationHoursFromContext(
+			await getReservationsContext(orgId),
+			locationId,
+		)
+	} catch {
+		hours = null
+	}
+	if (!hours) return empty
+	const specialDays = await db
+		.select()
+		.from(rsvSpecialDays)
+		.where(eq(rsvSpecialDays.locationId, locationId))
+		.all()
+	return validateLocationHoursSetup({
+		hours,
+		dayStartMin,
+		today: businessDateOf(Date.now(), hours.timeZone, dayStartMin),
+		services: services.map((s) => ({
+			id: s.id,
+			name: s.name,
+			daysMask: s.daysMask,
+			firstSeatingMin: s.firstSeatingMin,
+			lastSeatingMin: s.lastSeatingMin,
+			active: s.archivedAt === null,
+		})),
+		specialDays: specialDays.map((sd) => ({
+			id: sd.id,
+			kind: sd.kind,
+			fromDate: sd.fromDate,
+			toDate: sd.toDate,
+			name: sd.name,
+		})),
+	})
 }
 
 export async function detectLocationConflicts(

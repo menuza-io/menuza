@@ -45,6 +45,7 @@ import {
 import {
 	auditRsvReportRun,
 	loadBookingRecords,
+	loadPacingSlotRecords,
 	loadWaitlistRecords,
 	type RsvReportContext,
 } from '../services/rsv-report-records.ts'
@@ -80,6 +81,7 @@ const TENANT_ANALYTICS_SUBJECTS = new Set([
 	'applications',
 	'bookings',
 	'waitlist_entries',
+	'pacing_slots',
 ])
 
 const REPEAT_CALLER_WINDOW_MS = 30 * 86_400_000
@@ -452,7 +454,9 @@ analyticsRoutes.post('/query', async (c) => {
 			loaded =
 				definition.subject === 'bookings'
 					? await loadBookingRecords(rsvCtx, definition)
-					: await loadWaitlistRecords(rsvCtx, definition)
+					: definition.subject === 'pacing_slots'
+						? await loadPacingSlotRecords(rsvCtx, definition)
+						: await loadWaitlistRecords(rsvCtx, definition)
 			await auditRsvReportRun(rsvCtx, {
 				subject: definition.subject,
 				rows: loaded.records.length,

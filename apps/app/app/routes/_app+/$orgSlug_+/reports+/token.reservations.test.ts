@@ -196,3 +196,43 @@ describe('reports token for reservations subjects', () => {
 		}
 	})
 })
+
+describe('reports token gate for reservation-only roles', () => {
+	it('mints a token for a role holding only the reservation report grant', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableReservations(organization.id)
+		const { cookie } = await member(organization.id, [
+			P.READ_RESERVATION_REPORT,
+		])
+		const { subjects, claims } = await mint(organization.slug, cookie)
+		expect(subjects).toEqual(expect.arrayContaining(RESERVATION_SUBJECTS))
+		expect(claims.subjects).toEqual(
+			expect.arrayContaining(RESERVATION_SUBJECTS),
+		)
+		// No analytics grant: nothing beyond the reservation subjects.
+		expect(subjects).not.toContain('orders')
+		expect(subjects).not.toContain('phone_calls')
+	})
+
+	it('still refuses a role with neither an admin report grant nor a module grant', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableReservations(organization.id)
+		const { cookie } = await member(organization.id, [
+			P.READ_RESERVATION,
+			P.READ_RESERVATION_GUEST,
+		])
+		await expect(mint(organization.slug, cookie)).rejects.toMatchObject({
+			status: 403,
+		})
+	})
+
+	it('refuses a reservation report holder while the flag is off', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const { cookie } = await member(organization.id, [
+			P.READ_RESERVATION_REPORT,
+		])
+		await expect(mint(organization.slug, cookie)).rejects.toMatchObject({
+			status: 403,
+		})
+	})
+})

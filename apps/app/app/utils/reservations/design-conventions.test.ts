@@ -72,14 +72,10 @@ const FILES = [
 	'components/reservations/guests/guest-merge-dialog.tsx',
 	'components/reservations/guests/guest-tag-badge.tsx',
 	'components/reservations/guest-profile-card.tsx',
-	'components/reservations/reports/reports-screen.tsx',
-	'components/reservations/reports/report-panels.tsx',
-	'utils/reservations/reports-export.ts',
 	'utils/reservations/setup-issue-target.ts',
 	'routes/_app+/$orgSlug_+/reservations+/waitlist.tsx',
 	'routes/_app+/$orgSlug_+/reservations+/guests.tsx',
 	'routes/_app+/$orgSlug_+/reservations+/guests.$guestId.tsx',
-	'routes/_app+/$orgSlug_+/reservations+/reports.tsx',
 ]
 
 /** Sheets and dialogs: no native form controls or buttons either. */
@@ -150,7 +146,6 @@ describe('payments and experiences UI follows the design conventions', () => {
 const HEADERLESS_SCREENS = [
 	'components/reservations/waitlist/waitlist-screen.tsx',
 	'components/reservations/guests/guest-list-screen.tsx',
-	'components/reservations/reports/reports-screen.tsx',
 	'components/reservations/experiences/experiences-screen.tsx',
 ]
 
@@ -177,8 +172,6 @@ const NO_NATIVE_CONTROLS = [
 	'components/reservations/guests/guest-notes-panel.tsx',
 	'components/reservations/guests/guest-merge-dialog.tsx',
 	'components/reservations/guest-profile-card.tsx',
-	'components/reservations/reports/reports-screen.tsx',
-	'components/reservations/reports/report-panels.tsx',
 ]
 
 describe('polished screens use the shared controls', () => {

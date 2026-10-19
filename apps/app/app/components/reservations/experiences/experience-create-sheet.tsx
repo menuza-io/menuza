@@ -11,6 +11,12 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { type FormEvent, useMemo, useState } from 'react'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
@@ -22,21 +28,23 @@ import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import {
 	createExperience,
 	EXPERIENCE_KINDS,
-	EXPERIENCE_LOCALES,
 	type ExperienceDto,
 	type ExperienceKind,
-	type ExperienceLocale,
 } from '#app/utils/reservations/experiences-api.ts'
 import {
 	emptyExperienceForm,
 	EXPERIENCE_KIND_LABELS,
-	EXPERIENCE_LOCALE_LABELS,
 	experienceErrorMessages,
 	experienceFormToInput,
 	type ExperienceFormErrors,
 	slugify,
 } from '#app/utils/reservations/experiences-view.ts'
+import {
+	defaultEntry,
+	type LocalizedMap,
+} from '#app/utils/reservations/localized.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 
 /**
  * The few fields needed to start an experience as a draft. Schedules, longer
@@ -64,13 +72,15 @@ export function ExperienceCreateSheet({
 				data-testid="experience-create-sheet"
 			>
 				{open ? (
-					<Body
-						onClose={onClose}
-						client={client}
-						locationId={locationId}
-						currency={currency}
-						onCreated={onCreated}
-					/>
+					<ReservationLocaleProvider>
+						<Body
+							onClose={onClose}
+							client={client}
+							locationId={locationId}
+							currency={currency}
+							onCreated={onCreated}
+						/>
+					</ReservationLocaleProvider>
 				) : null}
 			</SheetContent>
 		</Sheet>
@@ -85,15 +95,14 @@ function Body({
 	onCreated,
 }: Omit<Parameters<typeof ExperienceCreateSheet>[0], 'open'>) {
 	const { t, i18n } = useLingui()
-	const initialLocale = (i18n.locale === 'ar' ? 'ar' : 'en') as ExperienceLocale
+	const languages = useReservationLocales()
 	const [form, setForm] = useState(emptyExperienceForm)
-	const [nameLocale, setNameLocale] = useState<ExperienceLocale>(initialLocale)
 	const [slugTouched, setSlugTouched] = useState(false)
 	// Derived from the form on every render and revealed after a submit attempt,
 	// so a message goes away as soon as the value is valid.
 	const parsed = useMemo(
-		() => experienceFormToInput(form, currency),
-		[form, currency],
+		() => experienceFormToInput(form, currency, languages),
+		[form, currency, languages],
 	)
 	const { errors, attempt } = useRevealedErrors<
 		keyof ExperienceFormErrors,
@@ -111,22 +120,17 @@ function Body({
 			})),
 		[i18n],
 	)
-	const localeOptions: Option[] = useMemo(
-		() =>
-			EXPERIENCE_LOCALES.map((value) => ({
-				value,
-				label: i18n._(EXPERIENCE_LOCALE_LABELS[value]),
-			})),
-		[i18n],
-	)
 	const message = (field: keyof ExperienceFormErrors) =>
 		errors[field] ? i18n._(errors[field]!) : null
 
-	function setName(value: string) {
+	function setNames(names: LocalizedMap) {
 		setForm((current) => ({
 			...current,
-			names: { ...current.names, [nameLocale]: value },
-			slug: slugTouched ? current.slug : slugify(value),
+			names,
+			// The link name follows the default-language name only.
+			slug: slugTouched
+				? current.slug
+				: slugify(defaultEntry(names, languages)),
 		}))
 	}
 
@@ -157,6 +161,7 @@ function Body({
 
 	return (
 		<SheetForm
+			headerExtra={<ReservationLocaleSwitcher />}
 			title={t`New experience`}
 			description={t`Start a draft. You add schedules and publish it on the next screen.`}
 			onSubmit={submit}
@@ -180,15 +185,15 @@ function Body({
 					<AlertDescription>{banner.join(' ')}</AlertDescription>
 				</Alert>
 			) : null}
-			<TextField
-				label={<Trans>Name</Trans>}
-				value={form.names[nameLocale] ?? ''}
-				onChange={(event) => setName(event.target.value)}
+			<LocalizedMapField
+				label={<Trans>Name (guest-facing)</Trans>}
+				value={form.names}
+				onChange={setNames}
 				maxLength={140}
 				error={message('name')}
-				dir={nameLocale === 'ar' ? 'rtl' : 'ltr'}
 				data-testid="experience-name"
 			/>
+			<WritingLanguageNote />
 			<SelectField
 				label={<Trans>Type</Trans>}
 				value={form.kind}
@@ -242,16 +247,6 @@ function Body({
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<div className="flex flex-col gap-4 pt-2">
-						<SelectField
-							label={<Trans>Name language</Trans>}
-							hint={<Trans>You can add more languages later.</Trans>}
-							value={nameLocale}
-							options={localeOptions}
-							onValueChange={(value) =>
-								setNameLocale(value as ExperienceLocale)
-							}
-							id="experience-name-locale"
-						/>
 						<TextField
 							label={<Trans>Link name</Trans>}
 							hint={

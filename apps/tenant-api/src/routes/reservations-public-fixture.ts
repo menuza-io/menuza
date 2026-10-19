@@ -33,6 +33,9 @@ export function publicContext(
 		waitlist?: boolean
 		experiences?: boolean
 		enabled?: boolean
+		/** The organization's Website settings languages (default: English only). */
+		locales?: string[]
+		defaultLocale?: string
 		/** Turns the payments feature on and sets the processor capability. */
 		payments?: {
 			processor: 'connect' | 'checkout' | null
@@ -55,8 +58,8 @@ export function publicContext(
 		organization: {
 			name: 'Acme Bistro',
 			slug: 'acme',
-			defaultLocale: 'en',
-			locales: ['en'],
+			defaultLocale: options.defaultLocale ?? 'en',
+			locales: options.locales ?? ['en'],
 			siteOrigin: 'https://acme.menuza.test',
 			sitePublished: true,
 			logoUrl: null,
@@ -118,6 +121,8 @@ export async function seedPublicOrg(
 		dataRegion?: 'us' | 'ksa'
 		settings?: Partial<typeof rsvLocationSettings.$inferInsert>
 		seedContext?: boolean
+		locales?: string[]
+		defaultLocale?: string
 	} = {},
 ) {
 	await provisionTenantDb(orgId)
@@ -208,7 +213,11 @@ export async function seedPublicOrg(
 	if (options.seedContext !== false) {
 		seedReservationsContextForTest(
 			orgId,
-			publicContext(orgId, { dataRegion: options.dataRegion }),
+			publicContext(orgId, {
+				dataRegion: options.dataRegion,
+				locales: options.locales,
+				defaultLocale: options.defaultLocale,
+			}),
 		)
 	}
 	return db

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { MAX_EXPERIENCE_SEATINGS_PER_SCHEDULE } from '../engine/experience-seatings.ts'
+import { localizedTextSchema } from '../i18n.ts'
 import { businessDateStringSchema } from './common.ts'
 
 /**
@@ -15,36 +16,19 @@ export const SETUP_EXPERIENCE_STATUSES = [
 	'archived',
 ] as const
 
-/** The six site content locales (`packages/common/src/site-locales.ts`). */
-export const EXPERIENCE_I18N_LOCALES = [
-	'en',
-	'ar',
-	'es',
-	'fr',
-	'de',
-	'zh',
-] as const
-
 export const EXPERIENCE_NAME_MAX = 140
 export const EXPERIENCE_DESCRIPTION_MAX = 4000
 
-const i18nShape = (max: number) =>
-	Object.fromEntries(
-		EXPERIENCE_I18N_LOCALES.map((l) => [
-			l,
-			z.string().trim().min(1).max(max).optional(),
-		]),
-	) as Record<
-		(typeof EXPERIENCE_I18N_LOCALES)[number],
-		z.ZodOptional<z.ZodString>
-	>
+/**
+ * Locale maps: any language-code key. The service checks the keys against the
+ * organization's enabled languages (Website settings) and requires the default.
+ */
+export const experienceNameI18nSchema = localizedTextSchema(
+	EXPERIENCE_NAME_MAX,
+).refine((v) => Object.values(v).some(Boolean), { message: 'required' })
 
-export const experienceNameI18nSchema = z
-	.strictObject(i18nShape(EXPERIENCE_NAME_MAX))
-	.refine((v) => Object.values(v).some(Boolean), { message: 'required' })
-
-export const experienceDescriptionI18nSchema = z.strictObject(
-	i18nShape(EXPERIENCE_DESCRIPTION_MAX),
+export const experienceDescriptionI18nSchema = localizedTextSchema(
+	EXPERIENCE_DESCRIPTION_MAX,
 )
 
 export const experienceSlugSchema = z

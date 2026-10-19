@@ -543,11 +543,10 @@ export function buildReservationReturnUrls(
 		baseUrl: (ENV.BASE_URL || 'http://localhost:3001').replace(/\/+$/, ''),
 		hostSuffixes: ENV.PUBLIC_SITE_HOST_SUFFIXES,
 	})
-	const defaultLocale =
-		parseSiteLocalesConfig(
-			organization.siteLocales,
-			organization.siteDefaultLocale,
-		).defaultLocale || 'en'
+	const { defaultLocale } = parseSiteLocalesConfig(
+		organization.siteLocales,
+		organization.siteDefaultLocale,
+	)
 	const done = getLocaleHref('/reserve/pay/done', locale, locale, defaultLocale)
 	const pay = getLocaleHref('/reserve/pay', locale, locale, defaultLocale)
 	const idParam = ids.feeId

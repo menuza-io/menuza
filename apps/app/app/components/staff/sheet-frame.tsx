@@ -48,20 +48,37 @@ export function SheetForm({
 	onSubmit,
 	children,
 	footer,
+	headerExtra,
 }: {
 	title: ReactNode
 	description?: ReactNode
 	onSubmit: (event: FormEvent<HTMLFormElement>) => void
 	children: ReactNode
 	footer: ReactNode
+	/** Sits beside the title, e.g. the content-language switcher. */
+	headerExtra?: ReactNode
 }) {
 	return (
 		<>
 			<SheetHeader className="border-b pe-12 rtl:ps-12 rtl:pe-4">
-				<SheetTitle className="text-base">{title}</SheetTitle>
-				{description ? (
-					<SheetDescription>{description}</SheetDescription>
-				) : null}
+				{headerExtra ? (
+					<div className="flex items-start justify-between gap-3">
+						<div className="flex min-w-0 flex-col gap-1">
+							<SheetTitle className="text-base">{title}</SheetTitle>
+							{description ? (
+								<SheetDescription>{description}</SheetDescription>
+							) : null}
+						</div>
+						{headerExtra}
+					</div>
+				) : (
+					<>
+						<SheetTitle className="text-base">{title}</SheetTitle>
+						{description ? (
+							<SheetDescription>{description}</SheetDescription>
+						) : null}
+					</>
+				)}
 			</SheetHeader>
 			<form
 				onSubmit={onSubmit}

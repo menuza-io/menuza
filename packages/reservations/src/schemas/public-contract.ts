@@ -128,6 +128,8 @@ export const publicAvailabilityResponseSchema = z.object({
 			reason: z.string().nullable(),
 			note: z.string().nullable(),
 			name: z.string().nullable(),
+			/** Who closed the day: the location hours or a reservations special day. */
+			source: z.enum(['location_hours', 'reservation_special_day']).optional(),
 		})
 		.optional(),
 	onlineClosed: z
@@ -148,6 +150,9 @@ export const publicCalendarResponseSchema = z.object({
 			hasAvailability: z.boolean(),
 			status: z.enum(PUBLIC_DAY_STATUSES),
 			closed: z.boolean(),
+			closedSource: z
+				.enum(['location_hours', 'reservation_special_day'])
+				.optional(),
 			slotCount: z.number().int(),
 			firstLocalMin: z.number().int().nullable(),
 			lastLocalMin: z.number().int().nullable(),

@@ -1,10 +1,12 @@
 import { requireUserId } from '@repo/auth'
+import { and, db, eq, OrganizationLocation } from '@repo/database'
 import {
 	blankReportDefinition,
 	catalogForGrants,
 	definitionAllowed,
 	definitionForNewReport,
 	getCatalog,
+	withLocationFilter,
 } from '@repo/reports'
 import { parseDefinition, saveReport } from '@repo/reports/server'
 import { redirect, useLoaderData } from 'react-router'
@@ -15,6 +17,25 @@ import { resolveReportGrantsForRequest } from '#app/utils/reservations/report-ac
 import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/new.ts'
+
+/** The name of one of the organization's locations, or null when it is not one. */
+async function findLocationName(
+	organizationId: string,
+	locationId: string | null,
+) {
+	if (!locationId) return null
+	const [row] = await db
+		.select({ name: OrganizationLocation.name })
+		.from(OrganizationLocation)
+		.where(
+			and(
+				eq(OrganizationLocation.id, locationId),
+				eq(OrganizationLocation.organizationId, organizationId),
+			),
+		)
+		.limit(1)
+	return row?.name ?? null
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const userId = await requireUserId(request)
@@ -36,10 +57,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const requested = definitionForNewReport(
 		'organization',
 		url.searchParams.get('template'),
+		url.searchParams.get('category'),
 	)
 	// A template the person has no access to opens a blank report instead.
-	const definition = definitionAllowed(fullCatalog, requested, grants)
-		? requested
+	const allowed = definitionAllowed(fullCatalog, requested, grants)
+	// A link from Reservations keeps the location the person was working in.
+	const locationName = await findLocationName(
+		organization.id,
+		url.searchParams.get('location'),
+	)
+	const definition = allowed
+		? withLocationFilter('organization', requested, locationName)
 		: blankReportDefinition('organization')
 
 	return {

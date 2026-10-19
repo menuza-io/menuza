@@ -91,7 +91,7 @@ beforeEach(async () => {
 	sent.sms.mockResolvedValue({ success: true, mock: true })
 	await destroyTenantDb(ORG).catch(() => undefined)
 	resetReservationsContextCache()
-	db = await seedPublicOrg(ORG)
+	db = await seedPublicOrg(ORG, { locales: ['en', 'ar'] })
 })
 
 afterEach(() => {

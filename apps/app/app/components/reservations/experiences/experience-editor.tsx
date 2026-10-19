@@ -35,11 +35,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { ScheduleSheet } from '#app/components/reservations/experiences/schedule-sheet.tsx'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
 	SelectField,
-	TextAreaField,
 	TextField,
 } from '#app/components/staff/controls.tsx'
 import { PageWithBack } from '#app/components/staff/page-back.tsx'
@@ -52,11 +57,9 @@ import {
 	createSchedule,
 	deleteSchedule,
 	EXPERIENCE_KINDS,
-	EXPERIENCE_LOCALES,
 	type ExperienceContext,
 	type ExperienceDto,
 	type ExperienceKind,
-	type ExperienceLocale,
 	type ExperienceScheduleDto,
 	type ExperienceTransition,
 	experienceSchema,
@@ -69,7 +72,6 @@ import {
 import {
 	conflictCurrent,
 	EXPERIENCE_KIND_LABELS,
-	EXPERIENCE_LOCALE_LABELS,
 	EXPERIENCE_STATUS_LABELS,
 	experienceErrorMessages,
 	experienceErrorStatus,
@@ -81,11 +83,12 @@ import {
 	formatCalendarDate,
 	maskToDays,
 	MASK_WEEKDAYS,
-	pickExperienceText,
 	seatingSummary,
 } from '#app/utils/reservations/experiences-view.ts'
+import { displayText } from '#app/utils/reservations/localized.ts'
 import { formatMoney } from '#app/utils/reservations/payments-view.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 
 const NO_POLICY = '__none__'
 
@@ -129,14 +132,15 @@ export function ExperienceEditor({
 	today: string
 }) {
 	const { t, i18n } = useLingui()
+	const languages = useReservationLocales()
 	const [state, setState] = useState<LoadState>({ status: 'loading' })
 	const [form, setForm] = useState<ExperienceFormValues | null>(null)
 	// Derived from the draft on every render and revealed after a save attempt,
 	// so a message goes away as soon as the value is valid.
 	const liveCurrency = state.status === 'ready' ? state.experience.currency : ''
 	const liveParsed = useMemo(
-		() => (form ? experienceFormToInput(form, liveCurrency) : null),
-		[form, liveCurrency],
+		() => (form ? experienceFormToInput(form, liveCurrency, languages) : null),
+		[form, liveCurrency, languages],
 	)
 	const { errors, attempt } = useRevealedErrors<
 		keyof ExperienceFormErrors,
@@ -145,9 +149,6 @@ export function ExperienceEditor({
 	const [banner, setBanner] = useState<string[]>([])
 	const [conflict, setConflict] = useState<ExperienceDto | null>(null)
 	const [busy, setBusy] = useState(false)
-	const [textLocale, setTextLocale] = useState<ExperienceLocale>(
-		(i18n.locale === 'ar' ? 'ar' : 'en') as ExperienceLocale,
-	)
 	const [sheet, setSheet] = useState<
 		{ mode: 'create' } | { mode: 'edit'; id: string } | null
 	>(null)
@@ -207,14 +208,6 @@ export function ExperienceEditor({
 			EXPERIENCE_KINDS.map((value) => ({
 				value,
 				label: i18n._(EXPERIENCE_KIND_LABELS[value]),
-			})),
-		[i18n],
-	)
-	const localeOptions: Option[] = useMemo(
-		() =>
-			EXPERIENCE_LOCALES.map((value) => ({
-				value,
-				label: i18n._(EXPERIENCE_LOCALE_LABELS[value]),
 			})),
 		[i18n],
 	)
@@ -316,11 +309,16 @@ export function ExperienceEditor({
 
 	async function saveDetails() {
 		if (!form) return
-		const parsed = experienceFormToInput(form, currency)
+		const parsed = experienceFormToInput(form, currency, languages)
 		attempt()
 		setBanner([])
 		if (!parsed.ok) return
-		const patch = experiencePatch(base, parsed.input, experience.version)
+		const patch = experiencePatch(
+			base,
+			parsed.input,
+			experience.version,
+			languages,
+		)
 		if (!patch) return
 		setBusy(true)
 		try {
@@ -431,8 +429,7 @@ export function ExperienceEditor({
 				null)
 			: null
 
-	const name =
-		pickExperienceText(experience.nameI18n, i18n.locale) || experience.slug
+	const name = displayText(experience.nameI18n, languages) || experience.slug
 	const statusLabel = i18n._(EXPERIENCE_STATUS_LABELS[experience.status])
 
 	function daysText(mask: number): string {
@@ -612,96 +609,88 @@ export function ExperienceEditor({
 				</Alert>
 			) : null}
 
-			<Frame>
-				<FrameHeader>
-					<FrameTitle className="font-medium">
-						<Trans>Details</Trans>
-					</FrameTitle>
-					<FrameDescription>
-						<Trans>What guests read on your website.</Trans>
-					</FrameDescription>
-				</FrameHeader>
-				<FramePanel className="flex flex-col gap-5">
-					<SelectField
-						label={<Trans>Language to edit</Trans>}
-						hint={
-							<Trans>
-								Add the name and description in each language your guests use.
-								Guests see the closest language you filled in.
-							</Trans>
-						}
-						value={textLocale}
-						options={localeOptions}
-						onValueChange={(value) => setTextLocale(value as ExperienceLocale)}
-						disabled={!editable}
-						id="experience-text-locale"
-					/>
-					<TextField
-						label={<Trans>Name</Trans>}
-						value={form.names[textLocale] ?? ''}
-						onChange={(event) =>
-							set('names', { ...form.names, [textLocale]: event.target.value })
-						}
-						maxLength={140}
-						disabled={!editable}
-						error={message('name')}
-						dir={textLocale === 'ar' ? 'rtl' : 'ltr'}
-						data-testid="experience-name"
-					/>
-					<TextAreaField
-						label={<Trans>Description</Trans>}
-						optional
-						value={form.descriptions[textLocale] ?? ''}
-						onChange={(event) =>
-							set('descriptions', {
-								...form.descriptions,
-								[textLocale]: event.target.value,
-							})
-						}
-						maxLength={4000}
-						rows={5}
-						disabled={!editable}
-						dir={textLocale === 'ar' ? 'rtl' : 'ltr'}
-						data-testid="experience-description"
-					/>
-					<TextField
-						label={<Trans>Link name</Trans>}
-						hint={
-							<Trans>
-								Used in the web address of the page. Lowercase letters, numbers
-								and dashes.
-							</Trans>
-						}
-						value={form.slug}
-						onChange={(event) => set('slug', event.target.value)}
-						maxLength={64}
-						disabled={!editable}
-						error={message('slug')}
-						dir="ltr"
-						data-testid="experience-slug"
-					/>
-					<SelectField
-						label={<Trans>Type</Trans>}
-						value={form.kind}
-						options={kindOptions}
-						onValueChange={(value) => set('kind', value as ExperienceKind)}
-						disabled={!editable}
-						id="experience-kind"
-					/>
-					<TextField
-						label={<Trans>Image link</Trans>}
-						optional
-						type="url"
-						inputMode="url"
-						value={form.imageUrl}
-						onChange={(event) => set('imageUrl', event.target.value)}
-						disabled={!editable}
-						error={message('imageUrl')}
-						dir="ltr"
-						data-testid="experience-image"
-					/>
-				</FramePanel>
-			</Frame>
+			<ReservationLocaleProvider>
+				<Frame>
+					<FrameHeader>
+						<div className="flex items-start justify-between gap-3">
+							<div className="flex min-w-0 flex-col gap-1">
+								<FrameTitle className="font-medium">
+									<Trans>Details</Trans>
+								</FrameTitle>
+								<FrameDescription>
+									<Trans>What guests read on your website.</Trans>
+								</FrameDescription>
+							</div>
+							<ReservationLocaleSwitcher />
+						</div>
+					</FrameHeader>
+					<FramePanel className="flex flex-col gap-5">
+						<LocalizedMapField
+							label={<Trans>Name (guest-facing)</Trans>}
+							value={form.names}
+							onChange={(names) => set('names', names)}
+							maxLength={140}
+							disabled={!editable}
+							error={message('name')}
+							data-testid="experience-name"
+						/>
+						<LocalizedMapField
+							multiline
+							label={<Trans>Description (guest-facing)</Trans>}
+							hint={
+								<Trans>
+									Write it in each language your website offers. Guests see the
+									default language where a translation is missing.
+								</Trans>
+							}
+							optional
+							value={form.descriptions}
+							onChange={(descriptions) => set('descriptions', descriptions)}
+							maxLength={4000}
+							rows={5}
+							disabled={!editable}
+							data-testid="experience-description"
+						/>
+						<WritingLanguageNote />
+						<TextField
+							label={<Trans>Link name</Trans>}
+							hint={
+								<Trans>
+									Used in the web address of the page. Lowercase letters,
+									numbers and dashes.
+								</Trans>
+							}
+							value={form.slug}
+							onChange={(event) => set('slug', event.target.value)}
+							maxLength={64}
+							disabled={!editable}
+							error={message('slug')}
+							dir="ltr"
+							data-testid="experience-slug"
+						/>
+						<SelectField
+							label={<Trans>Type</Trans>}
+							value={form.kind}
+							options={kindOptions}
+							onValueChange={(value) => set('kind', value as ExperienceKind)}
+							disabled={!editable}
+							id="experience-kind"
+						/>
+						<TextField
+							label={<Trans>Image link</Trans>}
+							optional
+							type="url"
+							inputMode="url"
+							value={form.imageUrl}
+							onChange={(event) => set('imageUrl', event.target.value)}
+							disabled={!editable}
+							error={message('imageUrl')}
+							dir="ltr"
+							data-testid="experience-image"
+						/>
+					</FramePanel>
+				</Frame>
+			</ReservationLocaleProvider>
 
 			<Frame>
 				<FrameHeader>

@@ -17,6 +17,7 @@ import {
 	RESTAURANT_ORDER_STATUS_VALUES,
 	RESTAURANT_PAYMENT_STATUS_VALUES,
 } from '@repo/common/restaurant-orders'
+import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 
 // ==========================================
 // 1. CUSTOMERS TABLE
@@ -2934,14 +2935,8 @@ export const RSV_POLICY_REFUND_RULE_VALUES = [
 ] as const
 export type RsvPolicyRefundRule = (typeof RSV_POLICY_REFUND_RULE_VALUES)[number]
 
-export const RSV_MESSAGE_LOCALE_VALUES = [
-	'en',
-	'ar',
-	'es',
-	'fr',
-	'de',
-	'zh',
-] as const
+/** The site content languages: the organization enables a subset in Website settings. */
+export const RSV_MESSAGE_LOCALE_VALUES = SITE_CONTENT_LOCALES
 export type RsvMessageLocale = (typeof RSV_MESSAGE_LOCALE_VALUES)[number]
 
 export const RSV_MESSAGE_KIND_VALUES = [
@@ -3918,6 +3913,10 @@ export const rsvGuests = sqliteTable(
 		emailNorm: text('email_norm'),
 		locale: text('locale').notNull().default('en'),
 		allergyNotes: text('allergy_notes'),
+		// DEPRECATED, never read or written (ADR 048, "Single consent source").
+		// `customer_subscriptions` is the only marketing consent store; these
+		// columns only hold evidence for rows written before that decision and
+		// are dropped in a later release. Do not add readers or writers.
 		marketingEmailConsentAt: integer('marketing_email_consent_at'),
 		marketingSmsConsentAt: integer('marketing_sms_consent_at'),
 		consentSource: text('consent_source'),

@@ -10,7 +10,11 @@ import {
 	rsvWaitlistEntries,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { localToInstant, type ReservationsContext } from '@repo/reservations'
+import {
+	localToInstant,
+	resolveGuestLocale,
+	type ReservationsContext,
+} from '@repo/reservations'
 import { and, asc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { getNodeRegion } from '../lib/region.ts'
@@ -19,6 +23,7 @@ import {
 	normalizeReservationLocale,
 	renderReservationEmail,
 	type PaymentEmailKind,
+	type ReservationEmailLocale,
 } from '../lib/reservations-email.ts'
 import { type ToggleableMessageKind } from '../lib/reservations-messaging-settings.ts'
 import { getReservationsContext } from '../lib/reservations-context.ts'
@@ -104,31 +109,48 @@ function siteBase(context: ReservationsContext, locale: string): string | null {
 		: base
 }
 
+/**
+ * The operator's note for the guest's language, else for the organization's
+ * default language, else none. Notes are never machine-translated at send time.
+ */
 async function customNoteFor(
 	db: TenantDatabase,
 	locationId: string,
 	kind: string,
 	locale: string,
+	defaultLocale: string,
 ): Promise<string | null> {
+	const wanted = [...new Set([locale, defaultLocale])] as Array<
+		(typeof rsvMessageTexts.$inferSelect)['locale']
+	>
 	const rows = await db
 		.select({
 			locationId: rsvMessageTexts.locationId,
+			locale: rsvMessageTexts.locale,
 			customNote: rsvMessageTexts.customNote,
 		})
 		.from(rsvMessageTexts)
 		.where(
 			and(
 				eq(rsvMessageTexts.kind, kind as MessageRow['kind']),
-				eq(rsvMessageTexts.locale, locale as 'en' | 'ar'),
+				inArray(rsvMessageTexts.locale, wanted),
 				or(
 					eq(rsvMessageTexts.locationId, locationId),
 					isNull(rsvMessageTexts.locationId),
 				),
 			),
 		)
-	const specific = rows.find((row) => row.locationId === locationId)
-	const orgWide = rows.find((row) => row.locationId === null)
-	return specific?.customNote?.trim() || orgWide?.customNote?.trim() || null
+	for (const candidate of wanted) {
+		const specific = rows.find(
+			(row) => row.locale === candidate && row.locationId === locationId,
+		)
+		const orgWide = rows.find(
+			(row) => row.locale === candidate && row.locationId === null,
+		)
+		const note = specific?.customNote?.trim() || orgWide?.customNote?.trim()
+		if (note) return note
+	}
+	return null
 }
 
 type Subject = {
@@ -356,7 +378,14 @@ async function sendOne(options: {
 	now: number
 }): Promise<void> {
 	const { db, orgId, context, row, subject } = options
-	const locale = normalizeReservationLocale(subject.locale)
+	const locale = normalizeReservationLocale(
+		resolveGuestLocale(
+			subject.locale,
+			context.organization.locales,
+			context.organization.defaultLocale,
+		),
+		context.organization.defaultLocale as ReservationEmailLocale,
+	)
 	const location = context.locations.find((l) => l.id === subject.locationId)
 	const restaurantName = location?.name ?? context.organization.name
 	const timeZone =
@@ -419,6 +448,7 @@ async function sendOne(options: {
 		subject.locationId,
 		row.kind,
 		locale,
+		context.organization.defaultLocale,
 	)
 	const address = location?.address?.formattedAddress ?? null
 	const calendarUrl =

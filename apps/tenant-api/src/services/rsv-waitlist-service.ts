@@ -540,7 +540,7 @@ export async function createWaitlistEntry(params: {
 				sortKey,
 				notes: params.input.notes?.trim() || null,
 				smsOptIn: Boolean(params.input.smsOptIn && contact.phone),
-				locale: params.input.locale || 'en',
+				locale: params.input.locale ?? '',
 				ipHash: params.ipHash ?? null,
 				createdAt: helpers.now,
 			})

@@ -1,7 +1,8 @@
 /**
  * Which Reservations screen a pathname is, for the layout chrome: the page
  * header, the section tabs and the context bar. Pure so it can be tested
- * without rendering.
+ * without rendering. Reports is not a Reservations screen: it is the generic
+ * Reports page (see `reservationsReportsHref`), so it has no route key here.
  */
 
 export type ReservationsRouteKey =
@@ -14,7 +15,6 @@ export type ReservationsRouteKey =
 	| 'waitlist'
 	| 'guests'
 	| 'experiences'
-	| 'reports'
 	| 'settings'
 	| 'other'
 
@@ -46,7 +46,6 @@ const KNOWN: ReadonlySet<string> = new Set([
 	'waitlist',
 	'guests',
 	'experiences',
-	'reports',
 	'settings',
 ])
 
@@ -73,7 +72,6 @@ export function reservationsSectionTab(
 	| 'waitlist'
 	| 'guests'
 	| 'experiences'
-	| 'reports'
 	| 'settings'
 	| null {
 	switch (key) {
@@ -87,7 +85,6 @@ export function reservationsSectionTab(
 		case 'waitlist':
 		case 'guests':
 		case 'experiences':
-		case 'reports':
 		case 'settings':
 			return key
 		default:

@@ -260,9 +260,7 @@ describe('ExperiencesScreen', () => {
 		)
 		await screen.findByTestId('experience-create-sheet')
 		fireEvent.click(screen.getByTestId('experience-create'))
-		expect(
-			await screen.findByText('Enter a name in at least one language.'),
-		).toBeTruthy()
+		expect(await screen.findByText('Enter a name.')).toBeTruthy()
 		expect(calls.filter((call) => call.method === 'POST')).toHaveLength(0)
 		fireEvent.change(screen.getByTestId('experience-name'), {
 			target: { value: 'Tasting' },

@@ -49,6 +49,12 @@ import {
 } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
 import { useDiscardGuard } from '#app/components/reservations/settings/setup-list-chrome.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
@@ -56,6 +62,11 @@ import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import {
+	cleanLocalizedMap,
+	defaultEntry,
+	type LocalizedMap,
+} from '#app/utils/reservations/localized.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	checkTurnTimeContiguity,
@@ -92,6 +103,7 @@ import {
 	updateService,
 	WEEKDAY_OPTIONS,
 } from '#app/utils/reservations/setup-api.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 import { type Route } from './+types/settings.services.ts'
 import { useReservationsSetupContext } from './settings.tsx'
 
@@ -115,8 +127,8 @@ type DeleteTarget = {
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6]
 
 type ServiceForm = {
-	name: string
-	nameAr: string
+	/** Guest-facing name per language; the default language is required. */
+	names: LocalizedMap
 	days: number[]
 	first: string
 	last: string
@@ -127,8 +139,7 @@ type ServiceForm = {
 }
 
 const NEW_SERVICE_FORM: ServiceForm = {
-	name: '',
-	nameAr: '',
+	names: {},
 	days: ALL_DAYS,
 	first: '17:00',
 	last: '21:30',
@@ -228,6 +239,7 @@ const READ_ONLY_CELL = (
 
 export default function ReservationsSettingsServicesRoute() {
 	const { _ } = useLingui()
+	const siteLocales = useReservationLocales()
 	const { selectedLocationId, canWrite, client, refreshSummary, settings } =
 		useReservationsSetupContext()
 	const defaultTurnMin = settings?.defaultTurnTimeMin ?? 90
@@ -359,8 +371,12 @@ export default function ReservationsSettingsServicesRoute() {
 
 	const openEdit = (svc: ServiceDto) => {
 		setForm({
-			name: svc.name,
-			nameAr: svc.nameI18n?.ar ?? '',
+			names: {
+				...svc.nameI18n,
+				// The canonical name is the default-language text.
+				[siteLocales.defaultLocale]:
+					svc.nameI18n?.[siteLocales.defaultLocale] ?? svc.name,
+			},
 			days: svc.daysOfWeek?.length ? svc.daysOfWeek : ALL_DAYS,
 			first: minutesToTimeString(svc.firstSeatingMin),
 			last: minutesToTimeString(svc.lastSeatingMin),
@@ -390,7 +406,7 @@ export default function ReservationsSettingsServicesRoute() {
 	// or blur, so a message goes away as soon as the value is valid.
 	const liveFieldErrors: Partial<Record<'name' | 'times', string>> = {}
 	if (sheet) {
-		if (!form.name.trim()) {
+		if (!defaultEntry(form.names, siteLocales)) {
 			liveFieldErrors.name = _(msg`Service name is required.`)
 		}
 		const firstMin = timeStringToMinutes(form.first, { nextDay: false })
@@ -438,12 +454,11 @@ export default function ReservationsSettingsServicesRoute() {
 			return
 		}
 		if (!attemptSubmit()) return
-		const name = form.name.trim()
+		const nameI18n = cleanLocalizedMap(form.names, siteLocales)
+		const name = defaultEntry(nameI18n, siteLocales)
 		const firstMin = timeStringToMinutes(form.first, { nextDay: false })
 		const lastMin = timeStringToMinutes(form.last, { nextDay: false })
 		const endMin = timeStringToMinutes(form.end, { nextDay: form.nextDay })
-		const nameAr = form.nameAr.trim()
-		const nameI18n = { en: name, ...(nameAr ? { ar: nameAr } : {}) }
 
 		setBusy(true)
 		try {
@@ -827,11 +842,6 @@ export default function ReservationsSettingsServicesRoute() {
 											<TableCell className="font-medium">
 												<div className="flex min-w-0 flex-col">
 													<span className="wrap-anywhere">{svc.name}</span>
-													{svc.nameI18n?.ar ? (
-														<span className="text-muted-foreground text-xs wrap-anywhere">
-															{svc.nameI18n.ar}
-														</span>
-													) : null}
 												</div>
 											</TableCell>
 											<TableCell className="text-sm">
@@ -1428,167 +1438,167 @@ export default function ReservationsSettingsServicesRoute() {
 			>
 				<SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
 					{sheet ? (
-						<SheetForm
-							title={
-								sheet.mode === 'create' ? (
-									<Trans>Add a service</Trans>
-								) : (
-									<Trans>Edit service</Trans>
-								)
-							}
-							description={
-								<Trans>
-									Guests can book between the first and last seating. The
-									service ends at the time you set.
-								</Trans>
-							}
-							onSubmit={(e) => void handleSubmitService(e)}
-							footer={
-								<>
-									<Button
-										type="button"
-										variant="outline"
-										disabled={busy}
-										onClick={requestCloseSheet}
-									>
-										<Trans>Cancel</Trans>
-									</Button>
-									<Button
-										type="submit"
-										disabled={busy}
-										data-testid={
-											sheet.mode === 'create'
-												? 'setup-add-service-button'
-												: 'setup-save-service-edit-button'
-										}
-									>
-										{sheet.mode === 'create' ? (
-											<Trans>Add service</Trans>
-										) : (
-											<Trans>Save changes</Trans>
-										)}
-									</Button>
-								</>
-							}
+						<ReservationLocaleProvider
+							key={sheet.mode === 'edit' ? sheet.svc.id : 'create'}
 						>
-							{sheetError ? (
-								<Alert
-									variant="destructive"
-									data-testid="setup-service-form-error"
-								>
-									<AlertDescription>{sheetError}</AlertDescription>
-								</Alert>
-							) : null}
-							<TextField
-								label={<Trans>Name</Trans>}
-								placeholder={_(msg`e.g. Late Dinner`)}
-								value={form.name}
-								error={fieldErrors.name}
-								onBlur={() => touchField('name')}
-								onChange={(e) => patchForm({ name: e.target.value })}
-								data-testid="setup-service-name-input"
-							/>
-							<TextField
-								label={<Trans>Arabic name</Trans>}
-								optional
-								dir="rtl"
-								placeholder={_(msg`Arabic service name`)}
-								value={form.nameAr}
-								onChange={(e) => patchForm({ nameAr: e.target.value })}
-								data-testid="setup-service-name-ar-input"
-							/>
-							<Field>
-								<FieldLabel>
-									<Trans>Runs on</Trans>
-								</FieldLabel>
-								<div className="flex flex-wrap gap-1.5">
-									{WEEKDAY_OPTIONS.map((day) => {
-										const active = form.days.includes(day.value)
-										return (
-											<Button
-												key={day.value}
-												type="button"
-												size="sm"
-												className="h-11 md:h-7"
-												variant={active ? 'default' : 'outline'}
-												aria-pressed={active}
-												onClick={() => handleToggleDay(day.value)}
-												data-testid={`setup-service-day-${day.code}`}
-											>
-												{_(day.shortLabel)}
-											</Button>
-										)
-									})}
-								</div>
-							</Field>
-							<div className="grid grid-cols-2 gap-4">
-								<TextField
-									label={<Trans>First seating</Trans>}
-									type="time"
-									value={form.first}
-									onChange={(e) => patchForm({ first: e.target.value })}
-									data-testid="setup-service-first-time-input"
-								/>
-								<TextField
-									label={<Trans>Last seating</Trans>}
-									type="time"
-									value={form.last}
-									onChange={(e) => patchForm({ last: e.target.value })}
-									data-testid="setup-service-last-time-input"
-								/>
-								<TextField
-									label={<Trans>Service ends</Trans>}
-									type="time"
-									value={form.end}
-									onChange={(e) => patchForm({ end: e.target.value })}
-									data-testid="setup-service-end-time-input"
-								/>
-								<div className="flex items-end pb-2">
-									<Field orientation="horizontal">
-										<Checkbox
-											id="svc-next-day"
-											checked={form.nextDay}
-											onCheckedChange={(v) =>
-												patchForm({ nextDay: Boolean(v) })
-											}
-											data-testid="setup-service-next-day-checkbox"
-										/>
-										<FieldLabel htmlFor="svc-next-day" className="font-normal">
-											<Trans>Ends after midnight</Trans>
-										</FieldLabel>
-									</Field>
-								</div>
-							</div>
-							{fieldErrors.times ? (
-								<FieldError data-testid="setup-service-times-error">
-									{fieldErrors.times}
-								</FieldError>
-							) : null}
-							<SelectField
-								label={<Trans>Booking times every</Trans>}
-								hint={
-									<Trans>
-										How far apart the times guests can pick are, for example
-										18:00, 18:15, 18:30.
-									</Trans>
+							<SheetForm
+								headerExtra={<ReservationLocaleSwitcher />}
+								title={
+									sheet.mode === 'create' ? (
+										<Trans>Add a service</Trans>
+									) : (
+										<Trans>Edit service</Trans>
+									)
 								}
-								options={intervalOptions}
-								value={String(form.interval)}
-								onValueChange={(v) =>
-									patchForm({ interval: Number(v) as Interval })
-								}
-							/>
-							<SwitchField
-								label={<Trans>Bookable online</Trans>}
 								description={
 									<Trans>
-										Turn off to keep this service for staff bookings only.
+										Guests can book between the first and last seating. The
+										service ends at the time you set.
 									</Trans>
 								}
-								checked={form.online}
-								onCheckedChange={(online) => patchForm({ online })}
-							/>
-						</SheetForm>
+								onSubmit={(e) => void handleSubmitService(e)}
+								footer={
+									<>
+										<Button
+											type="button"
+											variant="outline"
+											disabled={busy}
+											onClick={requestCloseSheet}
+										>
+											<Trans>Cancel</Trans>
+										</Button>
+										<Button
+											type="submit"
+											disabled={busy}
+											data-testid={
+												sheet.mode === 'create'
+													? 'setup-add-service-button'
+													: 'setup-save-service-edit-button'
+											}
+										>
+											{sheet.mode === 'create' ? (
+												<Trans>Add service</Trans>
+											) : (
+												<Trans>Save changes</Trans>
+											)}
+										</Button>
+									</>
+								}
+							>
+								{sheetError ? (
+									<Alert
+										variant="destructive"
+										data-testid="setup-service-form-error"
+									>
+										<AlertDescription>{sheetError}</AlertDescription>
+									</Alert>
+								) : null}
+								<LocalizedMapField
+									label={<Trans>Name (guest-facing)</Trans>}
+									placeholder={_(msg`e.g. Late Dinner`)}
+									value={form.names}
+									error={fieldErrors.name}
+									onBlur={() => touchField('name')}
+									onChange={(names) => patchForm({ names })}
+									data-testid="setup-service-name-input"
+								/>
+								<WritingLanguageNote />
+								<Field>
+									<FieldLabel>
+										<Trans>Runs on</Trans>
+									</FieldLabel>
+									<div className="flex flex-wrap gap-1.5">
+										{WEEKDAY_OPTIONS.map((day) => {
+											const active = form.days.includes(day.value)
+											return (
+												<Button
+													key={day.value}
+													type="button"
+													size="sm"
+													className="h-11 md:h-7"
+													variant={active ? 'default' : 'outline'}
+													aria-pressed={active}
+													onClick={() => handleToggleDay(day.value)}
+													data-testid={`setup-service-day-${day.code}`}
+												>
+													{_(day.shortLabel)}
+												</Button>
+											)
+										})}
+									</div>
+								</Field>
+								<div className="grid grid-cols-2 gap-4">
+									<TextField
+										label={<Trans>First seating</Trans>}
+										type="time"
+										value={form.first}
+										onChange={(e) => patchForm({ first: e.target.value })}
+										data-testid="setup-service-first-time-input"
+									/>
+									<TextField
+										label={<Trans>Last seating</Trans>}
+										type="time"
+										value={form.last}
+										onChange={(e) => patchForm({ last: e.target.value })}
+										data-testid="setup-service-last-time-input"
+									/>
+									<TextField
+										label={<Trans>Service ends</Trans>}
+										type="time"
+										value={form.end}
+										onChange={(e) => patchForm({ end: e.target.value })}
+										data-testid="setup-service-end-time-input"
+									/>
+									<div className="flex items-end pb-2">
+										<Field orientation="horizontal">
+											<Checkbox
+												id="svc-next-day"
+												checked={form.nextDay}
+												onCheckedChange={(v) =>
+													patchForm({ nextDay: Boolean(v) })
+												}
+												data-testid="setup-service-next-day-checkbox"
+											/>
+											<FieldLabel
+												htmlFor="svc-next-day"
+												className="font-normal"
+											>
+												<Trans>Ends after midnight</Trans>
+											</FieldLabel>
+										</Field>
+									</div>
+								</div>
+								{fieldErrors.times ? (
+									<FieldError data-testid="setup-service-times-error">
+										{fieldErrors.times}
+									</FieldError>
+								) : null}
+								<SelectField
+									label={<Trans>Booking times every</Trans>}
+									hint={
+										<Trans>
+											How far apart the times guests can pick are, for example
+											18:00, 18:15, 18:30.
+										</Trans>
+									}
+									options={intervalOptions}
+									value={String(form.interval)}
+									onValueChange={(v) =>
+										patchForm({ interval: Number(v) as Interval })
+									}
+								/>
+								<SwitchField
+									label={<Trans>Bookable online</Trans>}
+									description={
+										<Trans>
+											Turn off to keep this service for staff bookings only.
+										</Trans>
+									}
+									checked={form.online}
+									onCheckedChange={(online) => patchForm({ online })}
+								/>
+							</SheetForm>
+						</ReservationLocaleProvider>
 					) : null}
 				</SheetContent>
 			</Sheet>

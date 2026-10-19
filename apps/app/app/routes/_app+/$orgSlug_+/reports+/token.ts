@@ -1,4 +1,5 @@
 import {
+	createForbiddenResponse,
 	isImpersonating,
 	requireUserId,
 	userHasOrganizationPermission,
@@ -11,10 +12,7 @@ import {
 import { data } from 'react-router'
 import { ENV } from 'varlock/env'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import {
-	ORG_PERMISSIONS,
-	requireAnyUserWithOrganizationPermission,
-} from '#app/utils/organization/permissions.server.ts'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import {
 	intersectScopeIds,
 	resolveReservationsReportAccess,
@@ -32,26 +30,41 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	})
 
 	// Operator analytics token minting grants regional tenant database access.
-	// Require analytics, settings, or website admin permission.
-	await requireAnyUserWithOrganizationPermission(request, organization.id, [
+	// Analytics, settings, or website admin permission opens every subject the
+	// person's other grants cover. Without any of them, only the restricted
+	// module subjects (staff, Reservations) below can be granted, each by its
+	// own permission, so a host or shift manager holding only the reservation
+	// report grant still gets a token. A person with neither gets a 403.
+	const adminPermissions = [
 		ORG_PERMISSIONS.READ_ANALYTICS_ANY,
 		ORG_PERMISSIONS.READ_SETTINGS_ANY,
 		ORG_PERMISSIONS.READ_WEBSITE_ANY,
-	])
+	]
+	let hasAdminReportAccess = false
+	for (const permission of adminPermissions) {
+		if (
+			await userHasOrganizationPermission(userId, organization.id, permission)
+		) {
+			hasAdminReportAccess = true
+			break
+		}
+	}
 	// Call reports include caller numbers, so they also need call access.
 	// Order reports follow the orders page, which menu access covers.
-	const [canReadPhoneCalls, canReadOrders] = await Promise.all([
-		userHasOrganizationPermission(
-			userId,
-			organization.id,
-			ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
-		),
-		userHasOrganizationPermission(
-			userId,
-			organization.id,
-			ORG_PERMISSIONS.READ_MENU_ANY,
-		),
-	])
+	const [canReadPhoneCalls, canReadOrders] = hasAdminReportAccess
+		? await Promise.all([
+				userHasOrganizationPermission(
+					userId,
+					organization.id,
+					ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
+				),
+				userHasOrganizationPermission(
+					userId,
+					organization.id,
+					ORG_PERMISSIONS.READ_MENU_ANY,
+				),
+			])
+		: [false, false]
 	// Staff reports (time cards, shifts, daily labor, applications) follow the
 	// staffing flags, the staffing permissions, and the person's scope grants.
 	const staff = await resolveStaffReportAccess({
@@ -59,13 +72,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organizationId: organization.id,
 		impersonated: await isImpersonating(request),
 	})
-	// Bookings and waitlist reports need the reservation report grant and the
-	// master Reservations flag, limited to the person's locations.
+	// Bookings, waitlist and pacing reports need the reservation report grant
+	// and the master Reservations flag, limited to the person's locations.
 	const reservations = await resolveReservationsReportAccess({
 		request,
 		userId,
 		organizationId: organization.id,
 	})
+	if (
+		!hasAdminReportAccess &&
+		staff.subjects.length === 0 &&
+		reservations.subjects.length === 0
+	) {
+		throw createForbiddenResponse(adminPermissions.join(' or '))
+	}
 	const scopeIds =
 		staff.subjects.length > 0 && reservations.subjects.length > 0
 			? intersectScopeIds(staff.scopeIds, reservations.scopeIds)

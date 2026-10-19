@@ -3,6 +3,7 @@ import {
 	ConfigFlag,
 	db,
 	inArray,
+	OrganizationLocation,
 	OrganizationRole,
 } from '@repo/database'
 import { blankReportDefinition } from '@repo/reports'
@@ -172,5 +173,112 @@ describe('report builder offers the Reservations subjects', () => {
 		expect(result.catalog.subjects.map((subject) => subject.id)).not.toContain(
 			'bookings',
 		)
+	})
+})
+
+describe('Reservations category deep link', () => {
+	async function reader(organizationId: string) {
+		await enableReservations(organizationId)
+		// A host-style role: only the reservation report grant.
+		return member(organizationId, [P.READ_RESERVATION_REPORT])
+	}
+
+	it('lists the Reservations templates for a report reader and passes the category and location', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const cookie = await reader(organization.id)
+		const result = (await indexLoader({
+			...(args(organization.slug, '', cookie) as object),
+			request: createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/reports?category=Reservations&location=loc_1`,
+				{},
+				cookie,
+			),
+		} as never)) as unknown as {
+			category: string | null
+			location: string | null
+			templates: Array<{ id: string; category: string }>
+		}
+		expect(result.category).toBe('Reservations')
+		expect(result.location).toBe('loc_1')
+		const ids = result.templates
+			.filter((template) => template.category === 'Reservations')
+			.map((template) => template.id)
+		expect(ids).toEqual(
+			expect.arrayContaining(['rsv-daily-summary', 'rsv-pacing']),
+		)
+	})
+
+	it('offers no Reservations template to someone without the report grant', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableReservations(organization.id)
+		const cookie = await member(organization.id, [
+			ANALYTICS,
+			P.READ_RESERVATION,
+		])
+		const result = (await indexLoader(
+			args(organization.slug, '', cookie),
+		)) as unknown as { templates: Array<{ category: string }> }
+		expect(
+			result.templates.filter(
+				(template) => template.category === 'Reservations',
+			),
+		).toEqual([])
+	})
+
+	it('opens a template limited to the location the link carries', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const cookie = await reader(organization.id)
+		const [location] = await db
+			.insert(OrganizationLocation)
+			.values({
+				organizationId: organization.id,
+				name: 'Harbor Street',
+				slug: `harbor-${crypto.randomUUID().slice(0, 6)}`,
+			})
+			.returning({ id: OrganizationLocation.id })
+		const open = async (query: string) =>
+			(await newLoader({
+				...(args(organization.slug, 'new', cookie) as object),
+				request: createAuthenticatedRequest(
+					`http://localhost:3000/${organization.slug}/reports/new?${query}`,
+					{},
+					cookie,
+				),
+			} as never)) as unknown as {
+				definition: {
+					subject: string
+					filters: { conditions: Array<{ field: string; value: string }> }
+				}
+			}
+		const filtered = await open(
+			`template=rsv-no-show-rate&location=${location!.id}`,
+		)
+		expect(filtered.definition.subject).toBe('bookings')
+		expect(filtered.definition.filters.conditions).toContainEqual(
+			expect.objectContaining({ field: 'location', value: 'Harbor Street' }),
+		)
+		// A location id from another organization adds no filter.
+		const foreign = await open('template=rsv-no-show-rate&location=nope')
+		expect(
+			foreign.definition.filters.conditions.some((c) => c.field === 'location'),
+		).toBe(false)
+		// A category alone opens on one of its own templates.
+		const byCategory = await open('category=Reservations')
+		expect(byCategory.definition.subject).toBe('bookings')
+	})
+
+	it('opens a blank report, not a Reservations template, without the grant', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableReservations(organization.id)
+		const cookie = await member(organization.id, [ANALYTICS])
+		const result = (await newLoader({
+			...(args(organization.slug, 'new', cookie) as object),
+			request: createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/reports/new?category=Reservations`,
+				{},
+				cookie,
+			),
+		} as never)) as unknown as { definition: { subject: string } }
+		expect(result.definition.subject).not.toBe('bookings')
 	})
 })

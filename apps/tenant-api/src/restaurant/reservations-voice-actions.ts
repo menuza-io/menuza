@@ -210,7 +210,7 @@ async function slotsForRequest(
 		date: input.date,
 		partySize: input.partySize,
 		localMin: input.time ? toMinutes(input.time) : null,
-		locale: 'en',
+		locale: resolved.context.organization.defaultLocale,
 		now: ctx.now,
 		location: resolved.location,
 		features: resolved.context.features,
@@ -239,7 +239,7 @@ async function requiresPayment(
 			serviceId,
 			experienceId: null,
 			partySize,
-			locale: 'en',
+			locale: resolved.context.organization.defaultLocale,
 		})
 		return view.requiresPayment
 	} catch {
@@ -342,7 +342,7 @@ const holdAction = {
 				serviceId: offered.serviceId,
 				experienceId: null,
 				partySize: input.partySize,
-				locale: 'en',
+				locale: resolved.context.organization.defaultLocale,
 			})
 			if (ctx.dryRun) {
 				return {
@@ -428,7 +428,7 @@ const bookAction = {
 				serviceId: offered.serviceId,
 				experienceId: null,
 				partySize: input.partySize,
-				locale: 'en',
+				locale: resolved.context.organization.defaultLocale,
 			})
 			if (plan.required) {
 				return fail(
@@ -471,7 +471,7 @@ const bookAction = {
 							lastName: input.lastName ?? '',
 							phone: phone!,
 							email: null,
-							locale: 'en',
+							locale: resolved.context.organization.defaultLocale,
 						},
 						smsOptIn: true,
 						marketing: false,

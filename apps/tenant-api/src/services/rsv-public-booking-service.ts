@@ -3,7 +3,6 @@ import {
 	daysBetween,
 	currentBusinessDate,
 	isValidNormalizedPhone,
-	normalizeGuestPhone,
 	type AvailableSlot,
 	type ReservationsContext,
 } from '@repo/reservations'
@@ -20,6 +19,8 @@ import {
 } from '@repo/tenant-db'
 import { and, desc, eq, inArray, gt, sql } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
+import { pickText } from '../lib/reservations-i18n.ts'
+import { normalizeGuestPhone } from '../lib/phone.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
 import { queueReservationJourney } from '../restaurant/reservations-journeys.ts'
 import { recordReservationMarketingConsent } from './rsv-marketing-consent.ts'
@@ -53,7 +54,6 @@ import {
 } from './rsv-experience-engine.ts'
 import {
 	loadPublicEngineState,
-	pickI18n,
 	searchPublicDay,
 	type PublicEngineState,
 } from './rsv-public-engine.ts'
@@ -213,7 +213,12 @@ export async function buildManageView(
 	const location = findContextLocation(ctx, row.locationId)
 	const summary = summarizeReservation(row, ctx)
 	const experience = row.experienceId
-		? await loadManageExperience(db, row.experienceId, row.guestLocale)
+		? await loadManageExperience(
+				db,
+				row.experienceId,
+				row.guestLocale,
+				ctx.organization,
+			)
 		: null
 	return {
 		now: new Date(now).toISOString(),
@@ -225,8 +230,12 @@ export async function buildManageView(
 				? {
 						id: occasion.id,
 						name:
-							pickI18n(occasion.nameI18n, row.guestLocale, false) ??
-							occasion.name,
+							pickText(
+								occasion.nameI18n,
+								row.guestLocale,
+								ctx.organization,
+								occasion.name,
+							) ?? occasion.name,
 					}
 				: null,
 			requests: row.guestRequests,
@@ -251,7 +260,11 @@ export async function buildManageView(
 			policy && policy.kind !== 'none'
 				? {
 						kind: policy.kind,
-						terms: pickI18n(policy.termsI18n, row.guestLocale),
+						terms: pickText(
+							policy.termsI18n,
+							row.guestLocale,
+							ctx.organization,
+						),
 						freeCancelUntilMin: policy.freeCancelUntilMin,
 						currency: policy.currency,
 					}
@@ -294,7 +307,6 @@ async function resolvePublicGuest(
 	options: {
 		customerId: string | null
 		customerPhone?: string | null
-		marketing: boolean
 		now: number
 	},
 ): Promise<typeof rsvGuests.$inferSelect> {
@@ -342,11 +354,6 @@ async function resolvePublicGuest(
 				.get()
 			if (!owner) patch.customerId = options.customerId
 		}
-		// Marketing consent only counts for the address the profile holds.
-		if (options.marketing && email && guest.emailNorm === email) {
-			patch.marketingEmailConsentAt = options.now
-			patch.consentSource = 'online_reservation'
-		}
 		if (Object.keys(patch).length > 0) {
 			await tx
 				.update(rsvGuests)
@@ -361,23 +368,29 @@ async function resolvePublicGuest(
 		return guest
 	}
 
-	const consent =
-		options.marketing && email
-			? {
-					marketingEmailConsentAt: options.now,
-					consentSource: 'online_reservation',
-				}
-			: {}
+	const verifiedPhone = options.customerPhone
+		? normalizePublicPhone(options.customerPhone)
+		: null
+	const linkNew =
+		options.customerId !== null &&
+		verifiedPhone !== null &&
+		verifiedPhone === phone &&
+		!(await tx
+			.select({ id: rsvGuests.id })
+			.from(rsvGuests)
+			.where(eq(rsvGuests.customerId, options.customerId))
+			.get())
 	const id = `gst_${randomUUID()}`
 	await tx.insert(rsvGuests).values({
 		id,
-		customerId: options.customerId,
+		// Linked only when the signed-in customer's verified phone is this
+		// phone and the customer owns no other guest; never from a typed name.
+		customerId: linkNew ? options.customerId : null,
 		firstName: input.firstName.trim(),
 		lastName: input.lastName.trim(),
 		phoneE164: phone,
 		emailNorm: email,
-		locale: input.locale || 'en',
-		...consent,
+		locale: input.locale,
 		createdAt: options.now,
 		updatedAt: options.now,
 	})
@@ -569,7 +582,6 @@ export async function bookFromHold(params: {
 			const guest = await resolvePublicGuest(tx, params.input.guest, {
 				customerId: params.customerId,
 				customerPhone: params.customerPhone,
-				marketing: params.input.marketing,
 				now,
 			})
 			await enforcePhoneLimits(
@@ -594,7 +606,7 @@ export async function bookFromHold(params: {
 				serviceId: match.serviceId,
 				experienceId: hold.experienceId,
 				partySize: hold.partySize,
-				locale: params.input.guest.locale || 'en',
+				locale: params.input.guest.locale,
 			})
 			if (paymentPlan.required && !params.input.policyAccepted) {
 				throw new HttpError(400, 'policy_required')
@@ -644,7 +656,7 @@ export async function bookFromHold(params: {
 				policyAcceptedAt: params.input.policyAccepted ? now : null,
 				holdId: hold.id,
 				smsOptIn: params.input.smsOptIn,
-				guestLocale: params.input.guest.locale || 'en',
+				guestLocale: params.input.guest.locale,
 				createdByKind: 'guest',
 				ipHash: params.ipHash,
 				createdAt: now,
@@ -888,7 +900,6 @@ export async function createLargePartyRequest(params: {
 			const guest = await resolvePublicGuest(tx, params.input.guest, {
 				customerId: params.customerId,
 				customerPhone: params.customerPhone,
-				marketing: params.input.marketing,
 				now,
 			})
 			await enforcePhoneLimits(
@@ -941,7 +952,7 @@ export async function createLargePartyRequest(params: {
 					structural.startAt,
 				),
 				smsOptIn: params.input.smsOptIn,
-				guestLocale: params.input.guest.locale || 'en',
+				guestLocale: params.input.guest.locale,
 				createdByKind: 'guest',
 				ipHash: params.ipHash,
 				createdAt: now,

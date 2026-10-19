@@ -25,7 +25,7 @@ describe('messages-view', () => {
 		expect(draft.quietEnabled).toBe(true)
 		expect(draft.quietStart).toBe('21:00')
 		expect(draft.quietEnd).toBe('08:00')
-		expect(draft.notes.confirmation).toEqual({ en: 'See you soon', ar: '' })
+		expect(draft.notes.confirmation).toEqual({ en: 'See you soon' })
 	})
 
 	it('reads an empty quiet window as off and offers the default window', () => {

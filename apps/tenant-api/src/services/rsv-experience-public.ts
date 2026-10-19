@@ -16,17 +16,14 @@ import {
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { HttpError } from '../lib/http.ts'
+import { pickText, type LocaleOrg } from '../lib/reservations-i18n.ts'
 import {
 	loadExperienceWithSchedules,
 	searchExperienceDay,
 	toScheduleInput,
 } from './rsv-experience-engine.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
-import {
-	loadPublicEngineState,
-	pickI18n,
-	readDayVersion,
-} from './rsv-public-engine.ts'
+import { loadPublicEngineState, readDayVersion } from './rsv-public-engine.ts'
 import {
 	listBookableLocations,
 	type BookableLocation,
@@ -92,6 +89,7 @@ async function loadPolicyTerms(
 	db: DbOrTx,
 	policyIds: readonly string[],
 	locale: string | null,
+	org: LocaleOrg,
 ): Promise<Map<string, NonNullable<PolicyTerms>>> {
 	const unique = [...new Set(policyIds)]
 	const out = new Map<string, NonNullable<PolicyTerms>>()
@@ -102,7 +100,7 @@ async function loadPolicyTerms(
 	for (const row of rows) {
 		if (row.archivedAt !== null) continue
 		out.set(row.id, {
-			terms: pickI18n(row.termsI18n, locale),
+			terms: pickText(row.termsI18n, locale, org),
 			termsVersion: row.termsVersion,
 		})
 	}
@@ -115,6 +113,7 @@ function present(
 	location: BookableLocation,
 	policies: ReadonlyMap<string, NonNullable<PolicyTerms>>,
 	locale: string | null,
+	org: LocaleOrg,
 	now: number,
 ): PublicExperience {
 	const { settings, facts } = location
@@ -129,8 +128,8 @@ function present(
 		locationId: row.locationId,
 		locationName: facts.name,
 		kind: row.kind,
-		name: pickI18n(row.nameI18n, locale) ?? row.slug,
-		description: pickI18n(row.descriptionI18n, locale),
+		name: pickText(row.nameI18n, locale, org) ?? row.slug,
+		description: pickText(row.descriptionI18n, locale, org),
 		imageUrl: row.imageUrl,
 		price:
 			row.priceMinor === null
@@ -211,8 +210,8 @@ async function buildPublic(
 		db,
 		rows.flatMap((r) => (r.policyId ? [r.policyId] : [])),
 		locale,
+		ctx.organization,
 	)
-	void ctx
 	return rows.flatMap((row) => {
 		const location = byLocation.get(row.locationId)
 		if (!location) return []
@@ -223,6 +222,7 @@ async function buildPublic(
 				location,
 				policies,
 				locale,
+				ctx.organization,
 				now,
 			),
 		]

@@ -1,5 +1,6 @@
 import { getTenantDb } from '@repo/tenant-db'
 import { type Context, type Hono } from 'hono'
+import { type LocaleOrg } from '../lib/reservations-i18n.ts'
 import {
 	notFoundResponse,
 	type ResolvedPublicOrg,
@@ -25,7 +26,7 @@ export type PublicExperienceRouteKit = {
 	guarded: (
 		handler: (c: Context) => Promise<Response>,
 	) => (c: Context) => Promise<Response>
-	readLocale: (c: Context) => string | null
+	readLocale: (c: Context, org: LocaleOrg) => string
 }
 
 const SLUG_RE = /^[a-z0-9-]{1,64}$/
@@ -64,7 +65,7 @@ export function registerPublicExperienceRoutes(
 			const db = await getTenantDb(g.value.org.id)
 			const now = Date.now()
 			const experiences = await listPublicExperiences(db, g.value.context, {
-				locale: readLocale(c),
+				locale: readLocale(c, g.value.context.organization),
 				now,
 			})
 			return Response.json(
@@ -91,7 +92,7 @@ export function registerPublicExperienceRoutes(
 			const experience = await getPublicExperience(db, g.value.context, {
 				slug,
 				locationId: c.req.query('locationId')?.trim() || null,
-				locale: readLocale(c),
+				locale: readLocale(c, g.value.context.organization),
 				now,
 			})
 			return Response.json(

@@ -28,6 +28,7 @@ import {
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
+import { linkVerifiedCustomerToGuest } from '../services/rsv-customer-link.ts'
 
 export const authRoutes = new Hono()
 
@@ -518,6 +519,12 @@ authRoutes.post(
 		if (!consumed) {
 			return c.json({ error: 'Invalid or expired code' }, 400)
 		}
+
+		// The phone is now verified: link the reservation guest that carries it
+		// (best effort, never fails sign-in, ids only).
+		await linkVerifiedCustomerToGuest(db, customer.id, {
+			orgId: organization.id,
+		})
 
 		const { accessToken, refreshToken } = await issueSessionTokens(
 			db,

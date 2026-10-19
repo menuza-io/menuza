@@ -1761,10 +1761,85 @@ describe('guest-selectable seating areas', () => {
 
 	it('config localizes area names', async () => {
 		await seedAreas()
+		seedReservationsContextForTest(
+			ORG,
+			publicContext(ORG, { locales: ['en', 'ar'] }),
+		)
 		const { body } = await call('GET', '/reservations/config?locale=ar')
 		const names = body.locations[0].areas.map((a: { name: string }) => a.name)
 		expect(names).toContain('الشرفة')
 		expect(names).toContain('Main Room')
+	})
+
+	describe('languages follow the organization Website settings', () => {
+		const org = (locales: string[], defaultLocale: string) =>
+			seedReservationsContextForTest(
+				ORG,
+				publicContext(ORG, { locales, defaultLocale }),
+			)
+		const configNames = async (locale: string) => {
+			const { body } = await call(
+				'GET',
+				`/reservations/config?locale=${locale}`,
+			)
+			return body.locations[0].areas.map((a: { name: string }) => a.name)
+		}
+
+		it('serves the organization default language before the canonical name, never a hard-coded English entry', async () => {
+			const db = await seedAreas()
+			await db
+				.update(rsvAreas)
+				.set({ nameI18n: { ar: 'الشرفة', en: 'Terrace' } })
+				.where(eq(rsvAreas.id, 'area_pub_patio'))
+			org(['ar', 'en'], 'ar')
+			// Spanish is not enabled: the default (Arabic) wins over the English entry.
+			expect(await configNames('es')).toContain('الشرفة')
+			expect(await configNames('en')).toContain('Terrace')
+		})
+
+		it('falls back to the canonical name, not to another language, when the default has no entry', async () => {
+			const db = await seedAreas()
+			await db
+				.update(rsvAreas)
+				.set({ nameI18n: { en: 'Terrace' } })
+				.where(eq(rsvAreas.id, 'area_pub_patio'))
+			org(['ar', 'en'], 'ar')
+			const names = await configNames('ar')
+			expect(names).toContain('Patio')
+			expect(names).not.toContain('Terrace')
+		})
+
+		it('never serves a language the organization has not enabled', async () => {
+			const db = await seedAreas()
+			await db
+				.update(rsvAreas)
+				.set({ nameI18n: { fr: 'Terrasse' } })
+				.where(eq(rsvAreas.id, 'area_pub_patio'))
+			org(['en'], 'en')
+			expect(await configNames('fr')).toContain('Patio')
+		})
+
+		it.each(['es', 'fr', 'de', 'zh'])(
+			'serves %s operator copy when enabled',
+			async (lang) => {
+				const db = await seedAreas()
+				await db
+					.update(rsvAreas)
+					.set({ nameI18n: { en: 'Patio', [lang]: `Patio ${lang}` } })
+					.where(eq(rsvAreas.id, 'area_pub_patio'))
+				org(['en', lang], 'en')
+				expect(await configNames(lang)).toContain(`Patio ${lang}`)
+			},
+		)
+
+		it('stores the guest language only when it is enabled, else the organization default', async () => {
+			org(['en', 'es'], 'en')
+			const { guestLocaleFor } = await import('../lib/reservations-i18n.ts')
+			const orgLocales = { locales: ['en', 'es'], defaultLocale: 'en' }
+			expect(guestLocaleFor('es-MX', orgLocales)).toBe('es')
+			expect(guestLocaleFor('zh', orgLocales)).toBe('en')
+			expect(guestLocaleFor(undefined, orgLocales)).toBe('en')
+		})
 	})
 
 	it('availability slots carry areaId and areaLabel only for selectable areas', async () => {

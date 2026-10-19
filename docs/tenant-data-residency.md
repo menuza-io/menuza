@@ -168,9 +168,13 @@ references exist **only** in the regional database, and the rules are:
 - Changing the region wipes the old reservations data (no migration), is blocked
   while payments are unsettled, and needs the organization slug typed when data
   exists or the count is unknown.
-- Customer erasure unlinks `customer_id` on guests and reservations; operator
-  guest erasure scrubs the profile, cancels future bookings and redacts event
-  and audit payloads.
+- Erasure is one flow (ADR 048, section 11): erasing a guest or a customer, from
+  the operator routes or `/internal/reservations/erase-customer`, removes the
+  person completely in one regional transaction (guests including merged ones,
+  the linked customer row, subscriptions, tokens, order contact fields, waitlist
+  and notify contact data, voice data, pending messages) and redacts event and
+  audit payloads. `customer_subscriptions` is the only marketing consent store,
+  and a guest links to a customer only through a verified phone.
 
 ## Code map
 
@@ -374,7 +378,7 @@ node’s `DATA_REGION` (slug subdomain or published custom domain).
 | POST   | `/api/staff/tick`                                                                                               | App cron fan-out         | Bearer `INTERNAL_COMMAND_TOKEN`. Counts only. See [Staff tick](scheduled-jobs.md#staff-tick).                                                                                                              |
 | ANY    | `/reservations/*`                                                                                               | Browser, native (public) | Booking, manage, waitlist. Organization from `Origin` only; capability tokens in `X-Reservation-Token`. See the [contract](reservations-contract.md#4-public-guest-routes-reservations-on-appstenant-api). |
 | ANY    | `/operator/reservations/*`                                                                                      | Operator (rsv token)     | Browser-direct, `rsv+jwt` minted by the App. Locked by `reservations-security.test.ts`.                                                                                                                    |
-| POST   | `/internal/reservations/*`, `/api/reservations/*`                                                               | App, cron                | `INTERNAL_COMMAND_TOKEN`: context-changed, erase-customer, summary, tick, payments bridge. Counts and ids only.                                                                                            |
+| POST   | `/internal/reservations/*`, `/api/reservations/*`                                                               | App, cron                | `INTERNAL_COMMAND_TOKEN`: context-changed, erase-customer (complete erase), link-customers, summary, tick, payments bridge. Counts and ids only.                                                           |
 | POST   | `/api/voice/actions/:name`                                                                                      | Voice agent              | `VOICE_AGENT_TOKEN`; US organizations only.                                                                                                                                                                |
 
 Access tokens last 15 minutes. Refresh tokens last 30 days (stored hashed with

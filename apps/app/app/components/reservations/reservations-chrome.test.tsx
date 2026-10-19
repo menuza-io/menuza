@@ -125,7 +125,6 @@ describe('ReservationsChrome', () => {
 	it.each([
 		['waitlist', 'Waitlist'],
 		['guests', 'Guests'],
-		['reports', 'Reports'],
 		['experiences', 'Experiences'],
 	])('renders the layout header, then one tab bar, on %s', (segment, title) => {
 		renderChrome(`/acme/reservations/${segment}`, {
@@ -145,6 +144,23 @@ describe('ReservationsChrome', () => {
 			tabs.compareDocumentPosition(screen.getByTestId('screen-body')) &
 				Node.DOCUMENT_POSITION_FOLLOWING,
 		).toBeTruthy()
+	})
+
+	it('links the Reports tab to the generic Reports page on its Reservations category, keeping the location', () => {
+		renderChrome('/acme/reservations/waitlist', {
+			children: <p>screen</p>,
+		})
+		const tabs = screen.getByRole('navigation', {
+			name: 'Reservations sections',
+		})
+		const link = within(tabs).getByRole('link', { name: 'Reports' })
+		const href = link.getAttribute('href')!
+		expect(href.startsWith('/acme/reports?')).toBe(true)
+		const query = new URLSearchParams(href.split('?')[1])
+		expect(query.get('category')).toBe('Reservations')
+		expect(query.get('location')).toBeTruthy()
+		// It is a link out, never the current section.
+		expect(link.getAttribute('aria-current')).toBeNull()
 	})
 
 	it('leaves detail pages their own header and adds no tab bar above it', () => {

@@ -108,6 +108,7 @@ function useProcessor(processor: 'connect' | null) {
 	seedReservationsContextForTest(
 		ORG,
 		publicContext(ORG, {
+			locales: ['en', 'ar', 'es'],
 			payments: {
 				processor,
 				deposit: processor !== null,
@@ -223,6 +224,21 @@ describe('payment policy CRUD (VAL-PAY-012, 013)', () => {
 		expect(res.body.error).toBe('stale_version')
 	})
 
+	it('accepts terms in any enabled site language and refuses a disabled one', async () => {
+		useProcessor('connect')
+		const ok = await call('POST', `/locations/${PUBLIC_LOC}/policies`, {
+			...deposit,
+			termsI18n: { en: 'Terms', es: 'Condiciones' },
+		})
+		expect(ok.status).toBe(201)
+		const refused = await call('POST', `/locations/${PUBLIC_LOC}/policies`, {
+			...deposit,
+			termsI18n: { en: 'Terms', fr: 'Conditions' },
+		})
+		expect(refused.status).toBe(400)
+		expect(refused.body.error).toBe('locale_not_enabled')
+	})
+
 	it('validates amounts, partial refunds and terms without echoing values', async () => {
 		for (const bad of [
 			{ ...deposit, amountMinor: 0 },
@@ -265,6 +281,7 @@ describe('payment policy CRUD (VAL-PAY-012, 013)', () => {
 		seedReservationsContextForTest(
 			ORG,
 			publicContext(ORG, {
+				locales: ['en', 'ar', 'es'],
 				payments: { processor: 'connect', deposit: true, guarantee: false },
 			}),
 		)

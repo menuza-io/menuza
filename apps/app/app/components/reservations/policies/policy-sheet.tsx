@@ -5,30 +5,32 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { type FormEvent, useMemo, useState } from 'react'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
 	SelectField,
-	TextAreaField,
 	TextField,
 } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import {
 	POLICY_KINDS,
-	POLICY_LOCALES,
 	POLICY_REFUND_RULES,
 	type PolicyBody,
 	type PolicyDto,
 	type PolicyKind,
-	type PolicyLocale,
 	type PolicyRefundRule,
 } from '#app/utils/reservations/policies-api.ts'
 import {
 	emptyPolicyForm,
 	POLICY_KIND_HINTS,
 	POLICY_KIND_LABELS,
-	POLICY_LOCALE_LABELS,
 	POLICY_REFUND_RULE_LABELS,
 	type PolicyFormErrors,
 	type PolicyFormField,
@@ -39,6 +41,7 @@ import {
 	summarizePolicyForm,
 	policyErrorMessage,
 } from '#app/utils/reservations/policies-view.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 
 /**
  * Create or edit one payment policy. The form is a local draft: nothing is
@@ -66,13 +69,15 @@ export function PolicySheet({
 		<Sheet open={open} onOpenChange={(next) => !next && onClose()}>
 			<SheetContent className="sm:max-w-lg" data-testid="policy-sheet">
 				{open ? (
-					<Body
-						policy={policy}
-						currency={currency}
-						region={region}
-						onClose={onClose}
-						onSave={onSave}
-					/>
+					<ReservationLocaleProvider>
+						<Body
+							policy={policy}
+							currency={currency}
+							region={region}
+							onClose={onClose}
+							onSave={onSave}
+						/>
+					</ReservationLocaleProvider>
 				) : null}
 			</SheetContent>
 		</Sheet>
@@ -87,6 +92,7 @@ function Body({
 	onSave,
 }: Omit<Parameters<typeof PolicySheet>[0], 'open'>) {
 	const { t, i18n } = useLingui()
+	const languages = useReservationLocales()
 	const [form, setForm] = useState<PolicyFormValues>(() =>
 		policy ? policyToForm(policy, currency) : emptyPolicyForm(),
 	)
@@ -94,8 +100,8 @@ function Body({
 	// save attempt or blur, so they clear as soon as the value is valid. The
 	// server's own complaints are flagged separately and drop on the next edit.
 	const parsed = useMemo(
-		() => policyFormToBody(form, currency),
-		[form, currency],
+		() => policyFormToBody(form, currency, languages),
+		[form, currency, languages],
 	)
 	const { errors: revealedErrors, attempt } = useRevealedErrors<
 		PolicyFormField,
@@ -105,9 +111,6 @@ function Body({
 	const errors: PolicyFormErrors = { ...serverFlags, ...revealedErrors }
 	const [pending, setPending] = useState(false)
 	const [banner, setBanner] = useState<string | null>(null)
-	const [termsLocale, setTermsLocale] = useState<PolicyLocale>(
-		(i18n.locale === 'ar' ? 'ar' : 'en') as PolicyLocale,
-	)
 
 	const set = <K extends keyof PolicyFormValues>(
 		key: K,
@@ -133,17 +136,6 @@ function Body({
 			})),
 		[i18n],
 	)
-	const localeOptions: Option[] = useMemo(
-		() =>
-			POLICY_LOCALES.map((value) => ({
-				value,
-				label: form.terms[value]
-					? `${i18n._(POLICY_LOCALE_LABELS[value])} ✓`
-					: i18n._(POLICY_LOCALE_LABELS[value]),
-			})),
-		[i18n, form.terms],
-	)
-
 	const summary = useMemo(
 		() => summarizePolicyForm(form, currency, i18n.locale, (d) => i18n._(d)),
 		[form, currency, i18n],
@@ -184,6 +176,7 @@ function Body({
 			title={policy ? t`Edit policy` : t`New payment policy`}
 			description={t`What guests pay or guarantee to book, and what happens if they cancel or do not show.`}
 			onSubmit={submit}
+			headerExtra={<ReservationLocaleSwitcher />}
 			footer={
 				<>
 					<Button type="button" variant="ghost" onClick={onClose}>
@@ -341,30 +334,22 @@ function Body({
 			/>
 
 			<div className="flex flex-col gap-3">
-				<SelectField
-					label={<Trans>Terms shown to guests</Trans>}
+				<LocalizedMapField
+					multiline
+					label={<Trans>Terms shown to guests (guest-facing)</Trans>}
 					hint={
 						<Trans>
-							Guests read these terms and accept them before they book. Add the
-							languages your guests use.
+							Guests read these terms and accept them before they book. Write
+							them in each language your website offers.
 						</Trans>
 					}
-					value={termsLocale}
-					options={localeOptions}
-					onValueChange={(value) => setTermsLocale(value as PolicyLocale)}
-					id="policy-terms-locale"
-				/>
-				<TextAreaField
-					label={<Trans>Terms text</Trans>}
-					value={form.terms[termsLocale] ?? ''}
-					onChange={(event) =>
-						set('terms', { ...form.terms, [termsLocale]: event.target.value })
-					}
+					value={form.terms}
+					onChange={(terms) => set('terms', terms)}
 					maxLength={4000}
 					rows={5}
-					dir={termsLocale === 'ar' ? 'rtl' : 'ltr'}
 					data-testid="policy-terms"
 				/>
+				<WritingLanguageNote />
 			</div>
 		</SheetForm>
 	)

@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import {
 	assignTables,
 	canTransition,
+	instantInIntervals,
 	instantToLocal,
 	localToInstant,
 	type AssignBlockRecord,
@@ -40,6 +41,7 @@ import {
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, isNull, lte, gte, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
+import { loadLocaleOrg } from '../lib/reservations-i18n.ts'
 import { badRequest, conflict, notFound } from '../lib/http.ts'
 import {
 	cancelPendingReservationMessages,
@@ -61,7 +63,7 @@ import {
 	serializeReservationsForBook,
 	type SerializedBookReservation,
 } from './rsv-day-feed-service.ts'
-import { loadStaffDayState } from './rsv-special-days.ts'
+import { loadStaffDayState, type StaffDayState } from './rsv-special-days.ts'
 import {
 	getGuestSummary,
 	resolveOrCreateGuestForBooking,
@@ -547,7 +549,11 @@ export interface CreateOperatorReservationInput {
 
 /** A rule the staff booking went past because the operator explicitly overrode it. */
 export type BookingWarning = {
-	code: 'closed_day' | 'pacing_exceeded' | 'pacing_parties_exceeded'
+	code:
+		| 'closed_day'
+		| 'outside_location_hours'
+		| 'pacing_exceeded'
+		| 'pacing_parties_exceeded'
 	message: string
 }
 
@@ -657,15 +663,19 @@ export async function createOperatorReservation(params: {
 			// `online_closed` only stops the guest channel, so staff may still book.
 			const dayState = await loadStaffDayState(tx, locationId, businessDate)
 			if (dayState.state === 'closed') {
-				const message = dayState.name
-					? `The location is closed on this date (${dayState.name}); overbook override required`
-					: 'The location is closed on this date; overbook override required'
+				const message = closedDayMessage(dayState)
 				if (!isOverbook) {
-					throw conflict('closed_day', message, {
-						specialDay: { name: dayState.name, note: dayState.note },
-					})
+					throw conflict('closed_day', message, closedDayDetails(dayState))
 				}
 				warnings.push({ code: 'closed_day', message })
+			} else if (
+				!instantInIntervals(dayState.effectiveDay.intervals, startAt)
+			) {
+				// Staff may still book outside the location's open hours; the host is told.
+				warnings.push({
+					code: 'outside_location_hours',
+					message: 'This time is outside the location opening hours',
+				})
 			}
 
 			// Check pacing rules for this slot
@@ -1043,7 +1053,10 @@ export async function createOperatorReservation(params: {
 				locationId,
 				guestId: guest.id,
 				confirmationCode,
-				guestLocale: guest.locale || 'en',
+				guestLocale:
+					guest.locale ||
+					(await loadLocaleOrg(params.orgId))?.defaultLocale ||
+					'',
 				businessDate,
 				localStartMin,
 				timeZone: state.timeZone,
@@ -1193,11 +1206,31 @@ async function requireStaffDayOpenOrOverride(
 	if (dayState.state !== 'closed' || isOverbook) return
 	throw conflict(
 		'closed_day',
-		dayState.name
-			? `The location is closed on this date (${dayState.name}); overbook override required`
-			: 'The location is closed on this date; overbook override required',
-		{ specialDay: { name: dayState.name, note: dayState.note } },
+		closedDayMessage(dayState),
+		closedDayDetails(dayState),
 	)
+}
+
+type ClosedStaffDay = Extract<
+	StaffDayState,
+	{ state: 'closed' | 'online_closed' }
+>
+
+function closedDayMessage(dayState: ClosedStaffDay): string {
+	if (dayState.source === 'location_hours') {
+		return `The location is closed on this date (${dayState.reason}, from location hours); overbook override required`
+	}
+	return dayState.name
+		? `The location is closed on this date (${dayState.name}); overbook override required`
+		: 'The location is closed on this date; overbook override required'
+}
+
+function closedDayDetails(dayState: ClosedStaffDay) {
+	return {
+		specialDay: { name: dayState.name, note: dayState.note },
+		source: dayState.source,
+		reason: dayState.reason,
+	}
 }
 
 export async function createWalkIn(params: {
@@ -1441,7 +1474,10 @@ export async function createWalkIn(params: {
 				locationId,
 				guestId: guest.id,
 				confirmationCode,
-				guestLocale: guest.locale || 'en',
+				guestLocale:
+					guest.locale ||
+					(await loadLocaleOrg(params.orgId))?.defaultLocale ||
+					'',
 				businessDate,
 				localStartMin,
 				timeZone: state.timeZone,

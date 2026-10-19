@@ -8,7 +8,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { PageHeader } from '@repo/ui/page-header'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { type ReportScope } from '../catalog.ts'
 import { type ReportTemplate, templateCategories } from '../templates.ts'
@@ -171,15 +171,34 @@ export function ReportStart({
 	templates,
 	savedReports,
 	basePath,
+	category,
+	templateQuery,
 }: {
 	heading: string
 	description: string
 	templates: ReportTemplate[]
 	savedReports: SavedReportSummary[]
 	basePath: string
+	/**
+	 * A template category to put first and scroll to (the Reservations link
+	 * opens on its own reports). Ignored when no template has it.
+	 */
+	category?: string | null
+	/** Extra query (for example `location=…`) kept on every template link. */
+	templateQuery?: string
 }) {
 	const labels = useReportLabels()
-	const categories = templateCategories(templates)
+	const allCategories = templateCategories(templates)
+	const focused = category && allCategories.includes(category) ? category : null
+	const categories = focused
+		? [focused, ...allCategories.filter((item) => item !== focused)]
+		: allCategories
+	const focusedRef = useRef<HTMLDivElement | null>(null)
+	useEffect(() => {
+		focusedRef.current?.scrollIntoView({ block: 'start' })
+	}, [focused])
+	const templateHref = (id: string) =>
+		`${basePath}/new?template=${id}${templateQuery ? `&${templateQuery}` : ''}`
 
 	return (
 		<div className="mx-auto flex w-full max-w-6xl flex-col gap-10 py-8 md:px-6 lg:px-8">
@@ -195,7 +214,7 @@ export function ReportStart({
 			/>
 
 			{savedReports.length > 0 ? (
-				<section className="space-y-3">
+				<section className={cn('space-y-3', focused && 'order-last')}>
 					<div className="flex items-baseline justify-between gap-4">
 						<h2 className="text-base font-medium">Saved reports</h2>
 						<span className="text-muted-foreground text-sm tabular-nums">
@@ -246,7 +265,14 @@ export function ReportStart({
 							(template) => template.category === category,
 						)
 						return (
-							<div key={category} className="space-y-3">
+							<div
+								key={category}
+								ref={category === focused ? focusedRef : undefined}
+								className={cn(
+									'space-y-3',
+									category === focused && 'scroll-mt-6 lg:col-span-2',
+								)}
+							>
 								<h3 className="text-muted-foreground text-sm font-medium">
 									{labels.categoryLabel(category)}
 								</h3>
@@ -254,7 +280,7 @@ export function ReportStart({
 									{categoryTemplates.map((template) => (
 										<li key={template.id}>
 											<Link
-												to={`${basePath}/new?template=${template.id}`}
+												to={templateHref(template.id)}
 												className="hover:bg-muted/50 focus-visible:ring-ring/50 flex items-start px-4 py-3.5 outline-none focus-visible:ring-2 focus-visible:ring-inset"
 											>
 												<span className="min-w-0 flex-1">

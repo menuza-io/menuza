@@ -196,7 +196,10 @@ beforeEach(async () => {
 		name: 'Acme Bistro',
 	})
 	await seedPublicOrg(ORG, { seedContext: false })
-	seedReservationsContextForTest(ORG, publicContext(ORG, { experiences: true }))
+	seedReservationsContextForTest(
+		ORG,
+		publicContext(ORG, { experiences: true, locales: ['en', 'ar'] }),
+	)
 })
 
 afterEach(async () => {
@@ -205,6 +208,53 @@ afterEach(async () => {
 })
 
 describe('operator Experiences setup', () => {
+	describe('languages follow the organization Website settings', () => {
+		const useLocales = (locales: string[], defaultLocale = locales[0]!) =>
+			seedReservationsContextForTest(
+				ORG,
+				publicContext(ORG, { experiences: true, locales, defaultLocale }),
+			)
+
+		it('requires the default-language name and refuses a language that is not enabled', async () => {
+			useLocales(['ar', 'en'])
+			const noDefault = await op(
+				'POST',
+				'',
+				newExperience('no-default', { nameI18n: { en: 'Only English' } }),
+			)
+			expect(noDefault.status).toBe(400)
+			expect(noDefault.body.error).toBe('default_locale_required')
+			useLocales(['en'])
+			const disabled = await op(
+				'POST',
+				'',
+				newExperience('disabled', { nameI18n: { en: 'x', zh: '体验' } }),
+			)
+			expect(disabled.status).toBe(400)
+			expect(disabled.body.error).toBe('locale_not_enabled')
+		})
+
+		it.each(['es', 'fr', 'de', 'zh'])(
+			'stores a %s name and description when enabled',
+			async (lang) => {
+				useLocales(['en', lang], 'en')
+				const created = await op(
+					'POST',
+					'',
+					newExperience(`exp-${lang}`, {
+						nameI18n: { en: 'Tasting', [lang]: `Tasting ${lang}` },
+						descriptionI18n: { en: 'Menu', [lang]: `Menu ${lang}` },
+					}),
+				)
+				expect(created.status).toBe(201)
+				expect(created.body.experience.nameI18n[lang]).toBe(`Tasting ${lang}`)
+				expect(created.body.experience.descriptionI18n[lang]).toBe(
+					`Menu ${lang}`,
+				)
+			},
+		)
+	})
+
 	it('creates a draft that operators see and guests never do (VAL-EXP-001)', async () => {
 		const created = await op('POST', '', newExperience('chefs-counter'))
 		expect(created.status).toBe(201)
@@ -680,7 +730,7 @@ describe('public Experiences', () => {
 		const id = await createAndPublish('flagged', { usesTables: false })
 		seedReservationsContextForTest(
 			ORG,
-			publicContext(ORG, { experiences: false }),
+			publicContext(ORG, { experiences: false, locales: ['en', 'ar'] }),
 		)
 		const avail = await pub(
 			'GET',
@@ -695,7 +745,7 @@ describe('public Experiences', () => {
 		expect(hold.status).toBe(404)
 		seedReservationsContextForTest(
 			ORG,
-			publicContext(ORG, { experiences: true }),
+			publicContext(ORG, { experiences: true, locales: ['en', 'ar'] }),
 		)
 		const unknown = await pub(
 			'GET',

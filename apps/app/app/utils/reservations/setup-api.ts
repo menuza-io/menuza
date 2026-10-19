@@ -30,9 +30,10 @@ export type LocationSettingsDto = {
 	pacingMaxPartiesPerSlot: number | null
 	autoConfirmOnline: boolean
 	autoAssignTables: boolean
-	ConfirmationCopyI18n?: LocalizedCopy
-	confirmationCopyI18n: LocalizedCopy
-	policyCopyI18n: LocalizedCopy
+	/** Note on the booking page, per language (`public_note_i18n`). */
+	publicNoteI18n: LocalizedCopy
+	/** Message to parties above the online maximum, per language (`large_party_note_i18n`). */
+	largePartyNoteI18n: LocalizedCopy
 	timeZone: string
 	contextTimeZone?: string
 	tzSyncedAt: number | null
@@ -748,12 +749,10 @@ export function normalizeLocationSettings(
 			typeof raw.autoConfirmOnline === 'boolean' ? raw.autoConfirmOnline : true,
 		autoAssignTables:
 			typeof raw.autoAssignTables === 'boolean' ? raw.autoAssignTables : true,
-		confirmationCopyI18n: (raw.confirmationCopyI18n ??
-			raw.publicNoteI18n ??
+		publicNoteI18n: (raw.publicNoteI18n ??
 			raw.public_note_i18n ??
 			{}) as LocalizedCopy,
-		policyCopyI18n: (raw.policyCopyI18n ??
-			raw.largePartyNoteI18n ??
+		largePartyNoteI18n: (raw.largePartyNoteI18n ??
 			raw.large_party_note_i18n ??
 			{}) as LocalizedCopy,
 		timeZone: String(raw.timeZone ?? raw.time_zone ?? 'UTC'),
@@ -1197,9 +1196,9 @@ export function normalizeSpecialDay(rawInput: unknown): SpecialDayDto {
 			? raw.name
 			: typeof raw.reason === 'string' && raw.reason.trim()
 				? raw.reason
-				: typeof publicNoteI18n.en === 'string' && publicNoteI18n.en.trim()
-					? publicNoteI18n.en
-					: null
+				: (Object.values(publicNoteI18n).find(
+						(note) => typeof note === 'string' && note.trim(),
+					) ?? null)
 	return {
 		...(raw as Partial<SpecialDayDto>),
 		id: String(raw.id ?? ''),

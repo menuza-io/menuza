@@ -2,13 +2,14 @@ import { internalContextChangedSchema } from '@repo/reservations'
 import { getTenantDb, TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { json, readJsonBody } from '../lib/http.ts'
+import { handleRouteError, json, readJsonBody } from '../lib/http.ts'
 import { invalidateReservationsContext } from '../lib/reservations-context.ts'
 import { ensureActiveOrgInNodeRegion } from '../lib/reservations-guard.ts'
 import { invalidateReservationDayCache } from '../lib/reservations-write.ts'
 import { bearerMatches, getInternalCommandToken } from '../lib/secrets.ts'
 import { getRegionalReservationSummary } from '../services/rsv-day-feed-service.js'
-import { unlinkErasedCustomer } from '../services/rsv-guestbook-service.ts'
+import { erasePerson } from '../services/person-erasure-service.ts'
+import { linkGuestsToCustomers } from '../services/rsv-customer-link.ts'
 
 function requireInternalAuth(authHeader: string | undefined): Response | null {
 	const token = getInternalCommandToken()
@@ -62,13 +63,43 @@ reservationsInternalRoutes.post('/erase-customer', async (c) => {
 	if (orgErr) return orgErr
 
 	const db = await getTenantDb(parsed.data.orgId)
-	const unlinked = await unlinkErasedCustomer(
-		db,
-		parsed.data.customerId,
-		Date.now(),
-	)
+	try {
+		// The complete erase: customer, linked and merged guests, subscriptions,
+		// tokens, order contact fields, waitlist and notify rows, voice data.
+		// Idempotent; the response carries counts only (no PII).
+		const result = await erasePerson(
+			db,
+			{ customerId: parsed.data.customerId },
+			{ actorId: 'system:internal' },
+		)
+		const { guest: ignoredGuest, ...counts } = result
+		return json({ ok: true, orgId: parsed.data.orgId, ...counts })
+	} catch (error) {
+		return handleRouteError(error)
+	}
+})
 
-	return json({ ok: true, orgId: parsed.data.orgId, ...unlinked })
+const linkCustomersSchema = z.strictObject({
+	orgId: z.string().regex(TENANT_ORG_ID_PATTERN),
+})
+
+/**
+ * Maintenance pass (safe to re-run): links every live guest to the verified
+ * customer that owns its phone. Ids and counts only.
+ */
+reservationsInternalRoutes.post('/link-customers', async (c) => {
+	const authErr = requireInternalAuth(c.req.header('Authorization'))
+	if (authErr) return authErr
+
+	const parsed = await readJsonBody(c, linkCustomersSchema)
+	if ('error' in parsed) return parsed.error
+
+	const orgErr = await verifyOrgAndRegion(parsed.data.orgId)
+	if (orgErr) return orgErr
+
+	const db = await getTenantDb(parsed.data.orgId)
+	const summary = await linkGuestsToCustomers(db, { orgId: parsed.data.orgId })
+	return json({ ok: true, orgId: parsed.data.orgId, ...summary })
 })
 
 const internalSummarySchema = z.object({

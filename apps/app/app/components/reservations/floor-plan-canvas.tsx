@@ -56,6 +56,7 @@ import {
 	type TableDto,
 	type TableShape,
 } from '#app/utils/reservations/setup-api.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 import {
 	NumberField,
 	RotationPresets,
@@ -158,6 +159,7 @@ export function FloorPlanCanvas({
 	onDirtyChange,
 }: FloorPlanCanvasProps) {
 	const { _ } = useLingui()
+	const siteLocales = useReservationLocales()
 	const tableShapeOptions = TABLE_SHAPES.map((shape) => ({
 		value: shape.value,
 		label: _(shape.label),
@@ -300,7 +302,7 @@ export function FloorPlanCanvas({
 				id: makeClientId('area'),
 				locationId: '',
 				name: 'Main Dining',
-				nameI18n: { en: 'Main Dining' },
+				nameI18n: { [siteLocales.defaultLocale]: 'Main Dining' },
 				floorLabel: null,
 				sortOrder: 0,
 				isOutdoor: false,

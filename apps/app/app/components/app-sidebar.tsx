@@ -284,6 +284,10 @@ function OrganizationSidebar({
 			}
 		}
 	}, [extensionId])
+	const reservationsReportsUrl = `/${orgSlug}/reports?category=Reservations`
+	const isReservationsReportsLocation =
+		location.pathname.startsWith(`/${orgSlug}/reports`) &&
+		new URLSearchParams(location.search).get('category') === 'Reservations'
 	const navMain = [
 		{
 			title: _(msg`Dashboard`),
@@ -296,7 +300,10 @@ function OrganizationSidebar({
 		{
 			title: _(msg`Reports`),
 			url: `/${orgSlug}/reports`,
-			isActive: location.pathname.includes(`/${orgSlug}/reports`),
+			// The Reservations link below opens this same page on its own category.
+			isActive:
+				location.pathname.includes(`/${orgSlug}/reports`) &&
+				!isReservationsReportsLocation,
 			icon: ChartPieIcon,
 		},
 		{
@@ -513,10 +520,10 @@ function OrganizationSidebar({
 				},
 				{
 					title: _(msg`Reports`),
-					url: `/${orgSlug}/reservations/reports`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/reservations/reports`,
-					),
+					// Reports is the generic Reports page on its Reservations category,
+					// not a Reservations screen.
+					url: reservationsReportsUrl,
+					isActive: isReservationsReportsLocation,
 				},
 				{
 					title: _(msg`Experiences`),
@@ -757,7 +764,7 @@ function OrganizationSidebar({
 					[`/${orgSlug}/reservations/waitlist`]: reservationsNav.waitlist,
 					[`/${orgSlug}/reservations/guests`]: reservationsNav.guests,
 					[`/${orgSlug}/reservations/experiences`]: reservationsNav.experiences,
-					[`/${orgSlug}/reservations/reports`]: reservationsNav.reports,
+					[reservationsReportsUrl]: reservationsNav.reports,
 					[`/${orgSlug}/reservations/settings`]: reservationsNav.settings,
 				}
 				const visibleItems = item.items.filter(

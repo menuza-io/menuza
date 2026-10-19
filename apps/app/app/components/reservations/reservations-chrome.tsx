@@ -11,6 +11,7 @@ import {
 	ReservationsShellProvider,
 } from '#app/components/reservations/shell-context.tsx'
 import { type ReservationsNavAccess } from '#app/utils/reservations/nav.ts'
+import { reservationsReportsHref } from '#app/utils/reservations/reports-link.ts'
 import {
 	isDetailRoute,
 	isHostRoute,
@@ -25,7 +26,7 @@ import {
  * bar (location, day views, date, service, area) through `HostSubnav`. Screens
  * fill the header's actions and meta slots with a portal.
  *
- * Every section screen (waitlist, guests, reports, experiences included) puts
+ * Every section screen (waitlist, guests, experiences included) puts
  * its actions in the header with `ReservationsHeaderActions`. Detail pages (a
  * guest profile, an experience editor; see `isDetailRoute`) render their own
  * header with a back link, so the layout adds neither header nor tabs there.
@@ -97,7 +98,12 @@ export function ReservationsChrome({
 		{
 			id: 'reports',
 			label: _(msg`Reports`),
-			href: sectionHref('reports', false),
+			// A plain link to the generic Reports page on its Reservations
+			// category, keeping the active location and the language.
+			href: reservationsReportsHref(orgSlug, {
+				locationId: selectedLocationId,
+				lng: searchParams.get('lng'),
+			}),
 			visible: nav.reports,
 		},
 		{
@@ -159,10 +165,6 @@ export function ReservationsChrome({
 			description: _(
 				msg`Everyone who has booked, with notes and visit history.`,
 			),
-		},
-		reports: {
-			title: _(msg`Reports`),
-			description: _(msg`Covers, no-shows and pacing over a date range.`),
 		},
 		experiences: {
 			title: _(msg`Experiences`),

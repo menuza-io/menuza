@@ -27,9 +27,11 @@ import {
 	rsvTurnTimes,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { DEFAULT_SITE_LOCALES } from '@repo/common/site-locales'
 import { addDays } from '@repo/zoned-time'
 import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.js'
+import { assertLocalizedMap, loadLocaleOrg } from '../lib/reservations-i18n.ts'
 import {
 	isOccupancyOverlapError,
 	withSetupWrite,
@@ -209,6 +211,8 @@ export async function createAreaForLocation(
 		locationId: string
 		name: string
 		nameI18n?: Record<string, string>
+		/** Organization default language: the key of the default name entry. */
+		defaultLocale?: string
 		onlineBookable?: boolean
 		guestSelectable?: boolean
 		canvasW?: number
@@ -225,7 +229,10 @@ export async function createAreaForLocation(
 			id,
 			locationId: input.locationId,
 			name: input.name.trim(),
-			nameI18n: input.nameI18n ?? { en: input.name.trim() },
+			nameI18n: input.nameI18n ?? {
+				[input.defaultLocale ?? DEFAULT_SITE_LOCALES.defaultLocale]:
+					input.name.trim(),
+			},
 			sort: input.sort ?? input.sortOrder ?? 0,
 			onlineBookable: input.onlineBookable ?? true,
 			guestSelectable: input.guestSelectable ?? true,
@@ -1454,6 +1461,14 @@ export async function saveFloorPlan(
 	},
 	actorId: string | null,
 ) {
+	const localeOrg = await loadLocaleOrg(orgId)
+	const defaultLocale =
+		localeOrg?.defaultLocale ?? DEFAULT_SITE_LOCALES.defaultLocale
+	for (const area of payload.areas ?? []) {
+		if (area.nameI18n) {
+			area.nameI18n = assertLocalizedMap(area.nameI18n, localeOrg, 'nameI18n')
+		}
+	}
 	return withSetupWrite(
 		db,
 		async (db) => {
@@ -1539,7 +1554,7 @@ export async function saveFloorPlan(
 							id,
 							locationId,
 							name: a.name.trim(),
-							nameI18n: a.nameI18n ?? { en: a.name.trim() },
+							nameI18n: a.nameI18n ?? { [defaultLocale]: a.name.trim() },
 							sort: a.sort ?? a.sortOrder ?? 0,
 							onlineBookable: a.onlineBookable ?? true,
 							guestSelectable: a.guestSelectable ?? true,
@@ -1886,6 +1901,7 @@ export async function createServiceForLocation(
 		locationId: string
 		name: string
 		nameI18n?: Record<string, string>
+		defaultLocale?: string
 		daysMask?: number
 		daysOfWeek?: number[]
 		firstSeatingMin?: number
@@ -1946,7 +1962,10 @@ export async function createServiceForLocation(
 			id,
 			locationId: input.locationId,
 			name: input.name.trim(),
-			nameI18n: input.nameI18n ?? { en: input.name.trim() },
+			nameI18n: input.nameI18n ?? {
+				[input.defaultLocale ?? DEFAULT_SITE_LOCALES.defaultLocale]:
+					input.name.trim(),
+			},
 			daysMask,
 			firstSeatingMin,
 			lastSeatingMin,
@@ -2836,6 +2855,7 @@ export async function createSpecialDayForLocation(
 		name?: string | null
 		label?: string | null
 		publicNoteI18n?: Record<string, string> | null
+		defaultLocale?: string
 		note?: string | null
 		services?: Array<Record<string, unknown>> | null
 		customServices?: Array<Record<string, unknown>> | null
@@ -2865,7 +2885,13 @@ export async function createSpecialDayForLocation(
 			patch: input.patch ?? null,
 			name: input.name ?? input.label ?? null,
 			publicNoteI18n:
-				input.publicNoteI18n ?? (input.note ? { en: input.note } : null),
+				input.publicNoteI18n ??
+				(input.note
+					? {
+							[input.defaultLocale ?? DEFAULT_SITE_LOCALES.defaultLocale]:
+								input.note,
+						}
+					: null),
 			createdBy: input.actorId,
 			createdAt: now,
 			version: 1,
@@ -2879,6 +2905,11 @@ export async function createSpecialDayForLocation(
 				locationId: input.locationId,
 				specialDayId: id,
 				name: String(s.name ?? 'Special Service'),
+				nameI18n:
+					s.nameI18n && typeof s.nameI18n === 'object'
+						? (s.nameI18n as Record<string, string>)
+						: undefined,
+				defaultLocale: input.defaultLocale,
 				daysMask: typeof s.daysMask === 'number' ? s.daysMask : 127,
 				firstSeatingMin: Number(
 					s.firstSeatingMin ?? s.first_seating_min ?? s.startMin ?? 1020,

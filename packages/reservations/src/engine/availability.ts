@@ -6,6 +6,12 @@ import {
 	resolveServices,
 } from '../services.ts'
 import {
+	type EffectiveDay,
+	type LocationHours,
+	buildEffectiveDay,
+	instantInIntervals,
+} from '../rules/location-hours.ts'
+import {
 	currentBusinessDate,
 	formatHhmm,
 	instantToLocal,
@@ -97,6 +103,11 @@ export type EngineDayConfig = {
 	serviceTableModes: EngineServiceTableModeInput[]
 	serviceAvailability?: EngineServiceAvailabilityInput[]
 	specialDays: SpecialDayRuleInput[]
+	/**
+	 * Location hours (single source of truth for "when are we open"). Services
+	 * only operate inside them. `null`/absent: unknown, fail open.
+	 */
+	locationHours?: LocationHours | null
 }
 
 export type ExistingOccupancyInput = {
@@ -175,6 +186,15 @@ export type SearchAvailabilityResult = {
 	alternatives: AvailableSlot[]
 	warnings?: string[]
 	expansionsUsed: number
+	/** Why a `closed` day is closed, when known. */
+	closed?: {
+		source: EffectiveDay['source']
+		reason: EffectiveDay['closedReason']
+		name: string | null
+		note: string | null
+	}
+	/** Effective day (location hours merged with the reservation special day). */
+	effectiveDay?: EffectiveDay
 }
 
 /**
@@ -359,13 +379,29 @@ export function searchAvailability(
 		config.specialDays,
 	)
 
-	if (resolvedDay.closed) {
+	const effectiveDay = buildEffectiveDay({
+		businessDate,
+		hours: config.locationHours,
+		dayStartMin: settings.dayStartMin,
+		reservation: resolvedDay,
+	})
+	const locationClosedDay =
+		!effectiveDay.open && effectiveDay.source === 'location_closed'
+
+	if (resolvedDay.closed || (locationClosedDay && isOnlineLike)) {
 		return {
 			businessDate,
 			status: 'closed',
 			slots: [],
 			alternatives: [],
 			expansionsUsed: 0,
+			closed: {
+				source: effectiveDay.source,
+				reason: effectiveDay.closedReason,
+				name: effectiveDay.name ?? null,
+				note: effectiveDay.note ?? null,
+			},
+			effectiveDay,
 		}
 	}
 
@@ -559,6 +595,13 @@ export function searchAvailability(
 
 			const slotWarnings: string[] = []
 
+			// Services operate only inside the location's open hours (slot start).
+			if (!instantInIntervals(effectiveDay.intervals, startAt)) {
+				if (isOnlineLike) continue
+				slotWarnings.push('outside_location_hours')
+				dayWarningsSet.add('outside_location_hours')
+			}
+
 			// Evaluate location-wide pacing first
 			const globalPacing = evaluatePacing({
 				serviceId: service.id,
@@ -704,6 +747,7 @@ export function searchAvailability(
 		alternatives,
 		...(dayWarningsSet.size > 0 ? { warnings: [...dayWarningsSet] } : {}),
 		expansionsUsed,
+		effectiveDay,
 	}
 }
 
@@ -711,6 +755,9 @@ export type CalendarDaySummary = {
 	businessDate: string
 	status: AvailabilityDayStatus
 	availableSlotCount: number
+	/** Present for closed days: who closed it. */
+	closedSource?: EffectiveDay['source']
+	closedReason?: EffectiveDay['closedReason']
 }
 
 export type CalendarSummaryInput = {
@@ -778,6 +825,14 @@ export function calendarSummary(
 			businessDate,
 			status: dayRes.status,
 			availableSlotCount: dayRes.slots.length,
+			...(dayRes.closed
+				? {
+						closedSource: dayRes.closed.source,
+						...(dayRes.closed.reason
+							? { closedReason: dayRes.closed.reason }
+							: {}),
+					}
+				: {}),
 		})
 	}
 

@@ -193,16 +193,16 @@ mirrored in `ORG_PERMISSIONS`
 (`RESERVATIONS_PERMISSIONS`), `TENANT_ROLE_PERMISSION_IDS`, the role editor
 groups, and `packages/database/setup-roles.ts`.
 
-| Permission                        | Covers                                                                                       |
-| --------------------------------- | -------------------------------------------------------------------------------------------- |
-| `read:reservation:any`            | View Today host stand, Book day sheet, floor availability, and Waitlist                      |
-| `update:reservation:any`          | Create/edit/cancel bookings, seat/unseat/move tables, manage walk-ins and waitlist           |
-| `read:reservation_guest:any`      | View Guestbook CRM profiles, tags, visit/no-show history, and notes                          |
-| `update:reservation_guest:any`    | Edit guest profiles, tags, dietary/private notes, and merge duplicate guests                 |
-| `read:reservation_settings:any`   | View floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
-| `update:reservation_settings:any` | Edit floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences |
-| `read:reservation_report:any`     | View covers, utilization, no-show/cancellation analytics, and export CSVs                    |
-| `update:reservation_payment:any`  | Charge cancellation or no-show fees and request reservation refunds                          |
+| Permission                        | Covers                                                                                                                |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `read:reservation:any`            | View Today host stand, Book day sheet, floor availability, and Waitlist                                               |
+| `update:reservation:any`          | Create/edit/cancel bookings, seat/unseat/move tables, manage walk-ins and waitlist                                    |
+| `read:reservation_guest:any`      | View Guestbook CRM profiles, tags, visit/no-show history, and notes                                                   |
+| `update:reservation_guest:any`    | Edit guest profiles, tags, dietary/private notes, and merge duplicate guests                                          |
+| `read:reservation_settings:any`   | View floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences                          |
+| `update:reservation_settings:any` | Edit floor plans, areas, tables, combos, services, turn times, pacing, policies, experiences                          |
+| `read:reservation_report:any`     | Run the Reservations report templates (covers, pacing, no-shows, cancellations, turn times, waitlist) and export CSVs |
+| `update:reservation_payment:any`  | Charge cancellation or no-show fees and request reservation refunds                                                   |
 
 Rules:
 

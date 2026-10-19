@@ -1,8 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto'
 import {
+	buildEffectiveDay,
+	describeLocationClosedReason,
 	detectConflicts,
 	evaluatePacing,
 	extractDietaryCodes,
+	instantInIntervals,
+	localToInstant,
 	resolveServices,
 	type AvailableSlot,
 	type ConflictBlockInput,
@@ -74,7 +78,8 @@ import {
 } from './rsv-operator-pacing.ts'
 import { loadPublicEngineState, searchPublicDay } from './rsv-public-engine.ts'
 import { getPaymentSummaryCounts } from './rsv-payment-summary.ts'
-import { loadStaffDayState } from './rsv-special-days.ts'
+import { loadLocationHours } from './rsv-location-hours.ts'
+import { loadStaffDayState, publicStaffDayState } from './rsv-special-days.ts'
 
 function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
@@ -843,8 +848,16 @@ export async function getDayFeed(
 	const settingsVersion = settings.version ?? 1
 	const floorPlanVersion = settings.floorPlanVersion ?? 1
 
+	// The location hours live in the control plane, so a closure does not bump
+	// the day version: fold the effective state into the ETag.
+	const staffDay = await loadStaffDayState(db, locationId, businessDate)
+	const staffDayView = publicStaffDayState(staffDay)
 	const filters = normalizeDayFeedFilters(opts?.filters)
-	const etagSuffix = filtersEtagSuffix(filters)
+	const stateSuffix =
+		staffDayView.state === 'open'
+			? ''
+			: `.${staffDayView.state === 'closed' ? 'c' : 'o'}${staffDayView.closedSource === 'location_hours' ? 'l' : 'r'}`
+	const etagSuffix = `${filtersEtagSuffix(filters)}${stateSuffix}`
 	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}:${floorPlanVersion}${etagSuffix}"`
 	const shortEtag = `"${dayVersion}.${settingsVersion}.${floorPlanVersion}${etagSuffix}"`
 
@@ -1082,6 +1095,14 @@ export async function getDayFeed(
 		floorPlanVersion,
 		etag,
 		shortEtag,
+		/** Effective day: `open` | `closed` | `online_closed`, with who closed it (`closedSource`) and a ready label. */
+		dayState: staffDayView.state,
+		closedSource:
+			'closedSource' in staffDayView ? staffDayView.closedSource : null,
+		closedReason:
+			'closedReason' in staffDayView ? staffDayView.closedReason : null,
+		closedLabel:
+			'closedLabel' in staffDayView ? staffDayView.closedLabel : null,
 		settings,
 		areas,
 		tables,
@@ -1212,6 +1233,14 @@ export async function getMonthCalendarSummary(
 	const fromDate = `${month}-01`
 	const toDate = `${month}-${String(daysInMonth).padStart(2, '0')}`
 
+	const [locationHours, locationSettings] = await Promise.all([
+		loadLocationHours(db, locationId),
+		db
+			.select({ dayStartMin: rsvLocationSettings.dayStartMin })
+			.from(rsvLocationSettings)
+			.where(eq(rsvLocationSettings.locationId, locationId))
+			.get(),
+	])
 	const [services, tables, specialDays, monthReservations] = await Promise.all([
 		listServicesForLocation(db, locationId),
 		listTablesForLocation(db, locationId),
@@ -1265,6 +1294,9 @@ export async function getMonthCalendarSummary(
 			capacityCovers: number
 			pacingPct: number
 			closed: boolean
+			/** Who closed the day; absent when open. */
+			closedSource?: 'location_hours' | 'reservation_special_day'
+			closedReason?: string
 			specialDay: {
 				id: string
 				kind: string
@@ -1282,7 +1314,23 @@ export async function getMonthCalendarSummary(
 		const sp =
 			specialDays.find((s) => s.fromDate <= dateStr && s.toDate >= dateStr) ??
 			null
-		const closed = sp?.kind === 'closed'
+		const effective = buildEffectiveDay({
+			businessDate: dateStr,
+			hours: locationHours,
+			dayStartMin: locationSettings?.dayStartMin ?? 240,
+			reservation: {
+				closed: sp?.kind === 'closed',
+				onlineClosed: sp?.kind === 'online_closed',
+				specialDay: sp ? { type: sp.kind, name: sp.name } : null,
+			},
+		})
+		const closed = !effective.open
+		const closedSource =
+			closed && effective.source === 'location_closed'
+				? ('location_hours' as const)
+				: closed
+					? ('reservation_special_day' as const)
+					: undefined
 
 		const dayServices = services.filter((s) => (s.daysMask & dowBit) !== 0)
 		const turnsEstimate = Math.max(dayServices.length * 2, 1)
@@ -1312,6 +1360,18 @@ export async function getMonthCalendarSummary(
 			capacityCovers,
 			pacingPct,
 			closed,
+			...(closedSource
+				? {
+						closedSource,
+						closedReason:
+							closedSource === 'location_hours'
+								? describeLocationClosedReason(
+										effective.closedReason,
+										effective.note,
+									)
+								: (effective.name ?? 'Reservations closed'),
+					}
+				: {}),
 			specialDay: sp
 				? {
 						id: sp.id,
@@ -1432,8 +1492,10 @@ export async function getOperatorAvailability(
 				.all(),
 	)
 
+	// A reservations closure offers no services; a location closure still lists
+	// them so the host can overbook, with `outside_location_hours` flagged.
 	const targetServices =
-		dayState.state === 'closed'
+		dayState.state === 'closed' && dayState.reservationClosed
 			? []
 			: input.serviceId
 				? services.filter((s) => s.id === input.serviceId)
@@ -1471,6 +1533,8 @@ export async function getOperatorAvailability(
 		held: boolean
 		heldTableIds: string[]
 		suggestedTableIds: string[]
+		/** `outside_location_hours`: staff may still book (explicit override). */
+		warnings?: string[]
 	}> = []
 
 	const pacedRes = dayResRows.filter((r) =>
@@ -1563,8 +1627,17 @@ export async function getOperatorAvailability(
 			// area-wide blocks, service table modes and pacing the same way for
 			// every channel. Only the host channel's looser notice rules differ.
 			const engineSlot = engineSlots.get(`${svc.id}:${m}`)
+			const outsideLocationHours =
+				(engineSlot?.warnings ?? []).includes('outside_location_hours') ||
+				(engineState !== null &&
+					!instantInIntervals(
+						dayState.effectiveDay.intervals,
+						localToInstant(input.date, m, engineState.timeZone).instantMs,
+					))
 			const pacingWarning =
-				(engineSlot?.warnings?.length ?? 0) > 0 ||
+				(engineSlot?.warnings ?? []).some(
+					(w) => w !== 'outside_location_hours',
+				) ||
 				findOperatorPacingBreaches({
 					rules: svcPacingRules,
 					serviceId: svc.id,
@@ -1596,6 +1669,9 @@ export async function getOperatorAvailability(
 				held: heldEligibleIds.length > 0,
 				heldTableIds: heldEligibleIds,
 				suggestedTableIds: engineSlot ? [engineSlot.tableIds[0]!] : [],
+				...(outsideLocationHours
+					? { warnings: ['outside_location_hours'] }
+					: {}),
 			})
 		}
 	}
@@ -1607,7 +1683,7 @@ export async function getOperatorAvailability(
 		partySize: input.partySize,
 		closed: dayState.state === 'closed',
 		onlineClosed: dayState.state === 'online_closed',
-		dayState,
+		dayState: publicStaffDayState(dayState),
 		slots,
 	}
 }
@@ -2127,7 +2203,12 @@ export async function getBookConflicts(
 		blocks,
 		services: resolvedServices.services,
 		pacingRules: enginePacingRules,
-		dayClosed: resolvedServices.closed,
+		// A day closed by a reservations special day or by the location hours
+		// (special hours, inactive, closed weekday) makes every booking on it a conflict.
+		dayClosed:
+			resolvedServices.closed ||
+			(await loadStaffDayState(db, locationId, businessDate)).state ===
+				'closed',
 	})
 
 	const conflicts = rawConflicts.map((c) => ({

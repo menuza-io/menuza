@@ -4,6 +4,11 @@ import { and, asc, eq, gt, ne } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { HttpError, json } from '../lib/http.ts'
+import {
+	guestLocaleFor,
+	resolveRequestLocale,
+	type LocaleOrg,
+} from '../lib/reservations-i18n.ts'
 import { type PublishedOrganization } from '../lib/origin.ts'
 import {
 	clientIpHash,
@@ -114,12 +119,12 @@ function methodNotAllowed(_context?: Context) {
 	)
 }
 
-function readLocale(c: Context): string | null {
-	const explicit = c.req.query('locale')?.trim()
-	const raw = explicit || c.req.header('Accept-Language')?.split(',')[0]?.trim()
-	if (!raw) return null
-	const base = raw.split(';')[0]?.trim().toLowerCase().split('-')[0]
-	return base && /^[a-z]{2,3}$/.test(base) ? base : null
+function readLocale(c: Context, org: LocaleOrg): string {
+	return resolveRequestLocale(
+		c.req.query('locale'),
+		c.req.header('Accept-Language'),
+		org,
+	)
 }
 
 function checkPartySize(partySize: number) {
@@ -213,7 +218,7 @@ const bookingDetailsShape = {
 	policyAccepted: z
 		.object({ termsVersion: z.string().max(64).optional() })
 		.nullish(),
-	locale: z.string().trim().min(2).max(10).default('en'),
+	locale: z.string().trim().min(2).max(10).optional(),
 	website: z.string().max(500).optional(),
 	turnstileToken: z.string().max(2048).nullish(),
 }
@@ -276,6 +281,7 @@ const emptyBodySchema = z.object({}).passthrough()
 
 function bookingInputFrom(
 	data: z.infer<typeof bookSchema | typeof requestSchema>,
+	org: LocaleOrg,
 ) {
 	return {
 		guest: {
@@ -283,7 +289,7 @@ function bookingInputFrom(
 			lastName: data.guest.lastName,
 			phone: data.guest.phone,
 			email: data.guest.email ?? null,
-			locale: data.locale,
+			locale: guestLocaleFor(data.locale, org),
 		},
 		occasionTagId: data.occasionTagId ?? null,
 		requests: data.requests ?? null,
@@ -337,7 +343,11 @@ reservationsPublicRoutes.get(
 		})
 		if (!g.ok) return g.response
 		const db = await getTenantDb(g.value.org.id)
-		const config = await getPublicConfig(db, g.value.context, readLocale(c))
+		const config = await getPublicConfig(
+			db,
+			g.value.context,
+			readLocale(c, g.value.context.organization),
+		)
 		return json({ ...config, now: isoNow(Date.now()) })
 	}),
 )
@@ -377,7 +387,8 @@ reservationsPublicRoutes.get(
 					date: query.data.date,
 					partySize: query.data.partySize,
 					localMin: query.data.localMin ?? null,
-					locale: readLocale(c),
+					locale: readLocale(c, g.value.context.organization),
+					organization: g.value.context.organization,
 					now,
 					location,
 					features: g.value.context.features,
@@ -387,7 +398,23 @@ reservationsPublicRoutes.get(
 		// day or settings version tracks, so a flag change must change the tag.
 		const { online, waitlist } = g.value.context.features
 		const flagBits = `${online ? 1 : 0}${waitlist ? 1 : 0}`
-		const etag = `"${result.dayVersion}.${result.settingsVersion}.${flagBits}"`
+		// Location hours come from the control plane and bump no day version, so
+		// a location with hours also tags the tag with what the day offers now.
+		const usesHours =
+			(location.facts.storeHours?.length ?? 0) > 0 ||
+			(location.facts.specialHours?.length ?? 0) > 0
+		const hoursBits = usesHours
+			? `.${createHash('sha1')
+					.update(
+						JSON.stringify([
+							result.status,
+							result.slots.map((s: { localMin: number }) => s.localMin),
+						]),
+					)
+					.digest('hex')
+					.slice(0, 6)}`
+			: ''
+		const etag = `"${result.dayVersion}.${result.settingsVersion}.${flagBits}${hoursBits}"`
 		const headers = {
 			ETag: etag,
 			'Cache-Control': 'private, max-age=0',
@@ -510,7 +537,7 @@ reservationsPublicRoutes.post(
 			locationId: body.data.locationId,
 			experienceId: body.data.experienceId ?? null,
 			partySize: body.data.slot.partySize,
-			locale: readLocale(c) ?? 'en',
+			locale: readLocale(c, g.value.context.organization),
 		}
 		// Fail closed before anything is held.
 		await describeBookingPolicy(db, {
@@ -721,7 +748,7 @@ reservationsPublicRoutes.post(
 		const { reservationId } = await bookFromHold({
 			orgId: org.id,
 			holdTokenHash: hashHoldToken(body.data.holdToken),
-			input: bookingInputFrom(body.data),
+			input: bookingInputFrom(body.data, g.value.context.organization),
 			client: client.client,
 			channel: client.channel,
 			customerId: customer.customerId,
@@ -733,7 +760,7 @@ reservationsPublicRoutes.post(
 			// booking: a retry with a fresh token must replay, not conflict.
 			requestHash: hashIdempotencyPayload({
 				holdToken: body.data.holdToken,
-				...bookingInputFrom(body.data),
+				...bookingInputFrom(body.data, g.value.context.organization),
 			}),
 		})
 		return bookingResponse(g.value, reservationId, 201)
@@ -781,7 +808,10 @@ reservationsPublicRoutes.post(
 		const { reservationId } = await createLargePartyRequest({
 			orgId: org.id,
 			locationId: body.data.locationId,
-			input: { ...bookingInputFrom(body.data), slot: body.data.slot },
+			input: {
+				...bookingInputFrom(body.data, g.value.context.organization),
+				slot: body.data.slot,
+			},
 			client: client.client,
 			channel: client.channel,
 			customerId: customer.customerId,
@@ -791,7 +821,7 @@ reservationsPublicRoutes.post(
 			requestHash: hashIdempotencyPayload({
 				locationId: body.data.locationId,
 				slot: body.data.slot,
-				...bookingInputFrom(body.data),
+				...bookingInputFrom(body.data, g.value.context.organization),
 			}),
 		})
 		return bookingResponse(g.value, reservationId, 201)
@@ -978,7 +1008,8 @@ reservationsPublicRoutes.get(
 			date: query.data.date ?? row.businessDate,
 			partySize,
 			localMin: query.data.localMin ?? null,
-			locale: readLocale(c),
+			locale: readLocale(c, g.context.organization),
+			organization: g.context.organization,
 			now,
 			excludeReservationId: row.id,
 			location,

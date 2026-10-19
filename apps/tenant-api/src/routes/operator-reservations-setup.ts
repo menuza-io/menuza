@@ -33,6 +33,11 @@ import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { badRequest, handleRouteError, json, notFound } from '../lib/http.ts'
 import {
+	assertLocalizedMap,
+	loadLocaleOrg,
+	normalizeNameMap,
+} from '../lib/reservations-i18n.ts'
+import {
 	filterReservationsLocations,
 	requireReservationsLocation,
 } from '../lib/reservations-auth.ts'
@@ -432,6 +437,11 @@ const updateSettingsHandler = wrapHandler(async (c) => {
 	const locationId = requireLocationId(c, body)
 	const parsed = parseSchemaOrThrow(setupLocationSettingsPatchSchema, body)
 	const db = await getTenantDb(ctx.orgId)
+	const localeOrg = await loadLocaleOrg(ctx.orgId)
+	const checkNote = (
+		map: Record<string, string> | null | undefined,
+		field: string,
+	) => (map ? assertLocalizedMap(map, localeOrg, field) : map)
 	const updated = await updateLocationSettings(
 		db,
 		ctx.orgId,
@@ -457,11 +467,14 @@ const updateSettingsHandler = wrapHandler(async (c) => {
 			partyMax: parsed.partyMax ?? parsed.maxParty,
 			largePartyMode: parsed.largePartyMode as
 				'contact' | 'request' | 'disabled' | 'call_only' | undefined,
-			largePartyNoteI18n: parsed.largePartyNoteI18n,
+			largePartyNoteI18n: checkNote(
+				parsed.largePartyNoteI18n,
+				'largePartyNoteI18n',
+			),
 			requestHoldsCapacity: parsed.requestHoldsCapacity,
 			requestDeadlineHours: parsed.requestDeadlineHours,
 			contactPhone: parsed.contactPhone,
-			publicNoteI18n: parsed.publicNoteI18n,
+			publicNoteI18n: checkNote(parsed.publicNoteI18n, 'publicNoteI18n'),
 			seatingPrefMode: (parsed.seatingPrefMode ??
 				parsed.seatingPreferenceMode) as
 				'off' | 'preferred' | 'strict' | 'preference' | undefined,
@@ -616,7 +629,7 @@ operatorReservationsSetupRoutes.get(
 		const db = await getTenantDb(ctx.orgId)
 		const preview = await previewMessage(db, ctx.orgId, locationId, {
 			kind: c.req.query('kind') ?? '',
-			locale: c.req.query('locale') ?? 'en',
+			locale: c.req.query('locale') ?? '',
 		})
 		return json({ ok: true, orgId: ctx.orgId, ...preview })
 	}),
@@ -741,9 +754,12 @@ const createAreaHandler = wrapHandler(async (c) => {
 		locationId,
 	})
 	const db = await getTenantDb(ctx.orgId)
+	const org = await loadLocaleOrg(ctx.orgId)
 	const res = await createAreaForLocation(db, {
 		actorId: ctx.userId,
 		...parsed,
+		nameI18n: normalizeNameMap(parsed.nameI18n, org, parsed.name),
+		defaultLocale: org?.defaultLocale,
 		locationId,
 	})
 	return json({ ...res.area, ...res }, 201)
@@ -763,9 +779,15 @@ const updateAreaHandler = wrapHandler(async (c) => {
 	if (!current) throw notFound('Area not found')
 	assertAllowedLocation(c, current.locationId)
 	const parsed = parseSchemaOrThrow(setupAreaUpdateSchema, body)
+	const org = await loadLocaleOrg(ctx.orgId)
 	const res = await updateAreaForLocation(db, areaId, {
 		actorId: ctx.userId,
 		...parsed,
+		nameI18n: normalizeNameMap(
+			parsed.nameI18n,
+			org,
+			parsed.name ?? current.name,
+		),
 	})
 	return json({ ...res.area, ...res })
 })
@@ -1273,9 +1295,12 @@ const createServiceHandler = wrapHandler(async (c) => {
 		locationId,
 	})
 	const db = await getTenantDb(ctx.orgId)
+	const org = await loadLocaleOrg(ctx.orgId)
 	const service = await createServiceForLocation(db, {
 		actorId: ctx.userId,
 		...parsed,
+		nameI18n: normalizeNameMap(parsed.nameI18n, org, parsed.name),
+		defaultLocale: org?.defaultLocale,
 		locationId,
 	})
 	return json({ ...service, service }, 201)
@@ -1290,9 +1315,15 @@ const updateServiceHandler = wrapHandler(async (c) => {
 	const current = await getServiceOrThrow(db, serviceId)
 	assertAllowedLocation(c, current.locationId)
 	const parsed = parseSchemaOrThrow(setupServiceUpdateSchema, body)
+	const org = await loadLocaleOrg(ctx.orgId)
 	const result = await updateServiceForLocation(db, serviceId, {
 		actorId: ctx.userId,
 		...parsed,
+		nameI18n: normalizeNameMap(
+			parsed.nameI18n,
+			org,
+			parsed.name ?? current.name,
+		),
 	})
 	return json({ ...result.service, ...result })
 })
@@ -1866,9 +1897,14 @@ const createSpecialDayHandler = wrapHandler(async (c) => {
 		fromDate: body.fromDate ?? body.businessDate ?? body.date,
 	})
 	const db = await getTenantDb(ctx.orgId)
+	const org = await loadLocaleOrg(ctx.orgId)
 	const result = await createSpecialDayForLocation(db, {
 		actorId: ctx.userId,
 		...parsed,
+		publicNoteI18n: parsed.publicNoteI18n
+			? assertLocalizedMap(parsed.publicNoteI18n, org, 'publicNoteI18n')
+			: parsed.publicNoteI18n,
+		defaultLocale: org?.defaultLocale,
 		locationId,
 	})
 	return json({ ...result.specialDay, ...result }, 201)
@@ -1888,9 +1924,13 @@ const updateSpecialDayHandler = wrapHandler(async (c) => {
 	if (!current) throw notFound('Special day not found')
 	assertAllowedLocation(c, current.locationId)
 	const parsed = parseSchemaOrThrow(setupSpecialDayUpdateSchema, body)
+	const org = await loadLocaleOrg(ctx.orgId)
 	const result = await updateSpecialDayForLocation(db, id, {
 		actorId: ctx.userId,
 		...parsed,
+		publicNoteI18n: parsed.publicNoteI18n
+			? assertLocalizedMap(parsed.publicNoteI18n, org, 'publicNoteI18n')
+			: parsed.publicNoteI18n,
 	})
 	return json({ ...result.specialDay, ...result })
 })

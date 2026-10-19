@@ -26,6 +26,7 @@ import {
 } from '@repo/tenant-db'
 import { and, asc, eq, gt, gte, inArray, lte } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
+import { pickText, type LocaleOrg } from '../lib/reservations-i18n.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import {
 	CAPACITY_STATUSES,
@@ -640,6 +641,7 @@ export async function loadManageExperience(
 	db: DbOrTx,
 	experienceId: string,
 	locale: string | null,
+	org: LocaleOrg,
 ): Promise<{ id: string; slug: string; name: string } | null> {
 	const row = await db
 		.select()
@@ -647,11 +649,6 @@ export async function loadManageExperience(
 		.where(eq(rsvExperiences.id, experienceId))
 		.get()
 	if (!row) return null
-	const names = row.nameI18n
-	const exact = locale
-		? (names[locale] ?? names[locale.split('-')[0]!])
-		: undefined
-	const name =
-		exact ?? names.en ?? Object.values(names).find(Boolean) ?? row.slug
+	const name = pickText(row.nameI18n, locale, org) ?? row.slug
 	return { id: row.id, slug: row.slug, name }
 }

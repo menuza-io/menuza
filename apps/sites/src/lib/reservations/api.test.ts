@@ -37,6 +37,21 @@ describe('reservations api', () => {
 		expect(url).not.toMatch(/slug|org/i)
 	})
 
+	it.each(['es', 'fr', 'de', 'zh'])(
+		'asks for the catalog and the config in the page language (%s)',
+		async (locale) => {
+			const { api, fetchImpl } = setup()
+			await api.config(locale)
+			expect(lastCall(fetchImpl).url).toBe(
+				`http://localhost:3007/reservations/config?locale=${locale}`,
+			)
+			await api.experiences(locale)
+			expect(lastCall(fetchImpl).url).toBe(
+				`http://localhost:3007/reservations/experiences?locale=${locale}`,
+			)
+		},
+	)
+
 	it('books with an Idempotency-Key and a JSON body', async () => {
 		const { api, fetchImpl } = setup()
 		await api.book({ holdToken: 'h' })

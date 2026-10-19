@@ -8,6 +8,7 @@ import { type Context, type Hono } from 'hono'
 import { z } from 'zod'
 import { HttpError, json } from '../lib/http.ts'
 import { type PublishedOrganization } from '../lib/origin.ts'
+import { guestLocaleFor, type LocaleOrg } from '../lib/reservations-i18n.ts'
 import {
 	clientIpHash,
 	deriveWaitlistToken,
@@ -61,7 +62,7 @@ export type PublicRouteKit = {
 		c: Context,
 		org: PublishedOrganization,
 	) => Promise<{ customerId: string | null } | { error: Response }>
-	readLocale: (c: Context) => string | null
+	readLocale: (c: Context, org: LocaleOrg) => string
 	missingIdempotencyKey: () => HttpError
 }
 
@@ -208,7 +209,10 @@ export function registerPublicWaitlistRoutes(
 					smsOptIn: input.smsOptIn,
 					areaPrefId: input.areaId ?? null,
 					notes: input.notes,
-					locale: input.locale ?? readLocale(c) ?? undefined,
+					locale: guestLocaleFor(
+						input.locale ?? readLocale(c, g.value.context.organization),
+						g.value.context.organization,
+					),
 				},
 			})
 			const entry = await loadWaitlistEntry(org.id, entryId)
@@ -434,7 +438,10 @@ export function registerPublicWaitlistRoutes(
 					areaPrefId: input.areaId ?? null,
 					phone: input.phone,
 					email: input.email,
-					locale: input.locale ?? readLocale(c) ?? undefined,
+					locale: guestLocaleFor(
+						input.locale ?? readLocale(c, g.value.context.organization),
+						g.value.context.organization,
+					),
 				},
 			})
 			return json(

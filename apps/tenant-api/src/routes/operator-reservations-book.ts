@@ -19,6 +19,7 @@ import {
 	getRsvAuth,
 	rsvGuard,
 } from '../lib/reservations-guard.ts'
+import { loadLocaleOrg } from '../lib/reservations-i18n.ts'
 import {
 	assignReservationTables,
 	createOperatorReservation,
@@ -925,6 +926,18 @@ const guestInlineSchema = z.object({
 	allergyNotes: z.string().max(1000).optional().nullable(),
 })
 
+/**
+ * A new guest typed in by staff speaks the organization's default language
+ * until they choose another one; an existing guest keeps their own.
+ */
+async function withDefaultGuestLocale<
+	G extends { id?: string | null; locale?: string } | null | undefined,
+>(orgId: string, guest: G): Promise<G> {
+	if (!guest || guest.id || guest.locale) return guest
+	const org = await loadLocaleOrg(orgId)
+	return org ? { ...guest, locale: org.defaultLocale } : guest
+}
+
 const createBookingBodySchema = z.object({
 	locationId: z.string().trim().min(1).max(128),
 	date: z.string().regex(DATE_RE).optional(),
@@ -1004,6 +1017,10 @@ operatorReservationsBookRoutes.post(
 						}
 					: undefined)
 
+			const guestWithLocale = await withDefaultGuestLocale(
+				ctx.orgId,
+				guestInput,
+			)
 			const rawChannel = parsed.data.channel ?? parsed.data.source
 			const mappedChannel = rawChannel === 'host' ? 'in_person' : rawChannel
 
@@ -1019,7 +1036,7 @@ operatorReservationsBookRoutes.post(
 					date: parsed.data.date ?? parsed.data.businessDate ?? '',
 					time: parsed.data.time ?? parsed.data.slotLocal,
 					locationId: locCheck.locationId,
-					guest: guestInput,
+					guest: guestWithLocale,
 				},
 			})
 
@@ -1095,6 +1112,7 @@ operatorReservationsBookRoutes.post(
 				idempotencyKey: idempotencyKey ?? '',
 				input: {
 					...parsed.data,
+					guest: await withDefaultGuestLocale(ctx.orgId, parsed.data.guest),
 					date: parsed.data.date ?? parsed.data.businessDate,
 					time: parsed.data.time ?? parsed.data.slotLocal,
 					locationId: locCheck.locationId,

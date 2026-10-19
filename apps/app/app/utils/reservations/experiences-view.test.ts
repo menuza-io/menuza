@@ -14,7 +14,6 @@ import {
 	formatCalendarDate,
 	formatSeatingMin,
 	maskToDays,
-	pickExperienceText,
 	scheduleFormToBody,
 	scheduleToForm,
 	seatingSummary,
@@ -51,12 +50,38 @@ describe('slugify', () => {
 	})
 })
 
-describe('pickExperienceText', () => {
-	it('prefers the interface language, then English, then any', () => {
-		expect(pickExperienceText({ en: 'A', ar: 'ب' }, 'ar')).toBe('ب')
-		expect(pickExperienceText({ en: 'A', ar: 'ب' }, 'fr')).toBe('A')
-		expect(pickExperienceText({ zh: '菜单' }, 'en')).toBe('菜单')
-		expect(pickExperienceText(null, 'en')).toBe('')
+describe('experienceFormToInput with the organization languages', () => {
+	const form = {
+		...emptyExperienceForm(),
+		slug: 'tasting',
+		names: { es: 'Cata', fr: 'Dégustation' },
+	}
+	it('requires the default-language name', () => {
+		const result = experienceFormToInput(form, 'USD', {
+			locales: ['en', 'es'],
+			defaultLocale: 'en',
+		})
+		expect(result.ok).toBe(false)
+		if (!result.ok) expect(result.errors.name).toBeDefined()
+	})
+	it('keeps only enabled languages, in any of the six', () => {
+		const result = experienceFormToInput(
+			{ ...form, names: { ...form.names, en: 'Tasting' } },
+			'USD',
+			{ locales: ['en', 'es'], defaultLocale: 'en' },
+		)
+		expect(result.ok).toBe(true)
+		if (result.ok) {
+			expect(result.input.nameI18n).toEqual({ en: 'Tasting', es: 'Cata' })
+		}
+	})
+	it('works for an organization whose default language is Arabic', () => {
+		const result = experienceFormToInput(
+			{ ...form, names: { ar: 'تذوق' } },
+			'USD',
+			{ locales: ['ar'], defaultLocale: 'ar' },
+		)
+		expect(result.ok).toBe(true)
 	})
 })
 

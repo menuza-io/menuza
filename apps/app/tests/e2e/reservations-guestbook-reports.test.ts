@@ -108,7 +108,6 @@ async function stubApi(page: Page, locationId: string) {
 		createdAt: number
 	}> = []
 	let nextNote = 1
-	const range = { from: '2026-04-14', to: TODAY, serviceId: null }
 
 	await page.route('**/operator/reservations/**', async (route) => {
 		const request = route.request()
@@ -202,43 +201,13 @@ async function stubApi(page: Page, locationId: string) {
 			return json(route, { note }, 201)
 		}
 
-		const report = path.match(/^\/operator\/reservations\/reports\/([a-z-]+)$/)
-		if (report && method === 'GET') {
-			const services = [{ id: 'svc-dinner', name: 'Dinner' }]
-			const kind = report[1]
-			const bodies: Record<string, unknown> = {
-				summary: {
-					range,
-					services,
-					totals: { parties: 6, covers: 17 },
-					byService: [
-						{ serviceId: 'svc-dinner', name: 'Dinner', parties: 6, covers: 17 },
-					],
-					bySource: [{ channel: 'online', parties: 6, covers: 17 }],
-					byPartySize: [{ partySize: 2, parties: 6, covers: 17 }],
-					byStatus: [{ status: 'booked', parties: 6, covers: 17 }],
-				},
-				'no-shows': {
-					range,
-					services,
-					total: 1,
-					covers: 2,
-					rate: 12.5,
-					byService: [],
-					byPartySize: [],
-					rows: [],
-				},
-			}
-			return json(route, bodies[kind!] ?? { range, services, total: 0 })
-		}
-
 		return json(route, { ok: true })
 	})
 
 	return { requests }
 }
 
-test.describe('Reservations guestbook, reports and Bookings today block', () => {
+test.describe('Reservations guestbook, generic reports link and Bookings today block', () => {
 	test('Guestbook lists, searches, filters by tag and keeps notes with the profile', async ({
 		page,
 		login,
@@ -296,7 +265,7 @@ test.describe('Reservations guestbook, reports and Bookings today block', () => 
 		})
 	})
 
-	test('Reports screen runs a report per tab and sends the date range and no contact fields', async ({
+	test('Reservations Reports links to the generic Reports page, opens the Reservations templates and runs one straight from tenant-api', async ({
 		page,
 		login,
 		navigate,
@@ -306,27 +275,84 @@ test.describe('Reservations guestbook, reports and Bookings today block', () => 
 		const org = await createTestOrganization(user.id, 'admin')
 		const location = await createLocation(org.id)
 		await enableFlags(org.id)
-		const { requests } = await stubApi(page, location.id)
+		await stubApi(page, location.id)
+		const analytics: Array<{ body: any; authorization: string | undefined }> =
+			[]
+		await page.route('**/analytics/query', async (route) => {
+			const request = route.request()
+			if (request.method() === 'OPTIONS') {
+				return route.fulfill({ status: 204, headers: CORS })
+			}
+			analytics.push({
+				body: request.postDataJSON(),
+				authorization: request.headers()['authorization'],
+			})
+			return json(route, {
+				total: 8,
+				value: 12.5,
+				valueInfo: {
+					measure: 'ratio',
+					field: 'noShowRate',
+					label: 'No-show rate',
+					type: 'percent',
+				},
+				segments: [
+					{
+						key: 'Dinner',
+						label: 'Dinner',
+						count: 8,
+						percent: 100,
+						value: 12.5,
+					},
+				],
+				refreshedAt: new Date().toISOString(),
+			})
+		})
+		const dataBodies: string[] = []
+		page.on('response', async (response) => {
+			if (response.url().includes('.data')) {
+				dataBodies.push(await response.text().catch(() => ''))
+			}
+		})
 
-		await navigate('/:slug/reservations/reports', { slug: org.slug })
-		await expect(page.getByTestId('reports-screen')).toBeVisible()
-		await expect(page.getByTestId('report-summary')).toBeVisible()
-		await expect(page.getByTestId('report-result')).toContainText('17')
+		await navigate('/:slug/reservations/today', { slug: org.slug })
+		// Reports is a plain link out of Reservations, not a screen of its own.
+		await page
+			.getByRole('navigation', { name: 'Reservations sections' })
+			.getByRole('link', { name: 'Reports' })
+			.click()
+		await expect(page).toHaveURL(
+			new RegExp(`/${org.slug}/reports\\?category=Reservations`),
+		)
+		await expect(page).toHaveURL(new RegExp(`location=${location.id}`))
+		await expect(
+			page.getByRole('link', { name: /No-shows & cancellations/ }),
+		).toBeVisible()
 
-		await page.getByTestId('report-tab-no-shows').click()
-		await expect(page.getByTestId('report-no-shows')).toBeVisible()
-		const noShows = requests.find((r) => r.path.endsWith('/reports/no-shows'))
-		expect(noShows?.search).toContain(`locationId=${location.id}`)
-		expect(noShows?.search).toMatch(/from=\d{4}-\d{2}-\d{2}/)
-		expect(noShows?.search).toMatch(/to=\d{4}-\d{2}-\d{2}/)
+		await page.getByRole('link', { name: /No-shows & cancellations/ }).click()
+		await expect(page).toHaveURL(/\/reports\/new\?template=rsv-no-show-rate/)
+		await expect.poll(() => analytics.length).toBeGreaterThan(0)
+		// The browser called tenant-api with its own token; no App `.data`
+		// response carried a reservation fact.
+		const first = analytics[0]!
+		expect(first.authorization).toMatch(/^Bearer /)
+		expect(first.body.definition.subject).toBe('bookings')
+		expect(
+			first.body.definition.filters.conditions.some(
+				(condition: { field: string; value: string }) =>
+					condition.field === 'location' &&
+					condition.value === 'Downtown Bistro',
+			),
+		).toBe(true)
+		for (const body of dataBodies) {
+			expect(body).not.toContain('noShowRate":12.5')
+		}
 
-		await page.getByTestId('report-tab-pacing').click()
-		await expect(page.getByTestId('report-pacing')).toBeVisible()
-
+		// Old links and bookmarks land on the same page, keeping the language.
 		await page.goto(
 			`/${org.slug}/reservations/reports?location=${location.id}&lng=ar`,
 		)
-		await expect(page.getByTestId('reports-screen')).toBeVisible()
+		await expect(page).toHaveURL(/\/reports\?category=Reservations/)
 		await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
 	})
 

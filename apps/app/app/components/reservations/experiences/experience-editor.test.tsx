@@ -12,6 +12,7 @@ import { userEvent } from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { ExperienceEditor } from '#app/components/reservations/experiences/experience-editor.tsx'
+import { RESERVATIONS_LAYOUT_ROUTE_ID } from '#app/utils/reservations/use-reservation-locales.ts'
 import {
 	apiError,
 	createScriptedClient,
@@ -78,6 +79,8 @@ function setup(
 		paymentsEnabled?: boolean
 		write?: Writer
 		getError?: ReturnType<typeof apiError>
+		/** The Website settings languages the reservations layout loader returns. */
+		languages?: { locales: string[]; defaultLocale: string }
 	} = {},
 ) {
 	const scripted = createScriptedClient((call) => {
@@ -111,18 +114,27 @@ function setup(
 	const router = createMemoryRouter(
 		[
 			{
+				id: RESERVATIONS_LAYOUT_ROUTE_ID,
 				path: '/',
-				element: (
-					<ExperienceEditor
-						client={scripted.client}
-						locationId="loc_1"
-						experienceId="exp_1"
-						listHref="/list"
-						canWrite={options.canWrite ?? true}
-						paymentsEnabled={options.paymentsEnabled ?? true}
-						today="2026-10-18"
-					/>
-				),
+				HydrateFallback: () => null,
+				loader: () =>
+					options.languages ? { siteLocales: options.languages } : null,
+				children: [
+					{
+						index: true,
+						element: (
+							<ExperienceEditor
+								client={scripted.client}
+								locationId="loc_1"
+								experienceId="exp_1"
+								listHref="/list"
+								canWrite={options.canWrite ?? true}
+								paymentsEnabled={options.paymentsEnabled ?? true}
+								today="2026-10-18"
+							/>
+						),
+					},
+				],
 			},
 			{ path: '/list', element: <div>list</div> },
 		],
@@ -188,6 +200,60 @@ describe('ExperienceEditor loading', () => {
 		setup({ paymentsEnabled: false })
 		await ready()
 		expect(screen.getByText(/Online payments are off/)).toBeTruthy()
+	})
+})
+
+describe('ExperienceEditor languages', () => {
+	it('shows one name field and no switcher for a one-language organization', async () => {
+		setup()
+		await ready()
+		expect(screen.queryByRole('radiogroup')).toBeNull()
+		expect(screen.queryByText(/Arabic/)).toBeNull()
+		expect(screen.queryByLabelText(/Language to edit/)).toBeNull()
+	})
+
+	it('writes each language of the organization and sends them as a map', async () => {
+		const { calls } = setup({
+			languages: { locales: ['en', 'es', 'zh'], defaultLocale: 'en' },
+			write: () => ({ experience: experience({ version: 4 }) }),
+		})
+		await ready()
+		// Starts on the default language, whatever the interface language is.
+		expect(
+			(screen.getByTestId('experience-name') as HTMLInputElement).value,
+		).toBe("Chef's Counter")
+		expect(screen.getAllByRole('radio').map((r) => r.textContent)).toEqual([
+			'en',
+			'es',
+			'zh',
+		])
+		fireEvent.click(screen.getByRole('radio', { name: 'Spanish' }))
+		const name = screen.getByTestId('experience-name') as HTMLInputElement
+		expect(name.value).toBe('')
+		fireEvent.change(name, { target: { value: 'Mostrador del chef' } })
+		fireEvent.click(screen.getByTestId('experience-save'))
+		await waitFor(() => expect(writes(calls)).toHaveLength(1))
+		// The stored Arabic name is not enabled here, so it is left alone, not sent.
+		expect(writes(calls)[0]!.body).toEqual({
+			nameI18n: { en: "Chef's Counter", es: 'Mostrador del chef' },
+			expectedVersion: 3,
+		})
+	})
+
+	it('needs the default-language name when the organization writes in several languages', async () => {
+		const { calls } = setup({
+			languages: { locales: ['ar', 'en'], defaultLocale: 'ar' },
+			current: experience({ nameI18n: { en: 'Counter' } }),
+		})
+		await ready()
+		fireEvent.change(screen.getByTestId('experience-price'), {
+			target: { value: '80' },
+		})
+		fireEvent.click(screen.getByTestId('experience-save'))
+		expect(
+			await screen.findByText('Enter a name in the default language.'),
+		).toBeTruthy()
+		expect(writes(calls)).toHaveLength(0)
 	})
 })
 

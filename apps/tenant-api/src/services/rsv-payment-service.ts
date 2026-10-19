@@ -40,6 +40,7 @@ import {
 	sql,
 } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
+import { pickText } from '../lib/reservations-i18n.ts'
 import {
 	deriveFeePayToken,
 	deriveGuestRef,
@@ -66,7 +67,7 @@ import {
 	releaseRefundReservation,
 	REFUNDABLE_KINDS,
 } from './rsv-payment-refunds.ts'
-import { loadPublicEngineState, pickI18n } from './rsv-public-engine.ts'
+import { loadPublicEngineState } from './rsv-public-engine.ts'
 import { planRequestTables } from './rsv-public-booking-service.ts'
 
 /**
@@ -265,9 +266,16 @@ async function experienceLabel(
 		.from(rsvExperiences)
 		.where(eq(rsvExperiences.id, reservation.experienceId))
 		.get()
-	return experience
-		? pickI18n(experience.nameI18n, reservation.guestLocale, true)
-		: null
+	if (!experience) return null
+	// No context here: the guest's language, else the first name the operator wrote.
+	return (
+		pickText(experience.nameI18n, reservation.guestLocale, {
+			locales: [],
+			defaultLocale: '',
+		}) ??
+		Object.values(experience.nameI18n).find((value) => value?.trim()) ??
+		null
+	)
 }
 
 function lateCancelMax(snapshot: PolicySnapshot): number {

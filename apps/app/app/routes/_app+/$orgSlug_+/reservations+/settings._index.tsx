@@ -14,18 +14,21 @@ import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router'
+import {
+	LocalizedMapField,
+	ReservationLocaleProvider,
+	ReservationLocaleSwitcher,
+	WritingLanguageNote,
+} from '#app/components/reservations/localized-fields.tsx'
 import { SettingsSaveBar } from '#app/components/reservations/settings/save-bar.tsx'
 import { SwitchRow } from '#app/components/reservations/settings/settings-fields.tsx'
 import { SetupChecklist } from '#app/components/reservations/settings/setup-checklist.tsx'
 import { SetupDiagnostics } from '#app/components/reservations/settings/setup-diagnostics.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
-import {
-	SelectField,
-	TextAreaField,
-	TextField,
-} from '#app/components/staff/controls.tsx'
+import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
 import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
+import { cleanLocalizedMap } from '#app/utils/reservations/localized.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	extractApiErrorMessage,
@@ -34,6 +37,7 @@ import {
 	SETUP_CONFLICT_REASON_LABELS,
 	updateLocationSettings,
 } from '#app/utils/reservations/setup-api.ts'
+import { useReservationLocales } from '#app/utils/reservations/use-reservation-locales.ts'
 import { type Route } from './+types/settings._index.ts'
 import { useReservationsSetupContext } from './settings.tsx'
 
@@ -54,6 +58,7 @@ function sameSettings(a: LocationSettingsDto, b: LocationSettingsDto) {
 
 export default function ReservationsSettingsIndexRoute() {
 	const { _, i18n } = useLingui()
+	const siteLocales = useReservationLocales()
 	const {
 		selectedLocationId,
 		canWrite,
@@ -154,10 +159,11 @@ export default function ReservationsSettingsIndexRoute() {
 				pacingMaxPartiesPerSlot: draft.pacingMaxPartiesPerSlot,
 				autoConfirmOnline: draft.autoConfirmOnline,
 				autoAssignTables: draft.autoAssignTables,
-				confirmationCopyI18n: draft.confirmationCopyI18n,
-				publicNoteI18n: draft.confirmationCopyI18n,
-				policyCopyI18n: draft.policyCopyI18n,
-				largePartyNoteI18n: draft.policyCopyI18n,
+				publicNoteI18n: cleanLocalizedMap(draft.publicNoteI18n, siteLocales),
+				largePartyNoteI18n: cleanLocalizedMap(
+					draft.largePartyNoteI18n,
+					siteLocales,
+				),
 			} as Partial<LocationSettingsDto> & { expectedVersion: number })
 			setSettingsState(res.settings)
 			setDraft(res.settings)
@@ -661,87 +667,66 @@ export default function ReservationsSettingsIndexRoute() {
 						</FramePanel>
 					</Frame>
 
-					<Frame>
-						<FrameHeader>
-							<FrameTitle>
-								<Trans>What guests read</Trans>
-							</FrameTitle>
-							<FrameDescription>
-								<Trans>
-									Shown on the booking page and in confirmation messages. Write
-									it in each language your guests use.
-								</Trans>
-							</FrameDescription>
-						</FrameHeader>
-						<FramePanel className="grid grid-cols-1 gap-5 md:grid-cols-2">
-							<TextAreaField
-								id="setup-confirmation-copy-en"
-								rows={3}
-								label={<Trans>Confirmation message (English)</Trans>}
-								disabled={disabled}
-								value={draft.confirmationCopyI18n?.en ?? ''}
-								onChange={(e) =>
-									edit({
-										confirmationCopyI18n: {
-											...draft.confirmationCopyI18n,
-											en: e.target.value,
-										},
-									})
-								}
-								data-testid="setup-confirmation-copy-en"
-							/>
-							<TextAreaField
-								id="setup-confirmation-copy-ar"
-								rows={3}
-								dir="rtl"
-								label={<Trans>Confirmation message (Arabic)</Trans>}
-								disabled={disabled}
-								value={draft.confirmationCopyI18n?.ar ?? ''}
-								onChange={(e) =>
-									edit({
-										confirmationCopyI18n: {
-											...draft.confirmationCopyI18n,
-											ar: e.target.value,
-										},
-									})
-								}
-								data-testid="setup-confirmation-copy-ar"
-							/>
-							<TextAreaField
-								id="setup-policy-copy-en"
-								rows={3}
-								label={<Trans>Booking & cancellation policy (English)</Trans>}
-								disabled={disabled}
-								value={draft.policyCopyI18n?.en ?? ''}
-								onChange={(e) =>
-									edit({
-										policyCopyI18n: {
-											...draft.policyCopyI18n,
-											en: e.target.value,
-										},
-									})
-								}
-								data-testid="setup-policy-copy-en"
-							/>
-							<TextAreaField
-								id="setup-policy-copy-ar"
-								rows={3}
-								dir="rtl"
-								label={<Trans>Booking & cancellation policy (Arabic)</Trans>}
-								disabled={disabled}
-								value={draft.policyCopyI18n?.ar ?? ''}
-								onChange={(e) =>
-									edit({
-										policyCopyI18n: {
-											...draft.policyCopyI18n,
-											ar: e.target.value,
-										},
-									})
-								}
-								data-testid="setup-policy-copy-ar"
-							/>
-						</FramePanel>
-					</Frame>
+					<ReservationLocaleProvider>
+						<Frame>
+							<FrameHeader>
+								<div className="flex items-start justify-between gap-3">
+									<div className="flex min-w-0 flex-col gap-1">
+										<FrameTitle>
+											<Trans>What guests read</Trans>
+										</FrameTitle>
+										<FrameDescription>
+											<Trans>
+												Shown on the booking page. Write it in each language
+												your website offers; guests see the default language
+												where a translation is missing.
+											</Trans>
+										</FrameDescription>
+									</div>
+									<ReservationLocaleSwitcher />
+								</div>
+							</FrameHeader>
+							<FramePanel className="grid grid-cols-1 gap-5 md:grid-cols-2">
+								<LocalizedMapField
+									id="setup-public-note"
+									multiline
+									rows={3}
+									label={<Trans>Booking page note (guest-facing)</Trans>}
+									hint={
+										<Trans>
+											A short note shown with the booking form, for example
+											parking or dress code.
+										</Trans>
+									}
+									disabled={disabled}
+									value={draft.publicNoteI18n}
+									onChange={(publicNoteI18n) => edit({ publicNoteI18n })}
+									data-testid="setup-public-note"
+								/>
+								<LocalizedMapField
+									id="setup-large-party-note"
+									multiline
+									rows={3}
+									label={<Trans>Large party message (guest-facing)</Trans>}
+									hint={
+										<Trans>
+											Shown to guests whose party is larger than you take
+											online.
+										</Trans>
+									}
+									disabled={disabled}
+									value={draft.largePartyNoteI18n}
+									onChange={(largePartyNoteI18n) =>
+										edit({ largePartyNoteI18n })
+									}
+									data-testid="setup-large-party-note"
+								/>
+								<div className="md:col-span-2">
+									<WritingLanguageNote />
+								</div>
+							</FramePanel>
+						</Frame>
+					</ReservationLocaleProvider>
 
 					{saveSuccess ? (
 						<p

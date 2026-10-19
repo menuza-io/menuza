@@ -8,6 +8,7 @@ import {
 	type BookingChannel,
 	type EngineDayConfig,
 	type EngineSettingsInput,
+	type LocationHours,
 	type ExistingOccupancyInput,
 	type SearchAvailabilityResult,
 	type WeeklyServiceTemplateInput,
@@ -21,6 +22,7 @@ import {
 } from '@repo/tenant-db'
 import { and, eq, gt, gte, inArray, lte } from 'drizzle-orm'
 import { loadLocationSchedulingState } from './rsv-booking-service.ts'
+import { loadLocationHours } from './rsv-location-hours.ts'
 import { loadExclusiveWindowBlocks } from './rsv-experience-engine.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import {
@@ -64,6 +66,8 @@ export type PublicEngineState = {
 	occupanciesFor: (businessDate: string) => ExistingOccupancyInput[]
 	/** Closed windows of exclusive experiences; only the guest search of regular slots sees them. */
 	exclusiveBlocksFor: (businessDate: string) => ExistingOccupancyInput[]
+	/** The organization default language, when the caller knows it (area labels fall back to it). */
+	defaultLocale?: string
 }
 
 export function toEngineSettings(
@@ -108,6 +112,10 @@ export async function loadPublicEngineState(
 		now: number
 		excludeReservationIds?: ReadonlySet<string>
 		excludeHoldIds?: ReadonlySet<string>
+		/** Location hours override (tests); default reads the cached control-plane context. */
+		locationHours?: LocationHours | null
+		/** Languages of the guest-facing copy (special-day notes, area labels). */
+		i18n?: { locale?: string | null; defaultLocale: string }
 	},
 ): Promise<PublicEngineState | null> {
 	const { locationId, fromDate, toDate, now } = params
@@ -122,6 +130,10 @@ export async function loadPublicEngineState(
 
 	const windowFrom = addDays(fromDate, -1)
 	const windowTo = addDays(toDate, 1)
+	const locationHours =
+		params.locationHours !== undefined
+			? params.locationHours
+			: await loadLocationHours(db, locationId)
 
 	const [specialDayRows, reservationRows, holdRows, blockRows] =
 		await Promise.all([
@@ -301,7 +313,8 @@ export async function loadPublicEngineState(
 		pacingRules: sched.enginePacingRules,
 		serviceTableModes: sched.engineServiceAvail,
 		serviceAvailability: sched.engineServiceAvail,
-		specialDays: specialDayRules(specialDayRows, fromDate, toDate),
+		specialDays: specialDayRules(specialDayRows, fromDate, toDate, params.i18n),
+		locationHours,
 	}
 
 	return {
@@ -310,6 +323,7 @@ export async function loadPublicEngineState(
 		config,
 		timeZone: sched.timeZone,
 		specialDays: specialDayRows,
+		defaultLocale: params.i18n?.defaultLocale,
 		tableById: sched.tableById,
 		selectableAreas: new Map(
 			sched.areas
@@ -373,7 +387,7 @@ export type PublicSlot = {
 
 /** Maps engine slots to the public shape, naming the seating area when a guest may choose it. */
 export function publicSlotMapper(
-	state: Pick<PublicEngineState, 'selectableAreas'>,
+	state: Pick<PublicEngineState, 'selectableAreas' | 'defaultLocale'>,
 	locale?: string | null,
 ): (slot: AvailableSlot) => PublicSlot {
 	return (slot) => {
@@ -385,7 +399,8 @@ export function publicSlotMapper(
 			serviceName: slot.serviceName,
 			areaId: area ? slot.areaId : null,
 			areaLabel: area
-				? (pickI18n(area.nameI18n, locale, false) ?? area.name)
+				? (pickI18n(area.nameI18n, locale, state.defaultLocale, false) ??
+					area.name)
 				: null,
 		}
 	}
@@ -467,11 +482,23 @@ export function otherDateAlternatives(
 export function describeClosedDay(
 	state: PublicEngineState,
 	businessDate: string,
+	result?: Pick<SearchAvailabilityResult, 'closed'>,
 ): {
-	reason: 'special_day' | 'past' | 'closed'
+	reason: 'special_day' | 'location_closed' | 'past' | 'closed'
 	note: string | null
 	name: string | null
+	source?: 'location_hours' | 'reservation_special_day'
+	closedReason?: string
 } {
+	if (result?.closed?.source === 'location_closed') {
+		return {
+			reason: 'location_closed',
+			note: result.closed.note,
+			name: result.closed.name,
+			source: 'location_hours',
+			...(result.closed.reason ? { closedReason: result.closed.reason } : {}),
+		}
+	}
 	const resolved = resolveServices(
 		businessDate,
 		state.config.services,
@@ -482,6 +509,7 @@ export function describeClosedDay(
 			reason: 'special_day',
 			note: resolved.specialDay?.note ?? null,
 			name: resolved.specialDay?.name ?? null,
+			source: 'reservation_special_day',
 		}
 	}
 	return { reason: 'past', note: null, name: null }

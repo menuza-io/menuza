@@ -1,6 +1,5 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
-import { type MessageLocale } from '#app/utils/reservations/messages-api.ts'
 
 export const MESSAGE_KIND_LABELS: Record<string, MessageDescriptor> = {
 	confirmation: msg`Booking confirmation`,
@@ -30,9 +29,4 @@ export const MESSAGE_KIND_DESCRIPTIONS: Record<string, MessageDescriptor> = {
 	waitlist_joined: msg`Confirms the guest is on the waitlist.`,
 	waitlist_ready: msg`Tells the guest their table is ready.`,
 	notify_available: msg`Tells a guest who asked to be notified that a table opened.`,
-}
-
-export const MESSAGE_LOCALE_LABELS: Record<MessageLocale, MessageDescriptor> = {
-	en: msg`English`,
-	ar: msg`Arabic`,
 }

@@ -1,6 +1,5 @@
+import { type LocalizedMap } from '#app/utils/reservations/localized.ts'
 import {
-	MESSAGE_LOCALES,
-	type MessageLocale,
 	type MessageSettings,
 	type MessageSettingsPatch,
 	WAITLIST_MESSAGE_SETTING_KINDS,
@@ -30,7 +29,8 @@ export type MessageDraft = {
 	quietStart: string
 	quietEnd: string
 	smsEnabled: boolean
-	notes: Record<string, Record<MessageLocale, string>>
+	/** Custom note per kind and language; the languages come from Website settings. */
+	notes: Record<string, LocalizedMap>
 }
 
 export function draftFromSettings(settings: MessageSettings): MessageDraft {
@@ -38,7 +38,7 @@ export function draftFromSettings(settings: MessageSettings): MessageDraft {
 	const notes: MessageDraft['notes'] = {}
 	for (const entry of settings.kinds) {
 		kinds[entry.kind] = entry.enabled
-		notes[entry.kind] = { en: entry.notes.en, ar: entry.notes.ar }
+		notes[entry.kind] = { ...entry.notes }
 	}
 	const { startMin, endMin } = settings.messaging.quietHours
 	const quietEnabled = startMin !== endMin
@@ -83,7 +83,7 @@ export type DraftIssues = {
 	longNotes: string[]
 }
 
-export function noteSlot(kind: string, locale: MessageLocale): string {
+export function noteSlot(kind: string, locale: string): string {
 	return `${kind}:${locale}`
 }
 
@@ -93,8 +93,8 @@ export function validateDraft(
 ): DraftIssues {
 	const longNotes: string[] = []
 	for (const [kind, byLocale] of Object.entries(draft.notes)) {
-		for (const locale of MESSAGE_LOCALES) {
-			if (byLocale[locale].length > noteMaxLength) {
+		for (const [locale, text] of Object.entries(byLocale)) {
+			if ((text ?? '').length > noteMaxLength) {
 				longNotes.push(noteSlot(kind, locale))
 			}
 		}
@@ -165,8 +165,12 @@ export function buildPatch(
 
 	const texts: NonNullable<MessageSettingsPatch['texts']> = []
 	for (const [kind, byLocale] of Object.entries(draft.notes)) {
-		for (const locale of MESSAGE_LOCALES) {
-			const next = byLocale[locale].trim()
+		const locales = new Set([
+			...Object.keys(byLocale),
+			...Object.keys(base.notes[kind] ?? {}),
+		])
+		for (const locale of locales) {
+			const next = (byLocale[locale] ?? '').trim()
 			const before = (base.notes[kind]?.[locale] ?? '').trim()
 			if (next !== before) texts.push({ kind, locale, customNote: next })
 		}
@@ -201,13 +205,14 @@ export function rebaseDraft(
 		notes[kind] = { ...byLocale }
 	}
 	for (const [kind, byLocale] of Object.entries(draft.notes)) {
-		for (const locale of MESSAGE_LOCALES) {
-			if (byLocale[locale] !== (oldBase.notes[kind]?.[locale] ?? '')) {
-				notes[kind] = {
-					en: notes[kind]?.en ?? '',
-					ar: notes[kind]?.ar ?? '',
-					[locale]: byLocale[locale],
-				}
+		const locales = new Set([
+			...Object.keys(byLocale),
+			...Object.keys(oldBase.notes[kind] ?? {}),
+		])
+		for (const locale of locales) {
+			const mine = byLocale[locale] ?? ''
+			if (mine !== (oldBase.notes[kind]?.[locale] ?? '')) {
+				notes[kind] = { ...notes[kind], [locale]: mine }
 			}
 		}
 	}

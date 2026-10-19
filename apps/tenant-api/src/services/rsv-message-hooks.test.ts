@@ -97,7 +97,7 @@ beforeEach(async () => {
 	sent.sms.mockResolvedValue({ success: true, mock: true })
 	await destroyTenantDb(ORG).catch(() => undefined)
 	resetReservationsContextCache()
-	db = await seedPublicOrg(ORG)
+	db = await seedPublicOrg(ORG, { locales: ['en', 'ar', 'es'] })
 	await db.insert(rsvTables).values({
 		id: 'tbl_hook_2b',
 		locationId: PUBLIC_LOC,

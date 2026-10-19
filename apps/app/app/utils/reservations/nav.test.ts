@@ -132,6 +132,25 @@ describe('Reservations navigation and route gating (VAL-FND-021, VAL-FND-022)', 
 			`/${organization.slug}/reservations/today`,
 		)
 
+		// The old Reports screen is a redirect to the generic Reports page on the
+		// Reservations category, keeping the location and the language.
+		const reportsRes = await reportsLoader({
+			request: createAuthenticatedRequest(
+				`http://localhost:3000/${organization.slug}/reservations/reports?locationId=loc_1&lng=ar`,
+				{},
+				cookie,
+			),
+			params: { orgSlug: organization.slug },
+			context: {},
+		} as never).then(
+			() => null,
+			(thrown: unknown) => thrown as Response,
+		)
+		expect(reportsRes?.status).toBe(302)
+		expect(reportsRes?.headers.get('Location')).toBe(
+			`/${organization.slug}/reports?category=Reservations&location=loc_1&lng=ar`,
+		)
+
 		// Layout loader succeeds and provides orgSlug, locations, nav, todayDate
 		const layoutData = await layoutLoader({
 			request: createAuthenticatedRequest(

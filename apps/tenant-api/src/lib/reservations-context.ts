@@ -1,4 +1,5 @@
 import {
+	countMalformedLocationHours,
 	reservationsContextSchema,
 	type ReservationsContext,
 } from '@repo/reservations'
@@ -54,7 +55,14 @@ async function fetchReservationsContext(
 			},
 		)
 		if (!response.ok) return null
-		const parsed = reservationsContextSchema.safeParse(await response.json())
+		const body: unknown = await response.json()
+		const malformed = countMalformedLocationHours(body)
+		if (malformed > 0) {
+			console.warn(
+				`[reservations-context] ${malformed} malformed location hours value(s) ignored (fail open) for org ${orgId}`,
+			)
+		}
+		const parsed = reservationsContextSchema.safeParse(body)
 		if (!parsed.success || parsed.data.orgId !== orgId) return null
 		return parsed.data
 	} catch {

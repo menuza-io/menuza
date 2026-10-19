@@ -38,7 +38,11 @@ describe('setupExperienceInputSchema', () => {
 		['party out of range', { partyMax: 100 }, 'partyMax'],
 		['http image', { imageUrl: 'http://x.test/a.png' }, 'imageUrl'],
 		['javascript image', { imageUrl: 'javascript:alert(1)' }, 'imageUrl'],
-		['unknown locale', { nameI18n: { en: 'x', xx: 'y' } }, 'nameI18n'],
+		[
+			'malformed locale key',
+			{ nameI18n: { en: 'x', 'XX-1!': 'y' } },
+			'nameI18n.XX-1!',
+		],
 		['client currency', { currency: 'EUR' }, ''],
 	])('rejects %s', (_label, patch, path) => {
 		const result = setupExperienceInputSchema.safeParse({ ...valid, ...patch })

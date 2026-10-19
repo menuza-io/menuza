@@ -1,4 +1,4 @@
-import { browserLocaleHref } from '~/lib/locale'
+import { browserLocale, browserLocaleHref } from '~/lib/locale'
 import { readReservationLabels } from '~/lib/reservations/client'
 import { createPaymentApi, initPayPage } from '~/lib/reservations/pay'
 
@@ -7,7 +7,7 @@ if (root) {
 	void initPayPage(root, {
 		api: createPaymentApi(),
 		labels: readReservationLabels(),
-		locale: document.documentElement.lang || 'en',
+		locale: browserLocale(),
 		hash: location.hash,
 		search: location.search,
 		done: root.dataset.done === 'true',

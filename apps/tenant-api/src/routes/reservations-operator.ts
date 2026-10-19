@@ -18,7 +18,6 @@ import { operatorReservationsExperiencesRoutes } from './operator-reservations-e
 import { operatorReservationsGuestsRoutes } from './operator-reservations-guests.ts'
 import { operatorReservationsPaymentsRoutes } from './operator-reservations-payments.ts'
 import { operatorReservationsPoliciesRoutes } from './operator-reservations-policies.ts'
-import { operatorReservationsReportsRoutes } from './operator-reservations-reports.ts'
 import { operatorReservationsSetupRoutes } from './operator-reservations-setup.ts'
 import { operatorReservationsWaitlistRoutes } from './reservations-waitlist.ts'
 
@@ -102,10 +101,7 @@ reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
 // 3. Guests scope routes
 reservationsOperatorRoutes.route('/guests', operatorReservationsGuestsRoutes)
 
-// 4. Reports scope routes
-reservationsOperatorRoutes.route('/reports', operatorReservationsReportsRoutes)
-
-// 5. Payments scope routes
+// 4. Payments scope routes (reports run through the generic report token)
 const refundPaymentBodySchema = z.object({
 	locationId: z.string().trim().min(1).max(128),
 	paymentId: z.string().trim().min(1).max(128),

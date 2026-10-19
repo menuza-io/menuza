@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 import { brand } from '@repo/config/brand'
 import {
 	RESERVATIONS_PERMISSIONS,
@@ -195,7 +196,10 @@ beforeEach(async () => {
 	await destroyTenantDb(ORG).catch(() => undefined)
 	resetReservationsContextCache()
 	db = await seedPublicOrg(ORG, { seedContext: false })
-	const base = publicContext(ORG)
+	const base = publicContext(ORG, {
+		locales: [...SITE_CONTENT_LOCALES],
+		defaultLocale: 'en',
+	})
 	seedReservationsContextForTest(ORG, {
 		...base,
 		locations: [
@@ -244,7 +248,7 @@ describe('GET /setup/message-texts', () => {
 			...TOGGLEABLE_MESSAGE_KINDS,
 		])
 		for (const entry of json.kinds as Json[]) {
-			expect(entry.notes).toEqual({ en: '', ar: '' })
+			expect(entry.notes).toEqual({})
 			expect(entry.enabled).toBe(entry.kind !== 'reconfirm_request')
 		}
 	})
@@ -279,7 +283,7 @@ describe('GET /setup/message-texts', () => {
 		const confirmation = (json.kinds as Json[]).find(
 			(k) => k.kind === 'confirmation',
 		)
-		expect(confirmation?.notes).toEqual({ en: '', ar: 'أهلاً بكم' })
+		expect(confirmation?.notes).toEqual({ ar: 'أهلاً بكم' })
 		expect(json.texts).toEqual([
 			expect.objectContaining({
 				kind: 'confirmation',
@@ -539,8 +543,36 @@ describe('PUT /setup/message-texts: notes', () => {
 			ar: 'نراكم قريباً',
 		})
 		const reminder = (json.kinds as Json[]).find((k) => k.kind === 'reminder')
-		expect(reminder?.notes).toEqual({ en: 'Please bring ID', ar: '' })
+		expect(reminder?.notes).toEqual({ en: 'Please bring ID' })
 		expect(json.texts).toHaveLength(3)
+	})
+
+	it('stores a note for any enabled site language', async () => {
+		const { status, json } = await putTexts({
+			locationId: PUBLIC_LOC,
+			texts: [note('confirmation', 'es', 'Hasta pronto')],
+		})
+		expect(status).toBe(200)
+		const confirmation = (json.kinds as Json[]).find(
+			(k) => k.kind === 'confirmation',
+		)
+		expect(confirmation?.notes).toEqual({ es: 'Hasta pronto' })
+		const es = await preview('kind=confirmation&locale=es')
+		expect(es.json.html).toContain('Hasta pronto')
+	})
+
+	it('refuses a note for a language the organization has not enabled', async () => {
+		seedReservationsContextForTest(
+			ORG,
+			publicContext(ORG, { locales: ['en'], defaultLocale: 'en' }),
+		)
+		const { status, json } = await putTexts({
+			locationId: PUBLIC_LOC,
+			texts: [note('confirmation', 'fr', 'Bientôt')],
+		})
+		expect(status).toBe(400)
+		expect(json.error ?? json.code).toBe('locale_not_enabled')
+		expect((await getTexts()).json.texts).toEqual([])
 	})
 
 	it('replaces an existing note instead of adding a second row', async () => {
@@ -642,10 +674,10 @@ describe('PUT /setup/message-texts: notes', () => {
 		}
 	})
 
-	it('rejects a language other than English or Arabic', async () => {
+	it('rejects a language that is not a site language', async () => {
 		const { status } = await putTexts({
 			locationId: PUBLIC_LOC,
-			texts: [note('confirmation', 'fr', 'x')],
+			texts: [note('confirmation', 'xx', 'x')],
 		})
 		expect(status).toBe(400)
 	})
@@ -668,7 +700,10 @@ describe('PUT /setup/message-texts: notes', () => {
 
 	it('rejects more notes than there are kind and language slots', async () => {
 		const texts = Array.from(
-			{ length: TOGGLEABLE_MESSAGE_KINDS.length * 2 + 1 },
+			{
+				length:
+					TOGGLEABLE_MESSAGE_KINDS.length * SITE_CONTENT_LOCALES.length + 1,
+			},
 			() => note('confirmation', 'en', 'x'),
 		)
 		const { status } = await putTexts({ locationId: PUBLIC_LOC, texts })
@@ -844,12 +879,36 @@ describe('GET /setup/message-texts/preview', () => {
 		expect(json.html).toContain('سارة')
 	})
 
-	it('falls back to English for an unknown language', async () => {
-		const { status, json } = await preview('kind=confirmation&locale=fr')
+	it('falls back to the organization default for an unknown language', async () => {
+		const { status, json } = await preview('kind=confirmation&locale=xx')
 		expect(status).toBe(200)
 		expect(json.locale).toBe('en')
 		expect(json.html).toContain('dir="ltr"')
 	})
+
+	it('falls back to the organization default for a language it has not enabled', async () => {
+		seedReservationsContextForTest(
+			ORG,
+			publicContext(ORG, { locales: ['en', 'es'], defaultLocale: 'en' }),
+		)
+		const { json } = await preview('kind=confirmation&locale=fr')
+		expect(json.locale).toBe('en')
+	})
+
+	it.each(['es', 'fr', 'de', 'zh'])(
+		'previews %s with its own copy and sample name',
+		async (locale) => {
+			const { status, json } = await preview(
+				`kind=confirmation&locale=${locale}`,
+			)
+			expect(status).toBe(200)
+			expect(json.locale).toBe(locale)
+			expect(json.html).toContain(`<html lang="${locale}" dir="ltr">`)
+			expect(json.subject).not.toBe(
+				(await preview('kind=confirmation&locale=en')).json.subject,
+			)
+		},
+	)
 
 	it('defaults the language to English', async () => {
 		const { json } = await preview('kind=confirmation')
@@ -857,9 +916,9 @@ describe('GET /setup/message-texts/preview', () => {
 	})
 
 	it.each(TOGGLEABLE_MESSAGE_KINDS)(
-		'renders %s in both languages',
+		'renders %s in every site language',
 		async (kind) => {
-			for (const locale of ['en', 'ar']) {
+			for (const locale of SITE_CONTENT_LOCALES) {
 				const { status, json } = await preview(`kind=${kind}&locale=${locale}`)
 				expect(status).toBe(200)
 				expect(json.subject.length).toBeGreaterThan(0)

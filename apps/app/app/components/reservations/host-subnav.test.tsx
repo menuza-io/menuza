@@ -201,7 +201,6 @@ describe('shell routes', () => {
 		['/acme/reservations/calendar', 'calendar', true, 'calendar'],
 		['/acme/reservations/waitlist', 'waitlist', false, 'waitlist'],
 		['/acme/reservations/guests/g-1', 'guests', false, 'guests'],
-		['/acme/reservations/reports', 'reports', false, 'reports'],
 		['/acme/reservations/experiences/e-1', 'experiences', false, 'experiences'],
 		['/acme/reservations/settings/tables', 'settings', false, 'settings'],
 	])('%s', (pathname, key, host, tab) => {

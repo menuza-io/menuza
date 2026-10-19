@@ -1,24 +1,31 @@
+import {
+	DEFAULT_SITE_LOCALES,
+	getSiteLocaleDirection,
+	isSiteContentLocale,
+	type SiteContentLocale,
+} from '@repo/common/site-locales'
 import { type ReservationsContext } from '@repo/reservations'
+import {
+	fillCopy,
+	messageCopyFor,
+	type KindCopy,
+	type PaymentEmailKind,
+} from './reservations-copy/index.ts'
 import { type ToggleableMessageKind } from './reservations-messaging-settings.ts'
 
-/** Payment-flow kinds: they follow the payment state, not a message setting. */
-export type PaymentEmailKind =
-	| 'payment_received'
-	| 'refund_issued'
-	| 'fee_charged'
-	| 'fee_action_required'
-	| 'late_payment_refunded'
+export type { PaymentEmailKind }
 
 /**
  * Guest reservation email as plain HTML strings: tenant-api also runs inside a
  * Durable Object, so there is no React here, and mail clients support neither
  * CSS variables nor `oklch()`, so colors are the hex values of the organization's
- * email theme. English and Arabic only (Arabic renders `dir="rtl"`); any other
- * guest locale gets English. Every dynamic value is escaped. The manage link
+ * email theme. The shipped copy exists for every site language
+ * (`reservations-copy/`), right-to-left languages render `dir="rtl"`. Every
+ * dynamic value is escaped. The manage link
  * carries its capability token in the URL fragment, never the path or query.
  */
 
-export type ReservationEmailLocale = 'en' | 'ar'
+export type ReservationEmailLocale = SiteContentLocale
 export type ReservationEmailTheme =
 	ReservationsContext['organization']['emailTheme']
 
@@ -53,12 +60,19 @@ export type RenderedReservationEmail = {
 	text: string
 }
 
+/**
+ * A language the shipped copy exists for: any site language, regional tags
+ * included (`ar-SA` is `ar`). Anything else gets the platform default; callers
+ * that know the organization resolve the guest's language against its enabled
+ * languages first (`resolveGuestLocale`).
+ */
 export function normalizeReservationLocale(
 	value: unknown,
+	fallback: ReservationEmailLocale = DEFAULT_SITE_LOCALES.defaultLocale,
 ): ReservationEmailLocale {
-	return typeof value === 'string' && value.toLowerCase().startsWith('ar')
-		? 'ar'
-		: 'en'
+	if (typeof value !== 'string') return fallback
+	const base = value.trim().toLowerCase().replace(/_/g, '-').split('-')[0]
+	return base && isSiteContentLocale(base) ? base : fallback
 }
 
 export function escapeHtml(value: string): string {
@@ -71,8 +85,9 @@ export function escapeHtml(value: string): string {
 }
 
 function intlLocale(locale: ReservationEmailLocale): string {
-	// Latin digits in Arabic too, so times and party sizes read the same in both.
-	return locale === 'ar' ? 'ar-u-nu-latn' : 'en-US'
+	// Latin digits in Arabic too, so times and party sizes read the same everywhere.
+	if (locale === 'ar') return 'ar-u-nu-latn'
+	return locale === 'en' ? 'en-US' : locale
 }
 
 function safeZone(timeZone: string | null | undefined): string {
@@ -106,278 +121,6 @@ export function formatWhen(
 		}).format(new Date(whenMs)),
 	}
 }
-
-type Vars = {
-	r: string
-	name: string
-	date: string
-	time: string
-	party: string
-	wait: string
-	amount: string
-}
-
-type Copy = {
-	subject: string
-	heading: string
-	lead: string
-	cta?: 'manage' | 'confirm' | 'status' | 'book' | 'pay'
-	ctaLabel?: string
-	footer?: string
-}
-
-type Dict = Record<ToggleableMessageKind | PaymentEmailKind, (v: Vars) => Copy>
-
-const EN: Dict = {
-	confirmation: (v) => ({
-		subject: `Your reservation at ${v.r} is confirmed`,
-		heading: 'Reservation confirmed',
-		lead: `Hi ${v.name}, your table at ${v.r} is booked.`,
-		cta: 'manage',
-		ctaLabel: 'Manage reservation',
-	}),
-	modification: (v) => ({
-		subject: `Your reservation at ${v.r} was updated`,
-		heading: 'Reservation updated',
-		lead: `Hi ${v.name}, your reservation at ${v.r} now looks like this.`,
-		cta: 'manage',
-		ctaLabel: 'Manage reservation',
-	}),
-	cancellation_guest: (v) => ({
-		subject: `Your reservation at ${v.r} was cancelled`,
-		heading: 'Reservation cancelled',
-		lead: `Hi ${v.name}, as you asked, we cancelled your reservation at ${v.r}.`,
-	}),
-	cancellation_restaurant: (v) => ({
-		subject: `We had to cancel your reservation at ${v.r}`,
-		heading: 'We had to cancel your reservation',
-		lead: `Hi ${v.name}, we are sorry: ${v.r} had to cancel your reservation. Please contact the restaurant to find another time.`,
-	}),
-	reminder: (v) => ({
-		subject: `Reminder: your reservation at ${v.r}`,
-		heading: 'See you soon',
-		lead: `Hi ${v.name}, this is a reminder of your reservation at ${v.r}.`,
-		cta: 'manage',
-		ctaLabel: 'Manage reservation',
-	}),
-	reconfirm_request: (v) => ({
-		subject: `Please confirm your reservation at ${v.r}`,
-		heading: 'Please confirm your reservation',
-		lead: `Hi ${v.name}, please let ${v.r} know you are still coming.`,
-		cta: 'confirm',
-		ctaLabel: 'Confirm reservation',
-	}),
-	request_received: (v) => ({
-		subject: `We received your request at ${v.r}`,
-		heading: 'Request received',
-		lead: `Hi ${v.name}, ${v.r} received your request and will reply soon. Your table is not confirmed yet.`,
-		cta: 'manage',
-		ctaLabel: 'View your request',
-	}),
-	request_approved: (v) => ({
-		subject: `Your request at ${v.r} was approved`,
-		heading: 'Request approved',
-		lead: `Hi ${v.name}, good news: ${v.r} approved your request.`,
-		cta: 'manage',
-		ctaLabel: 'Manage reservation',
-	}),
-	request_declined: (v) => ({
-		subject: `We could not accept your request at ${v.r}`,
-		heading: 'Request not accepted',
-		lead: `Hi ${v.name}, we are sorry: ${v.r} could not accept your request. Please contact the restaurant or try another time.`,
-	}),
-	waitlist_joined: (v) => ({
-		subject: `You are on the waitlist at ${v.r}`,
-		heading: 'You are on the waitlist',
-		lead: `Hi ${v.name}, you joined the waitlist at ${v.r}.${v.wait ? ` Estimated wait: ${v.wait}.` : ''}`,
-		cta: 'status',
-		ctaLabel: 'Check your place in line',
-	}),
-	waitlist_ready: (v) => ({
-		subject: `Your table at ${v.r} is ready`,
-		heading: 'Your table is ready',
-		lead: `Hi ${v.name}, your table at ${v.r} is ready. Please let the host know you are on your way.`,
-		cta: 'status',
-		ctaLabel: 'Open your waitlist status',
-	}),
-	notify_available: (v) => ({
-		subject: `A table opened up at ${v.r}`,
-		heading: 'A table is available',
-		lead: v.date
-			? `A table you asked about at ${v.r} opened up on ${v.date} at ${v.time}. Book it before it goes.`
-			: `A table you asked about at ${v.r} just opened up. Book it before it goes.`,
-		cta: 'book',
-		ctaLabel: 'Book now',
-	}),
-	payment_received: (v) => ({
-		subject: `Payment received for your reservation at ${v.r}`,
-		heading: 'Payment received',
-		lead: `Hi ${v.name}, we received your payment of ${v.amount}. Your reservation at ${v.r} is confirmed.`,
-		cta: 'manage',
-		ctaLabel: 'Manage reservation',
-	}),
-	refund_issued: (v) => ({
-		subject: `Your refund from ${v.r}`,
-		heading: 'Refund issued',
-		lead: `Hi ${v.name}, ${v.r} refunded ${v.amount} to your original payment method. Your bank may take a few days to show it.`,
-	}),
-	fee_charged: (v) => ({
-		subject: `A fee was charged by ${v.r}`,
-		heading: 'Fee charged',
-		lead: `Hi ${v.name}, ${v.r} charged a fee of ${v.amount} to the card you left to guarantee your reservation, as described in the terms you accepted.`,
-	}),
-	fee_action_required: (v) => ({
-		subject: `Action needed to pay a fee to ${v.r}`,
-		heading: 'Your bank needs you to confirm a payment',
-		lead: `Hi ${v.name}, ${v.r} charged a fee of ${v.amount} under the terms you accepted, and your bank asked you to confirm it. Please complete the payment.`,
-		cta: 'pay',
-		ctaLabel: 'Pay now',
-	}),
-	late_payment_refunded: (v) => ({
-		subject: `Your payment to ${v.r} was refunded`,
-		heading: 'Payment refunded',
-		lead: `Hi ${v.name}, your payment of ${v.amount} reached us after your table was released and it is no longer available. We refunded the full amount.`,
-	}),
-}
-
-const AR: Dict = {
-	confirmation: (v) => ({
-		subject: `تم تأكيد حجزك في ${v.r}`,
-		heading: 'تم تأكيد الحجز',
-		lead: `مرحباً ${v.name}، تم حجز طاولتك في ${v.r}.`,
-		cta: 'manage',
-		ctaLabel: 'إدارة الحجز',
-	}),
-	modification: (v) => ({
-		subject: `تم تعديل حجزك في ${v.r}`,
-		heading: 'تم تعديل الحجز',
-		lead: `مرحباً ${v.name}، هذه هي تفاصيل حجزك المحدّثة في ${v.r}.`,
-		cta: 'manage',
-		ctaLabel: 'إدارة الحجز',
-	}),
-	cancellation_guest: (v) => ({
-		subject: `تم إلغاء حجزك في ${v.r}`,
-		heading: 'تم إلغاء الحجز',
-		lead: `مرحباً ${v.name}، تم إلغاء حجزك في ${v.r} بناءً على طلبك.`,
-	}),
-	cancellation_restaurant: (v) => ({
-		subject: `اضطررنا إلى إلغاء حجزك في ${v.r}`,
-		heading: 'اضطررنا إلى إلغاء حجزك',
-		lead: `مرحباً ${v.name}، نعتذر: اضطر ${v.r} إلى إلغاء حجزك. يرجى التواصل مع المطعم لاختيار موعد آخر.`,
-	}),
-	reminder: (v) => ({
-		subject: `تذكير بحجزك في ${v.r}`,
-		heading: 'نراك قريباً',
-		lead: `مرحباً ${v.name}، هذا تذكير بحجزك في ${v.r}.`,
-		cta: 'manage',
-		ctaLabel: 'إدارة الحجز',
-	}),
-	reconfirm_request: (v) => ({
-		subject: `يرجى تأكيد حجزك في ${v.r}`,
-		heading: 'يرجى تأكيد حجزك',
-		lead: `مرحباً ${v.name}، يرجى إبلاغ ${v.r} بأنك ما زلت قادماً.`,
-		cta: 'confirm',
-		ctaLabel: 'تأكيد الحجز',
-	}),
-	request_received: (v) => ({
-		subject: `استلمنا طلبك في ${v.r}`,
-		heading: 'تم استلام الطلب',
-		lead: `مرحباً ${v.name}، استلم ${v.r} طلبك وسيرد عليك قريباً. لم يتم تأكيد الطاولة بعد.`,
-		cta: 'manage',
-		ctaLabel: 'عرض طلبك',
-	}),
-	request_approved: (v) => ({
-		subject: `تمت الموافقة على طلبك في ${v.r}`,
-		heading: 'تمت الموافقة على الطلب',
-		lead: `مرحباً ${v.name}، خبر سار: وافق ${v.r} على طلبك.`,
-		cta: 'manage',
-		ctaLabel: 'إدارة الحجز',
-	}),
-	request_declined: (v) => ({
-		subject: `تعذّر قبول طلبك في ${v.r}`,
-		heading: 'لم يتم قبول الطلب',
-		lead: `مرحباً ${v.name}، نعتذر: تعذّر على ${v.r} قبول طلبك. يرجى التواصل مع المطعم أو تجربة موعد آخر.`,
-	}),
-	waitlist_joined: (v) => ({
-		subject: `أنت في قائمة الانتظار في ${v.r}`,
-		heading: 'أنت في قائمة الانتظار',
-		lead: `مرحباً ${v.name}، انضممت إلى قائمة الانتظار في ${v.r}.${v.wait ? ` مدة الانتظار المتوقعة: ${v.wait}.` : ''}`,
-		cta: 'status',
-		ctaLabel: 'تحقق من ترتيبك',
-	}),
-	waitlist_ready: (v) => ({
-		subject: `طاولتك في ${v.r} جاهزة`,
-		heading: 'طاولتك جاهزة',
-		lead: `مرحباً ${v.name}، طاولتك في ${v.r} جاهزة. يرجى إبلاغ المضيف بأنك في الطريق.`,
-		cta: 'status',
-		ctaLabel: 'فتح حالة الانتظار',
-	}),
-	notify_available: (v) => ({
-		subject: `توفرت طاولة في ${v.r}`,
-		heading: 'توفرت طاولة',
-		lead: v.date
-			? `توفرت طاولة سألت عنها في ${v.r} بتاريخ ${v.date} الساعة ${v.time}. احجزها قبل أن تنفد.`
-			: `توفرت طاولة سألت عنها في ${v.r}. احجزها قبل أن تنفد.`,
-		cta: 'book',
-		ctaLabel: 'احجز الآن',
-	}),
-	payment_received: (v) => ({
-		subject: `تم استلام الدفعة لحجزك في ${v.r}`,
-		heading: 'تم استلام الدفعة',
-		lead: `مرحباً ${v.name}، استلمنا دفعتك بمبلغ ${v.amount}. تم تأكيد حجزك في ${v.r}.`,
-		cta: 'manage',
-		ctaLabel: 'إدارة الحجز',
-	}),
-	refund_issued: (v) => ({
-		subject: `استرداد المبلغ من ${v.r}`,
-		heading: 'تم استرداد المبلغ',
-		lead: `مرحباً ${v.name}، أعاد ${v.r} مبلغ ${v.amount} إلى وسيلة الدفع الأصلية. قد يستغرق ظهوره في حسابك بضعة أيام.`,
-	}),
-	fee_charged: (v) => ({
-		subject: `تم خصم رسوم من ${v.r}`,
-		heading: 'تم خصم الرسوم',
-		lead: `مرحباً ${v.name}، خصم ${v.r} رسوماً بمبلغ ${v.amount} من البطاقة التي قدمتها لضمان حجزك، وفق الشروط التي وافقت عليها.`,
-	}),
-	fee_action_required: (v) => ({
-		subject: `مطلوب إجراء لدفع رسوم إلى ${v.r}`,
-		heading: 'مصرفك يطلب منك تأكيد الدفعة',
-		lead: `مرحباً ${v.name}، خصم ${v.r} رسوماً بمبلغ ${v.amount} وفق الشروط التي وافقت عليها، وطلب مصرفك تأكيدها. يرجى إتمام الدفع.`,
-		cta: 'pay',
-		ctaLabel: 'ادفع الآن',
-	}),
-	late_payment_refunded: (v) => ({
-		subject: `تم استرداد دفعتك إلى ${v.r}`,
-		heading: 'تم استرداد الدفعة',
-		lead: `مرحباً ${v.name}، وصلت دفعتك بمبلغ ${v.amount} بعد تحرير طاولتك ولم تعد متاحة. أعدنا المبلغ كاملاً.`,
-	}),
-}
-
-const LABELS = {
-	en: {
-		restaurant: 'Restaurant',
-		date: 'Date',
-		time: 'Time',
-		party: 'Party size',
-		address: 'Address',
-		phone: 'Phone',
-		calendar: 'Add to calendar',
-		note: 'A note from the restaurant',
-		minutes: 'min',
-		footer: 'This is a service message about your reservation.',
-	},
-	ar: {
-		restaurant: 'المطعم',
-		date: 'التاريخ',
-		time: 'الوقت',
-		party: 'عدد الأشخاص',
-		address: 'العنوان',
-		phone: 'الهاتف',
-		calendar: 'أضف إلى التقويم',
-		note: 'ملاحظة من المطعم',
-		minutes: 'دقيقة',
-		footer: 'هذه رسالة خدمة بخصوص حجزك.',
-	},
-} as const
 
 function safeColor(value: string, fallback: string): string {
 	return /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback
@@ -420,7 +163,27 @@ export function formatMoney(
 }
 
 function formatWait(minutes: number, locale: ReservationEmailLocale): string {
-	return `${Math.max(0, Math.round(minutes))} ${LABELS[locale].minutes}`
+	return `${Math.max(0, Math.round(minutes))} ${messageCopyFor(locale).labels.waitUnit}`
+}
+
+/** What the guest can click, by message kind. Language-independent. */
+const EMAIL_CTA: Partial<
+	Record<
+		ToggleableMessageKind | PaymentEmailKind,
+		'manage' | 'confirm' | 'status' | 'book' | 'pay'
+	>
+> = {
+	confirmation: 'manage',
+	modification: 'manage',
+	reminder: 'manage',
+	reconfirm_request: 'confirm',
+	request_received: 'manage',
+	request_approved: 'manage',
+	waitlist_joined: 'status',
+	waitlist_ready: 'status',
+	notify_available: 'book',
+	payment_received: 'manage',
+	fee_action_required: 'pay',
 }
 
 /** Google Calendar template link: carries the booking facts, never a token. */
@@ -448,26 +211,37 @@ export function renderReservationEmail(
 	input: ReservationEmailInput,
 ): RenderedReservationEmail {
 	const locale = normalizeReservationLocale(input.locale)
-	const labels = LABELS[locale]
+	const copyset = messageCopyFor(locale)
+	const labels = copyset.labels
 	const when =
 		typeof input.whenMs === 'number'
 			? formatWhen(input.whenMs, input.timeZone, locale)
 			: null
-	const firstName =
-		input.firstName?.trim() || (locale === 'ar' ? 'ضيفنا' : 'there')
-	const vars: Vars = {
+	const firstName = input.firstName?.trim() || labels.guestFallback
+	const entry: KindCopy = copyset.kinds[input.kind]
+	const values = {
 		r: input.restaurantName,
 		name: firstName,
 		date: when?.date ?? '',
 		time: when?.time ?? '',
-		party: input.partySize ? String(input.partySize) : '',
-		wait:
-			typeof input.quotedWaitMin === 'number'
-				? formatWait(input.quotedWaitMin, locale)
-				: '',
 		amount: formatMoney(input.amountMinor, input.currency, locale),
+		waitSentence:
+			typeof input.quotedWaitMin === 'number'
+				? fillCopy(labels.emailWait, {
+						wait: formatWait(input.quotedWaitMin, locale),
+					})
+				: '',
 	}
-	const copy = (locale === 'ar' ? AR : EN)[input.kind](vars)
+	const copy = {
+		subject: fillCopy(entry.subject, values),
+		heading: fillCopy(entry.heading, values),
+		lead: fillCopy(
+			!when && entry.leadNoTime ? entry.leadNoTime : entry.lead,
+			values,
+		),
+		cta: EMAIL_CTA[input.kind],
+		ctaLabel: entry.ctaLabel,
+	}
 
 	const rows: Array<[string, string]> = [
 		[labels.restaurant, input.restaurantName],
@@ -507,8 +281,8 @@ export function renderReservationEmail(
 	const radius = Math.max(0, Math.min(24, Math.round(theme.radius || 8)))
 	const bodyFont = safeFont(theme.bodyFont)
 	const headingFont = safeFont(theme.headingFont)
-	const dir = locale === 'ar' ? 'rtl' : 'ltr'
-	const align = locale === 'ar' ? 'right' : 'left'
+	const dir = getSiteLocaleDirection(locale)
+	const align = dir === 'rtl' ? 'right' : 'left'
 	const logo = safeUrl(theme.logoUrl)
 
 	const detailRows = rows

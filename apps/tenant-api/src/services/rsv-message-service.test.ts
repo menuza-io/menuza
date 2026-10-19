@@ -216,13 +216,24 @@ describe('sending an email', () => {
 		expect(mail.html).toContain(`href="${SITE}/ar/reserve/manage#t=${token}"`)
 	})
 
-	it('uses the unprefixed site for a locale the organization does not publish', async () => {
+	it('uses the organization default language and unprefixed site for a language the organization does not publish', async () => {
 		const { rsv } = await booking()
 		await emailRow(rsv.id, 'confirmation', { locale: 'ar' })
 		await deliver()
 		const mail = sent.email.mock.calls[0]![0]
-		expect(mail.html).toContain('dir="rtl"')
+		expect(mail.html).toContain('<html lang="en" dir="ltr">')
 		expect(mail.html).toContain(`href="${SITE}/reserve/manage#t=`)
+	})
+
+	it('renders Spanish copy and the Spanish note for an enabled Spanish guest, falling back to the default language note', async () => {
+		setContext({ locales: ['en', 'es'] })
+		const { rsv } = await booking()
+		await emailRow(rsv.id, 'confirmation', { locale: 'es' })
+		await deliver()
+		const mail = sent.email.mock.calls[0]![0]
+		expect(mail.subject).toContain('está confirmada')
+		expect(mail.html).toContain('<html lang="es" dir="ltr">')
+		expect(mail.html).toContain(`href="${SITE}/es/reserve/manage#t=`)
 	})
 
 	it('shows the time in the reservation time zone', async () => {

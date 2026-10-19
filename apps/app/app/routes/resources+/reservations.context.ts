@@ -9,7 +9,11 @@ import {
 	Organization,
 	OrganizationLocation,
 } from '@repo/database'
-import { reservationsContextSchema } from '@repo/reservations'
+import {
+	parseSpecialHours,
+	parseWeeklyHours,
+	reservationsContextSchema,
+} from '@repo/reservations'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
 import { ENV } from 'varlock/env'
@@ -85,7 +89,8 @@ function parseLocales(raw: string | null, defaultLocale: string): string[] {
  *
  * Authenticated exclusively via `INTERNAL_COMMAND_TOKEN` (`requireInternalCommandAuth`).
  * Returns non-PII organization metadata, folded `reservations.*` flags, hex-converted
- * email branding, locations, payment processor readiness, and staffing/voice flags.
+ * email branding, locations (with typed `storeHours` / `specialHours` / `isActive` /
+ * time zone, the single source of truth for reservation hours), payment processor readiness, and staffing/voice flags.
  */
 export async function loader({ request }: LoaderFunctionArgs) {
 	try {
@@ -187,6 +192,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 	const paymentActive = Boolean(features.payments && onlinePayment.enabled)
 
+	// Location hours drive reservation availability. A malformed value fails
+	// open for that location only (parsed to null), and we log how many.
+	let malformedHours = 0
+	const locationHours = new Map(
+		locationRows.map((loc) => {
+			const weekly = parseWeeklyHours(loc.storeHours)
+			const special = parseSpecialHours(loc.specialHours)
+			if (weekly.malformed) malformedHours++
+			if (special.malformed) malformedHours++
+			return [loc.id, { storeHours: weekly.value, specialHours: special.value }]
+		}),
+	)
+	if (malformedHours > 0) {
+		console.warn(
+			`[reservations-context] ${malformedHours} malformed location hours value(s) ignored (fail open) for org ${org.id}`,
+		)
+	}
+
 	const payload = reservationsContextSchema.parse({
 		orgId: org.id,
 		dataRegion,
@@ -209,8 +232,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			currency: loc.address ? getLocationCurrency(loc.address) : currency,
 			phone: loc.phone ?? null,
 			address: parseLocationAddress(loc.address),
-			storeHours: parseJsonSafe(loc.storeHours),
-			specialHours: parseJsonSafe(loc.specialHours),
+			storeHours: locationHours.get(loc.id)?.storeHours ?? null,
+			specialHours: locationHours.get(loc.id)?.specialHours ?? null,
 			isActive: Boolean(loc.isActive),
 		})),
 		payments: {

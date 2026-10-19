@@ -3,16 +3,21 @@ import { msg } from '@lingui/core/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
 import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import {
-	EXPERIENCE_LOCALES,
 	type ExperienceDto,
 	type ExperienceInput,
 	type ExperienceKind,
-	type ExperienceLocale,
 	type ExperiencePatch,
 	type ExperienceScheduleDto,
 	type ExperienceStatus,
 	type ScheduleBody,
 } from '#app/utils/reservations/experiences-api.ts'
+import {
+	cleanLocalizedMap,
+	defaultEntry,
+	type LocalesLike,
+	type LocalizedMap,
+	type LocalizedText,
+} from '#app/utils/reservations/localized.ts'
 import {
 	currencyFractionDigits,
 	parseMoneyInput,
@@ -32,29 +37,6 @@ export const EXPERIENCE_STATUS_LABELS: Record<
 	draft: msg`Draft`,
 	published: msg`Published`,
 	archived: msg`Archived`,
-}
-
-export const EXPERIENCE_LOCALE_LABELS: Record<
-	ExperienceLocale,
-	MessageDescriptor
-> = {
-	en: msg`English`,
-	ar: msg`Arabic`,
-	es: msg`Spanish`,
-	fr: msg`French`,
-	de: msg`German`,
-	zh: msg`Chinese`,
-}
-
-/** The name in the interface language, then English, then any language. */
-export function pickExperienceText(
-	values: Record<string, string> | null | undefined,
-	locale: string,
-): string {
-	if (!values) return ''
-	return (
-		values[locale] ?? values.en ?? Object.values(values).find(Boolean) ?? ''
-	)
 }
 
 /** `Chef's Counter` -> `chefs-counter`; empty when nothing ASCII is left (Arabic names). */
@@ -107,8 +89,9 @@ export function daysToMask(days: readonly boolean[]): number {
 export type ExperienceFormValues = {
 	slug: string
 	kind: ExperienceKind
-	names: Partial<Record<ExperienceLocale, string>>
-	descriptions: Partial<Record<ExperienceLocale, string>>
+	/** Name per language; the default language is required. */
+	names: LocalizedMap
+	descriptions: LocalizedMap
 	imageUrl: string
 	price: string
 	pricePerCover: boolean
@@ -126,18 +109,6 @@ export type ExperienceFormField =
 export type ExperienceFormErrors = Partial<
 	Record<ExperienceFormField, MessageDescriptor>
 >
-
-const clean = <T extends string>(
-	values: Partial<Record<T, string>>,
-	keys: readonly T[],
-): Partial<Record<T, string>> => {
-	const out: Partial<Record<T, string>> = {}
-	for (const key of keys) {
-		const text = values[key]?.trim()
-		if (text) out[key] = text
-	}
-	return out
-}
 
 export function emptyExperienceForm(): ExperienceFormValues {
 	return {
@@ -160,12 +131,14 @@ export function emptyExperienceForm(): ExperienceFormValues {
 export function experienceToForm(
 	experience: ExperienceDto,
 ): ExperienceFormValues {
-	const names: Partial<Record<ExperienceLocale, string>> = {}
-	const descriptions: Partial<Record<ExperienceLocale, string>> = {}
-	for (const locale of EXPERIENCE_LOCALES) {
-		const name = experience.nameI18n[locale]
+	const names: LocalizedMap = {}
+	const descriptions: LocalizedMap = {}
+	for (const [locale, name] of Object.entries(experience.nameI18n)) {
 		if (name) names[locale] = name
-		const description = experience.descriptionI18n?.[locale]
+	}
+	for (const [locale, description] of Object.entries(
+		experience.descriptionI18n ?? {},
+	)) {
 		if (description) descriptions[locale] = description
 	}
 	return {
@@ -189,7 +162,7 @@ type ParsedForm =
 	| {
 			ok: true
 			input: Required<Omit<ExperienceInput, 'descriptionI18n'>> & {
-				descriptionI18n: Partial<Record<ExperienceLocale, string>> | null
+				descriptionI18n: LocalizedText | null
 			}
 	  }
 	| { ok: false; errors: ExperienceFormErrors }
@@ -198,11 +171,24 @@ type ParsedForm =
 export function experienceFormToInput(
 	form: ExperienceFormValues,
 	currency: string,
+	/** The organization's Website settings languages; omitted, no language is dropped. */
+	languages?: LocalesLike,
 ): ParsedForm {
 	const errors: ExperienceFormErrors = {}
-	const nameI18n = clean(form.names, EXPERIENCE_LOCALES)
-	if (Object.keys(nameI18n).length === 0) {
-		errors.name = msg`Enter a name in at least one language.`
+	const scope = languages ?? {
+		locales: Object.keys({ ...form.names, ...form.descriptions }),
+		defaultLocale: '',
+	}
+	const nameI18n = cleanLocalizedMap(form.names, scope)
+	if (
+		languages
+			? !defaultEntry(nameI18n, languages)
+			: !Object.keys(nameI18n).length
+	) {
+		errors.name =
+			languages && languages.locales.length > 1
+				? msg`Enter a name in the default language.`
+				: msg`Enter a name.`
 	}
 	const slug = form.slug.trim()
 	if (!slug) {
@@ -247,7 +233,7 @@ export function experienceFormToInput(
 	}
 
 	if (Object.keys(errors).length > 0) return { ok: false, errors }
-	const descriptions = clean(form.descriptions, EXPERIENCE_LOCALES)
+	const descriptions = cleanLocalizedMap(form.descriptions, scope)
 	return {
 		ok: true,
 		input: {
@@ -269,8 +255,17 @@ export function experienceFormToInput(
 	}
 }
 
-const sameJson = (a: unknown, b: unknown) =>
-	JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+/** Same language entries, whatever their order; null and empty are the same. */
+const sameMap = (
+	a: Record<string, string> | null | undefined,
+	b: Record<string, string> | null | undefined,
+) => {
+	const entries = (map: Record<string, string> | null | undefined) =>
+		JSON.stringify(
+			Object.entries(map ?? {}).sort(([x], [y]) => (x < y ? -1 : 1)),
+		)
+	return entries(a) === entries(b)
+}
 
 export type ExperienceFormInput = Extract<ParsedForm, { ok: true }>['input']
 
@@ -304,14 +299,18 @@ export function experiencePatch(
 	base: ExperienceDto,
 	input: ExperienceFormInput,
 	expectedVersion: number,
+	/** Languages a saved text is read in; text in a language that is no longer enabled stays untouched. */
+	languages?: LocalesLike,
 ): ExperiencePatch | null {
 	const before = experienceToInput(base)
 	const patch: Partial<ExperienceInput> = {}
+	const scope = (map: Record<string, string> | null) =>
+		languages ? cleanLocalizedMap(map, languages) : (map ?? {})
 	if (input.slug !== before.slug) patch.slug = input.slug
 	if (input.kind !== before.kind) patch.kind = input.kind
-	if (!sameJson(input.nameI18n, before.nameI18n))
+	if (!sameMap(input.nameI18n, scope(before.nameI18n)))
 		patch.nameI18n = input.nameI18n
-	if (!sameJson(input.descriptionI18n, before.descriptionI18n)) {
+	if (!sameMap(input.descriptionI18n, scope(before.descriptionI18n))) {
 		patch.descriptionI18n = input.descriptionI18n
 	}
 	if (input.imageUrl !== before.imageUrl) patch.imageUrl = input.imageUrl

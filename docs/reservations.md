@@ -13,19 +13,19 @@ and grants live in [permissions](./permissions.md).
 
 ## Features
 
-| Section     | Route                                 | What operators can do                                                                                                | Flag                       |
-| ----------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Overview    | `/<orgSlug>/reservations/overview`    | Location summary, today's covers, pending requests                                                                   | `reservations.enabled`     |
-| Today       | `/<orgSlug>/reservations/today`       | Live host stand: floor canvas, party drawer, seat/unseat/move tables, walk-ins, table blocks                         | `reservations.enabled`     |
-| Floor       | `/<orgSlug>/reservations/floor`       | Floor canvas on its own                                                                                              | `reservations.enabled`     |
-| Timeline    | `/<orgSlug>/reservations/timeline`    | Table-by-time grid for the business date                                                                             | `reservations.enabled`     |
-| Book        | `/<orgSlug>/reservations/book`        | Day sheet, create/edit bookings, approve or decline large-party requests, overbook with a reason                     | `reservations.enabled`     |
-| Calendar    | `/<orgSlug>/reservations/calendar`    | Month view with availability per day                                                                                 | `reservations.enabled`     |
-| Waitlist    | `/<orgSlug>/reservations/waitlist`    | Walk-in and online waitlist queue, quoted waits, notify/summon, seat directly to a table                             | `reservations.waitlist`    |
-| Guests      | `/<orgSlug>/reservations/guests`      | Guestbook CRM, tags, visit/no-show/spend counters, dietary notes, merge, export, erase                               | `reservations.enabled`     |
-| Experiences | `/<orgSlug>/reservations/experiences` | Ticketed tastings and events with schedules, occurrences, and per-cover or flat pricing                              | `reservations.experiences` |
-| Reports     | `/<orgSlug>/reservations/reports`     | Summary, no-shows, cancellations, turn times, waitlist and pacing reports with CSV export                            | `reservations.enabled`     |
-| Settings    | `/<orgSlug>/reservations/settings`    | Floor plan, tables, sections, services, special days, pacing, waitlist, policies (deposit, card guarantee), messages | `reservations.enabled`     |
+| Section     | Route                                      | What operators can do                                                                                                                                    | Flag                       |
+| ----------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Overview    | `/<orgSlug>/reservations/overview`         | Location summary, today's covers, pending requests                                                                                                       | `reservations.enabled`     |
+| Today       | `/<orgSlug>/reservations/today`            | Live host stand: floor canvas, party drawer, seat/unseat/move tables, walk-ins, table blocks                                                             | `reservations.enabled`     |
+| Floor       | `/<orgSlug>/reservations/floor`            | Floor canvas on its own                                                                                                                                  | `reservations.enabled`     |
+| Timeline    | `/<orgSlug>/reservations/timeline`         | Table-by-time grid for the business date                                                                                                                 | `reservations.enabled`     |
+| Book        | `/<orgSlug>/reservations/book`             | Day sheet, create/edit bookings, approve or decline large-party requests, overbook with a reason                                                         | `reservations.enabled`     |
+| Calendar    | `/<orgSlug>/reservations/calendar`         | Month view with availability per day                                                                                                                     | `reservations.enabled`     |
+| Waitlist    | `/<orgSlug>/reservations/waitlist`         | Walk-in and online waitlist queue, quoted waits, notify/summon, seat directly to a table                                                                 | `reservations.waitlist`    |
+| Guests      | `/<orgSlug>/reservations/guests`           | Guestbook CRM, tags, visit/no-show/spend counters, dietary notes, merge (blocked for two different customers), export, erase (the complete person erase) | `reservations.enabled`     |
+| Experiences | `/<orgSlug>/reservations/experiences`      | Ticketed tastings and events with schedules, occurrences, and per-cover or flat pricing                                                                  | `reservations.experiences` |
+| Reports     | `/<orgSlug>/reports?category=Reservations` | A link to the generic Reports page on its Reservations templates (see Reservation reports below); `/reservations/reports` redirects there                | `reservations.enabled`     |
+| Settings    | `/<orgSlug>/reservations/settings`         | Floor plan, tables, sections, services, special days, pacing, waitlist, policies (deposit, card guarantee), messages                                     | `reservations.enabled`     |
 
 Guest-facing surfaces: the Sites `/reserve` pages (book, `/reserve/manage`,
 `/reserve/waitlist`, `/reserve/pay`), the native iOS and Android booking flows
@@ -103,7 +103,8 @@ Role presets (Settings, Roles; `RESERVATIONS_ROLE_PRESETS` in
    combinations and sections.
 5. **Services** (meal periods): days, first and last seating, end, turn times.
    Then pacing rules, special days (closed, online closed, modified, replace)
-   and blocks. The validation panel reports overlaps and conflicts.
+   and blocks. The validation panel reports overlaps and conflicts, and checks
+   services against the location's opening hours (see "Hours model").
 6. **Policies** (needs `reservations.payments`, a connected provider account):
    deposit, card guarantee or prepay, fees and the cancellation window.
 7. **Messages** (Settings, Messages): switch message kinds on or off, reminder
@@ -113,6 +114,96 @@ Role presets (Settings, Roles; `RESERVATIONS_ROLE_PRESETS` in
    `GET /resources/sites/reservations` and answers 404 until the website is
    published and both flags are on.
 9. Check Book with a test booking, then Today.
+
+## Languages
+
+Reservations has no language list of its own. The languages are the ones in
+**Website settings, Languages** (`siteLocales` plus the default language
+`siteDefaultLocale`, limited to the six site content languages `en`, `ar`, `es`,
+`fr`, `de`, `zh`), the same list the Menu and Drops editors use. Decision
+record: `docs/reservations-mission/library/reservations-i18n.md`; ADR 048,
+section 13.
+
+- **Who writes what.** Owners type guest-facing text themselves, per language:
+  service names, dining area names, the booking page note and the large-party
+  message (Settings, General), the special-day public note, experience name and
+  description, payment policy terms and the custom note of each guest message.
+  Each editor has the shared language switcher in its header; it hides itself
+  for a one-language organization, and the editor starts on the organization's
+  **default** language (never the operator's interface language). The default
+  language is required for names; every other language is optional and falls
+  back to it. The existing optional Translate button comes with the field.
+- **Staff-only text stays single-language:** table labels, section names, policy
+  names, special-day names, blocks, service notes, guest notes and slugs.
+- **Storage.** Every guest-facing text is a `*_i18n` JSON map (language to text)
+  next to its canonical column (`name`), which holds the default-language text.
+  Message notes are one `rsv_message_texts` row per kind and language. A
+  language removed from Website settings is neither accepted on save nor served;
+  its stored text is left alone and is simply not shown.
+- **What guests see.** Operator text resolves requested language, then the
+  organization default, then the canonical name; it never borrows another
+  language. `locale` and `Accept-Language` are checked against the enabled
+  languages; anything else is the organization default.
+- **Guest messages.** The language of an SMS or email is the guest's own booking
+  language when the organization enables it, else the organization default. The
+  shipped subject, body and SMS templates exist for all six languages
+  (`apps/tenant-api/src/lib/reservations-copy/`, a
+  `Record<SiteContentLocale, ...>` so a new site language fails the typecheck
+  until its copy exists, and a test checks every kind and placeholder). The
+  templates are first drafts written without a native speaker: **have a native
+  speaker review the es, fr, de, zh and ar copy before relying on it.** The
+  owner's custom note is the note for the guest's language, else for the default
+  language, and is never translated at send time.
+- **Sites.** The page language comes from the Sites locale resolution (path
+  prefix, `<html lang>`); the page chrome is Lingui (all six catalogs) and the
+  booking client sends that language as `locale`.
+
+## Hours model: location hours are the single source of truth
+
+The location (Settings, Locations) owns "when are we open": weekly `storeHours`,
+dated `specialHours`, `isActive` and the time zone. Reservations reads them from
+the non-PII control-plane context (`GET /resources/reservations/context`) and
+there is no flag: enforcement is on for everyone.
+
+- Services and seatings only operate **inside** the open hours. A slot is
+  offered only when its start instant is open in the **location's** zone (the
+  reservation zone and `dayStartMin` only label business dates: a 01:00 slot
+  belongs to the previous business date but is checked by its real clock time).
+- A closed location (special hours closed, `isActive` false, a closed weekday)
+  has **no** availability for guests, the online widget, the phone agent or
+  holds, and a stale hold cannot be confirmed. Hosts see a closed-day state with
+  the source ("Closed: Christmas (from location hours)") and can still book with
+  the explicit `overbook` override (same as a reservations `closed` day). Slots
+  outside open hours on an otherwise open day carry the warning
+  `outside_location_hours` for staff.
+- Reservation special days only add reservation behavior **on top**: `closed`
+  (reservations-only closure while the location stays open), `online_closed`
+  (stop online, staff and phone can still book) and `modified` / `replace`
+  (service windows and limits, only inside open hours). A special day can never
+  open reservations on a closed location; for a special opening edit the
+  location's special hours.
+- Overnight hours are modelled as the location does it (split at midnight, for
+  example Fri 18:00-23:59 and Sat 00:00-02:00; an end before the start is read
+  as overnight). `onlineHours` is ordering-only and ignored here. The end of a
+  range is inclusive at minute granularity. Several ranges per day are fine.
+- Fail open: no context, no weekly hours, or a malformed value for one location
+  never closes anything (the context schema parses it to `null` and logs a
+  count). A context older than 24 hours is dropped by the cache, so it also
+  fails open.
+- Existing bookings are never auto-cancelled when a day closes: they appear in
+  the conflicts feed (`outside_service_hours`) and the host stand.
+- The setup validation panel warns about `service_on_closed_weekday`,
+  `service_outside_location_hours`, `location_inactive` and `location_no_hours`
+  ("Add opening hours in Location settings"), and notes (info only, in `infos`)
+  a reservations `closed` special day on dates the location is already closed
+  (`special_day_redundant_closed`).
+
+Code: `packages/reservations/src/rules/location-hours.ts` (`isLocationOpenAt`,
+`locationOpenIntervals`, `buildEffectiveDay`), the engine in
+`packages/reservations/src/engine/availability.ts` (`config.locationHours`),
+`apps/tenant-api/src/services/rsv-location-hours.ts` and `rsv-special-days.ts`
+(`loadStaffDayState`). Decision record:
+`.factory/mission/library/special-days-vs-location-hours.md` and ADR 048.
 
 ## Kill switches and environment variables
 
@@ -191,8 +282,9 @@ region guard asks the old node for counts only
 - `TENANT_API_URL_KSA` is set in App and Sites; `APP_URL` and
   `INTERNAL_COMMAND_TOKEN` are set on the KSA node so it can read flags and post
   manager alerts.
-- Arabic (`ar`) message texts and right-to-left layouts are required in the App
-  and Sites; check them with `?lng=ar`.
+- Arabic (`ar`) must be enabled in Website settings for the organization to
+  write and send Arabic copy (see [Languages](#languages)); right-to-left
+  layouts are required in the App and Sites; check them with `?lng=ar`.
 
 ## Local development
 
@@ -284,13 +376,66 @@ code when this page was written.
   an `expectedVersion`, so a guest tapping "running late" between the two is not
   honored.
 
+**Reservation reports**
+
+Reservation reports are not a screen of their own. They are the **Reservations**
+template category of the generic Reports page (`/<orgSlug>/reports`), built on
+three regional subjects: `bookings`, `waitlist_entries` and `pacing_slots`. The
+Reservations **Reports** tab and sidebar item are plain links to
+`/<orgSlug>/reports?category=Reservations&location=<active location>`; the old
+`/reservations/reports` route only redirects there (keeping `lng`), and the
+active location becomes a `location` filter on the template you open.
+
+- Data path: the browser fetches `/<orgSlug>/reports/token` and posts the report
+  straight to tenant-api `POST /analytics/query`. Nothing passes through the App
+  and no field carries a name, phone, email, note or allergy text (a test locks
+  the field list). Every run writes one `report.run` audit row naming the
+  subject and row count.
+- Access: `read:reservation_report:any` plus the `reservations.enabled` flag,
+  limited to the person's locations. A role holding only this grant (host, shift
+  manager, finance) can mint a report token; without an analytics, settings or
+  website grant it receives only the reservation (and staff) subjects. The
+  templates, the dashboard Add block picker and saved reports are filtered by
+  the same grants.
+- **Covers** are the guests who actually came when recorded, otherwise the
+  booked party size (`coversActual ?? partySize`), in every report. A finished
+  party does not use the seated count.
+- Booked parties are bookings that are not cancelled, declined or expired. The
+  no-show rate divides no-shows by booked parties, so upcoming bookings count in
+  the denominator: use a range that has passed.
+- Turn-time fields reuse `configuredTurnMinutes` (a service rule beats a general
+  one); `turnVarianceMinutes` is actual minus configured.
+- `pacing_slots` rows come from `computePacingSlots` in
+  `apps/tenant-api/src/services/rsv-report-shared.ts`, the one definition of
+  bookings and covers per date, service and start time against the pacing
+  limits.
+- Templates: Daily summary, Covers by service, Booking sources, No-shows &
+  cancellations, Cancellations by who, Late cancellations, No-show list, Turn
+  times, Turn times against target, Waitlist outcomes, Waitlist waits, Pacing,
+  and four single-number KPIs (Covers today, No-show rate, Late cancellations,
+  Average waitlist wait) that also appear as dashboard report blocks. A report
+  reads at most 20,000 rows; none of the templates runs over all time.
+- Not carried over from the old page: the narrative insight sentence and the
+  comparison with the previous period (a follow-up for single-number reports),
+  and the read-only turn-time rules table (it stays in Settings, Policies).
+
 **Guests and reports**
 
+- Erasing a person is one flow (ADR 048, section 11) and
+  `customer_subscriptions` is the only marketing consent store (the
+  `rsv_guests.marketing_*_consent_at`, `consent_source` and
+  `consent_text_version` columns are deprecated, never read or written, and
+  dropped in a later release). A guest links to a customer only through a
+  verified phone; merging two guests linked to different customers is refused
+  (`409 merge_conflicting_customers`). Still open: access tokens issued before
+  an erasure stay valid until they expire (15 minutes), the Stripe customer
+  object is not deleted at the provider, and website form submissions are
+  redacted only when they contain the erased phone or email.
 - The guestbook is organization-wide: `locationIds` scoping is not applied to
   guests (needs a product decision).
-- Report CSV export keeps the oldest 20,000 rows when it truncates, and the
-  no-show rate denominator counts every booking that is not cancelled, declined
-  or expired, including upcoming ones.
+- A report keeps the oldest 20,000 rows when it truncates (a notice shows), and
+  the no-show rate denominator counts every booking that is not cancelled,
+  declined or expired, including upcoming ones.
 - The append-only triggers on `rsv_reservation_events` and `rsv_audit_log` allow
   an update that sets the redaction payload while leaving actor and time columns
   unpinned, so a redaction could also rewrite them.
