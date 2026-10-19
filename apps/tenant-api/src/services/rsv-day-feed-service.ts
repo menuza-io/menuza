@@ -1640,6 +1640,11 @@ export async function getOperatorAvailability(
 						dayState.effectiveDay.intervals,
 						localToInstant(input.date, m, engineState.timeZone).instantMs,
 					))
+			const slotStartAt = localToInstant(
+				input.date,
+				m,
+				engineState?.timeZone ?? 'UTC',
+			).instantMs
 			const pacingWarning =
 				(engineSlot?.warnings ?? []).some(
 					(w) => w !== 'outside_location_hours',
@@ -1654,7 +1659,10 @@ export async function getOperatorAvailability(
 				!evaluatePacing({
 					serviceId: svc.id,
 					slotMin: m,
-					startAt: m * 60_000,
+					businessDate: input.date,
+					// Epoch ms (not minutes): concurrency overlaps compare instants.
+					startAt: slotStartAt,
+					endAt: slotStartAt + durationMin * 60_000,
 					durationMin,
 					intervalMin: interval,
 					partySize: input.partySize,

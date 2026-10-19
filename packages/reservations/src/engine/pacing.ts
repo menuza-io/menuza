@@ -107,6 +107,23 @@ function sameBucket(
 }
 
 /**
+ * Instants are epoch milliseconds. A local minute-of-day (for example
+ * `m * 60_000`) is far below 1e11 (year 1973) and never overlaps real
+ * bookings, which silently disables the concurrency cap. Fail loudly outside
+ * production.
+ */
+function assertEpochMs(name: string, value: number | undefined): void {
+	if (value === undefined) return
+	if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production')
+		return
+	if (value < 1e11) {
+		throw new Error(
+			`evaluatePacing: ${name}=${value} is not an epoch-ms instant (got minutes or a minute-based offset?)`,
+		)
+	}
+}
+
+/**
  * Evaluate whether adding a party of `partySize` at `slotMin` in `serviceId`
  * (and optional `areaId`) respects all matching pacing rules, rolling windows,
  * per-interval online caps, and concurrent cover caps (`architecture.md` §6.3, `VAL-FND-006`).
@@ -130,6 +147,12 @@ export function evaluatePacing(input: {
 	existing: readonly PacingBookingItem[]
 	ignoreIds?: ReadonlySet<string>
 }): PacingEvaluation {
+	assertEpochMs('startAt', input.startAt)
+	assertEpochMs('endAt', input.endAt)
+	for (const item of input.existing) {
+		assertEpochMs('existing.startAt', item.startAt)
+		assertEpochMs('existing.endAt', item.endAt)
+	}
 	const activeExisting = input.existing.filter((item) => {
 		if (input.ignoreIds?.has(item.id)) return false
 		if (item.kind === 'block') return false

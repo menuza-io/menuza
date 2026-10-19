@@ -7,10 +7,13 @@ import {
 	provisionTenantDb,
 	rsvAreas,
 	rsvBlocks,
+	rsvGuests,
 	rsvLocationSettings,
+	rsvReservations,
 	rsvServices,
 	rsvTables,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getOperatorAvailability } from './rsv-day-feed-service.ts'
 
@@ -151,5 +154,40 @@ describe('getOperatorAvailability goes through the public engine', () => {
 		expect(room).toContain('17:00')
 		// Another room is unaffected.
 		expect(free(await slots('area_solo'))).toContain('19:00')
+	})
+
+	it('flags a concurrent-covers cap breach for staff as a warning, not a block', async () => {
+		const db = await getTenantDb(ORG)
+		await db
+			.update(rsvServices)
+			.set({ concurrentCoversCap: 6 })
+			.where(eq(rsvServices.id, 'svc_dinner'))
+		await db.insert(rsvGuests).values({ id: 'gst_cc', firstName: 'Cap' })
+		await db.insert(rsvReservations).values({
+			id: 'res_cc',
+			locationId: LOC,
+			guestId: 'gst_cc',
+			confirmationCode: 'CCCAP1',
+			businessDate: DATE,
+			localStartMin: 19 * 60,
+			timeZone: 'UTC',
+			startAt: at('19:00'),
+			endAt: at('20:30'),
+			durationMin: 90,
+			serviceId: 'svc_dinner',
+			partySize: 5,
+			status: 'booked',
+			channel: 'online',
+		})
+		const avail = await slots('area_solo')
+		const inside = avail.slots.find((s) => s.time === '19:30')!
+		expect(inside.pacingWarning).toBe(true)
+		expect(inside.available).toBe(false)
+		// Staff override model: the slot stays bookable (overbook), never removed.
+		expect(inside.overbookAvailable).toBe(true)
+		// Outside the overlap window the cap is not breached.
+		expect(avail.slots.find((s) => s.time === '17:00')!.pacingWarning).toBe(
+			false,
+		)
 	})
 })
