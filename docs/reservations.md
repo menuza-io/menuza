@@ -153,8 +153,7 @@ Role presets (Settings, Roles; `RESERVATIONS_ROLE_PRESETS` in
 ## First-day setup
 
 1. **Flags.** Turn on `reservations.enabled`; add `online`, `waitlist`,
-   `payments`, `experiences`, `voice` as the restaurant needs them. Local:
-   `.factory/mission/scripts/set-org-flag.sh <org> <key> <value>`.
+   `payments`, `experiences`, `voice` as the restaurant needs them.
 2. **Locations.** Create or check the organization's locations (Settings,
    Locations). Each bookable location needs an address and a time zone.
 3. **Permissions.** Give the host stand and managers the presets above.
@@ -183,8 +182,7 @@ Reservations has no language list of its own. The languages are the ones in
 **Website settings, Languages** (`siteLocales` plus the default language
 `siteDefaultLocale`, limited to the six site content languages `en`, `ar`, `es`,
 `fr`, `de`, `zh`), the same list the Menu and Drops editors use. Decision
-record: `docs/reservations-mission/library/reservations-i18n.md`; ADR 048,
-section 13.
+record: ADR 048, section 13.
 
 - **Who writes what.** Owners type guest-facing text themselves, per language:
   service names, dining area names, the booking page note and the large-party
@@ -264,8 +262,7 @@ Code: `packages/reservations/src/rules/location-hours.ts` (`isLocationOpenAt`,
 `locationOpenIntervals`, `buildEffectiveDay`), the engine in
 `packages/reservations/src/engine/availability.ts` (`config.locationHours`),
 `apps/tenant-api/src/services/rsv-location-hours.ts` and `rsv-special-days.ts`
-(`loadStaffDayState`). Decision record:
-`.factory/mission/library/special-days-vs-location-hours.md` and ADR 048.
+(`loadStaffDayState`). Decision record: ADR 048.
 
 ## Kill switches and environment variables
 
