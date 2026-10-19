@@ -39,18 +39,18 @@ export type SetupStatus = {
 }
 
 /**
- * One source of truth for "can guests book?". Blocking issues are validator
- * errors; warnings are suggestions and never block.
+ * The status is derived from the same rows the diagnostics card lists (see
+ * `describeSetupIssues`), never from the raw validator output: the validator
+ * emits one `unseatable_party_size` warning per party size while the card folds
+ * them into one line, so counting the raw issues made the header chip say
+ * "3 suggestions" above a card with one. Blocking rows are validator errors and
+ * the empty-setup essentials; the rest are suggestions that never block.
  */
-export function summarizeSetupStatus(
-	issues: ReadonlyArray<Pick<SetupIssueInput, 'severity'>>,
-	essentials: SetupEssentials = {},
+export function summarizeSetupItems(
+	items: ReadonlyArray<Pick<SetupIssueItem, 'severity'>>,
 ): SetupStatus {
-	const blockingCount =
-		issues.filter((i) => i.severity === 'error').length +
-		(essentials.noServices ? 1 : 0) +
-		(essentials.noTables ? 1 : 0)
-	const suggestionCount = issues.filter((i) => i.severity === 'warning').length
+	const blockingCount = items.filter((i) => i.severity === 'error').length
+	const suggestionCount = items.length - blockingCount
 	return {
 		state:
 			blockingCount > 0
@@ -61,6 +61,14 @@ export function summarizeSetupStatus(
 		blockingCount,
 		suggestionCount,
 	}
+}
+
+/** Convenience for callers that only have the raw validator output. */
+export function summarizeSetupStatus(
+	issues: readonly SetupIssueInput[],
+	essentials: SetupEssentials = {},
+): SetupStatus {
+	return summarizeSetupItems(describeSetupIssues(issues, new Map(), essentials))
 }
 
 /** `[1,2,3,5,6]` -> `1-3, 5-6`. Logical order, digits only (callers wrap in bdi). */

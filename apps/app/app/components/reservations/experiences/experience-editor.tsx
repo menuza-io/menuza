@@ -35,6 +35,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { ScheduleSheet } from '#app/components/reservations/experiences/schedule-sheet.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
 	SelectField,
@@ -130,7 +131,17 @@ export function ExperienceEditor({
 	const { t, i18n } = useLingui()
 	const [state, setState] = useState<LoadState>({ status: 'loading' })
 	const [form, setForm] = useState<ExperienceFormValues | null>(null)
-	const [errors, setErrors] = useState<ExperienceFormErrors>({})
+	// Derived from the draft on every render and revealed after a save attempt,
+	// so a message goes away as soon as the value is valid.
+	const liveCurrency = state.status === 'ready' ? state.experience.currency : ''
+	const liveParsed = useMemo(
+		() => (form ? experienceFormToInput(form, liveCurrency) : null),
+		[form, liveCurrency],
+	)
+	const { errors, attempt } = useRevealedErrors<
+		keyof ExperienceFormErrors,
+		MessageDescriptor
+	>(liveParsed && !liveParsed.ok ? liveParsed.errors : {})
 	const [banner, setBanner] = useState<string[]>([])
 	const [conflict, setConflict] = useState<ExperienceDto | null>(null)
 	const [busy, setBusy] = useState(false)
@@ -306,13 +317,9 @@ export function ExperienceEditor({
 	async function saveDetails() {
 		if (!form) return
 		const parsed = experienceFormToInput(form, currency)
-		if (!parsed.ok) {
-			setErrors(parsed.errors)
-			setBanner([])
-			return
-		}
-		setErrors({})
+		attempt()
 		setBanner([])
+		if (!parsed.ok) return
 		const patch = experiencePatch(base, parsed.input, experience.version)
 		if (!patch) return
 		setBusy(true)

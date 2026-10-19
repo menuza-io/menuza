@@ -19,6 +19,7 @@ import {
 	useEffect,
 	useId,
 	useMemo,
+	useRef,
 	useState,
 } from 'react'
 import {
@@ -146,6 +147,7 @@ export function MessageSettingsScreen({
 	const [notice, setNotice] = useState<'saved' | 'conflict' | null>(null)
 	const [previewKind, setPreviewKind] = useState('confirmation')
 	const [previewLocale, setPreviewLocale] = useState<MessageLocale>('en')
+	const previewCardRef = useRef<HTMLDivElement>(null)
 
 	const base = useMemo(
 		() => (settings ? draftFromSettings(settings) : null),
@@ -199,6 +201,28 @@ export function MessageSettingsScreen({
 	const previewKindValue = kinds.some((k) => k.kind === previewKind)
 		? previewKind
 		: (kinds[0]?.kind ?? previewKind)
+
+	// The preview lives in its own card below the notes, and "confirmation" is
+	// already selected on load, so choosing a kind alone changes nothing on
+	// screen. Bring the card into view and move focus to it so the click always
+	// has a visible result.
+	const openPreview = (kind: string) => {
+		setPreviewKind(kind)
+		const card = previewCardRef.current
+		if (!card) return
+		const reduceMotion =
+			typeof window.matchMedia === 'function' &&
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		card.scrollIntoView?.({
+			behavior: reduceMotion ? 'auto' : 'smooth',
+			block: 'start',
+		})
+		card.focus({ preventScroll: true })
+	}
+	const savedNote = (kind: string, locale: MessageLocale) =>
+		settings?.kinds.find((entry) => entry.kind === kind)?.notes[locale] ?? ''
+	const previewHasNote =
+		savedNote(previewKindValue, previewLocale).trim() !== ''
 
 	const update = (change: (current: MessageDraft) => MessageDraft) => {
 		setDraft((current) => (current ? change(current) : current))
@@ -556,7 +580,7 @@ export function MessageSettingsScreen({
 											type="button"
 											variant="ghost"
 											size="xs"
-											onClick={() => setPreviewKind(kind)}
+											onClick={() => openPreview(kind)}
 											data-testid={`message-preview-pick-${kind}`}
 										>
 											<Trans>Preview</Trans>
@@ -615,70 +639,90 @@ export function MessageSettingsScreen({
 				</FramePanel>
 			</Frame>
 
-			<Frame data-testid="message-preview-card">
-				<FrameHeader>
-					<FrameTitle>
-						<Trans>Preview</Trans>
-					</FrameTitle>
-					<FrameDescription>
-						<Trans>
-							A sample message with made-up guest details, built from the saved
-							settings.
-						</Trans>
-					</FrameDescription>
-				</FrameHeader>
-				<FramePanel className="flex flex-col gap-4">
-					<div className="flex flex-wrap items-end gap-3">
-						<SelectField
-							className="w-full max-w-xs"
-							id="message-preview-kind"
-							label={<Trans>Message</Trans>}
-							options={kindOptions}
-							value={previewKindValue}
-							onValueChange={setPreviewKind}
-						/>
-						<ToggleGroup
-							aria-label={t`Language`}
-							value={[previewLocale]}
-							onValueChange={(next) => {
-								const picked = next[0] as MessageLocale | undefined
-								if (picked) setPreviewLocale(picked)
-							}}
-							variant="segmented"
-							data-testid="message-preview-locale"
-						>
-							{MESSAGE_LOCALES.map((locale) => (
-								<ToggleGroupItem
-									key={locale}
-									value={locale}
-									className="h-11 md:h-7"
-									data-testid={`message-preview-locale-${locale}`}
-								>
-									{i18n._(MESSAGE_LOCALE_LABELS[locale])}
-								</ToggleGroupItem>
-							))}
-						</ToggleGroup>
-					</div>
-					{dirty ? (
+			<div
+				ref={previewCardRef}
+				tabIndex={-1}
+				className="scroll-mt-4 outline-none"
+				data-testid="message-preview-card"
+			>
+				<Frame>
+					<FrameHeader>
+						<FrameTitle>
+							<Trans>Preview</Trans>
+						</FrameTitle>
+						<FrameDescription>
+							<Trans>
+								A sample message with made-up guest details, built from the
+								saved settings.
+							</Trans>
+						</FrameDescription>
+					</FrameHeader>
+					<FramePanel className="flex flex-col gap-4">
+						<div className="flex flex-wrap items-end gap-3">
+							<SelectField
+								className="w-full max-w-xs"
+								id="message-preview-kind"
+								label={<Trans>Message</Trans>}
+								options={kindOptions}
+								value={previewKindValue}
+								onValueChange={setPreviewKind}
+							/>
+							<ToggleGroup
+								aria-label={t`Language`}
+								value={[previewLocale]}
+								onValueChange={(next) => {
+									const picked = next[0] as MessageLocale | undefined
+									if (picked) setPreviewLocale(picked)
+								}}
+								variant="segmented"
+								data-testid="message-preview-locale"
+							>
+								{MESSAGE_LOCALES.map((locale) => (
+									<ToggleGroupItem
+										key={locale}
+										value={locale}
+										className="h-11 md:h-7"
+										data-testid={`message-preview-locale-${locale}`}
+									>
+										{i18n._(MESSAGE_LOCALE_LABELS[locale])}
+									</ToggleGroupItem>
+								))}
+							</ToggleGroup>
+						</div>
 						<p
 							className="text-muted-foreground text-sm"
-							data-testid="message-preview-stale-note"
+							data-testid="message-preview-note-status"
 						>
-							<Trans>
-								The preview shows the saved settings. Save your changes to see
-								them here.
-							</Trans>
+							{previewHasNote ? (
+								<Trans>Includes your saved custom note.</Trans>
+							) : (
+								<Trans>
+									No custom note. This is the default text with sample guest
+									details.
+								</Trans>
+							)}
 						</p>
-					) : null}
-					<MessagePreview
-						client={client}
-						locationId={locationId}
-						kind={previewKindValue}
-						locale={previewLocale}
-						refreshKey={settings.version}
-					/>
-				</FramePanel>
-			</Frame>
+						{dirty ? (
+							<p
+								className="text-muted-foreground text-sm"
+								data-testid="message-preview-stale-note"
+							>
+								<Trans>
+									The preview shows the saved settings. Save your changes to see
+									them here.
+								</Trans>
+							</p>
+						) : null}
+						<MessagePreview
+							client={client}
+							locationId={locationId}
+							kind={previewKindValue}
+							locale={previewLocale}
+							refreshKey={settings.version}
+						/>
+					</FramePanel>
+				</Frame>
+			</div>
 
 			{canWrite && (dirty || (edited && hasIssues(issues))) ? (
 				<div

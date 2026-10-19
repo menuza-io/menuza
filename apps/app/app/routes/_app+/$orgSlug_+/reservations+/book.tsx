@@ -52,6 +52,7 @@ import { useReservationRequests } from '#app/components/reservations/use-reserva
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { FilterSelect } from '#app/components/staff/controls.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import { guestsCountLabel } from '#app/utils/reservations/count-labels.ts'
 import {
 	HOST_ACTION_LABELS,
@@ -135,6 +136,11 @@ export default function ReservationsBookRoute() {
 		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
 		pollIntervalMs: 10_000,
 	})
+	const businessDateLabel = formatBusinessDate(
+		host.businessDate,
+		i18n.locale,
+		'long',
+	)
 
 	const [view, setView] = useState<ReservationsViewTab>('reservations')
 	const [searchQuery, setSearchQuery] = useState('')
@@ -353,7 +359,7 @@ export default function ReservationsBookRoute() {
 									</strong>
 								</span>
 								<span data-testid="book-counter-covers">
-									<Trans>Covers</Trans>:{' '}
+									<Trans>Guests</Trans>:{' '}
 									<strong className="text-foreground tabular-nums">
 										{counters.covers}
 									</strong>
@@ -422,7 +428,7 @@ export default function ReservationsBookRoute() {
 										<Trans>No reservations for this day yet</Trans>
 									)
 								}
-								description={<Trans>Showing {host.businessDate}.</Trans>}
+								description={<Trans>Showing {businessDateLabel}.</Trans>}
 							>
 								{filtersActive ? (
 									<Button

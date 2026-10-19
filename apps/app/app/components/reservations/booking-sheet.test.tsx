@@ -266,6 +266,28 @@ describe('BookingSheet flow', () => {
 		toasts.warning.mockReset()
 	})
 
+	it('shows a format hint instead of "missing" when the phone number is filled but invalid', async () => {
+		renderSheet((call) =>
+			call.method === 'GET' ? availability({ slots: [slot(1140)] }) : created,
+		)
+		await screen.findByTestId('booking-slot-1140')
+		fireEvent.change(screen.getByTestId('booking-guest-phone'), {
+			target: { value: 'abc' },
+		})
+		fireEvent.change(screen.getByTestId('booking-guest-name'), {
+			target: { value: 'QA Tester' },
+		})
+		expect(screen.getByText(/Enter a valid phone number, e\.g\./)).toBeTruthy()
+		expect(
+			screen.getByTestId('booking-validation-summary').textContent,
+		).not.toMatch(/phone number$/)
+		expect(screen.getByTestId('booking-submit-btn')).toBeDisabled()
+		fireEvent.change(screen.getByTestId('booking-guest-phone'), {
+			target: { value: '+14155550100' },
+		})
+		expect(screen.queryByText(/Enter a valid phone number/)).toBeNull()
+	})
+
 	it('lists what is still needed from the start and keeps Book off until it is filled', async () => {
 		const { calls } = renderSheet((call) =>
 			call.method === 'GET' ? availability({ slots: [slot(1140)] }) : created,

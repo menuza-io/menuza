@@ -5,6 +5,11 @@ import { plural, t } from '@lingui/core/macro'
  * message (an ICU plural), never `{n} <Trans>noun</Trans>`: the translator
  * controls word order and plural forms (Arabic has six), and the number and the
  * noun stay in one text node so right-to-left rendering cannot split them.
+ *
+ * Vocabulary: people are always "guests" in these labels, errors and lists
+ * (seat capacity included). "Covers" is the industry term for total guests
+ * served and survives only as a column or KPI name in Reports; do not add it to
+ * labels, errors or lists.
  */
 
 export function partiesLabel(count: number): string {
@@ -37,10 +42,6 @@ export function unassignedAndConflictsLabel(
 	return t`${unassignedText} · ${conflictsText}`
 }
 
-export function coversLabel(count: number): string {
-	return plural(count, { one: '# cover', other: '# covers' })
-}
-
 export function guestsCountLabel(count: number): string {
 	return plural(count, { one: '# guest', other: '# guests' })
 }
@@ -56,9 +57,9 @@ export function specialClosedDaysLabel(count: number): string {
 	})
 }
 
-export function coversRangeLabel(min: number, max: number): string {
-	if (min >= max) return coversLabel(max)
-	return t`${min}-${max} covers`
+export function guestsRangeLabel(min: number, max: number): string {
+	if (min >= max) return guestsCountLabel(max)
+	return t`${min}-${max} guests`
 }
 
 export function finishedCountLabel(count: number): string {
@@ -72,6 +73,6 @@ export function allergiesTonightLabel(count: number): string {
 	})
 }
 
-export function coversLeftLabel(count: number): string {
-	return plural(count, { one: '# cover left', other: '# covers left' })
+export function guestsLeftLabel(count: number): string {
+	return plural(count, { one: '# guest left', other: '# guests left' })
 }

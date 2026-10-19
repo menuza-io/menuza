@@ -111,6 +111,20 @@ describe('experienceFormToInput', () => {
 		}
 	})
 
+	it('reports only the name for an empty form, and asks for a link name once a name exists', () => {
+		const empty = experienceFormToInput({ ...form, names: {}, slug: '' }, 'USD')
+		expect(empty.ok).toBe(false)
+		if (!empty.ok) expect(Object.keys(empty.errors)).toEqual(['name'])
+		const named = experienceFormToInput(
+			{ ...form, names: { ar: 'مائدة' }, slug: '' },
+			'USD',
+		)
+		if (!named.ok) {
+			expect(Object.keys(named.errors)).toEqual(['slug'])
+			expect(named.errors.slug?.message).toBe('Enter a link name.')
+		} else throw new Error('expected failure')
+	})
+
 	it('checks the party range', () => {
 		const result = experienceFormToInput(
 			{ ...form, partyMin: '6', partyMax: '4' },
@@ -274,7 +288,7 @@ describe('scheduleFormToBody', () => {
 		expect(backwards.ok).toBe(false)
 	})
 
-	it('needs a covers limit when the experience does not use tables', () => {
+	it('needs a guest limit when the experience does not use tables', () => {
 		const withoutCap = scheduleFormToBody(
 			{ ...base, times: ['19:00'] },
 			{ usesTables: false },
@@ -368,7 +382,7 @@ describe('error messages', () => {
 		const messages = experienceErrorMessages(err, translate, fallback)
 		expect(messages).toHaveLength(2)
 		expect(messages[0]).toMatch(/at least one schedule/)
-		expect(messages[1]).toMatch(/covers limit/)
+		expect(messages[1]).toMatch(/guest limit/)
 	})
 
 	it('knows a taken link name and a conflict, and falls back otherwise', () => {

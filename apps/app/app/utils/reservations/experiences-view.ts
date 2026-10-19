@@ -1,6 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { formatHhmm, parseHhmm } from '@repo/reservations'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import {
 	EXPERIENCE_LOCALES,
 	type ExperienceDto,
@@ -204,7 +205,10 @@ export function experienceFormToInput(
 		errors.name = msg`Enter a name in at least one language.`
 	}
 	const slug = form.slug.trim()
-	if (!SLUG_RE.test(slug)) {
+	if (!slug) {
+		// An empty form only reports the name; the link name follows from it.
+		if (!errors.name) errors.slug = msg`Enter a link name.`
+	} else if (!SLUG_RE.test(slug)) {
 		errors.slug = msg`Use lowercase letters, numbers and dashes only (up to 64).`
 	}
 
@@ -419,7 +423,7 @@ function optionalCap(
 	if (!text.trim()) return null
 	const value = Number(text)
 	if (!Number.isInteger(value) || value < 1 || value > max) {
-		errors[field] = msg`Enter a whole number of covers, or leave it empty.`
+		errors[field] = msg`Enter a whole number of guests, or leave it empty.`
 		return null
 	}
 	return value
@@ -509,7 +513,7 @@ export function scheduleFormToBody(
 		!errors.capSeating &&
 		!errors.capDay
 	) {
-		errors.capSeating = msg`Without tables, set a covers limit per seating or per day.`
+		errors.capSeating = msg`Without tables, set a guest limit per seating or per day.`
 	}
 
 	if (Object.keys(errors).length > 0) return { ok: false, errors }
@@ -548,16 +552,7 @@ export function formatSeatingMin(minute: number, locale: string): string {
 
 /** A date like `2026-10-24` shown as a calendar date (no zone shift). */
 export function formatCalendarDate(date: string, locale: string): string {
-	const [year, month, day] = date.split('-').map(Number)
-	if (!year || !month || !day) return date
-	try {
-		return new Intl.DateTimeFormat(locale, {
-			dateStyle: 'medium',
-			timeZone: 'UTC',
-		}).format(Date.UTC(year, month - 1, day))
-	} catch {
-		return date
-	}
+	return formatBusinessDate(date, locale, 'medium')
 }
 
 export { currencyFractionDigits }
@@ -568,7 +563,7 @@ const ISSUE_MESSAGES: Record<string, MessageDescriptor> = {
 	schedules_required: msg`Add at least one schedule before publishing.`,
 	schedule_in_past: msg`Every schedule has ended. Add or extend a schedule before publishing.`,
 	required: msg`A seating time is missing.`,
-	cap_required: msg`Without tables, every schedule needs a covers limit.`,
+	cap_required: msg`Without tables, every schedule needs a guest limit.`,
 	invalid_reference: msg`An area, service or policy you picked no longer exists. Reload and choose again.`,
 	https_only: msg`Use a secure image link that starts with https://.`,
 	one_mode: msg`Use either specific times or an interval, not both.`,

@@ -19,7 +19,7 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from '@repo/ui/collapsible'
-import { Field, FieldLabel } from '@repo/ui/field'
+import { Field, FieldError, FieldLabel } from '@repo/ui/field'
 import {
 	Frame,
 	FrameAction,
@@ -51,6 +51,7 @@ import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
 import { useDiscardGuard } from '#app/components/reservations/settings/setup-list-chrome.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
@@ -351,6 +352,7 @@ export default function ReservationsSettingsServicesRoute() {
 
 	const openCreate = () => {
 		setForm(NEW_SERVICE_FORM)
+		resetFieldErrors()
 		setSheetError(null)
 		setSheet({ mode: 'create' })
 	}
@@ -367,6 +369,7 @@ export default function ReservationsSettingsServicesRoute() {
 			interval: (svc.slotIntervalMin ?? 15) as Interval,
 			online: svc.onlineBookable ?? svc.isBookableOnline ?? true,
 		})
+		resetFieldErrors()
 		setSheetError(null)
 		setSheet({ mode: 'edit', svc })
 	}
@@ -383,8 +386,33 @@ export default function ReservationsSettingsServicesRoute() {
 		() => setSheet(null),
 	)
 
-	const patchForm = (patch: Partial<ServiceForm>) =>
+	// Derived from the form on every render and revealed after a submit attempt
+	// or blur, so a message goes away as soon as the value is valid.
+	const liveFieldErrors: Partial<Record<'name' | 'times', string>> = {}
+	if (sheet) {
+		if (!form.name.trim()) {
+			liveFieldErrors.name = _(msg`Service name is required.`)
+		}
+		const firstMin = timeStringToMinutes(form.first, { nextDay: false })
+		const lastMin = timeStringToMinutes(form.last, { nextDay: false })
+		const endMin = timeStringToMinutes(form.end, { nextDay: form.nextDay })
+		if (firstMin > lastMin || lastMin > endMin) {
+			liveFieldErrors.times = _(
+				msg`The first seating must not be after the last seating, and the last seating must not be after the service ends.`,
+			)
+		}
+	}
+	const {
+		errors: fieldErrors,
+		attempt: attemptSubmit,
+		touch: touchField,
+		reset: resetFieldErrors,
+	} = useRevealedErrors(liveFieldErrors)
+
+	const patchForm = (patch: Partial<ServiceForm>) => {
+		setSheetError(null)
 		setForm((prev) => ({ ...prev, ...patch }))
+	}
 
 	const handleToggleDay = (dayValue: number) => {
 		setForm((prev) => {
@@ -405,26 +433,15 @@ export default function ReservationsSettingsServicesRoute() {
 		setSheetError(null)
 		setConflictBanner(null)
 
-		const name = form.name.trim()
-		if (!name) {
-			setSheetError(_(msg`Service name is required.`))
-			return
-		}
 		if (form.days.length === 0) {
 			setSheetError(_(msg`Select at least one active day of the week.`))
 			return
 		}
+		if (!attemptSubmit()) return
+		const name = form.name.trim()
 		const firstMin = timeStringToMinutes(form.first, { nextDay: false })
 		const lastMin = timeStringToMinutes(form.last, { nextDay: false })
 		const endMin = timeStringToMinutes(form.end, { nextDay: form.nextDay })
-		if (firstMin > lastMin || lastMin > endMin) {
-			setSheetError(
-				_(
-					msg`Seating times must satisfy firstSeating <= lastSeating <= serviceEnd.`,
-				),
-			)
-			return
-		}
 		const nameAr = form.nameAr.trim()
 		const nameI18n = { en: name, ...(nameAr ? { ar: nameAr } : {}) }
 
@@ -571,9 +588,7 @@ export default function ReservationsSettingsServicesRoute() {
 		const maxCovers = paceMaxCovers.trim() ? Number(paceMaxCovers) : null
 		const maxParties = paceMaxParties.trim() ? Number(paceMaxParties) : null
 		if (maxCovers === null && maxParties === null) {
-			setErrorMessage(
-				_(msg`Specify at least max covers or max parties for pacing.`),
-			)
+			setErrorMessage(_(msg`Set a guest limit or a party limit for pacing.`))
 			return
 		}
 		await runMutation(
@@ -1468,6 +1483,8 @@ export default function ReservationsSettingsServicesRoute() {
 								label={<Trans>Name</Trans>}
 								placeholder={_(msg`e.g. Late Dinner`)}
 								value={form.name}
+								error={fieldErrors.name}
+								onBlur={() => touchField('name')}
 								onChange={(e) => patchForm({ name: e.target.value })}
 								data-testid="setup-service-name-input"
 							/>
@@ -1542,6 +1559,11 @@ export default function ReservationsSettingsServicesRoute() {
 									</Field>
 								</div>
 							</div>
+							{fieldErrors.times ? (
+								<FieldError data-testid="setup-service-times-error">
+									{fieldErrors.times}
+								</FieldError>
+							) : null}
 							<SelectField
 								label={<Trans>Booking times every</Trans>}
 								hint={

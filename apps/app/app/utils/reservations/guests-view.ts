@@ -49,27 +49,7 @@ export function formatLocalMinutes(minutes: number): string {
 	return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-/** A `YYYY-MM-DD` business date in the viewer's language, without a time zone shift. */
-export function formatBusinessDate(
-	date: string,
-	locale: string,
-	options: Intl.DateTimeFormatOptions = {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	},
-): string {
-	const parsed = new Date(`${date}T12:00:00Z`)
-	if (Number.isNaN(parsed.getTime())) return date
-	try {
-		return new Intl.DateTimeFormat(locale, {
-			...options,
-			timeZone: 'UTC',
-		}).format(parsed)
-	} catch {
-		return date
-	}
-}
+export { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 
 export function formatInstantDate(
 	instant: number | null,

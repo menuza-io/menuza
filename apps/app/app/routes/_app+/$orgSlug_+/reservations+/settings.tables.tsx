@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { FieldError } from '@repo/ui/field'
 import {
 	Frame,
 	FrameAction,
@@ -37,10 +38,12 @@ import {
 	EditSheet,
 	SetupNotices,
 } from '#app/components/reservations/settings/setup-list-chrome.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { guestsRangeLabel } from '#app/utils/reservations/count-labels.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	createArea,
@@ -100,8 +103,6 @@ type PendingConfirm =
 
 export default function ReservationsSettingsTablesRoute() {
 	const { _ } = useLingui()
-	const coversLabel = (minCovers: number, maxCovers: number) =>
-		_(msg`${minCovers}–${maxCovers} covers`)
 	const shapeLabel = (shape: string) => {
 		const option = SHAPE_OPTIONS.find((s) => s.value === shape)
 		return option ? _(option.label) : shape
@@ -127,7 +128,6 @@ export default function ReservationsSettingsTablesRoute() {
 	const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(
 		null,
 	)
-	const [fieldError, setFieldError] = useState<string | null>(null)
 	const [loadFailed, setLoadFailed] = useState(false)
 
 	// Area form
@@ -151,6 +151,55 @@ export default function ReservationsSettingsTablesRoute() {
 	const [comboMinCovers, setComboMinCovers] = useState(4)
 	const [comboMaxCovers, setComboMaxCovers] = useState(8)
 	const [comboTableIds, setComboTableIds] = useState<string[]>([])
+
+	// Field errors are derived from the form values on every render and only
+	// revealed after a submit attempt or a blur, so they clear as soon as the
+	// value is valid (see use-revealed-errors.ts).
+	const liveFieldErrors: Partial<
+		Record<
+			| 'areaName'
+			| 'tableLabel'
+			| 'tableRange'
+			| 'comboName'
+			| 'comboRange'
+			| 'comboTables',
+			string
+		>
+	> = {}
+	if (sheet.kind === 'area' && !areaName.trim()) {
+		liveFieldErrors.areaName = _(msg`Enter a name for the dining area.`)
+	}
+	if (sheet.kind === 'table') {
+		if (!tableLabel.trim()) {
+			liveFieldErrors.tableLabel = _(msg`Table label is required.`)
+		}
+		if (tableMinCovers > tableMaxCovers) {
+			liveFieldErrors.tableRange = _(
+				msg`The fewest guests cannot be more than the most guests.`,
+			)
+		}
+	}
+	if (sheet.kind === 'combo') {
+		if (!comboName.trim()) {
+			liveFieldErrors.comboName = _(msg`Combination name is required.`)
+		}
+		if (comboMinCovers > comboMaxCovers) {
+			liveFieldErrors.comboRange = _(
+				msg`The fewest guests cannot be more than the most guests.`,
+			)
+		}
+		if (comboTableIds.length < 2) {
+			liveFieldErrors.comboTables = _(
+				msg`Select at least 2 combinable tables to create a combination.`,
+			)
+		}
+	}
+	const {
+		errors: fieldErrors,
+		attempt: attemptSubmit,
+		touch: touchField,
+		reset: resetFieldErrors,
+	} = useRevealedErrors(liveFieldErrors)
 
 	const loadAll = useCallback(async () => {
 		if (!selectedLocationId) {
@@ -204,7 +253,7 @@ export default function ReservationsSettingsTablesRoute() {
 
 	const closeSheet = () => {
 		setSheet({ kind: 'closed' })
-		setFieldError(null)
+		resetFieldErrors()
 		setErrorMessage(null)
 		setConflictBanner(null)
 	}
@@ -213,7 +262,7 @@ export default function ReservationsSettingsTablesRoute() {
 		setErrorMessage(null)
 		setConflictBanner(null)
 		setFeedbackMessage(null)
-		setFieldError(null)
+		resetFieldErrors()
 	}
 
 	const openArea = (area: DiningAreaDto | null) => {
@@ -253,10 +302,7 @@ export default function ReservationsSettingsTablesRoute() {
 			return
 		startNotices()
 		const name = areaName.trim()
-		if (!name) {
-			setFieldError(_(msg`Enter a name for the dining area.`))
-			return
-		}
+		if (!attemptSubmit()) return
 		const editing = sheet.areaId
 			? areas.find((a) => a.id === sheet.areaId)
 			: null
@@ -353,14 +399,7 @@ export default function ReservationsSettingsTablesRoute() {
 			setErrorMessage(_(msg`Create a dining area before adding tables.`))
 			return
 		}
-		if (!tableLabel.trim()) {
-			setFieldError(_(msg`Table label is required.`))
-			return
-		}
-		if (tableMinCovers > tableMaxCovers) {
-			setErrorMessage(_(msg`Minimum covers cannot exceed maximum covers.`))
-			return
-		}
+		if (!attemptSubmit()) return
 
 		setSaving(true)
 		try {
@@ -437,20 +476,7 @@ export default function ReservationsSettingsTablesRoute() {
 		if (!canWrite || !selectedLocationId || saving) return
 		startNotices()
 
-		if (!comboName.trim()) {
-			setFieldError(_(msg`Combination name is required.`))
-			return
-		}
-		if (comboTableIds.length < 2) {
-			setErrorMessage(
-				_(msg`Select at least 2 combinable tables to create a combination.`),
-			)
-			return
-		}
-		if (comboMinCovers > comboMaxCovers) {
-			setErrorMessage(_(msg`Minimum covers cannot exceed maximum covers.`))
-			return
-		}
+		if (!attemptSubmit()) return
 
 		setSaving(true)
 		try {
@@ -490,7 +516,7 @@ export default function ReservationsSettingsTablesRoute() {
 					pending.area.id,
 				)
 				recordMutationSideEffects(res)
-				setFeedbackMessage(_(msg`Dining area archived.`))
+				setFeedbackMessage(_(msg`Dining area deleted.`))
 			} else if (pending.kind === 'table') {
 				const res = await deleteTable(
 					client,
@@ -498,7 +524,7 @@ export default function ReservationsSettingsTablesRoute() {
 					pending.table.id,
 				)
 				recordMutationSideEffects(res)
-				setFeedbackMessage(_(msg`Table archived.`))
+				setFeedbackMessage(_(msg`Table deleted.`))
 			} else {
 				const res = await deleteCombination(
 					client,
@@ -514,9 +540,9 @@ export default function ReservationsSettingsTablesRoute() {
 				extractApiErrorMessage(
 					err,
 					pending.kind === 'area'
-						? _(msg`Failed to archive dining area.`)
+						? _(msg`Failed to delete dining area.`)
 						: pending.kind === 'table'
-							? _(msg`Failed to archive table.`)
+							? _(msg`Failed to delete table.`)
 							: _(msg`Failed to delete table combination.`),
 				),
 			)
@@ -581,21 +607,21 @@ export default function ReservationsSettingsTablesRoute() {
 		if (pendingConfirm.kind === 'area') {
 			const areaLabel = pendingConfirm.area.name
 			return {
-				title: _(msg`Archive ${areaLabel}?`),
+				title: _(msg`Delete ${areaLabel}?`),
 				description: _(
-					msg`The area and its tables disappear from the floor and from online booking. Upcoming reservations are moved to other tables where possible, or flagged for you to review.`,
+					msg`The area and its tables disappear from the floor and from online booking. Past reservations keep their history. Upcoming reservations are moved to other tables where possible, or flagged for you to review.`,
 				),
-				confirm: _(msg`Archive`),
+				confirm: _(msg`Delete`),
 			}
 		}
 		if (pendingConfirm.kind === 'table') {
 			const tableName = pendingConfirm.table.label
 			return {
-				title: _(msg`Archive table ${tableName}?`),
+				title: _(msg`Delete table ${tableName}?`),
 				description: _(
-					msg`The table disappears from the floor and from booking. Upcoming reservations on it are moved to other tables where possible, or flagged for you to review.`,
+					msg`The table disappears from the floor and from booking. Past reservations keep their history. Upcoming reservations on it are moved to other tables where possible, or flagged for you to review.`,
 				),
-				confirm: _(msg`Archive`),
+				confirm: _(msg`Delete`),
 			}
 		}
 		const comboLabel = pendingConfirm.combo.name
@@ -822,7 +848,7 @@ export default function ReservationsSettingsTablesRoute() {
 														event.stopPropagation()
 														setPendingConfirm({ kind: 'area', area })
 													}}
-													aria-label={_(msg`Archive area`)}
+													aria-label={_(msg`Delete area`)}
 													data-testid={`setup-archive-area-${area.name}`}
 												>
 													<Icon name="trash-2" className="size-4" />
@@ -936,7 +962,7 @@ export default function ReservationsSettingsTablesRoute() {
 											{areaNameForTable}
 										</TableCell>
 										<TableCell className="tabular-nums">
-											{coversLabel(table.minCovers, table.maxCovers)}
+											{guestsRangeLabel(table.minCovers, table.maxCovers)}
 										</TableCell>
 										<TableCell className="text-muted-foreground">
 											{shapeLabel(table.shape)}
@@ -975,7 +1001,7 @@ export default function ReservationsSettingsTablesRoute() {
 															event.stopPropagation()
 															setPendingConfirm({ kind: 'table', table })
 														}}
-														aria-label={_(msg`Archive table`)}
+														aria-label={_(msg`Delete table`)}
 														data-testid={`setup-archive-table-${table.label}`}
 													>
 														<Icon name="trash-2" className="size-4" />
@@ -1081,7 +1107,7 @@ export default function ReservationsSettingsTablesRoute() {
 											{memberLabels}
 										</TableCell>
 										<TableCell className="tabular-nums">
-											{coversLabel(combo.minCovers, combo.maxCovers)}
+											{guestsRangeLabel(combo.minCovers, combo.maxCovers)}
 										</TableCell>
 										<TableCell className="text-end">
 											{canWrite ? (
@@ -1145,7 +1171,8 @@ export default function ReservationsSettingsTablesRoute() {
 							label={<Trans>Name</Trans>}
 							placeholder={_(msg`e.g. Main dining`)}
 							value={areaName}
-							error={fieldError}
+							error={fieldErrors.areaName}
+							onBlur={() => touchField('areaName')}
 							onChange={(e) => setAreaName(e.target.value)}
 							data-testid={
 								sheet.kind === 'area' && sheet.areaId
@@ -1221,7 +1248,8 @@ export default function ReservationsSettingsTablesRoute() {
 							label={<Trans>Table label</Trans>}
 							placeholder={_(msg`e.g. T15`)}
 							value={tableLabel}
-							error={fieldError}
+							error={fieldErrors.tableLabel}
+							onBlur={() => touchField('tableLabel')}
 							onChange={(e) => setTableLabel(e.target.value)}
 							data-testid={
 								sheet.kind === 'table' && sheet.tableId
@@ -1255,6 +1283,7 @@ export default function ReservationsSettingsTablesRoute() {
 								min={1}
 								max={99}
 								value={tableMaxCovers}
+								error={fieldErrors.tableRange}
 								onChange={(e) => setTableMaxCovers(Number(e.target.value) || 2)}
 								data-testid={
 									sheet.kind === 'table' && sheet.tableId
@@ -1316,7 +1345,8 @@ export default function ReservationsSettingsTablesRoute() {
 							label={<Trans>Name</Trans>}
 							placeholder={_(msg`e.g. T1 + T2`)}
 							value={comboName}
-							error={fieldError}
+							error={fieldErrors.comboName}
+							onBlur={() => touchField('comboName')}
 							onChange={(e) => setComboName(e.target.value)}
 							data-testid="setup-combo-name-input"
 						/>
@@ -1336,6 +1366,7 @@ export default function ReservationsSettingsTablesRoute() {
 								min={1}
 								max={99}
 								value={comboMaxCovers}
+								error={fieldErrors.comboRange}
 								onChange={(e) => setComboMaxCovers(Number(e.target.value) || 6)}
 								data-testid="setup-combo-max-covers-input"
 							/>
@@ -1371,6 +1402,9 @@ export default function ReservationsSettingsTablesRoute() {
 									)
 								})}
 							</div>
+							{fieldErrors.comboTables ? (
+								<FieldError>{fieldErrors.comboTables}</FieldError>
+							) : null}
 						</div>
 					</div>
 				</SheetForm>

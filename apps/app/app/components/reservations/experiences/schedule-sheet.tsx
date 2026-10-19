@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { parseHhmm } from '@repo/reservations'
@@ -8,7 +9,8 @@ import { Field, FieldError, FieldLabel } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
 	SelectField,
@@ -87,7 +89,22 @@ function Body({
 	const [form, setForm] = useState<ScheduleFormValues>(() =>
 		schedule ? scheduleToForm(schedule) : emptyScheduleForm(today),
 	)
-	const [errors, setErrors] = useState<ScheduleFormErrors>({})
+	// Derived from the form on every render and revealed after a save attempt,
+	// so a message goes away as soon as the value is valid.
+	const parsed = useMemo(
+		() => scheduleFormToBody(form, { usesTables }),
+		[form, usesTables],
+	)
+	const { errors: revealedErrors, attempt } = useRevealedErrors<
+		ScheduleFormField,
+		MessageDescriptor
+	>(parsed.ok ? {} : parsed.errors)
+	const [timeEntryError, setTimeEntryError] =
+		useState<MessageDescriptor | null>(null)
+	const errors: ScheduleFormErrors = {
+		...revealedErrors,
+		...(timeEntryError ? { times: timeEntryError } : {}),
+	}
 	const [banner, setBanner] = useState<string[]>([])
 	const [pending, setPending] = useState(false)
 	const [newTime, setNewTime] = useState('19:00')
@@ -116,13 +133,10 @@ function Body({
 		try {
 			parseHhmm(newTime)
 		} catch {
-			setErrors((current) => ({
-				...current,
-				times: msg`Enter times like 19:00.`,
-			}))
+			setTimeEntryError(msg`Enter times like 19:00.`)
 			return
 		}
-		setErrors((current) => ({ ...current, times: undefined }))
+		setTimeEntryError(null)
 		set('times', [...new Set([...form.times, newTime])].sort())
 	}
 
@@ -143,14 +157,9 @@ function Body({
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
-		const parsed = scheduleFormToBody(form, { usesTables })
-		if (!parsed.ok) {
-			setErrors(parsed.errors)
-			setBanner([])
-			return
-		}
-		setErrors({})
+		attempt()
 		setBanner([])
+		if (!parsed.ok) return
 		setPending(true)
 		try {
 			const failed = await onSave(parsed.body)
@@ -249,7 +258,10 @@ function Body({
 								id="schedule-new-time"
 								type="time"
 								value={newTime}
-								onChange={(event) => setNewTime(event.target.value)}
+								onChange={(event) => {
+									setTimeEntryError(null)
+									setNewTime(event.target.value)
+								}}
 								data-testid="schedule-new-time"
 								className="h-11 md:h-8"
 							/>

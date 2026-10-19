@@ -397,7 +397,7 @@ export function FloorPlanCanvas({
 		setDraftTables((prev) => prev.filter((t) => t.id !== selectedTable.id))
 		setSelected(null)
 		setDirty(true)
-		setLiveAnnouncement(_(msg`Removed table ${removedLabel} from floor plan`))
+		setLiveAnnouncement(_(msg`Deleted table ${removedLabel} from floor plan`))
 	}
 
 	const handleDeleteSelectedElement = () => {
@@ -408,7 +408,7 @@ export function FloorPlanCanvas({
 		)
 		setSelected(null)
 		setDirty(true)
-		setLiveAnnouncement(_(msg`Removed element ${removedLabel} from floor plan`))
+		setLiveAnnouncement(_(msg`Deleted element ${removedLabel} from floor plan`))
 	}
 
 	const handleDiscardDraft = () => {
@@ -1186,14 +1186,14 @@ export function FloorPlanCanvas({
 													data-testid="floor-inspector-delete-table"
 												>
 													<Icon name="trash-2" className="size-3.5" />
-													<Trans>Archive</Trans>
+													<Trans>Delete</Trans>
 												</Button>
 											}
 										/>
 										<AlertDialogContent>
 											<AlertDialogHeader>
 												<AlertDialogTitle>
-													<Trans>Archive this table?</Trans>
+													<Trans>Delete this table?</Trans>
 												</AlertDialogTitle>
 												<AlertDialogDescription>
 													<Trans>
@@ -1211,7 +1211,7 @@ export function FloorPlanCanvas({
 													onClick={handleArchiveSelectedTable}
 													data-testid="floor-inspector-delete-table-confirm"
 												>
-													<Trans>Archive table</Trans>
+													<Trans>Delete table</Trans>
 												</AlertDialogAction>
 											</AlertDialogFooter>
 										</AlertDialogContent>
@@ -1246,7 +1246,7 @@ export function FloorPlanCanvas({
 								/>
 								<NumberField
 									id="inspector-min-covers"
-									label={<Trans>Min covers</Trans>}
+									label={<Trans>Fewest guests</Trans>}
 									min={1}
 									max={99}
 									disabled={!canWrite}
@@ -1261,7 +1261,7 @@ export function FloorPlanCanvas({
 								/>
 								<NumberField
 									id="inspector-max-covers"
-									label={<Trans>Max covers</Trans>}
+									label={<Trans>Most guests</Trans>}
 									min={1}
 									max={99}
 									disabled={!canWrite}
@@ -1444,7 +1444,7 @@ export function FloorPlanCanvas({
 										data-testid="floor-inspector-delete-element"
 									>
 										<Icon name="trash-2" className="size-3.5" />
-										<Trans>Remove</Trans>
+										<Trans>Delete</Trans>
 									</Button>
 								) : null}
 							</div>

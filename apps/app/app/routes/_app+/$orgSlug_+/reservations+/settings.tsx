@@ -48,7 +48,7 @@ import {
 	describeSetupIssues,
 	type SetupStep,
 	type SetupStepId,
-	summarizeSetupStatus,
+	summarizeSetupItems,
 	type SetupIssueItem,
 	type SetupStatus,
 } from '#app/utils/reservations/setup-progress.ts'
@@ -298,13 +298,6 @@ export default function ReservationsSettingsRoute() {
 		[serviceList],
 	)
 	const setupIssueInputs = validation?.issues
-	const setupStatus = useMemo(() => {
-		if (loadingSummary || !validation) return null
-		return summarizeSetupStatus(validation.issues, {
-			noServices: activeServices !== null && activeServices.length === 0,
-			noTables: tableCount === 0,
-		})
-	}, [loadingSummary, validation, activeServices, tableCount])
 	const setupIssues = useMemo(
 		() =>
 			describeSetupIssues(
@@ -317,6 +310,12 @@ export default function ReservationsSettingsRoute() {
 			),
 		[setupIssueInputs, activeServices, tableCount],
 	)
+	// Derived from the rows the diagnostics card lists, so the header chip and
+	// the card can never disagree on the count.
+	const setupStatus = useMemo(() => {
+		if (loadingSummary || !validation) return null
+		return summarizeSetupItems(setupIssues)
+	}, [loadingSummary, validation, setupIssues])
 	const setupSteps = useMemo(
 		() =>
 			deriveSetupSteps({

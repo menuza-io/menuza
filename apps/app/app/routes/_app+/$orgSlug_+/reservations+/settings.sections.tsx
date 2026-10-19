@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { FieldError } from '@repo/ui/field'
 import {
 	Frame,
 	FrameAction,
@@ -37,6 +38,7 @@ import {
 	SetupNotices,
 	useDiscardGuard,
 } from '#app/components/reservations/settings/setup-list-chrome.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
@@ -125,7 +127,25 @@ export default function ReservationsSettingsSectionsRoute() {
 	const [layoutName, setLayoutName] = useState('')
 	const [layoutServiceId, setLayoutServiceId] = useState('')
 	const [draftSections, setDraftSections] = useState<DraftSectionRow[]>([])
-	const [nameError, setNameError] = useState<string | null>(null)
+	// Derived on every render, revealed after a submit attempt or blur, so a
+	// message goes away as soon as the value is valid.
+	const liveFieldErrors: Partial<Record<'name' | 'sections', string>> = {}
+	if (sheet.mode !== 'closed') {
+		if (!layoutName.trim()) {
+			liveFieldErrors.name = _(msg`Please enter a name for the section layout.`)
+		}
+		if (!draftSections.some((sec) => sec.name.trim().length > 0)) {
+			liveFieldErrors.sections = _(
+				msg`Add at least one named section to the layout.`,
+			)
+		}
+	}
+	const {
+		errors: fieldErrors,
+		attempt: attemptSubmit,
+		touch: touchField,
+		reset: resetFieldErrors,
+	} = useRevealedErrors(liveFieldErrors)
 	const [pendingDelete, setPendingDelete] =
 		useState<RsvSectionLayoutRecord | null>(null)
 
@@ -219,7 +239,7 @@ export default function ReservationsSettingsSectionsRoute() {
 
 	const closeSheet = () => {
 		setSheet({ mode: 'closed' })
-		setNameError(null)
+		resetFieldErrors()
 		setErrorMessage(null)
 	}
 
@@ -228,7 +248,7 @@ export default function ReservationsSettingsSectionsRoute() {
 		setLayoutName('')
 		setLayoutServiceId('')
 		setDraftSections(makeInitialDraftSections())
-		setNameError(null)
+		resetFieldErrors()
 		setErrorMessage(null)
 		setFeedbackMessage(null)
 	}
@@ -245,7 +265,7 @@ export default function ReservationsSettingsSectionsRoute() {
 				tableIds: [...sec.tableIds],
 			})),
 		)
-		setNameError(null)
+		resetFieldErrors()
 		setErrorMessage(null)
 		setFeedbackMessage(null)
 	}
@@ -271,12 +291,8 @@ export default function ReservationsSettingsSectionsRoute() {
 		event.preventDefault()
 		if (!canWrite || saving || sheet.mode === 'closed') return
 
+		if (!attemptSubmit()) return
 		const trimmedName = layoutName.trim()
-		if (!trimmedName) {
-			setNameError(_(msg`Please enter a name for the section layout.`))
-			return
-		}
-		setNameError(null)
 		const validSections = draftSections
 			.map((sec, idx) => ({
 				...(sec.id ? { id: sec.id } : {}),
@@ -286,11 +302,6 @@ export default function ReservationsSettingsSectionsRoute() {
 				tableIds: sec.tableIds,
 			}))
 			.filter((sec) => sec.name.length > 0)
-
-		if (validSections.length === 0) {
-			setErrorMessage(_(msg`Add at least one named section to the layout.`))
-			return
-		}
 
 		setSaving(true)
 		setErrorMessage(null)
@@ -625,7 +636,8 @@ export default function ReservationsSettingsSectionsRoute() {
 							placeholder={_(msg`e.g. Dinner 3-server`)}
 							value={layoutName}
 							disabled={!canWrite || saving}
-							error={nameError}
+							error={fieldErrors.name}
+							onBlur={() => touchField('name')}
 							onChange={(e) => setLayoutName(e.target.value)}
 							data-testid={
 								sheet.mode === 'edit'
@@ -664,6 +676,9 @@ export default function ReservationsSettingsSectionsRoute() {
 							) : null}
 						</div>
 
+						{fieldErrors.sections ? (
+							<FieldError>{fieldErrors.sections}</FieldError>
+						) : null}
 						<div className="flex flex-col gap-3">
 							{draftSections.map((sec, idx) => (
 								<div

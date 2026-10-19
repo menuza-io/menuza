@@ -71,6 +71,7 @@ import {
 	updateReservationContactStatus,
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import {
 	ACTOR_KIND_LABELS,
@@ -640,16 +641,9 @@ export function DetailSheet({
 				? t`Seat Party`
 				: t`Complete & Clear Table`
 
-	const whenLabel = (() => {
-		if (!reservation) return ''
-		const parsed = new Date(`${reservation.businessDate}T12:00:00`)
-		if (Number.isNaN(parsed.getTime())) return reservation.businessDate
-		return i18n.date(parsed, {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-		})
-	})()
+	const whenLabel = reservation
+		? formatBusinessDate(reservation.businessDate, i18n.locale, 'short')
+		: ''
 	const tablesText =
 		reservation && reservation.assignedTableLabels.length > 0
 			? reservation.assignedTableLabels.join(', ')
@@ -1328,7 +1322,8 @@ export function DetailSheet({
 														className="flex items-center justify-between gap-3 py-2"
 													>
 														<span className="tabular-nums">
-															{h.businessDate} {h.hhmm} (
+															{formatBusinessDate(h.businessDate, i18n.locale)}{' '}
+															{h.hhmm} (
 															<Plural
 																value={h.partySize}
 																one="# guest"

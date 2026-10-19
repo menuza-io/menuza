@@ -2,8 +2,8 @@ import { i18n } from '@lingui/core'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { normalizeDayFeedResponse } from './book-api.ts'
 import {
-	coversLabel,
-	coversRangeLabel,
+	guestsCountLabel,
+	guestsRangeLabel,
 	inNextMinutesLabel,
 	partiesLabel,
 	tablesActiveLabel,
@@ -38,9 +38,9 @@ describe.each(['en', 'ar'])(
 			const attention = unassignedAndConflictsLabel(2, 7)
 			expect(attention).toContain('2')
 			expect(attention).toContain('7')
-			expect(coversLabel(18)).toContain('18')
-			expect(coversRangeLabel(2, 6)).toContain('2-6')
-			expect(coversRangeLabel(4, 4)).toContain('4')
+			expect(guestsCountLabel(18)).toBe('18 guests')
+			expect(guestsRangeLabel(2, 6)).toBe('2-6 guests')
+			expect(guestsRangeLabel(4, 4)).toBe('4 guests')
 		})
 
 		it('renders the Today KPIs from the real day feed, not zeros', () => {

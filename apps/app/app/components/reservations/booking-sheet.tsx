@@ -37,6 +37,7 @@ import {
 	searchBookAvailability,
 	searchBookGuests,
 } from '#app/utils/reservations/book-api.ts'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import { hostErrorMessage } from '#app/utils/reservations/host-errors.ts'
 import { enumLabel, VIP_TIER_LABELS } from '#app/utils/reservations/labels.ts'
 import {
@@ -375,7 +376,13 @@ export function BookingSheet({
 	}
 
 	const nameMissing = !guestName.trim()
-	const phoneMissing = guestPhone.replace(/\D/g, '').length < 7
+	const phoneFilled = guestPhone.trim().length > 0
+	const phoneMissing = !phoneFilled
+	// Filled but not a phone number: letters, or fewer than 7 digits.
+	const phoneInvalid =
+		phoneFilled &&
+		(/[^\d\s+().-]/.test(guestPhone) ||
+			guestPhone.replace(/\D/g, '').length < 7)
 	const timeMissing = (() => {
 		try {
 			parseHhmm(timeInput)
@@ -389,11 +396,12 @@ export function BookingSheet({
 	if (nameMissing) missing.push(t`guest name`)
 	if (timeMissing) missing.push(t`a time`)
 	const missingList = missing.join(', ')
+	const hasInvalidField = phoneInvalid
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setAttempted(true)
-		if (nameMissing || phoneMissing || timeMissing) {
+		if (nameMissing || phoneMissing || phoneInvalid || timeMissing) {
 			setError(t`Guest name, phone number and time are required.`)
 			return
 		}
@@ -477,15 +485,7 @@ export function BookingSheet({
 		(tbl) => tbl.isActive && (!areaId || tbl.areaId === areaId),
 	)
 
-	const dateLabel = (() => {
-		const parsed = new Date(`${date}T12:00:00`)
-		if (Number.isNaN(parsed.getTime())) return date
-		return new Intl.DateTimeFormat(i18n.locale, {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-		}).format(parsed)
-	})()
+	const dateLabel = formatBusinessDate(date, i18n.locale, 'short')
 
 	const serviceOptions = [
 		{ value: ANY, label: t`Auto / Any` },
@@ -572,6 +572,14 @@ export function BookingSheet({
 									>
 										<Trans>Still needed: {missingList}</Trans>
 									</p>
+								) : hasInvalidField ? (
+									<p
+										role="status"
+										className="text-destructive text-sm sm:me-auto"
+										data-testid="booking-validation-summary"
+									>
+										<Trans>Fix the highlighted field to book.</Trans>
+									</p>
 								) : null}
 								<Button
 									type="button"
@@ -587,6 +595,7 @@ export function BookingSheet({
 									disabled={
 										submitting ||
 										missing.length > 0 ||
+										hasInvalidField ||
 										(closedDay && !overrideClosedDay)
 									}
 									data-testid="booking-submit-btn"
@@ -963,8 +972,8 @@ export function BookingSheet({
 							onChange={(e) => setGuestPhone(e.target.value)}
 							placeholder="+14155550100"
 							error={
-								attempted && phoneMissing
-									? t`Enter a phone number with at least 7 digits.`
+								phoneInvalid || (attempted && phoneMissing)
+									? t`Enter a valid phone number, e.g. +14155550100`
 									: null
 							}
 							data-testid="booking-guest-phone"

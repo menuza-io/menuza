@@ -18,12 +18,14 @@ import { SettingsSaveBar } from '#app/components/reservations/settings/save-bar.
 import { SwitchRow } from '#app/components/reservations/settings/settings-fields.tsx'
 import { SetupChecklist } from '#app/components/reservations/settings/setup-checklist.tsx'
 import { SetupDiagnostics } from '#app/components/reservations/settings/setup-diagnostics.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	SelectField,
 	TextAreaField,
 	TextField,
 } from '#app/components/staff/controls.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	extractApiErrorMessage,
@@ -51,7 +53,7 @@ function sameSettings(a: LocationSettingsDto, b: LocationSettingsDto) {
 }
 
 export default function ReservationsSettingsIndexRoute() {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const {
 		selectedLocationId,
 		canWrite,
@@ -84,6 +86,29 @@ export default function ReservationsSettingsIndexRoute() {
 		[draft, settings],
 	)
 
+	// Derived from the draft on every render and revealed after a save attempt
+	// or blur, so a message goes away as soon as the numbers agree again.
+	const livePartyErrors: Partial<Record<'onlineRange' | 'overallMax', string>> =
+		{}
+	if (draft) {
+		if (draft.onlinePartyMin > draft.onlinePartyMax) {
+			livePartyErrors.onlineRange = _(
+				msg`The online minimum cannot be more than the online maximum.`,
+			)
+		}
+		if (draft.onlinePartyMax > draft.partyMax) {
+			livePartyErrors.overallMax = _(
+				msg`The online maximum cannot be more than the largest party at the host stand.`,
+			)
+		}
+	}
+	const {
+		errors: partyErrors,
+		attempt: attemptSave,
+		touch: touchParty,
+		reset: resetPartyErrors,
+	} = useRevealedErrors(livePartyErrors)
+
 	useEffect(() => {
 		if (settings) {
 			setDraft(settings)
@@ -98,22 +123,7 @@ export default function ReservationsSettingsIndexRoute() {
 		setConflictBanner(null)
 		setSaveSuccess(null)
 
-		if (draft.onlinePartyMin > draft.onlinePartyMax) {
-			setFormError(
-				_(
-					msg`Online minimum party size cannot exceed online maximum party size.`,
-				),
-			)
-			return
-		}
-		if (draft.onlinePartyMax > draft.partyMax) {
-			setFormError(
-				_(
-					msg`Online maximum party size cannot exceed overall maximum party size.`,
-				),
-			)
-			return
-		}
+		if (!attemptSave()) return
 
 		setSaving(true)
 		try {
@@ -176,10 +186,12 @@ export default function ReservationsSettingsIndexRoute() {
 	const handleDiscard = () => {
 		setDraft(settings)
 		setFormError(null)
+		resetPartyErrors()
 		setSaveSuccess(null)
 	}
 
 	const edit = (patch: Partial<LocationSettingsDto>) => {
+		setFormError(null)
 		setSaveSuccess(null)
 		setDraft((prev) => (prev ? { ...prev, ...patch } : prev))
 	}
@@ -440,6 +452,8 @@ export default function ReservationsSettingsIndexRoute() {
 								label={<Trans>Online maximum</Trans>}
 								disabled={disabled}
 								value={draft.onlinePartyMax}
+								error={partyErrors.onlineRange}
+								onBlur={() => touchParty('onlineRange')}
 								onChange={(e) =>
 									edit({ onlinePartyMax: Number(e.target.value) || 8 })
 								}
@@ -454,6 +468,8 @@ export default function ReservationsSettingsIndexRoute() {
 								label={<Trans>Largest party at the host stand</Trans>}
 								disabled={disabled}
 								value={draft.partyMax}
+								error={partyErrors.overallMax}
+								onBlur={() => touchParty('overallMax')}
 								onChange={(e) =>
 									edit({ partyMax: Number(e.target.value) || 20 })
 								}
@@ -795,7 +811,14 @@ export default function ReservationsSettingsIndexRoute() {
 											<span className="text-foreground font-medium">
 												<bdi dir="ltr">{conflict.confirmationCode ?? '—'}</bdi>
 												{' · '}
-												<bdi dir="ltr">{conflict.businessDate ?? '—'}</bdi>
+												<bdi dir="ltr">
+													{conflict.businessDate
+														? formatBusinessDate(
+																conflict.businessDate,
+																i18n.locale,
+															)
+														: '—'}
+												</bdi>
 												{partySize !== null
 													? ` · ${_(msg`Party of ${partySize}`)}`
 													: ''}

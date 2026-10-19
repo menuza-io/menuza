@@ -7,6 +7,7 @@ import { Icon } from '@repo/ui/icon'
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/popover'
 import { ar, enUS } from 'date-fns/locale'
 import { useState } from 'react'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 
 function toLocalDate(date: string): Date {
 	const [year = 1970, month = 1, day = 1] = date.split('-').map(Number)
@@ -40,12 +41,7 @@ export function DateStepper({
 	const rtl = direction === 'rtl'
 	const [open, setOpen] = useState(false)
 	const locale = i18n.locale
-	const label = new Intl.DateTimeFormat(locale, {
-		weekday: 'short',
-		month: 'short',
-		day: 'numeric',
-		timeZone: 'UTC',
-	}).format(new Date(`${date}T12:00:00Z`))
+	const label = formatBusinessDate(date, locale, 'short')
 	const pickerLabel = t`Choose a date: ${label}`
 
 	return (

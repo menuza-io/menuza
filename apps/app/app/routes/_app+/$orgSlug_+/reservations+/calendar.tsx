@@ -30,8 +30,8 @@ import {
 	fetchBookCalendar,
 } from '#app/utils/reservations/book-api.ts'
 import {
-	coversLabel,
-	coversLeftLabel,
+	guestsCountLabel,
+	guestsLeftLabel,
 	partiesLabel,
 	specialClosedDaysLabel,
 } from '#app/utils/reservations/count-labels.ts'
@@ -289,7 +289,7 @@ export default function ReservationsCalendarRoute() {
 							variant="secondary"
 							data-testid="calendar-month-covers-badge"
 						>
-							{coversLabel(monthTotals.totalCovers)}
+							{guestsCountLabel(monthTotals.totalCovers)}
 						</Badge>
 						<Badge variant="outline" data-testid="calendar-month-parties-badge">
 							{partiesLabel(monthTotals.totalParties)}
@@ -485,7 +485,7 @@ export default function ReservationsCalendarRoute() {
 															className="text-foreground font-semibold tabular-nums"
 															data-testid={`calendar-day-covers-${cell.date}`}
 														>
-															{coversLabel(cell.totalCovers)}
+															{guestsCountLabel(cell.totalCovers)}
 														</span>
 														<span
 															className="text-muted-foreground hidden text-xs sm:inline"
@@ -499,7 +499,7 @@ export default function ReservationsCalendarRoute() {
 															className="text-muted-foreground text-xs tabular-nums"
 															data-testid={`calendar-day-left-${cell.date}`}
 														>
-															{coversLeftLabel(
+															{guestsLeftLabel(
 																Math.max(
 																	0,
 																	cell.maxCapacityCovers - cell.totalCovers,

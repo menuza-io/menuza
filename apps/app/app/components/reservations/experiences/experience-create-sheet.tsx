@@ -1,3 +1,4 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
@@ -10,6 +11,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { type FormEvent, useMemo, useState } from 'react'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
 	SelectField,
@@ -87,7 +89,16 @@ function Body({
 	const [form, setForm] = useState(emptyExperienceForm)
 	const [nameLocale, setNameLocale] = useState<ExperienceLocale>(initialLocale)
 	const [slugTouched, setSlugTouched] = useState(false)
-	const [errors, setErrors] = useState<ExperienceFormErrors>({})
+	// Derived from the form on every render and revealed after a submit attempt,
+	// so a message goes away as soon as the value is valid.
+	const parsed = useMemo(
+		() => experienceFormToInput(form, currency),
+		[form, currency],
+	)
+	const { errors, attempt } = useRevealedErrors<
+		keyof ExperienceFormErrors,
+		MessageDescriptor
+	>(parsed.ok ? {} : parsed.errors)
 	const [banner, setBanner] = useState<string[]>([])
 	const [pending, setPending] = useState(false)
 	const [moreOpen, setMoreOpen] = useState(false)
@@ -121,14 +132,13 @@ function Body({
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
-		const parsed = experienceFormToInput(form, currency)
+		attempt()
+		setBanner([])
 		if (!parsed.ok) {
-			setErrors(parsed.errors)
-			setBanner([])
+			// Only a real link-name problem opens the advanced section.
+			if (parsed.errors.slug) setMoreOpen(true)
 			return
 		}
-		setErrors({})
-		setBanner([])
 		setPending(true)
 		try {
 			onCreated(await createExperience(client, locationId, parsed.input))
@@ -221,10 +231,7 @@ function Body({
 					data-testid="experience-party-max"
 				/>
 			</div>
-			<Collapsible
-				open={moreOpen || Boolean(errors.slug)}
-				onOpenChange={setMoreOpen}
-			>
+			<Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
 				<CollapsibleTrigger
 					render={<Button type="button" variant="ghost" size="sm" />}
 					className="-ms-2 self-start"

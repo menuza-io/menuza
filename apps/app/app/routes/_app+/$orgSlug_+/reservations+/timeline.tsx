@@ -1005,8 +1005,8 @@ export default function ReservationsTimelineRoute() {
 						style={{ width: `${192 + totalGridWidthPx}px` }}
 					>
 						{/* Header Row: Time Slots & Covers Pacing */}
-						<div className="bg-muted/60 sticky top-0 z-20 flex border-b">
-							<div className="bg-muted/90 sticky start-0 z-30 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs font-semibold">
+						<div className="bg-muted sticky top-0 z-40 flex border-b">
+							<div className="bg-muted sticky start-0 z-30 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs font-semibold">
 								<span>
 									<Trans>Table</Trans>
 								</span>
@@ -1020,6 +1020,17 @@ export default function ReservationsTimelineRoute() {
 								style={{ width: `${totalGridWidthPx}px` }}
 								data-testid="timeline-pacing-strip"
 							>
+								{showNowLine ? (
+									<div
+										className="bg-primary pointer-events-none absolute top-0 bottom-0 z-10 w-0.5"
+										style={{ left: `${nowOffsetPx}px` }}
+										data-testid="timeline-now-label"
+									>
+										<span className="bg-primary text-primary-foreground rounded-b px-1 py-0.5 text-xs font-semibold">
+											{host.liveNow.hhmm}
+										</span>
+									</div>
+								) : null}
 								{slots.map((slotMin) => {
 									const isHour = slotMin % 60 === 0
 									const pacingSlot = slotPacingMap.get(slotMin)
@@ -1080,11 +1091,7 @@ export default function ReservationsTimelineRoute() {
 								className="bg-primary pointer-events-none absolute top-0 bottom-0 z-20 w-0.5"
 								style={{ left: `${192 + nowOffsetPx}px` }}
 								data-testid="timeline-now-line"
-							>
-								<span className="bg-primary text-primary-foreground rounded-b px-1 py-0.5 text-xs font-semibold">
-									{host.liveNow.hhmm}
-								</span>
-							</div>
+							/>
 						) : null}
 
 						{/* Area Groups & Table Rows */}
@@ -1116,7 +1123,7 @@ export default function ReservationsTimelineRoute() {
 												data-table-label={table.label}
 											>
 												{/* Sticky Left Table Cell */}
-												<div className="bg-card sticky start-0 z-10 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs">
+												<div className="bg-card sticky start-0 z-30 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs">
 													<div className="flex items-center gap-1.5">
 														<span className="font-semibold">{table.label}</span>
 														<span className="text-muted-foreground text-xs">

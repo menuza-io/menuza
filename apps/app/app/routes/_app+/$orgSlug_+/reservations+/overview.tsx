@@ -34,8 +34,8 @@ import {
 	fetchBookOverview,
 	saveServiceNotes,
 } from '#app/utils/reservations/book-api.ts'
+import { formatBusinessDate } from '#app/utils/reservations/business-date.ts'
 import {
-	coversLabel,
 	guestsCountLabel,
 	partiesLabel,
 } from '#app/utils/reservations/count-labels.ts'
@@ -96,6 +96,11 @@ export default function ReservationsOverviewRoute() {
 		defaultTimeZone: activeLocation?.timezone ?? 'UTC',
 		pollIntervalMs: 60_000,
 	})
+	const businessDateLabel = formatBusinessDate(
+		host.businessDate,
+		i18n.locale,
+		'long',
+	)
 
 	const [overview, setOverview] = useState<DayOverviewResponse | null>(null)
 	const [loadingOverview, setLoadingOverview] = useState(true)
@@ -308,7 +313,7 @@ export default function ReservationsOverviewRoute() {
 				<div data-testid="overview-kpi-grid">
 					<WorkspaceMetricGrid className="xl:grid-cols-4">
 						<WorkspaceMetric
-							label={<Trans>Expected covers</Trans>}
+							label={<Trans>Expected guests</Trans>}
 							value={
 								<span dir="ltr" data-testid="overview-total-covers">
 									{overview?.stats.expectedCovers ?? 0}
@@ -360,7 +365,7 @@ export default function ReservationsOverviewRoute() {
 								</CardTitle>
 								<CardDescription>
 									<Trans>
-										Keyed to {host.businessDate} · {activeServiceName}
+										Keyed to {businessDateLabel} · {activeServiceName}
 									</Trans>
 								</CardDescription>
 							</div>
@@ -480,7 +485,7 @@ export default function ReservationsOverviewRoute() {
 									<Trans>Peak:</Trans>{' '}
 									<span dir="ltr" className="ms-1 font-mono">
 										{peakSlots.map((s) => s.hhmm).join(', ')} (
-										{coversLabel(peakCovers)})
+										{guestsCountLabel(peakCovers)})
 									</span>
 								</Badge>
 							) : null}
@@ -531,7 +536,7 @@ export default function ReservationsOverviewRoute() {
 												/>
 											</div>
 											<span className="w-28 shrink-0 text-end" dir="ltr">
-												{coversLabel(slot.covers)} ·{' '}
+												{guestsCountLabel(slot.covers)} ·{' '}
 												{partiesLabel(slot.parties)}
 											</span>
 											{isPeak ? (
@@ -625,7 +630,7 @@ export default function ReservationsOverviewRoute() {
 					<CardHeader className="pb-2">
 						<div className="flex items-center justify-between">
 							<CardTitle className="text-base">
-								<Trans>Large Parties (6+ Covers)</Trans>
+								<Trans>Large parties (6+ guests)</Trans>
 							</CardTitle>
 							<Badge variant="secondary" dir="ltr">
 								{largeParties.length}

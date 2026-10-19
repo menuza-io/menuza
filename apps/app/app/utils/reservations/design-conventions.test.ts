@@ -189,3 +189,21 @@ describe('polished screens use the shared controls', () => {
 		})
 	}
 })
+
+describe('timeline sticky header', () => {
+	const source = fs.readFileSync(
+		path.join(APP, 'routes/_app+/$orgSlug_+/reservations+/timeline.tsx'),
+		'utf8',
+	)
+	it('uses opaque backgrounds on the sticky header and table cells', () => {
+		const sticky = source.match(/className="[^"]*\bsticky\b[^"]*"/g) ?? []
+		expect(sticky.length).toBeGreaterThan(2)
+		for (const cls of sticky) expect(cls).not.toMatch(/bg-[a-z]+\/\d+/)
+	})
+	it('stacks sticky cells above scrolled bars and the now line', () => {
+		expect(source).toMatch(/sticky top-0 z-40/)
+		expect(source).toMatch(
+			/sticky start-0 z-30 flex w-48 shrink-0 items-center justify-between border-e px-3 py-2 text-xs"/,
+		)
+	})
+})

@@ -106,10 +106,13 @@ describe('WaitlistSettingsScreen', () => {
 		})
 		// Submit the form directly: the browser's own range check would otherwise stop the click first.
 		fireEvent.submit(screen.getByTestId('waitlist-settings-form'))
-		expect(
-			await screen.findByTestId('waitlist-settings-form-error'),
-		).toHaveTextContent('from 1 to 120')
+		expect(await screen.findByText(/from 1 to 120/)).toBeTruthy()
 		expect(puts).toHaveLength(0)
+		// The message goes away as soon as the value is valid again.
+		fireEvent.change(screen.getByTestId('waitlist-setting-response-min'), {
+			target: { value: '30' },
+		})
+		expect(screen.queryByText(/from 1 to 120/)).toBeNull()
 	})
 
 	it('keeps the draft and offers a reload when someone else saved first', async () => {

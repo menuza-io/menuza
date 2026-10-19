@@ -14,6 +14,7 @@ import { Skeleton } from '@repo/ui/skeleton'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { SettingsSaveBar } from '#app/components/reservations/settings/save-bar.tsx'
 import { SwitchRow } from '#app/components/reservations/settings/settings-fields.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import { TextField } from '#app/components/staff/controls.tsx'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import {
@@ -105,10 +106,41 @@ export function WaitlistSettingsScreen({
 		void load()
 	}, [load])
 
+	// Derived from the draft on every render and revealed after a save attempt
+	// or blur, so a message goes away as soon as the value is valid.
+	const liveErrors: Partial<Record<'responseMin' | 'maxParties', string>> = {}
+	if (draft) {
+		const responseMin = Number(draft.responseMin)
+		if (
+			!Number.isInteger(responseMin) ||
+			responseMin < MIN_RESPONSE ||
+			responseMin > MAX_RESPONSE
+		) {
+			liveErrors.responseMin = t`The answer window must be a whole number of minutes from ${MIN_RESPONSE} to ${MAX_RESPONSE}.`
+		}
+		const maxText = draft.maxParties.trim()
+		const maxParties = maxText === '' ? null : Number(maxText)
+		if (
+			maxParties !== null &&
+			(!Number.isInteger(maxParties) ||
+				maxParties < 1 ||
+				maxParties > MAX_PARTIES)
+		) {
+			liveErrors.maxParties = t`The party limit must be a whole number from 1 to ${MAX_PARTIES}, or empty for no limit.`
+		}
+	}
+	const {
+		errors: fieldErrors,
+		attempt: attemptSave,
+		touch: touchField,
+		reset: resetErrors,
+	} = useRevealedErrors(liveErrors)
+
 	const dirty = Boolean(saved && draft && !sameDraft(draft, draftFor(saved)))
 
 	const update = (patch: Partial<Draft>) => {
 		setSuccess(false)
+		setFormError(null)
 		setDraft((prev) => (prev ? { ...prev, ...patch } : prev))
 	}
 
@@ -116,6 +148,7 @@ export function WaitlistSettingsScreen({
 		if (!saved) return
 		setDraft(draftFor(saved))
 		setFormError(null)
+		resetErrors()
 		setSuccess(false)
 	}
 
@@ -131,30 +164,10 @@ export function WaitlistSettingsScreen({
 		setFormError(null)
 		setSuccess(false)
 
+		if (!attemptSave()) return
 		const responseMin = Number(draft.responseMin)
-		if (
-			!Number.isInteger(responseMin) ||
-			responseMin < MIN_RESPONSE ||
-			responseMin > MAX_RESPONSE
-		) {
-			setFormError(
-				t`The answer window must be a whole number of minutes from ${MIN_RESPONSE} to ${MAX_RESPONSE}.`,
-			)
-			return
-		}
 		const maxText = draft.maxParties.trim()
 		const maxParties = maxText === '' ? null : Number(maxText)
-		if (
-			maxParties !== null &&
-			(!Number.isInteger(maxParties) ||
-				maxParties < 1 ||
-				maxParties > MAX_PARTIES)
-		) {
-			setFormError(
-				t`The party limit must be a whole number from 1 to ${MAX_PARTIES}, or empty for no limit.`,
-			)
-			return
-		}
 
 		setSaving(true)
 		try {
@@ -334,6 +347,8 @@ export function WaitlistSettingsScreen({
 							</Trans>
 						}
 						value={draft.responseMin}
+						error={fieldErrors.responseMin}
+						onBlur={() => touchField('responseMin')}
 						disabled={!canWrite}
 						onChange={(event) => update({ responseMin: event.target.value })}
 						data-testid="waitlist-setting-response-min"
@@ -354,6 +369,8 @@ export function WaitlistSettingsScreen({
 							</Trans>
 						}
 						value={draft.maxParties}
+						error={fieldErrors.maxParties}
+						onBlur={() => touchField('maxParties')}
 						disabled={!canWrite}
 						placeholder={t`No limit`}
 						onChange={(event) => update({ maxParties: event.target.value })}

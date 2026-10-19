@@ -1,4 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { useEffect, useState } from 'react'
 import {
@@ -33,6 +34,7 @@ export function MessagePreview({
 	const [preview, setPreview] = useState<MessagePreviewData | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
+	const [attempt, setAttempt] = useState(0)
 
 	useEffect(() => {
 		const controller = new AbortController()
@@ -62,7 +64,7 @@ export function MessagePreview({
 			clearTimeout(timer)
 			controller.abort()
 		}
-	}, [client, locationId, kind, locale, refreshKey, t])
+	}, [client, locationId, kind, locale, refreshKey, attempt, t])
 
 	return (
 		<div
@@ -71,13 +73,23 @@ export function MessagePreview({
 			data-testid="message-preview"
 		>
 			{error ? (
-				<p
+				<div
 					role="alert"
-					className="text-destructive text-sm"
+					className="flex flex-wrap items-center gap-3"
 					data-testid="message-preview-error"
 				>
-					{error}
-				</p>
+					<p className="text-destructive text-sm">{error}</p>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						disabled={loading}
+						onClick={() => setAttempt((current) => current + 1)}
+						data-testid="message-preview-retry"
+					>
+						<Trans>Retry</Trans>
+					</Button>
+				</div>
 			) : null}
 			{loading && !preview ? (
 				<div

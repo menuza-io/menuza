@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
 	DEFAULT_DAY_START_MIN,
+	formatBusinessDate,
+	formatBusinessDateRange,
 	serviceDayBusinessDate,
 } from './business-date.ts'
 
@@ -53,5 +55,29 @@ describe('serviceDayBusinessDate', () => {
 			serviceDayBusinessDate(nowMs, 'UTC', DEFAULT_DAY_START_MIN),
 		)
 		expect(serviceDayBusinessDate(nowMs, null, Number.NaN)).toBe('2026-04-20')
+	})
+})
+
+describe('formatBusinessDate', () => {
+	it('formats a plain calendar date without a zone shift', () => {
+		expect(formatBusinessDate('2026-10-18', 'en', 'short')).toBe('Sun, Oct 18')
+		expect(formatBusinessDate('2026-10-18', 'en')).toBe('Oct 18, 2026')
+		expect(formatBusinessDate('2026-10-18', 'en', 'long')).toBe(
+			'Sunday, October 18, 2026',
+		)
+	})
+	it('localizes and never returns the raw ISO string for a valid date', () => {
+		expect(formatBusinessDate('2026-10-18', 'ar', 'short')).not.toMatch(
+			/2026-10-18/,
+		)
+	})
+	it('returns unparseable input unchanged and formats ranges', () => {
+		expect(formatBusinessDate('soon', 'en')).toBe('soon')
+		expect(formatBusinessDateRange('2026-10-18', '2026-10-18', 'en')).toBe(
+			'Oct 18, 2026',
+		)
+		expect(formatBusinessDateRange('2026-10-18', '2026-10-20', 'en')).toBe(
+			'Oct 18, 2026 → Oct 20, 2026',
+		)
 	})
 })

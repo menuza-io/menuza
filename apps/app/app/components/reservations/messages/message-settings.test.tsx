@@ -290,6 +290,63 @@ describe('MessageSettingsScreen', () => {
 		).toEqual({ locationId: 'loc_1', kind: 'reminder', locale: 'ar' })
 	})
 
+	it('always opens the preview when Preview is clicked, even for the kind already shown and with empty notes', async () => {
+		setup()
+		await screen.findByTestId('message-preview-frame')
+		const card = screen.getByTestId('message-preview-card')
+		const scroll = vi.fn()
+		card.scrollIntoView = scroll
+		fireEvent.click(screen.getByTestId('message-preview-pick-confirmation'))
+		expect(scroll).toHaveBeenCalled()
+		expect(card).toHaveFocus()
+		expect(
+			screen.getByTestId('message-preview-note-status').textContent,
+		).toMatch(/custom note/)
+		// Arabic has no saved note in the fixture: the default text is marked as such.
+		fireEvent.click(screen.getByTestId('message-preview-locale-ar'))
+		expect(
+			screen.getByTestId('message-preview-note-status').textContent,
+		).toMatch(/^No custom note/)
+	})
+
+	it('retries a failed preview', async () => {
+		let fail = true
+		const request = vi.fn(async (path: string) => {
+			if (path.endsWith('/preview')) {
+				if (fail)
+					throw new ReservationsApiError('No preview', 500, {
+						message: 'No preview',
+					})
+				return {
+					kind: 'confirmation',
+					locale: 'en',
+					subject: 'S',
+					html: '<p>ok</p>',
+					sms: null,
+				}
+			}
+			return makeSettingsResponse()
+		})
+		renderStaff(
+			<MessageSettingsScreen
+				client={
+					{ scope: 'setup', request } as unknown as ReservationsScopedClient
+				}
+				locationId="loc_1"
+				canWrite
+				waitlistEnabled={false}
+				dataRegion="us"
+			/>,
+		)
+		fireEvent.click(await screen.findByTestId('message-preview-retry'))
+		fail = false
+		await waitFor(() =>
+			expect(
+				screen.getByTestId('message-preview-frame').getAttribute('srcdoc'),
+			).toBe('<p>ok</p>'),
+		)
+	})
+
 	it('shows a preview error without breaking the screen', async () => {
 		const request = vi.fn(async (path: string) => {
 			if (path.endsWith('/preview')) {
@@ -312,7 +369,8 @@ describe('MessageSettingsScreen', () => {
 		)
 		expect(
 			(await screen.findByTestId('message-preview-error')).textContent,
-		).toBe('No preview')
+		).toContain('No preview')
+		expect(screen.getByTestId('message-preview-retry')).toBeTruthy()
 		expect(screen.getByTestId('message-kinds-card')).toBeTruthy()
 	})
 

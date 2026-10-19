@@ -4,6 +4,7 @@ import {
 	describeSetupIssues,
 	formatPartySizeRanges,
 	setupProgress,
+	summarizeSetupItems,
 	summarizeSetupStatus,
 } from './setup-progress.ts'
 
@@ -62,16 +63,54 @@ describe('summarizeSetupStatus', () => {
 		expect(summarizeSetupStatus([]).state).toBe('ready')
 	})
 	it('is ready with suggestions for warnings only', () => {
-		const s = summarizeSetupStatus([{ severity: 'warning' }])
+		const s = summarizeSetupStatus([
+			{ code: 'duplicate_table_label', severity: 'warning' },
+		])
 		expect(s).toMatchObject({ state: 'ready_suggestions', suggestionCount: 1 })
 	})
 	it('needs attention for errors and for an empty setup', () => {
-		expect(summarizeSetupStatus([{ severity: 'error' }]).state).toBe(
-			'needs_attention',
-		)
+		expect(
+			summarizeSetupStatus([
+				{ code: 'duplicate_table_label', severity: 'error' },
+			]).state,
+		).toBe('needs_attention')
 		expect(summarizeSetupStatus([], { noTables: true })).toMatchObject({
 			state: 'needs_attention',
 			blockingCount: 1,
+		})
+	})
+})
+
+describe('the header status and the diagnostics card agree', () => {
+	it('counts folded unseatable party sizes once, like the card lists them', () => {
+		const issues = [1, 5, 6].map((partySize) => ({
+			code: 'unseatable_party_size',
+			severity: 'warning' as const,
+			partySize,
+		}))
+		const items = describeSetupIssues(issues)
+		expect(items).toHaveLength(1)
+		expect(summarizeSetupItems(items).suggestionCount).toBe(items.length)
+		expect(summarizeSetupStatus(issues)).toMatchObject({
+			state: 'ready_suggestions',
+			suggestionCount: 1,
+		})
+	})
+	it('counts blocking rows and suggestions from the same list', () => {
+		const items = describeSetupIssues(
+			[
+				{ code: 'unseatable_party_size', severity: 'warning', partySize: 2 },
+				{ code: 'unseatable_party_size', severity: 'warning', partySize: 3 },
+				{ code: 'turn_time_bucket_gap', severity: 'warning' },
+				{ code: 'duplicate_table_label', severity: 'error' },
+			],
+			new Map(),
+			{ noServices: true },
+		)
+		expect(summarizeSetupItems(items)).toEqual({
+			state: 'needs_attention',
+			blockingCount: 2,
+			suggestionCount: 2,
 		})
 	})
 })

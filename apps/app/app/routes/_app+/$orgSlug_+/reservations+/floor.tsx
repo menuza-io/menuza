@@ -63,7 +63,7 @@ import {
 	transitionReservationStatus,
 	updateReservationCourseStage,
 } from '#app/utils/reservations/book-api.ts'
-import { coversRangeLabel } from '#app/utils/reservations/count-labels.ts'
+import { guestsRangeLabel } from '#app/utils/reservations/count-labels.ts'
 import {
 	type ComputedTableFloorState,
 	computeTableFloorState,
@@ -1172,7 +1172,7 @@ export default function ReservationsFloorRoute() {
 									<div className="min-w-0">
 										<CardTitle className="text-sm font-semibold">
 											{selectedTableState.table.label} ·{' '}
-											{coversRangeLabel(
+											{guestsRangeLabel(
 												selectedTableState.table.minCovers,
 												selectedTableState.table.maxCovers,
 											)}

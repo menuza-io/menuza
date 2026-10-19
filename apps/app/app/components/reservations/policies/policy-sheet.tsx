@@ -1,9 +1,11 @@
+import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { type FormEvent, useMemo, useState } from 'react'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	type Option,
 	SelectField,
@@ -88,7 +90,19 @@ function Body({
 	const [form, setForm] = useState<PolicyFormValues>(() =>
 		policy ? policyToForm(policy, currency) : emptyPolicyForm(),
 	)
-	const [errors, setErrors] = useState<PolicyFormErrors>({})
+	// Errors are derived from the form on every render and revealed after a
+	// save attempt or blur, so they clear as soon as the value is valid. The
+	// server's own complaints are flagged separately and drop on the next edit.
+	const parsed = useMemo(
+		() => policyFormToBody(form, currency),
+		[form, currency],
+	)
+	const { errors: revealedErrors, attempt } = useRevealedErrors<
+		PolicyFormField,
+		MessageDescriptor
+	>(parsed.ok ? {} : parsed.errors)
+	const [serverFlags, setServerFlags] = useState<PolicyFormErrors>({})
+	const errors: PolicyFormErrors = { ...serverFlags, ...revealedErrors }
 	const [pending, setPending] = useState(false)
 	const [banner, setBanner] = useState<string | null>(null)
 	const [termsLocale, setTermsLocale] = useState<PolicyLocale>(
@@ -98,7 +112,10 @@ function Body({
 	const set = <K extends keyof PolicyFormValues>(
 		key: K,
 		value: PolicyFormValues[K],
-	) => setForm((current) => ({ ...current, [key]: value }))
+	) => {
+		setServerFlags({})
+		setForm((current) => ({ ...current, [key]: value }))
+	}
 
 	const kindOptions: Option[] = useMemo(
 		() =>
@@ -137,14 +154,10 @@ function Body({
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
-		const parsed = policyFormToBody(form, currency)
-		if (!parsed.ok) {
-			setErrors(parsed.errors)
-			setBanner(null)
-			return
-		}
-		setErrors({})
+		attempt()
 		setBanner(null)
+		if (!parsed.ok) return
+		setServerFlags({})
 		setPending(true)
 		try {
 			await onSave(parsed.body)
@@ -153,7 +166,7 @@ function Body({
 			for (const field of policyIssueFields(error)) {
 				flagged[field] = msg`Check this value.`
 			}
-			setErrors(flagged)
+			setServerFlags(flagged)
 			setBanner(
 				policyErrorMessage(
 					error,

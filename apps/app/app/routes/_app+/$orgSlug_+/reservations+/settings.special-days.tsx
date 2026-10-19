@@ -13,6 +13,7 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { FieldError } from '@repo/ui/field'
 import {
 	Frame,
 	FrameAction,
@@ -39,10 +40,15 @@ import {
 	useState,
 } from 'react'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
-import { serviceDayBusinessDate } from '#app/utils/reservations/business-date.ts'
+import {
+	formatBusinessDate,
+	formatBusinessDateRange,
+	serviceDayBusinessDate,
+} from '#app/utils/reservations/business-date.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
 import {
 	type BlockDto,
@@ -99,7 +105,7 @@ const BLOCK_REASON_LABELS: Record<string, MessageDescriptor> = {
 }
 
 export default function ReservationsSettingsSpecialDaysRoute() {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const {
 		selectedLocationId,
 		selectedLocation,
@@ -171,6 +177,71 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 	const [blkEndTime, setBlkEndTime] = useState('20:00')
 	const [blkReason, setBlkReason] = useState<BlockReason>('private_event')
 	const [blkNote, setBlkNote] = useState('')
+
+	// Field errors are derived from the form values on every render and only
+	// revealed after a submit attempt or a blur, so they clear as soon as the
+	// value is valid (see use-revealed-errors.ts).
+	const liveSdErrors: Partial<
+		Record<'dates' | 'times' | 'replaceName', string>
+	> = {}
+	if (sdStartDate > sdEndDate) {
+		liveSdErrors.dates = _(msg`The start date cannot be after the end date.`)
+	}
+	{
+		const timesInvalid = (first: string, last: string, end: string) => {
+			const f = timeStringToMinutes(first, { nextDay: false })
+			const l = timeStringToMinutes(last, { nextDay: false })
+			const e = timeStringToMinutes(end, { nextDay: false })
+			return f > l || l > e
+		}
+		const hoursMessage = _(
+			msg`The first seating must not be after the last seating, and the last seating must not be after the service ends.`,
+		)
+		if (
+			sdKind === 'modified' &&
+			timesInvalid(sdPatchFirstTime, sdPatchLastTime, sdPatchEndTime)
+		) {
+			liveSdErrors.times = hoursMessage
+		}
+		if (sdKind === 'replace') {
+			if (!sdReplaceName.trim()) {
+				liveSdErrors.replaceName = _(
+					msg`Enter a name for the replacement service.`,
+				)
+			}
+			if (
+				timesInvalid(sdReplaceFirstTime, sdReplaceLastTime, sdReplaceEndTime)
+			) {
+				liveSdErrors.times = hoursMessage
+			}
+		}
+	}
+	const {
+		errors: sdErrors,
+		attempt: attemptSpecialDay,
+		touch: touchSd,
+		reset: resetSd,
+	} = useRevealedErrors(liveSdErrors)
+
+	const liveBlockErrors: Partial<Record<'times' | 'target', string>> = {}
+	if (
+		timeStringToMinutes(blkStartTime, { nextDay: false }) >=
+		timeStringToMinutes(blkEndTime, { nextDay: false })
+	) {
+		liveBlockErrors.times = _(msg`The block must start before it ends.`)
+	}
+	if (
+		(blkTargetType === 'table' && !(blkTableId || tables[0]?.id)) ||
+		(blkTargetType === 'area' && !(blkAreaId || areas[0]?.id))
+	) {
+		liveBlockErrors.target = _(msg`Select a table or dining area to block.`)
+	}
+	const {
+		errors: blockErrors,
+		attempt: attemptBlock,
+		touch: touchBlock,
+		reset: resetBlock,
+	} = useRevealedErrors(liveBlockErrors)
 
 	const loadAll = useCallback(async () => {
 		if (!selectedLocationId) {
@@ -251,10 +322,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 		setConflictBanner(null)
 		setFeedbackMessage(null)
 
-		if (sdStartDate > sdEndDate) {
-			setErrorMessage(_(msg`Start date cannot be after end date.`))
-			return
-		}
+		if (!attemptSpecialDay()) return
 
 		let serviceId: string | null = null
 		let patch: SpecialDayDto['patch'] = null
@@ -265,10 +333,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			const firstMin = timeStringToMinutes(sdPatchFirstTime, { nextDay: false })
 			const lastMin = timeStringToMinutes(sdPatchLastTime, { nextDay: false })
 			const endMin = timeStringToMinutes(sdPatchEndTime, { nextDay: false })
-			if (!targetSvcId || firstMin > lastMin || lastMin > endMin) {
-				setErrorMessage(
-					_(msg`Select a service and valid hours for modified schedule.`),
-				)
+			if (!targetSvcId) {
+				setErrorMessage(_(msg`Add a service before changing its hours.`))
 				return
 			}
 			serviceId = targetSvcId
@@ -284,12 +350,6 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			})
 			const lastMin = timeStringToMinutes(sdReplaceLastTime, { nextDay: false })
 			const endMin = timeStringToMinutes(sdReplaceEndTime, { nextDay: false })
-			if (!sdReplaceName.trim() || firstMin > lastMin || lastMin > endMin) {
-				setErrorMessage(
-					_(msg`Enter replacement service name and valid seating times.`),
-				)
-				return
-			}
 			replacementServices = [
 				{
 					name: sdReplaceName.trim(),
@@ -390,22 +450,14 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 		setErrorMessage(null)
 		setFeedbackMessage(null)
 
+		if (!attemptBlock()) return
 		const startMin = timeStringToMinutes(blkStartTime, { nextDay: false })
 		const endMin = timeStringToMinutes(blkEndTime, { nextDay: false })
-		if (startMin >= endMin) {
-			setErrorMessage(_(msg`Block start time must be earlier than end time.`))
-			return
-		}
 
 		const targetTableId =
 			blkTargetType === 'table' ? blkTableId || tables[0]?.id || null : null
 		const targetAreaId =
 			blkTargetType === 'area' ? blkAreaId || areas[0]?.id || null : null
-
-		if (!targetTableId && !targetAreaId) {
-			setErrorMessage(_(msg`Select a table or dining area to block.`))
-			return
-		}
 
 		try {
 			const res = await createBlock(client, selectedLocationId, {
@@ -435,11 +487,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 		try {
 			const res = await deleteBlock(client, selectedLocationId, blockId)
 			recordMutationSideEffects(res)
-			setFeedbackMessage(_(msg`Block removed.`))
+			setFeedbackMessage(_(msg`Block deleted.`))
 			await Promise.all([loadAll(), refreshSummary()])
 		} catch (err) {
 			setErrorMessage(
-				extractApiErrorMessage(err, _(msg`Failed to remove block.`)),
+				extractApiErrorMessage(err, _(msg`Failed to delete block.`)),
 			)
 		}
 	}
@@ -656,17 +708,18 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 							{specialDays.map((sd) => {
 								const startStr = sd.fromDate || sd.date
 								const endStr = sd.toDate || sd.date
-								const rowLabel = sd.name || sd.reason || startStr
+								const rangeLabel = formatBusinessDateRange(
+									startStr,
+									endStr,
+									i18n.locale,
+								)
+								const rowLabel = sd.name || sd.reason || rangeLabel
 								return (
 									<TableRow
 										key={sd.id}
 										data-testid={`setup-special-day-row-${startStr}`}
 									>
-										<TableCell className="tabular-nums">
-											{startStr === endStr
-												? startStr
-												: `${startStr} → ${endStr}`}
-										</TableCell>
+										<TableCell className="tabular-nums">{rangeLabel}</TableCell>
 										<TableCell className="font-medium wrap-anywhere">
 											{sd.name || sd.reason || '—'}
 										</TableCell>
@@ -823,7 +876,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 										data-testid={`setup-block-row-${blk.businessDate}`}
 									>
 										<TableCell className="tabular-nums">
-											{blk.businessDate}
+											{formatBusinessDate(blk.businessDate, i18n.locale)}
 										</TableCell>
 										<TableCell className="font-medium wrap-anywhere">
 											{targetLabel}
@@ -858,7 +911,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 													}
 													data-testid={`setup-delete-block-${blk.id}`}
 												>
-													<Trans>Remove</Trans>
+													<Trans>Delete</Trans>
 												</Button>
 											) : null}
 										</TableCell>
@@ -874,6 +927,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 				open={specialDaySheetOpen}
 				onOpenChange={(open) => {
 					setSpecialDaySheetOpen(open)
+					resetSd()
 					if (!open) setErrorMessage(null)
 				}}
 			>
@@ -939,6 +993,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 									label={<Trans>End date</Trans>}
 									type="date"
 									value={sdEndDate}
+									error={sdErrors.dates}
+									onBlur={() => touchSd('dates')}
 									onChange={(e) => setSdEndDate(e.target.value)}
 									data-testid="setup-special-day-end-date"
 								/>
@@ -995,6 +1051,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 											data-testid="setup-special-day-patch-end"
 										/>
 									</div>
+									{sdErrors.times ? (
+										<FieldError data-testid="setup-special-day-times-error">
+											{sdErrors.times}
+										</FieldError>
+									) : null}
 								</div>
 							) : null}
 
@@ -1004,6 +1065,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 										id="sd-replace-name"
 										label={<Trans>Replacement service name</Trans>}
 										value={sdReplaceName}
+										error={sdErrors.replaceName}
+										onBlur={() => touchSd('replaceName')}
 										onChange={(e) => setSdReplaceName(e.target.value)}
 										data-testid="setup-special-day-replace-name"
 									/>
@@ -1033,6 +1096,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 											data-testid="setup-special-day-replace-end"
 										/>
 									</div>
+									{sdErrors.times ? (
+										<FieldError data-testid="setup-special-day-times-error">
+											{sdErrors.times}
+										</FieldError>
+									) : null}
 								</div>
 							) : null}
 
@@ -1064,6 +1132,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 				open={blockSheetOpen}
 				onOpenChange={(open) => {
 					setBlockSheetOpen(open)
+					resetBlock()
 					if (!open) setErrorMessage(null)
 				}}
 			>
@@ -1128,6 +1197,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 										options={tableOptions}
 										value={blkTableId || tables[0]?.id || ''}
 										onValueChange={setBlkTableId}
+										error={blockErrors.target}
 									/>
 								) : (
 									<SelectField
@@ -1136,6 +1206,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 										options={areaOptions}
 										value={blkAreaId || areas[0]?.id || ''}
 										onValueChange={setBlkAreaId}
+										error={blockErrors.target}
 									/>
 								)}
 							</div>
@@ -1153,6 +1224,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 									label={<Trans>End time</Trans>}
 									type="time"
 									value={blkEndTime}
+									error={blockErrors.times}
+									onBlur={() => touchBlock('times')}
 									onChange={(e) => setBlkEndTime(e.target.value)}
 									data-testid="setup-block-end-time"
 								/>
@@ -1188,7 +1261,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>
 							{pendingDelete?.kind === 'block' ? (
-								<Trans>Remove this block?</Trans>
+								<Trans>Delete this block?</Trans>
 							) : (
 								<Trans>Delete this special day?</Trans>
 							)}
@@ -1217,7 +1290,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 							data-testid="setup-special-days-confirm-delete"
 						>
 							{pendingDelete?.kind === 'block' ? (
-								<Trans>Remove</Trans>
+								<Trans>Delete</Trans>
 							) : (
 								<Trans>Delete</Trans>
 							)}
