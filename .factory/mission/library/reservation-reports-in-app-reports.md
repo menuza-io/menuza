@@ -480,3 +480,23 @@ for one release before step 9.
    aggregate counts after a privacy review; free text never.
 4. Is a combined "Reservations overview" dashboard worth a follow-up, since the
    six-tab single view has no one-screen equivalent in Reports?
+
+## 9. Implementation status
+
+Implemented on `pr/reservations` (owner decisions: no live customers, no
+migration, covers = `coversActual ?? partySize` everywhere, the deep link keeps
+the active location, no allergy reporting).
+
+- Done: token gate relaxed for reservation-only roles; dashboard picker and
+  saved reports filtered by grants; number 0/1 flag fields work as engine ratio
+  measures (no fallback needed); `bookings` fields (`cancelledBy`, flags, rates,
+  `slotTime`, configured turn and variance); `pacing_slots` subject on shared
+  `computePacingSlots`; 16 Reservations templates (12 reports, 4 KPIs) with
+  Arabic labels; `?category=` and `?location=` deep link; Reservations Reports
+  tab and sidebar item as plain links; `/reservations/reports` redirect; the
+  custom screen, API client, tenant-api routes and `rsv-report-service` deleted.
+- Follow-ups: previous-period comparison on single-number reports (the insight
+  sentence was dropped); a "Reservations overview" dashboard preset; field
+  labels in the catalog are English constants (as for staffing); the `reports`
+  scope of the Reservations operator token is now unused and can be removed from
+  `packages/reservations`.
