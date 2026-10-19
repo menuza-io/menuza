@@ -789,6 +789,7 @@ export async function withReservationWrite<T>(
 		current: {
 			affectedDatesByLocation: Map<string, Set<string>>
 			postCommitHooks: Array<() => void | Promise<void>>
+			sweepHooks: Array<() => void | Promise<void>>
 		} | null
 	} = { current: null }
 
@@ -800,6 +801,9 @@ export async function withReservationWrite<T>(
 			if (options.onAfterCommit) {
 				postCommitHooks.push(options.onAfterCommit)
 			}
+			// Hooks queued by the sweep and its follow-up writes; they run even when
+			// the request itself is an idempotent replay.
+			const sweepHooks: Array<() => void | Promise<void>> = []
 			const affectedDatesByLocation = new Map<string, Set<string>>()
 			const markAffectedDate = (locId: string, businessDate: string) => {
 				let set = affectedDatesByLocation.get(locId)
@@ -829,6 +833,7 @@ export async function withReservationWrite<T>(
 						now,
 						afterCommit: (hook: () => void | Promise<void>) => {
 							postCommitHooks.push(hook)
+							sweepHooks.push(hook)
 						},
 					}
 					for (const requestId of swept.expiredRequestIds) {
@@ -863,6 +868,24 @@ export async function withReservationWrite<T>(
 									'idempotency_conflict',
 									'Idempotency key already used with a different request payload',
 								)
+							}
+							// The sweep above already expired rows (and a rolled-back replay
+							// is not an option: later sweeps would no longer see them). Bring
+							// the swept days' version, reminders and outbox rows in line
+							// before answering from the stored response, so conditional
+							// feeds never keep reporting unchanged data.
+							const sweptByLocation = new Map<string, Set<string>>()
+							for (const item of swept.affectedLocationDates) {
+								const set = sweptByLocation.get(item.locationId) ?? new Set()
+								set.add(item.businessDate)
+								sweptByLocation.set(item.locationId, set)
+							}
+							for (const [locId, datesSet] of sweptByLocation) {
+								await reconcileScheduledMessages(tx, queueCtx, {
+									locationId: locId,
+									dates: [...datesSet],
+								})
+								await bumpDayVersionsInTx(tx, locId, [...datesSet], now)
 							}
 							return {
 								replayed: true as const,
@@ -995,7 +1018,11 @@ export async function withReservationWrite<T>(
 						value,
 					}
 				})
-				committed.current = { affectedDatesByLocation, postCommitHooks }
+				committed.current = {
+					affectedDatesByLocation,
+					postCommitHooks,
+					sweepHooks,
+				}
 				return result
 			} catch (error) {
 				mapSqliteConstraintError(error)
@@ -1010,10 +1037,12 @@ export async function withReservationWrite<T>(
 		}
 	}
 
-	if (!outcome.replayed) {
-		for (const hook of finished?.postCommitHooks ?? []) {
-			await hook()
-		}
+	// A replay answers from the stored response: only what the sweep queued runs.
+	const hooksToRun = outcome.replayed
+		? (finished?.sweepHooks ?? [])
+		: (finished?.postCommitHooks ?? [])
+	for (const hook of hooksToRun) {
+		await hook()
 	}
 
 	return outcome.value

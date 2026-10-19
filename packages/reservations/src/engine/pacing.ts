@@ -48,6 +48,12 @@ export type PacingBookingItem = {
 	channel?: BookingChannel | string
 	partySize: number
 	localStartMin?: number
+	/**
+	 * Business date the booking belongs to. `localStartMin` is relative to it
+	 * (an overnight booking has minutes >= 1440). Pacing and concurrency only
+	 * count bookings of the requested business date.
+	 */
+	businessDate?: string
 	startAt?: number
 	endAt?: number
 	status?: string
@@ -108,6 +114,8 @@ function sameBucket(
 export function evaluatePacing(input: {
 	serviceId: string
 	slotMin: number
+	/** Business date of the proposed slot; bookings of other dates are ignored. */
+	businessDate?: string
 	startAt?: number
 	endAt?: number
 	durationMin?: number
@@ -125,6 +133,13 @@ export function evaluatePacing(input: {
 	const activeExisting = input.existing.filter((item) => {
 		if (input.ignoreIds?.has(item.id)) return false
 		if (item.kind === 'block') return false
+		if (
+			input.businessDate !== undefined &&
+			item.businessDate !== undefined &&
+			item.businessDate !== input.businessDate
+		) {
+			return false
+		}
 		if (item.status && INACTIVE_PACING_STATUSES.has(item.status)) return false
 		return true
 	})

@@ -70,6 +70,7 @@ import {
 	refreshStaffCaches,
 } from './time-entry-calc.ts'
 import { snapshotCard } from './timesheet-write-service.ts'
+import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * The regional tick: one idempotent pass over an organization's time clock that
@@ -362,7 +363,7 @@ async function loadOpenEntries(db: StaffDb): Promise<OpenEntry[]> {
 		.from(timeBreaks)
 		.where(
 			and(
-				inArray(
+				inJsonList(
 					timeBreaks.entryId,
 					rows.map((row) => row.entry.id),
 				),
@@ -731,10 +732,9 @@ async function loadStaff(
 	ids: readonly string[],
 ): Promise<Map<string, StaffMember>> {
 	if (ids.length === 0) return new Map()
-	const rows = await db
-		.select()
-		.from(staffMembers)
-		.where(inArray(staffMembers.id, [...ids]))
+	const rows = await queryInChunks([...ids], (chunk) =>
+		db.select().from(staffMembers).where(inArray(staffMembers.id, chunk)),
+	)
 	return new Map(rows.map((row) => [row.id, row]))
 }
 
@@ -1238,6 +1238,7 @@ async function deliverOutbox(
 			and(
 				eq(notificationOutbox.status, 'pending'),
 				lte(notificationOutbox.nextAttemptAt, ctx.now),
+				// bounded: outbox kinds are a small closed enum
 				inArray(notificationOutbox.kind, kinds),
 			),
 		)
@@ -1497,6 +1498,7 @@ export async function runStaffTickForOrg(
 					.where(
 						and(
 							eq(notificationOutbox.status, 'pending'),
+							// bounded: outbox kinds are a small closed enum
 							inArray(notificationOutbox.kind, kinds),
 						),
 					)

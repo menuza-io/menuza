@@ -200,7 +200,12 @@ struct ModifyReservationView: View {
 								ForEach(availability?.slots ?? [], id: \.self) { slot in
 									ChipButton(title: ReservationsFormat.ltr(slot.time)) {
 										Task {
-											await store.modify(token: token, date: date, localMin: slot.localMin)
+											await store.modify(
+												token: token,
+												date: date,
+												localMin: slot.localMin,
+												partySize: party
+											)
 											if store.manageFailure == nil {
 												isPresented = false
 												await store.loadMine()

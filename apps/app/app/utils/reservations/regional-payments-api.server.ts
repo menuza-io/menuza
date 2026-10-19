@@ -217,7 +217,13 @@ export async function notifyReservationPaymentStatus(
 
 /** Move a fee pending -> charging once; 409 when it is not claimable. */
 export async function claimReservationFee(
-	options: Region & { orgId: string; reservationId: string; feeId: string },
+	options: Region & {
+		orgId: string
+		reservationId: string
+		feeId: string
+		/** The operator's locations (`null` for all); the region enforces it. */
+		locationIds: string[] | null
+	},
 ): Promise<ReservationFeeClaim> {
 	const { dataRegion, ...rest } = options
 	const body = parseOutgoing(reservationFeeClaimRequestSchema, rest)
@@ -237,7 +243,12 @@ export async function reportReservationFeeResult(
 
 /** Claim one refund request (or, without an id, the batch that is due). */
 export async function claimReservationRefunds(
-	options: Region & { orgId: string; refundRequestId?: string },
+	options: Region & {
+		orgId: string
+		refundRequestId?: string
+		/** Set for an operator's request; the region refuses other locations. */
+		locationIds?: string[] | null
+	},
 ): Promise<ReservationRefundClaim[]> {
 	const { dataRegion, ...rest } = options
 	const body = parseOutgoing(reservationRefundClaimRequestSchema, rest)

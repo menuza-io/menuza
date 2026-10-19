@@ -250,6 +250,7 @@ export async function cancelPendingReservationMessages(
 			and(
 				eq(rsvMessages.reservationId, reservationId),
 				eq(rsvMessages.status, 'pending'),
+				// bounded: message kinds are a small closed enum
 				inArray(rsvMessages.kind, [...kinds]),
 			),
 		)
@@ -283,15 +284,17 @@ export async function reconcileScheduledMessages(
 	input: { locationId: string; dates: readonly string[] },
 ): Promise<void> {
 	if (input.dates.length === 0) return
-	const reservations = await tx
-		.select()
-		.from(rsvReservations)
-		.where(
-			and(
-				eq(rsvReservations.locationId, input.locationId),
-				inArray(rsvReservations.businessDate, [...input.dates]),
+	const reservations = await queryInChunks([...input.dates], (chunk) =>
+		tx
+			.select()
+			.from(rsvReservations)
+			.where(
+				and(
+					eq(rsvReservations.locationId, input.locationId),
+					inArray(rsvReservations.businessDate, chunk),
+				),
 			),
-		)
+	)
 	if (reservations.length === 0) return
 	const ids = reservations.map((row) => row.id)
 

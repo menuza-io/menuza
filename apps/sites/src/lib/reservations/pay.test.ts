@@ -330,10 +330,51 @@ describe('pay page', () => {
 		expect(readPay({ kind: 'reservation', id: 'rsv_1' }, storage)?.token).toBe(
 			'tok-123456',
 		)
-		expect(replaceState).toHaveBeenCalledWith(null, '', '/reserve/pay')
+		expect(replaceState).toHaveBeenCalledWith(null, '', '/reserve/pay#r=rsv_1')
 		expect(root.querySelector('[data-action="pay"]')).not.toBeNull()
 		expect(root.textContent).toContain('$25.00')
 		expect(JSON.stringify(location.href)).not.toContain('tok-123456')
+	})
+
+	it('keeps the non-secret reference in the sanitized URL so a reload still resolves', async () => {
+		for (const [fragment, ref, expected] of [
+			[
+				'#r=rsv_1&t=tok-123456&purpose=deposit',
+				{ kind: 'reservation', id: 'rsv_1' },
+				'/reserve/pay#r=rsv_1&purpose=deposit',
+			],
+			[
+				'#f=fee_9&t=tok-fee-9999',
+				{ kind: 'fee', id: 'fee_9' },
+				'/reserve/pay#f=fee_9',
+			],
+		] as const) {
+			const status = vi.fn(async () => ({
+				paymentStatus: 'pending',
+				reservationStatus: 'pending_payment',
+				expiresAt: new Date(Date.now() + 600_000).toISOString(),
+			}))
+			const first = page({
+				api: { status },
+				hash: fragment,
+				pageLocation: { hash: fragment, pathname: '/reserve/pay', search: '' },
+			})
+			await initPayPage(first.root, first.deps)
+			const url = first.replaceState.mock.calls[0]![2] as string
+			expect(url).toBe(expected)
+			expect(url).not.toContain('tok')
+			// Reload: the browser shows the sanitized URL, storage survives.
+			const hash = url.slice(url.indexOf('#'))
+			const second = page({
+				api: { status },
+				hash,
+				pageLocation: { hash, pathname: '/reserve/pay', search: '' },
+				storage: first.storage,
+			})
+			await initPayPage(second.root, second.deps)
+			expect(second.root.querySelector('[data-action="pay"]')).not.toBeNull()
+			expect(readPay(ref, first.storage)?.token).toMatch(/^tok-/)
+		}
 	})
 
 	it('tries the next purpose after a purpose mismatch', async () => {

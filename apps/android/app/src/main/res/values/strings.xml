@@ -65,6 +65,7 @@
 	<string name="res_try_instead">Try one of these instead</string>
 	<string name="res_other_dates">Other dates</string>
 	<string name="res_large_party">Parties this size need the restaurant\'s approval.</string>
+	<string name="res_party_over_max">Parties over %1$d need the restaurant\'s approval.</string>
 	<string name="res_request_table">Request a table</string>
 	<string name="res_details_title">Your details</string>
 	<string name="res_requests">Special requests</string>

@@ -479,4 +479,37 @@ final class BookingFlowTests: XCTestCase {
 		XCTAssertNotNil(key.range(of: "^[A-Za-z0-9._:-]{8,128}$", options: .regularExpression))
 		XCTAssertNotEqual(key, IdempotencyKey.make())
 	}
+
+	func testRestoringAWaitlistTokenGivesBackTheStatusCapability() throws {
+		var flow = WaitlistFlow()
+		XCTAssertNil(flow.statusToken)
+		flow.restore(token: "tok_wait_0001")
+		XCTAssertEqual(flow.statusToken, "tok_wait_0001")
+		XCTAssertEqual(flow.phase, .waiting)
+		// A 404 on the restored token is a dead link, not a generic failure.
+		flow.receive(error: ReservationAPIError(statusCode: 404, code: "not_found"))
+		XCTAssertEqual(flow.phase, .linkInvalid)
+		XCTAssertTrue(WaitlistFlow.isFinished(status: "left"))
+		XCTAssertTrue(WaitlistFlow.isFinished(status: "seated"))
+		XCTAssertFalse(WaitlistFlow.isFinished(status: "waiting"))
+		XCTAssertFalse(WaitlistFlow.isFinished(status: "notified"))
+	}
+
+	func testPartyCeilingAllowsLargePartiesUnlessTheyAreDisabled() throws {
+		var config = try XCTUnwrap(
+			JSONSerialization.jsonObject(with: ReservationFixtures.data("config")) as? [String: Any]
+		)
+		var locations = try XCTUnwrap(config["locations"] as? [[String: Any]])
+		var large = try XCTUnwrap(locations[0]["largeParty"] as? [String: Any])
+		for (mode, ceiling) in [("request", 99), ("contact", 99), ("call_only", 99), ("disabled", 4)] {
+			large["mode"] = mode
+			locations[0]["largeParty"] = large
+			config["locations"] = locations
+			let data = try JSONSerialization.data(withJSONObject: config)
+			let decoded = try JSONDecoder().decode(ReservationsConfig.self, from: data)
+			let location = try XCTUnwrap(decoded.locations.first)
+			XCTAssertEqual(location.partyCeiling, ceiling, mode)
+			XCTAssertEqual(location.needsApproval(partySize: 5), mode != "disabled", mode)
+		}
+	}
 }

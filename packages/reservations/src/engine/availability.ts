@@ -120,6 +120,12 @@ export type ExistingOccupancyInput = {
 	experienceId?: string | null
 	partySize?: number
 	localStartMin?: number
+	/**
+	 * Business date `localStartMin` is relative to. Occupancies of adjacent
+	 * days still block tables physically but only count toward pacing when
+	 * this equals the requested business date.
+	 */
+	businessDate?: string
 	startAt: number
 	endAt: number
 	tableIds?: readonly string[]
@@ -476,6 +482,7 @@ export function searchAvailability(
 		channel: o.channel ?? 'online',
 		partySize: o.partySize ?? 0,
 		localStartMin: o.localStartMin,
+		businessDate: o.businessDate,
 		startAt: o.startAt,
 		endAt: o.endAt,
 		status: o.status,
@@ -606,6 +613,7 @@ export function searchAvailability(
 			const globalPacing = evaluatePacing({
 				serviceId: service.id,
 				slotMin,
+				businessDate,
 				startAt,
 				endAt,
 				durationMin: turnMin,
@@ -685,6 +693,7 @@ export function searchAvailability(
 				const areaPacing = evaluatePacing({
 					serviceId: service.id,
 					slotMin,
+					businessDate,
 					startAt,
 					endAt,
 					durationMin: turnMin,

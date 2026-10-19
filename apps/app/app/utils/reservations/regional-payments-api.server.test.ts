@@ -271,8 +271,12 @@ describe('regional reservation payments client', () => {
 			orgId: 'org_1',
 			reservationId: 'rsv_1',
 			feeId: 'fee_1',
+			locationIds: ['loc_a'],
 		})
 		expect(claim.attempt).toBe(1)
+		expect(JSON.parse(String(lastCall().init?.body))).toMatchObject({
+			locationIds: ['loc_a'],
+		})
 		expect(lastCall().url).toMatch(/\/payments\/fee-claim$/)
 
 		fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))

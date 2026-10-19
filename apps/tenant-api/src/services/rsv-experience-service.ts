@@ -33,6 +33,7 @@ import {
 	ensureLocationSettingsRow,
 	writeSetupAuditLog,
 } from './rsv-setup-service.ts'
+import { queryInChunks } from '../lib/chunked-in.ts'
 
 /**
  * Operator Experiences setup (`architecture.md` 4.1, 7.2).
@@ -268,17 +269,19 @@ async function assertReferences(
 	}
 	if (refs.areaIds && refs.areaIds.length > 0) {
 		const unique = [...new Set(refs.areaIds)]
-		const found = await tx
-			.select({ id: rsvAreas.id })
-			.from(rsvAreas)
-			.where(
-				and(
-					eq(rsvAreas.locationId, locationId),
-					isNull(rsvAreas.archivedAt),
-					inArray(rsvAreas.id, unique),
-				),
-			)
-			.all()
+		const found = await queryInChunks(unique, (chunk) =>
+			tx
+				.select({ id: rsvAreas.id })
+				.from(rsvAreas)
+				.where(
+					and(
+						eq(rsvAreas.locationId, locationId),
+						isNull(rsvAreas.archivedAt),
+						inArray(rsvAreas.id, chunk),
+					),
+				)
+				.all(),
+		)
 		if (found.length !== unique.length) {
 			issues.push({ path: `${pathPrefix}areaIds`, code: 'invalid_reference' })
 		}

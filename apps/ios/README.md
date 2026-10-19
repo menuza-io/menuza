@@ -40,6 +40,12 @@ never logged and never put in a URL. Re-record the fixtures with
 `npm run fixtures:reservations -w tenant-api`; its contract test fails when a
 copy drifts.
 
+`Tests/TenantAppTests/ReservationsStoreTests.swift` covers `ReservationsStore`
+(waitlist restore after relaunch, `reset()` on sign-out, modify party size). The
+store lives in the SwiftUI app target, so SwiftPM's `swift test` does not run
+it: compile it with `ReservationsStore.swift`, `TestSupport.swift` and
+`ReservationFixtures.swift` in an Xcode unit-test target.
+
 ## Two build modes (read this first)
 
 |                | Un-branded (**default**)                                   | White-label (per tenant)                             |

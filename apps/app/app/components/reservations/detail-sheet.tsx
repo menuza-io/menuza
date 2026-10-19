@@ -1,7 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
-import { formatHhmm, parseHhmm } from '@repo/reservations'
+import { formatHhmm } from '@repo/reservations'
 import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import {
@@ -91,6 +91,7 @@ import {
 	type RsvAreaRecord,
 	type RsvTableRecord,
 } from '#app/utils/reservations/setup-api.ts'
+import { startMinPatch } from '#app/utils/reservations/time-edit.ts'
 import { waitlistErrorInfo } from '#app/utils/reservations/waitlist-errors.ts'
 
 const COURSE_STAGES = [
@@ -491,17 +492,12 @@ export function DetailSheet({
 		setBusy(true)
 		setError(null)
 		try {
-			let nextStartMin = reservation.localStartMin
-			try {
-				nextStartMin = parseHhmm(
-					timeEdit || formatHhmm(reservation.localStartMin),
-				)
-			} catch {
-				// keep existing startMin if invalid
-			}
+			// Business-day minutes end to end: send the time only when the operator
+			// changed it, so a notes-only edit of an overnight booking (minute 1470)
+			// never moves it a day earlier.
 			const res = await updateReservation(client, reservation.id, {
 				partySize: partySizeEdit,
-				localStartMin: nextStartMin,
+				...startMinPatch(reservation.localStartMin, timeEdit),
 				durationMin: durationEdit,
 				serverLabel: serverLabel.trim() || null,
 				guestNotes: guestNotes.trim() || null,

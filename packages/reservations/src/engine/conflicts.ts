@@ -34,6 +34,8 @@ export type ConflictBookingInput = {
 	channel?: string
 	partySize: number
 	localStartMin?: number
+	/** Business date `localStartMin` is relative to (pacing scope). */
+	businessDate?: string
 	startAt: number
 	endAt: number
 	tableIds: readonly string[]
@@ -70,6 +72,11 @@ export type DetectConflictsInput = {
 	blocks?: readonly ConflictBlockInput[]
 	services?: readonly ConflictServiceInput[]
 	pacingRules?: readonly EnginePacingRuleInput[]
+	/**
+	 * Business date being checked. Pacing only counts bookings of this date,
+	 * mirroring availability (`evaluatePacing`); physical checks see all.
+	 */
+	businessDate?: string
 	dayClosed?: boolean
 }
 
@@ -356,6 +363,13 @@ export function detectConflicts(input: DetectConflictsInput): ConflictItem[] {
 			null
 
 		const inService = activeBookings.filter((b) => {
+			if (
+				input.businessDate !== undefined &&
+				b.businessDate !== undefined &&
+				b.businessDate !== input.businessDate
+			) {
+				return false
+			}
 			if (sId && b.serviceId && b.serviceId !== sId) return false
 			if (rArea && b.areaId && b.areaId !== rArea) return false
 			return true

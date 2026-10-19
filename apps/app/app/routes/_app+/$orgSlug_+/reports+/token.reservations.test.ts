@@ -214,6 +214,22 @@ describe('reports token gate for reservation-only roles', () => {
 		expect(subjects).not.toContain('phone_calls')
 	})
 
+	it('never lists organization-wide subjects for a module-only holder, but does for analytics access', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await enableReservations(organization.id)
+		const only = await member(organization.id, [P.READ_RESERVATION_REPORT])
+		const minted = await mint(organization.slug, only.cookie)
+		for (const subject of ['customers', 'text_subscribers', 'shop_orders']) {
+			expect(minted.subjects).not.toContain(subject)
+			expect(minted.claims.subjects).not.toContain(subject)
+		}
+		const admin = await member(organization.id, [ANALYTICS])
+		const adminMint = await mint(organization.slug, admin.cookie)
+		expect(adminMint.claims.subjects).toEqual(
+			expect.arrayContaining(['customers', 'text_subscribers', 'shop_orders']),
+		)
+	})
+
 	it('still refuses a role with neither an admin report grant nor a module grant', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		await enableReservations(organization.id)

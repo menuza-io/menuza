@@ -1179,6 +1179,7 @@ export async function reflowFutureBookingsForLocation(
 				id: r.id,
 				partySize: r.partySize,
 				localStartMin: r.localStartMin,
+				businessDate: r.businessDate,
 				startAt: r.startAt,
 				endAt: r.endAt,
 				tableIds: (occMap.get(r.id) ?? []).map((o) => o.tableId),
@@ -1404,6 +1405,7 @@ export async function reflowFutureBookingsForLocation(
 			blocks: engineBlocks,
 			services: resolvedServices.services,
 			pacingRules: enginePacingRules,
+			businessDate,
 			dayClosed: resolvedServices.closed,
 		})
 		for (const c of dayConflicts) {
@@ -1481,11 +1483,13 @@ export async function validateLocationSetup(
 	const serviceIds = services.map((s) => s.id)
 	const pacing =
 		serviceIds.length > 0
-			? await db
-					.select()
-					.from(rsvPacingRules)
-					.where(inArray(rsvPacingRules.serviceId, serviceIds))
-					.all()
+			? await queryInChunks(serviceIds, (chunk) =>
+					db
+						.select()
+						.from(rsvPacingRules)
+						.where(inArray(rsvPacingRules.serviceId, chunk))
+						.all(),
+				)
 			: []
 	const policies = await db
 		.select()
@@ -1724,11 +1728,13 @@ export async function getFloorPlan(
 	const areaIds = areas.map((a) => a.id)
 	const elements =
 		areaIds.length > 0
-			? await db
-					.select()
-					.from(rsvFloorElements)
-					.where(inArray(rsvFloorElements.areaId, areaIds))
-					.all()
+			? await queryInChunks(areaIds, (chunk) =>
+					db
+						.select()
+						.from(rsvFloorElements)
+						.where(inArray(rsvFloorElements.areaId, chunk))
+						.all(),
+				)
 			: []
 
 	return {

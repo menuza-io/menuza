@@ -65,6 +65,7 @@
 	<string name="res_try_instead">Probieren Sie stattdessen eine dieser Zeiten</string>
 	<string name="res_other_dates">Andere Tage</string>
 	<string name="res_large_party">Gruppen dieser Größe benötigen die Zustimmung des Restaurants.</string>
+	<string name="res_party_over_max">Gruppen über %1$d Personen benötigen die Zustimmung des Restaurants.</string>
 	<string name="res_request_table">Tisch anfragen</string>
 	<string name="res_details_title">Ihre Angaben</string>
 	<string name="res_requests">Besondere Wünsche</string>

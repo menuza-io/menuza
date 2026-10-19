@@ -89,7 +89,21 @@ data class ResLocation(
 	val areas: List<ResChip>,
 	val publicNote: String?,
 ) {
+	/**
+	 * The most a guest can step to. Above [partyMax] the booking becomes a
+	 * large-party request (or a call); only a location that turned large parties
+	 * off stops at the online maximum. 99 is the API limit.
+	 */
+	val partyCeiling: Int get() = if (largePartyMode == "disabled") partyMax else maxOf(partyMax, LARGE_PARTY_CEILING)
+
+	fun clampParty(size: Int): Int = size.coerceIn(partyMin, partyCeiling)
+
+	/** True when [size] is above the online maximum and the guest can send a request. */
+	fun needsApproval(size: Int): Boolean = size > partyMax && largePartyMode == "request"
+
 	companion object {
+		const val LARGE_PARTY_CEILING = 99
+
 		fun fromJson(json: JSONObject): ResLocation? {
 			val id = json.stringOrNull("id") ?: return null
 			val party = json.objectOrNull("partySize")

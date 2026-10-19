@@ -339,10 +339,15 @@ export async function searchGuests(
 		resolvedOpts,
 	)
 
-	const pinned = await loadPinnedNotesMap(
-		db,
-		rows.map((r) => r.id),
-	)
+	// Pinned note bodies are private free text: only the guest-data grant sees
+	// them, so without it they are not even read.
+	const pinned =
+		resolvedOpts?.canReadSensitive === true
+			? await loadPinnedNotesMap(
+					db,
+					rows.map((r) => r.id),
+				)
+			: new Map<string, Array<{ id: string; body: string }>>()
 	return rows.map((r) => ({
 		...serializeGuestRow(r, tagsMap.get(r.id) ?? [], resolvedOpts),
 		pinnedNotes: pinned.get(r.id) ?? [],
@@ -635,7 +640,7 @@ export async function getGuestSummary(
 		.orderBy(desc(rsvGuestNotes.pinned), desc(rsvGuestNotes.createdAt))
 		.all()
 	const notes = canReadSensitive ? liveNotes : []
-	const pinnedNotes = liveNotes
+	const pinnedNotes = (canReadSensitive ? liveNotes : [])
 		.filter((n) => n.pinned)
 		.map((n) => ({ id: n.id, body: n.body, createdAt: n.createdAt }))
 
@@ -662,7 +667,7 @@ export async function getGuestSummary(
 			status: r.status,
 			channel: r.channel,
 			dietaryNotes: canReadSensitive ? r.dietaryNotes : null,
-			guestRequests: r.guestRequests,
+			guestRequests: canReadSensitive ? r.guestRequests : null,
 			staffNotes: canReadSensitive ? r.staffNotes : null,
 			startAt: r.startAt,
 			endAt: r.endAt,
@@ -810,7 +815,7 @@ export async function exportGuestProfile(
 			partySize: r.partySize,
 			status: r.status,
 			channel: r.channel,
-			guestRequests: r.guestRequests,
+			guestRequests: includeSensitive ? r.guestRequests : null,
 			dietaryNotes: includeSensitive ? r.dietaryNotes : null,
 			staffNotes: includeSensitive ? r.staffNotes : null,
 			startAt: r.startAt,

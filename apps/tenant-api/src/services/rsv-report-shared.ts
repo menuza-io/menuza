@@ -1,3 +1,5 @@
+import { maskIncludesWeekday } from '@repo/reservations'
+
 /**
  * Reservation report math shared by the generic report loaders
  * (`rsv-report-records.ts`). One definition each, so a figure never differs
@@ -48,7 +50,7 @@ export function configuredTurnMinutes(
 		(rule) =>
 			partySize >= rule.partyMin &&
 			partySize <= rule.partyMax &&
-			(rule.daysMask === null || (rule.daysMask & (1 << weekday)) !== 0),
+			(rule.daysMask === null || maskIncludesWeekday(rule.daysMask, weekday)),
 	)
 	const pick =
 		fits.find(

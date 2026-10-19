@@ -249,6 +249,30 @@ describe('/analytics/query on reservations subjects', () => {
 		}
 	})
 
+	it('a reservation-report-only token cannot run any subject it does not list', async () => {
+		for (const subject of [
+			'customers',
+			'text_subscribers',
+			'shop_orders',
+			'orders',
+			'order_items',
+			'order_options',
+			'phone_calls',
+			'time_entries',
+		]) {
+			const res = await query(definition(subject, 'createdAt'))
+			expect(res.status, subject).toBe(403)
+			expect(res.body.error, subject).toBe('forbidden_subject')
+		}
+		for (const [subject, field] of [
+			['bookings', 'startsAt'],
+			['waitlist_entries', 'joinedAt'],
+		] as const) {
+			const ok = await query(definition(subject, field))
+			expect(ok.status, subject).toBe(200)
+		}
+	})
+
 	it('returns one correct row per reservation, without contact columns', async () => {
 		const columns = organizationCatalog.subjects
 			.find((s) => s.id === 'bookings')!

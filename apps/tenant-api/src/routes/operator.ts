@@ -25,6 +25,7 @@ import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
 import { loadBroadcastAudience } from '../services/marketing-audience.ts'
 import { erasePerson } from '../services/person-erasure-service.ts'
+import { forEachInChunks, insertRowsInChunks } from '../lib/chunked-in.ts'
 
 export const operatorRoutes = new Hono()
 
@@ -588,13 +589,15 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 				customer,
 			}))
 
-			await db.insert(marketingMessages).values(
+			await insertRowsInChunks(
+				marketingMessages,
 				chunkItems.map((item) => ({
 					id: item.messageId,
 					campaignId,
 					customerId: item.customer.id,
 					status: 'Processing',
 				})),
+				(chunk) => db.insert(marketingMessages).values(chunk),
 			)
 
 			// Process sends concurrently across the batch
@@ -659,16 +662,26 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 			// Bulk update outcomes for the batch
 			if (sentIds.length > 0) {
-				await db
-					.update(marketingMessages)
-					.set({ status: 'Sent', sentAt: new Date() })
-					.where(inArray(marketingMessages.id, sentIds))
+				await forEachInChunks(
+					sentIds,
+					(chunk) =>
+						db
+							.update(marketingMessages)
+							.set({ status: 'Sent', sentAt: new Date() })
+							.where(inArray(marketingMessages.id, chunk)),
+					40,
+				)
 			}
 			if (failedIds.length > 0) {
-				await db
-					.update(marketingMessages)
-					.set({ status: 'Failed' })
-					.where(inArray(marketingMessages.id, failedIds))
+				await forEachInChunks(
+					failedIds,
+					(chunk) =>
+						db
+							.update(marketingMessages)
+							.set({ status: 'Failed' })
+							.where(inArray(marketingMessages.id, chunk)),
+					40,
+				)
 			}
 		}
 

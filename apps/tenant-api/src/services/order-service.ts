@@ -35,6 +35,7 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /** Tenant database + transaction handle types. */
 type TenantDatabase = Awaited<ReturnType<typeof getTenantDb>>
@@ -591,7 +592,8 @@ export async function placeOrder(input: {
 				}
 
 				if (result.capacity && result.capacity.entities.length > 0) {
-					await tx.insert(restaurantOrderReservations).values(
+					await insertRowsInChunks(
+						restaurantOrderReservations,
 						result.capacity.entities.map((entity) => ({
 							orderId: inserted!.id,
 							kind: entity.kind,
@@ -600,6 +602,7 @@ export async function placeOrder(input: {
 							slotTime: result.capacity!.slotTime,
 							quantity: entity.quantity,
 						})),
+						(chunk) => tx.insert(restaurantOrderReservations).values(chunk),
 					)
 				}
 
@@ -1226,7 +1229,7 @@ export async function buildOrderingOptions(
 				.from(restaurantOrders)
 				.where(
 					and(
-						inArray(restaurantOrders.pickupWindowId, windowIds),
+						inJsonList(restaurantOrders.pickupWindowId, windowIds),
 						inArray(restaurantOrders.status, [
 							...RESTAURANT_ORDER_ACTIVE_STATUSES,
 						]),
@@ -1257,7 +1260,7 @@ export async function buildOrderingOptions(
 				)
 				.where(
 					and(
-						inArray(restaurantOrderReservations.entityId, entityIds),
+						inJsonList(restaurantOrderReservations.entityId, entityIds),
 						eq(restaurantOrders.dropId, context.drop.drop.id),
 						inArray(restaurantOrders.status, [
 							...RESTAURANT_ORDER_ACTIVE_STATUSES,

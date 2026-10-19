@@ -38,6 +38,7 @@ import {
 import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, HttpError, notFound } from '../lib/http.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
+import { handleCancellationPayments } from './rsv-payment-refunds.ts'
 import {
 	CANCELLABLE_FUTURE_STATUSES,
 	collectMergedGuestIds,
@@ -411,6 +412,22 @@ export async function erasePerson(
 						fromStatus: r.status,
 						toStatus: 'cancelled',
 						data: { redacted: true },
+					})
+					// The restaurant-side cancellation of a paid booking owes the money
+					// back: same handling as an operator cancel (full refund queued as
+					// a regional refund row + outbox command, unpaid sessions closed,
+					// guarantees released). The provider is called later through the
+					// outbox, never inside this write. Ids and amounts only.
+					if (!orgId) {
+						// Never drop a refund silently: fail before anything commits.
+						throw new Error('erasure cannot queue refunds without an org id')
+					}
+					await handleCancellationPayments(tx, {
+						orgId,
+						reservation: r,
+						cancelledBy: 'restaurant',
+						late: false,
+						now,
 					})
 					cancelledFutureCount += 1
 					affectedDayKeys.add(`${r.locationId}::${r.businessDate}`)

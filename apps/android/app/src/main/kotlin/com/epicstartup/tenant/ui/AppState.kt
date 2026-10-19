@@ -23,6 +23,7 @@ import com.epicstartup.tenant.platform.KeystoreReservationTokenStorage
 import com.epicstartup.tenant.platform.KeystoreTokenStorage
 import com.epicstartup.tenant.platform.TaskRunner
 import com.epicstartup.tenant.ui.reservations.ReservationsController
+import com.epicstartup.tenant.ui.reservations.ReservationsHost
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -36,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * thread: callers enter from the UI, and every background result is posted back
  * by [TaskRunner].
  */
-class AppState(private val context: Context) {
+class AppState(private val context: Context) : ReservationsHost {
 
 	sealed interface Phase {
 		data object Loading : Phase
@@ -59,7 +60,7 @@ class AppState(private val context: Context) {
 		private set
 	var theme: SiteTheme = SiteTheme.fallback
 		private set
-	var profile: CustomerProfile? = null
+	override var profile: CustomerProfile? = null
 		private set
 	var isSignedIn: Boolean = false
 		private set
@@ -84,7 +85,7 @@ class AppState(private val context: Context) {
 	 * The reservations screens on top of the profile, as `res:*` keys (see
 	 * `ReservationScreens`). Empty means the profile is showing.
 	 */
-	var resStack: List<String> = emptyList()
+	override var resStack: List<String> = emptyList()
 		private set
 
 	private var configuration: TenantConfiguration = AndroidTenantConfiguration.from(context)
@@ -248,6 +249,8 @@ class AppState(private val context: Context) {
 				// never see them.
 				if (tokens != null && tokens.orgId != organization.id) {
 					session.clearLocalSession()
+					// The bookings' capability tokens belong to that tenant's customer too.
+					KeystoreReservationTokenStorage(context).save(emptyMap())
 					null to session
 				} else {
 					tokens to session
@@ -313,6 +316,10 @@ class AppState(private val context: Context) {
 			onSuccess = { result ->
 				if (attempt != authAttempt) return@run
 				isBusy = false
+				// A new sign-in is a new customer as far as reservations go: nothing of
+				// a previous session (an expired one included) may carry over.
+				reservations?.onSignedOut()
+				resStack = emptyList()
 				isSignedIn = true
 				if (result.needsName == true) {
 					needsName = true
@@ -400,6 +407,8 @@ class AppState(private val context: Context) {
 			},
 			onFailure = { error ->
 				if (error is ApiException && error.isUnauthorized) {
+					reservations?.onSignedOut()
+					resStack = emptyList()
 					isSignedIn = false
 					profile = null
 				} else {
@@ -442,32 +451,34 @@ class AppState(private val context: Context) {
 
 	// MARK: - Reservations navigation
 
-	fun pushRes(key: String) {
+	override fun pushRes(key: String) {
 		resStack = resStack + key
 		notifyChanged()
 	}
 
 	/** Swaps the top screen (the booking result replaces the review). */
-	fun replaceRes(key: String) {
+	override fun replaceRes(key: String) {
 		resStack = resStack.dropLast(1) + key
 		notifyChanged()
 	}
 
 	/** Pops one reservations screen; false when the profile is already showing. */
-	fun popRes(): Boolean {
+	override fun popRes(): Boolean {
 		if (resStack.isEmpty()) return false
 		resStack = resStack.dropLast(1)
 		notifyChanged()
 		return true
 	}
 
-	fun popResTo(key: String) {
+	override fun popResTo(key: String) {
 		val index = resStack.indexOf(key)
 		resStack = if (index >= 0) resStack.take(index + 1) else listOf(key)
 		notifyChanged()
 	}
 
-	internal fun notifyReservationsChanged() = notifyChanged()
+	override fun notifyReservationsChanged() = notifyChanged()
+
+	override val languageCode: String get() = language.code
 
 	// MARK: - Listeners
 

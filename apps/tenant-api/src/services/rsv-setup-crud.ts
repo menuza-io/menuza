@@ -3,6 +3,7 @@ import {
 	currentBusinessDate,
 	isValidTimeZone,
 	localToInstant,
+	uiDaysToMask,
 	type ConflictItem,
 } from '@repo/reservations'
 import {
@@ -29,7 +30,7 @@ import {
 } from '@repo/tenant-db'
 import { DEFAULT_SITE_LOCALES } from '@repo/common/site-locales'
 import { addDays } from '@repo/zoned-time'
-import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, lte, ne, sql } from 'drizzle-orm'
 import { badRequest, conflict, notFound } from '../lib/http.js'
 import { assertLocalizedMap, loadLocaleOrg } from '../lib/reservations-i18n.ts'
 import {
@@ -51,6 +52,7 @@ import {
 	serializeTurnTime,
 	type ReflowMove,
 } from './rsv-setup-service.js'
+import { queryInChunks, forEachInChunks } from '../lib/chunked-in.ts'
 
 function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
@@ -635,6 +637,22 @@ export async function updateTableForLocation(
 			throw notFound('Table not found in location')
 		}
 
+		if (patch.areaId !== undefined && patch.areaId !== existing.areaId) {
+			const area = await db
+				.select({ id: rsvAreas.id })
+				.from(rsvAreas)
+				.where(
+					and(
+						eq(rsvAreas.id, patch.areaId),
+						eq(rsvAreas.locationId, existing.locationId),
+					),
+				)
+				.get()
+			if (!area) {
+				throw badRequest('invalid_area', 'Area does not exist in location')
+			}
+		}
+
 		const nextLabel =
 			patch.label !== undefined ? patch.label.trim() : existing.label
 		if (nextLabel !== existing.label) {
@@ -873,16 +891,18 @@ export async function createComboForLocation(
 			)
 		}
 
-		const tables = await db
-			.select()
-			.from(rsvTables)
-			.where(
-				and(
-					eq(rsvTables.locationId, input.locationId),
-					inArray(rsvTables.id, uniqueTableIds),
-				),
-			)
-			.all()
+		const tables = await queryInChunks(uniqueTableIds, (chunk) =>
+			db
+				.select()
+				.from(rsvTables)
+				.where(
+					and(
+						eq(rsvTables.locationId, input.locationId),
+						inArray(rsvTables.id, chunk),
+					),
+				)
+				.all(),
+		)
 		if (tables.length !== uniqueTableIds.length) {
 			throw badRequest(
 				'invalid_combination_tables',
@@ -910,11 +930,13 @@ export async function createComboForLocation(
 			.all()
 		if (activeCombos.length > 0) {
 			const activeComboIds = activeCombos.map((c) => c.id)
-			const existingMembers = await db
-				.select()
-				.from(rsvTableComboMembers)
-				.where(inArray(rsvTableComboMembers.comboId, activeComboIds))
-				.all()
+			const existingMembers = await queryInChunks(activeComboIds, (chunk) =>
+				db
+					.select()
+					.from(rsvTableComboMembers)
+					.where(inArray(rsvTableComboMembers.comboId, chunk))
+					.all(),
+			)
 			const canonicalKey = uniqueTableIds.join(',')
 			for (const c of activeCombos) {
 				const cKey = existingMembers
@@ -1045,16 +1067,18 @@ export async function updateComboForLocation(
 					'Combination must contain at least 2 distinct tables',
 				)
 			}
-			const tables = await db
-				.select()
-				.from(rsvTables)
-				.where(
-					and(
-						eq(rsvTables.locationId, existing.locationId),
-						inArray(rsvTables.id, nextTableIds),
-					),
-				)
-				.all()
+			const tables = await queryInChunks(nextTableIds, (chunk) =>
+				db
+					.select()
+					.from(rsvTables)
+					.where(
+						and(
+							eq(rsvTables.locationId, existing.locationId),
+							inArray(rsvTables.id, chunk),
+						),
+					)
+					.all(),
+			)
 			if (tables.length !== nextTableIds.length) {
 				throw badRequest(
 					'invalid_combination_tables',
@@ -1098,11 +1122,13 @@ export async function updateComboForLocation(
 				.filter((c) => c.id !== comboId)
 				.map((c) => c.id)
 			if (otherComboIds.length > 0) {
-				const existingMembers = await db
-					.select()
-					.from(rsvTableComboMembers)
-					.where(inArray(rsvTableComboMembers.comboId, otherComboIds))
-					.all()
+				const existingMembers = await queryInChunks(otherComboIds, (chunk) =>
+					db
+						.select()
+						.from(rsvTableComboMembers)
+						.where(inArray(rsvTableComboMembers.comboId, chunk))
+						.all(),
+				)
 				for (const otherId of otherComboIds) {
 					const otherKey = existingMembers
 						.filter((m) => m.comboId === otherId)
@@ -1256,11 +1282,13 @@ export async function listFloorElementsForLocation(
 		? areas.filter((a) => a.id === areaId).map((a) => a.id)
 		: areas.map((a) => a.id)
 	if (areaIds.length === 0) return []
-	const rows = await db
-		.select()
-		.from(rsvFloorElements)
-		.where(inArray(rsvFloorElements.areaId, areaIds))
-		.all()
+	const rows = await queryInChunks(areaIds, (chunk) =>
+		db
+			.select()
+			.from(rsvFloorElements)
+			.where(inArray(rsvFloorElements.areaId, chunk))
+			.all(),
+	)
 	return rows.map(serializeElement)
 }
 
@@ -1352,6 +1380,127 @@ export async function deleteFloorElementForLocation(
 		)
 		return { deleted: true, id: elementId, floorPlanVersion }
 	})
+}
+
+/** A service id from a request must belong to the location being edited. */
+async function assertServiceInLocation(
+	db: TenantDatabase,
+	serviceId: string | null | undefined,
+	locationId: string,
+) {
+	if (!serviceId) return
+	const row = await db
+		.select({ id: rsvServices.id })
+		.from(rsvServices)
+		.where(
+			and(
+				eq(rsvServices.id, serviceId),
+				eq(rsvServices.locationId, locationId),
+			),
+		)
+		.get()
+	if (!row) {
+		throw badRequest('invalid_service', 'Service does not exist in location')
+	}
+}
+
+type FloorPlanIdPayload = {
+	areas?: Array<{ id?: string }>
+	tables?: Array<{ id?: string }>
+	combos?: Array<{ id?: string }>
+	combinations?: Array<{ id?: string }>
+	elements?: Array<{ id?: string }>
+	floorElements?: Array<{ id?: string }>
+}
+
+/**
+ * Rejects (400, stable codes) any area, table, combination or floor element id
+ * in a floor plan save that already belongs to a different location.
+ */
+async function assertFloorPlanIdsOwned(
+	db: TenantDatabase,
+	locationId: string,
+	payload: FloorPlanIdPayload,
+) {
+	const ids = (items?: Array<{ id?: string }>) => [
+		...new Set((items ?? []).flatMap((i) => (i.id ? [i.id] : []))),
+	]
+	const areaIds = ids(payload.areas)
+	if (areaIds.length > 0) {
+		const foreign = await queryInChunks(areaIds, (chunk) =>
+			db
+				.select({ id: rsvAreas.id })
+				.from(rsvAreas)
+				.where(
+					and(inArray(rsvAreas.id, chunk), ne(rsvAreas.locationId, locationId)),
+				)
+				.all(),
+		)
+		if (foreign.length > 0) {
+			throw badRequest('invalid_area', 'Area does not exist in location')
+		}
+	}
+	const tableIds = ids(payload.tables)
+	if (tableIds.length > 0) {
+		const foreign = await queryInChunks(tableIds, (chunk) =>
+			db
+				.select({ id: rsvTables.id })
+				.from(rsvTables)
+				.where(
+					and(
+						inArray(rsvTables.id, chunk),
+						ne(rsvTables.locationId, locationId),
+					),
+				)
+				.all(),
+		)
+		if (foreign.length > 0) {
+			throw badRequest('invalid_table', 'Table does not exist in location')
+		}
+	}
+	const comboIds = ids(payload.combos ?? payload.combinations)
+	if (comboIds.length > 0) {
+		const foreign = await queryInChunks(comboIds, (chunk) =>
+			db
+				.select({ id: rsvTableCombos.id })
+				.from(rsvTableCombos)
+				.where(
+					and(
+						inArray(rsvTableCombos.id, chunk),
+						ne(rsvTableCombos.locationId, locationId),
+					),
+				)
+				.all(),
+		)
+		if (foreign.length > 0) {
+			throw badRequest(
+				'invalid_combination',
+				'Combination does not exist in location',
+			)
+		}
+	}
+	const elementIds = ids(payload.elements ?? payload.floorElements)
+	if (elementIds.length > 0) {
+		const foreign = await queryInChunks(elementIds, (chunk) =>
+			db
+				.select({ id: rsvFloorElements.id })
+				.from(rsvFloorElements)
+				.innerJoin(rsvAreas, eq(rsvAreas.id, rsvFloorElements.areaId))
+				.where(
+					and(
+						inArray(rsvFloorElements.id, chunk),
+						ne(rsvAreas.locationId, locationId),
+					),
+				)
+				.all(),
+		)
+		if (foreign.length > 0) {
+			throw badRequest(
+				'invalid_element',
+				'Floor element does not exist in location',
+			)
+		}
+	}
 }
 
 export async function saveFloorPlan(
@@ -1514,6 +1663,11 @@ export async function saveFloorPlan(
 				}
 			}
 
+			// A payload may only name ids that are new or already belong to this
+			// location: a foreign id would otherwise collide with, or attach to,
+			// another location's rows.
+			await assertFloorPlanIdsOwned(db, locationId, payload)
+
 			// Upsert areas if provided
 			if (payload.areas) {
 				for (const a of payload.areas) {
@@ -1566,6 +1720,26 @@ export async function saveFloorPlan(
 							version: 1,
 						})
 					}
+				}
+			}
+
+			const ownedAreaIds = new Set(
+				(
+					await db
+						.select({ id: rsvAreas.id })
+						.from(rsvAreas)
+						.where(eq(rsvAreas.locationId, locationId))
+						.all()
+				).map((a) => a.id),
+			)
+			for (const t of payload.tables ?? []) {
+				if (!ownedAreaIds.has(t.areaId)) {
+					throw badRequest('invalid_area', 'Area does not exist in location')
+				}
+			}
+			for (const el of payload.elements ?? payload.floorElements ?? []) {
+				if (!ownedAreaIds.has(el.areaId)) {
+					throw badRequest('invalid_area', 'Area does not exist in location')
 				}
 			}
 
@@ -1706,16 +1880,18 @@ export async function saveFloorPlan(
 								'Combination must contain at least 2 distinct tables',
 							)
 						}
-						const memberTables = await db
-							.select()
-							.from(rsvTables)
-							.where(
-								and(
-									eq(rsvTables.locationId, locationId),
-									inArray(rsvTables.id, uniqueTableIds),
-								),
-							)
-							.all()
+						const memberTables = await queryInChunks(uniqueTableIds, (chunk) =>
+							db
+								.select()
+								.from(rsvTables)
+								.where(
+									and(
+										eq(rsvTables.locationId, locationId),
+										inArray(rsvTables.id, chunk),
+									),
+								)
+								.all(),
+						)
 						if (memberTables.length !== uniqueTableIds.length) {
 							throw badRequest(
 								'invalid_combination_tables',
@@ -1782,11 +1958,13 @@ export async function saveFloorPlan(
 					.all()
 				if (activeCombos.length > 1) {
 					const activeComboIds = activeCombos.map((c) => c.id)
-					const allMembers = await db
-						.select()
-						.from(rsvTableComboMembers)
-						.where(inArray(rsvTableComboMembers.comboId, activeComboIds))
-						.all()
+					const allMembers = await queryInChunks(activeComboIds, (chunk) =>
+						db
+							.select()
+							.from(rsvTableComboMembers)
+							.where(inArray(rsvTableComboMembers.comboId, chunk))
+							.all(),
+					)
 					const seenCanonicalKeys = new Set<string>()
 					for (const ac of activeCombos) {
 						const key = allMembers
@@ -1815,9 +1993,11 @@ export async function saveFloorPlan(
 					.all()
 				const locAreaIds = locAreas.map((a) => a.id)
 				if (locAreaIds.length > 0) {
-					await db
-						.delete(rsvFloorElements)
-						.where(inArray(rsvFloorElements.areaId, locAreaIds))
+					await forEachInChunks(locAreaIds, (chunk) =>
+						db
+							.delete(rsvFloorElements)
+							.where(inArray(rsvFloorElements.areaId, chunk)),
+					)
 				}
 				for (const el of elementsInput) {
 					const id = el.id ?? createId('el')
@@ -1951,10 +2131,8 @@ export async function createServiceForLocation(
 
 		let daysMask = input.daysMask ?? 127
 		if (input.daysMask === undefined && input.daysOfWeek) {
-			daysMask = 0
-			for (const d of input.daysOfWeek) {
-				daysMask |= 1 << d
-			}
+			// `daysOfWeek` is Sunday-first; the stored mask is Monday-first.
+			daysMask = uiDaysToMask(input.daysOfWeek)
 		}
 
 		const id = createId('srv')
@@ -2081,10 +2259,7 @@ export async function updateServiceForLocation(
 
 		let daysMask = patch.daysMask ?? existing.daysMask
 		if (patch.daysMask === undefined && patch.daysOfWeek) {
-			daysMask = 0
-			for (const d of inputDaysOfWeek(patch.daysOfWeek)) {
-				daysMask |= 1 << d
-			}
+			daysMask = uiDaysToMask(inputDaysOfWeek(patch.daysOfWeek))
 		}
 
 		const now = Date.now()
@@ -2266,6 +2441,7 @@ export async function createTurnTimeForLocation(
 		const minutes = input.minutes ?? input.turnMin ?? input.durationMin ?? 90
 		const targetServiceId = input.serviceId ?? null
 		const daysMask = input.daysMask ?? null
+		await assertServiceInLocation(db, targetServiceId, input.locationId)
 
 		if (partyMin < 1 || partyMax < partyMin || partyMax > 99) {
 			throw badRequest(
@@ -2359,6 +2535,7 @@ export async function updateTurnTimeForLocation(
 			patch.serviceId !== undefined ? patch.serviceId : existing.serviceId
 		const daysMask =
 			patch.daysMask !== undefined ? patch.daysMask : existing.daysMask
+		await assertServiceInLocation(db, targetServiceId, existing.locationId)
 
 		if (partyMin < 1 || partyMax < partyMin || partyMax > 99) {
 			throw badRequest(
@@ -2458,11 +2635,13 @@ export async function listPacingRulesForLocation(
 		? services.filter((s) => s.id === serviceId).map((s) => s.id)
 		: services.map((s) => s.id)
 	if (serviceIds.length === 0) return []
-	const rows = await db
-		.select()
-		.from(rsvPacingRules)
-		.where(inArray(rsvPacingRules.serviceId, serviceIds))
-		.all()
+	const rows = await queryInChunks(serviceIds, (chunk) =>
+		db
+			.select()
+			.from(rsvPacingRules)
+			.where(inArray(rsvPacingRules.serviceId, chunk))
+			.all(),
+	)
 	return rows.map(serializePacingRule)
 }
 
@@ -2659,11 +2838,13 @@ export async function listServiceAvailabilityForLocation(
 		? services.filter((s) => s.id === serviceId).map((s) => s.id)
 		: services.map((s) => s.id)
 	if (serviceIds.length === 0) return []
-	const rows = await db
-		.select()
-		.from(rsvServiceAvailability)
-		.where(inArray(rsvServiceAvailability.serviceId, serviceIds))
-		.all()
+	const rows = await queryInChunks(serviceIds, (chunk) =>
+		db
+			.select()
+			.from(rsvServiceAvailability)
+			.where(inArray(rsvServiceAvailability.serviceId, chunk))
+			.all(),
+	)
 	return rows.map(serializeServiceAvailability)
 }
 
@@ -2701,6 +2882,50 @@ export async function upsertServiceAvailabilityForLocation(
 				'invalid_target',
 				'Exactly one of areaId, tableId, or comboId is required',
 			)
+		}
+		// The target must belong to the same location as the service.
+		if (areaId) {
+			const row = await db
+				.select({ id: rsvAreas.id })
+				.from(rsvAreas)
+				.where(
+					and(eq(rsvAreas.id, areaId), eq(rsvAreas.locationId, srv.locationId)),
+				)
+				.get()
+			if (!row)
+				throw badRequest('invalid_area', 'Area does not exist in location')
+		}
+		if (tableId) {
+			const row = await db
+				.select({ id: rsvTables.id })
+				.from(rsvTables)
+				.where(
+					and(
+						eq(rsvTables.id, tableId),
+						eq(rsvTables.locationId, srv.locationId),
+					),
+				)
+				.get()
+			if (!row)
+				throw badRequest('invalid_table', 'Table does not exist in location')
+		}
+		if (comboId) {
+			const row = await db
+				.select({ id: rsvTableCombos.id })
+				.from(rsvTableCombos)
+				.where(
+					and(
+						eq(rsvTableCombos.id, comboId),
+						eq(rsvTableCombos.locationId, srv.locationId),
+					),
+				)
+				.get()
+			if (!row) {
+				throw badRequest(
+					'invalid_combination',
+					'Combination does not exist in location',
+				)
+			}
 		}
 
 		const existingRows = await db
@@ -2809,19 +3034,20 @@ export async function listSpecialDaysForLocation(
 		.all()
 	if (rows.length === 0) return []
 
-	const customServices = await db
-		.select()
-		.from(rsvServices)
-		.where(
-			and(
-				eq(rsvServices.locationId, locationId),
-				inArray(
-					rsvServices.specialDayId,
-					rows.map((r) => r.id),
-				),
-			),
-		)
-		.all()
+	const customServices = await queryInChunks(
+		rows.map((r) => r.id),
+		(chunk) =>
+			db
+				.select()
+				.from(rsvServices)
+				.where(
+					and(
+						eq(rsvServices.locationId, locationId),
+						inArray(rsvServices.specialDayId, chunk),
+					),
+				)
+				.all(),
+	)
 	const servicesBySpecialDayId = new Map<
 		string,
 		Array<ReturnType<typeof serializeService>>
@@ -2872,6 +3098,7 @@ export async function createSpecialDayForLocation(
 			)
 		}
 		const kind = input.kind ?? input.type ?? 'closed'
+		await assertServiceInLocation(db, input.serviceId, input.locationId)
 		const id = createId('sd')
 		const now = Date.now()
 
@@ -2985,6 +3212,7 @@ export async function updateSpecialDayForLocation(
 			throw notFound('Special day not found in location')
 		}
 
+		await assertServiceInLocation(db, patch.serviceId, existing.locationId)
 		const singleDate = patch.businessDate ?? patch.date
 		const fromDate = patch.fromDate ?? singleDate ?? existing.fromDate
 		const toDate = patch.toDate ?? singleDate ?? existing.toDate
@@ -3163,20 +3391,24 @@ export async function createBlockForLocation(
 				? [
 						...new Set(
 							(
-								await db
-									.select({ reservationId: rsvTableOccupancies.reservationId })
-									.from(rsvTableOccupancies)
-									.where(
-										and(
-											eq(rsvTableOccupancies.locationId, input.locationId),
-											inArray(rsvTableOccupancies.tableId, targetTableIds),
-											eq(rsvTableOccupancies.active, true),
-											eq(rsvTableOccupancies.kind, 'reservation'),
-											lte(rsvTableOccupancies.startAt, endAt - 1),
-											gte(rsvTableOccupancies.endAt, startAt + 1),
-										),
-									)
-									.all()
+								await queryInChunks(targetTableIds, (chunk) =>
+									db
+										.select({
+											reservationId: rsvTableOccupancies.reservationId,
+										})
+										.from(rsvTableOccupancies)
+										.where(
+											and(
+												eq(rsvTableOccupancies.locationId, input.locationId),
+												inArray(rsvTableOccupancies.tableId, chunk),
+												eq(rsvTableOccupancies.active, true),
+												eq(rsvTableOccupancies.kind, 'reservation'),
+												lte(rsvTableOccupancies.startAt, endAt - 1),
+												gte(rsvTableOccupancies.endAt, startAt + 1),
+											),
+										)
+										.all(),
+								)
 							).flatMap((o) => (o.reservationId ? [o.reservationId] : [])),
 						),
 					]
@@ -3209,19 +3441,21 @@ export async function createBlockForLocation(
 			// `reflowFutureBookingsForLocation` can reassign those soft reservations.
 			const preDeactivatedOriginalTables = new Map<string, string[]>()
 			if (targetTableIds.length > 0) {
-				const overlappingOccs = await db
-					.select()
-					.from(rsvTableOccupancies)
-					.where(
-						and(
-							eq(rsvTableOccupancies.locationId, input.locationId),
-							inArray(rsvTableOccupancies.tableId, targetTableIds),
-							eq(rsvTableOccupancies.active, true),
-							lte(rsvTableOccupancies.startAt, endAt - 1),
-							gte(rsvTableOccupancies.endAt, startAt + 1),
-						),
-					)
-					.all()
+				const overlappingOccs = await queryInChunks(targetTableIds, (chunk) =>
+					db
+						.select()
+						.from(rsvTableOccupancies)
+						.where(
+							and(
+								eq(rsvTableOccupancies.locationId, input.locationId),
+								inArray(rsvTableOccupancies.tableId, chunk),
+								eq(rsvTableOccupancies.active, true),
+								lte(rsvTableOccupancies.startAt, endAt - 1),
+								gte(rsvTableOccupancies.endAt, startAt + 1),
+							),
+						)
+						.all(),
+				)
 
 				const overlappingResIds = [
 					...new Set(
@@ -3232,11 +3466,13 @@ export async function createBlockForLocation(
 				]
 
 				if (overlappingResIds.length > 0) {
-					const resRows = await db
-						.select()
-						.from(rsvReservations)
-						.where(inArray(rsvReservations.id, overlappingResIds))
-						.all()
+					const resRows = await queryInChunks(overlappingResIds, (chunk) =>
+						db
+							.select()
+							.from(rsvReservations)
+							.where(inArray(rsvReservations.id, chunk))
+							.all(),
+					)
 
 					for (const r of resRows) {
 						if (
@@ -3258,15 +3494,15 @@ export async function createBlockForLocation(
 								allResOccs.map((o) => o.tableId),
 							)
 							if (allResOccs.length > 0) {
-								await db
-									.update(rsvTableOccupancies)
-									.set({ active: false })
-									.where(
-										inArray(
-											rsvTableOccupancies.id,
-											allResOccs.map((o) => o.id),
-										),
-									)
+								await forEachInChunks(
+									allResOccs.map((o) => o.id),
+									(chunk) =>
+										db
+											.update(rsvTableOccupancies)
+											.set({ active: false })
+											.where(inArray(rsvTableOccupancies.id, chunk)),
+									40,
+								)
 							}
 							if (r.comboId) {
 								await db
@@ -3433,6 +3669,7 @@ async function validateAndNormalizeSections(
 	db: TenantDatabase,
 	locationId: string,
 	sections: SectionInput[],
+	ownLayoutId?: string,
 ): Promise<
 	Array<{
 		id: string
@@ -3479,18 +3716,35 @@ async function validateAndNormalizeSections(
 		})
 	}
 
+	// A client-chosen section id must not already belong to another layout.
+	const sectionIds = normalized.map((n) => n.id)
+	if (sectionIds.length > 0) {
+		const taken = await queryInChunks(sectionIds, (chunk) =>
+			db
+				.select({ id: rsvSections.id, layoutId: rsvSections.layoutId })
+				.from(rsvSections)
+				.where(inArray(rsvSections.id, chunk))
+				.all(),
+		)
+		if (taken.some((row) => row.layoutId !== ownLayoutId)) {
+			throw badRequest('invalid_section', 'Section id is already in use')
+		}
+	}
+
 	if (allRequestedTables.size > 0) {
-		const validTables = await db
-			.select()
-			.from(rsvTables)
-			.where(
-				and(
-					eq(rsvTables.locationId, locationId),
-					inArray(rsvTables.id, [...allRequestedTables]),
-					isNull(rsvTables.archivedAt),
-				),
-			)
-			.all()
+		const validTables = await queryInChunks([...allRequestedTables], (chunk) =>
+			db
+				.select()
+				.from(rsvTables)
+				.where(
+					and(
+						eq(rsvTables.locationId, locationId),
+						inArray(rsvTables.id, chunk),
+						isNull(rsvTables.archivedAt),
+					),
+				)
+				.all(),
+		)
 		if (validTables.length !== allRequestedTables.size) {
 			throw badRequest(
 				'invalid_table',
@@ -3701,6 +3955,7 @@ export async function updateSectionLayoutForLocation(
 				db,
 				existing.locationId,
 				input.sections,
+				layoutId,
 			)
 
 			await db

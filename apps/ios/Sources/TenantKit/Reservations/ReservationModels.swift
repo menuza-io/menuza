@@ -535,3 +535,19 @@ public struct ReservationGuestDetails: Equatable, Sendable {
 		self.policyTermsVersion = policyTermsVersion
 	}
 }
+
+public extension ReservationLocation {
+	/// The most a guest can step to. Above `partySize.max` the booking is a
+	/// large-party request or a call (see `largeParty.mode`); only a location that
+	/// turned large parties off stops at the online maximum. 99 is the API limit.
+	static let largePartyCeiling = 99
+
+	var partyCeiling: Int {
+		largeParty.mode == "disabled" ? partySize.max : max(partySize.max, Self.largePartyCeiling)
+	}
+
+	/// True when `size` is above the online maximum and a request is possible.
+	func needsApproval(partySize size: Int) -> Bool {
+		size > partySize.max && largeParty.mode != "disabled"
+	}
+}

@@ -54,6 +54,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		const result = await executeReservationRefundRequest({
 			orgId: access.organizationId,
 			refundRequestId: parsed.data.refundRequestId,
+			locationIds: access.locationIds,
 		})
 		return Response.json(result, { headers: NO_STORE })
 	} catch (error) {

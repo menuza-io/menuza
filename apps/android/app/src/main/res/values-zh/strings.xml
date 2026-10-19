@@ -65,6 +65,7 @@
 	<string name="res_try_instead">请试试这些时间</string>
 	<string name="res_other_dates">其他日期</string>
 	<string name="res_large_party">此人数的预订需要餐厅批准。</string>
+	<string name="res_party_over_max">超过 %1$d 位的预订需要餐厅批准。</string>
 	<string name="res_request_table">申请餐桌</string>
 	<string name="res_details_title">您的信息</string>
 	<string name="res_requests">特殊要求</string>

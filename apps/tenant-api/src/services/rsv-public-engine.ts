@@ -188,7 +188,9 @@ export async function loadPublicEngineState(
 	const byDate = new Map<string, ExistingOccupancyInput[]>()
 	const push = (date: string, item: ExistingOccupancyInput) => {
 		const list = byDate.get(date) ?? []
-		list.push(item)
+		// Adjacent days stay in the list for physical table collisions; the date
+		// scopes pacing/concurrency to the requested business date.
+		list.push({ ...item, businessDate: date })
 		byDate.set(date, list)
 	}
 

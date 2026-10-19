@@ -107,10 +107,16 @@ describe('configuredTurnMinutes', () => {
 		expect(configuredTurnMinutes(rules, 2, 's1', '2031-03-10')).toBe(45)
 		expect(configuredTurnMinutes(rules, 2, 's2', '2031-03-10')).toBe(60)
 		expect(configuredTurnMinutes(rules, 9, 's1', '2031-03-10')).toBeNull()
-		// 2031-03-10 is a Monday (bit 1).
-		const weekend = [
+		// 2031-03-10 is a Monday. The mask is Monday-first: bit 0 = Monday, bit 6 = Sunday.
+		const mondayOnly = [
 			{ serviceId: null, partyMin: 1, partyMax: 4, minutes: 30, daysMask: 1 },
 		]
-		expect(configuredTurnMinutes(weekend, 2, null, '2031-03-10')).toBeNull()
+		expect(configuredTurnMinutes(mondayOnly, 2, null, '2031-03-10')).toBe(30)
+		expect(configuredTurnMinutes(mondayOnly, 2, null, '2031-03-11')).toBeNull()
+		const sundayOnly = [
+			{ serviceId: null, partyMin: 1, partyMax: 4, minutes: 30, daysMask: 64 },
+		]
+		expect(configuredTurnMinutes(sundayOnly, 2, null, '2031-03-10')).toBeNull()
+		expect(configuredTurnMinutes(sundayOnly, 2, null, '2031-03-09')).toBe(30)
 	})
 })

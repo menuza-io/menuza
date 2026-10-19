@@ -54,6 +54,7 @@ import {
 	keyForSubmit,
 	newSubmitKey,
 } from '#app/utils/reservations/submit-key.ts'
+import { resolveEditedStartMin } from '#app/utils/reservations/time-edit.ts'
 
 const DIETARY_OPTIONS = [
 	{ code: 'vegetarian', label: msg`Vegetarian` },
@@ -304,12 +305,11 @@ export function BookingSheet({
 
 	const handleTimeChange = (val: string) => {
 		setTimeInput(val)
-		try {
-			const parsed = parseHhmm(val)
-			setLocalStartMin(parsed)
-		} catch {
-			// Wait for valid HH:MM
-		}
+		// Keep business-day minutes: a time past midnight on an overnight service
+		// stays on the same business day instead of jumping back 24 hours.
+		const resolved = resolveEditedStartMin(val, localStartMin)
+		// Wait for a valid HH:MM
+		if (resolved !== null) setLocalStartMin(resolved)
 	}
 
 	const closedDay = dayState.state === 'closed'

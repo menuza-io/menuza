@@ -65,6 +65,7 @@
 	<string name="res_try_instead">جرّب أحد هذه الخيارات</string>
 	<string name="res_other_dates">تواريخ أخرى</string>
 	<string name="res_large_party">المجموعات بهذا الحجم تحتاج إلى موافقة المطعم.</string>
+	<string name="res_party_over_max">المجموعات التي تزيد على %1$d تحتاج إلى موافقة المطعم.</string>
 	<string name="res_request_table">اطلب طاولة</string>
 	<string name="res_details_title">بياناتك</string>
 	<string name="res_requests">طلبات خاصة</string>

@@ -254,6 +254,7 @@ final class ReservationsClientTests: XCTestCase {
 		XCTAssertTrue(transport.recorded.allSatisfy { $0.request.httpMethod == "POST" })
 		XCTAssertEqual(transport.recorded[0].body["localMin"] as? Int, 1170)
 		XCTAssertEqual(transport.recorded[0].body["date"] as? String, "2030-06-25")
+		XCTAssertEqual(transport.recorded[0].body["partySize"] as? Int, 3)
 		XCTAssertEqual(transport.recorded[3].body["minutes"] as? Int, 15)
 	}
 

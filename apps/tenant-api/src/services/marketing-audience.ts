@@ -43,7 +43,8 @@ export async function loadBroadcastAudience(
 				eq(customerSubscriptions.channel, params.channel),
 				isNull(customerSubscriptions.unsubscribedAt),
 				topics
-					? inArray(customerSubscriptions.topic, topics as never[])
+					? // bounded: marketing topics are a small closed enum
+						inArray(customerSubscriptions.topic, topics as never[])
 					: undefined,
 			),
 		)

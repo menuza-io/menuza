@@ -45,6 +45,7 @@ import {
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { type StaffContext } from './staff-service.ts'
+import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Onboarding checklists, their templates, and certificates with an expiry, all
@@ -224,7 +225,7 @@ async function loadTemplates(db: StaffDb, includeArchived: boolean) {
 		.select()
 		.from(onboardingTemplateTasks)
 		.where(
-			inArray(
+			inJsonList(
 				onboardingTemplateTasks.templateId,
 				templates.map((row) => row.id),
 			),
@@ -298,10 +299,11 @@ export async function createTemplate(
 			})
 			.returning()
 		const template = row!
-		const tasks = await tx
-			.insert(onboardingTemplateTasks)
-			.values(templateTaskValues(template.id, input.tasks))
-			.returning()
+		const tasks = await insertRowsInChunks(
+			onboardingTemplateTasks,
+			templateTaskValues(template.id, input.tasks),
+			(chunk) => tx.insert(onboardingTemplateTasks).values(chunk).returning(),
+		)
 		await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
 			action: 'onboarding.template.created',
 			entityType: 'onboarding_template',
@@ -342,10 +344,11 @@ export async function updateTemplate(
 		await tx
 			.delete(onboardingTemplateTasks)
 			.where(eq(onboardingTemplateTasks.templateId, id))
-		const tasks = await tx
-			.insert(onboardingTemplateTasks)
-			.values(templateTaskValues(id, input.tasks))
-			.returning()
+		const tasks = await insertRowsInChunks(
+			onboardingTemplateTasks,
+			templateTaskValues(id, input.tasks),
+			(chunk) => tx.insert(onboardingTemplateTasks).values(chunk).returning(),
+		)
 		await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
 			action: 'onboarding.template.updated',
 			entityType: 'onboarding_template',
@@ -494,7 +497,9 @@ export async function insertChecklist(
 		startOrder: input.startOrder ?? 0,
 	})
 	if (rows.length === 0) return 0
-	await tx.insert(onboardingTasks).values(rows)
+	await insertRowsInChunks(onboardingTasks, rows, (chunk) =>
+		tx.insert(onboardingTasks).values(chunk),
+	)
 	return rows.length
 }
 
@@ -527,10 +532,11 @@ export async function summarizeChecklists(
 	const visible = ctx.scope.where(staffScopeAssignments.scopeId)
 	const conditions = [ne(staffMembers.status, 'terminated')]
 	if (staffIds && staffIds.length > 0) {
-		conditions.push(inArray(onboardingTasks.staffId, [...staffIds]))
+		conditions.push(inJsonList(onboardingTasks.staffId, [...staffIds]))
 	}
 	if (visible) {
 		conditions.push(
+			// bounded: a subquery, no bound parameters
 			inArray(
 				onboardingTasks.staffId,
 				ctx.db

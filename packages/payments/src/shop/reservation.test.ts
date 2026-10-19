@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import {
 	buildReservationCustomerIdempotencyKey,
@@ -272,7 +272,7 @@ describe('Checkout.com references', () => {
 			refundRequestId: 'rr_abc',
 			paymentRef: 'pay_1',
 		})
-		expect(reference).toBe('rsv_refund_rr_abc')
+		expect(reference).toBe('rsv_rf_rr_abc')
 		expect(parseReservationRefundReference(reference)).toEqual({
 			refundRequestId: 'rr_abc',
 			late: false,
@@ -284,6 +284,36 @@ describe('Checkout.com references', () => {
 		})
 		expect(parseReservationRefundReference('order:1')).toBeNull()
 		expect(parseReservationRefundReference(null)).toBeNull()
+	})
+
+	it('round-trips every generated refund id inside the 50 character provider limit (never truncates)', () => {
+		const ids: string[] = []
+		for (let index = 0; index < 200; index++) {
+			ids.push(`pay_${randomUUID()}`)
+		}
+		for (const id of ids) {
+			const reference = reservationRefundReference({
+				refundRequestId: id,
+				paymentRef: 'pay_x',
+			})
+			expect(reference.length).toBeLessThanOrEqual(50)
+			expect(parseReservationRefundReference(reference)).toEqual({
+				refundRequestId: id,
+				late: false,
+			})
+		}
+		// Legacy prefix still decodes.
+		expect(parseReservationRefundReference('rsv_refund_pay_1')).toEqual({
+			refundRequestId: 'pay_1',
+			late: false,
+		})
+		// An id that cannot fit fails loudly instead of corrupting the link.
+		expect(() =>
+			reservationRefundReference({
+				refundRequestId: 'x'.repeat(60),
+				paymentRef: 'pay_x',
+			}),
+		).toThrow(/refund reference/i)
 	})
 })
 
@@ -302,20 +332,35 @@ describe('provider presentation', () => {
 		expect(sanitizeStatementDescriptorSuffix(null)).toBeNull()
 	})
 
-	it('Stripe expiry is max(now + 31 min, hold) and below 24 hours', () => {
+	it('Stripe expiry honors the hold, stays within Stripe limits and is stable across clocks', () => {
 		const now = Date.parse('2026-10-08T12:00:00.000Z')
-		expect(reservationStripeExpiresAt(now, '2026-10-08T12:10:00.000Z')).toBe(
-			Math.floor((now + 31 * 60_000) / 1000),
+		const minSec = Math.floor((now + 30 * 60_000) / 1000)
+		// Far hold: used as is (stable for any clock).
+		const far = '2026-10-08T13:00:00.000Z'
+		expect(reservationStripeExpiresAt(now, far)).toBe(
+			Math.floor(Date.parse(far) / 1000),
 		)
-		expect(reservationStripeExpiresAt(now, '2026-10-08T13:00:00.000Z')).toBe(
-			Math.floor(Date.parse('2026-10-08T13:00:00.000Z') / 1000),
+		expect(reservationStripeExpiresAt(now + 90_000, far)).toBe(
+			reservationStripeExpiresAt(now, far),
 		)
+		// Near hold (within 31 minutes): at least the Stripe minimum.
+		expect(
+			reservationStripeExpiresAt(now, '2026-10-08T12:10:00.000Z'),
+		).toBeGreaterThan(minSec)
+		expect(reservationStripeExpiresAt(now, 'garbage')).toBeGreaterThan(minSec)
+		// Capped below the 24 hour maximum.
 		expect(
 			reservationStripeExpiresAt(now, '2026-10-12T13:00:00.000Z'),
 		).toBeLessThan(Math.floor((now + 24 * 3600_000) / 1000))
-		expect(reservationStripeExpiresAt(now, 'garbage')).toBe(
-			Math.floor((now + 31 * 60_000) / 1000),
-		)
+	})
+
+	it('a near-hold expiry is identical for every clock inside one bucket (retry after a lost response)', () => {
+		const hold = '2026-10-08T12:10:00.000Z'
+		const base = Date.parse('2026-10-08T12:00:00.000Z')
+		const first = reservationStripeExpiresAt(base, hold)
+		for (let offset = 0; offset < 4 * 60_000; offset += 7_000) {
+			expect(reservationStripeExpiresAt(base + offset, hold)).toBe(first)
+		}
 	})
 })
 

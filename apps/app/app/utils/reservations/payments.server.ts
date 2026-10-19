@@ -41,6 +41,7 @@ import {
 	reservationFeeChargeReference,
 	reservationProductName,
 	reservationRefundReference,
+	reservationStripeExpiresAt,
 	RESERVATION_CHECKOUT_VERIFICATION_MINOR,
 	sanitizeStatementDescriptorSuffix,
 	stripeErrorCode,
@@ -409,10 +410,14 @@ export async function handleLateRefund(input: {
 	try {
 		const org = await loadReservationPaymentsOrg(orgId)
 		if (!org) throw new ReservationPaymentError('org_not_found', 404)
+		// The regional refund row id (when the region named one) links the
+		// provider refund to its row: metadata, reference and idempotency key
+		// are then identical to a claimed refund, so a later reclaim by
+		// reconciliation can never issue a second refund.
 		execution = await issueReservationRefund({
 			org,
 			directive,
-			refundRequestId: null,
+			refundRequestId: directive.refundRequestId ?? null,
 		})
 	} catch (error) {
 		logReservationPaymentFailure('late refund', error)
@@ -425,9 +430,13 @@ export async function handleLateRefund(input: {
 	await reportReservationRefundResult({
 		dataRegion,
 		orgId,
-		reservationId: directive.reservationId,
-		paymentRef: directive.paymentRef,
-		reason: 'late_payment',
+		...(directive.refundRequestId
+			? { refundRequestId: directive.refundRequestId }
+			: {
+					reservationId: directive.reservationId,
+					paymentRef: directive.paymentRef,
+					reason: 'late_payment' as const,
+				}),
 		refundRef: execution.refundRef ?? undefined,
 		amountMinor: execution.amountMinor,
 		status: execution.status,
@@ -788,6 +797,12 @@ export async function createReservationHostedCheckout(
 					),
 				}
 			}
+			// One value feeds both the key and the session, so a retry with the
+			// same key always sends the same parameters.
+			const stripeExpiresAt = reservationStripeExpiresAt(
+				Date.now(),
+				quote.expiresAt,
+			)
 			const session = await commerce.createReservationStripeSession({
 				connectedAccountId: organization.stripeConnectAccountId,
 				guarantee,
@@ -800,6 +815,7 @@ export async function createReservationHostedCheckout(
 				successUrl,
 				cancelUrl,
 				paymentExpiresAt: quote.expiresAt,
+				expiresAt: stripeExpiresAt,
 				statementDescriptorSuffix: sanitizeStatementDescriptorSuffix(
 					organization.name,
 				),
@@ -811,6 +827,7 @@ export async function createReservationHostedCheckout(
 					amountMinor: quote.amountMinor,
 					currency: quote.currency,
 					paymentExpiresAt: quote.expiresAt,
+					stripeExpiresAt,
 				}),
 				metadata,
 			})
@@ -1121,6 +1138,8 @@ export async function chargeReservationFee(input: {
 	orgId: string
 	reservationId: string
 	feeId: string
+	/** The operator's locations: `null` for all. Required, never defaulted. */
+	locationIds: string[] | null
 }): Promise<ReservationFeeChargeResult> {
 	const org = await loadReservationPaymentsOrg(input.orgId)
 	if (!org || !org.hasProvisionedDb) {
@@ -1133,6 +1152,7 @@ export async function chargeReservationFee(input: {
 			orgId: org.id,
 			reservationId: input.reservationId,
 			feeId: input.feeId,
+			locationIds: input.locationIds,
 		})
 	} catch (error) {
 		if (error instanceof RegionalPaymentsApiError) {
@@ -1295,6 +1315,8 @@ export type ReservationCommandResult =
 export async function executeReservationRefundRequest(input: {
 	orgId: string
 	refundRequestId: string
+	/** An operator's locations (`null` for all); omitted for the system outbox. */
+	locationIds?: string[] | null
 }): Promise<{ refunds: number; pending: number; failed: number }> {
 	const org = await loadReservationPaymentsOrg(input.orgId)
 	if (!org || !org.hasProvisionedDb) {
@@ -1306,6 +1328,9 @@ export async function executeReservationRefundRequest(input: {
 			dataRegion: org.dataRegion,
 			orgId: org.id,
 			refundRequestId: input.refundRequestId,
+			...(input.locationIds !== undefined
+				? { locationIds: input.locationIds }
+				: {}),
 		})
 	} catch (error) {
 		if (error instanceof RegionalPaymentsApiError) {

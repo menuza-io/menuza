@@ -1,5 +1,10 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
+import {
+	ALL_WEEKDAYS_MASK,
+	maskToUiDays,
+	uiDaysToMask,
+} from '@repo/reservations'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 
 export type LocalizedCopy = {
@@ -638,24 +643,14 @@ export function extractApiErrorMessage(err: unknown, fallback: string): string {
 
 // --- Normalization helpers (bridge tenant-api and UI DTO field aliases) ---
 
-function daysMaskToDaysOfWeek(mask: number): number[] {
-	const days: number[] = []
-	for (let d = 0; d <= 6; d++) {
-		if ((mask & (1 << d)) !== 0) {
-			days.push(d)
-		}
-	}
-	return days
+/** Stored mask (Monday-first) to UI weekdays (Sunday-first). */
+export function daysMaskToDaysOfWeek(mask: number): number[] {
+	return maskToUiDays(mask)
 }
 
-function daysOfWeekToDaysMask(days: number[]): number {
-	let mask = 0
-	for (const d of days) {
-		if (d >= 0 && d <= 6) {
-			mask |= 1 << d
-		}
-	}
-	return mask || 127
+/** UI weekdays (Sunday-first) to the stored mask (Monday-first); none means every day. */
+export function daysOfWeekToDaysMask(days: number[]): number {
+	return uiDaysToMask(days) || ALL_WEEKDAYS_MASK
 }
 
 export function normalizeLocationSettings(

@@ -36,6 +36,7 @@ import {
 import { resolvePolicy } from './labor-policy-service.ts'
 import { type StaffDb } from './staff-audit.ts'
 import { entryToInput, issuesForEntry, loadBreaks } from './time-entry-calc.ts'
+import { queryInChunks } from '../lib/chunked-in.ts'
 
 /**
  * What the timesheet views and writes share: who may see money, the live card
@@ -248,22 +249,24 @@ export async function buildLiveCards(
 
 	const staffIds = [...new Set(rows.map((row) => row.entry.staffId))]
 	const neighbourhood: TimeEntry[] = []
-	for (const ids of chunk(staffIds, 400)) {
+	for (const ids of chunk(staffIds, 90)) {
 		neighbourhood.push(
-			...(await ctx.db
-				.select()
-				.from(timeEntries)
-				.where(
-					and(
-						isNull(timeEntries.voidedAt),
-						inArray(timeEntries.staffId, ids),
-						between(
-							timeEntries.localDate,
-							addDays(window.fromDate, -FIGURE_NEIGHBOURHOOD_DAYS),
-							addDays(window.toDate, FIGURE_NEIGHBOURHOOD_DAYS),
+			...(await queryInChunks(ids, (chunk) =>
+				ctx.db
+					.select()
+					.from(timeEntries)
+					.where(
+						and(
+							isNull(timeEntries.voidedAt),
+							inArray(timeEntries.staffId, chunk),
+							between(
+								timeEntries.localDate,
+								addDays(window.fromDate, -FIGURE_NEIGHBOURHOOD_DAYS),
+								addDays(window.toDate, FIGURE_NEIGHBOURHOOD_DAYS),
+							),
 						),
 					),
-				)),
+			)),
 		)
 	}
 	// Cards outside the date window (a card moved by a business-day rule) are

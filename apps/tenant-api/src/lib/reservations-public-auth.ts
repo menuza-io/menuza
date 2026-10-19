@@ -10,7 +10,10 @@ import {
 	parseTurnstileHostnames,
 	verifyTurnstileToken,
 } from '@repo/common/turnstile'
-import { type ReservationsContext } from '@repo/reservations'
+import {
+	RESERVATIONS_TURNSTILE_ACTION,
+	type ReservationsContext,
+} from '@repo/reservations'
 import { rsvRateCounters, type TenantDatabase } from '@repo/tenant-db'
 import { and, eq, lt, sql } from 'drizzle-orm'
 import { type Context } from 'hono'
@@ -559,8 +562,6 @@ export async function purgeStaleRateCounters(
 // Bot protection on public writes
 // ---------------------------------------------------------------------------
 
-const TURNSTILE_ACTION = 'reservations'
-
 /**
  * With `TURNSTILE_SECRET_KEY` configured a hold or request needs either a
  * valid customer access token for this organization (checked by the caller) or
@@ -585,7 +586,7 @@ export async function verifyPublicChallenge(
 		secret,
 		token: presented,
 		remoteIp: ip || undefined,
-		expectedAction: TURNSTILE_ACTION,
+		expectedAction: RESERVATIONS_TURNSTILE_ACTION,
 		expectedHostnames: parseTurnstileHostnames(ENV.TURNSTILE_HOSTNAMES),
 	})
 	return result.success

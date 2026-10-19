@@ -38,6 +38,7 @@ const fake = vi.hoisted(() => {
 		claimError: null as unknown,
 		feeResultFailures: 0,
 		refundClaims: [] as Json[],
+		claimInputs: [] as Json[],
 		pending: new Map<string, Json | Error>(),
 		flagOn: true,
 		platformFeeBp: 150,
@@ -82,7 +83,8 @@ vi.mock(
 				}
 				return { outcome: duplicate ? 'duplicate' : 'recorded' }
 			}),
-			claimReservationFee: vi.fn(async () => {
+			claimReservationFee: vi.fn(async (input: Json) => {
+				fake.claimInputs.push(input)
 				if (fake.claimError) throw fake.claimError
 				return structuredClone(fake.claim)
 			}),
@@ -257,6 +259,7 @@ describe('reservation payments bridge on the payment emulators', () => {
 		fake.statusResponse = null
 		fake.claim = null
 		fake.claimError = null
+		fake.claimInputs = []
 		fake.feeResultFailures = 0
 		fake.refundClaims = []
 		fake.pending = new Map()
@@ -1041,6 +1044,24 @@ describe('reservation payments bridge on the payment emulators', () => {
 			orgId: org.id,
 			reservationId: 'rsv_1',
 			feeId: 'fee_1',
+			locationIds: null as string[] | null,
+		})
+
+		it('hands the operator location list to the regional claim and never calls the provider when the region refuses it', async () => {
+			const org = await savedStripeCard('4242424242424242')
+			fake.claimError = new RegionalPaymentsApiError('fee_not_found', 404)
+			const error = await chargeReservationFee({
+				...feeInput(org),
+				locationIds: ['loc_a'],
+			}).catch((e) => e)
+			expect(error).toBeInstanceOf(ReservationPaymentError)
+			expect(error).toMatchObject({ httpStatus: 404 })
+			expect(fake.claimInputs[0]).toMatchObject({ locationIds: ['loc_a'] })
+			expect(fake.feeResults).toHaveLength(0)
+			fake.claimError = null
+			fake.claimInputs = []
+			await chargeReservationFee({ ...feeInput(org), locationIds: ['loc_a'] })
+			expect(fake.claimInputs[0]).toMatchObject({ locationIds: ['loc_a'] })
 		})
 
 		it('charges the saved card off-session with the platform fee and reports success', async () => {
@@ -1573,6 +1594,21 @@ describe('reservation payments bridge on the payment emulators', () => {
 			const paymentIntent = (
 				await commerce.retrieveReservationStripeSession(result.sessionId)
 			).payment_intent as string
+			fake.refundClaims = [
+				{
+					refundRequestId: 'rr_9',
+					reservationId: 'rsv_1',
+					paymentRef: paymentIntent,
+					processor: 'stripe',
+					amountMinor: 1000,
+					currency: 'USD',
+					paymentAmountMinor: 3333,
+					platformFeeMinor: 49,
+					refundedBeforeMinor: 0,
+					feeReversedBeforeMinor: 0,
+					feeReversalMinor: 15,
+				},
+			]
 			fake.pending.set(org.id, {
 				sessions: [],
 				refunds: [
@@ -1621,6 +1657,248 @@ describe('reservation payments bridge on the payment emulators', () => {
 				refundRequestId: 'rr_9',
 				refundRef,
 				status: 'succeeded',
+			})
+		})
+
+		describe('stale unissued refunds go through the regional claim (finding 9)', () => {
+			function pendingRefund(overrides: Json = {}) {
+				return {
+					refundRequestId: 'rr_stale',
+					reservationId: 'rsv_1',
+					paymentRef: 'pay_x',
+					processor: 'checkout',
+					// Requested but never claimed: the fee reversal was never computed.
+					refundRef: null,
+					amountMinor: 10_000,
+					currency: 'SAR',
+					paymentAmountMinor: 10_000,
+					platformFeeMinor: 150,
+					feeReversalMinor: 0,
+					...overrides,
+				}
+			}
+
+			it('Checkout.com: a stale requested full refund is claimed first and reverses the original fee', async () => {
+				const org = await createOrg('ksa', 'checkout')
+				setQuote({}, { currency: 'SAR', amountMinor: 10_000 })
+				const result = await createReservationHostedCheckout(request(org))
+				await getPaymentsEmulator().testing.completeHostedPayment(
+					result.sessionId,
+				)
+				const paymentRef = fake.statuses.at(-1)!.paymentRef as string
+				const commerce = (
+					await import('#app/utils/shop.server.ts')
+				).getShopCommerce()
+				const spy = vi.spyOn(commerce, 'createReservationCheckoutRefund')
+				fake.refundClaims = [
+					{
+						refundRequestId: 'rr_stale',
+						reservationId: 'rsv_1',
+						paymentRef,
+						processor: 'checkout',
+						amountMinor: 10_000,
+						currency: 'SAR',
+						paymentAmountMinor: 10_000,
+						platformFeeMinor: 150,
+						refundedBeforeMinor: 0,
+						feeReversedBeforeMinor: 0,
+						feeReversalMinor: 150,
+					},
+				]
+				fake.pending.set(org.id, {
+					sessions: [],
+					refunds: [pendingRefund({ paymentRef })],
+				})
+				const { claimReservationRefunds } =
+					await import('./regional-payments-api.server.ts')
+				vi.mocked(claimReservationRefunds).mockClear()
+				await reconcileReservationPayments()
+				expect(claimReservationRefunds).toHaveBeenCalledWith(
+					expect.objectContaining({
+						orgId: org.id,
+						refundRequestId: 'rr_stale',
+					}),
+				)
+				expect(spy).toHaveBeenCalledTimes(1)
+				expect(spy.mock.calls[0]![0]).toMatchObject({
+					amountMinor: 10_000,
+					feeReversalMinor: 150,
+				})
+				expect(fake.refundResults.at(-1)).toMatchObject({
+					refundRequestId: 'rr_stale',
+					amountMinor: 10_000,
+				})
+
+				// Already claimed elsewhere (409): never executed a second time.
+				const issued = spy.mock.calls.length
+				const reported = fake.refundResults.length
+				vi.mocked(claimReservationRefunds).mockRejectedValueOnce(
+					new RegionalPaymentsApiError('refund_not_claimable', 409),
+				)
+				await reconcileReservationPayments()
+				expect(spy.mock.calls.length).toBe(issued)
+				expect(fake.refundResults.length).toBe(reported)
+				spy.mockRestore()
+			})
+
+			it('Stripe: a stale requested refund is claimed and executed with the claimed amount', async () => {
+				vi.stubEnv('PAYMENTS_MOCK_WEBHOOKS', 'manual')
+				const org = await createOrg('us', 'stripe')
+				setQuote()
+				const result = await createReservationHostedCheckout(request(org))
+				await getPaymentsEmulator().testing.completeCheckout(result.sessionId)
+				const commerce = (
+					await import('#app/utils/shop.server.ts')
+				).getShopCommerce()
+				const paymentIntent = (
+					await commerce.retrieveReservationStripeSession(result.sessionId)
+				).payment_intent as string
+				const claimed = {
+					refundRequestId: 'rr_stale',
+					reservationId: 'rsv_1',
+					paymentRef: paymentIntent,
+					processor: 'stripe',
+					amountMinor: 1200,
+					currency: 'USD',
+					paymentAmountMinor: 3333,
+					platformFeeMinor: 49,
+					refundedBeforeMinor: 0,
+					feeReversedBeforeMinor: 0,
+					feeReversalMinor: 17,
+				}
+				fake.refundClaims = [claimed]
+				// The feed row is stale: its amount differs from the authoritative claim.
+				fake.pending.set(org.id, {
+					sessions: [],
+					refunds: [
+						pendingRefund({
+							processor: 'stripe',
+							paymentRef: paymentIntent,
+							currency: 'USD',
+							amountMinor: 999,
+							paymentAmountMinor: 3333,
+							platformFeeMinor: 49,
+						}),
+					],
+				})
+				await reconcileReservationPayments()
+				expect(fake.refundResults.at(-1)).toMatchObject({
+					refundRequestId: 'rr_stale',
+					amountMinor: 1200,
+				})
+			})
+		})
+
+		describe('late-payment refunds are recognised by reconciliation (finding 19)', () => {
+			async function paidWithPendingRefundCard() {
+				vi.stubEnv('PAYMENTS_MOCK_WEBHOOKS', 'manual')
+				const org = await createOrg('us', 'stripe')
+				setQuote()
+				const result = await createReservationHostedCheckout(request(org))
+				await getPaymentsEmulator().testing.completeCheckout(result.sessionId, {
+					card: '4000000000007726',
+				})
+				const commerce = (
+					await import('#app/utils/shop.server.ts')
+				).getShopCommerce()
+				const paymentIntent = (
+					await commerce.retrieveReservationStripeSession(result.sessionId)
+				).payment_intent as string
+				return { org, paymentIntent }
+			}
+			const directiveFor = (paymentIntent: string, extra: Json = {}) => ({
+				reservationId: 'rsv_1',
+				paymentRef: paymentIntent,
+				processor: 'stripe' as const,
+				amountMinor: 3333,
+				currency: 'USD',
+				paymentAmountMinor: 3333,
+				platformFeeMinor: 49,
+				refundedBeforeMinor: 0,
+				feeReversedBeforeMinor: 0,
+				feeReversalMinor: 49,
+				...extra,
+			})
+
+			it('a late refund carries the regional refund row id: pending, webhook missed, reconcile settles it', async () => {
+				const { org, paymentIntent } = await paidWithPendingRefundCard()
+				await handleLateRefund({
+					orgId: org.id,
+					dataRegion: 'us',
+					directive: directiveFor(paymentIntent, {
+						refundRequestId: 'pay_late_1',
+					}),
+				})
+				expect(fake.refundResults.at(-1)).toMatchObject({
+					refundRequestId: 'pay_late_1',
+					status: 'pending',
+				})
+				const refundRef = fake.refundResults.at(-1)!.refundRef as string
+				await getPaymentsEmulator().testing.settleRefund(refundRef, 'succeeded')
+				fake.refundResults = []
+				fake.pending.set(org.id, {
+					sessions: [],
+					refunds: [
+						{
+							refundRequestId: 'pay_late_1',
+							reservationId: 'rsv_1',
+							paymentRef: paymentIntent,
+							processor: 'stripe',
+							refundRef,
+							amountMinor: 3333,
+							currency: 'USD',
+							paymentAmountMinor: 3333,
+							platformFeeMinor: 49,
+							feeReversalMinor: 49,
+						},
+					],
+				})
+				await reconcileReservationPayments()
+				expect(fake.refundResults.at(-1)).toMatchObject({
+					refundRequestId: 'pay_late_1',
+					refundRef,
+					status: 'succeeded',
+				})
+			})
+
+			it('a refund without the row id in its metadata is matched by payment ref + amount + late kind', async () => {
+				const { org, paymentIntent } = await paidWithPendingRefundCard()
+				// Legacy directive: no row id, so the provider refund has none either.
+				await handleLateRefund({
+					orgId: org.id,
+					dataRegion: 'us',
+					directive: directiveFor(paymentIntent),
+				})
+				const refundRef = fake.refundResults.at(-1)!.refundRef as string
+				await getPaymentsEmulator().testing.settleRefund(refundRef, 'succeeded')
+				fake.refundResults = []
+				const row = {
+					refundRequestId: 'pay_late_2',
+					reservationId: 'rsv_1',
+					paymentRef: paymentIntent,
+					processor: 'stripe',
+					refundRef,
+					amountMinor: 3333,
+					currency: 'USD',
+					paymentAmountMinor: 3333,
+					platformFeeMinor: 49,
+					feeReversalMinor: 49,
+				}
+				fake.pending.set(org.id, { sessions: [], refunds: [row] })
+				await reconcileReservationPayments()
+				expect(fake.refundResults.at(-1)).toMatchObject({
+					refundRequestId: 'pay_late_2',
+					refundRef,
+					status: 'succeeded',
+				})
+				// A different amount is never matched by the fallback.
+				fake.refundResults = []
+				fake.pending.set(org.id, {
+					sessions: [],
+					refunds: [{ ...row, amountMinor: 1000 }],
+				})
+				await reconcileReservationPayments()
+				expect(fake.refundResults).toHaveLength(0)
 			})
 		})
 	})

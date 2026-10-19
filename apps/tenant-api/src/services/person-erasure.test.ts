@@ -18,6 +18,8 @@ import {
 	rsvHolds,
 	rsvMessages,
 	rsvNotifyRequests,
+	rsvOutbox,
+	rsvPayments,
 	rsvReservations,
 	rsvWaitlistEntries,
 	shopOrders,
@@ -585,6 +587,111 @@ describe('erasePerson', () => {
 			.where(eq(rsvAuditLog.id, 'aud_old'))
 			.get()
 		expect(old!.changes).toEqual({ redacted: true })
+	})
+
+	it('queues refunds for paid deposits and expires open checkouts when erasure cancels bookings (restaurant cancel = full refund)', async () => {
+		const { futureId } = await seedSentinelPerson()
+		const paidAt = Date.now()
+		await db
+			.update(rsvReservations)
+			.set({ paymentStatus: 'paid' })
+			.where(eq(rsvReservations.id, futureId))
+		await db.insert(rsvPayments).values({
+			id: 'pay_dep',
+			locationId: LOC,
+			reservationId: futureId,
+			provider: 'stripe',
+			kind: 'deposit_charge',
+			purpose: 'deposit',
+			amountMinor: 10_000,
+			currency: 'USD',
+			platformFeeMinor: 1000,
+			platformFeeBp: 1000,
+			status: 'succeeded',
+			providerRef: 'pi_dep',
+			customerRef: 'cus_stripe_sentinel',
+			idempotencyKey: 'idem-dep',
+			createdAt: paidAt,
+			updatedAt: paidAt,
+		} as never)
+		// A second booking still waiting for payment: its session must be closed.
+		const pendingId = await insertBooking('gst_s', {
+			id: 'rsv_unpaid',
+			status: 'pending_payment',
+			paymentStatus: 'pending',
+		})
+		await db.insert(rsvPayments).values({
+			id: 'pay_open',
+			locationId: LOC,
+			reservationId: pendingId,
+			provider: 'stripe',
+			kind: 'deposit_charge',
+			purpose: 'deposit',
+			amountMinor: 5000,
+			currency: 'USD',
+			status: 'pending',
+			providerSessionId: 'cs_open',
+			idempotencyKey: 'idem-open',
+		} as never)
+
+		await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
+
+		const refunds = await db
+			.select()
+			.from(rsvPayments)
+			.where(eq(rsvPayments.kind, 'refund'))
+		expect(refunds).toHaveLength(1)
+		expect(refunds[0]).toMatchObject({
+			reservationId: futureId,
+			parentPaymentId: 'pay_dep',
+			amountMinor: 10_000,
+			status: 'requested',
+		})
+		const parent = await db
+			.select()
+			.from(rsvPayments)
+			.where(eq(rsvPayments.id, 'pay_dep'))
+			.get()
+		expect(parent!.refundedMinor).toBe(10_000)
+		expect(
+			(await db
+				.select()
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, futureId))
+				.get())!.paymentStatus,
+		).toBe('refund_pending')
+		const open = await db
+			.select()
+			.from(rsvPayments)
+			.where(eq(rsvPayments.id, 'pay_open'))
+			.get()
+		expect(open!.status).toBe('expired')
+
+		const outbox = await db.select().from(rsvOutbox).all()
+		const refundRows = outbox.filter((row) => row.kind === 'refund_request')
+		expect(refundRows).toHaveLength(1)
+		expect(refundRows[0]!.payload).toEqual({
+			kind: 'refund_request',
+			orgId: ORG,
+			refundRequestId: refunds[0]!.id,
+		})
+		expect(outbox.filter((row) => row.kind === 'checkout_expire')).toHaveLength(
+			1,
+		)
+		// Nothing the outbox carries identifies the person.
+		const outboxDump = JSON.stringify(outbox).toLowerCase()
+		for (const value of Object.values(SENTINEL)) {
+			expect(outboxDump).not.toContain(value.toLowerCase())
+		}
+		expect(outboxDump).not.toContain('cus_stripe_sentinel')
+
+		// Re-running changes nothing: no second refund, no second outbox row.
+		await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
+		expect(
+			await db.select().from(rsvPayments).where(eq(rsvPayments.kind, 'refund')),
+		).toHaveLength(1)
+		expect(await db.select().from(rsvOutbox).all()).toHaveLength(outbox.length)
+		expectNoSentinel(await dumpDatabase())
 	})
 
 	it('rejects a call with neither id and a missing guest', async () => {

@@ -420,7 +420,7 @@ describe('Checkout.com refunds with commission reversal (VAL-PAY-026, VAL-PAY-02
 		)
 		const pending = actions.find((action) => action.id === first.refundRef)!
 		expect(checkoutRefundActionStatus(pending)).toBe('pending')
-		expect(pending.reference).toBe('rsv_refund_rr_ref')
+		expect(pending.reference).toBe('rsv_rf_rr_ref')
 
 		await harness.emulator.testing.advanceClock(5)
 		actions = await listReservationCheckoutActions(
@@ -480,9 +480,9 @@ describe('Checkout.com refunds with commission reversal (VAL-PAY-026, VAL-PAY-02
 			.find((entry) => entry.type === 'payment_refund_declined')
 		const webhook = extractCheckoutRefundWebhook(declined)!
 		expect(webhook.declined).toBe(true)
-		expect(
-			buildCheckoutRefundEvent(webhook, 'rsv_refund_rr_decl')?.status,
-		).toBe('failed')
+		expect(buildCheckoutRefundEvent(webhook, 'rsv_rf_rr_decl')?.status).toBe(
+			'failed',
+		)
 		const actions = await listReservationCheckoutActions(
 			harness.checkout,
 			stored.paymentId,

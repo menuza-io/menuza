@@ -6,6 +6,7 @@ import com.epicstartup.tenant.core.net.ApiException
 import com.epicstartup.tenant.core.reservations.BookingFlow
 import com.epicstartup.tenant.core.reservations.FlowError
 import com.epicstartup.tenant.core.reservations.FlowState
+import com.epicstartup.tenant.core.reservations.PayOutcome
 import com.epicstartup.tenant.core.reservations.PaymentPoll
 import com.epicstartup.tenant.core.reservations.ReservationTokenKeys
 import com.epicstartup.tenant.core.reservations.ReservationTokenStorage
@@ -20,8 +21,6 @@ import com.epicstartup.tenant.core.reservations.ResMine
 import com.epicstartup.tenant.core.reservations.ResSelection
 import com.epicstartup.tenant.core.reservations.ResSlot
 import com.epicstartup.tenant.core.reservations.WaitlistFlow
-import com.epicstartup.tenant.platform.TaskRunner
-import com.epicstartup.tenant.ui.AppState
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -33,9 +32,10 @@ import java.time.ZoneId
  * Keystore-backed [ReservationTokenStorage].
  */
 internal class ReservationsController(
-	private val app: AppState,
+	private val app: ReservationsHost,
 	private val client: ReservationsClient,
 	private val storage: () -> ReservationTokenStorage,
+	private val tasks: ReservationTasks = AndroidReservationTasks,
 ) {
 	val flow = BookingFlow()
 	val waitlist = WaitlistFlow()
@@ -71,13 +71,17 @@ internal class ReservationsController(
 
 	val isAvailable: Boolean get() = config?.locations?.isNotEmpty() == true
 
-	private val main = Handler(Looper.getMainLooper())
+	/** Bumped on sign-out: answers still in flight for the previous customer are dropped. */
+	private var generation = 0
+
+	private val main by lazy { Handler(Looper.getMainLooper()) }
 	private var tokens: Map<String, String>? = null
 	private var pollGeneration = 0
 	private var pollAttempt = 0
 	private var pollStartedAt = 0L
 	private var pollScheduled = false
 	private var requestKey: String? = null
+	private var waitlistLocationId: String? = null
 
 	private val ticker = object : Runnable {
 		override fun run() {
@@ -91,11 +95,25 @@ internal class ReservationsController(
 		}
 	}
 
+	/** [tasks] with a guard: nothing that arrives after [onSignedOut] may touch this session. */
+	private fun <T> run(
+		work: () -> T,
+		onSuccess: (T) -> Unit = {},
+		onFailure: (Exception) -> Unit = {},
+	) {
+		val issued = generation
+		tasks.run(
+			work = work,
+			onSuccess = { if (issued == generation) onSuccess(it) },
+			onFailure = { if (issued == generation) onFailure(it) },
+		)
+	}
+
 	// MARK: - Discovery
 
 	fun loadConfig() {
-		TaskRunner.run(
-			work = { client.config(app.language.code) },
+		run(
+			work = { client.config(app.languageCode) },
 			onSuccess = {
 				config = it
 				changed()
@@ -115,7 +133,7 @@ internal class ReservationsController(
 	}
 
 	fun loadMine() {
-		TaskRunner.run(
+		run(
 			work = { client.mine() },
 			onSuccess = { result ->
 				mine = result
@@ -139,7 +157,7 @@ internal class ReservationsController(
 	fun selectLocation(chosen: ResLocation) {
 		location = chosen
 		val zone = runCatching { ZoneId.of(chosen.timeZone) }.getOrDefault(ZoneId.systemDefault())
-		val party = 2.coerceIn(chosen.partyMin, chosen.partyMax)
+		val party = chosen.clampParty(2)
 		selection = ResSelection(chosen.id, LocalDate.now(zone).toString(), party)
 		app.pushRes("res:search")
 		search()
@@ -154,7 +172,8 @@ internal class ReservationsController(
 	fun setParty(partySize: Int) {
 		val current = selection ?: return
 		val loc = location ?: return
-		selection = current.copy(partySize = partySize.coerceIn(loc.partyMin, loc.partyMax))
+		// Above the online maximum is allowed: the guest sends a request instead.
+		selection = current.copy(partySize = loc.clampParty(partySize))
 		search()
 	}
 
@@ -168,8 +187,8 @@ internal class ReservationsController(
 		flow.startSearch(current)
 		error = null
 		changed()
-		TaskRunner.run(
-			work = { client.availability(current.locationId, current.date, current.partySize, locale = app.language.code) },
+		run(
+			work = { client.availability(current.locationId, current.date, current.partySize, locale = app.languageCode) },
 			onSuccess = {
 				if (selection != current) return@run
 				flow.availabilityLoaded(current, it)
@@ -190,7 +209,7 @@ internal class ReservationsController(
 		val previous = holdTokenOrNull()
 		loading = true
 		changed()
-		TaskRunner.run(
+		run(
 			work = {
 				client.createHold(
 					locationId = current.locationId,
@@ -249,7 +268,7 @@ internal class ReservationsController(
 		val key = flow.beginSubmit(ReservationsClient::newIdempotencyKey) ?: return
 		val state = flow.state as? FlowState.Reviewing ?: return
 		changed()
-		TaskRunner.run(
+		run(
 			work = { client.book(state.hold.holdToken, state.details, key) },
 			onSuccess = { booking ->
 				stopTicker()
@@ -285,7 +304,7 @@ internal class ReservationsController(
 		loading = true
 		error = null
 		changed()
-		TaskRunner.run(
+		run(
 			work = {
 				client.requestLargeParty(loc.id, current.date, localMin, current.partySize, details, key)
 			},
@@ -311,7 +330,7 @@ internal class ReservationsController(
 	/** Leaving the booking before it is made frees the table straight away. */
 	fun abandonHold() {
 		stopTicker()
-		holdTokenOrNull()?.let { token -> TaskRunner.run(work = { client.releaseHold(token) }) }
+		holdTokenOrNull()?.let { token -> tasks.run(work = { client.releaseHold(token) }) }
 		flow.reset()
 	}
 
@@ -401,7 +420,7 @@ internal class ReservationsController(
 
 	private fun pollOnce(attempt: Int, state: FlowState.AwaitingPayment) {
 		if (attempt != pollGeneration) return
-		TaskRunner.run(
+		run(
 			work = { client.paymentStatus(state.booking.payment?.paymentToken ?: state.booking.manageToken) },
 			onSuccess = { status ->
 				if (attempt != pollGeneration) return@run
@@ -455,7 +474,7 @@ internal class ReservationsController(
 				changed()
 				return@withToken
 			}
-			TaskRunner.run(
+			run(
 				work = { client.manage(token) },
 				onSuccess = {
 					detail = it
@@ -470,7 +489,7 @@ internal class ReservationsController(
 		val view = detail ?: return
 		withToken(ReservationTokenKeys.manage(view.reservation.id)) { token ->
 			token ?: return@withToken
-			TaskRunner.run(
+			run(
 				work = { client.manageAvailability(token, date, partySize) },
 				onSuccess = {
 					detailAvailability = it
@@ -500,7 +519,7 @@ internal class ReservationsController(
 				changed()
 				return@withToken
 			}
-			TaskRunner.run(
+			run(
 				work = { call(token) },
 				onSuccess = {
 					detailBusy = false
@@ -522,8 +541,16 @@ internal class ReservationsController(
 		val loc = location ?: return
 		waitlistError = null
 		app.pushRes("res:waitlist")
+		// One flow serves every location: a status that belongs to another place goes.
+		if (waitlistLocationId != null && waitlistLocationId != loc.id) waitlist.clear()
 		withToken(ReservationTokenKeys.waitlist(loc.id)) { token ->
-			if (token != null && waitlist.statusToken == null) refreshWaitlist(token)
+			// After a restart the saved capability goes back into the flow, so the
+			// guest sees the entry (and can refresh or leave it) rather than the join form.
+			if (token != null && waitlist.statusToken == null) {
+				waitlist.restore(token)
+				waitlistLocationId = loc.id
+				refreshWaitlist(token)
+			}
 			changed()
 		}
 	}
@@ -535,13 +562,14 @@ internal class ReservationsController(
 		waitlistBusy = true
 		waitlistError = null
 		changed()
-		TaskRunner.run(
+		run(
 			work = {
-				client.joinWaitlist(loc.id, name, partySize, phone, smsOptIn, app.language.code, key)
+				client.joinWaitlist(loc.id, name, partySize, phone, smsOptIn, app.languageCode, key)
 			},
 			onSuccess = {
 				waitlistBusy = false
 				waitlist.joined(it)
+				waitlistLocationId = loc.id
 				rememberTokens(mapOf(ReservationTokenKeys.waitlist(loc.id) to it.statusToken))
 				changed()
 			},
@@ -556,10 +584,11 @@ internal class ReservationsController(
 
 	fun refreshWaitlist(token: String? = waitlist.statusToken) {
 		token ?: return
-		TaskRunner.run(
+		run(
 			work = { client.waitlistStatus(token) },
 			onSuccess = {
 				waitlist.statusUpdated(it)
+				forgetFinishedWaitlistToken()
 				changed()
 			},
 			onFailure = {
@@ -580,15 +609,18 @@ internal class ReservationsController(
 		val token = waitlist.statusToken ?: return
 		waitlistBusy = true
 		changed()
-		TaskRunner.run(
+		run(
 			work = { call(token) },
 			onSuccess = {
 				waitlistBusy = false
 				waitlist.statusUpdated(it)
+				forgetFinishedWaitlistToken()
 				changed()
 			},
 			onFailure = {
 				waitlistBusy = false
+				val api = it as? ApiException
+				if (api?.statusCode == 404) forgetWaitlist()
 				waitlistError = FlowError.from(it)
 				changed()
 			},
@@ -596,16 +628,25 @@ internal class ReservationsController(
 	}
 
 	private fun forgetWaitlist() {
-		val id = location?.id ?: return
+		val id = waitlistLocationId ?: location?.id ?: return
 		waitlist.clear()
+		waitlistLocationId = null
 		rememberTokens(emptyMap(), remove = setOf(ReservationTokenKeys.waitlist(id)))
+	}
+
+	/** An ended entry cannot be inspected again: drop the saved token, keep the final status on screen. */
+	private fun forgetFinishedWaitlistToken() {
+		val id = waitlistLocationId ?: return
+		if (waitlist.status?.isActive == false) {
+			rememberTokens(emptyMap(), remove = setOf(ReservationTokenKeys.waitlist(id)))
+		}
 	}
 
 	// MARK: - Tokens
 
 	private fun ensureTokens() {
 		if (tokens != null) return
-		TaskRunner.run(
+		tasks.run(
 			work = { storage().load() },
 			onSuccess = { if (tokens == null) tokens = it },
 		)
@@ -617,37 +658,56 @@ internal class ReservationsController(
 			block(known[key])
 			return
 		}
-		TaskRunner.run(
+		val issued = generation
+		tasks.run(
 			work = { storage().load() },
 			onSuccess = {
+				if (issued != generation) return@run
 				if (tokens == null) tokens = it
 				block(tokens?.get(key))
 			},
-			onFailure = { block(null) },
+			onFailure = { if (issued == generation) block(null) },
 		)
 	}
 
 	private fun rememberTokens(add: Map<String, String>, remove: Set<String> = emptySet()) {
 		val merged = ((tokens ?: emptyMap()) + add) - remove
 		tokens = merged
-		TaskRunner.run(work = { storage().save(merged) })
+		tasks.run(work = { storage().save(merged) })
 	}
 
-	/** Sign-out: bookings belong to the customer, so their tokens go with the session. */
+	/**
+	 * Sign-out and account switch: bookings belong to the customer, so their tokens
+	 * go with the session, and every in-memory piece of it (flow, waitlist, hold,
+	 * payment poll, bookings, request in progress) is cleared. Answers still in
+	 * flight are dropped by the generation guard.
+	 */
 	fun onSignedOut() {
+		generation += 1
 		stopPolling()
 		stopTicker()
+		// The leaving customer's held table is freed, best effort.
+		holdTokenOrNull()?.let { token -> tasks.run(work = { client.releaseHold(token) }) }
 		flow.reset()
 		waitlist.clear()
+		waitlistLocationId = null
 		config = null
 		mine = null
 		detail = null
 		detailAvailability = null
+		detailBusy = false
 		location = null
 		selection = null
 		error = null
+		loading = false
+		requestLocalMin = null
+		requestKey = null
+		waitlistBusy = false
+		waitlistError = null
+		pollAttempt = 0
+		pollStartedAt = 0L
 		tokens = emptyMap()
-		TaskRunner.run(work = { storage().save(emptyMap()) })
+		tasks.run(work = { storage().save(emptyMap()) })
 	}
 
 	private fun fail(failure: Exception) {

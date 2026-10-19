@@ -125,8 +125,14 @@ internal class ResSearchScreen(host: ScreenHost) : ResScreen(host) {
 		body.removeAllViews()
 		body.addRow(ctx.headingText(palette, location.name))
 		body.addRow(ctx.bodyText(palette, host.str(R.string.res_party_size), bold = true), 16f)
-		stepper.bind(selection.partySize, location.partyMin, location.partyMax)
+		stepper.bind(selection.partySize, location.partyMin, location.partyCeiling)
 		body.addRow(stepper, 8f)
+		if (location.needsApproval(selection.partySize)) {
+			body.addRow(
+				ctx.bodyText(palette, host.str(R.string.res_party_over_max, location.partyMax), muted = true),
+				6f,
+			)
+		}
 
 		body.addRow(ctx.bodyText(palette, host.str(R.string.res_date), bold = true), 16f)
 		val start = runCatching { LocalDate.parse(rc.today()) }.getOrDefault(LocalDate.now())
@@ -531,7 +537,7 @@ internal class ResWaitlistScreen(host: ScreenHost) : ResScreen(host) {
 		body.addRow(ctx.headingText(palette, host.str(R.string.res_waitlist_title)))
 		val status = rc.waitlist.status
 		val error = rc.waitlistError?.let { host.str(ResFormat.errorRes(it)) }
-		if (status == null || !rc.waitlist.isActive && rc.waitlist.statusToken == null) {
+		if (rc.waitlist.statusToken == null) {
 			body.addRow(ctx.bodyText(palette, host.str(R.string.res_waitlist_subtitle), muted = true), 6f)
 			party = party.coerceIn(location.partyMin, location.partyMax)
 			stepper.bind(party, location.partyMin, location.partyMax)
@@ -552,6 +558,14 @@ internal class ResWaitlistScreen(host: ScreenHost) : ResScreen(host) {
 				},
 				16f,
 			)
+			return
+		}
+		if (status == null) {
+			// A restored entry whose first refresh is still running (or failed).
+			body.addRow(ctx.bodyText(palette, host.str(R.string.app_loading), muted = true), 8f)
+			message.bind(error)
+			body.addRow(message, 8f)
+			body.addRow(secondary(host.str(R.string.res_reload)) { rc.refreshWaitlist() }, 12f)
 			return
 		}
 		val label = when (status.status) {

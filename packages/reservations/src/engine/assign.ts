@@ -46,6 +46,9 @@ export type ScoreCandidateInput = {
  * Candidate pools only depend on the slot when a service-availability rule has
  * a `fromMin`/`toMin` sub-window, so the slot joins the cache key only then.
  */
+/** Sentinel slot for requests without local minutes: matches no booking bucket. */
+const NO_LOCAL_SLOT = -1
+
 function candidatePoolCacheKey(
 	serviceId: string | null | undefined,
 	channel: BookingChannel,
@@ -169,6 +172,8 @@ export type AssignBookingRecord = {
 	kind?: 'reservation' | 'hold' | 'block'
 	partySize: number
 	localStartMin?: number
+	/** Business date `localStartMin` is relative to (pacing scope). */
+	businessDate?: string
 	startAt: number
 	endAt: number
 	tableIds: readonly string[]
@@ -249,6 +254,8 @@ export type AssignTablesInput = {
 	endAt?: number
 	localStartMin?: number
 	slotMin?: number
+	/** Business date of the requested slot; pacing ignores other dates' bookings. */
+	businessDate?: string
 	channel?: BookingChannel
 	serviceId?: string | null
 	areaId?: string | null
@@ -498,11 +505,12 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	const partySize = req?.partySize ?? input.partySize ?? 1
 	const startAt = req?.startAt ?? input.startAt ?? 0
 	const endAt = req?.endAt ?? input.endAt ?? 0
-	const slotMin =
-		req?.localStartMin ??
-		input.localStartMin ??
-		input.slotMin ??
-		Math.floor(startAt / 60_000)
+	// Local business-day minutes only: never fall back to epoch minutes. Without
+	// a local start, time-windowed rules are not evaluated and slot pacing
+	// matches nothing (`NO_LOCAL_SLOT`).
+	const localSlotMin =
+		req?.localStartMin ?? input.localStartMin ?? input.slotMin
+	const slotMin = localSlotMin ?? NO_LOCAL_SLOT
 	const channel = req?.channel ?? input.channel ?? 'online'
 	const isOnlineLike = isGuestChannel(channel)
 	const serviceId = req?.serviceId ?? input.serviceId
@@ -566,7 +574,8 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 				areaId: b.areaId ?? null,
 				channel: b.channel ?? 'online',
 				partySize: b.partySize,
-				localStartMin: b.localStartMin ?? Math.floor(b.startAt / 60_000),
+				localStartMin: b.localStartMin,
+				businessDate: b.businessDate,
 				startAt: b.startAt,
 				endAt: b.endAt,
 				status: b.status,
@@ -584,6 +593,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		const globalPacing = evaluatePacing({
 			serviceId,
 			slotMin,
+			businessDate: input.businessDate,
 			startAt,
 			endAt,
 			durationMin: minTurnMin,
@@ -627,6 +637,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		const areaEval = evaluatePacing({
 			serviceId,
 			slotMin,
+			businessDate: input.businessDate,
 			startAt,
 			endAt,
 			durationMin: minTurnMin,
@@ -649,7 +660,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 		serviceId,
 		channel,
 		serviceTableModes,
-		slotMin,
+		localSlotMin,
 	)
 	let allCandidates = candidatePoolCache.get(primaryCacheKey)
 	if (!allCandidates) {
@@ -659,7 +670,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 			combinations,
 			serviceTableModes,
 			serviceId,
-			slotMin,
+			slotMin: localSlotMin,
 			channel,
 		})
 		candidatePoolCache.set(primaryCacheKey, allCandidates)
@@ -824,7 +835,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	): Array<{ candidate: AssignCandidate; score: number }> => {
 		const bServiceId = booking.serviceId ?? serviceId
 		const bChannel = booking.channel ?? 'online'
-		const bSlotMin = booking.localStartMin ?? slotMin
+		const bSlotMin = booking.localStartMin ?? localSlotMin
 		const poolKey = candidatePoolCacheKey(
 			bServiceId,
 			bChannel,
@@ -1274,6 +1285,9 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 			combinations,
 			serviceTableModes,
 			serviceId: sb.serviceId,
+			// Time-bounded table modes (`fromMin`/`toMin`) need the booking's local
+			// business-day minutes, never epoch minutes.
+			slotMin: sb.localStartMin,
 			channel: sb.channel ?? 'online',
 		})
 
@@ -1325,6 +1339,8 @@ export function reflowDay(input: ReflowDayInput): ReflowDayResult {
 			partySize: sb.partySize,
 			startAt: sb.startAt,
 			endAt: sb.endAt,
+			localStartMin: sb.localStartMin,
+			businessDate: sb.businessDate,
 			channel: sb.channel ?? 'online',
 			serviceId: sb.serviceId,
 			areaId: sb.areaId,

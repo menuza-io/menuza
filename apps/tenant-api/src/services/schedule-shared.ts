@@ -60,6 +60,7 @@ import {
 	ok,
 	type TimesheetResult,
 } from './timesheet-shared.ts'
+import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * What the schedule services share: the request context, the failure
@@ -89,7 +90,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 /** Most rows loaded for one list: a bigger set asks the caller to narrow. */
 export const MAX_LIST_ROWS = 500
 /** Ids per `IN (...)` query, comfortably under SQLite's variable limit. */
-const ID_CHUNK = 300
+const ID_CHUNK = 90
 
 export function chunk<T>(items: readonly T[], size: number): T[][] {
 	const out: T[][] = []
@@ -351,10 +352,9 @@ export async function loadPeople(
 	const people = new Map<string, PersonRecord>()
 	const ids = [...new Set(staffIds)]
 	for (const part of chunk(ids, ID_CHUNK)) {
-		const members = await db
-			.select()
-			.from(staffMembers)
-			.where(inArray(staffMembers.id, part))
+		const members = await queryInChunks(part, (chunk) =>
+			db.select().from(staffMembers).where(inArray(staffMembers.id, chunk)),
+		)
 		for (const member of members) {
 			people.set(member.id, {
 				member,
@@ -363,26 +363,30 @@ export async function loadPeople(
 				jobs: [],
 			})
 		}
-		const assignments = await db
-			.select()
-			.from(staffScopeAssignments)
-			.where(
-				and(
-					inArray(staffScopeAssignments.staffId, part),
-					eq(staffScopeAssignments.active, true),
+		const assignments = await queryInChunks(part, (chunk) =>
+			db
+				.select()
+				.from(staffScopeAssignments)
+				.where(
+					and(
+						inArray(staffScopeAssignments.staffId, chunk),
+						eq(staffScopeAssignments.active, true),
+					),
 				),
-			)
+		)
 		for (const assignment of assignments) {
 			const person = people.get(assignment.staffId)
 			if (!person) continue
 			person.assignments.push(assignment)
 			person.scopeIds.add(assignment.scopeId)
 		}
-		const jobs = await db
-			.select({ job: staffJobs, position: staffPositions })
-			.from(staffJobs)
-			.innerJoin(staffPositions, eq(staffPositions.id, staffJobs.positionId))
-			.where(inArray(staffJobs.staffId, part))
+		const jobs = await queryInChunks(part, (chunk) =>
+			db
+				.select({ job: staffJobs, position: staffPositions })
+				.from(staffJobs)
+				.innerJoin(staffPositions, eq(staffPositions.id, staffJobs.positionId))
+				.where(inArray(staffJobs.staffId, chunk)),
+		)
 		for (const row of jobs) {
 			people.get(row.job.staffId)?.jobs.push(row)
 		}
@@ -408,6 +412,7 @@ export function visibleStaffWhere(
 	}
 	const scoped = scope.where(staffScopeAssignments.scopeId)
 	if (scoped) where.push(scoped)
+	// bounded: a subquery, no bound parameters
 	return inArray(
 		column,
 		db
@@ -468,17 +473,19 @@ export async function loadApprovedTimeOff(
 ): Promise<Map<string, TimeOffWindow[]>> {
 	const out = new Map<string, TimeOffWindow[]>()
 	for (const part of chunk([...new Set(staffIds)], ID_CHUNK)) {
-		const rows = await db
-			.select()
-			.from(timeOffRequests)
-			.where(
-				and(
-					inArray(timeOffRequests.staffId, part),
-					eq(timeOffRequests.status, 'approved'),
-					sql`${timeOffRequests.startDate} <= ${toDate}`,
-					sql`${timeOffRequests.endDate} >= ${fromDate}`,
+		const rows = await queryInChunks(part, (chunk) =>
+			db
+				.select()
+				.from(timeOffRequests)
+				.where(
+					and(
+						inArray(timeOffRequests.staffId, chunk),
+						eq(timeOffRequests.status, 'approved'),
+						sql`${timeOffRequests.startDate} <= ${toDate}`,
+						sql`${timeOffRequests.endDate} >= ${fromDate}`,
+					),
 				),
-			)
+		)
 		for (const row of rows) {
 			const list = out.get(row.staffId) ?? []
 			list.push({
@@ -501,15 +508,17 @@ export async function loadApprovedAvailability(
 ): Promise<Map<string, AvailabilityWindow[]>> {
 	const out = new Map<string, AvailabilityWindow[]>()
 	for (const part of chunk([...new Set(staffIds)], ID_CHUNK)) {
-		const rows = await db
-			.select()
-			.from(staffAvailability)
-			.where(
-				and(
-					inArray(staffAvailability.staffId, part),
-					eq(staffAvailability.status, 'approved'),
+		const rows = await queryInChunks(part, (chunk) =>
+			db
+				.select()
+				.from(staffAvailability)
+				.where(
+					and(
+						inArray(staffAvailability.staffId, chunk),
+						eq(staffAvailability.status, 'approved'),
+					),
 				),
-			)
+		)
 		for (const row of rows) {
 			const list = out.get(row.staffId) ?? []
 			list.push({
@@ -551,9 +560,9 @@ export async function loadShiftsInRange(
 				.where(
 					and(
 						or(
-							inArray(shifts.staffId, part),
+							inJsonList(shifts.staffId, part),
 							// A pending reassignment moves a shift onto these people.
-							inArray(
+							inJsonList(
 								sql`json_extract(${shifts.draftPatch}, '$.staffId')`,
 								part,
 							),
@@ -582,7 +591,9 @@ export async function loadShiftsByIds(
 	const out: ShiftRow[] = []
 	for (const part of chunk([...new Set(ids)], ID_CHUNK)) {
 		out.push(
-			...(await db.select().from(shifts).where(inArray(shifts.id, part))),
+			...(await queryInChunks(part, (chunk) =>
+				db.select().from(shifts).where(inArray(shifts.id, chunk)),
+			)),
 		)
 	}
 	return out

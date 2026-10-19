@@ -539,6 +539,23 @@ public struct WaitlistFlow: Sendable {
 		phase = .waiting
 	}
 
+	/// Statuses after which the entry can no longer be inspected or changed.
+	public static func isFinished(status: String) -> Bool {
+		switch status {
+		case "left", "cancelled", "removed", "no_show", "expired", "seated": return true
+		default: return false
+		}
+	}
+
+	/// Puts a persisted status token back into the flow (after a relaunch) so the
+	/// guest can see, refresh and leave the entry instead of joining again.
+	public mutating func restore(token: String) {
+		statusToken = token
+		idempotencyKey = nil
+		lastJoin = nil
+		phase = .waiting
+	}
+
 	public mutating func receive(status: ReservationWaitlistStatus) {
 		self.status = status
 		switch status.status {

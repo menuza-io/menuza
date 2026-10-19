@@ -239,6 +239,12 @@ export function buildReservationSessionIdempotencyKey(input: {
 	amountMinor: number
 	currency: string
 	paymentExpiresAt: string
+	/**
+	 * The exact Stripe `expires_at` sent with the session. It can legitimately
+	 * differ between attempts (clock-bound for short holds), so it is part of
+	 * the identity: same key implies byte-identical session parameters.
+	 */
+	stripeExpiresAt?: number
 }): string {
 	const material = [
 		input.orgId,
@@ -248,6 +254,9 @@ export function buildReservationSessionIdempotencyKey(input: {
 		String(input.amountMinor),
 		input.currency.toUpperCase(),
 		input.paymentExpiresAt,
+		...(input.stripeExpiresAt === undefined
+			? []
+			: [String(input.stripeExpiresAt)]),
 	].join('|')
 	return `reservation_${input.purpose}_${sha256Hex(material).slice(0, 40)}`
 }
@@ -306,14 +315,30 @@ export function reservationCheckoutReference(input: {
 	return `rsv_${input.purpose}_${digest}`
 }
 
-/** Checkout.com reference of a refund: carries the opaque request id. */
+/** Checkout.com limits `reference` to 50 characters. */
+const CHECKOUT_REFERENCE_MAX = 50
+const REFUND_REFERENCE_PREFIX = 'rsv_rf_'
+/** Pre-compact prefix, decoded for references already at the provider. */
+const LEGACY_REFUND_REFERENCE_PREFIX = 'rsv_refund_'
+
+/**
+ * Checkout.com reference of a refund: carries the opaque request id intact
+ * (`pay_<uuid>` is 40 characters, so the short prefix fits the 50 character
+ * limit). An id that cannot fit throws: truncating would point webhooks at a
+ * refund row that does not exist.
+ */
 export function reservationRefundReference(input: {
 	refundRequestId?: string | null
 	paymentRef: string
 }): string {
-	return input.refundRequestId
-		? `rsv_refund_${input.refundRequestId}`.slice(0, 50)
-		: `rsv_late_${input.paymentRef}`.slice(0, 50)
+	if (input.refundRequestId) {
+		const reference = `${REFUND_REFERENCE_PREFIX}${input.refundRequestId}`
+		if (reference.length > CHECKOUT_REFERENCE_MAX) {
+			throw new Error('Refund reference does not fit the provider limit')
+		}
+		return reference
+	}
+	return `rsv_late_${input.paymentRef}`.slice(0, CHECKOUT_REFERENCE_MAX)
 }
 
 /** Read the refund request id back from a Checkout.com refund reference. */
@@ -321,9 +346,14 @@ export function parseReservationRefundReference(
 	reference: string | null | undefined,
 ): { refundRequestId: string | null; late: boolean } | null {
 	if (!reference) return null
-	if (reference.startsWith('rsv_refund_')) {
-		const id = reference.slice('rsv_refund_'.length)
-		return id ? { refundRequestId: id, late: false } : null
+	for (const prefix of [
+		REFUND_REFERENCE_PREFIX,
+		LEGACY_REFUND_REFERENCE_PREFIX,
+	]) {
+		if (reference.startsWith(prefix)) {
+			const id = reference.slice(prefix.length)
+			return id ? { refundRequestId: id, late: false } : null
+		}
 	}
 	if (reference.startsWith('rsv_late_')) {
 		return { refundRequestId: null, late: true }
@@ -356,19 +386,32 @@ export function sanitizeStatementDescriptorSuffix(
 
 const STRIPE_MIN_SESSION_MS = 31 * 60_000
 const STRIPE_MAX_SESSION_MS = 24 * 60 * 60_000 - 60_000
+/**
+ * The clock-derived bounds snap to this grid, so a retry seconds after a lost
+ * response submits the same `expires_at` (Stripe rejects a reused idempotency
+ * key whose parameters changed).
+ */
+const STRIPE_EXPIRY_GRID_MS = 5 * 60_000
 
 /**
- * Stripe `expires_at` (unix seconds): `max(now + 31 min, paymentExpiresAt)`,
- * capped below Stripe's 24 hour maximum. A late payment on a session that
- * outlives the hold is handled regionally.
+ * Stripe `expires_at` (unix seconds): the hold (`paymentExpiresAt`, a stable
+ * regional value) when it is at least 31 minutes away, otherwise the clock
+ * bound rounded UP to a 5 minute grid; capped below Stripe's 24 hour maximum
+ * (rounded down). Only the clock-derived bounds vary with `nowMs`, and only per
+ * grid step, so callers put the result in the idempotency key. A late payment
+ * on a session that outlives the hold is handled regionally.
  */
 export function reservationStripeExpiresAt(
 	nowMs: number,
 	paymentExpiresAt: string,
 ): number {
 	const hold = new Date(paymentExpiresAt).getTime()
-	const wanted = Number.isFinite(hold)
-		? Math.max(nowMs + STRIPE_MIN_SESSION_MS, hold)
-		: nowMs + STRIPE_MIN_SESSION_MS
-	return Math.floor(Math.min(wanted, nowMs + STRIPE_MAX_SESSION_MS) / 1000)
+	const earliest =
+		Math.ceil((nowMs + STRIPE_MIN_SESSION_MS) / STRIPE_EXPIRY_GRID_MS) *
+		STRIPE_EXPIRY_GRID_MS
+	const latest =
+		Math.floor((nowMs + STRIPE_MAX_SESSION_MS) / STRIPE_EXPIRY_GRID_MS) *
+		STRIPE_EXPIRY_GRID_MS
+	const wanted = Number.isFinite(hold) ? Math.max(earliest, hold) : earliest
+	return Math.floor(Math.min(wanted, latest) / 1000)
 }

@@ -70,6 +70,7 @@ import {
 	type ScheduleResult,
 } from './schedule-shared.ts'
 import { buildLiveCards, fail, ok, selectCardRows } from './timesheet-shared.ts'
+import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * What a person can do with their own "my schedule" link: read their own
@@ -362,7 +363,7 @@ export async function loadMyTimeCards(
 				.from(timeEntryEdits)
 				.where(
 					and(
-						inArray(
+						inJsonList(
 							timeEntryEdits.entryId,
 							live.map((card) => card.entry.id),
 						),
@@ -459,10 +460,12 @@ async function myShiftRequests(
 		),
 	]
 	const targets = targetIds.length
-		? await ctx.db
-				.select()
-				.from(staffMembers)
-				.where(inArray(staffMembers.id, targetIds))
+		? await queryInChunks(targetIds, (chunk) =>
+				ctx.db
+					.select()
+					.from(staffMembers)
+					.where(inArray(staffMembers.id, chunk)),
+			)
 		: []
 	const names = new Map(targets.map((t) => [t.id, shortName(t)]))
 	return rows.map(({ request, shift }) => ({
@@ -616,10 +619,12 @@ export async function createMyAvailability(
 	})
 	if (!created.ok) return created
 	const ids = created.value.map((row) => row.id)
-	const rows = await ctx.db
-		.select()
-		.from(staffAvailability)
-		.where(inArray(staffAvailability.id, ids))
+	const rows = await queryInChunks(ids, (chunk) =>
+		ctx.db
+			.select()
+			.from(staffAvailability)
+			.where(inArray(staffAvailability.id, chunk)),
+	)
 	return ok(rows.map(toMyAvailability))
 }
 
@@ -719,7 +724,7 @@ export async function loadMyTeammates(
 				and(
 					eq(shifts.scopeId, shift.scopeId),
 					eq(shifts.status, 'published'),
-					inArray(
+					inJsonList(
 						shifts.staffId,
 						people.map((p) => p.id),
 					),

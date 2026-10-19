@@ -56,6 +56,7 @@ import {
 } from './schedule-shared.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, ok } from './timesheet-shared.ts'
+import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Telling people about a publication. Three parts:
@@ -73,7 +74,7 @@ import { fail, ok } from './timesheet-shared.ts'
 
 /** Statuses of a person who can be sent a schedule. */
 const NOTIFIABLE = 'active'
-const PEOPLE_CHUNK = 300
+const PEOPLE_CHUNK = 90
 /** Shifts listed in one email. */
 const MAX_EMAIL_SHIFTS = 60
 export const MAX_NOT_REACHED = 500
@@ -93,10 +94,9 @@ async function loadMembers(
 ): Promise<Map<string, StaffMember>> {
 	const map = new Map<string, StaffMember>()
 	for (const part of chunked([...new Set(ids)], PEOPLE_CHUNK)) {
-		const rows = await db
-			.select()
-			.from(staffMembers)
-			.where(inArray(staffMembers.id, part))
+		const rows = await queryInChunks(part, (chunk) =>
+			db.select().from(staffMembers).where(inArray(staffMembers.id, chunk)),
+		)
 		for (const row of rows) map.set(row.id, row)
 	}
 	return map
@@ -585,7 +585,7 @@ export async function buildScheduleNotice(
 					.leftJoin(staffPositions, eq(staffPositions.id, shifts.positionId))
 					.where(
 						and(
-							inArray(shifts.id, removedIds),
+							inJsonList(shifts.id, removedIds),
 							eq(shifts.scopeId, payload.scopeId),
 						),
 					)

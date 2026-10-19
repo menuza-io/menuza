@@ -121,7 +121,12 @@ async function internal(
 	const res = await app.request(`/api/reservations/payments${pathName}`, {
 		method: 'POST',
 		headers,
-		body: JSON.stringify({ orgId: ORG, ...body }),
+		body: JSON.stringify({
+			orgId: ORG,
+			// The fee claim must name the operator's locations (null is all).
+			...(pathName === '/fee-claim' ? { locationIds: null } : {}),
+			...body,
+		}),
 	})
 	const text = await res.text()
 	return { status: res.status, body: text ? JSON.parse(text) : null }
@@ -826,6 +831,13 @@ describe('expiry and late payments', () => {
 			platformFeeMinor: 1000,
 			feeReversalMinor: 1000,
 		})
+		// The directive names the regional refund row, so the provider refund
+		// carries the same linking metadata as every other refund.
+		const lateRows = (await paymentRows(booking.reservation.id)).filter(
+			(r) => r.kind === 'refund',
+		)
+		expect(lateRows).toHaveLength(1)
+		expect(late.body.refund.refundRequestId).toBe(lateRows[0]!.id)
 		expect((await reservationRow(booking.reservation.id)).status).toBe(
 			'expired',
 		)
@@ -895,6 +907,42 @@ describe('expiry and late payments', () => {
 })
 
 describe('refunds', () => {
+	it('refuses a refund claim outside the operator location list and claims inside it', async () => {
+		const booking = await bookDeposit()
+		await payDeposit(booking, { bp: 1000 })
+		await guestCancelReservation({
+			orgId: ORG,
+			reservationId: booking.reservation.id,
+		})
+		const db = await getTenantDb(ORG)
+		const outbox = await db
+			.select()
+			.from(rsvOutbox)
+			.where(eq(rsvOutbox.kind, 'refund_request'))
+		const refundId = (outbox[0]!.payload as { refundRequestId: string })
+			.refundRequestId
+		const locationId = (await reservationRow(booking.reservation.id)).locationId
+		const status = async () =>
+			(await paymentRows(booking.reservation.id)).find((r) => r.id === refundId)
+				?.status
+		const before = await status()
+		for (const locationIds of [[], ['loc_elsewhere']]) {
+			const denied = await internal('/refund-claim', {
+				refundRequestId: refundId,
+				locationIds,
+			})
+			expect(denied.status).toBe(404)
+			expect(denied.body).toMatchObject({ error: 'refund_not_found' })
+			expect(await status()).toBe(before)
+		}
+		const ok = await internal('/refund-claim', {
+			refundRequestId: refundId,
+			locationIds: [locationId],
+		})
+		expect(ok.status).toBe(200)
+		expect(ok.body.refunds).toHaveLength(1)
+	})
+
 	it('refunds a free guest cancellation in full, reverses the fee and records it (VAL-PAY-041)', async () => {
 		const booking = await bookDeposit()
 		await payDeposit(booking, { bp: 1000 })
@@ -1082,6 +1130,38 @@ describe('refunds', () => {
 		expect(audit).toHaveLength(2)
 	})
 
+	it('a reclaimed refund keeps the fee reversal it was first claimed with (stable provider parameters)', async () => {
+		await seedPolicy({ id: 'pol_flat', amountMinor: 3333, perCover: false })
+		const booking = await bookDeposit(1, 2)
+		await payDeposit(booking, { bp: 1000 })
+		const first = await operatorCall(
+			'POST',
+			`/payments/reservations/${booking.reservation.id}/refund`,
+			{ amountMinor: 1667, reason: 'first' },
+		)
+		const second = await operatorCall(
+			'POST',
+			`/payments/reservations/${booking.reservation.id}/refund`,
+			{ amountMinor: 1666, reason: 'second' },
+		)
+		const { claimRefunds } = await import('../services/rsv-payment-service.ts')
+		const t0 = Date.now()
+		const [a] = (
+			await claimRefunds(ORG, { refundRequestId: first.body.refundId }, t0)
+		).refunds
+		await claimRefunds(ORG, { refundRequestId: second.body.refundId }, t0)
+		// The first attempt's response was lost; its lease lapses and it is claimed again.
+		const [again] = (
+			await claimRefunds(
+				ORG,
+				{ refundRequestId: first.body.refundId },
+				t0 + 11 * 60_000,
+			)
+		).refunds
+		expect(again!.amountMinor).toBe(a!.amountMinor)
+		expect(again!.feeReversalMinor).toBe(a!.feeReversalMinor)
+	})
+
 	it('shows a pending refund and settles it later (VAL-PAY-045)', async () => {
 		const booking = await bookDeposit()
 		await payDeposit(booking)
@@ -1184,6 +1264,54 @@ describe('card guarantee and staff fees', () => {
 			cardExpYear: 2031,
 		})
 		expect(await messageKinds(row.id)).toContain('confirmation')
+	})
+
+	it('refuses a fee claim for a location outside the operator list, with no state change (location scope)', async () => {
+		const booking = await guaranteedBooking()
+		const id = booking.reservation.id
+		await markNoShow(id)
+		const version = (await reservationRow(id)).version
+		const fee = await operatorCall('POST', `/payments/reservations/${id}/fee`, {
+			kind: 'no_show_fee',
+			expectedVersion: version,
+		})
+		expect(fee.status).toBe(201)
+		const locationId = (await reservationRow(id)).locationId
+		const feeRowStatus = async () =>
+			(await paymentRows(id)).find((r) => r.id === fee.body.feeId)?.status
+		expect(await feeRowStatus()).toBe('pending')
+		for (const locationIds of [[], ['loc_elsewhere']]) {
+			const denied = await internal('/fee-claim', {
+				reservationId: id,
+				feeId: fee.body.feeId,
+				locationIds,
+			})
+			expect(denied.status).toBe(404)
+			expect(denied.body).toMatchObject({ error: 'fee_not_found' })
+			expect(await feeRowStatus()).toBe('pending')
+		}
+		// A missing list is a validation error, never "unrestricted".
+		const missing = await app.request('/api/reservations/payments/fee-claim', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${INTERNAL_TOKEN}`,
+			},
+			body: JSON.stringify({
+				orgId: ORG,
+				reservationId: id,
+				feeId: fee.body.feeId,
+			}),
+		})
+		expect(missing.status).toBe(400)
+		expect(await feeRowStatus()).toBe('pending')
+		const allowed = await internal('/fee-claim', {
+			reservationId: id,
+			feeId: fee.body.feeId,
+			locationIds: [locationId],
+		})
+		expect(allowed.status).toBe(200)
+		expect(await feeRowStatus()).toBe('charging')
 	})
 
 	it('charges the no-show fee only on a staff request, with the exact amount (VAL-PAY-034, 035)', async () => {

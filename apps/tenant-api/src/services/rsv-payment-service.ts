@@ -107,6 +107,13 @@ const API_FEE_KIND: Record<(typeof FEE_KINDS)[number], ReservationFeeKind> = {
 /** Reservation states in which an unpaid hold may still become a booking. */
 const PAYABLE_RESERVATION_STATUSES = ['pending_payment'] as const
 
+function locationAllowed(
+	allowed: readonly string[] | null | undefined,
+	locationId: string,
+): boolean {
+	return allowed == null || allowed.includes(locationId)
+}
+
 function notFound(code = 'not_found'): HttpError {
 	return new HttpError(404, code)
 }
@@ -942,6 +949,7 @@ async function queueLateRefund(
 	})
 	void orgId
 	return {
+		refundRequestId: refundId,
 		reservationId: reservation.id,
 		paymentRef: paid.providerRef ?? request.paymentRef ?? '',
 		processor: payment.provider,
@@ -1145,7 +1153,12 @@ export async function requestOperatorFee(params: {
 
 export async function claimFee(
 	orgId: string,
-	request: { reservationId: string; feeId: string },
+	request: {
+		reservationId: string
+		feeId: string
+		/** The operator's locations: `null` is all; a list limits the claim. */
+		locationIds: readonly string[] | null
+	},
 	now = Date.now(),
 ): Promise<ReservationFeeClaim> {
 	return inReservationWrite(
@@ -1153,6 +1166,11 @@ export async function claimFee(
 		request.reservationId,
 		now,
 		async (tx, _helpers, reservation) => {
+			// Same answer as an unknown fee, so a restricted operator learns
+			// nothing about a reservation at a location they cannot see.
+			if (!locationAllowed(request.locationIds, reservation.locationId)) {
+				throw notFound('fee_not_found')
+			}
 			const fee = await loadPayment(tx, request.feeId)
 			if (
 				!fee ||
@@ -1407,13 +1425,22 @@ async function directiveFor(
 	tx: Tx,
 	refund: PaymentRow,
 	parent: PaymentRow,
+	reclaim: boolean,
 ): Promise<ReservationRefundClaim | null> {
 	if (!parent.providerRef) return null
 	const reversal = await computeFeeReversal(tx, parent, refund)
-	await tx
-		.update(rsvPayments)
-		.set({ platformFeeMinor: reversal.feeReversalMinor })
-		.where(eq(rsvPayments.id, refund.id))
+	// A reclaim (the first attempt's lease lapsed) must send the provider the
+	// exact fee reversal the first claim decided: other refunds may have been
+	// claimed since, and a changed parameter under the same idempotency key is
+	// rejected by the provider. Only a first claim (`requested`) decides it.
+	if (reclaim) {
+		reversal.feeReversalMinor = refund.platformFeeMinor
+	} else {
+		await tx
+			.update(rsvPayments)
+			.set({ platformFeeMinor: reversal.feeReversalMinor })
+			.where(eq(rsvPayments.id, refund.id))
+	}
 	return {
 		refundRequestId: refund.id,
 		reservationId: refund.reservationId,
@@ -1431,7 +1458,11 @@ async function directiveFor(
 
 export async function claimRefunds(
 	orgId: string,
-	request: { refundRequestId?: string },
+	request: {
+		refundRequestId?: string
+		/** Set for an operator's request: only these locations may be claimed. */
+		locationIds?: readonly string[] | null
+	},
 	now = Date.now(),
 ): Promise<{ refunds: ReservationRefundClaim[] }> {
 	const db = await getTenantDb(orgId)
@@ -1457,7 +1488,10 @@ export async function claimRefunds(
 			orgId,
 			candidate.reservationId,
 			now,
-			async (tx) => {
+			async (tx, _helpers, reservation) => {
+				if (!locationAllowed(request.locationIds, reservation.locationId)) {
+					return null
+				}
 				const refund = await loadPayment(tx, candidate.id)
 				if (!refund || refund.kind !== 'refund' || !refund.parentPaymentId) {
 					return null
@@ -1485,12 +1519,29 @@ export async function claimRefunds(
 					)
 					.returning({ id: rsvPayments.id })
 				if (claimed.length === 0) return null
-				return directiveFor(tx, refund, parent)
+				return directiveFor(tx, refund, parent, refund.status === 'charging')
 			},
 		)
 		if (claim) refunds.push(claim)
 	}
 	if (request.refundRequestId && refunds.length === 0) {
+		// An out-of-scope refund answers like an unknown one.
+		if (request.locationIds && candidates.length > 0) {
+			const outOfScope = await db
+				.select({ locationId: rsvReservations.locationId })
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, candidates[0]!.reservationId))
+				.get()
+			if (
+				!outOfScope ||
+				!locationAllowed(request.locationIds, outOfScope.locationId)
+			) {
+				throw notFound('refund_not_found')
+			}
+		}
+		if (candidates.length === 0 && request.locationIds) {
+			throw notFound('refund_not_found')
+		}
 		throw new HttpError(409, 'refund_not_claimable')
 	}
 	return { refunds }

@@ -206,7 +206,7 @@ final class AppState: ObservableObject {
 			// A stored session belongs to one org; drop it when the tenant changes.
 			if let tokens, tokens.orgId != organization.id {
 				await session.signOut()
-				reservations?.forgetTokens()
+				reservations?.reset()
 				isSignedIn = false
 				return
 			}
@@ -249,6 +249,9 @@ final class AppState: ObservableObject {
 		do {
 			let result = try await session.verify(phone: phone, code: code)
 			guard attempt == authAttempt else { return }
+			// A new sign-in is a new customer as far as reservations go: nothing of
+			// a previous session (an expired one included) may carry over.
+			reservations?.reset()
 			isSignedIn = true
 			if result.needsName == true {
 				needsName = true
@@ -297,7 +300,7 @@ final class AppState: ObservableObject {
 		authAttempt += 1
 		await session?.signOut()
 		// Capability tokens for this customer's bookings leave the device with them.
-		reservations?.forgetTokens()
+		reservations?.reset()
 		isSignedIn = false
 		profile = nil
 		needsName = false
@@ -314,6 +317,7 @@ final class AppState: ObservableObject {
 			self.profile = profile
 			if profile.needsName == true { needsName = true }
 		} catch let error as APIError where error.isUnauthorized {
+			reservations?.reset()
 			isSignedIn = false
 			profile = nil
 		} catch {

@@ -471,6 +471,7 @@ export async function getGuestProfile(
 		marketing,
 		reservations: history.map((r) => ({
 			...r,
+			guestRequests: opts.canReadSensitive ? r.guestRequests : null,
 			dietaryNotes: opts.canReadSensitive ? r.dietaryNotes : null,
 		})),
 	}

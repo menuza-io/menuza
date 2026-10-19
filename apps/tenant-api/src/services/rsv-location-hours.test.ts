@@ -16,6 +16,7 @@ import {
 	rsvSpecialDays,
 	rsvTables,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
 	resetReservationsContextCache,
@@ -29,6 +30,10 @@ import {
 	getMonthCalendarSummary,
 	getOperatorAvailability,
 } from './rsv-day-feed-service.ts'
+import {
+	createServiceForLocation,
+	updateServiceForLocation,
+} from './rsv-setup-crud.ts'
 import { validateLocationSetup } from './rsv-setup-service.ts'
 
 const ORG = 'org_loc_hours'
@@ -306,6 +311,46 @@ describe('host stand day feed, month calendar and conflicts', () => {
 			closedReason: 'Holiday',
 			capacityCovers: 0,
 		})
+	})
+
+	it('month capacity reads the Monday-first service mask (bit 0 = Monday)', async () => {
+		const db = await getTenantDb(ORG)
+		seedHours()
+		await db
+			.update(rsvServices)
+			.set({ daysMask: 1 }) // Monday only
+			.where(eq(rsvServices.id, 'svc_dinner'))
+		const month = DATE.slice(0, 7)
+		const summary = await getMonthCalendarSummary(db, ORG, LOC, month)
+		const weekdayOf = (d: string) => new Date(`${d}T12:00:00Z`).getUTCDay()
+		const dates = Object.keys(summary.daysByDate)
+		const monday = dates.find((d) => weekdayOf(d) === 1)!
+		const tuesday = dates.find((d) => weekdayOf(d) === 2)!
+		const sunday = dates.find((d) => weekdayOf(d) === 0)!
+		// 3 tables x 4 seats = 12 seats; a day with one service has 2 turns, none has 1.
+		expect(summary.daysByDate[monday]!.capacityCovers).toBe(24)
+		expect(summary.daysByDate[tuesday]!.capacityCovers).toBe(12)
+		expect(summary.daysByDate[sunday]!.capacityCovers).toBe(12)
+	})
+
+	it('service setup converts Sunday-first daysOfWeek to the Monday-first mask', async () => {
+		const db = await getTenantDb(ORG)
+		const created = await createServiceForLocation(db, {
+			actorId: 'usr_host',
+			locationId: LOC,
+			name: 'Brunch',
+			daysOfWeek: [1], // Monday
+			firstSeatingMin: 600,
+			lastSeatingMin: 720,
+			endMin: 840,
+		})
+		expect(created.daysMask).toBe(1)
+		const updated = await updateServiceForLocation(db, created.id, {
+			actorId: 'usr_host',
+			locationId: LOC,
+			daysOfWeek: [0, 6], // Sunday + Saturday
+		})
+		expect(updated.service.daysMask).toBe(0b1100000)
 	})
 
 	it('existing bookings on a newly closed day are listed as conflicts', async () => {

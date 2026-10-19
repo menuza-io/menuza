@@ -183,6 +183,65 @@ describe('withReservationWrite (VAL-FND-019)', () => {
 		} satisfies Partial<HttpError>)
 	})
 
+	it('finalizes an expiry sweep (day version, hooks) even when the request is an idempotent replay', async () => {
+		const now = 1_750_000_000_000
+		const hash = hashIdempotencyPayload({ locationId: LOC_ID, date: DATE })
+		const write = (at: number, afterCommit?: () => void) =>
+			withReservationWrite(
+				{
+					orgId: ORG_ID,
+					locationId: LOC_ID,
+					dates: ['2026-06-20'],
+					scope: 'public:hold',
+					idempotencyKey: 'idem-replay-sweep',
+					requestHash: hash,
+					now: at,
+					onAfterCommit: afterCommit,
+				},
+				async () => ({ ok: true }),
+			)
+		await write(now)
+
+		// A hold on another day expires before the retry arrives.
+		const db = await getTenantDb(ORG_ID)
+		await db.insert(rsvHolds).values({
+			id: 'hold_exp_replay',
+			locationId: LOC_ID,
+			tokenHash: 'hash_exp_replay',
+			businessDate: DATE,
+			localStartMin: 1140,
+			startAt: now + 3_600_000,
+			endAt: now + 9_000_000,
+			partySize: 2,
+			status: 'active',
+			expiresAt: now + 1_000,
+		})
+		const version = async () =>
+			(
+				await db
+					.select()
+					.from(rsvDayVersions)
+					.where(eq(rsvDayVersions.businessDate, DATE))
+					.get()
+			)?.version ?? 0
+		const before = await version()
+		const mainHook = vi.fn()
+
+		const replay = await write(now + 60_000, mainHook)
+		expect(replay).toEqual({ ok: true })
+
+		const hold = await db
+			.select()
+			.from(rsvHolds)
+			.where(eq(rsvHolds.id, 'hold_exp_replay'))
+			.get()
+		expect(hold?.status).toBe('expired')
+		// The swept day's version moved, so the conditional feed cannot answer 304.
+		expect(await version()).toBe(before + 1)
+		// The request's own hook never runs on a replay.
+		expect(mainHook).not.toHaveBeenCalled()
+	})
+
 	it('sweeps expired holds, pending payments, pending requests, and waitlist offers inside the transaction before loading dayState', async () => {
 		const now = 1_750_000_000_000
 		const db = await getTenantDb(ORG_ID)

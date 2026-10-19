@@ -5,6 +5,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, gt, inArray, ne, sql } from 'drizzle-orm'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 type Db =
 	TenantDatabase | Parameters<Parameters<TenantDatabase['transaction']>[0]>[0]
@@ -37,7 +38,7 @@ export async function getPaymentSummaryCounts(
 }> {
 	const locationFilter = (column: Parameters<typeof inArray>[0]) =>
 		locationIds && locationIds.length > 0
-			? inArray(column, [...locationIds])
+			? inJsonList(column, locationIds)
 			: undefined
 	const [payments, unsettledReservations, chargingRows, experiences] =
 		await Promise.all([

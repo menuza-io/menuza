@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
 import {
 	checkTurnTimeContiguity,
+	createService,
+	daysMaskToDaysOfWeek,
+	daysOfWeekToDaysMask,
+	normalizeService,
+	updateService,
 	clampCanvasCoord,
 	clampCanvasDimension,
 	extractApiErrorCode,
@@ -232,5 +237,49 @@ describe('setup conflicts', () => {
 			confirmationCode: null,
 			partySize: null,
 		})
+	})
+})
+
+describe('service weekday mask conversion (UI Sunday-first, mask Monday-first)', () => {
+	it('round-trips all seven days and every mask', () => {
+		for (let d = 0; d <= 6; d++) {
+			expect(daysMaskToDaysOfWeek(daysOfWeekToDaysMask([d]))).toEqual([d])
+		}
+		for (let mask = 1; mask <= 127; mask++) {
+			expect(daysOfWeekToDaysMask(daysMaskToDaysOfWeek(mask))).toBe(mask)
+		}
+		expect(daysOfWeekToDaysMask([])).toBe(127)
+	})
+
+	it('saves a Monday-only service as bit 0 and displays it as Monday', async () => {
+		const requestMock = vi.fn(async (_path: string, _opts?: unknown) => ({
+			service: { id: 'srv_1', name: 'Lunch', daysMask: 1 },
+		}))
+		const client = {
+			request: requestMock,
+		} as unknown as ReservationsScopedClient
+		const base = {
+			name: 'Lunch',
+			firstSeatingMin: 720,
+			lastSeatingMin: 840,
+			endMin: 900,
+		}
+		const created = await createService(client, 'loc_1', {
+			...base,
+			daysOfWeek: [1],
+		})
+		expect((requestMock.mock.calls[0]![1] as any).body.daysMask).toBe(1)
+		expect(created.service.daysOfWeek).toEqual([1])
+
+		await updateService(client, 'loc_1', 'srv_1', { daysOfWeek: [0] })
+		expect((requestMock.mock.calls[1]![1] as any).body.daysMask).toBe(64)
+
+		// A stored Monday-only mask (bit 0) reads back as Monday (1), not Sunday.
+		expect(
+			normalizeService({ id: 's', name: 'x', daysMask: 1 }).daysOfWeek,
+		).toEqual([1])
+		expect(
+			normalizeService({ id: 's', name: 'x', daysMask: 64 }).daysOfWeek,
+		).toEqual([0])
 	})
 })

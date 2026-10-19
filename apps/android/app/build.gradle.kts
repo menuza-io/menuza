@@ -160,6 +160,12 @@ android {
 		sourceCompatibility = JavaVersion.VERSION_17
 		targetCompatibility = JavaVersion.VERSION_17
 	}
+
+	// The reservations controller builds a main-thread Handler; on the JVM the
+	// android.jar stubs must return defaults instead of throwing.
+	testOptions {
+		unitTests.isReturnDefaultValues = true
+	}
 }
 
 kotlin {

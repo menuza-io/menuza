@@ -700,14 +700,22 @@ export class ShopCommerce {
 		cancelUrl: string
 		paymentExpiresAt: string
 		nowMs?: number
+		/**
+		 * Exact Stripe `expires_at` (unix seconds). Callers compute it once with
+		 * `reservationStripeExpiresAt`, put it in the idempotency key and pass it
+		 * here, so the key and the sent parameters can never disagree.
+		 */
+		expiresAt?: number
 		statementDescriptorSuffix?: string | null
 		idempotencyKey: string
 		metadata: Record<string, string>
 	}): Promise<{ id: string; url: string; customerId: string | null }> {
-		const expiresAt = reservationStripeExpiresAt(
-			options.nowMs ?? Date.now(),
-			options.paymentExpiresAt,
-		)
+		const expiresAt =
+			options.expiresAt ??
+			reservationStripeExpiresAt(
+				options.nowMs ?? Date.now(),
+				options.paymentExpiresAt,
+			)
 		const stripe = this.getStripe()
 		if (options.guarantee) {
 			const guarantee = options.guarantee

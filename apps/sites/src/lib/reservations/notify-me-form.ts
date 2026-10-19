@@ -246,11 +246,7 @@ export function createNotifyMeForm(deps: NotifyMeDeps) {
 	trap.append(trapInput)
 
 	const challengeBox = el('div')
-	const challenge = createChallenge(
-		challengeBox,
-		deps.turnstileSiteKey,
-		'reservation-notify',
-	)
+	const challenge = createChallenge(challengeBox, deps.turnstileSiteKey)
 
 	const bannerBox = el('div')
 	const submit = el('button', primaryButtonClass, labels.notifySubmit)

@@ -34,6 +34,7 @@ import {
 	isBookedStatus,
 	type TurnRule,
 } from './rsv-report-shared.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Report records for the Reservations subjects `bookings`,
@@ -95,7 +96,7 @@ function locationWhere(
 ): SQL | undefined {
 	if (ctx.locationIds === null) return undefined
 	if (ctx.locationIds.length === 0) return eq(column, '')
-	return inArray(column, [...ctx.locationIds])
+	return inJsonList(column, ctx.locationIds)
 }
 
 async function locationNames(ctx: RsvReportContext) {

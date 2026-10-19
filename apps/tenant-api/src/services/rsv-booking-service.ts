@@ -77,6 +77,50 @@ function guestAccess(params: { canReadGuestSensitive?: boolean }) {
 	return { canReadGuestSensitive: params.canReadGuestSensitive === true }
 }
 
+/**
+ * What an idempotent create stores and replays: ids and move reports only,
+ * never the serialized reservation. That response depends on the caller's
+ * guest-data grant, so it is built again, for the caller making the request,
+ * every time (first run and replay alike). Records written before this change
+ * hold the whole reservation; only its id is read from them.
+ */
+type IdempotentCreateCore<W> = {
+	reservationId?: string
+	reservation?: { id: string }
+	moves: ReservationMoveReport[]
+	warnings?: W
+}
+
+async function serializeCreateForCaller<W>(
+	orgId: string,
+	core: IdempotentCreateCore<W>,
+	access: { canReadGuestSensitive?: boolean },
+): Promise<{
+	reservation: SerializedBookReservation
+	moves: ReservationMoveReport[]
+	warnings?: W
+}> {
+	const reservationId = core.reservationId ?? core.reservation?.id
+	if (!reservationId) throw notFound('Reservation not found')
+	const db = await getTenantDb(orgId)
+	const row = await db
+		.select()
+		.from(rsvReservations)
+		.where(eq(rsvReservations.id, reservationId))
+		.get()
+	if (!row) throw notFound('Reservation not found')
+	const [serialized] = await serializeReservationsForBook(
+		db,
+		[row],
+		guestAccess(access),
+	)
+	return {
+		reservation: serialized!,
+		moves: core.moves,
+		...(core.warnings !== undefined ? { warnings: core.warnings } : {}),
+	}
+}
+
 function createId(prefix: string): string {
 	return `${prefix}_${randomUUID()}`
 }
@@ -602,8 +646,8 @@ export async function createOperatorReservation(params: {
 		throw badRequest('missing_time', 'Reservation time is required')
 	}
 
-	return withReservationWrite<{
-		reservation: SerializedBookReservation
+	const core = await withReservationWrite<{
+		reservationId: string
 		moves: ReservationMoveReport[]
 		warnings: BookingWarning[]
 	}>(
@@ -611,7 +655,8 @@ export async function createOperatorReservation(params: {
 			orgId: params.orgId,
 			locationId,
 			dates: businessDate,
-			scope: 'POST /operator/reservations/book/reservations',
+			// Per operator, so one operator's key never replays for another.
+			scope: `POST /operator/reservations/book/reservations:${params.actorId}`,
 			idempotencyKey,
 			requestHash: hashIdempotencyPayload(input),
 		},
@@ -1160,24 +1205,18 @@ export async function createOperatorReservation(params: {
 				trigger: 'reservation_booked',
 			})
 
-			const createdRow = await tx
-				.select()
-				.from(rsvReservations)
-				.where(eq(rsvReservations.id, resId))
-				.get()
-			const [serialized] = await serializeReservationsForBook(
-				tx,
-				[createdRow!],
-				guestAccess(params),
-			)
-
 			return {
-				reservation: serialized!,
+				reservationId: resId,
 				moves,
 				warnings,
 			}
 		},
 	)
+	return (await serializeCreateForCaller(params.orgId, core, params)) as {
+		reservation: SerializedBookReservation
+		moves: ReservationMoveReport[]
+		warnings: BookingWarning[]
+	}
 }
 
 export type WalkInOccupiedInfo = {
@@ -1322,15 +1361,15 @@ export async function createWalkIn(params: {
 				? parseTimeToMinutes(input.time)
 				: nowLocal.localStartMin
 
-	return withReservationWrite<{
-		reservation: SerializedBookReservation
+	const core = await withReservationWrite<{
+		reservationId: string
 		moves: ReservationMoveReport[]
 	}>(
 		{
 			orgId: params.orgId,
 			locationId,
 			dates: businessDate,
-			scope: 'POST /operator/reservations/book/walk-ins',
+			scope: `POST /operator/reservations/book/walk-ins:${params.actorId}`,
 			idempotencyKey,
 			requestHash: hashIdempotencyPayload(input),
 		},
@@ -1587,23 +1626,16 @@ export async function createWalkIn(params: {
 				})
 			}
 
-			const createdRow = await tx
-				.select()
-				.from(rsvReservations)
-				.where(eq(rsvReservations.id, resId))
-				.get()
-			const [serialized] = await serializeReservationsForBook(
-				tx,
-				[createdRow!],
-				guestAccess(params),
-			)
-
 			return {
-				reservation: serialized!,
+				reservationId: resId,
 				moves,
 			}
 		},
 	)
+	return (await serializeCreateForCaller(params.orgId, core, params)) as {
+		reservation: SerializedBookReservation
+		moves: ReservationMoveReport[]
+	}
 }
 
 export async function getReservationDetail(

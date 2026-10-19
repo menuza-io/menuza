@@ -197,11 +197,14 @@ type TurnstileApi = {
 	reset: (widgetId?: string) => void
 }
 
+/** Must equal `RESERVATIONS_TURNSTILE_ACTION` in @repo/reservations (contract-tested). */
+export const RESERVATIONS_TURNSTILE_ACTION = 'reservations'
+
 /** Human-check widget. A no-op (always `null`) when the site has no key. */
 export function createChallenge(
 	container: HTMLElement,
 	siteKey: string,
-	action = 'reservations',
+	action = RESERVATIONS_TURNSTILE_ACTION,
 ) {
 	let token: string | null = null
 	let widgetId: string | undefined

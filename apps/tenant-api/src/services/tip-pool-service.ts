@@ -34,6 +34,7 @@ import {
 	type TimesheetResult,
 	UNKNOWN_CURRENCY,
 } from './timesheet-shared.ts'
+import { queryInChunks } from '../lib/chunked-in.ts'
 
 /**
  * The tip-pool report: online-order tips and declared cash tips of one
@@ -80,12 +81,17 @@ export async function updateTipPoolSettings(
 
 	const ids = Object.keys(input.positionPercentBp)
 	if (ids.length > 0) {
-		const found = await ctx.db
-			.select({ id: staffPositions.id })
-			.from(staffPositions)
-			.where(
-				and(inArray(staffPositions.id, ids), isNull(staffPositions.archivedAt)),
-			)
+		const found = await queryInChunks(ids, (chunk) =>
+			ctx.db
+				.select({ id: staffPositions.id })
+				.from(staffPositions)
+				.where(
+					and(
+						inArray(staffPositions.id, chunk),
+						isNull(staffPositions.archivedAt),
+					),
+				),
+		)
 		const known = new Set(found.map((row) => row.id))
 		const unknown = ids.filter((id) => !known.has(id))
 		if (unknown.length > 0) {
@@ -175,11 +181,13 @@ export async function buildTipPool(
 		),
 	]
 	const eligibleJobs = new Set<string>()
-	for (let i = 0; i < jobIds.length; i += 300) {
-		const rows = await ctx.db
-			.select({ id: staffJobs.id, tipEligible: staffJobs.tipEligible })
-			.from(staffJobs)
-			.where(inArray(staffJobs.id, jobIds.slice(i, i + 300)))
+	for (let i = 0; i < jobIds.length; i += 90) {
+		const rows = await queryInChunks(jobIds.slice(i, i + 90), (chunk) =>
+			ctx.db
+				.select({ id: staffJobs.id, tipEligible: staffJobs.tipEligible })
+				.from(staffJobs)
+				.where(inArray(staffJobs.id, chunk)),
+		)
 		for (const row of rows) if (row.tipEligible) eligibleJobs.add(row.id)
 	}
 

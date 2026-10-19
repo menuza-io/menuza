@@ -60,7 +60,7 @@ struct ReservationSearchView: View {
 					// A party above the online maximum is allowed so the guest can send a request.
 					PartyStepper(
 						value: $store.partySize,
-						range: location.partySize.min...max(location.partySize.max, location.largeParty.maxOnlinePartySize + 20)
+						range: location.partySize.min...location.partyCeiling
 					)
 				}
 				Text(language.string("rsv.search.date"))

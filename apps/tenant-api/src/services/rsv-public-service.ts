@@ -23,6 +23,7 @@ import {
 	uniqueSlotsByTime,
 	type LocationSettingsRow,
 } from './rsv-public-engine.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 export const MAX_CALENDAR_DAYS = 62
 
@@ -42,7 +43,7 @@ export async function listBookableLocations(
 		.select()
 		.from(rsvLocationSettings)
 		.where(
-			inArray(
+			inJsonList(
 				rsvLocationSettings.locationId,
 				active.map((l) => l.id),
 			),
@@ -103,7 +104,7 @@ export async function getPublicConfig(
 					.from(rsvAreas)
 					.where(
 						and(
-							inArray(
+							inJsonList(
 								rsvAreas.locationId,
 								locations.map((l) => l.facts.id),
 							),

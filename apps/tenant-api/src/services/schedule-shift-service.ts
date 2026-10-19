@@ -39,6 +39,7 @@ import {
 } from './schedule-shared.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, moneyAccess, ok } from './timesheet-shared.ts'
+import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
 /**
  * Shift writes. A new shift is a draft. Editing a published shift never touches
@@ -56,7 +57,7 @@ export type ScheduleWriteContext = Omit<ScheduleContext, 'db'> & {
 }
 
 const MS_PER_MINUTE = 60_000
-const INSERT_CHUNK = 100
+const INSERT_CHUNK = 50
 
 function rootMessage(error: unknown): string {
 	let root: unknown = error
@@ -221,20 +222,19 @@ export async function insertDrafts(
 	const inserted: ShiftRow[] = []
 	for (const part of chunk(rows, INSERT_CHUNK)) {
 		inserted.push(
-			...(await tx
-				.insert(shifts)
-				.values(
-					part.map((row) => ({
-						...row,
-						status: 'draft' as const,
-						version: 1,
-						createdBy: ctx.auth.userId,
-						updatedBy: ctx.auth.userId,
-						createdAt: ctx.now,
-						updatedAt: ctx.now,
-					})),
-				)
-				.returning()),
+			...(await insertRowsInChunks(
+				shifts,
+				part.map((row) => ({
+					...row,
+					status: 'draft' as const,
+					version: 1,
+					createdBy: ctx.auth.userId,
+					updatedBy: ctx.auth.userId,
+					createdAt: ctx.now,
+					updatedAt: ctx.now,
+				})),
+				(chunk) => tx.insert(shifts).values(chunk).returning(),
+			)),
 		)
 	}
 	return inserted

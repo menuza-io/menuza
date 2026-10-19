@@ -1,3 +1,11 @@
+import {
+	type AnyColumn,
+	type SQL,
+	type SQLWrapper,
+	sql,
+	type Table,
+} from 'drizzle-orm'
+
 /**
  * Cloudflare Durable Object SQLite allows at most 100 bound parameters per
  * statement, so an `IN (...)` list built from user-sized data (every
@@ -6,6 +14,18 @@
  * values).
  */
 export const MAX_IN_CHUNK = 90
+
+/**
+ * `column IN (<ids>)` as one bound parameter (a JSON array read with
+ * `json_each`). Use it when the condition is a fragment inside a larger query
+ * that cannot be split per chunk (aggregates, ordering, joins). Ids are strings.
+ */
+export function inJsonList(
+	column: AnyColumn | SQL | SQLWrapper,
+	ids: readonly string[],
+): SQL {
+	return sql`${column} in (select value from json_each(${JSON.stringify([...ids])}))`
+}
 
 export function chunkIds<T>(
 	ids: readonly T[],
@@ -40,4 +60,50 @@ export async function forEachInChunks<T>(
 	for (const chunk of chunkIds(ids, size)) {
 		await run(chunk)
 	}
+}
+
+/**
+ * Multi-row `INSERT ... VALUES` binds rows x columns parameters, and Drizzle
+ * binds a value for every column that has a default too, so the column count
+ * is the table's, not the row's. Splits `rows` so each statement stays at or
+ * under `MAX_IN_CHUNK` bound parameters.
+ */
+export async function insertRowsInChunks<T extends object, R>(
+	table: Table,
+	rows: readonly T[],
+	run: (chunk: T[]) => PromiseLike<readonly R[]>,
+	maxParams?: number,
+): Promise<R[]>
+export async function insertRowsInChunks<T extends object>(
+	table: Table,
+	rows: readonly T[],
+	run: (chunk: T[]) => PromiseLike<unknown>,
+	maxParams?: number,
+): Promise<void>
+export async function insertRowsInChunks<T extends object>(
+	table: Table,
+	rows: readonly T[],
+	run: (chunk: T[]) => PromiseLike<unknown>,
+	maxParams: number = MAX_IN_CHUNK,
+): Promise<unknown[] | void> {
+	const out: unknown[] = []
+	if (rows.length === 0) return out
+	const columns = Math.max(
+		1,
+		Object.keys(
+			(table as unknown as Record<symbol, object>)[
+				Symbol.for('drizzle:Columns')
+			] ?? {},
+		).length,
+	)
+	const perStatement = Math.max(1, Math.floor(maxParams / columns))
+	await forEachInChunks(
+		rows,
+		async (chunk) => {
+			const result = await run(chunk)
+			if (Array.isArray(result)) out.push(...result)
+		},
+		perStatement,
+	)
+	return out
 }

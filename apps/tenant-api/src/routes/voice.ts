@@ -83,6 +83,11 @@ import { getVoiceLinkFragmentVerifier } from '../services/voice-actions.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { placeVerificationCall } from '../lib/twilio-voice.ts'
 import { authenticateOperator } from './operator.ts'
+import {
+	forEachInChunks,
+	insertRowsInChunks,
+	inJsonList,
+} from '../lib/chunked-in.ts'
 
 /**
  * Voice worker → tenant-api (VOICE_AGENT_TOKEN), plus App → tenant-api
@@ -1291,6 +1296,7 @@ async function queueUnreferencedRecordings(
 		.from(voiceCalls)
 		.where(
 			and(
+				// bounded: a subquery, no bound parameters
 				inArray(voiceCalls.id, expiredCalls),
 				isNull(voiceCalls.recordingKey),
 				isNull(voiceCalls.recordingSweptAt),
@@ -1299,19 +1305,19 @@ async function queueUnreferencedRecordings(
 		.limit(PURGE_BATCH_SIZE)
 	if (!calls.length) return
 	// Queue before marking: a crash in between only re-queues the same keys.
-	await db
-		.insert(voiceRecordingDeletions)
-		.values(
-			calls.map((call) => ({
-				recordingKey: expectedRecordingKey(orgId, call.id),
-			})),
-		)
-		.onConflictDoNothing()
+	await insertRowsInChunks(
+		voiceRecordingDeletions,
+		calls.map((call) => ({
+			recordingKey: expectedRecordingKey(orgId, call.id),
+		})),
+		(chunk) =>
+			db.insert(voiceRecordingDeletions).values(chunk).onConflictDoNothing(),
+	)
 	await db
 		.update(voiceCalls)
 		.set({ recordingSweptAt: now })
 		.where(
-			inArray(
+			inJsonList(
 				voiceCalls.id,
 				calls.map((call) => call.id),
 			),
@@ -1383,6 +1389,7 @@ voiceSystemRoutes.post('/retention/purge', requireInternal, async (c) => {
 		.set({ transcript: [], summary: null, callerPhone: null, customerId: null })
 		.where(
 			and(
+				// bounded: a subquery, no bound parameters
 				inArray(voiceCalls.id, expiredCalls),
 				or(
 					ne(voiceCalls.transcript, sql`'[]'`),
@@ -1398,6 +1405,7 @@ voiceSystemRoutes.post('/retention/purge', requireInternal, async (c) => {
 		.set({ callerName: null, callerPhone: null, details: {} })
 		.where(
 			and(
+				// bounded: a subquery, no bound parameters
 				inArray(voiceCallRequests.callId, expiredCalls),
 				or(
 					isNotNull(voiceCallRequests.callerName),
@@ -1415,12 +1423,14 @@ voiceSystemRoutes.post('/retention/purge', requireInternal, async (c) => {
 					voiceLinkHandoffs.expiresAt,
 					new Date(now.getTime() - HANDOFF_GRACE_DAYS * 86_400_000),
 				),
+				// bounded: a subquery, no bound parameters
 				inArray(voiceLinkHandoffs.callId, expiredCalls),
 			),
 		)
 		.returning({ id: voiceLinkHandoffs.id })
 	await db
 		.delete(voiceSmsSends)
+		// bounded: a subquery, no bound parameters
 		.where(inArray(voiceSmsSends.callId, expiredCalls))
 	await db
 		.delete(voiceLineVerifications)
@@ -1500,9 +1510,11 @@ export async function eraseCallerVoiceData(
 		.where(
 			or(
 				customerIds.size
-					? inArray(voiceCalls.customerId, [...customerIds])
+					? inJsonList(voiceCalls.customerId, [...customerIds])
 					: undefined,
-				phones.size ? inArray(voiceCalls.callerPhone, [...phones]) : undefined,
+				phones.size
+					? inJsonList(voiceCalls.callerPhone, [...phones])
+					: undefined,
 			),
 		)
 
@@ -1517,7 +1529,9 @@ export async function eraseCallerVoiceData(
 
 	const callIds = calls.map((call) => call.id)
 	if (callIds.length) {
-		await db.delete(voiceCalls).where(inArray(voiceCalls.id, callIds))
+		await forEachInChunks(callIds, (chunk) =>
+			db.delete(voiceCalls).where(inArray(voiceCalls.id, chunk)),
+		)
 	}
 	let requestsDeleted = 0
 	let smsLogsDeleted = 0
@@ -1525,18 +1539,23 @@ export async function eraseCallerVoiceData(
 		const phoneList = [...phones]
 		const requests = await db
 			.delete(voiceCallRequests)
-			.where(inArray(voiceCallRequests.callerPhone, phoneList))
+			.where(inJsonList(voiceCallRequests.callerPhone, phoneList))
 			.returning({ id: voiceCallRequests.id })
 		requestsDeleted = requests.length
 		const smsLogs = await db
 			.delete(voiceSmsSends)
-			.where(inArray(voiceSmsSends.toPhone, phoneList))
+			.where(inJsonList(voiceSmsSends.toPhone, phoneList))
 			.returning({ id: voiceSmsSends.id })
 		smsLogsDeleted = smsLogs.length
-		await db
-			.update(voiceLinkHandoffs)
-			.set({ sentToPhone: null })
-			.where(inArray(voiceLinkHandoffs.sentToPhone, phoneList))
+		await forEachInChunks(
+			phoneList,
+			(chunk) =>
+				db
+					.update(voiceLinkHandoffs)
+					.set({ sentToPhone: null })
+					.where(inArray(voiceLinkHandoffs.sentToPhone, chunk)),
+			40,
+		)
 	}
 
 	return {

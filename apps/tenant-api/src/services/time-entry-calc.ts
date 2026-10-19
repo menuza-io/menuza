@@ -18,6 +18,7 @@ import {
 } from '@repo/tenant-db'
 import { resolvePolicy } from './labor-policy-service.ts'
 import { type StaffDb } from './staff-audit.ts'
+import { queryInChunks } from '../lib/chunked-in.ts'
 
 /**
  * Database side of the shared time math. Everything that turns punches into
@@ -60,10 +61,9 @@ export async function loadBreaks(
 ): Promise<Map<string, TimeBreakRow[]>> {
 	const map = new Map<string, TimeBreakRow[]>()
 	if (entryIds.length === 0) return map
-	const rows = await db
-		.select()
-		.from(timeBreaks)
-		.where(inArray(timeBreaks.entryId, [...entryIds]))
+	const rows = await queryInChunks([...entryIds], (chunk) =>
+		db.select().from(timeBreaks).where(inArray(timeBreaks.entryId, chunk)),
+	)
 	for (const row of rows) {
 		const list = map.get(row.entryId) ?? []
 		list.push(row)

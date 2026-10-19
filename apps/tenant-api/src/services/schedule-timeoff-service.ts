@@ -36,6 +36,12 @@ import {
 import { transact } from './schedule-shift-service.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, ok } from './timesheet-shared.ts'
+import {
+	queryInChunks,
+	forEachInChunks,
+	insertRowsInChunks,
+	inJsonList,
+} from '../lib/chunked-in.ts'
 
 /**
  * Time off and availability. A manager entering a request for someone is final
@@ -457,11 +463,16 @@ async function supersedeWeekly(
 			),
 		)
 	const ids = stale.map((s) => s.id).filter((id) => !exceptIds.includes(id))
-	for (const part of chunk(ids, 200)) {
-		await tx
-			.update(staffAvailability)
-			.set({ status: 'superseded', updatedAt: now })
-			.where(inArray(staffAvailability.id, part))
+	for (const part of chunk(ids, 90)) {
+		await forEachInChunks(
+			part,
+			(chunk) =>
+				tx
+					.update(staffAvailability)
+					.set({ status: 'superseded', updatedAt: now })
+					.where(inArray(staffAvailability.id, chunk)),
+			40,
+		)
 	}
 	return ids.length
 }
@@ -482,38 +493,37 @@ export async function createAvailability(
 	if (!person.ok) return person
 	const approved = input.submission === 'manager_entered'
 	return transact(ctx.db, async (tx) => {
-		const rows = await tx
-			.insert(staffAvailability)
-			.values(
-				input.rows.map((row) => ({
-					staffId: input.staffId,
-					kind: row.kind,
-					weekday: row.kind === 'weekly' ? (row.weekday ?? null) : null,
-					date: row.kind === 'one_off' ? (row.date ?? null) : null,
-					availability: row.availability,
-					allDay: row.allDay,
-					startMinute:
-						!row.allDay && row.startTime
-							? minuteOfDayFromAvailabilityTime(row.startTime)
-							: null,
-					endMinute:
-						!row.allDay && row.endTime
-							? minuteOfDayFromAvailabilityTime(row.endTime)
-							: null,
-					effectiveFrom:
-						row.kind === 'weekly' ? (row.effectiveFrom ?? null) : null,
-					effectiveTo: row.kind === 'weekly' ? (row.effectiveTo ?? null) : null,
-					note: row.note ?? null,
-					status: approved ? ('approved' as const) : ('pending' as const),
-					source: approved ? ('manager' as const) : ('staff' as const),
-					requestedBy: ctx.auth.userId,
-					decidedBy: approved ? ctx.auth.userId : null,
-					decidedAt: approved ? ctx.now : null,
-					createdAt: ctx.now,
-					updatedAt: ctx.now,
-				})),
-			)
-			.returning()
+		const rows = await insertRowsInChunks(
+			staffAvailability,
+			input.rows.map((row) => ({
+				staffId: input.staffId,
+				kind: row.kind,
+				weekday: row.kind === 'weekly' ? (row.weekday ?? null) : null,
+				date: row.kind === 'one_off' ? (row.date ?? null) : null,
+				availability: row.availability,
+				allDay: row.allDay,
+				startMinute:
+					!row.allDay && row.startTime
+						? minuteOfDayFromAvailabilityTime(row.startTime)
+						: null,
+				endMinute:
+					!row.allDay && row.endTime
+						? minuteOfDayFromAvailabilityTime(row.endTime)
+						: null,
+				effectiveFrom:
+					row.kind === 'weekly' ? (row.effectiveFrom ?? null) : null,
+				effectiveTo: row.kind === 'weekly' ? (row.effectiveTo ?? null) : null,
+				note: row.note ?? null,
+				status: approved ? ('approved' as const) : ('pending' as const),
+				source: approved ? ('manager' as const) : ('staff' as const),
+				requestedBy: ctx.auth.userId,
+				decidedBy: approved ? ctx.auth.userId : null,
+				decidedAt: approved ? ctx.now : null,
+				createdAt: ctx.now,
+				updatedAt: ctx.now,
+			})),
+			(chunk) => tx.insert(staffAvailability).values(chunk).returning(),
+		)
 		let superseded = 0
 		if (
 			approved &&
@@ -551,10 +561,12 @@ export async function decideAvailability(
 	const ids = [...new Set(input.ids)]
 	if (!ids.every(isOpaqueId)) return fail(404, 'not_found')
 	return transact(ctx.db, async (tx) => {
-		const rows = await tx
-			.select()
-			.from(staffAvailability)
-			.where(inArray(staffAvailability.id, ids))
+		const rows = await queryInChunks(ids, (chunk) =>
+			tx
+				.select()
+				.from(staffAvailability)
+				.where(inArray(staffAvailability.id, chunk)),
+		)
 		if (rows.length !== ids.length) return fail(404, 'not_found')
 		const people = await loadPeople(
 			tx,
@@ -581,7 +593,7 @@ export async function decideAvailability(
 			})
 			.where(
 				and(
-					inArray(staffAvailability.id, ids),
+					inJsonList(staffAvailability.id, ids),
 					eq(staffAvailability.status, 'pending'),
 				),
 			)

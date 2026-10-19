@@ -18,6 +18,7 @@ import {
 	mapStripeSessionToReservationPayment,
 	reservationCheckoutReference,
 	type ReservationPaymentEvent,
+	type ReservationRefundEvent,
 } from '@repo/payments'
 import { type ReservationPendingResponse } from '@repo/reservations'
 import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
@@ -28,7 +29,9 @@ import {
 	pushReservationPaymentEvent,
 } from '#app/utils/reservations/payments.server.ts'
 import {
+	claimReservationRefunds,
 	fetchPendingReservationPayments,
+	RegionalPaymentsApiError,
 	reportReservationRefundResult,
 } from '#app/utils/reservations/regional-payments-api.server.ts'
 import { getShopCommerce } from '#app/utils/shop.server.ts'
@@ -46,6 +49,35 @@ export type ReservationReconcileSummary = {
 type PendingSession = ReservationPendingResponse['sessions'][number]
 type PendingRefund = ReservationPendingResponse['refunds'][number]
 type OrgScope = { id: string; dataRegion: string | null }
+
+/**
+ * Does this provider refund belong to the pending regional refund row?
+ *
+ * Primary key: the opaque `refundRequestId` in the refund metadata. A refund
+ * whose metadata has none (a late-payment refund issued before the region named
+ * its row) is recognised by the documented fallback key: same organization,
+ * metadata kind `late_payment`, same payment reference and same amount. Both
+ * come from the provider object, never from the feed row alone.
+ */
+export function refundBelongsToRequest(
+	event: Pick<
+		ReservationRefundEvent,
+		'orgId' | 'refundRequestId' | 'late' | 'paymentRef' | 'amountMinor'
+	>,
+	orgId: string,
+	refund: Pick<PendingRefund, 'refundRequestId' | 'paymentRef' | 'amountMinor'>,
+): boolean {
+	if (event.orgId !== orgId) return false
+	if (event.refundRequestId) {
+		return event.refundRequestId === refund.refundRequestId
+	}
+	return (
+		event.late &&
+		event.paymentRef !== null &&
+		event.paymentRef === refund.paymentRef &&
+		event.amountMinor === refund.amountMinor
+	)
+}
 
 /** Look up one pending session at its provider; null when nothing is decided. */
 async function lookupSessionEvent(
@@ -120,27 +152,42 @@ async function reconcileRefund(
 	}
 
 	if (refund.refundRef === null) {
-		// Claimed but never issued: issue it with the deterministic key, report.
+		// Requested or claimed but never issued. The feed row is a hint only:
+		// its fee reversal is not computed until the region claims the refund,
+		// so a stale `requested` row would reverse no platform commission. Take
+		// the authoritative claim (it computes the reversal and keeps a lapsed
+		// claim's amounts stable) and execute only what the claim returns. A
+		// refusal (409) means another worker holds it: never executed twice.
+		let claims
+		try {
+			claims = await claimReservationRefunds({
+				dataRegion: org.dataRegion,
+				orgId: org.id,
+				refundRequestId: refund.refundRequestId,
+			})
+		} catch (error) {
+			if (error instanceof RegionalPaymentsApiError && !error.retryable) {
+				return
+			}
+			throw error
+		}
 		const orgRow = await loadReservationPaymentsOrg(org.id)
 		if (!orgRow) return
-		const execution = await issueReservationRefund({
-			org: orgRow,
-			directive: {
-				reservationId: refund.reservationId,
-				paymentRef: refund.paymentRef,
-				processor: refund.processor,
-				amountMinor: refund.amountMinor,
-				feeReversalMinor: refund.feeReversalMinor,
-			},
-			refundRequestId: refund.refundRequestId,
-		})
-		await reportReservationRefundResult({
-			...scope,
-			refundRef: execution.refundRef ?? undefined,
-			amountMinor: execution.amountMinor,
-			status: execution.status,
-		})
-		summary.refundsReported += 1
+		for (const claim of claims) {
+			if (claim.refundRequestId !== refund.refundRequestId) continue
+			const execution = await issueReservationRefund({
+				org: orgRow,
+				directive: claim,
+				refundRequestId: claim.refundRequestId,
+			})
+			await reportReservationRefundResult({
+				...scope,
+				amountMinor: execution.amountMinor,
+				refundRef: execution.refundRef ?? undefined,
+				status: execution.status,
+			})
+			summary.refundsReported += 1
+		}
 		return
 	}
 
@@ -150,14 +197,7 @@ async function reconcileRefund(
 			refund.refundRef,
 		)
 		const event = mapStripeRefundToReservation(stored)
-		// Ownership: the refund must belong to this organization and request.
-		if (
-			!event ||
-			event.orgId !== org.id ||
-			event.refundRequestId !== refund.refundRequestId
-		) {
-			return
-		}
+		if (!event || !refundBelongsToRequest(event, org.id, refund)) return
 		status = event.status
 	} else {
 		const actions = await commerce.listReservationCheckoutPaymentActions(

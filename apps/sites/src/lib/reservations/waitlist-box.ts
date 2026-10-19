@@ -469,11 +469,7 @@ export async function initWaitlistPage(root: HTMLElement, deps: WaitlistDeps) {
 		trap.append(trapInput)
 
 		const challengeBox = el('div')
-		const challenge = createChallenge(
-			challengeBox,
-			deps.turnstileSiteKey,
-			'waitlist-join',
-		)
+		const challenge = createChallenge(challengeBox, deps.turnstileSiteKey)
 
 		const bannerBox = el('div')
 		const submit = el('button', primaryButtonClass, labels.waitlistSubmit)

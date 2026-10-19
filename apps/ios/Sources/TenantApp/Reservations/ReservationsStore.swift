@@ -45,6 +45,11 @@ final class ReservationsStore: ObservableObject {
 	private var pollTask: Task<Void, Never>?
 	/// Server time minus device time, from the last answer that carried `now`.
 	private var serverOffset: TimeInterval = 0
+	/// The waitlist entry whose status token `waitlist` holds (to forget it later).
+	private var waitlistEntryId: String?
+	private var isRestoringWaitlist = false
+	/// Bumped by `reset()`: an answer that arrives after sign-out is dropped.
+	private var generation = 0
 
 	init(client: ReservationsClient, tokens: ReservationTokenStore, localeCode: String) {
 		self.client = client
@@ -62,8 +67,10 @@ final class ReservationsStore: ObservableObject {
 	func loadConfig() async {
 		if loadState == .loading { return }
 		loadState = .loading
+		let gen = generation
 		do {
 			let config = try await client.config(locale: localeCode)
+			guard gen == generation else { return }
 			noteServerTime(config.now)
 			self.config = config
 			if config.locations.isEmpty {
@@ -74,7 +81,9 @@ final class ReservationsStore: ObservableObject {
 			if location == nil, config.locations.count == 1, let only = config.locations.first {
 				selectLocation(only)
 			}
+			await restoreWaitlist()
 		} catch {
+			guard gen == generation else { return }
 			let failure = BookingFailure.map(error)
 			loadState = (failure == .notFound || failure == .paused) ? .unavailable : .failed(failure)
 		}
@@ -82,7 +91,8 @@ final class ReservationsStore: ObservableObject {
 
 	func selectLocation(_ location: ReservationLocation) {
 		self.location = location
-		partySize = min(max(partySize, location.partySize.min), location.partySize.max)
+		// Above the online maximum is allowed: the guest sends a request instead.
+		partySize = min(max(partySize, location.partySize.min), location.partyCeiling)
 		date = ReservationDates.strip(
 			now: Date().addingTimeInterval(serverOffset),
 			timeZone: location.timeZone,
@@ -199,8 +209,9 @@ final class ReservationsStore: ObservableObject {
 		guard let location else { return }
 		let isRequest = flow.phase == .choosingTime && flow.offersRequest
 		guard let key = flow.beginSubmit(details: details, isRequest: isRequest) else { return }
+		let gen = generation
 		isBusy = true
-		defer { isBusy = false }
+		defer { if gen == generation { isBusy = false } }
 		do {
 			let booking: ReservationBooking
 			if isRequest, let slot = flow.selectedSlot {
@@ -222,11 +233,13 @@ final class ReservationsStore: ObservableObject {
 				flow.receive(error: ReservationAPIError(statusCode: 410, code: "hold_expired"))
 				return
 			}
+			guard gen == generation else { return }
 			tokens.rememberManage(reservationId: booking.reservation.id, token: booking.manageToken)
 			flow.receive(booking: booking)
 			stopTicker()
 			if flow.phase == .awaitingPayment { startPolling() }
 		} catch {
+			guard gen == generation else { return }
 			flow.receive(error: error)
 		}
 	}
@@ -310,8 +323,10 @@ final class ReservationsStore: ObservableObject {
 	// MARK: - My reservations and manage
 
 	func loadMine() async {
+		let gen = generation
 		do {
 			let result = try await client.mine()
+			guard gen == generation else { return }
 			noteServerTime(result.now)
 			mine = result
 			// Recover tokens after a reinstall: `/mine` re-derives every manage token.
@@ -330,18 +345,26 @@ final class ReservationsStore: ObservableObject {
 	func loadManage(token: String) async {
 		manageFailure = nil
 		manageNotice = nil
+		let gen = generation
 		do {
 			let view = try await client.manage(token: token)
+			guard gen == generation else { return }
 			noteServerTime(view.now)
 			manage = view
 		} catch {
+			guard gen == generation else { return }
 			manageFailure = BookingFailure.map(error)
 		}
 	}
 
-	func modify(token: String, date: String, localMin: Int) async {
+	func modify(token: String, date: String, localMin: Int, partySize: Int? = nil) async {
 		await mutate(token: token) {
-			try await self.client.modify(token: token, date: date, localMin: localMin)
+			try await self.client.modify(
+				token: token,
+				date: date,
+				localMin: localMin,
+				partySize: partySize
+			)
 		}
 	}
 
@@ -360,16 +383,19 @@ final class ReservationsStore: ObservableObject {
 		notice: String? = nil,
 		_ call: () async throws -> ReservationManageView
 	) async {
+		let gen = generation
 		isBusy = true
 		manageFailure = nil
 		manageNotice = nil
-		defer { isBusy = false }
+		defer { if gen == generation { isBusy = false } }
 		do {
 			let view = try await call()
+			guard gen == generation else { return }
 			noteServerTime(view.now)
 			manage = view
 			manageNotice = notice
 		} catch {
+			guard gen == generation else { return }
 			manageFailure = BookingFailure.map(error)
 		}
 	}
@@ -392,8 +418,9 @@ final class ReservationsStore: ObservableObject {
 	func joinWaitlist(name: String, phone: String, smsOptIn: Bool) async {
 		guard let location else { return }
 		let key = waitlist.beginJoin(locationId: location.id, name: name, partySize: partySize)
+		let gen = generation
 		isBusy = true
-		defer { isBusy = false }
+		defer { if gen == generation { isBusy = false } }
 		do {
 			let joined = try await client.joinWaitlist(
 				locationId: location.id,
@@ -404,48 +431,124 @@ final class ReservationsStore: ObservableObject {
 				locale: localeCode,
 				idempotencyKey: key
 			)
+			guard gen == generation else { return }
 			tokens.rememberWaitlist(entryId: joined.entry.id, token: joined.statusToken)
+			waitlistEntryId = joined.entry.id
 			waitlist.receive(join: joined)
 			await refreshWaitlist()
 		} catch {
+			guard gen == generation else { return }
 			waitlist.receive(error: error)
+		}
+	}
+
+	/// After a relaunch the Keychain still holds the status token of an entry the
+	/// guest joined. Put it back into the flow so the guest can follow, refresh and
+	/// leave it (joining again would answer `already_on_waitlist`). A token the
+	/// server no longer knows, or an entry that is over, is forgotten so the guest
+	/// can join again.
+	func restoreWaitlist() async {
+		guard waitlist.statusToken == nil, !isRestoringWaitlist else { return }
+		isRestoringWaitlist = true
+		defer { isRestoringWaitlist = false }
+		let gen = generation
+		let saved = tokens.load().waitlist
+		for entryId in saved.keys.sorted() {
+			guard let token = saved[entryId] else { continue }
+			do {
+				let status = try await client.waitlistStatus(token: token)
+				guard gen == generation else { return }
+				noteServerTime(status.now)
+				if WaitlistFlow.isFinished(status: status.status) {
+					tokens.forgetWaitlist(entryId: entryId)
+					continue
+				}
+				waitlist.restore(token: token)
+				waitlist.receive(status: status)
+				waitlistEntryId = entryId
+				return
+			} catch {
+				guard gen == generation else { return }
+				if BookingFailure.map(error) == .notFound {
+					tokens.forgetWaitlist(entryId: entryId)
+					continue
+				}
+				// Offline or a transient failure: keep the capability and show the
+				// status screen; the screen's refresh loop retries.
+				waitlist.restore(token: token)
+				waitlistEntryId = entryId
+				return
+			}
 		}
 	}
 
 	func refreshWaitlist() async {
 		guard let token = waitlist.statusToken else { return }
+		let gen = generation
 		do {
 			let status = try await client.waitlistStatus(token: token)
+			guard gen == generation else { return }
 			noteServerTime(status.now)
 			waitlist.receive(status: status)
+			forgetWaitlistTokenIfFinished()
 		} catch {
+			guard gen == generation else { return }
 			waitlist.receive(error: error)
+			if waitlist.phase == .linkInvalid { forgetWaitlistToken() }
 		}
 	}
 
 	func leaveWaitlist() async {
 		guard let token = waitlist.statusToken else { return }
+		let gen = generation
 		isBusy = true
-		defer { isBusy = false }
+		defer { if gen == generation { isBusy = false } }
 		do {
-			waitlist.receive(status: try await client.leaveWaitlist(token: token))
+			let status = try await client.leaveWaitlist(token: token)
+			guard gen == generation else { return }
+			waitlist.receive(status: status)
+			forgetWaitlistTokenIfFinished()
 		} catch {
+			guard gen == generation else { return }
 			waitlist.receive(error: error)
+			if waitlist.phase == .linkInvalid { forgetWaitlistToken() }
 		}
 	}
 
 	func waitlistOnMyWay() async {
 		guard let token = waitlist.statusToken else { return }
+		let gen = generation
 		isBusy = true
-		defer { isBusy = false }
+		defer { if gen == generation { isBusy = false } }
 		do {
-			waitlist.receive(status: try await client.waitlistOnMyWay(token: token))
+			let status = try await client.waitlistOnMyWay(token: token)
+			guard gen == generation else { return }
+			waitlist.receive(status: status)
+			forgetWaitlistTokenIfFinished()
 		} catch {
+			guard gen == generation else { return }
 			waitlist.receive(error: error)
+			if waitlist.phase == .linkInvalid { forgetWaitlistToken() }
 		}
 	}
 
-	func resetWaitlist() { waitlist = WaitlistFlow() }
+	func resetWaitlist() {
+		forgetWaitlistToken()
+		waitlist = WaitlistFlow()
+	}
+
+	private func forgetWaitlistTokenIfFinished() {
+		if let status = waitlist.status, WaitlistFlow.isFinished(status: status.status) {
+			forgetWaitlistToken()
+		}
+	}
+
+	/// Drops the persisted status token of the current entry (the in-memory flow
+	/// keeps showing its final state until the guest leaves the screen).
+	private func forgetWaitlistToken() {
+		if let id = waitlistEntryId { tokens.forgetWaitlist(entryId: id) }
+		waitlistEntryId = nil
+	}
 
 	// MARK: - Helpers
 
@@ -455,10 +558,41 @@ final class ReservationsStore: ObservableObject {
 		}
 	}
 
-	/// Wipes remembered tokens (sign-out).
-	func forgetTokens() {
+	/// Sign-out and account switch: wipes the persisted capability tokens AND every
+	/// in-memory piece of the previous customer's session (manage, waitlist, hold,
+	/// payment poll, bookings, guest details), so the next customer who signs in on
+	/// this device starts from nothing. Answers still in flight are dropped.
+	func reset() {
+		generation += 1
+		stopTicker()
+		stopPolling()
+		// The held table of the leaving customer is released, best effort.
+		flow.reset()
+		let heldToken = flow.holdToRelease
 		tokens.clear()
+		flow = BookingFlow()
+		waitlist = WaitlistFlow()
+		waitlistEntryId = nil
+		isRestoringWaitlist = false
+		loadState = .idle
+		config = nil
+		location = nil
+		isBusy = false
+		searchFailure = nil
 		mine = nil
 		manage = nil
+		manageFailure = nil
+		manageNotice = nil
+		draft = ReservationGuestDetails()
+		partySize = 2
+		date = ""
+		serverOffset = 0
+		if let heldToken {
+			let client = client
+			Task { try? await client.releaseHold(holdToken: heldToken) }
+		}
 	}
+
+	/// Kept for callers that only meant "sign out".
+	func forgetTokens() { reset() }
 }

@@ -131,6 +131,18 @@ describe.each([
 		expect(work()).not.toHaveBeenCalled()
 	})
 
+	it('hands the operator location scope to the privileged payment bridge', async () => {
+		for (const locationIds of [null, ['loc_a'], []]) {
+			mocks.access.mockResolvedValue({
+				organizationId: 'org_1',
+				locationIds,
+			})
+			await route({ ...body })
+			const [input] = work().mock.calls.at(-1)!
+			expect(input.locationIds).toEqual(locationIds)
+		}
+	})
+
 	it('uses the organization of the session, never one from the body', async () => {
 		await route({ ...body })
 		const [input] = work().mock.calls[0]!

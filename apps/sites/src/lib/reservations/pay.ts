@@ -392,10 +392,16 @@ export async function initPayPage(root: HTMLElement, deps: PayPageDeps) {
 		storePay(ref, { ...stored, token: parsed.token }, deps.storage)
 	}
 	if (parsed.token && deps.pageLocation.hash) {
+		// Drop the secret but keep the non-secret reference (and purpose) so a
+		// reload can still pair it with the token saved above.
+		const kept = new URLSearchParams()
+		if (ref) kept.set(ref.kind === 'fee' ? 'f' : 'r', ref.id)
+		if (parsed.purpose) kept.set('purpose', parsed.purpose)
+		const keptHash = kept.toString()
 		deps.history.replaceState(
 			deps.history.state,
 			'',
-			`${deps.pageLocation.pathname}${deps.pageLocation.search}`,
+			`${deps.pageLocation.pathname}${deps.pageLocation.search}${keptHash ? `#${keptHash}` : ''}`,
 		)
 	}
 

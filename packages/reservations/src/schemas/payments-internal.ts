@@ -174,6 +174,12 @@ export type ReservationPaymentStatusRequest = z.infer<
 >
 
 export const reservationRefundDirectiveSchema = z.strictObject({
+	/**
+	 * The regional refund row. Always present on a claim; a late-payment
+	 * directive carries it too, so that provider refund gets the same linking
+	 * metadata, idempotency key and reference as every other refund.
+	 */
+	refundRequestId: opaqueId.optional(),
 	reservationId: opaqueId,
 	paymentRef: z.string().min(1),
 	processor: paymentProviderSchema,
@@ -210,10 +216,19 @@ export type ReservationPaymentStatusResponse = z.infer<
 	typeof reservationPaymentStatusResponseSchema
 >
 
+/**
+ * The locations the operator who asked for this is limited to: `null` for
+ * every location, a list otherwise (empty means none). Required on the fee
+ * claim so a caller can never widen it by omission; the region refuses a
+ * reservation outside the list with the same 404 as an unknown one.
+ */
+const operatorLocationIds = z.array(opaqueId).max(1000).nullable()
+
 export const reservationFeeClaimRequestSchema = z.strictObject({
 	orgId: opaqueId,
 	reservationId: opaqueId,
 	feeId: opaqueId,
+	locationIds: operatorLocationIds,
 })
 export const reservationFeeClaimResponseSchema = z.strictObject({
 	feeId: opaqueId,
@@ -250,6 +265,8 @@ export type ReservationFeeResultRequest = z.infer<
 export const reservationRefundClaimRequestSchema = z.strictObject({
 	orgId: opaqueId,
 	refundRequestId: opaqueId.optional(),
+	/** Set by the operator-facing App route; absent for the system outbox. */
+	locationIds: operatorLocationIds.optional(),
 })
 export const reservationRefundClaimSchema =
 	reservationRefundDirectiveSchema.extend({

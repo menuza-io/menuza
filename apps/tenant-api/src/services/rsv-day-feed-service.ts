@@ -7,6 +7,7 @@ import {
 	extractDietaryCodes,
 	instantInIntervals,
 	localToInstant,
+	maskIncludesWeekday,
 	resolveServices,
 	type AvailableSlot,
 	type ConflictBlockInput,
@@ -446,7 +447,10 @@ export async function serializeReservationsForBook(
 					...serializeGuestRow(guestRow, tagsMap.get(guestRow.id) ?? [], {
 						canReadSensitive,
 					}),
-					pinnedNotes: pinnedNotesMap.get(guestRow.id) ?? [],
+					// Private free text: only with the guest-data grant.
+					pinnedNotes: canReadSensitive
+						? (pinnedNotesMap.get(guestRow.id) ?? [])
+						: [],
 				}
 			: null
 
@@ -455,6 +459,7 @@ export async function serializeReservationsForBook(
 		)
 		const hasAllergy = Boolean(guestSummary?.hasAllergy || rawDietary)
 		const dietaryNotes = canReadSensitive ? r.dietaryNotes : null
+		const guestRequests = canReadSensitive ? r.guestRequests : null
 		// Coded values only: free text stays behind the guest grant.
 		const dietaryCodes: string[] = extractDietaryCodes(r.dietaryNotes)
 		const runningLateNote =
@@ -536,8 +541,8 @@ export async function serializeReservationsForBook(
 				? (occasionByTagId.get(r.occasionTagId) ??
 					bareOccasionValue(r.occasionTagId, null))
 				: null,
-			guestRequests: r.guestRequests,
-			guest_requests: r.guestRequests,
+			guestRequests,
+			guest_requests: guestRequests,
 			dietaryNotes,
 			dietary_notes: dietaryNotes,
 			staffNotes: r.staffNotes,
@@ -1309,7 +1314,6 @@ export async function getMonthCalendarSummary(
 	for (let d = 1; d <= daysInMonth; d++) {
 		const dateStr = `${month}-${String(d).padStart(2, '0')}`
 		const dow = dayOfWeek(dateStr)
-		const dowBit = 1 << dow
 
 		const sp =
 			specialDays.find((s) => s.fromDate <= dateStr && s.toDate >= dateStr) ??
@@ -1332,7 +1336,9 @@ export async function getMonthCalendarSummary(
 					? ('reservation_special_day' as const)
 					: undefined
 
-		const dayServices = services.filter((s) => (s.daysMask & dowBit) !== 0)
+		const dayServices = services.filter((s) =>
+			maskIncludesWeekday(s.daysMask, dow),
+		)
 		const turnsEstimate = Math.max(dayServices.length * 2, 1)
 		const capacityCovers = closed ? 0 : totalTableSeats * turnsEstimate
 
@@ -2178,6 +2184,7 @@ export async function getBookConflicts(
 		channel: r.channel === 'online' ? 'online' : 'host',
 		partySize: r.partySize,
 		localStartMin: r.localStartMin,
+		businessDate: r.businessDate,
 		startAt: r.startAt,
 		endAt: r.endAt,
 		tableIds: r.tableIds,
@@ -2203,6 +2210,7 @@ export async function getBookConflicts(
 		blocks,
 		services: resolvedServices.services,
 		pacingRules: enginePacingRules,
+		businessDate,
 		// A day closed by a reservations special day or by the location hours
 		// (special hours, inactive, closed weekday) makes every booking on it a conflict.
 		dayClosed:
@@ -2273,6 +2281,13 @@ export async function getReservationEvents(db: DbOrTx, reservationId: string) {
 	}
 }
 
+/** Adds up `count(*)` rows returned by a statement run once per chunk. */
+function sumCounts(rows: ReadonlyArray<{ count: number | null }>): {
+	count: number
+} {
+	return { count: rows.reduce((n, r) => n + Number(r.count ?? 0), 0) }
+}
+
 export async function getRegionalReservationSummary(
 	db: DbOrTx,
 	locationIdsOrOpts?:
@@ -2292,106 +2307,126 @@ export async function getRegionalReservationSummary(
 				? [locationIdsOrOpts.locationId]
 				: undefined
 	const locFilter = locIds && locIds.length > 0 ? locIds : undefined
+	// A location filter can list every location of the region: split it so no
+	// statement binds more than the Durable Object limit. No filter reads all.
+	const perLocationChunk = <R>(
+		run: (chunk: string[] | undefined) => PromiseLike<R[]>,
+	): Promise<R[]> =>
+		locFilter
+			? queryInChunks(locFilter, (chunk) => run(chunk))
+			: Promise.resolve(run(undefined))
 
-	const settingsRows = await db
-		.select()
-		.from(rsvLocationSettings)
-		.where(
-			locFilter
-				? inArray(rsvLocationSettings.locationId, locFilter)
-				: undefined,
-		)
-		.all()
-
-	const areaRows = await db
-		.select()
-		.from(rsvAreas)
-		.where(
-			and(
-				isNull(rsvAreas.archivedAt),
-				...(locFilter ? [inArray(rsvAreas.locationId, locFilter)] : []),
-			),
-		)
-		.all()
-
-	const tableRows = await db
-		.select()
-		.from(rsvTables)
-		.where(
-			and(
-				isNull(rsvTables.archivedAt),
-				...(locFilter ? [inArray(rsvTables.locationId, locFilter)] : []),
-			),
-		)
-		.all()
-
-	const upcomingResRows = await db
-		.select()
-		.from(rsvReservations)
-		.where(
-			and(
-				inArray(rsvReservations.status, [
-					'pending_payment',
-					'pending_approval',
-					'booked',
-					'confirmed',
-					'arrived',
-					'seated',
-				]),
-				gte(rsvReservations.endAt, now - 12 * 3600_000),
-				...(locFilter ? [inArray(rsvReservations.locationId, locFilter)] : []),
-			),
-		)
-		.all()
-
-	const [allResCountRow, guestsCountRow, auditCountRow] = await Promise.all([
+	const settingsRows = await perLocationChunk((chunk) =>
 		db
-			.select({ count: sql<number>`count(*)` })
+			.select()
+			.from(rsvLocationSettings)
+			.where(chunk ? inArray(rsvLocationSettings.locationId, chunk) : undefined)
+			.all(),
+	)
+
+	const areaRows = await perLocationChunk((chunk) =>
+		db
+			.select()
+			.from(rsvAreas)
+			.where(
+				and(
+					isNull(rsvAreas.archivedAt),
+					...(chunk ? [inArray(rsvAreas.locationId, chunk)] : []),
+				),
+			)
+			.all(),
+	)
+
+	const tableRows = await perLocationChunk((chunk) =>
+		db
+			.select()
+			.from(rsvTables)
+			.where(
+				and(
+					isNull(rsvTables.archivedAt),
+					...(chunk ? [inArray(rsvTables.locationId, chunk)] : []),
+				),
+			)
+			.all(),
+	)
+
+	const upcomingResRows = await perLocationChunk((chunk) =>
+		db
+			.select()
 			.from(rsvReservations)
 			.where(
-				locFilter ? inArray(rsvReservations.locationId, locFilter) : undefined,
+				and(
+					inArray(rsvReservations.status, [
+						'pending_payment',
+						'pending_approval',
+						'booked',
+						'confirmed',
+						'arrived',
+						'seated',
+					]),
+					gte(rsvReservations.endAt, now - 12 * 3600_000),
+					...(chunk ? [inArray(rsvReservations.locationId, chunk)] : []),
+				),
 			)
-			.get(),
+			.all(),
+	)
+
+	const [allResCountRow, guestsCountRow, auditCountRow] = await Promise.all([
+		sumCounts(
+			await perLocationChunk((chunk) =>
+				db
+					.select({ count: sql<number>`count(*)` })
+					.from(rsvReservations)
+					.where(chunk ? inArray(rsvReservations.locationId, chunk) : undefined)
+					.all(),
+			),
+		),
 		db
 			.select({ count: sql<number>`count(*)` })
 			.from(rsvGuests)
 			.where(isNull(rsvGuests.erasedAt))
 			.get(),
-		db
-			.select({ count: sql<number>`count(*)` })
-			.from(rsvAuditLog)
-			.where(locFilter ? inArray(rsvAuditLog.locationId, locFilter) : undefined)
-			.get(),
+		sumCounts(
+			await perLocationChunk((chunk) =>
+				db
+					.select({ count: sql<number>`count(*)` })
+					.from(rsvAuditLog)
+					.where(chunk ? inArray(rsvAuditLog.locationId, chunk) : undefined)
+					.all(),
+			),
+		),
 	])
 
-	const activeWaitlistRows = await db
-		.select()
-		.from(rsvWaitlistEntries)
-		.where(
-			and(
-				inArray(rsvWaitlistEntries.status, [
-					'waiting',
-					'notified',
-					'on_the_way',
-				]),
-				...(locFilter
-					? [inArray(rsvWaitlistEntries.locationId, locFilter)]
-					: []),
-			),
-		)
-		.all()
+	const activeWaitlistRows = await perLocationChunk((chunk) =>
+		db
+			.select()
+			.from(rsvWaitlistEntries)
+			.where(
+				and(
+					inArray(rsvWaitlistEntries.status, [
+						'waiting',
+						'notified',
+						'on_the_way',
+					]),
+					...(chunk ? [inArray(rsvWaitlistEntries.locationId, chunk)] : []),
+				),
+			)
+			.all(),
+	)
 
-	const activeHoldRows = await db
-		.select()
-		.from(rsvHolds)
-		.where(
-			and(
-				eq(rsvHolds.status, 'active'),
-				gte(rsvHolds.expiresAt, now),
-				...(locFilter ? [inArray(rsvHolds.locationId, locFilter)] : []),
-			),
-		)
-		.all()
+	const activeHoldRows = await perLocationChunk((chunk) =>
+		db
+			.select()
+			.from(rsvHolds)
+			.where(
+				and(
+					eq(rsvHolds.status, 'active'),
+					gte(rsvHolds.expiresAt, now),
+					...(chunk ? [inArray(rsvHolds.locationId, chunk)] : []),
+				),
+			)
+			.all(),
+	)
 
 	const allKnownLocIds = new Set<string>([
 		...(locFilter ?? []),

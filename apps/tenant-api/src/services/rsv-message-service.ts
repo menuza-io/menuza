@@ -133,6 +133,7 @@ async function customNoteFor(
 		.where(
 			and(
 				eq(rsvMessageTexts.kind, kind as MessageRow['kind']),
+				// bounded: at most two locales
 				inArray(rsvMessageTexts.locale, wanted),
 				or(
 					eq(rsvMessageTexts.locationId, locationId),

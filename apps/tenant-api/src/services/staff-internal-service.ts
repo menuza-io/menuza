@@ -44,6 +44,7 @@ import {
 	type Failure,
 	type StaffContext,
 } from './staff-service.ts'
+import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Server-to-server staff operations for `/internal/staff`: summary counts for
@@ -405,10 +406,12 @@ export async function buildStaffExport(
 	const staffIds = staffRows.map((row) => row.id)
 
 	const applications = staffIds.length
-		? await db
-				.select()
-				.from(hiringApplications)
-				.where(inArray(hiringApplications.hiredStaffId, staffIds))
+		? await queryInChunks(staffIds, (chunk) =>
+				db
+					.select()
+					.from(hiringApplications)
+					.where(inArray(hiringApplications.hiredStaffId, chunk)),
+			)
 		: []
 	const [assignments, jobs, notes, privates, tasks, certificates] =
 		staffIds.length
@@ -416,32 +419,32 @@ export async function buildStaffExport(
 					db
 						.select()
 						.from(staffScopeAssignments)
-						.where(inArray(staffScopeAssignments.staffId, staffIds)),
+						.where(inJsonList(staffScopeAssignments.staffId, staffIds)),
 					db
 						.select()
 						.from(staffJobs)
-						.where(inArray(staffJobs.staffId, staffIds))
+						.where(inJsonList(staffJobs.staffId, staffIds))
 						.orderBy(desc(staffJobs.effectiveFrom), desc(staffJobs.createdAt)),
 					db
 						.select()
 						.from(staffNotes)
-						.where(inArray(staffNotes.staffId, staffIds))
+						.where(inJsonList(staffNotes.staffId, staffIds))
 						.orderBy(desc(staffNotes.createdAt)),
 					options.include.private
 						? db
 								.select()
 								.from(staffPrivate)
-								.where(inArray(staffPrivate.staffId, staffIds))
+								.where(inJsonList(staffPrivate.staffId, staffIds))
 						: Promise.resolve([]),
 					db
 						.select()
 						.from(onboardingTasks)
-						.where(inArray(onboardingTasks.staffId, staffIds))
+						.where(inJsonList(onboardingTasks.staffId, staffIds))
 						.orderBy(asc(onboardingTasks.sortOrder)),
 					db
 						.select()
 						.from(staffCertificates)
-						.where(inArray(staffCertificates.staffId, staffIds))
+						.where(inJsonList(staffCertificates.staffId, staffIds))
 						.orderBy(asc(staffCertificates.expiresOn)),
 				])
 			: [[], [], [], [], [], []]
@@ -464,6 +467,7 @@ export async function buildStaffExport(
 		.from(staffAuditLog)
 		.where(
 			and(
+				// bounded: audit sensitivities are a closed enum of three
 				inArray(staffAuditLog.sensitivity, sensitivities),
 				options.staffId
 					? eq(staffAuditLog.staffId, options.staffId)

@@ -100,33 +100,48 @@ export function quoteWaitlistMin(
 		}
 	}
 
-	// Track per-table earliest availability in epoch ms
-	const tableAvailableAt = new Map<string, number>()
+	// Per-table busy intervals (epoch ms), sorted by start. Future reservations
+	// and blocks stay in the list so a seating is never placed over them: the
+	// simulation looks for the earliest gap that fits the whole turn + buffer.
+	const busy = new Map<string, Array<{ start: number; end: number }>>()
 	for (const t of input.tables) {
 		if (t.active === false || t.active === 0) continue
-		tableAvailableAt.set(t.id, input.nowMs)
+		busy.set(t.id, [])
+	}
+	const addBusy = (tid: string, start: number, end: number) => {
+		const list = busy.get(tid)
+		if (!list) return
+		list.push({ start, end })
+		list.sort((a, b) => a.start - b.start || a.end - b.end)
 	}
 
 	for (const occ of input.occupancies ?? []) {
 		if (occ.status && INACTIVE_OCCUPANCY_STATUSES.has(occ.status)) continue
 		if (occ.endAt <= input.nowMs) continue
-		// If occupancy is currently active or starting soon before tables free up, mark table busy until endAt
-		for (const tid of occ.tableIds) {
-			const prev = tableAvailableAt.get(tid) ?? input.nowMs
-			if (occ.startAt <= prev + defaultTurnMin * 60_000 && occ.endAt > prev) {
-				tableAvailableAt.set(tid, occ.endAt)
+		for (const tid of occ.tableIds) addBusy(tid, occ.startAt, occ.endAt)
+	}
+
+	/** Earliest start >= now where every table is free for `durationMs`. */
+	const earliestFit = (
+		tableIds: readonly string[],
+		durationMs: number,
+	): number => {
+		let t = input.nowMs
+		for (;;) {
+			let pushedTo = t
+			for (const tid of tableIds) {
+				for (const iv of busy.get(tid) ?? []) {
+					if (iv.start < t + durationMs && iv.end > t && iv.end > pushedTo) {
+						pushedTo = iv.end
+					}
+				}
 			}
+			if (pushedTo === t) return t
+			t = pushedTo
 		}
 	}
 
-	const candidateAvailableAt = (tableIds: readonly string[]): number => {
-		let maxMs = input.nowMs
-		for (const tid of tableIds) {
-			const avail = tableAvailableAt.get(tid) ?? input.nowMs
-			if (avail > maxMs) maxMs = avail
-		}
-		return maxMs
-	}
+	const targetDurationMs = (defaultTurnMin + bufferMin) * 60_000
 
 	const targetTableSet = new Set<string>()
 	for (const c of fittingForTarget) {
@@ -137,6 +152,8 @@ export function quoteWaitlistMin(
 
 	// Simulate FIFO placement of each waiting party ahead
 	for (const entry of activeAhead) {
+		const entryDurationMs =
+			((entry.turnMin ?? defaultTurnMin) + bufferMin) * 60_000
 		const fittingForEntry = candidates
 			.filter((c) => {
 				if (entry.partySize < c.minSeats || entry.partySize > c.maxSeats) {
@@ -149,7 +166,7 @@ export function quoteWaitlistMin(
 			})
 			.map((candidate) => ({
 				candidate,
-				availAt: candidateAvailableAt(candidate.tableIds),
+				availAt: earliestFit(candidate.tableIds, entryDurationMs),
 				score: scoreCandidate({
 					candidate,
 					partySize: entry.partySize,
@@ -168,18 +185,15 @@ export function quoteWaitlistMin(
 			fittingPartiesAhead++
 		}
 
-		const turnDurationMs =
-			((entry.turnMin ?? defaultTurnMin) + bufferMin) * 60_000
-		const nextFreeAt = chosen.availAt + turnDurationMs
 		for (const tid of chosen.candidate.tableIds) {
-			tableAvailableAt.set(tid, nextFreeAt)
+			addBusy(tid, chosen.availAt, chosen.availAt + entryDurationMs)
 		}
 	}
 
 	// Now pick the earliest-releasing candidate for our party
 	const scoredTarget = fittingForTarget.map((candidate) => ({
 		candidate,
-		availAt: candidateAvailableAt(candidate.tableIds),
+		availAt: earliestFit(candidate.tableIds, targetDurationMs),
 		score: scoreCandidate({
 			candidate,
 			partySize: input.partySize,

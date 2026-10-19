@@ -73,6 +73,7 @@ import {
 	type ChecklistSource,
 } from './onboarding-service.ts'
 import { getSettings, type StaffContext } from './staff-service.ts'
+import { forEachInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Applicants and the hire, reached by managers through `/operator/hiring`.
@@ -316,7 +317,7 @@ async function extrasFor(
 			.from(hiringNotes)
 			.where(
 				and(
-					inArray(hiringNotes.applicationId, ids),
+					inJsonList(hiringNotes.applicationId, ids),
 					isNull(hiringNotes.deletedAt),
 				),
 			)
@@ -329,7 +330,7 @@ async function extrasFor(
 			.from(hiringInterviews)
 			.where(
 				and(
-					inArray(hiringInterviews.applicationId, ids),
+					inJsonList(hiringInterviews.applicationId, ids),
 					eq(hiringInterviews.status, 'scheduled'),
 				),
 			)
@@ -1492,13 +1493,15 @@ export async function purgeExpiredApplications(
 		.limit(RETENTION_BATCH)
 	if (due.length === 0) return { purged: 0 }
 	const ids = due.map((row) => row.id)
-	await db.delete(hiringApplications).where(
-		and(
-			inArray(hiringApplications.id, ids),
-			// Re-checked in the delete itself: a candidate reopened since the select
-			// is not purged.
-			eq(hiringApplications.stage, 'declined'),
-			lte(hiringApplications.retentionExpiresAt, now),
+	await forEachInChunks(ids, (chunk) =>
+		db.delete(hiringApplications).where(
+			and(
+				inArray(hiringApplications.id, chunk),
+				// Re-checked in the delete itself: a candidate reopened since the select
+				// is not purged.
+				eq(hiringApplications.stage, 'declined'),
+				lte(hiringApplications.retentionExpiresAt, now),
+			),
 		),
 	)
 	await writeSystemAudit(db, {
@@ -1517,7 +1520,7 @@ export async function eraseApplicationsForStaff(
 	if (staffIds.length === 0) return 0
 	const deleted = await tx
 		.delete(hiringApplications)
-		.where(inArray(hiringApplications.hiredStaffId, [...staffIds]))
+		.where(inJsonList(hiringApplications.hiredStaffId, [...staffIds]))
 		.returning({ id: hiringApplications.id })
 	return deleted.length
 }

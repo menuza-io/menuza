@@ -6,6 +6,8 @@ import {
 	OPERATOR_TOKEN_AUD,
 	OPERATOR_TOKEN_ISS,
 	operatorTokenAllowsSubject,
+	ORG_WIDE_REPORT_SUBJECTS,
+	RESTRICTED_REPORT_SUBJECTS,
 	verifyOperatorAnalyticsToken,
 } from './operator-token.ts'
 
@@ -75,8 +77,8 @@ describe('operator analytics token', () => {
 			token,
 		})
 		expect(operatorTokenAllowsSubject(claims!, 'phone_calls')).toBe(false)
-		expect(operatorTokenAllowsSubject(claims!, 'customers')).toBe(true)
-		expect(operatorTokenAllowsSubject(claims!, 'shop_orders')).toBe(true)
+		expect(operatorTokenAllowsSubject(claims!, 'customers')).toBe(false)
+		expect(operatorTokenAllowsSubject(claims!, 'shop_orders')).toBe(false)
 	})
 
 	it('drops unknown subjects from a token', async () => {
@@ -242,5 +244,55 @@ describe('operator analytics token', () => {
 			)
 			expect((await verify(mixed))?.scopeIds).toEqual(['loc-1'])
 		})
+	})
+})
+
+describe('subject x grant matrix', () => {
+	const ALL_SUBJECTS = [
+		'orders',
+		'order_items',
+		'order_options',
+		'customers',
+		'text_subscribers',
+		'shop_orders',
+		'phone_calls',
+		'time_entries',
+		'shifts',
+		'labor_daily',
+		'applications',
+		'bookings',
+		'waitlist_entries',
+		'pacing_slots',
+	]
+
+	it('allows a subject if and only if the token lists it', () => {
+		for (const granted of [...RESTRICTED_REPORT_SUBJECTS, 'none'] as const) {
+			const claims = { subjects: granted === 'none' ? [] : [granted] }
+			for (const subject of ALL_SUBJECTS) {
+				expect(
+					operatorTokenAllowsSubject(claims as never, subject),
+					`${granted} -> ${subject}`,
+				).toBe(granted === subject)
+			}
+		}
+	})
+
+	it('treats the organization-wide subjects as restricted', () => {
+		for (const subject of ORG_WIDE_REPORT_SUBJECTS) {
+			expect(RESTRICTED_REPORT_SUBJECTS).toContain(subject)
+			expect(operatorTokenAllowsSubject({ subjects: [] }, subject)).toBe(false)
+		}
+	})
+
+	it('a module-only token never reaches the organization-wide subjects', () => {
+		const reservations = {
+			subjects: ['bookings', 'waitlist_entries', 'pacing_slots'],
+		}
+		const staff = { subjects: ['time_entries', 'shifts', 'labor_daily'] }
+		for (const claims of [reservations, staff]) {
+			for (const subject of ORG_WIDE_REPORT_SUBJECTS) {
+				expect(operatorTokenAllowsSubject(claims as never, subject)).toBe(false)
+			}
+		}
 	})
 })

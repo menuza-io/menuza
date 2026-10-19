@@ -329,6 +329,16 @@ class WaitlistFlow {
 	/** An unknown token (404) or a finished entry stops polling. */
 	val isActive: Boolean get() = statusToken != null && status?.isActive == true
 
+	/**
+	 * Puts a persisted status token back after a restart so the guest sees, refreshes
+	 * and can leave the entry, instead of the join form (which would answer
+	 * `already_on_waitlist`).
+	 */
+	fun restore(token: String) {
+		statusToken = token
+		pendingKey = null
+	}
+
 	fun clear() {
 		statusToken = null
 		status = null

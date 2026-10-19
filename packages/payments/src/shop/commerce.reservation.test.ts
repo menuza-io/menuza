@@ -41,6 +41,43 @@ function commerceFor(harness: Harness) {
 const ORG = 'org_a'
 const RSV = 'rsv_1'
 
+describe('ShopCommerce reservation session replay', () => {
+	it('Stripe: a replay at a later clock with the same key returns the same session (no idempotency error)', async () => {
+		const harness = createTestHarness()
+		const commerce = commerceFor(harness)
+		const destination = await onboardedAccount(harness)
+		// Aligned to the expiry grid so both attempts fall in one step.
+		const start = Math.floor(harness.clock.now() / 300_000) * 300_000 + 10_000
+		// Hold inside the 31 minute window: the expiry used to track the clock.
+		const hold = new Date(start + 10 * 60_000).toISOString()
+		const options = {
+			connectedAccountId: destination,
+			currency: 'USD',
+			platformFeeMinor: 0,
+			successUrl: 'http://localhost:3008/done',
+			cancelUrl: 'http://localhost:3008/cancel',
+			paymentExpiresAt: hold,
+			productName: 'Reservation deposit',
+			amountMinor: 4000,
+			idempotencyKey: 'k_replay',
+			metadata: buildReservationPaymentMetadata({
+				orgId: ORG,
+				reservationId: RSV,
+				purpose: 'deposit',
+			}),
+		}
+		const first = await commerce.createReservationStripeSession({
+			...options,
+			nowMs: start,
+		})
+		const replay = await commerce.createReservationStripeSession({
+			...options,
+			nowMs: start + 45_000,
+		})
+		expect(replay.id).toBe(first.id)
+	})
+})
+
 describe('ShopCommerce reservation methods on the emulators', () => {
 	it('Stripe: deposit, guarantee, off-session fee with dangling cancel, refund', async () => {
 		const harness = createTestHarness()
@@ -190,7 +227,7 @@ describe('ShopCommerce reservation methods on the emulators', () => {
 			subEntityId: entity,
 			amountMinor: 5000,
 			feeReversalMinor: 0,
-			reference: 'rsv_refund_rr_1',
+			reference: 'rsv_rf_rr_1',
 			idempotencyKey: 'k_refund',
 		})
 		expect(refund.status).toBe('pending')

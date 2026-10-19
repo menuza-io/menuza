@@ -7,6 +7,7 @@ import {
 import {
 	mintOperatorAnalyticsToken,
 	ORDER_REPORT_SUBJECTS,
+	ORG_WIDE_REPORT_SUBJECTS,
 	type RestrictedReportSubject,
 } from '@repo/reports/token'
 import { data } from 'react-router'
@@ -93,6 +94,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				? reservations.scopeIds
 				: staff.scopeIds
 	const subjects: RestrictedReportSubject[] = [
+		// Organization-wide subjects need analytics, settings or website access:
+		// a module-only grant (Reservations, staff) never lists them.
+		...(hasAdminReportAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...staff.subjects,

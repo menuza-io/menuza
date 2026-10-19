@@ -58,6 +58,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			orgId: access.organizationId,
 			reservationId: parsed.data.reservationId,
 			feeId: parsed.data.feeId,
+			locationIds: access.locationIds,
 		})
 		return Response.json(result, { headers: NO_STORE })
 	} catch (error) {
