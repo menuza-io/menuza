@@ -193,10 +193,20 @@ export async function linkReferral(userId: string, referralCode: string) {
 	if (linked.length === 0) {
 		return { success: false, message: 'Already referred by someone' }
 	}
-	await db
-		.update(WaitlistEntry)
-		.set({ points: sql`${WaitlistEntry.points} + ${REFERRAL_POINTS}` })
-		.where(eq(WaitlistEntry.id, referrer.id))
+	try {
+		await db
+			.update(WaitlistEntry)
+			.set({ points: sql`${WaitlistEntry.points} + ${REFERRAL_POINTS}` })
+			.where(eq(WaitlistEntry.id, referrer.id))
+	} catch (error) {
+		// No multi-statement transaction on D1: undo the link so a retry still
+		// pays the referrer instead of hitting the already-referred guard.
+		await db
+			.update(WaitlistEntry)
+			.set({ referredById: null })
+			.where(eq(WaitlistEntry.id, entry.id))
+		throw error
+	}
 	return { success: true, message: 'Referral linked successfully' }
 }
 
