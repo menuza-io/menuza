@@ -425,7 +425,8 @@ internal class ReservationsController(
 	private fun continuePolling(attempt: Int) {
 		val state = flow.state as? FlowState.AwaitingPayment
 		val elapsed = System.currentTimeMillis() - pollStartedAt
-		if (state == null || elapsed >= PaymentPoll.MAX_MS) {
+		// A failed charge is final until the guest pays again, so stop polling.
+		if (state == null || state.outcome == PayOutcome.FAILED || elapsed >= PaymentPoll.MAX_MS) {
 			pollScheduled = false
 			return
 		}

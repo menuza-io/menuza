@@ -4,6 +4,7 @@ import {
 	type EngineCombinationInput,
 	type EngineTableInput,
 } from './day-state.ts'
+import { type BookingChannel, isGuestChannel } from './day-state.ts'
 import { intervalsOverlap } from './occupancy.ts'
 import { type EnginePacingRuleInput } from './pacing.ts'
 
@@ -76,8 +77,10 @@ const CAPACITY_STATUSES = new Set([
 	'booked',
 	'confirmed',
 	'arrived',
+	'partially_arrived',
 	'partially_seated',
 	'seated',
+	'pending_payment',
 ])
 
 function toBool(v: boolean | number | undefined, fallback = true): boolean {
@@ -360,7 +363,9 @@ export function detectConflicts(input: DetectConflictsInput): ConflictItem[] {
 
 		if (maxOnlineService !== null) {
 			const onlineCovers = inService
-				.filter((b) => (b.channel ?? 'online') === 'online')
+				.filter((b) =>
+					isGuestChannel((b.channel ?? 'online') as BookingChannel),
+				)
 				.reduce((acc, b) => acc + b.partySize, 0)
 			if (onlineCovers > maxOnlineService) {
 				conflicts.push({

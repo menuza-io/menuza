@@ -5,7 +5,7 @@ import {
 	type EngineDayConfig,
 	type ExistingOccupancyInput,
 } from './availability.ts'
-import { type BookingChannel } from './day-state.ts'
+import { type BookingChannel, isGuestChannel } from './day-state.ts'
 
 export type ExperienceScheduleConfig = {
 	daysOfWeek?: readonly number[]
@@ -78,18 +78,14 @@ export function searchExperienceAvailability(
 	const channel = input.channel ?? 'online'
 	const dow = dayOfWeek(input.businessDate)
 	const bufferMin = input.config.settings.bufferMin ?? 0
-	const minNoticeMin =
-		channel === 'online' || channel === 'voice'
-			? (input.config.settings.minNoticeMin ?? 0)
-			: 0
+	const minNoticeMin = isGuestChannel(channel)
+		? (input.config.settings.minNoticeMin ?? 0)
+		: 0
 
 	const results: ExperienceAvailabilityItem[] = []
 
 	for (const exp of input.experiences) {
-		if (
-			(channel === 'online' || channel === 'voice') &&
-			exp.status !== 'published'
-		) {
+		if (isGuestChannel(channel) && exp.status !== 'published') {
 			continue
 		}
 		if (exp.status === 'archived') continue

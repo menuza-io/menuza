@@ -431,6 +431,9 @@ function generateSharedSecrets() {
 			HONEYPOT_SECRET: randomHex(16),
 			INTERNAL_COMMAND_TOKEN: internalCommandToken,
 			TENANT_OPERATOR_TOKEN: tenantOperatorToken,
+			// Authenticates Sites -> App reservation payment forwarding; App and
+			// Sites must hold the same value (production fails closed without it).
+			SITES_RESERVATION_PAYMENT_TOKEN: randomHex(16),
 			SSO_ENCRYPTION_KEY: randomHex(32),
 			AUDIT_LOG_SECRET_KEY: randomHex(32),
 		},
@@ -449,6 +452,7 @@ function generateSharedSecrets() {
 		},
 		notes: [
 			'SESSION_SECRET, HONEYPOT_SECRET, INTERNAL_COMMAND_TOKEN, TENANT_OPERATOR_TOKEN, SSO_ENCRYPTION_KEY, and AUDIT_LOG_SECRET_KEY must match on App and Admin.',
+			'SITES_RESERVATION_PAYMENT_TOKEN must match on App and Sites (set it as a Sites Worker secret too).',
 			'INTERNAL_COMMAND_TOKEN must also match jobs-cron and tenant-api.',
 			'TENANT_CUSTOMER_JWT_SECRET (App) must equal JWT_SECRET on US tenant-api.',
 			'VOICE_AGENT_TOKEN must match on App, US tenant-api, and the LiveKit Cloud voice agent (launch.voice-agent.env).',
@@ -626,6 +630,10 @@ function applyGeneratedWranglerSecrets(
 				['HONEYPOT_SECRET', secrets.shared.HONEYPOT_SECRET],
 				['INTERNAL_COMMAND_TOKEN', secrets.shared.INTERNAL_COMMAND_TOKEN],
 				['TENANT_OPERATOR_TOKEN', secrets.shared.TENANT_OPERATOR_TOKEN],
+				[
+					'SITES_RESERVATION_PAYMENT_TOKEN',
+					secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
+				],
 				['JWT_SECRET', secrets.app.JWT_SECRET],
 				['TENANT_CUSTOMER_JWT_SECRET', secrets.app.TENANT_CUSTOMER_JWT_SECRET],
 				...(secrets.app.INTEGRATION_ENCRYPTION_KEY
@@ -1197,6 +1205,10 @@ function printWranglerSecrets(secrets, { autoApplied = false } = {}) {
 						['HONEYPOT_SECRET', secrets.shared.HONEYPOT_SECRET],
 						['INTERNAL_COMMAND_TOKEN', secrets.shared.INTERNAL_COMMAND_TOKEN],
 						['TENANT_OPERATOR_TOKEN', secrets.shared.TENANT_OPERATOR_TOKEN],
+						[
+							'SITES_RESERVATION_PAYMENT_TOKEN',
+							secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
+						],
 						['JWT_SECRET', secrets.app.JWT_SECRET],
 						[
 							'TENANT_CUSTOMER_JWT_SECRET',
@@ -1416,6 +1428,8 @@ async function main() {
 		HONEYPOT_SECRET: secrets.shared.HONEYPOT_SECRET,
 		INTERNAL_COMMAND_TOKEN: secrets.shared.INTERNAL_COMMAND_TOKEN,
 		TENANT_OPERATOR_TOKEN: secrets.shared.TENANT_OPERATOR_TOKEN,
+		SITES_RESERVATION_PAYMENT_TOKEN:
+			secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
 		JWT_SECRET: secrets.app.JWT_SECRET,
 		TENANT_CUSTOMER_JWT_SECRET: secrets.app.TENANT_CUSTOMER_JWT_SECRET,
 		...(secrets.app.INTEGRATION_ENCRYPTION_KEY
@@ -1450,6 +1464,8 @@ async function main() {
 	const sitesEnvPatched = patchEnvFile(join(rootDir, 'apps/sites/.env'), {
 		ROOT_APP: localDomain,
 		PUBLIC_APP_URL: localAppUrl,
+		SITES_RESERVATION_PAYMENT_TOKEN:
+			secrets.shared.SITES_RESERVATION_PAYMENT_TOKEN,
 		TENANT_API_URL: localTenantUs,
 		TENANT_API_URL_KSA: localTenantKsa,
 	})

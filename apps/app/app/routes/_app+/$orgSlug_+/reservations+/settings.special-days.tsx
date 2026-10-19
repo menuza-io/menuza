@@ -40,6 +40,8 @@ import {
 	useState,
 } from 'react'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
+import { useDiscardGuard } from '#app/components/reservations/settings/setup-list-chrome.tsx'
 import { useRevealedErrors } from '#app/components/reservations/settings/use-revealed-errors.ts'
 import {
 	LocalizedMapField,
@@ -115,6 +117,17 @@ const BLOCK_REASON_LABELS: Record<string, MessageDescriptor> = {
 	vip_hold: msg`VIP hold`,
 	staffing: msg`Staffing`,
 	other: msg`Other`,
+}
+
+/**
+ * A service end earlier than its first seating ends after midnight (a 17:00
+ * service ending 01:00 ends at 25:00), as the services screen's "Ends after
+ * midnight" switch does.
+ */
+function serviceEndMinutes(first: string, end: string): number {
+	const firstMin = timeStringToMinutes(first, { nextDay: false })
+	const endMin = timeStringToMinutes(end, { nextDay: false })
+	return endMin < firstMin ? endMin + 1440 : endMin
 }
 
 export default function ReservationsSettingsSpecialDaysRoute() {
@@ -206,7 +219,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 		const timesInvalid = (first: string, last: string, end: string) => {
 			const f = timeStringToMinutes(first, { nextDay: false })
 			const l = timeStringToMinutes(last, { nextDay: false })
-			const e = timeStringToMinutes(end, { nextDay: false })
+			const e = serviceEndMinutes(first, end)
 			return f > l || l > e
 		}
 		const hoursMessage = _(
@@ -347,7 +360,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			const targetSvcId = sdPatchServiceId || services[0]?.id || null
 			const firstMin = timeStringToMinutes(sdPatchFirstTime, { nextDay: false })
 			const lastMin = timeStringToMinutes(sdPatchLastTime, { nextDay: false })
-			const endMin = timeStringToMinutes(sdPatchEndTime, { nextDay: false })
+			const endMin = serviceEndMinutes(sdPatchFirstTime, sdPatchEndTime)
 			if (!targetSvcId) {
 				setErrorMessage(_(msg`Add a service before changing its hours.`))
 				return
@@ -364,7 +377,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 				nextDay: false,
 			})
 			const lastMin = timeStringToMinutes(sdReplaceLastTime, { nextDay: false })
-			const endMin = timeStringToMinutes(sdReplaceEndTime, { nextDay: false })
+			const endMin = serviceEndMinutes(sdReplaceFirstTime, sdReplaceEndTime)
 			replacementServices = [
 				{
 					name: defaultEntry(sdReplaceNames, siteLocales),
@@ -531,6 +544,50 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 	const tableOptions = tables.map((t) => ({ value: t.id, label: t.label }))
 	const areaOptions = areas.map((a) => ({ value: a.id, label: a.name }))
 	const sheetOpen = specialDaySheetOpen || blockSheetOpen
+
+	// Closing a sheet someone has edited asks before throwing the draft away,
+	// as the other settings sheets do.
+	const closeSpecialDaySheet = () => {
+		setSpecialDaySheetOpen(false)
+		resetSd()
+		setErrorMessage(null)
+	}
+	const specialDayGuard = useDiscardGuard(
+		useSheetDirty(specialDaySheetOpen ? 'special-day' : null, [
+			sdStartDate,
+			sdEndDate,
+			sdKind,
+			sdName,
+			sdNotes,
+			sdPatchServiceId,
+			sdPatchFirstTime,
+			sdPatchLastTime,
+			sdPatchEndTime,
+			sdReplaceNames,
+			sdReplaceFirstTime,
+			sdReplaceLastTime,
+			sdReplaceEndTime,
+		]),
+		closeSpecialDaySheet,
+	)
+	const closeBlockSheet = () => {
+		setBlockSheetOpen(false)
+		resetBlock()
+		setErrorMessage(null)
+	}
+	const blockGuard = useDiscardGuard(
+		useSheetDirty(blockSheetOpen ? 'block' : null, [
+			blkDate,
+			blkTargetType,
+			blkTableId,
+			blkAreaId,
+			blkStartTime,
+			blkEndTime,
+			blkReason,
+			blkNote,
+		]),
+		closeBlockSheet,
+	)
 
 	const confirmDelete = () => {
 		const target = pendingDelete
@@ -937,9 +994,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			<Sheet
 				open={specialDaySheetOpen}
 				onOpenChange={(open) => {
-					setSpecialDaySheetOpen(open)
-					resetSd()
-					if (!open) setErrorMessage(null)
+					if (!open) {
+						specialDayGuard.requestClose()
+						return
+					}
+					setSpecialDaySheetOpen(true)
 				}}
 			>
 				<SheetContent
@@ -962,7 +1021,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 									<Button
 										type="button"
 										variant="ghost"
-										onClick={() => setSpecialDaySheetOpen(false)}
+										onClick={specialDayGuard.requestClose}
 									>
 										<Trans>Cancel</Trans>
 									</Button>
@@ -1138,9 +1197,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 			<Sheet
 				open={blockSheetOpen}
 				onOpenChange={(open) => {
-					setBlockSheetOpen(open)
-					resetBlock()
-					if (!open) setErrorMessage(null)
+					if (!open) {
+						blockGuard.requestClose()
+						return
+					}
+					setBlockSheetOpen(true)
 				}}
 			>
 				<SheetContent className="sm:max-w-lg" data-testid="setup-block-sheet">
@@ -1157,7 +1218,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 								<Button
 									type="button"
 									variant="ghost"
-									onClick={() => setBlockSheetOpen(false)}
+									onClick={blockGuard.requestClose}
 								>
 									<Trans>Cancel</Trans>
 								</Button>
@@ -1257,6 +1318,8 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 					</SheetForm>
 				</SheetContent>
 			</Sheet>
+			{specialDayGuard.discardDialog}
+			{blockGuard.discardDialog}
 
 			<AlertDialog
 				open={pendingDelete !== null}

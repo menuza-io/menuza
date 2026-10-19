@@ -8,6 +8,7 @@ import {
 } from '@repo/tenant-db'
 import { and, count, desc, eq, isNull, max, sql, type SQL } from 'drizzle-orm'
 import { badRequest, conflict, forbidden, notFound } from '../lib/http.ts'
+import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	FREQUENT_NO_SHOW_THRESHOLD,
 	loadGuestTagsMap,
@@ -1007,57 +1008,61 @@ export async function updatePerson(
 	if (!customer && editsContact) requireDiningWrite(access)
 	if (!customer && !guest) throw notFound('Person not found')
 
-	if (customer && editsContact && access.canUpdateCustomers) {
-		await db
-			.update(customers)
-			.set({
-				...(patch.name !== undefined ? { name: patch.name } : {}),
-				...(patch.email !== undefined ? { email: patch.email } : {}),
-				updatedAt: new Date(),
-			})
-			.where(eq(customers.id, customer.id))
-	}
+	// One write: a rejected dining update (stale version, merged guest) must
+	// not leave the customer's name or email already changed.
+	await withSetupWrite(db, async (tx) => {
+		if (customer && editsContact && access.canUpdateCustomers) {
+			await tx
+				.update(customers)
+				.set({
+					...(patch.name !== undefined ? { name: patch.name } : {}),
+					...(patch.email !== undefined ? { email: patch.email } : {}),
+					updatedAt: new Date(),
+				})
+				.where(eq(customers.id, customer.id))
+		}
 
-	// The dining facet follows the customer's contact (name and email), and a
-	// guest-only person is edited here directly.
-	if (guest && hasDiningFacet(access)) {
-		const guestPatch: Parameters<typeof updateGuestProfile>[2] = {
-			expectedVersion: patch.expectedVersion ?? guest.version,
-			actorId: access.actorId,
-		}
-		let touched = false
-		if (patch.name !== undefined) {
-			const { first, last } = splitName(patch.name)
-			guestPatch.firstName = first
-			guestPatch.lastName = last
-			touched = true
-		}
-		if (patch.email !== undefined) {
-			guestPatch.email = patch.email
-			touched = true
-		}
-		if (patch.phone !== undefined && !customer) {
-			guestPatch.phone = patch.phone
-			touched = true
-		}
-		if (editsAllergy) {
-			guestPatch.allergyNotes = patch.allergyNotes ?? null
-			touched = true
-		}
-		// Contact synced from a customer edit needs only the customer grant.
-		if (
-			touched &&
-			(customer ? access.canUpdateCustomers || editsAllergy : true)
-		) {
-			if (!customer && patch.expectedVersion === undefined) {
-				throw badRequest(
-					'expected_version_required',
-					'expectedVersion is required to edit a guest',
-				)
+		// The dining facet follows the customer's contact (name and email), and a
+		// guest-only person is edited here directly.
+		if (guest && hasDiningFacet(access)) {
+			const guestPatch: Parameters<typeof updateGuestProfile>[2] = {
+				expectedVersion: patch.expectedVersion ?? guest.version,
+				actorId: access.actorId,
 			}
-			await updateGuestProfile(db, guest.id, guestPatch)
+			let touched = false
+			if (patch.name !== undefined) {
+				const { first, last } = splitName(patch.name)
+				guestPatch.firstName = first
+				guestPatch.lastName = last
+				touched = true
+			}
+			if (patch.email !== undefined) {
+				guestPatch.email = patch.email
+				touched = true
+			}
+			if (patch.phone !== undefined && !customer) {
+				guestPatch.phone = patch.phone
+				touched = true
+			}
+			if (editsAllergy) {
+				guestPatch.allergyNotes = patch.allergyNotes ?? null
+				touched = true
+			}
+			// Contact synced from a customer edit needs only the customer grant.
+			if (
+				touched &&
+				(customer ? access.canUpdateCustomers || editsAllergy : true)
+			) {
+				if (!customer && patch.expectedVersion === undefined) {
+					throw badRequest(
+						'expected_version_required',
+						'expectedVersion is required to edit a guest',
+					)
+				}
+				await updateGuestProfile(tx, guest.id, guestPatch)
+			}
 		}
-	}
+	})
 	return person.canonicalKey
 }
 

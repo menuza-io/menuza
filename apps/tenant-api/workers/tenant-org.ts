@@ -6,8 +6,9 @@ import {
 import { migrate } from 'drizzle-orm/durable-sqlite/migrator'
 import {
 	schema,
+	registerTenantDb,
 	registerTenantDbTransactionRunner,
-	setTenantDbResolver,
+	unregisterTenantDb,
 	TENANT_ORG_ID_PATTERN,
 	type TenantDatabase,
 } from '@repo/tenant-db'
@@ -41,7 +42,6 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 	private db: DrizzleSqliteDODatabase<typeof schema> | null = null
 	private readonly app = createTenantApiApp()
 	private orgId: string | null = null
-	private resolverUsers = 0
 
 	private getOrgId() {
 		if (!this.orgId) {
@@ -73,35 +73,26 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 		// then tick against a database that no longer exists.
 		await this.ctx.storage.deleteAlarm()
 		await this.ctx.storage.deleteAll()
+		if (this.orgId && this.db) {
+			unregisterTenantDb(this.orgId, this.db as unknown as TenantDatabase)
+		}
 		this.db = null
 	}
 
 	/**
-	 * Points the tenant database resolver at this object's database for the
-	 * duration of `fn`. Several requests (and the alarm) can be in flight at
-	 * once, because the object yields at every await, so the resolver is
-	 * reference counted: the last one out clears it, never the first.
+	 * Registers this object's database for its org so `getTenantDb(orgId)`
+	 * resolves it. The registration is per org and outlives the request, so
+	 * work queued after the response (message delivery, journey emission)
+	 * still finds the database, and other objects in the same isolate never
+	 * see or clear it.
 	 */
-	private async withTenantDb<T>(
+	private useTenantDb<T>(
 		orgId: string,
 		db: DrizzleSqliteDODatabase<typeof schema>,
 		fn: () => Promise<T>,
 	): Promise<T> {
-		if (this.resolverUsers === 0) {
-			setTenantDbResolver(async (requestedOrgId) => {
-				if (requestedOrgId !== orgId) {
-					throw new Error('Tenant DB org mismatch')
-				}
-				return db as unknown as TenantDatabase
-			})
-		}
-		this.resolverUsers++
-		try {
-			return await fn()
-		} finally {
-			this.resolverUsers--
-			if (this.resolverUsers === 0) setTenantDbResolver(null)
-		}
+		registerTenantDb(orgId, db as unknown as TenantDatabase)
+		return fn()
 	}
 
 	async fetch(request: Request): Promise<Response> {
@@ -117,7 +108,7 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 		this.orgId = orgId
 
 		const db = await this.ensureDb()
-		const response = await this.withTenantDb(orgId, db, async () =>
+		const response = await this.useTenantDb(orgId, db, async () =>
 			this.app.fetch(request, this.env),
 		)
 		await this.maybeArmAlarm(request, response, orgId)
@@ -172,7 +163,7 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 		if (!orgId) return
 		this.orgId = orgId
 		const db = await this.ensureDb()
-		await this.withTenantDb(orgId, db, () =>
+		await this.useTenantDb(orgId, db, () =>
 			handleOrgAlarm({ storage, now: Date.now() }),
 		)
 	}

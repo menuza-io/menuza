@@ -42,6 +42,36 @@ export type ScoreCandidateInput = {
 	minTurnMin?: number
 }
 
+/**
+ * Candidate pools only depend on the slot when a service-availability rule has
+ * a `fromMin`/`toMin` sub-window, so the slot joins the cache key only then.
+ */
+function candidatePoolCacheKey(
+	serviceId: string | null | undefined,
+	channel: BookingChannel,
+	modes: AssignTablesInput['serviceTableModes'],
+	slotMin: number | undefined,
+): string {
+	const base = `${serviceId ?? ''}::${channel}`
+	if (!serviceId || slotMin === undefined || !modes) return base
+	const windowed = modes.some((rule) => {
+		const r = rule as {
+			serviceId?: string | null
+			service_id?: string | null
+			fromMin?: number | null
+			from_min?: number | null
+			toMin?: number | null
+			to_min?: number | null
+		}
+		if ((r.serviceId ?? r.service_id) !== serviceId) return false
+		return (
+			(r.fromMin ?? r.from_min ?? null) !== null ||
+			(r.toMin ?? r.to_min ?? null) !== null
+		)
+	})
+	return windowed ? `${base}::${slotMin}` : base
+}
+
 function candidateHasAttribute(
 	candidate: AssignCandidate,
 	attr: CandidateAttributeTag,
@@ -615,7 +645,12 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 
 	const candidatePoolCache =
 		input.candidatePoolCache ?? new Map<string, AssignCandidate[]>()
-	const primaryCacheKey = `${serviceId ?? ''}::${channel}`
+	const primaryCacheKey = candidatePoolCacheKey(
+		serviceId,
+		channel,
+		serviceTableModes,
+		slotMin,
+	)
 	let allCandidates = candidatePoolCache.get(primaryCacheKey)
 	if (!allCandidates) {
 		allCandidates = buildCandidates({
@@ -789,11 +824,18 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 	): Array<{ candidate: AssignCandidate; score: number }> => {
 		const bServiceId = booking.serviceId ?? serviceId
 		const bChannel = booking.channel ?? 'online'
-		const existingKey = `${bServiceId ?? ''}::${bChannel}::${booking.partySize}::${booking.areaId ?? ''}::${booking.seatingPreference ?? ''}`
+		const bSlotMin = booking.localStartMin ?? slotMin
+		const poolKey = candidatePoolCacheKey(
+			bServiceId,
+			bChannel,
+			serviceTableModes,
+			bSlotMin,
+		)
+		const existingKey = `${poolKey}::${booking.partySize}::${booking.areaId ?? ''}::${booking.seatingPreference ?? ''}`
 		const cached = existingCandidatesCache.get(existingKey)
 		if (cached) return cached
 
-		const cacheKey = `${bServiceId ?? ''}::${bChannel}`
+		const cacheKey = poolKey
 		let pool = candidatePoolCache.get(cacheKey)
 		if (!pool) {
 			pool = buildCandidates({
@@ -802,6 +844,7 @@ export function assignTables(input: AssignTablesInput): AssignTablesResult {
 				combinations,
 				serviceTableModes,
 				serviceId: bServiceId,
+				slotMin: bSlotMin,
 				channel: bChannel,
 			})
 			candidatePoolCache.set(cacheKey, pool)

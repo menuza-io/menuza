@@ -87,6 +87,7 @@
 	<string name="res_awaiting_payment">请在浏览器中完成支付后返回，本页会自动更新。</string>
 	<string name="res_payment_review">您的付款正在审核中。</string>
 	<string name="res_payment_refunded">此笔付款已退款。</string>
+	<string name="res_payment_failed">此笔付款未成功。点击“立即付款”重试。</string>
 	<string name="res_expired_title">此预订已过期</string>
 	<string name="res_expired_hold">餐桌保留时间已结束，请重新选择时间。</string>
 	<string name="res_expired_payment">支付时限已过，餐桌已释放。</string>

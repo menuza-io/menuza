@@ -66,4 +66,26 @@ describe('quoteWaitlistMin waitlist wait-time estimation', () => {
 		expect(quote.fittingPartiesAhead).toBe(1)
 		expect(quote.quotedWaitMin).toBe(35)
 	})
+
+	it('counts a party that is on the way as still ahead in line', () => {
+		const quote = quoteWaitlistMin({
+			partySize: 2,
+			nowMs,
+			tables,
+			combinations: [],
+			occupancies: [],
+			entriesAhead: [
+				{
+					id: 'wl_1',
+					partySize: 2,
+					status: 'on_the_way',
+					createdAt: nowMs - 10 * 60_000,
+				},
+			],
+			defaultTurnMin: 60,
+			bufferMin: 15,
+		})
+		expect(quote.positionInLine).toBe(2)
+		expect(quote.fittingPartiesAhead).toBe(1)
+	})
 })

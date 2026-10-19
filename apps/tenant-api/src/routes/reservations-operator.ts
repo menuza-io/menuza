@@ -3,7 +3,7 @@ import { getTenantDb, rsvExperiences } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
-import { json, readJsonBody, readQuery } from '../lib/http.ts'
+import { json, readQuery } from '../lib/http.ts'
 import {
 	requireReservationsLocation,
 	type ReservationsAuthContext,
@@ -101,39 +101,7 @@ reservationsOperatorRoutes.route('/book', operatorReservationsBookRoutes)
 // 3. Guests scope routes
 reservationsOperatorRoutes.route('/guests', operatorReservationsGuestsRoutes)
 
-// 4. Payments scope routes (reports run through the generic report token)
-const refundPaymentBodySchema = z.object({
-	locationId: z.string().trim().min(1).max(128),
-	paymentId: z.string().trim().min(1).max(128),
-})
-
-reservationsOperatorRoutes.post(
-	'/payments/refund',
-	rsvGuard({
-		scope: 'payments',
-		feature: 'payments',
-		write: true,
-		grant: RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
-	}),
-	async (c) => {
-		const ctx = getRsvAuth(c)
-		const orgErr = await ensureActiveOrgInNodeRegion(ctx)
-		if (orgErr) return orgErr
-
-		const parsed = await readJsonBody(c, refundPaymentBodySchema)
-		if ('error' in parsed) return parsed.error
-
-		const locCheck = await resolveLocationParam(c, ctx, parsed.data.locationId)
-		if (!locCheck.ok) return locCheck.response
-
-		return json({
-			ok: true,
-			orgId: ctx.orgId,
-			locationId: locCheck.locationId,
-			paymentId: parsed.data.paymentId,
-			status: 'refund_requested',
-		})
-	},
-)
+// 4. Payments scope routes live in operator-reservations-payments.ts (the
+// refund endpoint is `POST /payments/reservations/:id/refund`).
 
 export const reservationsOperatorRouter = reservationsOperatorRoutes

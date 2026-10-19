@@ -2999,11 +2999,13 @@ export const RSV_TAG_SYSTEM_KEY_VALUES = [
 export type RsvTagSystemKey = (typeof RSV_TAG_SYSTEM_KEY_VALUES)[number]
 
 export const RSV_RESERVATION_STATUS_VALUES = [
+	'requested',
 	'pending_payment',
 	'pending_approval',
 	'booked',
 	'confirmed',
 	'arrived',
+	'partially_arrived',
 	'partially_seated',
 	'seated',
 	'finished',

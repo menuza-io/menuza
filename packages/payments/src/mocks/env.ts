@@ -76,10 +76,10 @@ export function paymentsMockMode(env: PaymentsMockEnv): PaymentsMockMode {
 	if (!bundled()) return OFF
 	if (env.PAYMENTS_MOCK === 'false') return OFF
 	if (env.MOCKS !== 'true' && env.PAYMENTS_MOCK !== 'true') return OFF
-	if (/^sk_live_/.test(env.STRIPE_SECRET_KEY?.trim() ?? '')) {
+	if ((env.STRIPE_SECRET_KEY?.trim() ?? '').startsWith('sk_live_')) {
 		throw new Error('Refusing payments mock with a live Stripe key')
 	}
-	if (/^whsec_live_/.test(env.STRIPE_WEBHOOK_SECRET?.trim() ?? '')) {
+	if ((env.STRIPE_WEBHOOK_SECRET?.trim() ?? '').startsWith('whsec_live_')) {
 		throw new Error('Refusing payments mock with a live Stripe webhook secret')
 	}
 	if (

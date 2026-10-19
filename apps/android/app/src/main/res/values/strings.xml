@@ -87,6 +87,7 @@
 	<string name="res_awaiting_payment">Finish paying in your browser, then come back. This page updates by itself.</string>
 	<string name="res_payment_review">Your payment is being reviewed.</string>
 	<string name="res_payment_refunded">This payment was refunded.</string>
+	<string name="res_payment_failed">That payment did not go through. Tap Pay now to try again.</string>
 	<string name="res_expired_title">This booking expired</string>
 	<string name="res_expired_hold">Your table hold ran out. Please choose a time again.</string>
 	<string name="res_expired_payment">The payment window closed and the table was released.</string>

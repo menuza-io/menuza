@@ -156,6 +156,9 @@ class BookingFlowTests {
 		flow.paymentPolled(ResPaymentStatus("review", "pending_payment", null))
 		assertEquals(PayOutcome.REVIEW, (flow.state as FlowState.AwaitingPayment).outcome)
 
+		flow.paymentPolled(ResPaymentStatus("fee_failed", "pending_payment", null))
+		assertEquals(PayOutcome.FAILED, (flow.state as FlowState.AwaitingPayment).outcome)
+
 		flow.paymentPolled(ResPaymentStatus("paid", "booked", null))
 		val confirmed = flow.state as FlowState.Confirmed
 		assertEquals("paid", confirmed.booking.paymentStatus)

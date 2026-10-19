@@ -87,6 +87,7 @@
 	<string name="res_awaiting_payment">Schließen Sie die Zahlung im Browser ab und kehren Sie zurück. Diese Seite aktualisiert sich selbst.</string>
 	<string name="res_payment_review">Ihre Zahlung wird geprüft.</string>
 	<string name="res_payment_refunded">Diese Zahlung wurde erstattet.</string>
+	<string name="res_payment_failed">Die Zahlung ist fehlgeschlagen. Tippen Sie auf „Jetzt bezahlen“, um es erneut zu versuchen.</string>
 	<string name="res_expired_title">Diese Buchung ist abgelaufen</string>
 	<string name="res_expired_hold">Die Tischreservierung ist abgelaufen. Bitte wählen Sie erneut eine Zeit.</string>
 	<string name="res_expired_payment">Das Zahlungsfenster ist geschlossen, der Tisch wurde freigegeben.</string>

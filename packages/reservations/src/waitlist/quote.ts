@@ -52,7 +52,7 @@ const INACTIVE_OCCUPANCY_STATUSES = new Set([
 	'finished',
 ])
 
-const ACTIVE_WAITLIST_STATUSES = new Set(['waiting', 'notified'])
+const ACTIVE_WAITLIST_STATUSES = new Set(['waiting', 'notified', 'on_the_way'])
 
 /**
  * Pure waitlist wait-time estimator (`architecture.md` §6.9, `VAL-FND-006`).

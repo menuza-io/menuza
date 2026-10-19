@@ -256,6 +256,8 @@ export function transitionReservation(input: {
 	actor: ReservationActor
 	nowMs?: number
 	finishedAtMs?: number | null
+	/** Capacity options (e.g. `requestHoldsCapacity`) applied to both sides. */
+	capacity?: Omit<ConsumesCapacityOptions, 'nowMs'>
 }): TransitionResult {
 	const allowed = canTransition(input.from, input.to, input.actor, {
 		nowMs: input.nowMs,
@@ -271,8 +273,12 @@ export function transitionReservation(input: {
 		}
 	}
 
-	const wasConsuming = consumesCapacity(input.from)
-	const nowConsuming = consumesCapacity(input.to)
+	const capacityOpts: ConsumesCapacityOptions = {
+		...input.capacity,
+		nowMs: input.nowMs,
+	}
+	const wasConsuming = consumesCapacity(input.from, capacityOpts)
+	const nowConsuming = consumesCapacity(input.to, capacityOpts)
 
 	return {
 		ok: true,

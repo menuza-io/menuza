@@ -187,6 +187,19 @@ export function parseLocalTimestamp(
 	const hour = Number(match[4])
 	const minute = Number(match[5])
 	const second = match[6] ? Number(match[6]) : 0
+	// Reject values the calendar would silently roll over (Feb 31, 25:99).
+	const rolled = new Date(Date.UTC(year, month - 1, day))
+	if (
+		month < 1 ||
+		month > 12 ||
+		rolled.getUTCMonth() !== month - 1 ||
+		rolled.getUTCDate() !== day ||
+		hour > 23 ||
+		minute > 59 ||
+		second > 59
+	) {
+		throw new Error(`Invalid local timestamp: ${timestamp}`)
+	}
 	return (
 		zonedLocalToUtc(year, month, day, hour, minute, timeZone) + second * 1000
 	)

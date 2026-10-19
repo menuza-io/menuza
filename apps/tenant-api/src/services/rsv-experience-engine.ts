@@ -1,12 +1,14 @@
 import {
 	addDays,
 	assignTables,
+	buildEffectiveDay,
 	currentBusinessDate,
 	daysBetween,
 	experienceRemainingCovers,
 	experienceSeatingsOn,
 	formatHhmm,
 	instantToLocal,
+	instantInIntervals,
 	isGuestChannel,
 	localToInstant,
 	resolveServices,
@@ -355,6 +357,23 @@ export async function searchExperienceDay(
 	if (resolvedDay.closed) return NO_SLOTS('closed')
 	if (guest && resolvedDay.onlineClosed) return NO_SLOTS('online_closed')
 
+	// Location hours are the single source of truth for when the venue is
+	// open, exactly as for table availability: guests never see seatings on a
+	// closed day or outside the open intervals.
+	const effectiveDay = buildEffectiveDay({
+		businessDate,
+		hours: config.locationHours,
+		dayStartMin: settings.dayStartMin,
+		reservation: resolvedDay,
+	})
+	if (
+		guest &&
+		!effectiveDay.open &&
+		effectiveDay.source === 'location_closed'
+	) {
+		return NO_SLOTS('closed')
+	}
+
 	const scheduleInputs = schedules.map(toScheduleInput)
 	const seatings = experienceSeatingsOn(scheduleInputs, businessDate)
 	if (seatings.length === 0) return NO_SLOTS('full')
@@ -416,6 +435,7 @@ export async function searchExperienceDay(
 			state.timeZone,
 		)
 		if (startAt === null || startAt < earliestMs) continue
+		if (guest && !instantInIntervals(effectiveDay.intervals, startAt)) continue
 
 		if (remaining < partySize) {
 			soldOut.push(seating.seatingMin)

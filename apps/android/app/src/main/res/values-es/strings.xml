@@ -87,6 +87,7 @@
 	<string name="res_awaiting_payment">Termina el pago en el navegador y vuelve. Esta página se actualiza sola.</string>
 	<string name="res_payment_review">Tu pago está en revisión.</string>
 	<string name="res_payment_refunded">Este pago fue reembolsado.</string>
+	<string name="res_payment_failed">El pago no se completó. Toca «Pagar ahora» para volver a intentarlo.</string>
 	<string name="res_expired_title">Esta reserva ha caducado</string>
 	<string name="res_expired_hold">La retención de la mesa terminó. Elige una hora de nuevo.</string>
 	<string name="res_expired_payment">El plazo de pago terminó y la mesa se liberó.</string>

@@ -87,6 +87,7 @@
 	<string name="res_awaiting_payment">أكمل الدفع في المتصفح ثم عد إلى هنا. تتحدث هذه الصفحة تلقائيًا.</string>
 	<string name="res_payment_review">دفعتك قيد المراجعة.</string>
 	<string name="res_payment_refunded">تم استرداد هذه الدفعة.</string>
+	<string name="res_payment_failed">لم تتم هذه الدفعة. اضغط على «ادفع الآن» للمحاولة مرة أخرى.</string>
 	<string name="res_expired_title">انتهت صلاحية هذا الحجز</string>
 	<string name="res_expired_hold">انتهت مدة حجز الطاولة. يرجى اختيار وقت من جديد.</string>
 	<string name="res_expired_payment">انتهت مهلة الدفع وتم تحرير الطاولة.</string>

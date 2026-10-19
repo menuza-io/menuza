@@ -373,6 +373,7 @@ internal class ResConfirmedScreen(host: ScreenHost) : ResScreen(host) {
 				val note = when (state.outcome) {
 					PayOutcome.REVIEW -> R.string.res_payment_review
 					PayOutcome.REFUNDED -> R.string.res_payment_refunded
+					PayOutcome.FAILED -> R.string.res_payment_failed
 					else -> R.string.res_awaiting_payment
 				}
 				body.addRow(ctx.bodyText(palette, host.str(note), muted = true), 12f)
@@ -541,7 +542,13 @@ internal class ResWaitlistScreen(host: ScreenHost) : ResScreen(host) {
 			body.addRow(message, 12f)
 			body.addRow(
 				primary(host.str(R.string.res_waitlist_join), loading = rc.waitlistBusy) {
-					rc.joinWaitlist(rc.guestIdentity().firstName.ifBlank { rc.guestIdentity().lastName }, party, sms.isChecked)
+					// Same gate as booking: the waitlist never takes a nameless party.
+					val name = rc.guestIdentity().let { it.firstName.ifBlank { it.lastName } }
+					if (name.isBlank()) {
+						message.bind(host.str(R.string.res_err_verify))
+						return@primary
+					}
+					rc.joinWaitlist(name, party, sms.isChecked)
 				},
 				16f,
 			)

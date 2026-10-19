@@ -108,4 +108,11 @@ describe('business dates', () => {
 			businessDayStartMs('2026-03-08', 'Asia/Riyadh', 0)
 		expect(minutesBetween(0, day)).toBe(24 * 60)
 	})
+
+	it('rejects wall-clock values the calendar would roll over', () => {
+		expect(() => parseLocalTimestamp('2026-02-31T10:00', 'UTC')).toThrow()
+		expect(() => parseLocalTimestamp('2026-13-01T10:00', 'UTC')).toThrow()
+		expect(() => parseLocalTimestamp('2026-06-01T25:99', 'UTC')).toThrow()
+		expect(() => parseLocalTimestamp('2026-06-01T23:59', 'UTC')).not.toThrow()
+	})
 })

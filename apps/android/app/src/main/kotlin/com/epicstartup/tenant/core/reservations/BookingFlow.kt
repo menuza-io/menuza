@@ -44,7 +44,7 @@ sealed interface FlowError {
 }
 
 /** How the payment poll answer reads to a guest (mirrors `interpretPay` on Sites). */
-enum class PayOutcome { PAID, EXPIRED, REVIEW, REFUNDED, PENDING }
+enum class PayOutcome { PAID, EXPIRED, REVIEW, REFUNDED, FAILED, PENDING }
 
 object PaymentPoll {
 	val DELAYS_MS = longArrayOf(1_500, 2_500, 4_000, 6_000, 10_000)
@@ -59,6 +59,7 @@ object PaymentPoll {
 
 	fun interpret(status: ResPaymentStatus): PayOutcome = when {
 		status.paymentStatus in PAID -> PayOutcome.PAID
+		status.paymentStatus == "fee_failed" -> PayOutcome.FAILED
 		status.paymentStatus == "review" || status.paymentStatus == "disputed" -> PayOutcome.REVIEW
 		status.paymentStatus in REFUNDED -> PayOutcome.REFUNDED
 		status.reservationStatus in DEAD -> PayOutcome.EXPIRED

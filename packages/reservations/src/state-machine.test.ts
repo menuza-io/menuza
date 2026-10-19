@@ -145,4 +145,29 @@ describe('booking state machine, capacity consumption, undo rules, and quick act
 			}),
 		).not.toContain('undo_finish')
 	})
+
+	it('applies capacity options when a request holds capacity', () => {
+		const accepted = transitionReservation({
+			from: 'requested',
+			to: 'booked',
+			actor: 'operator',
+			capacity: { requestHoldsCapacity: true },
+		})
+		expect(accepted.ok && accepted.restoredCapacity).toBe(false)
+
+		const declined = transitionReservation({
+			from: 'requested',
+			to: 'declined',
+			actor: 'operator',
+			capacity: { requestHoldsCapacity: true },
+		})
+		expect(declined.ok && declined.releasedCapacity).toBe(true)
+
+		const plain = transitionReservation({
+			from: 'requested',
+			to: 'booked',
+			actor: 'operator',
+		})
+		expect(plain.ok && plain.restoredCapacity).toBe(true)
+	})
 })
