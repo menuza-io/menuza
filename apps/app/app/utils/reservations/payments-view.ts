@@ -204,6 +204,80 @@ export function refundableMinor(rows: readonly PaymentRowLike[]): number {
 		)
 }
 
+export type PaymentSummary = {
+	kind:
+		| 'deposit_paid'
+		| 'prepaid'
+		| 'pending'
+		| 'card_on_file'
+		| 'refund_pending'
+		| 'refunded'
+		| 'partly_refunded'
+		| 'fee_pending'
+		| 'fee_charged'
+		| 'fee_failed'
+		| 'review'
+		| 'disputed'
+		| 'none'
+	/** Money the line states, in minor units; `null` when it states none. */
+	amountMinor: number | null
+}
+
+const MONEY_IN_KINDS = ['deposit_charge', 'prepay_charge']
+const FEE_KINDS = ['no_show_fee_charge', 'cancel_fee_charge']
+const COLLECTED = ['succeeded', 'partially_refunded', 'refunded', 'disputed']
+
+/**
+ * The one-line status shown first in the payment panel: what state the
+ * booking's money is in and the amount that matters for it.
+ */
+export function paymentSummary(
+	paymentStatus: string,
+	rows: readonly PaymentRowLike[],
+): PaymentSummary {
+	const sum = (kinds: string[], pick: (row: PaymentRowLike) => number) =>
+		rows
+			.filter(
+				(row) => kinds.includes(row.kind) && COLLECTED.includes(row.status),
+			)
+			.reduce((total, row) => total + pick(row), 0)
+	const collected = sum(MONEY_IN_KINDS, (row) => row.amountMinor)
+	const refunded = sum(MONEY_IN_KINDS, (row) => row.refundedMinor)
+	const fees = sum(FEE_KINDS, (row) => row.amountMinor)
+	const prepaid = rows.some(
+		(row) => row.kind === 'prepay_charge' && COLLECTED.includes(row.status),
+	)
+	switch (paymentStatus) {
+		case 'paid':
+			return {
+				kind: prepaid ? 'prepaid' : 'deposit_paid',
+				amountMinor: collected,
+			}
+		case 'pending':
+			return { kind: 'pending', amountMinor: null }
+		case 'guaranteed':
+			return { kind: 'card_on_file', amountMinor: null }
+		case 'refund_pending':
+			return { kind: 'refund_pending', amountMinor: null }
+		case 'refunded':
+			return { kind: 'refunded', amountMinor: refunded || collected }
+		case 'partially_refunded':
+			return { kind: 'partly_refunded', amountMinor: refunded }
+		case 'fee_pending':
+			return { kind: 'fee_pending', amountMinor: null }
+		case 'fee_charged':
+			return { kind: 'fee_charged', amountMinor: fees }
+		case 'fee_failed':
+			return { kind: 'fee_failed', amountMinor: null }
+		case 'review':
+			return { kind: 'review', amountMinor: null }
+		case 'disputed':
+			return { kind: 'disputed', amountMinor: null }
+		default:
+			return { kind: 'none', amountMinor: null }
+	}
+}
+
 /** The fee a host can still charge: a no-show or a late cancel with a card on file. */
 export function feeKindFor(reservation: {
 	status: string

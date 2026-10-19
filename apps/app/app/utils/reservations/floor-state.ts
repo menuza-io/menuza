@@ -373,16 +373,23 @@ export function floorTablePlacement(
 }
 
 export type FloorTileLayout = {
-	/** `tight` tiles print the table, one compact status word and the party; `roomy` ones add time, timer, capacity and section. */
+	/** `tight` tiles print the table and one compact status word; `roomy` ones add time, timer, capacity and section. */
 	tier: 'tight' | 'roomy'
 	/** Lines the party name may wrap to before it is clamped. */
 	partyLines: 1 | 2
+	/** Width in px that text can use inside the tile (a round tile loses its corners). */
+	innerWidth: number
+	/** The party name fits on its own line; otherwise it lives in the title and aria-label. */
+	showParty: boolean
+	/** The booking time fits beside the status word. */
+	showTime: boolean
 }
 
 /**
- * What a tile can hold, from its own size (never from a fixed text width):
- * roomy needs 104x88 (a round tile loses its corners, so it needs 128x112),
- * and the party name gets a second line once the tile is 80 or more tall.
+ * What a tile can hold, from its own size in screen pixels (text never scales
+ * with the room, only the tile does): roomy needs 104x88 (a round tile loses
+ * its corners, so it needs 128x112). The party name needs 64px of inner width
+ * and room for a third line; the booking time needs 76px beside the status word.
  */
 export function floorTileLayout(
 	width: number,
@@ -391,9 +398,16 @@ export function floorTileLayout(
 ): FloorTileLayout {
 	const needW = isRound ? 128 : 104
 	const needH = isRound ? 112 : 88
+	const innerWidth = Math.floor(isRound ? width * 0.7 - 12 : width - 16)
+	const showParty = isRound
+		? innerWidth >= 64 && height >= 80
+		: innerWidth >= 64 && height >= 72
 	return {
 		tier: width >= needW && height >= needH ? 'roomy' : 'tight',
-		partyLines: height >= 80 ? 2 : 1,
+		partyLines: !isRound && height >= 96 ? 2 : 1,
+		innerWidth,
+		showParty,
+		showTime: innerWidth >= 76,
 	}
 }
 

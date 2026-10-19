@@ -14,7 +14,7 @@ import {
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 
 /**
  * Shared chrome for the list-plus-sheet settings screens (tables, sections):
@@ -26,6 +26,7 @@ export function SetupNotices({
 	errorMessage,
 	errorTestId,
 	onDismissError,
+	onRetry,
 	feedbackMessage,
 	feedbackTestId,
 	onDismissFeedback,
@@ -36,6 +37,8 @@ export function SetupNotices({
 	errorMessage?: string | null
 	errorTestId?: string
 	onDismissError?: () => void
+	/** Shown as a Retry button when the page's data could not be loaded. */
+	onRetry?: () => void
 	feedbackMessage?: string | null
 	feedbackTestId?: string
 	onDismissFeedback?: () => void
@@ -69,7 +72,18 @@ export function SetupNotices({
 					<AlertDescription>
 						<div className="flex items-center justify-between gap-3">
 							<span>{errorMessage}</span>
-							{onDismissError ? (
+							{onRetry ? (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={onRetry}
+									data-testid="setup-retry"
+								>
+									<Trans>Retry</Trans>
+								</Button>
+							) : null}
+							{onDismissError && !onRetry ? (
 								<DismissButton onClick={onDismissError} />
 							) : null}
 						</div>
@@ -173,4 +187,38 @@ export function ConfirmDialog({
 			</AlertDialogContent>
 		</AlertDialog>
 	)
+}
+
+/**
+ * Closing an edit sheet with unsaved edits asks first. Use `requestClose` for
+ * the sheet's own close, Escape, overlay click and Cancel button, and render
+ * `discardDialog` once next to the sheet. A save closes the sheet directly.
+ */
+export function useDiscardGuard(dirty: boolean, close: () => void) {
+	const [asking, setAsking] = useState(false)
+	const requestClose = () => {
+		if (dirty) setAsking(true)
+		else close()
+	}
+	const discardDialog = (
+		<ConfirmDialog
+			open={asking}
+			onClose={() => setAsking(false)}
+			title={<Trans>Discard your changes?</Trans>}
+			description={
+				<Trans>
+					You have unsaved edits. If you close now they are lost and nothing is
+					saved.
+				</Trans>
+			}
+			cancelLabel={<Trans>Keep editing</Trans>}
+			confirmLabel={<Trans>Discard changes</Trans>}
+			confirmTestId="setup-confirm-discard"
+			onConfirm={() => {
+				setAsking(false)
+				close()
+			}}
+		/>
+	)
+	return { requestClose, discardDialog }
 }

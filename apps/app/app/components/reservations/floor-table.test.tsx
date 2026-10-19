@@ -50,37 +50,53 @@ const render = (width: number, height: number, s = state()) =>
 	)
 
 describe('FloorTable', () => {
-	it('prints a compact status word and wrapping party line on a minimum tile', () => {
+	it('prints only the table and a short status word on a minimum tile', () => {
 		render(72, 72)
 		const tile = screen.getByTestId('floor-table-t1')
 		expect(tile.getAttribute('data-tile-tier')).toBe('tight')
-		// A tight tile shows the clock and the time, never a word that could
-		// break mid-word; the full status stays in the aria-label.
 		expect(screen.getByTestId('floor-table-status-text-t1').textContent).toBe(
-			'18:00',
+			'Held',
 		)
 		expect(tile.getAttribute('aria-label')).toContain('Reserved')
 		expect(screen.getByTestId('floor-table-label-t1').textContent).toBe('M12')
-		expect(
-			screen.getByTestId('floor-table-party-size-t1').textContent,
-		).toContain('6p')
-		expect(tile.innerHTML).toContain('line-clamp-1')
+		// The party does not fit: its full name and size live in the title.
+		expect(screen.queryByTestId('floor-table-guest-t1')).toBeNull()
+		expect(tile.getAttribute('title')).toContain('Tariq Al Mansouri (6)')
 	})
 
-	it('adds the time and a two-line party name when the tile has room', () => {
+	it('adds the party line and the time when the tile has room', () => {
 		render(120, 96)
 		const tile = screen.getByTestId('floor-table-t1')
 		expect(tile.getAttribute('data-tile-tier')).toBe('roomy')
 		expect(
 			screen.getByTestId('floor-table-status-text-t1').textContent,
 		).toContain('18:00')
+		expect(screen.getByTestId('floor-table-guest-t1').textContent).toBe(
+			'Tariq M.',
+		)
 		expect(tile.innerHTML).toContain('line-clamp-2')
+	})
+
+	it('never scales its text with the tile (fixed readable type)', () => {
+		render(200, 160)
+		const tile = screen.getByTestId('floor-table-t1')
+		expect(tile.innerHTML).not.toMatch(/text-\[|scale\(/)
+		expect(screen.getByTestId('floor-table-label-t1').className).toContain(
+			'text-sm',
+		)
 	})
 
 	it('shows Free for an open table with no booking', () => {
 		render(88, 88, state({ nextReservation: null, reservedAtHhmm: null }))
 		expect(screen.getByTestId('floor-table-status-text-t1').textContent).toBe(
 			'Free',
+		)
+	})
+
+	it('uses Over, not a truncated Overtime', () => {
+		render(88, 88, state({ liveStatus: 'overtime' }))
+		expect(screen.getByTestId('floor-table-status-text-t1').textContent).toBe(
+			'Over',
 		)
 	})
 })

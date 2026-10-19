@@ -26,7 +26,10 @@ export function TodayWaitlistCard({
 		.sort((a, b) => a.position - b.position)
 
 	return (
-		<Card className="flex flex-col" data-testid="today-waitlist-card">
+		<Card
+			className="flex min-w-0 flex-col max-md:w-[88%] max-md:shrink-0 max-md:snap-start"
+			data-testid="today-waitlist-card"
+		>
 			<CardHeader className="pb-2">
 				<CardTitle className="flex items-center justify-between text-base">
 					<span>

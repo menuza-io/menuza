@@ -93,8 +93,9 @@ export function WaitlistSettingsScreen({
 			const next = await fetchWaitlistSettings(client, locationId)
 			setSaved(next)
 			setDraft(draftFor(next))
-		} catch (err) {
-			setLoadError(extractApiErrorMessage(err, i18n._(LOAD_FAILED)))
+		} catch {
+			// Plain copy only: the server's own wording is never shown here.
+			setLoadError(i18n._(LOAD_FAILED))
 		} finally {
 			setLoading(false)
 		}

@@ -18,6 +18,7 @@ import {
 	StatusLabel,
 } from '#app/components/reservations/status-style.tsx'
 import { type DayReservationView } from '#app/utils/reservations/book-api.ts'
+import { guestsCountLabel } from '#app/utils/reservations/count-labels.ts'
 import {
 	canMarkRunningLate,
 	HOST_ACTION_LABELS,
@@ -106,152 +107,169 @@ export function TodayPartyCard({
 	const hasActions = canManage && Boolean(primary?.to || showMenu)
 
 	return (
-		<div
-			className={cn(
-				'bg-background flex min-w-0 items-start gap-3 rounded-lg border p-3',
-				kind === 'finished' && 'bg-muted/20',
-			)}
-			data-testid={rowTestId}
-		>
-			<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-				<Button
-					type="button"
-					variant="link"
-					className={cn(
-						'h-auto min-w-0 justify-start p-0 text-start text-sm font-semibold whitespace-normal hover:underline focus-visible:underline',
-						'min-h-8 max-md:min-h-11 pointer-coarse:min-h-11',
-						style.strike && 'line-through',
-					)}
-					onClick={() => onOpenDetail(rsv.id)}
-					data-testid={`today-open-detail-${rsv.id}`}
-				>
-					<span className="wrap-anywhere">
-						{kind === 'seated' && tableLabels
-							? `${tableLabels} · `
-							: `${rsv.hhmm} · `}
-						{guest} ({size})
-					</span>
-				</Button>
-
-				<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-					<StatusLabel status={rsv.status} />
-					{kind === 'seated' ? (
+		<div className="@container/card min-w-0">
+			<div
+				className={cn(
+					'bg-background flex min-w-0 flex-col items-stretch gap-2 rounded-lg border p-3 @[14rem]/card:flex-row @[14rem]/card:items-start @[14rem]/card:gap-3',
+					kind === 'finished' && 'bg-muted/20',
+				)}
+				data-testid={rowTestId}
+			>
+				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
+					<div className="flex min-w-0 flex-col">
 						<span
-							className={cn('tabular-nums', overTurn && 'text-warning')}
-							data-testid={`today-elapsed-${rsv.id}`}
+							className="text-muted-foreground flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-xs"
+							data-testid={`today-time-${rsv.id}`}
 						>
-							{t`${elapsed}m / ${planned}m`}
+							<span className="text-foreground font-medium tabular-nums">
+								{kind === 'seated' && tableLabels ? tableLabels : rsv.hhmm}
+							</span>
+							<span aria-hidden="true">·</span>
+							<span>{guestsCountLabel(size)}</span>
 						</span>
-					) : tableLabels ? (
-						<span>{tableLabels}</span>
-					) : null}
-					{kind === 'seated' && rsv.serverLabel ? (
-						<span>{rsv.serverLabel}</span>
-					) : null}
-					{rsv.channel ? (
-						<span data-testid={`today-channel-${rsv.id}`}>
-							{enumLabel(tx, CHANNEL_LABELS, rsv.channel)}
-						</span>
-					) : null}
-				</div>
-
-				{attention || rsv.paymentStatus !== 'none' ? (
-					<div className="flex flex-wrap items-center gap-1">
-						{attention ? (
-							<Badge variant={attention.variant}>{attention.label}</Badge>
-						) : null}
-						<PaymentBadge
-							paymentStatus={rsv.paymentStatus}
-							experience={Boolean(rsv.experienceId)}
-						/>
-					</div>
-				) : null}
-
-				{kind !== 'finished' ? <GuestFlags reservation={rsv} /> : null}
-
-				{kind !== 'finished' && noteBits.length > 0 ? (
-					<p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-						<Icon name="info" className="size-3.5 shrink-0" />
-						<span className="truncate">{noteBits.join(' · ')}</span>
-					</p>
-				) : null}
-			</div>
-
-			{hasActions ? (
-				<div
-					className="flex w-28 shrink-0 flex-col items-stretch gap-1"
-					data-testid={`today-actions-${rsv.id}`}
-				>
-					{primary && primary.to ? (
 						<Button
 							type="button"
-							size="sm"
-							variant={primary.action === 'seat' ? 'default' : 'outline'}
+							variant="link"
 							className={cn(
-								'h-8 max-md:h-11 pointer-coarse:h-11',
-								'w-full min-w-0 px-2',
+								'h-auto min-w-0 justify-start p-0 text-start text-sm font-semibold whitespace-normal hover:underline focus-visible:underline',
+								'min-h-8 max-md:min-h-11 pointer-coarse:min-h-11',
+								style.strike && 'line-through',
 							)}
-							disabled={busy}
-							onClick={() => onAction(rsv, primary)}
-							data-testid={`${ACTION_TEST_ID[primary.action] ?? 'today-action'}-${rsv.id}`}
+							onClick={() => onOpenDetail(rsv.id)}
+							data-testid={`today-open-detail-${rsv.id}`}
 						>
-							{primary.action === 'seat' || primary.action === 'finish' ? (
-								<Icon name="check" className="size-3.5" />
-							) : null}
-							<span className="truncate">
-								{tx(HOST_ACTION_LABELS[primary.action])}
+							<span className="line-clamp-2 wrap-anywhere" title={guest}>
+								{guest}
 							</span>
 						</Button>
-					) : null}
-					{showMenu ? (
-						<DropdownMenu>
-							<DropdownMenuTrigger
-								render={
-									<Button
-										type="button"
-										size="icon"
-										variant="ghost"
-										className={cn(
-											'size-8 max-md:size-11 pointer-coarse:size-11',
-											'self-end',
-										)}
-										aria-label={t`More actions for ${guest}`}
-										disabled={busy}
-										data-testid={`today-menu-${rsv.id}`}
-									>
-										<Icon name="more-horizontal" className="size-4" />
-									</Button>
-								}
+					</div>
+
+					<div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+						<StatusLabel status={rsv.status} />
+						{kind === 'seated' ? (
+							<span
+								className={cn('tabular-nums', overTurn && 'text-warning')}
+								data-testid={`today-elapsed-${rsv.id}`}
+							>
+								{t`${elapsed}m / ${planned}m`}
+							</span>
+						) : tableLabels ? (
+							<span>{tableLabels}</span>
+						) : null}
+						{kind === 'seated' && rsv.serverLabel ? (
+							<span>{rsv.serverLabel}</span>
+						) : null}
+						{rsv.channel ? (
+							<span data-testid={`today-channel-${rsv.id}`}>
+								{enumLabel(tx, CHANNEL_LABELS, rsv.channel)}
+							</span>
+						) : null}
+					</div>
+
+					{attention || rsv.paymentStatus !== 'none' ? (
+						<div className="flex flex-wrap items-center gap-1">
+							{attention ? (
+								<Badge variant={attention.variant}>{attention.label}</Badge>
+							) : null}
+							<PaymentBadge
+								paymentStatus={rsv.paymentStatus}
+								experience={Boolean(rsv.experienceId)}
 							/>
-							<DropdownMenuContent align="end">
-								{secondary.map((item) => (
-									<DropdownMenuItem
-										key={item.action}
-										onClick={() =>
-											item.to ? onAction(rsv, item) : onOpenDetail(rsv.id)
-										}
-										data-testid={`today-menu-${item.action}-${rsv.id}`}
-									>
-										{tx(HOST_ACTION_LABELS[item.action])}
-									</DropdownMenuItem>
-								))}
-								{canMarkRunningLate(rsv.status) ? (
-									<DropdownMenuItem
-										onClick={() => onRunningLate(rsv, 15)}
-										data-testid={`today-late-${rsv.id}`}
-									>
-										{t`Running late: add 15 minutes`}
-									</DropdownMenuItem>
-								) : null}
-								{secondary.length > 0 ? <DropdownMenuSeparator /> : null}
-								<DropdownMenuItem onClick={() => onOpenDetail(rsv.id)}>
-									{t`Open details`}
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						</div>
+					) : null}
+
+					{kind !== 'finished' ? <GuestFlags reservation={rsv} /> : null}
+
+					{kind !== 'finished' && noteBits.length > 0 ? (
+						<p
+							className="text-muted-foreground flex items-start gap-1.5 text-xs"
+							title={noteBits.join(' · ')}
+							data-testid={`today-notes-${rsv.id}`}
+						>
+							<Icon name="info" className="mt-px size-3.5 shrink-0" />
+							<span className="line-clamp-2 min-w-0 wrap-anywhere">
+								{noteBits.join(' · ')}
+							</span>
+						</p>
 					) : null}
 				</div>
-			) : null}
+
+				{hasActions ? (
+					<div
+						className="flex shrink-0 flex-row items-center gap-1 @[14rem]/card:w-24 @[14rem]/card:flex-col @[14rem]/card:items-stretch"
+						data-testid={`today-actions-${rsv.id}`}
+					>
+						{primary && primary.to ? (
+							<Button
+								type="button"
+								size="sm"
+								variant={primary.action === 'seat' ? 'default' : 'outline'}
+								className={cn(
+									'h-8 max-md:h-11 pointer-coarse:h-11',
+									'w-full min-w-0 flex-1 px-2 @[14rem]/card:flex-none',
+								)}
+								disabled={busy}
+								onClick={() => onAction(rsv, primary)}
+								data-testid={`${ACTION_TEST_ID[primary.action] ?? 'today-action'}-${rsv.id}`}
+							>
+								{primary.action === 'seat' || primary.action === 'finish' ? (
+									<Icon name="check" className="size-3.5" />
+								) : null}
+								<span className="truncate">
+									{tx(HOST_ACTION_LABELS[primary.action])}
+								</span>
+							</Button>
+						) : null}
+						{showMenu ? (
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											className={cn(
+												'size-8 max-md:size-11 pointer-coarse:size-11',
+												'@[14rem]/card:self-end',
+											)}
+											aria-label={t`More actions for ${guest}`}
+											disabled={busy}
+											data-testid={`today-menu-${rsv.id}`}
+										>
+											<Icon name="more-horizontal" className="size-4" />
+										</Button>
+									}
+								/>
+								<DropdownMenuContent align="end">
+									{secondary.map((item) => (
+										<DropdownMenuItem
+											key={item.action}
+											onClick={() =>
+												item.to ? onAction(rsv, item) : onOpenDetail(rsv.id)
+											}
+											data-testid={`today-menu-${item.action}-${rsv.id}`}
+										>
+											{tx(HOST_ACTION_LABELS[item.action])}
+										</DropdownMenuItem>
+									))}
+									{canMarkRunningLate(rsv.status) ? (
+										<DropdownMenuItem
+											onClick={() => onRunningLate(rsv, 15)}
+											data-testid={`today-late-${rsv.id}`}
+										>
+											{t`Running late: add 15 minutes`}
+										</DropdownMenuItem>
+									) : null}
+									{secondary.length > 0 ? <DropdownMenuSeparator /> : null}
+									<DropdownMenuItem onClick={() => onOpenDetail(rsv.id)}>
+										{t`Open details`}
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						) : null}
+					</div>
+				) : null}
+			</div>
 		</div>
 	)
 }

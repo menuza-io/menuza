@@ -124,6 +124,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 	const [tables, setTables] = useState<TableDto[]>([])
 
 	const [loading, setLoading] = useState(true)
+	const [loadFailed, setLoadFailed] = useState(false)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [conflictBanner, setConflictBanner] = useState<string | null>(null)
 	const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
@@ -178,6 +179,7 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 		}
 		setLoading(true)
 		setErrorMessage(null)
+		setLoadFailed(false)
 		try {
 			const [sdRes, blkRes, svcRes, areasRes, tablesRes] = await Promise.all([
 				fetchSpecialDays(client, selectedLocationId),
@@ -219,12 +221,11 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 						: activeAreas[0]!.id,
 				)
 			}
-		} catch (err) {
+		} catch {
+			// Plain copy only: the server's own wording is never shown here.
+			setLoadFailed(true)
 			setErrorMessage(
-				extractApiErrorMessage(
-					err,
-					_(msg`Failed to load special days and table blocks.`),
-				),
+				_(msg`The special days and table blocks could not be loaded.`),
 			)
 		} finally {
 			setLoading(false)
@@ -506,7 +507,22 @@ export default function ReservationsSettingsSpecialDaysRoute() {
 					variant="destructive"
 					data-testid="setup-special-days-error-banner"
 				>
-					<AlertDescription>{errorMessage}</AlertDescription>
+					<AlertDescription>
+						<div className="flex items-center justify-between gap-3">
+							<span>{errorMessage}</span>
+							{loadFailed ? (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => void loadAll()}
+									data-testid="setup-retry"
+								>
+									<Trans>Retry</Trans>
+								</Button>
+							) : null}
+						</div>
+					</AlertDescription>
 				</Alert>
 			) : null}
 

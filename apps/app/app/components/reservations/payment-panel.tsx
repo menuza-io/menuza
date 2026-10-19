@@ -34,6 +34,7 @@ import {
 	PAYMENT_ROW_STATUS_LABELS,
 	paymentErrorMessage,
 	parseMoneyInput,
+	paymentSummary,
 	refundableMinor,
 } from '#app/utils/reservations/payments-view.ts'
 import { type ReservationsScopedClient } from '#app/utils/reservations/reservations-client.ts'
@@ -195,6 +196,39 @@ export function PaymentPanel({
 		feeKind === 'no_show_fee'
 			? (policy?.noShowFeeMinor ?? 0)
 			: (policy?.lateCancelFeeMinor ?? 0)
+	const summary = paymentSummary(reservation.paymentStatus, payments)
+	const summaryAmount =
+		summary.amountMinor !== null ? money(summary.amountMinor) : ''
+	const summaryText = (() => {
+		switch (summary.kind) {
+			case 'deposit_paid':
+				return t`Deposit paid ${summaryAmount}`
+			case 'prepaid':
+				return t`Prepaid ${summaryAmount}`
+			case 'pending':
+				return t`Payment pending`
+			case 'card_on_file':
+				return t`Card on file, nothing charged`
+			case 'refund_pending':
+				return t`Refund processing`
+			case 'refunded':
+				return t`Refunded ${summaryAmount}`
+			case 'partly_refunded':
+				return t`Partly refunded ${summaryAmount}`
+			case 'fee_pending':
+				return t`Fee due`
+			case 'fee_charged':
+				return t`Fee charged ${summaryAmount}`
+			case 'fee_failed':
+				return t`Fee charge failed`
+			case 'review':
+				return t`Payment needs review`
+			case 'disputed':
+				return t`Payment disputed`
+			default:
+				return null
+		}
+	})()
 	const refundable = refundableMinor(payments)
 	const canRefund = canAct && refundable > 0
 
@@ -419,6 +453,16 @@ export function PaymentPanel({
 				</h3>
 				<PaymentBadge paymentStatus={reservation.paymentStatus} />
 			</div>
+
+			{summaryText ? (
+				<p
+					className="text-sm font-medium tabular-nums"
+					data-testid="payment-summary"
+					data-summary-kind={summary.kind}
+				>
+					{summaryText}
+				</p>
+			) : null}
 
 			{notice ? (
 				<Alert data-testid="payment-panel-notice" role="status">

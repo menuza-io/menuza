@@ -75,3 +75,12 @@ describe('WalkInDialog idempotency key', () => {
 		expect(second).not.toBe(first)
 	})
 })
+
+describe('WalkInDialog focus', () => {
+	it('opens on the chip of the current party size', async () => {
+		renderDialog()
+		await waitFor(() =>
+			expect(screen.getByTestId('walk-in-size-2')).toHaveFocus(),
+		)
+	})
+})

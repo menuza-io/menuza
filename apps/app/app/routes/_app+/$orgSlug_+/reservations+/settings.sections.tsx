@@ -30,10 +30,12 @@ import {
 } from 'react'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
 import {
 	ConfirmDialog,
 	EditSheet,
 	SetupNotices,
+	useDiscardGuard,
 } from '#app/components/reservations/settings/setup-list-chrome.tsx'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
@@ -114,6 +116,7 @@ export default function ReservationsSettingsSectionsRoute() {
 	const [areas, setAreas] = useState<DiningAreaDto[]>([])
 	const [services, setServices] = useState<ServicePeriodDto[]>([])
 	const [loading, setLoading] = useState(true)
+	const [loadFailed, setLoadFailed] = useState(false)
 	const [saving, setSaving] = useState(false)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
@@ -133,6 +136,7 @@ export default function ReservationsSettingsSectionsRoute() {
 		}
 		setLoading(true)
 		setErrorMessage(null)
+		setLoadFailed(false)
 		try {
 			const [layoutsRes, tablesRes, areasRes, servicesRes] = await Promise.all([
 				listSectionLayouts(client, selectedLocationId),
@@ -144,12 +148,11 @@ export default function ReservationsSettingsSectionsRoute() {
 			setTables(tablesRes.tables.filter((t) => !t.archivedAt))
 			setAreas(areasRes.areas.filter((a) => !a.archivedAt))
 			setServices(servicesRes.services.filter((s) => !s.archivedAt))
-		} catch (err) {
+		} catch {
+			// Plain copy only: the server's own wording is never shown here.
+			setLoadFailed(true)
 			setErrorMessage(
-				extractApiErrorMessage(
-					err,
-					_(msg`Failed to load section layouts for this location.`),
-				),
+				_(msg`The section layouts for this location could not be loaded.`),
 			)
 		} finally {
 			setLoading(false)
@@ -357,6 +360,15 @@ export default function ReservationsSettingsSectionsRoute() {
 	// While the sheet is open it covers the page, so the error shows inside it.
 	const sheetError = sheetOpen ? errorMessage : null
 	const pageError = sheetOpen ? null : errorMessage
+	const dirty = useSheetDirty(
+		sheet.mode === 'closed'
+			? null
+			: sheet.mode === 'edit'
+				? `edit:${sheet.layoutId}`
+				: 'create',
+		[layoutName, layoutServiceId, draftSections],
+	)
+	const { requestClose, discardDialog } = useDiscardGuard(dirty, closeSheet)
 
 	// Map tableId -> section index & name for showing ownership and preventing duplicates
 	const ownerByTableId = new Map<string, { idx: number; name: string }>()
@@ -376,6 +388,7 @@ export default function ReservationsSettingsSectionsRoute() {
 				errorMessage={pageError}
 				errorTestId="sections-error-banner"
 				onDismissError={() => setErrorMessage(null)}
+				onRetry={loadFailed ? () => void loadAll() : undefined}
 				feedbackMessage={feedbackMessage}
 				feedbackTestId="sections-feedback-banner"
 				onDismissFeedback={() => setFeedbackMessage(null)}
@@ -553,7 +566,7 @@ export default function ReservationsSettingsSectionsRoute() {
 				)}
 			</Frame>
 
-			<EditSheet open={sheetOpen} onClose={closeSheet} wide>
+			<EditSheet open={sheetOpen} onClose={requestClose} wide>
 				<SheetForm
 					title={
 						sheet.mode === 'edit' ? (
@@ -574,7 +587,7 @@ export default function ReservationsSettingsSectionsRoute() {
 							<Button
 								type="button"
 								variant="outline"
-								onClick={closeSheet}
+								onClick={requestClose}
 								data-testid="section-layout-cancel-edit"
 							>
 								<Trans>Cancel</Trans>
@@ -791,6 +804,8 @@ export default function ReservationsSettingsSectionsRoute() {
 					</div>
 				</SheetForm>
 			</EditSheet>
+
+			{discardDialog}
 
 			<ConfirmDialog
 				open={pendingDelete !== null}

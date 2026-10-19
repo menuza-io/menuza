@@ -30,8 +30,10 @@ import {
 } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
 import {
 	ConfirmDialog,
+	useDiscardGuard,
 	EditSheet,
 	SetupNotices,
 } from '#app/components/reservations/settings/setup-list-chrome.tsx'
@@ -126,6 +128,7 @@ export default function ReservationsSettingsTablesRoute() {
 		null,
 	)
 	const [fieldError, setFieldError] = useState<string | null>(null)
+	const [loadFailed, setLoadFailed] = useState(false)
 
 	// Area form
 	const [areaName, setAreaName] = useState('')
@@ -156,6 +159,7 @@ export default function ReservationsSettingsTablesRoute() {
 		}
 		setLoading(true)
 		setErrorMessage(null)
+		setLoadFailed(false)
 		try {
 			const [areasRes, tablesRes, combosRes] = await Promise.all([
 				fetchAreas(client, selectedLocationId),
@@ -171,12 +175,11 @@ export default function ReservationsSettingsTablesRoute() {
 			setAreas(activeAreas)
 			setTables(activeTables)
 			setCombos(combosRes.combos ?? [])
-		} catch (err) {
+		} catch {
+			// Plain copy only: the server's own wording is never shown here.
+			setLoadFailed(true)
 			setErrorMessage(
-				extractApiErrorMessage(
-					err,
-					_(msg`Failed to load areas, tables, and combinations.`),
-				),
+				_(msg`The areas, tables and combinations could not be loaded.`),
 			)
 		} finally {
 			setLoading(false)
@@ -534,6 +537,31 @@ export default function ReservationsSettingsTablesRoute() {
 	}))
 
 	const sheetOpen = sheet.kind !== 'closed'
+	const sheetId =
+		sheet.kind === 'closed'
+			? null
+			: sheet.kind === 'area'
+				? `area:${sheet.areaId ?? 'new'}`
+				: sheet.kind === 'table'
+					? `table:${sheet.tableId ?? 'new'}`
+					: 'combo'
+	const dirty = useSheetDirty(
+		sheetId,
+		sheet.kind === 'area'
+			? [areaName, areaNameAr, areaFloorLabel, areaOutdoor, areaOnline]
+			: sheet.kind === 'table'
+				? [
+						tableAreaId,
+						tableLabel,
+						tableMinCovers,
+						tableMaxCovers,
+						tableShape,
+						tableCombinable,
+						tableOnline,
+					]
+				: [comboName, comboMinCovers, comboMaxCovers, comboTableIds],
+	)
+	const { requestClose, discardDialog } = useDiscardGuard(dirty, closeSheet)
 	// While a sheet is open it covers the page, so errors show inside it.
 	const sheetNotices = (
 		<SetupNotices
@@ -592,6 +620,7 @@ export default function ReservationsSettingsTablesRoute() {
 				errorMessage={sheetOpen ? null : errorMessage}
 				errorTestId="setup-tables-error-banner"
 				onDismissError={() => setErrorMessage(null)}
+				onRetry={loadFailed ? () => void loadAll() : undefined}
 				feedbackMessage={feedbackMessage}
 				feedbackTestId="setup-tables-feedback-banner"
 				onDismissFeedback={() => setFeedbackMessage(null)}
@@ -1083,7 +1112,7 @@ export default function ReservationsSettingsTablesRoute() {
 			</Frame>
 
 			{/* Area sheet */}
-			<EditSheet open={sheet.kind === 'area'} onClose={closeSheet}>
+			<EditSheet open={sheet.kind === 'area'} onClose={requestClose}>
 				<SheetForm
 					title={
 						sheet.kind === 'area' && sheet.areaId ? (
@@ -1096,7 +1125,7 @@ export default function ReservationsSettingsTablesRoute() {
 					footer={
 						<SheetFooterButtons
 							saving={saving}
-							onCancel={closeSheet}
+							onCancel={requestClose}
 							submitTestId={
 								sheet.kind === 'area' && sheet.areaId
 									? 'setup-save-area-edit-button'
@@ -1159,7 +1188,7 @@ export default function ReservationsSettingsTablesRoute() {
 			</EditSheet>
 
 			{/* Table sheet */}
-			<EditSheet open={sheet.kind === 'table'} onClose={closeSheet}>
+			<EditSheet open={sheet.kind === 'table'} onClose={requestClose}>
 				<SheetForm
 					title={
 						sheet.kind === 'table' && sheet.tableId ? (
@@ -1172,7 +1201,7 @@ export default function ReservationsSettingsTablesRoute() {
 					footer={
 						<SheetFooterButtons
 							saving={saving}
-							onCancel={closeSheet}
+							onCancel={requestClose}
 							submitTestId={
 								sheet.kind === 'table' && sheet.tableId
 									? 'setup-save-table-edit-button'
@@ -1263,7 +1292,7 @@ export default function ReservationsSettingsTablesRoute() {
 			</EditSheet>
 
 			{/* Combination sheet */}
-			<EditSheet open={sheet.kind === 'combo'} onClose={closeSheet}>
+			<EditSheet open={sheet.kind === 'combo'} onClose={requestClose}>
 				<SheetForm
 					title={<Trans>New table combination</Trans>}
 					description={<Trans>Choose at least two combinable tables.</Trans>}
@@ -1271,7 +1300,7 @@ export default function ReservationsSettingsTablesRoute() {
 					footer={
 						<SheetFooterButtons
 							saving={saving}
-							onCancel={closeSheet}
+							onCancel={requestClose}
 							submitTestId="setup-add-combo-button"
 							createLabel={<Trans>Create combination</Trans>}
 							isEdit={false}
@@ -1346,6 +1375,8 @@ export default function ReservationsSettingsTablesRoute() {
 					</div>
 				</SheetForm>
 			</EditSheet>
+
+			{discardDialog}
 
 			<ConfirmDialog
 				open={pendingConfirm !== null}

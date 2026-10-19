@@ -79,6 +79,7 @@ export function WalkInDialog({
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const keyRef = useRef(newSubmitKey('walkin'))
+	const sizeGroupRef = useRef<HTMLDivElement | null>(null)
 
 	useEffect(() => {
 		if (!open) return
@@ -92,6 +93,20 @@ export function WalkInDialog({
 		setError(null)
 		keyRef.current = newSubmitKey('walkin')
 	}, [initialPartySize, initialTableId, open])
+
+	// Land on the party-size row (the chip for the current size, else the typed
+	// number) so a host can pick a size and press Enter.
+	useEffect(() => {
+		if (!open) return
+		const id = window.setTimeout(() => {
+			const group = sizeGroupRef.current
+			const target =
+				group?.querySelector<HTMLElement>('button[aria-pressed="true"]') ??
+				group?.querySelector<HTMLElement>('input')
+			target?.focus()
+		}, 0)
+		return () => window.clearTimeout(id)
+	}, [open])
 
 	// Sort candidate tables: open tables that fit partySize first, then other open tables, then occupied
 	const sortedTables = [...tableStates].sort((a, b) => {
@@ -184,6 +199,7 @@ export function WalkInDialog({
 							<Trans>Party Size</Trans>
 						</span>
 						<div
+							ref={sizeGroupRef}
 							role="group"
 							aria-labelledby="walk-in-party-label"
 							className="flex flex-wrap items-center gap-2"

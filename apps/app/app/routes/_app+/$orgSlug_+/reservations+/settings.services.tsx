@@ -49,6 +49,8 @@ import {
 } from 'react'
 import { toast } from 'sonner'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import { useSheetDirty } from '#app/components/reservations/settings/dirty.ts'
+import { useDiscardGuard } from '#app/components/reservations/settings/setup-list-chrome.tsx'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import { SheetForm } from '#app/components/staff/sheet-frame.tsx'
 import { SwitchField } from '#app/components/staff/switch-field.tsx'
@@ -239,6 +241,7 @@ export default function ReservationsSettingsServicesRoute() {
 	const [onlinePartyMax, setOnlinePartyMax] = useState(8)
 
 	const [loading, setLoading] = useState(true)
+	const [loadFailed, setLoadFailed] = useState(false)
 	const [busy, setBusy] = useState(false)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [conflictBanner, setConflictBanner] = useState<string | null>(null)
@@ -278,6 +281,7 @@ export default function ReservationsSettingsServicesRoute() {
 		}
 		setLoading(true)
 		setErrorMessage(null)
+		setLoadFailed(false)
 		try {
 			const [
 				settingsRes,
@@ -325,10 +329,10 @@ export default function ReservationsSettingsServicesRoute() {
 			if (activeAreas.length > 0) {
 				setAvailTargetId((prev) => prev || activeAreas[0]!.id)
 			}
-		} catch (err) {
-			setErrorMessage(
-				extractApiErrorMessage(err, _(msg`Failed to load services setup.`)),
-			)
+		} catch {
+			// Plain copy only: the server's own wording is never shown here.
+			setLoadFailed(true)
+			setErrorMessage(_(msg`The services setup could not be loaded.`))
 		} finally {
 			setLoading(false)
 		}
@@ -366,6 +370,18 @@ export default function ReservationsSettingsServicesRoute() {
 		setSheetError(null)
 		setSheet({ mode: 'edit', svc })
 	}
+
+	const { requestClose: requestCloseSheet, discardDialog } = useDiscardGuard(
+		useSheetDirty(
+			sheet === null
+				? null
+				: sheet.mode === 'edit'
+					? `edit:${sheet.svc.id}`
+					: 'create',
+			form,
+		),
+		() => setSheet(null),
+	)
 
 	const patchForm = (patch: Partial<ServiceForm>) =>
 		setForm((prev) => ({ ...prev, ...patch }))
@@ -683,7 +699,22 @@ export default function ReservationsSettingsServicesRoute() {
 			{errorMessage ? (
 				<Alert variant="destructive" data-testid="setup-services-error-banner">
 					<Icon name="alert-triangle" />
-					<AlertDescription>{errorMessage}</AlertDescription>
+					<AlertDescription>
+						<div className="flex items-center justify-between gap-3">
+							<span>{errorMessage}</span>
+							{loadFailed ? (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => void loadAll()}
+									data-testid="setup-retry"
+								>
+									<Trans>Retry</Trans>
+								</Button>
+							) : null}
+						</div>
+					</AlertDescription>
 				</Alert>
 			) : null}
 
@@ -1371,11 +1402,13 @@ export default function ReservationsSettingsServicesRoute() {
 				)}
 			</RuleSection>
 
+			{discardDialog}
+
 			{/* Create / edit service */}
 			<Sheet
 				open={sheet !== null}
 				onOpenChange={(open) => {
-					if (!open && !busy) setSheet(null)
+					if (!open && !busy) requestCloseSheet()
 				}}
 			>
 				<SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
@@ -1401,7 +1434,7 @@ export default function ReservationsSettingsServicesRoute() {
 										type="button"
 										variant="outline"
 										disabled={busy}
-										onClick={() => setSheet(null)}
+										onClick={requestCloseSheet}
 									>
 										<Trans>Cancel</Trans>
 									</Button>

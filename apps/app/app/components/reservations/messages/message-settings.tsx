@@ -161,14 +161,10 @@ export function MessageSettingsScreen({
 				if (signal?.aborted) return
 				setSettings(next)
 				setDraft(draftFromSettings(next))
-			} catch (err) {
+			} catch {
 				if (signal?.aborted) return
-				setLoadError(
-					extractApiErrorMessage(
-						err,
-						t`Guest message settings could not be loaded.`,
-					),
-				)
+				// Plain copy only: the server's own wording is never shown here.
+				setLoadError(t`Guest message settings could not be loaded.`)
 			} finally {
 				if (!signal?.aborted) setLoading(false)
 			}

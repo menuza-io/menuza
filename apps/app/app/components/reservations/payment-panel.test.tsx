@@ -170,6 +170,29 @@ describe('PaymentPanel rows', () => {
 		).toBe('Fee charged')
 	})
 
+	it('leads with a one-line status that states the amount', async () => {
+		setup({
+			reads: [
+				list(
+					[
+						row({
+							id: 'pay_dep',
+							kind: 'deposit_charge',
+							amountMinor: 1000,
+						}),
+					],
+					{ status: 'booked', paymentStatus: 'paid' },
+				),
+			],
+		})
+		const line = await screen.findByTestId('payment-summary')
+		expect(line.textContent).toBe('Deposit paid $10.00')
+		const rows = screen.getByTestId('payment-rows')
+		expect(
+			rows.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_PRECEDING,
+		).toBeTruthy()
+	})
+
 	it('shows the rows but no action controls without the payment grant', async () => {
 		setup({
 			canAct: false,

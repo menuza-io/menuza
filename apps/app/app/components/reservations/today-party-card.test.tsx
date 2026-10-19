@@ -89,7 +89,7 @@ describe('TodayPartyCard', () => {
 		expect(screen.queryByTestId('today-menu-r1')).toBeNull()
 	})
 
-	it('pins the actions in a fixed-width column beside the name block', () => {
+	it('pins the actions in a fixed-width column (stacked on narrow cards) beside the name block', () => {
 		renderStaff(
 			<TodayPartyCard reservation={rsv()} kind="upcoming" {...props()} />,
 		)
@@ -97,7 +97,9 @@ describe('TodayPartyCard', () => {
 		const name = screen.getByTestId('today-open-detail-r1')
 		expect(actions.contains(screen.getByTestId('today-arrive-r1'))).toBe(true)
 		expect(actions.contains(name)).toBe(false)
-		expect(actions.className).toContain('w-28')
+		expect(actions.className).toContain('w-24')
+		// Below 14rem of card width the actions drop under the name instead.
+		expect(actions.className).toContain('flex-row')
 		expect(actions.className).toContain('shrink-0')
 	})
 
@@ -117,5 +119,34 @@ describe('TodayPartyCard', () => {
 			'Shellfish Allergy',
 		)
 		expect(screen.getByTestId('guest-flag-vip')).toBeTruthy()
+	})
+
+	it('puts the time and guest count on their own line, apart from the name link', () => {
+		renderStaff(
+			<TodayPartyCard
+				reservation={rsv({ guestName: 'Layla Al-Mansoor', partySize: 2 })}
+				kind="upcoming"
+				{...props()}
+			/>,
+		)
+		const time = screen.getByTestId('today-time-r1')
+		expect(time.textContent).toContain('19:00')
+		expect(time.textContent).toContain('2 guests')
+		const name = screen.getByTestId('today-open-detail-r1')
+		expect(name.textContent).toBe('Layla Al-Mansoor')
+	})
+
+	it('clamps the notes to two lines and keeps the full text in a title', () => {
+		const note = 'Window table please, celebrating a promotion with colleagues'
+		renderStaff(
+			<TodayPartyCard
+				reservation={rsv({ guestNotes: note })}
+				kind="upcoming"
+				{...props()}
+			/>,
+		)
+		const notes = screen.getByTestId('today-notes-r1')
+		expect(notes.getAttribute('title')).toContain(note)
+		expect(notes.innerHTML).toContain('line-clamp-2')
 	})
 })

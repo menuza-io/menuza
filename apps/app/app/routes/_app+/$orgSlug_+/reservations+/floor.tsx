@@ -77,6 +77,7 @@ import {
 	isReservationOnFloor,
 	pickFloorAreaId,
 	restOfServiceWindow,
+	type FloorPlacement,
 	type TableSectionInfo,
 } from '#app/utils/reservations/floor-state.ts'
 import {
@@ -142,6 +143,24 @@ const LEGEND_STATES = [
 	'overtime',
 	'blocked',
 ] as const
+
+/**
+ * Scales only the geometry of a placement into screen pixels. Text inside a
+ * tile keeps its own readable size, so a small room never shrinks type.
+ */
+function scaleFloorPlacement(
+	p: FloorPlacement,
+	stage: { x: number; y: number },
+	scale: number,
+): FloorPlacement {
+	return {
+		...p,
+		x: (p.x - stage.x) * scale,
+		y: (p.y - stage.y) * scale,
+		width: p.width * scale,
+		height: p.height * scale,
+	}
+}
 
 /** Fits the room's bounding box to the container width (see `floorFitScale`). */
 function useFitScale(stageWidth: number) {
@@ -1076,16 +1095,19 @@ export default function ReservationsFloorRoute() {
 									}}
 								>
 									<div
-										className="relative origin-top-left"
+										className="relative"
 										style={{
-											width: stage.width,
-											height: stage.height,
-											transform: `scale(${scale}) translate(${-stage.x}px, ${-stage.y}px)`,
+											width: stage.width * scale,
+											height: stage.height * scale,
 										}}
 										data-testid="floor-plan-stage"
 									>
 										{areaElements.map((el) => {
-											const p = floorPlacement(el)
+											const p = scaleFloorPlacement(
+												floorPlacement(el),
+												stage,
+												scale,
+											)
 											return (
 												<div
 													key={el.id}
@@ -1113,7 +1135,11 @@ export default function ReservationsFloorRoute() {
 											<FloorTable
 												key={ts.table.id}
 												state={ts}
-												placement={floorTablePlacement(ts.table, index)}
+												placement={scaleFloorPlacement(
+													floorTablePlacement(ts.table, index),
+													stage,
+													scale,
+												)}
 												isRound={ts.table.shape === 'round'}
 												selected={selectedTableId === ts.table.id}
 												dragOver={dragOverTableId === ts.table.id}

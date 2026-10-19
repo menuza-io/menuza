@@ -372,9 +372,26 @@ describe('floor tile sizing', () => {
 
 	it('chooses the tile tier and party-name lines from the tile size', async () => {
 		const { floorTileLayout } = await import('./floor-state.ts')
-		expect(floorTileLayout(72, 72)).toEqual({ tier: 'tight', partyLines: 1 })
-		expect(floorTileLayout(88, 88)).toEqual({ tier: 'tight', partyLines: 2 })
-		expect(floorTileLayout(120, 96)).toEqual({ tier: 'roomy', partyLines: 2 })
+		expect(floorTileLayout(72, 72)).toMatchObject({
+			tier: 'tight',
+			partyLines: 1,
+			showParty: false,
+			showTime: false,
+		})
+		expect(floorTileLayout(88, 88)).toMatchObject({
+			tier: 'tight',
+			partyLines: 1,
+			showParty: true,
+			showTime: false,
+		})
+		expect(floorTileLayout(120, 96)).toMatchObject({
+			tier: 'roomy',
+			partyLines: 2,
+			showTime: true,
+		})
+		// A small round tile keeps the party name out of the tile.
+		expect(floorTileLayout(72, 72, true).showParty).toBe(false)
+		expect(floorTileLayout(110, 110, true).showParty).toBe(true)
 		expect(floorTileLayout(120, 96, true).tier).toBe('tight')
 		expect(floorTileLayout(140, 120, true).tier).toBe('roomy')
 	})

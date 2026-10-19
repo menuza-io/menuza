@@ -169,7 +169,7 @@ export function GuestFlags({
 						className="mt-px size-3.5 shrink-0"
 						aria-hidden="true"
 					/>
-					<span className="line-clamp-2 min-w-0 wrap-anywhere">
+					<span className="min-w-0 break-words">
 						{allergyLabel}
 						{extraAllergens > 0 ? (
 							<span className="ms-1 tabular-nums">+{extraAllergens}</span>

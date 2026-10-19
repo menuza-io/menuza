@@ -357,6 +357,6 @@ describe('MessageSettingsScreen', () => {
 		)
 		expect(
 			(await screen.findByTestId('message-settings-load-error')).textContent,
-		).toMatch(/Down/)
+		).toContain('could not be loaded') // plain copy, never the server text
 	})
 })

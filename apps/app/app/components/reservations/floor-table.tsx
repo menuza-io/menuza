@@ -98,15 +98,15 @@ export const FLOOR_COMPACT_STATUS: Partial<
 > = {
 	available: FREE_TABLE,
 	open: FREE_TABLE,
-	reserved_soon: msg`Reserved`,
+	reserved_soon: msg`Held`,
 	arrived_waiting: msg`Waiting`,
 	seated: msg`Seated`,
 	entree: msg`Entree`,
 	dessert: msg`Dessert`,
 	dessert_check: msg`Dessert`,
 	check_dropped: msg`Check`,
-	finishing: msg`Finishing`,
-	overtime: msg`Overtime`,
+	finishing: msg`Ending`,
+	overtime: msg`Over`,
 	bussing: msg`Bussing`,
 	blocked: msg`Blocked`,
 }
@@ -176,11 +176,21 @@ function FloorTableBase({
 	const guestName = activeParty
 		? formatShortGuestName(activeParty.guestName)
 		: null
+	const fullGuestName = activeParty?.guestName ?? null
 	const tableLabel = table.label
 	const ariaLabel = guestName
 		? t`Table ${tableLabel}, ${statusLabel}, ${guestName}`
 		: t`Table ${tableLabel}, ${statusLabel}`
-	const title = timerText ? `${ariaLabel} · ${timerText}` : ariaLabel
+	const partySize = activeParty?.partySize
+	const titleParts = [
+		fullGuestName && partySize
+			? `${tableLabel}, ${statusLabel}, ${fullGuestName} (${partySize})`
+			: ariaLabel,
+		!state.currentReservation && activeParty ? activeParty.hhmm : null,
+		timerText,
+	].filter(Boolean)
+	const title = titleParts.join(' · ')
+	const showPartyLine = Boolean(activeParty) && layout.showParty
 
 	return (
 		<button
@@ -201,10 +211,8 @@ function FloorTableBase({
 			onDragLeave={() => onDragLeaveTable(table.id)}
 			onDrop={(e) => onDropOnTable(e, state)}
 			className={cn(
-				'absolute flex min-w-0 flex-col gap-0.5 overflow-hidden border-2 p-1.5 text-start text-xs leading-tight shadow-xs transition-colors focus-visible:ring-2 focus-visible:outline-none',
-				isRound
-					? 'items-center justify-center rounded-full p-3 text-center'
-					: 'rounded-xl',
+				'absolute flex min-w-0 flex-col justify-center gap-0.5 overflow-hidden border-2 p-1.5 text-start text-xs leading-tight shadow-xs transition-colors focus-visible:ring-2 focus-visible:outline-none',
+				isRound ? 'items-center rounded-full p-1 text-center' : 'rounded-xl',
 				floorTableSurface(liveStatus, highContrast),
 				selected && 'ring-primary ring-2 ring-offset-2',
 				dragOver && 'border-primary bg-primary/15 ring-2',
@@ -234,16 +242,16 @@ function FloorTableBase({
 						/>
 					) : null}
 					<span
-						className="truncate font-semibold"
+						className="truncate text-sm font-bold"
 						data-testid={`floor-table-label-${table.id}`}
 					>
 						{table.label}
 					</span>
 				</span>
-				{activeParty && !roomy ? (
+				{activeParty && !roomy && !isRound ? (
 					<GuestFlags reservation={activeParty} tier="tight" />
 				) : null}
-				{isRound && !roomy ? null : (
+				{isRound ? null : (
 					<span className="text-muted-foreground flex shrink-0 items-center gap-0.5">
 						<Icon name={FLOOR_STATUS_ICONS[liveStatus]} className="size-3.5" />
 						{roomy ? (
@@ -257,7 +265,7 @@ function FloorTableBase({
 
 			<div
 				className={cn(
-					'flex w-full min-w-0 items-center gap-1',
+					'flex w-full min-w-0 items-center gap-1 text-xs font-medium',
 					style.text,
 					isRound && 'justify-center',
 				)}
@@ -267,31 +275,20 @@ function FloorTableBase({
 					className={cn('size-1.5 shrink-0 rounded-full', style.dot)}
 				/>
 				<span
-					className="flex min-w-0 items-center gap-1 break-normal"
+					className="flex min-w-0 items-center gap-1 whitespace-nowrap"
 					data-testid={`floor-table-status-text-${table.id}`}
 				>
-					{!roomy && liveStatus === 'available' && reservedAt ? (
-						<>
-							<Icon
-								name="clock"
-								className="size-3 shrink-0"
-								aria-hidden="true"
-							/>
-							<span className="tabular-nums">{reservedAt}</span>
-						</>
-					) : (
-						<span className="truncate">{compactWord}</span>
-					)}
-					{roomy && statusTime ? (
-						<span className="tabular-nums"> {statusTime}</span>
+					<span>{compactWord}</span>
+					{layout.showTime && statusTime ? (
+						<span className="tabular-nums">{statusTime}</span>
 					) : null}
 				</span>
 			</div>
 
-			{activeParty ? (
+			{showPartyLine && activeParty ? (
 				<div
 					className={cn(
-						'min-w-0 font-medium wrap-anywhere',
+						'min-w-0 text-xs font-medium',
 						layout.partyLines === 2 ? 'line-clamp-2' : 'line-clamp-1',
 					)}
 				>
@@ -300,27 +297,24 @@ function FloorTableBase({
 						className="text-muted-foreground font-normal tabular-nums"
 						data-testid={`floor-table-party-size-${table.id}`}
 					>
-						{!roomy && !state.currentReservation
-							? `${activeParty.hhmm} · `
-							: null}
 						{activeParty.partySize}p
 					</span>
 				</div>
 			) : null}
 
-			{roomy && timerText ? (
+			{roomy && !isRound && timerText ? (
 				<span
 					className={cn(
-						'truncate font-medium tabular-nums',
+						'truncate text-xs font-medium tabular-nums',
 						liveStatus === 'overtime' && 'text-warning',
 					)}
 					data-testid={`floor-table-timer-${table.id}`}
 				>
 					{timerText}
 				</span>
-			) : roomy && activeParty?.courseStage ? (
+			) : roomy && activeParty?.courseStage && !isRound ? (
 				<span
-					className="text-muted-foreground truncate"
+					className="text-muted-foreground truncate text-xs"
 					data-testid={`floor-table-course-${table.id}`}
 				>
 					{enumLabel(
@@ -331,7 +325,7 @@ function FloorTableBase({
 				</span>
 			) : null}
 
-			{roomy && activeParty ? (
+			{roomy && activeParty && !isRound ? (
 				<GuestFlags
 					reservation={activeParty}
 					showOccasion={false}
@@ -339,7 +333,7 @@ function FloorTableBase({
 				/>
 			) : null}
 
-			{roomy && showSection && state.sectionName ? (
+			{roomy && !isRound && showSection && state.sectionName ? (
 				<span
 					className="bg-background/80 text-foreground mt-auto inline-flex min-w-0 items-center gap-1 self-start rounded-sm px-1"
 					data-testid={`floor-table-section-badge-${table.id}`}

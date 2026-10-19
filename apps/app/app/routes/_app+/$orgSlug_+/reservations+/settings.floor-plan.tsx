@@ -6,6 +6,7 @@ import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { EmptyState } from '#app/components/empty-state.tsx'
 import {
 	FloorPlanCanvas,
 	type FloorPlanSaveDraft,
@@ -72,10 +73,9 @@ export default function ReservationsSettingsFloorPlanRoute() {
 		try {
 			const res = await fetchFloorPlan(client, selectedLocationId)
 			setFloorPlan(res)
-		} catch (err) {
-			setErrorMessage(
-				extractApiErrorMessage(err, _(msg`Failed to load floor plan.`)),
-			)
+		} catch {
+			// Plain copy only: the server's own wording is never shown here.
+			setErrorMessage(_(msg`The floor plan could not be loaded.`))
 		} finally {
 			setLoading(false)
 		}
@@ -188,6 +188,27 @@ export default function ReservationsSettingsFloorPlanRoute() {
 					</div>
 				</AlertDescription>
 			</Alert>
+		)
+	}
+
+	if (floorPlan.areas.length === 0) {
+		return (
+			<div data-testid="floor-plan-empty">
+				<EmptyState
+					icons={['layout-grid']}
+					title={<Trans>Add a dining area first</Trans>}
+					description={
+						<Trans>
+							The floor plan places your tables inside dining areas. Create an
+							area and its tables, then come back to arrange them.
+						</Trans>
+					}
+					action={{
+						label: _(msg`Go to tables`),
+						href: `/${orgSlug}/reservations/settings/tables`,
+					}}
+				/>
+			</div>
 		)
 	}
 

@@ -5,6 +5,7 @@ import {
 	formatMoney,
 	hasInFlightPayment,
 	paymentBadge,
+	paymentSummary,
 	parseMoneyInput,
 	refundableMinor,
 } from '#app/utils/reservations/payments-view.ts'
@@ -105,5 +106,46 @@ describe('refunds and fees', () => {
 		expect(hasInFlightPayment([{ status: 'succeeded' }])).toBe(false)
 		expect(hasInFlightPayment([{ status: 'refund_pending' }])).toBe(true)
 		expect(hasInFlightPayment([{ status: 'requested' }])).toBe(true)
+	})
+})
+
+describe('paymentSummary', () => {
+	const row = (over: Record<string, unknown>) => ({
+		id: 'p',
+		kind: 'deposit_charge',
+		status: 'succeeded',
+		amountMinor: 1000,
+		refundedMinor: 0,
+		...over,
+	})
+	it('states the deposit that was paid', () => {
+		expect(paymentSummary('paid', [row({})])).toEqual({
+			kind: 'deposit_paid',
+			amountMinor: 1000,
+		})
+		expect(
+			paymentSummary('paid', [
+				row({ kind: 'prepay_charge', amountMinor: 4000 }),
+			]),
+		).toEqual({ kind: 'prepaid', amountMinor: 4000 })
+	})
+	it('states what was refunded, fully or partly', () => {
+		expect(
+			paymentSummary('refunded', [
+				row({ status: 'refunded', refundedMinor: 1000 }),
+			]),
+		).toEqual({ kind: 'refunded', amountMinor: 1000 })
+		expect(
+			paymentSummary('partially_refunded', [
+				row({ status: 'partially_refunded', refundedMinor: 250 }),
+			]),
+		).toEqual({ kind: 'partly_refunded', amountMinor: 250 })
+	})
+	it('has no amount while pending and no line for no payment', () => {
+		expect(paymentSummary('pending', [row({ status: 'pending' })])).toEqual({
+			kind: 'pending',
+			amountMinor: null,
+		})
+		expect(paymentSummary('none', []).kind).toBe('none')
 	})
 })

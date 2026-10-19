@@ -3,6 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isImpersonating } from '@repo/auth'
 import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import { cn } from '@repo/ui'
 import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card'
@@ -27,6 +28,7 @@ import { useReservationRequests } from '#app/components/reservations/use-reserva
 import { TodayWaitlistCard } from '#app/components/reservations/waitlist/today-waitlist-card.tsx'
 import { WalkInDialog } from '#app/components/reservations/walk-in-dialog.tsx'
 import { requireReservationsAccess } from '#app/utils/reservations/access.server.ts'
+import { boardGridClass } from '#app/utils/reservations/board-layout.ts'
 import {
 	markReservationRunningLate,
 	type DayReservationView,
@@ -80,6 +82,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 const UNDO_WINDOW_MS = 60_000
+
+/** Each board column; on phones the columns snap-scroll sideways. */
+const BOARD_CARD =
+	'flex min-w-0 flex-col max-md:w-[88%] max-md:shrink-0 max-md:snap-start'
 
 function ColumnEmpty({
 	icon,
@@ -321,6 +327,7 @@ export default function ReservationsTodayRoute() {
 		}
 		return next
 	}, [columns.upcoming, host.liveNow.nowMs])
+	const finishedExpanded = columns.finished.length > 0 && showFinished
 	const dayIsEmpty =
 		Boolean(dayFeed) && reservations.length === 0 && waitlistCount === 0
 	const cardProps = {
@@ -476,14 +483,14 @@ export default function ReservationsTodayRoute() {
 						</EmptyState>
 					) : (
 						<div
-							className={
-								waitlistEnabled
-									? 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'
-									: 'grid grid-cols-1 gap-4 lg:grid-cols-3'
-							}
+							className={boardGridClass({
+								waitlistEnabled,
+								finishedOpen: finishedExpanded,
+							})}
 							data-testid="today-board"
+							data-finished-open={finishedExpanded}
 						>
-							<Card className="flex min-w-0 flex-col">
+							<Card className={BOARD_CARD}>
 								<CardHeader className="pb-2">
 									<CardTitle className="flex items-center justify-between text-base">
 										<span>
@@ -513,7 +520,7 @@ export default function ReservationsTodayRoute() {
 								</CardContent>
 							</Card>
 
-							<Card className="flex min-w-0 flex-col">
+							<Card className={BOARD_CARD}>
 								<CardHeader className="pb-2">
 									<CardTitle className="flex items-center justify-between text-base">
 										<span>
@@ -553,8 +560,11 @@ export default function ReservationsTodayRoute() {
 								/>
 							) : null}
 
-							<Card className="flex min-w-0 flex-col">
-								<CardHeader className="pb-2">
+							<Card
+								className={cn(BOARD_CARD, !finishedExpanded && 'self-start')}
+								data-testid="today-finished-column"
+							>
+								<CardHeader className={finishedExpanded ? 'pb-2' : 'py-0'}>
 									<CardTitle className="flex items-center justify-between gap-2 text-base">
 										<span data-testid="today-finished-count">
 											{columns.finished.length > 0 ? (
@@ -582,25 +592,17 @@ export default function ReservationsTodayRoute() {
 										) : null}
 									</CardTitle>
 								</CardHeader>
-								{columns.finished.length === 0 || showFinished ? (
+								{finishedExpanded ? (
 									<CardContent className="flex flex-col gap-2.5">
-										{columns.finished.length === 0 ? (
-											<ColumnEmpty icon="check">
-												<Trans>
-													No completed or cancelled reservations yet.
-												</Trans>
-											</ColumnEmpty>
-										) : (
-											columns.finished.map((rsv) => (
-												<TodayPartyCard
-													key={rsv.id}
-													reservation={rsv}
-													kind="finished"
-													busy={actionBusyId === rsv.id}
-													{...cardProps}
-												/>
-											))
-										)}
+										{columns.finished.map((rsv) => (
+											<TodayPartyCard
+												key={rsv.id}
+												reservation={rsv}
+												kind="finished"
+												busy={actionBusyId === rsv.id}
+												{...cardProps}
+											/>
+										))}
 									</CardContent>
 								) : null}
 							</Card>
