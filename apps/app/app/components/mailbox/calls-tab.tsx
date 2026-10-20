@@ -238,7 +238,7 @@ export function CallsTab({
 					selectedId && 'hidden md:flex',
 				)}
 			>
-				<div className="flex items-center justify-between gap-2 border-b p-4">
+				<div className="flex items-center justify-between gap-3 border-b px-4 py-3">
 					<p className="text-muted-foreground text-xs tabular-nums">
 						<Trans>{count} need follow-up</Trans>
 					</p>
@@ -326,7 +326,7 @@ export function CallsTab({
 												setToggleError(null)
 											}}
 										>
-											<div className="flex items-start justify-between gap-3">
+											<div className="flex items-start justify-between gap-2">
 												<span
 													className={cn(
 														'min-w-0 truncate text-sm',
@@ -343,7 +343,7 @@ export function CallsTab({
 													{formatRelative(call.startedAt, i18n.locale)}
 												</time>
 											</div>
-											<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+											<div className="mt-1 flex flex-wrap items-center gap-2">
 												{resolved ? (
 													<Badge variant="outline">
 														<Icon name="check" />
