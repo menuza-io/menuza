@@ -313,7 +313,7 @@ describe('Operator Routes', () => {
 		})
 	})
 
-	it('sends no broadcast email in production without TENANT_API_URL', async () => {
+	it('fails the broadcast fast in production without TENANT_API_URL', async () => {
 		const saved = {
 			NODE_ENV: process.env.NODE_ENV,
 			TENANT_API_URL: process.env.TENANT_API_URL,
@@ -357,7 +357,7 @@ describe('Operator Routes', () => {
 						.select()
 						.from(marketingCampaigns)
 						.where(eq(marketingCampaigns.id, body.campaignId))
-					expect(camp?.status).toBe('Completed')
+					expect(camp?.status).toBe('Failed')
 				},
 				{ timeout: 3000, interval: 50 },
 			)
@@ -366,7 +366,8 @@ describe('Operator Routes', () => {
 				.select()
 				.from(marketingMessages)
 				.where(eq(marketingMessages.campaignId, body.campaignId))
-			expect(messages.map((m) => m.status)).toEqual(['Failed'])
+			// Failed fast: nothing was attempted per recipient.
+			expect(messages).toEqual([])
 			expect(JSON.stringify(log.mock.calls)).not.toContain('in@example.com')
 		} finally {
 			log.mockRestore()

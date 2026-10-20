@@ -1,11 +1,11 @@
 # AGENTS.md
 
 This file provides AI coding agents with essential context for working on the
-Menuza monorepo.
+Epic Startup monorepo.
 
 ## Project Overview
 
-**Menuza** is a production-ready, full-stack SaaS template built as a
+**Epic Startup** is a production-ready, full-stack SaaS template built as a
 Turborepo-based monorepo with npm workspaces. It includes multiple apps (main
 app, marketing site, admin dashboard, tenant sites, regional tenant-api, mobile
 app, CMS, jobs-cron, email templates, notifications) and shared packages (UI,
@@ -159,7 +159,7 @@ A person runs these on a developer machine; agents ask first. Sandboxes: see
 ```bash
 # Initial setup (one-time)
 git clone <your-fork>
-cd menuza
+cd epic-startup
 PUPPETEER_SKIP_DOWNLOAD=true npm install && npm run setup -s
 
 # Install Playwright Chromium for App E2E tests. `--with-deps` uses sudo;
@@ -323,7 +323,7 @@ When encountering many ESLint warnings, follow this systematic approach:
 
 **1. Import Order (`import/order`)**:
 
-Menuza enforces specific import ordering:
+Epic Startup enforces specific import ordering:
 
 ```typescript
 // ✅ Correct order
@@ -541,9 +541,13 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   provision + browser calls from App/Sites; not a server PII proxy) On a
   tenant-api node itself, `TENANT_API_URL` is its own public origin and is
   **required in production**: it is the origin of the signed confirmation and
-  unsubscribe links in emails. The node refuses to start without it, and the
-  request origin or `Host` header is never used outside local development hosts
-  (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`).
+  unsubscribe links in emails. The Node entry refuses to start without it. The
+  Worker keeps serving (health, login, provisioning) and skips consent emails
+  instead (a broadcast ends `Failed`), logging ids only. Only an explicit
+  `NODE_ENV=development|test` is local: an unset `NODE_ENV` counts as
+  production. The request origin or `Host` header is never used outside local
+  development hosts (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`).
+  Rollout order: set `TENANT_API_URL` on the node first, then deploy.
 - `EMAIL_PROVIDER` - App/Admin: `resend` (default) or `oci`. When `oci`, set
   `OCI_*` vars; `sendEmail()` routes to OCI Email Delivery. See
   `docs/platform-marketing-email.md`.
@@ -573,10 +577,6 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
   siteverify secret and comma-separated allowed hostnames for form submissions
   and careers applications (action `careers-apply`).
-- `GOOGLE_MAPS_API_KEY` - Tenant-api (customer delivery address search +
-  coverage quotes, `/delivery/*`) and App (store address search/geocoding).
-  Optional; empty uses dev fixtures outside production. See
-  `docs/delivery-coverage.md`.
 - `VOICE_AGENT_TOKEN` - Shared by App, tenant-api, and `apps/voice-agent` (≥32
   chars, distinct from `INTERNAL_COMMAND_TOKEN`). Authenticates
   `/resources/phone-agent-config` and tenant-api `/api/voice/*`.

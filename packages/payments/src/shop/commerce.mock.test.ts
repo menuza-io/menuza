@@ -14,6 +14,7 @@ import { applyPaymentsMockConfig } from './mock-config'
 function mockCommerce(harness: Harness, env: Record<string, string> = {}) {
 	const fullEnv = {
 		MOCKS: 'true',
+		BASE_URL: 'http://localhost:3001',
 		STRIPE_SECRET_KEY: 'sk_test_***',
 		STRIPE_PUBLISHABLE_KEY: 'pk_test_***',
 		STRIPE_WEBHOOK_SECRET: 'whsec_***',
@@ -53,6 +54,7 @@ describe('ShopCommerce on the payment mock', () => {
 		const harness = createTestHarness()
 		const fullEnv = {
 			MOCKS: 'true',
+			BASE_URL: 'http://localhost:3001',
 			STRIPE_SECRET_KEY: 'sk_test_51Real',
 			CHECKOUT_SECRET_KEY: '',
 		}

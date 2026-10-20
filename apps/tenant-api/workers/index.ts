@@ -4,8 +4,6 @@ import {
 	TENANT_ORG_ID_PATTERN,
 } from '@repo/tenant-db'
 import { createTenantApiApp } from '../src/app.ts'
-import { assertConsentBaseUrl } from '../src/lib/email-consent.ts'
-import { registerRestaurantOrderSource } from '../src/restaurant/staffing-order-source.ts'
 import { organizationFromProvisionPayload } from '../src/lib/origin.ts'
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
@@ -30,9 +28,6 @@ import { TenantRegistry } from './tenant-registry.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
 
 export { TenantOrg, TenantRegistry }
-
-// Restaurant orders feed the demand guide, forecast, labor sales and tip pools.
-registerRestaurantOrderSource()
 
 const edgeApp = createTenantApiApp()
 
@@ -228,7 +223,10 @@ export default {
 	): Promise<Response> {
 		applyWorkerEnv(env)
 		assertTenantApiSecrets()
-		assertConsentBaseUrl()
+		// No consent-origin assert here: a missing TENANT_API_URL must not take
+		// the whole Worker (health, login, provisioning) down. Each email send
+		// checks `consentBaseUrl()` and skips (or fails the broadcast) instead.
+		// The hard startup assert stays on the Node entry (`src/index.ts`).
 
 		setListTenantOrgIdsProvider(async () => registryStub(env).list())
 
