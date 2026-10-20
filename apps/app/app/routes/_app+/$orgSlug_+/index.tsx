@@ -1,9 +1,17 @@
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
-import { PageTitle } from '@repo/ui/page-title'
+import {
+	WorkspaceHero,
+	WorkspaceMetric,
+	WorkspaceMetricGrid,
+	WorkspacePage,
+	formatWorkspaceDate,
+	getWorkspaceGreeting,
+	getWorkspaceHour,
+} from '@repo/ui/workspace'
 import confetti from 'canvas-confetti'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useRouteLoaderData, useSearchParams } from 'react-router'
 import { DashboardBlockContent } from '#app/components/dashboard/dashboard-block-content.tsx'
 import { DashboardEditor } from '#app/components/dashboard/dashboard-editor.tsx'
@@ -13,10 +21,12 @@ import { handleHomeAction } from '#app/utils/dashboards/actions.server.ts'
 import {
 	loadBlockPicker,
 	loadBuiltInBlockData,
+	loadContributorCount,
 	loadReportBlockData,
 } from '#app/utils/dashboards/block-data.server.ts'
 import {
 	defaultHomeConfig,
+	type BlockType,
 	type DashboardBlock,
 } from '#app/utils/dashboards/config.ts'
 import {
@@ -29,6 +39,10 @@ import { setUserDefaultOrganization } from '#app/utils/organization/organization
 import { type Route } from './+types/index.ts'
 
 const CELEBRATION_MS = 3000
+/** The KPI row above the grid stands in for the stats block. */
+const HOME_HIDDEN_BLOCK_TYPES: readonly BlockType[] = ['stats']
+/** What the KPI row reads, loaded whatever blocks the home has. */
+const KPI_BLOCK_TYPES: readonly BlockType[] = ['stats']
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const userId = await requireUserId(request)
@@ -45,17 +59,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		setUserDefaultOrganization(userId, organization.id),
 	])
 	const blocks = home.config.blocks
-	const [blockData, reports, switcher] = await Promise.all([
+	const [blockData, reports, switcher, contributorCount] = await Promise.all([
 		loadBuiltInBlockData({
 			userId,
 			organization: { id: organization.id, createdAt },
 			blocks,
+			include: KPI_BLOCK_TYPES,
 		}),
 		loadReportBlockData({
 			organization: { ...organization, dataRegion },
 			blocks,
 		}),
 		listDashboardsForSwitcher(userId, organization.id),
+		loadContributorCount(organization.id),
 	])
 	const picker = await loadBlockPicker({
 		userId,
@@ -72,6 +88,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			config: home.config,
 		},
 		blockData,
+		contributorCount,
 		reports,
 		picker,
 		switcher,
@@ -125,10 +142,35 @@ function useCelebration() {
 
 export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 	const { _ } = useLingui()
-	const { organization, dashboard, blockData, reports, picker, switcher } =
-		loaderData
+	const {
+		organization,
+		dashboard,
+		blockData,
+		contributorCount,
+		reports,
+		picker,
+		switcher,
+	} = loaderData
 	const rootData = useRouteLoaderData<typeof rootLoader>('root')
 	const userName = rootData?.user?.name || _(msg`User`)
+	const notes = blockData.notes
+	// The request's locale and time zone, so the server render matches the
+	// browser's.
+	const locale = rootData?.locale ?? 'en'
+	const timeZone = rootData?.requestInfo.hints.timeZone
+	const greeting = useMemo(() => {
+		const part = getWorkspaceGreeting(getWorkspaceHour(new Date(), timeZone))
+		if (part === 'morning') return _(msg`Good morning, ${userName}`)
+		if (part === 'afternoon') return _(msg`Good afternoon, ${userName}`)
+		return _(msg`Good evening, ${userName}`)
+	}, [_, timeZone, userName])
+	const todayLine = useMemo(
+		() =>
+			_(
+				msg`${formatWorkspaceDate(new Date(), { locale, timeZone })} · Here's what's happening in ${organization.name}`,
+			),
+		[_, locale, organization.name, timeZone],
+	)
 	useCelebration()
 
 	const renderBlock = useCallback(
@@ -156,13 +198,42 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 	)
 
 	return (
-		<div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 py-8 md:px-6 lg:px-8">
-			<PageTitle
-				title={_(msg`Welcome ${userName}!`)}
-				description={_(msg`Your organization dashboard`)}
-			/>
+		<WorkspacePage>
+			<WorkspaceHero title={greeting} meta={todayLine} />
+			<WorkspaceMetricGrid>
+				<WorkspaceMetric
+					label={_(msg`Total notes`)}
+					value={notes?.total ?? 0}
+					hint={_(msg`Across your organization`)}
+				/>
+				<WorkspaceMetric
+					label={_(msg`Avg per day`)}
+					value={notes?.avgPerDay ?? 0}
+					hint={
+						notes
+							? _(msg`Last ${notes.daysShown} days`)
+							: _(msg`No activity yet`)
+					}
+				/>
+				<WorkspaceMetric
+					label={_(msg`Trend`)}
+					value={notes ? `${notes.trend >= 0 ? '+' : ''}${notes.trend}%` : '—'}
+					tone={
+						notes && notes.trend < 0
+							? 'danger'
+							: notes && notes.trend > 0
+								? 'primary'
+								: 'default'
+					}
+					hint={_(msg`Vs prior period`)}
+				/>
+				<WorkspaceMetric
+					label={_(msg`Contributors`)}
+					value={contributorCount}
+					hint={_(msg`Across your organization`)}
+				/>
+			</WorkspaceMetricGrid>
 			<DashboardEditor
-				// Unsaved edits belong to the Home of one organization.
 				key={organization.id}
 				title={
 					<DashboardSwitcher
@@ -177,7 +248,8 @@ export default function HomeDashboard({ loaderData }: Route.ComponentProps) {
 				renderBlock={renderBlock}
 				blockTitle={blockTitle}
 				resetConfig={defaultHomeConfig}
+				hiddenBlockTypes={HOME_HIDDEN_BLOCK_TYPES}
 			/>
-		</div>
+		</WorkspacePage>
 	)
 }

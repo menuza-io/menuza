@@ -1,6 +1,6 @@
 import { data } from 'react-router'
 import { z } from 'zod'
-import { requireAuth } from '#app/utils/jwt.server.ts'
+import { isAuthenticationError, requireAuth } from '#app/utils/jwt.server.ts'
 import {
 	getUserOrganizations,
 	setUserDefaultOrganization,
@@ -56,7 +56,7 @@ export async function action({ request }: Route.ActionArgs) {
 			data: { organizationSlug: hasAccess.organization.slug },
 		})
 	} catch (error) {
-		if (error instanceof Error && error.message.includes('authorization')) {
+		if (isAuthenticationError(error)) {
 			return data(
 				{
 					success: false,

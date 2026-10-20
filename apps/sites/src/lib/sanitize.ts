@@ -1,4 +1,5 @@
-import sanitizeHtml from 'sanitize-html'
+import { JOB_DESCRIPTION_SANITIZE_OPTIONS } from '@repo/common/job-posting'
+import sanitizeHtml, { type IOptions } from 'sanitize-html'
 
 export function sanitizeContentBody(html?: string | null): string {
 	if (!html) return ''
@@ -32,4 +33,14 @@ export function sanitizeContentBody(html?: string | null): string {
 		},
 		allowedSchemes: ['http', 'https', 'mailto', 'tel'],
 	})
+}
+
+/**
+ * A job description, cleaned again at render time with the same allow-list the
+ * App applies when it is saved, so a row edited out of band still cannot carry
+ * a script, an image, an inline style or a `javascript:` link.
+ */
+export function sanitizeJobDescription(html?: string | null): string {
+	if (!html) return ''
+	return sanitizeHtml(html, JOB_DESCRIPTION_SANITIZE_OPTIONS as IOptions)
 }

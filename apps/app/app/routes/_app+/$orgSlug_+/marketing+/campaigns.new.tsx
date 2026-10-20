@@ -11,12 +11,10 @@ import {
 	normalizeEmailBlocks,
 	renderMarketingEmail,
 } from '@repo/marketing/server/email-render'
-import { Button } from '@repo/ui/button'
-import { Icon } from '@repo/ui/icon'
+import { PageHeader } from '@repo/ui/page-header'
 import { useCallback, useRef, useState } from 'react'
 import {
 	Form,
-	Link,
 	redirect,
 	useActionData,
 	useLoaderData,
@@ -225,24 +223,11 @@ export default function NewCampaignRoute() {
 	const isSubmitting = navigation.state === 'submitting'
 
 	return (
-		<div className="mx-auto max-w-5xl space-y-8">
-			<div className="flex items-start gap-3">
-				<Button
-					variant="ghost"
-					size="icon-xs"
-					render={<Link to=".." />}
-					aria-label={_(msg`Back`)}
-					className="mt-0.5"
-				>
-					<Icon name="arrow-left" className="size-4" />
-				</Button>
-				<header className="space-y-1">
-					<h1 className="text-2xl tracking-tight">{_(msg`New broadcast`)}</h1>
-					<p className="text-muted-foreground text-sm">
-						{_(msg`Send a one-time email or SMS to your audience.`)}
-					</p>
-				</header>
-			</div>
+		<div className="flex flex-col gap-6">
+			<PageHeader
+				title={_(msg`New broadcast`)}
+				description={_(msg`Send a one-time email or SMS to your audience.`)}
+			/>
 
 			<Form method="post">
 				<CampaignForm

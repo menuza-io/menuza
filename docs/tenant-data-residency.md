@@ -69,28 +69,113 @@ deployment (Cloudflare Container singleton for US, or OCI VM + block volume).
 App never reads or writes that table. Provision/deprovision send only routing
 metadata: `{ orgId, slug, customDomain, dataRegion }`.
 
+**Regional tenant SQLite, staff tables** (Staff module, see
+[ADR 047](./decisions/047-staffing-data-residency.md)): `staff_members`,
+`staff_private`, `staff_positions`, `staff_scope_assignments`, `staff_jobs`
+(effective-dated pay), `staff_notes`, `staffing_settings`, `staff_audit_log`.
+Staff names, contact details, pay, PINs and history exist **only** here. The US
+control plane keeps just the permissions, the `staffing.*` flags, an opaque
+staff id on `OrganizationInvitation.staffMemberId`, the `StaffingOutbox` (ids
+only), the organization's staff time zone (`Organization.staffingTimeZone`) and
+`JobPosting`. There are no member scope grants; the staffing token still carries
+`scopeIds` (`null` = every scope) so a vertical can limit a member, and changes
+lag by up to the 15-minute token lifetime, 5 for pay or private grants. Staff
+rows are never `UserOrganization` rows and never change the seat count. All
+staffing tables ship in one tenant migration, `0012_staffing_foundation`.
+
+**Regional tenant SQLite, time clock tables**: `labor_policies`, `time_punches`,
+`time_entries`, `time_breaks`, `time_entry_edits`, `timesheet_periods`,
+`kiosk_devices`, `kiosk_pairing_codes`, `kiosk_attempts`. Punches, times and pay
+snapshots exist only here. A paired kiosk tablet calls its region's tenant-api
+directly (`/kiosk/*`, device secret in `localStorage`, no cookie, nothing
+proxied through the US). The only thing tenant-api pulls from the US for it is
+scope facts (time zone, name) from `/resources/staffing/scope-context`; no staff
+data goes the other way. `STAFFING_KIOSK_ENABLED` switches the kiosk routes off
+per node.
+
+**Clock operations** (the regional staff tick): reminders and notices to staff
+are emailed by tenant-api, which holds their contact data; they never pass
+through the US. Manager alerts cross as one generic event
+(`POST /resources/staffing/notify`: organization id, alert kind, scope id,
+count, event id, validated by a strict schema that rejects any other field). The
+App resolves recipients by permission and scope, applies each member's
+notification preferences, and writes an in-app notification holding only the
+kind, scope id and count; names, times and pay are read in the browser from the
+regional node after the manager opens it. `STAFFING_EMAIL_ENABLED` stops the
+email. See [Staff tick](scheduled-jobs.md#staff-tick).
+
+**Regional tenant SQLite, schedule tables**: `shifts`, `schedule_weeks`,
+`schedule_publications`, `shift_templates`, `staff_availability`,
+`time_off_requests`, `shift_requests`, `schedule_settings`, `schedule_links`.
+Who works when, and what a person asked for, exists only here. Publishing emails
+each person from tenant-api, which holds their contact data. "My schedule"
+(`/my-schedule` on the App host) is a static client page: the person's link
+token sits in the URL fragment (never sent to a server), and the page calls its
+own region's tenant-api directly (`/schedule-link/*`). The App only ever sees
+counts (a manager alert with the organization id, kind, scope id and count).
+
+**Regional tenant SQLite, labor tables**: `sales_manual_entries`,
+`labor_scope_settings`, `tip_pool_settings`. Labor cost, the sales behind a
+labor percentage and tip pools are computed in tenant-api from the regional time
+card and shift data (and orders, when a vertical registers an order source) and
+returned to the browser; the control plane never holds a wage, an hour or a
+sales figure for a person. Reports that include staffing subjects
+(`packages/reports`) run their staffing queries in tenant-api too; pay figures
+need `read:staff_pay:any`.
+
+**Regional tenant SQLite, hiring tables**: `hiring_applications`,
+`hiring_events`, `hiring_interviews`, `hiring_notes`, `onboarding_tasks`,
+`onboarding_templates`, `onboarding_template_tasks`, `staff_certificates`.
+Applicant names, contact details, answers and notes exist only here. The US
+control plane keeps the **public** job posting (`JobPosting`: title,
+description, questions, closing date, no person data) because the careers page
+needs it. The apply form posts **straight from the visitor's browser to the
+regional node** (`POST /careers/apply`); the Sites server never sees an
+applicant, and the organization comes from the browser `Origin`, never from a
+client-sent id. A new applicant reaches managers only as the generic alert event
+above. Declined applicants are purged by the regional tick after the
+organization's retention period (365 days by default); the audit log is never
+purged.
+
 ## Code map
 
-| Concern                                  | Path                                                                                       |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Regional API (Hono)                      | `apps/tenant-api/src/index.ts`                                                             |
-| Customer auth routes                     | `apps/tenant-api/src/routes/auth.ts`                                                       |
-| Provision / wipe                         | `apps/tenant-api/src/routes/provision.ts`                                                  |
-| CORS + Origin → org                      | `apps/tenant-api/src/lib/origin.ts`                                                        |
-| `DATA_REGION` checks                     | `apps/tenant-api/src/lib/region.ts`                                                        |
-| JWT / HMAC / command token               | `apps/tenant-api/src/lib/secrets.ts`                                                       |
-| Per-org SQLite + Drizzle                 | `packages/tenant-db/`                                                                      |
-| OTP SMS (Twilio blocked for KSA prod)    | `packages/sms/`                                                                            |
-| App → regional provision                 | `apps/app/app/utils/sites/tenant-api.server.ts`                                            |
-| Organization creation + provision        | `apps/app/app/utils/organization/organizations.server.ts`                                  |
-| Internal active-org metadata             | `apps/app/app/routes/resources+/tenant-organization.ts`                                    |
-| Publish + region switch UI               | `apps/app/app/routes/_app+/$orgSlug_+/website+/_index.tsx`                                 |
-| Region dropdown + wipe dialog            | `apps/app/app/components/settings/cards/organization/site-card.tsx`                        |
-| Public org JSON (`dataRegion` for Sites) | `apps/app/app/utils/sites/public-org.server.ts`                                            |
-| Sites: pick public API URL               | `apps/sites/src/lib/tenant-api.ts`                                                         |
-| Sites: browser session (`localStorage`)  | `apps/sites/src/lib/client-auth.ts`                                                        |
-| Sites: inject `data-tenant-api-url`      | `apps/sites/src/layouts/SiteLayout.astro`                                                  |
-| Login / verify / profile / complete-name | `apps/sites/src/pages/login.astro`, `verify.astro`, `profile.astro`, `complete-name.astro` |
+| Concern                                    | Path                                                                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Regional API (Hono)                        | `apps/tenant-api/src/index.ts`                                                                                |
+| Customer auth routes                       | `apps/tenant-api/src/routes/auth.ts`                                                                          |
+| Provision / wipe                           | `apps/tenant-api/src/routes/provision.ts`                                                                     |
+| CORS + Origin → org                        | `apps/tenant-api/src/lib/origin.ts`                                                                           |
+| `DATA_REGION` checks                       | `apps/tenant-api/src/lib/region.ts`                                                                           |
+| JWT / HMAC / command token                 | `apps/tenant-api/src/lib/secrets.ts`                                                                          |
+| Per-org SQLite + Drizzle                   | `packages/tenant-db/`                                                                                         |
+| OTP SMS (Twilio blocked for KSA prod)      | `packages/sms/`                                                                                               |
+| App → regional provision                   | `apps/app/app/utils/sites/tenant-api.server.ts`                                                               |
+| Organization creation + provision          | `apps/app/app/utils/organization/organizations.server.ts`                                                     |
+| Internal active-org metadata               | `apps/app/app/routes/resources+/tenant-organization.ts`                                                       |
+| Publish + region switch UI                 | `apps/app/app/routes/_app+/$orgSlug_+/website+/_index.tsx`                                                    |
+| Region dropdown + wipe dialog              | `apps/app/app/components/settings/cards/organization/site-card.tsx`                                           |
+| Region switch: staff guard (dialog)        | `apps/app/app/components/staff/region-staff-guard.tsx`                                                        |
+| Region switch: staff counts (App)          | `apps/app/app/routes/resources+/staffing.region-summary.ts`, `utils/staffing/region-guard.server.ts`          |
+| Staffing outbox (link / unlink / erase)    | `apps/app/app/utils/staffing/outbox.server.ts`, `routes/resources+/jobs.staffing-outbox.ts`                   |
+| Account erasure + access request (staff)   | `apps/app/app/utils/staffing/dsar.server.ts`                                                                  |
+| Regional `/internal/staff` commands        | `apps/tenant-api/src/routes/staff-internal.ts`, `services/staff-internal-service.ts`                          |
+| Time clock: kiosk + labor policy API       | `apps/tenant-api/src/routes/kiosk.ts`, `routes/timeclock.ts`, `services/punch-service.ts`                     |
+| Timesheets: views, edits, approval, export | `apps/tenant-api/src/routes/timesheets.ts`, `services/timesheet-*.ts`, `packages/staffing/src/timesheet-*.ts` |
+| Time clock: scope facts (App)              | `apps/app/app/routes/resources+/staffing.scope-context.ts`                                                    |
+| Schedule API, publishing, my-schedule link | `apps/tenant-api/src/routes/schedule.ts`, `routes/schedule-link.ts`, `services/schedule-*.ts`                 |
+| My schedule page (static, fragment token)  | `apps/app/app/routes/my-schedule.tsx`, `apps/app/app/components/my-schedule/`                                 |
+| Labor summary, sales, tip pool             | `apps/tenant-api/src/routes/labor.ts`, `services/labor-*.ts`, `services/tip-pool-service.ts`                  |
+| Staffing report subjects (regional)        | `apps/tenant-api/src/services/staffing-report-records.ts`, `packages/reports/src/catalog-staffing.ts`         |
+| Careers apply, applicants, hire            | `apps/tenant-api/src/routes/careers.ts`, `routes/hiring.ts`, `services/hiring-service.ts`                     |
+| Onboarding checklists and certificates     | `apps/tenant-api/src/routes/onboarding.ts`, `services/onboarding-service.ts`                                  |
+| Public job postings (control plane)        | `apps/app/app/routes/resources+/sites.careers.ts`, `utils/hiring/job-postings.server.ts`                      |
+| Careers pages (Sites)                      | `apps/sites/src/pages/careers/`, `apps/sites/src/lib/careers/`                                                |
+| Staff tick (reminders, alerts, retention)  | `apps/tenant-api/src/routes/staff-tick.ts`, `services/staff-tick-service.ts`                                  |
+| Public org JSON (`dataRegion` for Sites)   | `apps/app/app/utils/sites/public-org.server.ts`                                                               |
+| Sites: pick public API URL                 | `apps/sites/src/lib/tenant-api.ts`                                                                            |
+| Sites: browser session (`localStorage`)    | `apps/sites/src/lib/client-auth.ts`                                                                           |
+| Sites: inject `data-tenant-api-url`        | `apps/sites/src/layouts/SiteLayout.astro`                                                                     |
+| Login / verify / profile / complete-name   | `apps/sites/src/pages/login.astro`, `verify.astro`, `profile.astro`, `complete-name.astro`                    |
 
 There is **no** `apps/sites/src/pages/api/auth/` BFF. Do not add one.
 
@@ -146,7 +231,20 @@ Operators can switch `dataRegion` after customers exist. PII is **not**
 migrated.
 
 1. If `hasProvisionedDb`, the UI requires an explicit confirm
-   (`confirmWipe=true`).
+   (`confirmWipe=true`). **Staff guard.** The dialog also asks the old region
+   what staff data it holds (`GET /resources/staffing/region-summary`, which
+   calls the node's `POST /internal/staff/summary`; counts only). When there is
+   anything to lose, or the answer is unknown (node down, older node without the
+   route, malformed reply: the guard fails closed), the admin must **type the
+   organization slug**, and the dialog offers **Download staff backup**. The
+   backup is a staff-scope token minted by the App, then
+   `GET /operator/staff/export` on the **old region's node straight to the
+   admin's browser**, saved as a local JSON file (`staff-export/v1`). Pay and
+   private groups appear only if the admin's token carries those grants. The App
+   action re-checks all of this server-side (`confirmText`), so a crafted
+   request cannot skip the guard. The backup is offered, not required: if Staff
+   is off or the admin cannot view staff the button explains why and the typed
+   confirmation is still the gate.
 2. App sets `hasProvisionedDb = false` before deprovisioning the **old** region.
    The control-plane database keeps the old `dataRegion` until the wipe
    succeeds, so retries still target the correct node.
@@ -156,23 +254,84 @@ migrated.
    `hasProvisionedDb = true`, whether or not the site is published.
 5. Existing visitors must sign in again. Old tokens are useless against the new
    empty database.
+6. Staffing outbox events still pending for the organization are marked `failed`
+   (`region_changed`): they addressed a database that no longer exists. Staff
+   records are not moved; the new region starts with none.
+
+### Staff login links, removal and erasure
+
+Staff records are regional, logins are control-plane. Three events connect them,
+carried by the **`StaffingOutbox`** (ids only, never a name, contact detail, pay
+figure or time) to the regional node's `/internal/staff/*` routes
+(`INTERNAL_COMMAND_TOKEN`; an operator token never works there):
+
+| Trigger                                                                                      | Outbox kind   | Regional effect                                                                                           |
+| -------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------- |
+| An invitation sent from a staff profile (`OrganizationInvitation.staffMemberId`) is accepted | `link_user`   | `staff_members.user_id` set. Refuses to take over a row linked to another login or link a terminated row. |
+| A member is removed (`remove-member`)                                                        | `unlink_user` | `user_id` cleared. **Not termination:** status, PIN, schedule and pay history are untouched.              |
+| An account is erased (GDPR job, before the `User` row is deleted)                            | `erase_user`  | The linked row is anonymized (below).                                                                     |
+
+Delivery is at-least-once and every endpoint is idempotent. The App tries once
+right after enqueueing; the `jobs.staffing-outbox` route (the existing
+`0 4 * * *` cron trigger, no extra slot) retries with exponential backoff (1
+minute up to 24 hours, 20 attempts) and delivers a login's events in order. See
+[scheduled jobs](./scheduled-jobs.md#staffing-outbox). Invite-link and
+verified-domain joins create members with no staff link; linking is then manual.
+
+**Erasure** (`erase_user`) replaces the names with a pseudonym, clears email,
+phone, Arabic names, employee number and PIN lookups, deletes the private record
+(birth date, address, emergency contact) and notes, deactivates assignments,
+ends the employment (`terminated`, reason `erased`, not eligible for rehire, and
+a rehire is refused) and redacts the before/after values in the person's
+`staff_audit_log` rows. The log stays append-only: a trigger in
+`0012_staffing_foundation` lets exactly one edit through, replacing a row's
+`changes` with `{"redacted":true}`; every other column stays fixed and deletes
+remain impossible. What is **kept** under the pseudonym: the effective-dated pay
+history (wage records have a retention period that outlives an account) and,
+later, time entries. Rows whose login was already unlinked are an employment
+record of the organization, not of the account, and are not touched by an
+account erasure.
+
+**Access requests (DSAR).** `download-user-data` adds a `staffRecords` section.
+A US-region record is generated in-region (`POST /internal/staff/export-user`)
+and attached. A Saudi-region record is **not** fetched through the US servers:
+the node refuses (`409 export_requires_regional_delivery`) and the file only
+points the person to the organization, whose admins export it in-region with
+`GET /operator/staff/export?staffId=...` (browser-direct). Admin's own DSAR
+export has no regional read path and does not include staff records.
+
+**Seats.** Staff rows never touch `UserOrganization` or the seat quantity. A
+person with a login is a normal member and one seat (counted when they accept);
+linking adds none; clock-only staff cost none. Regression tests:
+`invitation.staff-link.test.ts`.
 
 ## Tenant-api surface
 
 Browser CORS is allowlisted only for origins that resolve to an org in **this**
 node’s `DATA_REGION` (slug subdomain or published custom domain).
 
-| Method | Path               | Who      | Notes                                                                                              |
-| ------ | ------------------ | -------- | -------------------------------------------------------------------------------------------------- |
-| GET    | `/health`          | Anyone   | Returns `{ region }` for the node.                                                                 |
-| POST   | `/auth/send-code`  | Browser  | Body: `phone`, optional `slug`/`host`. Same success for new and existing numbers (no enumeration). |
-| POST   | `/auth/verify`     | Browser  | Issues JWTs. `needsName: true` when the customer has no name yet.                                  |
-| POST   | `/auth/refresh`    | Browser  | Rotates refresh token.                                                                             |
-| POST   | `/auth/logout`     | Browser  | Clears refresh hash.                                                                               |
-| GET    | `/auth/me`         | Browser  | Bearer access token.                                                                               |
-| POST   | `/auth/profile`    | Browser  | Update name/email.                                                                                 |
-| POST   | `/api/provision`   | App only | `{ orgId, slug, dataRegion }`. Bearer `INTERNAL_COMMAND_TOKEN`.                                    |
-| POST   | `/api/deprovision` | App only | Same payload. Deletes that org’s SQLite on this node.                                              |
+| Method | Path                                                                                                            | Who                    | Notes                                                                                                                                                                                                   |
+| ------ | --------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/health`                                                                                                       | Anyone                 | Returns `{ region }` for the node.                                                                                                                                                                      |
+| POST   | `/auth/send-code`                                                                                               | Browser                | Body: `phone`, optional `slug`/`host`. Same success for new and existing numbers (no enumeration).                                                                                                      |
+| POST   | `/auth/verify`                                                                                                  | Browser                | Issues JWTs. `needsName: true` when the customer has no name yet.                                                                                                                                       |
+| POST   | `/auth/refresh`                                                                                                 | Browser                | Rotates refresh token.                                                                                                                                                                                  |
+| POST   | `/auth/logout`                                                                                                  | Browser                | Clears refresh hash.                                                                                                                                                                                    |
+| GET    | `/auth/me`                                                                                                      | Browser                | Bearer access token.                                                                                                                                                                                    |
+| POST   | `/auth/profile`                                                                                                 | Browser                | Update name/email.                                                                                                                                                                                      |
+| POST   | `/api/provision`                                                                                                | App only               | `{ orgId, slug, dataRegion }`. Bearer `INTERNAL_COMMAND_TOKEN`.                                                                                                                                         |
+| POST   | `/api/deprovision`                                                                                              | App only               | Same payload. Deletes that org’s SQLite on this node.                                                                                                                                                   |
+| POST   | `/internal/staff/summary`                                                                                       | App only               | `{ orgId }` → counts only (region-switch guard).                                                                                                                                                        |
+| POST   | `/internal/staff/link-user`                                                                                     | App only               | `{ orgId, staffMemberId, userId }`. Idempotent.                                                                                                                                                         |
+| POST   | `/internal/staff/unlink-user`                                                                                   | App only               | `{ orgId, userId }`. Not termination.                                                                                                                                                                   |
+| POST   | `/internal/staff/erase-user`                                                                                    | App only               | `{ orgId, userId }`. Anonymizes the linked row.                                                                                                                                                         |
+| POST   | `/internal/staff/export-user`                                                                                   | App only               | `{ orgId, userId }`. US node only; the Saudi node answers 409.                                                                                                                                          |
+| GET    | `/operator/staff/export`                                                                                        | Operator (staff token) | Full regional export, browser-direct; pay/private by grant; needs an unrestricted token.                                                                                                                |
+| ANY    | `/operator/staff/*`, `/operator/timeclock/*`, `/operator/schedule/*`, `/operator/labor/*`, `/operator/hiring/*` | Operator (staff token) | Browser-direct, short-lived scoped token minted by the App after the flag and permission checks. Every route refuses a missing, wrong-scope or grantless token (locked by `staffing-security.test.ts`). |
+| ANY    | `/kiosk/*`                                                                                                      | Paired tablet          | Device secret + PIN. Off per node with `STAFFING_KIOSK_ENABLED=false`.                                                                                                                                  |
+| ANY    | `/schedule-link/*`                                                                                              | Staff (link token)     | Own schedule, own time cards, own requests. The token is in the page's URL fragment.                                                                                                                    |
+| POST   | `/careers/apply`                                                                                                | Browser (public)       | Applicant form. Origin-resolved organization, Turnstile, honeypot, durable rate limits, consent.                                                                                                        |
+| POST   | `/api/staff/tick`                                                                                               | App cron fan-out       | Bearer `INTERNAL_COMMAND_TOKEN`. Counts only. See [Staff tick](scheduled-jobs.md#staff-tick).                                                                                                           |
 
 Access tokens last 15 minutes. Refresh tokens last 30 days (stored hashed with
 `AUTH_HMAC_SECRET`).

@@ -8,6 +8,9 @@ way for someone to come up to speed on why certain decisions were made.
 
 Recent additions:
 
+- [047 - Staffing data residency and identity](./047-staffing-data-residency.md)
+  — why staff, pay, punch, schedule and applicant data lives in the regional
+  tenant database, why staff are not members, and which flags gate the module.
 - [046 - Staging hostnames and cookies](./046-staging-hostnames-and-cookies.md)
   — flat `app-staging.{apex}` URLs for free Universal SSL and staging-suffixed
   operator cookie names.

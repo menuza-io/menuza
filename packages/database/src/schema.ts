@@ -1153,6 +1153,10 @@ export const OrganizationInvitation = sqliteTable(
 			onDelete: 'set null',
 			onUpdate: 'cascade',
 		}),
+		// Opaque id of a regional staff row this invitation will link to once
+		// accepted. Deliberately no foreign key: staff records live in the
+		// regional tenant database, never in the control plane.
+		staffMemberId: text(),
 	},
 	(table) => [
 		uniqueIndex('OrganizationInvitation_email_organizationId_key').on(
@@ -2421,6 +2425,12 @@ export const Organization = sqliteTable(
 		tiktokPixelId: text(),
 		/** Team chat message retention in days; null keeps messages forever. */
 		chatRetentionDays: integer(),
+		/**
+		 * IANA time zone of the organization's single staffing scope: the zone
+		 * shifts, time cards and labor days are computed in. Edited in the staff
+		 * settings.
+		 */
+		staffingTimeZone: text().default('UTC').notNull(),
 	},
 	(table) => [
 		uniqueIndex('Organization_customDomain_key').on(table.customDomain),
@@ -2919,5 +2929,113 @@ export const PhoneAgentTrainingRule = sqliteTable(
 	},
 	(table) => [
 		index('PhoneAgentTrainingRule_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/**
+ * Control-plane outbox for staffing events that must reach the regional
+ * tenant database (link a login to a staff row, unlink, erase). Rows carry ids
+ * only: never names, contact details, pay, or times. A job drains the table and
+ * retries with backoff until the regional node acknowledges.
+ */
+export const StaffingOutbox = sqliteTable(
+	'StaffingOutbox',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		kind: text().notNull(), // 'link_user' | 'unlink_user' | 'erase_user'
+		payload: text({ mode: 'json' }).notNull(), // ids only
+		status: text().default('pending').notNull(), // 'pending' | 'done' | 'failed'
+		attempts: integer().default(0).notNull(),
+		nextAttemptAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		lastError: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('StaffingOutbox_status_nextAttemptAt_idx').on(
+			table.status,
+			table.nextAttemptAt,
+		),
+		index('StaffingOutbox_organizationId_idx').on(table.organizationId),
+	],
+)
+
+/**
+ * A public job posting (staffing.hiring). Public content only: a role, its
+ * description and pay range, and the questions an applicant answers. No person
+ * data is ever stored here. Applicants live in the regional tenant database and
+ * refer to a posting by this id (ADR 047, decision 8). The careers pages on
+ * Sites render published rows server side, and the sanitized description is
+ * sanitized again when it is rendered.
+ */
+export const JobPosting = sqliteTable(
+	'JobPosting',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		slug: text().notNull(),
+		title: text().notNull(),
+		positionName: text().notNull(),
+		employmentType: text().default('part_time').notNull(),
+		payType: text().default('none').notNull(), // none | hourly | weekly | monthly | yearly
+		payMinMinor: integer(),
+		payMaxMinor: integer(),
+		currency: text().default('USD').notNull(),
+		descriptionHtml: text().default('').notNull(), // sanitized HTML
+		questions: text({ mode: 'json' }).default([]).notNull(), // screener questions
+		// Other-language copy: { [locale]: { title, descriptionHtml, prompts } }.
+		translations: text({ mode: 'json' }).default({}).notNull(),
+		// The evergreen "General application": offered by default, never expires.
+		isGeneral: integer({ mode: 'boolean' }).default(false).notNull(),
+		status: text().default('draft').notNull(), // draft | published | closed | expired
+		publishedAt: integer({ mode: 'timestamp_ms' }),
+		closedAt: integer({ mode: 'timestamp_ms' }),
+		expiresAt: integer({ mode: 'timestamp_ms' }),
+		createdByUserId: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('JobPosting_organizationId_slug_key').on(
+			table.organizationId,
+			table.slug,
+		),
+		index('JobPosting_organizationId_status_idx').on(
+			table.organizationId,
+			table.status,
+		),
+		index('JobPosting_status_expiresAt_idx').on(table.status, table.expiresAt),
 	],
 )

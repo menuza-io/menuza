@@ -1,18 +1,20 @@
 import { cn } from '@repo/ui'
 import { Button } from '@repo/ui/button'
 import { Icon, type IconName } from '@repo/ui/icon'
-import * as React from 'react'
+import { type ReactNode } from 'react'
 
 import { Link } from 'react-router'
 
 interface EmptyStateProps {
-	title: string
-	description: string
+	title: ReactNode
+	description?: ReactNode
 	icons?: IconName[]
 	action?: {
 		label: string
 		href: string
 	}
+	/** Extra actions (buttons, forms) rendered under the description. */
+	children?: ReactNode
 	className?: string
 }
 
@@ -21,18 +23,17 @@ export function EmptyState({
 	description,
 	icons = [],
 	action,
+	children,
 	className,
 }: EmptyStateProps) {
 	return (
 		<div
 			className={cn(
-				'dark:bg-background bg-muted text-center',
-				'w-full rounded-xl p-1',
-				'',
+				'border-border bg-muted/30 w-full rounded-lg border border-dashed text-center',
 				className,
 			)}
 		>
-			<div className="bg-background ring-border dark:bg-muted/50 hover:dark:bg-muted/70 group rounded-lg p-14 shadow-sm ring-1 motion-safe:transition motion-safe:duration-500 motion-safe:hover:duration-200">
+			<div className="group rounded-lg px-8 py-14 motion-safe:transition motion-safe:duration-300">
 				<div className="isolate flex justify-center">
 					{icons.length === 3 ? (
 						<>
@@ -73,14 +74,21 @@ export function EmptyState({
 					)}
 				</div>
 				<h2 className="text-foreground mt-6 text-lg font-medium">{title}</h2>
-				<p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
-					{description}
-				</p>
+				{description ? (
+					<p className="text-muted-foreground mt-1 text-base whitespace-pre-line">
+						{description}
+					</p>
+				) : null}
 				{action && (
-					<Button className={cn('mt-4')}>
-						<Link to={action.href}>{action.label}</Link>
+					<Button className={cn('mt-4')} render={<Link to={action.href} />}>
+						{action.label}
 					</Button>
 				)}
+				{children ? (
+					<div className="mt-4 flex flex-wrap justify-center gap-2">
+						{children}
+					</div>
+				) : null}
 			</div>
 		</div>
 	)

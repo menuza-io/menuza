@@ -2,7 +2,7 @@
 
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import {
 	createMemoryRouter,
@@ -135,6 +135,9 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+	// Unmount while the fetch stub is still in place, so a still-pending
+	// debounced save leaves through the stub, not MSW's patched fetch.
+	cleanup()
 	vi.unstubAllGlobals()
 })
 

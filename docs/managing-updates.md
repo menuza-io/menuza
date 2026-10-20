@@ -98,7 +98,7 @@ shouldn't break anything, but it's good practice to re-run your tests before
 committing these changes.
 
 ```sh
-npm run test -- run
+npm run test
 npm run test:e2e:run
 ```
 
@@ -132,7 +132,7 @@ versions shouldn't break anything, but it's good practice to re-run your tests
 to make sure.
 
 ```sh
-npm run test -- run
+npm run test
 npm run test:e2e:run
 ```
 
@@ -161,7 +161,7 @@ npm i
 Make sure you've made all relevant changes and that the tests pass.
 
 ```sh
-npm run test -- run
+npm run test
 npm run test:e2e:run
 ```
 

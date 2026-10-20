@@ -1,5 +1,10 @@
 import { jwtVerify } from 'jose'
 import { z } from 'zod'
+import {
+	parseKioskDeviceSecret,
+	parseKioskPairingCode,
+	STAFFING_TOKEN_AUDIENCE,
+} from '@repo/staffing'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { brand } from '@repo/config/brand'
 import {
@@ -46,8 +51,11 @@ async function orgIdFromOperatorJwt(
 
 	try {
 		const secret = new TextEncoder().encode(env.TENANT_OPERATOR_TOKEN)
+		// Staffing tokens carry their own audience so they cannot be replayed on
+		// the generic operator routes (and vice versa); both must route to the
+		// org's Durable Object. The route handlers re-verify audience and scope.
 		const { payload } = await jwtVerify(token, secret, {
-			audience: 'tenant-api-operator',
+			audience: ['tenant-api-operator', STAFFING_TOKEN_AUDIENCE],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
 		})
@@ -88,6 +96,32 @@ async function orgIdFromJsonBody(request: Request): Promise<string | null> {
 }
 
 /**
+ * Kiosk requests carry their organization inside an opaque credential: the
+ * pairing code in the body for `/kiosk/pair`, otherwise the bearer device
+ * secret. Nothing else may choose the organization (no query or body orgId),
+ * and a malformed credential routes nowhere. The route handler verifies the
+ * credential itself; this only picks the Durable Object.
+ */
+async function orgIdFromKioskRequest(
+	request: Request,
+	pathname: string,
+): Promise<string | null> {
+	if (pathname === '/kiosk/pair') {
+		const body = await request
+			.clone()
+			.json()
+			.catch(() => null)
+		const code =
+			body && typeof body === 'object'
+				? (body as { code?: unknown }).code
+				: undefined
+		return parseKioskPairingCode(code)?.orgId ?? null
+	}
+	const secret = getBearerToken(request.headers.get('Authorization'))
+	return parseKioskDeviceSecret(secret)?.orgId ?? null
+}
+
+/**
  * Resolve which tenant org should handle this request on Cloudflare Workers.
  * Returns null when the route is not org-scoped (health, sync-all, etc.).
  */
@@ -106,6 +140,36 @@ export async function resolveOrgId(
 
 	if (pathname === '/api/marketing/sync-engagement') {
 		return orgIdFromJsonBody(request)
+	}
+
+	// Hourly staff tick: a body orgId runs that organization in its Durable
+	// Object; no orgId means the edge fans out to every organization.
+	if (pathname === '/api/staff/tick') {
+		return orgIdFromJsonBody(request)
+	}
+
+	// App -> regional staff commands (link, unlink, erase, summary, export): body
+	// orgId, authenticated by INTERNAL_COMMAND_TOKEN inside the route handler.
+	if (pathname.startsWith('/internal/staff/')) {
+		return orgIdFromJsonBody(request)
+	}
+
+	if (pathname.startsWith('/kiosk/')) {
+		return orgIdFromKioskRequest(request, pathname)
+	}
+
+	// The public application form: the organization is the one the browser's
+	// Origin names, never a client-supplied orgId (the generic body and query
+	// routing below must not apply to it).
+	if (pathname.startsWith('/careers/')) {
+		const organization = await resolveOrganizationForBrowserAuth(
+			request.headers.get('Origin') ?? undefined,
+			{
+				slug: url.searchParams.get('slug') ?? undefined,
+				host: url.searchParams.get('host') ?? undefined,
+			},
+		)
+		return organization?.id ?? null
 	}
 
 	const queryOrgId = url.searchParams.get('orgId')
@@ -176,6 +240,30 @@ export async function assertOrgOnUsNode(
 			},
 			{ status: 409 },
 		)
+	}
+	return null
+}
+
+/**
+ * Kiosk requests are unauthenticated until the handler checks the credential,
+ * so a made-up organization id must not be allowed to create a Durable Object.
+ * Unlike the other routes, an organization the control plane does not know is
+ * refused here (a lookup that fails closes the door too). Unknown, wrong-region
+ * and unprovisioned organizations all answer the same.
+ */
+export async function assertKioskOrgOnUsNode(
+	orgId: string,
+	pathname: string,
+): Promise<Response | null> {
+	const error =
+		pathname === '/kiosk/pair' ? 'invalid_pairing_code' : 'invalid_device'
+	const organization = await findActiveOrganizationById(orgId)
+	if (
+		!organization ||
+		organization.dataRegion !== 'us' ||
+		!organization.hasProvisionedDb
+	) {
+		return Response.json({ error }, { status: 401 })
 	}
 	return null
 }

@@ -54,8 +54,9 @@ second component library or duplicate a primitive already available there.
   errors correctly.
 - Use buttons for actions and links for navigation; do not make a `div`
   clickable.
-- Dialogs, menus, tabs, popovers, and comboboxes should use the shared/Radix
-  primitives for focus management, keyboard interaction, and announcements.
+- Dialogs, menus, tabs, popovers, and comboboxes should use the shared
+  `@repo/ui` (Base UI) primitives for focus management, keyboard interaction,
+  and announcements.
 - Preserve visible focus, logical tab order, sufficient contrast, and touch
   targets. Do not communicate state by color alone.
 - Add skip navigation and meaningful page/region headings where a layout needs

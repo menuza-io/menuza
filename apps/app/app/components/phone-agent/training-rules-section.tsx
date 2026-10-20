@@ -123,6 +123,14 @@ export function TrainingRulesSection({
 
 	const atLimit = rules.length >= MAX_TRAINING_RULES
 
+	const emptyDescription = !canUpdate ? (
+		<Trans>Ask an administrator to add training rules.</Trans>
+	) : EXAMPLES.length ? (
+		<Trans>Start with an example and change it to match your business.</Trans>
+	) : (
+		<Trans>Add a rule to teach the agent how your business works.</Trans>
+	)
+
 	return (
 		<AnnotatedSection
 			title={<Trans>Training rules</Trans>}
@@ -168,11 +176,7 @@ export function TrainingRulesSection({
 								<EmptyTitle>
 									<Trans>No training rules yet</Trans>
 								</EmptyTitle>
-								<EmptyDescription>
-									<Trans>
-										Start with an example and change it to match your business.
-									</Trans>
-								</EmptyDescription>
+								<EmptyDescription>{emptyDescription}</EmptyDescription>
 							</EmptyHeader>
 							{canUpdate ? (
 								<EmptyContent>
@@ -629,7 +633,7 @@ function RuleDialog({
 					) : null}
 
 					<DialogFooter>
-						<Button type="button" variant="ghost" onClick={onClose}>
+						<Button type="button" variant="outline" onClick={onClose}>
 							<Trans>Cancel</Trans>
 						</Button>
 						<Button
@@ -680,7 +684,7 @@ function DeleteRuleDialog({ rule, onClose }: { rule: Rule; onClose(): void }) {
 					</p>
 				) : null}
 				<DialogFooter>
-					<Button type="button" variant="ghost" onClick={onClose}>
+					<Button type="button" variant="outline" onClick={onClose}>
 						<Trans>Cancel</Trans>
 					</Button>
 					<Button

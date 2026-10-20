@@ -23,6 +23,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		return new Response('Missing fields', { status: 400 })
 
 	const targetIndex = Number(positionStr)
+	if (!Number.isInteger(targetIndex) || targetIndex < 0) {
+		return new Response('Invalid position', { status: 400 })
+	}
 
 	// Validate statusId
 	const [statusToMove] = await db

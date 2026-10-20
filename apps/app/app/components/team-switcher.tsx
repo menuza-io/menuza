@@ -46,7 +46,7 @@ function OrganizationAvatar({
 	return (
 		<Avatar
 			className={cn(
-				'size-7 shrink-0 rounded-[4px] group-data-[collapsible=icon]:border-0 after:rounded-[4px]',
+				'size-5.5 shrink-0 rounded-md group-data-[collapsible=icon]:size-5 group-data-[collapsible=icon]:border-0 after:rounded-md',
 				className,
 			)}
 		>
@@ -57,7 +57,7 @@ function OrganizationAvatar({
 					className="rounded-md object-cover"
 				/>
 			) : null}
-			<AvatarFallback className="bg-sidebar-accent text-sidebar-foreground rounded-[4px] text-xs font-medium">
+			<AvatarFallback className="bg-primary text-primary-foreground rounded-md text-xs font-semibold">
 				{organization.name.slice(0, 2).toUpperCase()}
 			</AvatarFallback>
 		</Avatar>
@@ -107,8 +107,6 @@ export function TeamSwitcher() {
 		return null
 	}
 
-	const memberCount = activeTeam.userCount ?? 0
-
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
@@ -116,39 +114,25 @@ export function TeamSwitcher() {
 					<DropdownMenuTrigger
 						render={
 							<SidebarMenuButton
-								size="lg"
 								tooltip={activeTeam.name}
-								className="group/org bg-background h-12 gap-3 rounded-[8px] border px-2 shadow-xs group-data-[collapsible=icon]:ml-0.5 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent"
+								className="group/org text-foreground h-8 gap-2 px-1.5 font-semibold group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1.5!"
 							>
 								<OrganizationAvatar organization={activeTeam} />
-								<div className="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden ltr:text-left rtl:text-right">
-									<span className="text-sidebar-foreground truncate text-sm leading-5 font-medium">
-										{activeTeam.name}
-									</span>
-									{memberCount > 0 ? (
-										<span className="text-sidebar-foreground/60 truncate text-xs leading-4">
-											{memberCount}{' '}
-											{memberCount === 1 ? (
-												<Trans>member</Trans>
-											) : (
-												<Trans>members</Trans>
-											)}
-										</span>
-									) : null}
-								</div>
+								<span className="min-w-0 truncate text-sm group-data-[collapsible=icon]:hidden">
+									{activeTeam.name}
+								</span>
 								<Icon
 									name="chevron-down"
-									className="text-sidebar-foreground/50 size-4 shrink-0 transition-transform duration-200 ease-out group-data-popup-open/org:rotate-180 group-data-[collapsible=icon]:hidden motion-reduce:transition-none"
+									className="text-muted-foreground size-3.5 shrink-0 transition-transform duration-200 ease-out group-data-popup-open/org:rotate-180 group-data-[collapsible=icon]:hidden motion-reduce:transition-none"
 								/>
 							</SidebarMenuButton>
 						}
 					></DropdownMenuTrigger>
 					<DropdownMenuContent
-						className="w-full min-w-56 rounded-lg"
+						className="w-64"
 						align="start"
 						side="bottom"
 						sideOffset={4}
-						style={{ width: 'var(--anchor-width)' }}
 					>
 						<DropdownMenuGroup>
 							<DropdownMenuLabel>
@@ -163,7 +147,7 @@ export function TeamSwitcher() {
 											handleOrganizationSelect(userOrg.organization.id)
 											if (isMobile) toggleSidebar()
 										}}
-										className="gap-2 rounded-[8px] px-1.5 py-1.5"
+										className="gap-2 px-1.5"
 									>
 										<OrganizationAvatar
 											organization={userOrg.organization}

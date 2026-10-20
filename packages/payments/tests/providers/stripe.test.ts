@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { sanitizeStripeErrorMessage } from '../../src/sanitize-stripe-error.js'
 import { StripeProvider } from '../../src/providers/stripe'
 
 // Mock Stripe SDK
@@ -592,6 +593,22 @@ describe('StripeProvider', () => {
 			const result = await stripeProvider.listInvoices('cus_123')
 
 			expect(result).toEqual([])
+		})
+	})
+
+	describe('sanitizeStripeErrorMessage', () => {
+		it('redacts Stripe secret keys from error text', () => {
+			const secret = 'sk_test_key'
+			expect(
+				sanitizeStripeErrorMessage(`Invalid API Key provided: ${secret}`),
+			).toBe('Invalid API Key provided: [STRIPE_KEY_REDACTED]')
+		})
+
+		it('redacts keys with organization, underscore, and hyphen suffixes', () => {
+			const secret = ['sk', 'org', 'part_one-two'].join('_')
+			expect(sanitizeStripeErrorMessage(`Invalid key: ${secret}`)).toBe(
+				'Invalid key: [STRIPE_KEY_REDACTED]',
+			)
 		})
 	})
 })

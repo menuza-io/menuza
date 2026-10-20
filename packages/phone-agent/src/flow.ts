@@ -401,6 +401,37 @@ export function validateFlowGraph(graph: FlowGraph): FlowValidationIssue[] {
 	return issues
 }
 
+/**
+ * Problems that don't block publishing but change what callers get. The UI
+ * words each code itself, so this package carries no UI strings.
+ */
+export type FlowWarning = {
+	code: 'transfer_no_phone'
+	nodeId: string
+	/** The step's label, for the UI's sentence. */
+	label: string
+}
+
+/**
+ * A transfer step without its own number calls the staff phone from Setup.
+ * Without one it can dial, the call goes straight to the step's "no answer"
+ * path. `hasStaffPhone` should already exclude a staff phone the runtime
+ * refuses, such as one that rings the agent's own line.
+ */
+export function flowWarnings(
+	graph: FlowGraph,
+	context: { hasStaffPhone: boolean },
+): FlowWarning[] {
+	if (context.hasStaffPhone) return []
+	return graph.nodes
+		.filter((node) => node.type === 'transfer' && !node.data.phone)
+		.map((node) => ({
+			code: 'transfer_no_phone',
+			nodeId: node.id,
+			label: node.data.label,
+		}))
+}
+
 export function parseFlowGraph(value: unknown): FlowGraph {
 	const raw = typeof value === 'string' ? (JSON.parse(value) as unknown) : value
 	return FlowGraphSchema.parse(raw)

@@ -159,7 +159,8 @@ export const TRANSFER_RESULT_LABELS: Record<
 
 export function outcomeVariant(outcome: CallOutcome) {
 	if (outcome === 'failed' || outcome === 'abandoned') return 'destructive'
-	if (outcome === 'escalated' || outcome === 'message_taken') return 'outline'
+	if (outcome === 'escalated' || outcome === 'message_taken') return 'warning'
+	if (outcome === 'resolved') return 'success'
 	return 'secondary'
 }
 

@@ -21,16 +21,26 @@ import {
 	useLoaderData,
 } from 'react-router'
 import { RoleAccessForm } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	hasOnlyTenantRolePermissions,
 	TENANT_ROLE_PERMISSION_IDS,
+	withImpliedStaffingPermissions,
 } from '#app/utils/organization/tenant-role-permissions.ts'
+import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	getCustomRole,
 	invalidateAssignedActiveMembers,
 	requireBuiltInOrganizationAdmin,
 	roleInputSchema,
 } from './roles.server.ts'
+
+const capitalize = (value: string) =>
+	value.charAt(0).toUpperCase() + value.slice(1)
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => capitalize(data.role.name),
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { organization } = await requireBuiltInOrganizationAdmin(
@@ -82,6 +92,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			permissionIds: grants.map((g) => g.permissionId),
 			memberCount: memberCountRow?.total ?? 0,
 		},
+		staffingEnabled: await isStaffingFeatureEnabled(
+			organization.organizationId,
+		),
 	}
 }
 
@@ -109,13 +122,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				'Check the role details and try again.',
 		}
 	}
-	const permissionIds = [...new Set(submission.data.permissionIds)]
-	if (!hasOnlyTenantRolePermissions(permissionIds)) {
+	const requestedPermissionIds = [...new Set(submission.data.permissionIds)]
+	if (!hasOnlyTenantRolePermissions(requestedPermissionIds)) {
 		return {
 			error:
 				'One or more selected access options are not available for custom roles.',
 		}
 	}
+	const permissionIds = withImpliedStaffingPermissions(requestedPermissionIds)
 
 	const { name, description } = submission.data
 	const duplicateWhere = and(
@@ -197,6 +211,7 @@ export default function EditRoleRoute() {
 			role={data.role}
 			cancelHref={rolesPath}
 			error={actionData?.error}
+			staffingEnabled={data.staffingEnabled}
 		/>
 	)
 }

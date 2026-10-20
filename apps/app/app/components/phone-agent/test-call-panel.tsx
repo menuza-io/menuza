@@ -25,6 +25,12 @@ import {
 	isMicrophoneError,
 	microphoneErrorMessage,
 } from './test-call-errors.ts'
+import {
+	DIAL_PAD_KEYS,
+	type DialPadKey,
+	PLACEHOLDER_AGENT_NUMBER,
+	TestCallPhone,
+} from './test-call-phone.tsx'
 import { useVerticalLabels } from './vertical-labels.ts'
 
 export type StartTestCallResult =
@@ -40,22 +46,6 @@ type TranscriptSegment = {
 	final: boolean
 }
 type SentLink = { id: string; url: string }
-
-const DIAL_PAD_KEYS = [
-	'1',
-	'2',
-	'3',
-	'4',
-	'5',
-	'6',
-	'7',
-	'8',
-	'9',
-	'*',
-	'0',
-	'#',
-] as const
-type DialPadKey = (typeof DIAL_PAD_KEYS)[number]
 
 /** RFC 4733 event codes, which LiveKit expects alongside the digit. */
 function dtmfCode(key: DialPadKey) {
@@ -89,6 +79,8 @@ export function TestCallPanel({
 	hasPublishedFlow,
 	defaultFlow,
 	canStart,
+	agentName,
+	agentNumbers,
 	regionSupported,
 }: {
 	orgSlug: string
@@ -97,6 +89,9 @@ export function TestCallPanel({
 	hasPublishedFlow: boolean
 	defaultFlow: TestFlow
 	canStart: boolean
+	agentName: string
+	/** Active agent lines; the dialer shows one for the chosen scope. */
+	agentNumbers: Array<{ scopeId: string | null; e164: string }>
 	regionSupported: boolean
 }) {
 	const { _ } = useLingui()
@@ -114,6 +109,13 @@ export function TestCallPanel({
 	const [agentSpeaking, setAgentSpeaking] = useState(false)
 	const [segments, setSegments] = useState<TranscriptSegment[]>([])
 	const [sentLinks, setSentLinks] = useState<SentLink[]>([])
+	const [speakerOn, setSpeakerOn] = useState(true)
+	const [dialed, setDialed] = useState('')
+	const [answeredAt, setAnsweredAt] = useState<number | null>(null)
+	const [now, setNow] = useState(() => Date.now())
+	// Read when agent audio attaches, so a track that arrives while the speaker
+	// is off starts silent.
+	const speakerOnRef = useRef(true)
 	const roomRef = useRef<Room | null>(null)
 	const audioContainerRef = useRef<HTMLDivElement>(null)
 	const transcriptRef = useRef<HTMLDivElement>(null)
@@ -191,6 +193,7 @@ export function TestCallPanel({
 			room.on(RoomEvent.TrackSubscribed, (track) => {
 				if (track.kind !== Track.Kind.Audio) return
 				const element = track.attach()
+				element.muted = !speakerOnRef.current
 				audioContainerRef.current?.appendChild(element)
 			})
 			room.on(RoomEvent.TrackUnsubscribed, (track) => {
@@ -331,13 +334,17 @@ export function TestCallPanel({
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 			stream.getTracks().forEach((track) => track.stop())
 		} catch (micError) {
+			if (endedByUser.current) return
 			setError(_(microphoneErrorMessage(micError)))
 			setPhase('idle')
 			return
 		}
+		if (endedByUser.current) return
 		setSegments([])
 		setSentLinks([])
 		setMuted(false)
+		setDialed('')
+		setAnsweredAt(null)
 		setPhase('starting')
 		void fetcher.submit(
 			{ intent: 'start', scopeId: needsScope ? scopeId : null, flow },
@@ -356,6 +363,7 @@ export function TestCallPanel({
 			void room.localParticipant.publishDtmf(dtmfCode(key), key).catch(() => {
 				setError(_(msg`Couldn't send that key press. Try again.`))
 			})
+			setDialed((current) => current + key)
 			dtmfSequence.current += 1
 			upsertSegment({
 				id: `dtmf-${dtmfSequence.current}`,
@@ -408,10 +416,44 @@ export function TestCallPanel({
 		setMuted(nextMuted)
 	}
 
-	const endCall = () => {
+	const toggleSpeaker = () => {
 		const room = roomRef.current
-		if (!room) return
+		// Browsers can block playback until a click; this click unblocks it.
+		if (room && audioBlocked) {
+			speakerOnRef.current = true
+			setSpeakerOn(true)
+			audioContainerRef.current
+				?.querySelectorAll('audio')
+				.forEach((element) => (element.muted = false))
+			void room.startAudio().then(() => setAudioBlocked(!room.canPlaybackAudio))
+			return
+		}
+		const next = !speakerOn
+		speakerOnRef.current = next
+		setSpeakerOn(next)
+		audioContainerRef.current
+			?.querySelectorAll('audio')
+			.forEach((element) => (element.muted = !next))
+	}
+
+	const answered = phase === 'connected' && agentPresent
+	useEffect(() => {
+		if (!answered) return
+		setAnsweredAt((current) => current ?? Date.now())
+		setNow(Date.now())
+		const timer = setInterval(() => setNow(Date.now()), 1000)
+		return () => clearInterval(timer)
+	}, [answered])
+
+	const endCall = () => {
 		endedByUser.current = true
+		const room = roomRef.current
+		// Before a room exists (asking for the microphone or requesting a
+		// token), hanging up abandons the attempt.
+		if (!room) {
+			setPhase('ended')
+			return
+		}
 		void room.disconnect()
 	}
 
@@ -421,24 +463,23 @@ export function TestCallPanel({
 		phase === 'connecting' ||
 		phase === 'connected'
 	const speaking = agentState === 'speaking' || agentSpeaking
-	const statusLabel =
+	const activity =
 		phase === 'mic'
-			? _(msg`Waiting for microphone permission…`)
-			: phase === 'starting' || phase === 'connecting'
-				? _(msg`Connecting…`)
-				: phase === 'connected'
-					? !agentPresent
-						? _(msg`Waiting for your agent to join…`)
-						: speaking
-							? _(msg`Agent speaking`)
-							: agentState === 'thinking'
-								? _(msg`Thinking…`)
-								: agentState === 'initializing'
-									? _(msg`Agent is getting ready…`)
-									: _(msg`Listening`)
-					: phase === 'ended'
-						? _(msg`Call ended`)
-						: _(msg`Ready to call`)
+			? _(msg`Allow microphone access`)
+			: phase === 'connected' && agentPresent
+				? speaking
+					? _(msg`Agent speaking`)
+					: agentState === 'thinking'
+						? _(msg`Thinking…`)
+						: agentState === 'initializing'
+							? _(msg`Agent is getting ready…`)
+							: _(msg`Listening`)
+				: null
+	const agentNumber =
+		agentNumbers.find((number) => needsScope && number.scopeId === scopeId)
+			?.e164 ??
+		agentNumbers[0]?.e164 ??
+		PLACEHOLDER_AGENT_NUMBER
 
 	const scopeItems = scopes.map((scope) => ({
 		value: scope.id,
@@ -518,138 +559,50 @@ export function TestCallPanel({
 					</div>
 				</div>
 
-				<div
-					className="flex flex-col items-center gap-4 py-4 text-center"
-					role="status"
-					aria-live="polite"
-				>
-					<div
-						className={cn(
-							'flex size-24 items-center justify-center rounded-full border transition-colors',
-							phase === 'connected' && speaking
-								? 'bg-primary text-primary-foreground animate-pulse'
-								: phase === 'connected'
-									? 'bg-muted'
-									: 'bg-background text-muted-foreground',
-						)}
-						aria-hidden="true"
-					>
-						<Icon
-							name={
-								phase === 'ended'
-									? 'phone-off'
-									: phase === 'connected' && speaking
-										? 'bot'
-										: phase === 'connected' && muted
-											? 'mic-off'
-											: phase === 'connecting' ||
-												  phase === 'starting' ||
-												  phase === 'mic'
-												? 'loader'
-												: 'mic'
-							}
-							className={cn(
-								'size-10',
-								(phase === 'connecting' ||
-									phase === 'starting' ||
-									phase === 'mic') &&
-									'animate-spin',
-							)}
-						/>
-					</div>
-					<p className="text-lg font-medium">{statusLabel}</p>
-					{phase === 'connected' && muted ? (
-						<p className="text-muted-foreground text-sm">
-							<Trans>You're muted.</Trans>
-						</p>
-					) : null}
-				</div>
-
+				<TestCallPhone
+					agentName={agentName}
+					agentNumber={agentNumber}
+					state={
+						inCall
+							? {
+									screen: 'call',
+									elapsedSeconds:
+										answered && answeredAt !== null
+											? Math.max(0, Math.floor((now - answeredAt) / 1000))
+											: null,
+									activity,
+									muted,
+									canMute: phase === 'connected',
+									speakerOn: speakerOn && !audioBlocked,
+									dialed,
+								}
+							: { screen: 'dialer', ended: phase === 'ended' }
+					}
+					canCall={!startDisabled}
+					onCall={() => void start()}
+					onPressKey={pressKey}
+					onToggleMute={() => void toggleMute()}
+					onToggleSpeaker={toggleSpeaker}
+					onHangUp={endCall}
+				/>
 				{phase === 'connected' ? (
-					<div className="flex flex-col items-center gap-2">
-						<div
-							role="group"
-							aria-label={_(msg`Dial pad`)}
-							className="grid w-full max-w-56 grid-cols-3 gap-2"
-						>
-							{DIAL_PAD_KEYS.map((key) => (
-								<Button
-									key={key}
-									type="button"
-									variant="outline"
-									size="lg"
-									className="font-mono text-lg"
-									aria-label={_(msg`Press ${key}`)}
-									onClick={() => pressKey(key)}
-								>
-									{key}
-								</Button>
-							))}
-						</div>
-						<p className="text-muted-foreground text-xs">
-							<Trans>You can also type keys on your keyboard.</Trans>
-						</p>
-					</div>
+					<p className="text-muted-foreground text-center text-xs">
+						<Trans>You can also type keys on your keyboard.</Trans>
+					</p>
 				) : null}
-
-				{error ? (
-					<p role="alert" className="text-destructive text-sm">
-						{error}
+				{audioBlocked ? (
+					<p className="text-muted-foreground text-center text-sm">
+						<Trans>
+							Your browser paused the agent's audio. Tap Speaker to hear it.
+						</Trans>
 					</p>
 				) : null}
 
-				{audioBlocked ? (
-					<Button
-						variant="outline"
-						onClick={() => {
-							const room = roomRef.current
-							if (room)
-								void room
-									.startAudio()
-									.then(() => setAudioBlocked(!room.canPlaybackAudio))
-						}}
-					>
-						<Icon name="play" />
-						<Trans>Enable audio</Trans>
-					</Button>
+				{error ? (
+					<p role="alert" className="text-destructive text-center text-sm">
+						{error}
+					</p>
 				) : null}
-
-				<div className="flex flex-wrap justify-center gap-2">
-					{phase === 'connected' || phase === 'connecting' ? (
-						<>
-							<Button
-								variant="outline"
-								size="lg"
-								disabled={phase !== 'connected'}
-								aria-pressed={muted}
-								aria-label={
-									muted ? _(msg`Unmute microphone`) : _(msg`Mute microphone`)
-								}
-								onClick={() => void toggleMute()}
-							>
-								<Icon name={muted ? 'mic-off' : 'mic'} />
-								{muted ? <Trans>Unmute</Trans> : <Trans>Mute</Trans>}
-							</Button>
-							<Button variant="destructive" size="lg" onClick={endCall}>
-								<Icon name="phone-off" />
-								<Trans>End call</Trans>
-							</Button>
-						</>
-					) : (
-						<Button
-							size="lg"
-							disabled={startDisabled}
-							onClick={() => void start()}
-						>
-							<Icon name="phone" />
-							{phase === 'ended' ? (
-								<Trans>Start another call</Trans>
-							) : (
-								<Trans>Start call</Trans>
-							)}
-						</Button>
-					)}
-				</div>
 
 				{phase === 'ended' ? (
 					<p className="text-muted-foreground text-center text-sm">

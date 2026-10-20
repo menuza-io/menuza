@@ -47,6 +47,7 @@ import {
 } from '#app/components/forms.tsx'
 import { signup } from '#app/utils/auth.server.ts'
 import { getLaunchStatus } from '#app/utils/env.server.ts'
+import { auditMemberAdded } from '#app/utils/organization/membership-audit.server.ts'
 import { updateSeatQuantity } from '#app/utils/payments.server.ts'
 import { type Route } from './+types/onboarding.ts'
 
@@ -271,6 +272,16 @@ export async function action({ request }: Route.ActionArgs) {
 						organizationRoleId: memberRoleId, // Use proper organization role
 					})),
 				)
+
+				for (const org of organizationsWithMatchingDomain) {
+					await auditMemberAdded({
+						organizationId: org.id,
+						memberUserId: session.userId,
+						via: 'verified_domain',
+						roleId: memberRoleId,
+						request,
+					})
+				}
 
 				// Update seat quantity for billing for each organization
 				for (const org of organizationsWithMatchingDomain) {

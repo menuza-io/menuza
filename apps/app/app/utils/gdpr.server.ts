@@ -18,6 +18,10 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { getClientIp } from '@repo/security'
+import {
+	enqueueStaffErasureForUser,
+	flushStaffErasure,
+} from '#app/utils/staffing/dsar.server.ts'
 
 export const GDPR_DELETION_GRACE_PERIOD_DAYS = 7
 
@@ -236,6 +240,8 @@ export async function createErasureRequest(
 		.where(
 			and(
 				eq(UserOrganization.userId, userId),
+				// An inactive membership cannot be the sole active admin.
+				eq(UserOrganization.active, true),
 				eq(OrganizationRole.name, 'admin'),
 				isNull(OrganizationRole.organizationId),
 			),
@@ -452,7 +458,13 @@ export async function processDueErasureRequests(): Promise<{
 				})
 				.where(eq(DataSubjectRequest.id, dsr.id))
 
-			if (dsr.userId) await db.delete(User).where(eq(User.id, dsr.userId))
+			if (dsr.userId) {
+				// Queue the regional staff anonymization first: if it cannot be
+				// recorded, the request fails and the account is not deleted.
+				const staffErasureOrgs = await enqueueStaffErasureForUser(dsr.userId)
+				await db.delete(User).where(eq(User.id, dsr.userId))
+				await flushStaffErasure(dsr.userId, staffErasureOrgs)
+			}
 
 			await db
 				.update(DataSubjectRequest)

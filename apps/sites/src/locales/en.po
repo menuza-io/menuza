@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "(optional)"
+msgstr "(optional)"
+
+#: src/lib/careers/labels.ts:66
+msgid "{amount} per {unit}"
+msgstr "{amount} per {unit}"
+
 #: src/components/AccountShell.astro.ts:3
 msgid "Account"
 msgstr "Account"
@@ -20,6 +28,22 @@ msgstr "Account"
 #: src/components/AccountShell.astro.ts:3
 msgid "Account settings"
 msgstr "Account settings"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "All jobs"
+msgstr "All jobs"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Apply"
+msgstr "Apply"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply by {date}"
+msgstr "Apply by {date}"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Apply now"
+msgstr "Apply now"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Back to shop"
@@ -42,9 +66,22 @@ msgstr "Card number"
 msgid "Cards used on past shop purchases on this account."
 msgstr "Cards used on past shop purchases on this account."
 
+#: src/pages/careers/[slug].astro.ts:3
+#: src/pages/careers/index.astro.ts:3
+msgid "Careers"
+msgstr "Careers"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Check back soon."
+msgstr "Check back soon."
+
 #: src/pages/verify.astro.ts:3
 msgid "Check your phone"
 msgstr "Check your phone"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Complete the verification check before sending."
+msgstr "Complete the verification check before sending."
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Complete the verification check before submitting."
@@ -54,13 +91,30 @@ msgstr "Complete the verification check before submitting."
 msgid "Continue"
 msgstr "Continue"
 
+#: src/lib/careers/labels.ts:22
+msgid "Contract"
+msgstr "Contract"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Copy link"
+msgstr "Copy link"
+
 #: src/pages/shop.astro.ts:3
 msgid "CVC"
 msgstr "CVC"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Email"
 msgstr "Email"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a phone number with its country code, like +1 415 555 0123."
+msgstr "Enter a phone number with its country code, like +1 415 555 0123."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Enter a valid email address."
+msgstr "Enter a valid email address."
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -74,9 +128,41 @@ msgstr "Expires"
 msgid "Expiry"
 msgstr "Expiry"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "First name"
+msgstr "First name"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "Full name"
 msgstr "Full name"
+
+#: src/lib/careers/labels.ts:14
+msgid "Full time"
+msgstr "Full time"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email or a phone number."
+msgstr "Give us an email or a phone number."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Give us an email, a phone number, or both."
+msgstr "Give us an email, a phone number, or both."
+
+#: src/lib/careers/labels.ts:31
+msgid "hour"
+msgstr "hour"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
+msgstr "I agree that {organization} may keep my details and answers to consider my application and contact me about it. They will delete them if I ask."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Include your country code, for example +1 415 555 0123."
+msgstr "Include your country code, for example +1 415 555 0123."
+
+#: src/lib/careers/labels.ts:24
+msgid "Internship"
+msgstr "Internship"
 
 #: src/pages/verify.astro.ts:3
 msgid "Invalid verification code."
@@ -86,6 +172,14 @@ msgstr "Invalid verification code."
 msgid "Language"
 msgstr "Language"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Last name"
+msgstr "Last name"
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Link copied"
+msgstr "Link copied"
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Logout"
 msgstr "Logout"
@@ -93,6 +187,10 @@ msgstr "Logout"
 #: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "Mobile"
+
+#: src/lib/careers/labels.ts:35
+msgid "month"
+msgstr "month"
 
 #: src/pages/profile.astro.ts:3
 msgid "Name"
@@ -105,6 +203,14 @@ msgstr "Name"
 msgid "Network error. Please try again."
 msgstr "Network error. Please try again."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "No"
+msgstr "No"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "No openings right now."
+msgstr "No openings right now."
+
 #: src/pages/profile.astro.ts:3
 #: src/pages/profile/orders.astro.ts:3
 msgid "No orders yet."
@@ -114,9 +220,17 @@ msgstr "No orders yet."
 msgid "No saved payment methods yet."
 msgstr "No saved payment methods yet."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Online applications are not available right now. Ask a team member."
+msgstr "Online applications are not available right now. Ask a team member."
+
 #: src/components/SiteHeader.astro.ts:3
 msgid "Open menu"
 msgstr "Open menu"
+
+#: src/pages/careers/index.astro.ts:3
+msgid "Open positions at {name}"
+msgstr "Open positions at {name}"
 
 #: src/pages/shop/success.astro.ts:3
 msgid "Order confirmed"
@@ -132,6 +246,10 @@ msgstr "Order history"
 msgid "Orders"
 msgstr "Orders"
 
+#: src/lib/careers/labels.ts:16
+msgid "Part time"
+msgstr "Part time"
+
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "Pay now"
@@ -144,6 +262,10 @@ msgstr "Payment method"
 msgid "Payment methods"
 msgstr "Payment methods"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Phone"
+msgstr "Phone"
+
 #: src/pages/login.astro.ts:3
 #: src/pages/profile.astro.ts:3
 msgid "Phone Number"
@@ -152,6 +274,18 @@ msgstr "Phone Number"
 #: src/pages/profile.astro.ts:3
 msgid "Phone number cannot be changed at this time."
 msgstr "Phone number cannot be changed at this time."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please agree so we can keep your application."
+msgstr "Please agree so we can keep your application."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Please check the answers marked below and try again."
+msgstr "Please check the answers marked below and try again."
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "Posted {date}"
+msgstr "Posted {date}"
 
 #: src/components/SiteHeader.astro.ts:3
 msgid "Primary"
@@ -177,6 +311,10 @@ msgstr "Purchases from the shop while signed in to this account."
 msgid "Purchases from the shop while signed in."
 msgstr "Purchases from the shop while signed in."
 
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "QR code for {title}"
+msgstr "QR code for {title}"
+
 #: src/pages/profile/orders.astro.ts:3
 msgid "Receipts for completed purchases appear here with status and amount."
 msgstr "Receipts for completed purchases appear here with status and amount."
@@ -190,17 +328,38 @@ msgstr "Save Changes"
 msgid "Saving..."
 msgstr "Saving..."
 
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Scan to open this job on your phone."
+msgstr "Scan to open this job on your phone."
+
+#: src/lib/careers/labels.ts:18
+msgid "Seasonal"
+msgstr "Seasonal"
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "See all open jobs"
+msgstr "See all open jobs"
+
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "Select a published form in the page editor."
 msgstr "Select a published form in the page editor."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Send application"
+msgstr "Send application"
 
 #: src/pages/login.astro.ts:3
 msgid "Send Code"
 msgstr "Send Code"
 
+#: src/components/careers/ApplyPanel.astro.ts:3
 #: src/pages/login.astro.ts:3
 msgid "Sending..."
 msgstr "Sending..."
+
+#: src/components/careers/ShareJob.astro.ts:3
+msgid "Share this job"
+msgstr "Share this job"
 
 #: src/pages/shop.astro.ts:3
 msgid "Shop"
@@ -221,17 +380,53 @@ msgstr "Something went wrong."
 msgid "Submitting..."
 msgstr "Submitting..."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Tell us a little about yourself. It takes a couple of minutes."
+msgstr "Tell us a little about yourself. It takes a couple of minutes."
+
+#: src/lib/careers/labels.ts:20
+msgid "Temporary"
+msgstr "Temporary"
+
 #: src/pages/shop/success.astro.ts:3
 msgid "Thank you for your purchase!"
 msgstr "Thank you for your purchase!"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
+msgstr "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "The verification check did not pass. Please try again."
+msgstr "The verification check did not pass. Please try again."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "this business"
+msgstr "this business"
 
 #: src/components/blocks/FormBlock.astro.ts:3
 msgid "This form is currently unavailable."
 msgstr "This form is currently unavailable."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This is required."
+msgstr "This is required."
+
+#: src/pages/careers/[slug].astro.ts:3
+msgid "This job is no longer open."
+msgstr "This job is no longer open."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "This job is no longer taking applications."
+msgstr "This job is no longer taking applications."
+
 #: src/pages/shop.astro.ts:3
 msgid "This shop is not available right now."
 msgstr "This shop is not available right now."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Too many applications were sent from here. Please try again later."
+msgstr "Too many applications were sent from here. Please try again later."
 
 #: src/pages/shop.astro.ts:3
 msgid "Unable to start checkout. Please try again."
@@ -265,6 +460,14 @@ msgstr "Verifying..."
 msgid "We could not confirm this order."
 msgstr "We could not confirm this order."
 
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not reach the server. Check your connection and try again."
+msgstr "We could not reach the server. Check your connection and try again."
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "We could not send your application right now. Please try again in a moment."
+msgstr "We could not send your application right now. Please try again in a moment."
+
 #: src/pages/complete-name.astro.ts:3
 msgid "We'll use this on your profile. You can change it later."
 msgstr "We'll use this on your profile. You can change it later."
@@ -273,6 +476,10 @@ msgstr "We'll use this on your profile. You can change it later."
 msgid "We've sent a 6-digit code to"
 msgstr "We've sent a 6-digit code to"
 
+#: src/lib/careers/labels.ts:33
+msgid "week"
+msgstr "week"
+
 #: src/pages/complete-name.astro.ts:3
 msgid "What's your name?"
 msgstr "What's your name?"
@@ -280,6 +487,14 @@ msgstr "What's your name?"
 #: src/pages/profile/orders.astro.ts:3
 msgid "When you buy something from the shop, your receipts will show up here."
 msgstr "When you buy something from the shop, your receipts will show up here."
+
+#: src/lib/careers/labels.ts:37
+msgid "year"
+msgstr "year"
+
+#: src/components/careers/ApplyPanel.astro.ts:3
+msgid "Yes"
+msgstr "Yes"
 
 #: src/pages/profile.astro.ts:3
 msgid "Your Profile"

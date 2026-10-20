@@ -1,3 +1,7 @@
+import {
+	type PublicJobPosting,
+	type PublicJobPostingListItem,
+} from '@repo/common/job-posting'
 import { type SiteFontSelection } from '@repo/common/site-fonts'
 import { edgeCache } from '~/lib/site-headers'
 import { getAppServiceBinding, getPublicAppUrl } from '~/lib/worker-env'
@@ -382,4 +386,61 @@ export async function createShopPaymentIntent(
 		publishableKey?: string
 		error?: string
 	}>
+}
+
+export type PublicCareersListing = {
+	organization: { name: string }
+	postings: PublicJobPostingListItem[]
+}
+
+export type PublicCareersPosting = {
+	organization: { name: string }
+	posting: PublicJobPosting
+}
+
+function careersParams(options: {
+	slug?: string | null
+	host?: string | null
+	/** The language the visitor reads; untranslated copy falls back to the default. */
+	locale?: string | null
+}): URLSearchParams | null {
+	const params = new URLSearchParams()
+	if (options.slug) params.set('slug', options.slug)
+	if (options.host) params.set('host', options.host)
+	if (params.size && options.locale) params.set('locale', options.locale)
+	return params.size ? params : null
+}
+
+/**
+ * Live job postings for the careers page, or `null` when the organization has
+ * no careers pages (site unpublished or `staffing.hiring` off). Public content
+ * only: no person data crosses this call.
+ */
+export async function fetchPublishedCareers(options: {
+	slug?: string | null
+	host?: string | null
+	locale?: string | null
+}): Promise<PublicCareersListing | null> {
+	const params = careersParams(options)
+	if (!params) return null
+	return fetchAppJson<PublicCareersListing>(
+		`${getAppUrl()}/resources/sites/careers?${params.toString()}`,
+		false,
+	)
+}
+
+/** One live posting with its description and questions, or `null`. */
+export async function fetchPublishedJobPosting(options: {
+	slug?: string | null
+	host?: string | null
+	locale?: string | null
+	posting: string
+}): Promise<PublicCareersPosting | null> {
+	const params = careersParams(options)
+	if (!params) return null
+	params.set('posting', options.posting)
+	return fetchAppJson<PublicCareersPosting>(
+		`${getAppUrl()}/resources/sites/careers?${params.toString()}`,
+		false,
+	)
 }

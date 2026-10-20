@@ -1,9 +1,10 @@
 import { parseWithZod } from '@conform-to/zod'
+import { invalidateUserCache } from '@repo/cache'
 import { db, eq, User, UserImage } from '@repo/database'
 import { NameSchema, UsernameSchema } from '@repo/validation'
 import { data } from 'react-router'
 import { z } from 'zod'
-import { requireAuth } from '#app/utils/jwt.server.ts'
+import { isAuthenticationError, requireAuth } from '#app/utils/jwt.server.ts'
 import { type Route } from './+types/profile.ts'
 
 const ProfileFormSchema = z.object({
@@ -92,6 +93,8 @@ export async function action({ request }: Route.ActionArgs) {
 				updatedAt: User.updatedAt,
 			})
 		if (!updatedUser) throw new Error('User not found')
+		// The web root loader caches name and username for the sidebar user card.
+		await invalidateUserCache(userId)
 		const [image] = await db
 			.select({ objectKey: UserImage.objectKey })
 			.from(UserImage)
@@ -113,7 +116,7 @@ export async function action({ request }: Route.ActionArgs) {
 			},
 		})
 	} catch (error) {
-		if (error instanceof Error && error.message.includes('authorization')) {
+		if (isAuthenticationError(error)) {
 			return data(
 				{
 					success: false,

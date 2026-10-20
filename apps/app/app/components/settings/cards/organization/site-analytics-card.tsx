@@ -16,36 +16,34 @@ import { ErrorList, Field } from '#app/components/forms.tsx'
 
 export const siteAnalyticsActionIntent = 'update-site-analytics'
 
+// Conform submits an empty input as `undefined`, so each ID is optional: a
+// blank field disables that integration and only a filled-in value is checked.
+function optionalTrackingId(pattern: RegExp, message: string) {
+	return z
+		.string()
+		.trim()
+		.optional()
+		.refine((value) => !value || pattern.test(value), message)
+}
+
 export const SiteAnalyticsSchema = z.object({
 	organizationId: z.string(),
-	facebookPixelId: z
-		.string()
-		.trim()
-		.refine(
-			(value) => value === '' || /^\d{5,20}$/.test(value),
-			'Enter a valid numeric Pixel ID, or leave blank to disable.',
-		),
-	googleTagManagerId: z
-		.string()
-		.trim()
-		.refine(
-			(value) => value === '' || /^GTM-[A-Z0-9]+$/.test(value),
-			'Enter a valid container ID like GTM-XXXXXXX, or leave blank to disable.',
-		),
-	googleAnalyticsId: z
-		.string()
-		.trim()
-		.refine(
-			(val) => val === '' || /^G-[A-Z0-9]+$/.test(val),
-			'Enter a valid Measurement ID like G-XXXXXXXXXX, or leave blank to disable.',
-		),
-	tiktokPixelId: z
-		.string()
-		.trim()
-		.refine(
-			(value) => value === '' || /^[A-Z0-9]{10,30}$/.test(value),
-			'Enter a valid TikTok Pixel ID, or leave blank to disable.',
-		),
+	facebookPixelId: optionalTrackingId(
+		/^\d{5,20}$/,
+		'Enter a valid numeric Pixel ID, or leave blank to disable.',
+	),
+	googleTagManagerId: optionalTrackingId(
+		/^GTM-[A-Z0-9]+$/,
+		'Enter a valid container ID like GTM-XXXXXXX, or leave blank to disable.',
+	),
+	googleAnalyticsId: optionalTrackingId(
+		/^G-[A-Z0-9]+$/,
+		'Enter a valid Measurement ID like G-XXXXXXXXXX, or leave blank to disable.',
+	),
+	tiktokPixelId: optionalTrackingId(
+		/^[A-Z0-9]{10,30}$/,
+		'Enter a valid TikTok Pixel ID, or leave blank to disable.',
+	),
 })
 
 export function SiteAnalyticsCard({

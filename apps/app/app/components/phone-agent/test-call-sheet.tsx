@@ -123,6 +123,8 @@ export function TestCallSheet({
 								hasPublishedFlow={data.hasPublishedFlow}
 								defaultFlow={data.defaultFlow}
 								canStart={data.canStart}
+								agentName={data.agentName}
+								agentNumbers={data.agentNumbers}
 								regionSupported={regionSupported}
 							/>
 						) : (

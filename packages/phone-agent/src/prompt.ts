@@ -159,15 +159,26 @@ function describeLanguages(languages: AgentLanguage[]) {
 	return `Start in ${names[0]}. If the caller speaks ${names.slice(1).join(' or ')}, switch to it for the rest of the call.`
 }
 
+/** Weekday and time in the timezone, falling back to UTC for unknown zones. */
+function formatLocalTime(timezone: string, now: Date) {
+	const format = (timeZone: string) =>
+		new Intl.DateTimeFormat('en-US', {
+			timeZone,
+			weekday: 'long',
+			hour: 'numeric',
+			minute: '2-digit',
+		}).format(now)
+	try {
+		return format(timezone || 'UTC')
+	} catch {
+		return format('UTC')
+	}
+}
+
 /** System prompt for the AI assistant step. */
 export function buildAgentInstructions(context: PromptContext) {
 	const { settings, vertical } = context
-	const localTime = new Intl.DateTimeFormat('en-US', {
-		timeZone: context.timezone,
-		weekday: 'long',
-		hour: 'numeric',
-		minute: '2-digit',
-	}).format(context.now)
+	const localTime = formatLocalTime(context.timezone, context.now)
 
 	const knowledgeBudget =
 		context.knowledgeCharBudget ?? DEFAULT_KNOWLEDGE_CHAR_BUDGET

@@ -1,7 +1,6 @@
 import {
 	useEffect,
 	useLayoutEffect,
-	useRef,
 	useSyncExternalStore,
 	type Dispatch,
 	type MutableRefObject,
@@ -27,22 +26,70 @@ export function useMinWidthMediaQuery(
 	)
 }
 
+export type LeavePrompt = {
+	message: string
+	leave: () => void
+	stay: () => void
+}
+
+// One prompt for the whole app: React Router consults only the most recently
+// registered blocker, so at most one blocker is ever `blocked` and one slot is
+// enough. `LeavePageDialog` (mounted in root.tsx) shows it.
+let leavePrompt: LeavePrompt | null = null
+const leavePromptListeners = new Set<() => void>()
+
+function setLeavePrompt(next: LeavePrompt | null) {
+	const previous = leavePrompt
+	leavePrompt = next
+	// A newer prompt replaces an unanswered one. Reset that blocker so its
+	// navigation is not stuck with no dialog.
+	if (previous && next && previous !== next) previous.stay()
+	for (const listener of leavePromptListeners) listener()
+}
+
+function subscribeToLeavePrompt(callback: () => void) {
+	leavePromptListeners.add(callback)
+	return () => leavePromptListeners.delete(callback)
+}
+
+export function useLeavePrompt() {
+	return useSyncExternalStore(
+		subscribeToLeavePrompt,
+		() => leavePrompt,
+		() => null,
+	)
+}
+
+/**
+ * Blocks in-app navigation while `shouldBlock` holds and asks the operator,
+ * in an in-app dialog, whether to leave. Not `window.confirm`: a native
+ * dialog is easy to miss and is dismissed silently by browser automation,
+ * which makes every link look dead.
+ */
 export function useConfirmBlocker(
 	shouldBlock: boolean | BlockerFunction,
 	message: string,
 ) {
 	const blocker = useBlocker(shouldBlock)
-	const prompted = useRef(false)
 
 	useEffect(() => {
-		if (blocker.state !== 'blocked') {
-			prompted.current = false
-			return
+		if (blocker.state !== 'blocked') return
+		// Answer once: a closing dialog can report "stay" after "leave".
+		let answered = false
+		const answer = (decide: () => void) => () => {
+			if (answered) return
+			answered = true
+			decide()
 		}
-		if (prompted.current) return
-		prompted.current = true
-		if (window.confirm(message)) blocker.proceed()
-		else blocker.reset()
+		const prompt: LeavePrompt = {
+			message,
+			leave: answer(() => blocker.proceed()),
+			stay: answer(() => blocker.reset()),
+		}
+		setLeavePrompt(prompt)
+		return () => {
+			if (leavePrompt === prompt) setLeavePrompt(null)
+		}
 	}, [blocker, message])
 }
 

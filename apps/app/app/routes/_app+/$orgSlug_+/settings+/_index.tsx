@@ -2,6 +2,7 @@ import { parseWithZod } from '@conform-to/zod'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
+import { organizationSlugSchema } from '@repo/common'
 import { markStepCompleted } from '@repo/common/onboarding'
 import { redirectWithToast } from '@repo/common/toast'
 import {
@@ -52,6 +53,7 @@ import VerifiedDomainCard, {
 } from '#app/components/settings/cards/organization/verified-domain-card.tsx'
 
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
+import { auditMemberAdded } from '#app/utils/organization/membership-audit.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
@@ -130,7 +132,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 const SettingsSchema = z.object({
 	name: z.string().min(1, 'Name is required'),
-	slug: z.string().min(1, 'Slug is required'),
+	slug: organizationSlugSchema,
 })
 
 /**
@@ -381,6 +383,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		const { verifiedDomain } = submission.value
 
+		const autoAddedMembers: Array<{ userId: string; roleId: string }> = []
 		try {
 			await db.transaction(async (tx) => {
 				// Update the organization with the verified domain
@@ -432,6 +435,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							organizationRoleId: memberRole.id,
 						})),
 					)
+					for (const user of usersWithMatchingDomain)
+						autoAddedMembers.push({ userId: user.id, roleId: memberRole.id })
 				}
 
 				// Update seat quantity for billing if users were added
@@ -443,6 +448,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					}
 				}
 			})
+
+			for (const member of autoAddedMembers) {
+				await auditMemberAdded({
+					organizationId: organization.id,
+					memberUserId: member.userId,
+					actorId: userId,
+					via: 'verified_domain',
+					roleId: member.roleId,
+					request,
+				})
+			}
 
 			await invalidateUserOrganizationsCache(userId)
 

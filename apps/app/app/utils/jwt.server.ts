@@ -249,36 +249,51 @@ export async function createTokenPair(
 }
 
 /**
+ * Thrown by `requireAuth` for every authentication failure (missing, malformed,
+ * invalid or expired token, disabled account) so API routes can answer 401.
+ */
+export class AuthenticationError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'AuthenticationError'
+	}
+}
+
+export function isAuthenticationError(error: unknown): boolean {
+	return error instanceof AuthenticationError
+}
+
+/**
  * Middleware helper to extract and verify JWT from Authorization header
  */
 export async function requireAuth(request: Request): Promise<JWTPayload> {
 	const header = request.headers.get('authorization')
 
 	if (!header) {
-		throw new Error('No authorization header')
+		throw new AuthenticationError('No authorization header')
 	}
 
 	// Handle case where multiple Bearer tokens might be present (comma-separated)
 	// This can happen if headers are set both as default and per-request
 	const firstBearerToken = header.split(',')[0]?.trim()
 	if (!firstBearerToken) {
-		throw new Error('Invalid authorization header format')
+		throw new AuthenticationError('Invalid authorization header format')
 	}
 
 	const [scheme, token] = firstBearerToken.split(' ')
 
 	if (scheme !== 'Bearer' || !token) {
-		throw new Error('Invalid authorization header format')
+		throw new AuthenticationError('Invalid authorization header format')
 	}
 
 	const payload = verifyAccessToken(token)
 	if (!payload) {
-		throw new Error('Invalid or expired token')
+		throw new AuthenticationError('Invalid or expired token')
 	}
 
 	const canLogin = await canUserLogin(payload.sub)
 	if (!canLogin) {
-		throw new Error('User account is disabled or banned')
+		throw new AuthenticationError('User account is disabled or banned')
 	}
 
 	return payload

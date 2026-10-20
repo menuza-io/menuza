@@ -94,6 +94,10 @@ export default [
 						'to-red-500',
 						// EmDash CMS plugin components receive @cloudflare/kumo tokens from the CMS host.
 						'*-kumo-*',
+						// Design-system elevation tokens (--shadow-* in the theme), not colors.
+						'shadow-card',
+						'shadow-raised',
+						'shadow-pop',
 					],
 				},
 			],

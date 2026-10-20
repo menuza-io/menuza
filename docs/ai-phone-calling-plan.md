@@ -412,11 +412,16 @@ Operators view call logs in App, but the App server must not proxy PII. Use the
 same pattern as forms and mailbox: the App page's browser calls tenant-api
 `/operator/calls/*` with an operator token signed by `TENANT_OPERATOR_TOKEN`.
 
-**Not built yet:** recording playback. Recordings are written to regional
-storage and the call sheet shows a "Recorded" badge with "Playback coming soon",
-but tenant-api has no route that streams a recording or issues a signed URL for
-one. The intended design is to stream from regional storage through tenant-api
-with short-lived signed URLs, so the audio never passes through the US App.
+**Recording playback.** The call sheet asks tenant-api
+`GET /operator/calls/:callId/recording` (read permission) for a link signed for
+5 minutes and plays it in an `<audio>` element, so the audio streams from the
+regional bucket straight to the operator's browser and never passes through the
+US App. tenant-api only signs the key the worker writes for that call in that
+organization (`voice-recordings/{orgId}/{callId}.ogg`), and answers 404 once the
+recording is past its retention or queued for deletion. A link that expires
+while the sheet is open is renewed once. Anyone holding a link can fetch the
+file until it expires. App's CSP allows the bucket as a `media-src` from
+`RECORDING_S3_BUCKET` / `_ENDPOINT` / `_REGION` (no keys on App).
 
 Call data has its own permissions: read, update, and delete phone calls. Read
 opens the Calls page and the "Phone calls" report subject (tenant-api rejects a
@@ -498,7 +503,7 @@ reference customers; call config does not.)
 | 0. Spike (1 to 2 weeks)     | `apps/voice-agent` with local LiveKit, browser-call testing, business info tools on one seeded org, US plugins. Measure latency and answer accuracy.                                   | p50 response under about 1 second; correct answers on a 50-question FAQ script. |
 | 1. Answering agent (US)     | Data model, settings page, training rules CRUD, default flow (no editor), number provisioning and forwarding, call logs and purposes, operator call log UI via tenant-api, disclosure. | A pilot business takes real calls.                                              |
 | 2. Links and verticals      | Website link texts, link handoffs, and the `PhoneAgentVertical` contract so business types can add their own tools and data.                                                           | A vertical's tool texts the caller a link that opens with the call's data.      |
-| 3. Escalation and recording | SIP transfer with fallback to messages, recordings, retention jobs, erasure (audited in App). Recording playback is not built yet.                                                     | Transfers and recordings work end to end; retention job verified.               |
+| 3. Escalation and recording | SIP transfer with fallback to messages, recordings, retention jobs, erasure (audited in App).                                                                                          | Transfers and recordings work end to end; retention job verified.               |
 | 4. Phone menu editor        | React Flow IVR editor, step inspector, versioned publish, browser test call with dial pad, evaluation scripts.                                                                         | An operator changes the flow, tests it, and publishes without engineering help. |
 | 5. KSA                      | Riyadh LiveKit and agent deployment, in-kingdom SIP trunk, in-kingdom STT, LLM, and TTS, in-kingdom SMS or WhatsApp, Saudi dialect evaluation.                                         | KSA calls verified to never leave the kingdom.                                  |
 | Later                       | Outbound calls (appointment reminders, callbacks), integrations with business systems, usage-based billing.                                                                            |                                                                                 |
@@ -528,8 +533,11 @@ The voice worker is not part of `npm run dev`. Start it separately.
    `LIVEKIT_API_SECRET`. The App signs browser test-call tokens and dispatches
    the `phone-agent` worker. Set `CARTESIA_API_KEY` too if you want the voice
    picker on the Agent tab; without it, the tab shows a plain voice ID field.
-3. Voice agent (`apps/voice-agent/.env`): set the same LiveKit values, plus
-   `DEEPGRAM_API_KEY`, `GOOGLE_API_KEY`, and `CARTESIA_API_KEY`
+3. Voice agent (`apps/voice-agent/.env`): set the same LiveKit values. With
+   LiveKit Cloud that's enough: speech-to-text, Gemini, and text-to-speech go
+   through LiveKit Inference. Set `DEEPGRAM_API_KEY`, `GOOGLE_API_KEY`, or
+   `CARTESIA_API_KEY` to call that provider directly instead; with a local
+   `livekit-server --dev` (no Inference) set all three
    (`CARTESIA_DEFAULT_VOICE_ID` optional). `APP_URL` and `TENANT_API_URL`
    default to the local App and US tenant-api.
 4. `VOICE_AGENT_TOKEN` (at least 32 characters) must match across App, the US
@@ -552,8 +560,11 @@ Real phone numbers (US):
    Agent tab; a forwarded business line must be verified with a code first. Link
    SMS uses the tenant-api `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and
    `TWILIO_FROM_NUMBER`.
-4. Recording (optional): set `RECORDING_S3_*` on the voice agent. LiveKit Egress
-   must be running and able to reach the bucket (LiveKit Cloud runs it for you).
+4. Recording (optional): turn on recording in the agent's settings, and set the
+   same `RECORDING_S3_*` bucket on the voice agent and the US tenant-api (keys
+   included) and on App (`RECORDING_S3_BUCKET`, `_ENDPOINT`, `_REGION` only, for
+   playback). LiveKit Egress must be running and able to reach the bucket
+   (LiveKit Cloud runs it for you).
 
 Production deployment, secrets, CI, and the KSA path:
 `docs/voice-agent-deployment.md`.

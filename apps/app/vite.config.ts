@@ -81,6 +81,7 @@ function stubCacheServerPlugin(): Plugin {
 					export const invalidateUserOrganizationsCache = () => Promise.resolve();
 					export const invalidateUserCache = () => Promise.resolve();
 					export const invalidateUserSecurityCache = () => Promise.resolve();
+					export const invalidateUserFavoritesCache = () => Promise.resolve();
 					export const deleteCacheKeys = () => Promise.resolve();
 					export const clearCacheByType = () => Promise.resolve();
 					export default {};

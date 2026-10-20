@@ -7,7 +7,8 @@ import { brand } from '@repo/config/brand'
 import { db, eq, User, UserImage } from '@repo/database'
 import { generateSeoMeta } from '@repo/seo'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
-import { PageTitle } from '@repo/ui/page-title'
+import { PageHeader } from '@repo/ui/page-header'
+import { WorkspacePage } from '@repo/ui/workspace'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -108,20 +109,18 @@ export default function ProfileSettings() {
 	const { _ } = useLingui()
 
 	return (
-		<div className="mx-auto w-full max-w-4xl py-8 md:p-8">
-			<div className="mb-8 md:mb-10">
-				<PageTitle
-					title={_(t`Profile Settings`)}
-					description={_(
-						t`Manage your account settings and set e-mail preferences.`,
-					)}
-				/>
-			</div>
+		<WorkspacePage className="max-w-4xl">
+			<PageHeader
+				title={_(t`Profile Settings`)}
+				description={_(
+					t`Manage your account settings and set e-mail preferences.`,
+				)}
+			/>
 			<AnnotatedLayout>
 				<AnnotatedSection>
 					<ProfileCard user={data.user} />
 				</AnnotatedSection>
 			</AnnotatedLayout>
-		</div>
+		</WorkspacePage>
 	)
 }

@@ -1,6 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { getNoteImgSrc, getUserImgSrc } from '@repo/common'
+import { getUserImgSrc } from '@repo/common'
 import { cn } from '@repo/ui'
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/avatar'
 import { Button } from '@repo/ui/button'
@@ -11,7 +11,6 @@ import { PrioritySignal } from '@repo/ui/priority-signal'
 import { Textarea } from '@repo/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import { formatDistanceToNow } from 'date-fns'
-import { Img } from 'openimg/react'
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useRouteLoaderData, useFetcher } from 'react-router'
 import sanitizeHtml from 'sanitize-html'
@@ -33,6 +32,7 @@ type LoaderNote = {
 		type: string
 		altText: string | null
 		objectKey: string
+		imageSrc?: string
 	}>
 }
 
@@ -57,6 +57,7 @@ export type Note = {
 		type: string
 		altText: string | null
 		objectKey: string
+		imageSrc?: string
 	}>
 }
 
@@ -297,8 +298,11 @@ export const NoteCard = ({
 											height={200}
 										/>
 									) : firstImage ? (
-										<Img
-											src={getNoteImgSrc(firstImage.objectKey, organizationId)}
+										<img
+											src={
+												firstImage.imageSrc ??
+												`/resources/images?objectKey=${encodeURIComponent(firstImage.objectKey)}&organizationId=${encodeURIComponent(organizationId)}`
+											}
 											alt={firstImage.altText || 'Note image'}
 											className="absolute inset-0 h-full w-full rounded-xl object-cover transition-all duration-300"
 											width={200}

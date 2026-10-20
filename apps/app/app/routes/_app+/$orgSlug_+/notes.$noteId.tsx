@@ -35,7 +35,6 @@ import {
 import { StatusButton } from '@repo/ui/status-button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@repo/ui/tabs'
 import { formatDistanceToNow } from 'date-fns'
-import { Img } from 'openimg/react'
 import {
 	useRef,
 	useEffect,
@@ -57,6 +56,11 @@ import {
 import sanitizeHtml from 'sanitize-html'
 import { ENV } from 'varlock/env'
 import { z } from 'zod'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.note.title,
+}
 
 // Simple error boundary for lazy-loaded components
 class LazyLoadErrorBoundary extends Component<
@@ -98,6 +102,7 @@ import {
 } from '#app/components/permissions/permission-guard.tsx'
 import { VideoPoster } from '#app/components/ui/video-poster.tsx'
 
+import { enrichNoteUploadsWithImageSrc } from '#app/utils/note-upload-url.server.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
@@ -184,6 +189,11 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	invariantResponse(note, 'Not found', { status: 404 })
 
+	note.uploads = await enrichNoteUploadsWithImageSrc(
+		note.uploads,
+		note.organizationId,
+	)
+
 	// Check if user has permission to read notes in this organization
 	// This will automatically verify organization access and specific permissions
 	await requireUserWithOrganizationPermission(
@@ -222,7 +232,12 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	// Get organization members for sharing
 	const organizationMembers = await db.query.UserOrganization.findMany({
 		columns: { userId: true },
-		with: { user: { columns: { id: true, name: true, username: true } } },
+		with: {
+			user: {
+				columns: { id: true, name: true, username: true },
+				with: { image: { columns: { objectKey: true } } },
+			},
+		},
 		where: (membership, { and, eq }) =>
 			and(
 				eq(membership.organizationId, note.organizationId),
@@ -492,6 +507,7 @@ type NoteLoaderData = {
 			type: string
 			altText: string | null
 			objectKey: string
+			imageSrc: string
 		}[]
 		organization: { slug: string; id: string }
 		noteAccess: Array<{
@@ -512,6 +528,7 @@ type NoteLoaderData = {
 			id: string
 			name: string | null
 			username: string
+			image: { objectKey: string } | null
 		}
 	}>
 	comments: Array<{
@@ -764,17 +781,20 @@ export default function NoteRoute() {
 										.map((image) => (
 											<li key={image.objectKey}>
 												<a
-													href={getNoteImgSrc(
-														image.objectKey,
-														note.organization.id,
-													)}
+													href={
+														image.imageSrc ??
+														getNoteImgSrc(image.objectKey, note.organization.id)
+													}
 													className="ring-border hover:ring-foreground/20 focus-visible:ring-ring block overflow-hidden rounded-lg ring-1 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none motion-safe:transition-shadow"
 												>
-													<Img
-														src={getNoteImgSrc(
-															image.objectKey,
-															note.organization.id,
-														)}
+													<img
+														src={
+															image.imageSrc ??
+															getNoteImgSrc(
+																image.objectKey,
+																note.organization.id,
+															)
+														}
 														alt={image.altText ?? ''}
 														className="size-28 object-cover sm:size-32"
 														width={512}
@@ -1043,6 +1063,7 @@ function NoteSheetActions({
 				open={shareOpen}
 				onOpenChange={setShareOpen}
 				noteId={note.id}
+				noteOwnerId={note.createdById}
 				isPublic={note.isPublic}
 				noteAccess={note.noteAccess}
 				organizationMembers={organizationMembers}

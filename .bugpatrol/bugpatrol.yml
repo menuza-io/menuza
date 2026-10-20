@@ -1,0 +1,26 @@
+version: 1
+
+# Written by `bugpatrol init` on 2026-10-14. Correct any value that is wrong.
+# Docs: https://github.com/agent-labs-dev/bugpatrol/blob/main/docs/configuration.md
+
+app:
+  platform: web
+# Paths are relative to the project root: the folder that holds .bugpatrol/.
+  source: .                          # the repo that the fixer edits
+  setup: []                          # start the app yourself (npm run dev) before running bugpatrol
+  connect:
+    url: https://app.epic-startup.test:2999
+  instructions: .bugpatrol/instructions.md   # plain English for the explorer: sign in, main flows, never-do list
+  secrets: []                        # env var names the explorer may use as {{NAME}}, e.g. [TEST_PASSWORD]
+
+# Each agent runs on an LLM: a local agent CLI (claude, codex, kimi, pi) or an API key.
+agents:
+  explorer:                          # uses the app and reports what looks wrong
+    use: claude
+  judge:                             # decides which reports are real bugs, and writes the issues
+    use: claude
+  fixer:                             # writes a fix in its own git worktree
+    enabled: true                    # turn on when you want Bugpatrol to fix bugs
+    use: claude
+  github:
+    enabled: true                   # turn on to open PRs and issues (needs the gh CLI)

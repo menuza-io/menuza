@@ -1,4 +1,5 @@
-import { Trans, t } from '@lingui/macro'
+import { type MessageDescriptor } from '@lingui/core'
+import { Trans, msg, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	CommandDialog,
@@ -10,10 +11,14 @@ import {
 	CommandShortcut,
 	Command,
 } from '@repo/ui/command'
-import { Icon } from '@repo/ui/icon'
+import { Icon, type IconName } from '@repo/ui/icon'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouteLoaderData, useFetcher, useNavigate } from 'react-router'
 import { type loader as rootLoader } from '#app/root.tsx'
+import {
+	HIDDEN_STAFFING_NAV,
+	type StaffingNavAccess,
+} from '#app/utils/staffing/nav.ts'
 
 interface Note {
 	id: string
@@ -22,6 +27,119 @@ interface Note {
 	createdAt: string
 	updatedAt: string
 	createdByName: string
+}
+
+interface NavigationCommand {
+	label: MessageDescriptor
+	url: string
+	icon: IconName
+	/** Sub-section names, so typing "time clock" still finds Staff. */
+	keywords?: MessageDescriptor[]
+}
+
+/** The descriptors whose access flag is true. */
+function allowed(
+	entries: ReadonlyArray<readonly [MessageDescriptor, boolean]>,
+): MessageDescriptor[] {
+	return entries.filter(([, ok]) => ok).map(([label]) => label)
+}
+
+/**
+ * The sidebar's main sections as palette entries, behind the same permission
+ * checks as `visibleNavMain` in `app-sidebar.tsx`. Keep the two in step.
+ */
+export function getNavigationCommands({
+	orgSlug,
+	permissions,
+	staffingNav,
+}: {
+	orgSlug: string
+	permissions: ReadonlyArray<{ action: string; entity: string }>
+	staffingNav: StaffingNavAccess
+}): NavigationCommand[] {
+	const can = (action: string, entity: string) =>
+		permissions.some(
+			(permission) =>
+				permission.action === action && permission.entity === entity,
+		)
+	const canReadWebsite = can('read', 'website')
+	const canReadPhoneAgent = can('read', 'phone_agent')
+	const canReadPhoneCalls = can('read', 'phone_call')
+	const canReadCampaigns = can('read', 'campaign')
+	const canReadAutomations = can('read', 'automation')
+	const canReadAnnouncements = can('read', 'announcement')
+	const staffUrl = (
+		[
+			['team', staffingNav.team],
+			['timeclock', staffingNav.timeclock],
+			['schedule', staffingNav.schedule],
+			['labor', staffingNav.labor],
+			['hiring', staffingNav.hiring],
+		] as const
+	).find(([, allowed]) => allowed)?.[0]
+
+	const commands: Array<NavigationCommand | false> = [
+		{ label: msg`Dashboard`, url: `/${orgSlug}`, icon: 'layout-grid' },
+		{ label: msg`Reports`, url: `/${orgSlug}/reports`, icon: 'trending-up' },
+		{ label: msg`Notes`, url: `/${orgSlug}/notes`, icon: 'folder' },
+		{ label: msg`Media library`, url: `/${orgSlug}/media`, icon: 'image' },
+		{ label: msg`Customers`, url: `/${orgSlug}/customers`, icon: 'users' },
+		{ label: msg`Chat`, url: `/${orgSlug}/chat`, icon: 'message-circle' },
+		(canReadWebsite || canReadPhoneCalls) && {
+			label: msg`Mailbox`,
+			url: `/${orgSlug}/mailbox`,
+			icon: 'mail',
+		},
+		(canReadCampaigns || canReadAutomations) && {
+			label: msg`Marketing`,
+			url: `/${orgSlug}/marketing`,
+			icon: 'send',
+			keywords: allowed([
+				[msg`Broadcasts`, canReadCampaigns],
+				[msg`Automations`, canReadAutomations],
+			]),
+		},
+		(canReadPhoneAgent || canReadPhoneCalls) && {
+			label: msg`Phone agent`,
+			// People who can only see calls land on Calls, not Setup.
+			url: canReadPhoneAgent
+				? `/${orgSlug}/phone-agent`
+				: `/${orgSlug}/phone-agent/calls`,
+			icon: 'phone',
+			keywords: allowed([
+				[msg`Calls`, canReadPhoneCalls],
+				[msg`Setup`, canReadPhoneAgent],
+				[msg`Knowledge`, canReadPhoneAgent],
+				[msg`Call flow`, canReadPhoneAgent],
+			]),
+		},
+		staffingNav.visible && {
+			label: msg`Staff`,
+			url: staffUrl ? `/${orgSlug}/staff/${staffUrl}` : `/${orgSlug}/staff`,
+			icon: 'person',
+			keywords: allowed([
+				[msg`Team`, staffingNav.team],
+				[msg`Time clock`, staffingNav.timeclock],
+				[msg`Schedule`, staffingNav.schedule],
+				[msg`Labor`, staffingNav.labor],
+				[msg`Hiring`, staffingNav.hiring],
+			]),
+		},
+		(canReadWebsite || canReadAnnouncements) && {
+			label: msg`Website`,
+			url: canReadWebsite
+				? `/${orgSlug}/website`
+				: `/${orgSlug}/website/announcements`,
+			icon: 'monitor',
+			keywords: allowed([
+				[msg`Pages`, canReadWebsite],
+				[msg`Forms`, canReadWebsite],
+				[msg`Announcements`, canReadAnnouncements],
+				[msg`Redirects`, canReadWebsite],
+			]),
+		},
+	]
+	return commands.filter((command) => command !== false)
 }
 
 interface CommandMenuProps {
@@ -43,6 +161,15 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 		rootData?.userOrganizations?.currentOrganization?.organization.slug
 	const organizationId =
 		rootData?.userOrganizations?.currentOrganization?.organization.id
+	const navigationCommands = orgSlug
+		? getNavigationCommands({
+				orgSlug,
+				permissions:
+					rootData?.userOrganizations?.currentOrganization?.organizationRole
+						?.permissions ?? [],
+				staffingNav: rootData?.staffingNav ?? HIDDEN_STAFFING_NAV,
+			})
+		: []
 
 	// Track command menu usage for onboarding (only once per session)
 	useEffect(() => {
@@ -99,18 +226,36 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 		>
 			<Command>
 				<CommandInput
-					placeholder={_(t`Search notes...`)}
+					placeholder={_(t`Search or jump to…`)}
 					value={query}
 					onValueChange={setQuery}
 				/>
 				<CommandList className="md:min-h-[400px]">
 					<CommandEmpty>
 						{loading ? (
-							<Trans>Loading notes...</Trans>
+							<Trans>Searching…</Trans>
 						) : (
-							<Trans>No notes found.</Trans>
+							<Trans>No results found.</Trans>
 						)}
 					</CommandEmpty>
+
+					{navigationCommands.length > 0 && (
+						<CommandGroup heading={_(t`Go to`)}>
+							{navigationCommands.map((command) => (
+								<CommandItem
+									key={command.url}
+									keywords={command.keywords?.map((keyword) => _(keyword))}
+									onSelect={() => {
+										void navigate(command.url)
+										onOpenChange(false)
+									}}
+								>
+									<Icon name={command.icon} />
+									<span>{_(command.label)}</span>
+								</CommandItem>
+							))}
+						</CommandGroup>
+					)}
 
 					<CommandGroup heading={_(t`Actions`)}>
 						<CommandItem

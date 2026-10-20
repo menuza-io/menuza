@@ -1,4 +1,8 @@
-import { verifySessionStorage, requireUserId } from '@repo/auth'
+import {
+	getRequestDocumentPath,
+	requireUserId,
+	verifySessionStorage,
+} from '@repo/auth'
 import { redirectWithToast } from '@repo/common/toast'
 import { and, db, eq, User, UserOrganization } from '@repo/database'
 import { type LoaderFunctionArgs, redirect } from 'react-router'
@@ -91,7 +95,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			)
 			verifySession.set(onboardingInviteTokenSessionKey, token)
 			const signupUrl = new URL('/signup', request.url)
-			signupUrl.searchParams.set('redirectTo', new URL(request.url).pathname)
+			signupUrl.searchParams.set(
+				'redirectTo',
+				getRequestDocumentPath(request).split('?')[0] ?? '/',
+			)
 
 			return redirect(`${signupUrl.pathname}?${signupUrl.searchParams}`, {
 				headers: {

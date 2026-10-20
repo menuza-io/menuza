@@ -120,15 +120,10 @@ function calculateNoteDestination(
 
 	if (overNoteId) {
 		const overIndex = list.findIndex((n) => n.id === overNoteId)
+		// The server computes the position among the column's notes without the
+		// moved one, so the dragged-over note's index is already the right slot
+		// (dropping onto a later note in the same column lands after it).
 		if (overIndex >= 0) destIndex = overIndex
-
-		// If moving within same column and after itself, adjust index
-		if (
-			activeParsed.columnId === destColId &&
-			overIndex > list.findIndex((n) => n.id === activeParsed.noteId)
-		) {
-			destIndex--
-		}
 	}
 
 	return { columnId: destColId, position: destIndex }
@@ -352,10 +347,15 @@ export function NotesKanbanBoard({
 			const overParsed = parseDragId(over.id)
 			if (!overParsed?.isColumn) return
 
-			const activeIndex = columns.findIndex(
+			// The synthetic Uncategorised column is not a status: it cannot be
+			// moved and must not shift the position sent to the server.
+			const statusColumns = columns.filter((c) => c.id !== UNCATEGORISED)
+			const activeIndex = statusColumns.findIndex(
 				(c) => c.id === activeParsed.columnId,
 			)
-			const overIndex = columns.findIndex((c) => c.id === overParsed.columnId)
+			const overIndex = statusColumns.findIndex(
+				(c) => c.id === overParsed.columnId,
+			)
 
 			if (activeIndex !== overIndex && activeIndex !== -1 && overIndex !== -1) {
 				const formData = new FormData()

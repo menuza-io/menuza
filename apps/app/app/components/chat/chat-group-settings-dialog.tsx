@@ -124,7 +124,7 @@ export function ChatGroupSettingsDialog({
 											type="button"
 											variant="outline"
 											size="sm"
-											className="w-full justify-start"
+											className="w-full justify-start rounded-md"
 											disabled={pending}
 											onClick={() =>
 												submit({

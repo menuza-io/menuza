@@ -113,6 +113,7 @@
     "@opentelemetry/sdk-node": "^0.217.0",
     "@varlock/nextjs-integration": "^0.1.2",
     "astro": "^7.1.6",
+    "@qwik.dev/partytown": "^1.0.1",
     "liquidjs": "^10.28.0",
     "motion": "^12.23.1",
     "react-dom": "^19.2.8",

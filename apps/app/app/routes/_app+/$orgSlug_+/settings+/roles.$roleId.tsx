@@ -1,9 +1,18 @@
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router'
 import { ReadOnlyRoleView } from '#app/components/roles/tenant-role-access-manager.tsx'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
+import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	getRoleWithPermissions,
 	requireOrganizationMember,
 } from './roles.server.ts'
+
+const capitalize = (value: string) =>
+	value.charAt(0).toUpperCase() + value.slice(1)
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => capitalize(data.role.name),
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const { organization, isAdmin } = await requireOrganizationMember(
@@ -25,11 +34,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		},
 		role,
 		canEdit: isAdmin && !role.isBuiltIn,
+		staffingEnabled: await isStaffingFeatureEnabled(
+			organization.organizationId,
+		),
 	}
 }
 
 export default function ViewRoleRoute() {
-	const { organization, role, canEdit } = useLoaderData<typeof loader>()
+	const { organization, role, canEdit, staffingEnabled } =
+		useLoaderData<typeof loader>()
 	const basePath = `/${organization.slug}/settings/roles`
 
 	return (
@@ -37,6 +50,7 @@ export default function ViewRoleRoute() {
 			orgSlug={organization.slug}
 			role={role}
 			editHref={canEdit ? `${basePath}/${role.id}/edit` : undefined}
+			staffingEnabled={staffingEnabled}
 		/>
 	)
 }

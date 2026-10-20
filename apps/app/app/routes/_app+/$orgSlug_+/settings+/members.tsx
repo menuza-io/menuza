@@ -42,6 +42,11 @@ import {
 import { MAX_ORGANIZATION_INVITES_PER_REQUEST } from '#app/utils/organization/invitation.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
+	auditInvitationRevoked,
+	auditInviteLinkDisabled,
+	auditMemberRemoved,
+} from '#app/utils/organization/membership-audit.server.ts'
+import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 	getUserOrganizationPermissionsForClient,
@@ -52,6 +57,10 @@ import {
 	createRateLimitResponse,
 	ORGANIZATION_INVITE_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
+import {
+	enqueueStaffingOutbox,
+	flushStaffingOutboxFor,
+} from '#app/utils/staffing/outbox.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -152,7 +161,9 @@ const InviteSchema = z.object({
 		.array(
 			z
 				.object({
-					email: z.string().email('Invalid email address'),
+					email: z
+						.string({ required_error: 'Enter an email address' })
+						.email('Invalid email address'),
 					roleId: z.string().min(1).optional(),
 					// Accept legacy callers while all current forms submit roleId.
 					role: z
@@ -248,6 +259,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					roleId: invite.roleId,
 					role: invite.role,
 					inviterId: userId,
+					request,
 				})
 
 				await sendOrganizationInvitationEmail({
@@ -292,7 +304,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const invitationId = formData.get('invitationId') as string
 
 		try {
-			await deleteOrganizationInvitation(invitationId, organization.id)
+			const revoked = await deleteOrganizationInvitation(
+				invitationId,
+				organization.id,
+			)
+			if (revoked.length > 0) {
+				await auditInvitationRevoked({
+					organizationId: organization.id,
+					actorId: userId,
+					invitationId,
+					request,
+				})
+			}
 			return Response.json({ success: true })
 		} catch (error) {
 			console.error('Error removing invitation:', error)
@@ -321,6 +344,67 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		try {
+			// Like role changes, removing a built-in admin is reserved for built-in
+			// admins: a tenant role with DELETE_MEMBER_ANY must not be able to lock
+			// admins out of the organization.
+			const [targetMembership] = await db
+				.select({ roleId: UserOrganization.organizationRoleId })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, memberUserId),
+						eq(UserOrganization.organizationId, organization.id),
+					),
+				)
+				.limit(1)
+			if (targetMembership?.roleId === 'org_role_admin') {
+				const [actorAdmin] = await db
+					.select({ userId: UserOrganization.userId })
+					.from(UserOrganization)
+					.where(
+						and(
+							eq(UserOrganization.userId, userId),
+							eq(UserOrganization.organizationId, organization.id),
+							eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+							eq(UserOrganization.active, true),
+						),
+					)
+					.limit(1)
+				// The sole admin falls through to the last-admin check below.
+				const [otherAdmin] = actorAdmin
+					? []
+					: await db
+							.select({ userId: UserOrganization.userId })
+							.from(UserOrganization)
+							.where(
+								and(
+									eq(UserOrganization.organizationId, organization.id),
+									eq(UserOrganization.organizationRoleId, 'org_role_admin'),
+									eq(UserOrganization.active, true),
+									ne(UserOrganization.userId, memberUserId),
+								),
+							)
+							.limit(1)
+				if (!actorAdmin && otherAdmin) {
+					return Response.json(
+						{ error: 'Only organization admins can remove admins' },
+						{ status: 403 },
+					)
+				}
+			}
+
+			// Removing an already-inactive member is an idempotent no-op; only the
+			// first removal is an auditable event.
+			const [before] = await db
+				.select({ active: UserOrganization.active })
+				.from(UserOrganization)
+				.where(
+					and(
+						eq(UserOrganization.userId, memberUserId),
+						eq(UserOrganization.organizationId, organization.id),
+					),
+				)
+				.limit(1)
 			const [removed] = await db
 				.update(UserOrganization)
 				.set({
@@ -377,6 +461,34 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					'Failed to update seat quantity after removing user:',
 					error,
 				)
+			}
+
+			if (before?.active) {
+				await auditMemberRemoved({
+					organizationId: organization.id,
+					memberUserId,
+					actorId: userId,
+					request,
+				})
+				// Removing app access is not terminating the person: the staff record
+				// keeps its schedule, PIN and pay history. Only the login link is
+				// detached, through the staffing outbox (ids only, best effort now,
+				// retried by the daily job).
+				try {
+					const queued = await enqueueStaffingOutbox({
+						organizationId: organization.id,
+						kind: 'unlink_user',
+						payload: { userId: memberUserId },
+					})
+					if (queued) {
+						await flushStaffingOutboxFor(organization.id, memberUserId)
+					}
+				} catch (error) {
+					console.error(
+						'Failed to queue staff unlink after removing member:',
+						error instanceof Error ? error.name : 'unknown',
+					)
+				}
 			}
 
 			return Response.json({ success: true })
@@ -552,6 +664,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				organizationId: organization.id,
 				roleId: 'org_role_member',
 				createdById: userId,
+				request,
 			})
 			return Response.json({ success: true, inviteLink })
 		} catch (error) {
@@ -575,6 +688,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				organizationId: organization.id,
 				roleId: 'org_role_member',
 				createdById: userId,
+				request,
 			})
 			return Response.json({ success: true, inviteLink })
 		} catch (error) {
@@ -594,7 +708,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		)
 
 		try {
-			await deactivateOrganizationInviteLink(organization.id, userId)
+			const disabled = await deactivateOrganizationInviteLink(
+				organization.id,
+				userId,
+			)
+			if (disabled.length > 0) {
+				await auditInviteLinkDisabled({
+					organizationId: organization.id,
+					actorId: userId,
+					request,
+				})
+			}
 			return Response.json({ success: true })
 		} catch (error) {
 			console.error('Error deactivating invite link:', error)

@@ -173,6 +173,20 @@ describe('patchPhoneAgentSettings', () => {
 		})
 	})
 
+	it('refuses an unknown business time zone', async () => {
+		const { orgId, versions } = await setup()
+		const result = await patch(
+			orgId,
+			{ business: { ...VALID_SETTINGS.business, timezone: 'Not/AZone' } },
+			{ business: versions.business! },
+		)
+		expect(result).toEqual({
+			ok: false,
+			error: 'invalid_fields',
+			fieldErrors: { 'business.timezone': 'timezone' },
+		})
+	})
+
 	it('refuses numbers outside the US and Canada', async () => {
 		const { orgId, versions } = await setup()
 		const result = await patch(

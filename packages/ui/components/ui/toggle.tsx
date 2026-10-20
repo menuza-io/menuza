@@ -10,6 +10,9 @@ const toggleVariants = cva(
 			variant: {
 				default: 'bg-transparent',
 				outline: 'border-input hover:bg-muted border bg-transparent',
+				// Segmented control: use inside `ToggleGroup variant="segmented"`.
+				segmented:
+					'text-muted-foreground hover:text-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-raised dark:aria-pressed:bg-muted rounded-sm bg-transparent px-2.5 text-xs hover:bg-transparent',
 			},
 			size: {
 				default: 'h-8 min-w-8 px-2',
@@ -17,6 +20,10 @@ const toggleVariants = cva(
 				lg: 'h-9 min-w-9 px-2.5',
 			},
 		},
+		// Sizes set their own padding and radius; a segment keeps its own.
+		compoundVariants: [
+			{ variant: 'segmented', className: 'rounded-sm px-2.5' },
+		],
 		defaultVariants: {
 			variant: 'default',
 			size: 'default',

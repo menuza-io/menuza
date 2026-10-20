@@ -4,8 +4,8 @@ import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 import { initializeOnboardingSteps } from '../../../../packages/database/setup-onboarding.ts'
 
+/** Home's grid; the stats block is replaced by the KPI row above it. */
 const DEFAULT_HOME_BLOCKS = [
-	'Stats',
 	'Notes chart',
 	'Onboarding checklist',
 	'Top contributors',

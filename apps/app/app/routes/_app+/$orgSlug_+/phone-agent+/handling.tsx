@@ -29,8 +29,8 @@ import {
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { useEffect, useState } from 'react'
-import { Link, useLoaderData, useParams } from 'react-router'
+import { type ReactNode, useEffect, useState } from 'react'
+import { Link, useLoaderData, useLocation, useParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { formatDateTime } from '#app/components/phone-agent/call-data.ts'
 import {
@@ -136,6 +136,16 @@ export default function PhoneAgentHandling() {
 		data.canUpdate &&
 			(flowDirty || transfersDirty || ratingsDirty || afterCallDirty),
 	)
+	const { hash } = useLocation()
+
+	// Client navigations do not scroll to a hash on their own.
+	useEffect(() => {
+		if (!hash) return
+		document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' })
+		if (hash === '#transfers') {
+			document.getElementById('transfer-staff-phone')?.focus()
+		}
+	}, [hash])
 	return (
 		<div className="flex flex-col gap-8">
 			<PhoneAgentSettingsHeader active="handling" />
@@ -153,6 +163,7 @@ export default function PhoneAgentHandling() {
 					<TransfersSection
 						safety={data.safety}
 						escalationPhone={data.escalationPhone}
+						hasStaffPhone={data.hasStaffPhone}
 						transfers={data.transfers}
 						contacts={data.contacts}
 						transferCases={data.transferCases}
@@ -319,6 +330,7 @@ function FlowLinesSection({
 function TransfersSection({
 	safety,
 	escalationPhone,
+	hasStaffPhone: savedHasStaffPhone,
 	transfers: savedTransfers,
 	contacts: savedContacts,
 	transferCases: savedCases,
@@ -331,6 +343,7 @@ function TransfersSection({
 }: {
 	safety: LoaderData['safety']
 	escalationPhone: LoaderData['escalationPhone']
+	hasStaffPhone: boolean
 	transfers: LoaderData['transfers']
 	contacts: LoaderData['contacts']
 	transferCases: LoaderData['transferCases']
@@ -386,6 +399,13 @@ function TransfersSection({
 		onDirtyChange(dirty)
 	}, [dirty, onDirtyChange])
 	const disabled = !canUpdate || pending
+	// An unsaved number is trusted until the server can check it on reload.
+	const hasStaffPhone =
+		staffPhone === (escalationPhone ?? '')
+			? savedHasStaffPhone
+			: Boolean(staffPhone)
+	const pressZeroWarning = transfers.pressZeroForStaff && !hasStaffPhone
+	const textOfferWarning = transfers.offerTextWhenNoAnswer && !hasStaffPhone
 
 	const usedContactIds = new Set(cases.map((item) => item.contactId))
 
@@ -513,10 +533,22 @@ function TransfersSection({
 										Callers can press 0 at any time to be transferred.
 									</Trans>
 								</p>
+								<StaffPhoneWarning
+									id="transfer-press-zero-warning"
+									show={pressZeroWarning}
+								>
+									<Trans>
+										Pressing 0 won't reach anyone until you set a staff phone
+										number above.
+									</Trans>
+								</StaffPhoneWarning>
 							</div>
 							<Switch
 								id="transfer-press-zero"
 								checked={transfers.pressZeroForStaff}
+								aria-describedby={
+									pressZeroWarning ? 'transfer-press-zero-warning' : undefined
+								}
 								disabled={disabled}
 								onCheckedChange={(checked) =>
 									setTransfers((current) => ({
@@ -537,10 +569,22 @@ function TransfersSection({
 										caller a link they can use should nobody pick up.
 									</Trans>
 								</p>
+								<StaffPhoneWarning
+									id="transfer-text-offer-warning"
+									show={textOfferWarning}
+								>
+									<Trans>
+										A text after a missed transfer is only offered once a call
+										can reach staff. Set a staff phone number above.
+									</Trans>
+								</StaffPhoneWarning>
 							</div>
 							<Switch
 								id="transfer-text-offer"
 								checked={transfers.offerTextWhenNoAnswer}
+								aria-describedby={
+									textOfferWarning ? 'transfer-text-offer-warning' : undefined
+								}
 								disabled={disabled}
 								onCheckedChange={(checked) =>
 									setTransfers((current) => ({
@@ -910,6 +954,28 @@ function TransfersSection({
 				label={<Trans>Save transfers</Trans>}
 			/>
 		</form>
+	)
+}
+
+function StaffPhoneWarning({
+	id,
+	show,
+	children,
+}: {
+	id: string
+	show: boolean
+	children: ReactNode
+}) {
+	// Always mounted so turning the switch on announces the warning.
+	return (
+		<div role="status">
+			{show ? (
+				<p id={id} className="text-warning flex items-start gap-1.5 text-xs">
+					<Icon name="alert-triangle" size="xs" className="mt-0.5 shrink-0" />
+					{children}
+				</p>
+			) : null}
+		</div>
 	)
 }
 

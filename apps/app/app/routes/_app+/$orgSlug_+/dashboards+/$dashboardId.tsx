@@ -2,7 +2,7 @@ import { Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { Button } from '@repo/ui/button'
-import { PageTitle } from '@repo/ui/page-title'
+import { WorkspacePage } from '@repo/ui/workspace'
 import { useCallback } from 'react'
 import { Link } from 'react-router'
 import { SHARED_ACCESS_LABELS } from '#app/components/dashboard/access-labels.ts'
@@ -12,6 +12,7 @@ import { DashboardOptionsMenu } from '#app/components/dashboard/dashboard-option
 import { DashboardSwitcher } from '#app/components/dashboard/dashboard-switcher.tsx'
 import { ShareDashboardDialog } from '#app/components/dashboard/share-dashboard-dialog.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import { requireCustomDashboardAccess } from '#app/utils/dashboards/access.server.ts'
 import { handleCustomDashboardAction } from '#app/utils/dashboards/actions.server.ts'
 import {
@@ -32,6 +33,10 @@ import {
 import { resolveReportBlock } from '#app/utils/dashboards/reports.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { type Route } from './+types/$dashboardId.ts'
+
+export const handle: BreadcrumbHandle<Awaited<ReturnType<typeof loader>>> = {
+	breadcrumb: (data) => data.dashboard.name,
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const userId = await requireUserId(request)
@@ -162,20 +167,15 @@ export default function CustomDashboard({ loaderData }: Route.ComponentProps) {
 	)
 
 	return (
-		<div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 py-8 md:px-6 lg:px-8">
-			<PageTitle
-				title={<span className="wrap-anywhere">{dashboard.name}</span>}
-				description={
-					dashboard.access === 'owner' ? null : (
-						<SharedBy
-							ownerName={dashboard.ownerName}
-							access={dashboard.access}
-						/>
-					)
-				}
-			/>
+		<WorkspacePage>
+			{/* The switcher names the dashboard visually; the page still needs an h1. */}
+			<h1 className="sr-only">{dashboard.name}</h1>
+			{dashboard.access === 'owner' ? null : (
+				<p className="text-muted-foreground text-[13px]">
+					<SharedBy ownerName={dashboard.ownerName} access={dashboard.access} />
+				</p>
+			)}
 			<DashboardEditor
-				// Unsaved edits, open menus and dialogs belong to one dashboard.
 				key={dashboard.id}
 				title={
 					<DashboardSwitcher
@@ -206,7 +206,7 @@ export default function CustomDashboard({ loaderData }: Route.ComponentProps) {
 				renderBlock={renderBlock}
 				blockTitle={blockTitle}
 			/>
-		</div>
+		</WorkspacePage>
 	)
 }
 

@@ -69,7 +69,7 @@ test.describe('Organization Management', () => {
 
 		// Verify organization was created and user is redirected
 		await expect(page).toHaveURL(new RegExp(`/${orgSlug}`))
-		await expect(page.getByText(orgName)).toBeVisible()
+		await expect(page.getByText(orgName).first()).toBeVisible()
 
 		// Verify organization exists in database
 		const [createdOrg] = await db
@@ -132,7 +132,7 @@ test.describe('Organization Management', () => {
 		await page.waitForLoadState('networkidle')
 
 		// Verify we're in the first organization
-		await expect(page.getByText(org1.name)).toBeVisible()
+		await expect(page.getByText(org1.name).first()).toBeVisible()
 
 		// Switch to second organization using the organization switcher
 		// Click on the team switcher (look for the current org name in the sidebar)

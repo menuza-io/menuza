@@ -1,5 +1,6 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
 import { Badge } from '@repo/ui/badge'
 import {
 	Card,
@@ -11,7 +12,7 @@ import {
 import { Icon, type IconName } from '@repo/ui/icon'
 import { Separator } from '@repo/ui/separator'
 import { Switch } from '@repo/ui/switch'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useId, useRef } from 'react'
 import { useFetcher } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 
@@ -35,6 +36,10 @@ function getWorkflowLabel(
 	const labels: Record<string, any> = {
 		'comment-mention-workflow': msg`Notifications when you are mentioned in a comment`,
 		'note-comment-workflow': msg`Notifications when someone comments on your notes`,
+		'staffing-attendance-workflow': msg`Time clock: someone has not clocked in or forgot to clock out`,
+		'staffing-overtime-workflow': msg`Time clock: someone is close to overtime or has reached it`,
+		'staffing-schedule-workflow': msg`Schedule: a week was published`,
+		'staffing-hiring-workflow': msg`Hiring: someone applied for a job`,
 	}
 	return _(labels[workflowName]) || workflowName
 }
@@ -63,8 +68,41 @@ const workflows = [
 	},
 ]
 
+// Time clock alerts: only offered to members who can actually receive them
+// (staffing time clock is on and they can read timesheets), so nobody sees a
+// switch that does nothing.
+const staffingWorkflows = STAFFING_NOTIFICATION_WORKFLOWS.filter(
+	(id) =>
+		id !== 'staffing-schedule-workflow' && id !== 'staffing-hiring-workflow',
+).map((id) => ({
+	id,
+	name: id,
+	critical: false,
+}))
+// Schedule alerts are offered on their own: scheduling is on and the member can
+// read the schedule.
+const scheduleWorkflows = [
+	{
+		id: 'staffing-schedule-workflow',
+		name: 'staffing-schedule-workflow',
+		critical: false,
+	},
+]
+
+// Applicant alerts are offered where hiring is on and the member can read the
+// applicants they open.
+const hiringWorkflows = [
+	{
+		id: 'staffing-hiring-workflow',
+		name: 'staffing-hiring-workflow',
+		critical: false,
+	},
+]
+
 interface ChannelSwitchListProps {
 	preference: Preference
+	// Id of the workflow heading, so each switch is named "<channel> <workflow>".
+	headingId: string
 	isUpdating: boolean
 	onUpdate: (workflow: string, channel: string, enabled: boolean) => void
 	disabled: boolean
@@ -72,6 +110,7 @@ interface ChannelSwitchListProps {
 
 function ChannelSwitchList({
 	preference,
+	headingId,
 	isUpdating,
 	onUpdate,
 	disabled,
@@ -90,11 +129,15 @@ function ChannelSwitchList({
 							name={getChannelIcon(channel)}
 							className="text-muted-foreground h-4 w-4 shrink-0"
 						/>
-						<span className="text-sm font-medium">
+						<span
+							id={`${headingId}-${channel}`}
+							className="text-sm font-medium"
+						>
 							{getChannelLabel(channel, _)}
 						</span>
 					</div>
 					<Switch
+						aria-labelledby={`${headingId}-${channel} ${headingId}`}
 						checked={preference[channel]}
 						onCheckedChange={(checked) =>
 							onUpdate(preference.workflow, channel, checked)
@@ -121,6 +164,7 @@ function WorkflowPreferenceRow({
 	const { _ } = useLingui()
 	const fetcher = useFetcher()
 	const formRef = useRef<HTMLFormElement>(null)
+	const headingId = useId()
 
 	const isUpdating = fetcher.state !== 'idle'
 
@@ -158,7 +202,7 @@ function WorkflowPreferenceRow({
 			</form>
 			<div className="flex flex-wrap items-center gap-2">
 				<Icon name="cog" className="h-4 w-4 shrink-0" />
-				<h3 className="text-base font-medium">
+				<h3 id={headingId} className="text-base font-medium">
 					{getWorkflowLabel(workflow.name, _)}
 				</h3>
 				{workflow.critical && (
@@ -169,6 +213,7 @@ function WorkflowPreferenceRow({
 			</div>
 			<ChannelSwitchList
 				preference={pref}
+				headingId={headingId}
 				isUpdating={isUpdating}
 				onUpdate={updatePreference}
 				disabled={workflow.critical}
@@ -180,8 +225,14 @@ function WorkflowPreferenceRow({
 
 export function NotificationPreferencesCard({
 	organizationId,
+	showStaffingAlerts = false,
+	showScheduleAlerts = false,
+	showHiringAlerts = false,
 }: {
 	organizationId: string
+	showStaffingAlerts?: boolean
+	showScheduleAlerts?: boolean
+	showHiringAlerts?: boolean
 }) {
 	const fetcher = useFetcher<{ preferences: Preference[] }>()
 
@@ -194,6 +245,12 @@ export function NotificationPreferencesCard({
 	}, [fetcher, organizationId])
 
 	const preferences = fetcher.data?.preferences || []
+	const visibleWorkflows = [
+		...workflows,
+		...(showStaffingAlerts ? staffingWorkflows : []),
+		...(showScheduleAlerts ? scheduleWorkflows : []),
+		...(showHiringAlerts ? hiringWorkflows : []),
+	]
 
 	const getPreference = (workflowId: string): Preference => {
 		const pref = preferences.find((p) => p.workflow === workflowId)
@@ -214,7 +271,7 @@ export function NotificationPreferencesCard({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-6">
-				{workflows.map((workflow, index) => {
+				{visibleWorkflows.map((workflow, index) => {
 					const serverPref = getPreference(workflow.id)
 
 					return (
@@ -223,7 +280,7 @@ export function NotificationPreferencesCard({
 							organizationId={organizationId}
 							workflow={workflow}
 							serverPref={serverPref}
-							isLast={index === workflows.length - 1}
+							isLast={index === visibleWorkflows.length - 1}
 						/>
 					)
 				})}

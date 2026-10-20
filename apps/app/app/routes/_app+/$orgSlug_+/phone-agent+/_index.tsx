@@ -10,6 +10,7 @@ import {
 	RECORDING_RETENTION_DAYS,
 	SUPPORTED_AGENT_LANGUAGES,
 } from '@repo/phone-agent'
+import { cn } from '@repo/ui'
 import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
@@ -184,48 +185,45 @@ export default function PhoneAgentSetup() {
 	)
 }
 
-type StepState = 'done' | 'next' | 'later'
-
-function SetupStep({
-	state,
-	title,
-	description,
-	action,
-}: {
-	state: StepState
+type SetupStepItem = {
+	key: string
+	done: boolean
 	title: ReactNode
-	description: ReactNode
-	action?: ReactNode
+	/** Shown only while the step is open. */
+	hint: ReactNode
+	action: (isNext: boolean) => ReactNode
+}
+
+function ChecklistStatusIcon({
+	done,
+	isNext,
+}: {
+	done: boolean
+	isNext: boolean
 }) {
 	const { _ } = useLingui()
+	if (done) {
+		return (
+			<span
+				role="img"
+				aria-label={_(msg`Done`)}
+				className="bg-success/15 text-success flex size-5 shrink-0 items-center justify-center rounded-full"
+			>
+				<Icon name="check" className="size-3" />
+			</span>
+		)
+	}
 	return (
-		<li className="flex items-start gap-3">
-			<Icon
-				name={state === 'done' ? 'circle-check' : 'circle'}
-				className={
-					state === 'done'
-						? 'text-primary mt-0.5'
-						: 'text-muted-foreground mt-0.5'
-				}
-				aria-label={state === 'done' ? _(msg`Done`) : _(msg`Not done`)}
-			/>
-			<div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-				<div className="flex min-w-0 flex-col gap-0.5">
-					<div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-						{title}
-						{state === 'next' ? (
-							<Badge variant="secondary">
-								<Trans>Next</Trans>
-							</Badge>
-						) : null}
-					</div>
-					<p className="text-muted-foreground text-xs">{description}</p>
-				</div>
-				{state !== 'done' && action ? (
-					<div className="shrink-0">{action}</div>
-				) : null}
-			</div>
-		</li>
+		<span
+			role="img"
+			aria-label={_(msg`Not done`)}
+			className={cn(
+				'flex size-5 shrink-0 items-center justify-center rounded-full border-2',
+				isNext ? 'border-primary' : 'border-border-strong border-dashed',
+			)}
+		>
+			{isNext ? <span className="bg-primary size-2 rounded-full" /> : null}
+		</span>
 	)
 }
 
@@ -250,18 +248,13 @@ function GetStarted({
 	versions: LoaderData['versions']
 	canUpdate: boolean
 }) {
+	const { _ } = useLingui()
 	const describe = useSettingsErrorText()
 	const fetcher = useFetcher<SettingsSaveResult>()
 	const testHref = useTestCallHref()
 	const on = isAgentOn(settings)
 	if (hasNumber && on) return null
 
-	const done = [hasNumber, knowsBusiness, on, on]
-	const nextIndex = done.findIndex((value) => !value)
-	const state = (index: number): StepState =>
-		done[index] ? 'done' : index === nextIndex ? 'next' : 'later'
-	const variant = (index: number) =>
-		index === nextIndex ? ('default' as const) : ('outline' as const)
 	const turningOn = fetcher.state !== 'idle'
 	const turnOnError =
 		fetcher.state === 'idle' && fetcher.data && !fetcher.data.ok
@@ -282,20 +275,123 @@ function GetStarted({
 		)
 	}
 
+	const steps: SetupStepItem[] = [
+		{
+			key: 'number',
+			done: hasNumber,
+			title: <Trans>Connect a phone number</Trans>,
+			hint: (
+				<Trans>Use a number we assign, or forward your business line.</Trans>
+			),
+			action: (isNext) => (
+				<Button
+					size="sm"
+					variant={isNext ? 'default' : 'outline'}
+					render={<a href="#phone-numbers" />}
+				>
+					<Trans>Add a number</Trans>
+				</Button>
+			),
+		},
+		{
+			key: 'knowledge',
+			done: knowsBusiness,
+			title: <Trans>Tell it about your business</Trans>,
+			hint: (
+				<Trans>
+					Answer common questions, or let AI draft the answers from your
+					business details.
+				</Trans>
+			),
+			action: (isNext) => (
+				<Button
+					size="sm"
+					variant={isNext ? 'default' : 'outline'}
+					render={<Link to={`${base}/knowledge`} />}
+				>
+					<Trans>Add answers</Trans>
+				</Button>
+			),
+		},
+		{
+			key: 'test',
+			// A test call leaves nothing behind to check, so this step closes
+			// together with the last one.
+			done: on,
+			title: <Trans>Make a test call</Trans>,
+			hint: (
+				<Trans>Talk to your agent from this browser before callers do.</Trans>
+			),
+			action: (isNext) => (
+				<Button
+					size="sm"
+					variant={isNext ? 'default' : 'outline'}
+					render={<Link to={testHref} preventScrollReset />}
+				>
+					<Icon name="mic" />
+					<Trans>Start a test call</Trans>
+				</Button>
+			),
+		},
+		{
+			key: 'on',
+			done: on,
+			title: <Trans>Turn on the agent</Trans>,
+			hint: <Trans>It starts answering on the next call.</Trans>,
+			action: (isNext) =>
+				canUpdate ? (
+					<Button
+						type="button"
+						size="sm"
+						variant={isNext || nextKey === 'test' ? 'default' : 'outline'}
+						disabled={turningOn}
+						onClick={turnOn}
+					>
+						{turningOn ? <Trans>Turning on…</Trans> : <Trans>Turn on</Trans>}
+					</Button>
+				) : null,
+		},
+	]
+	const doneCount = steps.filter((step) => step.done).length
+	const total = steps.length
+	const nextKey = steps.find((step) => !step.done)?.key
+
 	return (
-		<Card>
-			<CardContent className="flex flex-col gap-5">
-				<div className="flex flex-col gap-1">
-					<h2 className="text-base font-semibold">
+		<Card className="gap-0 py-0">
+			<div className="flex flex-col gap-1 px-4 pt-4 pb-3">
+				<div className="flex items-center gap-2">
+					<h2 className="text-sm font-semibold tracking-tight">
 						<Trans>Get your agent answering calls</Trans>
 					</h2>
-					<p className="text-muted-foreground text-sm">
+					<Badge variant="secondary" className="tabular-nums">
 						<Trans>
-							Four steps. Everything else has defaults you can change later.
+							{doneCount} of {total} done
 						</Trans>
-					</p>
+					</Badge>
 				</div>
-				{liveKitConfigured ? null : (
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Four steps. Everything else has defaults you can change later.
+					</Trans>
+				</p>
+			</div>
+
+			<div
+				className="bg-muted mx-4 mb-1 h-1 overflow-hidden rounded-full"
+				role="progressbar"
+				aria-valuemin={0}
+				aria-valuemax={total}
+				aria-valuenow={doneCount}
+				aria-label={_(msg`${doneCount} of ${total} steps done`)}
+			>
+				<div
+					className="bg-primary ease-out-quint h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none"
+					style={{ width: `${(doneCount / total) * 100}%` }}
+				/>
+			</div>
+
+			{liveKitConfigured ? null : (
+				<div className="px-4 pt-3">
 					<Item variant="muted" role="status">
 						<ItemMedia variant="icon">
 							<Icon name="alert-triangle" />
@@ -312,95 +408,45 @@ function GetStarted({
 							</ItemDescription>
 						</ItemContent>
 					</Item>
-				)}
-				<ol className="flex flex-col gap-4">
-					<SetupStep
-						state={state(0)}
-						title={<Trans>Connect a phone number</Trans>}
-						description={
-							<Trans>
-								Use a number we assign, or forward your business line.
-							</Trans>
-						}
-						action={
-							<Button
-								size="sm"
-								variant={variant(0)}
-								render={<a href="#phone-numbers" />}
-							>
-								<Trans>Add a number</Trans>
-							</Button>
-						}
-					/>
-					<SetupStep
-						state={state(1)}
-						title={<Trans>Tell it about your business</Trans>}
-						description={
-							<Trans>
-								Answer common questions, or let AI draft the answers from your
-								business details.
-							</Trans>
-						}
-						action={
-							<Button
-								size="sm"
-								variant={variant(1)}
-								render={<Link to={`${base}/knowledge`} />}
-							>
-								<Trans>Add answers</Trans>
-							</Button>
-						}
-					/>
-					<SetupStep
-						state={state(2)}
-						title={<Trans>Make a test call</Trans>}
-						description={
-							<Trans>
-								Talk to your agent from this browser before callers do.
-							</Trans>
-						}
-						action={
-							<Button
-								size="sm"
-								variant={variant(2)}
-								render={<Link to={testHref} preventScrollReset />}
-							>
-								<Icon name="mic" />
-								<Trans>Start a test call</Trans>
-							</Button>
-						}
-					/>
-					<SetupStep
-						state={state(3)}
-						title={<Trans>Turn on the agent</Trans>}
-						description={<Trans>It starts answering on the next call.</Trans>}
-						action={
-							canUpdate ? (
-								<Button
-									type="button"
-									size="sm"
-									variant={
-										nextIndex === 2 || nextIndex === 3 ? 'default' : 'outline'
-									}
-									disabled={turningOn}
-									onClick={turnOn}
-								>
-									{turningOn ? (
-										<Trans>Turning on…</Trans>
-									) : (
-										<Trans>Turn on</Trans>
+				</div>
+			)}
+
+			<ol className="divide-y">
+				{steps.map((step) => {
+					const isNext = step.key === nextKey
+					const action = step.done ? null : step.action(isNext)
+					return (
+						<li
+							key={step.key}
+							className="flex min-h-12 items-center gap-3 px-4 py-2.5"
+						>
+							<ChecklistStatusIcon done={step.done} isNext={isNext} />
+							<div className="min-w-0 flex-1">
+								<p
+									className={cn(
+										'text-sm',
+										step.done
+											? 'text-muted-foreground'
+											: 'text-foreground font-medium',
 									)}
-								</Button>
-							) : null
-						}
-					/>
-				</ol>
-				{turnOnError ? (
-					<p role="alert" className="text-destructive text-sm">
-						{turnOnError}
-					</p>
-				) : null}
-			</CardContent>
+								>
+									{step.title}
+								</p>
+								{step.done ? null : (
+									<p className="text-muted-foreground text-xs">{step.hint}</p>
+								)}
+							</div>
+							{action ? <div className="shrink-0">{action}</div> : null}
+						</li>
+					)
+				})}
+			</ol>
+
+			{turnOnError ? (
+				<p role="alert" className="text-destructive px-4 pb-3 text-sm">
+					{turnOnError}
+				</p>
+			) : null}
 		</Card>
 	)
 }
@@ -508,6 +554,7 @@ function SettingsForm({
 			}}
 		>
 			<AnnotatedSection
+				id="agent-settings"
 				title={<Trans>Agent</Trans>}
 				description={
 					<Trans>Who answers, in which languages, and with which voice.</Trans>

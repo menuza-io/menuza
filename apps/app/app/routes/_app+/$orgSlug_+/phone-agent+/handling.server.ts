@@ -1,6 +1,8 @@
+import { pickSafeTransferTarget } from '@repo/phone-agent'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { canReadPhoneCalls } from '#app/utils/phone-agent/access.server.ts'
 import { getPublishedFlow } from '#app/utils/phone-agent/phone-agent.server.ts'
+import { listAgentLines } from '#app/utils/phone-agent/runtime-config.server.ts'
 import {
 	loadSettingsPage,
 	saveSettingsPage,
@@ -10,10 +12,17 @@ import { type SettingsPatchResult } from '#app/utils/phone-agent/settings-patch.
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const page = await loadSettingsPage(request, params.orgSlug)
-	const [published, canReadCalls] = await Promise.all([
+	const [published, canReadCalls, agentLines] = await Promise.all([
 		getPublishedFlow(page.orgId),
 		canReadPhoneCalls(request, page.orgId),
+		listAgentLines(page.orgId),
 	])
+	// Press 0 uses resolveTransfer, which needs auto-escalate on and a number
+	// the runtime will actually dial (not one of the agent's own lines).
+	const hasStaffPhone = Boolean(
+		page.settings.autoEscalate &&
+		pickSafeTransferTarget([page.settings.escalationPhone], agentLines),
+	)
 	return settingsPageData({
 		businessName: page.orgName,
 		languages: page.settings.languages,
@@ -23,6 +32,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		transfers: page.settings.transfers,
 		contacts: page.settings.contacts,
 		transferCases: page.settings.transferCases,
+		hasStaffPhone,
 		csatEnabled: page.settings.csatEnabled,
 		notifications: page.settings.notifications,
 		followUp: page.settings.followUp,

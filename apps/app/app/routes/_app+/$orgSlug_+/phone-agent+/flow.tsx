@@ -114,6 +114,8 @@ export default function PhoneAgentFlowRoute() {
 					savedJson={savedJson}
 					readOnly={!data.canUpdate}
 					backHref={`/${orgSlug}/phone-agent/handling`}
+					staffPhoneHref={`/${orgSlug}/phone-agent/handling#transfers`}
+					hasStaffPhone={data.hasStaffPhone}
 					testHref={testHref}
 					published={data.published}
 					draftDiffersFromPublished={data.draftDiffersFromPublished}

@@ -4,6 +4,7 @@ import { ENV } from 'varlock/env'
 import { createTenantApiApp } from './app.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
+import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
 assertTenantApiSecrets()
 assertDataRegion()
@@ -21,3 +22,6 @@ serve({
 	fetch: app.fetch,
 	port,
 })
+
+// Sub-hourly staff tick on this node; the hourly cron remains the safety net.
+startStaffTickInterval()

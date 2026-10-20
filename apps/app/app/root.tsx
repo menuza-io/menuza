@@ -54,6 +54,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	useLoaderData,
+	useMatches,
 	useRouteLoaderData,
 } from 'react-router'
 import { HoneypotProvider } from 'remix-utils/honeypot/react'
@@ -61,8 +62,9 @@ import { ENV } from 'varlock/env'
 import { type Route } from './+types/root.ts'
 import appleTouchIconAssetUrl from './assets/favicons/apple-touch-icon.png'
 import faviconAssetUrl from './assets/favicons/favicon.svg'
-import { GeneralErrorBoundary } from './components/error-boundary.tsx'
+import { NotFoundErrorBoundary } from './components/error-boundary.tsx'
 import { ImpersonationBanner } from './components/impersonation-banner.tsx'
+import { LeavePageDialog } from './components/leave-page-dialog.tsx'
 import { PostHogAnalytics } from './components/posthog-analytics.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
 import { useToast } from './components/toaster.tsx'
@@ -72,16 +74,20 @@ import {
 	serializeLocaleCookie,
 } from './modules/lingui/lingui.server.ts'
 import { useOptionalTheme } from './routes/resources+/theme-switch.tsx'
+import '@fontsource-variable/geist/wght.css'
+import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
 import { posthogMiddleware } from './utils/posthog.server.ts'
 import { seoConfig } from './utils/seo.ts'
+import {
+	HIDDEN_STAFFING_NAV,
+	type StaffingNavAccess,
+} from './utils/staffing/nav.ts'
 import { type Theme, getTheme } from './utils/theme.server.ts'
 
 export const links: Route.LinksFunction = () => {
 	return [
-		// Preconnect to external services for faster resource loading
-
 		// Preload critical assets
 		{ rel: 'preload', href: iconsHref, as: 'image' },
 
@@ -374,6 +380,31 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		}
 	}
 
+	// Staff nav links: shown only when the org-level staffing flags and the
+	// member's permissions both allow it. Best-effort and briefly cached; every
+	// staffing route enforces the same checks itself, so a stale or failed
+	// lookup can only hide links, never grant access.
+	let staffingNav: StaffingNavAccess = HIDDEN_STAFFING_NAV
+	if (currentOrgId && userId) {
+		const staffingAccess = await import('./utils/staffing/access.server.ts')
+		staffingNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `staffing-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							staffingAccess.getStaffingNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_STAFFING_NAV
+				}
+			},
+			{ timings, type: 'staffing nav', desc: 'staffing nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -424,6 +455,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			docsUrl: ENV.DOCS_URL?.trim() || null,
 			configuredProviders,
 			homePageId,
+			staffingNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,
@@ -483,7 +515,7 @@ function Document({
 			className={`${theme} h-full overflow-x-hidden`}
 			style={
 				{
-					'--header-height': 'calc(var(--spacing) * 12)',
+					'--header-height': '2.875rem',
 				} as unknown as React.CSSProperties
 			}
 		>
@@ -546,14 +578,21 @@ function AppWithProviders() {
 	useToast(data.toast)
 	const organizationId =
 		data.userOrganizations?.currentOrganization?.organization.id
+	// The shared-tablet time clock is a counter appliance: no cookie banner, no
+	// toasts and no analytics on it (see `routes/kiosk.tsx`).
+	const isKiosk = useMatches().some(
+		(match) => (match.handle as { kiosk?: boolean } | undefined)?.kiosk,
+	)
 
 	return (
 		<HoneypotProvider {...data.honeyProps}>
-			<PostHogAnalytics
-				consent={data.cookieConsent}
-				userId={data.user?.id}
-				organizationId={organizationId}
-			/>
+			{isKiosk ? null : (
+				<PostHogAnalytics
+					consent={data.cookieConsent}
+					userId={data.user?.id}
+					organizationId={organizationId}
+				/>
+			)}
 			<OpenImgContextProvider
 				optimizerEndpoint="/resources/images"
 				getSrc={getImgSrc}
@@ -568,8 +607,9 @@ function AppWithProviders() {
 						</TooltipProvider>
 					</div>
 				</div>
-				<EpicToaster />
-				<CookieConsentBanner consent={data.cookieConsent} />
+				<LeavePageDialog />
+				{isKiosk ? null : <EpicToaster />}
+				{isKiosk ? null : <CookieConsentBanner consent={data.cookieConsent} />}
 			</OpenImgContextProvider>
 		</HoneypotProvider>
 	)
@@ -578,5 +618,6 @@ function AppWithProviders() {
 export default AppWithProviders
 
 // this is a last resort error boundary. There's not much useful information we
-// can offer at this level.
-export const ErrorBoundary = GeneralErrorBoundary
+// can offer at this level, but a 404 (for example an unknown organization slug)
+// still gets a way back into the app.
+export const ErrorBoundary = NotFoundErrorBoundary
