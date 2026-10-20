@@ -83,7 +83,7 @@ underneath in the same regional database (`customers`: sign-in, orders, consent;
   the customer, newest first, with number, date, status, fulfillment, item count
   and total, plus the order count and lifetime spend (cancelled, expired and
   payment-review orders are not spend). Each number opens
-  `/<orgSlug>/orders?order=<id>`. Rule: an order is the customer's when its
+  `/<orgSlug>/orders/<id>`. Rule: an order is the customer's when its
   `customer_id` is theirs, or, for a customer with a VERIFIED phone, when it has
   no `customer_id` and the same contact phone. Never by name or email. Needs the
   customers claim (`GET /operator/people/:key/orders`).

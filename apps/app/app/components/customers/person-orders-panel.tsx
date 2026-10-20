@@ -1,6 +1,5 @@
 import { Plural, Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
 	Frame,
@@ -9,6 +8,7 @@ import {
 	FramePanel,
 	FrameTitle,
 } from '@repo/ui/frame'
+import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
 import {
 	Table,
@@ -20,8 +20,11 @@ import {
 } from '@repo/ui/table'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import {
+	OrderStatusLabel,
+	PaymentStatusLabel,
+} from '#app/components/orders/order-status.tsx'
 import { ordersHref } from '#app/utils/orders/orders-link.ts'
-import { ORDER_STATUS_LABELS } from '#app/utils/orders/status-label.ts'
 import {
 	fetchPersonOrders,
 	type PeopleClient,
@@ -174,7 +177,6 @@ export function PersonOrdersPanel({
 						</TableHeader>
 						<TableBody>
 							{orders.map((order) => {
-								const status = ORDER_STATUS_LABELS[order.status]
 								return (
 									<TableRow
 										key={order.id}
@@ -182,7 +184,7 @@ export function PersonOrdersPanel({
 									>
 										<TableCell>
 											<Link
-												className="text-primary font-medium underline"
+												className="text-foreground focus-visible:ring-ring rounded-sm font-medium underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:outline-none"
 												to={ordersHref(orgSlug, { orderId: order.id })}
 											>
 												<bdi dir="ltr">{order.number}</bdi>
@@ -197,20 +199,25 @@ export function PersonOrdersPanel({
 												: '—'}
 										</TableCell>
 										<TableCell>
-											<Badge
-												variant={
-													order.status === 'payment_review'
-														? 'destructive'
-														: 'secondary'
-												}
-											>
-												{status ? _(status) : order.status}
-											</Badge>
+											<span className="flex flex-col gap-1">
+												<OrderStatusLabel status={order.status} />
+												<PaymentStatusLabel status={order.paymentStatus} />
+											</span>
 										</TableCell>
 										<TableCell>
-											{order.fulfillment === 'delivery'
-												? _(msg`Delivery`)
-												: _(msg`Pickup`)}
+											<span className="text-muted-foreground flex items-center gap-1.5">
+												<Icon
+													name={
+														order.fulfillment === 'delivery'
+															? 'route'
+															: 'building'
+													}
+													className="size-3.5"
+												/>
+												{order.fulfillment === 'delivery'
+													? _(msg`Delivery`)
+													: _(msg`Pickup`)}
+											</span>
 										</TableCell>
 										<TableCell className="text-end tabular-nums">
 											<bdi>{order.itemCount}</bdi>

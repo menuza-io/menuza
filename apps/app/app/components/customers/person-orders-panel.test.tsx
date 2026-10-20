@@ -58,7 +58,7 @@ describe('PersonOrdersPanel', () => {
 		)
 		expect(screen.getByRole('link', { name: 'A-1' })).toHaveAttribute(
 			'href',
-			'/acme/orders?order=1',
+			'/acme/orders/1',
 		)
 		fireEvent.click(screen.getByTestId('person-orders-more'))
 		expect(await screen.findByTestId('person-order-3')).toBeInTheDocument()
