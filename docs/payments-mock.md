@@ -22,11 +22,15 @@ code imports it, never the emulators themselves.
 | a real `STRIPE_SECRET_KEY`                                                            | That provider stays real (same for `CHECKOUT_SECRET_KEY`). |
 | `sk_live_` / `rk_live_`, or a Checkout.com key that is not `sk_sbox_*` / `ack_test_*` | Startup throws (anything unrecognised counts as live).     |
 
-There is no `NODE_ENV` gate: CI runs the production Node build with
-`MOCKS=true`. Placeholder keys (`sk_test_***`) get synthetic values so
-`listConfiguredProcessors()` returns `connect` and `checkout`. Organizations
-still need onboarding: Settings, Shop shows a "Mock payments" panel with
-instant-enable buttons. The App logs
+There is no bare `NODE_ENV` gate: CI and `start:mocks` run the production Node
+build with `MOCKS=true`. The runtime gate is the public origin instead: with a
+mock switch on, `BASE_URL` (and `PAYMENTS_MOCK_ORIGIN`, when set) must be a
+local host (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`), whatever
+key variables are set. Any other origin makes startup throw, so a real deploy
+with a stray switch fails closed. Placeholder keys (`sk_test_***`) get synthetic
+values so `listConfiguredProcessors()` returns `connect` and `checkout`.
+Organizations still need onboarding: Settings, Shop shows a "Mock payments"
+panel with instant-enable buttons. The App logs
 `PAYMENTS MOCK ACTIVE (stripe, checkout.com)`.
 
 Other variables: `PAYMENTS_MOCK_ORIGIN` (hosted page origin, default
@@ -50,7 +54,8 @@ elsewhere.
    (`build:cf` and `scripts/cf-workers-ci.mjs` set it).
 3. Every mock route and the Settings panel answer 404 unless the mode is on
    **and** the request and `BASE_URL` are local (loopback, `*.localhost`,
-   `*.test`). Startup refuses live keys and a non-local mock origin.
+   `*.test`). Startup refuses a non-local `BASE_URL` or mock origin (even with
+   no keys set) and live keys.
 4. `node scripts/check-no-payment-mocks.mjs [dir]` fails when the bundle holds
    `__PAYMENTS_MOCK__`, `checkout-com.mock.invalid`, `__mock_pay_` or the mock
    route ids (`/mock-payments/`). `exclusion.test.ts` bundles what production

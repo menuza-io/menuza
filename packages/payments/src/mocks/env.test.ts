@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	getStripeWebhookSecrets,
 	isLocalHostname,
@@ -48,6 +48,74 @@ describe('paymentsMockMode', () => {
 		expect(paymentsMockMode({ MOCKS: 'false', ...placeholders })).toEqual({
 			stripe: false,
 			checkout: false,
+		})
+	})
+
+	describe('runtime deployment gate', () => {
+		afterEach(() => {
+			vi.unstubAllEnvs()
+		})
+
+		it.each([{ MOCKS: 'true' }, { PAYMENTS_MOCK: 'true' }])(
+			'refuses %o on a real origin even with no key variables set',
+			(switchOn) => {
+				expect(() =>
+					paymentsMockMode({
+						...switchOn,
+						BASE_URL: 'https://app.example.com',
+					}),
+				).toThrow('non-local deployment')
+			},
+		)
+
+		it('refuses a real BASE_URL hidden behind a local PAYMENTS_MOCK_ORIGIN', () => {
+			expect(() =>
+				paymentsMockMode({
+					MOCKS: 'true',
+					BASE_URL: 'https://app.example.com',
+					PAYMENTS_MOCK_ORIGIN: 'http://localhost:3001',
+				}),
+			).toThrow('non-local deployment')
+		})
+
+		it('refuses a real origin with placeholder keys and with test keys', () => {
+			for (const keys of [
+				placeholders,
+				{ STRIPE_SECRET_KEY: 'sk_test_realtestkey' },
+			]) {
+				expect(() =>
+					paymentsMockMode({
+						MOCKS: 'true',
+						BASE_URL: 'https://app.example.com',
+						...keys,
+					}),
+				).toThrow('non-local deployment')
+			}
+		})
+
+		it.each([
+			'http://localhost:3001',
+			'http://127.0.0.1:3001',
+			'http://[::1]:3001',
+			'https://app.menu.test:2999',
+			'http://app.localhost:3001',
+		])('allows %s even when NODE_ENV=production (start:mocks, CI)', (url) => {
+			vi.stubEnv('NODE_ENV', 'production')
+			expect(
+				paymentsMockMode({ MOCKS: 'true', BASE_URL: url, ...placeholders }),
+			).toEqual({ stripe: true, checkout: true })
+		})
+
+		it('does not check anything while the mock is off', () => {
+			const real = { BASE_URL: 'https://app.example.com' }
+			expect(paymentsMockMode(real)).toEqual({ stripe: false, checkout: false })
+			expect(paymentsMockMode({ ...real, MOCKS: 'false' })).toEqual({
+				stripe: false,
+				checkout: false,
+			})
+			expect(
+				paymentsMockMode({ ...real, MOCKS: 'true', PAYMENTS_MOCK: 'false' }),
+			).toEqual({ stripe: false, checkout: false })
 		})
 	})
 
