@@ -224,8 +224,10 @@ Every broadcast email carries a signed unsubscribe link (HMAC with
 endpoints are `GET|POST /subscriptions/unsubscribe?token=` and
 `GET|POST /subscriptions/confirm?token=`: GET only shows a button, POST acts and
 is idempotent, so a mail scanner opening links changes nothing. Links point at
-`TENANT_API_URL` (the request origin for confirmations when unset). Journey
-emails do not carry the link yet.
+`TENANT_API_URL`, which is required in production (the node refuses to start
+without it, and a send is skipped and logged when it is missing). The request
+origin is never used, except for local development hosts when the variable is
+unset. Journey emails do not carry the link yet.
 
 To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`
