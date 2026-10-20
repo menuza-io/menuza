@@ -532,6 +532,7 @@ describe('loadBlockPicker', () => {
 			userId: viewer.id,
 			organizationId: organization.id,
 			blockData: noBlockData,
+			grants: ['customers', 'shop_orders'],
 		})
 
 		expect(picker.savedReports).toEqual([
@@ -546,8 +547,44 @@ describe('loadBlockPicker', () => {
 			userId: viewer.id,
 			organizationId: organization.id,
 			blockData: noBlockData,
+			grants: ['customers', 'shop_orders'],
 		})
 		expect(picker.savedReports).toEqual([])
-		expect(picker.templateGroups).toEqual(reportTemplateGroups())
+		expect(picker.templateGroups).toEqual(
+			reportTemplateGroups(['customers', 'shop_orders']),
+		)
+	})
+
+	it('leaves out templates and saved reports the grants do not cover', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Shop orders',
+			definition: templateDefinition('shop-order-count', 'Shop orders'),
+		})
+		const notes = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Notes by status',
+			definition: templateDefinition('notes-by-status', 'Notes by status'),
+		})
+		const picker = await loadBlockPicker({
+			userId: viewer.id,
+			organizationId: organization.id,
+			blockData: noBlockData,
+			grants: [],
+		})
+		expect(picker.savedReports.map((report) => report.id)).toEqual([notes.id])
+		const offered = picker.templateGroups.flatMap((group) =>
+			group.templates.map((template) => template.id),
+		)
+		expect(offered).toContain('notes-by-status')
+		expect(offered).not.toContain('shop-order-count')
+		// The full list is still every template.
+		const everything = reportTemplateGroups().flatMap((group) =>
+			group.templates.map((template) => template.id),
+		)
+		expect(everything).toContain('shop-order-count')
 	})
 })

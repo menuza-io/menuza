@@ -11,7 +11,7 @@ import { listSavedReports, parseDefinition } from '@repo/reports/server'
 import { ReportStart } from '@repo/reports/ui'
 import { useLoaderData } from 'react-router'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
 import { type Route } from './+types/_index.ts'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -27,13 +27,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organizationId: organization.id,
 	})
 	// Staff reports show only to people whose flags and permissions grant them.
-	const staff = await resolveStaffReportAccessForRequest(
+	const grants = await resolveReportGrantsForRequest(
 		request,
 		userId,
 		organization.id,
 	)
 	const fullCatalog = getCatalog('organization')
-	const catalog = catalogForGrants(fullCatalog, staff.subjects)
+	const catalog = catalogForGrants(fullCatalog, grants)
 	return {
 		orgSlug: organization.slug,
 		organizationName: organization.name,
@@ -42,7 +42,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				definitionAllowed(
 					fullCatalog,
 					parseDefinition(report.definition),
-					staff.subjects,
+					grants,
 				),
 			)
 			.map((report) => {
@@ -57,7 +57,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		templates: templatesForGrants(
 			fullCatalog,
 			templatesFor('organization'),
-			staff.subjects,
+			grants,
 		),
 	}
 }

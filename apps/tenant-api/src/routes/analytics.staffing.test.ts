@@ -241,6 +241,40 @@ describe('/analytics/query on staff subjects', () => {
 			}
 		})
 
+		it('lets a staff-only token run staff subjects but never org-wide ones', async () => {
+			await seedWeek()
+			const staffOnly = [
+				'time_entries',
+				'shifts',
+				'labor_daily',
+				'applications',
+			]
+			for (const subject of ['customers', 'shop_orders']) {
+				const denied = await run(
+					{ subject, timeframeField: 'createdAt' },
+					{ subjects: staffOnly as never, scopeIds: [LOC_1] },
+				)
+				expect(denied.status, subject).toBe(403)
+				expect(denied.body.error).toBe('forbidden_subject')
+			}
+			for (const subject of ['time_entries', 'shifts']) {
+				const allowed = await run(
+					{
+						subject,
+						timeframeField: subject === 'shifts' ? 'startsAt' : undefined,
+					},
+					{ subjects: staffOnly as never, scopeIds: null },
+				)
+				expect(allowed.status, subject).toBe(200)
+			}
+			// The same token with the org-wide grants added opens them.
+			const admin = await run(
+				{ subject: 'customers', timeframeField: 'createdAt' },
+				{ subjects: ['customers'] },
+			)
+			expect(admin.status).toBe(200)
+		})
+
 		it('keeps one staff grant from opening another subject', async () => {
 			await seedWeek()
 			const wrong = await run(
