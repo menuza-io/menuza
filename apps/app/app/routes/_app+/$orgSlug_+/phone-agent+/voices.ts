@@ -29,7 +29,7 @@ const SearchSchema = z.object({
 	cursor: VoiceIdSchema.optional(),
 })
 
-/** Searches Cartesia's voice library for the Setup page's voice picker. */
+/** Searches Cartesia's voice library for the Agent tab's voice picker. */
 export async function loader({ request, params }: Route.LoaderArgs) {
 	await requirePhoneAgentAccess(request, params.orgSlug)
 	const headers = { 'Cache-Control': 'private, max-age=300' }

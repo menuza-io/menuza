@@ -6,6 +6,7 @@ import {
 	type AfterHoursMode,
 	type AgentLanguage,
 	type PhoneAgentSettings,
+	type PhraseKey,
 	RECORDING_RETENTION_DAYS,
 	SUPPORTED_AGENT_LANGUAGES,
 } from '@repo/phone-agent'
@@ -16,8 +17,14 @@ import { Card, CardContent } from '@repo/ui/card'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
-import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -25,35 +32,35 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
+import { Separator } from '@repo/ui/separator'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
 import { type ReactNode, useState } from 'react'
-import {
-	Link,
-	useLoaderData,
-	useParams,
-	useRouteLoaderData,
-} from 'react-router'
+import { Link, useFetcher, useLoaderData, useParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { AgentDetails } from '#app/components/phone-agent/agent-details.tsx'
 import { PhoneNumbersSection } from '#app/components/phone-agent/phone-number-dialogs.tsx'
 import {
+	LANGUAGE_LABELS,
+	PhraseOverridesSection,
+	usePhraseDrafts,
+} from '#app/components/phone-agent/phrase-fields.tsx'
+import {
+	PhoneAgentSettingsHeader,
+	usePhoneAgentLayoutData,
+} from '#app/components/phone-agent/settings-nav.tsx'
+import {
 	FieldErrorText,
+	type SettingsSaveResult,
 	SettingsSaveBar,
+	useSettingsErrorText,
 	useSettingsForm,
 } from '#app/components/phone-agent/settings-page.tsx'
+import { useTestCallHref } from '#app/components/phone-agent/test-call-sheet.tsx'
 import { VoicePicker } from '#app/components/phone-agent/voice-picker.tsx'
 import { type Route } from './+types/_index.ts'
-import { type loader as layoutLoader } from './_layout.tsx'
 
 export { action, loader } from './_index.server.ts'
-
-const LAYOUT_ROUTE_ID = 'routes/_app+/$orgSlug_+/phone-agent+/_layout'
-
-const LANGUAGE_LABELS: Record<AgentLanguage, MessageDescriptor> = {
-	en: msg`English`,
-	es: msg`Spanish`,
-	ar: msg`Arabic`,
-}
 
 const AFTER_HOURS_LABELS: Record<AfterHoursMode, MessageDescriptor> = {
 	answer_and_link: msg`Answer questions and text links`,
@@ -61,11 +68,38 @@ const AFTER_HOURS_LABELS: Record<AfterHoursMode, MessageDescriptor> = {
 	take_message: msg`Take a message`,
 }
 
+/** Lines spoken around the conversation itself, edited with the greeting. */
+const AGENT_PHRASE_KEYS: PhraseKey[] = [
+	'disclosure',
+	'recording_notice',
+	'goodbye',
+	'call_time_limit',
+	'calling_disabled',
+	'trouble',
+]
+
 type LoaderData = Route.ComponentProps['loaderData']
 
-type SetupFields = Pick<
+/**
+ * "Pause the AI assistant" used to be a separate switch. Both it and
+ * `enabled` pass calls to the business line, so the page shows one switch.
+ */
+function isAgentOn(settings: Pick<PhoneAgentSettings, 'enabled' | 'safety'>) {
+	return settings.enabled && !settings.safety.callingDisabled
+}
+
+/** The patch for the single on/off switch; it also clears an old pause. */
+function onOffPatch(
+	on: boolean,
+	settings: Pick<PhoneAgentSettings, 'safety'>,
+): Partial<PhoneAgentSettings> {
+	return settings.safety.callingDisabled
+		? { enabled: on, safety: { ...settings.safety, callingDisabled: false } }
+		: { enabled: on }
+}
+
+type AgentFields = Pick<
 	PhoneAgentSettings,
-	| 'enabled'
 	| 'agentName'
 	| 'languages'
 	| 'voiceId'
@@ -73,15 +107,14 @@ type SetupFields = Pick<
 	| 'closing'
 	| 'recordCalls'
 	| 'recordingRetentionDays'
-	| 'autoEscalate'
-	| 'escalationPhone'
 	| 'afterHoursMode'
 	| 'maxCallMinutes'
->
+	| 'phrases'
+> & { on: boolean }
 
-function setupFields(settings: PhoneAgentSettings): SetupFields {
+function agentFields(settings: PhoneAgentSettings): AgentFields {
 	return {
-		enabled: settings.enabled,
+		on: isAgentOn(settings),
 		agentName: settings.agentName,
 		languages: settings.languages,
 		voiceId: settings.voiceId ?? null,
@@ -89,10 +122,9 @@ function setupFields(settings: PhoneAgentSettings): SetupFields {
 		closing: settings.closing,
 		recordCalls: settings.recordCalls,
 		recordingRetentionDays: settings.recordingRetentionDays,
-		autoEscalate: settings.autoEscalate,
-		escalationPhone: settings.escalationPhone ?? null,
 		afterHoursMode: settings.afterHoursMode,
 		maxCallMinutes: settings.maxCallMinutes,
+		phrases: settings.phrases,
 	}
 }
 
@@ -101,161 +133,273 @@ export default function PhoneAgentSetup() {
 	const {
 		settings,
 		versions,
-		publishedFlowVersionId,
+		businessName,
 		numbers,
 		assignableNumbers,
 		scopes,
 		activeRuleCount,
+		faqAnswerCount,
 		canUpdate,
 		voiceLibraryAvailable,
 	} = useLoaderData<LoaderData>()
-	const layout = useRouteLoaderData<typeof layoutLoader>(LAYOUT_ROUTE_ID)
+	const layout = usePhoneAgentLayoutData()
 	const base = `/${orgSlug}/phone-agent`
 
 	return (
 		<div className="flex flex-col gap-8">
-			<PageHeader
-				title={<Trans>Phone agent</Trans>}
-				description={
-					<Trans>
-						An AI agent that answers your business's calls, answers common
-						questions, and texts callers helpful links.
-					</Trans>
-				}
-				actions={
-					<Badge variant={settings.enabled ? 'default' : 'secondary'}>
-						{settings.enabled ? <Trans>On</Trans> : <Trans>Off</Trans>}
-					</Badge>
-				}
-			/>
+			<PhoneAgentSettingsHeader active="agent" />
 
-			<GoLiveChecklist
+			<GetStarted
 				base={base}
 				hasNumber={numbers.some((number) => number.isActive)}
-				flowPublished={Boolean(publishedFlowVersionId)}
+				knowsBusiness={faqAnswerCount > 0 || activeRuleCount > 0}
 				liveKitConfigured={Boolean(layout?.liveKitConfigured)}
-				enabled={settings.enabled}
-				activeRuleCount={activeRuleCount}
+				settings={settings}
+				versions={versions}
+				canUpdate={canUpdate}
 			/>
 
 			<AnnotatedLayout>
-				<PhoneNumbersSection
-					numbers={numbers}
-					assignableNumbers={assignableNumbers}
-					scopes={scopes}
-					canUpdate={canUpdate}
-				/>
+				<div id="phone-numbers" className="scroll-mt-6">
+					<PhoneNumbersSection
+						numbers={numbers}
+						assignableNumbers={assignableNumbers}
+						scopes={scopes}
+						canUpdate={canUpdate}
+					/>
+				</div>
 				<SettingsForm
 					settings={settings}
 					versions={versions}
+					businessName={businessName}
 					canUpdate={canUpdate}
 					base={base}
 					voiceLibraryAvailable={voiceLibraryAvailable}
 				/>
 			</AnnotatedLayout>
+
+			<Separator />
+			<AgentDetails />
 		</div>
 	)
 }
 
-function ChecklistItem({
-	done,
-	children,
+type StepState = 'done' | 'next' | 'later'
+
+function SetupStep({
+	state,
+	title,
+	description,
+	action,
 }: {
-	done: boolean
-	children: ReactNode
+	state: StepState
+	title: ReactNode
+	description: ReactNode
+	action?: ReactNode
 }) {
 	const { _ } = useLingui()
 	return (
-		<li className="flex items-start gap-3 text-sm">
+		<li className="flex items-start gap-3">
 			<Icon
-				name={done ? 'circle-check' : 'circle'}
+				name={state === 'done' ? 'circle-check' : 'circle'}
 				className={
-					done ? 'text-primary mt-0.5' : 'text-muted-foreground mt-0.5'
+					state === 'done'
+						? 'text-primary mt-0.5'
+						: 'text-muted-foreground mt-0.5'
 				}
-				aria-label={done ? _(msg`Done`) : _(msg`Not done`)}
+				aria-label={state === 'done' ? _(msg`Done`) : _(msg`Not done`)}
 			/>
-			<div className="min-w-0 flex-1">{children}</div>
+			<div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+				<div className="flex min-w-0 flex-col gap-0.5">
+					<div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+						{title}
+						{state === 'next' ? (
+							<Badge variant="secondary">
+								<Trans>Next</Trans>
+							</Badge>
+						) : null}
+					</div>
+					<p className="text-muted-foreground text-xs">{description}</p>
+				</div>
+				{state !== 'done' && action ? (
+					<div className="shrink-0">{action}</div>
+				) : null}
+			</div>
 		</li>
 	)
 }
 
-function GoLiveChecklist({
+/**
+ * First-time setup in four steps. Each step links to the one place its
+ * setting lives; the card goes away once the agent is answering calls.
+ */
+function GetStarted({
 	base,
 	hasNumber,
-	flowPublished,
+	knowsBusiness,
 	liveKitConfigured,
-	enabled,
-	activeRuleCount,
+	settings,
+	versions,
+	canUpdate,
 }: {
 	base: string
 	hasNumber: boolean
-	flowPublished: boolean
+	knowsBusiness: boolean
 	liveKitConfigured: boolean
-	enabled: boolean
-	activeRuleCount: number
+	settings: PhoneAgentSettings
+	versions: LoaderData['versions']
+	canUpdate: boolean
 }) {
+	const describe = useSettingsErrorText()
+	const fetcher = useFetcher<SettingsSaveResult>()
+	const testHref = useTestCallHref()
+	const on = isAgentOn(settings)
+	if (hasNumber && on) return null
+
+	const done = [hasNumber, knowsBusiness, on, on]
+	const nextIndex = done.findIndex((value) => !value)
+	const state = (index: number): StepState =>
+		done[index] ? 'done' : index === nextIndex ? 'next' : 'later'
+	const variant = (index: number) =>
+		index === nextIndex ? ('default' as const) : ('outline' as const)
+	const turningOn = fetcher.state !== 'idle'
+	const turnOnError =
+		fetcher.state === 'idle' && fetcher.data && !fetcher.data.ok
+			? describe(fetcher.data.error)
+			: undefined
+
+	function turnOn() {
+		const patch = onOffPatch(true, settings)
+		void fetcher.submit(
+			{
+				intent: 'save-settings',
+				patch,
+				versions: Object.fromEntries(
+					Object.keys(patch).map((key) => [key, versions[key] ?? '']),
+				),
+			} as Parameters<typeof fetcher.submit>[0],
+			{ method: 'POST', encType: 'application/json' },
+		)
+	}
+
 	return (
 		<Card>
-			<CardContent className="flex flex-col gap-4">
+			<CardContent className="flex flex-col gap-5">
 				<div className="flex flex-col gap-1">
 					<h2 className="text-base font-semibold">
-						<Trans>Go-live checklist</Trans>
+						<Trans>Get your agent answering calls</Trans>
 					</h2>
 					<p className="text-muted-foreground text-sm">
-						<Trans>The agent answers calls once every step is done.</Trans>
+						<Trans>
+							Four steps. Everything else has defaults you can change later.
+						</Trans>
 					</p>
 				</div>
-				<ul className="flex flex-col gap-3">
-					<ChecklistItem done={hasNumber}>
-						<Trans>Connect a phone number</Trans>
-						<span className="text-muted-foreground block text-xs">
-							<Trans>Add it in Phone numbers below.</Trans>
-						</span>
-					</ChecklistItem>
-					<ChecklistItem done={flowPublished}>
-						<Link
-							to={`${base}/flow`}
-							className="underline-offset-4 hover:underline"
-						>
-							<Trans>Publish a call flow</Trans>
-						</Link>
-					</ChecklistItem>
-					<ChecklistItem done={liveKitConfigured}>
-						<Trans>Voice service configured</Trans>
-						<span className="text-muted-foreground block text-xs">
+				{liveKitConfigured ? null : (
+					<Item variant="muted" role="status">
+						<ItemMedia variant="icon">
+							<Icon name="alert-triangle" />
+						</ItemMedia>
+						<ItemContent>
+							<ItemTitle>
+								<Trans>The voice service isn't set up yet</Trans>
+							</ItemTitle>
+							<ItemDescription>
+								<Trans>
+									Your platform administrator sets the LiveKit credentials.
+									Until then, calls and test calls won't connect.
+								</Trans>
+							</ItemDescription>
+						</ItemContent>
+					</Item>
+				)}
+				<ol className="flex flex-col gap-4">
+					<SetupStep
+						state={state(0)}
+						title={<Trans>Connect a phone number</Trans>}
+						description={
 							<Trans>
-								LiveKit credentials are set by your platform administrator.
+								Use a number we assign, or forward your business line.
 							</Trans>
-						</span>
-					</ChecklistItem>
-					<ChecklistItem done={enabled}>
-						<Trans>Turn on the agent</Trans>
-						<span className="text-muted-foreground block text-xs">
-							<Trans>Use the switch in Agent settings below.</Trans>
-						</span>
-					</ChecklistItem>
-				</ul>
-				<div className="flex flex-wrap gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						render={
-							<Link to={`${base}/training`}>
-								<Trans>Training rules ({activeRuleCount} active)</Trans>
-							</Link>
+						}
+						action={
+							<Button
+								size="sm"
+								variant={variant(0)}
+								render={<a href="#phone-numbers" />}
+							>
+								<Trans>Add a number</Trans>
+							</Button>
 						}
 					/>
-					<Button
-						variant="outline"
-						size="sm"
-						render={
-							<Link to={`${base}/test`}>
+					<SetupStep
+						state={state(1)}
+						title={<Trans>Tell it about your business</Trans>}
+						description={
+							<Trans>
+								Answer common questions, or let AI draft the answers from your
+								business details.
+							</Trans>
+						}
+						action={
+							<Button
+								size="sm"
+								variant={variant(1)}
+								render={<Link to={`${base}/knowledge`} />}
+							>
+								<Trans>Add answers</Trans>
+							</Button>
+						}
+					/>
+					<SetupStep
+						state={state(2)}
+						title={<Trans>Make a test call</Trans>}
+						description={
+							<Trans>
+								Talk to your agent from this browser before callers do.
+							</Trans>
+						}
+						action={
+							<Button
+								size="sm"
+								variant={variant(2)}
+								render={<Link to={testHref} preventScrollReset />}
+							>
 								<Icon name="mic" />
-								<Trans>Test the agent</Trans>
-							</Link>
+								<Trans>Start a test call</Trans>
+							</Button>
 						}
 					/>
-				</div>
+					<SetupStep
+						state={state(3)}
+						title={<Trans>Turn on the agent</Trans>}
+						description={<Trans>It starts answering on the next call.</Trans>}
+						action={
+							canUpdate ? (
+								<Button
+									type="button"
+									size="sm"
+									variant={
+										nextIndex === 2 || nextIndex === 3 ? 'default' : 'outline'
+									}
+									disabled={turningOn}
+									onClick={turnOn}
+								>
+									{turningOn ? (
+										<Trans>Turning on…</Trans>
+									) : (
+										<Trans>Turn on</Trans>
+									)}
+								</Button>
+							) : null
+						}
+					/>
+				</ol>
+				{turnOnError ? (
+					<p role="alert" className="text-destructive text-sm">
+						{turnOnError}
+					</p>
+				) : null}
 			</CardContent>
 		</Card>
 	)
@@ -264,18 +408,20 @@ function GoLiveChecklist({
 function SettingsForm({
 	settings,
 	versions,
+	businessName,
 	canUpdate,
 	base,
 	voiceLibraryAvailable,
 }: {
 	settings: PhoneAgentSettings
 	versions: LoaderData['versions']
+	businessName: string
 	canUpdate: boolean
 	base: string
 	voiceLibraryAvailable: boolean
 }) {
 	const { _ } = useLingui()
-	const [enabled, setEnabled] = useState(settings.enabled)
+	const [on, setOn] = useState(isAgentOn(settings))
 	const [agentName, setAgentName] = useState(settings.agentName)
 	const [languages, setLanguages] = useState<AgentLanguage[]>(
 		settings.languages,
@@ -287,22 +433,19 @@ function SettingsForm({
 	const [retentionDays, setRetentionDays] = useState(
 		String(settings.recordingRetentionDays),
 	)
-	const [autoEscalate, setAutoEscalate] = useState(settings.autoEscalate)
-	const [escalationPhone, setEscalationPhone] = useState(
-		settings.escalationPhone ?? '',
-	)
 	const [afterHoursMode, setAfterHoursMode] = useState<AfterHoursMode>(
 		settings.afterHoursMode,
 	)
 	const [maxCallMinutes, setMaxCallMinutes] = useState(
 		String(settings.maxCallMinutes),
 	)
+	const phrases = usePhraseDrafts(settings.phrases)
 
 	const form = useSettingsForm({
-		saved: setupFields(settings),
+		saved: agentFields(settings),
 		versions,
 		draft: [
-			enabled,
+			on,
 			agentName,
 			languages,
 			voiceId,
@@ -310,13 +453,12 @@ function SettingsForm({
 			closing,
 			recordCalls,
 			retentionDays,
-			autoEscalate,
-			escalationPhone,
 			afterHoursMode,
 			maxCallMinutes,
+			phrases.drafts,
 		],
 		reset: (saved) => {
-			setEnabled(saved.enabled)
+			setOn(saved.on)
 			setAgentName(saved.agentName)
 			setLanguages(saved.languages)
 			setVoiceId(saved.voiceId ?? '')
@@ -324,22 +466,20 @@ function SettingsForm({
 			setClosing(saved.closing)
 			setRecordCalls(saved.recordCalls)
 			setRetentionDays(String(saved.recordingRetentionDays))
-			setAutoEscalate(saved.autoEscalate)
-			setEscalationPhone(saved.escalationPhone ?? '')
 			setAfterHoursMode(saved.afterHoursMode)
 			setMaxCallMinutes(String(saved.maxCallMinutes))
+			phrases.reset(saved.phrases)
 		},
 		canUpdate,
 		intent: 'save-settings',
 	})
 	const { pending, fieldErrors } = form
 	const disabled = !canUpdate || pending
-	const escalationMissing = autoEscalate && !escalationPhone.trim()
 	const defaultLanguage = languages[0] ? _(LANGUAGE_LABELS[languages[0]]) : null
 
-	function toggleLanguage(language: AgentLanguage, on: boolean) {
+	function toggleLanguage(language: AgentLanguage, checked: boolean) {
 		setLanguages((current) =>
-			on
+			checked
 				? current.includes(language)
 					? current
 					: [...current, language]
@@ -352,8 +492,8 @@ function SettingsForm({
 			className="flex flex-col gap-8 md:gap-10"
 			onSubmit={(event) => {
 				event.preventDefault()
-				const next: Partial<PhoneAgentSettings> = {
-					enabled,
+				form.save({
+					...onOffPatch(on, settings),
 					agentName,
 					languages,
 					voiceId: voiceId.trim() || null,
@@ -361,16 +501,14 @@ function SettingsForm({
 					closing,
 					recordCalls,
 					recordingRetentionDays: Number(retentionDays),
-					autoEscalate,
-					escalationPhone: escalationPhone.trim() || null,
 					afterHoursMode,
 					maxCallMinutes: Number(maxCallMinutes),
-				}
-				form.save(next)
+					phrases: phrases.collect(),
+				})
 			}}
 		>
 			<AnnotatedSection
-				title={<Trans>Agent settings</Trans>}
+				title={<Trans>Agent</Trans>}
 				description={
 					<Trans>Who answers, in which languages, and with which voice.</Trans>
 				}
@@ -378,14 +516,26 @@ function SettingsForm({
 				<Card>
 					<CardContent className="flex flex-col gap-5">
 						<div className="flex items-center justify-between gap-4">
-							<Label htmlFor="phone-agent-enabled">
-								<Trans>Answer calls with the AI agent</Trans>
-							</Label>
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="phone-agent-enabled">
+									<Trans>Answer calls with the AI agent</Trans>
+								</Label>
+								<p
+									id="phone-agent-enabled-hint"
+									className="text-muted-foreground text-xs"
+								>
+									<Trans>
+										When it's off, calls go straight to your business line. If
+										no line is known, callers hear an apology.
+									</Trans>
+								</p>
+							</div>
 							<Switch
 								id="phone-agent-enabled"
-								checked={enabled}
+								checked={on}
 								disabled={disabled}
-								onCheckedChange={(checked) => setEnabled(checked)}
+								aria-describedby="phone-agent-enabled-hint"
+								onCheckedChange={(checked) => setOn(checked)}
 							/>
 						</div>
 
@@ -533,14 +683,26 @@ function SettingsForm({
 							/>
 							<FieldErrorText error={fieldErrors.closing} />
 						</div>
+						<PhraseOverridesSection
+							keys={AGENT_PHRASE_KEYS}
+							languages={languages}
+							phrases={phrases}
+							fieldErrors={fieldErrors}
+							disabled={disabled}
+							businessName={businessName}
+						/>
+						<FieldErrorText error={fieldErrors.phrases} />
 					</CardContent>
 				</Card>
 			</AnnotatedSection>
 
 			<AnnotatedSection
-				title={<Trans>Call handling</Trans>}
+				title={<Trans>Calls</Trans>}
 				description={
-					<Trans>Recording, transfers to staff, and after-hours calls.</Trans>
+					<Trans>
+						Recording, what happens when you're closed, and how long calls can
+						last. Transfers are in Call handling.
+					</Trans>
 				}
 			>
 				<Card>
@@ -595,51 +757,6 @@ function SettingsForm({
 										</SelectContent>
 									</Select>
 									<FieldErrorText error={fieldErrors.recordingRetentionDays} />
-								</div>
-							) : null}
-						</div>
-
-						<div className="flex flex-col gap-3">
-							<div className="flex items-center justify-between gap-4">
-								<Label htmlFor="phone-agent-escalate">
-									<Trans>Transfer to staff when the agent can't help</Trans>
-								</Label>
-								<Switch
-									id="phone-agent-escalate"
-									checked={autoEscalate}
-									disabled={disabled}
-									onCheckedChange={(checked) => setAutoEscalate(checked)}
-								/>
-							</div>
-							{autoEscalate ? (
-								<div className="flex flex-col gap-1.5">
-									<Label htmlFor="phone-agent-escalation-phone">
-										<Trans>Staff phone number</Trans>
-									</Label>
-									<Input
-										id="phone-agent-escalation-phone"
-										type="tel"
-										inputMode="tel"
-										autoComplete="off"
-										placeholder="+15551234567"
-										value={escalationPhone}
-										disabled={disabled}
-										aria-invalid={
-											fieldErrors.escalationPhone ? true : undefined
-										}
-										aria-describedby="phone-agent-escalation-hint"
-										onChange={(event) => setEscalationPhone(event.target.value)}
-									/>
-									<p
-										id="phone-agent-escalation-hint"
-										className="text-muted-foreground text-xs"
-									>
-										<Trans>
-											International format, for example +15551234567. Use a line
-											that doesn't forward to the agent.
-										</Trans>
-									</p>
-									<FieldErrorText error={fieldErrors.escalationPhone} />
 								</div>
 							) : null}
 						</div>
@@ -699,7 +816,7 @@ function SettingsForm({
 			<SettingsSaveBar
 				canUpdate={canUpdate}
 				form={form}
-				disabled={languages.length === 0 || escalationMissing}
+				disabled={languages.length === 0}
 				label={<Trans>Save settings</Trans>}
 			/>
 		</form>

@@ -9,31 +9,23 @@ import {
 	type PhraseKey,
 	type PhraseOverride,
 } from '@repo/phone-agent'
-import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
-import { Card, CardContent } from '@repo/ui/card'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@repo/ui/collapsible'
+import { Icon } from '@repo/ui/icon'
 import { Label } from '@repo/ui/label'
-import { PageHeader } from '@repo/ui/page-header'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { Textarea } from '@repo/ui/textarea'
-import { useState } from 'react'
-import { useLoaderData } from 'react-router'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import {
-	FieldErrorText,
-	SettingsSaveBar,
-	useSettingsForm,
-} from '#app/components/phone-agent/settings-page.tsx'
-import { phoneAgentVerticalUi } from '#app/components/phone-agent/vertical-ui.tsx'
+import { useCallback, useState } from 'react'
 import { phoneAgentVertical } from '#app/utils/phone-agent/vertical.ts'
-import { type Route } from './+types/phrases.ts'
+import { FieldErrorText } from './settings-page.tsx'
+import { phoneAgentVerticalUi } from './vertical-ui.tsx'
 
-export { action, loader } from './phrases.server.ts'
-
-type LoaderData = Route.ComponentProps['loaderData']
-
-const LANGUAGE_LABELS: Record<AgentLanguage, MessageDescriptor> = {
+export const LANGUAGE_LABELS: Record<AgentLanguage, MessageDescriptor> = {
 	en: msg`English`,
 	es: msg`Spanish`,
 	ar: msg`Arabic`,
@@ -88,8 +80,8 @@ const PHRASE_COPY: Record<
 		hint: msg`Played when nobody answered and the text to the caller could not be sent.`,
 	},
 	calling_disabled: {
-		label: msg`Assistant paused`,
-		hint: msg`Played before passing the call to your business line while the assistant is paused.`,
+		label: msg`Agent turned off`,
+		hint: msg`Played before passing the call to your business line while the agent is off.`,
 	},
 	trouble: {
 		label: msg`Something went wrong`,
@@ -141,78 +133,21 @@ const PHRASE_COPY: Record<
 	},
 }
 
-/** Phrases grouped by the moment in the call they're spoken. */
-const PHRASE_GROUPS: {
-	title: MessageDescriptor
-	description: MessageDescriptor
-	keys: PhraseKey[]
-}[] = [
-	{
-		title: msg`Start of the call`,
-		description: msg`What callers hear before anything else, and when the assistant can't answer.`,
-		keys: ['disclosure', 'recording_notice', 'calling_disabled', 'trouble'],
-	},
-	{
-		title: msg`Keypad menu`,
-		description: msg`Said while callers choose an option.`,
-		keys: ['menu_retry', 'menu_invalid'],
-	},
-	{
-		title: msg`Transfers`,
-		description: msg`Said while connecting callers to your team.`,
-		keys: [
-			'hold',
-			'transfer_connecting',
-			'transfer_no_answer',
-			'transfer_unavailable',
-			'transfer_text_offer',
-			'transfer_text_sent',
-			'transfer_text_failed',
-		],
-	},
-	{
-		title: msg`Texted links`,
-		description: msg`Said after the assistant tries to text a link.`,
-		keys: ['text_link_sent', 'text_link_blocked'],
-	},
-	{
-		title: msg`Voicemail`,
-		description: msg`Said when a caller leaves a message.`,
-		keys: [
-			'voicemail_prompt',
-			'voicemail_saved',
-			'voicemail_failed',
-			'voicemail_empty',
-		],
-	},
-	{
-		title: msg`End of the call`,
-		description: msg`The time-limit notice, the rating question, and the goodbye.`,
-		keys: [
-			'call_time_limit',
-			'csat_question',
-			'csat_thanks',
-			'csat_low',
-			'goodbye',
-		],
-	},
-]
+const PHRASE_DEFINITIONS = phraseDefinitionsFor(phoneAgentVertical)
 
 const BUSINESS_TOKEN = '{business}'
-
-const PHRASE_DEFINITIONS = phraseDefinitionsFor(phoneAgentVertical)
 
 function phraseCopy(key: PhraseKey) {
 	return { ...PHRASE_COPY[key], ...phoneAgentVerticalUi.phraseCopy?.[key] }
 }
 
-type Drafts = Record<string, string>
+type PhraseDrafts = Record<string, string>
 
 function draftKey(key: PhraseKey, language: AgentLanguage) {
 	return `${language}:${key}`
 }
 
-function toDrafts(overrides: PhraseOverride[]): Drafts {
+function toDrafts(overrides: PhraseOverride[]): PhraseDrafts {
 	return Object.fromEntries(
 		overrides.map((override) => [
 			draftKey(override.key, override.language),
@@ -221,146 +156,174 @@ function toDrafts(overrides: PhraseOverride[]): Drafts {
 	)
 }
 
-export default function PhoneAgentPhrases() {
-	const { _ } = useLingui()
-	const { phrases, languages, businessName, canUpdate, versions } =
-		useLoaderData<LoaderData>()
-	const [drafts, setDrafts] = useState<Drafts>(() => toDrafts(phrases))
-	const [language, setLanguage] = useState<AgentLanguage>(languages[0] ?? 'en')
-	const form = useSettingsForm({
-		saved: phrases,
-		versions,
-		draft: drafts,
-		reset: (saved) => setDrafts(toDrafts(saved)),
-		canUpdate,
-	})
-	const { pending, fieldErrors, save } = form
-	const disabled = !canUpdate || pending
+/**
+ * Phrase overrides edited on a settings page. Every page that shows some
+ * phrases keeps drafts for all of them, so saving one page's lines never
+ * drops the lines shown on another page.
+ */
+export function usePhraseDrafts(saved: PhraseOverride[]) {
+	const [drafts, setDrafts] = useState<PhraseDrafts>(() => toDrafts(saved))
 	// Field errors are keyed by position in the saved list (`phrases.3.text`),
 	// so remember which draft each position came from.
 	const [submittedKeys, setSubmittedKeys] = useState<string[]>([])
-	const errorFor = (key: PhraseKey, lang: AgentLanguage) => {
-		const index = submittedKeys.indexOf(draftKey(key, lang))
+
+	const reset = useCallback((next: PhraseOverride[]) => {
+		setDrafts(toDrafts(next))
+	}, [])
+
+	const setText = useCallback(
+		(key: PhraseKey, language: AgentLanguage, text: string | null) => {
+			setDrafts((current) => {
+				const next = { ...current }
+				if (text === null) delete next[draftKey(key, language)]
+				else next[draftKey(key, language)] = text
+				return next
+			})
+		},
+		[],
+	)
+
+	/** The overrides to save. Lines equal to their default are dropped. */
+	function collect(): PhraseOverride[] {
+		const overrides: PhraseOverride[] = []
+		for (const [keyed, text] of Object.entries(drafts)) {
+			const [language, key] = keyed.split(':') as [AgentLanguage, PhraseKey]
+			const definition = PHRASE_DEFINITIONS.find((item) => item.key === key)
+			const value = text.trim()
+			if (
+				!definition ||
+				!isEditablePhraseKey(key) ||
+				!value ||
+				value === definition.defaults[language]
+			)
+				continue
+			overrides.push({ key, language, text: value })
+		}
+		setSubmittedKeys(
+			overrides.map((override) => draftKey(override.key, override.language)),
+		)
+		return overrides
+	}
+
+	function errorFor(
+		fieldErrors: Record<string, string>,
+		key: PhraseKey,
+		language: AgentLanguage,
+	) {
+		const index = submittedKeys.indexOf(draftKey(key, language))
 		return index === -1 ? undefined : fieldErrors[`phrases.${index}.text`]
 	}
 
-	const customized = (lang: AgentLanguage) =>
-		PHRASE_DEFINITIONS.filter(
-			(definition) =>
-				isEditablePhraseKey(definition.key) &&
-				drafts[draftKey(definition.key, lang)]?.trim(),
-		).length
+	return { drafts, reset, setText, collect, errorFor }
+}
 
-	const groups = (lang: AgentLanguage) => (
-		<AnnotatedLayout>
-			{PHRASE_GROUPS.map((group) => (
-				<AnnotatedSection
-					key={group.keys[0]}
-					title={_(group.title)}
-					description={_(group.description)}
-				>
-					<Card>
-						<CardContent className="flex flex-col gap-6">
-							{group.keys.map((key) => (
-								<PhraseField
-									key={key}
-									phraseKey={key}
-									language={lang}
-									value={drafts[draftKey(key, lang)] ?? ''}
-									error={errorFor(key, lang)}
-									disabled={disabled}
-									onChange={(text) =>
-										setDrafts((current) => {
-											const next = { ...current }
-											if (text === null) delete next[draftKey(key, lang)]
-											else next[draftKey(key, lang)] = text
-											return next
-										})
-									}
-								/>
-							))}
-						</CardContent>
-					</Card>
-				</AnnotatedSection>
+export type PhraseDraftsState = ReturnType<typeof usePhraseDrafts>
+
+/**
+ * The fixed lines for one feature, folded away under "Customize what the
+ * agent says" because the defaults work for most businesses.
+ */
+export function PhraseOverridesSection({
+	keys,
+	languages,
+	phrases,
+	fieldErrors,
+	disabled,
+	businessName,
+}: {
+	keys: readonly PhraseKey[]
+	languages: readonly AgentLanguage[]
+	phrases: PhraseDraftsState
+	fieldErrors: Record<string, string>
+	disabled: boolean
+	businessName: string
+}) {
+	const { _ } = useLingui()
+	const [open, setOpen] = useState(false)
+	const shownLanguages: AgentLanguage[] = languages.length
+		? [...languages]
+		: ['en']
+	const [language, setLanguage] = useState<AgentLanguage>(shownLanguages[0]!)
+	const customized = keys.filter(
+		(key) =>
+			isEditablePhraseKey(key) &&
+			shownLanguages.some((lang) =>
+				phrases.drafts[draftKey(key, lang)]?.trim(),
+			),
+	).length
+	const hasError = keys.some((key) =>
+		shownLanguages.some((lang) => phrases.errorFor(fieldErrors, key, lang)),
+	)
+
+	const fields = (lang: AgentLanguage) => (
+		<div className="flex flex-col gap-5">
+			{keys.map((key) => (
+				<PhraseField
+					key={key}
+					phraseKey={key}
+					language={lang}
+					value={phrases.drafts[draftKey(key, lang)] ?? ''}
+					error={phrases.errorFor(fieldErrors, key, lang)}
+					disabled={disabled}
+					onChange={(text) => phrases.setText(key, lang, text)}
+				/>
 			))}
-		</AnnotatedLayout>
+		</div>
 	)
 
 	return (
-		<div className="flex flex-col gap-8">
-			<PageHeader
-				title={<Trans>Phrases</Trans>}
-				description={
-					<Trans>
-						The fixed lines the phone system says outside of conversation with
-						the AI assistant. Leave a line empty to use the default.{' '}
-						{BUSINESS_TOKEN} is replaced with {businessName}.
-					</Trans>
+		<Collapsible open={open || hasError} onOpenChange={setOpen}>
+			<CollapsibleTrigger
+				render={
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						className="-ms-2 self-start"
+					/>
 				}
-			/>
-			<form
-				className="flex flex-col gap-8"
-				onSubmit={(event) => {
-					event.preventDefault()
-					const overrides: PhraseOverride[] = []
-					for (const [keyed, text] of Object.entries(drafts)) {
-						const [lang, key] = keyed.split(':') as [AgentLanguage, PhraseKey]
-						const definition = PHRASE_DEFINITIONS.find(
-							(item) => item.key === key,
-						)
-						const value = text.trim()
-						if (
-							!definition ||
-							!isEditablePhraseKey(key) ||
-							!value ||
-							value === definition.defaults[lang]
-						)
-							continue
-						overrides.push({ key, language: lang, text: value })
-					}
-					setSubmittedKeys(
-						overrides.map((override) =>
-							draftKey(override.key, override.language),
-						),
-					)
-					save({ phrases: overrides })
-				}}
 			>
-				{languages.length > 1 ? (
-					<Tabs
-						value={language}
-						onValueChange={(value) => {
-							const next = languages.find((item) => item === value)
-							if (next) setLanguage(next)
-						}}
-					>
-						<TabsList>
-							{languages.map((lang) => (
-								<TabsTrigger key={lang} value={lang}>
-									{_(LANGUAGE_LABELS[lang])}
-									{customized(lang) ? (
-										<Badge variant="secondary">{customized(lang)}</Badge>
-									) : null}
-								</TabsTrigger>
+				<Icon name={open || hasError ? 'chevron-down' : 'chevron-right'} />
+				<Trans>Customize what the agent says</Trans>
+				{customized ? (
+					<Badge variant="secondary">{_(msg`${customized} changed`)}</Badge>
+				) : null}
+			</CollapsibleTrigger>
+			<CollapsibleContent>
+				<div className="flex flex-col gap-4 pt-3">
+					<p className="text-muted-foreground text-xs">
+						<Trans>
+							Leave a line empty to use the default. {BUSINESS_TOKEN} is
+							replaced with {businessName}.
+						</Trans>
+					</p>
+					{shownLanguages.length > 1 ? (
+						<Tabs
+							value={language}
+							onValueChange={(value) => {
+								const next = shownLanguages.find((item) => item === value)
+								if (next) setLanguage(next)
+							}}
+						>
+							<TabsList>
+								{shownLanguages.map((lang) => (
+									<TabsTrigger key={lang} value={lang}>
+										{_(LANGUAGE_LABELS[lang])}
+									</TabsTrigger>
+								))}
+							</TabsList>
+							{shownLanguages.map((lang) => (
+								<TabsContent key={lang} value={lang} className="pt-3">
+									{fields(lang)}
+								</TabsContent>
 							))}
-						</TabsList>
-						{languages.map((lang) => (
-							<TabsContent key={lang} value={lang} className="pt-6">
-								{groups(lang)}
-							</TabsContent>
-						))}
-					</Tabs>
-				) : (
-					groups(language)
-				)}
-				<FieldErrorText error={fieldErrors.phrases} />
-				<SettingsSaveBar
-					canUpdate={canUpdate}
-					form={form}
-					label={<Trans>Save phrases</Trans>}
-				/>
-			</form>
-		</div>
+						</Tabs>
+					) : (
+						fields(shownLanguages[0]!)
+					)}
+				</div>
+			</CollapsibleContent>
+		</Collapsible>
 	)
 }
 
@@ -445,8 +408,4 @@ function PhraseField({
 			<FieldErrorText id={`${id}-error`} error={error} />
 		</div>
 	)
-}
-
-export function ErrorBoundary() {
-	return <GeneralErrorBoundary />
 }

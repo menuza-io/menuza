@@ -9,7 +9,6 @@ export const SETTINGS_ERROR_CODES = [
 	'conflict',
 	'invalid_fields',
 	'invalid_request',
-	'escalation_phone_required',
 	'staff_phone_loop',
 	'rate_limited_send',
 	'rate_limited_check',

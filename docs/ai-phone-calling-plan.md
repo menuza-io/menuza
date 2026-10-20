@@ -238,10 +238,10 @@ in-kingdom provider.
 - **Record calls** on or off, plus retention (for example 30, 90, or 365 days).
   When on, the agent plays a recording notice. Transcripts follow the same
   retention.
-- **Auto-escalate complex requests** on or off, the escalation phone number, and
-  the behavior when nobody answers (take a message). Built-in triggers: the
-  caller asks for a person, repeated misunderstandings, and complaints.
-  Escalation training rules add business-specific triggers.
+- Under **Call handling → Transfers**: transfers on or off, the staff phone
+  number, and the behavior when nobody answers (take a message). Built-in
+  triggers: the caller asks for a person, repeated misunderstandings, and
+  complaints. Escalation training rules add business-specific triggers.
 - Maximum call length.
 
 Avoid transfer loops: when the business forwards its own line to the AI number,
@@ -272,7 +272,7 @@ release date, so it stays held until an admin confirms. A forced reassignment is
 audit-logged as `admin_phone_number_force_reassigned` with the previous
 organization id and the last four digits of the number.
 
-### Training rules (App → `/{orgSlug}/phone-agent/training`)
+### Training rules (App → `/{orgSlug}/phone-agent/knowledge`)
 
 Each rule has a **category**, **title**, **description**, **priority**, an
 active toggle, and an optional scope.
@@ -310,17 +310,17 @@ press a key or say the option (its label or one of its keywords).
 
 Step types:
 
-| Step             | What it does                                                                                  | Outputs                       |
-| ---------------- | --------------------------------------------------------------------------------------------- | ----------------------------- |
-| Call comes in    | Entry point.                                                                                  | One                           |
-| Keypad menu      | Reads a prompt, waits for a key or a spoken choice, repeats up to 3 times.                    | One per key, plus "No choice" |
-| Play message     | Reads a message, then continues.                                                              | One                           |
-| Open or closed   | Branches on the business's hours.                                                             | Open, Closed                  |
-| AI assistant     | Hands the call to the general AI agent (Setup + Training rules). Ends or transfers by itself. | None                          |
-| Text link        | Texts the website link to the caller (`POST /api/voice/website-links` on tenant-api).         | One                           |
-| Transfer         | Transfers to the step's number or the Setup escalation number.                                | "No answer"                   |
-| Take a voicemail | Records a message and saves it as a callback request.                                         | One                           |
-| Hang up          | Optional goodbye, then ends the call.                                                         | None                          |
+| Step             | What it does                                                                                     | Outputs                       |
+| ---------------- | ------------------------------------------------------------------------------------------------ | ----------------------------- |
+| Call comes in    | Entry point.                                                                                     | One                           |
+| Keypad menu      | Reads a prompt, waits for a key or a spoken choice, repeats up to 3 times.                       | One per key, plus "No choice" |
+| Play message     | Reads a message, then continues.                                                                 | One                           |
+| Open or closed   | Branches on the business's hours.                                                                | Open, Closed                  |
+| AI assistant     | Hands the call to the general AI agent (settings + training rules). Ends or transfers by itself. | None                          |
+| Text link        | Texts the website link to the caller (`POST /api/voice/website-links` on tenant-api).            | One                           |
+| Transfer         | Transfers to the step's number or the staff phone.                                               | "No answer"                   |
+| Take a voicemail | Records a message and saves it as a callback request.                                            | One                           |
+| Hang up          | Optional goodbye, then ends the call.                                                            | None                          |
 
 Messages can use `{business}`, plus any placeholders the vertical adds.
 Validation blocks publishing for missing or duplicate connections, missing
@@ -328,15 +328,16 @@ prompts, duplicate keys, invalid phone numbers, loops with no caller input, and
 unreachable steps.
 
 Publishing creates an immutable version. Calls record the flow version they ran.
-The **Test call** page calls the draft from the browser (WebRTC into a LiveKit
-room) with an on-screen dial pad that sends DTMF. On test calls, transfers
-behave as if nobody answered, and links are shown in the page instead of texted.
+The **Test call** sheet (**Save and test** in the editor) calls the draft from
+the browser (WebRTC into a LiveKit room) with an on-screen dial pad that sends
+DTMF. On test calls, transfers behave as if nobody answered, and links are shown
+in the page instead of texted.
 
 ### Choosing a voice
 
-On Setup, **Choose voice** opens Cartesia's voice library with search and
-language and voice-type filters. Play reads the agent name and greeting in that
-voice, so owners hear what callers will hear. The App proxies the audio
+On the Agent tab, **Choose voice** opens Cartesia's voice library with search
+and language and voice-type filters. Play reads the agent name and greeting in
+that voice, so owners hear what callers will hear. The App proxies the audio
 (`/{orgSlug}/phone-agent/voice-preview`) because its content security policy
 only allows same-origin media. Greeting previews are billed speech requests:
 each editor gets 60 an hour, then previews fall back to Cartesia's free sample
@@ -346,20 +347,29 @@ falls back to `CARTESIA_DEFAULT_VOICE_ID`.
 
 ### More settings pages
 
-Each page saves only the fields it owns. The server merges the patch onto the
-stored settings, validates the whole object again, and checks cross-field rules
-(unique ids, transfer cases point to an existing contact, no contact number that
-loops back to the agent). Every save, training rule change, and phone menu
-publish is written to the audit log with key names only, never values, and shown
-under **Advanced → Change history**.
+The phone agent's settings are three tabs: **Agent** (`/{orgSlug}/phone-agent`),
+**What it knows** (`knowledge`), and **Call handling** (`handling`). Each form
+saves only the fields it owns. The server merges the patch onto the stored
+settings, validates the whole object again, and checks cross-field rules (unique
+ids, transfer cases point to an existing contact, no contact number that loops
+back to the agent). Every save, training rule change, and phone menu publish is
+written to the audit log with key names only, never values, and shown under
+**Agent → Behind the scenes → Change history**.
 
-| Page (App → `/{orgSlug}/phone-agent/…`) | What it holds                                                                                                                                                                                                                                                                         |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `knowledge`                             | Common questions and answers by category (optionally per scope), with an AI "Draft answers" button (10 per hour) that fills answers from the business facts. Pronunciations and key terms for speech recognition.                                                                     |
-| `transfers`                             | Transfer hours, press 0 for staff, offer a text when nobody answers, ring timeout, named contacts, and transfer cases ("when the caller asks about billing, transfer to Sam").                                                                                                        |
-| `follow-up`                             | Staff alerts by SMS (US only) and email for chosen events, a call link in alerts, auto-resolve after N days, keep transferred calls open, and call tags (auto-applied or manual, important or not).                                                                                   |
-| `phrases`                               | Per-language overrides for the fixed lines the phone system speaks (hold, nobody answered, rating question, goodbye, and so on). Empty fields use the default. The AI disclosure and recording notice are legal notices: they are shown read-only and any stored override is ignored. |
-| `advanced`                              | Safety switches (pause the assistant and pass calls straight to the business; turn off transfers), the end-of-call rating question, the vertical's own settings section, a prompt preview, and change history.                                                                        |
+The fixed lines the phone system speaks (hold, nobody answered, rating question,
+goodbye, and so on) are edited next to the feature that uses them, under
+**Customize what the agent says**. Empty fields use the default. The AI
+disclosure and recording notice are legal notices: they are shown read-only and
+any stored override is ignored.
+
+| Tab (App → `/{orgSlug}/phone-agent/…`) | What it holds                                                                                                                                                                                                                                        |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (index)                                | First-time setup steps, phone numbers, one on/off switch, name, languages, voice, greeting and closing, recording, after-hours behavior, maximum call length, and **Behind the scenes** (prompt preview and change history).                         |
+| `knowledge`                            | Business details (or the vertical's own settings section), common questions and answers by category (optionally per scope) with an AI "Draft answers" button (10 per hour), training rules, and pronunciations and key terms for speech recognition. |
+| `handling`                             | The call flow (standard until you publish your own), transfers (on/off, staff phone, hours, press 0, text offer, ring timeout, contacts, cases), call ratings, and after the call: staff alerts by SMS (US only) and email, follow-up, and tags.     |
+
+A test call opens in a sheet on any phone agent page when the URL has `?test=1`
+(or `?test=draft` / `?test=published`).
 
 ## Call records and purposes
 
@@ -517,7 +527,7 @@ The voice worker is not part of `npm run dev`. Start it separately.
 2. App (`apps/app/.env`): set `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and
    `LIVEKIT_API_SECRET`. The App signs browser test-call tokens and dispatches
    the `phone-agent` worker. Set `CARTESIA_API_KEY` too if you want the voice
-   picker on the Setup page; without it, Setup shows a plain voice ID field.
+   picker on the Agent tab; without it, the tab shows a plain voice ID field.
 3. Voice agent (`apps/voice-agent/.env`): set the same LiveKit values, plus
    `DEEPGRAM_API_KEY`, `GOOGLE_API_KEY`, and `CARTESIA_API_KEY`
    (`CARTESIA_DEFAULT_VOICE_ID` optional). `APP_URL` and `TENANT_API_URL`
@@ -528,8 +538,8 @@ The voice worker is not part of `npm run dev`. Start it separately.
    `NODE_ENV=production`, App rejects the committed development default.
 5. Once: `npm run download-files -w voice-agent` (turn-detector and VAD
    weights). Then `npm run dev` and `npm run dev:voice-agent`.
-6. Open `/{orgSlug}/phone-agent/test` in the App to talk to the agent in the
-   browser. Links appear in the page instead of being sent by SMS.
+6. Click **Test call** on the phone agent settings in the App to talk to the
+   agent in the browser. Links appear in the page instead of being sent by SMS.
 
 Real phone numbers (US):
 
@@ -539,8 +549,8 @@ Real phone numbers (US):
    puts each caller in its own room with agent `phone-agent`.
 3. A platform admin adds the number in Admin and assigns it to the organization.
    The operator picks its mode (and scope, when the vertical has scopes) on the
-   Setup page; a forwarded business line must be verified with a code first.
-   Link SMS uses the tenant-api `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and
+   Agent tab; a forwarded business line must be verified with a code first. Link
+   SMS uses the tenant-api `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and
    `TWILIO_FROM_NUMBER`.
 4. Recording (optional): set `RECORDING_S3_*` on the voice agent. LiveKit Egress
    must be running and able to reach the bucket (LiveKit Cloud runs it for you).

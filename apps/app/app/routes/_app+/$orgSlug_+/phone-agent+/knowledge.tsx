@@ -15,7 +15,6 @@ import { Card, CardContent } from '@repo/ui/card'
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -28,6 +27,8 @@ import { Textarea } from '@repo/ui/textarea'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { BusinessDetailsSection } from '#app/components/phone-agent/business-details-section.tsx'
+import { PhoneAgentSettingsHeader } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	localId,
@@ -36,7 +37,9 @@ import {
 	useSettingsFormState,
 	useUnsavedChangesWarning,
 } from '#app/components/phone-agent/settings-page.tsx'
+import { TrainingRulesSection } from '#app/components/phone-agent/training-rules-section.tsx'
 import { useVerticalLabels } from '#app/components/phone-agent/vertical-labels.ts'
+import { phoneAgentVerticalUi } from '#app/components/phone-agent/vertical-ui.tsx'
 import { phoneAgentVertical } from '#app/utils/phone-agent/vertical.ts'
 import { type Route } from './+types/knowledge.ts'
 import { type KnowledgeActionResult } from './knowledge.server.ts'
@@ -79,23 +82,27 @@ function initialRows(saved: FaqEntry[]): FaqRow[] {
 }
 
 export default function PhoneAgentKnowledge() {
-	const { faq, pronunciations, keyterms, scopes, canUpdate, versions } =
-		useLoaderData<LoaderData>()
+	const data = useLoaderData<LoaderData>()
+	const { faq, pronunciations, keyterms, scopes, canUpdate, versions } = data
+	const [businessDirty, setBusinessDirty] = useState(false)
 	const [faqDirty, setFaqDirty] = useState(false)
 	const [speechDirty, setSpeechDirty] = useState(false)
-	useUnsavedChangesWarning(canUpdate && (faqDirty || speechDirty))
+	useUnsavedChangesWarning(
+		canUpdate && (businessDirty || faqDirty || speechDirty),
+	)
 	return (
 		<div className="flex flex-col gap-8">
-			<PageHeader
-				title={<Trans>Knowledge</Trans>}
-				description={
-					<Trans>
-						Answers to common questions, and how the agent hears and says the
-						names callers use.
-					</Trans>
-				}
-			/>
+			<PhoneAgentSettingsHeader active="knowledge" />
 			<AnnotatedLayout>
+				<BusinessSection
+					business={data.business}
+					vertical={data.vertical}
+					providesBusinessProfile={data.providesBusinessProfile}
+					verticalData={data.verticalData}
+					versions={versions}
+					canUpdate={canUpdate}
+					onDirtyChange={setBusinessDirty}
+				/>
 				<FaqSection
 					saved={faq}
 					// Scoped answers are kept as they are.
@@ -104,6 +111,12 @@ export default function PhoneAgentKnowledge() {
 					versions={versions}
 					canUpdate={canUpdate}
 					onDirtyChange={setFaqDirty}
+				/>
+				<TrainingRulesSection
+					rules={data.rules}
+					scopes={scopes}
+					canUpdate={canUpdate}
+					verticalSettings={data.vertical}
 				/>
 				<SpeechSection
 					pronunciations={pronunciations}
@@ -114,6 +127,92 @@ export default function PhoneAgentKnowledge() {
 				/>
 			</AnnotatedLayout>
 		</div>
+	)
+}
+
+/**
+ * Hours, phone, and address (verticals without their own records) plus the
+ * vertical's own settings form, saved together.
+ */
+function BusinessSection({
+	business,
+	vertical,
+	providesBusinessProfile,
+	verticalData,
+	versions,
+	canUpdate,
+	onDirtyChange,
+}: {
+	business: LoaderData['business']
+	vertical: LoaderData['vertical']
+	providesBusinessProfile: boolean
+	verticalData: unknown
+	versions: LoaderData['versions']
+	canUpdate: boolean
+	onDirtyChange: (dirty: boolean) => void
+}) {
+	const [businessDraft, setBusinessDraft] = useState(business)
+	const [verticalDraft, setVerticalDraft] =
+		useState<Record<string, unknown>>(vertical)
+	const editsBusiness = !providesBusinessProfile
+	const VerticalSection = phoneAgentVerticalUi.SettingsSection
+	const editsVertical = Boolean(VerticalSection && phoneAgentVertical.settings)
+	const form = useSettingsFormState({
+		saved: { business, vertical },
+		versions,
+		draft: { business: businessDraft, vertical: verticalDraft },
+		reset: (saved) => {
+			setBusinessDraft(saved.business)
+			setVerticalDraft(saved.vertical)
+		},
+		canUpdate,
+	})
+	const { pending, save, fieldErrors, dirty } = form
+	useEffect(() => {
+		onDirtyChange(dirty)
+	}, [dirty, onDirtyChange])
+	// The vertical's own records own these, or it has no settings form.
+	if (!editsBusiness && !editsVertical) return null
+	const disabled = !canUpdate || pending
+	const verticalFieldErrors = Object.fromEntries(
+		Object.entries(fieldErrors)
+			.filter(([key]) => key.startsWith('vertical.'))
+			.map(([key, value]) => [key.slice('vertical.'.length), value]),
+	)
+	return (
+		<form
+			className="flex flex-col gap-6"
+			onSubmit={(event) => {
+				event.preventDefault()
+				save({
+					...(editsBusiness ? { business: businessDraft } : {}),
+					...(editsVertical ? { vertical: verticalDraft } : {}),
+				})
+			}}
+		>
+			{editsBusiness ? (
+				<BusinessDetailsSection
+					value={businessDraft}
+					onChange={setBusinessDraft}
+					disabled={disabled}
+					fieldErrors={fieldErrors}
+				/>
+			) : null}
+			{VerticalSection && editsVertical ? (
+				<VerticalSection
+					value={verticalDraft}
+					onChange={setVerticalDraft}
+					disabled={disabled}
+					data={verticalData}
+					fieldErrors={verticalFieldErrors}
+				/>
+			) : null}
+			<SettingsSaveBar
+				canUpdate={canUpdate}
+				form={form}
+				label={<Trans>Save business details</Trans>}
+			/>
+		</form>
 	)
 }
 

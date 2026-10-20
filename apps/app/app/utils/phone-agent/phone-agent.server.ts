@@ -159,13 +159,16 @@ export type SettingsSaveResult =
  */
 export async function updatePhoneAgentSettings(
 	organizationId: string,
-	settings: PhoneAgentSettings,
+	input: PhoneAgentSettings,
 	options: { expectedRawSettings?: string } = {},
 ): Promise<SettingsSaveResult> {
 	await getPhoneAgent(organizationId)
-	if (settings.autoEscalate && !settings.escalationPhone) {
-		return { ok: false, error: settingsError('escalation_phone_required') }
-	}
+	// The staff phone is the only control for the general transfer, so a
+	// missing number means it's off rather than an error every page must avoid.
+	const settings =
+		input.autoEscalate && !input.escalationPhone
+			? { ...input, autoEscalate: false }
+			: input
 	const numbers = await listPhoneNumbers(organizationId)
 	if (findSettingsTransferLoop(settings, numbers)) {
 		return { ok: false, error: settingsError('staff_phone_loop') }

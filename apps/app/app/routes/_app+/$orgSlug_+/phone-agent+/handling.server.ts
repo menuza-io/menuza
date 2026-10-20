@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { canReadPhoneCalls } from '#app/utils/phone-agent/access.server.ts'
+import { getPublishedFlow } from '#app/utils/phone-agent/phone-agent.server.ts'
 import {
 	loadSettingsPage,
 	saveSettingsPage,
@@ -9,11 +10,29 @@ import { type SettingsPatchResult } from '#app/utils/phone-agent/settings-patch.
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const page = await loadSettingsPage(request, params.orgSlug)
-	const canReadCalls = await canReadPhoneCalls(request, page.orgId)
+	const [published, canReadCalls] = await Promise.all([
+		getPublishedFlow(page.orgId),
+		canReadPhoneCalls(request, page.orgId),
+	])
 	return settingsPageData({
+		businessName: page.orgName,
+		languages: page.settings.languages,
+		phrases: page.settings.phrases,
+		safety: page.settings.safety,
+		escalationPhone: page.settings.escalationPhone ?? null,
+		transfers: page.settings.transfers,
+		contacts: page.settings.contacts,
+		transferCases: page.settings.transferCases,
+		csatEnabled: page.settings.csatEnabled,
 		notifications: page.settings.notifications,
 		followUp: page.settings.followUp,
 		tags: page.settings.tags,
+		publishedFlow: published
+			? {
+					version: published.version,
+					publishedAt: published.publishedAt?.toISOString() ?? null,
+				}
+			: null,
 		versions: page.versions,
 		canUpdate: page.canUpdate,
 		// Saving still checks this; see patchPhoneAgentSettings.

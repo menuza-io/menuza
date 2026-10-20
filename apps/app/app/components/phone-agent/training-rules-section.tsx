@@ -6,12 +6,13 @@ import {
 	MAX_TRAINING_RULES,
 	TRAINING_RULE_LIMIT_ERROR,
 	TRAINING_RULE_PRIORITIES,
+	type TrainingRule,
 	type TrainingRuleCategory,
 	trainingRuleCategoriesFor,
 	type TrainingRuleInput,
 	type TrainingRulePriority,
 } from '@repo/phone-agent'
-import { AnnotatedLayout, AnnotatedSection } from '@repo/ui/annotated-layout'
+import { AnnotatedSection } from '@repo/ui/annotated-layout'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent } from '@repo/ui/card'
@@ -33,7 +34,6 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
-import { PageHeader } from '@repo/ui/page-header'
 import {
 	Select,
 	SelectContent,
@@ -44,24 +44,19 @@ import {
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
 import { useEffect, useMemo, useState } from 'react'
-import { useFetcher, useLoaderData } from 'react-router'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { useVerticalLabels } from '#app/components/phone-agent/vertical-labels.ts'
-import { phoneAgentVerticalUi } from '#app/components/phone-agent/vertical-ui.tsx'
+import { useFetcher } from 'react-router'
+import { type TrainingActionResult } from '#app/utils/phone-agent/training-actions.server.ts'
 import { phoneAgentVertical } from '#app/utils/phone-agent/vertical.ts'
-import { type Route } from './+types/training.ts'
-import { type TrainingActionResult } from './training.server.ts'
-
-export { action, loader } from './training.server.ts'
+import { useVerticalLabels } from './vertical-labels.ts'
+import { phoneAgentVerticalUi } from './vertical-ui.tsx'
 
 const DESCRIPTION_MAX = 1000
 const ALL_SCOPES = '__all__'
 
 const RULE_CATEGORIES = trainingRuleCategoriesFor(phoneAgentVertical)
 
-type LoaderData = Route.ComponentProps['loaderData']
-type Rule = LoaderData['rules'][number]
-type Scope = LoaderData['scopes'][number]
+type Rule = TrainingRule
+type Scope = { id: string; name: string }
 type RuleDraft = TrainingRuleInput & { id?: string }
 
 const PRIORITY_LABELS: Record<TrainingRulePriority, MessageDescriptor> = {
@@ -85,9 +80,21 @@ function emptyDraft(
 	}
 }
 
-export default function PhoneAgentTraining() {
-	const { rules, scopes, canUpdate, verticalSettings } =
-		useLoaderData<LoaderData>()
+/**
+ * Training rules, grouped by category. Rule changes save on their own (each
+ * dialog posts to the page's action), separately from the page's forms.
+ */
+export function TrainingRulesSection({
+	rules,
+	scopes,
+	canUpdate,
+	verticalSettings,
+}: {
+	rules: Rule[]
+	scopes: Scope[]
+	canUpdate: boolean
+	verticalSettings: Record<string, unknown>
+}) {
 	const { _ } = useLingui()
 	const labels = useVerticalLabels()
 	const [editing, setEditing] = useState<RuleDraft | null>(null)
@@ -115,142 +122,147 @@ export default function PhoneAgentTraining() {
 	}, [rules, scopes, verticalSettings])
 
 	const atLimit = rules.length >= MAX_TRAINING_RULES
-	const addButton = canUpdate ? (
-		<Button
-			type="button"
-			disabled={atLimit}
-			onClick={() => setEditing(emptyDraft())}
-		>
-			<Icon name="plus" />
-			<Trans>Add rule</Trans>
-		</Button>
-	) : null
 
 	return (
-		<div className="flex flex-col gap-8">
-			<PageHeader
-				title={<Trans>Training rules</Trans>}
-				description={
-					<Trans>
-						Rules teach the agent how your business works. High priority rules
-						are included first; when there are too many, the rest are left out.
-					</Trans>
-				}
-				actions={addButton}
-			/>
+		<AnnotatedSection
+			title={<Trans>Training rules</Trans>}
+			description={
+				<Trans>
+					Rules teach the agent how your business works, the way you'd explain
+					it to a new staff member. High priority rules are included first.
+				</Trans>
+			}
+		>
+			<div id="training-rules" className="flex scroll-mt-6 flex-col gap-4">
+				{droppedCount > 0 ? (
+					<div
+						role="status"
+						className="flex items-start gap-3 rounded-lg border p-4 text-sm"
+					>
+						<Icon name="alert-triangle" className="text-destructive mt-0.5" />
+						<p>
+							{_(
+								plural(droppedCount, {
+									one: '# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.',
+									other:
+										'# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.',
+								}),
+							)}
+						</p>
+					</div>
+				) : null}
 
-			{droppedCount > 0 ? (
-				<div
-					role="status"
-					className="flex items-start gap-3 rounded-lg border p-4 text-sm"
-				>
-					<Icon name="alert-triangle" className="text-destructive mt-0.5" />
-					<p>
-						{_(
-							plural(droppedCount, {
-								one: '# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.',
-								other:
-									'# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.',
-							}),
-						)}
+				{canUpdate && atLimit ? (
+					<p role="status" className="text-muted-foreground text-sm">
+						<Trans>
+							You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one
+							to add another.
+						</Trans>
 					</p>
-				</div>
-			) : null}
+				) : null}
 
-			{canUpdate && atLimit ? (
-				<p role="status" className="text-muted-foreground text-sm">
-					<Trans>
-						You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to
-						add another.
-					</Trans>
-				</p>
-			) : null}
-
-			{rules.length === 0 ? (
-				<div className="rounded-lg border border-dashed py-4">
-					<Empty>
-						<EmptyHeader>
-							<EmptyTitle>
-								<Trans>No training rules yet</Trans>
-							</EmptyTitle>
-							<EmptyDescription>
-								<Trans>
-									Start with an example and change it to match your business.
-								</Trans>
-							</EmptyDescription>
-						</EmptyHeader>
-						{canUpdate && EXAMPLES.length ? (
-							<EmptyContent>
-								<div className="flex flex-wrap justify-center gap-2">
-									{EXAMPLES.map((example) => (
+				{rules.length === 0 ? (
+					<div className="rounded-lg border border-dashed py-4">
+						<Empty>
+							<EmptyHeader>
+								<EmptyTitle>
+									<Trans>No training rules yet</Trans>
+								</EmptyTitle>
+								<EmptyDescription>
+									<Trans>
+										Start with an example and change it to match your business.
+									</Trans>
+								</EmptyDescription>
+							</EmptyHeader>
+							{canUpdate ? (
+								<EmptyContent>
+									<div className="flex flex-wrap justify-center gap-2">
+										{EXAMPLES.map((example) => (
+											<Button
+												key={example.category + example.title.id}
+												type="button"
+												variant="outline"
+												size="sm"
+												onClick={() =>
+													setEditing({
+														...emptyDraft(example.category),
+														title: _(example.title),
+														description: _(example.description),
+													})
+												}
+											>
+												{_(example.title)}
+											</Button>
+										))}
 										<Button
-											key={example.category + example.title.id}
 											type="button"
-											variant="outline"
 											size="sm"
-											onClick={() =>
-												setEditing({
-													...emptyDraft(example.category),
-													title: _(example.title),
-													description: _(example.description),
-												})
-											}
+											disabled={atLimit}
+											onClick={() => setEditing(emptyDraft())}
 										>
-											{_(example.title)}
+											<Icon name="plus" />
+											<Trans>Add rule</Trans>
 										</Button>
-									))}
-								</div>
-							</EmptyContent>
-						) : null}
-					</Empty>
-				</div>
-			) : (
-				<AnnotatedLayout>
-					{labels.ruleCategories.map(({ id: category, label, description }) => {
-						const inCategory = rules.filter(
-							(rule) => rule.category === category,
-						)
-						const categoryLabel = label
-						const notice = phoneAgentVerticalUi.ruleCategoryNotice?.(
-							category,
-							verticalSettings,
-						)
-						const addToCategory = canUpdate ? (
-							<Button
-								type="button"
-								variant={inCategory.length === 0 ? 'outline' : 'ghost'}
-								size="sm"
-								disabled={atLimit}
-								aria-label={_(msg`Add a ${categoryLabel} rule`)}
-								onClick={() => setEditing(emptyDraft(category))}
-							>
-								<Icon name="plus" />
-								<Trans>Add rule</Trans>
-							</Button>
-						) : null
-						return (
-							<AnnotatedSection
-								key={category}
-								title={categoryLabel}
-								description={description ?? undefined}
-							>
-								<Card>
-									<CardContent className="flex flex-col gap-3">
-										{notice ? (
-											<p className="text-muted-foreground flex items-center gap-2 text-xs">
-												<Icon name="info" />
-												{_(notice)}
-											</p>
-										) : null}
-										{inCategory.length === 0 ? (
-											<div className="flex flex-wrap items-center justify-between gap-3">
+									</div>
+								</EmptyContent>
+							) : null}
+						</Empty>
+					</div>
+				) : (
+					<Card>
+						<CardContent className="flex flex-col gap-6">
+							{labels.ruleCategories.map(
+								({ id: category, label, description }) => {
+									const inCategory = rules.filter(
+										(rule) => rule.category === category,
+									)
+									const categoryLabel = label
+									const notice = phoneAgentVerticalUi.ruleCategoryNotice?.(
+										category,
+										verticalSettings,
+									)
+									return (
+										<section
+											key={category}
+											aria-label={categoryLabel}
+											className="flex flex-col gap-2"
+										>
+											<div className="flex items-start justify-between gap-3">
+												<div className="flex min-w-0 flex-col gap-0.5">
+													<h3 className="text-sm font-medium">
+														{categoryLabel}
+													</h3>
+													{description ? (
+														<p className="text-muted-foreground text-xs">
+															{description}
+														</p>
+													) : null}
+												</div>
+												{canUpdate ? (
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														disabled={atLimit}
+														aria-label={_(msg`Add a ${categoryLabel} rule`)}
+														onClick={() => setEditing(emptyDraft(category))}
+													>
+														<Icon name="plus" />
+														<Trans>Add rule</Trans>
+													</Button>
+												) : null}
+											</div>
+											{notice ? (
+												<p className="text-muted-foreground flex items-center gap-2 text-xs">
+													<Icon name="info" />
+													{_(notice)}
+												</p>
+											) : null}
+											{inCategory.length === 0 ? (
 												<p className="text-muted-foreground text-sm">
 													<Trans>No rules yet.</Trans>
 												</p>
-												{addToCategory}
-											</div>
-										) : (
-											<>
+											) : (
 												<ul className="divide-y">
 													{inCategory.map((rule) => (
 														<RuleRow
@@ -280,18 +292,15 @@ export default function PhoneAgentTraining() {
 														/>
 													))}
 												</ul>
-												{addToCategory ? (
-													<div className="-ms-2">{addToCategory}</div>
-												) : null}
-											</>
-										)}
-									</CardContent>
-								</Card>
-							</AnnotatedSection>
-						)
-					})}
-				</AnnotatedLayout>
-			)}
+											)}
+										</section>
+									)
+								},
+							)}
+						</CardContent>
+					</Card>
+				)}
+			</div>
 
 			{editing ? (
 				<RuleDialog
@@ -304,7 +313,7 @@ export default function PhoneAgentTraining() {
 			{deleting ? (
 				<DeleteRuleDialog rule={deleting} onClose={() => setDeleting(null)} />
 			) : null}
-		</div>
+		</AnnotatedSection>
 	)
 }
 
@@ -358,7 +367,7 @@ function RuleRow({
 					aria-label={_(msg`Use "${ruleTitle}"`)}
 					onCheckedChange={(checked) =>
 						void fetcher.submit(
-							{ intent: 'toggle', id: rule.id, isActive: checked },
+							{ intent: 'toggle-rule', id: rule.id, isActive: checked },
 							{ method: 'POST', encType: 'application/json' },
 						)
 					}
@@ -458,7 +467,7 @@ function RuleDialog({
 						event.preventDefault()
 						void fetcher.submit(
 							{
-								intent: 'save',
+								intent: 'save-rule',
 								...(draft.id ? { id: draft.id } : {}),
 								category,
 								title,
@@ -680,7 +689,7 @@ function DeleteRuleDialog({ rule, onClose }: { rule: Rule; onClose(): void }) {
 						disabled={pending}
 						onClick={() =>
 							void fetcher.submit(
-								{ intent: 'delete', id: rule.id },
+								{ intent: 'delete-rule', id: rule.id },
 								{ method: 'POST', encType: 'application/json' },
 							)
 						}
@@ -691,8 +700,4 @@ function DeleteRuleDialog({ rule, onClose }: { rule: Rule; onClose(): void }) {
 			</DialogContent>
 		</Dialog>
 	)
-}
-
-export function ErrorBoundary() {
-	return <GeneralErrorBoundary />
 }

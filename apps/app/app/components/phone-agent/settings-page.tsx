@@ -55,10 +55,6 @@ export function useSettingsErrorText() {
 					return _(msg`Check the highlighted fields.`)
 				case 'invalid_request':
 					return _(msg`Something went wrong. Reload the page and try again.`)
-				case 'escalation_phone_required':
-					return _(
-						msg`Add a staff phone number to turn on automatic transfers.`,
-					)
 				case 'staff_phone_loop':
 					return _(
 						msg`A staff or transfer number reaches the AI agent, so transfers would loop back to it. Change it to a number staff answer directly.`,
