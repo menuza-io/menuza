@@ -1188,6 +1188,10 @@ msgstr "بدأت استراحة ولم تنتهِ. حدّد وقت انتهائ�
 msgid "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
 msgstr "يمكن أن تحمل المكالمة حتى {MAX_CALL_TAGS} وسوم. أزل وسمًا لإضافة آخر."
 
+#: app/routes/_app+/$orgSlug_+/customers.tsx:84
+msgid "A call recording could not be deleted, so nothing was erased. Try again in a moment."
+msgstr "تعذّر حذف تسجيل مكالمة، لذلك لم يتم محو أي شيء. حاول مرة أخرى بعد قليل."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:56
 msgid "A caller asked someone to call them back."
 msgstr "طلب متصل أن يعاود أحد الاتصال به."
@@ -3603,6 +3607,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
+#: app/routes/_app+/$orgSlug_+/customers.tsx:817
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:470
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
@@ -3693,7 +3698,7 @@ msgstr "رسوم البطاقة المخصومة"
 msgid "Card fee withheld from online tips (%)"
 msgstr "رسوم البطاقة المخصومة من إكراميات الطلبات عبر الإنترنت (%)"
 
-#: app/routes/mock-payments+/__card-form.tsx:40
+#: app/routes/mock-payments+/__card-form.tsx:43
 msgid "Card number"
 msgstr "رقم البطاقة"
 
@@ -3988,7 +3993,7 @@ msgstr "قوائم مهام للموظفين الجدد. اختر واحدة ل�
 msgid "Checkout payout not connected"
 msgstr "دفعات الخروج غير متصلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:242
+#: app/components/settings/cards/organization/shop-card.tsx:244
 msgid "Checkout processor"
 msgstr "معالج الدفع عند الخروج"
 
@@ -4724,7 +4729,7 @@ msgstr "ربط رقم هاتف"
 msgid "Connect domain"
 msgstr "ربط نطاق"
 
-#: app/components/settings/cards/organization/shop-card.tsx:144
+#: app/components/settings/cards/organization/shop-card.tsx:146
 msgid "Connect payout account"
 msgstr "ربط حساب المدفوعات"
 
@@ -4835,7 +4840,7 @@ msgstr "محرر المحتوى"
 msgid "Continue"
 msgstr "متابعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:142
+#: app/components/settings/cards/organization/shop-card.tsx:144
 msgid "Continue payout setup"
 msgstr "متابعة إعداد المدفوعات"
 
@@ -5032,6 +5037,10 @@ msgstr "تعذّر تحميل الردود."
 #: app/utils/staffing/staff-errors.ts:28
 msgid "Could not make a PIN. Try again."
 msgstr "تعذّر إنشاء رمز PIN. حاول مرة أخرى."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:86
+msgid "Could not reach the customer data service. Check your connection and try again."
+msgstr "تعذّر الوصول إلى خدمة بيانات العملاء. تحقق من اتصالك وحاول مرة أخرى."
 
 #: app/components/kiosk/kiosk-pair.tsx:167
 msgid "Could not reach the time clock. Check the connection and try again."
@@ -5560,11 +5569,11 @@ msgstr "معرّف العميل مطلوب"
 msgid "Customers"
 msgstr "العملاء"
 
-#: app/components/settings/cards/organization/shop-card.tsx:309
+#: app/components/settings/cards/organization/shop-card.tsx:311
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent}% بعد رسوم المنصة."
 
-#: app/routes/mock-payments+/__card-form.tsx:70
+#: app/routes/mock-payments+/__card-form.tsx:77
 msgid "CVC"
 msgstr "رمز الأمان"
 
@@ -6095,7 +6104,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/components/roles/tenant-role-access-manager.tsx:903
 #: app/components/roles/tenant-role-access-manager.tsx:1051
 #: app/components/roles/tenant-role-access-manager.tsx:1185
-#: app/components/settings/cards/organization/shop-card.tsx:282
+#: app/components/settings/cards/organization/shop-card.tsx:284
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
@@ -6781,7 +6790,7 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
 #: app/routes/_auth+/login.tsx:775
 #: app/routes/_auth+/signup.tsx:225
-#: app/routes/mock-payments+/__card-form.tsx:27
+#: app/routes/mock-payments+/__card-form.tsx:30
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
@@ -6879,7 +6888,7 @@ msgstr "موضوع فارغ"
 msgid "Enable Custom S3 Storage"
 msgstr "تفعيل تخزين S3 مخصص"
 
-#: app/components/settings/cards/organization/shop-card.tsx:208
+#: app/components/settings/cards/organization/shop-card.tsx:210
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
@@ -7196,8 +7205,17 @@ msgid "Erase caller's data"
 msgstr "مسح بيانات المتصل"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:600
+#: app/routes/_app+/$orgSlug_+/customers.tsx:835
 msgid "Erase data"
 msgstr "مسح البيانات"
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:763
+msgid "Erase this customer's data?"
+msgstr "هل تريد محو بيانات هذا العميل؟"
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:833
+msgid "Erasing..."
+msgstr "جارٍ المحو..."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
@@ -7283,6 +7301,10 @@ msgstr "كل مكالمة أجاب عنها وكيلك، مع الملخصات �
 #: app/components/staff/timesheets/payroll-summary.tsx:311
 msgid "Every card is approved. This period is ready for payroll."
 msgstr "تمت الموافقة على كل البطاقات. هذه الفترة جاهزة للرواتب."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:775
+msgid "Every customer record with the same phone number is erased too."
+msgstr "يتم أيضًا محو كل سجل عميل يحمل رقم الهاتف نفسه."
 
 #: app/components/staff/timesheets/pay-period-dialog.tsx:110
 msgid "Every two weeks"
@@ -7390,7 +7412,7 @@ msgstr "تنتهي صلاحيته خلال {left}"
 msgid "Expires today"
 msgstr "تنتهي اليوم"
 
-#: app/routes/mock-payments+/__card-form.tsx:56
+#: app/routes/mock-payments+/__card-form.tsx:60
 msgid "Expiry (MM/YY)"
 msgstr "تاريخ الانتهاء (شهر/سنة)"
 
@@ -7825,6 +7847,10 @@ msgstr "إعدادات النموذج"
 msgid "Form submissions"
 msgstr "ردود النماذج"
 
+#: app/routes/_app+/$orgSlug_+/customers.tsx:781
+msgid "Form submissions are redacted on a best-effort basis: only ones that contain the exact phone number or email address are found. Backups are not changed."
+msgstr "يتم حجب بيانات نماذج الإرسال بأفضل جهد ممكن: لا يتم العثور إلا على ما يحتوي على رقم الهاتف أو البريد الإلكتروني نفسه تمامًا. لا تتغير النسخ الاحتياطية."
+
 #: app/routes/_app+/$orgSlug_+/media.tsx:1355
 msgid "Format:"
 msgstr "التنسيق:"
@@ -8149,7 +8175,7 @@ msgstr "مجموعات"
 msgid "Guest"
 msgstr "ضيف"
 
-#: app/components/settings/cards/organization/shop-card.tsx:393
+#: app/components/settings/cards/organization/shop-card.tsx:400
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -8406,7 +8432,7 @@ msgstr "العطل"
 msgid "Home"
 msgstr "الرئيسية"
 
-#: app/components/settings/cards/organization/shop-card.tsx:225
+#: app/components/settings/cards/organization/shop-card.tsx:227
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
 msgstr "يصبح الدفع المستضاف متاحاً بمجرد قيام المنصة بتهيئة معالج التاجر المسجل."
 
@@ -8868,7 +8894,7 @@ msgstr "الدعوات غير متاحة لهذه المؤسسة."
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
-#: app/components/settings/cards/organization/shop-card.tsx:177
+#: app/components/settings/cards/organization/shop-card.tsx:179
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
@@ -10347,7 +10373,7 @@ msgid "Mock merchant"
 msgstr "تاجر تجريبي"
 
 #: app/components/settings/cards/organization/mock-payments-panel.tsx:21
-#: app/components/settings/cards/organization/shop-card.tsx:123
+#: app/components/settings/cards/organization/shop-card.tsx:125
 msgid "Mock payments"
 msgstr "مدفوعات تجريبية"
 
@@ -10548,7 +10574,7 @@ msgstr "الاسم"
 msgid "Name it so you can tell tablets apart, then open the pairing page on it."
 msgstr "سمِّه لتميّز بين الأجهزة، ثم افتح صفحة الربط عليه."
 
-#: app/routes/mock-payments+/__card-form.tsx:86
+#: app/routes/mock-payments+/__card-form.tsx:94
 msgid "Name on card"
 msgstr "الاسم على البطاقة"
 
@@ -12217,7 +12243,7 @@ msgstr "فتح مسار المكالمة"
 msgid "Open checklist"
 msgstr "فتح قائمة المهام"
 
-#: app/components/settings/cards/organization/shop-card.tsx:188
+#: app/components/settings/cards/organization/shop-card.tsx:190
 msgid "Open Checkout dashboard"
 msgstr "فتح لوحة تحكم الدفع"
 
@@ -12237,7 +12263,7 @@ msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 msgid "Open Graph image"
 msgstr "صورة Open Graph"
 
-#: app/components/settings/cards/organization/shop-card.tsx:219
+#: app/components/settings/cards/organization/shop-card.tsx:221
 msgid "Open hosted dashboard"
 msgstr "فتح لوحة التحكم المستضافة"
 
@@ -12283,7 +12309,7 @@ msgstr "مفتوح أو مغلق"
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "فتح الصفحات والنماذج والسمات في منشئ الموقع."
 
-#: app/components/settings/cards/organization/shop-card.tsx:156
+#: app/components/settings/cards/organization/shop-card.tsx:158
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
@@ -12453,7 +12479,7 @@ msgstr "أو الصقه أدناه"
 msgid "Orange"
 msgstr "برتقالي"
 
-#: app/components/settings/cards/organization/shop-card.tsx:369
+#: app/components/settings/cards/organization/shop-card.tsx:376
 msgid "Orders are unavailable right now. Your shop settings are still saved; try again later."
 msgstr "الطلبات غير متاحة حاليًا. إعدادات المتجر محفوظة؛ حاول مرة أخرى لاحقًا."
 
@@ -12461,7 +12487,7 @@ msgstr "الطلبات غير متاحة حاليًا. إعدادات المتج
 msgid "Orders one person handles in an hour"
 msgstr "الطلبات التي يتولاها شخص واحد في الساعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:363
+#: app/components/settings/cards/organization/shop-card.tsx:370
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
 
@@ -12915,7 +12941,7 @@ msgstr "التحويلات"
 msgid "Payouts disabled"
 msgstr "التحويلات معطلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:129
+#: app/components/settings/cards/organization/shop-card.tsx:131
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:144
 msgid "Payouts enabled"
 msgstr "التحويلات مفعّلة"
@@ -13649,7 +13675,7 @@ msgstr "الفترة السابقة"
 msgid "Previous week"
 msgstr "الأسبوع السابق"
 
-#: app/components/settings/cards/organization/shop-card.tsx:297
+#: app/components/settings/cards/organization/shop-card.tsx:299
 msgid "Price (USD)"
 msgstr "السعر (USD)"
 
@@ -13717,7 +13743,7 @@ msgstr "قيد المعالجة"
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
-#: app/components/settings/cards/organization/shop-card.tsx:268
+#: app/components/settings/cards/organization/shop-card.tsx:270
 msgid "Product name"
 msgstr "اسم المنتج"
 
@@ -13816,7 +13842,7 @@ msgstr "نشر هذا الأسبوع"
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:341
+#: app/components/settings/cards/organization/shop-card.tsx:343
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
@@ -14029,7 +14055,7 @@ msgstr "يتلقى الإكراميات"
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:360
+#: app/components/settings/cards/organization/shop-card.tsx:367
 msgid "Recent orders"
 msgstr "الطلبات الأخيرة"
 
@@ -14150,7 +14176,7 @@ msgstr "تحديث"
 msgid "Refresh calls"
 msgstr "تحديث المكالمات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:175
+#: app/components/settings/cards/organization/shop-card.tsx:177
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
@@ -15195,7 +15221,7 @@ msgstr "حفظ البيانات الشخصية"
 msgid "Save phrases"
 msgstr "حفظ العبارات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:327
+#: app/components/settings/cards/organization/shop-card.tsx:329
 msgid "Save product"
 msgstr "حفظ المنتج"
 
@@ -16264,7 +16290,7 @@ msgstr "عرض أقل"
 msgid "Show more"
 msgstr "عرض المزيد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:323
+#: app/components/settings/cards/organization/shop-card.tsx:325
 msgid "Show product on your public site"
 msgstr "إظهار المنتج على موقعك العام"
 
@@ -17054,7 +17080,7 @@ msgstr "التبديل غير متاح في مكان العمل هذا. اسأل
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr "التبديل من {currentRegionLabel} إلى {pendingRegionLabel} يحذف نهائياً كل حساب زائر في المنطقة الحالية — الأسماء وأرقام الهواتف والبريد الإلكتروني وجلسات تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء. ستبدأ عمليات تسجيل الدخول الجديدة من قاعدة بيانات فارغة في المنطقة الجديدة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:206
+#: app/components/settings/cards/organization/shop-card.tsx:208
 msgid "Sync hosted product"
 msgstr "مزامنة المنتج المستضاف"
 
@@ -17761,6 +17787,14 @@ msgstr "ستظهر المحادثة وضغطات المفاتيح هنا."
 msgid "The current PIN stops working right away. You will see the new one once."
 msgstr "يتوقف رمز PIN الحالي عن العمل فورًا. سترى الرمز الجديد مرة واحدة فقط."
 
+#: app/routes/_app+/$orgSlug_+/customers.tsx:87
+msgid "The customer could not be erased. Nothing was changed."
+msgstr "تعذّر محو العميل. لم يتم تغيير أي شيء."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:85
+msgid "The customer data service is unavailable. Nothing was erased; try again later."
+msgstr "خدمة بيانات العملاء غير متاحة. لم يتم محو أي شيء، حاول مرة أخرى لاحقًا."
+
 #: app/components/dashboard/dashboard-options-menu.tsx:56
 msgid "The dashboard could not be deleted."
 msgstr "تعذر حذف لوحة التحكم."
@@ -18402,6 +18436,10 @@ msgstr "سيتمكن هذا العميل من الوصول إلى:"
 msgid "This code expired. Make a new one."
 msgstr "انتهت صلاحية هذا الرمز. أنشئ رمزًا جديدًا."
 
+#: app/routes/_app+/$orgSlug_+/customers.tsx:517
+msgid "this customer"
+msgstr "هذا العميل"
+
 #: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:226
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "لوحة التحكم هذه غير موجودة أو ليس لديك صلاحية الوصول إليها."
@@ -18529,6 +18567,10 @@ msgstr "هذه الفترة"
 #: app/components/staff/timesheets/payroll-summary.tsx:333
 msgid "This period has more cards than we can add up here. Narrow the filters."
 msgstr "في هذه الفترة بطاقات أكثر مما يمكننا جمعه هنا. ضيّق عوامل التصفية."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:766
+msgid "This permanently deletes the account, login sessions, subscriptions, saved cards, journeys, messages and phone calls for {erasingLabel}. Orders stay for your records, without a link to the person. This cannot be undone."
+msgstr "يؤدي هذا إلى حذف الحساب وجلسات تسجيل الدخول والاشتراكات والبطاقات المحفوظة والرحلات والرسائل والمكالمات الهاتفية الخاصة بـ {erasingLabel} نهائيًا. تبقى الطلبات في سجلاتك دون ربطها بالشخص. لا يمكن التراجع عن ذلك."
 
 #: app/components/hiring/erase-dialog.tsx:61
 msgid "This permanently deletes their application, answers, notes and interviews. It cannot be undone."
@@ -19416,6 +19458,10 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
 msgstr "النوع"
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:792
+msgid "Type {eraseTargets} to confirm"
+msgstr "اكتب {eraseTargets} للتأكيد"
 
 #: app/components/staff/region-staff-guard.tsx:176
 msgid "Type <0>{orgSlug}</0> to confirm"
@@ -21191,6 +21237,10 @@ msgstr "أنت مسجّل انصرافك."
 msgid "You are covered during our beta phase. No billing required at this time."
 msgstr "أنت مشمول خلال مرحلتنا التجريبية. لا توجد فوترة مطلوبة في الوقت الحالي."
 
+#: app/routes/_app+/$orgSlug_+/customers.tsx:83
+msgid "You are not allowed to erase customer data."
+msgstr "غير مسموح لك بمحو بيانات العملاء."
+
 #: app/utils/kiosk/kiosk-messages.ts:64
 msgid "You are not clocked in."
 msgstr "لم تسجّل حضورك."
@@ -21347,7 +21397,7 @@ msgstr "تحتاج إلى صلاحية الأجور لتغيير الإكرام�
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "لم يعد لديك حق الوصول إلى هذه الدردشة. أعد تحميل الصفحة للتحقق من قنواتك."
 
-#: app/components/settings/cards/organization/shop-card.tsx:410
+#: app/components/settings/cards/organization/shop-card.tsx:417
 msgid "You receive"
 msgstr "تستلم"
 
@@ -21447,7 +21497,7 @@ msgstr "رمز أمان بطاقتك غير مكتمل."
 msgid "Your changes to this job will be lost."
 msgstr "ستفقد تغييراتك على هذه الوظيفة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:333
+#: app/components/settings/cards/organization/shop-card.tsx:335
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
 
@@ -21579,6 +21629,6 @@ msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الن�
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
 
-#: app/routes/mock-payments+/__card-form.tsx:98
+#: app/routes/mock-payments+/__card-form.tsx:106
 msgid "ZIP"
 msgstr "الرمز البريدي"
