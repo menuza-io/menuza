@@ -24,6 +24,11 @@ export type SettingsSaveResult =
 	| { ok: true }
 	| { ok: false; error?: string; fieldErrors?: Record<string, string> }
 
+type SettingsPatch = Partial<PhoneAgentSettings> & {
+	phraseKeys?: PhoneAgentSettings['phrases'][number]['key'][]
+	phraseBase?: PhoneAgentSettings['phrases']
+}
+
 export function FieldErrorText({ id, error }: { id?: string; error?: string }) {
 	if (!error) return null
 	return (
@@ -55,10 +60,6 @@ export function useSettingsErrorText() {
 					return _(msg`Check the highlighted fields.`)
 				case 'invalid_request':
 					return _(msg`Something went wrong. Reload the page and try again.`)
-				case 'escalation_phone_required':
-					return _(
-						msg`Add a staff phone number to turn on automatic transfers.`,
-					)
 				case 'staff_phone_loop':
 					return _(
 						msg`A staff or transfer number reaches the AI agent, so transfers would loop back to it. Change it to a number staff answer directly.`,
@@ -311,7 +312,7 @@ export function useSettingsFormState<TSaved>({
 		conflict,
 		fieldErrors,
 		error: result && !result.ok ? describe(result.error) : undefined,
-		save(patch: Partial<PhoneAgentSettings>) {
+		save(patch: SettingsPatch) {
 			submittedDraft.current = draftKey
 			const keys = Object.keys(patch)
 			const body = {

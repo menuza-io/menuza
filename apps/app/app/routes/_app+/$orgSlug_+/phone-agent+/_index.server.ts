@@ -72,7 +72,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (!section.canReadAgent) {
 		throw redirect(`/${params.orgSlug}/phone-agent/calls`)
 	}
-	const { orgId } = section
+	const { orgId, orgName } = section
 	const [agent, numbers, assignableNumbers, scopes, rules, canUpdate] =
 		await Promise.all([
 			getPhoneAgent(orgId),
@@ -86,7 +86,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		{
 			settings: agent.settings,
 			versions: settingsVersions(agent.settings),
-			publishedFlowVersionId: agent.publishedFlowVersionId ?? null,
+			businessName: orgName,
 			numbers,
 			assignableNumbers,
 			scopes: scopes.map(({ id, name, isDefault }) => ({
@@ -95,6 +95,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				isDefault,
 			})),
 			activeRuleCount: rules.filter((rule) => rule.isActive).length,
+			faqAnswerCount: agent.settings.faq.length,
 			canUpdate,
 			voiceLibraryAvailable: cartesiaConfigured(),
 		},

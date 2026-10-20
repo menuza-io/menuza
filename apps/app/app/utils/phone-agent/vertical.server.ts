@@ -72,8 +72,9 @@ export type PhoneAgentServerVertical = {
 	}): Promise<ConfigPartsResult>
 	faqFacts(config: PhoneAgentRuntimeConfig, now: Date): FaqFacts
 	/**
-	 * Data for the vertical's Advanced page section (`SettingsSection` in
-	 * `vertical-ui.tsx`), from the default scope's config when there is one.
+	 * Data for the vertical's settings section on the "What it knows" page
+	 * (`SettingsSection` in `vertical-ui.tsx`), from the default scope's config
+	 * when there is one.
 	 */
 	advancedPageData?(config: PhoneAgentRuntimeConfig | null): unknown
 }

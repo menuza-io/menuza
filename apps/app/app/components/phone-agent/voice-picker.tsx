@@ -202,7 +202,7 @@ function VoiceMeta({ voice }: { voice: Voice }) {
 	)
 }
 
-/** Loads one voice's details so the Setup page can name the saved voice. */
+/** Loads one voice's details so the Agent tab can name the saved voice. */
 function useVoiceDetails(voicesUrl: string, voiceId: string, known?: Voice) {
 	const [loaded, setLoaded] = useState<{
 		id: string

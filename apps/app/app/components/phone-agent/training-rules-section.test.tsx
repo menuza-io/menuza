@@ -6,8 +6,6 @@ import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('./training.server.ts', () => ({ loader: vi.fn(), action: vi.fn() }))
-
 async function renderEmpty({
 	canUpdate = true,
 	verticalUi = {},
@@ -16,22 +14,22 @@ async function renderEmpty({
 	verticalUi?: object
 } = {}) {
 	vi.resetModules()
-	vi.doMock('#app/components/phone-agent/vertical-ui.tsx', () => ({
+	vi.doMock('./vertical-ui.tsx', () => ({
 		phoneAgentVerticalUi: verticalUi,
 	}))
-	const { default: PhoneAgentTraining } = await import('./training.tsx')
+	const { TrainingRulesSection } = await import('./training-rules-section.tsx')
 	const router = createMemoryRouter(
 		[
 			{
 				path: '/',
-				loader: () => ({
-					rules: [],
-					scopes: [],
-					canUpdate,
-					verticalSettings: {},
-				}),
-				HydrateFallback: () => null,
-				element: <PhoneAgentTraining />,
+				element: (
+					<TrainingRulesSection
+						rules={[]}
+						scopes={[]}
+						canUpdate={canUpdate}
+						verticalSettings={{}}
+					/>
+				),
 			},
 		],
 		{ initialEntries: ['/'] },
@@ -47,7 +45,7 @@ async function renderEmpty({
 }
 
 afterEach(() => {
-	vi.doUnmock('#app/components/phone-agent/vertical-ui.tsx')
+	vi.doUnmock('./vertical-ui.tsx')
 })
 
 describe('training rules empty state', () => {

@@ -130,7 +130,7 @@ function FlowWarningText({ warning }: { warning: FlowWarning }) {
 				<Trans>
 					"{label}" has no number to call, so callers go straight to its
 					no-answer path. Enter a number for this step, or set a staff phone
-					number in Setup.
+					number in Call handling.
 				</Trans>
 			)
 	}
@@ -647,7 +647,7 @@ export function FlowEditor({
 									className="text-xs underline underline-offset-4"
 									onClick={() => setIssuesOpen(false)}
 								>
-									<Trans>Set a staff phone number in Setup</Trans>
+									<Trans>Set a staff phone number in Call handling</Trans>
 								</Link>
 							) : null}
 						</PopoverContent>
