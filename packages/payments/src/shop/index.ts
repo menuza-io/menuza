@@ -36,6 +36,7 @@ export {
 
 export {
 	type ShopCommerceConfig,
+	type ShopCommerceMockConfig,
 	createShopCommerceConfigFromEnv,
 } from './config'
 
