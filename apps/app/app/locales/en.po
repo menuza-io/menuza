@@ -3558,8 +3558,12 @@ msgid "Calls that need follow-up"
 msgstr "Calls that need follow-up"
 
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:64
-msgid "Calls the staff number from Setup"
-msgstr "Calls the staff number from Setup"
+msgid "Calls the staff number from Call handling"
+msgstr "Calls the staff number from Call handling"
+
+#: app/components/phone-agent/flow-editor/flow-nodes.tsx:64
+#~ msgid "Calls the staff number from Setup"
+#~ msgstr "Calls the staff number from Setup"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1451
 msgid "Calls with an important tag always stay open."
@@ -7977,8 +7981,12 @@ msgid "From a file"
 msgstr "From a file"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:503
-msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
-msgstr "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
+msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Agent and What it knows rules, and can transfer to staff if auto-escalation is on."
+msgstr "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Agent and What it knows rules, and can transfer to staff if auto-escalation is on."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:503
+#~ msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
+#~ msgstr "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:280
 msgid "From Name (Optional)"
@@ -9498,16 +9506,24 @@ msgid "Leave empty to skip"
 msgstr "Leave empty to skip"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:591
-msgid "Leave empty to use the closing line from Setup."
-msgstr "Leave empty to use the closing line from Setup."
+msgid "Leave empty to use the closing line from Agent."
+msgstr "Leave empty to use the closing line from Agent."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:591
+#~ msgid "Leave empty to use the closing line from Setup."
+#~ msgstr "Leave empty to use the closing line from Setup."
 
 #: app/components/staff/positions-tab.tsx:574
 msgid "Leave empty to use the position's default rate."
 msgstr "Leave empty to use the position's default rate."
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:537
-msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
-msgstr "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
+msgid "Leave empty to use the staff number from Call handling. If the transfer fails, the call follows \"No answer\"."
+msgstr "Leave empty to use the staff number from Call handling. If the transfer fails, the call follows \"No answer\"."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:537
+#~ msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
+#~ msgstr "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
 
 #: app/utils/staffing/onboarding-view.ts:226
 #: app/utils/staffing/onboarding-view.ts:255
@@ -17875,8 +17891,12 @@ msgstr "The agent tried to transfer a call and nobody answered."
 #~ msgstr "The agent won't transfer any calls until you turn transfers back on in <0>Advanced</0>."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:41
-msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
-msgstr "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
+msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Agent, and What it knows rules until the call ends."
+msgstr "The AI assistant step hands the call to your AI. It answers questions using your business details, Agent, and What it knows rules until the call ends."
+
+#: app/components/phone-agent/flow-editor/node-palette.tsx:41
+#~ msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
+#~ msgstr "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:63
 msgid "The AI phone agent runs on US infrastructure, so it's only available to businesses whose customer data is stored in the US. You can set it up, but calls won't connect."

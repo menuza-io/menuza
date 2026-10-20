@@ -3556,8 +3556,12 @@ msgid "Calls that need follow-up"
 msgstr "المكالمات التي تحتاج إلى متابعة"
 
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:64
-msgid "Calls the staff number from Setup"
-msgstr "يتصل برقم الفريق من الإعداد"
+msgid "Calls the staff number from Call handling"
+msgstr "يتصل برقم الفريق من التعامل مع المكالمات"
+
+#: app/components/phone-agent/flow-editor/flow-nodes.tsx:64
+#~ msgid "Calls the staff number from Setup"
+#~ msgstr "يتصل برقم الفريق من الإعداد"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1451
 msgid "Calls with an important tag always stay open."
@@ -7975,8 +7979,12 @@ msgid "From a file"
 msgstr "من ملف"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:503
-msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
-msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع إعداداتك وقواعد التدريب، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
+msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Agent and What it knows rules, and can transfer to staff if auto-escalation is on."
+msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع قواعد الوكيل وما يعرفه، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:503
+#~ msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
+#~ msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع إعداداتك وقواعد التدريب، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:280
 msgid "From Name (Optional)"
@@ -9496,16 +9504,24 @@ msgid "Leave empty to skip"
 msgstr "اتركه فارغًا للتخطي"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:591
-msgid "Leave empty to use the closing line from Setup."
-msgstr "اتركه فارغًا لاستخدام عبارة الختام من الإعداد."
+msgid "Leave empty to use the closing line from Agent."
+msgstr "اتركه فارغًا لاستخدام عبارة الختام من الوكيل."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:591
+#~ msgid "Leave empty to use the closing line from Setup."
+#~ msgstr "اتركه فارغًا لاستخدام عبارة الختام من الإعداد."
 
 #: app/components/staff/positions-tab.tsx:574
 msgid "Leave empty to use the position's default rate."
 msgstr "اتركه فارغًا لاستخدام الأجر الافتراضي للمنصب."
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:537
-msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
-msgstr "اتركه فارغًا لاستخدام رقم الفريق من الإعداد. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
+msgid "Leave empty to use the staff number from Call handling. If the transfer fails, the call follows \"No answer\"."
+msgstr "اتركه فارغًا لاستخدام رقم الفريق من التعامل مع المكالمات. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:537
+#~ msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
+#~ msgstr "اتركه فارغًا لاستخدام رقم الفريق من الإعداد. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
 
 #: app/utils/staffing/onboarding-view.ts:226
 #: app/utils/staffing/onboarding-view.ts:255
@@ -17873,8 +17889,12 @@ msgstr "حاول الوكيل تحويل مكالمة ولم يرد أحد."
 #~ msgstr "لن يحوّل الوكيل أي مكالمات حتى تعيد تفعيل التحويلات في <0>الإعدادات المتقدمة</0>."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:41
-msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
-msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري والإعدادات وقواعد التدريب حتى تنتهي المكالمة."
+msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Agent, and What it knows rules until the call ends."
+msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري وقواعد الوكيل وما يعرفه حتى تنتهي المكالمة."
+
+#: app/components/phone-agent/flow-editor/node-palette.tsx:41
+#~ msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
+#~ msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري والإعدادات وقواعد التدريب حتى تنتهي المكالمة."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:63
 msgid "The AI phone agent runs on US infrastructure, so it's only available to businesses whose customer data is stored in the US. You can set it up, but calls won't connect."

@@ -502,8 +502,8 @@ export function NodeInspector({
 							<p className="text-muted-foreground text-sm">
 								<Trans>
 									From here the AI handles the rest of the call: questions,
-									texted links, and messages. It follows your Setup and Training
-									rules, and can transfer to staff if auto-escalation is on.
+									texted links, and messages. It follows your Agent and What it
+									knows rules, and can transfer to staff if auto-escalation is on.
 								</Trans>
 							</p>
 						</>
@@ -535,7 +535,7 @@ export function NodeInspector({
 								htmlFor={`${id}-phone`}
 								hint={
 									<Trans>
-										Leave empty to use the staff number from Setup. If the
+										Leave empty to use the staff number from Call handling. If the
 										transfer fails, the call follows "No answer".
 									</Trans>
 								}
@@ -588,7 +588,7 @@ export function NodeInspector({
 							id={`${id}-message`}
 							label={<Trans>Goodbye message</Trans>}
 							hint={
-								<Trans>Leave empty to use the closing line from Setup.</Trans>
+								<Trans>Leave empty to use the closing line from Agent.</Trans>
 							}
 							value={message}
 							readOnly={readOnly}
