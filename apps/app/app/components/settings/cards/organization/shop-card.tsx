@@ -118,7 +118,9 @@ export function ShopCard({
 								<Badge variant="outline">
 									{processorDefinition.shortLabel}
 								</Badge>
-								{paymentsMock?.enabled ? (
+								{typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&
+								__PAYMENTS_MOCK_BUNDLED__ &&
+								paymentsMock?.enabled ? (
 									<Badge variant="warning" data-testid="mock-payments-badge">
 										<Trans>Mock payments</Trans>
 									</Badge>
@@ -345,7 +347,12 @@ export function ShopCard({
 								</p>
 							)}
 
-							{paymentsMock?.enabled ? (
+							{/* The build-time constant makes the panel (and its link to the
+							    mock dashboard) dead code in the Cloudflare build, so none of it
+							    ships there. Keep the check inline: it is what the bundler folds. */}
+							{typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&
+							__PAYMENTS_MOCK_BUNDLED__ &&
+							paymentsMock?.enabled ? (
 								<MockPaymentsPanel state={paymentsMock} />
 							) : null}
 						</>

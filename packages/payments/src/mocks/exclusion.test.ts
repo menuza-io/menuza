@@ -14,10 +14,13 @@ const { findMockLeaks, MOCK_NEEDLES } = (await import(scriptPath)) as {
 const entry = fileURLToPath(
 	new URL('./fixtures/exclusion-entry.ts', import.meta.url),
 )
+const productionEntry = fileURLToPath(
+	new URL('./fixtures/production-entry.ts', import.meta.url),
+)
 
-async function bundle(bundled: boolean) {
+async function bundle(bundled: boolean, input = entry) {
 	const build = await rolldown({
-		input: entry,
+		input,
 		platform: 'node',
 		external: [/^node:/, 'stripe', 'checkout-sdk-node'],
 		logLevel: 'silent',
@@ -75,5 +78,57 @@ describe('production exclusion: build-time define (build-time define and CI scan
 		expect(spawnSync('node', [scriptPath, join(clean, 'missing')]).status).toBe(
 			1,
 		)
+	})
+
+	describe('a production-style bundle of what the App imports', () => {
+		// The barrel plus the gated Settings panel, as the Cloudflare build
+		// (define false) sees them. The first version of the guard failed every
+		// real build because the panel's link to the mock dashboard survived it.
+		it('is clean when built with the define false, panel and link included', async () => {
+			const code = await bundle(false, productionEntry)
+			for (const needle of MOCK_NEEDLES) expect(code).not.toContain(needle)
+			expect(code).not.toContain('mock-payments')
+			expect(code).not.toContain('MOCK_CHECKOUT_HOST')
+		})
+
+		it('keeps the panel link only in the dev and CI build', async () => {
+			const code = await bundle(true, productionEntry)
+			expect(code).toContain('/mock-payments/dashboard')
+		})
+
+		it('the scanner flags a panel that is only gated at runtime', async () => {
+			const { mkdtempSync, writeFileSync } = await import('node:fs')
+			const { tmpdir } = await import('node:os')
+			const { join } = await import('node:path')
+			const dir = mkdtempSync(join(tmpdir(), 'mock-ungated-'))
+			const code = await bundle(
+				false,
+				fileURLToPath(new URL('./fixtures/ungated-entry.ts', import.meta.url)),
+			)
+			writeFileSync(join(dir, 'server.js'), code)
+			expect(findMockLeaks(dir).map((leak) => leak.needle)).toContain(
+				'/mock-payments/',
+			)
+		})
+
+		it('Settings only renders the panel and its badge behind the build-time constant', async () => {
+			const { readFileSync } = await import('node:fs')
+			const source = readFileSync(
+				fileURLToPath(
+					new URL(
+						'../../../../apps/app/app/components/settings/cards/organization/shop-card.tsx',
+						import.meta.url,
+					),
+				),
+				'utf8',
+			)
+			const gate =
+				/typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&\s*__PAYMENTS_MOCK_BUNDLED__ &&\s*paymentsMock\?\.enabled\s*\?\s*\(\s*<(MockPaymentsPanel|Badge)/g
+			const gated = [...source.matchAll(gate)].map((m) => m[1])
+			expect(gated.sort()).toEqual(['Badge', 'MockPaymentsPanel'])
+			// No other use of the panel or of the runtime-only flag.
+			expect(source.match(/<MockPaymentsPanel/g)).toHaveLength(1)
+			expect(source.match(/paymentsMock\?\.enabled/g)).toHaveLength(2)
+		})
 	})
 })

@@ -51,25 +51,51 @@ describe('paymentsMockMode', () => {
 		})
 	})
 
-	it('refuses a live Stripe key, live webhook secret and live Checkout.com key', () => {
-		expect(() =>
-			paymentsMockMode({ MOCKS: 'true', STRIPE_SECRET_KEY: 'sk_live_abc123' }),
-		).toThrow('live Stripe key')
+	it.each(['sk_live_abc123', 'rk_live_abc123', ' sk_live_padded '])(
+		'refuses the live Stripe key %s',
+		(key) => {
+			expect(() =>
+				paymentsMockMode({ MOCKS: 'true', STRIPE_SECRET_KEY: key }),
+			).toThrow('live Stripe key')
+		},
+	)
+
+	it('accepts Stripe test keys and ignores webhook secrets (no live marker exists)', () => {
+		for (const key of ['sk_test_51Realkey', 'rk_test_abc']) {
+			expect(() =>
+				paymentsMockMode({ MOCKS: 'true', STRIPE_SECRET_KEY: key }),
+			).not.toThrow()
+		}
 		expect(() =>
 			paymentsMockMode({
 				MOCKS: 'true',
 				STRIPE_WEBHOOK_SECRET: 'whsec_live_abc',
 			}),
-		).toThrow('live Stripe webhook secret')
+		).not.toThrow()
+	})
+
+	it.each([
+		'sk_abcdefghijklmnopqrstuvwxyz2',
+		'ack_live_abc',
+		'ack_abc',
+		// Checkout.com MBC live keys are a bare UUID.
+		'0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+		'Bearer 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+		'something-unrecognised',
+	])('treats the Checkout.com key %s as live', (key) => {
 		expect(() =>
-			paymentsMockMode({
-				MOCKS: 'true',
-				CHECKOUT_SECRET_KEY: 'sk_abcdefghijklmnopqrstuvwxyz2',
-			}),
+			paymentsMockMode({ MOCKS: 'true', CHECKOUT_SECRET_KEY: key }),
 		).toThrow('live Checkout.com key')
+	})
+
+	it.each([
+		'sk_sbox_abcdefghijklmnopqrstuvwxyz2',
+		'ack_test_abc',
+		'sk_sbox_***',
+	])('accepts the Checkout.com sandbox key %s', (key) => {
 		expect(() =>
-			paymentsMockMode({ MOCKS: 'true', CHECKOUT_SECRET_KEY: 'ack_live_abc' }),
-		).toThrow('live Checkout.com key')
+			paymentsMockMode({ MOCKS: 'true', CHECKOUT_SECRET_KEY: key }),
+		).not.toThrow()
 	})
 
 	it('does not look at a live key while the mock is off', () => {
@@ -101,6 +127,9 @@ describe('paymentsMockMode', () => {
 	})
 })
 
+const LOCAL = { url: 'http://localhost:3001/api/stripe/webhook' }
+const REMOTE = { url: 'https://app.example.com/api/stripe/webhook' }
+
 describe('mock secrets', () => {
 	it('synthetic Checkout.com key matches the SDK sandbox key pattern', () => {
 		expect(MOCK_CHECKOUT_SECRET_KEY).toMatch(
@@ -111,17 +140,42 @@ describe('mock secrets', () => {
 	it('signs with the secret the route verifies with, placeholder included', () => {
 		const env = { MOCKS: 'true', STRIPE_WEBHOOK_SECRET: 'whsec_***' }
 		expect(mockWebhookSecrets(env).stripePlatform).toBe('whsec_***')
-		expect(getStripeWebhookSecrets(env)).toEqual(['whsec_***'])
+		expect(getStripeWebhookSecrets(env, LOCAL)).toEqual(['whsec_***'])
 	})
 
 	it('a missing platform secret falls back to the mock secret only while the mock is on', () => {
 		expect(mockWebhookSecrets({}).stripePlatform).toBe(
 			MOCK_STRIPE_WEBHOOK_SECRET,
 		)
-		expect(getStripeWebhookSecrets({ MOCKS: 'true' })).toEqual([
+		expect(getStripeWebhookSecrets({ MOCKS: 'true' }, LOCAL)).toEqual([
 			MOCK_STRIPE_WEBHOOK_SECRET,
 		])
-		expect(getStripeWebhookSecrets({})).toEqual([])
+		expect(getStripeWebhookSecrets({}, LOCAL)).toEqual([])
+	})
+
+	it('never offers the public mock secret to a non-local request or deployment', () => {
+		// A node started with MOCKS=true and no real secret must not accept
+		// forged events from the internet.
+		expect(getStripeWebhookSecrets({ MOCKS: 'true' })).toEqual([])
+		expect(getStripeWebhookSecrets({ MOCKS: 'true' }, REMOTE)).toEqual([])
+		expect(
+			getStripeWebhookSecrets(
+				{ MOCKS: 'true', BASE_URL: 'https://app.example.com' },
+				LOCAL,
+			),
+		).toEqual([])
+		expect(
+			getStripeWebhookSecrets(
+				{ MOCKS: 'true', PAYMENTS_MOCK_ORIGIN: 'https://app.example.com' },
+				LOCAL,
+			),
+		).toEqual([])
+		expect(
+			getStripeWebhookSecrets(
+				{ MOCKS: 'true', BASE_URL: 'https://a.test' },
+				LOCAL,
+			),
+		).toEqual([MOCK_STRIPE_WEBHOOK_SECRET])
 	})
 
 	it('verifies Connect events with the second secret when it is set', () => {
