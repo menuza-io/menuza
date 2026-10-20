@@ -124,6 +124,29 @@ export const customerSubscriptions = sqliteTable(
 	],
 )
 
+// Record that a person's data was erased (see the person erasure service in
+// tenant-api). Holds no personal data: the customer row is gone, so its id
+// points at nothing, and the counts say how much was removed. Never purged.
+export const personErasureLog = sqliteTable(
+	'person_erasure_log',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		at: integer('at', { mode: 'timestamp_ms' }).notNull(),
+		// The operator (control-plane user id) who ran the erasure.
+		actorId: text('actor_id').notNull(),
+		// Opaque id of the erased customer. Not a foreign key on purpose.
+		subjectId: text('subject_id').notNull(),
+		counts: text('counts', { mode: 'json' })
+			.$type<Record<string, number>>()
+			.notNull(),
+	},
+	(table) => [index('idx_person_erasure_log_at').on(table.at)],
+)
+
+export type PersonErasureLogEntry = typeof personErasureLog.$inferSelect
+
 // ==========================================
 // 2. MARKETING JOURNEYS (Workflow Definitions)
 // ==========================================

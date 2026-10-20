@@ -22,6 +22,10 @@ import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
+import {
+	erasePerson,
+	PersonErasureError,
+} from '../services/person-erasure-service.ts'
 import { loadBroadcastAudience } from '../services/marketing-audience.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
 import { insertRowsInChunks } from '../lib/chunked-in.ts'
@@ -200,6 +204,41 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 		return c.json({ customer: updated })
 	} catch (error) {
 		console.error('Error updating customer:', error)
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * Erase everything the regional database holds about one customer (sessions,
+ * subscriptions, saved cards, journeys, messages, calls, and the order and
+ * form links). Needs a token minted with `canDelete`. Idempotent: an unknown or
+ * already-erased customer answers 200 with `alreadyErased: true`, so the call
+ * cannot be used to probe for ids.
+ */
+operatorRoutes.post('/customers/:customerId/erase', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c)
+	} catch (response) {
+		return response as Response
+	}
+	if (auth.canDelete !== true) {
+		return c.json({ error: 'Forbidden' }, 403)
+	}
+
+	try {
+		const db = await getTenantDb(auth.orgId)
+		const result = await erasePerson(
+			db,
+			{ customerId: c.req.param('customerId') },
+			{ actorId: auth.sub ?? 'operator' },
+		)
+		return c.json({ success: true, ...result })
+	} catch (error) {
+		if (error instanceof PersonErasureError) {
+			return c.json({ error: error.message, code: error.code }, error.status)
+		}
+		console.error('Error erasing customer:', error)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })

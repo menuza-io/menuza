@@ -508,3 +508,28 @@ the US control plane. For a data-subject deletion request, an authorized
 operator can delete one response with
 `DELETE /operator/forms/:formId/submissions/:submissionId`. Deleting a form
 still cascades to all of its submissions.
+
+### Erasing a person
+
+`POST /operator/customers/:customerId/erase` (tenant-api, operator token minted
+with `canDelete`; the App only mints it for people who can update settings)
+erases one customer from the regional database in a single transaction: the
+`customers` row, login sessions, subscriptions (the marketing consent record),
+saved cards, journey runs and their messages, and the voice calls, call requests
+and texts that carry the customer id or phone. Orders keep their totals for the
+books and lose the link to the person. Website form submissions that contain the
+customer's phone or email are redacted (best effort: they are free text). Call
+recordings are deleted from object storage first, and a failed deletion stops
+the erasure before any row is touched, so it can be retried.
+
+The call is idempotent and answers 200 with `alreadyErased: true` for an unknown
+or already-erased id, so it cannot be used to probe for ids. Each erasure that
+changed something leaves one `person_erasure_log` row: the operator's id, the
+opaque id of the erased customer and counts. It holds no phone, email or name
+and is never purged. Staff and applicants are not customers: they have their own
+erasure and retention (`docs/staffing.md`).
+
+`apps/tenant-api/src/services/person-erasure-pii-columns.test.ts` fails when a
+tenant table gets a personal-looking column, or a `customer_id` link, that the
+erasure neither handles nor lists with a reason. Records held at the payment
+provider (a Stripe customer, for example) are not touched by this call.
