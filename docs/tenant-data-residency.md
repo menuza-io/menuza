@@ -512,3 +512,48 @@ the US control plane. For a data-subject deletion request, an authorized
 operator can delete one response with
 `DELETE /operator/forms/:formId/submissions/:submissionId`. Deleting a form
 still cascades to all of its submissions.
+
+### Erasing a person
+
+`POST /operator/customers/:customerId/erase` (tenant-api, operator token minted
+with `canDelete`; the App only mints it for people who can update settings)
+erases one customer from the regional database in a single transaction: the
+`customers` row, login sessions, subscriptions (the marketing consent record),
+saved cards, journey runs and their messages, and the voice calls, call requests
+and texts that carry the customer id or phone. Orders keep their totals for the
+books and lose the link to the person. Website form submissions are redacted
+when a field holds the customer's phone or email as a whole token (best effort:
+they are free text). `al@x.com` does not match inside `sal@x.com` or
+`al@x.com.au`, and a number in another format (spaces, another country form) is
+not recognised, so check for leftovers by hand when it matters. Every customer
+row that shares the phone (a stale duplicate) is erased too. Call recordings are
+deleted from object storage first, one caller identity (phone, customer id) at a
+time. A failed deletion stops the erasure before the customer row is touched,
+but identities handled earlier are already erased: the 502 answer
+(`recording_delete_failed`) carries those counts in `erased`, the log row holds
+the same counts, and erasing again completes the job.
+
+The identity (customer ids, phones, emails) is resolved once. An "erasure
+started" row is committed before anything is deleted (`incomplete: 1`, ids and
+counts only). If a later step fails the row stays as the record of the partial
+erasure, and retrying the same call is safe: it continues that row and, once the
+transaction commits, completes it.
+
+The call is idempotent and answers 200 with `alreadyErased: true` for an unknown
+or already-erased id, so it cannot be used to probe for ids. Each erasure that
+changed something leaves one `person_erasure_log` row: the operator's id, the
+opaque id of the erased customer and counts. It holds no phone, email or name
+and is never purged. Staff and applicants are not customers: they have their own
+erasure and retention (`docs/staffing.md`).
+
+`apps/tenant-api/src/services/person-erasure-pii-columns.test.ts` fails when a
+tenant table gets a personal-looking column, or a `customer_id` link, that the
+erasure neither handles nor lists with a reason. Records held at the payment
+provider (a Stripe customer, for example) are not touched by this call.
+
+**Backups.** Erasure changes the live database only. A person erased here can
+remain in volume backups and snapshots of the regional database (the OCI block
+volume, Durable Object point-in-time recovery) until those expire under their
+retention schedule. Do not restore a backup older than an erasure without
+re-running the erasures logged since (`person_erasure_log` lists them by opaque
+id), and state the backup retention period when answering a deletion request.

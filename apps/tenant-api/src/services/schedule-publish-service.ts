@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import {
 	addDays,
 	SCHEDULE_MAX_SHIFTS_PER_WEEK,
@@ -37,6 +37,7 @@ import {
 } from './schedule-notify-service.ts'
 import { writeStaffAudit } from './staff-audit.ts'
 import { fail, ok } from './timesheet-shared.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Publishing a week. In one transaction: drafts become published, pending
@@ -55,7 +56,7 @@ export type PublishContext = Omit<ScheduleContext, 'db'> & {
 	db: TenantDatabase
 }
 
-const BULK_CHUNK = 200
+const BULK_CHUNK = 90
 
 function toPublicationView(
 	row: SchedulePublicationRow,
@@ -194,7 +195,7 @@ export async function publishWeek(
 					updatedAt: ctx.now,
 				})
 				.where(
-					inArray(
+					inJsonList(
 						shifts.id,
 						part.map((row) => row.id),
 					),

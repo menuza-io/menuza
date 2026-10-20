@@ -54,9 +54,9 @@ export type PhoneAgentVerticalUi = {
 		category: string,
 		verticalSettings: Record<string, unknown>,
 	): MessageDescriptor | null
-	/** Extra Advanced page section for `settings.vertical`. */
+	/** Extra "What it knows" page section for `settings.vertical`. */
 	SettingsSection?: ComponentType<VerticalSettingsSectionProps>
-	/** Replaces the Phrases page label or hint for a phrase. */
+	/** Replaces the label or hint shown for a phrase. */
 	phraseCopy?: Partial<
 		Record<PhraseKey, { label?: MessageDescriptor; hint?: MessageDescriptor }>
 	>

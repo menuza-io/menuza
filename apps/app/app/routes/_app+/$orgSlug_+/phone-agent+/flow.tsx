@@ -11,6 +11,7 @@ import {
 	canonicalGraphJson,
 	type FlowEditorIntent,
 } from '#app/components/phone-agent/flow-editor/flow-canvas.tsx'
+import { useTestCallHref } from '#app/components/phone-agent/test-call-sheet.tsx'
 import {
 	type action,
 	type FlowActionResult,
@@ -25,7 +26,7 @@ export default function PhoneAgentFlowRoute() {
 	const data = useLoaderData<typeof loader>()
 	const fetcher = useFetcher<typeof action>()
 	const navigate = useNavigate()
-	const testHref = `/${orgSlug}/phone-agent/test?flow=draft`
+	const testHref = useTestCallHref('draft')
 	const [testAfterSave, setTestAfterSave] = useState(false)
 
 	const [editorKey, setEditorKey] = useState(0)
@@ -112,8 +113,8 @@ export default function PhoneAgentFlowRoute() {
 					initialGraph={initialGraph}
 					savedJson={savedJson}
 					readOnly={!data.canUpdate}
-					backHref={`/${orgSlug}/phone-agent`}
-					staffPhoneHref={`/${orgSlug}/phone-agent#staff-transfer`}
+					backHref={`/${orgSlug}/phone-agent/handling`}
+					staffPhoneHref={`/${orgSlug}/phone-agent/handling#transfers`}
 					hasStaffPhone={data.hasStaffPhone}
 					testHref={testHref}
 					published={data.published}

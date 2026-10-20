@@ -8,6 +8,8 @@ export interface TenantApiWorkerEnv {
 	DATA_REGION: string
 	NODE_ENV?: string
 	APP_URL: string
+	/** Public origin of this node, used in consent email links. Required in production. */
+	TENANT_API_URL?: string
 	ROOT_APP: string
 	GLOBAL_SMS_CAP?: string
 	STAFFING_KIOSK_ENABLED?: string

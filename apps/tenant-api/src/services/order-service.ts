@@ -19,11 +19,13 @@ import {
 import {
 	getTenantDb,
 	RESTAURANT_ORDER_ACTIVE_STATUSES,
+	runTenantTransaction,
 	restaurantOrders,
 	restaurantOrderReservations,
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
+import { inJsonList } from '../lib/chunked-in.ts'
 import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
 import { isGeocodingAvailable } from '../lib/geocoder.ts'
 import type { PublishedOrganization } from '../lib/origin.ts'
@@ -230,7 +232,7 @@ async function expireHolds(db: OrderTx, now: Date): Promise<void> {
 export async function sweepExpiredHolds(orgId: string, now = new Date()) {
 	const db = await getTenantDb(orgId)
 	return runExclusive(orgId, () =>
-		retryOnSqliteBusy(() => db.transaction(async (tx) => expireHolds(tx, now))),
+		retryOnSqliteBusy(() => runTenantTransaction(db, async (tx) => expireHolds(tx, now))),
 	)
 }
 
@@ -496,7 +498,7 @@ export async function placeOrder(input: {
 
 	return runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				const [existingInTx] = await tx
 					.select()
 					.from(restaurantOrders)
@@ -738,7 +740,7 @@ export async function bindPaymentSession(input: {
 
 	return runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				await expireHolds(tx, new Date())
 				const [order] = await tx
 					.select()
@@ -859,7 +861,7 @@ export async function applyPaymentEvent(input: {
 
 	return runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				await expireHolds(tx, new Date())
 				const [order] = await tx
 					.select()
@@ -1074,7 +1076,7 @@ export async function updateOperatorOrder(
 
 	return runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				await expireHolds(tx, new Date())
 				const [order] = await tx
 					.select()
@@ -1226,7 +1228,8 @@ export async function buildOrderingOptions(
 				.from(restaurantOrders)
 				.where(
 					and(
-						inArray(restaurantOrders.pickupWindowId, windowIds),
+						// bound as one JSON parameter: Durable Object SQLite caps bound values
+						inJsonList(restaurantOrders.pickupWindowId, windowIds),
 						inArray(restaurantOrders.status, [
 							...RESTAURANT_ORDER_ACTIVE_STATUSES,
 						]),
@@ -1257,7 +1260,7 @@ export async function buildOrderingOptions(
 				)
 				.where(
 					and(
-						inArray(restaurantOrderReservations.entityId, entityIds),
+						inJsonList(restaurantOrderReservations.entityId, entityIds),
 						eq(restaurantOrders.dropId, context.drop.drop.id),
 						inArray(restaurantOrders.status, [
 							...RESTAURANT_ORDER_ACTIVE_STATUSES,

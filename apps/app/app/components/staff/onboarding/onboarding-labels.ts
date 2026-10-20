@@ -97,11 +97,23 @@ export const TASK_TYPE_ORDER: readonly OnboardingTaskType[] = [
 	'form_link',
 ]
 
+/**
+ * The kinds the generic module offers, none tied to a business type. Anything
+ * else is "Other" with its own name. The food-service kinds still in the data
+ * (`food_handler`, `health_card`, `alcohol_service`) belong to a vertical: the
+ * generic form only keeps one in the list when the certificate already has it.
+ */
 export const CERTIFICATE_KIND_ORDER: readonly CertificateKind[] = [
-	'food_handler',
-	'health_card',
-	'alcohol_service',
 	'first_aid',
 	'fire_safety',
 	'other',
 ]
+
+/** The kinds to offer for a certificate that currently has `current`. */
+export function certificateKindChoices(
+	current: CertificateKind | null,
+): readonly CertificateKind[] {
+	return current && !CERTIFICATE_KIND_ORDER.includes(current)
+		? [current, ...CERTIFICATE_KIND_ORDER]
+		: CERTIFICATE_KIND_ORDER
+}

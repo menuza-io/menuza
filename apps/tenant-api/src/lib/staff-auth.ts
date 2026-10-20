@@ -1,4 +1,4 @@
-import { type AnyColumn, inArray, or, type SQL, sql } from 'drizzle-orm'
+import { type AnyColumn, or, type SQL, sql } from 'drizzle-orm'
 import { type Context } from 'hono'
 import { jwtVerify } from 'jose'
 import { brand } from '@repo/config/brand'
@@ -18,6 +18,7 @@ import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { findActiveOrganizationById } from './origin.ts'
 import { getNodeRegion, orgMatchesNodeRegion } from './region.ts'
 import { getBearerToken, getOperatorToken } from './secrets.ts'
+import { inJsonList } from './chunked-in.ts'
 
 /**
  * Staffing principals authenticate with App-minted operator tokens that carry
@@ -253,18 +254,16 @@ export function scopeToScopes(auth: Pick<StaffAuth, 'scopeIds'>): ScopeAccess {
 		where(column) {
 			if (ids === null) return undefined
 			if (ids.size === 0) return sql`0 = 1`
-			return inArray(column, [...ids])
+			return inJsonList(column, [...ids])
 		},
 		whereAnyOf(column, jsonIds) {
 			if (ids === null) return undefined
 			if (ids.size === 0) return sql`0 = 1`
-			const list = sql.join(
-				[...ids].map((id) => sql`${id}`),
-				sql`, `,
-			)
+			// Both halves bind the ids as one JSON parameter (Durable Object SQLite
+			// allows 100 bound parameters per statement).
 			return or(
-				inArray(column, [...ids]),
-				sql`exists (select 1 from json_each(${jsonIds}) where json_each.value in (${list}))`,
+				inJsonList(column, [...ids]),
+				sql`exists (select 1 from json_each(${jsonIds}) where json_each.value in (select value from json_each(${JSON.stringify([...ids])})))`,
 			)
 		},
 	}

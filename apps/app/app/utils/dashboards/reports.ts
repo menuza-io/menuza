@@ -3,6 +3,7 @@ import {
 	getSubject,
 	organizationTemplates,
 	templateCategories,
+	templatesForGrants,
 	type ReportDefinition,
 	type ReportRunError,
 	type ReportTemplate,
@@ -60,13 +61,8 @@ export function reportSubjectLabel(subjectId: string) {
 	return getSubject(ORGANIZATION_REPORT_CATALOG, subjectId)?.label ?? subjectId
 }
 
-let templateGroups: ReportTemplateGroup[] | undefined
-
-/** The organization templates by category, in the order the reports page uses. */
-export function reportTemplateGroups(): ReportTemplateGroup[] {
-	if (templateGroups) return templateGroups
-	const templates = organizationTemplates()
-	templateGroups = templateCategories(templates).map((category) => ({
+function groupTemplates(templates: readonly ReportTemplate[]) {
+	return templateCategories([...templates]).map((category) => ({
 		category,
 		templates: templates
 			.filter((template) => template.category === category)
@@ -77,7 +73,24 @@ export function reportTemplateGroups(): ReportTemplateGroup[] {
 				subjectLabel: reportSubjectLabel(template.definition.subject),
 			})),
 	}))
-	return templateGroups
+}
+
+/**
+ * The organization templates by category, in the order the reports page uses.
+ * With `grants` (the restricted report subjects the person's reports token
+ * lists), a template on a subject they cannot run is left out, so the picker
+ * never offers a report that cannot run. Without `grants`, every template is
+ * listed.
+ */
+export function reportTemplateGroups(
+	grants?: readonly string[],
+): ReportTemplateGroup[] {
+	const templates = organizationTemplates()
+	return groupTemplates(
+		grants
+			? templatesForGrants(ORGANIZATION_REPORT_CATALOG, templates, grants)
+			: templates,
+	)
 }
 
 /** Where "Open report" goes: the saved report, or the template in the builder. */

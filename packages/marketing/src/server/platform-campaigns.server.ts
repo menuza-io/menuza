@@ -148,6 +148,10 @@ export async function createPlatformCampaign(
 		throw new Error('Email campaigns require a subject')
 	}
 
+	if (parsed.audience === 'organization' && !parsed.targetOrganizationId) {
+		throw new Error('Organization campaigns require a target organization')
+	}
+
 	const campaignId = createId()
 	await db.insert(PlatformMarketingCampaign).values({
 		id: campaignId,
@@ -173,7 +177,9 @@ async function resolvePlatformRecipients(
 	audience: PlatformAudience,
 	targetOrganizationId?: string | null,
 ) {
-	if (audience === 'organization' && targetOrganizationId) {
+	if (audience === 'organization') {
+		// Never widen an organization-scoped campaign to every operator.
+		if (!targetOrganizationId) return []
 		const memberships = await db
 			.select({
 				userId: UserOrganization.userId,

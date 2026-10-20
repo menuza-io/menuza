@@ -7,6 +7,11 @@ import {
 import { ENV } from './package-env.js'
 
 export {
+	isOrgWideReportSubject,
+	ORG_WIDE_REPORT_SUBJECTS,
+} from './org-wide-subjects.ts'
+
+export {
 	isStaffingReportSubject,
 	STAFF_PAY_REPORT_PERMISSION,
 	STAFFING_REPORT_SUBJECTS,
@@ -26,11 +31,14 @@ export type OperatorAnalyticsRole = 'operator' | 'admin'
 /**
  * Report subjects that need their own permission on top of analytics access,
  * because their rows hold data the analytics permissions don't cover (call
- * logs include caller phone numbers; orders are gated by menu access). The
- * token lists the ones granted.
+ * logs include caller phone numbers; customers and shop orders are
+ * organization-wide; restaurant orders are gated by menu access). The token
+ * lists the ones granted.
  */
 export const RESTRICTED_REPORT_SUBJECTS = [
 	'phone_calls',
+	'customers',
+	'shop_orders',
 	'orders',
 	'order_items',
 	'order_options',

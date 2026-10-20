@@ -61,7 +61,7 @@ function StepHint({ node }: { node: FlowEditorNode }) {
 			return phone ? (
 				<Trans>Calls {phone}</Trans>
 			) : (
-				<Trans>Calls the staff number from Setup</Trans>
+				<Trans>Calls the staff number from Call handling</Trans>
 			)
 		}
 		default:

@@ -1,14 +1,4 @@
-import {
-	and,
-	asc,
-	between,
-	count,
-	desc,
-	eq,
-	gte,
-	inArray,
-	ne,
-} from 'drizzle-orm'
+import { and, asc, between, count, desc, eq, gte, ne } from 'drizzle-orm'
 import {
 	addDays,
 	localDateOf,
@@ -70,6 +60,7 @@ import {
 	type ScheduleResult,
 } from './schedule-shared.ts'
 import { buildLiveCards, fail, ok, selectCardRows } from './timesheet-shared.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * What a person can do with their own "my schedule" link: read their own
@@ -362,7 +353,7 @@ export async function loadMyTimeCards(
 				.from(timeEntryEdits)
 				.where(
 					and(
-						inArray(
+						inJsonList(
 							timeEntryEdits.entryId,
 							live.map((card) => card.entry.id),
 						),
@@ -462,7 +453,7 @@ async function myShiftRequests(
 		? await ctx.db
 				.select()
 				.from(staffMembers)
-				.where(inArray(staffMembers.id, targetIds))
+				.where(inJsonList(staffMembers.id, targetIds))
 		: []
 	const names = new Map(targets.map((t) => [t.id, shortName(t)]))
 	return rows.map(({ request, shift }) => ({
@@ -619,7 +610,7 @@ export async function createMyAvailability(
 	const rows = await ctx.db
 		.select()
 		.from(staffAvailability)
-		.where(inArray(staffAvailability.id, ids))
+		.where(inJsonList(staffAvailability.id, ids))
 	return ok(rows.map(toMyAvailability))
 }
 
@@ -719,7 +710,7 @@ export async function loadMyTeammates(
 				and(
 					eq(shifts.scopeId, shift.scopeId),
 					eq(shifts.status, 'published'),
-					inArray(
+					inJsonList(
 						shifts.staffId,
 						people.map((p) => p.id),
 					),

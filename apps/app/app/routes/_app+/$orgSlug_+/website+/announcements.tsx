@@ -81,6 +81,7 @@ import {
 	ORG_PERMISSIONS,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 function isAnnouncementType(value: string): value is AnnouncementType {
 	return (ANNOUNCEMENT_TYPES as readonly string[]).includes(value)
@@ -159,6 +160,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		customDomain: true,
 		siteLocales: true,
 		siteDefaultLocale: true,
 	})
@@ -173,6 +175,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		organization.siteLocales,
 		organization.siteDefaultLocale,
 	)
+
+	// Announcements are part of the cached public site payload.
+	const purgeSiteCache = () =>
+		purgeOrganizationSiteCache(
+			organization.id,
+			organization.slug,
+			organization.customDomain,
+		)
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')
@@ -238,6 +248,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				position: nextPosition,
 				...data,
 			})
+			await purgeSiteCache()
 
 			return Response.json({ status: 'success' })
 		}
@@ -281,6 +292,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			.update(OrganizationAnnouncement)
 			.set(data)
 			.where(eq(OrganizationAnnouncement.id, id))
+		await purgeSiteCache()
 
 		return Response.json({ status: 'success' })
 	}
@@ -312,6 +324,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			.update(OrganizationAnnouncement)
 			.set({ isEnabled })
 			.where(eq(OrganizationAnnouncement.id, id))
+		await purgeSiteCache()
 
 		return Response.json({ status: 'success' })
 	}
@@ -331,6 +344,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					eq(OrganizationAnnouncement.organizationId, organization.id),
 				),
 			)
+		await purgeSiteCache()
 
 		return Response.json({ status: 'success' })
 	}

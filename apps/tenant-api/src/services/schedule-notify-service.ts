@@ -33,6 +33,7 @@ import {
 	type SchedulePublicationRow,
 	type StaffMember,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import { scheduleLinkUrl } from '../lib/schedule-link.ts'
@@ -56,6 +57,7 @@ import {
 } from './schedule-shared.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, ok } from './timesheet-shared.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Telling people about a publication. Three parts:
@@ -73,7 +75,7 @@ import { fail, ok } from './timesheet-shared.ts'
 
 /** Statuses of a person who can be sent a schedule. */
 const NOTIFIABLE = 'active'
-const PEOPLE_CHUNK = 300
+const PEOPLE_CHUNK = 90
 /** Shifts listed in one email. */
 const MAX_EMAIL_SHIFTS = 60
 export const MAX_NOT_REACHED = 500
@@ -462,7 +464,7 @@ export async function resendNotices(
 		ctx.db,
 		recipients.map((r) => r.staffId),
 	)
-	const result = await ctx.db.transaction(async (tx) => {
+	const result = await runTenantTransaction(ctx.db, async (tx) => {
 		const queued = await enqueueNotices(tx, {
 			publication: {
 				id: publication.id,
@@ -585,7 +587,7 @@ export async function buildScheduleNotice(
 					.leftJoin(staffPositions, eq(staffPositions.id, shifts.positionId))
 					.where(
 						and(
-							inArray(shifts.id, removedIds),
+							inJsonList(shifts.id, removedIds),
 							eq(shifts.scopeId, payload.scopeId),
 						),
 					)
@@ -656,7 +658,7 @@ export async function revokeLink(
 ): Promise<ScheduleResult<ScheduleLinkStatus>> {
 	const person = await visibleStaff(ctx, staffId)
 	if (!person.ok) return person
-	await ctx.db.transaction(async (tx) => {
+	await runTenantTransaction(ctx.db, async (tx) => {
 		const revoked = await revokeScheduleLink(
 			tx,
 			staffId,

@@ -289,7 +289,7 @@ export default function MailboxRoute() {
 			<Tabs
 				value={tab}
 				onValueChange={(value) => setTab(value as MailboxSource)}
-				className="-mx-4 min-h-0 flex-1 gap-0 md:-mx-2"
+				className="min-h-0 flex-1 gap-0"
 			>
 				<div className="border-b">
 					<TabsList variant="line" aria-label={_(msg`Mailbox sources`)}>
@@ -317,7 +317,7 @@ export default function MailboxRoute() {
 						<section
 							aria-label={_(msg`Form submissions`)}
 							className={cn(
-								'bg-muted/20 flex min-h-0 w-full shrink-0 flex-col border-e md:w-80 lg:w-96',
+								'flex min-h-0 w-full shrink-0 flex-col border-e md:w-80 lg:w-96',
 								selected && 'hidden md:flex',
 							)}
 						>
@@ -421,7 +421,7 @@ export default function MailboxRoute() {
 														aria-pressed={selected?.id === item.id}
 														onClick={() => select(item)}
 													>
-														<div className="flex items-start justify-between gap-3">
+														<div className="flex items-start justify-between gap-2">
 															<span
 																className={cn(
 																	'min-w-0 truncate text-sm',

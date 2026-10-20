@@ -9,7 +9,6 @@ export const SETTINGS_ERROR_CODES = [
 	'conflict',
 	'invalid_fields',
 	'invalid_request',
-	'escalation_phone_required',
 	'staff_phone_loop',
 	'rate_limited_send',
 	'rate_limited_check',
@@ -35,6 +34,7 @@ export const SETTINGS_ERROR_CODES = [
 	'contact_required',
 	'code_format',
 	'closes_before_opens',
+	'timezone',
 ] as const
 export type SettingsErrorCode = (typeof SETTINGS_ERROR_CODES)[number]
 

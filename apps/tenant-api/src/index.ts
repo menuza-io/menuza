@@ -3,14 +3,31 @@ import { serve } from '@hono/node-server'
 import { ENV } from 'varlock/env'
 import { createTenantApiApp } from './app.ts'
 import { registerRestaurantOrderSource } from './restaurant/staffing-order-source.ts'
+import {
+	captureDevEmail,
+	devEmailCaptureDir,
+	isDevEmailCaptureOn,
+} from './lib/dev-email-capture.ts'
+import { assertConsentBaseUrl } from './lib/email-consent.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
+import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
 assertTenantApiSecrets()
+assertConsentBaseUrl()
 assertDataRegion()
 
 registerRestaurantOrderSource()
+if (process.env.NODE_ENV === 'production' && devEmailCaptureDir()) {
+	console.warn('DEV_EMAIL_CAPTURE_DIR is ignored in production')
+}
+if (isDevEmailCaptureOn()) {
+	setTenantEmailDevCapture((record) =>
+		captureDevEmail(record, { region: getNodeRegion() }),
+	)
+	console.log(`DEV EMAIL CAPTURE ACTIVE -> ${devEmailCaptureDir()}`)
+}
 
 const app = createTenantApiApp()
 

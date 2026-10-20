@@ -11,7 +11,9 @@ import {
 	eq,
 	inArray,
 	isNull,
+	or,
 	Organization as OrganizationTable,
+	sql,
 } from '@repo/database'
 import {
 	calculateShopFees,
@@ -24,7 +26,10 @@ import {
 	SHOP_PLATFORM_FEE_PERCENT,
 	ShopOrderNotFoundError,
 	shopProcessorToDbValue,
+	type PaymentsEmulator,
+	type PaymentsMockEnv,
 	type ShopCommerce,
+	type ShopCommerceConfig,
 	type ShopOrderUpsert,
 	type ShopOrganizationSnapshot,
 	type ShopProcessorId,
@@ -35,12 +40,30 @@ import {
 	customers,
 	customerPaymentMethods,
 } from '@repo/tenant-db'
+import { withPaymentsMock } from '#app/utils/payments-mock/config.server.ts'
 import { resolveVerifiedShopCustomer } from '#app/utils/tenant-customer-auth.server.ts'
 import { type ShopOrganization } from './shop.types.ts'
 
-let shopCommerce = createShopCommerce(
-	createShopCommerceConfigFromEnv(process.env),
-)
+/**
+ * Provider settings from the environment. In a build that bundles the payment
+ * mock (never the Cloudflare production build) and with a mock switch on, the
+ * emulators replace the providers that have no real key.
+ */
+function buildShopCommerceConfig(
+	env: PaymentsMockEnv & Parameters<typeof createShopCommerceConfigFromEnv>[0],
+	emulator?: PaymentsEmulator,
+): ShopCommerceConfig {
+	const config = createShopCommerceConfigFromEnv(env)
+	if (
+		typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&
+		__PAYMENTS_MOCK_BUNDLED__
+	) {
+		return withPaymentsMock(config, env, emulator)
+	}
+	return config
+}
+
+let shopCommerce = createShopCommerce(buildShopCommerceConfig(process.env))
 
 function getShopCommerce() {
 	return shopCommerce
@@ -48,14 +71,23 @@ function getShopCommerce() {
 
 /**
  * The App-wide ShopCommerce instance (Stripe Connect / Polar / Checkout.com).
+ * Webhook routes use it too, so the payment mock's synthetic settings apply.
  * Restaurant order payments reuse the same configured providers.
  */
 export { getShopCommerce }
 
+/**
+ * Rebuild the commerce singleton. Pass `{ emulator }` with `MOCKS=true` in
+ * `env` to run the real SDK calls against a test emulator (memory store).
+ */
 export function configureShopCommerceForTests(
-	config: Parameters<typeof createShopCommerceConfigFromEnv>[0],
+	config: Parameters<typeof createShopCommerceConfigFromEnv>[0] &
+		PaymentsMockEnv,
+	options: { emulator?: PaymentsEmulator } = {},
 ) {
-	shopCommerce = createShopCommerce(createShopCommerceConfigFromEnv(config))
+	shopCommerce = createShopCommerce(
+		buildShopCommerceConfig(config, options.emulator),
+	)
 }
 
 export {
@@ -233,11 +265,14 @@ export async function syncConnectAccountStatus(organizationId: string) {
 	return status
 }
 
-export async function startConnectOnboarding(
-	request: Request,
+/**
+ * The organization's Connect account id, creating the account on first use.
+ * Single-shot: a concurrent request that loses the claim reuses the winner.
+ */
+export async function ensureConnectAccount(
 	organization: Pick<
 		ShopOrganization,
-		'id' | 'name' | 'slug' | 'dataRegion' | 'stripeConnectAccountId'
+		'id' | 'name' | 'dataRegion' | 'stripeConnectAccountId'
 	>,
 ) {
 	if ((organization.dataRegion || 'us') !== 'us') {
@@ -245,47 +280,55 @@ export async function startConnectOnboarding(
 	}
 
 	let accountId = organization.stripeConnectAccountId
-	const commerce = getShopCommerce()
+	if (accountId) return accountId
 
-	if (!accountId) {
-		const account = await commerce.createConnectExpressAccount({
-			organizationId: organization.id,
-			organizationName: organization.name,
+	const account = await getShopCommerce().createConnectExpressAccount({
+		organizationId: organization.id,
+		organizationName: organization.name,
+	})
+
+	const [claimed] = await db
+		.update(OrganizationTable)
+		.set({
+			stripeConnectAccountId: account.id,
+			updatedAt: new Date(),
+		})
+		.where(
+			and(
+				eq(OrganizationTable.id, organization.id),
+				isNull(OrganizationTable.stripeConnectAccountId),
+			),
+		)
+		.returning({
+			stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
 		})
 
-		const [claimed] = await db
-			.update(OrganizationTable)
-			.set({
-				stripeConnectAccountId: account.id,
-				updatedAt: new Date(),
-			})
-			.where(
-				and(
-					eq(OrganizationTable.id, organization.id),
-					isNull(OrganizationTable.stripeConnectAccountId),
-				),
-			)
-			.returning({
+	if (claimed?.stripeConnectAccountId) {
+		accountId = claimed.stripeConnectAccountId
+	} else {
+		const [refreshed] = await db
+			.select({
 				stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
 			})
-
-		if (claimed?.stripeConnectAccountId) {
-			accountId = claimed.stripeConnectAccountId
-		} else {
-			const [refreshed] = await db
-				.select({
-					stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
-				})
-				.from(OrganizationTable)
-				.where(eq(OrganizationTable.id, organization.id))
-				.limit(1)
-			accountId = refreshed?.stripeConnectAccountId ?? account.id
-		}
+			.from(OrganizationTable)
+			.where(eq(OrganizationTable.id, organization.id))
+			.limit(1)
+		accountId = refreshed?.stripeConnectAccountId ?? account.id
 	}
+	return accountId
+}
 
+export async function startConnectOnboarding(
+	request: Request,
+	organization: Pick<
+		ShopOrganization,
+		'id' | 'name' | 'slug' | 'dataRegion' | 'stripeConnectAccountId'
+	>,
+) {
+	const accountId = await ensureConnectAccount(organization)
 	const appBase = getDomainUrl(request)
-	return commerce.createConnectOnboardingLink({
-		accountId: accountId!,
+	return getShopCommerce().createConnectOnboardingLink({
+		accountId,
 		refreshUrl: `${appBase}/${organization.slug}/settings/shop?connect=refresh`,
 		returnUrl: `${appBase}/${organization.slug}/settings/shop?connect=return`,
 	})
@@ -954,9 +997,53 @@ async function upsertShopOrder(
 	customerId: string | null,
 ) {
 	const paymentProvider = shopProcessorToDbValue(order.processor)
+	// A later event for the same order (e.g. payment_intent.succeeded after
+	// checkout.session.completed) often carries only some identifiers. Keep the
+	// identifiers and customer already stored, and never move a settled order
+	// back to pending/failed on an out-of-order delivery.
+	const keepOrSet = <T>(column: unknown, value: T | null) =>
+		value === null ? sql`${column}` : value
 	const updateSet = {
-		status: order.status,
+		status:
+			order.status === 'paid'
+				? order.status
+				: sql`CASE WHEN ${shopOrders.status} IN ('paid', 'refunded') THEN ${shopOrders.status} ELSE ${order.status} END`,
+		customerId: keepOrSet(shopOrders.customerId, customerId),
+		paymentProvider,
+		stripeCheckoutSessionId: keepOrSet(
+			shopOrders.stripeCheckoutSessionId,
+			order.processor === 'connect' ? order.processorCheckoutId : null,
+		),
+		stripePaymentIntentId: keepOrSet(
+			shopOrders.stripePaymentIntentId,
+			order.processor === 'connect' ? order.processorPaymentId : null,
+		),
+		polarCheckoutId: keepOrSet(
+			shopOrders.polarCheckoutId,
+			order.processor === 'mor' ? order.processorCheckoutId : null,
+		),
+		polarOrderId: keepOrSet(
+			shopOrders.polarOrderId,
+			order.processor === 'mor' ? order.processorOrderId : null,
+		),
+		checkoutSessionId: keepOrSet(
+			shopOrders.checkoutSessionId,
+			order.processor === 'checkout' ? order.processorCheckoutId : null,
+		),
+		checkoutPaymentId: keepOrSet(
+			shopOrders.checkoutPaymentId,
+			order.processor === 'checkout' ? order.processorPaymentId : null,
+		),
+		updatedAt: new Date(),
+	}
+
+	const values = {
 		customerId,
+		productName: order.productName,
+		amountCents: order.amountCents,
+		platformFeeCents: order.platformFeeCents,
+		orgPayoutCents: order.orgPayoutCents,
+		currency: order.currency,
 		paymentProvider,
 		stripeCheckoutSessionId:
 			order.processor === 'connect' ? order.processorCheckoutId : null,
@@ -969,24 +1056,33 @@ async function upsertShopOrder(
 			order.processor === 'checkout' ? order.processorCheckoutId : null,
 		checkoutPaymentId:
 			order.processor === 'checkout' ? order.processorPaymentId : null,
-		updatedAt: new Date(),
+		status: order.status,
 	}
 
-	const values = {
-		customerId,
-		productName: order.productName,
-		amountCents: order.amountCents,
-		platformFeeCents: order.platformFeeCents,
-		orgPayoutCents: order.orgPayoutCents,
-		currency: order.currency,
-		paymentProvider,
-		stripeCheckoutSessionId: updateSet.stripeCheckoutSessionId,
-		stripePaymentIntentId: updateSet.stripePaymentIntentId,
-		polarCheckoutId: updateSet.polarCheckoutId,
-		polarOrderId: updateSet.polarOrderId,
-		checkoutSessionId: updateSet.checkoutSessionId,
-		checkoutPaymentId: updateSet.checkoutPaymentId,
-		status: order.status,
+	// The same Connect order can arrive keyed by session only, by payment intent
+	// only, or by both. Attach to the row either identifier already owns, or the
+	// insert would violate the other unique index.
+	if (values.stripeCheckoutSessionId && values.stripePaymentIntentId) {
+		const [existing] = await tenantDb
+			.select({ id: shopOrders.id })
+			.from(shopOrders)
+			.where(
+				or(
+					eq(
+						shopOrders.stripeCheckoutSessionId,
+						values.stripeCheckoutSessionId,
+					),
+					eq(shopOrders.stripePaymentIntentId, values.stripePaymentIntentId),
+				),
+			)
+			.limit(1)
+		if (existing) {
+			await tenantDb
+				.update(shopOrders)
+				.set(updateSet)
+				.where(eq(shopOrders.id, existing.id))
+			return existing.id
+		}
 	}
 
 	if (values.stripeCheckoutSessionId) {

@@ -22,6 +22,21 @@ import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
+import {
+	erasePerson,
+	PersonErasureError,
+} from '../services/person-erasure-service.ts'
+import {
+	consentBaseUrl,
+	listUnsubscribeHeaders,
+	unsubscribeUrl,
+} from '../lib/email-consent.ts'
+import {
+	BROADCAST_TOPIC,
+	loadBroadcastAudience,
+} from '../services/marketing-audience.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
+import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
 export const operatorRoutes = new Hono()
 
@@ -197,6 +212,44 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 		return c.json({ customer: updated })
 	} catch (error) {
 		console.error('Error updating customer:', error)
+		return c.json({ error: 'Tenant Database unavailable' }, 500)
+	}
+})
+
+/**
+ * Erase everything the regional database holds about one customer (sessions,
+ * subscriptions, saved cards, journeys, messages, calls, and the order and
+ * form links). Needs a token minted with `canDelete`. Idempotent: an unknown or
+ * already-erased customer answers 200 with `alreadyErased: true`, so the call
+ * cannot be used to probe for ids.
+ */
+operatorRoutes.post('/customers/:customerId/erase', async (c) => {
+	let auth
+	try {
+		auth = await authenticateOperator(c)
+	} catch (response) {
+		return response as Response
+	}
+	if (auth.canDelete !== true) {
+		return c.json({ error: 'Forbidden' }, 403)
+	}
+
+	try {
+		const db = await getTenantDb(auth.orgId)
+		const result = await erasePerson(
+			db,
+			{ customerId: c.req.param('customerId') },
+			{ actorId: auth.sub ?? 'operator' },
+		)
+		return c.json({ success: true, ...result })
+	} catch (error) {
+		if (error instanceof PersonErasureError) {
+			return c.json(
+				{ error: error.message, code: error.code, erased: error.erased },
+				error.status,
+			)
+		}
+		console.error('Error erasing customer:', error)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })
@@ -482,15 +535,9 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		const campaign = campaignArr[0]
 		if (!campaign) return
 
-		// 1. Fetch audience and evaluate segmentation rules
-		const allCustomers = await db.select().from(customers).all()
-		let targetCustomers = allCustomers
-		// A phone number is only trusted once its owner proved control of it via
-		// OTP; texting unverified numbers is unsolicited messaging to whoever
-		// typed them into a sign-in form.
-		if (campaign.channel === 'sms') {
-			targetCustomers = targetCustomers.filter((c) => Boolean(c.phoneVerified))
-		}
+		// 1. Fetch the consented audience (active subscription for this channel
+		// and topic; texts also need a verified phone) and apply the rules.
+		let rulesAudience: string | undefined
 		if (campaign.segmentationRules) {
 			try {
 				const rules =
@@ -499,17 +546,15 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 								audience?: string
 							})
 						: (campaign.segmentationRules as { audience?: string })
-				if (rules?.audience === 'verified') {
-					targetCustomers = targetCustomers.filter((c) =>
-						Boolean(c.phoneVerified),
-					)
-				} else if (rules?.audience === 'unverified') {
-					targetCustomers = targetCustomers.filter((c) => !c.phoneVerified)
-				}
+				rulesAudience = rules?.audience
 			} catch {
-				// Fallback to all
+				// Fallback to everyone subscribed
 			}
 		}
+		const targetCustomers = await loadBroadcastAudience(db, {
+			channel: campaign.channel === 'sms' ? 'sms' : 'email',
+			audience: rulesAudience,
+		})
 
 		// Update target audience count
 		await db
@@ -519,6 +564,17 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 		let hitCap = false
 		const BATCH_SIZE = 25
+
+		// The unsubscribe link carries a signed token, so its origin must be the
+		// configured one. Without it no email goes out (each one is marked
+		// Failed); ids only in the log.
+		const consentOrigin = campaign.channel === 'email' ? consentBaseUrl() : null
+		if (campaign.channel === 'email' && !consentOrigin) {
+			console.error('Broadcast emails skipped: TENANT_API_URL is not set', {
+				orgId,
+				campaignId,
+			})
+		}
 
 		// 2. Dispatch in concurrency batches
 		for (let i = 0; i < targetCustomers.length; i += BATCH_SIZE) {
@@ -540,13 +596,15 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 				customer,
 			}))
 
-			await db.insert(marketingMessages).values(
+			await insertRowsInChunks(
+				marketingMessages,
 				chunkItems.map((item) => ({
 					id: item.messageId,
 					campaignId,
 					customerId: item.customer.id,
 					status: 'Processing',
 				})),
+				(part) => db.insert(marketingMessages).values(part),
 			)
 
 			// Process sends concurrently across the batch
@@ -564,14 +622,24 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 					if (campaign.channel === 'email') {
 						if (!customer.email) throw new Error('No email address')
+						// Every broadcast carries a signed unsubscribe link, in the
+						// body and as List-Unsubscribe / one-click headers.
+						if (!consentOrigin) throw new Error('TENANT_API_URL is not set')
+						const optOutUrl = unsubscribeUrl(consentOrigin, {
+							orgId,
+							customerId: customer.id,
+							topic: BROADCAST_TOPIC,
+						})
+						const bodyHtml = campaign.contentHtml
+							? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
+							: `<p>${escapeHtml(parsedContent)}</p>`
 						const emailRes = await sendTenantEmail({
 							to: customer.email,
 							toName: customer.name,
 							subject: parsedSubject || 'Notification',
-							text: parsedContent,
-							html: campaign.contentHtml
-								? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
-								: `<p>${escapeHtml(parsedContent)}</p>`,
+							text: `${parsedContent}\n\nUnsubscribe: ${optOutUrl}`,
+							html: `${bodyHtml}<p style="font-size:12px;color:#666"><a href="${optOutUrl}">Unsubscribe</a></p>`,
+							extraHeaders: listUnsubscribeHeaders(optOutUrl),
 							context: {
 								orgId,
 								campaignId,
@@ -614,13 +682,13 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 				await db
 					.update(marketingMessages)
 					.set({ status: 'Sent', sentAt: new Date() })
-					.where(inArray(marketingMessages.id, sentIds))
+					.where(inJsonList(marketingMessages.id, sentIds))
 			}
 			if (failedIds.length > 0) {
 				await db
 					.update(marketingMessages)
 					.set({ status: 'Failed' })
-					.where(inArray(marketingMessages.id, failedIds))
+					.where(inJsonList(marketingMessages.id, failedIds))
 			}
 		}
 

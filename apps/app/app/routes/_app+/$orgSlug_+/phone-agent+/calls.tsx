@@ -41,6 +41,8 @@ import {
 import { CallDetailSheet } from '#app/components/phone-agent/call-detail-sheet.tsx'
 import { CallInsightBadges } from '#app/components/phone-agent/call-follow-up.tsx'
 import { CallRequestCard } from '#app/components/phone-agent/call-request-card.tsx'
+import { usePhoneAgentLayoutData } from '#app/components/phone-agent/settings-nav.tsx'
+import { useTestCallHref } from '#app/components/phone-agent/test-call-sheet.tsx'
 import { useVerticalLabels } from '#app/components/phone-agent/vertical-labels.ts'
 import {
 	phoneCallsErrorMessage,
@@ -72,6 +74,8 @@ export default function PhoneAgentCallsRoute() {
 		useLoaderData<typeof loader>()
 	const labels = useVerticalLabels()
 	const { orgSlug = '' } = useParams()
+	const layout = usePhoneAgentLayoutData()
+	const testHref = useTestCallHref()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const { _, i18n } = useLingui()
 	const request = usePhoneCallsClient(orgSlug)
@@ -580,12 +584,12 @@ export default function PhoneAgentCallsRoute() {
 									>
 										<Trans>Clear filters</Trans>
 									</Button>
-								) : (
-									<Button render={<Link to={`/${orgSlug}/phone-agent/test`} />}>
+								) : layout?.canReadAgent ? (
+									<Button render={<Link to={testHref} preventScrollReset />}>
 										<Icon name="mic" />
 										<Trans>Make a test call</Trans>
 									</Button>
-								)}
+								) : null}
 							</EmptyContent>
 						</Empty>
 					) : (

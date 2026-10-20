@@ -206,7 +206,12 @@ export async function getUserDefaultOrganization(userId: User['id']) {
 	const [countRow] = await db
 		.select({ value: count() })
 		.from(UserOrganization)
-		.where(eq(UserOrganization.organizationId, membership.organizationId))
+		.where(
+			and(
+				eq(UserOrganization.organizationId, membership.organizationId),
+				eq(UserOrganization.active, true),
+			),
+		)
 	if (!countRow)
 		return {
 			organization,

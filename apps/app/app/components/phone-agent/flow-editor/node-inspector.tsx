@@ -21,7 +21,7 @@ import {
 	SelectValue,
 } from '@repo/ui/select'
 import { Textarea } from '@repo/ui/textarea'
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useState, type ComponentProps, type ReactNode } from 'react'
 import { FLOW_STEP_META } from './flow-meta.ts'
 import { randomId, type FlowEditorNode } from './flow-model.ts'
 
@@ -117,6 +117,31 @@ function splitKeywords(text: string) {
 		.slice(0, 10)
 }
 
+// The inspector panel is narrow, so short one-line values (option labels,
+// keywords) wrap and grow instead of being clipped like an Input would.
+function SingleLineTextarea({
+	onValueChange,
+	...props
+}: Omit<ComponentProps<typeof Textarea>, 'onChange' | 'rows'> & {
+	onValueChange: (value: string) => void
+}) {
+	return (
+		<Textarea
+			{...props}
+			rows={1}
+			className="min-h-8 min-w-0 flex-1 resize-none py-1"
+			onKeyDown={(event) => {
+				if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+					event.preventDefault()
+				}
+			}}
+			onChange={(event) =>
+				onValueChange(event.target.value.replace(/[\r\n]+/g, ' '))
+			}
+		/>
+	)
+}
+
 function OptionRow({
 	option,
 	takenKeys,
@@ -140,7 +165,7 @@ function OptionRow({
 
 	return (
 		<li className="space-y-2 rounded-lg border p-2.5">
-			<div className="flex items-center gap-2">
+			<div className="flex items-start gap-2">
 				<Select
 					items={keyItems}
 					value={option.key}
@@ -172,13 +197,13 @@ function OptionRow({
 						))}
 					</SelectContent>
 				</Select>
-				<Input
+				<SingleLineTextarea
 					aria-label={_(msg`What this option does`)}
 					placeholder={_(msg`e.g. Speak with our team`)}
 					value={option.label}
 					maxLength={80}
 					disabled={readOnly}
-					onChange={(event) => onChange({ label: event.target.value })}
+					onValueChange={(label) => onChange({ label })}
 				/>
 				<Button
 					type="button"
@@ -195,14 +220,14 @@ function OptionRow({
 				<Label htmlFor={`${id}-keywords`} className="text-xs">
 					<Trans>Words callers might say</Trans>
 				</Label>
-				<Input
+				<SingleLineTextarea
 					id={`${id}-keywords`}
 					placeholder={_(msg`team, person, help`)}
 					value={keywordText}
 					disabled={readOnly}
-					onChange={(event) => {
-						setKeywordText(event.target.value)
-						onChange({ keywords: splitKeywords(event.target.value) })
+					onValueChange={(text) => {
+						setKeywordText(text)
+						onChange({ keywords: splitKeywords(text) })
 					}}
 				/>
 			</div>
@@ -477,8 +502,8 @@ export function NodeInspector({
 							<p className="text-muted-foreground text-sm">
 								<Trans>
 									From here the AI handles the rest of the call: questions,
-									texted links, and messages. It follows your Setup and Training
-									rules, and can transfer to staff if auto-escalation is on.
+									texted links, and messages. It follows your Agent and What it
+									knows rules, and can transfer to staff if auto-escalation is on.
 								</Trans>
 							</p>
 						</>
@@ -510,7 +535,7 @@ export function NodeInspector({
 								htmlFor={`${id}-phone`}
 								hint={
 									<Trans>
-										Leave empty to use the staff number from Setup. If the
+										Leave empty to use the staff number from Call handling. If the
 										transfer fails, the call follows "No answer".
 									</Trans>
 								}
@@ -563,7 +588,7 @@ export function NodeInspector({
 							id={`${id}-message`}
 							label={<Trans>Goodbye message</Trans>}
 							hint={
-								<Trans>Leave empty to use the closing line from Setup.</Trans>
+								<Trans>Leave empty to use the closing line from Agent.</Trans>
 							}
 							value={message}
 							readOnly={readOnly}

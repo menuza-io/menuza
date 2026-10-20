@@ -351,7 +351,7 @@ export function TestCallPanel({
 			{
 				method: 'POST',
 				encType: 'application/json',
-				action: `/${orgSlug}/phone-agent/test`,
+				action: `/${orgSlug}/phone-agent/test-call`,
 			},
 		)
 	}

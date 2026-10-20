@@ -95,6 +95,24 @@ function stubApi(
 	return calls
 }
 
+/**
+ * Mutations refresh the lists when they land, and those refreshes are
+ * fire-and-forget: wait for them before the test ends. A refresh GET that
+ * slips out after the test runs on MSW's fetch again (the stub is gone), and
+ * its unhandled-request warning fails the whole run.
+ */
+async function waitForListReload(
+	calls: Call[],
+	path: '/kiosk/devices' | '/kiosk/pairing-codes',
+) {
+	await waitFor(() =>
+		expect(
+			calls.filter((call) => call.method === 'GET' && call.url.endsWith(path))
+				.length,
+		).toBeGreaterThan(1),
+	)
+}
+
 const scopes = [{ id: 'loc-1', name: 'Downtown', timeZone: 'America/Chicago' }]
 
 function view(props: Partial<Parameters<typeof KioskManager>[0]> = {}) {
@@ -190,6 +208,10 @@ describe('KioskManager', () => {
 		expect(
 			within(dialog).getByText(/Expires in 9:5|Expires in 10:00/),
 		).toBeTruthy()
+		// The pairing step polls the pending list; an empty list reads as "the
+		// code was used", which refreshes both lists. Let that land here.
+		await waitForListReload(calls, '/kiosk/pairing-codes')
+		await waitForListReload(calls, '/kiosk/devices')
 	})
 
 	it('asks for a name before creating anything', async () => {
@@ -245,6 +267,8 @@ describe('KioskManager', () => {
 					?.method,
 			).toBe('POST'),
 		)
+		// Removing a tablet refreshes the device list; wait for that round trip.
+		await waitForListReload(calls, '/kiosk/devices')
 	})
 
 	it('keeping a tablet sends nothing', async () => {
@@ -278,6 +302,8 @@ describe('KioskManager', () => {
 				/pairing-codes\/c9$/,
 			),
 		)
+		// Cancelling a code refreshes the pending list; wait for that round trip.
+		await waitForListReload(calls, '/kiosk/pairing-codes')
 	})
 
 	it('is read-only without the update grant', async () => {

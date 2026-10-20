@@ -173,6 +173,20 @@ describe('patchPhoneAgentSettings', () => {
 		})
 	})
 
+	it('refuses an unknown business time zone', async () => {
+		const { orgId, versions } = await setup()
+		const result = await patch(
+			orgId,
+			{ business: { ...VALID_SETTINGS.business, timezone: 'Not/AZone' } },
+			{ business: versions.business! },
+		)
+		expect(result).toEqual({
+			ok: false,
+			error: 'invalid_fields',
+			fieldErrors: { 'business.timezone': 'timezone' },
+		})
+	})
+
 	it('refuses numbers outside the US and Canada', async () => {
 		const { orgId, versions } = await setup()
 		const result = await patch(
@@ -318,6 +332,112 @@ describe('patchPhoneAgentSettings', () => {
 		const { settings } = await getPhoneAgent(orgId)
 		expect(settings.closing).toBe('Bye now')
 		expect(settings.agentName).toBe(DEFAULT_PHONE_AGENT_SETTINGS.agentName)
+	})
+
+	it('keeps transfers off when a save leaves the staff phone empty', async () => {
+		const { orgId, versions } = await setup()
+		const result = await patch(
+			orgId,
+			{ autoEscalate: true, escalationPhone: null },
+			{
+				autoEscalate: versions.autoEscalate!,
+				escalationPhone: versions.escalationPhone!,
+			},
+		)
+		expect(result.ok).toBe(true)
+		expect((await getPhoneAgent(orgId)).settings.autoEscalate).toBe(false)
+	})
+})
+
+describe('scoped phrase saves', () => {
+	const hold = { key: 'hold', language: 'en', text: 'One moment.' } as const
+	const csat = {
+		key: 'csat_question',
+		language: 'en',
+		text: 'How did we do?',
+	} as const
+
+	it('merges disjoint phrase edits from forms loaded at the same time', async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		const first = await patch(
+			orgId,
+			{ phrases: [hold], phraseKeys: ['hold'], phraseBase: [] },
+			stale,
+		)
+		expect(first.ok).toBe(true)
+		const second = await patch(
+			orgId,
+			{ phrases: [csat], phraseKeys: ['csat_question'], phraseBase: [] },
+			stale,
+		)
+		expect(second.ok).toBe(true)
+		const { settings } = await getPhoneAgent(orgId)
+		expect(settings.phrases).toEqual(expect.arrayContaining([hold, csat]))
+		expect(settings.phrases).toHaveLength(2)
+	})
+
+	it('refuses a stale edit of the same phrase', async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		await patch(
+			orgId,
+			{ phrases: [hold], phraseKeys: ['hold'], phraseBase: [] },
+			stale,
+		)
+		const result = await patch(
+			orgId,
+			{
+				phrases: [{ ...hold, text: 'Please hold.' }],
+				phraseKeys: ['hold'],
+				phraseBase: [],
+			},
+			stale,
+		)
+		expect(result).toEqual({ ok: false, error: 'conflict' })
+		expect((await getPhoneAgent(orgId)).settings.phrases).toEqual([hold])
+	})
+
+	it("reports a line's error at its position in the form's own list", async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		await patch(
+			orgId,
+			{ phrases: [csat], phraseKeys: ['csat_question'], phraseBase: [] },
+			stale,
+		)
+		const result = await patch(
+			orgId,
+			{
+				phrases: [{ ...hold, text: 'x'.repeat(401) }],
+				phraseKeys: ['hold'],
+				phraseBase: [],
+			},
+			stale,
+		)
+		expect(result.ok).toBe(false)
+		const fieldErrors = result.ok ? {} : (result.fieldErrors ?? {})
+		expect(Object.keys(fieldErrors)).toEqual(['phrases.0.text'])
+		expect((await getPhoneAgent(orgId)).settings.phrases).toEqual([csat])
+	})
+
+	it('rejects phrases outside the declared keys or locked notices', async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		expect(
+			await patch(
+				orgId,
+				{ phrases: [csat], phraseKeys: ['hold'], phraseBase: [] },
+				stale,
+			),
+		).toEqual({ ok: false, error: 'invalid_request' })
+		expect(
+			await patch(
+				orgId,
+				{ phrases: [], phraseKeys: ['disclosure'], phraseBase: [] },
+				stale,
+			),
+		).toEqual({ ok: false, error: 'invalid_request' })
 	})
 })
 

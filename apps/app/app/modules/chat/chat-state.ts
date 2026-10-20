@@ -133,9 +133,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
 							action.result.messages,
 							view.messages.filter(
 								(message) =>
-									message.id >
-									(action.result.messages.at(-1)?.id ??
-										Number.MAX_SAFE_INTEGER),
+									message.id > (action.result.messages.at(-1)?.id ?? 0),
 							),
 						)
 			return {
@@ -169,9 +167,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
 								mergePages(
 									replies,
 									(state.threads[parent.id] ?? []).filter(
-										(reply) =>
-											reply.id >
-											(replies.at(-1)?.id ?? Number.MAX_SAFE_INTEGER),
+										(reply) => reply.id > (replies.at(-1)?.id ?? 0),
 									),
 								),
 				},

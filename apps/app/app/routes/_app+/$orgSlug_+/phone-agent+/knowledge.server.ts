@@ -4,12 +4,18 @@ import { z } from 'zod'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { requirePhoneAgentAccess } from '#app/utils/phone-agent/access.server.ts'
 import { generateFaqDrafts } from '#app/utils/phone-agent/faq-generate.server.ts'
+import { listTrainingRules } from '#app/utils/phone-agent/phone-agent.server.ts'
+import { buildRuntimeConfig } from '#app/utils/phone-agent/runtime-config.server.ts'
 import { settingsError } from '#app/utils/phone-agent/settings-errors.ts'
 import {
 	loadSettingsPage,
 	saveSettingsPage,
 	settingsPageData,
 } from '#app/utils/phone-agent/settings-page.server.ts'
+import {
+	handleTrainingAction,
+	isTrainingIntent,
+} from '#app/utils/phone-agent/training-actions.server.ts'
 import { phoneAgentServerVertical } from '#app/utils/phone-agent/vertical.server.ts'
 
 export type KnowledgeActionResult =
@@ -30,13 +36,34 @@ const draftSchema = z.object({
 		.max(60),
 })
 
+async function verticalPageData(orgId: string, scopeId: string | null) {
+	const pageData = phoneAgentServerVertical.advancedPageData
+	if (!pageData) return null
+	const config = await buildRuntimeConfig({
+		kind: 'test',
+		orgId,
+		scopeId,
+		flow: 'published',
+	})
+	return pageData(config.ok ? config.config : null) ?? null
+}
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const page = await loadSettingsPage(request, params.orgSlug)
 	const scopes = await phoneAgentServerVertical.listScopes(page.orgId)
+	const [rules, verticalData] = await Promise.all([
+		listTrainingRules(page.orgId),
+		verticalPageData(page.orgId, scopes[0]?.id ?? null),
+	])
 	return settingsPageData({
 		faq: page.settings.faq,
 		pronunciations: page.settings.pronunciations,
 		keyterms: page.settings.keyterms,
+		business: page.settings.business,
+		vertical: page.settings.vertical,
+		providesBusinessProfile: phoneAgentServerVertical.providesBusinessProfile,
+		verticalData,
+		rules,
 		scopes: scopes.map(({ id, name }) => ({ id, name })),
 		versions: page.versions,
 		canUpdate: page.canUpdate,
@@ -48,6 +75,19 @@ export async function action({
 	params,
 }: ActionFunctionArgs): Promise<KnowledgeActionResult> {
 	const body: unknown = await request.json().catch(() => null)
+	if (isTrainingIntent(body)) {
+		const { orgId, userId } = await requirePhoneAgentAccess(
+			request,
+			params.orgSlug,
+			ORG_PERMISSIONS.UPDATE_PHONE_AGENT_ANY,
+		)
+		return handleTrainingAction({
+			organizationId: orgId,
+			userId,
+			request,
+			body,
+		})
+	}
 	const draft = draftSchema.safeParse(body)
 	if (draft.success) {
 		const { orgId, userId } = await requirePhoneAgentAccess(

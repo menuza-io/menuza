@@ -538,7 +538,12 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `INTEGRATION_ENCRYPTION_KEY` - 64 hex chars for integration OAuth tokens (App
   only)
 - `TENANT_API_URL` / `TENANT_API_URL_KSA` - Regional tenant-api origins (App
-  provision + browser calls from App/Sites; not a server PII proxy)
+  provision + browser calls from App/Sites; not a server PII proxy) On a
+  tenant-api node itself, `TENANT_API_URL` is its own public origin and is
+  **required in production**: it is the origin of the signed confirmation and
+  unsubscribe links in emails. The node refuses to start without it, and the
+  request origin or `Host` header is never used outside local development hosts
+  (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`).
 - `EMAIL_PROVIDER` - App/Admin: `resend` (default) or `oci`. When `oci`, set
   `OCI_*` vars; `sendEmail()` routes to OCI Email Delivery. See
   `docs/platform-marketing-email.md`.
@@ -592,6 +597,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
   Object alarms instead. See `docs/scheduled-jobs.md#staff-tick`.
+- `DEV_EMAIL_CAPTURE_DIR` - Tenant-api, development only: folder (relative to
+  `apps/tenant-api`) that receives one JSON file per email the node would only
+  log. Ignored in production or when OCI email is configured.
+- `STRIPE_CONNECT_WEBHOOK_SECRET` - App only, optional: second Stripe webhook
+  secret for Connect events (the Stripe webhook route accepts either secret).
+- `PAYMENTS_MOCK` / `PAYMENTS_MOCK_ORIGIN` / `PAYMENTS_MOCK_WEBHOOKS` /
+  `PAYMENTS_MOCK_WEBHOOKS_HTTP` / `PAYMENTS_MOCK_CKO_SESSION_ID` - App only:
+  local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
+  Startup refuses live keys; mock routes are stripped from Worker builds. See
+  `docs/payments-mock.md`.
 
 **CMS Storage**:
 

@@ -29,8 +29,14 @@ export async function fetchDropAlertsSubscribed(): Promise<boolean | null> {
 	try {
 		const res = await tenantFetch('/subscriptions')
 		if (!res.ok) return null
-		const data = (await res.json()) as { drops?: { sms?: boolean } }
-		return Boolean(data.drops?.sms)
+		const data = (await res.json()) as {
+			subscriptions?: { topic: string; channel: string; subscribed: boolean }[]
+		}
+		return Boolean(
+			data.subscriptions?.some(
+				(row) => row.topic === 'drops' && row.channel === 'sms' && row.subscribed,
+			),
+		)
 	} catch {
 		return null
 	}
@@ -40,7 +46,7 @@ export async function setDropAlertsSubscribed(
 	subscribed: boolean,
 	source: string,
 ): Promise<{ ok: boolean; data: Record<string, unknown> }> {
-	const res = await tenantFetch('/subscriptions/drops', {
+	const res = await tenantFetch('/subscriptions/drops/sms', {
 		method: 'PUT',
 		body: JSON.stringify({ subscribed, source }),
 	})

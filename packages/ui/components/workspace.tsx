@@ -227,10 +227,10 @@ export function WorkspaceTabBar({
 	return (
 		<WorkspaceTabDivider className={className}>
 			<nav
-				className="-mx-1 [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+				className="-mx-4 [scrollbar-width:none] overflow-x-auto md:-mx-1 [&::-webkit-scrollbar]:hidden"
 				aria-label={label}
 			>
-				<div className="flex min-w-max gap-0.5 px-1">
+				<div className="flex min-w-max gap-0.5 px-4 md:px-1">
 					{tabs.map((tab) => (
 						<Link
 							key={tab.href}
@@ -256,7 +256,7 @@ export function WorkspaceTabBar({
  * Bottom divider for a row of section tabs. It spans the whole main column
  * (edge to edge), not just the centered page width: `cqw` is the
  * `@container/main` content width and the added rem covers that container's
- * horizontal padding. Wrap stock `TabsList variant="line"` in it to match
+ * horizontal padding (2rem on mobile, 1.5rem from md). Wrap stock `TabsList variant="line"` in it to match
  * `WorkspaceTabBar`.
  */
 export function WorkspaceTabDivider({
@@ -269,7 +269,7 @@ export function WorkspaceTabDivider({
 	return (
 		<div
 			className={cn(
-				'before:bg-border relative before:absolute before:inset-x-0 before:bottom-0 before:h-px md:before:inset-x-auto md:before:left-1/2 md:before:w-[calc(100cqw+1.5rem)] md:before:-translate-x-1/2',
+				'before:bg-border relative before:absolute before:bottom-0 before:left-1/2 before:h-px before:w-[calc(100cqw+2rem)] before:-translate-x-1/2 md:before:w-[calc(100cqw+1.5rem)]',
 				className,
 			)}
 		>
