@@ -36,7 +36,7 @@ route in process), `PAYMENTS_MOCK_CKO_SESSION_ID=true` (fidelity switch, below),
 `STRIPE_CONNECT_WEBHOOK_SECRET` (second secret for Connect events; the Stripe
 webhook route accepts either secret).
 
-## Production exclusion
+## Production exclusion (four layers)
 
 1. `vite.config.ts` defines `__PAYMENTS_MOCK_BUNDLED__` as
    `!(DEPLOY_TARGET=cloudflare && command=build)`. In `build:cf` the mock
@@ -47,6 +47,11 @@ webhook route accepts either secret).
 3. Every mock route and the Settings panel answer 404 unless the mode is on
    **and** the request and `BASE_URL` are local (loopback, `*.localhost`,
    `*.test`). Startup refuses live keys and a non-local mock origin.
+4. `node scripts/check-no-payment-mocks.mjs [dir]` fails when the bundle holds
+   `__PAYMENTS_MOCK__`, `checkout-com.mock.invalid`, `__mock_pay_` or the mock
+   route ids. CI runs it after `build:cf` (`deploy.yml`, and before every Worker
+   deploy in `cf-workers-ci.mjs`). Do not point it at the Node build that
+   Playwright uses: that one keeps the mock on purpose.
 
 ## State
 
