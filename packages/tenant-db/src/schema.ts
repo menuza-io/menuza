@@ -115,6 +115,13 @@ export const customerSubscriptions = sqliteTable(
 		 * changes. Always null for texts (the OTP proved the phone).
 		 */
 		confirmedEmailHash: text('confirmed_email_hash'),
+		/**
+		 * The last confirmation email that was actually sent: when, and an HMAC
+		 * of the address it went to. Only a repeat request for the same address
+		 * within the resend interval is throttled; a new address is not.
+		 */
+		confirmationSentAt: integer('confirmation_sent_at', { mode: 'timestamp' }),
+		confirmationSentHash: text('confirmation_sent_hash'),
 		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),

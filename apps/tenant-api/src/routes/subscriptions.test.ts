@@ -245,7 +245,7 @@ describe('customer subscription routes', () => {
 				const db = await getTenantDb(orgId)
 				await db
 					.update(customerSubscriptions)
-					.set({ updatedAt: new Date(Date.now() - ms) })
+					.set({ confirmationSentAt: new Date(Date.now() - ms) })
 			}
 
 			it('reports a sent link', async () => {
@@ -303,6 +303,7 @@ describe('customer subscription routes', () => {
 					confirmationSent: false,
 				})
 				expect(throttled.retryAfter).toBeGreaterThan(0)
+				expect(throttled.retryAfter).toBeLessThanOrEqual(180)
 				expect(send).toHaveBeenCalledTimes(1)
 
 				await backdate(RESEND_INTERVAL_MS + 1000)
@@ -317,6 +318,57 @@ describe('customer subscription routes', () => {
 						.status,
 				).toBe(200)
 				expect(await audience()).toHaveLength(1)
+			})
+
+			it('never throttles the first link for a new address, even right after a confirm', async () => {
+				const db = await getTenantDb(orgId)
+				await putEmail()
+				const link = confirmLink()
+				await app.request(link.pathname + link.search, { method: 'POST' })
+				expect(await audience()).toHaveLength(1)
+				// The confirm just wrote the row; the address changes at once.
+				await db
+					.update(customers)
+					.set({ email: 'new@example.com' })
+					.where(eq(customers.id, customerId))
+				await expect(putEmail()).resolves.toMatchObject({
+					pending: true,
+					confirmationSent: true,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+				expect(send.mock.calls.at(-1)![0].to).toBe('new@example.com')
+				// The same new address again is a genuine repeat.
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: false,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+			})
+
+			it('is not moved by other writes to the row', async () => {
+				const db = await getTenantDb(orgId)
+				await putEmail()
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				// Something else touches the row (updatedAt) just now.
+				await db.update(customerSubscriptions).set({ updatedAt: new Date() })
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: true,
+				})
+				// And a send does not shorten a running wait on an old updatedAt.
+				await db.update(customerSubscriptions).set({ updatedAt: new Date(0) })
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: false,
+				})
+			})
+
+			it('a failed send does not start the wait for that address', async () => {
+				const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+				send.mockResolvedValueOnce({ status: 'skipped' } as never)
+				await putEmail()
+				log.mockRestore()
+				const db = await getTenantDb(orgId)
+				const [row] = await db.select().from(customerSubscriptions)
+				expect(row!.confirmationSentAt).toBeNull()
+				expect(row!.confirmationSentHash).toBeNull()
 			})
 
 			it('a resend keeps the original source and subscription time', async () => {

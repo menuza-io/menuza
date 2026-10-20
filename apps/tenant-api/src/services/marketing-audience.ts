@@ -160,6 +160,9 @@ export async function setCustomerSubscription(
 					subscribedAt: now,
 					unsubscribedAt: null,
 					confirmedEmailHash,
+					// A fresh opt-in starts a fresh confirmation.
+					confirmationSentAt: null,
+					confirmationSentHash: null,
 					updatedAt: now,
 				},
 			})

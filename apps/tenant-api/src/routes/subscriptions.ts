@@ -142,12 +142,17 @@ subscriptionRoutes.put(
 				return c.json({ topic, channel, subscribed, pending: false })
 			}
 			const now = Date.now()
+			const addressHash = emailConsentHash(email)
 			const pending = existing && !existing.unsubscribedAt
-			// A repeat request for a pending subscription resends the link, but
-			// at most once per RESEND_INTERVAL_MS (the row's updatedAt is the
-			// time of the last send attempt).
-			if (pending) {
-				const sinceLast = now - (existing.updatedAt?.getTime() ?? 0)
+			// A repeat request for the SAME address resends the link, at most once
+			// per RESEND_INTERVAL_MS after the last link actually sent. A new
+			// address (or one never sent to) is never throttled.
+			if (
+				pending &&
+				existing.confirmationSentHash === addressHash &&
+				existing.confirmationSentAt
+			) {
+				const sinceLast = now - existing.confirmationSentAt.getTime()
 				if (sinceLast < RESEND_INTERVAL_MS) {
 					return c.json({
 						topic,
@@ -158,7 +163,8 @@ subscriptionRoutes.put(
 						retryAfter: Math.ceil((RESEND_INTERVAL_MS - sinceLast) / 1000),
 					})
 				}
-			} else {
+			}
+			if (!pending) {
 				await setCustomerSubscription(db, {
 					customerId,
 					topic,
@@ -175,20 +181,24 @@ subscriptionRoutes.put(
 				email,
 				name: customer.name,
 			})
-			await db
-				.update(customerSubscriptions)
-				.set({
-					// A failed send must not delay the customer's next try.
-					updatedAt: confirmationSent ? new Date(now) : new Date(0),
-				})
-				.where(
-					and(
-						eq(customerSubscriptions.customerId, customerId),
-						eq(customerSubscriptions.topic, topic),
-						eq(customerSubscriptions.channel, 'email'),
-					),
-				)
-				.run()
+			// Only a link that went out starts the wait; a failed send leaves the
+			// clock alone so the next request can retry at once.
+			if (confirmationSent) {
+				await db
+					.update(customerSubscriptions)
+					.set({
+						confirmationSentAt: new Date(now),
+						confirmationSentHash: addressHash,
+					})
+					.where(
+						and(
+							eq(customerSubscriptions.customerId, customerId),
+							eq(customerSubscriptions.topic, topic),
+							eq(customerSubscriptions.channel, 'email'),
+						),
+					)
+					.run()
+			}
 			return c.json({
 				topic,
 				channel,
