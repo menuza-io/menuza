@@ -20,6 +20,7 @@
     "seed:staffing-history": "../../node_modules/.bin/varlock run -- tsx scripts/seed-staffing-history.ts",
     "seed:staffing": "node scripts/seed-staffing.mjs",
     "seed:reservations": "node scripts/seed-reservations.mjs",
+    "seed:demo-people": "../../node_modules/.bin/varlock run -- tsx scripts/seed-demo-people-orders.ts",
     "fixtures:reservations": "RECORD_RESERVATIONS_FIXTURES=1 CI=true ../../node_modules/.bin/varlock run -- vitest run src/routes/reservations-contract.test.ts"
   },
   "dependencies": {

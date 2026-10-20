@@ -42,6 +42,16 @@ Canonical guide:
 [docs/deployment.md](../../docs/deployment.md#regional-tenant-data-plane). ADR:
 [docs/decisions/045-tenant-data-residency.md](../../docs/decisions/045-tenant-data-residency.md).
 
+## Demo people and orders (local only)
+
+`npm run seed:demo-people -w tenant-api -- acme-demo` adds richer demo data to
+the `acme-demo` organization only: 12 customers with subscriptions, 33
+restaurant orders (5 guest checkouts), 40 past and 8 upcoming reservations (one
+with a paid deposit), waitlist entries, two experience schedules, and guest tags
+and notes. Run `seed:reservations` for `acme-demo` first. It is idempotent
+(fixed ids), links guests to customers only through `linkGuestsToCustomers`, and
+refuses production and any other organization.
+
 ## Reservations routes
 
 | Mount                          | Auth                                       | Purpose                                                                                                      |
