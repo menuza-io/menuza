@@ -66,6 +66,8 @@ import {
 	type StaffDb,
 	writeStaffAudit,
 } from './staff-audit.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
+import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
 // ---------------------------------------------------------------------------
 // Result plumbing
@@ -374,7 +376,7 @@ async function currentRates(ctx: StaffContext, staffIds: string[]) {
 		.innerJoin(staffPositions, eq(staffPositions.id, staffJobs.positionId))
 		.where(
 			and(
-				inArray(staffJobs.staffId, staffIds),
+				inJsonList(staffJobs.staffId, staffIds),
 				sql`${staffJobs.effectiveFrom} <= ${today}`,
 				or(
 					isNull(staffJobs.effectiveTo),
@@ -475,7 +477,7 @@ export async function listStaff(ctx: StaffContext, query: StaffListQuery) {
 		? await db
 				.select()
 				.from(staffScopeAssignments)
-				.where(inArray(staffScopeAssignments.staffId, ids))
+				.where(inJsonList(staffScopeAssignments.staffId, ids))
 		: []
 	const openJobs = ids.length
 		? await db
@@ -486,7 +488,10 @@ export async function listStaff(ctx: StaffContext, query: StaffListQuery) {
 				})
 				.from(staffJobs)
 				.where(
-					and(inArray(staffJobs.staffId, ids), isNull(staffJobs.effectiveTo)),
+					and(
+						inJsonList(staffJobs.staffId, ids),
+						isNull(staffJobs.effectiveTo),
+					),
 				)
 		: []
 
@@ -667,20 +672,19 @@ export async function createStaff(
 				})
 				.returning()
 			const assignments = input.assignments.length
-				? await tx
-						.insert(staffScopeAssignments)
-						.values(
-							input.assignments.map((a) => ({
-								staffId: staff!.id,
-								scopeId: a.scopeId,
-								isPrimary: a.scopeId === primaryScopeId,
-								showInSchedule: a.showInSchedule,
-								eligibleOpenShifts: a.eligibleOpenShifts,
-								includeInClockErrors: a.includeInClockErrors,
-								canWaiveBreaks: a.canWaiveBreaks,
-							})),
-						)
-						.returning()
+				? await insertRowsInChunks(
+						staffScopeAssignments,
+						input.assignments.map((a) => ({
+							staffId: staff!.id,
+							scopeId: a.scopeId,
+							isPrimary: a.scopeId === primaryScopeId,
+							showInSchedule: a.showInSchedule,
+							eligibleOpenShifts: a.eligibleOpenShifts,
+							includeInClockErrors: a.includeInClockErrors,
+							canWaiveBreaks: a.canWaiveBreaks,
+						})),
+						(part) => tx.insert(staffScopeAssignments).values(part).returning(),
+					)
 				: []
 			await writeStaffAudit(tx, auth, ctx.ipHash, {
 				action: 'staff.created',
@@ -2012,6 +2016,7 @@ export async function listAudit(
 	query: { staffId?: string; action?: string; before?: number; limit: number },
 ) {
 	const sensitivities = readableSensitivities(ctx.auth)
+	// bounded: at most three sensitivity levels
 	const conditions: SQL[] = [inArray(staffAuditLog.sensitivity, sensitivities)]
 	if (query.staffId) conditions.push(eq(staffAuditLog.staffId, query.staffId))
 	if (query.action) conditions.push(eq(staffAuditLog.action, query.action))

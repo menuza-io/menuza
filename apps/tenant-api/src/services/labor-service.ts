@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import {
 	businessDateOf,
 	computeLaborSummary,
@@ -47,6 +47,7 @@ import {
 	type TimesheetContext,
 	type TimesheetResult,
 } from './timesheet-shared.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * The labor summary: hours, estimated wages and sales for one scope, one
@@ -126,7 +127,7 @@ export async function updateLaborSettings(
 				.from(staffPositions)
 				.where(
 					and(
-						inArray(staffPositions.id, ids),
+						inJsonList(staffPositions.id, ids),
 						isNull(staffPositions.archivedAt),
 					),
 				)

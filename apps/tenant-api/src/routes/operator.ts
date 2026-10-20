@@ -22,6 +22,8 @@ import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
+import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
 export const operatorRoutes = new Hono()
 
@@ -540,13 +542,15 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 				customer,
 			}))
 
-			await db.insert(marketingMessages).values(
+			await insertRowsInChunks(
+				marketingMessages,
 				chunkItems.map((item) => ({
 					id: item.messageId,
 					campaignId,
 					customerId: item.customer.id,
 					status: 'Processing',
 				})),
+				(part) => db.insert(marketingMessages).values(part),
 			)
 
 			// Process sends concurrently across the batch
@@ -614,13 +618,13 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 				await db
 					.update(marketingMessages)
 					.set({ status: 'Sent', sentAt: new Date() })
-					.where(inArray(marketingMessages.id, sentIds))
+					.where(inJsonList(marketingMessages.id, sentIds))
 			}
 			if (failedIds.length > 0) {
 				await db
 					.update(marketingMessages)
 					.set({ status: 'Failed' })
-					.where(inArray(marketingMessages.id, failedIds))
+					.where(inJsonList(marketingMessages.id, failedIds))
 			}
 		}
 

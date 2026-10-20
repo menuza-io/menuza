@@ -89,7 +89,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 /** Most rows loaded for one list: a bigger set asks the caller to narrow. */
 export const MAX_LIST_ROWS = 500
 /** Ids per `IN (...)` query, comfortably under SQLite's variable limit. */
-const ID_CHUNK = 300
+const ID_CHUNK = 90
 
 export function chunk<T>(items: readonly T[], size: number): T[][] {
 	const out: T[][] = []
@@ -408,6 +408,7 @@ export function visibleStaffWhere(
 	}
 	const scoped = scope.where(staffScopeAssignments.scopeId)
 	if (scoped) where.push(scoped)
+	// bounded: a subquery, never bound values
 	return inArray(
 		column,
 		db

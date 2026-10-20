@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
+import { and, eq, gte, isNull, lte } from 'drizzle-orm'
 import {
 	computeCachedMinutes,
 	computeEntryIssues,
@@ -18,6 +18,7 @@ import {
 } from '@repo/tenant-db'
 import { resolvePolicy } from './labor-policy-service.ts'
 import { type StaffDb } from './staff-audit.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Database side of the shared time math. Everything that turns punches into
@@ -63,7 +64,7 @@ export async function loadBreaks(
 	const rows = await db
 		.select()
 		.from(timeBreaks)
-		.where(inArray(timeBreaks.entryId, [...entryIds]))
+		.where(inJsonList(timeBreaks.entryId, [...entryIds]))
 	for (const row of rows) {
 		const list = map.get(row.entryId) ?? []
 		list.push(row)
