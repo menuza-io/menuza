@@ -213,10 +213,20 @@ Every broadcast email carries a signed unsubscribe link (HMAC with
 endpoints are `GET|POST /subscriptions/unsubscribe?token=` and
 `GET|POST /subscriptions/confirm?token=`: GET only shows a button, POST acts and
 is idempotent, so a mail scanner opening links changes nothing. Links point at
-`TENANT_API_URL`, which is required in production (the node refuses to start
-without it, and a send is skipped and logged when it is missing). The request
-origin is never used, except for local development hosts when the variable is
-unset. Journey emails do not carry the link yet.
+`TENANT_API_URL`, which is required in production (the Node entry refuses to
+start without it; the Cloudflare Worker keeps serving instead, so health, login
+and provisioning are unaffected). A send is skipped and logged when it is
+missing, and a broadcast with no origin is marked `Failed` before any
+per-recipient work. "Production" is anything but an explicit
+`NODE_ENV=development|test`, so an unset `NODE_ENV` counts as production. The
+request origin is never used, except for local development hosts when the
+variable is unset in development or test.
+
+**Rollout order:** set `TENANT_API_URL` on the node (Worker `vars` of that
+environment or the dashboard; `apps/tenant-api/wrangler.jsonc` deliberately does
+not declare an empty value, which would overwrite it on deploy), then deploy.
+Without it consent emails are skipped, not the whole node. Journey emails do not
+carry the link yet.
 
 To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`

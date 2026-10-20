@@ -13,8 +13,8 @@
  *
  * There is deliberately no bare `NODE_ENV` gate: CI and `start:mocks` run the
  * production Node build with `MOCKS=true` and must keep the mock. The runtime
- * signal is the public origin instead: with a mock switch on, `BASE_URL` (and
- * `PAYMENTS_MOCK_ORIGIN`, when set) must be a local development host, so a
+ * signal is the public origin instead: with a mock switch on, `BASE_URL` must be set to a local
+ * development host (and `PAYMENTS_MOCK_ORIGIN` too, when set), so a
  * real deploy fails closed even when no key variable is set.
  */
 
@@ -90,7 +90,7 @@ export function paymentsMockMode(env: PaymentsMockEnv): PaymentsMockMode {
 	// keys simply unset) must not start.
 	if (!isLocalDeployment(env)) {
 		throw new Error(
-			'Refusing payments mock on a non-local deployment: BASE_URL and PAYMENTS_MOCK_ORIGIN must be a local host (localhost, 127.0.0.1, ::1, *.test, *.localhost). Unset MOCKS and PAYMENTS_MOCK.',
+			'Refusing payments mock on a non-local deployment: BASE_URL must be set to a local host (and PAYMENTS_MOCK_ORIGIN too, when set; localhost, 127.0.0.1, ::1, *.test, *.localhost). Unset MOCKS and PAYMENTS_MOCK.',
 		)
 	}
 	// Webhook secrets (`whsec_...`) carry no live/test marker, so the secret
@@ -208,13 +208,13 @@ export function isLocalUrl(value: string | undefined | null) {
 }
 
 /**
- * Every configured public origin (`BASE_URL`, `PAYMENTS_MOCK_ORIGIN`) is
- * local. Both are checked, so a local override cannot hide a real `BASE_URL`.
- * With neither set the mock runs against its own localhost default.
+ * The deployment is local: `BASE_URL` must be present and local, and
+ * `PAYMENTS_MOCK_ORIGIN` must be local too when set. Both are checked, so a
+ * local override cannot hide a real `BASE_URL`. An absent or empty `BASE_URL`
+ * is not local: an unset variable must never switch the mock on.
  */
 export function isLocalDeployment(env: PaymentsMockEnv) {
-	return [env.BASE_URL, env.PAYMENTS_MOCK_ORIGIN]
-		.map((value) => value?.trim())
-		.filter(Boolean)
-		.every((value) => isLocalUrl(value))
+	if (!isLocalUrl(env.BASE_URL?.trim())) return false
+	const override = env.PAYMENTS_MOCK_ORIGIN?.trim()
+	return !override || isLocalUrl(override)
 }

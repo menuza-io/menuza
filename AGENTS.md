@@ -541,9 +541,13 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   provision + browser calls from App/Sites; not a server PII proxy) On a
   tenant-api node itself, `TENANT_API_URL` is its own public origin and is
   **required in production**: it is the origin of the signed confirmation and
-  unsubscribe links in emails. The node refuses to start without it, and the
-  request origin or `Host` header is never used outside local development hosts
-  (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`).
+  unsubscribe links in emails. The Node entry refuses to start without it. The
+  Worker keeps serving (health, login, provisioning) and skips consent emails
+  instead (a broadcast ends `Failed`), logging ids only. Only an explicit
+  `NODE_ENV=development|test` is local: an unset `NODE_ENV` counts as
+  production. The request origin or `Host` header is never used outside local
+  development hosts (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`).
+  Rollout order: set `TENANT_API_URL` on the node first, then deploy.
 - `EMAIL_PROVIDER` - App/Admin: `resend` (default) or `oci`. When `oci`, set
   `OCI_*` vars; `sendEmail()` routes to OCI Email Delivery. See
   `docs/platform-marketing-email.md`.
