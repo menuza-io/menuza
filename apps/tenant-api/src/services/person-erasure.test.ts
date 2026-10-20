@@ -466,15 +466,140 @@ describe('person erasure', () => {
 			{ actorId: 'user_1' },
 		)
 		expect(result).toMatchObject({ restaurantOrdersScrubbed: 2 })
-		expect(await tablesContaining(a, [PHONE, EMAIL, NAME, 'Erase Street'])).toEqual(
-			[],
-		)
+		expect(
+			await tablesContaining(a, [PHONE, EMAIL, NAME, 'Erase Street']),
+		).toEqual([])
 		const rows = await a.select().from(restaurantOrders)
 		expect(rows).toHaveLength(3)
 		expect(rows.map((row) => row.totalCents)).toEqual([1000, 1000, 1000])
 		expect(rows.find((row) => row.number === 'R-3')).toMatchObject({
 			contactName: 'Someone Else',
 			contactPhone: OTHER_PHONE,
+		})
+	})
+
+	describe('guest restaurant orders stored in another format', () => {
+		const base = {
+			orgId: orgA,
+			locationId: 'loc_1',
+			locationName: 'Main',
+			currency: 'USD',
+			subtotalCents: 900,
+			taxCents: 100,
+			totalCents: 1000,
+			lines: [],
+			requestHash: 'h',
+			paymentMethod: 'handoff',
+			paymentStatus: 'pending',
+			fulfillment: 'delivery',
+			deliveryAddress: '1 Erase Street',
+		}
+		const order = (
+			n: number,
+			contact: { contactPhone: string; contactEmail?: string | null },
+		) => ({
+			...base,
+			number: `G-${n}`,
+			idempotencyKey: `gk${n}`,
+			receiptTokenHash: `gr${n}`,
+			contactName: n === 99 ? 'Someone Else' : NAME,
+			...contact,
+		})
+		const scrubbed = async () =>
+			(await a.select().from(restaurantOrders))
+				.filter((row) => row.contactName === '' && row.deliveryAddress === null)
+				.map((row) => row.number)
+				.sort()
+
+		it('matches a mixed-case guest email and legacy-format phones', async () => {
+			const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+			await a.insert(restaurantOrders).values([
+				order(1, {
+					contactPhone: '000',
+					contactEmail: 'Erase.Me@Example.TEST',
+				}),
+				order(2, {
+					contactPhone: '000',
+					contactEmail: ' erase.me@example.test ',
+				}),
+				order(3, { contactPhone: '(555) 000-1111' }),
+				order(4, { contactPhone: '555-000-1111' }),
+				order(5, { contactPhone: '1 555 000 1111' }),
+				order(6, { contactPhone: '5550001111' }),
+				order(7, { contactPhone: '001-555-000-1111' }),
+				// Other people: a different number, a longer and a shorter one, and
+				// a different mailbox on the same domain.
+				order(90, { contactPhone: '(555) 000-2222' }),
+				order(91, { contactPhone: '+155500011112' }),
+				order(92, { contactPhone: '555000111' }),
+				order(93, {
+					contactPhone: '000',
+					contactEmail: 'rase.me@example.test',
+				}),
+			] as never)
+
+			const result = await erasePerson(
+				a,
+				{ customerId: id },
+				{ actorId: 'user_1' },
+			)
+			expect(result).toMatchObject({ restaurantOrdersScrubbed: 7 })
+			expect(await scrubbed()).toEqual([
+				'G-1',
+				'G-2',
+				'G-3',
+				'G-4',
+				'G-5',
+				'G-6',
+				'G-7',
+			])
+			expect(
+				await tablesContaining(a, ['Erase.Me@Example.TEST', '555-000-1111']),
+			).toEqual([])
+		})
+
+		it('matches the national forms of a Saudi number when the node serves KSA', async () => {
+			const previous = process.env.DATA_REGION
+			process.env.DATA_REGION = 'ksa'
+			try {
+				const ksaPhone = '+966501234567'
+				const id = await seedPerson(a, {
+					name: NAME,
+					phone: ksaPhone,
+					email: EMAIL,
+				})
+				await a
+					.insert(restaurantOrders)
+					.values([
+						order(1, { contactPhone: '0501234567' }),
+						order(2, { contactPhone: '50 123 4567' }),
+						order(3, { contactPhone: '966 50 123 4567' }),
+						order(4, { contactPhone: '00966501234567' }),
+						order(99, { contactPhone: '0509999999' }),
+					] as never)
+				await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+				expect(await scrubbed()).toEqual(['G-1', 'G-2', 'G-3', 'G-4'])
+			} finally {
+				process.env.DATA_REGION = previous ?? 'us'
+			}
+		})
+
+		it('handles more guest orders and addresses than a statement can bind', async () => {
+			const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+			await a.insert(restaurantOrders).values(
+				Array.from({ length: 150 }, (_, i) =>
+					order(i + 1, {
+						contactPhone: i % 2 ? '(555) 000-1111' : '000',
+						contactEmail: i % 2 ? null : 'ERASE.ME@example.test',
+					}),
+				) as never,
+			)
+			const result = await erasePerson(
+				a,
+				{ customerId: id },
+				{ actorId: 'user_1' },
+			)
+			expect(result).toMatchObject({ restaurantOrdersScrubbed: 150 })
 		})
 	})
 

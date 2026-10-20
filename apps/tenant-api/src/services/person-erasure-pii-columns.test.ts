@@ -35,9 +35,12 @@ const COVERED: Record<string, string> = {
 		'provider reference, no person data; order totals are kept, customer link nulled',
 	'shop_orders.stripe_payment_intent_id':
 		'provider reference, no person data; order totals are kept, customer link nulled',
-	'restaurant_orders.contact_name': 'scrubbed by customer id, phone or email',
-	'restaurant_orders.contact_phone': 'scrubbed by customer id, phone or email',
-	'restaurant_orders.contact_email': 'scrubbed by customer id, phone or email',
+	'restaurant_orders.contact_name':
+		'scrubbed by customer id, normalised phone or case-insensitive email',
+	'restaurant_orders.contact_phone':
+		'scrubbed by customer id, normalised phone or case-insensitive email',
+	'restaurant_orders.contact_email':
+		'scrubbed by customer id, normalised phone or case-insensitive email',
 	'restaurant_orders.delivery_address': 'scrubbed with the order contact',
 	'restaurant_orders.delivery_postal_code': 'scrubbed with the order contact',
 	'restaurant_orders.delivery_lat': 'scrubbed with the order contact',

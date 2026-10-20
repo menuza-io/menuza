@@ -17,8 +17,13 @@ import {
 	type TenantTransaction,
 } from '@repo/tenant-db'
 import crypto from 'node:crypto'
-import { and, eq, inArray, sql } from 'drizzle-orm'
-import { forEachInChunks, queryInChunks } from '../lib/chunked-in.ts'
+import { and, eq, inArray, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
+import {
+	forEachInChunks,
+	inJsonList,
+	queryInChunks,
+} from '../lib/chunked-in.ts'
+import { legacyPhoneForms } from '../lib/phone.ts'
 
 /**
  * ONE erasure flow for a person.
@@ -125,6 +130,35 @@ async function resolveIdentity(
 		phones: [...phones],
 		emails: [...emails],
 	}
+}
+
+/** SQL: a text column with the usual phone punctuation and spaces removed. */
+function digitsOnly(column: SQLWrapper) {
+	let expr: SQL = sql`${column}`
+	for (const ch of [' ', '-', '(', ')', '+', '.', '/']) {
+		expr = sql`replace(${expr}, ${ch}, '')`
+	}
+	return sql`replace(${expr}, char(160), '')`
+}
+
+/**
+ * Every digits-only form a stored phone may be in: the E.164 digits, the
+ * national forms numbers were stored in before region-aware normalisation
+ * (`legacyPhoneForms`), and the `00` international prefix.
+ */
+function phoneMatchForms(phones: readonly string[]): string[] {
+	const forms = new Set<string>()
+	for (const phone of phones) {
+		const digits = phone.replace(/\D/g, '')
+		if (!digits) continue
+		forms.add(digits)
+		forms.add(`00${digits}`)
+		for (const legacy of legacyPhoneForms(phone)) {
+			const legacyDigits = legacy.replace(/\D/g, '')
+			if (legacyDigits) forms.add(legacyDigits)
+		}
+	}
+	return [...forms]
 }
 
 const EMAIL_CHAR = /[a-z0-9._%+\-@]/
@@ -344,20 +378,43 @@ export async function erasePerson(
 			// Restaurant orders keep totals and lines for the books; everything that
 			// identifies the person goes: contact, delivery address and position,
 			// and the receipt and payment capability hashes (so an old link stops
-			// working). Matched by customer id, and by the stored phone or email
-			// for guest orders placed without an account.
+			// working). Matched by customer id, and for guest orders placed without
+			// an account by the stored phone or email, compared on a normalised
+			// form: an email as typed ("Sal@Example.com") matches case-insensitively,
+			// and a phone stored before region-aware normalisation ("(555) 000-1111",
+			// a national form) matches on its digits.
 			const restaurantOrderIds = new Set<string>()
-			for (const [column, values] of [
-				[restaurantOrders.customerId, customerIds],
-				[restaurantOrders.contactPhone, identity.phones],
-				[restaurantOrders.contactEmail, identity.emails],
-			] as const) {
-				const rows = await queryInChunks(values, (chunk) =>
-					tx
-						.select({ id: restaurantOrders.id })
-						.from(restaurantOrders)
-						.where(inArray(column, chunk)),
+			const byCustomer = await queryInChunks(customerIds, (chunk) =>
+				tx
+					.select({ id: restaurantOrders.id })
+					.from(restaurantOrders)
+					.where(inArray(restaurantOrders.customerId, chunk)),
+			)
+			for (const row of byCustomer) restaurantOrderIds.add(row.id)
+			// One bound parameter per list (a JSON array), whatever its size.
+			const contactConditions = []
+			const phoneForms = phoneMatchForms(identity.phones)
+			if (phoneForms.length > 0) {
+				contactConditions.push(
+					inJsonList(digitsOnly(restaurantOrders.contactPhone), phoneForms),
 				)
+			}
+			const emailForms = identity.emails
+				.map((email) => email.trim().toLowerCase())
+				.filter(Boolean)
+			if (emailForms.length > 0) {
+				contactConditions.push(
+					inJsonList(
+						sql`lower(trim(${restaurantOrders.contactEmail}))`,
+						emailForms,
+					),
+				)
+			}
+			for (const condition of contactConditions) {
+				const rows = await tx
+					.select({ id: restaurantOrders.id })
+					.from(restaurantOrders)
+					.where(condition)
 				for (const row of rows) restaurantOrderIds.add(row.id)
 			}
 			await forEachInChunks([...restaurantOrderIds], (chunk) =>
