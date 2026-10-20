@@ -60,10 +60,14 @@ describe('finding the link', () => {
 	})
 
 	it('survives a browser that will not keep it', () => {
-		vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+		// The prototype of the storage the code under test really uses: on newer
+		// Node versions the global `sessionStorage` is Node's own object, not
+		// jsdom's, so `Storage.prototype` would not intercept it.
+		const storage = Object.getPrototypeOf(sessionStorage) as Storage
+		vi.spyOn(storage, 'setItem').mockImplementation(() => {
 			throw new Error('blocked')
 		})
-		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+		vi.spyOn(storage, 'getItem').mockImplementation(() => {
 			throw new Error('blocked')
 		})
 		const history = { replaceState: vi.fn() }
