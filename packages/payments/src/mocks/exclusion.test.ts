@@ -111,6 +111,84 @@ describe('production exclusion: build-time define (build-time define and CI scan
 			)
 		})
 
+		it('the real Settings card bundles without the panel, its link or its badge', async () => {
+			const appRoot = fileURLToPath(
+				new URL('../../../../apps/app/app', import.meta.url),
+			)
+			const shopCard = `${appRoot}/components/settings/cards/organization/shop-card.tsx`
+			const build = async (bundled: boolean) => {
+				const result = await rolldown({
+					input: shopCard,
+					platform: 'node',
+					// Packages stay external; only the App's own files are bundled.
+					external: [/^[^.#/]/],
+					resolve: { alias: { '#app': appRoot } },
+					logLevel: 'silent',
+					transform: {
+						jsx: { runtime: 'automatic' },
+						define: { __PAYMENTS_MOCK_BUNDLED__: String(bundled) },
+					},
+				})
+				const { output } = await result.generate({ format: 'esm' })
+				return output
+					.map((chunk) => ('code' in chunk ? chunk.code : ''))
+					.join('\n')
+			}
+			const production = await build(false)
+			expect(production).toContain('ShopCard')
+			for (const needle of MOCK_NEEDLES)
+				expect(production).not.toContain(needle)
+			expect(production).not.toContain('mock-payments')
+			expect(production).not.toContain('MockPaymentsPanel')
+			const development = await build(true)
+			expect(development).toContain('/mock-payments/dashboard')
+		})
+
+		it('the real server-side shop wiring bundles without any mock code', async () => {
+			const root = fileURLToPath(new URL('../../../..', import.meta.url))
+			const build = async (
+				bundled: boolean,
+				entry = `${root}apps/app/app/utils/shop.server.ts`,
+			) => {
+				const result = await rolldown({
+					input: entry,
+					platform: 'node',
+					// Other packages stay external; the App's files and the payments
+					// package (barrel and mock entry) are bundled.
+					external: [/^(?!@repo\/payments)[^.#/]/],
+					resolve: {
+						alias: {
+							'#app': `${root}apps/app/app`,
+							'@repo/payments/mock': `${root}packages/payments/src/mocks/index.ts`,
+							'@repo/payments': `${root}packages/payments/index.ts`,
+						},
+					},
+					logLevel: 'silent',
+					transform: {
+						define: { __PAYMENTS_MOCK_BUNDLED__: String(bundled) },
+					},
+				})
+				const { output } = await result.generate({ format: 'esm' })
+				return output
+					.map((chunk) => ('code' in chunk ? chunk.code : ''))
+					.join('\n')
+			}
+			const production = await build(false)
+			expect(production).toContain('getShopCommerce')
+			for (const needle of MOCK_NEEDLES)
+				expect(production).not.toContain(needle)
+			expect(production).not.toContain('createPaymentsEmulator')
+			expect(await build(true)).toContain('__PAYMENTS_MOCK__')
+
+			// The Settings, Shop route (loader, action with the mock onboarding
+			// branch, and the card) as a whole.
+			const route = `${root}apps/app/app/routes/_app+/$orgSlug_+/settings+/shop.tsx`
+			const routeCode = await build(false, route)
+			expect(routeCode).toContain('ShopCard')
+			for (const needle of MOCK_NEEDLES) expect(routeCode).not.toContain(needle)
+			expect(routeCode).not.toContain('mockOnboardOrganization')
+		})
+
 		it('Settings only renders the panel and its badge behind the build-time constant', async () => {
 			const { readFileSync } = await import('node:fs')
 			const source = readFileSync(
