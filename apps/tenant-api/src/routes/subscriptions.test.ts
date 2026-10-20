@@ -17,7 +17,7 @@ import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
 import { loadBroadcastAudience } from '../services/marketing-audience.ts'
 import { signConsentToken, unsubscribeUrl } from '../lib/email-consent.ts'
-import { subscriptionRoutes } from './subscriptions.ts'
+import { RESEND_INTERVAL_MS, subscriptionRoutes } from './subscriptions.ts'
 
 const orgId = 'clw9x0a12000008l00test07'
 const jwtSecret = 'test-jwt-secret-123456789'
@@ -235,6 +235,98 @@ describe('customer subscription routes', () => {
 			await expect(again.json()).resolves.toMatchObject({ pending: false })
 			expect(sendTenantEmail).toHaveBeenCalledTimes(1)
 			expect(await audience()).toHaveLength(1)
+		})
+
+		describe('confirmation delivery', () => {
+			const send = vi.mocked(sendTenantEmail)
+			const putEmail = async () =>
+				(await put('marketing/email', { subscribed: true })).json()
+			const backdate = async (ms: number) => {
+				const db = await getTenantDb(orgId)
+				await db
+					.update(customerSubscriptions)
+					.set({ updatedAt: new Date(Date.now() - ms) })
+			}
+
+			it('reports a sent link', async () => {
+				await expect(putEmail()).resolves.toMatchObject({
+					pending: true,
+					confirmationSent: true,
+				})
+			})
+
+			it.each([
+				[
+					'an error result',
+					() =>
+						send.mockResolvedValueOnce({
+							status: 'error',
+							error: { message: 'sam@example.com bounced', statusCode: 500 },
+						} as never),
+				],
+				[
+					'a skipped send',
+					() => send.mockResolvedValueOnce({ status: 'skipped' } as never),
+				],
+				[
+					'a thrown error',
+					() => send.mockRejectedValueOnce(new Error('sam@example.com down')),
+				],
+			])(
+				'reports %s, logs no address, and lets the next request resend at once',
+				async (_name, arrange) => {
+					const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+					arrange()
+					await expect(putEmail()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: false,
+					})
+					expect(JSON.stringify(log.mock.calls)).not.toContain(
+						'sam@example.com',
+					)
+					expect(log).toHaveBeenCalled()
+					log.mockRestore()
+					// The failed send did not start the resend wait.
+					await expect(putEmail()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: true,
+					})
+					expect(send).toHaveBeenCalledTimes(2)
+				},
+			)
+
+			it('resends for a pending subscription, at most once per interval', async () => {
+				await putEmail()
+				const throttled = await putEmail()
+				expect(throttled).toMatchObject({
+					pending: true,
+					confirmationSent: false,
+				})
+				expect(throttled.retryAfter).toBeGreaterThan(0)
+				expect(send).toHaveBeenCalledTimes(1)
+
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: true,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+				// The resend link works.
+				const link = confirmLink()
+				expect(
+					(await app.request(link.pathname + link.search, { method: 'POST' }))
+						.status,
+				).toBe(200)
+				expect(await audience()).toHaveLength(1)
+			})
+
+			it('a resend keeps the original source and subscription time', async () => {
+				await put('marketing/email', { subscribed: true, source: 'signup' })
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				await put('marketing/email', { subscribed: true, source: 'checkout' })
+				const db = await getTenantDb(orgId)
+				const [row] = await db.select().from(customerSubscriptions)
+				expect(row!.source).toBe('signup')
+			})
 		})
 
 		it('rejects forged, tampered, wrong-kind and expired links', async () => {

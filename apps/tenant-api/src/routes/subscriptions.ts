@@ -48,6 +48,9 @@ const paramsSchema = z.object({
 	channel: z.enum(CUSTOMER_SUBSCRIPTION_CHANNELS),
 })
 
+/** Least time between two confirmation emails for one subscription. */
+export const RESEND_INTERVAL_MS = 3 * 60 * 1000
+
 type Auth = Awaited<ReturnType<typeof authenticateCustomer>>
 
 subscriptionRoutes.get('/', async (c) => {
@@ -138,22 +141,61 @@ subscriptionRoutes.put(
 			) {
 				return c.json({ topic, channel, subscribed, pending: false })
 			}
-			await setCustomerSubscription(db, {
-				customerId,
-				topic,
-				channel,
-				subscribed,
-				source,
-				confirmedEmail: null,
-			})
-			await sendConfirmationEmail(c.req.url, {
+			const now = Date.now()
+			const pending = existing && !existing.unsubscribedAt
+			// A repeat request for a pending subscription resends the link, but
+			// at most once per RESEND_INTERVAL_MS (the row's updatedAt is the
+			// time of the last send attempt).
+			if (pending) {
+				const sinceLast = now - (existing.updatedAt?.getTime() ?? 0)
+				if (sinceLast < RESEND_INTERVAL_MS) {
+					return c.json({
+						topic,
+						channel,
+						subscribed,
+						pending: true,
+						confirmationSent: false,
+						retryAfter: Math.ceil((RESEND_INTERVAL_MS - sinceLast) / 1000),
+					})
+				}
+			} else {
+				await setCustomerSubscription(db, {
+					customerId,
+					topic,
+					channel,
+					subscribed,
+					source,
+					confirmedEmail: null,
+				})
+			}
+			const confirmationSent = await sendConfirmationEmail(c.req.url, {
 				orgId: auth.orgId,
 				customerId,
 				topic,
 				email,
 				name: customer.name,
 			})
-			return c.json({ topic, channel, subscribed, pending: true })
+			await db
+				.update(customerSubscriptions)
+				.set({
+					// A failed send must not delay the customer's next try.
+					updatedAt: confirmationSent ? new Date(now) : new Date(0),
+				})
+				.where(
+					and(
+						eq(customerSubscriptions.customerId, customerId),
+						eq(customerSubscriptions.topic, topic),
+						eq(customerSubscriptions.channel, 'email'),
+					),
+				)
+				.run()
+			return c.json({
+				topic,
+				channel,
+				subscribed,
+				pending: true,
+				confirmationSent,
+			})
 		}
 
 		await setCustomerSubscription(db, {
@@ -176,7 +218,7 @@ async function sendConfirmationEmail(
 		email: string
 		name: string
 	},
-) {
+): Promise<boolean> {
 	const token = signConsentToken({
 		k: 'confirm',
 		o: params.orgId,
@@ -187,7 +229,7 @@ async function sendConfirmationEmail(
 	})
 	const link = `${consentBaseUrl(new URL(requestUrl).origin)}/subscriptions/confirm?token=${encodeURIComponent(token)}`
 	try {
-		await sendTenantEmail({
+		const result = await sendTenantEmail({
 			to: params.email,
 			toName: params.name,
 			subject: 'Confirm your email subscription',
@@ -195,9 +237,23 @@ async function sendConfirmationEmail(
 			html: `<p>Someone asked to send marketing email to this address.</p><p><a href="${link}">Confirm my subscription</a></p><p>If this was not you, ignore this message and you will not receive anything.</p>`,
 			capture: { orgId: params.orgId, messageKind: 'email-confirmation' },
 		})
+		if (result.status === 'success') return true
+		// Ids and a status only: never the address or the provider's message.
+		console.error('Email confirmation was not sent', {
+			orgId: params.orgId,
+			customerId: params.customerId,
+			status: result.status,
+			statusCode:
+				result.status === 'error' ? result.error.statusCode : undefined,
+		})
 	} catch (error) {
-		console.error('Failed to send the email confirmation:', error)
+		console.error('Email confirmation failed', {
+			orgId: params.orgId,
+			customerId: params.customerId,
+			error: error instanceof Error ? error.name : 'unknown',
+		})
 	}
+	return false
 }
 
 // Public, tokenised endpoints (no login): the link in an email. GET shows a

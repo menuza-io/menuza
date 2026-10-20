@@ -197,12 +197,14 @@ channel (`email` or `sms`) and topic (`marketing`). A customer row, a verified
 phone or an order is not consent. Texts also need a verified phone. Emails need
 an address its owner confirmed (double opt-in): a customer's
 `PUT /subscriptions/:topic/:channel` for `email` stays pending and sends a
-signed confirmation link; the subscription counts only while
-`confirmed_email_hash` matches the customer's current address, so a changed
-address has to be confirmed again. A customer may claim the sources `profile`,
-`signup` or `checkout`; `operator`, `import` and `form` are for trusted server
-code (`operator` and `import` count as confirmed for the address on file).
-Opting out keeps the row with `unsubscribed_at` set.
+signed confirmation link (the answer says `confirmationSent`; a failed send is
+logged without the address and the next request resends at once, otherwise a
+repeat request resends at most every 3 minutes); the subscription counts only
+while `confirmed_email_hash` matches the customer's current address, so a
+changed address has to be confirmed again. A customer may claim the sources
+`profile`, `signup` or `checkout`; `operator`, `import` and `form` are for
+trusted server code (`operator` and `import` count as confirmed for the address
+on file). Opting out keeps the row with `unsubscribed_at` set.
 
 Every broadcast email carries a signed unsubscribe link (HMAC with
 `AUTH_HMAC_SECRET`, no login) in the body and as `List-Unsubscribe` and
