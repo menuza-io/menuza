@@ -81,10 +81,10 @@ interface CustomerListItem {
 
 const ERASE_ERROR_MESSAGES = {
 	permission: msg`You are not allowed to erase customer data.`,
-	recording: msg`A call recording could not be deleted, so nothing was erased. Try again in a moment.`,
-	unavailable: msg`The customer data service is unavailable. Nothing was erased; try again later.`,
+	recording: msg`A call recording could not be deleted. Some voice data may already be erased; the customer's account is still there. Try again: erasing again completes it.`,
+	unavailable: msg`The customer data service is unavailable. Try again later; erasing again is safe.`,
 	network: msg`Could not reach the customer data service. Check your connection and try again.`,
-	generic: msg`The customer could not be erased. Nothing was changed.`,
+	generic: msg`The customer could not be erased. Try again; erasing again is safe.`,
 } as const
 
 const VERIFICATION_TONES = {

@@ -1191,8 +1191,12 @@ msgid "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
 msgstr "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
 
 #: app/routes/_app+/$orgSlug_+/customers.tsx:84
-msgid "A call recording could not be deleted, so nothing was erased. Try again in a moment."
-msgstr "A call recording could not be deleted, so nothing was erased. Try again in a moment."
+#~ msgid "A call recording could not be deleted, so nothing was erased. Try again in a moment."
+#~ msgstr "A call recording could not be deleted, so nothing was erased. Try again in a moment."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:84
+msgid "A call recording could not be deleted. Some voice data may already be erased; the customer's account is still there. Try again: erasing again completes it."
+msgstr "A call recording could not be deleted. Some voice data may already be erased; the customer's account is still there. Try again: erasing again completes it."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:56
 msgid "A caller asked someone to call them back."
@@ -17790,12 +17794,20 @@ msgid "The current PIN stops working right away. You will see the new one once."
 msgstr "The current PIN stops working right away. You will see the new one once."
 
 #: app/routes/_app+/$orgSlug_+/customers.tsx:87
-msgid "The customer could not be erased. Nothing was changed."
-msgstr "The customer could not be erased. Nothing was changed."
+#~ msgid "The customer could not be erased. Nothing was changed."
+#~ msgstr "The customer could not be erased. Nothing was changed."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:87
+msgid "The customer could not be erased. Try again; erasing again is safe."
+msgstr "The customer could not be erased. Try again; erasing again is safe."
 
 #: app/routes/_app+/$orgSlug_+/customers.tsx:85
-msgid "The customer data service is unavailable. Nothing was erased; try again later."
-msgstr "The customer data service is unavailable. Nothing was erased; try again later."
+#~ msgid "The customer data service is unavailable. Nothing was erased; try again later."
+#~ msgstr "The customer data service is unavailable. Nothing was erased; try again later."
+
+#: app/routes/_app+/$orgSlug_+/customers.tsx:85
+msgid "The customer data service is unavailable. Try again later; erasing again is safe."
+msgstr "The customer data service is unavailable. Try again later; erasing again is safe."
 
 #: app/components/dashboard/dashboard-options-menu.tsx:56
 msgid "The dashboard could not be deleted."

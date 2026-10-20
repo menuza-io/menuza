@@ -523,8 +523,11 @@ they are free text). `al@x.com` does not match inside `sal@x.com` or
 `al@x.com.au`, and a number in another format (spaces, another country form) is
 not recognised, so check for leftovers by hand when it matters. Every customer
 row that shares the phone (a stale duplicate) is erased too. Call recordings are
-deleted from object storage first, and a failed deletion stops the erasure
-before any row is touched.
+deleted from object storage first, one caller identity (phone, customer id) at a
+time. A failed deletion stops the erasure before the customer row is touched,
+but identities handled earlier are already erased: the 502 answer
+(`recording_delete_failed`) carries those counts in `erased`, the log row holds
+the same counts, and erasing again completes the job.
 
 The identity (customer ids, phones, emails) is resolved once. An "erasure
 started" row is committed before anything is deleted (`incomplete: 1`, ids and

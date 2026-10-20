@@ -59,6 +59,8 @@ export class PersonErasureError extends Error {
 		readonly status: 400 | 502,
 		readonly code: string,
 		message: string,
+		/** What was already erased when the call failed (counts only). */
+		readonly erased?: Record<string, number>,
 	) {
 		super(message)
 		this.name = 'PersonErasureError'
@@ -279,10 +281,14 @@ export async function erasePerson(
 			for (const voiceTarget of voiceTargets) {
 				const result = await eraseCallerVoiceData(db, orgId, voiceTarget)
 				if ('error' in result) {
+					// Earlier targets are already gone (and logged below); only the
+					// customer and the rest of the data are untouched. A retry
+					// continues from here.
 					throw new PersonErasureError(
 						502,
 						'recording_delete_failed',
-						'A call recording could not be deleted; nothing else was erased',
+						'A call recording could not be deleted; earlier voice data may already be erased, retry to complete',
+						voiceCounts(),
 					)
 				}
 				voice.callsDeleted += result.callsDeleted

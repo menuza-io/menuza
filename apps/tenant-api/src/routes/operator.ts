@@ -244,7 +244,10 @@ operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 		return c.json({ success: true, ...result })
 	} catch (error) {
 		if (error instanceof PersonErasureError) {
-			return c.json({ error: error.message, code: error.code }, error.status)
+			return c.json(
+				{ error: error.message, code: error.code, erased: error.erased },
+				error.status,
+			)
 		}
 		console.error('Error erasing customer:', error)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
