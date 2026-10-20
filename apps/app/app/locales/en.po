@@ -572,8 +572,8 @@ msgstr "{dayLabel} opens"
 msgid "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 msgstr "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:789
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:801
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:812
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:824
 msgid "{days} days"
 msgstr "{days} days"
 
@@ -598,11 +598,11 @@ msgstr ""
 msgid "{done, plural, one {# card marked as reviewed} other {# cards marked as reviewed}}"
 msgstr "{done, plural, one {# card marked as reviewed} other {# cards marked as reviewed}}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:367
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:385
 msgid "{doneCount} of {total} done"
 msgstr "{doneCount} of {total} done"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:385
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:403
 msgid "{doneCount} of {total} steps done"
 msgstr "{doneCount} of {total} steps done"
 
@@ -1650,7 +1650,7 @@ msgstr ""
 msgid "Add a note"
 msgstr "Add a note"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:292
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:304
 msgid "Add a number"
 msgstr "Add a number"
 
@@ -1770,7 +1770,7 @@ msgstr ""
 msgid "Add another team member to start a conversation."
 msgstr "Add another team member to start a conversation."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:312
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:324
 msgid "Add answers"
 msgstr "Add answers"
 
@@ -2200,7 +2200,7 @@ msgstr "After-hours calls"
 #: app/components/phone-agent/call-detail-sheet.tsx:444
 #: app/components/phone-agent/settings-nav.tsx:37
 #: app/components/phone-agent/test-call-panel.tsx:675
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:558
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:581
 msgid "Agent"
 msgstr "Agent"
 
@@ -2209,7 +2209,7 @@ msgid "Agent is getting ready…"
 msgstr "Agent is getting ready…"
 
 #: app/components/phone-agent/agent-details.tsx:37
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:591
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:614
 msgid "Agent name"
 msgstr "Agent name"
 
@@ -2528,11 +2528,11 @@ msgstr "another position"
 msgid "Answer"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:568
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:591
 msgid "Answer calls with the AI agent"
 msgstr "Answer calls with the AI agent"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:301
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:313
 msgid "Answer common questions, or let AI draft the answers from your business details."
 msgstr "Answer common questions, or let AI draft the answers from your business details."
 
@@ -3534,7 +3534,7 @@ msgstr "Calling…"
 #: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:747
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:770
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:331
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:405
 msgid "Calls"
@@ -3778,7 +3778,7 @@ msgstr "Cards with a missing clock-out, a missed break or a very long shift show
 msgid "Careers page"
 msgstr "Careers page"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:679
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:702
 msgid "Cartesia voice ID. Leave empty for the default voice."
 msgstr "Cartesia voice ID. Leave empty for the default voice."
 
@@ -4534,7 +4534,7 @@ msgid "Closes on"
 msgstr "Closes on"
 
 #: app/components/phone-agent/agent-details.tsx:41
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:719
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:742
 msgid "Closing"
 msgstr "Closing"
 
@@ -4771,7 +4771,7 @@ msgstr ""
 msgid "Connect"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:282
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:294
 msgid "Connect a phone number"
 msgstr "Connect a phone number"
 
@@ -5871,7 +5871,7 @@ msgstr ""
 msgid "Default voice"
 msgstr "Default voice"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:637
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:660
 msgid "Default: {defaultLanguage}. The first language you select is the default; callers can switch to the others."
 msgstr "Default: {defaultLanguage}. The first language you select is the default; callers can switch to the others."
 
@@ -6377,7 +6377,7 @@ msgstr "Don't retry"
 #: app/components/staff/onboarding/task-row.tsx:272
 #: app/components/staff/pin-panel.tsx:96
 #: app/components/staff/schedule/publish-dialog.tsx:363
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:209
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:212
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:527
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:153
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:188
@@ -7948,7 +7948,7 @@ msgstr "Forwarding"
 msgid "Four"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:373
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:391
 msgid "Four steps. Everything else has defaults you can change later."
 msgstr "Four steps. Everything else has defaults you can change later."
 
@@ -8076,7 +8076,7 @@ msgstr ""
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:364
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:382
 msgid "Get your agent answering calls"
 msgstr "Get your agent answering calls"
 
@@ -8194,7 +8194,7 @@ msgid "Green"
 msgstr "Green"
 
 #: app/components/phone-agent/agent-details.tsx:40
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:703
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:726
 msgid "Greeting"
 msgstr "Greeting"
 
@@ -9062,7 +9062,7 @@ msgstr "It is taken off their profile. This is recorded in the staff log."
 msgid "It is too early to clock in for your shift."
 msgstr "It is too early to clock in for your shift."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:340
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:357
 msgid "It starts answering on the next call."
 msgstr "It starts answering on the next call."
 
@@ -9180,7 +9180,7 @@ msgstr "Keep editing"
 msgid "Keep it"
 msgstr "Keep it"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:782
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:805
 msgid "Keep recordings for"
 msgstr "Keep recordings for"
 
@@ -9345,7 +9345,7 @@ msgstr ""
 
 #: app/components/phone-agent/agent-details.tsx:38
 #: app/components/settings/cards/organization/site-locales-card.tsx:159
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:616
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:639
 msgid "Languages"
 msgstr ""
 
@@ -9997,7 +9997,7 @@ msgstr "Main position"
 msgid "Main workplace"
 msgstr "Main workplace"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:321
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:333
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:590
 msgid "Make a test call"
 msgstr "Make a test call"
@@ -10235,7 +10235,7 @@ msgstr "Masculine"
 msgid "Maximum call length"
 msgstr "Maximum call length"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:842
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:865
 msgid "Maximum call length (minutes)"
 msgstr "Maximum call length (minutes)"
 
@@ -11732,7 +11732,7 @@ msgstr "Not available when we need them"
 msgid "Not connected"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:219
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:222
 msgid "Not done"
 msgstr "Not done"
 
@@ -14202,7 +14202,7 @@ msgstr "Recommended for SEO"
 msgid "Record a message for your team to follow up."
 msgstr "Record a message for your team to follow up."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:760
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:783
 msgid "Record calls"
 msgstr "Record calls"
 
@@ -14240,7 +14240,7 @@ msgstr "Recording retention"
 #~ msgid "Recording, transfers to staff, and after-hours calls."
 #~ msgstr "Recording, transfers to staff, and after-hours calls."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:749
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:772
 msgid "Recording, what happens when you're closed, and how long calls can last. Transfers are in Call handling."
 msgstr "Recording, what happens when you're closed, and how long calls can last. Transfers are in Call handling."
 
@@ -15370,7 +15370,7 @@ msgstr "Save rate"
 msgid "Save ratings"
 msgstr "Save ratings"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:867
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:890
 msgid "Save settings"
 msgstr "Save settings"
 
@@ -15920,7 +15920,7 @@ msgstr "Select an image from your library or upload a new one."
 msgid "Select an issue to jump to its step."
 msgstr "Select an issue to jump to its step."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:644
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:667
 msgid "Select at least one language."
 msgstr "Select at least one language."
 
@@ -16870,7 +16870,7 @@ msgstr "Start"
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "Start a call to see what you and your agent say in real time."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:332
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:344
 msgid "Start a test call"
 msgstr "Start a test call"
 
@@ -17295,7 +17295,7 @@ msgstr "Take me to settings"
 msgid "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 msgstr "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:323
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:335
 msgid "Talk to your agent from this browser before callers do."
 msgstr "Talk to your agent from this browser before callers do."
 
@@ -17405,7 +17405,7 @@ msgstr "Teammate"
 msgid "Tell callers which key does what."
 msgstr "Tell callers which key does what."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:299
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:311
 msgid "Tell it about your business"
 msgstr "Tell it about your business"
 
@@ -17858,7 +17858,7 @@ msgstr "The agent stops following this rule. To pause it instead, turn it off."
 #~ msgid "The agent takes a message instead of transferring, even when callers press 0."
 #~ msgstr "The agent takes a message instead of transferring, even when callers press 0."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:774
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:797
 msgid "The agent tells callers the call is recorded. Some US states require consent from everyone on the call."
 msgstr "The agent tells callers the call is recorded. Some US states require consent from everyone on the call."
 
@@ -18052,7 +18052,7 @@ msgstr ""
 msgid "The general application stays open until you close it."
 msgstr "The general application stays open until you close it."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:693
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:716
 msgid "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 msgstr "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 
@@ -18137,7 +18137,7 @@ msgstr ""
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:607
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:630
 msgid "The name the agent uses when it introduces itself."
 msgstr "The name the agent uses when it introduces itself."
 
@@ -18273,7 +18273,7 @@ msgstr "The unpaid break is longer than the shift."
 msgid "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
 msgstr "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:401
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:419
 msgid "The voice service isn't set up yet"
 msgstr "The voice service isn't set up yet"
 
@@ -19571,7 +19571,7 @@ msgstr "Turn off to add every shift as an open shift."
 msgid "Turn off to save every shift as an open shift."
 msgstr "Turn off to save every shift as an open shift."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:350
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:368
 msgid "Turn on"
 msgstr "Turn on"
 
@@ -19579,7 +19579,7 @@ msgstr "Turn on"
 msgid "Turn on agent audio"
 msgstr "Turn on agent audio"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:339
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:351
 msgid "Turn on the agent"
 msgstr "Turn on the agent"
 
@@ -19599,7 +19599,7 @@ msgstr "Turned on training rule \"{title}\""
 msgid "Turning off…"
 msgstr "Turning off…"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:350
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:368
 msgid "Turning on…"
 msgstr "Turning on…"
 
@@ -20099,7 +20099,7 @@ msgstr "Use a full link that starts with https://"
 msgid "Use a number like 18 or 18.50."
 msgstr "Use a number like 18 or 18.50."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:284
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:296
 msgid "Use a number we assign, or forward your business line."
 msgstr "Use a number we assign, or forward your business line."
 
@@ -20455,7 +20455,7 @@ msgstr "Vivid"
 msgid "Voice"
 msgstr "Voice"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:665
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:688
 msgid "Voice ID (optional)"
 msgstr "Voice ID (optional)"
 
@@ -20948,7 +20948,7 @@ msgstr "What should your reply include? (optional)"
 #~ msgid "What the agent does on each call."
 #~ msgstr "What the agent does on each call."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:691
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:714
 msgid "What the agent says"
 msgstr "What the agent says"
 
@@ -21008,7 +21008,7 @@ msgstr "When a caller asks for a callback, leaves a message, or needs help your 
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:574
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:597
 msgid "When it's off, calls go straight to your business line. If no line is known, callers hear an apology."
 msgstr "When it's off, calls go straight to your business line. If no line is known, callers hear an apology."
 
@@ -21076,7 +21076,7 @@ msgstr "When you close it"
 msgid "When you get notifications, they'll show up here."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:813
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:836
 msgid "When you're closed"
 msgstr "When you're closed"
 
@@ -21133,7 +21133,7 @@ msgstr "While open"
 msgid "Who"
 msgstr "Who"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:560
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:583
 msgid "Who answers, in which languages, and with which voice."
 msgstr "Who answers, in which languages, and with which voice."
 
@@ -21564,6 +21564,10 @@ msgstr "You have not set up any positions yet. <0>Add a position</0> first, then
 msgid "You have reached the limit of templates. Archive one you no longer use."
 msgstr "You have reached the limit of templates. Archive one you no longer use."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:353
+msgid "You have unsaved changes below. Turn the agent on there and save."
+msgstr "You have unsaved changes below. Turn the agent on there and save."
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:241
 msgid "You have unsaved changes to the call flow. Leave without saving?"
 msgstr "You have unsaved changes to the call flow. Leave without saving?"
@@ -21771,7 +21775,7 @@ msgstr ""
 msgid "Your page will appear here"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:404
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:422
 msgid "Your platform administrator sets the LiveKit credentials. Until then, calls and test calls won't connect."
 msgstr "Your platform administrator sets the LiveKit credentials. Until then, calls and test calls won't connect."
 

@@ -398,6 +398,29 @@ describe('scoped phrase saves', () => {
 		expect((await getPhoneAgent(orgId)).settings.phrases).toEqual([hold])
 	})
 
+	it("reports a line's error at its position in the form's own list", async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		await patch(
+			orgId,
+			{ phrases: [csat], phraseKeys: ['csat_question'], phraseBase: [] },
+			stale,
+		)
+		const result = await patch(
+			orgId,
+			{
+				phrases: [{ ...hold, text: 'x'.repeat(401) }],
+				phraseKeys: ['hold'],
+				phraseBase: [],
+			},
+			stale,
+		)
+		expect(result.ok).toBe(false)
+		const fieldErrors = result.ok ? {} : (result.fieldErrors ?? {})
+		expect(Object.keys(fieldErrors)).toEqual(['phrases.0.text'])
+		expect((await getPhoneAgent(orgId)).settings.phrases).toEqual([csat])
+	})
+
 	it('rejects phrases outside the declared keys or locked notices', async () => {
 		const { orgId, versions } = await setup()
 		const stale = { phrases: versions.phrases! }

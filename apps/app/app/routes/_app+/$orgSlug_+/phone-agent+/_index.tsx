@@ -36,7 +36,7 @@ import {
 import { Separator } from '@repo/ui/separator'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useFetcher, useLoaderData, useParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { AgentDetails } from '#app/components/phone-agent/agent-details.tsx'
@@ -145,6 +145,7 @@ export default function PhoneAgentSetup() {
 	} = useLoaderData<LoaderData>()
 	const layout = usePhoneAgentLayoutData()
 	const base = `/${orgSlug}/phone-agent`
+	const [agentFormDirty, setAgentFormDirty] = useState(false)
 
 	return (
 		<div className="flex flex-col gap-8">
@@ -158,6 +159,7 @@ export default function PhoneAgentSetup() {
 				settings={settings}
 				versions={versions}
 				canUpdate={canUpdate}
+				agentFormDirty={agentFormDirty}
 			/>
 
 			<AnnotatedLayout>
@@ -176,6 +178,7 @@ export default function PhoneAgentSetup() {
 					canUpdate={canUpdate}
 					base={base}
 					voiceLibraryAvailable={voiceLibraryAvailable}
+					onDirtyChange={setAgentFormDirty}
 				/>
 			</AnnotatedLayout>
 
@@ -239,6 +242,7 @@ function GetStarted({
 	settings,
 	versions,
 	canUpdate,
+	agentFormDirty,
 }: {
 	base: string
 	hasNumber: boolean
@@ -247,6 +251,8 @@ function GetStarted({
 	settings: PhoneAgentSettings
 	versions: LoaderData['versions']
 	canUpdate: boolean
+	/** A separate save would leave the Agent form's switch and versions stale. */
+	agentFormDirty: boolean
 }) {
 	const { _ } = useLingui()
 	const describe = useSettingsErrorText()
@@ -262,6 +268,12 @@ function GetStarted({
 			: undefined
 
 	function turnOn() {
+		if (agentFormDirty) {
+			const toggle = document.getElementById('phone-agent-enabled')
+			toggle?.scrollIntoView({ block: 'center' })
+			toggle?.focus()
+			return
+		}
 		const patch = onOffPatch(true, settings)
 		void fetcher.submit(
 			{
@@ -337,7 +349,13 @@ function GetStarted({
 			key: 'on',
 			done: on,
 			title: <Trans>Turn on the agent</Trans>,
-			hint: <Trans>It starts answering on the next call.</Trans>,
+			hint: agentFormDirty ? (
+				<Trans>
+					You have unsaved changes below. Turn the agent on there and save.
+				</Trans>
+			) : (
+				<Trans>It starts answering on the next call.</Trans>
+			),
 			action: (isNext) =>
 				canUpdate ? (
 					<Button
@@ -458,6 +476,7 @@ function SettingsForm({
 	canUpdate,
 	base,
 	voiceLibraryAvailable,
+	onDirtyChange,
 }: {
 	settings: PhoneAgentSettings
 	versions: LoaderData['versions']
@@ -465,6 +484,7 @@ function SettingsForm({
 	canUpdate: boolean
 	base: string
 	voiceLibraryAvailable: boolean
+	onDirtyChange: (dirty: boolean) => void
 }) {
 	const { _ } = useLingui()
 	const [on, setOn] = useState(isAgentOn(settings))
@@ -519,7 +539,10 @@ function SettingsForm({
 		canUpdate,
 		intent: 'save-settings',
 	})
-	const { pending, fieldErrors } = form
+	const { pending, fieldErrors, dirty } = form
+	useEffect(() => {
+		onDirtyChange(dirty)
+	}, [dirty, onDirtyChange])
 	const disabled = !canUpdate || pending
 	const defaultLanguage = languages[0] ? _(LANGUAGE_LABELS[languages[0]]) : null
 

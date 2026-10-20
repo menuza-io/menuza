@@ -32,8 +32,13 @@ const VersionsSchema = z.record(z.string().max(32))
 type ScopedPhrasePatch = {
 	keys: ReadonlySet<PhraseKey>
 	base: PhraseOverride[]
-	phrases: PhraseOverride[]
+	// Text is validated with the merged settings so errors carry field paths.
+	phrases: unknown[]
 }
+
+const ScopedPhraseKeysSchema = z.array(
+	z.object({ key: z.string() }).passthrough(),
+)
 
 function parseScopedPhrasePatch(
 	raw: unknown,
@@ -60,12 +65,12 @@ function parseScopedPhrasePatch(
 	const base = PhoneAgentSettingsSchema.shape.phrases.safeParse(
 		patch.phraseBase,
 	)
-	const phrases = PhoneAgentSettingsSchema.shape.phrases.safeParse(
-		patch.phrases,
-	)
+	const phrases = ScopedPhraseKeysSchema.safeParse(patch.phrases)
 	if (!base.success || !phrases.success) return { ok: false }
 	if (
-		[...base.data, ...phrases.data].some((override) => !keys.has(override.key))
+		[...base.data, ...phrases.data].some(
+			(override) => !keys.has(override.key as PhraseKey),
+		)
 	) {
 		return { ok: false }
 	}
@@ -79,6 +84,28 @@ function samePhraseOverrides(left: PhraseOverride[], right: PhraseOverride[]) {
 				a.key.localeCompare(b.key) || a.language.localeCompare(b.language),
 		)
 	return JSON.stringify(sorted(left)) === JSON.stringify(sorted(right))
+}
+
+/**
+ * The server validates other features' lines followed by the form's own, so
+ * shift `phrases.N` paths back to positions in the list the form sent.
+ */
+function scopedPhraseErrors(
+	fieldErrors: Record<string, string>,
+	offset: number,
+) {
+	const shifted: Record<string, string> = {}
+	for (const [path, message] of Object.entries(fieldErrors)) {
+		const match = /^phrases\.(\d+)(\..*)?$/.exec(path)
+		const index = match ? Number(match[1]) - offset : -1
+		const key = !match
+			? path
+			: index >= 0
+				? `phrases.${index}${match[2] ?? ''}`
+				: 'phrases'
+		shifted[key] ??= message
+	}
+	return shifted
 }
 
 function phraseOverridesForKeys(
@@ -352,26 +379,26 @@ export async function patchPhoneAgentSettings(input: {
 		) {
 			return CONFLICT
 		}
+		const otherPhrases = phraseScope
+			? agent.settings.phrases.filter(
+					(override) => !phraseScope.keys.has(override.key),
+				)
+			: []
 		const effectivePatch = phraseScope
-			? {
-					...patch,
-					phrases: [
-						...agent.settings.phrases.filter(
-							(override) => !phraseScope.keys.has(override.key),
-						),
-						...phraseScope.phrases,
-					],
-				}
+			? { ...patch, phrases: [...otherPhrases, ...phraseScope.phrases] }
 			: patch
 		const parsed = PhoneAgentSettingsSchema.safeParse({
 			...agent.settings,
 			...effectivePatch,
 		})
 		if (!parsed.success) {
+			const fieldErrors = toFieldErrors(parsed.error)
 			return {
 				ok: false,
 				error: settingsError('invalid_fields'),
-				fieldErrors: toFieldErrors(parsed.error),
+				fieldErrors: phraseScope
+					? scopedPhraseErrors(fieldErrors, otherPhrases.length)
+					: fieldErrors,
 			}
 		}
 		if ('vertical' in patch) {
