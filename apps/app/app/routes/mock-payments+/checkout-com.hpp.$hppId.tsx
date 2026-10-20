@@ -118,7 +118,7 @@ export default function MockCheckoutHostedPayment() {
 					{view.active ? (
 						<>
 							{actionData?.error ? (
-								<CardErrorAlert>
+								<CardErrorAlert field={actionData?.error?.field}>
 									{_(cardErrorDescriptor(actionData.error.code))}
 								</CardErrorAlert>
 							) : null}

@@ -7,7 +7,36 @@ import { requirePaymentsMock } from './gate.server.ts'
  * request is local. The API is unauthenticated on purpose (dev only).
  */
 export function gateDevApi(request: Request) {
-	return requirePaymentsMock(request)
+	const status = requirePaymentsMock(request)
+	if (!SAFE_METHODS.has(request.method)) {
+		// A page open in the developer's browser must not be able to reset or
+		// onboard local data: no cross-site requests, and a JSON content type
+		// (which a cross-site form or `text/plain` fetch cannot send without a
+		// CORS preflight this API never grants).
+		rejectCrossSite(request)
+		const contentType = request.headers.get('content-type') ?? ''
+		if (!/^application\/json(\s*;|$)/i.test(contentType.trim())) {
+			throw Response.json({ error: 'unsupported_media_type' }, { status: 415 })
+		}
+	}
+	return status
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+/** Browsers send `Sec-Fetch-Site`; `Origin` covers clients that do not. */
+function rejectCrossSite(request: Request) {
+	const site = request.headers.get('sec-fetch-site')
+	if (site) {
+		if (site !== 'same-origin' && site !== 'none') {
+			throw Response.json({ error: 'cross_site_request' }, { status: 403 })
+		}
+		return
+	}
+	const origin = request.headers.get('origin')
+	if (origin && origin !== new URL(request.url).origin) {
+		throw Response.json({ error: 'cross_site_request' }, { status: 403 })
+	}
 }
 
 export function methodNotAllowed() {

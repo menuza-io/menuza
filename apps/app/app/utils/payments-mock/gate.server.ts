@@ -1,4 +1,5 @@
 import {
+	isLocalDeployment,
 	isLocalUrl,
 	isPaymentsMockOn,
 	paymentsMockMode,
@@ -25,11 +26,6 @@ const OFF: PaymentsMockStatus = {
 	checkout: false,
 }
 
-function originIsLocal(env: PaymentsMockEnv) {
-	const configured = env.PAYMENTS_MOCK_ORIGIN?.trim() || env.BASE_URL?.trim()
-	return !configured || isLocalUrl(configured)
-}
-
 export function getPaymentsMockStatus(
 	request?: Request,
 	env: PaymentsMockEnv = process.env,
@@ -43,7 +39,7 @@ export function getPaymentsMockStatus(
 		return OFF
 	}
 	if (!isPaymentsMockOn(mode)) return OFF
-	if (!originIsLocal(env)) return OFF
+	if (!isLocalDeployment(env)) return OFF
 	if (request && !isLocalUrl(request.url)) return OFF
 	return { ...mode, enabled: true }
 }

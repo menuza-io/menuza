@@ -14,13 +14,13 @@ code imports it, never the emulators themselves.
 
 ## Turning it on
 
-| Switch                                           | Effect                                                     |
-| ------------------------------------------------ | ---------------------------------------------------------- |
-| `MOCKS=true`                                     | On (root `npm run dev`, Playwright set it).                |
-| `PAYMENTS_MOCK=true`                             | On without `MOCKS`.                                        |
-| `PAYMENTS_MOCK=false`                            | Forced off even with `MOCKS=true`.                         |
-| a real `STRIPE_SECRET_KEY`                       | That provider stays real (same for `CHECKOUT_SECRET_KEY`). |
-| `sk_live_`, `whsec_live_`, live Checkout.com key | Startup throws.                                            |
+| Switch                                                                                | Effect                                                     |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `MOCKS=true`                                                                          | On (root `npm run dev`, Playwright set it).                |
+| `PAYMENTS_MOCK=true`                                                                  | On without `MOCKS`.                                        |
+| `PAYMENTS_MOCK=false`                                                                 | Forced off even with `MOCKS=true`.                         |
+| a real `STRIPE_SECRET_KEY`                                                            | That provider stays real (same for `CHECKOUT_SECRET_KEY`). |
+| `sk_live_` / `rk_live_`, or a Checkout.com key that is not `sk_sbox_*` / `ack_test_*` | Startup throws (anything unrecognised counts as live).     |
 
 There is no `NODE_ENV` gate: CI runs the production Node build with
 `MOCKS=true`. Placeholder keys (`sk_test_***`) get synthetic values so
@@ -34,14 +34,18 @@ Other variables: `PAYMENTS_MOCK_ORIGIN` (hosted page origin, default
 `PAYMENTS_MOCK_WEBHOOKS_HTTP=1` (POST webhooks over HTTP instead of calling the
 route in process), `PAYMENTS_MOCK_CKO_SESSION_ID=true` (fidelity switch, below),
 `STRIPE_CONNECT_WEBHOOK_SECRET` (second secret for Connect events; the Stripe
-webhook route accepts either secret).
+webhook route accepts either secret). With no `STRIPE_WEBHOOK_SECRET` set, the
+route falls back to the mock's public secret only for a local request on a local
+deployment, so a node started with `MOCKS=true` never accepts forged events from
+elsewhere.
 
 ## Production exclusion (four layers)
 
 1. `vite.config.ts` defines `__PAYMENTS_MOCK_BUNDLED__` as
    `!(DEPLOY_TARGET=cloudflare && command=build)`. In `build:cf` the mock
    branches are dead code and tree-shaken. Where it is undefined the mock stays
-   off.
+   off. The Settings panel and its link to the mock dashboard are gated by the
+   same constant inline in `ShopCard`, so they are removed too.
 2. `app/routes.ts` drops `mock-payments+` when `STRIP_DEV_MOCKS=true`
    (`build:cf` and `scripts/cf-workers-ci.mjs` set it).
 3. Every mock route and the Settings panel answer 404 unless the mode is on
@@ -49,9 +53,11 @@ webhook route accepts either secret).
    `*.test`). Startup refuses live keys and a non-local mock origin.
 4. `node scripts/check-no-payment-mocks.mjs [dir]` fails when the bundle holds
    `__PAYMENTS_MOCK__`, `checkout-com.mock.invalid`, `__mock_pay_` or the mock
-   route ids. CI runs it after `build:cf` (`deploy.yml`, and before every Worker
-   deploy in `cf-workers-ci.mjs`). Do not point it at the Node build that
-   Playwright uses: that one keeps the mock on purpose.
+   route ids (`/mock-payments/`). `exclusion.test.ts` bundles what production
+   code imports with the define off and runs the scanner on the result. CI runs
+   it after `build:cf` (`deploy.yml`, and before every Worker deploy in
+   `cf-workers-ci.mjs`). Do not point it at the Node build that Playwright uses:
+   that one keeps the mock on purpose.
 
 ## State
 
@@ -85,6 +91,11 @@ mada card whose MIT declines (`20046`). Amounts ending `05`, `51`, `12`, `54`
 decline (`20005`, `20051`, `20012`, `20054`). The 3DS password is `Checkout1!`.
 
 ## Dev control API (`/mock-payments/dev/*`, JSON, local only)
+
+State-changing calls need `Content-Type: application/json` (415 otherwise) and
+must not be cross-site: a `Sec-Fetch-Site` other than `same-origin` or `none`,
+or an `Origin` that differs from the request origin, gets 403. curl needs
+`-H 'Content-Type: application/json'`.
 
 `POST onboard {orgSlug, provider}`, `POST stripe/sessions/:id/complete`,
 `POST checkout-com/hpp/:id/complete`, `POST sessions/:id/expire`,

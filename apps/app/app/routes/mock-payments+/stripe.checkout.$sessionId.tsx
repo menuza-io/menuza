@@ -181,7 +181,7 @@ export default function MockStripeCheckout() {
 								<Trans>Expires at {expiresAt}</Trans>
 							</p>
 							{errorCode ? (
-								<CardErrorAlert>
+								<CardErrorAlert field={actionData?.error?.field}>
 									{_(cardErrorDescriptor(errorCode))}
 								</CardErrorAlert>
 							) : null}

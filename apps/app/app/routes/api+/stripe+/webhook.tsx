@@ -45,7 +45,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	// The platform secret and, when set, the Connect secret: Connect events
 	// (`account.updated`) are signed by a second endpoint secret. Stripe's
 	// verifier compares in constant time.
-	const secrets = getStripeWebhookSecrets(process.env)
+	const secrets = getStripeWebhookSecrets(process.env, request)
 	if (secrets.length === 0) {
 		console.error('Stripe webhook secret is not configured')
 		return new Response('Webhook not configured', { status: 500 })
