@@ -1,3 +1,4 @@
+import { getStripeWebhookSecrets } from '@repo/payments'
 import { type ActionFunctionArgs } from 'react-router'
 import type Stripe from 'stripe'
 import {
@@ -45,16 +46,27 @@ export async function action({ request }: ActionFunctionArgs) {
 		return new Response('Missing signature', { status: 400 })
 	}
 
-	let event: Stripe.Event
+	// The platform secret and, when set, the Connect secret: Connect events
+	// (`account.updated`) are signed by a second endpoint secret. Stripe's
+	// verifier compares in constant time.
+	const secrets = getStripeWebhookSecrets(process.env, request)
+	if (secrets.length === 0) {
+		console.error('Stripe webhook secret is not configured')
+		return new Response('Webhook not configured', { status: 500 })
+	}
 
-	try {
-		event = stripe.webhooks.constructEvent(
-			payload,
-			signature,
-			process.env.STRIPE_WEBHOOK_SECRET!,
-		)
-	} catch (error) {
-		console.error('Webhook signature verification failed:', error)
+	let event: Stripe.Event | null = null
+	let verificationError: unknown = null
+	for (const secret of secrets) {
+		try {
+			event = stripe.webhooks.constructEvent(payload, signature, secret)
+			break
+		} catch (error) {
+			verificationError = error
+		}
+	}
+	if (!event) {
+		console.error('Webhook signature verification failed:', verificationError)
 		return new Response('Invalid signature', { status: 400 })
 	}
 

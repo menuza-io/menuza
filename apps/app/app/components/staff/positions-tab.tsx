@@ -38,6 +38,7 @@ import { toast } from 'sonner'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
+import { focusFirstInvalidField } from '#app/utils/staffing/staff-form-focus.ts'
 import {
 	minorToInput,
 	parseMoneyToMinor,
@@ -50,6 +51,11 @@ import {
 	type StaffJobRow,
 	type StaffPositionRow,
 } from '#app/utils/staffing/staff-types.ts'
+import {
+	hasErrors,
+	validateAddJobForm,
+	validateRateChangeForm,
+} from '#app/utils/staffing/staff-validation.ts'
 import { formatDateLabel } from '#app/utils/staffing/timesheet-view.ts'
 import { SelectField, TextField } from './controls.tsx'
 import { RevealGate } from './reveal-gate.tsx'
@@ -406,7 +412,12 @@ function AddPositionForm({
 	const [amount, setAmount] = useState('')
 	const [effectiveFrom, setEffectiveFrom] = useState(today)
 	const [isPrimary, setIsPrimary] = useState(true)
-	const [error, setError] = useState<string | null>(null)
+	// After the first submit, errors follow the values, so each one clears as
+	// soon as its field is valid.
+	const [submitted, setSubmitted] = useState(false)
+	const validate = () =>
+		validateAddJobForm({ positionId, payType, amount }, _, { canSetPay })
+	const errors = submitted ? validate() : {}
 
 	const scope = scopes.find((item) => item.id === scopeId)
 	const held = new Set(
@@ -455,23 +466,13 @@ function AddPositionForm({
 
 	async function add(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
-		setError(null)
-		if (!positionId) {
-			setError(_(t`Choose a position.`))
+		setSubmitted(true)
+		if (hasErrors(validate())) {
+			focusFirstInvalidField(event.currentTarget)
 			return
 		}
-		let rateMinor: number | null = null
-		if (canSetPay && amount.trim()) {
-			rateMinor = parseMoneyToMinor(amount)
-			if (rateMinor === null) {
-				setError(_(t`Enter an amount like 15.50.`))
-				return
-			}
-		}
-		if (canSetPay && payType === 'salary' && rateMinor === null) {
-			setError(_(t`Enter the yearly salary.`))
-			return
-		}
+		const rateMinor =
+			canSetPay && amount.trim() ? parseMoneyToMinor(amount) : null
 		const result = await action.run(() =>
 			client.request(`/${detail.staff.id}/jobs`, {
 				method: 'POST',
@@ -492,6 +493,7 @@ function AddPositionForm({
 		if (result.ok) {
 			toast.success(_(t`Position added.`))
 			setOpen(false)
+			setSubmitted(false)
 			setPositionId('')
 			setAmount('')
 			reloadRoster()
@@ -529,6 +531,7 @@ function AddPositionForm({
 					value={positionId}
 					onValueChange={setPositionId}
 					placeholder={_(t`Choose a position`)}
+					error={errors.positionId}
 					options={available.map((position) => ({
 						value: position.id,
 						label: position.name,
@@ -565,6 +568,7 @@ function AddPositionForm({
 							dir="ltr"
 							value={amount}
 							onChange={(event) => setAmount(event.target.value)}
+							error={errors.amount}
 							hint={
 								payType === 'hourly'
 									? _(t`Leave empty to use the position's default rate.`)
@@ -581,9 +585,9 @@ function AddPositionForm({
 				/>
 				<Trans>Their main position at this workplace</Trans>
 			</Label>
-			{error || action.error ? (
+			{action.error ? (
 				<Alert variant="destructive">
-					<AlertDescription>{error ?? action.error}</AlertDescription>
+					<AlertDescription>{action.error}</AlertDescription>
 				</Alert>
 			) : null}
 			<div className="flex items-center gap-3">
@@ -598,7 +602,10 @@ function AddPositionForm({
 					type="button"
 					variant="ghost"
 					disabled={action.pending}
-					onClick={() => setOpen(false)}
+					onClick={() => {
+						setOpen(false)
+						setSubmitted(false)
+					}}
 				>
 					<Trans>Cancel</Trans>
 				</Button>
@@ -777,20 +784,20 @@ function RateChangeForm({
 	)
 	const [effectiveFrom, setEffectiveFrom] = useState(todayLocalDate())
 	const [reason, setReason] = useState('')
-	const [error, setError] = useState<string | null>(null)
+	// After the first Save, errors follow the values, so each one clears as
+	// soon as its field is valid.
+	const [submitted, setSubmitted] = useState(false)
+	const validate = () => validateRateChangeForm({ amount, reason }, _)
+	const errors = submitted ? validate() : {}
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
-		setError(null)
+		setSubmitted(true)
+		if (hasErrors(validate())) {
+			focusFirstInvalidField(event.currentTarget)
+			return
+		}
 		const minor = parseMoneyToMinor(amount)
-		if (minor === null) {
-			setError(_(t`Enter an amount like 15.50.`))
-			return
-		}
-		if (!reason.trim()) {
-			setError(_(t`Add a reason for the change.`))
-			return
-		}
 		const result = await action.run(() =>
 			client.request(`/${staffId}/jobs/${job.id}/rate-change`, {
 				method: 'POST',
@@ -827,6 +834,7 @@ function RateChangeForm({
 					dir="ltr"
 					value={amount}
 					onChange={(event) => setAmount(event.target.value)}
+					error={errors.amount}
 				/>
 				<TextField
 					label={<Trans>Starts on</Trans>}
@@ -840,11 +848,12 @@ function RateChangeForm({
 				label={<Trans>Reason</Trans>}
 				value={reason}
 				onChange={(event) => setReason(event.target.value)}
+				error={errors.reason}
 				maxLength={300}
 			/>
-			{error || action.error ? (
+			{action.error ? (
 				<Alert variant="destructive">
-					<AlertDescription>{error ?? action.error}</AlertDescription>
+					<AlertDescription>{action.error}</AlertDescription>
 				</Alert>
 			) : null}
 			<div className="flex items-center gap-3">

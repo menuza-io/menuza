@@ -28,6 +28,7 @@ import {
 	type TimeBreakRow,
 	type TimeEntry,
 	type TimeEntryEdit,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { getScopeFacts } from '../lib/scope-context.ts'
 import { OPAQUE_ID_PATTERN } from '../lib/staff-http.ts'
@@ -105,7 +106,9 @@ async function transact<T>(
 	run: (tx: StaffDb) => Promise<TimesheetResult<T>>,
 ): Promise<TimesheetResult<T>> {
 	try {
-		return await retryOnSqliteBusy(() => ctx.db.transaction((tx) => run(tx)))
+		return await retryOnSqliteBusy(() =>
+			runTenantTransaction(ctx.db, (tx) => run(tx)),
+		)
 	} catch (error) {
 		const mapped = mapWriteError(error)
 		if (mapped) return mapped

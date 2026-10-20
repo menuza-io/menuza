@@ -1,0 +1,1 @@
+ALTER TABLE `customer_subscriptions` ADD `confirmed_email_hash` text;

@@ -119,7 +119,9 @@ export function SelectField({
 	placeholder,
 	disabled,
 	id,
+	testId,
 }: BaseFieldProps & {
+	testId?: string
 	options: readonly Option[]
 	value: string
 	onValueChange: (value: string) => void
@@ -151,6 +153,7 @@ export function SelectField({
 			>
 				<SelectTrigger
 					id={fieldId}
+					data-testid={testId}
 					className="h-11 w-full md:h-8"
 					aria-invalid={error ? true : undefined}
 					aria-describedby={describedBy}
@@ -180,12 +183,16 @@ export function FilterSelect({
 	value,
 	onValueChange,
 	className,
+	id,
+	testId,
 }: {
 	label: string
 	options: readonly Option[]
 	value: string
 	onValueChange: (value: string) => void
 	className?: string
+	id?: string
+	testId?: string
 }) {
 	return (
 		<Select
@@ -194,6 +201,8 @@ export function FilterSelect({
 			onValueChange={(next) => next !== null && onValueChange(next)}
 		>
 			<SelectTrigger
+				id={id}
+				data-testid={testId}
 				aria-label={label}
 				className={cn('h-11 w-full md:h-8 md:w-auto md:min-w-36', className)}
 			>

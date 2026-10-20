@@ -240,6 +240,8 @@ export async function createErasureRequest(
 		.where(
 			and(
 				eq(UserOrganization.userId, userId),
+				// An inactive membership cannot be the sole active admin.
+				eq(UserOrganization.active, true),
 				eq(OrganizationRole.name, 'admin'),
 				isNull(OrganizationRole.organizationId),
 			),

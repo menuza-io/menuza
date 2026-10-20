@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+	define: { __PAYMENTS_MOCK_BUNDLED__: 'true' },
 	test: {
 		globals: true,
 		environment: 'node',

@@ -39,6 +39,7 @@ import {
 	type StaffMember,
 	type TenantDatabase,
 	type TimeEntry,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import {
@@ -70,6 +71,7 @@ import {
 	refreshStaffCaches,
 } from './time-entry-calc.ts'
 import { snapshotCard } from './timesheet-write-service.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * The regional tick: one idempotent pass over an organization's time clock that
@@ -362,7 +364,7 @@ async function loadOpenEntries(db: StaffDb): Promise<OpenEntry[]> {
 		.from(timeBreaks)
 		.where(
 			and(
-				inArray(
+				inJsonList(
 					timeBreaks.entryId,
 					rows.map((row) => row.entry.id),
 				),
@@ -420,7 +422,7 @@ async function autoClockOutTask(
 		})
 		try {
 			const closed = await retryOnSqliteBusy(() =>
-				ctx.db.transaction((tx) =>
+				runTenantTransaction(ctx.db, (tx) =>
 					closeEntryAutomatically(tx, ctx, item, policy, closeAt),
 				),
 			)
@@ -734,7 +736,7 @@ async function loadStaff(
 	const rows = await db
 		.select()
 		.from(staffMembers)
-		.where(inArray(staffMembers.id, [...ids]))
+		.where(inJsonList(staffMembers.id, [...ids]))
 	return new Map(rows.map((row) => [row.id, row]))
 }
 
@@ -1238,6 +1240,7 @@ async function deliverOutbox(
 			and(
 				eq(notificationOutbox.status, 'pending'),
 				lte(notificationOutbox.nextAttemptAt, ctx.now),
+				// bounded: a handful of notification kinds
 				inArray(notificationOutbox.kind, kinds),
 			),
 		)
@@ -1497,6 +1500,7 @@ export async function runStaffTickForOrg(
 					.where(
 						and(
 							eq(notificationOutbox.status, 'pending'),
+							// bounded: a handful of notification kinds
 							inArray(notificationOutbox.kind, kinds),
 						),
 					)

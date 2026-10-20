@@ -19,6 +19,10 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import {
+	getPaymentsMockStatus,
+	requirePaymentsMock,
+} from '#app/utils/payments-mock/gate.server.ts'
+import {
 	checkRateLimit,
 	SHOP_CONNECT_ONBOARDING_RATE_LIMIT,
 } from '#app/utils/rate-limit.server.ts'
@@ -124,6 +128,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orders,
 		ordersUnavailable,
 		configuredProcessors: listConfiguredShopProcessors(),
+		// Dev and CI only: always `enabled: false` in a production build.
+		paymentsMock: getPaymentsMockStatus(request),
 	}
 }
 
@@ -281,6 +287,41 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return redirect(url)
 	}
 
+	if (intent === 'mock-onboard-stripe' || intent === 'mock-onboard-checkout') {
+		// Dev and CI only. The branch is compiled out of the Cloudflare
+		// production build; elsewhere the gate answers 404 unless the mock is on
+		// and the request is local.
+		if (
+			typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&
+			__PAYMENTS_MOCK_BUNDLED__
+		) {
+			const provider = intent === 'mock-onboard-stripe' ? 'stripe' : 'checkout'
+			requirePaymentsMock(request, provider)
+			const { mockOnboardOrganization } =
+				await import('#app/utils/payments-mock/onboard.server.ts')
+			const result = await mockOnboardOrganization({
+				orgSlug: organization.slug,
+				provider,
+			})
+			if (!result.ok) {
+				return redirectWithToast(`/${organization.slug}/settings/shop`, {
+					title: 'Mock setup failed',
+					description:
+						result.error === 'us_only'
+							? 'Shop payouts are available for US organizations only.'
+							: 'The mock could not enable this provider.',
+					type: 'error',
+				})
+			}
+			return redirectWithToast(`/${organization.slug}/settings/shop`, {
+				title: 'Mock payments enabled',
+				description: 'This organization can now take mock online payments.',
+				type: 'success',
+			})
+		}
+		throw new Response('Not Found', { status: 404 })
+	}
+
 	if (intent === 'enable-hosted-checkout') {
 		if (organization.dataRegion !== 'us') {
 			return redirectWithToast(`/${organization.slug}/settings/shop`, {
@@ -388,8 +429,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ShopSettingsRoute() {
-	const { organization, orders, ordersUnavailable, configuredProcessors } =
-		useLoaderData<typeof loader>()
+	const {
+		organization,
+		orders,
+		ordersUnavailable,
+		configuredProcessors,
+		paymentsMock,
+	} = useLoaderData<typeof loader>()
 
 	return (
 		<AnnotatedLayout>
@@ -399,6 +445,7 @@ export default function ShopSettingsRoute() {
 					orders={orders}
 					ordersUnavailable={ordersUnavailable}
 					configuredProcessors={configuredProcessors}
+					paymentsMock={paymentsMock}
 				/>
 			</AnnotatedSection>
 		</AnnotatedLayout>

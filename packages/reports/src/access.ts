@@ -4,12 +4,14 @@ import {
 	isStaffingReportSubject,
 } from './catalog-staffing.ts'
 import { type ReportDefinition } from './dsl.ts'
+import { isOrgWideReportSubject } from './org-wide-subjects.ts'
 import { referencedFieldIds } from './engine.ts'
 import { type ReportTemplate } from './templates.ts'
 
 /**
  * What a person is offered in the Reports screens. Staff subjects (time cards,
- * shifts, daily labor, applications) and the fields that show one person's pay
+ * shifts, daily labor, applications) and the organization-wide ones (customers,
+ * shop orders) and the fields that show one person's pay
  * exist for someone only while their token grants them: with the staffing flag
  * off or without the permission, they are absent from the subject list, the
  * field pickers and the templates, as if the module did not exist. The regional
@@ -18,6 +20,11 @@ import { type ReportTemplate } from './templates.ts'
  *
  * `granted` is the restricted subjects the reports token lists.
  */
+
+/** Subjects that exist for someone only while their token grants them. */
+function isGatedSubject(subject: string) {
+	return isStaffingReportSubject(subject) || isOrgWideReportSubject(subject)
+}
 
 function fieldAvailable(
 	field: { requiresSubject?: string },
@@ -37,7 +44,7 @@ export function catalogForGrants(
 	const set = new Set(granted)
 	const subjects: ReportSubject[] = []
 	for (const subject of catalog.subjects) {
-		if (isStaffingReportSubject(subject.id) && !set.has(subject.id)) continue
+		if (isGatedSubject(subject.id) && !set.has(subject.id)) continue
 		subjects.push({
 			...subject,
 			fields: subject.fields.filter((field) => fieldAvailable(field, set)),
@@ -62,7 +69,7 @@ export function definitionAllowed(
 		(item) => item.id === definition.subject,
 	)
 	if (!subject) return true
-	if (isStaffingReportSubject(subject.id) && !set.has(subject.id)) return false
+	if (isGatedSubject(subject.id) && !set.has(subject.id)) return false
 	for (const id of referencedFieldIds(subject, definition)) {
 		const field = getField(subject, id)
 		if (field && !fieldAvailable(field, set)) return false

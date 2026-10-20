@@ -21,6 +21,7 @@ import {
 	staffMembers,
 	type StaffMember,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { hmacHash } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
@@ -104,7 +105,7 @@ export async function verifyKioskPin(
 	const { device } = input
 
 	return retryOnSqliteBusy(() =>
-		db.transaction(async (tx): Promise<PinResult> => {
+		runTenantTransaction(db, async (tx): Promise<PinResult> => {
 			const [attemptRow] = await tx
 				.select()
 				.from(kioskAttempts)

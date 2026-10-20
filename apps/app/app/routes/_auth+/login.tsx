@@ -54,7 +54,7 @@ import {
 	discoverOrganizationFromEmail,
 } from '#app/utils/organization/organizations.server.ts'
 import { ssoConfigurationService } from '#app/utils/sso/configuration.server.ts'
-import { checkSSOEnforcementByEmail } from '#app/utils/sso/enforcement.server.ts'
+import { checkSSOEnforcementByIdentifier } from '#app/utils/sso/enforcement.server.ts'
 import { type Route } from './+types/login.ts'
 import { handleNewSession } from './login.server.ts'
 
@@ -172,7 +172,9 @@ export async function action({ request }: Route.ActionArgs) {
 				if (intent !== null) return { ...data, session: null }
 
 				// Check SSO enforcement before allowing password login
-				const ssoEnforcement = await checkSSOEnforcementByEmail(data.username)
+				const ssoEnforcement = await checkSSOEnforcementByIdentifier(
+					data.username,
+				)
 				if (ssoEnforcement.enforced) {
 					ctx.addIssue({
 						code: z.ZodIssueCode.custom,

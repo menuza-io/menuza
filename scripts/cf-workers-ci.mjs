@@ -45,6 +45,7 @@ const APPS = {
 		turboFilter: 'app',
 		buildEnv: {
 			NODE_OPTIONS: '--max-old-space-size=6144',
+			STRIP_DEV_MOCKS: 'true',
 			DEPLOY_TARGET: 'cloudflare',
 		},
 		deploy: {
@@ -208,6 +209,11 @@ function buildApp(appKey) {
 				...(config.sitesBuildEnv ? sitesBuildEnv(deployEnv) : {}),
 			},
 		})
+	}
+
+	// A Worker bundle that contains the payment mock must never be deployed.
+	if (appKey === 'app') {
+		run('node', ['scripts/check-no-payment-mocks.mjs', 'apps/app/build'])
 	}
 
 	patchWrangler(appKey, deployEnv)

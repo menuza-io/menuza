@@ -183,6 +183,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 		const key = generateApiKey()
 		const expiresAt = formData.get('expiresAt')
+		const parsedExpiresAt =
+			expiresAt && typeof expiresAt === 'string' ? new Date(expiresAt) : null
+		invariantResponse(
+			!parsedExpiresAt || !Number.isNaN(parsedExpiresAt.getTime()),
+			'Expiration date is invalid',
+		)
 
 		const crypto = await import('node:crypto')
 		// Use base64 to prevent CodeQL from falsely flagging this as an insecure password hash
@@ -198,10 +204,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				name,
 				userId: user.id,
 				organizationId: organization.id,
-				expiresAt:
-					expiresAt && typeof expiresAt === 'string'
-						? new Date(expiresAt)
-						: null,
+				expiresAt: parsedExpiresAt,
 			})
 			.returning()
 		if (!createdKey) throw new Error('Failed to create API key')

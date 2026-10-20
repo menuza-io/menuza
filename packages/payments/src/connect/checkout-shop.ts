@@ -18,6 +18,8 @@ export type CheckoutShopConfig = {
 	subdomain: string
 	processingChannelId: string
 	environment?: 'sandbox' | 'production'
+	/** Point the SDK at another API host (the local payment mock). */
+	host?: string
 }
 
 export type CheckoutSubEntityStatus = {
@@ -30,6 +32,7 @@ export type CheckoutSubEntityStatus = {
 export type CheckoutShopPaymentSession = {
 	id: string
 	url: string
+	reference?: string
 	amountCents: number
 	currency: string
 	metadata: Record<string, string>
@@ -37,10 +40,15 @@ export type CheckoutShopPaymentSession = {
 
 export type CheckoutShopPayment = {
 	id: string
+	/** `processing.payment_session_id`; HPP payments may not carry it. */
 	sessionId: string | null
+	/** Merchant reference the hosted page was created with. */
+	reference: string | null
 	amountCents: number
 	currency: string
 	paid: boolean
+	/** Provider status (e.g. `Declined`), used to tell failed from pending. */
+	status?: string
 	metadata: Record<string, string>
 	productName: string
 }
@@ -63,6 +71,7 @@ export function createCheckoutShopClient(
 		pk: config.publicKey,
 		subdomain: config.subdomain,
 		environment: config.environment ?? 'sandbox',
+		...(config.host ? { host: config.host } : {}),
 	})
 }
 
@@ -123,7 +132,11 @@ export async function retrieveCheckoutSubEntityStatus(
 	}
 }
 
-export async function createCheckoutShopPaymentSession(
+/**
+ * Create a Hosted Payments Page (`POST /hosted-payments`). Unlike the Flow
+ * `payment-sessions` call this returns a redirect link the guest can open.
+ */
+export async function createCheckoutShopHostedPayment(
 	client: CheckoutShopClient,
 	options: {
 		subEntityId: string
@@ -133,6 +146,7 @@ export async function createCheckoutShopPaymentSession(
 		processingChannelId: string
 		successUrl: string
 		failureUrl: string
+		cancelUrl?: string
 		metadata: Record<string, string>
 		customerEmail?: string | null
 		/** Merchant reference; defaults to the metadata orgId (shop behavior). */
@@ -144,15 +158,17 @@ export async function createCheckoutShopPaymentSession(
 	const { platformFeeCents, orgPayoutCents } = calculateShopFees(
 		options.amountCents,
 	)
+	const reference = options.reference || options.metadata.orgId || 'shop_order'
 
 	const body = {
 		amount: options.amountCents,
 		currency: (options.currency || 'usd').toUpperCase(),
-		reference: options.reference || options.metadata.orgId || 'shop_order',
+		reference,
 		description: options.productName.slice(0, 100),
 		processing_channel_id: options.processingChannelId,
 		success_url: options.successUrl,
 		failure_url: options.failureUrl,
+		cancel_url: options.cancelUrl || options.failureUrl,
 		billing: {
 			address: {
 				country: options.billingCountry || 'US',
@@ -178,7 +194,7 @@ export async function createCheckoutShopPaymentSession(
 		],
 	}
 
-	const session = (await client.paymentSessions.request(body)) as {
+	const session = (await client.hostedPayments.create(body as never)) as {
 		id?: string
 		_links?: {
 			redirect?: { href?: string }
@@ -187,7 +203,7 @@ export async function createCheckoutShopPaymentSession(
 	}
 
 	if (!session.id) {
-		throw new Error('Checkout.com did not return a payment session id')
+		throw new Error('Checkout.com did not return a hosted payment id')
 	}
 
 	const redirectUrl = session._links?.redirect?.href
@@ -198,30 +214,69 @@ export async function createCheckoutShopPaymentSession(
 	return {
 		id: session.id,
 		url: redirectUrl,
+		reference,
 		amountCents: options.amountCents,
 		currency: options.currency || 'usd',
 		metadata: metadataRecord(options.metadata),
 	}
 }
 
-export async function retrieveCheckoutShopPayment(
+/** Hosted page status and, once paid, the payment id (`GET /hosted-payments/{id}`). */
+export async function retrieveCheckoutHostedPayment(
 	client: CheckoutShopClient,
-	paymentId: string,
-): Promise<CheckoutShopPayment> {
-	const payment = (await client.payments.get(paymentId)) as {
+	hostedPaymentId: string,
+) {
+	const hosted = (await client.hostedPayments.get(hostedPaymentId)) as {
 		id?: string
-		amount?: number
-		currency?: string
-		approved?: boolean
 		status?: string
-		metadata?: Record<string, string | number | boolean>
+		payment_id?: string | null
 		reference?: string
-		description?: string
-		processing?: {
-			payment_session_id?: string
-		}
 	}
+	return {
+		id: hosted.id ?? hostedPaymentId,
+		status: hosted.status ?? 'unknown',
+		paymentId: hosted.payment_id ?? null,
+		reference: hosted.reference ?? null,
+	}
+}
 
+/**
+ * Payments made for one merchant reference (`POST /payments/search`), newest
+ * first. This is how a status poll finds a payment with no webhook and no
+ * stored payment id.
+ */
+export async function findCheckoutShopPaymentsByReference(
+	client: CheckoutShopClient,
+	reference: string,
+): Promise<CheckoutShopPayment[]> {
+	const escaped = reference.replaceAll("'", '')
+	const result = (await client.payments.search({
+		query: `reference:'${escaped}'`,
+		limit: 20,
+	} as never)) as { data?: Array<Record<string, unknown>> }
+	return (result.data ?? []).map((payment) =>
+		toCheckoutShopPayment(payment as never, String(payment.id ?? '')),
+	)
+}
+
+type RawCheckoutPayment = {
+	id?: string
+	amount?: number
+	currency?: string
+	approved?: boolean
+	status?: string
+	metadata?: Record<string, string | number | boolean>
+	reference?: string
+	description?: string
+	processing?: {
+		payment_session_id?: string
+	}
+}
+
+function toCheckoutShopPayment(
+	payment: RawCheckoutPayment,
+	fallbackId: string,
+): CheckoutShopPayment {
 	const metadata = metadataRecord(payment.metadata)
 	const paid =
 		payment.approved === true ||
@@ -229,11 +284,13 @@ export async function retrieveCheckoutShopPayment(
 		payment.status === 'Captured'
 
 	return {
-		id: payment.id ?? paymentId,
+		id: payment.id ?? fallbackId,
 		sessionId: payment.processing?.payment_session_id ?? null,
+		reference: payment.reference ?? null,
 		amountCents: payment.amount ?? 0,
 		currency: payment.currency?.toLowerCase() || 'usd',
 		paid,
+		status: payment.status,
 		metadata,
 		productName:
 			metadata.productName ||
@@ -241,6 +298,14 @@ export async function retrieveCheckoutShopPayment(
 			payment.reference ||
 			'Product',
 	}
+}
+
+export async function retrieveCheckoutShopPayment(
+	client: CheckoutShopClient,
+	paymentId: string,
+): Promise<CheckoutShopPayment> {
+	const payment = (await client.payments.get(paymentId)) as RawCheckoutPayment
+	return toCheckoutShopPayment(payment, paymentId)
 }
 
 export function checkoutPaymentStatusToOrderStatus(
@@ -293,35 +358,17 @@ export function mapCheckoutWebhookToPayment(event: {
 	])
 	if (!relevantTypes.has(event.type)) return null
 
-	const data = event.data as {
-		id?: string
-		amount?: number
-		currency?: string
-		approved?: boolean
-		status?: string
-		metadata?: Record<string, string | number | boolean>
-		reference?: string
-		description?: string
-		processing?: {
-			payment_session_id?: string
-		}
-	}
+	const data = event.data as RawCheckoutPayment
 	if (!data.id) return null
 
-	const metadata = metadataRecord(data.metadata)
 	const paid =
 		event.type === 'payment_approved' ||
 		event.type === 'payment_captured' ||
 		data.approved === true
 
 	return {
-		id: data.id,
-		sessionId: data.processing?.payment_session_id ?? null,
-		amountCents: data.amount ?? 0,
-		currency: data.currency?.toLowerCase() || 'usd',
+		...toCheckoutShopPayment(data, data.id),
 		paid,
-		metadata,
-		productName:
-			metadata.productName || data.description || data.reference || 'Product',
+		status: event.type === 'payment_declined' ? 'Declined' : data.status,
 	}
 }

@@ -99,7 +99,10 @@ function monthDate(
 	day: number,
 ): string {
 	const target = shiftMonth(year, month, delta)
-	return formatDate(target.year, target.month, day)
+	// A boundary day a short month lacks (D + 15 = 29 in February) falls on the
+	// month's last day, so the date is always real and periods stay contiguous.
+	const lastDay = new Date(Date.UTC(target.year, target.month, 0)).getUTCDate()
+	return formatDate(target.year, target.month, Math.min(day, lastDay))
 }
 
 function dayOfMonthAnchor(
@@ -144,7 +147,7 @@ export function payPeriodFor(date: string, config: PayPeriodConfig): PayPeriod {
 	const second = anchorDay + 15
 	let start: string
 	let end: string
-	if (day >= second) {
+	if (day >= parseDate(monthDate(year, month, 0, second)).day) {
 		start = monthDate(year, month, 0, second)
 		end = addDays(monthDate(year, month, 1, anchorDay), -1)
 	} else if (day >= anchorDay) {

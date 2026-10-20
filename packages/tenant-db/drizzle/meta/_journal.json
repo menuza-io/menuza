@@ -113,6 +113,27 @@
 			"when": 1791960342824,
 			"tag": "0015_hiring_interested_scopes",
 			"breakpoints": true
+		},
+		{
+			"idx": 16,
+			"version": "6",
+			"when": 1792532034810,
+			"tag": "0016_person_erasure_log",
+			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "6",
+			"when": 1792532035810,
+			"tag": "0017_customer_subscription_email_confirmation",
+			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "6",
+			"when": 1792532036810,
+			"tag": "0018_customer_subscription_confirmation_sent",
+			"breakpoints": true
 		}
 	]
 }

@@ -9,6 +9,7 @@
   "exports": {
     "./order-receipt": "./src/order-receipt.ts",
     "./mailbox": "./src/mailbox.ts",
+    "./phone": "./src/phone.ts",
     "./chat": "./src/chat.ts",
     "./chat-markdown": "./src/chat-markdown.ts",
     ".": {

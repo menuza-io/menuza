@@ -19,6 +19,7 @@ import {
 	type DashboardConfig,
 } from '#app/utils/dashboards/config.ts'
 import { appendBlock, removeBlock } from '#app/utils/dashboards/layout.ts'
+import { reportTemplateGroups } from '#app/utils/dashboards/reports.ts'
 import {
 	insertTestDashboard,
 	insertTestMember,
@@ -323,11 +324,19 @@ describe('Home dashboard loader', () => {
 		expect(data.picker.savedReports).toEqual([
 			{ id: own.id, title: 'Our notes', subjectLabel: 'Notes' },
 		])
-		expect(
-			data.picker.templateGroups.flatMap((group) =>
+		// The picker lists only the templates the person's reports token covers.
+		// An admin holds the organization-wide subjects (customers, shop orders)
+		// but not the staff ones, which need the staffing flags and grants.
+		const offered = data.picker.templateGroups.flatMap((group) =>
+			group.templates.map((template) => template.id),
+		)
+		expect(offered).toEqual(
+			reportTemplateGroups(['customers', 'shop_orders']).flatMap((group) =>
 				group.templates.map((template) => template.id),
 			),
-		).toEqual(organizationTemplates().map((template) => template.id))
+		)
+		expect(offered.length).toBeGreaterThan(0)
+		expect(offered.length).toBeLessThan(organizationTemplates().length)
 	})
 
 	it('only loads report data when Home has report blocks', async () => {

@@ -175,6 +175,43 @@ describe('reports token for staff subjects', () => {
 		expect(claims.scopeIds).toBeNull()
 	})
 
+	it('mints a staff-only token for a manager without analytics access', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		await setFlags(organization.id, ['enabled', 'timeclock'])
+		const { cookie } = await manager(organization.id, [
+			P.READ_STAFF,
+			P.READ_TIMESHEET,
+		])
+		const { subjects, claims } = await mint(organization.slug, cookie)
+		expect(subjects).toEqual(['time_entries'])
+		expect(claims.subjects).toEqual(['time_entries'])
+		for (const orgWide of ['customers', 'shop_orders', 'phone_calls']) {
+			expect(subjects).not.toContain(orgWide)
+			expect(claims.subjects).not.toContain(orgWide)
+		}
+	})
+
+	it('refuses a manager with neither analytics nor a staff report grant', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		// Flags off: the staffing grants cover no subject.
+		const { cookie } = await manager(organization.id, [
+			P.READ_STAFF,
+			P.READ_TIMESHEET,
+		])
+		await expect(
+			loader(args(organization.slug, 'reports/token', cookie)),
+		).rejects.toMatchObject({ status: 403 })
+	})
+
+	it('lists the org-wide subjects for analytics access', async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const { cookie } = await manager(organization.id, [ANALYTICS])
+		const { subjects } = await mint(organization.slug, cookie)
+		expect(subjects).toEqual(
+			expect.arrayContaining(['customers', 'shop_orders']),
+		)
+	})
+
 	it('never lets a token that can unlock staff data be cached', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		await setFlags(organization.id, ['enabled', 'timeclock'])

@@ -31,6 +31,7 @@ import {
 	timePunches,
 	type KioskDevice,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
@@ -363,7 +364,7 @@ export async function processPunch(
 	for (let attempt = 0; attempt < 2; attempt++) {
 		try {
 			return await retryOnSqliteBusy(() =>
-				db.transaction((tx) => runPunch(tx, subject, request, deps)),
+				runTenantTransaction(db, (tx) => runPunch(tx, subject, request, deps)),
 			)
 		} catch (error) {
 			if (attempt === 0 && isUniqueViolation(error)) continue

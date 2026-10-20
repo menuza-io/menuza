@@ -13,6 +13,10 @@ import { InvoicesCard } from '#app/components/settings/cards/organization/invoic
 import { getLaunchStatus } from '#app/utils/env.server.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
+	requireUserWithOrganizationPermission,
+	ORG_PERMISSIONS,
+} from '#app/utils/organization/permissions.server.ts'
+import {
 	checkoutAction,
 	customerPortalAction,
 	getPlansAndPrices,
@@ -119,6 +123,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	) {
 		throw new Response('Not Found', { status: 404 })
 	}
+
+	// Changing the plan or opening the billing portal is an admin operation.
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+	)
 
 	const formData = await request.formData()
 	const intent = formData.get('intent')

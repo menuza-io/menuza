@@ -370,7 +370,7 @@ describe('POST /query order reports', () => {
 			userId: 'user_1',
 			orgId,
 			role: 'operator',
-			subjects,
+			subjects: ['customers', 'shop_orders', ...subjects],
 		})
 		const res = await analyticsRoutes.request('/query', {
 			method: 'POST',

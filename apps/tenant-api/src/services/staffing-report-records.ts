@@ -53,6 +53,7 @@ import {
 	selectCardRows,
 } from './timesheet-shared.ts'
 import { FrameCache } from './schedule-shared.ts'
+import { queryInChunks } from '../lib/chunked-in.ts'
 
 /**
  * Report records for the staff subjects: `time_entries`, `shifts`,
@@ -223,24 +224,26 @@ async function loadShiftIndex(
 ) {
 	const byId = new Map<string, ShiftStart>()
 	const byStaffDate = new Map<string, ShiftStart[]>()
-	for (let i = 0; i < staffIds.length; i += 400) {
-		const rows = await db
-			.select({
-				id: shifts.id,
-				staffId: shifts.staffId,
-				startsAt: shifts.startsAt,
-				localDate: shifts.localDate,
-			})
-			.from(shifts)
-			.where(
-				and(
-					inArray(shifts.staffId, staffIds.slice(i, i + 400)),
-					eq(shifts.status, 'published'),
-					isNull(shifts.cancelledAt),
-					between(shifts.localDate, fromDate, toDate),
-					scopeWhere.where(shifts.scopeId),
+	{
+		const rows = await queryInChunks(staffIds, (chunk) =>
+			db
+				.select({
+					id: shifts.id,
+					staffId: shifts.staffId,
+					startsAt: shifts.startsAt,
+					localDate: shifts.localDate,
+				})
+				.from(shifts)
+				.where(
+					and(
+						inArray(shifts.staffId, chunk),
+						eq(shifts.status, 'published'),
+						isNull(shifts.cancelledAt),
+						between(shifts.localDate, fromDate, toDate),
+						scopeWhere.where(shifts.scopeId),
+					),
 				),
-			)
+		)
 		for (const row of rows) {
 			const shift = { id: row.id, staffId: row.staffId, startsAt: row.startsAt }
 			byId.set(row.id, shift)
