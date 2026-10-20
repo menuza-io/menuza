@@ -312,4 +312,66 @@ describe('Operator Routes', () => {
 			t: 'marketing',
 		})
 	})
+
+	it('sends no broadcast email in production without TENANT_API_URL', async () => {
+		const saved = {
+			NODE_ENV: process.env.NODE_ENV,
+			TENANT_API_URL: process.env.TENANT_API_URL,
+		}
+		process.env.NODE_ENV = 'production'
+		process.env.TENANT_API_URL = ''
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+		vi.mocked(sendTenantEmail).mockClear()
+		try {
+			const db = await getTenantDb(testOrgId)
+			const [subscribed] = await db
+				.insert(customers)
+				.values([{ name: 'Subscribed', email: 'in@example.com' }])
+				.returning()
+			await db.insert(customerSubscriptions).values({
+				customerId: subscribed!.id,
+				topic: 'marketing',
+				channel: 'email',
+				source: 'signup',
+				subscribedAt: new Date(),
+				confirmedEmailHash: emailConsentHash('in@example.com'),
+			})
+			const res = await app.request('/operator/marketing/campaigns', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${validToken}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					name: 'No origin',
+					channel: 'email',
+					subject: 'Hello',
+					content: 'Hi',
+					audience: 'all',
+				}),
+			})
+			const body = await res.json()
+			await vi.waitFor(
+				async () => {
+					const [camp] = await db
+						.select()
+						.from(marketingCampaigns)
+						.where(eq(marketingCampaigns.id, body.campaignId))
+					expect(camp?.status).toBe('Completed')
+				},
+				{ timeout: 3000, interval: 50 },
+			)
+			expect(sendTenantEmail).not.toHaveBeenCalled()
+			const messages = await db
+				.select()
+				.from(marketingMessages)
+				.where(eq(marketingMessages.campaignId, body.campaignId))
+			expect(messages.map((m) => m.status)).toEqual(['Failed'])
+			expect(JSON.stringify(log.mock.calls)).not.toContain('in@example.com')
+		} finally {
+			log.mockRestore()
+			process.env.NODE_ENV = saved.NODE_ENV ?? ''
+			process.env.TENANT_API_URL = saved.TENANT_API_URL ?? ''
+		}
+	})
 })

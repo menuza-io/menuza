@@ -565,6 +565,17 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		let hitCap = false
 		const BATCH_SIZE = 25
 
+		// The unsubscribe link carries a signed token, so its origin must be the
+		// configured one. Without it no email goes out (each one is marked
+		// Failed); ids only in the log.
+		const consentOrigin = campaign.channel === 'email' ? consentBaseUrl() : null
+		if (campaign.channel === 'email' && !consentOrigin) {
+			console.error('Broadcast emails skipped: TENANT_API_URL is not set', {
+				orgId,
+				campaignId,
+			})
+		}
+
 		// 2. Dispatch in concurrency batches
 		for (let i = 0; i < targetCustomers.length; i += BATCH_SIZE) {
 			const chunk = targetCustomers.slice(i, i + BATCH_SIZE)
@@ -613,7 +624,8 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 						if (!customer.email) throw new Error('No email address')
 						// Every broadcast carries a signed unsubscribe link, in the
 						// body and as List-Unsubscribe / one-click headers.
-						const optOutUrl = unsubscribeUrl(consentBaseUrl(), {
+						if (!consentOrigin) throw new Error('TENANT_API_URL is not set')
+						const optOutUrl = unsubscribeUrl(consentOrigin, {
 							orgId,
 							customerId: customer.id,
 							topic: BROADCAST_TOPIC,
