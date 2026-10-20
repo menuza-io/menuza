@@ -19,6 +19,7 @@ import {
 	type NewShiftRow,
 	type ShiftRow,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { type ScopeAccess } from '../lib/staff-auth.ts'
@@ -112,7 +113,7 @@ export async function transact<T>(
 ): Promise<ScheduleResult<T>> {
 	try {
 		return await retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				const result = await run(tx)
 				if (!result.ok) throw new RefusedResult(result)
 				return result

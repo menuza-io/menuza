@@ -50,6 +50,7 @@ import {
 	type HiringInterviewRow,
 	type HiringNoteRow,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -121,7 +122,7 @@ function write<T>(
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 	) => Promise<T>,
 ): Promise<T> {
-	return retryOnSqliteBusy(() => db.transaction(fn))
+	return retryOnSqliteBusy(() => runTenantTransaction(db, fn))
 }
 
 function isUniqueViolation(error: unknown, hints: string[] = []): boolean {

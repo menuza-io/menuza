@@ -33,6 +33,7 @@ import {
 	type SchedulePublicationRow,
 	type StaffMember,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import { scheduleLinkUrl } from '../lib/schedule-link.ts'
@@ -462,7 +463,7 @@ export async function resendNotices(
 		ctx.db,
 		recipients.map((r) => r.staffId),
 	)
-	const result = await ctx.db.transaction(async (tx) => {
+	const result = await runTenantTransaction(ctx.db, async (tx) => {
 		const queued = await enqueueNotices(tx, {
 			publication: {
 				id: publication.id,
@@ -656,7 +657,7 @@ export async function revokeLink(
 ): Promise<ScheduleResult<ScheduleLinkStatus>> {
 	const person = await visibleStaff(ctx, staffId)
 	if (!person.ok) return person
-	await ctx.db.transaction(async (tx) => {
+	await runTenantTransaction(ctx.db, async (tx) => {
 		const revoked = await revokeScheduleLink(
 			tx,
 			staffId,

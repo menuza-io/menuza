@@ -39,6 +39,7 @@ import {
 	type StaffMember,
 	type TenantDatabase,
 	type TimeEntry,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import {
@@ -420,7 +421,7 @@ async function autoClockOutTask(
 		})
 		try {
 			const closed = await retryOnSqliteBusy(() =>
-				ctx.db.transaction((tx) =>
+				runTenantTransaction(ctx.db, (tx) =>
 					closeEntryAutomatically(tx, ctx, item, policy, closeAt),
 				),
 			)

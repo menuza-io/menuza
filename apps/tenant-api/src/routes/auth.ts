@@ -12,6 +12,7 @@ import {
 	customers,
 	getTenantDb,
 	TENANT_ORG_ID_PATTERN,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import {
 	findActiveOrganizationById,
@@ -584,7 +585,7 @@ authRoutes.post(
 			Date.now() + REFRESH_TOKEN_EXPIRY_MS,
 		)
 		const rotation = await retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				const revokeAll = async (customerId: string) => {
 					const now = new Date()
 					await tx

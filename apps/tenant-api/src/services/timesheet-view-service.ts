@@ -36,6 +36,7 @@ import {
 	timeEntryEdits,
 	timePunches,
 	type TimeEntryEdit,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { OPAQUE_ID_PATTERN } from '../lib/staff-http.ts'
 import { getDefaultPolicy } from './labor-policy-service.ts'
@@ -128,7 +129,7 @@ export async function updatePayPeriodSettings(
 			problems: [{ path: 'payPeriodAnchor', code: 'anchor_day_unsupported' }],
 		})
 	}
-	await ctx.db.transaction(async (tx) => {
+	await runTenantTransaction(ctx.db, async (tx) => {
 		const before = await getSettings(tx)
 		if (
 			before.payPeriod === input.payPeriod &&

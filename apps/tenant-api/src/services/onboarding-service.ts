@@ -41,6 +41,7 @@ import {
 	type StaffCertificateRow,
 	type StaffMember,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
@@ -93,7 +94,7 @@ function write<T>(
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 	) => Promise<T>,
 ): Promise<T> {
-	return retryOnSqliteBusy(() => db.transaction(fn))
+	return retryOnSqliteBusy(() => runTenantTransaction(db, fn))
 }
 
 /** Test seam: the clock. */
