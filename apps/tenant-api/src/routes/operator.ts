@@ -566,14 +566,21 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		const BATCH_SIZE = 25
 
 		// The unsubscribe link carries a signed token, so its origin must be the
-		// configured one. Without it no email goes out (each one is marked
-		// Failed); ids only in the log.
+		// configured one. Without it no email can go out: fail the campaign now,
+		// before any per-recipient work, so the operator sees a Failed broadcast
+		// instead of a Completed one that delivered nothing. The campaign row has
+		// no reason column, so the generic reason goes to the log (ids only).
 		const consentOrigin = campaign.channel === 'email' ? consentBaseUrl() : null
 		if (campaign.channel === 'email' && !consentOrigin) {
-			console.error('Broadcast emails skipped: TENANT_API_URL is not set', {
+			console.error('Broadcast failed: TENANT_API_URL is not set', {
 				orgId,
 				campaignId,
 			})
+			await db
+				.update(marketingCampaigns)
+				.set({ status: 'Failed' })
+				.where(eq(marketingCampaigns.id, campaignId))
+			return
 		}
 
 		// 2. Dispatch in concurrency batches
