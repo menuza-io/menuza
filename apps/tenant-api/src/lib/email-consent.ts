@@ -82,17 +82,83 @@ export function verifyConsentToken(
 	}
 }
 
-/** Public origin of this tenant-api node, for links inside emails. */
-export function consentBaseUrl(requestOrigin?: string): string {
+const LOCAL_HOST_SUFFIXES = ['.test', '.localhost']
+
+/** True for hosts that only exist on a developer machine. */
+export function isLocalDevelopmentHost(hostname: string): boolean {
+	const host = hostname.toLowerCase().replace(/^\[|\]$/g, '')
+	return (
+		host === 'localhost' ||
+		host === '127.0.0.1' ||
+		host === '::1' ||
+		LOCAL_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))
+	)
+}
+
+function configuredConsentOrigin(): string | null {
 	syncEnvFromProcess()
 	const configured = (ENV as Record<string, unknown>).TENANT_API_URL
-	if (typeof configured === 'string' && configured) {
-		return configured.replace(/\/$/, '')
+	if (typeof configured !== 'string' || !configured.trim()) return null
+	try {
+		const url = new URL(configured.trim())
+		if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+		return `${url.origin}${url.pathname}`.replace(/\/+$/, '')
+	} catch {
+		return null
 	}
-	if (requestOrigin) return requestOrigin.replace(/\/$/, '')
+}
+
+function isProductionRuntime(): boolean {
+	syncEnvFromProcess()
+	return (ENV as Record<string, unknown>).NODE_ENV === 'production'
+}
+
+/**
+ * Public origin of this tenant-api node, for links inside emails (the
+ * confirmation link and every unsubscribe URL), or null when none can be
+ * trusted. The link carries a signed token, so its host must never come from
+ * the request: a missing variable or a forged Host header would otherwise
+ * send the token to an attacker.
+ *
+ * - `TENANT_API_URL` always wins.
+ * - In production it is required: without it the result is null and the
+ *   caller must skip the send.
+ * - Outside production, the request origin is used only when its host is a
+ *   local development host (localhost, 127.0.0.1, ::1, *.test, *.localhost).
+ *   Any other host is ignored and the default local port is used.
+ */
+export function consentBaseUrl(requestOrigin?: string): string | null {
+	const configured = configuredConsentOrigin()
+	if (configured) return configured
+	if (isProductionRuntime()) return null
+	if (requestOrigin) {
+		try {
+			const origin = new URL(requestOrigin)
+			if (
+				(origin.protocol === 'http:' || origin.protocol === 'https:') &&
+				isLocalDevelopmentHost(origin.hostname)
+			) {
+				return origin.origin
+			}
+		} catch {
+			// fall through to the default local origin
+		}
+	}
 	return getNodeRegion() === 'ksa'
 		? 'http://localhost:3009'
 		: 'http://localhost:3007'
+}
+
+/**
+ * Startup check: in production the links in consent emails need a configured
+ * origin, so a missing or invalid `TENANT_API_URL` is a deployment error.
+ */
+export function assertConsentBaseUrl() {
+	if (isProductionRuntime() && !configuredConsentOrigin()) {
+		throw new Error(
+			"TENANT_API_URL must be set to this node's public https origin in production",
+		)
+	}
 }
 
 export function unsubscribeUrl(

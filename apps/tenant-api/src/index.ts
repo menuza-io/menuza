@@ -8,12 +8,14 @@ import {
 	devEmailCaptureDir,
 	isDevEmailCaptureOn,
 } from './lib/dev-email-capture.ts'
+import { assertConsentBaseUrl } from './lib/email-consent.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
 import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
 assertTenantApiSecrets()
+assertConsentBaseUrl()
 assertDataRegion()
 
 registerRestaurantOrderSource()
