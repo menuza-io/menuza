@@ -588,6 +588,13 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
   Object alarms instead. See `docs/scheduled-jobs.md#staff-tick`.
+- `STRIPE_CONNECT_WEBHOOK_SECRET` - App only, optional: second Stripe webhook
+  secret for Connect events (the Stripe webhook route accepts either secret).
+- `PAYMENTS_MOCK` / `PAYMENTS_MOCK_ORIGIN` / `PAYMENTS_MOCK_WEBHOOKS` /
+  `PAYMENTS_MOCK_WEBHOOKS_HTTP` / `PAYMENTS_MOCK_CKO_SESSION_ID` - App only:
+  local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
+  Startup refuses live keys; mock routes are stripped from Worker builds. See
+  `docs/payments-mock.md`.
 
 **CMS Storage**:
 

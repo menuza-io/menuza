@@ -6,9 +6,63 @@ allocations). The real `stripe` and `checkout-sdk-node` clients talk to an
 in-process, stateful emulator, so request encoding, error classes and webhook
 signatures are exercised. No real key is ever used.
 
-Code: `packages/payments/src/mocks/` (export `@repo/payments/mock`). The
-activation rule (`packages/payments/src/mocks/env.ts`) is tiny and pure on
-purpose: production code imports it, never the emulators themselves.
+Code: `packages/payments/src/mocks/` (export `@repo/payments/mock`) and
+`apps/app/app/utils/payments-mock/`. Pages and dev API:
+`apps/app/app/routes/mock-payments+/`. The activation rule
+(`packages/payments/src/mocks/env.ts`) is tiny and pure on purpose: production
+code imports it, never the emulators themselves.
+
+## Turning it on
+
+| Switch                                           | Effect                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| `MOCKS=true`                                     | On (root `npm run dev`, Playwright set it).                |
+| `PAYMENTS_MOCK=true`                             | On without `MOCKS`.                                        |
+| `PAYMENTS_MOCK=false`                            | Forced off even with `MOCKS=true`.                         |
+| a real `STRIPE_SECRET_KEY`                       | That provider stays real (same for `CHECKOUT_SECRET_KEY`). |
+| `sk_live_`, `whsec_live_`, live Checkout.com key | Startup throws.                                            |
+
+There is no `NODE_ENV` gate: CI runs the production Node build with
+`MOCKS=true`. Placeholder keys (`sk_test_***`) get synthetic values so
+`listConfiguredProcessors()` returns `connect` and `checkout`. Organizations
+still need onboarding: Settings, Shop shows a "Mock payments" panel with
+instant-enable buttons. The App logs
+`PAYMENTS MOCK ACTIVE (stripe, checkout.com)`.
+
+Other variables: `PAYMENTS_MOCK_ORIGIN` (hosted page origin, default
+`BASE_URL`), `PAYMENTS_MOCK_WEBHOOKS` (`inline` default, `deferred`, `manual`),
+`PAYMENTS_MOCK_WEBHOOKS_HTTP=1` (POST webhooks over HTTP instead of calling the
+route in process), `PAYMENTS_MOCK_CKO_SESSION_ID=true` (fidelity switch, below),
+`STRIPE_CONNECT_WEBHOOK_SECRET` (second secret for Connect events; the Stripe
+webhook route accepts either secret).
+
+## Production exclusion
+
+1. `vite.config.ts` defines `__PAYMENTS_MOCK_BUNDLED__` as
+   `!(DEPLOY_TARGET=cloudflare && command=build)`. In `build:cf` the mock
+   branches are dead code and tree-shaken. Where it is undefined the mock stays
+   off.
+2. `app/routes.ts` drops `mock-payments+` when `STRIP_DEV_MOCKS=true`
+   (`build:cf` and `scripts/cf-workers-ci.mjs` set it).
+3. Every mock route and the Settings panel answer 404 unless the mode is on
+   **and** the request and `BASE_URL` are local (loopback, `*.localhost`,
+   `*.test`). Startup refuses live keys and a non-local mock origin.
+
+## State
+
+`__mock_pay_object`, `__mock_pay_idempotency`, `__mock_pay_event` in the
+control-plane database (local D1 in Workers dev, LibSQL in Node), created lazily
+with `CREATE TABLE IF NOT EXISTS`. No migration. State survives restarts;
+`POST /mock-payments/dev/reset` wipes it and clears the onboarding columns of
+mocked providers. Mock time (`clock/advance`) is an offset stored there.
+
+## Pages
+
+`/mock-payments/dashboard` (event log, Redeliver), `/stripe/checkout/:id`,
+`/stripe/3ds/:attemptId`, `/stripe/connect/onboard/:linkId`,
+`/stripe/connect/dashboard/:accountId`, `/checkout-com/hpp/:id`,
+`/checkout-com/3ds/:attemptId`, `/checkout-com/dashboard`. Forms are plain POSTs
+with stable `data-testid`s.
 
 ## Test cards
 
@@ -24,6 +78,23 @@ Checkout.com: `4242424242424242`, `5436031030606378` frictionless;
 `4543474002249996`, `5352151570003404` 3DS; `5297412542005689` is a mock-only
 mada card whose MIT declines (`20046`). Amounts ending `05`, `51`, `12`, `54`
 decline (`20005`, `20051`, `20012`, `20054`). The 3DS password is `Checkout1!`.
+
+## Dev control API (`/mock-payments/dev/*`, JSON, local only)
+
+`POST onboard {orgSlug, provider}`, `POST stripe/sessions/:id/complete`,
+`POST checkout-com/hpp/:id/complete`, `POST sessions/:id/expire`,
+`POST refunds/:id/settle {outcome}`, `POST disputes {paymentIntent}`,
+`POST clock/advance {seconds}`, `GET events?provider=&type=`,
+`POST events/flush`, `POST events/:id/redeliver`, `GET objects/:provider/:id`
+(`stripe` | `checkout`; `sid_` resolves), `POST reset`.
+
+## Webhooks
+
+Signed with the secret the real route verifies with (`Stripe-Signature`
+`t=,v1=`; `cko-signature` hex HMAC-SHA256) and delivered by calling the route's
+`action` in process. `inline` delivers before the redirect, `deferred` about a
+second later (or on the next mock request), `manual` only on flush. A non-2xx is
+retried on flush; redelivery re-signs the same body.
 
 ## Checkout.com orders
 
@@ -48,4 +119,8 @@ no webhook.
 
 ## Tests
 
-Vitest: `cd packages/payments && npx vitest run src/mocks src/shop`.
+Vitest: `cd packages/payments && npx vitest run src/mocks src/shop`;
+`cd apps/app && npx vitest run app/utils/payments-mock app/routes/mock-payments+`.
+Playwright: `apps/app/tests/e2e/payment-mocks.test.ts` with the page objects in
+`apps/app/tests/playwright-payments-mock.ts` (needs the spec and the App to
+share a database: the CI Node server).

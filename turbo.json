@@ -46,7 +46,7 @@
 				"@repo/notifications#build",
 				"@repo/ai#build"
 			],
-			"env": ["DEPLOY_TARGET"],
+			"env": ["DEPLOY_TARGET", "STRIP_DEV_MOCKS"],
 			"outputs": ["build/**", "public/build/**", ".wrangler/**"],
 			"passThroughEnv": ["NODE_OPTIONS"]
 		},

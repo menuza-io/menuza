@@ -54,7 +54,7 @@ msgstr "(تم التعديل)"
 
 #: app/components/staff/controls.tsx:50
 #: app/components/staff/controls.tsx:90
-#: app/components/staff/controls.tsx:142
+#: app/components/staff/controls.tsx:144
 msgid "(optional)"
 msgstr "(اختياري)"
 
@@ -390,7 +390,7 @@ msgstr "{0, plural, one {أضفنا قائمة مهام للموظف الجدي�
 
 #. placeholder {0}: formatWorkspaceDate(new Date(), { locale, timeZone })
 #. placeholder {1}: organization.name
-#: app/routes/_app+/$orgSlug_+/index.tsx:170
+#: app/routes/_app+/$orgSlug_+/index.tsx:176
 msgid "{0} · Here's what's happening in {1}"
 msgstr "{0} · إليك ما يحدث في {1}"
 
@@ -426,7 +426,7 @@ msgstr "{amount}/ساعة"
 msgid "{amount}/yr"
 msgstr "{amount}/سنة"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:648
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:662
 msgid "{announcementCount} announcements"
 msgstr "{announcementCount} إعلانات"
 
@@ -1053,7 +1053,7 @@ msgstr "• إذا كان العميل {0}{1}<0>{2}</0> → <1>فرع صحيح</
 msgid "• Otherwise → <0>False branch</0>"
 msgstr "• وإلا → <0>فرع خاطئ</0>"
 
-#: app/routes/_auth+/login.tsx:758
+#: app/routes/_auth+/login.tsx:760
 msgid "← Back to SSO login"
 msgstr "→ العودة إلى تسجيل الدخول بـ SSO"
 
@@ -1100,7 +1100,7 @@ msgstr "${basePriceValue} يُفوتر سنوياً"
 msgid "03/31/2026 (month first)"
 msgstr "03/31/2026 (الشهر أولًا)"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:646
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:660
 msgid "1 announcement"
 msgstr "إعلان واحد"
 
@@ -1466,7 +1466,7 @@ msgstr "تم نسخ معرف الحساب إلى الحافظة"
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
-#: app/routes/_auth+/login.tsx:280
+#: app/routes/_auth+/login.tsx:282
 msgid "Account Suspended"
 msgstr "الحساب معلق"
 
@@ -1482,22 +1482,34 @@ msgstr "acme"
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:233
+#: app/routes/_app+/$orgSlug_+/index.tsx:213
+#: app/routes/_app+/$orgSlug_+/index.tsx:239
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
 #: app/components/command-menu.tsx:260
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:1060
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:963
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:626
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:966
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:640
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:869
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1046
 msgid "Actions"
 msgstr "الإجراءات"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:104
+msgid "Activate a sub-entity to let it take payments and receive payouts."
+msgstr "فعّل كيانًا فرعيًا ليتمكن من قبول المدفوعات واستلام التحويلات."
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:163
+msgid "Activate payments"
+msgstr "تفعيل المدفوعات"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:191
+msgid "Activate payouts"
+msgstr "تفعيل التحويلات"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:298
 msgid "active"
@@ -1510,7 +1522,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:993
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:996
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:657
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:248
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:268
@@ -1697,7 +1709,7 @@ msgstr "أضف مكان عمل في الإعدادات، أو اطلب من أح
 msgid "Add a workplace in settings, then plan its shifts here."
 msgstr "أضف مكان عمل في الإعدادات، ثم خطّط ورديّاته هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:601
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:615
 msgid "Add an announcement to share updates, maintenance notices, or promotions on your public site."
 msgstr "أضف إعلاناً لمشاركة التحديثات أو إشعارات الصيانة أو العروض الترويجية على موقعك العام."
 
@@ -1718,7 +1730,7 @@ msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "إضافة بطاقات الدوام وتعديلها وتصدير الساعات. يشمل عرض بطاقات الدوام."
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:552
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:591
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:605
 msgid "Add announcement"
 msgstr "إضافة إعلان"
 
@@ -1964,7 +1976,7 @@ msgstr "إضافة مهمة"
 msgid "Add the end time before adding breaks."
 msgstr "أضف وقت الانتهاء قبل إضافة الاستراحات."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:799
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:802
 msgid "Add the following configuration to the file:"
 msgstr "أضف التكوين التالي إلى الملف:"
 
@@ -1994,7 +2006,7 @@ msgstr "إضافتهم إلى الجدول"
 msgid "Add these shifts"
 msgstr "إضافة هذه الورديات"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:832
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:835
 msgid "Add this configuration to your .kiro/settings/mcp.json:"
 msgstr "أضف هذا التكوين إلى ملف .kiro/settings/mcp.json:"
 
@@ -2344,6 +2356,10 @@ msgstr "جميع أماكن العمل"
 msgid "All workplaces (default)"
 msgstr "جميع أماكن العمل (افتراضي)"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:228
+msgid "Allocation"
+msgstr "التخصيص"
+
 #: app/components/staff/labor-policy-editor.tsx:633
 msgid "Allow clock-in without a scheduled shift"
 msgstr "السماح بتسجيل الحضور دون وردية مجدولة"
@@ -2393,6 +2409,11 @@ msgstr "النص البديل"
 msgid "Amber"
 msgstr "كهرماني"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:225
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:89
+msgid "Amount"
+msgstr "المبلغ"
+
 #: app/utils/staffing/labor-errors.ts:41
 msgid "Amounts can have at most two decimal places."
 msgstr "يمكن أن تحتوي المبالغ على خانتين عشريتين كحد أقصى."
@@ -2439,7 +2460,7 @@ msgstr "التحليلات"
 msgid "Analytics and tracking"
 msgstr "التحليلات والتتبع"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:460
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:474
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
@@ -2447,7 +2468,7 @@ msgstr "إجراءات الإعلان"
 #: app/components/command-menu.tsx:137
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:570
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:584
 msgid "Announcements"
 msgstr "الإعلانات"
 
@@ -2522,15 +2543,15 @@ msgstr "يمكن لأي شخص لديه هذا الرابط رؤية الوظي�
 msgid "Anything else you need done, like handing over a uniform."
 msgstr "أي شيء آخر تحتاج إلى إنجازه، مثل تسليم الزي."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:553
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:556
 msgid "API Key"
 msgstr "مفتاح API"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:530
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:533
 msgid "API Key Created"
 msgstr "تم إنشاء مفتاح API"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:625
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:628
 msgid "API Keys"
 msgstr "مفاتيح API"
 
@@ -2585,6 +2606,14 @@ msgstr "يجب على المتقدمين الإجابة قبل أن يتمكنو
 #: app/components/hiring/candidate-sheet.tsx:502
 msgid "Application deleted."
 msgstr "تم حذف الطلب."
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:178
+msgid "Application fee refunds"
+msgstr "استردادات رسوم التطبيق"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:163
+msgid "Application fees"
+msgstr "رسوم التطبيق"
 
 #: ../../packages/reports/src/ui/report-labels.ts:73
 msgid "Applications at each stage, from new to hired, over the last 3 months."
@@ -2690,7 +2719,7 @@ msgstr "هل أنت متأكد أنك تريد حذف هذا التعليق؟"
 msgid "Are you sure you want to remove this media asset?"
 msgstr "هل أنت متأكد أنك تريد إزالة عنصر الوسائط هذا؟"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1057
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1060
 msgid "Are you sure you want to revoke access for {clientName}? This action cannot be undone."
 msgstr "هل أنت متأكد أنك تريد إلغاء الوصول لـ {clientName}؟ لا يمكن التراجع عن هذا الإجراء."
 
@@ -2788,9 +2817,18 @@ msgstr "المساعد متوقف مؤقتًا"
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
+#: app/routes/mock-payments+/dashboard.tsx:161
+msgid "Attempts"
+msgstr "المحاولات"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:70
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:76
+msgid "Authenticate this payment"
+msgstr "مصادقة هذه العملية"
 
 #: app/components/settings/two-factor-form.tsx:87
 #: app/components/settings/two-factor-form.tsx:241
@@ -2805,11 +2843,11 @@ msgstr "الموافقة"
 msgid "Authorize MCP Client"
 msgstr "الموافقة على عميل MCP"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:976
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:979
 msgid "Authorized {createdAt}"
 msgstr "تمت الموافقة {createdAt}"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:935
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:938
 msgid "Authorized Clients"
 msgstr "العملاء المصرح لهم"
 
@@ -2904,11 +2942,11 @@ msgstr "متاح خلال…"
 msgid "Available then"
 msgstr "متاح في ذلك الوقت"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1275
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1278
 msgid "Available Tools"
 msgstr "الأدوات المتاحة"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:210
+#: app/routes/_app+/$orgSlug_+/index.tsx:216
 msgid "Avg per day"
 msgstr "المتوسط اليومي"
 
@@ -2928,6 +2966,9 @@ msgstr "أبيض وأسود"
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:205
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:192
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:218
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:157
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:221
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:111
 msgid "Back"
 msgstr "رجوع"
 
@@ -3562,8 +3603,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/website/create-form-dialog.tsx:292
 #: app/components/website/form-builder-sidebar.tsx:190
 #: app/components/website/translate-provider.tsx:258
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:467
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1090
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:470
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
@@ -3578,7 +3619,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:250
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:270
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:144
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:499
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1770
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
@@ -3651,6 +3692,10 @@ msgstr "رسوم البطاقة المخصومة"
 #: app/components/staff/labor/tip-settings-dialog.tsx:192
 msgid "Card fee withheld from online tips (%)"
 msgstr "رسوم البطاقة المخصومة من إكراميات الطلبات عبر الإنترنت (%)"
+
+#: app/routes/mock-payments+/__card-form.tsx:40
+msgid "Card number"
+msgstr "رقم البطاقة"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4228
 msgid "Card position"
@@ -3840,6 +3885,18 @@ msgstr "القناة"
 msgid "Channels"
 msgstr "القنوات"
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:153
+msgid "Charges"
+msgstr "المعاملات"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:140
+msgid "Charges disabled"
+msgstr "المعاملات معطلة"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:138
+msgid "Charges enabled"
+msgstr "المعاملات مفعلة"
+
 #: app/components/command-menu.tsx:87
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Chat"
@@ -3927,13 +3984,25 @@ msgstr "القائمة المراد إضافتها"
 msgid "Checklists for new hires. Pick one to add automatically when you hire someone."
 msgstr "قوائم مهام للموظفين الجدد. اختر واحدة لتُضاف تلقائيًا عند توظيف شخص."
 
-#: app/components/settings/cards/organization/shop-card.tsx:103
+#: app/components/settings/cards/organization/shop-card.tsx:110
 msgid "Checkout payout not connected"
 msgstr "دفعات الخروج غير متصلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:230
+#: app/components/settings/cards/organization/shop-card.tsx:242
 msgid "Checkout processor"
 msgstr "معالج الدفع عند الخروج"
+
+#: app/routes/mock-payments+/dashboard.tsx:117
+msgid "Checkout.com dashboard"
+msgstr "لوحة Checkout.com"
+
+#: app/routes/mock-payments+/dashboard.tsx:102
+msgid "Checkout.com: mocked"
+msgstr "Checkout.com: محاكاة"
+
+#: app/routes/mock-payments+/dashboard.tsx:104
+msgid "Checkout.com: real"
+msgstr "Checkout.com: حقيقي"
 
 #: app/components/website/form-builder-sidebar.tsx:550
 msgid "Choices"
@@ -4179,7 +4248,7 @@ msgstr "دائرة"
 msgid "City"
 msgstr "المدينة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:785
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:788
 msgid "Claude Desktop Setup"
 msgstr "إعداد Claude Desktop"
 
@@ -4221,11 +4290,11 @@ msgstr "مسح الساعات"
 msgid "Clear search"
 msgstr "مسح البحث"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:871
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:874
 msgid "Click \"Add Server\" and paste this configuration:"
 msgstr "انقر على \"إضافة خادم\" والصق هذا التكوين:"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:794
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:797
 msgid "Click \"Edit Config\" to open claude_desktop_config.json"
 msgstr "انقر على \"تعديل التكوين\" لفتح claude_desktop_config.json"
 
@@ -4237,7 +4306,7 @@ msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضم
 msgid "Click rate"
 msgstr "معدل النقر"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:882
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:885
 msgid "Click Save and restart Cursor"
 msgstr "انقر حفظ وأعد تشغيل Cursor"
 
@@ -4250,7 +4319,7 @@ msgstr "انقر على اليوم الأول ثم على اليوم الأخي�
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:954
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:957
 msgid "Client"
 msgstr "العميل"
 
@@ -4488,6 +4557,10 @@ msgstr "إجراءات التعليق"
 msgid "Comments"
 msgstr "التعليقات"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:231
+msgid "Commission"
+msgstr "العمولة"
+
 #: app/components/staff/timesheets/reason-field.tsx:49
 msgid "Common reasons"
 msgstr "أسباب شائعة"
@@ -4518,6 +4591,7 @@ msgstr "مكتمل"
 
 #: app/components/phone-agent/call-data.ts:141
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:306
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:82
 msgid "Complete"
 msgstr "مكتملة"
 
@@ -4529,6 +4603,10 @@ msgstr "تعبئة نموذج"
 msgid "Complete and reopen calls and requests, and tag calls. Needs View calls."
 msgstr "إكمال المكالمات والطلبات وإعادة فتحها، ووسم المكالمات. يتطلب صلاحية عرض المكالمات."
 
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:94
+msgid "Complete authentication"
+msgstr "إكمال المصادقة"
+
 #: app/routes/organizations+/create.tsx:1116
 msgid "Complete Setup"
 msgstr "إكمال الإعداد"
@@ -4537,8 +4615,8 @@ msgstr "إكمال الإعداد"
 msgid "Complete the following steps."
 msgstr "أكمل الخطوات التالية."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:846
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:885
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:849
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:888
 msgid "Complete the OAuth flow when prompted"
 msgstr "أكمل عملية OAuth عند المطالبة"
 
@@ -4646,7 +4724,7 @@ msgstr "ربط رقم هاتف"
 msgid "Connect domain"
 msgstr "ربط نطاق"
 
-#: app/components/settings/cards/organization/shop-card.tsx:132
+#: app/components/settings/cards/organization/shop-card.tsx:144
 msgid "Connect payout account"
 msgstr "ربط حساب المدفوعات"
 
@@ -4658,17 +4736,21 @@ msgstr "اربط منصات التحليلات التي تستخدمها على 
 msgid "Connect the caller to a person, such as a manager."
 msgstr "تحويل المتصل إلى شخص، مثل المدير."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1357
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1360
 msgid "Connect your AI assistants to {organizationName} data using the Model Context Protocol"
 msgstr "ربط مساعدي الذكاء الاصطناعي ببيانات {organizationName} باستخدام بروتوكول سياق النموذج"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:752
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:755
 msgid "Connect your favorite AI client to access your organization's data securely. Follow the instructions for your preferred client below."
 msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك للوصول إلى بيانات منظمتك بشكل آمن. اتبع التعليمات لعميلك المفضل أدناه."
 
 #: app/components/staff/kiosk-manager.tsx:718
 msgid "Connected"
 msgstr "متصل"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:73
+msgid "Connected account"
+msgstr "الحساب المتصل"
 
 #: app/components/settings/cards/connections-card.tsx:39
 msgid "Connected Accounts"
@@ -4732,7 +4814,7 @@ msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:434
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:613
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3290
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3480
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3776
@@ -4747,12 +4829,13 @@ msgstr "محرر المحتوى"
 #: app/components/kiosk/kiosk-screens.tsx:120
 #: app/components/kiosk/pin-pad.tsx:127
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
-#: app/routes/_auth+/login.tsx:680
+#: app/routes/_auth+/login.tsx:682
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:95
 #: app/routes/organizations+/create.tsx:827
 msgid "Continue"
 msgstr "متابعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:130
+#: app/components/settings/cards/organization/shop-card.tsx:142
 msgid "Continue payout setup"
 msgstr "متابعة إعداد المدفوعات"
 
@@ -4760,11 +4843,11 @@ msgstr "متابعة إعداد المدفوعات"
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
-#: app/routes/_auth+/login.tsx:592
+#: app/routes/_auth+/login.tsx:594
 msgid "Continue with"
 msgstr "المتابعة باستخدام"
 
-#: app/routes/_auth+/login.tsx:268
+#: app/routes/_auth+/login.tsx:270
 msgid "Continue with your password"
 msgstr "تابع باستخدام كلمة المرور الخاصة بك"
 
@@ -4783,7 +4866,7 @@ msgstr "متعاقد"
 msgid "Contrast"
 msgstr "التباين"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:231
+#: app/routes/_app+/$orgSlug_+/index.tsx:237
 msgid "Contributors"
 msgstr "المساهمون"
 
@@ -4816,16 +4899,16 @@ msgstr "وردية منسوخة جاهزة للصق"
 msgid "Copied shifts arrive as drafts. Nothing reaches your team until you publish."
 msgstr "تصل الورديات المنسوخة كمسودات. لا يصل شيء إلى فريقك حتى تنشر."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:311
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:569
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:314
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:572
 #: app/routes/_auth+/waitlist.tsx:330
 msgid "Copied!"
 msgstr "تم النسخ!"
 
 #: app/components/organization-invitations.tsx:224
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:316
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:569
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:319
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:572
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:360
 #: app/routes/_auth+/waitlist.tsx:332
 msgid "Copy"
@@ -5080,7 +5163,7 @@ msgstr "أنشئ قناة لبدء التواصل مع فريقك. يمكنك ق
 msgid "Create a custom role to assign specific permissions to teammates."
 msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة للزملاء."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:391
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:394
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء الاصطناعي ببيانات {orgName}."
 
@@ -5104,7 +5187,7 @@ msgstr "إنشاء خطة"
 msgid "Create a ready-made role for the people who run your team. Each one becomes a normal custom role that you can rename, edit, or delete."
 msgstr "أنشئ دورًا جاهزًا للأشخاص الذين يديرون فريقك. يصبح كل دور دورًا مخصصًا عاديًا يمكنك إعادة تسميته أو تعديله أو حذفه."
 
-#: app/routes/_auth+/login.tsx:368
+#: app/routes/_auth+/login.tsx:370
 #: app/routes/_auth+/onboarding_.$provider.tsx:385
 #: app/routes/_auth+/onboarding.tsx:548
 msgid "Create account"
@@ -5126,7 +5209,7 @@ msgstr "إنشاء منظمة"
 msgid "Create and customize"
 msgstr "إنشاء وتخصيص"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:628
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:631
 msgid "Create and manage API keys to authenticate your MCP clients"
 msgstr "إنشاء وإدارة مفاتيح API لمصادقة عملاء MCP"
 
@@ -5142,9 +5225,9 @@ msgstr "أنشئ نموذجًا وانشره أولًا من الموقع الإ
 msgid "Create and send one-time email and SMS campaigns."
 msgstr "إنشاء وإرسال حملات بريد إلكتروني ورسائل SMS لمرة واحدة."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:388
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:482
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:635
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:391
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:485
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:638
 msgid "Create API Key"
 msgstr "إنشاء مفتاح API"
 
@@ -5152,7 +5235,7 @@ msgstr "إنشاء مفتاح API"
 msgid "Create automation"
 msgstr "إنشاء أتمتة"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:572
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:586
 msgid "Create banner announcements for your public organization site. Enabled banners appear at the top of the site for visitors."
 msgstr "أنشئ إعلانات شريطية لموقع مؤسستك العام. تظهر الإعلانات الشريطية المفعّلة أعلى الموقع للزوار."
 
@@ -5246,7 +5329,7 @@ msgstr "أنشئ نماذج قابلة لإعادة الاستخدام، ثم أ
 msgid "Create role"
 msgstr "إنشاء دور"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:686
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:689
 msgid "Create your first API key to get started"
 msgstr "أنشئ مفتاح API الأول للبدء"
 
@@ -5294,7 +5377,7 @@ msgstr "إنشاء وتحديث ونشر صفحات الويب والنماذج 
 msgid "Created"
 msgstr "تم الإنشاء"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:661
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:664
 msgid "Created {createdDate}"
 msgstr "تم الإنشاء {createdDate}"
 
@@ -5310,7 +5393,7 @@ msgstr "تم إنشاء الصفحة"
 msgid "Creating page"
 msgstr "إنشاء الصفحة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:477
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:480
 msgid "Creating..."
 msgstr "جاري الإنشاء..."
 
@@ -5385,7 +5468,7 @@ msgstr "الاشتراك الحالي"
 msgid "Current time {time}, {date}"
 msgstr "الوقت الحالي {time}، {date}"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:861
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:864
 msgid "Cursor Setup"
 msgstr "إعداد Cursor"
 
@@ -5477,9 +5560,13 @@ msgstr "معرّف العميل مطلوب"
 msgid "Customers"
 msgstr "العملاء"
 
-#: app/components/settings/cards/organization/shop-card.tsx:297
+#: app/components/settings/cards/organization/shop-card.tsx:309
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent}% بعد رسوم المنصة."
+
+#: app/routes/mock-payments+/__card-form.tsx:70
+msgid "CVC"
+msgstr "رمز الأمان"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
@@ -5749,8 +5836,8 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1053
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1112
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:167
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:476
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:490
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:527
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:983
@@ -5787,7 +5874,7 @@ msgstr "هل تريد حذف إدخال سجل 404؟"
 msgid "Delete account"
 msgstr "حذف الحساب"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:488
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:502
 msgid "Delete announcement?"
 msgstr "هل تريد حذف الإعلان؟"
 
@@ -5965,6 +6052,18 @@ msgstr "تم حذف قاعدة التدريب \"{title}\""
 msgid "Deleting…"
 msgstr "جارٍ الحذف…"
 
+#: app/routes/mock-payments+/dashboard.tsx:140
+msgid "Deliver queued events"
+msgstr "تسليم الأحداث المعلقة"
+
+#: app/routes/mock-payments+/dashboard.tsx:182
+msgid "Delivered ({lastStatus})"
+msgstr "تم التسليم ({lastStatus})"
+
+#: app/routes/mock-payments+/dashboard.tsx:158
+msgid "Delivery"
+msgstr "التسليم"
+
 #: app/components/staff/labor/tip-settings-dialog.tsx:99
 msgid "Delivery orders"
 msgstr "طلبات التوصيل"
@@ -5996,7 +6095,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/components/roles/tenant-role-access-manager.tsx:903
 #: app/components/roles/tenant-role-access-manager.tsx:1051
 #: app/components/roles/tenant-role-access-manager.tsx:1185
-#: app/components/settings/cards/organization/shop-card.tsx:270
+#: app/components/settings/cards/organization/shop-card.tsx:282
 #: app/components/website/create-form-dialog.tsx:124
 #: app/components/website/form-builder-sidebar.tsx:683
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
@@ -6036,6 +6135,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
 #: app/components/workspace-breadcrumb.tsx:134
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:92
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -6127,7 +6227,7 @@ msgstr "تجاهل التغييرات غير المحفوظة؟"
 msgid "Disconnect"
 msgstr "قطع الاتصال"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1074
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1077
 msgid "Disconnect any active MCP connections"
 msgstr "قطع أي اتصالات MCP نشطة"
 
@@ -6147,6 +6247,10 @@ msgstr "إرسال رسالة نصية مع وسوم الدمج"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4121
 msgid "Display"
 msgstr "العرض"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:183
+msgid "Disputes"
+msgstr "النزاعات"
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:174
 msgid "Divide tips"
@@ -6180,7 +6284,7 @@ msgstr "لا يعمل في مكان العمل هذا"
 msgid "Domain"
 msgstr "النطاق"
 
-#: app/routes/_auth+/login.tsx:359
+#: app/routes/_auth+/login.tsx:361
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
@@ -6453,7 +6557,7 @@ msgstr "مثال: مرحبًا {{firstName}}!"
 msgid "e.g. You've got mail!"
 msgstr "مثل: لديك بريد جديد!"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:406
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:409
 msgid "e.g., Claude Desktop, Kiro IDE"
 msgstr "مثل: Claude Desktop، Kiro IDE"
 
@@ -6518,7 +6622,7 @@ msgstr "انصراف مبكر"
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:996
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:469
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:483
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
 msgid "Edit"
@@ -6583,7 +6687,7 @@ msgstr "تعديل الرسالة"
 msgid "Edit note"
 msgstr "تعديل الملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:98
+#: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:113
 msgid "Edit Note"
 msgstr "تعديل ملاحظة"
 
@@ -6675,8 +6779,9 @@ msgstr "مؤهل لإعادة التوظيف."
 #: app/components/website/link-inspector.tsx:468
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:188
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:237
-#: app/routes/_auth+/login.tsx:773
+#: app/routes/_auth+/login.tsx:775
 #: app/routes/_auth+/signup.tsx:225
+#: app/routes/mock-payments+/__card-form.tsx:27
 #: app/utils/website/field-types.ts:37
 #: app/utils/website/field-types.ts:40
 msgid "Email"
@@ -6711,8 +6816,8 @@ msgstr "البريد الإلكتروني متوقف"
 msgid "Email is turned off, so nothing was sent"
 msgstr "البريد الإلكتروني متوقف، لذا لم يُرسل شيء"
 
-#: app/routes/_auth+/login.tsx:653
-#: app/routes/_auth+/login.tsx:778
+#: app/routes/_auth+/login.tsx:655
+#: app/routes/_auth+/login.tsx:780
 msgid "Email or Username"
 msgstr "البريد الإلكتروني / اسم المستخدم"
 
@@ -6774,7 +6879,7 @@ msgstr "موضوع فارغ"
 msgid "Enable Custom S3 Storage"
 msgstr "تفعيل تخزين S3 مخصص"
 
-#: app/components/settings/cards/organization/shop-card.tsx:196
+#: app/components/settings/cards/organization/shop-card.tsx:208
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
@@ -6783,6 +6888,8 @@ msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:382
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:144
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:171
 msgid "Enabled"
 msgstr "مفعّل"
 
@@ -7024,8 +7131,8 @@ msgstr "Enter للإرسال. Shift+Enter لسطر جديد."
 msgid "Enter when the break started and ended."
 msgstr "أدخل وقت بدء الاستراحة وانتهائها."
 
-#: app/routes/_auth+/login.tsx:659
-#: app/routes/_auth+/login.tsx:785
+#: app/routes/_auth+/login.tsx:661
+#: app/routes/_auth+/login.tsx:787
 msgid "Enter your email or username"
 msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم"
 
@@ -7042,7 +7149,7 @@ msgstr "أدخل كلمة المرور الجديدة"
 msgid "Enter your new password below."
 msgstr "أدخل كلمة المرور الجديدة أدناه."
 
-#: app/routes/_auth+/login.tsx:814
+#: app/routes/_auth+/login.tsx:816
 msgid "Enter your password"
 msgstr "أدخل كلمة المرور"
 
@@ -7072,6 +7179,10 @@ msgstr "لا تُستخدم المبيعات المُدخلة إلا عندما 
 msgid "Enterprise Plan"
 msgstr "الخطة المؤسسية"
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:119
+msgid "Entity"
+msgstr "الكيان"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:102
 msgid "Epic Startup Team"
 msgstr "فريق Epic Startup"
@@ -7091,7 +7202,7 @@ msgstr "مسح البيانات"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
 #: app/components/settings/cards/organization/announcement-sheet.tsx:273
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:346
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:360
 msgid "Error"
 msgstr "خطأ"
 
@@ -7132,6 +7243,10 @@ msgstr "الأجور التقديرية حسب الوظيفة خلال آخر 30
 #: app/components/hiring/job-editor.tsx:565
 msgid "Evening line cook, three nights a week, must be comfortable on grill"
 msgstr "طاهٍ مسائي على الخط، ثلاث ليالٍ في الأسبوع، يجيد العمل على الشواية"
+
+#: app/routes/mock-payments+/dashboard.tsx:125
+msgid "Event log"
+msgstr "سجل الأحداث"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:111
 msgid "Event-driven workflows"
@@ -7219,7 +7334,7 @@ msgstr "الوقت الدقيق (بدون تقريب)"
 msgid "Exactly Equals"
 msgstr "يساوي تماماً"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1197
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1200
 msgid "Example Request"
 msgstr "مثال على الطلب"
 
@@ -7244,7 +7359,7 @@ msgstr "صفحة موجودة"
 msgid "Experience"
 msgstr "الخبرة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:440
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:443
 msgid "Expiration Date"
 msgstr "تاريخ انتهاء الصلاحية"
 
@@ -7258,9 +7373,13 @@ msgstr "منتهي الصلاحية"
 msgid "Expires"
 msgstr "تنتهي الصلاحية"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:664
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:667
 msgid "Expires {expireDate}"
 msgstr "تنتهي صلاحيته {expireDate}"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:181
+msgid "Expires at {expiresAt}"
+msgstr "تنتهي في {expiresAt}"
 
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
@@ -7270,6 +7389,10 @@ msgstr "تنتهي صلاحيته خلال {left}"
 #: app/components/staff/onboarding/certificates-tab.tsx:237
 msgid "Expires today"
 msgstr "تنتهي اليوم"
+
+#: app/routes/mock-payments+/__card-form.tsx:56
+msgid "Expiry (MM/YY)"
+msgstr "تاريخ الانتهاء (شهر/سنة)"
 
 #: app/components/staff/timesheets/timesheets-page.tsx:627
 msgid "Export"
@@ -7304,6 +7427,10 @@ msgstr "معرّف بكسل Facebook"
 msgid "Fade up"
 msgstr "التلاشي للأعلى"
 
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:104
+msgid "Fail authentication"
+msgstr "فشل المصادقة"
+
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
@@ -7311,7 +7438,11 @@ msgstr "التلاشي للأعلى"
 msgid "Failed"
 msgstr "فشل"
 
-#: app/routes/_auth+/login.tsx:441
+#: app/routes/mock-payments+/dashboard.tsx:186
+msgid "Failed ({lastStatus})"
+msgstr "فشل ({lastStatus})"
+
+#: app/routes/_auth+/login.tsx:443
 msgid "Failed to authenticate with passkey: {errorMessage}"
 msgstr "فشل التحقق باستخدام مفتاح المرور: {errorMessage}"
 
@@ -7672,7 +7803,7 @@ msgstr "نسيت كلمة المرور"
 msgid "Forgot to clock out"
 msgstr "نسي تسجيل الانصراف"
 
-#: app/routes/_auth+/login.tsx:807
+#: app/routes/_auth+/login.tsx:809
 msgid "Forgot your password?"
 msgstr "هل نسيت كلمة المرور؟"
 
@@ -7813,7 +7944,7 @@ msgstr "إنشاء رموز احتياطية"
 msgid "Generate with AI"
 msgstr "إنشاء بالذكاء الاصطناعي"
 
-#: app/routes/_auth+/login.tsx:403
+#: app/routes/_auth+/login.tsx:405
 msgid "Generating Authentication Options"
 msgstr "جاري إنشاء خيارات المصادقة"
 
@@ -7902,7 +8033,7 @@ msgstr "الانتقال إلى هناك"
 msgid "Go to"
 msgstr "الانتقال إلى"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:228
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:234
 msgid "Go to Home"
 msgstr "الانتقال إلى الرئيسية"
 
@@ -7918,15 +8049,15 @@ msgstr "انتقل إلى المفتاح"
 msgid "Go-live checklist"
 msgstr "قائمة التحقق قبل الإطلاق"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:164
+#: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "Good afternoon, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:165
+#: app/routes/_app+/$orgSlug_+/index.tsx:171
 msgid "Good evening, {userName}"
 msgstr "مساء الخير، {userName}"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:163
+#: app/routes/_app+/$orgSlug_+/index.tsx:169
 msgid "Good morning, {userName}"
 msgstr "صباح الخير، {userName}"
 
@@ -8018,7 +8149,7 @@ msgstr "مجموعات"
 msgid "Guest"
 msgstr "ضيف"
 
-#: app/components/settings/cards/organization/shop-card.tsx:377
+#: app/components/settings/cards/organization/shop-card.tsx:393
 msgid "Guest checkout"
 msgstr "الدفع كضيف"
 
@@ -8275,11 +8406,11 @@ msgstr "العطل"
 msgid "Home"
 msgstr "الرئيسية"
 
-#: app/components/settings/cards/organization/shop-card.tsx:213
+#: app/components/settings/cards/organization/shop-card.tsx:225
 msgid "Hosted checkout becomes available once the platform configures a merchant-of-record processor."
 msgstr "يصبح الدفع المستضاف متاحاً بمجرد قيام المنصة بتهيئة معالج التاجر المسجل."
 
-#: app/components/settings/cards/organization/shop-card.tsx:97
+#: app/components/settings/cards/organization/shop-card.tsx:104
 msgid "Hosted checkout not connected"
 msgstr "الدفع المستضاف غير متصل"
 
@@ -8429,9 +8560,13 @@ msgstr "لا أستطيع العمل فيها"
 msgid "I'll not be able to access the organization and its data anymore"
 msgstr "لن أتمكن من الوصول إلى المؤسسة وبياناتها بعد الآن"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:598
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:601
 msgid "I've Copied the Key"
 msgstr "لقد نسخت المفتاح"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:86
+msgid "ID"
+msgstr "المعرّف"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:478
 msgid "Identify risks"
@@ -8491,7 +8626,7 @@ msgstr "صورة للقص"
 msgid "Image URL"
 msgstr "رابط الصورة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1071
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1074
 msgid "Immediately invalidate all tokens for this client"
 msgstr "إبطال جميع الرموز المميزة لهذا العميل فوراً"
 
@@ -8526,7 +8661,7 @@ msgstr "اكتمل الاستيراد"
 msgid "Important"
 msgstr "مهم"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:895
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:898
 msgid "Important Notes"
 msgstr "ملاحظات مهمة"
 
@@ -8538,7 +8673,7 @@ msgstr "ملاحظة أمنية مهمة"
 msgid "Important tags"
 msgstr "الوسوم المهمة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:582
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:585
 msgid "Important:"
 msgstr "مهم:"
 
@@ -8604,7 +8739,7 @@ msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:271
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:344
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:358
 msgid "Info"
 msgstr "معلومات"
 
@@ -8623,6 +8758,14 @@ msgstr "إدراج حقل هنا"
 #: app/components/roles/tenant-role-access-manager.tsx:1220
 msgid "Inspect"
 msgstr "استعراض"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:55
+msgid "Instantly enable Checkout.com (mock)"
+msgstr "تفعيل Checkout.com فورًا (محاكاة)"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:39
+msgid "Instantly enable Stripe (mock)"
+msgstr "تفعيل Stripe فورًا (محاكاة)"
 
 #: app/components/app-sidebar.tsx:544
 #: app/components/settings/cards/organization/integrations-card.tsx:101
@@ -8682,7 +8825,7 @@ msgstr "عنوان البريد الإلكتروني غير صالح"
 msgid "Invalid graph format"
 msgstr "تنسيق الرسم البياني غير صالح"
 
-#: app/routes/_auth+/login.tsx:193
+#: app/routes/_auth+/login.tsx:195
 msgid "Invalid username or password"
 msgstr "اسم المستخدم أو كلمة المرور غير صحيحة"
 
@@ -8725,7 +8868,7 @@ msgstr "الدعوات غير متاحة لهذه المؤسسة."
 msgid "Invite by email"
 msgstr "الدعوة عبر البريد الإلكتروني"
 
-#: app/components/settings/cards/organization/shop-card.tsx:165
+#: app/components/settings/cards/organization/shop-card.tsx:177
 msgid "Invite Checkout payout contact"
 msgstr "دعوة جهة اتصال دفعات الخروج"
 
@@ -8972,8 +9115,8 @@ msgstr "تُحفظ مع البطاقة وتظهر في سجلها."
 msgid "Key"
 msgstr "الزر"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:402
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:544
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:405
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:547
 msgid "Key Name"
 msgstr "اسم المفتاح"
 
@@ -9013,7 +9156,7 @@ msgstr "نوع الاستراحة {number}"
 msgid "Kiosk time clocks are turned off right now."
 msgstr "ساعات الدوام على الأجهزة اللوحية متوقفة حاليًا."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:822
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:825
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
@@ -9111,7 +9254,7 @@ msgid "Large"
 msgstr "كبير"
 
 #. placeholder {0}: notes.daysShown
-#: app/routes/_app+/$orgSlug_+/index.tsx:214
+#: app/routes/_app+/$orgSlug_+/index.tsx:220
 msgid "Last {0} days"
 msgstr "آخر {0} يومًا"
 
@@ -9162,12 +9305,12 @@ msgstr "اسم العائلة"
 msgid "Last opened {lastOpened}."
 msgstr "آخر فتح في {lastOpened}."
 
-#: app/routes/_auth+/login.tsx:483
-#: app/routes/_auth+/login.tsx:494
+#: app/routes/_auth+/login.tsx:485
+#: app/routes/_auth+/login.tsx:496
 msgid "Last used"
 msgstr "آخر استخدام"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:957
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:960
 msgid "Last Used"
 msgstr "آخر استخدام"
 
@@ -9343,7 +9486,7 @@ msgstr "السطر {line}: "
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
 #: app/components/website/link-inspector.tsx:648
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:619
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:633
 msgid "Link"
 msgstr "رابط"
 
@@ -9406,7 +9549,7 @@ msgstr "يستمع"
 
 #: app/components/hiring/job-labels.ts:50
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:304
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:610
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:624
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
 msgid "Live"
 msgstr "مباشر"
@@ -9621,11 +9764,11 @@ msgstr "القفل متوقف في مكان العمل هذا. فعّله من �
 msgid "Log out"
 msgstr "تسجيل الخروج"
 
-#: app/routes/_auth+/login.tsx:297
+#: app/routes/_auth+/login.tsx:299
 msgid "Login Error"
 msgstr "خطأ في تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:397
+#: app/routes/_auth+/login.tsx:399
 msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
@@ -9982,11 +10125,11 @@ msgstr "الحد الأقصى لمدة المكالمة"
 msgid "Maximum call length (minutes)"
 msgstr "الحد الأقصى لمدة المكالمة (بالدقائق)"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:938
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:941
 msgid "MCP clients authorized to access your organization data"
 msgstr "عملاء MCP المصرح لهم بالوصول إلى بيانات منظمتك"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:749
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:752
 msgid "MCP OAuth Setup Instructions"
 msgstr "تعليمات إعداد MCP OAuth"
 
@@ -9995,7 +10138,7 @@ msgid "MCP server"
 msgstr "خادم MCP"
 
 #: app/components/app-sidebar.tsx:554
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1356
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
 msgid "MCP Server"
 msgstr "خادم MCP"
 
@@ -10183,6 +10326,51 @@ msgstr "ينقصه شيء تحتاجه الوظيفة"
 msgid "Mobile"
 msgstr "الجوال"
 
+#: app/routes/mock-payments+/__mock-page.tsx:29
+msgid "Mock"
+msgstr "محاكاة"
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:65
+msgid "Mock Checkout.com 3D Secure (local)"
+msgstr "محاكاة 3D Secure لدى Checkout.com (محلي)"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:96
+msgid "Mock Checkout.com dashboard (local)"
+msgstr "محاكاة لوحة Checkout.com (محلي)"
+
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:102
+msgid "Mock Checkout.com HPP (local)"
+msgstr "محاكاة صفحة الدفع المستضافة لدى Checkout.com (محلي)"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:137
+msgid "Mock merchant"
+msgstr "تاجر تجريبي"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:21
+#: app/components/settings/cards/organization/shop-card.tsx:123
+msgid "Mock payments"
+msgstr "مدفوعات تجريبية"
+
+#: app/routes/mock-payments+/dashboard.tsx:78
+msgid "Mock payments (local)"
+msgstr "مدفوعات تجريبية (محلي)"
+
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:71
+msgid "Mock Stripe 3D Secure (local)"
+msgstr "محاكاة 3D Secure لدى Stripe (محلي)"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:132
+msgid "Mock Stripe Checkout (local)"
+msgstr "محاكاة Stripe Checkout (محلي)"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:62
+msgid "Mock Stripe Connect onboarding (local)"
+msgstr "محاكاة إعداد Stripe Connect (محلي)"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:124
+msgid "Mock Stripe Express dashboard (local)"
+msgstr "محاكاة لوحة Stripe Express (محلي)"
+
 #: app/components/roles/tenant-role-access-manager.tsx:97
 msgid "Modify notes created by other team members."
 msgstr "تعديل الملاحظات التي أنشأها أعضاء الفريق الآخرون."
@@ -10360,6 +10548,10 @@ msgstr "الاسم"
 msgid "Name it so you can tell tablets apart, then open the pairing page on it."
 msgstr "سمِّه لتميّز بين الأجهزة، ثم افتح صفحة الربط عليه."
 
+#: app/routes/mock-payments+/__card-form.tsx:86
+msgid "Name on card"
+msgstr "الاسم على البطاقة"
+
 #: app/utils/staffing/onboarding-view.ts:222
 #: app/utils/staffing/onboarding-view.ts:343
 msgid "Name the task."
@@ -10377,11 +10569,11 @@ msgstr "الاسم ومعلومات التواصل والرواتب."
 msgid "Name, plus a phone number or an email. They do not need a login."
 msgstr "الاسم، مع رقم هاتف أو بريد إلكتروني. لا يحتاجون إلى تسجيل دخول."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:868
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:871
 msgid "Navigate to Features → MCP Servers"
 msgstr "انتقل إلى الميزات → خوادم MCP"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:829
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:832
 msgid "Navigate to MCP Servers configuration"
 msgstr "انتقل إلى تكوين خوادم MCP"
 
@@ -10452,7 +10644,7 @@ msgstr "ملاحظات محايدة"
 msgid "Never"
 msgstr "أبدًا"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:984
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:987
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:953
 msgid "Never used"
 msgstr "لم يُستخدم أبداً"
@@ -10664,7 +10856,7 @@ msgid "No active subscription"
 msgstr "لا يوجد اشتراك نشط"
 
 #: app/components/note/activity-log.tsx:207
-#: app/routes/_app+/$orgSlug_+/index.tsx:215
+#: app/routes/_app+/$orgSlug_+/index.tsx:221
 msgid "No activity yet"
 msgstr "لا يوجد نشاط بعد"
 
@@ -10672,7 +10864,7 @@ msgstr "لا يوجد نشاط بعد"
 msgid "No agent numbers are assigned to your business yet. Contact support to get one."
 msgstr "لم تُخصص أي أرقام للوكيل لنشاطك التجاري بعد. تواصل مع الدعم للحصول على رقم."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:600
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:614
 msgid "No announcements yet"
 msgstr "لا توجد إعلانات بعد"
 
@@ -10680,7 +10872,7 @@ msgstr "لا توجد إعلانات بعد"
 msgid "No answer"
 msgstr "لا يوجد رد"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:685
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:688
 msgid "No API keys created yet"
 msgstr "لم يتم إنشاء مفاتيح API بعد"
 
@@ -10762,7 +10954,7 @@ msgstr "لا توجد قنوات بعد"
 msgid "No choice"
 msgstr "بلا اختيار"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:944
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:947
 msgid "No clients have been authorized yet"
 msgstr "لم يتم تفويض أي عملاء بعد"
 
@@ -10833,6 +11025,10 @@ msgstr "لا يوجد بريد إلكتروني مسجّل، لذا لم يُر�
 #: app/components/note/emoji-list.tsx:34
 msgid "No emojis found"
 msgstr "لم يتم العثور على رموز تعبيرية"
+
+#: app/routes/mock-payments+/dashboard.tsx:145
+msgid "No events yet."
+msgstr "لا توجد أحداث بعد."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
 msgid "No execution runs recorded yet for this automation."
@@ -10984,7 +11180,7 @@ msgid "No names to show. Ask a manager to set up your PIN."
 msgstr "لا توجد أسماء لعرضها. اطلب من مدير إعداد رقمك السري."
 
 #: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
-#: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:134
+#: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:149
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
 msgid "No note with the id \"{noteId}\" exists"
 msgstr "لا توجد ملاحظة بالمعرف \"{noteId}\""
@@ -11080,7 +11276,7 @@ msgstr "لا توجد صفحات تطابق هذا البحث"
 msgid "No pages yet"
 msgstr "لا توجد صفحات بعد"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1167
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1170
 msgid "No parameters required"
 msgstr "لا توجد معاملات مطلوبة"
 
@@ -11091,6 +11287,10 @@ msgstr "لا توجد مفاتيح مرور مسجلة بعد"
 #: app/components/staff/positions-tab.tsx:670
 msgid "No pay is set yet."
 msgstr "لم يتم تحديد أي أجر بعد."
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:212
+msgid "No payments yet."
+msgstr "لا توجد مدفوعات بعد."
 
 #: app/components/staff/timesheets/payroll-summary.tsx:351
 msgid "No payroll ID"
@@ -11197,6 +11397,10 @@ msgstr "لم يتم تخطيط أي ورديات لهذا الأسبوع."
 msgid "No staff phone is set, so only the transfer cases below can transfer calls."
 msgstr "لم يتم تعيين رقم هاتف للفريق، لذا يمكن تحويل المكالمات فقط في حالات التحويل أدناه."
 
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:112
+msgid "No sub-entities yet."
+msgstr "لا توجد كيانات فرعية بعد."
+
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:387
 msgid "No submissions yet"
 msgstr "لا توجد ردود بعد"
@@ -11250,7 +11454,7 @@ msgstr "بدون إكراميات"
 msgid "No tips to divide in this range"
 msgstr "لا إكراميات لتقسيمها في هذه الفترة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1288
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1291
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
@@ -11406,7 +11610,7 @@ msgstr "غير متاح في منطقة بياناتك بعد"
 msgid "Not available when we need them"
 msgstr "غير متاح عندما نحتاج إليه"
 
-#: app/components/settings/cards/organization/shop-card.tsx:108
+#: app/components/settings/cards/organization/shop-card.tsx:115
 msgid "Not connected"
 msgstr "غير متصل"
 
@@ -11674,6 +11878,10 @@ msgstr "لا يوجد ما يُعرض هنا"
 msgid "Nothing waiting for a manager."
 msgstr "لا شيء بانتظار المدير."
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
+msgid "Nothing yet."
+msgstr "لا شيء بعد."
+
 #: app/components/settings/cards/notification-preferences-card.tsx:264
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
@@ -11707,7 +11915,7 @@ msgstr "أرقام"
 msgid "Numbers the agent answers. We assign agent numbers to your business; forwarded lines start answering once you verify them."
 msgstr "الأرقام التي يرد عليها الوكيل. نخصص أرقام الوكيل لنشاطك التجاري، وتبدأ الخطوط المحوّلة في الرد بمجرد التحقق منها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:899
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:902
 msgid "OAuth tokens are scoped to your organization ({orgSlug})"
 msgstr "رموز OAuth محدودة بمنظمتك ({orgSlug})"
 
@@ -11825,7 +12033,7 @@ msgstr "مرة في الشهر"
 msgid "Once it is paired, your team can clock in with a PIN. This takes about a minute."
 msgstr "بعد الربط، يمكن لفريقك تسجيل الحضور بالرقم السري. يستغرق ذلك دقيقة تقريبًا."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:945
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:948
 msgid "Once you connect an AI client using the setup instructions below, it will appear here."
 msgstr "بمجرد ربط عميل الذكاء الاصطناعي باستخدام تعليمات الإعداد أدناه، سيظهر هنا."
 
@@ -12009,11 +12217,11 @@ msgstr "فتح مسار المكالمة"
 msgid "Open checklist"
 msgstr "فتح قائمة المهام"
 
-#: app/components/settings/cards/organization/shop-card.tsx:176
+#: app/components/settings/cards/organization/shop-card.tsx:188
 msgid "Open Checkout dashboard"
 msgstr "فتح لوحة تحكم الدفع"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:789
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:792
 msgid "Open Claude Desktop and go to Settings → Developer"
 msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → المطور"
 
@@ -12021,7 +12229,7 @@ msgstr "افتح Claude Desktop وانتقل إلى الإعدادات → ال�
 msgid "Open command menu"
 msgstr "فتح قائمة الأوامر"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:865
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:868
 msgid "Open Cursor Settings (Cmd/Ctrl + ,)"
 msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 
@@ -12029,7 +12237,7 @@ msgstr "افتح إعدادات Cursor (Cmd/Ctrl + ,)"
 msgid "Open Graph image"
 msgstr "صورة Open Graph"
 
-#: app/components/settings/cards/organization/shop-card.tsx:207
+#: app/components/settings/cards/organization/shop-card.tsx:219
 msgid "Open hosted dashboard"
 msgstr "فتح لوحة التحكم المستضافة"
 
@@ -12051,7 +12259,7 @@ msgstr "فتح في تطبيق البريد"
 msgid "Open in new tab"
 msgstr "فتح في علامة تبويب جديدة"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:826
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:829
 msgid "Open Kiro IDE Settings"
 msgstr "افتح إعدادات Kiro IDE"
 
@@ -12063,6 +12271,10 @@ msgstr "فتح الرابط"
 msgid "Open menu"
 msgstr "فتح القائمة"
 
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:64
+msgid "Open mock payments dashboard"
+msgstr "فتح لوحة المدفوعات التجريبية"
+
 #: app/components/phone-agent/flow-editor/flow-meta.ts:41
 msgid "Open or closed"
 msgstr "مفتوح أو مغلق"
@@ -12071,7 +12283,7 @@ msgstr "مفتوح أو مغلق"
 msgid "Open pages, forms, and themes in the site builder."
 msgstr "فتح الصفحات والنماذج والسمات في منشئ الموقع."
 
-#: app/components/settings/cards/organization/shop-card.tsx:144
+#: app/components/settings/cards/organization/shop-card.tsx:156
 msgid "Open payout dashboard"
 msgstr "فتح لوحة تحكم المدفوعات"
 
@@ -12229,7 +12441,7 @@ msgstr "الخيارات"
 msgid "Or continue with"
 msgstr "أو تابع باستخدام"
 
-#: app/routes/_auth+/login.tsx:315
+#: app/routes/_auth+/login.tsx:317
 msgid "Or continue with email or username"
 msgstr "أو تابع باستخدام البريد الإلكتروني أو اسم المستخدم"
 
@@ -12241,7 +12453,7 @@ msgstr "أو الصقه أدناه"
 msgid "Orange"
 msgstr "برتقالي"
 
-#: app/components/settings/cards/organization/shop-card.tsx:353
+#: app/components/settings/cards/organization/shop-card.tsx:369
 msgid "Orders are unavailable right now. Your shop settings are still saved; try again later."
 msgstr "الطلبات غير متاحة حاليًا. إعدادات المتجر محفوظة؛ حاول مرة أخرى لاحقًا."
 
@@ -12249,7 +12461,7 @@ msgstr "الطلبات غير متاحة حاليًا. إعدادات المتج
 msgid "Orders one person handles in an hour"
 msgstr "الطلبات التي يتولاها شخص واحد في الساعة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:347
+#: app/components/settings/cards/organization/shop-card.tsx:363
 msgid "Orders placed on your public site."
 msgstr "الطلبات المقدمة على موقعك العام."
 
@@ -12535,7 +12747,7 @@ msgid "Paragraphs, navigation, and other text."
 msgstr "الفقرات والتنقل والنصوص الأخرى."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:120
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1163
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1166
 msgid "Parameters"
 msgstr "المعاملات"
 
@@ -12564,8 +12776,9 @@ msgid "Passkeys are a secure, passwordless way to sign in using your device's bi
 msgstr "مفاتيح المرور هي طريقة آمنة وبدون كلمة مرور لتسجيل الدخول باستخدام القياسات الحيوية لجهازك."
 
 #: app/components/settings/password-form.tsx:112
-#: app/routes/_auth+/login.tsx:801
+#: app/routes/_auth+/login.tsx:803
 #: app/routes/_auth+/onboarding.tsx:467
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:83
 msgid "Password"
 msgstr "كلمة المرور"
 
@@ -12630,6 +12843,8 @@ msgstr "جارٍ إيقاف الأتمتة مؤقتاً..."
 #: app/components/hiring/job-editor.tsx:720
 #: app/components/hiring/job-summary.tsx:42
 #: app/components/staff/staff-roster.tsx:147
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:140
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
 msgid "Pay"
 msgstr "الأجر"
 
@@ -12674,13 +12889,40 @@ msgstr "نوع الأجر"
 msgid "Pay week"
 msgstr "أسبوع الأجور"
 
-#: app/components/settings/cards/organization/shop-card.tsx:92
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
+msgid "Payment"
+msgstr "الدفعة"
+
+#: app/routes/mock-payments+/dashboard.tsx:83
+msgid "Payment mock"
+msgstr "محاكاة المدفوعات"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:125
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:206
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:129
+msgid "Payments"
+msgstr "المدفوعات"
+
+#: app/components/settings/cards/organization/shop-card.tsx:99
 msgid "Payments enabled"
 msgstr "المدفوعات مفعّلة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:117
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:128
+msgid "Payouts"
+msgstr "التحويلات"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:146
+msgid "Payouts disabled"
+msgstr "التحويلات معطلة"
+
+#: app/components/settings/cards/organization/shop-card.tsx:129
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:144
 msgid "Payouts enabled"
 msgstr "التحويلات مفعّلة"
+
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:102
+msgid "Payouts restricted"
+msgstr "التحويلات مقيدة"
 
 #: app/components/hiring/hire-dialog.tsx:279
 #: app/components/staff/details-tab.tsx:177
@@ -13212,7 +13454,7 @@ msgid "Please enter your 2FA code to verify your identity."
 msgstr "يرجى إدخال رمز المصادقة الثنائية للتحقق من هويتك."
 
 #: app/routes/_auth+/login.tsx:109
-#: app/routes/_auth+/login.tsx:626
+#: app/routes/_auth+/login.tsx:628
 msgid "Please enter your email or username"
 msgstr "يرجى إدخال بريدك الإلكتروني أو اسم المستخدم"
 
@@ -13407,7 +13649,7 @@ msgstr "الفترة السابقة"
 msgid "Previous week"
 msgstr "الأسبوع السابق"
 
-#: app/components/settings/cards/organization/shop-card.tsx:285
+#: app/components/settings/cards/organization/shop-card.tsx:297
 msgid "Price (USD)"
 msgstr "السعر (USD)"
 
@@ -13475,7 +13717,7 @@ msgstr "قيد المعالجة"
 msgid "Processing…"
 msgstr "جارٍ المعالجة…"
 
-#: app/components/settings/cards/organization/shop-card.tsx:256
+#: app/components/settings/cards/organization/shop-card.tsx:268
 msgid "Product name"
 msgstr "اسم المنتج"
 
@@ -13512,6 +13754,14 @@ msgstr "الرسالة الصوتية"
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:596
 msgid "Pronunciations"
 msgstr "طرق النطق"
+
+#: app/routes/mock-payments+/dashboard.tsx:152
+msgid "Provider"
+msgstr "المزوّد"
+
+#: app/components/settings/cards/organization/mock-payments-panel.tsx:25
+msgid "Provider calls go to the built-in emulators. No real money moves and no real keys are used."
+msgstr "تذهب طلبات المزوّد إلى المحاكيات المدمجة. لا تُنقل أموال حقيقية ولا تُستخدم مفاتيح حقيقية."
 
 #: app/components/note/share-note-button.tsx:208
 msgid "Public Access"
@@ -13566,7 +13816,7 @@ msgstr "نشر هذا الأسبوع"
 msgid "Publish updates"
 msgstr "نشر التحديثات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:329
+#: app/components/settings/cards/organization/shop-card.tsx:341
 msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
@@ -13669,6 +13919,10 @@ msgstr "أسئلة حول الفوترة؟"
 #: app/components/hiring/screener-editor.tsx:98
 msgid "Questions are optional. A short yes or no on weekends or experience saves you reading every application."
 msgstr "الأسئلة اختيارية. سؤال قصير بنعم أو لا عن العمل في عطلة نهاية الأسبوع أو الخبرة يوفّر عليك قراءة كل طلب."
+
+#: app/routes/mock-payments+/dashboard.tsx:190
+msgid "Queued"
+msgstr "في الانتظار"
 
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:354
 msgid "Quick edit"
@@ -13775,7 +14029,7 @@ msgstr "يتلقى الإكراميات"
 msgid "Recent campaigns"
 msgstr "الحملات الأخيرة"
 
-#: app/components/settings/cards/organization/shop-card.tsx:344
+#: app/components/settings/cards/organization/shop-card.tsx:360
 msgid "Recent orders"
 msgstr "الطلبات الأخيرة"
 
@@ -13796,7 +14050,7 @@ msgstr "اقتراح جدول"
 msgid "Recommended"
 msgstr "موصى به"
 
-#: app/routes/_auth+/login.tsx:596
+#: app/routes/_auth+/login.tsx:598
 msgid "Recommended for"
 msgstr "موصى به لـ"
 
@@ -13854,6 +14108,10 @@ msgstr "السجلات"
 msgid "Red"
 msgstr "أحمر"
 
+#: app/routes/mock-payments+/dashboard.tsx:223
+msgid "Redeliver"
+msgstr "إعادة التسليم"
+
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
 msgid "Redirect actions"
 msgstr "إجراءات إعادة التوجيه"
@@ -13892,7 +14150,7 @@ msgstr "تحديث"
 msgid "Refresh calls"
 msgstr "تحديث المكالمات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:163
+#: app/components/settings/cards/organization/shop-card.tsx:175
 msgid "Refresh Checkout setup"
 msgstr "تحديث إعدادات الدفع"
 
@@ -13903,6 +14161,10 @@ msgstr "تحديث المعاينة"
 #: app/components/settings/cards/organization/site-card.tsx:453
 msgid "Refresh status"
 msgstr "تحديث الحالة"
+
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:168
+msgid "Refunds"
+msgstr "المستردات"
 
 #: app/components/settings/backup-codes-display.tsx:151
 msgid "Regenerate Codes"
@@ -13974,7 +14236,7 @@ msgstr "إعادة تحميل الصفحة"
 msgid "Reload the page to try again."
 msgstr "أعد تحميل الصفحة للمحاولة مرة أخرى."
 
-#: app/routes/_auth+/login.tsx:836
+#: app/routes/_auth+/login.tsx:838
 #: app/routes/_auth+/onboarding_.$provider.tsx:368
 #: app/routes/_auth+/onboarding.tsx:534
 msgid "Remember me"
@@ -14366,7 +14628,7 @@ msgstr "اطلب الحذف الدائم لحسابك وجميع البيانا�
 msgid "Request time off"
 msgstr "طلب إجازة"
 
-#: app/routes/_auth+/login.tsx:409
+#: app/routes/_auth+/login.tsx:411
 msgid "Requesting your authorization"
 msgstr "جاري طلب التفويض"
 
@@ -14376,11 +14638,11 @@ msgstr "جاري طلب التفويض"
 msgid "Requests"
 msgstr "الطلبات"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1077
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1080
 msgid "Require re-authorization to reconnect"
 msgstr "يتطلب إعادة التفويض لإعادة الاتصال"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1183
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1186
 msgid "required"
 msgstr "مطلوب"
 
@@ -14561,15 +14823,15 @@ msgstr "راجع بطاقات الوقت التي تحتاج إلى نظرة."
 msgid "Reviews"
 msgstr "المراجعات"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1010
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1013
 msgid "Revoke"
 msgstr "إلغاء"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1107
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1110
 msgid "Revoke Access"
 msgstr "إلغاء الوصول"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1054
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1057
 msgid "Revoke Authorization"
 msgstr "إلغاء التفويض"
 
@@ -14581,12 +14843,12 @@ msgstr "إلغاء الجلسة"
 msgid "Revoke workspace access and remove non-admin members."
 msgstr "إلغاء الوصول إلى مساحة العمل وإزالة الأعضاء غير المسؤولين."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:995
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1014
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:998
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1017
 msgid "Revoked"
 msgstr "تم الإلغاء"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1102
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1105
 msgid "Revoking..."
 msgstr "جاري الإلغاء..."
 
@@ -14883,6 +15145,14 @@ msgstr "حفظ كنسخة"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
+msgid "Save card"
+msgstr "حفظ البطاقة"
+
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:141
+msgid "Save card for later charges"
+msgstr "حفظ البطاقة للمعاملات اللاحقة"
+
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/roles/tenant-role-access-manager.tsx:803
@@ -14925,7 +15195,7 @@ msgstr "حفظ البيانات الشخصية"
 msgid "Save phrases"
 msgstr "حفظ العبارات"
 
-#: app/components/settings/cards/organization/shop-card.tsx:315
+#: app/components/settings/cards/organization/shop-card.tsx:327
 msgid "Save product"
 msgstr "حفظ المنتج"
 
@@ -14946,11 +15216,11 @@ msgstr "حفظ الإعدادات"
 msgid "Save template"
 msgstr "حفظ القالب"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:808
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:811
 msgid "Save the file and restart Claude Desktop"
 msgstr "احفظ الملف وأعد تشغيل Claude Desktop"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:843
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:846
 msgid "Save the file and restart Kiro IDE"
 msgstr "احفظ الملف وأعد تشغيل Kiro IDE"
 
@@ -15553,7 +15823,7 @@ msgstr "الأعضاء المحددون"
 msgid "Selected members have direct access."
 msgstr "لدى الأعضاء المحددين صلاحية الوصول المباشر."
 
-#: app/components/settings/cards/organization/shop-card.tsx:73
+#: app/components/settings/cards/organization/shop-card.tsx:80
 msgid "Sell one product on your public site. The platform keeps {SHOP_PLATFORM_FEE_PERCENT}% and the rest is paid out to you."
 msgstr "قم ببيع منتج واحد على موقعك العام. تحتفظ المنصة بنسبة {SHOP_PLATFORM_FEE_PERCENT}% ويتم دفع الباقي لك."
 
@@ -15728,7 +15998,7 @@ msgstr "تحديد الانصراف"
 msgid "Set deadlines"
 msgstr "تعيين المواعيد النهائية"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:429
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:432
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
 
@@ -15760,6 +16030,10 @@ msgstr "إعداد جهاز لوحي"
 msgid "Set up authenticator app"
 msgstr "إعداد تطبيق المصادقة"
 
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:67
+msgid "Set up payouts"
+msgstr "إعداد التحويلات"
+
 #: app/components/staff/onboarding/onboarding-labels.ts:42
 msgid "Set up their clock-in PIN"
 msgstr "إعداد رمز الحضور الخاص بهم"
@@ -15784,9 +16058,9 @@ msgstr "الإعدادات"
 msgid "Setup"
 msgstr "الإعداد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:95
-#: app/components/settings/cards/organization/shop-card.tsx:101
-#: app/components/settings/cards/organization/shop-card.tsx:106
+#: app/components/settings/cards/organization/shop-card.tsx:102
+#: app/components/settings/cards/organization/shop-card.tsx:108
+#: app/components/settings/cards/organization/shop-card.tsx:113
 msgid "Setup incomplete"
 msgstr "الإعداد غير مكتمل"
 
@@ -15847,7 +16121,7 @@ msgstr "شارك مع الآخرين"
 msgid "Shared across every page"
 msgstr "مشترك عبر كل صفحة"
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:125
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:131
 msgid "Shared by {ownerName} · {accessLabel}"
 msgstr "تمت المشاركة بواسطة {ownerName} · {accessLabel}"
 
@@ -15924,7 +16198,7 @@ msgstr "المتجر"
 msgid "Shop order reports are only available for US organizations."
 msgstr "تقارير طلبات المتجر متاحة للمؤسسات الأمريكية فقط."
 
-#: app/components/settings/cards/organization/shop-card.tsx:82
+#: app/components/settings/cards/organization/shop-card.tsx:89
 msgid "Shop payouts are available for US organizations only. KSA checkout will be supported separately."
 msgstr "مدفوعات المتجر متاحة للمؤسسات الأمريكية فقط. سيتم دعم الدفع في السعودية بشكل منفصل."
 
@@ -15990,7 +16264,7 @@ msgstr "عرض أقل"
 msgid "Show more"
 msgstr "عرض المزيد"
 
-#: app/components/settings/cards/organization/shop-card.tsx:311
+#: app/components/settings/cards/organization/shop-card.tsx:323
 msgid "Show product on your public site"
 msgstr "إظهار المنتج على موقعك العام"
 
@@ -16051,11 +16325,11 @@ msgstr "إجازة مرضية"
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:849
+#: app/routes/_auth+/login.tsx:851
 msgid "Sign In"
 msgstr "تسجيل الدخول"
 
-#: app/routes/_auth+/login.tsx:270
+#: app/routes/_auth+/login.tsx:272
 msgid "Sign in to your account"
 msgstr "تسجيل الدخول إلى حسابك"
 
@@ -16087,8 +16361,12 @@ msgstr "تم تسجيل الدخول"
 msgid "Signed in as"
 msgstr "تم تسجيل الدخول كـ"
 
-#: app/routes/_auth+/login.tsx:566
-#: app/routes/_auth+/login.tsx:740
+#: app/routes/mock-payments+/dashboard.tsx:128
+msgid "Signed webhook deliveries, newest first."
+msgstr "عمليات تسليم الويب هوك الموقّعة، الأحدث أولًا."
+
+#: app/routes/_auth+/login.tsx:568
+#: app/routes/_auth+/login.tsx:742
 msgid "Signing in as"
 msgstr "تسجيل الدخول باسم"
 
@@ -16118,7 +16396,7 @@ msgstr "تسجيل دخول موحد، اتفاقية مستوى خدمة مخص
 msgid "Site icon"
 msgstr "أيقونة الموقع"
 
-#: app/components/settings/cards/organization/shop-card.tsx:70
+#: app/components/settings/cards/organization/shop-card.tsx:77
 msgid "Site shop"
 msgstr "متجر الموقع"
 
@@ -16548,10 +16826,12 @@ msgstr "الإحصائيات"
 #: app/components/workspace-breadcrumb.tsx:71
 #: app/components/workspace-breadcrumb.tsx:79
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:960
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:236
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:203
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:616
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:122
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:222
 msgid "Status"
 msgstr "الحالة"
 
@@ -16616,6 +16896,18 @@ msgstr "ترحيل التخزين"
 msgid "Strict"
 msgstr "صارم"
 
+#: app/routes/mock-payments+/dashboard.tsx:86
+msgid "Stripe and Checkout.com are emulated in this app. Nothing here is real."
+msgstr "تتم محاكاة Stripe وCheckout.com في هذا التطبيق. لا شيء هنا حقيقي."
+
+#: app/routes/mock-payments+/dashboard.tsx:95
+msgid "Stripe: mocked"
+msgstr "Stripe: محاكاة"
+
+#: app/routes/mock-payments+/dashboard.tsx:97
+msgid "Stripe: real"
+msgstr "Stripe: حقيقي"
+
 #: app/components/hiring/applicant-labels.ts:87
 msgid "Strong match"
 msgstr "مطابقة قوية"
@@ -16636,6 +16928,10 @@ msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإع
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4303
 msgid "Style"
 msgstr "النمط"
+
+#: app/routes/mock-payments+/checkout-com.dashboard.tsx:101
+msgid "Sub-entities"
+msgstr "الكيانات الفرعية"
 
 #: app/components/settings/cards/organization/site-card.tsx:349
 msgid "Subdomain URL"
@@ -16663,6 +16959,10 @@ msgstr "تُحفظ المشاركات في قاعدة بيانات المستأ�
 msgid "Submit"
 msgstr "إرسال"
 
+#: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:92
+msgid "Submit with requirements due"
+msgstr "إرسال مع وجود متطلبات مستحقة"
+
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:624
 msgid "Submitted"
 msgstr "تاريخ الإرسال"
@@ -16684,7 +16984,7 @@ msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:274
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:347
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:361
 msgid "Success"
 msgstr "نجاح"
 
@@ -16754,7 +17054,7 @@ msgstr "التبديل غير متاح في مكان العمل هذا. اسأل
 msgid "Switching from {currentRegionLabel} to {pendingRegionLabel} permanently deletes every visitor account in the current region — names, phone numbers, emails, and login sessions. This cannot be undone. New sign-ins will start from an empty database in the new region."
 msgstr "التبديل من {currentRegionLabel} إلى {pendingRegionLabel} يحذف نهائياً كل حساب زائر في المنطقة الحالية — الأسماء وأرقام الهواتف والبريد الإلكتروني وجلسات تسجيل الدخول. لا يمكن التراجع عن هذا الإجراء. ستبدأ عمليات تسجيل الدخول الجديدة من قاعدة بيانات فارغة في المنطقة الجديدة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:194
+#: app/components/settings/cards/organization/shop-card.tsx:206
 msgid "Sync hosted product"
 msgstr "مزامنة المنتج المستضاف"
 
@@ -17401,7 +17701,7 @@ msgstr "يعمل وكيل الهاتف بالذكاء الاصطناعي على 
 msgid "The amount could not be read."
 msgstr "تعذّرت قراءة المبلغ."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:451
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:454
 msgid "The API key will expire on this date. Leave unchecked for no expiration."
 msgstr "سينتهي صلاحية مفتاح API في هذا التاريخ. اترك بدون تحديد لعدم انتهاء الصلاحية."
 
@@ -17421,7 +17721,7 @@ msgstr "تعذّر على المساعد الرد. حاول مرة أخرى."
 msgid "The assistant that answers your business calls."
 msgstr "المساعد الذي يرد على مكالمات نشاطك التجاري."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:850
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:853
 msgid "The autoApprove setting allows automatic approval of these tools without prompting"
 msgstr "يسمح إعداد autoApprove بالموافقة التلقائية على هذه الأدوات دون مطالبة"
 
@@ -17861,7 +18161,7 @@ msgstr "لا يوجد أشخاص آخرون في هذه المؤسسة لمشا�
 msgid "There is nothing new to publish this week."
 msgstr "لا يوجد جديد للنشر هذا الأسبوع."
 
-#: app/routes/_auth+/login.tsx:301
+#: app/routes/_auth+/login.tsx:303
 msgid "There was an issue with your login attempt. Please try again."
 msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى."
 
@@ -17869,7 +18169,7 @@ msgstr "حدثت مشكلة في محاولة تسجيل الدخول. يرجى 
 msgid "These are settings, not legal advice. Overtime, break and cost figures are estimates to help you plan, and are not payroll. Check the rules that apply to your business before relying on them."
 msgstr "هذه إعدادات وليست استشارة قانونية. أرقام العمل الإضافي والاستراحات والتكلفة تقديرات لمساعدتك في التخطيط وليست كشف رواتب. تحقق من القواعد المطبّقة على نشاطك قبل الاعتماد عليها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1278
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1281
 msgid "These are the MCP tools available in your organization. AI clients can use these tools to interact with your data."
 msgstr "هذه هي أدوات MCP المتاحة في منظمتك. يمكن لعملاء الذكاء الاصطناعي استخدام هذه الأدوات للتفاعل مع بياناتك."
 
@@ -17997,7 +18297,7 @@ msgstr "يمكن لهذا الحساب الاطلاع على الوظائف دو
 msgid "This action cannot be undone. Are you sure you want to delete \"{pageTitle}\"?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف \"{pageTitle}\"؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:491
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:505
 msgid "This action cannot be undone. Are you sure you want to delete this announcement?"
 msgstr "لا يمكن التراجع عن هذا الإجراء. هل أنت متأكد من رغبتك في حذف هذا الإعلان؟"
 
@@ -18020,6 +18320,11 @@ msgstr "لم يعد هذا المتقدّم قيد المنافسة."
 #: app/utils/hiring/applicant-errors.ts:15
 msgid "This applicant was declined. Move them back into the pipeline first."
 msgstr "تم رفض هذا المتقدّم. أعده إلى مسار التقديم أولًا."
+
+#: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:100
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:110
+msgid "This authentication is no longer active"
+msgstr "هذه المصادقة لم تعد نشطة"
 
 #: app/components/kiosk/kiosk-pair.tsx:171
 msgid "This browser will not keep the pairing. Turn off private browsing and try again."
@@ -18085,6 +18390,10 @@ msgstr "هذه البطاقة لا تزال مفتوحة. أضف وقت الان
 msgid "This checklist was already added for them."
 msgstr "سبق أن أُضيفت هذه القائمة لهم."
 
+#: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:209
+msgid "This Checkout Session is no longer active"
+msgstr "جلسة الدفع هذه لم تعد نشطة"
+
 #: app/routes/mcp+/authorize.tsx:374
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
@@ -18093,7 +18402,7 @@ msgstr "سيتمكن هذا العميل من الوصول إلى:"
 msgid "This code expired. Make a new one."
 msgstr "انتهت صلاحية هذا الرمز. أنشئ رمزًا جديدًا."
 
-#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:220
+#: app/routes/_app+/$orgSlug_+/dashboards+/$dashboardId.tsx:226
 msgid "This dashboard does not exist or you do not have access to it."
 msgstr "لوحة التحكم هذه غير موجودة أو ليس لديك صلاحية الوصول إليها."
 
@@ -18133,7 +18442,7 @@ msgstr "هذا تقرير لمساعدتك على تقسيم الإكراميا�
 msgid "This is not available on this tablet."
 msgstr "هذا غير متاح على هذا الجهاز اللوحي."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:585
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:588
 msgid "This is the only time you'll see this API key. Make sure to copy it and store it securely."
 msgstr "هذه هي المرة الوحيدة التي سترى فيها مفتاح API. تأكد من نسخه وتخزينه بشكل آمن."
 
@@ -18145,7 +18454,7 @@ msgstr "هذا ما يُطلب منهم قراءته والموافقة عليه
 msgid "This is your current session. Sign out to end it."
 msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:767
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:770
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
 
@@ -18208,6 +18517,10 @@ msgstr "هذه الصفحة لك وحدك. لا تشارك الرابط الذي
 #: app/utils/my-schedule/my-schedule-messages.ts:82
 msgid "This page opens from the link in your schedule email. Find the latest email from your manager and tap the button in it."
 msgstr "تُفتح هذه الصفحة من الرابط في رسالة الجدول. ابحث عن آخر رسالة من مديرك واضغط الزر فيها."
+
+#: app/routes/mock-payments+/checkout-com.hpp.$hppId.tsx:146
+msgid "This payment page is no longer active"
+msgstr "صفحة الدفع هذه لم تعد نشطة"
 
 #: app/components/staff/timesheets/period-nav.tsx:150
 msgid "This period"
@@ -18419,7 +18732,7 @@ msgstr "سيؤدي ذلك إلى حذف جميع أخطاء 404 المسجلة �
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً من <0>{deleteRedirectFrom}</0> إلى <1>{deleteRedirectTo}</1>. لن يُعاد توجيه الزوار الذين يطلبون عنوان URL القديم بعد الآن."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:1067
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:1070
 msgid "This will:"
 msgstr "سيؤدي هذا إلى:"
 
@@ -18692,7 +19005,7 @@ msgstr "إلى: {recipient}"
 msgid "Today"
 msgstr "اليوم"
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:407
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:421
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
@@ -18704,7 +19017,7 @@ msgstr "تبديل الإشعارات"
 msgid "Toggle redirect active status"
 msgstr "تبديل حالة تفعيل إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:910
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:913
 msgid "Tokens automatically expire after 30 days of inactivity"
 msgstr "تنتهي صلاحية الرموز المميزة تلقائياً بعد 30 يوماً من عدم النشاط"
 
@@ -18758,7 +19071,7 @@ msgstr "الإجمالي"
 msgid "Total {totalText} of 100"
 msgstr "المجموع {totalText} من 100"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:205
+#: app/routes/_app+/$orgSlug_+/index.tsx:211
 msgid "Total notes"
 msgstr "إجمالي الملاحظات"
 
@@ -18818,6 +19131,10 @@ msgstr "جهات اتصال التحويل"
 msgid "Transfer options"
 msgstr "خيارات التحويل"
 
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:173
+msgid "Transfer reversals"
+msgstr "عكس التحويلات"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:555
 msgid "Transfer to"
 msgstr "التحويل إلى"
@@ -18842,6 +19159,7 @@ msgstr "التحويل عندما"
 #: app/components/workspace-breadcrumb.tsx:50
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:166
+#: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:158
 msgid "Transfers"
 msgstr "التحويلات"
 
@@ -18878,7 +19196,7 @@ msgstr "ترجمة الكل"
 msgid "Transport"
 msgstr "المواصلات"
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:219
+#: app/routes/_app+/$orgSlug_+/index.tsx:225
 msgid "Trend"
 msgstr "الاتجاه"
 
@@ -19092,9 +19410,10 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:616
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:630
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3928
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
+#: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
 msgstr "النوع"
 
@@ -19368,7 +19687,7 @@ msgstr "تحديث اسم هذا الدور ووصفه وصلاحياته."
 msgid "Update your photo and personal details here."
 msgstr "قم بتحديث صورتك وبياناتك الشخصية هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:622
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:636
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:206
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:619
 msgid "Updated"
@@ -19602,7 +19921,7 @@ msgstr "استخدم الصيغة الدولية، مثل +15551234567."
 msgid "Use own time clock"
 msgstr "استخدام ساعة الدوام الخاصة"
 
-#: app/routes/_auth+/login.tsx:609
+#: app/routes/_auth+/login.tsx:611
 msgid "Use password instead"
 msgstr "استخدم كلمة المرور بدلاً من ذلك"
 
@@ -19658,12 +19977,12 @@ msgstr "يُستخدم عند توظيف شخص من المتقدمين. يمك�
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:155
+#: app/routes/_app+/$orgSlug_+/index.tsx:161
 msgid "User"
 msgstr "مستخدم"
 
 #: app/components/settings/cards/profile-card.tsx:114
-#: app/routes/_auth+/login.tsx:775
+#: app/routes/_auth+/login.tsx:777
 #: app/routes/_auth+/onboarding_.$provider.tsx:297
 #: app/routes/_auth+/onboarding.tsx:433
 msgid "Username"
@@ -19674,7 +19993,7 @@ msgid "Username or Email"
 msgstr "اسم المستخدم أو البريد الإلكتروني"
 
 #: app/routes/_auth+/login.tsx:102
-#: app/routes/_auth+/login.tsx:702
+#: app/routes/_auth+/login.tsx:704
 msgid "Username or email is required"
 msgstr "اسم المستخدم أو البريد الإلكتروني مطلوب"
 
@@ -19732,7 +20051,7 @@ msgstr "تحقق من الخط"
 msgid "Verify your business line"
 msgstr "تحقق من خط نشاطك التجاري"
 
-#: app/routes/_auth+/login.tsx:411
+#: app/routes/_auth+/login.tsx:413
 msgid "Verifying your passkey"
 msgstr "جاري التحقق من مفتاح المرور"
 
@@ -19929,7 +20248,7 @@ msgstr "تم حفظ البريد الصوتي"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة الاتصال والتحويلات الفائتة والشكاوى والتقييمات المنخفضة مفتوحة في صفحة المكالمات حتى يضع أحدهم علامة عليها بأنها مكتملة."
 
-#: app/routes/_app+/$orgSlug_+/index.tsx:228
+#: app/routes/_app+/$orgSlug_+/index.tsx:234
 msgid "Vs prior period"
 msgstr "مقارنة بالفترة السابقة"
 
@@ -20026,7 +20345,7 @@ msgid "Warn when this close to the limit"
 msgstr "التنبيه عند الاقتراب من الحد بمقدار"
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:272
-#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:345
+#: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:359
 msgid "Warning"
 msgstr "تحذير"
 
@@ -20038,6 +20357,11 @@ msgstr "تحذيرات"
 #: app/components/staff/schedule/shift-editor-sheet.tsx:425
 msgid "Warnings do not stop you from saving or publishing."
 msgstr "التحذيرات لا تمنعك من الحفظ أو النشر."
+
+#: app/routes/mock-payments+/__card-errors.ts:16
+#: app/routes/mock-payments+/__card-errors.ts:17
+msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
+msgstr "تعذّرت مصادقة وسيلة الدفع. يرجى اختيار وسيلة دفع أخرى والمحاولة مرة أخرى."
 
 #: app/components/staff/region-staff-guard.tsx:130
 msgid "We could not check how many staff records there are, so assume there are some."
@@ -20186,7 +20510,7 @@ msgstr "لا نحتفظ بنسخة، لذا لا يمكن استرجاعه لا�
 msgid "We do not pick this for you. Until you choose, overtime is estimated at each workplace separately."
 msgstr "لا نختار هذا نيابةً عنك. إلى أن تختار، تُقدَّر الساعات الإضافية في كل مكان عمل على حدة."
 
-#: app/routes/_auth+/login.tsx:570
+#: app/routes/_auth+/login.tsx:572
 msgid "We found your organization:"
 msgstr "وجدنا منظمتك:"
 
@@ -20230,6 +20554,10 @@ msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بري�
 #: app/components/staff/timesheets/card-history.tsx:64
 msgid "Web"
 msgstr "الويب"
+
+#: app/routes/mock-payments+/dashboard.tsx:108
+msgid "Webhooks: {webhookMode}"
+msgstr "الويب هوك: {webhookMode}"
 
 #: app/components/app-sidebar.tsx:457
 #: app/components/command-menu.tsx:129
@@ -20296,7 +20624,7 @@ msgid "Welcome aboard!"
 msgstr "مرحباً بك على متن الطائرة!"
 
 #: app/components/kiosk/kiosk-screens.tsx:661
-#: app/routes/_auth+/login.tsx:260
+#: app/routes/_auth+/login.tsx:262
 msgid "Welcome back"
 msgstr "مرحباً بعودتك"
 
@@ -20456,7 +20784,7 @@ msgstr "عندما يسجّل الموظفون حضورهم أو تضيف بطا
 msgid "When people have hours they can or cannot work, the schedule warns you if a shift falls outside them."
 msgstr "عندما يحدد الأشخاص ساعات يستطيعون أو لا يستطيعون العمل فيها، يحذّرك الجدول إذا وقعت وردية خارجها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:811
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:814
 msgid "When prompted, authorize the connection in your browser"
 msgstr "عند المطالبة، وافق على الاتصال في متصفحك"
 
@@ -20907,7 +21235,7 @@ msgstr "يمكنك الاطلاع على هذه الإعدادات لكن لا �
 msgid "You can look at this card but not change it."
 msgstr "يمكنك الاطلاع على هذه البطاقة لكن لا يمكنك تغييرها."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:904
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:907
 msgid "You can revoke access at any time from the Authorized Clients section above"
 msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العملاء المصرح لهم أعلاه"
 
@@ -21019,7 +21347,7 @@ msgstr "تحتاج إلى صلاحية الأجور لتغيير الإكرام�
 msgid "You no longer have access to this chat. Reload the page to check your channels."
 msgstr "لم يعد لديك حق الوصول إلى هذه الدردشة. أعد تحميل الصفحة للتحقق من قنواتك."
 
-#: app/components/settings/cards/organization/shop-card.tsx:394
+#: app/components/settings/cards/organization/shop-card.tsx:410
 msgid "You receive"
 msgstr "تستلم"
 
@@ -21031,7 +21359,7 @@ msgstr "تم تسجيل انصرافك تلقائيًا."
 msgid "You’re all caught up"
 msgstr "قرأت جميع الردود"
 
-#: app/routes/_auth+/login.tsx:437
+#: app/routes/_auth+/login.tsx:439
 msgid "You're logged in! Navigating..."
 msgstr "تم تسجيل الدخول! جاري التوجيه..."
 
@@ -21051,7 +21379,7 @@ msgstr "أنت مسجل الدخول على {sessionCount, plural, one {# جها
 msgid "You've drafted answers many times this hour. Try again later."
 msgstr "لقد صغت إجابات مرات عديدة خلال هذه الساعة. حاول مرة أخرى لاحقًا."
 
-#: app/routes/_auth+/login.tsx:284
+#: app/routes/_auth+/login.tsx:286
 msgid "Your account has been suspended. Please contact support if you believe this is an error."
 msgstr "تم تعليق حسابك. يرجى الاتصال بالدعم إذا كنت تعتقد أن هذا خطأ."
 
@@ -21071,9 +21399,13 @@ msgstr "لم ينضم الوكيل إلى المكالمة. تأكد من أن �
 msgid "Your agent is answering calls."
 msgstr "وكيلك يرد على المكالمات."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:533
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:536
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
 msgstr "تم إنشاء مفتاح API بنجاح. انسخه الآن - لن تتمكن من رؤيته مرة أخرى."
+
+#: app/routes/mock-payments+/stripe.3ds.$attemptId.tsx:84
+msgid "Your bank needs to confirm it is you."
+msgstr "يحتاج مصرفك إلى التأكد من هويتك."
 
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:33
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
@@ -21087,11 +21419,35 @@ msgstr "أوقف متصفحك صوت الوكيل مؤقتًا. اضغط على 
 msgid "Your business line"
 msgstr "خط نشاطك التجاري"
 
+#: app/routes/mock-payments+/__card-errors.ts:14
+msgid "Your card has insufficient funds."
+msgstr "رصيد بطاقتك غير كافٍ."
+
+#: app/routes/mock-payments+/__card-errors.ts:10
+msgid "Your card number is invalid."
+msgstr "رقم بطاقتك غير صالح."
+
+#: app/routes/mock-payments+/__card-errors.ts:13
+msgid "Your card was declined."
+msgstr "تم رفض بطاقتك."
+
+#: app/routes/mock-payments+/__card-errors.ts:15
+msgid "Your card was declined. Your request was in test mode, but used a non test card."
+msgstr "تم رفض بطاقتك. كان طلبك في وضع الاختبار لكنه استخدم بطاقة غير تجريبية."
+
+#: app/routes/mock-payments+/__card-errors.ts:11
+msgid "Your card's expiration date is incomplete or in the past."
+msgstr "تاريخ انتهاء بطاقتك غير مكتمل أو في الماضي."
+
+#: app/routes/mock-payments+/__card-errors.ts:12
+msgid "Your card's security code is incomplete."
+msgstr "رمز أمان بطاقتك غير مكتمل."
+
 #: app/components/hiring/job-editor.tsx:446
 msgid "Your changes to this job will be lost."
 msgstr "ستفقد تغييراتك على هذه الوظيفة."
 
-#: app/components/settings/cards/organization/shop-card.tsx:321
+#: app/components/settings/cards/organization/shop-card.tsx:333
 msgid "Your customers can buy at <0>/shop</0> on your published site once payments are enabled."
 msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك المنشور بعد تفعيل المدفوعات."
 
@@ -21127,7 +21483,7 @@ msgstr "لم يتم نشر مسار المكالمة بعد، لذا اختبر 
 msgid "Your hours, phone, and address. The agent quotes them and uses the hours to tell when you're open."
 msgstr "ساعات العمل والهاتف والعنوان. يذكرها الوكيل ويستخدم الساعات لمعرفة متى تكون مفتوحًا."
 
-#: app/routes/_app+/$orgSlug_+/mcp.tsx:763
+#: app/routes/_app+/$orgSlug_+/mcp.tsx:766
 msgid "Your MCP Server URL"
 msgstr "رابط خادم MCP الخاص بك"
 
@@ -21222,3 +21578,7 @@ msgstr "موقعك غير منشور بعد، لذلك لا يستطيع الن�
 #: app/components/roles/tenant-role-access-manager.tsx:484
 msgid "Zero permissions"
 msgstr "بدون صلاحيات"
+
+#: app/routes/mock-payments+/__card-form.tsx:98
+msgid "ZIP"
+msgstr "الرمز البريدي"

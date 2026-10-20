@@ -45,6 +45,7 @@ const APPS = {
 		turboFilter: 'app',
 		buildEnv: {
 			NODE_OPTIONS: '--max-old-space-size=6144',
+			STRIP_DEV_MOCKS: 'true',
 			DEPLOY_TARGET: 'cloudflare',
 		},
 		deploy: {
