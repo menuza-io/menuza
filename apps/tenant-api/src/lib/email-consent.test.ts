@@ -54,6 +54,50 @@ describe('consentBaseUrl', () => {
 		})
 	})
 
+	// NODE_ENV is an optional binding on the Worker. Only an explicit
+	// development or test counts as local; "unset" (empty here, because the env
+	// sync copies only defined values) must behave like production.
+	describe.each(['', 'staging', 'Production'])(
+		'with NODE_ENV=%j',
+		(nodeEnv) => {
+			beforeEach(() => {
+				process.env.NODE_ENV = nodeEnv
+			})
+
+			it('never falls back to a localhost link, whatever the request origin', () => {
+				expect(consentBaseUrl()).toBeNull()
+				expect(consentBaseUrl('http://localhost:3007')).toBeNull()
+				process.env.DATA_REGION = 'ksa'
+				expect(consentBaseUrl()).toBeNull()
+			})
+
+			it('does not trust a *.test or *.localhost Host', () => {
+				expect(consentBaseUrl('https://api.menu.test:2999')).toBeNull()
+				expect(consentBaseUrl('http://tenant.localhost:3007')).toBeNull()
+			})
+
+			it('still uses the configured origin', () => {
+				process.env.TENANT_API_URL = 'https://tenant.example.com/'
+				expect(consentBaseUrl('http://localhost:3007')).toBe(
+					'https://tenant.example.com',
+				)
+				expect(() => assertConsentBaseUrl()).not.toThrow()
+			})
+
+			it('fails the startup check without TENANT_API_URL', () => {
+				expect(() => assertConsentBaseUrl()).toThrow(/TENANT_API_URL/)
+			})
+		},
+	)
+
+	it('treats an explicit development NODE_ENV as local', () => {
+		process.env.NODE_ENV = 'development'
+		expect(consentBaseUrl('http://localhost:3007')).toBe(
+			'http://localhost:3007',
+		)
+		expect(consentBaseUrl()).toBe('http://localhost:3007')
+	})
+
 	describe('in development', () => {
 		it('prefers the configured origin', () => {
 			process.env.TENANT_API_URL = 'https://tenant.example.com'
