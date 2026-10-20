@@ -10,30 +10,42 @@ import {
 import { WorkspacePage } from '@repo/ui/workspace'
 import { Outlet, useLoaderData, useLocation } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { TestCallSheet } from '#app/components/phone-agent/test-call-sheet.tsx'
 import { requirePhoneAgentSectionAccess } from '#app/utils/phone-agent/access.server.ts'
 import { getLiveKitConfig } from '#app/utils/phone-agent/livekit.server.ts'
+import { getPhoneAgentIsOn } from '#app/utils/phone-agent/phone-agent.server.ts'
 import { type Route } from './+types/_layout.ts'
 
 // Each page checks its own permission: setup pages need phone agent read,
 // the Calls page needs call read.
 export async function loader({ request, params }: Route.LoaderArgs) {
-	const { dataRegion } = await requirePhoneAgentSectionAccess(
-		request,
-		params.orgSlug,
-	)
+	const { dataRegion, canReadAgent, orgId } =
+		await requirePhoneAgentSectionAccess(request, params.orgSlug)
+	const agentOn = canReadAgent ? await getPhoneAgentIsOn(orgId) : null
 	return {
 		regionSupported: dataRegion === 'us',
 		liveKitConfigured: Boolean(getLiveKitConfig()),
+		canReadAgent,
+		/** Null for people who can only see calls. */
+		agentOn,
 	}
 }
 
 export default function PhoneAgentLayout() {
-	const { regionSupported } = useLoaderData<typeof loader>()
+	const { regionSupported, canReadAgent } = useLoaderData<typeof loader>()
 	const location = useLocation()
+	const testSheet = canReadAgent ? (
+		<TestCallSheet regionSupported={regionSupported} />
+	) : null
 
 	// The flow editor renders full-viewport, like the automation builder.
 	if (/\/phone-agent\/flow\/?$/.test(location.pathname)) {
-		return <Outlet />
+		return (
+			<>
+				<Outlet />
+				{testSheet}
+			</>
+		)
 	}
 
 	return (
@@ -58,6 +70,7 @@ export default function PhoneAgentLayout() {
 				</Item>
 			)}
 			<Outlet />
+			{testSheet}
 		</WorkspacePage>
 	)
 }

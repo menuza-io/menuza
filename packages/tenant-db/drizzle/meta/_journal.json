@@ -1,125 +1,125 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1787549109274,
-      "tag": "0000_initial",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1788000000001,
-      "tag": "0001_shop_orders",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1788000000002,
-      "tag": "0002_shop_polar_orders",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1788000000003,
-      "tag": "0003_shop_checkout_orders",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1787955877667,
-      "tag": "0004_drop_unwired_journey_triggers",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1788719155295,
-      "tag": "0005_refresh-token-reuse-detection",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1788720000000,
-      "tag": "0006_journey-step-idempotency",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1788884863954,
-      "tag": "0007_website_forms",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1789060048515,
-      "tag": "0008_marketing_email_blocks",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1789447836172,
-      "tag": "0009_journey_step_executions_journey_idx",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "6",
-      "when": 1790710410117,
-      "tag": "0010_mailbox_read_receipts",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "6",
-      "when": 1791432305862,
-      "tag": "0011_voice_calls",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "6",
-      "when": 1791949810388,
-      "tag": "0012_staffing_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "6",
-      "when": 1792471906882,
-      "tag": "0013_customer_subscriptions",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "6",
-      "when": 1792505060665,
-      "tag": "0014_person_erasure_log",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "6",
-      "when": 1792520142671,
-      "tag": "0015_customer_subscription_email_confirmation",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "6",
-      "when": 1792524703189,
-      "tag": "0016_customer_subscription_confirmation_sent",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "sqlite",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "6",
+			"when": 1787549109274,
+			"tag": "0000_initial",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1788000000001,
+			"tag": "0001_shop_orders",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1788000000002,
+			"tag": "0002_shop_polar_orders",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "6",
+			"when": 1788000000003,
+			"tag": "0003_shop_checkout_orders",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "6",
+			"when": 1787955877667,
+			"tag": "0004_drop_unwired_journey_triggers",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "6",
+			"when": 1788719155295,
+			"tag": "0005_refresh-token-reuse-detection",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1788720000000,
+			"tag": "0006_journey-step-idempotency",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "6",
+			"when": 1788884863954,
+			"tag": "0007_website_forms",
+			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "6",
+			"when": 1789060048515,
+			"tag": "0008_marketing_email_blocks",
+			"breakpoints": true
+		},
+		{
+			"idx": 9,
+			"version": "6",
+			"when": 1789447836172,
+			"tag": "0009_journey_step_executions_journey_idx",
+			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "6",
+			"when": 1790710410117,
+			"tag": "0010_mailbox_read_receipts",
+			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "6",
+			"when": 1791432305862,
+			"tag": "0011_voice_calls",
+			"breakpoints": true
+		},
+		{
+			"idx": 12,
+			"version": "6",
+			"when": 1791949810388,
+			"tag": "0012_staffing_foundation",
+			"breakpoints": true
+		},
+		{
+			"idx": 13,
+			"version": "6",
+			"when": 1792471906882,
+			"tag": "0013_customer_subscriptions",
+			"breakpoints": true
+		},
+		{
+			"idx": 14,
+			"version": "6",
+			"when": 1792505060665,
+			"tag": "0014_person_erasure_log",
+			"breakpoints": true
+		},
+		{
+			"idx": 15,
+			"version": "6",
+			"when": 1792520142671,
+			"tag": "0015_customer_subscription_email_confirmation",
+			"breakpoints": true
+		},
+		{
+			"idx": 16,
+			"version": "6",
+			"when": 1792524703189,
+			"tag": "0016_customer_subscription_confirmation_sent",
+			"breakpoints": true
+		}
+	]
 }

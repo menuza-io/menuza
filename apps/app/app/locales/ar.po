@@ -33,8 +33,12 @@ msgid "AI assistant"
 msgstr "المساعد الذكي"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:130
-msgid "\"{label}\" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Setup."
-msgstr "لا يوجد رقم تتصل به الخطوة «{label}»، لذا ينتقل المتصلون مباشرةً إلى مسار عدم الرد. أدخل رقمًا لهذه الخطوة، أو عيّن رقم هاتف الموظفين في الإعداد."
+msgid "\"{label}\" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Call handling."
+msgstr "لا يوجد رقم تتصل به الخطوة «{label}»، لذا ينتقل المتصلون مباشرةً إلى مسار عدم الرد. أدخل رقمًا لهذه الخطوة، أو عيّن رقم هاتف الموظفين في التعامل مع المكالمات."
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:130
+#~ msgid "\"{label}\" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Setup."
+#~ msgstr "لا يوجد رقم تتصل به الخطوة «{label}»، لذا ينتقل المتصلون مباشرةً إلى مسار عدم الرد. أدخل رقمًا لهذه الخطوة، أو عيّن رقم هاتف الموظفين في الإعداد."
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:35
 msgid "\"Press 1 for…\" options. Callers can also say their choice."
@@ -430,11 +434,11 @@ msgstr "{amount}/سنة"
 msgid "{announcementCount} announcements"
 msgstr "{announcementCount} إعلانات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:274
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:373
 msgid "{answered} answered"
 msgstr "تمت الإجابة عن {answered}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:270
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:369
 msgid "{answered} answered, {draftCount} drafted and not saved"
 msgstr "تمت الإجابة عن {answered}، و{draftCount} مسودة لم تُحفظ"
 
@@ -482,27 +486,27 @@ msgstr "{count, plural, one {إجابة واحدة تستحق المراجعة} 
 msgid "{count, plural, one {# thing to sort out} other {# things to sort out}}"
 msgstr "{count, plural, one {أمر واحد يحتاج إلى معالجة} two {أمران يحتاجان إلى معالجة} few {# أمور تحتاج إلى معالجة} many {# أمرًا يحتاج إلى معالجة} other {# أمر يحتاج إلى معالجة}}"
 
-#: app/components/phone-agent/settings-page.tsx:113
+#: app/components/phone-agent/settings-page.tsx:114
 msgid "{count, plural, one {Add at least # item.} other {Add at least # items.}}"
 msgstr "{count, plural, one {أضف عنصرًا واحدًا على الأقل.} two {أضف عنصرين على الأقل.} few {أضف # عناصر على الأقل.} many {أضف # عنصرًا على الأقل.} other {أضف # عنصر على الأقل.}}"
 
-#: app/components/phone-agent/settings-page.tsx:76
+#: app/components/phone-agent/settings-page.tsx:77
 msgid "{count, plural, one {Too many tries. Try again in # minute.} other {Too many tries. Try again in # minutes.}}"
 msgstr "{count, plural, one {محاولات كثيرة جدًا. حاول مرة أخرى بعد دقيقة.} two {محاولات كثيرة جدًا. حاول مرة أخرى بعد دقيقتين.} few {محاولات كثيرة جدًا. حاول مرة أخرى بعد # دقائق.} many {محاولات كثيرة جدًا. حاول مرة أخرى بعد # دقيقة.} other {محاولات كثيرة جدًا. حاول مرة أخرى بعد # دقيقة.}}"
 
-#: app/components/phone-agent/settings-page.tsx:99
+#: app/components/phone-agent/settings-page.tsx:100
 msgid "{count, plural, one {Use at least # character.} other {Use at least # characters.}}"
 msgstr "{count, plural, one {استخدم حرفًا واحدًا على الأقل.} two {استخدم حرفين على الأقل.} few {استخدم # أحرف على الأقل.} many {استخدم # حرفًا على الأقل.} other {استخدم # حرف على الأقل.}}"
 
-#: app/components/phone-agent/settings-page.tsx:106
+#: app/components/phone-agent/settings-page.tsx:107
 msgid "{count, plural, one {Use at most # character.} other {Use at most # characters.}}"
 msgstr "{count, plural, one {استخدم حرفًا واحدًا كحد أقصى.} two {استخدم حرفين كحد أقصى.} few {استخدم # أحرف كحد أقصى.} many {استخدم # حرفًا كحد أقصى.} other {استخدم # حرف كحد أقصى.}}"
 
-#: app/components/phone-agent/settings-page.tsx:120
+#: app/components/phone-agent/settings-page.tsx:121
 msgid "{count, plural, one {Use at most # item.} other {Use at most # items.}}"
 msgstr "{count, plural, one {استخدم عنصرًا واحدًا كحد أقصى.} two {استخدم عنصرين كحد أقصى.} few {استخدم # عناصر كحد أقصى.} many {استخدم # عنصرًا كحد أقصى.} other {استخدم # عنصر كحد أقصى.}}"
 
-#: app/components/phone-agent/settings-page.tsx:68
+#: app/components/phone-agent/settings-page.tsx:69
 msgid "{count, plural, one {You've sent several codes recently. Try again in # minute.} other {You've sent several codes recently. Try again in # minutes.}}"
 msgstr "{count, plural, one {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد دقيقة.} two {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد دقيقتين.} few {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد # دقائق.} many {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد # دقيقة.} other {أرسلت عدة رموز مؤخرًا. حاول مرة أخرى بعد # دقيقة.}}"
 
@@ -534,6 +538,10 @@ msgstr "{created, plural, one {أُضيفت مهمة واحدة.} two {أُضي�
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "تم استيراد {created}، و{existing} موجودون في فريقك أصلًا، و{notImported} لم يتم استيرادهم."
 
+#: app/components/phone-agent/phrase-fields.tsx:331
+msgid "{customized} changed"
+msgstr "تم تغيير {customized}"
+
 #: app/components/my-schedule/requests-view.tsx:97
 msgid "{day}: available {hours}"
 msgstr "{day}: متاح {hours}"
@@ -562,8 +570,8 @@ msgstr "{dayLabel} يفتح"
 msgid "{dayName}: {people} people scheduled, {open} open shifts. Open this day."
 msgstr "{dayName}: عدد المجدولين {people}، والورديات الشاغرة {open}. افتح هذا اليوم."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:719
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:731
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:812
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:824
 msgid "{days} days"
 msgstr "{days} يومًا"
 
@@ -588,15 +596,15 @@ msgstr "{diffSec} ث (قيد التشغيل)"
 msgid "{done, plural, one {# card marked as reviewed} other {# cards marked as reviewed}}"
 msgstr "{done, plural, one {تم تحديد بطاقة واحدة كمراجَعة} two {تم تحديد بطاقتين كمراجَعتين} few {تم تحديد # بطاقات كمراجَعة} many {تم تحديد # بطاقة كمراجَعة} other {تم تحديد # بطاقة كمراجَعة}}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:308
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:385
 msgid "{doneCount} of {total} done"
 msgstr "اكتمل {doneCount} من {total}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:338
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:403
 msgid "{doneCount} of {total} steps done"
 msgstr "اكتملت {doneCount} من {total} خطوات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:158
+#: app/components/phone-agent/training-rules-section.tsx:154
 msgid "{droppedCount, plural, one {# rule is being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.} other {# rules are being left out because the prompt is full. Shorten rules or turn some off. High priority rules are kept first.}}"
 msgstr "{droppedCount, plural, zero {لم تُستبعد أي قاعدة.} one {تم استبعاد قاعدة واحدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} two {تم استبعاد قاعدتين لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} few {تم استبعاد # قواعد لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} many {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.} other {تم استبعاد # قاعدة لأن التعليمات ممتلئة. اختصر القواعد أو أوقف بعضها. تُحفظ القواعد ذات الأولوية العالية أولًا.}}"
 
@@ -625,7 +633,7 @@ msgstr "{failed, plural, one {تغيّرت بطاقة واحدة أثناء مر
 msgid "{failed, plural, one {# punch needs a manager} other {# punches need a manager}}"
 msgstr "{failed, plural, one {بصمة واحدة تحتاج إلى مدير} two {بصمتان تحتاجان إلى مدير} few {# بصمات تحتاج إلى مدير} many {# بصمة تحتاج إلى مدير} other {# بصمة تحتاج إلى مدير}}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:560
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:659
 msgid "{failedTerm}: {failedTermError}"
 msgstr "{failedTerm}: {failedTermError}"
 
@@ -827,7 +835,7 @@ msgstr "{open} مهام تهيئة ما زالت مفتوحة"
 msgid "{openCallFollowUps} need follow-up"
 msgstr "{openCallFollowUps} بحاجة إلى متابعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:405
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:409
 msgid "{openFollowUps} need follow-up"
 msgstr "{openFollowUps} بحاجة إلى متابعة"
 
@@ -1188,6 +1196,7 @@ msgstr "بدأت استراحة ولم تنتهِ. حدّد وقت انتهائ�
 msgid "A call can have up to {MAX_CALL_TAGS} tags. Remove one to add another."
 msgstr "يمكن أن تحمل المكالمة حتى {MAX_CALL_TAGS} وسوم. أزل وسمًا لإضافة آخر."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:105
 #: app/routes/_app+/$orgSlug_+/customers.tsx:84
 #~ msgid "A call recording could not be deleted, so nothing was erased. Try again in a moment."
 #~ msgstr "تعذّر حذف تسجيل مكالمة، لذلك لم يتم محو أي شيء. حاول مرة أخرى بعد قليل."
@@ -1196,19 +1205,19 @@ msgstr "يمكن أن تحمل المكالمة حتى {MAX_CALL_TAGS} وسوم.
 msgid "A call recording could not be deleted. Some voice data may already be erased; the customer's account is still there. Try again: erasing again completes it."
 msgstr "تعذّر حذف تسجيل مكالمة. قد تكون بعض البيانات الصوتية قد مُحيت بالفعل، وما زال حساب العميل موجودًا. حاول مرة أخرى: المحو مجددًا يُكمل العملية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:56
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:105
 msgid "A caller asked someone to call them back."
 msgstr "طلب متصل أن يعاود أحد الاتصال به."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:52
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:101
 msgid "A caller left a voicemail."
 msgstr "ترك متصل رسالة في البريد الصوتي."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:72
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:121
 msgid "A caller rated the call 1 or 2 out of 5."
 msgstr "قيّم متصل المكالمة بـ 1 أو 2 من 5."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:68
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:117
 msgid "A caller was unhappy or reported a problem."
 msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 
@@ -1384,11 +1393,11 @@ msgstr "نموذج قصير وسهل لجمع بيانات العملاء الم
 msgid "A specific team member"
 msgstr "عضو محدد في الفريق"
 
-#: app/components/phone-agent/settings-page.tsx:64
+#: app/components/phone-agent/settings-page.tsx:65
 msgid "A staff or transfer number reaches the AI agent, so transfers would loop back to it. Change it to a number staff answer directly."
 msgstr "أحد أرقام الفريق أو أرقام التحويل يصل إلى الوكيل الذكي، لذا ستعود التحويلات إليه. غيّره إلى رقم يجيب عليه الفريق مباشرة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:48
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:97
 msgid "A summary after each call. Can be a lot of texts on busy days."
 msgstr "ملخص بعد كل مكالمة. قد يعني ذلك رسائل نصية كثيرة في الأيام المزدحمة."
 
@@ -1408,9 +1417,13 @@ msgstr "يمكن أن يحتوي القالب على 30 مهمة كحد أقصى
 msgid "A template with that name already exists."
 msgstr "يوجد قالب بهذا الاسم مسبقًا."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:591
+msgid "A text after a missed transfer is only offered once a call can reach staff. Set a staff phone number above."
+msgstr "لا يُعرض إرسال رسالة بعد تحويل لم يرد عليه إلا عندما تصل المكالمة إلى الفريق. عيّن رقم هاتف الفريق أعلاه."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:313
-msgid "A text after a missed transfer is only offered once a call can reach staff. Set a staff phone number in Setup."
-msgstr "لا يُعرض إرسال رسالة بعد تحويل لم يرد عليه إلا عندما تصل المكالمة إلى الفريق. عيّن رقم هاتف الفريق في الإعداد."
+#~ msgid "A text after a missed transfer is only offered once a call can reach staff. Set a staff phone number in Setup."
+#~ msgstr "لا يُعرض إرسال رسالة بعد تحويل لم يرد عليه إلا عندما تصل المكالمة إلى الفريق. عيّن رقم هاتف الفريق في الإعداد."
 
 #: app/utils/staffing/timesheet-errors.ts:18
 #: app/utils/staffing/timesheet-form.ts:209
@@ -1531,7 +1544,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:996
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:657
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:984
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:248
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:268
 msgid "Active"
@@ -1545,8 +1558,8 @@ msgstr "النشاط"
 #: app/components/staff/positions-tab.tsx:375
 #: app/components/staff/schedule/shift-editor-sheet.tsx:394
 #: app/components/website/form-builder-sidebar.tsx:195
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:140
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:721
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1690
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:820
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1775
 msgid "Add"
 msgstr "إضافة"
@@ -1561,7 +1574,7 @@ msgstr "إضافة {0}"
 msgid "Add {label}"
 msgstr "إضافة {label}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:228
+#: app/components/phone-agent/training-rules-section.tsx:252
 msgid "Add a {categoryLabel} rule"
 msgstr "إضافة قاعدة {categoryLabel}"
 
@@ -1594,7 +1607,7 @@ msgstr "أضف سجل CNAME لنطاقك (أو نطاقك الفرعي) يشير
 msgid "Add a comment..."
 msgstr "أضف تعليقاً..."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:501
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:815
 msgid "Add a contact first."
 msgstr "أضف جهة اتصال أولًا."
 
@@ -1635,7 +1648,11 @@ msgstr "إضافة رابط"
 msgid "Add a note"
 msgstr "إضافة ملاحظة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:354
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:304
+msgid "Add a number"
+msgstr "إضافة رقم"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1397
 msgid "Add a number or email to start sending alerts."
 msgstr "أضف رقمًا أو بريدًا إلكترونيًا لبدء إرسال التنبيهات."
 
@@ -1654,7 +1671,7 @@ msgstr "إضافة منصب"
 msgid "Add a position on the Positions page first."
 msgstr "أضف منصبًا من صفحة المناصب أولًا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:421
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:520
 msgid "Add a question"
 msgstr "إضافة سؤال"
 
@@ -1667,7 +1684,7 @@ msgstr "أضف سببًا للتغيير."
 msgid "Add a reason."
 msgstr "أضف سببًا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:134
+#: app/components/phone-agent/training-rules-section.tsx:132
 msgid "Add a rule to teach the agent how your business works."
 msgstr "أضف قاعدة لتعلّم الوكيل كيف يعمل نشاطك التجاري."
 
@@ -1694,8 +1711,8 @@ msgid "Add a shift for {rowLabel} on {dayLabel}"
 msgstr "إضافة وردية لـ {rowLabel} يوم {dayLabel}"
 
 #: app/components/phone-agent/settings-page.tsx:60
-msgid "Add a staff phone number to turn on automatic transfers."
-msgstr "أضف رقم هاتف للفريق لتفعيل التحويلات التلقائية."
+#~ msgid "Add a staff phone number to turn on automatic transfers."
+#~ msgstr "أضف رقم هاتف للفريق لتفعيل التحويلات التلقائية."
 
 #: app/components/staff/onboarding/task-form.tsx:68
 msgid "Add a task"
@@ -1751,6 +1768,10 @@ msgstr "إضافة دعوة أخرى"
 msgid "Add another team member to start a conversation."
 msgstr "أضف عضوًا آخر إلى الفريق لبدء محادثة."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:324
+msgid "Add answers"
+msgstr "إضافة إجابات"
+
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns.new.tsx:176
 msgid "Add at least one email block"
 msgstr "أضف كتلة بريد إلكتروني واحدة على الأقل"
@@ -1802,7 +1823,7 @@ msgstr "إضافة خيار"
 msgid "Add column"
 msgstr "إضافة عمود"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:478
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:792
 msgid "Add contact"
 msgstr "إضافة جهة اتصال"
 
@@ -1835,7 +1856,7 @@ msgstr "إضافة رابط"
 msgid "Add meal break"
 msgstr "إضافة استراحة وجبة"
 
-#: app/components/app-sidebar.tsx:672
+#: app/components/app-sidebar.tsx:620
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -1870,7 +1891,6 @@ msgstr "أضف ملاحظات أو روابط أو وسائط لتوثيق ما 
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:213
 #: app/components/phone-agent/phone-number-dialogs.tsx:457
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:243
 msgid "Add number"
 msgstr "إضافة رقم"
 
@@ -1912,7 +1932,7 @@ msgstr "إضافة منصب"
 msgid "Add positions on the Team page first."
 msgstr "أضف الوظائف أولًا من صفحة الفريق."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:681
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:780
 msgid "Add pronunciation"
 msgstr "إضافة نطق"
 
@@ -1934,10 +1954,10 @@ msgstr "إضافة استراحة قصيرة"
 msgid "Add review"
 msgstr "إضافة مراجعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:125
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:232
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
+#: app/components/phone-agent/training-rules-section.tsx:209
+#: app/components/phone-agent/training-rules-section.tsx:256
+#: app/components/phone-agent/training-rules-section.tsx:462
+#: app/components/phone-agent/training-rules-section.tsx:645
 msgid "Add rule"
 msgstr "إضافة قاعدة"
 
@@ -1969,7 +1989,7 @@ msgstr "أضف الإحصائيات والمخططات والتقارير لبن
 msgid "Add supporting information."
 msgstr "أضف معلومات توضيحية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:557
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1616
 msgid "Add tag"
 msgstr "إضافة وسم"
 
@@ -2042,7 +2062,7 @@ msgstr "إضافتها للموظفين الجدد تلقائيًا"
 msgid "Add to this week"
 msgstr "إضافة إلى هذا الأسبوع"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:684
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1011
 msgid "Add transfer case"
 msgstr "إضافة حالة تحويل"
 
@@ -2050,7 +2070,7 @@ msgstr "إضافة حالة تحويل"
 msgid "Add URL"
 msgstr "إضافة رابط"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:373
+#: app/components/phone-agent/agent-details.tsx:252
 msgid "Add your business details to see what the assistant is told."
 msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال للمساعد."
 
@@ -2134,9 +2154,7 @@ msgstr "مسؤول"
 msgid "Admin impersonation active"
 msgstr "انتحال شخصية المسؤول نشط"
 
-#: app/components/app-sidebar.tsx:410
 #: app/components/workspace-breadcrumb.tsx:53
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:117
 msgid "Advanced"
 msgstr "متقدم"
 
@@ -2156,8 +2174,8 @@ msgstr "يؤثر على الأجور"
 msgid "After"
 msgstr "بعد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:388
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:406
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1429
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1445
 msgid "After {days} days"
 msgstr "بعد {days} يوم"
 
@@ -2165,16 +2183,22 @@ msgstr "بعد {days} يوم"
 msgid "After someone clocks in, briefly show their next shifts. Only works once scheduling is on."
 msgstr "بعد تسجيل الحضور، اعرض ورديات الشخص القادمة لثوانٍ. يعمل فقط بعد تفعيل الجدولة."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1291
+msgid "After the call"
+msgstr "بعد المكالمة"
+
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:445
 msgid "After the replays, the call follows the \"No choice\" connection, or hangs up if it isn't connected."
 msgstr "بعد انتهاء التكرارات، تتبع المكالمة وصلة «بدون اختيار»، أو يُنهى الاتصال إذا لم تكن موصولة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:50
+#: app/components/phone-agent/agent-details.tsx:46
 msgid "After-hours calls"
 msgstr "المكالمات خارج ساعات العمل"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:444
+#: app/components/phone-agent/settings-nav.tsx:37
 #: app/components/phone-agent/test-call-panel.tsx:675
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:581
 msgid "Agent"
 msgstr "الوكيل"
 
@@ -2182,12 +2206,12 @@ msgstr "الوكيل"
 msgid "Agent is getting ready…"
 msgstr "الوكيل يستعد…"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:533
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:41
+#: app/components/phone-agent/agent-details.tsx:37
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:614
 msgid "Agent name"
 msgstr "اسم الوكيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:40
+#: app/components/phone-agent/agent-details.tsx:36
 msgid "Agent on or off"
 msgstr "تشغيل الوكيل أو إيقافه"
 
@@ -2196,12 +2220,16 @@ msgid "Agent phone number"
 msgstr "رقم هاتف الوكيل"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:512
-msgid "Agent settings"
-msgstr "إعدادات الوكيل"
+#~ msgid "Agent settings"
+#~ msgstr "إعدادات الوكيل"
 
 #: app/components/phone-agent/test-call-panel.tsx:471
 msgid "Agent speaking"
 msgstr "الوكيل يتحدث"
+
+#: app/components/phone-agent/phrase-fields.tsx:83
+msgid "Agent turned off"
+msgstr "الوكيل متوقف"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:48
 #: app/components/phone-agent/flow-editor/flow-meta.ts:50
@@ -2213,7 +2241,7 @@ msgstr "المساعد الذكي"
 msgid "AI Assistant"
 msgstr "مساعد الذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:488
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:587
 msgid "AI draft"
 msgstr "مسودة ذكاء اصطناعي"
 
@@ -2221,7 +2249,7 @@ msgstr "مسودة ذكاء اصطناعي"
 msgid "AI drafting hasn’t been enabled for this mailbox."
 msgstr "لم يتم تفعيل صياغة الردود بالذكاء الاصطناعي لصندوق الوارد هذا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:337
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:436
 msgid "AI drafts use your business details and training rules, and only fill empty answers. Review each one before saving."
 msgstr "تستخدم مسودات الذكاء الاصطناعي تفاصيل نشاطك التجاري وقواعد التدريب، ولا تملأ إلا الإجابات الفارغة. راجع كل واحدة قبل الحفظ."
 
@@ -2250,8 +2278,12 @@ msgid "Alerts and reminders"
 msgstr "التنبيهات والتذكيرات"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:221
-msgid "Alerts for your team, call tags, and when calls that need follow-up close on their own."
-msgstr "تنبيهات لفريقك، ووسوم المكالمات، ومتى تُغلق المكالمات التي تحتاج إلى متابعة تلقائيًا."
+#~ msgid "Alerts for your team, call tags, and when calls that need follow-up close on their own."
+#~ msgstr "تنبيهات لفريقك، ووسوم المكالمات، ومتى تُغلق المكالمات التي تحتاج إلى متابعة تلقائيًا."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1293
+msgid "Alerts for your team, how calls that need follow-up close on their own, and tags to find them later."
+msgstr "تنبيهات لفريقك، وكيف تُغلق المكالمات التي تحتاج إلى متابعة تلقائيًا، ووسوم للعثور عليها لاحقًا."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:180
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:182
@@ -2274,7 +2306,7 @@ msgid "All built-in blocks are already on this dashboard."
 msgstr "جميع الكتل المدمجة موجودة بالفعل في لوحة التحكم هذه."
 
 #: app/components/mailbox/calls-tab.tsx:264
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:299
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:303
 msgid "All calls"
 msgstr "كل المكالمات"
 
@@ -2331,7 +2363,7 @@ msgstr "يمكن لجميع أعضاء المنظمة عرض هذه الملاح
 msgid "All positions"
 msgstr "كل المناصب"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:292
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:296
 msgid "All purposes"
 msgstr "كل الأغراض"
 
@@ -2347,7 +2379,7 @@ msgstr "تم حفظ الكل"
 msgid "All steps complete"
 msgstr "اكتملت جميع الخطوات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:309
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:313
 msgid "All tags"
 msgstr "كل الوسوم"
 
@@ -2426,7 +2458,7 @@ msgstr "المبلغ"
 msgid "Amounts can have at most two decimal places."
 msgstr "يمكن أن تحتوي المبالغ على خانتين عشريتين كحد أقصى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:132
+#: app/components/phone-agent/settings-nav.tsx:55
 msgid "An AI agent that answers your business's calls, answers common questions, and texts callers helpful links."
 msgstr "وكيل ذكاء اصطناعي يرد على مكالمات نشاطك التجاري، ويجيب عن الأسئلة الشائعة، ويرسل للمتصلين روابط مفيدة برسائل نصية."
 
@@ -2458,7 +2490,7 @@ msgstr "تم تحديث مقابلة"
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
-#: app/components/app-sidebar.tsx:478
+#: app/components/app-sidebar.tsx:426
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -2472,7 +2504,7 @@ msgstr "التحليلات والتتبع"
 msgid "Announcement actions"
 msgstr "إجراءات الإعلان"
 
-#: app/components/app-sidebar.tsx:494
+#: app/components/app-sidebar.tsx:442
 #: app/components/command-menu.tsx:137
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -2489,26 +2521,34 @@ msgstr "الراتب السنوي"
 msgid "another position"
 msgstr "منصب آخر"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:495
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:594
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3663
 msgid "Answer"
 msgstr "الإجابة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:521
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:591
 msgid "Answer calls with the AI agent"
 msgstr "الرد على المكالمات بالوكيل الذكي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:62
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:313
+msgid "Answer common questions, or let AI draft the answers from your business details."
+msgstr "أجب عن الأسئلة الشائعة، أو دع الذكاء الاصطناعي يصيغ الإجابات من تفاصيل نشاطك التجاري."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:67
 msgid "Answer questions and text links"
 msgstr "الإجابة عن الأسئلة وإرسال الروابط"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:63
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:68
 msgid "Answer questions only"
 msgstr "الإجابة عن الأسئلة فقط"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:258
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:357
 msgid "Answer the questions callers ask you. Leave a question empty to skip it; the agent offers to take a message instead of guessing."
 msgstr "أجب عن الأسئلة التي يطرحها عليك المتصلون. اترك السؤال فارغًا لتخطيه؛ وسيعرض الوكيل أخذ رسالة بدلًا من التخمين."
+
+#: app/components/phone-agent/settings-nav.tsx:65
+msgid "Answering calls"
+msgstr "يرد على المكالمات"
 
 #: app/components/hiring/applicant-list.tsx:70
 msgid "Answers"
@@ -2519,8 +2559,8 @@ msgid "Answers to check"
 msgstr "إجابات تستحق المراجعة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:92
-msgid "Answers to common questions, and how the agent hears and says the names callers use."
-msgstr "إجابات الأسئلة الشائعة، وكيف يسمع الوكيل الأسماء التي يستخدمها المتصلون وينطقها."
+#~ msgid "Answers to common questions, and how the agent hears and says the names callers use."
+#~ msgstr "إجابات الأسئلة الشائعة، وكيف يسمع الوكيل الأسماء التي يستخدمها المتصلون وينطقها."
 
 #: app/components/kiosk/kiosk-screens.tsx:527
 msgid "Any cash tips this shift?"
@@ -2531,11 +2571,11 @@ msgid "Any language"
 msgstr "أي لغة"
 
 #: app/components/staff/timesheets/timesheet-filters.tsx:57
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:304
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:308
 msgid "Any status"
 msgstr "أي حالة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:49
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:55
 msgid "Any time"
 msgstr "أي وقت"
 
@@ -2563,7 +2603,7 @@ msgstr "تم إنشاء مفتاح API"
 msgid "API Keys"
 msgstr "مفاتيح API"
 
-#: app/components/app-sidebar.tsx:699
+#: app/components/app-sidebar.tsx:647
 msgid "App header"
 msgstr "ترويسة التطبيق"
 
@@ -2638,7 +2678,7 @@ msgstr "الطلبات حسب المصدر"
 msgid "Applied"
 msgstr "تاريخ التقديم"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:520
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1579
 msgid "Apply automatically"
 msgstr "تطبيق تلقائي"
 
@@ -2687,9 +2727,8 @@ msgstr "الموافقة على التبديل أو التغطية تعدّل ا
 
 #: app/components/hiring/candidate-sheet.tsx:381
 #: app/components/nav-user.tsx:102
+#: app/components/phone-agent/phrase-fields.tsx:31
 #: app/components/phone-agent/voice-picker.tsx:60
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:58
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:39
 msgid "Arabic"
 msgstr "العربية"
 
@@ -2760,7 +2799,7 @@ msgstr "اسأل عن هذه الملاحظة أو أخبرني أين ترغب 
 msgid "Ask AI"
 msgstr "اسأل الذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:130
+#: app/components/phone-agent/training-rules-section.tsx:128
 msgid "Ask an administrator to add training rules."
 msgstr "اطلب من أحد المسؤولين إضافة قواعد التدريب."
 
@@ -2768,7 +2807,7 @@ msgstr "اطلب من أحد المسؤولين إضافة قواعد التدر
 msgid "Ask anything…"
 msgstr "اسأل أي شيء…"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:230
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1172
 msgid "Ask callers to rate the call from 1 to 5 before it ends. Ratings and the caller's mood appear on the Calls page and in Reports."
 msgstr "اطلب من المتصلين تقييم المكالمة من 1 إلى 5 قبل انتهائها. تظهر التقييمات ومزاج المتصل في صفحة المكالمات وفي التقارير."
 
@@ -2777,7 +2816,7 @@ msgstr "اطلب من المتصلين تقييم المكالمة من 1 إلى
 msgid "Ask for a change"
 msgstr "اطلب تغييرًا"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:240
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1182
 msgid "Ask for a rating"
 msgstr "طلب تقييم"
 
@@ -2793,11 +2832,11 @@ msgstr "اطلب ممن يستطيع الموافقة على بطاقات الد
 msgid "Ask your manager if you think this is a mistake."
 msgstr "اسأل مديرك إن كنت تظن أن هذا خطأ."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:128
+#: app/components/phone-agent/phrase-fields.tsx:120
 msgid "Asked at the end of the call when call ratings are on."
 msgstr "يُطرح في نهاية المكالمة عند تفعيل تقييمات المكالمات."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:80
+#: app/components/phone-agent/phrase-fields.tsx:72
 msgid "Asked before a transfer when texting the caller back is on."
 msgstr "يُطرح قبل التحويل عند تفعيل إرسال رسالة نصية للمتصل."
 
@@ -2813,13 +2852,13 @@ msgstr "تعيين"
 msgid "Assign responsibilities"
 msgstr "تعيين المسؤوليات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:366
+#: app/components/phone-agent/agent-details.tsx:245
 msgid "Assistant instructions"
 msgstr "تعليمات المساعد"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:91
-msgid "Assistant paused"
-msgstr "المساعد متوقف مؤقتًا"
+#~ msgid "Assistant paused"
+#~ msgstr "المساعد متوقف مؤقتًا"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
@@ -2867,7 +2906,7 @@ msgstr "تلقائي"
 msgid "Auto clock-out"
 msgstr "انصراف تلقائي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:47
+#: app/components/phone-agent/phrase-fields.tsx:39
 msgid "Automated assistant notice"
 msgstr "إشعار المساعد الآلي"
 
@@ -3068,13 +3107,17 @@ msgstr "تم تنزيل النسخة الاحتياطية."
 msgid "Base it on"
 msgstr "اعتمد على"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:304
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:582
 msgid "Before transferring, the agent asks if it may text the caller a link they can use should nobody pick up."
 msgstr "قبل التحويل، يسأل الوكيل المتصل إن كان يمكنه أن يرسل إليه رابطًا يستخدمه إذا لم يرد أحد."
 
 #: app/components/hiring/job-editor.tsx:833
 msgid "Before you can publish"
 msgstr "قبل أن تتمكن من النشر"
+
+#: app/components/phone-agent/agent-details.tsx:131
+msgid "Behind the scenes"
+msgstr "خلف الكواليس"
 
 #: app/components/settings/cards/organization/billing-card.tsx:118
 msgid "Beta Access"
@@ -3084,7 +3127,7 @@ msgstr "الوصول التجريبي"
 msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
-#: app/components/app-sidebar.tsx:568
+#: app/components/app-sidebar.tsx:516
 #: app/components/command-menu.tsx:326
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
@@ -3138,7 +3181,7 @@ msgstr "غامق"
 msgid "Branch on whether you're open right now."
 msgstr "التفرع حسب ما إذا كنت مفتوحًا الآن."
 
-#: app/components/app-sidebar.tsx:485
+#: app/components/app-sidebar.tsx:433
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5130
 msgid "Branding"
@@ -3315,12 +3358,12 @@ msgstr "الأكثر ازدحامًا حوالي {peak}"
 msgid "Business day starts at"
 msgstr "يبدأ يوم العمل عند"
 
+#: app/components/phone-agent/agent-details.tsx:60
 #: app/components/phone-agent/business-details-section.tsx:84
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:64
 msgid "Business details"
 msgstr "تفاصيل النشاط التجاري"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:339
+#: app/components/phone-agent/agent-details.tsx:218
 msgid "Business hours"
 msgstr "ساعات العمل"
 
@@ -3332,7 +3375,7 @@ msgstr "معلومات النشاط التجاري"
 msgid "Business phone"
 msgstr "هاتف النشاط التجاري"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:65
+#: app/components/phone-agent/agent-details.tsx:61
 msgid "Business type settings"
 msgstr "إعدادات نوع النشاط التجاري"
 
@@ -3411,15 +3454,15 @@ msgstr "تفاصيل المكالمة"
 msgid "Call ended"
 msgstr "انتهت المكالمة"
 
-#: app/components/app-sidebar.tsx:384
 #: app/components/command-menu.tsx:113
+#: app/components/phone-agent/agent-details.tsx:311
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:519
 #: app/components/workspace-breadcrumb.tsx:49
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:432
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:217
 msgid "Call flow"
 msgstr "مسار المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:680
+#: app/components/phone-agent/settings-nav.tsx:46
 msgid "Call handling"
 msgstr "التعامل مع المكالمات"
 
@@ -3427,21 +3470,21 @@ msgstr "التعامل مع المكالمات"
 msgid "Call history is unavailable right now. Try again."
 msgstr "سجل المكالمات غير متاح حاليًا. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:63
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:228
+#: app/components/phone-agent/agent-details.tsx:59
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1170
 msgid "Call ratings"
 msgstr "تقييمات المكالمات"
 
+#: app/components/phone-agent/agent-details.tsx:42
 #: app/components/phone-agent/call-recording-player.tsx:127
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:46
 msgid "Call recording"
 msgstr "تسجيل المكالمات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:99
+#: app/components/phone-agent/phrase-fields.tsx:91
 msgid "Call time limit"
 msgstr "الحد الزمني للمكالمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:399
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:403
 msgid "Call views"
 msgstr "طرق عرض المكالمات"
 
@@ -3449,11 +3492,11 @@ msgstr "طرق عرض المكالمات"
 msgid "Callback"
 msgstr "معاودة اتصال"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:55
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:104
 msgid "Callback requests"
 msgstr "طلبات معاودة الاتصال"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:713
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:717
 msgid "Callbacks, complaints, and other requests your agent takes will appear here."
 msgstr "ستظهر هنا طلبات معاودة الاتصال والشكاوى والطلبات الأخرى التي يتلقاها وكيلك."
 
@@ -3473,7 +3516,7 @@ msgstr "مزاج المتصل"
 msgid "Caller rating"
 msgstr "تقييم المتصل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:267
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:547
 msgid "Callers can press 0 at any time to be transferred."
 msgstr "يمكن للمتصلين الضغط على 0 في أي وقت لتحويلهم."
 
@@ -3485,12 +3528,13 @@ msgstr "يسمع المتصلون كل خطوة بالترتيب. تنتظر ق�
 msgid "Calling…"
 msgstr "جارٍ الاتصال…"
 
-#: app/components/app-sidebar.tsx:365
+#: app/components/app-sidebar.tsx:358
 #: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:46
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:327
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:401
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:770
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:331
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:405
 msgid "Calls"
 msgstr "المكالمات"
 
@@ -3499,27 +3543,31 @@ msgid "Calls {phone}"
 msgstr "يتصل بـ {phone}"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:155
-msgid "Calls go straight to your business line. If no line is known, callers hear an apology."
-msgstr "تُحوَّل المكالمات مباشرة إلى خط نشاطك التجاري. إذا لم يكن هناك خط معروف، يسمع المتصلون اعتذارًا."
+#~ msgid "Calls go straight to your business line. If no line is known, callers hear an apology."
+#~ msgstr "تُحوَّل المكالمات مباشرة إلى خط نشاطك التجاري. إذا لم يكن هناك خط معروف، يسمع المتصلون اعتذارًا."
 
 #: app/components/mailbox/calls-tab.tsx:444
 msgid "Calls that need a person"
 msgstr "مكالمات تحتاج إلى شخص"
 
 #: app/components/mailbox/calls-tab.tsx:235
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:367
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1408
 msgid "Calls that need follow-up"
 msgstr "المكالمات التي تحتاج إلى متابعة"
 
 #: app/components/phone-agent/flow-editor/flow-nodes.tsx:64
-msgid "Calls the staff number from Setup"
-msgstr "يتصل برقم الفريق من الإعداد"
+msgid "Calls the staff number from Call handling"
+msgstr "يتصل برقم الفريق من التعامل مع المكالمات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:412
+#: app/components/phone-agent/flow-editor/flow-nodes.tsx:64
+#~ msgid "Calls the staff number from Setup"
+#~ msgstr "يتصل برقم الفريق من الإعداد"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1451
 msgid "Calls with an important tag always stay open."
 msgstr "تبقى المكالمات ذات الوسم المهم مفتوحة دائمًا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:563
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:567
 msgid "Calls your agent answers will appear here. Try a test call from your browser to see how it sounds."
 msgstr "ستظهر هنا المكالمات التي يرد عليها وكيلك. جرّب مكالمة تجريبية من متصفحك لتسمع كيف يبدو."
 
@@ -3535,7 +3583,7 @@ msgstr "يمكن التعديل"
 msgid "Can edit teammate notes"
 msgstr "يمكنه تعديل ملاحظات الزملاء"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:107
+#: app/components/phone-agent/phrase-fields.tsx:99
 msgid "Can't text that number"
 msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 
@@ -3570,6 +3618,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/phone-number-dialogs.tsx:616
 #: app/components/phone-agent/phone-number-dialogs.tsx:629
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
+#: app/components/phone-agent/training-rules-section.tsx:639
+#: app/components/phone-agent/training-rules-section.tsx:691
 #: app/components/roles/tenant-role-access-manager.tsx:797
 #: app/components/roles/tenant-role-access-manager.tsx:1256
 #: app/components/settings/cards/organization/announcement-sheet.tsx:546
@@ -3618,8 +3668,6 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:628
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:679
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:455
@@ -3732,7 +3780,7 @@ msgstr "البطاقات التي ينقصها تسجيل الانصراف أو 
 msgid "Careers page"
 msgstr "صفحة الوظائف"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:621
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:702
 msgid "Cartesia voice ID. Leave empty for the default voice."
 msgstr "معرّف صوت Cartesia. اتركه فارغًا لاستخدام الصوت الافتراضي."
 
@@ -3749,7 +3797,7 @@ msgstr "الإكراميات النقدية بلا رسوم بطاقة. حتى 1
 msgid "Cash tips: {from} to {to}"
 msgstr "الإكراميات النقدية: من {from} إلى {to}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:480
+#: app/components/phone-agent/training-rules-section.tsx:491
 msgid "Category"
 msgstr "التصنيف"
 
@@ -3796,13 +3844,13 @@ msgstr "تغيير تاريخ الاستحقاق"
 msgid "Change Email"
 msgstr "تغيير البريد الإلكتروني"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:413
+#: app/components/phone-agent/agent-details.tsx:292
 msgid "Change history"
 msgstr "سجل التغييرات"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:240
-msgid "Change in Setup"
-msgstr "التغيير من الإعداد"
+#~ msgid "Change in Setup"
+#~ msgstr "التغيير من الإعداد"
 
 #: app/components/roles/tenant-role-access-manager.tsx:284
 msgid "Change individual pay rates and salary details. Includes View pay rates."
@@ -3864,7 +3912,7 @@ msgstr "تغيير الصوت"
 msgid "Change your password to something new"
 msgstr "غيّر كلمة المرور الخاصة بك إلى شيء جديد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:408
+#: app/components/phone-agent/agent-details.tsx:287
 msgid "Changed {sections}"
 msgstr "تم تغيير {sections}"
 
@@ -3911,7 +3959,7 @@ msgstr "المعاملات مفعلة"
 msgid "Chat"
 msgstr "الدردشة"
 
-#: app/components/app-sidebar.tsx:537
+#: app/components/app-sidebar.tsx:485
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "قنوات الدردشة"
@@ -3936,7 +3984,7 @@ msgstr "راجع الإعلان"
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
-#: app/components/phone-agent/settings-page.tsx:136
+#: app/components/phone-agent/settings-page.tsx:137
 msgid "Check the format of this value."
 msgstr "تحقق من تنسيق هذه القيمة."
 
@@ -3944,7 +3992,7 @@ msgstr "تحقق من تنسيق هذه القيمة."
 msgid "Check the highlighted fields and try again."
 msgstr "راجع الحقول المحددة وحاول مرة أخرى."
 
-#: app/components/phone-agent/settings-page.tsx:55
+#: app/components/phone-agent/settings-page.tsx:60
 msgid "Check the highlighted fields."
 msgstr "تحقق من الحقول المميزة."
 
@@ -4021,7 +4069,7 @@ msgstr "الخيارات"
 msgid "Choose a channel, group, or direct message from the list."
 msgstr "اختر قناة أو مجموعة أو رسالة مباشرة من القائمة."
 
-#: app/components/phone-agent/settings-page.tsx:148
+#: app/components/phone-agent/settings-page.tsx:149
 msgid "Choose a contact."
 msgstr "اختر جهة اتصال."
 
@@ -4108,7 +4156,7 @@ msgstr "اختر زميلًا في الفريق لبدء محادثة."
 msgid "Choose a template"
 msgstr "اختر قالباً"
 
-#: app/components/phone-agent/settings-page.tsx:138
+#: app/components/phone-agent/settings-page.tsx:139
 msgid "Choose a valid value."
 msgstr "اختر قيمة صالحة."
 
@@ -4166,7 +4214,7 @@ msgstr "اختر واحدًا"
 msgid "Choose one of the agent numbers assigned to your business."
 msgstr "اختر أحد أرقام الوكيل المخصصة لنشاطك التجاري."
 
-#: app/components/phone-agent/settings-page.tsx:90
+#: app/components/phone-agent/settings-page.tsx:91
 msgid "Choose one of the listed options."
 msgstr "اختر أحد الخيارات المدرجة."
 
@@ -4277,7 +4325,7 @@ msgstr "مسح المسودة"
 
 #: app/components/hiring/applicants-page.tsx:434
 #: app/components/staff/timesheets/timesheets-page.tsx:805
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:581
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:585
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:436
 msgid "Clear filters"
 msgstr "مسح عوامل التصفية"
@@ -4487,13 +4535,13 @@ msgstr "يغلق وردية نُسي إنهاؤها ويعلّمها لكي يص
 msgid "Closes on"
 msgstr "تُغلق في"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:661
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:45
+#: app/components/phone-agent/agent-details.tsx:41
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:742
 msgid "Closing"
 msgstr "الختام"
 
 #: app/components/phone-agent/business-details-section.tsx:236
-#: app/components/phone-agent/settings-page.tsx:152
+#: app/components/phone-agent/settings-page.tsx:153
 msgid "Closing time must be after opening time."
 msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 
@@ -4590,7 +4638,7 @@ msgstr "قارن الأجور كنسبة من المبيعات بين أماكن
 msgid "Complaint"
 msgstr "شكوى"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:67
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:116
 msgid "Complaints"
 msgstr "الشكاوى"
 
@@ -4599,7 +4647,7 @@ msgid "complete"
 msgstr "مكتمل"
 
 #: app/components/phone-agent/call-data.ts:141
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:306
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:310
 #: app/routes/mock-payments+/stripe.connect.onboard.$linkId.tsx:82
 msgid "Complete"
 msgstr "مكتملة"
@@ -4725,7 +4773,7 @@ msgstr "أكد كلمة المرور"
 msgid "Connect"
 msgstr "اتصال"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:235
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:294
 msgid "Connect a phone number"
 msgstr "ربط رقم هاتف"
 
@@ -4814,7 +4862,7 @@ msgstr "اتصل بالدعم"
 msgid "Contact support for pricing"
 msgstr "اتصل بالدعم للحصول على الأسعار"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:365
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:655
 msgid "Contacts"
 msgstr "جهات الاتصال"
 
@@ -4915,10 +4963,10 @@ msgid "Copied!"
 msgstr "تم النسخ!"
 
 #: app/components/organization-invitations.tsx:224
+#: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:319
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:572
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:360
 #: app/routes/_auth+/waitlist.tsx:332
 msgid "Copy"
 msgstr "نسخ"
@@ -5067,7 +5115,7 @@ msgid "Could not update this call. Try again."
 msgstr "تعذّر تحديث هذه المكالمة. حاول مرة أخرى."
 
 #: app/components/mailbox/calls-tab.tsx:210
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:283
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:287
 msgid "Could not update this request. Try again."
 msgstr "تعذّر تحديث هذا الطلب. حاول مرة أخرى."
 
@@ -5083,7 +5131,7 @@ msgstr "تعذّر رفع الصورة. حاول مرة أخرى."
 msgid "Couldn't connect to the test call. Make sure the voice agent is running and try again."
 msgstr "تعذّر الاتصال بالمكالمة التجريبية. تأكد من أن الوكيل الصوتي قيد التشغيل وحاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:542
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:546
 msgid "Couldn't load calls"
 msgstr "تعذّر تحميل المكالمات"
 
@@ -5091,7 +5139,7 @@ msgstr "تعذّر تحميل المكالمات"
 msgid "Couldn't load more voices. Try again."
 msgstr "تعذّر تحميل المزيد من الأصوات. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:695
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:699
 msgid "Couldn't load requests"
 msgstr "تعذّر تحميل الطلبات"
 
@@ -5577,6 +5625,14 @@ msgstr "العملاء"
 msgid "Customers pay this amount. You receive {orgSharePercent}% after the platform fee."
 msgstr "يدفع العملاء هذا المبلغ. تستلم {orgSharePercent}% بعد رسوم المنصة."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:252
+msgid "Customize call flow"
+msgstr "تخصيص مسار المكالمة"
+
+#: app/components/phone-agent/phrase-fields.tsx:329
+msgid "Customize what the agent says"
+msgstr "تخصيص ما يقوله الوكيل"
+
 #: app/routes/mock-payments+/__card-form.tsx:77
 msgid "CVC"
 msgstr "رمز الأمان"
@@ -5817,7 +5873,7 @@ msgstr "اللغة الافتراضية مطلوبة"
 msgid "Default voice"
 msgstr "الصوت الافتراضي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:579
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:660
 msgid "Default: {defaultLanguage}. The first language you select is the default; callers can switch to the others."
 msgstr "الافتراضية: {defaultLanguage}. أول لغة تختارها هي الافتراضية، ويمكن للمتصلين التبديل إلى اللغات الأخرى."
 
@@ -5863,11 +5919,11 @@ msgstr "حذف"
 msgid "Delete “{name}”?"
 msgstr "حذف «{name}»؟"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:385
+#: app/components/phone-agent/training-rules-section.tsx:396
 msgid "Delete \"{ruleTitle}\""
 msgstr "حذف \"{ruleTitle}\""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:663
+#: app/components/phone-agent/training-rules-section.tsx:675
 msgid "Delete \"{ruleTitle}\"?"
 msgstr "حذف \"{ruleTitle}\"؟"
 
@@ -6009,7 +6065,7 @@ msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 msgid "Delete review"
 msgstr "حذف المراجعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:692
+#: app/components/phone-agent/training-rules-section.tsx:704
 msgid "Delete rule"
 msgstr "حذف القاعدة"
 
@@ -6053,7 +6109,7 @@ msgstr "حذف بطاقة الدوام هذه؟"
 msgid "Deleted"
 msgstr "حُذفت"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:398
+#: app/components/phone-agent/agent-details.tsx:277
 msgid "Deleted training rule \"{title}\""
 msgstr "تم حذف قاعدة التدريب \"{title}\""
 
@@ -6098,7 +6154,7 @@ msgstr "صف الدور والأجر وما تريد أن تسأل عنه."
 msgid "Describe this image for accessibility"
 msgstr "صِف هذه الصورة لتحسين إمكانية الوصول"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:488
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:802
 msgid "Describe when the agent should transfer to a specific contact. For example: \"Questions about large group bookings\"."
 msgstr "صف متى يجب على الوكيل التحويل إلى جهة اتصال معينة. على سبيل المثال: \"أسئلة حول حجوزات المجموعات الكبيرة\"."
 
@@ -6182,7 +6238,7 @@ msgstr "لوحة الاتصال"
 msgid "Did not show"
 msgstr "لم يحضر"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:55
+#: app/components/phone-agent/phrase-fields.tsx:47
 msgid "Didn't catch that"
 msgstr "لم أفهم ذلك"
 
@@ -6305,8 +6361,8 @@ msgstr "ليس لديك حساب؟"
 msgid "Don't replay"
 msgstr "عدم الإعادة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:618
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:639
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:948
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:966
 msgid "Don't retry"
 msgstr "عدم إعادة المحاولة"
 
@@ -6323,8 +6379,8 @@ msgstr "عدم إعادة المحاولة"
 #: app/components/staff/onboarding/task-row.tsx:272
 #: app/components/staff/pin-panel.tsx:96
 #: app/components/staff/schedule/publish-dialog.tsx:363
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:194
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:523
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:212
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:527
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:153
 #: app/routes/_app+/$orgSlug_+/staff+/team.import.tsx:188
 msgid "Done"
@@ -6410,19 +6466,19 @@ msgstr "تمت إضافة المسودة. اقرأها جيدًا قبل الن�
 msgid "Draft and create new notes in the organization."
 msgstr "مسودة وإنشاء ملاحظات جديدة في المنظمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:294
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:393
 msgid "Draft answers for"
 msgstr "صياغة إجابات لـ"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:330
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:429
 msgid "Draft answers with AI"
 msgstr "صياغة الإجابات بالذكاء الاصطناعي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/flow.tsx:78
+#: app/routes/_app+/$orgSlug_+/phone-agent+/flow.tsx:79
 msgid "Draft reset"
 msgstr "تمت إعادة تعيين المسودة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/flow.tsx:65
+#: app/routes/_app+/$orgSlug_+/phone-agent+/flow.tsx:66
 msgid "Draft saved"
 msgstr "تم حفظ المسودة"
 
@@ -6442,7 +6498,7 @@ msgstr "اكتب مسودة لي"
 msgid "Draft with AI"
 msgstr "صياغة بالذكاء الاصطناعي"
 
-#: app/components/phone-agent/settings-page.tsx:87
+#: app/components/phone-agent/settings-page.tsx:88
 msgid "Drafting answers is unavailable right now. Try again later."
 msgstr "صياغة الإجابات غير متاحة حاليًا. حاول مرة أخرى لاحقًا."
 
@@ -6451,7 +6507,7 @@ msgid "Drafting..."
 msgstr "جارٍ كتابة المسودة..."
 
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:607
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:328
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:427
 msgid "Drafting…"
 msgstr "جارٍ إعداد المسودة…"
 
@@ -6546,7 +6602,7 @@ msgstr "مثال: checkout_abandoned, tier_upgraded"
 msgid "e.g. cust_123"
 msgstr "مثال: cust_123"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:703
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:802
 msgid "e.g. product or brand names"
 msgstr "مثل أسماء المنتجات أو العلامات التجارية"
 
@@ -6625,6 +6681,7 @@ msgstr "انصراف مبكر"
 #: app/components/dashboard/access-labels.ts:20
 #: app/components/favorite-notes.tsx:116
 #: app/components/note/comment-item.tsx:232
+#: app/components/phone-agent/summary-card.tsx:55
 #: app/components/roles/tenant-role-access-manager.tsx:1095
 #: app/components/staff/kiosk-manager.tsx:447
 #: app/components/staff/onboarding/certificates-tab.tsx:278
@@ -6641,13 +6698,17 @@ msgstr "انصراف مبكر"
 msgid "Edit"
 msgstr "تعديل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:376
+#: app/components/phone-agent/training-rules-section.tsx:387
 msgid "Edit \"{ruleTitle}\""
 msgstr "تعديل \"{ruleTitle}\""
 
 #: app/components/settings/cards/organization/announcement-sheet.tsx:327
 msgid "Edit announcement"
 msgstr "تعديل الإعلان"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:250
+msgid "Edit call flow"
+msgstr "تعديل مسار المكالمة"
 
 #: app/components/staff/timesheets/review-queue.tsx:445
 msgid "Edit card"
@@ -6724,7 +6785,7 @@ msgstr "تعديل إعادة التوجيه"
 msgid "Edit role"
 msgstr "تعديل الدور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:451
+#: app/components/phone-agent/training-rules-section.tsx:462
 msgid "Edit rule"
 msgstr "تعديل القاعدة"
 
@@ -6854,7 +6915,7 @@ msgstr "إرسال الدعوة بالبريد مرة أخرى"
 msgid "Email the updated time"
 msgstr "إرسال الوقت المحدّث بالبريد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:291
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1337
 msgid "Email these addresses"
 msgstr "إرسال بريد إلكتروني إلى هذه العناوين"
 
@@ -6932,8 +6993,8 @@ msgid "End of day"
 msgstr "نهاية اليوم"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:189
-msgid "End of the call"
-msgstr "نهاية المكالمة"
+#~ msgid "End of the call"
+#~ msgstr "نهاية المكالمة"
 
 #: app/components/hiring/job-labels.ts:52
 msgid "Ended"
@@ -6962,9 +7023,8 @@ msgstr "تنتهي في اليوم التالي."
 
 #: app/components/hiring/candidate-sheet.tsx:381
 #: app/components/nav-user.tsx:101
+#: app/components/phone-agent/phrase-fields.tsx:29
 #: app/components/phone-agent/voice-picker.tsx:58
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:56
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:37
 msgid "English"
 msgstr "الإنجليزية"
 
@@ -7017,7 +7077,7 @@ msgstr "أدخل رقمًا."
 msgid "Enter a pay amount, or choose not to show pay."
 msgstr "أدخل مبلغ الأجر، أو اختر عدم إظهاره."
 
-#: app/components/phone-agent/settings-page.tsx:130
+#: app/components/phone-agent/settings-page.tsx:131
 #: app/utils/staffing/staff-validation.ts:44
 msgid "Enter a valid email address."
 msgstr "أدخل عنوان بريد إلكتروني صالحًا."
@@ -7094,7 +7154,7 @@ msgstr "إدخال الرقم السري"
 msgid "Enter sales"
 msgstr "إدخال المبيعات"
 
-#: app/components/phone-agent/settings-page.tsx:150
+#: app/components/phone-agent/settings-page.tsx:151
 msgid "Enter the 6-digit code."
 msgstr "أدخل الرمز المكوّن من 6 أرقام."
 
@@ -7286,7 +7346,7 @@ msgstr "كل {day}"
 msgid "Every active member can read and post."
 msgstr "يمكن لكل عضو نشط القراءة والنشر."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:47
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:96
 msgid "Every call"
 msgstr "كل مكالمة"
 
@@ -7298,7 +7358,7 @@ msgstr "تُحذف كل مكالمة من {erasePhoneLabel} نهائيًا، م�
 msgid "Every call starts here. Connect it to the first thing callers should hear."
 msgstr "كل مكالمة تبدأ من هنا. اربطها بأول ما يجب أن يسمعه المتصلون."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:329
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:333
 msgid "Every call your agent answered, with summaries, transcripts, and follow-up requests."
 msgstr "كل مكالمة أجاب عنها وكيلك، مع الملخصات والنصوص المكتوبة وطلبات المتابعة."
 
@@ -7580,7 +7640,7 @@ msgstr "القيمة الاحتياطية"
 msgid "False"
 msgstr "خطأ"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:52
+#: app/components/phone-agent/agent-details.tsx:48
 msgid "FAQ answers"
 msgstr "إجابات الأسئلة الشائعة"
 
@@ -7640,7 +7700,7 @@ msgstr "اسم ملف عنصر الوسائط"
 msgid "Filename"
 msgstr "اسم الملف"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:494
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:498
 msgid "Filter by channel"
 msgstr "التصفية حسب القناة"
 
@@ -7648,7 +7708,7 @@ msgstr "التصفية حسب القناة"
 msgid "Filter by first letter"
 msgstr "التصفية حسب الحرف الأول"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:429
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:433
 msgid "Filter by follow-up"
 msgstr "التصفية حسب المتابعة"
 
@@ -7665,7 +7725,7 @@ msgstr "تصفية حسب الوظيفة"
 msgid "Filter by position"
 msgstr "تصفية حسب المنصب"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:473
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:477
 msgid "Filter by purpose"
 msgstr "التصفية حسب الغرض"
 
@@ -7678,7 +7738,7 @@ msgstr "تصفية حسب المرحلة"
 msgid "Filter by status"
 msgstr "تصفية حسب الحالة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:451
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:455
 msgid "Filter by tag"
 msgstr "التصفية حسب الوسم"
 
@@ -7784,18 +7844,16 @@ msgstr "مسار المكالمة"
 msgid "Follow up on calls"
 msgstr "متابعة المكالمات"
 
-#: app/components/app-sidebar.tsx:396
+#: app/components/phone-agent/agent-details.tsx:58
 #: app/components/workspace-breadcrumb.tsx:51
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:62
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:219
 msgid "Follow-up"
 msgstr "المتابعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:87
+#: app/components/phone-agent/phrase-fields.tsx:79
 msgid "Follow-up text not sent"
 msgstr "لم تُرسل رسالة المتابعة النصية"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:83
+#: app/components/phone-agent/phrase-fields.tsx:75
 msgid "Follow-up text sent"
 msgstr "تم إرسال رسالة المتابعة النصية"
 
@@ -7867,7 +7925,7 @@ msgstr "التنسيق"
 msgid "Former member"
 msgstr "عضو سابق"
 
-#: app/components/app-sidebar.tsx:473
+#: app/components/app-sidebar.tsx:421
 #: app/components/command-menu.tsx:136
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:46
@@ -7892,7 +7950,11 @@ msgstr "تحويل الاتصال"
 msgid "Four"
 msgstr "أربعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:256
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:391
+msgid "Four steps. Everything else has defaults you can change later."
+msgstr "أربع خطوات. كل ما عدا ذلك له إعدادات افتراضية يمكنك تغييرها لاحقًا."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:355
 msgid "Frequently asked questions"
 msgstr "الأسئلة الشائعة"
 
@@ -7917,8 +7979,12 @@ msgid "From a file"
 msgstr "من ملف"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:503
-msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
-msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع إعداداتك وقواعد التدريب، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
+msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Agent and What it knows rules, and can transfer to staff if auto-escalation is on."
+msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع قواعد الوكيل وما يعرفه، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:503
+#~ msgid "From here the AI handles the rest of the call: questions, texted links, and messages. It follows your Setup and Training rules, and can transfer to staff if auto-escalation is on."
+#~ msgstr "من هنا يتولى الذكاء الاصطناعي بقية المكالمة: الأسئلة والروابط المرسلة والرسائل. يتبع إعداداتك وقواعد التدريب، ويمكنه التحويل إلى الموظفين إذا كان التصعيد التلقائي مفعّلًا."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:280
 msgid "From Name (Optional)"
@@ -7949,7 +8015,7 @@ msgstr "دوام كامل"
 msgid "Full width"
 msgstr "عرض كامل"
 
-#: app/components/app-sidebar.tsx:516
+#: app/components/app-sidebar.tsx:464
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:62
@@ -7960,7 +8026,7 @@ msgstr "عام"
 msgid "General manager"
 msgstr "المدير العام"
 
-#: app/components/app-sidebar.tsx:463
+#: app/components/app-sidebar.tsx:411
 #: app/components/settings/cards/organization/general-settings-card.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -7992,12 +8058,12 @@ msgstr "جارٍ إنشاء متغيرات الأيقونة. قد يستغرق �
 msgid "Generating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/app-sidebar.tsx:664
+#: app/components/app-sidebar.tsx:612
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:162
-#: app/components/app-sidebar.tsx:679
+#: app/components/app-sidebar.tsx:627
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -8016,12 +8082,16 @@ msgstr "ابدأ"
 msgid "Get started: {completedCount} of {totalSteps} steps complete"
 msgstr "ابدأ الآن: اكتمل {completedCount} من {totalSteps} خطوات"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:382
+msgid "Get your agent answering calls"
+msgstr "اجعل وكيلك يرد على المكالمات"
+
 #: app/components/my-schedule/requests-view.tsx:111
 msgid "Give away {when}"
 msgstr "التخلي عن {when}"
 
 #: app/components/app-sidebar.tsx:170
-#: app/components/app-sidebar.tsx:687
+#: app/components/app-sidebar.tsx:635
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -8072,12 +8142,12 @@ msgid "Go to homepage"
 msgstr "الذهاب إلى الصفحة الرئيسية"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:283
-msgid "Go to switch"
-msgstr "انتقل إلى المفتاح"
+#~ msgid "Go to switch"
+#~ msgstr "انتقل إلى المفتاح"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:299
-msgid "Go-live checklist"
-msgstr "قائمة التحقق قبل الإطلاق"
+#~ msgid "Go-live checklist"
+#~ msgstr "قائمة التحقق قبل الإطلاق"
 
 #: app/routes/_app+/$orgSlug_+/index.tsx:170
 msgid "Good afternoon, {userName}"
@@ -8092,7 +8162,7 @@ msgid "Good morning, {userName}"
 msgstr "صباح الخير، {userName}"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:78
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:139
+#: app/components/phone-agent/phrase-fields.tsx:131
 msgid "Goodbye"
 msgstr "الوداع"
 
@@ -8129,8 +8199,8 @@ msgstr "تدرج الرمادي"
 msgid "Green"
 msgstr "أخضر"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:645
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:44
+#: app/components/phone-agent/agent-details.tsx:40
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:726
 msgid "Greeting"
 msgstr "الترحيب"
 
@@ -8187,6 +8257,10 @@ msgstr "الدفع كضيف"
 #: app/components/staff/timesheets/card-fields.tsx:67
 msgid "h"
 msgstr "س"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:454
+msgid "Hand a caller to a person when the agent can't help, when they press 0, or when a case below matches."
+msgstr "حوّل المتصل إلى شخص عندما لا يستطيع الوكيل المساعدة، أو عندما يضغط 0، أو عندما تنطبق إحدى الحالات أدناه."
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:49
 msgid "Hand the call to your AI assistant to help the caller."
@@ -8296,6 +8370,7 @@ msgstr "مرحبًا {personName}، أدخل رقمك السري"
 msgid "Hi, {userName}"
 msgstr "مرحباً، {userName}"
 
+#: app/components/phone-agent/summary-card.tsx:50
 #: app/components/phone-agent/test-call-phone.tsx:319
 #: app/components/staff/reveal-gate.tsx:46
 msgid "Hide"
@@ -8317,7 +8392,7 @@ msgstr "إخفاء عن محركات البحث"
 msgid "Hide replies ({replyCount})"
 msgstr "إخفاء الردود ({replyCount})"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:68
+#: app/components/phone-agent/training-rules-section.tsx:64
 msgid "High"
 msgstr "عالية"
 
@@ -8365,7 +8440,7 @@ msgid "Hired."
 msgstr "تم التوظيف."
 
 #: ../../packages/reports/src/ui/report-labels.ts:83
-#: app/components/app-sidebar.tsx:450
+#: app/components/app-sidebar.tsx:398
 #: app/components/command-menu.tsx:125
 #: app/components/roles/tenant-role-access-manager.tsx:363
 #: app/components/workspace-breadcrumb.tsx:37
@@ -8408,7 +8483,7 @@ msgstr "زيارات"
 msgid "Hits"
 msgstr "الزيارات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:63
+#: app/components/phone-agent/phrase-fields.tsx:55
 msgid "Hold message"
 msgstr "رسالة الانتظار"
 
@@ -8606,7 +8681,7 @@ msgstr "تحديد المخاطر"
 msgid "If an account exists with that username or email, we've sent password reset instructions."
 msgstr "إذا كان هناك حساب بهذا اسم المستخدم أو البريد الإلكتروني، فقد أرسلنا تعليمات إعادة تعيين كلمة المرور."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:609
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:939
 msgid "If nobody answers"
 msgstr "إذا لم يرد أحد"
 
@@ -8687,7 +8762,7 @@ msgstr "استيراد المبيعات اليومية"
 msgid "Import finished"
 msgstr "اكتمل الاستيراد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:530
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1589
 msgid "Important"
 msgstr "مهم"
 
@@ -8699,7 +8774,7 @@ msgstr "ملاحظات مهمة"
 msgid "Important Security Note"
 msgstr "ملاحظة أمنية مهمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:75
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:124
 msgid "Important tags"
 msgstr "الوسوم المهمة"
 
@@ -8744,7 +8819,7 @@ msgstr "من حساب المدير، افتح «الموظفون» ثم «ساع
 msgid "In-App"
 msgstr "داخل التطبيق"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:338
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1381
 msgid "Include a link to the call"
 msgstr "تضمين رابط إلى المكالمة"
 
@@ -8797,7 +8872,7 @@ msgstr "تفعيل Checkout.com فورًا (محاكاة)"
 msgid "Instantly enable Stripe (mock)"
 msgstr "تفعيل Stripe فورًا (محاكاة)"
 
-#: app/components/app-sidebar.tsx:544
+#: app/components/app-sidebar.tsx:492
 #: app/components/settings/cards/organization/integrations-card.tsx:101
 #: app/components/workspace-breadcrumb.tsx:65
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
@@ -8809,8 +8884,8 @@ msgid "Internal channels for your team."
 msgstr "قنوات داخلية لفريقك."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:779
-msgid "International format, for example +15551234567. Use a line that doesn't forward to the agent."
-msgstr "بالصيغة الدولية، مثل +15551234567. استخدم خطًا لا يُحوِّل المكالمات إلى الوكيل."
+#~ msgid "International format, for example +15551234567. Use a line that doesn't forward to the agent."
+#~ msgstr "بالصيغة الدولية، مثل +15551234567. استخدم خطًا لا يُحوِّل المكالمات إلى الوكيل."
 
 #: app/components/hiring/job-labels.ts:24
 msgid "Internship"
@@ -8993,6 +9068,10 @@ msgstr "ستُزال من ملفهم. يُسجَّل ذلك في سجل المو
 msgid "It is too early to clock in for your shift."
 msgstr "الوقت مبكر جدًا لتسجيل الحضور لورديتك."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:357
+msgid "It starts answering on the next call."
+msgstr "يبدأ الرد من المكالمة التالية."
+
 #: app/components/staff/schedule/time-off-sheet.tsx:152
 msgid "It was entered on short notice."
 msgstr "أُدخلت قبل وقت قصير."
@@ -9107,7 +9186,7 @@ msgstr "متابعة التعديل"
 msgid "Keep it"
 msgstr "إبقاؤه"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:712
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:805
 msgid "Keep recordings for"
 msgstr "الاحتفاظ بالتسجيلات لمدة"
 
@@ -9119,7 +9198,7 @@ msgstr "الاحتفاظ ببياناتهم"
 msgid "Keep track of licences and certificates, and get a reminder before one expires."
 msgstr "تابع التراخيص والشهادات، واحصل على تذكير قبل انتهاء إحداها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:418
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1457
 msgid "Keep transferred calls open"
 msgstr "إبقاء المكالمات المحوّلة مفتوحة"
 
@@ -9150,12 +9229,12 @@ msgstr "الزر"
 msgid "Key Name"
 msgstr "اسم المفتاح"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:702
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:801
 msgid "Key term"
 msgstr "مصطلح أساسي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:54
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:689
+#: app/components/phone-agent/agent-details.tsx:50
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:788
 msgid "Key terms"
 msgstr "المصطلحات الأساسية"
 
@@ -9170,7 +9249,6 @@ msgstr "لوحة المفاتيح"
 #: app/components/phone-agent/flow-editor/flow-meta.ts:34
 #: app/components/phone-agent/flow-editor/flow-meta.ts:36
 #: app/components/phone-agent/flow-editor/node-palette.tsx:101
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:156
 msgid "Keypad menu"
 msgstr "قائمة لوحة المفاتيح"
 
@@ -9190,10 +9268,8 @@ msgstr "ساعات الدوام على الأجهزة اللوحية متوقف�
 msgid "Kiro IDE Setup"
 msgstr "إعداد Kiro IDE"
 
-#: app/components/app-sidebar.tsx:370
 #: app/components/command-menu.tsx:112
 #: app/components/workspace-breadcrumb.tsx:47
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:90
 msgid "Knowledge"
 msgstr "المعرفة"
 
@@ -9207,12 +9283,12 @@ msgstr "إدارة المعرفة"
 msgid "Label"
 msgstr "التسمية"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:446
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1484
 msgid "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 msgstr "صنّف المكالمات بوسوم لتجدها لاحقًا. عند تفعيل الوسم التلقائي، يطبّق الوكيل الوسم عندما يتطابق الوصف مع المكالمة."
 
 #: ../../packages/reports/src/ui/report-labels.ts:82
-#: app/components/app-sidebar.tsx:445
+#: app/components/app-sidebar.tsx:393
 #: app/components/command-menu.tsx:124
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
@@ -9273,9 +9349,9 @@ msgstr "عرض العمالة"
 msgid "Language"
 msgstr "اللغة"
 
+#: app/components/phone-agent/agent-details.tsx:38
 #: app/components/settings/cards/organization/site-locales-card.tsx:159
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:558
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:42
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:639
 msgid "Languages"
 msgstr "اللغات"
 
@@ -9296,7 +9372,7 @@ msgstr "آخر {days} يوم"
 msgid "Last {daysShown} days"
 msgstr "آخر {daysShown} يوم"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:355
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:359
 msgid "Last 30 days"
 msgstr "آخر 30 يومًا"
 
@@ -9398,6 +9474,10 @@ msgstr "اعرف المزيد"
 msgid "Leave"
 msgstr "مغادرة"
 
+#: app/components/phone-agent/phrase-fields.tsx:337
+msgid "Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
+msgstr "اترك السطر فارغًا لاستخدام النص الافتراضي. يُستبدل {BUSINESS_TOKEN} بـ {businessName}."
+
 #: app/components/note/comment-input.tsx:75
 #: app/components/note/comment-item.tsx:337
 msgid "Leave a reply..."
@@ -9419,21 +9499,29 @@ msgstr "اتركه فارغاً للاحتفاظ بالمفتاح السري ا�
 msgid "Leave empty to keep this page at the root of your site."
 msgstr "اتركه فارغاً لإبقاء هذه الصفحة في جذر موقعك."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:496
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:595
 msgid "Leave empty to skip"
 msgstr "اتركه فارغًا للتخطي"
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:591
-msgid "Leave empty to use the closing line from Setup."
-msgstr "اتركه فارغًا لاستخدام عبارة الختام من الإعداد."
+msgid "Leave empty to use the closing line from Agent."
+msgstr "اتركه فارغًا لاستخدام عبارة الختام من الوكيل."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:591
+#~ msgid "Leave empty to use the closing line from Setup."
+#~ msgstr "اتركه فارغًا لاستخدام عبارة الختام من الإعداد."
 
 #: app/components/staff/positions-tab.tsx:574
 msgid "Leave empty to use the position's default rate."
 msgstr "اتركه فارغًا لاستخدام الأجر الافتراضي للمنصب."
 
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:537
-msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
-msgstr "اتركه فارغًا لاستخدام رقم الفريق من الإعداد. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
+msgid "Leave empty to use the staff number from Call handling. If the transfer fails, the call follows \"No answer\"."
+msgstr "اتركه فارغًا لاستخدام رقم الفريق من التعامل مع المكالمات. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
+
+#: app/components/phone-agent/flow-editor/node-inspector.tsx:537
+#~ msgid "Leave empty to use the staff number from Setup. If the transfer fails, the call follows \"No answer\"."
+#~ msgstr "اتركه فارغًا لاستخدام رقم الفريق من الإعداد. إذا فشل التحويل، تتبع المكالمة مسار \"لا يوجد رد\"."
 
 #: app/utils/staffing/onboarding-view.ts:226
 #: app/utils/staffing/onboarding-view.ts:255
@@ -9494,6 +9582,10 @@ msgstr "اسمح للناس باختيار خيار واحد."
 msgid "Let people select several options."
 msgstr "اسمح للناس باختيار عدة خيارات."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:465
+msgid "Let the agent transfer calls"
+msgstr "السماح للوكيل بتحويل المكالمات"
+
 #: app/components/staff/onboarding/certificates-tab.tsx:121
 msgid "Licences and cards, and when they expire."
 msgstr "التراخيص والبطاقات وتواريخ انتهائها."
@@ -9513,6 +9605,10 @@ msgstr "وصول محدود للمتعاونين المؤقتين"
 #: app/components/staff/labor/sales-import-dialog.tsx:259
 msgid "Line {line}: "
 msgstr "السطر {line}: "
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:299
+msgid "Lines the flow uses"
+msgstr "العبارات التي يستخدمها المسار"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:303
 #: app/components/website/link-inspector.tsx:648
@@ -9547,7 +9643,7 @@ msgid "Link label"
 msgstr "تسمية الرابط"
 
 #: app/components/phone-agent/call-data.ts:132
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:103
+#: app/components/phone-agent/phrase-fields.tsx:95
 msgid "Link sent"
 msgstr "تم إرسال الرابط"
 
@@ -9565,7 +9661,7 @@ msgid "Link URL"
 msgstr "عنوان الرابط"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:83
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:59
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:108
 msgid "Links sent"
 msgstr "الروابط المرسلة"
 
@@ -9578,7 +9674,6 @@ msgid "Listening"
 msgstr "يستمع"
 
 #: app/components/hiring/job-labels.ts:50
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:304
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:624
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
 msgid "Live"
@@ -9589,15 +9684,15 @@ msgid "Live transcript"
 msgstr "النص المكتوب المباشر"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:267
-msgid "LiveKit credentials are set by your platform administrator."
-msgstr "يضبط مسؤول المنصة بيانات اعتماد LiveKit."
+#~ msgid "LiveKit credentials are set by your platform administrator."
+#~ msgstr "يضبط مسؤول المنصة بيانات اعتماد LiveKit."
 
 #: app/components/chat/chat-view.tsx:863
 msgid "Load earlier replies"
 msgstr "تحميل ردود أقدم"
 
 #: app/components/mailbox/calls-tab.tsx:392
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:669
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:673
 msgid "Load more"
 msgstr "تحميل المزيد"
 
@@ -9635,7 +9730,7 @@ msgid "Loading call…"
 msgstr "جارٍ تحميل المكالمة…"
 
 #: app/components/mailbox/calls-tab.tsx:273
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:534
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:538
 msgid "Loading calls"
 msgstr "جارٍ تحميل المكالمات"
 
@@ -9695,7 +9790,7 @@ msgstr "جارٍ تحميل المناصب"
 msgid "Loading profile"
 msgstr "جارٍ تحميل الملف الشخصي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:687
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:691
 msgid "Loading requests"
 msgstr "جارٍ تحميل الطلبات"
 
@@ -9753,9 +9848,11 @@ msgstr "جارٍ تحميل من هم على الساعة"
 
 #: app/components/hiring/hire-dialog.tsx:233
 #: app/components/mailbox/calls-tab.tsx:392
+#: app/components/phone-agent/agent-details.tsx:145
+#: app/components/phone-agent/test-call-sheet.tsx:116
 #: app/components/staff/schedule/availability-sheet.tsx:217
 #: app/components/staff/schedule/time-off-sheet.tsx:190
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:667
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:671
 msgid "Loading…"
 msgstr "جارٍ التحميل…"
 
@@ -9869,15 +9966,15 @@ msgstr "تبدو سليمة ({reviewCount})"
 msgid "Loose"
 msgstr "متباعد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:70
+#: app/components/phone-agent/training-rules-section.tsx:66
 msgid "Low"
 msgstr "منخفضة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:135
+#: app/components/phone-agent/phrase-fields.tsx:127
 msgid "Low rating"
 msgstr "تقييم منخفض"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:71
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:120
 msgid "Low ratings"
 msgstr "التقييمات المنخفضة"
 
@@ -9914,7 +10011,8 @@ msgstr "المنصب الرئيسي"
 msgid "Main workplace"
 msgstr "مكان العمل الرئيسي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:586
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:333
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:590
 msgid "Make a test call"
 msgstr "إجراء مكالمة تجريبية"
 
@@ -10052,7 +10150,7 @@ msgstr "إدارة موقع مؤسستك العام ومظهره."
 msgid "Manager"
 msgstr "مدير"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:296
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1342
 msgid "manager@example.com"
 msgstr "manager@example.com"
 
@@ -10094,7 +10192,7 @@ msgstr "تحديد كمقروء"
 msgid "Mark complete"
 msgstr "وضع علامة مكتمل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:380
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1421
 msgid "Mark complete automatically"
 msgstr "وضع علامة مكتمل تلقائيًا"
 
@@ -10147,11 +10245,11 @@ msgstr "جارٍ التحديد…"
 msgid "Masculine"
 msgstr "ذكوري"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:51
+#: app/components/phone-agent/agent-details.tsx:47
 msgid "Maximum call length"
 msgstr "الحد الأقصى لمدة المكالمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:820
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:865
 msgid "Maximum call length (minutes)"
 msgstr "الحد الأقصى لمدة المكالمة (بالدقائق)"
 
@@ -10167,7 +10265,7 @@ msgstr "تعليمات إعداد MCP OAuth"
 msgid "MCP server"
 msgstr "خادم MCP"
 
-#: app/components/app-sidebar.tsx:554
+#: app/components/app-sidebar.tsx:502
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
 msgid "MCP Server"
 msgstr "خادم MCP"
@@ -10204,9 +10302,9 @@ msgstr "مكتبة الوسائط"
 msgid "Media URL"
 msgstr "رابط الوسائط"
 
+#: app/components/phone-agent/training-rules-section.tsx:65
 #: app/components/settings/cards/organization/site-theme-card.tsx:747
 #: app/components/settings/cards/organization/site-theme-card.tsx:750
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:69
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4944
 msgid "Medium"
 msgstr "متوسط"
@@ -10227,7 +10325,7 @@ msgstr "عضو"
 msgid "members"
 msgstr "أعضاء"
 
-#: app/components/app-sidebar.tsx:521
+#: app/components/app-sidebar.tsx:469
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:169
 #: app/components/roles/tenant-role-access-manager.tsx:1054
@@ -10331,7 +10429,7 @@ msgstr "استراحة فائتة"
 msgid "Missed punch"
 msgstr "تسجيل فائت"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:63
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:112
 msgid "Missed transfers"
 msgstr "التحويلات الفائتة"
 
@@ -10561,8 +10659,8 @@ msgstr "رابط جدولي"
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:393
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:394
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:683
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:684
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:277
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:387
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
@@ -10637,7 +10735,7 @@ msgid "Needs attention:"
 msgstr "يحتاج إلى انتباه:"
 
 #: app/components/phone-agent/call-data.ts:140
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:309
 msgid "Needs follow-up"
 msgstr "تحتاج إلى متابعة"
 
@@ -10669,8 +10767,8 @@ msgstr "محايد"
 msgid "Neutral feedback"
 msgstr "ملاحظات محايدة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:388
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:405
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1429
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1445
 msgid "Never"
 msgstr "أبدًا"
 
@@ -10809,7 +10907,7 @@ msgstr "تقرير جديد"
 msgid "New tab"
 msgstr "علامة تبويب جديدة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:466
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1503
 msgid "New tag"
 msgstr "وسم جديد"
 
@@ -10951,7 +11049,7 @@ msgstr "لم يتم العثور على بثّات"
 msgid "No calls need follow-up"
 msgstr "لا توجد مكالمات تحتاج إلى متابعة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:556
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:560
 msgid "No calls yet"
 msgstr "لا توجد مكالمات بعد"
 
@@ -10967,7 +11065,7 @@ msgstr "لا توجد شهادات مسجلة لهذا الشخص."
 msgid "No certificates yet"
 msgstr "لا توجد شهادات بعد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:450
+#: app/components/phone-agent/agent-details.tsx:329
 msgid "No changes recorded yet."
 msgstr "لم تُسجَّل أي تغييرات بعد."
 
@@ -10992,7 +11090,7 @@ msgstr "لم يتم تفويض أي عملاء بعد"
 msgid "No comments yet"
 msgstr "لا توجد تعليقات بعد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:709
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:713
 msgid "No completed requests"
 msgstr "لا توجد طلبات مكتملة"
 
@@ -11012,7 +11110,7 @@ msgstr "لا يوجد اتصال. تحقق من الإنترنت وحاول مر
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:377
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:667
 msgid "No contacts yet."
 msgstr "لا توجد جهات اتصال بعد."
 
@@ -11141,7 +11239,7 @@ msgstr "لم يعد مهيأ لهذا المنصب"
 msgid "no longer working here"
 msgstr "لم يعد يعمل هنا"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:554
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:558
 msgid "No matching calls"
 msgstr "لا توجد مكالمات مطابقة"
 
@@ -11181,7 +11279,7 @@ msgstr "لم يتم العثور على أعضاء."
 msgid "No members have been given direct access."
 msgstr "لم تُمنح صلاحية الوصول المباشر لأي عضو."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:123
+#: app/components/phone-agent/phrase-fields.tsx:115
 msgid "No message heard"
 msgstr "لم تُسمع أي رسالة"
 
@@ -11277,7 +11375,7 @@ msgstr "بلا إكراميات الطلبات عبر الإنترنت"
 msgid "No online orders on a typical day"
 msgstr "لا توجد طلبات عبر الإنترنت في يوم عادي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:707
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:711
 msgid "No open requests"
 msgstr "لا توجد طلبات مفتوحة"
 
@@ -11363,7 +11461,7 @@ msgstr "لا توجد مناصب بعد"
 msgid "No preference"
 msgstr "بلا تفضيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:608
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:707
 msgid "No pronunciations yet."
 msgstr "لا توجد طرق نطق بعد."
 
@@ -11391,7 +11489,7 @@ msgstr "لم يتم العثور على نتائج."
 msgid "No rules are saved for this workplace yet, so the defaults are used. Delivery tips stay out until you choose to pool them."
 msgstr "لا توجد قواعد محفوظة لمكان العمل هذا بعد، لذا تُستخدم القواعد الافتراضية. تبقى إكراميات التوصيل خارج التقسيم حتى تختار جمعها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:252
+#: app/components/phone-agent/training-rules-section.tsx:268
 msgid "No rules yet."
 msgstr "لا توجد قواعد بعد."
 
@@ -11424,8 +11522,12 @@ msgid "No shifts have been planned for this week."
 msgstr "لم يتم تخطيط أي ورديات لهذا الأسبوع."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:231
-msgid "No staff phone is set, so only the transfer cases below can transfer calls."
-msgstr "لم يتم تعيين رقم هاتف للفريق، لذا يمكن تحويل المكالمات فقط في حالات التحويل أدناه."
+#~ msgid "No staff phone is set, so only the transfer cases below can transfer calls."
+#~ msgstr "لم يتم تعيين رقم هاتف للفريق، لذا يمكن تحويل المكالمات فقط في حالات التحويل أدناه."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:511
+msgid "No staff phone, so only the transfer cases below transfer calls."
+msgstr "لا يوجد هاتف للموظفين، لذا تُحوَّل المكالمات فقط في حالات التحويل أدناه."
 
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:112
 msgid "No sub-entities yet."
@@ -11488,7 +11590,7 @@ msgstr "لا إكراميات لتقسيمها في هذه الفترة"
 msgid "No tools available."
 msgstr "لا توجد أدوات متاحة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:182
+#: app/components/phone-agent/training-rules-section.tsx:178
 msgid "No training rules yet"
 msgstr "لا توجد قواعد تدريب بعد"
 
@@ -11500,7 +11602,7 @@ msgstr "لم يُحفظ نص مكتوب لهذه المكالمة."
 msgid "No transfer"
 msgstr "بلا تحويل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:499
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:813
 msgid "No transfer cases yet."
 msgstr "لا توجد حالات تحويل بعد."
 
@@ -11533,7 +11635,7 @@ msgid "Nobody"
 msgstr "لا أحد"
 
 #: app/components/phone-agent/call-data.ts:156
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:71
+#: app/components/phone-agent/phrase-fields.tsx:63
 msgid "Nobody answered"
 msgstr "لم يرد أحد"
 
@@ -11632,7 +11734,7 @@ msgstr "ليس في أي مكان عمل بعد. أضف مكانًا أدناه.
 msgid "not available"
 msgstr "غير متاح"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:48
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:60
 msgid "Not available in your data region yet"
 msgstr "غير متاح في منطقة بياناتك بعد"
 
@@ -11644,7 +11746,7 @@ msgstr "غير متاح عندما نحتاج إليه"
 msgid "Not connected"
 msgstr "غير متصل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:204
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:222
 msgid "Not done"
 msgstr "غير منجز"
 
@@ -11847,7 +11949,7 @@ msgstr "لم يتغير شيء في هذه البطاقة."
 msgid "Nothing about this card has changed yet."
 msgstr "لم يتغير شيء في هذه البطاقة بعد."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:349
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:448
 msgid "Nothing could be answered from your business details. Add the answers yourself."
 msgstr "تعذرت الإجابة عن أي شيء من تفاصيل نشاطك التجاري. أضف الإجابات بنفسك."
 
@@ -11866,6 +11968,10 @@ msgstr "لا يوجد في هذا الملف ما يمكن استيراده بع
 #: app/components/dashboard/blocks/use-report-state-messages.ts:41
 msgid "Nothing in this timeframe matches the report's filters."
 msgstr "لا يوجد في هذا الإطار الزمني ما يطابق عوامل تصفية التقرير."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:240
+msgid "Nothing is published yet, so calls use the default phone menu."
+msgstr "لم يُنشر شيء بعد، لذا تستخدم المكالمات قائمة الهاتف الافتراضية."
 
 #: app/routes/_app+/$orgSlug_+/staff+/team.bulk.tsx:181
 msgid "Nothing is saved until you confirm. Fix a row here or remove it."
@@ -11916,7 +12022,7 @@ msgstr "لا شيء بعد."
 msgid "Notification Preferences"
 msgstr "تفضيلات الإشعارات"
 
-#: app/components/app-sidebar.tsx:559
+#: app/components/app-sidebar.tsx:507
 #: app/components/workspace-breadcrumb.tsx:66
 msgid "Notifications"
 msgstr "الإشعارات"
@@ -11957,7 +12063,7 @@ msgstr "من {sourceName}"
 msgid "of {totalUsers} people"
 msgstr "من {totalUsers} شخص"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:139
+#: app/components/phone-agent/settings-nav.tsx:67
 msgid "Off"
 msgstr "إيقاف"
 
@@ -11965,8 +12071,8 @@ msgstr "إيقاف"
 msgid "Offer"
 msgstr "عرض"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:79
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:301
+#: app/components/phone-agent/phrase-fields.tsx:71
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:579
 msgid "Offer a text if nobody answers"
 msgstr "عرض إرسال رسالة نصية إذا لم يرد أحد"
 
@@ -11987,8 +12093,8 @@ msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:139
-msgid "On"
-msgstr "تشغيل"
+#~ msgid "On"
+#~ msgstr "تشغيل"
 
 #: app/components/staff/timeclock-today.tsx:124
 #: app/components/staff/timeclock-today.tsx:336
@@ -12027,6 +12133,10 @@ msgstr "ضمن فريقك"
 #: ../../packages/reports/src/ui/report-labels.ts:56
 msgid "On-time arrival"
 msgstr "الحضور في الوقت المحدد"
+
+#: app/components/phone-agent/agent-details.tsx:56
+msgid "On/off switches"
+msgstr "مفاتيح التشغيل والإيقاف"
 
 #: app/components/staff/onboarding/onboarding-tab.tsx:191
 #: app/components/staff/onboarding/templates-page.tsx:103
@@ -12157,8 +12267,8 @@ msgstr "تُحتسب الطلبات عبر الإنترنت فقط، أما ال
 msgid "Only people who can edit the phone agent can start test calls."
 msgstr "لا يمكن بدء المكالمات التجريبية إلا لمن يملكون صلاحية تعديل وكيل الهاتف."
 
-#: app/components/phone-agent/settings-page.tsx:93
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:256
+#: app/components/phone-agent/settings-page.tsx:94
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1307
 msgid "Only people who can view calls can change staff alerts, because alerts include callers' numbers and call summaries."
 msgstr "لا يمكن تغيير تنبيهات الفريق إلا لمن يملك صلاحية عرض المكالمات، لأن التنبيهات تتضمن أرقام المتصلين وملخصات المكالمات."
 
@@ -12202,7 +12312,7 @@ msgstr "يُستخدم فقط ما تكتبه هنا واسم نشاطك الت�
 msgid "Only where nobody pressed Start break. Each deduction is marked on the time card."
 msgstr "فقط حيث لم يضغط أحد على بدء الاستراحة. يُوضَّح كل خصم على بطاقة الدوام."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:50
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:56
 msgid "Only while you're open"
 msgstr "فقط أثناء ساعات العمل"
 
@@ -12219,7 +12329,7 @@ msgstr "فريقك وحده يرى الملاحظات. ولا يراها الم�
 #: app/components/staff/timesheets/issue-copy.ts:50
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:515
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:519
 msgid "Open"
 msgstr "فتح"
 
@@ -12240,8 +12350,8 @@ msgid "Open and view notes created by this user."
 msgstr "فتح وعرض الملاحظات التي أنشأها هذا المستخدم."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:258
-msgid "Open call flow"
-msgstr "فتح مسار المكالمة"
+#~ msgid "Open call flow"
+#~ msgstr "فتح مسار المكالمة"
 
 #: app/hooks/use-staff-attention.ts:140
 msgid "Open checklist"
@@ -12584,7 +12694,7 @@ msgstr "خارج توفره"
 msgid "Outside their usual hours"
 msgstr "خارج ساعاته المعتادة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:256
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:536
 msgid "Outside these times the agent takes a message instead."
 msgstr "خارج هذه الأوقات، يأخذ الوكيل رسالة بدلًا من ذلك."
 
@@ -12689,7 +12799,7 @@ msgstr "عنوان الصفحة"
 msgid "Page URL"
 msgstr "رابط الصفحة"
 
-#: app/components/app-sidebar.tsx:468
+#: app/components/app-sidebar.tsx:416
 #: app/components/command-menu.tsx:135
 #: app/components/workspace-breadcrumb.tsx:56
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -12847,12 +12957,12 @@ msgid "Pause"
 msgstr "إيقاف مؤقت"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:152
-msgid "Pause the AI assistant"
-msgstr "إيقاف المساعد الذكي مؤقتًا"
+#~ msgid "Pause the AI assistant"
+#~ msgstr "إيقاف المساعد الذكي مؤقتًا"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:176
-msgid "Pause transfers"
-msgstr "إيقاف التحويلات مؤقتًا"
+#~ msgid "Pause transfers"
+#~ msgstr "إيقاف التحويلات مؤقتًا"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:299
 msgid "paused"
@@ -12985,7 +13095,7 @@ msgstr "الدعوات المعلقة"
 msgid "People"
 msgstr "الأشخاص"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:367
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:657
 msgid "People or departments the agent can transfer to, like a manager. Use numbers that don't forward to the agent."
 msgstr "الأشخاص أو الأقسام التي يمكن للوكيل التحويل إليها، مثل المدير. استخدم أرقامًا لا تُحوَّل إلى الوكيل."
 
@@ -13114,8 +13224,8 @@ msgstr "رابط الدعوة الشخصي"
 #: app/components/staff/timesheets/card-history.tsx:65
 #: app/components/website/link-inspector.tsx:370
 #: app/components/website/link-inspector.tsx:489
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:300
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:422
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:304
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:719
 #: app/routes/_app+/$orgSlug_+/staff+/team.new.tsx:173
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:238
 msgid "Phone"
@@ -13123,10 +13233,14 @@ msgstr "الهاتف"
 
 #: app/components/app-sidebar.tsx:352
 #: app/components/command-menu.tsx:103
+#: app/components/phone-agent/settings-nav.tsx:53
 #: app/components/workspace-breadcrumb.tsx:15
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:130
 msgid "Phone agent"
 msgstr "وكيل الهاتف"
+
+#: app/components/phone-agent/settings-nav.tsx:76
+msgid "Phone agent settings"
+msgstr "إعدادات وكيل الهاتف"
 
 #: app/components/hiring/applicant-labels.ts:36
 msgid "Phone call"
@@ -13199,10 +13313,8 @@ msgstr "جانب الصورة"
 msgid "Photos and videos"
 msgstr "الصور والفيديوهات"
 
-#: app/components/app-sidebar.tsx:403
+#: app/components/phone-agent/agent-details.tsx:51
 #: app/components/workspace-breadcrumb.tsx:52
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:55
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:292
 msgid "Phrases"
 msgstr "العبارات"
 
@@ -13371,91 +13483,99 @@ msgstr "تشغيل الرسالة"
 msgid "Play preview of {voiceName}"
 msgstr "تشغيل معاينة {voiceName}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:136
+#: app/components/phone-agent/phrase-fields.tsx:128
 msgid "Played after a rating of 1 or 2."
 msgstr "تُشغَّل بعد تقييم 1 أو 2."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:132
+#: app/components/phone-agent/phrase-fields.tsx:124
 msgid "Played after a rating of 3 to 5."
 msgstr "تُشغَّل بعد تقييم من 3 إلى 5."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:84
+#: app/components/phone-agent/phrase-fields.tsx:76
 msgid "Played after texting the caller because nobody answered."
 msgstr "تُشغَّل بعد إرسال رسالة نصية إلى المتصل لعدم الرد."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:116
+#: app/components/phone-agent/phrase-fields.tsx:108
 msgid "Played after the caller's message is saved."
 msgstr "تُشغَّل بعد حفظ رسالة المتصل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:104
+#: app/components/phone-agent/phrase-fields.tsx:96
 msgid "Played after the link is texted."
 msgstr "يُشغَّل بعد إرسال الرابط برسالة نصية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:48
+#: app/components/phone-agent/phrase-fields.tsx:40
 msgid "Played at the start of every call. It tells callers they're speaking with an automated assistant."
 msgstr "تُشغَّل في بداية كل مكالمة لإعلام المتصلين بأنهم يتحدثون مع مساعد آلي."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:56
+#: app/components/phone-agent/phrase-fields.tsx:48
 msgid "Played before a keypad menu repeats because the choice was unclear."
 msgstr "تُشغَّل قبل تكرار قائمة لوحة المفاتيح لأن الاختيار لم يكن واضحًا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:60
+#: app/components/phone-agent/phrase-fields.tsx:52
 msgid "Played before a keypad menu repeats because the key pressed is not one of its options."
 msgstr "تُشغَّل قبل تكرار قائمة لوحة المفاتيح لأن المفتاح المضغوط ليس من خياراتها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:112
+#: app/components/phone-agent/phrase-fields.tsx:104
 msgid "Played before a voicemail step starts listening, when the step has no message of its own."
 msgstr "تُشغَّل قبل أن تبدأ خطوة البريد الصوتي في الاستماع، عندما لا تكون للخطوة رسالة خاصة بها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:92
-msgid "Played before passing the call to your business line while the assistant is paused."
-msgstr "يُشغَّل قبل تحويل المكالمة إلى خط نشاطك التجاري أثناء إيقاف المساعد مؤقتًا."
+#: app/components/phone-agent/phrase-fields.tsx:84
+msgid "Played before passing the call to your business line while the agent is off."
+msgstr "يُشغَّل قبل تحويل المكالمة إلى خط نشاطك التجاري أثناء توقف الوكيل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:100
+#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:92
+#~ msgid "Played before passing the call to your business line while the assistant is paused."
+#~ msgstr "يُشغَّل قبل تحويل المكالمة إلى خط نشاطك التجاري أثناء إيقاف المساعد مؤقتًا."
+
+#: app/components/phone-agent/phrase-fields.tsx:92
 msgid "Played before the goodbye when a call reaches its maximum length."
 msgstr "تُشغَّل قبل رسالة الوداع عندما تبلغ المكالمة مدتها القصوى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:52
+#: app/components/phone-agent/phrase-fields.tsx:44
 msgid "Played right after the assistant notice when recording is on. It tells callers the call may be recorded."
 msgstr "تُشغَّل مباشرة بعد إشعار المساعد عند تفعيل التسجيل لإعلام المتصلين بأن المكالمة قد تُسجَّل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:72
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:301
+msgid "Played when a step has no message of its own: a keypad menu repeating, a voicemail being saved, or a link being texted."
+msgstr "يُشغَّل عندما لا تحتوي الخطوة على رسالة خاصة بها: عند تكرار قائمة لوحة المفاتيح، أو حفظ رسالة صوتية، أو إرسال رابط برسالة نصية."
+
+#: app/components/phone-agent/phrase-fields.tsx:64
 msgid "Played when a transfer is not picked up."
 msgstr "تُشغَّل عند عدم الرد على التحويل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:124
+#: app/components/phone-agent/phrase-fields.tsx:116
 msgid "Played when a voicemail step hears nothing from the caller."
 msgstr "تُشغَّل عندما لا تسمع خطوة البريد الصوتي شيئًا من المتصل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:88
+#: app/components/phone-agent/phrase-fields.tsx:80
 msgid "Played when nobody answered and the text to the caller could not be sent."
 msgstr "تُشغَّل عند عدم الرد وتعذّر إرسال الرسالة النصية إلى المتصل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:68
+#: app/components/phone-agent/phrase-fields.tsx:60
 msgid "Played when staff pick up, just before the assistant leaves the call."
 msgstr "تُشغَّل عند رد الموظفين، قبل مغادرة المساعد للمكالمة مباشرة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:140
+#: app/components/phone-agent/phrase-fields.tsx:132
 msgid "Played when the call ends without a hang-up message of its own."
 msgstr "تُشغَّل عند انتهاء المكالمة دون رسالة إنهاء خاصة بها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:120
+#: app/components/phone-agent/phrase-fields.tsx:112
 msgid "Played when the caller's message could not be saved."
 msgstr "تُشغَّل عند تعذّر حفظ رسالة المتصل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:108
+#: app/components/phone-agent/phrase-fields.tsx:100
 msgid "Played when the link can't be texted to the caller."
 msgstr "تُشغَّل عند تعذّر إرسال الرابط إلى المتصل في رسالة نصية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:96
+#: app/components/phone-agent/phrase-fields.tsx:88
 msgid "Played when the phone system can't answer the call."
 msgstr "تُشغَّل عندما يتعذّر على نظام الهاتف الرد على المكالمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:76
+#: app/components/phone-agent/phrase-fields.tsx:68
 msgid "Played when transfers are off or outside transfer hours."
 msgstr "تُشغَّل عند إيقاف التحويلات أو خارج ساعات التحويل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:64
+#: app/components/phone-agent/phrase-fields.tsx:56
 msgid "Played while a transfer is ringing."
 msgstr "تُشغَّل أثناء رنين التحويل."
 
@@ -13632,7 +13752,7 @@ msgstr "الإعدادات المسبقة"
 msgid "Press {key}"
 msgstr "اضغط {key}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:264
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:544
 msgid "Press 0 to reach staff"
 msgstr "اضغط 0 للتحدث مع الموظفين"
 
@@ -13644,9 +13764,13 @@ msgstr "اضغط تشغيل لتسمع كل صوت يقرأ تحيتك، ثم ا
 msgid "Pressed {key}"
 msgstr "تم الضغط على {key}"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:555
+msgid "Pressing 0 won't reach anyone until you set a staff phone number above."
+msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رقم هاتف الفريق أعلاه."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:275
-msgid "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
-msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رقم هاتف الفريق في الإعداد."
+#~ msgid "Pressing 0 won't reach anyone until you set a staff phone number in Setup."
+#~ msgstr "الضغط على 0 لن يصل إلى أي أحد حتى تضبط رقم هاتف الفريق في الإعداد."
 
 #: app/components/staff/schedule/recommend-dialog.tsx:241
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:548
@@ -13713,7 +13837,7 @@ msgstr "طباعة هذا العرض"
 msgid "Prioritize these tasks"
 msgstr "تحديد أولوية هذه المهام"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:553
+#: app/components/phone-agent/training-rules-section.tsx:564
 msgid "Priority"
 msgstr "الأولوية"
 
@@ -13780,8 +13904,8 @@ msgstr "إدارة المشاريع"
 msgid "Prompt"
 msgstr "الرسالة الصوتية"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:53
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:596
+#: app/components/phone-agent/agent-details.tsx:49
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:695
 msgid "Pronunciations"
 msgstr "طرق النطق"
 
@@ -13813,8 +13937,8 @@ msgid "Publish ({count})"
 msgstr "نشر ({count})"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:250
-msgid "Publish a call flow"
-msgstr "انشر مسار المكالمة"
+#~ msgid "Publish a call flow"
+#~ msgstr "انشر مسار المكالمة"
 
 #: app/components/settings/cards/organization/site-card.tsx:218
 msgid "Publish a public website for your organization. Visitors can reach it at your org subdomain, or a custom domain you connect."
@@ -13862,7 +13986,7 @@ msgstr "انشر موقعك قبل مشاركة رابط المتجر مع ال�
 msgid "Published"
 msgstr "منشور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:391
+#: app/components/phone-agent/agent-details.tsx:270
 msgid "Published call flow version {version}"
 msgstr "تم نشر الإصدار {version} من مسار المكالمة"
 
@@ -13870,7 +13994,7 @@ msgstr "تم نشر الإصدار {version} من مسار المكالمة"
 msgid "Published quietly. Nobody was emailed."
 msgstr "نُشر بهدوء. لم يصل بريد إلى أحد."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:392
+#: app/components/phone-agent/agent-details.tsx:271
 msgid "Published the call flow"
 msgstr "تم نشر مسار المكالمة"
 
@@ -13878,7 +14002,7 @@ msgstr "تم نشر مسار المكالمة"
 msgid "Published v{publishedVersion}"
 msgstr "الإصدار المنشور v{publishedVersion}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/flow.tsx:71
+#: app/routes/_app+/$orgSlug_+/phone-agent+/flow.tsx:72
 msgid "Published version {version}"
 msgstr "تم نشر الإصدار {version}"
 
@@ -13925,8 +14049,8 @@ msgstr "رمز QR يفتح صفحة الربط"
 msgid "QR code that opens this job"
 msgstr "رمز QR يفتح هذه الوظيفة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:464
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:465
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:563
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:564
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3653
 msgid "Question"
 msgstr "السؤال"
@@ -13974,11 +14098,11 @@ msgstr "التقييم {rating} من 5"
 msgid "Rating"
 msgstr "التقييم"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:127
+#: app/components/phone-agent/phrase-fields.tsx:119
 msgid "Rating question"
 msgstr "سؤال التقييم"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:131
+#: app/components/phone-agent/phrase-fields.tsx:123
 msgid "Rating thanks"
 msgstr "شكر التقييم"
 
@@ -14092,7 +14216,7 @@ msgstr "موصى به لتحسين محركات البحث"
 msgid "Record a message for your team to follow up."
 msgstr "تسجيل رسالة ليتابعها فريقك."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:690
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:783
 msgid "Record calls"
 msgstr "تسجيل المكالمات"
 
@@ -14101,7 +14225,7 @@ msgid "Record the decision quietly."
 msgstr "تسجيل القرار بهدوء."
 
 #: app/components/phone-agent/call-recording-player.tsx:113
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:626
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:630
 msgid "Recorded"
 msgstr "مُسجَّلة"
 
@@ -14114,7 +14238,7 @@ msgstr "سجّلته أنت، لذا تتم الموافقة عليه فورًا
 msgid "Recording"
 msgstr "التسجيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:51
+#: app/components/phone-agent/phrase-fields.tsx:43
 msgid "Recording notice"
 msgstr "إشعار التسجيل"
 
@@ -14122,13 +14246,17 @@ msgstr "إشعار التسجيل"
 msgid "Recording playback isn't set up for your account yet."
 msgstr "لم يتم إعداد تشغيل التسجيلات لحسابك بعد."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:47
+#: app/components/phone-agent/agent-details.tsx:43
 msgid "Recording retention"
 msgstr "مدة الاحتفاظ بالتسجيلات"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:682
-msgid "Recording, transfers to staff, and after-hours calls."
-msgstr "التسجيل، والتحويل إلى الموظفين، والمكالمات خارج ساعات العمل."
+#~ msgid "Recording, transfers to staff, and after-hours calls."
+#~ msgstr "التسجيل، والتحويل إلى الموظفين، والمكالمات خارج ساعات العمل."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:772
+msgid "Recording, what happens when you're closed, and how long calls can last. Transfers are in Call handling."
+msgstr "التسجيل، وما يحدث عندما تكون مغلقًا، ومدة المكالمات القصوى. التحويلات موجودة في التعامل مع المكالمات."
 
 #: app/components/staff/staff-profile-page.tsx:108
 msgid "Records"
@@ -14154,7 +14282,7 @@ msgstr "نوع إعادة التوجيه"
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
-#: app/components/app-sidebar.tsx:501
+#: app/components/app-sidebar.tsx:449
 #: app/components/command-menu.tsx:138
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -14170,13 +14298,13 @@ msgid "Referrer"
 msgstr "المُحيل"
 
 #: app/components/staff/timeclock-today.tsx:172
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:342
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:346
 msgid "Refresh"
 msgstr "تحديث"
 
 #: app/components/mailbox/calls-tab.tsx:249
 #: app/components/mailbox/calls-tab.tsx:250
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:339
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:343
 msgid "Refresh calls"
 msgstr "تحديث المكالمات"
 
@@ -14252,7 +14380,7 @@ msgstr "صلة القرابة"
 msgid "Relaxed"
 msgstr "مرن"
 
-#: app/components/phone-agent/settings-page.tsx:371
+#: app/components/phone-agent/settings-page.tsx:372
 #: app/components/staff/labor-policy-editor.tsx:1094
 msgid "Reload"
 msgstr "إعادة التحميل"
@@ -14340,11 +14468,11 @@ msgstr "إزالة {label}"
 msgid "Remove {rowLabel}"
 msgstr "إزالة {rowLabel}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:737
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:836
 msgid "Remove {term}"
 msgstr "إزالة {term}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:153
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1703
 msgid "Remove {value}"
 msgstr "إزالة {value}"
 
@@ -14371,7 +14499,7 @@ msgstr "إزالة الاستراحة {number}"
 msgid "Remove choice"
 msgstr "إزالة الخيار"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:442
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:742
 msgid "Remove contact"
 msgstr "إزالة جهة الاتصال"
 
@@ -14432,11 +14560,11 @@ msgstr "إزالة الخيار"
 msgid "Remove PIN"
 msgstr "إزالة رمز PIN"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:654
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:753
 msgid "Remove pronunciation"
 msgstr "إزالة طريقة النطق"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:477
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:576
 msgid "Remove question"
 msgstr "إزالة السؤال"
 
@@ -14444,7 +14572,7 @@ msgstr "إزالة السؤال"
 msgid "Remove question {number}"
 msgstr "حذف السؤال {number}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:486
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1527
 msgid "Remove tag"
 msgstr "إزالة الوسم"
 
@@ -14484,7 +14612,7 @@ msgstr "إزالة هذه المهمة؟"
 msgid "Remove this template?"
 msgstr "إزالة هذا القالب؟"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:542
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:863
 msgid "Remove transfer case"
 msgstr "إزالة حالة التحويل"
 
@@ -14664,7 +14792,7 @@ msgstr "جاري طلب التفويض"
 
 #: app/components/my-schedule/my-schedule-page.tsx:193
 #: app/components/phone-agent/call-detail-sheet.tsx:501
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:412
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:416
 msgid "Requests"
 msgstr "الطلبات"
 
@@ -14677,14 +14805,14 @@ msgid "required"
 msgstr "مطلوب"
 
 #: app/components/hiring/screener-editor.tsx:220
+#: app/components/phone-agent/phrase-fields.tsx:400
 #: app/components/staff/labor-policy-editor.tsx:1197
 #: app/components/website/create-form-dialog.tsx:235
 #: app/components/website/form-builder-sidebar.tsx:604
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:395
 msgid "Required"
 msgstr "مطلوب"
 
-#: app/components/phone-agent/settings-page.tsx:96
+#: app/components/phone-agent/settings-page.tsx:97
 msgid "Required."
 msgstr "مطلوب."
 
@@ -14888,7 +15016,7 @@ msgstr "جاري الإلغاء..."
 msgid "Right"
 msgstr "اليمين"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:338
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:614
 msgid "Ring for (seconds)"
 msgstr "مدة الرنين (بالثواني)"
 
@@ -14896,11 +15024,11 @@ msgstr "مدة الرنين (بالثواني)"
 #: app/components/roles/tenant-role-access-manager.tsx:1048
 #: app/components/roles/tenant-role-access-manager.tsx:1182
 #: app/components/workspace-breadcrumb.tsx:82
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:407
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:701
 msgid "Role"
 msgstr "الدور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:408
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:702
 msgid "Role (optional)"
 msgstr "الدور (اختياري)"
 
@@ -14912,7 +15040,7 @@ msgstr "اسم الدور"
 msgid "Roles"
 msgstr "الأدوار"
 
-#: app/components/app-sidebar.tsx:528
+#: app/components/app-sidebar.tsx:476
 #: app/components/workspace-breadcrumb.tsx:64
 msgid "Roles & access"
 msgstr "الأدوار والصلاحيات"
@@ -14962,9 +15090,13 @@ msgstr "الصف {rowNumber}"
 msgid "Rules for"
 msgstr "القواعد الخاصة بـ"
 
+#: app/components/phone-agent/training-rules-section.tsx:139
+msgid "Rules teach the agent how your business works, the way you'd explain it to a new staff member. High priority rules are included first."
+msgstr "تعلّم القواعد الوكيلَ كيف يعمل نشاطك التجاري، كما تشرحه لموظف جديد. تُضمَّن القواعد ذات الأولوية العالية أولًا."
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:142
-msgid "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
-msgstr "تعلّم القواعد الوكيل كيف يعمل نشاطك التجاري. تُضمَّن القواعد ذات الأولوية العالية أولًا، وعندما تكثر القواعد يُستبعد الباقي."
+#~ msgid "Rules teach the agent how your business works. High priority rules are included first; when there are too many, the rest are left out."
+#~ msgstr "تعلّم القواعد الوكيل كيف يعمل نشاطك التجاري. تُضمَّن القواعد ذات الأولوية العالية أولًا، وعندما تكثر القواعد يُستبعد الباقي."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:341
 msgid "Run Execution Timeline"
@@ -15033,28 +15165,28 @@ msgstr "تكوين تخزين S3"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:60
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:139
-msgid "Safety switches"
-msgstr "مفاتيح الأمان"
+#~ msgid "Safety switches"
+#~ msgstr "مفاتيح الأمان"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:119
-msgid "Safety switches, call ratings, business settings, and what changed recently."
-msgstr "مفاتيح الأمان، وتقييمات المكالمات، وإعدادات النشاط التجاري، وما تغيّر مؤخرًا."
+#~ msgid "Safety switches, call ratings, business settings, and what changed recently."
+#~ msgstr "مفاتيح الأمان، وتقييمات المكالمات، وإعدادات النشاط التجاري، وما تغيّر مؤخرًا."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:175
-msgid "Said after the assistant tries to text a link."
-msgstr "يُقال بعد أن يحاول المساعد إرسال رابط برسالة نصية."
+#~ msgid "Said after the assistant tries to text a link."
+#~ msgstr "يُقال بعد أن يحاول المساعد إرسال رابط برسالة نصية."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:180
-msgid "Said when a caller leaves a message."
-msgstr "تُقال عندما يترك المتصل رسالة."
+#~ msgid "Said when a caller leaves a message."
+#~ msgstr "تُقال عندما يترك المتصل رسالة."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:157
-msgid "Said while callers choose an option."
-msgstr "تُقال أثناء اختيار المتصلين لأحد الخيارات."
+#~ msgid "Said while callers choose an option."
+#~ msgstr "تُقال أثناء اختيار المتصلين لأحد الخيارات."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:162
-msgid "Said while connecting callers to your team."
-msgstr "تُقال أثناء توصيل المتصلين بفريقك."
+#~ msgid "Said while connecting callers to your team."
+#~ msgstr "تُقال أثناء توصيل المتصلين بفريقك."
 
 #: app/components/staff/positions-tab.tsx:555
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:253
@@ -15132,7 +15264,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/dashboard/dashboard-options-menu.tsx:153
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:134
-#: app/components/phone-agent/settings-page.tsx:380
+#: app/components/phone-agent/settings-page.tsx:381
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
 #: app/components/settings/email-form.tsx:90
@@ -15159,11 +15291,15 @@ msgstr "حفظ"
 msgid "Save 20%"
 msgstr "وفّر 20٪"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1624
+msgid "Save after-call settings"
+msgstr "حفظ إعدادات ما بعد المكالمة"
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:665
 msgid "Save and test"
 msgstr "حفظ واختبار"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:434
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:533
 msgid "Save answers"
 msgstr "حفظ الإجابات"
 
@@ -15175,6 +15311,10 @@ msgstr "حفظ كنسخة"
 msgid "Save Branding"
 msgstr "حفظ العلامة التجارية"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:213
+msgid "Save business details"
+msgstr "حفظ تفاصيل النشاط التجاري"
+
 #: app/routes/mock-payments+/stripe.checkout.$sessionId.tsx:203
 msgid "Save card"
 msgstr "حفظ البطاقة"
@@ -15185,6 +15325,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 
 #: app/components/hiring/interview-dialog.tsx:285
 #: app/components/hiring/job-editor.tsx:416
+#: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/roles/tenant-role-access-manager.tsx:803
 #: app/components/settings/cards/organization/announcement-sheet.tsx:550
 #: app/components/settings/cards/organization/general-settings-card.tsx:114
@@ -15195,8 +15336,6 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/components/staff/timesheets/card-sheet.tsx:310
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:256
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:634
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
 msgid "Save changes"
@@ -15209,9 +15348,13 @@ msgstr "حفظ التغييرات"
 msgid "Save draft"
 msgstr "حفظ المسودة"
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:324
+msgid "Save flow lines"
+msgstr "حفظ عبارات المسار"
+
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:566
-msgid "Save follow-up settings"
-msgstr "حفظ إعدادات المتابعة"
+#~ msgid "Save follow-up settings"
+#~ msgstr "حفظ إعدادات المتابعة"
 
 #: app/components/settings/cards/organization/site-locales-card.tsx:307
 msgid "Save languages"
@@ -15222,14 +15365,14 @@ msgid "Save personal details"
 msgstr "حفظ البيانات الشخصية"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:360
-msgid "Save phrases"
-msgstr "حفظ العبارات"
+#~ msgid "Save phrases"
+#~ msgstr "حفظ العبارات"
 
 #: app/components/settings/cards/organization/shop-card.tsx:329
 msgid "Save product"
 msgstr "حفظ المنتج"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:760
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:859
 msgid "Save pronunciations and key terms"
 msgstr "حفظ طرق النطق والمصطلحات الرئيسية"
 
@@ -15237,7 +15380,11 @@ msgstr "حفظ طرق النطق والمصطلحات الرئيسية"
 msgid "Save rate"
 msgstr "حفظ الأجر"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:845
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1208
+msgid "Save ratings"
+msgstr "حفظ التقييمات"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:890
 msgid "Save settings"
 msgstr "حفظ الإعدادات"
 
@@ -15266,7 +15413,7 @@ msgstr "احفظ هذه الرموز الآن!"
 msgid "Save this week"
 msgstr "حفظ هذا الأسبوع"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:693
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1019
 msgid "Save transfers"
 msgstr "حفظ التحويلات"
 
@@ -15276,7 +15423,7 @@ msgstr "احفظ تغييراتك قبل الإغلاق."
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
-#: app/components/phone-agent/settings-page.tsx:376
+#: app/components/phone-agent/settings-page.tsx:377
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -15288,7 +15435,7 @@ msgstr "تم الحفظ على هذا الجهاز. سيُسجَّل عند عو
 msgid "Saved reports"
 msgstr "التقارير المحفوظة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:404
+#: app/components/phone-agent/agent-details.tsx:283
 msgid "Saved training rule \"{title}\""
 msgstr "تم حفظ قاعدة التدريب \"{title}\""
 
@@ -15322,7 +15469,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/hiring/interview-dialog.tsx:283
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:493
-#: app/components/phone-agent/settings-page.tsx:380
+#: app/components/phone-agent/settings-page.tsx:381
 #: app/components/roles/tenant-role-access-manager.tsx:801
 #: app/components/staff/details-tab.tsx:229
 #: app/components/staff/details-tab.tsx:407
@@ -15359,11 +15506,11 @@ msgstr "ما يُقال قبل التحويل"
 msgid "Say goodbye and end the call."
 msgstr "قل وداعًا وأنهِ المكالمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:633
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:732
 msgid "Say it as"
 msgstr "انطقها هكذا"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:634
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:733
 msgid "Say it as, e.g. win"
 msgstr "انطقها هكذا، مثل win"
 
@@ -15396,7 +15543,7 @@ msgstr "امسح الرمز بكاميرا الجهاز اللوحي، أو اف
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "امسح الرمز بكاميرا هذا الجهاز اللوحي، أو الصق الرابط أدناه."
 
-#: app/components/app-sidebar.tsx:440
+#: app/components/app-sidebar.tsx:388
 #: app/components/command-menu.tsx:123
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
@@ -15611,7 +15758,7 @@ msgstr "البحث في الأصوات"
 msgid "Search..."
 msgstr "البحث..."
 
-#: app/components/app-sidebar.tsx:738
+#: app/components/app-sidebar.tsx:686
 msgid "Search…"
 msgstr "بحث…"
 
@@ -15787,7 +15934,7 @@ msgstr "حدد صورة من مكتبتك أو ارفع صورة جديدة."
 msgid "Select an issue to jump to its step."
 msgstr "اختر مشكلة للانتقال إلى خطوتها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:586
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:667
 msgid "Select at least one language."
 msgstr "اختر لغة واحدة على الأقل."
 
@@ -15871,10 +16018,10 @@ msgid "Send a one-time email or SMS to your audience."
 msgstr "أرسل بريداً إلكترونياً أو رسالة نصية لمرة واحدة إلى جمهورك."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:242
-msgid "Send a short call summary by text or email when something needs attention. Alerts include the caller's number."
-msgstr "أرسل ملخصًا قصيرًا للمكالمة برسالة نصية أو بريد إلكتروني عندما يتطلب أمر ما الانتباه. تتضمن التنبيهات رقم المتصل."
+#~ msgid "Send a short call summary by text or email when something needs attention. Alerts include the caller's number."
+#~ msgstr "أرسل ملخصًا قصيرًا للمكالمة برسالة نصية أو بريد إلكتروني عندما يتطلب أمر ما الانتباه. تتضمن التنبيهات رقم المتصل."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:312
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1358
 msgid "Send an alert for"
 msgstr "إرسال تنبيه عند"
 
@@ -15987,7 +16134,7 @@ msgstr "أُرسل إلى {formatted}"
 msgid "SEO title"
 msgstr "عنوان SEO"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:725
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:824
 msgid "Separate several terms with commas. Up to 100."
 msgstr "افصل بين المصطلحات بفواصل. بحد أقصى 100."
 
@@ -16013,8 +16160,12 @@ msgid "Sessions"
 msgstr "الجلسات"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:650
-msgid "Set a staff phone number in Setup"
-msgstr "اضبط رقم هاتف الفريق في الإعداد"
+msgid "Set a staff phone number in Call handling"
+msgstr "اضبط رقم هاتف الفريق في التعامل مع المكالمات"
+
+#: app/components/phone-agent/flow-editor/flow-canvas.tsx:650
+#~ msgid "Set a staff phone number in Setup"
+#~ msgstr "اضبط رقم هاتف الفريق في الإعداد"
 
 #: app/components/staff/schedule/availability-sheet.tsx:155
 msgid "Set at least one day."
@@ -16072,18 +16223,18 @@ msgstr "إعداد رمز الحضور الخاص بهم"
 msgid "Set up this tablet"
 msgstr "إعداد هذا الجهاز اللوحي"
 
-#: app/components/app-sidebar.tsx:508
+#: app/components/app-sidebar.tsx:363
+#: app/components/app-sidebar.tsx:456
 #: app/components/command-menu.tsx:305
 #: app/components/command-menu.tsx:338
+#: app/components/phone-agent/agent-details.tsx:315
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:436
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:14
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5136
 msgid "Settings"
 msgstr "الإعدادات"
 
-#: app/components/app-sidebar.tsx:358
 #: app/components/command-menu.tsx:111
 msgid "Setup"
 msgstr "الإعداد"
@@ -16219,7 +16370,7 @@ msgstr "الورديات وبطاقات الدوام وكل يوم عمل تتب
 msgid "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 msgstr "الورديات وبطاقات الدوام وتكلفة العمالة. تنطبق فقط عند تفعيل ميزات الموظفين المطابقة."
 
-#: app/components/app-sidebar.tsx:549
+#: app/components/app-sidebar.tsx:497
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Shop"
 msgstr "المتجر"
@@ -16530,7 +16681,7 @@ msgid "Some settings do not fit together. Check the highlighted fields."
 msgstr "بعض الإعدادات لا تتوافق معًا. تحقق من الحقول المميزة."
 
 #: app/components/chat/chat-view.tsx:227
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:442
+#: app/components/phone-agent/agent-details.tsx:321
 msgid "Someone"
 msgstr "شخص ما"
 
@@ -16550,7 +16701,7 @@ msgstr "عدّل شخص آخر بطاقة الدوام هذه. أعد تحميل
 msgid "Someone on your team already has this email or phone number. Check the team list before hiring."
 msgstr "يوجد شخص في فريقك بهذا البريد الإلكتروني أو رقم الهاتف. راجع قائمة الفريق قبل التوظيف."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:95
+#: app/components/phone-agent/phrase-fields.tsx:87
 msgid "Something went wrong"
 msgstr "حدث خطأ ما"
 
@@ -16566,7 +16717,7 @@ msgstr "حدث خطأ ما."
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
 
-#: app/components/phone-agent/settings-page.tsx:57
+#: app/components/phone-agent/settings-page.tsx:62
 msgid "Something went wrong. Reload the page and try again."
 msgstr "حدث خطأ ما. أعد تحميل الصفحة وحاول مرة أخرى."
 
@@ -16580,9 +16731,8 @@ msgstr "حدث خطأ ما. حاول مرة أخرى."
 msgid "Spacing"
 msgstr "التباعد"
 
+#: app/components/phone-agent/phrase-fields.tsx:30
 #: app/components/phone-agent/voice-picker.tsx:59
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:57
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:38
 msgid "Spanish"
 msgstr "الإسبانية"
 
@@ -16594,7 +16744,7 @@ msgstr "التحدث مع فريقنا"
 msgid "Speaker"
 msgstr "مكبر الصوت"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:598
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:697
 msgid "Spell out how the agent should say words it gets wrong, like product names or your street. Write it the way it sounds."
 msgstr "اكتب كيف يجب أن ينطق الوكيل الكلمات التي يخطئ فيها، مثل أسماء المنتجات أو اسم شارعك. اكتبها كما تُنطق."
 
@@ -16619,7 +16769,7 @@ msgstr "وردية مقسّمة"
 msgid "Square"
 msgstr "مربع"
 
-#: app/components/app-sidebar.tsx:424
+#: app/components/app-sidebar.tsx:372
 #: app/components/command-menu.tsx:117
 #: app/components/roles/tenant-role-access-manager.tsx:260
 #: app/components/workspace-breadcrumb.tsx:16
@@ -16627,8 +16777,7 @@ msgstr "مربع"
 msgid "Staff"
 msgstr "الموظفون"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:59
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:240
+#: app/components/phone-agent/agent-details.tsx:55
 msgid "Staff alerts"
 msgstr "تنبيهات الفريق"
 
@@ -16656,17 +16805,18 @@ msgstr "موظف"
 msgid "Staff members: {staffCount}"
 msgstr "الموظفون: {staffCount}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:49
+#: app/components/phone-agent/agent-details.tsx:45
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:483
 msgid "Staff phone"
 msgstr "هاتف الفريق"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:759
-msgid "Staff phone number"
-msgstr "رقم هاتف الفريق"
+#~ msgid "Staff phone number"
+#~ msgstr "رقم هاتف الفريق"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:229
-msgid "Staff phone: {staffPhone}"
-msgstr "هاتف الفريق: {staffPhone}"
+#~ msgid "Staff phone: {staffPhone}"
+#~ msgstr "هاتف الفريق: {staffPhone}"
 
 #: app/components/phone-agent/call-data.ts:155
 msgid "Staff picked up"
@@ -16684,8 +16834,7 @@ msgstr "أدوار الموظفين الجاهزة"
 msgid "Staff tools are on the way"
 msgstr "أدوات الموظفين قادمة قريباً"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:48
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:217
+#: app/components/phone-agent/agent-details.tsx:44
 msgid "Staff transfers"
 msgstr "التحويلات إلى الفريق"
 
@@ -16734,6 +16883,10 @@ msgstr "بدء"
 #: app/components/phone-agent/test-call-panel.tsx:656
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "ابدأ مكالمة لترى ما تقوله أنت والوكيل في الوقت الفعلي."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:344
+msgid "Start a test call"
+msgstr "بدء مكالمة تجريبية"
 
 #: app/components/staff/onboarding/templates-page.tsx:174
 #: app/components/staff/schedule/schedule-page.tsx:463
@@ -16787,8 +16940,8 @@ msgid "Start journey on lifecycle event"
 msgstr "بدء الرحلة عند حدث دورة الحياة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:151
-msgid "Start of the call"
-msgstr "بداية المكالمة"
+#~ msgid "Start of the call"
+#~ msgstr "بداية المكالمة"
 
 #: app/components/note/comments-section.tsx:231
 msgid "Start the conversation by adding the first comment."
@@ -16802,7 +16955,7 @@ msgstr "بدء قائمة مهام الموظف الجديد"
 msgid "Start with a template"
 msgstr "ابدأ بقالب"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:132
+#: app/components/phone-agent/training-rules-section.tsx:130
 msgid "Start with an example and change it to match your business."
 msgstr "ابدأ بمثال وعدّله ليناسب نشاطك التجاري."
 
@@ -17123,15 +17276,15 @@ msgstr "الأجهزة اللوحية"
 msgid "Tablets accept clock-ins"
 msgstr "الأجهزة اللوحية تقبل تسجيل الحضور"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:470
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:471
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1507
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1508
 msgid "Tag name"
 msgstr "اسم الوسم"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:308
+#: app/components/phone-agent/agent-details.tsx:57
 #: app/components/phone-agent/call-follow-up.tsx:206
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:61
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:444
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1482
 msgid "Tags"
 msgstr "الوسوم"
 
@@ -17140,7 +17293,7 @@ msgid "Tailored roles specific to your organization with configured permissions.
 msgstr "أدوار مخصصة لمنظمتك مع صلاحيات مُعدّة."
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:71
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:64
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:69
 msgid "Take a message"
 msgstr "تلقي رسالة"
 
@@ -17151,6 +17304,14 @@ msgstr "تلقي بريد صوتي"
 #: ../../packages/ai/src/components/ai-chat.tsx:430
 msgid "Take me to settings"
 msgstr "الانتقال إلى الإعدادات"
+
+#: app/components/phone-agent/test-call-sheet.tsx:105
+msgid "Talk to your agent from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
+msgstr "تحدّث مع وكيلك من هذا المتصفح واستخدم لوحة الاتصال للضغط على المفاتيح. تستخدم المكالمات التجريبية نفس مسار المكالمة والقواعد وتفاصيل النشاط التجاري التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات مُعلَّمة كتجريبية."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:335
+msgid "Talk to your agent from this browser before callers do."
+msgstr "تحدّث مع وكيلك من هذا المتصفح قبل أن يفعل المتصلون."
 
 #: app/components/roles/tenant-role-access-manager.tsx:221
 msgid "Talks to customers"
@@ -17198,7 +17359,7 @@ msgid "Teal"
 msgstr "فيروزي"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:93
-#: app/components/app-sidebar.tsx:430
+#: app/components/app-sidebar.tsx:378
 #: app/components/command-menu.tsx:121
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:359
@@ -17257,6 +17418,10 @@ msgstr "الزميل"
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:428
 msgid "Tell callers which key does what."
 msgstr "أخبر المتصلين بوظيفة كل مفتاح."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:311
+msgid "Tell it about your business"
+msgstr "عرّفه بنشاطك التجاري"
 
 #: app/components/staff/labor-policy-editor.tsx:770
 msgid "Tell managers when someone has not clocked in"
@@ -17357,25 +17522,25 @@ msgstr "جارٍ إنهاء الخدمة…"
 msgid "Test again"
 msgstr "الاختبار مرة أخرى"
 
-#: app/components/app-sidebar.tsx:417
 #: app/components/mailbox/calls-tab.tsx:226
 #: app/components/phone-agent/call-detail-sheet.tsx:326
 #: app/components/phone-agent/call-detail-sheet.tsx:376
+#: app/components/phone-agent/test-call-sheet.tsx:51
+#: app/components/phone-agent/test-call-sheet.tsx:102
 #: app/components/workspace-breadcrumb.tsx:54
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:319
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:44
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:323
 msgid "Test call"
 msgstr "مكالمة تجريبية"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:301
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
 msgid "Test calls"
 msgstr "المكالمات التجريبية"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:72
+#: app/components/phone-agent/test-call-sheet.tsx:138
 msgid "Test calls aren't available yet"
 msgstr "المكالمات التجريبية غير متاحة بعد"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:360
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1401
 msgid "Test calls never send alerts."
 msgstr "المكالمات التجريبية لا ترسل تنبيهات أبدًا."
 
@@ -17393,16 +17558,16 @@ msgid "Test run triggered successfully (Run ID: {runId})"
 msgstr "تم تشغيل الاختبار بنجاح (معرّف التشغيل: {runId})"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:328
-msgid "Test the agent"
-msgstr "اختبار الوكيل"
+#~ msgid "Test the agent"
+#~ msgstr "اختبار الوكيل"
 
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:670
 msgid "Test this draft"
 msgstr "اختبار هذه المسودة"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:46
-msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
-msgstr "اختبر مسار المكالمة من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار مسار المكالمة والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
+#~ msgid "Test your call flow from this browser and use the dial pad to press keys. Test calls use the same call flow, rules, and business details as real calls and appear in Calls marked as tests."
+#~ msgstr "اختبر مسار المكالمة من هذا المتصفح واستخدم لوحة الأرقام للضغط على المفاتيح. تستخدم مكالمات الاختبار مسار المكالمة والقواعد وتفاصيل النشاط التجاري نفسها التي تستخدمها المكالمات الحقيقية، وتظهر في المكالمات بعلامة اختبار."
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:161
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:193
@@ -17439,13 +17604,13 @@ msgstr "أرسل للمتصل رابطًا إلى موقعك الإلكترون�
 msgid "Text the website link"
 msgstr "إرسال رابط الموقع"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:266
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1316
 msgid "Text these numbers"
 msgstr "إرسال رسالة نصية إلى هذه الأرقام"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:174
-msgid "Texted links"
-msgstr "الروابط المرسلة"
+#~ msgid "Texted links"
+#~ msgstr "الروابط المرسلة"
 
 #: app/components/hiring/applicant-labels.ts:69
 msgid "Thank them"
@@ -17684,46 +17849,54 @@ msgid "The access could not be removed. Please try again."
 msgstr "تعذرت إزالة صلاحية الوصول. يُرجى المحاولة مرة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:318
-msgid "The agent answers calls once every step is done."
-msgstr "يرد الوكيل على المكالمات بعد إكمال جميع الخطوات."
+#~ msgid "The agent answers calls once every step is done."
+#~ msgstr "يرد الوكيل على المكالمات بعد إكمال جميع الخطوات."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:199
-msgid "The agent is off, so these have no effect yet."
-msgstr "الوكيل متوقف، لذا ليس لهذه الإعدادات أي تأثير بعد."
+#~ msgid "The agent is off, so these have no effect yet."
+#~ msgstr "الوكيل متوقف، لذا ليس لهذه الإعدادات أي تأثير بعد."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:505
+msgid "The agent moves callers here when it can't help. Use a number staff answer directly, not one that forwards back to the agent."
+msgstr "ينقل الوكيل المتصلين إلى هذا الرقم عندما لا يستطيع المساعدة. استخدم رقمًا يرد عليه الموظفون مباشرة، وليس رقمًا يعيد التحويل إلى الوكيل."
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:667
 msgid "The agent stops answering this number. Update your call forwarding or SIP routing so callers still reach you."
 msgstr "سيتوقف الوكيل عن الرد على هذا الرقم. حدّث إعادة توجيه المكالمات أو توجيه SIP حتى يظل المتصلون قادرين على الوصول إليك."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:666
+#: app/components/phone-agent/training-rules-section.tsx:678
 msgid "The agent stops following this rule. To pause it instead, turn it off."
 msgstr "سيتوقف الوكيل عن اتباع هذه القاعدة. لإيقافها مؤقتًا بدلًا من ذلك، عطّلها."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:179
-msgid "The agent takes a message instead of transferring, even when callers press 0."
-msgstr "يتلقى الوكيل رسالة بدلًا من التحويل، حتى عندما يضغط المتصلون 0."
+#~ msgid "The agent takes a message instead of transferring, even when callers press 0."
+#~ msgstr "يتلقى الوكيل رسالة بدلًا من التحويل، حتى عندما يضغط المتصلون 0."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:704
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:797
 msgid "The agent tells callers the call is recorded. Some US states require consent from everyone on the call."
 msgstr "يُخبر الوكيل المتصلين بأن المكالمة مسجّلة. تشترط بعض الولايات الأمريكية موافقة جميع أطراف المكالمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:60
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:109
 msgid "The agent texted a caller a link."
 msgstr "أرسل الوكيل رابطًا إلى متصل برسالة نصية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:64
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:113
 msgid "The agent tried to transfer a call and nobody answered."
 msgstr "حاول الوكيل تحويل مكالمة ولم يرد أحد."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:182
-msgid "The agent won't transfer any calls until you turn transfers back on in <0>Advanced</0>."
-msgstr "لن يحوّل الوكيل أي مكالمات حتى تعيد تفعيل التحويلات في <0>الإعدادات المتقدمة</0>."
+#~ msgid "The agent won't transfer any calls until you turn transfers back on in <0>Advanced</0>."
+#~ msgstr "لن يحوّل الوكيل أي مكالمات حتى تعيد تفعيل التحويلات في <0>الإعدادات المتقدمة</0>."
 
 #: app/components/phone-agent/flow-editor/node-palette.tsx:41
-msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
-msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري والإعدادات وقواعد التدريب حتى تنتهي المكالمة."
+msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Agent, and What it knows rules until the call ends."
+msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري وقواعد الوكيل وما يعرفه حتى تنتهي المكالمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:51
+#: app/components/phone-agent/flow-editor/node-palette.tsx:41
+#~ msgid "The AI assistant step hands the call to your AI. It answers questions using your business details, Setup, and Training rules until the call ends."
+#~ msgstr "تسلّم خطوة مساعد الذكاء الاصطناعي المكالمة إلى الذكاء الاصطناعي. يجيب عن الأسئلة باستخدام تفاصيل نشاطك التجاري والإعدادات وقواعد التدريب حتى تنتهي المكالمة."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx:63
 msgid "The AI phone agent runs on US infrastructure, so it's only available to businesses whose customer data is stored in the US. You can set it up, but calls won't connect."
 msgstr "يعمل وكيل الهاتف بالذكاء الاصطناعي على بنية تحتية في الولايات المتحدة، لذا فهو متاح فقط للأنشطة التجارية التي تُخزَّن بيانات عملائها في الولايات المتحدة. يمكنك إعداده، لكن المكالمات لن تتصل."
 
@@ -17767,7 +17940,7 @@ msgstr "يجب أن تكون الاستراحة أقصر من الوردية."
 msgid "The break has to fall inside the shift."
 msgstr "يجب أن تقع الاستراحة داخل الوردية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:76
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:125
 msgid "The call got a tag you marked important."
 msgstr "حصلت المكالمة على وسم حددته كمهم."
 
@@ -17886,8 +18059,8 @@ msgid "The first row should name the columns, for example Date and Net sales."
 msgstr "ينبغي أن يسمّي الصف الأول الأعمدة، مثل التاريخ وصافي المبيعات."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:294
-msgid "The fixed lines the phone system says outside of conversation with the AI assistant. Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
-msgstr "العبارات الثابتة التي يقولها نظام الهاتف خارج المحادثة مع مساعد الذكاء الاصطناعي. اترك العبارة فارغة لاستخدام النص الافتراضي. يُستبدل {BUSINESS_TOKEN} بـ {businessName}."
+#~ msgid "The fixed lines the phone system says outside of conversation with the AI assistant. Leave a line empty to use the default. {BUSINESS_TOKEN} is replaced with {businessName}."
+#~ msgstr "العبارات الثابتة التي يقولها نظام الهاتف خارج المحادثة مع مساعد الذكاء الاصطناعي. اترك العبارة فارغة لاستخدام النص الافتراضي. يُستبدل {BUSINESS_TOKEN} بـ {businessName}."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4374
 msgid "The footer is shared across every page. Leave copyright blank to use the organization name and current year."
@@ -17897,7 +18070,7 @@ msgstr "التذييل مشترك عبر كل صفحة. اترك حقوق الن
 msgid "The general application stays open until you close it."
 msgstr "يبقى الطلب العام مفتوحًا حتى تغلقه."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:635
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:716
 msgid "The greeting is used when the AI assistant answers first. The closing line ends calls when a step has no goodbye of its own."
 msgstr "يُستخدم الترحيب عندما يرد المساعد الذكي أولًا. وتُنهي العبارة الختامية المكالمات عندما لا تتضمن الخطوة عبارة وداع خاصة بها."
 
@@ -17905,7 +18078,7 @@ msgstr "يُستخدم الترحيب عندما يرد المساعد الذك�
 msgid "The header is shared across every page."
 msgstr "الترويسة مشتركة عبر كل صفحة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:296
+#: app/components/phone-agent/agent-details.tsx:175
 msgid "The instructions the AI assistant gets at the start of a call, built from your settings, answers, and training rules. Saved changes show up here."
 msgstr "التعليمات التي يتلقاها المساعد الذكي في بداية المكالمة، والمبنية من إعداداتك وإجاباتك وقواعد التدريب. تظهر التغييرات المحفوظة هنا."
 
@@ -17954,7 +18127,7 @@ msgstr "تحتسب نسبة العمالة الطلبات عبر الإنترن�
 msgid "The last day cannot be before the first day."
 msgstr "لا يمكن أن يكون اليوم الأخير قبل اليوم الأول."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:407
+#: app/components/phone-agent/phrase-fields.tsx:412
 msgid "The law requires this line, so it can't be changed."
 msgstr "يفرض القانون هذه العبارة، لذا لا يمكن تغييرها."
 
@@ -17982,7 +18155,7 @@ msgstr "سيتمكن عميل MCP من الوصول فقط إلى بيانات �
 msgid "The message ends when the caller presses pound, stops talking, or hangs up. It shows up under Calls as a callback request."
 msgstr "تنتهي الرسالة عندما يضغط المتصل مفتاح # أو يتوقف عن الكلام أو يُغلق الخط. وتظهر ضمن المكالمات كطلب معاودة اتصال."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:549
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:630
 msgid "The name the agent uses when it introduces itself."
 msgstr "الاسم الذي يستخدمه الوكيل عند تقديم نفسه."
 
@@ -17991,8 +18164,8 @@ msgid "The new hire"
 msgstr "الموظف الجديد"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:236
-msgid "The number callers dial to reach your agent."
-msgstr "الرقم الذي يتصل به المتصلون للوصول إلى وكيلك."
+#~ msgid "The number callers dial to reach your agent."
+#~ msgstr "الرقم الذي يتصل به المتصلون للوصول إلى وكيلك."
 
 #: app/components/phone-agent/phone-number-dialogs.tsx:431
 msgid "The number customers dial today, in international format. You'll verify it with a code before the agent answers."
@@ -18074,6 +18247,10 @@ msgstr "الوردية على شكل شريط، مع تمييز أي استرا�
 msgid "The standard voice for your agent's language."
 msgstr "الصوت القياسي للغة مساعدك الذكي."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:219
+msgid "The steps the agent follows on each call. The standard flow works for most businesses, so change it only if your calls need a different order."
+msgstr "الخطوات التي يتبعها الوكيل في كل مكالمة. يناسب المسار القياسي معظم الأنشطة التجارية، لذا غيّره فقط إذا كانت مكالماتك تحتاج إلى ترتيب مختلف."
+
 #: app/components/staff/timesheets/issue-copy.ts:32
 msgid "The system clocked them out. Check the time is right."
 msgstr "سجّل النظام انصرافه. تأكد أن الوقت صحيح."
@@ -18091,8 +18268,8 @@ msgid "The tasks a new hire starts with. Due dates count from the day they are h
 msgstr "المهام التي يبدأ بها الموظف الجديد. تُحسب تواريخ الاستحقاق من يوم توظيفه."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:190
-msgid "The time-limit notice, the rating question, and the goodbye."
-msgstr "تنبيه المهلة الزمنية وسؤال التقييم وعبارة الوداع."
+#~ msgid "The time-limit notice, the rating question, and the goodbye."
+#~ msgstr "تنبيه المهلة الزمنية وسؤال التقييم وعبارة الوداع."
 
 #: app/components/staff/timesheets/issue-copy.ts:37
 msgid "The times do not add up. Fix the start or the end."
@@ -18110,9 +18287,13 @@ msgstr "يُحذف نص هذه المكالمة وملخصها وتسجيلها 
 msgid "The unpaid break is longer than the shift."
 msgstr "الاستراحة غير المدفوعة أطول من الوردية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/test.tsx:75
+#: app/components/phone-agent/test-call-sheet.tsx:141
 msgid "The voice service for your account hasn't been set up. Contact support and we'll turn it on."
 msgstr "لم يتم إعداد خدمة الصوت لحسابك بعد. تواصل مع الدعم وسنفعّلها لك."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:419
+msgid "The voice service isn't set up yet"
+msgstr "لم يتم إعداد خدمة الصوت بعد"
 
 #: app/components/staff/labor/tip-settings-dialog.tsx:94
 msgid "The whole date range together"
@@ -18227,7 +18408,7 @@ msgstr "لن يتم عرض هذه الرموز مرة أخرى. احفظها ف�
 msgid "These don't stop publishing, but callers may not get what they expect."
 msgstr "لا تمنع هذه النشر، لكن قد لا يحصل المتصلون على ما يتوقعونه."
 
-#: app/components/phone-agent/settings-page.tsx:52
+#: app/components/phone-agent/settings-page.tsx:57
 msgid "These settings changed in another tab or by someone else. Reload to see the latest, then save again."
 msgstr "تم تغيير هذه الإعدادات في علامة تبويب أخرى أو بواسطة شخص آخر. أعد التحميل لرؤية أحدث نسخة، ثم احفظ مرة أخرى."
 
@@ -18508,7 +18689,7 @@ msgstr "هذه هي جلستك الحالية. سجل الخروج لإنهائ�
 msgid "This is your organization's unique MCP server endpoint. Use this URL when configuring your AI client."
 msgstr "هذه هي نقطة نهاية خادم MCP الفريدة لمنظمتك. استخدم هذا الرابط عند تكوين عميل الذكاء الاصطناعي."
 
-#: app/components/phone-agent/settings-page.tsx:141
+#: app/components/phone-agent/settings-page.tsx:142
 msgid "This item duplicates another one. Remove it and add it again."
 msgstr "هذا العنصر مكرر لعنصر آخر. أزله ثم أضفه مرة أخرى."
 
@@ -18548,7 +18729,7 @@ msgstr "هذا الشهر"
 msgid "This needs access to every workplace."
 msgstr "يتطلب هذا صلاحية الوصول إلى كل مكان عمل."
 
-#: app/components/phone-agent/settings-page.tsx:145
+#: app/components/phone-agent/settings-page.tsx:146
 msgid "This number reaches the AI agent, so transfers would loop back to it. Use a number staff answer directly."
 msgstr "هذا الرقم يصل إلى الوكيل الذكي، لذا ستعود التحويلات إليه. استخدم رقمًا يرد عليه الفريق مباشرة."
 
@@ -18870,7 +19051,7 @@ msgstr "بطاقات الدوام (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "بطاقات الدوام: {timeCardCount} (غير مشمولة في النسخة الاحتياطية)"
 
-#: app/components/app-sidebar.tsx:435
+#: app/components/app-sidebar.tsx:383
 #: app/components/command-menu.tsx:122
 #: app/components/workspace-breadcrumb.tsx:29
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
@@ -18993,7 +19174,7 @@ msgstr "تظهر هنا إكراميات الطلبات عبر الإنترنت 
 msgid "Tips on online orders that count toward sales, by business day. How a pool is split between people is set on the Labor page."
 msgstr "البقشيش على الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، حسب يوم العمل. تُحدَّد طريقة توزيع الصندوق بين الأشخاص في صفحة العمالة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:505
+#: app/components/phone-agent/training-rules-section.tsx:516
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3722
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4032
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4401
@@ -19137,20 +19318,18 @@ msgstr "إجمالي الملاحظات والمتوسط اليومي والات
 msgid "Track time at this workplace"
 msgstr "تتبّع الوقت في مكان العمل هذا"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:434
+#: app/components/phone-agent/agent-details.tsx:313
 msgid "Training"
 msgstr "التدريب"
 
-#: app/components/app-sidebar.tsx:377
+#: app/components/phone-agent/training-rules-section.tsx:137
 #: app/components/workspace-breadcrumb.tsx:48
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:394
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:140
 msgid "Training rules"
 msgstr "قواعد التدريب"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:383
-msgid "Training rules teach the agent your answers. <0>{activeRuleCount}</0> active."
-msgstr "تعلّم قواعد التدريب الوكيلَ إجاباتك. <0>{activeRuleCount}</0> نشطة."
+#~ msgid "Training rules teach the agent your answers. <0>{activeRuleCount}</0> active."
+#~ msgstr "تعلّم قواعد التدريب الوكيلَ إجاباتك. <0>{activeRuleCount}</0> نشطة."
 
 #: app/components/phone-agent/call-detail-sheet.tsx:428
 msgid "Transcript"
@@ -19160,28 +19339,28 @@ msgstr "النص المكتوب"
 msgid "Transfer"
 msgstr "تحويل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:67
+#: app/components/phone-agent/phrase-fields.tsx:59
 msgid "Transfer answered"
 msgstr "تم الرد على التحويل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:245
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:525
 msgid "Transfer calls"
 msgstr "تحويل المكالمات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:516
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:830
 msgid "Transfer case {caseNumber}"
 msgstr "حالة التحويل {caseNumber}"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:57
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:486
+#: app/components/phone-agent/agent-details.tsx:53
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:800
 msgid "Transfer cases"
 msgstr "حالات التحويل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:56
+#: app/components/phone-agent/agent-details.tsx:52
 msgid "Transfer contacts"
 msgstr "جهات اتصال التحويل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:58
+#: app/components/phone-agent/agent-details.tsx:54
 msgid "Transfer options"
 msgstr "خيارات التحويل"
 
@@ -19189,7 +19368,7 @@ msgstr "خيارات التحويل"
 msgid "Transfer reversals"
 msgstr "عكس التحويلات"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:555
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:881
 msgid "Transfer to"
 msgstr "التحويل إلى"
 
@@ -19198,34 +19377,32 @@ msgid "Transfer to a number"
 msgstr "التحويل إلى رقم"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:747
-msgid "Transfer to staff when the agent can't help"
-msgstr "التحويل إلى الفريق عندما لا يستطيع الوكيل المساعدة"
+#~ msgid "Transfer to staff when the agent can't help"
+#~ msgstr "التحويل إلى الفريق عندما لا يستطيع الوكيل المساعدة"
 
 #: app/components/phone-agent/flow-editor/flow-meta.ts:64
 msgid "Transfer to the team"
 msgstr "التحويل إلى الفريق"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:521
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:835
 msgid "Transfer when"
 msgstr "التحويل عندما"
 
-#: app/components/app-sidebar.tsx:389
 #: app/components/workspace-breadcrumb.tsx:50
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:161
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:166
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:452
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:158
 msgid "Transfers"
 msgstr "التحويلات"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:179
-msgid "Transfers are paused"
-msgstr "التحويلات متوقفة مؤقتًا"
+#~ msgid "Transfers are paused"
+#~ msgstr "التحويلات متوقفة مؤقتًا"
 
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
 msgid "Transfers search rank"
 msgstr "ينقل ترتيب البحث"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:75
+#: app/components/phone-agent/phrase-fields.tsx:67
 msgid "Transfers unavailable"
 msgstr "التحويلات غير متاحة"
 
@@ -19306,8 +19483,8 @@ msgstr "صحيح"
 msgid "Trust your team. Few alerts and no automatic deductions."
 msgstr "ثق بفريقك. تنبيهات قليلة ولا خصومات تلقائية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:619
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:640
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:949
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:967
 msgid "Try {retries} more times"
 msgstr "المحاولة {retries} مرات إضافية"
 
@@ -19356,7 +19533,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/staff/timeclock-today.tsx:232
 #: app/components/staff/timesheets/timesheets-page.tsx:692
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:372
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:801
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:805
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:159
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.tsx:227
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:415
@@ -19380,7 +19557,7 @@ msgstr "جرّب اسمًا أو بريدًا إلكترونيًا أو رسال
 msgid "Try another search or clear the filters."
 msgstr "جرّب بحثًا آخر أو امسح عوامل التصفية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:561
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:565
 msgid "Try different filters."
 msgstr "جرّب عوامل تصفية مختلفة."
 
@@ -19412,11 +19589,15 @@ msgstr "أوقف التشغيل لإضافة كل وردية كوردية شاغ
 msgid "Turn off to save every shift as an open shift."
 msgstr "أوقف التشغيل لحفظ كل وردية كوردية شاغرة."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:368
+msgid "Turn on"
+msgstr "تشغيل"
+
 #: app/components/phone-agent/test-call-phone.tsx:258
 msgid "Turn on agent audio"
 msgstr "تشغيل صوت الوكيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:275
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:351
 msgid "Turn on the agent"
 msgstr "شغّل الوكيل"
 
@@ -19424,17 +19605,21 @@ msgstr "شغّل الوكيل"
 msgid "Turn this off and tablets here will not accept punches."
 msgstr "عند إيقافه لن تقبل الأجهزة اللوحية هنا أي بصمات."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:402
+#: app/components/phone-agent/agent-details.tsx:281
 msgid "Turned off training rule \"{title}\""
 msgstr "تم إيقاف قاعدة التدريب \"{title}\""
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:400
+#: app/components/phone-agent/agent-details.tsx:279
 msgid "Turned on training rule \"{title}\""
 msgstr "تم تشغيل قاعدة التدريب \"{title}\""
 
 #: app/components/staff/schedule-link-section.tsx:149
 msgid "Turning off…"
 msgstr "جارٍ الإيقاف…"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:368
+msgid "Turning on…"
+msgstr "جارٍ التشغيل…"
 
 #: app/components/staff/timesheets/pay-period-dialog.tsx:111
 msgid "Twice a month"
@@ -19501,12 +19686,12 @@ msgid "Unable to authorize call history. Refresh the page and try again."
 msgstr "تعذّر التحقق من صلاحية الوصول إلى سجل المكالمات. حدّث الصفحة وحاول مرة أخرى."
 
 #: app/components/mailbox/calls-tab.tsx:131
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:170
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:174
 msgid "Unable to load calls. Try again."
 msgstr "تعذّر تحميل المكالمات. حاول مرة أخرى."
 
 #: app/components/mailbox/calls-tab.tsx:184
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:252
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:256
 msgid "Unable to load more calls. Try again."
 msgstr "تعذّر تحميل المزيد من المكالمات. حاول مرة أخرى."
 
@@ -19514,7 +19699,7 @@ msgstr "تعذّر تحميل المزيد من المكالمات. حاول م�
 msgid "Unable to load pricing information"
 msgstr "تعذر تحميل معلومات الأسعار"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:196
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:200
 msgid "Unable to load requests. Try again."
 msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 
@@ -19570,7 +19755,7 @@ msgstr "غير معروف"
 #: app/components/mailbox/calls-tab.tsx:229
 #: app/components/phone-agent/call-detail-sheet.tsx:329
 #: app/components/phone-agent/call-request-card.tsx:45
-#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:322
+#: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:326
 msgid "Unknown caller"
 msgstr "متصل غير معروف"
 
@@ -19700,11 +19885,11 @@ msgstr "غير المترجم فقط"
 msgid "Up"
 msgstr "للأعلى"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:268
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1317
 msgid "Up to 4 mobile numbers, like +15551234567."
 msgstr "حتى 4 أرقام جوال، مثل +15551234567."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:292
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1338
 msgid "Up to 5 addresses."
 msgstr "حتى 5 عناوين."
 
@@ -19864,15 +20049,15 @@ msgstr "الرابط:"
 msgid "Usage"
 msgstr "الاستخدام"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:362
+#: app/components/phone-agent/training-rules-section.tsx:373
 msgid "Use \"{ruleTitle}\""
 msgstr "استخدام \"{ruleTitle}\""
 
-#: app/components/phone-agent/settings-page.tsx:128
+#: app/components/phone-agent/settings-page.tsx:129
 msgid "Use {count} or less."
 msgstr "استخدم {count} أو أقل."
 
-#: app/components/phone-agent/settings-page.tsx:126
+#: app/components/phone-agent/settings-page.tsx:127
 msgid "Use {count} or more."
 msgstr "استخدم {count} أو أكثر."
 
@@ -19932,16 +20117,20 @@ msgstr "استخدم رابطًا كاملًا يبدأ بـ https://"
 msgid "Use a number like 18 or 18.50."
 msgstr "استخدم رقمًا مثل 18 أو 18.50."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:296
+msgid "Use a number we assign, or forward your business line."
+msgstr "استخدم رقمًا نخصصه لك، أو حوّل خط نشاطك التجاري."
+
 #: app/components/staff/schedule/schedule-page.tsx:456
 #: app/components/staff/schedule/templates-dialog.tsx:187
 msgid "Use a template"
 msgstr "استخدام قالب"
 
-#: app/components/phone-agent/settings-page.tsx:154
+#: app/components/phone-agent/settings-page.tsx:155
 msgid "Use a time zone name such as America/New_York."
 msgstr "استخدم اسم منطقة زمنية مثل America/New_York."
 
-#: app/components/phone-agent/settings-page.tsx:134
+#: app/components/phone-agent/settings-page.tsx:135
 msgid "Use a US or Canada phone number."
 msgstr "استخدم رقم هاتف من الولايات المتحدة أو كندا."
 
@@ -19966,12 +20155,12 @@ msgstr "استخدم 3 أحرف على الأقل."
 msgid "Use authenticator app instead"
 msgstr "استخدم تطبيق المصادقة بدلاً من ذلك"
 
+#: app/components/phone-agent/phrase-fields.tsx:430
 #: app/components/phone-agent/voice-picker.tsx:662
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:425
 msgid "Use default"
 msgstr "استخدام الافتراضي"
 
-#: app/components/phone-agent/settings-page.tsx:132
+#: app/components/phone-agent/settings-page.tsx:133
 msgid "Use international format, for example +15551234567."
 msgstr "استخدم الصيغة الدولية، مثل +15551234567."
 
@@ -19992,14 +20181,14 @@ msgid "Use the country code, like +14155550123."
 msgstr "استخدم رمز الدولة، مثل ‎+14155550123."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:276
-msgid "Use the switch in Agent settings."
-msgstr "استخدم المفتاح في إعدادات الوكيل."
+#~ msgid "Use the switch in Agent settings."
+#~ msgstr "استخدم المفتاح في إعدادات الوكيل."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:141
-msgid "Use these if something goes wrong. They take effect on the next call."
-msgstr "استخدم هذه الخيارات إذا حدث خطأ ما. يسري مفعولها من المكالمة التالية."
+#~ msgid "Use these if something goes wrong. They take effect on the next call."
+#~ msgstr "استخدم هذه الخيارات إذا حدث خطأ ما. يسري مفعولها من المكالمة التالية."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:607
+#: app/components/phone-agent/training-rules-section.tsx:618
 msgid "Use this rule on calls"
 msgstr "تطبيق هذه القاعدة على المكالمات"
 
@@ -20011,7 +20200,7 @@ msgstr "استخدام هذا الصوت"
 msgid "Use your own S3-compatible storage instead of the default storage"
 msgstr "استخدم تخزين S3 المتوافق الخاص بك بدلاً من التخزين الافتراضي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:440
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:741
 msgid "Used by a transfer case"
 msgstr "مستخدم في حالة تحويل"
 
@@ -20031,7 +20220,7 @@ msgstr "يُستخدم عندما تكون القيمة فارغة"
 msgid "Used when you hire someone from Applicants. Only one template can do this."
 msgstr "يُستخدم عند توظيف شخص من المتقدمين. يمكن لقالب واحد فقط القيام بذلك."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:421
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1460
 msgid "Useful if staff should log what happened after a transfer."
 msgstr "مفيد إذا كان على الفريق تسجيل ما حدث بعد التحويل."
 
@@ -20058,6 +20247,14 @@ msgstr "اسم المستخدم أو البريد الإلكتروني مطلو�
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:478
 msgid "Uses your opening hours and special hours for the line the caller reached. Connect the Open and Closed outputs to different steps."
 msgstr "يستخدم ساعات العمل والساعات الخاصة للخط الذي اتصل به المتصل. اربط مخرجي مفتوح ومغلق بخطوات مختلفة."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:231
+msgid "Using a custom call flow"
+msgstr "يستخدم مسار مكالمة مخصصًا"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:233
+msgid "Using the standard call flow"
+msgstr "يستخدم مسار المكالمة القياسي"
 
 #: app/components/staff/onboarding/certificates-tab.tsx:247
 msgid "Valid until {expires}"
@@ -20112,6 +20309,10 @@ msgstr "تحقق من خط نشاطك التجاري"
 #: app/routes/_auth+/login.tsx:413
 msgid "Verifying your passkey"
 msgstr "جاري التحقق من مفتاح المرور"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:238
+msgid "Version {flowVersion}, published {publishedOn}"
+msgstr "الإصدار {flowVersion}، نُشر في {publishedOn}"
 
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3351
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3933
@@ -20267,42 +20468,41 @@ msgstr "يتم تخزين أسماء الزوار وأرقام هواتفهم و
 msgid "Vivid"
 msgstr "زاهٍ"
 
+#: app/components/phone-agent/agent-details.tsx:39
 #: app/components/phone-agent/voice-picker.tsx:609
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:43
 msgid "Voice"
 msgstr "الصوت"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:607
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:688
 msgid "Voice ID (optional)"
 msgstr "معرّف الصوت (اختياري)"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:265
-msgid "Voice service configured"
-msgstr "تم إعداد خدمة الصوت"
+#~ msgid "Voice service configured"
+#~ msgstr "تم إعداد خدمة الصوت"
 
 #: app/components/phone-agent/voice-picker.tsx:411
 msgid "Voice type"
 msgstr "نوع الصوت"
 
 #: app/components/phone-agent/call-follow-up.tsx:52
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:51
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:179
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:100
 msgid "Voicemail"
 msgstr "البريد الصوتي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:111
+#: app/components/phone-agent/phrase-fields.tsx:103
 msgid "Voicemail instructions"
 msgstr "تعليمات البريد الصوتي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:119
+#: app/components/phone-agent/phrase-fields.tsx:111
 msgid "Voicemail not saved"
 msgstr "لم يتم حفظ البريد الصوتي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:115
+#: app/components/phone-agent/phrase-fields.tsx:107
 msgid "Voicemail saved"
 msgstr "تم حفظ البريد الصوتي"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:369
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1410
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة الاتصال والتحويلات الفائتة والشكاوى والتقييمات المنخفضة مفتوحة في صفحة المكالمات حتى يضع أحدهم علامة عليها بأنها مكتملة."
 
@@ -20617,7 +20817,7 @@ msgstr "الويب"
 msgid "Webhooks: {webhookMode}"
 msgstr "الويب هوك: {webhookMode}"
 
-#: app/components/app-sidebar.tsx:457
+#: app/components/app-sidebar.tsx:405
 #: app/components/command-menu.tsx:129
 #: app/components/workspace-breadcrumb.tsx:13
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
@@ -20714,8 +20914,8 @@ msgid "What are the key points?"
 msgstr "ما هي النقاط الرئيسية؟"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:152
-msgid "What callers hear before anything else, and when the assistant can't answer."
-msgstr "ما يسمعه المتصلون قبل أي شيء آخر، وعندما لا يستطيع المساعد الإجابة."
+#~ msgid "What callers hear before anything else, and when the assistant can't answer."
+#~ msgstr "ما يسمعه المتصلون قبل أي شيء آخر، وعندما لا يستطيع المساعد الإجابة."
 
 #: ../../packages/ai/src/components/ai-chat.tsx:429
 msgid "What can you help me with?"
@@ -20746,6 +20946,10 @@ msgstr "ما اسمها"
 msgid "What is the job?"
 msgstr "ما هي الوظيفة؟"
 
+#: app/components/phone-agent/settings-nav.tsx:41
+msgid "What it knows"
+msgstr "ما يعرفه"
+
 #: app/components/staff/onboarding/task-form.tsx:72
 msgid "What kind of task"
 msgstr "نوع المهمة"
@@ -20759,18 +20963,18 @@ msgid "What should your reply include? (optional)"
 msgstr "ما الذي تريد تضمينه في ردك؟ (اختياري)"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:251
-msgid "What the agent does on each call."
-msgstr "ما يفعله الوكيل في كل مكالمة."
+#~ msgid "What the agent does on each call."
+#~ msgstr "ما يفعله الوكيل في كل مكالمة."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:633
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:714
 msgid "What the agent says"
 msgstr "ما يقوله الوكيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:525
+#: app/components/phone-agent/training-rules-section.tsx:536
 msgid "What the agent should do"
 msgstr "ما يجب أن يفعله الوكيل"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:294
+#: app/components/phone-agent/agent-details.tsx:173
 msgid "What the assistant is told"
 msgstr "التعليمات المقدّمة للمساعد"
 
@@ -20806,7 +21010,7 @@ msgstr "كم تكلّفك ساعات العمل مقابل مبيعاتك، وا
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:598
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:928
 msgid "When"
 msgstr "عندما"
 
@@ -20822,6 +21026,10 @@ msgstr "عندما يطلب متصل معاودة الاتصال، أو يترك
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:597
+msgid "When it's off, calls go straight to your business line. If no line is known, callers hear an apology."
+msgstr "عند إيقافه، تذهب المكالمات مباشرة إلى خط نشاطك التجاري. إذا لم يكن هناك خط معروف، يسمع المتصلون اعتذارًا."
+
 #: app/components/chat/chat-group-settings-dialog.tsx:166
 msgid "When off, people only see messages from after they joined."
 msgstr "عند الإيقاف، يرى الأشخاص الرسائل من بعد انضمامهم فقط."
@@ -20829,6 +21037,10 @@ msgstr "عند الإيقاف، يرى الأشخاص الرسائل من بعد
 #: app/components/staff/labor-policy-editor.tsx:638
 msgid "When off, people with no shift cannot clock in and need a manager."
 msgstr "عند الإيقاف لا يستطيع من ليست لديهم وردية تسجيل الحضور ويحتاجون إلى مدير."
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:468
+msgid "When off, the agent takes a message instead of transferring."
+msgstr "عند الإيقاف، يأخذ الوكيل رسالة بدلًا من التحويل."
 
 #: app/components/staff/timesheets/payroll-summary.tsx:297
 msgid "When people clock in or you add time cards, their hours add up here."
@@ -20855,14 +21067,14 @@ msgid "When someone signs up using an email that matches your verified domain, t
 msgstr "عندما يقوم شخص ما بالتسجيل باستخدام بريد إلكتروني يطابق نطاقك المُتحقق منه، سيتم إضافته تلقائياً إلى مؤسستك كعضو."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:219
-msgid "When the agent can't help, it transfers to your staff phone number from Setup."
-msgstr "عندما لا يستطيع الوكيل المساعدة، يحوّل المكالمة إلى رقم هاتف الفريق المحدد في الإعداد."
+#~ msgid "When the agent can't help, it transfers to your staff phone number from Setup."
+#~ msgstr "عندما لا يستطيع الوكيل المساعدة، يحوّل المكالمة إلى رقم هاتف الفريق المحدد في الإعداد."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:498
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1547
 msgid "When to apply"
 msgstr "متى تُطبَّق"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/follow-up.tsx:500
+#: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1549
 msgid "When to apply, e.g. The caller mentions an allergy"
 msgstr "متى تُطبَّق، مثل: يذكر المتصل وجود حساسية"
 
@@ -20882,7 +21094,7 @@ msgstr "عندما تغلقها"
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:791
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:836
 msgid "When you're closed"
 msgstr "عندما تكون مغلقًا"
 
@@ -20924,13 +21136,13 @@ msgstr "أي الاستراحات يأخذها الموظفون، وهل يُع�
 msgid "Which shifts"
 msgstr "أي الورديات"
 
+#: app/components/phone-agent/agent-details.tsx:167
 #: app/components/phone-agent/call-follow-up.tsx:196
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:282
 msgid "While closed"
 msgstr "أثناء الإغلاق"
 
+#: app/components/phone-agent/agent-details.tsx:166
 #: app/components/phone-agent/call-follow-up.tsx:194
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:281
 msgid "While open"
 msgstr "أثناء ساعات العمل"
 
@@ -20939,7 +21151,7 @@ msgstr "أثناء ساعات العمل"
 msgid "Who"
 msgstr "من"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:514
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:583
 msgid "Who answers, in which languages, and with which voice."
 msgstr "من يرد، وبأي لغات، وبأي صوت."
 
@@ -20955,7 +21167,7 @@ msgstr "من يمكنه الوصول إلى هذه القناة؟"
 msgid "Who changed"
 msgstr "من تغيّرت ورديّاته"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/advanced.tsx:415
+#: app/components/phone-agent/agent-details.tsx:294
 msgid "Who changed the phone agent and when. Shows the last 50 changes."
 msgstr "من غيّر وكيل الهاتف ومتى. يعرض آخر 50 تغييرًا."
 
@@ -20980,8 +21192,8 @@ msgid "Who signs off on time cards."
 msgstr "من يعتمد بطاقات الدوام."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/transfers.tsx:168
-msgid "Who the agent connects callers to, and when."
-msgstr "إلى من يوصل الوكيل المتصلين، ومتى."
+#~ msgid "Who the agent connects callers to, and when."
+#~ msgstr "إلى من يوصل الوكيل المتصلين، ومتى."
 
 #: app/components/staff/schedule/publish-dialog.tsx:218
 msgid "Who to notify"
@@ -21027,11 +21239,11 @@ msgstr "سحب طلبه"
 msgid "within target"
 msgstr "ضمن الهدف"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:615
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:714
 msgid "Word"
 msgstr "الكلمة"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:616
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:715
 msgid "Word, e.g. Nguyen"
 msgstr "الكلمة، مثل Nguyen"
 
@@ -21039,7 +21251,7 @@ msgstr "الكلمة، مثل Nguyen"
 msgid "Words callers might say"
 msgstr "كلمات قد يقولها المتصلون"
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:691
+#: app/routes/_app+/$orgSlug_+/phone-agent+/knowledge.tsx:790
 msgid "Words the agent should listen for, so it understands callers who say them. Your business name and the names the agent already knows are included automatically."
 msgstr "الكلمات التي يجب أن ينتبه لها الوكيل ليفهم المتصلين الذين يقولونها. يُضاف اسم نشاطك التجاري والأسماء التي يعرفها الوكيل تلقائيًا."
 
@@ -21123,7 +21335,7 @@ msgstr "اكتب رسالة…"
 msgid "Write a policy. You record when they have read and accepted it."
 msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقوا عليها."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:454
+#: app/components/phone-agent/training-rules-section.tsx:465
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
 
@@ -21166,7 +21378,7 @@ msgstr "اكتب رسالتك النصية"
 msgid "Writing the {language} version. Anything you leave blank is shown in {fallback}."
 msgstr "أنت تكتب نسخة {language}. أي حقل تتركه فارغًا يظهر بـ {fallback}."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/phrases.tsx:59
+#: app/components/phone-agent/phrase-fields.tsx:51
 msgid "Wrong key"
 msgstr "زر خاطئ"
 
@@ -21217,7 +21429,7 @@ msgstr "أنت"
 msgid "You already have {MAX_CUSTOM_DASHBOARDS} dashboards in this organization, the most you can have. Delete one to create another."
 msgstr "لديك بالفعل {MAX_CUSTOM_DASHBOARDS} لوحة تحكم في هذه المؤسسة، وهو الحد الأقصى المسموح به. احذف واحدة لإنشاء أخرى."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:620
+#: app/components/phone-agent/training-rules-section.tsx:631
 msgid "You already have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك بالفعل {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
 
@@ -21309,7 +21521,7 @@ msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة
 msgid "You can view these rules but not change them."
 msgstr "يمكنك عرض هذه القواعد دون تغييرها."
 
-#: app/components/phone-agent/settings-page.tsx:357
+#: app/components/phone-agent/settings-page.tsx:358
 msgid "You can view these settings but not change them."
 msgstr "يمكنك عرض هذه الإعدادات دون تغييرها."
 
@@ -21354,7 +21566,7 @@ msgstr "ليست لديك صلاحية للقيام بذلك."
 msgid "You don't have permission to see this report's data."
 msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
 
-#: app/routes/_app+/$orgSlug_+/phone-agent+/training.tsx:170
+#: app/components/phone-agent/training-rules-section.tsx:166
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
 
@@ -21370,6 +21582,10 @@ msgstr "لم تُنشئ أي مناصب بعد. <0>أضف منصبًا</0> أو�
 msgid "You have reached the limit of templates. Archive one you no longer use."
 msgstr "وصلت إلى الحد الأقصى من القوالب. أرشِف قالبًا لم تعد تستخدمه."
 
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:353
+msgid "You have unsaved changes below. Turn the agent on there and save."
+msgstr "لديك تغييرات غير محفوظة أدناه. شغّل الوكيل هناك ثم احفظ."
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:241
 msgid "You have unsaved changes to the call flow. Leave without saving?"
 msgstr "لديك تغييرات غير محفوظة على مسار المكالمة. هل تريد المغادرة دون حفظ؟"
@@ -21378,7 +21594,7 @@ msgstr "لديك تغييرات غير محفوظة على مسار المكال
 msgid "You have unsaved changes."
 msgstr "لديك تغييرات غير محفوظة."
 
-#: app/components/phone-agent/settings-page.tsx:188
+#: app/components/phone-agent/settings-page.tsx:189
 msgid "You have unsaved changes. Leave this page and lose them?"
 msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة هذه الصفحة وفقدانها؟"
 
@@ -21437,7 +21653,7 @@ msgstr "أنت في قائمة الانتظار!"
 msgid "You're signed in on {sessionCount, plural, one {# device} other {# devices}} as {userEmail}"
 msgstr "أنت مسجل الدخول على {sessionCount, plural, one {# جهاز} other {# أجهزة}} كـ {userEmail}"
 
-#: app/components/phone-agent/settings-page.tsx:83
+#: app/components/phone-agent/settings-page.tsx:84
 msgid "You've drafted answers many times this hour. Try again later."
 msgstr "لقد صغت إجابات مرات عديدة خلال هذه الساعة. حاول مرة أخرى لاحقًا."
 
@@ -21458,8 +21674,8 @@ msgid "Your agent didn't join the call. Make sure the voice agent is running and
 msgstr "لم ينضم الوكيل إلى المكالمة. تأكد من أن الوكيل الصوتي قيد التشغيل وحاول مرة أخرى."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:316
-msgid "Your agent is answering calls."
-msgstr "وكيلك يرد على المكالمات."
+#~ msgid "Your agent is answering calls."
+#~ msgstr "وكيلك يرد على المكالمات."
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:536
 msgid "Your API key has been created successfully. Copy it now - you won't be able to see it again."
@@ -21576,6 +21792,10 @@ msgstr "مؤسساتك"
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5750
 msgid "Your page will appear here"
 msgstr "ستظهر صفحتك هنا"
+
+#: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:422
+msgid "Your platform administrator sets the LiveKit credentials. Until then, calls and test calls won't connect."
+msgstr "يضبط مسؤول المنصة بيانات اعتماد LiveKit. حتى ذلك الحين، لن تتصل المكالمات ولا المكالمات التجريبية."
 
 #: app/routes/_auth+/waitlist.tsx:275
 msgid "Your points"

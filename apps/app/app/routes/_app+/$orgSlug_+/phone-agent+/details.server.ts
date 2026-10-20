@@ -4,18 +4,20 @@ import {
 	promptContextFor,
 	transferAvailability,
 } from '@repo/phone-agent'
-import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
+import { type LoaderFunctionArgs } from 'react-router'
 import { buildRuntimeConfig } from '#app/utils/phone-agent/runtime-config.server.ts'
 import { listPhoneAgentHistory } from '#app/utils/phone-agent/settings-history.server.ts'
 import {
 	loadSettingsPage,
-	saveSettingsPage,
 	settingsPageData,
 } from '#app/utils/phone-agent/settings-page.server.ts'
-import { type SettingsPatchResult } from '#app/utils/phone-agent/settings-patch.server.ts'
 import { phoneAgentServerVertical } from '#app/utils/phone-agent/vertical.server.ts'
 import { phoneAgentVertical } from '#app/utils/phone-agent/vertical.ts'
 
+/**
+ * What the assistant is told at the start of a call, and who changed the
+ * agent recently. Loaded when someone opens "Behind the scenes".
+ */
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const page = await loadSettingsPage(request, params.orgSlug)
 	const url = new URL(request.url)
@@ -69,28 +71,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	return settingsPageData({
-		safety: page.settings.safety,
-		csatEnabled: page.settings.csatEnabled,
-		business: page.settings.business,
-		vertical: page.settings.vertical,
-		enabled: page.settings.enabled,
-		providesBusinessProfile: phoneAgentServerVertical.providesBusinessProfile,
-		verticalData:
-			phoneAgentServerVertical.advancedPageData?.(
-				config.ok ? config.config : null,
-			) ?? null,
 		scopes: scopes.map(({ id, name }) => ({ id, name })),
 		preview,
 		history,
-		versions: page.versions,
-		canUpdate: page.canUpdate,
 	})
-}
-
-export async function action({
-	request,
-	params,
-}: ActionFunctionArgs): Promise<SettingsPatchResult> {
-	const body: unknown = await request.json().catch(() => null)
-	return saveSettingsPage(request, params.orgSlug, body)
 }

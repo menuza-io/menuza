@@ -148,6 +148,19 @@ export async function getPhoneAgent(organizationId: string) {
 	}
 }
 
+/** Reads the layout badge state without creating a settings row on navigation. */
+export async function getPhoneAgentIsOn(organizationId: string) {
+	const [existing] = await db
+		.select({ settings: PhoneAgent.settings })
+		.from(PhoneAgent)
+		.where(eq(PhoneAgent.organizationId, organizationId))
+		.limit(1)
+	const settings = existing
+		? parsePhoneAgentSettings(existing.settings)
+		: DEFAULT_SETTINGS
+	return settings.enabled && !settings.safety.callingDisabled
+}
+
 export type SettingsSaveResult =
 	| { ok: true; settings: PhoneAgentSettings }
 	| { ok: false; error: string; conflict?: boolean }
@@ -159,13 +172,16 @@ export type SettingsSaveResult =
  */
 export async function updatePhoneAgentSettings(
 	organizationId: string,
-	settings: PhoneAgentSettings,
+	input: PhoneAgentSettings,
 	options: { expectedRawSettings?: string } = {},
 ): Promise<SettingsSaveResult> {
 	await getPhoneAgent(organizationId)
-	if (settings.autoEscalate && !settings.escalationPhone) {
-		return { ok: false, error: settingsError('escalation_phone_required') }
-	}
+	// The staff phone is the only control for the general transfer, so a
+	// missing number means it's off rather than an error every page must avoid.
+	const settings =
+		input.autoEscalate && !input.escalationPhone
+			? { ...input, autoEscalate: false }
+			: input
 	const numbers = await listPhoneNumbers(organizationId)
 	if (findSettingsTransferLoop(settings, numbers)) {
 		return { ok: false, error: settingsError('staff_phone_loop') }
@@ -439,7 +455,7 @@ export async function setTrainingRuleActive(
 	ruleId: string,
 	isActive: boolean,
 ) {
-	await db
+	const updated = await db
 		.update(PhoneAgentTrainingRule)
 		.set({ isActive })
 		.where(
@@ -448,13 +464,15 @@ export async function setTrainingRuleActive(
 				eq(PhoneAgentTrainingRule.organizationId, organizationId),
 			),
 		)
+		.returning({ id: PhoneAgentTrainingRule.id })
+	return updated.length > 0
 }
 
 export async function deleteTrainingRule(
 	organizationId: string,
 	ruleId: string,
 ) {
-	await db
+	const deleted = await db
 		.delete(PhoneAgentTrainingRule)
 		.where(
 			and(
@@ -462,6 +480,8 @@ export async function deleteTrainingRule(
 				eq(PhoneAgentTrainingRule.organizationId, organizationId),
 			),
 		)
+		.returning({ id: PhoneAgentTrainingRule.id })
+	return deleted.length > 0
 }
 
 export async function listPhoneNumbers(organizationId: string) {

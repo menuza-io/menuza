@@ -1,6 +1,9 @@
 import { ORG_PERMISSIONS, userHasOrganizationPermission } from '@repo/auth'
 import {
+	EDITABLE_PHRASE_KEYS,
 	findTransferLoop,
+	type PhraseKey,
+	type PhraseOverride,
 	type PhoneAgentSettings,
 	PhoneAgentSettingsSchema,
 	unsupportedPhoneFields,
@@ -22,8 +25,95 @@ export type SettingsPatchResult =
 
 const SETTINGS_KEYS = Object.keys(PhoneAgentSettingsSchema.shape)
 const SETTINGS_KEY_SET = new Set(SETTINGS_KEYS)
+const EDITABLE_PHRASE_KEY_SET = new Set<string>(EDITABLE_PHRASE_KEYS)
 
 const VersionsSchema = z.record(z.string().max(32))
+
+type ScopedPhrasePatch = {
+	keys: ReadonlySet<PhraseKey>
+	base: PhraseOverride[]
+	// Text is validated with the merged settings so errors carry field paths.
+	phrases: unknown[]
+}
+
+const ScopedPhraseKeysSchema = z.array(
+	z.object({ key: z.string() }).passthrough(),
+)
+
+function parseScopedPhrasePatch(
+	raw: unknown,
+): { ok: true; value: ScopedPhrasePatch | null } | { ok: false } {
+	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+		return { ok: true, value: null }
+	}
+	const patch = raw as Record<string, unknown>
+	if (!('phraseKeys' in patch) && !('phraseBase' in patch)) {
+		return { ok: true, value: null }
+	}
+	if (
+		!Array.isArray(patch.phraseKeys) ||
+		patch.phraseKeys.length === 0 ||
+		patch.phraseKeys.some(
+			(key) => typeof key !== 'string' || !EDITABLE_PHRASE_KEY_SET.has(key),
+		)
+	) {
+		return { ok: false }
+	}
+	const keyList = patch.phraseKeys as PhraseKey[]
+	const keys = new Set(keyList)
+	if (keys.size !== keyList.length) return { ok: false }
+	const base = PhoneAgentSettingsSchema.shape.phrases.safeParse(
+		patch.phraseBase,
+	)
+	const phrases = ScopedPhraseKeysSchema.safeParse(patch.phrases)
+	if (!base.success || !phrases.success) return { ok: false }
+	if (
+		[...base.data, ...phrases.data].some(
+			(override) => !keys.has(override.key as PhraseKey),
+		)
+	) {
+		return { ok: false }
+	}
+	return { ok: true, value: { keys, base: base.data, phrases: phrases.data } }
+}
+
+function samePhraseOverrides(left: PhraseOverride[], right: PhraseOverride[]) {
+	const sorted = (overrides: PhraseOverride[]) =>
+		[...overrides].sort(
+			(a, b) =>
+				a.key.localeCompare(b.key) || a.language.localeCompare(b.language),
+		)
+	return JSON.stringify(sorted(left)) === JSON.stringify(sorted(right))
+}
+
+/**
+ * The server validates other features' lines followed by the form's own, so
+ * shift `phrases.N` paths back to positions in the list the form sent.
+ */
+function scopedPhraseErrors(
+	fieldErrors: Record<string, string>,
+	offset: number,
+) {
+	const shifted: Record<string, string> = {}
+	for (const [path, message] of Object.entries(fieldErrors)) {
+		const match = /^phrases\.(\d+)(\..*)?$/.exec(path)
+		const index = match ? Number(match[1]) - offset : -1
+		const key = !match
+			? path
+			: index >= 0
+				? `phrases.${index}${match[2] ?? ''}`
+				: 'phrases'
+		shifted[key] ??= message
+	}
+	return shifted
+}
+
+function phraseOverridesForKeys(
+	phrases: PhraseOverride[],
+	keys: ReadonlySet<PhraseKey>,
+) {
+	return phrases.filter((override) => keys.has(override.key))
+}
 
 // The E164 schema's regex message; it is the only phone format check.
 const PHONE_FORMAT_MESSAGE = 'Use international format'
@@ -256,8 +346,16 @@ export async function patchPhoneAgentSettings(input: {
 	/** Defaults to checking the user's call-read permission. */
 	canChangeAlerts?: () => Promise<boolean>
 }): Promise<SettingsPatchResult> {
+	const parsedPhraseScope = parseScopedPhrasePatch(input.patch)
+	if (!parsedPhraseScope.ok) {
+		return { ok: false, error: settingsError('invalid_request') }
+	}
+	const phraseScope = parsedPhraseScope.value
 	const patch = pickSettingsPatch(input.patch)
 	const keys = Object.keys(patch)
+	const versionKeys = phraseScope
+		? keys.filter((key) => key !== 'phrases')
+		: keys
 	const expected = VersionsSchema.safeParse(input.versions)
 	if (!expected.success) {
 		return { ok: false, error: settingsError('invalid_request') }
@@ -269,18 +367,38 @@ export async function patchPhoneAgentSettings(input: {
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const agent = await getPhoneAgent(input.organizationId)
 		const current = settingsVersions(agent.settings)
-		if (keys.some((key) => expected.data[key] !== current[key])) {
+		if (versionKeys.some((key) => expected.data[key] !== current[key])) {
 			return CONFLICT
 		}
+		if (
+			phraseScope &&
+			!samePhraseOverrides(
+				phraseOverridesForKeys(agent.settings.phrases, phraseScope.keys),
+				phraseScope.base,
+			)
+		) {
+			return CONFLICT
+		}
+		const otherPhrases = phraseScope
+			? agent.settings.phrases.filter(
+					(override) => !phraseScope.keys.has(override.key),
+				)
+			: []
+		const effectivePatch = phraseScope
+			? { ...patch, phrases: [...otherPhrases, ...phraseScope.phrases] }
+			: patch
 		const parsed = PhoneAgentSettingsSchema.safeParse({
 			...agent.settings,
-			...patch,
+			...effectivePatch,
 		})
 		if (!parsed.success) {
+			const fieldErrors = toFieldErrors(parsed.error)
 			return {
 				ok: false,
 				error: settingsError('invalid_fields'),
-				fieldErrors: toFieldErrors(parsed.error),
+				fieldErrors: phraseScope
+					? scopedPhraseErrors(fieldErrors, otherPhrases.length)
+					: fieldErrors,
 			}
 		}
 		if ('vertical' in patch) {
