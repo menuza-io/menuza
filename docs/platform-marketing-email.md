@@ -26,7 +26,7 @@ OCI_PRIVATE_KEY=
 OCI_REGION=us-ashburn-1
 OCI_EMAIL_COMPARTMENT_ID=
 OCI_EMAIL_SENDER_EMAIL=
-OCI_EMAIL_SENDER_NAME=Menuza
+OCI_EMAIL_SENDER_NAME=Epic Startup
 OCI_EMAIL_LOG_OCID=          # required for open/click metrics on OCI
 ```
 
@@ -46,16 +46,16 @@ With `EMAIL_PROVIDER=resend` (default), behavior is unchanged: Resend API +
 Tag and header names are derived from `brand.slug` in `packages/config/brand.ts`
 so forks white-label in one place.
 
-With the default slug `menuza`:
+With the default slug `epic-startup`:
 
-| Purpose            | Resend tag           | OCI / SMTP header      |
-| ------------------ | -------------------- | ---------------------- |
-| Scope (`platform`) | `menuza_scope`       | —                      |
-| Message id         | `menuza_message_id`  | `X-Menuza-Message-Id`  |
-| Campaign id        | `menuza_campaign_id` | `X-Menuza-Campaign-Id` |
-| Org id             | —                    | `X-Menuza-Org-Id`      |
-| Journey id         | —                    | `X-Menuza-Journey-Id`  |
-| Customer id        | —                    | `X-Menuza-Customer-Id` |
+| Purpose            | Resend tag                 | OCI / SMTP header            |
+| ------------------ | -------------------------- | ---------------------------- |
+| Scope (`platform`) | `epic_startup_scope`       | —                            |
+| Message id         | `epic_startup_message_id`  | `X-Epic-Startup-Message-Id`  |
+| Campaign id        | `epic_startup_campaign_id` | `X-Epic-Startup-Campaign-Id` |
+| Org id             | —                          | `X-Epic-Startup-Org-Id`      |
+| Journey id         | —                          | `X-Epic-Startup-Journey-Id`  |
+| Customer id        | —                          | `X-Epic-Startup-Customer-Id` |
 
 Helpers live in `packages/config/marketing-email.ts`:
 
@@ -207,27 +207,26 @@ address has to be confirmed again. A customer may claim the sources `profile`,
 code (`operator` and `import` count as confirmed for the address on file).
 Opting out keeps the row with `unsubscribed_at` set.
 
-Temporary compatibility alias
-(`TODO(remove after the release that follows this one)`): the old drop-alert
-routes were replaced by `PUT /subscriptions/drops/sms`, but Sites bundles and
-mobile clients cached before the rollout still call `PUT /subscriptions/drops`
-and read `{ drops: { sms } }` from `GET /subscriptions`. For one release,
-`PUT /subscriptions/drops` forwards to `PUT /subscriptions/drops/sms` (same
-authentication, validation and rate limit) and answers `{ drops: { sms } }`;
-`GET /subscriptions/drops` answers the same shape; and `GET /subscriptions`
-keeps a legacy `drops: { sms }` field next to `subscriptions`. Remove the three
-(and their tests) once old clients are gone.
-
 Every broadcast email carries a signed unsubscribe link (HMAC with
 `AUTH_HMAC_SECRET`, no login) in the body and as `List-Unsubscribe` and
 `List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers. The tenant-api
 endpoints are `GET|POST /subscriptions/unsubscribe?token=` and
 `GET|POST /subscriptions/confirm?token=`: GET only shows a button, POST acts and
 is idempotent, so a mail scanner opening links changes nothing. Links point at
-`TENANT_API_URL`, which is required in production (the node refuses to start
-without it, and a send is skipped and logged when it is missing). The request
-origin is never used, except for local development hosts when the variable is
-unset. Journey emails do not carry the link yet.
+`TENANT_API_URL`, which is required in production (the Node entry refuses to
+start without it; the Cloudflare Worker keeps serving instead, so health, login
+and provisioning are unaffected). A send is skipped and logged when it is
+missing, and a broadcast with no origin is marked `Failed` before any
+per-recipient work. "Production" is anything but an explicit
+`NODE_ENV=development|test`, so an unset `NODE_ENV` counts as production. The
+request origin is never used, except for local development hosts when the
+variable is unset in development or test.
+
+**Rollout order:** set `TENANT_API_URL` on the node (Worker `vars` of that
+environment or the dashboard; `apps/tenant-api/wrangler.jsonc` deliberately does
+not declare an empty value, which would overwrite it on deploy), then deploy.
+Without it consent emails are skipped, not the whole node. Journey emails do not
+carry the link yet.
 
 To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`

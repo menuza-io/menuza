@@ -108,9 +108,15 @@ function configuredConsentOrigin(): string | null {
 	}
 }
 
+/**
+ * Fails closed: only an explicit `development` or `test` counts as a local
+ * runtime. A missing `NODE_ENV` (an optional binding on the Worker) is treated
+ * as production, so it can never ship localhost links in real emails.
+ */
 function isProductionRuntime(): boolean {
 	syncEnvFromProcess()
-	return (ENV as Record<string, unknown>).NODE_ENV === 'production'
+	const nodeEnv = (ENV as Record<string, unknown>).NODE_ENV
+	return nodeEnv !== 'development' && nodeEnv !== 'test'
 }
 
 /**
@@ -123,6 +129,7 @@ function isProductionRuntime(): boolean {
  * - `TENANT_API_URL` always wins.
  * - In production it is required: without it the result is null and the
  *   caller must skip the send.
+ * - Production means anything but an explicit `NODE_ENV=development|test`.
  * - Outside production, the request origin is used only when its host is a
  *   local development host (localhost, 127.0.0.1, ::1, *.test, *.localhost).
  *   Any other host is ignored and the default local port is used.

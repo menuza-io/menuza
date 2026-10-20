@@ -1,12 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
 	getStripeWebhookSecrets,
+	isLocalDeployment,
 	isLocalHostname,
 	MOCK_CHECKOUT_SECRET_KEY,
 	MOCK_STRIPE_WEBHOOK_SECRET,
 	mockWebhookSecrets,
 	paymentsMockMode,
 } from './env'
+
+/** A local `BASE_URL`: the mock refuses to run without one. */
+const localBase = { BASE_URL: 'http://localhost:3001' }
 
 const placeholders = {
 	STRIPE_SECRET_KEY: 'sk_test_***',
@@ -15,7 +19,9 @@ const placeholders = {
 
 describe('paymentsMockMode', () => {
 	it('MOCKS=true activates both emulators over placeholder keys', () => {
-		expect(paymentsMockMode({ MOCKS: 'true', ...placeholders })).toEqual({
+		expect(
+			paymentsMockMode({ MOCKS: 'true', ...localBase, ...placeholders }),
+		).toEqual({
 			stripe: true,
 			checkout: true,
 		})
@@ -23,7 +29,11 @@ describe('paymentsMockMode', () => {
 
 	it('PAYMENTS_MOCK=true alone activates both emulators', () => {
 		expect(
-			paymentsMockMode({ PAYMENTS_MOCK: 'true', ...placeholders }),
+			paymentsMockMode({
+				PAYMENTS_MOCK: 'true',
+				...localBase,
+				...placeholders,
+			}),
 		).toEqual({
 			stripe: true,
 			checkout: true,
@@ -34,6 +44,7 @@ describe('paymentsMockMode', () => {
 		expect(
 			paymentsMockMode({
 				MOCKS: 'true',
+				...localBase,
 				PAYMENTS_MOCK: 'false',
 				...placeholders,
 			}),
@@ -56,7 +67,7 @@ describe('paymentsMockMode', () => {
 			vi.unstubAllEnvs()
 		})
 
-		it.each([{ MOCKS: 'true' }, { PAYMENTS_MOCK: 'true' }])(
+		it.each([{ MOCKS: 'true', ...localBase }, { PAYMENTS_MOCK: 'true' }])(
 			'refuses %o on a real origin even with no key variables set',
 			(switchOn) => {
 				expect(() =>
@@ -68,10 +79,26 @@ describe('paymentsMockMode', () => {
 			},
 		)
 
+		it.each([
+			{ MOCKS: 'true' },
+			{ PAYMENTS_MOCK: 'true' },
+			{ MOCKS: 'true', BASE_URL: '' },
+			{ MOCKS: 'true', BASE_URL: '   ' },
+			{ MOCKS: 'true', BASE_URL: 'not a url' },
+			// A local override alone cannot stand in for a missing BASE_URL.
+			{ MOCKS: 'true', PAYMENTS_MOCK_ORIGIN: 'http://localhost:3001' },
+		])('refuses %o when BASE_URL is unset or not a URL', (env) => {
+			expect(() => paymentsMockMode({ ...env, ...placeholders })).toThrow(
+				'non-local deployment',
+			)
+			expect(isLocalDeployment(env)).toBe(false)
+		})
+
 		it('refuses a real BASE_URL hidden behind a local PAYMENTS_MOCK_ORIGIN', () => {
 			expect(() =>
 				paymentsMockMode({
 					MOCKS: 'true',
+					...localBase,
 					BASE_URL: 'https://app.example.com',
 					PAYMENTS_MOCK_ORIGIN: 'http://localhost:3001',
 				}),
@@ -86,6 +113,7 @@ describe('paymentsMockMode', () => {
 				expect(() =>
 					paymentsMockMode({
 						MOCKS: 'true',
+						...localBase,
 						BASE_URL: 'https://app.example.com',
 						...keys,
 					}),
@@ -102,7 +130,12 @@ describe('paymentsMockMode', () => {
 		])('allows %s even when NODE_ENV=production (start:mocks, CI)', (url) => {
 			vi.stubEnv('NODE_ENV', 'production')
 			expect(
-				paymentsMockMode({ MOCKS: 'true', BASE_URL: url, ...placeholders }),
+				paymentsMockMode({
+					MOCKS: 'true',
+					...localBase,
+					BASE_URL: url,
+					...placeholders,
+				}),
 			).toEqual({ stripe: true, checkout: true })
 		})
 
@@ -114,7 +147,12 @@ describe('paymentsMockMode', () => {
 				checkout: false,
 			})
 			expect(
-				paymentsMockMode({ ...real, MOCKS: 'true', PAYMENTS_MOCK: 'false' }),
+				paymentsMockMode({
+					...real,
+					MOCKS: 'true',
+					...localBase,
+					PAYMENTS_MOCK: 'false',
+				}),
 			).toEqual({ stripe: false, checkout: false })
 		})
 	})
@@ -123,7 +161,11 @@ describe('paymentsMockMode', () => {
 		'refuses the live Stripe key %s',
 		(key) => {
 			expect(() =>
-				paymentsMockMode({ MOCKS: 'true', STRIPE_SECRET_KEY: key }),
+				paymentsMockMode({
+					MOCKS: 'true',
+					...localBase,
+					STRIPE_SECRET_KEY: key,
+				}),
 			).toThrow('live Stripe key')
 		},
 	)
@@ -131,12 +173,17 @@ describe('paymentsMockMode', () => {
 	it('accepts Stripe test keys and ignores webhook secrets (no live marker exists)', () => {
 		for (const key of ['sk_test_51Realkey', 'rk_test_abc']) {
 			expect(() =>
-				paymentsMockMode({ MOCKS: 'true', STRIPE_SECRET_KEY: key }),
+				paymentsMockMode({
+					MOCKS: 'true',
+					...localBase,
+					STRIPE_SECRET_KEY: key,
+				}),
 			).not.toThrow()
 		}
 		expect(() =>
 			paymentsMockMode({
 				MOCKS: 'true',
+				...localBase,
 				STRIPE_WEBHOOK_SECRET: 'whsec_live_abc',
 			}),
 		).not.toThrow()
@@ -152,7 +199,11 @@ describe('paymentsMockMode', () => {
 		'something-unrecognised',
 	])('treats the Checkout.com key %s as live', (key) => {
 		expect(() =>
-			paymentsMockMode({ MOCKS: 'true', CHECKOUT_SECRET_KEY: key }),
+			paymentsMockMode({
+				MOCKS: 'true',
+				...localBase,
+				CHECKOUT_SECRET_KEY: key,
+			}),
 		).toThrow('live Checkout.com key')
 	})
 
@@ -162,7 +213,11 @@ describe('paymentsMockMode', () => {
 		'sk_sbox_***',
 	])('accepts the Checkout.com sandbox key %s', (key) => {
 		expect(() =>
-			paymentsMockMode({ MOCKS: 'true', CHECKOUT_SECRET_KEY: key }),
+			paymentsMockMode({
+				MOCKS: 'true',
+				...localBase,
+				CHECKOUT_SECRET_KEY: key,
+			}),
 		).not.toThrow()
 	})
 
@@ -177,12 +232,14 @@ describe('paymentsMockMode', () => {
 		expect(
 			paymentsMockMode({
 				MOCKS: 'true',
+				...localBase,
 				STRIPE_SECRET_KEY: 'sk_test_51Realkey',
 			}),
 		).toEqual({ stripe: false, checkout: true })
 		expect(
 			paymentsMockMode({
 				MOCKS: 'true',
+				...localBase,
 				STRIPE_SECRET_KEY: 'sk_test_***',
 				CHECKOUT_SECRET_KEY: 'sk_sbox_abcdefghijklmnopqrstuvwxyz2',
 			}),
@@ -190,7 +247,12 @@ describe('paymentsMockMode', () => {
 	})
 
 	it('has no NODE_ENV gate: production with MOCKS=true still activates', () => {
-		const env = { MOCKS: 'true', NODE_ENV: 'production', ...placeholders }
+		const env = {
+			MOCKS: 'true',
+			...localBase,
+			NODE_ENV: 'production',
+			...placeholders,
+		}
 		expect(paymentsMockMode(env)).toEqual({ stripe: true, checkout: true })
 	})
 })
@@ -206,7 +268,11 @@ describe('mock secrets', () => {
 	})
 
 	it('signs with the secret the route verifies with, placeholder included', () => {
-		const env = { MOCKS: 'true', STRIPE_WEBHOOK_SECRET: 'whsec_***' }
+		const env = {
+			MOCKS: 'true',
+			...localBase,
+			STRIPE_WEBHOOK_SECRET: 'whsec_***',
+		}
 		expect(mockWebhookSecrets(env).stripePlatform).toBe('whsec_***')
 		expect(getStripeWebhookSecrets(env, LOCAL)).toEqual(['whsec_***'])
 	})
@@ -215,32 +281,38 @@ describe('mock secrets', () => {
 		expect(mockWebhookSecrets({}).stripePlatform).toBe(
 			MOCK_STRIPE_WEBHOOK_SECRET,
 		)
-		expect(getStripeWebhookSecrets({ MOCKS: 'true' }, LOCAL)).toEqual([
-			MOCK_STRIPE_WEBHOOK_SECRET,
-		])
+		expect(
+			getStripeWebhookSecrets({ MOCKS: 'true', ...localBase }, LOCAL),
+		).toEqual([MOCK_STRIPE_WEBHOOK_SECRET])
 		expect(getStripeWebhookSecrets({}, LOCAL)).toEqual([])
 	})
 
 	it('never offers the public mock secret to a non-local request or deployment', () => {
 		// A node started with MOCKS=true and no real secret must not accept
 		// forged events from the internet.
-		expect(getStripeWebhookSecrets({ MOCKS: 'true' })).toEqual([])
-		expect(getStripeWebhookSecrets({ MOCKS: 'true' }, REMOTE)).toEqual([])
+		expect(getStripeWebhookSecrets({ MOCKS: 'true', ...localBase })).toEqual([])
+		expect(
+			getStripeWebhookSecrets({ MOCKS: 'true', ...localBase }, REMOTE),
+		).toEqual([])
 		expect(
 			getStripeWebhookSecrets(
-				{ MOCKS: 'true', BASE_URL: 'https://app.example.com' },
+				{ MOCKS: 'true', ...localBase, BASE_URL: 'https://app.example.com' },
 				LOCAL,
 			),
 		).toEqual([])
 		expect(
 			getStripeWebhookSecrets(
-				{ MOCKS: 'true', PAYMENTS_MOCK_ORIGIN: 'https://app.example.com' },
+				{
+					MOCKS: 'true',
+					...localBase,
+					PAYMENTS_MOCK_ORIGIN: 'https://app.example.com',
+				},
 				LOCAL,
 			),
 		).toEqual([])
 		expect(
 			getStripeWebhookSecrets(
-				{ MOCKS: 'true', BASE_URL: 'https://a.test' },
+				{ MOCKS: 'true', ...localBase, BASE_URL: 'https://a.test' },
 				LOCAL,
 			),
 		).toEqual([MOCK_STRIPE_WEBHOOK_SECRET])
@@ -249,6 +321,7 @@ describe('mock secrets', () => {
 	it('verifies Connect events with the second secret when it is set', () => {
 		const env = {
 			MOCKS: 'true',
+			...localBase,
 			STRIPE_WEBHOOK_SECRET: 'whsec_platform',
 			STRIPE_CONNECT_WEBHOOK_SECRET: 'whsec_connect',
 		}
