@@ -7,6 +7,9 @@ import { type ReactNode, useId } from 'react'
  * A setting that is simply on or off: the label and a plain-language
  * description on one side, the switch on the other. The whole row is the touch
  * target (44px tall) and the switch is named by its label for screen readers.
+ * `shrink-0`: inside a scrolling flex column the explicit min-height would let
+ * the row shrink below its text, so the description would spill onto the next
+ * field.
  */
 export function SwitchField({
 	label,
@@ -27,7 +30,7 @@ export function SwitchField({
 	return (
 		<div
 			className={cn(
-				'flex min-h-11 items-start justify-between gap-4 py-1',
+				'flex min-h-11 shrink-0 items-start justify-between gap-4 py-1',
 				className,
 			)}
 		>
