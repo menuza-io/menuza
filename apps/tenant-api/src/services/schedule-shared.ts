@@ -49,6 +49,7 @@ import {
 	type StaffMember,
 	type StaffPosition,
 } from '@repo/tenant-db'
+import { inJsonList } from '../lib/chunked-in.ts'
 import { getScopeFacts } from '../lib/scope-context.ts'
 import { type ScopeAccess, type StaffAuth } from '../lib/staff-auth.ts'
 import { OPAQUE_ID_PATTERN } from '../lib/staff-http.ts'
@@ -89,7 +90,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 /** Most rows loaded for one list: a bigger set asks the caller to narrow. */
 export const MAX_LIST_ROWS = 500
 /** Ids per `IN (...)` query, comfortably under SQLite's variable limit. */
-const ID_CHUNK = 300
+const ID_CHUNK = 90
 
 export function chunk<T>(items: readonly T[], size: number): T[][] {
 	const out: T[][] = []
@@ -408,6 +409,7 @@ export function visibleStaffWhere(
 	}
 	const scoped = scope.where(staffScopeAssignments.scopeId)
 	if (scoped) where.push(scoped)
+	// bounded: a subquery, never bound values
 	return inArray(
 		column,
 		db
@@ -543,7 +545,11 @@ export async function loadShiftsInRange(
 	const out: ShiftRow[] = []
 	const patchStart = sql<number>`json_extract(${shifts.draftPatch}, '$.startsAt')`
 	const patchEnd = sql<number>`json_extract(${shifts.draftPatch}, '$.endsAt')`
-	for (const part of chunk([...new Set(staffIds)], ID_CHUNK)) {
+	// One bound JSON array per predicate (two parameters in all), however
+	// many people: a chunk of ids used in both predicates would double the
+	// bound parameters of the statement past the Durable Object limit.
+	const ids = [...new Set(staffIds)]
+	if (ids.length > 0) {
 		out.push(
 			...(await db
 				.select()
@@ -551,11 +557,11 @@ export async function loadShiftsInRange(
 				.where(
 					and(
 						or(
-							inArray(shifts.staffId, part),
+							inJsonList(shifts.staffId, ids),
 							// A pending reassignment moves a shift onto these people.
-							inArray(
+							inJsonList(
 								sql`json_extract(${shifts.draftPatch}, '$.staffId')`,
-								part,
+								ids,
 							),
 						),
 						ne(shifts.status, 'cancelled'),

@@ -26,7 +26,10 @@ import {
 	SHOP_PLATFORM_FEE_PERCENT,
 	ShopOrderNotFoundError,
 	shopProcessorToDbValue,
+	type PaymentsEmulator,
+	type PaymentsMockEnv,
 	type ShopCommerce,
+	type ShopCommerceConfig,
 	type ShopOrderUpsert,
 	type ShopOrganizationSnapshot,
 	type ShopProcessorId,
@@ -37,21 +40,53 @@ import {
 	customers,
 	customerPaymentMethods,
 } from '@repo/tenant-db'
+import { withPaymentsMock } from '#app/utils/payments-mock/config.server.ts'
 import { resolveVerifiedShopCustomer } from '#app/utils/tenant-customer-auth.server.ts'
 import { type ShopOrganization } from './shop.types.ts'
 
-let shopCommerce = createShopCommerce(
-	createShopCommerceConfigFromEnv(process.env),
-)
+/**
+ * Provider settings from the environment. In a build that bundles the payment
+ * mock (never the Cloudflare production build) and with a mock switch on, the
+ * emulators replace the providers that have no real key.
+ */
+function buildShopCommerceConfig(
+	env: PaymentsMockEnv & Parameters<typeof createShopCommerceConfigFromEnv>[0],
+	emulator?: PaymentsEmulator,
+): ShopCommerceConfig {
+	const config = createShopCommerceConfigFromEnv(env)
+	if (
+		typeof __PAYMENTS_MOCK_BUNDLED__ !== 'undefined' &&
+		__PAYMENTS_MOCK_BUNDLED__
+	) {
+		return withPaymentsMock(config, env, emulator)
+	}
+	return config
+}
+
+let shopCommerce = createShopCommerce(buildShopCommerceConfig(process.env))
 
 function getShopCommerce() {
 	return shopCommerce
 }
 
+/**
+ * The App-wide ShopCommerce instance (Stripe Connect / Polar / Checkout.com).
+ * Webhook routes use it too, so the payment mock's synthetic settings apply.
+ */
+export { getShopCommerce }
+
+/**
+ * Rebuild the commerce singleton. Pass `{ emulator }` with `MOCKS=true` in
+ * `env` to run the real SDK calls against a test emulator (memory store).
+ */
 export function configureShopCommerceForTests(
-	config: Parameters<typeof createShopCommerceConfigFromEnv>[0],
+	config: Parameters<typeof createShopCommerceConfigFromEnv>[0] &
+		PaymentsMockEnv,
+	options: { emulator?: PaymentsEmulator } = {},
 ) {
-	shopCommerce = createShopCommerce(createShopCommerceConfigFromEnv(config))
+	shopCommerce = createShopCommerce(
+		buildShopCommerceConfig(config, options.emulator),
+	)
 }
 
 export {
@@ -229,11 +264,14 @@ export async function syncConnectAccountStatus(organizationId: string) {
 	return status
 }
 
-export async function startConnectOnboarding(
-	request: Request,
+/**
+ * The organization's Connect account id, creating the account on first use.
+ * Single-shot: a concurrent request that loses the claim reuses the winner.
+ */
+export async function ensureConnectAccount(
 	organization: Pick<
 		ShopOrganization,
-		'id' | 'name' | 'slug' | 'dataRegion' | 'stripeConnectAccountId'
+		'id' | 'name' | 'dataRegion' | 'stripeConnectAccountId'
 	>,
 ) {
 	if ((organization.dataRegion || 'us') !== 'us') {
@@ -241,47 +279,55 @@ export async function startConnectOnboarding(
 	}
 
 	let accountId = organization.stripeConnectAccountId
-	const commerce = getShopCommerce()
+	if (accountId) return accountId
 
-	if (!accountId) {
-		const account = await commerce.createConnectExpressAccount({
-			organizationId: organization.id,
-			organizationName: organization.name,
+	const account = await getShopCommerce().createConnectExpressAccount({
+		organizationId: organization.id,
+		organizationName: organization.name,
+	})
+
+	const [claimed] = await db
+		.update(OrganizationTable)
+		.set({
+			stripeConnectAccountId: account.id,
+			updatedAt: new Date(),
+		})
+		.where(
+			and(
+				eq(OrganizationTable.id, organization.id),
+				isNull(OrganizationTable.stripeConnectAccountId),
+			),
+		)
+		.returning({
+			stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
 		})
 
-		const [claimed] = await db
-			.update(OrganizationTable)
-			.set({
-				stripeConnectAccountId: account.id,
-				updatedAt: new Date(),
-			})
-			.where(
-				and(
-					eq(OrganizationTable.id, organization.id),
-					isNull(OrganizationTable.stripeConnectAccountId),
-				),
-			)
-			.returning({
+	if (claimed?.stripeConnectAccountId) {
+		accountId = claimed.stripeConnectAccountId
+	} else {
+		const [refreshed] = await db
+			.select({
 				stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
 			})
-
-		if (claimed?.stripeConnectAccountId) {
-			accountId = claimed.stripeConnectAccountId
-		} else {
-			const [refreshed] = await db
-				.select({
-					stripeConnectAccountId: OrganizationTable.stripeConnectAccountId,
-				})
-				.from(OrganizationTable)
-				.where(eq(OrganizationTable.id, organization.id))
-				.limit(1)
-			accountId = refreshed?.stripeConnectAccountId ?? account.id
-		}
+			.from(OrganizationTable)
+			.where(eq(OrganizationTable.id, organization.id))
+			.limit(1)
+		accountId = refreshed?.stripeConnectAccountId ?? account.id
 	}
+	return accountId
+}
 
+export async function startConnectOnboarding(
+	request: Request,
+	organization: Pick<
+		ShopOrganization,
+		'id' | 'name' | 'slug' | 'dataRegion' | 'stripeConnectAccountId'
+	>,
+) {
+	const accountId = await ensureConnectAccount(organization)
 	const appBase = getDomainUrl(request)
-	return commerce.createConnectOnboardingLink({
-		accountId: accountId!,
+	return getShopCommerce().createConnectOnboardingLink({
+		accountId,
 		refreshUrl: `${appBase}/${organization.slug}/settings/shop?connect=refresh`,
 		returnUrl: `${appBase}/${organization.slug}/settings/shop?connect=return`,
 	})

@@ -19,6 +19,7 @@ import {
 	type ExecuteStepPayload,
 	type CompleteRunPayload,
 	type EvaluateConditionPayload,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { sendSms } from '@repo/sms'
 import { getNodeRegion } from '../lib/region.ts'
@@ -156,7 +157,7 @@ export async function executeJourneyStep(
 		rawType === 'action_email' || rawType === 'email' ? 'email' : 'sms'
 
 	const txResult = await retryOnSqliteBusy(() =>
-		db.transaction(async (tx) => {
+		runTenantTransaction(db, async (tx) => {
 			// Idempotency: if this (runId, nodeId) action already delivered, return the
 			// prior result instead of re-dispatching on a workflow retry.
 			const existing = await tx

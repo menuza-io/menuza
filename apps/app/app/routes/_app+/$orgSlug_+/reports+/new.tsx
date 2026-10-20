@@ -10,7 +10,7 @@ import { parseDefinition, saveReport } from '@repo/reports/server'
 import { redirect, useLoaderData } from 'react-router'
 import { AppReportWorkspace } from '#app/components/reports/report-workspace.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/new.ts'
 
@@ -23,19 +23,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		dataRegion: true,
 	})
 	const url = new URL(request.url)
-	const staff = await resolveStaffReportAccessForRequest(
+	const grants = await resolveReportGrantsForRequest(
 		request,
 		userId,
 		organization.id,
 	)
 	const fullCatalog = getCatalog('organization')
-	const catalog = catalogForGrants(fullCatalog, staff.subjects)
+	const catalog = catalogForGrants(fullCatalog, grants)
 	const requested = definitionForNewReport(
 		'organization',
 		url.searchParams.get('template'),
 	)
 	// A template the person has no access to opens a blank report instead.
-	const definition = definitionAllowed(fullCatalog, requested, staff.subjects)
+	const definition = definitionAllowed(fullCatalog, requested, grants)
 		? requested
 		: blankReportDefinition('organization')
 
@@ -57,14 +57,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 	})
 	const form = await request.formData()
 	const definition = parseDefinition(form.get('definition'))
-	const staff = await resolveStaffReportAccessForRequest(
+	const grants = await resolveReportGrantsForRequest(
 		request,
 		userId,
 		organization.id,
 	)
-	if (
-		!definitionAllowed(getCatalog('organization'), definition, staff.subjects)
-	) {
+	if (!definitionAllowed(getCatalog('organization'), definition, grants)) {
 		throw new Response('Forbidden', { status: 403 })
 	}
 	const saved = await saveReport({

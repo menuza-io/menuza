@@ -22,6 +22,7 @@ env.d.ts
 /packages/**/fixtures/uploaded/
 /coverage
 /apps/email/out/
+/apps/tenant-api/.dev-mail/
 
 /packages/database/cache.db
 

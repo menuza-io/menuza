@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { SignJWT, jwtVerify } from 'jose'
 import { ENV } from 'varlock/env'
@@ -12,6 +12,7 @@ import {
 	customers,
 	getTenantDb,
 	TENANT_ORG_ID_PATTERN,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import {
 	findActiveOrganizationById,
@@ -24,6 +25,7 @@ import {
 	rateLimit,
 	rateLimitByKey,
 } from '../lib/rate-limit.ts'
+import { isValidPhone, legacyPhoneForms, normalizePhone } from '../lib/phone.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, hmacHash } from '../lib/secrets.ts'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
@@ -90,16 +92,6 @@ const ACCESS_TOKEN_EXPIRY = '15m'
 const REFRESH_TOKEN_EXPIRY_DAYS = 30
 const REFRESH_TOKEN_EXPIRY_MS = REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000
 
-const NORMALIZED_PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/
-
-function normalizePhone(phone: string) {
-	return phone.replace(/[\s\-().]/g, '')
-}
-
-function isValidPhone(phone: string) {
-	return NORMALIZED_PHONE_PATTERN.test(phone)
-}
-
 function customerNeedsName(name: string | null | undefined) {
 	return !name || name.trim().length < 2
 }
@@ -163,6 +155,56 @@ async function loadProvisionedOrgDb(
 	}
 
 	return { organization, db }
+}
+
+/**
+ * The customer for an E.164 number. Rows written before phone normalization
+ * may hold the number without `+` or in national form, so when no row has the
+ * E.164 form the legacy forms are tried (exact match always wins). The row is
+ * rewritten to E.164 after a successful verify (`upgradeLegacyPhone`).
+ */
+async function findCustomerByPhone(db: TenantDb, phone: string) {
+	const exact = await db
+		.select()
+		.from(customers)
+		.where(eq(customers.phone, phone))
+		.get()
+	if (exact) return exact
+	const legacy = legacyPhoneForms(phone)
+	if (legacy.length === 0) return undefined
+	const rows = await db
+		.select()
+		.from(customers)
+		.where(inArray(customers.phone, legacy)) // bounded: at most four forms
+		.all()
+	// Oldest row first: it is the original account, not a later duplicate.
+	return rows.sort(
+		(a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0),
+	)[0]
+}
+
+/**
+ * Moves a legacy-format row to E.164. A UNIQUE collision (another row already
+ * holds the E.164 form) is left alone: the two rows are never merged here.
+ */
+async function upgradeLegacyPhone(
+	db: TenantDb,
+	customer: { id: string; phone: string | null },
+	phone: string,
+) {
+	if (customer.phone === phone) return
+	try {
+		await db
+			.update(customers)
+			.set({ phone })
+			.where(eq(customers.id, customer.id))
+			.run()
+	} catch (error) {
+		console.warn(
+			'Could not rewrite legacy phone to E.164 (kept as stored):',
+			error instanceof Error ? error.message : 'unknown error',
+		)
+	}
 }
 
 async function issueSessionTokens(
@@ -394,11 +436,7 @@ authRoutes.post(
 			)
 		}
 
-		const existing = await db
-			.select()
-			.from(customers)
-			.where(eq(customers.phone, phone))
-			.get()
+		const existing = await findCustomerByPhone(db, phone)
 
 		const code = crypto.randomInt(100000, 1_000_000).toString()
 		const hashedCode = hmacHash(code)
@@ -483,11 +521,7 @@ authRoutes.post(
 			)
 		}
 
-		const customer = await db
-			.select()
-			.from(customers)
-			.where(eq(customers.phone, phone))
-			.get()
+		const customer = await findCustomerByPhone(db, phone)
 
 		if (!customer) {
 			return c.json({ error: 'Invalid or expired code' }, 400)
@@ -527,6 +561,8 @@ authRoutes.post(
 		if (!consumed) {
 			return c.json({ error: 'Invalid or expired code' }, 400)
 		}
+
+		await upgradeLegacyPhone(db, customer, phone)
 
 		const { accessToken, refreshToken } = await issueSessionTokens(
 			db,
@@ -584,7 +620,7 @@ authRoutes.post(
 			Date.now() + REFRESH_TOKEN_EXPIRY_MS,
 		)
 		const rotation = await retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				const revokeAll = async (customerId: string) => {
 					const now = new Date()
 					await tx

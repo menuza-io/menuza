@@ -1,3 +1,18 @@
+import type Stripe from 'stripe'
+
+/**
+ * Set only when the local payment emulators are active. Production never
+ * builds this: the code that does is removed from the Cloudflare bundle.
+ */
+export type ShopCommerceMockConfig = {
+	/** Stripe SDK transport into the in-process emulator. */
+	stripeHttpClient?: Stripe.HttpClient
+	/** Checkout.com SDK host (the dedicated `.invalid` origin). */
+	checkoutHost?: string
+	/** Where "Open Checkout dashboard" goes instead of the real dashboard. */
+	checkoutDashboardUrl?: string
+}
+
 export type ShopCommerceConfig = {
 	stripeSecretKey?: string
 	stripePublishableKey?: string
@@ -12,6 +27,7 @@ export type ShopCommerceConfig = {
 	checkoutEnvironment?: 'sandbox' | 'production'
 	checkoutWebhookSecret?: string
 	validateStripeKeys?: boolean
+	mock?: ShopCommerceMockConfig
 }
 
 function isConfiguredSecret(value: string | undefined) {

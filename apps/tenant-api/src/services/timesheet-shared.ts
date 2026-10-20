@@ -248,7 +248,7 @@ export async function buildLiveCards(
 
 	const staffIds = [...new Set(rows.map((row) => row.entry.staffId))]
 	const neighbourhood: TimeEntry[] = []
-	for (const ids of chunk(staffIds, 400)) {
+	for (const ids of chunk(staffIds, 90)) {
 		neighbourhood.push(
 			...(await ctx.db
 				.select()

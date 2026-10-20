@@ -8,6 +8,7 @@ import { getNodeRegion } from './lib/region.ts'
 import { analyticsRoutes } from './routes/analytics.ts'
 import { authRoutes } from './routes/auth.ts'
 import { shopRoutes } from './routes/shop.ts'
+import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { engagementSyncRoutes } from './routes/engagement-sync.ts'
 import {
 	formOperatorRoutes,
@@ -174,6 +175,7 @@ export function createTenantApiApp() {
 
 	app.route('/auth', authRoutes)
 	app.route('/shop', shopRoutes)
+	app.route('/subscriptions', subscriptionRoutes)
 	app.route('/forms', publicFormRoutes)
 	app.route('/analytics', analyticsRoutes)
 	app.route('/api', provisionRoutes)

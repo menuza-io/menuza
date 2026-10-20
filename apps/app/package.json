@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=6144 react-router build",
-    "build:cf": "cross-env NODE_OPTIONS=--max-old-space-size=6144 DEPLOY_TARGET=cloudflare react-router build",
+    "build:cf": "cross-env NODE_OPTIONS=--max-old-space-size=6144 STRIP_DEV_MOCKS=true DEPLOY_TARGET=cloudflare react-router build",
     "deploy:cf": "npm run build:cf && node ../../scripts/patch-wrangler.mjs --app app && wrangler deploy --config build/server/wrangler.deploy.json --keep-vars --env=",
     "dev": "node scripts/sync-dev-vars.mjs && npm run db:migrate:d1:local && cross-env NODE_ENV=development MOCKS=true DEPLOY_TARGET=cloudflare PORT=3001 node ../../node_modules/vite/bin/vite.js dev",
     "dev:cf": "npm run dev",

@@ -1,4 +1,17 @@
+import { msg, Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
+import { userHasOrganizationPermission } from '@repo/auth'
 import { cn } from '@repo/ui'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -41,9 +54,15 @@ import {
 } from '@repo/ui/table'
 import { WorkspacePage, WorkspaceToolbar } from '@repo/ui/workspace'
 import { formatDistanceToNow } from 'date-fns'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
+import {
+	classifyEraseError,
+	eraseConfirmationTargets,
+	type EraseErrorKind,
+	matchesEraseConfirmation,
+} from '#app/utils/customers/erase-dialog.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -59,6 +78,14 @@ interface CustomerListItem {
 	phoneVerified: boolean | null
 	createdAt: string
 }
+
+const ERASE_ERROR_MESSAGES = {
+	permission: msg`You are not allowed to erase customer data.`,
+	recording: msg`A call recording could not be deleted. Some voice data may already be erased; the customer's account is still there. Try again: erasing again completes it.`,
+	unavailable: msg`The customer data service is unavailable. Try again later; erasing again is safe.`,
+	network: msg`Could not reach the customer data service. Check your connection and try again.`,
+	generic: msg`The customer could not be erased. Try again; erasing again is safe.`,
+} as const
 
 const VERIFICATION_TONES = {
 	verified: {
@@ -251,23 +278,37 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	// Guard customer PII access
-	await requireUserWithOrganizationPermission(
+	const userId = await requireUserWithOrganizationPermission(
 		request,
 		organization.id,
 		ORG_PERMISSIONS.READ_SETTINGS_ANY,
 	)
 
-	const { jwt, tenantApiUrl } = await getOperatorTenantClient(request, orgSlug)
+	// Erasing a customer is destructive: only people who can change settings get
+	// a token that tenant-api accepts for it.
+	const canErase = await userHasOrganizationPermission(
+		userId,
+		organization.id,
+		ORG_PERMISSIONS.UPDATE_SETTINGS_ANY,
+	)
+	const { jwt, tenantApiUrl } = await getOperatorTenantClient(
+		request,
+		orgSlug,
+		{ canDelete: canErase },
+	)
 
-	return { jwt, tenantApiUrl }
+	return { jwt, tenantApiUrl, canErase }
 }
 
 function CustomerRow({
 	customer,
 	onEdit,
+	onErase,
 }: {
 	customer: CustomerListItem
 	onEdit: (customer: CustomerListItem) => void
+	/** Set only for people allowed to erase a customer. */
+	onErase?: (customer: CustomerListItem) => void
 }) {
 	return (
 		<TableRow
@@ -326,6 +367,15 @@ function CustomerRow({
 							<Icon name="pencil" className="mr-2 size-4" />
 							Edit
 						</DropdownMenuItem>
+						{onErase ? (
+							<DropdownMenuItem
+								variant="destructive"
+								onClick={() => onErase(customer)}
+							>
+								<Icon name="trash-2" className="mr-2 size-4" />
+								Erase data
+							</DropdownMenuItem>
+						) : null}
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</TableCell>
@@ -334,7 +384,14 @@ function CustomerRow({
 }
 
 export default function CustomersRoute() {
-	const { jwt, tenantApiUrl } = useLoaderData<typeof loader>()
+	const { jwt, tenantApiUrl, canErase } = useLoaderData<typeof loader>()
+	const [erasingCustomer, setErasingCustomer] =
+		useState<CustomerListItem | null>(null)
+	const [isErasing, setIsErasing] = useState(false)
+	const { _, i18n } = useLingui()
+	const [eraseError, setEraseError] = useState<EraseErrorKind | null>(null)
+	const [eraseConfirmation, setEraseConfirmation] = useState('')
+	const eraseAlertRef = useRef<HTMLParagraphElement>(null)
 	const [customers, setCustomers] = useState<CustomerListItem[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
@@ -348,28 +405,34 @@ export default function CustomersRoute() {
 	const [isSaving, setIsSaving] = useState(false)
 	const [saveError, setSaveError] = useState<string | null>(null)
 
-	useEffect(() => {
-		async function fetchCustomers() {
-			try {
-				const res = await fetch(`${tenantApiUrl}/operator/customers`, {
-					headers: { Authorization: `Bearer ${jwt}` },
-				})
-				if (!res.ok) {
-					throw new Error('Failed to load customers')
-				}
-				const data = (await res.json()) as { customers?: CustomerListItem[] }
-				setCustomers(data.customers ?? [])
-			} catch (err) {
-				setError(
-					err instanceof Error ? err.message : 'Failed to load customers',
-				)
-			} finally {
-				setLoading(false)
+	const fetchCustomers = useCallback(async () => {
+		try {
+			const res = await fetch(`${tenantApiUrl}/operator/customers`, {
+				headers: { Authorization: `Bearer ${jwt}` },
+			})
+			if (!res.ok) {
+				throw new Error('Failed to load customers')
 			}
+			const data = (await res.json()) as { customers?: CustomerListItem[] }
+			setCustomers(data.customers ?? [])
+			return true
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Failed to load customers')
+			return false
+		} finally {
+			setLoading(false)
 		}
-
-		void fetchCustomers()
 	}, [jwt, tenantApiUrl])
+
+	useEffect(() => {
+		void fetchCustomers()
+	}, [fetchCustomers])
+
+	// After a failed erase, move focus to the message (the destructive button
+	// is enabled again and would otherwise keep it).
+	useEffect(() => {
+		if (eraseError) eraseAlertRef.current?.focus()
+	}, [eraseError])
 
 	const filterConditions = useMemo(
 		() =>
@@ -441,6 +504,51 @@ export default function CustomersRoute() {
 			)
 		} finally {
 			setIsSaving(false)
+		}
+	}
+
+	const eraseTargets = erasingCustomer
+		? new Intl.ListFormat(i18n.locale, {
+				style: 'long',
+				type: 'disjunction',
+			}).format(eraseConfirmationTargets(erasingCustomer)) || 'erase'
+		: ''
+	const erasingLabel =
+		erasingCustomer?.name || erasingCustomer?.phone || _(msg`this customer`)
+
+	async function handleErase() {
+		if (!erasingCustomer) return
+		if (!matchesEraseConfirmation(erasingCustomer, eraseConfirmation)) return
+		setIsErasing(true)
+		setEraseError(null)
+		let status: number | null = null
+		try {
+			const res = await fetch(
+				`${tenantApiUrl}/operator/customers/${erasingCustomer.id}/erase`,
+				{ method: 'POST', headers: { Authorization: `Bearer ${jwt}` } },
+			)
+			status = res.status
+			if (!res.ok) {
+				const data = (await res.json().catch(() => null)) as {
+					code?: string
+				} | null
+				setEraseError(classifyEraseError(res.status, data?.code))
+				return
+			}
+			// Customers sharing the phone are erased with this one and more than
+			// one row can go, so reload the list instead of removing one row.
+			const erasedId = erasingCustomer.id
+			const reloaded = await fetchCustomers()
+			if (!reloaded) {
+				setCustomers((current) =>
+					current.filter((customer) => customer.id !== erasedId),
+				)
+			}
+			setErasingCustomer(null)
+		} catch {
+			setEraseError(classifyEraseError(status, null))
+		} finally {
+			setIsErasing(false)
 		}
 	}
 
@@ -535,6 +643,15 @@ export default function CustomersRoute() {
 									key={customer.id}
 									customer={customer}
 									onEdit={openEditSheet}
+									onErase={
+										canErase
+											? (target) => {
+													setEraseError(null)
+													setEraseConfirmation('')
+													setErasingCustomer(target)
+												}
+											: undefined
+									}
 								/>
 							))}
 						</TableBody>
@@ -633,6 +750,94 @@ export default function CustomersRoute() {
 					) : null}
 				</SheetContent>
 			</Sheet>
+
+			<AlertDialog
+				open={erasingCustomer !== null}
+				onOpenChange={(open) => {
+					if (!open && !isErasing) setErasingCustomer(null)
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Trans>Erase this customer&apos;s data?</Trans>
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							<Trans>
+								This permanently deletes the account, login sessions,
+								subscriptions, saved cards, journeys, messages and phone calls
+								for {erasingLabel}. Orders stay for your records, without a link
+								to the person. This cannot be undone.
+							</Trans>
+						</AlertDialogDescription>
+						<ul className="text-muted-foreground list-disc ps-5 text-sm">
+							<li>
+								<Trans>
+									Every customer record with the same phone number is erased
+									too.
+								</Trans>
+							</li>
+							<li>
+								<Trans>
+									Form submissions are redacted on a best-effort basis: only
+									ones that contain the exact phone number or email address are
+									found. Backups are not changed.
+								</Trans>
+							</li>
+						</ul>
+					</AlertDialogHeader>
+					{erasingCustomer ? (
+						<div className="flex flex-col gap-1.5">
+							<Label htmlFor="erase-confirmation">
+								<Trans>Type {eraseTargets} to confirm</Trans>
+							</Label>
+							<Input
+								id="erase-confirmation"
+								value={eraseConfirmation}
+								onChange={(event) => setEraseConfirmation(event.target.value)}
+								autoComplete="off"
+								disabled={isErasing}
+								aria-describedby={eraseError ? 'erase-error' : undefined}
+							/>
+						</div>
+					) : null}
+					{eraseError ? (
+						<p
+							id="erase-error"
+							ref={eraseAlertRef}
+							tabIndex={-1}
+							className="text-destructive text-sm"
+							role="alert"
+						>
+							{_(ERASE_ERROR_MESSAGES[eraseError])}
+						</p>
+					) : null}
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={isErasing}>
+							<Trans>Cancel</Trans>
+						</AlertDialogCancel>
+						<AlertDialogAction
+							variant="destructive"
+							disabled={
+								isErasing ||
+								!erasingCustomer ||
+								!matchesEraseConfirmation(erasingCustomer, eraseConfirmation)
+							}
+							onClick={(event) => {
+								// Keep the dialog open until the request finishes.
+								event.preventDefault()
+								void handleErase()
+							}}
+						>
+							{isErasing ? (
+								<Trans>Erasing...</Trans>
+							) : (
+								<Trans>Erase data</Trans>
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</WorkspacePage>
 	)
 }
