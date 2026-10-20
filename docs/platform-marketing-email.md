@@ -183,9 +183,10 @@ endpoint must verify the token without routing tenant customer PII through the
 App or Sites control plane. Platform-operator marketing needs an equivalent
 US-control-plane preference flow.
 
-Not yet implemented (follow-ups): a working unsubscribe flow, per-locale email
-content, and AI tools that read or edit the journey/email design. The AI
-assistant is reachable in the automation editor but its server-side tools
+Not yet implemented (follow-ups): the unsubscribe link in journey emails
+(broadcasts have it, see Broadcast consent), per-locale email content, and AI
+tools that read or edit the journey/email design. The AI assistant is reachable
+in the automation editor but its server-side tools
 (`packages/ai/src/route-handlers/chat.ts`) are still website-editor only.
 
 ## Broadcast consent
@@ -193,10 +194,24 @@ assistant is reachable in the automation editor but its server-side tools
 Customer broadcasts (App > Marketing > Campaigns) only go to customers with an
 active row in the regional `customer_subscriptions` table for the campaign's
 channel (`email` or `sms`) and topic (`marketing`). A customer row, a verified
-phone or an order is not consent. Texts also need a verified phone; emails need
-an address. Customers manage their own consent with
-`PUT /subscriptions/:topic/:channel` on the tenant-api (text needs a verified
-phone). Opting out keeps the row with `unsubscribed_at` set.
+phone or an order is not consent. Texts also need a verified phone. Emails need
+an address its owner confirmed (double opt-in): a customer's
+`PUT /subscriptions/:topic/:channel` for `email` stays pending and sends a
+signed confirmation link; the subscription counts only while
+`confirmed_email_hash` matches the customer's current address, so a changed
+address has to be confirmed again. A customer may claim the sources `profile`,
+`signup` or `checkout`; `operator`, `import` and `form` are for trusted server
+code (`operator` and `import` count as confirmed for the address on file).
+Opting out keeps the row with `unsubscribed_at` set.
+
+Every broadcast email carries a signed unsubscribe link (HMAC with
+`AUTH_HMAC_SECRET`, no login) in the body and as `List-Unsubscribe` and
+`List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers. The tenant-api
+endpoints are `GET|POST /subscriptions/unsubscribe?token=` and
+`GET|POST /subscriptions/confirm?token=`: GET only shows a button, POST acts and
+is idempotent, so a mail scanner opening links changes nothing. Links point at
+`TENANT_API_URL` (the request origin for confirmations when unset). Journey
+emails do not carry the link yet.
 
 To backfill consent a business already holds (for example an existing mailing
 list), insert rows with `source = 'import'` through `setCustomerSubscription()`

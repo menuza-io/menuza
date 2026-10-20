@@ -7,8 +7,10 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+	confirmCustomerSubscription,
 	loadBroadcastAudience,
 	setCustomerSubscription,
 } from './marketing-audience.ts'
@@ -23,6 +25,7 @@ describe('loadBroadcastAudience', () => {
 		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-audience-'))
 		process.env.TENANT_DB_DIR = tempDir
 		process.env.DATA_REGION = 'us'
+		process.env.AUTH_HMAC_SECRET = 'test-hmac-secret-123456789'
 		await provisionTenantDb(orgId)
 		db = await getTenantDb(orgId)
 	})
@@ -65,6 +68,7 @@ describe('loadBroadcastAudience', () => {
 				channel: 'email',
 				subscribed: true,
 				source: 'signup',
+				confirmedEmail: c.email,
 			})
 		}
 		await setCustomerSubscription(db, {
@@ -134,6 +138,7 @@ describe('loadBroadcastAudience', () => {
 			channel: 'email',
 			subscribed: true,
 			source: 'signup',
+			confirmedEmail: 'u@example.com',
 		})
 		await setCustomerSubscription(db, {
 			customerId: promo.id,
@@ -141,6 +146,7 @@ describe('loadBroadcastAudience', () => {
 			channel: 'email',
 			subscribed: true,
 			source: 'signup',
+			confirmedEmail: 'p@example.com',
 		})
 		expect(
 			(await loadBroadcastAudience(db, { channel: 'email' })).map((c) => c.id),
@@ -176,9 +182,80 @@ describe('loadBroadcastAudience', () => {
 			...base,
 			subscribed: true,
 			source: 'profile',
+			confirmedEmail: 'r@example.com',
 		})
 		expect(await loadBroadcastAudience(db, { channel: 'email' })).toHaveLength(
 			1,
 		)
+	})
+
+	it('keeps a customer-made email subscription out until the address is confirmed', async () => {
+		const c = await customer({ email: 'pending@example.com' })
+		await setCustomerSubscription(db, {
+			customerId: c.id,
+			topic: 'marketing',
+			channel: 'email',
+			subscribed: true,
+			source: 'signup',
+		})
+		await expect(
+			loadBroadcastAudience(db, { channel: 'email' }),
+		).resolves.toEqual([])
+		await expect(
+			confirmCustomerSubscription(db, {
+				customerId: c.id,
+				topic: 'marketing',
+				email: 'Pending@Example.com',
+			}),
+		).resolves.toBe(true)
+		expect(
+			(await loadBroadcastAudience(db, { channel: 'email' })).map((x) => x.id),
+		).toEqual([c.id])
+	})
+
+	it('drops a confirmed subscription when the address changes', async () => {
+		const c = await customer({ email: 'old@example.com' })
+		await setCustomerSubscription(db, {
+			customerId: c.id,
+			topic: 'marketing',
+			channel: 'email',
+			subscribed: true,
+			source: 'import',
+		})
+		expect(await loadBroadcastAudience(db, { channel: 'email' })).toHaveLength(
+			1,
+		)
+		await db
+			.update(customers)
+			.set({ email: 'someone-else@example.com' })
+			.where(eq(customers.id, c.id))
+		await expect(
+			loadBroadcastAudience(db, { channel: 'email' }),
+		).resolves.toEqual([])
+	})
+
+	it('does not confirm an opted-out subscription', async () => {
+		const c = await customer({ email: 'out@example.com' })
+		await setCustomerSubscription(db, {
+			customerId: c.id,
+			topic: 'marketing',
+			channel: 'email',
+			subscribed: true,
+			source: 'signup',
+		})
+		await setCustomerSubscription(db, {
+			customerId: c.id,
+			topic: 'marketing',
+			channel: 'email',
+			subscribed: false,
+			source: 'profile',
+		})
+		await expect(
+			confirmCustomerSubscription(db, {
+				customerId: c.id,
+				topic: 'marketing',
+				email: 'out@example.com',
+			}),
+		).resolves.toBe(false)
 	})
 })

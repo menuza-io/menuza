@@ -25,7 +25,7 @@ import {
 } from '@repo/tenant-db'
 import { eq, sql } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { erasePerson } from './person-erasure-service.ts'
+import { containsAsToken, erasePerson } from './person-erasure-service.ts'
 
 const orgA = 'clw9x0a12000008l00erase1'
 const orgB = 'clw9x0a12000008l00erase2'
@@ -326,6 +326,89 @@ describe('person erasure', () => {
 				.from(customerSubscriptions)
 				.where(eq(customerSubscriptions.customerId, id)),
 		).toEqual([])
+	})
+
+	it('redacts a submission only where the address is a whole token', async () => {
+		const id = await seedPerson(a, {
+			name: NAME,
+			phone: '+15550001111',
+			email: 'al@x.test',
+		})
+		await seedForm(a, 'mail me at AL@X.test please')
+		await seedForm(a, 'sal@x.test is my colleague')
+		await seedForm(a, 'al@x.test.au is another address')
+		await seedForm(a, 'phone +155500011119 is longer')
+		const [form] = await a.select().from(websiteForms)
+		await a.insert(websiteFormSubmissions).values({
+			formId: form!.id,
+			values: { nested: { list: ['x', 'reach al@x.test'] } },
+		})
+		const result = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(result.formSubmissionsRedacted).toBe(2)
+		const kept = (await a.select().from(websiteFormSubmissions)).filter(
+			(row) => !('redacted' in (row.values as object)),
+		)
+		expect(
+			kept.map((row) => (row.values as { message: string }).message).sort(),
+		).toEqual([
+			'al@x.test.au is another address',
+			'phone +155500011119 is longer',
+			'sal@x.test is my colleague',
+		])
+	})
+
+	it('containsAsToken respects address and number boundaries', () => {
+		expect(containsAsToken('write to al@x.test.', 'al@x.test')).toBe(true)
+		expect(containsAsToken('(al@x.test)', 'al@x.test')).toBe(true)
+		expect(containsAsToken('sal@x.test', 'al@x.test')).toBe(false)
+		expect(containsAsToken('al@x.test.au', 'al@x.test')).toBe(false)
+		expect(containsAsToken('al@x.testing', 'al@x.test')).toBe(false)
+		expect(containsAsToken('call +15550001111!', '+15550001111')).toBe(true)
+		expect(containsAsToken('+155500011112', '+15550001111')).toBe(false)
+		expect(containsAsToken('9+15550001111', '+15550001111')).toBe(false)
+	})
+
+	it('leaves a record and stays retryable when the transaction fails after voice data is gone', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await a.run(
+			sql`CREATE TRIGGER block_customer_delete BEFORE DELETE ON customers BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+		)
+		await expect(
+			erasePerson(a, { customerId: id }, { actorId: 'user_1' }),
+		).rejects.toThrow()
+
+		// Phase 1 already deleted the voice data; the transaction rolled back.
+		expect(await a.select().from(voiceCalls)).toEqual([])
+		expect(await a.select().from(customers)).toHaveLength(1)
+		expect(await a.select().from(customerSubscriptions)).toHaveLength(1)
+		const [partial] = await a.select().from(personErasureLog)
+		expect(partial).toMatchObject({
+			actorId: 'user_1',
+			subjectId: id,
+			counts: expect.objectContaining({ incomplete: 1, voiceCalls: 1 }),
+		})
+		const serialized = JSON.stringify(partial).toLowerCase()
+		for (const pii of [PHONE, EMAIL.toLowerCase(), NAME.toLowerCase()]) {
+			expect(serialized).not.toContain(pii)
+		}
+
+		// Retry: the same row is completed and keeps the earlier voice count.
+		await a.run(sql`DROP TRIGGER block_customer_delete`)
+		const retry = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(retry).toMatchObject({ alreadyErased: false, customersErased: 1 })
+		expect(await tablesContaining(a, [PHONE, EMAIL, NAME])).toEqual([])
+		const log = await a.select().from(personErasureLog)
+		expect(log).toHaveLength(1)
+		expect(log[0]!.counts).toMatchObject({ customers: 1, voiceCalls: 1 })
+		expect(log[0]!.counts).not.toHaveProperty('incomplete')
 	})
 
 	it('rejects an empty target', async () => {

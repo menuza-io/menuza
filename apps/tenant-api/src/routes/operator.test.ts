@@ -15,6 +15,9 @@ import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { verifyConsentToken } from '../lib/email-consent.ts'
+import { sendTenantEmail } from '../lib/tenant-email.ts'
+import { emailConsentHash } from '../services/marketing-audience.ts'
 import { operatorRoutes } from './operator.ts'
 
 const testOrgId = 'clw9x0a12000008l00test99'
@@ -42,6 +45,7 @@ describe('Operator Routes', () => {
 		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-op-test-'))
 		process.env.TENANT_DB_DIR = tempDir
 		process.env.DATA_REGION = 'us'
+		process.env.AUTH_HMAC_SECRET = 'test-hmac-secret-123456789'
 		process.env.JWT_SECRET = operatorSecret
 		process.env.TENANT_OPERATOR_TOKEN = operatorSecret
 
@@ -182,6 +186,7 @@ describe('Operator Routes', () => {
 				channel: 'email' as const,
 				source: 'signup' as const,
 				subscribedAt: new Date(),
+				confirmedEmailHash: emailConsentHash(customer.email!),
 			})),
 		)
 
@@ -243,6 +248,7 @@ describe('Operator Routes', () => {
 				channel: 'email',
 				source: 'signup',
 				subscribedAt: new Date(),
+				confirmedEmailHash: emailConsentHash('in@example.com'),
 			},
 			{
 				customerId: optedOut!.id,
@@ -287,5 +293,23 @@ describe('Operator Routes', () => {
 			.from(marketingMessages)
 			.where(eq(marketingMessages.campaignId, body.campaignId))
 		expect(messages.map((m) => m.customerId)).toEqual([subscribed!.id])
+
+		// The broadcast carries a signed unsubscribe link and one-click headers.
+		const sent = vi
+			.mocked(sendTenantEmail)
+			.mock.calls.map(([input]) => input)
+			.filter((input) => input.to === 'in@example.com')
+		expect(sent).toHaveLength(1)
+		const headers = sent[0]!.extraHeaders!
+		expect(headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
+		const url = /^<(.+)>$/.exec(headers['List-Unsubscribe']!)![1]!
+		expect(sent[0]!.html).toContain(url)
+		expect(sent[0]!.text).toContain(url)
+		const token = new URL(url).searchParams.get('token')!
+		expect(verifyConsentToken(token, 'unsubscribe')).toMatchObject({
+			o: testOrgId,
+			c: subscribed!.id,
+			t: 'marketing',
+		})
 	})
 })

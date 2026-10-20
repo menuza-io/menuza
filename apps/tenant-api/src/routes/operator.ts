@@ -26,7 +26,15 @@ import {
 	erasePerson,
 	PersonErasureError,
 } from '../services/person-erasure-service.ts'
-import { loadBroadcastAudience } from '../services/marketing-audience.ts'
+import {
+	consentBaseUrl,
+	listUnsubscribeHeaders,
+	unsubscribeUrl,
+} from '../lib/email-consent.ts'
+import {
+	BROADCAST_TOPIC,
+	loadBroadcastAudience,
+} from '../services/marketing-audience.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
 import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
@@ -600,14 +608,23 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 					if (campaign.channel === 'email') {
 						if (!customer.email) throw new Error('No email address')
+						// Every broadcast carries a signed unsubscribe link, in the
+						// body and as List-Unsubscribe / one-click headers.
+						const optOutUrl = unsubscribeUrl(consentBaseUrl(), {
+							orgId,
+							customerId: customer.id,
+							topic: BROADCAST_TOPIC,
+						})
+						const bodyHtml = campaign.contentHtml
+							? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
+							: `<p>${escapeHtml(parsedContent)}</p>`
 						const emailRes = await sendTenantEmail({
 							to: customer.email,
 							toName: customer.name,
 							subject: parsedSubject || 'Notification',
-							text: parsedContent,
-							html: campaign.contentHtml
-								? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
-								: `<p>${escapeHtml(parsedContent)}</p>`,
+							text: `${parsedContent}\n\nUnsubscribe: ${optOutUrl}`,
+							html: `${bodyHtml}<p style="font-size:12px;color:#666"><a href="${optOutUrl}">Unsubscribe</a></p>`,
+							extraHeaders: listUnsubscribeHeaders(optOutUrl),
 							context: {
 								orgId,
 								campaignId,

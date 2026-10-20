@@ -26,6 +26,8 @@ const COVERED: Record<string, string> = {
 	'customers.phone_verification_expires_at': 'row deleted',
 	'customers.refresh_token_hash': 'row deleted',
 	'customers.stripe_customer_id': 'row deleted',
+	'customer_subscriptions.confirmed_email_hash':
+		'HMAC of the address, deleted with the subscription by customer id',
 	'customer_refresh_tokens.token_hash': 'deleted by customer id',
 	'customer_payment_methods.stripe_payment_method_id': 'deleted by customer id',
 	'customer_payment_methods.last4': 'deleted by customer id',
@@ -34,7 +36,7 @@ const COVERED: Record<string, string> = {
 	'shop_orders.stripe_payment_intent_id':
 		'provider reference, no person data; order totals are kept, customer link nulled',
 	'website_form_submissions.values':
-		'redacted when it contains the erased phone or email (best effort, free text)',
+		'redacted when a field holds the erased phone or email as a whole token (best effort, free text)',
 	'voice_calls.caller_phone': 'call deleted by phone or customer id',
 	'voice_calls.summary': 'call deleted',
 	'voice_calls.transcript': 'call deleted',

@@ -13,7 +13,10 @@ import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
+import { loadBroadcastAudience } from '../services/marketing-audience.ts'
+import { signConsentToken, unsubscribeUrl } from '../lib/email-consent.ts'
 import { subscriptionRoutes } from './subscriptions.ts'
 
 const orgId = 'clw9x0a12000008l00test07'
@@ -27,6 +30,10 @@ vi.mock('../lib/origin.ts', () => ({
 		hasProvisionedDb: true,
 		dataRegion: 'us',
 	}),
+}))
+
+vi.mock('../lib/tenant-email.ts', () => ({
+	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),
 }))
 
 async function tokenFor(customerId: string) {
@@ -69,6 +76,8 @@ describe('customer subscription routes', () => {
 		process.env.TENANT_DB_DIR = tempDir
 		process.env.DATA_REGION = 'us'
 		process.env.JWT_SECRET = jwtSecret
+		process.env.AUTH_HMAC_SECRET = 'test-hmac-secret-123456789'
+		vi.mocked(sendTenantEmail).mockClear()
 		syncEnvFromProcess()
 
 		await provisionTenantDb(orgId)
@@ -108,7 +117,12 @@ describe('customer subscription routes', () => {
 		expect(res.status).toBe(200)
 		await expect((await get()).json()).resolves.toEqual({
 			subscriptions: [
-				{ topic: 'marketing', channel: 'email', subscribed: true },
+				{
+					topic: 'marketing',
+					channel: 'email',
+					subscribed: true,
+					confirmed: false,
+				},
 			],
 		})
 		const db = await getTenantDb(orgId)
@@ -168,5 +182,129 @@ describe('customer subscription routes', () => {
 			(await put('marketing/email', { subscribed: true, source: 'popup' }))
 				.status,
 		).toBe(400)
+	})
+
+	it('does not let a customer claim a server-side provenance', async () => {
+		for (const source of ['operator', 'import', 'form']) {
+			expect(
+				(await put('marketing/sms', { subscribed: true, source })).status,
+			).toBe(400)
+		}
+		expect(
+			(await put('marketing/sms', { subscribed: true, source: 'checkout' }))
+				.status,
+		).toBe(200)
+	})
+
+	describe('email double opt-in and unsubscribe', () => {
+		const confirmLink = () => {
+			const text = vi.mocked(sendTenantEmail).mock.calls.at(-1)![0].text
+			const url = /(https?:\/\/\S+)/.exec(text)![1]!
+			return new URL(url)
+		}
+		const audience = async () =>
+			loadBroadcastAudience(await getTenantDb(orgId), { channel: 'email' })
+
+		it('stays pending, emails a link, and counts only after the owner confirms', async () => {
+			const res = await put('marketing/email', { subscribed: true })
+			await expect(res.json()).resolves.toMatchObject({ pending: true })
+			expect(sendTenantEmail).toHaveBeenCalledTimes(1)
+			expect(vi.mocked(sendTenantEmail).mock.calls[0]![0].to).toBe(
+				'sam@example.com',
+			)
+			expect(await audience()).toEqual([])
+
+			const link = confirmLink()
+			// A scanner opening the link (GET) confirms nothing.
+			expect((await app.request(link.pathname + link.search)).status).toBe(200)
+			expect(await audience()).toEqual([])
+
+			const done = await app.request(link.pathname + link.search, {
+				method: 'POST',
+			})
+			expect(done.status).toBe(200)
+			expect((await audience()).map((c) => c.id)).toEqual([customerId])
+			// Idempotent.
+			expect(
+				(await app.request(link.pathname + link.search, { method: 'POST' }))
+					.status,
+			).toBe(200)
+
+			// Asking again while confirmed sends nothing and stays confirmed.
+			const again = await put('marketing/email', { subscribed: true })
+			await expect(again.json()).resolves.toMatchObject({ pending: false })
+			expect(sendTenantEmail).toHaveBeenCalledTimes(1)
+			expect(await audience()).toHaveLength(1)
+		})
+
+		it('rejects forged, tampered, wrong-kind and expired links', async () => {
+			await put('marketing/email', { subscribed: true })
+			const link = confirmLink()
+			const token = link.searchParams.get('token')!
+			const post = (route: string, t: string) =>
+				app.request(`/subscriptions/${route}?token=${encodeURIComponent(t)}`, {
+					method: 'POST',
+				})
+			expect((await post('confirm', token + 'x')).status).toBe(400)
+			expect((await post('confirm', 'junk')).status).toBe(400)
+			// A confirm token is not an unsubscribe token, and vice versa.
+			expect((await post('unsubscribe', token)).status).toBe(400)
+			const expired = signConsentToken({
+				k: 'confirm',
+				o: orgId,
+				c: customerId,
+				t: 'marketing',
+				e: 'x',
+				x: Date.now() - 1000,
+			})
+			expect((await post('confirm', expired)).status).toBe(400)
+			expect(await audience()).toEqual([])
+		})
+
+		it('does not confirm an address that changed after the link was sent', async () => {
+			await put('marketing/email', { subscribed: true })
+			const link = confirmLink()
+			const db = await getTenantDb(orgId)
+			await db
+				.update(customers)
+				.set({ email: 'other@example.com' })
+				.where(eq(customers.id, customerId))
+			const res = await app.request(link.pathname + link.search, {
+				method: 'POST',
+			})
+			expect(res.status).toBe(410)
+			expect(await audience()).toEqual([])
+		})
+
+		it('unsubscribes with one POST, idempotently, and never for another customer', async () => {
+			const db = await getTenantDb(orgId)
+			await put('marketing/email', { subscribed: true })
+			const link = confirmLink()
+			await app.request(link.pathname + link.search, { method: 'POST' })
+			expect(await audience()).toHaveLength(1)
+
+			const url = new URL(
+				unsubscribeUrl('http://tenant.test', {
+					orgId,
+					customerId,
+					topic: 'marketing',
+				}),
+			)
+			// Opening the link changes nothing; the POST (also the RFC 8058
+			// one-click call) does.
+			expect((await app.request(url.pathname + url.search)).status).toBe(200)
+			expect(await audience()).toHaveLength(1)
+			for (let i = 0; i < 2; i++) {
+				const res = await app.request(url.pathname + url.search, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: 'List-Unsubscribe=One-Click',
+				})
+				expect(res.status).toBe(200)
+			}
+			expect(await audience()).toEqual([])
+			const [row] = await db.select().from(customerSubscriptions).all()
+			expect(row!.unsubscribedAt).toBeInstanceOf(Date)
+		})
 	})
 })

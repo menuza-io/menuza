@@ -116,4 +116,57 @@ describe.each([
 		const db = await getTenantDb(orgId)
 		expect(await db.select().from(customers).all()).toHaveLength(1)
 	})
+
+	describe('legacy stored forms', () => {
+		const legacyForms = [
+			scenario.e164.slice(1),
+			scenario.region === 'ksa' ? '0501234567' : '5551234567',
+		]
+
+		it.each(legacyForms)(
+			'finds a customer stored as %s and rewrites it to E.164 on verify',
+			async (stored) => {
+				const db = await getTenantDb(orgId)
+				await db.insert(customers).values({ name: 'Old', phone: stored })
+				expect(
+					(await post(app, '/auth/send-code', { phone: scenario.national }))
+						.status,
+				).toBe(200)
+				// No duplicate customer was created.
+				expect(await db.select().from(customers).all()).toHaveLength(1)
+				const code = vi.mocked(sendSms).mock.calls.at(-1)![0].message
+				const digits = /(\d{6})/.exec(code)![1]!
+				const res = await post(app, '/auth/verify', {
+					phone: scenario.e164,
+					code: digits,
+				})
+				expect(res.status).toBe(200)
+				const [row] = await db.select().from(customers)
+				expect(row?.phone).toBe(scenario.e164)
+				expect(row?.name).toBe('Old')
+				expect(row?.phoneVerified).toBe(true)
+			},
+		)
+
+		it('prefers the exact E.164 row and keeps a colliding legacy row as stored', async () => {
+			const db = await getTenantDb(orgId)
+			await db
+				.insert(customers)
+				.values({ name: 'Legacy', phone: scenario.e164.slice(1) })
+			await db.insert(customers).values({ name: 'Exact', phone: scenario.e164 })
+			await post(app, '/auth/send-code', { phone: scenario.e164 })
+			const digits = /(\d{6})/.exec(
+				vi.mocked(sendSms).mock.calls.at(-1)![0].message,
+			)![1]!
+			const res = await post(app, '/auth/verify', {
+				phone: scenario.e164,
+				code: digits,
+			})
+			expect(res.status).toBe(200)
+			const rows = await db.select().from(customers).all()
+			expect(rows.map((r) => r.phone).sort()).toEqual(
+				[scenario.e164, scenario.e164.slice(1)].sort(),
+			)
+		})
+	})
 })

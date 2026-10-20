@@ -144,9 +144,77 @@ export function findUnboundedInArray(): string[] {
 	return offenders
 }
 
+/**
+ * A chunk of up to 90 ids bound twice in one statement is 180 parameters. A
+ * chunk variable may therefore appear in only one `inArray` per statement
+ * (use `inJsonList` for the second predicate, or a smaller chunk with a
+ * `// bounded:` note).
+ */
+export function findReusedChunkList(
+	files: Array<{ file: string; text: string }> = sourceFiles(SRC).map(
+		(file) => ({ file, text: fs.readFileSync(file, 'utf8') }),
+	),
+): string[] {
+	const offenders: string[] = []
+	for (const { file, text } of files) {
+		if (!text.includes('inArray(')) continue
+		const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
+		const statementOf = (node: ts.Node): ts.Node => {
+			let cur = node
+			while (cur.parent && !ts.isStatement(cur)) cur = cur.parent
+			return cur
+		}
+		const seen = new Map<string, number>()
+		const calls: ts.CallExpression[] = []
+		const visit = (node: ts.Node) => {
+			if (
+				ts.isCallExpression(node) &&
+				ts.isIdentifier(node.expression) &&
+				node.expression.text === 'inArray' &&
+				node.arguments[1] &&
+				ts.isIdentifier(node.arguments[1])
+			) {
+				calls.push(node)
+			}
+			ts.forEachChild(node, visit)
+		}
+		visit(sf)
+		for (const call of calls) {
+			const list = (call.arguments[1] as ts.Identifier).text
+			const stmt = statementOf(call)
+			const key = `${stmt.pos}:${list}`
+			seen.set(key, (seen.get(key) ?? 0) + 1)
+			if (seen.get(key) === 2 && !hasBoundedComment(text, sf, call)) {
+				const { line } = sf.getLineAndCharacterOfPosition(call.getStart(sf))
+				offenders.push(`${path.relative(SRC, file)}:${line + 1}`)
+			}
+		}
+	}
+	return offenders
+}
+
 describe('tenant-api statements stay under the 100 bound-parameter limit', () => {
 	it('has no unchunked inArray over unbounded lists', () => {
 		expect(findUnboundedInArray()).toEqual([])
+	})
+
+	it('never binds one chunk of ids twice in a statement', () => {
+		expect(findReusedChunkList()).toEqual([])
+	})
+
+	it('flags a list reused in one statement (scanner self-test)', () => {
+		const bad = `async function f(db) {
+			for (const part of chunk(ids, 90)) {
+				await db.select().where(or(inArray(a, part), inArray(b, part)))
+			}
+		}`
+		const good = bad.replace('inArray(b, part)', 'inJsonList(b, ids)')
+		expect(
+			findReusedChunkList([{ file: path.join(SRC, 'x.ts'), text: bad }]),
+		).toHaveLength(1)
+		expect(
+			findReusedChunkList([{ file: path.join(SRC, 'x.ts'), text: good }]),
+		).toEqual([])
 	})
 
 	it('keeps every chunk size constant and literal at 90 or less', () => {

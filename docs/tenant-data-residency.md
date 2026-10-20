@@ -517,10 +517,20 @@ erases one customer from the regional database in a single transaction: the
 `customers` row, login sessions, subscriptions (the marketing consent record),
 saved cards, journey runs and their messages, and the voice calls, call requests
 and texts that carry the customer id or phone. Orders keep their totals for the
-books and lose the link to the person. Website form submissions that contain the
-customer's phone or email are redacted (best effort: they are free text). Call
-recordings are deleted from object storage first, and a failed deletion stops
-the erasure before any row is touched, so it can be retried.
+books and lose the link to the person. Website form submissions are redacted
+when a field holds the customer's phone or email as a whole token (best effort:
+they are free text). `al@x.com` does not match inside `sal@x.com` or
+`al@x.com.au`, and a number in another format (spaces, another country form) is
+not recognised, so check for leftovers by hand when it matters. Every customer
+row that shares the phone (a stale duplicate) is erased too. Call recordings are
+deleted from object storage first, and a failed deletion stops the erasure
+before any row is touched.
+
+The identity (customer ids, phones, emails) is resolved once. An "erasure
+started" row is committed before anything is deleted (`incomplete: 1`, ids and
+counts only). If a later step fails the row stays as the record of the partial
+erasure, and retrying the same call is safe: it continues that row and, once the
+transaction commits, completes it.
 
 The call is idempotent and answers 200 with `alreadyErased: true` for an unknown
 or already-erased id, so it cannot be used to probe for ids. Each erasure that
@@ -533,3 +543,10 @@ erasure and retention (`docs/staffing.md`).
 tenant table gets a personal-looking column, or a `customer_id` link, that the
 erasure neither handles nor lists with a reason. Records held at the payment
 provider (a Stripe customer, for example) are not touched by this call.
+
+**Backups.** Erasure changes the live database only. A person erased here can
+remain in volume backups and snapshots of the regional database (the OCI block
+volume, Durable Object point-in-time recovery) until those expire under their
+retention schedule. Do not restore a backup older than an erasure without
+re-running the erasures logged since (`person_erasure_log` lists them by opaque
+id), and state the backup retention period when answering a deletion request.

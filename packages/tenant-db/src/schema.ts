@@ -106,6 +106,15 @@ export const customerSubscriptions = sqliteTable(
 		source: text('source', { enum: CUSTOMER_SUBSCRIPTION_SOURCES }).notNull(),
 		subscribedAt: integer('subscribed_at', { mode: 'timestamp' }).notNull(),
 		unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
+		/**
+		 * HMAC of the (lower-cased) email address the owner confirmed. An address
+		 * a customer typed is not proof they own it, so an email subscription is
+		 * deliverable only while this matches the customer's current address: it
+		 * is set when the owner follows the emailed confirmation link (or an
+		 * operator or import vouches for it) and stops matching if the address
+		 * changes. Always null for texts (the OTP proved the phone).
+		 */
+		confirmedEmailHash: text('confirmed_email_hash'),
 		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
 			sql`(strftime('%s', 'now'))`,
 		),
@@ -2674,8 +2683,7 @@ export type MarketingMessage = typeof marketingMessages.$inferSelect
 export type NewMarketingMessage = typeof marketingMessages.$inferInsert
 
 export type CustomerSubscription = typeof customerSubscriptions.$inferSelect
-export type NewCustomerSubscription =
-	typeof customerSubscriptions.$inferInsert
+export type NewCustomerSubscription = typeof customerSubscriptions.$inferInsert
 
 export type ShopOrder = typeof shopOrders.$inferSelect
 export type NewShopOrder = typeof shopOrders.$inferInsert

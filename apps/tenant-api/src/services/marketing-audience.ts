@@ -7,10 +7,16 @@ import {
 	type CustomerSubscriptionTopic,
 	type TenantDatabase,
 } from '@repo/tenant-db'
+import { hmacHash } from '../lib/secrets.ts'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 
 export type BroadcastChannel = CustomerSubscriptionChannel
 export type BroadcastAudience = 'all' | 'verified' | 'unverified'
+
+/** Binds an email subscription to the address that was confirmed. */
+export function emailConsentHash(email: string): string {
+	return hmacHash(`email-consent:${email.trim().toLowerCase()}`)
+}
 
 /** The topic a broadcast campaign is sent under. */
 export const BROADCAST_TOPIC: CustomerSubscriptionTopic = 'marketing'
@@ -23,7 +29,10 @@ export const BROADCAST_TOPIC: CustomerSubscriptionTopic = 'marketing'
  * NULL`) for the campaign's channel and topic. Having a customer row, a
  * verified phone or an order is not consent. Texts additionally need a
  * verified phone (a number only counts once its owner proved control of it);
- * emails need an address. The `audience` rule only narrows further.
+ * emails need an address the owner confirmed (`confirmed_email_hash` matches
+ * the current address): a customer-typed address is only deliverable once its
+ * owner followed the emailed confirmation link (double opt-in), and a changed
+ * address must be confirmed again. The `audience` rule only narrows further.
  */
 export async function loadBroadcastAudience(
 	db: TenantDatabase,
@@ -35,7 +44,10 @@ export async function loadBroadcastAudience(
 ): Promise<Customer[]> {
 	const topics = params.topics?.length ? [...params.topics] : [BROADCAST_TOPIC]
 	const rows = await db
-		.selectDistinct({ customer: customers })
+		.select({
+			customer: customers,
+			confirmedEmailHash: customerSubscriptions.confirmedEmailHash,
+		})
 		.from(customers)
 		.innerJoin(
 			customerSubscriptions,
@@ -52,11 +64,26 @@ export async function loadBroadcastAudience(
 		.orderBy(asc(customers.id))
 		.all()
 
-	let audience = rows.map((row) => row.customer)
+	const byId = new Map<string, { customer: Customer; hashes: string[] }>()
+	for (const row of rows) {
+		const entry = byId.get(row.customer.id) ?? {
+			customer: row.customer,
+			hashes: [],
+		}
+		if (row.confirmedEmailHash) entry.hashes.push(row.confirmedEmailHash)
+		byId.set(row.customer.id, entry)
+	}
+	let audience = [...byId.values()].map((entry) => entry.customer)
 	if (params.channel === 'sms') {
 		audience = audience.filter((c) => Boolean(c.phoneVerified) && c.phone)
 	} else {
-		audience = audience.filter((c) => Boolean(c.email?.trim()))
+		audience = audience.filter((c) => {
+			const email = c.email?.trim()
+			return (
+				Boolean(email) &&
+				byId.get(c.id)!.hashes.includes(emailConsentHash(email!))
+			)
+		})
 	}
 	if (params.audience === 'verified') {
 		audience = audience.filter((c) => Boolean(c.phoneVerified))
@@ -81,9 +108,34 @@ export async function setCustomerSubscription(
 		subscribed: boolean
 		source: CustomerSubscriptionSource
 		now?: Date
+		/**
+		 * The address to bind an email subscription to as already confirmed.
+		 * Default: the customer's current address for `operator` and `import`
+		 * (someone vouching for it), none otherwise: a customer-made email
+		 * subscription stays pending until the owner confirms (see
+		 * `confirmCustomerSubscription`).
+		 */
+		confirmedEmail?: string | null
 	},
 ): Promise<void> {
 	const now = params.now ?? new Date()
+	let confirmedEmail = params.confirmedEmail
+	if (
+		confirmedEmail === undefined &&
+		params.channel === 'email' &&
+		(params.source === 'operator' || params.source === 'import')
+	) {
+		const row = await db
+			.select({ email: customers.email })
+			.from(customers)
+			.where(eq(customers.id, params.customerId))
+			.get()
+		confirmedEmail = row?.email
+	}
+	const confirmedEmailHash =
+		params.channel === 'email' && confirmedEmail?.trim()
+			? emailConsentHash(confirmedEmail)
+			: null
 	if (params.subscribed) {
 		await db
 			.insert(customerSubscriptions)
@@ -94,6 +146,7 @@ export async function setCustomerSubscription(
 				source: params.source,
 				subscribedAt: now,
 				unsubscribedAt: null,
+				confirmedEmailHash,
 				updatedAt: now,
 			})
 			.onConflictDoUpdate({
@@ -106,6 +159,7 @@ export async function setCustomerSubscription(
 					source: params.source,
 					subscribedAt: now,
 					unsubscribedAt: null,
+					confirmedEmailHash,
 					updatedAt: now,
 				},
 			})
@@ -123,4 +177,33 @@ export async function setCustomerSubscription(
 			),
 		)
 		.run()
+}
+
+/**
+ * Binds a pending email subscription to the address its owner confirmed.
+ * Returns false when the subscription is gone or was opted out meanwhile.
+ */
+export async function confirmCustomerSubscription(
+	db: TenantDatabase,
+	params: {
+		customerId: string
+		topic: CustomerSubscriptionTopic
+		email: string
+		now?: Date
+	},
+): Promise<boolean> {
+	const now = params.now ?? new Date()
+	const rows = await db
+		.update(customerSubscriptions)
+		.set({ confirmedEmailHash: emailConsentHash(params.email), updatedAt: now })
+		.where(
+			and(
+				eq(customerSubscriptions.customerId, params.customerId),
+				eq(customerSubscriptions.topic, params.topic),
+				eq(customerSubscriptions.channel, 'email'),
+				isNull(customerSubscriptions.unsubscribedAt),
+			),
+		)
+		.returning({ id: customerSubscriptions.id })
+	return rows.length > 0
 }

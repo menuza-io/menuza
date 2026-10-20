@@ -41,18 +41,20 @@ export async function sendTenantEmail(
 		context?: TenantEmailContext
 		capture?: TenantEmailCaptureMeta
 		from?: string
+		/** Extra message headers (for example `List-Unsubscribe`). */
+		extraHeaders?: Record<string, string>
 	},
 ): Promise<SendOciEmailResult> {
 	const headerFields = input.context
 		? buildTenantMarketingEmailHeaders(input.context)
 		: {}
 
-	const { context, capture, from, ...rest } = input
+	const { context, capture, from, extraHeaders, ...rest } = input
+	const allHeaders = { ...headerFields, ...extraHeaders }
 	const result = await sendOciEmail({
 		...rest,
 		messageId: context?.messageId ?? capture?.messageId,
-		headerFields:
-			Object.keys(headerFields).length > 0 ? headerFields : undefined,
+		headerFields: Object.keys(allHeaders).length > 0 ? allHeaders : undefined,
 	})
 
 	// Only the plain "not configured" mock branch is captured, after its log line.
