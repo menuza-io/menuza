@@ -62,6 +62,7 @@ import {
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, moneyAccess, ok } from './timesheet-shared.ts'
 import { transact } from './schedule-shift-service.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * The week the schedule grid shows, the orders-based demand guide and the
@@ -413,7 +414,7 @@ export async function loadWeek(
 			: await ctx.db
 					.select()
 					.from(staffPositions)
-					.where(inArray(staffPositions.id, [...positionIds]))
+					.where(inJsonList(staffPositions.id, [...positionIds]))
 	const positions = positionRows
 		.map((row) => ({
 			id: row.id,
@@ -608,7 +609,7 @@ async function loadOverlays(
 		.from(timeOffRequests)
 		.where(
 			and(
-				inArray(timeOffRequests.staffId, [...staffIds]),
+				inJsonList(timeOffRequests.staffId, [...staffIds]),
 				inArray(timeOffRequests.status, ['pending', 'approved']),
 				sql`${timeOffRequests.startDate} <= ${weekEnd}`,
 				sql`${timeOffRequests.endDate} >= ${weekStart}`,
@@ -674,7 +675,7 @@ async function countPending(
 					.from(timeOffRequests)
 					.where(
 						and(
-							inArray(timeOffRequests.staffId, [...staffIds]),
+							inJsonList(timeOffRequests.staffId, [...staffIds]),
 							eq(timeOffRequests.status, 'pending'),
 						),
 					),
@@ -685,7 +686,7 @@ async function countPending(
 					.from(staffAvailability)
 					.where(
 						and(
-							inArray(staffAvailability.staffId, [...staffIds]),
+							inJsonList(staffAvailability.staffId, [...staffIds]),
 							eq(staffAvailability.status, 'pending'),
 						),
 					),

@@ -743,3 +743,30 @@ describe('value measures', () => {
 		expect(result.rows?.map((row) => row.stars)).toEqual(['4.5', '0', '—'])
 	})
 })
+
+describe('sortBy label', () => {
+	it('orders numeric labels naturally (2 before 10)', () => {
+		const result = runReport(
+			organizationCatalog,
+			measuredDefinition(
+				'shop_orders',
+				{ measure: 'count', sortBy: 'label' },
+				{ groupBy: ['productName'] },
+			),
+			['Plan 10', 'Plan 2', 'Plan 1', 'Plan 20'].map((productName) => ({
+				createdAt: '2026-08-01',
+				productName,
+				amount: 1,
+				currency: 'USD',
+			})),
+			now,
+		)
+		if (isReportRunError(result)) throw new Error(result.message)
+		expect(result.segments.map((segment) => segment.label)).toEqual([
+			'Plan 1',
+			'Plan 2',
+			'Plan 10',
+			'Plan 20',
+		])
+	})
+})

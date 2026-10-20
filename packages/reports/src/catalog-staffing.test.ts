@@ -169,7 +169,10 @@ describe('what a person is offered', () => {
 		catalog.subjects.map((subject) => subject.id)
 
 	it('hides every staff subject until the token grants it', () => {
-		const none = catalogForGrants(organizationCatalog, ['phone_calls'])
+		const none = catalogForGrants(organizationCatalog, [
+			'phone_calls',
+			'customers',
+		])
 		for (const id of staffIds) expect(ids(none)).not.toContain(id)
 		expect(ids(none)).toContain('phone_calls')
 		expect(ids(none)).toContain('customers')
@@ -195,7 +198,7 @@ describe('what a person is offered', () => {
 		const offered = templatesForGrants(
 			organizationCatalog,
 			organizationTemplates(),
-			[],
+			['customers', 'shop_orders'],
 		)
 		expect(
 			offered.filter((template) =>

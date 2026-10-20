@@ -41,3 +41,8 @@ Canonical guide:
 [docs/tenant-data-residency.md](../../docs/tenant-data-residency.md). Deploy:
 [docs/deployment.md](../../docs/deployment.md#regional-tenant-data-plane). ADR:
 [docs/decisions/045-tenant-data-residency.md](../../docs/decisions/045-tenant-data-residency.md).
+
+Dev email capture: set `DEV_EMAIL_CAPTURE_DIR` (the dev scripts use
+`.dev-mail/us` and `.dev-mail/ksa`) and every email the node would only log is
+written there as JSON. It is ignored in production and whenever OCI email is
+configured.

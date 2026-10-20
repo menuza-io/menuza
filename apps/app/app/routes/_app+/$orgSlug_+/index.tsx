@@ -36,6 +36,7 @@ import {
 import { resolveReportBlock } from '#app/utils/dashboards/reports.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { setUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
 import { type Route } from './+types/index.ts'
 
 const CELEBRATION_MS = 3000
@@ -77,6 +78,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		userId,
 		organizationId: organization.id,
 		blockData,
+		grants: await resolveReportGrantsForRequest(
+			request,
+			userId,
+			organization.id,
+		),
 	})
 
 	return {

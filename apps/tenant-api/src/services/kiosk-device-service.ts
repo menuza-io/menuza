@@ -19,6 +19,7 @@ import {
 	kioskPairingCodes,
 	type KioskPairingCode,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { hashKioskSecret } from '../lib/kiosk-auth.ts'
 import { getScopeFacts } from '../lib/scope-context.ts'
@@ -139,7 +140,7 @@ export async function createPairingCode(
 	const expiresAt = now + KIOSK_PAIRING_CODE_TTL_MS
 
 	const result = await retryOnSqliteBusy(() =>
-		ctx.db.transaction(async (tx): Promise<DeviceResult<null>> => {
+		runTenantTransaction(ctx.db, async (tx): Promise<DeviceResult<null>> => {
 			await tx
 				.delete(kioskPairingCodes)
 				.where(lt(kioskPairingCodes.expiresAt, now - CODE_RETENTION_MS))
@@ -218,7 +219,8 @@ export async function cancelPairingCode(
 	id: string,
 ): Promise<DeviceResult<{ cancelled: true }>> {
 	return retryOnSqliteBusy(() =>
-		ctx.db.transaction(
+		runTenantTransaction(
+			ctx.db,
 			async (tx): Promise<DeviceResult<{ cancelled: true }>> => {
 				const [row] = await tx
 					.select()
@@ -273,7 +275,7 @@ export async function updateDevice(
 	now = Date.now(),
 ): Promise<DeviceResult<ReturnType<typeof serializeDevice>>> {
 	return retryOnSqliteBusy(() =>
-		ctx.db.transaction(async (tx) => {
+		runTenantTransaction(ctx.db, async (tx) => {
 			const row = await loadScopedDevice(tx, ctx.scope, id)
 			if (!row) return fail(404, 'not_found')
 			if (row.revokedAt !== null) return fail(409, 'device_revoked')
@@ -340,7 +342,7 @@ export async function revokeDevice(
 	now = Date.now(),
 ): Promise<DeviceResult<ReturnType<typeof serializeDevice>>> {
 	return retryOnSqliteBusy(() =>
-		ctx.db.transaction(async (tx) => {
+		runTenantTransaction(ctx.db, async (tx) => {
 			const row = await loadScopedDevice(tx, ctx.scope, id)
 			if (!row) return fail(404, 'not_found')
 			let updated = row
@@ -393,7 +395,7 @@ export async function redeemPairingCode(
 
 	try {
 		return await retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				const [row] = await tx
 					.select()
 					.from(kioskPairingCodes)

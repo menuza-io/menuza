@@ -1,25 +1,23 @@
 import {
 	checkoutWebhookSignatureFromRequest,
-	createShopCommerce,
-	createShopCommerceConfigFromEnv,
 	hostedWebhookHeadersFromRequest,
 	parseHostedShopWebhook,
 } from '@repo/payments'
 import { type ActionFunctionArgs } from 'react-router'
 import {
+	getShopCommerce,
 	recordShopOrder,
 	recordShopOrderFromCheckoutWebhook,
 } from '#app/utils/shop.server.ts'
-
-const shopCommerce = createShopCommerce(
-	createShopCommerceConfigFromEnv(process.env),
-)
 
 export async function action({ request }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method not allowed', { status: 405 })
 	}
 
+	// The App-wide commerce, so the payment mock's synthetic Checkout.com
+	// settings (and webhook secret) apply here exactly as they do for orders.
+	const shopCommerce = getShopCommerce()
 	const payload = await request.text()
 	const checkoutSignature = checkoutWebhookSignatureFromRequest(request)
 	const hostedHeaders = hostedWebhookHeadersFromRequest(request)

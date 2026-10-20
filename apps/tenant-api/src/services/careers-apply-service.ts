@@ -13,6 +13,7 @@ import {
 	hiringEvents,
 	notificationOutbox,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { type LivePosting } from '../lib/job-posting-context.ts'
 import { hmacHash } from '../lib/secrets.ts'
@@ -168,7 +169,7 @@ export async function submitApplication(
 
 	try {
 		await retryOnSqliteBusy(() =>
-			db.transaction(async (tx) => {
+			runTenantTransaction(db, async (tx) => {
 				const [created] = await tx
 					.insert(hiringApplications)
 					.values({

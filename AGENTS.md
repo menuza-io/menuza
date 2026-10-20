@@ -588,6 +588,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
   Object alarms instead. See `docs/scheduled-jobs.md#staff-tick`.
+- `DEV_EMAIL_CAPTURE_DIR` - Tenant-api, development only: folder (relative to
+  `apps/tenant-api`) that receives one JSON file per email the node would only
+  log. Ignored in production or when OCI email is configured.
+- `STRIPE_CONNECT_WEBHOOK_SECRET` - App only, optional: second Stripe webhook
+  secret for Connect events (the Stripe webhook route accepts either secret).
+- `PAYMENTS_MOCK` / `PAYMENTS_MOCK_ORIGIN` / `PAYMENTS_MOCK_WEBHOOKS` /
+  `PAYMENTS_MOCK_WEBHOOKS_HTTP` / `PAYMENTS_MOCK_CKO_SESSION_ID` - App only:
+  local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
+  Startup refuses live keys; mock routes are stripped from Worker builds. See
+  `docs/payments-mock.md`.
 
 **CMS Storage**:
 

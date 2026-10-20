@@ -65,6 +65,104 @@ export const customerRefreshTokens = sqliteTable(
 	],
 )
 
+// Explicit marketing consent, one row per customer + topic + channel. Opting
+// out keeps the row (unsubscribedAt set) as the record of the opt-out; a later
+// opt-in clears it and restamps subscribedAt/source. A customer with no active
+// row has not consented: broadcasts never reach them.
+export const CUSTOMER_SUBSCRIPTION_TOPICS = [
+	'marketing',
+	'product_updates',
+] as const
+export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms', 'email'] as const
+export const CUSTOMER_SUBSCRIPTION_SOURCES = [
+	'signup',
+	'profile',
+	'checkout',
+	'form',
+	'operator',
+	'import',
+] as const
+
+export type CustomerSubscriptionTopic =
+	(typeof CUSTOMER_SUBSCRIPTION_TOPICS)[number]
+export type CustomerSubscriptionChannel =
+	(typeof CUSTOMER_SUBSCRIPTION_CHANNELS)[number]
+export type CustomerSubscriptionSource =
+	(typeof CUSTOMER_SUBSCRIPTION_SOURCES)[number]
+
+export const customerSubscriptions = sqliteTable(
+	'customer_subscriptions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		topic: text('topic', { enum: CUSTOMER_SUBSCRIPTION_TOPICS }).notNull(),
+		channel: text('channel', {
+			enum: CUSTOMER_SUBSCRIPTION_CHANNELS,
+		}).notNull(),
+		source: text('source', { enum: CUSTOMER_SUBSCRIPTION_SOURCES }).notNull(),
+		subscribedAt: integer('subscribed_at', { mode: 'timestamp' }).notNull(),
+		unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
+		/**
+		 * HMAC of the (lower-cased) email address the owner confirmed. An address
+		 * a customer typed is not proof they own it, so an email subscription is
+		 * deliverable only while this matches the customer's current address: it
+		 * is set when the owner follows the emailed confirmation link (or an
+		 * operator or import vouches for it) and stops matching if the address
+		 * changes. Always null for texts (the OTP proved the phone).
+		 */
+		confirmedEmailHash: text('confirmed_email_hash'),
+		/**
+		 * The last confirmation email that was actually sent: when, and an HMAC
+		 * of the address it went to. Only a repeat request for the same address
+		 * within the resend interval is throttled; a new address is not.
+		 */
+		confirmationSentAt: integer('confirmation_sent_at', { mode: 'timestamp' }),
+		confirmationSentHash: text('confirmation_sent_hash'),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		uniqueIndex('uniq_customer_subscriptions_customer_topic_channel').on(
+			table.customerId,
+			table.topic,
+			table.channel,
+		),
+		index('idx_customer_subscriptions_topic_channel').on(
+			table.topic,
+			table.channel,
+			table.unsubscribedAt,
+		),
+	],
+)
+
+// Record that a person's data was erased (see the person erasure service in
+// tenant-api). Holds no personal data: the customer row is gone, so its id
+// points at nothing, and the counts say how much was removed. Never purged.
+export const personErasureLog = sqliteTable(
+	'person_erasure_log',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		at: integer('at', { mode: 'timestamp_ms' }).notNull(),
+		// The operator (control-plane user id) who ran the erasure.
+		actorId: text('actor_id').notNull(),
+		// Opaque id of the erased customer. Not a foreign key on purpose.
+		subjectId: text('subject_id').notNull(),
+		counts: text('counts', { mode: 'json' })
+			.$type<Record<string, number>>()
+			.notNull(),
+	},
+	(table) => [index('idx_person_erasure_log_at').on(table.at)],
+)
+
+export type PersonErasureLogEntry = typeof personErasureLog.$inferSelect
+
 // ==========================================
 // 2. MARKETING JOURNEYS (Workflow Definitions)
 // ==========================================
@@ -2590,6 +2688,9 @@ export type NewMarketingCampaign = typeof marketingCampaigns.$inferInsert
 
 export type MarketingMessage = typeof marketingMessages.$inferSelect
 export type NewMarketingMessage = typeof marketingMessages.$inferInsert
+
+export type CustomerSubscription = typeof customerSubscriptions.$inferSelect
+export type NewCustomerSubscription = typeof customerSubscriptions.$inferInsert
 
 export type ShopOrder = typeof shopOrders.$inferSelect
 export type NewShopOrder = typeof shopOrders.$inferInsert
