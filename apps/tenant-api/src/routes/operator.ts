@@ -22,6 +22,7 @@ import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
+import { loadBroadcastAudience } from '../services/marketing-audience.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
 import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
@@ -484,15 +485,9 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		const campaign = campaignArr[0]
 		if (!campaign) return
 
-		// 1. Fetch audience and evaluate segmentation rules
-		const allCustomers = await db.select().from(customers).all()
-		let targetCustomers = allCustomers
-		// A phone number is only trusted once its owner proved control of it via
-		// OTP; texting unverified numbers is unsolicited messaging to whoever
-		// typed them into a sign-in form.
-		if (campaign.channel === 'sms') {
-			targetCustomers = targetCustomers.filter((c) => Boolean(c.phoneVerified))
-		}
+		// 1. Fetch the consented audience (active subscription for this channel
+		// and topic; texts also need a verified phone) and apply the rules.
+		let rulesAudience: string | undefined
 		if (campaign.segmentationRules) {
 			try {
 				const rules =
@@ -501,17 +496,15 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 								audience?: string
 							})
 						: (campaign.segmentationRules as { audience?: string })
-				if (rules?.audience === 'verified') {
-					targetCustomers = targetCustomers.filter((c) =>
-						Boolean(c.phoneVerified),
-					)
-				} else if (rules?.audience === 'unverified') {
-					targetCustomers = targetCustomers.filter((c) => !c.phoneVerified)
-				}
+				rulesAudience = rules?.audience
 			} catch {
-				// Fallback to all
+				// Fallback to everyone subscribed
 			}
 		}
+		const targetCustomers = await loadBroadcastAudience(db, {
+			channel: campaign.channel === 'sms' ? 'sms' : 'email',
+			audience: rulesAudience,
+		})
 
 		// Update target audience count
 		await db

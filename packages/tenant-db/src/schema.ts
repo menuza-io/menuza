@@ -65,6 +65,65 @@ export const customerRefreshTokens = sqliteTable(
 	],
 )
 
+// Explicit marketing consent, one row per customer + topic + channel. Opting
+// out keeps the row (unsubscribedAt set) as the record of the opt-out; a later
+// opt-in clears it and restamps subscribedAt/source. A customer with no active
+// row has not consented: broadcasts never reach them.
+export const CUSTOMER_SUBSCRIPTION_TOPICS = [
+	'marketing',
+	'product_updates',
+] as const
+export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms', 'email'] as const
+export const CUSTOMER_SUBSCRIPTION_SOURCES = [
+	'signup',
+	'profile',
+	'checkout',
+	'form',
+	'operator',
+	'import',
+] as const
+
+export type CustomerSubscriptionTopic =
+	(typeof CUSTOMER_SUBSCRIPTION_TOPICS)[number]
+export type CustomerSubscriptionChannel =
+	(typeof CUSTOMER_SUBSCRIPTION_CHANNELS)[number]
+export type CustomerSubscriptionSource =
+	(typeof CUSTOMER_SUBSCRIPTION_SOURCES)[number]
+
+export const customerSubscriptions = sqliteTable(
+	'customer_subscriptions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		customerId: text('customer_id')
+			.notNull()
+			.references(() => customers.id, { onDelete: 'cascade' }),
+		topic: text('topic', { enum: CUSTOMER_SUBSCRIPTION_TOPICS }).notNull(),
+		channel: text('channel', {
+			enum: CUSTOMER_SUBSCRIPTION_CHANNELS,
+		}).notNull(),
+		source: text('source', { enum: CUSTOMER_SUBSCRIPTION_SOURCES }).notNull(),
+		subscribedAt: integer('subscribed_at', { mode: 'timestamp' }).notNull(),
+		unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
+		updatedAt: integer('updated_at', { mode: 'timestamp' }).default(
+			sql`(strftime('%s', 'now'))`,
+		),
+	},
+	(table) => [
+		uniqueIndex('uniq_customer_subscriptions_customer_topic_channel').on(
+			table.customerId,
+			table.topic,
+			table.channel,
+		),
+		index('idx_customer_subscriptions_topic_channel').on(
+			table.topic,
+			table.channel,
+			table.unsubscribedAt,
+		),
+	],
+)
+
 // ==========================================
 // 2. MARKETING JOURNEYS (Workflow Definitions)
 // ==========================================
@@ -2590,6 +2649,10 @@ export type NewMarketingCampaign = typeof marketingCampaigns.$inferInsert
 
 export type MarketingMessage = typeof marketingMessages.$inferSelect
 export type NewMarketingMessage = typeof marketingMessages.$inferInsert
+
+export type CustomerSubscription = typeof customerSubscriptions.$inferSelect
+export type NewCustomerSubscription =
+	typeof customerSubscriptions.$inferInsert
 
 export type ShopOrder = typeof shopOrders.$inferSelect
 export type NewShopOrder = typeof shopOrders.$inferInsert

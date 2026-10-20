@@ -187,3 +187,18 @@ Not yet implemented (follow-ups): a working unsubscribe flow, per-locale email
 content, and AI tools that read or edit the journey/email design. The AI
 assistant is reachable in the automation editor but its server-side tools
 (`packages/ai/src/route-handlers/chat.ts`) are still website-editor only.
+
+## Broadcast consent
+
+Customer broadcasts (App > Marketing > Campaigns) only go to customers with an
+active row in the regional `customer_subscriptions` table for the campaign's
+channel (`email` or `sms`) and topic (`marketing`). A customer row, a verified
+phone or an order is not consent. Texts also need a verified phone; emails need
+an address. Customers manage their own consent with
+`PUT /subscriptions/:topic/:channel` on the tenant-api (text needs a verified
+phone). Opting out keeps the row with `unsubscribed_at` set.
+
+To backfill consent a business already holds (for example an existing mailing
+list), insert rows with `source = 'import'` through `setCustomerSubscription()`
+in `apps/tenant-api/src/services/marketing-audience.ts`. Only import people who
+agreed to receive marketing.

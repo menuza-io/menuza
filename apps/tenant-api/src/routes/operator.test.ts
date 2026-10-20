@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import {
 	customers,
+	customerSubscriptions,
 	destroyTenantDb,
 	getTenantDb,
 	marketingCampaigns,
@@ -157,20 +158,32 @@ describe('Operator Routes', () => {
 
 	it('dispatches campaigns and respects segmentation rules', async () => {
 		const db = await getTenantDb(testOrgId)
-		await db.insert(customers).values([
-			{
-				name: 'Verified User',
-				phone: '+15550000031',
-				email: 'verified@example.com',
-				phoneVerified: true,
-			},
-			{
-				name: 'Unverified User',
-				phone: '+15550000032',
-				email: 'unverified@example.com',
-				phoneVerified: false,
-			},
-		])
+		const created = await db
+			.insert(customers)
+			.values([
+				{
+					name: 'Verified User',
+					phone: '+15550000031',
+					email: 'verified@example.com',
+					phoneVerified: true,
+				},
+				{
+					name: 'Unverified User',
+					phone: '+15550000032',
+					email: 'unverified@example.com',
+					phoneVerified: false,
+				},
+			])
+			.returning()
+		await db.insert(customerSubscriptions).values(
+			created.map((customer) => ({
+				customerId: customer.id,
+				topic: 'marketing' as const,
+				channel: 'email' as const,
+				source: 'signup' as const,
+				subscribedAt: new Date(),
+			})),
+		)
 
 		// Create campaign targeting only verified users
 		const res = await app.request('/operator/marketing/campaigns', {
@@ -210,5 +223,69 @@ describe('Operator Routes', () => {
 			.where(eq(marketingMessages.campaignId, body.campaignId))
 		expect(messages).toHaveLength(1)
 		expect(messages[0]!.status).toBe('Sent')
+	})
+
+	it('only sends broadcasts to subscribed customers', async () => {
+		const db = await getTenantDb(testOrgId)
+		const created = await db
+			.insert(customers)
+			.values([
+				{ name: 'Subscribed', email: 'in@example.com' },
+				{ name: 'Opted Out', email: 'out@example.com' },
+				{ name: 'Never Asked', email: 'never@example.com' },
+			])
+			.returning()
+		const [subscribed, optedOut] = created
+		await db.insert(customerSubscriptions).values([
+			{
+				customerId: subscribed!.id,
+				topic: 'marketing',
+				channel: 'email',
+				source: 'signup',
+				subscribedAt: new Date(),
+			},
+			{
+				customerId: optedOut!.id,
+				topic: 'marketing',
+				channel: 'email',
+				source: 'signup',
+				subscribedAt: new Date(),
+				unsubscribedAt: new Date(),
+			},
+		])
+
+		const res = await app.request('/operator/marketing/campaigns', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${validToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				name: 'Consent check',
+				channel: 'email',
+				subject: 'Hello',
+				content: 'Hi {{customer.name}}!',
+				audience: 'all',
+			}),
+		})
+		expect(res.status).toBe(200)
+		const body = await res.json()
+
+		await vi.waitFor(
+			async () => {
+				const [camp] = await db
+					.select()
+					.from(marketingCampaigns)
+					.where(eq(marketingCampaigns.id, body.campaignId))
+				expect(camp?.status).toBe('Completed')
+				expect(camp?.targetAudienceCount).toBe(1)
+			},
+			{ timeout: 3000, interval: 50 },
+		)
+		const messages = await db
+			.select()
+			.from(marketingMessages)
+			.where(eq(marketingMessages.campaignId, body.campaignId))
+		expect(messages.map((m) => m.customerId)).toEqual([subscribed!.id])
 	})
 })

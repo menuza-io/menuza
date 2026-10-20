@@ -92,6 +92,13 @@
 			"when": 1791949810388,
 			"tag": "0012_staffing_foundation",
 			"breakpoints": true
+		},
+		{
+			"idx": 13,
+			"version": "6",
+			"when": 1792471906882,
+			"tag": "0013_customer_subscriptions",
+			"breakpoints": true
 		}
 	]
 }
