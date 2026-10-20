@@ -22,7 +22,8 @@ describe('Worker without TENANT_API_URL', () => {
 	})
 
 	afterEach(() => {
-		for (const key of KEYS) process.env[key] = saved[key] ?? ''
+		for (const key of KEYS)
+			(process.env as Record<string, string>)[key] = saved[key] ?? ''
 	})
 
 	it('still answers /health and does not throw on fetch', async () => {
