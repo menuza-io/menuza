@@ -29,7 +29,7 @@ import {
 } from '@repo/ui/select'
 import { Switch } from '@repo/ui/switch'
 import { Textarea } from '@repo/ui/textarea'
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLoaderData, useLocation, useParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { formatDateTime } from '#app/components/phone-agent/call-data.ts'
@@ -292,7 +292,7 @@ function FlowLinesSection({
 			className="flex flex-col gap-6"
 			onSubmit={(event) => {
 				event.preventDefault()
-				save({ phrases: drafts.collect() })
+				save(drafts.patch(FLOW_PHRASE_KEYS))
 			}}
 		>
 			<AnnotatedSection
@@ -360,6 +360,10 @@ function TransfersSection({
 	const [transfers, setTransfers] = useState(savedTransfers)
 	const [contacts, setContacts] = useState(savedContacts)
 	const [cases, setCases] = useState(savedCases)
+	const contactFocus = useRowFocus()
+	const caseFocus = useRowFocus()
+	const addContactButtonRef = useRef<HTMLButtonElement>(null)
+	const addCaseButtonRef = useRef<HTMLButtonElement>(null)
 	const [ringTimeout, setRingTimeout] = useState(
 		String(savedTransfers.ringTimeoutSeconds),
 	)
@@ -440,7 +444,7 @@ function TransfersSection({
 						role: contact.role?.trim() || null,
 					})),
 					transferCases: cases,
-					phrases: drafts.collect(),
+					...drafts.patch(TRANSFER_PHRASE_KEYS),
 				})
 			}}
 		>
@@ -486,9 +490,17 @@ function TransfersSection({
 								value={staffPhone}
 								disabled={disabled}
 								aria-invalid={fieldErrors.escalationPhone ? true : undefined}
+								aria-describedby={
+									fieldErrors.escalationPhone
+										? 'transfer-staff-phone-hint transfer-staff-phone-error'
+										: 'transfer-staff-phone-hint'
+								}
 								onChange={(event) => setStaffPhone(event.target.value.trim())}
 							/>
-							<p className="text-muted-foreground text-xs">
+							<p
+								id="transfer-staff-phone-hint"
+								className="text-muted-foreground text-xs"
+							>
 								{staffPhone ? (
 									<Trans>
 										The agent moves callers here when it can't help. Use a
@@ -502,7 +514,10 @@ function TransfersSection({
 									</Trans>
 								)}
 							</p>
-							<FieldErrorText error={fieldErrors.escalationPhone} />
+							<FieldErrorText
+								id="transfer-staff-phone-error"
+								error={fieldErrors.escalationPhone}
+							/>
 						</div>
 
 						<div className="flex flex-col gap-1.5">
@@ -610,9 +625,15 @@ function TransfersSection({
 								aria-invalid={
 									fieldErrors['transfers.ringTimeoutSeconds'] ? true : undefined
 								}
+								aria-describedby={
+									fieldErrors['transfers.ringTimeoutSeconds']
+										? 'transfer-ring-timeout-error'
+										: undefined
+								}
 								onChange={(event) => setRingTimeout(event.target.value)}
 							/>
 							<FieldErrorText
+								id="transfer-ring-timeout-error"
 								error={fieldErrors['transfers.ringTimeoutSeconds']}
 							/>
 						</div>
@@ -666,6 +687,10 @@ function TransfersSection({
 										required
 										disabled={disabled}
 										aria-invalid={nameError ? true : undefined}
+										aria-describedby={
+											nameError ? `contact-${contact.id}-name-error` : undefined
+										}
+										ref={contactFocus.fieldRef(contact.id)}
 										onChange={(event) =>
 											updateContact(contact.id, {
 												name: event.target.value,
@@ -679,6 +704,9 @@ function TransfersSection({
 										maxLength={80}
 										disabled={disabled}
 										aria-invalid={roleError ? true : undefined}
+										aria-describedby={
+											roleError ? `contact-${contact.id}-role-error` : undefined
+										}
 										onChange={(event) =>
 											updateContact(contact.id, {
 												role: event.target.value,
@@ -694,6 +722,11 @@ function TransfersSection({
 										required
 										disabled={disabled}
 										aria-invalid={phoneError ? true : undefined}
+										aria-describedby={
+											phoneError
+												? `contact-${contact.id}-phone-error`
+												: undefined
+										}
 										onChange={(event) =>
 											updateContact(contact.id, {
 												phone: event.target.value.trim(),
@@ -707,18 +740,32 @@ function TransfersSection({
 										disabled={disabled || inUse}
 										title={inUse ? _(msg`Used by a transfer case`) : undefined}
 										aria-label={_(msg`Remove contact`)}
-										onClick={() =>
+										onClick={() => {
+											contactFocus.focusNeighbor(
+												contacts,
+												contact.id,
+												addContactButtonRef.current,
+											)
 											setContacts((current) =>
 												current.filter((item) => item.id !== contact.id),
 											)
-										}
+										}}
 									>
 										<Icon name="trash-2" />
 									</Button>
 									<div className="flex flex-col gap-1 sm:col-span-4">
-										<FieldErrorText error={nameError} />
-										<FieldErrorText error={roleError} />
-										<FieldErrorText error={phoneError} />
+										<FieldErrorText
+											id={`contact-${contact.id}-name-error`}
+											error={nameError}
+										/>
+										<FieldErrorText
+											id={`contact-${contact.id}-role-error`}
+											error={roleError}
+										/>
+										<FieldErrorText
+											id={`contact-${contact.id}-phone-error`}
+											error={phoneError}
+										/>
 									</div>
 								</div>
 							)
@@ -728,18 +775,18 @@ function TransfersSection({
 							variant="outline"
 							size="sm"
 							className="self-start"
+							ref={addContactButtonRef}
 							disabled={disabled || contacts.length >= 20}
-							onClick={() =>
-								setContacts((current) => [
-									...current,
-									{
-										id: localId('contact'),
-										name: '',
-										phone: '',
-										role: null,
-									},
-								])
-							}
+							onClick={() => {
+								const contact = {
+									id: localId('contact'),
+									name: '',
+									phone: '',
+									role: null,
+								}
+								setContacts((current) => [...current, contact])
+								contactFocus.focusRow(contact.id)
+							}}
 						>
 							<Icon name="user-plus" />
 							<Trans>Add contact</Trans>
@@ -795,11 +842,18 @@ function TransfersSection({
 												value={item.when}
 												disabled={disabled}
 												aria-invalid={whenError ? true : undefined}
+												aria-describedby={
+													whenError ? `case-${item.id}-when-error` : undefined
+												}
+												ref={caseFocus.fieldRef(item.id)}
 												onChange={(event) =>
 													updateCase(item.id, { when: event.target.value })
 												}
 											/>
-											<FieldErrorText error={whenError} />
+											<FieldErrorText
+												id={`case-${item.id}-when-error`}
+												error={whenError}
+											/>
 										</div>
 										<Button
 											type="button"
@@ -807,11 +861,16 @@ function TransfersSection({
 											size="icon"
 											disabled={disabled}
 											aria-label={_(msg`Remove transfer case`)}
-											onClick={() =>
+											onClick={() => {
+												caseFocus.focusNeighbor(
+													cases,
+													item.id,
+													addCaseButtonRef.current,
+												)
 												setCases((current) =>
 													current.filter((other) => other.id !== item.id),
 												)
-											}
+											}}
 										>
 											<Icon name="trash-2" />
 										</Button>
@@ -843,6 +902,11 @@ function TransfersSection({
 															? true
 															: undefined
 													}
+													aria-describedby={
+														fieldErrors[`transferCases.${index}.contactId`]
+															? `case-${item.id}-contact-error`
+															: undefined
+													}
 												>
 													<SelectValue />
 												</SelectTrigger>
@@ -855,6 +919,7 @@ function TransfersSection({
 												</SelectContent>
 											</Select>
 											<FieldErrorText
+												id={`case-${item.id}-contact-error`}
 												error={fieldErrors[`transferCases.${index}.contactId`]}
 											/>
 										</div>
@@ -927,20 +992,20 @@ function TransfersSection({
 							variant="outline"
 							size="sm"
 							className="self-start"
+							ref={addCaseButtonRef}
 							disabled={disabled || !contacts.length || cases.length >= 20}
-							onClick={() =>
-								setCases((current) => [
-									...current,
-									{
-										id: localId('case'),
-										contactId: contacts[0]!.id,
-										when: '',
-										hours: 'business_hours',
-										retries: 0,
-										isActive: true,
-									},
-								])
-							}
+							onClick={() => {
+								const item: TransferCase = {
+									id: localId('case'),
+									contactId: contacts[0]!.id,
+									when: '',
+									hours: 'business_hours',
+									retries: 0,
+									isActive: true,
+								}
+								setCases((current) => [...current, item])
+								caseFocus.focusRow(item.id)
+							}}
 						>
 							<Icon name="plus" />
 							<Trans>Add transfer case</Trans>
@@ -955,6 +1020,44 @@ function TransfersSection({
 			/>
 		</form>
 	)
+}
+
+/**
+ * Keeps keyboard focus in an editable list: a new row's first field gets
+ * focus once it mounts, and removing a row moves focus to a neighbor (or to
+ * the list's add button) before the removed button unmounts.
+ */
+function useRowFocus() {
+	const fields = useRef(new Map<string, HTMLElement>())
+	const pending = useRef<string | null>(null)
+	return {
+		fieldRef(id: string) {
+			return (node: HTMLElement | null) => {
+				if (!node) {
+					fields.current.delete(id)
+					return
+				}
+				fields.current.set(id, node)
+				if (pending.current === id) {
+					pending.current = null
+					node.focus()
+				}
+			}
+		},
+		focusRow(id: string) {
+			pending.current = id
+		},
+		focusNeighbor(
+			rows: ReadonlyArray<{ id: string }>,
+			id: string,
+			fallback: HTMLElement | null,
+		) {
+			const index = rows.findIndex((row) => row.id === id)
+			const neighbor = rows[index + 1] ?? rows[index - 1]
+			const target = neighbor ? fields.current.get(neighbor.id) : fallback
+			target?.focus()
+		},
+	}
 }
 
 function StaffPhoneWarning({
@@ -1057,7 +1160,10 @@ function RatingsSection({
 			className="flex flex-col gap-6"
 			onSubmit={(event) => {
 				event.preventDefault()
-				save({ csatEnabled: askRating, phrases: drafts.collect() })
+				save({
+					csatEnabled: askRating,
+					...drafts.patch(CSAT_PHRASE_KEYS),
+				})
 			}}
 		>
 			<AnnotatedSection
@@ -1126,6 +1232,8 @@ function AfterCallSection({
 	const [notifications, setNotifications] = useState(savedNotifications)
 	const [followUp, setFollowUp] = useState(savedFollowUp)
 	const [tags, setTags] = useState(savedTags)
+	const tagFocus = useRowFocus()
+	const addTagButtonRef = useRef<HTMLButtonElement>(null)
 	const form = useSettingsFormState({
 		saved: {
 			notifications: savedNotifications,
@@ -1388,7 +1496,7 @@ function AfterCallSection({
 							const descriptionError = fieldErrors[`tags.${index}.description`]
 							return (
 								<fieldset
-									key={index}
+									key={tag.id}
 									className="border-border flex flex-col gap-3 rounded-md border p-4"
 								>
 									<legend className="sr-only">
@@ -1403,6 +1511,10 @@ function AfterCallSection({
 											required
 											disabled={disabled}
 											aria-invalid={nameError ? true : undefined}
+											aria-describedby={
+												nameError ? `tag-${tag.id}-name-error` : undefined
+											}
+											ref={tagFocus.fieldRef(tag.id)}
 											onChange={(event) =>
 												updateTag(tag.id, { name: event.target.value })
 											}
@@ -1413,16 +1525,24 @@ function AfterCallSection({
 											size="icon"
 											disabled={disabled}
 											aria-label={_(msg`Remove tag`)}
-											onClick={() =>
+											onClick={() => {
+												tagFocus.focusNeighbor(
+													tags,
+													tag.id,
+													addTagButtonRef.current,
+												)
 												setTags((current) =>
 													current.filter((item) => item.id !== tag.id),
 												)
-											}
+											}}
 										>
 											<Icon name="trash-2" />
 										</Button>
 									</div>
-									<FieldErrorText error={nameError} />
+									<FieldErrorText
+										id={`tag-${tag.id}-name-error`}
+										error={nameError}
+									/>
 									<Input
 										aria-label={_(msg`When to apply`)}
 										placeholder={_(
@@ -1432,13 +1552,21 @@ function AfterCallSection({
 										maxLength={200}
 										disabled={disabled}
 										aria-invalid={descriptionError ? true : undefined}
+										aria-describedby={
+											descriptionError
+												? `tag-${tag.id}-description-error`
+												: undefined
+										}
 										onChange={(event) =>
 											updateTag(tag.id, {
 												description: event.target.value,
 											})
 										}
 									/>
-									<FieldErrorText error={descriptionError} />
+									<FieldErrorText
+										id={`tag-${tag.id}-description-error`}
+										error={descriptionError}
+									/>
 									<div className="flex flex-wrap gap-6">
 										<label className="flex items-center gap-2 text-sm">
 											<Switch
@@ -1470,19 +1598,19 @@ function AfterCallSection({
 							variant="outline"
 							size="sm"
 							className="self-start"
+							ref={addTagButtonRef}
 							disabled={disabled || tags.length >= 30}
-							onClick={() =>
-								setTags((current) => [
-									...current,
-									{
-										id: localId('tag'),
-										name: '',
-										description: '',
-										autoApply: false,
-										important: false,
-									},
-								])
-							}
+							onClick={() => {
+								const tag: CallTag = {
+									id: localId('tag'),
+									name: '',
+									description: '',
+									autoApply: false,
+									important: false,
+								}
+								setTags((current) => [...current, tag])
+								tagFocus.focusRow(tag.id)
+							}}
 						>
 							<Icon name="tag" />
 							<Trans>Add tag</Trans>

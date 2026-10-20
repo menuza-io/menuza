@@ -24,6 +24,11 @@ export type SettingsSaveResult =
 	| { ok: true }
 	| { ok: false; error?: string; fieldErrors?: Record<string, string> }
 
+type SettingsPatch = Partial<PhoneAgentSettings> & {
+	phraseKeys?: PhoneAgentSettings['phrases'][number]['key'][]
+	phraseBase?: PhoneAgentSettings['phrases']
+}
+
 export function FieldErrorText({ id, error }: { id?: string; error?: string }) {
 	if (!error) return null
 	return (
@@ -307,7 +312,7 @@ export function useSettingsFormState<TSaved>({
 		conflict,
 		fieldErrors,
 		error: result && !result.ok ? describe(result.error) : undefined,
-		save(patch: Partial<PhoneAgentSettings>) {
+		save(patch: SettingsPatch) {
 			submittedDraft.current = draftKey
 			const keys = Object.keys(patch)
 			const body = {

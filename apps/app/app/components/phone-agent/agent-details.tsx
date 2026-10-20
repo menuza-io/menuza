@@ -19,7 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useFetcher, useLocation, useParams } from 'react-router'
 import { type loader as detailsLoader } from '#app/routes/_app+/$orgSlug_+/phone-agent+/details.server.ts'
 import { formatDateTime } from './call-data.ts'
@@ -79,21 +79,44 @@ export function AgentDetails() {
 	const [open, setOpen] = useState(location.hash === '#details')
 	const [query, setQuery] = useState<{ scope?: string; state?: string }>({})
 	const fetcher = useDetailsFetcher()
-	const search = new URLSearchParams(
-		Object.entries(query).filter((entry): entry is [string, string] =>
-			Boolean(entry[1]),
-		),
-	).toString()
-	const href = `/${orgSlug}/phone-agent/details${search ? `?${search}` : ''}`
 	const { load } = fetcher
-	useEffect(() => {
-		if (open) void load(href)
-	}, [open, href, load])
+	const hrefFor = useCallback(
+		(next: { scope?: string; state?: string }) => {
+			const search = new URLSearchParams(
+				Object.entries(next).filter((entry): entry is [string, string] =>
+					Boolean(entry[1]),
+				),
+			).toString()
+			return `/${orgSlug}/phone-agent/details${search ? `?${search}` : ''}`
+		},
+		[orgSlug],
+	)
+	const detailsRef = useCallback(
+		(node: HTMLElement | null) => {
+			if (!node || location.hash !== '#details') return
+			node.scrollIntoView({ block: 'start' })
+			void load(hrefFor({}))
+		},
+		[load, hrefFor, location.hash],
+	)
+	function handleOpenChange(next: boolean) {
+		setOpen(next)
+		if (next) void load(hrefFor(query))
+	}
+	function setParam(key: 'scope' | 'state', value: string) {
+		const next = { ...query, [key]: value }
+		setQuery(next)
+		void load(hrefFor(next))
+	}
 	const data = fetcher.data
 
 	return (
-		<Collapsible open={open} onOpenChange={setOpen}>
-			<section id="details" className="flex scroll-mt-6 flex-col gap-6">
+		<Collapsible open={open} onOpenChange={handleOpenChange}>
+			<section
+				id="details"
+				ref={detailsRef}
+				className="flex scroll-mt-6 flex-col gap-6"
+			>
 				<CollapsibleTrigger
 					render={
 						<Button
@@ -113,9 +136,7 @@ export function AgentDetails() {
 							<PromptPreview
 								preview={data.preview}
 								scopes={data.scopes}
-								setParam={(key, value) =>
-									setQuery((current) => ({ ...current, [key]: value }))
-								}
+								setParam={setParam}
 							/>
 							<HistorySection history={data.history} />
 						</AnnotatedLayout>

@@ -549,7 +549,7 @@ function SettingsForm({
 					recordingRetentionDays: Number(retentionDays),
 					afterHoursMode,
 					maxCallMinutes: Number(maxCallMinutes),
-					phrases: phrases.collect(),
+					...phrases.patch(AGENT_PHRASE_KEYS),
 				})
 			}}
 		>

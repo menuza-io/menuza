@@ -333,6 +333,89 @@ describe('patchPhoneAgentSettings', () => {
 		expect(settings.closing).toBe('Bye now')
 		expect(settings.agentName).toBe(DEFAULT_PHONE_AGENT_SETTINGS.agentName)
 	})
+
+	it('keeps transfers off when a save leaves the staff phone empty', async () => {
+		const { orgId, versions } = await setup()
+		const result = await patch(
+			orgId,
+			{ autoEscalate: true, escalationPhone: null },
+			{
+				autoEscalate: versions.autoEscalate!,
+				escalationPhone: versions.escalationPhone!,
+			},
+		)
+		expect(result.ok).toBe(true)
+		expect((await getPhoneAgent(orgId)).settings.autoEscalate).toBe(false)
+	})
+})
+
+describe('scoped phrase saves', () => {
+	const hold = { key: 'hold', language: 'en', text: 'One moment.' } as const
+	const csat = {
+		key: 'csat_question',
+		language: 'en',
+		text: 'How did we do?',
+	} as const
+
+	it('merges disjoint phrase edits from forms loaded at the same time', async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		const first = await patch(
+			orgId,
+			{ phrases: [hold], phraseKeys: ['hold'], phraseBase: [] },
+			stale,
+		)
+		expect(first.ok).toBe(true)
+		const second = await patch(
+			orgId,
+			{ phrases: [csat], phraseKeys: ['csat_question'], phraseBase: [] },
+			stale,
+		)
+		expect(second.ok).toBe(true)
+		const { settings } = await getPhoneAgent(orgId)
+		expect(settings.phrases).toEqual(expect.arrayContaining([hold, csat]))
+		expect(settings.phrases).toHaveLength(2)
+	})
+
+	it('refuses a stale edit of the same phrase', async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		await patch(
+			orgId,
+			{ phrases: [hold], phraseKeys: ['hold'], phraseBase: [] },
+			stale,
+		)
+		const result = await patch(
+			orgId,
+			{
+				phrases: [{ ...hold, text: 'Please hold.' }],
+				phraseKeys: ['hold'],
+				phraseBase: [],
+			},
+			stale,
+		)
+		expect(result).toEqual({ ok: false, error: 'conflict' })
+		expect((await getPhoneAgent(orgId)).settings.phrases).toEqual([hold])
+	})
+
+	it('rejects phrases outside the declared keys or locked notices', async () => {
+		const { orgId, versions } = await setup()
+		const stale = { phrases: versions.phrases! }
+		expect(
+			await patch(
+				orgId,
+				{ phrases: [csat], phraseKeys: ['hold'], phraseBase: [] },
+				stale,
+			),
+		).toEqual({ ok: false, error: 'invalid_request' })
+		expect(
+			await patch(
+				orgId,
+				{ phrases: [], phraseKeys: ['disclosure'], phraseBase: [] },
+				stale,
+			),
+		).toEqual({ ok: false, error: 'invalid_request' })
+	})
 })
 
 describe('toFieldErrors', () => {

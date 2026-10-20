@@ -13,7 +13,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { TestCallSheet } from '#app/components/phone-agent/test-call-sheet.tsx'
 import { requirePhoneAgentSectionAccess } from '#app/utils/phone-agent/access.server.ts'
 import { getLiveKitConfig } from '#app/utils/phone-agent/livekit.server.ts'
-import { getPhoneAgent } from '#app/utils/phone-agent/phone-agent.server.ts'
+import { getPhoneAgentIsOn } from '#app/utils/phone-agent/phone-agent.server.ts'
 import { type Route } from './+types/_layout.ts'
 
 // Each page checks its own permission: setup pages need phone agent read,
@@ -21,15 +21,13 @@ import { type Route } from './+types/_layout.ts'
 export async function loader({ request, params }: Route.LoaderArgs) {
 	const { dataRegion, canReadAgent, orgId } =
 		await requirePhoneAgentSectionAccess(request, params.orgSlug)
-	const agent = canReadAgent ? await getPhoneAgent(orgId) : null
+	const agentOn = canReadAgent ? await getPhoneAgentIsOn(orgId) : null
 	return {
 		regionSupported: dataRegion === 'us',
 		liveKitConfigured: Boolean(getLiveKitConfig()),
 		canReadAgent,
 		/** Null for people who can only see calls. */
-		agentOn: agent
-			? agent.settings.enabled && !agent.settings.safety.callingDisabled
-			: null,
+		agentOn,
 	}
 }
 

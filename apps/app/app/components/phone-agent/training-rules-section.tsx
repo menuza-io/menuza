@@ -47,6 +47,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useFetcher } from 'react-router'
 import { type TrainingActionResult } from '#app/utils/phone-agent/training-actions.server.ts'
 import { phoneAgentVertical } from '#app/utils/phone-agent/vertical.ts'
+import { useSettingsErrorText } from './settings-page.tsx'
 import { useVerticalLabels } from './vertical-labels.ts'
 import { phoneAgentVerticalUi } from './vertical-ui.tsx'
 
@@ -335,6 +336,7 @@ function RuleRow({
 	onDelete(): void
 }) {
 	const { _ } = useLingui()
+	const describeError = useSettingsErrorText()
 	const fetcher = useFetcher<TrainingActionResult>()
 	const pendingActive =
 		fetcher.json &&
@@ -360,7 +362,7 @@ function RuleRow({
 				</p>
 				{fetcher.data && !fetcher.data.ok && fetcher.data.error ? (
 					<p role="alert" className="text-destructive mt-1 text-xs">
-						{fetcher.data.error}
+						{describeError(fetcher.data.error)}
 					</p>
 				) : null}
 			</div>
@@ -650,6 +652,7 @@ function RuleDialog({
 }
 
 function DeleteRuleDialog({ rule, onClose }: { rule: Rule; onClose(): void }) {
+	const describeError = useSettingsErrorText()
 	const fetcher = useFetcher<TrainingActionResult>()
 	const pending = fetcher.state !== 'idle'
 	const result = fetcher.data
@@ -680,7 +683,7 @@ function DeleteRuleDialog({ rule, onClose }: { rule: Rule; onClose(): void }) {
 				</DialogHeader>
 				{result && !result.ok && result.error ? (
 					<p role="alert" className="text-destructive text-sm">
-						{result.error}
+						{describeError(result.error)}
 					</p>
 				) : null}
 				<DialogFooter>

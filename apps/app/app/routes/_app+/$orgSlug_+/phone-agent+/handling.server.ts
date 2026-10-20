@@ -28,7 +28,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		languages: page.settings.languages,
 		phrases: page.settings.phrases,
 		safety: page.settings.safety,
-		escalationPhone: page.settings.escalationPhone ?? null,
+		// Legacy settings could retain a number after staff transfers were
+		// disabled. Do not show it as active or let an unrelated save re-enable it.
+		escalationPhone: page.settings.autoEscalate
+			? (page.settings.escalationPhone ?? null)
+			: null,
 		transfers: page.settings.transfers,
 		contacts: page.settings.contacts,
 		transferCases: page.settings.transferCases,

@@ -156,19 +156,53 @@ function toDrafts(overrides: PhraseOverride[]): PhraseDrafts {
 	)
 }
 
+function collectOverrides(
+	drafts: PhraseDrafts,
+	keys?: ReadonlySet<PhraseKey>,
+): PhraseOverride[] {
+	const overrides: PhraseOverride[] = []
+	for (const [keyed, text] of Object.entries(drafts)) {
+		const [language, key] = keyed.split(':') as [AgentLanguage, PhraseKey]
+		const definition = PHRASE_DEFINITIONS.find((item) => item.key === key)
+		const value = text.trim()
+		if (
+			!definition ||
+			!isEditablePhraseKey(key) ||
+			(keys && !keys.has(key)) ||
+			!value ||
+			value === definition.defaults[language]
+		)
+			continue
+		overrides.push({ key, language, text: value })
+	}
+	return overrides
+}
+
+function sameOverrides(left: PhraseOverride[], right: PhraseOverride[]) {
+	const sorted = (overrides: PhraseOverride[]) =>
+		[...overrides].sort(
+			(a, b) =>
+				a.key.localeCompare(b.key) || a.language.localeCompare(b.language),
+		)
+	return JSON.stringify(sorted(left)) === JSON.stringify(sorted(right))
+}
+
 /**
- * Phrase overrides edited on a settings page. Every page that shows some
- * phrases keeps drafts for all of them, so saving one page's lines never
- * drops the lines shown on another page.
+ * Phrase overrides edited on a settings page. `patch(keys)` sends only one
+ * feature's lines plus the values they started from, so the server merges
+ * them without touching (or conflicting with) lines saved by other forms.
  */
 export function usePhraseDrafts(saved: PhraseOverride[]) {
 	const [drafts, setDrafts] = useState<PhraseDrafts>(() => toDrafts(saved))
+	// Keep the snapshot this editor began from while sibling forms revalidate.
+	const [base, setBase] = useState(saved)
 	// Field errors are keyed by position in the saved list (`phrases.3.text`),
 	// so remember which draft each position came from.
 	const [submittedKeys, setSubmittedKeys] = useState<string[]>([])
 
 	const reset = useCallback((next: PhraseOverride[]) => {
 		setDrafts(toDrafts(next))
+		setBase(next)
 	}, [])
 
 	const setText = useCallback(
@@ -185,24 +219,24 @@ export function usePhraseDrafts(saved: PhraseOverride[]) {
 
 	/** The overrides to save. Lines equal to their default are dropped. */
 	function collect(): PhraseOverride[] {
-		const overrides: PhraseOverride[] = []
-		for (const [keyed, text] of Object.entries(drafts)) {
-			const [language, key] = keyed.split(':') as [AgentLanguage, PhraseKey]
-			const definition = PHRASE_DEFINITIONS.find((item) => item.key === key)
-			const value = text.trim()
-			if (
-				!definition ||
-				!isEditablePhraseKey(key) ||
-				!value ||
-				value === definition.defaults[language]
-			)
-				continue
-			overrides.push({ key, language, text: value })
-		}
+		const overrides = collectOverrides(drafts)
 		setSubmittedKeys(
 			overrides.map((override) => draftKey(override.key, override.language)),
 		)
 		return overrides
+	}
+
+	/** A scoped patch merges this feature's lines without clobbering siblings. */
+	function patch(keys: readonly PhraseKey[]) {
+		const phraseKeys = keys.filter(isEditablePhraseKey)
+		const allowed = new Set(phraseKeys)
+		const phraseBase = base.filter((override) => allowed.has(override.key))
+		const phrases = collectOverrides(drafts, allowed)
+		if (sameOverrides(phraseBase, phrases)) return {}
+		setSubmittedKeys(
+			phrases.map((override) => draftKey(override.key, override.language)),
+		)
+		return { phrases, phraseKeys, phraseBase }
 	}
 
 	function errorFor(
@@ -214,10 +248,17 @@ export function usePhraseDrafts(saved: PhraseOverride[]) {
 		return index === -1 ? undefined : fieldErrors[`phrases.${index}.text`]
 	}
 
-	return { drafts, reset, setText, collect, errorFor }
+	return { drafts, reset, setText, collect, patch, errorFor }
 }
 
 export type PhraseDraftsState = ReturnType<typeof usePhraseDrafts>
+
+export function activePhraseLanguage(
+	language: AgentLanguage,
+	shownLanguages: readonly AgentLanguage[],
+) {
+	return shownLanguages.includes(language) ? language : shownLanguages[0]!
+}
 
 /**
  * The fixed lines for one feature, folded away under "Customize what the
@@ -244,6 +285,7 @@ export function PhraseOverridesSection({
 		? [...languages]
 		: ['en']
 	const [language, setLanguage] = useState<AgentLanguage>(shownLanguages[0]!)
+	const activeLanguage = activePhraseLanguage(language, shownLanguages)
 	const customized = keys.filter(
 		(key) =>
 			isEditablePhraseKey(key) &&
@@ -299,7 +341,7 @@ export function PhraseOverridesSection({
 					</p>
 					{shownLanguages.length > 1 ? (
 						<Tabs
-							value={language}
+							value={activeLanguage}
 							onValueChange={(value) => {
 								const next = shownLanguages.find((item) => item === value)
 								if (next) setLanguage(next)

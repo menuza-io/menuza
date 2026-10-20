@@ -9,6 +9,7 @@ import {
 	saveTrainingRule,
 	setTrainingRuleActive,
 } from './phone-agent.server.ts'
+import { settingsError } from './settings-errors.ts'
 import { recordTrainingChange } from './settings-history.server.ts'
 import { canAddTrainingRule } from './training-rules.server.ts'
 import { phoneAgentVertical } from './vertical.ts'
@@ -69,7 +70,8 @@ export async function handleTrainingAction(input: {
 	const body = parsed.data
 
 	if (body.intent === 'toggle-rule') {
-		await setTrainingRuleActive(orgId, body.id, body.isActive)
+		const updated = await setTrainingRuleActive(orgId, body.id, body.isActive)
+		if (!updated) return { ok: false, error: settingsError('conflict') }
 		await recordTrainingChange({
 			...history,
 			change: body.isActive ? 'activated' : 'deactivated',
@@ -78,7 +80,8 @@ export async function handleTrainingAction(input: {
 		return { ok: true }
 	}
 	if (body.intent === 'delete-rule') {
-		await deleteTrainingRule(orgId, body.id)
+		const deleted = await deleteTrainingRule(orgId, body.id)
+		if (!deleted) return { ok: false, error: settingsError('conflict') }
 		await recordTrainingChange({
 			...history,
 			change: 'deleted',
