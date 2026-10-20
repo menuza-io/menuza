@@ -237,7 +237,17 @@ async function sendConfirmationEmail(
 		e: emailConsentHash(params.email),
 		x: confirmTokenExpiry(),
 	})
-	const link = `${consentBaseUrl(new URL(requestUrl).origin)}/subscriptions/confirm?token=${encodeURIComponent(token)}`
+	const baseUrl = consentBaseUrl(new URL(requestUrl).origin)
+	if (!baseUrl) {
+		// Never fall back to the request origin here: the link carries a signed
+		// token. Ids only, no address and no token.
+		console.error('Email confirmation skipped: TENANT_API_URL is not set', {
+			orgId: params.orgId,
+			customerId: params.customerId,
+		})
+		return false
+	}
+	const link = `${baseUrl}/subscriptions/confirm?token=${encodeURIComponent(token)}`
 	try {
 		const result = await sendTenantEmail({
 			to: params.email,

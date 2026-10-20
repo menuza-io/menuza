@@ -255,6 +255,76 @@ describe('customer subscription routes', () => {
 				})
 			})
 
+			describe('link origin', () => {
+				const saved = {
+					NODE_ENV: process.env.NODE_ENV,
+					TENANT_API_URL: process.env.TENANT_API_URL,
+				}
+				afterEach(() => {
+					process.env.NODE_ENV = saved.NODE_ENV ?? ''
+					process.env.TENANT_API_URL = saved.TENANT_API_URL ?? ''
+				})
+				const putFrom = (origin: string) =>
+					app.request(`${origin}/subscriptions/marketing/email`, {
+						method: 'PUT',
+						headers: {
+							Authorization: `Bearer ${accessToken}`,
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ subscribed: true }),
+					})
+				const sentLink = () => {
+					const args = send.mock.calls.at(-1)![0] as { text: string }
+					return /open: (\S+)/.exec(args.text)![1]!
+				}
+
+				it('in production without TENANT_API_URL skips the send and logs no token or address', async () => {
+					process.env.NODE_ENV = 'production'
+					process.env.TENANT_API_URL = ''
+					const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+					const res = await putFrom('https://tenant.example.com')
+					await expect(res.json()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: false,
+					})
+					expect(send).not.toHaveBeenCalled()
+					expect(log).toHaveBeenCalled()
+					const logged = JSON.stringify(log.mock.calls)
+					expect(logged).not.toContain('sam@example.com')
+					expect(logged).not.toContain('token=')
+					log.mockRestore()
+				})
+
+				it('in production with TENANT_API_URL links to the configured origin only', async () => {
+					process.env.NODE_ENV = 'production'
+					process.env.TENANT_API_URL = 'https://tenant.example.com'
+					const res = await putFrom('https://evil.example')
+					await expect(res.json()).resolves.toMatchObject({
+						confirmationSent: true,
+					})
+					expect(sentLink()).toMatch(
+						/^https:\/\/tenant\.example\.com\/subscriptions\/confirm\?token=/,
+					)
+				})
+
+				it('in development uses a local request origin', async () => {
+					process.env.NODE_ENV = 'development'
+					process.env.TENANT_API_URL = ''
+					await putFrom('http://localhost:3007')
+					expect(sentLink()).toMatch(
+						/^http:\/\/localhost:3007\/subscriptions\/confirm\?token=/,
+					)
+				})
+
+				it('in development ignores a forged Host and never links to it', async () => {
+					process.env.NODE_ENV = 'development'
+					process.env.TENANT_API_URL = ''
+					await putFrom('https://evil.example')
+					expect(sentLink()).not.toContain('evil.example')
+					expect(sentLink()).toMatch(/^http:\/\/localhost:3007\//)
+				})
+			})
+
 			it.each([
 				[
 					'an error result',

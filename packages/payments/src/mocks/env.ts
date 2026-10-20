@@ -11,8 +11,11 @@
  * 4. `scripts/check-no-payment-mocks.mjs` greps the Worker bundle for
  *    `PAYMENTS_MOCK_SENTINEL`.
  *
- * There is deliberately no `NODE_ENV` gate: CI runs the production Node build
- * with `MOCKS=true` and must keep the mock.
+ * There is deliberately no bare `NODE_ENV` gate: CI and `start:mocks` run the
+ * production Node build with `MOCKS=true` and must keep the mock. The runtime
+ * signal is the public origin instead: with a mock switch on, `BASE_URL` (and
+ * `PAYMENTS_MOCK_ORIGIN`, when set) must be a local development host, so a
+ * real deploy fails closed even when no key variable is set.
  */
 
 export type PaymentsMockEnv = {
@@ -74,13 +77,22 @@ function looksLiveCheckoutKey(value: string) {
 const LIVE_STRIPE_KEY = /^(sk|rk)_live_/
 
 /**
- * Which providers the emulator replaces. Throws when a mock switch is on but a
- * live key is present, so a misconfigured deploy fails loudly at startup.
+ * Which providers the emulator replaces. Throws when a mock switch is on but
+ * the deployment is not local or a live key is present, so a misconfigured
+ * deploy fails loudly at startup.
  */
 export function paymentsMockMode(env: PaymentsMockEnv): PaymentsMockMode {
 	if (!bundled()) return OFF
 	if (env.PAYMENTS_MOCK === 'false') return OFF
 	if (env.MOCKS !== 'true' && env.PAYMENTS_MOCK !== 'true') return OFF
+	// Fail closed on the deployment, whatever the key variables say: the mock
+	// accepts public webhook secrets, so a real deploy with a switch on (and
+	// keys simply unset) must not start.
+	if (!isLocalDeployment(env)) {
+		throw new Error(
+			'Refusing payments mock on a non-local deployment: BASE_URL and PAYMENTS_MOCK_ORIGIN must be a local host (localhost, 127.0.0.1, ::1, *.test, *.localhost). Unset MOCKS and PAYMENTS_MOCK.',
+		)
+	}
 	// Webhook secrets (`whsec_...`) carry no live/test marker, so the secret
 	// key is the only Stripe signal there is.
 	if (LIVE_STRIPE_KEY.test(env.STRIPE_SECRET_KEY?.trim() ?? '')) {
@@ -195,8 +207,14 @@ export function isLocalUrl(value: string | undefined | null) {
 	}
 }
 
-/** The configured public origin (if any) is local too. */
+/**
+ * Every configured public origin (`BASE_URL`, `PAYMENTS_MOCK_ORIGIN`) is
+ * local. Both are checked, so a local override cannot hide a real `BASE_URL`.
+ * With neither set the mock runs against its own localhost default.
+ */
 export function isLocalDeployment(env: PaymentsMockEnv) {
-	const configured = env.PAYMENTS_MOCK_ORIGIN?.trim() || env.BASE_URL?.trim()
-	return !configured || isLocalUrl(configured)
+	return [env.BASE_URL, env.PAYMENTS_MOCK_ORIGIN]
+		.map((value) => value?.trim())
+		.filter(Boolean)
+		.every((value) => isLocalUrl(value))
 }

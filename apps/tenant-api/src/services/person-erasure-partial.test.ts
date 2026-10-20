@@ -121,4 +121,47 @@ describe('person erasure when a recording deletion fails after an earlier target
 		})
 		expect(logs[0]!.counts).not.toHaveProperty('incomplete')
 	})
+
+	it('logs a failed progress write (ids only) and still throws the original error', async () => {
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const realUpdate = db.update.bind(db)
+		const update = vi.spyOn(db, 'update').mockImplementation(((
+			table: Parameters<typeof realUpdate>[0],
+		) =>
+			table === personErasureLog
+				? {
+						set: () => ({
+							where: () => Promise.reject(new Error('database is locked')),
+						}),
+					}
+				: realUpdate(table)) as never)
+		try {
+			const failure = await erasePerson(
+				db,
+				{ customerId },
+				{ actorId: 'user_1' },
+			).catch((error: unknown) => error)
+			// The original error is not masked by the progress failure.
+			expect(failure).toBeInstanceOf(PersonErasureError)
+			expect(failure).toMatchObject({
+				status: 502,
+				code: 'recording_delete_failed',
+				erased: { voiceCalls: 1, voiceRequests: 0, voiceTexts: 0 },
+			})
+			expect(update).toHaveBeenCalled()
+			const [logRow] = await db.select().from(personErasureLog)
+			expect(log).toHaveBeenCalledWith('Erasure progress not recorded', {
+				logId: logRow!.id,
+				phase: 'voice',
+				error: { name: 'Error', message: 'database is locked' },
+			})
+			const logged = JSON.stringify(log.mock.calls)
+			for (const pii of [PHONE, 'pat@example.test', 'Pat Partial']) {
+				expect(logged).not.toContain(pii)
+			}
+		} finally {
+			update.mockRestore()
+			log.mockRestore()
+		}
+	})
 })

@@ -4,6 +4,7 @@ import {
 	TENANT_ORG_ID_PATTERN,
 } from '@repo/tenant-db'
 import { createTenantApiApp } from '../src/app.ts'
+import { assertConsentBaseUrl } from '../src/lib/email-consent.ts'
 import { organizationFromProvisionPayload } from '../src/lib/origin.ts'
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
@@ -223,6 +224,7 @@ export default {
 	): Promise<Response> {
 		applyWorkerEnv(env)
 		assertTenantApiSecrets()
+		assertConsentBaseUrl()
 
 		setListTenantOrgIdsProvider(async () => registryStub(env).list())
 

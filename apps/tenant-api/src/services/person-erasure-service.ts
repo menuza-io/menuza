@@ -252,13 +252,29 @@ export async function erasePerson(
 			logId = started!.id
 		}
 	}
-	const recordProgress = async (counts: Record<string, number>) => {
+	const recordProgress = async (
+		phase: 'voice' | 'transaction',
+		counts: Record<string, number>,
+	) => {
 		if (!logId) return
-		await db
-			.update(personErasureLog)
-			.set({ counts: { incomplete: 1, ...counts } })
-			.where(eq(personErasureLog.id, logId))
-			.catch(() => {})
+		try {
+			await db
+				.update(personErasureLog)
+				.set({ counts: { incomplete: 1, ...counts } })
+				.where(eq(personErasureLog.id, logId))
+		} catch (progressError) {
+			// A failed progress write must not replace the error being thrown, but
+			// it must leave a trace: the row still says only { incomplete: 1 }.
+			// Ids and an error name and message only, never the person's data.
+			console.error('Erasure progress not recorded', {
+				logId,
+				phase,
+				error:
+					progressError instanceof Error
+						? { name: progressError.name, message: progressError.message }
+						: { name: 'UnknownError', message: String(progressError) },
+			})
+		}
 	}
 
 	// Phase 1 (outside the transaction): voice data, whose recordings are
@@ -297,7 +313,7 @@ export async function erasePerson(
 			}
 		}
 	} catch (error) {
-		await recordProgress(voiceCounts())
+		await recordProgress('voice', voiceCounts())
 		throw error
 	}
 
@@ -400,7 +416,7 @@ export async function erasePerson(
 			}
 		})
 	} catch (error) {
-		await recordProgress(voiceCounts())
+		await recordProgress('transaction', voiceCounts())
 		throw error
 	}
 }
