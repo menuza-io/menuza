@@ -207,6 +207,17 @@ address has to be confirmed again. A customer may claim the sources `profile`,
 code (`operator` and `import` count as confirmed for the address on file).
 Opting out keeps the row with `unsubscribed_at` set.
 
+Temporary compatibility alias
+(`TODO(remove after the release that follows this one)`): the old drop-alert
+routes were replaced by `PUT /subscriptions/drops/sms`, but Sites bundles and
+mobile clients cached before the rollout still call `PUT /subscriptions/drops`
+and read `{ drops: { sms } }` from `GET /subscriptions`. For one release,
+`PUT /subscriptions/drops` forwards to `PUT /subscriptions/drops/sms` (same
+authentication, validation and rate limit) and answers `{ drops: { sms } }`;
+`GET /subscriptions/drops` answers the same shape; and `GET /subscriptions`
+keeps a legacy `drops: { sms }` field next to `subscriptions`. Remove the three
+(and their tests) once old clients are gone.
+
 Every broadcast email carries a signed unsubscribe link (HMAC with
 `AUTH_HMAC_SECRET`, no login) in the body and as `List-Unsubscribe` and
 `List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers. The tenant-api

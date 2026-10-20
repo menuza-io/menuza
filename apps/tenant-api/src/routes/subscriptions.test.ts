@@ -147,13 +147,17 @@ describe('customer subscription routes', () => {
 	})
 
 	it('starts with no consent, opts in, and records the source', async () => {
-		await expect((await get()).json()).resolves.toEqual({ subscriptions: [] })
+		await expect((await get()).json()).resolves.toEqual({
+			drops: { sms: false },
+			subscriptions: [],
+		})
 		const res = await put('marketing/email', {
 			subscribed: true,
 			source: 'signup',
 		})
 		expect(res.status).toBe(200)
 		await expect((await get()).json()).resolves.toEqual({
+			drops: { sms: false },
 			subscriptions: [
 				{
 					topic: 'marketing',
@@ -170,6 +174,65 @@ describe('customer subscription routes', () => {
 			.where(eq(customerSubscriptions.customerId, customerId))
 			.get()
 		expect(row).toMatchObject({ source: 'signup', unsubscribedAt: null })
+	})
+
+	// TODO(remove after the release that follows this one): legacy drops routes.
+	describe('legacy drops alias for cached clients', () => {
+		const legacyPut = (body: unknown, token: string | null = accessToken) =>
+			app.request('/subscriptions/drops', {
+				method: 'PUT',
+				headers: {
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			})
+		const legacyGet = (token: string | null = accessToken) =>
+			app.request('/subscriptions/drops', {
+				headers: token ? { Authorization: `Bearer ${token}` } : {},
+			})
+
+		it('PUT forwards to /drops/sms and answers in the legacy shape', async () => {
+			const res = await legacyPut({ subscribed: true, source: 'menu' })
+			expect(res.status).toBe(200)
+			await expect(res.json()).resolves.toEqual({ drops: { sms: true } })
+			const db = await getTenantDb(orgId)
+			const row = await db
+				.select()
+				.from(customerSubscriptions)
+				.where(eq(customerSubscriptions.customerId, customerId))
+				.get()
+			expect(row).toMatchObject({
+				topic: 'drops',
+				channel: 'sms',
+				source: 'menu',
+				unsubscribedAt: null,
+			})
+			await expect((await get()).json()).resolves.toMatchObject({
+				drops: { sms: true },
+			})
+			await expect((await legacyGet()).json()).resolves.toEqual({
+				drops: { sms: true },
+			})
+
+			const off = await legacyPut({ subscribed: false })
+			await expect(off.json()).resolves.toEqual({ drops: { sms: false } })
+			await expect((await legacyGet()).json()).resolves.toEqual({
+				drops: { sms: false },
+			})
+		})
+
+		it('is authenticated and validated exactly like the new route', async () => {
+			expect((await legacyPut({ subscribed: true }, null)).status).toBe(401)
+			expect((await legacyGet(null)).status).toBe(401)
+			expect((await legacyPut({ subscribed: 'yes' })).status).toBe(400)
+			const db = await getTenantDb(orgId)
+			await db
+				.update(customers)
+				.set({ phoneVerified: false })
+				.where(eq(customers.id, customerId))
+			expect((await legacyPut({ subscribed: true })).status).toBe(409)
+		})
 	})
 
 	it('keeps the opt-out on record and re-subscribes on the same row', async () => {

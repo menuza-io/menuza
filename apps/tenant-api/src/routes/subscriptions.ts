@@ -64,6 +64,21 @@ export const RESEND_INTERVAL_MS = 3 * 60 * 1000
 
 type Auth = Awaited<ReturnType<typeof authenticateCustomer>>
 
+async function dropsSmsSubscribed(auth: Auth) {
+	const row = await auth.db
+		.select({ unsubscribedAt: customerSubscriptions.unsubscribedAt })
+		.from(customerSubscriptions)
+		.where(
+			and(
+				eq(customerSubscriptions.customerId, auth.customerId),
+				eq(customerSubscriptions.topic, 'drops'),
+				eq(customerSubscriptions.channel, 'sms'),
+			),
+		)
+		.get()
+	return Boolean(row && !row.unsubscribedAt)
+}
+
 subscriptionRoutes.get('/', async (c) => {
 	let auth: Auth
 	try {
@@ -77,6 +92,9 @@ subscriptionRoutes.get('/', async (c) => {
 		.where(eq(customerSubscriptions.customerId, auth.customerId))
 		.all()
 	return c.json({
+		// TODO(remove after the release that follows this one): the legacy shape
+		// of this route, still read by cached Sites bundles and mobile clients.
+		drops: { sms: await dropsSmsSubscribed(auth) },
 		subscriptions: rows.map((row) => ({
 			topic: row.topic,
 			channel: row.channel,
@@ -229,6 +247,32 @@ subscriptionRoutes.put(
 		return c.json({ topic, channel, subscribed })
 	},
 )
+
+// TODO(remove after the release that follows this one): temporary
+// compatibility alias. Sites bundles and mobile clients cached before the
+// per-topic routes still call `PUT /subscriptions/drops` and
+// `GET /subscriptions/drops` and expect `{ drops: { sms } }`. The PUT is
+// forwarded to `PUT /drops/sms` (same authentication, validation and rate
+// limit) and its answer is reshaped; the GET reads the same row.
+subscriptionRoutes.put('/drops', async (c) => {
+	const res = await subscriptionRoutes.fetch(
+		new Request(new URL('/drops/sms', c.req.url), c.req.raw),
+		c.env,
+	)
+	if (!res.ok) return res
+	const { subscribed } = (await res.json()) as { subscribed: boolean }
+	return c.json({ drops: { sms: subscribed } })
+})
+
+subscriptionRoutes.get('/drops', async (c) => {
+	let auth: Auth
+	try {
+		auth = await authenticateCustomer(c)
+	} catch (response) {
+		return response as Response
+	}
+	return c.json({ drops: { sms: await dropsSmsSubscribed(auth) } })
+})
 
 async function sendConfirmationEmail(
 	requestUrl: string,
