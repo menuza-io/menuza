@@ -83,6 +83,48 @@ npx drizzle-kit generate --name your_migration_name
 They apply automatically on the next connection; `POST /api/provision` also
 forces the full migration run for a specific org.
 
+#### Migration numbering versus upstream
+
+The tenant migrations of this repository (`packages/tenant-db/drizzle`) are
+numbered differently from upstream's, because the fork shipped its own
+migrations (and applied them to deployed databases) before it synced upstream's.
+The files are the same changes, in a different order and with different indexes:
+
+| Change                                 | Upstream                                        | Here                                                                         |
+| -------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| Restaurant orders                      | not upstream                                    | `0011_restaurant_orders`                                                     |
+| Voice calls                            | `0011_voice_calls`                              | `0012_voice_calls` (same SQL)                                                |
+| Delivery quote columns + customer subs | `0013_customer_subscriptions` (subscriptions)   | `0013_delivery_quote_and_subscriptions` (adds the delivery columns up front) |
+| Staffing foundation                    | `0012_staffing_foundation`                      | `0014_staffing_foundation` (same SQL)                                        |
+| Hiring interested scopes               | not upstream                                    | `0015_hiring_interested_scopes`                                              |
+| Person erasure log                     | `0014_person_erasure_log`                       | `0016_person_erasure_log` (same SQL, trailing newline only)                  |
+| Email confirmation on subscriptions    | `0015_customer_subscription_email_confirmation` | `0017_customer_subscription_email_confirmation` (same SQL)                   |
+| Confirmation sent marker               | `0016_customer_subscription_confirmation_sent`  | `0018_customer_subscription_confirmation_sent` (same SQL)                    |
+
+Policy: **never renumber, rename or edit a migration that has been applied.**
+Drizzle records applied migrations by journal order and hash, and the files here
+are already on long-lived `tenant_{orgId}.db` files. When upstream is merged:
+
+1. Do not take upstream's `packages/tenant-db/drizzle` (files,
+   `meta/_journal.json` and snapshots) wholesale; keep ours in a merge conflict.
+2. Take only the delta: the upstream migrations whose change is not already in
+   the table above. Compare the SQL, not the file names.
+3. Append each one with the next free index here (`0019_...`, and so on) and
+   keep its SQL unchanged. Add a `_journal.json` entry with the next `idx`, the
+   new `tag` and a `when` later than the previous entry.
+4. Add its snapshot by taking the latest snapshot here as the base (it holds the
+   fork-only tables), applying the delta to it, and chaining it: a new `id` and
+   a `prevId` equal to the `id` of the previous snapshot here. Do not copy
+   upstream's snapshot (it lacks the fork-only tables and carries upstream's
+   ids).
+5. `packages/tenant-db/src/schema.ts` is merged as code. Run
+   `npx drizzle-kit generate --name check` in `packages/tenant-db`: it must
+   report nothing to migrate (delete anything it creates).
+6. Run `npx vitest run src/migration-chain.test.ts` in `packages/tenant-db` and
+   raise `SHIPPED_ENTRIES` there to the number of entries that had shipped
+   before the sync: a database at the old state must migrate forward to exactly
+   the schema a fresh one gets.
+
 ## Seeding
 
 During development, you may want to seed your database with test data:
