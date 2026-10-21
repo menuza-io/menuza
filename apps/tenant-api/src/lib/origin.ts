@@ -104,12 +104,48 @@ async function lookupOrganizationFromDatabase(where: {
 	return null
 }
 
+/** How long an App lookup answer is reused. A rename or publish shows within a minute. */
+export const APP_LOOKUP_POSITIVE_TTL_MS = 45_000
+export const APP_LOOKUP_NEGATIVE_TTL_MS = 15_000
+/** The App must answer within this, or the request falls through as unresolved. */
+export const APP_LOOKUP_TIMEOUT_MS = 3_000
+const APP_LOOKUP_CACHE_MAX = 500
+
+const appLookupCache = new Map<
+	string,
+	{ value: PublishedOrganization | null; expiresAt: number }
+>()
+
+export function clearAppLookupCacheForTest() {
+	appLookupCache.clear()
+}
+
 async function lookupOrganizationFromApp(query: {
 	slug?: string
 	host?: string
 }): Promise<PublishedOrganization | null> {
 	const appUrl = appBaseUrl()
 	if (!appUrl || (!query.slug && !query.host)) return null
+
+	// Every public request resolves its organization, and an unknown origin is
+	// anonymous traffic: one lookup to the US App each would turn a flood into a
+	// flood on the control plane. Answers are cached briefly; errors are not.
+	const cacheKey = `${query.slug ?? ''}|${query.host ?? ''}`
+	const now = Date.now()
+	const cached = appLookupCache.get(cacheKey)
+	if (cached && cached.expiresAt > now) return cached.value
+
+	const remember = (value: PublishedOrganization | null) => {
+		if (appLookupCache.size >= APP_LOOKUP_CACHE_MAX) {
+			appLookupCache.delete(appLookupCache.keys().next().value!)
+		}
+		appLookupCache.set(cacheKey, {
+			value,
+			expiresAt:
+				now + (value ? APP_LOOKUP_POSITIVE_TTL_MS : APP_LOOKUP_NEGATIVE_TTL_MS),
+		})
+		return value
+	}
 
 	const params = new URLSearchParams()
 	if (query.slug) params.set('slug', query.slug)
@@ -118,7 +154,9 @@ async function lookupOrganizationFromApp(query: {
 	try {
 		const response = await fetch(`${appUrl}/resources/sites?${params}`, {
 			headers: { Accept: 'application/json' },
+			signal: AbortSignal.timeout(APP_LOOKUP_TIMEOUT_MS),
 		})
+		if (response.status === 404) return remember(null)
 		if (!response.ok) return null
 		const data = (await response.json()) as {
 			id?: string
@@ -126,14 +164,14 @@ async function lookupOrganizationFromApp(query: {
 			customDomain?: string | null
 			dataRegion?: string | null
 		}
-		if (!data.id || !data.slug) return null
-		return {
+		if (!data.id || !data.slug) return remember(null)
+		return remember({
 			id: data.id,
 			slug: data.slug,
 			customDomain: data.customDomain ?? null,
 			hasProvisionedDb: true,
 			dataRegion: data.dataRegion || 'us',
-		}
+		})
 	} catch (error) {
 		console.warn('APP_URL org lookup failed', error)
 		return null
