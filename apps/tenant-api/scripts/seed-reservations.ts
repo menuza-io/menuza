@@ -44,6 +44,11 @@ import {
 	rsvWaitlistEntries,
 } from '@repo/tenant-db'
 import { buildDemoTags } from './seed-reservations-data.ts'
+import {
+	assertLocalSeedEnvironment,
+	assertRegionUnchanged,
+	resolveSeedSlug,
+} from './seed-reservations-guard.ts'
 
 function fail(message: string): never {
 	console.error(message)
@@ -138,17 +143,18 @@ async function ensureControlPlaneOrgAndLocation(slug: string): Promise<{
 		}
 		console.info(`Created organization "${preset.name}" (${preset.id}).`)
 	} else {
+		// A real organization is never moved: its region is checked, not
+		// rewritten (a region change wipes the regional database).
+		if (preset) {
+			assertRegionUnchanged({
+				slug,
+				existing: org.dataRegion,
+				preset: preset.dataRegion,
+			})
+		}
 		await db
 			.update(Organization)
-			.set({
-				hasProvisionedDb: true,
-				...(preset
-					? {
-							dataRegion: preset.dataRegion,
-							staffingTimeZone: preset.timeZone,
-						}
-					: {}),
-			})
+			.set({ hasProvisionedDb: true })
 			.where(eq(Organization.id, org.id))
 	}
 
@@ -1405,14 +1411,23 @@ async function seedTenantReservations(params: {
 }
 
 async function main() {
-	if (process.env.NODE_ENV === 'production') {
-		fail(
-			'seed-reservations is for local development and refuses to run in production.',
-		)
-	}
-	const slug = process.argv.slice(2).find((arg) => !arg.startsWith('--'))
-	if (!slug) {
+	const requested = process.argv.slice(2).find((arg) => !arg.startsWith('--'))
+	if (!requested) {
 		fail('Usage: seed-reservations <org-slug>')
+	}
+	let slug: string
+	try {
+		assertLocalSeedEnvironment({
+			nodeEnv: process.env.NODE_ENV,
+			databaseUrl: process.env.DATABASE_URL,
+			tenantDbDir: process.env.TENANT_DB_DIR,
+		})
+		slug = resolveSeedSlug({
+			slug: requested,
+			allow: process.env.SEED_RESERVATIONS_ALLOW,
+		})
+	} catch (error) {
+		fail(error instanceof Error ? error.message : String(error))
 	}
 
 	const orgInfo = await ensureControlPlaneOrgAndLocation(slug)

@@ -402,8 +402,14 @@ npm run seed:reservations -w tenant-api -- acme
 npm run seed:reservations -w tenant-api -- riyadh-grill
 ```
 
-The script turns on every `reservations.*` flag for the organization, is
-idempotent, and refuses to run when `NODE_ENV=production`.
+The script turns on every `reservations.*` flag for the organization, grants
+the local `kody` user admin, and is idempotent. It only runs against local
+databases: `NODE_ENV` must be explicitly `development` or `test` (unset counts
+as production), `DATABASE_URL` must be a `file:` database, and `TENANT_DB_DIR`
+must sit inside `packages/database/db` or the temp directory. Only the demo
+organizations `acme` and `riyadh-grill` are accepted; another local slug needs
+`SEED_RESERVATIONS_ALLOW=<slug>`. An organization that already exists keeps its
+data region (the script refuses on a mismatch instead of rewriting it).
 
 ## Contract fixtures
 
