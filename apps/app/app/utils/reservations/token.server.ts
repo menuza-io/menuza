@@ -60,7 +60,26 @@ export async function mintReservationsToken(
 	}
 
 	const region = input.dataRegion?.toLowerCase() === 'ksa' ? 'ksa' : 'us'
-	const ttlSeconds = maxTokenTtlSeconds(grants, input.impersonated)
+	// The guest-PII read grant is a claim of its own, but it makes the token
+	// sensitive: count it, so such a token lives 5 minutes, not 15.
+	const canReadGuest =
+		input.scope === 'book' &&
+		!input.impersonated &&
+		hasGrantSatisfying(
+			input.grants,
+			RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+		)
+	const ttlSeconds = maxTokenTtlSeconds(
+		canReadGuest
+			? [
+					...new Set([
+						...grants,
+						RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+					]),
+				]
+			: grants,
+		input.impersonated,
+	)
 	const issuedAt = input.nowSeconds ?? Math.floor(Date.now() / 1000)
 	const expSeconds = issuedAt + ttlSeconds
 
@@ -87,13 +106,6 @@ export async function mintReservationsToken(
 		exp: ignoredExp,
 		...payload
 	} = claims
-	const canReadGuest =
-		input.scope === 'book' &&
-		!input.impersonated &&
-		hasGrantSatisfying(
-			input.grants,
-			RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-		)
 	const jwt = await new SignJWT(
 		canReadGuest ? { ...payload, canReadGuest: true } : payload,
 	)

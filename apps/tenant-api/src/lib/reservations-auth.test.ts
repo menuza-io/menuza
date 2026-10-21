@@ -76,6 +76,38 @@ describe('verifyReservationsOperatorToken & rsvGuard (VAL-FND-017)', () => {
 		expect(res.context.locationIds?.has('loc_soho')).toBe(true)
 	})
 
+	it('holds a token that can read guest PII to the 5-minute lifetime, not 15', async () => {
+		const now = Math.floor(Date.now() / 1000)
+		const long = await signToken({ canReadGuest: true, exp: now + 900 })
+		const rejected = await verifyReservationsOperatorToken(`Bearer ${long}`, {
+			secret: SECRET,
+			expectedRegion: 'us',
+		})
+		expect(rejected).toMatchObject({ ok: false, status: 401 })
+		const short = await signToken({ canReadGuest: true, exp: now + 300 })
+		const accepted = await verifyReservationsOperatorToken(`Bearer ${short}`, {
+			secret: SECRET,
+			expectedRegion: 'us',
+		})
+		expect(accepted.ok).toBe(true)
+		if (!accepted.ok) return
+		expect(
+			accepted.context.grants.has(
+				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+			),
+		).toBe(true)
+		// Without the claim a 15-minute token is still fine.
+		const plain = await signToken({ exp: now + 900 })
+		expect(
+			(
+				await verifyReservationsOperatorToken(`Bearer ${plain}`, {
+					secret: SECRET,
+					expectedRegion: 'us',
+				})
+			).ok,
+		).toBe(true)
+	})
+
 	it('rejects missing, wrong-secret, expired, staffing (staff+jwt), and customer tokens with 401', async () => {
 		const missing = await verifyReservationsOperatorToken(undefined, {
 			secret: SECRET,

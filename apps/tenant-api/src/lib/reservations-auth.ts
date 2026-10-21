@@ -200,6 +200,17 @@ export async function verifyReservationsOperatorToken(
 	const allClaimGrants: ReservationsPermission[] = hasEmptyGrants
 		? []
 		: Array.from(new Set([...claims.grants, ...extraBookGuestGrants]))
+	// The guest-PII grant rides in a claim, so it counts toward the lifetime
+	// limit too: a token that can read guests lives 5 minutes, not 15.
+	if (
+		rawScope === 'book' &&
+		!claims.impersonated &&
+		rawRecord?.canReadGuest === true &&
+		!allClaimGrants.includes('read:reservation_guest:any')
+	) {
+		allClaimGrants.push('read:reservation_guest:any')
+	}
+
 	const lifetime = claims.exp - claims.iat
 	const maxLifetime = maxTokenTtlSeconds(allClaimGrants, claims.impersonated)
 	if (!(lifetime > 0) || lifetime > maxLifetime) {
@@ -208,15 +219,6 @@ export async function verifyReservationsOperatorToken(
 			status: 401,
 			error: 'Token lifetime exceeds maximum allowed TTL',
 		}
-	}
-
-	if (
-		rawScope === 'book' &&
-		!claims.impersonated &&
-		rawRecord?.canReadGuest === true &&
-		!allClaimGrants.includes('read:reservation_guest:any')
-	) {
-		allClaimGrants.push('read:reservation_guest:any')
 	}
 
 	const effectiveGrants = restrictGrantsForImpersonation(
