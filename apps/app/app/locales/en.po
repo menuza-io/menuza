@@ -34,6 +34,10 @@ msgstr "Open full screen"
 msgid "AI assistant"
 msgstr "AI assistant"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1374
+msgid "-15m"
+msgstr "-15m"
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:130
 msgid "\"{label}\" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Call handling."
 msgstr "\"{label}\" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Call handling."
@@ -480,7 +484,7 @@ msgid "{0} drops"
 msgstr "{0} drops"
 
 #. placeholder {0}: pendingLockedMove.reservation.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:802
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:830
 msgid "{0} is locked to its current table. Unlock and move?"
 msgstr "{0} is locked to its current table. Unlock and move?"
 
@@ -600,6 +604,14 @@ msgstr ""
 #: app/components/settings/backup-codes-display.tsx:125
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1267
+msgid "{baseAriaLabel}, {statusLabel}"
+msgstr "{baseAriaLabel}, {statusLabel}"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1266
+msgid "{baseAriaLabel}, {statusLabel}, {attention}"
+msgstr "{baseAriaLabel}, {statusLabel}, {attention}"
 
 #: app/routes/organizations+/create.tsx:1804
 msgid "{basePriceLabel} billed annually"
@@ -769,7 +781,7 @@ msgstr "{count} need follow-up"
 msgid "{covers, plural, one {# cover} other {# covers}}"
 msgstr "{covers, plural, one {# cover} other {# covers}}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1074
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1102
 msgid "{coversInSlot} of {maxCovers} seats used"
 msgstr "{coversInSlot} of {maxCovers} seats used"
 
@@ -957,11 +969,11 @@ msgstr "{from} to {to}"
 #~ msgid "{guest} ({size}) can be seated there anyway, on top of the booking or block. A waitlist party cannot swap places with another party."
 #~ msgstr "{guest} ({size}) can be seated there anyway, on top of the booking or block. A waitlist party cannot swap places with another party."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1228
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1257
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}"
 msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1227
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1256
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 msgstr "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 
@@ -1058,7 +1070,7 @@ msgstr "{lo} min"
 msgid "{lo}–{hi} min"
 msgstr "{lo}–{hi} min"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:295
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:297
 msgid "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
 msgstr "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
 
@@ -1347,6 +1359,10 @@ msgstr "{pairedName} is ready. People can clock in with their PIN."
 msgid "{partySize, plural, one {# guest} other {# guests}}"
 msgstr "{partySize, plural, one {# guest} other {# guests}}"
 
+#: app/components/reservations/floor-table.tsx:301
+msgid "{partySizeLabel}p"
+msgstr "{partySizeLabel}p"
+
 #: app/components/staff/schedule/month-view.tsx:175
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {# person} other {# people}}"
@@ -1514,6 +1530,10 @@ msgstr "{tableCount, plural, one {# table} other {# tables}}"
 msgid "{tableCount} tables · {seatedCovers} covers"
 msgstr "{tableCount} tables · {seatedCovers} covers"
 
+#: app/components/reservations/floor-plan-canvas.tsx:1191
+msgid "{tableMinCovers}–{tableMaxCovers}p"
+msgstr "{tableMinCovers}–{tableMaxCovers}p"
+
 #: app/components/staff/schedule/week-grid.tsx:638
 msgid "{text} overtime"
 msgstr "{text} overtime"
@@ -1625,6 +1645,10 @@ msgstr "+{moreSlots} more"
 #: app/components/dashboard/blocks/stats-block.tsx:24
 msgid "+{trend}%"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1387
+msgid "+15m"
+msgstr "+15m"
 
 #: app/routes/_auth+/waitlist.tsx:369
 msgid "+2 points"
@@ -2931,7 +2955,7 @@ msgstr "Add date override"
 msgid "Add dates and collection time slots when customers can pick up their orders."
 msgstr "Add dates and collection time slots when customers can pick up their orders."
 
-#: app/components/reservations/floor-plan-canvas.tsx:941
+#: app/components/reservations/floor-plan-canvas.tsx:967
 msgid "Add decor"
 msgstr "Add decor"
 
@@ -3232,7 +3256,7 @@ msgstr "Add stats, charts and reports to build it."
 msgid "Add supporting information."
 msgstr "Add supporting information."
 
-#: app/components/reservations/floor-plan-canvas.tsx:906
+#: app/components/reservations/floor-plan-canvas.tsx:932
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:901
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:925
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1243
@@ -3672,7 +3696,7 @@ msgstr "All / Day"
 #~ msgid "All / Unlinked"
 #~ msgstr "All / Unlinked"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:954
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:982
 msgid "All active reservations are assigned to tables."
 msgstr "All active reservations are assigned to tables."
 
@@ -3924,7 +3948,7 @@ msgstr "Allow it to be pushed together with other tables."
 msgid "Allow microphone access"
 msgstr "Allow microphone access"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:928
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:956
 msgid "Allow overbook / tight table drop"
 msgstr "Allow overbook / tight table drop"
 
@@ -4089,7 +4113,7 @@ msgstr "Anonymous diner"
 msgid "Another experience already uses this link name. Pick a different one."
 msgstr "Another experience already uses this link name. Pick a different one."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:385
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:387
 msgid "Another host modified this reservation. The timeline has been refreshed."
 msgstr "Another host modified this reservation. The timeline has been refreshed."
 
@@ -4610,11 +4634,11 @@ msgstr ""
 #: app/components/reservations/conflict-panel.tsx:241
 #: app/components/reservations/conflict-panel.tsx:340
 #: app/components/staff/schedule/shift-editor-sheet.tsx:654
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:764
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:792
 msgid "Assign"
 msgstr "Assign"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:786
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:814
 msgid "Assign & Lock"
 msgstr "Assign & Lock"
 
@@ -4658,11 +4682,11 @@ msgstr "Assign to table"
 
 #. placeholder {0}: assignLockChoice.reservation.guestName
 #. placeholder {1}: assignLockChoice.tableLabel
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:750
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:778
 msgid "Assigned {0} to {1}. Choose assignment lock mode:"
 msgstr "Assigned {0} to {1}. Choose assignment lock mode:"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:330
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:332
 msgid "Assigned {assignedGuestName} ({assignedPartySize}) to {tblLabel} at {assignedTime} ({targetDurationMin}m)"
 msgstr "Assigned {assignedGuestName} ({assignedPartySize}) to {tblLabel} at {assignedTime} ({targetDurationMin}m)"
 
@@ -5075,8 +5099,8 @@ msgstr "Back to steps"
 msgid "Back to submissions"
 msgstr "Back to submissions"
 
-#: app/components/reservations/floor-plan-canvas.tsx:707
-#: app/components/reservations/floor-plan-canvas.tsx:716
+#: app/components/reservations/floor-plan-canvas.tsx:734
+#: app/components/reservations/floor-plan-canvas.tsx:743
 msgid "Back to tables"
 msgstr "Back to tables"
 
@@ -5288,7 +5312,7 @@ msgid "Book into a blocked time"
 msgstr "Book into a blocked time"
 
 #. placeholder {0}: table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1138
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1166
 msgid "Book on {0}"
 msgstr "Book on {0}"
 
@@ -5312,7 +5336,7 @@ msgstr "Book, guestbook & reports"
 msgid "Book, waitlist & table status"
 msgstr "Book, waitlist & table status"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1283
+#: app/components/reservations/floor-plan-canvas.tsx:1321
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1591
 msgid "Bookable online"
 msgstr "Bookable online"
@@ -5922,7 +5946,7 @@ msgstr ""
 msgid "Can be combined"
 msgstr "Can be combined"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1291
+#: app/components/reservations/floor-plan-canvas.tsx:1329
 msgid "Can be combined with other tables"
 msgstr "Can be combined with other tables"
 
@@ -5989,7 +6013,7 @@ msgstr "Can't text that number"
 #: app/components/reservations/detail-sheet.tsx:1625
 #: app/components/reservations/experiences/experience-create-sheet.tsx:171
 #: app/components/reservations/experiences/schedule-sheet.tsx:180
-#: app/components/reservations/floor-plan-canvas.tsx:1209
+#: app/components/reservations/floor-plan-canvas.tsx:1247
 #: app/components/reservations/policies/policy-sheet.tsx:183
 #: app/components/reservations/requests-panel.tsx:216
 #: app/components/reservations/waitlist/add-party-dialog.tsx:201
@@ -6058,8 +6082,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1223
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1354
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1464
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:817
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:876
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:845
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:904
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:831
@@ -6185,7 +6209,7 @@ msgstr "Cancelled by the guest"
 msgid "Cancelled by the restaurant"
 msgstr "Cancelled by the restaurant"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:467
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:482
 msgid "Cancelled moving {cancelledGuestName}."
 msgstr "Cancelled moving {cancelledGuestName}."
 
@@ -7190,7 +7214,7 @@ msgstr ""
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr ""
 
-#: app/components/reservations/floor-plan-canvas.tsx:1533
+#: app/components/reservations/floor-plan-canvas.tsx:1571
 msgid "Click a table or decor element on the canvas to edit, resize, rotate, or nudge it with the keyboard."
 msgstr "Click a table or decor element on the canvas to edit, resize, rotate, or nudge it with the keyboard."
 
@@ -7787,7 +7811,7 @@ msgstr ""
 msgid "Confirm New Password"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:899
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:927
 msgid "Confirm Overbook"
 msgstr "Confirm Overbook"
 
@@ -7851,11 +7875,15 @@ msgstr "Confirms a cancellation the guest made."
 msgid "Confirms the guest is on the waitlist."
 msgstr "Confirms the guest is on the waitlist."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1261
+msgid "conflict"
+msgstr "conflict"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:493
 msgid "Conflict"
 msgstr "Conflict"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:408
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:410
 msgid "Conflict detected: {conflictMessage}"
 msgstr "Conflict detected: {conflictMessage}"
 
@@ -8328,7 +8356,7 @@ msgstr "Could not make a PIN. Try again."
 msgid "Could not mark the party as running late."
 msgstr "Could not mark the party as running late."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:414
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:416
 msgid "Could not move the reservation."
 msgstr "Could not move the reservation."
 
@@ -9573,11 +9601,11 @@ msgstr "Declined. They were sent your message."
 msgid "Declining…"
 msgstr "Declining…"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1437
+#: app/components/reservations/floor-plan-canvas.tsx:1475
 msgid "Decor"
 msgstr "Decor"
 
-#: app/components/reservations/floor-plan-canvas.tsx:920
+#: app/components/reservations/floor-plan-canvas.tsx:946
 msgid "Decor element type"
 msgstr "Decor element type"
 
@@ -9688,8 +9716,8 @@ msgstr ""
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/hiring/job-editor.tsx:1002
 #: app/components/note/comment-item.tsx:239
-#: app/components/reservations/floor-plan-canvas.tsx:1191
-#: app/components/reservations/floor-plan-canvas.tsx:1449
+#: app/components/reservations/floor-plan-canvas.tsx:1229
+#: app/components/reservations/floor-plan-canvas.tsx:1487
 #: app/components/roles/tenant-role-access-manager.tsx:1278
 #: app/components/roles/tenant-role-access-manager.tsx:1484
 #: app/components/settings/passkey-manager.tsx:220
@@ -9977,7 +10005,7 @@ msgstr ""
 msgid "Delete step"
 msgstr "Delete step"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1216
+#: app/components/reservations/floor-plan-canvas.tsx:1254
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1013
 msgid "Delete table"
 msgstr "Delete table"
@@ -10030,7 +10058,7 @@ msgstr "Delete this service?"
 msgid "Delete this special day?"
 msgstr "Delete this special day?"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1198
+#: app/components/reservations/floor-plan-canvas.tsx:1236
 msgid "Delete this table?"
 msgstr "Delete this table?"
 
@@ -10429,7 +10457,7 @@ msgstr "Dining area deleted."
 msgid "Dining area updated."
 msgstr "Dining area updated."
 
-#: app/components/reservations/floor-plan-canvas.tsx:865
+#: app/components/reservations/floor-plan-canvas.tsx:892
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:702
 msgid "Dining areas"
 msgstr "Dining areas"
@@ -10504,7 +10532,7 @@ msgstr "Discard"
 #~ msgid "Discard & leave"
 #~ msgstr "Discard & leave"
 
-#: app/components/reservations/floor-plan-canvas.tsx:799
+#: app/components/reservations/floor-plan-canvas.tsx:826
 msgid "Discard and leave"
 msgstr "Discard and leave"
 
@@ -10512,7 +10540,7 @@ msgstr "Discard and leave"
 msgid "Discard and switch"
 msgstr "Discard and switch"
 
-#: app/components/reservations/floor-plan-canvas.tsx:761
+#: app/components/reservations/floor-plan-canvas.tsx:788
 #: app/components/reservations/messages/message-settings.tsx:775
 #: app/components/reservations/settings/setup-list-chrome.tsx:215
 msgid "Discard changes"
@@ -10527,7 +10555,7 @@ msgstr "Discard changes"
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
-#: app/components/reservations/floor-plan-canvas.tsx:781
+#: app/components/reservations/floor-plan-canvas.tsx:808
 #: app/components/reservations/settings/setup-list-chrome.tsx:207
 msgid "Discard your changes?"
 msgstr "Discard your changes?"
@@ -10813,7 +10841,7 @@ msgstr "Drafting..."
 msgid "Drafting…"
 msgstr "Drafting…"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:909
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:937
 msgid "Drag a bar to move it. Keyboard: Space or Enter."
 msgstr "Drag a bar to move it. Keyboard: Space or Enter."
 
@@ -10833,7 +10861,7 @@ msgstr "Drag and reorder your menu categories and items exactly as they appear t
 #~ msgid "Drag bars to reassign table or shift time in 15-min slots. Focus a bar and press Space/Enter for keyboard move."
 #~ msgstr "Drag bars to reassign table or shift time in 15-min slots. Focus a bar and press Space/Enter for keyboard move."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1539
+#: app/components/reservations/floor-plan-canvas.tsx:1577
 msgid "Drag items on the 10-unit grid, or use Arrow keys (1 unit) and Shift+Arrow (10 units). Nothing is saved until you click Save."
 msgstr "Drag items on the 10-unit grid, or use Arrow keys (1 unit) and Shift+Arrow (10 units). Nothing is saved until you click Save."
 
@@ -10849,7 +10877,7 @@ msgstr "Drag onto a table, or use Assign to table"
 #~ msgid "Drag onto table to seat/assign"
 #~ msgstr "Drag onto table to seat/assign"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1340
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1392
 msgid "Drag right edge to resize duration"
 msgstr "Drag right edge to resize duration"
 
@@ -10988,7 +11016,7 @@ msgstr "Duration (min)"
 #~ msgid "Duration (minutes)"
 #~ msgstr "Duration (minutes)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:484
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:499
 msgid "Duration {nextDuration} minutes for {resizedGuestName}"
 msgstr "Duration {nextDuration} minutes for {resizedGuestName}"
 
@@ -11450,7 +11478,7 @@ msgstr "Egg Allergy"
 #~ msgid "Element {0} ({1}, {2})"
 #~ msgstr "Element {0} ({1}, {2})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1037
+#: app/components/reservations/floor-plan-canvas.tsx:1066
 msgid "Element {elementName} ({elementX}, {elementY})"
 msgstr "Element {elementName} ({elementX}, {elementY})"
 
@@ -11458,7 +11486,7 @@ msgstr "Element {elementName} ({elementX}, {elementY})"
 #~ msgid "Element Inspector"
 #~ msgstr "Element Inspector"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1455
+#: app/components/reservations/floor-plan-canvas.tsx:1493
 msgid "Element label"
 msgstr "Element label"
 
@@ -11911,7 +11939,7 @@ msgstr "Enter an email address"
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:853
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:881
 msgid "Enter an overbook reason to force this placement or cancel."
 msgstr "Enter an overbook reason to force this placement or cancel."
 
@@ -12537,7 +12565,8 @@ msgstr "Exported {count} rows."
 msgid "Exported {exportedCount} people."
 msgstr "Exported {exportedCount} people."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1328
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1379
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1380
 msgid "Extend turn by 15m"
 msgstr "Extend turn by 15m"
 
@@ -13009,7 +13038,7 @@ msgstr "Feminine"
 msgid "Fewer guests"
 msgstr "Fewer guests"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1251
+#: app/components/reservations/floor-plan-canvas.tsx:1289
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1274
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1361
 msgid "Fewest guests"
@@ -13300,7 +13329,7 @@ msgstr "Floor"
 #~ msgid "Floor label"
 #~ msgstr "Floor label"
 
-#: app/components/reservations/floor-plan-canvas.tsx:722
+#: app/components/reservations/floor-plan-canvas.tsx:749
 #: app/components/workspace-breadcrumb.tsx:84
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:444
 msgid "Floor plan"
@@ -13822,7 +13851,7 @@ msgstr "Google Analytics ID"
 msgid "Google Tag Manager ID"
 msgstr "Google Tag Manager ID"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:456
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:471
 msgid "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel."
 msgstr "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel."
 
@@ -13853,7 +13882,7 @@ msgstr "Green"
 msgid "Greeting"
 msgstr "Greeting"
 
-#: app/components/reservations/floor-plan-canvas.tsx:993
+#: app/components/reservations/floor-plan-canvas.tsx:1019
 msgid "Grid"
 msgstr "Grid"
 
@@ -14283,11 +14312,11 @@ msgstr ""
 msgid "Health card"
 msgstr "Health card"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1506
+#: app/components/reservations/floor-plan-canvas.tsx:1544
 msgid "Height"
 msgstr "Height"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1415
+#: app/components/reservations/floor-plan-canvas.tsx:1453
 msgid "Height (20–600)"
 msgstr "Height (20–600)"
 
@@ -15553,7 +15582,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 #: app/components/hiring/job-editor.tsx:477
-#: app/components/reservations/floor-plan-canvas.tsx:792
+#: app/components/reservations/floor-plan-canvas.tsx:819
 #: app/components/reservations/settings/setup-list-chrome.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:290
 msgid "Keep editing"
@@ -15705,7 +15734,7 @@ msgstr "Kosher"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 #: app/components/reservations/floor-plan-canvas.tsx:134
-#: app/components/reservations/floor-plan-canvas.tsx:1227
+#: app/components/reservations/floor-plan-canvas.tsx:1265
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 #: app/utils/reservations/labels.ts:207
@@ -16405,7 +16434,7 @@ msgstr "Live floor plan with seated and open tables."
 #~ msgid "Live floor plan, upcoming reservations, seated tables, and walk-in seating."
 #~ msgstr "Live floor plan, upcoming reservations, seated tables, and walk-in seating."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:913
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:941
 msgid "Live polling paused while moving"
 msgstr "Live polling paused while moving"
 
@@ -16773,7 +16802,8 @@ msgid "Lock ({lockCount})"
 msgstr "Lock ({lockCount})"
 
 #: app/components/reservations/detail-sheet.tsx:1197
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1302
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1346
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1351
 msgid "Lock table assignment"
 msgstr "Lock table assignment"
 
@@ -16791,7 +16821,7 @@ msgstr "Locked cards cannot be edited by anyone until they are unlocked, and the
 msgid "Locked timesheets cannot be edited until someone unlocks them."
 msgstr "Locked timesheets cannot be edited until someone unlocks them."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1267
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1310
 msgid "Locked to table"
 msgstr "Locked to table"
 
@@ -17994,7 +18024,7 @@ msgstr "More schedule actions"
 msgid "More team actions"
 msgstr "More team actions"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1266
+#: app/components/reservations/floor-plan-canvas.tsx:1304
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1287
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1370
 msgid "Most guests"
@@ -18060,7 +18090,7 @@ msgstr "Move cancelled. Nothing changed."
 msgid "Move down"
 msgstr "Move down"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:417
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:419
 msgid "Move failed: {failMessage}"
 msgstr "Move failed: {failMessage}"
 
@@ -18105,21 +18135,21 @@ msgstr "Move up"
 msgid "Moved"
 msgstr "Moved"
 
-#: app/components/reservations/floor-plan-canvas.tsx:470
-#: app/components/reservations/floor-plan-canvas.tsx:520
+#: app/components/reservations/floor-plan-canvas.tsx:478
+#: app/components/reservations/floor-plan-canvas.tsx:538
 msgid "Moved {displayName} to ({nextX}, {nextY})"
 msgstr "Moved {displayName} to ({nextX}, {nextY})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:588
-#: app/components/reservations/floor-plan-canvas.tsx:596
+#: app/components/reservations/floor-plan-canvas.tsx:615
+#: app/components/reservations/floor-plan-canvas.tsx:623
 msgid "Moved {itemName} to ({nextX}, {nextY})"
 msgstr "Moved {itemName} to ({nextX}, {nextY})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1393
+#: app/components/reservations/floor-plan-canvas.tsx:1431
 msgid "Moved {tableLabel} to ({currentX}, {nextY})"
 msgstr "Moved {tableLabel} to ({currentX}, {nextY})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1372
+#: app/components/reservations/floor-plan-canvas.tsx:1410
 msgid "Moved {tableLabel} to ({nextX}, {currentY})"
 msgstr "Moved {tableLabel} to ({nextX}, {currentY})"
 
@@ -19131,7 +19161,7 @@ msgstr ""
 msgid "No issues found"
 msgstr "No issues found"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1530
+#: app/components/reservations/floor-plan-canvas.tsx:1568
 msgid "No item selected"
 msgstr "No item selected"
 
@@ -21822,7 +21852,7 @@ msgid "over the whole range"
 msgstr "over the whole range"
 
 #: app/components/reservations/booking-sheet.tsx:1183
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:864
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:892
 msgid "Overbook reason"
 msgstr "Overbook reason"
 
@@ -21833,7 +21863,7 @@ msgstr "Overbook reason"
 msgid "Overbook reason (optional)"
 msgstr "Overbook reason (optional)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:863
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:891
 msgid "Overbook reason..."
 msgstr "Overbook reason..."
 
@@ -23358,7 +23388,7 @@ msgstr "Position {position} of {total}"
 msgid "Position added."
 msgstr "Position added."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1351
+#: app/components/reservations/floor-plan-canvas.tsx:1389
 msgid "Position and size"
 msgstr "Position and size"
 
@@ -24119,7 +24149,7 @@ msgstr "Read the order back"
 msgid "Read the policy"
 msgstr "Read the policy"
 
-#: app/components/reservations/floor-plan-canvas.tsx:727
+#: app/components/reservations/floor-plan-canvas.tsx:754
 #: app/components/roles/tenant-role-access-manager.tsx:606
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:568
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:236
@@ -24207,7 +24237,7 @@ msgstr "Reassigned upcoming reservations after schedule/block changes"
 #~ msgid "Reassigned upcoming reservations after table changes"
 #~ msgstr "Reassigned upcoming reservations after table changes"
 
-#: app/components/reservations/floor-plan-canvas.tsx:844
+#: app/components/reservations/floor-plan-canvas.tsx:871
 msgid "Reassigned upcoming reservations automatically"
 msgstr "Reassigned upcoming reservations automatically"
 
@@ -24528,7 +24558,7 @@ msgstr "Relaxed"
 msgid "Reload"
 msgstr "Reload"
 
-#: app/components/reservations/floor-plan-canvas.tsx:830
+#: app/components/reservations/floor-plan-canvas.tsx:857
 msgid "Reload latest floor plan"
 msgstr "Reload latest floor plan"
 
@@ -25376,8 +25406,8 @@ msgstr "Reset to the usual columns"
 msgid "Resetting…"
 msgstr "Resetting…"
 
-#: app/components/reservations/floor-plan-canvas.tsx:614
-#: app/components/reservations/floor-plan-canvas.tsx:622
+#: app/components/reservations/floor-plan-canvas.tsx:641
+#: app/components/reservations/floor-plan-canvas.tsx:649
 msgid "Resized {itemName} to {nextWidth} by {nextHeight}"
 msgstr "Resized {itemName} to {nextWidth} by {nextHeight}"
 
@@ -25637,7 +25667,7 @@ msgstr "Rotate manage link"
 msgid "Rotate right"
 msgstr "Rotate right"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1317
+#: app/components/reservations/floor-plan-canvas.tsx:1355
 msgid "Rotated {tableLabel} to {deg} degrees"
 msgstr "Rotated {tableLabel} to {deg} degrees"
 
@@ -25645,7 +25675,7 @@ msgstr "Rotated {tableLabel} to {deg} degrees"
 #~ msgid "Rotation"
 #~ msgstr "Rotation"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1327
+#: app/components/reservations/floor-plan-canvas.tsx:1365
 #: app/components/reservations/floor-plan-editor/editor-fields.tsx:66
 msgid "Rotation (degrees)"
 msgstr "Rotation (degrees)"
@@ -25733,6 +25763,10 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 msgid "Running"
 msgstr ""
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1263
+msgid "running late"
+msgstr "running late"
 
 #: app/components/reservations/detail-sheet.tsx:1028
 #: app/utils/reservations/labels.ts:187
@@ -25956,7 +25990,7 @@ msgstr ""
 #: app/components/organization-members.tsx:145
 #: app/components/phone-agent/settings-page.tsx:381
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
-#: app/components/reservations/floor-plan-canvas.tsx:772
+#: app/components/reservations/floor-plan-canvas.tsx:799
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:149
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -26176,7 +26210,7 @@ msgstr "Save zone"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/phone-agent/settings-page.tsx:377
-#: app/components/reservations/floor-plan-canvas.tsx:746
+#: app/components/reservations/floor-plan-canvas.tsx:773
 msgid "Saved"
 msgstr "Saved"
 
@@ -26257,7 +26291,7 @@ msgstr ""
 #: app/components/phone-agent/settings-page.tsx:381
 #: app/components/reservations/experiences/experience-editor.tsx:545
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
-#: app/components/reservations/floor-plan-canvas.tsx:772
+#: app/components/reservations/floor-plan-canvas.tsx:799
 #: app/components/reservations/messages/message-settings.tsx:783
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/settings/save-bar.tsx:87
@@ -26819,11 +26853,11 @@ msgstr "Seatings"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:941
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1093
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1014
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1042
 msgid "Seats"
 msgstr "Seats"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1069
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1097
 msgid "Seats used / capacity: {coversInSlot} / {maxCovers}"
 msgstr "Seats used / capacity: {coversInSlot} / {maxCovers}"
 
@@ -27806,7 +27840,7 @@ msgstr "Setup, book, guestbook & reports"
 msgid "Several people are typing…"
 msgstr "Several people are typing…"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1239
+#: app/components/reservations/floor-plan-canvas.tsx:1277
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:944
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1302
 msgid "Shape"
@@ -27976,7 +28010,8 @@ msgstr "Short by {short} person-hours and {over} over, against the orders you us
 msgid "Short notice."
 msgstr "Short notice."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1316
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1366
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1367
 msgid "Shorten turn by 15m"
 msgstr "Shorten turn by 15m"
 
@@ -28276,7 +28311,7 @@ msgid "Skipped"
 msgstr "Skipped"
 
 #. placeholder {0}: pendingConflictMove.message
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:850
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:878
 msgid "Slot conflict: {0}"
 msgstr "Slot conflict: {0}"
 
@@ -29342,7 +29377,7 @@ msgstr ""
 
 #: app/components/reservations/detail-sheet.tsx:816
 #: app/components/reservations/detail-sheet.tsx:891
-#: app/components/reservations/floor-plan-canvas.tsx:1178
+#: app/components/reservations/floor-plan-canvas.tsx:1216
 #: app/components/reservations/waitlist/seat-dialog.tsx:178
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:466
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:691
@@ -29351,7 +29386,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:937
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1264
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:935
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1011
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1039
 msgid "Table"
 msgstr "Table"
 
@@ -29370,7 +29405,7 @@ msgstr "Table {0} is occupied by {1} ({2}p)"
 msgid "Table {createdTableLabel} created."
 msgstr "Table {createdTableLabel} created."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:521
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:536
 msgid "Table {nextTableLabel} ({nextTableMin}-{nextTableMax}) for {movedGuestName}"
 msgstr "Table {nextTableLabel} ({nextTableMin}-{nextTableMax}) for {movedGuestName}"
 
@@ -29382,17 +29417,25 @@ msgstr "Table {tableLabel} is not free"
 msgid "Table {tableLabel} is not free for this party"
 msgstr "Table {tableLabel} is not free for this party"
 
-#: app/components/reservations/floor-table.tsx:183
+#: app/components/reservations/floor-table.tsx:184
 msgid "Table {tableLabel}, {statusLabel}"
 msgstr "Table {tableLabel}, {statusLabel}"
 
-#: app/components/reservations/floor-table.tsx:182
+#: app/components/reservations/floor-table.tsx:183
 msgid "Table {tableLabel}, {statusLabel}, {guestName}"
 msgstr "Table {tableLabel}, {statusLabel}, {guestName}"
 
 #: app/components/reservations/floor-plan-canvas.tsx:1114
-msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
-msgstr "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
+#~ msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
+#~ msgstr "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
+
+#: app/components/reservations/floor-plan-canvas.tsx:1147
+msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY}), bookable online"
+msgstr "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY}), bookable online"
+
+#: app/components/reservations/floor-plan-canvas.tsx:1150
+msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY}), not bookable online"
+msgstr "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY}), not bookable online"
 
 #: app/components/reservations/conflict-panel.tsx:71
 msgid "Table {tableNames} is blocked during this booking"
@@ -30205,8 +30248,8 @@ msgstr "That PIN did not match. Try again."
 msgid "That PIN did not match. Wait {seconds} seconds, then try again."
 msgstr "That PIN did not match. Wait {seconds} seconds, then try again."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:400
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:406
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:402
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:408
 msgid "That placement conflicts with another booking."
 msgstr "That placement conflicts with another booking."
 
@@ -31191,7 +31234,7 @@ msgstr "The table is on hold."
 msgid "The table is released and the visit counts toward the guest's no-shows. You can undo this for the next 60 seconds."
 msgstr "The table is released and the visit counts toward the guest's no-shows. You can undo this for the next 60 seconds."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1201
+#: app/components/reservations/floor-plan-canvas.tsx:1239
 msgid "The table leaves the floor plan when you save. Past reservations keep their history."
 msgstr "The table leaves the floor plan when you save. Past reservations keep their history."
 
@@ -31733,7 +31776,7 @@ msgstr "This experience no longer exists."
 msgid "This fee is already being charged or was charged."
 msgstr "This fee is already being charged or was charged."
 
-#: app/components/reservations/floor-plan-canvas.tsx:814
+#: app/components/reservations/floor-plan-canvas.tsx:841
 msgid "This floor plan was changed by someone else"
 msgstr "This floor plan was changed by someone else"
 
@@ -32249,7 +32292,7 @@ msgstr "TikTok Pixel ID"
 msgid "Time"
 msgstr "Time"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:500
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:515
 msgid "Time {shiftedTime} for {shiftedGuestName}"
 msgstr "Time {shiftedTime} for {shiftedGuestName}"
 
@@ -33256,7 +33299,7 @@ msgstr "Unable to update this order. Refresh and try again."
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1532
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:664
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:735
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:359
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:361
 #: app/utils/reservations/labels.ts:144
 msgid "Unassigned"
 msgstr "Unassigned"
@@ -33277,7 +33320,7 @@ msgstr "Unassigned"
 #~ msgid "Unassigned, Conflicts & Reflow Notices"
 #~ msgstr "Unassigned, Conflicts & Reflow Notices"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:942
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:970
 msgid "Unassigned: drag onto a table row below"
 msgstr "Unassigned: drag onto a table row below"
 
@@ -33434,7 +33477,7 @@ msgstr "Unlock"
 msgid "Unlock ({unlockCount})"
 msgstr "Unlock ({unlockCount})"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:836
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:864
 msgid "Unlock and move"
 msgstr "Unlock and move"
 
@@ -33442,7 +33485,8 @@ msgstr "Unlock and move"
 msgid "Unlock card"
 msgstr "Unlock card"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1301
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1345
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1350
 msgid "Unlock table assignment"
 msgstr "Unlock table assignment"
 
@@ -33511,7 +33555,7 @@ msgstr "Unread only"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:496
 #: app/components/reservations/experiences/experience-editor.tsx:499
-#: app/components/reservations/floor-plan-canvas.tsx:743
+#: app/components/reservations/floor-plan-canvas.tsx:770
 #: app/components/reservations/messages/message-settings.tsx:761
 #: app/components/reservations/settings/save-bar.tsx:63
 msgid "Unsaved changes"
@@ -33617,7 +33661,7 @@ msgstr "Upcoming reservations flagged with conflicts (outside hours or blocked t
 #~ msgid "Upcoming reservations flagged with setup conflicts"
 #~ msgstr "Upcoming reservations flagged with setup conflicts"
 
-#: app/components/reservations/floor-plan-canvas.tsx:850
+#: app/components/reservations/floor-plan-canvas.tsx:877
 msgid "Upcoming reservations need manual attention after this floor-plan change"
 msgstr "Upcoming reservations need manual attention after this floor-plan change"
 
@@ -33693,7 +33737,7 @@ msgstr ""
 msgid "Updated {updated}"
 msgstr "Updated {updated}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:363
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:365
 msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 msgstr "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 
@@ -35146,7 +35190,7 @@ msgstr "What your hours cost against your sales, the sales you enter, and how ti
 msgid "What's missing?"
 msgstr ""
 
-#: app/components/reservations/floor-plan-canvas.tsx:1299
+#: app/components/reservations/floor-plan-canvas.tsx:1337
 msgid "Wheelchair accessible"
 msgstr "Wheelchair accessible"
 
@@ -35459,11 +35503,11 @@ msgstr "Why are you declining?"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:324
-#: app/components/reservations/floor-plan-canvas.tsx:1493
+#: app/components/reservations/floor-plan-canvas.tsx:1531
 msgid "Width"
 msgstr "Width"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1400
+#: app/components/reservations/floor-plan-canvas.tsx:1438
 msgid "Width (20–600)"
 msgstr "Width (20–600)"
 
@@ -35678,13 +35722,13 @@ msgstr "Wrong Number"
 msgid "Wrong time entered"
 msgstr "Wrong time entered"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1358
-#: app/components/reservations/floor-plan-canvas.tsx:1467
+#: app/components/reservations/floor-plan-canvas.tsx:1396
+#: app/components/reservations/floor-plan-canvas.tsx:1505
 msgid "X (0–1200)"
 msgstr "X (0–1200)"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1379
-#: app/components/reservations/floor-plan-canvas.tsx:1480
+#: app/components/reservations/floor-plan-canvas.tsx:1417
+#: app/components/reservations/floor-plan-canvas.tsx:1518
 msgid "Y (0–1200)"
 msgstr "Y (0–1200)"
 
@@ -36000,7 +36044,7 @@ msgstr "You have unsaved changes. Leave this page and lose them?"
 msgid "You have unsaved edits. If you close now they are lost and nothing is saved."
 msgstr "You have unsaved edits. If you close now they are lost and nothing is saved."
 
-#: app/components/reservations/floor-plan-canvas.tsx:784
+#: app/components/reservations/floor-plan-canvas.tsx:811
 msgid "You have unsaved floor plan changes. If you leave now they are lost."
 msgstr "You have unsaved floor plan changes. If you leave now they are lost."
 
@@ -36332,10 +36376,10 @@ msgstr "Zone"
 msgid "Zone Name"
 msgstr "Zone Name"
 
-#: app/components/reservations/floor-plan-canvas.tsx:979
+#: app/components/reservations/floor-plan-canvas.tsx:1005
 msgid "Zoom in"
 msgstr "Zoom in"
 
-#: app/components/reservations/floor-plan-canvas.tsx:957
+#: app/components/reservations/floor-plan-canvas.tsx:983
 msgid "Zoom out"
 msgstr "Zoom out"

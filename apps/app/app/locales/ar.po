@@ -32,6 +32,10 @@ msgstr "فتح بملء الشاشة"
 msgid "AI assistant"
 msgstr "المساعد الذكي"
 
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1374
+msgid "-15m"
+msgstr "-١٥د"
+
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:130
 msgid "\"{label}\" has no number to call, so callers go straight to its no-answer path. Enter a number for this step, or set a staff phone number in Call handling."
 msgstr "لا يوجد رقم تتصل به الخطوة «{label}»، لذا ينتقل المتصلون مباشرةً إلى مسار عدم الرد. أدخل رقمًا لهذه الخطوة، أو عيّن رقم هاتف الموظفين في التعامل مع المكالمات."
@@ -478,7 +482,7 @@ msgid "{0} drops"
 msgstr "{0} طروحات"
 
 #. placeholder {0}: pendingLockedMove.reservation.guestName
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:802
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:830
 msgid "{0} is locked to its current table. Unlock and move?"
 msgstr "{0} مقفل على طاولته الحالية. هل تريد إلغاء القفل والنقل؟"
 
@@ -598,6 +602,14 @@ msgstr "{avgPerDay} متوسط يومي"
 #: app/components/settings/backup-codes-display.tsx:125
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1267
+msgid "{baseAriaLabel}, {statusLabel}"
+msgstr "{baseAriaLabel}، {statusLabel}"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1266
+msgid "{baseAriaLabel}, {statusLabel}, {attention}"
+msgstr "{baseAriaLabel}، {statusLabel}، {attention}"
 
 #: app/routes/organizations+/create.tsx:1804
 msgid "{basePriceLabel} billed annually"
@@ -767,7 +779,7 @@ msgstr "{count} بحاجة إلى متابعة"
 msgid "{covers, plural, one {# cover} other {# covers}}"
 msgstr "{covers, plural, zero {# ضيف} one {# ضيف} two {# ضيفان} few {# ضيوف} many {# ضيفًا} other {# ضيف}}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1074
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1102
 msgid "{coversInSlot} of {maxCovers} seats used"
 msgstr "{coversInSlot} من {maxCovers} مقعدًا مستخدمة"
 
@@ -955,11 +967,11 @@ msgstr "من {from} إلى {to}"
 #~ msgid "{guest} ({size}) can be seated there anyway, on top of the booking or block. A waitlist party cannot swap places with another party."
 #~ msgstr "يمكن إجلاس {guest} ({size}) هناك على أي حال، فوق الحجز أو الحظر. لا يمكن لمجموعة من قائمة الانتظار تبديل مكانها مع مجموعة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1228
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1257
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}"
 msgstr "{guestName}، مجموعة من {partySize}، {startTime}، {durationMin} دقيقة، الطاولة {tableLabel}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1227
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1256
 msgid "{guestName}, party of {partySize}, {startTime}, {durationMin} minutes, table {tableLabel}, locked"
 msgstr "{guestName}، مجموعة من {partySize}، {startTime}، {durationMin} دقيقة، الطاولة {tableLabel}، مقفلة"
 
@@ -1056,7 +1068,7 @@ msgstr "{lo} د"
 msgid "{lo}–{hi} min"
 msgstr "{lo}–{hi} د"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:295
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:297
 msgid "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
 msgstr "{lockedGuestName} مثبّت على طاولته. أكّد إلغاء التثبيت والنقل للمتابعة."
 
@@ -1345,6 +1357,10 @@ msgstr "{pairedName} جاهز. يمكن للموظفين تسجيل الحضور
 msgid "{partySize, plural, one {# guest} other {# guests}}"
 msgstr "{partySize, plural, one {ضيف واحد} two {ضيفان} few {# ضيوف} many {# ضيفًا} other {# ضيف}}"
 
+#: app/components/reservations/floor-table.tsx:301
+msgid "{partySizeLabel}p"
+msgstr "{partySizeLabel} ض"
+
 #: app/components/staff/schedule/month-view.tsx:175
 msgid "{people, plural, one {# person} other {# people}}"
 msgstr "{people, plural, one {شخص واحد} two {شخصان} few {# أشخاص} many {# شخصًا} other {# شخصًا}}"
@@ -1512,6 +1528,10 @@ msgstr "{tableCount, plural, one {طاولة واحدة} two {طاولتان} fe
 msgid "{tableCount} tables · {seatedCovers} covers"
 msgstr "{tableCount} طاولات · {seatedCovers} ضيوف"
 
+#: app/components/reservations/floor-plan-canvas.tsx:1191
+msgid "{tableMinCovers}–{tableMaxCovers}p"
+msgstr "{tableMinCovers}–{tableMaxCovers} ض"
+
 #: app/components/staff/schedule/week-grid.tsx:638
 msgid "{text} overtime"
 msgstr "{text} وقت إضافي"
@@ -1623,6 +1643,10 @@ msgstr "+{moreSlots} إضافية"
 #: app/components/dashboard/blocks/stats-block.tsx:24
 msgid "+{trend}%"
 msgstr "+{trend}٪"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1387
+msgid "+15m"
+msgstr "+١٥د"
 
 #: app/routes/_auth+/waitlist.tsx:369
 msgid "+2 points"
@@ -2925,7 +2949,7 @@ msgstr "إضافة استثناء تاريخ"
 msgid "Add dates and collection time slots when customers can pick up their orders."
 msgstr "أضف التواريخ وفترات الاستلام التي يمكن للعملاء استلام طلباتهم خلالها."
 
-#: app/components/reservations/floor-plan-canvas.tsx:941
+#: app/components/reservations/floor-plan-canvas.tsx:967
 msgid "Add decor"
 msgstr "إضافة عنصر ديكور"
 
@@ -3226,7 +3250,7 @@ msgstr "أضف الإحصائيات والمخططات والتقارير لبن
 msgid "Add supporting information."
 msgstr "أضف معلومات توضيحية."
 
-#: app/components/reservations/floor-plan-canvas.tsx:906
+#: app/components/reservations/floor-plan-canvas.tsx:932
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:901
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:925
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1243
@@ -3666,7 +3690,7 @@ msgstr "الكل / اليوم"
 #~ msgid "All / Unlinked"
 #~ msgstr "الكل / غير مرتبط"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:954
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:982
 msgid "All active reservations are assigned to tables."
 msgstr "جميع الحجوزات النشطة معينة لطاولات."
 
@@ -3918,7 +3942,7 @@ msgstr "السماح بضمها مع طاولات أخرى."
 msgid "Allow microphone access"
 msgstr "اسمح بالوصول إلى الميكروفون"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:928
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:956
 msgid "Allow overbook / tight table drop"
 msgstr "السماح بالحجز الزائد / الإفلات على طاولة ضيقة"
 
@@ -4083,7 +4107,7 @@ msgstr "زبون مجهول"
 msgid "Another experience already uses this link name. Pick a different one."
 msgstr "هناك تجربة أخرى تستخدم اسم الرابط هذا. اختر اسمًا مختلفًا."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:385
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:387
 msgid "Another host modified this reservation. The timeline has been refreshed."
 msgstr "قام مضيف آخر بتعديل هذا الحجز. تم تحديث الجدول الزمني."
 
@@ -4604,11 +4628,11 @@ msgstr "الملف"
 #: app/components/reservations/conflict-panel.tsx:241
 #: app/components/reservations/conflict-panel.tsx:340
 #: app/components/staff/schedule/shift-editor-sheet.tsx:654
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:764
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:792
 msgid "Assign"
 msgstr "تعيين"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:786
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:814
 msgid "Assign & Lock"
 msgstr "تعيين وقفل"
 
@@ -4652,11 +4676,11 @@ msgstr "تعيين إلى طاولة"
 
 #. placeholder {0}: assignLockChoice.reservation.guestName
 #. placeholder {1}: assignLockChoice.tableLabel
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:750
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:778
 msgid "Assigned {0} to {1}. Choose assignment lock mode:"
 msgstr "تم تعيين {0} إلى {1}. اختر وضع قفل التعيين:"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:330
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:332
 msgid "Assigned {assignedGuestName} ({assignedPartySize}) to {tblLabel} at {assignedTime} ({targetDurationMin}m)"
 msgstr "تم تعيين {assignedGuestName} ({assignedPartySize}) إلى {tblLabel} في {assignedTime} ({targetDurationMin} د)"
 
@@ -5069,8 +5093,8 @@ msgstr "العودة إلى الخطوات"
 msgid "Back to submissions"
 msgstr "العودة إلى الردود"
 
-#: app/components/reservations/floor-plan-canvas.tsx:707
-#: app/components/reservations/floor-plan-canvas.tsx:716
+#: app/components/reservations/floor-plan-canvas.tsx:734
+#: app/components/reservations/floor-plan-canvas.tsx:743
 msgid "Back to tables"
 msgstr "العودة إلى الطاولات"
 
@@ -5282,7 +5306,7 @@ msgid "Book into a blocked time"
 msgstr "الحجز في وقت محظور"
 
 #. placeholder {0}: table.label
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1138
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1166
 msgid "Book on {0}"
 msgstr "حجز على {0}"
 
@@ -5306,7 +5330,7 @@ msgstr "دفتر الحجوزات وسجل الضيوف والتقارير"
 msgid "Book, waitlist & table status"
 msgstr "دفتر الحجوزات وقائمة الانتظار وحالة الطاولات"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1283
+#: app/components/reservations/floor-plan-canvas.tsx:1321
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1591
 msgid "Bookable online"
 msgstr "متاح للحجز عبر الإنترنت"
@@ -5916,7 +5940,7 @@ msgstr "اسم الحملة"
 msgid "Can be combined"
 msgstr "قابلة للدمج"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1291
+#: app/components/reservations/floor-plan-canvas.tsx:1329
 msgid "Can be combined with other tables"
 msgstr "يمكن دمجها مع طاولات أخرى"
 
@@ -5983,7 +6007,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/reservations/detail-sheet.tsx:1625
 #: app/components/reservations/experiences/experience-create-sheet.tsx:171
 #: app/components/reservations/experiences/schedule-sheet.tsx:180
-#: app/components/reservations/floor-plan-canvas.tsx:1209
+#: app/components/reservations/floor-plan-canvas.tsx:1247
 #: app/components/reservations/policies/policy-sheet.tsx:183
 #: app/components/reservations/requests-panel.tsx:216
 #: app/components/reservations/waitlist/add-party-dialog.tsx:201
@@ -6052,8 +6076,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1223
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1354
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1464
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:817
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:876
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:845
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:904
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:831
@@ -6179,7 +6203,7 @@ msgstr "إلغاء من الضيف"
 msgid "Cancelled by the restaurant"
 msgstr "إلغاء من المطعم"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:467
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:482
 msgid "Cancelled moving {cancelledGuestName}."
 msgstr "تم إلغاء نقل {cancelledGuestName}."
 
@@ -7184,7 +7208,7 @@ msgstr "انقر على \"تعديل التكوين\" لفتح claude_desktop_co
 msgid "Click \"Verify Discord membership\" after joining to claim your points automatically."
 msgstr "انقر على \"تحقق من عضوية Discord\" بعد الانضمام للمطالبة بنقاطك تلقائياً."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1533
+#: app/components/reservations/floor-plan-canvas.tsx:1571
 msgid "Click a table or decor element on the canvas to edit, resize, rotate, or nudge it with the keyboard."
 msgstr "انقر على طاولة أو عنصر ديكور في المخطط لتعديله أو تغيير حجمه أو تدويره أو تحريكه بلوحة المفاتيح."
 
@@ -7777,7 +7801,7 @@ msgstr "تأكيد طلب الحذف"
 msgid "Confirm New Password"
 msgstr "تأكيد كلمة المرور الجديدة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:899
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:927
 msgid "Confirm Overbook"
 msgstr "تأكيد الحجز الزائد"
 
@@ -7841,11 +7865,15 @@ msgstr "يؤكد إلغاءً قام به الضيف."
 msgid "Confirms the guest is on the waitlist."
 msgstr "يؤكد أن الضيف في قائمة الانتظار."
 
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1261
+msgid "conflict"
+msgstr "تعارض"
+
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:493
 msgid "Conflict"
 msgstr "تعارض"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:408
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:410
 msgid "Conflict detected: {conflictMessage}"
 msgstr "تم اكتشاف تعارض: {conflictMessage}"
 
@@ -8318,7 +8346,7 @@ msgstr "تعذّر إنشاء رمز PIN. حاول مرة أخرى."
 msgid "Could not mark the party as running late."
 msgstr "تعذّر تسجيل تأخر المجموعة."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:414
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:416
 msgid "Could not move the reservation."
 msgstr "تعذّر نقل الحجز."
 
@@ -9563,11 +9591,11 @@ msgstr "تم الرفض. وصلتهم رسالتك."
 msgid "Declining…"
 msgstr "جارٍ الرفض…"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1437
+#: app/components/reservations/floor-plan-canvas.tsx:1475
 msgid "Decor"
 msgstr "ديكور"
 
-#: app/components/reservations/floor-plan-canvas.tsx:920
+#: app/components/reservations/floor-plan-canvas.tsx:946
 msgid "Decor element type"
 msgstr "نوع عنصر الديكور"
 
@@ -9678,8 +9706,8 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/components/hiring/erase-dialog.tsx:89
 #: app/components/hiring/job-editor.tsx:1002
 #: app/components/note/comment-item.tsx:239
-#: app/components/reservations/floor-plan-canvas.tsx:1191
-#: app/components/reservations/floor-plan-canvas.tsx:1449
+#: app/components/reservations/floor-plan-canvas.tsx:1229
+#: app/components/reservations/floor-plan-canvas.tsx:1487
 #: app/components/roles/tenant-role-access-manager.tsx:1278
 #: app/components/roles/tenant-role-access-manager.tsx:1484
 #: app/components/settings/passkey-manager.tsx:220
@@ -9967,7 +9995,7 @@ msgstr "حذف رابط التواصل الاجتماعي"
 msgid "Delete step"
 msgstr "حذف الخطوة"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1216
+#: app/components/reservations/floor-plan-canvas.tsx:1254
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1013
 msgid "Delete table"
 msgstr "حذف الطاولة"
@@ -10020,7 +10048,7 @@ msgstr "حذف هذه الخدمة؟"
 msgid "Delete this special day?"
 msgstr "حذف هذا اليوم الخاص؟"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1198
+#: app/components/reservations/floor-plan-canvas.tsx:1236
 msgid "Delete this table?"
 msgstr "حذف هذه الطاولة؟"
 
@@ -10419,7 +10447,7 @@ msgstr "تم حذف منطقة الجلوس."
 msgid "Dining area updated."
 msgstr "تم تحديث منطقة الطعام."
 
-#: app/components/reservations/floor-plan-canvas.tsx:865
+#: app/components/reservations/floor-plan-canvas.tsx:892
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:702
 msgid "Dining areas"
 msgstr "مناطق الطعام"
@@ -10494,7 +10522,7 @@ msgstr "تجاهل"
 #~ msgid "Discard & leave"
 #~ msgstr "تجاهل ومغادرة"
 
-#: app/components/reservations/floor-plan-canvas.tsx:799
+#: app/components/reservations/floor-plan-canvas.tsx:826
 msgid "Discard and leave"
 msgstr "تجاهل ومغادرة"
 
@@ -10502,7 +10530,7 @@ msgstr "تجاهل ومغادرة"
 msgid "Discard and switch"
 msgstr "تجاهل والتبديل"
 
-#: app/components/reservations/floor-plan-canvas.tsx:761
+#: app/components/reservations/floor-plan-canvas.tsx:788
 #: app/components/reservations/messages/message-settings.tsx:775
 #: app/components/reservations/settings/setup-list-chrome.tsx:215
 msgid "Discard changes"
@@ -10517,7 +10545,7 @@ msgstr "تجاهل التغييرات"
 msgid "Discard unsaved changes?"
 msgstr "تجاهل التغييرات غير المحفوظة؟"
 
-#: app/components/reservations/floor-plan-canvas.tsx:781
+#: app/components/reservations/floor-plan-canvas.tsx:808
 #: app/components/reservations/settings/setup-list-chrome.tsx:207
 msgid "Discard your changes?"
 msgstr "تجاهل تغييراتك؟"
@@ -10803,7 +10831,7 @@ msgstr "جارٍ كتابة المسودة..."
 msgid "Drafting…"
 msgstr "جارٍ إعداد المسودة…"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:909
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:937
 msgid "Drag a bar to move it. Keyboard: Space or Enter."
 msgstr "اسحب الشريط لنقله. لوحة المفاتيح: مسافة أو Enter."
 
@@ -10823,7 +10851,7 @@ msgstr "اسحب وأعد ترتيب تصنيفات وعناصر القائمة 
 #~ msgid "Drag bars to reassign table or shift time in 15-min slots. Focus a bar and press Space/Enter for keyboard move."
 #~ msgstr "اسحب الأشرطة لإعادة تعيين الطاولة أو تغيير الوقت بفترات 15 دقيقة. حدد شريطاً واضغط Space/Enter للنقل بلوحة المفاتيح."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1539
+#: app/components/reservations/floor-plan-canvas.tsx:1577
 msgid "Drag items on the 10-unit grid, or use Arrow keys (1 unit) and Shift+Arrow (10 units). Nothing is saved until you click Save."
 msgstr "اسحب العناصر على شبكة من 10 وحدات، أو استخدم مفاتيح الأسهم (وحدة واحدة) وShift+سهم (10 وحدات). لا يُحفظ شيء حتى تنقر على حفظ."
 
@@ -10839,7 +10867,7 @@ msgstr "اسحب إلى طاولة، أو استخدم «تعيين إلى طا�
 #~ msgid "Drag onto table to seat/assign"
 #~ msgstr "اسحب إلى الطاولة للإجلاس أو التعيين"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1340
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1392
 msgid "Drag right edge to resize duration"
 msgstr "اسحب الحافة لتغيير المدة"
 
@@ -10978,7 +11006,7 @@ msgstr "المدة (دقيقة)"
 #~ msgid "Duration (minutes)"
 #~ msgstr "المدة (بالدقائق)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:484
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:499
 msgid "Duration {nextDuration} minutes for {resizedGuestName}"
 msgstr "المدة {nextDuration} دقيقة لـ {resizedGuestName}"
 
@@ -11440,7 +11468,7 @@ msgstr "حساسية البيض"
 #~ msgid "Element {0} ({1}, {2})"
 #~ msgstr ""
 
-#: app/components/reservations/floor-plan-canvas.tsx:1037
+#: app/components/reservations/floor-plan-canvas.tsx:1066
 msgid "Element {elementName} ({elementX}, {elementY})"
 msgstr "العنصر {elementName} ({elementX}، {elementY})"
 
@@ -11448,7 +11476,7 @@ msgstr "العنصر {elementName} ({elementX}، {elementY})"
 #~ msgid "Element Inspector"
 #~ msgstr "فاحص العناصر"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1455
+#: app/components/reservations/floor-plan-canvas.tsx:1493
 msgid "Element label"
 msgstr "تسمية العنصر"
 
@@ -11901,7 +11929,7 @@ msgstr "أدخل عنوان بريد إلكتروني"
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان URL خارجياً كاملاً."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:853
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:881
 msgid "Enter an overbook reason to force this placement or cancel."
 msgstr "أدخل سبب الحجز الزائد لفرض هذا التعيين أو قم بالإلغاء."
 
@@ -12527,7 +12555,8 @@ msgstr "تم تصدير {count} صفًا."
 msgid "Exported {exportedCount} people."
 msgstr "تم تصدير {exportedCount} شخصًا."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1328
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1379
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1380
 msgid "Extend turn by 15m"
 msgstr "تمديد الدورة 15 دقيقة"
 
@@ -12999,7 +13028,7 @@ msgstr "أنثوي"
 msgid "Fewer guests"
 msgstr "عدد أقل من الضيوف"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1251
+#: app/components/reservations/floor-plan-canvas.tsx:1289
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1274
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1361
 msgid "Fewest guests"
@@ -13290,7 +13319,7 @@ msgstr "الطابق"
 #~ msgid "Floor label"
 #~ msgstr "تسمية الطابق"
 
-#: app/components/reservations/floor-plan-canvas.tsx:722
+#: app/components/reservations/floor-plan-canvas.tsx:749
 #: app/components/workspace-breadcrumb.tsx:84
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tsx:444
 msgid "Floor plan"
@@ -13812,7 +13841,7 @@ msgstr "معرّف Google Analytics"
 msgid "Google Tag Manager ID"
 msgstr "معرّف Google Tag Manager"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:456
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:471
 msgid "Grabbed {grabbedGuestName} ({grabbedPartySize}) at {grabbedTime}. Use arrow keys to change time or table, Shift+Left/Right to resize duration, Enter to drop, Escape to cancel."
 msgstr "تم الإمساك بحجز {grabbedGuestName} ({grabbedPartySize}) عند {grabbedTime}. استخدم مفاتيح الأسهم لتغيير الوقت أو الطاولة، وShift مع السهم الأيمن/الأيسر لتغيير المدة، وEnter للإفلات، وEscape للإلغاء."
 
@@ -13843,7 +13872,7 @@ msgstr "أخضر"
 msgid "Greeting"
 msgstr "الترحيب"
 
-#: app/components/reservations/floor-plan-canvas.tsx:993
+#: app/components/reservations/floor-plan-canvas.tsx:1019
 msgid "Grid"
 msgstr "الشبكة"
 
@@ -14273,11 +14302,11 @@ msgstr "العناوين"
 msgid "Health card"
 msgstr "البطاقة الصحية"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1506
+#: app/components/reservations/floor-plan-canvas.tsx:1544
 msgid "Height"
 msgstr "الارتفاع"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1415
+#: app/components/reservations/floor-plan-canvas.tsx:1453
 msgid "Height (20–600)"
 msgstr "الارتفاع (20–600)"
 
@@ -15543,7 +15572,7 @@ msgstr "الإبقاء على المنطقة الحالية"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:202
 #: app/components/hiring/job-editor.tsx:477
-#: app/components/reservations/floor-plan-canvas.tsx:792
+#: app/components/reservations/floor-plan-canvas.tsx:819
 #: app/components/reservations/settings/setup-list-chrome.tsx:214
 #: app/components/staff/labor-policy-editor.tsx:290
 msgid "Keep editing"
@@ -15695,7 +15724,7 @@ msgstr "كوشر"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:295
 #: app/components/reservations/floor-plan-canvas.tsx:134
-#: app/components/reservations/floor-plan-canvas.tsx:1227
+#: app/components/reservations/floor-plan-canvas.tsx:1265
 #: app/components/website/create-form-dialog.tsx:171
 #: app/components/website/form-builder-sidebar.tsx:511
 #: app/utils/reservations/labels.ts:207
@@ -16395,7 +16424,7 @@ msgstr "مخطط الصالة المباشر مع الطاولات المشغو�
 #~ msgid "Live floor plan, upcoming reservations, seated tables, and walk-in seating."
 #~ msgstr "مخطط الصالة المباشر والحجوزات القادمة والطاولات المشغولة وإجلاس الحضور المباشر."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:913
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:941
 msgid "Live polling paused while moving"
 msgstr "تم إيقاف التحديث المباشر مؤقتاً أثناء النقل"
 
@@ -16763,7 +16792,8 @@ msgid "Lock ({lockCount})"
 msgstr "قفل ({lockCount})"
 
 #: app/components/reservations/detail-sheet.tsx:1197
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1302
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1346
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1351
 msgid "Lock table assignment"
 msgstr "قفل تعيين الطاولة"
 
@@ -16781,7 +16811,7 @@ msgstr "لا يمكن لأحد تعديل البطاقات المقفلة حتى
 msgid "Locked timesheets cannot be edited until someone unlocks them."
 msgstr "لا يمكن تعديل سجلات الدوام المقفلة حتى يفتحها أحد."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1267
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1310
 msgid "Locked to table"
 msgstr "مقفلة على الطاولة"
 
@@ -17984,7 +18014,7 @@ msgstr "المزيد من إجراءات الجدول"
 msgid "More team actions"
 msgstr "مزيد من إجراءات الفريق"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1266
+#: app/components/reservations/floor-plan-canvas.tsx:1304
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1287
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1370
 msgid "Most guests"
@@ -18050,7 +18080,7 @@ msgstr "تم إلغاء النقل. لم يتغير شيء."
 msgid "Move down"
 msgstr "نقل لأسفل"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:417
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:419
 msgid "Move failed: {failMessage}"
 msgstr "فشل النقل: {failMessage}"
 
@@ -18095,21 +18125,21 @@ msgstr "نقل لأعلى"
 msgid "Moved"
 msgstr "تم النقل"
 
-#: app/components/reservations/floor-plan-canvas.tsx:470
-#: app/components/reservations/floor-plan-canvas.tsx:520
+#: app/components/reservations/floor-plan-canvas.tsx:478
+#: app/components/reservations/floor-plan-canvas.tsx:538
 msgid "Moved {displayName} to ({nextX}, {nextY})"
 msgstr "تم نقل {displayName} إلى ({nextX}, {nextY})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:588
-#: app/components/reservations/floor-plan-canvas.tsx:596
+#: app/components/reservations/floor-plan-canvas.tsx:615
+#: app/components/reservations/floor-plan-canvas.tsx:623
 msgid "Moved {itemName} to ({nextX}, {nextY})"
 msgstr "تم نقل {itemName} إلى ({nextX}, {nextY})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1393
+#: app/components/reservations/floor-plan-canvas.tsx:1431
 msgid "Moved {tableLabel} to ({currentX}, {nextY})"
 msgstr "تم نقل {tableLabel} إلى ({currentX}, {nextY})"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1372
+#: app/components/reservations/floor-plan-canvas.tsx:1410
 msgid "Moved {tableLabel} to ({nextX}, {currentY})"
 msgstr "تم نقل {tableLabel} إلى ({nextX}, {currentY})"
 
@@ -19121,7 +19151,7 @@ msgstr "لم يتم العثور على فواتير"
 msgid "No issues found"
 msgstr "لم يتم العثور على مشكلات"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1530
+#: app/components/reservations/floor-plan-canvas.tsx:1568
 msgid "No item selected"
 msgstr "لم يتم تحديد أي عنصر"
 
@@ -21812,7 +21842,7 @@ msgid "over the whole range"
 msgstr "على الفترة كاملة"
 
 #: app/components/reservations/booking-sheet.tsx:1183
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:864
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:892
 msgid "Overbook reason"
 msgstr "سبب الحجز الزائد"
 
@@ -21823,7 +21853,7 @@ msgstr "سبب الحجز الزائد"
 msgid "Overbook reason (optional)"
 msgstr "سبب الحجز الزائد (اختياري)"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:863
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:891
 msgid "Overbook reason..."
 msgstr "سبب الحجز الزائد..."
 
@@ -23348,7 +23378,7 @@ msgstr "الترتيب {position} من {total}"
 msgid "Position added."
 msgstr "تمت إضافة المنصب."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1351
+#: app/components/reservations/floor-plan-canvas.tsx:1389
 msgid "Position and size"
 msgstr "الموضع والحجم"
 
@@ -24109,7 +24139,7 @@ msgstr "إعادة قراءة الطلب"
 msgid "Read the policy"
 msgstr "قراءة السياسة"
 
-#: app/components/reservations/floor-plan-canvas.tsx:727
+#: app/components/reservations/floor-plan-canvas.tsx:754
 #: app/components/roles/tenant-role-access-manager.tsx:606
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:568
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:236
@@ -24197,7 +24227,7 @@ msgstr "تمت إعادة تعيين الحجوزات القادمة بعد تغ
 #~ msgid "Reassigned upcoming reservations after table changes"
 #~ msgstr "تمت إعادة تعيين الحجوزات القادمة بعد تغييرات الطاولات"
 
-#: app/components/reservations/floor-plan-canvas.tsx:844
+#: app/components/reservations/floor-plan-canvas.tsx:871
 msgid "Reassigned upcoming reservations automatically"
 msgstr "تمت إعادة تعيين الحجوزات القادمة تلقائياً"
 
@@ -24518,7 +24548,7 @@ msgstr "مرن"
 msgid "Reload"
 msgstr "إعادة التحميل"
 
-#: app/components/reservations/floor-plan-canvas.tsx:830
+#: app/components/reservations/floor-plan-canvas.tsx:857
 msgid "Reload latest floor plan"
 msgstr "إعادة تحميل أحدث مخطط صالة"
 
@@ -25366,8 +25396,8 @@ msgstr "إعادة الأعمدة المعتادة"
 msgid "Resetting…"
 msgstr "جارٍ إعادة التعيين…"
 
-#: app/components/reservations/floor-plan-canvas.tsx:614
-#: app/components/reservations/floor-plan-canvas.tsx:622
+#: app/components/reservations/floor-plan-canvas.tsx:641
+#: app/components/reservations/floor-plan-canvas.tsx:649
 msgid "Resized {itemName} to {nextWidth} by {nextHeight}"
 msgstr "تم تغيير حجم {itemName} إلى {nextWidth} × {nextHeight}"
 
@@ -25627,7 +25657,7 @@ msgstr "تغيير رابط الإدارة"
 msgid "Rotate right"
 msgstr "تدوير لليمين"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1317
+#: app/components/reservations/floor-plan-canvas.tsx:1355
 msgid "Rotated {tableLabel} to {deg} degrees"
 msgstr "تم تدوير {tableLabel} إلى {deg} درجة"
 
@@ -25635,7 +25665,7 @@ msgstr "تم تدوير {tableLabel} إلى {deg} درجة"
 #~ msgid "Rotation"
 #~ msgstr "الدوران"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1327
+#: app/components/reservations/floor-plan-canvas.tsx:1365
 #: app/components/reservations/floor-plan-editor/editor-fields.tsx:66
 msgid "Rotation (degrees)"
 msgstr "الدوران (بالدرجات)"
@@ -25723,6 +25753,10 @@ msgstr "معرّف التشغيل مطلوب"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 msgid "Running"
 msgstr "قيد التشغيل"
+
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1263
+msgid "running late"
+msgstr "متأخر"
 
 #: app/components/reservations/detail-sheet.tsx:1028
 #: app/utils/reservations/labels.ts:187
@@ -25946,7 +25980,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/organization-members.tsx:145
 #: app/components/phone-agent/settings-page.tsx:381
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
-#: app/components/reservations/floor-plan-canvas.tsx:772
+#: app/components/reservations/floor-plan-canvas.tsx:799
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/waitlist/edit-party-dialog.tsx:149
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
@@ -26166,7 +26200,7 @@ msgstr "حفظ المنطقة"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 #: app/components/phone-agent/settings-page.tsx:377
-#: app/components/reservations/floor-plan-canvas.tsx:746
+#: app/components/reservations/floor-plan-canvas.tsx:773
 msgid "Saved"
 msgstr "تم الحفظ"
 
@@ -26247,7 +26281,7 @@ msgstr "جارٍ الحفظ..."
 #: app/components/phone-agent/settings-page.tsx:381
 #: app/components/reservations/experiences/experience-editor.tsx:545
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
-#: app/components/reservations/floor-plan-canvas.tsx:772
+#: app/components/reservations/floor-plan-canvas.tsx:799
 #: app/components/reservations/messages/message-settings.tsx:783
 #: app/components/reservations/policies/policy-sheet.tsx:186
 #: app/components/reservations/settings/save-bar.tsx:87
@@ -26809,11 +26843,11 @@ msgstr "فترات الجلوس"
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:941
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1093
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1014
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1042
 msgid "Seats"
 msgstr "المقاعد"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1069
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1097
 msgid "Seats used / capacity: {coversInSlot} / {maxCovers}"
 msgstr "المقاعد المستخدمة / السعة: {coversInSlot} / {maxCovers}"
 
@@ -27796,7 +27830,7 @@ msgstr "الإعدادات ودفتر الحجوزات وسجل الضيوف و�
 msgid "Several people are typing…"
 msgstr "عدة أشخاص يكتبون…"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1239
+#: app/components/reservations/floor-plan-canvas.tsx:1277
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:944
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1302
 msgid "Shape"
@@ -27966,7 +28000,8 @@ msgstr "نقص {short} ساعة عمل للأفراد وزيادة {over}، مق
 msgid "Short notice."
 msgstr "مهلة قصيرة."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1316
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1366
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1367
 msgid "Shorten turn by 15m"
 msgstr "تقليص الدورة 15 دقيقة"
 
@@ -28266,7 +28301,7 @@ msgid "Skipped"
 msgstr "تم تخطيها"
 
 #. placeholder {0}: pendingConflictMove.message
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:850
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:878
 msgid "Slot conflict: {0}"
 msgstr "تعارض في الوقت: {0}"
 
@@ -29332,7 +29367,7 @@ msgstr "نظام السمة"
 
 #: app/components/reservations/detail-sheet.tsx:816
 #: app/components/reservations/detail-sheet.tsx:891
-#: app/components/reservations/floor-plan-canvas.tsx:1178
+#: app/components/reservations/floor-plan-canvas.tsx:1216
 #: app/components/reservations/waitlist/seat-dialog.tsx:178
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:466
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:691
@@ -29341,7 +29376,7 @@ msgstr "نظام السمة"
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:937
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:1264
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:935
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1011
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1039
 msgid "Table"
 msgstr "طاولة"
 
@@ -29360,7 +29395,7 @@ msgstr "الطاولة {0} مشغولة بواسطة {1} ({2} أشخاص)"
 msgid "Table {createdTableLabel} created."
 msgstr "تم إنشاء الطاولة {createdTableLabel}."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:521
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:536
 msgid "Table {nextTableLabel} ({nextTableMin}-{nextTableMax}) for {movedGuestName}"
 msgstr "الطاولة {nextTableLabel} ({nextTableMin}-{nextTableMax}) لـ {movedGuestName}"
 
@@ -29372,17 +29407,25 @@ msgstr "الطاولة {tableLabel} غير متاحة"
 msgid "Table {tableLabel} is not free for this party"
 msgstr "الطاولة {tableLabel} غير متاحة لهذه المجموعة"
 
-#: app/components/reservations/floor-table.tsx:183
+#: app/components/reservations/floor-table.tsx:184
 msgid "Table {tableLabel}, {statusLabel}"
 msgstr "الطاولة {tableLabel}، {statusLabel}"
 
-#: app/components/reservations/floor-table.tsx:182
+#: app/components/reservations/floor-table.tsx:183
 msgid "Table {tableLabel}, {statusLabel}, {guestName}"
 msgstr "الطاولة {tableLabel}، {statusLabel}، {guestName}"
 
 #: app/components/reservations/floor-plan-canvas.tsx:1114
-msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
-msgstr "الطاولة {tableName}، {tableMinCovers}-{tableMaxCovers} مقاعد عند ({tableX}، {tableY})"
+#~ msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY})"
+#~ msgstr "الطاولة {tableName}، {tableMinCovers}-{tableMaxCovers} مقاعد عند ({tableX}، {tableY})"
+
+#: app/components/reservations/floor-plan-canvas.tsx:1147
+msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY}), bookable online"
+msgstr "الطاولة {tableName}، {tableMinCovers}-{tableMaxCovers} مقاعد عند ({tableX}، {tableY})، قابلة للحجز عبر الإنترنت"
+
+#: app/components/reservations/floor-plan-canvas.tsx:1150
+msgid "Table {tableName}, {tableMinCovers}-{tableMaxCovers} covers at ({tableX}, {tableY}), not bookable online"
+msgstr "الطاولة {tableName}، {tableMinCovers}-{tableMaxCovers} مقاعد عند ({tableX}، {tableY})، غير قابلة للحجز عبر الإنترنت"
 
 #: app/components/reservations/conflict-panel.tsx:71
 msgid "Table {tableNames} is blocked during this booking"
@@ -30195,8 +30238,8 @@ msgstr "الرقم السري غير مطابق. حاول مرة أخرى."
 msgid "That PIN did not match. Wait {seconds} seconds, then try again."
 msgstr "الرقم السري غير مطابق. انتظر {seconds} ثانية ثم حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:400
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:406
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:402
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:408
 msgid "That placement conflicts with another booking."
 msgstr "هذا الموضع يتعارض مع حجز آخر."
 
@@ -31181,7 +31224,7 @@ msgstr "الطاولة محتجزة."
 msgid "The table is released and the visit counts toward the guest's no-shows. You can undo this for the next 60 seconds."
 msgstr "تُحرَّر الطاولة وتُحتسب الزيارة ضمن حالات عدم حضور الضيف. يمكنك التراجع خلال الـ 60 ثانية التالية."
 
-#: app/components/reservations/floor-plan-canvas.tsx:1201
+#: app/components/reservations/floor-plan-canvas.tsx:1239
 msgid "The table leaves the floor plan when you save. Past reservations keep their history."
 msgstr "ستُزال الطاولة من المخطط عند الحفظ. تحتفظ الحجوزات السابقة بسجلها."
 
@@ -31723,7 +31766,7 @@ msgstr "لم تعد هذه التجربة موجودة."
 msgid "This fee is already being charged or was charged."
 msgstr "هذه الرسوم قيد التحصيل بالفعل أو سبق تحصيلها."
 
-#: app/components/reservations/floor-plan-canvas.tsx:814
+#: app/components/reservations/floor-plan-canvas.tsx:841
 msgid "This floor plan was changed by someone else"
 msgstr "تم تغيير مخطط الصالة هذا بواسطة شخص آخر"
 
@@ -32239,7 +32282,7 @@ msgstr "معرّف بكسل TikTok"
 msgid "Time"
 msgstr "الوقت"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:500
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:515
 msgid "Time {shiftedTime} for {shiftedGuestName}"
 msgstr "الوقت {shiftedTime} لـ {shiftedGuestName}"
 
@@ -33246,7 +33289,7 @@ msgstr "تعذّر تحديث هذا الطلب. حدّث الصفحة وحاو�
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1532
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:664
 #: app/routes/_app+/$orgSlug_+/reservations+/overview.tsx:735
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:359
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:361
 #: app/utils/reservations/labels.ts:144
 msgid "Unassigned"
 msgstr "غير مسند"
@@ -33267,7 +33310,7 @@ msgstr "غير مسند"
 #~ msgid "Unassigned, Conflicts & Reflow Notices"
 #~ msgstr "غير المعينة والتعارضات وإشعارات التوزيع"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:942
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:970
 msgid "Unassigned: drag onto a table row below"
 msgstr "غير مخصصة: اسحبها إلى صف طاولة أدناه"
 
@@ -33424,7 +33467,7 @@ msgstr "فتح القفل"
 msgid "Unlock ({unlockCount})"
 msgstr "فتح القفل ({unlockCount})"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:836
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:864
 msgid "Unlock and move"
 msgstr "إلغاء القفل والنقل"
 
@@ -33432,7 +33475,8 @@ msgstr "إلغاء القفل والنقل"
 msgid "Unlock card"
 msgstr "فتح قفل البطاقة"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1301
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1345
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:1350
 msgid "Unlock table assignment"
 msgstr "إلغاء قفل تعيين الطاولة"
 
@@ -33501,7 +33545,7 @@ msgstr "غير المقروء فقط"
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:146
 #: app/components/phone-agent/flow-editor/flow-canvas.tsx:496
 #: app/components/reservations/experiences/experience-editor.tsx:499
-#: app/components/reservations/floor-plan-canvas.tsx:743
+#: app/components/reservations/floor-plan-canvas.tsx:770
 #: app/components/reservations/messages/message-settings.tsx:761
 #: app/components/reservations/settings/save-bar.tsx:63
 msgid "Unsaved changes"
@@ -33607,7 +33651,7 @@ msgstr "حجوزات قادمة بها تعارضات (خارج ساعات ال�
 #~ msgid "Upcoming reservations flagged with setup conflicts"
 #~ msgstr "حجوزات قادمة بها تعارضات مع الإعدادات"
 
-#: app/components/reservations/floor-plan-canvas.tsx:850
+#: app/components/reservations/floor-plan-canvas.tsx:877
 msgid "Upcoming reservations need manual attention after this floor-plan change"
 msgstr "حجوزات قادمة تحتاج إلى مراجعة يدوية بعد تغيير مخطط الصالة هذا"
 
@@ -33683,7 +33727,7 @@ msgstr "تم التحديث منذ {timeAgo}"
 msgid "Updated {updated}"
 msgstr "تم التحديث {updated}"
 
-#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:363
+#: app/routes/_app+/$orgSlug_+/reservations+/timeline.tsx:365
 msgid "Updated {updatedGuestName} on {tblLabel} to {updatedTime} ({targetDurationMin}m)"
 msgstr "تم تحديث {updatedGuestName} على {tblLabel} إلى {updatedTime} ({targetDurationMin} د)"
 
@@ -35136,7 +35180,7 @@ msgstr "كم تكلّفك ساعات العمل مقابل مبيعاتك، وا
 msgid "What's missing?"
 msgstr "ما الذي ينقص؟"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1299
+#: app/components/reservations/floor-plan-canvas.tsx:1337
 msgid "Wheelchair accessible"
 msgstr "ملائم للكراسي المتحركة"
 
@@ -35449,11 +35493,11 @@ msgstr "ما سبب الرفض؟"
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:324
-#: app/components/reservations/floor-plan-canvas.tsx:1493
+#: app/components/reservations/floor-plan-canvas.tsx:1531
 msgid "Width"
 msgstr "العرض"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1400
+#: app/components/reservations/floor-plan-canvas.tsx:1438
 msgid "Width (20–600)"
 msgstr "العرض (20–600)"
 
@@ -35668,13 +35712,13 @@ msgstr "رقم خاطئ"
 msgid "Wrong time entered"
 msgstr "تم إدخال وقت خاطئ"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1358
-#: app/components/reservations/floor-plan-canvas.tsx:1467
+#: app/components/reservations/floor-plan-canvas.tsx:1396
+#: app/components/reservations/floor-plan-canvas.tsx:1505
 msgid "X (0–1200)"
 msgstr "س (0–1200)"
 
-#: app/components/reservations/floor-plan-canvas.tsx:1379
-#: app/components/reservations/floor-plan-canvas.tsx:1480
+#: app/components/reservations/floor-plan-canvas.tsx:1417
+#: app/components/reservations/floor-plan-canvas.tsx:1518
 msgid "Y (0–1200)"
 msgstr "ص (0–1200)"
 
@@ -35990,7 +36034,7 @@ msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة 
 msgid "You have unsaved edits. If you close now they are lost and nothing is saved."
 msgstr "لديك تعديلات غير محفوظة. إذا أغلقت الآن فستضيع ولن يُحفظ شيء."
 
-#: app/components/reservations/floor-plan-canvas.tsx:784
+#: app/components/reservations/floor-plan-canvas.tsx:811
 msgid "You have unsaved floor plan changes. If you leave now they are lost."
 msgstr "لديك تغييرات غير محفوظة في مخطط الصالة. إذا غادرت الآن ستفقدها."
 
@@ -36322,10 +36366,10 @@ msgstr "منطقة"
 msgid "Zone Name"
 msgstr "اسم المنطقة"
 
-#: app/components/reservations/floor-plan-canvas.tsx:979
+#: app/components/reservations/floor-plan-canvas.tsx:1005
 msgid "Zoom in"
 msgstr "تكبير"
 
-#: app/components/reservations/floor-plan-canvas.tsx:957
+#: app/components/reservations/floor-plan-canvas.tsx:983
 msgid "Zoom out"
 msgstr "تصغير"
