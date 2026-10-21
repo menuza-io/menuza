@@ -36,12 +36,17 @@ vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
 }))
 
-/** Random ids can hold any four digits; the PIN checks look at the rest. */
+/**
+ * Random ids and epoch timestamps can hold any four digits; the PIN and pay
+ * checks look at the rest.
+ */
 const withoutIds = (text: string) =>
-	text.replace(
-		/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,
-		'',
-	)
+	text
+		.replace(
+			/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,
+			'',
+		)
+		.replace(/\b\d{13}\b/g, '')
 
 describe('Adversarial: /operator/staff', () => {
 	let h: StaffHarness
@@ -544,8 +549,8 @@ describe('Adversarial: /operator/staff', () => {
 			const managerAudit = await h.request('GET', '/audit?limit=200', {
 				token: manager,
 			})
-			expect(managerAudit.raw).not.toContain('7777')
-			expect(managerAudit.raw).not.toContain('1642')
+			expect(withoutIds(managerAudit.raw)).not.toContain('7777')
+			expect(withoutIds(managerAudit.raw)).not.toContain('1642')
 			expect(
 				managerAudit.body.entries.every(
 					(e: any) => e.sensitivity === 'standard',
@@ -591,7 +596,7 @@ describe('Adversarial: /operator/staff', () => {
 			expect(blocked.raw).not.toContain('1987-06-15')
 			const blockedPay = await h.request('GET', `/${staffId}?include=pay`)
 			expect(blockedPay.status).toBe(500)
-			expect(blockedPay.raw).not.toContain('1642')
+			expect(withoutIds(blockedPay.raw)).not.toContain('1642')
 			await db.run(sql.raw('DROP TRIGGER no_audit'))
 		})
 	})
@@ -749,7 +754,7 @@ describe('Adversarial: /operator/staff', () => {
 				token,
 			})
 			expect(detail.status).toBe(200)
-			expect(detail.raw).not.toContain('1642')
+			expect(withoutIds(detail.raw)).not.toContain('1642')
 			expect(detail.raw).not.toContain('1987-06-15')
 			expect(detail.body.restricted).toEqual({ pay: true, private: true })
 
