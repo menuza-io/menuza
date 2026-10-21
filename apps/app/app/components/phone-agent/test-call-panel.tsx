@@ -497,215 +497,220 @@ export function TestCallPanel({
 		fetcher.state !== 'idle'
 
 	return (
-		<div className="grid gap-6 lg:grid-cols-5">
-			<section
-				aria-label={_(msg`Call controls`)}
-				className="flex flex-col gap-6 rounded-lg border p-6 lg:col-span-2"
-			>
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-					{labels.scope ? (
+		<div className="@container">
+			<div className="grid gap-6 @2xl:grid-cols-5">
+				<section
+					aria-label={_(msg`Call controls`)}
+					className="flex flex-col gap-6 rounded-lg border p-6 @2xl:col-span-2"
+				>
+					<div className="grid gap-4 @md:grid-cols-2 @2xl:grid-cols-1">
+						{labels.scope ? (
+							<div className="flex flex-col gap-2">
+								<Label htmlFor="test-call-scope">{labels.scope.label}</Label>
+								<Select
+									items={scopeItems}
+									value={scopeId || null}
+									disabled={inCall || scopes.length === 0}
+									onValueChange={(value) => {
+										if (value) setScopeId(value)
+									}}
+								>
+									<SelectTrigger id="test-call-scope" className="w-full">
+										<SelectValue placeholder={_(msg`Choose one`)} />
+									</SelectTrigger>
+									<SelectContent>
+										{scopeItems.map((item) => (
+											<SelectItem key={item.value} value={item.value}>
+												{item.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						) : null}
 						<div className="flex flex-col gap-2">
-							<Label htmlFor="test-call-scope">{labels.scope.label}</Label>
+							<Label htmlFor="test-call-flow">
+								<Trans>Flow</Trans>
+							</Label>
 							<Select
-								items={scopeItems}
-								value={scopeId || null}
-								disabled={inCall || scopes.length === 0}
+								items={flowItems}
+								value={flow}
+								disabled={inCall}
 								onValueChange={(value) => {
-									if (value) setScopeId(value)
+									if (value === 'draft' || value === 'published') setFlow(value)
 								}}
 							>
-								<SelectTrigger id="test-call-scope" className="w-full">
-									<SelectValue placeholder={_(msg`Choose one`)} />
+								<SelectTrigger id="test-call-flow" className="w-full">
+									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									{scopeItems.map((item) => (
-										<SelectItem key={item.value} value={item.value}>
-											{item.label}
-										</SelectItem>
-									))}
+									<SelectItem value="published" disabled={!hasPublishedFlow}>
+										<Trans>Published</Trans>
+									</SelectItem>
+									<SelectItem value="draft">
+										<Trans>Draft</Trans>
+									</SelectItem>
 								</SelectContent>
 							</Select>
+							{!hasPublishedFlow ? (
+								<p className="text-muted-foreground text-xs">
+									<Trans>
+										Your flow isn't published yet, so test the draft.
+									</Trans>
+								</p>
+							) : null}
 						</div>
-					) : null}
-					<div className="flex flex-col gap-2">
-						<Label htmlFor="test-call-flow">
-							<Trans>Flow</Trans>
-						</Label>
-						<Select
-							items={flowItems}
-							value={flow}
-							disabled={inCall}
-							onValueChange={(value) => {
-								if (value === 'draft' || value === 'published') setFlow(value)
-							}}
-						>
-							<SelectTrigger id="test-call-flow" className="w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="published" disabled={!hasPublishedFlow}>
-									<Trans>Published</Trans>
-								</SelectItem>
-								<SelectItem value="draft">
-									<Trans>Draft</Trans>
-								</SelectItem>
-							</SelectContent>
-						</Select>
-						{!hasPublishedFlow ? (
-							<p className="text-muted-foreground text-xs">
-								<Trans>Your flow isn't published yet, so test the draft.</Trans>
-							</p>
-						) : null}
 					</div>
-				</div>
 
-				<TestCallPhone
-					agentName={agentName}
-					agentNumber={agentNumber}
-					state={
-						inCall
-							? {
-									screen: 'call',
-									elapsedSeconds:
-										answered && answeredAt !== null
-											? Math.max(0, Math.floor((now - answeredAt) / 1000))
-											: null,
-									activity,
-									muted,
-									canMute: phase === 'connected',
-									speakerOn: speakerOn && !audioBlocked,
-									dialed,
-								}
-							: { screen: 'dialer', ended: phase === 'ended' }
-					}
-					canCall={!startDisabled}
-					onCall={() => void start()}
-					onPressKey={pressKey}
-					onToggleMute={() => void toggleMute()}
-					onToggleSpeaker={toggleSpeaker}
-					onHangUp={endCall}
-				/>
-				{phase === 'connected' ? (
-					<p className="text-muted-foreground text-center text-xs">
-						<Trans>You can also type keys on your keyboard.</Trans>
-					</p>
-				) : null}
-				{audioBlocked ? (
-					<p className="text-muted-foreground text-center text-sm">
-						<Trans>
-							Your browser paused the agent's audio. Tap Speaker to hear it.
-						</Trans>
-					</p>
-				) : null}
-
-				{error ? (
-					<p role="alert" className="text-destructive text-center text-sm">
-						{error}
-					</p>
-				) : null}
-
-				{phase === 'ended' ? (
-					<p className="text-muted-foreground text-center text-sm">
-						<Trans>
-							This call will appear in{' '}
-							<Link
-								to={`/${orgSlug}/phone-agent/calls`}
-								className="text-foreground underline underline-offset-4"
-							>
-								Calls
-							</Link>{' '}
-							shortly, marked as a test.
-						</Trans>
-					</p>
-				) : null}
-				{!canStart ? (
-					<p className="text-muted-foreground text-center text-sm">
-						<Trans>
-							Only people who can edit the phone agent can start test calls.
-						</Trans>
-					</p>
-				) : null}
-				{labels.scope && scopes.length === 0 ? (
-					<p className="text-muted-foreground text-center text-sm">
-						{labels.scope.missing}
-					</p>
-				) : null}
-				<div ref={audioContainerRef} hidden />
-			</section>
-
-			<section
-				aria-labelledby="test-call-transcript-heading"
-				className="flex min-h-80 flex-col gap-4 rounded-lg border p-6 lg:col-span-3"
-			>
-				<h2 id="test-call-transcript-heading" className="font-medium">
-					<Trans>Live transcript</Trans>
-				</h2>
-				<div
-					ref={transcriptRef}
-					className="flex max-h-96 min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
-					aria-live="polite"
-					aria-relevant="additions text"
-				>
-					{segments.length === 0 ? (
-						<p className="text-muted-foreground m-auto text-center text-sm">
-							{inCall ? (
-								<Trans>
-									The conversation and your key presses will appear here.
-								</Trans>
-							) : (
-								<Trans>
-									Start a call to see what you and your agent say in real time.
-								</Trans>
-							)}
+					<TestCallPhone
+						agentName={agentName}
+						agentNumber={agentNumber}
+						state={
+							inCall
+								? {
+										screen: 'call',
+										elapsedSeconds:
+											answered && answeredAt !== null
+												? Math.max(0, Math.floor((now - answeredAt) / 1000))
+												: null,
+										activity,
+										muted,
+										canMute: phase === 'connected',
+										speakerOn: speakerOn && !audioBlocked,
+										dialed,
+									}
+								: { screen: 'dialer', ended: phase === 'ended' }
+						}
+						canCall={!startDisabled}
+						onCall={() => void start()}
+						onPressKey={pressKey}
+						onToggleMute={() => void toggleMute()}
+						onToggleSpeaker={toggleSpeaker}
+						onHangUp={endCall}
+					/>
+					{phase === 'connected' ? (
+						<p className="text-muted-foreground text-center text-xs">
+							<Trans>You can also type keys on your keyboard.</Trans>
 						</p>
-					) : (
-						segments.map((segment) => (
-							<div
-								key={segment.id}
-								className={cn(
-									'flex max-w-[85%] flex-col gap-1 rounded-lg px-3 py-2 text-sm',
-									segment.speaker === 'agent'
-										? 'bg-muted self-start'
-										: 'bg-primary text-primary-foreground self-end',
-									!segment.final && 'opacity-70',
-								)}
-							>
-								<span className="text-xs opacity-70">
-									{segment.speaker === 'agent' ? (
-										<Trans>Agent</Trans>
-									) : (
-										<Trans>You</Trans>
-									)}
-								</span>
-								<span className="leading-relaxed whitespace-pre-wrap">
-									{segment.text}
-								</span>
-							</div>
-						))
-					)}
-				</div>
-				{sentLinks.map((link) => (
+					) : null}
+					{audioBlocked ? (
+						<p className="text-muted-foreground text-center text-sm">
+							<Trans>
+								Your browser paused the agent's audio. Tap Speaker to hear it.
+							</Trans>
+						</p>
+					) : null}
+
+					{error ? (
+						<p role="alert" className="text-destructive text-center text-sm">
+							{error}
+						</p>
+					) : null}
+
+					{phase === 'ended' ? (
+						<p className="text-muted-foreground text-center text-sm">
+							<Trans>
+								This call will appear in{' '}
+								<Link
+									to={`/${orgSlug}/phone-agent/calls`}
+									className="text-foreground underline underline-offset-4"
+								>
+									Calls
+								</Link>{' '}
+								shortly, marked as a test.
+							</Trans>
+						</p>
+					) : null}
+					{!canStart ? (
+						<p className="text-muted-foreground text-center text-sm">
+							<Trans>
+								Only people who can edit the phone agent can start test calls.
+							</Trans>
+						</p>
+					) : null}
+					{labels.scope && scopes.length === 0 ? (
+						<p className="text-muted-foreground text-center text-sm">
+							{labels.scope.missing}
+						</p>
+					) : null}
+					<div ref={audioContainerRef} hidden />
+				</section>
+
+				<section
+					aria-labelledby="test-call-transcript-heading"
+					className="flex min-h-80 flex-col gap-4 rounded-lg border p-6 @2xl:col-span-3"
+				>
+					<h2 id="test-call-transcript-heading" className="font-medium">
+						<Trans>Live transcript</Trans>
+					</h2>
 					<div
-						key={link.id}
-						className="bg-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
-						role="status"
+						ref={transcriptRef}
+						className="flex max-h-96 min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
+						aria-live="polite"
+						aria-relevant="additions text"
 					>
-						<div className="flex items-center gap-2 text-sm font-medium">
-							<Icon name="link-2" className="size-4" />
-							<Trans>Link created</Trans>
-						</div>
-						<Button
-							variant="outline"
-							size="sm"
-							render={<a href={link.url} target="_blank" rel="noreferrer" />}
-							nativeButton={false}
-						>
-							<Icon name="external-link" />
-							<Trans>Open link</Trans>
-						</Button>
+						{segments.length === 0 ? (
+							<p className="text-muted-foreground m-auto text-center text-sm">
+								{inCall ? (
+									<Trans>
+										The conversation and your key presses will appear here.
+									</Trans>
+								) : (
+									<Trans>
+										Start a call to see what you and your agent say in real
+										time.
+									</Trans>
+								)}
+							</p>
+						) : (
+							segments.map((segment) => (
+								<div
+									key={segment.id}
+									className={cn(
+										'flex max-w-[85%] flex-col gap-1 rounded-lg px-3 py-2 text-sm',
+										segment.speaker === 'agent'
+											? 'bg-muted self-start'
+											: 'bg-primary text-primary-foreground self-end',
+										!segment.final && 'opacity-70',
+									)}
+								>
+									<span className="text-xs opacity-70">
+										{segment.speaker === 'agent' ? (
+											<Trans>Agent</Trans>
+										) : (
+											<Trans>You</Trans>
+										)}
+									</span>
+									<span className="leading-relaxed whitespace-pre-wrap">
+										{segment.text}
+									</span>
+								</div>
+							))
+						)}
 					</div>
-				))}
-			</section>
+					{sentLinks.map((link) => (
+						<div
+							key={link.id}
+							className="bg-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+							role="status"
+						>
+							<div className="flex items-center gap-2 text-sm font-medium">
+								<Icon name="link-2" className="size-4" />
+								<Trans>Link created</Trans>
+							</div>
+							<Button
+								variant="outline"
+								size="sm"
+								render={<a href={link.url} target="_blank" rel="noreferrer" />}
+								nativeButton={false}
+							>
+								<Icon name="external-link" />
+								<Trans>Open link</Trans>
+							</Button>
+						</div>
+					))}
+				</section>
+			</div>
 		</div>
 	)
 }
