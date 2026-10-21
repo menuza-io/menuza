@@ -168,6 +168,64 @@ describe('FloorPlanCanvas', () => {
 		})
 	})
 
+	function renderCanvas() {
+		return renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={vi.fn(async () => true)}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+	}
+
+	it('selects a table or element with Enter or Space, so the inspector opens without a pointer', () => {
+		renderCanvas()
+		const table = screen.getByTestId('floor-table-T1')
+		expect(table.getAttribute('aria-pressed')).toBe('false')
+		fireEvent.keyDown(table, { key: 'Enter' })
+		expect(table.getAttribute('aria-pressed')).toBe('true')
+		expect(screen.getByTestId('floor-inspector-delete-table')).toBeTruthy()
+		const element = screen.getByTestId('floor-element-el-1')
+		fireEvent.keyDown(element, { key: ' ' })
+		expect(element.getAttribute('aria-pressed')).toBe('true')
+		expect(table.getAttribute('aria-pressed')).toBe('false')
+	})
+
+	it('names whether a table is bookable online, not by its colour alone', () => {
+		renderCanvas()
+		const names = SAMPLE_TABLES.map(
+			(table) =>
+				screen
+					.getByTestId(`floor-table-${table.label}`)
+					.getAttribute('aria-label') ?? '',
+		)
+		for (const name of names) {
+			expect(name).toMatch(/bookable online/)
+		}
+		expect(
+			names.some((name) => /not bookable online/.test(name)) ||
+				SAMPLE_TABLES.every((table) => table.isBookableOnline),
+		).toBe(true)
+	})
+
+	it('does not nudge the selected item when an arrow is pressed on the area buttons or elsewhere outside the canvas', () => {
+		renderCanvas()
+		const table = screen.getByTestId('floor-table-T1')
+		fireEvent.keyDown(table, { key: 'Enter' })
+		const areaButton = screen.getByTestId('floor-area-tab-Main Dining')
+		fireEvent.keyDown(areaButton, { key: 'ArrowRight', bubbles: true })
+		const live = screen.getByTestId('floor-plan-live-region')
+		expect(live.textContent ?? '').not.toContain('Moved')
+	})
+
 	it('discards unsaved changes when clicking Leave without saving and shows 409 stale-version banner when conflictMessage is set', () => {
 		const onSave = vi.fn(async () => true)
 		const onReloadLatest = vi.fn()

@@ -446,6 +446,14 @@ export function FloorPlanCanvas({
 		itemKind: 'table' | 'element',
 		item: { id: string; label: string | null; x: number; y: number },
 	) => {
+		// Enter or Space selects (the click action), so the inspector (rotate,
+		// resize, delete, covers) is reachable without a pointer.
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault()
+			event.stopPropagation()
+			setSelected({ kind: itemKind, id: item.id })
+			return
+		}
 		if (!canWrite) return
 		const step = event.shiftKey ? FLOOR_GRID_STEP : 1
 		let nextX = item.x
@@ -480,6 +488,16 @@ export function FloorPlanCanvas({
 		const onWindowKeyDown = (event: KeyboardEvent) => {
 			if (event.defaultPrevented) return
 			const target = event.target as HTMLElement | null
+			// Arrows nudge the selected item only from the canvas itself (or with
+			// nothing focused): never from a tab, select, button or the inspector,
+			// where the arrow keys already mean something else.
+			if (
+				target &&
+				target !== document.body &&
+				!canvasViewportRef.current?.contains(target)
+			) {
+				return
+			}
 			if (
 				target &&
 				(target.tagName === 'INPUT' ||
@@ -538,6 +556,8 @@ export function FloorPlanCanvas({
 		return () => window.removeEventListener('keydown', onWindowKeyDown)
 	}, [canWrite, selected, draftTables, draftElements, _])
 
+	const canvasViewportRef = useRef<HTMLDivElement>(null)
+
 	const startPointerDrag = (
 		event: ReactPointerEvent<HTMLElement>,
 		itemKind: 'table' | 'element',
@@ -553,6 +573,13 @@ export function FloorPlanCanvas({
 		event.stopPropagation()
 		setSelected({ kind: itemKind, id: item.id })
 		if (!canWrite) return
+		// Keep receiving the pointer when it leaves the item or the page, and
+		// end the drag cleanly if the system cancels it.
+		try {
+			event.currentTarget.setPointerCapture?.(event.pointerId)
+		} catch {
+			// A synthetic or already-released pointer: the drag still works.
+		}
 
 		dragRef.current = {
 			itemKind,
@@ -861,7 +888,7 @@ export function FloorPlanCanvas({
 			<div className="bg-background flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
 				<div
 					className="flex flex-wrap items-center gap-1.5"
-					role="tablist"
+					role="group"
 					aria-label={_(msg`Dining areas`)}
 				>
 					{draftAreas.map((area) => {
@@ -873,8 +900,7 @@ export function FloorPlanCanvas({
 							<Button
 								key={area.id}
 								type="button"
-								role="tab"
-								aria-selected={isActive}
+								aria-pressed={isActive}
 								variant={isActive ? 'secondary' : 'ghost'}
 								size="sm"
 								onClick={() => {
@@ -1001,9 +1027,11 @@ export function FloorPlanCanvas({
 				{/* Canvas Viewport */}
 				<div
 					dir="ltr"
+					ref={canvasViewportRef}
 					className="relative min-h-[420px] overflow-auto p-4 lg:min-h-0"
 					onPointerMove={handleCanvasPointerMove}
 					onPointerUp={handleCanvasPointerUp}
+					onPointerCancel={handleCanvasPointerUp}
 					onClick={() => setSelected(null)}
 				>
 					<div
@@ -1032,6 +1060,7 @@ export function FloorPlanCanvas({
 								<div
 									key={el.id}
 									role="button"
+									aria-pressed={isSelected}
 									tabIndex={0}
 									aria-label={_(
 										msg`Element ${elementName} (${elementX}, ${elementY})`,
@@ -1070,6 +1099,7 @@ export function FloorPlanCanvas({
 										height: `${el.height}px`,
 										transform: `rotate(${el.rotation}deg)`,
 										cursor: canWrite ? 'grab' : 'default',
+										touchAction: canWrite ? 'none' : undefined,
 									}}
 								>
 									<span className="truncate px-1">
@@ -1109,10 +1139,17 @@ export function FloorPlanCanvas({
 								<div
 									key={table.id}
 									role="button"
+									aria-pressed={isSelected}
 									tabIndex={0}
-									aria-label={_(
-										msg`Table ${tableName}, ${tableMinCovers}-${tableMaxCovers} covers at (${tableX}, ${tableY})`,
-									)}
+									aria-label={
+										table.isBookableOnline
+											? _(
+													msg`Table ${tableName}, ${tableMinCovers}-${tableMaxCovers} covers at (${tableX}, ${tableY}), bookable online`,
+												)
+											: _(
+													msg`Table ${tableName}, ${tableMinCovers}-${tableMaxCovers} covers at (${tableX}, ${tableY}), not bookable online`,
+												)
+									}
 									data-testid={`floor-table-${table.label}`}
 									onClick={(e) => {
 										e.stopPropagation()
@@ -1146,6 +1183,7 @@ export function FloorPlanCanvas({
 										height: `${table.height}px`,
 										transform: `rotate(${table.rotation}deg)`,
 										cursor: canWrite ? 'grab' : 'pointer',
+										touchAction: canWrite ? 'none' : undefined,
 									}}
 								>
 									<span className="text-xs font-bold">{table.label}</span>
