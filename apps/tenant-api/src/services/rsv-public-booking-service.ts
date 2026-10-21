@@ -921,7 +921,18 @@ export async function createLargePartyRequest(params: {
 			)
 
 			const endAt = structural.startAt + structural.turnMin * 60_000
-			const tableIds = settings.requestHoldsCapacity
+			// A request may park tables until a manager answers, and an anonymous
+			// guest typed an unverified phone. Past a small per-address and
+			// per-location number of open requests the request is still taken (a
+			// manager reads it) but holds no tables, so a flood cannot lock the
+			// floor.
+			const mayHoldCapacity =
+				settings.requestHoldsCapacity &&
+				(await canHoldRequestCapacity(tx, {
+					locationId: params.locationId,
+					ipHash: params.ipHash,
+				}))
+			const tableIds = mayHoldCapacity
 				? planRequestTables(state, {
 						businessDate: slot.date,
 						localMin: structural.slotMin,
@@ -1007,6 +1018,35 @@ export async function createLargePartyRequest(params: {
 			return { reservationId }
 		},
 	)
+}
+
+/** Open guest requests one address may have holding tables at a time. */
+export const MAX_OPEN_REQUESTS_PER_ADDRESS = 3
+/** Open guest requests one location may have holding tables at a time. */
+export const MAX_OPEN_REQUESTS_PER_LOCATION = 20
+
+export async function canHoldRequestCapacity(
+	tx: DbOrTx,
+	params: { locationId: string; ipHash: string },
+): Promise<boolean> {
+	const open = and(
+		eq(rsvReservations.locationId, params.locationId),
+		eq(rsvReservations.status, 'pending_approval'),
+		eq(rsvReservations.createdByKind, 'guest'),
+	)
+	const [perLocation] = await tx
+		.select({ n: sql<number>`count(*)` })
+		.from(rsvReservations)
+		.where(open)
+		.all()
+	if (Number(perLocation?.n ?? 0) >= MAX_OPEN_REQUESTS_PER_LOCATION)
+		return false
+	const [perAddress] = await tx
+		.select({ n: sql<number>`count(*)` })
+		.from(rsvReservations)
+		.where(and(open, eq(rsvReservations.ipHash, params.ipHash)))
+		.all()
+	return Number(perAddress?.n ?? 0) < MAX_OPEN_REQUESTS_PER_ADDRESS
 }
 
 /** Slot that exists on an open day for a staff-like channel, ignoring what is already booked. */
