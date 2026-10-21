@@ -1982,7 +1982,9 @@ describe('operator reads of the recorded client', () => {
 
 	it('sanitizes unknown or hostile X-Client values to web', async () => {
 		const date = dateAhead(30)
-		const id = await bookAs('<script>' + 'x'.repeat(300), 70, date)
+		// Markup-looking and far over any sane length; plain data for a header.
+		const hostileHeader = `${'<'}b${'>'}${'x'.repeat(300)}`
+		const id = await bookAs(hostileHeader, 70, date)
 		const row = await feedRow(id, date)
 		expect(row).toMatchObject({ channel: 'online', client: 'web' })
 	})
