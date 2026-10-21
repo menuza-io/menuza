@@ -7,8 +7,9 @@
  * is never stored or logged, and the DTO goes to the org's region.
  *
  * Failures to reach the region propagate so the route answers 5xx and the
- * provider retries. Permanent regional rejections (unknown payment, mismatched
- * session or amount) are logged by code and acknowledged. Duplicates are
+ * provider retries. Final regional rejections (404, 409, 422: unknown payment,
+ * mismatched session or amount) are logged by code and acknowledged; 400, 401
+ * and 403 are wiring faults and are retried, not dropped. Duplicates are
  * idempotent regionally and answer 200.
  */
 
@@ -46,14 +47,30 @@ export function isReservationStripeMetadata(
 	return isReservationMetadata(metadata)
 }
 
-/** Run a regional delivery; ack permanent rejections, rethrow transient ones. */
+/**
+ * The regional answers that say "this event does not apply" (unknown payment,
+ * already settled or mismatched, not processable). Only these are final.
+ * Anything else that is not a success is the wiring (400 contract skew, 401 or
+ * 403 after a secret rotation or a deploy): acknowledging it would lose the
+ * payment event for good, so the route answers 5xx and the provider redelivers.
+ */
+const FINAL_REGIONAL_STATUSES = new Set([404, 409, 422])
+
+/** Run a regional delivery; ack final rejections, rethrow everything else. */
 async function deliver(label: string, operation: () => Promise<unknown>) {
 	try {
 		await operation()
 	} catch (error) {
-		if (error instanceof RegionalPaymentsApiError && !error.retryable) {
+		if (
+			error instanceof RegionalPaymentsApiError &&
+			FINAL_REGIONAL_STATUSES.has(error.httpStatus)
+		) {
 			logReservationPaymentFailure(`${label} rejected by region`, error)
 			return
+		}
+		if (error instanceof RegionalPaymentsApiError) {
+			// Needs a person: surfaces in the error logs on every redelivery.
+			logReservationPaymentFailure(`${label} not delivered, will retry`, error)
 		}
 		throw error
 	}

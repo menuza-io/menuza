@@ -930,6 +930,42 @@ describe('reservation payments bridge on the payment emulators', () => {
 			})
 		})
 
+		it('a transient provider failure on a late refund is retried, never reported as failed', async () => {
+			const org = await createOrg('us', 'stripe')
+			const commerce = (
+				await import('#app/utils/shop.server.ts')
+			).getShopCommerce()
+			const spy = vi
+				.spyOn(commerce, 'createReservationStripeRefund')
+				.mockRejectedValue(
+					new (await import('stripe')).default.errors.StripeConnectionError({
+						message: 'connection reset',
+						type: 'api_connection_error',
+					} as never),
+				)
+			await expect(
+				handleLateRefund({
+					orgId: org.id,
+					dataRegion: 'us',
+					directive: {
+						reservationId: 'rsv_1',
+						paymentRef: 'pi_any',
+						processor: 'stripe',
+						amountMinor: 3333,
+						currency: 'USD',
+						paymentAmountMinor: 3333,
+						platformFeeMinor: 0,
+						refundedBeforeMinor: 0,
+						feeReversedBeforeMinor: 0,
+						feeReversalMinor: 0,
+					},
+				}),
+			).rejects.toMatchObject({ retryable: true, httpStatus: 503 })
+			spy.mockRestore()
+			// Nothing reported: the payment is not pushed to manual review.
+			expect(fake.refundResults).toHaveLength(0)
+		})
+
 		it('a regional outage on the webhook path answers 5xx so Stripe retries; a permanent rejection is acknowledged', async () => {
 			const org = await createOrg('us', 'stripe')
 			const result = await createReservationHostedCheckout(request(org))

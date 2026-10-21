@@ -395,6 +395,19 @@ export async function issueReservationRefund(input: {
 }
 
 /**
+ * Whether a failed provider or regional call may succeed on a later attempt:
+ * a server error, rate limit, dropped connection or anything unrecognised.
+ * Definitive: a Stripe or Checkout.com 4xx, and a non-retryable payment error.
+ */
+export function isTransientProviderError(error: unknown): boolean {
+	if (error instanceof ReservationPaymentError) return error.retryable
+	if (error instanceof RegionalPaymentsApiError) return error.retryable
+	const httpCode = (error as { http_code?: unknown } | null)?.http_code
+	if (typeof httpCode === 'number') return httpCode >= 500 || httpCode === 429
+	return isStripeTransientError(error)
+}
+
+/**
  * A payment that arrived after its hold expired and no longer fits: refund it
  * in full at once (key `reservation_late_refund_<paymentRef>`) and report it.
  * When the refund call cannot be made, report `failed` so the region moves the
@@ -421,6 +434,13 @@ export async function handleLateRefund(input: {
 		})
 	} catch (error) {
 		logReservationPaymentFailure('late refund', error)
+		// `failed` moves the payment to `review` for a manager, so it is reported
+		// only for a definitive rejection. A provider or network hiccup is
+		// thrown back as retryable: the caller (the regional outbox, or the
+		// provider's redelivery) tries again, and the refund key makes that safe.
+		if (isTransientProviderError(error)) {
+			throw new ReservationPaymentError('provider_unavailable', 503, true)
+		}
 		execution = {
 			status: 'failed',
 			refundRef: null,
