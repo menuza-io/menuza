@@ -20,10 +20,8 @@ import { ENV } from 'varlock/env'
 import { z } from 'zod'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import { displayLocationName } from '#app/utils/location-name.server.ts'
-import {
-	getReservationsFeatureState,
-	getReservationsPlatformFeeBp,
-} from '#app/utils/reservations/access.server.ts'
+import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
+import { resolveReservationPlatformFeeBp } from '#app/utils/reservations/platform-fee.server.ts'
 import { resolveSitesOrigin } from '#app/utils/reservations/sites-origin.server.ts'
 import { resolveRestaurantOnlinePayment } from '#app/utils/restaurant-orders/payment-config.server.ts'
 import { getStaffingFeatureState } from '#app/utils/staffing/access.server.ts'
@@ -144,7 +142,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const [features, platformFeeBp, staffingFeatures, locationRows] =
 		await Promise.all([
 			getReservationsFeatureState(org.id),
-			getReservationsPlatformFeeBp(),
+			// Same resolver as the charge path, so an organization's own fee shows
+			// here too (the system default alone would disagree with what is charged).
+			resolveReservationPlatformFeeBp(orgId),
 			getStaffingFeatureState(org.id),
 			db
 				.select({

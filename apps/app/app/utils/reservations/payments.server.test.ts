@@ -1218,6 +1218,26 @@ describe('reservation payments bridge on the payment emulators', () => {
 			})
 		})
 
+		it('a Stripe error that is not a card decline is retried, never recorded as a decline', async () => {
+			const org = await savedStripeCard('4242424242424242')
+			const commerce = (
+				await import('#app/utils/shop.server.ts')
+			).getShopCommerce()
+			const StripeLib = (await import('stripe')).default
+			const spy = vi
+				.spyOn(commerce, 'chargeReservationFeeStripe')
+				.mockRejectedValue(
+					new StripeLib.errors.StripeInvalidRequestError({
+						message: 'No such payment method',
+						type: 'invalid_request_error',
+					} as never),
+				)
+			const error = await chargeReservationFee(feeInput(org)).catch((e) => e)
+			spy.mockRestore()
+			expect(error).toMatchObject({ retryable: true, httpStatus: 503 })
+			expect(fake.feeResults).toHaveLength(0)
+		})
+
 		it('a second claim is a typed 409 and nothing is charged', async () => {
 			const org = await savedStripeCard('4242424242424242')
 			fake.claimError = new RegionalPaymentsApiError('fee_not_pending', 409)

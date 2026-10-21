@@ -1292,9 +1292,13 @@ export async function chargeReservationFee(input: {
 		// failed charge the operator can see; anything else is retried later
 		// with the same key and never reported as terminal.
 		const stripeCode = stripeErrorCode(error)
+		// Only a card decline is a failed charge. Any other Stripe error (a bad
+		// request, an authentication or permission fault) says nothing about
+		// the guest's card: recording it as a decline would put a wrong
+		// "declined" on the reservation, so it is retried and surfaced instead.
 		const definitiveStripe =
 			isStripeTransientError(error) === false &&
-			(error as { type?: unknown } | null)?.type !== undefined
+			(error as { type?: unknown } | null)?.type === 'StripeCardError'
 		if (definitiveStripe) {
 			outcome = {
 				status: 'failed',

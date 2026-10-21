@@ -193,6 +193,33 @@ describe('GET /resources/reservations/context (VAL-FND-018)', () => {
 			platformFeeBp: 250,
 		})
 	})
+	it("reports an organization's own platform fee, the one the charge path uses", async () => {
+		const { organization } = await setupTestOrgWithUser('admin')
+		const inserted = await db
+			.insert(ConfigFlag)
+			.values([
+				{ key: PLATFORM_FEE_FLAG_KEY, value: 250, level: 'system' },
+				{
+					key: PLATFORM_FEE_FLAG_KEY,
+					value: 400,
+					level: 'organization',
+					organizationId: organization.id,
+				},
+			])
+			.returning({ id: ConfigFlag.id })
+		flagIds.push(...inserted.map((f) => f.id))
+		const res = await loader({
+			request: new Request(
+				`http://localhost:3000/resources/reservations/context?orgId=${organization.id}`,
+				{ headers: { Authorization: `Bearer ${ENV.INTERNAL_COMMAND_TOKEN}` } },
+			),
+			params: {},
+			context: {},
+		} as never)
+		const body = reservationsContextSchema.parse(await res.json())
+		expect(body.payments.platformFeeBp).toBe(400)
+	})
+
 	it('types location hours and fails open per location for a malformed value', async () => {
 		const { organization } = await setupTestOrgWithUser('admin')
 		const weekly = [
