@@ -31,7 +31,7 @@
     "cn": "^0.3.0",
     "fontless": "^0.1.0",
     "qrcode": "^1.5.4",
-    "sanitize-html": "^2.17.7",
+    "sanitize-html": "^2.18.0",
     "shadcn": "^3.6.0",
     "tailwindcss": "^4.1.8",
     "tw-animate-css": "^1.2.9"

@@ -90,7 +90,7 @@ export function TestCallPhone({
 	const showKeypad = state.screen === 'call' && keypadOpen
 
 	return (
-		<div className="mx-auto w-72 rounded-4xl bg-zinc-900 p-2.5 shadow-xl ring-1 ring-zinc-700 dark:ring-zinc-600">
+		<div className="mx-auto w-72 max-w-full rounded-4xl bg-zinc-900 p-2.5 shadow-xl ring-1 ring-zinc-700 dark:ring-zinc-600">
 			<div
 				className={cn(
 					'relative flex h-140 flex-col overflow-hidden rounded-3xl',
