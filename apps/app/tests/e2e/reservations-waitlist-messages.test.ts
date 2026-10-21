@@ -536,7 +536,7 @@ test.describe('Reservations messages and waitlist UI', () => {
 		).toBeVisible()
 
 		await page.getByTestId('floor-waitlist-resolve-swap').click()
-		await expect(page.getByTestId('floor-action-banner')).toContainText(
+		await expect(page.getByTestId('floor-waitlist-announcement')).toContainText(
 			'Rana Saleh',
 		)
 		const seats = requests.filter((r) => r.path.endsWith('/w1/seat'))

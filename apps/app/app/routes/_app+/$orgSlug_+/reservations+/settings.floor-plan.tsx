@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
 import { Skeleton } from '@repo/ui/skeleton'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import {
@@ -143,15 +143,28 @@ export default function ReservationsSettingsFloorPlanRoute() {
 		void loadFloorPlan()
 	}
 
+	// The canvas asks "Discard and leave?" itself and then calls handleLeave.
+	// Its dirty flag only reaches `isDirty` after a render, so without this the
+	// navigation guard would still see unsaved changes and ask a second time.
+	const leavingConfirmedRef = useRef(false)
+	const shouldBlockLeave = useCallback(
+		() => isDirty && !leavingConfirmedRef.current,
+		[isDirty],
+	)
 	useConfirmBlocker(
-		isDirty,
+		shouldBlockLeave,
 		_(msg`You have unsaved floor plan changes. Leave and discard them?`),
 	)
 	useDirtyBeforeUnload(isDirty)
 
 	const handleLeave = () => {
 		const suffix = searchParams.toString() ? `?${searchParams.toString()}` : ''
-		void navigate(`/${orgSlug}/reservations/settings/tables${suffix}`)
+		leavingConfirmedRef.current = true
+		void Promise.resolve(
+			navigate(`/${orgSlug}/reservations/settings/tables${suffix}`),
+		).finally(() => {
+			leavingConfirmedRef.current = false
+		})
 	}
 
 	if (loading && !floorPlan) {

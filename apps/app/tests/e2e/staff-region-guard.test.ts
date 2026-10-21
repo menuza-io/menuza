@@ -98,7 +98,13 @@ test.describe('Region switch: staff guard', () => {
 			const dialog = await openRegionDialog(page)
 
 			// No node to ask: the guard assumes there may be staff records.
-			await expect(dialog.getByText(/could not check/)).toBeVisible()
+			await expect(
+				dialog.getByText(/could not check how many staff records/),
+			).toBeVisible()
+			// The Reservations guard fails closed the same way, in its own paragraph.
+			await expect(
+				dialog.getByTestId('region-reservations-unknown'),
+			).toBeVisible()
 			await expect(
 				dialog.getByText('Staff records will be deleted too'),
 			).toBeVisible()

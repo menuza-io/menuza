@@ -376,11 +376,25 @@ export default function ReservationsFloorRoute() {
 	)
 	const { viewportRef, scale } = useFitScale(stage.width)
 
+	const areaTableIds = useMemo(
+		() => new Set(areaTables.map((table) => table.id)),
+		[areaTables],
+	)
+
 	const sideReservations = useMemo(
 		() =>
 			activeReservations
 				.filter((r) => {
-					if (floorAreaId && r.areaId && r.areaId !== floorAreaId) return false
+					// A party with a table belongs to the area of that table. One without a
+					// table shows in every area: its area is only a preference, and the
+					// host must be able to seat it on whichever floor has the space (an
+					// area with no tables has no tab to switch to).
+					if (floorAreaId && r.assignedTableIds.length > 0) {
+						const onThisFloor = r.assignedTableIds.some((id) =>
+							areaTableIds.has(id),
+						)
+						if (!onThisFloor) return false
+					}
 					if (sideFilter === 'unassigned')
 						return r.assignedTableIds.length === 0
 					if (sideFilter === 'arrived') return r.status === 'arrived'
@@ -391,7 +405,7 @@ export default function ReservationsFloorRoute() {
 					return true
 				})
 				.sort((a, b) => a.localStartMin - b.localStartMin),
-		[activeReservations, floorAreaId, sideFilter],
+		[activeReservations, floorAreaId, areaTableIds, sideFilter],
 	)
 
 	const handleDropReservationOnTable = async (

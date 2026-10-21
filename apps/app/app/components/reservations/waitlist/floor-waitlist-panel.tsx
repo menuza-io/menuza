@@ -85,7 +85,12 @@ export function FloorWaitlistPanel({
 					</span>
 				</div>
 			</CardHeader>
-			<div role="status" aria-live="polite" className="sr-only">
+			<div
+				role="status"
+				aria-live="polite"
+				className="sr-only"
+				data-testid="floor-waitlist-announcement"
+			>
 				{announcement}
 			</div>
 			{open ? (

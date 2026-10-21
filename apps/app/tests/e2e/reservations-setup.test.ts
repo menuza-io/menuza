@@ -676,7 +676,10 @@ test.describe('Reservations Setup & Floor Plan Designer', () => {
 		await expect(page.getByTestId('setup-tables-error-banner')).toContainText(
 			'T10',
 		)
+		// The sheet holds an unsaved label, so closing it asks before discarding.
 		await page.keyboard.press('Escape')
+		await page.getByTestId('setup-confirm-discard').click()
+		await expect(page.getByTestId('setup-table-label-input')).toBeHidden()
 
 		// Create Table Combination
 		await page.getByTestId('setup-open-add-combo').click()

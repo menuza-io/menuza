@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import {
 	useFetcher,
 	useLocation,
@@ -7,7 +7,6 @@ import {
 } from 'react-router'
 import { type ReportCatalog, type ReportScope } from '../catalog.ts'
 import { type ReportDefinition, reportDefinitionSchema } from '../dsl.ts'
-import { definitionForNewReport } from '../templates.ts'
 import { ReportBuilder } from './report-builder.tsx'
 import { useReportRunner } from './use-report-runner.ts'
 
@@ -55,9 +54,20 @@ export function ReportWorkspace({
 	const templateId = searchParams.get('template')
 	const isNewReport = location.pathname.endsWith('/new')
 
+	// Another template picked while the builder is open starts from that
+	// template. The first render already holds `initialDefinition`, which can
+	// carry more than the bare template (a location filter from the link), so
+	// it must not be replaced by the bare template.
+	const firstTemplateRender = useRef(true)
+	const initialDefinitionRef = useRef(initialDefinition)
+	initialDefinitionRef.current = initialDefinition
 	useEffect(() => {
+		if (firstTemplateRender.current) {
+			firstTemplateRender.current = false
+			return
+		}
 		if (!isNewReport) return
-		setDefinition(cloneDefinition(definitionForNewReport(scope, templateId)))
+		setDefinition(cloneDefinition(initialDefinitionRef.current))
 	}, [isNewReport, scope, templateId])
 
 	useEffect(() => {
