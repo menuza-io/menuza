@@ -39,6 +39,7 @@ import {
 	or,
 	sql,
 } from 'drizzle-orm'
+import { inJsonList } from '../lib/chunked-in.ts'
 import { HttpError } from '../lib/http.ts'
 import { pickText } from '../lib/reservations-i18n.ts'
 import {
@@ -1466,20 +1467,34 @@ export async function claimRefunds(
 	now = Date.now(),
 ): Promise<{ refunds: ReservationRefundClaim[] }> {
 	const db = await getTenantDb(orgId)
+	// The batch is the 20 oldest refunds this caller can actually claim: the
+	// lease (a `charging` refund another worker is still on) and the location
+	// scope are in the query, not applied after the LIMIT, or twenty refunds
+	// that are leased or out of scope would starve every claimable one behind.
+	const claimable = request.refundRequestId
+		? eq(rsvPayments.id, request.refundRequestId)
+		: or(
+				eq(rsvPayments.status, 'requested'),
+				and(
+					eq(rsvPayments.status, 'charging'),
+					lt(rsvPayments.updatedAt, now - REFUND_LEASE_MS),
+				),
+			)
+	const inScope =
+		request.refundRequestId || !request.locationIds
+			? undefined
+			: inJsonList(rsvReservations.locationId, [...request.locationIds])
 	const candidates = await db
 		.select({
 			id: rsvPayments.id,
 			reservationId: rsvPayments.reservationId,
 		})
 		.from(rsvPayments)
-		.where(
-			and(
-				eq(rsvPayments.kind, 'refund'),
-				request.refundRequestId
-					? eq(rsvPayments.id, request.refundRequestId)
-					: inArray(rsvPayments.status, ['requested', 'charging']),
-			),
+		.innerJoin(
+			rsvReservations,
+			eq(rsvReservations.id, rsvPayments.reservationId),
 		)
+		.where(and(eq(rsvPayments.kind, 'refund'), claimable, inScope))
 		.orderBy(asc(rsvPayments.createdAt))
 		.limit(request.refundRequestId ? 1 : 20)
 	const refunds: ReservationRefundClaim[] = []

@@ -1225,6 +1225,41 @@ describe('refunds', () => {
 		expect(again!.feeReversalMinor).toBe(a!.feeReversalMinor)
 	})
 
+	it('is not starved by twenty refunds another worker still holds a lease on', async () => {
+		await seedPolicy({ id: 'pol_flat', amountMinor: 3333, perCover: false })
+		const booking = await bookDeposit(1, 2)
+		await payDeposit(booking, { bp: 1000 })
+		const wanted = await operatorCall(
+			'POST',
+			`/payments/reservations/${booking.reservation.id}/refund`,
+			{ amountMinor: 1000, reason: 'wanted' },
+		)
+		const db = await getTenantDb(ORG)
+		const [template] = await db
+			.select()
+			.from(rsvPayments)
+			.where(eq(rsvPayments.id, wanted.body.refundId))
+		const now = Date.now()
+		// Twenty older refunds, all leased a moment ago: not claimable now.
+		for (let i = 0; i < 20; i++) {
+			await db.insert(rsvPayments).values({
+				...template!,
+				id: `pay_leased_${i}`,
+				idempotencyKey: `leased_${i}`,
+				refundRef: null,
+				providerRef: null,
+				status: 'charging',
+				createdAt: template!.createdAt - 10_000 + i,
+				updatedAt: now,
+			})
+		}
+		const { claimRefunds } = await import('../services/rsv-payment-service.ts')
+		const { refunds } = await claimRefunds(ORG, {}, now)
+		expect(refunds.map((claim) => claim.refundRequestId)).toEqual([
+			wanted.body.refundId,
+		])
+	})
+
 	it('shows a pending refund and settles it later (VAL-PAY-045)', async () => {
 		const booking = await bookDeposit()
 		await payDeposit(booking)

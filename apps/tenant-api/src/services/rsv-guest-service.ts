@@ -15,7 +15,7 @@ import {
 	RSV_WAITLIST_STATUS_VALUES,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, desc, eq, inArray, isNull, like, or } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, forbidden, notFound } from '../lib/http.ts'
 import { normalizePhone as normalizeSharedPhone } from '../lib/phone.ts'
@@ -310,7 +310,11 @@ export async function searchGuests(
 			.limit(limit)
 			.all()
 	} else {
-		const pattern = `%${q}%`
+		// `%` and `_` typed by the caller are literal characters, not wildcards
+		// (a bare `%%` would otherwise match every guest).
+		const escape = (value: string) =>
+			value.replace(/[\\%_]/g, (ch) => `\\${ch}`)
+		const pattern = `%${escape(q)}%`
 		const digits = q.replace(/\D/g, '')
 		const phonePattern = digits.length >= 3 ? `%${digits}%` : pattern
 		rows = await db
@@ -321,10 +325,10 @@ export async function searchGuests(
 					isNull(rsvGuests.mergedIntoId),
 					isNull(rsvGuests.erasedAt),
 					or(
-						like(rsvGuests.firstName, pattern),
-						like(rsvGuests.lastName, pattern),
-						like(rsvGuests.phoneE164, phonePattern),
-						like(rsvGuests.emailNorm, pattern.toLowerCase()),
+						sql`${rsvGuests.firstName} LIKE ${pattern} ESCAPE '\\'`,
+						sql`${rsvGuests.lastName} LIKE ${pattern} ESCAPE '\\'`,
+						sql`${rsvGuests.phoneE164} LIKE ${phonePattern} ESCAPE '\\'`,
+						sql`${rsvGuests.emailNorm} LIKE ${pattern.toLowerCase()} ESCAPE '\\'`,
 					),
 				),
 			)
