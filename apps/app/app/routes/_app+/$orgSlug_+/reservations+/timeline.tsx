@@ -36,6 +36,8 @@ import {
 } from '#app/utils/reservations/host-errors.ts'
 import { ReservationsApiError } from '#app/utils/reservations/reservations-client.ts'
 import { RESERVATIONS_SECTION_REQUIREMENTS } from '#app/utils/reservations/sections.ts'
+import { trackPointerDrag } from '#app/utils/reservations/pointer-drag.ts'
+import { barKeyAction } from '#app/utils/reservations/timeline-keys.ts'
 import {
 	pickTimelineFocusMin,
 	pickTimelineScrollLeft,
@@ -424,10 +426,23 @@ export default function ReservationsTimelineRoute() {
 		e: React.KeyboardEvent,
 		rsv: DayReservationView,
 	) => {
+		const action = barKeyAction({
+			key: e.key,
+			grabbed: kbGrab?.reservationId === rsv.id,
+			canManage,
+			onBar: e.target === e.currentTarget,
+		})
+		if (action === 'ignore') return
+		if (action === 'open') {
+			e.preventDefault()
+			e.stopPropagation()
+			host.openDetail(rsv.id)
+			return
+		}
 		if (!canManage) return
 
-		// Toggle grab or commit with Space / Enter
-		if (e.key === ' ' || e.key === 'Enter') {
+		// Pick up (Space or M) or drop (Enter or Space)
+		if (action === 'grab' || action === 'drop') {
 			e.preventDefault()
 			e.stopPropagation()
 			if (kbGrab && kbGrab.reservationId === rsv.id) {
@@ -574,6 +589,11 @@ export default function ReservationsTimelineRoute() {
 		})
 	}
 
+	// Window listeners of a resize in progress, removed on release, cancel or
+	// when this screen goes away mid-drag.
+	const resizeCleanupRef = useRef<(() => void) | null>(null)
+	useEffect(() => () => resizeCleanupRef.current?.(), [])
+
 	const startPointerResize = (
 		e: React.PointerEvent,
 		rsv: DayReservationView,
@@ -602,9 +622,9 @@ export default function ReservationsTimelineRoute() {
 			)
 		}
 
-		const onPointerUp = (upEvent: PointerEvent) => {
-			window.removeEventListener('pointermove', onPointerMove)
-			window.removeEventListener('pointerup', onPointerUp)
+		resizeCleanupRef.current?.()
+		const up = (upEvent: PointerEvent) => {
+			resizeCleanupRef.current = null
 			const dx = upEvent.clientX - startX
 			const slotDelta = Math.round(dx / SLOT_WIDTH_PX)
 			const nextDuration = Math.max(
@@ -621,9 +641,17 @@ export default function ReservationsTimelineRoute() {
 				})
 			}
 		}
-
-		window.addEventListener('pointermove', onPointerMove)
-		window.addEventListener('pointerup', onPointerUp)
+		// The system took the pointer (a touch turned into a scroll, a context
+		// menu): abandon the resize, commit nothing.
+		const cancel = () => {
+			resizeCleanupRef.current = null
+			setResizingState(null)
+		}
+		resizeCleanupRef.current = trackPointerDrag(window, {
+			move: onPointerMove,
+			up,
+			cancel,
+		})
 	}
 
 	const showNowLine =
@@ -1223,17 +1251,32 @@ export default function ReservationsTimelineRoute() {
 														const partySize = rsv.partySize
 														const startTime = formatHhmm(startMin)
 														const tableLabel = table.label
-														const barAriaLabel = rsv.locked
+														const statusLabel = i18n._(statusStyle.label)
+														const baseAriaLabel = rsv.locked
 															? t`${guestName}, party of ${partySize}, ${startTime}, ${durationMin} minutes, table ${tableLabel}, locked`
 															: t`${guestName}, party of ${partySize}, ${startTime}, ${durationMin} minutes, table ${tableLabel}`
+														// State is never colour alone: status, late risk and a
+														// conflict are in the name a screen reader reads.
+														const attention = rsv.hasConflict
+															? t`conflict`
+															: rsv.lateRisk || rsv.runningLateMin
+																? t`running late`
+																: null
+														const barAriaLabel = attention
+															? t`${baseAriaLabel}, ${statusLabel}, ${attention}`
+															: t`${baseAriaLabel}, ${statusLabel}`
 
 														return (
 															<div
 																key={rsv.id}
 																draggable={canManage}
 																tabIndex={0}
-																role="button"
+																// A group, not a button: it holds real buttons (lock,
+																// +-15 min), which a button role would hide from
+																// assistive technology.
+																role="group"
 																aria-label={barAriaLabel}
+																title={statusLabel}
 																style={{
 																	left: `${leftPx}px`,
 																	width: `${widthPx}px`,
@@ -1293,6 +1336,7 @@ export default function ReservationsTimelineRoute() {
 																	<div
 																		className="flex shrink-0 items-center gap-0.5"
 																		onClick={(e) => e.stopPropagation()}
+																		onKeyDown={(e) => e.stopPropagation()}
 																	>
 																		<button
 																			type="button"
@@ -1301,6 +1345,12 @@ export default function ReservationsTimelineRoute() {
 																					? t`Unlock table assignment`
 																					: t`Lock table assignment`
 																			}
+																			aria-label={
+																				rsv.locked
+																					? t`Unlock table assignment`
+																					: t`Lock table assignment`
+																			}
+																			aria-pressed={rsv.locked}
 																			onClick={() => void handleToggleLock(rsv)}
 																			className="hover:bg-foreground/10 inline-flex h-8 min-w-8 items-center justify-center rounded px-1 text-xs"
 																			data-testid={`timeline-toggle-lock-${rsv.id}`}
@@ -1314,25 +1364,27 @@ export default function ReservationsTimelineRoute() {
 																			<button
 																				type="button"
 																				title={t`Shorten turn by 15m`}
+																				aria-label={t`Shorten turn by 15m`}
 																				onClick={() =>
 																					void handleResizeDelta(rsv, -15)
 																				}
 																				className="hover:bg-foreground/10 inline-flex h-8 min-w-8 items-center justify-center rounded px-1 text-xs tabular-nums"
 																				data-testid={`timeline-shrink-${rsv.id}`}
 																			>
-																				-15m
+																				{t`-15m`}
 																			</button>
 																		) : null}
 																		<button
 																			type="button"
 																			title={t`Extend turn by 15m`}
+																			aria-label={t`Extend turn by 15m`}
 																			onClick={() =>
 																				void handleResizeDelta(rsv, 15)
 																			}
 																			className="hover:bg-foreground/10 inline-flex h-8 min-w-8 items-center justify-center rounded px-1 text-xs tabular-nums"
 																			data-testid={`timeline-extend-${rsv.id}`}
 																		>
-																			+15m
+																			{t`+15m`}
 																		</button>
 																		<div
 																			role="separator"
