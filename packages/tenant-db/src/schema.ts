@@ -3440,6 +3440,7 @@ export const rsvTables = sqliteTable(
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_rsv_tables_area_id').on(table.areaId),
 		index('idx_rsv_tables_location_area').on(table.locationId, table.areaId),
 		uniqueIndex('uniq_rsv_tables_location_label')
 			.on(table.locationId, table.label)
@@ -3569,6 +3570,9 @@ export const rsvServices = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_services_section_layout_id').on(table.sectionLayoutId),
+		index('idx_rsv_services_policy_id').on(table.policyId),
+		index('idx_rsv_services_special_day_id').on(table.specialDayId),
 		index('idx_rsv_services_location_archived').on(
 			table.locationId,
 			table.archivedAt,
@@ -3609,6 +3613,9 @@ export const rsvServiceAvailability = sqliteTable(
 		toMin: integer('to_min'),
 	},
 	(table) => [
+		index('idx_rsv_service_availability_combo_id').on(table.comboId),
+		index('idx_rsv_service_availability_table_id').on(table.tableId),
+		index('idx_rsv_service_availability_area_id').on(table.areaId),
 		index('idx_rsv_service_availability_service').on(table.serviceId),
 		check(
 			'chk_rsv_service_availability_target',
@@ -3633,6 +3640,7 @@ export const rsvTurnTimes = sqliteTable(
 		daysMask: integer('days_mask'),
 	},
 	(table) => [
+		index('idx_rsv_turn_times_service_id').on(table.serviceId),
 		uniqueIndex('uniq_rsv_turn_times_bucket').on(
 			table.locationId,
 			table.serviceId,
@@ -3689,6 +3697,7 @@ export const rsvSpecialDays = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_special_days_service_id').on(table.serviceId),
 		index('idx_rsv_special_days_location_dates').on(
 			table.locationId,
 			table.fromDate,
@@ -3719,6 +3728,8 @@ export const rsvBlocks = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_rsv_blocks_area_id').on(table.areaId),
+		index('idx_rsv_blocks_table_id').on(table.tableId),
 		index('idx_rsv_blocks_location_date').on(
 			table.locationId,
 			table.businessDate,
@@ -3814,6 +3825,7 @@ export const rsvSectionTables = sqliteTable(
 			.references(() => rsvSectionLayouts.id, { onDelete: 'cascade' }),
 	},
 	(table) => [
+		index('idx_rsv_section_tables_table_id').on(table.tableId),
 		primaryKey({ columns: [table.sectionId, table.tableId] }),
 		uniqueIndex('uniq_rsv_section_tables_layout_table').on(
 			table.layoutId,
@@ -3839,6 +3851,7 @@ export const rsvSectionAssignments = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_section_assignments_section_id').on(table.sectionId),
 		uniqueIndex('uniq_rsv_section_assignments_day_service_section').on(
 			table.businessDate,
 			table.serviceId,
@@ -3916,6 +3929,7 @@ export const rsvExperiences = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_experiences_policy_id').on(table.policyId),
 		uniqueIndex('uniq_rsv_experiences_location_slug')
 			.on(table.locationId, table.slug)
 			.where(sql`${table.status} <> 'archived'`),
@@ -3952,6 +3966,7 @@ export const rsvExperienceSchedules = sqliteTable(
 		}),
 	},
 	(table) => [
+		index('idx_rsv_experience_schedules_service_id').on(table.serviceId),
 		index('idx_rsv_experience_schedules_experience').on(table.experienceId),
 	],
 )
@@ -3999,6 +4014,7 @@ export const rsvGuests = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_guests_marketing_customer_id').on(table.marketingCustomerId),
 		uniqueIndex('uniq_rsv_guests_customer_id')
 			.on(table.customerId)
 			.where(sql`${table.customerId} IS NOT NULL`),
@@ -4095,6 +4111,7 @@ export const rsvGuestMerges = sqliteTable(
 			.default(sql`'{}'`),
 	},
 	(table) => [
+		index('idx_rsv_guest_merges_merged_guest_id').on(table.mergedGuestId),
 		index('idx_rsv_guest_merges_kept').on(table.keptGuestId, table.at),
 	],
 )
@@ -4200,6 +4217,11 @@ export const rsvReservations = sqliteTable(
 		updatedAt: integer('updated_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_rsv_reservations_occasion_tag_id').on(table.occasionTagId),
+		index('idx_rsv_reservations_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_reservations_combo_id').on(table.comboId),
+		index('idx_rsv_reservations_experience_id').on(table.experienceId),
+		index('idx_rsv_reservations_service_id').on(table.serviceId),
 		uniqueIndex('uniq_rsv_reservations_confirmation_code').on(
 			table.confirmationCode,
 		),
@@ -4287,6 +4309,10 @@ export const rsvHolds = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_rsv_holds_combo_id').on(table.comboId),
+		index('idx_rsv_holds_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_holds_experience_id').on(table.experienceId),
+		index('idx_rsv_holds_service_id').on(table.serviceId),
 		uniqueIndex('uniq_rsv_holds_token_hash').on(table.tokenHash),
 		index('idx_rsv_holds_location_date_status_expires').on(
 			table.locationId,
@@ -4393,6 +4419,7 @@ export const rsvServiceNotes = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_service_notes_service_id').on(table.serviceId),
 		uniqueIndex('uniq_rsv_service_notes_loc_date_service').on(
 			table.locationId,
 			table.businessDate,
@@ -4450,6 +4477,9 @@ export const rsvWaitlistEntries = sqliteTable(
 		version: integer('version').notNull().default(1),
 	},
 	(table) => [
+		index('idx_rsv_waitlist_entries_reservation_id').on(table.reservationId),
+		index('idx_rsv_waitlist_entries_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_waitlist_entries_guest_id').on(table.guestId),
 		index('idx_rsv_waitlist_entries_loc_date_status_sort').on(
 			table.locationId,
 			table.businessDate,
@@ -4504,6 +4534,9 @@ export const rsvNotifyRequests = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_rsv_notify_requests_guest_id').on(table.guestId),
+		index('idx_rsv_notify_requests_experience_id').on(table.experienceId),
+		index('idx_rsv_notify_requests_area_pref_id').on(table.areaPrefId),
 		index('idx_rsv_notify_requests_loc_date_status').on(
 			table.locationId,
 			table.businessDate,
@@ -4555,6 +4588,8 @@ export const rsvMessages = sqliteTable(
 		createdAt: integer('created_at').notNull().default(nowMs),
 	},
 	(table) => [
+		index('idx_rsv_messages_notify_request_id').on(table.notifyRequestId),
+		index('idx_rsv_messages_waitlist_entry_id').on(table.waitlistEntryId),
 		uniqueIndex('uniq_rsv_messages_dedupe_key').on(table.dedupeKey),
 		index('idx_rsv_messages_status_next_attempt').on(
 			table.status,

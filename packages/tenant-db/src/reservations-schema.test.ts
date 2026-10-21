@@ -129,6 +129,51 @@ describe('reservations tenant schema (0019_reservations)', () => {
 		client.close()
 	})
 
+	it('indexes every foreign-key child column of the rsv_* tables', async () => {
+		// A cascade or SET NULL on the parent scans the child table; without an
+		// index that is a full scan per deleted parent row.
+		const { client } = await openMigratedDb()
+		// One row per location, read by key: not worth an index of its own.
+		const exempt = new Set(['rsv_location_settings.default_policy_id'])
+		const unindexed: string[] = []
+		const tables = await client.execute(
+			"select name from sqlite_master where type = 'table' and name like 'rsv_%'",
+		)
+		for (const { name } of tables.rows) {
+			const table = String(name)
+			const indexes: string[][] = []
+			for (const index of (
+				await client.execute(`pragma index_list('${table}')`)
+			).rows) {
+				const info = await client.execute(
+					`pragma index_info('${String(index.name)}')`,
+				)
+				indexes.push(info.rows.map((row) => String(row.name)))
+			}
+			const pk = (await client.execute(`pragma table_info('${table}')`)).rows
+				.filter((row) => Number(row.pk) > 0)
+				.sort((a, b) => Number(a.pk) - Number(b.pk))
+				.map((row) => String(row.name))
+			const fks = new Map<number, string[]>()
+			for (const fk of (
+				await client.execute(`pragma foreign_key_list('${table}')`)
+			).rows) {
+				const list = fks.get(Number(fk.id)) ?? []
+				list.push(String(fk.from))
+				fks.set(Number(fk.id), list)
+			}
+			for (const columns of fks.values()) {
+				const covered = [...indexes, pk].some((leading) =>
+					columns.every((column, i) => leading[i] === column),
+				)
+				const key = `${table}.${columns.join(',')}`
+				if (!covered && !exempt.has(key)) unindexed.push(key)
+			}
+		}
+		client.close()
+		expect(unindexed).toEqual([])
+	})
+
 	it('keeps apps/tenant-api/workers/migrations.generated.ts in sync with 0019_reservations.sql', () => {
 		const sqlPath = path.resolve(__dirname, '../drizzle/0019_reservations.sql')
 		const generatedPath = path.resolve(

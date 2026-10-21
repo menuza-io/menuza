@@ -903,3 +903,39 @@ CREATE TABLE `voice_call_actions` (
 CREATE INDEX `idx_voice_call_actions_call_action` ON `voice_call_actions` (`call_id`,`action`);--> statement-breakpoint
 ALTER TABLE `labor_scope_settings` ADD `demand_per_labor_hour` text DEFAULT '{}' NOT NULL;--> statement-breakpoint
 UPDATE `labor_scope_settings` SET `demand_per_labor_hour` = json_object('orders', json(`orders_per_labor_hour`));
+--> statement-breakpoint
+CREATE INDEX `idx_rsv_blocks_area_id` ON `rsv_blocks` (`area_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_blocks_table_id` ON `rsv_blocks` (`table_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_experience_schedules_service_id` ON `rsv_experience_schedules` (`service_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_experiences_policy_id` ON `rsv_experiences` (`policy_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_guest_merges_merged_guest_id` ON `rsv_guest_merges` (`merged_guest_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_guests_marketing_customer_id` ON `rsv_guests` (`marketing_customer_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_holds_combo_id` ON `rsv_holds` (`combo_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_holds_area_pref_id` ON `rsv_holds` (`area_pref_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_holds_experience_id` ON `rsv_holds` (`experience_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_holds_service_id` ON `rsv_holds` (`service_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_messages_notify_request_id` ON `rsv_messages` (`notify_request_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_messages_waitlist_entry_id` ON `rsv_messages` (`waitlist_entry_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_notify_requests_guest_id` ON `rsv_notify_requests` (`guest_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_notify_requests_experience_id` ON `rsv_notify_requests` (`experience_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_notify_requests_area_pref_id` ON `rsv_notify_requests` (`area_pref_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_reservations_occasion_tag_id` ON `rsv_reservations` (`occasion_tag_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_reservations_area_pref_id` ON `rsv_reservations` (`area_pref_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_reservations_combo_id` ON `rsv_reservations` (`combo_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_reservations_experience_id` ON `rsv_reservations` (`experience_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_reservations_service_id` ON `rsv_reservations` (`service_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_section_assignments_section_id` ON `rsv_section_assignments` (`section_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_section_tables_table_id` ON `rsv_section_tables` (`table_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_service_availability_combo_id` ON `rsv_service_availability` (`combo_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_service_availability_table_id` ON `rsv_service_availability` (`table_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_service_availability_area_id` ON `rsv_service_availability` (`area_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_service_notes_service_id` ON `rsv_service_notes` (`service_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_services_section_layout_id` ON `rsv_services` (`section_layout_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_services_policy_id` ON `rsv_services` (`policy_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_services_special_day_id` ON `rsv_services` (`special_day_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_special_days_service_id` ON `rsv_special_days` (`service_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_tables_area_id` ON `rsv_tables` (`area_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_turn_times_service_id` ON `rsv_turn_times` (`service_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_waitlist_entries_reservation_id` ON `rsv_waitlist_entries` (`reservation_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_waitlist_entries_area_pref_id` ON `rsv_waitlist_entries` (`area_pref_id`);--> statement-breakpoint
+CREATE INDEX `idx_rsv_waitlist_entries_guest_id` ON `rsv_waitlist_entries` (`guest_id`);
