@@ -511,6 +511,9 @@ export function buildReservationLabels(i18n: I18n) {
 		errorModifyClosed: t(
 			msg`It is too late to change this online. Please call the restaurant.`,
 		),
+		errorModifyPayment: t(
+			msg`This booking includes a payment, so the party size cannot be changed online. Please call the restaurant.`,
+		),
 		errorLargeParty: t(
 			msg`That party size needs a request. Please use the large-party option.`,
 		),

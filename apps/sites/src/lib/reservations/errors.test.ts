@@ -20,6 +20,7 @@ describe('reservation errors', () => {
 			[400, 'invalid', 'errorInvalid'],
 			[400, 'policy_required', 'errorPolicyRequired'],
 			[409, 'policy_unavailable', 'errorPaymentUnavailable'],
+			[409, 'modify_changes_payment', 'errorModifyPayment'],
 		]
 		for (const [status, code, key] of cases) {
 			expect(

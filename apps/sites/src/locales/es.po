@@ -1406,7 +1406,7 @@ msgstr "La reserva en línea necesita JavaScript. Llama al restaurante para rese
 msgid "Online payment is not available"
 msgstr "El pago en línea no está disponible"
 
-#: src/lib/reservations/labels.ts:542
+#: src/lib/reservations/labels.ts:545
 msgid "Online payment is not available right now. Please call the restaurant."
 msgstr "El pago en línea no está disponible ahora mismo. Llama al restaurante."
 
@@ -1689,7 +1689,7 @@ msgid "Placing your order…"
 msgstr "Realizando tu pedido…"
 
 #: src/lib/reservations/labels.ts:369
-#: src/lib/reservations/labels.ts:540
+#: src/lib/reservations/labels.ts:543
 msgid "Please accept the booking terms to continue."
 msgstr "Acepta las condiciones de la reserva para continuar."
 
@@ -1725,7 +1725,7 @@ msgstr "Revisa los campos marcados a continuación."
 msgid "Please check your connection and try again."
 msgstr "Comprueba tu conexión e inténtalo de nuevo."
 
-#: src/lib/reservations/labels.ts:521
+#: src/lib/reservations/labels.ts:524
 msgid "Please check your details and try again."
 msgstr "Revisa tus datos e inténtalo de nuevo."
 
@@ -2032,7 +2032,7 @@ msgstr "Algunos precios cambiaron desde su llamada. Su carrito muestra los preci
 msgid "Something went wrong."
 msgstr "Algo salió mal."
 
-#: src/lib/reservations/labels.ts:547
+#: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "Algo salió mal. Inténtalo de nuevo."
 
@@ -2064,7 +2064,7 @@ msgstr "Subtotal"
 msgid "Switch to pickup"
 msgstr "Cambiar a recogida"
 
-#: src/lib/reservations/labels.ts:535
+#: src/lib/reservations/labels.ts:538
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "Los avisos de mesa no están disponibles ahora. Llama al restaurante."
 
@@ -2145,11 +2145,11 @@ msgstr "Gracias. El restaurante sabe que vas en camino."
 msgid "That date is too far ahead to book online."
 msgstr "Esa fecha queda demasiado lejos para reservar en línea."
 
-#: src/lib/reservations/labels.ts:520
+#: src/lib/reservations/labels.ts:523
 msgid "That party size is not available online."
 msgstr "Ese número de personas no está disponible en línea."
 
-#: src/lib/reservations/labels.ts:515
+#: src/lib/reservations/labels.ts:518
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "Ese número de personas requiere una solicitud. Usa la opción de grupo grande."
 
@@ -2193,7 +2193,7 @@ msgstr "El pago no se ha completado"
 msgid "The restaurant is closed on this date."
 msgstr "El restaurante está cerrado en esta fecha."
 
-#: src/lib/reservations/labels.ts:518
+#: src/lib/reservations/labels.ts:521
 msgid "The restaurant is not taking requests for that date."
 msgstr "El restaurante no acepta solicitudes para esa fecha."
 
@@ -2218,7 +2218,7 @@ msgstr "Se agotó el tiempo para pagar o la reserva se canceló, y la mesa se ha
 msgid "The verification check did not pass. Please try again."
 msgstr "La verificación no se superó. Inténtalo de nuevo."
 
-#: src/lib/reservations/labels.ts:526
+#: src/lib/reservations/labels.ts:529
 msgid "The waitlist is full right now. Please call the restaurant."
 msgstr "La lista de espera está llena ahora. Llama al restaurante."
 
@@ -2226,13 +2226,17 @@ msgstr "La lista de espera está llena ahora. Llama al restaurante."
 msgid "The waitlist is not available right now"
 msgstr "La lista de espera no está disponible ahora"
 
-#: src/lib/reservations/labels.ts:529
+#: src/lib/reservations/labels.ts:532
 msgid "The waitlist is not available right now. Please call the restaurant."
 msgstr "La lista de espera no está disponible ahora. Llama al restaurante."
 
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "Ahora mismo no hay turnos próximos para reservar."
+
+#: src/lib/reservations/labels.ts:515
+msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
+msgstr "Esta reserva incluye un pago, por lo que el número de personas no se puede cambiar en línea. Llame al restaurante."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
@@ -2303,7 +2307,7 @@ msgstr "Este número de teléfono ya tiene una reserva a esa hora."
 msgid "This phone number has too many upcoming reservations."
 msgstr "Este número de teléfono tiene demasiadas reservas próximas."
 
-#: src/lib/reservations/labels.ts:523
+#: src/lib/reservations/labels.ts:526
 msgid "This phone number is already on the waitlist today."
 msgstr "Este número de teléfono ya está en la lista de espera hoy."
 
@@ -2511,7 +2515,7 @@ msgstr "No pudimos encontrar esa reserva. Puede que el enlace haya caducado."
 msgid "We could not find this payment"
 msgstr "No hemos encontrado este pago"
 
-#: src/lib/reservations/labels.ts:532
+#: src/lib/reservations/labels.ts:535
 msgid "We could not find your place in line. The link may have expired."
 msgstr "No pudimos encontrar tu lugar en la fila. Puede que el enlace haya caducado."
 
@@ -2524,7 +2528,7 @@ msgid "We could not place your order. Please try again."
 msgstr "No pudimos realizar tu pedido. Inténtalo de nuevo."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:545
+#: src/lib/reservations/labels.ts:548
 msgid "We could not reach the server. Check your connection and try again."
 msgstr "No pudimos conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo."
 
@@ -2700,7 +2704,7 @@ msgstr "Sí, cancelarla"
 msgid "Yes, leave"
 msgstr "Sí, salir"
 
-#: src/lib/reservations/labels.ts:538
+#: src/lib/reservations/labels.ts:541
 msgid "You already have the most table alerts allowed for these contact details."
 msgstr "Ya tienes el máximo de avisos de mesa permitidos para estos datos de contacto."
 

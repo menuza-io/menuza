@@ -1309,6 +1309,21 @@ export async function guestModifyReservation(params: {
 				)
 			}
 
+			// A booking that carries money (a deposit, a prepayment, a card on file)
+			// was priced for its party size and service. A guest change here does
+			// not re-plan or re-snapshot the payment, so only a move of day or time
+			// inside the same service and party is allowed; anything else goes
+			// through the restaurant, who can adjust the payment.
+			const carriesMoney =
+				current.paymentStatus !== 'none' || current.policySnapshot != null
+			if (
+				carriesMoney &&
+				(partySize !== current.partySize ||
+					(current.serviceId && match.serviceId !== current.serviceId))
+			) {
+				throw new HttpError(409, 'modify_changes_payment')
+			}
+
 			if (settings) {
 				await enforcePhoneLimits(
 					tx,

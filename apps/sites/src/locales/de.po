@@ -1406,7 +1406,7 @@ msgstr "Die Online-Buchung benötigt JavaScript. Bitte rufen Sie das Restaurant 
 msgid "Online payment is not available"
 msgstr "Online-Zahlung ist nicht verfügbar"
 
-#: src/lib/reservations/labels.ts:542
+#: src/lib/reservations/labels.ts:545
 msgid "Online payment is not available right now. Please call the restaurant."
 msgstr "Online-Zahlung ist derzeit nicht verfügbar. Bitte rufen Sie das Restaurant an."
 
@@ -1689,7 +1689,7 @@ msgid "Placing your order…"
 msgstr "Ihre Bestellung wird aufgegeben…"
 
 #: src/lib/reservations/labels.ts:369
-#: src/lib/reservations/labels.ts:540
+#: src/lib/reservations/labels.ts:543
 msgid "Please accept the booking terms to continue."
 msgstr "Bitte akzeptieren Sie die Buchungsbedingungen, um fortzufahren."
 
@@ -1725,7 +1725,7 @@ msgstr "Bitte prüfen Sie die unten markierten Felder."
 msgid "Please check your connection and try again."
 msgstr "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
 
-#: src/lib/reservations/labels.ts:521
+#: src/lib/reservations/labels.ts:524
 msgid "Please check your details and try again."
 msgstr "Bitte prüfen Sie Ihre Angaben und versuchen Sie es erneut."
 
@@ -2032,7 +2032,7 @@ msgstr "Einige Preise haben sich seit Ihrem Anruf geändert. Ihr Warenkorb zeigt
 msgid "Something went wrong."
 msgstr "Etwas ist schiefgelaufen."
 
-#: src/lib/reservations/labels.ts:547
+#: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
 
@@ -2064,7 +2064,7 @@ msgstr "Zwischensumme"
 msgid "Switch to pickup"
 msgstr "Zur Abholung wechseln"
 
-#: src/lib/reservations/labels.ts:535
+#: src/lib/reservations/labels.ts:538
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "Tischbenachrichtigungen sind derzeit nicht verfügbar. Bitte rufen Sie das Restaurant an."
 
@@ -2145,11 +2145,11 @@ msgstr "Danke. Das Restaurant weiß, dass Sie unterwegs sind."
 msgid "That date is too far ahead to book online."
 msgstr "Dieses Datum liegt zu weit in der Zukunft für eine Online-Buchung."
 
-#: src/lib/reservations/labels.ts:520
+#: src/lib/reservations/labels.ts:523
 msgid "That party size is not available online."
 msgstr "Diese Personenzahl ist online nicht verfügbar."
 
-#: src/lib/reservations/labels.ts:515
+#: src/lib/reservations/labels.ts:518
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "Für diese Personenzahl ist eine Anfrage nötig. Bitte nutzen Sie die Option für große Gruppen."
 
@@ -2193,7 +2193,7 @@ msgstr "Die Zahlung ist nicht durchgegangen"
 msgid "The restaurant is closed on this date."
 msgstr "Das Restaurant ist an diesem Datum geschlossen."
 
-#: src/lib/reservations/labels.ts:518
+#: src/lib/reservations/labels.ts:521
 msgid "The restaurant is not taking requests for that date."
 msgstr "Das Restaurant nimmt für dieses Datum keine Anfragen an."
 
@@ -2218,7 +2218,7 @@ msgstr "Die Zahlungsfrist ist abgelaufen oder die Buchung wurde storniert, und d
 msgid "The verification check did not pass. Please try again."
 msgstr "Die Überprüfung war nicht erfolgreich. Bitte versuchen Sie es erneut."
 
-#: src/lib/reservations/labels.ts:526
+#: src/lib/reservations/labels.ts:529
 msgid "The waitlist is full right now. Please call the restaurant."
 msgstr "Die Warteliste ist derzeit voll. Bitte rufen Sie das Restaurant an."
 
@@ -2226,13 +2226,17 @@ msgstr "Die Warteliste ist derzeit voll. Bitte rufen Sie das Restaurant an."
 msgid "The waitlist is not available right now"
 msgstr "Die Warteliste ist derzeit nicht verfügbar"
 
-#: src/lib/reservations/labels.ts:529
+#: src/lib/reservations/labels.ts:532
 msgid "The waitlist is not available right now. Please call the restaurant."
 msgstr "Die Warteliste ist derzeit nicht verfügbar. Bitte rufen Sie das Restaurant an."
 
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "Derzeit gibt es keine kommenden Termine zum Buchen."
+
+#: src/lib/reservations/labels.ts:515
+msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
+msgstr "Diese Reservierung enthält eine Zahlung, daher kann die Personenzahl nicht online geändert werden. Bitte rufen Sie das Restaurant an."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
@@ -2303,7 +2307,7 @@ msgstr "Für diese Telefonnummer besteht zu dieser Zeit bereits eine Reservierun
 msgid "This phone number has too many upcoming reservations."
 msgstr "Für diese Telefonnummer bestehen zu viele bevorstehende Reservierungen."
 
-#: src/lib/reservations/labels.ts:523
+#: src/lib/reservations/labels.ts:526
 msgid "This phone number is already on the waitlist today."
 msgstr "Diese Telefonnummer steht heute bereits auf der Warteliste."
 
@@ -2511,7 +2515,7 @@ msgstr "Wir konnten diese Reservierung nicht finden. Der Link ist möglicherweis
 msgid "We could not find this payment"
 msgstr "Diese Zahlung wurde nicht gefunden"
 
-#: src/lib/reservations/labels.ts:532
+#: src/lib/reservations/labels.ts:535
 msgid "We could not find your place in line. The link may have expired."
 msgstr "Wir konnten Ihren Platz in der Schlange nicht finden. Der Link ist möglicherweise abgelaufen."
 
@@ -2524,7 +2528,7 @@ msgid "We could not place your order. Please try again."
 msgstr "Wir konnten Ihre Bestellung nicht aufgeben. Bitte versuchen Sie es erneut."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:545
+#: src/lib/reservations/labels.ts:548
 msgid "We could not reach the server. Check your connection and try again."
 msgstr "Der Server ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
 
@@ -2700,7 +2704,7 @@ msgstr "Ja, stornieren"
 msgid "Yes, leave"
 msgstr "Ja, verlassen"
 
-#: src/lib/reservations/labels.ts:538
+#: src/lib/reservations/labels.ts:541
 msgid "You already have the most table alerts allowed for these contact details."
 msgstr "Für diese Kontaktdaten sind bereits die maximal erlaubten Tischbenachrichtigungen angelegt."
 

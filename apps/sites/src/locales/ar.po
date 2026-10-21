@@ -1406,7 +1406,7 @@ msgstr "يتطلب الحجز عبر الإنترنت تفعيل JavaScript. ي�
 msgid "Online payment is not available"
 msgstr "الدفع عبر الإنترنت غير متاح"
 
-#: src/lib/reservations/labels.ts:542
+#: src/lib/reservations/labels.ts:545
 msgid "Online payment is not available right now. Please call the restaurant."
 msgstr "الدفع عبر الإنترنت غير متاح حاليًا. يرجى الاتصال بالمطعم."
 
@@ -1689,7 +1689,7 @@ msgid "Placing your order…"
 msgstr "جارٍ إرسال طلبك…"
 
 #: src/lib/reservations/labels.ts:369
-#: src/lib/reservations/labels.ts:540
+#: src/lib/reservations/labels.ts:543
 msgid "Please accept the booking terms to continue."
 msgstr "يرجى قبول شروط الحجز للمتابعة."
 
@@ -1725,7 +1725,7 @@ msgstr "يرجى مراجعة الحقول المحددة أدناه."
 msgid "Please check your connection and try again."
 msgstr "تحقق من اتصالك وحاول مرة أخرى."
 
-#: src/lib/reservations/labels.ts:521
+#: src/lib/reservations/labels.ts:524
 msgid "Please check your details and try again."
 msgstr "يرجى مراجعة بياناتك والمحاولة مرة أخرى."
 
@@ -2032,7 +2032,7 @@ msgstr "تغيّرت بعض الأسعار منذ مكالمتك. تعرض سل�
 msgid "Something went wrong."
 msgstr "حدث خطأ ما."
 
-#: src/lib/reservations/labels.ts:547
+#: src/lib/reservations/labels.ts:550
 msgid "Something went wrong. Please try again."
 msgstr "حدث خطأ ما. يرجى المحاولة مرة أخرى."
 
@@ -2064,7 +2064,7 @@ msgstr "المجموع الفرعي"
 msgid "Switch to pickup"
 msgstr "التبديل إلى الاستلام"
 
-#: src/lib/reservations/labels.ts:535
+#: src/lib/reservations/labels.ts:538
 msgid "Table alerts are not available right now. Please call the restaurant."
 msgstr "تنبيهات الطاولات غير متاحة حاليًا. يرجى الاتصال بالمطعم."
 
@@ -2145,11 +2145,11 @@ msgstr "شكرًا. المطعم يعلم أنك في الطريق."
 msgid "That date is too far ahead to book online."
 msgstr "هذا التاريخ بعيد جدًا للحجز عبر الإنترنت."
 
-#: src/lib/reservations/labels.ts:520
+#: src/lib/reservations/labels.ts:523
 msgid "That party size is not available online."
 msgstr "هذا العدد من الأشخاص غير متاح عبر الإنترنت."
 
-#: src/lib/reservations/labels.ts:515
+#: src/lib/reservations/labels.ts:518
 msgid "That party size needs a request. Please use the large-party option."
 msgstr "هذا العدد يتطلب تقديم طلب. يرجى استخدام خيار المجموعات الكبيرة."
 
@@ -2193,7 +2193,7 @@ msgstr "لم تتم عملية الدفع"
 msgid "The restaurant is closed on this date."
 msgstr "المطعم مغلق في هذا التاريخ."
 
-#: src/lib/reservations/labels.ts:518
+#: src/lib/reservations/labels.ts:521
 msgid "The restaurant is not taking requests for that date."
 msgstr "المطعم لا يقبل الطلبات لهذا التاريخ."
 
@@ -2218,7 +2218,7 @@ msgstr "انتهى وقت الدفع أو تم إلغاء الحجز وتم تح
 msgid "The verification check did not pass. Please try again."
 msgstr "لم تنجح خطوة التحقق. يرجى المحاولة مرة أخرى."
 
-#: src/lib/reservations/labels.ts:526
+#: src/lib/reservations/labels.ts:529
 msgid "The waitlist is full right now. Please call the restaurant."
 msgstr "قائمة الانتظار ممتلئة حاليًا. يرجى الاتصال بالمطعم."
 
@@ -2226,13 +2226,17 @@ msgstr "قائمة الانتظار ممتلئة حاليًا. يرجى الات
 msgid "The waitlist is not available right now"
 msgstr "قائمة الانتظار غير متاحة حاليًا"
 
-#: src/lib/reservations/labels.ts:529
+#: src/lib/reservations/labels.ts:532
 msgid "The waitlist is not available right now. Please call the restaurant."
 msgstr "قائمة الانتظار غير متاحة حاليًا. يرجى الاتصال بالمطعم."
 
 #: src/lib/reservations/labels.ts:474
 msgid "There are no upcoming seatings to book right now."
 msgstr "لا توجد مواعيد قادمة للحجز حاليًا."
+
+#: src/lib/reservations/labels.ts:515
+msgid "This booking includes a payment, so the party size cannot be changed online. Please call the restaurant."
+msgstr "يتضمن هذا الحجز دفعة، لذلك لا يمكن تغيير عدد الضيوف عبر الإنترنت. يرجى الاتصال بالمطعم."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "this business"
@@ -2303,7 +2307,7 @@ msgstr "لدى رقم الهاتف هذا حجز بالفعل في ذلك الو
 msgid "This phone number has too many upcoming reservations."
 msgstr "لدى رقم الهاتف هذا عدد كبير من الحجوزات القادمة."
 
-#: src/lib/reservations/labels.ts:523
+#: src/lib/reservations/labels.ts:526
 msgid "This phone number is already on the waitlist today."
 msgstr "رقم الهاتف هذا موجود بالفعل في قائمة الانتظار اليوم."
 
@@ -2511,7 +2515,7 @@ msgstr "تعذر العثور على هذا الحجز. ربما انتهت صل
 msgid "We could not find this payment"
 msgstr "تعذر العثور على هذه الدفعة"
 
-#: src/lib/reservations/labels.ts:532
+#: src/lib/reservations/labels.ts:535
 msgid "We could not find your place in line. The link may have expired."
 msgstr "تعذر العثور على دورك في القائمة. ربما انتهت صلاحية الرابط."
 
@@ -2524,7 +2528,7 @@ msgid "We could not place your order. Please try again."
 msgstr "تعذّر إرسال طلبك. حاول مرة أخرى."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
-#: src/lib/reservations/labels.ts:545
+#: src/lib/reservations/labels.ts:548
 msgid "We could not reach the server. Check your connection and try again."
 msgstr "تعذّر الوصول إلى الخادم. تحقق من اتصالك وحاول مرة أخرى."
 
@@ -2700,7 +2704,7 @@ msgstr "نعم، ألغِه"
 msgid "Yes, leave"
 msgstr "نعم، مغادرة"
 
-#: src/lib/reservations/labels.ts:538
+#: src/lib/reservations/labels.ts:541
 msgid "You already have the most table alerts allowed for these contact details."
 msgstr "لديك بالفعل أقصى عدد مسموح به من تنبيهات الطاولات لبيانات الاتصال هذه."
 

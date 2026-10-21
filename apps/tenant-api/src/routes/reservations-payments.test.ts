@@ -521,6 +521,42 @@ describe('booking with a payment policy', () => {
 	})
 })
 
+describe('guest changes to a booking that carries money', () => {
+	async function paidBooking() {
+		const booking = await bookDeposit()
+		const db = await getTenantDb(ORG)
+		await db
+			.update(rsvReservations)
+			.set({ status: 'booked', paymentStatus: 'paid' })
+			.where(eq(rsvReservations.id, booking.reservation.id))
+		return booking
+	}
+
+	it('refuses a party-size change that would leave the deposit wrong', async () => {
+		const booking = await paidBooking()
+		const res = await publicCall('POST', '/reservations/manage/modify', {
+			token: booking.manageToken,
+			body: { localMin: 19 * 60, partySize: 2 },
+		})
+		expect(res.status).toBe(409)
+		expect(res.body.error).toBe('modify_changes_payment')
+		const row = await reservationRow(booking.reservation.id)
+		expect(row.partySize).toBe(4)
+	})
+
+	it('still lets the guest move the time inside the same service and party', async () => {
+		const booking = await paidBooking()
+		const res = await publicCall('POST', '/reservations/manage/modify', {
+			token: booking.manageToken,
+			body: { localMin: 19 * 60 + 15 },
+		})
+		expect(res.status).toBe(200)
+		const row = await reservationRow(booking.reservation.id)
+		expect(row.localStartMin).toBe(19 * 60 + 15)
+		expect(row.paymentStatus).toBe('paid')
+	})
+})
+
 describe('quote, bind and status', () => {
 	it('quotes the authoritative amount in the contract shape and refuses a bad token', async () => {
 		const booking = await bookDeposit()

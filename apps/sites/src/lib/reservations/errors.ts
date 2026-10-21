@@ -12,6 +12,7 @@ export type ReservationErrorKey =
 	| 'errorPhoneLimit'
 	| 'errorCancelClosed'
 	| 'errorModifyClosed'
+	| 'errorModifyPayment'
 	| 'errorLargeParty'
 	| 'errorRequestsClosed'
 	| 'errorPartySize'
@@ -38,6 +39,7 @@ const BY_CODE: Record<string, ReservationErrorKey> = {
 	phone_active_limit: 'errorPhoneLimit',
 	cancel_closed: 'errorCancelClosed',
 	modify_closed: 'errorModifyClosed',
+	modify_changes_payment: 'errorModifyPayment',
 	large_party: 'errorLargeParty',
 	requests_closed: 'errorRequestsClosed',
 	party_size_invalid: 'errorPartySize',
