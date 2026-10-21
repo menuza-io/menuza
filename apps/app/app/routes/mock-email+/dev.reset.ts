@@ -4,14 +4,14 @@ import {
 	resetCapturedEmails,
 } from '#app/utils/dev-email-capture.server.ts'
 
-export async function loader(_args: LoaderFunctionArgs) {
-	requireMockEmailEnabled()
+export async function loader({ request }: LoaderFunctionArgs) {
+	requireMockEmailEnabled(request)
 	return new Response('Method Not Allowed', { status: 405 })
 }
 
 /** Dev only: `POST /mock-email/dev/reset` clears the captured emails. 404 without `MOCKS=true`. */
 export async function action({ request }: ActionFunctionArgs) {
-	requireMockEmailEnabled()
+	requireMockEmailEnabled(request)
 	if (request.method !== 'POST') {
 		return new Response('Method Not Allowed', { status: 405 })
 	}

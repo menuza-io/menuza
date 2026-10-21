@@ -49,6 +49,7 @@ async function seed(
 
 beforeEach(async () => {
 	vi.stubEnv('MOCKS', 'true')
+	vi.stubEnv('BASE_URL', 'http://localhost:3001')
 	await resetCapturedEmails()
 })
 
@@ -84,6 +85,37 @@ describe('mock-email routes without MOCKS', () => {
 			expect(listed).toHaveLength(1)
 		},
 	)
+})
+
+describe('mock-email routes on a deployment that is not local', () => {
+	it.each([
+		['an unset BASE_URL', undefined],
+		['a public BASE_URL', 'https://app.example.com'],
+	])('answer 404 with MOCKS=true and %s', async (_label, baseUrl) => {
+		await seed('a@example.com', 'secret', Date.now())
+		vi.stubEnv('BASE_URL', baseUrl as never)
+		expect((await settle(() => viewer(args('/mock-email')))).status).toBe(404)
+		expect(
+			(await settle(() => messages(args('/mock-email/dev/messages')))).status,
+		).toBe(404)
+		expect(
+			(
+				await settle(() =>
+					resetAction(args('/mock-email/dev/reset', { method: 'POST' })),
+				)
+			).status,
+		).toBe(404)
+	})
+
+	it('answers 404 for a non-local request even on a local deployment', async () => {
+		const remote = {
+			request: new Request('https://app.example.com/mock-email/dev/messages'),
+			params: {},
+			context: new RouterContextProvider(),
+			unstable_pattern: '/mock-email/dev/messages',
+		} as never
+		expect((await settle(() => messages(remote))).status).toBe(404)
+	})
 })
 
 describe('GET /mock-email/dev/messages', () => {

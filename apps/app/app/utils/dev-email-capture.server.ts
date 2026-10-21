@@ -1,4 +1,5 @@
 import { db, sql } from '@repo/database'
+import { isLocalUrl } from '@repo/payments'
 import {
 	DEV_EMAIL_CAPTURE_CREATE_SQL,
 	DEV_EMAIL_CAPTURE_TABLE,
@@ -10,9 +11,19 @@ import {
 export const DEFAULT_CAPTURE_LIMIT = 100
 export const MAX_CAPTURE_LIMIT = 500
 
-/** The mock email routes answer only when dev mocks are on. */
-export function requireMockEmailEnabled() {
-	if (process.env.MOCKS !== 'true') {
+/**
+ * The mock email routes answer only when dev mocks are on AND the deployment
+ * is local: `BASE_URL` is a loopback or `.test`/`.localhost` origin (an unset
+ * one is not local) and so is the request. `MOCKS=true` alone is not enough:
+ * the routes read and clear a table in the app database, and a stray flag on a
+ * real deployment must not expose that.
+ */
+export function requireMockEmailEnabled(request?: Request) {
+	if (
+		process.env.MOCKS !== 'true' ||
+		!isLocalUrl(process.env.BASE_URL?.trim()) ||
+		(request && !isLocalUrl(request.url))
+	) {
 		throw new Response('Not Found', { status: 404 })
 	}
 }

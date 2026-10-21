@@ -173,6 +173,7 @@ function FloorTableBase({
 				: t`${elapsed}m · ${remaining}m left`
 	}
 
+	const partySizeLabel = activeParty?.partySize ?? 0
 	const guestName = activeParty
 		? formatShortGuestName(activeParty.guestName)
 		: null
@@ -297,7 +298,7 @@ function FloorTableBase({
 						className="text-muted-foreground font-normal tabular-nums"
 						data-testid={`floor-table-party-size-${table.id}`}
 					>
-						{activeParty.partySize}p
+						{t`${partySizeLabel}p`}
 					</span>
 				</div>
 			) : null}

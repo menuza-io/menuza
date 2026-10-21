@@ -6,8 +6,8 @@ import {
 } from '#app/utils/dev-email-capture.server.ts'
 
 /** Dev only: lists the emails the Workers dev capture stored. 404 without `MOCKS=true`. */
-export async function loader(_args: LoaderFunctionArgs) {
-	requireMockEmailEnabled()
+export async function loader({ request }: LoaderFunctionArgs) {
+	requireMockEmailEnabled(request)
 	const messages = await listCapturedEmails()
 	return new Response(renderMailViewer(messages), {
 		headers: {

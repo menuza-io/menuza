@@ -10,7 +10,7 @@ import { parseSince } from '#app/utils/dev-email-capture.shared.ts'
  * `since` is epoch milliseconds or an ISO date. 404 without `MOCKS=true`.
  */
 export async function loader({ request }: LoaderFunctionArgs) {
-	requireMockEmailEnabled()
+	requireMockEmailEnabled(request)
 	const params = new URL(request.url).searchParams
 	const sinceParam = params.get('since')
 	const since = sinceParam === null ? null : parseSince(sinceParam)

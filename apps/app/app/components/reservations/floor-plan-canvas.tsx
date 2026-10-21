@@ -1188,7 +1188,7 @@ export function FloorPlanCanvas({
 								>
 									<span className="text-xs font-bold">{table.label}</span>
 									<span className="text-muted-foreground text-2xs">
-										{table.minCovers}–{table.maxCovers}p
+										{_(msg`${tableMinCovers}–${tableMaxCovers}p`)}
 									</span>
 
 									{isSelected && canWrite ? (
