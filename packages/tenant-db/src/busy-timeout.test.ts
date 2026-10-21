@@ -35,4 +35,23 @@ describe('tenant DB busy timeout', () => {
 		const after = await db.get<{ timeout: number }>(sql`PRAGMA busy_timeout`)
 		expect(Number((after as { timeout: number }).timeout)).toBeLessThan(30_000)
 	})
+
+	it('keeps foreign keys enforced on every connection, including one opened after a transaction', async () => {
+		await provisionTenantDb(ORG_ID)
+		const db = await getTenantDb(ORG_ID)
+		const enforced = async () =>
+			Number(
+				(
+					(await db.get(sql`PRAGMA foreign_keys`)) as {
+						foreign_keys: number
+					}
+				).foreign_keys,
+			)
+		expect(await enforced()).toBe(1)
+		await db.transaction(async (tx) => {
+			await tx.run(sql`SELECT 1`)
+		})
+		// Cascades and SET NULL (erasure relies on them) must still fire.
+		expect(await enforced()).toBe(1)
+	})
 })
