@@ -9,7 +9,7 @@ import {
 /**
  * Cloudflare Durable Object SQLite allows at most 100 bound parameters per
  * statement, so an `IN (...)` list built from user-sized data (every
- * reservation of a day, every guest of a page) must be split. 90 leaves room
+ * shift of a week, every person of a page) must be split. 90 leaves room
  * for the other parameters of the same statement (status filters, `set`
  * values).
  */

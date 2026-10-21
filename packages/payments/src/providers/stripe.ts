@@ -3,6 +3,7 @@
  */
 
 import Stripe from 'stripe'
+import { toPublicStripeError } from '../sanitize-stripe-error.js'
 import {
 	type PaymentProvider,
 	type Product,
@@ -64,11 +65,13 @@ export class StripeProvider implements PaymentProvider {
 				description: product.description,
 				defaultPriceId: product.default_price as string | undefined,
 			}))
-		} catch (error: any) {
-			console.error('StripeProvider: Failed to fetch products:', error)
-			throw new Error(
-				`Failed to fetch Stripe products: ${error?.message || error}`,
+		} catch (error: unknown) {
+			const publicError = toPublicStripeError(
+				error,
+				'Failed to fetch Stripe products',
 			)
+			console.error('StripeProvider: Failed to fetch products:', publicError)
+			throw publicError
 		}
 	}
 
@@ -95,11 +98,13 @@ export class StripeProvider implements PaymentProvider {
 					flat_amount: tier.flat_amount,
 				})),
 			}))
-		} catch (error: any) {
-			console.error('StripeProvider: Failed to fetch prices:', error)
-			throw new Error(
-				`Failed to fetch Stripe prices: ${error?.message || error}`,
+		} catch (error: unknown) {
+			const publicError = toPublicStripeError(
+				error,
+				'Failed to fetch Stripe prices',
 			)
+			console.error('StripeProvider: Failed to fetch prices:', publicError)
+			throw publicError
 		}
 	}
 
@@ -422,8 +427,12 @@ export class StripeProvider implements PaymentProvider {
 				periodStart: invoice.period_start,
 				periodEnd: invoice.period_end,
 			}))
-		} catch (error) {
-			console.error('StripeProvider: Error fetching invoices:', error)
+		} catch (error: unknown) {
+			const publicError = toPublicStripeError(
+				error,
+				'Failed to fetch Stripe invoices',
+			)
+			console.error('StripeProvider: Error fetching invoices:', publicError)
 			return []
 		}
 	}

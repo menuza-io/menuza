@@ -143,7 +143,7 @@ dry. Register actions with `registerVoiceAction` in both entry points
 `apps/tenant-api/src/services/voice-actions.ts` is the registry:
 `registerVoiceAction({ name, ... })` adds an action, `getVoiceAction(name)`
 resolves it for `POST /api/voice/actions/:name`, and a per-call cap per action
-name is counted in `voice_call_actions` (tenant migration `0021`). An action
+name is counted in `voice_call_actions` (tenant migration `0019_reservations`). An action
 receives the call context (organization, call, caller, channel, location scope)
 from the call row, never from model output, and returns `VoiceActionResult`. The
 restaurant vertical registers three, in

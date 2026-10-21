@@ -33,6 +33,7 @@ import {
 	type SchedulePublicationRow,
 	type StaffMember,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import { scheduleLinkUrl } from '../lib/schedule-link.ts'
@@ -56,7 +57,7 @@ import {
 } from './schedule-shared.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, ok } from './timesheet-shared.ts'
-import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Telling people about a publication. Three parts:
@@ -94,9 +95,10 @@ async function loadMembers(
 ): Promise<Map<string, StaffMember>> {
 	const map = new Map<string, StaffMember>()
 	for (const part of chunked([...new Set(ids)], PEOPLE_CHUNK)) {
-		const rows = await queryInChunks(part, (chunk) =>
-			db.select().from(staffMembers).where(inArray(staffMembers.id, chunk)),
-		)
+		const rows = await db
+			.select()
+			.from(staffMembers)
+			.where(inArray(staffMembers.id, part))
 		for (const row of rows) map.set(row.id, row)
 	}
 	return map
@@ -462,7 +464,7 @@ export async function resendNotices(
 		ctx.db,
 		recipients.map((r) => r.staffId),
 	)
-	const result = await ctx.db.transaction(async (tx) => {
+	const result = await runTenantTransaction(ctx.db, async (tx) => {
 		const queued = await enqueueNotices(tx, {
 			publication: {
 				id: publication.id,
@@ -656,7 +658,7 @@ export async function revokeLink(
 ): Promise<ScheduleResult<ScheduleLinkStatus>> {
 	const person = await visibleStaff(ctx, staffId)
 	if (!person.ok) return person
-	await ctx.db.transaction(async (tx) => {
+	await runTenantTransaction(ctx.db, async (tx) => {
 		const revoked = await revokeScheduleLink(
 			tx,
 			staffId,

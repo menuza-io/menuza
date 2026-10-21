@@ -74,7 +74,7 @@ async function expectRejectsWith(
 	expect(text).toContain(substring)
 }
 
-describe('reservations tenant schema (0016_reservations_foundation)', () => {
+describe('reservations tenant schema (0019_reservations)', () => {
 	const tempDirs: string[] = []
 
 	afterEach(() => {
@@ -129,11 +129,8 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 		client.close()
 	})
 
-	it('keeps apps/tenant-api/workers/migrations.generated.ts in sync with 0016_reservations_foundation.sql', () => {
-		const sqlPath = path.resolve(
-			__dirname,
-			'../drizzle/0016_reservations_foundation.sql',
-		)
+	it('keeps apps/tenant-api/workers/migrations.generated.ts in sync with 0019_reservations.sql', () => {
+		const sqlPath = path.resolve(__dirname, '../drizzle/0019_reservations.sql')
 		const generatedPath = path.resolve(
 			__dirname,
 			'../../../apps/tenant-api/workers/migrations.generated.ts',
@@ -142,15 +139,15 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			__dirname,
 			'../../../apps/tenant-api/scripts/generate-do-migrations.mjs',
 		)
-		if (!existsSync(generatedPath)) {
-			execFileSync(process.execPath, [generatorScriptPath], {
-				stdio: 'ignore',
-			})
-		}
+		// Always regenerated: the file is gitignored, so an old copy from before a
+		// renumbering would otherwise be compared against the new migration.
+		execFileSync(process.execPath, [generatorScriptPath], {
+			stdio: 'ignore',
+		})
 		const sqlContent = readFileSync(sqlPath, 'utf8')
 		const generatedContent = readFileSync(generatedPath, 'utf8')
 
-		expect(generatedContent).toContain(`"m0016": ${JSON.stringify(sqlContent)}`)
+		expect(generatedContent).toContain(`"m0019": ${JSON.stringify(sqlContent)}`)
 	})
 
 	it('round-trips inserts across all 41 rsv_* tables via Drizzle', async () => {
@@ -1105,7 +1102,7 @@ describe('reservations tenant schema (0016_reservations_foundation)', () => {
 			'UNIQUE',
 		)
 
-		// 0020: a provider session binds to one payment row, and the new
+		// 0019: a provider session binds to one payment row, and the new
 		// columns default so older rows stay valid.
 		await db.insert(schema.rsvPayments).values({
 			id: 'pay_s1',

@@ -40,7 +40,7 @@ import {
 import { useVerticalLabels } from './vertical-labels.ts'
 
 // These components post to the action of the route that renders them, which
-// is the phone agent Setup page (`add-number`, `send-line-code`, ...).
+// is the phone agent Agent tab (`add-number`, `send-line-code`, ...).
 
 export type PhoneNumber = Awaited<ReturnType<typeof listPhoneNumbers>>[number]
 export type AssignableNumber = Awaited<

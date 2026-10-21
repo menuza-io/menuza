@@ -83,6 +83,126 @@ npx drizzle-kit generate --name your_migration_name
 They apply automatically on the next connection; `POST /api/provision` also
 forces the full migration run for a specific org.
 
+#### Migration numbering versus upstream
+
+The tenant migrations of this repository (`packages/tenant-db/drizzle`) are
+numbered differently from upstream's, because the fork shipped its own
+migrations (and applied them to deployed databases) before it synced upstream's.
+The files are the same changes, in a different order and with different indexes:
+
+| Change                                 | Upstream                                        | Here                                                                         |
+| -------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| Restaurant orders                      | not upstream                                    | `0011_restaurant_orders`                                                     |
+| Voice calls                            | `0011_voice_calls`                              | `0012_voice_calls` (same SQL)                                                |
+| Delivery quote columns + customer subs | `0013_customer_subscriptions` (subscriptions)   | `0013_delivery_quote_and_subscriptions` (adds the delivery columns up front) |
+| Staffing foundation                    | `0012_staffing_foundation`                      | `0014_staffing_foundation` (same SQL)                                        |
+| Hiring interested scopes               | not upstream                                    | `0015_hiring_interested_scopes`                                              |
+| Person erasure log                     | `0014_person_erasure_log`                       | `0016_person_erasure_log` (same SQL, trailing newline only)                  |
+| Email confirmation on subscriptions    | `0015_customer_subscription_email_confirmation` | `0017_customer_subscription_email_confirmation` (same SQL)                   |
+| Confirmation sent marker               | `0016_customer_subscription_confirmation_sent`  | `0018_customer_subscription_confirmation_sent` (same SQL)                    |
+| Reservations module (tables, triggers) | not upstream                                    | `0019_reservations` (one migration for the whole module)                     |
+
+The reservations module is one migration, `0019_reservations`, which also holds
+two non-reservation changes it needed (`voice_call_actions` and
+`labor_scope_settings.demand_per_labor_hour`). It was first written as six
+migrations, `0016` to `0021`, before the upstream deltas above existed on `main`;
+when the module was merged they were folded into this one file (same SQL, one
+snapshot chained after `0018`, a `when` later than `0018`'s). The control-plane
+module migration is likewise one file, `0025_reservations` (`main` ended at
+`0024_dashboards`, so its number did not move).
+
+Policy: **never renumber, rename or edit a migration that has been applied.**
+Drizzle records applied migrations by journal order and hash, and the files here
+are already on long-lived `tenant_{orgId}.db` files. When upstream is merged:
+
+1. Do not take upstream's `packages/tenant-db/drizzle` (files,
+   `meta/_journal.json` and snapshots) wholesale; keep ours in a merge conflict.
+2. Take only the delta: the upstream migrations whose change is not already in
+   the table above. Compare the SQL, not the file names.
+3. Append each one with the next free index here (`0025_...`, and so on) and
+   keep its SQL unchanged. Add a `_journal.json` entry with the next `idx`, the
+   new `tag` and a `when` **strictly greater than the previous entry's**. This is
+   not cosmetic: Drizzle's SQLite migrator applies only the journal entries whose
+   `when` is greater than the `created_at` of the last migration a database
+   applied, so an entry with an older `when` is silently skipped on every
+   database that already ran the entries before it.
+4. Add its snapshot by taking the latest snapshot here as the base (it holds the
+   fork-only tables), applying the delta to it, and chaining it: a new `id` and
+   a `prevId` equal to the `id` of the previous snapshot here. Do not copy
+   upstream's snapshot (it lacks the fork-only tables and carries upstream's
+   ids).
+5. `packages/tenant-db/src/schema.ts` is merged as code. Run
+   `npx drizzle-kit generate --name check` in `packages/tenant-db`: it must
+   report nothing to migrate (delete anything it creates).
+6. Run `npx vitest run src/migration-chain.test.ts` in `packages/tenant-db`.
+   Add the number of entries that had shipped before the sync to
+   `SHIPPED_STATES` there: a database at each shipped state must migrate forward
+   to exactly the schema a fresh one gets. The same test fails when a `when`
+   does not increase or a snapshot is not chained to the previous one.
+
+#### One-off: local tenant databases that ran the reservations branch early
+
+Only developers who ran the reservations branch **before** it was merged have
+this problem. Their local `tenant_{orgId}.db` files (under
+`packages/database/db/`) recorded the reservations migrations under the old
+numbers `0016` to `0021`. After the merge the journal is `0016` to `0018`
+(upstream deltas) then `0019_reservations`, with newer `when` values, so Drizzle
+sees `0016` to `0019` as not applied yet, runs the upstream deltas, and then
+fails on `0019_reservations` with
+`table rsv_areas already exists`. Databases created from `main`, or after the
+merge, are fine. So are the control-plane databases (`data.db`, local D1): the
+module's control-plane migration is one file, `0025_reservations`, made only of
+idempotent `INSERT OR IGNORE` and `NOT EXISTS` statements, with a `when` later
+than the old `0026`'s, so a database that applied the old `0025` and `0026` runs
+it once more harmlessly. No action there.
+
+Pick one per database. Do these only on a developer machine, with the tenant-api
+dev processes stopped, and never on a shared or deployed database.
+
+**Option A: rebuild (simplest, loses the local data of that organization).**
+Delete `tenant_{orgId}.db` and its `-wal` and `-shm` files, then start
+`npm run dev` (the organization's database is provisioned again on first use) and
+re-run the seeds you need, for example
+`npm run seed:reservations -w tenant-api -- <org-slug>` and
+`npm run seed:demo-people -w tenant-api -- <org-slug>`. Local Durable Object
+state of the Worker runtime (`apps/tenant-api/.wrangler/state`) is separate;
+delete it the same way if you use it.
+
+**Option B: keep the data.** The old reservations rows stay as they are. You
+apply the three upstream deltas by hand and record `0016` to `0019` as applied,
+so Drizzle starts at the first migration after them (the data already holds
+everything `0019_reservations` creates):
+
+```sh
+cd packages/database/db
+cp tenant_<orgId>.db tenant_<orgId>.db.bak            # always keep a copy
+for f in 0016_person_erasure_log \
+         0017_customer_subscription_email_confirmation \
+         0018_customer_subscription_confirmation_sent; do
+  sqlite3 tenant_<orgId>.db < ../../tenant-db/drizzle/$f.sql
+done
+node -e '
+const fs = require("fs"), crypto = require("crypto")
+const dir = "../../tenant-db/drizzle"
+const { entries } = JSON.parse(fs.readFileSync(dir + "/meta/_journal.json", "utf8"))
+for (const e of entries.filter((e) => e.idx >= 16)) {
+  const hash = crypto.createHash("sha256").update(fs.readFileSync(`${dir}/${e.tag}.sql`, "utf8")).digest("hex")
+  console.log(`INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES ("${hash}", ${e.when});`)
+}' | sqlite3 tenant_<orgId>.db
+```
+
+The three `sqlite3 < file` runs execute the upstream SQL (the
+`--> statement-breakpoint` markers are SQL comments, so the files run as they
+are). The `node` script prints one `INSERT` per journal entry from `0016` on,
+with the hash Drizzle computes (SHA-256 of the file) and the entry's `when`, and
+pipes them in. Afterwards the newest `created_at` in `__drizzle_migrations` is
+the `when` of `0019`, so the next migration anyone adds applies normally. Check
+with `sqlite3 tenant_<orgId>.db 'select count(*), max(created_at) from
+"__drizzle_migrations"'` and open the organization once; if anything fails,
+restore the `.bak` copy and use Option A. If a file was already partly migrated
+(`duplicate column name` on `0017` or `0018`), the upstream deltas are already
+there: skip that file and run only the `INSERT` step.
+
 ## Seeding
 
 During development, you may want to seed your database with test data:

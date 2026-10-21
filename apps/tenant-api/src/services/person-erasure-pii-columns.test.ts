@@ -3,7 +3,7 @@ import { getTableConfig } from 'drizzle-orm/sqlite-core'
 import { describe, expect, it } from 'vitest'
 
 /**
- * Schema-driven guard for the one erasure flow (`person-erasure-service.ts`).
+ * Schema-driven guard for the person erasure flow (`person-erasure-service.ts`).
  *
  * Every column of every table in the regional tenant schema whose name looks
  * like personal data must be either COVERED by the erasure (with a note on how)
@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest'
  */
 
 const PII_COLUMN =
-	/((^|_)phone|(^|_)email|first_name|last_name|full_name|display_name|caller_name|contact_name|address|postal|_lat$|_lng$|^lat$|^lng$|ip_hash|stripe_|last4|payment_method_ref|customer_ref|card_|allerg|dietary|guest_requests|staff_notes|^transcript$|^summary$|^values$|^details$|^body$|^notes?$|token_hash|date_of_birth|^name$)/
+	/((^|_)phone|(^|_)email|first_name|last_name|full_name|display_name|caller_name|contact_name|address|postal|_lat$|_lng$|^lat$|^lng$|ip_hash|stripe_|last4|payment_method|customer_ref|card_|allerg|dietary|guest_requests|staff_notes|^transcript$|^summary$|^values$|^details$|^body$|^notes?$|token_hash|date_of_birth|^name$)/
 
 /** Columns the erasure removes or scrubs, and how. */
 const COVERED: Record<string, string> = {
@@ -25,27 +25,40 @@ const COVERED: Record<string, string> = {
 	'customers.phone_verification_code': 'row deleted',
 	'customers.phone_verification_expires_at': 'row deleted',
 	'customers.refresh_token_hash': 'row deleted',
-	'customers.refresh_token_expires_at': 'row deleted',
 	'customers.stripe_customer_id': 'row deleted',
+	'customer_subscriptions.confirmed_email_hash':
+		'HMAC of the address, deleted with the subscription by customer id',
 	'customer_refresh_tokens.token_hash': 'deleted by customer id',
 	'customer_payment_methods.stripe_payment_method_id': 'deleted by customer id',
 	'customer_payment_methods.last4': 'deleted by customer id',
-	'restaurant_orders.contact_name': 'scrubbed to "Erased customer"',
-	'restaurant_orders.contact_phone': 'scrubbed to empty',
-	'restaurant_orders.contact_email': 'nulled',
-	'restaurant_orders.delivery_address': 'nulled',
-	'restaurant_orders.delivery_notes': 'nulled',
-	'restaurant_orders.delivery_postal_code': 'nulled',
-	'restaurant_orders.delivery_lat': 'nulled',
-	'restaurant_orders.delivery_lng': 'nulled',
-	'restaurant_orders.receipt_token_hash': 'replaced with a random value',
-	'restaurant_orders.payment_token_hash': 'nulled',
 	'shop_orders.stripe_checkout_session_id':
 		'provider reference, no person data; order totals are kept, customer link nulled',
 	'shop_orders.stripe_payment_intent_id':
 		'provider reference, no person data; order totals are kept, customer link nulled',
+	'restaurant_orders.contact_name':
+		'scrubbed by customer id, normalised phone or case-insensitive email',
+	'restaurant_orders.contact_phone':
+		'scrubbed by customer id, normalised phone or case-insensitive email',
+	'restaurant_orders.contact_email':
+		'scrubbed by customer id, normalised phone or case-insensitive email',
+	'restaurant_orders.delivery_address': 'scrubbed with the order contact',
+	'restaurant_orders.delivery_postal_code': 'scrubbed with the order contact',
+	'restaurant_orders.delivery_lat': 'scrubbed with the order contact',
+	'restaurant_orders.delivery_lng': 'scrubbed with the order contact',
+	'restaurant_orders.receipt_token_hash':
+		'replaced by a random value, so the old receipt link stops working',
+	'restaurant_orders.payment_token_hash': 'nulled with the order contact',
 	'website_form_submissions.values':
-		'redacted when it contains the erased phone or email (best effort, free text)',
+		'redacted when a field holds the erased phone or email as a whole token (best effort, free text)',
+	'voice_calls.caller_phone': 'call deleted by phone or customer id',
+	'voice_calls.summary': 'call deleted',
+	'voice_calls.transcript': 'call deleted',
+	'voice_call_requests.caller_name': 'deleted by phone',
+	'voice_call_requests.caller_phone': 'deleted by phone',
+	'voice_call_requests.details': 'deleted by phone',
+	'voice_sms_sends.to_phone': 'deleted by phone',
+	'voice_link_handoffs.sent_to_phone': 'nulled by phone',
+	'voice_link_handoffs.token_hash': 'handoff deleted with its call',
 	'rsv_guests.first_name': 'anonymized',
 	'rsv_guests.last_name': 'anonymized',
 	'rsv_guests.phone_e164': 'nulled',
@@ -74,22 +87,15 @@ const COVERED: Record<string, string> = {
 		'card metadata, with the nulled card brand and last4 it identifies no one',
 	'rsv_payments.card_exp_year':
 		'card metadata, with the nulled card brand and last4 it identifies no one',
-	'voice_calls.caller_phone': 'call deleted by phone or customer id',
-	'voice_calls.summary': 'call deleted',
-	'voice_calls.transcript': 'call deleted',
-	'voice_call_requests.caller_name': 'deleted by phone',
-	'voice_call_requests.caller_phone': 'deleted by phone',
-	'voice_call_requests.details': 'deleted by phone',
-	'voice_sms_sends.to_phone': 'deleted by phone',
-	'voice_link_handoffs.sent_to_phone': 'nulled by phone',
-	'voice_link_handoffs.token_hash': 'handoff deleted with its call',
+	'customers.refresh_token_expires_at': 'row deleted',
+	'restaurant_orders.delivery_notes': 'scrubbed with the order contact',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
 const ALLOWED_TABLES: Array<[RegExp, string]> = [
 	[
 		/^(staff_|hiring_|kiosk_|schedule_|shift|time_|sales_|tip_|onboarding_|labor_|staffing_)/,
-		'staff module: people who work here, own lifecycle (docs/staffing.md, ADR 047), not customers',
+		'staff module: people who work here or apply to, with their own erasure and retention (docs/staffing.md, ADR 047), not customers',
 	],
 ]
 
@@ -98,6 +104,10 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'marketing_campaigns.name': 'campaign title written by the operator',
 	'marketing_journeys.name': 'journey title written by the operator',
 	'website_forms.name': 'form title written by the operator',
+	'restaurant_orders.payment_method':
+		'cash or card, not personal data; the order totals are kept',
+	'voice_line_verifications.to_phone':
+		"the organization's own phone line being verified, not a customer",
 	'rsv_areas.name': 'room name written by the operator',
 	'rsv_policies.name': 'policy title written by the operator',
 	'rsv_section_layouts.name': 'layout title written by the operator',
@@ -117,15 +127,7 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'rsv_guests.marketing_sms_consent_at':
 		'deprecated timestamp column, never read or written (single consent source)',
 	'rsv_guests.consent_text_version': 'deprecated, a text version label',
-	'voice_line_verifications.to_phone':
-		"the organization's own phone line being verified, not a customer",
 	'voice_calls.transfer_contact_id': 'opaque id of an organization contact',
-	'shop_orders.stripe_checkout_session_id':
-		'provider reference (see COVERED note)',
-	'shop_orders.stripe_payment_intent_id':
-		'provider reference (see COVERED note)',
-	'restaurant_orders.payment_method': 'enum: handoff or online',
-	'customer_subscriptions.source': 'enum of consent sources',
 }
 
 function listColumns() {
@@ -152,6 +154,7 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 	it('finds the tenant tables', () => {
 		expect(names.has('customers.phone')).toBe(true)
 		expect(names.has('rsv_guests.phone_e164')).toBe(true)
+		expect(names.has('customer_subscriptions.customer_id')).toBe(true)
 		expect(columns.length).toBeGreaterThan(500)
 	})
 
@@ -169,6 +172,32 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 		expect(
 			uncovered,
 			"Decide for each column: erase it in person-erasure-service.ts and add it to COVERED, or add it to ALLOWED_* with the reason it is not a customer's data",
+		).toEqual([])
+	})
+
+	it('erases every table keyed by a customer id', () => {
+		// A table with a customer_id column holds a person's rows. It must be one
+		// the erasure deletes from or unlinks (listed here), so a new one fails.
+		const handled = new Set([
+			'customer_refresh_tokens',
+			'customer_subscriptions',
+			'customer_payment_methods',
+			'journey_runs',
+			'journey_step_executions',
+			'marketing_messages',
+			'restaurant_orders',
+			'rsv_guests',
+			'rsv_reservations',
+			'shop_orders',
+			'voice_calls',
+		])
+		const keyed = columns
+			.filter(({ column }) => column === 'customer_id')
+			.map(({ table }) => table)
+			.filter((table) => !handled.has(table))
+		expect(
+			keyed,
+			'A table keyed by customer_id needs a delete or unlink in person-erasure-service.ts, then an entry here',
 		).toEqual([])
 	})
 

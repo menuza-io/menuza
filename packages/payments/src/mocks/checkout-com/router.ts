@@ -92,7 +92,7 @@ function normalizeKey(value: string | null) {
 	return (value ?? '').replace(/^Bearer\s+/i, '').trim()
 }
 
-/** Every Checkout.com request the SDK makes to the reserved mock host lands here. */
+/** Every Checkout.com request the SDK makes to the dedicated mock host lands here. */
 export async function handleCheckoutRequest(
 	ctx: EmulatorContext,
 	request: Request,

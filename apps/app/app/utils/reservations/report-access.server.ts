@@ -13,7 +13,6 @@ import {
 	getUserReservationsGrants,
 	resolveReservationsLocationIds,
 } from '#app/utils/reservations/access.server.ts'
-import { resolveStaffReportAccessForRequest } from '#app/utils/staffing/report-access.server.ts'
 
 /**
  * Which Reservations report subjects (`bookings`, `waitlist_entries`) a person
@@ -80,23 +79,4 @@ export function intersectScopeIds(
 	if (b === null) return a
 	const allowed = new Set(b)
 	return a.filter((id) => allowed.has(id))
-}
-
-/**
- * The restricted subjects (staff and Reservations) the Reports screens may
- * offer this person: the same grants the reports token lists. `catalogForGrants`
- * hides every gated subject that is missing from this list, so a screen that
- * passed only the staff grants would hide Bookings and Waitlist entries from
- * someone whose token runs them.
- */
-export async function resolveReportGrantsForRequest(
-	request: Request,
-	userId: string,
-	organizationId: string,
-): Promise<string[]> {
-	const [staff, reservations] = await Promise.all([
-		resolveStaffReportAccessForRequest(request, userId, organizationId),
-		resolveReservationsReportAccess({ request, userId, organizationId }),
-	])
-	return [...staff.subjects, ...reservations.subjects]
 }

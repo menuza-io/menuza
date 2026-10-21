@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { eq } from 'drizzle-orm'
+import { brand } from '@repo/config/brand'
 import {
 	customerSubscriptions,
 	customers,
@@ -9,11 +9,15 @@ import {
 	getTenantDb,
 	provisionTenantDb,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { subscriptionRoutes } from './subscriptions.ts'
+import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { syncEnvFromProcess } from '../lib/secrets.ts'
+import { loadBroadcastAudience } from '../services/marketing-audience.ts'
+import { signConsentToken, unsubscribeUrl } from '../lib/email-consent.ts'
+import { RESEND_INTERVAL_MS, subscriptionRoutes } from './subscriptions.ts'
 
 const orgId = 'clw9x0a12000008l00test07'
 const jwtSecret = 'test-jwt-secret-123456789'
@@ -28,6 +32,10 @@ vi.mock('../lib/origin.ts', () => ({
 	}),
 }))
 
+vi.mock('../lib/tenant-email.ts', () => ({
+	sendTenantEmail: vi.fn().mockResolvedValue({ status: 'success' }),
+}))
+
 async function tokenFor(customerId: string) {
 	return new SignJWT({
 		customerId,
@@ -38,7 +46,7 @@ async function tokenFor(customerId: string) {
 	})
 		.setProtectedHeader({ alg: 'HS256' })
 		.setAudience('tenant-api')
-		.setIssuer('menuza')
+		.setIssuer(brand.slug)
 		.setExpirationTime('15m')
 		.sign(new TextEncoder().encode(jwtSecret))
 }
@@ -49,8 +57,8 @@ describe('customer subscription routes', () => {
 	let customerId: string
 	let accessToken: string
 
-	const put = (body: unknown, token = accessToken) =>
-		app.request('/subscriptions/drops', {
+	const put = (path: string, body: unknown, token = accessToken) =>
+		app.request(`/subscriptions/${path}`, {
 			method: 'PUT',
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -68,13 +76,20 @@ describe('customer subscription routes', () => {
 		process.env.TENANT_DB_DIR = tempDir
 		process.env.DATA_REGION = 'us'
 		process.env.JWT_SECRET = jwtSecret
+		process.env.AUTH_HMAC_SECRET = 'test-hmac-secret-123456789'
+		vi.mocked(sendTenantEmail).mockClear()
 		syncEnvFromProcess()
 
 		await provisionTenantDb(orgId)
 		const db = await getTenantDb(orgId)
 		const [customer] = await db
 			.insert(customers)
-			.values({ name: 'Sam', phone: '+15555550111', phoneVerified: true })
+			.values({
+				name: 'Sam',
+				phone: '+15555550111',
+				phoneVerified: true,
+				email: 'sam@example.com',
+			})
 			.returning()
 		customerId = customer!.id
 		accessToken = await tokenFor(customerId)
@@ -93,66 +108,518 @@ describe('customer subscription routes', () => {
 		expect((await app.request('/subscriptions')).status).toBe(401)
 	})
 
-	it('starts unsubscribed, opts in, and records the source', async () => {
-		await expect((await get()).json()).resolves.toEqual({
-			drops: { sms: false },
-		})
-
-		const res = await put({ subscribed: true, source: 'menu' })
+	// Fork drop alerts: SMS opt-in under the `drops` topic from Sites entry points.
+	it('records drop-alert opt-ins and keeps the opt-out on the same row', async () => {
+		const res = await put('drops/sms', { subscribed: true, source: 'menu' })
 		expect(res.status).toBe(200)
-		await expect((await get()).json()).resolves.toEqual({
-			drops: { sms: true },
+		await expect((await get()).json()).resolves.toMatchObject({
+			subscriptions: [{ topic: 'drops', channel: 'sms', subscribed: true }],
 		})
 
+		await put('drops/sms', { subscribed: false, source: 'profile' })
+		await put('drops/sms', { subscribed: true, source: 'order_success' })
 		const db = await getTenantDb(orgId)
-		const row = await db
-			.select()
-			.from(customerSubscriptions)
-			.where(eq(customerSubscriptions.customerId, customerId))
-			.get()
-		expect(row).toMatchObject({
-			topic: 'drops',
-			channel: 'sms',
-			source: 'menu',
-			unsubscribedAt: null,
-		})
-	})
-
-	it('keeps the opt-out on record and re-subscribes on the same row', async () => {
-		await put({ subscribed: true, source: 'drops_page' })
-		await put({ subscribed: false, source: 'profile' })
-		await expect((await get()).json()).resolves.toEqual({
-			drops: { sms: false },
-		})
-
-		const db = await getTenantDb(orgId)
-		const optedOut = await db.select().from(customerSubscriptions).all()
-		expect(optedOut).toHaveLength(1)
-		expect(optedOut[0]!.unsubscribedAt).toBeInstanceOf(Date)
-
-		await put({ subscribed: true, source: 'order_success' })
 		const rows = await db.select().from(customerSubscriptions).all()
 		expect(rows).toHaveLength(1)
 		expect(rows[0]).toMatchObject({
+			topic: 'drops',
+			channel: 'sms',
 			source: 'order_success',
 			unsubscribedAt: null,
 		})
 	})
 
-	it('refuses to subscribe an unverified phone', async () => {
+	it('refuses a drop-alert opt-in for an unverified phone and unknown sources', async () => {
 		const db = await getTenantDb(orgId)
 		const [unverified] = await db
 			.insert(customers)
 			.values({ name: '', phone: '+15555550112', phoneVerified: false })
 			.returning()
 		const res = await put(
+			'drops/sms',
 			{ subscribed: true, source: 'menu' },
+			await tokenFor(unverified!.id),
+		)
+		expect(res.status).toBe(409)
+		expect(
+			(await put('drops/sms', { subscribed: true, source: 'popup' })).status,
+		).toBe(400)
+	})
+
+	it('starts with no consent, opts in, and records the source', async () => {
+		await expect((await get()).json()).resolves.toEqual({
+			drops: { sms: false },
+			subscriptions: [],
+		})
+		const res = await put('marketing/email', {
+			subscribed: true,
+			source: 'signup',
+		})
+		expect(res.status).toBe(200)
+		await expect((await get()).json()).resolves.toEqual({
+			drops: { sms: false },
+			subscriptions: [
+				{
+					topic: 'marketing',
+					channel: 'email',
+					subscribed: true,
+					confirmed: false,
+				},
+			],
+		})
+		const db = await getTenantDb(orgId)
+		const row = await db
+			.select()
+			.from(customerSubscriptions)
+			.where(eq(customerSubscriptions.customerId, customerId))
+			.get()
+		expect(row).toMatchObject({ source: 'signup', unsubscribedAt: null })
+	})
+
+	// TODO(remove after the release that follows this one): legacy drops routes.
+	describe('legacy drops alias for cached clients', () => {
+		const legacyPut = (body: unknown, token: string | null = accessToken) =>
+			app.request('/subscriptions/drops', {
+				method: 'PUT',
+				headers: {
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+			})
+		const legacyGet = (token: string | null = accessToken) =>
+			app.request('/subscriptions/drops', {
+				headers: token ? { Authorization: `Bearer ${token}` } : {},
+			})
+
+		it('PUT forwards to /drops/sms and answers in the legacy shape', async () => {
+			const res = await legacyPut({ subscribed: true, source: 'menu' })
+			expect(res.status).toBe(200)
+			await expect(res.json()).resolves.toEqual({ drops: { sms: true } })
+			const db = await getTenantDb(orgId)
+			const row = await db
+				.select()
+				.from(customerSubscriptions)
+				.where(eq(customerSubscriptions.customerId, customerId))
+				.get()
+			expect(row).toMatchObject({
+				topic: 'drops',
+				channel: 'sms',
+				source: 'menu',
+				unsubscribedAt: null,
+			})
+			await expect((await get()).json()).resolves.toMatchObject({
+				drops: { sms: true },
+			})
+			await expect((await legacyGet()).json()).resolves.toEqual({
+				drops: { sms: true },
+			})
+
+			const off = await legacyPut({ subscribed: false })
+			await expect(off.json()).resolves.toEqual({ drops: { sms: false } })
+			await expect((await legacyGet()).json()).resolves.toEqual({
+				drops: { sms: false },
+			})
+		})
+
+		it('is authenticated and validated exactly like the new route', async () => {
+			expect((await legacyPut({ subscribed: true }, null)).status).toBe(401)
+			expect((await legacyGet(null)).status).toBe(401)
+			expect((await legacyPut({ subscribed: 'yes' })).status).toBe(400)
+			const db = await getTenantDb(orgId)
+			await db
+				.update(customers)
+				.set({ phoneVerified: false })
+				.where(eq(customers.id, customerId))
+			expect((await legacyPut({ subscribed: true })).status).toBe(409)
+		})
+	})
+
+	it('keeps the opt-out on record and re-subscribes on the same row', async () => {
+		await put('marketing/sms', { subscribed: true })
+		await put('marketing/sms', { subscribed: false })
+		const db = await getTenantDb(orgId)
+		const rows = await db.select().from(customerSubscriptions).all()
+		expect(rows).toHaveLength(1)
+		expect(rows[0]!.unsubscribedAt).toBeInstanceOf(Date)
+		await put('marketing/sms', { subscribed: true, source: 'checkout' })
+		const after = await db.select().from(customerSubscriptions).all()
+		expect(after).toHaveLength(1)
+		expect(after[0]).toMatchObject({ source: 'checkout', unsubscribedAt: null })
+	})
+
+	it('refuses an sms subscription for an unverified phone', async () => {
+		const db = await getTenantDb(orgId)
+		const [unverified] = await db
+			.insert(customers)
+			.values({ name: '', phone: '+15555550112', phoneVerified: false })
+			.returning()
+		const res = await put(
+			'marketing/sms',
+			{ subscribed: true },
 			await tokenFor(unverified!.id),
 		)
 		expect(res.status).toBe(409)
 	})
 
-	it('rejects unknown sources', async () => {
-		expect((await put({ subscribed: true, source: 'popup' })).status).toBe(400)
+	it('refuses an email subscription without an address', async () => {
+		const db = await getTenantDb(orgId)
+		const [noEmail] = await db
+			.insert(customers)
+			.values({ name: '', phone: '+15555550113', phoneVerified: true })
+			.returning()
+		const res = await put(
+			'marketing/email',
+			{ subscribed: true },
+			await tokenFor(noEmail!.id),
+		)
+		expect(res.status).toBe(409)
+	})
+
+	it('rejects unknown topics, channels and sources', async () => {
+		expect((await put('promos/email', { subscribed: true })).status).toBe(404)
+		expect((await put('marketing/fax', { subscribed: true })).status).toBe(404)
+		expect(
+			(await put('marketing/email', { subscribed: true, source: 'popup' }))
+				.status,
+		).toBe(400)
+	})
+
+	it('does not let a customer claim a server-side provenance', async () => {
+		for (const source of ['operator', 'import', 'form']) {
+			expect(
+				(await put('marketing/sms', { subscribed: true, source })).status,
+			).toBe(400)
+		}
+		expect(
+			(await put('marketing/sms', { subscribed: true, source: 'checkout' }))
+				.status,
+		).toBe(200)
+	})
+
+	describe('email double opt-in and unsubscribe', () => {
+		const confirmLink = () => {
+			const text = vi.mocked(sendTenantEmail).mock.calls.at(-1)![0].text
+			const url = /(https?:\/\/\S+)/.exec(text)![1]!
+			return new URL(url)
+		}
+		const audience = async () =>
+			loadBroadcastAudience(await getTenantDb(orgId), { channel: 'email' })
+
+		it('stays pending, emails a link, and counts only after the owner confirms', async () => {
+			const res = await put('marketing/email', { subscribed: true })
+			await expect(res.json()).resolves.toMatchObject({ pending: true })
+			expect(sendTenantEmail).toHaveBeenCalledTimes(1)
+			expect(vi.mocked(sendTenantEmail).mock.calls[0]![0].to).toBe(
+				'sam@example.com',
+			)
+			expect(await audience()).toEqual([])
+
+			const link = confirmLink()
+			// A scanner opening the link (GET) confirms nothing.
+			expect((await app.request(link.pathname + link.search)).status).toBe(200)
+			expect(await audience()).toEqual([])
+
+			const done = await app.request(link.pathname + link.search, {
+				method: 'POST',
+			})
+			expect(done.status).toBe(200)
+			expect((await audience()).map((c) => c.id)).toEqual([customerId])
+			// Idempotent.
+			expect(
+				(await app.request(link.pathname + link.search, { method: 'POST' }))
+					.status,
+			).toBe(200)
+
+			// Asking again while confirmed sends nothing and stays confirmed.
+			const again = await put('marketing/email', { subscribed: true })
+			await expect(again.json()).resolves.toMatchObject({ pending: false })
+			expect(sendTenantEmail).toHaveBeenCalledTimes(1)
+			expect(await audience()).toHaveLength(1)
+		})
+
+		describe('confirmation delivery', () => {
+			const send = vi.mocked(sendTenantEmail)
+			const putEmail = async () =>
+				(await put('marketing/email', { subscribed: true })).json()
+			const backdate = async (ms: number) => {
+				const db = await getTenantDb(orgId)
+				await db
+					.update(customerSubscriptions)
+					.set({ confirmationSentAt: new Date(Date.now() - ms) })
+			}
+
+			it('reports a sent link', async () => {
+				await expect(putEmail()).resolves.toMatchObject({
+					pending: true,
+					confirmationSent: true,
+				})
+			})
+
+			describe('link origin', () => {
+				const saved = {
+					NODE_ENV: process.env.NODE_ENV,
+					TENANT_API_URL: process.env.TENANT_API_URL,
+				}
+				afterEach(() => {
+					process.env.NODE_ENV = saved.NODE_ENV ?? ''
+					process.env.TENANT_API_URL = saved.TENANT_API_URL ?? ''
+				})
+				const putFrom = (origin: string) =>
+					app.request(`${origin}/subscriptions/marketing/email`, {
+						method: 'PUT',
+						headers: {
+							Authorization: `Bearer ${accessToken}`,
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ subscribed: true }),
+					})
+				const sentLink = () => {
+					const args = send.mock.calls.at(-1)![0] as { text: string }
+					return /open: (\S+)/.exec(args.text)![1]!
+				}
+
+				it('in production without TENANT_API_URL skips the send and logs no token or address', async () => {
+					process.env.NODE_ENV = 'production'
+					process.env.TENANT_API_URL = ''
+					const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+					const res = await putFrom('https://tenant.example.com')
+					await expect(res.json()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: false,
+					})
+					expect(send).not.toHaveBeenCalled()
+					expect(log).toHaveBeenCalled()
+					const logged = JSON.stringify(log.mock.calls)
+					expect(logged).not.toContain('sam@example.com')
+					expect(logged).not.toContain('token=')
+					log.mockRestore()
+				})
+
+				it('in production with TENANT_API_URL links to the configured origin only', async () => {
+					process.env.NODE_ENV = 'production'
+					process.env.TENANT_API_URL = 'https://tenant.example.com'
+					const res = await putFrom('https://evil.example')
+					await expect(res.json()).resolves.toMatchObject({
+						confirmationSent: true,
+					})
+					expect(sentLink()).toMatch(
+						/^https:\/\/tenant\.example\.com\/subscriptions\/confirm\?token=/,
+					)
+				})
+
+				it('in development uses a local request origin', async () => {
+					process.env.NODE_ENV = 'development'
+					process.env.TENANT_API_URL = ''
+					await putFrom('http://localhost:3007')
+					expect(sentLink()).toMatch(
+						/^http:\/\/localhost:3007\/subscriptions\/confirm\?token=/,
+					)
+				})
+
+				it('in development ignores a forged Host and never links to it', async () => {
+					process.env.NODE_ENV = 'development'
+					process.env.TENANT_API_URL = ''
+					await putFrom('https://evil.example')
+					expect(sentLink()).not.toContain('evil.example')
+					expect(sentLink()).toMatch(/^http:\/\/localhost:3007\//)
+				})
+			})
+
+			it.each([
+				[
+					'an error result',
+					() =>
+						send.mockResolvedValueOnce({
+							status: 'error',
+							error: { message: 'sam@example.com bounced', statusCode: 500 },
+						} as never),
+				],
+				[
+					'a skipped send',
+					() => send.mockResolvedValueOnce({ status: 'skipped' } as never),
+				],
+				[
+					'a thrown error',
+					() => send.mockRejectedValueOnce(new Error('sam@example.com down')),
+				],
+			])(
+				'reports %s, logs no address, and lets the next request resend at once',
+				async (_name, arrange) => {
+					const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+					arrange()
+					await expect(putEmail()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: false,
+					})
+					expect(JSON.stringify(log.mock.calls)).not.toContain(
+						'sam@example.com',
+					)
+					expect(log).toHaveBeenCalled()
+					log.mockRestore()
+					// The failed send did not start the resend wait.
+					await expect(putEmail()).resolves.toMatchObject({
+						pending: true,
+						confirmationSent: true,
+					})
+					expect(send).toHaveBeenCalledTimes(2)
+				},
+			)
+
+			it('resends for a pending subscription, at most once per interval', async () => {
+				await putEmail()
+				const throttled = await putEmail()
+				expect(throttled).toMatchObject({
+					pending: true,
+					confirmationSent: false,
+				})
+				expect(throttled.retryAfter).toBeGreaterThan(0)
+				expect(throttled.retryAfter).toBeLessThanOrEqual(180)
+				expect(send).toHaveBeenCalledTimes(1)
+
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: true,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+				// The resend link works.
+				const link = confirmLink()
+				expect(
+					(await app.request(link.pathname + link.search, { method: 'POST' }))
+						.status,
+				).toBe(200)
+				expect(await audience()).toHaveLength(1)
+			})
+
+			it('never throttles the first link for a new address, even right after a confirm', async () => {
+				const db = await getTenantDb(orgId)
+				await putEmail()
+				const link = confirmLink()
+				await app.request(link.pathname + link.search, { method: 'POST' })
+				expect(await audience()).toHaveLength(1)
+				// The confirm just wrote the row; the address changes at once.
+				await db
+					.update(customers)
+					.set({ email: 'new@example.com' })
+					.where(eq(customers.id, customerId))
+				await expect(putEmail()).resolves.toMatchObject({
+					pending: true,
+					confirmationSent: true,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+				expect(send.mock.calls.at(-1)![0].to).toBe('new@example.com')
+				// The same new address again is a genuine repeat.
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: false,
+				})
+				expect(send).toHaveBeenCalledTimes(2)
+			})
+
+			it('is not moved by other writes to the row', async () => {
+				const db = await getTenantDb(orgId)
+				await putEmail()
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				// Something else touches the row (updatedAt) just now.
+				await db.update(customerSubscriptions).set({ updatedAt: new Date() })
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: true,
+				})
+				// And a send does not shorten a running wait on an old updatedAt.
+				await db.update(customerSubscriptions).set({ updatedAt: new Date(0) })
+				await expect(putEmail()).resolves.toMatchObject({
+					confirmationSent: false,
+				})
+			})
+
+			it('a failed send does not start the wait for that address', async () => {
+				const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+				send.mockResolvedValueOnce({ status: 'skipped' } as never)
+				await putEmail()
+				log.mockRestore()
+				const db = await getTenantDb(orgId)
+				const [row] = await db.select().from(customerSubscriptions)
+				expect(row!.confirmationSentAt).toBeNull()
+				expect(row!.confirmationSentHash).toBeNull()
+			})
+
+			it('a resend keeps the original source and subscription time', async () => {
+				await put('marketing/email', { subscribed: true, source: 'signup' })
+				await backdate(RESEND_INTERVAL_MS + 1000)
+				await put('marketing/email', { subscribed: true, source: 'checkout' })
+				const db = await getTenantDb(orgId)
+				const [row] = await db.select().from(customerSubscriptions)
+				expect(row!.source).toBe('signup')
+			})
+		})
+
+		it('rejects forged, tampered, wrong-kind and expired links', async () => {
+			await put('marketing/email', { subscribed: true })
+			const link = confirmLink()
+			const token = link.searchParams.get('token')!
+			const post = (route: string, t: string) =>
+				app.request(`/subscriptions/${route}?token=${encodeURIComponent(t)}`, {
+					method: 'POST',
+				})
+			expect((await post('confirm', token + 'x')).status).toBe(400)
+			expect((await post('confirm', 'junk')).status).toBe(400)
+			// A confirm token is not an unsubscribe token, and vice versa.
+			expect((await post('unsubscribe', token)).status).toBe(400)
+			const expired = signConsentToken({
+				k: 'confirm',
+				o: orgId,
+				c: customerId,
+				t: 'marketing',
+				e: 'x',
+				x: Date.now() - 1000,
+			})
+			expect((await post('confirm', expired)).status).toBe(400)
+			expect(await audience()).toEqual([])
+		})
+
+		it('does not confirm an address that changed after the link was sent', async () => {
+			await put('marketing/email', { subscribed: true })
+			const link = confirmLink()
+			const db = await getTenantDb(orgId)
+			await db
+				.update(customers)
+				.set({ email: 'other@example.com' })
+				.where(eq(customers.id, customerId))
+			const res = await app.request(link.pathname + link.search, {
+				method: 'POST',
+			})
+			expect(res.status).toBe(410)
+			expect(await audience()).toEqual([])
+		})
+
+		it('unsubscribes with one POST, idempotently, and never for another customer', async () => {
+			const db = await getTenantDb(orgId)
+			await put('marketing/email', { subscribed: true })
+			const link = confirmLink()
+			await app.request(link.pathname + link.search, { method: 'POST' })
+			expect(await audience()).toHaveLength(1)
+
+			const url = new URL(
+				unsubscribeUrl('http://tenant.test', {
+					orgId,
+					customerId,
+					topic: 'marketing',
+				}),
+			)
+			// Opening the link changes nothing; the POST (also the RFC 8058
+			// one-click call) does.
+			expect((await app.request(url.pathname + url.search)).status).toBe(200)
+			expect(await audience()).toHaveLength(1)
+			for (let i = 0; i < 2; i++) {
+				const res = await app.request(url.pathname + url.search, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: 'List-Unsubscribe=One-Click',
+				})
+				expect(res.status).toBe(200)
+			}
+			expect(await audience()).toEqual([])
+			const [row] = await db.select().from(customerSubscriptions).all()
+			expect(row!.unsubscribedAt).toBeInstanceOf(Date)
+		})
 	})
 })

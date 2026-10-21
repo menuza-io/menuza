@@ -117,43 +117,29 @@
 		{
 			"idx": 16,
 			"version": "6",
-			"when": 1792108794217,
-			"tag": "0016_reservations_foundation",
+			"when": 1792532034810,
+			"tag": "0016_person_erasure_log",
 			"breakpoints": true
 		},
 		{
 			"idx": 17,
 			"version": "6",
-			"when": 1792216284333,
-			"tag": "0017_reservations_messages_waitlist",
+			"when": 1792532035810,
+			"tag": "0017_customer_subscription_email_confirmation",
 			"breakpoints": true
 		},
 		{
 			"idx": 18,
 			"version": "6",
-			"when": 1792229122667,
-			"tag": "0018_rsv_notify_slot",
+			"when": 1792532036810,
+			"tag": "0018_customer_subscription_confirmation_sent",
 			"breakpoints": true
 		},
 		{
 			"idx": 19,
 			"version": "6",
-			"when": 1792266143098,
-			"tag": "0019_rsv_occupancy_location_window",
-			"breakpoints": true
-		},
-		{
-			"idx": 20,
-			"version": "6",
-			"when": 1792286174165,
-			"tag": "0020_rsv_payments_contract",
-			"breakpoints": true
-		},
-		{
-			"idx": 21,
-			"version": "6",
-			"when": 1792332555083,
-			"tag": "0021_demand_units_and_voice_actions",
+			"when": 1792532037810,
+			"tag": "0019_reservations",
 			"breakpoints": true
 		}
 	]

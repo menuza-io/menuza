@@ -9,7 +9,7 @@ import {
 	rsvTags,
 	type TenantDatabase,
 } from '@repo/tenant-db'
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, isNull } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { pickText, type LocaleOrg } from '../lib/reservations-i18n.ts'
 import { buildAlternatives, alternativesWindow } from './rsv-hold-service.ts'

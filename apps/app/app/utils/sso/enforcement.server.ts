@@ -9,6 +9,7 @@ import {
 	and,
 	db,
 	eq,
+	or,
 	Organization,
 	SSOConfiguration,
 	User,
@@ -124,6 +125,34 @@ export async function checkSSOEnforcementByUserId(
 		}
 
 		return { enforced: false }
+	} catch (error) {
+		console.error('SSO enforcement check failed:', error)
+		return { enforced: false }
+	}
+}
+
+/**
+ * Check SSO enforcement for whatever a person typed into a login form: an
+ * email address or a username. Matching by email alone would let someone
+ * dodge enforcement by signing in with their username.
+ */
+export async function checkSSOEnforcementByIdentifier(
+	identifier: string,
+): Promise<SSOEnforcementResult> {
+	try {
+		const [user] = await db
+			.select({ id: User.id })
+			.from(User)
+			.where(
+				or(
+					eq(User.email, identifier.trim().toLowerCase()),
+					eq(User.username, identifier),
+					eq(User.username, identifier.trim().toLowerCase()),
+				),
+			)
+			.limit(1)
+		if (!user) return { enforced: false }
+		return checkSSOEnforcementByUserId(user.id)
 	} catch (error) {
 		console.error('SSO enforcement check failed:', error)
 		return { enforced: false }

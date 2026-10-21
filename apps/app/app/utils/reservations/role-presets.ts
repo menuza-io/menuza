@@ -24,7 +24,7 @@ export type ReservationsRolePresetKey =
 
 /**
  * Mapping between `@repo/reservations` permission strings and the canonical
- * `Permission.id` values seeded by migration `0025_reservations_foundation.sql`.
+ * `Permission.id` values seeded by migration `0025_reservations.sql`.
  */
 export const RESERVATIONS_PERMISSION_ID_BY_GRANT: Record<
 	ReservationsPermission,

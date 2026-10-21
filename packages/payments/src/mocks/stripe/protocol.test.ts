@@ -51,7 +51,7 @@ async function raw(
 	)
 }
 
-describe('Stripe protocol fidelity (VAL-PMOCK-028)', () => {
+describe('Stripe protocol fidelity', () => {
 	it('replays the stored response for the same Idempotency-Key and parameters', async () => {
 		const harness = createTestHarness()
 		const destination = await onboardedAccount(harness)

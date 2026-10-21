@@ -40,8 +40,8 @@ export function FlowHelp() {
 						<li>
 							<Trans>
 								The AI assistant step hands the call to your AI. It answers
-								questions using your business details, Setup, and Training rules
-								until the call ends.
+								questions using your business details, Agent, and What it knows
+								rules until the call ends.
 							</Trans>
 						</li>
 						<li>

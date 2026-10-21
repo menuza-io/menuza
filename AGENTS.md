@@ -1,11 +1,11 @@
 # AGENTS.md
 
 This file provides AI coding agents with essential context for working on the
-Menuza monorepo.
+Epic Startup monorepo.
 
 ## Project Overview
 
-**Menuza** is a production-ready, full-stack SaaS template built as a
+**Epic Startup** is a production-ready, full-stack SaaS template built as a
 Turborepo-based monorepo with npm workspaces. It includes multiple apps (main
 app, marketing site, admin dashboard, tenant sites, regional tenant-api, mobile
 app, CMS, jobs-cron, email templates, notifications) and shared packages (UI,
@@ -159,7 +159,7 @@ A person runs these on a developer machine; agents ask first. Sandboxes: see
 ```bash
 # Initial setup (one-time)
 git clone <your-fork>
-cd menuza
+cd epic-startup
 PUPPETEER_SKIP_DOWNLOAD=true npm install && npm run setup -s
 
 # Install Playwright Chromium for App E2E tests. `--with-deps` uses sudo;
@@ -323,7 +323,7 @@ When encountering many ESLint warnings, follow this systematic approach:
 
 **1. Import Order (`import/order`)**:
 
-Menuza enforces specific import ordering:
+Epic Startup enforces specific import ordering:
 
 ```typescript
 // ✅ Correct order
@@ -538,7 +538,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `INTEGRATION_ENCRYPTION_KEY` - 64 hex chars for integration OAuth tokens (App
   only)
 - `TENANT_API_URL` / `TENANT_API_URL_KSA` - Regional tenant-api origins (App
-  provision + browser calls from App/Sites; not a server PII proxy)
+  provision + browser calls from App/Sites; not a server PII proxy) On a
+  tenant-api node itself, `TENANT_API_URL` is its own public origin and is
+  **required in production**: it is the origin of the signed confirmation and
+  unsubscribe links in emails. The Node entry refuses to start without it. The
+  Worker keeps serving (health, login, provisioning) and skips consent emails
+  instead (a broadcast ends `Failed`), logging ids only. Only an explicit
+  `NODE_ENV=development|test` is local: an unset `NODE_ENV` counts as
+  production. The request origin or `Host` header is never used outside local
+  development hosts (`localhost`, `127.0.0.1`, `::1`, `*.test`, `*.localhost`).
+  Rollout order: set `TENANT_API_URL` on the node first, then deploy.
 - `EMAIL_PROVIDER` - App/Admin: `resend` (default) or `oci`. When `oci`, set
   `OCI_*` vars; `sendEmail()` routes to OCI Email Delivery. See
   `docs/platform-marketing-email.md`.
@@ -568,10 +577,6 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `TURNSTILE_SECRET_KEY` / `TURNSTILE_HOSTNAMES` - Tenant-api only: Turnstile
   siteverify secret and comma-separated allowed hostnames for form submissions
   and careers applications (action `careers-apply`).
-- `GOOGLE_MAPS_API_KEY` - Tenant-api (customer delivery address search +
-  coverage quotes, `/delivery/*`) and App (store address search/geocoding).
-  Optional; empty uses dev fixtures outside production. See
-  `docs/delivery-coverage.md`.
 - `VOICE_AGENT_TOKEN` - Shared by App, tenant-api, and `apps/voice-agent` (≥32
   chars, distinct from `INTERNAL_COMMAND_TOKEN`). Authenticates
   `/resources/phone-agent-config` and tenant-api `/api/voice/*`.
@@ -622,6 +627,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   optional. Seconds between in-process staff ticks (default 300, minimum 60, `0`
   off). The hourly cron fan-out always runs; the Workers runtime uses Durable
   Object alarms instead. See `docs/scheduled-jobs.md#staff-tick`.
+- `DEV_EMAIL_CAPTURE_DIR` - Tenant-api, development only: folder (relative to
+  `apps/tenant-api`) that receives one JSON file per email the node would only
+  log. Ignored in production or when OCI email is configured.
+- `STRIPE_CONNECT_WEBHOOK_SECRET` - App only, optional: second Stripe webhook
+  secret for Connect events (the Stripe webhook route accepts either secret).
+- `PAYMENTS_MOCK` / `PAYMENTS_MOCK_ORIGIN` / `PAYMENTS_MOCK_WEBHOOKS` /
+  `PAYMENTS_MOCK_WEBHOOKS_HTTP` / `PAYMENTS_MOCK_CKO_SESSION_ID` - App only:
+  local Stripe and Checkout.com emulators (`MOCKS=true` also turns them on).
+  Startup refuses live keys; mock routes are stripped from Worker builds. See
+  `docs/payments-mock.md`.
 
 **CMS Storage**:
 
@@ -878,9 +893,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 
 **Reservations module (tables, bookings, waitlist, guestbook, experiences):**
 
-- Regional data in `packages/tenant-db` (41 `rsv_*` tables, migrations `0016` to
-  `0021`); control plane keeps flags, permissions, locations and payment
-  connection state (migrations `0025`, `0026`). Pure domain code in
+- Regional data in `packages/tenant-db` (41 `rsv_*` tables, one migration,
+  `0019_reservations`); control plane keeps flags, permissions, locations and
+  payment connection state (one migration, `0025_reservations`). Pure domain
+  code in
   `@repo/reservations` and `@repo/zoned-time` (never hand-roll time-zone math).
   Guest PII (names, phones, emails, notes, allergies, tags) lives only in the
   regional DB: never in the control plane, logs, cross-plane payloads, Sites SSR
@@ -888,7 +904,7 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Everything user-visible is behind org flags read with `getFeatureFlag`
   (`reservations.enabled` master, plus `.online`, `.waitlist`, `.payments`,
   `.experiences`, `.voice`; `reservations.platform_fee_bp` is a number, default
-  250 from migration `0026`). Only a literal `true` counts and child flags need
+  250 from migration `0025`). Only a literal `true` counts and child flags need
   the master. Enforce at token mint and in every loader and action.
 - Operators: App mints a short-lived `rsv+jwt`
   (`GET /<orgSlug>/reservations/token?scope=`; 15 minutes, 5 for guest or

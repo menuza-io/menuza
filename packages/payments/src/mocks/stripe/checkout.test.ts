@@ -20,7 +20,7 @@ async function paymentSession(
 				{
 					price_data: {
 						currency: 'usd',
-						product_data: { name: 'Restaurant order' },
+						product_data: { name: 'Shop order' },
 						unit_amount: 2500,
 					},
 					quantity: 1,
@@ -30,14 +30,14 @@ async function paymentSession(
 				application_fee_amount: 500,
 				transfer_data: { destination },
 				metadata: {
-					type: 'restaurant_order',
+					type: 'shop_order',
 					orgId: 'org_a',
 					orderId: 'ord_1',
 				},
 			},
 			success_url: 'http://localhost:3008/menu/success?order=ord_1',
 			cancel_url: 'http://localhost:3008/menu',
-			metadata: { type: 'restaurant_order', orgId: 'org_a', orderId: 'ord_1' },
+			metadata: { type: 'shop_order', orgId: 'org_a', orderId: 'ord_1' },
 			...overrides,
 		},
 		{ idempotencyKey: `key_${Math.random()}` },
@@ -84,7 +84,7 @@ describe('Stripe Checkout payment mode', () => {
 			application_fee_amount: 500,
 		})
 		expect(intent.metadata).toEqual({
-			type: 'restaurant_order',
+			type: 'shop_order',
 			orgId: 'org_a',
 			orderId: 'ord_1',
 		})
@@ -284,7 +284,7 @@ describe('Stripe Checkout payment mode', () => {
 		})
 		expect(view?.lineItems).toEqual([
 			{
-				name: 'Restaurant order',
+				name: 'Shop order',
 				description: null,
 				unit_amount: 2500,
 				quantity: 1,

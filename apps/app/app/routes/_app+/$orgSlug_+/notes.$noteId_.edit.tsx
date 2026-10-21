@@ -7,6 +7,10 @@ import { lazy, Suspense } from 'react'
 import { ENV } from 'varlock/env'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
+import {
+	ORG_PERMISSIONS,
+	requireUserWithOrganizationPermission,
+} from '#app/utils/organization/permissions.server.ts'
 
 // Lazy load the heavy rich text editor
 const OrgNoteEditor = lazy(() =>
@@ -22,7 +26,7 @@ export async function loader({
 	params: { orgSlug: string; noteId: string }
 	request: Request
 }) {
-	await requireUserId(request)
+	const userId = await requireUserId(request)
 	const orgSlug = params.orgSlug
 
 	// Get the organization ID
@@ -44,6 +48,7 @@ export async function loader({
 			content: true,
 			priority: true,
 			tags: true,
+			createdById: true,
 		},
 		with: {
 			organizationNoteUploads: {
@@ -58,10 +63,20 @@ export async function loader({
 		where: (note, { and, eq }) =>
 			and(eq(note.id, params.noteId), eq(note.organizationId, organization.id)),
 	})
-	const note = noteRow
-		? { ...noteRow, uploads: noteRow.organizationNoteUploads }
-		: null
-	invariantResponse(note, 'Not found', { status: 404 })
+	invariantResponse(noteRow, 'Not found', { status: 404 })
+
+	// Same rule as the save action: editing needs the update permission for
+	// your own note or for any note, so a note you cannot edit never loads.
+	await requireUserWithOrganizationPermission(
+		request,
+		organization.id,
+		noteRow.createdById === userId
+			? ORG_PERMISSIONS.UPDATE_NOTE_OWN
+			: ORG_PERMISSIONS.UPDATE_NOTE_ANY,
+	)
+
+	const { createdById: ignoredCreatedById, ...noteColumns } = noteRow
+	const note = { ...noteColumns, uploads: noteRow.organizationNoteUploads }
 	return {
 		note,
 		organizationId: organization.id,

@@ -12,17 +12,17 @@ async function citPayment(
 	const hpp = (await harness.checkout.hostedPayments.create({
 		amount,
 		currency: 'SAR',
-		reference: 'reservation_payment:org_a:rsv_1',
+		reference: 'shop_payment:org_a:ord_9',
 		processing_channel_id: channel,
 		payment_type: 'Unscheduled',
 		billing: { address: { country: 'SA' } },
-		success_url: 'http://localhost:3008/reserve/done',
-		failure_url: 'http://localhost:3008/reserve',
-		cancel_url: 'http://localhost:3008/reserve',
+		success_url: 'http://localhost:3008/shop/done',
+		failure_url: 'http://localhost:3008/shop',
+		cancel_url: 'http://localhost:3008/shop',
 		metadata: {
-			type: 'reservation_payment',
+			type: 'shop_payment',
 			orgId: 'org_a',
-			reservationId: 'rsv_1',
+			orderRef: 'ord_9',
 		},
 		amount_allocations: [{ id: entity, amount, commission: { amount: 0 } }],
 	} as never)) as { id: string }
@@ -55,8 +55,8 @@ function mit(
 			amount,
 			currency: 'SAR',
 			processing_channel_id: channel,
-			reference: 'reservation_fee:org_a:fee_1',
-			metadata: { type: 'reservation_fee' },
+			reference: 'shop_fee:org_a:fee_1',
+			metadata: { type: 'shop_fee' },
 			amount_allocations: [{ id: entity, amount, commission: { amount: 0 } }],
 			...extra,
 		} as never,
@@ -64,7 +64,7 @@ function mit(
 	) as Promise<Record<string, any>>
 }
 
-describe('Checkout.com stored instrument and MIT (VAL-PMOCK-034)', () => {
+describe('Checkout.com stored instrument and MIT', () => {
 	it('an Unscheduled customer-initiated payment stores the card and exposes src_, cus_ and scheme_id', async () => {
 		const harness = createTestHarness()
 		const { payment } = await citPayment(harness)

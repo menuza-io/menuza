@@ -8,16 +8,16 @@ import { migrate } from 'drizzle-orm/libsql/migrator'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import * as schema from './schema.ts'
 
-const MIGRATION = '0021_demand_units_and_voice_actions'
+const MIGRATION = '0019_reservations'
 const pkgRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const drizzleDir = path.join(pkgRoot, 'drizzle')
 
-describe('migration 0021: voice call actions and demand units', () => {
+describe('migration 0019 (reservations): voice call actions and demand units', () => {
 	let tempDir: string
 	let client: ReturnType<typeof createClient>
 
 	beforeEach(() => {
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-db-0021-'))
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-db-0019-'))
 		client = createClient({ url: `file:${path.join(tempDir, 'test.db')}` })
 	})
 
@@ -30,8 +30,8 @@ describe('migration 0021: voice call actions and demand units', () => {
 		}
 	})
 
-	/** Everything before 0021 applied, so there is data to backfill. */
-	async function migrateBefore0021() {
+	/** Everything before 0019 applied, so there is data to backfill. */
+	async function migrateBefore0019() {
 		const folder = path.join(tempDir, 'before')
 		fs.cpSync(drizzleDir, folder, { recursive: true })
 		const journalPath = path.join(folder, 'meta', '_journal.json')
@@ -82,7 +82,7 @@ describe('migration 0021: voice call actions and demand units', () => {
 	})
 
 	it('backfills the orders standards without losing them', async () => {
-		await migrateBefore0021()
+		await migrateBefore0019()
 		await client.execute(
 			`INSERT INTO labor_scope_settings (scope_id, orders_per_labor_hour) VALUES ('loc1', '{"cook":12.5,"server":20}'), ('loc2', '{}')`,
 		)

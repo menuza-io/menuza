@@ -22,8 +22,11 @@ import { expect, test } from '#tests/playwright-utils.ts'
  */
 test.describe.configure({ mode: 'serial' })
 
-const SUCCESS_URL = 'http://localhost:3101/mock-payments/dashboard?paid=1'
-const CANCEL_URL = 'http://localhost:3101/mock-payments/dashboard?cancelled=1'
+// Same default as `playwright.config.ts`: CI serves the App on 3001, local runs
+// often use PORT=3101. A fixed port here sent the success redirect nowhere.
+const ORIGIN = `http://localhost:${process.env.PORT || '3001'}`
+const SUCCESS_URL = `${ORIGIN}/mock-payments/dashboard?paid=1`
+const CANCEL_URL = `${ORIGIN}/mock-payments/dashboard?cancelled=1`
 
 function stripePaymentParams(
 	destination: string,

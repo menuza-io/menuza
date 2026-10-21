@@ -18,7 +18,7 @@ import {
 import { and, desc, eq, inArray, isNull, like, or } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
 import { badRequest, forbidden, notFound } from '../lib/http.ts'
-import { normalizeGuestPhone as normalizeSharedPhone } from '../lib/phone.ts'
+import { normalizePhone as normalizeSharedPhone } from '../lib/phone.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
 import {
 	cancelPendingReservationMessages,

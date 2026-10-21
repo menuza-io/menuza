@@ -33,7 +33,7 @@ async function capturedPayment(
 const events = (harness: Harness) =>
 	harness.deliveries.map((entry) => JSON.parse(entry.body))
 
-describe('Checkout.com refunds with allocation reversal (VAL-PMOCK-036)', () => {
+describe('Checkout.com refunds with allocation reversal', () => {
 	it('202 with an action_id, settles lazily approved, emits payment_refunded with reversal allocations', async () => {
 		const harness = createTestHarness()
 		const { entity, paymentId } = await capturedPayment(harness)

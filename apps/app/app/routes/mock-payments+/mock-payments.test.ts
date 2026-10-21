@@ -33,12 +33,13 @@ async function settle(run: () => unknown) {
 	}
 }
 
-const post = (body: unknown = {}) => ({
+const post = (body: unknown = {}, headers: Record<string, string> = {}) => ({
 	method: 'POST',
+	headers: { 'Content-Type': 'application/json', ...headers },
 	body: JSON.stringify(body),
 })
 
-describe('mock routes with the mock off (VAL-PMOCK-002/003)', () => {
+describe('mock routes with the mock off', () => {
 	beforeEach(() => {
 		vi.stubEnv('MOCKS', '')
 		vi.stubEnv('PAYMENTS_MOCK', '')
@@ -175,5 +176,59 @@ describe('dev control API with the mock on', () => {
 		expect(response.status).toBe(400)
 		const body = JSON.stringify(await response.json())
 		expect(body).not.toContain('sekret-value')
+	})
+
+	it('refuses a state-changing request that is not JSON or comes from another site', async () => {
+		const seedClock = () => clockAction(args('/x', post({ seconds: 60 })))
+		const before = (await (await settle(seedClock)).json()) as {
+			offsetMs: number
+		}
+		const attempts: Array<RequestInit & { expect: number }> = [
+			// A cross-site form or `text/plain` fetch cannot set a JSON type.
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'text/plain' },
+				body: JSON.stringify({ seconds: 3600 }),
+				expect: 415,
+			},
+			{ method: 'POST', body: JSON.stringify({ seconds: 3600 }), expect: 415 },
+			{
+				...post({ seconds: 3600 }, { 'Sec-Fetch-Site': 'cross-site' }),
+				expect: 403,
+			},
+			{
+				...post({ seconds: 3600 }, { 'Sec-Fetch-Site': 'same-site' }),
+				expect: 403,
+			},
+			{
+				...post({ seconds: 3600 }, { Origin: 'https://evil.example' }),
+				expect: 403,
+			},
+		]
+		for (const { expect: status, ...init } of attempts) {
+			const response = await settle(() => clockAction(args('/x', init)))
+			expect(response.status).toBe(status)
+		}
+		// The clock did not move (only the final 1 s call above did).
+		const after = (await (
+			await settle(() => clockAction(args('/x', post({ seconds: 1 }))))
+		).json()) as { offsetMs: number }
+		expect(after.offsetMs).toBe(before.offsetMs + 1000)
+
+		// Same-origin browser calls, direct tools and a JSON charset all work.
+		for (const headers of [
+			{ 'Sec-Fetch-Site': 'same-origin' },
+			{ 'Sec-Fetch-Site': 'none' },
+			{ Origin: 'http://localhost:3001' },
+			{ 'Content-Type': 'application/json; charset=utf-8' },
+		] as Array<Record<string, string>>) {
+			expect(
+				(
+					await settle(() =>
+						resetAction(args('/mock-payments/dev/reset', post({}, headers))),
+					)
+				).status,
+			).toBe(200)
+		}
 	})
 })

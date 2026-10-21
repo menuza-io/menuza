@@ -16,10 +16,10 @@ async function savedCard(harness: Harness, card: string) {
 		payment_method_types: ['card'],
 		customer: customer.id,
 		setup_intent_data: {
-			metadata: { type: 'reservation_payment', orgId: 'org_a' },
+			metadata: { type: 'shop_payment', orgId: 'org_a' },
 		},
-		success_url: 'http://localhost:3008/reserve/done',
-		cancel_url: 'http://localhost:3008/reserve',
+		success_url: 'http://localhost:3008/shop/done',
+		cancel_url: 'http://localhost:3008/shop',
 	})
 	const result = await harness.emulator.testing.completeCheckout(session.id, {
 		card,
@@ -43,11 +43,11 @@ async function chargeOffSession(
 		payment_method_types: ['card'],
 		application_fee_amount: 250,
 		transfer_data: { destination },
-		metadata: { type: 'reservation_fee', orgId: 'org_a', feeId: 'fee_1' },
+		metadata: { type: 'shop_fee', orgId: 'org_a', feeId: 'fee_1' },
 	})
 }
 
-describe('Stripe setup mode and off-session charges (VAL-PMOCK-022)', () => {
+describe('Stripe setup mode and off-session charges', () => {
 	it('3155: setup needs 3DS, the SetupIntent succeeds, later off-session succeeds', async () => {
 		const harness = createTestHarness()
 		const { customer, session, result } = await savedCard(
@@ -65,7 +65,7 @@ describe('Stripe setup mode and off-session charges (VAL-PMOCK-022)', () => {
 		const setupIntent = done.setup_intent as Stripe.SetupIntent
 		expect(setupIntent.status).toBe('succeeded')
 		expect(setupIntent.metadata).toEqual({
-			type: 'reservation_payment',
+			type: 'shop_payment',
 			orgId: 'org_a',
 		})
 		const pm = setupIntent.payment_method as string
@@ -147,7 +147,7 @@ describe('Stripe setup mode and off-session charges (VAL-PMOCK-022)', () => {
 	})
 })
 
-describe('Stripe decline profiles (VAL-PMOCK-023, VAL-PMOCK-024)', () => {
+describe('Stripe decline profiles', () => {
 	it('3184: off-session throws authentication_required carrying the PaymentIntent', async () => {
 		const harness = createTestHarness()
 		const { customer, session, result } = await savedCard(

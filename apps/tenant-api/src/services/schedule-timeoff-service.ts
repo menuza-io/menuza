@@ -36,12 +36,7 @@ import {
 import { transact } from './schedule-shift-service.ts'
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, ok } from './timesheet-shared.ts'
-import {
-	queryInChunks,
-	forEachInChunks,
-	insertRowsInChunks,
-	inJsonList,
-} from '../lib/chunked-in.ts'
+import { inJsonList, insertRowsInChunks } from '../lib/chunked-in.ts'
 
 /**
  * Time off and availability. A manager entering a request for someone is final
@@ -464,15 +459,10 @@ async function supersedeWeekly(
 		)
 	const ids = stale.map((s) => s.id).filter((id) => !exceptIds.includes(id))
 	for (const part of chunk(ids, 90)) {
-		await forEachInChunks(
-			part,
-			(chunk) =>
-				tx
-					.update(staffAvailability)
-					.set({ status: 'superseded', updatedAt: now })
-					.where(inArray(staffAvailability.id, chunk)),
-			40,
-		)
+		await tx
+			.update(staffAvailability)
+			.set({ status: 'superseded', updatedAt: now })
+			.where(inArray(staffAvailability.id, part))
 	}
 	return ids.length
 }
@@ -522,7 +512,7 @@ export async function createAvailability(
 				createdAt: ctx.now,
 				updatedAt: ctx.now,
 			})),
-			(chunk) => tx.insert(staffAvailability).values(chunk).returning(),
+			(part) => tx.insert(staffAvailability).values(part).returning(),
 		)
 		let superseded = 0
 		if (
@@ -561,12 +551,10 @@ export async function decideAvailability(
 	const ids = [...new Set(input.ids)]
 	if (!ids.every(isOpaqueId)) return fail(404, 'not_found')
 	return transact(ctx.db, async (tx) => {
-		const rows = await queryInChunks(ids, (chunk) =>
-			tx
-				.select()
-				.from(staffAvailability)
-				.where(inArray(staffAvailability.id, chunk)),
-		)
+		const rows = await tx
+			.select()
+			.from(staffAvailability)
+			.where(inJsonList(staffAvailability.id, ids))
 		if (rows.length !== ids.length) return fail(404, 'not_found')
 		const people = await loadPeople(
 			tx,

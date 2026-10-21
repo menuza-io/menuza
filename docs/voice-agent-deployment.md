@@ -117,7 +117,7 @@ never passes LiveKit's own credentials.
    numbers (US)" steps. For warm transfers, create an outbound trunk and set
    `LIVEKIT_SIP_OUTBOUND_TRUNK_ID`.
 8. **Verify.** `lk agent status --id <agent-id>` shows `Running`. Place a test
-   call from `/{orgSlug}/phone-agent/test`, then a real call to the number.
+   call from `/{orgSlug}/phone-agent?test=1`, then a real call to the number.
 
 ## Day-to-day
 

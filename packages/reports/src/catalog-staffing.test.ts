@@ -14,6 +14,7 @@ import {
 	STAFF_PAY_REPORT_PERMISSION,
 	STAFFING_REPORT_SUBJECTS,
 } from './operator-token.ts'
+import { ORG_WIDE_REPORT_SUBJECTS } from './org-wide-subjects.ts'
 import { organizationTemplates } from './templates.ts'
 
 const STAFF_TEMPLATE_CATEGORIES = new Set(['Labor', 'Hiring'])
@@ -169,7 +170,10 @@ describe('what a person is offered', () => {
 		catalog.subjects.map((subject) => subject.id)
 
 	it('hides every staff subject until the token grants it', () => {
-		const none = catalogForGrants(organizationCatalog, ['phone_calls'])
+		const none = catalogForGrants(organizationCatalog, [
+			'phone_calls',
+			'customers',
+		])
 		for (const id of staffIds) expect(ids(none)).not.toContain(id)
 		expect(ids(none)).toContain('phone_calls')
 		expect(ids(none)).toContain('customers')
@@ -195,7 +199,7 @@ describe('what a person is offered', () => {
 		const offered = templatesForGrants(
 			organizationCatalog,
 			organizationTemplates(),
-			[],
+			[...ORG_WIDE_REPORT_SUBJECTS],
 		)
 		expect(
 			offered.filter((template) =>

@@ -334,7 +334,7 @@ describe('mapCheckoutPaymentToRestaurantOrder', () => {
 			mapCheckoutPaymentToRestaurantOrder({ ...base, paid: true })?.status,
 		).toBe('paid')
 		expect(
-			mapCheckoutPaymentToRestaurantOrder({ ...base, declined: true })?.status,
+			mapCheckoutPaymentToRestaurantOrder({ ...base, status: 'Declined' })?.status,
 		).toBe('failed')
 		expect(mapCheckoutPaymentToRestaurantOrder(base)?.status).toBe('pending')
 		expect(

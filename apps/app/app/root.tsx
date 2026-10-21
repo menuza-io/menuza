@@ -65,8 +65,9 @@ import { ENV } from 'varlock/env'
 import { type Route } from './+types/root.ts'
 import appleTouchIconAssetUrl from './assets/favicons/apple-touch-icon.png'
 import faviconAssetUrl from './assets/favicons/favicon.svg'
-import { GeneralErrorBoundary } from './components/error-boundary.tsx'
+import { NotFoundErrorBoundary } from './components/error-boundary.tsx'
 import { ImpersonationBanner } from './components/impersonation-banner.tsx'
+import { LeavePageDialog } from './components/leave-page-dialog.tsx'
 import { PostHogAnalytics } from './components/posthog-analytics.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
 import { useToast } from './components/toaster.tsx'
@@ -664,6 +665,7 @@ function AppWithProviders() {
 						</TooltipProvider>
 					</div>
 				</div>
+				<LeavePageDialog />
 				{isKiosk ? null : <EpicToaster />}
 				{isKiosk ? null : <CookieConsentBanner consent={data.cookieConsent} />}
 			</OpenImgContextProvider>
@@ -674,5 +676,6 @@ function AppWithProviders() {
 export default AppWithProviders
 
 // this is a last resort error boundary. There's not much useful information we
-// can offer at this level.
-export const ErrorBoundary = GeneralErrorBoundary
+// can offer at this level, but a 404 (for example an unknown organization slug)
+// still gets a way back into the app.
+export const ErrorBoundary = NotFoundErrorBoundary

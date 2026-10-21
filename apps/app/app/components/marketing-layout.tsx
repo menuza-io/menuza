@@ -74,7 +74,7 @@ export function MarketingLayout({
 						className={cn(
 							'bg-card dark:bg-background @container/main flex flex-1 flex-col gap-2',
 							// Chat and mailbox fill the viewport edge to edge; other pages get gutters.
-							isConversation ? 'min-h-0' : 'px-2 pb-4 md:px-3 md:pb-6',
+							isConversation ? 'min-h-0' : 'px-4 pb-6 md:px-3 md:pb-6',
 						)}
 					>
 						{children}

@@ -288,8 +288,11 @@ msgstr ""
 
 #: app/components/admin-user-detail.tsx:271
 #: app/components/admin-user-detail.tsx:733
-#: app/routes/_admin+/index.tsx:235
 msgid "Active Sessions"
+msgstr ""
+
+#: app/routes/_admin+/index.tsx:236
+msgid "Active Users"
 msgstr ""
 
 #: app/components/sso-configuration-overview.tsx:305
@@ -1139,7 +1142,7 @@ msgstr ""
 msgid "Current active login sessions"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:258
+#: app/routes/_admin+/index.tsx:259
 msgid "Currently logged in users"
 msgstr ""
 
@@ -1698,6 +1701,10 @@ msgstr "Fallback"
 #: ../../packages/marketing-workflow/src/edges/workflow-edge.tsx:21
 msgid "False"
 msgstr "False"
+
+#: app/components/admin/feature-flags.tsx:739
+msgid "Feature flags"
+msgstr "Feature flags"
 
 #: app/components/admin-sidebar.tsx:135
 msgid "Feature Flags"
@@ -3632,6 +3639,10 @@ msgstr ""
 #: app/components/admin-ban-user-dialog.tsx:128
 msgid "Set expiration date (optional)"
 msgstr ""
+
+#: app/components/admin/feature-flags.tsx:741
+msgid "Set system defaults and override them for an organization or a user."
+msgstr "Set system defaults and override them for an organization or a user."
 
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277

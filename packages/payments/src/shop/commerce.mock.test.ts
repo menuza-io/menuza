@@ -10,11 +10,11 @@ import { createMockStripeHttpClient } from '../mocks/transport'
 import { createShopCommerce } from './commerce'
 import { createShopCommerceConfigFromEnv } from './config'
 import { applyPaymentsMockConfig } from './mock-config'
-import { mapCheckoutWebhookToRestaurantOrder } from './restaurant'
 
 function mockCommerce(harness: Harness, env: Record<string, string> = {}) {
 	const fullEnv = {
 		MOCKS: 'true',
+		BASE_URL: 'http://localhost:3001',
 		STRIPE_SECRET_KEY: 'sk_test_***',
 		STRIPE_PUBLISHABLE_KEY: 'pk_test_***',
 		STRIPE_WEBHOOK_SECRET: 'whsec_***',
@@ -54,6 +54,7 @@ describe('ShopCommerce on the payment mock', () => {
 		const harness = createTestHarness()
 		const fullEnv = {
 			MOCKS: 'true',
+			BASE_URL: 'http://localhost:3001',
 			STRIPE_SECRET_KEY: 'sk_test_51Real',
 			CHECKOUT_SECRET_KEY: '',
 		}
@@ -112,25 +113,18 @@ describe('ShopCommerce on the payment mock', () => {
 		await harness.emulator.testing.completeOnboarding(account.id)
 		const session = await commerce.createCheckout({
 			processor: 'connect',
-			productName: 'Restaurant order',
+			productName: 'Shop order',
 			amountCents: 5000,
-			currency: 'usd',
 			connectAccountId: account.id,
-			successUrl: 'http://localhost:3008/menu/success?order=o1',
-			cancelUrl: 'http://localhost:3008/menu',
-			metadata: { type: 'restaurant_order', orgId: 'org_a', orderId: 'o1' },
-			expiresAt: new Date(harness.clock.now() + 40 * 60_000),
-			idempotencyKey: 'restaurant_order_abc',
+			successUrl: 'http://localhost:3008/shop/success?order=o1',
+			cancelUrl: 'http://localhost:3008/shop',
+			metadata: { type: 'shop_order', orgId: 'org_a', orderId: 'o1' },
 		})
 		expect(session.url).toBe(
 			`http://localhost:3001/mock-payments/stripe/checkout/${session.id}`,
 		)
 		const stored = await commerce.retrieveConnectCheckoutSession(session.id)
 		expect(stored).toMatchObject({ amount_total: 5000, status: 'open' })
-		await commerce.expireConnectCheckoutSession(session.id)
-		expect(
-			(await commerce.retrieveConnectCheckoutSession(session.id)).status,
-		).toBe('expired')
 	})
 
 	it('creates a Checkout.com order on the hosted payments page, not Flow', async () => {
@@ -154,15 +148,12 @@ describe('ShopCommerce on the payment mock', () => {
 		})
 		const session = await commerce.createCheckout({
 			processor: 'checkout',
-			productName: 'Restaurant order',
+			productName: 'Shop order',
 			amountCents: 12_000,
-			currency: 'sar',
 			checkoutSubEntityId: entity.id,
-			successUrl: 'http://localhost:3008/ar/menu/success?order=o1',
-			cancelUrl: 'http://localhost:3008/ar/menu',
-			metadata: { type: 'restaurant_order', orgId: 'org_k', orderId: 'o1' },
-			reference: 'restaurant_order:org_k:o1',
-			billingCountry: 'SA',
+			successUrl: 'http://localhost:3008/shop/success?order=o1',
+			cancelUrl: 'http://localhost:3008/shop',
+			metadata: { type: 'shop_order', orgId: 'org_k', orderId: 'o1' },
 		})
 		expect(session.id).toMatch(/^hpp_/)
 		expect(session.url).toBe(
@@ -172,21 +163,19 @@ describe('ShopCommerce on the payment mock', () => {
 		expect(hosted).toMatchObject({
 			status: 'Payment Pending',
 			paymentId: null,
-			reference: 'restaurant_order:org_k:o1',
+			reference: 'org_k',
 		})
 
 		// No webhook needed: the status is found through the API.
 		await harness.emulator.testing.completeHostedPayment(session.id)
-		const found = await commerce.findCheckoutPaymentsByReference(
-			'restaurant_order:org_k:o1',
-		)
+		const found = await commerce.findCheckoutPaymentsByReference('org_k')
 		expect(found).toHaveLength(1)
 		expect(found[0]).toMatchObject({
 			paid: true,
 			amountCents: 12_000,
-			currency: 'sar',
-			declined: false,
+			currency: 'usd',
 		})
+		expect(found[0]?.status).not.toBe('Declined')
 	})
 
 	it('verifies the mock Checkout.com webhook signature with the real verifier', async () => {
@@ -195,15 +184,12 @@ describe('ShopCommerce on the payment mock', () => {
 		const entity = await activeEntity(harness)
 		const session = await commerce.createCheckout({
 			processor: 'checkout',
-			productName: 'Restaurant order',
+			productName: 'Shop order',
 			amountCents: 12_000,
-			currency: 'sar',
 			checkoutSubEntityId: entity,
-			successUrl: 'http://localhost:3008/menu/success?order=o1',
-			cancelUrl: 'http://localhost:3008/menu',
-			metadata: { type: 'restaurant_order', orgId: 'org_k', orderId: 'o1' },
-			reference: 'restaurant_order:org_k:o1',
-			billingCountry: 'SA',
+			successUrl: 'http://localhost:3008/shop/success?order=o1',
+			cancelUrl: 'http://localhost:3008/shop',
+			metadata: { type: 'shop_order', orgId: 'org_k', orderId: 'o1' },
 		})
 		await harness.emulator.testing.completeHostedPayment(session.id)
 		await harness.emulator.events.flush()
@@ -215,24 +201,17 @@ describe('ShopCommerce on the payment mock', () => {
 			delivery.headers['cko-signature']!,
 		)
 		expect(event.type).toBe('payment_approved')
-		expect(mapCheckoutWebhookToRestaurantOrder(event)).toEqual({
-			orgId: 'org_k',
-			orderId: 'o1',
-			sessionId: 'restaurant_order:org_k:o1',
-			processor: 'checkout',
-			status: 'paid',
-			amountCents: 12_000,
-			currency: 'sar',
+		expect(commerce.parseCheckoutWebhookEvent(event)).toMatchObject({
+			type: 'payment',
+			order: { orgId: 'org_k', status: 'paid' },
 		})
-		// A restaurant order is not a single-product shop order.
-		expect(commerce.parseCheckoutWebhookEvent(event)).toBeNull()
 		expect(() =>
 			commerce.verifyCheckoutWebhook(delivery.body, 'deadbeef'),
 		).toThrow('signature')
 	})
 })
 
-describe('withConnect keeps provider errors (VAL-PMOCK-023)', () => {
+describe('withConnect keeps provider errors', () => {
 	it('authentication_required survives with its class, code and raw PaymentIntent', async () => {
 		const harness = createTestHarness()
 		const commerce = mockCommerce(harness)

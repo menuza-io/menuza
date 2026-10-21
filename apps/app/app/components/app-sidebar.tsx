@@ -418,68 +418,16 @@ function OrganizationSidebar({
 			icon: PhoneIcon,
 			items: [
 				{
-					title: _(msg`Setup`),
-					url: `/${orgSlug}/phone-agent`,
-					isActive:
-						location.pathname === `/${orgSlug}/phone-agent` ||
-						location.pathname === `/${orgSlug}/phone-agent/`,
-				},
-				{
 					title: _(msg`Calls`),
 					url: `/${orgSlug}/phone-agent/calls`,
 					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/calls`),
 				},
 				{
-					title: _(msg`Knowledge`),
-					url: `/${orgSlug}/phone-agent/knowledge`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/phone-agent/knowledge`,
-					),
-				},
-				{
-					title: _(msg`Training rules`),
-					url: `/${orgSlug}/phone-agent/training`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/phone-agent/training`,
-					),
-				},
-				{
-					title: _(msg`Call flow`),
-					url: `/${orgSlug}/phone-agent/flow`,
-					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/flow`),
-				},
-				{
-					title: _(msg`Transfers`),
-					url: `/${orgSlug}/phone-agent/transfers`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/phone-agent/transfers`,
-					),
-				},
-				{
-					title: _(msg`Follow-up`),
-					url: `/${orgSlug}/phone-agent/follow-up`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/phone-agent/follow-up`,
-					),
-				},
-				{
-					title: _(msg`Phrases`),
-					url: `/${orgSlug}/phone-agent/phrases`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/phone-agent/phrases`,
-					),
-				},
-				{
-					title: _(msg`Advanced`),
-					url: `/${orgSlug}/phone-agent/advanced`,
-					isActive: location.pathname.includes(
-						`/${orgSlug}/phone-agent/advanced`,
-					),
-				},
-				{
-					title: _(msg`Test call`),
-					url: `/${orgSlug}/phone-agent/test`,
-					isActive: location.pathname.includes(`/${orgSlug}/phone-agent/test`),
+					title: _(msg`Settings`),
+					url: `/${orgSlug}/phone-agent`,
+					isActive:
+						location.pathname.includes(`/${orgSlug}/phone-agent`) &&
+						!location.pathname.includes(`/${orgSlug}/phone-agent/calls`),
 				},
 			],
 		},
@@ -746,7 +694,7 @@ function OrganizationSidebar({
 				const callsUrl = `/${orgSlug}/phone-agent/calls`
 				return {
 					...item,
-					// People who can only see calls land on Calls, not Setup.
+					// People who can only see calls land on Calls, not settings.
 					url: canReadPhoneAgent ? item.url : callsUrl,
 					items: item.items.filter((subItem) =>
 						subItem.url === callsUrl ? canReadPhoneCalls : canReadPhoneAgent,

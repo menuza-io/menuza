@@ -47,8 +47,8 @@ export type CheckoutShopPayment = {
 	amountCents: number
 	currency: string
 	paid: boolean
-	/** The provider declined this payment (status `Declined`). */
-	declined?: boolean
+	/** Provider status (e.g. `Declined`), used to tell failed from pending. */
+	status?: string
 	metadata: Record<string, string>
 	productName: string
 }
@@ -290,7 +290,7 @@ function toCheckoutShopPayment(
 		amountCents: payment.amount ?? 0,
 		currency: payment.currency?.toLowerCase() || 'usd',
 		paid,
-		declined: payment.status === 'Declined',
+		status: payment.status,
 		metadata,
 		productName:
 			metadata.productName ||
@@ -369,6 +369,6 @@ export function mapCheckoutWebhookToPayment(event: {
 	return {
 		...toCheckoutShopPayment(data, data.id),
 		paid,
-		declined: event.type === 'payment_declined',
+		status: event.type === 'payment_declined' ? 'Declined' : data.status,
 	}
 }

@@ -288,9 +288,12 @@ msgstr "الحملات النشطة"
 
 #: app/components/admin-user-detail.tsx:271
 #: app/components/admin-user-detail.tsx:733
-#: app/routes/_admin+/index.tsx:235
 msgid "Active Sessions"
 msgstr "الجلسات النشطة"
+
+#: app/routes/_admin+/index.tsx:236
+msgid "Active Users"
+msgstr "المستخدمون النشطون"
 
 #: app/components/sso-configuration-overview.tsx:305
 msgid "Active Users:"
@@ -1139,7 +1142,7 @@ msgstr "حرج"
 msgid "Current active login sessions"
 msgstr "جلسات تسجيل الدخول النشطة الحالية"
 
-#: app/routes/_admin+/index.tsx:258
+#: app/routes/_admin+/index.tsx:259
 msgid "Currently logged in users"
 msgstr "المستخدمون المسجلون حالياً"
 
@@ -1698,6 +1701,10 @@ msgstr "القيمة الاحتياطية"
 #: ../../packages/marketing-workflow/src/edges/workflow-edge.tsx:21
 msgid "False"
 msgstr "خطأ"
+
+#: app/components/admin/feature-flags.tsx:739
+msgid "Feature flags"
+msgstr "مؤشرات الميزات"
 
 #: app/components/admin-sidebar.tsx:135
 msgid "Feature Flags"
@@ -3632,6 +3639,10 @@ msgstr "محدد"
 #: app/components/admin-ban-user-dialog.tsx:128
 msgid "Set expiration date (optional)"
 msgstr "تعيين تاريخ انتهاء الصلاحية (اختياري)"
+
+#: app/components/admin/feature-flags.tsx:741
+msgid "Set system defaults and override them for an organization or a user."
+msgstr "عيّن القيم الافتراضية للنظام وتجاوزها لمؤسسة أو مستخدم."
 
 #: app/routes/_admin+/audit-logs.tsx:149
 #: app/routes/_admin+/audit-logs.tsx:277

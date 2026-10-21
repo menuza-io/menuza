@@ -33,6 +33,7 @@ import {
 	getJourneyRunTimeline,
 	triggerTestJourney,
 } from './journey-service.ts'
+import { emailConsentHash } from './marketing-audience.ts'
 
 // Mock external dispatch modules
 vi.mock('@repo/email', () => ({
@@ -584,7 +585,11 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				.insert(journeyRuns)
 				.values({ journeyId: journey!.id, customerId: customer!.id })
 				.returning()
-			const subscribe = (channel: 'email' | 'sms', unsubscribed = false) =>
+			const subscribe = (
+				channel: 'email' | 'sms',
+				unsubscribed = false,
+				confirmed = true,
+			) =>
 				db.insert(customerSubscriptions).values({
 					customerId: customer!.id,
 					topic: 'reservations',
@@ -592,6 +597,11 @@ describe('Journey Service & Regional Message Dispatching', () => {
 					source: 'reservation_booking',
 					subscribedAt: new Date(),
 					unsubscribedAt: unsubscribed ? new Date() : null,
+					// Double opt-in: an email counts only once its owner confirmed it.
+					confirmedEmailHash:
+						channel === 'email' && confirmed
+							? emailConsentHash('guest@example.com')
+							: null,
 				})
 			const step = (nodeId: string, nodeType: 'action_email' | 'action_sms') =>
 				executeJourneyStep(orgId, {
@@ -654,6 +664,17 @@ describe('Journey Service & Regional Message Dispatching', () => {
 				status: 'skipped',
 			})
 			expect(sendSms).not.toHaveBeenCalled()
+		})
+
+		it('skips an email step while the address is still unconfirmed (double opt-in)', async () => {
+			const { subscribe, step } = await setup('reservation_booked')
+			await subscribe('email', false, false)
+			vi.mocked(sendOciEmail).mockClear()
+			expect(await step('n1', 'action_email')).toMatchObject({
+				success: true,
+				status: 'skipped',
+			})
+			expect(sendOciEmail).not.toHaveBeenCalled()
 		})
 
 		it('stops later steps when the guest withdraws consent mid-run', async () => {

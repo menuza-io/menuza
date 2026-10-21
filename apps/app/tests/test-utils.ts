@@ -136,7 +136,7 @@ export async function createTestOrganization(
 		.insert(Organization)
 		.values({
 			name,
-			slug: `${faker.helpers.slugify(name).toLowerCase()}-${Date.now()}-${faker.string.alphanumeric(4)}`,
+			slug: `${faker.helpers.slugify(name).toLowerCase()}-${Date.now()}-${faker.string.alphanumeric(4).toLowerCase()}`,
 			description: faker.company.catchPhrase(),
 		})
 		.returning()

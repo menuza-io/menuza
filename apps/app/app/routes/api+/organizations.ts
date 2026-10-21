@@ -1,6 +1,6 @@
 import { db, eq, User } from '@repo/database'
 import { data } from 'react-router'
-import { requireAuth } from '#app/utils/jwt.server.ts'
+import { isAuthenticationError, requireAuth } from '#app/utils/jwt.server.ts'
 import { type Route } from './+types/organizations.ts'
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -76,7 +76,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 			data: { organizations },
 		})
 	} catch (error) {
-		if (error instanceof Error && error.message.includes('authorization')) {
+		if (isAuthenticationError(error)) {
 			return data(
 				{
 					success: false,

@@ -30,8 +30,8 @@ const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'dev-email-capture-'))
 
 const RECORD: DevEmailRecord = {
 	to: 'guest@example.com',
-	from: 'noreply@dev.menuza.test',
-	subject: 'Your reservation at Acme is confirmed',
+	from: 'noreply@dev.example.test',
+	subject: 'Your order at Acme is confirmed',
 	html: '<p>Hello &amp; welcome</p>',
 	text: 'Hello & welcome',
 	meta: { orgId: 'org_1', messageKind: 'confirmation', messageId: 'msg_1' },
@@ -210,7 +210,7 @@ describe('sendTenantEmail capture hook', () => {
 		const record = sink.mock.calls[0]![0]
 		expect(record).toEqual({
 			to: 'guest@example.com',
-			from: 'noreply@dev.menuza.test',
+			from: 'noreply@dev.example.test',
 			subject: 'Hello',
 			html: '<p>Hi</p>',
 			text: 'Hi',

@@ -177,7 +177,7 @@ export function mapCheckoutPaymentToRestaurantOrder(
 
 	const status: RestaurantOrderPaymentStatus = payment.paid
 		? 'paid'
-		: payment.declined
+		: payment.status === 'Declined'
 			? 'failed'
 			: 'pending'
 

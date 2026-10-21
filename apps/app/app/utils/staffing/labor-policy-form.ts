@@ -4,6 +4,7 @@ import {
 	type LaborPolicyFields,
 	type LaborPolicyProblem,
 } from '@repo/staffing'
+import { z } from 'zod'
 
 /**
  * Pure helpers behind the labor policy settings screen: standard starter
@@ -161,6 +162,52 @@ export function problemFor(
 	return problems.find(
 		(problem) => problem.path === path || problem.path.startsWith(`${path}.`),
 	)
+}
+
+/**
+ * The sentence boxes above Advanced only parse, so a value outside the schema
+ * reaches validation and needs a message naming the range. Keyed by policy
+ * path, with the unit the box shows.
+ */
+const SENTENCE_FIELD_UNITS: Record<string, 'hours' | 'minutes'> = {
+	longShiftMinutes: 'hours',
+	'breakRules.autoDeduction.afterMinutes': 'hours',
+	'breakRules.autoDeduction.deductMinutes': 'minutes',
+	'weeklyOvertime.thresholdMinutes': 'hours',
+}
+
+/** The schema's own bounds at a path, so a message never repeats them by hand. */
+function schemaNumberBounds(path: string): { min: number; max: number } | null {
+	let node: z.ZodTypeAny = laborPolicyBaseSchema
+	for (const key of path.split('.')) {
+		while (node instanceof z.ZodNullable || node instanceof z.ZodOptional) {
+			node = node.unwrap() as z.ZodTypeAny
+		}
+		if (!(node instanceof z.ZodObject)) return null
+		const child = (node.shape as Record<string, z.ZodTypeAny | undefined>)[key]
+		if (!child) return null
+		node = child
+	}
+	if (!(node instanceof z.ZodNumber)) return null
+	const { minValue, maxValue } = node
+	return minValue === null || maxValue === null
+		? null
+		: { min: minValue, max: maxValue }
+}
+
+/**
+ * The allowed range of a sentence box, in the unit it shows (hours or
+ * minutes), or `null` for any other path.
+ */
+export function sentenceFieldRange(
+	path: string,
+): { unit: 'hours' | 'minutes'; min: number; max: number } | null {
+	const unit = SENTENCE_FIELD_UNITS[path]
+	const bounds = unit ? schemaNumberBounds(path) : null
+	if (!unit || !bounds) return null
+	return unit === 'hours'
+		? { unit, min: bounds.min / 60, max: bounds.max / 60 }
+		: { unit, ...bounds }
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,4 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
-import { queryInChunks } from '../lib/chunked-in.ts'
+import { and, eq, isNull } from 'drizzle-orm'
 import {
 	businessDateOf,
 	computeLaborSummary,
@@ -48,6 +47,7 @@ import {
 	type TimesheetContext,
 	type TimesheetResult,
 } from './timesheet-shared.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * The labor summary: hours, estimated wages and sales for one scope, one
@@ -139,15 +139,13 @@ export async function updateLaborSettings(
 			...new Set(requestedStandards.flatMap((record) => Object.keys(record))),
 		]
 		if (ids.length > 0) {
-			const found = await queryInChunks(ids, (chunk) =>
-				ctx.db
-					.select({ id: staffPositions.id })
-					.from(staffPositions)
-					.where(
-						and(
-							inArray(staffPositions.id, chunk),
-							isNull(staffPositions.archivedAt),
-						),
+			const found = await ctx.db
+				.select({ id: staffPositions.id })
+				.from(staffPositions)
+				.where(
+					and(
+						inJsonList(staffPositions.id, ids),
+						isNull(staffPositions.archivedAt),
 					),
 			)
 			const known = new Set(found.map((row) => row.id))

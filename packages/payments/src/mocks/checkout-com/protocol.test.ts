@@ -6,14 +6,14 @@ import { activeEntity, createTestHarness, type Harness } from '../test-helpers'
 const hppBody = (entity: string, overrides: Record<string, unknown> = {}) => ({
 	amount: 12_000,
 	currency: 'SAR',
-	reference: 'restaurant_order:org_a:ord_1',
-	description: 'Restaurant order',
+	reference: 'shop_order:org_a:ord_1',
+	description: 'Shop order',
 	processing_channel_id: 'pc_mockmockmockmockmockm',
 	billing: { address: { country: 'SA' } },
 	success_url: 'http://localhost:3008/menu/success?order=ord_1',
 	failure_url: 'http://localhost:3008/menu',
 	cancel_url: 'http://localhost:3008/menu',
-	metadata: { type: 'restaurant_order', orgId: 'org_a', orderId: 'ord_1' },
+	metadata: { type: 'shop_order', orgId: 'org_a', orderId: 'ord_1' },
 	amount_allocations: [
 		{ id: entity, amount: 12_000, commission: { amount: 2_400 } },
 	],
@@ -34,7 +34,7 @@ async function hostedPayment(
 	return { entity, hpp }
 }
 
-describe('Checkout.com protocol fidelity (VAL-PMOCK-037)', () => {
+describe('Checkout.com protocol fidelity', () => {
 	it('answers 401 for a bad Authorization key', async () => {
 		createTestHarness()
 		const wrong = new Checkout('sk_sbox_wrongkeywrongkeywrongkeyabc', {
@@ -158,7 +158,7 @@ describe('Checkout.com protocol fidelity (VAL-PMOCK-037)', () => {
 		const { hpp } = await hostedPayment(harness)
 		await harness.emulator.testing.completeHostedPayment(hpp.id)
 		const found = (await harness.checkout.payments.search({
-			query: "reference:'restaurant_order:org_a:ord_1'",
+			query: "reference:'shop_order:org_a:ord_1'",
 			limit: 5,
 		} as never)) as { data: Array<{ reference: string }> }
 		expect(found.data).toHaveLength(1)

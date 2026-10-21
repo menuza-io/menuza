@@ -138,6 +138,7 @@ describe('OnboardingTemplatesPage', () => {
 				type: 'review_profile',
 				dueInDays: 0,
 			})
+			expect(calls.filter((call) => call.method === 'GET')).toHaveLength(2)
 		})
 	})
 

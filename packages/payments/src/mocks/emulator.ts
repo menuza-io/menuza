@@ -58,7 +58,7 @@ import { publicObject as stripePublic, findStripeObject } from './stripe/state'
  * Lives in the emulator module only (never in `env.ts`, which production code
  * imports). The CI bundle check greps the Worker bundle for it.
  */
-export const PAYMENTS_MOCK_SENTINEL = '__MENUZA_PAYMENTS_MOCK__'
+export const PAYMENTS_MOCK_SENTINEL = '__PAYMENTS_MOCK__'
 
 export type EmulatorOptions = {
 	store: MockStore

@@ -9,7 +9,7 @@ type ListTenantOrgIdsProvider = () => string[] | Promise<string[]>
 
 const dbOrgIds = new WeakMap<object, string>()
 
-/** Org id a handle returned by `getTenantDb` belongs to (used as the write-lock key). */
+/** Org id a handle returned by `resolveTenantDb` belongs to (usable as a lock key). */
 export function getTenantDbOrgId(db: object): string | undefined {
 	return dbOrgIds.get(db)
 }
@@ -99,10 +99,11 @@ export function registerTenantDbTransactionRunner(
  * Object SQLite) uses that runner and passes the handle itself as `tx`.
  */
 export async function runTenantTransaction<T>(
-	db: TenantDatabase,
+	db: TenantDatabase | TenantTransaction,
 	fn: (tx: TenantTransaction) => Promise<T>,
 ): Promise<T> {
 	const runner = transactionRunners.get(db)
-	if (!runner) return db.transaction(fn)
+	// A transaction handle has no runner and nests as a savepoint.
+	if (!runner) return (db as TenantDatabase).transaction(fn)
 	return runner(() => fn(db as unknown as TenantTransaction))
 }

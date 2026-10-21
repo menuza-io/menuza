@@ -10,6 +10,7 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { organizationTemplates, type ReportDefinition } from '@repo/reports'
+import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
 import { describe, expect, it } from 'vitest'
 import {
 	defaultHomeConfig,
@@ -19,6 +20,7 @@ import {
 	type DashboardConfig,
 } from '#app/utils/dashboards/config.ts'
 import { appendBlock, removeBlock } from '#app/utils/dashboards/layout.ts'
+import { reportTemplateGroups } from '#app/utils/dashboards/reports.ts'
 import {
 	insertTestDashboard,
 	insertTestMember,
@@ -323,15 +325,20 @@ describe('Home dashboard loader', () => {
 		expect(data.picker.savedReports).toEqual([
 			{ id: own.id, title: 'Our notes', subjectLabel: 'Notes' },
 		])
-		// The picker only offers templates the person's grants can run: this
-		// admin has no staff or reservation grants, so those templates are left out.
+		// The picker lists only the templates the person's reports token covers.
+		// An admin holds the organization-wide subjects (customers, text
+		// subscribers, shop orders) but not the staff or Reservations ones, which
+		// need their flags and grants.
 		const offered = data.picker.templateGroups.flatMap((group) =>
 			group.templates.map((template) => template.id),
 		)
-		const all = organizationTemplates().map((template) => template.id)
+		expect(offered).toEqual(
+			reportTemplateGroups([...ORG_WIDE_REPORT_SUBJECTS]).flatMap((group) =>
+				group.templates.map((template) => template.id),
+			),
+		)
 		expect(offered.length).toBeGreaterThan(0)
-		expect(offered.length).toBeLessThan(all.length)
-		for (const id of offered) expect(all).toContain(id)
+		expect(offered.length).toBeLessThan(organizationTemplates().length)
 		expect(offered).toContain('sales-total')
 	})
 

@@ -2,6 +2,7 @@ import { parseWithZod } from '@conform-to/zod'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
+import { organizationSlugSchema } from '@repo/common'
 import { markStepCompleted } from '@repo/common/onboarding'
 import { redirectWithToast } from '@repo/common/toast'
 import {
@@ -132,7 +133,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 const SettingsSchema = z.object({
 	name: z.string().min(1, 'Name is required'),
-	slug: z.string().min(1, 'Slug is required'),
+	slug: organizationSlugSchema,
 })
 
 /**

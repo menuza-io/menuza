@@ -2,7 +2,6 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import {
 	daysBetween,
 	currentBusinessDate,
-	isValidNormalizedPhone,
 	type AvailableSlot,
 	type ReservationsContext,
 } from '@repo/reservations'
@@ -20,10 +19,13 @@ import {
 import { and, desc, eq, inArray, gt, sql } from 'drizzle-orm'
 import { HttpError } from '../lib/http.ts'
 import { pickText } from '../lib/reservations-i18n.ts'
-import { normalizeGuestPhone } from '../lib/phone.ts'
+import { isValidPhone, normalizePhone } from '../lib/phone.ts'
 import { withReservationWrite } from '../lib/reservations-write.ts'
 import { queueReservationJourney } from '../restaurant/reservations-journeys.ts'
-import { recordReservationMarketingConsent } from './rsv-marketing-consent.ts'
+import {
+	queueConsentConfirmation,
+	recordReservationMarketingConsent,
+} from './rsv-marketing-consent.ts'
 import { isLateCancellation } from './rsv-late-cancel.ts'
 import { enqueueReservationMessage } from './rsv-message-queue.ts'
 import { markNotifyRequestsBooked } from './rsv-notify-service.ts'
@@ -290,8 +292,8 @@ export type PublicGuestInput = {
 }
 
 export function normalizePublicPhone(raw: string): string | null {
-	const normalized = normalizeGuestPhone(raw)
-	return isValidNormalizedPhone(normalized) ? normalized : null
+	const normalized = normalizePhone(raw)
+	return isValidPhone(normalized) ? normalized : null
 }
 
 /**
@@ -592,11 +594,19 @@ export async function bookFromHold(params: {
 				now,
 			)
 			if (params.input.marketing) {
-				await recordReservationMarketingConsent(tx, {
+				const consentEmail =
+					params.input.guest.email?.trim().toLowerCase() || null
+				const consentCustomerId = await recordReservationMarketingConsent(tx, {
 					guest,
-					email: params.input.guest.email?.trim().toLowerCase() || null,
+					email: consentEmail,
 					channels: ['email'],
 					now,
+				})
+				queueConsentConfirmation(helpers.afterCommit, {
+					orgId: params.orgId,
+					customerId: consentCustomerId,
+					email: consentEmail,
+					name: `${guest.firstName} ${guest.lastName}`.trim(),
 				})
 			}
 

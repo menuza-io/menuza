@@ -29,7 +29,7 @@ async function paidCharge(
 		payment_intent_data: {
 			application_fee_amount: fee,
 			transfer_data: { destination },
-			metadata: { type: 'reservation_payment' },
+			metadata: { type: 'shop_payment' },
 		},
 		success_url: 'http://localhost:3008/done',
 	})
@@ -43,7 +43,7 @@ const refundParams = {
 	refund_application_fee: true,
 } as const
 
-describe('Stripe refunds with ledger reversal (VAL-PMOCK-025)', () => {
+describe('Stripe refunds with ledger reversal', () => {
 	it('a full refund reverses the transfer and refunds the whole fee', async () => {
 		const harness = createTestHarness()
 		const { destination, intent } = await paidCharge(harness)
@@ -161,7 +161,7 @@ describe('Stripe refunds with ledger reversal (VAL-PMOCK-025)', () => {
 	})
 })
 
-describe('asynchronous refunds (VAL-PMOCK-026)', () => {
+describe('asynchronous refunds', () => {
 	it('7726: pending, then succeeded once settled, with matching events', async () => {
 		const harness = createTestHarness()
 		const { intent } = await paidCharge(harness, '4000000000007726')

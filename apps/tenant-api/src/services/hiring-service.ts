@@ -50,6 +50,7 @@ import {
 	type HiringInterviewRow,
 	type HiringNoteRow,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { isEmailEnabled } from '../lib/email-switch.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
@@ -73,7 +74,7 @@ import {
 	type ChecklistSource,
 } from './onboarding-service.ts'
 import { getSettings, type StaffContext } from './staff-service.ts'
-import { forEachInChunks, inJsonList } from '../lib/chunked-in.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Applicants and the hire, reached by managers through `/operator/hiring`.
@@ -122,7 +123,7 @@ function write<T>(
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 	) => Promise<T>,
 ): Promise<T> {
-	return retryOnSqliteBusy(() => db.transaction(fn))
+	return retryOnSqliteBusy(() => runTenantTransaction(db, fn))
 }
 
 function isUniqueViolation(error: unknown, hints: string[] = []): boolean {
@@ -1493,15 +1494,13 @@ export async function purgeExpiredApplications(
 		.limit(RETENTION_BATCH)
 	if (due.length === 0) return { purged: 0 }
 	const ids = due.map((row) => row.id)
-	await forEachInChunks(ids, (chunk) =>
-		db.delete(hiringApplications).where(
-			and(
-				inArray(hiringApplications.id, chunk),
-				// Re-checked in the delete itself: a candidate reopened since the select
-				// is not purged.
-				eq(hiringApplications.stage, 'declined'),
-				lte(hiringApplications.retentionExpiresAt, now),
-			),
+	await db.delete(hiringApplications).where(
+		and(
+			inJsonList(hiringApplications.id, ids),
+			// Re-checked in the delete itself: a candidate reopened since the select
+			// is not purged.
+			eq(hiringApplications.stage, 'declined'),
+			lte(hiringApplications.retentionExpiresAt, now),
 		),
 	)
 	await writeSystemAudit(db, {

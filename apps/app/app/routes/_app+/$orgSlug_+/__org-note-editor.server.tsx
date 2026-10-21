@@ -18,6 +18,7 @@ import { noteHooks } from '@repo/integrations'
 import { data, redirect, type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { sanitizeNoteContent } from '#app/utils/content-sanitization.server.ts'
+import { invalidateNoteFavoritesCaches } from '#app/utils/note-favorites.server.ts'
 import { processNoteMediaUploads } from '#app/utils/note-media-pipeline.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -271,7 +272,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							...upload,
 							id: upload.objectKey ? cuid() : upload.id,
 						})
-						.where(eq(OrganizationNoteUpload.id, upload.id))
+						.where(
+							and(
+								eq(OrganizationNoteUpload.id, upload.id),
+								eq(OrganizationNoteUpload.noteId, noteId),
+							),
+						)
 				}
 			}
 		}
@@ -309,6 +315,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const contentChanged = beforeSnapshot.content !== content
 		const priorityChanged = beforeSnapshot.priority !== processedPriority
 		const tagsChanged = beforeSnapshot.tags !== processedTags
+
+		// The sidebar favorites show the title from a cached list.
+		if (titleChanged) {
+			await invalidateNoteFavoritesCaches(updatedNote.id)
+		}
 
 		await logNoteActivity({
 			noteId: updatedNote.id,

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { eq, and, desc, count, isNull } from 'drizzle-orm'
+import { eq, and, desc, count } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { hasDeliverableSubscription } from './marketing-audience.ts'
 import { z } from 'zod'
 import {
 	getTenantDb,
@@ -10,7 +11,6 @@ import {
 	journeyRuns,
 	journeyStepExecutions,
 	marketingMessages,
-	customerSubscriptions,
 	isReservationJourneyTrigger,
 	validateWorkflowDAG,
 	actionEmailNodeDataSchema,
@@ -21,6 +21,7 @@ import {
 	type ExecuteStepPayload,
 	type CompleteRunPayload,
 	type EvaluateConditionPayload,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { sendSms } from '@repo/sms'
 import { getNodeRegion } from '../lib/region.ts'
@@ -126,18 +127,13 @@ async function skipWithoutReservationConsent(
 		.get()
 	if (!journey || !isReservationJourneyTrigger(journey.triggerType)) return null
 
-	const consent = await db
-		.select({ id: customerSubscriptions.id })
-		.from(customerSubscriptions)
-		.where(
-			and(
-				eq(customerSubscriptions.customerId, payload.customerId),
-				eq(customerSubscriptions.topic, 'reservations'),
-				eq(customerSubscriptions.channel, stepType),
-				isNull(customerSubscriptions.unsubscribedAt),
-			),
-		)
-		.get()
+	// Active subscription on the `reservations` topic; an email also needs an
+	// address its owner confirmed (double opt-in), like a broadcast does.
+	const consent = await hasDeliverableSubscription(db, {
+		customerId: payload.customerId,
+		topic: 'reservations',
+		channel: stepType,
+	})
 	if (consent) return null
 
 	const existing = await db
@@ -249,7 +245,7 @@ export async function executeJourneyStep(
 	if (skipped) return skipped
 
 	const txResult = await retryOnSqliteBusy(() =>
-		db.transaction(async (tx) => {
+		runTenantTransaction(db, async (tx) => {
 			// Idempotency: if this (runId, nodeId) action already delivered, return the
 			// prior result instead of re-dispatching on a workflow retry.
 			const existing = await tx

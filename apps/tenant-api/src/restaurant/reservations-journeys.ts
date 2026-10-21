@@ -1,6 +1,5 @@
 import {
 	customers,
-	customerSubscriptions,
 	getTenantDb,
 	isReservationJourneyTrigger,
 	rsvGuests,
@@ -8,8 +7,9 @@ import {
 	rsvReservations,
 	type ReservationJourneyTriggerType,
 } from '@repo/tenant-db'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { evaluateAndSpawnTriggers } from '../services/journey-service.ts'
+import { hasDeliverableSubscription } from '../services/marketing-audience.ts'
 
 /**
  * Reservation journeys (`reservation_booked`, `_completed`, `_no_show`,
@@ -77,20 +77,17 @@ async function eligibleCustomerId(
 			.get()
 		if (verified) return verified.id
 	}
-	// Consenting: an active `reservations` subscription on the marketing row.
+	// Consenting: an active `reservations` subscription on the marketing row
+	// (an email one also needs its address confirmed: double opt-in).
 	if (guest.marketingCustomerId) {
-		const consent = await db
-			.select({ id: customerSubscriptions.id })
-			.from(customerSubscriptions)
-			.where(
-				and(
-					eq(customerSubscriptions.customerId, guest.marketingCustomerId),
-					eq(customerSubscriptions.topic, 'reservations'),
-					isNull(customerSubscriptions.unsubscribedAt),
-				),
-			)
-			.get()
-		if (consent) return guest.marketingCustomerId
+		for (const channel of ['email', 'sms'] as const) {
+			const consent = await hasDeliverableSubscription(db, {
+				customerId: guest.marketingCustomerId,
+				topic: 'reservations',
+				channel,
+			})
+			if (consent) return guest.marketingCustomerId
+		}
 	}
 	return null
 }

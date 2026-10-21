@@ -12,7 +12,7 @@ const drizzleDir = path.resolve(
 	'../drizzle',
 )
 
-test('0026 seeds the system platform fee row once (250 bp) and is idempotent', async () => {
+test('0025 seeds the system platform fee row once (250 bp) and is idempotent', async () => {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'platform-fee-'))
 	const client = createClient({ url: `file:${path.join(dir, 'test.db')}` })
 	try {
@@ -27,7 +27,7 @@ test('0026 seeds the system platform fee row once (250 bp) and is idempotent', a
 		})
 
 		const sqlText = fs.readFileSync(
-			path.join(drizzleDir, '0026_reservations_platform_fee.sql'),
+			path.join(drizzleDir, '0025_reservations.sql'),
 			'utf8',
 		)
 		for (const statement of sqlText.split('--> statement-breakpoint')) {

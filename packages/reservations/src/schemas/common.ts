@@ -9,7 +9,7 @@ import {
 	SPECIAL_DAY_TYPES,
 } from '../config.ts'
 import { BOOKING_CHANNELS } from '../engine/day-state.ts'
-import { isValidNormalizedPhone, normalizeGuestPhone } from '../phone.ts'
+import { isValidE164Phone, normalizePhone } from '@repo/common/phone'
 import { RESERVATION_ACTORS, RESERVATION_STATUSES } from '../state-machine.ts'
 
 export const isoTimestampSchema = z.string().datetime({
@@ -41,8 +41,8 @@ export const normalizedPhoneSchema = z
 	.trim()
 	.min(7)
 	.max(24)
-	.transform((val) => normalizeGuestPhone(val))
-	.refine((val) => isValidNormalizedPhone(val), {
+	.transform((val) => normalizePhone(val))
+	.refine((val) => isValidE164Phone(val), {
 		message: 'Invalid E.164 phone number',
 	})
 

@@ -188,7 +188,7 @@ device secret lives on the tablet), so revoke kiosks before turning a flag off.
 The Reservations module (host stand, booking sheet, waitlist, guest profiles in
 Customers, setup, experiences, reports (the Reservations group of the main
 Reports page), and deposit/prepayment refunds) uses 8 organization permissions
-added by control-plane migration `0025_reservations_foundation` and mirrored in
+added by control-plane migration `0025_reservations` and mirrored in
 `ORG_PERMISSIONS` (`packages/auth/src/organization-permissions.server.ts`),
 `@repo/reservations` (`RESERVATIONS_PERMISSIONS`), `TENANT_ROLE_PERMISSION_IDS`,
 the role editor groups, and `packages/database/setup-roles.ts`.

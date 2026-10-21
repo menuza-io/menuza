@@ -64,7 +64,7 @@ import {
 import { type StaffDb, writeStaffAudit } from './staff-audit.ts'
 import { fail, moneyAccess, ok } from './timesheet-shared.ts'
 import { transact } from './schedule-shift-service.ts'
-import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * The week the schedule grid shows, the orders-based demand guide and the
@@ -419,12 +419,10 @@ export async function loadWeek(
 	const positionRows =
 		positionIds.size === 0
 			? []
-			: await queryInChunks([...positionIds], (chunk) =>
-					ctx.db
-						.select()
-						.from(staffPositions)
-						.where(inArray(staffPositions.id, chunk)),
-				)
+			: await ctx.db
+					.select()
+					.from(staffPositions)
+					.where(inJsonList(staffPositions.id, [...positionIds]))
 	const positions = positionRows
 		.map((row) => ({
 			id: row.id,
@@ -614,17 +612,15 @@ async function loadOverlays(
 	weekEnd: string,
 ): Promise<ScheduleOverlay[]> {
 	if (staffIds.length === 0) return []
-	const timeOff = await queryInChunks([...staffIds], (chunk) =>
-		db
-			.select()
-			.from(timeOffRequests)
-			.where(
-				and(
-					inArray(timeOffRequests.staffId, chunk),
-					inArray(timeOffRequests.status, ['pending', 'approved']),
-					sql`${timeOffRequests.startDate} <= ${weekEnd}`,
-					sql`${timeOffRequests.endDate} >= ${weekStart}`,
-				),
+	const timeOff = await db
+		.select()
+		.from(timeOffRequests)
+		.where(
+			and(
+				inJsonList(timeOffRequests.staffId, [...staffIds]),
+				inArray(timeOffRequests.status, ['pending', 'approved']),
+				sql`${timeOffRequests.startDate} <= ${weekEnd}`,
+				sql`${timeOffRequests.endDate} >= ${weekStart}`,
 			),
 	)
 	const availability = await loadApprovedAvailability(db, staffIds)

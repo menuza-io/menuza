@@ -37,6 +37,10 @@ import {
 	bookFromHold,
 	guestCancelReservation,
 } from '../services/rsv-public-booking-service.ts'
+import {
+	confirmCustomerSubscription,
+	emailConsentHash,
+} from '../services/marketing-audience.ts'
 import { transitionReservationStatus } from '../services/rsv-booking-service.ts'
 import {
 	emitReservationJourney,
@@ -95,12 +99,38 @@ async function book(
 		phone?: string
 		email?: string | null
 		marketing?: boolean
+		/**
+		 * The guest already confirmed this address by email on an earlier visit
+		 * (double opt-in), so ticking the box again keeps it confirmed.
+		 */
+		confirmed?: boolean
 		customerId?: string | null
 		customerPhone?: string | null
 		firstName?: string
 	} = {},
 ) {
 	bookingCounter += 1
+	const phone = options.phone ?? `+1415555${String(2000 + bookingCounter)}`
+	if (options.confirmed && options.marketing && options.email) {
+		const db = await getTenantDb(ORG)
+		const [returning] = await db
+			.insert(customers)
+			.values({
+				name: 'Returning Guest',
+				phone,
+				email: options.email,
+				phoneVerified: false,
+			})
+			.returning()
+		await db.insert(customerSubscriptions).values({
+			customerId: returning!.id,
+			topic: 'reservations',
+			channel: 'email',
+			source: 'reservation_booking',
+			subscribedAt: new Date(),
+			confirmedEmailHash: emailConsentHash(options.email),
+		})
+	}
 	const token = newHoldToken()
 	await createHold({
 		orgId: ORG,
@@ -114,7 +144,6 @@ async function book(
 		source: 'web',
 		ipHash: 'ip',
 	})
-	const phone = options.phone ?? `+1415555${String(2000 + bookingCounter)}`
 	const { reservationId } = await bookFromHold({
 		orgId: ORG,
 		holdTokenHash: hashHoldToken(token),
@@ -197,10 +226,63 @@ describe('reservation_booked', () => {
 		expect(await emissions()).toHaveLength(2)
 	})
 
-	it('fires for an explicitly consenting unverified guest and records the consent (VAL-JRNY-004)', async () => {
+	it('waits for the owner to confirm a first-time consent by email (double opt-in)', async () => {
 		const journey = await activeJourney('reservation_booked')
 		const { reservationId, phone } = await book({
 			marketing: true,
+			email: 'pending@example.com',
+		})
+		// Ticked, but nobody proved the address is theirs yet: no run, no emission.
+		expect(await runsFor(journey.id)).toEqual([])
+		expect(await emissions()).toEqual([])
+		const db = await getTenantDb(ORG)
+		const [guest] = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.phoneE164, phone))
+		const [subscription] = await db
+			.select()
+			.from(customerSubscriptions)
+			.where(eq(customerSubscriptions.customerId, guest!.marketingCustomerId!))
+			.all()
+		expect(subscription).toMatchObject({
+			topic: 'reservations',
+			channel: 'email',
+			source: 'reservation_booking',
+			unsubscribedAt: null,
+			confirmedEmailHash: null,
+		})
+		await expect(
+			emitReservationJourney({
+				orgId: ORG,
+				reservationId,
+				trigger: 'reservation_booked',
+			}),
+		).resolves.toEqual({ emitted: false, reason: 'not_eligible' })
+
+		// The owner follows the emailed link.
+		expect(
+			await confirmCustomerSubscription(db, {
+				customerId: guest!.marketingCustomerId!,
+				topic: 'reservations',
+				email: 'pending@example.com',
+			}),
+		).toBe(true)
+		await expect(
+			emitReservationJourney({
+				orgId: ORG,
+				reservationId,
+				trigger: 'reservation_booked',
+			}),
+		).resolves.toMatchObject({ emitted: true })
+		expect(await runsFor(journey.id)).toHaveLength(1)
+	})
+
+	it('fires for a guest who confirmed by email earlier and records the consent (VAL-JRNY-004)', async () => {
+		const journey = await activeJourney('reservation_booked')
+		const { reservationId, phone } = await book({
+			marketing: true,
+			confirmed: true,
 			email: 'consent@example.com',
 		})
 		const runs = await runsFor(journey.id)
@@ -232,6 +314,7 @@ describe('reservation_booked', () => {
 			channel: 'email',
 			source: 'reservation_booking',
 			unsubscribedAt: null,
+			confirmedEmailHash: emailConsentHash('consent@example.com'),
 		})
 		expect(await emissions()).toEqual([
 			expect.objectContaining({ reservationId }),
@@ -299,6 +382,7 @@ describe('emission', () => {
 		const journey = await activeJourney('reservation_booked')
 		const { reservationId } = await book({
 			marketing: true,
+			confirmed: true,
 			email: 'dedupe@example.com',
 		})
 		expect(await runsFor(journey.id)).toHaveLength(1)
@@ -319,6 +403,7 @@ describe('emission', () => {
 		const journey = await activeJourney('reservation_booked')
 		const { reservationId, phone } = await book({
 			marketing: true,
+			confirmed: true,
 			email: 'private@example.com',
 			firstName: 'Quentin',
 		})
@@ -401,7 +486,11 @@ describe('emission', () => {
 
 describe('status transitions', () => {
 	async function consentingBooking() {
-		const result = await book({ marketing: true, email: 'flow@example.com' })
+		const result = await book({
+			marketing: true,
+			confirmed: true,
+			email: 'flow@example.com',
+		})
 		return result.reservationId
 	}
 
@@ -421,6 +510,7 @@ describe('status transitions', () => {
 		}
 		const missed = await book({
 			marketing: true,
+			confirmed: true,
 			email: 'flow2@example.com',
 			localMin: 20 * 60,
 		})
@@ -433,6 +523,7 @@ describe('status transitions', () => {
 		})
 		const dropped = await book({
 			marketing: true,
+			confirmed: true,
 			email: 'flow3@example.com',
 			localMin: 19 * 60,
 		})

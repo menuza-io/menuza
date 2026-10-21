@@ -19,7 +19,7 @@ const ERROR_MESSAGES: Record<string, MessageDescriptor> = {
 	merge_conflicting_customers: msg`These two people are both signed in as different customers, so they cannot be merged. Each keeps their own profile, orders and marketing choices.`,
 	no_dining_profile: msg`This customer has no reservation history yet.`,
 	phone_managed_by_sign_in: msg`A customer's phone number is managed through sign-in and cannot be changed here.`,
-	recording_delete_failed: msg`A call recording could not be deleted, so nothing was erased. Try again.`,
+	recording_delete_failed: msg`A call recording could not be deleted. Some voice data may already be erased and the customer is still there. Try again: erasing again completes it.`,
 }
 
 export type PeopleErrorInfo = ReturnType<typeof waitlistErrorInfo>

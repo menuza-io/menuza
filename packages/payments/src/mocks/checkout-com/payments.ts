@@ -203,7 +203,7 @@ async function recordPayment(
 			...(input.customer.email ? { email: input.customer.email } : {}),
 			...(input.customer.name ? { name: input.customer.name } : {}),
 		},
-		billing_descriptor: { name: 'Menuza mock', city: 'Local' },
+		billing_descriptor: { name: 'Payments mock', city: 'Local' },
 		processing: { acquirer_transaction_id: authorization.id },
 		processing_channel_id: input.processingChannelId,
 		metadata: input.metadata,
@@ -215,7 +215,7 @@ async function recordPayment(
 		_links: paymentLinks(paymentId),
 		__mock: {
 			hostedPaymentId: input.hostedPaymentId,
-			refundReserved: 0,
+			refundHeld: 0,
 			reversed: {},
 			acquirerTransactionId: authorization.id,
 			retrievalReferenceNumber: String(
@@ -808,7 +808,7 @@ export async function createRefund(
 		commission: { amount: number }
 	}> = []
 	await mutateCheckoutObject(ctx, payment.id, (json) => {
-		const left = refundable - Number(json.__mock.refundReserved)
+		const left = refundable - Number(json.__mock.refundHeld)
 		const requested = (input.amount as number | undefined) ?? left
 		if (requested > left || left <= 0) {
 			throw invalidRequest('refund_amount_exceeds_balance')
@@ -841,7 +841,7 @@ export async function createRefund(
 				commission: done.commission + entry.commission.amount,
 			}
 		}
-		json.__mock.refundReserved = Number(json.__mock.refundReserved) + requested
+		json.__mock.refundHeld = Number(json.__mock.refundHeld) + requested
 	})
 	const now = ctx.clock.now()
 	const action = {
@@ -922,11 +922,8 @@ export async function settleRefundAction(
 						? 'Refunded'
 						: 'Partially Refunded'
 			} else {
-				// Give the reservation back, including the allocation reversal.
-				json.__mock.refundReserved = Math.max(
-					0,
-					json.__mock.refundReserved - amount,
-				)
+				// Give the held amount back, including the allocation reversal.
+				json.__mock.refundHeld = Math.max(0, json.__mock.refundHeld - amount)
 				for (const entry of (row.json.amount_allocations ?? []) as Array<{
 					id: string
 					amount: number

@@ -12,7 +12,7 @@ import {
 import { Icon, type IconName } from '@repo/ui/icon'
 import { Separator } from '@repo/ui/separator'
 import { Switch } from '@repo/ui/switch'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useId, useRef } from 'react'
 import { useFetcher } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { RESERVATION_ALERT_WORKFLOWS } from '#app/utils/reservations/manager-alerts.ts'
@@ -117,6 +117,8 @@ const reservationsWorkflows = RESERVATION_ALERT_WORKFLOWS.map((id) => ({
 
 interface ChannelSwitchListProps {
 	preference: Preference
+	// Id of the workflow heading, so each switch is named "<channel> <workflow>".
+	headingId: string
 	isUpdating: boolean
 	onUpdate: (workflow: string, channel: string, enabled: boolean) => void
 	disabled: boolean
@@ -124,6 +126,7 @@ interface ChannelSwitchListProps {
 
 function ChannelSwitchList({
 	preference,
+	headingId,
 	isUpdating,
 	onUpdate,
 	disabled,
@@ -142,11 +145,15 @@ function ChannelSwitchList({
 							name={getChannelIcon(channel)}
 							className="text-muted-foreground h-4 w-4 shrink-0"
 						/>
-						<span className="text-sm font-medium">
+						<span
+							id={`${headingId}-${channel}`}
+							className="text-sm font-medium"
+						>
 							{getChannelLabel(channel, _)}
 						</span>
 					</div>
 					<Switch
+						aria-labelledby={`${headingId}-${channel} ${headingId}`}
 						checked={preference[channel]}
 						onCheckedChange={(checked) =>
 							onUpdate(preference.workflow, channel, checked)
@@ -173,6 +180,7 @@ function WorkflowPreferenceRow({
 	const { _ } = useLingui()
 	const fetcher = useFetcher()
 	const formRef = useRef<HTMLFormElement>(null)
+	const headingId = useId()
 
 	const isUpdating = fetcher.state !== 'idle'
 
@@ -210,7 +218,7 @@ function WorkflowPreferenceRow({
 			</form>
 			<div className="flex flex-wrap items-center gap-2">
 				<Icon name="cog" className="h-4 w-4 shrink-0" />
-				<h3 className="text-base font-medium">
+				<h3 id={headingId} className="text-base font-medium">
 					{getWorkflowLabel(workflow.name, _)}
 				</h3>
 				{workflow.critical && (
@@ -221,6 +229,7 @@ function WorkflowPreferenceRow({
 			</div>
 			<ChannelSwitchList
 				preference={pref}
+				headingId={headingId}
 				isUpdating={isUpdating}
 				onUpdate={updatePreference}
 				disabled={workflow.critical}

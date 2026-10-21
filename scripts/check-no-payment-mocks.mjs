@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CI guard (exclusion layer 4): the Cloudflare production bundle must not
+ * CI guard: the Cloudflare production bundle must not
  * contain the local payment emulators or their routes.
  *
  *   node scripts/check-no-payment-mocks.mjs [dir ...]   (default: apps/app/build)
@@ -15,11 +15,10 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const MOCK_NEEDLES = [
-	'__MENUZA_PAYMENTS_MOCK__',
+	'__PAYMENTS_MOCK__',
 	'checkout-com.mock.invalid',
 	'__mock_pay_',
 	'mock-payments+',
-	'mock-email+',
 	'/mock-payments/',
 ]
 

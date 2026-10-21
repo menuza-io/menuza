@@ -268,11 +268,11 @@ export async function loadLocationSchedulingState(
 				.where(inArray(rsvPacingRules.serviceId, chunk))
 				.all(),
 		),
-		queryInChunks(svcIds, (chunk) =>
+		queryInChunks(svcIds, (availabilityChunk) =>
 			db
 				.select()
 				.from(rsvServiceAvailability)
-				.where(inArray(rsvServiceAvailability.serviceId, chunk))
+				.where(inArray(rsvServiceAvailability.serviceId, availabilityChunk))
 				.all(),
 		),
 	])

@@ -174,6 +174,7 @@ export {
 	paymentsMockMode,
 	isPaymentsMockOn,
 	getStripeWebhookSecrets,
+	isLocalDeployment,
 	isLocalHostname,
 	isLocalUrl,
 	isRealSecret,

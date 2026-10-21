@@ -254,17 +254,16 @@ export function scopeToScopes(auth: Pick<StaffAuth, 'scopeIds'>): ScopeAccess {
 		where(column) {
 			if (ids === null) return undefined
 			if (ids.size === 0) return sql`0 = 1`
-			// One bound parameter (a JSON array) however many scopes: an IN list
-			// would exceed the Durable Object limit of 100 bound parameters.
 			return inJsonList(column, [...ids])
 		},
 		whereAnyOf(column, jsonIds) {
 			if (ids === null) return undefined
 			if (ids.size === 0) return sql`0 = 1`
-			const idList = JSON.stringify([...ids])
+			// Both halves bind the ids as one JSON parameter (Durable Object SQLite
+			// allows 100 bound parameters per statement).
 			return or(
 				inJsonList(column, [...ids]),
-				sql`exists (select 1 from json_each(${jsonIds}) where json_each.value in (select value from json_each(${idList})))`,
+				sql`exists (select 1 from json_each(${jsonIds}) where json_each.value in (select value from json_each(${JSON.stringify([...ids])})))`,
 			)
 		},
 	}

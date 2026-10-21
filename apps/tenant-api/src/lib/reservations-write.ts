@@ -590,11 +590,11 @@ export async function loadDayStateInTx(
 				.from(rsvServiceAvailability)
 				.where(inArray(rsvServiceAvailability.serviceId, chunk)),
 		),
-		queryInChunks(serviceIds, (chunk) =>
+		queryInChunks(serviceIds, (pacingChunk) =>
 			tx
 				.select()
 				.from(rsvPacingRules)
-				.where(inArray(rsvPacingRules.serviceId, chunk)),
+				.where(inArray(rsvPacingRules.serviceId, pacingChunk)),
 		),
 	])
 

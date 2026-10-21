@@ -1,6 +1,7 @@
 import { customers, restaurantOrders, rsvGuests } from '@repo/tenant-db'
 import type { TenantDatabase } from '@repo/tenant-db'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { chunkIds } from '../lib/chunked-in.ts'
 import { personKey } from './people-service.ts'
 
 /**
@@ -19,14 +20,6 @@ import { personKey } from './people-service.ts'
 export type OrderLinkAccess = { linkCustomers: boolean; linkGuests: boolean }
 
 const CHUNK = 50
-
-function chunks<T>(values: T[]): T[][] {
-	const out: T[][] = []
-	for (let i = 0; i < values.length; i += CHUNK) {
-		out.push(values.slice(i, i + CHUNK))
-	}
-	return out
-}
 
 type OrderRef = Pick<
 	typeof restaurantOrders.$inferSelect,
@@ -51,7 +44,7 @@ export async function resolveOrderCustomerKeys(
 	]
 	const customerByPhone = new Map<string, string>()
 	if (access.linkCustomers) {
-		for (const part of chunks(phones)) {
+		for (const part of chunkIds(phones, CHUNK)) {
 			const rows = await db
 				.select({ id: customers.id, phone: customers.phone })
 				.from(customers)
@@ -69,7 +62,7 @@ export async function resolveOrderCustomerKeys(
 	const guestByPhone = new Map<string, string>()
 	const guestByCustomer = new Map<string, string>()
 	if (access.linkGuests) {
-		for (const part of chunks(phones)) {
+		for (const part of chunkIds(phones, CHUNK)) {
 			const rows = await db
 				.select({ id: rsvGuests.id, phone: rsvGuests.phoneE164 })
 				.from(rsvGuests)
@@ -92,7 +85,7 @@ export async function resolveOrderCustomerKeys(
 			const ids = [
 				...new Set(orders.map((o) => o.customerId).filter(Boolean)),
 			] as string[]
-			for (const part of chunks(ids)) {
+			for (const part of chunkIds(ids, CHUNK)) {
 				const rows = await db
 					.select({ id: rsvGuests.id, customerId: rsvGuests.customerId })
 					.from(rsvGuests)

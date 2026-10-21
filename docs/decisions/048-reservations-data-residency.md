@@ -42,14 +42,13 @@ run in the US control plane and must never store, proxy, or log KSA guest PII.
 ### 1. Plane split: guest PII and operational state in regional `tenant-db`, control metadata in US `@repo/database`
 
 All 41 `rsv_*` tables live exclusively in the regional per-organization SQLite
-database (`packages/tenant-db`). Migration `0016_reservations_foundation.sql`
-creates all 41; `0017` to `0020` only add columns and an index to them (`0017`:
-`rsv_day_versions.availability_increased_at`, `rsv_outbox.status`; `0018`:
-`rsv_notify_requests.last_notified_slot_min`; `0019`: index
-`idx_rsv_table_occupancies_location_active_end`; `0020`: the `rsv_payments`
-contract columns). `0021` adds the non-reservation table `voice_call_actions`
-and `labor_scope_settings.demand_per_labor_hour`. The list below is generated
-from `packages/tenant-db/src/schema.ts`.
+database (`packages/tenant-db`). The single migration `0019_reservations.sql`
+creates all 41, with their indexes, triggers and the later column additions
+(for example `rsv_payments` contract columns and
+`rsv_table_occupancies` index `idx_rsv_table_occupancies_location_active_end`).
+It also adds the non-reservation table `voice_call_actions` and
+`labor_scope_settings.demand_per_labor_hour`. The list below is generated from
+`packages/tenant-db/src/schema.ts`.
 
 - Configuration and floor plan (12): `rsv_location_settings`, `rsv_areas`,
   `rsv_tables`, `rsv_table_combos`, `rsv_table_combo_members`,
@@ -86,8 +85,7 @@ contain no guest data but are versioned with the bookings they govern, and the
 control plane only learns about them through the non-PII context pull (section
 4).
 
-The US control plane (`@repo/database`, migrations
-`0025_reservations_foundation.sql` and `0026_reservations_platform_fee.sql`)
+The US control plane (`@repo/database`, migration `0025_reservations.sql`)
 stores **only**:
 
 - Organization feature flags (`reservations.enabled`, `reservations.online`,
@@ -236,7 +234,7 @@ never double-book a table even under concurrent requests:
    reconciles scheduled messages of the touched days, and bumps
    `rsv_day_versions`. After commit it invalidates the day cache and runs
    `afterCommit` hooks.
-3. Database triggers in `0016_reservations_foundation.sql` enforce hard
+3. Database triggers in `0019_reservations.sql` enforce hard
    invariants as a second line of defense:
    - `rsv_occupancy_no_overlap_insert` and `rsv_occupancy_no_overlap_update`
      abort with `RAISE(ABORT, 'rsv_table_occupancies overlap')` on any
@@ -305,7 +303,7 @@ counts; child flags need `reservations.enabled`):
 ### 7. Permissions, role presets and location-scope reuse
 
 Access to operator surfaces and `rsv+jwt` scopes is governed by 8 organization
-permissions seeded in control-plane migration `0025_reservations_foundation.sql`
+permissions seeded in control-plane migration `0025_reservations.sql`
 and granted to the built-in `admin` role only:
 
 - `read:reservation:any`, `update:reservation:any`
@@ -382,7 +380,7 @@ connected Stripe account (US) or Checkout.com sub-entity (KSA, SAR):
   (`INTERNAL_COMMAND_TOKEN`), with an hourly reconcile job
   (`/resources/jobs/reservation-payments-reconcile`) as the safety net.
 - **Platform fee.** `reservations.platform_fee_bp` (integer basis points,
-  `0..10000`, system default `250` set by control-plane migration `0026`; a
+  `0..10000`, system default `250` set by control-plane migration `0025`; a
   per-organization value overrides it, edited in Admin) is applied as
   `floor(amount * bp / 10000)` to deposits and prepayments, reported at bind and
   fee result and stored in `rsv_payments.platform_fee_bp`.
@@ -484,8 +482,19 @@ connected Stripe account (US) or Checkout.com sub-entity (KSA, SAR):
   from the linked customer's subscriptions (`marketing`, null when the guest has
   no customer row). A broadcast campaign's audience (`loadBroadcastAudience`) is
   customers with an active subscription (`unsubscribed_at IS NULL`) for the
-  campaign's channel; texts also need a verified phone. Having a customer row, a
-  verified phone or a past booking is not consent.
+  campaign's channel and the `marketing` topic; texts also need a verified phone
+  and emails an address its owner confirmed. Having a customer row, a verified
+  phone or a past booking is not consent. The booking-form box writes the
+  `reservations` topic (source `reservation_booking`), which only reservation
+  journeys read, and follows the same double opt-in as every email consent: the
+  subscription stays pending, tenant-api emails the confirmation link after the
+  booking commits (`queueConsentConfirmation`, throttled per address), and
+  `hasDeliverableSubscription` lets a journey email through only while
+  `confirmed_email_hash` matches the customer's current address. A returning
+  guest who ticks the box again for an already confirmed address stays
+  confirmed. Until the owner follows the link, a first-time consenting guest
+  starts no journey, so no `reservation_booked` email goes to them for that
+  booking.
 - **Linking rule.** `rsv_guests.customer_id` is set only when a customer's
   verified phone (E.164) equals the guest's phone and the customer owns no other
   guest. Never on an unverified phone, a name or an email; a guest never creates
@@ -504,7 +513,7 @@ connected Stripe account (US) or Checkout.com sub-entity (KSA, SAR):
   `00`) is never reinterpreted. A number typed without one is read in the node's
   data region: `05XXXXXXXX`, `5XXXXXXXX` and `9665XXXXXXXX` are `+966...` on a
   KSA node, 10 digits (or 11 with a leading 1) are `+1...` on a US node. One
-  shared function (`normalizeGuestPhone` in `@repo/reservations`, wrapped by
+  shared function (`normalizePhone` in `@repo/common/phone`, wrapped by
   `apps/tenant-api/src/lib/phone.ts`) serves customers, guests and the
   guestbook.
 - **Region switch** follows ADR 045: the old regional database is destroyed and

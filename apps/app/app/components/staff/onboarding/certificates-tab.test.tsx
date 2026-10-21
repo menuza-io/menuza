@@ -8,11 +8,16 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StaffClientProvider } from '#app/components/staff/staff-client-provider.tsx'
 import { localToday } from '#app/utils/staffing/onboarding-view.ts'
 import { renderStaff } from '#tests/staff-render.tsx'
 import { CertificatesTab } from './certificates-tab.tsx'
+import {
+	CERTIFICATE_KIND_ORDER,
+	certificateKindChoices,
+} from './onboarding-labels.ts'
 
 afterEach(() => {
 	cleanup()
@@ -102,7 +107,24 @@ describe('CertificatesTab', () => {
 		stubApi()
 		show()
 		expect(await screen.findByText('No certificates yet')).toBeTruthy()
-		expect(screen.getByText(/get a reminder before one expires/)).toBeTruthy()
+		const hint = screen.getByText(/get a reminder before one expires/)
+		// The generic module names no business type.
+		expect(hint.textContent).toMatch(/licences and certificates/)
+		expect(hint.textContent).not.toMatch(/food/i)
+	})
+
+	it('offers only kinds that fit any business, and keeps an existing one', () => {
+		const vertical = ['food_handler', 'health_card', 'alcohol_service']
+		expect(
+			CERTIFICATE_KIND_ORDER.filter((kind) => vertical.includes(kind)),
+		).toEqual([])
+		expect(certificateKindChoices(null)).toEqual(CERTIFICATE_KIND_ORDER)
+		expect(certificateKindChoices('first_aid')).toEqual(CERTIFICATE_KIND_ORDER)
+		// Editing a certificate saved with a food-service kind keeps that kind.
+		expect(certificateKindChoices('food_handler')).toEqual([
+			'food_handler',
+			...CERTIFICATE_KIND_ORDER,
+		])
 	})
 
 	it('asks for a name only for "Other" and checks the dates before sending', async () => {
@@ -113,6 +135,9 @@ describe('CertificatesTab', () => {
 		)
 		const form = await screen.findByRole('form', { name: 'Add a certificate' })
 		expect(within(form).queryByLabelText(/What is it called/)).toBeNull()
+		// A neutral kind is preselected, not a food-service one.
+		expect(within(form).getByText('First aid')).toBeTruthy()
+		expect(within(form).queryByText('Food handler card')).toBeNull()
 
 		fireEvent.change(within(form).getByLabelText(/Issued/), {
 			target: { value: '2026-05-02' },
@@ -139,7 +164,7 @@ describe('CertificatesTab', () => {
 		await waitFor(() =>
 			expect(calls.find((c) => c.method === 'POST')).toMatchObject({
 				body: {
-					kind: 'food_handler',
+					kind: 'first_aid',
 					label: null,
 					issuedOn: '2026-05-02',
 					expiresOn: '2027-05-01',
@@ -165,15 +190,16 @@ describe('CertificatesTab', () => {
 			certificates: [cert({ expiresOn: addDays(TODAY, 90) })],
 		})
 		show()
-		fireEvent.click(
-			await screen.findByRole('button', {
-				name: 'More actions for Food handler card',
-			}),
-		)
-		fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }))
+		const user = userEvent.setup()
+		const menuTrigger = await screen.findByRole('button', {
+			name: 'More actions for Food handler card',
+		})
+		await user.click(menuTrigger)
+		await waitFor(() => expect(menuTrigger).toHaveAttribute('aria-expanded', 'true'))
+		await user.click(await screen.findByRole('menuitem', { name: 'Remove' }))
 		expect(await screen.findByText('Remove this certificate?')).toBeTruthy()
 		expect(calls.some((c) => c.method === 'DELETE')).toBe(false)
-		fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+		await user.click(screen.getByRole('button', { name: 'Remove' }))
 		await waitFor(() =>
 			expect(calls.find((c) => c.method === 'DELETE')?.url).toMatch(
 				/\/certificates\/staff\/s1\/c1$/,

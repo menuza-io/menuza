@@ -8,6 +8,7 @@ import {
 	operatorTokenAllowsSubject,
 	ORG_WIDE_REPORT_SUBJECTS,
 	RESTRICTED_REPORT_SUBJECTS,
+	STAFFING_REPORT_SUBJECTS,
 	verifyOperatorAnalyticsToken,
 } from './operator-token.ts'
 
@@ -79,6 +80,8 @@ describe('operator analytics token', () => {
 		expect(operatorTokenAllowsSubject(claims!, 'phone_calls')).toBe(false)
 		expect(operatorTokenAllowsSubject(claims!, 'customers')).toBe(false)
 		expect(operatorTokenAllowsSubject(claims!, 'shop_orders')).toBe(false)
+		// Control-plane subjects are not restricted.
+		expect(operatorTokenAllowsSubject(claims!, 'members')).toBe(true)
 	})
 
 	it('drops unknown subjects from a token', async () => {
@@ -103,6 +106,68 @@ describe('operator analytics token', () => {
 			token,
 		})
 		expect(claims?.subjects).toEqual(['phone_calls'])
+	})
+
+	describe('subject by grant matrix', () => {
+		const base = {
+			internalCommandToken: secret,
+			userId: 'user_1',
+			orgId: 'org_1',
+			role: 'operator' as const,
+		}
+		const STAFF_ALL = [...STAFFING_REPORT_SUBJECTS, 'staff_pay'] as const
+		const grants = {
+			'no grants': [],
+			'admin: org-wide only': [...ORG_WIDE_REPORT_SUBJECTS],
+			'admin: org-wide and calls': [...ORG_WIDE_REPORT_SUBJECTS, 'phone_calls'],
+			'module only: staff': [...STAFF_ALL],
+			'module only: one staff subject': ['shifts'],
+			'admin and staff': [...ORG_WIDE_REPORT_SUBJECTS, ...STAFF_ALL],
+		} as const
+
+		it.each(Object.entries(grants))(
+			'%s allows exactly the granted restricted subjects',
+			async (_name, granted) => {
+				const { token } = await mintOperatorAnalyticsToken({
+					...base,
+					subjects: granted,
+					scopeIds: null,
+				})
+				const claims = await verifyOperatorAnalyticsToken({
+					internalCommandToken: secret,
+					token,
+				})
+				for (const subject of RESTRICTED_REPORT_SUBJECTS) {
+					expect(
+						operatorTokenAllowsSubject(claims!, subject),
+						`${subject} with ${_name}`,
+					).toBe((granted as readonly string[]).includes(subject))
+				}
+			},
+		)
+
+		it('never lets a module-only grant reach an org-wide subject', async () => {
+			for (const granted of [['shifts'], [...STAFF_ALL]] as const) {
+				const { token } = await mintOperatorAnalyticsToken({
+					...base,
+					subjects: granted,
+					scopeIds: ['loc-a'],
+				})
+				const claims = await verifyOperatorAnalyticsToken({
+					internalCommandToken: secret,
+					token,
+				})
+				for (const subject of ORG_WIDE_REPORT_SUBJECTS) {
+					expect(operatorTokenAllowsSubject(claims!, subject)).toBe(false)
+				}
+			}
+		})
+
+		it('keeps the org-wide subjects restricted', () => {
+			for (const subject of ORG_WIDE_REPORT_SUBJECTS) {
+				expect(RESTRICTED_REPORT_SUBJECTS).toContain(subject)
+			}
+		})
 	})
 
 	describe('staff subjects', () => {
@@ -159,7 +224,7 @@ describe('operator analytics token', () => {
 			}
 			// Other subjects need none.
 			await expect(
-				mintOperatorAnalyticsToken({ ...base, subjects: ['orders'] }),
+				mintOperatorAnalyticsToken({ ...base, subjects: ['customers'] }),
 			).resolves.toBeTruthy()
 		})
 

@@ -21,6 +21,7 @@ import {
 function commerceFor(harness: Harness) {
 	const env = {
 		MOCKS: 'true',
+		BASE_URL: 'http://localhost:3001',
 		STRIPE_SECRET_KEY: 'sk_test_***',
 		STRIPE_PUBLISHABLE_KEY: 'pk_test_***',
 		STRIPE_WEBHOOK_SECRET: 'whsec_***',

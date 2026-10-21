@@ -1,5 +1,5 @@
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import {
 	customerPaymentMethods,
@@ -9,22 +9,16 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	journeyRuns,
+	journeyStepExecutions,
+	marketingCampaigns,
 	marketingJourneys,
+	marketingMessages,
+	personErasureLog,
 	provisionTenantDb,
 	restaurantOrders,
-	rsvAuditLog,
-	rsvGuestNotes,
-	rsvGuests,
-	rsvHolds,
-	rsvMessages,
-	rsvNotifyRequests,
-	rsvOutbox,
-	rsvPayments,
-	rsvReservations,
-	rsvWaitlistEntries,
 	shopOrders,
-	voiceCalls,
 	voiceCallRequests,
+	voiceCalls,
 	voiceSmsSends,
 	websiteFormSubmissions,
 	websiteForms,
@@ -32,672 +26,586 @@ import {
 } from '@repo/tenant-db'
 import { eq, sql } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { erasePerson } from './person-erasure-service.ts'
-import { eraseGuestProfile } from './rsv-guest-service.ts'
-import { emitReservationJourney } from '../restaurant/reservations-journeys.ts'
+import { containsAsToken, erasePerson } from './person-erasure-service.ts'
 
-const ORG = 'org_person_erase'
-const LOC = 'loc_pe'
-const FUTURE = '2099-03-10'
+const orgA = 'clw9x0a12000008l00erase1'
+const orgB = 'clw9x0a12000008l00erase2'
+const PHONE = '+15550001111'
+const EMAIL = 'erase.me@example.test'
+const NAME = 'Erin Erasable'
+const OTHER_PHONE = '+15550002222'
 
-// Distinctive values that must not survive anywhere in the database.
-export const SENTINEL = {
-	phone: '+14155550777',
-	email: 'sentinel.person@example.com',
-	name: 'Sentinelle',
-	surname: 'Zorblax',
-	address: '77 Sentinel Street',
-	secret: 'secretallergynote',
-} as const
+/** Every row of every table, to prove an organization was not touched. */
+async function snapshot(db: TenantDatabase) {
+	const tables = (await db.all(
+		sql`select name from sqlite_master where type = 'table' and name not like 'sqlite_%' order by name`,
+	)) as Array<{ name: string }>
+	const rows: Record<string, unknown> = {}
+	for (const { name } of tables) {
+		rows[name] = await db.all(sql.raw(`select * from "${name}"`))
+	}
+	return JSON.stringify(rows)
+}
 
-let tempDir: string
-let db: TenantDatabase
-let seq = 0
+/** Names of the tables whose rows still contain one of the strings. */
+async function tablesContaining(db: TenantDatabase, needles: string[]) {
+	const tables = (await db.all(
+		sql`select name from sqlite_master where type = 'table' and name not like 'sqlite_%'`,
+	)) as Array<{ name: string }>
+	const found: string[] = []
+	for (const { name } of tables) {
+		const rows = JSON.stringify(
+			await db.all(sql.raw(`select * from "${name}"`)),
+		).toLowerCase()
+		if (needles.some((needle) => rows.includes(needle.toLowerCase()))) {
+			found.push(name)
+		}
+	}
+	return found
+}
 
-beforeEach(async () => {
-	tempDir = mkdtempSync(path.join(tmpdir(), 'person-erase-'))
-	process.env.TENANT_DB_DIR = tempDir
-	process.env.DATA_REGION = 'us'
-	await provisionTenantDb(ORG)
-	db = await getTenantDb(ORG)
-	seq = 0
-})
-
-afterEach(async () => {
-	await destroyTenantDb(ORG)
-	rmSync(tempDir, { recursive: true, force: true })
-})
-
-async function insertBooking(
-	guestId: string,
-	over: Record<string, unknown> = {},
+/** One person with a row in every table that holds personal data. */
+async function seedPerson(
+	db: TenantDatabase,
+	input: { name: string; phone: string; email: string },
 ) {
-	seq += 1
-	const id = (over.id as string | undefined) ?? `rsv_${seq}`
-	const startAt = Date.parse(`${FUTURE}T19:00:00Z`)
-	await db.insert(rsvReservations).values({
-		id,
-		locationId: LOC,
-		guestId,
-		confirmationCode: `CODE${seq}`,
-		businessDate: FUTURE,
-		localStartMin: 19 * 60,
-		timeZone: 'UTC',
-		startAt,
-		endAt: startAt + 90 * 60_000,
-		durationMin: 90,
-		partySize: 2,
-		status: 'booked',
-		guestRequests: SENTINEL.secret,
-		ipHash: 'iphash-sentinel',
-		client: 'UA-sentinel',
-		...over,
-		id,
+	const [customer] = await db
+		.insert(customers)
+		.values({
+			name: input.name,
+			phone: input.phone,
+			email: input.email,
+			phoneVerified: true,
+			stripeCustomerId: `cus_${input.phone.slice(-4)}`,
+			refreshTokenHash: `hash_${input.phone.slice(-4)}`,
+		})
+		.returning()
+	const id = customer!.id
+	await db.insert(customerRefreshTokens).values({
+		customerId: id,
+		tokenHash: `rt_${input.phone.slice(-4)}`,
+		expiresAt: new Date(Date.now() + 60_000),
+	})
+	await db.insert(customerSubscriptions).values({
+		customerId: id,
+		topic: 'marketing',
+		channel: 'sms',
+		source: 'signup',
+		subscribedAt: new Date(),
+	})
+	await db.insert(customerPaymentMethods).values({
+		customerId: id,
+		stripePaymentMethodId: `pm_${input.phone.slice(-4)}`,
+		brand: 'visa',
+		last4: '4242',
+		expMonth: 12,
+		expYear: 2034,
+	})
+	const [journey] = await db
+		.insert(marketingJourneys)
+		.values({ name: 'Welcome journey' })
+		.returning()
+	const [run] = await db
+		.insert(journeyRuns)
+		.values({ journeyId: journey!.id, customerId: id })
+		.returning()
+	await db.insert(journeyStepExecutions).values({
+		runId: run!.id,
+		journeyId: journey!.id,
+		customerId: id,
+		nodeId: 'n1',
+		nodeType: 'trigger',
+		stepType: 'trigger',
 	} as never)
+	const [campaign] = await db
+		.insert(marketingCampaigns)
+		.values({ name: 'Campaign', channel: 'sms', content: 'Hi' })
+		.returning()
+	await db.insert(marketingMessages).values({
+		campaignId: campaign!.id,
+		customerId: id,
+		channel: 'sms',
+	})
+	await db.insert(shopOrders).values({
+		customerId: id,
+		productName: 'Pack',
+		amountCents: 1000,
+		platformFeeCents: 200,
+		orgPayoutCents: 800,
+		checkoutSessionId: `cs_${input.phone.slice(-4)}`,
+	})
+	const [call] = await db
+		.insert(voiceCalls)
+		.values({
+			channel: 'phone',
+			roomName: `room-${input.phone.slice(-4)}`,
+			startedAt: new Date(),
+			callerPhone: input.phone,
+			customerId: id,
+			summary: `${input.name} asked about hours`,
+		})
+		.returning()
+	await db.insert(voiceCallRequests).values({
+		callId: call!.id,
+		type: 'callback',
+		callerName: input.name,
+		callerPhone: input.phone,
+		details: { note: 'call me' },
+	} as never)
+	await db.insert(voiceSmsSends).values({
+		callId: call!.id,
+		kind: 'website_link',
+		toPhone: input.phone,
+		status: 'sent',
+	})
 	return id
 }
 
-async function seedSentinelPerson() {
-	await db.insert(customers).values({
-		id: 'cus_s',
-		name: `${SENTINEL.name} ${SENTINEL.surname}`,
-		email: SENTINEL.email,
-		phone: SENTINEL.phone,
-		phoneVerified: true,
-		stripeCustomerId: 'cus_stripe_sentinel',
-		refreshTokenHash: 'rt-sentinel',
-	})
-	await db.insert(customerSubscriptions).values([
-		{
-			customerId: 'cus_s',
-			topic: 'reservations',
-			channel: 'email',
-			source: 'reservation_booking',
-			subscribedAt: new Date(),
-		},
-		{
-			customerId: 'cus_s',
-			topic: 'drops',
-			channel: 'sms',
-			source: 'profile',
-			subscribedAt: new Date(),
-		},
-	])
-	await db.insert(customerRefreshTokens).values({
-		customerId: 'cus_s',
-		tokenHash: 'rt-hash-sentinel',
-		expiresAt: new Date(Date.now() + 1e9),
-	})
-	await db.insert(customerPaymentMethods).values({
-		customerId: 'cus_s',
-		stripePaymentMethodId: 'pm_sentinel',
-		brand: 'visa',
-		last4: '4242',
-		expMonth: 1,
-		expYear: 2099,
-	})
-	await db.insert(rsvGuests).values({
-		id: 'gst_s',
-		customerId: 'cus_s',
-		firstName: SENTINEL.name,
-		lastName: SENTINEL.surname,
-		phoneE164: SENTINEL.phone,
-		emailNorm: SENTINEL.email,
-		allergyNotes: SENTINEL.secret,
-		visits: 4,
-	})
-	// A merged duplicate with its own phone, linked to nothing.
-	await db.insert(rsvGuests).values({
-		id: 'gst_dupe',
-		firstName: SENTINEL.name,
-		lastName: 'Dupe',
-		phoneE164: '+14155550778',
-		mergedIntoId: 'gst_s',
-	})
-	await db.insert(rsvGuestNotes).values({
-		id: 'note_s',
-		guestId: 'gst_s',
-		body: `note ${SENTINEL.secret}`,
-		authorId: 'u',
-	})
-	const futureId = await insertBooking('gst_s')
-	const pastId = await insertBooking('gst_s', {
-		id: 'rsv_past',
-		status: 'finished',
-		businessDate: '2020-01-01',
-		startAt: Date.parse('2020-01-01T19:00:00Z'),
-		endAt: Date.parse('2020-01-01T20:30:00Z'),
-	})
-	await db.insert(rsvMessages).values({
-		id: 'msg_pending',
-		locationId: LOC,
-		reservationId: futureId,
-		kind: 'reminder',
-		channel: 'email',
-		sendAt: Date.now() + 1e6,
-		dedupeKey: 'dk-1',
-	})
-	await db.insert(rsvHolds).values({
-		id: 'hold_s',
-		locationId: LOC,
-		tokenHash: 'tok-sentinel',
-		businessDate: FUTURE,
-		localStartMin: 1140,
-		startAt: Date.parse(`${FUTURE}T19:00:00Z`),
-		endAt: Date.parse(`${FUTURE}T20:30:00Z`),
-		partySize: 2,
-		status: 'converted',
-		expiresAt: Date.now() + 1e6,
-		ipHash: 'iphash-hold-sentinel',
-		reservationId: futureId,
-	})
-	// Waitlist and notify rows that only carry the phone (no guest id).
-	await db.insert(rsvWaitlistEntries).values({
-		id: 'wl_phone_only',
-		locationId: LOC,
-		businessDate: FUTURE,
-		guestId: null,
-		displayName: SENTINEL.name,
-		phoneE164: SENTINEL.phone,
-		partySize: 2,
-		ipHash: 'iphash-wl',
-	})
-	await db.insert(rsvNotifyRequests).values({
-		id: 'nr_phone_only',
-		locationId: LOC,
-		businessDate: FUTURE,
-		partySize: 2,
-		fromLocalMin: 1000,
-		toLocalMin: 1200,
-		contactPhoneE164: SENTINEL.phone,
-		contactEmailNorm: SENTINEL.email,
-		expiresAt: Date.now() + 1e9,
-	})
-	await db.insert(rsvMessages).values({
-		id: 'msg_wl',
-		locationId: LOC,
-		waitlistEntryId: 'wl_phone_only',
-		kind: 'waitlist_ready',
-		channel: 'sms',
-		sendAt: Date.now(),
-		dedupeKey: 'dk-2',
-	})
-	// Orders: one by customer id, one guest checkout by phone, one by email.
-	const order = (n: number, over: Record<string, unknown>) => ({
-		orgId: ORG,
-		number: `N-${n}`,
-		status: 'completed' as const,
-		paymentMethod: 'handoff' as const,
-		paymentStatus: 'unpaid' as const,
-		fulfillment: 'delivery' as const,
-		locationId: LOC,
-		locationName: 'Main',
-		contactName: `${SENTINEL.name} ${SENTINEL.surname}`,
-		contactPhone: '+15550001111',
-		contactEmail: null,
-		deliveryAddress: SENTINEL.address,
-		deliveryCity: 'City',
-		deliveryNotes: SENTINEL.secret,
-		deliveryLat: 1.5,
-		deliveryLng: 2.5,
-		currency: 'usd',
-		subtotalCents: 1000,
-		taxCents: 100,
-		totalCents: 1100,
-		lines: [],
-		idempotencyKey: `idem-${n}`,
-		requestHash: 'rh',
-		receiptTokenHash: `receipt-${n}`,
-		...over,
-	})
-	await db.insert(restaurantOrders).values([
-		order(1, { id: 'ord_c', customerId: 'cus_s' }),
-		order(2, { id: 'ord_p', contactPhone: SENTINEL.phone }),
-		order(3, { id: 'ord_e', contactEmail: SENTINEL.email.toUpperCase() }),
-		order(4, {
-			id: 'ord_other',
-			contactName: 'Someone Else',
-			deliveryAddress: '1 Other St',
-			deliveryNotes: null,
-		}),
-	] as never)
-	await db.insert(shopOrders).values({
-		id: 'shop_s',
-		customerId: 'cus_s',
-		productName: 'Thing',
-		amountCents: 500,
-		platformFeeCents: 10,
-		orgPayoutCents: 490,
-	})
-	// Voice.
-	await db.insert(voiceCalls).values([
-		{
-			id: 'call_phone',
-			channel: 'phone',
-			roomName: 'room-1',
-			callerPhone: SENTINEL.phone,
-			summary: SENTINEL.secret,
-			startedAt: new Date(),
-		},
-		{
-			id: 'call_cust',
-			channel: 'phone',
-			roomName: 'room-2',
-			callerPhone: '+15550002222',
-			customerId: 'cus_s',
-			startedAt: new Date(),
-		},
-		{
-			id: 'call_other',
-			channel: 'phone',
-			roomName: 'room-3',
-			callerPhone: '+15550003333',
-			startedAt: new Date(),
-		},
-	])
-	await db.insert(voiceCallRequests).values({
-		id: 'req_s',
-		callId: 'call_other',
-		type: 'message',
-		callerPhone: SENTINEL.phone,
-		callerName: SENTINEL.name,
-		details: { note: 'x' },
-	})
-	await db.insert(voiceSmsSends).values({
-		id: 'sms_s',
-		callId: 'call_other',
-		kind: 'website_link',
-		toPhone: SENTINEL.phone,
-		status: 'sent',
-	})
-	// Journeys.
-	await db.insert(marketingJourneys).values({ id: 'jrn_1', name: 'Welcome' })
-	await db.insert(journeyRuns).values({
-		id: 'run_s',
-		journeyId: 'jrn_1',
-		customerId: 'cus_s',
-	})
-	// Form submission that typed the email.
-	await db.insert(websiteForms).values({ id: 'form_1', name: 'Contact' })
-	await db.insert(websiteFormSubmissions).values([
-		{
-			id: 'sub_s',
-			formId: 'form_1',
-			values: { email: SENTINEL.email, message: 'hi' },
-		},
-		{ id: 'sub_other', formId: 'form_1', values: { email: 'other@x.com' } },
-	])
-	// An unrelated person that must stay untouched.
-	await db.insert(customers).values({
-		id: 'cus_other',
-		name: 'Other Person',
-		email: 'other@example.com',
-		phone: '+14155550999',
-		phoneVerified: true,
-	})
-	await db.insert(rsvGuests).values({
-		id: 'gst_other',
-		customerId: 'cus_other',
-		firstName: 'Other',
-		lastName: 'Person',
-		phoneE164: '+14155550999',
-	})
-	await db.insert(customerSubscriptions).values({
-		customerId: 'cus_other',
-		topic: 'reservations',
-		channel: 'email',
-		source: 'profile',
-		subscribedAt: new Date(),
-	})
-	return { futureId, pastId }
-}
+describe('person erasure', () => {
+	let tempDir: string
+	let a: TenantDatabase
+	let b: TenantDatabase
 
-async function dumpDatabase(): Promise<string> {
-	const tables = await db.all<{ name: string }>(
-		sql`SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '\\_\\_%' ESCAPE '\\'`,
-	)
-	const parts: string[] = []
-	for (const { name } of tables) {
-		if (name.startsWith('__') || name === 'd1_migrations') continue
-		const rows = await db.all(sql.raw(`SELECT * FROM "${name}"`))
-		parts.push(JSON.stringify(rows))
+	beforeEach(async () => {
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-erase-'))
+		process.env.TENANT_DB_DIR = tempDir
+		process.env.DATA_REGION = 'us'
+		await provisionTenantDb(orgA)
+		await provisionTenantDb(orgB)
+		a = await getTenantDb(orgA)
+		b = await getTenantDb(orgB)
+	})
+
+	afterEach(async () => {
+		await destroyTenantDb(orgA).catch(() => {})
+		await destroyTenantDb(orgB).catch(() => {})
+		fs.rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	async function seedForm(db: TenantDatabase, text: string) {
+		const [form] = await db
+			.insert(websiteForms)
+			.values({ name: 'Contact', fields: [] } as never)
+			.returning()
+		await db
+			.insert(websiteFormSubmissions)
+			.values({ formId: form!.id, values: { message: text } })
 	}
-	return parts.join('\n').toLowerCase()
-}
 
-function expectNoSentinel(dump: string) {
-	for (const [key, value] of Object.entries(SENTINEL)) {
-		expect(dump, `sentinel ${key} survived`).not.toContain(value.toLowerCase())
-	}
-	for (const extra of [
-		'iphash-sentinel',
-		'iphash-hold-sentinel',
-		'iphash-wl',
-		'ua-sentinel',
-		'cus_stripe_sentinel',
-		'pm_sentinel',
-		'tok-sentinel',
-		'rt-sentinel',
-		'rt-hash-sentinel',
-	]) {
-		expect(dump, `${extra} survived`).not.toContain(extra)
-	}
-}
+	it('erases the customer and everything keyed by them, and keeps order totals', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await seedForm(a, `please call ${PHONE}`)
+		await seedForm(a, `unrelated message`)
+		expect(await tablesContaining(a, [PHONE])).toContain('customers')
 
-describe('erasePerson', () => {
-	it('erasing a guest erases the linked customer, subscriptions, tokens, orders contact and voice data', async () => {
-		const { futureId, pastId } = await seedSentinelPerson()
+		const result = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(result).toMatchObject({
+			erased: true,
+			alreadyErased: false,
+			customersErased: 1,
+			ordersUnlinked: 1,
+			formSubmissionsRedacted: 1,
+			voice: expect.objectContaining({ callsDeleted: 1 }),
+		})
 
-		const result = await eraseGuestProfile(db, 'gst_s', { actorId: 'op' })
-		expect(result.erased).toBe(true)
-		expect(result.cancelledFutureReservations).toBe(1)
-		expect(result.customersErased).toBe(1)
+		expect(await tablesContaining(a, [PHONE, EMAIL, NAME])).toEqual([])
+		for (const table of [
+			customers,
+			customerRefreshTokens,
+			customerSubscriptions,
+			customerPaymentMethods,
+			journeyRuns,
+			journeyStepExecutions,
+			marketingMessages,
+			voiceCalls,
+			voiceCallRequests,
+			voiceSmsSends,
+		]) {
+			expect(await a.select().from(table)).toEqual([])
+		}
+		const orders = await a.select().from(shopOrders)
+		expect(orders).toHaveLength(1)
+		expect(orders[0]).toMatchObject({ amountCents: 1000, customerId: null })
+		const submissions = await a.select().from(websiteFormSubmissions)
+		expect(submissions.map((s) => s.values)).toEqual(
+			expect.arrayContaining([
+				{ redacted: true },
+				{ message: 'unrelated message' },
+			]),
+		)
+	})
 
-		expectNoSentinel(await dumpDatabase())
+	it('leaves other customers of the same organization untouched', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		const otherId = await seedPerson(a, {
+			name: 'Olive Other',
+			phone: OTHER_PHONE,
+			email: 'olive@example.test',
+		})
+		await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+		expect(await tablesContaining(a, [OTHER_PHONE, 'olive other'])).toContain(
+			'customers',
+		)
+		const remaining = await a.select().from(customers)
+		expect(remaining.map((c) => c.id)).toEqual([otherId])
+		expect(await a.select().from(customerSubscriptions)).toHaveLength(1)
+		expect(await a.select().from(voiceCalls)).toHaveLength(1)
+	})
 
-		// Customer side is gone.
+	it('never touches another organization, even for the same phone and id', async () => {
+		const idA = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		const idB = await seedPerson(b, { name: NAME, phone: PHONE, email: EMAIL })
+		await seedForm(b, `please call ${PHONE}`)
+		const before = await snapshot(b)
+
+		// The same person is a customer of both organizations. Erasing from A
+		// must not reach B, and an id that only exists in B is a no-op in A.
+		await erasePerson(a, { customerId: idA }, { actorId: 'user_1' })
+		expect(await snapshot(b)).toBe(before)
+		expect(await b.select().from(customers)).toHaveLength(1)
+
+		const foreign = await erasePerson(
+			a,
+			{ customerId: idB },
+			{ actorId: 'user_1' },
+		)
+		expect(foreign).toMatchObject({ alreadyErased: true, customersErased: 0 })
+		expect(await snapshot(b)).toBe(before)
+
+		await erasePerson(b, { customerId: idB }, { actorId: 'user_1' })
+		expect(await tablesContaining(b, [PHONE])).toEqual([])
+	})
+
+	it('records the erasure without personal data', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await erasePerson(a, { customerId: id }, { actorId: 'user_1', now: 5000 })
+		const log = await a.select().from(personErasureLog)
+		expect(log).toHaveLength(1)
+		expect(log[0]).toMatchObject({
+			actorId: 'user_1',
+			subjectId: id,
+			counts: expect.objectContaining({ customers: 1, voiceCalls: 1 }),
+		})
+		const serialized = JSON.stringify(log).toLowerCase()
+		for (const pii of [PHONE, EMAIL.toLowerCase(), NAME.toLowerCase()]) {
+			expect(serialized).not.toContain(pii)
+		}
+	})
+
+	it('is idempotent: a second run changes nothing and logs nothing', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+		const again = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(again).toMatchObject({
+			alreadyErased: true,
+			customersErased: 0,
+			ordersUnlinked: 0,
+		})
+		expect(await a.select().from(personErasureLog)).toHaveLength(1)
+	})
+
+	it('erases from the customer row even when the foreign-key pragma is off', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await a.run(sql`PRAGMA foreign_keys = OFF`)
+		try {
+			await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+		} finally {
+			await a.run(sql`PRAGMA foreign_keys = ON`)
+		}
+		expect(await tablesContaining(a, [PHONE])).toEqual([])
 		expect(
-			await db.select().from(customers).where(eq(customers.id, 'cus_s')),
-		).toHaveLength(0)
-		expect(
-			await db
+			await a
 				.select()
 				.from(customerSubscriptions)
-				.where(eq(customerSubscriptions.customerId, 'cus_s')),
-		).toHaveLength(0)
-		expect(await db.select().from(customerRefreshTokens)).toHaveLength(0)
-		expect(await db.select().from(customerPaymentMethods)).toHaveLength(0)
-		expect(await db.select().from(journeyRuns)).toHaveLength(0)
-
-		// Guests (and the merged duplicate) are anonymized, history stays.
-		for (const id of ['gst_s', 'gst_dupe']) {
-			const g = await db
-				.select()
-				.from(rsvGuests)
-				.where(eq(rsvGuests.id, id))
-				.get()
-			expect(g!.erasedAt).not.toBeNull()
-			expect(g!.phoneE164).toBeNull()
-			expect(g!.emailNorm).toBeNull()
-			expect(g!.customerId).toBeNull()
-		}
-		expect(await db.select().from(rsvGuestNotes)).toHaveLength(0)
-		const future = await db
-			.select()
-			.from(rsvReservations)
-			.where(eq(rsvReservations.id, futureId))
-			.get()
-		expect(future!.status).toBe('cancelled')
-		expect(future!.guestRequests).toBeNull()
-		expect(future!.ipHash).toBeNull()
-		const past = await db
-			.select()
-			.from(rsvReservations)
-			.where(eq(rsvReservations.id, pastId))
-			.get()
-		expect(past!.status).toBe('finished')
-
-		// Orders: contact scrubbed, totals and numbers kept.
-		const orders = await db.select().from(restaurantOrders).all()
-		for (const id of ['ord_c', 'ord_p', 'ord_e']) {
-			const o = orders.find((r) => r.id === id)!
-			expect(o.contactName).toBe('Erased customer')
-			expect(o.contactPhone).toBe('')
-			expect(o.contactEmail).toBeNull()
-			expect(o.deliveryAddress).toBeNull()
-			expect(o.deliveryLat).toBeNull()
-			expect(o.customerId).toBeNull()
-			expect(o.totalCents).toBe(1100)
-		}
-		const other = orders.find((r) => r.id === 'ord_other')!
-		expect(other.contactName).toBe('Someone Else')
-		expect(other.deliveryAddress).toBe('1 Other St')
-		const shop = await db.select().from(shopOrders).get()
-		expect(shop!.customerId).toBeNull()
-		expect(shop!.amountCents).toBe(500)
-
-		// Voice rows tied to the phone or the customer.
-		const calls = await db.select().from(voiceCalls).all()
-		expect(calls.map((c) => c.id)).toEqual(['call_other'])
-		expect(await db.select().from(voiceCallRequests)).toHaveLength(0)
-		expect(await db.select().from(voiceSmsSends)).toHaveLength(0)
-
-		// Waitlist and notify rows found by phone alone.
-		const wl = await db.select().from(rsvWaitlistEntries).get()
-		expect(wl!.phoneE164).toBeNull()
-		expect(wl!.status).toBe('cancelled')
-		const nr = await db.select().from(rsvNotifyRequests).get()
-		expect(nr!.contactPhoneE164).toBeNull()
-		expect(nr!.status).toBe('cancelled')
-
-		// Holds tied to the person's bookings are removed with their hashes.
-		expect(await db.select().from(rsvHolds)).toHaveLength(0)
-
-		// Form submission that typed the email is redacted; the other stays.
-		const subs = await db.select().from(websiteFormSubmissions).all()
-		expect(subs.find((s) => s.id === 'sub_s')!.values).toEqual({
-			redacted: true,
-		})
-		expect(subs.find((s) => s.id === 'sub_other')!.values).toEqual({
-			email: 'other@x.com',
-		})
-
-		// The unrelated person is untouched.
-		expect(
-			await db.select().from(customers).where(eq(customers.id, 'cus_other')),
-		).toHaveLength(1)
-		const otherGuest = await db
-			.select()
-			.from(rsvGuests)
-			.where(eq(rsvGuests.id, 'gst_other'))
-			.get()
-		expect(otherGuest!.erasedAt).toBeNull()
-		expect(otherGuest!.customerId).toBe('cus_other')
-		expect(await db.select().from(customerSubscriptions)).toHaveLength(1)
+				.where(eq(customerSubscriptions.customerId, id)),
+		).toEqual([])
 	})
 
-	it('erasing a customer erases the linked guest and the rest of the person', async () => {
-		await seedSentinelPerson()
+	it('redacts a submission only where the address is a whole token', async () => {
+		const id = await seedPerson(a, {
+			name: NAME,
+			phone: '+15550001111',
+			email: 'al@x.test',
+		})
+		await seedForm(a, 'mail me at AL@X.test please')
+		await seedForm(a, 'sal@x.test is my colleague')
+		await seedForm(a, 'al@x.test.au is another address')
+		await seedForm(a, 'phone +155500011119 is longer')
+		const [form] = await a.select().from(websiteForms)
+		await a.insert(websiteFormSubmissions).values({
+			formId: form!.id,
+			values: { nested: { list: ['x', 'reach al@x.test'] } },
+		})
 		const result = await erasePerson(
-			db,
-			{ customerId: 'cus_s' },
-			{ actorId: 'sys' },
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
 		)
-		expect(result.customersErased).toBe(1)
-		expect(result.guestsErased).toBe(2)
-		expect(result.guest).toBeNull()
-		expectNoSentinel(await dumpDatabase())
-		const g = await db
-			.select()
-			.from(rsvGuests)
-			.where(eq(rsvGuests.id, 'gst_s'))
-			.get()
-		expect(g!.erasedAt).not.toBeNull()
-		expect(g!.firstName).toBe('Erased')
-	})
-
-	it('finds the guest by the customer phone when no link exists, and the customer by the guest phone', async () => {
-		await db.insert(customers).values({
-			id: 'cus_unlinked',
-			name: 'Unlinked',
-			phone: '+14155550123',
-			phoneVerified: false,
-		})
-		await db.insert(rsvGuests).values({
-			id: 'gst_by_phone',
-			firstName: 'Phone',
-			lastName: 'Match',
-			phoneE164: '+14155550123',
-		})
-		await erasePerson(db, { guestId: 'gst_by_phone' }, { actorId: 'op' })
-		expect(await db.select().from(customers)).toHaveLength(0)
-	})
-
-	it('is idempotent: a second run changes nothing and adds no audit entry', async () => {
-		await seedSentinelPerson()
-		await erasePerson(db, { customerId: 'cus_s' }, { actorId: 'sys' })
-		const auditBefore = await db.select().from(rsvAuditLog).all()
-		const second = await erasePerson(
-			db,
-			{ customerId: 'cus_s' },
-			{ actorId: 'sys' },
+		expect(result.formSubmissionsRedacted).toBe(2)
+		const kept = (await a.select().from(websiteFormSubmissions)).filter(
+			(row) => !('redacted' in (row.values as object)),
 		)
-		expect(second.alreadyErased).toBe(true)
-		expect(second.customersErased).toBe(0)
-		expect(second.guestsErased).toBe(0)
-		const third = await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
-		expect(third.alreadyErased).toBe(true)
-		expect(await db.select().from(rsvAuditLog).all()).toHaveLength(
-			auditBefore.length,
-		)
-		expectNoSentinel(await dumpDatabase())
-	})
-
-	it('sends nothing after erasure: pending messages are cancelled and no journey is emitted', async () => {
-		const { futureId } = await seedSentinelPerson()
-		await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
-		const messages = await db.select().from(rsvMessages).all()
-		for (const m of messages.filter(
-			(r) => r.id === 'msg_pending' || r.id === 'msg_wl',
-		)) {
-			expect(m.status).toBe('cancelled')
-		}
-		const outcome = await emitReservationJourney({
-			orgId: ORG,
-			reservationId: futureId,
-			trigger: 'reservation_cancelled',
-		})
-		expect(outcome.emitted).toBe(false)
-	})
-
-	it('keeps audit entries free of PII and redacts earlier ones', async () => {
-		await seedSentinelPerson()
-		await db.insert(rsvAuditLog).values({
-			id: 'aud_old',
-			actorKind: 'operator',
-			action: 'guest.update',
-			entityType: 'guest',
-			entityId: 'gst_s',
-			changes: { phone: SENTINEL.phone },
-		})
-		await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
-		const old = await db
-			.select()
-			.from(rsvAuditLog)
-			.where(eq(rsvAuditLog.id, 'aud_old'))
-			.get()
-		expect(old!.changes).toEqual({ redacted: true })
-	})
-
-	it('queues refunds for paid deposits and expires open checkouts when erasure cancels bookings (restaurant cancel = full refund)', async () => {
-		const { futureId } = await seedSentinelPerson()
-		const paidAt = Date.now()
-		await db
-			.update(rsvReservations)
-			.set({ paymentStatus: 'paid' })
-			.where(eq(rsvReservations.id, futureId))
-		await db.insert(rsvPayments).values({
-			id: 'pay_dep',
-			locationId: LOC,
-			reservationId: futureId,
-			provider: 'stripe',
-			kind: 'deposit_charge',
-			purpose: 'deposit',
-			amountMinor: 10_000,
-			currency: 'USD',
-			platformFeeMinor: 1000,
-			platformFeeBp: 1000,
-			status: 'succeeded',
-			providerRef: 'pi_dep',
-			customerRef: 'cus_stripe_sentinel',
-			idempotencyKey: 'idem-dep',
-			createdAt: paidAt,
-			updatedAt: paidAt,
-		} as never)
-		// A second booking still waiting for payment: its session must be closed.
-		const pendingId = await insertBooking('gst_s', {
-			id: 'rsv_unpaid',
-			status: 'pending_payment',
-			paymentStatus: 'pending',
-		})
-		await db.insert(rsvPayments).values({
-			id: 'pay_open',
-			locationId: LOC,
-			reservationId: pendingId,
-			provider: 'stripe',
-			kind: 'deposit_charge',
-			purpose: 'deposit',
-			amountMinor: 5000,
-			currency: 'USD',
-			status: 'pending',
-			providerSessionId: 'cs_open',
-			idempotencyKey: 'idem-open',
-		} as never)
-
-		await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
-
-		const refunds = await db
-			.select()
-			.from(rsvPayments)
-			.where(eq(rsvPayments.kind, 'refund'))
-		expect(refunds).toHaveLength(1)
-		expect(refunds[0]).toMatchObject({
-			reservationId: futureId,
-			parentPaymentId: 'pay_dep',
-			amountMinor: 10_000,
-			status: 'requested',
-		})
-		const parent = await db
-			.select()
-			.from(rsvPayments)
-			.where(eq(rsvPayments.id, 'pay_dep'))
-			.get()
-		expect(parent!.refundedMinor).toBe(10_000)
 		expect(
-			(await db
-				.select()
-				.from(rsvReservations)
-				.where(eq(rsvReservations.id, futureId))
-				.get())!.paymentStatus,
-		).toBe('refund_pending')
-		const open = await db
-			.select()
-			.from(rsvPayments)
-			.where(eq(rsvPayments.id, 'pay_open'))
-			.get()
-		expect(open!.status).toBe('expired')
-
-		const outbox = await db.select().from(rsvOutbox).all()
-		const refundRows = outbox.filter((row) => row.kind === 'refund_request')
-		expect(refundRows).toHaveLength(1)
-		expect(refundRows[0]!.payload).toEqual({
-			kind: 'refund_request',
-			orgId: ORG,
-			refundRequestId: refunds[0]!.id,
-		})
-		expect(outbox.filter((row) => row.kind === 'checkout_expire')).toHaveLength(
-			1,
-		)
-		// Nothing the outbox carries identifies the person.
-		const outboxDump = JSON.stringify(outbox).toLowerCase()
-		for (const value of Object.values(SENTINEL)) {
-			expect(outboxDump).not.toContain(value.toLowerCase())
-		}
-		expect(outboxDump).not.toContain('cus_stripe_sentinel')
-
-		// Re-running changes nothing: no second refund, no second outbox row.
-		await erasePerson(db, { guestId: 'gst_s' }, { actorId: 'op' })
-		expect(
-			await db.select().from(rsvPayments).where(eq(rsvPayments.kind, 'refund')),
-		).toHaveLength(1)
-		expect(await db.select().from(rsvOutbox).all()).toHaveLength(outbox.length)
-		expectNoSentinel(await dumpDatabase())
+			kept.map((row) => (row.values as { message: string }).message).sort(),
+		).toEqual([
+			'al@x.test.au is another address',
+			'phone +155500011119 is longer',
+			'sal@x.test is my colleague',
+		])
 	})
 
-	it('rejects a call with neither id and a missing guest', async () => {
-		await expect(erasePerson(db, {}, { actorId: 'x' })).rejects.toThrow()
+	it('containsAsToken respects address and number boundaries', () => {
+		expect(containsAsToken('write to al@x.test.', 'al@x.test')).toBe(true)
+		expect(containsAsToken('(al@x.test)', 'al@x.test')).toBe(true)
+		expect(containsAsToken('sal@x.test', 'al@x.test')).toBe(false)
+		expect(containsAsToken('al@x.test.au', 'al@x.test')).toBe(false)
+		expect(containsAsToken('al@x.testing', 'al@x.test')).toBe(false)
+		expect(containsAsToken('call +15550001111!', '+15550001111')).toBe(true)
+		expect(containsAsToken('+155500011112', '+15550001111')).toBe(false)
+		expect(containsAsToken('9+15550001111', '+15550001111')).toBe(false)
+	})
+
+	it('leaves a record and stays retryable when the transaction fails after voice data is gone', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		await a.run(
+			sql`CREATE TRIGGER block_customer_delete BEFORE DELETE ON customers BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+		)
 		await expect(
-			erasePerson(db, { guestId: 'nope' }, { actorId: 'x' }),
-		).rejects.toMatchObject({ status: 404 })
+			erasePerson(a, { customerId: id }, { actorId: 'user_1' }),
+		).rejects.toThrow()
+
+		// Phase 1 already deleted the voice data; the transaction rolled back.
+		expect(await a.select().from(voiceCalls)).toEqual([])
+		expect(await a.select().from(customers)).toHaveLength(1)
+		expect(await a.select().from(customerSubscriptions)).toHaveLength(1)
+		const [partial] = await a.select().from(personErasureLog)
+		expect(partial).toMatchObject({
+			actorId: 'user_1',
+			subjectId: id,
+			counts: expect.objectContaining({ incomplete: 1, voiceCalls: 1 }),
+		})
+		const serialized = JSON.stringify(partial).toLowerCase()
+		for (const pii of [PHONE, EMAIL.toLowerCase(), NAME.toLowerCase()]) {
+			expect(serialized).not.toContain(pii)
+		}
+
+		// Retry: the same row is completed and keeps the earlier voice count.
+		await a.run(sql`DROP TRIGGER block_customer_delete`)
+		const retry = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(retry).toMatchObject({ alreadyErased: false, customersErased: 1 })
+		expect(await tablesContaining(a, [PHONE, EMAIL, NAME])).toEqual([])
+		const log = await a.select().from(personErasureLog)
+		expect(log).toHaveLength(1)
+		expect(log[0]!.counts).toMatchObject({ customers: 1, voiceCalls: 1 })
+		expect(log[0]!.counts).not.toHaveProperty('incomplete')
+	})
+
+	it('scrubs restaurant orders by customer id and by guest phone, keeping totals', async () => {
+		const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+		const base = {
+			orgId: orgA,
+			number: 'R-1',
+			locationId: 'loc_1',
+			locationName: 'Main',
+			currency: 'USD',
+			subtotalCents: 900,
+			taxCents: 100,
+			totalCents: 1000,
+			lines: [],
+			requestHash: 'h',
+			paymentMethod: 'handoff',
+			paymentStatus: 'pending',
+			fulfillment: 'pickup',
+		}
+		await a.insert(restaurantOrders).values([
+			{
+				...base,
+				customerId: id,
+				idempotencyKey: 'k1',
+				receiptTokenHash: 'r1',
+				contactName: NAME,
+				contactPhone: PHONE,
+				contactEmail: EMAIL,
+				deliveryAddress: '1 Erase Street',
+				deliveryLat: 1.5,
+				deliveryLng: 2.5,
+			},
+			{
+				...base,
+				number: 'R-2',
+				idempotencyKey: 'k2',
+				receiptTokenHash: 'r2',
+				contactName: NAME,
+				contactPhone: PHONE,
+			},
+			{
+				...base,
+				number: 'R-3',
+				idempotencyKey: 'k3',
+				receiptTokenHash: 'r3',
+				contactName: 'Someone Else',
+				contactPhone: OTHER_PHONE,
+			},
+		] as never)
+
+		const result = await erasePerson(
+			a,
+			{ customerId: id },
+			{ actorId: 'user_1' },
+		)
+		expect(result).toMatchObject({ restaurantOrdersScrubbed: 2 })
+		expect(
+			await tablesContaining(a, [PHONE, EMAIL, NAME, 'Erase Street']),
+		).toEqual([])
+		const rows = await a.select().from(restaurantOrders)
+		expect(rows).toHaveLength(3)
+		expect(rows.map((row) => row.totalCents)).toEqual([1000, 1000, 1000])
+		expect(rows.find((row) => row.number === 'R-3')).toMatchObject({
+			contactName: 'Someone Else',
+			contactPhone: OTHER_PHONE,
+		})
+	})
+
+	describe('guest restaurant orders stored in another format', () => {
+		const base = {
+			orgId: orgA,
+			locationId: 'loc_1',
+			locationName: 'Main',
+			currency: 'USD',
+			subtotalCents: 900,
+			taxCents: 100,
+			totalCents: 1000,
+			lines: [],
+			requestHash: 'h',
+			paymentMethod: 'handoff',
+			paymentStatus: 'pending',
+			fulfillment: 'delivery',
+			deliveryAddress: '1 Erase Street',
+		}
+		const order = (
+			n: number,
+			contact: { contactPhone: string; contactEmail?: string | null },
+		) => ({
+			...base,
+			number: `G-${n}`,
+			idempotencyKey: `gk${n}`,
+			receiptTokenHash: `gr${n}`,
+			contactName: n === 99 ? 'Someone Else' : NAME,
+			...contact,
+		})
+		const scrubbed = async () =>
+			(await a.select().from(restaurantOrders))
+				.filter((row) => row.contactName === '' && row.deliveryAddress === null)
+				.map((row) => row.number)
+				.sort()
+
+		it('matches a mixed-case guest email and legacy-format phones', async () => {
+			const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+			await a.insert(restaurantOrders).values([
+				order(1, {
+					contactPhone: '000',
+					contactEmail: 'Erase.Me@Example.TEST',
+				}),
+				order(2, {
+					contactPhone: '000',
+					contactEmail: ' erase.me@example.test ',
+				}),
+				order(3, { contactPhone: '(555) 000-1111' }),
+				order(4, { contactPhone: '555-000-1111' }),
+				order(5, { contactPhone: '1 555 000 1111' }),
+				order(6, { contactPhone: '5550001111' }),
+				order(7, { contactPhone: '001-555-000-1111' }),
+				// Other people: a different number, a longer and a shorter one, and
+				// a different mailbox on the same domain.
+				order(90, { contactPhone: '(555) 000-2222' }),
+				order(91, { contactPhone: '+155500011112' }),
+				order(92, { contactPhone: '555000111' }),
+				order(93, {
+					contactPhone: '000',
+					contactEmail: 'rase.me@example.test',
+				}),
+			] as never)
+
+			const result = await erasePerson(
+				a,
+				{ customerId: id },
+				{ actorId: 'user_1' },
+			)
+			expect(result).toMatchObject({ restaurantOrdersScrubbed: 7 })
+			expect(await scrubbed()).toEqual([
+				'G-1',
+				'G-2',
+				'G-3',
+				'G-4',
+				'G-5',
+				'G-6',
+				'G-7',
+			])
+			expect(
+				await tablesContaining(a, ['Erase.Me@Example.TEST', '555-000-1111']),
+			).toEqual([])
+		})
+
+		it('matches the national forms of a Saudi number when the node serves KSA', async () => {
+			const previous = process.env.DATA_REGION
+			process.env.DATA_REGION = 'ksa'
+			try {
+				const ksaPhone = '+966501234567'
+				const id = await seedPerson(a, {
+					name: NAME,
+					phone: ksaPhone,
+					email: EMAIL,
+				})
+				await a
+					.insert(restaurantOrders)
+					.values([
+						order(1, { contactPhone: '0501234567' }),
+						order(2, { contactPhone: '50 123 4567' }),
+						order(3, { contactPhone: '966 50 123 4567' }),
+						order(4, { contactPhone: '00966501234567' }),
+						order(99, { contactPhone: '0509999999' }),
+					] as never)
+				await erasePerson(a, { customerId: id }, { actorId: 'user_1' })
+				expect(await scrubbed()).toEqual(['G-1', 'G-2', 'G-3', 'G-4'])
+			} finally {
+				process.env.DATA_REGION = previous ?? 'us'
+			}
+		})
+
+		it('handles more guest orders and addresses than a statement can bind', async () => {
+			const id = await seedPerson(a, { name: NAME, phone: PHONE, email: EMAIL })
+			await a.insert(restaurantOrders).values(
+				Array.from({ length: 150 }, (_, i) =>
+					order(i + 1, {
+						contactPhone: i % 2 ? '(555) 000-1111' : '000',
+						contactEmail: i % 2 ? null : 'ERASE.ME@example.test',
+					}),
+				) as never,
+			)
+			const result = await erasePerson(
+				a,
+				{ customerId: id },
+				{ actorId: 'user_1' },
+			)
+			expect(result).toMatchObject({ restaurantOrdersScrubbed: 150 })
+		})
+	})
+
+	it('rejects an empty target', async () => {
+		await expect(
+			erasePerson(a, { customerId: '' }, { actorId: 'user_1' }),
+		).rejects.toMatchObject({ code: 'invalid_erase_call' })
 	})
 })

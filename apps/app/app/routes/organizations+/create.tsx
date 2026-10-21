@@ -818,6 +818,7 @@ function Step1({ actionData }: { actionData: any }) {
 		id: 'create-organization-step1',
 		constraint: getZodConstraint(Step1Schema),
 		lastResult: actionData,
+		shouldRevalidate: 'onInput',
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: Step1Schema })
 		},
@@ -1186,10 +1187,8 @@ function SubscriptionStep({
 					<ErrorList errors={form.errors} id={form.errorId} />
 
 					<div className="flex justify-between pt-4">
-						<Button variant="outline">
-							<Link to="/organizations">
-								<Trans>Cancel</Trans>
-							</Link>
+						<Button variant="outline" render={<Link to="/organizations" />}>
+							<Trans>Cancel</Trans>
 						</Button>
 						<Button type="submit" disabled={!selectedPriceId}>
 							<Trans>Continue to Payment</Trans>
@@ -1528,7 +1527,7 @@ function CreateOrganizationInvitations({
 		defaultValue: {
 			invites: [{ email: '', role: 'member' }],
 		},
-		shouldRevalidate: 'onBlur',
+		shouldRevalidate: 'onInput',
 	})
 
 	const invitesList = fields.invites.getFieldList()

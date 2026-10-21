@@ -4,6 +4,7 @@ import {
 	type FlowGraph,
 	type FlowNode,
 	flowOutputs,
+	flowWarnings,
 	parseFlowGraph,
 	validateFlowGraph,
 } from './flow.ts'
@@ -156,6 +157,33 @@ describe('validateFlowGraph', () => {
 			],
 		}
 		expect(validateFlowGraph(graph)).toEqual([])
+	})
+})
+
+describe('flowWarnings', () => {
+	it('warns when a transfer step has no number and no staff phone is set', () => {
+		const graph = createDefaultFlowGraph()
+		expect(flowWarnings(graph, { hasStaffPhone: false })).toEqual([
+			{
+				code: 'transfer_no_phone',
+				nodeId: 'staff',
+				label: expect.any(String),
+			},
+		])
+		expect(flowWarnings(graph, { hasStaffPhone: true })).toEqual([])
+	})
+
+	it('accepts a transfer step with its own number', () => {
+		const graph = createDefaultFlowGraph()
+		const withPhone: FlowGraph = {
+			...graph,
+			nodes: graph.nodes.map((node) =>
+				node.type === 'transfer'
+					? { ...node, data: { ...node.data, phone: '+12025550123' } }
+					: node,
+			),
+		}
+		expect(flowWarnings(withPhone, { hasStaffPhone: false })).toEqual([])
 	})
 })
 

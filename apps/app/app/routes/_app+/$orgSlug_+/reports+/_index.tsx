@@ -11,7 +11,7 @@ import { ReportStart } from '@repo/reports/ui'
 import { useLoaderData } from 'react-router'
 import { ScopeWordingProvider } from '#app/components/staff/scope-wording-provider.tsx'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
-import { resolveReportGrantsForRequest } from '#app/utils/reservations/report-access.server.ts'
+import { resolveReportGrantsForRequest } from '#app/utils/staffing/report-grants.server.ts'
 import { organizationReportCatalog } from '#app/utils/staffing/restaurant/report-catalog.server.ts'
 import { type Route } from './+types/_index.ts'
 

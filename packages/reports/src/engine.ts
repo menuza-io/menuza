@@ -492,7 +492,7 @@ function sortSegments(
 	const metric = (segment: ReportSegment) =>
 		byValue ? (segment.value ?? 0) : segment.count
 	if (sortBy === 'label') {
-		// Numeric collation keeps party sizes and times in their natural order.
+		// Numeric collation keeps numbers in their natural order (2 before 10).
 		copy.sort((a, b) =>
 			a.label.localeCompare(b.label, undefined, { numeric: true }),
 		)

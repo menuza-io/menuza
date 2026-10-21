@@ -18,6 +18,7 @@ import {
 	timeEntries,
 	timeOffRequests,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { getNodeRegion } from '../lib/region.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
@@ -44,7 +45,7 @@ import {
 	type Failure,
 	type StaffContext,
 } from './staff-service.ts'
-import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Server-to-server staff operations for `/internal/staff`: summary counts for
@@ -73,7 +74,7 @@ function write<T>(
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 	) => Promise<T>,
 ): Promise<T> {
-	return retryOnSqliteBusy(() => db.transaction(fn))
+	return retryOnSqliteBusy(() => runTenantTransaction(db, fn))
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -406,12 +407,10 @@ export async function buildStaffExport(
 	const staffIds = staffRows.map((row) => row.id)
 
 	const applications = staffIds.length
-		? await queryInChunks(staffIds, (chunk) =>
-				db
-					.select()
-					.from(hiringApplications)
-					.where(inArray(hiringApplications.hiredStaffId, chunk)),
-			)
+		? await db
+				.select()
+				.from(hiringApplications)
+				.where(inJsonList(hiringApplications.hiredStaffId, staffIds))
 		: []
 	const [assignments, jobs, notes, privates, tasks, certificates] =
 		staffIds.length
@@ -467,7 +466,7 @@ export async function buildStaffExport(
 		.from(staffAuditLog)
 		.where(
 			and(
-				// bounded: audit sensitivities are a closed enum of three
+				// bounded: at most three sensitivity levels
 				inArray(staffAuditLog.sensitivity, sensitivities),
 				options.staffId
 					? eq(staffAuditLog.staffId, options.staffId)

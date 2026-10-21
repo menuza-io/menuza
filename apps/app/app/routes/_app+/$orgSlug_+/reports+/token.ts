@@ -19,6 +19,10 @@ import {
 	resolveReservationsReportAccess,
 } from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccess } from '#app/utils/staffing/report-access.server.ts'
+import {
+	hasAdminReportAccess,
+	REPORT_ADMIN_PERMISSIONS,
+} from '#app/utils/staffing/report-grants.server.ts'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { type Route } from './+types/token.ts'
 
@@ -31,41 +35,30 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	})
 
 	// Operator analytics token minting grants regional tenant database access.
-	// Analytics, settings, or website admin permission opens every subject the
-	// person's other grants cover. Without any of them, only the restricted
-	// module subjects (staff, Reservations) below can be granted, each by its
-	// own permission, so a host or shift manager holding only the reservation
-	// report grant still gets a token. A person with neither gets a 403.
-	const adminPermissions = [
-		ORG_PERMISSIONS.READ_ANALYTICS_ANY,
-		ORG_PERMISSIONS.READ_SETTINGS_ANY,
-		ORG_PERMISSIONS.READ_WEBSITE_ANY,
-	]
-	let hasAdminReportAccess = false
-	for (const permission of adminPermissions) {
-		if (
-			await userHasOrganizationPermission(userId, organization.id, permission)
-		) {
-			hasAdminReportAccess = true
-			break
-		}
-	}
+	// Analytics, settings, or website admin permission opens the
+	// organization-wide subjects (customers, text subscribers, shop orders).
+	// Without any of them, only the restricted module subjects (staff,
+	// Reservations) below can be granted, each by its own permission and limited
+	// to the person's scopes or locations, so a manager holding only module
+	// report grants still gets a token. A person with none gets a 403.
+	const hasAdminAccess = await hasAdminReportAccess(userId, organization.id)
 	// Call reports include caller numbers, so they also need call access.
-	// Order reports follow the orders page, which menu access covers.
-	const [canReadPhoneCalls, canReadOrders] = hasAdminReportAccess
-		? await Promise.all([
-				userHasOrganizationPermission(
-					userId,
-					organization.id,
-					ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
-				),
-				userHasOrganizationPermission(
-					userId,
-					organization.id,
-					ORG_PERMISSIONS.READ_MENU_ANY,
-				),
-			])
-		: [false, false]
+	// Order reports follow the orders page, which menu access covers (and, as
+	// before, only for people who can run reports at all).
+	const [canReadPhoneCalls, canReadOrders] = await Promise.all([
+		hasAdminAccess &&
+			userHasOrganizationPermission(
+				userId,
+				organization.id,
+				ORG_PERMISSIONS.READ_PHONE_CALL_ANY,
+			),
+		hasAdminAccess &&
+			userHasOrganizationPermission(
+				userId,
+				organization.id,
+				ORG_PERMISSIONS.READ_MENU_ANY,
+			),
+	])
 	// Staff reports (time cards, shifts, daily labor, applications) follow the
 	// staffing flags, the staffing permissions, and the person's scope grants.
 	const staff = await resolveStaffReportAccess({
@@ -81,11 +74,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organizationId: organization.id,
 	})
 	if (
-		!hasAdminReportAccess &&
+		!hasAdminAccess &&
 		staff.subjects.length === 0 &&
 		reservations.subjects.length === 0
 	) {
-		throw createForbiddenResponse(adminPermissions.join(' or '))
+		throw createForbiddenResponse(REPORT_ADMIN_PERMISSIONS.join(' or '))
 	}
 	const scopeIds =
 		staff.subjects.length > 0 && reservations.subjects.length > 0
@@ -94,9 +87,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				? reservations.scopeIds
 				: staff.scopeIds
 	const subjects: RestrictedReportSubject[] = [
-		// Organization-wide subjects need analytics, settings or website access:
-		// a module-only grant (Reservations, staff) never lists them.
-		...(hasAdminReportAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
+		// A module-only grant never lists the organization-wide subjects.
+		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...staff.subjects,

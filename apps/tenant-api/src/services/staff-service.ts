@@ -46,6 +46,7 @@ import {
 	type StaffMember,
 	type StaffPosition,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { getNodeRegion } from '../lib/region.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
@@ -65,11 +66,8 @@ import {
 	type StaffDb,
 	writeStaffAudit,
 } from './staff-audit.ts'
-import {
-	queryInChunks,
-	insertRowsInChunks,
-	inJsonList,
-} from '../lib/chunked-in.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
+import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
 // ---------------------------------------------------------------------------
 // Result plumbing
@@ -125,7 +123,7 @@ function write<T>(
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 	) => Promise<T>,
 ): Promise<T> {
-	return retryOnSqliteBusy(() => db.transaction(fn))
+	return retryOnSqliteBusy(() => runTenantTransaction(db, fn))
 }
 
 // ---------------------------------------------------------------------------
@@ -476,29 +474,25 @@ export async function listStaff(ctx: StaffContext, query: StaffListQuery) {
 
 	const ids = rows.map((row) => row.id)
 	const assignments = ids.length
-		? await queryInChunks(ids, (chunk) =>
-				db
-					.select()
-					.from(staffScopeAssignments)
-					.where(inArray(staffScopeAssignments.staffId, chunk)),
-			)
+		? await db
+				.select()
+				.from(staffScopeAssignments)
+				.where(inJsonList(staffScopeAssignments.staffId, ids))
 		: []
 	const openJobs = ids.length
-		? await queryInChunks(ids, (chunk) =>
-				db
-					.select({
-						staffId: staffJobs.staffId,
-						scopeId: staffJobs.scopeId,
-						positionId: staffJobs.positionId,
-					})
-					.from(staffJobs)
-					.where(
-						and(
-							inArray(staffJobs.staffId, chunk),
-							isNull(staffJobs.effectiveTo),
-						),
+		? await db
+				.select({
+					staffId: staffJobs.staffId,
+					scopeId: staffJobs.scopeId,
+					positionId: staffJobs.positionId,
+				})
+				.from(staffJobs)
+				.where(
+					and(
+						inJsonList(staffJobs.staffId, ids),
+						isNull(staffJobs.effectiveTo),
 					),
-			)
+				)
 		: []
 
 	const rates =
@@ -689,8 +683,7 @@ export async function createStaff(
 							includeInClockErrors: a.includeInClockErrors,
 							canWaiveBreaks: a.canWaiveBreaks,
 						})),
-						(chunk) =>
-							tx.insert(staffScopeAssignments).values(chunk).returning(),
+						(part) => tx.insert(staffScopeAssignments).values(part).returning(),
 					)
 				: []
 			await writeStaffAudit(tx, auth, ctx.ipHash, {
@@ -2023,7 +2016,7 @@ export async function listAudit(
 	query: { staffId?: string; action?: string; before?: number; limit: number },
 ) {
 	const sensitivities = readableSensitivities(ctx.auth)
-	// bounded: audit sensitivities are a closed enum of three
+	// bounded: at most three sensitivity levels
 	const conditions: SQL[] = [inArray(staffAuditLog.sensitivity, sensitivities)]
 	if (query.staffId) conditions.push(eq(staffAuditLog.staffId, query.staffId))
 	if (query.action) conditions.push(eq(staffAuditLog.action, query.action))

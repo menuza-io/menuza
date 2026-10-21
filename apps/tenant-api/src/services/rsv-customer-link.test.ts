@@ -13,7 +13,10 @@ import {
 } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { loadBroadcastAudience } from './marketing-audience.ts'
+import {
+	emailConsentHash,
+	loadBroadcastAudience,
+} from './marketing-audience.ts'
 import {
 	linkGuestsToCustomers,
 	linkGuestToVerifiedCustomer,
@@ -293,16 +296,24 @@ describe('one consent source: customer_subscriptions', () => {
 				phoneVerified: true,
 			},
 		])
+		const emails: Record<string, string> = {
+			sub_email: 'a@x.com',
+			opted_out: 'd@x.com',
+		}
 		const sub = (
 			customerId: string,
 			channel: 'email' | 'sms',
 			over: Record<string, unknown> = {},
 		) => ({
 			customerId,
-			topic: 'drops' as const,
+			topic: 'marketing' as const,
 			channel,
 			source: 'profile' as const,
 			subscribedAt: new Date(),
+			// An email subscription is deliverable once its owner confirmed it.
+			...(channel === 'email' && emails[customerId]
+				? { confirmedEmailHash: emailConsentHash(emails[customerId]!) }
+				: {}),
 			...over,
 		})
 		await db

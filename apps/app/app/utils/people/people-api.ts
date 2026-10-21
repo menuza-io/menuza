@@ -467,7 +467,8 @@ export async function exportPerson(
 export type ErasePersonResult = {
 	guestsErased: number
 	customersErased: number
-	ordersScrubbed: number
+	/** Present only when a restaurant order was scrubbed. */
+	restaurantOrdersScrubbed?: number
 	cancelledFutureReservations: number
 }
 

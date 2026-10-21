@@ -9,8 +9,8 @@ import {
 	createShopCheckoutSession,
 	createShopPaymentIntent,
 	createCheckoutShopClient,
-	createCheckoutShopHostedPayment,
 	expireShopCheckoutSession,
+	createCheckoutShopHostedPayment,
 	findCheckoutShopPaymentsByReference,
 	retrieveCheckoutHostedPayment,
 	getCheckoutDashboardUrl,
@@ -965,7 +965,10 @@ export class ShopCommerce {
 					: null
 
 			return {
-				status: checkoutPaymentStatusToOrderStatus(payment.paid),
+				status: checkoutPaymentStatusToOrderStatus(
+					payment.paid,
+					payment.status,
+				),
 				productName: payment.productName,
 				amountCents: payment.amountCents,
 				currency: payment.currency,
@@ -1144,7 +1147,7 @@ export class ShopCommerce {
 			processorCheckoutId: payment.sessionId,
 			processorPaymentId: payment.id,
 			processorOrderId: null,
-			status: checkoutPaymentStatusToOrderStatus(payment.paid),
+			status: checkoutPaymentStatusToOrderStatus(payment.paid, payment.status),
 		})
 	}
 

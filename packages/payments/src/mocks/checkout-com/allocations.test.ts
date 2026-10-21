@@ -27,7 +27,7 @@ async function errorCodes(harness: Harness, allocations: unknown) {
 	return error.body.error_codes as string[]
 }
 
-describe('Checkout.com amount allocations (VAL-PMOCK-035)', () => {
+describe('Checkout.com amount allocations', () => {
 	it('stores allocations and commission and carries them in the approved webhook', async () => {
 		const harness = createTestHarness()
 		const entity = await activeEntity(harness)

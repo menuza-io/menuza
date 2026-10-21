@@ -247,6 +247,10 @@ export default {
 	): Promise<Response> {
 		applyWorkerEnv(env)
 		assertTenantApiSecrets()
+		// No consent-origin assert here: a missing TENANT_API_URL must not take
+		// the whole Worker (health, login, provisioning) down. Each email send
+		// checks `consentBaseUrl()` and skips (or fails the broadcast) instead.
+		// The hard startup assert stays on the Node entry (`src/index.ts`).
 
 		setListTenantOrgIdsProvider(async () => registryStub(env).list())
 

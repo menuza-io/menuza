@@ -71,7 +71,8 @@ Kill switches: `RESERVATIONS_PUBLIC_ENABLED` (503 on public routes),
 
 Dev email capture: set `DEV_EMAIL_CAPTURE_DIR` (the dev scripts use
 `.dev-mail/us` and `.dev-mail/ksa`) and every email the node would only log is
-written there as JSON. Demo data:
+written there as JSON. It is ignored in production and whenever OCI email is
+configured. Demo data:
 `npm run seed:reservations -w tenant-api -- <org-slug>`. Re-record the public
 API fixtures with `npm run fixtures:reservations -w tenant-api`. Docs:
 [reservations guide](../../docs/reservations.md),

@@ -34,7 +34,7 @@ import {
 	CAPACITY_STATUSES,
 	type PublicEngineState,
 } from './rsv-public-engine.ts'
-import { queryInChunks, inJsonList } from '../lib/chunked-in.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 
 /**
  * Experience availability and cover caps on top of the table engine

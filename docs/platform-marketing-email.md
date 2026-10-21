@@ -26,7 +26,7 @@ OCI_PRIVATE_KEY=
 OCI_REGION=us-ashburn-1
 OCI_EMAIL_COMPARTMENT_ID=
 OCI_EMAIL_SENDER_EMAIL=
-OCI_EMAIL_SENDER_NAME=Menuza
+OCI_EMAIL_SENDER_NAME=Epic Startup
 OCI_EMAIL_LOG_OCID=          # required for open/click metrics on OCI
 ```
 
@@ -46,16 +46,16 @@ With `EMAIL_PROVIDER=resend` (default), behavior is unchanged: Resend API +
 Tag and header names are derived from `brand.slug` in `packages/config/brand.ts`
 so forks white-label in one place.
 
-With the default slug `menuza`:
+With the default slug `epic-startup`:
 
-| Purpose            | Resend tag           | OCI / SMTP header      |
-| ------------------ | -------------------- | ---------------------- |
-| Scope (`platform`) | `menuza_scope`       | —                      |
-| Message id         | `menuza_message_id`  | `X-Menuza-Message-Id`  |
-| Campaign id        | `menuza_campaign_id` | `X-Menuza-Campaign-Id` |
-| Org id             | —                    | `X-Menuza-Org-Id`      |
-| Journey id         | —                    | `X-Menuza-Journey-Id`  |
-| Customer id        | —                    | `X-Menuza-Customer-Id` |
+| Purpose            | Resend tag                 | OCI / SMTP header            |
+| ------------------ | -------------------------- | ---------------------------- |
+| Scope (`platform`) | `epic_startup_scope`       | —                            |
+| Message id         | `epic_startup_message_id`  | `X-Epic-Startup-Message-Id`  |
+| Campaign id        | `epic_startup_campaign_id` | `X-Epic-Startup-Campaign-Id` |
+| Org id             | —                          | `X-Epic-Startup-Org-Id`      |
+| Journey id         | —                          | `X-Epic-Startup-Journey-Id`  |
+| Customer id        | —                          | `X-Epic-Startup-Customer-Id` |
 
 Helpers live in `packages/config/marketing-email.ts`:
 
@@ -183,7 +183,52 @@ endpoint must verify the token without routing tenant customer PII through the
 App or Sites control plane. Platform-operator marketing needs an equivalent
 US-control-plane preference flow.
 
-Not yet implemented (follow-ups): a working unsubscribe flow, per-locale email
-content, and AI tools that read or edit the journey/email design. The AI
-assistant is reachable in the automation editor but its server-side tools
+Not yet implemented (follow-ups): the unsubscribe link in journey emails
+(broadcasts have it, see Broadcast consent), per-locale email content, and AI
+tools that read or edit the journey/email design. The AI assistant is reachable
+in the automation editor but its server-side tools
 (`packages/ai/src/route-handlers/chat.ts`) are still website-editor only.
+
+## Broadcast consent
+
+Customer broadcasts (App > Marketing > Campaigns) only go to customers with an
+active row in the regional `customer_subscriptions` table for the campaign's
+channel (`email` or `sms`) and topic (`marketing`). A customer row, a verified
+phone or an order is not consent. Texts also need a verified phone. Emails need
+an address its owner confirmed (double opt-in): a customer's
+`PUT /subscriptions/:topic/:channel` for `email` stays pending and sends a
+signed confirmation link (the answer says `confirmationSent`; a failed send is
+logged without the address and the next request resends at once, otherwise a
+repeat request resends at most every 3 minutes per address, counted from the
+last link actually sent); the subscription counts only while
+`confirmed_email_hash` matches the customer's current address, so a changed
+address has to be confirmed again. A customer may claim the sources `profile`,
+`signup` or `checkout`; `operator`, `import` and `form` are for trusted server
+code (`operator` and `import` count as confirmed for the address on file).
+Opting out keeps the row with `unsubscribed_at` set.
+
+Every broadcast email carries a signed unsubscribe link (HMAC with
+`AUTH_HMAC_SECRET`, no login) in the body and as `List-Unsubscribe` and
+`List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers. The tenant-api
+endpoints are `GET|POST /subscriptions/unsubscribe?token=` and
+`GET|POST /subscriptions/confirm?token=`: GET only shows a button, POST acts and
+is idempotent, so a mail scanner opening links changes nothing. Links point at
+`TENANT_API_URL`, which is required in production (the Node entry refuses to
+start without it; the Cloudflare Worker keeps serving instead, so health, login
+and provisioning are unaffected). A send is skipped and logged when it is
+missing, and a broadcast with no origin is marked `Failed` before any
+per-recipient work. "Production" is anything but an explicit
+`NODE_ENV=development|test`, so an unset `NODE_ENV` counts as production. The
+request origin is never used, except for local development hosts when the
+variable is unset in development or test.
+
+**Rollout order:** set `TENANT_API_URL` on the node (Worker `vars` of that
+environment or the dashboard; `apps/tenant-api/wrangler.jsonc` deliberately does
+not declare an empty value, which would overwrite it on deploy), then deploy.
+Without it consent emails are skipped, not the whole node. Journey emails do not
+carry the link yet.
+
+To backfill consent a business already holds (for example an existing mailing
+list), insert rows with `source = 'import'` through `setCustomerSubscription()`
+in `apps/tenant-api/src/services/marketing-audience.ts`. Only import people who
+agreed to receive marketing.

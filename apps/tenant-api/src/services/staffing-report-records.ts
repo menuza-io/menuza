@@ -224,8 +224,8 @@ async function loadShiftIndex(
 ) {
 	const byId = new Map<string, ShiftStart>()
 	const byStaffDate = new Map<string, ShiftStart[]>()
-	for (let i = 0; i < staffIds.length; i += 90) {
-		const rows = await queryInChunks(staffIds.slice(i, i + 90), (chunk) =>
+	{
+		const rows = await queryInChunks(staffIds, (chunk) =>
 			db
 				.select({
 					id: shifts.id,

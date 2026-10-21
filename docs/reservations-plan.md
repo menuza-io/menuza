@@ -21,7 +21,7 @@ the [operator guide](./reservations.md) for runbooks and known issues.
      schemas, role presets and error codes live in `@repo/reservations`. It does
      no I/O and has no UI strings.
 2. **Regional data plane (`packages/tenant-db`, `apps/tenant-api`).**
-   - 41 `rsv_*` tables (migration `0016`) with SQLite triggers for overlapping
+   - 41 `rsv_*` tables (migration `0019_reservations`) with SQLite triggers for overlapping
      occupancies, converted holds and append-only history (ADR 048 lists them).
    - A serialized per-organization write gate, `withReservationWrite`
      (`apps/tenant-api/src/lib/reservations-write.ts`): in-process mutex,
@@ -40,10 +40,9 @@ the [operator guide](./reservations.md) for runbooks and known issues.
      source.
 3. **Control plane (`packages/database`, `packages/auth`, `apps/app`,
    `apps/admin`).**
-   - Migration `0025_reservations_foundation.sql` seeds the 8 organization
-     permissions (granted to the `admin` role), and system-level `false` flags;
-     `0026_reservations_platform_fee.sql` sets the platform fee default to 250
-     basis points.
+   - Migration `0025_reservations.sql` seeds the 8 organization permissions
+     (granted to the `admin` role), system-level `false` flags, and the platform
+     fee default of 250 basis points.
    - Operator `rsv+jwt` tokens minted by `GET /<orgSlug>/reservations/token`,
      and the non-PII context endpoint `GET /resources/reservations/context`.
    - Payment orchestration: the App talks to Stripe and Checkout.com, verifies
@@ -55,28 +54,22 @@ the [operator guide](./reservations.md) for runbooks and known issues.
 
 | Milestone                             | Scope                                                                                                                                                  | Main commits                                                  |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| 1. `foundation`                       | `@repo/zoned-time`, `@repo/reservations`, tenant `0016` and control-plane `0025` migrations, `rsv+jwt` auth, guards, write gate, App shell, seed, docs | `b10ef622`, `bc4326f7`, `452bb463`                            |
+| 1. `foundation`                       | `@repo/zoned-time`, `@repo/reservations`, the tenant `0019` and control-plane `0025` migrations, `rsv+jwt` auth, guards, write gate, App shell, seed, docs | `b10ef622`, `bc4326f7`, `452bb463`                            |
 | 2. `foh-core`                         | Setup backend and App Setup screens, floor-plan editor, Book, Today host stand, Timeline, Calendar, Overview, region and location guards               | `bf30dd0c`, `d6dd3084`, `3c4bfa6b`, `403e6c0c` and fix rounds |
-| 3. `guest-channels-and-crm`           | Public booking API, Sites pages and builder block, messages and tick (`0017`), waitlist and notify-me (`0018`), guestbook CRM, reports                 | `c336ca21`, `05659c95`, `97bb99a4`, `e5c6e296`, `661d65a5`    |
-| 4. `payments-integrations-and-native` | Payment mocks, payments and platform fee (`0020`, `0026`), experiences, Sites pay, voice actions (`0021`), demand source, journeys, native apps, docs  | `72032cc7`, `8b544867`, `8cac7e43`, this change               |
+| 3. `guest-channels-and-crm`           | Public booking API, Sites pages and builder block, messages and tick, waitlist and notify-me, guestbook CRM, reports                 | `c336ca21`, `05659c95`, `97bb99a4`, `e5c6e296`, `661d65a5`    |
+| 4. `payments-integrations-and-native` | Payment mocks, payments and platform fee, experiences, Sites pay, voice actions, demand source, journeys, native apps, docs  | `72032cc7`, `8b544867`, `8cac7e43`, this change               |
 
 Hardening: `6c8ec334` made the write gate roll back on the Durable Object
 runtime, chunked `IN` lists below the 100-parameter limit, windowed occupancy
-scans (migration `0019`), fixed undo, stopped public bookings from patching
+scans (index in migration `0019`), fixed undo, stopped public bookings from patching
 guest profiles and moved idempotency retries to per-attempt keys.
 
 ### Migrations
 
-| Migration                                      | Plane    | Change                                                                                                                                          |
-| ---------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| tenant `0016_reservations_foundation`          | regional | 41 `rsv_*` tables, indexes, triggers                                                                                                            |
-| tenant `0017_reservations_messages_waitlist`   | regional | `rsv_day_versions.availability_increased_at`, `rsv_outbox.status`                                                                               |
-| tenant `0018_rsv_notify_slot`                  | regional | `rsv_notify_requests.last_notified_slot_min`                                                                                                    |
-| tenant `0019_rsv_occupancy_location_window`    | regional | index `idx_rsv_table_occupancies_location_active_end`                                                                                           |
-| tenant `0020_rsv_payments_contract`            | regional | `rsv_payments` purpose, provider session, refunded amount, platform fee, attempt, decline code, dispute and refund references, version, indexes |
-| tenant `0021_demand_units_and_voice_actions`   | regional | `voice_call_actions` table, `labor_scope_settings.demand_per_labor_hour`                                                                        |
-| control plane `0025_reservations_foundation`   | US       | 8 permissions, `admin` grants, system flags                                                                                                     |
-| control plane `0026_reservations_platform_fee` | US       | `reservations.platform_fee_bp` system default `250`                                                                                             |
+| Migration                          | Plane    | Change                                                                                                                                                                                                                                                                                          |
+| ---------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tenant `0019_reservations`         | regional | 41 `rsv_*` tables, indexes, triggers; `rsv_payments` contract columns; `voice_call_actions` table; `labor_scope_settings.demand_per_labor_hour`. One migration for the whole module: it began as six (`0016` to `0021`) and was folded into one, after upstream's `0016` to `0018`, when merged |
+| control plane `0025_reservations`  | US       | 8 permissions, `admin` grants, system flags, `reservations.platform_fee_bp` system default `250`                                                                                                                                                                                                |
 
 ### Milestone 4 detail
 

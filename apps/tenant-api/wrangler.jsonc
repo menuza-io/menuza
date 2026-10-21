@@ -35,6 +35,14 @@
 	// Secrets — set via `wrangler secret put <NAME>` (never commit values):
 	// JWT_SECRET, AUTH_HMAC_SECRET, INTERNAL_COMMAND_TOKEN, TENANT_OPERATOR_TOKEN,
 	// TWILIO_AUTH_TOKEN, OCI_PRIVATE_KEY, OCI_EMAIL_COMPARTMENT_ID, etc.
+	//
+	// TENANT_API_URL (this Worker's public https origin, used in the signed
+	// confirmation and unsubscribe links inside emails) is required in
+	// production but deliberately NOT declared below: an empty "vars" entry
+	// would overwrite a value set in the dashboard on every deploy. Set it per
+	// environment ("vars" of that environment, or the dashboard) BEFORE you
+	// deploy. Until it is set the Worker keeps serving; consent emails are
+	// skipped (broadcasts end Failed) and each skip is logged with ids only.
 	"vars": {
 		"DATA_REGION": "us",
 		"NODE_ENV": "production",

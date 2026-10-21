@@ -15,6 +15,7 @@ import {
 	staffScopeAssignments,
 	staffMembers,
 	type TenantDatabase,
+	runTenantTransaction,
 } from '@repo/tenant-db'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { type ScopeAccess, type StaffAuth } from '../lib/staff-auth.ts'
@@ -306,103 +307,108 @@ export async function savePolicy(
 	const scopeKey = scopeId ?? DEFAULT_POLICY_SCOPE
 
 	return retryOnSqliteBusy(() =>
-		ctx.db.transaction(async (tx): Promise<PolicyResult<LaborPolicyView>> => {
-			const existing = await findPolicyRow(tx, scopeKey)
-			if (existing && patch.expectedVersion !== existing.version) {
-				return fail(409, 'stale_version', { currentVersion: existing.version })
-			}
-			const seed =
-				existing ??
-				(scopeId === null
-					? null
-					: await findPolicyRow(tx, DEFAULT_POLICY_SCOPE))
-			const base = seed ? policyRowToFields(seed) : BUILTIN_LABOR_POLICY
-
-			let merged: LaborPolicyFields
-			try {
-				merged = applyLaborPolicyPatch(base, patch)
-			} catch {
-				return fail(422, 'invalid_policy')
-			}
-			const problems = laborPolicyProblems(merged)
-			if (problems.length > 0) return problemsFailure(problems)
-			if (!getRulePack(merged.rulePack)) {
-				return problemsFailure([
-					{ path: 'rulePack', code: 'unknown_rule_pack' },
-				])
-			}
-			if (
-				merged.aggregateOvertimeAcrossScopes === null &&
-				(await hasMultiScopeStaff(tx, scopeId ?? undefined))
-			) {
-				return fail(422, 'aggregate_overtime_required', {
-					problems: [
-						{
-							path: 'aggregateOvertimeAcrossScopes',
-							code: 'required_for_multi_scope_staff',
-						},
-					],
-				})
-			}
-
-			const columns = policyFieldsToColumns(merged)
-			const now = Date.now()
-			let version = 1
-			if (existing) {
-				version = existing.version + 1
-				const updated = await tx
-					.update(laborPolicies)
-					.set({
-						...columns,
-						version,
-						updatedBy: ctx.auth.userId,
-						updatedAt: now,
-					})
-					.where(
-						and(
-							eq(laborPolicies.id, existing.id),
-							eq(laborPolicies.version, existing.version),
-						),
-					)
-					.returning({ id: laborPolicies.id })
-				if (updated.length !== 1) {
+		runTenantTransaction(
+			ctx.db,
+			async (tx): Promise<PolicyResult<LaborPolicyView>> => {
+				const existing = await findPolicyRow(tx, scopeKey)
+				if (existing && patch.expectedVersion !== existing.version) {
 					return fail(409, 'stale_version', {
 						currentVersion: existing.version,
 					})
 				}
-			} else {
-				await tx.insert(laborPolicies).values({
-					...columns,
-					scopeKey,
+				const seed =
+					existing ??
+					(scopeId === null
+						? null
+						: await findPolicyRow(tx, DEFAULT_POLICY_SCOPE))
+				const base = seed ? policyRowToFields(seed) : BUILTIN_LABOR_POLICY
+
+				let merged: LaborPolicyFields
+				try {
+					merged = applyLaborPolicyPatch(base, patch)
+				} catch {
+					return fail(422, 'invalid_policy')
+				}
+				const problems = laborPolicyProblems(merged)
+				if (problems.length > 0) return problemsFailure(problems)
+				if (!getRulePack(merged.rulePack)) {
+					return problemsFailure([
+						{ path: 'rulePack', code: 'unknown_rule_pack' },
+					])
+				}
+				if (
+					merged.aggregateOvertimeAcrossScopes === null &&
+					(await hasMultiScopeStaff(tx, scopeId ?? undefined))
+				) {
+					return fail(422, 'aggregate_overtime_required', {
+						problems: [
+							{
+								path: 'aggregateOvertimeAcrossScopes',
+								code: 'required_for_multi_scope_staff',
+							},
+						],
+					})
+				}
+
+				const columns = policyFieldsToColumns(merged)
+				const now = Date.now()
+				let version = 1
+				if (existing) {
+					version = existing.version + 1
+					const updated = await tx
+						.update(laborPolicies)
+						.set({
+							...columns,
+							version,
+							updatedBy: ctx.auth.userId,
+							updatedAt: now,
+						})
+						.where(
+							and(
+								eq(laborPolicies.id, existing.id),
+								eq(laborPolicies.version, existing.version),
+							),
+						)
+						.returning({ id: laborPolicies.id })
+					if (updated.length !== 1) {
+						return fail(409, 'stale_version', {
+							currentVersion: existing.version,
+						})
+					}
+				} else {
+					await tx.insert(laborPolicies).values({
+						...columns,
+						scopeKey,
+						scopeId,
+						version,
+						updatedBy: ctx.auth.userId,
+						createdAt: now,
+						updatedAt: now,
+					})
+				}
+
+				const before = existing ? policyRowToFields(existing) : null
+				await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
+					action: existing ? 'labor_policy.updated' : 'labor_policy.created',
+					entityType: 'labor_policy',
+					entityId: scopeKey,
 					scopeId,
-					version,
-					updatedBy: ctx.auth.userId,
-					createdAt: now,
-					updatedAt: now,
+					changes: {
+						version,
+						fields: changedFields(before ?? base, merged),
+					},
 				})
-			}
 
-			const before = existing ? policyRowToFields(existing) : null
-			await writeStaffAudit(tx, ctx.auth, ctx.ipHash, {
-				action: existing ? 'labor_policy.updated' : 'labor_policy.created',
-				entityType: 'labor_policy',
-				entityId: scopeKey,
-				scopeId,
-				changes: {
-					version,
-					fields: changedFields(before ?? base, merged),
-				},
-			})
-
-			const row = await findPolicyRow(tx, scopeKey)
-			return ok(
-				toView(
-					row,
-					scopeId === null ? 'default' : 'scope',
-					scopeId,
-					await hasMultiScopeStaff(tx, scopeId ?? undefined),
-				),
-			)
-		}),
+				const row = await findPolicyRow(tx, scopeKey)
+				return ok(
+					toView(
+						row,
+						scopeId === null ? 'default' : 'scope',
+						scopeId,
+						await hasMultiScopeStaff(tx, scopeId ?? undefined),
+					),
+				)
+			},
+		),
 	)
 }

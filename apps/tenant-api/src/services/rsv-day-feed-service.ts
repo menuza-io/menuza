@@ -2399,6 +2399,7 @@ export async function getRegionalReservationSummary(
 				db
 					.select({ count: sql<number>`count(*)` })
 					.from(rsvAuditLog)
+					// bounded: one chunk of locations per query, never reused
 					.where(chunk ? inArray(rsvAuditLog.locationId, chunk) : undefined)
 					.all(),
 			),

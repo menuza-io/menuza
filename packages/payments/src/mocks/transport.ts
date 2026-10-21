@@ -11,11 +11,11 @@ export function createMockStripeHttpClient(emulator: PaymentsEmulator) {
 }
 
 type FetchLike = typeof fetch
-const CURRENT = Symbol.for('menuza.payments-mock.checkout-emulator')
-const PATCHED = Symbol.for('menuza.payments-mock.checkout-fetch')
+const CURRENT = Symbol.for('payments-mock.checkout-emulator')
+const PATCHED = Symbol.for('payments-mock.checkout-fetch')
 
 /**
- * The Checkout.com SDK always calls global `fetch`, so only the reserved
+ * The Checkout.com SDK always calls global `fetch`, so only the dedicated
  * `.invalid` host is intercepted. Safe to call repeatedly: the wrapper is
  * installed once and each call just points it at the newest emulator.
  */

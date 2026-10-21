@@ -11,8 +11,11 @@
  * 4. `scripts/check-no-payment-mocks.mjs` greps the Worker bundle for
  *    `PAYMENTS_MOCK_SENTINEL`.
  *
- * There is deliberately no `NODE_ENV` gate: CI runs the production Node build
- * with `MOCKS=true` and must keep the mock.
+ * There is deliberately no bare `NODE_ENV` gate: CI and `start:mocks` run the
+ * production Node build with `MOCKS=true` and must keep the mock. The runtime
+ * signal is the public origin instead: with a mock switch on, `BASE_URL` must be set to a local
+ * development host (and `PAYMENTS_MOCK_ORIGIN` too, when set), so a
+ * real deploy fails closed even when no key variable is set.
  */
 
 export type PaymentsMockEnv = {
@@ -59,28 +62,41 @@ export function isRealSecret(value: string | undefined | null) {
 	return Boolean(trimmed && !trimmed.includes('***'))
 }
 
+/**
+ * Fail closed: only the two shapes that are certainly not live pass. Checkout
+ * sandbox secret keys are `sk_sbox_...`, test access keys `ack_test_...`.
+ * Anything else (a live `sk_`, a live `ack_`, an MBC key that is a bare UUID,
+ * a typo) counts as live.
+ */
 function looksLiveCheckoutKey(value: string) {
 	const key = value.trim().replace(/^Bearer\s+/i, '')
-	// Sandbox keys are `sk_sbox_...`; MBC live keys are a bare UUID; every other
-	// `sk_` key is live. `ack_` access keys must be explicit test keys.
-	if (key.startsWith('sk_sbox_')) return false
-	if (key.startsWith('ack_')) return !key.startsWith('ack_test_')
-	return key.startsWith('sk_')
+	return !(key.startsWith('sk_sbox_') || key.startsWith('ack_test_'))
 }
 
+/** Live secret and restricted keys; test keys are `sk_test_` / `rk_test_`. */
+const LIVE_STRIPE_KEY = /^(sk|rk)_live_/
+
 /**
- * Which providers the emulator replaces. Throws when a mock switch is on but a
- * live key is present, so a misconfigured deploy fails loudly at startup.
+ * Which providers the emulator replaces. Throws when a mock switch is on but
+ * the deployment is not local or a live key is present, so a misconfigured
+ * deploy fails loudly at startup.
  */
 export function paymentsMockMode(env: PaymentsMockEnv): PaymentsMockMode {
 	if (!bundled()) return OFF
 	if (env.PAYMENTS_MOCK === 'false') return OFF
 	if (env.MOCKS !== 'true' && env.PAYMENTS_MOCK !== 'true') return OFF
-	if ((env.STRIPE_SECRET_KEY?.trim() ?? '').startsWith('sk_live_')) {
-		throw new Error('Refusing payments mock with a live Stripe key')
+	// Fail closed on the deployment, whatever the key variables say: the mock
+	// accepts public webhook secrets, so a real deploy with a switch on (and
+	// keys simply unset) must not start.
+	if (!isLocalDeployment(env)) {
+		throw new Error(
+			'Refusing payments mock on a non-local deployment: BASE_URL must be set to a local host (and PAYMENTS_MOCK_ORIGIN too, when set; localhost, 127.0.0.1, ::1, *.test, *.localhost). Unset MOCKS and PAYMENTS_MOCK.',
+		)
 	}
-	if ((env.STRIPE_WEBHOOK_SECRET?.trim() ?? '').startsWith('whsec_live_')) {
-		throw new Error('Refusing payments mock with a live Stripe webhook secret')
+	// Webhook secrets (`whsec_...`) carry no live/test marker, so the secret
+	// key is the only Stripe signal there is.
+	if (LIVE_STRIPE_KEY.test(env.STRIPE_SECRET_KEY?.trim() ?? '')) {
+		throw new Error('Refusing payments mock with a live Stripe key')
 	}
 	if (
 		isRealSecret(env.CHECKOUT_SECRET_KEY) &&
@@ -133,13 +149,25 @@ export function mockWebhookSecrets(env: PaymentsMockEnv) {
 }
 
 /**
- * Secrets the Stripe webhook route verifies with: the platform secret and,
- * when set, the Connect secret (Connect events such as `account.updated` are
+ * Secrets the Stripe webhook route verifies with: the platform secret (the
+ * mock's own only for a local request, see below) and, when set, the Connect
+ * secret (Connect events such as `account.updated` are
  * signed by a second endpoint secret in production).
  */
-export function getStripeWebhookSecrets(env: PaymentsMockEnv): string[] {
+export function getStripeWebhookSecrets(
+	env: PaymentsMockEnv,
+	request?: { url: string },
+): string[] {
 	const secrets: string[] = []
-	const platform = platformWebhookSecret(env, isPaymentsMockOn(safeMode(env)))
+	// The mock's own (public) secret is a fallback only when the request is
+	// local too: a node started with MOCKS=true must not accept forged events
+	// from the internet when no real secret is set.
+	const mockFallback =
+		isPaymentsMockOn(safeMode(env)) &&
+		isLocalDeployment(env) &&
+		Boolean(request) &&
+		isLocalUrl(request!.url)
+	const platform = platformWebhookSecret(env, mockFallback)
 	if (platform) secrets.push(platform)
 	if (isRealSecret(env.STRIPE_CONNECT_WEBHOOK_SECRET)) {
 		secrets.push(env.STRIPE_CONNECT_WEBHOOK_SECRET!.trim())
@@ -155,7 +183,7 @@ function safeMode(env: PaymentsMockEnv) {
 	}
 }
 
-/** Loopback and reserved local names. Mock pages never answer anywhere else. */
+/** Loopback and special-use local names. Mock pages never answer anywhere else. */
 export function isLocalHostname(hostname: string) {
 	const host = hostname
 		.trim()
@@ -177,4 +205,16 @@ export function isLocalUrl(value: string | undefined | null) {
 	} catch {
 		return false
 	}
+}
+
+/**
+ * The deployment is local: `BASE_URL` must be present and local, and
+ * `PAYMENTS_MOCK_ORIGIN` must be local too when set. Both are checked, so a
+ * local override cannot hide a real `BASE_URL`. An absent or empty `BASE_URL`
+ * is not local: an unset variable must never switch the mock on.
+ */
+export function isLocalDeployment(env: PaymentsMockEnv) {
+	if (!isLocalUrl(env.BASE_URL?.trim())) return false
+	const override = env.PAYMENTS_MOCK_ORIGIN?.trim()
+	return !override || isLocalUrl(override)
 }

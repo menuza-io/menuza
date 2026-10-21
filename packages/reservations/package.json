@@ -21,6 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@repo/common": "*",
     "@repo/zoned-time": "*",
     "zod": "^3.25.76"
   },

@@ -39,13 +39,20 @@ export function MockPage({
 	)
 }
 
+/**
+ * Formats an amount in minor units. The exponent comes from the currency
+ * itself (`Intl`): 2 for USD, 0 for JPY, 3 for KWD.
+ */
 export function formatMinor(amount: number, currency: string) {
+	const code = currency.toUpperCase()
 	try {
-		return new Intl.NumberFormat('en-US', {
+		const formatter = new Intl.NumberFormat('en-US', {
 			style: 'currency',
-			currency: currency.toUpperCase(),
-		}).format(amount / 100)
+			currency: code,
+		})
+		const digits = formatter.resolvedOptions().maximumFractionDigits ?? 2
+		return formatter.format(amount / 10 ** digits)
 	} catch {
-		return `${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`
+		return `${(amount / 100).toFixed(2)} ${code}`
 	}
 }

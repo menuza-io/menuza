@@ -5,12 +5,14 @@ import {
 	isStaffingReportSubject,
 } from './catalog-staffing.ts'
 import { type ReportDefinition } from './dsl.ts'
+import { isOrgWideReportSubject } from './org-wide-subjects.ts'
 import { referencedFieldIds } from './engine.ts'
 import { type ReportTemplate } from './templates.ts'
 
 /**
  * What a person is offered in the Reports screens. Staff subjects (time cards,
- * shifts, daily labor, applications) and the fields that show one person's pay
+ * shifts, daily labor, applications) and the organization-wide ones (customers,
+ * shop orders) and the fields that show one person's pay
  * exist for someone only while their token grants them: with the staffing flag
  * off or without the permission, they are absent from the subject list, the
  * field pickers and the templates, as if the module did not exist. The regional
@@ -20,9 +22,12 @@ import { type ReportTemplate } from './templates.ts'
  * `granted` is the restricted subjects the reports token lists.
  */
 
+/** Subjects that exist for someone only while their token grants them. */
 function isGatedSubject(subject: string) {
 	return (
-		isStaffingReportSubject(subject) || isReservationsReportSubject(subject)
+		isStaffingReportSubject(subject) ||
+		isReservationsReportSubject(subject) ||
+		isOrgWideReportSubject(subject)
 	)
 }
 

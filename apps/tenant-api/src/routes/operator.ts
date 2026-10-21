@@ -18,14 +18,25 @@ import {
 	marketingMessages,
 } from '@repo/tenant-db'
 import { z } from 'zod'
-import { HttpError } from '../lib/http.ts'
 import { checkGlobalSendCap } from '../lib/rate-limit.ts'
 import { getBearerToken, getOperatorToken } from '../lib/secrets.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { ensureEmailEngagementSynced } from '../services/email-engagement-sync.ts'
-import { loadBroadcastAudience } from '../services/marketing-audience.ts'
-import { erasePerson } from '../services/person-erasure-service.ts'
-import { forEachInChunks, insertRowsInChunks } from '../lib/chunked-in.ts'
+import {
+	erasePerson,
+	PersonErasureError,
+} from '../services/person-erasure-service.ts'
+import {
+	consentBaseUrl,
+	listUnsubscribeHeaders,
+	unsubscribeUrl,
+} from '../lib/email-consent.ts'
+import {
+	BROADCAST_TOPIC,
+	loadBroadcastAudience,
+} from '../services/marketing-audience.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
+import { insertRowsInChunks } from '../lib/chunked-in.ts'
 
 export const operatorRoutes = new Hono()
 
@@ -212,10 +223,11 @@ operatorRoutes.patch('/customers/:customerId', async (c) => {
 })
 
 /**
- * Erases a customer completely (the one erasure flow, shared with the guest
- * erase and the internal route): customer row, linked guests, subscriptions,
- * tokens, order contact fields, waitlist, notify and voice data. Needs a
- * token minted with `canDelete`; a token without it is refused.
+ * Erase everything the regional database holds about one customer (sessions,
+ * subscriptions, saved cards, journeys, messages, calls, and the order and
+ * form links). Needs a token minted with `canDelete`. Idempotent: an unknown or
+ * already-erased customer answers 200 with `alreadyErased: true`, so the call
+ * cannot be used to probe for ids.
  */
 operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 	let auth
@@ -228,31 +240,22 @@ operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 		return c.json({ error: 'Forbidden' }, 403)
 	}
 
-	const customerId = c.req.param('customerId')
 	try {
 		const db = await getTenantDb(auth.orgId)
-		const existing = await db
-			.select({ id: customers.id })
-			.from(customers)
-			.where(eq(customers.id, customerId))
-			.get()
-		if (!existing) {
-			return c.json({ error: 'Customer not found' }, 404)
-		}
-		const { guest: ignoredGuest, ...counts } = await erasePerson(
+		const result = await erasePerson(
 			db,
-			{ customerId },
+			{ customerId: c.req.param('customerId') },
 			{ actorId: auth.sub ?? 'operator' },
 		)
-		return c.json({ ok: true, ...counts })
+		return c.json({ success: true, ...result })
 	} catch (error) {
-		if (error instanceof HttpError) {
-			return c.json({ error: error.code }, error.status as 502)
+		if (error instanceof PersonErasureError) {
+			return c.json(
+				{ error: error.message, code: error.code, erased: error.erased },
+				error.status as 400 | 502,
+			)
 		}
-		console.error(
-			'Error erasing customer:',
-			error instanceof Error ? error.name : 'error',
-		)
+		console.error('Error erasing customer:', error)
 		return c.json({ error: 'Tenant Database unavailable' }, 500)
 	}
 })
@@ -538,10 +541,9 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 		const campaign = campaignArr[0]
 		if (!campaign) return
 
-		// 1. Fetch the audience: only customers with an ACTIVE subscription for
-		// the channel (customer_subscriptions is the single consent store), then
-		// the segmentation rule narrows it further.
-		let audienceRule: string | undefined
+		// 1. Fetch the consented audience (active subscription for this channel
+		// and topic; texts also need a verified phone) and apply the rules.
+		let rulesAudience: string | undefined
 		if (campaign.segmentationRules) {
 			try {
 				const rules =
@@ -550,14 +552,14 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 								audience?: string
 							})
 						: (campaign.segmentationRules as { audience?: string })
-				audienceRule = rules?.audience
+				rulesAudience = rules?.audience
 			} catch {
-				// Fallback to all
+				// Fallback to everyone subscribed
 			}
 		}
 		const targetCustomers = await loadBroadcastAudience(db, {
-			channel: campaign.channel,
-			audience: audienceRule,
+			channel: campaign.channel === 'sms' ? 'sms' : 'email',
+			audience: rulesAudience,
 		})
 
 		// Update target audience count
@@ -568,6 +570,24 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 		let hitCap = false
 		const BATCH_SIZE = 25
+
+		// The unsubscribe link carries a signed token, so its origin must be the
+		// configured one. Without it no email can go out: fail the campaign now,
+		// before any per-recipient work, so the operator sees a Failed broadcast
+		// instead of a Completed one that delivered nothing. The campaign row has
+		// no reason column, so the generic reason goes to the log (ids only).
+		const consentOrigin = campaign.channel === 'email' ? consentBaseUrl() : null
+		if (campaign.channel === 'email' && !consentOrigin) {
+			console.error('Broadcast failed: TENANT_API_URL is not set', {
+				orgId,
+				campaignId,
+			})
+			await db
+				.update(marketingCampaigns)
+				.set({ status: 'Failed' })
+				.where(eq(marketingCampaigns.id, campaignId))
+			return
+		}
 
 		// 2. Dispatch in concurrency batches
 		for (let i = 0; i < targetCustomers.length; i += BATCH_SIZE) {
@@ -597,7 +617,7 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 					customerId: item.customer.id,
 					status: 'Processing',
 				})),
-				(chunk) => db.insert(marketingMessages).values(chunk),
+				(part) => db.insert(marketingMessages).values(part),
 			)
 
 			// Process sends concurrently across the batch
@@ -615,14 +635,24 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 					if (campaign.channel === 'email') {
 						if (!customer.email) throw new Error('No email address')
+						// Every broadcast carries a signed unsubscribe link, in the
+						// body and as List-Unsubscribe / one-click headers.
+						if (!consentOrigin) throw new Error('TENANT_API_URL is not set')
+						const optOutUrl = unsubscribeUrl(consentOrigin, {
+							orgId,
+							customerId: customer.id,
+							topic: BROADCAST_TOPIC,
+						})
+						const bodyHtml = campaign.contentHtml
+							? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
+							: `<p>${escapeHtml(parsedContent)}</p>`
 						const emailRes = await sendTenantEmail({
 							to: customer.email,
 							toName: customer.name,
 							subject: parsedSubject || 'Notification',
-							text: parsedContent,
-							html: campaign.contentHtml
-								? interpolateMergeTagsHtml(campaign.contentHtml, customer, {})
-								: `<p>${escapeHtml(parsedContent)}</p>`,
+							text: `${parsedContent}\n\nUnsubscribe: ${optOutUrl}`,
+							html: `${bodyHtml}<p style="font-size:12px;color:#666"><a href="${optOutUrl}">Unsubscribe</a></p>`,
+							extraHeaders: listUnsubscribeHeaders(optOutUrl),
 							context: {
 								orgId,
 								campaignId,
@@ -662,26 +692,16 @@ async function dispatchCampaign(orgId: string, campaignId: string) {
 
 			// Bulk update outcomes for the batch
 			if (sentIds.length > 0) {
-				await forEachInChunks(
-					sentIds,
-					(chunk) =>
-						db
-							.update(marketingMessages)
-							.set({ status: 'Sent', sentAt: new Date() })
-							.where(inArray(marketingMessages.id, chunk)),
-					40,
-				)
+				await db
+					.update(marketingMessages)
+					.set({ status: 'Sent', sentAt: new Date() })
+					.where(inJsonList(marketingMessages.id, sentIds))
 			}
 			if (failedIds.length > 0) {
-				await forEachInChunks(
-					failedIds,
-					(chunk) =>
-						db
-							.update(marketingMessages)
-							.set({ status: 'Failed' })
-							.where(inArray(marketingMessages.id, chunk)),
-					40,
-				)
+				await db
+					.update(marketingMessages)
+					.set({ status: 'Failed' })
+					.where(inJsonList(marketingMessages.id, failedIds))
 			}
 		}
 

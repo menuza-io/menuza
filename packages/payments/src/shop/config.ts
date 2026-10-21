@@ -7,7 +7,7 @@ import type Stripe from 'stripe'
 export type ShopCommerceMockConfig = {
 	/** Stripe SDK transport into the in-process emulator. */
 	stripeHttpClient?: Stripe.HttpClient
-	/** Checkout.com SDK host (the reserved `.invalid` origin). */
+	/** Checkout.com SDK host (the dedicated `.invalid` origin). */
 	checkoutHost?: string
 	/** Where "Open Checkout dashboard" goes instead of the real dashboard. */
 	checkoutDashboardUrl?: string

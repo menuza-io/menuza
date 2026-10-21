@@ -37,7 +37,6 @@ describe('mapCheckoutWebhookToPayment', () => {
 			id: 'pay_1',
 			sessionId: 'ps_1',
 			reference: null,
-			declined: false,
 			amountCents: 1999,
 			currency: 'usd',
 			paid: true,

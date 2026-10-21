@@ -2,8 +2,8 @@ import {
 	getCatalog,
 	getSubject,
 	organizationTemplates,
-	templatesForGrants,
 	templateCategories,
+	templatesForGrants,
 	type ReportDefinition,
 	type ReportRunError,
 	type ReportTemplate,
@@ -76,10 +76,10 @@ function groupTemplates(templates: readonly ReportTemplate[]) {
 }
 
 /**
- * The organization templates a person may run, by category, in the order the
- * reports page uses. `grants` is the restricted subjects their reports token
- * lists (`resolveReportGrantsForRequest`): staff and Reservations templates
- * are left out for anyone it does not cover, so the Add block dialog never
+ * The organization templates by category, in the order the reports page uses.
+ * With `grants` (the restricted report subjects the person's reports token
+ * lists, `resolveReportGrantsForRequest`), a template on a subject they cannot
+ * run (staff, Reservations, organization-wide) is left out, so the picker never
  * offers a report that cannot run. Without `grants`, every template is listed.
  */
 export function reportTemplateGroups(

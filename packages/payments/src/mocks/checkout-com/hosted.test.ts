@@ -9,7 +9,7 @@ import {
 async function hosted(
 	harness: Harness,
 	amount = 12_000,
-	reference = 'restaurant_order:org_a:ord_1',
+	reference = 'shop_order:org_a:ord_1',
 ) {
 	const entity = await activeEntity(harness)
 	const hpp = (await harness.checkout.hostedPayments.create({
@@ -21,7 +21,7 @@ async function hosted(
 		success_url: 'http://localhost:3008/menu/success?order=ord_1',
 		failure_url: 'http://localhost:3008/menu',
 		cancel_url: 'http://localhost:3008/menu',
-		metadata: { type: 'restaurant_order', orgId: 'org_a', orderId: 'ord_1' },
+		metadata: { type: 'shop_order', orgId: 'org_a', orderId: 'ord_1' },
 		amount_allocations: [
 			{ id: entity, amount, commission: { amount: Math.round(amount / 5) } },
 		],
@@ -53,9 +53,9 @@ describe('Checkout.com hosted payment page', () => {
 				amount: 12_000,
 				currency: 'SAR',
 				approved: true,
-				reference: 'restaurant_order:org_a:ord_1',
+				reference: 'shop_order:org_a:ord_1',
 				metadata: {
-					type: 'restaurant_order',
+					type: 'shop_order',
 					orgId: 'org_a',
 					orderId: 'ord_1',
 				},
@@ -147,7 +147,7 @@ describe('Checkout.com hosted payment page', () => {
 			),
 		).toMatchObject({ status: 'inactive' })
 
-		const fresh = await hosted(harness, 12_000, 'restaurant_order:org_a:ord_2')
+		const fresh = await hosted(harness, 12_000, 'shop_order:org_a:ord_2')
 		const challenge = await harness.emulator.pages.checkout.submit(
 			fresh.hppId,
 			{

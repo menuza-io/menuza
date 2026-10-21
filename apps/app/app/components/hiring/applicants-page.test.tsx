@@ -12,12 +12,13 @@ import { type ApplicantScope } from '#app/utils/hiring/applicant-types.ts'
 import { renderStaff } from '#tests/staff-render.tsx'
 import { ApplicantsPage } from './applicants-page.tsx'
 
+// Requests that finish after a test ends (fire-and-forget reloads) must not
+// reach MSW: swallow them instead of restoring its patched fetch.
 afterEach(() => {
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(async () => Response.json({})),
 	)
-	vi.unstubAllGlobals()
 })
 
 let mobile = false
@@ -211,6 +212,12 @@ describe('ApplicantsPage', () => {
 		)
 		const move = calls.find((c) => c.url.endsWith('/applications/a1/stage'))!
 		expect(move).toMatchObject({ method: 'POST', body: { stage: 'offer' } })
+		// The board reloads after the move; wait for that round trip.
+		await waitFor(() =>
+			expect(
+				calls.filter((c) => c.url.includes('/applications?')).length,
+			).toBeGreaterThan(1),
+		)
 	})
 
 	it('puts the card back and says why when the move fails', async () => {

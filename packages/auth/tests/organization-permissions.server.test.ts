@@ -426,7 +426,7 @@ describe('Organization Permissions', () => {
 			const migrationSource = fs.readFileSync(
 				path.resolve(
 					__dirname,
-					'../../database/drizzle/0025_reservations_foundation.sql',
+					'../../database/drizzle/0025_reservations.sql',
 				),
 				'utf8',
 			)

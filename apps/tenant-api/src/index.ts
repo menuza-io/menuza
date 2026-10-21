@@ -10,6 +10,7 @@ import {
 import { registerReservationsDemandSource } from './restaurant/reservations-demand-source.ts'
 import { registerReservationVoiceActions } from './restaurant/reservations-voice-actions.ts'
 import { registerRestaurantOrderSource } from './restaurant/staffing-order-source.ts'
+import { assertConsentBaseUrl } from './lib/email-consent.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
 import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
@@ -17,6 +18,7 @@ import { startReservationsTickInterval } from './lib/reservations-tick-interval.
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
 assertTenantApiSecrets()
+assertConsentBaseUrl()
 assertDataRegion()
 
 registerRestaurantOrderSource()

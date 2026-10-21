@@ -551,6 +551,7 @@ export async function refreshAccessToken(refreshToken: string) {
 	if (
 		!refreshTokenRecord ||
 		refreshTokenRecord.token.revoked ||
+		!refreshTokenRecord.authorization.isActive ||
 		refreshTokenRecord.token.expiresAt < new Date()
 	) {
 		return null

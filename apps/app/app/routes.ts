@@ -4,7 +4,8 @@ import { flatRoutes } from 'remix-flat-routes'
 
 /**
  * Dev-only route folders. `build:cf` sets `STRIP_DEV_MOCKS=true`, so a deployed
- * Worker never contains them (each also answers 404 unless `MOCKS=true`).
+ * Worker never contains them (each also answers 404 unless `MOCKS=true`; the
+ * payment mock also needs a local request).
  */
 const DEV_MOCK_ROUTE_FOLDERS = ['mock-payments+', 'mock-email+']
 

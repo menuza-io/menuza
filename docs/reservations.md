@@ -132,7 +132,7 @@ Admin (Feature flags).
 | `reservations.payments`        | `boolean` | Deposit, card guarantee and prepay policies, refunds, fee charges                                                       |
 | `reservations.experiences`     | `boolean` | Operator Experiences section and public ticketed experiences                                                            |
 | `reservations.voice`           | `boolean` | Phone agent availability, hold with texted link, and direct voice booking                                               |
-| `reservations.platform_fee_bp` | `number`  | Platform fee in basis points (`0..10000`) on deposits and prepayments. System default `250` (2.50%, migration `0026`).  |
+| `reservations.platform_fee_bp` | `number`  | Platform fee in basis points (`0..10000`) on deposits and prepayments. System default `250` (2.50%, migration `0025`).  |
 
 When a flag is off, App routes answer **404** and the sidebar hides the link.
 When a member lacks the permission, App routes answer **403**. The regional node
@@ -299,10 +299,10 @@ Code: `packages/reservations/src/rules/location-hours.ts` (`isLocationOpenAt`,
 ## Deploy order
 
 1. **tenant-api first** (US Worker and KSA node): it ships the migrations
-   (`0016` to `0021`) and the new routes. Tenant databases migrate on first use
+   (`0019_reservations`) and the new routes. Tenant databases migrate on first use
    (Node) or on first request to the Durable Object.
-2. **App and Admin second**: control-plane migrations `0025` (permissions and
-   flags) and `0026` (platform fee default) run with the App deploy.
+2. **App and Admin second**: control-plane migration `0025_reservations`
+   (permissions, flags and the platform fee default) runs with the App deploy.
 3. **Sites and the marketing web** last, then `apps/jobs-cron` if its triggers
    changed.
 4. Turn flags on per organization only after all three are live.
@@ -310,6 +310,22 @@ Code: `packages/reservations/src/rules/location-hours.ts` (`isLocationOpenAt`,
 Rolling back: switch `RESERVATIONS_PUBLIC_ENABLED=false` on the nodes first (no
 deploy needed), then flags off per organization. Migrations are additive and
 need no rollback.
+
+### Migration numbers and local databases
+
+The whole module is one tenant migration, `0019_reservations`, appended after
+upstream's `0016` to `0018`, and one control-plane migration,
+`0025_reservations` (see [reservations plan](./reservations-plan.md#migrations)).
+The tenant journal `when` is later than the last upstream entry's, which is what
+makes Drizzle apply it on a database that already ran `0018`.
+
+A **local** tenant database that applied the module under its first numbers
+(`0016` to `0021`, before the merge and the fold into one migration) needs a
+one-off fix, or a rebuild. The
+exact steps are in
+[database, one-off for local tenant databases](./database.md#one-off-local-tenant-databases-that-ran-the-reservations-branch-early).
+Deployed databases are not affected, and neither are local control-plane
+databases (their one migration is idempotent and simply runs again).
 
 ## Symptoms
 
@@ -498,10 +514,14 @@ on the main Reports page with the other groups, for people who have
 **Guests and reports**
 
 - Erasing a person is one flow (ADR 048, section 11) and
-  `customer_subscriptions` is the only marketing consent store (the
+  `customer_subscriptions` is the only marketing consent store. Ticking the
+  marketing box on a booking form records a pending `reservations` email
+  subscription and emails the owner a confirmation link (double opt-in, like
+  every email consent; it needs `TENANT_API_URL` on the node): reservation
+  journey emails go only to an address that was confirmed. The
   `rsv_guests.marketing_*_consent_at`, `consent_source` and
   `consent_text_version` columns are deprecated, never read or written, and
-  dropped in a later release). A guest links to a customer only through a
+  dropped in a later release. A guest links to a customer only through a
   verified phone; merging two guests linked to different customers is refused
   (`409 merge_conflicting_customers`). Still open: access tokens issued before
   an erasure stay valid until they expire (15 minutes), the Stripe customer
