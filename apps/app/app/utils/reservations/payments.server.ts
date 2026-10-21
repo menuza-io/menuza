@@ -894,7 +894,12 @@ export async function createReservationHostedCheckout(
 			!(error instanceof RegionalPaymentsApiError) ||
 			error.httpStatus !== 409
 		) {
-			await closeUnboundSession(processor, providerSessionId)
+			// A transient or unknown failure is not proof the session is useless.
+			// The session key is deterministic, so the guest's retry is served this
+			// same session and binds it; expiring it here would make every retry
+			// replay an expired session until the hold lapses. It is closed only
+			// when the region confirmed that another session won (below), or when
+			// the hold or payment is over.
 			if (error instanceof RegionalPaymentsApiError) {
 				throw regionalFailureResponse(error)
 			}
@@ -912,7 +917,13 @@ export async function createReservationHostedCheckout(
 		) {
 			return result
 		}
-		await closeUnboundSession(processor, providerSessionId)
+		// A null winner means the lookup failed: unknown, so nothing is closed
+		// (the winner may be serving this very session).
+		const definitelyUseless =
+			error.code === 'payment_terminal' || error.code === 'hold_expired'
+		if (winner?.boundSession || (winner && definitelyUseless)) {
+			await closeUnboundSession(processor, providerSessionId)
+		}
 		if (winner?.boundSession) {
 			const recovered = await recoverBoundSession(organization, winner).catch(
 				() => null,
@@ -930,7 +941,7 @@ export async function createReservationHostedCheckout(
 	return result
 }
 
-/** After a lost bind, re-quote to learn the winner; null on a transient failure. */
+/** After a lost bind, re-quote to learn the winner; null when that lookup fails (the winner is then unknown). */
 async function requoteAfterBindLoss(
 	organization: RestaurantOrderOrganization,
 	options: ReservationCheckoutOptions,

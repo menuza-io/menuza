@@ -547,6 +547,67 @@ describe('reservation payments bridge on the payment emulators', () => {
 			}
 		})
 
+		it('a transient bind failure leaves the session open, and the retry is served the same session', async () => {
+			const org = await createOrg('us', 'stripe')
+			const commerce = (
+				await import('#app/utils/shop.server.ts')
+			).getShopCommerce()
+			const created: Array<{ id: string }> = []
+			const original = commerce.createReservationStripeSession.bind(commerce)
+			const spy = vi
+				.spyOn(commerce, 'createReservationStripeSession')
+				.mockImplementation(async (options) => {
+					const session = await original(options)
+					created.push(session)
+					return session
+				})
+			fake.bindError = new RegionalPaymentsApiError('regional_unreachable', 503)
+			await failure(createReservationHostedCheckout(request(org)))
+			expect(created).toHaveLength(1)
+			// Not expired: the deterministic key would hand the retry this session.
+			expect(
+				(await commerce.retrieveReservationStripeSession(created[0]!.id))
+					.status,
+			).toBe('open')
+			fake.bindError = null
+			const retry = await createReservationHostedCheckout(request(org))
+			spy.mockRestore()
+			expect(retry.sessionId).toBe(created[0]!.id)
+			expect(fake.binds).toHaveLength(1)
+		})
+
+		it('a lost bind whose winner cannot be read closes nothing', async () => {
+			const org = await createOrg('us', 'stripe')
+			const commerce = (
+				await import('#app/utils/shop.server.ts')
+			).getShopCommerce()
+			const api =
+				await import('#app/utils/reservations/regional-payments-api.server.ts')
+			const created: Array<{ id: string }> = []
+			const original = commerce.createReservationStripeSession.bind(commerce)
+			const spy = vi
+				.spyOn(commerce, 'createReservationStripeSession')
+				.mockImplementation(async (options) => {
+					const session = await original(options)
+					created.push(session)
+					return session
+				})
+			vi.mocked(api.fetchReservationPaymentQuote)
+				.mockImplementationOnce(async () => structuredClone(fake.quote))
+				.mockRejectedValueOnce(new Error('region down'))
+			fake.bindError = new RegionalPaymentsApiError('already_bound', 409)
+			expect(
+				await failure(createReservationHostedCheckout(request(org))),
+			).toMatchObject({ status: 409, error: 'session_in_progress' })
+			spy.mockRestore()
+			expect(created).toHaveLength(1)
+			// The winner may be serving this very session: it stays open.
+			expect(
+				(await commerce.retrieveReservationStripeSession(created[0]!.id))
+					.status,
+			).toBe('open')
+		})
+
 		it('rejects what is not payable without calling the provider', async () => {
 			const org = await createOrg('us', 'stripe')
 			const eventsBefore = (
