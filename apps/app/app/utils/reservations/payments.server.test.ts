@@ -593,7 +593,9 @@ describe('reservation payments bridge on the payment emulators', () => {
 					return session
 				})
 			vi.mocked(api.fetchReservationPaymentQuote)
-				.mockImplementationOnce(async () => structuredClone(fake.quote))
+				.mockImplementationOnce(
+					async () => structuredClone(fake.quote) as never,
+				)
 				.mockRejectedValueOnce(new Error('region down'))
 			fake.bindError = new RegionalPaymentsApiError('already_bound', 409)
 			expect(

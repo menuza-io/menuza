@@ -299,8 +299,8 @@ Code: `packages/reservations/src/rules/location-hours.ts` (`isLocationOpenAt`,
 ## Deploy order
 
 1. **tenant-api first** (US Worker and KSA node): it ships the migrations
-   (`0019_reservations`) and the new routes. Tenant databases migrate on first use
-   (Node) or on first request to the Durable Object.
+   (`0019_reservations`) and the new routes. Tenant databases migrate on first
+   use (Node) or on first request to the Durable Object.
 2. **App and Admin second**: control-plane migration `0025_reservations`
    (permissions, flags and the platform fee default) runs with the App deploy.
 3. **Sites and the marketing web** last, then `apps/jobs-cron` if its triggers
@@ -315,14 +315,14 @@ need no rollback.
 
 The whole module is one tenant migration, `0019_reservations`, appended after
 upstream's `0016` to `0018`, and one control-plane migration,
-`0025_reservations` (see [reservations plan](./reservations-plan.md#migrations)).
-The tenant journal `when` is later than the last upstream entry's, which is what
-makes Drizzle apply it on a database that already ran `0018`.
+`0025_reservations` (see
+[reservations plan](./reservations-plan.md#migrations)). The tenant journal
+`when` is later than the last upstream entry's, which is what makes Drizzle
+apply it on a database that already ran `0018`.
 
 A **local** tenant database that applied the module under its first numbers
 (`0016` to `0021`, before the merge and the fold into one migration) needs a
-one-off fix, or a rebuild. The
-exact steps are in
+one-off fix, or a rebuild. The exact steps are in
 [database, one-off for local tenant databases](./database.md#one-off-local-tenant-databases-that-ran-the-reservations-branch-early).
 Deployed databases are not affected, and neither are local control-plane
 databases (their one migration is idempotent and simply runs again).
@@ -402,8 +402,8 @@ npm run seed:reservations -w tenant-api -- acme
 npm run seed:reservations -w tenant-api -- riyadh-grill
 ```
 
-The script turns on every `reservations.*` flag for the organization, grants
-the local `kody` user admin, and is idempotent. It only runs against local
+The script turns on every `reservations.*` flag for the organization, grants the
+local `kody` user admin, and is idempotent. It only runs against local
 databases: `NODE_ENV` must be explicitly `development` or `test` (unset counts
 as production), `DATABASE_URL` must be a `file:` database, and `TENANT_DB_DIR`
 must sit inside `packages/database/db` or the temp directory. Only the demo
@@ -551,19 +551,21 @@ on the main Reports page with the other groups, for people who have
 
 - Decided: a booking that carries money (a payment status other than `none`, or
   a policy snapshot) lets the guest move day or time inside the same service and
-  party only; a party-size or service change answers `409 modify_changes_payment`
-  and goes through the restaurant. Re-planning and re-snapshotting the payment
-  from the guest side is a follow-up.
+  party only; a party-size or service change answers
+  `409 modify_changes_payment` and goes through the restaurant. Re-planning and
+  re-snapshotting the payment from the guest side is a follow-up.
 - Decided: open large-party requests hold tables only up to 3 per address and 20
-  per location (`MAX_OPEN_REQUESTS_PER_ADDRESS`, `MAX_OPEN_REQUESTS_PER_LOCATION`);
-  past that the request is still taken, and a manager reads it, without parking
-  tables. Requiring a verified phone to hold capacity is a follow-up.
+  per location (`MAX_OPEN_REQUESTS_PER_ADDRESS`,
+  `MAX_OPEN_REQUESTS_PER_LOCATION`); past that the request is still taken, and a
+  manager reads it, without parking tables. Requiring a verified phone to hold
+  capacity is a follow-up.
 - Decided (unchanged): tenant-api serves a stale organization context for up to
   24 hours when the control plane is unreachable (ADR 048). The cost is that an
   organization disabled during an outage stays bookable until the cache entry
   ages out; shortening it trades that against bookings failing during an outage.
 - Follow-up: marketing consent on the booking form records only the email
-  channel as one boolean, without a per-channel record or a consent-text version.
+  channel as one boolean, without a per-channel record or a consent-text
+  version.
 - Follow-up: email and SMS are sent to an unverified phone or email typed on a
   booking, waitlist or notify form, so a third party can be messaged; an
   OTP-verified phone for SMS is the fix.
