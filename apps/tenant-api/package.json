@@ -12,6 +12,7 @@
     "codegen": "../../node_modules/.bin/varlock codegen --path .",
     "build": "npm run codegen && npm run generate:do-migrations && tsc",
     "typecheck": "npm run codegen && npm run generate:do-migrations && tsc --noEmit",
+    "pretest": "node scripts/generate-do-migrations.mjs",
     "test": "../../node_modules/.bin/varlock run -- vitest run",
     "deploy:cf": "npm run generate:do-migrations && wrangler deploy",
     "seed:staff": "../../node_modules/.bin/varlock run -- tsx scripts/seed-staff.ts",
