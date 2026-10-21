@@ -112,6 +112,10 @@ internal class ChipGrid(context: Context, private val palette: ThemePalette, pri
 				strokeColor = palette.border,
 				strokeWidthPx = context.dp(1f),
 			)
+			// 48dp touch target, and selection exposed to TalkBack: the filled colour
+			// alone does not tell a screen reader which chip is chosen.
+			minHeight = context.dp(48f)
+			isSelected = selected
 			isClickable = true
 			isFocusable = true
 			setOnClickListener { onClick() }
