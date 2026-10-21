@@ -60,7 +60,7 @@ export function NodeInspector({
 	className,
 }: NodeInspectorProps) {
 	const { _ } = useLingui()
-	const { triggerOptions } = useWorkflowConfig()
+	const { triggerOptions, hiddenTriggerTypes } = useWorkflowConfig()
 	const { conditionFieldLabel, delayUnitLabel } = useWorkflowUiLabels()
 	const [designerOpen, setDesignerOpen] = useState(false)
 
@@ -165,11 +165,17 @@ export function NodeInspector({
 										</SelectValue>
 									</SelectTrigger>
 									<SelectContent>
-										{triggerOptions.map((option) => (
-											<SelectItem key={option.value} value={option.value}>
-												{option.label}
-											</SelectItem>
-										))}
+										{triggerOptions
+											.filter(
+												(option) =>
+													!hiddenTriggerTypes?.includes(option.value) ||
+													option.value === data.triggerType,
+											)
+											.map((option) => (
+												<SelectItem key={option.value} value={option.value}>
+													{option.label}
+												</SelectItem>
+											))}
 									</SelectContent>
 								</Select>
 								<p className="text-muted-foreground text-[11px]">

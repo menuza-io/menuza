@@ -1,4 +1,5 @@
 import {
+	type AnySQLiteColumn,
 	sqliteTable,
 	text,
 	integer,
@@ -6,6 +7,7 @@ import {
 	uniqueIndex,
 	primaryKey,
 	real,
+	check,
 } from 'drizzle-orm/sqlite-core'
 import { sql, relations } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
@@ -15,6 +17,7 @@ import {
 	RESTAURANT_ORDER_STATUS_VALUES,
 	RESTAURANT_PAYMENT_STATUS_VALUES,
 } from '@repo/common/restaurant-orders'
+import { SITE_CONTENT_LOCALES } from '@repo/common/site-locales'
 
 // ==========================================
 // 1. CUSTOMERS TABLE
@@ -80,6 +83,9 @@ export const CUSTOMER_SUBSCRIPTION_TOPICS = [
 	'product_updates',
 	// Fork: SMS drop alerts (menu / drops pages).
 	'drops',
+	// Reservation journeys: a guest who ticked the marketing box on a booking
+	// form agreed to hear from the restaurant about their visits.
+	'reservations',
 ] as const
 export const CUSTOMER_SUBSCRIPTION_CHANNELS = ['sms', 'email'] as const
 export const CUSTOMER_SUBSCRIPTION_SOURCES = [
@@ -94,6 +100,8 @@ export const CUSTOMER_SUBSCRIPTION_SOURCES = [
 	'drops_page',
 	'drop_page',
 	'order_success',
+	// Reservations: the marketing box on a booking form.
+	'reservation_booking',
 ] as const
 
 export type CustomerSubscriptionTopic =
@@ -193,7 +201,16 @@ export const marketingJourneys = sqliteTable(
 			.notNull()
 			.default('draft'),
 		triggerType: text('trigger_type', {
-			enum: ['phone_verified', 'profile_completed', 'custom_event', 'manual'],
+			enum: [
+				'phone_verified',
+				'profile_completed',
+				'custom_event',
+				'manual',
+				'reservation_booked',
+				'reservation_completed',
+				'reservation_no_show',
+				'reservation_cancelled',
+			],
 		})
 			.notNull()
 			.default('phone_verified'),
@@ -938,6 +955,39 @@ export const voiceCalls = sqliteTable(
 		index('idx_voice_calls_recording_expires').on(table.recordingExpiresAt),
 		index('idx_voice_calls_transcript_expires').on(table.transcriptExpiresAt),
 		uniqueIndex('voice_calls_room_name_unique').on(table.roomName),
+	],
+)
+
+export const VOICE_CALL_ACTION_OUTCOME_VALUES = [
+	'pending',
+	'ok',
+	'refused',
+	'failed',
+] as const
+
+// One row per action the voice agent asked tenant-api to run during a call.
+// The rows are the per-call cap: an action is reserved here (counted against
+// its cap) before it runs. Holds no caller data: ids and outcomes only.
+export const voiceCallActions = sqliteTable(
+	'voice_call_actions',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		callId: text('call_id')
+			.notNull()
+			.references(() => voiceCalls.id, { onDelete: 'cascade' }),
+		action: text('action').notNull(),
+		outcome: text('outcome', { enum: VOICE_CALL_ACTION_OUTCOME_VALUES })
+			.notNull()
+			.default('pending'),
+		dryRun: integer('dry_run', { mode: 'boolean' }).notNull().default(false),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(strftime('%s', 'now'))`),
+	},
+	(table) => [
+		index('idx_voice_call_actions_call_action').on(table.callId, table.action),
 	],
 )
 
@@ -2346,6 +2396,13 @@ export const laborScopeSettings = sqliteTable('labor_scope_settings', {
 		.$type<Record<string, number>>()
 		.notNull()
 		.default(sql`'{}'`),
+	// JSON object: demand source id (`orders`, `visits`) -> position id ->
+	// units one person in the position handles per hour. `orders` mirrors
+	// `orders_per_labor_hour`, which older code still reads.
+	demandPerLaborHour: text('demand_per_labor_hour', { mode: 'json' })
+		.$type<Record<string, Record<string, number>>>()
+		.notNull()
+		.default(sql`'{}'`),
 	updatedBy: text('updated_by'),
 	updatedAt: integer('updated_at').notNull().default(nowMs),
 })
@@ -2858,7 +2915,1858 @@ export const hiringEventsRelations = relations(hiringEvents, ({ one }) => ({
 }))
 
 // ==========================================
-// 12. INFERRED TYPES
+// 12. RESERVATIONS
+// ==========================================
+// Regional customer & operational reservations tables (rsv_*). Guest PII
+// (names, phones, emails, allergy/dietary notes, free-form notes) stays in
+// this regional SQLite database. Cross-plane events emitted through rsv_outbox
+// carry only opaque IDs, counts, and money amounts — never guest PII.
+
+export const RSV_LARGE_PARTY_MODE_VALUES = [
+	'contact',
+	'request',
+	'disabled',
+	'call_only',
+] as const
+export type RsvLargePartyMode = (typeof RSV_LARGE_PARTY_MODE_VALUES)[number]
+
+export const RSV_SEATING_PREF_MODE_VALUES = [
+	'off',
+	'preferred',
+	'strict',
+	'preference',
+] as const
+export type RsvSeatingPrefMode = (typeof RSV_SEATING_PREF_MODE_VALUES)[number]
+
+export const RSV_VOICE_MODE_VALUES = ['hold_link', 'confirm_on_call'] as const
+export type RsvVoiceMode = (typeof RSV_VOICE_MODE_VALUES)[number]
+
+export const RSV_TABLE_SHAPE_VALUES = [
+	'round',
+	'square',
+	'rect',
+	'booth',
+	'bar',
+] as const
+export type RsvTableShape = (typeof RSV_TABLE_SHAPE_VALUES)[number]
+
+export const RSV_FLOOR_ELEMENT_KIND_VALUES = [
+	'wall',
+	'bar',
+	'door',
+	'window',
+	'label',
+	'plant',
+	'zone',
+] as const
+export type RsvFloorElementKind = (typeof RSV_FLOOR_ELEMENT_KIND_VALUES)[number]
+
+export const RSV_SERVICE_AVAILABILITY_MODE_VALUES = [
+	'online',
+	'staff_only',
+	'walk_in_only',
+	'unavailable',
+] as const
+export type RsvServiceAvailabilityMode =
+	(typeof RSV_SERVICE_AVAILABILITY_MODE_VALUES)[number]
+
+export const RSV_PACING_CHANNEL_VALUES = ['all', 'online'] as const
+export type RsvPacingChannel = (typeof RSV_PACING_CHANNEL_VALUES)[number]
+
+export const RSV_SPECIAL_DAY_KIND_VALUES = [
+	'closed',
+	'online_closed',
+	'modified',
+	'replace',
+] as const
+export type RsvSpecialDayKind = (typeof RSV_SPECIAL_DAY_KIND_VALUES)[number]
+
+export const RSV_POLICY_KIND_VALUES = [
+	'none',
+	'card_guarantee',
+	'card_hold',
+	'deposit',
+	'prepay',
+] as const
+export type RsvPolicyKind = (typeof RSV_POLICY_KIND_VALUES)[number]
+
+export const RSV_POLICY_REFUND_RULE_VALUES = [
+	'full_before_window',
+	'none',
+	'partial',
+] as const
+export type RsvPolicyRefundRule = (typeof RSV_POLICY_REFUND_RULE_VALUES)[number]
+
+/** The site content languages: the organization enables a subset in Website settings. */
+export const RSV_MESSAGE_LOCALE_VALUES = SITE_CONTENT_LOCALES
+export type RsvMessageLocale = (typeof RSV_MESSAGE_LOCALE_VALUES)[number]
+
+export const RSV_MESSAGE_KIND_VALUES = [
+	'confirmation',
+	'modification',
+	'cancellation',
+	'cancellation_guest',
+	'cancellation_restaurant',
+	'reminder',
+	'reconfirm_request',
+	'request_received',
+	'request_approved',
+	'request_declined',
+	'waitlist_joined',
+	'waitlist_ready',
+	'waitlist_called',
+	'notify_available',
+	'notify_me_available',
+	'payment_required',
+	'payment_received',
+	'payment_failed',
+	'payment_refunded',
+	'refund_issued',
+	'fee_charged',
+	'fee_action_required',
+	'late_payment_refunded',
+] as const
+export type RsvMessageKind = (typeof RSV_MESSAGE_KIND_VALUES)[number]
+
+export const RSV_EXPERIENCE_KIND_VALUES = ['ticketed', 'prix_fixe'] as const
+export type RsvExperienceKind = (typeof RSV_EXPERIENCE_KIND_VALUES)[number]
+
+export const RSV_EXPERIENCE_STATUS_VALUES = [
+	'draft',
+	'published',
+	'archived',
+] as const
+export type RsvExperienceStatus = (typeof RSV_EXPERIENCE_STATUS_VALUES)[number]
+
+export const RSV_TAG_SCOPE_VALUES = ['guest', 'reservation'] as const
+export type RsvTagScope = (typeof RSV_TAG_SCOPE_VALUES)[number]
+
+export const RSV_TAG_CATEGORY_VALUES = [
+	'vip',
+	'dietary',
+	'occasion',
+	'seating',
+	'regular',
+	'custom',
+	'system',
+] as const
+export type RsvTagCategory = (typeof RSV_TAG_CATEGORY_VALUES)[number]
+
+export const RSV_TAG_SYSTEM_KEY_VALUES = [
+	'first_visit',
+	'frequent_no_show',
+	'birthday',
+	'anniversary',
+] as const
+export type RsvTagSystemKey = (typeof RSV_TAG_SYSTEM_KEY_VALUES)[number]
+
+export const RSV_RESERVATION_STATUS_VALUES = [
+	'requested',
+	'pending_payment',
+	'pending_approval',
+	'booked',
+	'confirmed',
+	'arrived',
+	'partially_arrived',
+	'partially_seated',
+	'seated',
+	'finished',
+	'cancelled',
+	'no_show',
+	'declined',
+	'expired',
+	'disputed',
+] as const
+export type RsvReservationStatus =
+	(typeof RSV_RESERVATION_STATUS_VALUES)[number]
+
+export const RSV_CONTACT_STATUS_VALUES = [
+	'not_contacted',
+	'left_message',
+	'no_answer',
+	'wrong_number',
+	'confirmed',
+	'confirmed_by_phone',
+	'confirmed_phone',
+	'confirmed_sms',
+] as const
+export type RsvContactStatus = (typeof RSV_CONTACT_STATUS_VALUES)[number]
+
+export const RSV_COURSE_STATUS_VALUES = [
+	'Ordered',
+	'ordered',
+	'appetizer',
+	'apps',
+	'starters',
+	'entree',
+	'mains',
+	'dessert',
+	'check_dropped',
+	'check_presented',
+	'check',
+	'paid',
+	'bussing',
+] as const
+export type RsvCourseStatus = (typeof RSV_COURSE_STATUS_VALUES)[number]
+
+export const RSV_RESERVATION_CHANNEL_VALUES = [
+	'online',
+	'native',
+	'voice_agent',
+	'phone',
+	'host',
+	'walk_in',
+	'waitlist',
+] as const
+export type RsvReservationChannel =
+	(typeof RSV_RESERVATION_CHANNEL_VALUES)[number]
+
+export const RSV_ASSIGNMENT_MODE_VALUES = ['soft', 'locked'] as const
+export type RsvAssignmentMode = (typeof RSV_ASSIGNMENT_MODE_VALUES)[number]
+
+export const RSV_PAYMENT_STATUS_VALUES = [
+	'none',
+	'pending',
+	'guaranteed',
+	'paid',
+	'refund_pending',
+	'refunded',
+	'partially_refunded',
+	'fee_pending',
+	'fee_charged',
+	'fee_failed',
+	'review',
+	'disputed',
+] as const
+export type RsvPaymentStatus = (typeof RSV_PAYMENT_STATUS_VALUES)[number]
+
+export const RSV_CANCELLED_BY_VALUES = [
+	'guest',
+	'restaurant',
+	'system',
+] as const
+export type RsvCancelledBy = (typeof RSV_CANCELLED_BY_VALUES)[number]
+
+export const RSV_ACTOR_KIND_VALUES = [
+	'guest',
+	'operator',
+	'system',
+	'voice_agent',
+] as const
+export type RsvActorKind = (typeof RSV_ACTOR_KIND_VALUES)[number]
+
+export const RSV_OCCUPANCY_KIND_VALUES = [
+	'reservation',
+	'hold',
+	'block',
+] as const
+export type RsvOccupancyKind = (typeof RSV_OCCUPANCY_KIND_VALUES)[number]
+
+export const RSV_HOLD_SOURCE_VALUES = ['web', 'native', 'voice_agent'] as const
+export type RsvHoldSource = (typeof RSV_HOLD_SOURCE_VALUES)[number]
+
+export const RSV_HOLD_STATUS_VALUES = [
+	'active',
+	'converted',
+	'released',
+	'expired',
+] as const
+export type RsvHoldStatus = (typeof RSV_HOLD_STATUS_VALUES)[number]
+
+export const RSV_WAITLIST_CHANNEL_VALUES = ['walk_in', 'remote'] as const
+export type RsvWaitlistChannel = (typeof RSV_WAITLIST_CHANNEL_VALUES)[number]
+
+export const RSV_WAITLIST_STATUS_VALUES = [
+	'waiting',
+	'notified',
+	'on_the_way',
+	'seated',
+	'cancelled',
+	'left',
+	'no_response',
+] as const
+export type RsvWaitlistStatus = (typeof RSV_WAITLIST_STATUS_VALUES)[number]
+
+export const RSV_NOTIFY_STATUS_VALUES = [
+	'active',
+	'notified',
+	'booked',
+	'expired',
+	'cancelled',
+] as const
+export type RsvNotifyStatus = (typeof RSV_NOTIFY_STATUS_VALUES)[number]
+
+export const RSV_MESSAGE_CHANNEL_VALUES = ['email', 'sms'] as const
+export type RsvMessageChannel = (typeof RSV_MESSAGE_CHANNEL_VALUES)[number]
+
+export const RSV_MESSAGE_CATEGORY_VALUES = ['transactional'] as const
+export type RsvMessageCategory = (typeof RSV_MESSAGE_CATEGORY_VALUES)[number]
+
+export const RSV_MESSAGE_STATUS_VALUES = [
+	'pending',
+	'sending',
+	'sent',
+	'failed',
+	'cancelled',
+	'suppressed',
+	'dropped',
+] as const
+export type RsvMessageStatus = (typeof RSV_MESSAGE_STATUS_VALUES)[number]
+
+export const RSV_PAYMENT_PROVIDER_VALUES = ['stripe', 'checkout'] as const
+export type RsvPaymentProvider = (typeof RSV_PAYMENT_PROVIDER_VALUES)[number]
+
+export const RSV_PAYMENT_KIND_VALUES = [
+	'card_setup',
+	'hold_auth',
+	'deposit_charge',
+	'prepay_charge',
+	'cancel_fee_charge',
+	'no_show_fee_charge',
+	'refund',
+	'release',
+] as const
+export type RsvPaymentKind = (typeof RSV_PAYMENT_KIND_VALUES)[number]
+
+export const RSV_PAYMENT_RECORD_STATUS_VALUES = [
+	// `created`: row exists, no provider session bound yet. `charging`: a fee
+	// or refund claimed by the App and in flight. `requested`: a refund waiting
+	// for the App. `refund_pending`: the provider accepted a refund that has not
+	// settled. `refunded` / `partially_refunded` live on the original payment.
+	'created',
+	'pending',
+	'charging',
+	'requires_action',
+	'succeeded',
+	'failed',
+	'cancelled',
+	'expired',
+	'requested',
+	'refund_pending',
+	'refunded',
+	'partially_refunded',
+	'disputed',
+	'review',
+] as const
+export type RsvPaymentRecordStatus =
+	(typeof RSV_PAYMENT_RECORD_STATUS_VALUES)[number]
+
+export const RSV_OUTBOX_STATUS_VALUES = ['pending', 'sent', 'failed'] as const
+export type RsvOutboxStatus = (typeof RSV_OUTBOX_STATUS_VALUES)[number]
+
+export const RSV_OUTBOX_KIND_VALUES = [
+	'manager_alert',
+	'payment_command',
+	'refund_request',
+	'checkout_expire',
+] as const
+export type RsvOutboxKind = (typeof RSV_OUTBOX_KIND_VALUES)[number]
+
+// The two dotted values predate the journey triggers and stay valid; the four
+// `reservation_*` values are the journey trigger types and the dedupe key.
+export const RSV_JOURNEY_EVENT_TYPE_VALUES = [
+	'reservation.visited',
+	'reservation.no_show',
+	'reservation_booked',
+	'reservation_completed',
+	'reservation_no_show',
+	'reservation_cancelled',
+] as const
+export type RsvJourneyEventType = (typeof RSV_JOURNEY_EVENT_TYPE_VALUES)[number]
+
+export const RSV_AUDIT_ACTOR_KIND_VALUES = [
+	'operator',
+	'system',
+	'guest',
+	'voice_agent',
+] as const
+export type RsvAuditActorKind = (typeof RSV_AUDIT_ACTOR_KIND_VALUES)[number]
+
+// 4.1 Configuration
+
+export const rsvLocationSettings = sqliteTable('rsv_location_settings', {
+	locationId: text('location_id').primaryKey(),
+	enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+	onlineEnabled: integer('online_enabled', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	timeZone: text('time_zone').notNull().default('UTC'),
+	tzSyncedAt: integer('tz_synced_at').notNull().default(nowMs),
+	currency: text('currency').notNull().default('USD'),
+	dayStartMin: integer('day_start_min').notNull().default(240),
+	intervalMin: integer('interval_min').notNull().default(15),
+	horizonDays: integer('horizon_days').notNull().default(30),
+	releaseLocalMin: integer('release_local_min'),
+	minNoticeMin: integer('min_notice_min').notNull().default(60),
+	sameDayCutoffMin: integer('same_day_cutoff_min'),
+	onlinePartyMin: integer('online_party_min').notNull().default(1),
+	onlinePartyMax: integer('online_party_max').notNull().default(8),
+	partyMax: integer('party_max').notNull().default(30),
+	largePartyMode: text('large_party_mode', {
+		enum: RSV_LARGE_PARTY_MODE_VALUES,
+	})
+		.notNull()
+		.default('contact'),
+	largePartyNoteI18n: text('large_party_note_i18n', { mode: 'json' }).$type<
+		Record<string, string>
+	>(),
+	requestHoldsCapacity: integer('request_holds_capacity', { mode: 'boolean' })
+		.notNull()
+		.default(true),
+	requestDeadlineHours: integer('request_deadline_hours').notNull().default(24),
+	seatingPrefMode: text('seating_pref_mode', {
+		enum: RSV_SEATING_PREF_MODE_VALUES,
+	})
+		.notNull()
+		.default('off'),
+	holdMinutes: integer('hold_minutes').notNull().default(7),
+	paymentHoldMinutes: integer('payment_hold_minutes').notNull().default(20),
+	voiceHoldMinutes: integer('voice_hold_minutes').notNull().default(15),
+	voiceMode: text('voice_mode', { enum: RSV_VOICE_MODE_VALUES })
+		.notNull()
+		.default('hold_link'),
+	freezeMin: integer('freeze_min').notNull().default(30),
+	lateGraceMin: integer('late_grace_min').notNull().default(15),
+	autoNoShowAfterMin: integer('auto_no_show_after_min'),
+	maxActivePerPhone: integer('max_active_per_phone').notNull().default(3),
+	blockSamePhoneOverlap: integer('block_same_phone_overlap', {
+		mode: 'boolean',
+	})
+		.notNull()
+		.default(true),
+	guestModifyCutoffMin: integer('guest_modify_cutoff_min')
+		.notNull()
+		.default(120),
+	contactStatusesEnabled: integer('contact_statuses_enabled', {
+		mode: 'boolean',
+	})
+		.notNull()
+		.default(true),
+	courseStatusesEnabled: integer('course_statuses_enabled', {
+		mode: 'boolean',
+	})
+		.notNull()
+		.default(false),
+	defaultPolicyId: text('default_policy_id').references(
+		(): AnySQLiteColumn => rsvPolicies.id,
+		{ onDelete: 'set null' },
+	),
+	waitlistEnabled: integer('waitlist_enabled', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	waitlistOnline: integer('waitlist_online', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	notifyMeEnabled: integer('notify_me_enabled', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	waitlistResponseMin: integer('waitlist_response_min').notNull().default(10),
+	waitlistMaxParties: integer('waitlist_max_parties'),
+	messaging: text('messaging', { mode: 'json' })
+		.$type<Record<string, unknown>>()
+		.notNull()
+		.default(sql`'{}'`),
+	publicNoteI18n: text('public_note_i18n', { mode: 'json' }).$type<
+		Record<string, string>
+	>(),
+	contactPhone: text('contact_phone'),
+	floorPlanVersion: integer('floor_plan_version').notNull().default(1),
+	version: integer('version').notNull().default(1),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+	updatedBy: text('updated_by'),
+})
+
+export const rsvAreas = sqliteTable(
+	'rsv_areas',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		nameI18n: text('name_i18n', { mode: 'json' }).$type<
+			Record<string, string>
+		>(),
+		sort: integer('sort').notNull().default(0),
+		onlineBookable: integer('online_bookable', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		guestSelectable: integer('guest_selectable', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		canvasW: integer('canvas_w').notNull().default(1200),
+		canvasH: integer('canvas_h').notNull().default(800),
+		archivedAt: integer('archived_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_areas_location_sort').on(table.locationId, table.sort),
+	],
+)
+
+export const rsvTables = sqliteTable(
+	'rsv_tables',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		areaId: text('area_id')
+			.notNull()
+			.references(() => rsvAreas.id, { onDelete: 'cascade' }),
+		label: text('label').notNull(),
+		minCovers: integer('min_covers').notNull().default(1),
+		maxCovers: integer('max_covers').notNull().default(2),
+		onlineBookable: integer('online_bookable', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		combinable: integer('combinable', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		priority: integer('priority').notNull().default(0),
+		resetBufferMin: integer('reset_buffer_min').notNull().default(0),
+		shape: text('shape', { enum: RSV_TABLE_SHAPE_VALUES })
+			.notNull()
+			.default('square'),
+		x: integer('x').notNull().default(0),
+		y: integer('y').notNull().default(0),
+		w: integer('w').notNull().default(60),
+		h: integer('h').notNull().default(60),
+		rotation: integer('rotation').notNull().default(0),
+		archivedAt: integer('archived_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_tables_area_id').on(table.areaId),
+		index('idx_rsv_tables_location_area').on(table.locationId, table.areaId),
+		uniqueIndex('uniq_rsv_tables_location_label')
+			.on(table.locationId, table.label)
+			.where(sql`${table.archivedAt} IS NULL`),
+		check(
+			'chk_rsv_tables_covers',
+			sql`${table.minCovers} >= 1 AND ${table.minCovers} <= ${table.maxCovers} AND ${table.maxCovers} <= 99`,
+		),
+		check(
+			'chk_rsv_tables_reset_buffer',
+			sql`${table.resetBufferMin} BETWEEN 0 AND 120`,
+		),
+	],
+)
+
+export const rsvTableCombos = sqliteTable(
+	'rsv_table_combos',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		label: text('label').notNull(),
+		minCovers: integer('min_covers').notNull(),
+		maxCovers: integer('max_covers').notNull(),
+		onlineBookable: integer('online_bookable', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		priority: integer('priority').notNull().default(0),
+		archivedAt: integer('archived_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_table_combos_location').on(table.locationId),
+		check(
+			'chk_rsv_table_combos_covers',
+			sql`${table.minCovers} >= 1 AND ${table.minCovers} <= ${table.maxCovers} AND ${table.maxCovers} <= 99`,
+		),
+	],
+)
+
+export const rsvTableComboMembers = sqliteTable(
+	'rsv_table_combo_members',
+	{
+		comboId: text('combo_id')
+			.notNull()
+			.references(() => rsvTableCombos.id, { onDelete: 'cascade' }),
+		tableId: text('table_id')
+			.notNull()
+			.references(() => rsvTables.id, { onDelete: 'cascade' }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.comboId, table.tableId] }),
+		index('idx_rsv_table_combo_members_table').on(table.tableId),
+	],
+)
+
+export const rsvFloorElements = sqliteTable(
+	'rsv_floor_elements',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		areaId: text('area_id')
+			.notNull()
+			.references(() => rsvAreas.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: RSV_FLOOR_ELEMENT_KIND_VALUES }).notNull(),
+		label: text('label'),
+		x: integer('x').notNull().default(0),
+		y: integer('y').notNull().default(0),
+		w: integer('w').notNull().default(60),
+		h: integer('h').notNull().default(20),
+		rotation: integer('rotation').notNull().default(0),
+	},
+	(table) => [index('idx_rsv_floor_elements_area').on(table.areaId)],
+)
+
+export const rsvServices = sqliteTable(
+	'rsv_services',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		nameI18n: text('name_i18n', { mode: 'json' }).$type<
+			Record<string, string>
+		>(),
+		daysMask: integer('days_mask').notNull().default(127),
+		firstSeatingMin: integer('first_seating_min').notNull(),
+		lastSeatingMin: integer('last_seating_min').notNull(),
+		endMin: integer('end_min').notNull(),
+		intervalMin: integer('interval_min'),
+		effectiveFrom: text('effective_from'),
+		effectiveTo: text('effective_to'),
+		priority: integer('priority').notNull().default(0),
+		specialDayId: text('special_day_id').references(
+			(): AnySQLiteColumn => rsvSpecialDays.id,
+			{ onDelete: 'cascade' },
+		),
+		onlineEnabled: integer('online_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		onlineFromMin: integer('online_from_min'),
+		onlineToMin: integer('online_to_min'),
+		maxParty: integer('max_party'),
+		onlinePartyMax: integer('online_party_max'),
+		onlineCapPerInterval: integer('online_cap_per_interval'),
+		concurrentCoversCap: integer('concurrent_covers_cap'),
+		policyId: text('policy_id').references(
+			(): AnySQLiteColumn => rsvPolicies.id,
+			{ onDelete: 'set null' },
+		),
+		sectionLayoutId: text('section_layout_id').references(
+			(): AnySQLiteColumn => rsvSectionLayouts.id,
+			{ onDelete: 'set null' },
+		),
+		allowOverrunPastEnd: integer('allow_overrun_past_end', {
+			mode: 'boolean',
+		})
+			.notNull()
+			.default(true),
+		colorToken: text('color_token').notNull().default('neutral'),
+		sort: integer('sort').notNull().default(0),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_services_section_layout_id').on(table.sectionLayoutId),
+		index('idx_rsv_services_policy_id').on(table.policyId),
+		index('idx_rsv_services_special_day_id').on(table.specialDayId),
+		index('idx_rsv_services_location_archived').on(
+			table.locationId,
+			table.archivedAt,
+		),
+		check(
+			'chk_rsv_services_seating_order',
+			sql`${table.firstSeatingMin} <= ${table.lastSeatingMin} AND ${table.lastSeatingMin} <= ${table.endMin}`,
+		),
+		check(
+			'chk_rsv_services_max_span',
+			sql`${table.endMin} - ${table.firstSeatingMin} <= 1440`,
+		),
+	],
+)
+
+export const rsvServiceAvailability = sqliteTable(
+	'rsv_service_availability',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		serviceId: text('service_id')
+			.notNull()
+			.references(() => rsvServices.id, { onDelete: 'cascade' }),
+		areaId: text('area_id').references(() => rsvAreas.id, {
+			onDelete: 'cascade',
+		}),
+		tableId: text('table_id').references(() => rsvTables.id, {
+			onDelete: 'cascade',
+		}),
+		comboId: text('combo_id').references(() => rsvTableCombos.id, {
+			onDelete: 'cascade',
+		}),
+		mode: text('mode', {
+			enum: RSV_SERVICE_AVAILABILITY_MODE_VALUES,
+		}).notNull(),
+		fromMin: integer('from_min'),
+		toMin: integer('to_min'),
+	},
+	(table) => [
+		index('idx_rsv_service_availability_combo_id').on(table.comboId),
+		index('idx_rsv_service_availability_table_id').on(table.tableId),
+		index('idx_rsv_service_availability_area_id').on(table.areaId),
+		index('idx_rsv_service_availability_service').on(table.serviceId),
+		check(
+			'chk_rsv_service_availability_target',
+			sql`((${table.areaId} IS NOT NULL) + (${table.tableId} IS NOT NULL) + (${table.comboId} IS NOT NULL)) = 1`,
+		),
+	],
+)
+
+export const rsvTurnTimes = sqliteTable(
+	'rsv_turn_times',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		serviceId: text('service_id').references(() => rsvServices.id, {
+			onDelete: 'cascade',
+		}),
+		partyMin: integer('party_min').notNull(),
+		partyMax: integer('party_max').notNull(),
+		minutes: integer('minutes').notNull(),
+		daysMask: integer('days_mask'),
+	},
+	(table) => [
+		index('idx_rsv_turn_times_service_id').on(table.serviceId),
+		uniqueIndex('uniq_rsv_turn_times_bucket').on(
+			table.locationId,
+			table.serviceId,
+			table.partyMin,
+			table.daysMask,
+		),
+	],
+)
+
+export const rsvPacingRules = sqliteTable(
+	'rsv_pacing_rules',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		serviceId: text('service_id')
+			.notNull()
+			.references(() => rsvServices.id, { onDelete: 'cascade' }),
+		fromMin: integer('from_min'),
+		toMin: integer('to_min'),
+		bucketMin: integer('bucket_min').notNull().default(15),
+		maxCovers: integer('max_covers'),
+		maxParties: integer('max_parties'),
+		rollingMin: integer('rolling_min'),
+		rollingMaxCovers: integer('rolling_max_covers'),
+		channel: text('channel', { enum: RSV_PACING_CHANNEL_VALUES })
+			.notNull()
+			.default('all'),
+	},
+	(table) => [index('idx_rsv_pacing_rules_service').on(table.serviceId)],
+)
+
+export const rsvSpecialDays = sqliteTable(
+	'rsv_special_days',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		fromDate: text('from_date').notNull(),
+		toDate: text('to_date').notNull(),
+		kind: text('kind', { enum: RSV_SPECIAL_DAY_KIND_VALUES }).notNull(),
+		serviceId: text('service_id').references(
+			(): AnySQLiteColumn => rsvServices.id,
+			{ onDelete: 'set null' },
+		),
+		patch: text('patch', { mode: 'json' }).$type<Record<string, unknown>>(),
+		name: text('name'),
+		publicNoteI18n: text('public_note_i18n', { mode: 'json' }).$type<
+			Record<string, string>
+		>(),
+		createdBy: text('created_by'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_special_days_service_id').on(table.serviceId),
+		index('idx_rsv_special_days_location_dates').on(
+			table.locationId,
+			table.fromDate,
+			table.toDate,
+		),
+	],
+)
+
+export const rsvBlocks = sqliteTable(
+	'rsv_blocks',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		tableId: text('table_id').references(() => rsvTables.id, {
+			onDelete: 'cascade',
+		}),
+		areaId: text('area_id').references(() => rsvAreas.id, {
+			onDelete: 'cascade',
+		}),
+		businessDate: text('business_date').notNull(),
+		startAt: integer('start_at').notNull(),
+		endAt: integer('end_at').notNull(),
+		reason: text('reason'),
+		note: text('note'),
+		createdBy: text('created_by'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_blocks_area_id').on(table.areaId),
+		index('idx_rsv_blocks_table_id').on(table.tableId),
+		index('idx_rsv_blocks_location_date').on(
+			table.locationId,
+			table.businessDate,
+		),
+		check(
+			'chk_rsv_blocks_target',
+			sql`((${table.tableId} IS NOT NULL) + (${table.areaId} IS NOT NULL)) = 1`,
+		),
+		check('chk_rsv_blocks_time_range', sql`${table.endAt} > ${table.startAt}`),
+	],
+)
+
+export const rsvPolicies = sqliteTable(
+	'rsv_policies',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		kind: text('kind', { enum: RSV_POLICY_KIND_VALUES })
+			.notNull()
+			.default('none'),
+		amountMinor: integer('amount_minor').notNull().default(0),
+		perCover: integer('per_cover', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		currency: text('currency').notNull().default('USD'),
+		freeCancelUntilMin: integer('free_cancel_until_min').notNull().default(0),
+		lateCancelFeeMinor: integer('late_cancel_fee_minor').notNull().default(0),
+		noShowFeeMinor: integer('no_show_fee_minor').notNull().default(0),
+		feePerCover: integer('fee_per_cover', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		feeCapMinor: integer('fee_cap_minor'),
+		refundRule: text('refund_rule', { enum: RSV_POLICY_REFUND_RULE_VALUES })
+			.notNull()
+			.default('full_before_window'),
+		partialRefundBp: integer('partial_refund_bp'),
+		appliesPartyMin: integer('applies_party_min'),
+		termsI18n: text('terms_i18n', { mode: 'json' }).$type<
+			Record<string, string>
+		>(),
+		termsVersion: integer('terms_version').notNull().default(1),
+		archivedAt: integer('archived_at'),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [index('idx_rsv_policies_location').on(table.locationId)],
+)
+
+export const rsvSectionLayouts = sqliteTable(
+	'rsv_section_layouts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		name: text('name').notNull(),
+		archivedAt: integer('archived_at'),
+	},
+	(table) => [index('idx_rsv_section_layouts_location').on(table.locationId)],
+)
+
+export const rsvSections = sqliteTable(
+	'rsv_sections',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		layoutId: text('layout_id')
+			.notNull()
+			.references(() => rsvSectionLayouts.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		colorToken: text('color_token').notNull().default('neutral'),
+		sort: integer('sort').notNull().default(0),
+	},
+	(table) => [
+		index('idx_rsv_sections_layout_sort').on(table.layoutId, table.sort),
+	],
+)
+
+export const rsvSectionTables = sqliteTable(
+	'rsv_section_tables',
+	{
+		sectionId: text('section_id')
+			.notNull()
+			.references(() => rsvSections.id, { onDelete: 'cascade' }),
+		tableId: text('table_id')
+			.notNull()
+			.references(() => rsvTables.id, { onDelete: 'cascade' }),
+		layoutId: text('layout_id')
+			.notNull()
+			.references(() => rsvSectionLayouts.id, { onDelete: 'cascade' }),
+	},
+	(table) => [
+		index('idx_rsv_section_tables_table_id').on(table.tableId),
+		primaryKey({ columns: [table.sectionId, table.tableId] }),
+		uniqueIndex('uniq_rsv_section_tables_layout_table').on(
+			table.layoutId,
+			table.tableId,
+		),
+	],
+)
+
+export const rsvSectionAssignments = sqliteTable(
+	'rsv_section_assignments',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		serviceId: text('service_id').notNull(),
+		sectionId: text('section_id')
+			.notNull()
+			.references(() => rsvSections.id, { onDelete: 'cascade' }),
+		staffId: text('staff_id'),
+		serverLabel: text('server_label'),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_section_assignments_section_id').on(table.sectionId),
+		uniqueIndex('uniq_rsv_section_assignments_day_service_section').on(
+			table.businessDate,
+			table.serviceId,
+			table.sectionId,
+		),
+		index('idx_rsv_section_assignments_location_date').on(
+			table.locationId,
+			table.businessDate,
+		),
+	],
+)
+
+export const rsvMessageTexts = sqliteTable(
+	'rsv_message_texts',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id'),
+		kind: text('kind', { enum: RSV_MESSAGE_KIND_VALUES }).notNull(),
+		locale: text('locale', { enum: RSV_MESSAGE_LOCALE_VALUES }).notNull(),
+		customNote: text('custom_note').notNull().default(''),
+		updatedBy: text('updated_by'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_rsv_message_texts_loc_kind_locale').on(
+			table.locationId,
+			table.kind,
+			table.locale,
+		),
+		uniqueIndex('uniq_rsv_message_texts_org_kind_locale')
+			.on(table.kind, table.locale)
+			.where(sql`${table.locationId} IS NULL`),
+	],
+)
+
+export const rsvExperiences = sqliteTable(
+	'rsv_experiences',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		slug: text('slug').notNull(),
+		kind: text('kind', { enum: RSV_EXPERIENCE_KIND_VALUES }).notNull(),
+		nameI18n: text('name_i18n', { mode: 'json' })
+			.$type<Record<string, string>>()
+			.notNull()
+			.default(sql`'{}'`),
+		descriptionI18n: text('description_i18n', { mode: 'json' }).$type<
+			Record<string, string>
+		>(),
+		imageUrl: text('image_url'),
+		priceMinor: integer('price_minor'),
+		pricePerCover: integer('price_per_cover', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		currency: text('currency').notNull().default('USD'),
+		policyId: text('policy_id').references(() => rsvPolicies.id, {
+			onDelete: 'set null',
+		}),
+		partyMin: integer('party_min').notNull().default(1),
+		partyMax: integer('party_max').notNull().default(8),
+		usesTables: integer('uses_tables', { mode: 'boolean' })
+			.notNull()
+			.default(true),
+		exclusive: integer('exclusive', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		status: text('status', { enum: RSV_EXPERIENCE_STATUS_VALUES })
+			.notNull()
+			.default('draft'),
+		sort: integer('sort').notNull().default(0),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_experiences_policy_id').on(table.policyId),
+		uniqueIndex('uniq_rsv_experiences_location_slug')
+			.on(table.locationId, table.slug)
+			.where(sql`${table.status} <> 'archived'`),
+		index('idx_rsv_experiences_location_status').on(
+			table.locationId,
+			table.status,
+			table.sort,
+		),
+	],
+)
+
+export const rsvExperienceSchedules = sqliteTable(
+	'rsv_experience_schedules',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		experienceId: text('experience_id')
+			.notNull()
+			.references(() => rsvExperiences.id, { onDelete: 'cascade' }),
+		fromDate: text('from_date').notNull(),
+		toDate: text('to_date').notNull(),
+		daysMask: integer('days_mask').notNull().default(127),
+		seatingMins: text('seating_mins', { mode: 'json' }).$type<number[]>(),
+		startMin: integer('start_min'),
+		endMin: integer('end_min'),
+		intervalMin: integer('interval_min'),
+		turnMin: integer('turn_min').notNull().default(90),
+		coversCapPerSeating: integer('covers_cap_per_seating'),
+		coversCapPerDay: integer('covers_cap_per_day'),
+		areaIds: text('area_ids', { mode: 'json' }).$type<string[]>(),
+		serviceId: text('service_id').references(() => rsvServices.id, {
+			onDelete: 'set null',
+		}),
+	},
+	(table) => [
+		index('idx_rsv_experience_schedules_service_id').on(table.serviceId),
+		index('idx_rsv_experience_schedules_experience').on(table.experienceId),
+	],
+)
+
+// 4.2 Guests
+
+export const rsvGuests = sqliteTable(
+	'rsv_guests',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		marketingCustomerId: text('marketing_customer_id').references(
+			() => customers.id,
+			{ onDelete: 'set null' },
+		),
+		firstName: text('first_name').notNull(),
+		lastName: text('last_name').notNull().default(''),
+		phoneE164: text('phone_e164'),
+		emailNorm: text('email_norm'),
+		locale: text('locale').notNull().default('en'),
+		allergyNotes: text('allergy_notes'),
+		// DEPRECATED, never read or written (ADR 048, "Single consent source").
+		// `customer_subscriptions` is the only marketing consent store; these
+		// columns only hold evidence for rows written before that decision and
+		// are dropped in a later release. Do not add readers or writers.
+		marketingEmailConsentAt: integer('marketing_email_consent_at'),
+		marketingSmsConsentAt: integer('marketing_sms_consent_at'),
+		consentSource: text('consent_source'),
+		consentTextVersion: text('consent_text_version'),
+		visits: integer('visits').notNull().default(0),
+		covers: integer('covers').notNull().default(0),
+		noShows: integer('no_shows').notNull().default(0),
+		lateCancels: integer('late_cancels').notNull().default(0),
+		cancels: integer('cancels').notNull().default(0),
+		firstVisitAt: integer('first_visit_at'),
+		lastVisitAt: integer('last_visit_at'),
+		mergedIntoId: text('merged_into_id'),
+		erasedAt: integer('erased_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_guests_marketing_customer_id').on(table.marketingCustomerId),
+		uniqueIndex('uniq_rsv_guests_customer_id')
+			.on(table.customerId)
+			.where(sql`${table.customerId} IS NOT NULL`),
+		index('idx_rsv_guests_phone').on(table.phoneE164),
+		index('idx_rsv_guests_email').on(table.emailNorm),
+		index('idx_rsv_guests_last_name').on(table.lastName),
+		index('idx_rsv_guests_last_visit_at').on(table.lastVisitAt),
+	],
+)
+
+export const rsvTags = sqliteTable(
+	'rsv_tags',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		scope: text('scope', { enum: RSV_TAG_SCOPE_VALUES }).notNull(),
+		category: text('category', { enum: RSV_TAG_CATEGORY_VALUES }).notNull(),
+		name: text('name').notNull(),
+		nameI18n: text('name_i18n', { mode: 'json' }).$type<
+			Record<string, string>
+		>(),
+		colorToken: text('color_token').notNull().default('neutral'),
+		sensitive: integer('sensitive', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		systemKey: text('system_key', { enum: RSV_TAG_SYSTEM_KEY_VALUES }),
+		guestSelectable: integer('guest_selectable', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		archivedAt: integer('archived_at'),
+	},
+	(table) => [
+		uniqueIndex('uniq_rsv_tags_system_key')
+			.on(table.systemKey)
+			.where(sql`${table.systemKey} IS NOT NULL`),
+		index('idx_rsv_tags_scope_category').on(table.scope, table.category),
+	],
+)
+
+export const rsvGuestTags = sqliteTable(
+	'rsv_guest_tags',
+	{
+		guestId: text('guest_id')
+			.notNull()
+			.references(() => rsvGuests.id, { onDelete: 'cascade' }),
+		tagId: text('tag_id')
+			.notNull()
+			.references(() => rsvTags.id, { onDelete: 'cascade' }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.guestId, table.tagId] }),
+		index('idx_rsv_guest_tags_tag').on(table.tagId),
+	],
+)
+
+export const rsvGuestNotes = sqliteTable(
+	'rsv_guest_notes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		guestId: text('guest_id')
+			.notNull()
+			.references(() => rsvGuests.id, { onDelete: 'cascade' }),
+		body: text('body').notNull(),
+		pinned: integer('pinned', { mode: 'boolean' }).notNull().default(false),
+		authorId: text('author_id').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		deletedAt: integer('deleted_at'),
+	},
+	(table) => [
+		index('idx_rsv_guest_notes_guest').on(table.guestId, table.createdAt),
+	],
+)
+
+export const rsvGuestMerges = sqliteTable(
+	'rsv_guest_merges',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		keptGuestId: text('kept_guest_id')
+			.notNull()
+			.references(() => rsvGuests.id),
+		mergedGuestId: text('merged_guest_id')
+			.notNull()
+			.references(() => rsvGuests.id),
+		actorId: text('actor_id').notNull(),
+		at: integer('at').notNull().default(nowMs),
+		movedCounts: text('moved_counts', { mode: 'json' })
+			.$type<Record<string, number>>()
+			.notNull()
+			.default(sql`'{}'`),
+	},
+	(table) => [
+		index('idx_rsv_guest_merges_merged_guest_id').on(table.mergedGuestId),
+		index('idx_rsv_guest_merges_kept').on(table.keptGuestId, table.at),
+	],
+)
+
+// 4.3 Reservations
+
+export const rsvReservations = sqliteTable(
+	'rsv_reservations',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		guestId: text('guest_id')
+			.notNull()
+			.references(() => rsvGuests.id),
+		customerId: text('customer_id').references(() => customers.id, {
+			onDelete: 'set null',
+		}),
+		confirmationCode: text('confirmation_code').notNull(),
+		businessDate: text('business_date').notNull(),
+		localStartMin: integer('local_start_min').notNull(),
+		timeZone: text('time_zone').notNull(),
+		startAt: integer('start_at').notNull(),
+		endAt: integer('end_at').notNull(),
+		durationMin: integer('duration_min').notNull(),
+		serviceId: text('service_id').references(() => rsvServices.id, {
+			onDelete: 'set null',
+		}),
+		experienceId: text('experience_id').references(() => rsvExperiences.id, {
+			onDelete: 'set null',
+		}),
+		partySize: integer('party_size').notNull(),
+		arrivedCovers: integer('arrived_covers'),
+		seatedCovers: integer('seated_covers'),
+		coversActual: integer('covers_actual'),
+		status: text('status', { enum: RSV_RESERVATION_STATUS_VALUES })
+			.notNull()
+			.default('booked'),
+		contactStatus: text('contact_status', { enum: RSV_CONTACT_STATUS_VALUES }),
+		runningLateMin: integer('running_late_min'),
+		courseStatus: text('course_status', { enum: RSV_COURSE_STATUS_VALUES }),
+		channel: text('channel', { enum: RSV_RESERVATION_CHANNEL_VALUES })
+			.notNull()
+			.default('online'),
+		client: text('client'),
+		assignment: text('assignment', { enum: RSV_ASSIGNMENT_MODE_VALUES })
+			.notNull()
+			.default('soft'),
+		comboId: text('combo_id').references(() => rsvTableCombos.id, {
+			onDelete: 'set null',
+		}),
+		overbooked: integer('overbooked', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		areaPrefId: text('area_pref_id').references(() => rsvAreas.id, {
+			onDelete: 'set null',
+		}),
+		areaPrefStrict: integer('area_pref_strict', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		occasionTagId: text('occasion_tag_id').references(() => rsvTags.id, {
+			onDelete: 'set null',
+		}),
+		guestRequests: text('guest_requests'),
+		dietaryNotes: text('dietary_notes'),
+		staffNotes: text('staff_notes'),
+		policySnapshot: text('policy_snapshot', { mode: 'json' }).$type<
+			Record<string, unknown>
+		>(),
+		policyAcceptedAt: integer('policy_accepted_at'),
+		policyTextHash: text('policy_text_hash'),
+		paymentStatus: text('payment_status', { enum: RSV_PAYMENT_STATUS_VALUES })
+			.notNull()
+			.default('none'),
+		paymentExpiresAt: integer('payment_expires_at'),
+		requestDeadlineAt: integer('request_deadline_at'),
+		lateCancel: integer('late_cancel', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		holdId: text('hold_id'),
+		voiceCallId: text('voice_call_id'),
+		manageTokenVersion: integer('manage_token_version').notNull().default(1),
+		smsOptIn: integer('sms_opt_in', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		guestLocale: text('guest_locale').notNull().default('en'),
+		scheduleVersion: integer('schedule_version').notNull().default(1),
+		version: integer('version').notNull().default(1),
+		arrivedAt: integer('arrived_at'),
+		seatedAt: integer('seated_at'),
+		finishedAt: integer('finished_at'),
+		cancelledAt: integer('cancelled_at'),
+		noShowAt: integer('no_show_at'),
+		cancelledBy: text('cancelled_by', { enum: RSV_CANCELLED_BY_VALUES }),
+		cancelReason: text('cancel_reason'),
+		createdByKind: text('created_by_kind', { enum: RSV_ACTOR_KIND_VALUES })
+			.notNull()
+			.default('guest'),
+		createdById: text('created_by_id'),
+		ipHash: text('ip_hash'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_reservations_occasion_tag_id').on(table.occasionTagId),
+		index('idx_rsv_reservations_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_reservations_combo_id').on(table.comboId),
+		index('idx_rsv_reservations_experience_id').on(table.experienceId),
+		index('idx_rsv_reservations_service_id').on(table.serviceId),
+		uniqueIndex('uniq_rsv_reservations_confirmation_code').on(
+			table.confirmationCode,
+		),
+		uniqueIndex('uniq_rsv_reservations_hold_id').on(table.holdId),
+		index('idx_rsv_reservations_location_date_status').on(
+			table.locationId,
+			table.businessDate,
+			table.status,
+		),
+		index('idx_rsv_reservations_location_start').on(
+			table.locationId,
+			table.startAt,
+		),
+		index('idx_rsv_reservations_guest_start').on(table.guestId, table.startAt),
+		index('idx_rsv_reservations_status_start').on(table.status, table.startAt),
+		index('idx_rsv_reservations_customer_start').on(
+			table.customerId,
+			table.startAt,
+		),
+		check(
+			'chk_rsv_reservations_time_range',
+			sql`${table.endAt} > ${table.startAt}`,
+		),
+		check(
+			'chk_rsv_reservations_party_size',
+			sql`${table.partySize} BETWEEN 1 AND 99`,
+		),
+	],
+)
+
+export const rsvReservationTags = sqliteTable(
+	'rsv_reservation_tags',
+	{
+		reservationId: text('reservation_id')
+			.notNull()
+			.references(() => rsvReservations.id, { onDelete: 'cascade' }),
+		tagId: text('tag_id')
+			.notNull()
+			.references(() => rsvTags.id, { onDelete: 'cascade' }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.reservationId, table.tagId] }),
+		index('idx_rsv_reservation_tags_tag').on(table.tagId),
+	],
+)
+
+export const rsvHolds = sqliteTable(
+	'rsv_holds',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		tokenHash: text('token_hash').notNull(),
+		businessDate: text('business_date').notNull(),
+		localStartMin: integer('local_start_min').notNull(),
+		startAt: integer('start_at').notNull(),
+		endAt: integer('end_at').notNull(),
+		partySize: integer('party_size').notNull(),
+		serviceId: text('service_id').references(() => rsvServices.id, {
+			onDelete: 'set null',
+		}),
+		experienceId: text('experience_id').references(() => rsvExperiences.id, {
+			onDelete: 'set null',
+		}),
+		areaPrefId: text('area_pref_id').references(() => rsvAreas.id, {
+			onDelete: 'set null',
+		}),
+		comboId: text('combo_id').references(() => rsvTableCombos.id, {
+			onDelete: 'set null',
+		}),
+		source: text('source', { enum: RSV_HOLD_SOURCE_VALUES })
+			.notNull()
+			.default('web'),
+		voiceCallId: text('voice_call_id'),
+		status: text('status', { enum: RSV_HOLD_STATUS_VALUES })
+			.notNull()
+			.default('active'),
+		expiresAt: integer('expires_at').notNull(),
+		extendedForPayment: integer('extended_for_payment', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		ipHash: text('ip_hash'),
+		reservationId: text('reservation_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_holds_combo_id').on(table.comboId),
+		index('idx_rsv_holds_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_holds_experience_id').on(table.experienceId),
+		index('idx_rsv_holds_service_id').on(table.serviceId),
+		uniqueIndex('uniq_rsv_holds_token_hash').on(table.tokenHash),
+		index('idx_rsv_holds_location_date_status_expires').on(
+			table.locationId,
+			table.businessDate,
+			table.status,
+			table.expiresAt,
+		),
+		index('idx_rsv_holds_ip_created').on(table.ipHash, table.createdAt),
+		check('chk_rsv_holds_time_range', sql`${table.endAt} > ${table.startAt}`),
+		check('chk_rsv_holds_party_size', sql`${table.partySize} BETWEEN 1 AND 99`),
+	],
+)
+
+export const rsvTableOccupancies = sqliteTable(
+	'rsv_table_occupancies',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		tableId: text('table_id')
+			.notNull()
+			.references(() => rsvTables.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: RSV_OCCUPANCY_KIND_VALUES }).notNull(),
+		reservationId: text('reservation_id').references(() => rsvReservations.id, {
+			onDelete: 'cascade',
+		}),
+		holdId: text('hold_id').references(() => rsvHolds.id, {
+			onDelete: 'cascade',
+		}),
+		blockId: text('block_id').references(() => rsvBlocks.id, {
+			onDelete: 'cascade',
+		}),
+		startAt: integer('start_at').notNull(),
+		endAt: integer('end_at').notNull(),
+		active: integer('active', { mode: 'boolean' }).notNull().default(true),
+		overbook: integer('overbook', { mode: 'boolean' }).notNull().default(false),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_table_occupancies_table_active_start').on(
+			table.tableId,
+			table.active,
+			table.startAt,
+		),
+		index('idx_rsv_table_occupancies_location_active_end').on(
+			table.locationId,
+			table.active,
+			table.endAt,
+		),
+		index('idx_rsv_table_occupancies_reservation').on(table.reservationId),
+		index('idx_rsv_table_occupancies_hold').on(table.holdId),
+		index('idx_rsv_table_occupancies_block').on(table.blockId),
+		check(
+			'chk_rsv_table_occupancies_owner',
+			sql`((${table.kind} = 'reservation' AND ${table.reservationId} IS NOT NULL AND ${table.holdId} IS NULL AND ${table.blockId} IS NULL) OR (${table.kind} = 'hold' AND ${table.holdId} IS NOT NULL AND ${table.reservationId} IS NULL AND ${table.blockId} IS NULL) OR (${table.kind} = 'block' AND ${table.blockId} IS NOT NULL AND ${table.reservationId} IS NULL AND ${table.holdId} IS NULL))`,
+		),
+		check(
+			'chk_rsv_table_occupancies_time_range',
+			sql`${table.endAt} > ${table.startAt}`,
+		),
+	],
+)
+
+export const rsvReservationEvents = sqliteTable(
+	'rsv_reservation_events',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		reservationId: text('reservation_id')
+			.notNull()
+			.references(() => rsvReservations.id, { onDelete: 'cascade' }),
+		at: integer('at').notNull().default(nowMs),
+		actorKind: text('actor_kind', { enum: RSV_ACTOR_KIND_VALUES }).notNull(),
+		actorId: text('actor_id'),
+		type: text('type').notNull(),
+		fromStatus: text('from_status', { enum: RSV_RESERVATION_STATUS_VALUES }),
+		toStatus: text('to_status', { enum: RSV_RESERVATION_STATUS_VALUES }),
+		data: text('data', { mode: 'json' }).$type<Record<string, unknown>>(),
+	},
+	(table) => [
+		index('idx_rsv_reservation_events_reservation_at').on(
+			table.reservationId,
+			table.at,
+		),
+	],
+)
+
+export const rsvServiceNotes = sqliteTable(
+	'rsv_service_notes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		serviceId: text('service_id').references(() => rsvServices.id, {
+			onDelete: 'cascade',
+		}),
+		body: text('body').notNull().default(''),
+		updatedBy: text('updated_by'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_service_notes_service_id').on(table.serviceId),
+		uniqueIndex('uniq_rsv_service_notes_loc_date_service').on(
+			table.locationId,
+			table.businessDate,
+			table.serviceId,
+		),
+		uniqueIndex('uniq_rsv_service_notes_loc_date_day')
+			.on(table.locationId, table.businessDate)
+			.where(sql`${table.serviceId} IS NULL`),
+	],
+)
+
+// 4.4 Waitlist and notify-me
+
+export const rsvWaitlistEntries = sqliteTable(
+	'rsv_waitlist_entries',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		guestId: text('guest_id').references(() => rsvGuests.id, {
+			onDelete: 'set null',
+		}),
+		displayName: text('display_name').notNull(),
+		phoneE164: text('phone_e164'),
+		emailNorm: text('email_norm'),
+		partySize: integer('party_size').notNull(),
+		areaPrefId: text('area_pref_id').references(() => rsvAreas.id, {
+			onDelete: 'set null',
+		}),
+		channel: text('channel', { enum: RSV_WAITLIST_CHANNEL_VALUES })
+			.notNull()
+			.default('walk_in'),
+		joinedAt: integer('joined_at').notNull().default(nowMs),
+		quotedMin: integer('quoted_min'),
+		quotedReadyAt: integer('quoted_ready_at'),
+		status: text('status', { enum: RSV_WAITLIST_STATUS_VALUES })
+			.notNull()
+			.default('waiting'),
+		notifiedAt: integer('notified_at'),
+		responseDeadlineAt: integer('response_deadline_at'),
+		reservationId: text('reservation_id').references(() => rsvReservations.id, {
+			onDelete: 'set null',
+		}),
+		statusTokenVersion: integer('status_token_version').notNull().default(1),
+		sortKey: real('sort_key').notNull().default(0),
+		notes: text('notes'),
+		smsOptIn: integer('sms_opt_in', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		locale: text('locale').notNull().default('en'),
+		ipHash: text('ip_hash'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		index('idx_rsv_waitlist_entries_reservation_id').on(table.reservationId),
+		index('idx_rsv_waitlist_entries_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_waitlist_entries_guest_id').on(table.guestId),
+		index('idx_rsv_waitlist_entries_loc_date_status_sort').on(
+			table.locationId,
+			table.businessDate,
+			table.status,
+			table.sortKey,
+		),
+		index('idx_rsv_waitlist_entries_loc_date_phone').on(
+			table.locationId,
+			table.businessDate,
+			table.phoneE164,
+		),
+		check(
+			'chk_rsv_waitlist_entries_party_size',
+			sql`${table.partySize} BETWEEN 1 AND 99`,
+		),
+	],
+)
+
+export const rsvNotifyRequests = sqliteTable(
+	'rsv_notify_requests',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		partySize: integer('party_size').notNull(),
+		fromLocalMin: integer('from_local_min').notNull(),
+		toLocalMin: integer('to_local_min').notNull(),
+		areaPrefId: text('area_pref_id').references(() => rsvAreas.id, {
+			onDelete: 'set null',
+		}),
+		experienceId: text('experience_id').references(() => rsvExperiences.id, {
+			onDelete: 'set null',
+		}),
+		contactPhoneE164: text('contact_phone_e164'),
+		contactEmailNorm: text('contact_email_norm'),
+		guestId: text('guest_id').references(() => rsvGuests.id, {
+			onDelete: 'set null',
+		}),
+		locale: text('locale').notNull().default('en'),
+		status: text('status', { enum: RSV_NOTIFY_STATUS_VALUES })
+			.notNull()
+			.default('active'),
+		notifiedCount: integer('notified_count').notNull().default(0),
+		lastNotifiedAt: integer('last_notified_at'),
+		/** Local start minute of the opening the last notification offered. */
+		lastNotifiedSlotMin: integer('last_notified_slot_min'),
+		expiresAt: integer('expires_at').notNull(),
+		tokenVersion: integer('token_version').notNull().default(1),
+		ipHash: text('ip_hash'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_notify_requests_guest_id').on(table.guestId),
+		index('idx_rsv_notify_requests_experience_id').on(table.experienceId),
+		index('idx_rsv_notify_requests_area_pref_id').on(table.areaPrefId),
+		index('idx_rsv_notify_requests_loc_date_status').on(
+			table.locationId,
+			table.businessDate,
+			table.status,
+		),
+		check(
+			'chk_rsv_notify_requests_party_size',
+			sql`${table.partySize} BETWEEN 1 AND 99`,
+		),
+	],
+)
+
+// 4.5 Messages, payments, cross-plane outbox, journeys
+
+export const rsvMessages = sqliteTable(
+	'rsv_messages',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		reservationId: text('reservation_id').references(() => rsvReservations.id, {
+			onDelete: 'set null',
+		}),
+		waitlistEntryId: text('waitlist_entry_id').references(
+			() => rsvWaitlistEntries.id,
+			{ onDelete: 'set null' },
+		),
+		notifyRequestId: text('notify_request_id').references(
+			() => rsvNotifyRequests.id,
+			{ onDelete: 'set null' },
+		),
+		kind: text('kind', { enum: RSV_MESSAGE_KIND_VALUES }).notNull(),
+		channel: text('channel', { enum: RSV_MESSAGE_CHANNEL_VALUES }).notNull(),
+		category: text('category', { enum: RSV_MESSAGE_CATEGORY_VALUES })
+			.notNull()
+			.default('transactional'),
+		locale: text('locale').notNull().default('en'),
+		sendAt: integer('send_at').notNull(),
+		status: text('status', { enum: RSV_MESSAGE_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull().default(nowMs),
+		dedupeKey: text('dedupe_key').notNull(),
+		providerMessageId: text('provider_message_id'),
+		lastErrorCode: text('last_error_code'),
+		sentAt: integer('sent_at'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_rsv_messages_notify_request_id').on(table.notifyRequestId),
+		index('idx_rsv_messages_waitlist_entry_id').on(table.waitlistEntryId),
+		uniqueIndex('uniq_rsv_messages_dedupe_key').on(table.dedupeKey),
+		index('idx_rsv_messages_status_next_attempt').on(
+			table.status,
+			table.nextAttemptAt,
+		),
+		index('idx_rsv_messages_reservation').on(table.reservationId),
+	],
+)
+
+export const rsvPayments = sqliteTable(
+	'rsv_payments',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		locationId: text('location_id').notNull(),
+		reservationId: text('reservation_id')
+			.notNull()
+			.references(() => rsvReservations.id, { onDelete: 'cascade' }),
+		provider: text('provider', { enum: RSV_PAYMENT_PROVIDER_VALUES }).notNull(),
+		kind: text('kind', { enum: RSV_PAYMENT_KIND_VALUES }).notNull(),
+		amountMinor: integer('amount_minor').notNull().default(0),
+		currency: text('currency').notNull().default('USD'),
+		platformFeeMinor: integer('platform_fee_minor').notNull().default(0),
+		status: text('status', { enum: RSV_PAYMENT_RECORD_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		providerRef: text('provider_ref'),
+		paymentMethodRef: text('payment_method_ref'),
+		customerRef: text('customer_ref'),
+		cardBrand: text('card_brand'),
+		cardLast4: text('card_last4'),
+		idempotencyKey: text('idempotency_key').notNull(),
+		failureCode: text('failure_code'),
+		failureMessage: text('failure_message'),
+		createdBy: text('created_by'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		// Payments contract columns.
+		purpose: text('purpose'),
+		providerSessionId: text('provider_session_id'),
+		refundedMinor: integer('refunded_minor').notNull().default(0),
+		platformFeeBp: integer('platform_fee_bp').notNull().default(0),
+		attempt: integer('attempt').notNull().default(1),
+		declineCode: text('decline_code'),
+		previousPaymentRef: text('previous_payment_ref'),
+		cardExpMonth: integer('card_exp_month'),
+		cardExpYear: integer('card_exp_year'),
+		disputeStatus: text('dispute_status'),
+		disputeRef: text('dispute_ref'),
+		parentPaymentId: text('parent_payment_id'),
+		refundRef: text('refund_ref'),
+		version: integer('version').notNull().default(1),
+	},
+	(table) => [
+		uniqueIndex('uniq_rsv_payments_provider_session')
+			.on(table.providerSessionId)
+			.where(sql`${table.providerSessionId} IS NOT NULL`),
+		index('idx_rsv_payments_parent').on(table.parentPaymentId),
+		uniqueIndex('uniq_rsv_payments_idempotency_key').on(table.idempotencyKey),
+		uniqueIndex('uniq_rsv_payments_provider_ref')
+			.on(table.provider, table.providerRef)
+			.where(sql`${table.providerRef} IS NOT NULL`),
+		index('idx_rsv_payments_reservation').on(table.reservationId),
+	],
+)
+
+export const rsvOutbox = sqliteTable(
+	'rsv_outbox',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		kind: text('kind', { enum: RSV_OUTBOX_KIND_VALUES }).notNull(),
+		dedupeKey: text('dedupe_key').notNull(),
+		payload: text('payload', { mode: 'json' })
+			.$type<Record<string, unknown>>()
+			.notNull(),
+		status: text('status', { enum: RSV_OUTBOX_STATUS_VALUES })
+			.notNull()
+			.default('pending'),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull().default(nowMs),
+		deliveredAt: integer('delivered_at'),
+		lastError: text('last_error'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_rsv_outbox_dedupe_key').on(table.dedupeKey),
+		index('idx_rsv_outbox_pending').on(table.deliveredAt, table.nextAttemptAt),
+	],
+)
+
+export const rsvJourneyEmissions = sqliteTable(
+	'rsv_journey_emissions',
+	{
+		reservationId: text('reservation_id')
+			.notNull()
+			.references(() => rsvReservations.id, { onDelete: 'cascade' }),
+		eventType: text('event_type', {
+			enum: RSV_JOURNEY_EVENT_TYPE_VALUES,
+		}).notNull(),
+		emittedAt: integer('emitted_at').notNull().default(nowMs),
+	},
+	(table) => [primaryKey({ columns: [table.reservationId, table.eventType] })],
+)
+
+// 4.6 Operational
+
+export const rsvIdempotencyKeys = sqliteTable(
+	'rsv_idempotency_keys',
+	{
+		scope: text('scope').notNull(),
+		key: text('key').notNull(),
+		requestHash: text('request_hash').notNull(),
+		statusCode: integer('status_code').notNull(),
+		responseJson: text('response_json').notNull(),
+		createdAt: integer('created_at').notNull().default(nowMs),
+		expiresAt: integer('expires_at').notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.scope, table.key] }),
+		index('idx_rsv_idempotency_keys_expires').on(table.expiresAt),
+	],
+)
+
+export const rsvDayVersions = sqliteTable(
+	'rsv_day_versions',
+	{
+		locationId: text('location_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		version: integer('version').notNull().default(1),
+		availabilityIncreasedAt: integer('availability_increased_at'),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [primaryKey({ columns: [table.locationId, table.businessDate] })],
+)
+
+export const rsvRateCounters = sqliteTable(
+	'rsv_rate_counters',
+	{
+		bucket: text('bucket').notNull(),
+		subjectHash: text('subject_hash').notNull(),
+		windowStart: integer('window_start').notNull(),
+		count: integer('count').notNull().default(1),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.bucket, table.subjectHash, table.windowStart],
+		}),
+	],
+)
+
+export const rsvAuditLog = sqliteTable(
+	'rsv_audit_log',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		at: integer('at').notNull().default(nowMs),
+		actorKind: text('actor_kind', {
+			enum: RSV_AUDIT_ACTOR_KIND_VALUES,
+		}).notNull(),
+		actorId: text('actor_id'),
+		locationId: text('location_id'),
+		action: text('action').notNull(),
+		entityType: text('entity_type').notNull(),
+		entityId: text('entity_id').notNull(),
+		changes: text('changes', { mode: 'json' }).$type<Record<string, unknown>>(),
+	},
+	(table) => [
+		index('idx_rsv_audit_log_location_at').on(table.locationId, table.at),
+	],
+)
+
+// ==========================================
+// 13. INFERRED TYPES
 // ==========================================
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
@@ -2936,6 +4844,7 @@ export type StaffAvailabilityRow = typeof staffAvailability.$inferSelect
 export type TimeOffRequestRow = typeof timeOffRequests.$inferSelect
 export type ShiftRequestRow = typeof shiftRequests.$inferSelect
 
+export type VoiceCallActionRow = typeof voiceCallActions.$inferSelect
 export type LaborScopeSettingsRow = typeof laborScopeSettings.$inferSelect
 export type SalesManualEntryRow = typeof salesManualEntries.$inferSelect
 export type TipPoolSettingsRow = typeof tipPoolSettings.$inferSelect
@@ -2950,3 +4859,91 @@ export type OnboardingTemplateRow = typeof onboardingTemplates.$inferSelect
 export type OnboardingTemplateTaskRow =
 	typeof onboardingTemplateTasks.$inferSelect
 export type StaffCertificateRow = typeof staffCertificates.$inferSelect
+
+export type RsvLocationSettingsRow = typeof rsvLocationSettings.$inferSelect
+export type NewRsvLocationSettingsRow = typeof rsvLocationSettings.$inferInsert
+export type RsvAreaRow = typeof rsvAreas.$inferSelect
+export type NewRsvAreaRow = typeof rsvAreas.$inferInsert
+export type RsvTableRow = typeof rsvTables.$inferSelect
+export type NewRsvTableRow = typeof rsvTables.$inferInsert
+export type RsvTableComboRow = typeof rsvTableCombos.$inferSelect
+export type NewRsvTableComboRow = typeof rsvTableCombos.$inferInsert
+export type RsvTableComboMemberRow = typeof rsvTableComboMembers.$inferSelect
+export type NewRsvTableComboMemberRow = typeof rsvTableComboMembers.$inferInsert
+export type RsvFloorElementRow = typeof rsvFloorElements.$inferSelect
+export type NewRsvFloorElementRow = typeof rsvFloorElements.$inferInsert
+export type RsvServiceRow = typeof rsvServices.$inferSelect
+export type NewRsvServiceRow = typeof rsvServices.$inferInsert
+export type RsvServiceAvailabilityRow =
+	typeof rsvServiceAvailability.$inferSelect
+export type NewRsvServiceAvailabilityRow =
+	typeof rsvServiceAvailability.$inferInsert
+export type RsvTurnTimeRow = typeof rsvTurnTimes.$inferSelect
+export type NewRsvTurnTimeRow = typeof rsvTurnTimes.$inferInsert
+export type RsvPacingRuleRow = typeof rsvPacingRules.$inferSelect
+export type NewRsvPacingRuleRow = typeof rsvPacingRules.$inferInsert
+export type RsvSpecialDayRow = typeof rsvSpecialDays.$inferSelect
+export type NewRsvSpecialDayRow = typeof rsvSpecialDays.$inferInsert
+export type RsvBlockRow = typeof rsvBlocks.$inferSelect
+export type NewRsvBlockRow = typeof rsvBlocks.$inferInsert
+export type RsvPolicyRow = typeof rsvPolicies.$inferSelect
+export type NewRsvPolicyRow = typeof rsvPolicies.$inferInsert
+export type RsvSectionLayoutRow = typeof rsvSectionLayouts.$inferSelect
+export type NewRsvSectionLayoutRow = typeof rsvSectionLayouts.$inferInsert
+export type RsvSectionRow = typeof rsvSections.$inferSelect
+export type NewRsvSectionRow = typeof rsvSections.$inferInsert
+export type RsvSectionTableRow = typeof rsvSectionTables.$inferSelect
+export type NewRsvSectionTableRow = typeof rsvSectionTables.$inferInsert
+export type RsvSectionAssignmentRow = typeof rsvSectionAssignments.$inferSelect
+export type NewRsvSectionAssignmentRow =
+	typeof rsvSectionAssignments.$inferInsert
+export type RsvMessageTextRow = typeof rsvMessageTexts.$inferSelect
+export type NewRsvMessageTextRow = typeof rsvMessageTexts.$inferInsert
+export type RsvExperienceRow = typeof rsvExperiences.$inferSelect
+export type NewRsvExperienceRow = typeof rsvExperiences.$inferInsert
+export type RsvExperienceScheduleRow =
+	typeof rsvExperienceSchedules.$inferSelect
+export type NewRsvExperienceScheduleRow =
+	typeof rsvExperienceSchedules.$inferInsert
+export type RsvGuestRow = typeof rsvGuests.$inferSelect
+export type NewRsvGuestRow = typeof rsvGuests.$inferInsert
+export type RsvTagRow = typeof rsvTags.$inferSelect
+export type NewRsvTagRow = typeof rsvTags.$inferInsert
+export type RsvGuestTagRow = typeof rsvGuestTags.$inferSelect
+export type NewRsvGuestTagRow = typeof rsvGuestTags.$inferInsert
+export type RsvGuestNoteRow = typeof rsvGuestNotes.$inferSelect
+export type NewRsvGuestNoteRow = typeof rsvGuestNotes.$inferInsert
+export type RsvGuestMergeRow = typeof rsvGuestMerges.$inferSelect
+export type NewRsvGuestMergeRow = typeof rsvGuestMerges.$inferInsert
+export type RsvReservationRow = typeof rsvReservations.$inferSelect
+export type NewRsvReservationRow = typeof rsvReservations.$inferInsert
+export type RsvReservationTagRow = typeof rsvReservationTags.$inferSelect
+export type NewRsvReservationTagRow = typeof rsvReservationTags.$inferInsert
+export type RsvHoldRow = typeof rsvHolds.$inferSelect
+export type NewRsvHoldRow = typeof rsvHolds.$inferInsert
+export type RsvTableOccupancyRow = typeof rsvTableOccupancies.$inferSelect
+export type NewRsvTableOccupancyRow = typeof rsvTableOccupancies.$inferInsert
+export type RsvReservationEventRow = typeof rsvReservationEvents.$inferSelect
+export type NewRsvReservationEventRow = typeof rsvReservationEvents.$inferInsert
+export type RsvServiceNoteRow = typeof rsvServiceNotes.$inferSelect
+export type NewRsvServiceNoteRow = typeof rsvServiceNotes.$inferInsert
+export type RsvWaitlistEntryRow = typeof rsvWaitlistEntries.$inferSelect
+export type NewRsvWaitlistEntryRow = typeof rsvWaitlistEntries.$inferInsert
+export type RsvNotifyRequestRow = typeof rsvNotifyRequests.$inferSelect
+export type NewRsvNotifyRequestRow = typeof rsvNotifyRequests.$inferInsert
+export type RsvMessageRow = typeof rsvMessages.$inferSelect
+export type NewRsvMessageRow = typeof rsvMessages.$inferInsert
+export type RsvPaymentRow = typeof rsvPayments.$inferSelect
+export type NewRsvPaymentRow = typeof rsvPayments.$inferInsert
+export type RsvOutboxRow = typeof rsvOutbox.$inferSelect
+export type NewRsvOutboxRow = typeof rsvOutbox.$inferInsert
+export type RsvJourneyEmissionRow = typeof rsvJourneyEmissions.$inferSelect
+export type NewRsvJourneyEmissionRow = typeof rsvJourneyEmissions.$inferInsert
+export type RsvIdempotencyKeyRow = typeof rsvIdempotencyKeys.$inferSelect
+export type NewRsvIdempotencyKeyRow = typeof rsvIdempotencyKeys.$inferInsert
+export type RsvDayVersionRow = typeof rsvDayVersions.$inferSelect
+export type NewRsvDayVersionRow = typeof rsvDayVersions.$inferInsert
+export type RsvRateCounterRow = typeof rsvRateCounters.$inferSelect
+export type NewRsvRateCounterRow = typeof rsvRateCounters.$inferInsert
+export type RsvAuditLogRow = typeof rsvAuditLog.$inferSelect
+export type NewRsvAuditLogRow = typeof rsvAuditLog.$inferInsert

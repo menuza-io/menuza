@@ -6,6 +6,7 @@ import {
 	type CustomerSubscriptionSource,
 	type CustomerSubscriptionTopic,
 	type TenantDatabase,
+	type TenantTransaction,
 } from '@repo/tenant-db'
 import { hmacHash } from '../lib/secrets.ts'
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
@@ -100,7 +101,7 @@ export async function loadBroadcastAudience(
  * from a previous mailing list); only import addresses whose owners agreed.
  */
 export async function setCustomerSubscription(
-	db: TenantDatabase,
+	db: TenantDatabase | TenantTransaction,
 	params: {
 		customerId: string
 		topic: CustomerSubscriptionTopic
@@ -209,4 +210,45 @@ export async function confirmCustomerSubscription(
 		)
 		.returning({ id: customerSubscriptions.id })
 	return rows.length > 0
+}
+
+/**
+ * Whether one customer may be written to on one topic and channel right now:
+ * an ACTIVE subscription, and for email an address its owner confirmed
+ * (`confirmed_email_hash` matches the customer's current address; a customer-
+ * typed address is deliverable only after the emailed double opt-in). Texts
+ * are deliverable on the subscription alone: the caller decides whether the
+ * phone must be verified. Used by reservation journeys, whose consent is the
+ * `reservations` topic rather than a broadcast's `marketing`.
+ */
+export async function hasDeliverableSubscription(
+	db: TenantDatabase | TenantTransaction,
+	params: {
+		customerId: string
+		topic: CustomerSubscriptionTopic
+		channel: CustomerSubscriptionChannel
+	},
+): Promise<boolean> {
+	const row = await db
+		.select({
+			confirmedEmailHash: customerSubscriptions.confirmedEmailHash,
+			email: customers.email,
+		})
+		.from(customerSubscriptions)
+		.innerJoin(customers, eq(customers.id, customerSubscriptions.customerId))
+		.where(
+			and(
+				eq(customerSubscriptions.customerId, params.customerId),
+				eq(customerSubscriptions.topic, params.topic),
+				eq(customerSubscriptions.channel, params.channel),
+				isNull(customerSubscriptions.unsubscribedAt),
+			),
+		)
+		.get()
+	if (!row) return false
+	if (params.channel === 'sms') return true
+	const email = row.email?.trim()
+	return Boolean(
+		email && row.confirmedEmailHash === emailConsentHash(email),
+	)
 }

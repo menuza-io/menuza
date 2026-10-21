@@ -62,6 +62,8 @@ import {
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
 import { deleteScopeData } from '#app/utils/phone-agent/phone-agent.server.ts'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
+import { checkLocationReservationsDeleteGuard } from '#app/utils/reservations/region-guard.server.ts'
 import { purgeOrganizationSiteCache } from '#app/utils/sites/kv-cache.server.ts'
 
 interface LocationListItem {
@@ -356,6 +358,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const organization = await requireUserOrganization(request, params.orgSlug, {
 		id: true,
 		slug: true,
+		dataRegion: true,
+		hasProvisionedDb: true,
 	})
 
 	await requireUserWithOrganizationPermission(
@@ -385,6 +389,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				),
 			)
 		await purgeOrganizationSiteCache(organization.id, organization.slug)
+		await notifyReservationsContextChanged(organization.id, 'locations')
 
 		return { success: true }
 	}
@@ -412,6 +417,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				)
 		})
 		await purgeOrganizationSiteCache(organization.id, organization.slug)
+		await notifyReservationsContextChanged(organization.id, 'locations')
 
 		return { success: true }
 	}
@@ -440,6 +446,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return { error: 'Location not found' }
 		}
 
+		const deleteGuard = await checkLocationReservationsDeleteGuard({
+			organizationId: organization.id,
+			dataRegion: organization.dataRegion,
+			hasProvisionedDb: organization.hasProvisionedDb,
+			locationId,
+		})
+		if (!deleteGuard.allowed) {
+			return Response.json(
+				{
+					error: deleteGuard.error,
+					futureReservations: deleteGuard.futureReservations,
+				},
+				{ status: deleteGuard.status },
+			)
+		}
+
 		await db
 			.delete(OrganizationLocation)
 			.where(
@@ -450,6 +472,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		await deleteScopeData(organization.id, locationId, { userId, request })
 		await purgeOrganizationSiteCache(organization.id, organization.slug)
+		await notifyReservationsContextChanged(organization.id, 'locations')
 
 		return { success: true }
 	}
@@ -460,7 +483,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function LocationsIndexRoute() {
 	const { _ } = useLingui()
 	const { organization, locations } = useLoaderData<typeof loader>()
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<{ error?: string; futureReservations?: number }>()
 	const navigate = useNavigate()
 
 	const [filterQuery, setFilterQuery] = useState(createFilterQuery())
@@ -540,6 +563,16 @@ export default function LocationsIndexRoute() {
 			</div>
 
 			<div className="space-y-4">
+				{fetcher.data?.error ? (
+					<div
+						role="alert"
+						data-testid="location-delete-error"
+						className="bg-destructive/10 border-destructive/20 text-destructive rounded-md border p-3 text-sm"
+					>
+						{fetcher.data.error}
+					</div>
+				) : null}
+
 				<Filters
 					fields={LOCATION_FILTER_FIELDS}
 					query={filterQuery}

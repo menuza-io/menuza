@@ -1,0 +1,349 @@
+// @vitest-environment jsdom
+import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { FloorPlanCanvas } from '#app/components/reservations/floor-plan-canvas.tsx'
+import {
+	type DiningAreaDto,
+	type FloorElementDto,
+	type TableDto,
+} from '#app/utils/reservations/setup-api.ts'
+import { renderStaff as renderWithI18n } from '#tests/staff-render.tsx'
+
+const SAMPLE_AREAS: DiningAreaDto[] = [
+	{
+		id: 'area-main',
+		locationId: 'loc-1',
+		name: 'Main Dining',
+		nameI18n: { en: 'Main Dining' },
+		floorLabel: 'Ground',
+		sortOrder: 0,
+		isOutdoor: false,
+		isBookableOnline: true,
+		onlinePriority: 0,
+		isActive: true,
+		archivedAt: null,
+		version: 1,
+	},
+	{
+		id: 'area-patio',
+		locationId: 'loc-1',
+		name: 'Patio',
+		nameI18n: { en: 'Patio' },
+		floorLabel: 'Outdoor',
+		sortOrder: 1,
+		isOutdoor: true,
+		isBookableOnline: true,
+		onlinePriority: 1,
+		isActive: true,
+		archivedAt: null,
+		version: 1,
+	},
+]
+
+const SAMPLE_TABLES: TableDto[] = [
+	{
+		id: 'table-1',
+		locationId: 'loc-1',
+		areaId: 'area-main',
+		label: 'T1',
+		minCovers: 2,
+		maxCovers: 4,
+		shape: 'round',
+		x: 100,
+		y: 120,
+		width: 60,
+		height: 60,
+		rotation: 0,
+		combinable: true,
+		isBookableOnline: true,
+		isAccessible: false,
+		isHighTop: false,
+		isPatio: false,
+		resetBufferMin: 15,
+		priority: 0,
+		notes: null,
+		isActive: true,
+		archivedAt: null,
+		version: 1,
+	},
+	{
+		id: 'table-2',
+		locationId: 'loc-1',
+		areaId: 'area-main',
+		label: 'T2',
+		minCovers: 4,
+		maxCovers: 6,
+		shape: 'rect',
+		x: 240,
+		y: 120,
+		width: 90,
+		height: 60,
+		rotation: 0,
+		combinable: true,
+		isBookableOnline: true,
+		isAccessible: true,
+		isHighTop: false,
+		isPatio: false,
+		resetBufferMin: 15,
+		priority: 1,
+		notes: null,
+		isActive: true,
+		archivedAt: null,
+		version: 1,
+	},
+]
+
+const SAMPLE_ELEMENTS: FloorElementDto[] = [
+	{
+		id: 'el-1',
+		locationId: 'loc-1',
+		areaId: 'area-main',
+		kind: 'bar',
+		label: 'Main Bar',
+		x: 400,
+		y: 80,
+		width: 140,
+		height: 50,
+		rotation: 0,
+		style: {},
+	},
+]
+
+describe('FloorPlanCanvas', () => {
+	it('renders the floor plan canvas with dir="ltr", nudges selected table via keyboard arrows (+1 and +10 with Shift), and announces coordinates via aria-live', () => {
+		const onSave = vi.fn(async () => true)
+		const onDiscard = vi.fn()
+
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={onSave}
+				onReloadLatest={vi.fn()}
+				onLeave={onDiscard}
+			/>,
+		)
+
+		const canvas = screen.getByTestId('floor-plan-canvas-surface')
+		expect(canvas.getAttribute('dir')).toBe('ltr')
+
+		// Select table T1
+		const tableNode = screen.getByTestId('floor-table-T1')
+		fireEvent.click(tableNode)
+
+		// ArrowRight nudges x by +1 (100 -> 101)
+		fireEvent.keyDown(tableNode, { key: 'ArrowRight' })
+		const liveRegion = screen.getByTestId('floor-plan-live-region')
+		expect(liveRegion.textContent).toContain('T1')
+		expect(liveRegion.textContent).toContain('101')
+		expect(liveRegion.textContent).toContain('120')
+
+		// Shift+ArrowDown nudges y by +10 (120 -> 130)
+		fireEvent.keyDown(tableNode, { key: 'ArrowDown', shiftKey: true })
+		expect(liveRegion.textContent).toContain('101')
+		expect(liveRegion.textContent).toContain('130')
+
+		// Rotate 90 deg via quick button
+		fireEvent.click(screen.getByRole('button', { name: '90°' }))
+
+		// Draft was not auto-saved
+		expect(onSave).not.toHaveBeenCalled()
+
+		// Explicit Save sends expectedFloorPlanVersion and updated table coordinates
+		fireEvent.click(screen.getByTestId('floor-plan-save-button'))
+		expect(onSave).toHaveBeenCalledTimes(1)
+		const saveArg = (onSave.mock.calls[0] as any)?.[0]
+		expect(saveArg.expectedFloorPlanVersion).toBe(4)
+		const savedT1 = saveArg.tables.find((t: TableDto) => t.label === 'T1')
+		expect(savedT1).toMatchObject({
+			x: 101,
+			y: 130,
+			rotation: 90,
+		})
+	})
+
+	function renderCanvas() {
+		return renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={vi.fn(async () => true)}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+	}
+
+	it('selects a table or element with Enter or Space, so the inspector opens without a pointer', () => {
+		renderCanvas()
+		const table = screen.getByTestId('floor-table-T1')
+		expect(table.getAttribute('aria-pressed')).toBe('false')
+		fireEvent.keyDown(table, { key: 'Enter' })
+		expect(table.getAttribute('aria-pressed')).toBe('true')
+		expect(screen.getByTestId('floor-inspector-delete-table')).toBeTruthy()
+		const element = screen.getByTestId('floor-element-el-1')
+		fireEvent.keyDown(element, { key: ' ' })
+		expect(element.getAttribute('aria-pressed')).toBe('true')
+		expect(table.getAttribute('aria-pressed')).toBe('false')
+	})
+
+	it('names whether a table is bookable online, not by its colour alone', () => {
+		renderCanvas()
+		const names = SAMPLE_TABLES.map(
+			(table) =>
+				screen
+					.getByTestId(`floor-table-${table.label}`)
+					.getAttribute('aria-label') ?? '',
+		)
+		for (const name of names) {
+			expect(name).toMatch(/bookable online/)
+		}
+		expect(
+			names.some((name) => /not bookable online/.test(name)) ||
+				SAMPLE_TABLES.every((table) => table.isBookableOnline),
+		).toBe(true)
+	})
+
+	it('does not nudge the selected item when an arrow is pressed on the area buttons or elsewhere outside the canvas', () => {
+		renderCanvas()
+		const table = screen.getByTestId('floor-table-T1')
+		fireEvent.keyDown(table, { key: 'Enter' })
+		const areaButton = screen.getByTestId('floor-area-tab-Main Dining')
+		fireEvent.keyDown(areaButton, { key: 'ArrowRight', bubbles: true })
+		const live = screen.getByTestId('floor-plan-live-region')
+		expect(live.textContent ?? '').not.toContain('Moved')
+	})
+
+	it('discards unsaved changes when clicking Leave without saving and shows 409 stale-version banner when conflictMessage is set', () => {
+		const onSave = vi.fn(async () => true)
+		const onReloadLatest = vi.fn()
+		const onLeave = vi.fn()
+
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={5}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage="This floor plan was updated by another operator."
+				onSave={onSave}
+				onReloadLatest={onReloadLatest}
+				onLeave={onLeave}
+			/>,
+		)
+
+		// Conflict banner is visible
+		expect(
+			screen.getByTestId('floor-plan-conflict-banner').textContent,
+		).toContain('This floor plan was updated by another operator.')
+
+		// Select T1 and nudge it
+		const tableNode = screen.getByTestId('floor-table-T1')
+		fireEvent.click(tableNode)
+		fireEvent.keyDown(tableNode, { key: 'ArrowRight', shiftKey: true })
+
+		// Click Discard draft changes
+		fireEvent.click(screen.getByTestId('floor-plan-discard-button'))
+		expect(onSave).not.toHaveBeenCalled()
+
+		// Click Reload latest
+		fireEvent.click(screen.getByTestId('floor-plan-reload-button'))
+		expect(onReloadLatest).toHaveBeenCalledTimes(1)
+	})
+
+	it('disables mutation controls when canWrite is false (read-only operator)', () => {
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={2}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={false}
+				saving={false}
+				conflictMessage={null}
+				onSave={vi.fn(async () => true)}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+
+		const saveButton = screen.getByTestId('floor-plan-save-button')
+		expect(saveButton).toBeDisabled()
+		expect(screen.queryByTestId('floor-plan-add-table-button')).toBeNull()
+	})
+
+	it('keeps the draft dirty and the Discard button when a save fails', async () => {
+		const onSave = vi.fn(async () => false)
+
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={onSave}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+
+		const tableNode = screen.getByTestId('floor-table-T1')
+		fireEvent.click(tableNode)
+		fireEvent.keyDown(tableNode, { key: 'ArrowRight' })
+		expect(screen.getByTestId('floor-plan-discard-button')).toBeTruthy()
+
+		fireEvent.click(screen.getByTestId('floor-plan-save-button'))
+		await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+		await Promise.resolve()
+
+		expect(screen.getByTestId('floor-plan-discard-button')).toBeTruthy()
+	})
+
+	it('clears the draft state after a successful save', async () => {
+		const onSave = vi.fn(async () => true)
+
+		renderWithI18n(
+			<FloorPlanCanvas
+				locationName="Downtown"
+				floorPlanVersion={4}
+				areas={SAMPLE_AREAS}
+				tables={SAMPLE_TABLES}
+				elements={SAMPLE_ELEMENTS}
+				canWrite={true}
+				saving={false}
+				conflictMessage={null}
+				onSave={onSave}
+				onReloadLatest={vi.fn()}
+				onLeave={vi.fn()}
+			/>,
+		)
+
+		const tableNode = screen.getByTestId('floor-table-T1')
+		fireEvent.click(tableNode)
+		fireEvent.keyDown(tableNode, { key: 'ArrowRight' })
+		fireEvent.click(screen.getByTestId('floor-plan-save-button'))
+		await waitFor(() =>
+			expect(screen.queryByTestId('floor-plan-discard-button')).toBeNull(),
+		)
+	})
+})

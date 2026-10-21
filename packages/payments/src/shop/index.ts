@@ -12,11 +12,16 @@ export {
 	isTerminalRestaurantPaymentStatus,
 	mapConnectSessionToRestaurantOrder,
 	mapCheckoutWebhookToRestaurantOrder,
+	mapCheckoutPaymentToRestaurantOrder,
+	restaurantOrderCheckoutReference,
 	type RestaurantOrderProcessor,
 	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderPaymentStatus,
 	type RestaurantTerminalPaymentStatus,
 } from './restaurant'
+
+export * from './reservation'
+export * from './reservation-consent'
 
 export {
 	SHOP_PLATFORM_FEE_PERCENT,

@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react'
 import { type ReportTemplate } from '../templates.ts'
 
 /**
- * Translatable names for the staff report templates and their categories. The
+ * Translatable names for the staff and Reservations report templates and their categories. The
  * template data itself stays plain English (it is also the saved report's
  * default title and the engine's input); the Reports screens look the
  * translation up by template id and fall back to the English text. Strings are
@@ -76,11 +76,76 @@ const TEMPLATE_LABELS: Record<string, TemplateLabel> = {
 		title: msg`Applications by source`,
 		description: msg`Where applicants found the job.`,
 	},
+	'rsv-daily-summary': {
+		title: msg`Daily summary`,
+		description: msg`Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings.`,
+	},
+	'rsv-covers-by-service': {
+		title: msg`Covers by service`,
+		description: msg`Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings.`,
+	},
+	'rsv-booking-sources': {
+		title: msg`Booking sources`,
+		description: msg`Where bookings come from over the last 30 days: online, phone, host, walk-in and more.`,
+	},
+	'rsv-no-show-rate': {
+		title: msg`No-shows & cancellations`,
+		description: msg`The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked.`,
+	},
+	'rsv-cancellations-by-who': {
+		title: msg`Cancellations by who`,
+		description: msg`Who cancelled over the last 30 days: the guest, the restaurant or the system.`,
+	},
+	'rsv-late-cancellations': {
+		title: msg`Late cancellations`,
+		description: msg`The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days.`,
+	},
+	'rsv-no-show-list': {
+		title: msg`No-show list`,
+		description: msg`Every no-show over the last 30 days with its date, service, party size and source. No guest details.`,
+	},
+	'rsv-turn-times': {
+		title: msg`Turn times`,
+		description: msg`How long parties of each size stayed, from seated to finished, over the last 30 days.`,
+	},
+	'rsv-turn-time-variance': {
+		title: msg`Turn times against target`,
+		description: msg`How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early.`,
+	},
+	'rsv-waitlist-outcomes': {
+		title: msg`Waitlist outcomes`,
+		description: msg`How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response.`,
+	},
+	'rsv-waitlist-waits': {
+		title: msg`Waitlist waits`,
+		description: msg`The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days.`,
+	},
+	'rsv-pacing': {
+		title: msg`Pacing`,
+		description: msg`Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it.`,
+	},
+	'rsv-covers-today': {
+		title: msg`Covers today`,
+		description: msg`Covers booked for today, not counting cancelled, declined or expired bookings.`,
+	},
+	'rsv-no-show-rate-30d': {
+		title: msg`No-show rate, last 30 days`,
+		description: msg`The share of booked parties that did not show up over the last 30 days.`,
+	},
+	'rsv-late-cancels-30d': {
+		title: msg`Late cancellations, last 30 days`,
+		description: msg`Bookings cancelled after the free-cancellation window over the last 30 days.`,
+	},
+	'rsv-waitlist-avg-wait-7d': {
+		title: msg`Average waitlist wait, last 7 days`,
+		description: msg`How long waitlist parties waited before they were seated over the last 7 days.`,
+	},
 }
 
 const CATEGORY_LABELS: Record<string, ReturnType<typeof msg>> = {
 	Labor: msg`Labor`,
 	Hiring: msg`Hiring`,
+	Reservations: msg`Reservations`,
 }
 
 export function useReportLabels() {

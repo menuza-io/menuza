@@ -1,14 +1,16 @@
 import {
 	addDays,
-	type BookedOrderFact,
+	type BookedUnitFact,
 	computeForecastGap,
+	type ForecastDemandSource,
 	type ForecastGapView,
 	type ForecastQuery,
 	type ForecastShiftFact,
+	ORDERS_SOURCE_ID,
 	startOfLocalDay,
 } from '@repo/staffing'
 import { loadLaborSettings } from './labor-data.ts'
-import { getOrderSource } from './order-source.ts'
+import { type DemandSource, listDemandSources } from './demand-sources.ts'
 import {
 	effectiveShift,
 	FrameCache,
@@ -23,11 +25,11 @@ import { loadDemandGuide } from './schedule-week-service.ts'
 import { ok } from './timesheet-shared.ts'
 
 /**
- * The orders-based forecast against the schedule, for the week that holds
- * `date`. The expected orders of each hour are the demand guide's weekday
- * median, never fewer than the paid, active orders already booked for that
- * hour; the manager's orders-per-labor-hour standards turn them into the people
- * each position needs, and the live schedule says who is there. All the
+ * The demand forecast against the schedule, for the week that holds `date`.
+ * Each registered demand source (orders, visits) is forecast in its own unit:
+ * the expected units of each hour are the demand guide's weekday median, never
+ * fewer than what is already booked for that hour; the manager's standards per
+ * unit turn them into the people each position needs, and the live schedule says who is there. All the
  * arithmetic is `computeForecastGap` in `@repo/staffing`.
  *
  * It carries no money and no names (people are counted, not listed), so it
@@ -35,15 +37,14 @@ import { ok } from './timesheet-shared.ts'
  * point is to see a gap before the week is published.
  */
 
-/** Orders already placed for a future hour, from the registered order source (none by default). */
-async function loadBookedOrders(
+/** Units already booked for a future hour of one registered demand source. */
+async function loadBookedUnits(
 	ctx: Pick<ScheduleContext, 'db' | 'now'>,
+	source: DemandSource,
 	scopeId: string,
 	timeZone: string,
 	weekStart: string,
-): Promise<BookedOrderFact[]> {
-	const source = getOrderSource()
-	if (!source) return []
+): Promise<BookedUnitFact[]> {
 	const nowSeconds = Math.floor(ctx.now / 1000)
 	const fromSeconds = Math.max(
 		nowSeconds,
@@ -71,10 +72,24 @@ export async function loadForecastGap(
 	const weekStart = snapWeekStart(query.date, frame)
 	const weekEnd = addDays(weekStart, 6)
 
-	const [guide, settings, booked, rows] = await Promise.all([
-		loadDemandGuide(ctx, frame, weekStart, false),
+	const registered = listDemandSources()
+	const [settings, sources, rows] = await Promise.all([
 		loadLaborSettings(ctx.db, query.scopeId),
-		loadBookedOrders(ctx, query.scopeId, frame.timeZone, weekStart),
+		Promise.all(
+			registered.map(async (source) => {
+				const [guide, booked] = await Promise.all([
+					loadDemandGuide(ctx, frame, weekStart, false, source.id),
+					loadBookedUnits(
+						ctx,
+						source,
+						query.scopeId,
+						frame.timeZone,
+						weekStart,
+					),
+				])
+				return { source, guide, booked }
+			}),
+		),
 		// The day before is read too: a shift that runs past midnight puts people
 		// on the clock on the first morning.
 		loadScopeShifts(ctx.db, query.scopeId, addDays(weekStart, -1), weekEnd),
@@ -90,12 +105,30 @@ export async function loadForecastGap(
 			unpaidBreakMinutes: shift.unpaidBreakMinutes,
 		}))
 
-	// Only positions the manager gave a standard to are forecast.
+	// Only positions the manager gave a standard to are forecast, per unit. With
+	// no demand source registered (the generic module) the orders guide is still
+	// shown, empty, as before.
+	const inputs: ForecastDemandSource[] =
+		sources.length > 0
+			? sources.map(({ source, guide, booked }) => ({
+					id: source.id,
+					unit: source.unit,
+					guide,
+					booked,
+					standards: settings.demandPerLaborHour[source.id] ?? {},
+				}))
+			: [
+					{
+						id: ORDERS_SOURCE_ID,
+						unit: 'orders',
+						guide: await loadDemandGuide(ctx, frame, weekStart, false),
+						booked: [],
+						standards: settings.ordersPerLaborHour,
+					},
+				]
 	return ok(
 		computeForecastGap({
-			guide,
-			booked,
-			standards: settings.ordersPerLaborHour,
+			sources: inputs,
 			shifts,
 			timeZone: frame.timeZone,
 		}),

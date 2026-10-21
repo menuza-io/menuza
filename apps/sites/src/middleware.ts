@@ -17,6 +17,7 @@ import {
 	edgeCache,
 	isCareersPage,
 	isDropVisibilityPage,
+	isReservationsPage,
 	isSitesAppRoute,
 	isSitesProduction,
 	publishedHtmlCacheUrl,
@@ -326,7 +327,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 	const htmlCacheControl = cacheHtml
 		? 'public, max-age=60, s-maxage=60, stale-while-revalidate=300'
-		: isDropVisibilityPage(url.pathname) || isCareersPage(url.pathname)
+		: isDropVisibilityPage(url.pathname) ||
+			  isCareersPage(url.pathname) ||
+			  isReservationsPage(url.pathname)
 			? 'no-store'
 			: undefined
 	const secured = withSecurityHeaders(

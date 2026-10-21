@@ -9,15 +9,19 @@ import {
 	getTenantDb,
 	personErasureLog,
 	provisionTenantDb,
+	rsvGuests,
 } from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { operatorRoutes } from './operator.ts'
+import { reservationsInternalRoutes } from './reservations-internal.ts'
 
 const orgA = 'clw9x0a12000008l00route1'
 const orgB = 'clw9x0a12000008l00route2'
 const operatorSecret = 'test-operator-secret-123456789'
+const internalSecret = 'test-internal-secret-key-for-link-customers-32chars!!'
 
 vi.mock('@repo/email', () => ({
 	getOciMarketingMetrics: vi.fn().mockResolvedValue(null),
@@ -53,10 +57,12 @@ describe('POST /operator/customers/:id/erase', () => {
 		process.env.DATA_REGION = 'us'
 		process.env.JWT_SECRET = operatorSecret
 		process.env.TENANT_OPERATOR_TOKEN = operatorSecret
+		process.env.INTERNAL_COMMAND_TOKEN = internalSecret
 		await provisionTenantDb(orgA)
 		await provisionTenantDb(orgB)
 		app = new Hono()
 		app.route('/operator', operatorRoutes)
+		app.route('/internal/reservations', reservationsInternalRoutes)
 	})
 
 	afterEach(async () => {
@@ -128,6 +134,32 @@ describe('POST /operator/customers/:id/erase', () => {
 		expect(log).toMatchObject([{ actorId: 'user_9', subjectId: id }])
 	})
 
+	it('erases the reservation guest linked to the customer too', async () => {
+		const id = await seed(orgA, '+14155550123')
+		const db = await getTenantDb(orgA)
+		await db.insert(rsvGuests).values({
+			id: 'gst_1',
+			customerId: id,
+			firstName: 'Pat',
+			lastName: 'Person',
+			phoneE164: '+14155550123',
+		})
+		const res = await erase(id, await token(orgA, { canDelete: true }))
+		expect(res.status).toBe(200)
+		expect(await res.json()).toMatchObject({
+			success: true,
+			customersErased: 1,
+			guestsErased: 1,
+		})
+		const guest = await db
+			.select()
+			.from(rsvGuests)
+			.where(eq(rsvGuests.id, 'gst_1'))
+			.get()
+		expect(guest!.erasedAt).not.toBeNull()
+		expect(guest!.phoneE164).toBeNull()
+	})
+
 	it('cannot erase a customer of another organization', async () => {
 		const idA = await seed(orgA, '+15550003005')
 		await seed(orgB, '+15550003005')
@@ -154,5 +186,40 @@ describe('POST /operator/customers/:id/erase', () => {
 		expect(await again.json()).toMatchObject({ alreadyErased: true })
 		const db = await getTenantDb(orgA)
 		expect(await db.select().from(personErasureLog)).toHaveLength(1)
+	})
+})
+
+describe('POST /internal/reservations/link-customers', () => {
+	let tempDir: string
+	let app: Hono
+
+	beforeEach(async () => {
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tenant-api-link-route-'))
+		process.env.TENANT_DB_DIR = tempDir
+		process.env.DATA_REGION = 'us'
+		process.env.INTERNAL_COMMAND_TOKEN = internalSecret
+		await provisionTenantDb(orgA)
+		app = new Hono()
+		app.route('/internal/reservations', reservationsInternalRoutes)
+	})
+
+	afterEach(async () => {
+		await destroyTenantDb(orgA).catch(() => {})
+		fs.rmSync(tempDir, { recursive: true, force: true })
+	})
+
+	const call = (auth?: string) =>
+		app.request('/internal/reservations/link-customers', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				...(auth ? { Authorization: `Bearer ${auth}` } : {}),
+			},
+			body: JSON.stringify({ orgId: orgA }),
+		})
+
+	it('requires the internal token', async () => {
+		expect((await call()).status).toBe(401)
+		expect((await call('wrong-token-wrong-token')).status).toBe(401)
 	})
 })

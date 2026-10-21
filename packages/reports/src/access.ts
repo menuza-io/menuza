@@ -1,4 +1,5 @@
 import { type ReportCatalog, type ReportSubject, getField } from './catalog.ts'
+import { isReservationsReportSubject } from './catalog-reservations.ts'
 import {
 	STAFF_PAY_REPORT_PERMISSION,
 	isStaffingReportSubject,
@@ -23,7 +24,11 @@ import { type ReportTemplate } from './templates.ts'
 
 /** Subjects that exist for someone only while their token grants them. */
 function isGatedSubject(subject: string) {
-	return isStaffingReportSubject(subject) || isOrgWideReportSubject(subject)
+	return (
+		isStaffingReportSubject(subject) ||
+		isReservationsReportSubject(subject) ||
+		isOrgWideReportSubject(subject)
+	)
 }
 
 function fieldAvailable(

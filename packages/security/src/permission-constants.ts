@@ -54,6 +54,16 @@ export const PERMISSIONS = {
 	UPDATE_LABOR_POLICY_ANY: 'update:labor_policy:any',
 	READ_HIRING_ANY: 'read:hiring:any',
 	UPDATE_HIRING_ANY: 'update:hiring:any',
+
+	// Reservations permissions
+	READ_RESERVATION_ANY: 'read:reservation:any',
+	UPDATE_RESERVATION_ANY: 'update:reservation:any',
+	READ_RESERVATION_SETTINGS_ANY: 'read:reservation_settings:any',
+	UPDATE_RESERVATION_SETTINGS_ANY: 'update:reservation_settings:any',
+	READ_RESERVATION_GUEST_ANY: 'read:reservation_guest:any',
+	UPDATE_RESERVATION_GUEST_ANY: 'update:reservation_guest:any',
+	READ_RESERVATION_REPORT_ANY: 'read:reservation_report:any',
+	UPDATE_RESERVATION_PAYMENT_ANY: 'update:reservation_payment:any',
 } as const
 
 export type PermissionKey = keyof typeof PERMISSIONS

@@ -230,14 +230,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	if (intent === 'invite-checkout-payout') {
-		if (organization.dataRegion !== 'us') {
-			return redirectWithToast(`/${organization.slug}/settings/shop`, {
-				title: 'US only',
-				description: 'Shop payouts are available for US organizations only.',
-				type: 'error',
-			})
-		}
-
+		// Open to every region: KSA organizations pay through Checkout.com.
 		const userId = await requireUserId(request)
 		const [user] = await db
 			.select({ email: UserTable.email })
@@ -307,8 +300,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				return redirectWithToast(`/${organization.slug}/settings/shop`, {
 					title: 'Mock setup failed',
 					description:
-						result.error === 'us_only'
-							? 'Shop payouts are available for US organizations only.'
+						result.error === 'stripe_us_only'
+							? 'Stripe payouts are only available for US organizations.'
 							: 'The mock could not enable this provider.',
 					type: 'error',
 				})

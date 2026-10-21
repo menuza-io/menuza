@@ -153,7 +153,7 @@ describe('restaurant order webhook dispatch', () => {
 		expect(notify).not.toHaveBeenCalled()
 	})
 
-	it('forwards verified Checkout.com terminal payments with session references', async () => {
+	it('forwards verified Checkout.com terminal payments bound on the merchant reference', async () => {
 		await handleRestaurantOrderCheckoutWebhookEvent({
 			type: 'payment_approved',
 			data: {
@@ -166,7 +166,7 @@ describe('restaurant order webhook dispatch', () => {
 					orgId: 'org_1',
 					orderId: 'ord_1',
 				},
-				processing: { payment_session_id: 's_1' },
+				reference: 'restaurant_order:org_1:ord_1',
 			},
 		})
 
@@ -174,7 +174,7 @@ describe('restaurant order webhook dispatch', () => {
 			dataRegion: 'us',
 			orgId: 'org_1',
 			orderId: 'ord_1',
-			sessionId: 's_1',
+			sessionId: 'restaurant_order:org_1:ord_1',
 			processor: 'checkout',
 			status: 'paid',
 			amountCents: 15000,
@@ -182,7 +182,7 @@ describe('restaurant order webhook dispatch', () => {
 		})
 	})
 
-	it('ignores Checkout.com events without a session reference (cannot verify binding)', async () => {
+	it('ignores Checkout.com events whose reference does not match the order', async () => {
 		await handleRestaurantOrderCheckoutWebhookEvent({
 			type: 'payment_approved',
 			data: {
@@ -214,7 +214,7 @@ describe('restaurant order webhook dispatch', () => {
 					orgId: 'org_1',
 					orderId: 'ord_1',
 				},
-				processing: { payment_session_id: 's_1' },
+				reference: 'restaurant_order:org_1:ord_1',
 			},
 		})
 		expect(notify).toHaveBeenCalledWith(

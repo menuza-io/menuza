@@ -36,7 +36,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	const { catalog: fullCatalog, scopeWording } =
 		await organizationReportCatalog(organization.id)
 	const catalog = catalogForGrants(fullCatalog, grants)
+	// A link can open the page on one category (Reservations) and keep the
+	// location it came from; both only steer the page, they grant nothing.
+	const url = new URL(request.url)
+	const location = url.searchParams.get('location')
 	return {
+		category: url.searchParams.get('category'),
+		location: location && location.length <= 64 ? location : null,
 		scopeWording,
 		orgSlug: organization.slug,
 		organizationName: organization.name,
@@ -77,6 +83,12 @@ export default function ReportsIndex() {
 				templates={data.templates}
 				savedReports={data.savedReports}
 				basePath={basePath}
+				category={data.category}
+				templateQuery={
+					data.location
+						? `location=${encodeURIComponent(data.location)}`
+						: undefined
+				}
 			/>
 		</ScopeWordingProvider>
 	)

@@ -1,0 +1,138 @@
+{
+	"dayVersion": 0,
+	"settingsVersion": 1,
+	"timeZone": "UTC",
+	"now": "2030-06-14T16:00:00.000Z",
+	"locationId": "loc_pub_main",
+	"date": "2030-06-24",
+	"partySize": 2,
+	"status": "available",
+	"slots": [
+		{
+			"localMin": 1020,
+			"time": "17:00",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1035,
+			"time": "17:15",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1050,
+			"time": "17:30",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1065,
+			"time": "17:45",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1080,
+			"time": "18:00",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1095,
+			"time": "18:15",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1110,
+			"time": "18:30",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1125,
+			"time": "18:45",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1140,
+			"time": "19:00",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1155,
+			"time": "19:15",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1170,
+			"time": "19:30",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1185,
+			"time": "19:45",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1200,
+			"time": "20:00",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1215,
+			"time": "20:15",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		},
+		{
+			"localMin": 1230,
+			"time": "20:30",
+			"serviceId": "svc_pub_dinner",
+			"serviceName": "Dinner",
+			"areaId": "area_pub_main",
+			"areaLabel": "Main Room"
+		}
+	],
+	"alternatives": {
+		"sameDay": [],
+		"otherDates": []
+	},
+	"notifyMe": true,
+	"waitlist": true
+}

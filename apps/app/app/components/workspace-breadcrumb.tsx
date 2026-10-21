@@ -9,6 +9,7 @@ import { breadcrumbFromHandle } from '#app/utils/breadcrumb.ts'
 const SEGMENT_LABELS: Record<string, ReactNode> = {
 	notes: <Trans>Notes</Trans>,
 	customers: <Trans>Customers</Trans>,
+	orders: <Trans>Orders</Trans>,
 	settings: <Trans>Settings</Trans>,
 	website: <Trans>Website</Trans>,
 	marketing: <Trans>Marketing</Trans>,
@@ -69,12 +70,29 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	mcp: <Trans>MCP server</Trans>,
 	runs: <Trans>Runs</Trans>,
 	status: <Trans>Status</Trans>,
+	// Reservations
+	reservations: <Trans>Reservations</Trans>,
+	today: <Trans>Today</Trans>,
+	book: <Trans>List</Trans>,
+	timeline: <Trans>Timeline</Trans>,
+	floor: <Trans>Floor</Trans>,
+	calendar: <Trans>Calendar</Trans>,
+	overview: <Trans>Overview</Trans>,
+	waitlist: <Trans>Waitlist</Trans>,
+	experiences: <Trans>Experiences</Trans>,
+	tables: <Trans>Tables</Trans>,
+	'floor-plan': <Trans>Floor plan</Trans>,
+	sections: <Trans>Sections</Trans>,
+	services: <Trans>Services</Trans>,
+	'special-days': <Trans>Special days</Trans>,
+	policies: <Trans>Payment policies</Trans>,
 }
 
 // What a record id under each collection is called when its route gives no name.
 const RECORD_LABELS: Record<string, ReactNode> = {
 	dashboards: <Trans>Dashboard</Trans>,
 	reports: <Trans>Report</Trans>,
+	customers: <Trans>Customer</Trans>,
 	notes: <Trans>Note</Trans>,
 	status: <Trans>Status</Trans>,
 	campaigns: <Trans>Broadcast</Trans>,
@@ -86,6 +104,7 @@ const RECORD_LABELS: Record<string, ReactNode> = {
 	hiring: <Trans>Job post</Trans>,
 	applicants: <Trans>Applicant</Trans>,
 	timesheets: <Trans>Time card</Trans>,
+	experiences: <Trans>Experience</Trans>,
 }
 
 // Path prefixes with no page of their own. `notes/status` would be read as a

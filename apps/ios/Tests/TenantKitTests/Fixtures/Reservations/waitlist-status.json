@@ -1,0 +1,13 @@
+{
+	"status": "waiting",
+	"position": 1,
+	"partySize": 2,
+	"quotedMin": 1,
+	"quotedReadyAt": "2030-06-14T16:01:00.000Z",
+	"locationName": "Acme Downtown",
+	"notifiedAt": null,
+	"responseDeadlineAt": null,
+	"canLeave": true,
+	"canOnMyWay": true,
+	"now": "2030-06-14T16:00:00.000Z"
+}

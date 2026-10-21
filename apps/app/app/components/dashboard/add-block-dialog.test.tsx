@@ -26,6 +26,7 @@ import {
 const defaultBlocks = defaultHomeConfig().blocks
 const picker: DashboardBlockPicker = {
 	onboardingAvailable: true,
+	bookingsToday: { available: false, locations: [] },
 	savedReports: [],
 	templateGroups: [],
 }
@@ -90,6 +91,23 @@ describe('AddBlockDialog', () => {
 
 		const shown = await openDialog({ blocks: without('onboarding') })
 		expect(builtInOptions(shown.dialog)).toEqual(['Onboarding checklist'])
+	})
+
+	it('offers Bookings today only when the viewer may read reservations', async () => {
+		const hidden = await openDialog({})
+		expect(builtInOptions(hidden.dialog)).not.toContain('Bookings today')
+		cleanup()
+
+		const shown = await openDialog({
+			picker: {
+				...picker,
+				bookingsToday: {
+					available: true,
+					locations: [{ id: 'loc_1', name: 'Main' }],
+				},
+			},
+		})
+		expect(builtInOptions(shown.dialog)).toEqual(['Bookings today'])
 	})
 
 	it('adds the picked block and closes', async () => {

@@ -51,6 +51,14 @@ export const TENANT_ROLE_PERMISSION_IDS = [
 	'org_perm_update_labor_policy_any',
 	'org_perm_read_hiring_any',
 	'org_perm_update_hiring_any',
+	'org_perm_read_reservation_any',
+	'org_perm_update_reservation_any',
+	'org_perm_read_reservation_settings_any',
+	'org_perm_update_reservation_settings_any',
+	'org_perm_read_reservation_guest_any',
+	'org_perm_update_reservation_guest_any',
+	'org_perm_read_reservation_report_any',
+	'org_perm_update_reservation_payment_any',
 ] as const
 
 export type TenantRolePermissionId = (typeof TENANT_ROLE_PERMISSION_IDS)[number]
@@ -82,6 +90,33 @@ export const STAFFING_IMPLIED_PERMISSION_IDS: Record<
 }
 
 /**
+ * Reservations grants where holding an update grant implies the corresponding
+ * read grant (`update:reservation_payment:any` implies both
+ * `read:reservation:any` and `read:reservation_report:any`).
+ */
+export const RESERVATIONS_IMPLIED_PERMISSION_IDS: Record<
+	string,
+	readonly string[]
+> = {
+	org_perm_update_reservation_any: ['org_perm_read_reservation_any'],
+	org_perm_update_reservation_settings_any: [
+		'org_perm_read_reservation_settings_any',
+	],
+	org_perm_update_reservation_guest_any: [
+		'org_perm_read_reservation_guest_any',
+	],
+	org_perm_update_reservation_payment_any: [
+		'org_perm_read_reservation_any',
+		'org_perm_read_reservation_report_any',
+	],
+}
+
+export const IMPLIED_PERMISSION_IDS: Record<string, readonly string[]> = {
+	...STAFFING_IMPLIED_PERMISSION_IDS,
+	...RESERVATIONS_IMPLIED_PERMISSION_IDS,
+}
+
+/**
  * Add every read grant implied by a staffing update/approve grant. Returns a
  * de-duplicated list; permission ids outside the staffing set are untouched.
  */
@@ -95,4 +130,33 @@ export function withImpliedStaffingPermissions(
 		}
 	}
 	return [...result]
+}
+
+/**
+ * Add every read grant implied by a reservations update grant. Returns a
+ * de-duplicated list; permission ids outside the reservations set are
+ * untouched.
+ */
+export function withImpliedReservationsPermissions(
+	permissionIds: readonly string[],
+): string[] {
+	const result = new Set(permissionIds)
+	for (const id of permissionIds) {
+		for (const implied of RESERVATIONS_IMPLIED_PERMISSION_IDS[id] ?? []) {
+			result.add(implied)
+		}
+	}
+	return [...result]
+}
+
+/**
+ * Add every read grant implied by any staffing or reservations update/approve
+ * grant.
+ */
+export function withImpliedTenantRolePermissions(
+	permissionIds: readonly string[],
+): string[] {
+	return withImpliedReservationsPermissions(
+		withImpliedStaffingPermissions(permissionIds),
+	)
 }

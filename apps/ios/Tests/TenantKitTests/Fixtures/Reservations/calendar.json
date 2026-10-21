@@ -1,0 +1,44 @@
+{
+	"locationId": "loc_pub_main",
+	"timeZone": "UTC",
+	"now": "2030-06-14T16:00:00.000Z",
+	"partySize": 2,
+	"days": [
+		{
+			"date": "2030-06-24",
+			"hasAvailability": true,
+			"status": "available",
+			"closed": false,
+			"slotCount": 15,
+			"firstLocalMin": 1020,
+			"lastLocalMin": 1230
+		},
+		{
+			"date": "2030-06-25",
+			"hasAvailability": true,
+			"status": "available",
+			"closed": false,
+			"slotCount": 15,
+			"firstLocalMin": 1020,
+			"lastLocalMin": 1230
+		},
+		{
+			"date": "2030-06-26",
+			"hasAvailability": true,
+			"status": "available",
+			"closed": false,
+			"slotCount": 15,
+			"firstLocalMin": 1020,
+			"lastLocalMin": 1230
+		},
+		{
+			"date": "2030-06-27",
+			"hasAvailability": true,
+			"status": "available",
+			"closed": false,
+			"slotCount": 15,
+			"firstLocalMin": 1020,
+			"lastLocalMin": 1230
+		}
+	]
+}

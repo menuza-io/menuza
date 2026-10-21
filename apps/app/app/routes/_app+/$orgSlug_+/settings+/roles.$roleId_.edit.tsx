@@ -25,8 +25,9 @@ import { type BreadcrumbHandle } from '#app/utils/breadcrumb.ts'
 import {
 	hasOnlyTenantRolePermissions,
 	TENANT_ROLE_PERMISSION_IDS,
-	withImpliedStaffingPermissions,
+	withImpliedTenantRolePermissions,
 } from '#app/utils/organization/tenant-role-permissions.ts'
+import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	getCustomRole,
@@ -95,6 +96,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		staffingEnabled: await isStaffingFeatureEnabled(
 			organization.organizationId,
 		),
+		reservationsEnabled: await isReservationsFeatureEnabled(
+			organization.organizationId,
+		),
 	}
 }
 
@@ -129,7 +133,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				'One or more selected access options are not available for custom roles.',
 		}
 	}
-	const permissionIds = withImpliedStaffingPermissions(requestedPermissionIds)
+	const permissionIds = withImpliedTenantRolePermissions(requestedPermissionIds)
 
 	const { name, description } = submission.data
 	const duplicateWhere = and(
@@ -212,6 +216,7 @@ export default function EditRoleRoute() {
 			cancelHref={rolesPath}
 			error={actionData?.error}
 			staffingEnabled={data.staffingEnabled}
+			reservationsEnabled={data.reservationsEnabled}
 		/>
 	)
 }

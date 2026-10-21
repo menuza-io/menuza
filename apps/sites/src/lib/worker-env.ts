@@ -5,6 +5,7 @@ import { type SiteHostEnv } from './resolve-host'
 
 type SitesWorkerConfig = SiteHostEnv & {
 	PUBLIC_APP_URL?: string
+	SITES_RESERVATION_PAYMENT_TOKEN?: string
 	TENANT_API_URL?: string
 	TENANT_API_URL_KSA?: string
 }
@@ -54,6 +55,14 @@ export function getPublicAppUrl(): string {
 		/\/$/,
 		'',
 	)
+}
+
+/**
+ * Server-to-server secret for the App's reservation payment routes. It never
+ * reaches the browser; the forwarder answers 503 when it is not configured.
+ */
+export function getReservationPaymentToken(): string | undefined {
+	return readBinding('SITES_RESERVATION_PAYMENT_TOKEN')
 }
 
 export function getTenantApiUrl(): string {

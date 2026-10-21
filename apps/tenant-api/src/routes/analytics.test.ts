@@ -11,6 +11,7 @@ import {
 import {
 	mintOperatorAnalyticsToken,
 	ORDER_REPORT_SUBJECTS,
+	ORG_WIDE_REPORT_SUBJECTS,
 	type RestrictedReportSubject,
 } from '@repo/reports/token'
 import {
@@ -370,7 +371,8 @@ describe('POST /query order reports', () => {
 			userId: 'user_1',
 			orgId,
 			role: 'operator',
-			subjects: ['customers', 'shop_orders', ...subjects],
+			// An analytics-access token always lists the organization-wide subjects.
+			subjects: [...ORG_WIDE_REPORT_SUBJECTS, ...subjects],
 		})
 		const res = await analyticsRoutes.request('/query', {
 			method: 'POST',

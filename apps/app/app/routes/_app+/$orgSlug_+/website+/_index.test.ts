@@ -5,6 +5,8 @@ import {
 	deprovisionTenantDatabase,
 	provisionTenantDatabase,
 } from '#app/utils/sites/tenant-api.server.ts'
+import type * as reservationsAccess from '#app/utils/reservations/access.server.ts'
+import type * as reservationsRegionGuard from '#app/utils/reservations/region-guard.server.ts'
 import type * as regionGuard from '#app/utils/staffing/region-guard.server.ts'
 import {
 	createAuthenticatedRequest,
@@ -55,6 +57,30 @@ vi.mock(
 				positions: 0,
 				payRecords: 0,
 				notes: 0,
+				auditEntries: 0,
+			}),
+		}
+	},
+)
+// Publishing changes the branding, which tells the regional node; no node here.
+vi.mock('#app/utils/reservations/access.server.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof reservationsAccess>()),
+	notifyReservationsContextChanged: vi.fn(async () => undefined),
+}))
+vi.mock(
+	'#app/utils/reservations/region-guard.server.ts',
+	async (importOriginal) => {
+		const actual = await importOriginal<typeof reservationsRegionGuard>()
+		return {
+			...actual,
+			fetchReservationsSummary: vi.fn().mockResolvedValue({
+				reservations: 0,
+				upcomingReservations: 0,
+				guests: 0,
+				waitlistEntries: 0,
+				tables: 0,
+				experiences: 0,
+				payments: 0,
 				auditEntries: 0,
 			}),
 		}

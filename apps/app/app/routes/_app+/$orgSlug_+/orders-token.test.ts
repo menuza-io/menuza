@@ -6,6 +6,10 @@ const mocks = vi.hoisted(() => ({
 	read: vi.fn(),
 	write: vi.fn(),
 	client: vi.fn(),
+	link: vi.fn(),
+}))
+vi.mock('#app/utils/orders/customer-link.server.ts', () => ({
+	getOrderCustomerLinkAccess: mocks.link,
 }))
 vi.mock('#app/utils/organization/loader.server.ts', () => ({
 	requireUserOrganization: mocks.organization,
@@ -24,6 +28,7 @@ describe('order credentials', () => {
 		mocks.organization.mockResolvedValue({ id: 'organization' })
 		mocks.read.mockResolvedValue('operator')
 		mocks.write.mockResolvedValue('operator')
+		mocks.link.mockResolvedValue({ linkCustomers: false, linkGuests: false })
 		mocks.client.mockResolvedValue({
 			jwt: 'scoped-credential',
 			tenantApiUrl: 'https://regional.example',
@@ -65,5 +70,14 @@ describe('order credentials', () => {
 		mocks.write.mockRejectedValue(new Response('Forbidden', { status: 403 }))
 		await expect(run('?write=1')).rejects.toMatchObject({ status: 403 })
 		expect(mocks.client).not.toHaveBeenCalled()
+	})
+
+	it('signs the person-link claims only when the member may open Customers', async () => {
+		mocks.link.mockResolvedValue({ linkCustomers: true, linkGuests: false })
+		await run()
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:read',
+			claims: { linkCustomers: true, linkGuests: false },
+		})
 	})
 })

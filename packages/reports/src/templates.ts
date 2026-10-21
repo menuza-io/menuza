@@ -952,6 +952,226 @@ function hiringTemplates(): ReportTemplate[] {
 	]
 }
 
+/** Parties that took or held a table: not cancelled, declined or expired. */
+const BOOKED_PARTIES: FilterCondition[] = [
+	{ field: 'isBooked', operator: 'eq', value: '1' },
+]
+
+/**
+ * Reservations templates. They run on the regional bookings, waitlist and
+ * pacing subjects and are offered only to people whose token lists them
+ * (`templatesForGrants`). Date ranges stay short: a busy venue can hold more
+ * rows than one report reads, so none of them runs over all time.
+ */
+function reservationTemplates(): ReportTemplate[] {
+	const bookings = { category: 'Reservations', subject: 'bookings' } as const
+	return [
+		template('organization', {
+			...bookings,
+			id: 'rsv-daily-summary',
+			title: 'Daily summary',
+			description:
+				'Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings.',
+			groupBy: ['businessDate'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'covers',
+			timeframePreset: 'last_7_days',
+			sortBy: 'label',
+			filters: BOOKED_PARTIES,
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-covers-by-service',
+			title: 'Covers by service',
+			description:
+				'Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings.',
+			groupBy: ['service'],
+			chartStyle: 'bar',
+			measure: 'sum',
+			valueField: 'covers',
+			timeframePreset: 'last_30_days',
+			filters: BOOKED_PARTIES,
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-booking-sources',
+			title: 'Booking sources',
+			description:
+				'Where bookings come from over the last 30 days: online, phone, host, walk-in and more.',
+			groupBy: ['channel'],
+			chartStyle: 'pie',
+			timeframePreset: 'last_30_days',
+			filters: BOOKED_PARTIES,
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-no-show-rate',
+			title: 'No-shows & cancellations',
+			description:
+				'The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked.',
+			groupBy: ['service'],
+			chartStyle: 'table',
+			measure: 'ratio',
+			valueField: 'noShowRate',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-cancellations-by-who',
+			title: 'Cancellations by who',
+			description:
+				'Who cancelled over the last 30 days: the guest, the restaurant or the system.',
+			groupBy: ['cancelledBy'],
+			chartStyle: 'bar',
+			timeframePreset: 'last_30_days',
+			filters: [{ field: 'status', operator: 'eq', value: 'cancelled' }],
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-late-cancellations',
+			title: 'Late cancellations',
+			description:
+				'The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days.',
+			groupBy: ['service'],
+			chartStyle: 'table',
+			measure: 'ratio',
+			valueField: 'lateCancelShare',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-no-show-list',
+			title: 'No-show list',
+			description:
+				'Every no-show over the last 30 days with its date, service, party size and source. No guest details.',
+			groupBy: [],
+			chartStyle: 'table',
+			columns: ['startsAt', 'location', 'service', 'partySize', 'channel'],
+			timeframePreset: 'last_30_days',
+			sortBy: 'none',
+			filters: [{ field: 'status', operator: 'eq', value: 'no_show' }],
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-turn-times',
+			title: 'Turn times',
+			description:
+				'How long parties of each size stayed, from seated to finished, over the last 30 days.',
+			groupBy: ['partySize'],
+			chartStyle: 'table',
+			measure: 'average',
+			valueField: 'actualMinutes',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+			filters: [{ field: 'status', operator: 'eq', value: 'finished' }],
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-turn-time-variance',
+			title: 'Turn times against target',
+			description:
+				'How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early.',
+			groupBy: ['partySize'],
+			chartStyle: 'table',
+			measure: 'average',
+			valueField: 'turnVarianceMinutes',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+			filters: [{ field: 'status', operator: 'eq', value: 'finished' }],
+		}),
+		template('organization', {
+			category: 'Reservations',
+			subject: 'waitlist_entries',
+			id: 'rsv-waitlist-outcomes',
+			title: 'Waitlist outcomes',
+			description:
+				'How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response.',
+			groupBy: ['status'],
+			chartStyle: 'pie',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			category: 'Reservations',
+			subject: 'waitlist_entries',
+			id: 'rsv-waitlist-waits',
+			title: 'Waitlist waits',
+			description:
+				'The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days.',
+			groupBy: ['partySize'],
+			chartStyle: 'table',
+			measure: 'average',
+			valueField: 'actualMinutes',
+			timeframePreset: 'last_30_days',
+			sortBy: 'label',
+		}),
+		template('organization', {
+			category: 'Reservations',
+			subject: 'pacing_slots',
+			id: 'rsv-pacing',
+			title: 'Pacing',
+			description:
+				'Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it.',
+			groupBy: ['slotTime'],
+			chartStyle: 'table',
+			measure: 'ratio',
+			valueField: 'coversUtilization',
+			timeframePreset: 'last_7_days',
+			sortBy: 'label',
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-covers-today',
+			title: 'Covers today',
+			description:
+				'Covers booked for today, not counting cancelled, declined or expired bookings.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'covers',
+			timeframePreset: 'today',
+			filters: BOOKED_PARTIES,
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-no-show-rate-30d',
+			title: 'No-show rate, last 30 days',
+			description:
+				'The share of booked parties that did not show up over the last 30 days.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'ratio',
+			valueField: 'noShowRate',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			...bookings,
+			id: 'rsv-late-cancels-30d',
+			title: 'Late cancellations, last 30 days',
+			description:
+				'Bookings cancelled after the free-cancellation window over the last 30 days.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'sum',
+			valueField: 'isLateCancel',
+			timeframePreset: 'last_30_days',
+		}),
+		template('organization', {
+			category: 'Reservations',
+			subject: 'waitlist_entries',
+			id: 'rsv-waitlist-avg-wait-7d',
+			title: 'Average waitlist wait, last 7 days',
+			description:
+				'How long waitlist parties waited before they were seated over the last 7 days.',
+			groupBy: [],
+			chartStyle: 'single_number',
+			measure: 'average',
+			valueField: 'actualMinutes',
+			timeframePreset: 'last_7_days',
+		}),
+	]
+}
+
 export function organizationTemplates(): ReportTemplate[] {
 	return [
 		...salesTemplates(),
@@ -962,6 +1182,7 @@ export function organizationTemplates(): ReportTemplate[] {
 		...reviewTemplates(),
 		...laborTemplates(),
 		...hiringTemplates(),
+		...reservationTemplates(),
 		template('organization', {
 			id: 'phone-calls-by-week',
 			category: 'Phone calls',
@@ -1307,16 +1528,60 @@ export function blankReportDefinition(scope: ReportScope): ReportDefinition {
 	})
 }
 
+/**
+ * The definition a new report starts from: the named template, else the first
+ * template of `category` (so a link to a category opens on one of its own
+ * reports), else a blank report.
+ */
 export function definitionForNewReport(
 	scope: ReportScope,
 	templateId: string | null | undefined,
+	category?: string | null,
 ): ReportDefinition {
-	const template = templateId
-		? templatesFor(scope).find((item) => item.id === templateId)
-		: undefined
+	const templates = templatesFor(scope)
+	const template =
+		(templateId
+			? templates.find((item) => item.id === templateId)
+			: undefined) ??
+		(category
+			? templates.find((item) => item.category === category)
+			: undefined)
 	return template?.definition ?? blankReportDefinition(scope)
 }
 
 export function templateCategories(templates: ReportTemplate[]): string[] {
 	return [...new Set(templates.map((item) => item.category))]
+}
+
+/**
+ * The definition limited to one location by name, when its subject has a
+ * filterable `location` field (a Reservations link keeps the location the
+ * person was working in). Other subjects, and a blank name, come back as is.
+ */
+export function withLocationFilter(
+	scope: ReportScope,
+	definition: ReportDefinition,
+	locationName: string | null | undefined,
+): ReportDefinition {
+	if (!locationName) return definition
+	const subject = getCatalog(scope).subjects.find(
+		(item) => item.id === definition.subject,
+	)
+	const field = subject?.fields.find((item) => item.id === 'location')
+	if (!field?.filterable) return definition
+	const condition: FilterCondition = {
+		field: 'location',
+		operator: 'eq',
+		value: locationName,
+	}
+	const filters = definition.filters
+	return {
+		...definition,
+		advancedFilters:
+			filters.combinator === 'and' ? definition.advancedFilters : true,
+		filters:
+			filters.combinator === 'and' && !filters.not
+				? { ...filters, conditions: [...filters.conditions, condition] }
+				: { combinator: 'and', conditions: [filters, condition] },
+	}
 }

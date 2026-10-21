@@ -14,6 +14,7 @@ import {
 	STAFF_PAY_REPORT_PERMISSION,
 	STAFFING_REPORT_SUBJECTS,
 } from './operator-token.ts'
+import { ORG_WIDE_REPORT_SUBJECTS } from './org-wide-subjects.ts'
 import { organizationTemplates } from './templates.ts'
 
 const STAFF_TEMPLATE_CATEGORIES = new Set(['Labor', 'Hiring'])
@@ -198,17 +199,20 @@ describe('what a person is offered', () => {
 		const offered = templatesForGrants(
 			organizationCatalog,
 			organizationTemplates(),
-			['customers', 'shop_orders'],
+			[...ORG_WIDE_REPORT_SUBJECTS],
 		)
 		expect(
 			offered.filter((template) =>
 				STAFF_TEMPLATE_CATEGORIES.has(template.category),
 			),
 		).toEqual([])
-		// Everything else is untouched.
+		// Everything else is untouched, except the Reservations templates, which
+		// need their own grant.
 		expect(offered.length).toBe(
 			organizationTemplates().filter(
-				(template) => !STAFF_TEMPLATE_CATEGORIES.has(template.category),
+				(template) =>
+					!STAFF_TEMPLATE_CATEGORIES.has(template.category) &&
+					template.category !== 'Reservations',
 			).length,
 		)
 	})

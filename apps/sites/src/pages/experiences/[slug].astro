@@ -1,0 +1,129 @@
+---
+import { getLocaleHref } from '@repo/common/site-locales'
+import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedReservations, fetchPublishedSitePage } from '~/lib/org'
+import {
+	fetchPublicExperience,
+	isExperienceSlug,
+	partyText,
+	priceText,
+	safeImageUrl,
+} from '~/lib/reservations/experiences'
+import { buildReservationLabels } from '~/lib/reservations/labels'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+const slug = Astro.params.slug
+
+if (!organization || !isExperienceSlug(slug)) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const defaultLocale = organization.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization.locale || defaultLocale
+const labels = buildReservationLabels(i18n)
+
+const gate = await fetchPublishedReservations({ slug: orgSlug, host: customHost })
+const experience =
+	gate?.experiences
+		? await fetchPublicExperience(slug, {
+				tenantApiUrl: getTenantApiUrl(organization.dataRegion),
+				origin: Astro.url.origin,
+				locale,
+				locationId: Astro.url.searchParams.get('locationId'),
+			})
+		: null
+const cmsPage = experience
+	? null
+	: await fetchPublishedSitePage({
+			slug: orgSlug,
+			host: customHost,
+			pageSlug: `experiences/${slug}`,
+			lng: Astro.locals.requestedLocale,
+		})
+if (!experience && !cmsPage) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const listHref = getLocaleHref('/experiences', locale, locale, defaultLocale)
+const image = experience ? safeImageUrl(experience.imageUrl) : null
+const price = experience ? priceText(experience, labels, locale) : null
+const bookingData = experience
+	? {
+			id: experience.id,
+			locationId: experience.locationId,
+			partyMin: experience.partyMin,
+			partyMax: experience.partyMax,
+			dates: experience.seatings.map((day) => day.date),
+		}
+	: null
+---
+
+{cmsPage ? (
+	<SitePage
+		organization={organization}
+		page={cmsPage}
+		title={`${cmsPage.seo?.title || cmsPage.title} - ${organization.name}`}
+		noIndex={cmsPage.seo?.noIndex ?? false}
+	>
+		<RenderBlocks sections={cmsPage.sections} />
+	</SitePage>
+) : experience && bookingData ? (
+	<SitePage
+		organization={organization}
+		page={{ id: `experience-${experience.id}`, title: experience.name, slug: `experiences/${slug}`, isHomePage: false, sections: [] }}
+		title={`${experience.name} - ${organization.name}`}
+		description={experience.description?.slice(0, 160) || undefined}
+	>
+		<ReservationLabels />
+		<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+			<nav class="pt-6" aria-label={labels.expBack}>
+				<a href={listHref} class="focus-ring text-sm font-medium text-primary underline underline-offset-4">
+					{labels.expBack}
+				</a>
+			</nav>
+			<header class="pt-4 pb-6 sm:pb-8">
+				<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+					{experience.name}
+				</h1>
+				<p class="mt-2 text-sm text-muted-foreground sm:text-base">
+					{partyText(experience, labels)}
+					{experience.locationName ? ` · ${labels.expAtLocation.replace('{name}', experience.locationName)}` : ''}
+				</p>
+				{price ? <p class="price mt-2 text-lg font-medium text-foreground" dir="auto">{price}</p> : null}
+			</header>
+			<div class="flex max-w-3xl flex-col gap-8">
+				{image ? (
+					<img
+						src={image}
+						alt={labels.expImageAlt.replace('{name}', experience.name)}
+						class="aspect-video w-full rounded-xl object-cover"
+					/>
+				) : null}
+				{experience.description ? (
+					<p class="whitespace-pre-line text-base text-foreground wrap-anywhere" data-experience-description>
+						{experience.description}
+					</p>
+				) : null}
+				{experience.policy?.terms ? (
+					<section class="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-4" aria-labelledby="exp-terms-heading">
+						<h2 id="exp-terms-heading" class="text-base font-semibold text-foreground">{labels.policyHeading}</h2>
+						<p class="whitespace-pre-line text-sm text-muted-foreground wrap-anywhere">{experience.policy.terms}</p>
+					</section>
+				) : null}
+				<div id="experience-book" data-experience={JSON.stringify(bookingData)}>
+					<noscript><p class="text-sm text-foreground">{labels.noscript}</p></noscript>
+				</div>
+			</div>
+		</div>
+		<script>
+			import '~/scripts/experience-page.ts'
+		</script>
+	</SitePage>
+) : null}

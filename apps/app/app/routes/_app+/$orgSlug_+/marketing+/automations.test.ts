@@ -4,6 +4,7 @@ import {
 	requireAnyUserWithOrganizationPermission,
 	requireUserWithOrganizationPermission,
 } from '#app/utils/organization/permissions.server.ts'
+import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import * as tenantApiServer from '#app/utils/tenant-api.server.ts'
 import {
 	loader as runsLoader,
@@ -32,11 +33,17 @@ vi.mock(
 	},
 )
 
+vi.mock('#app/utils/reservations/access.server.ts', () => ({
+	isReservationsFeatureEnabled: vi.fn(),
+}))
+
 describe('Marketing Journeys Routes Loaders & Actions', () => {
 	let mockFetchTenant: ReturnType<typeof vi.fn>
 
 	beforeEach(() => {
 		activateTestLingui()
+		vi.mocked(isReservationsFeatureEnabled).mockReset()
+		vi.mocked(isReservationsFeatureEnabled).mockResolvedValue(false)
 		mockFetchTenant = vi.fn()
 		vi.mocked(requireUserWithOrganizationPermission).mockResolvedValue(
 			'user_test_123',
@@ -436,6 +443,146 @@ describe('Marketing Journeys Routes Loaders & Actions', () => {
 			)
 			expect((result as any).timeline).toHaveLength(1)
 			expect((result as any).timeline[0]!.nodeId).toBe('node_email_1')
+		})
+	})
+	describe('reservation triggers (flag-gated)', () => {
+		const reservationGraph = {
+			nodes: [
+				{
+					id: 't1',
+					type: 'trigger',
+					data: { triggerType: 'reservation_booked', config: {} },
+				},
+			],
+			edges: [],
+		}
+
+		function createRequest(graph: unknown) {
+			const formData = new FormData()
+			formData.set('name', 'Thanks for booking')
+			formData.set('graphJson', JSON.stringify(graph))
+			formData.set('publish', 'false')
+			return new Request(
+				'http://localhost:3001/test-org/marketing/automations/new',
+				{ method: 'POST', body: formData },
+			)
+		}
+
+		function saveRequest(graph: unknown) {
+			const formData = new FormData()
+			formData.set('intent', 'save')
+			formData.set('graphJson', JSON.stringify(graph))
+			return new Request(
+				'http://localhost:3001/test-org/marketing/automations/j1',
+				{ method: 'POST', body: formData },
+			)
+		}
+
+		it('offers the triggers to the new editor only while Reservations is on', async () => {
+			const args = {
+				request: new Request('http://localhost:3001/test-org/x'),
+				params: { orgSlug: 'test-org' },
+				context: {},
+			} as any
+			const { loader: newLoader } = await import('./automations.new.tsx')
+			expect((await newLoader(args)).reservationTriggers).toBe(false)
+			vi.mocked(isReservationsFeatureEnabled).mockResolvedValue(true)
+			expect((await newLoader(args)).reservationTriggers).toBe(true)
+			expect(isReservationsFeatureEnabled).toHaveBeenCalledWith(
+				'org_test_123',
+				'enabled',
+			)
+		})
+
+		it('offers the triggers to the journey editor only while Reservations is on', async () => {
+			const journey = new Response(
+				JSON.stringify({
+					journey: {
+						id: 'j1',
+						name: 'J',
+						status: 'draft',
+						nodes: [],
+						edges: [],
+					},
+				}),
+			)
+			mockFetchTenant.mockResolvedValueOnce(journey.clone())
+			const args = {
+				request: new Request('http://localhost:3001/test-org/x'),
+				params: { orgSlug: 'test-org', journeyId: 'j1' },
+				context: {},
+			} as any
+			expect((await detailLoader(args)).reservationTriggers).toBe(false)
+			vi.mocked(isReservationsFeatureEnabled).mockResolvedValue(true)
+			mockFetchTenant.mockResolvedValueOnce(journey.clone())
+			expect((await detailLoader(args)).reservationTriggers).toBe(true)
+		})
+
+		it('refuses to create a reservation journey while the module is off', async () => {
+			const result = await newAction({
+				request: createRequest(reservationGraph),
+				params: { orgSlug: 'test-org' },
+				context: {},
+			} as any)
+			expect(result).toEqual({
+				error: 'Turn on Reservations to use this trigger',
+			})
+			expect(mockFetchTenant).not.toHaveBeenCalled()
+		})
+
+		it('creates a reservation journey while the module is on', async () => {
+			vi.mocked(isReservationsFeatureEnabled).mockResolvedValue(true)
+			mockFetchTenant.mockResolvedValueOnce(
+				new Response(JSON.stringify({ journey: { id: 'j_new' } }), {
+					status: 201,
+				}),
+			)
+			const response = await newAction({
+				request: createRequest(reservationGraph),
+				params: { orgSlug: 'test-org' },
+				context: {},
+			} as any)
+			expect((response as Response).headers.get('Location')).toBe(
+				'/test-org/marketing/automations/j_new',
+			)
+			expect(JSON.parse(mockFetchTenant.mock.calls[0]![1].body)).toMatchObject({
+				triggerType: 'reservation_booked',
+			})
+		})
+
+		it('refuses to switch a journey to a reservation trigger while the module is off', async () => {
+			mockFetchTenant.mockResolvedValueOnce(
+				new Response(
+					JSON.stringify({ journey: { triggerType: 'phone_verified' } }),
+				),
+			)
+			const result = await detailAction({
+				request: saveRequest(reservationGraph),
+				params: { orgSlug: 'test-org', journeyId: 'j1' },
+				context: {},
+			} as any)
+			expect(result).toEqual({
+				error: 'Turn on Reservations to use this trigger',
+			})
+			expect(mockFetchTenant).toHaveBeenCalledTimes(1)
+		})
+
+		it('lets a journey that already has a reservation trigger keep saving while the module is off', async () => {
+			mockFetchTenant
+				.mockResolvedValueOnce(
+					new Response(
+						JSON.stringify({ journey: { triggerType: 'reservation_booked' } }),
+					),
+				)
+				.mockResolvedValueOnce(
+					new Response(JSON.stringify({ success: true }), { status: 200 }),
+				)
+			const result = await detailAction({
+				request: saveRequest(reservationGraph),
+				params: { orgSlug: 'test-org', journeyId: 'j1' },
+				context: {},
+			} as any)
+			expect(result).toMatchObject({ success: true })
 		})
 	})
 })

@@ -9,11 +9,13 @@ import {
 	Notification,
 	like,
 	not,
+	or,
 } from '@repo/database'
 import { checkHoneypot } from '@repo/security'
 
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
+import { countVisibleReservationAlerts } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
 	filterVisibleNotifications,
 	countVisibleStaffingAlerts,
@@ -46,7 +48,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			: undefined,
 	)
 	const staffingType = like(Notification.type, 'staffing-%')
-	const [rows, unread, unreadStaffing] = await Promise.all([
+	const reservationsType = like(Notification.type, 'reservations-%')
+	const [rows, unread, unreadAlerts] = await Promise.all([
 		db
 			.select()
 			.from(Notification)
@@ -59,7 +62,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			.select({ value: count() })
 			.from(Notification)
 			.where(
-				and(whereClause, eq(Notification.isRead, false), not(staffingType)),
+				and(
+					whereClause,
+					eq(Notification.isRead, false),
+					not(staffingType),
+					not(reservationsType),
+				),
 			),
 		db
 			.select({
@@ -67,13 +75,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				type: Notification.type,
 			})
 			.from(Notification)
-			.where(and(whereClause, eq(Notification.isRead, false), staffingType)),
+			.where(
+				and(
+					whereClause,
+					eq(Notification.isRead, false),
+					or(staffingType, reservationsType),
+				),
+			),
 	])
+	const unreadStaffing = unreadAlerts.filter((alert) =>
+		alert.type.startsWith('staffing-'),
+	)
+	const unreadReservations = unreadAlerts.filter((alert) =>
+		alert.type.startsWith('reservations-'),
+	)
 	const notifications = await filterVisibleNotifications(userId, rows)
 	let unreadCount = unread[0]?.value ?? 0
 	if (unreadStaffing.length > 0) {
 		unreadCount += await countVisibleStaffingAlerts(userId, unreadStaffing)
 	}
+	unreadCount += await countVisibleReservationAlerts(userId, unreadReservations)
 
 	return Response.json({ notifications, unreadCount })
 }

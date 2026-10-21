@@ -48,8 +48,11 @@ export function useOrdersClient(orgSlug: string) {
 				const error = z
 					.object({ error: z.string() })
 					.safeParse(await response.json().catch(() => null))
-				throw new Error(
-					error.success ? error.data.error : 'Unable to load orders.',
+				throw Object.assign(
+					new Error(
+						error.success ? error.data.error : 'Unable to load orders.',
+					),
+					{ status: response.status },
 				)
 			}
 			return response.json() as Promise<unknown>

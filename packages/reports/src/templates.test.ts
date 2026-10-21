@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { templatesForGrants } from './access.ts'
 import { getCatalog, getField, getSubject } from './catalog.ts'
+import { RESERVATIONS_REPORT_SUBJECTS } from './catalog-reservations.ts'
 import { flattenFilterConditions } from './dsl.ts'
 import { validateReportDefinition } from './engine.ts'
 import {
@@ -140,5 +142,60 @@ describe('definitionForNewReport', () => {
 			'status',
 			'createdAt',
 		])
+	})
+})
+
+describe('Reservations templates', () => {
+	const rsv = organizationTemplates().filter(
+		(template) => template.category === 'Reservations',
+	)
+	const catalog = getCatalog('organization')
+
+	it('offer presets for bookings, the waitlist and pacing, none over all time', () => {
+		expect(rsv.length).toBeGreaterThanOrEqual(8)
+		const subjects = new Set(rsv.map((item) => item.definition.subject))
+		expect([...subjects].sort()).toEqual(
+			[...RESERVATIONS_REPORT_SUBJECTS].sort(),
+		)
+		for (const template of rsv) {
+			expect(template.definition.timeframe.preset, template.id).not.toBe(
+				'all_time',
+			)
+		}
+	})
+
+	it('are offered only to people whose token lists the reservation subjects', () => {
+		const orgTemplates = organizationTemplates()
+		const without = templatesForGrants(catalog, orgTemplates, [])
+		expect(without.filter((item) => item.category === 'Reservations')).toEqual(
+			[],
+		)
+		const bookingsOnly = templatesForGrants(catalog, orgTemplates, ['bookings'])
+		const offered = bookingsOnly
+			.filter((item) => item.category === 'Reservations')
+			.map((item) => item.definition.subject)
+		expect(new Set(offered)).toEqual(new Set(['bookings']))
+		const all = templatesForGrants(catalog, orgTemplates, [
+			...RESERVATIONS_REPORT_SUBJECTS,
+		])
+		expect(all.filter((item) => item.category === 'Reservations')).toHaveLength(
+			rsv.length,
+		)
+	})
+
+	it('include the single-number presets the dashboard offers as report blocks', () => {
+		const single = rsv
+			.filter(
+				(item) => item.definition.visualization.chartStyle === 'single_number',
+			)
+			.map((item) => item.id)
+		expect(single).toEqual(
+			expect.arrayContaining([
+				'rsv-covers-today',
+				'rsv-no-show-rate-30d',
+				'rsv-late-cancels-30d',
+				'rsv-waitlist-avg-wait-7d',
+			]),
+		)
 	})
 })

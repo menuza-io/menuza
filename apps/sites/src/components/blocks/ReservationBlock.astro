@@ -1,0 +1,90 @@
+---
+import { msg } from '@lingui/core/macro'
+import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
+import { getLocaleHref } from '~/lib/locale'
+import {
+	siteBtnPrimary,
+	siteContainer,
+	siteSection,
+} from '~/lib/media'
+import { fetchPublishedReservations } from '~/lib/org'
+
+interface Props {
+	config: {
+		heading?: string
+		body?: string
+		buttonLabel?: string
+		locationId?: string
+		defaultPartySize?: number | string
+		layout?: 'button' | 'inline'
+	}
+}
+
+const { config } = Astro.props
+const i18n = Astro.locals.i18n
+
+// A published block disappears while online booking is off rather than
+// linking to a page that no longer exists.
+const gate = await fetchPublishedReservations({
+	slug: Astro.locals.orgSlug,
+	host: Astro.locals.customHost,
+})
+
+const organization = Astro.locals.organization
+const defaultLocale = organization?.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization?.locale || defaultLocale
+const party = Math.min(Math.max(Math.trunc(Number(config.defaultPartySize)) || 2, 1), 20)
+const locationId = (config.locationId || '').trim()
+const query = new URLSearchParams({ party: String(party) })
+if (locationId) query.set('location', locationId)
+const href = `${getLocaleHref('/reserve', locale, locale, defaultLocale)}?${query.toString()}`
+const heading = config.heading?.trim() || i18n._(msg`Reserve a table`)
+const buttonLabel = config.buttonLabel?.trim() || i18n._(msg`Book a table`)
+const inline = config.layout === 'inline'
+---
+
+{gate ? (
+	<section class:list={[siteSection]} data-reservation-block>
+		<div class={siteContainer}>
+			<div class="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
+				<h2 class="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{heading}</h2>
+				{config.body ? <p class="text-muted-foreground">{config.body}</p> : null}
+				{inline ? (
+					<>
+						<ReservationLabels />
+						<form
+							data-reservation-bar
+							data-location-id={locationId}
+							data-party={party}
+							class="grid w-full gap-4 text-start sm:grid-cols-2 lg:grid-cols-4"
+						>
+							<a href={href} class={siteBtnPrimary}>{buttonLabel}</a>
+						</form>
+					</>
+				) : (
+					<a href={href} class={siteBtnPrimary} data-reservation-cta>{buttonLabel}</a>
+				)}
+			</div>
+		</div>
+	</section>
+) : null}
+
+<script>
+	import { browserLocaleHref } from '~/lib/locale'
+	import { initBlockBar } from '~/lib/reservations/block-bar'
+	import {
+		createBrowserReservationsApi,
+		readReservationLabels,
+	} from '~/lib/reservations/client'
+
+	for (const form of document.querySelectorAll<HTMLFormElement>('[data-reservation-bar]')) {
+		void initBlockBar(form, {
+			api: createBrowserReservationsApi(),
+			labels: readReservationLabels(),
+			locationId: form.dataset.locationId || '',
+			defaultParty: Number(form.dataset.party) || 2,
+			reserveHref: (query) => `${browserLocaleHref('/reserve')}?${query.toString()}`,
+			navigate: (target) => window.location.assign(target),
+		})
+	}
+</script>

@@ -104,6 +104,17 @@ export async function getLaborSettings(
 	return ok(await loadLaborSettings(ctx.db, query.scopeId))
 }
 
+function countStandards(
+	standards: Record<string, Record<string, number>>,
+): Record<string, number> {
+	return Object.fromEntries(
+		Object.entries(standards).map(([unit, byPosition]) => [
+			unit,
+			Object.keys(byPosition).length,
+		]),
+	)
+}
+
 export async function updateLaborSettings(
 	ctx: LaborContext,
 	input: LaborSettingsUpdate,
@@ -119,8 +130,14 @@ export async function updateLaborSettings(
 	)
 	if (!framed.ok) return framed
 
-	if (input.ordersPerLaborHour) {
-		const ids = Object.keys(input.ordersPerLaborHour)
+	const requestedStandards = [
+		...Object.values(input.demandPerLaborHour ?? {}),
+		...(input.ordersPerLaborHour ? [input.ordersPerLaborHour] : []),
+	]
+	if (requestedStandards.length > 0) {
+		const ids = [
+			...new Set(requestedStandards.flatMap((record) => Object.keys(record))),
+		]
 		if (ids.length > 0) {
 			const found = await ctx.db
 				.select({ id: staffPositions.id })
@@ -130,7 +147,7 @@ export async function updateLaborSettings(
 						inJsonList(staffPositions.id, ids),
 						isNull(staffPositions.archivedAt),
 					),
-				)
+			)
 			const known = new Set(found.map((row) => row.id))
 			const unknown = ids.filter((id) => !known.has(id))
 			if (unknown.length > 0) {
@@ -143,9 +160,24 @@ export async function updateLaborSettings(
 
 	return transact(ctx.db, async (tx) => {
 		const before = await loadLaborSettings(tx, input.scopeId)
+		// Per-unit standards replace a unit's whole set; `orders` is also kept in
+		// the older column so every reader sees the same figures.
+		const demandPerLaborHour = { ...before.demandPerLaborHour }
+		const orders =
+			input.demandPerLaborHour?.orders ??
+			input.ordersPerLaborHour ??
+			before.ordersPerLaborHour
+		for (const [unit, standards] of Object.entries(
+			input.demandPerLaborHour ?? {},
+		)) {
+			demandPerLaborHour[unit] = standards
+		}
+		if (Object.keys(orders).length > 0) demandPerLaborHour.orders = orders
+		else delete demandPerLaborHour.orders
 		const next = {
 			salesSource: input.salesSource ?? before.salesSource,
-			ordersPerLaborHour: input.ordersPerLaborHour ?? before.ordersPerLaborHour,
+			ordersPerLaborHour: orders,
+			demandPerLaborHour,
 		}
 		await tx
 			.insert(laborScopeSettings)
@@ -170,6 +202,11 @@ export async function updateLaborSettings(
 				standards: {
 					before: Object.keys(before.ordersPerLaborHour).length,
 					after: Object.keys(next.ordersPerLaborHour).length,
+				},
+				// Positions with a standard, per demand unit: counts only.
+				demandStandards: {
+					before: countStandards(before.demandPerLaborHour),
+					after: countStandards(next.demandPerLaborHour),
 				},
 			},
 		})

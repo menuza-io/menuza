@@ -39,6 +39,10 @@ import { useMailboxUnreadCount } from '#app/hooks/use-mailbox.ts'
 
 import { type loader as rootLoader } from '#app/root.tsx'
 import {
+	HIDDEN_RESERVATIONS_NAV,
+	type ReservationsNavAccess,
+} from '#app/utils/reservations/nav.ts'
+import {
 	HIDDEN_STAFFING_NAV,
 	type StaffingNavAccess,
 } from '#app/utils/staffing/nav.ts'
@@ -46,11 +50,13 @@ import { ChatSidebarLink } from './chat/chat-sidebar-link.tsx'
 import FeedbackModal from './core/feedback-modal'
 import FavoriteNotes from './favorite-notes'
 import { FeatureUpdates } from './feature-updates'
+import { CalendarIcon } from './icons/calendar-icon'
 import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
 import { PhoneIcon } from './icons/phone-icon'
+import { ReceiptIcon } from './icons/receipt-icon'
 import { SendIcon } from './icons/send-icon'
 import { UserRoundGroupIcon } from './icons/user-round-group-icon'
 import { UsersRoundIcon } from './icons/users-round-icon'
@@ -249,10 +255,13 @@ function OrganizationSidebar({
 	const canReadMenu = hasOrgPermission('read', 'menu')
 	const canReadPhoneAgent = hasOrgPermission('read', 'phone_agent')
 	const canReadPhoneCalls = hasOrgPermission('read', 'phone_call')
+	const canReadSettings = hasOrgPermission('read', 'settings')
 	// Computed on the server from the org's staffing flags plus the member's
 	// permissions; the Staff group does not exist until both allow it.
 	const staffingNav: StaffingNavAccess =
 		rootData?.staffingNav ?? HIDDEN_STAFFING_NAV
+	const reservationsNav: ReservationsNavAccess =
+		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -289,6 +298,7 @@ function OrganizationSidebar({
 		{
 			title: _(msg`Reports`),
 			url: `/${orgSlug}/reports`,
+			// Reservation reports are the "Reservations" group on this page.
 			isActive: location.pathname.includes(`/${orgSlug}/reports`),
 			icon: ChartPieIcon,
 		},
@@ -356,6 +366,12 @@ function OrganizationSidebar({
 			],
 		},
 		{
+			title: _(msg`Orders`),
+			url: `/${orgSlug}/orders`,
+			isActive: location.pathname.startsWith(`/${orgSlug}/orders`),
+			icon: ReceiptIcon,
+		},
+		{
 			title: _(msg`Mailbox`),
 			url: `/${orgSlug}/mailbox`,
 			isActive: location.pathname === `/${orgSlug}/mailbox`,
@@ -412,6 +428,52 @@ function OrganizationSidebar({
 					isActive:
 						location.pathname.includes(`/${orgSlug}/phone-agent`) &&
 						!location.pathname.includes(`/${orgSlug}/phone-agent/calls`),
+				},
+			],
+		},
+		{
+			title: _(msg`Reservations`),
+			url: `/${orgSlug}/reservations`,
+			isActive: location.pathname.includes(`/${orgSlug}/reservations`),
+			icon: CalendarIcon,
+			items: [
+				{
+					// Every day view (Board, Timeline, Floor, List, Overview) is
+					// reached from Today; it is one entry, not five.
+					title: _(msg`Today`),
+					url: `/${orgSlug}/reservations/today`,
+					isActive: ['today', 'book', 'timeline', 'floor', 'overview'].some(
+						(view) =>
+							location.pathname.includes(`/${orgSlug}/reservations/${view}`),
+					),
+				},
+				{
+					title: _(msg`Calendar`),
+					url: `/${orgSlug}/reservations/calendar`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/calendar`,
+					),
+				},
+				{
+					title: _(msg`Waitlist`),
+					url: `/${orgSlug}/reservations/waitlist`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/waitlist`,
+					),
+				},
+				{
+					title: _(msg`Experiences`),
+					url: `/${orgSlug}/reservations/experiences`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/experiences`,
+					),
+				},
+				{
+					title: _(msg`Settings`),
+					url: `/${orgSlug}/reservations/settings`,
+					isActive: location.pathname.includes(
+						`/${orgSlug}/reservations/settings`,
+					),
 				},
 			],
 		},
@@ -590,11 +652,22 @@ function OrganizationSidebar({
 			if (item.url === `/${orgSlug}/website`) {
 				return canReadWebsite || canReadAnnouncements
 			}
-			if (item.url === `/${orgSlug}/menu`) {
+			if (
+				item.url === `/${orgSlug}/menu` ||
+				item.url === `/${orgSlug}/orders`
+			) {
 				return canReadMenu
 			}
 			if (item.url === `/${orgSlug}/phone-agent`) {
 				return canReadPhoneAgent || canReadPhoneCalls
+			}
+			if (item.url === `/${orgSlug}/reservations`) {
+				return reservationsNav.visible
+			}
+			// Customers is the one people screen: contact data (settings read) or
+			// the reservation guest grant opens it.
+			if (item.url === `/${orgSlug}/customers`) {
+				return canReadSettings || reservationsNav.customers
 			}
 			if (item.url === `/${orgSlug}/staff`) {
 				return staffingNav.visible
@@ -626,6 +699,23 @@ function OrganizationSidebar({
 					items: item.items.filter((subItem) =>
 						subItem.url === callsUrl ? canReadPhoneCalls : canReadPhoneAgent,
 					),
+				}
+			}
+			if (item.url === `/${orgSlug}/reservations`) {
+				const allowedByUrl: Record<string, boolean> = {
+					[`/${orgSlug}/reservations/today`]: reservationsNav.today,
+					[`/${orgSlug}/reservations/calendar`]: reservationsNav.book,
+					[`/${orgSlug}/reservations/waitlist`]: reservationsNav.waitlist,
+					[`/${orgSlug}/reservations/experiences`]: reservationsNav.experiences,
+					[`/${orgSlug}/reservations/settings`]: reservationsNav.settings,
+				}
+				const visibleItems = item.items.filter(
+					(subItem) => allowedByUrl[subItem.url] === true,
+				)
+				return {
+					...item,
+					url: visibleItems[0]?.url ?? item.url,
+					items: visibleItems,
 				}
 			}
 			if (item.url === `/${orgSlug}/staff`) {

@@ -6,6 +6,7 @@ import { data, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { LaborPolicyEditor } from '#app/components/staff/labor-policy-editor.tsx'
 import { TimeZoneCard } from '#app/components/staff/time-zone-card.tsx'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import { requireStaffingAccess } from '#app/utils/staffing/access.server.ts'
 import { loadOrganizationScope } from '#app/utils/staffing/scope.server.ts'
 import {
@@ -90,6 +91,9 @@ export async function action({ request, params }: Route.ActionArgs) {
 		.update(Organization)
 		.set({ staffingTimeZone: parsed.data.timeZone })
 		.where(eq(Organization.id, access.organizationId))
+	if (previous.timeZone !== parsed.data.timeZone) {
+		await notifyReservationsContextChanged(access.organizationId, 'staffing')
+	}
 	await auditService.log({
 		action: AuditAction.ORG_SETTINGS_UPDATED,
 		userId: access.userId,

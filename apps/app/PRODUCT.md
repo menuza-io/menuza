@@ -47,14 +47,23 @@ control-plane database stays customer-free by design.
 
 Sidebar surface (route names as shipped):
 
-- Dashboard, Reports (saved reports with charts and export), Notes (card,
-  kanban, and table views with statuses and comments), Media library.
-- Customers (regional customer list) and Mailbox (review of incoming messages
-  from website forms and customer feedback, with unread counts, replies, and AI
-  draft assistance).
+- Dashboard, Reports (saved reports with charts and export; the Reservations
+  category holds the booking, waitlist and pacing reports; Reservations has no
+  Reports tab), Notes (card, kanban, and table views with statuses and
+  comments), Media library.
+- Customers (the one people screen: customers, order and booking history, and
+  reservation guests, paged and searched in the regional API; the profile has
+  Contact, Dining, Notes, Reservation history, Marketing messages and Duplicates
+  and data sections; `/customers/<c_|g_ key>`) and Mailbox (review of incoming
+  messages from website forms and customer feedback, with unread counts,
+  replies, and AI draft assistance).
 - Menu: Overview, Menus, Categories, Items, Modifier Groups, Options, Drops
   (scheduled order windows with inventory limits, checkout holds, and pickup
   windows).
+- Orders (its own item after Menu, `/orders`; the old `/menu/orders` redirects):
+  the order inbox with status actions. Each order links to its customer, and the
+  customer profile lists all of their orders (`/orders/<id>` is one order's own
+  page; the old `/orders?order=<id>` redirects there).
 - Marketing: Overview, Broadcasts, Automations (journeys with runs; the email
   designer is a full-screen overlay with an explicit save).
 - Website: General Settings, Pages, Forms, Analytics, Branding, Announcements,

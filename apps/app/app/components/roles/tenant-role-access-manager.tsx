@@ -37,8 +37,8 @@ import { useState } from 'react'
 import { Form, Link, useNavigation } from 'react-router'
 import { useRoleLabels } from '#app/utils/organization/role-label.ts'
 import {
-	STAFFING_IMPLIED_PERMISSION_IDS,
-	withImpliedStaffingPermissions,
+	IMPLIED_PERMISSION_IDS,
+	withImpliedTenantRolePermissions,
 } from '#app/utils/organization/tenant-role-permissions.ts'
 
 export type TenantRole = {
@@ -63,6 +63,8 @@ export type PermissionGroup = {
 	permissions: PermissionOption[]
 	/** Staff module group: shown only when the organization has Staff turned on. */
 	staffing?: boolean
+	/** Reservations module group: shown only when the organization has Reservations turned on. */
+	reservations?: boolean
 }
 
 export function getPermissionGroups(): PermissionGroup[] {
@@ -378,6 +380,57 @@ export function getPermissionGroups(): PermissionGroup[] {
 				},
 			],
 		},
+		{
+			title: t`Reservations`,
+			reservations: true,
+			description: t`Reservation book, waitlist, guestbook, dining room setup, experiences, reports, and reservation payments. Only applies when Reservations is turned on for your organization.`,
+			permissions: [
+				{
+					id: 'org_perm_read_reservation_any',
+					label: t`View reservation book & waitlist`,
+					description: t`See the reservation book, timeline, floor plan, calendar, overview, and waitlist.`,
+				},
+				{
+					id: 'org_perm_update_reservation_any',
+					label: t`Manage reservation book & waitlist`,
+					description: t`Create, edit, seat, and manage reservations, walk-ins, waitlist entries, service notes, and section assignments. Includes View reservation book & waitlist.`,
+				},
+				{
+					id: 'org_perm_read_reservation_settings_any',
+					label: t`View reservation settings & experiences`,
+					description: t`See dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences.`,
+				},
+				{
+					id: 'org_perm_update_reservation_settings_any',
+					label: t`Manage reservation settings & experiences`,
+					description: t`Edit dining areas, tables, combinations, services, pacing, blocks, policies, messages, sections, and experiences. Includes View reservation settings & experiences.`,
+					warning: t`High impact`,
+				},
+				{
+					id: 'org_perm_read_reservation_guest_any',
+					label: t`View guestbook`,
+					description: t`See guestbook profiles, visit history, notes, and exports.`,
+					warning: t`Guest personal data`,
+				},
+				{
+					id: 'org_perm_update_reservation_guest_any',
+					label: t`Manage guestbook`,
+					description: t`Edit guestbook profiles, tags, notes, and merge or erase guests. Includes View guestbook.`,
+					warning: t`Guest personal data`,
+				},
+				{
+					id: 'org_perm_read_reservation_report_any',
+					label: t`View reservation reports`,
+					description: t`See covers, pacing, no-show, waitlist, channel, deposit, and section reports.`,
+				},
+				{
+					id: 'org_perm_update_reservation_payment_any',
+					label: t`Charge fees & refund reservation payments`,
+					description: t`Charge cancellation or no-show fees and issue reservation refunds. Includes View reservation book & waitlist and View reservation reports.`,
+					warning: t`Charges & refunds`,
+				},
+			],
+		},
 	]
 }
 
@@ -387,6 +440,8 @@ export type RolePreset = {
 	permissionIds: string[]
 	/** Staff module template: offered only when Staff is turned on. */
 	staffing?: boolean
+	/** Reservations module template: offered only when Reservations is turned on. */
+	reservations?: boolean
 }
 
 export function getPresets(): RolePreset[] {
@@ -468,6 +523,85 @@ export function getPresets(): RolePreset[] {
 			],
 		},
 		{
+			name: t`Host`,
+			reservations: true,
+			description: t`Book, waitlist & table status`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_update_reservation_any',
+			],
+		},
+		{
+			name: t`Shift manager`,
+			reservations: true,
+			description: t`Book, guestbook & reports`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_update_reservation_any',
+				'org_perm_read_reservation_guest_any',
+				'org_perm_read_reservation_report_any',
+			],
+		},
+		{
+			name: t`Reservations manager`,
+			reservations: true,
+			description: t`Setup, book, guestbook & reports`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_update_reservation_any',
+				'org_perm_read_reservation_settings_any',
+				'org_perm_update_reservation_settings_any',
+				'org_perm_read_reservation_guest_any',
+				'org_perm_update_reservation_guest_any',
+				'org_perm_read_reservation_report_any',
+			],
+		},
+		{
+			name: t`Guest relations`,
+			reservations: true,
+			description: t`Guestbook profiles & merges`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_read_reservation_guest_any',
+				'org_perm_update_reservation_guest_any',
+			],
+		},
+		{
+			name: t`Guestbook manager`,
+			reservations: true,
+			description: t`Guestbook profiles & merges`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_read_reservation_guest_any',
+				'org_perm_update_reservation_guest_any',
+			],
+		},
+		{
+			name: t`Finance`,
+			reservations: true,
+			description: t`Deposit reports, charges & refunds`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_read_reservation_report_any',
+				'org_perm_update_reservation_payment_any',
+			],
+		},
+		{
+			name: t`Owner`,
+			reservations: true,
+			description: t`All reservations, guestbook, setup & payments`,
+			permissionIds: [
+				'org_perm_read_reservation_any',
+				'org_perm_update_reservation_any',
+				'org_perm_read_reservation_settings_any',
+				'org_perm_update_reservation_settings_any',
+				'org_perm_read_reservation_guest_any',
+				'org_perm_update_reservation_guest_any',
+				'org_perm_read_reservation_report_any',
+				'org_perm_update_reservation_payment_any',
+			],
+		},
+		{
 			name: t`Viewer`,
 			description: t`Read-only`,
 			permissionIds: [
@@ -492,6 +626,7 @@ export function RoleAccessForm({
 	cancelHref,
 	error,
 	staffingEnabled = false,
+	reservationsEnabled = false,
 }: {
 	role?: TenantRole
 	cancelHref: string
@@ -499,23 +634,45 @@ export function RoleAccessForm({
 	orgSlug?: string
 	/** Whether the Staff module is turned on for this organization. */
 	staffingEnabled?: boolean
+	/** Whether the Reservations module is turned on for this organization. */
+	reservationsEnabled?: boolean
 }) {
 	const navigation = useNavigation()
 	const isSubmitting = navigation.state === 'submitting'
 	const permissionGroups = getPermissionGroups().filter(
-		(group) => staffingEnabled || !group.staffing,
+		(group) =>
+			(staffingEnabled || !group.staffing) &&
+			(reservationsEnabled || !group.reservations),
 	)
-	const presets = getPresets().filter(
-		(preset) => staffingEnabled || !preset.staffing,
+	const rawPresets = getPresets().filter(
+		(preset) =>
+			(staffingEnabled || !preset.staffing) &&
+			(reservationsEnabled || !preset.reservations),
 	)
-	// Staff grants a role already holds stay on it while the Staff groups are
-	// hidden, so saving a role with Staff off never silently strips them.
-	const hiddenStaffingIds = new Set(
-		staffingEnabled
-			? []
-			: getPermissionGroups()
-					.filter((group) => group.staffing)
-					.flatMap((group) => group.permissions.map((p) => p.id)),
+	// When both Staffing and Reservations are enabled, both define a "Shift manager"
+	// template; merge any templates sharing a name so template buttons stay unique.
+	const presets: RolePreset[] = []
+	for (const preset of rawPresets) {
+		const existing = presets.find((p) => p.name === preset.name)
+		if (existing) {
+			existing.permissionIds = [
+				...new Set([...existing.permissionIds, ...preset.permissionIds]),
+			]
+		} else {
+			presets.push({ ...preset })
+		}
+	}
+
+	// Module grants a role already holds stay on it while those module groups are
+	// hidden, so saving a role with a module off never silently strips them.
+	const hiddenModuleIds = new Set(
+		getPermissionGroups()
+			.filter(
+				(group) =>
+					(group.staffing && !staffingEnabled) ||
+					(group.reservations && !reservationsEnabled),
+			)
+			.flatMap((group) => group.permissions.map((p) => p.id)),
 	)
 
 	const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
@@ -528,10 +685,10 @@ export function RoleAccessForm({
 	const togglePermission = (id: string, checked: boolean) => {
 		setActivePreset(null)
 		setSelectedPermissionIds((prev) => {
-			if (checked) return withImpliedStaffingPermissions([...prev, id])
+			if (checked) return withImpliedTenantRolePermissions([...prev, id])
 			// Clearing a read grant also clears the update/approve grants that
 			// depend on it, so the saved role never holds an orphaned write.
-			const dependents = Object.entries(STAFFING_IMPLIED_PERMISSION_IDS)
+			const dependents = Object.entries(IMPLIED_PERMISSION_IDS)
 				.filter(([, implied]) => implied.includes(id))
 				.map(([dependent]) => dependent)
 			return prev.filter((p) => p !== id && !dependents.includes(p))
@@ -655,7 +812,7 @@ export function RoleAccessForm({
 								)
 							} else {
 								setSelectedPermissionIds((prev) =>
-									withImpliedStaffingPermissions([
+									withImpliedTenantRolePermissions([
 										...prev,
 										...groupPermissionIds,
 									]),
@@ -774,7 +931,7 @@ export function RoleAccessForm({
 				</div>
 
 				{selectedPermissionIds
-					.filter((id) => hiddenStaffingIds.has(id))
+					.filter((id) => hiddenModuleIds.has(id))
 					.map((id) => (
 						<input key={id} type="hidden" name="permissionIds" value={id} />
 					))}
@@ -817,16 +974,21 @@ export function ReadOnlyRoleView({
 	role,
 	editHref,
 	staffingEnabled = false,
+	reservationsEnabled = false,
 }: {
 	role: TenantRole
 	editHref?: string
 	orgSlug?: string
 	/** Whether the Staff module is turned on for this organization. */
 	staffingEnabled?: boolean
+	/** Whether the Reservations module is turned on for this organization. */
+	reservationsEnabled?: boolean
 }) {
 	const { roleName, roleDescription } = useRoleLabels()
 	const permissionGroups = getPermissionGroups().filter(
-		(group) => staffingEnabled || !group.staffing,
+		(group) =>
+			(staffingEnabled || !group.staffing) &&
+			(reservationsEnabled || !group.reservations),
 	)
 	const visibleIds = new Set(
 		permissionGroups.flatMap((group) => group.permissions.map((p) => p.id)),
@@ -963,12 +1125,21 @@ export type StaffingRolePresetOption = {
 	exists: boolean
 }
 
+export type ReservationsRolePresetOption = {
+	key: string
+	name: string
+	description: string
+	/** A role with this name already exists in the organization. */
+	exists: boolean
+}
+
 export function TenantRoleAccessManager({
 	roles,
 	orgSlug,
 	message,
 	error,
 	staffingPresets,
+	reservationsPresets,
 }: {
 	roles: TenantRole[]
 	orgSlug: string
@@ -976,6 +1147,8 @@ export function TenantRoleAccessManager({
 	error?: string
 	/** Present only while the Staff module is on for the organization. */
 	staffingPresets?: StaffingRolePresetOption[]
+	/** Present only while the Reservations module is on for the organization. */
+	reservationsPresets?: ReservationsRolePresetOption[]
 }) {
 	const { roleName, roleDescription } = useRoleLabels()
 	const navigation = useNavigation()
@@ -1138,6 +1311,54 @@ export function TenantRoleAccessManager({
 									type="hidden"
 									name="intent"
 									value="create-staffing-preset"
+								/>
+								<input type="hidden" name="presetKey" value={preset.key} />
+								<div className="min-w-0 flex-1 basis-64">
+									<p className="text-sm font-medium">{preset.name}</p>
+									<p className="text-muted-foreground text-xs">
+										{preset.description}
+									</p>
+								</div>
+								{preset.exists ? (
+									<Badge variant="secondary">
+										<Trans>Created</Trans>
+									</Badge>
+								) : (
+									<Button type="submit" variant="outline" size="sm">
+										<Trans>Create role</Trans>
+									</Button>
+								)}
+							</Form>
+						</FramePanel>
+					))}
+				</Frame>
+			) : null}
+
+			{/* Reservations role presets: one-click starting points, created as ordinary custom roles */}
+			{reservationsPresets && reservationsPresets.length > 0 ? (
+				<Frame className="w-full">
+					<FrameHeader>
+						<FrameTitle className="text-base">
+							<Trans>Reservations role presets</Trans>
+						</FrameTitle>
+						<FrameDescription>
+							<Trans>
+								Create a ready-made role for your host stand, shift leads,
+								reservations team, guestbook, or finance. Each one becomes a
+								normal custom role that you can rename, edit, or delete.
+							</Trans>
+						</FrameDescription>
+					</FrameHeader>
+					{reservationsPresets.map((preset) => (
+						<FramePanel key={preset.key}>
+							<Form
+								method="POST"
+								className="flex flex-wrap items-center justify-between gap-3"
+							>
+								<input
+									type="hidden"
+									name="intent"
+									value="create-reservations-preset"
 								/>
 								<input type="hidden" name="presetKey" value={preset.key} />
 								<div className="min-w-0 flex-1 basis-64">

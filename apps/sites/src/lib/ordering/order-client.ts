@@ -252,8 +252,35 @@ export async function startOrderPayment(
 	) {
 		throw new OrderRequestError('payment_unavailable', 502)
 	}
-	const url = new URL(value.checkoutUrl)
-	if (url.protocol !== 'https:')
+	return acceptCheckoutUrl(value.checkoutUrl)
+}
+
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1'])
+
+function isLoopbackHost(hostname: string) {
+	return LOOPBACK_HOSTS.has(hostname) || hostname.endsWith('.localhost')
+}
+
+/**
+ * The hosted checkout address the App returned. Always `https:`; outside
+ * production a loopback `http:` address is also accepted, because the local
+ * payment mock serves its hosted pages from `http://localhost:3001`. Anything
+ * else (including loopback in a production build) is refused.
+ */
+export function acceptCheckoutUrl(
+	value: string,
+	options: { production?: boolean } = {},
+) {
+	const production = options.production ?? import.meta.env.PROD
+	let url: URL
+	try {
+		url = new URL(value)
+	} catch {
 		throw new OrderRequestError('payment_unavailable', 502)
-	return url.toString()
+	}
+	if (url.protocol === 'https:') return url.toString()
+	if (url.protocol === 'http:' && !production && isLoopbackHost(url.hostname)) {
+		return url.toString()
+	}
+	throw new OrderRequestError('payment_unavailable', 502)
 }

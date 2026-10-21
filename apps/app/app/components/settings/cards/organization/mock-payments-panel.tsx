@@ -14,7 +14,13 @@ export type PaymentsMockUiState = {
  * build, so this panel never renders there. The instant buttons run the same
  * account setup and status sync the real onboarding return runs.
  */
-export function MockPaymentsPanel({ state }: { state: PaymentsMockUiState }) {
+export function MockPaymentsPanel({
+	state,
+	isUsRegion,
+}: {
+	state: PaymentsMockUiState
+	isUsRegion: boolean
+}) {
 	return (
 		<Alert data-testid="mock-payments-panel">
 			<AlertTitle>
@@ -28,7 +34,7 @@ export function MockPaymentsPanel({ state }: { state: PaymentsMockUiState }) {
 					</Trans>
 				</p>
 				<div className="flex flex-wrap gap-3">
-					{state.stripe ? (
+					{state.stripe && isUsRegion ? (
 						<Form method="post">
 							<input type="hidden" name="intent" value="mock-onboard-stripe" />
 							<Button

@@ -38,6 +38,12 @@ import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
 } from '#app/utils/organization/permissions.server.ts'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
+import { summaryHasUnsettledPayments } from '#app/utils/reservations/region-confirmation.ts'
+import {
+	evaluateReservationsRegionGuard,
+	fetchReservationsSummary,
+} from '#app/utils/reservations/region-guard.server.ts'
 import {
 	createCustomHostname,
 	deleteCustomHostname,
@@ -150,6 +156,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					...(published ? { hasProvisionedDb: true } : {}),
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
@@ -231,6 +238,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					sitePublished: true,
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
@@ -272,6 +280,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					cloudflareHostnameId: null,
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(
 				organization.id,
@@ -369,14 +378,33 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		if (organization.hasProvisionedDb) {
-			// Staff records live in the old region's database and are destroyed by
-			// the wipe. Ask that region what it holds (counts only), and when there
-			// is anything to lose (or the answer is unknown) require the admin to
-			// have typed the organization's slug.
-			const summary = await fetchStaffSummary({
-				organizationId: organization.id,
-				dataRegion: currentRegion,
-			})
+			// Staff and reservation records live in the old region's database and are
+			// destroyed by the wipe. Ask that region what it holds (counts only), and
+			// when there is anything to lose (or the answer is unknown) require the
+			// admin to have typed the organization's slug.
+			const [summary, reservationsSummary] = await Promise.all([
+				fetchStaffSummary({
+					organizationId: organization.id,
+					dataRegion: currentRegion,
+				}),
+				fetchReservationsSummary({
+					organizationId: organization.id,
+					dataRegion: currentRegion,
+				}),
+			])
+
+			if (summaryHasUnsettledPayments(reservationsSummary)) {
+				return Response.json(
+					{
+						error:
+							'This organization has unsettled reservation payments in the current region. Settle or refund them before switching regions.',
+						code: 'payments_unsettled',
+						reservationsSummary,
+					},
+					{ status: 409 },
+				)
+			}
+
 			const guard = evaluateRegionGuard({
 				summary,
 				typedConfirmation: submission.value.confirmText,
@@ -389,6 +417,26 @@ export async function action({ request, params }: ActionFunctionArgs) {
 							'This organization has staff records in the current region that would be deleted. Type the organization slug to confirm.',
 						staffConfirmationRequired: true,
 						summary: guard.summary,
+					},
+					{ status: 400 },
+				)
+			}
+
+			const reservationsGuard = evaluateReservationsRegionGuard({
+				summary: reservationsSummary,
+				typedConfirmation: submission.value.confirmText,
+				slug: organization.slug,
+			})
+			if (!reservationsGuard.allowed) {
+				return Response.json(
+					{
+						error:
+							reservationsGuard.summary === null
+								? 'Could not reach the regional reservation service to check existing records. Type the organization slug to confirm.'
+								: 'This organization has reservation records in the current region that would be deleted. Type the organization slug to confirm.',
+						reservationsConfirmationRequired: true,
+						reservationsSummary: reservationsGuard.summary,
+						summary: reservationsGuard.summary,
 					},
 					{ status: 400 },
 				)
@@ -492,6 +540,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 					siteDefaultLocale: defaultLocale,
 				})
 				.where(eq(Organization.id, organization.id))
+			await notifyReservationsContextChanged(organization.id, 'branding')
 
 			await invalidateUserOrganizationsCache(userId)
 			await purgeOrganizationSiteCache(

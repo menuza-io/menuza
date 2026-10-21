@@ -4,6 +4,10 @@ import {
 	isStaffingReportSubject,
 	STAFF_PAY_REPORT_PERMISSION,
 } from './catalog-staffing.ts'
+import {
+	isReservationsReportSubject,
+	RESERVATIONS_REPORT_SUBJECTS,
+} from './catalog-reservations.ts'
 import { ENV } from './package-env.js'
 
 export {
@@ -17,6 +21,12 @@ export {
 	STAFFING_REPORT_SUBJECTS,
 	type StaffingReportSubject,
 } from './catalog-staffing.ts'
+
+export {
+	isReservationsReportSubject,
+	RESERVATIONS_REPORT_SUBJECTS,
+	type ReservationsReportSubject,
+} from './catalog-reservations.ts'
 
 export const OPERATOR_TOKEN_AUD = 'tenant-api-operator'
 export const OPERATOR_TOKEN_ISS = 'menuza-control-plane'
@@ -38,6 +48,7 @@ export type OperatorAnalyticsRole = 'operator' | 'admin'
 export const RESTRICTED_REPORT_SUBJECTS = [
 	'phone_calls',
 	'customers',
+	'text_subscribers',
 	'shop_orders',
 	'orders',
 	'order_items',
@@ -46,6 +57,7 @@ export const RESTRICTED_REPORT_SUBJECTS = [
 	'shifts',
 	'labor_daily',
 	'applications',
+	...RESERVATIONS_REPORT_SUBJECTS,
 	'staff_pay',
 ] as const
 
@@ -106,8 +118,9 @@ export async function mintOperatorAnalyticsToken(options: {
 	/** Restricted subjects the user has the extra permission for. */
 	subjects?: readonly RestrictedReportSubject[]
 	/**
-	 * The scopes staff subjects are limited to (`null` for all). Required
-	 * whenever a staff subject or the pay permission is granted, so a caller
+	 * The scopes staff and reservations subjects are limited to (`null` for
+	 * all; location ids for reservations). Required whenever one of those
+	 * subjects or the pay permission is granted, so a caller
 	 * can't forget to limit one.
 	 */
 	scopeIds?: readonly string[] | null
@@ -117,10 +130,11 @@ export async function mintOperatorAnalyticsToken(options: {
 	const staffGranted = subjects.some(
 		(subject) =>
 			isStaffingReportSubject(subject) ||
+			isReservationsReportSubject(subject) ||
 			subject === STAFF_PAY_REPORT_PERMISSION,
 	)
 	if (staffGranted && options.scopeIds === undefined) {
-		throw new Error('Staff report subjects need a scope')
+		throw new Error('Staff and reservations report subjects need a scope')
 	}
 	const pay = subjects.includes(STAFF_PAY_REPORT_PERMISSION)
 	const expiresAt = new Date(

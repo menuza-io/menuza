@@ -466,6 +466,78 @@ describe('Journey API Routes (System & Operator)', () => {
 				expect(json.journey.status).toBe('draft')
 			})
 
+			it.each([
+				'reservation_booked',
+				'reservation_completed',
+				'reservation_no_show',
+				'reservation_cancelled',
+			] as const)(
+				'creates and updates a journey with the %s trigger',
+				async (triggerType) => {
+					const token = await mintOperatorJwt()
+					const headers = {
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json',
+					}
+					const graph = {
+						nodes: [
+							{
+								id: 't-1',
+								type: 'trigger' as const,
+								data: { triggerType },
+							},
+							validGraph.nodes[1]!,
+						],
+						edges: validGraph.edges,
+					}
+					const created = await app.request('/operator/journeys', {
+						method: 'POST',
+						headers,
+						body: JSON.stringify({
+							name: `Reservation ${triggerType}`,
+							triggerType,
+							...graph,
+						}),
+					})
+					expect(created.status).toBe(201)
+					const json = await created.json()
+					expect(json.journey.triggerType).toBe(triggerType)
+
+					const updated = await app.request(
+						`/operator/journeys/${json.journeyId}`,
+						{
+							method: 'PUT',
+							headers,
+							body: JSON.stringify({ name: 'Renamed', triggerType, ...graph }),
+						},
+					)
+					expect(updated.status).toBe(200)
+					const fetched = await app.request(
+						`/operator/journeys/${json.journeyId}`,
+						{ headers: { Authorization: `Bearer ${token}` } },
+					)
+					expect((await fetched.json()).journey.triggerType).toBe(triggerType)
+				},
+			)
+
+			it('rejects an unknown trigger type', async () => {
+				const token = await mintOperatorJwt()
+				const res = await app.request('/operator/journeys', {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						name: 'Nope',
+						triggerType: 'reservation_teleported',
+						nodes: validGraph.nodes,
+						edges: validGraph.edges,
+					}),
+				})
+				expect(res.status).toBe(400)
+			})
+
 			it('rejects creation of journey with invalid DAG cycles with 400', async () => {
 				const token = await mintOperatorJwt()
 				const res = await app.request('/operator/journeys', {

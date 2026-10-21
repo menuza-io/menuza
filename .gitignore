@@ -26,6 +26,9 @@ env.d.ts
 
 /packages/database/cache.db
 
+# Dev-only guest email capture written by tenant-api
+/apps/tenant-api/.dev-mail/
+
 # Easy way to create temporary files/folders that won't accidentally be added to git
 *.local.*
 

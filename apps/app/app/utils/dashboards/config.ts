@@ -13,6 +13,7 @@ export const BUILT_IN_BLOCK_TYPES = [
 	'notes-chart',
 	'onboarding',
 	'leaderboard',
+	'bookings-today',
 ] as const
 export const BLOCK_TYPES = [...BUILT_IN_BLOCK_TYPES, 'report'] as const
 export type BuiltInBlockType = (typeof BUILT_IN_BLOCK_TYPES)[number]
@@ -100,6 +101,14 @@ export const BLOCK_DEFINITIONS: { [T in BlockType]: BlockDefinition<T> } = {
 		description: msg`Members who created the most notes.`,
 		defaultSize: { lg: { w: 6, h: 10 }, md: { w: 4, h: 10 } },
 		minSize: { lg: { w: 3, h: 6 }, md: { w: 3, h: 6 } },
+		maxInstances: 1,
+	},
+	'bookings-today': {
+		type: 'bookings-today',
+		title: msg`Bookings today`,
+		description: msg`Today's reservations by status, covers by service, and the next arrivals.`,
+		defaultSize: { lg: { w: 6, h: 8 }, md: { w: 4, h: 8 } },
+		minSize: { lg: { w: 4, h: 6 }, md: { w: 4, h: 6 } },
 		maxInstances: 1,
 	},
 	report: {
@@ -410,16 +419,21 @@ export function canAddBlockType(
 /**
  * The built-in blocks a dashboard can still take. Onboarding is only offered
  * while the viewer would see it, since a completed or dismissed checklist is
- * not shown at all.
+ * not shown at all. Bookings today is only offered to viewers who may read
+ * reservations while the module is on.
  */
 export function addableBuiltInBlockTypes(
 	blocks: readonly DashboardBlock[],
-	{ onboardingAvailable }: { onboardingAvailable: boolean },
+	{
+		onboardingAvailable,
+		bookingsTodayAvailable,
+	}: { onboardingAvailable: boolean; bookingsTodayAvailable: boolean },
 ): BuiltInBlockType[] {
 	return BUILT_IN_BLOCK_TYPES.filter(
 		(type) =>
 			canAddBlockType(blocks, type) &&
-			(type !== 'onboarding' || onboardingAvailable),
+			(type !== 'onboarding' || onboardingAvailable) &&
+			(type !== 'bookings-today' || bookingsTodayAvailable),
 	)
 }
 

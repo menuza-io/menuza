@@ -1,4 +1,4 @@
-import { getLocaleHref } from '@repo/common/site-locales'
+import { DEFAULT_SITE_LOCALES, getLocaleHref } from '@repo/common/site-locales'
 
 export { getLocaleHref }
 
@@ -13,7 +13,22 @@ export function siteLocaleHref(
 
 export function browserLocaleHref(path: string): string {
 	if (typeof document === 'undefined') return path
-	const locale = document.documentElement.lang || 'en'
-	const defaultLocale = document.documentElement.dataset.defaultLocale || 'en'
+	const locale = browserLocale()
+	const defaultLocale =
+		document.documentElement.dataset.defaultLocale ||
+		DEFAULT_SITE_LOCALES.defaultLocale
 	return getLocaleHref(path, locale, locale, defaultLocale)
+}
+
+/**
+ * The language of the page the visitor is on (the Sites locale resolution put
+ * it on `<html lang>`), else the organization default, else the platform one.
+ */
+export function browserLocale(): string {
+	if (typeof document === 'undefined') return DEFAULT_SITE_LOCALES.defaultLocale
+	return (
+		document.documentElement.lang ||
+		document.documentElement.dataset.defaultLocale ||
+		DEFAULT_SITE_LOCALES.defaultLocale
+	)
 }

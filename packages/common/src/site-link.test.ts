@@ -47,6 +47,13 @@ describe('site-link', () => {
 		expect(matchSitePage('///about///', pages)?.id).toBe('about')
 		expect(matchSitePage('/', pages)?.id).toBe('home')
 		expect(matchSitePage('/login', pages)).toBeUndefined()
+		const withReserved = [
+			...pages,
+			{ id: 'reserve', slug: 'reserve', isHomePage: false },
+			{ id: 'experiences', slug: 'experiences', isHomePage: false },
+		]
+		expect(matchSitePage('/reserve', withReserved)).toBeUndefined()
+		expect(matchSitePage('/experiences', withReserved)).toBeUndefined()
 
 		const about = normalizeSiteLink(
 			{ type: 'page', pageId: 'about', pageSlug: 'about' },

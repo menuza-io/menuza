@@ -2,11 +2,13 @@ import { Skeleton } from '@repo/ui/skeleton'
 import { LeadershipCard } from '#app/components/leadership-card.tsx'
 import { OnboardingChecklist } from '#app/components/onboarding-checklist.tsx'
 import { type BuiltInBlockData } from '#app/utils/dashboards/block-data.server.ts'
+import { type BookingsTodayAccess } from '#app/utils/dashboards/bookings-today.ts'
 import { type DashboardBlock } from '#app/utils/dashboards/config.ts'
 import {
 	type ReportBlockData,
 	type SavedReportOption,
 } from '#app/utils/dashboards/reports.ts'
+import { BookingsTodayBlock } from './blocks/bookings-today-block.tsx'
 import { NotesChartBlock } from './blocks/notes-chart-block.tsx'
 import { ReportBlock } from './blocks/report-block.tsx'
 import { StatsBlock } from './blocks/stats-block.tsx'
@@ -23,6 +25,7 @@ export function DashboardBlockContent({
 	data,
 	reports,
 	savedReportOptions,
+	bookingsToday,
 	organization,
 	editable,
 }: {
@@ -30,6 +33,7 @@ export function DashboardBlockContent({
 	data: BuiltInBlockData
 	reports: ReportBlockData | null
 	savedReportOptions?: readonly SavedReportOption[]
+	bookingsToday?: BookingsTodayAccess
 	organization: DashboardBlockOrganization
 	/** Whether the viewer can change the dashboard's blocks. */
 	editable?: boolean
@@ -60,6 +64,13 @@ export function DashboardBlockContent({
 			) : (
 				<BlockLoading />
 			)
+		case 'bookings-today':
+			return bookingsToday?.available ? (
+				<BookingsTodayBlock
+					orgSlug={organization.slug}
+					locations={bookingsToday.locations}
+				/>
+			) : null
 		case 'report':
 			return (
 				<ReportBlock

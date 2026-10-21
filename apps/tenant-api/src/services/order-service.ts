@@ -25,7 +25,6 @@ import {
 	type RestaurantOrder,
 } from '@repo/tenant-db'
 
-import { inJsonList } from '../lib/chunked-in.ts'
 import { verifyDeliveryQuote } from '../lib/delivery-quote-token.ts'
 import { isGeocodingAvailable } from '../lib/geocoder.ts'
 import type { PublishedOrganization } from '../lib/origin.ts'
@@ -37,6 +36,7 @@ import {
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
 
 /** Tenant database + transaction handle types. */
 type TenantDatabase = Awaited<ReturnType<typeof getTenantDb>>
@@ -593,7 +593,8 @@ export async function placeOrder(input: {
 				}
 
 				if (result.capacity && result.capacity.entities.length > 0) {
-					await tx.insert(restaurantOrderReservations).values(
+					await insertRowsInChunks(
+						restaurantOrderReservations,
 						result.capacity.entities.map((entity) => ({
 							orderId: inserted!.id,
 							kind: entity.kind,
@@ -602,6 +603,7 @@ export async function placeOrder(input: {
 							slotTime: result.capacity!.slotTime,
 							quantity: entity.quantity,
 						})),
+						(chunk) => tx.insert(restaurantOrderReservations).values(chunk),
 					)
 				}
 
@@ -1350,12 +1352,17 @@ export function receiptOrder(order: RestaurantOrder) {
 	}
 }
 
-export function operatorOrder(order: RestaurantOrder) {
+export function operatorOrder(
+	order: RestaurantOrder,
+	customerKey: string | null = null,
+) {
 	return {
 		...receiptOrder(order),
 		id: order.id,
 		orgId: order.orgId,
 		customerId: order.customerId,
+		/** `c_<id>` / `g_<id>` person key the Orders screen links to, or null. */
+		customerKey,
 		paymentMethod: order.paymentMethod,
 		paymentProcessor: order.paymentProcessor,
 		paymentSessionId: order.paymentSessionId,

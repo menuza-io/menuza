@@ -8,6 +8,7 @@ import {
 	restaurantVertical,
 } from '@repo/phone-agent-restaurant'
 import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
+import { isReservationsFeatureEnabled } from '#app/utils/reservations/access.server.ts'
 import { type PhoneAgentServerVertical } from '../vertical.server.ts'
 
 const DEFAULT_CURRENCY = 'USD'
@@ -90,6 +91,11 @@ export const restaurantServerVertical: PhoneAgentServerVertical = {
 			payload.locations.find((candidate) => candidate.isDefault) ??
 			payload.locations[0]
 		if (!location) return { ok: false, reason: 'scope_not_found' }
+		// Table booking by phone exists for US organizations with the voice flag
+		// on; a KSA organization has no phone agent actions at all.
+		const reservationsAvailable =
+			organization.dataRegion === 'us' &&
+			(await isReservationsFeatureEnabled(organization.id, 'voice'))
 		return {
 			ok: true,
 			currency: location.currency ?? DEFAULT_CURRENCY,
@@ -97,6 +103,7 @@ export const restaurantServerVertical: PhoneAgentServerVertical = {
 				businessName: organization.name,
 				location,
 				menus: payload.menus,
+				reservationsAvailable,
 				now,
 			}),
 		}
@@ -123,13 +130,15 @@ export const restaurantServerVertical: PhoneAgentServerVertical = {
 	},
 
 	advancedPageData(config) {
-		if (!config) return { categories: [] }
-		const { menus } = restaurantDataOf(config)
+		if (!config) return { categories: [], reservationsAvailable: false }
+		const { menus, reservations } = restaurantDataOf(config)
 		return {
 			categories: listMenuCategories(menus).map(({ id, name }) => ({
 				id,
 				name,
 			})),
+			// The booking toggle shows only while phone booking is available.
+			reservationsAvailable: reservations?.available === true,
 		}
 	},
 }

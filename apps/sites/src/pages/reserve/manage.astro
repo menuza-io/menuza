@@ -1,0 +1,40 @@
+---
+import { msg } from '@lingui/core/macro'
+import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+// Manage links keep working while online booking is paused: the page reaches
+// tenant-api directly and holds no guest data or token on the server.
+const heading = i18n._(msg`Your reservation`)
+const loading = i18n._(msg`Loading…`)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'reserve-manage', title: heading, slug: 'reserve/manage', isHomePage: false, sections: [] }}
+	title={`${heading} - ${organization.name}`}
+	noIndex
+>
+	<ReservationLabels />
+	<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+		<header class="pt-6 pb-6 sm:pt-10 sm:pb-8">
+			<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+				{heading}
+			</h1>
+		</header>
+		<div id="manage-root" class="flex max-w-3xl flex-col gap-6">
+			<p class="text-sm text-muted-foreground">{loading}</p>
+		</div>
+	</div>
+	<script>
+		import '~/scripts/manage-page.ts'
+	</script>
+</SitePage>

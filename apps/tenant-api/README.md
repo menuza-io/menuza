@@ -42,7 +42,38 @@ Canonical guide:
 [docs/deployment.md](../../docs/deployment.md#regional-tenant-data-plane). ADR:
 [docs/decisions/045-tenant-data-residency.md](../../docs/decisions/045-tenant-data-residency.md).
 
+## Demo people and orders (local only)
+
+`npm run seed:demo-people -w tenant-api -- acme-demo` adds richer demo data to
+the `acme-demo` organization only: 12 customers with subscriptions, 33
+restaurant orders (5 guest checkouts), 40 past and 8 upcoming reservations (one
+with a paid deposit), waitlist entries, two experience schedules, and guest tags
+and notes. Run `seed:reservations` for `acme-demo` first. It is idempotent
+(fixed ids), links guests to customers only through `linkGuestsToCustomers`, and
+refuses production and any other organization.
+
+## Reservations routes
+
+| Mount                          | Auth                                       | Purpose                                                                                                      |
+| ------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `/reservations/*`              | `Origin` (organization), capability tokens | Public booking, manage, waitlist, notify-me, experiences. `X-Client: ios \| android` is native.              |
+| `/operator/people/*`           | operator JWT, `scope: people`              | Customers screen: customers and reservation guests as one list, profile, edit, merge, erase (browser-direct) |
+| `/operator/reservations/*`     | `rsv+jwt` minted by the App                | Setup, book, waitlist, guests, reports, payments (browser-direct)                                            |
+| `/internal/reservations/*`     | `INTERNAL_COMMAND_TOKEN`                   | `context-changed`, `erase-customer` (complete erase), `link-customers`, `summary`, `location-summary`        |
+| `/api/reservations/tick`       | `INTERNAL_COMMAND_TOKEN`                   | Regional tick                                                                                                |
+| `/api/reservations/payments/*` | `INTERNAL_COMMAND_TOKEN`                   | App to region payment bridge (ids and amounts only)                                                          |
+| `/api/voice/actions/:name`     | `VOICE_AGENT_TOKEN`                        | Phone agent actions (`reservations.availability`, `.hold`, `.book`), US only                                 |
+
+Kill switches: `RESERVATIONS_PUBLIC_ENABLED` (503 on public routes),
+`RESERVATIONS_SMS_ENABLED`, `RESERVATIONS_EMAIL_ENABLED`; interval
+`RESERVATIONS_TICK_INTERVAL_SECONDS`. Other settings: `AUTH_HMAC_SECRET`,
+`TENANT_OPERATOR_TOKEN`, `APP_URL`.
+
 Dev email capture: set `DEV_EMAIL_CAPTURE_DIR` (the dev scripts use
 `.dev-mail/us` and `.dev-mail/ksa`) and every email the node would only log is
 written there as JSON. It is ignored in production and whenever OCI email is
-configured.
+configured. Demo data:
+`npm run seed:reservations -w tenant-api -- <org-slug>`. Re-record the public
+API fixtures with `npm run fixtures:reservations -w tenant-api`. Docs:
+[reservations guide](../../docs/reservations.md),
+[contract](../../docs/reservations-contract.md).

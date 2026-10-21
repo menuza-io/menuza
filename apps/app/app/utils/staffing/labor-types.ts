@@ -81,6 +81,10 @@ export const settingsSchema = z.object({
 	scopeId: z.string(),
 	salesSource: salesSourceSchema,
 	ordersPerLaborHour: z.record(z.string(), z.number()),
+	/** Standards by demand unit (`orders`, `visits`), then position id. */
+	demandPerLaborHour: z
+		.record(z.string(), z.record(z.string(), z.number()))
+		.default({}),
 	configured: z.boolean(),
 	updatedAt: z.number().nullable(),
 })
@@ -190,6 +194,8 @@ export const forecastSchema = z.object({
 	estimate: z.literal(true),
 	method: z.string(),
 	source: z.string(),
+	/** The demand sources read, orders first (older servers send none). */
+	sources: z.array(z.object({ id: z.string(), unit: z.string() })).default([]),
 	weeks: z.number(),
 	windowStart: z.string(),
 	windowEnd: z.string(),
@@ -203,6 +209,9 @@ export const forecastSchema = z.object({
 					hour: z.number(),
 					orders: z.number(),
 					booked: z.number(),
+					/** Units already booked per demand source: counts only. */
+					bookedBySource: z.record(z.string(), z.number()).default({}),
+					unitsBySource: z.record(z.string(), z.number()).default({}),
 					needed: z.number(),
 					scheduled: z.number(),
 					short: z.number(),
@@ -219,6 +228,7 @@ export const forecastSchema = z.object({
 				z.object({
 					positionId: z.string(),
 					ordersPerLaborHour: z.number(),
+					standards: z.record(z.string(), z.number()).default({}),
 					neededHours: z.number(),
 					scheduledHours: z.number(),
 				}),

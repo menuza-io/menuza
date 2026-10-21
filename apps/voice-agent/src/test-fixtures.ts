@@ -9,6 +9,7 @@ import {
 	type PhoneAgentRuntimeConfig,
 	type PhoneAgentSettings,
 	type PhoneAgentVertical,
+	type VerticalActionResult,
 } from '@repo/phone-agent'
 import { vi } from 'vitest'
 import { CallState } from './call-state.ts'
@@ -226,6 +227,11 @@ export function setupController({
 			handoffId: 'h1',
 			expiresAt: '',
 		})),
+		runAction: vi.fn(async (): Promise<VerticalActionResult> => ({
+			ok: false,
+			reason: 'unavailable',
+			explanation: 'No actions in this test.',
+		})),
 	}
 	const hangUp = vi.fn(async () => undefined)
 	const leaveRoom = vi.fn(async () => undefined)
@@ -315,6 +321,11 @@ export function setupTools({
 		})),
 		createRequest: vi.fn(async () => ({ requestId: 'r1' })),
 		sendWebsiteLink: vi.fn(async () => handoff),
+		runAction: vi.fn(async (): Promise<VerticalActionResult> => ({
+			ok: false,
+			reason: 'unavailable',
+			explanation: 'No actions in this test.',
+		})),
 	}
 	const publishToRoom = vi.fn(async () => undefined)
 	const controller = new CallController({

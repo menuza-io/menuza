@@ -31,6 +31,25 @@ import {
 	type PolarShopOrder,
 } from '../connect'
 import {
+	chargeReservationFeeMit,
+	createReservationCheckoutRefund,
+	createReservationHostedPayment,
+	findReservationCheckoutPaymentsByReference,
+	listReservationCheckoutActions,
+	retrieveReservationCheckoutPayment,
+	RESERVATION_CHECKOUT_VERIFICATION_MINOR,
+} from '../connect/reservation-checkout'
+import {
+	cancelReservationPaymentIntent,
+	chargeReservationFeeOffSession,
+	createReservationPaymentSession,
+	createReservationSetupSession,
+	createReservationStripeCustomer,
+	createReservationStripeRefund,
+	retrieveReservationStripeRefund,
+	retrieveReservationStripeSession,
+} from '../connect/reservation-stripe'
+import {
 	calculateShopFees,
 	SHOP_PLATFORM_FEE_PERCENT,
 } from '../connect/shop-fees'
@@ -40,6 +59,7 @@ import {
 	getShopProcessorDefinition,
 	normalizeShopProcessor,
 } from './processors'
+import { reservationStripeExpiresAt } from './reservation'
 import {
 	type ShopCheckoutSession,
 	type ShopCheckoutUi,
@@ -654,6 +674,237 @@ export class ShopCommerce {
 	async retrieveHostedCheckout(checkoutId: string) {
 		return this.withHosted(() =>
 			retrievePolarShopCheckout(this.getPolar(), checkoutId),
+		)
+	}
+
+	/* ---------------------------------------------------------------- */
+	/* Reservation payments (opaque ids and minor-unit amounts only)     */
+	/* ---------------------------------------------------------------- */
+
+	/** Hosted Stripe session for a deposit, prepayment, ticket, fee or guarantee. */
+	async createReservationStripeSession(options: {
+		connectedAccountId: string
+		/** Guarantee: setup mode with a PII-free Customer; else payment mode. */
+		guarantee?: {
+			orgId: string
+			guestRef: string
+			consentText: string
+		} | null
+		productName: string
+		amountMinor: number
+		currency: string
+		quantity?: number | null
+		unitAmountMinor?: number | null
+		platformFeeMinor: number
+		successUrl: string
+		cancelUrl: string
+		paymentExpiresAt: string
+		nowMs?: number
+		/**
+		 * Exact Stripe `expires_at` (unix seconds). Callers compute it once with
+		 * `reservationStripeExpiresAt`, put it in the idempotency key and pass it
+		 * here, so the key and the sent parameters can never disagree.
+		 */
+		expiresAt?: number
+		statementDescriptorSuffix?: string | null
+		idempotencyKey: string
+		metadata: Record<string, string>
+	}): Promise<{ id: string; url: string; customerId: string | null }> {
+		const expiresAt =
+			options.expiresAt ??
+			reservationStripeExpiresAt(
+				options.nowMs ?? Date.now(),
+				options.paymentExpiresAt,
+			)
+		const stripe = this.getStripe()
+		if (options.guarantee) {
+			const guarantee = options.guarantee
+			const customerId = await this.withConnect(() =>
+				createReservationStripeCustomer(stripe, guarantee),
+			)
+			const session = await this.withConnect(() =>
+				createReservationSetupSession(stripe, {
+					customerId,
+					currency: options.currency,
+					successUrl: options.successUrl,
+					cancelUrl: options.cancelUrl,
+					expiresAt,
+					consentText: guarantee.consentText,
+					idempotencyKey: options.idempotencyKey,
+					metadata: options.metadata,
+				}),
+			)
+			if (!session.url) throw new Error('Unable to create checkout session.')
+			return { id: session.id, url: session.url, customerId }
+		}
+		const session = await this.withConnect(() =>
+			createReservationPaymentSession(stripe, {
+				connectedAccountId: options.connectedAccountId,
+				productName: options.productName,
+				amountMinor: options.amountMinor,
+				currency: options.currency,
+				quantity: options.quantity,
+				unitAmountMinor: options.unitAmountMinor,
+				platformFeeMinor: options.platformFeeMinor,
+				successUrl: options.successUrl,
+				cancelUrl: options.cancelUrl,
+				expiresAt,
+				statementDescriptorSuffix: options.statementDescriptorSuffix,
+				idempotencyKey: options.idempotencyKey,
+				metadata: options.metadata,
+			}),
+		)
+		if (!session.url) throw new Error('Unable to create checkout session.')
+		return { id: session.id, url: session.url, customerId: null }
+	}
+
+	/** Trusted session lookup; setup mode expands the SetupIntent and its card. */
+	async retrieveReservationStripeSession(
+		sessionId: string,
+		options: { setup?: boolean } = {},
+	) {
+		return this.withConnect(() =>
+			retrieveReservationStripeSession(this.getStripe(), sessionId, options),
+		)
+	}
+
+	/** Off-session fee charge; a dangling PaymentIntent is canceled for the caller. */
+	async chargeReservationFeeStripe(options: {
+		connectedAccountId: string
+		customerId: string
+		paymentMethodId: string
+		amountMinor: number
+		currency: string
+		platformFeeMinor: number
+		statementDescriptorSuffix?: string | null
+		idempotencyKey: string
+		metadata: Record<string, string>
+	}) {
+		const stripe = this.getStripe()
+		const outcome = await this.withConnect(() =>
+			chargeReservationFeeOffSession(stripe, options),
+		)
+		let danglingCanceled = false
+		if (
+			outcome.status === 'requires_action' &&
+			outcome.danglingPaymentIntentId
+		) {
+			try {
+				await this.withConnect(() =>
+					cancelReservationPaymentIntent(
+						stripe,
+						outcome.danglingPaymentIntentId!,
+					),
+				)
+				danglingCanceled = true
+			} catch {
+				// Best effort: an uncanceled intent is inert without a client secret.
+			}
+		}
+		return { ...outcome, danglingCanceled }
+	}
+
+	async createReservationStripeRefund(options: {
+		paymentIntentId: string
+		amountMinor: number
+		idempotencyKey: string
+		metadata: Record<string, string>
+	}) {
+		return this.withConnect(() =>
+			createReservationStripeRefund(this.getStripe(), options),
+		)
+	}
+
+	async retrieveReservationStripeRefund(refundId: string) {
+		return this.withConnect(() =>
+			retrieveReservationStripeRefund(this.getStripe(), refundId),
+		)
+	}
+
+	/** Platform-account PaymentIntent lookup (dispute events carry no metadata). */
+	async retrieveReservationPaymentIntent(paymentIntentId: string) {
+		return this.withConnect(() =>
+			this.getStripe().paymentIntents.retrieve(paymentIntentId),
+		)
+	}
+
+	/** Hosted Checkout.com page for a reservation (guarantee stores the card). */
+	async createReservationCheckoutHostedPayment(options: {
+		subEntityId: string
+		productName: string
+		/** Ignored for a guarantee: the verification amount is charged instead. */
+		amountMinor: number
+		currency: string
+		reference: string
+		guarantee: boolean
+		platformFeeMinor: number
+		successUrl: string
+		failureUrl: string
+		cancelUrl: string
+		billingCountry: string
+		metadata: Record<string, string>
+	}) {
+		return this.withCheckoutCommerce(() =>
+			createReservationHostedPayment(this.getCheckoutShop(), {
+				...options,
+				amountMinor: options.guarantee
+					? RESERVATION_CHECKOUT_VERIFICATION_MINOR
+					: options.amountMinor,
+				processingChannelId: this.config.checkoutProcessingChannelId!,
+			}),
+		)
+	}
+
+	async findReservationCheckoutPayments(reference: string) {
+		return this.withCheckoutCommerce(() =>
+			findReservationCheckoutPaymentsByReference(
+				this.getCheckoutShop(),
+				reference,
+			),
+		)
+	}
+
+	async retrieveReservationCheckoutPayment(paymentId: string) {
+		return this.withCheckoutCommerce(() =>
+			retrieveReservationCheckoutPayment(this.getCheckoutShop(), paymentId),
+		)
+	}
+
+	async listReservationCheckoutPaymentActions(paymentId: string) {
+		return this.withCheckoutCommerce(() =>
+			listReservationCheckoutActions(this.getCheckoutShop(), paymentId),
+		)
+	}
+
+	async chargeReservationFeeCheckout(options: {
+		subEntityId: string
+		sourceId: string
+		previousPaymentId: string
+		amountMinor: number
+		currency: string
+		reference: string
+		platformFeeMinor: number
+		idempotencyKey: string
+		metadata: Record<string, string>
+	}) {
+		return this.withCheckoutCommerce(() =>
+			chargeReservationFeeMit(this.getCheckoutShop(), {
+				...options,
+				processingChannelId: this.config.checkoutProcessingChannelId!,
+			}),
+		)
+	}
+
+	async createReservationCheckoutRefund(options: {
+		paymentId: string
+		subEntityId: string
+		amountMinor: number
+		feeReversalMinor: number
+		reference: string
+		idempotencyKey: string
+	}) {
+		return this.withCheckoutCommerce(() =>
+			createReservationCheckoutRefund(this.getCheckoutShop(), options),
 		)
 	}
 

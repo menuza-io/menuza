@@ -1,0 +1,43 @@
+{
+	"now": "2030-06-14T16:00:00.000Z",
+	"reservation": {
+		"id": "rsv_fixture_0001",
+		"confirmationCode": "FIXT0001",
+		"status": "booked",
+		"channel": "native",
+		"locationId": "loc_pub_main",
+		"locationName": "Acme Downtown",
+		"date": "2030-06-24",
+		"localMin": 1140,
+		"time": "19:00",
+		"startAt": "2030-06-24T19:00:00.000Z",
+		"endAt": "2030-06-24T20:30:00.000Z",
+		"partySize": 2,
+		"timeZone": "UTC",
+		"experience": null,
+		"firstName": "Fixture1",
+		"occasion": null,
+		"requests": null,
+		"dietary": null,
+		"runningLateMin": null,
+		"smsOptIn": false,
+		"location": {
+			"id": "loc_pub_main",
+			"name": "Acme Downtown",
+			"address": "100 Main St, New York",
+			"phone": "+12125550100",
+			"timeZone": "UTC"
+		}
+	},
+	"status": "booked",
+	"firstName": "Fixture1",
+	"contact": {
+		"phone": "•••• 3001",
+		"email": "f***@e***.com"
+	},
+	"policy": null,
+	"paymentStatus": "none",
+	"canModify": true,
+	"canCancel": true,
+	"cancelDeadline": "2030-06-24T17:00:00.000Z"
+}

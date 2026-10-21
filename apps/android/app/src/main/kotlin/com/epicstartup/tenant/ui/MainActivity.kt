@@ -22,6 +22,14 @@ import com.epicstartup.tenant.core.theme.SiteTheme
 import com.epicstartup.tenant.ui.components.AnnouncementBannerView
 import com.epicstartup.tenant.ui.components.BrandHeaderView
 import com.epicstartup.tenant.ui.components.dp
+import com.epicstartup.tenant.ui.reservations.ResConfirmedScreen
+import com.epicstartup.tenant.ui.reservations.ResDetailScreen
+import com.epicstartup.tenant.ui.reservations.ResDetailsScreen
+import com.epicstartup.tenant.ui.reservations.ResHomeScreen
+import com.epicstartup.tenant.ui.reservations.ResLocationScreen
+import com.epicstartup.tenant.ui.reservations.ResReviewScreen
+import com.epicstartup.tenant.ui.reservations.ResSearchScreen
+import com.epicstartup.tenant.ui.reservations.ResWaitlistScreen
 import com.epicstartup.tenant.ui.screens.ConnectScreen
 import com.epicstartup.tenant.ui.screens.FailedScreen
 import com.epicstartup.tenant.ui.screens.LoadingScreen
@@ -112,6 +120,12 @@ class MainActivity : Activity(), ScreenHost {
 		render()
 	}
 
+	override fun onResume() {
+		super.onResume()
+		// Back from the system browser after paying: poll the status once.
+		appState.reservations?.onResume()
+	}
+
 	override fun onStop() {
 		appState.removeListener(stateListener)
 		super.onStop()
@@ -189,6 +203,8 @@ class MainActivity : Activity(), ScreenHost {
 		is AppState.Phase.Failed -> "failed:${phase.message}"
 		is AppState.Phase.Ready -> when {
 			appState.isSignedIn && appState.needsName -> "name"
+			appState.isSignedIn && appState.reservations != null && appState.resStack.isNotEmpty() ->
+				appState.resStack.last()
 			appState.isSignedIn -> "profile"
 			appState.pendingPhone != null -> "verify"
 			else -> "login"
@@ -201,6 +217,14 @@ class MainActivity : Activity(), ScreenHost {
 		key.startsWith("failed:") -> FailedScreen(this, key.removePrefix("failed:"))
 		key == "name" -> NameScreen(this)
 		key == "profile" -> ProfileScreen(this)
+		key == "res:home" -> ResHomeScreen(this)
+		key == "res:location" -> ResLocationScreen(this)
+		key == "res:search" -> ResSearchScreen(this)
+		key == "res:details" -> ResDetailsScreen(this)
+		key == "res:review" -> ResReviewScreen(this)
+		key == "res:confirmed" -> ResConfirmedScreen(this)
+		key == "res:waitlist" -> ResWaitlistScreen(this)
+		key.startsWith("res:detail:") -> ResDetailScreen(this, key.removePrefix("res:detail:"))
 		key == "verify" -> VerifyScreen(this)
 		else -> LoginScreen(this)
 	}
@@ -282,6 +306,8 @@ class MainActivity : Activity(), ScreenHost {
 	}
 
 	private fun handleBack(): Boolean {
+		// Reservations screens sit above the profile: back walks down their stack.
+		if (appState.isSignedIn && appState.reservations?.onBack() == true) return true
 		// On the OTP screen, back abandons the attempt instead of leaving the app.
 		if (!appState.isSignedIn && appState.pendingPhone != null) {
 			appState.cancelVerification()

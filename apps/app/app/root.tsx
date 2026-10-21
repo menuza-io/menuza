@@ -82,6 +82,10 @@ import '@fontsource-variable/geist-mono/wght.css'
 import './styles/tailwind.css'
 import { getLaunchStatus } from './utils/env.server.ts'
 import { posthogMiddleware } from './utils/posthog.server.ts'
+import {
+	HIDDEN_RESERVATIONS_NAV,
+	type ReservationsNavAccess,
+} from './utils/reservations/nav.ts'
 import { seoConfig } from './utils/seo.ts'
 import {
 	HIDDEN_STAFFING_NAV,
@@ -434,6 +438,28 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let reservationsNav: ReservationsNavAccess = HIDDEN_RESERVATIONS_NAV
+	if (currentOrgId && userId) {
+		const reservationsAccess =
+			await import('./utils/reservations/access.server.ts')
+		reservationsNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `reservations-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							reservationsAccess.getReservationsNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_RESERVATIONS_NAV
+				}
+			},
+			{ timings, type: 'reservations nav', desc: 'reservations nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -487,6 +513,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			configuredProviders,
 			homePageId,
 			staffingNav,
+			reservationsNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

@@ -44,7 +44,8 @@ struct RootView: View {
 				if state.needsName {
 					CompleteNameView()
 				} else {
-					ProfileView()
+					// The reservations NavigationStack; the profile is one tap away.
+					SignedInShell()
 				}
 			} else if state.pendingPhone != nil {
 				VerifyView()

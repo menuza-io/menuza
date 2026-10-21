@@ -18,6 +18,11 @@ export interface WorkflowConfig {
 	audience: WorkflowAudience
 	triggerLabels: Record<string, { label: string; desc: string }>
 	triggerOptions: TriggerOption[]
+	/**
+	 * Trigger values the picker does not offer (the one an existing step
+	 * already uses stays listed so the select never shows a blank).
+	 */
+	hiddenTriggerTypes?: readonly string[]
 	paletteItems: PaletteItem[]
 	defaultGraph: () => WorkflowGraph
 	mergeTagHint: string
@@ -41,6 +46,22 @@ const TENANT_TRIGGER_LABELS: Record<string, { label: string; desc: string }> = {
 		label: 'Manual Trigger',
 		desc: 'Triggered via operator test or API',
 	},
+	reservation_booked: {
+		label: 'Reservation Booked',
+		desc: 'Runs when a guest who agreed to hear from you books a table',
+	},
+	reservation_completed: {
+		label: 'Reservation Completed',
+		desc: 'Runs after a guest who agreed to hear from you finishes a visit',
+	},
+	reservation_no_show: {
+		label: 'Reservation No-Show',
+		desc: 'Runs when a guest who agreed to hear from you does not arrive',
+	},
+	reservation_cancelled: {
+		label: 'Reservation Cancelled',
+		desc: 'Runs when a guest who agreed to hear from you cancels',
+	},
 }
 
 const TENANT_TRIGGER_OPTIONS: TriggerOption[] = [
@@ -48,7 +69,13 @@ const TENANT_TRIGGER_OPTIONS: TriggerOption[] = [
 	{ value: 'profile_completed', label: 'Profile Completed (Name/Email)' },
 	{ value: 'custom_event', label: 'Custom Event' },
 	{ value: 'manual', label: 'Manual Trigger' },
+	{ value: 'reservation_booked', label: 'Reservation Booked' },
+	{ value: 'reservation_completed', label: 'Reservation Completed' },
+	{ value: 'reservation_no_show', label: 'Reservation No-Show' },
+	{ value: 'reservation_cancelled', label: 'Reservation Cancelled' },
 ]
+
+export { TENANT_TRIGGER_LABELS, TENANT_TRIGGER_OPTIONS }
 
 const PLATFORM_TRIGGER_LABELS: Record<string, { label: string; desc: string }> =
 	{

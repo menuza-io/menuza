@@ -154,11 +154,19 @@ export default function CustomDashboard({ loaderData }: Route.ComponentProps) {
 				data={blockData}
 				reports={reports}
 				savedReportOptions={picker.savedReports}
+				bookingsToday={picker.bookingsToday}
 				organization={organization}
 				editable={editable}
 			/>
 		),
-		[blockData, editable, organization, picker.savedReports, reports],
+		[
+			blockData,
+			editable,
+			organization,
+			picker.bookingsToday,
+			picker.savedReports,
+			reports,
+		],
 	)
 	const blockTitle = useCallback(
 		(block: DashboardBlock) =>

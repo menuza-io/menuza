@@ -21,6 +21,7 @@ import {
 	type ScheduleWeekView,
 	startOfLocalDay,
 	type WeekQuery,
+	ORDERS_SOURCE_ID,
 	weekDates,
 } from '@repo/staffing'
 import {
@@ -38,6 +39,7 @@ import {
 	loadLaborSettings,
 	loadManualSales,
 	loadOrderBuckets,
+	loadSourceBuckets,
 	manualSalesFacts,
 } from './labor-data.ts'
 import {
@@ -140,16 +142,22 @@ export async function loadDemandGuide(
 	frame: ScopeFrame,
 	weekStart: string,
 	includeSales: boolean,
+	/** Which demand source the guide counts; the default is orders. */
+	sourceId: string = ORDERS_SOURCE_ID,
 ): Promise<DemandGuide> {
 	const today = localDateOf(ctx.now, frame.timeZone)
 	const anchor = weekStart > today ? today : weekStart
 	const { fromSeconds, toSeconds } = demandWindowSeconds(anchor, frame.timeZone)
-	const rows = await loadOrderBuckets(
-		ctx.db,
-		frame.scopeId,
-		fromSeconds,
-		toSeconds,
-	)
+	const rows =
+		sourceId === ORDERS_SOURCE_ID
+			? await loadOrderBuckets(ctx.db, frame.scopeId, fromSeconds, toSeconds)
+			: await loadSourceBuckets(
+					ctx.db,
+					sourceId,
+					frame.scopeId,
+					fromSeconds,
+					toSeconds,
+				)
 	const byKey = new Map<string, DemandBucket>()
 	for (const row of rows) {
 		const key = `${row.bucket}|${row.currency}`
@@ -614,7 +622,7 @@ async function loadOverlays(
 				sql`${timeOffRequests.startDate} <= ${weekEnd}`,
 				sql`${timeOffRequests.endDate} >= ${weekStart}`,
 			),
-		)
+	)
 	const availability = await loadApprovedAvailability(db, staffIds)
 	const overlays = new Map<string, ScheduleOverlay>()
 	const overlayFor = (staffId: string) => {

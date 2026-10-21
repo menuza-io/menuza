@@ -131,17 +131,34 @@ const standardsSchema = z
 		'Too many positions',
 	)
 
+/**
+ * What a forecast counts, one unit per demand source: `orders` (online
+ * orders) and `visits` (people booked or seated). Each unit has its own
+ * standard, because one visit is not one order.
+ */
+export const DEMAND_UNITS = ['orders', 'visits'] as const
+export type DemandUnit = (typeof DEMAND_UNITS)[number]
+export const demandUnitSchema = z.enum(DEMAND_UNITS)
+
 export const laborSettingsUpdateSchema = z
 	.object({
 		scopeId: idSchema,
 		salesSource: salesSourceSchema.optional(),
-		/** The full set of standards: positions left out have no standard. */
+		/** The full set of order standards: positions left out have no standard. */
 		ordersPerLaborHour: standardsSchema.optional(),
+		/**
+		 * Standards per demand unit. A unit that is present replaces that unit's
+		 * whole set (positions left out have no standard); a unit left out keeps
+		 * what it has. `orders` here wins over `ordersPerLaborHour`.
+		 */
+		demandPerLaborHour: z.record(demandUnitSchema, standardsSchema).optional(),
 	})
 	.strict()
 	.refine(
 		(body) =>
-			body.salesSource !== undefined || body.ordersPerLaborHour !== undefined,
+			body.salesSource !== undefined ||
+			body.ordersPerLaborHour !== undefined ||
+			body.demandPerLaborHour !== undefined,
 		'Nothing to change',
 	)
 export type LaborSettingsUpdate = z.infer<typeof laborSettingsUpdateSchema>
@@ -156,8 +173,10 @@ export type LaborPositionView = {
 export type LaborSettingsView = {
 	scopeId: string
 	salesSource: SalesSource
-	/** Positions with a standard; absent positions are not forecast. */
+	/** Positions with an orders standard; absent positions are not forecast on orders. */
 	ordersPerLaborHour: Record<string, number>
+	/** Standards by demand unit, then position id (`orders` mirrors `ordersPerLaborHour`). */
+	demandPerLaborHour: Record<string, Record<string, number>>
 	/** False until someone saved a setting for the scope (defaults shown). */
 	configured: boolean
 	updatedAt: number | null
@@ -465,6 +484,10 @@ export type ForecastSlot = {
 	orders: number
 	/** Paid and active orders already placed for this hour. */
 	booked: number
+	/** Expected units this hour per demand source (the median, never below what is booked). */
+	unitsBySource: Record<string, number>
+	/** Units already booked for this hour per demand source: counts only, never who. */
+	bookedBySource: Record<string, number>
 	/** People the standards say this hour needs, summed over positions. */
 	needed: number
 	/** People scheduled this hour in the positions that have a standard. */
@@ -476,7 +499,10 @@ export type ForecastSlot = {
 
 export type ForecastPositionTotal = {
 	positionId: string
+	/** The orders standard (0 when the position has none for orders). */
 	ordersPerLaborHour: number
+	/** The standard per demand source for this position. */
+	standards: Record<string, number>
 	neededHours: number
 	scheduledHours: number
 }
@@ -493,11 +519,16 @@ export type ForecastDay = {
 	byPosition: ForecastPositionTotal[]
 }
 
+/** A demand source the forecast read, with the unit it counts. */
+export type ForecastSource = { id: string; unit: DemandUnit }
+
 export type ForecastGapView = {
 	kind: 'forecast_gap'
 	estimate: true
 	method: 'median_orders_per_labor_hour'
 	source: 'online_orders'
+	/** Every demand source registered for the scope, orders first. */
+	sources: ForecastSource[]
 	weeks: number
 	windowStart: string
 	windowEnd: string

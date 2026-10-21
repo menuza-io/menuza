@@ -15,6 +15,7 @@ import { Switch } from '@repo/ui/switch'
 import React, { useEffect, useId, useRef } from 'react'
 import { useFetcher } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
+import { RESERVATION_ALERT_WORKFLOWS } from '#app/utils/reservations/manager-alerts.ts'
 
 const channelIcons: Record<string, IconName> = {
 	email: 'mail',
@@ -40,6 +41,13 @@ function getWorkflowLabel(
 		'staffing-overtime-workflow': msg`Time clock: someone is close to overtime or has reached it`,
 		'staffing-schedule-workflow': msg`Schedule: a week was published`,
 		'staffing-hiring-workflow': msg`Hiring: someone applied for a job`,
+		'reservations.large_party_request': msg`Reservations: a large-party request is waiting`,
+		'reservations.waitlist_remote_join': msg`Reservations: a guest joined the waitlist remotely`,
+		'reservations.unassigned_conflict': msg`Reservations: a booking no longer has a table`,
+		'reservations.payment_failed': msg`Reservations: a payment failed`,
+		'reservations.payment_review': msg`Reservations: a payment needs a review`,
+		'reservations.dispute_opened': msg`Reservations: a payment dispute was opened`,
+		'reservations.message_failed_bulk': msg`Reservations: guest messages could not be delivered`,
 	}
 	return _(labels[workflowName]) || workflowName
 }
@@ -98,6 +106,14 @@ const hiringWorkflows = [
 		critical: false,
 	},
 ]
+
+// Reservations alerts are offered where the module is on and the member can read
+// reservations or edit their settings, the members the alerts are sent to.
+const reservationsWorkflows = RESERVATION_ALERT_WORKFLOWS.map((id) => ({
+	id,
+	name: id,
+	critical: false,
+}))
 
 interface ChannelSwitchListProps {
 	preference: Preference
@@ -228,11 +244,13 @@ export function NotificationPreferencesCard({
 	showStaffingAlerts = false,
 	showScheduleAlerts = false,
 	showHiringAlerts = false,
+	showReservationsAlerts = false,
 }: {
 	organizationId: string
 	showStaffingAlerts?: boolean
 	showScheduleAlerts?: boolean
 	showHiringAlerts?: boolean
+	showReservationsAlerts?: boolean
 }) {
 	const fetcher = useFetcher<{ preferences: Preference[] }>()
 
@@ -250,6 +268,7 @@ export function NotificationPreferencesCard({
 		...(showStaffingAlerts ? staffingWorkflows : []),
 		...(showScheduleAlerts ? scheduleWorkflows : []),
 		...(showHiringAlerts ? hiringWorkflows : []),
+		...(showReservationsAlerts ? reservationsWorkflows : []),
 	]
 
 	const getPreference = (workflowId: string): Preference => {

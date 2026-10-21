@@ -7,6 +7,7 @@ import {
 	createDefaultJourneyGraph,
 	type WorkflowGraph,
 } from '@repo/marketing-workflow'
+import { isReservationJourneyTrigger } from '@repo/tenant-db/types/journey'
 import {
 	useLoaderData,
 	useNavigate,
@@ -22,6 +23,10 @@ import {
 } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIToggle } from '#app/components/ai/global-ai-panel.tsx'
 import { resolveEmailBrandingForOrg } from '#app/utils/email-branding.server.ts'
+import {
+	reservationTriggerBlocked,
+	reservationTriggersEnabled,
+} from '#app/utils/marketing/reservation-triggers.server.ts'
 import { useMinWidthMediaQuery } from '#app/utils/navigation-guards.ts'
 import {
 	ORG_PERMISSIONS,
@@ -79,7 +84,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		ORG_PERMISSIONS.UPDATE_AUTOMATION_ANY,
 	)
 
-	return { orgSlug }
+	return {
+		orgSlug,
+		reservationTriggers: await reservationTriggersEnabled(orgId),
+	}
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -128,6 +136,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		(triggerNode?.data as any)?.triggerType || 'phone_verified'
 	const triggerConfig =
 		((triggerNode?.data as any)?.config as Record<string, unknown>) || {}
+	if (
+		isReservationJourneyTrigger(triggerType) &&
+		reservationTriggerBlocked({
+			triggerType,
+			enabled: await reservationTriggersEnabled(orgId),
+		})
+	) {
+		return { error: i18n._(t`Turn on Reservations to use this trigger`) }
+	}
 	const branding = await resolveEmailBrandingForOrg(orgId)
 	const nodes = await withRenderedEmails(parsedGraph.nodes, branding)
 	const resolvedGraph = { ...parsedGraph, nodes }
@@ -169,7 +186,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function NewJourneyRoute() {
 	const { _ } = useLingui()
-	const { orgSlug } = useLoaderData<typeof loader>()
+	const { orgSlug, reservationTriggers } = useLoaderData<typeof loader>()
 	const navigate = useNavigate()
 	const fetcher = useFetcher()
 
@@ -210,6 +227,7 @@ export default function NewJourneyRoute() {
 				initialGraph={initialGraph}
 				journeyName={_(msg`New Customer Journey`)}
 				journeyStatus="draft"
+				reservationTriggers={reservationTriggers}
 				headerExtras={<GlobalAIToggle />}
 				onSave={handleSave}
 				onPublish={handlePublish}

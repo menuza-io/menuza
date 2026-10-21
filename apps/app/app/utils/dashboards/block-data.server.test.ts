@@ -8,7 +8,14 @@ import {
 	OrganizationNote,
 	SavedReport,
 } from '@repo/database'
-import { organizationTemplates, type ReportDefinition } from '@repo/reports'
+import {
+	organizationTemplates,
+	RESERVATIONS_REPORT_SUBJECTS,
+	STAFF_PAY_REPORT_PERMISSION,
+	STAFFING_REPORT_SUBJECTS,
+	type ReportDefinition,
+} from '@repo/reports'
+import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
 import { describe, expect, it } from 'vitest'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
@@ -541,18 +548,22 @@ describe('loadBlockPicker', () => {
 		])
 	})
 
-	it('offers the organization templates by category', async () => {
+	it('offers every template to a person whose grants cover them', async () => {
 		const { viewer, organization } = await setupReportOrg()
+		const grants = [
+			...ORG_WIDE_REPORT_SUBJECTS,
+			STAFF_PAY_REPORT_PERMISSION,
+			...STAFFING_REPORT_SUBJECTS,
+			...RESERVATIONS_REPORT_SUBJECTS,
+		]
 		const picker = await loadBlockPicker({
 			userId: viewer.id,
 			organizationId: organization.id,
 			blockData: noBlockData,
-			grants: ['customers', 'shop_orders'],
+			grants,
 		})
 		expect(picker.savedReports).toEqual([])
-		expect(picker.templateGroups).toEqual(
-			reportTemplateGroups(['customers', 'shop_orders']),
-		)
+		expect(picker.templateGroups).toEqual(reportTemplateGroups())
 	})
 
 	it('leaves out templates and saved reports the grants do not cover', async () => {
@@ -586,5 +597,79 @@ describe('loadBlockPicker', () => {
 			group.templates.map((template) => template.id),
 		)
 		expect(everything).toContain('shop-order-count')
+	})
+
+	it('hides staff and reservation templates and saved reports from someone without the grants', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		const staffTemplate = organizationTemplates().find(
+			(template) => template.definition.subject === 'time_entries',
+		)
+		const bookingsTemplate = organizationTemplates().find(
+			(template) => template.definition.subject === 'bookings',
+		)
+		expect(staffTemplate).toBeDefined()
+		const saved = await insertSavedReport({
+			organizationId: organization.id,
+			createdById: viewer.id,
+			title: 'Staff hours',
+			definition: templateDefinition(staffTemplate!.id, 'Staff hours'),
+		})
+		const ids = (groups: ReturnType<typeof reportTemplateGroups>) =>
+			groups.flatMap((group) => group.templates.map((item) => item.id))
+
+		const without = await loadBlockPicker({
+			userId: viewer.id,
+			organizationId: organization.id,
+			blockData: noBlockData,
+			grants: [],
+		})
+		expect(ids(without.templateGroups)).not.toContain(staffTemplate!.id)
+		if (bookingsTemplate) {
+			expect(ids(without.templateGroups)).not.toContain(bookingsTemplate.id)
+		}
+		expect(ids(without.templateGroups)).toContain('sales-total')
+		expect(without.savedReports.map((report) => report.id)).not.toContain(
+			saved.id,
+		)
+
+		const withStaff = await loadBlockPicker({
+			userId: viewer.id,
+			organizationId: organization.id,
+			blockData: noBlockData,
+			grants: ['time_entries'],
+		})
+		expect(ids(withStaff.templateGroups)).toContain(staffTemplate!.id)
+		expect(withStaff.savedReports.map((report) => report.id)).toContain(
+			saved.id,
+		)
+	})
+
+	it('offers the reservation KPI templates as report blocks only to people who can run them', async () => {
+		const { viewer, organization } = await setupReportOrg()
+		const kpis = [
+			'rsv-covers-today',
+			'rsv-no-show-rate-30d',
+			'rsv-late-cancels-30d',
+			'rsv-waitlist-avg-wait-7d',
+		]
+		const idsFor = async (grants: string[]) => {
+			const picker = await loadBlockPicker({
+				userId: viewer.id,
+				organizationId: organization.id,
+				blockData: noBlockData,
+				grants,
+			})
+			return picker.templateGroups.flatMap((group) =>
+				group.templates.map((item) => item.id),
+			)
+		}
+		for (const id of kpis) expect(await idsFor([])).not.toContain(id)
+		// Bookings alone covers the three booking KPIs, not the waitlist one.
+		const bookingsOnly = await idsFor(['bookings'])
+		expect(bookingsOnly).toEqual(expect.arrayContaining(kpis.slice(0, 3)))
+		expect(bookingsOnly).not.toContain('rsv-waitlist-avg-wait-7d')
+		expect(await idsFor([...RESERVATIONS_REPORT_SUBJECTS])).toEqual(
+			expect.arrayContaining(kpis),
+		)
 	})
 })

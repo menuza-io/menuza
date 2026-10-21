@@ -9,21 +9,19 @@ import {
 	customers,
 	getTenantDb,
 } from '@repo/tenant-db'
-import {
-	confirmTokenExpiry,
-	consentBaseUrl,
-	signConsentToken,
-	verifyConsentToken,
-} from '../lib/email-consent.ts'
+import { verifyConsentToken } from '../lib/email-consent.ts'
 import { findActiveOrganizationById } from '../lib/origin.ts'
 import { rateLimit } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
-import { sendTenantEmail } from '../lib/tenant-email.ts'
 import {
 	confirmCustomerSubscription,
 	emailConsentHash,
 	setCustomerSubscription,
 } from '../services/marketing-audience.ts'
+import {
+	RESEND_INTERVAL_MS,
+	sendConfirmationEmail,
+} from '../services/subscription-confirmation.ts'
 import { authenticateCustomer } from './auth.ts'
 
 /**
@@ -35,6 +33,8 @@ import { authenticateCustomer } from './auth.ts'
  * Every broadcast email carries a signed unsubscribe link (`/unsubscribe`).
  */
 export const subscriptionRoutes = new Hono()
+
+export { RESEND_INTERVAL_MS }
 
 const updateSchema = z.object({
 	subscribed: z.boolean(),
@@ -58,9 +58,6 @@ const paramsSchema = z.object({
 	topic: z.enum(CUSTOMER_SUBSCRIPTION_TOPICS),
 	channel: z.enum(CUSTOMER_SUBSCRIPTION_CHANNELS),
 })
-
-/** Least time between two confirmation emails for one subscription. */
-export const RESEND_INTERVAL_MS = 3 * 60 * 1000
 
 type Auth = Awaited<ReturnType<typeof authenticateCustomer>>
 
@@ -203,13 +200,16 @@ subscriptionRoutes.put(
 					confirmedEmail: null,
 				})
 			}
-			const confirmationSent = await sendConfirmationEmail(c.req.url, {
-				orgId: auth.orgId,
-				customerId,
-				topic,
-				email,
-				name: customer.name,
-			})
+			const confirmationSent = await sendConfirmationEmail(
+				new URL(c.req.url).origin,
+				{
+					orgId: auth.orgId,
+					customerId,
+					topic,
+					email,
+					name: customer.name,
+				},
+			)
 			// Only a link that went out starts the wait; a failed send leaves the
 			// clock alone so the next request can retry at once.
 			if (confirmationSent) {
@@ -273,63 +273,6 @@ subscriptionRoutes.get('/drops', async (c) => {
 	}
 	return c.json({ drops: { sms: await dropsSmsSubscribed(auth) } })
 })
-
-async function sendConfirmationEmail(
-	requestUrl: string,
-	params: {
-		orgId: string
-		customerId: string
-		topic: string
-		email: string
-		name: string
-	},
-): Promise<boolean> {
-	const token = signConsentToken({
-		k: 'confirm',
-		o: params.orgId,
-		c: params.customerId,
-		t: params.topic,
-		e: emailConsentHash(params.email),
-		x: confirmTokenExpiry(),
-	})
-	const baseUrl = consentBaseUrl(new URL(requestUrl).origin)
-	if (!baseUrl) {
-		// Never fall back to the request origin here: the link carries a signed
-		// token. Ids only, no address and no token.
-		console.error('Email confirmation skipped: TENANT_API_URL is not set', {
-			orgId: params.orgId,
-			customerId: params.customerId,
-		})
-		return false
-	}
-	const link = `${baseUrl}/subscriptions/confirm?token=${encodeURIComponent(token)}`
-	try {
-		const result = await sendTenantEmail({
-			to: params.email,
-			toName: params.name,
-			subject: 'Confirm your email subscription',
-			text: `Someone asked to send marketing email to this address. To confirm, open: ${link}\n\nIf this was not you, ignore this message and you will not receive anything.`,
-			html: `<p>Someone asked to send marketing email to this address.</p><p><a href="${link}">Confirm my subscription</a></p><p>If this was not you, ignore this message and you will not receive anything.</p>`,
-			capture: { orgId: params.orgId, messageKind: 'email-confirmation' },
-		})
-		if (result.status === 'success') return true
-		// Ids and a status only: never the address or the provider's message.
-		console.error('Email confirmation was not sent', {
-			orgId: params.orgId,
-			customerId: params.customerId,
-			status: result.status,
-			statusCode:
-				result.status === 'error' ? result.error.statusCode : undefined,
-		})
-	} catch (error) {
-		console.error('Email confirmation failed', {
-			orgId: params.orgId,
-			customerId: params.customerId,
-			error: error instanceof Error ? error.name : 'unknown',
-		})
-	}
-	return false
-}
 
 // Public, tokenised endpoints (no login): the link in an email. GET shows a
 // button and changes nothing, so a mail scanner that opens links cannot

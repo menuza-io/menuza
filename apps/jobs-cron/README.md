@@ -7,15 +7,15 @@ See the full guide: [docs/scheduled-jobs.md](../../docs/scheduled-jobs.md).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                                   |
-| ----------- | ------------------------------------------------------- |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival`                    |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`                     |
-| `0 3 * * *` | `/resources/jobs/job-postings-expiry`                   |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`                          |
-| `0 4 * * *` | `/resources/jobs/voice-retention`                       |
-| `0 4 * * *` | `/resources/jobs/staffing-outbox`                       |
-| `0 * * * *` | Tenant engagement sync and staff tick (each tenant-api) |
+| Cron        | Route                                                                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `0 2 * * *` | `/resources/jobs/audit-log-archival`                                                                                                   |
+| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`                                                                                                    |
+| `0 3 * * *` | `/resources/jobs/job-postings-expiry`                                                                                                  |
+| `0 4 * * *` | `/resources/jobs/gdpr-erasure`                                                                                                         |
+| `0 4 * * *` | `/resources/jobs/voice-retention`                                                                                                      |
+| `0 4 * * *` | `/resources/jobs/staffing-outbox`                                                                                                      |
+| `0 * * * *` | Tenant engagement sync, staff tick and reservations tick (each tenant-api), and `/resources/jobs/reservation-payments-reconcile` (App) |
 
 `/resources/jobs/form-submission-retention` is mapped to `0 5 * * *` in
 `JOB_ROUTES` but that trigger is not in `wrangler.jsonc`, so it does not run.

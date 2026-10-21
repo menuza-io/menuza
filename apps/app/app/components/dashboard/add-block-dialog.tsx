@@ -105,9 +105,10 @@ export function AddBlockDialog({
 	const { _ } = useLingui()
 	const [open, setOpen] = useState(false)
 	const full = blocks.length >= MAX_DASHBOARD_BLOCKS
-	const builtIns = addableBuiltInBlockTypes(blocks, picker).filter(
-		(type) => !excludeTypes.includes(type),
-	)
+	const builtIns = addableBuiltInBlockTypes(blocks, {
+		onboardingAvailable: picker.onboardingAvailable,
+		bookingsTodayAvailable: picker.bookingsToday.available,
+	}).filter((type) => !excludeTypes.includes(type))
 
 	const select = (block: NewDashboardBlock) => {
 		onAdd(block)

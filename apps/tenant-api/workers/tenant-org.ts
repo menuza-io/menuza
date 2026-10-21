@@ -16,14 +16,27 @@ import { durableSqliteMigrations } from './migrations.generated.ts'
 import { createTenantApiApp } from '../src/app.ts'
 import { applyVarlockEnv } from '../src/lib/secrets.ts'
 import {
-	armStaffAlarm,
-	handleStaffAlarm,
-	isStaffActivityPath,
-} from '../src/lib/staff-alarm.ts'
+	armForRequest,
+	handleOrgAlarm,
+	readAlarmOrgId,
+	registerOrgTickModule,
+} from '../src/lib/org-alarm.ts'
+import { createReservationsTickModule } from '../src/lib/reservations-alarm.ts'
+import { createStaffTickModule } from '../src/lib/staff-alarm.ts'
+import { runReservationsTickForOrg } from '../src/services/rsv-tick-service.ts'
 import { runStaffTickForOrg } from '../src/services/staff-tick-service.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
 
 export const TENANT_ORG_HEADER = 'X-Epic-Tenant-Org-Id'
+
+registerOrgTickModule(
+	createStaffTickModule((orgId) => runStaffTickForOrg(orgId)),
+)
+registerOrgTickModule(
+	createReservationsTickModule((orgId, now) =>
+		runReservationsTickForOrg(orgId, { deps: { now: () => now } }),
+	),
+)
 
 export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 	private db: DrizzleSqliteDODatabase<typeof schema> | null = null
@@ -98,17 +111,18 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 		const response = await this.useTenantDb(orgId, db, async () =>
 			this.app.fetch(request, this.env),
 		)
-		await this.maybeArmStaffAlarm(request, response, orgId)
+		await this.maybeArmAlarm(request, response, orgId)
 		return response
 	}
 
 	/**
-	 * Arms the sub-hourly staff tick (see `src/lib/staff-alarm.ts`) when a
-	 * successful request shows the organization is using the staff features, or
-	 * when the hourly tick reports something still worth watching. Never throws:
-	 * a failure here must not fail the request it rode on.
+	 * Arms the shared sub-hourly alarm (see `src/lib/org-alarm.ts`) when a
+	 * successful request shows the organization is using a module that wants
+	 * sub-hourly timing, or when a module's own tick reports something still
+	 * worth watching. Never throws: a failure here must not fail the request it
+	 * rode on.
 	 */
-	private async maybeArmStaffAlarm(
+	private async maybeArmAlarm(
 		request: Request,
 		response: Response,
 		orgId: string,
@@ -116,37 +130,41 @@ export class TenantOrg extends DurableObject<TenantApiWorkerEnv> {
 		try {
 			if (response.status >= 400) return
 			const { pathname } = new URL(request.url)
-			if (pathname === '/api/staff/tick') {
-				const body = (await response
-					.clone()
-					.json()
-					.catch(() => null)) as {
-					result?: { needsFollowUp?: boolean }
-				} | null
-				if (!body?.result?.needsFollowUp) return
-			} else if (!isStaffActivityPath(pathname)) {
-				return
-			}
-			await armStaffAlarm(this.ctx.storage, orgId, Date.now())
+			const isTick =
+				pathname === '/api/staff/tick' || pathname === '/api/reservations/tick'
+			const body = isTick
+				? ((await response
+						.clone()
+						.json()
+						.catch(() => null)) as {
+						result?: { needsFollowUp?: boolean; nextDueAt?: number | null }
+					} | null)
+				: null
+			await armForRequest({
+				storage: this.ctx.storage,
+				orgId,
+				now: Date.now(),
+				pathname,
+				tickResult: body?.result ?? null,
+			})
 		} catch (error) {
 			console.error(
-				'Staff alarm arming failed',
+				'Org alarm arming failed',
 				error instanceof Error ? error.name : 'unknown',
 			)
 		}
 	}
 
-	/** The sub-hourly staff tick: runs next to the data, then re-arms if needed. */
+	/** The sub-hourly tick for every registered module, then re-arm if needed. */
 	async alarm() {
 		applyVarlockEnv(this.env)
-		await handleStaffAlarm({
-			storage: this.ctx.storage,
-			now: Date.now(),
-			runTick: async (orgId) => {
-				this.orgId = orgId
-				const db = await this.ensureDb()
-				return this.useTenantDb(orgId, db, () => runStaffTickForOrg(orgId))
-			},
-		})
+		const storage = this.ctx.storage
+		const orgId = await readAlarmOrgId(storage)
+		if (!orgId) return
+		this.orgId = orgId
+		const db = await this.ensureDb()
+		await this.useTenantDb(orgId, db, () =>
+			handleOrgAlarm({ storage, now: Date.now() }),
+		)
 	}
 }

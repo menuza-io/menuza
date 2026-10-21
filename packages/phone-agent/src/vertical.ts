@@ -74,6 +74,12 @@ export type SendLinkInput = {
 	payload: unknown
 	/** A number the caller asked to be texted at instead of their caller ID. */
 	phone?: string | null
+	/**
+	 * Raw URL fragment, without `#`, the site reads on load (for example
+	 * `h=<token>`). The link then carries it instead of a stored `payload`;
+	 * tenant-api only accepts fragments the business's vertical verified.
+	 */
+	fragment?: string
 }
 
 export type SendLinkResult =
@@ -90,9 +96,35 @@ export type SendLinkResult =
 			explanation: string
 	  }
 
+export const VERTICAL_ACTION_FAILURES = [
+	'unavailable',
+	'rate_limited',
+	'not_enabled',
+	'invalid',
+	'conflict',
+] as const
+export type VerticalActionFailure = (typeof VERTICAL_ACTION_FAILURES)[number]
+
+/**
+ * What a named action the business runs for the call answers. Failures carry
+ * an explanation the assistant can say in plain words.
+ */
+export type VerticalActionResult =
+	| { ok: true; data: unknown }
+	| {
+			ok: false
+			reason: VerticalActionFailure
+			explanation: string
+	  }
+
 /** Services the voice worker gives vertical tools. */
 export type VerticalServices = {
 	sendLink(input: SendLinkInput): Promise<SendLinkResult>
+	/**
+	 * Runs a named action registered for this business on the regional server
+	 * (counted against per-call limits there). Never throws.
+	 */
+	action(name: string, input: unknown): Promise<VerticalActionResult>
 }
 
 export type VerticalToolContext<

@@ -1,4 +1,5 @@
 import { type BookedOrderFact } from '@repo/staffing'
+import { registerDemandSource } from './demand-sources.ts'
 import { type StaffDb } from './staff-audit.ts'
 
 /**
@@ -40,9 +41,37 @@ export type OrderSource = {
 
 let current: OrderSource | null = null
 
-/** Registers the vertical's order source; `null` removes it. */
+/**
+ * Registers the vertical's order source; `null` removes it. It also registers
+ * the `orders` demand source, so the forecast reads it through the registry.
+ */
 export function registerOrderSource(source: OrderSource | null) {
 	current = source
+	if (!source) {
+		registerDemandSource({ id: 'orders', remove: true })
+		return
+	}
+	registerDemandSource({
+		id: 'orders',
+		unit: 'orders',
+		async loadBuckets(db, scopeId, window) {
+			// The same rows `getOrderSource()` serves, counted per bucket.
+			const rows = await source.loadBuckets(db, scopeId, window)
+			const byBucket = new Map<number, number>()
+			for (const row of rows) {
+				byBucket.set(row.bucket, (byBucket.get(row.bucket) ?? 0) + row.orders)
+			}
+			return [...byBucket].map(([bucket, units]) => ({ bucket, units }))
+		},
+		async loadBooked(db, scopeId, window) {
+			const facts = await source.loadBooked(db, scopeId, window)
+			return facts.map((fact) => ({
+				date: fact.date,
+				hour: fact.hour,
+				units: fact.orders,
+			}))
+		},
+	})
 }
 
 export function getOrderSource(): OrderSource | null {

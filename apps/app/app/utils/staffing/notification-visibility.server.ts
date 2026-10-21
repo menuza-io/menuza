@@ -3,6 +3,7 @@ import {
 	STAFFING_NOTIFICATION_TYPE_PREFIX,
 	STAFFING_PERMISSIONS,
 } from '@repo/staffing'
+import { filterVisibleReservationNotifications } from '#app/utils/reservations/notification-visibility.server.ts'
 import {
 	isStaffingFeatureEnabled,
 	userHasStaffingPermission,
@@ -100,10 +101,17 @@ export async function countVisibleStaffingAlerts(
 	return total
 }
 
-/** Drops staffing alerts the member can no longer open; everything else passes. */
+/**
+ * Drops staffing and reservations alerts the member can no longer open;
+ * everything else passes.
+ */
 export async function filterVisibleNotifications<
 	T extends { type: string; organizationId: string },
->(userId: string, notifications: readonly T[]): Promise<T[]> {
+>(userId: string, allNotifications: readonly T[]): Promise<T[]> {
+	const notifications = await filterVisibleReservationNotifications(
+		userId,
+		allNotifications,
+	)
 	const staffing = notifications.filter((n) =>
 		isStaffingNotificationType(n.type),
 	)

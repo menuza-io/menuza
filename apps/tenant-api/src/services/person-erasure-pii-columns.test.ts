@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest'
  */
 
 const PII_COLUMN =
-	/((^|_)phone|(^|_)email|first_name|last_name|full_name|display_name|caller_name|contact_name|address|postal|_lat$|_lng$|^lat$|^lng$|ip_hash|stripe_|last4|payment_method|card_|^transcript$|^summary$|^values$|^details$|^body$|^notes?$|token_hash|date_of_birth|^name$)/
+	/((^|_)phone|(^|_)email|first_name|last_name|full_name|display_name|caller_name|contact_name|address|postal|_lat$|_lng$|^lat$|^lng$|ip_hash|stripe_|last4|payment_method|customer_ref|card_|allerg|dietary|guest_requests|staff_notes|^transcript$|^summary$|^values$|^details$|^body$|^notes?$|token_hash|date_of_birth|^name$)/
 
 /** Columns the erasure removes or scrubs, and how. */
 const COVERED: Record<string, string> = {
@@ -59,6 +59,36 @@ const COVERED: Record<string, string> = {
 	'voice_sms_sends.to_phone': 'deleted by phone',
 	'voice_link_handoffs.sent_to_phone': 'nulled by phone',
 	'voice_link_handoffs.token_hash': 'handoff deleted with its call',
+	'rsv_guests.first_name': 'anonymized',
+	'rsv_guests.last_name': 'anonymized',
+	'rsv_guests.phone_e164': 'nulled',
+	'rsv_guests.email_norm': 'nulled',
+	'rsv_guests.allergy_notes': 'nulled',
+	'rsv_guest_notes.body': 'deleted',
+	'rsv_holds.token_hash': 'hold deleted with the booking',
+	'rsv_holds.ip_hash': 'hold deleted with the booking',
+	'rsv_notify_requests.contact_phone_e164': 'nulled',
+	'rsv_notify_requests.contact_email_norm': 'nulled',
+	'rsv_notify_requests.ip_hash': 'nulled',
+	'rsv_waitlist_entries.display_name': 'set to "Removed Guest"',
+	'rsv_waitlist_entries.phone_e164': 'nulled',
+	'rsv_waitlist_entries.email_norm': 'nulled',
+	'rsv_waitlist_entries.notes': 'nulled',
+	'rsv_waitlist_entries.ip_hash': 'nulled',
+	'rsv_reservations.guest_requests': 'nulled',
+	'rsv_reservations.dietary_notes': 'nulled',
+	'rsv_reservations.staff_notes': 'nulled',
+	'rsv_reservations.ip_hash': 'nulled',
+	'rsv_payments.payment_method_ref': 'nulled',
+	'rsv_payments.customer_ref': 'nulled',
+	'rsv_payments.card_brand': 'nulled',
+	'rsv_payments.card_last4': 'nulled',
+	'rsv_payments.card_exp_month':
+		'card metadata, with the nulled card brand and last4 it identifies no one',
+	'rsv_payments.card_exp_year':
+		'card metadata, with the nulled card brand and last4 it identifies no one',
+	'customers.refresh_token_expires_at': 'row deleted',
+	'restaurant_orders.delivery_notes': 'scrubbed with the order contact',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
@@ -78,6 +108,26 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'cash or card, not personal data; the order totals are kept',
 	'voice_line_verifications.to_phone':
 		"the organization's own phone line being verified, not a customer",
+	'rsv_areas.name': 'room name written by the operator',
+	'rsv_policies.name': 'policy title written by the operator',
+	'rsv_section_layouts.name': 'layout title written by the operator',
+	'rsv_sections.name': 'section title written by the operator',
+	'rsv_services.name': 'service title written by the operator',
+	'rsv_special_days.name': 'special day title written by the operator',
+	'rsv_tags.name': 'tag catalog entry, not tied to a person',
+	'rsv_blocks.note': 'operator note about a table block, not about a guest',
+	'rsv_service_notes.body': 'operator note about a service period, not a guest',
+	'rsv_message_texts.custom_note':
+		'text the organization wrote for its messages',
+	'rsv_location_settings.contact_phone': "the restaurant's own phone number",
+	'rsv_location_settings.max_active_per_phone': 'a numeric limit',
+	'rsv_location_settings.block_same_phone_overlap': 'a boolean setting',
+	'rsv_guests.marketing_email_consent_at':
+		'deprecated timestamp column, never read or written (single consent source)',
+	'rsv_guests.marketing_sms_consent_at':
+		'deprecated timestamp column, never read or written (single consent source)',
+	'rsv_guests.consent_text_version': 'deprecated, a text version label',
+	'voice_calls.transfer_contact_id': 'opaque id of an organization contact',
 }
 
 function listColumns() {
@@ -103,8 +153,9 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 
 	it('finds the tenant tables', () => {
 		expect(names.has('customers.phone')).toBe(true)
+		expect(names.has('rsv_guests.phone_e164')).toBe(true)
 		expect(names.has('customer_subscriptions.customer_id')).toBe(true)
-		expect(columns.length).toBeGreaterThan(300)
+		expect(columns.length).toBeGreaterThan(500)
 	})
 
 	it('has no PII-looking column that is neither covered nor allow-listed', () => {
@@ -135,6 +186,8 @@ describe('person erasure covers every PII column of the tenant schema', () => {
 			'journey_step_executions',
 			'marketing_messages',
 			'restaurant_orders',
+			'rsv_guests',
+			'rsv_reservations',
 			'shop_orders',
 			'voice_calls',
 		])

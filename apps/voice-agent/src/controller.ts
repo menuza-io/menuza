@@ -33,6 +33,7 @@ import {
 	transferAvailability,
 	type VerticalContext,
 	type VerticalTool,
+	type VerticalActionResult,
 	type VerticalToolContext,
 	websitePathFor,
 } from '@repo/phone-agent'
@@ -84,7 +85,7 @@ export type CallControllerOptions = {
 	formatPrice: PriceFormatter
 	services: Pick<
 		VoiceServices,
-		'createRequest' | 'sendWebsiteLink' | 'createHandoff'
+		'createRequest' | 'sendWebsiteLink' | 'createHandoff' | 'runAction'
 	>
 	/** Null when there is no SIP leg; test calls only simulate transfers. */
 	dialer: TransferDialer | null
@@ -328,7 +329,10 @@ export class CallController {
 			state: this.state.vertical,
 			channel: this.channel,
 			callerPhone: this.callerPhone,
-			services: { sendLink: (input) => this.sendLink(input) },
+			services: {
+				sendLink: (input) => this.sendLink(input),
+				action: (name, input) => this.runAction(name, input),
+			},
 		}
 	}
 
@@ -974,6 +978,18 @@ export class CallController {
 		)
 	}
 
+	/** Runs a named business action for this call; failures are typed, not thrown. */
+	async runAction(name: string, input: unknown): Promise<VerticalActionResult> {
+		return this.services.runAction({
+			orgId: this.config.organization.id,
+			callId: this.callId,
+			scopeId: this.config.scopeId,
+			channel: this.channel,
+			name,
+			input,
+		})
+	}
+
 	/**
 	 * Texts the caller a link carrying data from the call, for the vertical's
 	 * tools. Test calls show the link on screen instead.
@@ -1017,9 +1033,10 @@ export class CallController {
 			path: input.path,
 			payload: input.payload,
 		})
-		const payload = this.vertical.links?.handoffPayload?.safeParse(
-			input.payload,
-		)
+		// A fragment link carries its own token; there is no payload to check.
+		const payload = input.fragment
+			? undefined
+			: this.vertical.links?.handoffPayload?.safeParse(input.payload)
 		if (!link.success || payload?.success === false) {
 			console.error('A vertical tool sent an invalid link', {
 				callId: this.callId,
@@ -1035,6 +1052,7 @@ export class CallController {
 				scopeId: this.config.scopeId,
 				path: link.data.path,
 				payload: payload?.success ? payload.data : input.payload,
+				...(input.fragment ? { fragment: input.fragment } : {}),
 				message: this.linkMessage('handoff'),
 				sendTo,
 			})

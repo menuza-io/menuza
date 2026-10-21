@@ -3,6 +3,7 @@ import {
 	asAstroResponse,
 	isCareersPage,
 	isDropVisibilityPage,
+	isReservationsPage,
 	isSitesAppRoute,
 	publishedHtmlCacheUrl,
 	shouldCachePublishedHtml,
@@ -42,6 +43,14 @@ describe('isSitesAppRoute', () => {
 		expect(isSitesAppRoute('/careers')).toBe(true)
 		expect(isSitesAppRoute('/careers/line-cook')).toBe(true)
 		expect(isSitesAppRoute('/careers-and-more')).toBe(false)
+		expect(isSitesAppRoute('/reserve')).toBe(true)
+		expect(isSitesAppRoute('/reserve/manage')).toBe(true)
+		expect(isSitesAppRoute('/reserve/pay')).toBe(true)
+		expect(isSitesAppRoute('/reserve/pay/done')).toBe(true)
+		expect(isSitesAppRoute('/experiences')).toBe(true)
+		expect(isSitesAppRoute('/experiences/chefs-counter')).toBe(true)
+		expect(isSitesAppRoute('/experiencesx')).toBe(false)
+		expect(isSitesAppRoute('/reserved')).toBe(false)
 		expect(isSitesAppRoute('/')).toBe(false)
 		expect(isSitesAppRoute('/about')).toBe(false)
 	})
@@ -169,6 +178,54 @@ describe('careers pages', () => {
 					true,
 				),
 			).toBe(false)
+		}
+	})
+})
+
+describe('reservations pages', () => {
+	it('are recognized with and without a locale prefix', () => {
+		for (const path of ['/reserve', '/reserve/manage', '/ar/reserve/manage']) {
+			expect(isReservationsPage(path)).toBe(true)
+		}
+		for (const path of ['/', '/about', '/blog/reserve', '/reserved']) {
+			expect(isReservationsPage(path)).toBe(false)
+		}
+	})
+
+	it('are never served from the HTML edge cache', () => {
+		for (const path of [
+			'/reserve',
+			'/reserve/manage',
+			'/reserve/pay',
+			'/reserve/pay/done',
+			'/ar/reserve',
+		]) {
+			expect(
+				shouldCachePublishedHtml(
+					new Request(`https://acme.example${path}`),
+					new URL(`https://acme.example${path}`),
+					true,
+				),
+			).toBe(false)
+		}
+	})
+})
+
+describe('experiences pages', () => {
+	it('are public catalog pages cached for a minute, never the reserve flow', () => {
+		for (const path of [
+			'/experiences',
+			'/experiences/chefs-counter',
+			'/ar/experiences',
+		]) {
+			expect(isReservationsPage(path)).toBe(false)
+			expect(
+				shouldCachePublishedHtml(
+					new Request(`https://acme.example${path}`),
+					new URL(`https://acme.example${path}`),
+					true,
+				),
+			).toBe(true)
 		}
 	})
 })

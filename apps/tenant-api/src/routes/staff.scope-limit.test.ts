@@ -96,6 +96,12 @@ function expectStatus(
 }
 
 /** Nothing the other scope owns may appear anywhere in a response. */
+// 10_000_000_000 is the largest rate the API accepts. Its 11 digits only fit a
+// 13-digit epoch-ms timestamp as 1710000000000 (March 2024), so the text can
+// never appear in a current timestamp, unlike a 4-digit needle.
+const HIDDEN_RATE_B2 = 10_000_000_000
+const HIDDEN_RATE_C = 10_000_000_000
+
 function expectNoLeak(raw: string, label: string, ...needles: unknown[]) {
 	for (const needle of needles) {
 		expect(raw, `${label} leaked ${String(needle)}`).not.toContain(
@@ -715,7 +721,7 @@ async function seed(h: StaffHarness): Promise<Fixture> {
 		p2: await position('Cook'),
 		p3: await position('Runner'),
 	}
-	const rates = { b1: 1111, b2: 2222, c: 3333 }
+	const rates = { b1: 1111, b2: HIDDEN_RATE_B2, c: HIDDEN_RATE_C }
 	const job = async (
 		person: Person,
 		scopeId: string,

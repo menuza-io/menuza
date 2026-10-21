@@ -351,6 +351,88 @@ describe('tenantApi links', () => {
 	})
 })
 
+describe('tenantApi.runAction', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals()
+	})
+
+	const input = {
+		orgId: 'org_1',
+		callId: 'call_1',
+		scopeId: 'loc_1',
+		channel: 'phone',
+		name: 'reservations.availability',
+		input: { date: '2030-01-04' },
+	} as const
+
+	function respond(status: number, body: unknown) {
+		const fetchMock = vi.fn(
+			async (ignoredUrl: string, ignoredInit?: RequestInit) =>
+				new Response(JSON.stringify(body), { status }),
+		)
+		vi.stubGlobal('fetch', fetchMock)
+		return fetchMock
+	}
+
+	it('posts the action body tenant-api expects, with the voice token', async () => {
+		const fetchMock = respond(200, { ok: true, data: { slots: [] } })
+		await expect(tenantApi.runAction(input)).resolves.toEqual({
+			ok: true,
+			data: { slots: [] },
+		})
+		const [url, init] = fetchMock.mock.calls[0]!
+		expect(url).toBe(
+			'http://tenant.test/api/voice/actions/reservations.availability',
+		)
+		expect(JSON.parse(String(init?.body))).toEqual({
+			orgId: 'org_1',
+			callId: 'call_1',
+			scopeId: 'loc_1',
+			channel: 'phone',
+			input: { date: '2030-01-04' },
+		})
+		expect((init?.headers as Record<string, string>).Authorization).toMatch(
+			/^Bearer /,
+		)
+	})
+
+	it('passes typed refusals and limits through', async () => {
+		respond(429, {
+			ok: false,
+			reason: 'rate_limited',
+			explanation: 'Too many.',
+		})
+		await expect(tenantApi.runAction(input)).resolves.toEqual({
+			ok: false,
+			reason: 'rate_limited',
+			explanation: 'Too many.',
+		})
+	})
+
+	it('never throws: a plain 404, a bad body and an outage are unavailable', async () => {
+		respond(404, { error: 'Endpoint Not Found' })
+		await expect(tenantApi.runAction(input)).resolves.toMatchObject({
+			ok: false,
+			reason: 'unavailable',
+		})
+		respond(200, { surprise: true })
+		await expect(tenantApi.runAction(input)).resolves.toMatchObject({
+			ok: false,
+			reason: 'unavailable',
+		})
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				throw new Error('down')
+			}),
+		)
+		await expect(tenantApi.runAction(input)).resolves.toMatchObject({
+			ok: false,
+			reason: 'unavailable',
+		})
+	})
+})
+
 describe('finishCallWithRetry', () => {
 	beforeEach(() => {
 		vi.spyOn(console, 'warn').mockImplementation(() => undefined)

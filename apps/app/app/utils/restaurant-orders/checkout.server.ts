@@ -29,8 +29,11 @@ import {
 	buildRestaurantOrderSessionIdempotencyKey,
 	isRestaurantOrderMetadata,
 	isTerminalRestaurantPaymentStatus,
+	mapCheckoutPaymentToRestaurantOrder,
 	mapConnectSessionToRestaurantOrder,
 	RESTAURANT_ORDER_PRODUCT_NAME,
+	restaurantOrderCheckoutReference,
+	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderProcessor,
 } from '@repo/payments'
 import type Stripe from 'stripe'
@@ -384,6 +387,12 @@ export async function createRestaurantOrderHostedCheckout(options: {
 		options.orderId,
 	)
 	const currency = quote.currency.toLowerCase()
+	// Checkout.com payments and webhooks echo this reference (a hosted page id
+	// is not guaranteed to come back), so it is also the regionally bound id.
+	const checkoutReference =
+		processor === 'checkout'
+			? restaurantOrderCheckoutReference(organization.id, options.orderId)
+			: null
 
 	const session = await commerce.createCheckout({
 		processor,
@@ -414,10 +423,7 @@ export async function createRestaurantOrderHostedCheckout(options: {
 						holdExpiresAt: quote.holdExpiresAt,
 					})
 				: null,
-		reference:
-			processor === 'checkout'
-				? `restaurant_order:${organization.id}:${options.orderId}`
-				: null,
+		reference: checkoutReference,
 		billingCountry:
 			processor === 'checkout'
 				? billingCountryForCurrency(quote.currency)
@@ -435,7 +441,7 @@ export async function createRestaurantOrderHostedCheckout(options: {
 			dataRegion: organization.dataRegion,
 			orgId: organization.id,
 			orderId: options.orderId,
-			sessionId: session.id,
+			sessionId: checkoutReference ?? session.id,
 			processor,
 		})
 	} catch (error) {
@@ -550,8 +556,8 @@ export async function getRestaurantOrderPaymentStatus(options: {
 					? 'failed'
 					: 'pending'
 
-	// Trusted provider reconciliation (Stripe Connect only: Checkout.com does
-	// not expose session retrieval by id, so webhooks remain its path).
+	// Trusted provider reconciliation: Stripe by session retrieval (below),
+	// Checkout.com by payment lookup (after this block).
 	const bound = quote.boundSession
 	if (paymentStatus !== 'paid' && bound?.processor === 'connect') {
 		const commerce = getShopCommerce()
@@ -595,10 +601,72 @@ export async function getRestaurantOrderPaymentStatus(options: {
 		}
 	}
 
+	// Checkout.com: no webhook needed. The bound id is the merchant reference,
+	// and the provider can list the payments made for it.
+	if (paymentStatus !== 'paid' && bound?.processor === 'checkout') {
+		const reconciled = await reconcileCheckoutOrderPayment(
+			organization,
+			options.orderId,
+			bound.sessionId,
+		)
+		if (reconciled) paymentStatus = reconciled
+	}
+
 	return {
 		paymentStatus,
 		orderStatus: quote.status,
 		holdExpiresAt: quote.holdExpiresAt,
 		processor: bound?.processor ?? null,
+	}
+}
+
+/**
+ * Look up the order's Checkout.com payments by reference and push a terminal
+ * state to the regional service. Returns the status to report to the browser,
+ * or null to keep the regional one (nothing decided yet, or a transient
+ * failure that the next poll retries).
+ */
+async function reconcileCheckoutOrderPayment(
+	organization: RestaurantOrderOrganization,
+	orderId: string,
+	boundSessionId: string,
+): Promise<'paid' | 'failed' | null> {
+	const reference = restaurantOrderCheckoutReference(organization.id, orderId)
+	// Only the reference this App binds for this order: never search for an
+	// id the regional service happens to hold.
+	if (boundSessionId !== reference) return null
+	try {
+		const payments =
+			await getShopCommerce().findCheckoutPaymentsByReference(reference)
+		const events = payments
+			.map((payment) => mapCheckoutPaymentToRestaurantOrder(payment))
+			.filter(
+				(event): event is RestaurantOrderPaymentEvent =>
+					event !== null &&
+					event.orgId === organization.id &&
+					event.orderId === orderId &&
+					isTerminalRestaurantPaymentStatus(event.status),
+			)
+		const decided =
+			events.find((event) => event.status === 'paid') ??
+			events.find((event) => event.status === 'failed')
+		if (!decided) return null
+		await notifyRestaurantOrderPaymentStatus({
+			dataRegion: organization.dataRegion,
+			orgId: decided.orgId,
+			orderId: decided.orderId,
+			sessionId: decided.sessionId,
+			processor: 'checkout',
+			status: decided.status as 'paid' | 'failed',
+			amountCents: decided.amountCents,
+			currency: decided.currency,
+		})
+		return decided.status === 'paid' ? 'paid' : 'failed'
+	} catch (error) {
+		console.error(
+			'Restaurant order Checkout.com payment lookup failed:',
+			error instanceof Error ? error.message : 'unknown error',
+		)
+		return null
 	}
 }

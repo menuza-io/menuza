@@ -134,7 +134,17 @@ export function AdminSidebar({
 		{
 			title: _(msg`Feature Flags`),
 			url: '/feature-flags',
-			isActive: location.pathname.startsWith('/feature-flags'),
+			isActive:
+				location.pathname.startsWith('/feature-flags') &&
+				!location.pathname.startsWith('/feature-flags/reservations-fees'),
+			icon: FlaskIcon,
+		},
+		{
+			title: _(msg`Reservations fees`),
+			url: '/feature-flags/reservations-fees',
+			isActive: location.pathname.startsWith(
+				'/feature-flags/reservations-fees',
+			),
 			icon: FlaskIcon,
 		},
 	]

@@ -17,7 +17,13 @@
  *
  * This file holds the logic with a narrow storage interface so it can be tested
  * without a Durable Object runtime; `workers/tenant-org.ts` is thin glue.
+ *
+ * The live alarm now goes through `org-alarm.ts`, which several modules share
+ * (a Durable Object has one alarm slot). `createStaffTickModule` is this
+ * module's adapter; the functions below remain the staff-only primitives and
+ * the legacy `staffTickOrgId` key is still read as a fallback there.
  */
+import { type OrgTickModule } from './org-alarm.ts'
 
 export const STAFF_ALARM_INTERVAL_MS = 5 * 60 * 1000
 export const STAFF_ALARM_ORG_KEY = 'staffTickOrgId'
@@ -113,5 +119,21 @@ export async function handleStaffAlarm(options: {
 		}
 		await storage.setAlarm(now + intervalMs)
 		return { status: 'failed', rearmed: true }
+	}
+}
+
+/** Registers the staff tick with the shared per-organization alarm. */
+export function createStaffTickModule(
+	run: (orgId: string) => Promise<{ needsFollowUp: boolean }>,
+): OrgTickModule {
+	return {
+		name: 'staff',
+		tickPath: '/api/staff/tick',
+		intervalMs: STAFF_ALARM_INTERVAL_MS,
+		isActivityPath: isStaffActivityPath,
+		run: async (orgId) => {
+			const result = await run(orgId)
+			return { needsFollowUp: result.needsFollowUp }
+		},
 	}
 }

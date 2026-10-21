@@ -10,6 +10,7 @@ import {
 	UserOrganization,
 } from '@repo/database'
 import { organizationTemplates, type ReportDefinition } from '@repo/reports'
+import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
 import { describe, expect, it } from 'vitest'
 import {
 	defaultHomeConfig,
@@ -325,18 +326,20 @@ describe('Home dashboard loader', () => {
 			{ id: own.id, title: 'Our notes', subjectLabel: 'Notes' },
 		])
 		// The picker lists only the templates the person's reports token covers.
-		// An admin holds the organization-wide subjects (customers, shop orders)
-		// but not the staff ones, which need the staffing flags and grants.
+		// An admin holds the organization-wide subjects (customers, text
+		// subscribers, shop orders) but not the staff or Reservations ones, which
+		// need their flags and grants.
 		const offered = data.picker.templateGroups.flatMap((group) =>
 			group.templates.map((template) => template.id),
 		)
 		expect(offered).toEqual(
-			reportTemplateGroups(['customers', 'shop_orders']).flatMap((group) =>
+			reportTemplateGroups([...ORG_WIDE_REPORT_SUBJECTS]).flatMap((group) =>
 				group.templates.map((template) => template.id),
 			),
 		)
 		expect(offered.length).toBeGreaterThan(0)
 		expect(offered.length).toBeLessThan(organizationTemplates().length)
+		expect(offered).toContain('sales-total')
 	})
 
 	it('only loads report data when Home has report blocks', async () => {

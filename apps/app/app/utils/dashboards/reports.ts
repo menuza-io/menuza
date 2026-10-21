@@ -78,9 +78,9 @@ function groupTemplates(templates: readonly ReportTemplate[]) {
 /**
  * The organization templates by category, in the order the reports page uses.
  * With `grants` (the restricted report subjects the person's reports token
- * lists), a template on a subject they cannot run is left out, so the picker
- * never offers a report that cannot run. Without `grants`, every template is
- * listed.
+ * lists, `resolveReportGrantsForRequest`), a template on a subject they cannot
+ * run (staff, Reservations, organization-wide) is left out, so the picker never
+ * offers a report that cannot run. Without `grants`, every template is listed.
  */
 export function reportTemplateGroups(
 	grants?: readonly string[],

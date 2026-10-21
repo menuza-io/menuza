@@ -155,11 +155,19 @@ export {
 	isTerminalRestaurantPaymentStatus,
 	mapConnectSessionToRestaurantOrder,
 	mapCheckoutWebhookToRestaurantOrder,
+	mapCheckoutPaymentToRestaurantOrder,
+	restaurantOrderCheckoutReference,
 	type RestaurantOrderProcessor,
 	type RestaurantOrderPaymentEvent,
 	type RestaurantOrderPaymentStatus,
 	type RestaurantTerminalPaymentStatus,
 } from './src/shop'
+
+// Reservation payments (deposits, guarantees, fees, refunds; non-PII ids only)
+export * from './src/shop/reservation'
+export * from './src/shop/reservation-consent'
+export * from './src/connect/reservation-stripe'
+export * from './src/connect/reservation-checkout'
 
 // Payment mock activation (tiny and pure: never pulls in the emulators)
 export {

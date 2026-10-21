@@ -39,9 +39,20 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { ErrorList, Field } from '#app/components/forms.tsx'
 import {
+	RegionReservationsGuard,
+	type RegionReservationsGuardState,
+} from '#app/components/reservations/region-reservations-guard.tsx'
+import {
 	RegionStaffGuard,
 	type RegionStaffGuardState,
 } from '#app/components/staff/region-staff-guard.tsx'
+import {
+	requiresReservationsConfirmation,
+	reservationsConfirmationMatches,
+	reservationsSummarySchema,
+	summaryHasUnsettledPayments,
+	type ReservationsSummary,
+} from '#app/utils/reservations/region-confirmation.ts'
 import {
 	requiresStaffConfirmation,
 	staffConfirmationMatches,
@@ -141,14 +152,19 @@ export function SiteCard({
 		)
 	}
 
-	// Staff records live in the same regional database and are deleted with it:
-	// ask the current region how much there is while the dialog is open.
+	// Staff and reservation records live in the same regional database and are
+	// deleted with it: ask the current region how much there is while the dialog is open.
 	const guardFetcher = useFetcher<{
+		summary: unknown
+		requiresConfirmation: boolean
+	}>()
+	const reservationsGuardFetcher = useFetcher<{
 		summary: unknown
 		requiresConfirmation: boolean
 	}>()
 	const [typedConfirmation, setTypedConfirmation] = useState('')
 	const guardLoad = guardFetcher.load
+	const reservationsGuardLoad = reservationsGuardFetcher.load
 	useEffect(() => {
 		if (pendingRegion === null) {
 			setTypedConfirmation('')
@@ -157,7 +173,16 @@ export function SiteCard({
 		void guardLoad(
 			`/resources/staffing/region-summary?orgSlug=${encodeURIComponent(organization.slug)}`,
 		)
-	}, [pendingRegion, guardLoad, organization.slug])
+		void reservationsGuardLoad(
+			`/resources/reservations/region-summary?orgSlug=${encodeURIComponent(organization.slug)}&orgId=${encodeURIComponent(organization.id)}`,
+		)
+	}, [
+		pendingRegion,
+		guardLoad,
+		reservationsGuardLoad,
+		organization.slug,
+		organization.id,
+	])
 	const guardState = useMemo<RegionStaffGuardState>(() => {
 		if (guardFetcher.data === undefined) {
 			return { status: 'loading', summary: null, requiresConfirmation: false }
@@ -173,10 +198,34 @@ export function SiteCard({
 				requiresStaffConfirmation(summary),
 		}
 	}, [guardFetcher.data])
+	const reservationsGuardState = useMemo<RegionReservationsGuardState>(() => {
+		if (reservationsGuardFetcher.data === undefined) {
+			return { status: 'loading', summary: null, requiresConfirmation: false }
+		}
+		const parsed = reservationsSummarySchema.safeParse(
+			reservationsGuardFetcher.data.summary,
+		)
+		const summary: ReservationsSummary | null = parsed.success
+			? parsed.data
+			: null
+		return {
+			status: 'ready',
+			summary,
+			requiresConfirmation:
+				reservationsGuardFetcher.data.requiresConfirmation ||
+				requiresReservationsConfirmation(summary),
+		}
+	}, [reservationsGuardFetcher.data])
 	const staffGuardBlocks =
 		guardState.status === 'loading' ||
 		(guardState.requiresConfirmation &&
 			!staffConfirmationMatches(typedConfirmation, organization.slug))
+	const reservationsGuardBlocks =
+		reservationsGuardState.status === 'loading' ||
+		summaryHasUnsettledPayments(reservationsGuardState.summary) ||
+		(reservationsGuardState.requiresConfirmation &&
+			!reservationsConfirmationMatches(typedConfirmation, organization.slug))
+	const regionGuardBlocks = staffGuardBlocks || reservationsGuardBlocks
 
 	const [form, fields] = useForm({
 		id: 'custom-domain',
@@ -307,15 +356,22 @@ export function SiteCard({
 								typed={typedConfirmation}
 								onTypedChange={setTypedConfirmation}
 							/>
+							<RegionReservationsGuard
+								orgSlug={organization.slug}
+								state={reservationsGuardState}
+								typed={typedConfirmation}
+								onTypedChange={setTypedConfirmation}
+								showConfirmInput={!guardState.requiresConfirmation}
+							/>
 							<AlertDialogFooter>
 								<AlertDialogCancel>
 									<Trans>Keep current region</Trans>
 								</AlertDialogCancel>
 								<AlertDialogAction
 									variant="destructive"
-									disabled={staffGuardBlocks}
+									disabled={regionGuardBlocks}
 									onClick={() => {
-										if (!pendingRegion || staffGuardBlocks) return
+										if (!pendingRegion || regionGuardBlocks) return
 										const nextRegion = pendingRegion
 										const typed = typedConfirmation
 										setPendingRegion(null)

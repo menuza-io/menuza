@@ -1,4 +1,5 @@
 import {
+	type DemandUnit,
 	type ForecastDay,
 	type ForecastGapView,
 	type ForecastPositionTotal,
@@ -115,23 +116,87 @@ export function scheduledByHour(
 	return { byHour, unpositioned }
 }
 
-export function computeForecastGap(input: {
+/** Units already booked for a future hour of one demand source. */
+export type BookedUnitFact = { date: string; hour: number; units: number }
+
+/** One demand source's inputs: its typical hours, what is booked, its standards. */
+export type ForecastDemandSource = {
+	id: string
+	unit: DemandUnit
+	/** Typical units per weekday and hour, in this source's unit. */
 	guide: DemandGuide
-	/** Orders already booked for a future hour (scheduled-for, paid or active). */
-	booked: readonly BookedOrderFact[]
-	/** Orders per labor hour by position id: only positions with a standard count. */
+	booked: readonly BookedUnitFact[]
+	/** Units per labor hour by position id: only positions with a standard count. */
 	standards: Readonly<Record<string, number>>
-	shifts: readonly ForecastShiftFact[]
-	timeZone: string
-	weeks?: number
-}): ForecastGapView {
-	const positionIds = Object.keys(input.standards).sort()
+}
+
+export const ORDERS_SOURCE_ID = 'orders'
+
+/**
+ * Need per position is worked out source by source (an hour needs
+ * `ceil(units / standard)` people for each source the position has a standard
+ * for) and summed: a position without a standard for a unit ignores that unit.
+ * Booked units above the typical hour win, per source.
+ *
+ * Pass `sources`, or the single-source `guide` / `booked` / `standards` of
+ * orders, which behaves exactly as it always has.
+ */
+export function computeForecastGap(
+	input: {
+		shifts: readonly ForecastShiftFact[]
+		timeZone: string
+		weeks?: number
+	} & (
+		| { sources: readonly ForecastDemandSource[] }
+		| {
+				guide: DemandGuide
+				/** Orders already booked for a future hour (scheduled-for, paid or active). */
+				booked: readonly BookedOrderFact[]
+				/** Orders per labor hour by position id: only positions with a standard count. */
+				standards: Readonly<Record<string, number>>
+		  }
+	),
+): ForecastGapView {
+	const sources: readonly ForecastDemandSource[] =
+		'sources' in input
+			? [...input.sources].sort(
+					(a, b) =>
+						Number(b.id === ORDERS_SOURCE_ID) -
+							Number(a.id === ORDERS_SOURCE_ID) || a.id.localeCompare(b.id),
+				)
+			: [
+					{
+						id: ORDERS_SOURCE_ID,
+						unit: 'orders',
+						guide: input.guide,
+						booked: input.booked.map((fact) => ({
+							date: fact.date,
+							hour: fact.hour,
+							units: fact.orders,
+						})),
+						standards: input.standards,
+					},
+				]
+	const guideDays = (sources[0]?.guide.days ?? []).map((day) => day.date)
+	const windowSource = sources[0]?.guide
+	const positionIds = [
+		...new Set(sources.flatMap((source) => Object.keys(source.standards))),
+	].sort()
 	const configured = positionIds.length > 0
-	const dates = new Set(input.guide.days.map((day) => day.date))
-	const bookedByHour = new Map<string, number>()
-	for (const fact of input.booked) {
-		const key = hourKey(fact.date, fact.hour)
-		bookedByHour.set(key, (bookedByHour.get(key) ?? 0) + fact.orders)
+	const dates = new Set(guideDays)
+	const bookedBySource = new Map<string, Map<string, number>>()
+	const medianBySource = new Map<string, Map<string, number[]>>()
+	for (const source of sources) {
+		const booked = new Map<string, number>()
+		for (const fact of source.booked) {
+			const key = hourKey(fact.date, fact.hour)
+			booked.set(key, (booked.get(key) ?? 0) + fact.units)
+		}
+		bookedBySource.set(source.id, booked)
+		medianBySource.set(
+			source.id,
+			new Map(source.guide.days.map((day) => [day.date, day.hours])),
+		)
 	}
 	const { byHour, unpositioned } = scheduledByHour(
 		input.shifts,
@@ -139,7 +204,7 @@ export function computeForecastGap(input: {
 		dates,
 	)
 
-	const days: ForecastDay[] = input.guide.days.map((guideDay) => {
+	const days: ForecastDay[] = guideDays.map((date) => {
 		const totals = new Map<string, { needed: number; scheduled: number }>(
 			positionIds.map((id) => [id, { needed: 0, scheduled: 0 }]),
 		)
@@ -148,17 +213,35 @@ export function computeForecastGap(input: {
 		let shortHours = 0
 		let surplusHours = 0
 		const hours: ForecastSlot[] = Array.from({ length: 24 }, (_, hour) => {
-			const key = hourKey(guideDay.date, hour)
-			const median = guideDay.hours[hour] ?? 0
-			const booked = bookedByHour.get(key) ?? 0
-			const orders = oneDecimal(Math.max(median, booked))
+			const key = hourKey(date, hour)
+			const unitsBySource: Record<string, number> = {}
+			const bookedHere: Record<string, number> = {}
+			for (const source of sources) {
+				const median = medianBySource.get(source.id)?.get(date)?.[hour] ?? 0
+				const booked = bookedBySource.get(source.id)?.get(key) ?? 0
+				bookedHere[source.id] = booked
+				unitsBySource[source.id] = oneDecimal(Math.max(median, booked))
+			}
+			const orders = unitsBySource[ORDERS_SOURCE_ID] ?? 0
+			// Quiet means no demand in any source that has a standard to judge by;
+			// units nobody set a standard for do not change an hour's status.
+			const demand = sources
+				.filter((source) => Object.keys(source.standards).length > 0)
+				.reduce((sum, source) => sum + (unitsBySource[source.id] ?? 0), 0)
 			const scheduledHere = byHour.get(key)
 			let needed = 0
 			let scheduled = 0
 			let short = 0
 			let surplus = 0
 			for (const id of positionIds) {
-				const need = neededPeople(orders, input.standards[id]!)
+				let need = 0
+				for (const source of sources) {
+					const standard = source.standards[id]
+					if (standard === undefined) continue
+					// Work from the rounded units the reader sees, as the orders-only
+					// forecast always did.
+					need += neededPeople(unitsBySource[source.id] ?? 0, standard)
+				}
 				const have = scheduledHere?.get(id) ?? 0
 				needed += need
 				scheduled += have
@@ -173,8 +256,6 @@ export function computeForecastGap(input: {
 			shortHours += short
 			surplusHours += surplus
 			const slot = {
-				orders,
-				needed,
 				scheduled: oneDecimal(scheduled),
 				short: oneDecimal(short),
 				surplus: oneDecimal(surplus),
@@ -182,31 +263,43 @@ export function computeForecastGap(input: {
 			return {
 				hour,
 				orders,
-				booked,
+				booked: bookedHere[ORDERS_SOURCE_ID] ?? 0,
+				unitsBySource,
+				bookedBySource: bookedHere,
 				needed,
 				scheduled: slot.scheduled,
 				short: slot.short,
 				surplus: slot.surplus,
 				// Judged on the unrounded figures; the shown ones are for reading.
 				status: configured
-					? slotStatus({ orders, needed, scheduled, short, surplus })
+					? slotStatus({ orders: demand, needed, scheduled, short, surplus })
 					: 'quiet',
 			}
 		})
 		const byPosition: ForecastPositionTotal[] = positionIds.map((id) => ({
 			positionId: id,
-			ordersPerLaborHour: input.standards[id]!,
+			ordersPerLaborHour:
+				sources.find((source) => source.id === ORDERS_SOURCE_ID)?.standards[
+					id
+				] ?? 0,
+			standards: Object.fromEntries(
+				sources.flatMap((source) =>
+					source.standards[id] === undefined
+						? []
+						: [[source.id, source.standards[id]!] as const],
+				),
+			),
 			neededHours: oneDecimal(totals.get(id)!.needed),
 			scheduledHours: oneDecimal(totals.get(id)!.scheduled),
 		}))
 		return {
-			date: guideDay.date,
+			date,
 			hours,
 			neededHours: oneDecimal(neededHours),
 			scheduledHours: oneDecimal(scheduledHours),
 			shortHours: oneDecimal(shortHours),
 			surplusHours: oneDecimal(surplusHours),
-			unpositionedHours: oneDecimal(unpositioned.get(guideDay.date) ?? 0),
+			unpositionedHours: oneDecimal(unpositioned.get(date) ?? 0),
 			byPosition,
 		}
 	})
@@ -216,9 +309,10 @@ export function computeForecastGap(input: {
 		estimate: true,
 		method: 'median_orders_per_labor_hour',
 		source: 'online_orders',
+		sources: sources.map((source) => ({ id: source.id, unit: source.unit })),
 		weeks: input.weeks ?? DEMAND_TRAILING_WEEKS,
-		windowStart: input.guide.windowStart,
-		windowEnd: input.guide.windowEnd,
+		windowStart: windowSource?.windowStart ?? '',
+		windowEnd: windowSource?.windowEnd ?? '',
 		timeZone: input.timeZone,
 		configured,
 		days,

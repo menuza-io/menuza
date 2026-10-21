@@ -26,7 +26,8 @@ let package = Package(
 		.testTarget(
 			name: "TenantKitTests",
 			dependencies: ["TenantKit"],
-			path: "Tests/TenantKitTests"
+			path: "Tests/TenantKitTests",
+			resources: [.copy("Fixtures")]
 		),
 	],
 	swiftLanguageVersions: [.v5]

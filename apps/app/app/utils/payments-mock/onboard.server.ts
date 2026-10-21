@@ -1,5 +1,6 @@
 import { db, eq, isNotNull, Organization } from '@repo/database'
 import { shopProcessorToDbValue } from '@repo/payments'
+import { notifyReservationsContextChanged } from '#app/utils/reservations/access.server.ts'
 import {
 	ensureConnectAccount,
 	inviteCheckoutSubEntityOnboarding,
@@ -31,8 +32,8 @@ const organizationColumns = {
 /**
  * Enable one provider for an organization in one call: create and complete the
  * account (or sub-entity) in the emulator, then run the same status sync the
- * real onboarding return runs. Region rules still apply: shop payouts are
- * US only for both providers. Never touches org columns directly
+ * real onboarding return runs. Region rules still apply: Stripe is US only,
+ * Checkout.com is open to every region. Never touches org columns directly
  * except `shopPaymentProvider`.
  */
 export async function mockOnboardOrganization(options: {
@@ -55,7 +56,7 @@ export async function mockOnboardOrganization(options: {
 
 	if (options.provider === 'stripe') {
 		if ((organization.dataRegion || 'us') !== 'us') {
-			return { ok: false, status: 409, error: 'us_only' }
+			return { ok: false, status: 409, error: 'stripe_us_only' }
 		}
 		let accountId = organization.stripeConnectAccountId
 		// A reset wipes the emulator but not the organization's columns.
@@ -73,6 +74,7 @@ export async function mockOnboardOrganization(options: {
 				})
 				.where(eq(Organization.id, organization.id))
 			accountId = null
+			await notifyReservationsContextChanged(organization.id, 'payments')
 		}
 		accountId = await ensureConnectAccount({
 			...organization,
@@ -87,12 +89,10 @@ export async function mockOnboardOrganization(options: {
 				updatedAt: new Date(),
 			})
 			.where(eq(Organization.id, organization.id))
+		await notifyReservationsContextChanged(organization.id, 'payments')
 		return { ok: true, provider: 'stripe', organizationId: organization.id }
 	}
 
-	if ((organization.dataRegion || 'us') !== 'us') {
-		return { ok: false, status: 409, error: 'us_only' }
-	}
 	let entityId = organization.checkoutSubEntityId
 	if (entityId && !(await emulator.object('checkout', entityId))) {
 		await db
@@ -105,6 +105,7 @@ export async function mockOnboardOrganization(options: {
 			})
 			.where(eq(Organization.id, organization.id))
 		entityId = null
+		await notifyReservationsContextChanged(organization.id, 'payments')
 	}
 	const entity = await inviteCheckoutSubEntityOnboarding(
 		{
@@ -126,7 +127,7 @@ export async function mockOnboardOrganization(options: {
 export async function clearMockOnboardingColumns() {
 	const status = getPaymentsMockStatus()
 	if (status.stripe) {
-		await db
+		const cleared = await db
 			.update(Organization)
 			.set({
 				stripeConnectAccountId: null,
@@ -135,9 +136,13 @@ export async function clearMockOnboardingColumns() {
 				updatedAt: new Date(),
 			})
 			.where(isNotNull(Organization.stripeConnectAccountId))
+			.returning({ id: Organization.id })
+		for (const { id } of cleared) {
+			await notifyReservationsContextChanged(id, 'payments')
+		}
 	}
 	if (status.checkout) {
-		await db
+		const cleared = await db
 			.update(Organization)
 			.set({
 				checkoutSubEntityId: null,
@@ -146,5 +151,9 @@ export async function clearMockOnboardingColumns() {
 				updatedAt: new Date(),
 			})
 			.where(isNotNull(Organization.checkoutSubEntityId))
+			.returning({ id: Organization.id })
+		for (const { id } of cleared) {
+			await notifyReservationsContextChanged(id, 'payments')
+		}
 	}
 }

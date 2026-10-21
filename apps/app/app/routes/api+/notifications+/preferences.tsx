@@ -6,6 +6,7 @@ import { STAFFING_NOTIFICATION_WORKFLOWS } from '@repo/staffing'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { userHasOrgAccess } from '#app/utils/organization/organizations.server.ts'
+import { RESERVATION_ALERT_WORKFLOWS } from '#app/utils/reservations/manager-alerts.ts'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -35,6 +36,7 @@ const preferenceSchema = z.object({
 		'comment-mention-workflow',
 		'note-comment-workflow',
 		...STAFFING_NOTIFICATION_WORKFLOWS,
+		...RESERVATION_ALERT_WORKFLOWS,
 	]),
 	channel: z.enum(['email', 'inApp']),
 	enabled: z.string().transform((val) => val === 'true'),

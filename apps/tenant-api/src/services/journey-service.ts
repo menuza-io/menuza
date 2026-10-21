@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { ENV } from 'varlock/env'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { hasDeliverableSubscription } from './marketing-audience.ts'
 import { z } from 'zod'
 import {
 	getTenantDb,
@@ -10,6 +11,7 @@ import {
 	journeyRuns,
 	journeyStepExecutions,
 	marketingMessages,
+	isReservationJourneyTrigger,
 	validateWorkflowDAG,
 	actionEmailNodeDataSchema,
 	interpolateMergeTags,
@@ -107,6 +109,89 @@ export interface StepExecutionResult {
 }
 
 /**
+ * Reservation journeys reach guests who agreed to hear from the restaurant,
+ * on the channels they agreed to. A step on any other channel (or after the
+ * guest withdrew) is recorded as skipped and nothing is sent. Journeys with
+ * any other trigger keep their behavior.
+ */
+async function skipWithoutReservationConsent(
+	db: Awaited<ReturnType<typeof getTenantDb>>,
+	payload: ExecuteStepPayload,
+	stepType: 'email' | 'sms',
+): Promise<StepExecutionResult | null> {
+	if (!payload.journeyId) return null
+	const journey = await db
+		.select({ triggerType: marketingJourneys.triggerType })
+		.from(marketingJourneys)
+		.where(eq(marketingJourneys.id, payload.journeyId))
+		.get()
+	if (!journey || !isReservationJourneyTrigger(journey.triggerType)) return null
+
+	// Active subscription on the `reservations` topic; an email also needs an
+	// address its owner confirmed (double opt-in), like a broadcast does.
+	const consent = await hasDeliverableSubscription(db, {
+		customerId: payload.customerId,
+		topic: 'reservations',
+		channel: stepType,
+	})
+	if (consent) return null
+
+	const existing = await db
+		.select()
+		.from(journeyStepExecutions)
+		.where(
+			and(
+				eq(journeyStepExecutions.runId, payload.runId),
+				eq(journeyStepExecutions.nodeId, payload.nodeId),
+			),
+		)
+		.get()
+	// What was already sent stays sent; the retry just reports it.
+	if (
+		existing &&
+		(existing.status === 'delivered' || existing.status === 'completed')
+	) {
+		return null
+	}
+	const details = JSON.stringify({
+		skipped: true,
+		reason: 'no_consent',
+		channel: stepType,
+	})
+	if (existing) {
+		await db
+			.update(journeyStepExecutions)
+			.set({
+				status: 'skipped',
+				executionDetails: details,
+				errorMessage: null,
+				completedAt: new Date(),
+			})
+			.where(eq(journeyStepExecutions.id, existing.id))
+		return { success: true, executionId: existing.id, status: 'skipped' }
+	}
+	const executionId = randomUUID()
+	await db
+		.insert(journeyStepExecutions)
+		.values({
+			id: executionId,
+			runId: payload.runId,
+			journeyId: payload.journeyId,
+			customerId: payload.customerId,
+			nodeId: payload.nodeId,
+			nodeType: payload.nodeType as 'action_email',
+			stepType,
+			status: 'skipped',
+			retryCount: 0,
+			executionDetails: details,
+			executedAt: new Date(),
+			completedAt: new Date(),
+		})
+		.onConflictDoNothing()
+	return { success: true, executionId, status: 'skipped' }
+}
+
+/**
  * Executes a journey action step (Email or SMS) within the regional boundary.
  * Resolves customer PII in the local SQLite tenant DB, interpolates merge tags,
  * dispatches the message via OCI Email Delivery (@repo/email) or @repo/sms,
@@ -155,6 +240,9 @@ export async function executeJourneyStep(
 	const rawType = payload.nodeType
 	const stepType =
 		rawType === 'action_email' || rawType === 'email' ? 'email' : 'sms'
+
+	const skipped = await skipWithoutReservationConsent(db, payload, stepType)
+	if (skipped) return skipped
 
 	const txResult = await retryOnSqliteBusy(() =>
 		runTenantTransaction(db, async (tx) => {

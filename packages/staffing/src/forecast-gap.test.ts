@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	computeForecastGap,
+	type ForecastDemandSource,
 	type ForecastShiftFact,
 	GAP_OVER_THRESHOLD,
 	GAP_SHORT_THRESHOLD,
@@ -262,6 +263,7 @@ describe('computeForecastGap: a hand-calculated Monday', () => {
 			{
 				positionId: 'cook',
 				ordersPerLaborHour: 10,
+				standards: { orders: 10 },
 				neededHours: 10,
 				scheduledHours: 6,
 			},
@@ -342,5 +344,133 @@ describe('computeForecastGap: determinism', () => {
 				timeZone: CHI,
 			})
 		expect(run(shifts)).toEqual(run([...shifts].reverse()))
+	})
+})
+
+describe('computeForecastGap: several demand sources', () => {
+	const date = '2026-03-09'
+	const cook = (from: string, to: string) => shift('a', 'cook', date, from, to)
+	const orders = (
+		hours: Record<number, number>,
+		standards: Record<string, number> = { cook: 10 },
+		booked: Array<{ hour: number; units: number }> = [],
+	): ForecastDemandSource => ({
+		id: 'orders',
+		unit: 'orders',
+		guide: guideFor(date, { [date]: hours }),
+		booked: booked.map((fact) => ({ date, ...fact })),
+		standards,
+	})
+	const visits = (
+		hours: Record<number, number>,
+		standards: Record<string, number> = { cook: 20 },
+		booked: Array<{ hour: number; units: number }> = [],
+	): ForecastDemandSource => ({
+		id: 'visits',
+		unit: 'visits',
+		guide: guideFor(date, { [date]: hours }),
+		booked: booked.map((fact) => ({ date, ...fact })),
+		standards,
+	})
+	const run = (
+		sources: ForecastDemandSource[],
+		shifts: ForecastShiftFact[] = [],
+	) => computeForecastGap({ sources, shifts, timeZone: CHI })
+	const slot = (view: ReturnType<typeof run>, hour: number) =>
+		view.days.find((d) => d.date === date)!.hours[hour]!
+
+	it('gives orders-only sources the numbers the single-source call always gave', () => {
+		const guide = guideFor(date, { [date]: { 12: 25, 13: 8 } })
+		const legacy = computeForecastGap({
+			guide,
+			booked: [{ date, hour: 13, orders: 15 }],
+			standards: { cook: 10 },
+			shifts: [cook('11:00', '14:00')],
+			timeZone: CHI,
+		})
+		const viaSources = run(
+			[orders({ 12: 25, 13: 8 }, { cook: 10 }, [{ hour: 13, units: 15 }])],
+			[cook('11:00', '14:00')],
+		)
+		expect(viaSources).toEqual(legacy)
+		expect(slot(legacy, 12)).toMatchObject({ orders: 25, needed: 3 })
+		expect(slot(legacy, 13)).toMatchObject({
+			orders: 15,
+			booked: 15,
+			needed: 2,
+		})
+	})
+
+	it('computes a visits-only forecast with its own standard', () => {
+		const view = run([
+			visits({ 19: 45 }, { cook: 20 }, [{ hour: 19, units: 30 }]),
+		])
+		expect(view.sources).toEqual([{ id: 'visits', unit: 'visits' }])
+		expect(view.configured).toBe(true)
+		expect(slot(view, 19)).toMatchObject({
+			orders: 0,
+			unitsBySource: { visits: 45 },
+			bookedBySource: { visits: 30 },
+			needed: 3,
+		})
+	})
+
+	it('sums the need of each source per position', () => {
+		// 25 orders at 10 per person-hour = 3, plus 45 visits at 20 = 3.
+		const view = run([orders({ 12: 25 }), visits({ 12: 45 })])
+		expect(view.sources).toEqual([
+			{ id: 'orders', unit: 'orders' },
+			{ id: 'visits', unit: 'visits' },
+		])
+		expect(slot(view, 12).needed).toBe(6)
+		expect(view.days.find((d) => d.date === date)!.byPosition).toEqual([
+			expect.objectContaining({
+				positionId: 'cook',
+				ordersPerLaborHour: 10,
+				standards: { orders: 10, visits: 20 },
+				neededHours: 6,
+			}),
+		])
+	})
+
+	it('lets booked units above the typical hour win, per unit', () => {
+		const view = run([
+			orders({ 12: 5 }, { cook: 10 }, [{ hour: 12, units: 4 }]),
+			visits({ 12: 10 }, { cook: 20 }, [{ hour: 12, units: 60 }]),
+		])
+		expect(slot(view, 12).unitsBySource).toEqual({ orders: 5, visits: 60 })
+		expect(slot(view, 12).bookedBySource).toEqual({ orders: 4, visits: 60 })
+		// 1 for orders, 3 for visits.
+		expect(slot(view, 12).needed).toBe(4)
+	})
+
+	it('ignores a unit for a position with no standard for it', () => {
+		const view = run([
+			orders({ 12: 25 }, { cook: 10 }),
+			visits({ 12: 200 }, { server: 20 }),
+		])
+		const byPosition = view.days.find((d) => d.date === date)!.byPosition
+		const cookTotal = byPosition.find((p) => p.positionId === 'cook')!
+		const serverTotal = byPosition.find((p) => p.positionId === 'server')!
+		// The cook never counts visits; the server never counts orders.
+		expect(cookTotal.standards).toEqual({ orders: 10 })
+		expect(serverTotal.standards).toEqual({ visits: 20 })
+		expect(slot(view, 12).needed).toBe(3 + 10)
+	})
+
+	it('reports booked units even when no position has a standard', () => {
+		const view = run([visits({}, {}, [{ hour: 19, units: 12 }])])
+		expect(view.configured).toBe(false)
+		expect(slot(view, 19)).toMatchObject({
+			bookedBySource: { visits: 12 },
+			needed: 0,
+			status: 'quiet',
+		})
+	})
+
+	it('does not change with the order the sources come in', () => {
+		const a = run([orders({ 12: 25 }), visits({ 12: 45 })])
+		const b = run([visits({ 12: 45 }), orders({ 12: 25 })])
+		expect(a).toEqual(b)
 	})
 })

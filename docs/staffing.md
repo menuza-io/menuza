@@ -235,3 +235,28 @@ to them: return several scopes from the scope-facts route
 demand guide read real orders. The rule is the same as for the phone agent, see
 [phone agent verticals](./phone-agent-verticals.md): the generic core keeps
 neutral vocabulary and the vertical owns the mapping and the words.
+
+## Demand sources and standards per unit
+
+The forecast reads a registry of demand sources
+(`apps/tenant-api/src/services/demand-sources.ts`): `orders` (from the order
+source) and `visits` (people booked or seated, from Reservations). Each source
+has its own standard per position in
+`labor_scope_settings.demand_per_labor_hour` (`{ [unit]: { [positionId]: n } }`;
+`orders` is mirrored in `orders_per_labor_hour`). `computeForecastGap` works out
+the need per source and sums it per position; a position with no standard for a
+unit ignores that unit. The forecast response carries `sources` and per-hour
+`bookedBySource`: counts only, never a guest. Registering `visits` does not
+change `hasOrderSource()`, labor sales or the report catalog wording.
+
+## Shared alarm with Reservations
+
+The staff tick no longer owns the organization's Durable Object alarm: it is the
+`staff` module of the shared scheduler `apps/tenant-api/src/lib/org-alarm.ts`,
+next to the `reservations` module, so one never clobbers the other's pending
+alarm (see
+[scheduled jobs](./scheduled-jobs.md#shared-organization-alarm-staffing-and-reservations)).
+The `visits` demand source reads Reservations bookings (counts per hour only),
+and the forecast units and standards are described above. Workplaces stay opaque
+**scopes** (`main` by default); reservation locations are not staffing scopes
+unless a vertical maps them.

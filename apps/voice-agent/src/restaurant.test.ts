@@ -86,16 +86,21 @@ const MENUS: AgentMenu[] = [
 
 function restaurantTools({
 	settings = {},
+	reservationsAvailable = false,
 	...options
 }: {
 	settings?: Partial<PhoneAgentSettings>
 	handoff?: TextLinkResult
 	channel?: 'phone' | 'web_test'
+	reservationsAvailable?: boolean
 } = {}) {
 	const setup = setupTools({
 		...options,
 		vertical,
-		config: restaurantTestConfig(settings, { menus: MENUS }),
+		config: restaurantTestConfig(settings, {
+			menus: MENUS,
+			reservationsAvailable,
+		}),
 	})
 	const cart = () => (setup.state.vertical as RestaurantCallState).cart
 	return { ...setup, cart }
@@ -338,6 +343,97 @@ describe('send_order_link', () => {
 		})
 		expect(services.createHandoff).not.toHaveBeenCalled()
 		vi.restoreAllMocks()
+	})
+})
+
+describe('table booking tools', () => {
+	const bookingSettings = { vertical: { reservationBooking: true } }
+
+	it('registers the booking tools only when the toggle and phone booking are on, with record_request as the fallback', () => {
+		const names = (options: Parameters<typeof restaurantTools>[0]) =>
+			Object.keys(restaurantTools(options).tools)
+		expect(names({})).not.toContain('book_table')
+		expect(names({ settings: bookingSettings })).not.toContain('book_table')
+		expect(names({ reservationsAvailable: true })).not.toContain('book_table')
+		const on = names({ settings: bookingSettings, reservationsAvailable: true })
+		expect(on).toEqual(
+			expect.arrayContaining([
+				'check_table_availability',
+				'book_table',
+				'record_request',
+			]),
+		)
+	})
+
+	it('maps check_table_availability to reservations.availability', async () => {
+		const { run, services } = restaurantTools({
+			settings: bookingSettings,
+			reservationsAvailable: true,
+		})
+		services.runAction.mockResolvedValueOnce({
+			ok: true,
+			data: { slots: [{ localTime: '19:00', partySizeFits: true }] },
+		})
+		await expect(
+			run('check_table_availability', { date: '2030-01-04', partySize: 2 }),
+		).resolves.toMatchObject({ available: true })
+		expect(services.runAction).toHaveBeenCalledWith({
+			orgId: 'org_1',
+			callId: 'call_1',
+			scopeId: 'loc_1',
+			channel: 'phone',
+			name: 'reservations.availability',
+			input: { date: '2030-01-04', partySize: 2, locationId: 'loc_1' },
+		})
+	})
+
+	it('holds the table and texts the /reserve link through the handoff service', async () => {
+		const { run, services, state } = restaurantTools({
+			settings: bookingSettings,
+			reservationsAvailable: true,
+		})
+		services.runAction.mockResolvedValueOnce({
+			ok: true,
+			data: { held: true, holdMinutes: 15, resumeFragment: 'h=tok123' },
+		})
+		await expect(
+			run('book_table', {
+				date: '2030-01-04',
+				time: '19:30',
+				partySize: 4,
+				firstName: 'Sam',
+			}),
+		).resolves.toMatchObject({ held: true, linkSent: true })
+		expect(services.createHandoff).toHaveBeenCalledWith(
+			expect.objectContaining({
+				path: '/reserve',
+				fragment: 'h=tok123',
+				sendTo: '+15552223333',
+			}),
+		)
+		expect(state.textsSent).toBe(1)
+		expect(state.toolsUsed.has('book_table')).toBe(true)
+		expect(classifyPurpose(state, vertical)).toBe('reservation')
+	})
+
+	it('reports the held table in the summary without the caller name', async () => {
+		const { run, services, state } = restaurantTools({
+			settings: bookingSettings,
+			reservationsAvailable: true,
+		})
+		services.runAction.mockResolvedValueOnce({
+			ok: true,
+			data: { held: true, resumeFragment: 'h=tok123' },
+		})
+		await run('book_table', {
+			date: '2030-01-04',
+			time: '19:30',
+			partySize: 4,
+			firstName: 'Samantha',
+		})
+		const summary = buildSummary(state, summaryOptions)
+		expect(summary).toContain('Held a table for 4 on Fri 7:30 pm')
+		expect(summary).not.toContain('Samantha')
 	})
 })
 

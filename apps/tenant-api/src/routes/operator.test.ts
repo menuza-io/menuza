@@ -177,18 +177,37 @@ describe('Operator Routes', () => {
 					email: 'unverified@example.com',
 					phoneVerified: false,
 				},
+				{
+					// Verified but never consented: must not receive the broadcast.
+					name: 'No Consent User',
+					phone: '+15550000033',
+					email: 'noconsent@example.com',
+					phoneVerified: true,
+				},
+				{
+					// Verified, consented, then opted out.
+					name: 'Opted Out User',
+					phone: '+15550000034',
+					email: 'optedout@example.com',
+					phoneVerified: true,
+				},
 			])
 			.returning()
-		await db.insert(customerSubscriptions).values(
-			created.map((customer) => ({
-				customerId: customer.id,
-				topic: 'marketing' as const,
-				channel: 'email' as const,
-				source: 'signup' as const,
-				subscribedAt: new Date(),
-				confirmedEmailHash: emailConsentHash(customer.email!),
-			})),
-		)
+		const idOf = (name: string) => created.find((c) => c.name === name)!.id
+		await db.insert(customerSubscriptions).values([
+			...['Verified User', 'Unverified User', 'Opted Out User'].map((name) => {
+				const customer = created.find((c) => c.name === name)!
+				return {
+					customerId: customer.id,
+					topic: 'marketing' as const,
+					channel: 'email' as const,
+					source: 'signup' as const,
+					subscribedAt: new Date(),
+					confirmedEmailHash: emailConsentHash(customer.email!),
+					...(name === 'Opted Out User' ? { unsubscribedAt: new Date() } : {}),
+				}
+			}),
+		])
 
 		// Create campaign targeting only verified users
 		const res = await app.request('/operator/marketing/campaigns', {
@@ -228,6 +247,7 @@ describe('Operator Routes', () => {
 			.where(eq(marketingMessages.campaignId, body.campaignId))
 		expect(messages).toHaveLength(1)
 		expect(messages[0]!.status).toBe('Sent')
+		expect(messages[0]!.customerId).toBe(idOf('Verified User'))
 	})
 
 	it('only sends broadcasts to subscribed customers', async () => {

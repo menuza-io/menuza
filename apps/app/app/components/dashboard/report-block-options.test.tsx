@@ -28,6 +28,7 @@ async function openDialog({
 	const onAdd = vi.fn()
 	const picker = {
 		onboardingAvailable: false,
+		bookingsToday: { available: false, locations: [] },
 		savedReports: reports,
 		templateGroups: reportTemplateGroups(),
 	}

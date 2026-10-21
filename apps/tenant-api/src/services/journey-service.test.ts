@@ -13,7 +13,9 @@ import {
 	journeyRuns,
 	journeyStepExecutions,
 	marketingMessages,
+	customerSubscriptions,
 } from '@repo/tenant-db'
+import { sendSms } from '@repo/sms'
 import {
 	interpolateMergeTags,
 	JOURNEY_PROCESSING_LEASE_MS,
@@ -31,6 +33,7 @@ import {
 	getJourneyRunTimeline,
 	triggerTestJourney,
 } from './journey-service.ts'
+import { emailConsentHash } from './marketing-audience.ts'
 
 // Mock external dispatch modules
 vi.mock('@repo/email', () => ({
@@ -559,6 +562,155 @@ describe('Journey Service & Regional Message Dispatching', () => {
 			expect(result.status).toBe('failed')
 			expect(result.statusCode).toBe(500)
 			expect(result.error).toContain('Invalid recipient domain')
+		})
+	})
+
+	describe('executeJourneyStep reservation consent', () => {
+		async function setup(triggerType: 'reservation_booked' | 'manual') {
+			const db = await getTenantDb(orgId)
+			const [customer] = await db
+				.insert(customers)
+				.values({
+					name: 'Guest One',
+					email: 'guest@example.com',
+					phone: '+14155550123',
+					phoneVerified: false,
+				})
+				.returning()
+			const [journey] = await db
+				.insert(marketingJourneys)
+				.values({ name: 'Thanks', triggerType })
+				.returning()
+			const [run] = await db
+				.insert(journeyRuns)
+				.values({ journeyId: journey!.id, customerId: customer!.id })
+				.returning()
+			const subscribe = (
+				channel: 'email' | 'sms',
+				unsubscribed = false,
+				confirmed = true,
+			) =>
+				db.insert(customerSubscriptions).values({
+					customerId: customer!.id,
+					topic: 'reservations',
+					channel,
+					source: 'reservation_booking',
+					subscribedAt: new Date(),
+					unsubscribedAt: unsubscribed ? new Date() : null,
+					// Double opt-in: an email counts only once its owner confirmed it.
+					confirmedEmailHash:
+						channel === 'email' && confirmed
+							? emailConsentHash('guest@example.com')
+							: null,
+				})
+			const step = (nodeId: string, nodeType: 'action_email' | 'action_sms') =>
+				executeJourneyStep(orgId, {
+					orgId,
+					journeyId: journey!.id,
+					runId: run!.id,
+					customerId: customer!.id,
+					nodeId,
+					nodeType,
+					config:
+						nodeType === 'action_email'
+							? { subject: 'Hi', content: 'Thanks {{firstName}}' }
+							: { messageText: 'Thanks {{firstName}}' },
+				})
+			return {
+				db,
+				customer: customer!,
+				journey: journey!,
+				run: run!,
+				subscribe,
+				step,
+			}
+		}
+
+		it('skips every step of a reservation journey without a reservations subscription and sends nothing', async () => {
+			const { db, run, step } = await setup('reservation_booked')
+			vi.mocked(sendSms).mockClear()
+			vi.mocked(sendOciEmail).mockClear()
+			const email = await step('n1', 'action_email')
+			const sms = await step('n2', 'action_sms')
+			expect(email).toMatchObject({ success: true, status: 'skipped' })
+			expect(sms).toMatchObject({ success: true, status: 'skipped' })
+			expect(sendSms).not.toHaveBeenCalled()
+			expect(sendOciEmail).not.toHaveBeenCalled()
+			const rows = await db
+				.select()
+				.from(journeyStepExecutions)
+				.where(eq(journeyStepExecutions.runId, run.id))
+				.all()
+			expect(rows.map((r) => r.status)).toEqual(['skipped', 'skipped'])
+			// A retry of the same step stays one skipped row.
+			await step('n1', 'action_email')
+			expect(
+				await db
+					.select()
+					.from(journeyStepExecutions)
+					.where(eq(journeyStepExecutions.runId, run.id))
+					.all(),
+			).toHaveLength(2)
+		})
+
+		it('sends on the consented channel only: an email-only guest has the SMS step skipped', async () => {
+			const { subscribe, step } = await setup('reservation_booked')
+			await subscribe('email')
+			vi.mocked(sendSms).mockClear()
+			expect(await step('n1', 'action_email')).toMatchObject({
+				status: 'delivered',
+			})
+			expect(await step('n2', 'action_sms')).toMatchObject({
+				status: 'skipped',
+			})
+			expect(sendSms).not.toHaveBeenCalled()
+		})
+
+		it('skips an email step while the address is still unconfirmed (double opt-in)', async () => {
+			const { subscribe, step } = await setup('reservation_booked')
+			await subscribe('email', false, false)
+			vi.mocked(sendOciEmail).mockClear()
+			expect(await step('n1', 'action_email')).toMatchObject({
+				success: true,
+				status: 'skipped',
+			})
+			expect(sendOciEmail).not.toHaveBeenCalled()
+		})
+
+		it('stops later steps when the guest withdraws consent mid-run', async () => {
+			const { db, customer, subscribe, step } =
+				await setup('reservation_booked')
+			await subscribe('email')
+			expect(await step('n1', 'action_email')).toMatchObject({
+				status: 'delivered',
+			})
+			await db
+				.update(customerSubscriptions)
+				.set({ unsubscribedAt: new Date() })
+				.where(eq(customerSubscriptions.customerId, customer.id))
+			vi.mocked(sendOciEmail).mockClear()
+			expect(await step('n2', 'action_email')).toMatchObject({
+				status: 'skipped',
+			})
+			expect(sendOciEmail).not.toHaveBeenCalled()
+		})
+
+		it('treats an unsubscribed row as no consent', async () => {
+			const { subscribe, step } = await setup('reservation_booked')
+			await subscribe('email', true)
+			expect(await step('n1', 'action_email')).toMatchObject({
+				status: 'skipped',
+			})
+		})
+
+		it("keeps today's behavior for journeys with any other trigger", async () => {
+			const { step } = await setup('manual')
+			expect(await step('n1', 'action_email')).toMatchObject({
+				status: 'delivered',
+			})
+			expect(await step('n2', 'action_sms')).toMatchObject({
+				status: 'delivered',
+			})
 		})
 	})
 

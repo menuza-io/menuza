@@ -29,6 +29,11 @@ import {
 } from '../../tests/staff-harness.ts'
 import { describeStaffError } from '../services/staff-audit.ts'
 
+// The largest rate the API accepts. Its 11 digits "10000000000" only fit a
+// 13-digit epoch-ms timestamp as 1710000000000 (March 2024), so the text can
+// never appear in a current timestamp, unlike a 4-digit needle.
+const HIDDEN_RATE_MINOR = 10_000_000_000
+
 const orgs = vi.hoisted(() => new Map<string, TestOrg>())
 
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
@@ -36,12 +41,17 @@ vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
 }))
 
-/** Random ids can hold any four digits; the PIN checks look at the rest. */
+/**
+ * Random ids and epoch timestamps can hold any four digits; the PIN and pay
+ * checks look at the rest.
+ */
 const withoutIds = (text: string) =>
-	text.replace(
-		/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,
-		'',
-	)
+	text
+		.replace(
+			/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,
+			'',
+		)
+		.replace(/\b\d{13}\b/g, '')
 
 describe('Adversarial: /operator/staff', () => {
 	let h: StaffHarness
@@ -544,8 +554,8 @@ describe('Adversarial: /operator/staff', () => {
 			const managerAudit = await h.request('GET', '/audit?limit=200', {
 				token: manager,
 			})
-			expect(managerAudit.raw).not.toContain('7777')
-			expect(managerAudit.raw).not.toContain('1642')
+			expect(withoutIds(managerAudit.raw)).not.toContain('7777')
+			expect(withoutIds(managerAudit.raw)).not.toContain('1642')
 			expect(
 				managerAudit.body.entries.every(
 					(e: any) => e.sensitivity === 'standard',
@@ -591,7 +601,7 @@ describe('Adversarial: /operator/staff', () => {
 			expect(blocked.raw).not.toContain('1987-06-15')
 			const blockedPay = await h.request('GET', `/${staffId}?include=pay`)
 			expect(blockedPay.status).toBe(500)
-			expect(blockedPay.raw).not.toContain('1642')
+			expect(withoutIds(blockedPay.raw)).not.toContain('1642')
 			await db.run(sql.raw('DROP TRIGGER no_audit'))
 		})
 	})
@@ -749,7 +759,7 @@ describe('Adversarial: /operator/staff', () => {
 				token,
 			})
 			expect(detail.status).toBe(200)
-			expect(detail.raw).not.toContain('1642')
+			expect(withoutIds(detail.raw)).not.toContain('1642')
 			expect(detail.raw).not.toContain('1987-06-15')
 			expect(detail.body.restricted).toEqual({ pay: true, private: true })
 
@@ -1083,7 +1093,7 @@ describe('Adversarial: /operator/staff', () => {
 			})
 			for (const [scopeId, rateMinor] of [
 				[LOC_1, 1111],
-				[LOC_2, 2222],
+				[LOC_2, HIDDEN_RATE_MINOR],
 			] as const) {
 				await h.request('POST', `/${b.staff.id}/jobs`, {
 					body: {
@@ -1107,9 +1117,9 @@ describe('Adversarial: /operator/staff', () => {
 				token,
 			})
 			expect(detail.raw).toContain('1111')
-			expect(detail.raw).not.toContain('2222')
+			expect(detail.raw).not.toContain(String(HIDDEN_RATE_MINOR))
 			const jobs = await h.request('GET', `/${b.staff.id}/jobs`, { token })
-			expect(jobs.raw).not.toContain('2222')
+			expect(jobs.raw).not.toContain(String(HIDDEN_RATE_MINOR))
 			const jobIds = (await h.request('GET', `/${b.staff.id}/jobs`)).body
 				.jobs as Array<{ id: string; scopeId: string }>
 			const hidden = jobIds.find((j) => j.scopeId === LOC_2)!

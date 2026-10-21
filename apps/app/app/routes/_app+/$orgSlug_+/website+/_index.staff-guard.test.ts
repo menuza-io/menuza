@@ -26,6 +26,24 @@ const regional = vi.hoisted(() => ({ post: vi.fn() }))
 vi.mock('#app/utils/staffing/regional-internal.server.ts', () => ({
 	postRegionalStaffInternal: regional.post,
 }))
+vi.mock('#app/utils/reservations/regional-internal.server.ts', () => ({
+	postRegionalReservationsInternal: vi.fn(
+		async () =>
+			new Response(
+				JSON.stringify({
+					reservations: 0,
+					upcomingReservations: 0,
+					guests: 0,
+					waitlistEntries: 0,
+					tables: 0,
+					experiences: 0,
+					payments: 0,
+					auditEntries: 0,
+				}),
+				{ status: 200 },
+			),
+	),
+}))
 
 type Sent = { dataRegion: string; path: string; body: Record<string, unknown> }
 let sent: Sent[]

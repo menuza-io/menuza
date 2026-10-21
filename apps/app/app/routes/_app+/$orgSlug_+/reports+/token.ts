@@ -14,6 +14,10 @@ import { data } from 'react-router'
 import { ENV } from 'varlock/env'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import {
+	intersectScopeIds,
+	resolveReservationsReportAccess,
+} from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccess } from '#app/utils/staffing/report-access.server.ts'
 import {
 	hasAdminReportAccess,
@@ -32,10 +36,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 	// Operator analytics token minting grants regional tenant database access.
 	// Analytics, settings, or website admin permission opens the
-	// organization-wide subjects (customers, shop orders). Without any of them,
-	// only the staff subjects below can be granted, each by its own permission
-	// and limited to the person's scopes, so a manager holding only staff
-	// report grants still gets a token. A person with neither gets a 403.
+	// organization-wide subjects (customers, text subscribers, shop orders).
+	// Without any of them, only the restricted module subjects (staff,
+	// Reservations) below can be granted, each by its own permission and limited
+	// to the person's scopes or locations, so a manager holding only module
+	// report grants still gets a token. A person with none gets a 403.
 	const hasAdminAccess = await hasAdminReportAccess(userId, organization.id)
 	// Call reports include caller numbers, so they also need call access.
 	// Order reports follow the orders page, which menu access covers (and, as
@@ -61,15 +66,33 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		organizationId: organization.id,
 		impersonated: await isImpersonating(request),
 	})
-	if (!hasAdminAccess && staff.subjects.length === 0) {
+	// Bookings, waitlist and pacing reports need the reservation report grant
+	// and the master Reservations flag, limited to the person's locations.
+	const reservations = await resolveReservationsReportAccess({
+		request,
+		userId,
+		organizationId: organization.id,
+	})
+	if (
+		!hasAdminAccess &&
+		staff.subjects.length === 0 &&
+		reservations.subjects.length === 0
+	) {
 		throw createForbiddenResponse(REPORT_ADMIN_PERMISSIONS.join(' or '))
 	}
+	const scopeIds =
+		staff.subjects.length > 0 && reservations.subjects.length > 0
+			? intersectScopeIds(staff.scopeIds, reservations.scopeIds)
+			: reservations.subjects.length > 0
+				? reservations.scopeIds
+				: staff.scopeIds
 	const subjects: RestrictedReportSubject[] = [
 		// A module-only grant never lists the organization-wide subjects.
 		...(hasAdminAccess ? ORG_WIDE_REPORT_SUBJECTS : []),
 		...(canReadPhoneCalls ? (['phone_calls'] as const) : []),
 		...(canReadOrders ? ORDER_REPORT_SUBJECTS : []),
 		...staff.subjects,
+		...reservations.subjects,
 	]
 
 	const minted = await mintOperatorAnalyticsToken({
@@ -78,7 +101,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		orgId: organization.id,
 		role: 'operator',
 		subjects,
-		scopeIds: staff.scopeIds,
+		scopeIds,
 	})
 
 	const { tenantApiUrl } = resolveRegionalTenantApiUrls(organization.dataRegion)

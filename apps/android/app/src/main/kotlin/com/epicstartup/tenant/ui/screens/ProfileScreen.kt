@@ -50,6 +50,7 @@ internal class ProfileScreen(private val host: ScreenHost) : Screen {
 	private val saved = FormMessage(host.uiContext, host.palette)
 	private val save = PrimaryButton(host.uiContext, host.palette)
 	private val languageRow = ThemedPickerRow(host.uiContext, host.palette)
+	private val reservationsCard = ThemedCard(host.uiContext, host.palette)
 	private val container: View
 
 	private var loaded = false
@@ -93,9 +94,26 @@ internal class ProfileScreen(private val host: ScreenHost) : Screen {
 			setOnClickListener { host.state.signOut() }
 		}
 
+		reservationsCard.titleBlock(
+			context = host.uiContext,
+			palette = host.palette,
+			title = host.uiContext.getString(R.string.res_title),
+			subtitle = host.uiContext.getString(R.string.res_entry_subtitle),
+		)
+		reservationsCard.addField(
+			PrimaryButton(host.uiContext, host.palette).apply {
+				bind(host.uiContext.getString(R.string.res_open), isLoading = false, isEnabled = true) {
+					host.state.reservations?.openHome()
+				}
+			},
+			host.uiContext.dp(16f),
+		)
+		reservationsCard.visibility = View.GONE
+
 		container = host.uiContext.screenScroll(
 			host.uiContext.screenColumn().apply {
-				addSpaced(details, 0)
+				addSpaced(reservationsCard, 0)
+				addSpaced(details, host.uiContext.dp(20f))
 				addSpaced(language, host.uiContext.dp(20f))
 				addSpaced(signOut, host.uiContext.dp(20f))
 			},
@@ -103,6 +121,8 @@ internal class ProfileScreen(private val host: ScreenHost) : Screen {
 	}
 
 	override fun update() {
+		reservationsCard.visibility =
+			if (host.state.reservations?.isAvailable == true) View.VISIBLE else View.GONE
 		val profile = host.state.profile
 		val name = profile?.name.orEmpty()
 		val email = profile?.email.orEmpty()

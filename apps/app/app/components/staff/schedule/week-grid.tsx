@@ -31,7 +31,7 @@ import {
 } from '#app/utils/staffing/timesheet-view.ts'
 import { type BoardProps, type CellRef } from './board-types.ts'
 import { DemandBars } from './demand-strip.tsx'
-import { ForecastCells, ShareCell } from './forecast-strip.tsx'
+import { bookedUnitsOf, ForecastCells, ShareCell } from './forecast-strip.tsx'
 import { ScheduleDnd } from './schedule-dnd.tsx'
 import { ShiftBlock } from './shift-block.tsx'
 import { useBlockKeys } from './use-block-keys.ts'
@@ -235,6 +235,10 @@ export function WeekGrid(props: BoardProps) {
 	)
 	const { orgSlug } = useParams()
 	const showForecast = forecast !== null && forecast.configured
+	// People already booked show even before any standard is set.
+	const hasBookedUnits =
+		forecast?.days.some((day) => bookedUnitsOf(day) > 0) ?? false
+	const showForecastRow = showForecast || hasBookedUnits
 	const showShare = showCost && hasShareRow(week)
 	const openDayLabel = (date: string) => {
 		const day = longDay(date)
@@ -424,14 +428,18 @@ export function WeekGrid(props: BoardProps) {
 								})}
 							</tr>
 						) : null}
-						{showForecast ? (
+						{showForecastRow ? (
 							<tr className="border-border border-t">
 								<th
 									scope="row"
 									className="bg-background sticky start-0 z-30 w-44 min-w-44 p-2 text-start align-bottom text-xs font-normal"
 								>
 									<span className="text-muted-foreground">
-										<Trans>Coverage against typical orders</Trans>
+										{showForecast ? (
+											<Trans>Coverage against typical orders</Trans>
+										) : (
+											<Trans>Booked ahead</Trans>
+										)}
 									</span>
 								</th>
 								{week.dates.map((date) => {
@@ -441,7 +449,9 @@ export function WeekGrid(props: BoardProps) {
 											key={date}
 											className="border-border border-s px-1 pt-1 pb-1.5 align-top"
 										>
-											{day ? <ForecastCells day={day} /> : null}
+											{day ? (
+												<ForecastCells day={day} configured={showForecast} />
+											) : null}
 										</td>
 									)
 								})}

@@ -143,13 +143,18 @@ describe('shop orders on the payment mock', () => {
 		expect(orders[0]).toMatchObject({ amountCents: 2500, status: 'paid' })
 	})
 
-	it('onboarding is refused outside the US', async () => {
+	it('Stripe onboarding is refused outside the US, Checkout.com is open to every region', async () => {
 		const org = await createOrg('mock-riyadh', 'ksa')
-		for (const provider of ['stripe', 'checkout'] as const) {
-			expect(
-				await mockOnboardOrganization({ orgSlug: org.slug, provider }),
-			).toMatchObject({ ok: false, status: 409 })
-		}
+		expect(
+			await mockOnboardOrganization({ orgSlug: org.slug, provider: 'stripe' }),
+		).toMatchObject({ ok: false, status: 409, error: 'stripe_us_only' })
+		// KSA organizations take their online payments through Checkout.com.
+		expect(
+			await mockOnboardOrganization({
+				orgSlug: org.slug,
+				provider: 'checkout',
+			}),
+		).toMatchObject({ ok: true })
 	})
 
 	it('forged webhooks are rejected by the real routes', async () => {

@@ -1,6 +1,7 @@
-import { Trans, t } from '@lingui/macro'
+import { Trans, plural, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { cn } from '@repo/ui'
+import { useScopeLabel } from '#app/components/staff/scope-wording-provider.tsx'
 import { type ForecastDayRow } from '#app/utils/staffing/labor-types.ts'
 import { formatShare } from '#app/utils/staffing/labor-view.ts'
 import { type DayShare } from '#app/utils/staffing/schedule-labor.ts'
@@ -14,8 +15,50 @@ import { formatMoneyMinor } from '#app/utils/staffing/staff-format.ts'
  * sales. The cells are read as one sentence, and the day's totals sit under
  * them in words, so nothing depends on color alone.
  */
-export function ForecastCells({ day }: { day: ForecastDayRow }) {
+/** The demand source whose booked units the strip shows (people, not orders). */
+export const BOOKED_SOURCE_ID = 'visits'
+
+/** People already booked across the day, summed from the hours' counts. */
+export function bookedUnitsOf(day: ForecastDayRow): number {
+	return day.hours.reduce(
+		(sum, slot) => sum + (slot.bookedBySource[BOOKED_SOURCE_ID] ?? 0),
+		0,
+	)
+}
+
+/**
+ * "12 covers booked" for a restaurant, "12 visits booked" for any other
+ * business: a bare count, never who.
+ */
+export function BookedUnits({ count }: { count: number }) {
+	const { isLocation } = useScopeLabel()
+	if (count <= 0) return null
+	return (
+		<p className="text-muted-foreground text-xs tabular-nums">
+			{isLocation
+				? plural(count, {
+						one: '# cover booked',
+						other: '# covers booked',
+					})
+				: plural(count, {
+						one: '# visit booked',
+						other: '# visits booked',
+					})}
+		</p>
+	)
+}
+
+export function ForecastCells({
+	day,
+	configured = true,
+}: {
+	day: ForecastDayRow
+	/** Without any standard there is nothing to judge the hours by: only the booked count shows. */
+	configured?: boolean
+}) {
 	const { _ } = useLingui()
+	const booked = bookedUnitsOf(day)
+	if (!configured) return <BookedUnits count={booked} />
 	const short = Math.round(day.shortHours * 10) / 10
 	const over = Math.round(day.surplusHours * 10) / 10
 	const label =
@@ -55,6 +98,7 @@ export function ForecastCells({ day }: { day: ForecastDayRow }) {
 					/>
 				))}
 			</div>
+			<BookedUnits count={booked} />
 			{short > 0 || over > 0 ? (
 				<p className="text-xs tabular-nums">
 					{short > 0 ? (

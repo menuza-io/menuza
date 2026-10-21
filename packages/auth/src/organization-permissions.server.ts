@@ -231,6 +231,18 @@ export const ORG_PERMISSIONS = {
 	UPDATE_LABOR_POLICY_ANY: 'update:labor_policy:any' as const,
 	READ_HIRING_ANY: 'read:hiring:any' as const,
 	UPDATE_HIRING_ANY: 'update:hiring:any' as const,
+
+	// Reservations: book, waitlist, guestbook, setup, reports, payments. Every
+	// reservations surface is also behind the org-level reservations.* feature
+	// flags (see apps/app utils/reservations/access.server.ts).
+	READ_RESERVATION_ANY: 'read:reservation:any' as const,
+	UPDATE_RESERVATION_ANY: 'update:reservation:any' as const,
+	READ_RESERVATION_SETTINGS_ANY: 'read:reservation_settings:any' as const,
+	UPDATE_RESERVATION_SETTINGS_ANY: 'update:reservation_settings:any' as const,
+	READ_RESERVATION_GUEST_ANY: 'read:reservation_guest:any' as const,
+	UPDATE_RESERVATION_GUEST_ANY: 'update:reservation_guest:any' as const,
+	READ_RESERVATION_REPORT_ANY: 'read:reservation_report:any' as const,
+	UPDATE_RESERVATION_PAYMENT_ANY: 'update:reservation_payment:any' as const,
 } as const
 
 /**

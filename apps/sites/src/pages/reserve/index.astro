@@ -1,0 +1,94 @@
+---
+import { msg } from '@lingui/core/macro'
+import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import ReservationLabels from '~/components/reservations/ReservationLabels.astro'
+import SitePage from '~/components/SitePage.astro'
+import { siteContainer } from '~/lib/media'
+import { fetchPublishedReservations, fetchPublishedSitePage } from '~/lib/org'
+import { getTenantApiUrl } from '~/lib/tenant-api'
+import { translate } from '~/lib/translate'
+
+const organization = Astro.locals.organization
+const i18n = Astro.locals.i18n
+const orgSlug = Astro.locals.orgSlug
+const customHost = Astro.locals.customHost
+
+if (!organization) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+// The booking flow exists only while online booking is on. Until then `/reserve`
+// stays whatever the organization published there, if anything.
+const gate = await fetchPublishedReservations({ slug: orgSlug, host: customHost })
+const cmsPage = gate
+	? null
+	: await fetchPublishedSitePage({
+			slug: orgSlug,
+			host: customHost,
+			pageSlug: 'reserve',
+			lng: Astro.locals.requestedLocale,
+		})
+if (!gate && !cmsPage) {
+	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+}
+
+const heading = i18n._(msg`Reserve a table`)
+const subtitle = translate(i18n, msg`Book a table at {name}.`, { name: organization.name })
+const noscript = i18n._(
+	msg`Online booking needs JavaScript. Please call the restaurant to book a table.`,
+)
+const loading = i18n._(msg`Loading…`)
+const tenantApiUrl = getTenantApiUrl(organization.dataRegion)
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''
+// Texting is not offered to guests of Saudi-hosted restaurants: email only.
+const smsAllowed = (organization.dataRegion || 'us').toLowerCase() !== 'ksa'
+const phoneExample = smsAllowed ? '+1 415 555 0123' : '+966 50 123 4567'
+---
+
+{cmsPage ? (
+	<SitePage
+		organization={organization}
+		page={cmsPage}
+		title={`${cmsPage.seo?.title || cmsPage.title} - ${organization.name}`}
+		description={cmsPage.seo?.description || undefined}
+		noIndex={cmsPage.seo?.noIndex ?? false}
+	>
+		<RenderBlocks sections={cmsPage.sections} />
+	</SitePage>
+) : (
+	<SitePage
+		organization={organization}
+		page={{ id: 'reserve', title: heading, slug: 'reserve', isHomePage: false, sections: [] }}
+		title={`${heading} - ${organization.name}`}
+		description={subtitle}
+	>
+		{
+			turnstileSiteKey && tenantApiUrl ? (
+				<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+			) : null
+		}
+		<ReservationLabels />
+		<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+			<header class="pt-6 pb-6 sm:pt-10 sm:pb-8">
+				<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+					{heading}
+				</h1>
+				<p class="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{subtitle}</p>
+			</header>
+			<div
+				id="reserve-root"
+				class="flex max-w-3xl flex-col gap-6"
+				data-org-name={organization.name}
+				data-sms-allowed={smsAllowed ? 'true' : 'false'}
+				data-phone-example={phoneExample}
+				data-turnstile-site-key={turnstileSiteKey || undefined}
+			>
+				<p class="text-sm text-muted-foreground">{loading}</p>
+				<noscript><p class="text-sm text-foreground">{noscript}</p></noscript>
+			</div>
+		</div>
+		<script>
+			import '~/scripts/reserve-page.ts'
+		</script>
+	</SitePage>
+)}

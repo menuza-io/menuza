@@ -134,6 +134,13 @@
 			"when": 1792532036810,
 			"tag": "0018_customer_subscription_confirmation_sent",
 			"breakpoints": true
+		},
+		{
+			"idx": 19,
+			"version": "6",
+			"when": 1792532037810,
+			"tag": "0019_reservations",
+			"breakpoints": true
 		}
 	]
 }

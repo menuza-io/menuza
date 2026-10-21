@@ -24,8 +24,32 @@ export const JOURNEY_TRIGGER_TYPES = [
 	'profile_completed',
 	'custom_event',
 	'manual',
+	'reservation_booked',
+	'reservation_completed',
+	'reservation_no_show',
+	'reservation_cancelled',
 ] as const
 export type JourneyTriggerType = (typeof JOURNEY_TRIGGER_TYPES)[number]
+
+/**
+ * Triggers fired by the Reservations module. Offered in the editor only while
+ * the module is on, and their steps check `reservations` consent.
+ */
+export const RESERVATION_JOURNEY_TRIGGER_TYPES = [
+	'reservation_booked',
+	'reservation_completed',
+	'reservation_no_show',
+	'reservation_cancelled',
+] as const
+export type ReservationJourneyTriggerType =
+	(typeof RESERVATION_JOURNEY_TRIGGER_TYPES)[number]
+export function isReservationJourneyTrigger(
+	value: unknown,
+): value is ReservationJourneyTriggerType {
+	return (RESERVATION_JOURNEY_TRIGGER_TYPES as readonly unknown[]).includes(
+		value,
+	)
+}
 export const journeyTriggerTypeSchema = z.enum(JOURNEY_TRIGGER_TYPES)
 
 export const JOURNEY_RUN_STATUSES = [

@@ -13,6 +13,8 @@ import type { TenantDatabase } from './types.ts'
 import { TENANT_ORG_ID_PATTERN } from './regions.ts'
 import { applyTenantMigrations } from './migrations.ts'
 
+const TENANT_BUSY_TIMEOUT_MS = 30_000
+
 type TenantDbInstance = {
 	db: ReturnType<typeof drizzle<typeof schema>>
 	client: ReturnType<typeof createClient>
@@ -121,6 +123,14 @@ async function getTenantDbFromFilesystem(
 			throw new Error(`Database file not found: ${dbPath}`)
 		}
 
+		// No `timeout` client option on purpose: it would put a busy wait on every
+		// extra connection `client.transaction()` opens. libsql's driver is
+		// synchronous, so a same-process writer waiting for a lock held by another
+		// in-process transaction blocks the event loop for the whole timeout
+		// (the lock holder cannot run), which stalled concurrent kiosk pairing,
+		// careers and refresh-rotation requests for ~30 s each. Same-process
+		// writers are serialized by `runExclusive`; `retryOnSqliteBusy` covers the
+		// rest.
 		const client = createClient({ url: `file:${dbPath}` })
 		const db = drizzle(client, { schema })
 
@@ -128,7 +138,9 @@ async function getTenantDbFromFilesystem(
 			// WAL is the default for a single-writer VM. DELETE is only needed when
 			// a FUSE replicator (LiteFS) is in front of the file.
 			await db.run(sql`PRAGMA journal_mode = WAL;`)
-			await db.run(sql`PRAGMA busy_timeout = 30000;`)
+			await db.run(
+				sql`PRAGMA busy_timeout = ${sql.raw(String(TENANT_BUSY_TIMEOUT_MS))};`,
+			)
 			// Enforce referential integrity. SQLite/libSQL default to OFF, which
 			// would silently accept orphaned rows and disable ON DELETE CASCADE.
 			await db.run(sql`PRAGMA foreign_keys = ON;`)

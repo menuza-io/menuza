@@ -1,3 +1,4 @@
+import { reservationsSubjects } from './catalog-reservations.ts'
 import { staffingSubjects } from './catalog-staffing.ts'
 import { type Measure, type ValueMeasure, isRatioMeasure } from './dsl.ts'
 
@@ -1100,6 +1101,7 @@ export const organizationCatalog: ReportCatalog = {
 			fields: phoneCallFields,
 		},
 		...staffingSubjects,
+		...reservationsSubjects,
 		{
 			id: 'notes',
 			label: 'Notes',

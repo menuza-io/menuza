@@ -151,7 +151,7 @@ export async function createCheckoutShopHostedPayment(
 		customerEmail?: string | null
 		/** Merchant reference; defaults to the metadata orgId (shop behavior). */
 		reference?: string | null
-		/** Billing country for the hosted session; defaults to 'US'. */
+		/** Billing country for the hosted page; defaults to 'US'. */
 		billingCountry?: string | null
 	},
 ): Promise<CheckoutShopPaymentSession> {

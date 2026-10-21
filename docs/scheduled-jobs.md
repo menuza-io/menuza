@@ -26,21 +26,39 @@ as the Admin cache route).
 
 ## Cron schedules (UTC)
 
-| Cron        | Route                                       | Purpose                                         |
-| ----------- | ------------------------------------------- | ----------------------------------------------- |
-| `0 2 * * *` | `/resources/jobs/audit-log-archival`        | Archive old audit logs                          |
-| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`         | Remove expired MCP tokens                       |
-| `0 3 * * *` | `/resources/jobs/job-postings-expiry`       | Mark job postings past their closing date       |
-| `0 4 * * *` | `/resources/jobs/gdpr-erasure`              | Process pending GDPR erasures                   |
-| `0 4 * * *` | `/resources/jobs/voice-retention`           | Delete expired call recordings and caller data  |
-| `0 4 * * *` | `/resources/jobs/staffing-outbox`           | Deliver staffing link, unlink, and erase events |
-| `0 5 * * *` | `/resources/jobs/form-submission-retention` | Not scheduled (see below)                       |
+| Cron        | Route                                            | Purpose                                         |
+| ----------- | ------------------------------------------------ | ----------------------------------------------- |
+| `0 2 * * *` | `/resources/jobs/audit-log-archival`             | Archive old audit logs                          |
+| `0 3 * * *` | `/resources/jobs/mcp-token-cleanup`              | Remove expired MCP tokens                       |
+| `0 3 * * *` | `/resources/jobs/job-postings-expiry`            | Mark job postings past their closing date       |
+| `0 4 * * *` | `/resources/jobs/gdpr-erasure`                   | Process pending GDPR erasures                   |
+| `0 4 * * *` | `/resources/jobs/voice-retention`                | Delete expired call recordings and caller data  |
+| `0 4 * * *` | `/resources/jobs/staffing-outbox`                | Deliver staffing link, unlink, and erase events |
+| `0 5 * * *` | `/resources/jobs/form-submission-retention`      | Not scheduled (see below)                       |
+| `0 * * * *` | `/resources/jobs/reservation-payments-reconcile` | Re-check lingering reservation payments         |
 
 The hourly `0 * * * *` trigger fans out to every regional tenant-api node: the
-tenant engagement sync and the staff tick (below). The two are independent
-requests, so one failing never blocks the other. The Workers free plan allows
-five cron triggers per Worker, so new daily jobs share an existing trigger (each
-job is still its own request with its own error logging).
+tenant engagement sync, the staff tick and the reservations tick (below), and
+also calls the App job that reconciles reservation payments (below). They are
+independent requests, so one failing never blocks the others. The Workers free
+plan allows five cron triggers per Worker, so new daily jobs share an existing
+trigger (each job is still its own request with its own error logging).
+
+### Shared organization alarm (staffing and reservations)
+
+A Durable Object has a single storage alarm slot, so the US Worker cannot arm
+one alarm per module. `apps/tenant-api/src/lib/org-alarm.ts` is the generic
+scheduler: a module (`staff`, `reservations`) registers its tick path, an
+activity matcher and a `run` that reports whether it needs a follow-up and when
+its next work is due. A request that shows a module is in use arms the alarm;
+the shared `alarm()` handler runs the modules and re-arms the single alarm for
+the earliest due time (clamped between 30 seconds and one hour) only while some
+module still has something to watch, and a module stops re-arming after six
+failed alarms in a row. An idle organization goes quiet and costs nothing; the
+hourly cron or the next request wakes it again. The Node (OCI) runtime drives
+the same modules from its interval loops (`STAFFING_TICK_INTERVAL_SECONDS`,
+`RESERVATIONS_TICK_INTERVAL_SECONDS`). Arming or firing one module therefore
+never clobbers a pending alarm of the other.
 
 ### Staff tick
 
@@ -84,6 +102,50 @@ period has passed (the organization's setting, 365 days by default) are deleted,
 master `staffing.enabled` flag is on even if `staffing.hiring` was turned off,
 and it only ever selects declined rows. An organization with applicants but no
 staff yet is still ticked, so its first managers are told about new applicants.
+
+### Reservations tick
+
+`POST /api/reservations/tick` on each tenant-api node (token:
+`INTERNAL_COMMAND_TOKEN`, empty body `{}`) runs the Reservations module's
+scheduled work for every organization on that node: expiring holds and
+large-party requests, automatic no-shows, due guest messages and reminders with
+their retries, and delivery of manager alerts to the App. It adds **no cron
+slot**: it is the third request in the hourly fan-out
+(`Tenant reservations tick`), after the staff tick, and a failing node or task
+never blocks the others. The response is counts only.
+
+Tasks (`RESERVATIONS_TICK_TASK_NAMES`): `expire_holds`, `expire_requests`
+(unapproved large-party requests and unpaid `pending_payment` bookings),
+`auto_no_show`, `waitlist_offers`, `notify_me_match`, `deliver_messages`,
+`deliver_outbox` (manager alerts and payment commands),
+`reconcile_guest_counters` and `purge`. A tick is skipped for an organization
+whose flags it cannot confirm (`flags_unknown`, it reads them from the App and
+fails closed), that is busy, has no database or has `reservations.enabled` off.
+A body of `{ "orgId": "..." }` ticks one organization; an empty body fans out
+over every organization on the node with a 50-second budget, and what is not
+reached is reported as deferred.
+
+Hourly is the safety net. The US Workers node arms a per-organization Durable
+Object alarm and the Node (OCI) node runs an in-process interval
+(`RESERVATIONS_TICK_INTERVAL_SECONDS`, default 120, minimum 60, `0` turns it
+off), so reminders and retries are not an hour late where Reservations is in
+use. Every task is idempotent, so the drivers may overlap.
+
+Manager alerts reach the App at `POST /resources/reservations/notify` (the
+regional node posts `{ orgId, eventId, kind, locationId, count }` with the
+internal token). The App turns each into one in-app notification per eligible
+member, plus an email unless `RESERVATIONS_EMAIL_ENABLED=false` (the switch also
+stops guest email on a tenant-api node; in-app notifications are unaffected).
+
+### Reservation payments reconcile
+
+`/resources/jobs/reservation-payments-reconcile` (App, hourly, rides the
+existing `0 * * * *` trigger, no cron slot of its own) re-checks every
+reservation payment session and refund the regions still list as pending, and
+pushes terminal provider states through the same paths as the browser poll and
+the webhooks. The App is the only caller of Stripe and Checkout.com, so this job
+lives in the App. It is idempotent, skips an item after a transient provider
+failure until the next run, and answers with counts only.
 
 ### Staffing outbox
 

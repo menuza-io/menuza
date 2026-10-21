@@ -97,6 +97,7 @@ Set secrets on each Worker once. Never commit values.
 cd apps/app
 npx wrangler secret put SESSION_SECRET
 npx wrangler secret put INTERNAL_COMMAND_TOKEN
+npx wrangler secret put SITES_RESERVATION_PAYMENT_TOKEN # same value on apps/sites; never INTERNAL_COMMAND_TOKEN
 npx wrangler secret put LAUNCH_STATUS
 # See docs/launch-checklist.md for the full list per app
 ```

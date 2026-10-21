@@ -6,6 +6,7 @@ import {
 	readFlowDragData,
 	useFlowColorMode,
 } from '@repo/flow-editor'
+import { RESERVATION_JOURNEY_TRIGGER_TYPES } from '@repo/tenant-db/types/journey'
 import { cn } from '@repo/ui'
 import {
 	ReactFlow,
@@ -59,6 +60,8 @@ import { WorkflowToolbar } from './workflow-toolbar.tsx'
 
 interface WorkflowCanvasProps {
 	workflowConfig?: WorkflowConfig
+	/** Offer the `reservation_*` triggers (the Reservations module is on). */
+	reservationTriggers?: boolean
 	initialGraph?: WorkflowGraph | string
 	journeyName: string
 	journeyStatus: JourneyStatus
@@ -363,20 +366,32 @@ function resolveLocalizedWorkflowConfig(
 
 export function WorkflowCanvas({
 	workflowConfig: workflowConfigProp,
+	reservationTriggers = false,
 	...props
 }: WorkflowCanvasProps) {
 	const localizedTenant = useLocalizedTenantWorkflowConfig()
 	const localizedPlatform = useLocalizedPlatformWorkflowConfig()
 
-	const workflowConfig = useMemo(
-		() =>
-			resolveLocalizedWorkflowConfig(
-				workflowConfigProp,
-				localizedTenant,
-				localizedPlatform,
-			),
-		[workflowConfigProp, localizedTenant, localizedPlatform],
-	)
+	const workflowConfig = useMemo(() => {
+		const resolved = resolveLocalizedWorkflowConfig(
+			workflowConfigProp,
+			localizedTenant,
+			localizedPlatform,
+		)
+		if (resolved.audience !== 'tenant' || reservationTriggers) return resolved
+		return {
+			...resolved,
+			hiddenTriggerTypes: [
+				...(resolved.hiddenTriggerTypes ?? []),
+				...RESERVATION_JOURNEY_TRIGGER_TYPES,
+			],
+		}
+	}, [
+		workflowConfigProp,
+		localizedTenant,
+		localizedPlatform,
+		reservationTriggers,
+	])
 
 	return (
 		<WorkflowConfigProvider config={workflowConfig}>

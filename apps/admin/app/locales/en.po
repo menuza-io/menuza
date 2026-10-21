@@ -22,12 +22,12 @@ msgid "(Expired)"
 msgstr ""
 
 #. placeholder {0}: data.messageText?.length || 0
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:404
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:410
 msgid "{0} / 1600 chars"
 msgstr ""
 
 #. placeholder {0}: emailBlocks.length
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:329
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:335
 msgid "{0} blocks · rendered in your website branding"
 msgstr "{0} blocks · rendered in your website branding"
 
@@ -38,7 +38,7 @@ msgstr "{0} numbers"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:119
+#: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr ""
 
@@ -73,11 +73,11 @@ msgstr "{days} days"
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr ""
 
-#: ../../packages/reports/src/ui/report-chart.tsx:149
+#: ../../packages/reports/src/ui/report-chart.tsx:156
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:321
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:343
 msgid "{field}"
 msgstr ""
 
@@ -93,7 +93,7 @@ msgstr ""
 msgid "{selectedCount} selected"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:319
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:341
 msgid "{status}"
 msgstr ""
 
@@ -117,7 +117,7 @@ msgstr ""
 msgid "{totalSize} total"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:317
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:339
 msgid "{unit}"
 msgstr ""
 
@@ -129,11 +129,11 @@ msgstr ""
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
 #. placeholder {2}: data.field === 'phoneVerified' ? data.value === 'true' ? 'Verified' : 'Not Verified' : data.value || '...'
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:543
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:549
 msgid "• If Customer {0}{1}<0>{2}</0> → <1>True branch</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:569
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:575
 msgid "• Otherwise → <0>False branch</0>"
 msgstr ""
 
@@ -160,15 +160,15 @@ msgstr ""
 msgid "<0>{0}</0> {1} <1>\"{2}\"</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:91
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:113
 msgid "<p>Hi {{name}},</p><p>Check out our latest update.</p>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:349
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:355
 msgid "<p>Hi {{name}},</p><p>Welcome to our service!</p>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:100
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:122
 msgid "<p>Hi {{name}},</p><p>Your organization {{organizationName}} is ready.</p>"
 msgstr ""
 
@@ -266,7 +266,7 @@ msgstr ""
 msgid "Activate"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:298
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:320
 msgid "active"
 msgstr ""
 
@@ -359,6 +359,10 @@ msgstr "Add number"
 msgid "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 msgstr "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:107
+msgid "Add or change an override"
+msgstr "Add or change an override"
+
 #: app/components/admin/feature-flags.tsx:536
 #: app/components/admin/feature-flags.tsx:714
 msgid "Add Override"
@@ -385,8 +389,8 @@ msgstr "Add points to {0}'s current total of {1}."
 msgid "Add waitlist points"
 msgstr "Add waitlist points"
 
-#: app/components/admin-sidebar.tsx:145
-#: app/components/admin-sidebar.tsx:153
+#: app/components/admin-sidebar.tsx:155
+#: app/components/admin-sidebar.tsx:163
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
@@ -394,7 +398,7 @@ msgstr "Add waitlist points"
 msgid "Admin"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:171
+#: app/components/admin-sidebar.tsx:181
 #: app/routes/_admin+/index.tsx:126
 msgid "Admin Dashboard"
 msgstr ""
@@ -436,7 +440,7 @@ msgstr ""
 #~ msgid "All plans"
 #~ msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:32
+#: ../../packages/marketing/src/components/campaign-detail.tsx:34
 msgid "All recipients"
 msgstr ""
 
@@ -493,6 +497,10 @@ msgstr "Applications at each stage, from new to hired, over the last 3 months."
 msgid "Applications by source"
 msgstr "Applications by source"
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:53
+msgid "Applies to every organization without its own override. Basis points: 100 is 1.00%."
+msgstr "Applies to every organization without its own override. Basis points: 100 is 1.00%."
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:339
 msgid "Apply Preset"
 msgstr ""
@@ -501,7 +509,7 @@ msgstr ""
 msgid "Archive Old Logs"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:300
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:322
 msgid "archived"
 msgstr ""
 
@@ -617,6 +625,10 @@ msgstr "Available"
 msgid "Average Size"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:140
+msgid "Average waitlist wait, last 7 days"
+msgstr "Average waitlist wait, last 7 days"
+
 #: app/routes/_admin+/phone-numbers.tsx:171
 msgid "Awaiting line verification"
 msgstr "Awaiting line verification"
@@ -633,7 +645,7 @@ msgstr ""
 msgid "Back to blocks"
 msgstr "Back to blocks"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:29
+#: ../../packages/marketing/src/components/campaign-detail.tsx:31
 msgid "Back to broadcasts"
 msgstr ""
 
@@ -685,6 +697,11 @@ msgstr ""
 msgid "Basic information"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:67
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:141
+msgid "Basis points"
+msgstr "Basis points"
+
 #: app/routes/_admin+/ip-addresses+/index.tsx:359
 msgid "Blacklist"
 msgstr ""
@@ -734,6 +751,14 @@ msgstr "Blocks"
 msgid "Body text"
 msgstr "Body text"
 
+#: ../../packages/reports/src/ui/report-labels.ts:88
+msgid "Booking sources"
+msgstr "Booking sources"
+
+#: ../../packages/reports/src/ui/report-labels.ts:137
+msgid "Bookings cancelled after the free-cancellation window over the last 30 days."
+msgstr "Bookings cancelled after the free-cancellation window over the last 30 days."
+
 #: app/components/admin/feature-flags.tsx:144
 msgid "Boolean"
 msgstr ""
@@ -742,7 +767,7 @@ msgstr ""
 msgid "Broadcast not found"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
@@ -755,7 +780,7 @@ msgstr ""
 msgid "Broadcasts and automations for tenant operators."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:334
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:340
 msgid "Build a branded HTML email with blocks."
 msgstr "Build a branded HTML email with blocks."
 
@@ -805,6 +830,10 @@ msgstr ""
 msgid "Canceled"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:96
+msgid "Cancellations by who"
+msgstr "Cancellations by who"
+
 #: app/routes/_admin+/gdpr-requests.tsx:365
 msgid "Cancelled"
 msgstr ""
@@ -851,7 +880,7 @@ msgid "Click rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:50
 msgid "Clicked {0}"
 msgstr ""
 
@@ -914,7 +943,7 @@ msgstr ""
 msgid "Comprehensive activity tracking and compliance audit trail"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:84
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:106
 msgid "Condition Branch"
 msgstr ""
 
@@ -922,7 +951,7 @@ msgstr ""
 msgid "Condition comparison field is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:498
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:504
 msgid "Condition Logic"
 msgstr ""
 
@@ -990,13 +1019,37 @@ msgstr ""
 msgid "contains"
 msgstr "contains"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:517
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:523
 msgid "Contains (Partial Match)"
 msgstr ""
 
 #: app/routes/_admin+/roles+/system.$roleId.tsx:252
 msgid "Core System Role"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:81
+msgid "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
+msgstr "Covers booked for each service day over the last 7 days, not counting cancelled, declined or expired bookings."
+
+#: ../../packages/reports/src/ui/report-labels.ts:85
+msgid "Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings."
+msgstr "Covers booked for each service over the last 30 days, not counting cancelled, declined or expired bookings."
+
+#: ../../packages/reports/src/ui/report-labels.ts:129
+msgid "Covers booked for today, not counting cancelled, declined or expired bookings."
+msgstr "Covers booked for today, not counting cancelled, declined or expired bookings."
+
+#: ../../packages/reports/src/ui/report-labels.ts:84
+msgid "Covers by service"
+msgstr "Covers by service"
+
+#: ../../packages/reports/src/ui/report-labels.ts:125
+msgid "Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it."
+msgstr "Covers in each start time against the pacing limit over the last 7 days, and how many slots went over it."
+
+#: ../../packages/reports/src/ui/report-labels.ts:128
+msgid "Covers today"
+msgstr "Covers today"
 
 #: app/components/admin/feature-flags.tsx:100
 msgid "Create a new feature flag at system level."
@@ -1094,11 +1147,11 @@ msgid "Currently logged in users"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:24
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:36
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:52
 msgid "Custom Event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:185
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:191
 msgid "Custom Event Name"
 msgstr ""
 
@@ -1110,7 +1163,7 @@ msgstr ""
 msgid "Custom trigger event"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:254
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:276
 msgid "customer"
 msgstr ""
 
@@ -1119,7 +1172,7 @@ msgstr ""
 msgid "Customer <0>Phone</0> is {0}<1>Verified</1>"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:437
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:443
 msgid "Customer Attribute"
 msgstr ""
 
@@ -1138,6 +1191,10 @@ msgstr ""
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:301
 msgid "Cycles"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:80
+msgid "Daily summary"
+msgstr "Daily summary"
 
 #: app/routes/resources+/theme-switch.tsx:73
 msgid "Dark"
@@ -1160,11 +1217,11 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:292
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:314
 msgid "days"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:250
 msgid "Days"
 msgstr ""
 
@@ -1238,7 +1295,7 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:306
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:312
 msgid "Design email"
 msgstr "Design email"
 
@@ -1284,15 +1341,15 @@ msgstr "Discard unsaved changes?"
 msgid "Discord"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:77
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:99
 msgid "Dispatch personalized email with merge tags"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:81
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:103
 msgid "Dispatch text message with merge tags"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:514
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:520
 msgid "Does Not Equal"
 msgstr ""
 
@@ -1300,7 +1357,7 @@ msgstr ""
 msgid "Double-click a block to add it instantly"
 msgstr "Double-click a block to add it instantly"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:297
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:319
 msgid "draft"
 msgstr ""
 
@@ -1317,15 +1374,15 @@ msgstr "Drag to reorder"
 msgid "Duplicate"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:206
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:212
 msgid "Duration"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:529
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:535
 msgid "e.g. @gmail.com"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:189
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:195
 msgid "e.g. checkout_abandoned, tier_upgraded"
 msgstr ""
 
@@ -1341,7 +1398,7 @@ msgstr ""
 msgid "e.g. cust_123"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:284
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:290
 msgid "e.g. Sarah from Marketing"
 msgstr ""
 
@@ -1349,7 +1406,7 @@ msgstr ""
 #~ msgid "e.g. VIP, lead-hot, subscriber"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:272
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:278
 msgid "e.g. Welcome {{firstName}}!"
 msgstr "e.g. Welcome {{firstName}}!"
 
@@ -1376,7 +1433,7 @@ msgstr "Each day’s published hours and shifts next to the hours worked and the
 msgid "Edit"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:304
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:310
 msgid "Edit design"
 msgstr "Edit design"
 
@@ -1409,8 +1466,8 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:457
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:304
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:463
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:326
 msgid "Email Address"
 msgstr ""
 
@@ -1418,15 +1475,15 @@ msgstr ""
 msgid "Email body content is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:293
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:377
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:299
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:383
 #: ../../packages/marketing/src/components/campaign-form.tsx:112
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:111
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:135
 msgid "Email design"
 msgstr "Email design"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:343
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:349
 msgid "Email HTML Body"
 msgstr ""
 
@@ -1492,6 +1549,11 @@ msgstr "End date"
 #: app/routes/_admin+/waitlist.tsx:464
 msgid "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
 msgstr "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:80
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:153
+msgid "Enter a whole number of basis points from 0 to 10000."
+msgstr "Enter a whole number of basis points from 0 to 10000."
 
 #: app/routes/_admin+/roles+/$roleId.tsx:800
 msgid "Enter feature description"
@@ -1565,7 +1627,11 @@ msgstr "Event"
 msgid "Event-driven workflows for tenant operator lifecycle."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:511
+#: ../../packages/reports/src/ui/report-labels.ts:105
+msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
+msgstr "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
+
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:517
 msgid "Exactly Equals"
 msgstr ""
 
@@ -1653,6 +1719,10 @@ msgstr ""
 msgid "Feature: {selectedEntity}"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:202
+msgid "Fee"
+msgstr "Fee"
+
 #: app/components/admin-sidebar.tsx:129
 msgid "Feedback"
 msgstr ""
@@ -1723,7 +1793,7 @@ msgstr ""
 msgid "from"
 msgstr "from"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:280
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:286
 msgid "From Name (Optional)"
 msgstr ""
 
@@ -1787,27 +1857,27 @@ msgstr "Held for the previous organization until {until}"
 msgid "Held: the previous organization was deleted while it had this number"
 msgstr "Held: the previous organization was deleted while it had this number"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:92
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:114
 msgid "Hi {{name}}, Check out our latest update."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:364
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:370
 msgid "Hi {{name}}, Welcome to our service!"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:96
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:118
 msgid "Hi {{name}}, your account update is ready!"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:105
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:127
 msgid "Hi {{name}}, your Menuza account is ready."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:412
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:418
 msgid "Hi {{name}}, your order has been confirmed!"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:101
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:123
 msgid "Hi {{name}}, Your organization {{organizationName}} is ready."
 msgstr ""
 
@@ -1815,7 +1885,7 @@ msgstr ""
 msgid "Higher level roles can manage lower level roles"
 msgstr ""
 
-#: ../../packages/reports/src/ui/report-labels.ts:83
+#: ../../packages/reports/src/ui/report-labels.ts:147
 msgid "Hiring"
 msgstr "Hiring"
 
@@ -1827,11 +1897,11 @@ msgstr ""
 msgid "Hot storage: {hotStorageDays} days"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:291
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:313
 msgid "hours"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:241
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:247
 msgid "Hours"
 msgstr ""
 
@@ -1843,6 +1913,14 @@ msgstr "Hours by employee"
 msgid "Hours worked by day"
 msgstr "Hours worked by day"
 
+#: ../../packages/reports/src/ui/report-labels.ts:113
+msgid "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
+msgstr "How far actual turn times ran from the turn time you set, for each party size over the last 30 days. Negative means parties left early."
+
+#: ../../packages/reports/src/ui/report-labels.ts:109
+msgid "How long parties of each size stayed, from seated to finished, over the last 30 days."
+msgstr "How long parties of each size stayed, from seated to finished, over the last 30 days."
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:380
 msgid "How long to keep logs before permanent deletion"
 msgstr ""
@@ -1851,9 +1929,17 @@ msgstr ""
 msgid "How long to keep logs readily searchable"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:141
+msgid "How long waitlist parties waited before they were seated over the last 7 days."
+msgstr "How long waitlist parties waited before they were seated over the last 7 days."
+
 #: ../../packages/reports/src/ui/report-labels.ts:57
 msgid "How often people clock in on time for the shifts they were scheduled on."
 msgstr "How often people clock in on time for the shifts they were scheduled on."
+
+#: ../../packages/reports/src/ui/report-labels.ts:117
+msgid "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
+msgstr "How waitlist parties ended up over the last 30 days: seated, left, cancelled or no response."
 
 #: app/components/sso-configuration-form.tsx:168
 msgid "https://your-domain.okta.com"
@@ -1940,6 +2026,10 @@ msgstr ""
 msgid "Integrations"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:213
+msgid "Invalid"
+msgstr "Invalid"
+
 #: app/routes/_admin+/marketing+/automations.$journeyId.tsx:138
 #: app/routes/_admin+/marketing+/automations.new.tsx:100
 msgid "Invalid graph format"
@@ -1980,7 +2070,7 @@ msgstr ""
 msgid "is"
 msgstr "is"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:486
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:492
 msgid "Is Verified (True)"
 msgstr ""
 
@@ -2029,7 +2119,7 @@ msgstr "Label"
 msgid "Label (optional)"
 msgstr "Label (optional)"
 
-#: ../../packages/reports/src/ui/report-labels.ts:82
+#: ../../packages/reports/src/ui/report-labels.ts:146
 msgid "Labor"
 msgstr "Labor"
 
@@ -2093,6 +2183,14 @@ msgstr ""
 #: ../../packages/reports/src/ui/report-labels.ts:60
 msgid "Late arrivals by employee"
 msgstr "Late arrivals by employee"
+
+#: ../../packages/reports/src/ui/report-labels.ts:100
+msgid "Late cancellations"
+msgstr "Late cancellations"
+
+#: ../../packages/reports/src/ui/report-labels.ts:136
+msgid "Late cancellations, last 30 days"
+msgstr "Late cancellations, last 30 days"
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:413
 msgid "Launch run"
@@ -2209,8 +2307,8 @@ msgid "Manual Endpoint Configuration"
 msgstr ""
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:28
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:37
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:61
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:53
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:83
 #: app/routes/_admin+/marketing+/automations._index.tsx:124
 msgid "Manual Trigger"
 msgstr ""
@@ -2236,7 +2334,7 @@ msgstr ""
 msgid "Members"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:124
 msgid "Menuza Team"
 msgstr ""
 
@@ -2244,7 +2342,7 @@ msgstr ""
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "Merge tags are replaced per recipient when the email is sent."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:88
+#: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr ""
@@ -2262,11 +2360,11 @@ msgstr "Message retention"
 msgid "Message retention updated"
 msgstr "Message retention updated"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:290
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:312
 msgid "minutes"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:238
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:244
 msgid "Minutes"
 msgstr ""
 
@@ -2299,8 +2397,8 @@ msgstr ""
 msgid "N/A"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:466
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:307
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:472
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:329
 #: app/routes/_admin+/roles+/$roleId.tsx:530
 #: app/routes/_admin+/roles+/$roleId.tsx:763
 #: app/routes/_admin+/roles+/$roleId.tsx:854
@@ -2403,11 +2501,11 @@ msgstr ""
 msgid "No connected accounts"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "No contact on file"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:127
+#: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr ""
 
@@ -2444,6 +2542,10 @@ msgstr ""
 #: app/routes/_admin+/phone-numbers.tsx:337
 msgid "No numbers yet"
 msgstr "No numbers yet"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:192
+msgid "No organization has its own fee."
+msgstr "No organization has its own fee."
 
 #: app/routes/_admin+/roles+/index.tsx:420
 msgid "No organization roles found"
@@ -2522,6 +2624,18 @@ msgstr "No users yet"
 msgid "No waitlist entries found"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:104
+msgid "No-show list"
+msgstr "No-show list"
+
+#: ../../packages/reports/src/ui/report-labels.ts:132
+msgid "No-show rate, last 30 days"
+msgstr "No-show rate, last 30 days"
+
+#: ../../packages/reports/src/ui/report-labels.ts:92
+msgid "No-shows & cancellations"
+msgstr "No-shows & cancellations"
+
 #: ../../packages/marketing-workflow/src/node-palette.tsx:50
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:289
 msgid "Nodes"
@@ -2534,11 +2648,15 @@ msgstr ""
 msgid "None"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:61
+msgid "Not set"
+msgstr "Not set"
+
 #: app/components/admin-user-detail.tsx:678
 msgid "Not Set"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:489
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:495
 msgid "Not Verified (False)"
 msgstr ""
 
@@ -2584,7 +2702,7 @@ msgid "Open rate"
 msgstr ""
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:51
+#: ../../packages/marketing/src/components/campaign-detail.tsx:53
 msgid "Opened {0}"
 msgstr ""
 
@@ -2592,11 +2710,11 @@ msgstr ""
 msgid "openid email profile"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:275
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:297
 msgid "operator"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:49
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:71
 #: app/routes/_admin+/marketing+/automations._index.tsx:118
 msgid "Operator Invited"
 msgstr ""
@@ -2613,6 +2731,8 @@ msgstr ""
 #: app/components/admin-organizations-table.tsx:139
 #: app/components/admin-users-table.tsx:235
 #: app/components/admin/feature-flags.tsx:744
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/phone-numbers.tsx:353
 msgid "Organization"
 msgstr ""
@@ -2621,7 +2741,7 @@ msgstr ""
 msgid "Organization (optional)"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:45
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:67
 #: app/routes/_admin+/marketing+/automations._index.tsx:116
 msgid "Organization Created"
 msgstr ""
@@ -2629,6 +2749,10 @@ msgstr ""
 #: app/components/admin/feature-flags.tsx:519
 msgid "Organization Override"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:186
+msgid "Organization overrides"
+msgstr "Organization overrides"
 
 #: app/routes/_admin+/roles+/index.tsx:279
 msgid "Organization Role"
@@ -2698,6 +2822,10 @@ msgstr ""
 msgid "Owner"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:124
+msgid "Pacing"
+msgstr "Pacing"
+
 #: app/components/admin-organizations-table.tsx:599
 #: app/components/admin-users-table.tsx:486
 #~ msgid "Page {currentPage} of {totalPages}"
@@ -2745,7 +2873,7 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:299
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:321
 msgid "paused"
 msgstr ""
 
@@ -2796,8 +2924,8 @@ msgstr ""
 msgid "Phone number"
 msgstr "Phone number"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:460
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:305
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:466
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:327
 msgid "Phone Number"
 msgstr ""
 
@@ -2806,8 +2934,8 @@ msgstr ""
 msgid "Phone numbers"
 msgstr "Phone numbers"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:463
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:306
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:469
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:328
 msgid "Phone Verification Status"
 msgstr ""
 
@@ -2815,7 +2943,7 @@ msgstr ""
 msgid "Phone Verified"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:34
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:50
 msgid "Phone Verified (OTP Success)"
 msgstr ""
 
@@ -2827,12 +2955,16 @@ msgstr "Pick a block to add to your email."
 msgid "Pick a layout, then customize the blocks."
 msgstr "Pick a layout, then customize the blocks."
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:110
+msgid "Pick an organization by name or slug. Saving again replaces its override."
+msgstr "Pick an organization by name or slug. Saving again replaces its override."
+
 #: app/components/sso-configuration-form.tsx:329
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:359
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:365
 msgid "Plaintext Fallback (Optional)"
 msgstr ""
 
@@ -2840,7 +2972,7 @@ msgstr ""
 msgid "Plan"
 msgstr "Plan"
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:309
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:331
 msgid "Plan Name"
 msgstr ""
 
@@ -2910,7 +3042,7 @@ msgstr ""
 msgid "Profile Completed"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:35
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:51
 msgid "Profile Completed (Name/Email)"
 msgstr ""
 
@@ -3021,7 +3153,7 @@ msgstr "Recently released"
 msgid "recipients"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:115
+#: ../../packages/marketing/src/components/campaign-detail.tsx:117
 msgid "Recipients"
 msgstr ""
 
@@ -3033,12 +3165,16 @@ msgstr ""
 msgid "Reject"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:225
+msgid "Remove"
+msgstr "Remove"
+
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:149
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:152
 msgid "Remove block"
 msgstr "Remove block"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:323
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:329
 msgid "Remove design"
 msgstr "Remove design"
 
@@ -3079,6 +3215,38 @@ msgstr ""
 #: app/routes/_admin+/gdpr-requests.tsx:478
 msgid "Requires attention"
 msgstr ""
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:32
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:54
+msgid "Reservation Booked"
+msgstr "Reservation Booked"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:44
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:57
+msgid "Reservation Cancelled"
+msgstr "Reservation Cancelled"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:36
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:55
+msgid "Reservation Completed"
+msgstr "Reservation Completed"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:40
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:56
+msgid "Reservation No-Show"
+msgstr "Reservation No-Show"
+
+#: ../../packages/reports/src/ui/report-labels.ts:148
+msgid "Reservations"
+msgstr "Reservations"
+
+#: app/components/admin-sidebar.tsx:143
+msgid "Reservations fees"
+msgstr "Reservations fees"
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:173
+msgid "Reservations platform fee"
+msgstr "Reservations platform fee"
 
 #: app/routes/_admin+/cache.tsx:406
 msgid "Reset"
@@ -3168,7 +3336,7 @@ msgstr ""
 msgid "Roles that apply within specific organizations"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:540
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:546
 msgid "Routing Logic:"
 msgstr ""
 
@@ -3192,15 +3360,31 @@ msgstr ""
 msgid "runs"
 msgstr ""
 
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:37
+msgid "Runs after a guest who agreed to hear from you finishes a visit"
+msgstr "Runs after a guest who agreed to hear from you finishes a visit"
+
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:33
 #~ msgid "Runs on website form submission"
 #~ msgstr ""
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:33
+msgid "Runs when a guest who agreed to hear from you books a table"
+msgstr "Runs when a guest who agreed to hear from you books a table"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:45
+msgid "Runs when a guest who agreed to hear from you cancels"
+msgstr "Runs when a guest who agreed to hear from you cancels"
+
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:41
+msgid "Runs when a guest who agreed to hear from you does not arrive"
+msgstr "Runs when a guest who agreed to hear from you does not arrive"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:17
 #~ msgid "Runs when a new customer registers"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:46
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:68
 msgid "Runs when a new tenant organization is created"
 msgstr ""
 
@@ -3208,15 +3392,15 @@ msgstr ""
 #~ msgid "Runs when a tag is applied to customer"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:58
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:80
 msgid "Runs when a tenant cancels their subscription"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:54
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:76
 msgid "Runs when a tenant starts a paid subscription"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:50
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:72
 msgid "Runs when an operator is invited to an organization"
 msgstr ""
 
@@ -3254,9 +3438,17 @@ msgstr ""
 msgid "Save Configuration"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:85
+msgid "Save default"
+msgstr "Save default"
+
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:193
 msgid "Save draft"
 msgstr ""
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:158
+msgid "Save override"
+msgstr "Save override"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:483
 msgid "Save Policy"
@@ -3372,7 +3564,7 @@ msgstr ""
 msgid "Select access level"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:453
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:459
 msgid "Select attribute"
 msgstr ""
 
@@ -3384,7 +3576,7 @@ msgstr ""
 msgid "Select flag type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:507
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:513
 msgid "Select operator"
 msgstr ""
 
@@ -3393,7 +3585,7 @@ msgstr ""
 msgid "Select role type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:482
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:488
 msgid "Select status"
 msgstr ""
 
@@ -3401,7 +3593,7 @@ msgstr ""
 msgid "Select trigger type"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:176
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:182
 msgid "Select which event initiates this automated journey."
 msgstr ""
 
@@ -3409,7 +3601,7 @@ msgstr ""
 msgid "Send a one-time message to tenant operators."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:76
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:98
 msgid "Send Email"
 msgstr ""
 
@@ -3421,7 +3613,7 @@ msgstr ""
 msgid "Send one-time emails to tenant operators."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:80
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:102
 msgid "Send SMS"
 msgstr ""
 
@@ -3431,8 +3623,8 @@ msgstr ""
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:80
-#: ../../packages/marketing/src/components/campaign-detail.tsx:143
+#: ../../packages/marketing/src/components/campaign-detail.tsx:81
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
 msgid "Sent {0}"
 msgstr ""
 
@@ -3521,7 +3713,7 @@ msgstr ""
 msgid "SMS message exceeds 1600 characters maximum."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:392
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:398
 msgid "SMS Message Text"
 msgstr ""
 
@@ -3529,7 +3721,7 @@ msgstr ""
 msgid "SMS message text is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:424
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:430
 msgid "SMS messages over 160 characters will be segmented according to standard GSM telecommunication protocols."
 msgstr ""
 
@@ -3562,7 +3754,7 @@ msgstr ""
 msgid "Specific Organization"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:85
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:107
 msgid "Split path based on rules (True / False)"
 msgstr ""
 
@@ -3612,7 +3804,7 @@ msgstr "Start date"
 #~ msgid "Start Date"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:69
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:91
 msgid "Start journey on lifecycle event"
 msgstr ""
 
@@ -3663,7 +3855,7 @@ msgstr "Style"
 msgid "Subject"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:268
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:274
 msgid "Subject Line"
 msgstr ""
 
@@ -3672,12 +3864,12 @@ msgstr ""
 msgid "Subscription"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:57
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:79
 #: app/routes/_admin+/marketing+/automations._index.tsx:122
 msgid "Subscription Cancelled"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:53
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:75
 #: app/routes/_admin+/marketing+/automations._index.tsx:120
 msgid "Subscription Started"
 msgstr ""
@@ -3721,6 +3913,10 @@ msgstr "Swap variable"
 msgid "System"
 msgstr ""
 
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:50
+msgid "System default"
+msgstr "System default"
+
 #: app/components/admin/feature-flags.tsx:521
 #: app/components/admin/feature-flags.tsx:698
 msgid "System Default"
@@ -3730,7 +3926,7 @@ msgstr ""
 msgid "System Flags"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:174
+#: app/components/admin-sidebar.tsx:184
 msgid "System Management"
 msgstr ""
 
@@ -3769,7 +3965,7 @@ msgstr ""
 #~ msgid "Tag Added"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:308
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:330
 msgid "Tags"
 msgstr ""
 
@@ -3781,11 +3977,11 @@ msgstr ""
 #~ msgid "Target Tag Name"
 #~ msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:525
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:531
 msgid "Target Value"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:93
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:115
 msgid "Team"
 msgstr ""
 
@@ -3830,7 +4026,7 @@ msgstr ""
 
 #. placeholder {0}: data.duration || 1
 #. placeholder {1}: delayUnitLabel(data.unit || 'hours')
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:255
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:261
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr ""
 
@@ -3849,6 +4045,26 @@ msgstr "The previous organization may still forward its line to this number, so 
 #: app/routes/_admin+/phone-numbers.tsx:212
 #~ msgid "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
 #~ msgstr "The previous restaurant may still forward its line to this number, so its callers could reach the new organization's agent."
+
+#: ../../packages/reports/src/ui/report-labels.ts:133
+msgid "The share of booked parties that did not show up over the last 30 days."
+msgstr "The share of booked parties that did not show up over the last 30 days."
+
+#: ../../packages/reports/src/ui/report-labels.ts:93
+msgid "The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked."
+msgstr "The share of booked parties that did not show up, for each service over the last 30 days. Cancelled, declined and expired bookings are not counted as booked."
+
+#: ../../packages/reports/src/ui/report-labels.ts:101
+msgid "The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days."
+msgstr "The share of cancellations that came after the free-cancellation window closed, for each service over the last 30 days."
+
+#: app/routes/_admin+/feature-flags_.reservations-fees.tsx:175
+msgid "The share of each Reservations payment kept by the platform, in basis points."
+msgstr "The share of each Reservations payment kept by the platform, in basis points."
+
+#: ../../packages/reports/src/ui/report-labels.ts:121
+msgid "The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days."
+msgstr "The wait you quoted and the wait parties had before they were seated, by party size, over the last 30 days."
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -3878,7 +4094,7 @@ msgstr "Time"
 msgid "Time delay"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:72
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:94
 msgid "Time Delay"
 msgstr ""
 
@@ -3950,7 +4166,7 @@ msgstr ""
 msgid "Trigger a test execution for a specific customer ID."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:68
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:90
 msgid "Trigger Event"
 msgstr ""
 
@@ -3962,7 +4178,7 @@ msgstr ""
 msgid "Trigger event type is required."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:62
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:84
 msgid "Triggered via admin test or API"
 msgstr ""
 
@@ -3985,6 +4201,14 @@ msgstr "Try different filters or clear them."
 #: app/routes/_admin+/cache.tsx:616
 msgid "TTL"
 msgstr ""
+
+#: ../../packages/reports/src/ui/report-labels.ts:108
+msgid "Turn times"
+msgstr "Turn times"
+
+#: ../../packages/reports/src/ui/report-labels.ts:112
+msgid "Turn times against target"
+msgstr "Turn times against target"
 
 #: app/components/admin/feature-flags.tsx:134
 #: app/routes/_admin+/gdpr-requests.tsx:496
@@ -4011,8 +4235,8 @@ msgstr ""
 msgid "Unedited boilerplate text detected in email body."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:225
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:234
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:231
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:240
 msgid "Unit"
 msgstr ""
 
@@ -4022,7 +4246,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:140
 msgid "Unnamed recipient"
 msgstr ""
 
@@ -4142,7 +4366,7 @@ msgstr ""
 msgid "Variables"
 msgstr "Variables"
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:475
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:481
 msgid "Verification Status"
 msgstr ""
 
@@ -4186,7 +4410,7 @@ msgstr ""
 msgid "Visitor IP addresses will appear here."
 msgstr "Visitor IP addresses will appear here."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:161
+#: ../../packages/reports/src/ui/report-chart.tsx:168
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 
@@ -4204,7 +4428,7 @@ msgstr "Wages as a share of sales over the last 30 days: total wages divided by 
 msgid "Wait {0} {1}"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:73
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:95
 msgid "Wait for a specified duration before next step"
 msgstr ""
 
@@ -4220,6 +4444,14 @@ msgstr ""
 msgid "Waitlist Management"
 msgstr ""
 
+#: ../../packages/reports/src/ui/report-labels.ts:116
+msgid "Waitlist outcomes"
+msgstr "Waitlist outcomes"
+
+#: ../../packages/reports/src/ui/report-labels.ts:120
+msgid "Waitlist waits"
+msgstr "Waitlist waits"
+
 #: app/routes/_admin+/audit-logs.tsx:157
 msgid "Warning"
 msgstr ""
@@ -4232,15 +4464,15 @@ msgstr ""
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content."
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:293
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:315
 msgid "weeks"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/node-inspector.tsx:247
+#: ../../packages/marketing-workflow/src/node-inspector.tsx:253
 msgid "Weeks"
 msgstr ""
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:99
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:121
 msgid "Welcome to Menuza, {{organizationName}}"
 msgstr ""
 
@@ -4251,6 +4483,14 @@ msgstr ""
 #: ../../packages/reports/src/ui/report-labels.ts:77
 msgid "Where applicants found the job."
 msgstr "Where applicants found the job."
+
+#: ../../packages/reports/src/ui/report-labels.ts:89
+msgid "Where bookings come from over the last 30 days: online, phone, host, walk-in and more."
+msgstr "Where bookings come from over the last 30 days: online, phone, host, walk-in and more."
+
+#: ../../packages/reports/src/ui/report-labels.ts:97
+msgid "Who cancelled over the last 30 days: the guest, the restaurant or the system."
+msgstr "Who cancelled over the last 30 days: the guest, the restaurant or the system."
 
 #: ../../packages/reports/src/ui/report-labels.ts:49
 msgid "Who worked overtime over the last 30 days, and how much."
@@ -4307,6 +4547,6 @@ msgstr ""
 msgid "Your email design has changes that haven't been saved. Leaving now will lose them."
 msgstr "Your email design has changes that haven't been saved. Leaving now will lose them."
 
-#: ../../packages/marketing-workflow/src/workflow-labels.ts:90
+#: ../../packages/marketing-workflow/src/workflow-labels.ts:112
 msgid "Your Exclusive Update"
 msgstr ""

@@ -21,6 +21,8 @@ import {
 import { definitionAllowed, type ReportDefinition } from '@repo/reports'
 import { listSavedReports, parseDefinition } from '@repo/reports/server'
 import { resolveRegionalTenantApiUrls } from '#app/utils/tenant-api.server.ts'
+import { loadBookingsTodayAccess } from './bookings-today.server.ts'
+import { type BookingsTodayAccess } from './bookings-today.ts'
 import { type BlockType, type DashboardBlock } from './config.ts'
 import {
 	ORGANIZATION_REPORT_CATALOG,
@@ -73,6 +75,7 @@ export type BuiltInBlockData = {
 export type DashboardBlockPicker = {
 	/** Onboarding is only offered while the viewer would see the checklist. */
 	onboardingAvailable: boolean
+	bookingsToday: BookingsTodayAccess
 	savedReports: SavedReportOption[]
 	templateGroups: ReportTemplateGroup[]
 }
@@ -369,12 +372,14 @@ export async function loadBlockPicker({
 	/** Restricted report subjects the person's reports token lists. */
 	grants: readonly string[]
 }): Promise<DashboardBlockPicker> {
-	const [onboarding, savedReports] = await Promise.all([
+	const [onboarding, savedReports, bookingsToday] = await Promise.all([
 		blockData.onboarding ?? loadOnboarding(userId, organizationId),
 		loadSavedReportOptions(organizationId, grants),
+		loadBookingsTodayAccess({ userId, organizationId }),
 	])
 	return {
 		onboardingAvailable: isOnboardingVisible(onboarding),
+		bookingsToday,
 		savedReports,
 		templateGroups: reportTemplateGroups(grants),
 	}

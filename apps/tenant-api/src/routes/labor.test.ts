@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STAFFING_PERMISSIONS as P } from '@repo/staffing'
-import { staffAuditLog } from '@repo/tenant-db'
+import { laborScopeSettings, staffAuditLog } from '@repo/tenant-db'
 import { registerOrderSource } from '../services/order-source.ts'
 import {
 	createFakeOrderSource,
@@ -417,6 +417,7 @@ describe('/operator/labor', () => {
 				scopeId: LOC_1,
 				salesSource: 'online_orders',
 				ordersPerLaborHour: {},
+				demandPerLaborHour: {},
 				configured: false,
 				updatedAt: null,
 			})
@@ -466,6 +467,96 @@ describe('/operator/labor', () => {
 			})
 			expect(res.status).toBe(422)
 			expect(res.body).toMatchObject({ error: 'unknown_position' })
+		})
+
+		it('saves a standard per demand unit, keeps orders mirrored and replaces one unit at a time', async () => {
+			const cook = await l.staff()
+			const saved = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: {
+					orders: { [cook.positionId]: 12 },
+					visits: { [cook.positionId]: 8.5 },
+				},
+			})
+			expect(saved.status).toBe(200)
+			expect(saved.body).toMatchObject({
+				ordersPerLaborHour: { [cook.positionId]: 12 },
+				demandPerLaborHour: {
+					orders: { [cook.positionId]: 12 },
+					visits: { [cook.positionId]: 8.5 },
+				},
+			})
+			// Changing only visits leaves orders alone.
+			const next = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: { visits: { [cook.positionId]: 10 } },
+			})
+			expect(next.body.demandPerLaborHour).toEqual({
+				orders: { [cook.positionId]: 12 },
+				visits: { [cook.positionId]: 10 },
+			})
+			// Clearing visits drops that unit only.
+			const cleared = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: { visits: {} },
+			})
+			expect(cleared.body.demandPerLaborHour.visits).toEqual({})
+			expect(cleared.body.demandPerLaborHour.orders).toEqual({
+				[cook.positionId]: 12,
+			})
+			// The older column still holds the orders standard.
+			const row = await (
+				await h.db(ORG_A)
+			)
+				.select()
+				.from(laborScopeSettings)
+				.where(eq(laborScopeSettings.scopeId, LOC_1))
+			expect(row[0]!.ordersPerLaborHour).toEqual({ [cook.positionId]: 12 })
+			expect(row[0]!.demandPerLaborHour).toEqual({
+				orders: { [cook.positionId]: 12 },
+				visits: {},
+			})
+			const after = await l.get(`/settings?scopeId=${LOC_1}`)
+			expect(after.body.demandPerLaborHour.visits).toEqual({})
+			// The audit row counts positions per unit and carries no names or values.
+			const audit = await (await h.db(ORG_A)).select().from(staffAuditLog)
+			const last = audit
+				.filter((r) => r.action === 'labor.settings.updated')
+				.at(-1)
+			expect(last!.changes).toMatchObject({
+				demandStandards: { after: { orders: 1, visits: 0 } },
+			})
+		})
+
+		it('reads an orders standard an older client saved after the migration', async () => {
+			const cook = await l.staff()
+			await (await h.db(ORG_A)).insert(laborScopeSettings).values({
+				scopeId: LOC_1,
+				ordersPerLaborHour: { [cook.positionId]: 9 },
+			})
+			const res = await l.get(`/settings?scopeId=${LOC_1}`)
+			expect(res.body).toMatchObject({
+				ordersPerLaborHour: { [cook.positionId]: 9 },
+				demandPerLaborHour: { orders: { [cook.positionId]: 9 } },
+			})
+		})
+
+		it('refuses a standard for an unknown position or unit in any demand set', async () => {
+			const unknownPosition = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: { visits: { 'nope-1': 10 } },
+			})
+			expect(unknownPosition.status).toBe(422)
+			const unknownUnit = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: { tickets: { 'nope-1': 10 } },
+			})
+			expect(unknownUnit.status).toBe(400)
+			const outOfRange = await l.send('PUT', '/settings', {
+				scopeId: LOC_1,
+				demandPerLaborHour: { visits: { 'nope-1': 0.1 } },
+			})
+			expect(outOfRange.status).toBe(400)
 		})
 
 		it('refuses bad bodies without echoing them', async () => {

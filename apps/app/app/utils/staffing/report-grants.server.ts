@@ -1,6 +1,7 @@
 import { userHasOrganizationPermission } from '@repo/auth'
 import { ORG_WIDE_REPORT_SUBJECTS } from '@repo/reports/token'
 import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
+import { resolveReservationsReportAccess } from '#app/utils/reservations/report-access.server.ts'
 import { resolveStaffReportAccessForRequest } from './report-access.server.ts'
 
 /**
@@ -31,18 +32,24 @@ export async function hasAdminReportAccess(
 /**
  * The restricted report subjects a person may run, as the reports token lists
  * them (minus phone calls, which the token route adds): the organization-wide
- * subjects with analytics, settings or website access, plus the staff
- * subjects their staffing grants cover. The Reports screens and the dashboard
- * block picker filter with this so they offer only reports that will run.
+ * subjects with analytics, settings or website access, plus the staff and
+ * Reservations subjects their grants cover. `catalogForGrants` hides every
+ * gated subject missing from this list, so the Reports screens and the
+ * dashboard block picker filter with it and offer only reports that will run.
  */
 export async function resolveReportGrantsForRequest(
 	request: Request,
 	userId: string,
 	organizationId: string,
 ): Promise<string[]> {
-	const [staff, admin] = await Promise.all([
+	const [staff, reservations, admin] = await Promise.all([
 		resolveStaffReportAccessForRequest(request, userId, organizationId),
+		resolveReservationsReportAccess({ request, userId, organizationId }),
 		hasAdminReportAccess(userId, organizationId),
 	])
-	return [...(admin ? ORG_WIDE_REPORT_SUBJECTS : []), ...staff.subjects]
+	return [
+		...(admin ? ORG_WIDE_REPORT_SUBJECTS : []),
+		...staff.subjects,
+		...reservations.subjects,
+	]
 }

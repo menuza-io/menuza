@@ -55,7 +55,7 @@ function escapeHtml(value: string) {
 
 export async function authenticateOperator(
 	c: Context,
-	scope?: 'mailbox' | 'phone_calls',
+	scope?: 'mailbox' | 'phone_calls' | 'people',
 ) {
 	const token = getBearerToken(c.req.header('Authorization')) || null
 	if (!token) {
@@ -74,6 +74,12 @@ export async function authenticateOperator(
 		scope?: string
 		canUpdate?: boolean
 		canDelete?: boolean
+		/** `people` scope: holds the Customers (contact, orders, consent) facet. */
+		peopleCustomers?: boolean
+		/** `people` scope: reservation guest facet, `flags` (counters) or `full`. */
+		peopleDining?: string
+		/** `people` scope: may edit the dining facet (`update:reservation_guest:any`). */
+		canUpdateGuest?: boolean
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
@@ -246,7 +252,7 @@ operatorRoutes.post('/customers/:customerId/erase', async (c) => {
 		if (error instanceof PersonErasureError) {
 			return c.json(
 				{ error: error.message, code: error.code, erased: error.erased },
-				error.status,
+				error.status as 400 | 502,
 			)
 		}
 		console.error('Error erasing customer:', error)

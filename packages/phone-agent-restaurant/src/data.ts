@@ -17,6 +17,11 @@ export type RestaurantVerticalData = {
 	menus: AgentMenu[]
 	/** Online ordering open at config time; recomputed at call time. */
 	orderingOpen: boolean
+	/**
+	 * Table booking facts for phone calls (no guest data). Absent or
+	 * `available: false` keeps reservations as a request the team confirms.
+	 */
+	reservations?: { available: boolean }
 }
 
 /**
@@ -29,6 +34,7 @@ export const RestaurantVerticalDataSchema = z.object({
 		.passthrough(),
 	menus: z.array(z.object({ id: z.string() }).passthrough()),
 	orderingOpen: z.boolean(),
+	reservations: z.object({ available: z.boolean() }).optional(),
 })
 
 export function parseRestaurantData(value: unknown): RestaurantVerticalData {
@@ -54,6 +60,8 @@ export function restaurantConfigParts(input: {
 	businessName: string
 	location: AgentLocation & Pick<AvailabilityLocation, 'isActive'>
 	menus: AgentMenu[]
+	/** Table booking by phone is on for this business (module flag, US). */
+	reservationsAvailable?: boolean
 	now?: Date
 }): Pick<
 	PhoneAgentRuntimeConfig,
@@ -64,6 +72,7 @@ export function restaurantConfigParts(input: {
 		location: input.location,
 		menus: input.menus,
 		orderingOpen: availability.orderingOpen,
+		reservations: { available: input.reservationsAvailable === true },
 	}
 	return {
 		scopeId: input.location.id,

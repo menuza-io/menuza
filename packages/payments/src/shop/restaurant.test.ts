@@ -6,7 +6,9 @@ import {
 	isRestaurantOrderMetadata,
 	isRestaurantOrderProcessor,
 	isTerminalRestaurantPaymentStatus,
+	mapCheckoutPaymentToRestaurantOrder,
 	mapCheckoutWebhookToRestaurantOrder,
+	restaurantOrderCheckoutReference,
 	mapConnectSessionToRestaurantOrder,
 	RESTAURANT_ORDER_METADATA_TYPE,
 	RESTAURANT_ORDER_PRODUCT_NAME,
@@ -192,7 +194,14 @@ describe('mapConnectSessionToRestaurantOrder', () => {
 })
 
 describe('mapCheckoutWebhookToRestaurantOrder', () => {
-	it('maps an approved payment with its session reference', () => {
+	const reference = 'restaurant_order:org_1:ord_1'
+	const metadata = {
+		type: RESTAURANT_ORDER_METADATA_TYPE,
+		orgId: 'org_1',
+		orderId: 'ord_1',
+	}
+
+	it('maps an approved payment, binding on the merchant reference', () => {
 		expect(
 			mapCheckoutWebhookToRestaurantOrder({
 				type: 'payment_approved',
@@ -201,23 +210,35 @@ describe('mapCheckoutWebhookToRestaurantOrder', () => {
 					amount: 4250,
 					currency: 'USD',
 					approved: true,
-					metadata: {
-						type: RESTAURANT_ORDER_METADATA_TYPE,
-						orgId: 'org_1',
-						orderId: 'ord_1',
-					},
-					processing: { payment_session_id: 's_1' },
+					reference,
+					metadata,
 				},
 			}),
 		).toEqual({
 			orgId: 'org_1',
 			orderId: 'ord_1',
-			sessionId: 's_1',
+			sessionId: reference,
 			processor: 'checkout',
 			status: 'paid',
 			amountCents: 4250,
 			currency: 'usd',
 		})
+	})
+
+	it('does not depend on processing.payment_session_id (HPP payments may not carry it)', () => {
+		const withSession = mapCheckoutWebhookToRestaurantOrder({
+			type: 'payment_approved',
+			data: {
+				id: 'pay_1',
+				amount: 4250,
+				currency: 'USD',
+				approved: true,
+				reference,
+				metadata,
+				processing: { payment_session_id: 'hpp_1' },
+			},
+		})
+		expect(withSession?.sessionId).toBe(reference)
 	})
 
 	it('maps declined payments as failed', () => {
@@ -229,12 +250,8 @@ describe('mapCheckoutWebhookToRestaurantOrder', () => {
 					amount: 4250,
 					currency: 'USD',
 					status: 'Declined',
-					metadata: {
-						type: RESTAURANT_ORDER_METADATA_TYPE,
-						orgId: 'org_1',
-						orderId: 'ord_1',
-					},
-					processing: { payment_session_id: 's_1' },
+					reference,
+					metadata,
 				},
 			})?.status,
 		).toBe('failed')
@@ -243,39 +260,29 @@ describe('mapCheckoutWebhookToRestaurantOrder', () => {
 	it('skips pending events', () => {
 		const event = mapCheckoutWebhookToRestaurantOrder({
 			type: 'payment_pending',
-			data: {
-				id: 'pay_1',
-				amount: 4250,
-				currency: 'USD',
-				metadata: {
-					type: RESTAURANT_ORDER_METADATA_TYPE,
-					orgId: 'org_1',
-					orderId: 'ord_1',
-				},
-				processing: { payment_session_id: 's_1' },
-			},
+			data: { id: 'pay_1', amount: 4250, currency: 'USD', reference, metadata },
 		})
 		expect(event?.status).toBe('pending')
 		expect(isTerminalRestaurantPaymentStatus(event!.status)).toBe(false)
 	})
 
-	it('returns null without a session reference (cannot verify binding)', () => {
-		expect(
-			mapCheckoutWebhookToRestaurantOrder({
-				type: 'payment_approved',
-				data: {
-					id: 'pay_1',
-					amount: 4250,
-					currency: 'USD',
-					approved: true,
-					metadata: {
-						type: RESTAURANT_ORDER_METADATA_TYPE,
-						orgId: 'org_1',
-						orderId: 'ord_1',
+	it('returns null when the reference does not match the order in the metadata', () => {
+		for (const wrong of [undefined, 'restaurant_order:org_1:ord_2', 'other']) {
+			expect(
+				mapCheckoutWebhookToRestaurantOrder({
+					type: 'payment_approved',
+					data: {
+						id: 'pay_1',
+						amount: 4250,
+						currency: 'USD',
+						approved: true,
+						reference: wrong,
+						metadata,
+						processing: { payment_session_id: 's_1' },
 					},
-				},
-			}),
-		).toBeNull()
+				}),
+			).toBeNull()
+		}
 	})
 
 	it('returns null for shop orders and irrelevant events', () => {
@@ -297,6 +304,51 @@ describe('mapCheckoutWebhookToRestaurantOrder', () => {
 				type: 'payment_refunded',
 				data: {},
 			}),
+		).toBeNull()
+	})
+})
+
+describe('mapCheckoutPaymentToRestaurantOrder', () => {
+	const reference = restaurantOrderCheckoutReference('org_1', 'ord_1')
+	const base = {
+		id: 'pay_1',
+		sessionId: null,
+		reference,
+		amountCents: 4250,
+		currency: 'SAR',
+		paid: false,
+		metadata: {
+			type: RESTAURANT_ORDER_METADATA_TYPE,
+			orgId: 'org_1',
+			orderId: 'ord_1',
+		},
+		productName: 'Restaurant order',
+	}
+
+	it('builds the reference the hosted page is created with', () => {
+		expect(reference).toBe('restaurant_order:org_1:ord_1')
+	})
+
+	it('paid, declined and undecided payments', () => {
+		expect(
+			mapCheckoutPaymentToRestaurantOrder({ ...base, paid: true })?.status,
+		).toBe('paid')
+		expect(
+			mapCheckoutPaymentToRestaurantOrder({ ...base, status: 'Declined' })?.status,
+		).toBe('failed')
+		expect(mapCheckoutPaymentToRestaurantOrder(base)?.status).toBe('pending')
+		expect(
+			mapCheckoutPaymentToRestaurantOrder({ ...base, paid: true }),
+		).toMatchObject({
+			sessionId: reference,
+			currency: 'sar',
+			processor: 'checkout',
+		})
+	})
+
+	it('refuses a payment whose reference belongs to another order', () => {
+		expect(
+			mapCheckoutPaymentToRestaurantOrder({ ...base, reference: 'x' }),
 		).toBeNull()
 	})
 })

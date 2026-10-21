@@ -1,5 +1,6 @@
 import { jwtVerify } from 'jose'
 import { z } from 'zod'
+import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
 	parseKioskDeviceSecret,
 	parseKioskPairingCode,
@@ -9,6 +10,7 @@ import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { brand } from '@repo/config/brand'
 import {
 	resolveOrganizationForBrowserAuth,
+	resolveOrganizationForPublicOrigin,
 	findActiveOrganizationById,
 } from '../src/lib/origin.ts'
 import { getBearerToken } from '../src/lib/secrets.ts'
@@ -51,11 +53,16 @@ async function orgIdFromOperatorJwt(
 
 	try {
 		const secret = new TextEncoder().encode(env.TENANT_OPERATOR_TOKEN)
-		// Staffing tokens carry their own audience so they cannot be replayed on
-		// the generic operator routes (and vice versa); both must route to the
-		// org's Durable Object. The route handlers re-verify audience and scope.
+		// Staffing and reservations tokens carry their own audiences so they
+		// cannot be replayed on the generic operator routes (and vice versa);
+		// all three must route to the org's Durable Object. The route handlers
+		// re-verify audience, typ, and scope.
 		const { payload } = await jwtVerify(token, secret, {
-			audience: ['tenant-api-operator', STAFFING_TOKEN_AUDIENCE],
+			audience: [
+				'tenant-api-operator',
+				STAFFING_TOKEN_AUDIENCE,
+				RESERVATIONS_TOKEN_AUDIENCE,
+			],
 			issuer: brand.shortName,
 			algorithms: ['HS256'],
 		})
@@ -191,6 +198,38 @@ export async function resolveOrgId(
 		return orgIdFromJsonBody(request)
 	}
 
+	// Reservations tick, internal commands, and voice actions: body orgId,
+	// authenticated by INTERNAL_COMMAND_TOKEN or VOICE_AGENT_TOKEN inside the
+	// route handler. A tick with no body orgId fans out at the edge.
+	if (
+		pathname === '/api/reservations/tick' ||
+		pathname.startsWith('/internal/reservations/') ||
+		pathname.startsWith('/api/reservations/') ||
+		pathname.startsWith('/api/voice/actions/')
+	) {
+		return orgIdFromJsonBody(request)
+	}
+
+	// Operator reservations routes: route strictly by the signed operator JWT,
+	// never by a client-supplied query or body orgId.
+	if (pathname.startsWith('/operator/reservations')) {
+		return orgIdFromOperatorJwt(request, env)
+	}
+
+	// Public/guest reservations routes: the organization is the one the
+	// browser's Origin names (plus slug/host hints outside production), never a
+	// customer JWT, query or body orgId.
+	if (isPublicReservationsPath(pathname)) {
+		const organization = await resolveOrganizationForPublicOrigin(
+			request.headers.get('Origin') ?? undefined,
+			{
+				slug: url.searchParams.get('slug') ?? undefined,
+				host: url.searchParams.get('host') ?? undefined,
+			},
+		)
+		return organization?.id ?? null
+	}
+
 	if (pathname.startsWith('/kiosk/')) {
 		return orgIdFromKioskRequest(request, pathname)
 	}
@@ -292,6 +331,42 @@ export async function assertOrgOnUsNode(
 			},
 			{ status: 409 },
 		)
+	}
+	return null
+}
+
+export function isPublicReservationsPath(pathname: string): boolean {
+	return pathname === '/reservations' || pathname.startsWith('/reservations/')
+}
+
+/**
+ * The same body, status and headers the Node runtime answers on
+ * `/reservations/*` when the Origin names no organization on this node
+ * (`notFoundResponse` in `src/lib/reservations-public-auth.ts`), so a caller
+ * learns nothing about which organizations exist.
+ */
+export function reservationsPublicNotFound(): Response {
+	return Response.json(
+		{ error: 'not_found' },
+		{ status: 404, headers: { 'Cache-Control': 'private, no-store' } },
+	)
+}
+
+/**
+ * Public reservations routes: an organization that is unknown, lives in
+ * another region or has no provisioned database answers the uniform 404, never
+ * a `region_mismatch` that would reveal where the organization lives.
+ */
+export async function assertReservationsOrgOnUsNode(
+	orgId: string,
+): Promise<Response | null> {
+	const organization = await findActiveOrganizationById(orgId)
+	if (
+		!organization ||
+		organization.dataRegion !== 'us' ||
+		!organization.hasProvisionedDb
+	) {
+		return reservationsPublicNotFound()
 	}
 	return null
 }
