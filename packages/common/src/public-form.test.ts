@@ -69,3 +69,25 @@ describe('public form projection', () => {
 		expect(parsed.success).toBe(true)
 	})
 })
+
+describe('publicFormFieldSchema labels', () => {
+	const field = { id: 'name', type: 'name' as const, required: true }
+
+	it('accepts plain and localized labels', () => {
+		expect(
+			publicFormFieldSchema.safeParse({ ...field, label: 'Name' }).success,
+		).toBe(true)
+		expect(
+			publicFormFieldSchema.safeParse({ ...field, label: '{"en":"Name"}' })
+				.success,
+		).toBe(true)
+	})
+
+	it('rejects a cleared localized label', () => {
+		for (const label of ['{"en":""}', '{"en":"  "}', '{}', '']) {
+			expect(publicFormFieldSchema.safeParse({ ...field, label }).success).toBe(
+				false,
+			)
+		}
+	})
+})

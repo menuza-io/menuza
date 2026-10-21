@@ -813,7 +813,7 @@ msgstr "{name} was put back."
 msgid "{name} was rehired. Add their workplaces again."
 msgstr "{name} was rehired. Add their workplaces again."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1121
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1129
 msgid "{notFoundCount} missing URLs logged"
 msgstr "{notFoundCount} missing URLs logged"
 
@@ -936,7 +936,7 @@ msgstr "{readyCount} ready, {needFix} need a fix. Rows with a problem are skippe
 msgid "{recipientCount} recipients"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:998
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1006
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} redirects"
 
@@ -1126,7 +1126,7 @@ msgstr "1 form"
 msgid "1 means no premium. Holiday hours are not counted toward overtime."
 msgstr "1 means no premium. Holiday hours are not counted toward overtime."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1119
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1127
 msgid "1 missing URL logged"
 msgstr "1 missing URL logged"
 
@@ -1138,7 +1138,7 @@ msgstr "1 onboarding task is still open"
 msgid "1 page"
 msgstr "1 page"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:996
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1004
 msgid "1 redirect"
 msgstr "1 redirect"
 
@@ -1166,7 +1166,7 @@ msgstr "2026-03-31 (year first)"
 msgid "31/03/2026 (day first)"
 msgstr "31/03/2026 (day first)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:794
 msgid "404 Error History"
 msgstr "404 Error History"
 
@@ -1485,7 +1485,7 @@ msgstr ""
 msgid "Account ID copied to clipboard"
 msgstr ""
 
-#: app/components/command-menu.tsx:314
+#: app/components/command-menu.tsx:341
 msgid "Account settings"
 msgstr ""
 
@@ -1510,15 +1510,15 @@ msgstr ""
 msgid "Across your organization"
 msgstr "Across your organization"
 
-#: app/components/command-menu.tsx:260
+#: app/components/command-menu.tsx:286
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:1060
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:966
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:640
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:869
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1046
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:877
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1054
 msgid "Actions"
 msgstr ""
 
@@ -1641,7 +1641,7 @@ msgstr "Add a job title."
 msgid "Add a last name."
 msgstr "Add a last name."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:480
+#: app/components/settings/cards/organization/announcement-sheet.tsx:481
 msgid "Add a link"
 msgstr ""
 
@@ -1756,7 +1756,7 @@ msgstr "Add and edit staff, reset time clock PINs, and terminate or rehire peopl
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "Add and edit time cards and export hours. Includes View time cards."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:552
+#: app/components/settings/cards/organization/announcement-sheet.tsx:553
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:605
 msgid "Add announcement"
 msgstr ""
@@ -1820,7 +1820,7 @@ msgstr "Add checklist"
 msgid "Add choice"
 msgstr "Add choice"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:931
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:933
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4395
 msgid "Add column"
 msgstr ""
@@ -2199,7 +2199,7 @@ msgstr "After-hours calls"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:444
 #: app/components/phone-agent/settings-nav.tsx:37
-#: app/components/phone-agent/test-call-panel.tsx:675
+#: app/components/phone-agent/test-call-panel.tsx:679
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:581
 msgid "Agent"
 msgstr "Agent"
@@ -3130,7 +3130,7 @@ msgid "Billed monthly"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:516
-#: app/components/command-menu.tsx:326
+#: app/components/command-menu.tsx:353
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
 msgstr ""
@@ -3397,7 +3397,7 @@ msgstr "Button label"
 msgid "Buttons"
 msgstr ""
 
-#: app/components/command-menu.tsx:297
+#: app/components/command-menu.tsx:324
 msgid "by {createdByName}"
 msgstr ""
 
@@ -3443,7 +3443,7 @@ msgstr "Call back"
 msgid "Call comes in"
 msgstr "Call comes in"
 
-#: app/components/phone-agent/test-call-panel.tsx:502
+#: app/components/phone-agent/test-call-panel.tsx:503
 msgid "Call controls"
 msgstr "Call controls"
 
@@ -3624,7 +3624,7 @@ msgstr "Can't text that number"
 #: app/components/phone-agent/training-rules-section.tsx:691
 #: app/components/roles/tenant-role-access-manager.tsx:797
 #: app/components/roles/tenant-role-access-manager.tsx:1256
-#: app/components/settings/cards/organization/announcement-sheet.tsx:546
+#: app/components/settings/cards/organization/announcement-sheet.tsx:547
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
 #: app/components/settings/email-form.tsx:82
@@ -3667,8 +3667,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:470
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:866
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:922
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
@@ -3681,10 +3681,10 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1770
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1457
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1495
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1579
 #: app/routes/organizations+/create.tsx:822
 #: app/routes/organizations+/create.tsx:957
 msgid "Cancel"
@@ -4208,7 +4208,7 @@ msgstr "Choose how overtime is counted before saving."
 msgid "Choose how overtime is counted for people who work at more than one workplace."
 msgstr "Choose how overtime is counted for people who work at more than one workplace."
 
-#: app/components/phone-agent/test-call-panel.tsx:518
+#: app/components/phone-agent/test-call-panel.tsx:519
 msgid "Choose one"
 msgstr "Choose one"
 
@@ -4316,7 +4316,7 @@ msgstr ""
 msgid "Clear"
 msgstr "Clear"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1568
 msgid "Clear all 404 history?"
 msgstr "Clear all 404 history?"
 
@@ -4332,11 +4332,11 @@ msgstr "Clear draft"
 msgid "Clear filters"
 msgstr "Clear filters"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:823
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:831
 msgid "Clear history"
 msgstr "Clear history"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1563
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1590
 msgid "Clear History"
 msgstr "Clear History"
 
@@ -4591,9 +4591,9 @@ msgstr "Collect a valid email address."
 msgid "Color"
 msgstr "Color"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:855
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:898
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:901
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:857
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:900
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:903
 msgid "Column name"
 msgstr ""
 
@@ -4872,7 +4872,7 @@ msgstr "Contacts"
 msgid "Contains (Partial Match)"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:434
+#: app/components/settings/cards/organization/announcement-sheet.tsx:435
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3290
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3480
@@ -5210,7 +5210,7 @@ msgid "Coverage compares the orders you usually get each hour with who is schedu
 msgstr "Coverage compares the orders you usually get each hour with who is scheduled. Red is short of your staffing standards, grey is clearly over."
 
 #: app/components/website/create-page-dialog.tsx:207
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:914
 msgid "Create"
 msgstr ""
 
@@ -5344,7 +5344,7 @@ msgstr "Create group chats"
 msgid "Create Link"
 msgstr ""
 
-#: app/components/command-menu.tsx:268
+#: app/components/command-menu.tsx:294
 msgid "Create new note"
 msgstr ""
 
@@ -5377,8 +5377,8 @@ msgstr ""
 msgid "Create PIN"
 msgstr "Create PIN"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1104
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
 msgid "Create redirect"
 msgstr "Create redirect"
 
@@ -5572,7 +5572,7 @@ msgstr "Custom task"
 msgid "Custom trigger event"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1234
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1252
 msgid "Custom URL"
 msgstr "Custom URL"
 
@@ -5867,7 +5867,7 @@ msgstr "Default hourly rate"
 msgid "Default language"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:439
+#: app/components/settings/cards/organization/announcement-sheet.tsx:440
 msgid "Default language required"
 msgstr ""
 
@@ -5911,9 +5911,9 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:527
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:983
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1484
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:991
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1511
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1557
 msgid "Delete"
 msgstr ""
 
@@ -5937,7 +5937,7 @@ msgstr "Delete {channelName}?"
 msgid "Delete {name}'s application?"
 msgstr "Delete {name}'s application?"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1500
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1527
 msgid "Delete 404 log entry?"
 msgstr "Delete 404 log entry?"
 
@@ -6017,7 +6017,7 @@ msgstr "Delete last digit"
 msgid "Delete link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1105
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1113
 msgid "Delete log entry"
 msgstr "Delete log entry"
 
@@ -6059,7 +6059,7 @@ msgstr ""
 msgid "Delete question"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1450
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1477
 msgid "Delete redirect rule?"
 msgstr "Delete redirect rule?"
 
@@ -6188,7 +6188,7 @@ msgstr "Design email"
 msgid "Desktop"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1201
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1219
 msgid "Destination"
 msgstr "Destination"
 
@@ -6252,7 +6252,7 @@ msgstr ""
 msgid "Dimensions:"
 msgstr "Dimensions:"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1081
 msgid "Direct / Unknown"
 msgstr "Direct / Unknown"
 
@@ -6448,7 +6448,7 @@ msgstr ""
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
 #: app/components/hiring/job-labels.ts:49
 #: app/components/phone-agent/test-call-panel.tsx:490
-#: app/components/phone-agent/test-call-panel.tsx:550
+#: app/components/phone-agent/test-call-panel.tsx:551
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
@@ -6530,7 +6530,7 @@ msgstr "Drag to move"
 msgid "Drag to reorder"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:646
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:647
 msgid "Drag to reorder column"
 msgstr ""
 
@@ -6616,7 +6616,7 @@ msgstr ""
 msgid "e.g. Speak with our team"
 msgstr "e.g. Speak with our team"
 
-#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:280
+#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:283
 msgid "e.g. urgent, meeting, project"
 msgstr ""
 
@@ -6696,7 +6696,7 @@ msgstr "Early out"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:483
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:984
 msgid "Edit"
 msgstr ""
 
@@ -6704,7 +6704,7 @@ msgstr ""
 msgid "Edit \"{ruleTitle}\""
 msgstr "Edit \"{ruleTitle}\""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:327
+#: app/components/settings/cards/organization/announcement-sheet.tsx:328
 msgid "Edit announcement"
 msgstr ""
 
@@ -6724,7 +6724,7 @@ msgstr "Edit certificate"
 msgid "Edit channel"
 msgstr "Edit channel"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:674
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:675
 msgid "Edit column"
 msgstr ""
 
@@ -6779,7 +6779,7 @@ msgstr "Edit position"
 msgid "Edit private details"
 msgstr "Edit private details"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1149
 msgid "Edit redirect"
 msgstr "Edit redirect"
 
@@ -6959,17 +6959,17 @@ msgstr ""
 msgid "Enable hosted checkout"
 msgstr "Enable hosted checkout"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1401
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1428
 msgid "Enable redirect immediately"
 msgstr "Enable redirect immediately"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:382
+#: app/components/settings/cards/organization/announcement-sheet.tsx:383
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:144
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:171
 msgid "Enabled"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:340
+#: app/components/settings/cards/organization/announcement-sheet.tsx:341
 msgid "Enabled banners appear at the top of your public site."
 msgstr ""
 
@@ -7106,7 +7106,7 @@ msgstr "Enter an amount like 15.50."
 msgid "Enter an email address"
 msgstr "Enter an email address"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "Enter an internal path (e.g. /new-page) or full external URL."
 
@@ -7285,7 +7285,7 @@ msgstr "Erasing..."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
-#: app/components/settings/cards/organization/announcement-sheet.tsx:273
+#: app/components/settings/cards/organization/announcement-sheet.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:360
 msgid "Error"
 msgstr ""
@@ -7439,7 +7439,7 @@ msgstr ""
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1222
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1240
 msgid "Existing page"
 msgstr "Existing page"
 
@@ -7838,7 +7838,7 @@ msgstr "Flip horizontally"
 msgid "Flip vertically"
 msgstr "Flip vertically"
 
-#: app/components/phone-agent/test-call-panel.tsx:532
+#: app/components/phone-agent/test-call-panel.tsx:533
 msgid "Flow"
 msgstr "Flow"
 
@@ -7936,7 +7936,7 @@ msgstr "Former member"
 msgid "Forms"
 msgstr "Forms"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:752
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:760
 msgid "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 msgstr "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 
@@ -8131,7 +8131,7 @@ msgstr "Give your group a name"
 msgid "Go there"
 msgstr "Go there"
 
-#: app/components/command-menu.tsx:243
+#: app/components/command-menu.tsx:269
 msgid "Go to"
 msgstr ""
 
@@ -8471,17 +8471,17 @@ msgstr "Hiring…"
 msgid "History"
 msgstr "History"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:950
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1072
 msgid "hit"
 msgstr "hit"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:950
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1072
 msgid "hits"
 msgstr "hits"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1036
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1044
 msgid "Hits"
 msgstr "Hits"
 
@@ -8699,7 +8699,7 @@ msgstr "If the caller doesn't choose"
 msgid "If you change your email, you'll need to verify the new address"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:835
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
 msgid "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 msgstr "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 
@@ -8845,7 +8845,7 @@ msgstr ""
 msgid "Includes {seats} user seats"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:271
+#: app/components/settings/cards/organization/announcement-sheet.tsx:272
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:358
 msgid "Info"
 msgstr ""
@@ -8987,7 +8987,7 @@ msgstr "Invite member"
 msgid "Invite members"
 msgstr ""
 
-#: app/components/command-menu.tsx:277
+#: app/components/command-menu.tsx:303
 #: app/components/roles/tenant-role-access-manager.tsx:124
 msgid "Invite new members"
 msgstr ""
@@ -9214,7 +9214,7 @@ msgstr "Keep waiting"
 msgid "Keep who works each shift"
 msgstr "Keep who works each shift"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1394
 msgid "Keeps original indexing"
 msgstr "Keeps original indexing"
 
@@ -9393,7 +9393,7 @@ msgstr ""
 msgid "Last day"
 msgstr "Last day"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1039
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1047
 msgid "Last Encountered"
 msgstr "Last Encountered"
 
@@ -9467,7 +9467,7 @@ msgid "Lead capture"
 msgstr "Lead capture"
 
 #: app/components/feature-updates.tsx:205
-#: app/components/settings/cards/organization/announcement-sheet.tsx:512
+#: app/components/settings/cards/organization/announcement-sheet.tsx:513
 msgid "Learn more"
 msgstr ""
 
@@ -9636,11 +9636,11 @@ msgstr ""
 msgid "Link copied."
 msgstr "Link copied."
 
-#: app/components/phone-agent/test-call-panel.tsx:695
+#: app/components/phone-agent/test-call-panel.tsx:699
 msgid "Link created"
 msgstr "Link created"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:498
+#: app/components/settings/cards/organization/announcement-sheet.tsx:499
 msgid "Link label"
 msgstr ""
 
@@ -9658,7 +9658,7 @@ msgstr "Link to a form you host elsewhere. Nothing is collected here."
 msgid "Link to the form"
 msgstr "Link to the form"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:486
+#: app/components/settings/cards/organization/announcement-sheet.tsx:487
 msgid "Link URL"
 msgstr ""
 
@@ -9677,11 +9677,11 @@ msgstr "Listening"
 
 #: app/components/hiring/job-labels.ts:50
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:624
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:861
 msgid "Live"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:641
+#: app/components/phone-agent/test-call-panel.tsx:644
 msgid "Live transcript"
 msgstr "Live transcript"
 
@@ -10440,7 +10440,7 @@ msgstr "Missed transfers"
 msgid "Missing clock-out"
 msgstr "Missing clock-out"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1033
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1041
 msgid "Missing Path"
 msgstr "Missing Path"
 
@@ -10775,7 +10775,7 @@ msgid "Never"
 msgstr "Never"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:987
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:953
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:961
 msgid "Never used"
 msgstr ""
 
@@ -10785,7 +10785,7 @@ msgstr ""
 msgid "New"
 msgstr "New"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:329
+#: app/components/settings/cards/organization/announcement-sheet.tsx:330
 msgid "New announcement"
 msgstr ""
 
@@ -10817,7 +10817,7 @@ msgstr ""
 msgid "New dashboard"
 msgstr "New dashboard"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:859
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:867
 msgid "New Destination"
 msgstr "New Destination"
 
@@ -10893,11 +10893,11 @@ msgstr "New PIN"
 msgid "New PIN for {scopeName}"
 msgstr "New PIN for {scopeName}"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1149
 msgid "New redirect"
 msgstr "New redirect"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:766
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:774
 msgid "New Redirect"
 msgstr "New Redirect"
 
@@ -10961,11 +10961,11 @@ msgstr "Next week"
 msgid "No"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1021
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1029
 msgid "No 404 errors match that search"
 msgstr "No 404 errors match that search"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1013
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1021
 msgid "No 404 errors recorded"
 msgstr "No 404 errors recorded"
 
@@ -11309,7 +11309,7 @@ msgstr "No microphone was found. Connect one and try again."
 msgid "No names to show. Ask a manager to set up your PIN."
 msgstr "No names to show. Ask a manager to set up your PIN."
 
-#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
+#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:396
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:149
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
 msgid "No note with the id \"{noteId}\" exists"
@@ -11471,11 +11471,11 @@ msgstr "No pronunciations yet."
 msgid "No rate"
 msgstr "No rate"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:833
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:841
 msgid "No redirects created yet"
 msgstr "No redirects created yet"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:841
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:849
 msgid "No redirects match that search"
 msgstr "No redirects match that search"
 
@@ -11483,7 +11483,7 @@ msgstr "No redirects match that search"
 msgid "No responses yet."
 msgstr "No responses yet."
 
-#: app/components/command-menu.tsx:238
+#: app/components/command-menu.tsx:264
 msgid "No results found."
 msgstr ""
 
@@ -11802,7 +11802,7 @@ msgstr "Not sent"
 msgid "Not set up for this position here"
 msgstr "Not set up for this position here"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:393
+#: app/components/dashboard/share-dashboard-dialog.tsx:404
 msgid "Not shared with anyone yet."
 msgstr "Not shared with anyone yet."
 
@@ -11888,7 +11888,7 @@ msgstr ""
 
 #: app/components/app-sidebar.tsx:294
 #: app/components/command-menu.tsx:84
-#: app/components/command-menu.tsx:282
+#: app/components/command-menu.tsx:308
 #: app/components/hiring/candidate-sheet.tsx:350
 #: app/components/staff/notes-tab.tsx:84
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
@@ -12086,11 +12086,11 @@ msgstr "Offline"
 msgid "Offline punch"
 msgstr "Offline punch"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1170
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1188
 msgid "Old path (Source)"
 msgstr "Old path (Source)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:864
 msgid "Old URL (Source)"
 msgstr "Old URL (Source)"
 
@@ -12265,7 +12265,7 @@ msgstr "Only one workplace can be the main one."
 msgid "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 msgstr "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 
-#: app/components/phone-agent/test-call-panel.tsx:623
+#: app/components/phone-agent/test-call-panel.tsx:626
 msgid "Only people who can edit the phone agent can start test calls."
 msgstr "Only people who can edit the phone agent can start test calls."
 
@@ -12397,7 +12397,7 @@ msgstr ""
 msgid "Open in email app"
 msgstr "Open in email app"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:530
+#: app/components/settings/cards/organization/announcement-sheet.tsx:531
 msgid "Open in new tab"
 msgstr ""
 
@@ -12405,7 +12405,7 @@ msgstr ""
 msgid "Open Kiro IDE Settings"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:704
+#: app/components/phone-agent/test-call-panel.tsx:708
 msgid "Open link"
 msgstr "Open link"
 
@@ -13129,11 +13129,11 @@ msgstr "People who work at more than one workplace"
 msgid "People whose shifts changed"
 msgstr "People whose shifts changed"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:389
+#: app/components/dashboard/share-dashboard-dialog.tsx:400
 msgid "People with access"
 msgstr "People with access"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:379
+#: app/components/dashboard/share-dashboard-dialog.tsx:390
 msgid "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
 msgstr "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
 
@@ -13162,7 +13162,7 @@ msgstr "Per year"
 msgid "Performance metrics"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1406
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 
@@ -13977,7 +13977,7 @@ msgid "Publish your site before sharing the shop link with customers."
 msgstr ""
 
 #: app/components/phone-agent/test-call-panel.tsx:489
-#: app/components/phone-agent/test-call-panel.tsx:547
+#: app/components/phone-agent/test-call-panel.tsx:548
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:721
@@ -14210,7 +14210,7 @@ msgstr "Recommended"
 msgid "Recommended for"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1356
 msgid "Recommended for SEO"
 msgstr "Recommended for SEO"
 
@@ -14272,15 +14272,15 @@ msgstr "Red"
 msgid "Redeliver"
 msgstr "Redeliver"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:973
 msgid "Redirect actions"
 msgstr "Redirect actions"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1324
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1351
 msgid "Redirect type"
 msgstr "Redirect type"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1086
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1094
 msgid "Redirected"
 msgstr "Redirected"
 
@@ -14291,11 +14291,11 @@ msgstr "Redirected"
 msgid "Redirects"
 msgstr "Redirects"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:750
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:758
 msgid "Redirects & 404 History"
 msgstr "Redirects & 404 History"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1042
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1050
 msgid "Referrer"
 msgstr "Referrer"
 
@@ -15076,7 +15076,7 @@ msgstr "Rounding step"
 msgid "Rounds clock-in and clock-out when hours are added up. The exact punch times are always kept."
 msgstr "Rounds clock-in and clock-out when hours are added up. The exact punch times are always kept."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1144
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1152
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "Route incoming traffic from an old path to a new destination."
 
@@ -15283,7 +15283,7 @@ msgstr ""
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
 msgstr ""
@@ -15329,7 +15329,7 @@ msgstr "Save card for later charges"
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/roles/tenant-role-access-manager.tsx:803
-#: app/components/settings/cards/organization/announcement-sheet.tsx:550
+#: app/components/settings/cards/organization/announcement-sheet.tsx:551
 #: app/components/settings/cards/organization/general-settings-card.tsx:114
 #: app/components/settings/cards/organization/site-analytics-card.tsx:138
 #: app/components/settings/cards/profile-card.tsx:192
@@ -15339,7 +15339,7 @@ msgstr "Save card for later charges"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
 msgid "Save changes"
 msgstr ""
 
@@ -15672,7 +15672,7 @@ msgstr "Search media library"
 msgid "Search messages"
 msgstr "Search messages"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:815
 msgid "Search missing URLs..."
 msgstr "Search missing URLs..."
 
@@ -15700,7 +15700,7 @@ msgstr ""
 msgid "Search or filter to narrow the list."
 msgstr "Search or filter to narrow the list."
 
-#: app/components/command-menu.tsx:229
+#: app/components/command-menu.tsx:255
 #: app/components/site-header.tsx:52
 msgid "Search or jump to…"
 msgstr "Search or jump to…"
@@ -15718,7 +15718,7 @@ msgstr "Search people"
 msgid "Search preview"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:806
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:814
 msgid "Search redirects..."
 msgstr "Search redirects..."
 
@@ -15764,7 +15764,7 @@ msgstr ""
 msgid "Search…"
 msgstr "Search…"
 
-#: app/components/command-menu.tsx:236
+#: app/components/command-menu.tsx:262
 msgid "Searching…"
 msgstr ""
 
@@ -15914,7 +15914,7 @@ msgstr "Select a submission to read the details and start a reply."
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1252
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1270
 msgid "Select a website page"
 msgstr "Select a website page"
 
@@ -15976,7 +15976,7 @@ msgstr ""
 msgid "Select trigger type"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:414
+#: app/components/settings/cards/organization/announcement-sheet.tsx:415
 msgid "Select type"
 msgstr ""
 
@@ -16227,8 +16227,8 @@ msgstr "Set up this tablet"
 
 #: app/components/app-sidebar.tsx:363
 #: app/components/app-sidebar.tsx:456
-#: app/components/command-menu.tsx:305
-#: app/components/command-menu.tsx:338
+#: app/components/command-menu.tsx:332
+#: app/components/command-menu.tsx:365
 #: app/components/phone-agent/agent-details.tsx:315
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
@@ -16256,7 +16256,7 @@ msgid "Several people are typing…"
 msgstr "Several people are typing…"
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:229
-#: app/components/dashboard/share-dashboard-dialog.tsx:369
+#: app/components/dashboard/share-dashboard-dialog.tsx:378
 #: app/components/note/share-note-button.tsx:186
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
@@ -16264,11 +16264,15 @@ msgstr "Several people are typing…"
 msgid "Share"
 msgstr ""
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:375
+#: app/components/dashboard/share-dashboard-dialog.tsx:369
 msgid "Share “{name}”"
 msgstr "Share “{name}”"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:463
+#: app/components/dashboard/share-dashboard-dialog.tsx:375
+#~ msgid "Share “<0>{name}</0>”"
+#~ msgstr "Share “<0>{name}</0>”"
+
+#: app/components/settings/cards/organization/announcement-sheet.tsx:464
 msgid "Share an update, maintenance notice, or promotion…"
 msgstr ""
 
@@ -16463,7 +16467,7 @@ msgstr "Show requests"
 msgid "Show specific examples"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:385
+#: app/components/settings/cards/organization/announcement-sheet.tsx:386
 msgid "Show this banner on your public site"
 msgstr ""
 
@@ -16882,7 +16886,7 @@ msgstr "Star"
 msgid "Start"
 msgstr "Start"
 
-#: app/components/phone-agent/test-call-panel.tsx:656
+#: app/components/phone-agent/test-call-panel.tsx:659
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "Start a call to see what you and your agent say in real time."
 
@@ -17168,7 +17172,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:274
+#: app/components/settings/cards/organization/announcement-sheet.tsx:275
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:361
 msgid "Success"
 msgstr ""
@@ -17491,11 +17495,11 @@ msgstr "Templates…"
 msgid "Temporary"
 msgstr "Temporary"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1385
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1412
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1333
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1360
 msgid "Temporary forward"
 msgstr "Temporary forward"
 
@@ -17958,7 +17962,7 @@ msgstr "The closing date has passed. Choose a new one."
 msgid "The code works once and expires after ten minutes."
 msgstr "The code works once and expires after ten minutes."
 
-#: app/components/phone-agent/test-call-panel.tsx:652
+#: app/components/phone-agent/test-call-panel.tsx:655
 msgid "The conversation and your key presses will appear here."
 msgstr "The conversation and your key presses will appear here."
 
@@ -18181,7 +18185,7 @@ msgstr "The page will not mention pay. Showing a range tends to bring more appli
 msgid "The passwords must match"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1182
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1200
 msgid "The path on your old site that visitors or search engines request."
 msgstr "The path on your old site that visitors or search engines request."
 
@@ -18571,7 +18575,7 @@ msgstr "This call flow is ready to publish."
 msgid "This call or request no longer exists."
 msgstr "This call or request no longer exists."
 
-#: app/components/phone-agent/test-call-panel.tsx:609
+#: app/components/phone-agent/test-call-panel.tsx:612
 msgid "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgstr "This call will appear in <0>Calls</0> shortly, marked as a test."
 
@@ -18957,15 +18961,15 @@ msgstr "This week has not been published yet."
 msgid "This will be the URL path for this page."
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1503
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1544
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1571
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1453
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1480
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 
@@ -19250,7 +19254,7 @@ msgstr ""
 msgid "Toggle notifications"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:889
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:897
 msgid "Toggle redirect active status"
 msgstr "Toggle redirect active status"
 
@@ -19400,7 +19404,7 @@ msgstr "Transfers"
 #~ msgid "Transfers are paused"
 #~ msgstr "Transfers are paused"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
 msgid "Transfers search rank"
 msgstr "Transfers search rank"
 
@@ -19501,8 +19505,8 @@ msgid "Try a different search or clear the filters."
 msgstr "Try a different search or clear the filters."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:851
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1031
 msgid "Try a different search term or clear the search."
 msgstr ""
 
@@ -19646,14 +19650,14 @@ msgstr ""
 #: app/components/hiring/job-editor.tsx:642
 #: app/components/hiring/job-summary.tsx:41
 #: app/components/my-schedule/time-off-sheet.tsx:153
-#: app/components/settings/cards/organization/announcement-sheet.tsx:397
+#: app/components/settings/cards/organization/announcement-sheet.tsx:398
 #: app/components/staff/schedule/time-off-sheet.tsx:194
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:630
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3928
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:870
 #: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
 msgstr ""
@@ -20039,7 +20043,7 @@ msgstr ""
 msgid "URL copied to clipboard"
 msgstr "URL copied to clipboard"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:780
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:788
 msgid "URL Redirects"
 msgstr "URL Redirects"
 
@@ -20047,7 +20051,7 @@ msgstr "URL Redirects"
 msgid "URL:"
 msgstr "URL:"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:865
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:873
 msgid "Usage"
 msgstr "Usage"
 
@@ -20604,7 +20608,7 @@ msgstr "Warn managers about overtime"
 msgid "Warn when this close to the limit"
 msgstr "Warn when this close to the limit"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:272
+#: app/components/settings/cards/organization/announcement-sheet.tsx:273
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:359
 msgid "Warning"
 msgstr ""
@@ -21024,7 +21028,7 @@ msgstr "When a call connects"
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1431
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "When active, visitors requesting the old URL will be forwarded right away."
 
@@ -21084,7 +21088,7 @@ msgstr "When to apply, e.g. The caller mentions an allergy"
 msgid "When to transfer a call or take a message for staff."
 msgstr "When to transfer a call or take a message for staff."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1015
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 
@@ -21228,7 +21232,7 @@ msgstr "Why are you changing this?"
 msgid "Width"
 msgstr "Width"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1288
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Will redirect to"
 msgstr "Will redirect to"
 
@@ -21341,7 +21345,7 @@ msgstr "Write a policy. You record when they have read and accepted it."
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "Write it the way you'd explain it to a new staff member."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:334
+#: app/components/settings/cards/organization/announcement-sheet.tsx:335
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr ""
 
@@ -21364,7 +21368,7 @@ msgstr ""
 msgid "Write your message"
 msgstr "Write your message"
 
-#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:308
+#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:311
 msgid "Write your note content..."
 msgstr ""
 
@@ -21423,7 +21427,7 @@ msgstr "Yesterday"
 
 #: app/components/hiring/candidate-parts.tsx:374
 #: app/components/organization-members.tsx:210
-#: app/components/phone-agent/test-call-panel.tsx:677
+#: app/components/phone-agent/test-call-panel.tsx:681
 msgid "You"
 msgstr ""
 
@@ -21483,7 +21487,7 @@ msgstr "You are on a break."
 msgid "You are viewing as another user. Staff data is read-only."
 msgstr "You are viewing as another user. Staff data is read-only."
 
-#: app/components/phone-agent/test-call-panel.tsx:590
+#: app/components/phone-agent/test-call-panel.tsx:593
 msgid "You can also type keys on your keyboard."
 msgstr "You can also type keys on your keyboard."
 
@@ -21691,7 +21695,7 @@ msgstr "Your bank needs to confirm it is you."
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 msgstr "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 
-#: app/components/phone-agent/test-call-panel.tsx:595
+#: app/components/phone-agent/test-call-panel.tsx:598
 msgid "Your browser paused the agent's audio. Tap Speaker to hear it."
 msgstr "Your browser paused the agent's audio. Tap Speaker to hear it."
 
@@ -21755,7 +21759,7 @@ msgstr "Your existing line forwards to this number."
 msgid "Your feedback"
 msgstr ""
 
-#: app/components/phone-agent/test-call-panel.tsx:556
+#: app/components/phone-agent/test-call-panel.tsx:557
 msgid "Your flow isn't published yet, so test the draft."
 msgstr "Your flow isn't published yet, so test the draft."
 

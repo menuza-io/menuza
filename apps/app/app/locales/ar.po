@@ -811,7 +811,7 @@ msgstr "أُعيد {name} إلى مكانه."
 msgid "{name} was rehired. Add their workplaces again."
 msgstr "أُعيد توظيف {name}. أضف أماكن عمله من جديد."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1121
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1129
 msgid "{notFoundCount} missing URLs logged"
 msgstr "تم تسجيل {notFoundCount} عناوين URL مفقودة"
 
@@ -934,7 +934,7 @@ msgstr "{readyCount} جاهزة، و{needFix} تحتاج إلى تصحيح. يت
 msgid "{recipientCount} recipients"
 msgstr "{recipientCount} مستلم"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:998
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1006
 msgid "{redirectCount} redirects"
 msgstr "{redirectCount} عمليات إعادة توجيه"
 
@@ -1124,7 +1124,7 @@ msgstr "نموذج واحد"
 msgid "1 means no premium. Holiday hours are not counted toward overtime."
 msgstr "القيمة 1 تعني بلا علاوة. ساعات العطل لا تُحتسب ضمن العمل الإضافي."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1119
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1127
 msgid "1 missing URL logged"
 msgstr "تم تسجيل عنوان URL مفقود واحد"
 
@@ -1136,7 +1136,7 @@ msgstr "مهمة تهيئة واحدة ما زالت مفتوحة"
 msgid "1 page"
 msgstr "صفحة واحدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:996
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1004
 msgid "1 redirect"
 msgstr "إعادة توجيه واحدة"
 
@@ -1164,7 +1164,7 @@ msgstr "2026-03-31 (السنة أولًا)"
 msgid "31/03/2026 (day first)"
 msgstr "31/03/2026 (اليوم أولًا)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:786
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:794
 msgid "404 Error History"
 msgstr "سجل أخطاء 404"
 
@@ -1483,7 +1483,7 @@ msgstr "الحساب"
 msgid "Account ID copied to clipboard"
 msgstr "تم نسخ معرف الحساب إلى الحافظة"
 
-#: app/components/command-menu.tsx:314
+#: app/components/command-menu.tsx:341
 msgid "Account settings"
 msgstr "إعدادات الحساب"
 
@@ -1508,15 +1508,15 @@ msgstr "شركة Acme"
 msgid "Across your organization"
 msgstr "على مستوى مؤسستك"
 
-#: app/components/command-menu.tsx:260
+#: app/components/command-menu.tsx:286
 #: app/components/phone-agent/flow-editor/node-palette.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:1060
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:966
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:640
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:213
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:623
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:869
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1046
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:877
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1054
 msgid "Actions"
 msgstr "الإجراءات"
 
@@ -1639,7 +1639,7 @@ msgstr "أضف مسمى الوظيفة."
 msgid "Add a last name."
 msgstr "أضف اسم العائلة."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:480
+#: app/components/settings/cards/organization/announcement-sheet.tsx:481
 msgid "Add a link"
 msgstr "إضافة رابط"
 
@@ -1754,7 +1754,7 @@ msgstr "إضافة الموظفين وتعديلهم، وإعادة تعيين �
 msgid "Add and edit time cards and export hours. Includes View time cards."
 msgstr "إضافة بطاقات الدوام وتعديلها وتصدير الساعات. يشمل عرض بطاقات الدوام."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:552
+#: app/components/settings/cards/organization/announcement-sheet.tsx:553
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:605
 msgid "Add announcement"
 msgstr "إضافة إعلان"
@@ -1818,7 +1818,7 @@ msgstr "إضافة القائمة"
 msgid "Add choice"
 msgstr "إضافة خيار"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:931
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:933
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4395
 msgid "Add column"
 msgstr "إضافة عمود"
@@ -2197,7 +2197,7 @@ msgstr "المكالمات خارج ساعات العمل"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:444
 #: app/components/phone-agent/settings-nav.tsx:37
-#: app/components/phone-agent/test-call-panel.tsx:675
+#: app/components/phone-agent/test-call-panel.tsx:679
 #: app/routes/_app+/$orgSlug_+/phone-agent+/_index.tsx:581
 msgid "Agent"
 msgstr "الوكيل"
@@ -3128,7 +3128,7 @@ msgid "Billed monthly"
 msgstr "الفوترة الشهرية"
 
 #: app/components/app-sidebar.tsx:516
-#: app/components/command-menu.tsx:326
+#: app/components/command-menu.tsx:353
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Billing"
 msgstr "الفواتير"
@@ -3395,7 +3395,7 @@ msgstr "نص الزر"
 msgid "Buttons"
 msgstr "الأزرار"
 
-#: app/components/command-menu.tsx:297
+#: app/components/command-menu.tsx:324
 msgid "by {createdByName}"
 msgstr "بواسطة {createdByName}"
 
@@ -3441,7 +3441,7 @@ msgstr "معاودة الاتصال"
 msgid "Call comes in"
 msgstr "ورود مكالمة"
 
-#: app/components/phone-agent/test-call-panel.tsx:502
+#: app/components/phone-agent/test-call-panel.tsx:503
 msgid "Call controls"
 msgstr "أدوات التحكم في المكالمة"
 
@@ -3622,7 +3622,7 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/training-rules-section.tsx:691
 #: app/components/roles/tenant-role-access-manager.tsx:797
 #: app/components/roles/tenant-role-access-manager.tsx:1256
-#: app/components/settings/cards/organization/announcement-sheet.tsx:546
+#: app/components/settings/cards/organization/announcement-sheet.tsx:547
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
 #: app/components/settings/email-form.tsx:82
@@ -3665,8 +3665,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:470
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1093
 #: app/routes/_app+/$orgSlug_+/media.tsx:1603
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:864
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:920
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:866
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:922
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1100
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:428
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:486
@@ -3679,10 +3679,10 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:513
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:498
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:1770
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1468
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1514
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1552
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1457
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1495
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1579
 #: app/routes/organizations+/create.tsx:822
 #: app/routes/organizations+/create.tsx:957
 msgid "Cancel"
@@ -4206,7 +4206,7 @@ msgstr "اختر طريقة احتساب العمل الإضافي قبل الح
 msgid "Choose how overtime is counted for people who work at more than one workplace."
 msgstr "اختر طريقة احتساب الساعات الإضافية لمن يعمل في أكثر من مكان عمل."
 
-#: app/components/phone-agent/test-call-panel.tsx:518
+#: app/components/phone-agent/test-call-panel.tsx:519
 msgid "Choose one"
 msgstr "اختر واحدًا"
 
@@ -4314,7 +4314,7 @@ msgstr "إعداد Claude Desktop"
 msgid "Clear"
 msgstr "مسح"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1568
 msgid "Clear all 404 history?"
 msgstr "هل تريد مسح كل سجل 404؟"
 
@@ -4330,11 +4330,11 @@ msgstr "مسح المسودة"
 msgid "Clear filters"
 msgstr "مسح عوامل التصفية"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:823
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:831
 msgid "Clear history"
 msgstr "مسح السجل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1563
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1590
 msgid "Clear History"
 msgstr "مسح السجل"
 
@@ -4589,9 +4589,9 @@ msgstr "اجمع بريدًا إلكترونيًا صالحًا."
 msgid "Color"
 msgstr "اللون"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:855
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:898
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:901
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:857
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:900
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:903
 msgid "Column name"
 msgstr "اسم العمود"
 
@@ -4870,7 +4870,7 @@ msgstr "جهات الاتصال"
 msgid "Contains (Partial Match)"
 msgstr "يحتوي (تطابق جزئي)"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:434
+#: app/components/settings/cards/organization/announcement-sheet.tsx:435
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:627
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3290
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3480
@@ -5208,7 +5208,7 @@ msgid "Coverage compares the orders you usually get each hour with who is schedu
 msgstr "تقارن التغطية الطلبات التي تصلك عادة كل ساعة بمن هم مجدولون. الأحمر أقل من معايير التوظيف لديك، والرمادي أكثر منها بوضوح."
 
 #: app/components/website/create-page-dialog.tsx:207
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:912
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:914
 msgid "Create"
 msgstr "إنشاء"
 
@@ -5342,7 +5342,7 @@ msgstr "إنشاء محادثات جماعية"
 msgid "Create Link"
 msgstr "إنشاء رابط"
 
-#: app/components/command-menu.tsx:268
+#: app/components/command-menu.tsx:294
 msgid "Create new note"
 msgstr "إنشاء ملاحظة جديدة"
 
@@ -5375,8 +5375,8 @@ msgstr "إنشاء كلمة المرور"
 msgid "Create PIN"
 msgstr "إنشاء رمز PIN"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1096
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1104
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
 msgid "Create redirect"
 msgstr "إنشاء إعادة توجيه"
 
@@ -5570,7 +5570,7 @@ msgstr "مهمة مخصصة"
 msgid "Custom trigger event"
 msgstr "حدث تشغيل مخصص"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1234
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1252
 msgid "Custom URL"
 msgstr "عنوان URL مخصص"
 
@@ -5865,7 +5865,7 @@ msgstr "الأجر الافتراضي بالساعة"
 msgid "Default language"
 msgstr "اللغة الافتراضية"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:439
+#: app/components/settings/cards/organization/announcement-sheet.tsx:440
 msgid "Default language required"
 msgstr "اللغة الافتراضية مطلوبة"
 
@@ -5909,9 +5909,9 @@ msgstr "وحدة التأخير مطلوبة."
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:527
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:473
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:512
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:983
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1484
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:991
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1511
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1557
 msgid "Delete"
 msgstr "حذف"
 
@@ -5935,7 +5935,7 @@ msgstr "حذف {channelName}؟"
 msgid "Delete {name}'s application?"
 msgstr "حذف طلب {name}؟"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1500
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1527
 msgid "Delete 404 log entry?"
 msgstr "هل تريد حذف إدخال سجل 404؟"
 
@@ -6015,7 +6015,7 @@ msgstr "حذف آخر رقم"
 msgid "Delete link"
 msgstr "حذف الرابط"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1105
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1113
 msgid "Delete log entry"
 msgstr "حذف إدخال السجل"
 
@@ -6057,7 +6057,7 @@ msgstr "حذف الصفحة؟"
 msgid "Delete question"
 msgstr "حذف السؤال"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1450
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1477
 msgid "Delete redirect rule?"
 msgstr "هل تريد حذف قاعدة إعادة التوجيه؟"
 
@@ -6186,7 +6186,7 @@ msgstr "تصميم البريد"
 msgid "Desktop"
 msgstr "سطح المكتب"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1201
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1219
 msgid "Destination"
 msgstr "الوجهة"
 
@@ -6250,7 +6250,7 @@ msgstr "لم تستلم البريد الإلكتروني؟ تحقق من مجل
 msgid "Dimensions:"
 msgstr "الأبعاد:"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1073
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1081
 msgid "Direct / Unknown"
 msgstr "مباشر / غير معروف"
 
@@ -6446,7 +6446,7 @@ msgstr "مسودة"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:6
 #: app/components/hiring/job-labels.ts:49
 #: app/components/phone-agent/test-call-panel.tsx:490
-#: app/components/phone-agent/test-call-panel.tsx:550
+#: app/components/phone-agent/test-call-panel.tsx:551
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
@@ -6528,7 +6528,7 @@ msgstr "اسحب للنقل"
 msgid "Drag to reorder"
 msgstr "اسحب لإعادة الترتيب"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:646
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:647
 msgid "Drag to reorder column"
 msgstr "اسحب لإعادة ترتيب العمود"
 
@@ -6614,7 +6614,7 @@ msgstr "مثال: سارة من التسويق"
 msgid "e.g. Speak with our team"
 msgstr "مثل التحدث مع فريقنا"
 
-#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:280
+#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:283
 msgid "e.g. urgent, meeting, project"
 msgstr "مثل: عاجل، اجتماع، مشروع"
 
@@ -6694,7 +6694,7 @@ msgstr "انصراف مبكر"
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:240
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:483
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:430
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:976
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:984
 msgid "Edit"
 msgstr "تعديل"
 
@@ -6702,7 +6702,7 @@ msgstr "تعديل"
 msgid "Edit \"{ruleTitle}\""
 msgstr "تعديل \"{ruleTitle}\""
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:327
+#: app/components/settings/cards/organization/announcement-sheet.tsx:328
 msgid "Edit announcement"
 msgstr "تعديل الإعلان"
 
@@ -6722,7 +6722,7 @@ msgstr "تعديل الشهادة"
 msgid "Edit channel"
 msgstr "تعديل القناة"
 
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:674
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:675
 msgid "Edit column"
 msgstr "تعديل العمود"
 
@@ -6777,7 +6777,7 @@ msgstr "تعديل المنصب"
 msgid "Edit private details"
 msgstr "تعديل التفاصيل الخاصة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1149
 msgid "Edit redirect"
 msgstr "تعديل إعادة التوجيه"
 
@@ -6957,17 +6957,17 @@ msgstr "تفعيل تخزين S3 مخصص"
 msgid "Enable hosted checkout"
 msgstr "تمكين الدفع المستضاف"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1401
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1428
 msgid "Enable redirect immediately"
 msgstr "تفعيل إعادة التوجيه فوراً"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:382
+#: app/components/settings/cards/organization/announcement-sheet.tsx:383
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:144
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:171
 msgid "Enabled"
 msgstr "مفعّل"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:340
+#: app/components/settings/cards/organization/announcement-sheet.tsx:341
 msgid "Enabled banners appear at the top of your public site."
 msgstr "تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
 
@@ -7104,7 +7104,7 @@ msgstr "أدخل مبلغًا مثل 15.50."
 msgid "Enter an email address"
 msgstr "أدخل عنوان بريد إلكتروني"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
 msgid "Enter an internal path (e.g. /new-page) or full external URL."
 msgstr "أدخل مساراً داخلياً (مثل /new-page) أو عنوان URL خارجياً كاملاً."
 
@@ -7283,7 +7283,7 @@ msgstr "جارٍ المحو..."
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:47
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:149
-#: app/components/settings/cards/organization/announcement-sheet.tsx:273
+#: app/components/settings/cards/organization/announcement-sheet.tsx:274
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:360
 msgid "Error"
 msgstr "خطأ"
@@ -7437,7 +7437,7 @@ msgstr "سجل التنفيذ ({runCount})"
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "عمليات التشغيل وسجل الخطوات، المُطلقة بواسطة \"{triggerLabel}\"."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1222
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1240
 msgid "Existing page"
 msgstr "صفحة موجودة"
 
@@ -7836,7 +7836,7 @@ msgstr "قلب أفقيًا"
 msgid "Flip vertically"
 msgstr "قلب عموديًا"
 
-#: app/components/phone-agent/test-call-panel.tsx:532
+#: app/components/phone-agent/test-call-panel.tsx:533
 msgid "Flow"
 msgstr "مسار المكالمة"
 
@@ -7934,7 +7934,7 @@ msgstr "عضو سابق"
 msgid "Forms"
 msgstr "النماذج"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:752
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:760
 msgid "Forward old or broken URLs to your new pages to preserve SEO rank and customer traffic."
 msgstr "وجّه عناوين URL القديمة أو المعطلة إلى صفحاتك الجديدة للحفاظ على ترتيب محركات البحث وزيارات العملاء."
 
@@ -8129,7 +8129,7 @@ msgstr "أدخل اسمًا لمجموعتك"
 msgid "Go there"
 msgstr "الانتقال إلى هناك"
 
-#: app/components/command-menu.tsx:243
+#: app/components/command-menu.tsx:269
 msgid "Go to"
 msgstr "الانتقال إلى"
 
@@ -8469,17 +8469,17 @@ msgstr "جارٍ التوظيف…"
 msgid "History"
 msgstr "السجل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:950
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1072
 msgid "hit"
 msgstr "زيارة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:942
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1064
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:950
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1072
 msgid "hits"
 msgstr "زيارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1036
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1044
 msgid "Hits"
 msgstr "الزيارات"
 
@@ -8697,7 +8697,7 @@ msgstr "إذا لم يختر المتصل"
 msgid "If you change your email, you'll need to verify the new address"
 msgstr "إذا قمت بتغيير بريدك الإلكتروني، ستحتاج إلى التحقق من العنوان الجديد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:835
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
 msgid "If you moved from an older website or changed page URLs, create redirects so visitors and search engines are automatically forwarded."
 msgstr "إذا انتقلت من موقع ويب أقدم أو غيّرت عناوين URL للصفحات، فأنشئ عمليات إعادة توجيه ليتم توجيه الزوار ومحركات البحث تلقائياً."
 
@@ -8843,7 +8843,7 @@ msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:271
+#: app/components/settings/cards/organization/announcement-sheet.tsx:272
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:358
 msgid "Info"
 msgstr "معلومات"
@@ -8985,7 +8985,7 @@ msgstr "دعوة عضو"
 msgid "Invite members"
 msgstr "دعوة أعضاء"
 
-#: app/components/command-menu.tsx:277
+#: app/components/command-menu.tsx:303
 #: app/components/roles/tenant-role-access-manager.tsx:124
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
@@ -9212,7 +9212,7 @@ msgstr "استمر بالانتظار"
 msgid "Keep who works each shift"
 msgstr "الإبقاء على من يعمل في كل وردية"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1367
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1394
 msgid "Keeps original indexing"
 msgstr "يحافظ على الفهرسة الأصلية"
 
@@ -9391,7 +9391,7 @@ msgstr "آخر نشاط {lastActiveValue}"
 msgid "Last day"
 msgstr "آخر يوم"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1039
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1047
 msgid "Last Encountered"
 msgstr "آخر ظهور"
 
@@ -9465,7 +9465,7 @@ msgid "Lead capture"
 msgstr "جمع العملاء المحتملين"
 
 #: app/components/feature-updates.tsx:205
-#: app/components/settings/cards/organization/announcement-sheet.tsx:512
+#: app/components/settings/cards/organization/announcement-sheet.tsx:513
 msgid "Learn more"
 msgstr "اعرف المزيد"
 
@@ -9634,11 +9634,11 @@ msgstr "تم نسخ الرابط!"
 msgid "Link copied."
 msgstr "تم نسخ الرابط."
 
-#: app/components/phone-agent/test-call-panel.tsx:695
+#: app/components/phone-agent/test-call-panel.tsx:699
 msgid "Link created"
 msgstr "تم إنشاء الرابط"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:498
+#: app/components/settings/cards/organization/announcement-sheet.tsx:499
 msgid "Link label"
 msgstr "تسمية الرابط"
 
@@ -9656,7 +9656,7 @@ msgstr "رابط لنموذج تستضيفه في مكان آخر. لا يُجم
 msgid "Link to the form"
 msgstr "رابط النموذج"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:486
+#: app/components/settings/cards/organization/announcement-sheet.tsx:487
 msgid "Link URL"
 msgstr "عنوان الرابط"
 
@@ -9675,11 +9675,11 @@ msgstr "يستمع"
 
 #: app/components/hiring/job-labels.ts:50
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:624
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:853
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:861
 msgid "Live"
 msgstr "مباشر"
 
-#: app/components/phone-agent/test-call-panel.tsx:641
+#: app/components/phone-agent/test-call-panel.tsx:644
 msgid "Live transcript"
 msgstr "النص المكتوب المباشر"
 
@@ -10438,7 +10438,7 @@ msgstr "التحويلات الفائتة"
 msgid "Missing clock-out"
 msgstr "انصراف غير مسجّل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1033
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1041
 msgid "Missing Path"
 msgstr "المسار المفقود"
 
@@ -10773,7 +10773,7 @@ msgid "Never"
 msgstr "أبدًا"
 
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:987
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:953
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:961
 msgid "Never used"
 msgstr "لم يُستخدم أبداً"
 
@@ -10783,7 +10783,7 @@ msgstr "لم يُستخدم أبداً"
 msgid "New"
 msgstr "جديد"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:329
+#: app/components/settings/cards/organization/announcement-sheet.tsx:330
 msgid "New announcement"
 msgstr "إعلان جديد"
 
@@ -10815,7 +10815,7 @@ msgstr "رحلة عميل جديدة"
 msgid "New dashboard"
 msgstr "لوحة تحكم جديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:859
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:867
 msgid "New Destination"
 msgstr "الوجهة الجديدة"
 
@@ -10891,11 +10891,11 @@ msgstr "رمز PIN جديد"
 msgid "New PIN for {scopeName}"
 msgstr "رمز سري جديد لـ {scopeName}"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1141
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1149
 msgid "New redirect"
 msgstr "إعادة توجيه جديدة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:766
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:774
 msgid "New Redirect"
 msgstr "إعادة توجيه جديدة"
 
@@ -10959,11 +10959,11 @@ msgstr "الأسبوع التالي"
 msgid "No"
 msgstr "لا"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1021
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1029
 msgid "No 404 errors match that search"
 msgstr "لا توجد أخطاء 404 تطابق هذا البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1013
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1021
 msgid "No 404 errors recorded"
 msgstr "لم تُسجَّل أي أخطاء 404"
 
@@ -11307,7 +11307,7 @@ msgstr "لم يتم العثور على ميكروفون. وصّل ميكروف�
 msgid "No names to show. Ask a manager to set up your PIN."
 msgstr "لا توجد أسماء لعرضها. اطلب من مدير إعداد رقمك السري."
 
-#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:383
+#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:396
 #: app/routes/_app+/$orgSlug_+/notes.$noteId_.edit.tsx:149
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1198
 msgid "No note with the id \"{noteId}\" exists"
@@ -11469,11 +11469,11 @@ msgstr "لا توجد طرق نطق بعد."
 msgid "No rate"
 msgstr "بلا أجر ساعي"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:833
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:841
 msgid "No redirects created yet"
 msgstr "لا توجد عمليات إعادة توجيه بعد"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:841
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:849
 msgid "No redirects match that search"
 msgstr "لا توجد عمليات إعادة توجيه تطابق هذا البحث"
 
@@ -11481,7 +11481,7 @@ msgstr "لا توجد عمليات إعادة توجيه تطابق هذا ال�
 msgid "No responses yet."
 msgstr "لا توجد ردود بعد."
 
-#: app/components/command-menu.tsx:238
+#: app/components/command-menu.tsx:264
 msgid "No results found."
 msgstr "لم يتم العثور على نتائج."
 
@@ -11800,7 +11800,7 @@ msgstr "لم يُرسل"
 msgid "Not set up for this position here"
 msgstr "غير مهيأ لهذا المنصب هنا"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:393
+#: app/components/dashboard/share-dashboard-dialog.tsx:404
 msgid "Not shared with anyone yet."
 msgstr "لم تتم مشاركتها مع أي شخص بعد."
 
@@ -11886,7 +11886,7 @@ msgstr "ملاحظات"
 
 #: app/components/app-sidebar.tsx:294
 #: app/components/command-menu.tsx:84
-#: app/components/command-menu.tsx:282
+#: app/components/command-menu.tsx:308
 #: app/components/hiring/candidate-sheet.tsx:350
 #: app/components/staff/notes-tab.tsx:84
 #: app/components/staff/schedule/shift-editor-sheet.tsx:589
@@ -12084,11 +12084,11 @@ msgstr "غير متصل"
 msgid "Offline punch"
 msgstr "تسجيل دون اتصال"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1170
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1188
 msgid "Old path (Source)"
 msgstr "المسار القديم (المصدر)"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:856
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:864
 msgid "Old URL (Source)"
 msgstr "عنوان URL القديم (المصدر)"
 
@@ -12263,7 +12263,7 @@ msgstr "يمكن أن يكون مكان عمل واحد فقط هو الرئيس
 msgid "Only online orders are counted. In-person and other sales are not, so the share is higher than it really is."
 msgstr "تُحتسب الطلبات عبر الإنترنت فقط، أما المبيعات الحضورية وغيرها فلا تُحتسب، لذا تبدو النسبة أعلى من حقيقتها."
 
-#: app/components/phone-agent/test-call-panel.tsx:623
+#: app/components/phone-agent/test-call-panel.tsx:626
 msgid "Only people who can edit the phone agent can start test calls."
 msgstr "لا يمكن بدء المكالمات التجريبية إلا لمن يملكون صلاحية تعديل وكيل الهاتف."
 
@@ -12395,7 +12395,7 @@ msgstr "فتح في"
 msgid "Open in email app"
 msgstr "فتح في تطبيق البريد"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:530
+#: app/components/settings/cards/organization/announcement-sheet.tsx:531
 msgid "Open in new tab"
 msgstr "فتح في علامة تبويب جديدة"
 
@@ -12403,7 +12403,7 @@ msgstr "فتح في علامة تبويب جديدة"
 msgid "Open Kiro IDE Settings"
 msgstr "افتح إعدادات Kiro IDE"
 
-#: app/components/phone-agent/test-call-panel.tsx:704
+#: app/components/phone-agent/test-call-panel.tsx:708
 msgid "Open link"
 msgstr "فتح الرابط"
 
@@ -13127,11 +13127,11 @@ msgstr "من يعملون في أكثر من مكان عمل"
 msgid "People whose shifts changed"
 msgstr "من تغيّرت ورديّاتهم"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:389
+#: app/components/dashboard/share-dashboard-dialog.tsx:400
 msgid "People with access"
 msgstr "الأشخاص الذين لديهم صلاحية الوصول"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:379
+#: app/components/dashboard/share-dashboard-dialog.tsx:390
 msgid "People you share with find this dashboard under “Shared with me”. View access lets them look at it. Edit access also lets them change its blocks and layout for everyone."
 msgstr "يجد الأشخاص الذين تشاركها معهم لوحة التحكم هذه ضمن “تمت مشاركتها معي”. تتيح لهم صلاحية العرض الاطلاع عليها، وتتيح لهم صلاحية التعديل أيضًا تغيير كتلها وتخطيطها للجميع."
 
@@ -13160,7 +13160,7 @@ msgstr "في السنة"
 msgid "Performance metrics"
 msgstr "مقاييس الأداء"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1406
 msgid "Permanent (301) tells search engines (like Google) that the page has moved permanently, passing ranking and backlinks."
 msgstr "تشير إعادة التوجيه الدائمة (301) لمحركات البحث (مثل Google) إلى أن الصفحة انتقلت نهائياً، مع نقل الترتيب والروابط الخلفية."
 
@@ -13975,7 +13975,7 @@ msgid "Publish your site before sharing the shop link with customers."
 msgstr "انشر موقعك قبل مشاركة رابط المتجر مع العملاء."
 
 #: app/components/phone-agent/test-call-panel.tsx:489
-#: app/components/phone-agent/test-call-panel.tsx:547
+#: app/components/phone-agent/test-call-panel.tsx:548
 #: app/components/staff/schedule/publish-dialog.tsx:325
 #: app/components/staff/schedule/shift-block.tsx:38
 #: app/components/website/form-builder-sidebar.tsx:721
@@ -14208,7 +14208,7 @@ msgstr "موصى به"
 msgid "Recommended for"
 msgstr "موصى به لـ"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1329
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1356
 msgid "Recommended for SEO"
 msgstr "موصى به لتحسين محركات البحث"
 
@@ -14270,15 +14270,15 @@ msgstr "أحمر"
 msgid "Redeliver"
 msgstr "إعادة التسليم"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:965
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:973
 msgid "Redirect actions"
 msgstr "إجراءات إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1324
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1351
 msgid "Redirect type"
 msgstr "نوع إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1086
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1094
 msgid "Redirected"
 msgstr "تمت إعادة التوجيه"
 
@@ -14289,11 +14289,11 @@ msgstr "تمت إعادة التوجيه"
 msgid "Redirects"
 msgstr "عمليات إعادة التوجيه"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:750
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:758
 msgid "Redirects & 404 History"
 msgstr "سجل عمليات إعادة التوجيه وأخطاء 404"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1042
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1050
 msgid "Referrer"
 msgstr "المُحيل"
 
@@ -15074,7 +15074,7 @@ msgstr "خطوة التقريب"
 msgid "Rounds clock-in and clock-out when hours are added up. The exact punch times are always kept."
 msgstr "يقرّب وقت الحضور والانصراف عند جمع الساعات. تُحفظ أوقات البصمة الدقيقة دائمًا."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1144
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1152
 msgid "Route incoming traffic from an old path to a new destination."
 msgstr "وجّه الزيارات الواردة من مسار قديم إلى وجهة جديدة."
 
@@ -15281,7 +15281,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/staff/timesheets/pay-period-dialog.tsx:199
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
-#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:861
+#: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
 msgstr "حفظ"
@@ -15327,7 +15327,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/components/hiring/job-editor.tsx:416
 #: app/components/phone-agent/training-rules-section.tsx:645
 #: app/components/roles/tenant-role-access-manager.tsx:803
-#: app/components/settings/cards/organization/announcement-sheet.tsx:550
+#: app/components/settings/cards/organization/announcement-sheet.tsx:551
 #: app/components/settings/cards/organization/general-settings-card.tsx:114
 #: app/components/settings/cards/organization/site-analytics-card.tsx:138
 #: app/components/settings/cards/profile-card.tsx:192
@@ -15337,7 +15337,7 @@ msgstr "حفظ البطاقة للمعاملات اللاحقة"
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1433
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
@@ -15670,7 +15670,7 @@ msgstr "البحث في مكتبة الوسائط"
 msgid "Search messages"
 msgstr "ابحث في الرسائل"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:807
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:815
 msgid "Search missing URLs..."
 msgstr "ابحث في عناوين URL المفقودة..."
 
@@ -15698,7 +15698,7 @@ msgstr "البحث في الملاحظات بالعنوان أو المحتوى.
 msgid "Search or filter to narrow the list."
 msgstr "ابحث أو صفِّ لتضييق القائمة."
 
-#: app/components/command-menu.tsx:229
+#: app/components/command-menu.tsx:255
 #: app/components/site-header.tsx:52
 msgid "Search or jump to…"
 msgstr "ابحث أو انتقل إلى…"
@@ -15716,7 +15716,7 @@ msgstr "البحث عن أشخاص"
 msgid "Search preview"
 msgstr "معاينة البحث"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:806
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:814
 msgid "Search redirects..."
 msgstr "ابحث في عمليات إعادة التوجيه..."
 
@@ -15762,7 +15762,7 @@ msgstr "البحث..."
 msgid "Search…"
 msgstr "بحث…"
 
-#: app/components/command-menu.tsx:236
+#: app/components/command-menu.tsx:262
 msgid "Searching…"
 msgstr "جارٍ البحث…"
 
@@ -15912,7 +15912,7 @@ msgstr "اختر ردًا لقراءة تفاصيله وبدء الإجابة ع
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ تجربتك بعد إعداد الدفع."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1252
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1270
 msgid "Select a website page"
 msgstr "اختر صفحة موقع ويب"
 
@@ -15974,7 +15974,7 @@ msgstr "اختر اللغات التي يمكن للزوار تصفح موقعك
 msgid "Select trigger type"
 msgstr "اختر نوع المحفّز"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:414
+#: app/components/settings/cards/organization/announcement-sheet.tsx:415
 msgid "Select type"
 msgstr "اختر النوع"
 
@@ -16225,8 +16225,8 @@ msgstr "إعداد هذا الجهاز اللوحي"
 
 #: app/components/app-sidebar.tsx:363
 #: app/components/app-sidebar.tsx:456
-#: app/components/command-menu.tsx:305
-#: app/components/command-menu.tsx:338
+#: app/components/command-menu.tsx:332
+#: app/components/command-menu.tsx:365
 #: app/components/phone-agent/agent-details.tsx:315
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:12
@@ -16254,7 +16254,7 @@ msgid "Several people are typing…"
 msgstr "عدة أشخاص يكتبون…"
 
 #: app/components/dashboard/share-dashboard-dialog.tsx:229
-#: app/components/dashboard/share-dashboard-dialog.tsx:369
+#: app/components/dashboard/share-dashboard-dialog.tsx:378
 #: app/components/note/share-note-button.tsx:186
 #: app/components/staff/labor/labor-overview.tsx:571
 #: app/components/staff/labor/labor-tips.tsx:256
@@ -16262,11 +16262,15 @@ msgstr "عدة أشخاص يكتبون…"
 msgid "Share"
 msgstr "مشاركة"
 
-#: app/components/dashboard/share-dashboard-dialog.tsx:375
+#: app/components/dashboard/share-dashboard-dialog.tsx:369
 msgid "Share “{name}”"
 msgstr "مشاركة “{name}”"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:463
+#: app/components/dashboard/share-dashboard-dialog.tsx:375
+#~ msgid "Share “<0>{name}</0>”"
+#~ msgstr "مشاركة “<0>{name}</0>”"
+
+#: app/components/settings/cards/organization/announcement-sheet.tsx:464
 msgid "Share an update, maintenance notice, or promotion…"
 msgstr "شارك تحديثاً أو إشعار صيانة أو عرضاً ترويجياً…"
 
@@ -16461,7 +16465,7 @@ msgstr "عرض الطلبات"
 msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:385
+#: app/components/settings/cards/organization/announcement-sheet.tsx:386
 msgid "Show this banner on your public site"
 msgstr "إظهار هذا الشريط على موقعك العام"
 
@@ -16880,7 +16884,7 @@ msgstr "تمييز بنجمة"
 msgid "Start"
 msgstr "بدء"
 
-#: app/components/phone-agent/test-call-panel.tsx:656
+#: app/components/phone-agent/test-call-panel.tsx:659
 msgid "Start a call to see what you and your agent say in real time."
 msgstr "ابدأ مكالمة لترى ما تقوله أنت والوكيل في الوقت الفعلي."
 
@@ -17166,7 +17170,7 @@ msgstr "الاشتراك غير نشط"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:274
+#: app/components/settings/cards/organization/announcement-sheet.tsx:275
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:361
 msgid "Success"
 msgstr "نجاح"
@@ -17489,11 +17493,11 @@ msgstr "القوالب…"
 msgid "Temporary"
 msgstr "مؤقت"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1385
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1412
 msgid "Temporary (302) keeps original search indexing. Best for short-term promotions, maintenance, or seasonal campaigns."
 msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهرسة البحث الأصلية. الأفضل للعروض قصيرة المدى أو الصيانة أو الحملات الموسمية."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1333
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1360
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
@@ -17956,7 +17960,7 @@ msgstr "انقضى تاريخ الإغلاق. اختر تاريخًا جديدً
 msgid "The code works once and expires after ten minutes."
 msgstr "يعمل الرمز مرة واحدة وتنتهي صلاحيته بعد عشر دقائق."
 
-#: app/components/phone-agent/test-call-panel.tsx:652
+#: app/components/phone-agent/test-call-panel.tsx:655
 msgid "The conversation and your key presses will appear here."
 msgstr "ستظهر المحادثة وضغطات المفاتيح هنا."
 
@@ -18179,7 +18183,7 @@ msgstr "لن تذكر الصفحة الأجر. إظهار نطاق للأجر ي
 msgid "The passwords must match"
 msgstr "يجب أن تتطابق كلمات المرور"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1182
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1200
 msgid "The path on your old site that visitors or search engines request."
 msgstr "المسار في موقعك القديم الذي يطلبه الزوار أو محركات البحث."
 
@@ -18569,7 +18573,7 @@ msgstr "مسار المكالمة هذا جاهز للنشر."
 msgid "This call or request no longer exists."
 msgstr "هذه المكالمة أو الطلب لم يعد موجودًا."
 
-#: app/components/phone-agent/test-call-panel.tsx:609
+#: app/components/phone-agent/test-call-panel.tsx:612
 msgid "This call will appear in <0>Calls</0> shortly, marked as a test."
 msgstr "ستظهر هذه المكالمة في <0>المكالمات</0> قريبًا، مع تمييزها كتجريبية."
 
@@ -18955,15 +18959,15 @@ msgstr "لم يُنشر هذا الأسبوع بعد."
 msgid "This will be the URL path for this page."
 msgstr "سيكون هذا مسار الرابط لهذه الصفحة."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1503
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1530
 msgid "This will delete the 404 record for <0>{deleteLogPath}</0> from your history."
 msgstr "سيؤدي ذلك إلى حذف سجل 404 للمسار <0>{deleteLogPath}</0> من سجلك."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1544
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1571
 msgid "This will permanently delete all recorded 404 errors for your organization website. This action cannot be undone."
 msgstr "سيؤدي ذلك إلى حذف جميع أخطاء 404 المسجلة لموقع مؤسستك نهائياً. لا يمكن التراجع عن هذا الإجراء."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1453
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1480
 msgid "This will permanently delete the redirect from <0>{deleteRedirectFrom}</0> to <1>{deleteRedirectTo}</1>. Visitors requesting this old URL will no longer be forwarded."
 msgstr "سيؤدي ذلك إلى حذف إعادة التوجيه نهائياً من <0>{deleteRedirectFrom}</0> إلى <1>{deleteRedirectTo}</1>. لن يُعاد توجيه الزوار الذين يطلبون عنوان URL القديم بعد الآن."
 
@@ -19248,7 +19252,7 @@ msgstr "تبديل ظهور الإعلان"
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:889
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:897
 msgid "Toggle redirect active status"
 msgstr "تبديل حالة تفعيل إعادة التوجيه"
 
@@ -19398,7 +19402,7 @@ msgstr "التحويلات"
 #~ msgid "Transfers are paused"
 #~ msgstr "التحويلات متوقفة مؤقتًا"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1352
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1379
 msgid "Transfers search rank"
 msgstr "ينقل ترتيب البحث"
 
@@ -19499,8 +19503,8 @@ msgid "Try a different search or clear the filters."
 msgstr "جرّب بحثًا مختلفًا أو امسح عوامل التصفية."
 
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:600
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:843
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:851
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1031
 msgid "Try a different search term or clear the search."
 msgstr "جرّب مصطلح بحث مختلفاً أو امسح البحث."
 
@@ -19644,14 +19648,14 @@ msgstr "المصادقة الثنائية مفعّلة حالياً. تعطيل�
 #: app/components/hiring/job-editor.tsx:642
 #: app/components/hiring/job-summary.tsx:41
 #: app/components/my-schedule/time-off-sheet.tsx:153
-#: app/components/settings/cards/organization/announcement-sheet.tsx:397
+#: app/components/settings/cards/organization/announcement-sheet.tsx:398
 #: app/components/staff/schedule/time-off-sheet.tsx:194
 #: app/components/website/create-form-dialog.tsx:198
 #: app/components/website/form-builder-sidebar.tsx:521
 #: app/components/website/link-inspector.tsx:341
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:630
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3928
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:862
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:870
 #: app/routes/mock-payments+/dashboard.tsx:155
 msgid "Type"
 msgstr "النوع"
@@ -20037,7 +20041,7 @@ msgstr "الرابط"
 msgid "URL copied to clipboard"
 msgstr "تم نسخ الرابط إلى الحافظة"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:780
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:788
 msgid "URL Redirects"
 msgstr "عمليات إعادة توجيه عناوين URL"
 
@@ -20045,7 +20049,7 @@ msgstr "عمليات إعادة توجيه عناوين URL"
 msgid "URL:"
 msgstr "الرابط:"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:865
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:873
 msgid "Usage"
 msgstr "الاستخدام"
 
@@ -20602,7 +20606,7 @@ msgstr "تنبيه المديرين بشأن العمل الإضافي"
 msgid "Warn when this close to the limit"
 msgstr "التنبيه عند الاقتراب من الحد بمقدار"
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:272
+#: app/components/settings/cards/organization/announcement-sheet.tsx:273
 #: app/routes/_app+/$orgSlug_+/website+/announcements.tsx:359
 msgid "Warning"
 msgstr "تحذير"
@@ -21022,7 +21026,7 @@ msgstr "عند اتصال المكالمة"
 msgid "When a caller asks for a callback, leaves a message, or needs help your agent couldn’t give, the call appears here."
 msgstr "عندما يطلب متصل معاودة الاتصال، أو يترك رسالة، أو يحتاج إلى مساعدة لم يستطع وكيلك تقديمها، تظهر المكالمة هنا."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1404
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1431
 msgid "When active, visitors requesting the old URL will be forwarded right away."
 msgstr "عند التفعيل، سيتم توجيه الزوار الذين يطلبون عنوان URL القديم فوراً."
 
@@ -21082,7 +21086,7 @@ msgstr "متى تُطبَّق، مثل: يذكر المتصل وجود حساس�
 msgid "When to transfer a call or take a message for staff."
 msgstr "متى يتم تحويل المكالمة أو تسجيل رسالة للفريق."
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1015
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1023
 msgid "When visitors or search engines request a URL that doesn't exist, it will appear here so you can set up redirects."
 msgstr "عندما يطلب الزوار أو محركات البحث عنوان URL غير موجود، سيظهر هنا لتتمكن من إعداد عمليات إعادة توجيه."
 
@@ -21226,7 +21230,7 @@ msgstr "لماذا تغيّر هذه؟"
 msgid "Width"
 msgstr "العرض"
 
-#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1288
+#: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1306
 msgid "Will redirect to"
 msgstr "ستتم إعادة التوجيه إلى"
 
@@ -21339,7 +21343,7 @@ msgstr "اكتب سياسة. أنت تسجّل متى قرأوها ووافقو�
 msgid "Write it the way you'd explain it to a new staff member."
 msgstr "اكتبها بالطريقة التي تشرحها بها لموظف جديد."
 
-#: app/components/settings/cards/organization/announcement-sheet.tsx:334
+#: app/components/settings/cards/organization/announcement-sheet.tsx:335
 msgid "Write the banner in the default language, then switch locales to translate. Enabled banners appear at the top of your public site."
 msgstr "اكتب الشريط باللغة الافتراضية، ثم بدّل اللغات للترجمة. تظهر الإعلانات الشريطية المفعّلة أعلى موقعك العام."
 
@@ -21362,7 +21366,7 @@ msgstr "اكتب بريدك الإلكتروني. استخدم {{name}} للتخ
 msgid "Write your message"
 msgstr "اكتب رسالتك"
 
-#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:308
+#: app/routes/_app+/$orgSlug_+/__org-note-editor.tsx:311
 msgid "Write your note content..."
 msgstr "اكتب محتوى ملاحظتك..."
 
@@ -21421,7 +21425,7 @@ msgstr "أمس"
 
 #: app/components/hiring/candidate-parts.tsx:374
 #: app/components/organization-members.tsx:210
-#: app/components/phone-agent/test-call-panel.tsx:677
+#: app/components/phone-agent/test-call-panel.tsx:681
 msgid "You"
 msgstr "أنت"
 
@@ -21481,7 +21485,7 @@ msgstr "أنت في استراحة."
 msgid "You are viewing as another user. Staff data is read-only."
 msgstr "أنت تعرض الصفحة بصفة مستخدم آخر. بيانات الموظفين للقراءة فقط."
 
-#: app/components/phone-agent/test-call-panel.tsx:590
+#: app/components/phone-agent/test-call-panel.tsx:593
 msgid "You can also type keys on your keyboard."
 msgstr "يمكنك أيضًا كتابة المفاتيح على لوحة المفاتيح."
 
@@ -21689,7 +21693,7 @@ msgstr "يحتاج مصرفك إلى التأكد من هويتك."
 msgid "Your blocks and their arrangement are replaced by the default blocks. This cannot be undone."
 msgstr "ستُستبدل كتلك وترتيبها بالكتل الافتراضية. لا يمكن التراجع عن ذلك."
 
-#: app/components/phone-agent/test-call-panel.tsx:595
+#: app/components/phone-agent/test-call-panel.tsx:598
 msgid "Your browser paused the agent's audio. Tap Speaker to hear it."
 msgstr "أوقف متصفحك صوت الوكيل مؤقتًا. اضغط على مكبر الصوت لسماعه."
 
@@ -21753,7 +21757,7 @@ msgstr "يتم تحويل خطك الحالي إلى هذا الرقم."
 msgid "Your feedback"
 msgstr "ملاحظاتك"
 
-#: app/components/phone-agent/test-call-panel.tsx:556
+#: app/components/phone-agent/test-call-panel.tsx:557
 msgid "Your flow isn't published yet, so test the draft."
 msgstr "لم يتم نشر مسار المكالمة بعد، لذا اختبر المسودة."
 

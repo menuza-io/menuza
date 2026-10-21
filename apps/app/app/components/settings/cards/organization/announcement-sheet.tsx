@@ -54,6 +54,7 @@ import {
 	updateLocalizedValue,
 } from '#app/components/website/locale-fields.tsx'
 import { TranslateItemsButton } from '#app/components/website/translate-provider.tsx'
+import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import { toTranslateItem } from '#app/utils/website/translation.ts'
 
 export const ANNOUNCEMENT_TYPES = [
@@ -64,6 +65,8 @@ export const ANNOUNCEMENT_TYPES = [
 ] as const
 
 export type AnnouncementType = (typeof ANNOUNCEMENT_TYPES)[number]
+
+export { isSafeAnnouncementLink }
 
 export const AnnouncementSchema = z
 	.object({
@@ -121,13 +124,11 @@ export const AnnouncementSchema = z
 			return
 		}
 
-		try {
-			new URL(data.linkUrl)
-		} catch {
+		if (!isSafeAnnouncementLink(data.linkUrl)) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ['linkUrl'],
-				message: 'Enter a valid URL including https://',
+				message: 'Enter an http(s) URL or a path starting with /',
 			})
 		}
 

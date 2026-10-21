@@ -131,7 +131,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 const SettingsSchema = z.object({
-	name: z.string().min(1, 'Name is required'),
+	name: z.string().trim().min(1, 'Name is required'),
 	slug: organizationSlugSchema,
 })
 

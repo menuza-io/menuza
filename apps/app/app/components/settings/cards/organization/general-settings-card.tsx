@@ -19,7 +19,7 @@ import { Field, ErrorList } from '#app/components/forms.tsx'
 import { OrganizationPhoto } from './organization-photo-card'
 
 const SettingsSchema = z.object({
-	name: z.string().min(1, 'Name is required'),
+	name: z.string().trim().min(1, 'Name is required'),
 	slug: organizationSlugSchema,
 })
 

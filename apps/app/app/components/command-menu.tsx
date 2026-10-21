@@ -142,6 +142,24 @@ export function getNavigationCommands({
 	return commands.filter((command) => command !== false)
 }
 
+const NOTE_VALUE_PREFIX = 'note-'
+
+// cmdk's default filter is fuzzy (the letters only have to appear in order),
+// so "Test" matches sections like Website through their keywords. Require the
+// typed text to appear as-is instead.
+function matchesSearch(value: string, search: string, keywords?: string[]) {
+	// The server already matched notes, so they always pass. Going through the
+	// filter (not forceMount) keeps cmdk's empty state and group visibility right.
+	if (value.startsWith(NOTE_VALUE_PREFIX)) return 1
+	const needle = search.trim().toLowerCase()
+	if (!needle) return 1
+	return [value, ...(keywords ?? [])].some((text) =>
+		text.toLowerCase().includes(needle),
+	)
+		? 1
+		: 0
+}
+
 interface CommandMenuProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
@@ -183,7 +201,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 	}, [open, hasTrackedUsage, organizationId, fetcher])
 
 	const searchNotes = useCallback(
-		async (searchQuery: string) => {
+		async (searchQuery: string, signal: AbortSignal) => {
 			if (!orgSlug) return
 
 			setLoading(true)
@@ -192,30 +210,38 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 					orgSlug,
 					...(searchQuery && { q: searchQuery }),
 				})
-				const response = await fetch(`/resources/search-notes?${params}`)
-				if (response.ok) {
+				const response = await fetch(`/resources/search-notes?${params}`, {
+					signal,
+				})
+				if (response.ok && !signal.aborted) {
 					const data = (await response.json()) as { notes: Note[] }
-					setNotes(data.notes)
+					if (!signal.aborted) setNotes(data.notes)
 				}
 			} catch (error) {
+				if (signal.aborted) return
 				console.error('Failed to search notes:', error)
 				setNotes([])
 			} finally {
-				setLoading(false)
+				if (!signal.aborted) setLoading(false)
 			}
 		},
 		[orgSlug],
 	)
 
-	// Debounce search
+	// Debounce search. Aborting on cleanup keeps a slow response for an older
+	// query (e.g. a no-match one) from overwriting the notes for the current one.
 	useEffect(() => {
 		if (!open) return
 
+		const controller = new AbortController()
 		const timeoutId = setTimeout(() => {
-			void searchNotes(query)
+			void searchNotes(query, controller.signal)
 		}, 300)
 
-		return () => clearTimeout(timeoutId)
+		return () => {
+			clearTimeout(timeoutId)
+			controller.abort()
+		}
 	}, [open, query, searchNotes])
 
 	return (
@@ -224,7 +250,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 			onOpenChange={onOpenChange}
 			className="rounded-lg border shadow-md md:min-w-[650px]"
 		>
-			<Command>
+			<Command filter={matchesSearch}>
 				<CommandInput
 					placeholder={_(t`Search or jump to…`)}
 					value={query}
@@ -285,6 +311,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 								return (
 									<CommandItem
 										key={note.id}
+										value={`${NOTE_VALUE_PREFIX}${note.id}`}
 										onSelect={() => {
 											void navigate(`/${orgSlug}/notes/${note.id}`)
 											onOpenChange(false)
