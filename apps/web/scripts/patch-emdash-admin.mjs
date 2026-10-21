@@ -4,6 +4,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
 
 const BLOCK_KIT_FIELD_START =
 	'function BlockKitField({ field, pluginId, value, onChange })'
@@ -43,108 +44,169 @@ const MARKDOWN_INPUT_CASE = `case "markdown_input": {
 		}
 		`
 
-const MENU_DESCRIPTION_MARKER =
+export const MENU_DESCRIPTION_MARKER =
 	'message: "Short summary shown below the menu label"'
 
-function patchMenuItemDescriptions(code) {
-	if (code.includes(MENU_DESCRIPTION_MARKER)) return code
+const createDescriptionInput = (
+	indent,
+) => `${indent}/* @__PURE__ */ jsx(Input, {
+${indent}	label: _t({ id: "menuItemDescription", message: "Description" }),
+${indent}	name: "titleAttr",
+${indent}	maxLength: 160,
+${indent}	placeholder: _t({
+${indent}		id: "menuItemDescriptionHint",
+${indent}		message: "Short summary shown below the menu label"
+${indent}	})
+${indent}}),
+`
 
-	const replacements = [
-		[
-			`const targetVal = formData.get("target");
+const editDescriptionInput = (indent) => `${indent}/* @__PURE__ */ jsx(Input, {
+${indent}	label: _t({ id: "menuItemDescription", message: "Description" }),
+${indent}	name: "titleAttr",
+${indent}	maxLength: 160,
+${indent}	placeholder: _t({
+${indent}		id: "menuItemDescriptionHint",
+${indent}		message: "Short summary shown below the menu label"
+${indent}	}),
+${indent}	defaultValue: editingItem.titleAttr || ""
+${indent}}),
+`
+
+/**
+ * Menu item layouts. Each step is [search, replacement]; a function
+ * replacement receives the regex match. EmDash admin 1.3.x has `cssClasses`
+ * fields on the menu item forms; 1.0.x does not.
+ */
+const MENU_LAYOUTS = [
+	{
+		name: '1.3.x (cssClasses forms)',
+		steps: [
+			[
+				`const classesVal = formData.get("cssClasses");`,
+				`const classesVal = formData.get("cssClasses");
+		const titleAttrVal = formData.get("titleAttr");`,
+			],
+			[
+				`target: (typeof targetVal === "string" ? targetVal : "") || void 0,
+			cssClasses:`,
+				`target: (typeof targetVal === "string" ? targetVal : "") || void 0,
+			titleAttr: (typeof titleAttrVal === "string" ? titleAttrVal.trim() : "") || void 0,
+			cssClasses:`,
+			],
+			[
+				`const uClassesVal = formData.get("cssClasses");`,
+				`const uClassesVal = formData.get("cssClasses");
+		const uTitleAttrVal = formData.get("titleAttr");`,
+			],
+			[
+				`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
+				cssClasses:`,
+				`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
+				titleAttr: typeof uTitleAttrVal === "string" ? uTitleAttrVal.trim() : "",
+				cssClasses:`,
+			],
+			[
+				/([ \t]*)\/\* @__PURE__ \*\/ jsx\(Input, \{\s*label: _t\(\{\s*id: "MdsNde",\s*message: "CSS classes"\s*\}\),\s*name: "cssClasses",\s*dir: "ltr",\s*description:/,
+				(match, indent) => createDescriptionInput(indent) + match,
+			],
+			[
+				/([ \t]*)\/\* @__PURE__ \*\/ jsx\(Input, \{\s*label: _t\(\{\s*id: "MdsNde",\s*message: "CSS classes"\s*\}\),\s*name: "cssClasses",\s*dir: "ltr",\s*defaultValue: editingItem\.cssClasses/,
+				(match, indent) => editDescriptionInput(indent) + match,
+			],
+		],
+	},
+	{
+		name: '1.0.x (label, URL, target forms)',
+		steps: [
+			[
+				`const targetVal = formData.get("target");
 		createMutation.mutate({`,
-			`const targetVal = formData.get("target");
+				`const targetVal = formData.get("target");
 		const titleAttrVal = formData.get("titleAttr");
 		createMutation.mutate({`,
-		],
-		[
-			`target: (typeof targetVal === "string" ? targetVal : "") || void 0
+			],
+			[
+				`target: (typeof targetVal === "string" ? targetVal : "") || void 0
 		});`,
-			`target: (typeof targetVal === "string" ? targetVal : "") || void 0,
+				`target: (typeof targetVal === "string" ? targetVal : "") || void 0,
 			titleAttr: (typeof titleAttrVal === "string" ? titleAttrVal.trim() : "") || void 0
 		});`,
-		],
-		[
-			`const uTargetVal = formData.get("target");
+			],
+			[
+				`const uTargetVal = formData.get("target");
 		const uParentIdVal = formData.get("parentId");`,
-			`const uTargetVal = formData.get("target");
+				`const uTargetVal = formData.get("target");
 		const uTitleAttrVal = formData.get("titleAttr");
 		const uParentIdVal = formData.get("parentId");`,
-		],
-		[
-			`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
+			],
+			[
+				`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
 				parentId:`,
-			`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
+				`target: (typeof uTargetVal === "string" ? uTargetVal : "") || void 0,
 				titleAttr: typeof uTitleAttrVal === "string" ? uTitleAttrVal.trim() : "",
 				parentId:`,
+			],
+			[
+				/([ \t]*)\/\* @__PURE__ \*\/ jsxs\(Select, \{\s*label: _t\(\{\s*id: "Yrrg\+y",\s*message: "Target"\s*\}\),\s*name: "target",\s*defaultValue: ""/,
+				(match, indent) => createDescriptionInput(indent) + match,
+			],
+			[
+				/([ \t]*)\/\* @__PURE__ \*\/ jsxs\(Select, \{\s*label: _t\(\{\s*id: "Yrrg\+y",\s*message: "Target"\s*\}\),\s*name: "target",\s*defaultValue: editingItem\.target/,
+				(match, indent) => editDescriptionInput(indent) + match,
+			],
 		],
-		[
-			`placeholder: _t({
-												id: "Xkfr5x",
-												message: "https://example.com or /about"
-											})
-										}),
-										/* @__PURE__ */ jsxs(Select, {`,
-			`placeholder: _t({
-											id: "Xkfr5x",
-											message: "https://example.com or /about"
-										})
-									}),
-									/* @__PURE__ */ jsx(Input, {
-										label: _t({ id: "menuItemDescription", message: "Description" }),
-										name: "titleAttr",
-										maxLength: 160,
-										placeholder: _t({
-											id: "menuItemDescriptionHint",
-											message: "Short summary shown below the menu label"
-										})
-									}),
-									/* @__PURE__ */ jsxs(Select, {`,
-		],
-		[
-			`defaultValue: editingItem.customUrl || ""
-							}),
-							/* @__PURE__ */ jsxs(Select, {`,
-			`defaultValue: editingItem.customUrl || ""
-							}),
-							/* @__PURE__ */ jsx(Input, {
-								label: _t({ id: "menuItemDescription", message: "Description" }),
-								name: "titleAttr",
-								maxLength: 160,
-								placeholder: _t({
-									id: "menuItemDescriptionHint",
-									message: "Short summary shown below the menu label"
-								}),
-								defaultValue: editingItem.titleAttr || ""
-							}),
-							/* @__PURE__ */ jsxs(Select, {`,
-		],
-	]
+	},
+]
 
+function applyMenuLayout(code, steps) {
 	let patched = code
-	for (const [search, replacement] of replacements) {
-		if (!patched.includes(search)) return null
-		patched = patched.replace(search, replacement)
+	for (const [search, replacement] of steps) {
+		if (typeof search === 'string') {
+			if (!patched.includes(search)) return null
+			patched = patched.replace(search, () => replacement)
+		} else {
+			if (!search.test(patched)) return null
+			patched = patched.replace(search, replacement)
+		}
 	}
-
 	return patched
 }
 
-function patchAdminBundle(code) {
+/** Returns the patched code, or null when no known menu item layout matches. */
+export function patchMenuItemDescriptions(code) {
+	if (code.includes(MENU_DESCRIPTION_MARKER)) return code
+	for (const layout of MENU_LAYOUTS) {
+		const patched = applyMenuLayout(code, layout.steps)
+		if (patched) return patched
+	}
+	return null
+}
+
+/**
+ * Returns the patched bundle. Throws an Error naming the part that could not
+ * be patched, so a changed EmDash admin bundle never fails silently.
+ */
+export function patchAdminBundle(code) {
 	let patched = code
 
 	if (!patched.includes('case "link_settings"')) {
 		const start = patched.indexOf(BLOCK_KIT_FIELD_START)
-		if (start === -1) return null
+		if (start === -1)
+			throw new Error('Could not patch BlockKitField: function not found')
 
 		const end = patched.indexOf(BLOCK_KIT_FIELD_END, start)
-		if (end === -1) return null
+		if (end === -1)
+			throw new Error('Could not patch BlockKitField: end anchor not found')
 
 		const before = patched.slice(0, start)
 		const fnBody = patched.slice(start, end)
 		const after = patched.slice(end)
 
-		if (!BLOCK_KIT_FIELD_MEDIA_TAIL.test(fnBody)) return null
+		if (!BLOCK_KIT_FIELD_MEDIA_TAIL.test(fnBody)) {
+			throw new Error(
+				'Could not patch BlockKitField: media_picker anchor not found',
+			)
+		}
 
 		const nextFnBody = fnBody.replace(
 			BLOCK_KIT_FIELD_MEDIA_TAIL,
@@ -156,12 +218,12 @@ function patchAdminBundle(code) {
 	}
 
 	if (!patched.includes('case "markdown_input"')) {
-		const markdownAnchor = patched.includes('case "link_settings"')
-			? /case "link_settings": \{[\s\S]*?\}\n\t\tdefault: return/
-			: BLOCK_KIT_FIELD_MEDIA_TAIL
-
-		if (markdownAnchor === BLOCK_KIT_FIELD_MEDIA_TAIL) {
-			return null
+		const markdownAnchor =
+			/case "link_settings": \{[\s\S]*?\}\s*default: return/
+		if (!markdownAnchor.test(patched)) {
+			throw new Error(
+				'Could not patch BlockKitField: link_settings anchor not found',
+			)
 		}
 
 		patched = patched.replace(markdownAnchor, (match) =>
@@ -169,33 +231,58 @@ function patchAdminBundle(code) {
 		)
 	}
 
-	return patchMenuItemDescriptions(patched) ?? patched
+	const withMenu = patchMenuItemDescriptions(patched)
+	if (!withMenu) {
+		throw new Error(
+			'Could not patch menu item Description (titleAttr) fields: no known @emdash-cms/admin menu item layout matched. Update MENU_LAYOUTS in apps/web/scripts/patch-emdash-admin.mjs for this admin version.',
+		)
+	}
+	return withMenu
 }
 
-const require = createRequire(import.meta.url)
-const adminPath = require.resolve('@emdash-cms/admin')
-const source = readFileSync(adminPath, 'utf8')
+export function isPatched(code) {
+	return (
+		code.includes('case "link_settings"') &&
+		code.includes('case "markdown_input"') &&
+		code.includes(MENU_DESCRIPTION_MARKER)
+	)
+}
+
+function main() {
+	const require = createRequire(import.meta.url)
+	const adminPath = require.resolve('@emdash-cms/admin')
+	const source = readFileSync(adminPath, 'utf8')
+
+	if (isPatched(source)) {
+		console.log(
+			'[patch-emdash-admin] @emdash-cms/admin already supports custom fields and menu descriptions',
+		)
+		return
+	}
+
+	let patched
+	try {
+		patched = patchAdminBundle(source)
+	} catch (error) {
+		console.error(`[patch-emdash-admin] ${error.message}`)
+		process.exit(1)
+	}
+	if (patched === source) {
+		console.error(
+			'[patch-emdash-admin] Patch made no changes to @emdash-cms/admin',
+		)
+		process.exit(1)
+	}
+
+	writeFileSync(adminPath, patched)
+	console.log(
+		'[patch-emdash-admin] Patched @emdash-cms/admin for custom fields and menu descriptions',
+	)
+}
 
 if (
-	source.includes('case "link_settings"') &&
-	source.includes('case "markdown_input"') &&
-	source.includes(MENU_DESCRIPTION_MARKER)
+	process.argv[1] &&
+	import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-	console.log(
-		'[patch-emdash-admin] @emdash-cms/admin already supports custom fields and menu descriptions',
-	)
-	process.exit(0)
+	main()
 }
-
-const patched = patchAdminBundle(source)
-if (!patched || patched === source) {
-	console.error(
-		'[patch-emdash-admin] Could not patch BlockKitField in @emdash-cms/admin',
-	)
-	process.exit(1)
-}
-
-writeFileSync(adminPath, patched)
-console.log(
-	'[patch-emdash-admin] Patched @emdash-cms/admin for custom fields and menu descriptions',
-)
