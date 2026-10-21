@@ -49,6 +49,7 @@ import {
 } from '@repo/payments'
 import {
 	platformFeeMinor,
+	processorSettlesCurrency,
 	type ReservationFeeKind,
 	type ReservationPaymentPurpose,
 	type ReservationPaymentQuote,
@@ -130,9 +131,6 @@ export function fromRegionalProcessor(
 /* Online payment gate                                                 */
 /* ------------------------------------------------------------------ */
 
-const STRIPE_CURRENCIES = new Set(['USD', 'CAD'])
-const CHECKOUT_CURRENCIES = new Set(['SAR', 'USD'])
-
 export type ReservationOnlinePayment = {
 	enabled: boolean
 	processor: AppProcessor | null
@@ -169,11 +167,7 @@ export function resolveReservationOnlinePayment(
 			guarantee: false,
 		}
 	}
-	const code = currency.toUpperCase()
-	const currencySupported =
-		processor === 'connect'
-			? STRIPE_CURRENCIES.has(code)
-			: CHECKOUT_CURRENCIES.has(code)
+	const currencySupported = processorSettlesCurrency(processor, currency)
 	const configured = options.isProcessorConfigured?.(processor) ?? true
 	return {
 		enabled: true,

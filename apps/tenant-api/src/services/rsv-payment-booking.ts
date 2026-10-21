@@ -7,6 +7,7 @@ import {
 	type PolicyInput,
 	type PolicySnapshot,
 	type ReservationsContext,
+	processorSettlesCurrency,
 } from '@repo/reservations'
 import {
 	rsvExperiences,
@@ -191,6 +192,17 @@ export async function planBookingPayment(
 		.from(rsvLocationSettings)
 		.where(eq(rsvLocationSettings.locationId, params.locationId))
 		.get()
+	// Fail closed at booking time too: a processor that cannot settle this
+	// location's currency (Stripe with SAR) would leave a hold the guest can
+	// never pay, parked in `pending_payment` until it lapses.
+	if (
+		!processorSettlesCurrency(
+			payments.processor,
+			settings?.currency ?? policy.currency,
+		)
+	) {
+		throw new HttpError(409, 'policy_unavailable')
+	}
 	let snapshot = snapshotPolicy(
 		{ ...policy, currency: settings?.currency ?? policy.currency },
 		params.partySize,

@@ -468,6 +468,33 @@ describe('booking with a payment policy', () => {
 		expect(await db.select().from(rsvReservations)).toHaveLength(0)
 	})
 
+	it('fails closed when the processor cannot settle the location currency (Stripe with SAR)', async () => {
+		useProcessor('connect')
+		const db = await getTenantDb(ORG)
+		await db
+			.update(rsvLocationSettings)
+			.set({ currency: 'SAR' })
+			.where(eq(rsvLocationSettings.locationId, PUBLIC_LOC))
+		const hold = await publicCall('POST', '/reservations/holds', {
+			body: {
+				locationId: PUBLIC_LOC,
+				slot: { date: DAY, localMin: 19 * 60, partySize: 4 },
+			},
+		})
+		expect(hold.status).toBe(409)
+		expect(hold.body.error).toBe('policy_unavailable')
+		expect(await db.select().from(rsvHolds)).toHaveLength(0)
+		// Checkout.com settles SAR: the same location books.
+		useProcessor('checkout')
+		const ok = await publicCall('POST', '/reservations/holds', {
+			body: {
+				locationId: PUBLIC_LOC,
+				slot: { date: DAY, localMin: 19 * 60, partySize: 4 },
+			},
+		})
+		expect(ok.status).toBe(201)
+	})
+
 	it('ignores money policies while the payments feature is off', async () => {
 		seedReservationsContextForTest(ORG, publicContext(ORG))
 		const { booked } = await holdAndBook(19 * 60, 4, 4, {
