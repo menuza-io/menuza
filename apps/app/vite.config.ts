@@ -195,7 +195,17 @@ export default defineConfig((config) => ({
 	plugins: [
 		cloudflareWorkerAliasPlugin(),
 		...(isCloudflare
-			? [cloudflare({ viteEnvironment: { name: 'ssr' } })]
+			? [
+					cloudflare({
+						viteEnvironment: { name: 'ssr' },
+						// miniflare's local trace store grows without bound (9+ GB); keep
+						// observability on in the deployed config, off for local dev.
+						config:
+							config.command === 'serve'
+								? { observability: { enabled: false } }
+								: undefined,
+					}),
+				]
 			: [varlockVitePlugin()]),
 		MODE === 'test' ? stubCacheServerPlugin() : null,
 		envOnlyMacros(),
@@ -215,7 +225,7 @@ export default defineConfig((config) => ({
 					host: process.env.POSTHOG_HOST,
 					sourcemaps: {
 						enabled: true,
-						releaseName: 'epic-startup-app',
+						releaseName: 'menuza-app',
 						releaseVersion:
 							process.env.COMMIT_SHA ?? process.env.npm_package_version,
 						deleteAfterUpload: true,
