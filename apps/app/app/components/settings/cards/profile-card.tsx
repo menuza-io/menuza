@@ -88,7 +88,17 @@ export function ProfileCard({ user }: ProfileCardProps) {
 						<ProfilePhoto user={user} size="small" />
 					</div>
 					<div className="grow">
-						<fetcher.Form method="POST" {...getFormProps(form)}>
+						<fetcher.Form
+							method="POST"
+							{...getFormProps(form)}
+							onSubmit={(event) => {
+								// The Change Email dialog is portaled out of this form but is
+								// still its React child, so its submit bubbles here. Conform
+								// throws on a submit from another form; only handle our own.
+								if (event.target !== event.currentTarget) return
+								form.onSubmit(event)
+							}}
+						>
 							<FieldGroup>
 								<Field
 									data-invalid={fields.name.errors?.length ? true : undefined}
