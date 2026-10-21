@@ -29,8 +29,8 @@ the repo root unless a line starts with `cd apps/app`.
 ## Running locally
 
 - Developer machine: use the root `npm run dev` that is already running, at
-  `https://app.epic-startup.test:2999`, and do not stop or restart it. If it is
-  not running, ask the user before you start any dev server, and start only what
+  `https://app.menuza.test:2999`, and do not stop or restart it. If it is not
+  running, ask the user before you start any dev server, and start only what
   they agree to, normally root `npm run dev`. Builds, Vitest, lint and typecheck
   need no permission. Leave `.env` and `.dev.vars` alone. The reasons are in the
   root "Developer machine or sandbox" block.
@@ -113,8 +113,11 @@ the repo root unless a line starts with `cd apps/app`.
 
 ## Login and browser testing
 
+- For manual testing with a browser tool (covered clicks, React inputs, `eval`,
+  drag and drop, Sites hosts), read the `project-browser-testing` skill
+  (`docs/skills/project-browser-testing/SKILL.md`).
 - These steps apply on both kinds of machine. Login URL: on a developer machine
-  `https://app.epic-startup.test:2999/login`, in a sandbox
+  `https://app.menuza.test:2999/login`, in a sandbox
   `http://localhost:3001/login`.
 - Use a fresh browser context per user, open the login URL directly, and accept
   the cookie banner.
@@ -221,9 +224,9 @@ the repo root unless a line starts with `cd apps/app`.
 
 ## Tests, lint and typecheck
 
-- Vitest: `cd apps/app && npx vitest run <paths>`. Watch: `npx vitest`.
-  `npm run test -w app` runs everything once. Vitest only picks up
-  `app/**/*.test.{ts,tsx}`.
+- Vitest: `cd apps/app && CI=true npx vitest run <paths>`. Watch: `npx vitest`.
+  The config is in `vite.config.ts`. `npm run test -w app` runs everything once
+  (about 7.5 min; run it alone). Vitest only picks up `app/**/*.test.{ts,tsx}`.
 - `tests/setup/setup-test-env.ts` resets MSW handlers and Testing Library after
   each test, and turns `console.error` and `console.warn` into failures. Fix the
   warning, or mock it in the test when it is expected.
@@ -248,8 +251,15 @@ the repo root unless a line starts with `cd apps/app`.
 - Fixtures in `tests/playwright-utils.ts`: `login`, `insertNewUser`, `navigate`.
   For a second signed-in user in one test, copy `signInElsewhere` from
   `tests/e2e/dashboard-sharing.test.ts`.
-- Lint and types: `npm run lint -w app` and `npm run typecheck -w app` (runs
-  `react-router typegen` first).
+- Types:
+  `cd apps/app && NODE_OPTIONS=--max-old-space-size=6144 npm run typecheck`
+  (runs `react-router typegen` first; the default heap runs out of memory).
+  Never run it beside App ESLint, a build or Playwright.
+- Lint the files you changed:
+  `cd apps/app && NODE_OPTIONS=--max-old-space-size=4096 npx eslint <paths>`.
+  `npm run lint -w app` reports pre-existing design-system errors, so compare
+  against that baseline (see "Running commands as an agent" in the root
+  `AGENTS.md`). After `--fix`, lint again.
 
 ## Commands that rewrite files
 
