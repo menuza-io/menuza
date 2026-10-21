@@ -547,6 +547,45 @@ on the main Reports page with the other groups, for people who have
   grants are in the 5-minute sensitive set. Whether settings writes should be
   sensitive is undecided.
 
+**Review follow-ups (PR 43), decided or deferred**
+
+- Decided: a booking that carries money (a payment status other than `none`, or
+  a policy snapshot) lets the guest move day or time inside the same service and
+  party only; a party-size or service change answers `409 modify_changes_payment`
+  and goes through the restaurant. Re-planning and re-snapshotting the payment
+  from the guest side is a follow-up.
+- Decided: open large-party requests hold tables only up to 3 per address and 20
+  per location (`MAX_OPEN_REQUESTS_PER_ADDRESS`, `MAX_OPEN_REQUESTS_PER_LOCATION`);
+  past that the request is still taken, and a manager reads it, without parking
+  tables. Requiring a verified phone to hold capacity is a follow-up.
+- Decided (unchanged): tenant-api serves a stale organization context for up to
+  24 hours when the control plane is unreachable (ADR 048). The cost is that an
+  organization disabled during an outage stays bookable until the cache entry
+  ages out; shortening it trades that against bookings failing during an outage.
+- Follow-up: marketing consent on the booking form records only the email
+  channel as one boolean, without a per-channel record or a consent-text version.
+- Follow-up: email and SMS are sent to an unverified phone or email typed on a
+  booking, waitlist or notify form, so a third party can be messaged; an
+  OTP-verified phone for SMS is the fix.
+- Follow-up: the hold cap (300) is shared across locations and the voice agent;
+  per-IP and per-location caps are not there yet.
+- Follow-up: the App expires sessions and refunds payment references the region
+  names without re-reading the provider object's `orgId` and `reservationId`
+  metadata (the region is authenticated; this is defense in depth).
+- Follow-up: the context route's `deposit` and `guarantee` are per organization;
+  booking time now fails closed per location currency
+  (`processorSettlesCurrency`), but the context does not yet say which locations
+  cannot take payments.
+- Follow-up: `rsv_journey_emissions` has no retention purge.
+- Follow-up (Android): the token store saves are not ordered against a sign-out
+  (a stale save can land after the clear on a shared device; a serial executor
+  and a generation counter fix it), and the policy countdown rebuilds its views
+  every second, which drops TalkBack focus.
+- Follow-up (Sites): focus is not moved on hold expiry or slot choice, and there
+  is no expiry warning (WCAG 2.2.1).
+- Follow-up: the saved fallback area name `Main Dining` and the ARIA wording of
+  the unassigned chips are not localized data.
+
 **Sites**
 
 - A KSA guest cannot get SMS, yet the waitlist form only requires a phone; the
