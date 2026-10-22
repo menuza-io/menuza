@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -53,6 +53,12 @@ const run = (args: string[]) =>
 		encoding: 'utf8',
 		stdio: ['ignore', 'pipe', 'pipe'],
 	})
+/** stdout and stderr together: OpenSSL 3 reports `verify OK` on stderr, 4 on stdout. */
+const runCombined = (args: string[]) => {
+	const result = spawnSync('openssl', args, { encoding: 'utf8' })
+	if (result.status !== 0) throw new Error(result.stderr || 'openssl failed')
+	return `${result.stdout}\n${result.stderr}`
+}
 
 /** A throwaway secp256k1 CA-signed certificate from openssl, to stand in for a ZATCA CSID. */
 function opensslCertificate() {
@@ -182,7 +188,7 @@ describe('CSR', () => {
 		'is a valid, self-signed PKCS#10 request carrying ZATCA’s fields',
 		() => {
 			const csr = buildCsr(input, generatePrivateKey())
-			const out = run([
+			const out = runCombined([
 				'req',
 				'-in',
 				file('csr.pem', csr.pem),

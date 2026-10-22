@@ -8,10 +8,14 @@ import { hmacHash } from './secrets.ts'
  */
 
 const key = () => Buffer.from(hmacHash('zatca-seal-v1'), 'hex')
+// Pinned so a truncated tag is refused instead of weakening authentication.
+const AUTH_TAG_LENGTH = 16
 
 export function seal(plain: string): string {
 	const iv = crypto.randomBytes(12)
-	const cipher = crypto.createCipheriv('aes-256-gcm', key(), iv)
+	const cipher = crypto.createCipheriv('aes-256-gcm', key(), iv, {
+		authTagLength: AUTH_TAG_LENGTH,
+	})
 	const body = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()])
 	return [
 		'v1',
@@ -29,6 +33,7 @@ export function unseal(sealed: string): string {
 		'aes-256-gcm',
 		key(),
 		Buffer.from(iv, 'base64'),
+		{ authTagLength: AUTH_TAG_LENGTH },
 	)
 	decipher.setAuthTag(Buffer.from(tag, 'base64'))
 	return Buffer.concat([
