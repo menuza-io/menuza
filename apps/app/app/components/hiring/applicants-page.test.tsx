@@ -259,9 +259,9 @@ describe('ApplicantsPage', () => {
 		view({}, '/acme/staff/hiring/applicants?view=list')
 		await screen.findAllByRole('link', { name: 'Amira Ali' })
 		expect(screen.getByRole('columnheader', { name: 'Applicant' })).toBeTruthy()
-		const interviewChip = screen.getByRole('button', { name: /Interview/ })
+		const interviewChip = screen.getByRole('tab', { name: /Interview/ })
 		expect(interviewChip).toBeTruthy()
-		fireEvent.click(screen.getByRole('button', { name: /Declined/ }))
+		fireEvent.click(screen.getByRole('tab', { name: /Declined/ }))
 		await waitFor(() =>
 			expect(calls.some((c) => c.url.includes('stage=declined'))).toBe(true),
 		)
@@ -274,7 +274,7 @@ describe('ApplicantsPage', () => {
 		view()
 		await screen.findAllByRole('link', { name: 'Amira Ali' })
 		expect(screen.queryByRole('region', { name: /^Screening/ })).toBeNull()
-		expect(screen.getByRole('button', { name: /In progress/ })).toBeTruthy()
+		expect(screen.getByRole('tab', { name: /In progress/ })).toBeTruthy()
 	})
 
 	it('filters by flagged answers and by search', async () => {

@@ -509,24 +509,21 @@ export default function PhoneAgentCallsRoute() {
 							</Select>
 						</div>
 					) : (
-						<div className="flex items-center gap-1">
-							<Button
-								variant={requestStatus === 'open' ? 'secondary' : 'ghost'}
-								size="sm"
-								aria-pressed={requestStatus === 'open'}
-								onClick={() => setRequestStatus('open')}
-							>
-								<Trans>Open</Trans>
-							</Button>
-							<Button
-								variant={requestStatus === 'done' ? 'secondary' : 'ghost'}
-								size="sm"
-								aria-pressed={requestStatus === 'done'}
-								onClick={() => setRequestStatus('done')}
-							>
-								<Trans>Done</Trans>
-							</Button>
-						</div>
+						<Tabs
+							value={requestStatus}
+							onValueChange={(next: RequestStatusFilter) =>
+								setRequestStatus(next)
+							}
+						>
+							<TabsList aria-label={_(msg`Status`)}>
+								<TabsTrigger value="open">
+									<Trans>Open</Trans>
+								</TabsTrigger>
+								<TabsTrigger value="done">
+									<Trans>Done</Trans>
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
 					)}
 				</div>
 

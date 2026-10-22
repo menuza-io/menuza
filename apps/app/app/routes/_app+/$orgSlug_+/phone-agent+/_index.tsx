@@ -46,10 +46,7 @@ import {
 	PhraseOverridesSection,
 	usePhraseDrafts,
 } from '#app/components/phone-agent/phrase-fields.tsx'
-import {
-	PhoneAgentSettingsHeader,
-	usePhoneAgentLayoutData,
-} from '#app/components/phone-agent/settings-nav.tsx'
+import { usePhoneAgentLayoutData } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	type SettingsSaveResult,
@@ -149,8 +146,6 @@ export default function PhoneAgentSetup() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<PhoneAgentSettingsHeader active="agent" />
-
 			<GetStarted
 				base={base}
 				hasNumber={numbers.some((number) => number.isActive)}

@@ -16,7 +16,7 @@ test.describe('Website General Settings & Site Locales', () => {
 
 		await page
 			.getByRole('main')
-			.getByRole('link', { name: 'Analytics', exact: true })
+			.getByRole('tab', { name: 'Analytics', exact: true })
 			.click()
 		await page.getByLabel('Facebook Pixel ID').fill('123456789012345')
 		await page.getByLabel('Google Tag Manager ID').fill('GTM-ABC1234')

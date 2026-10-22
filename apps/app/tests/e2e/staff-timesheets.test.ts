@@ -326,7 +326,7 @@ test.describe('Timesheets (manager)', () => {
 		try {
 			await page.setViewportSize({ width: 1280, height: 800 })
 			await navigate('/:slug/staff/timeclock/timesheets', { slug: org.slug })
-			await expect(page.getByRole('link', { name: 'Timesheets' })).toBeVisible()
+			await expect(page.getByRole('tab', { name: 'Timesheets' })).toBeVisible()
 			await expect(
 				page.getByRole('rowheader', { name: /Noor Alharbi/ }),
 			).toBeVisible()

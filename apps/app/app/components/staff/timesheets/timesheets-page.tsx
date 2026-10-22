@@ -26,7 +26,7 @@ import { FieldError } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
 import { Skeleton } from '@repo/ui/skeleton'
-import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
+import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import {
 	Link,
@@ -584,33 +584,32 @@ export function TimesheetsPage({
 			</h2>
 
 			<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-				<ToggleGroup
-					aria-label={_(t`Timesheet view`)}
-					value={[view]}
+				<Tabs
+					value={view}
 					onValueChange={(next) => {
-						const picked = next[0] as TimesheetViewName | undefined
+						const picked = next as TimesheetViewName | undefined
 						if (picked && TIMESHEET_VIEWS.includes(picked)) {
 							setSelected(new Set())
 							update({ view: picked })
 						}
 					}}
-					variant="segmented"
-					className="flex-wrap"
 				>
-					{TIMESHEET_VIEWS.map((value) => (
-						<ToggleGroupItem className="h-11 md:h-7" key={value} value={value}>
-							{viewLabels[value]}
-							{value === 'review' && reviewCount ? (
-								<Badge
-									variant="destructive"
-									className="h-5 px-1.5 text-xs tabular-nums"
-								>
-									{reviewCount}
-								</Badge>
-							) : null}
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
+					<TabsList aria-label={_(t`Timesheet view`)} className="flex-wrap">
+						{TIMESHEET_VIEWS.map((value) => (
+							<TabsTrigger className="h-11 md:h-7" key={value} value={value}>
+								{viewLabels[value]}
+								{value === 'review' && reviewCount ? (
+									<Badge
+										variant="destructive"
+										className="h-5 px-1.5 text-xs tabular-nums"
+									>
+										{reviewCount}
+									</Badge>
+								) : null}
+							</TabsTrigger>
+						))}
+					</TabsList>
+				</Tabs>
 				<div className="flex flex-wrap items-center gap-2">
 					{canUpdate ? (
 						<Button render={<Link to={`${basePath}/new${searchSuffix}`} />}>

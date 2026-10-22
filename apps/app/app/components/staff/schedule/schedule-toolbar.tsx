@@ -15,7 +15,7 @@ import { Field, FieldLabel } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/popover'
 import { Switch } from '@repo/ui/switch'
-import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
+import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { ar, enUS } from 'date-fns/locale'
 import { useId, useState } from 'react'
 import { FilterSelect, type Option } from '#app/components/staff/controls.tsx'
@@ -247,22 +247,22 @@ export function ScheduleToolbar({
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2">
-				<ToggleGroup
-					aria-label={_(t`Schedule view`)}
-					value={[view]}
+				<Tabs
+					value={view}
 					onValueChange={(next) => {
-						const picked = next[0] as ScheduleViewName | undefined
+						const picked = next as ScheduleViewName | undefined
 						if (picked && SCHEDULE_VIEWS.includes(picked))
 							onChange({ view: picked })
 					}}
-					variant="segmented"
 				>
-					{SCHEDULE_VIEWS.map((value) => (
-						<ToggleGroupItem className="h-11 md:h-7" key={value} value={value}>
-							{viewLabels[value]}
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
+					<TabsList aria-label={_(t`Schedule view`)}>
+						{SCHEDULE_VIEWS.map((value) => (
+							<TabsTrigger className="h-11 md:h-7" key={value} value={value}>
+								{viewLabels[value]}
+							</TabsTrigger>
+						))}
+					</TabsList>
+				</Tabs>
 				{scopes.length > 1 ? (
 					<FilterSelect
 						label={_(t`Workplace`)}

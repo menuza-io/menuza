@@ -16,7 +16,7 @@ import {
 import { Icon } from '@repo/ui/icon'
 import { Item, ItemGroup } from '@repo/ui/item'
 import { Skeleton } from '@repo/ui/skeleton'
-import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
+import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -194,21 +194,20 @@ export function TimeOffPage({ scopes: rawScopes }: Props) {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-wrap items-center gap-2">
-				<ToggleGroup
-					aria-label={_(t`Show requests`)}
-					value={[status]}
-					variant="segmented"
-					onValueChange={(next) => {
-						const picked = next[0]
+				<Tabs
+					value={status}
+					onValueChange={(picked) => {
 						if (picked) setFilter('status', picked, 'pending')
 					}}
 				>
-					{STATUSES.map((value) => (
-						<ToggleGroupItem className="h-11 md:h-7" key={value} value={value}>
-							{statusLabels[value]}
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
+					<TabsList aria-label={_(t`Show requests`)}>
+						{STATUSES.map((value) => (
+							<TabsTrigger className="h-11 md:h-7" key={value} value={value}>
+								{statusLabels[value]}
+							</TabsTrigger>
+						))}
+					</TabsList>
+				</Tabs>
 				{scopes.length > 1 ? (
 					<FilterSelect
 						label={_(t`Filter by workplace`)}

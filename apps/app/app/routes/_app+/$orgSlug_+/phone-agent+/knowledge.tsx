@@ -28,7 +28,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { BusinessDetailsSection } from '#app/components/phone-agent/business-details-section.tsx'
-import { PhoneAgentSettingsHeader } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	localId,
@@ -92,7 +91,6 @@ export default function PhoneAgentKnowledge() {
 	)
 	return (
 		<div className="flex flex-col gap-8">
-			<PhoneAgentSettingsHeader active="knowledge" />
 			<AnnotatedLayout>
 				<BusinessSection
 					business={data.business}

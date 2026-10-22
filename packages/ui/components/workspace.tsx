@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
 
 import { cn } from '../lib/utils'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 
 /** Standard app page width and vertical rhythm (Gr8r-style workspace canvas). */
 export function WorkspacePage({
@@ -224,29 +225,46 @@ export function WorkspaceTabBar({
 	label?: string
 	className?: string
 }) {
+	// The stock tabs, with each tab rendered as a route link: the location
+	// picks the active tab, so the underline glides when the route changes.
+	// A plain anchor, not <Link>: Link builds a new ref callback every render,
+	// and Base UI re-registers a tab whose ref changes, which loops forever.
+	const navigate = useNavigate()
+	const active = tabs.find((tab) => tab.isActive)?.href ?? null
 	return (
 		<WorkspaceTabDivider className={className}>
 			<nav
 				className="-mx-4 [scrollbar-width:none] overflow-x-auto md:-mx-1 [&::-webkit-scrollbar]:hidden"
 				aria-label={label}
 			>
-				<div className="flex min-w-max gap-0.5 px-4 md:px-1">
-					{tabs.map((tab) => (
-						<Link
-							key={tab.href}
-							to={tab.href}
-							aria-current={tab.isActive ? 'page' : undefined}
-							className={cn(
-								'relative flex h-9 items-center px-2.5 text-[13px] font-medium transition-colors after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full',
-								tab.isActive
-									? 'text-foreground after:bg-foreground'
-									: 'text-muted-foreground hover:text-foreground after:bg-transparent',
-							)}
-						>
-							{tab.label}
-						</Link>
-					))}
-				</div>
+				<Tabs value={active} className="w-max px-4 md:px-1">
+					<TabsList variant="line" aria-label={label}>
+						{tabs.map((tab) => (
+							<TabsTrigger
+								key={tab.href}
+								value={tab.href}
+								nativeButton={false}
+								render={<a href={tab.href} />}
+								onClick={(event) => {
+									// Let the browser open new tabs and windows itself.
+									if (
+										event.button !== 0 ||
+										event.metaKey ||
+										event.ctrlKey ||
+										event.shiftKey ||
+										event.altKey
+									) {
+										return
+									}
+									event.preventDefault()
+									void navigate(tab.href)
+								}}
+							>
+								{tab.label}
+							</TabsTrigger>
+						))}
+					</TabsList>
+				</Tabs>
 			</nav>
 		</WorkspaceTabDivider>
 	)

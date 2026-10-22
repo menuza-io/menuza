@@ -85,6 +85,7 @@ import {
 import { ScrollArea } from '@repo/ui/scroll-area'
 import { Spinner } from '@repo/ui/spinner'
 import { Switch } from '@repo/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import * as cookie from 'cookie'
 import {
@@ -5140,36 +5141,21 @@ function InspectorTabs({
 
 	return (
 		<nav aria-label="Builder panels" className="w-full">
-			<div
-				role="tablist"
-				aria-orientation="horizontal"
-				className="bg-muted grid grid-cols-3 gap-0.5 rounded-lg p-0.5"
-			>
-				{items.map((item) => {
-					const selected = value === item.id
-					return (
-						<Button
+			<Tabs value={value} onValueChange={(next: InspectorId) => onChange(next)}>
+				<TabsList className="grid w-full grid-cols-3">
+					{items.map((item) => (
+						<TabsTrigger
 							key={item.id}
-							variant="ghost"
-							size="sm"
-							role="tab"
-							aria-selected={selected}
+							value={item.id}
 							aria-label={item.ariaLabel}
-							className={cn(
-								'text-muted-foreground min-w-0 gap-1 rounded-md px-1.5 text-xs transition-colors duration-150 ease-out',
-								'hover:text-foreground hover:bg-background/60',
-								'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-								selected &&
-									'bg-background text-foreground hover:bg-background shadow-sm',
-							)}
-							onClick={() => onChange(item.id)}
+							className="min-w-0 gap-1 px-1.5"
 						>
 							<Icon name={item.icon} className="size-3.5 shrink-0" />
 							<span className="truncate">{item.label}</span>
-						</Button>
-					)
-				})}
-			</div>
+						</TabsTrigger>
+					))}
+				</TabsList>
+			</Tabs>
 		</nav>
 	)
 }
