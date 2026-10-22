@@ -614,6 +614,16 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/settings/shop`,
 					isActive: location.pathname === `/${orgSlug}/settings/shop`,
 				},
+				...(canReadMenu
+					? [
+							{
+								title: _(msg`Terminals`),
+								url: `/${orgSlug}/settings/terminals`,
+								isActive:
+									location.pathname === `/${orgSlug}/settings/terminals`,
+							},
+						]
+					: []),
 				{
 					title: _(msg`MCP Server`),
 					url: `/${orgSlug}/mcp`,

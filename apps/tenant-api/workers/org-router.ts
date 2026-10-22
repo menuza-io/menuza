@@ -1,4 +1,8 @@
 import { jwtVerify } from 'jose'
+import {
+	parsePosDeviceSecret,
+	parsePosPairingCode,
+} from '@repo/common/pos-orders'
 import { z } from 'zod'
 import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
@@ -12,6 +16,8 @@ import {
 	resolveOrganizationForBrowserAuth,
 	resolveOrganizationForPublicOrigin,
 	findActiveOrganizationById,
+	lookupActiveOrganization,
+	type OrganizationLookup,
 } from '../src/lib/origin.ts'
 import { getBearerToken } from '../src/lib/secrets.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
@@ -166,6 +172,30 @@ async function orgIdFromKioskRequest(
 }
 
 /**
+ * POS terminal requests carry their organization inside an opaque credential,
+ * exactly like kiosks: the pairing code in the body for `/pos/pair`, otherwise
+ * the bearer device secret.
+ */
+async function orgIdFromPosRequest(
+	request: Request,
+	pathname: string,
+): Promise<string | null> {
+	if (pathname === '/pos/pair') {
+		const body = await request
+			.clone()
+			.json()
+			.catch(() => null)
+		const code =
+			body && typeof body === 'object'
+				? (body as { code?: unknown }).code
+				: undefined
+		return parsePosPairingCode(code)?.orgId ?? null
+	}
+	const secret = getBearerToken(request.headers.get('Authorization'))
+	return parsePosDeviceSecret(secret)?.orgId ?? null
+}
+
+/**
  * Resolve which tenant org should handle this request on Cloudflare Workers.
  * Returns null when the route is not org-scoped (health, sync-all, etc.).
  */
@@ -232,6 +262,10 @@ export async function resolveOrgId(
 
 	if (pathname.startsWith('/kiosk/')) {
 		return orgIdFromKioskRequest(request, pathname)
+	}
+
+	if (pathname.startsWith('/pos/')) {
+		return orgIdFromPosRequest(request, pathname)
 	}
 
 	// The public application form: the organization is the one the browser's
@@ -372,7 +406,36 @@ export async function assertReservationsOrgOnUsNode(
 }
 
 /**
- * Kiosk requests are unauthenticated until the handler checks the credential,
+ * A till uploading a backlog makes many requests in a row, each of which would
+ * ask App about the same organization. A positive answer is remembered for a
+ * minute, so the drain neither crawls nor stops during a short App outage; a
+ * deactivated organization is refused within that minute. Negative and
+ * unavailable answers are never remembered.
+ */
+const POS_ORG_CACHE_MS = 60_000
+const posOrgCache = new Map<
+	string,
+	{ at: number; lookup: OrganizationLookup }
+>()
+/** Tests start from a cold cache. */
+export const clearPosOrganizationCache = () => posOrgCache.clear()
+export async function lookupPosOrganization(
+	orgId: string,
+): Promise<OrganizationLookup> {
+	const hit = posOrgCache.get(orgId)
+	if (hit && Date.now() - hit.at < POS_ORG_CACHE_MS) return hit.lookup
+	const lookup = await lookupActiveOrganization(orgId)
+	if (lookup.status === 'found') {
+		if (posOrgCache.size > 500) posOrgCache.clear()
+		posOrgCache.set(orgId, { at: Date.now(), lookup })
+	} else {
+		posOrgCache.delete(orgId)
+	}
+	return lookup
+}
+
+/**
+ * Kiosk and POS terminal requests are unauthenticated until the handler checks the credential,
  * so a made-up organization id must not be allowed to create a Durable Object.
  * Unlike the other routes, an organization the control plane does not know is
  * refused here (a lookup that fails closes the door too). Unknown, wrong-region
@@ -383,8 +446,21 @@ export async function assertKioskOrgOnUsNode(
 	pathname: string,
 ): Promise<Response | null> {
 	const error =
-		pathname === '/kiosk/pair' ? 'invalid_pairing_code' : 'invalid_device'
-	const organization = await findActiveOrganizationById(orgId)
+		pathname === '/kiosk/pair' || pathname === '/pos/pair'
+			? 'invalid_pairing_code'
+			: 'invalid_device'
+	let organization
+	if (pathname.startsWith('/pos/')) {
+		// A terminal signs itself out when told it was removed, so a control-plane
+		// hiccup must never look like a removal: answer 503, which it retries.
+		const lookup = await lookupPosOrganization(orgId)
+		if (lookup.status === 'unavailable') {
+			return Response.json({ error: 'service_unavailable' }, { status: 503 })
+		}
+		organization = lookup.status === 'found' ? lookup.organization : null
+	} else {
+		organization = await findActiveOrganizationById(orgId)
+	}
 	if (
 		!organization ||
 		organization.dataRegion !== 'us' ||

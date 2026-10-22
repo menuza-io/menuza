@@ -2,6 +2,7 @@ import { type CartStore } from './cart-store.ts'
 import { linesExcluding, remainingFor } from './constraints.ts'
 import { el, icon, lockScroll, trapFocus } from './dom.ts'
 import { fillTemplate } from './money.ts'
+import { estimateTax } from './tax.ts'
 import {
 	type CartItem,
 	type Constraints,
@@ -18,6 +19,11 @@ export type CartUiOptions = {
 	totals: {
 		/** Percentage, e.g. `8.25`. */
 		taxRate: number
+		/**
+		 * Menu prices already include tax (VAT): the tax row shows the portion
+		 * contained in the subtotal and the total does not add it.
+		 */
+		taxInclusive?: boolean
 		/** A number, or a getter when the fee comes from a live delivery quote. */
 		deliveryFee: number | (() => number)
 		mode: () => FulfillmentMode
@@ -43,13 +49,22 @@ const DRAWER_HIDDEN = ['translate-x-full', 'rtl:-translate-x-full']
 
 export function computeTotals(
 	lines: CartItem[],
-	config: { taxRate: number; deliveryFee: number; mode: FulfillmentMode },
+	config: {
+		taxRate: number
+		taxInclusive?: boolean
+		deliveryFee: number
+		mode: FulfillmentMode
+	},
 ) {
 	const subtotal = lines.reduce(
 		(acc, line) => acc + line.unitPrice * line.quantity,
 		0,
 	)
-	const tax = subtotal * ((config.taxRate || 0) / 100)
+	const { tax, added } = estimateTax(
+		subtotal,
+		config.taxRate,
+		config.taxInclusive === true,
+	)
 	const deliveryFee =
 		config.mode === 'delivery' && subtotal > 0 ? config.deliveryFee || 0 : 0
 	const count = lines.reduce((acc, line) => acc + line.quantity, 0)
@@ -57,7 +72,7 @@ export function computeTotals(
 		subtotal,
 		tax,
 		deliveryFee,
-		total: subtotal + tax + deliveryFee,
+		total: subtotal + added + deliveryFee,
 		count,
 	}
 }
@@ -79,6 +94,7 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	const itemsEl = q<HTMLElement>('cart-items-container')
 	const subtotalEl = q<HTMLElement>('drawer-subtotal')
 	const taxEl = q<HTMLElement>('drawer-tax')
+	const taxLabelEl = q<HTMLElement>('drawer-tax-label')
 	const taxRow = q<HTMLElement>('drawer-tax-row')
 	const deliveryRow = q<HTMLElement>('drawer-delivery-row')
 	const deliveryFeeEl = q<HTMLElement>('drawer-delivery-fee')
@@ -249,8 +265,10 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 
 	function refresh() {
 		const lines = store.lines()
+		const taxInclusive = options.totals.taxInclusive === true
 		const totals = computeTotals(lines, {
 			taxRate: options.totals.taxRate,
+			taxInclusive,
 			deliveryFee:
 				typeof options.totals.deliveryFee === 'function'
 					? options.totals.deliveryFee()
@@ -272,6 +290,12 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 
 		if (subtotalEl) subtotalEl.textContent = formatMoney(totals.subtotal)
 		if (taxEl) taxEl.textContent = formatMoney(totals.tax)
+		if (taxLabelEl) {
+			const label = taxInclusive
+				? taxLabelEl.dataset.inclusiveLabel
+				: taxLabelEl.dataset.exclusiveLabel
+			if (label) taxLabelEl.textContent = label
+		}
 		// Display only: a zero tax line is noise in the drawer.
 		if (taxRow) taxRow.classList.toggle('hidden', totals.tax <= 0)
 		if (deliveryRow)

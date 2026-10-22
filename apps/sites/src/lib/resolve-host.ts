@@ -3,6 +3,7 @@ import { getBrandDomain } from '@repo/config/brand'
 const RESERVED_SUBDOMAINS = new Set([
 	'app',
 	'admin',
+	'pos',
 	'app-staging',
 	'admin-staging',
 	'cms',

@@ -133,30 +133,34 @@ describe('organizations+/create route integration', () => {
 			}
 		})
 
-		it('returns error when validation fails (invalid slug format)', async () => {
-			const user = await createTestUser()
-			const { cookie } = await createTestSession(user.id)
+		it.each(['-invalid--slug-', 'pos'])(
+			'returns an error for the invalid or reserved slug %s',
+			async (slug) => {
+				const user = await createTestUser()
+				const { cookie } = await createTestSession(user.id)
 
-			const formData = new FormData()
-			formData.append('intent', 'create-organization')
-			formData.append('name', 'Test Org')
-			formData.append('slug', '-invalid--slug-')
+				const formData = new FormData()
+				formData.append('intent', 'create-organization')
+				formData.append('name', 'Test Org')
+				formData.append('slug', slug)
 
-			const request = createAuthenticatedRequest(
-				'http://localhost:3000/organizations/create',
-				{ method: 'POST', body: formData },
-				cookie,
-			)
+				const request = createAuthenticatedRequest(
+					'http://localhost:3000/organizations/create',
+					{ method: 'POST', body: formData },
+					cookie,
+				)
 
-			const response = (await action({
-				request,
-				params: {},
-				context: {},
-			} as any)) as any
+				const response = (await action({
+					request,
+					params: {},
+					context: {},
+				} as any)) as any
 
-			expect(response.status).toBe('error')
-			expect(response.error?.slug).toBeDefined()
-		})
+				expect(response.status).toBe('error')
+				expect(response.error?.slug).toBeDefined()
+				expect(provisionTenantDatabase).not.toHaveBeenCalled()
+			},
+		)
 
 		it('creates organization in database, adds user as admin, and redirects to step 2', async () => {
 			const user = await createTestUser()

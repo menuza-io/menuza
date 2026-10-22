@@ -1,5 +1,6 @@
 import { parseWithZod } from '@conform-to/zod'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
+import { organizationSlugSchema } from '@repo/common'
 import { db, eq, Organization } from '@repo/database'
 import { data } from 'react-router'
 import { z } from 'zod'
@@ -12,12 +13,9 @@ import { type Route } from './+types/organizations.create.ts'
 
 const CreateOrganizationSchema = z.object({
 	name: z.string().min(2, { message: 'Organization name is required' }),
-	slug: z
-		.string()
-		.min(2, { message: 'Slug is required' })
-		.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-			message: 'Slug can only contain lowercase letters, numbers, and hyphens',
-		}),
+	slug: organizationSlugSchema.refine((slug) => slug.length >= 2, {
+		message: 'Slug is required',
+	}),
 	description: z.string().optional(),
 	dataRegion: z.enum(['us', 'ksa']).default('us'),
 })

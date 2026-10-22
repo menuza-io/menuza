@@ -11,6 +11,7 @@ import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
+import { organizationSlugSchema } from '@repo/common'
 import { redirectWithToast } from '@repo/common/toast'
 import {
 	and,
@@ -123,13 +124,9 @@ const departments = [
 // Step 1: Basic organization info
 const Step1Schema = z.object({
 	name: z.string().min(2, { message: 'Organization name is required' }),
-	slug: z
-		.string()
-		.min(2, { message: 'Slug is required' })
-		.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-			message:
-				'Slug can only contain lowercase letters, numbers, and hyphens, and cannot start or end with a hyphen',
-		}),
+	slug: organizationSlugSchema.refine((slug) => slug.length >= 2, {
+		message: 'Slug is required',
+	}),
 	description: z.string().optional(),
 	logoFile: z
 		.instanceof(File)

@@ -7,7 +7,7 @@ import { and, db, eq, or, Organization } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 
 import { orgMatchesNodeRegion } from './region.ts'
-import { getInternalCommandToken } from './secrets.ts'
+import { getInternalCommandToken, syncEnvFromProcess } from './secrets.ts'
 
 const RESERVED_SUBDOMAINS = new Set([
 	'app',
@@ -260,17 +260,33 @@ export async function resolvePublishedOrganization(data: {
 	return null
 }
 
-export async function findActiveOrganizationById(orgId: string) {
-	if (!TENANT_ORG_ID_PATTERN.test(orgId)) {
-		return null
-	}
+export type OrganizationLookup =
+	| {
+			status: 'found'
+			organization:
+				z.infer<typeof activeOrganizationSchema> | PublishedOrganization
+	  }
+	| { status: 'missing' }
+	/** The control plane could not be asked (timeout, 5xx, misconfiguration). Says nothing about the org. */
+	| { status: 'unavailable' }
+
+/**
+ * Like `findActiveOrganizationById`, but keeps "this organization is not active
+ * here" apart from "we could not find out". Callers that sign a client out on a
+ * negative answer must use this one: a brief control-plane outage is not a
+ * revocation.
+ */
+export async function lookupActiveOrganization(
+	orgId: string,
+): Promise<OrganizationLookup> {
+	if (!TENANT_ORG_ID_PATTERN.test(orgId)) return { status: 'missing' }
 
 	const token = getInternalCommandToken()
 	const appUrl = appBaseUrl()
 	if (appUrl) {
 		// App owns the current org flags. A node-local control-plane copy may be
 		// missing or stale, especially when App uses D1 or the org changes region.
-		if (token.length < 16) return null
+		if (token.length < 16) return { status: 'unavailable' }
 		try {
 			const params = new URLSearchParams({ orgId })
 			const response = await fetch(
@@ -284,16 +300,28 @@ export async function findActiveOrganizationById(orgId: string) {
 					signal: AbortSignal.timeout(5_000),
 				},
 			)
-			if (!response.ok) return null
+			if (response.status === 404) return { status: 'missing' }
+			if (!response.ok) return { status: 'unavailable' }
 			const parsed = activeOrganizationSchema.safeParse(await response.json())
-			return parsed.success && parsed.data.id === orgId ? parsed.data : null
+			if (!parsed.success) return { status: 'unavailable' }
+			return parsed.data.id === orgId
+				? { status: 'found', organization: parsed.data }
+				: { status: 'missing' }
 		} catch {
-			// Fail closed: do not authorize from stale metadata after an outage.
-			return null
+			// Fail closed for authorization, but say we could not tell.
+			return { status: 'unavailable' }
 		}
 	}
 
-	return lookupOrganizationFromDatabase({ id: orgId })
+	const found = await lookupOrganizationFromDatabase({ id: orgId })
+	return found
+		? { status: 'found', organization: found }
+		: { status: 'missing' }
+}
+
+export async function findActiveOrganizationById(orgId: string) {
+	const result = await lookupActiveOrganization(orgId)
+	return result.status === 'found' ? result.organization : null
 }
 
 const activeOrganizationSchema = z.object({
@@ -459,6 +487,35 @@ export function isOperatorControlPlaneOrigin(origin: string) {
 		hostname === `admin.${domain}` ||
 		(!isProd && hostname === `app.${getLocalDomain()}`) ||
 		(!isProd && hostname === `admin.${getLocalDomain()}`)
+	)
+}
+
+/**
+ * Origins that host the POS web app (`POS_ORIGINS`, comma separated, exact
+ * origins). Local development also allows localhost and `*.test` hosts. Used
+ * only for `/pos/*` CORS: a terminal authenticates with its bearer secret, and
+ * being listed here grants nothing else.
+ */
+export function isPosOrigin(origin: string) {
+	// `POS_ORIGINS` is operational config: read the live environment so a change
+	// takes effect without a restart.
+	syncEnvFromProcess()
+	const url = parseOrigin(origin)
+	if (!url) return false
+	const isProd = ENV.NODE_ENV === 'production'
+	if (isProd && url.protocol !== 'https:') return false
+	const listed = String((ENV as { POS_ORIGINS?: unknown }).POS_ORIGINS ?? '')
+		.split(',')
+		.map((entry) => parseOrigin(entry.trim()))
+		.filter((entry): entry is URL => entry !== null)
+	if (listed.some((entry) => entry.origin === url.origin)) return true
+	if (isProd) return false
+	const hostname = url.hostname.toLowerCase()
+	return (
+		hostname === 'localhost' ||
+		hostname === '127.0.0.1' ||
+		hostname === getLocalDomain() ||
+		hostname.endsWith(`.${getLocalDomain()}`)
 	)
 }
 

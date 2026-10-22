@@ -30,6 +30,8 @@ const OPERATOR_LIST_LIMIT = 100
 
 export type OperatorOrderAuth = {
 	orgId: string
+	/** The signed-in operator the token was minted for. */
+	userId: string
 	role: string
 	scope: 'orders:read' | 'orders:write'
 	/** Signed claims from App: which person pages the operator may open. */
@@ -43,7 +45,7 @@ export type OperatorOrderAuth = {
  * menu-write authorization, and this node verifies only its own
  * TENANT_OPERATOR_TOKEN audience.
  */
-async function authenticateOrdersOperator(
+export async function authenticateOrdersOperator(
 	c: Context,
 	required: 'orders:read' | 'orders:write',
 ): Promise<{ auth: OperatorOrderAuth } | { error: Response }> {
@@ -61,6 +63,7 @@ async function authenticateOrdersOperator(
 	}
 
 	let decoded: {
+		sub?: string
 		orgId?: string
 		role?: string
 		scope?: string
@@ -102,6 +105,7 @@ async function authenticateOrdersOperator(
 	return {
 		auth: {
 			orgId: decoded.orgId,
+			userId: decoded.sub ?? 'unknown',
 			role: decoded.role,
 			scope: decoded.scope,
 			link: {
@@ -128,7 +132,7 @@ async function withCustomerKeys(
  * Region + provisioning fail-closed check for operator access, mirroring the
  * other operator surfaces. Responses are always `private, no-store`.
  */
-async function assertOperatorOrg(
+export async function assertOperatorOrg(
 	orgId: string,
 ): Promise<{ error: Response } | null> {
 	const nodeRegion = getNodeRegion()

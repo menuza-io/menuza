@@ -183,6 +183,13 @@
 			"when": 1792195707954,
 			"tag": "0025_reservations",
 			"breakpoints": true
+		},
+		{
+			"idx": 26,
+			"version": "6",
+			"when": 1792641527775,
+			"tag": "0026_location_tax_inclusive_vat",
+			"breakpoints": true
 		}
 	]
 }

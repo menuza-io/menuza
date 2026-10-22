@@ -90,6 +90,8 @@ const activeLocation: PublicLocationData | undefined =
 // The delivery fee and minimum come from the verified address quote (the
 // regional tenant-api resolves the zone), never from a guessed zone here.
 const taxRate = activeLocation?.taxRate ?? 0
+// Prices that already include tax (VAT): the tax is shown, not added.
+const taxInclusive = activeLocation?.taxInclusive === true
 
 // Same fulfillment rule as the menu page.
 const fulfillmentOptions = (activeLocation?.fulfillmentOptions ?? {}) as {
@@ -138,6 +140,7 @@ const payHandoffHint = i18n._(msg`Pay when you receive your order`)
 const summaryTitle = i18n._(msg`Order summary`)
 const subtotalText = i18n._(msg`Subtotal`)
 const taxText = i18n._(msg`Tax`)
+const includesTaxText = i18n._(msg`Includes VAT`)
 const deliveryFeeText = i18n._(msg`Delivery fee`)
 const tipText = tipTitle
 const totalText = i18n._(msg`Total`)
@@ -537,7 +540,13 @@ const tipOff = 'border-border bg-background text-foreground'
 							<dd id="co-subtotal" class={valueClass}>{price(0)}</dd>
 						</div>
 						<div class={rowClass}>
-							<dt>{taxText}</dt>
+							<dt
+								id="co-tax-label"
+								data-exclusive-label={taxText}
+								data-inclusive-label={includesTaxText}
+							>
+								{taxInclusive ? includesTaxText : taxText}
+							</dt>
 							<dd id="co-tax" class={valueClass}>{price(0)}</dd>
 						</div>
 						<div id="co-delivery-row" class:list={[rowClass, 'hidden']}>
@@ -622,6 +631,7 @@ const tipOff = 'border-border bg-background text-foreground'
 			locationId: activeLocation?.id ?? null,
 			locations,
 			taxRate,
+			taxInclusive,
 			allowedModes,
 			orderDetailsLabels: odLabels,
 			unavailableVariantIds: [...unavailableVariantIds],
@@ -647,6 +657,7 @@ const tipOff = 'border-border bg-background text-foreground'
 		} from '~/lib/drops/format'
 		import { formatRemaining, startCountdown } from '~/lib/ordering/countdown'
 		import { orderErrorMessage } from '~/lib/ordering/order-errors'
+		import { estimateTax } from '~/lib/ordering/tax'
 		import {
 			OrderRequestError,
 			checkoutAttemptKey,
@@ -796,6 +807,15 @@ const tipOff = 'border-border bg-background text-foreground'
 		function taxRate(): number {
 			return isDrop ? (pickupLocation ? pickupTaxRate : 0) : menuTaxRate
 		}
+		// Prices that already include tax (VAT): shown, not added to the total.
+		const menuTaxInclusive = meta.taxInclusive === true
+		const pickupTaxInclusive = isDrop
+			? meta.locations?.find((l: any) => l.id === pickupSelection?.locationId)?.taxInclusive ===
+				true
+			: false
+		function taxInclusive(): boolean {
+			return isDrop ? Boolean(pickupLocation) && pickupTaxInclusive : menuTaxInclusive
+		}
 
 		// Display only: the org currency and locale, same formatter as the menu.
 		const formatCurrency = createMoneyFormatter(meta.currency || 'USD', meta.locale || 'en')
@@ -812,10 +832,10 @@ const tipOff = 'border-border bg-background text-foreground'
 		// the authoritative totals render on the success page from the receipt.
 		function computeTotals() {
 			const subtotal = cart.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0)
-			const tax = subtotal * (taxRate() / 100)
+			const { tax, added } = estimateTax(subtotal, taxRate(), taxInclusive())
 			const fee = mode === 'delivery' ? (validDelivery()?.deliveryFee ?? 0) : 0
 			const tip = (subtotal * tipPercent) / 100
-			const total = subtotal + tax + fee + tip
+			const total = subtotal + added + fee + tip
 			return { subtotal, tax, deliveryFee: fee, tip, total }
 		}
 
@@ -868,6 +888,11 @@ const tipOff = 'border-border bg-background text-foreground'
 
 			if (coSubtotal) coSubtotal.textContent = formatCurrency(subtotal)
 			if (coTax) coTax.textContent = formatCurrency(tax)
+			const coTaxLabel = document.getElementById('co-tax-label')
+			const coTaxLabelText = taxInclusive()
+				? coTaxLabel?.dataset.inclusiveLabel
+				: coTaxLabel?.dataset.exclusiveLabel
+			if (coTaxLabel && coTaxLabelText) coTaxLabel.textContent = coTaxLabelText
 			if (coDeliveryRow && coDeliveryFee) {
 				if (mode === 'delivery') {
 					coDeliveryRow.classList.remove('hidden')

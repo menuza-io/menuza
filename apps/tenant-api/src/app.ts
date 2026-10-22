@@ -2,7 +2,7 @@ import { type Context, Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { logger as honoLogger } from 'hono/logger'
 import { logger } from '@repo/observability'
-import { isAllowedAnalyticsOrigin } from './lib/origin.ts'
+import { isAllowedAnalyticsOrigin, isPosOrigin } from './lib/origin.ts'
 import { requestLoggingMiddleware } from './lib/request-logging.ts'
 import { getNodeRegion } from './lib/region.ts'
 import { analyticsRoutes } from './routes/analytics.ts'
@@ -37,6 +37,8 @@ import { orderSystemRoutes } from './routes/order-system.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorPeopleRoutes } from './routes/operator-people.ts'
+import { operatorPosRoutes } from './routes/operator-pos.ts'
+import { posRoutes } from './routes/pos.ts'
 import {
 	publicVoiceRoutes,
 	voiceOperatorRoutes,
@@ -101,7 +103,10 @@ export function createTenantApiApp() {
 
 	app.use('*', async (c, next) => {
 		const origin = c.req.header('Origin')
-		const allowed = origin ? await isAllowedAnalyticsOrigin(origin) : false
+		const allowed = origin
+			? (c.req.path.startsWith('/pos/') && isPosOrigin(origin)) ||
+				(await isAllowedAnalyticsOrigin(origin))
+			: false
 
 		if (c.req.method === 'OPTIONS') {
 			if (!origin || !allowed) {
@@ -195,6 +200,14 @@ export function createTenantApiApp() {
 		rateLimit('kiosk', { windowMs: 60 * 1000, maxRequests: 600 }),
 	)
 
+	// POS terminals share a restaurant's NAT, so the per-IP ceiling is high.
+	// Pairing codes are single use and 256 bits, so only bulk probing is throttled.
+	app.use(
+		'/pos/pair',
+		rateLimit('pos-pair', { windowMs: 60 * 1000, maxRequests: 20 }),
+	)
+	app.use('/pos/*', rateLimit('pos', { windowMs: 60 * 1000, maxRequests: 600 }))
+
 	// The public application form: a person applies a few times at most. The
 	// organization also enforces durable per-address and per-organization limits
 	// in its own database (see `submitApplication`); this is the burst ceiling.
@@ -243,6 +256,7 @@ export function createTenantApiApp() {
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/orders', operatorOrderRoutes)
 	app.route('/operator/people', operatorPeopleRoutes)
+	app.route('/operator/pos', operatorPosRoutes)
 	app.route('/operator/calls', voiceOperatorRoutes)
 	app.route('/operator/staff', staffOperatorRoutes)
 	app.route('/operator/timeclock', timeclockOperatorRoutes)
@@ -252,6 +266,7 @@ export function createTenantApiApp() {
 	app.route('/careers', careersRoutes)
 	app.route('/internal/staff', staffInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
+	app.route('/pos', posRoutes)
 	app.route('/schedule-link', scheduleLinkRoutes)
 	app.route('/operator/reservations', reservationsOperatorRoutes)
 	app.route('/reservations', reservationsPublicRoutes)

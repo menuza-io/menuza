@@ -1,0 +1,323 @@
+# Station: point of sale (`apps/station`)
+
+An offline-first till for orders taken in the restaurant. It runs as a PWA on a
+tablet or phone, keeps every order in IndexedDB first, and uploads each revision
+of an order to the organization's **regional** tenant-api. Order contents never
+pass through the US control plane (see `docs/tenant-data-residency.md`).
+
+The app and npm workspace are named **Station**. POS remains the name of the
+order contracts and regional API module. Existing POS URLs, environment
+variables, and device storage keys are retained so the rename does not strand
+paired devices or offline orders.
+
+## Pieces
+
+| Where                                        | What                                                                                                                                                         |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/station`                               | The tablet app (Vite, React, Dexie). `src/lib/orders.ts` is the order lifecycle, `src/lib/outbox.ts` the upload queue, `src/lib/fiscal.ts` the fiscal chain. |
+| `packages/common/src/pos-orders.ts`          | Wire contract (Zod), credentials, `POS_CONTRACT_VERSION`.                                                                                                    |
+| `packages/common/src/pos-fiscal.ts`          | Fiscal document chain (SHA-256, synchronous) and the ZATCA Phase 1 QR payload.                                                                               |
+| `packages/common/src/pos-reports.ts`         | The sales summary behind the till's Z report and the server's shift and day reports.                                                                         |
+| `packages/zatca` (`@repo/zatca`)             | ZATCA Phase 2: EGS keys and CSR, UBL simplified invoices and credit and debit notes, the XAdES signature, the Phase 2 QR code, and the Fatoora API client.   |
+| `packages/tenant-db` (migration 0020)        | `pos_*` tables, their append-only triggers, and phone pickup details.                                                                                        |
+| `apps/tenant-api/src/routes/pos.ts`          | Terminal routes: `/pos/pair`, `/pos/me`, `/pos/sign-in`, `/pos/orders`, `/pos/shifts`, `/pos/tabs`, `/pos/tabs/:id/claim`, `/pos/zatca`.                     |
+| `apps/tenant-api/src/routes/operator-pos.ts` | Manager routes under `/operator/pos` (terminals, pairing codes, orders, revisions, held uploads, staff and managers, shifts, day reports, ZATCA).            |
+| `apps/app` → Settings → Terminals            | Pair and remove terminals, PIN sign-in, shifts, business day, till managers, held uploads, the day report, ZATCA settings and onboarding.                    |
+
+## Trust model
+
+A terminal is trusted to say what it sold, because it may have sold it offline.
+The server checks the arithmetic, reprices the lines against the live menu only
+to **flag** differences (`review_reason`), and never refuses a sale the till
+already took money for.
+
+- **Review reasons** stick: the first reason found stays on the order; every
+  revision's own verdict is on `pos_order_revisions`. `stale_price`, `stale_tax`
+  and `stale_catalog:*` mean the till's menu was over 10 minutes old at the
+  sale, or the upload arrived over 10 minutes after it: probably a menu change,
+  not a wrong charge. `price_mismatch`, `tax_mismatch` and `catalog:*` mean the
+  till had a fresh menu. Other reasons: `unverified` (menu unreachable),
+  `clock_skew`, `missing_staff`, `unknown_staff`, `inactive_staff`,
+  `approver_not_manager`, `fiscal:*`.
+- **Held uploads.** An upload the server cannot apply is stored in
+  `pos_held_uploads` and answered `202 { result: 'held' }`. This covers an
+  unreadable contract (an out-of-date till or node), a change to a closed bill,
+  a tab that moved, and a wrong location. The till stops resending it, and
+  managers settle it on the Terminals page. Only `number_conflict` is answered
+  409, and the till renumbers. A terminal with 1000 unsettled held uploads gets
+  429 `held_limit` and retries later. Phone callback numbers and phone-order
+  customer names are removed from held payloads; the bill and money remain
+  available for review.
+
+## Staff-entered phone orders
+
+Choose **Phone order** in the current order, enter the customer name and
+callback number, then choose **ASAP** or a scheduled pickup time. Scheduled
+times use the restaurant's time zone, not the tablet's. Add items, options and
+kitchen notes as usual. **Pay at pickup** saves an unpaid tab; **Pay now** uses
+the same cash/card recording flow as counter orders. Card collection still
+happens on the external card terminal, not over the phone in this app.
+
+`orderSource` (`counter` or `phone`) is separate from `orderType`; phone orders
+are always `takeaway` (pickup), never delivery. The Phone orders filter includes
+prepaid orders from earlier days. Payment status is not preparation or
+collection status. Details survive offline reloads, saved-tab edits and terminal
+transfers. Printed receipts mask the callback number.
+
+Contract version 3 defaults older uploads to counter orders. Migration 0020
+creates the POS tables, including phone pickup details; deploy it with the
+regional API before the new till. No customer account, OTP, SMS, address or
+dispatch integration is created.
+
+Names and callback numbers go browser-direct to regional tenant-api only.
+Numbers are omitted from permanent revision history and held uploads. Regional
+customer erasure scrubs matching phone contacts without deleting financial
+records; later uploads cannot restore a scrubbed phone contact. Closed-order
+contacts expire after 30 days (not before a scheduled pickup), using the same
+terminal check-in housekeeping as guest names. The till keeps settled, synced
+orders for 14 days, but never prunes an upcoming pickup or an open/unsent order.
+
+## Money and history are append-only
+
+- **`pos_payments`** holds payments and refunds (`kind`), and neither can be
+  updated or deleted. The one exception: erasing a person may replace the staff
+  names on a row.
+- **`pos_order_revisions`** keeps every accepted revision. Staff appear as ids
+  only; guest names and callback numbers are omitted.
+- **`pos_fiscal_documents`** holds the invoices and credit notes.
+- **`pos_orders`** rows cannot be deleted.
+
+On an order, payments, refunds and `lineVoids` (items taken off a saved tab) can
+only grow. Once a payment exists the bill is frozen. A closed sale can only gain
+refunds.
+
+## Voids, removed items and refunds
+
+- **Taking items off a saved tab** needs a reason. When PIN sign-in is on and
+  the person is not a till manager, it also needs a manager's PIN. Each removal
+  is recorded as a line void with the item, quantity, unit price, who, why and
+  who approved.
+- **Cancelling an unpaid tab** works the same way (`voidReason`,
+  `voidApprovedBy`, and `voidedAt` taken from the till).
+- **Refunding a paid sale** gives money back in the tenders it was paid with,
+  newest payment first, one refund row per payment touched. A sale refunded in
+  full has status `refunded`. Card refunds are made on the card terminal and
+  recorded here, with an optional reference.
+- **Till managers** are set on the Terminals page (`pos_managers`).
+
+## Cash drawer shifts and the Z report
+
+A terminal can be set to sell only inside a **shift** (Terminals page, "Require
+shifts"; off by default). A shift is opened with the float counted in the
+drawer, records cash put in or taken out (a note is required, and a manager's
+PIN for cash out when sign-in is on), and is closed with a **blind count**: the
+person counting is shown the expected figure only after confirming.
+
+- **Stamping.** Every order, payment and refund taken while a shift is open
+  carries its id, so a tab rung up in one shift and paid in the next counts its
+  cash in the shift where the money moved.
+- **Expected cash** is the opening float, plus cash payments, minus cash
+  refunds, plus cash in, minus cash out. The till computes it at the close; the
+  server works it out again from the payments it holds whenever a report is
+  asked for, so a payment that arrives after the close still counts.
+- **The Z report** is the same calculation everywhere (`posSalesSummary` in
+  `@repo/common/pos-reports`). The till prints it at the close. On the server it
+  covers one shift (`GET /operator/pos/shifts/:id`) or one business day across
+  terminals (`GET /operator/pos/reports/day`), and the day report is on the
+  Terminals page.
+- **Append-only.** Shifts can't be deleted and cash movements can't be changed
+  (triggers). A closed shift never changes.
+
+## Fiscal chain
+
+Every closed sale gets an **invoice** and every refund a **credit note**,
+numbered without gaps per till installation (`chainId`) and hash-linked to the
+previous document. This is ZATCA's ICV/PIH shape. The till issues documents in
+the same IndexedDB transaction that closes the sale. The hash is synchronous
+because an IndexedDB transaction cannot await `crypto.subtle`.
+
+- **Display number vs counter.** The order number a guest sees (`T1-0042`) can
+  change after a collision; the fiscal counter never does.
+- **Server checks.** The server recomputes each hash and checks its link to the
+  previous document. It flags `fiscal:hash_mismatch`, `fiscal:chain_break`,
+  `fiscal:counter_reused` and `fiscal:document_changed`, and still keeps the
+  sale.
+  - The first document must start from the genesis value.
+  - A link is checked from whichever side arrives second, because offline tills
+    upload out of order.
+  - Counters missing for more than a day are listed at
+    `GET /operator/pos/fiscal/gaps`.
+- **Recovery.** `/pos/me` returns the chain heads the server holds, so a till
+  whose storage was lost continues its chain instead of starting another.
+- **Receipts.** When the location has a VAT number, the receipt is a simplified
+  tax invoice: VAT number, invoice counter, and the ZATCA Phase 1 QR code
+  (seller, VAT number, time, total, VAT). An onboarded ZATCA unit prints the
+  Phase 2 QR code instead (below).
+
+## ZATCA Phase 2 (integration)
+
+For restaurants in Saudi Arabia, each terminal can be an **EGS unit**.
+
+- **Onboarding (App, Terminals page).**
+  1. A manager enters the seller details: legal name, VAT number, CR number,
+     national address, business category, branch, and environment (sandbox,
+     simulation or production).
+  2. They generate a one-time password in the Fatoora portal and press "Connect"
+     on a terminal.
+  3. The regional server generates the unit's secp256k1 key and CSR, gets a
+     compliance CSID, signs and submits the three compliance samples (invoice,
+     credit note, debit note), and requests the production CSID.
+  4. If a step fails, the unit records which step and why. A terminal that is
+     already connected keeps its key and certificates until a reconnect has
+     fully succeeded, so a mistyped password never breaks a working till.
+- **Signing on the till.** The terminal fetches its key and production
+  certificate (`GET /pos/zatca`; the CSID secret never leaves the server). It
+  then signs every closed sale (388) and every refund (381, referring to the
+  invoice) itself, offline if need be, in the same IndexedDB transaction that
+  issues the fiscal document. ICV is the fiscal counter, and PIH is the previous
+  document's invoice hash, starting from ZATCA's genesis value. The signed XML,
+  its hash and the Phase 2 QR (nine tags) ride on the fiscal document.
+- **Reporting.** The server queues each signed document
+  (`pos_zatca_submissions`, append-only) and reports it with the production
+  CSID: right after the upload, and on every hourly tick. Outcomes:
+  - `reported`: accepted.
+  - `warning`: accepted with warnings.
+  - `rejected`: refused; ZATCA's reason is kept.
+  - Network errors and 5xx responses are retried with backoff.
+
+  The Terminals page shows the counts and the rejections, and has a "Report now"
+  button.
+
+- **Amounts.** Lines are net. VAT-inclusive prices are converted per unit. The
+  document's VAT is computed from its own standard-rated taxable amount, so
+  ZATCA's rules BR-S-09 and BR-CO-17 hold exactly, and any halala between that
+  and what the guest paid goes into `PayableRoundingAmount`. The receipt of a
+  signed invoice prints that VAT, to match its QR code.
+  - Tips and untaxed options are category O (`VATEX-SA-OOS`).
+  - A discount is split between taxed and untaxed amounts in proportion.
+  - A refund is split the same way as the sale it refunds, so no VAT is claimed
+    back on a tip.
+- **Numbers.** The invoice number (`cbc:ID`) is fixed when the invoice is signed
+  and kept with it. Renumbering an order after a collision never changes it, and
+  credit notes always refer to it.
+- **Recovery.** `/pos/me` reports the hash of the last document the server holds
+  from the terminal, so a till whose storage was lost continues the PIH chain as
+  well as the counter.
+- **Secrets at rest.** Signing keys and CSID secrets are sealed with
+  AES-256-GCM, using a key derived from `AUTH_HMAC_SECRET`.
+- **Verification.**
+  - The invoice hash is checked byte for byte against `xmllint --c14n11`.
+  - `openssl` accepts the CSR and the signatures.
+  - The certificate fields match `openssl x509`.
+  - `npm run sandbox-check -w @repo/zatca -- <dir>` runs onboarding against
+    ZATCA's developer-portal sandbox and writes the signed samples for
+    `fatoora -validate`. Run it, and the SDK validator, before switching an
+    organization to production. The signed-properties digest follows ZATCA's
+    published layout and is not covered by the local checks.
+
+## Tax
+
+Locations can price **including** tax (`taxInclusive`, set on the location in
+App). The till and the server engine then show the tax inside the price
+(`round(taxable × rate / (100 + rate))`) instead of adding it. Each order
+records the rate and the mode it was priced with.
+
+## Business day
+
+A terminal's business day turns over at `dayStartMinutes` after local midnight
+(default 04:00, from 00:00 to 12:00, set per terminal on the Terminals page).
+Orders after midnight belong to the previous day until then, so a late service
+keeps one run of order numbers and one day's takings. The day is computed in the
+location's time zone, not the tablet's.
+
+## Tabs across terminals
+
+A tab belongs to the terminal that holds it. Another terminal at the same
+location can list open tabs (`GET /pos/tabs`, online only) and take one over
+(`POST /pos/tabs/:id/claim` with the revision it saw, so a tab that changed is
+not taken blind). The old terminal learns of the move from `/pos/me` and keeps
+its copy as history. Anything it uploads for the tab afterwards is held.
+
+## Staff sign-in
+
+PINs are the staff module's (`staff_scope_assignments.pin_lookup`, the
+terminal's scope). The server rules match the kiosk: escalating backoff per
+terminal, never a lockout. People who signed in online can sign in offline for
+**72 hours**. A person who has since left can still do so in that window, and
+their sales are flagged `inactive_staff`.
+
+## Personal data
+
+- **Guest names** (a first name or note typed by the cashier) are cleared 30
+  days after the order closes. This happens on terminal check-in
+  (`purgePosGuestNames`), because the staff tick does not run for every
+  organization.
+- **Staff names** recorded at the till are replaced when that person is erased
+  (`erasePosStaffNames`, called from `eraseLinkedUser`).
+
+## Languages
+
+The till runs in English or Arabic (right to left), chosen in its Settings. It
+defaults to Arabic when the restaurant's default language is Arabic. Catalogs:
+`apps/station/src/locales` (`npm run lingui:extract -w station`).
+
+## Configuration
+
+| Variable      | Where                 | Meaning                                                                                                                                                            |
+| ------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POS_URL`     | App                   | Origin of the POS web app, for pairing links and QR codes. When empty in development, defaults to `https://pos.<brand-slug>.test:2999`; no fallback in production. |
+| `POS_ORIGINS` | every tenant-api node | Origins allowed to call `/pos/*` from a browser.                                                                                                                   |
+| `POS_ENABLED` | tenant-api            | Kill switch. `false` answers 503 on `/pos/*` and refuses new pairing codes; revoking a terminal always works. Revoke terminals first, then flip it.                |
+
+On the US Workers node the router confirms the organization with App before each
+`/pos/*` request. A positive answer is cached for 60 s. If App cannot be
+reached, the node answers 503, which the till retries; it never answers
+"removed". Menu context for repricing is cached for 60 s per location.
+
+## Local development
+
+Root `npm run dev` includes the POS Vite server on **3010** alongside App
+(3001), Sites (3008), and both tenant-api nodes (US 3007, KSA 3009). The HTTPS
+proxy on **2999** serves it at `https://pos.<brand-slug>.test:2999`, derived
+from `getLocalDomain()` in `packages/config/brand.ts`. HMR uses the same proxy
+port. The PWA service worker is disabled in dev.
+
+For Menuza:
+
+1. On an existing hosts-file setup, run `npm run setup:hosts` once to add
+   `pos.menuza.test` (unnecessary with wildcard local DNS). The existing
+   wildcard development certificate covers this hostname.
+2. Start root `npm run dev`. It frees its dev ports first, including 3010.
+3. Open `https://app.menuza.test:2999/<org-slug>/menu/terminals` and create a
+   pairing code for the desired location.
+4. Open the pairing link or scan its QR code. It opens
+   `https://pos.menuza.test:2999` and pairs directly with the organization's
+   regional tenant-api.
+
+An empty `POS_URL` automatically uses this HTTPS dev origin, without editing
+App's `.env`. An explicit `POS_URL` still wins. The tenant-api already accepts
+`.test` origins outside production, so local pairing needs no `POS_ORIGINS`
+change. `pos` is reserved as an organization slug and a product subdomain.
+
+To run only the tablet app server, use `npm run dev:station`; the proxy, App and
+the appropriate tenant-api must be running separately for the full pairing flow.
+For direct `http://localhost:3010` development without the proxy, use
+`VITE_DIRECT_DEV=1 npm run dev -w station` so HMR connects directly.
+
+Station targets Safari 15+ (including iOS/iPadOS 15+). Its development
+dependency optimizer and production build use the same explicit browser targets;
+Vite 6's Safari 14 default is incompatible with the pinned esbuild version.
+
+## Tests
+
+- **Contract:**
+  `cd packages/common && npx vitest run src/pos-orders.test.ts src/pos-fiscal.test.ts`.
+- **Server:**
+  `cd apps/tenant-api && ../../node_modules/.bin/varlock run -- npx vitest run src/routes/pos.test.ts src/lib/pos-routing.test.ts`.
+- **Tablet app:** `cd apps/station && npx vitest run`.
+- **ZATCA:** `cd packages/zatca && npx vitest run` (uses `openssl` and `xmllint`
+  when installed).
+- **End to end:** `cd apps/station && npx playwright test`. It boots its own
+  tenant-api (`apps/tenant-api/tests/pos-e2e-server.ts`, temp databases, ports
+  4710 and 4711) and a POS preview on 3110. It does not touch the LibSQL or D1
+  dev databases.

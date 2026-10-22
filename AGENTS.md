@@ -144,7 +144,7 @@ install hook nor `npm run dev -w app` creates them.
   `http://localhost:3001` (health check: `/resources/healthcheck`). Reports and
   staffing also need `npm run dev:tenant-api` (port 3007).
 - Root `npm run dev` first kills whatever listens on the dev ports (2999,
-  3001-3005, 3007-3009, 8787, 24678, 24679). Stop the server you started by its
+  3001-3005, 3007-3010, 8787, 24678, 24679). Stop the server you started by its
   listening port: `lsof -nP -tiTCP:3001 -sTCP:LISTEN | xargs -r kill`. Without
   `-sTCP:LISTEN`, `lsof` also matches client connections such as the dev
   proxy's. Without `lsof`, use
@@ -186,11 +186,13 @@ npm run dev -w app          # Same, without Turbo (sandbox only, never beside ro
 npm run dev -w admin        # Admin (port 3005)
 npm run dev:web             # Astro marketing site (port 3002)
 npm run dev:sites           # Tenant public sites (port 3008)
+npm run dev:station         # Station tablet app (port 3010)
 npm run dev:tenant-api      # US tenant-api (port 3007, DATA_REGION=us)
 npm run dev:tenant-api:ksa  # KSA tenant-api (port 3009, DATA_REGION=ksa)
 npm run dev:mobile          # Expo mobile app
 
 # `npm run dev` already starts both tenant-api nodes (3007 + 3009).
+# It also starts Station (3010), retaining https://pos.<brand-slug>.test:2999.
 
 # Database management
 npm run db:studio      # Drizzle Studio UI (port 5555)
@@ -199,6 +201,14 @@ npm run db:migrate:d1:local -w app # Same migrations on Workers local D1 (app de
 npm run db:seed        # Seed LibSQL (packages/database/db/data.db), not local D1
 npm run db:reset -w @repo/database # Delete, migrate and re-seed LibSQL (destructive; agents ask first)
 ```
+
+The dev domain comes from `getLocalDomain()` in `packages/config/brand.ts`. For
+Menuza, App is `https://app.menuza.test:2999` and POS is
+`https://pos.menuza.test:2999`. When `POS_URL` is empty in development, the
+Terminals page uses this POS origin for pairing links and QR codes. Production
+still requires `POS_URL`. Existing hosts-file setups need a person to re-run
+`npm run setup:hosts` once to add the `pos.` hostname (unless using wildcard
+local DNS). See `docs/pos.md` for the pairing flow.
 
 ## Build & Test
 
@@ -592,6 +602,10 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   on that node; revoking a device always still works. A paired tablet keeps its
   device secret locally, so no organization flag can stop it. Runbook: revoke
   devices first, then use the switch. See `docs/staffing.md`.
+- `POS_ENABLED` / `POS_ORIGINS` - Tenant-api only. Kill switch for the walk-in
+  POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
+  the comma-separated POS web origins allowed to call `/pos/*` from a browser.
+  `POS_URL` is App's: the POS origin used in pairing links. See `docs/pos.md`.
 - `STAFFING_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true` is
   on). Kill switch for staffing email: on tenant-api it drops staff reminders
   and notices (dropped, not held, so re-enabling sends no backlog); in the App
@@ -802,6 +816,9 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - `@repo/config` - Shared configs (ESLint, TypeScript, Prettier)
 - `@repo/ai` - AI/ML integrations (Vercel AI SDK, Google AI)
 - `@repo/security` - Security utilities (encryption, rate limiting)
+- `@repo/zatca` - ZATCA (Saudi e-invoicing) Phase 2 for the POS: EGS keys and
+  CSR, UBL simplified invoices and notes, XAdES signature, Phase 2 QR, Fatoora
+  API client. Pure TypeScript, used by `apps/station` and tenant-api
 - `@repo/phone-agent` - AI phone agent core: flow model, vertical contract,
   prompts, and call reports (see `docs/phone-agent-verticals.md`)
 - `@repo/reservations` - Reservations domain code shared by App, tenant-api and
@@ -825,6 +842,12 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - `apps/tenant-api` - Regional customer auth + SQLite (local US :3007, KSA
   :3009; production: US Cloudflare Worker + Durable Objects by default, KSA OCI
   Riyadh)
+- `apps/station` - Station tablet app, currently an offline-first register (Vite
+  PWA, IndexedDB). Uploads each order revision browser-direct to the regional
+  tenant-api; money and history tables are append-only, refunds and removed
+  items need a reason (and a manager when sign-in is on), and closed sales carry
+  a hash-chained fiscal document. Read `docs/pos.md` before changing the order
+  contract (`@repo/common/pos-orders`, `POS_CONTRACT_VERSION`)
 - `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
   loads config from App and logs calls through tenant-api
 - `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):
@@ -896,11 +919,10 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Regional data in `packages/tenant-db` (41 `rsv_*` tables, one migration,
   `0019_reservations`); control plane keeps flags, permissions, locations and
   payment connection state (one migration, `0025_reservations`). Pure domain
-  code in
-  `@repo/reservations` and `@repo/zoned-time` (never hand-roll time-zone math).
-  Guest PII (names, phones, emails, notes, allergies, tags) lives only in the
-  regional DB: never in the control plane, logs, cross-plane payloads, Sites SSR
-  or App loaders. Validation errors never echo rejected values.
+  code in `@repo/reservations` and `@repo/zoned-time` (never hand-roll time-zone
+  math). Guest PII (names, phones, emails, notes, allergies, tags) lives only in
+  the regional DB: never in the control plane, logs, cross-plane payloads, Sites
+  SSR or App loaders. Validation errors never echo rejected values.
 - Everything user-visible is behind org flags read with `getFeatureFlag`
   (`reservations.enabled` master, plus `.online`, `.waitlist`, `.payments`,
   `.experiences`, `.voice`; `reservations.platform_fee_bp` is a number, default

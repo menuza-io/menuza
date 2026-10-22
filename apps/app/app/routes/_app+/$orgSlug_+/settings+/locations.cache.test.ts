@@ -106,6 +106,18 @@ describe('location changes purge the published site cache', () => {
 		expect(mocks.purgeOrganizationSiteCache).not.toHaveBeenCalled()
 	})
 
+	it('rejects a VAT number with symbols', async () => {
+		const result = await editAction({
+			request: post({ ...LOCATION_FIELDS, vatNumber: '310-123' }),
+			params: { orgSlug: 'acme', locationId: 'loc-1' },
+		} as any)
+
+		expect(result).toEqual({
+			error: 'VAT number may only contain letters and digits',
+		})
+		expect(mocks.purgeOrganizationSiteCache).not.toHaveBeenCalled()
+	})
+
 	it('purges after creating a location', async () => {
 		const response = await newAction({
 			request: post(LOCATION_FIELDS),

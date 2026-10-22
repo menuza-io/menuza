@@ -657,6 +657,13 @@ export const publicLocationContextSchema = z
 		phone: z.string().nullable().optional(),
 		timezone: z.string().default('UTC'),
 		taxRate: z.number().finite().min(0).default(0),
+		/**
+		 * Menu prices already include tax (VAT). Optional so order contexts
+		 * published before the field existed still parse as tax-exclusive.
+		 */
+		taxInclusive: z.boolean().default(false),
+		/** Seller's tax (VAT) registration number, printed on receipts. */
+		vatNumber: z.string().nullable().optional(),
 		prepTime: z.number().int().min(0).default(15),
 		currency: z.enum(['USD', 'CAD', 'SAR']).default('USD'),
 		isDefault: z.boolean().optional(),
@@ -893,7 +900,13 @@ export type PricedRestaurantOrder = {
 	currency: string
 	lines: PricedOrderLine[]
 	subtotalCents: number
+	/**
+	 * Tax on the order. When `taxInclusive` is true it is the portion already
+	 * contained in `subtotalCents` and is not added to `totalCents`.
+	 */
 	taxCents: number
+	/** True when menu prices include tax (VAT-inclusive pricing). */
+	taxInclusive: boolean
 	tipCents: number
 	tipPercent: number
 	deliveryFeeCents: number
@@ -1737,9 +1750,18 @@ export function priceRestaurantOrder(
 		now: Date
 		/** Verified signed delivery quote (tenant-api checks signature/expiry). */
 		deliveryQuote?: VerifiedDeliveryQuote | null
+		/**
+		 * Price an order rung up in the restaurant (POS) rather than placed
+		 * online. Only the online-ordering gates are skipped (open hours, the
+		 * pickup switch, in-house tip rules, the menu's special-instructions
+		 * setting); every catalog, variant and modifier rule still applies. The
+		 * caller's `request` must be a plain pickup order with no drop.
+		 */
+		walkIn?: boolean
 	},
 ): PriceRestaurantOrderResult {
 	const { now } = options
+	const walkIn = options.walkIn === true
 	const deliveryQuote = options.deliveryQuote ?? null
 
 	const location = context.menu.locations.find(
@@ -1793,7 +1815,11 @@ export function priceRestaurantOrder(
 			),
 		}
 	}
-	if (request.fulfillment === 'pickup' && !location.fulfillmentOptions.pickup) {
+	if (
+		!walkIn &&
+		request.fulfillment === 'pickup' &&
+		!location.fulfillmentOptions.pickup
+	) {
 		return {
 			ok: false,
 			error: orderError(
@@ -1820,7 +1846,7 @@ export function priceRestaurantOrder(
 		request.fulfillment === 'pickup'
 			? location.inHouseTips.pickupTips
 			: location.inHouseTips.deliveryTips
-	if (request.tipPercent > 0 && !tipsEnabled) {
+	if (!walkIn && request.tipPercent > 0 && !tipsEnabled) {
 		return {
 			ok: false,
 			error: orderError(
@@ -1981,7 +2007,7 @@ export function priceRestaurantOrder(
 			const schedule = validateScheduledFor(location, request.scheduledFor, now)
 			if (!schedule.ok) return { ok: false, error: schedule.error }
 			scheduledFor = schedule.scheduledFor.toISOString()
-		} else {
+		} else if (!walkIn) {
 			const availability = isLocationOpenForOrdering(location, now)
 			if (!availability.isOpen) {
 				return {
@@ -2065,7 +2091,7 @@ export function priceRestaurantOrder(
 				),
 			}
 		}
-		if (line.instructions && !entry.specialInstructions) {
+		if (line.instructions && !entry.specialInstructions && !walkIn) {
 			return {
 				ok: false,
 				error: orderError(
@@ -2315,9 +2341,14 @@ export function priceRestaurantOrder(
 		0,
 	)
 	const taxRatePercent = Math.max(0, Math.min(100, location.taxRate || 0))
-	const taxCents = Math.round((taxableCents * taxRatePercent) / 100)
+	const taxInclusive = location.taxInclusive === true
+	const taxCents = taxInclusive
+		? inclusiveTaxCents(taxableCents, taxRatePercent)
+		: Math.round((taxableCents * taxRatePercent) / 100)
 	const tipCents = Math.round((subtotalCents * request.tipPercent) / 100)
-	const totalCents = subtotalCents + taxCents + tipCents + deliveryFeeCents
+	// Inclusive prices already carry the tax: it is reported, not added.
+	const totalCents =
+		subtotalCents + (taxInclusive ? 0 : taxCents) + tipCents + deliveryFeeCents
 
 	return {
 		ok: true,
@@ -2326,6 +2357,7 @@ export function priceRestaurantOrder(
 			lines: pricedLines,
 			subtotalCents,
 			taxCents,
+			taxInclusive,
 			tipCents,
 			tipPercent: request.tipPercent,
 			deliveryFeeCents,
@@ -2343,6 +2375,19 @@ export function priceRestaurantOrder(
 			capacity,
 		},
 	}
+}
+
+/**
+ * Tax contained in a tax-inclusive amount: `amount * rate / (100 + rate)`,
+ * rounded once for the whole order like exclusive tax.
+ */
+export function inclusiveTaxCents(
+	taxInclusiveCents: number,
+	taxRatePercent: number,
+): number {
+	const rate = Math.max(0, Math.min(100, taxRatePercent || 0))
+	if (!(rate > 0) || !(taxInclusiveCents > 0)) return 0
+	return Math.round((taxInclusiveCents * rate) / (100 + rate))
 }
 
 function zoneMinimumOrderCents(

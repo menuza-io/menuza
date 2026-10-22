@@ -13,6 +13,8 @@ export interface TenantApiWorkerEnv {
 	ROOT_APP: string
 	GLOBAL_SMS_CAP?: string
 	STAFFING_KIOSK_ENABLED?: string
+	POS_ENABLED?: string
+	POS_ORIGINS?: string
 	STAFFING_EMAIL_ENABLED?: string
 	RESERVATIONS_PUBLIC_ENABLED?: string
 	RESERVATIONS_EMAIL_ENABLED?: string

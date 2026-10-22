@@ -141,6 +141,13 @@
 			"when": 1792532037810,
 			"tag": "0019_reservations",
 			"breakpoints": true
+		},
+		{
+			"idx": 20,
+			"version": "6",
+			"when": 1792641527810,
+			"tag": "0020_pos_orders_and_terminals",
+			"breakpoints": true
 		}
 	]
 }

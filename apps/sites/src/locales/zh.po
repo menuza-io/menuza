@@ -1046,6 +1046,13 @@ msgstr "请包含国家/地区区号，例如 {example}。"
 msgid "Include your country code, for example +1 415 555 0123."
 msgstr "请包含国家区号，例如 +1 415 555 0123。"
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Includes VAT"
+msgstr "含增值税"
+
 #: src/lib/ordering-labels.ts:56
 msgid "Increase quantity"
 msgstr "增加数量"
@@ -2436,6 +2443,10 @@ msgstr "使用“{query}”"
 #: src/pages/shop.astro.ts:3
 msgid "Use a new card"
 msgstr "使用新卡"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "VAT number"
+msgstr "增值税号"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3

@@ -14,10 +14,12 @@ import { describe, expect, it } from 'vitest'
  */
 
 const PII_COLUMN =
-	/((^|_)phone|(^|_)email|first_name|last_name|full_name|display_name|caller_name|contact_name|address|postal|_lat$|_lng$|^lat$|^lng$|ip_hash|stripe_|last4|payment_method|customer_ref|card_|allerg|dietary|guest_requests|staff_notes|^transcript$|^summary$|^values$|^details$|^body$|^notes?$|token_hash|date_of_birth|^name$)/
+	/((^|_)phone|(^|_)email|first_name|last_name|full_name|display_name|caller_name|contact_name|address|postal|_lat$|_lng$|^lat$|^lng$|ip_hash|stripe_|last4|payment_method|customer_ref|card_|allerg|dietary|guest_requests|staff_notes|^transcript$|^summary$|^values$|^details$|^body$|^notes?$|token_hash|date_of_birth|^name$|staff_name$|guest_name)/
 
 /** Columns the erasure removes or scrubs, and how. */
 const COVERED: Record<string, string> = {
+	'pos_orders.customer_phone':
+		'scrubbed by normalised phone; omitted from revision history and held records, also expires after 30 days',
 	'customers.name': 'row deleted',
 	'customers.email': 'row deleted',
 	'customers.phone': 'row deleted',
@@ -99,6 +101,9 @@ const ALLOWED_TABLES: Array<[RegExp, string]> = [
 	],
 ]
 
+const staffAtTheTill =
+	'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased'
+
 /** Single columns that look like PII but are not a customer's data. */
 const ALLOWED_COLUMNS: Record<string, string> = {
 	'marketing_campaigns.name': 'campaign title written by the operator',
@@ -128,6 +133,27 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 		'deprecated timestamp column, never read or written (single consent source)',
 	'rsv_guests.consent_text_version': 'deprecated, a text version label',
 	'voice_calls.transfer_contact_id': 'opaque id of an organization contact',
+	'pos_orders.guest_name':
+		'phone-order names scrubbed by matching phone, otherwise unlinked counter guest names; all expire after 30 days and are omitted from revision history',
+	'pos_orders.staff_name':
+		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
+	'pos_orders.voided_by_staff_name':
+		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
+	'pos_orders.void_approved_by_staff_name':
+		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
+	'pos_payments.staff_name':
+		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
+	'pos_payments.approved_by_staff_name':
+		'staff member who worked the till, not a customer; replaced by erasePosStaffNames when that person is erased (revision history keeps ids only)',
+	'pos_order_lines.name': 'menu item name, not personal data',
+	'pos_shifts.opened_by_staff_name': staffAtTheTill,
+	'pos_shifts.closed_by_staff_name': staffAtTheTill,
+	'pos_cash_movements.staff_name': staffAtTheTill,
+	'pos_cash_movements.approved_by_staff_name': staffAtTheTill,
+	'pos_cash_movements.note':
+		'what cash taken from or put in the drawer was for, written by staff; not about a customer',
+	'pos_zatca_settings.postal_code':
+		"the restaurant's own business address, as registered with ZATCA",
 }
 
 function listColumns() {

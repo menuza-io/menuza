@@ -52,6 +52,13 @@ describe('resolveHost', () => {
 		expect(resolveHost(brandDomain)).toEqual({ kind: 'none' })
 	})
 
+	it('never resolves the POS hostname as an organization site', () => {
+		expect(resolveHost(`pos.${brandDomain}`)).toEqual({ kind: 'none' })
+		expect(
+			resolveHost(`pos.${localDomain}:2999`, { ROOT_APP: localDomain }),
+		).toEqual({ kind: 'none' })
+	})
+
 	it('includes ROOT_APP and extra suffixes, longest first', () => {
 		expect(getSiteHostSuffixes(previewEnv)).toEqual([
 			'zama-887.workers.dev',

@@ -69,6 +69,7 @@ const domain = getLocalDomain()
 const RESERVED_SUBDOMAINS = new Set([
 	'app',
 	'admin',
+	'pos',
 	'docs',
 	'studio',
 	'api',
@@ -95,6 +96,7 @@ const targets = {
 	[`studio.${domain}:${port}`]: 'http://localhost:3003',
 	[`docs.${domain}:${port}`]: 'http://localhost:3004',
 	[`admin.${domain}:${port}`]: 'http://localhost:3005',
+	[`pos.${domain}:${port}`]: 'http://localhost:3010',
 	[`api.${domain}:${port}`]: 'http://localhost:3007',
 	[`api-ksa.${domain}:${port}`]: 'http://localhost:3009',
 }

@@ -33,6 +33,7 @@ import {
 	type StaffDb,
 } from './staff-audit.ts'
 import { eraseApplicationsForStaff } from './hiring-service.ts'
+import { erasePosStaffNames } from './pos-service.ts'
 import {
 	closeOpenJobs,
 	ERASED_TERMINATION_REASON,
@@ -332,6 +333,8 @@ export async function eraseLinkedUser(
 				.returning({ id: staffScopeAssignments.id })
 			const closedJobs = await closeOpenJobs(tx, staff.id, utcToday(now))
 			await revokeScheduleLink(tx, staff.id, now, LINK_SYSTEM_ACTOR)
+			// Names the till recorded on orders, payments and refunds go too.
+			await erasePosStaffNames(tx, staff.id, 'Erased')
 			await tx
 				.update(staffMembers)
 				.set({

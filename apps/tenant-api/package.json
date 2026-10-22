@@ -38,6 +38,7 @@
     "@repo/sms": "*",
     "@repo/staffing": "*",
     "@repo/tenant-db": "*",
+    "@repo/zatca": "*",
     "@varlock/cloudflare-integration": "^1.5.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.0",

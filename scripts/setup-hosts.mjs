@@ -26,6 +26,7 @@ const rootDir = resolve(__dirname, '..')
 const RESERVED_SUBDOMAINS = new Set([
 	'app',
 	'admin',
+	'pos',
 	'docs',
 	'studio',
 	'api',
@@ -44,6 +45,7 @@ const PRODUCT_SUBDOMAINS = [
 	'',
 	'app.',
 	'admin.',
+	'pos.',
 	'studio.',
 	'docs.',
 	'api.',
@@ -325,6 +327,7 @@ async function main() {
 		log(`  Main site: https://${domain}:2999`, 'gray')
 		log(`  App: https://app.${domain}:2999`, 'gray')
 		log(`  Admin: https://admin.${domain}:2999`, 'gray')
+		log(`  POS: https://pos.${domain}:2999`, 'gray')
 		log(`  Studio: https://studio.${domain}:2999`, 'gray')
 		log(`  Docs: https://docs.${domain}:2999`, 'gray')
 
