@@ -1046,6 +1046,13 @@ msgstr "أدخل رمز الدولة، مثل {example}."
 msgid "Include your country code, for example +1 415 555 0123."
 msgstr "أدخل رمز بلدك، مثل 0123 555 415 1+."
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Includes VAT"
+msgstr "شامل ضريبة القيمة المضافة"
+
 #: src/lib/ordering-labels.ts:56
 msgid "Increase quantity"
 msgstr "زيادة الكمية"
@@ -2436,6 +2443,10 @@ msgstr "استخدام «{query}»"
 #: src/pages/shop.astro.ts:3
 msgid "Use a new card"
 msgstr "استخدام بطاقة جديدة"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "VAT number"
+msgstr "الرقم الضريبي"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3

@@ -6,23 +6,32 @@
  *
  * Rows that scripts show and hide (`#drawer-tax-row`, `#drawer-delivery-row`)
  * use plain `flex` rather than `summary-row`, so `.hidden` always wins.
+ *
+ * `#drawer-tax-label` carries both tax labels; `mountCartUi` swaps them when
+ * the location's prices include tax (VAT), where the tax is shown, not added.
  */
 interface Props {
 	labels: {
 		yourOrder: string
 		subtotal: string
 		tax: string
+		/** Tax row label when prices include tax, e.g. "Includes VAT". */
+		includesTax?: string
 		deliveryFee: string
 		total: string
 		checkout: string
 		close: string
 	}
 	taxRateLabel?: string
+	/** Initial state of the tax row; the cart script keeps it current. */
+	taxInclusive?: boolean
 	checkoutHref: string
 	initialTotal: string
 }
 
-const { labels, taxRateLabel, checkoutHref, initialTotal } = Astro.props
+const { labels, taxRateLabel, taxInclusive, checkoutHref, initialTotal } =
+	Astro.props
+const includesTaxLabel = labels.includesTax ?? labels.tax
 
 const rowClass =
 	'flex items-baseline justify-between gap-4 text-sm text-muted-foreground'
@@ -90,7 +99,13 @@ const valueClass = 'price font-medium text-foreground'
 				</div>
 				<div id="drawer-tax-row" class={rowClass}>
 					<dt>
-						{labels.tax}
+						<span
+							id="drawer-tax-label"
+							data-exclusive-label={labels.tax}
+							data-inclusive-label={includesTaxLabel}
+						>
+							{taxInclusive ? includesTaxLabel : labels.tax}
+						</span>
 						{
 							taxRateLabel ? (
 								<span class="price font-normal">({taxRateLabel})</span>

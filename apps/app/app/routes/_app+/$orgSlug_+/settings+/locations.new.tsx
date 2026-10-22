@@ -13,6 +13,7 @@ import {
 import { z } from 'zod'
 import { LocationForm } from '#app/components/locations/location-form.tsx'
 import { ensureLocationCoordinates } from '#app/utils/location/geocoder.server.ts'
+import { locationTaxInputFields } from '#app/utils/location/tax-settings.ts'
 import { requireUserOrganization } from '#app/utils/organization/loader.server.ts'
 import {
 	requireUserWithOrganizationPermission,
@@ -32,6 +33,7 @@ const LocationInputSchema = z.object({
 	phone: z.string().optional(),
 	timezone: z.string().default('America/New_York'),
 	taxRate: z.coerce.number().min(0).default(0),
+	...locationTaxInputFields,
 	isActive: z.preprocess((val) => val === 'true' || val === true, z.boolean()),
 	isDefault: z.preprocess((val) => val === 'true' || val === true, z.boolean()),
 	address: z.string().optional(),
@@ -142,6 +144,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				phone: data.phone || null,
 				timezone: data.timezone,
 				taxRate: data.taxRate,
+				taxInclusive: data.taxInclusive,
+				vatNumber: data.vatNumber,
 				isActive: data.isActive,
 				isDefault: data.isDefault,
 				address: geocoded.address || null,

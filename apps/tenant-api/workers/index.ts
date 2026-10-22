@@ -304,11 +304,13 @@ export default {
 		}
 
 		const orgId = await resolveOrgId(request, env)
-		if (!orgId && url.pathname.startsWith('/kiosk/')) {
+		const isTerminalPath =
+			url.pathname.startsWith('/kiosk/') || url.pathname.startsWith('/pos/')
+		if (!orgId && isTerminalPath) {
 			return Response.json(
 				{
 					error:
-						url.pathname === '/kiosk/pair'
+						url.pathname === '/kiosk/pair' || url.pathname === '/pos/pair'
 							? 'invalid_pairing_code'
 							: 'invalid_device',
 				},
@@ -325,8 +327,12 @@ export default {
 			)
 		}
 
-		if (url.pathname.startsWith('/kiosk/')) {
-			const kioskDenied = await assertKioskOrgOnUsNode(orgId, url.pathname)
+		if (isTerminalPath) {
+			const kioskDenied = await assertKioskOrgOnUsNode(
+				orgId,
+				url.pathname,
+				request.headers.get('CF-Connecting-IP'),
+			)
 			if (kioskDenied) return kioskDenied
 			return forwardToOrg(request, env, orgId)
 		}

@@ -160,6 +160,8 @@ export async function buildPublicSiteMenuPayload(
 			phone: loc.phone,
 			timezone: loc.timezone || 'UTC',
 			taxRate: loc.taxRate || 0,
+			taxInclusive: Boolean(loc.taxInclusive),
+			vatNumber: loc.vatNumber?.trim() || null,
 			address: parsedAddress,
 			currency:
 				org.currency === 'SAR' ? 'SAR' : getLocationCurrency(parsedAddress),

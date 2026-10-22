@@ -1,4 +1,8 @@
 import { jwtVerify } from 'jose'
+import {
+	parsePosDeviceSecret,
+	parsePosPairingCode,
+} from '@repo/common/pos-orders'
 import { z } from 'zod'
 import { RESERVATIONS_TOKEN_AUDIENCE } from '@repo/reservations'
 import {
@@ -12,6 +16,8 @@ import {
 	resolveOrganizationForBrowserAuth,
 	resolveOrganizationForPublicOrigin,
 	findActiveOrganizationById,
+	lookupActiveOrganization,
+	type OrganizationLookup,
 } from '../src/lib/origin.ts'
 import { getBearerToken } from '../src/lib/secrets.ts'
 import type { TenantApiWorkerEnv } from './bindings.ts'
@@ -165,6 +171,79 @@ async function orgIdFromKioskRequest(
 	return parseKioskDeviceSecret(secret)?.orgId ?? null
 }
 
+/** Far more than a pairing body (`{"code":"…"}`) ever needs. */
+export const POS_PAIR_BODY_MAX_BYTES = 2_048
+
+/**
+ * The body of a clone of the request as text, or null when it is (or declares
+ * itself) larger than `maxBytes`. Stops reading as soon as it is.
+ */
+async function readCappedText(
+	request: Request,
+	maxBytes: number,
+): Promise<string | null> {
+	const declared = request.headers.get('content-length')
+	if (declared !== null && !(Number(declared) <= maxBytes)) return null
+	const stream = request.clone().body
+	if (!stream) return ''
+	const reader = stream.getReader()
+	const chunks: Uint8Array[] = []
+	let size = 0
+	try {
+		for (;;) {
+			const { done, value } = await reader.read()
+			if (done) break
+			size += value.byteLength
+			if (size > maxBytes) {
+				// Not awaited: a cloned (teed) body settles its cancel only once
+				// the other branch is cancelled too, and the request is refused.
+				reader.cancel().catch(() => {})
+				return null
+			}
+			chunks.push(value)
+		}
+	} catch {
+		return null
+	}
+	const bytes = new Uint8Array(size)
+	let offset = 0
+	for (const chunk of chunks) {
+		bytes.set(chunk, offset)
+		offset += chunk.byteLength
+	}
+	return new TextDecoder().decode(bytes)
+}
+
+/**
+ * POS terminal requests carry their organization inside an opaque credential,
+ * exactly like kiosks: the pairing code in the body for `/pos/pair`, otherwise
+ * the bearer device secret.
+ */
+async function orgIdFromPosRequest(
+	request: Request,
+	pathname: string,
+): Promise<string | null> {
+	if (pathname === '/pos/pair') {
+		// A pairing body is one short code: refuse anything larger before reading
+		// (or buffering) it, whatever its declared length.
+		const text = await readCappedText(request, POS_PAIR_BODY_MAX_BYTES)
+		if (text === null) return null
+		let body: unknown = null
+		try {
+			body = JSON.parse(text)
+		} catch {
+			return null
+		}
+		const code =
+			body && typeof body === 'object'
+				? (body as { code?: unknown }).code
+				: undefined
+		return parsePosPairingCode(code)?.orgId ?? null
+	}
+	const secret = getBearerToken(request.headers.get('Authorization'))
+	return parsePosDeviceSecret(secret)?.orgId ?? null
+}
+
 /**
  * Resolve which tenant org should handle this request on Cloudflare Workers.
  * Returns null when the route is not org-scoped (health, sync-all, etc.).
@@ -232,6 +311,10 @@ export async function resolveOrgId(
 
 	if (pathname.startsWith('/kiosk/')) {
 		return orgIdFromKioskRequest(request, pathname)
+	}
+
+	if (pathname.startsWith('/pos/')) {
+		return orgIdFromPosRequest(request, pathname)
 	}
 
 	// The public application form: the organization is the one the browser's
@@ -372,7 +455,75 @@ export async function assertReservationsOrgOnUsNode(
 }
 
 /**
- * Kiosk requests are unauthenticated until the handler checks the credential,
+ * A till uploading a backlog makes many requests in a row, each of which would
+ * ask App about the same organization. A positive answer is remembered for a
+ * minute, so the drain neither crawls nor stops during a short App outage; a
+ * deactivated organization is refused within that minute. An organization App
+ * does not know is remembered briefly too, so made-up ids in unauthenticated
+ * requests do not each cost a control-plane call. "Unavailable" is never
+ * remembered.
+ */
+const POS_ORG_CACHE_MS = 60_000
+export const POS_ORG_NEGATIVE_CACHE_MS = 15_000
+const POS_ORG_CACHE_MAX = 500
+const posOrgCache = new Map<
+	string,
+	{ at: number; ttl: number; lookup: OrganizationLookup }
+>()
+
+/**
+ * Control-plane lookups (cache misses) one client address may cause per
+ * minute on this isolate, before the router answers 429. A best-effort brake:
+ * per isolate, in memory, and only on misses, so a till draining its backlog
+ * against a cached organization is never slowed.
+ */
+export const POS_LOOKUPS_PER_IP_PER_MINUTE = 30
+const lookupWindows = new Map<string, { start: number; count: number }>()
+
+/** Tests start from a cold cache. */
+export const clearPosOrganizationCache = () => {
+	posOrgCache.clear()
+	lookupWindows.clear()
+}
+
+function remember(orgId: string, lookup: OrganizationLookup, ttl: number) {
+	if (posOrgCache.size >= POS_ORG_CACHE_MAX) {
+		posOrgCache.delete(posOrgCache.keys().next().value!)
+	}
+	posOrgCache.set(orgId, { at: Date.now(), ttl, lookup })
+}
+
+/** True when this address has used up its lookups for the current minute. */
+function lookupLimited(clientIp: string | null, now: number): boolean {
+	if (!clientIp) return false
+	const window = lookupWindows.get(clientIp)
+	if (!window || now - window.start >= 60_000) {
+		if (lookupWindows.size >= 5_000) lookupWindows.clear()
+		lookupWindows.set(clientIp, { start: now, count: 1 })
+		return false
+	}
+	window.count += 1
+	return window.count > POS_LOOKUPS_PER_IP_PER_MINUTE
+}
+
+export async function lookupPosOrganization(
+	orgId: string,
+	clientIp: string | null = null,
+): Promise<OrganizationLookup | { status: 'rate_limited' }> {
+	const now = Date.now()
+	const hit = posOrgCache.get(orgId)
+	if (hit && now - hit.at < hit.ttl) return hit.lookup
+	if (lookupLimited(clientIp, now)) return { status: 'rate_limited' }
+	const lookup = await lookupActiveOrganization(orgId)
+	if (lookup.status === 'found') remember(orgId, lookup, POS_ORG_CACHE_MS)
+	else if (lookup.status === 'missing')
+		remember(orgId, lookup, POS_ORG_NEGATIVE_CACHE_MS)
+	else posOrgCache.delete(orgId)
+	return lookup
+}
+
+/**
+ * Kiosk and POS terminal requests are unauthenticated until the handler checks the credential,
  * so a made-up organization id must not be allowed to create a Durable Object.
  * Unlike the other routes, an organization the control plane does not know is
  * refused here (a lookup that fails closes the door too). Unknown, wrong-region
@@ -381,10 +532,36 @@ export async function assertReservationsOrgOnUsNode(
 export async function assertKioskOrgOnUsNode(
 	orgId: string,
 	pathname: string,
+	clientIp: string | null = null,
 ): Promise<Response | null> {
 	const error =
-		pathname === '/kiosk/pair' ? 'invalid_pairing_code' : 'invalid_device'
-	const organization = await findActiveOrganizationById(orgId)
+		pathname === '/kiosk/pair' || pathname === '/pos/pair'
+			? 'invalid_pairing_code'
+			: 'invalid_device'
+	let organization
+	if (pathname.startsWith('/pos/')) {
+		// A terminal signs itself out when told it was removed, so a control-plane
+		// hiccup must never look like a removal: answer 503, which it retries.
+		const lookup = await lookupPosOrganization(orgId, clientIp)
+		if (lookup.status === 'unavailable') {
+			return Response.json({ error: 'service_unavailable' }, { status: 503 })
+		}
+		if (lookup.status === 'rate_limited') {
+			return Response.json(
+				{ error: 'rate_limited' },
+				{
+					status: 429,
+					headers: {
+						'Retry-After': '60',
+						'Cache-Control': 'private, no-store',
+					},
+				},
+			)
+		}
+		organization = lookup.status === 'found' ? lookup.organization : null
+	} else {
+		organization = await findActiveOrganizationById(orgId)
+	}
 	if (
 		!organization ||
 		organization.dataRegion !== 'us' ||

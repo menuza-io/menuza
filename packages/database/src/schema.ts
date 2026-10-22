@@ -2481,6 +2481,13 @@ export const OrganizationLocation = sqliteTable(
 		phone: text(),
 		timezone: text().default('America/New_York').notNull(),
 		taxRate: real().default(0).notNull(),
+		/**
+		 * When true, menu prices already include tax (VAT): the order total is the
+		 * subtotal plus tip, and the tax shown is the portion contained in it.
+		 */
+		taxInclusive: integer({ mode: 'boolean' }).default(false).notNull(),
+		/** Seller's tax (VAT) registration number, printed on receipts. */
+		vatNumber: text(),
 		address: text(),
 		storeHours: text(),
 		onlineHours: text(),

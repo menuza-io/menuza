@@ -33,6 +33,10 @@ export interface PublicLocationData {
 	phone: string | null
 	timezone: string
 	taxRate: number
+	/** Menu prices already include tax (VAT); tax is shown, not added. */
+	taxInclusive: boolean
+	/** Seller's tax (VAT) registration number for receipts, or null. */
+	vatNumber: string | null
 	address: LocationAddress | null
 	currency: 'USD' | 'CAD' | 'SAR'
 	storeHours: WeeklySchedule

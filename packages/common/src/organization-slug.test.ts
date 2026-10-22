@@ -9,4 +9,9 @@ describe('organizationSlugSchema', () => {
 	it('rejects spaces and symbols', () => {
 		expect(organizationSlugSchema.safeParse('Bad Slug!').success).toBe(false)
 	})
+
+	it('reserves pos for the till without rejecting restaurant names containing it', () => {
+		expect(organizationSlugSchema.safeParse('pos').success).toBe(false)
+		expect(organizationSlugSchema.safeParse('pos-cafe').success).toBe(true)
+	})
 })

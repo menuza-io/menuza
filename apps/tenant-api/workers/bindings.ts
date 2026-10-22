@@ -13,6 +13,8 @@ export interface TenantApiWorkerEnv {
 	ROOT_APP: string
 	GLOBAL_SMS_CAP?: string
 	STAFFING_KIOSK_ENABLED?: string
+	POS_ENABLED?: string
+	POS_ORIGINS?: string
 	STAFFING_EMAIL_ENABLED?: string
 	RESERVATIONS_PUBLIC_ENABLED?: string
 	RESERVATIONS_EMAIL_ENABLED?: string
@@ -21,6 +23,8 @@ export interface TenantApiWorkerEnv {
 	TWILIO_FROM_NUMBER?: string
 	JWT_SECRET: string
 	AUTH_HMAC_SECRET: string
+	ZATCA_SEAL_KEY?: string
+	ZATCA_SEAL_KEY_PREVIOUS?: string
 	INTERNAL_COMMAND_TOKEN: string
 	TENANT_OPERATOR_TOKEN: string
 	VOICE_AGENT_TOKEN?: string

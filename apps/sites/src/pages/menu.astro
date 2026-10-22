@@ -154,6 +154,7 @@ const viewOrderLabel = i18n._(msg`View order`)
 const yourOrderLabel = i18n._(msg`Your order`)
 const subtotalLabel = i18n._(msg`Subtotal`)
 const taxLabel = i18n._(msg`Estimated tax`)
+const includesTaxLabel = i18n._(msg`Includes VAT`)
 const deliveryFeeLabel = i18n._(msg`Delivery fee`)
 const totalLabel = i18n._(msg`Total`)
 const checkoutLabel = i18n._(msg`Proceed to checkout`)
@@ -372,6 +373,8 @@ function resolveDeliveryFee(location: PublicLocationData | undefined): number {
 }
 
 const taxRate = activeLocation?.taxRate ?? 0
+// Prices that already include tax (VAT): the cart shows the tax, not adds it.
+const taxInclusive = activeLocation?.taxInclusive === true
 const taxRateLabel = new Intl.NumberFormat(requestedLocale, {
 	style: 'percent',
 	maximumFractionDigits: 2,
@@ -422,6 +425,7 @@ const clientMenuData = {
 	locationIds: locations.map((location) => location.id),
 	timezone: activeLocation?.timezone || 'UTC',
 	taxRate,
+	taxInclusive,
 	deliveryFee: resolveDeliveryFee(activeLocation),
 	isOpen: availability.isOpen,
 	closedReason,
@@ -651,12 +655,14 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 				yourOrder: yourOrderLabel,
 				subtotal: subtotalLabel,
 				tax: taxLabel,
+				includesTax: includesTaxLabel,
 				deliveryFee: deliveryFeeLabel,
 				total: totalLabel,
 				checkout: checkoutLabel,
 				close: labels.closeDialog,
 			}}
 			taxRateLabel={taxRateLabel}
+			taxInclusive={taxInclusive}
 			checkoutHref={checkoutHref}
 			initialTotal={price(0)}
 		/>
@@ -725,6 +731,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			locationIds: string[]
 			timezone: string
 			taxRate: number
+			taxInclusive?: boolean
 			deliveryFee: number
 			isOpen: boolean
 			closedReason: string
@@ -773,6 +780,7 @@ const sectionScroll = 'scroll-mt-32 focus:outline-none lg:scroll-mt-28'
 			formatMoney: money,
 			totals: {
 				taxRate: data.taxRate || 0,
+				taxInclusive: data.taxInclusive === true,
 				deliveryFee: () => details.delivery?.deliveryFee ?? (data.deliveryFee || 0),
 				mode: () => details.mode,
 			},

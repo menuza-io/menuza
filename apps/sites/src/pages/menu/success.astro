@@ -39,6 +39,8 @@ const receiptLocations = (menuPayload?.locations ?? []).map((location) => ({
 	name: getLocalizedMenuValue(location.name, requestedLocale, defaultLocale),
 	address: location.address,
 	timezone: location.timezone ?? 'UTC',
+	// Seller's VAT registration number, printed on the receipt.
+	vatNumber: location.vatNumber?.trim() || null,
 }))
 
 // Receipts carry only the drop slug; titles come from the public drop listing.
@@ -65,6 +67,8 @@ const pickupTimeLabel = i18n._(msg`Pickup time`)
 const receiptTitle = i18n._(msg`Receipt`)
 const subtotalText = i18n._(msg`Subtotal`)
 const taxText = i18n._(msg`Tax`)
+const includesTaxText = i18n._(msg`Includes VAT`)
+const vatNumberText = i18n._(msg`VAT number`)
 const deliveryFeeText = i18n._(msg`Delivery fee`)
 const tipText = i18n._(msg`Tip`)
 const totalText = i18n._(msg`Total`)
@@ -374,7 +378,13 @@ const valueClass = 'price font-medium text-foreground'
 								<dd id="order-subtotal" class={valueClass}>{price(0)}</dd>
 							</div>
 							<div class={rowClass}>
-								<dt>{taxText}</dt>
+								<dt
+									id="order-tax-label"
+									data-exclusive-label={taxText}
+									data-inclusive-label={includesTaxText}
+								>
+									{taxText}
+								</dt>
 								<dd id="order-tax" class={valueClass}>{price(0)}</dd>
 							</div>
 							<div id="order-deliv-row" class:list={[rowClass, 'hidden']}>
@@ -388,6 +398,10 @@ const valueClass = 'price font-medium text-foreground'
 							<div class="mt-3 flex items-baseline justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-foreground">
 								<dt id="order-total-label">{totalPaidText}</dt>
 								<dd id="order-total" class="price font-heading text-xl">{price(0)}</dd>
+							</div>
+							<div id="order-vat-row" class:list={[rowClass, 'hidden']}>
+								<dt>{vatNumberText}</dt>
+								<dd id="order-vat-number" class="bidi-isolate font-medium text-foreground"></dd>
 							</div>
 						</dl>
 					</div>
@@ -740,6 +754,24 @@ const valueClass = 'price font-medium text-foreground'
 
 			if (subtotalEl) subtotalEl.textContent = formatCents(order.subtotalCents)
 			if (taxEl) taxEl.textContent = formatCents(order.taxCents)
+			// Tax-inclusive (VAT) prices: the tax is contained in the subtotal and
+			// the total does not add it, which the receipt's own amounts show.
+			const taxIncluded =
+				order.taxCents > 0 &&
+				order.totalCents === order.subtotalCents + order.deliveryFeeCents + order.tipCents
+			const taxLabelEl = document.getElementById('order-tax-label')
+			const taxLabelText = taxIncluded
+				? taxLabelEl?.dataset.inclusiveLabel
+				: taxLabelEl?.dataset.exclusiveLabel
+			if (taxLabelEl && taxLabelText) taxLabelEl.textContent = taxLabelText
+			const vatNumber =
+				(labels.locations as Array<{ id: string; vatNumber?: string | null }>).find(
+					(l) => l.id === order.location?.id,
+				)?.vatNumber ?? null
+			const vatRow = document.getElementById('order-vat-row')
+			const vatNumberEl = document.getElementById('order-vat-number')
+			if (vatNumberEl) vatNumberEl.textContent = vatNumber ?? ''
+			if (vatRow) vatRow.classList.toggle('hidden', !vatNumber)
 			if (delivRow && delivFeeEl) {
 				if (isDelivery) {
 					delivRow.classList.remove('hidden')

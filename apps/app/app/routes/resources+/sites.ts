@@ -11,6 +11,7 @@ import {
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
+import { withPublicCors } from '#app/utils/sites/public-cors.server.ts'
 import {
 	findPublishedSiteOrganization,
 	toPublicSitePayload,
@@ -23,7 +24,9 @@ import {
  * Query: ?slug=acme  OR  ?host=www.acme.com
  * Optional: ?lng=ar
  */
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withPublicCors(async function loader({
+	request,
+}: LoaderFunctionArgs) {
 	const url = new URL(request.url)
 	const slug = url.searchParams.get('slug')?.trim().toLowerCase() || null
 	const host =
@@ -81,4 +84,4 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			Vary: 'Accept-Language',
 		},
 	})
-}
+})

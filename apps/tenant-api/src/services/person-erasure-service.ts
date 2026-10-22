@@ -8,6 +8,7 @@ import {
 	journeyStepExecutions,
 	marketingMessages,
 	personErasureLog,
+	posOrders,
 	restaurantOrders,
 	rsvAuditLog,
 	rsvDayVersions,
@@ -46,6 +47,7 @@ import {
 import { HttpError, notFound } from '../lib/http.ts'
 import { legacyPhoneForms } from '../lib/phone.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
+import { erasePosHeldUploads } from './pos-service.ts'
 import { handleCancellationPayments } from './rsv-payment-refunds.ts'
 import {
 	CANCELLABLE_FUTURE_STATUSES,
@@ -129,6 +131,7 @@ export type ErasePersonResult = {
 	formSubmissionsRedacted: number
 	/** Present only when a restaurant order was scrubbed. */
 	restaurantOrdersScrubbed?: number
+	posOrdersScrubbed?: number
 	waitlistEntriesScrubbed: number
 	notifyRequestsScrubbed: number
 	voice: {
@@ -933,6 +936,21 @@ export async function erasePerson(
 				// One bound parameter per list (a JSON array), whatever its size.
 				const contactConditions = []
 				const phoneForms = phoneMatchForms(phones)
+				const posOrdersScrubbed =
+					phoneForms.length > 0
+						? (
+								await tx
+									.update(posOrders)
+									.set({ customerPhone: null, guestName: null })
+									.where(
+										inJsonList(digitsOnly(posOrders.customerPhone), phoneForms),
+									)
+									.returning({ id: posOrders.id })
+							).length
+						: 0
+				// Held uploads are redacted on arrival; this catches a record kept
+				// before that which still carries the number.
+				const posHeldScrubbed = await erasePosHeldUploads(tx, phoneForms)
 				if (phoneForms.length > 0) {
 					contactConditions.push(
 						inJsonList(digitsOnly(restaurantOrders.contactPhone), phoneForms),
@@ -1025,6 +1043,8 @@ export async function erasePerson(
 					newlyErasedGuests.length > 0 ||
 					existing.length > 0 ||
 					restaurantOrdersScrubbed > 0 ||
+					posOrdersScrubbed > 0 ||
+					posHeldScrubbed > 0 ||
 					waitlistIds.length > 0 ||
 					notifyIds.length > 0 ||
 					formSubmissionsRedacted > 0 ||
@@ -1046,6 +1066,7 @@ export async function erasePerson(
 						...(restaurantOrdersScrubbed > 0
 							? { restaurantOrdersScrubbed }
 							: {}),
+						...(posOrdersScrubbed > 0 ? { posOrdersScrubbed } : {}),
 						...voiceCounts(),
 					}
 					if (logId) {

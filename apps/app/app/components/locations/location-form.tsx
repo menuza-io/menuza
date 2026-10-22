@@ -74,6 +74,8 @@ export interface InitialLocationData {
 	phone?: string | null
 	timezone?: string
 	taxRate?: number
+	taxInclusive?: boolean
+	vatNumber?: string | null
 	address?: LocationAddress | null
 	storeHours?: WeeklySchedule | null
 	onlineHours?: WeeklySchedule | null
@@ -127,6 +129,10 @@ export function LocationForm({
 		initialData?.timezone || 'America/New_York',
 	)
 	const [taxRate, setTaxRate] = useState(initialData?.taxRate ?? 8.25)
+	const [taxInclusive, setTaxInclusive] = useState(
+		initialData?.taxInclusive ?? false,
+	)
+	const [vatNumber, setVatNumber] = useState(initialData?.vatNumber ?? '')
 	const [isActive, setIsActive] = useState(initialData?.isActive ?? true)
 	const [isDefault, setIsDefault] = useState(initialData?.isDefault ?? false)
 
@@ -247,6 +253,8 @@ export function LocationForm({
 			phone: phone.trim(),
 			timezone,
 			taxRate,
+			taxInclusive,
+			vatNumber: vatNumber.trim(),
 			isActive,
 			isDefault,
 			address: JSON.stringify(address),
@@ -417,9 +425,54 @@ export function LocationForm({
 												placeholder="8.25"
 											/>
 										</div>
+
+										<div className="space-y-1.5">
+											<Label htmlFor="loc-vat-number">
+												<Trans>VAT Registration Number</Trans>
+											</Label>
+											<Input
+												id="loc-vat-number"
+												value={vatNumber}
+												onChange={(e) => setVatNumber(e.target.value)}
+												maxLength={32}
+												pattern="[A-Za-z0-9]*"
+												inputMode="text"
+												autoComplete="off"
+												placeholder="310123456700003"
+											/>
+											<p className="text-muted-foreground text-[11px]">
+												<Trans>
+													Printed on receipts. Letters and digits only; leave
+													empty if not registered.
+												</Trans>
+											</p>
+										</div>
 									</div>
 
 									<div className="border-border divide-border divide-y rounded-md border">
+										<div className="flex items-center justify-between p-3">
+											<div>
+												<Label
+													htmlFor="loc-tax-inclusive"
+													className="cursor-pointer"
+												>
+													<Trans>Prices include tax</Trans>
+												</Label>
+												<p className="text-muted-foreground text-xs">
+													<Trans>
+														Menu prices already include tax (VAT), as required
+														in Saudi Arabia, the EU and the UK. Tax is shown on
+														receipts but not added at checkout.
+													</Trans>
+												</p>
+											</div>
+											<Switch
+												id="loc-tax-inclusive"
+												checked={taxInclusive}
+												onCheckedChange={setTaxInclusive}
+											/>
+										</div>
+
 										<div className="flex items-center justify-between p-3">
 											<div>
 												<Label htmlFor="loc-active" className="cursor-pointer">

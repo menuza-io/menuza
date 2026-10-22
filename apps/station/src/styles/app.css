@@ -1,0 +1,247 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Brand tokens. The restaurant's published theme (the same CSS the website
+ * injects) is added to <head> after this file and overrides these neutrals.
+ */
+:root {
+	color-scheme: light;
+	--radius: 0.875rem;
+	--background: oklch(0.985 0.003 90);
+	--foreground: oklch(0.2 0.01 60);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.2 0.01 60);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.2 0.01 60);
+	--primary: oklch(0.32 0.02 60);
+	--primary-foreground: oklch(0.985 0 0);
+	--secondary: oklch(0.955 0.005 90);
+	--secondary-foreground: oklch(0.3 0.02 60);
+	--muted: oklch(0.955 0.005 90);
+	--muted-foreground: oklch(0.5 0.015 60);
+	--accent: oklch(0.94 0.01 90);
+	--accent-foreground: oklch(0.3 0.02 60);
+	--destructive: oklch(0.55 0.2 27);
+	--border: oklch(0.9 0.006 90);
+	--input: oklch(0.9 0.006 90);
+	--ring: oklch(0.6 0.05 60);
+}
+.dark {
+	color-scheme: dark;
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--pos-muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--radius-sm: calc(var(--radius) - 6px);
+	--radius-md: calc(var(--radius) - 3px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--radius-2xl: calc(var(--radius) + 10px);
+	--font-sans: var(--pos-body-font);
+	--font-heading: var(--pos-heading-font);
+}
+
+/* Status colours lean toward the brand so they sit inside any palette. */
+:root {
+	--success: color-mix(in oklch, oklch(0.49 0.13 155) 80%, var(--primary));
+	--warning: color-mix(in oklch, oklch(0.5 0.12 65) 85%, var(--foreground));
+	/* Keep secondary text readable on the brand's muted surfaces as well as white. */
+	--pos-muted-foreground: color-mix(
+		in oklch,
+		var(--muted-foreground) 86%,
+		var(--foreground)
+	);
+	--elev-2: 0 1px 2px oklch(0 0 0 / 0.04), 0 8px 20px -6px oklch(0 0 0 / 0.1);
+	--elev-3: 0 -12px 40px -8px oklch(0 0 0 / 0.25);
+	--pos-body-font:
+		ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--pos-heading-font: var(--pos-body-font);
+	--pos-mono-font:
+		ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas,
+		'Roboto Mono', monospace;
+}
+.dark {
+	--success: color-mix(in oklch, oklch(0.74 0.14 155) 80%, var(--primary));
+	--warning: color-mix(in oklch, oklch(0.8 0.13 75) 85%, var(--foreground));
+	--elev-2: 0 8px 20px -6px oklch(0 0 0 / 0.5);
+}
+html[data-body-font='custom'] {
+	--pos-body-font: 'SiteBody', ui-sans-serif, system-ui, sans-serif;
+}
+html[data-heading-font='custom'] {
+	--pos-heading-font: 'SiteHeading', var(--pos-body-font);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+		-webkit-tap-highlight-color: transparent;
+	}
+	html,
+	body,
+	#root {
+		height: 100%;
+	}
+	body {
+		@apply bg-background text-foreground font-sans antialiased;
+		/* A till is a tool, not a document: no accidental text selection or rubber-band. */
+		user-select: none;
+		-webkit-user-select: none;
+		overscroll-behavior: none;
+		touch-action: manipulation;
+	}
+	input,
+	textarea {
+		user-select: text;
+		-webkit-user-select: text;
+		caret-color: var(--primary);
+	}
+	::selection {
+		color: var(--primary-foreground);
+		background: var(--primary);
+	}
+	h1,
+	h2,
+	h3,
+	.font-heading {
+		font-family: var(--font-heading);
+	}
+	button {
+		cursor: pointer;
+	}
+	button:disabled {
+		cursor: default;
+	}
+	:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* Keep field focus visible even where a screen removes the native outline. */
+:is(input, textarea, select):focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+
+@utility no-scrollbar {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+/* Elevation and device safe areas, named so components never hardcode them. */
+@utility elevated-card {
+	box-shadow: var(--elev-2);
+}
+@utility elevated-sheet {
+	box-shadow: var(--elev-3);
+}
+@utility pt-safe {
+	padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+	padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@utility mb-safe {
+	margin-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Tabular figures so totals and keypads never jitter. */
+@utility tnum {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Amounts and counts in a monospace face: crisp columns, and the till feels like an instrument. */
+@utility mono {
+	font-family: var(--pos-mono-font);
+	font-variant-numeric: tabular-nums slashed-zero;
+	letter-spacing: -0.02em;
+}
+@keyframes sheet-up {
+	from {
+		transform: translateY(24px);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
+}
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+}
+@keyframes pop {
+	from {
+		transform: scale(0.94);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
+}
+.anim-sheet {
+	animation: sheet-up 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.anim-fade {
+	animation: fade-in 150ms ease-out;
+}
+.anim-pop {
+	animation: pop 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation: none !important;
+		transition: none !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* Receipts print as a narrow roll; everything else disappears. */
+@media print {
+	body * {
+		visibility: hidden;
+	}
+	#receipt,
+	#receipt * {
+		visibility: visible;
+	}
+	#receipt {
+		position: absolute;
+		inset: 0 auto auto 0;
+		width: 72mm;
+		color: #000;
+		background: #fff;
+		font-size: 11px;
+	}
+	@page {
+		margin: 4mm;
+	}
+}

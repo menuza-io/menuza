@@ -9,3 +9,6 @@ export const organizationSlugSchema = z
 		message:
 			'Slug can only contain lowercase letters, numbers, and hyphens, and cannot start or end with a hyphen',
 	})
+	.refine((slug) => slug !== 'pos', {
+		message: 'This slug is reserved',
+	})

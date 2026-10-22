@@ -15,6 +15,7 @@ import {
 	getSiteKvKey,
 	setCachedSiteData,
 } from '#app/utils/sites/kv-cache.server.ts'
+import { withPublicCors } from '#app/utils/sites/public-cors.server.ts'
 
 export type {
 	PublicLocationData,
@@ -35,7 +36,9 @@ export type { PublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.
  * member-only preview semantics, and serves the KV-cached copy for anonymous
  * traffic.
  */
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withPublicCors(async function loader({
+	request,
+}: LoaderFunctionArgs) {
 	const url = new URL(request.url)
 	const slug = url.searchParams.get('slug')?.trim().toLowerCase() || null
 	const host =
@@ -198,4 +201,4 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			Vary: 'Accept-Language',
 		},
 	})
-}
+})

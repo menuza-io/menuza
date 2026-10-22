@@ -396,6 +396,13 @@ export type PublicLocationData = {
 	phone: string | null
 	timezone: string
 	taxRate: number
+	/**
+	 * Menu prices already include tax (VAT). Absent on payloads cached before
+	 * the field existed: treat as false (tax added on top).
+	 */
+	taxInclusive?: boolean
+	/** Seller's tax (VAT) registration number, or null. */
+	vatNumber?: string | null
 	address: any
 	currency?: 'USD' | 'CAD' | 'SAR'
 	storeHours: any

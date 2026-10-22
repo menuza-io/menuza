@@ -1046,6 +1046,13 @@ msgstr "Indiquez votre indicatif de pays, par exemple {example}."
 msgid "Include your country code, for example +1 415 555 0123."
 msgstr "Indiquez votre indicatif pays, par exemple +1 415 555 0123."
 
+#: src/pages/drop/[slug].astro.ts:3
+#: src/pages/menu.astro.ts:3
+#: src/pages/menu/checkout.astro.ts:3
+#: src/pages/menu/success.astro.ts:3
+msgid "Includes VAT"
+msgstr "TVA incluse"
+
 #: src/lib/ordering-labels.ts:56
 msgid "Increase quantity"
 msgstr "Augmenter la quantité"
@@ -2436,6 +2443,10 @@ msgstr "Utiliser « {query} »"
 #: src/pages/shop.astro.ts:3
 msgid "Use a new card"
 msgstr "Utiliser une nouvelle carte"
+
+#: src/pages/menu/success.astro.ts:3
+msgid "VAT number"
+msgstr "Numéro de TVA"
 
 #: src/pages/drop/[slug].astro.ts:3
 #: src/pages/menu.astro.ts:3

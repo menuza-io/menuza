@@ -5,6 +5,7 @@ import {
 	canonicalOrderRequest,
 	deliveryCoverageVerifiable,
 	extractPostalCode,
+	inclusiveTaxCents,
 	resolveDeliveryZoneForPoint,
 	priceRestaurantOrder,
 	restaurantOrderContextSchema,
@@ -911,6 +912,91 @@ describe('priceRestaurantOrder: adversarial validation', () => {
 	})
 })
 
+describe('priceRestaurantOrder: walk-in (POS) mode', () => {
+	const closed = () => {
+		const context = makeContext()
+		context.menu.locations[0]!.onlineHours = EVERY_DAY_HOURS.map((entry) => ({
+			...entry,
+			isOpen: false,
+			slots: [],
+		}))
+		return context
+	}
+
+	it('prices while online ordering is closed, with the same cents as online', () => {
+		const online = priceRestaurantOrder(makeContext(), makeRequest(), {
+			now: NOW,
+		})
+		const walkIn = priceRestaurantOrder(closed(), makeRequest(), {
+			now: NOW,
+			walkIn: true,
+		})
+		expect(online.ok && walkIn.ok).toBe(true)
+		if (online.ok && walkIn.ok) {
+			expect(walkIn.result.totalCents).toBe(online.result.totalCents)
+			expect(walkIn.result.taxCents).toBe(online.result.taxCents)
+		}
+	})
+
+	it('still refuses online ordering when closed (the flag is opt-in)', () => {
+		const result = priceRestaurantOrder(closed(), makeRequest(), { now: NOW })
+		expect(!result.ok && result.error.code).toBe('ordering_closed')
+	})
+
+	it('allows kitchen notes even when the menu disables special instructions', () => {
+		const menu = makeMenu()
+		menu.menus[0]!.specialInstructions = false
+		const request = makeRequest({
+			lines: [
+				{
+					itemId: 'item-burger',
+					quantity: 1,
+					instructions: 'no onions',
+					options: [{ groupId: 'grp-size', optionId: 'opt-reg' }],
+				},
+			],
+		})
+		expect(
+			priceRestaurantOrder(makeContext({ menu }), request, { now: NOW }).ok,
+		).toBe(false)
+		expect(
+			priceRestaurantOrder(makeContext({ menu }), request, {
+				now: NOW,
+				walkIn: true,
+			}).ok,
+		).toBe(true)
+	})
+
+	it('ignores the pickup switch and in-house tip rules', () => {
+		const context = makeContext()
+		context.menu.locations[0]!.fulfillmentOptions.pickup = false
+		context.menu.locations[0]!.inHouseTips.pickupTips = false
+		const request = makeRequest({ tipPercent: 15 })
+		expect(priceRestaurantOrder(context, request, { now: NOW }).ok).toBe(false)
+		expect(
+			priceRestaurantOrder(context, request, { now: NOW, walkIn: true }).ok,
+		).toBe(true)
+	})
+
+	it('still enforces catalog, variant and modifier rules', () => {
+		const context = closed()
+		const unknown = priceRestaurantOrder(
+			context,
+			makeRequest({ lines: [{ itemId: 'nope', quantity: 1, options: [] }] }),
+			{ now: NOW, walkIn: true },
+		)
+		expect(!unknown.ok && unknown.error.code).toBe('unknown_item')
+		const missingRequired = priceRestaurantOrder(
+			context,
+			makeRequest({
+				lines: [{ itemId: 'item-burger', quantity: 1, options: [] }],
+			}),
+			{ now: NOW, walkIn: true },
+		)
+		expect(missingRequired.ok).toBe(false)
+	})
+})
+
 // ---------------------------------------------------------------------------
 // Delivery coverage: fail closed, fees only from the zone
 // ---------------------------------------------------------------------------
@@ -1716,5 +1802,130 @@ describe('priceRestaurantOrder: scheduledFor', () => {
 		expect(canonicalOrderRequest(at('2025-06-16T12:30:00.000Z'))).not.toBe(
 			canonicalOrderRequest(at('2025-06-16T13:00:00.000Z')),
 		)
+	})
+})
+
+describe('priceRestaurantOrder: tax-inclusive (VAT) pricing', () => {
+	function vatContext(overrides: Record<string, unknown> = {}) {
+		const menu = makeMenu()
+		menu.locations = [
+			makeLocation({
+				taxRate: 15,
+				taxInclusive: true,
+				vatNumber: '310123456700003',
+				...overrides,
+			}),
+		]
+		return makeContext({ menu })
+	}
+
+	it('reports the tax contained in the prices and does not add it', () => {
+		const result = priceRestaurantOrder(
+			vatContext(),
+			makeRequest({
+				tipPercent: 10,
+				lines: [
+					{
+						itemId: 'item-burger',
+						quantity: 2,
+						options: [
+							{ groupId: 'grp-size', optionId: 'opt-reg' },
+							{ groupId: 'grp-toppings', optionId: 'opt-cheese' },
+						],
+					},
+				],
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.taxInclusive).toBe(true)
+		expect(result.result.subtotalCents).toBe(2200)
+		// 2200 * 15 / 115 = 286.96 -> 287
+		expect(result.result.taxCents).toBe(287)
+		expect(result.result.tipCents).toBe(220)
+		expect(result.result.totalCents).toBe(2200 + 220)
+	})
+
+	it('only counts taxable lines in the contained tax', () => {
+		const result = priceRestaurantOrder(
+			vatContext(),
+			makeRequest({
+				lines: [
+					{
+						itemId: 'item-burger',
+						quantity: 1,
+						options: [
+							{ groupId: 'grp-size', optionId: 'opt-reg' },
+							{ groupId: 'grp-toppings', optionId: 'opt-bacon' },
+						],
+					},
+				],
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.subtotalCents).toBe(1200)
+		// taxable = $10 burger -> 1000 * 15 / 115 = 130.43 -> 130
+		expect(result.result.taxCents).toBe(130)
+		expect(result.result.totalCents).toBe(1200)
+	})
+
+	it('still adds the delivery fee on top', () => {
+		const result = priceRestaurantOrder(
+			vatContext(),
+			makeRequest({
+				fulfillment: 'delivery',
+				delivery: {
+					address: '100 Congress Ave, Austin, TX 78701',
+					city: 'Austin',
+				},
+			}),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.subtotalCents).toBe(2000)
+		// 2000 * 15 / 115 = 260.87 -> 261
+		expect(result.result.taxCents).toBe(261)
+		expect(result.result.deliveryFeeCents).toBe(450)
+		expect(result.result.totalCents).toBe(2000 + 450)
+	})
+
+	it('treats a location without the field as tax-exclusive', () => {
+		const context = makeContext()
+		expect(context.menu.locations[0]?.taxInclusive).toBe(false)
+		expect(context.menu.locations[0]?.vatNumber).toBeUndefined()
+		const result = priceRestaurantOrder(context, makeRequest(), { now: NOW })
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.taxInclusive).toBe(false)
+		// 8.25% of 2000 = 165, added on top
+		expect(result.result.taxCents).toBe(165)
+		expect(result.result.totalCents).toBe(2000 + 165)
+	})
+
+	it('keeps the VAT number on the parsed location', () => {
+		expect(vatContext().menu.locations[0]?.vatNumber).toBe('310123456700003')
+	})
+
+	it('computes no contained tax at a zero rate', () => {
+		const result = priceRestaurantOrder(
+			vatContext({ taxRate: 0 }),
+			makeRequest(),
+			{ now: NOW },
+		)
+		expect(result.ok).toBe(true)
+		if (!result.ok) return
+		expect(result.result.taxCents).toBe(0)
+		expect(result.result.totalCents).toBe(2000)
+	})
+
+	it('inclusiveTaxCents rounds the contained portion once', () => {
+		expect(inclusiveTaxCents(11500, 15)).toBe(1500)
+		expect(inclusiveTaxCents(1000, 15)).toBe(130)
+		expect(inclusiveTaxCents(1000, 0)).toBe(0)
+		expect(inclusiveTaxCents(0, 15)).toBe(0)
 	})
 })

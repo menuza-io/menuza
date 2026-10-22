@@ -14,12 +14,14 @@ import { assertConsentBaseUrl } from './lib/email-consent.ts'
 import { assertDataRegion, getNodeRegion } from './lib/region.ts'
 import { assertTenantApiSecrets } from './lib/secrets.ts'
 import { setTenantEmailDevCapture } from './lib/tenant-email.ts'
+import { assertZatcaSealKey } from './lib/zatca-seal.ts'
 import { startReservationsTickInterval } from './lib/reservations-tick-interval.ts'
 import { startStaffTickInterval } from './lib/staff-tick-interval.ts'
 
 assertTenantApiSecrets()
 assertConsentBaseUrl()
 assertDataRegion()
+assertZatcaSealKey()
 
 registerRestaurantOrderSource()
 registerReservationVoiceActions()

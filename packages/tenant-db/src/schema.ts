@@ -1680,6 +1680,516 @@ export const kioskPairingCodes = sqliteTable(
 	],
 )
 
+// ---------------------------------------------------------------------------
+// Point of sale in Station (apps/station). A paired terminal rings up orders in the
+// restaurant, possibly offline, and uploads each revision of an order. Holds
+// short-lived customer contact data on phone pickups, or a counter guest name
+// and table label (cleared after `POS_GUEST_NAME_RETENTION_DAYS`).
+//
+// Money rows are append-only (triggers in migration 0020): payments and refunds,
+// every accepted revision of an order, and the fiscal document chain. The order
+// row itself is the current state; its history is `pos_order_revisions`.
+// ---------------------------------------------------------------------------
+
+/** Default end of a business day: 04:00, so a late service stays on one day. */
+export const POS_DEFAULT_DAY_START_MINUTES = 240
+
+export const posDevices = sqliteTable(
+	'pos_devices',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		label: text('label').notNull(),
+		// Short prefix for order numbers (`T1-0042`), unique per organization so
+		// two terminals can never issue the same number.
+		terminalCode: text('terminal_code').notNull(),
+		locationId: text('location_id'),
+		// The workplace whose staff PINs sign in here (a staff scope; `main` when the
+		// organization has only one).
+		scopeId: text('scope_id').notNull().default('main'),
+		// When true the till locks until a staff member enters their PIN, and every
+		// order records who took it. Off by default so a terminal that already
+		// exists keeps working; new pairings choose explicitly (on unless a manager
+		// turns it off).
+		signInRequired: integer('sign_in_required', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// When sign-in was last switched on, so orders rung up before that are not
+		// flagged for having no staff member.
+		signInRequiredSince: integer('sign_in_required_since'),
+		// Minutes after local midnight when the business day turns over (0-720).
+		dayStartMinutes: integer('day_start_minutes')
+			.notNull()
+			.default(POS_DEFAULT_DAY_START_MINUTES),
+		// When true the till sells only inside a cash drawer shift (opened with a
+		// float, closed with a count).
+		shiftsRequired: integer('shifts_required', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// Keyed hash of the device secret. The secret itself is never stored.
+		secretHash: text('secret_hash').notNull(),
+		pairedBy: text('paired_by').notNull(),
+		pairedAt: integer('paired_at').notNull().default(nowMs),
+		lastSeenAt: integer('last_seen_at'),
+		revokedAt: integer('revoked_at'),
+		revokedBy: text('revoked_by'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('uniq_pos_devices_secret_hash').on(table.secretHash),
+		// A revoked terminal frees its code for the replacement tablet.
+		uniqueIndex('uniq_pos_devices_terminal_code')
+			.on(table.terminalCode)
+			.where(sql`${table.revokedAt} is null`),
+	],
+)
+
+// One-time pairing codes: stored only as a keyed hash, valid for ten minutes.
+export const posPairingCodes = sqliteTable(
+	'pos_pairing_codes',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		codeHash: text('code_hash').notNull(),
+		label: text('label').notNull(),
+		terminalCode: text('terminal_code').notNull(),
+		locationId: text('location_id'),
+		scopeId: text('scope_id').notNull().default('main'),
+		signInRequired: integer('sign_in_required', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		dayStartMinutes: integer('day_start_minutes')
+			.notNull()
+			.default(POS_DEFAULT_DAY_START_MINUTES),
+		shiftsRequired: integer('shifts_required', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		createdBy: text('created_by').notNull(),
+		expiresAt: integer('expires_at').notNull(),
+		usedAt: integer('used_at'),
+		deviceId: text('device_id'),
+		createdAt: integer('created_at').notNull().default(nowMs),
+	},
+	(table) => [uniqueIndex('uniq_pos_pairing_codes_hash').on(table.codeHash)],
+)
+
+export const POS_ORDER_STATUSES = ['open', 'paid', 'void', 'refunded'] as const
+
+// `id` is the terminal's own UUID, which doubles as the idempotency key.
+export const posOrders = sqliteTable(
+	'pos_orders',
+	{
+		id: text('id').primaryKey(),
+		// The terminal that owns the order now (a tab can be taken over by another).
+		deviceId: text('device_id')
+			.notNull()
+			.references(() => posDevices.id),
+		number: text('number').notNull(),
+		// The business day (YYYY-MM-DD), which may run past midnight. Numbers restart daily.
+		businessDate: text('business_date').notNull(),
+		// Highest revision received. Replays and out-of-order uploads of a lower
+		// revision change nothing.
+		revision: integer('revision').notNull(),
+		status: text('status', { enum: [...POS_ORDER_STATUSES] }).notNull(),
+		orderType: text('order_type', { enum: ['dine_in', 'takeaway'] }).notNull(),
+		orderSource: text('order_source', { enum: ['counter', 'phone'] })
+			.notNull()
+			.default('counter'),
+		customerPhone: text('customer_phone'),
+		pickupAt: integer('pickup_at'),
+		pickupTimeZone: text('pickup_time_zone'),
+		guestName: text('guest_name'),
+		tableLabel: text('table_label'),
+		// Who rang the order up, as signed in at the till (id plus the name as it was
+		// then, so history survives a rename or a departure). Null when the terminal
+		// does not require sign-in. `signIn` says whether the PIN was checked by the
+		// server (`online`) or only by the till (`offline`).
+		staffId: text('staff_id'),
+		staffName: text('staff_name'),
+		signIn: text('sign_in', { enum: ['online', 'offline'] }),
+		voidedByStaffId: text('voided_by_staff_id'),
+		voidedByStaffName: text('voided_by_staff_name'),
+		voidReason: text('void_reason'),
+		voidApprovedByStaffId: text('void_approved_by_staff_id'),
+		voidApprovedByStaffName: text('void_approved_by_staff_name'),
+		locationId: text('location_id').notNull(),
+		locationName: text('location_name'),
+		currency: text('currency').notNull(),
+		taxRatePercent: real('tax_rate_percent'),
+		taxInclusive: integer('tax_inclusive', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// What the terminal rang up and collected: the money that changed hands.
+		subtotalCents: integer('subtotal_cents').notNull(),
+		adjustmentCents: integer('adjustment_cents').notNull().default(0),
+		taxCents: integer('tax_cents').notNull(),
+		tipCents: integer('tip_cents').notNull().default(0),
+		totalCents: integer('total_cents').notNull(),
+		refundedCents: integer('refunded_cents').notNull().default(0),
+		// The live menu's total for the same lines, when it could be computed.
+		serverTotalCents: integer('server_total_cents'),
+		// Why a person should look at this sale. The first reason found sticks; every
+		// revision's own verdict is kept on `pos_order_revisions`.
+		reviewReason: text('review_reason'),
+		lines: text('lines', { mode: 'json' }).notNull(),
+		// Items taken off after the order was saved (append-only, see the contract).
+		lineVoids: text('line_voids', { mode: 'json' })
+			.notNull()
+			.default(sql`'[]'`),
+		adjustments: text('adjustments', { mode: 'json' }).notNull(),
+		catalogFetchedAt: integer('catalog_fetched_at'),
+		// The drawer shift it was rung up in, when the terminal tracks shifts.
+		shiftId: text('shift_id'),
+		rungUpAt: integer('rung_up_at').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+		paidAt: integer('paid_at'),
+		voidedAt: integer('voided_at'),
+		refundedAt: integer('refunded_at'),
+	},
+	(table) => [
+		uniqueIndex('uniq_pos_orders_device_day_number').on(
+			table.deviceId,
+			table.businessDate,
+			table.number,
+		),
+		index('idx_pos_orders_status_rung_up').on(table.status, table.rungUpAt),
+		index('idx_pos_orders_business_date').on(
+			table.businessDate,
+			table.locationId,
+		),
+		index('idx_pos_orders_review').on(table.reviewReason),
+		// Guest names are cleared after a retention period; this finds the ones left.
+		index('idx_pos_orders_guest_name')
+			.on(table.updatedAt)
+			.where(sql`${table.guestName} is not null`),
+	],
+)
+
+// Payments and refunds. A refund is its own row (`kind = 'refund'`) pointing at
+// the payment it gives money back from, so a day's takings are one sum.
+export const posPayments = sqliteTable(
+	'pos_payments',
+	{
+		// The terminal's payment or refund UUID: a replay can never insert it twice.
+		id: text('id').primaryKey(),
+		orderId: text('order_id')
+			.notNull()
+			.references(() => posOrders.id, { onDelete: 'restrict' }),
+		deviceId: text('device_id').notNull(),
+		kind: text('kind', { enum: ['payment', 'refund'] })
+			.notNull()
+			.default('payment'),
+		refundOf: text('refund_of'),
+		staffId: text('staff_id'),
+		staffName: text('staff_name'),
+		approvedByStaffId: text('approved_by_staff_id'),
+		approvedByStaffName: text('approved_by_staff_name'),
+		reason: text('reason'),
+		method: text('method', { enum: ['cash', 'card', 'other'] }).notNull(),
+		amountCents: integer('amount_cents').notNull(),
+		tenderedCents: integer('tendered_cents').notNull(),
+		// Card terminal approval code or similar, for matching the processor's statement.
+		reference: text('reference'),
+		// The drawer shift the money moved in (a tab may be paid in a later shift).
+		shiftId: text('shift_id'),
+		paidAt: integer('paid_at').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_pos_payments_order').on(table.orderId),
+		index('idx_pos_payments_paid_at').on(table.paidAt),
+		index('idx_pos_payments_shift').on(table.shiftId),
+	],
+)
+
+// A cash drawer session on one terminal, as the till reported it. The server's
+// own expected figure is worked out from the payments it holds when a report is
+// asked for, so payments that arrive after the close still count.
+export const posShifts = sqliteTable(
+	'pos_shifts',
+	{
+		id: text('id').primaryKey(),
+		deviceId: text('device_id').notNull(),
+		businessDate: text('business_date').notNull(),
+		revision: integer('revision').notNull(),
+		status: text('status', { enum: ['open', 'closed'] }).notNull(),
+		openedAt: integer('opened_at').notNull(),
+		openedByStaffId: text('opened_by_staff_id'),
+		openedByStaffName: text('opened_by_staff_name'),
+		openingFloatCents: integer('opening_float_cents').notNull(),
+		closedAt: integer('closed_at'),
+		closedByStaffId: text('closed_by_staff_id'),
+		closedByStaffName: text('closed_by_staff_name'),
+		countedCashCents: integer('counted_cash_cents'),
+		// The till's expected figure at the close.
+		expectedCashCents: integer('expected_cash_cents'),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+		updatedAt: integer('updated_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_pos_shifts_device_opened').on(table.deviceId, table.openedAt),
+		index('idx_pos_shifts_business_date').on(table.businessDate),
+	],
+)
+
+// Cash put into or taken out of a drawer outside a sale. Append-only.
+export const posCashMovements = sqliteTable(
+	'pos_cash_movements',
+	{
+		id: text('id').primaryKey(),
+		shiftId: text('shift_id')
+			.notNull()
+			.references(() => posShifts.id, { onDelete: 'restrict' }),
+		kind: text('kind', { enum: ['pay_in', 'pay_out'] }).notNull(),
+		amountCents: integer('amount_cents').notNull(),
+		note: text('note').notNull(),
+		staffId: text('staff_id'),
+		staffName: text('staff_name'),
+		approvedByStaffId: text('approved_by_staff_id'),
+		approvedByStaffName: text('approved_by_staff_name'),
+		at: integer('at').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [index('idx_pos_cash_movements_shift').on(table.shiftId)],
+)
+
+// Every accepted revision of every order, exactly as uploaded but with staff
+// names and customer contact removed (ids only for staff).
+export const posOrderRevisions = sqliteTable(
+	'pos_order_revisions',
+	{
+		orderId: text('order_id').notNull(),
+		revision: integer('revision').notNull(),
+		deviceId: text('device_id').notNull(),
+		reviewReason: text('review_reason'),
+		snapshot: text('snapshot', { mode: 'json' }).notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [primaryKey({ columns: [table.orderId, table.revision] })],
+)
+
+// The current lines of each order, one row each, for item sales reports.
+export const posOrderLines = sqliteTable(
+	'pos_order_lines',
+	{
+		orderId: text('order_id')
+			.notNull()
+			.references(() => posOrders.id, { onDelete: 'cascade' }),
+		lineIndex: integer('line_index').notNull(),
+		itemId: text('item_id').notNull(),
+		name: text('name').notNull(),
+		variantId: text('variant_id'),
+		quantity: integer('quantity').notNull(),
+		unitCents: integer('unit_cents').notNull(),
+		totalCents: integer('total_cents').notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.orderId, table.lineIndex] }),
+		index('idx_pos_order_lines_item').on(table.itemId),
+	],
+)
+
+// A tab taken over by another terminal (the guest moved, or the shift ended).
+export const posOrderTransfers = sqliteTable(
+	'pos_order_transfers',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		orderId: text('order_id').notNull(),
+		fromDeviceId: text('from_device_id').notNull(),
+		toDeviceId: text('to_device_id').notNull(),
+		revision: integer('revision').notNull(),
+		staffId: text('staff_id'),
+		at: integer('at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_pos_order_transfers_from').on(table.fromDeviceId, table.at),
+		index('idx_pos_order_transfers_order').on(table.orderId),
+	],
+)
+
+// Uploads the server could not apply (an unreadable contract, a change to a closed
+// bill, a tab that moved): kept verbatim for a person to settle, never dropped.
+export const posHeldUploads = sqliteTable(
+	'pos_held_uploads',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => randomUUID()),
+		deviceId: text('device_id').notNull(),
+		orderId: text('order_id'),
+		revision: integer('revision'),
+		error: text('error').notNull(),
+		message: text('message'),
+		contractVersion: integer('contract_version'),
+		payload: text('payload').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+		resolvedAt: integer('resolved_at'),
+		resolvedBy: text('resolved_by'),
+	},
+	(table) => [
+		index('idx_pos_held_uploads_device').on(table.deviceId, table.receivedAt),
+		index('idx_pos_held_uploads_open').on(table.resolvedAt),
+	],
+)
+
+// The till's fiscal chain (invoices and credit notes), as issued on the device.
+// `pos-fiscal.ts` in @repo/common defines the hash.
+export const posFiscalDocuments = sqliteTable(
+	'pos_fiscal_documents',
+	{
+		docId: text('doc_id').primaryKey(),
+		chainId: text('chain_id').notNull(),
+		counter: integer('counter').notNull(),
+		kind: text('kind', { enum: ['invoice', 'credit_note'] }).notNull(),
+		orderId: text('order_id').notNull(),
+		deviceId: text('device_id').notNull(),
+		issuedAt: integer('issued_at').notNull(),
+		currency: text('currency').notNull(),
+		totalCents: integer('total_cents').notNull(),
+		taxCents: integer('tax_cents').notNull(),
+		previousHash: text('previous_hash').notNull(),
+		hash: text('hash').notNull(),
+		// Null when the document checks out; otherwise why it does not.
+		problem: text('problem'),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_pos_fiscal_chain_counter').on(table.chainId, table.counter),
+		index('idx_pos_fiscal_order').on(table.orderId),
+	],
+)
+
+// ZATCA e-invoicing (Phase 2) for walk-in sales. One settings row per
+// organization (the seller as ZATCA knows it), one EGS unit per terminal (its
+// signing key and CSIDs, secrets sealed), and every signed document waiting to
+// be, or already, reported to ZATCA.
+export const posZatcaSettings = sqliteTable('pos_zatca_settings', {
+	id: text('id').primaryKey(),
+	environment: text('environment', {
+		enum: ['sandbox', 'simulation', 'production'],
+	}).notNull(),
+	sellerName: text('seller_name').notNull(),
+	vatNumber: text('vat_number').notNull(),
+	crNumber: text('cr_number').notNull(),
+	street: text('street').notNull(),
+	buildingNumber: text('building_number').notNull(),
+	district: text('district').notNull(),
+	city: text('city').notNull(),
+	postalCode: text('postal_code').notNull(),
+	businessCategory: text('business_category').notNull(),
+	branchName: text('branch_name').notNull(),
+	updatedBy: text('updated_by').notNull(),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+export const posZatcaUnits = sqliteTable('pos_zatca_units', {
+	deviceId: text('device_id')
+		.primaryKey()
+		.references(() => posDevices.id, { onDelete: 'restrict' }),
+	environment: text('environment', {
+		enum: ['sandbox', 'simulation', 'production'],
+	}).notNull(),
+	// `revoked`: the terminal was removed; the unit never signs or reports again
+	// (documents it uploaded before then are still reported).
+	status: text('status', {
+		enum: ['onboarding', 'active', 'failed', 'revoked'],
+	}).notNull(),
+	// Sealed (AES-256-GCM); the till receives the key to sign offline.
+	privateKeySealed: text('private_key_sealed').notNull(),
+	complianceRequestId: text('compliance_request_id'),
+	complianceToken: text('compliance_token'),
+	complianceSecretSealed: text('compliance_secret_sealed'),
+	productionToken: text('production_token'),
+	productionSecretSealed: text('production_secret_sealed'),
+	lastError: text('last_error'),
+	onboardedAt: integer('onboarded_at'),
+	// The seller as it was when the unit was onboarded: its certificate was
+	// issued for these details, so a later settings change does not alter what
+	// the till signs until the unit is onboarded again.
+	seller: text('seller', { mode: 'json' }).$type<{
+		name: string
+		vatNumber: string
+		crNumber: string
+		street: string
+		buildingNumber: string
+		district: string
+		city: string
+		postalCode: string
+	}>(),
+	// When ZATCA last refused the production CSID (401): revoked or expired. A
+	// manager has to onboard the unit again; reporting backs off meanwhile.
+	authFailedAt: integer('auth_failed_at'),
+	revokedAt: integer('revoked_at'),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+export const posZatcaSubmissions = sqliteTable(
+	'pos_zatca_submissions',
+	{
+		docId: text('doc_id').primaryKey(),
+		deviceId: text('device_id').notNull(),
+		orderId: text('order_id').notNull(),
+		kind: text('kind', { enum: ['invoice', 'credit_note'] }).notNull(),
+		counter: integer('counter').notNull(),
+		uuid: text('uuid').notNull(),
+		invoiceHash: text('invoice_hash').notNull(),
+		xmlBase64: text('xml_base64').notNull(),
+		status: text('status', {
+			enum: ['pending', 'reported', 'warning', 'rejected'],
+		}).notNull(),
+		attempts: integer('attempts').notNull().default(0),
+		nextAttemptAt: integer('next_attempt_at').notNull().default(0),
+		// ZATCA's answer (validation results), kept for the record.
+		response: text('response', { mode: 'json' }),
+		lastError: text('last_error'),
+		issuedAt: integer('issued_at').notNull(),
+		reportedAt: integer('reported_at'),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [
+		index('idx_pos_zatca_submissions_due').on(
+			table.status,
+			table.nextAttemptAt,
+		),
+		// One document per invoice counter value (ICV) of a unit.
+		uniqueIndex('idx_pos_zatca_submissions_counter').on(
+			table.deviceId,
+			table.counter,
+		),
+	],
+)
+
+// PIN sign-in failure counters for a POS terminal (same escalating backoff as
+// kiosks: a device is never locked out, only slowed). In the organization's
+// database because in-process limiters reset per isolate.
+export const posPinAttempts = sqliteTable('pos_pin_attempts', {
+	deviceId: text('device_id')
+		.primaryKey()
+		.references(() => posDevices.id, { onDelete: 'cascade' }),
+	failures: integer('failures').notNull().default(0),
+	lastFailureAt: integer('last_failure_at'),
+	blockedUntil: integer('blocked_until'),
+	hourStartedAt: integer('hour_started_at'),
+	hourFailures: integer('hour_failures').notNull().default(0),
+	hourAlertedAt: integer('hour_alerted_at'),
+	updatedAt: integer('updated_at').notNull().default(nowMs),
+})
+
+// Staff who may manage a till (change its settings, and later approve voids and
+// refunds). Everyone else with a PIN is a cashier.
+export const posManagers = sqliteTable('pos_managers', {
+	staffId: text('staff_id')
+		.primaryKey()
+		.references(() => staffMembers.id, { onDelete: 'cascade' }),
+	addedBy: text('added_by').notNull(),
+	addedAt: integer('added_at').notNull().default(nowMs),
+})
+
 // Per-device PIN failure counters (escalating backoff, never a device lock).
 // Stored in the org database because the in-process rate limiter resets per
 // isolate and is not shared across Durable Objects or processes.
@@ -4823,6 +5333,20 @@ export type StaffAuditLogEntry = typeof staffAuditLog.$inferSelect
 export type NewStaffAuditLogEntry = typeof staffAuditLog.$inferInsert
 
 export type LaborPolicyRow = typeof laborPolicies.$inferSelect
+export type PosDevice = typeof posDevices.$inferSelect
+export type PosPairingCode = typeof posPairingCodes.$inferSelect
+export type PosOrderRow = typeof posOrders.$inferSelect
+export type PosPaymentRow = typeof posPayments.$inferSelect
+export type PosPinAttempt = typeof posPinAttempts.$inferSelect
+export type PosManager = typeof posManagers.$inferSelect
+export type PosOrderRevision = typeof posOrderRevisions.$inferSelect
+export type PosHeldUpload = typeof posHeldUploads.$inferSelect
+export type PosFiscalDocumentRow = typeof posFiscalDocuments.$inferSelect
+export type PosShiftRow = typeof posShifts.$inferSelect
+export type PosZatcaSettingsRow = typeof posZatcaSettings.$inferSelect
+export type PosZatcaUnitRow = typeof posZatcaUnits.$inferSelect
+export type PosZatcaSubmissionRow = typeof posZatcaSubmissions.$inferSelect
+export type PosCashMovementRow = typeof posCashMovements.$inferSelect
 export type KioskDevice = typeof kioskDevices.$inferSelect
 export type KioskPairingCode = typeof kioskPairingCodes.$inferSelect
 export type KioskAttempt = typeof kioskAttempts.$inferSelect

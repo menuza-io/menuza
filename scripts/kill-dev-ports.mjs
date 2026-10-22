@@ -17,6 +17,7 @@ const DEV_PORTS = [
 	{ port: 3007, name: 'tenant-api (US)' },
 	{ port: 3008, name: 'sites' },
 	{ port: 3009, name: 'tenant-api (KSA)' },
+	{ port: 3010, name: 'station' },
 	{ port: 8787, name: 'jobs-cron' },
 	{ port: 24678, name: 'admin Vite HMR' },
 	{ port: 24679, name: 'app Vite HMR' },

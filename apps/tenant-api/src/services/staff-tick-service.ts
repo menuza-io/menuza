@@ -57,6 +57,12 @@ import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { normalizeStaffLocale, renderStaffEmail } from '../lib/staff-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { purgeExpiredApplications } from './hiring-service.ts'
+import { purgePosGuestNames } from './pos-service.ts'
+import {
+	hasPendingZatca,
+	reportDueZatca,
+	resealZatcaUnits,
+} from './zatca-service.ts'
 import { runOnboardingTick } from './onboarding-tick.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
 import { buildScheduleNotice } from './schedule-notify-service.ts'
@@ -1339,6 +1345,20 @@ export async function runStaffTickForOrg(
 	orgId: string,
 	options: RunTickOptions = {},
 ): Promise<TickResult> {
+	const pendingZatca = { value: false }
+	const result = await runTick(orgId, options, pendingZatca)
+	// ZATCA documents waiting for a retry keep the sub-hourly alarm armed, whatever
+	// the staff module said (it may have nothing to do at all).
+	return pendingZatca.value && !result.needsFollowUp
+		? { ...result, needsFollowUp: true }
+		: result
+}
+
+async function runTick(
+	orgId: string,
+	options: RunTickOptions,
+	pendingZatca: { value: boolean },
+): Promise<TickResult> {
 	const deps: TickDeps = { ...defaultTickDeps, ...options.deps }
 	const now = deps.now()
 	if (inFlight.has(orgId)) return skipped(orgId, now, 'busy')
@@ -1349,6 +1369,37 @@ export async function runStaffTickForOrg(
 			db = options.db ?? (await getTenantDb(orgId))
 		} catch {
 			return skipped(orgId, now, 'no_database')
+		}
+
+		// Walk-in sales signed for ZATCA must be reported within 24 hours whether
+		// or not the staff module is in use: report what is due first.
+		try {
+			// Its own failure must never stop the reporting below.
+			await resealZatcaUnits(db)
+		} catch (error) {
+			console.error(
+				'ZATCA re-seal failed',
+				error instanceof Error ? error.message : 'unknown',
+			)
+		}
+		try {
+			await reportDueZatca(db)
+			pendingZatca.value = await hasPendingZatca(db)
+		} catch (error) {
+			console.error(
+				'ZATCA reporting failed',
+				error instanceof Error ? error.message : 'unknown',
+			)
+		}
+		// Till guest names, callback numbers and settled held uploads expire on
+		// schedule even when POS is off or no terminal checks in any more.
+		try {
+			await purgePosGuestNames(db, now)
+		} catch (error) {
+			console.error(
+				'POS retention purge failed',
+				error instanceof Error ? error.message : 'unknown',
+			)
 		}
 
 		// Organizations without staff or applicants cost two local queries, and

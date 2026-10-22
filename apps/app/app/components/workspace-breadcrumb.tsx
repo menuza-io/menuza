@@ -67,6 +67,7 @@ const SEGMENT_LABELS: Record<string, ReactNode> = {
 	notifications: <Trans>Notifications</Trans>,
 	billing: <Trans>Billing</Trans>,
 	shop: <Trans>Shop</Trans>,
+	terminals: <Trans>Terminals</Trans>,
 	mcp: <Trans>MCP server</Trans>,
 	runs: <Trans>Runs</Trans>,
 	status: <Trans>Status</Trans>,
