@@ -23,6 +23,7 @@ import {
 } from '@repo/ui/select'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLoaderData, useParams, useSearchParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -509,21 +510,24 @@ export default function PhoneAgentCallsRoute() {
 							</Select>
 						</div>
 					) : (
-						<Tabs
-							value={requestStatus}
-							onValueChange={(next: RequestStatusFilter) =>
-								setRequestStatus(next)
-							}
+						<ToggleGroup
+							aria-label={_(msg`Status`)}
+							value={[requestStatus]}
+							onValueChange={(next) => {
+								const picked = next[0]
+								if (picked === 'open' || picked === 'done') {
+									setRequestStatus(picked)
+								}
+							}}
+							variant="segmented"
 						>
-							<TabsList aria-label={_(msg`Status`)}>
-								<TabsTrigger value="open">
-									<Trans>Open</Trans>
-								</TabsTrigger>
-								<TabsTrigger value="done">
-									<Trans>Done</Trans>
-								</TabsTrigger>
-							</TabsList>
-						</Tabs>
+							<ToggleGroupItem value="open">
+								<Trans>Open</Trans>
+							</ToggleGroupItem>
+							<ToggleGroupItem value="done">
+								<Trans>Done</Trans>
+							</ToggleGroupItem>
+						</ToggleGroup>
 					)}
 				</div>
 

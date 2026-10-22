@@ -37,6 +37,7 @@ import {
 	PhraseOverridesSection,
 	usePhraseDrafts,
 } from '#app/components/phone-agent/phrase-fields.tsx'
+import { type PhoneAgentSettingsHandle } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	localId,
@@ -123,6 +124,10 @@ const EVENT_COPY: Record<
 		label: msg`Important tags`,
 		hint: msg`The call got a tag you marked important.`,
 	},
+}
+
+export const handle: PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: 'handling',
 }
 
 export default function PhoneAgentHandling() {

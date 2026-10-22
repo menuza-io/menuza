@@ -9,7 +9,7 @@ import { Icon } from '@repo/ui/icon'
 import { Item, ItemGroup } from '@repo/ui/item'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Spinner } from '@repo/ui/spinner'
-import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
@@ -137,21 +137,26 @@ export function TimeclockToday({
 							onValueChange={setScopeId}
 						/>
 					) : null}
-					<Tabs
-						value={filter}
+					<ToggleGroup
+						aria-label={_(t`Show`)}
+						value={[filter]}
 						onValueChange={(next) => {
-							const picked = next as TodayFilter | undefined
+							const picked = next[0] as TodayFilter | undefined
 							if (picked && TODAY_FILTERS.includes(picked)) setFilter(picked)
 						}}
+						variant="segmented"
+						className="flex-wrap"
 					>
-						<TabsList aria-label={_(t`Show`)} className="flex-wrap">
-							{TODAY_FILTERS.map((value) => (
-								<TabsTrigger className="h-11 md:h-7" key={value} value={value}>
-									{filterLabels[value]}
-								</TabsTrigger>
-							))}
-						</TabsList>
-					</Tabs>
+						{TODAY_FILTERS.map((value) => (
+							<ToggleGroupItem
+								className="h-11 md:h-7"
+								key={value}
+								value={value}
+							>
+								{filterLabels[value]}
+							</ToggleGroupItem>
+						))}
+					</ToggleGroup>
 				</div>
 				<div className="text-muted-foreground flex items-center gap-2 text-xs">
 					{data && updated ? (

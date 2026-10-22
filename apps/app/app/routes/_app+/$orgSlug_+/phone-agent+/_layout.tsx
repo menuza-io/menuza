@@ -12,7 +12,7 @@ import { Outlet, useLoaderData, useLocation } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import {
 	PhoneAgentSettingsHeader,
-	phoneAgentSettingsTab,
+	usePhoneAgentSettingsTab,
 } from '#app/components/phone-agent/settings-nav.tsx'
 import { TestCallSheet } from '#app/components/phone-agent/test-call-sheet.tsx'
 import { requirePhoneAgentSectionAccess } from '#app/utils/phone-agent/access.server.ts'
@@ -40,9 +40,8 @@ export default function PhoneAgentLayout() {
 	const location = useLocation()
 	// The settings pages share one header here, so its tabs stay mounted and
 	// the underline glides between Agent, What it knows and Call handling.
-	const settingsTab = canReadAgent
-		? phoneAgentSettingsTab(location.pathname)
-		: null
+	const pageTab = usePhoneAgentSettingsTab()
+	const settingsTab = canReadAgent ? pageTab : null
 	const testSheet = canReadAgent ? (
 		<TestCallSheet regionSupported={regionSupported} />
 	) : null

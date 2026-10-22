@@ -28,6 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { BusinessDetailsSection } from '#app/components/phone-agent/business-details-section.tsx'
+import { type PhoneAgentSettingsHandle } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	localId,
@@ -78,6 +79,10 @@ function initialRows(saved: FaqEntry[]): FaqRow[] {
 			answer: entry.answer,
 		}))
 	return [...bank, ...custom]
+}
+
+export const handle: PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: 'knowledge',
 }
 
 export default function PhoneAgentKnowledge() {

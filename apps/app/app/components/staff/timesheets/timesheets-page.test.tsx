@@ -527,7 +527,7 @@ describe('needs review queue', () => {
 	it('filters the queue by issue', async () => {
 		queue()
 		view('/?view=review')
-		fireEvent.click(await screen.findByRole('tab', { name: /Missed break/ }))
+		fireEvent.click(await screen.findByRole('button', { name: /Missed break/ }))
 		await waitFor(() =>
 			expect(screen.queryByText('Missing clock-out.')).toBeNull(),
 		)

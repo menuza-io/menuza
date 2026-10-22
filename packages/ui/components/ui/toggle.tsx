@@ -11,8 +11,10 @@ const toggleVariants = cva(
 				default: 'bg-transparent',
 				outline: 'border-input hover:bg-muted border bg-transparent',
 				// Segmented control: use inside `ToggleGroup variant="segmented"`.
+				// The group's sliding indicator draws the pressed pill; the item paints
+				// its own only until the indicator is measured (sliding-indicator.tsx).
 				segmented:
-					'text-muted-foreground hover:text-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-raised dark:aria-pressed:bg-muted rounded-sm bg-transparent px-2.5 text-xs hover:bg-transparent',
+					'text-muted-foreground hover:text-foreground aria-pressed:text-foreground group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/toggle-group:aria-pressed:bg-card group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/toggle-group:aria-pressed:shadow-raised dark:group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/toggle-group:aria-pressed:bg-muted rounded-sm bg-transparent px-2.5 text-xs hover:bg-transparent aria-pressed:bg-transparent',
 			},
 			size: {
 				default: 'h-8 min-w-8 px-2',

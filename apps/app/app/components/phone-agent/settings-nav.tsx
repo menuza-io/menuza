@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
 import { PageHeader } from '@repo/ui/page-header'
 import { WorkspaceTabBar } from '@repo/ui/workspace'
-import { useParams, useRouteLoaderData } from 'react-router'
+import { useMatches, useParams, useRouteLoaderData } from 'react-router'
 import { type loader as layoutLoader } from '#app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx'
 import { TestCallButton } from './test-call-sheet.tsx'
 
@@ -16,13 +16,17 @@ export function usePhoneAgentLayoutData() {
 	return useRouteLoaderData<typeof layoutLoader>(PHONE_AGENT_LAYOUT_ROUTE_ID)
 }
 
-/** The settings tab a phone agent path belongs to, or null for other pages. */
-export function phoneAgentSettingsTab(
-	pathname: string,
-): PhoneAgentSettingsTab | null {
-	if (/\/phone-agent\/?$/.test(pathname)) return 'agent'
-	if (/\/phone-agent\/knowledge\/?$/.test(pathname)) return 'knowledge'
-	if (/\/phone-agent\/handling\/?$/.test(pathname)) return 'handling'
+/** Route `handle` that puts a page under the shared phone agent settings tabs. */
+export type PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: PhoneAgentSettingsTab
+}
+
+/** The settings tab of the current page, from its route `handle`, or null. */
+export function usePhoneAgentSettingsTab(): PhoneAgentSettingsTab | null {
+	for (const match of useMatches()) {
+		const handle = match.handle as Partial<PhoneAgentSettingsHandle> | undefined
+		if (handle?.phoneAgentSettingsTab) return handle.phoneAgentSettingsTab
+	}
 	return null
 }
 

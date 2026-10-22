@@ -141,9 +141,9 @@ describe('TimeclockToday', () => {
 		})
 		view()
 		await screen.findByText('Luis Khalid')
-		fireEvent.click(screen.getByRole('tab', { name: 'Needs attention' }))
+		fireEvent.click(screen.getByRole('button', { name: 'Needs attention' }))
 		expect(screen.getAllByRole('listitem')).toHaveLength(1)
-		fireEvent.click(screen.getByRole('tab', { name: 'On break' }))
+		fireEvent.click(screen.getByRole('button', { name: 'On break' }))
 		expect(screen.getByText('No one matches this view.')).toBeTruthy()
 	})
 

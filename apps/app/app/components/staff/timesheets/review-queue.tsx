@@ -7,7 +7,7 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { Item, ItemContent, ItemGroup } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
-import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -152,29 +152,31 @@ export function ReviewQueue({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-				<Tabs
-					value={issue}
-					onValueChange={(picked) => {
+				<ToggleGroup
+					aria-label={_(t`Filter by issue`)}
+					value={[issue]}
+					onValueChange={(next) => {
+						const picked = next[0]
 						if (picked) setIssue(picked)
 					}}
+					variant="segmented"
+					className="flex-wrap"
 				>
-					<TabsList aria-label={_(t`Filter by issue`)} className="flex-wrap">
-						<TabsTrigger className="h-11 md:h-7" value="all">
-							<Trans>All</Trans>
+					<ToggleGroupItem className="h-11 md:h-7" value="all">
+						<Trans>All</Trans>
+						<span className="text-muted-foreground tabular-nums">
+							{rows.length}
+						</span>
+					</ToggleGroupItem>
+					{issueCounts.map(([code, count]) => (
+						<ToggleGroupItem className="h-11 md:h-7" key={code} value={code}>
+							{text.label(code)}
 							<span className="text-muted-foreground tabular-nums">
-								{rows.length}
+								{count}
 							</span>
-						</TabsTrigger>
-						{issueCounts.map(([code, count]) => (
-							<TabsTrigger className="h-11 md:h-7" key={code} value={code}>
-								{text.label(code)}
-								<span className="text-muted-foreground tabular-nums">
-									{count}
-								</span>
-							</TabsTrigger>
-						))}
-					</TabsList>
-				</Tabs>
+						</ToggleGroupItem>
+					))}
+				</ToggleGroup>
 				{canUpdate && reviewable.length > 1 ? (
 					<Button
 						variant="outline"

@@ -223,7 +223,7 @@ test.describe('Time clock (manager)', () => {
 			slug: org.slug,
 		})
 		expect(response?.status()).toBe(404)
-		await expect(page.getByRole('tab', { name: 'Tablets' })).toHaveCount(0)
+		await expect(page.getByRole('link', { name: 'Tablets' })).toHaveCount(0)
 	})
 
 	test('Today shows who is on the clock, who is on a break and who forgot to clock out', async ({
@@ -256,7 +256,7 @@ test.describe('Time clock (manager)', () => {
 			await expect(page.getByText('3 people on the clock')).toBeVisible()
 			await page.screenshot({ path: `${SCREENSHOTS}/today-desktop.png` })
 
-			await page.getByRole('tab', { name: 'Needs attention' }).click()
+			await page.getByRole('button', { name: 'Needs attention' }).click()
 			await expect(page.getByText('Noor Alharbi')).toHaveCount(0)
 			await expect(page.getByText('Priya Nair')).toBeVisible()
 

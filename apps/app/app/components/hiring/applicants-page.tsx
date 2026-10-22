@@ -12,8 +12,8 @@ import { Icon } from '@repo/ui/icon'
 import { Input } from '@repo/ui/input'
 import { PageHeader } from '@repo/ui/page-header'
 import { Sheet, SheetContent } from '@repo/ui/sheet'
-import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { Toggle } from '@repo/ui/toggle'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useIsMobile } from '@repo/ui/use-mobile'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
@@ -323,52 +323,54 @@ export function ApplicantsPage({
 							<Trans>Answers to check</Trans>
 						</Toggle>
 					</div>
-					<Tabs
-						value={view}
-						onValueChange={(picked) => {
+					<ToggleGroup
+						aria-label={_(t`Applicant view`)}
+						value={[view]}
+						onValueChange={(next) => {
+							const picked = next[0]
 							if (picked === 'board' || picked === 'list') {
 								setParam({ view: picked })
 							}
 						}}
+						variant="segmented"
 						className="md:ms-auto"
 					>
-						<TabsList aria-label={_(t`Applicant view`)}>
-							<TabsTrigger className="h-11 md:h-7" value="board">
-								<Icon name="layout-grid" />
-								<Trans>Board</Trans>
-							</TabsTrigger>
-							<TabsTrigger className="h-11 md:h-7" value="list">
-								<Icon name="logs" />
-								<Trans>List</Trans>
-							</TabsTrigger>
-						</TabsList>
-					</Tabs>
+						<ToggleGroupItem className="h-11 md:h-7" value="board">
+							<Icon name="layout-grid" />
+							<Trans>Board</Trans>
+						</ToggleGroupItem>
+						<ToggleGroupItem className="h-11 md:h-7" value="list">
+							<Icon name="logs" />
+							<Trans>List</Trans>
+						</ToggleGroupItem>
+					</ToggleGroup>
 				</div>
 
 				{view === 'list' ? (
 					<div className="-mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-						<Tabs
-							value={stage}
-							onValueChange={(picked) => {
+						<ToggleGroup
+							aria-label={_(t`Filter by stage`)}
+							value={[stage]}
+							onValueChange={(next) => {
+								const picked = next[0]
 								if (picked)
 									setParam({ stage: picked === 'open' ? null : picked })
 							}}
+							variant="segmented"
 						>
-							<TabsList aria-label={_(t`Filter by stage`)}>
-								{stageChips.map((chip) => (
-									<TabsTrigger
-										className="h-11 md:h-7"
-										key={chip.value}
-										value={chip.value}
-									>
-										{chip.label}
-										<span className="text-muted-foreground ms-1.5 text-xs tabular-nums">
-											{chip.count}
-										</span>
-									</TabsTrigger>
-								))}
-							</TabsList>
-						</Tabs>
+							{stageChips.map((chip) => (
+								<ToggleGroupItem
+									className="h-11 md:h-7"
+									key={chip.value}
+									value={chip.value}
+								>
+									{chip.label}
+									<span className="text-muted-foreground ms-1.5 text-xs tabular-nums">
+										{chip.count}
+									</span>
+								</ToggleGroupItem>
+							))}
+						</ToggleGroup>
 					</div>
 				) : null}
 			</div>

@@ -4,6 +4,7 @@ import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '../../lib/utils'
+import { slidingIndicatorVariants } from './sliding-indicator'
 
 function Tabs({
 	className,
@@ -24,32 +25,12 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-	'group/tabs-list text-muted-foreground relative isolate inline-flex w-fit items-center justify-center gap-0.5 rounded-md p-0.5 group-data-horizontal/tabs:h-8 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none data-[variant=line]:p-0 group-data-horizontal/tabs:data-[variant=line]:h-9',
+	'group/tabs-list text-muted-foreground relative isolate inline-flex w-fit items-center justify-center gap-0.5 rounded-md p-0.5 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none data-[variant=line]:p-0',
 	{
 		variants: {
 			variant: {
 				default: 'bg-accent',
 				line: 'gap-0.5 bg-transparent',
-			},
-		},
-		defaultVariants: {
-			variant: 'default',
-		},
-	},
-)
-
-// Base UI measures the active tab into --active-tab-* variables, so the
-// indicator glides between tabs with a plain CSS transition. It sits under the
-// triggers (-z-10 inside the list's isolated stacking context) and settles
-// without overshoot, which would read as a wobble in a dense toolbar.
-const tabsIndicatorVariants = cva(
-	'ease-out-quint pointer-events-none absolute top-0 left-0 -z-10 transition-[translate,width,height] duration-300 motion-reduce:transition-none',
-	{
-		variants: {
-			variant: {
-				default:
-					'bg-card shadow-raised dark:bg-muted h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) translate-y-(--active-tab-top) rounded-sm',
-				line: 'bg-foreground rounded-full group-data-[orientation=horizontal]/tabs:top-auto group-data-[orientation=horizontal]/tabs:bottom-0 group-data-[orientation=horizontal]/tabs:h-0.5 group-data-[orientation=horizontal]/tabs:w-[calc(var(--active-tab-width)-1rem)] group-data-[orientation=horizontal]/tabs:translate-x-[calc(var(--active-tab-left)+0.5rem)] group-data-[orientation=vertical]/tabs:-right-1 group-data-[orientation=vertical]/tabs:left-auto group-data-[orientation=vertical]/tabs:h-(--active-tab-height) group-data-[orientation=vertical]/tabs:w-0.5 group-data-[orientation=vertical]/tabs:translate-y-(--active-tab-top)',
 			},
 		},
 		defaultVariants: {
@@ -72,9 +53,13 @@ function TabsList({
 			{...props}
 		>
 			{children}
+			{/* Base UI measures the active tab into --active-tab-* and keeps the
+			    indicator hidden until then; see sliding-indicator.tsx. */}
 			<TabsPrimitive.Indicator
-				data-slot="tabs-indicator"
-				className={tabsIndicatorVariants({ variant })}
+				data-slot="sliding-indicator"
+				className={slidingIndicatorVariants({
+					variant: variant === 'line' ? 'line' : 'pill',
+				})}
 			/>
 		</TabsPrimitive.List>
 	)
@@ -87,11 +72,10 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 			className={cn(
 				"focus-visible:border-ring focus-visible:ring-ring focus-visible:outline-ring text-muted-foreground hover:text-foreground relative inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-sm border border-transparent px-2.5 text-xs font-medium whitespace-nowrap transition-[color,background-color,box-shadow] duration-150 group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start group-data-[variant=line]/tabs-list:px-2.5 group-data-[variant=line]/tabs-list:text-[13px] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 				'data-active:text-foreground',
-				// Until the indicator is measured (server HTML, before hydration, or
-				// a list rendered while hidden) the active tab paints its own pill or
-				// underline, so the selection never flashes away.
-				'group-data-[variant=default]/tabs-list:group-not-has-[>[data-slot=tabs-indicator]:not([hidden])]/tabs-list:data-active:bg-card group-data-[variant=default]/tabs-list:group-not-has-[>[data-slot=tabs-indicator]:not([hidden])]/tabs-list:data-active:shadow-raised dark:group-data-[variant=default]/tabs-list:group-not-has-[>[data-slot=tabs-indicator]:not([hidden])]/tabs-list:data-active:bg-muted',
-				'after:bg-foreground after:absolute after:rounded-full after:opacity-0 group-data-[orientation=horizontal]/tabs:after:inset-x-2 group-data-[orientation=horizontal]/tabs:after:bottom-0 group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:group-not-has-[>[data-slot=tabs-indicator]:not([hidden])]/tabs-list:data-active:after:opacity-100',
+				// While the indicator is hidden (not measured yet) the active tab
+				// paints its own pill or underline; see sliding-indicator.tsx.
+				'group-data-[variant=default]/tabs-list:group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/tabs-list:data-active:bg-card group-data-[variant=default]/tabs-list:group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/tabs-list:data-active:shadow-raised dark:group-data-[variant=default]/tabs-list:group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/tabs-list:data-active:bg-muted',
+				'after:bg-foreground after:absolute after:rounded-full after:opacity-0 group-data-[orientation=horizontal]/tabs:after:inset-x-2 group-data-[orientation=horizontal]/tabs:after:bottom-0 group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:group-not-has-[>[data-slot=sliding-indicator]:not([hidden])]/tabs-list:data-active:after:opacity-100',
 				className,
 			)}
 			{...props}

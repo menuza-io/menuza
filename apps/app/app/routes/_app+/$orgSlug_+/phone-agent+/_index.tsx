@@ -46,7 +46,10 @@ import {
 	PhraseOverridesSection,
 	usePhraseDrafts,
 } from '#app/components/phone-agent/phrase-fields.tsx'
-import { usePhoneAgentLayoutData } from '#app/components/phone-agent/settings-nav.tsx'
+import {
+	usePhoneAgentLayoutData,
+	type PhoneAgentSettingsHandle,
+} from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	type SettingsSaveResult,
@@ -124,6 +127,10 @@ function agentFields(settings: PhoneAgentSettings): AgentFields {
 		maxCallMinutes: settings.maxCallMinutes,
 		phrases: settings.phrases,
 	}
+}
+
+export const handle: PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: 'agent',
 }
 
 export default function PhoneAgentSetup() {

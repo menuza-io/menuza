@@ -16,7 +16,8 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Trans } from '@lingui/macro'
+import { Trans, msg } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
@@ -5118,45 +5119,54 @@ function InspectorTabs({
 	value: InspectorId
 	onChange: (next: InspectorId) => void
 }) {
+	const { _ } = useLingui()
 	const items = [
 		{
 			id: 'sections' as const,
 			icon: 'blocks' as const,
 			label: <Trans>Sections</Trans>,
-			ariaLabel: 'Sections',
+			ariaLabel: _(msg`Sections`),
 		},
 		{
 			id: 'branding' as const,
 			icon: 'paintbrush' as const,
 			label: <Trans>Branding</Trans>,
-			ariaLabel: 'Branding',
+			ariaLabel: _(msg`Branding`),
 		},
 		{
 			id: 'page' as const,
 			icon: 'file-text' as const,
 			label: <Trans>Settings</Trans>,
-			ariaLabel: 'Page Settings',
+			ariaLabel: _(msg`Page Settings`),
 		},
 	]
 
 	return (
-		<nav aria-label="Builder panels" className="w-full">
-			<Tabs value={value} onValueChange={(next: InspectorId) => onChange(next)}>
-				<TabsList className="grid w-full grid-cols-3">
-					{items.map((item) => (
-						<TabsTrigger
-							key={item.id}
-							value={item.id}
-							aria-label={item.ariaLabel}
-							className="min-w-0 gap-1 px-1.5"
-						>
-							<Icon name={item.icon} className="size-3.5 shrink-0" />
-							<span className="truncate">{item.label}</span>
-						</TabsTrigger>
-					))}
-				</TabsList>
-			</Tabs>
-		</nav>
+		<Tabs
+			value={value}
+			onValueChange={(next) => {
+				const picked = items.find((item) => item.id === next)
+				if (picked) onChange(picked.id)
+			}}
+			className="w-full"
+		>
+			<TabsList
+				aria-label={_(msg`Builder panels`)}
+				className="grid w-full grid-cols-3"
+			>
+				{items.map((item) => (
+					<TabsTrigger
+						key={item.id}
+						value={item.id}
+						aria-label={item.ariaLabel}
+						className="min-w-0 gap-1 px-1.5"
+					>
+						<Icon name={item.icon} className="size-3.5 shrink-0" />
+						<span className="truncate">{item.label}</span>
+					</TabsTrigger>
+				))}
+			</TabsList>
+		</Tabs>
 	)
 }
 
