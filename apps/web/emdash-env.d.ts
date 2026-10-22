@@ -34,6 +34,7 @@ export interface Post {
 		id: string
 		src?: string
 		alt?: string
+		caption?: string
 		width?: number
 		height?: number
 		filename?: string
@@ -49,6 +50,7 @@ export interface Post {
 			id: string
 			src?: string
 			alt?: string
+			caption?: string
 			width?: number
 			height?: number
 			filename?: string
