@@ -82,6 +82,11 @@ function DropdownMenuItem({
 }: MenuPrimitive.Item.Props & {
 	inset?: boolean
 	variant?: 'default' | 'destructive'
+	/**
+	 * Base UI items fire `onClick` (pointer and keyboard). `onSelect` is the
+	 * DOM text-selection event and never runs when the item is chosen.
+	 */
+	onSelect?: never
 }) {
 	return (
 		<MenuPrimitive.Item

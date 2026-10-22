@@ -1,11 +1,23 @@
 import { Link } from 'react-router'
 
+import { cn } from '../lib/utils'
 import { Icon } from './icon'
 import { Button } from './ui/button'
 
-export function NotFoundPage() {
+// `screen` is a standalone page; `inline` fills the content area of an app
+// shell (sidebar and header stay) on the shell's own surface.
+export function NotFoundPage({
+	variant = 'screen',
+}: {
+	variant?: 'screen' | 'inline'
+}) {
 	return (
-		<section className="bg-background flex min-h-screen items-center justify-center overflow-hidden py-16 md:py-24">
+		<section
+			className={cn(
+				'flex items-center justify-center overflow-hidden py-16 md:py-24',
+				variant === 'screen' ? 'bg-background min-h-screen' : 'min-h-0 flex-1',
+			)}
+		>
 			<div className="mx-auto w-full max-w-7xl grow px-4 md:px-8">
 				<div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-16 text-center">
 					<div className="flex flex-col items-center justify-center gap-8 md:gap-12">

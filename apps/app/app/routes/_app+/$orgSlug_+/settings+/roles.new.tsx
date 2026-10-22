@@ -23,6 +23,7 @@ import {
 } from '#app/utils/organization/tenant-role-permissions.ts'
 import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
+	getRoleInputErrors,
 	requireBuiltInOrganizationAdmin,
 	roleInputSchema,
 } from './roles.server.ts'
@@ -58,11 +59,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		permissionIds: formData.getAll('permissionIds'),
 	})
 	if (!submission.success) {
-		return {
-			error:
-				submission.error.issues[0]?.message ??
-				'Check the role details and try again.',
-		}
+		return getRoleInputErrors(submission.error)
 	}
 	const requestedPermissionIds = [...new Set(submission.data.permissionIds)]
 	if (!hasOnlyTenantRolePermissions(requestedPermissionIds)) {
@@ -90,7 +87,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (duplicate) {
 		return {
-			error:
+			nameError:
 				'A role with this name already exists in your organization or as a built-in role.',
 		}
 	}
@@ -146,7 +143,7 @@ export default function CreateRoleRoute() {
 		<RoleAccessForm
 			orgSlug={data.organization.slug}
 			cancelHref={rolesPath}
-			error={actionData?.error}
+			errors={actionData}
 			staffingEnabled={data.staffingEnabled}
 		/>
 	)

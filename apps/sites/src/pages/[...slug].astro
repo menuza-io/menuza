@@ -1,6 +1,7 @@
 ---
 import { ENV } from 'varlock/env'
 import { getPageTitle } from '@repo/config/brand'
+import SiteNotFound from '~/components/SiteNotFound.astro'
 import SitePage from '~/components/SitePage.astro'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
 import { fetchPublishedSitePage, recordSiteNotFound } from '~/lib/org'
@@ -44,10 +45,11 @@ if (!page) {
 	} else {
 		void logPromise
 	}
-	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
 }
 
-if (Astro.url.searchParams.get('preview') === 'true') {
+if (page && Astro.url.searchParams.get('preview') === 'true') {
 	let sectionsCookie = Astro.cookies.get('epic_preview_sections')?.value
 	let themeCookie = Astro.cookies.get('epic_preview_theme')?.value
 
@@ -116,22 +118,23 @@ if (Astro.url.searchParams.get('preview') === 'true') {
 }
 
 
-const seoTitle = page.seo?.title || page.title
+const seoTitle = page?.seo?.title || page?.title
 const pageTitle = getPageTitle(`${seoTitle} - ${organization.name}`)
-const seoDescription = page.seo?.description || undefined
+const seoDescription = page?.seo?.description || undefined
 const appOrigin = (ENV.PUBLIC_APP_URL || 'http://localhost:3001').replace(
 	/\/$/,
 	'',
 )
-const rawSeoImage = page.seo?.imageUrl || null
+const rawSeoImage = page?.seo?.imageUrl || null
 const seoImageUrl = rawSeoImage
 	? rawSeoImage.startsWith('http')
 		? rawSeoImage
 		: `${appOrigin}${rawSeoImage}`
 	: null
-const seoNoIndex = page.seo?.noIndex ?? false
+const seoNoIndex = page?.seo?.noIndex ?? false
 ---
 
+{page ? (
 <SitePage
 	organization={organization}
 	page={page}
@@ -142,3 +145,6 @@ const seoNoIndex = page.seo?.noIndex ?? false
 >
 	<RenderBlocks sections={page.sections} />
 </SitePage>
+) : (
+	<SiteNotFound organization={organization} />
+)}

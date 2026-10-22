@@ -169,6 +169,36 @@ describe('settings/roles route integration', () => {
 		expect(deleteResult).toMatchObject({ message: 'Role deleted.' })
 	})
 
+	it('reports a bad role name as a Role name field error, not a page error', async () => {
+		const { organization, cookie } = await setupTestOrgWithUser('admin')
+		const createUrl = `http://localhost:3000/${organization.slug}/settings/roles/new`
+
+		const blankResult = await createAction({
+			request: createRoleRequest(createUrl, cookie, {
+				name: '   ',
+				description: '',
+			}),
+			params: { orgSlug: organization.slug },
+			context: {},
+		} as any)
+		expect(blankResult).toEqual({
+			nameError: 'Give the role a name with at least 2 characters.',
+		})
+
+		const duplicateResult = await createAction({
+			request: createRoleRequest(createUrl, cookie, {
+				name: 'admin',
+				description: '',
+			}),
+			params: { orgSlug: organization.slug },
+			context: {},
+		} as any)
+		expect(duplicateResult).toEqual({
+			nameError:
+				'A role with this name already exists in your organization or as a built-in role.',
+		})
+	})
+
 	it('denies an ordinary member access to admin role management', async () => {
 		const { organization, cookie } = await setupTestOrgWithUser('member')
 		await expect(

@@ -148,6 +148,10 @@ msgstr "请提供电子邮箱或电话号码。"
 msgid "Give us an email, a phone number, or both."
 msgstr "请提供电子邮箱、电话号码，或两者都提供。"
 
+#: src/components/SiteNotFound.astro.ts:3
+msgid "Go to the home page"
+msgstr "前往首页"
+
 #: src/lib/careers/labels.ts:31
 msgid "hour"
 msgstr "小时"
@@ -245,6 +249,10 @@ msgstr "订单历史"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Orders"
 msgstr "订单"
+
+#: src/components/SiteNotFound.astro.ts:3
+msgid "Page not found"
+msgstr "找不到页面"
 
 #: src/lib/careers/labels.ts:16
 msgid "Part time"
@@ -395,6 +403,10 @@ msgstr "感谢您的购买！"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "谢谢。您的申请已提交。如果合适，他们会与您联系。"
+
+#: src/components/SiteNotFound.astro.ts:3
+msgid "The page you are looking for does not exist or has moved."
+msgstr "您要查找的页面不存在或已移动。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "The verification check did not pass. Please try again."

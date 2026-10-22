@@ -5897,7 +5897,7 @@ export default function PageBuilderRoute() {
 												</div>
 												<DropdownMenuSeparator />
 												<DropdownMenuItem
-													onSelect={() => setCreatePageOpen(true)}
+													onClick={() => setCreatePageOpen(true)}
 												>
 													<Icon name="plus" className="mr-2 size-4" />
 													<Trans>Add new page</Trans>

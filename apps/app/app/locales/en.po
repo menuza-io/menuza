@@ -3627,7 +3627,7 @@ msgstr "Can't text that number"
 #: app/components/settings/cards/organization/announcement-sheet.tsx:547
 #: app/components/settings/cards/organization/danger-zone-card.tsx:131
 #: app/components/settings/cards/organization/site-icon-card.tsx:184
-#: app/components/settings/email-form.tsx:82
+#: app/components/settings/email-form.tsx:94
 #: app/components/settings/passkey-manager.tsx:153
 #: app/components/settings/password-form.tsx:188
 #: app/components/settings/two-factor-form.tsx:123
@@ -3694,7 +3694,7 @@ msgstr ""
 msgid "Cancel deletion"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:428
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:444
 msgid "Cancel editing"
 msgstr ""
 
@@ -3832,7 +3832,7 @@ msgid "Certification"
 msgstr "Certification"
 
 #: app/components/settings/cards/organization/site-icon-card.tsx:215
-#: app/components/settings/cards/profile-card.tsx:152
+#: app/components/settings/cards/profile-card.tsx:162
 #: app/components/staff/labor/labor-overview.tsx:341
 #: app/components/website/branding-panel.tsx:304
 msgid "Change"
@@ -3842,7 +3842,7 @@ msgstr ""
 msgid "Change due date"
 msgstr "Change due date"
 
-#: app/components/settings/cards/profile-card.tsx:161
+#: app/components/settings/cards/profile-card.tsx:171
 msgid "Change Email"
 msgstr ""
 
@@ -5008,8 +5008,7 @@ msgstr "Copy into this week"
 #: app/components/hiring/job-share-panel.tsx:87
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:367
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:378
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:214
 msgid "Copy link"
 msgstr ""
 
@@ -5132,6 +5131,10 @@ msgstr "Could not upload image. Try again."
 #: app/components/phone-agent/test-call-panel.tsx:286
 msgid "Couldn't connect to the test call. Make sure the voice agent is running and try again."
 msgstr "Couldn't connect to the test call. Make sure the voice agent is running and try again."
+
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:213
+msgid "Couldn't copy link"
+msgstr "Couldn't copy link"
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:546
 msgid "Couldn't load calls"
@@ -6847,7 +6850,7 @@ msgstr "Eligible for rehire."
 #: app/components/hiring/candidate-parts.tsx:55
 #: app/components/organization-invitations.tsx:457
 #: app/components/settings/cards/notification-preferences-card.tsx:26
-#: app/components/settings/cards/profile-card.tsx:132
+#: app/components/settings/cards/profile-card.tsx:142
 #: app/components/staff/details-tab.tsx:166
 #: app/components/staff/review-rows.tsx:112
 #: app/components/staff/review-rows.tsx:120
@@ -7622,7 +7625,7 @@ msgstr ""
 msgid "Failed to save automation"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:444
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:460
 msgid "Failed to save:"
 msgstr ""
 
@@ -8695,7 +8698,7 @@ msgstr "If something looks wrong, talk to your manager."
 msgid "If the caller doesn't choose"
 msgstr "If the caller doesn't choose"
 
-#: app/components/settings/cards/profile-card.tsx:168
+#: app/components/settings/cards/profile-card.tsx:178
 msgid "If you change your email, you'll need to verify the new address"
 msgstr ""
 
@@ -9626,8 +9629,7 @@ msgstr "Link (optional)"
 msgid "Link columns"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:367
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:378
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:211
 msgid "Link copied!"
 msgstr ""
 
@@ -10657,7 +10659,7 @@ msgstr "My schedule link"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:307
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
 #: app/components/settings/cards/organization/general-settings-card.tsx:84
-#: app/components/settings/cards/profile-card.tsx:97
+#: app/components/settings/cards/profile-card.tsx:107
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
@@ -10821,7 +10823,7 @@ msgstr "New dashboard"
 msgid "New Destination"
 msgstr "New Destination"
 
-#: app/components/settings/email-form.tsx:64
+#: app/components/settings/email-form.tsx:76
 msgid "New Email"
 msgstr ""
 
@@ -11857,7 +11859,7 @@ msgstr "Note added."
 msgid "Note changed"
 msgstr "Note changed"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:438
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:454
 msgid "Note content..."
 msgstr ""
 
@@ -11874,7 +11876,7 @@ msgstr "Note for your manager"
 msgid "Note removed"
 msgstr "Note removed"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:411
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:427
 msgid "Note title..."
 msgstr ""
 
@@ -14080,7 +14082,7 @@ msgstr "Questions are optional. A short yes or no on weekends or experience save
 msgid "Queued"
 msgstr "Queued"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:354
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:368
 msgid "Quick edit"
 msgstr ""
 
@@ -15269,7 +15271,7 @@ msgstr ""
 #: app/components/phone-agent/settings-page.tsx:381
 #: app/components/settings/cards/organization/s3-storage-card.tsx:441
 #: app/components/settings/cards/organization/verified-domain-card.tsx:124
-#: app/components/settings/email-form.tsx:90
+#: app/components/settings/email-form.tsx:102
 #: app/components/staff/kiosk-manager.tsx:910
 #: app/components/staff/labor/labor-sales.tsx:203
 #: app/components/staff/labor/labor-settings.tsx:194
@@ -15332,12 +15334,12 @@ msgstr "Save card for later charges"
 #: app/components/settings/cards/organization/announcement-sheet.tsx:551
 #: app/components/settings/cards/organization/general-settings-card.tsx:114
 #: app/components/settings/cards/organization/site-analytics-card.tsx:138
-#: app/components/settings/cards/profile-card.tsx:192
+#: app/components/settings/cards/profile-card.tsx:202
 #: app/components/staff/details-tab.tsx:231
 #: app/components/staff/labor-policy-editor.tsx:1106
 #: app/components/staff/timesheets/card-sheet.tsx:310
 #: app/routes/_app+/$orgSlug_+/media.tsx:1958
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:418
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:434
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:432
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1460
 msgid "Save changes"
@@ -19765,7 +19767,7 @@ msgstr "Unknown"
 msgid "Unknown caller"
 msgstr "Unknown caller"
 
-#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:446
+#: app/routes/_app+/$orgSlug_+/notes-cards.tsx:462
 msgid "Unknown error"
 msgstr ""
 
@@ -20234,7 +20236,7 @@ msgstr "Useful if staff should log what happened after a transfer."
 msgid "User"
 msgstr "User"
 
-#: app/components/settings/cards/profile-card.tsx:114
+#: app/components/settings/cards/profile-card.tsx:124
 #: app/routes/_auth+/login.tsx:777
 #: app/routes/_auth+/onboarding_.$provider.tsx:297
 #: app/routes/_auth+/onboarding.tsx:433

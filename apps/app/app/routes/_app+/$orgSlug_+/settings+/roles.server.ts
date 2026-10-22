@@ -44,6 +44,15 @@ export const roleInputSchema = z.object({
 	permissionIds: z.array(z.string()).default([]),
 })
 
+/** Errors the role form shows: `nameError` under Role name, `error` above the form. */
+export type RoleFormErrors = { error?: string; nameError?: string }
+
+export function getRoleInputErrors(error: z.ZodError): RoleFormErrors {
+	const issue = error.issues[0]
+	const message = issue?.message ?? 'Check the role details and try again.'
+	return issue?.path[0] === 'name' ? { nameError: message } : { error: message }
+}
+
 export async function requireBuiltInOrganizationAdmin(
 	request: Request,
 	orgSlug: string | undefined,

@@ -148,6 +148,10 @@ msgstr "أعطنا بريدًا إلكترونيًا أو رقم هاتف."
 msgid "Give us an email, a phone number, or both."
 msgstr "أعطنا بريدًا إلكترونيًا أو رقم هاتف أو كليهما."
 
+#: src/components/SiteNotFound.astro.ts:3
+msgid "Go to the home page"
+msgstr "الذهاب إلى الصفحة الرئيسية"
+
 #: src/lib/careers/labels.ts:31
 msgid "hour"
 msgstr "ساعة"
@@ -245,6 +249,10 @@ msgstr "سجل الطلبات"
 #: src/pages/profile/orders.astro.ts:3
 msgid "Orders"
 msgstr "الطلبات"
+
+#: src/components/SiteNotFound.astro.ts:3
+msgid "Page not found"
+msgstr "الصفحة غير موجودة"
 
 #: src/lib/careers/labels.ts:16
 msgid "Part time"
@@ -395,6 +403,10 @@ msgstr "شكرًا لشرائك!"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Thank you. Your application has been sent. If it looks like a good fit, they will be in touch."
 msgstr "شكرًا لك. تم إرسال طلبك. إذا بدا مناسبًا فسيتواصلون معك."
+
+#: src/components/SiteNotFound.astro.ts:3
+msgid "The page you are looking for does not exist or has moved."
+msgstr "الصفحة التي تبحث عنها غير موجودة أو تم نقلها."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "The verification check did not pass. Please try again."

@@ -31,6 +31,7 @@ import { isStaffingFeatureEnabled } from '#app/utils/staffing/access.server.ts'
 import {
 	getCustomRole,
 	invalidateAssignedActiveMembers,
+	getRoleInputErrors,
 	requireBuiltInOrganizationAdmin,
 	roleInputSchema,
 } from './roles.server.ts'
@@ -116,11 +117,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		permissionIds: formData.getAll('permissionIds'),
 	})
 	if (!submission.success) {
-		return {
-			error:
-				submission.error.issues[0]?.message ??
-				'Check the role details and try again.',
-		}
+		return getRoleInputErrors(submission.error)
 	}
 	const requestedPermissionIds = [...new Set(submission.data.permissionIds)]
 	if (!hasOnlyTenantRolePermissions(requestedPermissionIds)) {
@@ -147,7 +144,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (duplicate && duplicate.id !== role.id) {
 		return {
-			error:
+			nameError:
 				'A custom role cannot use the name of another custom or built-in role.',
 		}
 	}
@@ -210,7 +207,7 @@ export default function EditRoleRoute() {
 			orgSlug={data.organization.slug}
 			role={data.role}
 			cancelHref={rolesPath}
-			error={actionData?.error}
+			errors={actionData}
 			staffingEnabled={data.staffingEnabled}
 		/>
 	)

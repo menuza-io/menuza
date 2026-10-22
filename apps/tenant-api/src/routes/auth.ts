@@ -36,7 +36,9 @@ export const authRoutes = new Hono()
 // so SMS cannot be pointed at arbitrary strings (SMS-pumping / injection).
 const phoneInputSchema = z
 	.string()
-	.min(5, 'Phone number is required')
+	.trim()
+	.min(1, 'Phone number is required')
+	.min(5, 'Invalid phone number')
 	.max(32, 'Invalid phone number')
 
 const sendCodeSchema = z.object({

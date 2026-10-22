@@ -2,6 +2,7 @@
 import { msg } from '@lingui/core/macro'
 import { getLocaleHref } from '@repo/common/site-locales'
 import RenderBlocks from '~/components/blocks/RenderBlocks.astro'
+import SiteNotFound from '~/components/SiteNotFound.astro'
 import SitePage from '~/components/SitePage.astro'
 import { employmentLabel, payLine } from '~/lib/careers/labels'
 import { siteContainer } from '~/lib/media'
@@ -37,7 +38,8 @@ const cmsPage = careers
 			lng: Astro.locals.requestedLocale,
 		})
 if (!careers && !cmsPage) {
-	return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+	Astro.response.status = 404
+	Astro.response.statusText = 'Not Found'
 }
 
 const heading = i18n._(msg`Careers`)
@@ -58,7 +60,9 @@ const postings = (careers?.postings ?? []).map((posting) => ({
 }))
 ---
 
-{cmsPage ? (
+{!careers && !cmsPage ? (
+	<SiteNotFound organization={organization} />
+) : cmsPage ? (
 	<SitePage
 		organization={organization}
 		page={cmsPage}
