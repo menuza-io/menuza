@@ -47,8 +47,8 @@ import {
 	usePhraseDrafts,
 } from '#app/components/phone-agent/phrase-fields.tsx'
 import {
-	PhoneAgentSettingsHeader,
 	usePhoneAgentLayoutData,
+	type PhoneAgentSettingsHandle,
 } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
@@ -129,6 +129,10 @@ function agentFields(settings: PhoneAgentSettings): AgentFields {
 	}
 }
 
+export const handle: PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: 'agent',
+}
+
 export default function PhoneAgentSetup() {
 	const { orgSlug = '' } = useParams()
 	const {
@@ -149,8 +153,6 @@ export default function PhoneAgentSetup() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<PhoneAgentSettingsHeader active="agent" />
-
 			<GetStarted
 				base={base}
 				hasNumber={numbers.some((number) => number.isActive)}

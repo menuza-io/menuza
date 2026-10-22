@@ -6,6 +6,7 @@ import { type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 
 import { cn } from '../../lib/utils'
+import { SlidingIndicator } from './sliding-indicator'
 import { toggleVariants } from './toggle'
 
 const ToggleGroupContext = React.createContext<
@@ -42,7 +43,7 @@ function ToggleGroup({
 			data-orientation={orientation}
 			style={{ '--gap': spacing } as React.CSSProperties}
 			className={cn(
-				'group/toggle-group data-[variant=segmented]:bg-accent flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch data-[size=sm]:rounded-[min(var(--radius-md),10px)] data-[variant=segmented]:gap-0.5 data-[variant=segmented]:rounded-md data-[variant=segmented]:p-0.5',
+				'group/toggle-group data-[variant=segmented]:bg-accent flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch data-[size=sm]:rounded-[min(var(--radius-md),10px)] data-[variant=segmented]:relative data-[variant=segmented]:isolate data-[variant=segmented]:gap-0.5 data-[variant=segmented]:rounded-md data-[variant=segmented]:p-0.5',
 				className,
 			)}
 			{...props}
@@ -52,6 +53,15 @@ function ToggleGroup({
 			>
 				{children}
 			</ToggleGroupContext.Provider>
+			{/* A single-choice segmented control slides its pill like the tabs
+			    do, while its items stay toggle buttons (aria-pressed). */}
+			{variant === 'segmented' && !props.multiple ? (
+				<SlidingIndicator
+					variant="pill"
+					orientation={orientation}
+					selector=':scope > [data-slot="toggle-group-item"][aria-pressed="true"]'
+				/>
+			) : null}
 		</ToggleGroupPrimitive>
 	)
 }

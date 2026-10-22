@@ -1,9 +1,9 @@
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Badge } from '@repo/ui/badge'
-import { Button } from '@repo/ui/button'
 import { PageHeader } from '@repo/ui/page-header'
-import { Link, useParams, useRouteLoaderData } from 'react-router'
+import { WorkspaceTabBar } from '@repo/ui/workspace'
+import { useMatches, useParams, useRouteLoaderData } from 'react-router'
 import { type loader as layoutLoader } from '#app/routes/_app+/$orgSlug_+/phone-agent+/_layout.tsx'
 import { TestCallButton } from './test-call-sheet.tsx'
 
@@ -16,9 +16,24 @@ export function usePhoneAgentLayoutData() {
 	return useRouteLoaderData<typeof layoutLoader>(PHONE_AGENT_LAYOUT_ROUTE_ID)
 }
 
+/** Route `handle` that puts a page under the shared phone agent settings tabs. */
+export type PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: PhoneAgentSettingsTab
+}
+
+/** The settings tab of the current page, from its route `handle`, or null. */
+export function usePhoneAgentSettingsTab(): PhoneAgentSettingsTab | null {
+	for (const match of useMatches()) {
+		const handle = match.handle as Partial<PhoneAgentSettingsHandle> | undefined
+		if (handle?.phoneAgentSettingsTab) return handle.phoneAgentSettingsTab
+	}
+	return null
+}
+
 /**
  * Title, on/off badge, test call button, and the tabs shared by the three
- * phone agent settings pages.
+ * phone agent settings pages. The phone agent layout renders it, so it stays
+ * mounted while you move between those pages and the tab underline glides.
  */
 export function PhoneAgentSettingsHeader({
 	active,
@@ -72,26 +87,14 @@ export function PhoneAgentSettingsHeader({
 					</>
 				}
 			/>
-			<nav
-				aria-label={_(msg`Phone agent settings`)}
-				className="flex flex-wrap gap-1 border-b pb-2"
-			>
-				{tabs.map((tab) => (
-					<Button
-						key={tab.id}
-						variant={tab.id === active ? 'secondary' : 'ghost'}
-						size="sm"
-						render={
-							<Link
-								to={tab.to}
-								aria-current={tab.id === active ? 'page' : undefined}
-							/>
-						}
-					>
-						{tab.label}
-					</Button>
-				))}
-			</nav>
+			<WorkspaceTabBar
+				label={_(msg`Phone agent settings`)}
+				tabs={tabs.map((tab) => ({
+					label: tab.label,
+					href: tab.to,
+					isActive: tab.id === active,
+				}))}
+			/>
 		</div>
 	)
 }
