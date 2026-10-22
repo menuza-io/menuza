@@ -24,6 +24,7 @@ export {
 } from './csr.ts'
 export {
 	figures,
+	hasXmlIllegal,
 	hashedForm,
 	invoiceHash,
 	phase2Qr,
@@ -31,6 +32,8 @@ export {
 	signDocument,
 	ZATCA_DOCUMENT_KINDS,
 	ZATCA_GENESIS_PIH,
+	ZATCA_QR_TAG_MAX_BYTES,
+	xmlSafe,
 	type SignedZatcaDocument,
 	type ZatcaDocumentInput,
 	type ZatcaDocumentKind,
@@ -42,5 +45,7 @@ export {
 	fromSale,
 	fromRefund,
 	outOfScopeCents,
+	standardTaxableFor,
 	type SaleForZatca,
 } from './from-sale.ts'
+export { readSignedDocument, type ReadZatcaDocument } from './verify.ts'

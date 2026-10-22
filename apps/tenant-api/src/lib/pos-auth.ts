@@ -68,6 +68,19 @@ function hashesMatch(left: string, right: string): boolean {
 export const hashPosSecret = (secret: string): string =>
 	hmacHash(posSecretHashMessage(secret))
 
+/**
+ * True when `AUTH_HMAC_SECRET` is missing or too short on this node. That is a
+ * configuration fault, answered 503 (the till retries) rather than a 500.
+ */
+export function isPosHashUnavailable(error: unknown): boolean {
+	return (
+		error instanceof Error &&
+		error.message === 'AUTH_HMAC_SECRET is not configured'
+	)
+}
+
+export const posUnavailableResponse = () => posError(503, 'service_unavailable')
+
 export type PosAuth = { orgId: string; device: PosDevice; db: TenantDatabase }
 
 /**
@@ -97,7 +110,13 @@ export async function authenticatePosDevice(
 		.where(eq(posDevices.id, parsed.deviceId))
 		.limit(1)
 	// Hash even when the device is unknown so timing does not reveal which ids exist.
-	const presented = hashPosSecret(secret)
+	let presented: string
+	try {
+		presented = hashPosSecret(secret)
+	} catch (error) {
+		if (isPosHashUnavailable(error)) return { error: posUnavailableResponse() }
+		throw error
+	}
 	if (!device || !hashesMatch(presented, device.secretHash)) {
 		return { error: posError(401, 'invalid_device') }
 	}

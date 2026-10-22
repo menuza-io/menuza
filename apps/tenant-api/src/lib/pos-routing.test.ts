@@ -8,10 +8,12 @@ import { formatKioskDeviceSecret, randomKioskToken } from '@repo/staffing'
 import {
 	assertKioskOrgOnUsNode,
 	clearPosOrganizationCache,
+	POS_LOOKUPS_PER_IP_PER_MINUTE,
 	resolveOrgId,
 } from '../../workers/org-router.ts'
 import type { TenantApiWorkerEnv } from '../../workers/bindings.ts'
 import { createTenantApiApp } from '../app.ts'
+import { lookupActiveOrganization } from './origin.ts'
 import { isPosEnabled } from './pos-auth.ts'
 
 const orgs = vi.hoisted(
@@ -155,6 +157,68 @@ describe('POS routing in the org router', () => {
 		expect(await assertKioskOrgOnUsNode(ORG, '/kiosk/punch')).toBeNull()
 	})
 
+	it('remembers an unknown organization briefly, so made-up ids do not each ask App', async () => {
+		const lookup = vi.mocked(lookupActiveOrganization)
+		lookup.mockClear()
+		const nope = 'clw9x0a12000008l00nope'
+		expect((await assertKioskOrgOnUsNode(nope, '/pos/orders'))!.status).toBe(
+			401,
+		)
+		expect((await assertKioskOrgOnUsNode(nope, '/pos/orders'))!.status).toBe(
+			401,
+		)
+		expect(lookup).toHaveBeenCalledTimes(1)
+		// An outage is never remembered.
+		controlPlane.down = true
+		expect((await assertKioskOrgOnUsNode(ORG, '/pos/orders'))!.status).toBe(503)
+		controlPlane.down = false
+		expect(await assertKioskOrgOnUsNode(ORG, '/pos/orders')).toBeNull()
+	})
+
+	it('limits control-plane lookups per client address, never cached hits', async () => {
+		const ip = '203.0.113.9'
+		expect(await assertKioskOrgOnUsNode(ORG, '/pos/orders', ip)).toBeNull()
+		for (let i = 0; i < 40; i++)
+			expect(await assertKioskOrgOnUsNode(ORG, '/pos/orders', ip)).toBeNull()
+		const fresh = (i: number) =>
+			`clw9x0a12000008l00x${String(i).padStart(3, '0')}`
+		let limited: Response | null = null
+		for (let i = 0; i < POS_LOOKUPS_PER_IP_PER_MINUTE + 1; i++)
+			limited = await assertKioskOrgOnUsNode(fresh(i), '/pos/orders', ip)
+		expect(limited!.status).toBe(429)
+		expect(await limited!.json()).toEqual({ error: 'rate_limited' })
+		// Another address is unaffected.
+		expect(
+			(await assertKioskOrgOnUsNode(fresh(999), '/pos/orders', '198.51.100.1'))!
+				.status,
+		).toBe(401)
+	})
+
+	it('refuses an oversized pairing body before reading all of it', async () => {
+		const code = formatPosPairingCode(ORG, randomPosToken())
+		const padded = req('/pos/pair', {
+			body: JSON.stringify({ code, pad: 'x'.repeat(5_000) }),
+		})
+		expect(await resolveOrgId(padded, env)).toBeNull()
+		const declared = req('/pos/pair', {
+			body: JSON.stringify({ code }),
+			headers: { 'content-length': '999999' },
+		})
+		expect(await resolveOrgId(declared, env)).toBeNull()
+		const streamed = req('/pos/pair', {
+			body: new ReadableStream({
+				start(controller) {
+					for (let i = 0; i < 10; i++)
+						controller.enqueue(new TextEncoder().encode('x'.repeat(1_000)))
+					controller.close()
+				},
+			}),
+			// @ts-expect-error Node needs this for a streamed request body
+			duplex: 'half',
+		})
+		expect(await resolveOrgId(streamed, env)).toBeNull()
+	})
+
 	it('reads the kill switch live', () => {
 		expect(isPosEnabled()).toBe(true)
 		for (const off of ['false', '0', 'off', 'NO', 'disabled']) {
@@ -220,6 +284,20 @@ describe('POS CORS', () => {
 		]) {
 			expect((await preflight('/pos/orders', origin)).status).toBe(403)
 		}
+	})
+
+	it('treats an unset NODE_ENV as production', async () => {
+		vi.stubEnv('NODE_ENV', undefined)
+		expect(
+			(await preflight('/pos/orders', 'http://localhost:3010')).status,
+		).toBe(403)
+		expect((await preflight('/pos/orders', POS)).status).toBe(204)
+	})
+
+	it('forgets a POS origin as soon as it is removed from the environment', async () => {
+		expect((await preflight('/pos/orders', POS)).status).toBe(204)
+		vi.stubEnv('POS_ORIGINS', undefined)
+		expect((await preflight('/pos/orders', POS)).status).toBe(403)
 	})
 
 	it('allows local development hosts only outside production', async () => {

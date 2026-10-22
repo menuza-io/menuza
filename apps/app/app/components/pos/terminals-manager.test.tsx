@@ -442,6 +442,31 @@ describe('TerminalsManager', () => {
 		).toBeTruthy()
 	}, 12_000)
 
+	it('does not call a removed code paired', async () => {
+		const api = stubApi()
+		render()
+		await screen.findByText('No terminals yet')
+		fireEvent.click(screen.getByRole('button', { name: 'Pair a terminal' }))
+		const dialog = await screen.findByRole('dialog')
+		fireEvent.change(within(dialog).getByLabelText('Name'), {
+			target: { value: 'Counter' },
+		})
+		fireEvent.click(
+			within(dialog).getByRole('button', { name: 'Create pairing code' }),
+		)
+		await within(dialog).findByLabelText('Pairing link')
+		// The code leaves the pending list, but no terminal redeemed it.
+		api.redeem()
+		expect(
+			await within(dialog).findByText(
+				'This code was removed. Make a new one.',
+				{},
+				{ timeout: 6000 },
+			),
+		).toBeTruthy()
+		expect(within(dialog).queryByText('Terminal paired')).toBeNull()
+	}, 12_000)
+
 	it('explains a load failure and lets you retry', async () => {
 		vi.stubGlobal(
 			'fetch',

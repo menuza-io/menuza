@@ -9,7 +9,16 @@ import {
 	type PosFiscalChainHead,
 	posRefundTaxCents,
 } from '@repo/common/pos-fiscal'
+import { formatPosPairingCode, randomPosToken } from '@repo/common/pos-orders'
 import { brand } from '@repo/config/brand'
+import {
+	fromHex,
+	fromSale,
+	readCertificate,
+	signDocument,
+	ZATCA_GENESIS_PIH,
+	type ZatcaSeller,
+} from '@repo/zatca'
 import {
 	destroyTenantDb,
 	customers,
@@ -22,6 +31,7 @@ import {
 	posFiscalDocuments,
 	posHeldUploads,
 	posOrderLines,
+	posOrderTransfers,
 	posZatcaSubmissions,
 	posZatcaUnits,
 	posOrderRevisions,
@@ -30,7 +40,7 @@ import {
 	posPayments,
 	provisionTenantDb,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -42,7 +52,7 @@ import { eraseLinkedUser } from '../services/staff-internal-service.ts'
 import { erasePerson } from '../services/person-erasure-service.ts'
 import { runStaffTickForOrg } from '../services/staff-tick-service.ts'
 import { reportDueZatca } from '../services/zatca-service.ts'
-import { seal as sealForTest } from '../lib/zatca-seal.ts'
+import { sealContext, seal as sealForTest } from '../lib/zatca-seal.ts'
 import { operatorPosRoutes } from './operator-pos.ts'
 import { clearPosMenuCache, posRoutes } from './pos.ts'
 
@@ -1977,6 +1987,13 @@ describe('POS terminals: pairing, upload and sync', () => {
 		})
 
 		it("a terminal paired to a workplace signs in that workplace's people", async () => {
+			// A workplace is real once someone is assigned to it.
+			await addStaff({
+				first: 'Pat',
+				last: 'Io',
+				pin: '5555',
+				scopeId: 'patio',
+			})
 			const created = await operator('POST', '/pairing-codes', {
 				body: { label: 'Patio', terminalCode: 'PAT', scopeId: 'patio' },
 			})
@@ -1986,12 +2003,6 @@ describe('POS terminals: pairing, upload and sync', () => {
 				device: { scopeId: string }
 			}
 			expect(paired.device.scopeId).toBe('patio')
-			await addStaff({
-				first: 'Pat',
-				last: 'Io',
-				pin: '5555',
-				scopeId: 'patio',
-			})
 			await addStaff({ first: 'Main', last: 'Room', pin: '6666' })
 			expect((await signIn(paired.deviceSecret, '5555')).status).toBe(200)
 			expect((await signIn(paired.deviceSecret, '6666')).status).toBe(401)
@@ -3261,14 +3272,35 @@ describe('POS terminals: pairing, upload and sync', () => {
 				const sale = wireOrder({
 					payments: [{ amountCents: wireOrder().totals.totalCents }],
 				})
+				const signed = signDocument(
+					fromSale(
+						{
+							lines: sale.lines,
+							taxRatePercent: 15,
+							taxInclusive: false,
+							totals: sale.totals,
+							payments: sale.payments.map((p) => ({ method: p.method })),
+						},
+						{
+							id: 'T1-0001-20261021',
+							uuid: crypto.randomUUID(),
+							issuedAt: new Date(),
+							counter: 1,
+							previousHash: ZATCA_GENESIS_PIH,
+							seller: credentials.seller as ZatcaSeller,
+						},
+					),
+					fromHex(credentials.privateKeyHex),
+					readCertificate(credentials.certificate),
+				)
 				const zatcaDoc = {
 					invoiceNumber: 'T1-0001-20261021',
-					uuid: crypto.randomUUID(),
-					invoiceHash: Buffer.alloc(32, 7).toString('base64'),
-					xml: Buffer.from('<Invoice/>').toString('base64'),
-					qr: 'AQI=',
-					totalCents: sale.totals.totalCents,
-					taxCents: sale.totals.taxCents,
+					uuid: signed.uuid,
+					invoiceHash: signed.invoiceHash,
+					xml: signed.xmlBase64,
+					qr: signed.qr,
+					totalCents: signed.totalCents,
+					taxCents: signed.taxCents,
 				}
 				const doc = issuePosFiscalDocument(
 					newPosFiscalChain(crypto.randomUUID()),
@@ -3361,7 +3393,10 @@ describe('POS terminals: pairing, upload and sync', () => {
 				status: 'active',
 				privateKeySealed: 'v1.x.y.z',
 				productionToken: 'dG9rZW4=',
-				productionSecretSealed: sealForTest('s'),
+				productionSecretSealed: sealForTest(
+					's',
+					sealContext(device.id, 'production_secret'),
+				),
 			})
 			const base = {
 				deviceId: device.id,
@@ -3558,6 +3593,565 @@ describe('POS terminals: pairing, upload and sync', () => {
 			})
 			const result = await runStaffTickForOrg(ORG_A, { db })
 			expect(result).toMatchObject({ status: 'skipped', needsFollowUp: true })
+		})
+	})
+
+	describe('review hardening', () => {
+		const paidOrder = (number: string, extra: Record<string, unknown> = {}) => {
+			const o = wireOrder({ number })
+			return {
+				...o,
+				...extra,
+				status: 'paid' as const,
+				payments: [
+					{
+						id: crypto.randomUUID(),
+						method: 'cash' as const,
+						amountCents: o.totals.totalCents,
+						tenderedCents: o.totals.totalCents,
+						at: new Date().toISOString(),
+						staff: null,
+						reference: null,
+					},
+				],
+			}
+		}
+		const withDoc = (
+			o: ReturnType<typeof paidOrder>,
+			head: PosFiscalChainHead,
+		) => {
+			const issued = issuePosFiscalDocument(head, {
+				kind: 'invoice',
+				docId: o.id,
+				orderId: o.id,
+				at: new Date().toISOString(),
+				currency: 'USD',
+				totalCents: o.totals.totalCents,
+				taxCents: o.totals.taxCents,
+			})
+			return { order: { ...o, fiscal: [issued.document] }, head: issued.head }
+		}
+		const reviewOf = async (response: Response) =>
+			((await response.json()) as { order: { reviewReason: string | null } })
+				.order.reviewReason
+		const remove = (deviceId: string) =>
+			operator('DELETE', `/terminals/${deviceId}`)
+
+		describe("a removed terminal's tabs", () => {
+			it('are continued by the same terminal paired again, with a transfer on record', async () => {
+				const first = await pair({ terminalCode: 'T1' })
+				const id = crypto.randomUUID()
+				expect(
+					(await upload(first.deviceSecret, wireOrder({ id }))).status,
+				).toBe(201)
+				expect((await remove(first.device.id)).status).toBe(200)
+				const again = await pair({ terminalCode: 'T1' })
+				const next = await upload(
+					again.deviceSecret,
+					wireOrder({ id, revision: 2, lines: [BURGER, FRIES] }),
+				)
+				expect(next.status).toBe(200)
+				const db = await getTenantDb(ORG_A)
+				const [row] = await db
+					.select()
+					.from(posOrders)
+					.where(eq(posOrders.id, id))
+				expect(row!.deviceId).toBe(again.device.id)
+				const transfers = await db
+					.select()
+					.from(posOrderTransfers)
+					.where(eq(posOrderTransfers.orderId, id))
+				expect(transfers).toEqual([
+					expect.objectContaining({
+						fromDeviceId: first.device.id,
+						toDeviceId: again.device.id,
+						revision: 1,
+					}),
+				])
+			})
+
+			it('are held for any other terminal, which must take the tab over explicitly', async () => {
+				const first = await pair({ terminalCode: 'T1' })
+				const id = crypto.randomUUID()
+				await upload(first.deviceSecret, wireOrder({ id }))
+				await remove(first.device.id)
+				const other = await pair({ terminalCode: 'T2' })
+				await expectHeld(
+					await upload(
+						other.deviceSecret,
+						wireOrder({ id, revision: 2, number: 'T2-0001' }),
+					),
+					'order_owned_by_removed_terminal',
+				)
+				const db = await getTenantDb(ORG_A)
+				const [row] = await db
+					.select()
+					.from(posOrders)
+					.where(eq(posOrders.id, id))
+				expect(row).toMatchObject({ deviceId: first.device.id, revision: 1 })
+				const claimed = await post(
+					`/tabs/${id}/claim`,
+					{ revision: 1 },
+					other.deviceSecret,
+				)
+				expect(claimed.status).toBe(200)
+				expect(
+					await db
+						.select()
+						.from(posOrderTransfers)
+						.where(eq(posOrderTransfers.orderId, id)),
+				).toHaveLength(1)
+			})
+
+			it('are held for a terminal with the same code at another location', async () => {
+				const first = await pair({ terminalCode: 'T1', locationId: 'loc-1' })
+				const id = crypto.randomUUID()
+				await upload(first.deviceSecret, wireOrder({ id }))
+				await remove(first.device.id)
+				const elsewhere = await pair({ terminalCode: 'T1', locationId: null })
+				await expectHeld(
+					await upload(elsewhere.deviceSecret, wireOrder({ id, revision: 2 })),
+					'order_owned_by_removed_terminal',
+				)
+			})
+		})
+
+		describe('fiscal chains belong to the terminal that started them', () => {
+			it("flags a document filed under another terminal's chain, without spoiling the owner's checks", async () => {
+				const a = await pair({ terminalCode: 'TA' })
+				const b = await pair({ terminalCode: 'TB' })
+				const chainId = crypto.randomUUID()
+				const one = withDoc(paidOrder('TA-0001'), newPosFiscalChain(chainId))
+				expect(await reviewOf(await upload(a.deviceSecret, one.order))).toBe(
+					null,
+				)
+				// B takes A's next counter, correctly linked, and a later one.
+				const squat = withDoc(paidOrder('TB-0001'), one.head)
+				expect(await reviewOf(await upload(b.deviceSecret, squat.order))).toBe(
+					'fiscal:chain_owner_mismatch',
+				)
+				const far = withDoc(paidOrder('TB-0002'), {
+					chainId,
+					counter: 8,
+					hash: 'c'.repeat(64),
+				})
+				await upload(b.deviceSecret, far.order)
+				// A's real counter 2 is neither a reused counter nor a break.
+				const two = withDoc(paidOrder('TA-0002'), one.head)
+				expect(await reviewOf(await upload(a.deviceSecret, two.order))).toBe(
+					null,
+				)
+				const db = await getTenantDb(ORG_A)
+				const docs = await db
+					.select()
+					.from(posFiscalDocuments)
+					.where(eq(posFiscalDocuments.chainId, chainId))
+				expect(
+					docs.filter((d) => d.deviceId === b.device.id).map((d) => d.problem),
+				).toEqual(['chain_owner_mismatch', 'chain_owner_mismatch'])
+				// A's recovery head and the gap list ignore B's documents.
+				const me = (await (
+					await app.request('/pos/me', {
+						headers: { authorization: `Bearer ${a.deviceSecret}` },
+					})
+				).json()) as {
+					fiscalChains: Array<{ chainId: string; counter: number }>
+				}
+				expect(me.fiscalChains).toEqual([
+					expect.objectContaining({ chainId, counter: 2 }),
+				])
+				expect(await fiscalChainGaps(db, Date.now() + 3 * 86_400_000)).toEqual(
+					[],
+				)
+			})
+
+			it("never flags another terminal's order from a link check", async () => {
+				const a = await pair({ terminalCode: 'TA' })
+				const b = await pair({ terminalCode: 'TB' })
+				const chainId = crypto.randomUUID()
+				// B's chain: counter 2 arrives first and is clean on its own.
+				const bTwo = withDoc(paidOrder('TB-0001'), {
+					chainId,
+					counter: 1,
+					hash: 'd'.repeat(64),
+				})
+				expect(await reviewOf(await upload(b.deviceSecret, bTwo.order))).toBe(
+					null,
+				)
+				// A files counter 1 under B's chain: A's order is flagged, B's is not touched.
+				const aOne = withDoc(paidOrder('TA-0001'), newPosFiscalChain(chainId))
+				expect(await reviewOf(await upload(a.deviceSecret, aOne.order))).toBe(
+					'fiscal:chain_owner_mismatch',
+				)
+				const db = await getTenantDb(ORG_A)
+				const [bRow] = await db
+					.select()
+					.from(posOrders)
+					.where(eq(posOrders.id, bTwo.order.id))
+				expect(bRow!.reviewReason).toBeNull()
+			})
+
+			it('lets a terminal paired again continue its own chain', async () => {
+				const first = await pair({ terminalCode: 'T1' })
+				const chainId = crypto.randomUUID()
+				const one = withDoc(paidOrder('T1-0001'), newPosFiscalChain(chainId))
+				await upload(first.deviceSecret, one.order)
+				await remove(first.device.id)
+				const again = await pair({ terminalCode: 'T1' })
+				const two = withDoc(paidOrder('T1-0002'), one.head)
+				expect(
+					await reviewOf(await upload(again.deviceSecret, two.order)),
+				).toBe(null)
+				const reused = withDoc(paidOrder('T1-0003'), one.head)
+				expect(
+					await reviewOf(await upload(again.deviceSecret, reused.order)),
+				).toBe('fiscal:counter_reused')
+			})
+		})
+
+		describe('held uploads keep no personal data', () => {
+			it('strips guest, table and staff names from a held order, keeping ids and the bill', async () => {
+				const { deviceSecret } = await pair()
+				const order = {
+					...wireOrder({ staff: { id: 'staff-bob-1', name: 'Bob Builder' } }),
+					customerName: 'Alice Guest',
+					tableLabel: 'Window seat for Alice',
+					totals: { ...wireOrder().totals, totalCents: 1 },
+				}
+				await expectHeld(await upload(deviceSecret, order), 'invalid_request')
+				const db = await getTenantDb(ORG_A)
+				const [held] = await db.select().from(posHeldUploads)
+				expect(held!.payload).not.toContain('Alice')
+				expect(held!.payload).not.toContain('Bob Builder')
+				expect(held!.payload).toContain('staff-bob-1')
+				expect(held!.payload).toContain('Burger')
+				expect(JSON.parse(held!.payload)).toMatchObject({
+					customerName: null,
+					tableLabel: null,
+					staff: { id: 'staff-bob-1' },
+				})
+			})
+
+			it('redacts, shortens and dedupes a body that is not JSON, and caps how many are kept', async () => {
+				const { deviceSecret } = await pair()
+				const broken = `{"customerName":"Alice Guest","staff":{"id":"s-1","name":"Bob Builder"},"note":"${'x'.repeat(10_000)}`
+				await expectHeld(await post('/orders', broken, deviceSecret))
+				await expectHeld(await post('/orders', broken, deviceSecret))
+				const db = await getTenantDb(ORG_A)
+				const rows = await db.select().from(posHeldUploads)
+				expect(rows).toHaveLength(1)
+				expect(rows[0]!.payload).not.toContain('Alice')
+				expect(rows[0]!.payload).not.toContain('Bob')
+				expect(rows[0]!.payload).toContain('"id":"s-1"')
+				expect(rows[0]!.payload.length).toBeLessThanOrEqual(4_000)
+				for (let i = 1; i < 20; i++)
+					await expectHeld(await post('/orders', `{"n":${i}`, deviceSecret))
+				const over = await post('/orders', '{"n":99', deviceSecret)
+				expect(over.status).toBe(429)
+				expect(await db.select().from(posHeldUploads)).toHaveLength(20)
+			})
+
+			it('keeps a held payload under 64 KB, dropping signed XML first', async () => {
+				const { deviceSecret } = await pair()
+				const big = {
+					...wireOrder(),
+					fiscal: 'x',
+					lines: Array.from({ length: 50 }, () => ({
+						...wireLine(BURGER),
+						instructions: 'y'.repeat(2_000),
+					})),
+				}
+				await expectHeld(await upload(deviceSecret, big), 'invalid_request')
+				const db = await getTenantDb(ORG_A)
+				const [held] = await db.select().from(posHeldUploads)
+				expect(held!.payload.length).toBeLessThanOrEqual(64_000)
+			})
+
+			it('stops holding when the organization already has too many waiting', async () => {
+				const { deviceSecret } = await pair()
+				const db = await getTenantDb(ORG_A)
+				await db.run(
+					sql`WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 5000)
+						INSERT INTO pos_held_uploads (id, device_id, error, payload, received_at)
+						SELECT 'h' || i, 'device-' || (i % 50), 'invalid_request', '{}', 0 FROM n`,
+				)
+				const r = await upload(deviceSecret, { ...wireOrder(), lines: [] })
+				expect(r.status).toBe(429)
+			})
+
+			it('the tick deletes settled records after 30 days and redacts any kept before redaction', async () => {
+				const db = await getTenantDb(ORG_A)
+				const old = Date.now() - 31 * 86_400_000
+				await db.insert(posHeldUploads).values([
+					{
+						id: 'settled-old',
+						deviceId: 'd',
+						error: 'order_closed',
+						payload: '{}',
+						receivedAt: old,
+						resolvedAt: old,
+						resolvedBy: 'u',
+					},
+					{
+						id: 'settled-recent',
+						deviceId: 'd',
+						error: 'order_closed',
+						payload: '{}',
+						receivedAt: old,
+						resolvedAt: Date.now(),
+						resolvedBy: 'u',
+					},
+					{
+						id: 'legacy',
+						deviceId: 'd',
+						error: 'order_closed',
+						payload: JSON.stringify({
+							customerName: 'Alice Guest',
+							customerPhone: '+15550001111',
+						}),
+						receivedAt: old,
+					},
+				])
+				await runStaffTickForOrg(ORG_A, { db })
+				const rows = await db.select().from(posHeldUploads)
+				expect(rows.map((r) => r.id).sort()).toEqual([
+					'legacy',
+					'settled-recent',
+				])
+				expect(JSON.stringify(rows)).not.toContain('Alice')
+				expect(JSON.stringify(rows)).not.toContain('5550001111')
+			})
+
+			it('erasing a staff member or a customer reaches held payloads kept before redaction', async () => {
+				const db = await getTenantDb(ORG_A)
+				const ana = await addStaff({ first: 'Ana', last: 'K' })
+				await db
+					.update(staffMembers)
+					.set({ userId: 'user-ana-held' })
+					.where(eq(staffMembers.id, ana))
+				const [customer] = await db
+					.insert(customers)
+					.values({ phone: '+15550002222', name: 'Sam' })
+					.returning()
+				await db.insert(posHeldUploads).values([
+					{
+						id: 'legacy-staff',
+						deviceId: 'd',
+						error: 'order_closed',
+						payload: JSON.stringify({ staff: { id: ana, name: 'Ana K.' } }),
+						receivedAt: Date.now(),
+					},
+					{
+						id: 'legacy-phone',
+						deviceId: 'd',
+						error: 'order_closed',
+						payload: JSON.stringify({
+							customerName: 'Sam Guest',
+							customerPhone: '+15550002222',
+						}),
+						receivedAt: Date.now(),
+					},
+				])
+				await eraseLinkedUser(db, { userId: 'user-ana-held' })
+				await erasePerson(db, { customerId: customer!.id }, { actorId: 'test' })
+				const dump = JSON.stringify(await db.select().from(posHeldUploads))
+				expect(dump).not.toContain('Ana K.')
+				expect(dump).toContain(ana)
+				expect(dump).not.toContain('Sam Guest')
+				expect(dump).not.toContain('5550002222')
+			})
+		})
+
+		describe('menu review of later revisions', () => {
+			it('checks again when the lines stay but the tax or the discount changes', async () => {
+				const { deviceSecret } = await pair()
+				const id = crypto.randomUUID()
+				const first = wireOrder({ id })
+				expect(await reviewOf(await upload(deviceSecret, first))).toBeNull()
+				const t = first.totals
+				const lowerTax = {
+					...first,
+					revision: 2,
+					totals: {
+						...t,
+						taxCents: t.taxCents - 50,
+						totalCents: t.totalCents - 50,
+					},
+				}
+				await upload(deviceSecret, lowerTax)
+				const db = await getTenantDb(ORG_A)
+				const [revision] = await db
+					.select()
+					.from(posOrderRevisions)
+					.where(eq(posOrderRevisions.revision, 2))
+				expect(revision!.reviewReason).toBe('tax_mismatch')
+			})
+
+			it('flags a discount of more than half the bill', async () => {
+				const { deviceSecret } = await pair()
+				const o = wireOrder()
+				const discount = Math.ceil(o.totals.subtotalCents * 0.6)
+				const r = await upload(deviceSecret, {
+					...o,
+					adjustments: [
+						{
+							id: 'adj-1',
+							kind: 'discount',
+							label: 'Comp',
+							amountCents: discount,
+						},
+					],
+					totals: {
+						...o.totals,
+						adjustmentCents: discount,
+						totalCents: o.totals.totalCents - discount,
+					},
+				})
+				expect(await reviewOf(r)).toBe('large_discount')
+				const small = wireOrder({ number: 'T1-0002' })
+				const r2 = await upload(deviceSecret, {
+					...small,
+					adjustments: [
+						{ id: 'adj-2', kind: 'discount', label: 'Promo', amountCents: 100 },
+					],
+					totals: {
+						...small.totals,
+						adjustmentCents: 100,
+						totalCents: small.totals.totalCents - 100,
+					},
+				})
+				expect(await reviewOf(r2)).toBeNull()
+			})
+		})
+
+		it('holds the same revision sent again with different contents', async () => {
+			const { deviceSecret } = await pair()
+			const order = wireOrder()
+			expect((await upload(deviceSecret, order)).status).toBe(201)
+			const replay = await upload(deviceSecret, order)
+			expect(((await replay.json()) as { result: string }).result).toBe(
+				'replay',
+			)
+			await expectHeld(
+				await upload(deviceSecret, {
+					...order,
+					lines: [wireLine(BURGER), wireLine(FRIES)],
+					totals: wireOrder({ lines: [BURGER, FRIES] }).totals,
+				}),
+				'revision_conflict',
+			)
+		})
+
+		describe('retention on the regional tick', () => {
+			it('clears names on closed orders after 30 days and on abandoned open tabs after 90', async () => {
+				const { deviceSecret } = await pair()
+				const total = wireOrder().totals.totalCents
+				const closed = {
+					...wireOrder({ payments: [{ amountCents: total }] }),
+					customerName: 'Closed Sam',
+				}
+				const abandoned = {
+					...wireOrder({ number: 'T1-0002' }),
+					customerName: 'Abandoned Ann',
+				}
+				const recent = {
+					...wireOrder({ number: 'T1-0003' }),
+					customerName: 'Recent Rob',
+				}
+				for (const o of [closed, abandoned, recent])
+					await upload(deviceSecret, o)
+				const db = await getTenantDb(ORG_A)
+				const ago = (days: number) => Date.now() - days * 86_400_000
+				await db
+					.update(posOrders)
+					.set({ updatedAt: ago(31) })
+					.where(eq(posOrders.id, closed.id))
+				await db
+					.update(posOrders)
+					.set({ updatedAt: ago(91) })
+					.where(eq(posOrders.id, abandoned.id))
+				await db
+					.update(posOrders)
+					.set({ updatedAt: ago(60) })
+					.where(eq(posOrders.id, recent.id))
+				// POS is off: no terminal checks in, the tick still purges.
+				vi.stubEnv('POS_ENABLED', 'false')
+				await runStaffTickForOrg(ORG_A, { db })
+				const names = Object.fromEntries(
+					(await db.select().from(posOrders)).map((o) => [o.id, o.guestName]),
+				)
+				expect(names).toEqual({
+					[closed.id]: null,
+					[abandoned.id]: null,
+					[recent.id]: 'Recent Rob',
+				})
+			})
+		})
+
+		describe('pairing codes name real places', () => {
+			const create = (body: Record<string, unknown>) =>
+				operator('POST', '/pairing-codes', {
+					body: { label: 'Bar', terminalCode: 'B1', ...body },
+				})
+
+			it('refuses a workplace nobody is assigned to, and a location the organization does not have', async () => {
+				const scope = await create({ scopeId: 'nowhere' })
+				expect(scope.status).toBe(422)
+				expect(await scope.json()).toMatchObject({ error: 'invalid_scope' })
+				const location = await create({ locationId: 'loc-typo' })
+				expect(location.status).toBe(422)
+				expect(await location.json()).toMatchObject({
+					error: 'invalid_location',
+				})
+				expect((await create({ locationId: 'loc-2' })).status).toBe(201)
+				await addStaff({ scopeId: 'patio' })
+				expect(
+					(await create({ terminalCode: 'B2', scopeId: 'patio' })).status,
+				).toBe(201)
+			})
+
+			it('trusts the manager when the catalog cannot be reached', async () => {
+				contextStatus = 503
+				expect((await create({ locationId: 'loc-typo' })).status).toBe(201)
+			})
+		})
+
+		describe('configuration faults', () => {
+			it('answers 503, not 500, when AUTH_HMAC_SECRET is missing or short', async () => {
+				const { deviceSecret } = await pair()
+				vi.stubEnv('AUTH_HMAC_SECRET', 'short')
+				const me = await app.request('/pos/me', {
+					headers: { authorization: `Bearer ${deviceSecret}` },
+				})
+				expect(me.status).toBe(503)
+				expect(await me.json()).toEqual({ error: 'service_unavailable' })
+				const paired = await post('/pair', {
+					code: formatPosPairingCode(ORG_A, randomPosToken()),
+				})
+				expect(paired.status).toBe(503)
+				const code = await operator('POST', '/pairing-codes', {
+					body: { label: 'Bar', terminalCode: 'B9' },
+				})
+				expect(code.status).toBe(503)
+			})
+		})
+
+		it('removing a terminal revokes its ZATCA unit', async () => {
+			const { device } = await pair()
+			const db = await getTenantDb(ORG_A)
+			await db.insert(posZatcaUnits).values({
+				deviceId: device.id,
+				environment: 'sandbox',
+				status: 'active',
+				privateKeySealed: 'sealed',
+			})
+			expect((await remove(device.id)).status).toBe(200)
+			const [unit] = await db
+				.select()
+				.from(posZatcaUnits)
+				.where(eq(posZatcaUnits.deviceId, device.id))
+			expect(unit).toMatchObject({ status: 'revoked' })
+			expect(unit!.revokedAt).toEqual(expect.any(Number))
 		})
 	})
 })

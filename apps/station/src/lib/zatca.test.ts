@@ -13,10 +13,16 @@ import {
 	ZATCA_GENESIS_PIH,
 } from '@repo/zatca'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useClock } from './clock.ts'
 import { db } from './db.ts'
 import { createOrder, refundOrder, type OrderDraft } from './orders.ts'
 import { toWireOrder } from './outbox.ts'
-import { invoiceId, syncZatcaUnit } from './zatca.ts'
+import {
+	forgetZatcaUnit,
+	invoiceId,
+	syncZatcaUnit,
+	zatcaUnit,
+} from './zatca.ts'
 
 let openssl = true
 try {
@@ -106,6 +112,7 @@ beforeEach(async () => {
 	await db.orders.clear()
 	await db.meta.clear()
 	await db.shifts.clear()
+	useClock.setState({ skewMs: null })
 })
 
 describe.skipIf(!openssl)('signing for ZATCA on the till', () => {
@@ -215,6 +222,56 @@ describe.skipIf(!openssl)('signing for ZATCA on the till', () => {
 		expect(posOrderRequestSchema.safeParse(toWireOrder(refunded)).success).toBe(
 			true,
 		)
+	})
+})
+
+describe.skipIf(!openssl)(
+	'a tablet clock the server has shown to be wrong',
+	() => {
+		it('refuses to sign (and so to close the sale), and saves nothing half-done', async () => {
+			await db.meta.put({
+				key: 'zatca:unit',
+				value: {
+					environment: 'sandbox',
+					privateKeyHex: toHex(generatePrivateKey()),
+					certificate: certificateToken(),
+					seller,
+				},
+			})
+			useClock.setState({ skewMs: 5 * 60_000 })
+			await expect(createOrder(draft, cash(2300))).rejects.toThrow(
+				/clock is about 5 minutes off/,
+			)
+			expect(await db.orders.count()).toBe(0)
+			// Within the limit, signing goes ahead.
+			useClock.setState({ skewMs: 60_000 })
+			expect(
+				(await createOrder(draft, cash(2300))).fiscal[0]!.zatca,
+			).toBeTruthy()
+		})
+
+		it('does not block a till that is not a ZATCA unit', async () => {
+			useClock.setState({ skewMs: 60 * 60_000 })
+			expect((await createOrder(draft, cash(2300))).fiscal[0]!.zatca).toBeNull()
+		})
+	},
+)
+
+describe('a terminal that is unpaired or removed', () => {
+	it('forgets its signing key, certificate and chain hash', async () => {
+		await db.meta.put({
+			key: 'zatca:unit',
+			value: {
+				environment: 'sandbox',
+				privateKeyHex: 'a'.repeat(64),
+				certificate: 'cert',
+				seller,
+			},
+		})
+		await db.meta.put({ key: 'zatca:pih', value: 'C'.repeat(43) + '=' })
+		await forgetZatcaUnit()
+		expect(await zatcaUnit()).toBeNull()
+		expect(await db.meta.get('zatca:pih')).toBeUndefined()
 	})
 })
 

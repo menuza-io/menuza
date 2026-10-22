@@ -19,7 +19,7 @@ paired devices or offline orders.
 | `packages/common/src/pos-fiscal.ts`          | Fiscal document chain (SHA-256, synchronous) and the ZATCA Phase 1 QR payload.                                                                               |
 | `packages/common/src/pos-reports.ts`         | The sales summary behind the till's Z report and the server's shift and day reports.                                                                         |
 | `packages/zatca` (`@repo/zatca`)             | ZATCA Phase 2: EGS keys and CSR, UBL simplified invoices and credit and debit notes, the XAdES signature, the Phase 2 QR code, and the Fatoora API client.   |
-| `packages/tenant-db` (migration 0020)        | `pos_*` tables, their append-only triggers, and phone pickup details.                                                                                        |
+| `packages/tenant-db` (migrations 0020, 0021) | `pos_*` tables, their append-only triggers, and phone pickup details.                                                                                        |
 | `apps/tenant-api/src/routes/pos.ts`          | Terminal routes: `/pos/pair`, `/pos/me`, `/pos/sign-in`, `/pos/orders`, `/pos/shifts`, `/pos/tabs`, `/pos/tabs/:id/claim`, `/pos/zatca`.                     |
 | `apps/tenant-api/src/routes/operator-pos.ts` | Manager routes under `/operator/pos` (terminals, pairing codes, orders, revisions, held uploads, staff and managers, shifts, day reports, ZATCA).            |
 | `apps/app` → Settings → Terminals            | Pair and remove terminals, PIN sign-in, shifts, business day, till managers, held uploads, the day report, ZATCA settings and onboarding.                    |
@@ -38,16 +38,26 @@ already took money for.
   not a wrong charge. `price_mismatch`, `tax_mismatch` and `catalog:*` mean the
   till had a fresh menu. Other reasons: `unverified` (menu unreachable),
   `clock_skew`, `missing_staff`, `unknown_staff`, `inactive_staff`,
-  `approver_not_manager`, `fiscal:*`.
+  `approver_not_manager`, `large_discount` (a discount over half the subtotal),
+  `fiscal:*`. A later revision reuses the previous menu check only when its
+  lines, adjustments and totals are all unchanged; otherwise it is checked
+  again.
 - **Held uploads.** An upload the server cannot apply is stored in
   `pos_held_uploads` and answered `202 { result: 'held' }`. This covers an
   unreadable contract (an out-of-date till or node), a change to a closed bill,
-  a tab that moved, and a wrong location. The till stops resending it, and
-  managers settle it on the Terminals page. Only `number_conflict` is answered
-  409, and the till renumbers. A terminal with 1000 unsettled held uploads gets
-  429 `held_limit` and retries later. Phone callback numbers and phone-order
-  customer names are removed from held payloads; the bill and money remain
-  available for review.
+  a tab that moved, a wrong location, a removed terminal's tab continued by
+  another terminal (`order_owned_by_removed_terminal`), and a different body
+  sent again at the same revision (`revision_conflict`). The till stops
+  resending it, and managers settle it on the Terminals page. Only
+  `number_conflict` is answered 409, and the till renumbers.
+  - **Limits.** 64 KB per entry (signed ZATCA XML is dropped first), 20
+    unreadable bodies of at most 4 KB per terminal, 1000 unsettled per terminal
+    and 5000 per organization; beyond that the terminal gets 429 `held_limit`
+    and retries later.
+  - **Personal data.** Guest and customer names, callback numbers and table
+    labels are removed from held payloads, and staff are kept as ids only; the
+    bill and money remain available for review. Settled held uploads are deleted
+    after 30 days; unsettled ones are kept, because they hold a sale.
 
 ## Staff-entered phone orders
 
@@ -147,6 +157,11 @@ because an IndexedDB transaction cannot await `crypto.subtle`.
     upload out of order.
   - Counters missing for more than a day are listed at
     `GET /operator/pos/fiscal/gaps`.
+  - A chain belongs to the terminal that stored its first document (or a removed
+    terminal with the same code and location). A document another terminal files
+    under that chain is kept with the problem `chain_owner_mismatch` and its
+    order flagged `fiscal:chain_owner_mismatch`; it never moves the owner's
+    head, gaps or review reasons.
 - **Recovery.** `/pos/me` returns the chain heads the server holds, so a till
   whose storage was lost continues its chain instead of starting another.
 - **Receipts.** When the location has a VAT number, the receipt is a simplified
@@ -178,21 +193,33 @@ For restaurants in Saudi Arabia, each terminal can be an **EGS unit**.
   document's invoice hash, starting from ZATCA's genesis value. The signed XML,
   its hash and the Phase 2 QR (nine tags) ride on the fiscal document.
 - **Reporting.** The server queues each signed document
-  (`pos_zatca_submissions`, append-only) and reports it with the production
-  CSID: right after the upload, and on every hourly tick. Outcomes:
+  (`pos_zatca_submissions`, append-only, one per terminal and counter) and
+  reports it with the production CSID: right after the upload, and on every
+  hourly tick. Before queueing, it reads the signed XML back (number, UUID,
+  type, ICV, PIH, totals, VAT number) and recomputes the invoice hash; a
+  document that disagrees with what the till claimed is kept as `rejected` with
+  "Not reported: …" and never sent. Reporting runs claim their documents
+  atomically, so the upload and the tick never report the same one twice.
+  Outcomes:
   - `reported`: accepted.
   - `warning`: accepted with warnings.
-  - `rejected`: refused; ZATCA's reason is kept.
-  - Network errors and 5xx responses are retried with backoff.
+  - `rejected`: refused (including a 2xx whose validation status is an error);
+    ZATCA's reason is kept.
+  - Network errors, 5xx, 408 and 425 are retried with backoff.
+  - 401 (a revoked or expired CSID) is recorded on the unit (`authFailedAt`,
+    last error); its documents are retried hourly until it is onboarded again.
 
-  The Terminals page shows the counts and the rejections, and has a "Report now"
-  button.
+  Documents pending for over 20 hours (ZATCA expects them within 24) are logged
+  and counted as `overdue`. The Terminals page shows the counts and the
+  rejections, and has a "Report now" button.
 
-- **Amounts.** Lines are net. VAT-inclusive prices are converted per unit. The
-  document's VAT is computed from its own standard-rated taxable amount, so
-  ZATCA's rules BR-S-09 and BR-CO-17 hold exactly, and any halala between that
-  and what the guest paid goes into `PayableRoundingAmount`. The receipt of a
-  signed invoice prints that VAT, to match its QR code.
+- **Amounts.** Lines are net (unit net × quantity). With VAT-inclusive prices
+  the taxable amount comes from the whole discounted bill, so the document's VAT
+  equals the bill's VAT (`totals.taxCents`, and `posRefundTaxCents` for a credit
+  note) while BR-S-09 and BR-CO-17 still hold. Per-unit rounding is evened out
+  by one document-level allowance or charge, and any halala between that and
+  what the guest paid goes into `PayableRoundingAmount`. The receipt of a signed
+  invoice prints that VAT, to match its QR code.
   - Tips and untaxed options are category O (`VATEX-SA-OOS`).
   - A discount is split between taxed and untaxed amounts in proportion.
   - A refund is split the same way as the sale it refunds, so no VAT is claimed
@@ -203,8 +230,22 @@ For restaurants in Saudi Arabia, each terminal can be an **EGS unit**.
 - **Recovery.** `/pos/me` reports the hash of the last document the server holds
   from the terminal, so a till whose storage was lost continues the PIH chain as
   well as the counter.
-- **Secrets at rest.** Signing keys and CSID secrets are sealed with
-  AES-256-GCM, using a key derived from `AUTH_HMAC_SECRET`.
+- **Seller details** are fixed on each unit when it is onboarded. After the
+  legal name or VAT number changes, onboard the units again (the overview marks
+  them `sellerOutdated`). The legal name is limited to 255 UTF-8 bytes (the QR
+  tag), and characters XML cannot carry are refused in the settings and stripped
+  from item names before signing.
+- **Secrets at rest.** Signing keys and CSID secrets are sealed with AES-256-GCM
+  (16-byte tag), bound to the unit and column. The key is `ZATCA_SEAL_KEY` when
+  set, otherwise one derived from `AUTH_HMAC_SECRET`. Set `ZATCA_SEAL_KEY` in
+  production so rotating `AUTH_HMAC_SECRET` cannot destroy onboarded units, and
+  never change or remove it while units are onboarded. Values sealed before it
+  was set still open. One unit whose secret cannot be opened does not stop the
+  others from reporting.
+- **Removing a terminal** retires its unit: the till deletes its key and the
+  server no longer hands it out or onboards it. Documents it uploaded before
+  removal are still reported, because ZATCA requires every issued invoice. Also
+  revoke the unit's CSID in the Fatoora portal.
 - **Verification.**
   - The invoice hash is checked byte for byte against `xmllint --c14n11`.
   - `openssl` accepts the CSR and the signatures.
@@ -238,6 +279,10 @@ location can list open tabs (`GET /pos/tabs`, online only) and take one over
 not taken blind). The old terminal learns of the move from `/pos/me` and keeps
 its copy as history. Anything it uploads for the tab afterwards is held.
 
+A removed terminal's tab can be continued directly only by a terminal paired
+again with the same terminal code and location; that writes a transfer row. Any
+other terminal must claim it.
+
 ## Staff sign-in
 
 PINs are the staff module's (`staff_scope_assignments.pin_lookup`, the
@@ -248,12 +293,14 @@ their sales are flagged `inactive_staff`.
 
 ## Personal data
 
-- **Guest names** (a first name or note typed by the cashier) are cleared 30
-  days after the order closes. This happens on terminal check-in
-  (`purgePosGuestNames`), because the staff tick does not run for every
-  organization.
+- **Guest names** (a first name or note typed by the cashier) and callback
+  numbers are cleared 30 days after the order closes (`purgePosGuestNames`), on
+  terminal check-in and on the hourly regional tick, so the purge runs even when
+  POS is switched off. Open tabs untouched for 90 days lose them too, never
+  before a scheduled pickup.
 - **Staff names** recorded at the till are replaced when that person is erased
   (`erasePosStaffNames`, called from `eraseLinkedUser`).
+- **Held uploads** are covered by the purge and by both erasure paths.
 
 ## Languages
 
@@ -263,16 +310,41 @@ defaults to Arabic when the restaurant's default language is Arabic. Catalogs:
 
 ## Configuration
 
-| Variable      | Where                 | Meaning                                                                                                                                                            |
-| ------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `POS_URL`     | App                   | Origin of the POS web app, for pairing links and QR codes. When empty in development, defaults to `https://pos.<brand-slug>.test:2999`; no fallback in production. |
-| `POS_ORIGINS` | every tenant-api node | Origins allowed to call `/pos/*` from a browser.                                                                                                                   |
-| `POS_ENABLED` | tenant-api            | Kill switch. `false` answers 503 on `/pos/*` and refuses new pairing codes; revoking a terminal always works. Revoke terminals first, then flip it.                |
+| Variable                   | Where                 | Meaning                                                                                                                                                            |
+| -------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POS_URL`                  | App                   | Origin of the POS web app, for pairing links and QR codes. When empty in development, defaults to `https://pos.<brand-slug>.test:2999`; no fallback in production. |
+| `POS_ORIGINS`              | every tenant-api node | Origins allowed to call `/pos/*` from a browser. Read live from the environment. Outside an explicit `NODE_ENV=development\|test`, only listed origins count.      |
+| `POS_ENABLED`              | tenant-api            | Kill switch. `false` answers 503 on `/pos/*` and refuses new pairing codes; revoking a terminal always works. Revoke terminals first, then flip it.                |
+| `ZATCA_SEAL_KEY`           | tenant-api            | Optional, 64 hex characters (`openssl rand -hex 32`). Seals ZATCA keys and CSID secrets. Set it in production; never change it while units are onboarded.          |
+| `VITE_POS_ALLOWED_ORIGINS` | Station build         | App and tenant-api origins the till may talk to. Required in production builds: when empty, the till refuses every server. Also sets the CSP `connect-src`.        |
 
 On the US Workers node the router confirms the organization with App before each
-`/pos/*` request. A positive answer is cached for 60 s. If App cannot be
-reached, the node answers 503, which the till retries; it never answers
-"removed". Menu context for repricing is cached for 60 s per location.
+`/pos/*` request. A positive answer is cached for 60 s and a "missing" answer
+for 15 s. Each client address may cause 30 uncached lookups a minute (then 429),
+and a `/pos/pair` body is capped at 2 KB. If App cannot be reached, the node
+answers 503, which the till retries; it never answers "removed". Menu context
+for repricing is cached for 60 s per location. A missing or short
+`AUTH_HMAC_SECRET` answers 503. `/pos/*` responses expose the `Date` header,
+from which the till measures its clock skew.
+
+Pairing codes check their `scopeId` against the staff assignments and their
+`locationId` against App's locations (skipped when App cannot be reached).
+
+## The till
+
+- **Pairing links** always show the servers they point at and wait for
+  confirmation. Servers must be https, except local development hosts.
+- **Hosting.** The build emits `dist/_headers` (Cloudflare Pages format) with
+  the CSP, `frame-ancestors 'none'` and `X-Frame-Options: DENY`; the host must
+  serve it. Only images served with CORS are cached for offline use.
+- **Install it.** Station asks the browser for persistent storage and shows a
+  banner when it is refused; installing the PWA (Add to Home Screen) avoids
+  losing unsent orders to eviction.
+- **Clock.** The till records its offset from the server's clock. Beyond 2
+  minutes it shows a warning and refuses to sign ZATCA documents. The PIN
+  lockout also runs on a monotonic clock.
+- **Shifts** the server refuses for good are marked rejected, shown on the Shift
+  sheet with "Send again", and counted in the attention badge.
 
 ## Local development
 

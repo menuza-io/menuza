@@ -1129,7 +1129,9 @@ function PairingStep({
 	const shown = link ?? created.code
 	const qr = useQrDataUrl(shown)
 	const [now, setNow] = useState(() => Date.now())
-	const expired = now >= created.expiresAt
+	// The code left the pending list without a terminal redeeming it (removed).
+	const [withdrawn, setWithdrawn] = useState(false)
+	const expired = withdrawn || now >= created.expiresAt
 	const seconds = Math.max(0, Math.ceil((created.expiresAt - now) / 1000))
 	const left = useMemo(
 		() =>
@@ -1142,7 +1144,9 @@ function PairingStep({
 		return () => clearInterval(timer)
 	}, [])
 
-	// Once the terminal redeems the code it leaves the pending list.
+	// Once the terminal redeems the code it leaves the pending list and an
+	// active terminal with its code appears. A code that just disappears was
+	// removed, not redeemed.
 	useEffect(() => {
 		if (paired || expired) return
 		let live = true
@@ -1152,10 +1156,17 @@ function PairingStep({
 					if (!live) return
 					const parsed = listSchema.safeParse(body)
 					if (
-						parsed.success &&
-						!parsed.data.pendingCodes.some((c) => c.id === created.id)
+						!parsed.success ||
+						parsed.data.pendingCodes.some((c) => c.id === created.id)
 					)
-						onPaired()
+						return
+					const redeemed = parsed.data.devices.some(
+						(device) =>
+							device.terminalCode === created.terminalCode &&
+							device.revokedAt === null,
+					)
+					if (redeemed) onPaired()
+					else setWithdrawn(true)
 				},
 				() => undefined,
 			)
@@ -1233,7 +1244,9 @@ function PairingStep({
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-3">
 					<p className="text-muted-foreground text-sm tabular-nums">
-						{expired ? (
+						{withdrawn ? (
+							<Trans>This code was removed. Make a new one.</Trans>
+						) : expired ? (
 							<Trans>This code expired. Make a new one.</Trans>
 						) : (
 							<Trans>Expires in {left}</Trans>

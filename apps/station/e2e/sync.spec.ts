@@ -15,6 +15,7 @@ import {
 	goOnline,
 	openCategory,
 	openOrders,
+	openPairingLink,
 	pairUi,
 	payExactCash,
 	sellFries,
@@ -824,7 +825,7 @@ test.describe('several terminals', () => {
 			label: 'Bar',
 			terminalCode: 'T2',
 		})
-		await second.goto(link)
+		await openPairingLink(second, link)
 		await expect(
 			second.getByRole('heading', { name: 'Demo Kitchen' }),
 		).toBeVisible()

@@ -666,10 +666,26 @@ export type ServerTab = {
 	payments: Array<Omit<Payment, 'at' | 'changeCents'> & { at: string }>
 }
 
+/** A tab the server sent without a tax rate cannot be billed here: guessing 0 % would undercharge. */
+export const canAdoptTab = (tab: Pick<ServerTab, 'taxRatePercent'>): boolean =>
+	typeof tab.taxRatePercent === 'number' &&
+	Number.isFinite(tab.taxRatePercent) &&
+	tab.taxRatePercent >= 0
+
+/**
+ * Stores the server's copy of a tab this terminal just took over. Never
+ * replaces a local copy that is newer, or has a change not yet sent: that copy
+ * is what this till last did, and it goes up on the next sync.
+ */
 export async function adoptTab(
 	tab: ServerTab,
 	origin: string,
 ): Promise<PosOrder> {
+	if (!canAdoptTab(tab))
+		throw new Error(
+			t`This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it.`,
+		)
+	const taxRatePercent = tab.taxRatePercent as number
 	const now = Date.now()
 	const order: PosOrder = {
 		id: tab.id,
@@ -685,7 +701,7 @@ export async function adoptTab(
 		tableLabel: tab.tableLabel ?? '',
 		locationId: tab.locationId,
 		currency: tab.currency,
-		taxRatePercent: tab.taxRatePercent ?? 0,
+		taxRatePercent,
 		taxInclusive: tab.taxInclusive,
 		catalogFetchedAt: null,
 		lines: tab.lines.map((l) => ({ ...l, id: crypto.randomUUID() })),
@@ -714,8 +730,21 @@ export async function adoptTab(
 		voidedBy: null,
 		origin,
 	}
-	await db.orders.put(order)
-	return order
+	return db.transaction('rw', db.orders, async () => {
+		const local = await db.orders.get(tab.id)
+		const unsent =
+			local !== undefined &&
+			local.sync !== 'synced' &&
+			local.revision >= tab.revision
+		if (local && (local.revision > tab.revision || unsent)) {
+			// Keep this till's newer copy; it is open here again, not elsewhere.
+			if (local.transferredTo)
+				await db.orders.update(local.id, { transferredTo: null })
+			return { ...local, transferredTo: null }
+		}
+		await db.orders.put(order)
+		return order
+	})
 }
 
 /** Marks orders taken in demo mode. Not a valid slug, so it can never equal a real restaurant. */

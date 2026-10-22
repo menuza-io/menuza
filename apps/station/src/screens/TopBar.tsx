@@ -7,6 +7,7 @@ import {
 	RefreshCw,
 	ReceiptText,
 	Settings,
+	TriangleAlert,
 	Wallet,
 } from 'lucide-react'
 import { db } from '~/lib/db.ts'
@@ -71,6 +72,11 @@ export function TopBar({
 		[],
 		0,
 	)
+	const rejectedShifts = useLiveQuery(
+		() => db.shifts.where('sync').equals('rejected').count(),
+		[],
+		0,
+	)
 
 	return (
 		<header className="border-border bg-card pt-safe flex h-16 shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4">
@@ -114,7 +120,15 @@ export function TopBar({
 						</span>
 					</button>
 				) : null}
-				<SyncStatus online={online} waiting={waiting} rejected={rejected} />
+				{/* A live region: going offline, sending and refusals are announced. */}
+				<div role="status" className="flex items-center">
+					<SyncStatus
+						online={online}
+						waiting={waiting}
+						rejected={rejected}
+						rejectedShifts={rejectedShifts}
+					/>
+				</div>
 				<span className="hidden sm:inline-flex">
 					<IconButton
 						label={_(t`Refresh menu`)}
@@ -170,22 +184,39 @@ function SyncStatus({
 	online,
 	waiting,
 	rejected,
+	rejectedShifts,
 }: {
 	online: boolean
 	waiting: number
 	rejected: number
+	rejectedShifts: number
 }) {
 	const { _ } = useLingui()
-	if (rejected > 0) {
+	if (rejected > 0 || rejectedShifts > 0) {
+		const total = rejected + rejectedShifts
+		const label =
+			rejectedShifts === 0
+				? plural(rejected, {
+						one: '# order needs attention',
+						other: '# orders need attention',
+					})
+				: rejected === 0
+					? plural(rejectedShifts, {
+							one: '# shift needs attention',
+							other: '# shifts need attention',
+						})
+					: plural(total, {
+							one: '# upload needs attention',
+							other: '# uploads need attention',
+						})
 		return (
 			<Badge tone="danger">
-				<span className="sm:hidden">{rejected}!</span>
-				<span className="hidden sm:inline">
-					{plural(rejected, {
-						one: '# order need attention',
-						other: '# orders need attention',
-					})}
+				<TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+				{/* On a phone only the count shows; the words are still read out. */}
+				<span className="sm:hidden" aria-hidden>
+					{total}
 				</span>
+				<span className="sr-only sm:not-sr-only">{label}</span>
 			</Badge>
 		)
 	}

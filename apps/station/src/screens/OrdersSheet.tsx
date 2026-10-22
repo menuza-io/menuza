@@ -767,9 +767,13 @@ function RefundSheet({
 	const approve = usePos((s) => s.approve)
 	const money = moneyFormatter(order.currency)
 	const available = refundableCents(order)
-	const [digits, setDigits] = useState(String(available))
+	// Starts empty: typing on a pre-filled amount would append to it. "Full
+	// amount" fills it in one tap.
+	const [digits, setDigits] = useState('')
 	const [reference, setReference] = useState('')
-	const amount = Math.min(Number(digits || 0), available)
+	const typed = Number(digits || 0)
+	const tooMuch = typed > available
+	const amount = tooMuch ? 0 : typed
 	const methods = [...new Set(order.payments.map((p) => p.method))].map((m) =>
 		_(TENDER[m]),
 	)
@@ -813,14 +817,22 @@ function RefundSheet({
 					<span className="text-muted-foreground text-sm">
 						<Trans>Refund (up to {upTo})</Trans>
 					</span>
-					<span className="tnum mono text-2xl font-bold">{money(amount)}</span>
+					<span className="tnum mono text-2xl font-bold">{money(typed)}</span>
 				</div>
-				<Keypad
-					value={digits}
-					onChange={(next) =>
-						setDigits(String(Math.min(Number(next || 0), available)))
-					}
-				/>
+				<Keypad value={digits} onChange={setDigits} />
+				<Button
+					variant="outline"
+					className="w-full"
+					disabled={typed === available}
+					onClick={() => setDigits(String(available))}
+				>
+					<Trans>Full amount ({upTo})</Trans>
+				</Button>
+				{tooMuch ? (
+					<p role="alert" className="text-destructive text-sm font-medium">
+						<Trans>That is more than can be refunded (up to {upTo}).</Trans>
+					</p>
+				) : null}
 				{order.payments.some((p) => p.method !== 'cash') ? (
 					<label className="block text-sm font-semibold">
 						<Trans>Card terminal refund code (optional)</Trans>

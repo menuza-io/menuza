@@ -2094,8 +2094,10 @@ export const posZatcaUnits = sqliteTable('pos_zatca_units', {
 	environment: text('environment', {
 		enum: ['sandbox', 'simulation', 'production'],
 	}).notNull(),
+	// `revoked`: the terminal was removed; the unit never signs or reports again
+	// (documents it uploaded before then are still reported).
 	status: text('status', {
-		enum: ['onboarding', 'active', 'failed'],
+		enum: ['onboarding', 'active', 'failed', 'revoked'],
 	}).notNull(),
 	// Sealed (AES-256-GCM); the till receives the key to sign offline.
 	privateKeySealed: text('private_key_sealed').notNull(),
@@ -2106,6 +2108,23 @@ export const posZatcaUnits = sqliteTable('pos_zatca_units', {
 	productionSecretSealed: text('production_secret_sealed'),
 	lastError: text('last_error'),
 	onboardedAt: integer('onboarded_at'),
+	// The seller as it was when the unit was onboarded: its certificate was
+	// issued for these details, so a later settings change does not alter what
+	// the till signs until the unit is onboarded again.
+	seller: text('seller', { mode: 'json' }).$type<{
+		name: string
+		vatNumber: string
+		crNumber: string
+		street: string
+		buildingNumber: string
+		district: string
+		city: string
+		postalCode: string
+	}>(),
+	// When ZATCA last refused the production CSID (401): revoked or expired. A
+	// manager has to onboard the unit again; reporting backs off meanwhile.
+	authFailedAt: integer('auth_failed_at'),
+	revokedAt: integer('revoked_at'),
 	updatedAt: integer('updated_at').notNull().default(nowMs),
 })
 
@@ -2136,6 +2155,11 @@ export const posZatcaSubmissions = sqliteTable(
 		index('idx_pos_zatca_submissions_due').on(
 			table.status,
 			table.nextAttemptAt,
+		),
+		// One document per invoice counter value (ICV) of a unit.
+		uniqueIndex('idx_pos_zatca_submissions_counter').on(
+			table.deviceId,
+			table.counter,
 		),
 	],
 )

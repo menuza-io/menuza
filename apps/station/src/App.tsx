@@ -1,11 +1,19 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronUp, CloudOff, Link2Off, Store } from 'lucide-react'
+import {
+	ChevronUp,
+	Clock,
+	CloudOff,
+	HardDrive,
+	Link2Off,
+	Store,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { applyLocale, effectiveLocale } from './i18n.ts'
 import { idleMs, shouldLock, touch } from '~/lib/activity.ts'
 import { categoryItems } from '~/lib/catalog.ts'
+import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
 import { isConfigured } from '~/lib/config.ts'
 import { db, type PosOrder } from '~/lib/db.ts'
 import {
@@ -26,6 +34,7 @@ import {
 	type OrderDraft,
 } from '~/lib/orders.ts'
 import { computeTotals, type CartLine } from '~/lib/pricing.ts'
+import { useStoragePersistence } from '~/lib/storage.ts'
 import { usePos } from '~/lib/store.ts'
 import { tipsAllowed } from '~/lib/tips.ts'
 import { type MenuItem } from '~/lib/types.ts'
@@ -37,6 +46,7 @@ import { ItemSheet } from '~/screens/ItemSheet.tsx'
 import { LockScreen } from '~/screens/LockScreen.tsx'
 import { MenuGrid } from '~/screens/MenuGrid.tsx'
 import { OrdersSheet } from '~/screens/OrdersSheet.tsx'
+import { PairingLinkDialog } from '~/screens/PairingLinkDialog.tsx'
 import { SettingsSheet } from '~/screens/SettingsSheet.tsx'
 import { ShiftSheet, useOpenShift } from '~/screens/ShiftSheet.tsx'
 import { TopBar } from '~/screens/TopBar.tsx'
@@ -80,7 +90,7 @@ export function App() {
 		source: 'cart' | 'orders'
 	} | null>(null)
 	const busy = useRef(false)
-	/** A pairing link opened on a till that is already paired: confirm before it changes anything. */
+	/** A pairing link opened on this device: shown with the servers it names, and confirmed before it changes anything. */
 	const [pendingLink, setPendingLink] = useState<string | null>(null)
 	/** Loading a tab would replace an order being rung up: confirm first. */
 	const [confirmReplace, setConfirmReplace] = useState<PosOrder | null>(null)
@@ -140,7 +150,7 @@ export function App() {
 
 	useEffect(() => {
 		/** A pairing link opened now, or tapped while the app is already open (the page does not reload). */
-		const takePairingLink = async () => {
+		const takePairingLink = () => {
 			if (!window.location.hash.includes('c=')) return
 			const hash = window.location.hash
 			history.replaceState(
@@ -148,16 +158,13 @@ export function App() {
 				'',
 				window.location.pathname + window.location.search,
 			)
-			// A link must never silently re-point a till that is already paired
-			// (a sticker with a QR code is enough to try): ask first.
-			if (usePos.getState().settings.deviceToken) setPendingLink(hash)
-			else await s.pair(hash)
+			// A link must never silently point a till at a server, paired or not (a
+			// sticker with a QR code is enough to try): show where it points, then ask.
+			setPendingLink(hash)
 		}
-		void (async () => {
-			await takePairingLink()
-			await s.boot()
-		})()
-		const onHash = () => void takePairingLink()
+		takePairingLink()
+		void s.boot()
+		const onHash = () => takePairingLink()
 		window.addEventListener('hashchange', onHash)
 		const on = () => s.setOnline(true)
 		const off = () => s.setOnline(false)
@@ -195,7 +202,10 @@ export function App() {
 
 	const currency =
 		s.location?.currency ?? s.snapshot?.menu.organization.currency ?? 'USD'
-	const money = useMemo(() => moneyFormatter(currency), [currency])
+	const money = useMemo(
+		() => moneyFormatter(currency, locale),
+		[currency, locale],
+	)
 	const itemsById = useMemo(() => {
 		const map = new Map<string, MenuItem>()
 		for (const c of s.categories)
@@ -209,6 +219,10 @@ export function App() {
 		return map
 	}, [s.lines])
 
+	const skew = useClock((c) => c.skewMs)
+	const clockOff = clockIsOff(skew)
+	const clockMinutes = skewMinutes(skew)
+	const storagePersisted = useStoragePersistence((p) => p.persisted)
 	const businessName = s.snapshot?.organization.name ?? _(t`Station`)
 	const locked = s.settings.signInRequired && s.session === null
 	// Plain values for the messages below (translations interpolate names, not expressions).
@@ -454,21 +468,40 @@ export function App() {
 		/>
 	)
 
+	const pairingDialog = pendingLink ? (
+		<PairingLinkDialog
+			link={pendingLink}
+			paired={s.settings.deviceToken !== null}
+			deviceLabel={deviceLabel}
+			currentApi={s.settings.tenantApiUrl}
+			currentApp={s.settings.appUrl}
+			needsManager={s.needsManager()}
+			onSwitchUser={s.lock}
+			onPair={s.pair}
+			onClose={() => setPendingLink(null)}
+		/>
+	) : null
+
 	if (needsSetup) {
 		return (
-			<SettingsSheet
-				open
-				required
-				onClose={() => undefined}
-				settings={s.settings}
-				locations={[]}
-				lastSyncedAt={null}
-				error={null}
-				waitingOrders={0}
-				onSave={s.updateSettings}
-				onPair={s.pair}
-				onUnpair={s.unpair}
-			/>
+			<>
+				<SettingsSheet
+					open
+					required
+					onClose={() => undefined}
+					settings={s.settings}
+					locations={[]}
+					lastSyncedAt={null}
+					error={null}
+					waitingOrders={0}
+					onSave={s.updateSettings}
+					onPair={s.pair}
+					onUnpair={s.unpair}
+				/>
+				{/* Same position as in the till below, so it survives the switch once paired. */}
+				{pairingDialog}
+				{null}
+			</>
 		)
 	}
 
@@ -525,6 +558,32 @@ export function App() {
 							</Trans>
 						)}
 					</button>
+				) : null}
+				{clockOff ? (
+					<div
+						role="alert"
+						className="bg-destructive/12 text-destructive flex items-center gap-2 px-4 py-2 text-sm font-semibold"
+					>
+						<Clock className="size-4 shrink-0" />{' '}
+						<Trans>
+							This tablet’s clock is about {clockMinutes} minutes off. Receipts
+							and invoices carry the wrong time until it is set correctly in the
+							tablet’s settings.
+						</Trans>
+					</div>
+				) : null}
+				{storagePersisted === false ? (
+					<div
+						role="status"
+						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-sm font-medium"
+					>
+						<HardDrive className="size-4 shrink-0" />{' '}
+						<Trans>
+							This browser may clear orders saved on this device when it runs
+							low on space. Install Station (Add to Home Screen) so they are
+							kept.
+						</Trans>
+					</div>
 				) : null}
 				{s.catalogError && s.snapshot && s.online ? (
 					<div
@@ -769,62 +828,6 @@ export function App() {
 					/>
 				) : null}
 
-				{pendingLink ? (
-					<Modal
-						open
-						onClose={() => setPendingLink(null)}
-						title={_(t`Pair with a different restaurant?`)}
-						footer={
-							<div className="grid grid-cols-2 gap-3">
-								<Button
-									variant="outline"
-									size="lg"
-									onClick={() => setPendingLink(null)}
-								>
-									<Trans>Keep current pairing</Trans>
-								</Button>
-								{s.needsManager() ? (
-									// Re-pointing a till is a manager's call, as in Settings. The link
-									// stays here, so it can be confirmed once a manager has signed in.
-									<Button variant="primary" size="lg" onClick={s.lock}>
-										<Trans>Switch to a manager</Trans>
-									</Button>
-								) : (
-									<Button
-										variant="danger"
-										size="lg"
-										onClick={() => {
-											const link = pendingLink
-											setPendingLink(null)
-											void s.pair(link)
-										}}
-									>
-										<Trans>Pair with this link</Trans>
-									</Button>
-								)}
-							</div>
-						}
-					>
-						<p className="text-muted-foreground p-5">
-							{deviceLabel ? (
-								<Trans>
-									This device is already paired as {deviceLabel}. You opened a
-									link that would pair it with a restaurant server. Only
-									continue if a manager gave you this link. Orders already saved
-									on this device stay here.
-								</Trans>
-							) : (
-								<Trans>
-									This device is already paired. You opened a link that would
-									pair it with a restaurant server. Only continue if a manager
-									gave you this link. Orders already saved on this device stay
-									here.
-								</Trans>
-							)}
-						</p>
-					</Modal>
-				) : null}
-
 				{confirmReplace ? (
 					<Modal
 						open
@@ -895,6 +898,8 @@ export function App() {
 					</Modal>
 				) : null}
 			</div>
+			{/* Waits behind the lock: a manager confirms it once signed in. */}
+			{locked ? null : pairingDialog}
 			{locked ? (
 				<LockScreen
 					businessName={businessName}

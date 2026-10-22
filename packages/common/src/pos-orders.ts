@@ -166,6 +166,22 @@ const tenderReference = z
 	.nullable()
 	.default(null)
 
+/**
+ * Characters XML 1.0 does not allow (C0 controls other than tab, newline and
+ * carriage return, U+FFFE, U+FFFF) and lone surrogates. Text that ends up in a
+ * signed ZATCA document (item names and variant labels) is stored without
+ * them, as the till signs it (`xmlSafe` in `@repo/zatca`): refusing them here
+ * would hold a sale that is already closed and signed.
+ */
+const XML_ILLEGAL =
+	// eslint-disable-next-line no-control-regex
+	/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
+const signedText = (max: number) =>
+	z
+		.string()
+		.transform((v) => v.replace(XML_ILLEGAL, ''))
+		.pipe(z.string().min(1).max(max))
+
 export const posOrderOptionSchema = z.strictObject({
 	groupId: z.string().min(1).max(100),
 	groupName: z.string().max(200),
@@ -178,9 +194,13 @@ export const posOrderOptionSchema = z.strictObject({
 
 export const posOrderLineSchema = z.strictObject({
 	itemId: z.string().min(1).max(100),
-	name: z.string().min(1).max(200),
+	name: signedText(200),
 	variantId: z.string().min(1).max(100).nullable(),
-	variantLabel: z.string().max(200).nullable(),
+	variantLabel: z
+		.string()
+		.transform((v) => v.replace(XML_ILLEGAL, ''))
+		.pipe(z.string().max(200))
+		.nullable(),
 	quantity: z.number().int().min(1).max(50),
 	baseCents: cents,
 	instructions: z.string().trim().max(280),

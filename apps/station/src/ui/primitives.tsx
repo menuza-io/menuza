@@ -1,5 +1,6 @@
 import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { cn } from 'cn'
 import { X } from 'lucide-react'
 import {
 	useEffect,
@@ -9,8 +10,16 @@ import {
 	type ReactNode,
 } from 'react'
 
-export const cn = (...parts: Array<string | false | null | undefined>) =>
-	parts.filter(Boolean).join(' ')
+/**
+ * Class joining with Tailwind conflict resolution, from the `cn` package as
+ * across the monorepo (`@repo/ui` re-exports the same). A caller's class wins
+ * over a base class for the same property.
+ *
+ * The components below stay local rather than `@repo/ui`'s: Station is an
+ * offline PWA for touch tills, with its own sizes (44 px+ targets), a native
+ * `<dialog>` modal that keeps working with no network, and a small bundle.
+ */
+export { cn }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 	variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger'

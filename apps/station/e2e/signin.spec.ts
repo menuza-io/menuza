@@ -113,7 +113,7 @@ test.describe('the till locks until a staff member signs in', () => {
 			'That PIN is not right.',
 		)
 		await expect(
-			lock.getByRole('img', { name: '0 digits entered' }),
+			lock.getByRole('status').filter({ hasText: '0 digits entered' }),
 		).toBeVisible()
 		await expectBehindLock(page)
 	})

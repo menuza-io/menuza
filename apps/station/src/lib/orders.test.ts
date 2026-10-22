@@ -411,3 +411,42 @@ describe('isSendable', () => {
 		expect(isSendable({}, { slug: 'joes', demo: false })).toBe(true)
 	})
 })
+
+describe('adopting a tab taken over from another terminal', () => {
+	it('refuses a tab with no tax rate rather than billing it at 0 %', async () => {
+		const tab = await createOrder(draft)
+		await db.orders.clear()
+		const wire = { ...toWireOrder(tab), taxRatePercent: null }
+		await expect(adoptTab(wire, 'restaurant')).rejects.toThrow(/no tax rate/)
+		expect(await db.orders.count()).toBe(0)
+	})
+
+	it('never overwrites a newer copy on this till, or a change not yet sent', async () => {
+		const tab = await createOrder(draft)
+		const server = toWireOrder(tab)
+		const newer = await updateTab(tab.id, {
+			...draft,
+			lines: [{ ...draft.lines[0]!, quantity: 3 }],
+		})
+		expect(newer.revision).toBeGreaterThan(server.revision)
+		const kept = await adoptTab(server, 'restaurant')
+		expect(kept.revision).toBe(newer.revision)
+		expect((await db.orders.get(tab.id))!.lines[0]!.quantity).toBe(3)
+	})
+
+	it('replaces an older copy that was already sent', async () => {
+		const tab = await createOrder(draft)
+		await db.orders.update(tab.id, {
+			sync: 'synced',
+			transferredTo: 'T2',
+		})
+		const server = { ...toWireOrder(tab), revision: tab.revision + 2 }
+		const adopted = await adoptTab(server, 'restaurant')
+		expect(adopted.revision).toBe(tab.revision + 2)
+		expect((await db.orders.get(tab.id))!).toMatchObject({
+			revision: tab.revision + 2,
+			sync: 'synced',
+		})
+		expect((await db.orders.get(tab.id))!.transferredTo).toBeUndefined()
+	})
+})

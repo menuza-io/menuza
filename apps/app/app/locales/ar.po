@@ -798,7 +798,7 @@ msgstr "{created, plural, one {أُضيفت مهمة واحدة.} two {أُضي�
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "تم استيراد {created}، و{existing} موجودون في فريقك أصلًا، و{notImported} لم يتم استيرادهم."
 
-#: app/components/pos/terminals-manager.tsx:1186
+#: app/components/pos/terminals-manager.tsx:1197
 msgid "{createdLabel} is ready to take orders."
 msgstr "{createdLabel} جاهز لاستقبال الطلبات."
 
@@ -7245,7 +7245,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:559
-#: app/components/pos/terminals-manager.tsx:1272
+#: app/components/pos/terminals-manager.tsx:1285
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 msgid "Close"
@@ -7282,7 +7282,7 @@ msgstr "أغلق هذه النافذة وافتح المجموعة مرة أخر
 msgid "Close thread"
 msgstr "إغلاق سلسلة الردود"
 
-#: app/components/pos/terminals-manager.tsx:1274
+#: app/components/pos/terminals-manager.tsx:1287
 #: app/components/staff/kiosk-manager.tsx:794
 msgid "Close, I'll finish later"
 msgstr "إغلاق، سأكمل لاحقًا"
@@ -7362,7 +7362,7 @@ msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
 
-#: app/components/pos/terminals-manager.tsx:1172
+#: app/components/pos/terminals-manager.tsx:1183
 msgid "Code copied."
 msgstr "تم نسخ الرمز."
 
@@ -7822,7 +7822,7 @@ msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك 
 msgid "Connect your POS"
 msgstr "اربط نظام نقاط البيع"
 
-#: app/components/pos/terminals-manager.tsx:1191
+#: app/components/pos/terminals-manager.tsx:1202
 #: app/components/pos/zatca-settings.tsx:378
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:102
 #: app/components/settings/cards/organization/review-integrations-card.tsx:54
@@ -8075,7 +8075,7 @@ msgid "Copy All"
 msgstr "نسخ الكل"
 
 #: ../../packages/ai/src/components/ai-elements/code-block.tsx:147
-#: app/components/pos/terminals-manager.tsx:1262
+#: app/components/pos/terminals-manager.tsx:1275
 msgid "Copy code"
 msgstr "نسخ الكود"
 
@@ -8092,7 +8092,7 @@ msgid "Copy into this week"
 msgstr "نسخ إلى هذا الأسبوع"
 
 #: app/components/hiring/job-share-panel.tsx:87
-#: app/components/pos/terminals-manager.tsx:1262
+#: app/components/pos/terminals-manager.tsx:1275
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
@@ -8178,7 +8178,7 @@ msgstr "تعذّر تغيير من يمكنه إدارة الأجهزة."
 msgid "Could not connect the terminal."
 msgstr "تعذّر ربط نقطة البيع."
 
-#: app/components/pos/terminals-manager.tsx:1174
+#: app/components/pos/terminals-manager.tsx:1185
 msgid "Could not copy. Select it and copy it by hand."
 msgstr "تعذّر النسخ. حدّده وانسخه يدويًا."
 
@@ -10591,7 +10591,7 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/kiosk/kiosk-screens.tsx:720
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
-#: app/components/pos/terminals-manager.tsx:1195
+#: app/components/pos/terminals-manager.tsx:1206
 #: app/components/reservations/settings/setup-checklist.tsx:173
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -11946,7 +11946,7 @@ msgstr "أدخل أول يوم عمل لهم."
 #~ msgid "Enter this code in the POS app's settings on the device. It works once."
 #~ msgstr "أدخل هذا الرمز في إعدادات تطبيق نقطة البيع على الجهاز. يعمل مرة واحدة فقط."
 
-#: app/components/pos/terminals-manager.tsx:1215
+#: app/components/pos/terminals-manager.tsx:1226
 msgid "Enter this code in the Station app's settings on the device. It works once."
 msgstr "أدخل هذا الرمز في إعدادات تطبيق Station على الجهاز. يُستخدم لمرة واحدة."
 
@@ -12404,7 +12404,7 @@ msgstr "ينتهي في {expiresAt}"
 #~ msgid "Expires at <0>{0}</0>"
 #~ msgstr "تنتهي في {expiresAt}"
 
-#: app/components/pos/terminals-manager.tsx:1239
+#: app/components/pos/terminals-manager.tsx:1252
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -16165,7 +16165,7 @@ msgid "Link copied!"
 msgstr "تم نسخ الرابط!"
 
 #: app/components/hiring/job-share-panel.tsx:49
-#: app/components/pos/terminals-manager.tsx:1172
+#: app/components/pos/terminals-manager.tsx:1183
 #: app/components/staff/kiosk-manager.tsx:697
 msgid "Link copied."
 msgstr "تم نسخ الرابط."
@@ -21083,7 +21083,7 @@ msgstr "افتح قائمة الانتظار لمعرفة من ينتظر."
 msgid "Open this on the tablet"
 msgstr "افتح هذا على الجهاز اللوحي"
 
-#: app/components/pos/terminals-manager.tsx:1206
+#: app/components/pos/terminals-manager.tsx:1217
 msgid "Open this on the terminal"
 msgstr "افتح هذا على جهاز البيع"
 
@@ -21831,11 +21831,11 @@ msgstr "اقرن أول جهاز بيع لبدء استقبال طلبات ال�
 msgid "Paired terminals"
 msgstr "أجهزة البيع المقترنة"
 
-#: app/components/pos/terminals-manager.tsx:1244
+#: app/components/pos/terminals-manager.tsx:1257
 msgid "Pairing code"
 msgstr "رمز الإقران"
 
-#: app/components/pos/terminals-manager.tsx:1244
+#: app/components/pos/terminals-manager.tsx:1257
 #: app/components/staff/kiosk-manager.tsx:764
 msgid "Pairing link"
 msgstr "رابط الربط"
@@ -23663,7 +23663,7 @@ msgstr "رمز QR يفتح صفحة الربط"
 msgid "QR code that opens this job"
 msgstr "رمز QR يفتح هذه الوظيفة"
 
-#: app/components/pos/terminals-manager.tsx:1227
+#: app/components/pos/terminals-manager.tsx:1238
 msgid "QR code that pairs the terminal"
 msgstr "رمز QR لإقران جهاز البيع"
 
@@ -26083,7 +26083,7 @@ msgstr "اذكر السبب. يُحفظ مع البطاقة."
 msgid "Scan QR Code or Enter Setup Key"
 msgstr "مسح رمز QR أو إدخال مفتاح الإعداد"
 
-#: app/components/pos/terminals-manager.tsx:1210
+#: app/components/pos/terminals-manager.tsx:1221
 msgid "Scan the code with the device's camera, or open the link in its browser. It works once."
 msgstr "امسح الرمز بكاميرا الجهاز، أو افتح الرابط في متصفحه. يعمل مرة واحدة فقط."
 
@@ -29592,7 +29592,7 @@ msgstr "إعادة توجيه مؤقتة"
 msgid "Terminal code"
 msgstr "رمز الجهاز"
 
-#: app/components/pos/terminals-manager.tsx:1183
+#: app/components/pos/terminals-manager.tsx:1194
 msgid "Terminal paired"
 msgstr "تم إقران الجهاز"
 
@@ -31378,10 +31378,14 @@ msgstr "جلسة الدفع هذه لم تعد نشطة"
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
 
-#: app/components/pos/terminals-manager.tsx:1237
+#: app/components/pos/terminals-manager.tsx:1250
 #: app/components/staff/kiosk-manager.tsx:757
 msgid "This code expired. Make a new one."
 msgstr "انتهت صلاحية هذا الرمز. أنشئ رمزًا جديدًا."
+
+#: app/components/pos/terminals-manager.tsx:1248
+msgid "This code was removed. Make a new one."
+msgstr "أُزيل هذا الرمز. أنشئ رمزًا جديدًا."
 
 #: app/routes/_app+/$orgSlug_+/customers.tsx:517
 #~ msgid "this customer"
@@ -34234,7 +34238,7 @@ msgstr "بانتظار المدير"
 msgid "Waiting for the tablet…"
 msgstr "بانتظار الجهاز اللوحي…"
 
-#: app/components/pos/terminals-manager.tsx:1267
+#: app/components/pos/terminals-manager.tsx:1280
 msgid "Waiting for the terminal…"
 msgstr "في انتظار الجهاز…"
 

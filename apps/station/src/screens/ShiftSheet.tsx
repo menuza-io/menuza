@@ -1,4 +1,4 @@
-import { t, Trans } from '@lingui/macro'
+import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type PosSalesSummary } from '@repo/common/pos-reports'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -17,11 +17,14 @@ import {
 	addCashMovement,
 	closeShift,
 	openShift,
+	rejectedShifts,
+	requeueRejectedShifts,
 	startShift,
 	summarize,
 } from '~/lib/shifts.ts'
 import { type ApprovalOutcome } from '~/lib/signin.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
+import { ManagerPinPad } from '~/ui/ManagerPinPad.tsx'
 import { Button, Modal, cn } from '~/ui/primitives.tsx'
 
 type Step =
@@ -60,7 +63,7 @@ export function ShiftSheet({
 	timeZone?: string
 	dayStartMinutes: number
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const shift = useLiveQuery(() => openShift(), [], undefined)
 	const orders = useLiveQuery(() => db.orders.toArray(), [], [])
 	const [step, setStep] = useState<Step>({ kind: 'overview' })
@@ -153,6 +156,7 @@ export function ShiftSheet({
 		return (
 			<Modal open onClose={onClose} title={_(t`Open a shift`)} size="md">
 				<div className="space-y-4 p-5">
+					<RejectedShifts onRetry={onChanged} />
 					<p className="text-muted-foreground">
 						<Trans>
 							Count the cash in the drawer before the first sale. Every sale
@@ -232,34 +236,28 @@ export function ShiftSheet({
 								<Trans>Approved by {approvedBy.name}</Trans>
 							</p>
 						) : (
-							<div className="border-border space-y-2 rounded-2xl border p-3">
-								<p className="text-sm font-semibold">
+							<ManagerPinPad
+								prompt={
 									<Trans>
 										A manager approves cash taken out with their PIN
 									</Trans>
-								</p>
-								<Keypad
-									value={pin}
-									onChange={(next) => setPin(next.slice(0, 6))}
-									maxDigits={6}
-									raw
-								/>
-								<Button
-									variant="outline"
-									className="w-full"
-									disabled={pin.length < 4 || busy}
-									onClick={() =>
-										void run(async () => {
+								}
+								pin={pin}
+								onPin={setPin}
+								busy={busy}
+								variant="outline"
+								onApprove={() =>
+									void run(async () => {
+										try {
 											const outcome = await onApprove(pin)
-											setPin('')
 											if (outcome.ok) setApprovedBy(outcome.manager)
 											else throw new Error(outcome.message)
-										})
-									}
-								>
-									<Trans>Approve</Trans>
-								</Button>
-							</div>
+										} finally {
+											setPin('')
+										}
+									})
+								}
+							/>
 						)
 					) : null}
 					{error ? (
@@ -351,10 +349,11 @@ export function ShiftSheet({
 	return (
 		<Modal open onClose={onClose} title={_(t`Shift`)} size="md">
 			<div className="space-y-4 p-5">
+				<RejectedShifts onRetry={onChanged} />
 				<p className="text-muted-foreground text-sm">
 					<Trans>
 						Open since{' '}
-						{new Date(shift.openedAt).toLocaleTimeString([], {
+						{new Date(shift.openedAt).toLocaleTimeString(i18n.locale, {
 							hour: 'numeric',
 							minute: '2-digit',
 						})}
@@ -406,6 +405,39 @@ export function ShiftSheet({
 				</Button>
 			</div>
 		</Modal>
+	)
+}
+
+/**
+ * Shifts the server refused for good: their Z figures never reached the
+ * restaurant. Shown until someone sends them again (after an app update or a
+ * manager's fix), never dropped.
+ */
+function RejectedShifts({ onRetry }: { onRetry: () => void }) {
+	const refused = useLiveQuery(() => rejectedShifts(), [], [])
+	if (refused.length === 0) return null
+	const count = refused.length
+	const reason = refused[0]?.lastError ?? ''
+	return (
+		<div
+			role="alert"
+			className="bg-destructive/10 text-destructive space-y-2 rounded-xl p-3 text-sm"
+		>
+			<p className="font-semibold">
+				{plural(count, {
+					one: 'The server refused # shift. Its figures have not reached the restaurant.',
+					other:
+						'The server refused # shifts. Their figures have not reached the restaurant.',
+				})}
+			</p>
+			{reason ? <p>{reason}</p> : null}
+			<Button
+				variant="outline"
+				onClick={() => void requeueRejectedShifts().then(onRetry)}
+			>
+				<Trans>Send again</Trans>
+			</Button>
+		</div>
 	)
 }
 
@@ -484,6 +516,7 @@ function ZReport({
 	money: MoneyFormatter
 	businessName: string
 }) {
+	const { i18n } = useLingui()
 	const overShort =
 		(shift.countedCashCents ?? 0) - (shift.expectedCashCents ?? 0)
 	return createPortal(
@@ -493,8 +526,10 @@ function ZReport({
 				<Trans>Z report</Trans> · {shift.businessDate}
 			</div>
 			<div className="text-center">
-				{new Date(shift.openedAt).toLocaleString()} –{' '}
-				{shift.closedAt ? new Date(shift.closedAt).toLocaleString() : ''}
+				{new Date(shift.openedAt).toLocaleString(i18n.locale)} –{' '}
+				{shift.closedAt
+					? new Date(shift.closedAt).toLocaleString(i18n.locale)
+					: ''}
 			</div>
 			{shift.closedBy ? (
 				<div className="text-center">

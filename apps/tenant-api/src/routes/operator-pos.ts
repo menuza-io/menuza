@@ -2,7 +2,13 @@ import { and, eq, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 import { getTenantDb, posDevices } from '@repo/tenant-db'
-import { isPosEnabled, posDisabledResponse, posError } from '../lib/pos-auth.ts'
+import {
+	isPosEnabled,
+	isPosHashUnavailable,
+	posDisabledResponse,
+	posError,
+	posUnavailableResponse,
+} from '../lib/pos-auth.ts'
 import {
 	countHeldUploads,
 	createPairingCode,
@@ -94,16 +100,22 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
-	const result = await createPairingCode(g.db, g.auth.orgId, {
-		label: parsed.data.label,
-		terminalCode: parsed.data.terminalCode,
-		locationId: parsed.data.locationId ?? null,
-		scopeId: parsed.data.scopeId,
-		signInRequired: parsed.data.signInRequired,
-		dayStartMinutes: parsed.data.dayStartMinutes,
-		shiftsRequired: parsed.data.shiftsRequired,
-		createdBy: g.auth.userId,
-	})
+	let result: Awaited<ReturnType<typeof createPairingCode>>
+	try {
+		result = await createPairingCode(g.db, g.auth.orgId, {
+			label: parsed.data.label,
+			terminalCode: parsed.data.terminalCode,
+			locationId: parsed.data.locationId ?? null,
+			scopeId: parsed.data.scopeId,
+			signInRequired: parsed.data.signInRequired,
+			dayStartMinutes: parsed.data.dayStartMinutes,
+			shiftsRequired: parsed.data.shiftsRequired,
+			createdBy: g.auth.userId,
+		})
+	} catch (error) {
+		if (isPosHashUnavailable(error)) return posUnavailableResponse()
+		throw error
+	}
 	if (!result.ok) {
 		return posError(
 			result.status,

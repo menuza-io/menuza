@@ -606,6 +606,12 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
   the comma-separated POS web origins allowed to call `/pos/*` from a browser.
   `POS_URL` is App's: the POS origin used in pairing links. See `docs/pos.md`.
+- `ZATCA_SEAL_KEY` - Tenant-api only, optional (64 hex chars). Seals ZATCA EGS
+  keys and CSID secrets; without it they derive from `AUTH_HMAC_SECRET`. Set it
+  in production and never change it while units are onboarded.
+- `VITE_POS_ALLOWED_ORIGINS` - Station build only. App and tenant-api origins
+  the till may talk to; required in production builds (empty refuses every
+  server).
 - `STAFFING_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true` is
   on). Kill switch for staffing email: on tenant-api it drops staff reminders
   and notices (dropped, not held, so re-enabling sends no backlog); in the App

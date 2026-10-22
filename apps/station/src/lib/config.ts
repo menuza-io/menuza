@@ -1,7 +1,13 @@
 /**
  * Device settings, kept in localStorage so the shell can boot with no network
- * and no IndexedDB round-trip. Nothing here is a secret except `deviceToken`,
- * which only authorises this terminal's own order uploads.
+ * and no IndexedDB round-trip. Nothing here is a secret except `deviceToken`.
+ *
+ * `deviceToken` reaches further than this terminal's own uploads: it signs
+ * staff in by PIN (`/pos/sign-in`), lists and claims other terminals' open tabs
+ * at its location, with guest names and callback numbers (`/pos/tabs`), and
+ * fetches this till's ZATCA signing key and certificate (`/pos/zatca`). Treat
+ * it like a password: unpairing or removal forgets it together with the ZATCA
+ * key (see `forgetZatcaUnit`), and only an operator can issue a new one.
  */
 export type PosSettings = {
 	/** App origin that serves the published catalog and branding. */

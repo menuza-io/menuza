@@ -567,14 +567,15 @@ export function Checkout({
 					{method === 'cash' || mode.kind === 'custom' ? (
 						<Keypad value={keypadValue} onChange={onKeypad} />
 					) : null}
-					{method === 'cash' && change > 0 ? (
-						<p
-							className="tnum text-warning text-center text-lg font-semibold"
-							aria-live="polite"
-						>
+					{/* Stays mounted so the change is announced as it appears and updates. */}
+					<p
+						className="tnum text-warning text-center text-lg font-semibold empty:absolute"
+						aria-live="polite"
+					>
+						{method === 'cash' && change > 0 ? (
 							<Trans>Change {changeText}</Trans>
-						</p>
-					) : null}
+						) : null}
+					</p>
 					{giveChange !== null ? (
 						<p
 							role="status"

@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro'
 import {
 	fromHex,
 	fromRefund,
@@ -10,6 +11,7 @@ import {
 	type ZatcaCertificate,
 	type ZatcaSeller,
 } from '@repo/zatca'
+import { clockIsOff, noteServerDate, skewMinutes } from './clock.ts'
 import { type PosSettings } from './config.ts'
 import { db, type PosOrder, type Refund, type ZatcaDocument } from './db.ts'
 
@@ -61,6 +63,20 @@ const nextPih = async () =>
 /** ZATCA reporting covers sales in riyals. */
 const eligible = (order: Pick<PosOrder, 'currency'>) => order.currency === 'SAR'
 
+/**
+ * A signed document carries the time it was issued, and ZATCA rejects or
+ * flags one stamped by a clock that is off. When the server has shown this
+ * tablet's clock is wrong, refuse to sign (the sale or refund is not saved, so
+ * nothing is left half-done) until someone sets the time.
+ */
+function assertClockTrusted(): void {
+	if (!clockIsOff()) return
+	const minutes = skewMinutes()
+	throw new Error(
+		t`This tablet’s clock is about ${minutes} minutes off. Set the correct date and time in the tablet’s settings, then try again.`,
+	)
+}
+
 /** Signs the invoice for a closed sale. Must run inside a transaction over `db.meta`. */
 export async function signInvoice(
 	order: PosOrder,
@@ -69,6 +85,7 @@ export async function signInvoice(
 ): Promise<ZatcaDocument | null> {
 	const egs = eligible(order) ? await unit() : null
 	if (!egs) return null
+	assertClockTrusted()
 	const invoiceNumber = invoiceId(order)
 	const input = fromSale(saleOf(order), {
 		id: invoiceNumber,
@@ -101,6 +118,7 @@ export async function signCreditNote(
 	const egs = eligible(order) ? await unit() : null
 	const invoice = order.fiscal.find((d) => d.kind === 'invoice')
 	if (!egs || !invoice) return null
+	assertClockTrusted()
 	// The invoice as it was signed: its number never follows a later renumbering.
 	const invoiceNumber = invoice.zatca?.invoiceNumber ?? invoiceId(order)
 	const noteNumber = `${invoiceNumber}-CN${counter}`
@@ -109,6 +127,8 @@ export async function signCreditNote(
 		{
 			taxRatePercent: order.taxRatePercent,
 			totalCents: order.totals.totalCents,
+			// The note's VAT then matches posRefundTaxCents, which reports use.
+			taxCents: order.totals.taxCents,
 			outOfScopeCents: outOfScopeCents(saleOf(order)),
 		},
 		{
@@ -168,6 +188,7 @@ export async function syncZatcaUnit(
 		return
 	}
 	try {
+		const sentAt = Date.now()
 		const response = await fetch(
 			`${settings.tenantApiUrl.replace(/\/+$/, '')}/pos/zatca`,
 			{
@@ -175,6 +196,7 @@ export async function syncZatcaUnit(
 				signal: AbortSignal.timeout(8_000),
 			},
 		)
+		noteServerDate(response, sentAt)
 		if (response.status === 404) {
 			await db.meta.delete(UNIT_KEY)
 			return
@@ -186,6 +208,20 @@ export async function syncZatcaUnit(
 	} catch {
 		/* keep what we have; try again at the next check-in */
 	}
+}
+
+/**
+ * Forgets this till's signing key, certificate and chain hash. Called when the
+ * terminal is unpaired here or the server says it was removed: a till that is
+ * no longer this restaurant's must not keep a key that signs in its name. A
+ * till paired again continues the chain from the hash the server holds.
+ */
+export async function forgetZatcaUnit(): Promise<void> {
+	parsed = null
+	await db.transaction('rw', db.meta, async () => {
+		await db.meta.delete(UNIT_KEY)
+		await db.meta.delete(PIH_KEY)
+	})
 }
 
 export async function zatcaUnit(): Promise<ZatcaUnit | null> {

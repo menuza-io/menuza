@@ -92,7 +92,8 @@ test.describe('refunds', () => {
 		const orders = await openOrders(page, 'today')
 		await orders.getByRole('button', { name: 'Refund', exact: true }).click()
 		const refund = page.getByRole('dialog', { name: /^Refund #/ })
-		// The whole amount is offered; it cannot go without a reason.
+		// The amount starts empty; "Full amount" fills it, and it cannot go without a reason.
+		await refund.getByRole('button', { name: /^Full amount/ }).click()
 		await expect(
 			refund.getByRole('button', { name: /^Refund \$/ }),
 		).toBeDisabled()

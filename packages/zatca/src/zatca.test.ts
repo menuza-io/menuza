@@ -18,13 +18,16 @@ import {
 import { buildCsr } from './csr.ts'
 import {
 	figures,
+	hasXmlIllegal,
 	hashedForm,
 	invoiceHash,
 	signDocument,
 	ZATCA_GENESIS_PIH,
 	type ZatcaDocumentInput,
+	xmlSafe,
 } from './document.ts'
 import { fromRefund, fromSale } from './from-sale.ts'
+import { readSignedDocument } from './verify.ts'
 
 const has = (tool: string) => {
 	try {
@@ -247,7 +250,8 @@ describe('documents', () => {
 	})
 
 	it('keeps VAT exactly 15% of the taxable amount when unit prices include tax, rounding the rest (BR-S-09)', () => {
-		// 10 x 1.00 incl. VAT: 0.87 net each, 8.70 taxable, VAT 1.31, paid 10.00.
+		// 10 x 1.00 incl. VAT, VAT 1.30 on the bill: 0.87 net each, evened out to
+		// 8.69 taxable (whose 15% is the bill's 1.30), paid 10.00.
 		const doc = sale({
 			lines: [
 				{
@@ -268,12 +272,148 @@ describe('documents', () => {
 			payments: [{ method: 'cash' }],
 		})
 		const f = figures(doc)
-		expect(f.standardTaxableCents).toBe(870)
-		expect(f.taxCents).toBe(Math.round(870 * 0.15))
+		expect(f.standardTaxableCents).toBe(869)
+		expect(f.taxCents).toBe(Math.round(869 * 0.15))
+		expect(f.taxCents).toBe(130)
 		expect(f.taxInclusiveCents + f.payableRoundingCents).toBe(1000)
 		expect(hashedForm(doc)).toContain(
-			'<cbc:PayableRoundingAmount currencyID="SAR">-0.01</cbc:PayableRoundingAmount>',
+			'<cbc:PayableRoundingAmount currencyID="SAR">0.01</cbc:PayableRoundingAmount>',
 		)
+	})
+
+	it('converts VAT-inclusive prices for the whole line, not unit by unit, and keeps the bill’s VAT', () => {
+		// 50 x 1.00 incl. VAT: 43.48 net, not 50 x 0.87 = 43.50; VAT 6.52 as on the bill.
+		const doc = sale({
+			lines: [
+				{
+					name: 'Water',
+					variantLabel: null,
+					quantity: 50,
+					baseCents: 100,
+					options: [],
+				},
+			],
+			taxInclusive: true,
+			totals: {
+				adjustmentCents: 0,
+				taxCents: Math.round((5000 * 15) / 115),
+				tipCents: 0,
+				totalCents: 5000,
+			},
+			payments: [{ method: 'cash' }],
+		})
+		const f = figures(doc)
+		// Each line is still unit price x quantity (BR-KSA-EN16931-11); the
+		// rounding of the unit price comes off once, for the document.
+		expect(f.lines[0]!.netCents).toBe(50 * 87)
+		expect(f.standardTaxableCents).toBe(4348)
+		expect(f.taxCents).toBe(652)
+		expect(f.taxCents).toBe(Math.round(f.standardTaxableCents * 0.15))
+		expect(f.taxInclusiveCents + f.payableRoundingCents).toBe(5000)
+	})
+
+	it('gives every VAT-inclusive bill the till’s VAT, with BR-S-09 exact', () => {
+		for (let gross = 1; gross <= 3000; gross += 7) {
+			const taxCents = Math.round((gross * 15) / 115)
+			const doc = sale({
+				lines: [
+					{
+						name: 'Item',
+						variantLabel: null,
+						quantity: 1,
+						baseCents: gross,
+						options: [],
+					},
+				],
+				taxInclusive: true,
+				totals: {
+					adjustmentCents: 0,
+					taxCents,
+					tipCents: 0,
+					totalCents: gross,
+				},
+				payments: [{ method: 'cash' }],
+			})
+			const f = figures(doc)
+			expect(f.taxCents).toBe(taxCents)
+			expect(f.taxCents).toBe(Math.round((f.standardTaxableCents * 15) / 100))
+			expect(Math.abs(f.payableRoundingCents)).toBeLessThanOrEqual(1)
+		}
+	})
+
+	it('gives a credit note the VAT on the till’s credit note when the bill’s VAT is known', () => {
+		// 23.00 incl. VAT (VAT 3.00), 7.00 refunded: the till's note carries 0.91.
+		const bill = { totalCents: 2300, taxCents: 300 }
+		const refunded = 700
+		const doc = fromRefund(
+			{ amountCents: refunded, method: 'cash', reason: 'Wrong item' },
+			{ taxRatePercent: 15, outOfScopeCents: 0, ...bill },
+			{
+				id: 'T1-CN',
+				uuid: '6f9d1d6e-3c3d-4d3f-9d4a-0d6a3a1b2c03',
+				issuedAt: new Date(),
+				counter: 2,
+				previousHash: ZATCA_GENESIS_PIH,
+				seller,
+				billingReference: { id: 'T1', issueDate: '2026-10-21' },
+			},
+		)
+		const f = figures(doc)
+		// posRefundTaxCents in @repo/common/pos-fiscal.
+		expect(f.taxCents).toBe(
+			Math.round((bill.taxCents * refunded) / bill.totalCents),
+		)
+		expect(f.taxCents).toBe(Math.round((f.standardTaxableCents * 15) / 100))
+		expect(f.taxInclusiveCents + f.payableRoundingCents).toBe(refunded)
+	})
+
+	it('drops characters XML 1.0 does not allow before hashing', () => {
+		const doc = sale({
+			lines: [
+				{
+					name: 'Bad\u0001name\u001F\uFFFE \uD800tea',
+					variantLabel: 'Hot\u000B',
+					quantity: 1,
+					baseCents: 1000,
+					options: [],
+				},
+			],
+			totals: {
+				adjustmentCents: 0,
+				taxCents: 150,
+				tipCents: 0,
+				totalCents: 1150,
+			},
+			payments: [{ method: 'cash' }],
+		})
+		const xml = hashedForm(doc)
+		expect(hasXmlIllegal(xml)).toBe(false)
+		expect(xml).toContain('<cbc:Name>Badname tea (Hot)</cbc:Name>')
+		expect(hasXmlIllegal('a\u0000')).toBe(true)
+		expect(hasXmlIllegal('a\uDC00')).toBe(true)
+		expect(hasXmlIllegal('emoji \uD83C\uDF54 and tab\t')).toBe(false)
+		expect(xmlSafe('ok \uD83C\uDF54')).toBe('ok \uD83C\uDF54')
+		if (XMLLINT) execFileSync('xmllint', ['--noout', file('illegal.xml', xml)])
+	})
+
+	it('signs even when the seller name is longer than a QR tag holds, cutting it on a character', () => {
+		if (!OPENSSL) return
+		const key = generatePrivateKey()
+		const cert = readCertificate(opensslCertificate().base64)
+		const longName = 'مطعم '.repeat(40) // 360 bytes
+		const signed = signDocument(
+			{ ...sale(), seller: { ...seller, name: longName } },
+			key,
+			cert,
+		)
+		const bytes = fromBase64(signed.qr)
+		expect(bytes[0]).toBe(1)
+		const length = bytes[1]!
+		expect(length).toBeLessThanOrEqual(255)
+		const name = new TextDecoder('utf-8', { fatal: true }).decode(
+			bytes.subarray(2, 2 + length),
+		)
+		expect(longName.startsWith(name)).toBe(true)
 	})
 
 	it('splits a discount between taxed and untaxed amounts, never below zero', () => {
@@ -444,7 +584,110 @@ describe('documents', () => {
 	})
 })
 
+describe('reading a signed document back', () => {
+	it.skipIf(!OPENSSL)(
+		'reads the fields the server records and recomputes the invoice hash',
+		() => {
+			const key = generatePrivateKey()
+			const cert = readCertificate(opensslCertificate().base64)
+			const input = sale()
+			const signed = signDocument(input, key, cert)
+			const read = readSignedDocument(signed.xmlBase64)
+			expect(read).toEqual({
+				ok: true,
+				value: {
+					id: 'T1-INV-000001',
+					uuid: input.uuid,
+					kind: 'invoice',
+					counter: 1,
+					previousHash: ZATCA_GENESIS_PIH,
+					invoiceHash: signed.invoiceHash,
+					payableCents: 6725,
+					taxCents: signed.taxCents,
+					vatNumber: seller.vatNumber,
+				},
+			})
+		},
+	)
+
+	it.skipIf(!OPENSSL)(
+		'notices a changed amount, a second element of a kind, or something that is not a signed document',
+		() => {
+			const key = generatePrivateKey()
+			const cert = readCertificate(opensslCertificate().base64)
+			const signed = signDocument(sale(), key, cert)
+			const encode = (xml: string) => toBase64(new TextEncoder().encode(xml))
+			const changed = readSignedDocument(
+				encode(
+					signed.xml.replace(
+						'<cbc:PayableAmount currencyID="SAR">67.25</cbc:PayableAmount>',
+						'<cbc:PayableAmount currencyID="SAR">1.00</cbc:PayableAmount>',
+					),
+				),
+			)
+			expect(changed).toMatchObject({ ok: true, value: { payableCents: 100 } })
+			if (changed.ok)
+				expect(changed.value.invoiceHash).not.toBe(signed.invoiceHash)
+			const twice = signed.xml.replace(
+				'</cac:LegalMonetaryTotal>',
+				'</cac:LegalMonetaryTotal><cbc:PayableAmount currencyID="SAR">1.00</cbc:PayableAmount>',
+			)
+			expect(readSignedDocument(encode(twice)).ok).toBe(false)
+			expect(readSignedDocument(encode('<Invoice/>')).ok).toBe(false)
+			expect(readSignedDocument('////').ok).toBe(false)
+		},
+	)
+})
+
 describe('Fatoora client', () => {
+	it('retries a timeout, flags refused credentials, and reads ZATCA’s status on a 2xx', async () => {
+		const answers = [
+			new Response('', { status: 408 }),
+			new Response('', { status: 425 }),
+			new Response('', { status: 401 }),
+			Response.json({
+				validationResults: {
+					status: 'ERROR',
+					errorMessages: [{ code: 'BR-KSA-98', message: 'no' }],
+				},
+				reportingStatus: 'NOT_REPORTED',
+			}),
+			Response.json(
+				{
+					validationResults: { status: 'WARNING' },
+					reportingStatus: 'REPORTED',
+				},
+				{ status: 202 },
+			),
+		]
+		const client = fatooraClient('sandbox', (async () =>
+			answers.shift()!) as unknown as typeof fetch)
+		const csid = { binarySecurityToken: 't', secret: 's', requestId: '1' }
+		const doc = { invoiceHash: 'h', uuid: 'u', xmlBase64: 'x' }
+		expect(await client.report(csid, doc)).toMatchObject({
+			ok: false,
+			retry: true,
+		})
+		expect(await client.report(csid, doc)).toMatchObject({
+			ok: false,
+			retry: true,
+		})
+		expect(await client.report(csid, doc)).toMatchObject({
+			ok: false,
+			retry: false,
+			unauthorized: true,
+		})
+		expect(await client.report(csid, doc)).toMatchObject({
+			ok: false,
+			retry: false,
+			error: 'BR-KSA-98: no',
+		})
+		expect(await client.report(csid, doc)).toMatchObject({
+			ok: true,
+			status: 202,
+		})
+	})
+
 	it('sends the documented headers and bodies, and tells refusals from retries', async () => {
 		const calls: Array<{ url: string; init: RequestInit }> = []
 		const responses = [

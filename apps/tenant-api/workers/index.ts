@@ -328,7 +328,11 @@ export default {
 		}
 
 		if (isTerminalPath) {
-			const kioskDenied = await assertKioskOrgOnUsNode(orgId, url.pathname)
+			const kioskDenied = await assertKioskOrgOnUsNode(
+				orgId,
+				url.pathname,
+				request.headers.get('CF-Connecting-IP'),
+			)
 			if (kioskDenied) return kioskDenied
 			return forwardToOrg(request, env, orgId)
 		}

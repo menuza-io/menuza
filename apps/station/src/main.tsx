@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App.tsx'
 import { i18n } from './i18n.ts'
+import { requestPersistentStorage } from './lib/storage.ts'
 import { setUpdater } from './lib/update.ts'
 import './styles/app.css'
 
@@ -14,8 +15,9 @@ const updateSW = registerSW({
 	onNeedRefresh: () => setUpdater(() => void updateSW(true)),
 })
 
-// Ask the browser not to evict the order queue under storage pressure.
-void navigator.storage?.persist?.()
+// Ask the browser not to evict the order queue under storage pressure. A
+// refusal is shown as a banner (see App) until it is granted.
+void requestPersistentStorage()
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>

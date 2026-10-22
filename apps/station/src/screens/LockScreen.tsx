@@ -2,9 +2,11 @@ import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { CloudOff, Lock } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { monotonicNow } from '~/lib/clock.ts'
 import { DEMO_PIN, type SignInOutcome } from '~/lib/signin.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
-import { Button, cn } from '~/ui/primitives.tsx'
+import { PinDots } from '~/ui/PinDots.tsx'
+import { Button } from '~/ui/primitives.tsx'
 
 /**
  * The lock. A modal <dialog> opened last, so it covers everything, including a
@@ -29,8 +31,11 @@ export function LockScreen({
 	const [pin, setPin] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [message, setMessage] = useState<string | null>(null)
+	/** End of a wrong-PIN wait on the monotonic clock: changing the tablet's time does not end it. */
 	const [waitUntil, setWaitUntil] = useState<number | null>(null)
-	const [now, setNow] = useState(() => Date.now())
+	const [now, setNow] = useState(() => monotonicNow())
+	/** Spoken once when a wait ends (the countdown itself is not announced every second). */
+	const [ready, setReady] = useState(false)
 
 	useEffect(() => {
 		const dialog = ref.current
@@ -39,7 +44,15 @@ export function LockScreen({
 
 	useEffect(() => {
 		if (waitUntil === null) return
-		const timer = setInterval(() => setNow(Date.now()), 500)
+		const timer = setInterval(() => {
+			const at = monotonicNow()
+			setNow(at)
+			if (at >= waitUntil) {
+				setWaitUntil(null)
+				setMessage(null)
+				setReady(true)
+			}
+		}, 500)
 		return () => clearInterval(timer)
 	}, [waitUntil])
 
@@ -51,15 +64,24 @@ export function LockScreen({
 		if (!canSubmit) return
 		setBusy(true)
 		setMessage(null)
-		const outcome = await onSignIn(pin)
-		setBusy(false)
-		// On success the till unmounts this screen.
-		if (outcome.ok) return
-		setPin('')
-		setMessage(outcome.message)
-		if (outcome.retryAfterSeconds) {
-			setNow(Date.now())
-			setWaitUntil(Date.now() + outcome.retryAfterSeconds * 1000)
+		setReady(false)
+		try {
+			const outcome = await onSignIn(pin)
+			// On success the till unmounts this screen.
+			if (outcome.ok) return
+			setPin('')
+			setMessage(outcome.message)
+			if (outcome.retryAfterSeconds) {
+				const at = monotonicNow()
+				setNow(at)
+				setWaitUntil(at + outcome.retryAfterSeconds * 1000)
+			}
+		} catch {
+			// Never leave the till stuck on "Checking…": say so and let them try again.
+			setPin('')
+			setMessage(_(t`Could not check the PIN. Try again.`))
+		} finally {
+			setBusy(false)
 		}
 	}
 
@@ -98,40 +120,33 @@ export function LockScreen({
 					</p>
 				</div>
 
-				<div
-					className="flex gap-3"
-					role="img"
-					aria-label={_(
-						plural(pin.length, {
-							one: '# digit entered',
-							other: '# digits entered',
-						}),
-					)}
-				>
-					{Array.from({ length: Math.max(4, pin.length) }, (_unused, i) => (
-						<span
-							key={i}
-							className={cn(
-								'border-primary size-4 rounded-full border-2 transition',
-								i < pin.length && 'bg-primary',
-							)}
-						/>
-					))}
-				</div>
+				<PinDots length={pin.length} />
 
-				<div className="min-h-12 text-center" aria-live="polite">
+				<div className="min-h-12 text-center">
+					{/* Announced once, when it appears; the countdown below is not live. */}
+					<p
+						role="alert"
+						className={
+							// During a wait the countdown below shows it; the alert stays for screen readers.
+							waiting
+								? 'sr-only'
+								: 'text-destructive text-sm font-medium empty:hidden'
+						}
+					>
+						{message}
+					</p>
 					{waiting ? (
-						<p role="alert" className="text-destructive text-sm font-medium">
+						<p className="text-destructive text-sm font-medium" aria-hidden>
 							{plural(secondsLeft, {
 								one: 'Too many wrong PINs. Try again in # second.',
 								other: 'Too many wrong PINs. Try again in # seconds.',
 							})}
 						</p>
-					) : message ? (
-						<p role="alert" className="text-destructive text-sm font-medium">
-							{message}
-						</p>
-					) : !online && !demo ? (
+					) : null}
+					<p role="status" className="sr-only">
+						{ready ? _(t`You can try your PIN again now.`) : ''}
+					</p>
+					{!message && !waiting && !online && !demo ? (
 						<p className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
 							<CloudOff className="size-4" />{' '}
 							<Trans>

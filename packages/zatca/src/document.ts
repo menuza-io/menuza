@@ -124,14 +124,32 @@ const NS = {
 // Canonical XML writing
 // ---------------------------------------------------------------------------
 
+/**
+ * Characters XML 1.0 does not allow (C0 controls other than tab, newline and
+ * carriage return, U+FFFE, U+FFFF) and lone surrogates. Free text (item names,
+ * reasons, seller fields) could carry them; a document holding one is not
+ * well-formed and ZATCA refuses it after the till has already chained it, so
+ * they are dropped before anything is hashed or signed.
+ */
+const XML_ILLEGAL =
+	// eslint-disable-next-line no-control-regex
+	/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
+
+/** `text` without the characters XML 1.0 does not allow. */
+export const xmlSafe = (text: string) => text.replace(XML_ILLEGAL, '')
+
+/** Whether `text` holds a character XML 1.0 does not allow. */
+export const hasXmlIllegal = (text: string) =>
+	new RegExp(XML_ILLEGAL.source).test(text)
+
 const escapeText = (text: string) =>
-	text
+	xmlSafe(text)
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
 		.replace(/\r/g, '&#xD;')
 const escapeAttribute = (text: string) =>
-	text
+	xmlSafe(text)
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/"/g, '&quot;')
@@ -670,7 +688,25 @@ function signatureExtension(input: {
 	)
 }
 
-/** TLV of the Phase 2 QR code (simplified documents carry all nine tags). */
+/** A QR tag's value is at most 255 bytes (its length is one byte). */
+export const ZATCA_QR_TAG_MAX_BYTES = 255
+
+/** `text` cut to at most `maxBytes` of UTF-8, never inside a character. */
+function utf8Within(text: string, maxBytes: number): Uint8Array {
+	const bytes = utf8(text)
+	if (bytes.length <= maxBytes) return bytes
+	let end = maxBytes
+	// Back off continuation bytes (10xxxxxx) to the start of a character.
+	while (end > 0 && (bytes[end]! & 0xc0) === 0x80) end--
+	return bytes.subarray(0, end)
+}
+
+/**
+ * TLV of the Phase 2 QR code (simplified documents carry all nine tags). A
+ * seller name longer than a tag holds is cut (settings refuse such a name, so
+ * this only guards older data): signing a sale must not fail at the till, and a
+ * document ZATCA then refuses is reported with its reason.
+ */
 export function phase2Qr(input: {
 	sellerName: string
 	vatNumber: string
@@ -682,7 +718,7 @@ export function phase2Qr(input: {
 	certificate: ZatcaCertificate
 }): string {
 	const fields: Uint8Array[] = [
-		utf8(input.sellerName),
+		utf8Within(xmlSafe(input.sellerName), ZATCA_QR_TAG_MAX_BYTES),
 		utf8(input.vatNumber),
 		utf8(input.timestamp),
 		utf8(amount(input.totalCents)),
@@ -694,7 +730,8 @@ export function phase2Qr(input: {
 	]
 	const bytes: number[] = []
 	fields.forEach((value, index) => {
-		if (value.length > 255) throw new Error(`QR tag ${index + 1} is too long`)
+		if (value.length > ZATCA_QR_TAG_MAX_BYTES)
+			throw new Error(`QR tag ${index + 1} is too long`)
 		bytes.push(index + 1, value.length, ...value)
 	})
 	return toBase64(Uint8Array.from(bytes))

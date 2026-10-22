@@ -26,8 +26,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			orgSlug: params.orgSlug || '',
 			canWrite,
 			posUrl: resolvePosUrl(ENV.POS_URL, process.env.NODE_ENV),
-			// The origin the terminal reads the menu and branding from.
-			appUrl: new URL(request.url).origin,
+			// The origin the terminal reads the menu and branding from: the
+			// canonical App origin, never the Host the request happened to use.
+			appUrl: new URL(ENV.BASE_URL).origin,
 		},
 		{ headers: { 'Cache-Control': 'private, no-store' } },
 	)

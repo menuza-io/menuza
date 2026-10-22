@@ -1,12 +1,12 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, plural, Trans } from '@lingui/macro'
+import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { type Reason, type StaffRef } from '~/lib/db.ts'
 import { type Audit } from '~/lib/orders.ts'
 import { type ApprovalOutcome } from '~/lib/signin.ts'
-import { Keypad } from '~/ui/Keypad.tsx'
+import { ManagerPinPad } from '~/ui/ManagerPinPad.tsx'
 import { Button, Modal, cn } from '~/ui/primitives.tsx'
 
 const REASON_LABEL: Record<Reason, MessageDescriptor> = {
@@ -69,11 +69,16 @@ export function AuditSheet({
 		if (pin.length < 4 || busy) return
 		setBusy(true)
 		setError(null)
-		const outcome = await onApprove(pin)
-		setBusy(false)
-		setPin('')
-		if (outcome.ok) setApprovedBy(outcome.manager)
-		else setError(outcome.message)
+		try {
+			const outcome = await onApprove(pin)
+			if (outcome.ok) setApprovedBy(outcome.manager)
+			else setError(outcome.message)
+		} catch {
+			setError(_(t`Could not check the PIN. Try again.`))
+		} finally {
+			setPin('')
+			setBusy(false)
+		}
 	}
 
 	const approverName = approvedBy?.name ?? ''
@@ -86,9 +91,16 @@ export function AuditSheet({
 		if (!ready || !reason) return
 		setBusy(true)
 		setError(null)
-		const failed = await onConfirm({ reason, by: me, approvedBy })
-		setBusy(false)
-		if (failed) setError(failed)
+		try {
+			const failed = await onConfirm({ reason, by: me, approvedBy })
+			if (failed) setError(failed)
+		} catch (e) {
+			setError(
+				e instanceof Error ? e.message : _(t`Something went wrong. Try again.`),
+			)
+		} finally {
+			setBusy(false)
+		}
 	}
 
 	return (
@@ -149,48 +161,13 @@ export function AuditSheet({
 							<Trans>Approved by {approverName}</Trans>
 						</p>
 					) : (
-						<div className="border-border space-y-2 rounded-2xl border p-3">
-							<p className="text-sm font-semibold">
-								<Trans>A manager approves this with their PIN</Trans>
-							</p>
-							<div
-								className="flex justify-center gap-3"
-								role="img"
-								aria-label={_(
-									plural(pin.length, {
-										one: '# digit entered',
-										other: '# digits entered',
-									}),
-								)}
-							>
-								{Array.from(
-									{ length: Math.max(4, pin.length) },
-									(_unused, i) => (
-										<span
-											key={i}
-											className={cn(
-												'border-primary size-3.5 rounded-full border-2',
-												i < pin.length && 'bg-primary',
-											)}
-										/>
-									),
-								)}
-							</div>
-							<Keypad
-								value={pin}
-								onChange={(next) => !busy && setPin(next.slice(0, 6))}
-								maxDigits={6}
-								raw
-							/>
-							<Button
-								variant="primary"
-								className="w-full"
-								disabled={pin.length < 4 || busy}
-								onClick={() => void approve()}
-							>
-								{busy ? <Trans>Checking…</Trans> : <Trans>Approve</Trans>}
-							</Button>
-						</div>
+						<ManagerPinPad
+							prompt={<Trans>A manager approves this with their PIN</Trans>}
+							pin={pin}
+							onPin={setPin}
+							busy={busy}
+							onApprove={() => void approve()}
+						/>
 					)
 				) : null}
 				{error ? (

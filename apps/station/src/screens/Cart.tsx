@@ -280,7 +280,6 @@ export function Cart({
 									<div className="bg-muted flex items-center gap-1 rounded-xl p-0.5">
 										<IconButton
 											label={_(t`Fewer ${line.name}`)}
-											className="size-10"
 											onClick={() => onQuantity(line.id, line.quantity - 1)}
 										>
 											{line.quantity === 1 ? (
@@ -297,7 +296,6 @@ export function Cart({
 										</span>
 										<IconButton
 											label={_(t`More ${line.name}`)}
-											className="size-10"
 											onClick={() => onQuantity(line.id, line.quantity + 1)}
 										>
 											<Plus className="size-4" />

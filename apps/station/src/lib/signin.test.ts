@@ -7,6 +7,7 @@ import {
 	attemptSignIn,
 	forgetCachedStaff,
 	rememberStaff,
+	resetMonotonicWait,
 	type SignInDeps,
 } from './signin.ts'
 
@@ -26,7 +27,15 @@ beforeEach(async () => {
 	await db.staff.clear()
 	await db.meta.clear()
 	vi.restoreAllMocks()
+	vi.unstubAllGlobals()
+	resetMonotonicWait()
 })
+
+/** Moves the monotonic clock (what the in-page wait counts on) forward. */
+function advanceMonotonic(ms: number) {
+	const base = performance.now()
+	vi.spyOn(performance, 'now').mockReturnValue(base + ms)
+}
 
 describe('demo mode', () => {
 	it('uses a fixed demo PIN, works with no network, and never calls a server', async () => {
@@ -195,6 +204,7 @@ describe('offline sign-in', () => {
 			(during as { retryAfterSeconds: number }).retryAfterSeconds,
 		).toBeGreaterThan(0)
 		// "Reload": the guard is read back from storage, not memory.
+		resetMonotonicWait()
 		expect(await getMeta('pin-guard')).toMatchObject({ failures: 5 })
 		expect(await attemptSignIn('4321', offline)).toMatchObject({
 			ok: false,
@@ -209,9 +219,36 @@ describe('offline sign-in', () => {
 		expect(await attemptSignIn('4321', offline, t0 + 1000)).toMatchObject({
 			reason: 'wait',
 		})
+		advanceMonotonic(31_000)
 		expect(await attemptSignIn('4321', offline, t0 + 31_000)).toMatchObject({
 			ok: true,
 		})
+	})
+
+	it('setting the clock forward does not end a wait while the till stays open', async () => {
+		await rememberStaff('4321', ana, 'cashier')
+		const t0 = Date.now()
+		for (let i = 0; i < 5; i++) await attemptSignIn('0000', offline, t0)
+		// The tablet's time jumps an hour; only seconds have really passed.
+		expect(
+			await attemptSignIn('4321', offline, t0 + 60 * 60_000),
+		).toMatchObject({ ok: false, reason: 'wait' })
+		advanceMonotonic(31_000)
+		expect(
+			await attemptSignIn('4321', offline, t0 + 60 * 60_000),
+		).toMatchObject({ ok: true })
+	})
+
+	it('setting the clock back never makes the stored wait longer than five minutes', async () => {
+		await rememberStaff('4321', ana, 'cashier')
+		const t0 = Date.now()
+		for (let i = 0; i < 5; i++) await attemptSignIn('0000', offline, t0)
+		resetMonotonicWait()
+		const r = await attemptSignIn('4321', offline, t0 - 24 * 60 * 60_000)
+		expect(r).toMatchObject({ ok: false, reason: 'wait' })
+		expect(
+			(r as { retryAfterSeconds: number }).retryAfterSeconds,
+		).toBeLessThanOrEqual(300)
 	})
 
 	it('asks for a connection once the remembered sign-in is too old, rather than trusting it forever', async () => {
@@ -242,6 +279,49 @@ describe('offline sign-in', () => {
 		vi.stubGlobal('fetch', reply(200, { staff: ana, role: 'cashier' }))
 		await attemptSignIn('4321', online)
 		expect(await getMeta('pin-guard')).toMatchObject({ failures: 0 })
+	})
+})
+
+describe('answers that cannot be trusted, and storage that fails', () => {
+	it('a 200 that is not JSON (a captive portal) decides nothing: the remembered roster does', async () => {
+		await rememberStaff('4321', ana, 'cashier')
+		vi.stubGlobal(
+			'fetch',
+			vi
+				.fn()
+				.mockResolvedValue(
+					new Response('<html>Log in to Wi-Fi</html>', { status: 200 }),
+				),
+		)
+		expect(await attemptSignIn('4321', online)).toMatchObject({
+			ok: true,
+			session: { staff: ana, mode: 'offline' },
+		})
+	})
+
+	it('a 200 with the wrong shape is not a sign-in', async () => {
+		vi.stubGlobal('fetch', reply(200, { staff: { id: 1 }, role: 'owner' }))
+		expect(await attemptSignIn('4321', online)).toMatchObject({
+			ok: false,
+			reason: 'needs_connection',
+		})
+	})
+
+	it('still signs in when the server says yes but the device cannot remember them', async () => {
+		vi.stubGlobal('fetch', reply(200, { staff: ana, role: 'manager' }))
+		vi.spyOn(db, 'transaction').mockRejectedValue(new Error('QuotaExceeded'))
+		expect(await attemptSignIn('4321', online)).toMatchObject({
+			ok: true,
+			session: { staff: ana, role: 'manager', mode: 'online' },
+		})
+	})
+
+	it('never rejects when IndexedDB fails: it says the device could not check', async () => {
+		vi.spyOn(db.meta, 'get').mockRejectedValue(new Error('broken'))
+		expect(await attemptSignIn('4321', offline)).toMatchObject({
+			ok: false,
+			reason: 'unavailable',
+		})
 	})
 })
 

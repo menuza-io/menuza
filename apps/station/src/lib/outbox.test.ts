@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
 import { posOrderRequestSchema } from '@repo/common/pos-orders'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useClock } from './clock.ts'
 import { type PosSettings } from './config.ts'
 import { db } from './db.ts'
 import {
@@ -11,8 +12,20 @@ import {
 	voidTab,
 	type OrderDraft,
 } from './orders.ts'
-import { backoffFor, checkDevice, flushOutbox, toWireOrder } from './outbox.ts'
+import {
+	backoffFor,
+	checkDevice,
+	classifyRefusal,
+	flushOutbox,
+	toWireOrder,
+} from './outbox.ts'
 import { type CartLine } from './pricing.ts'
+import {
+	closeShift,
+	rejectedShifts,
+	requeueRejectedShifts,
+	startShift,
+} from './shifts.ts'
 
 const MISTAKE = { reason: 'mistake' as const, by: null, approvedBy: null }
 
@@ -82,6 +95,8 @@ const respond = (status: number, body: unknown = {}) =>
 beforeEach(async () => {
 	await db.orders.clear()
 	await db.meta.clear()
+	await db.shifts.clear()
+	useClock.setState({ skewMs: null })
 	vi.restoreAllMocks()
 })
 
@@ -830,5 +845,122 @@ describe('who took the order, on the wire', () => {
 			lines: [{ ...line, quantity: 3 }],
 		})
 		expect(edited.staff).toEqual(ana)
+	})
+})
+
+describe('cash drawer shifts', () => {
+	/** Two shifts on this terminal: one closed, one open (oldest first). */
+	async function twoShifts() {
+		const first = await startShift({
+			openingFloatCents: 10_000,
+			by: null,
+			origin: 'demo',
+		})
+		await closeShift(first.id, { countedCashCents: 10_000, by: null })
+		// Opened a moment later, so it sorts after the first.
+		await new Promise((resolve) => setTimeout(resolve, 2))
+		const second = await startShift({
+			openingFloatCents: 5_000,
+			by: null,
+			origin: 'demo',
+		})
+		return { first, second }
+	}
+	const shiftCalls = (fetchMock: ReturnType<typeof vi.fn>) =>
+		fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/pos/shifts'))
+
+	it('a shift refused for good is marked rejected, and the next shift still goes', async () => {
+		const { first, second } = await twoShifts()
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce(
+				new Response(JSON.stringify({ error: 'payload_too_large' }), {
+					status: 413,
+				}),
+			)
+			.mockResolvedValueOnce(new Response('{}', { status: 201 }))
+		vi.stubGlobal('fetch', fetchMock)
+		await flushOutbox(settings)
+		expect(shiftCalls(fetchMock)).toHaveLength(2)
+		expect((await db.shifts.get(first.id))!).toMatchObject({
+			sync: 'rejected',
+			lastError: 'payload_too_large',
+		})
+		expect((await db.shifts.get(second.id))!.sync).toBe('synced')
+		expect(await rejectedShifts()).toHaveLength(1)
+		// Sent again on request.
+		expect(await requeueRejectedShifts()).toBe(1)
+		expect((await db.shifts.get(first.id))!.sync).toBe('pending')
+	})
+
+	it('a failure that may clear backs off and stops, without marking anything refused', async () => {
+		const { first, second } = await twoShifts()
+		const fetchMock = respond(503)
+		vi.stubGlobal('fetch', fetchMock)
+		await flushOutbox(settings)
+		expect(shiftCalls(fetchMock)).toHaveLength(1)
+		const row = (await db.shifts.get(first.id))!
+		expect(row.sync).toBe('pending')
+		expect(row.attempts).toBe(1)
+		expect(row.nextAttemptAt).toBeGreaterThan(Date.now())
+		expect((await db.shifts.get(second.id))!.attempts).toBe(0)
+	})
+
+	it('a removed terminal says so once, and its shifts wait for re-pairing', async () => {
+		const { first } = await twoShifts()
+		vi.stubGlobal('fetch', respond(401, { error: 'device_revoked' }))
+		const onUnpaired = vi.fn()
+		await flushOutbox(settings, { onUnpaired })
+		expect(onUnpaired).toHaveBeenCalledTimes(1)
+		expect((await db.shifts.get(first.id))!).toMatchObject({
+			sync: 'pending',
+			attempts: 0,
+			nextAttemptAt: 0,
+		})
+	})
+
+	it('a terminal the server does not recognise is reported, not removed', async () => {
+		await twoShifts()
+		vi.stubGlobal('fetch', respond(401, { error: 'invalid_device' }))
+		const onUnrecognised = vi.fn()
+		const onUnpaired = vi.fn()
+		await flushOutbox(settings, { onUnrecognised, onUnpaired })
+		expect(onUnrecognised).toHaveBeenCalledTimes(1)
+		expect(onUnpaired).not.toHaveBeenCalled()
+	})
+})
+
+describe('classifyRefusal', () => {
+	it('is shared by orders and shifts', () => {
+		expect(classifyRefusal(401, { error: 'device_revoked' }).kind).toBe(
+			'unpaired',
+		)
+		expect(classifyRefusal(401, { error: 'invalid_device' }).kind).toBe(
+			'unrecognised',
+		)
+		expect(classifyRefusal(413, { error: 'payload_too_large' }).kind).toBe(
+			'rejected',
+		)
+		expect(classifyRefusal(429, { error: 'held_limit' }).kind).toBe('retry')
+		expect(classifyRefusal(502, {}).kind).toBe('retry')
+	})
+})
+
+describe('the server clock', () => {
+	it('every order upload measures how far off the tablet clock is', async () => {
+		await place()
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(
+				new Response('{}', {
+					status: 201,
+					headers: { Date: new Date(Date.now() - 5 * 60_000).toUTCString() },
+				}),
+			),
+		)
+		await flushOutbox(settings)
+		const skew = useClock.getState().skewMs!
+		expect(skew).toBeLessThan(-4 * 60_000)
+		expect(skew).toBeGreaterThan(-6 * 60_000)
 	})
 })

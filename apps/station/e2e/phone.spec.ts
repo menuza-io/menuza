@@ -11,6 +11,7 @@ import {
 	openCategory,
 	lockScreen,
 	openOrders,
+	openPairingLink,
 	pairLocked,
 	signInWithPin,
 	test,
@@ -219,7 +220,7 @@ test.describe('on a phone', () => {
 			label: 'Waiter phone',
 			terminalCode: 'W1',
 		})
-		await page.goto(link)
+		await openPairingLink(page, link)
 		await expect(
 			page.getByRole('heading', { name: 'Demo Kitchen' }),
 		).toBeVisible()

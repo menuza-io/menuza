@@ -13,11 +13,14 @@ import { z } from 'zod'
 import {
 	authenticatePosDevice,
 	isPosEnabled,
+	isPosHashUnavailable,
 	posDisabledResponse,
 	posError,
+	posUnavailableResponse,
 } from '../lib/pos-auth.ts'
 import { fetchOrderContext } from '../services/order-service.ts'
 import {
+	billUnchanged,
 	claimTab,
 	fiscalChainHeads,
 	holdUpload,
@@ -32,6 +35,7 @@ import {
 	upsertPosOrder,
 	verifyPosPin,
 	withClockCheck,
+	withDiscountCheck,
 	withStaffCheck,
 	type PosReview,
 } from '../services/pos-service.ts'
@@ -147,6 +151,7 @@ posRoutes.post('/pair', async (c) => {
 		if (!paired) return invalid()
 		return c.json({ deviceSecret: paired.secret, device: paired.device }, 201)
 	} catch (error) {
+		if (isPosHashUnavailable(error)) return posUnavailableResponse()
 		console.error(
 			'POS pairing failed',
 			error instanceof Error ? error.message : error,
@@ -240,6 +245,7 @@ posRoutes.post('/sign-in', async (c) => {
 		}
 		return c.json({ staff: result.staff, role: result.role }, 200)
 	} catch (error) {
+		if (isPosHashUnavailable(error)) return posUnavailableResponse()
 		console.error(
 			'POS sign-in failed',
 			error instanceof Error ? error.message : error,
@@ -320,17 +326,17 @@ posRoutes.post('/orders', async (c) => {
 	const order = parsed.data
 
 	// The live menu is only consulted to FLAG drift; the sale is kept either way.
-	// A replay, or a change that leaves the lines alone (a payment, a
-	// cancellation, a refund), needs no menu check. If the menu cannot be reached
-	// the sale is stored for review ("unverified") instead of being held back on
-	// the tablet, where a wipe would lose it.
+	// A replay, or a change that leaves the bill exactly as it was checked (a
+	// payment, a cancellation, a refund), needs no menu check. If the menu cannot
+	// be reached the sale is stored for review ("unverified") instead of being
+	// held back on the tablet, where a wipe would lose it.
 	const prior = await peekOrder(pos.db, order.id)
 	let review: PosReview
 	if (
 		prior &&
 		(prior.revision >= order.revision ||
 			order.status === 'void' ||
-			JSON.stringify(prior.lines) === JSON.stringify(order.lines))
+			billUnchanged(prior, order))
 	) {
 		review = {
 			reviewReason: prior.reviewReason,
@@ -347,7 +353,7 @@ posRoutes.post('/orders', async (c) => {
 		pos.db,
 		pos.device,
 		order,
-		withClockCheck(review, order),
+		withDiscountCheck(withClockCheck(review, order), order),
 	)
 
 	try {

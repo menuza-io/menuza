@@ -46,7 +46,12 @@ const meansOf = (
 	payments: Array<{ method: ZatcaPaymentMeans }>,
 ): ZatcaPaymentMeans[] => [...new Set(payments.map((p) => p.method))]
 
-/** Gross amounts of a sale by VAT treatment, before and after its discount. */
+/**
+ * Gross amounts of a sale by VAT treatment, before and after its discount. The
+ * standard-rated base after the discount is worked out exactly as the till
+ * prices it (`computeTotals` in Station), so the document's VAT is the VAT on
+ * the bill.
+ */
 function split(sale: SaleForZatca) {
 	let standardGross = 0
 	let untaxed = 0
@@ -65,10 +70,12 @@ function split(sale: SaleForZatca) {
 	// The till's discount comes off the subtotal (taxed and untaxed items alike), in proportion.
 	const discount = sale.totals.adjustmentCents
 	const base = standardGross + untaxed
-	const standardDiscount =
-		base > 0 ? Math.round((discount * standardGross) / base) : 0
+	const standardAfter =
+		base > 0 ? Math.round(standardGross * (1 - discount / base)) : 0
+	const standardDiscount = standardGross - standardAfter
 	return {
 		standardGross,
+		standardAfter,
 		untaxed,
 		standardDiscount,
 		outOfScopeDiscount: discount - standardDiscount,
@@ -81,11 +88,41 @@ export function outOfScopeCents(sale: SaleForZatca): number {
 	return s.untaxed - s.outOfScopeDiscount + sale.totals.tipCents
 }
 
+/**
+ * The standard-rated taxable amount (net) of a document whose standard-rated
+ * part costs `grossCents` VAT included and whose VAT is `taxCents` (the till's
+ * figure). It is the gross less that VAT, moved by at most a halala when that
+ * is needed for VAT to be exactly `rate`% of it (BR-S-09); the halala then
+ * shows as the payable rounding amount. `null` when no such amount exists (the
+ * VAT does not belong to this gross), so the caller falls back to converting
+ * the gross on its own.
+ */
+export function standardTaxableFor(
+	grossCents: number,
+	taxCents: number,
+	rate: number,
+): number | null {
+	const exact = (grossCents * 100) / (100 + rate)
+	const first = grossCents - taxCents
+	const fits = [first, first - 1, first + 1]
+		.filter((n) => n >= 0 && Math.round((n * rate) / 100) === taxCents)
+		.sort((a, b) => Math.abs(a - exact) - Math.abs(b - exact))
+	return fits[0] ?? null
+}
+
+/** Allowance or charge that takes the standard-rated line nets to `target`. */
+function reconcile(linesNet: number, target: number) {
+	return linesNet >= target
+		? { allowanceCents: linesNet - target, chargeCents: 0 }
+		: { allowanceCents: 0, chargeCents: target - linesNet }
+}
+
 export function fromSale(sale: SaleForZatca, meta: Meta): ZatcaDocumentInput {
 	const rate = sale.taxRatePercent
 	const net = (gross: number) =>
 		sale.taxInclusive ? Math.round((gross * 100) / (100 + rate)) : gross
 	const lines: ZatcaLine[] = []
+	let standardLinesNet = 0
 	for (const line of sale.lines) {
 		const name = line.variantLabel
 			? `${line.name} (${line.variantLabel})`
@@ -98,12 +135,16 @@ export function fromSale(sale: SaleForZatca, meta: Meta): ZatcaDocumentInput {
 		const untaxed = line.options
 			.filter((o) => !o.taxable)
 			.reduce((s, o) => s + o.unitCents * o.quantity, 0)
+		// The line's net is its unit price times its quantity (BR-KSA-EN16931-11);
+		// rounding a VAT-inclusive unit price is evened out once, for the whole
+		// document, below.
 		lines.push({
 			name,
 			quantity: line.quantity,
 			unitNetCents: net(taxed),
 			category: 'S',
 		})
+		standardLinesNet += net(taxed) * line.quantity
 		if (untaxed > 0)
 			lines.push({
 				name: `${name}: not subject to VAT`,
@@ -120,13 +161,22 @@ export function fromSale(sale: SaleForZatca, meta: Meta): ZatcaDocumentInput {
 			category: 'O',
 		})
 	const s = split(sale)
+	// One source of truth for VAT: the document's standard-rated amount is the
+	// one whose VAT is the bill's own (`totals.taxCents`), converted from the
+	// whole discounted gross at once rather than unit by unit.
+	const target = sale.taxInclusive
+		? (standardTaxableFor(s.standardAfter, sale.totals.taxCents, rate) ??
+			net(s.standardAfter))
+		: s.standardAfter
+	const { allowanceCents, chargeCents } = reconcile(standardLinesNet, target)
 	return {
 		kind: 'invoice',
 		...meta,
 		currency: 'SAR',
 		taxRatePercent: rate,
 		lines,
-		allowanceCents: net(s.standardDiscount),
+		allowanceCents,
+		...(chargeCents > 0 ? { chargeCents } : {}),
 		outOfScopeAllowanceCents: s.outOfScopeDiscount,
 		payableCents: sale.totals.totalCents,
 		paymentMeans: meansOf(sale.payments),
@@ -146,7 +196,17 @@ export function fromRefund(
 		reason: string
 		kind?: 'credit_note' | 'debit_note'
 	},
-	sale: { taxRatePercent: number; totalCents: number; outOfScopeCents: number },
+	sale: {
+		taxRatePercent: number
+		totalCents: number
+		outOfScopeCents: number
+		/**
+		 * The bill's VAT. With it the note's VAT is the bill's VAT in proportion to
+		 * the amount (`posRefundTaxCents` in `@repo/common/pos-fiscal`, the figure
+		 * on the till's credit note and in its reports).
+		 */
+		taxCents?: number
+	},
 	meta: Meta & { billingReference: { id: string; issueDate: string } },
 ): ZatcaDocumentInput {
 	const rate = sale.taxRatePercent
@@ -157,12 +217,24 @@ export function fromRefund(
 				)
 			: 0
 	const standardGross = refund.amountCents - outOfScope
+	// Same formula as posRefundTaxCents.
+	const noteTax =
+		sale.taxCents === undefined
+			? null
+			: sale.totalCents > 0
+				? Math.round((sale.taxCents * refund.amountCents) / sale.totalCents)
+				: 0
+	const standardNet =
+		(noteTax === null
+			? null
+			: standardTaxableFor(standardGross, noteTax, rate)) ??
+		Math.round((standardGross * 100) / (100 + rate))
 	const label = refund.kind === 'debit_note' ? 'Additional charge' : 'Refund'
 	const lines: ZatcaLine[] = [
 		{
 			name: label,
 			quantity: 1,
-			unitNetCents: Math.round((standardGross * 100) / (100 + rate)),
+			unitNetCents: standardNet,
 			category: 'S',
 		},
 		...(outOfScope > 0

@@ -1,4 +1,6 @@
 import { t } from '@lingui/macro'
+import { z } from 'zod'
+import { monotonicNow, noteServerDate } from './clock.ts'
 import {
 	db,
 	getMeta,
@@ -49,6 +51,8 @@ export type SignInOutcome =
 				| 'terminal_removed'
 				| 'sign_in_off'
 				| 'bad_pin'
+				/** This device could not check the PIN (its storage failed). */
+				| 'unavailable'
 			message: string
 			retryAfterSeconds?: number
 	  }
@@ -104,9 +108,30 @@ async function loadGuard(): Promise<PinGuard> {
 	return (await getMeta<PinGuard>(GUARD_KEY)) ?? EMPTY_GUARD
 }
 
+/**
+ * The same wait on a clock that only moves forward. The stored deadline
+ * survives a reload but follows the tablet's time, so moving the clock ahead
+ * would end it; this one does not, for as long as the page stays open.
+ */
+let monotonicBlockedUntil: number | null = null
+
+/** Seconds still to wait by either clock. */
+function remainingWait(guard: PinGuard, now: number): number {
+	const mono =
+		monotonicBlockedUntil === null
+			? 0
+			: Math.max(0, Math.ceil((monotonicBlockedUntil - monotonicNow()) / 1000))
+	return Math.max(waitSeconds(guard, now), mono)
+}
+
+/** For tests: forget the in-memory wait, as a reload would. */
+export function resetMonotonicWait(): void {
+	monotonicBlockedUntil = null
+}
+
 async function offlineSignIn(pin: string, now: number): Promise<SignInOutcome> {
 	const guard = await loadGuard()
-	const wait = waitSeconds(guard, now)
+	const wait = remainingWait(guard, now)
 	if (wait > 0) {
 		return {
 			ok: false,
@@ -147,6 +172,8 @@ async function offlineSignIn(pin: string, now: number): Promise<SignInOutcome> {
 		}
 	}
 	const { guard: next, delaySeconds } = afterFailure(guard, now)
+	if (delaySeconds > 0)
+		monotonicBlockedUntil = monotonicNow() + delaySeconds * 1000
 	await setMeta(GUARD_KEY, next)
 	return {
 		ok: false,
@@ -175,6 +202,33 @@ export async function attemptSignIn(
 	pin: string,
 	deps: SignInDeps,
 	now = Date.now(),
+): Promise<SignInOutcome> {
+	try {
+		return await signIn(pin, deps, now)
+	} catch {
+		// IndexedDB refused (storage full, private mode, a browser bug). Never
+		// leave the lock screen waiting on a promise that will not settle well.
+		return {
+			ok: false,
+			reason: 'unavailable',
+			message: t`This device could not check the PIN. Try again, or reload the app.`,
+		}
+	}
+}
+
+/** Who answered a sign-in: the person and their role. Anything else is not trusted. */
+const signInResponseSchema = z.object({
+	staff: z.object({
+		id: z.string().min(1).max(200),
+		name: z.string().max(200),
+	}),
+	role: z.enum(['cashier', 'manager']),
+})
+
+async function signIn(
+	pin: string,
+	deps: SignInDeps,
+	now: number,
 ): Promise<SignInOutcome> {
 	if (!PIN_PATTERN.test(pin))
 		return {
@@ -205,6 +259,7 @@ export async function attemptSignIn(
 		return offlineSignIn(pin, now)
 
 	let response: Response
+	const sentAt = Date.now()
 	try {
 		response = await fetch(
 			`${deps.tenantApiUrl.replace(/\/+$/, '')}/pos/sign-in`,
@@ -221,14 +276,29 @@ export async function attemptSignIn(
 	} catch {
 		return offlineSignIn(pin, now)
 	}
+	noteServerDate(response, sentAt)
 
 	if (response.ok) {
-		const body = (await response.json()) as { staff: StaffRef; role: StaffRole }
-		await rememberStaff(pin, body.staff, body.role, now)
-		await setMeta(GUARD_KEY, EMPTY_GUARD)
+		const parsed = signInResponseSchema.safeParse(
+			await response.json().catch(() => null),
+		)
+		// A 200 that is not the server's answer (a captive portal's page, a proxy)
+		// decides nothing: fall back to the people this device remembers.
+		if (!parsed.success) return offlineSignIn(pin, now)
+		const staff: StaffRef = parsed.data.staff
+		const role: StaffRole = parsed.data.role
+		// The server said yes. Remembering them for offline use is a bonus: a
+		// storage failure here must not turn a good sign-in into a stuck till.
+		try {
+			await rememberStaff(pin, staff, role, now)
+			await setMeta(GUARD_KEY, EMPTY_GUARD)
+		} catch {
+			/* signed in; not remembered for offline use this time */
+		}
+		monotonicBlockedUntil = null
 		return {
 			ok: true,
-			session: { staff: body.staff, role: body.role, mode: 'online', at: now },
+			session: { staff, role, mode: 'online', at: now },
 		}
 	}
 

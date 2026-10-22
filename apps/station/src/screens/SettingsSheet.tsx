@@ -4,6 +4,11 @@ import { CheckCircle2, Languages, Link2, Unlink } from 'lucide-react'
 import { useState } from 'react'
 import { IDLE_LOCK_CHOICES } from '~/lib/activity.ts'
 import { type PosSettings } from '~/lib/config.ts'
+import {
+	pairingHosts,
+	parsePairingInput,
+	serversProblem,
+} from '~/lib/pairing.ts'
 import { DEMO_PIN } from '~/lib/signin.ts'
 import { type MenuLocation } from '~/lib/types.ts'
 import { Button, Modal } from '~/ui/primitives.tsx'
@@ -51,7 +56,16 @@ export function SettingsSheet({
 	const lastUpdated = lastSyncedAt
 		? new Date(lastSyncedAt).toLocaleString(i18n.locale)
 		: ''
-	const valid = draft.demo || (draft.appUrl.trim() && draft.slug.trim())
+	// Typed addresses follow the same rules as a pairing link: https, and trusted.
+	const serverProblem = draft.demo
+		? null
+		: serversProblem([draft.appUrl.trim(), draft.tenantApiUrl.trim()])
+	const valid =
+		(draft.demo || (draft.appUrl.trim() && draft.slug.trim())) &&
+		serverProblem === null
+	/** Where a pasted link would point the till, shown before it is used. */
+	const pastedLink = parsePairingInput(pairingText)
+	const pastedHost = pastedLink ? pairingHosts(pastedLink).api : null
 	/** Idle-lock choices, worded in the till's language. */
 	const lockLabel = (seconds: number) =>
 		seconds === 0
@@ -61,14 +75,20 @@ export function SettingsSheet({
 				: _(plural(seconds / 60, { one: '# minute', other: '# minutes' }))
 
 	const doPair = async () => {
+		if (pairing || !pairingText.trim()) return
 		setPairing(true)
 		setPairingError(null)
-		const problem = await onPair(pairingText)
-		setPairing(false)
-		if (problem) setPairingError(problem)
-		else {
-			setPairingText('')
-			onClose()
+		try {
+			const problem = await onPair(pairingText)
+			if (problem) setPairingError(problem)
+			else {
+				setPairingText('')
+				onClose()
+			}
+		} catch {
+			setPairingError(_(t`Could not pair this terminal. Try again.`))
+		} finally {
+			setPairing(false)
 		}
 	}
 
@@ -212,20 +232,36 @@ export function SettingsSheet({
 									setPairingText(e.target.value)
 									setPairingError(null)
 								}}
+								onKeyDown={(e) => {
+									// The settings form never submits; Enter here pairs.
+									if (e.key !== 'Enter') return
+									e.preventDefault()
+									void doPair()
+								}}
+								enterKeyHint="go"
 								autoCapitalize="none"
 								autoCorrect="off"
 								spellCheck={false}
 								placeholder={_(t`Pairing link or ppc1.… code`)}
 								className={inputClass}
 							/>
-							{pairingError ? (
-								<p
-									role="alert"
-									className="text-destructive text-sm font-medium"
-								>
-									{pairingError}
+							{pastedHost ? (
+								<p className="text-muted-foreground text-sm">
+									<Trans>
+										Orders will be sent to{' '}
+										<bdi className="text-foreground font-semibold">
+											{pastedHost}
+										</bdi>
+										.
+									</Trans>
 								</p>
 							) : null}
+							<p
+								role="alert"
+								className="text-destructive text-sm font-medium empty:hidden"
+							>
+								{pairingError}
+							</p>
 							<Button
 								variant="primary"
 								size="lg"
@@ -416,6 +452,12 @@ export function SettingsSheet({
 						) : null}
 					</>
 				)}
+				<p
+					role="alert"
+					className="text-destructive text-sm font-medium empty:hidden"
+				>
+					{serverProblem}
+				</p>
 				{!required ? (
 					<p className="text-muted-foreground text-sm">
 						{lastSyncedAt ? (

@@ -47,6 +47,7 @@ import {
 import { HttpError, notFound } from '../lib/http.ts'
 import { legacyPhoneForms } from '../lib/phone.ts'
 import { withSetupWrite } from '../lib/reservations-write.ts'
+import { erasePosHeldUploads } from './pos-service.ts'
 import { handleCancellationPayments } from './rsv-payment-refunds.ts'
 import {
 	CANCELLABLE_FUTURE_STATUSES,
@@ -947,6 +948,9 @@ export async function erasePerson(
 									.returning({ id: posOrders.id })
 							).length
 						: 0
+				// Held uploads are redacted on arrival; this catches a record kept
+				// before that which still carries the number.
+				const posHeldScrubbed = await erasePosHeldUploads(tx, phoneForms)
 				if (phoneForms.length > 0) {
 					contactConditions.push(
 						inJsonList(digitsOnly(restaurantOrders.contactPhone), phoneForms),
@@ -1040,6 +1044,7 @@ export async function erasePerson(
 					existing.length > 0 ||
 					restaurantOrdersScrubbed > 0 ||
 					posOrdersScrubbed > 0 ||
+					posHeldScrubbed > 0 ||
 					waitlistIds.length > 0 ||
 					notifyIds.length > 0 ||
 					formSubmissionsRedacted > 0 ||

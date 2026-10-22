@@ -57,6 +57,7 @@ import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { normalizeStaffLocale, renderStaffEmail } from '../lib/staff-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { purgeExpiredApplications } from './hiring-service.ts'
+import { purgePosGuestNames } from './pos-service.ts'
 import { hasPendingZatca, reportDueZatca } from './zatca-service.ts'
 import { runOnboardingTick } from './onboarding-tick.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
@@ -1374,6 +1375,16 @@ async function runTick(
 		} catch (error) {
 			console.error(
 				'ZATCA reporting failed',
+				error instanceof Error ? error.message : 'unknown',
+			)
+		}
+		// Till guest names, callback numbers and settled held uploads expire on
+		// schedule even when POS is off or no terminal checks in any more.
+		try {
+			await purgePosGuestNames(db, now)
+		} catch (error) {
+			console.error(
+				'POS retention purge failed',
 				error instanceof Error ? error.message : 'unknown',
 			)
 		}

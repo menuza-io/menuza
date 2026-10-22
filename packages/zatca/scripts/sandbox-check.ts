@@ -106,7 +106,7 @@ const reference = { id: 'SME00001', issueDate: riyadhDateTime(now).date }
 const credit = signDocument(
 	fromRefund(
 		{ amountCents: 1150, method: 'cash', reason: 'Returned item' },
-		{ taxRatePercent: 15, totalCents: 2300, outOfScopeCents: 0 },
+		{ taxRatePercent: 15, totalCents: 2300, outOfScopeCents: 0, taxCents: 300 },
 		{
 			...meta(2, invoice.invoiceHash, 'SME00002'),
 			billingReference: reference,
@@ -123,8 +123,38 @@ const debit = signDocument(
 			reason: 'Price correction',
 			kind: 'debit_note',
 		},
-		{ taxRatePercent: 15, totalCents: 2300, outOfScopeCents: 0 },
+		{ taxRatePercent: 15, totalCents: 2300, outOfScopeCents: 0, taxCents: 300 },
 		{ ...meta(3, credit.invoiceHash, 'SME00003'), billingReference: reference },
+	),
+	key,
+	certificate,
+)
+// VAT-inclusive prices whose per-unit net does not add up (50 x 1.00: 43.48 net,
+// not 50 x 0.87), so the document-level allowance and the payable rounding
+// amount are checked by ZATCA too.
+const inclusive = signDocument(
+	fromSale(
+		{
+			lines: [
+				{
+					name: 'Water',
+					variantLabel: null,
+					quantity: 50,
+					baseCents: 100,
+					options: [],
+				},
+			],
+			taxRatePercent: 15,
+			taxInclusive: true,
+			totals: {
+				adjustmentCents: 0,
+				taxCents: 652,
+				tipCents: 0,
+				totalCents: 5000,
+			},
+			payments: [{ method: 'cash' }],
+		},
+		meta(4, debit.invoiceHash, 'SME00004'),
 	),
 	key,
 	certificate,
@@ -135,6 +165,7 @@ for (const [name, document] of [
 	['invoice', invoice],
 	['credit-note', credit],
 	['debit-note', debit],
+	['invoice-tax-inclusive', inclusive],
 ] as const) {
 	fs.writeFileSync(path.join(out, `${name}.xml`), document.xml)
 	const result = await client.complianceCheck(compliance.value, document)

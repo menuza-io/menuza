@@ -214,3 +214,15 @@ export function toWireShift(shift: Shift) {
 		expectedCashCents: shift.expectedCashCents,
 	}
 }
+
+/** Shifts the server refused for good. They stay here, shown for attention. */
+export const rejectedShifts = (): Promise<Shift[]> =>
+	db.shifts.where('sync').equals('rejected').toArray()
+
+/** Puts refused shifts back in the queue (after an update or a manager's fix). */
+export async function requeueRejectedShifts(): Promise<number> {
+	return db.shifts
+		.where('sync')
+		.equals('rejected')
+		.modify({ sync: 'pending', nextAttemptAt: 0, lastError: null })
+}

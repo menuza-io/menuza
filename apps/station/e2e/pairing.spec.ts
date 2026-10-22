@@ -7,6 +7,7 @@ import {
 	expectStored,
 	fillCart,
 	openOrders,
+	openPairingLink,
 	pairUi,
 	payExactCash,
 	sellFries,
@@ -49,7 +50,7 @@ test.describe('pairing', () => {
 			label: 'Bar tablet',
 			terminalCode: 'BAR',
 		})
-		await page.goto(link)
+		await openPairingLink(page, link)
 		await expect(
 			page.getByRole('heading', { name: 'Demo Kitchen' }),
 		).toBeVisible()
@@ -190,7 +191,7 @@ test.describe('pairing', () => {
 			label: 'Two',
 			terminalCode: 'T2',
 		})
-		await second.goto(link)
+		await openPairingLink(second, link)
 		await expect(
 			second.getByRole('heading', { name: 'Demo Kitchen' }),
 		).toBeVisible()

@@ -57,6 +57,16 @@ export default defineConfig({
 		},
 		{
 			command: `npx vite build && npx vite preview --port ${POS_PORT} --strictPort --host localhost`,
+			// A production build trusts only the servers it is given (and its CSP
+			// allows only those): the harness, and a dead port for the
+			// unreachable-server test.
+			env: {
+				VITE_POS_ALLOWED_ORIGINS: [
+					`http://127.0.0.1:${API_PORT}`,
+					'http://127.0.0.1:4710',
+					'http://127.0.0.1:9',
+				].join(','),
+			},
 			url: `http://localhost:${POS_PORT}`,
 			reuseExistingServer: !process.env.CI,
 			timeout: 120_000,

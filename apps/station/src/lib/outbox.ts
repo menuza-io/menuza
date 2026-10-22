@@ -1,6 +1,7 @@
 import { t } from '@lingui/macro'
 import { type PosFiscalChainHead } from '@repo/common/pos-fiscal'
 import { POS_CONTRACT_VERSION } from '@repo/common/pos-orders'
+import { noteServerDate } from './clock.ts'
 import { type PosSettings } from './config.ts'
 import { db, type PosOrder } from './db.ts'
 import { isSendable } from './orders.ts'
@@ -171,6 +172,39 @@ type UploadResult =
 	 */
 	| { kind: 'unrecognised'; error: string }
 
+type RefusalBody = { message?: string; error?: string; nextNumber?: string }
+
+/**
+ * What a refusal means, for orders and shifts alike. Only the answers that say
+ * "this upload itself is the problem" are final. Anything else (a 404 during a
+ * deploy, a wrong URL, a proxy page, a 5xx, a 429) may clear, so it is retried
+ * rather than parking a paid order or a counted drawer as refused.
+ */
+export function classifyRefusal(
+	status: number,
+	parsed: RefusalBody,
+): Extract<
+	UploadResult,
+	{ kind: 'unpaired' | 'unrecognised' | 'rejected' | 'retry' }
+> {
+	if (status === 401 && parsed.error === 'device_revoked') {
+		return {
+			kind: 'unpaired',
+			error: t`This terminal was removed. Pair it again to keep sending orders.`,
+		}
+	}
+	if (status === 401 && parsed.error === 'invalid_device') {
+		return {
+			kind: 'unrecognised',
+			error: t`The server did not recognise this terminal. It will try again.`,
+		}
+	}
+	const error = parsed.message ?? parsed.error ?? `Server answered ${status}`
+	if (typeof parsed.error === 'string' && PERMANENT_REFUSALS.has(parsed.error))
+		return { kind: 'rejected', error }
+	return { kind: 'retry', error }
+}
+
 async function upload(
 	order: PosOrder,
 	settings: PosSettings,
@@ -179,6 +213,7 @@ async function upload(
 		return { kind: 'waiting', error: t`Terminal is not paired yet` }
 	}
 	try {
+		const sentAt = Date.now()
 		const response = await fetch(
 			`${settings.tenantApiUrl.replace(/\/+$/, '')}/pos/orders`,
 			{
@@ -193,6 +228,7 @@ async function upload(
 				signal: AbortSignal.timeout(15_000),
 			},
 		)
+		noteServerDate(response, sentAt)
 		if (response.status === 202) {
 			const body = (await response.json().catch(() => ({}))) as {
 				error?: string
@@ -212,22 +248,8 @@ async function upload(
 		}
 		const parsed = await response
 			.json()
-			.then((b: { message?: string; error?: string; nextNumber?: string }) => b)
-			.catch(
-				() => ({}) as { message?: string; error?: string; nextNumber?: string },
-			)
-		if (response.status === 401 && parsed.error === 'device_revoked') {
-			return {
-				kind: 'unpaired',
-				error: t`This terminal was removed. Pair it again to keep sending orders.`,
-			}
-		}
-		if (response.status === 401 && parsed.error === 'invalid_device') {
-			return {
-				kind: 'unrecognised',
-				error: t`The server did not recognise this terminal. It will try again.`,
-			}
-		}
+			.then((b: RefusalBody) => b ?? {})
+			.catch(() => ({}) as RefusalBody)
 		const error =
 			parsed.message ?? parsed.error ?? `Server answered ${response.status}`
 		if (
@@ -237,16 +259,7 @@ async function upload(
 		) {
 			return { kind: 'renumber', nextNumber: parsed.nextNumber, error }
 		}
-		// Only the answers that say "this order itself is the problem" are final.
-		// Anything else (a 404 during a deploy, a wrong URL, a proxy page, a 5xx)
-		// may clear, so it is retried rather than parking a paid order as refused.
-		if (
-			typeof parsed.error === 'string' &&
-			PERMANENT_REFUSALS.has(parsed.error)
-		) {
-			return { kind: 'rejected', error }
-		}
-		return { kind: 'retry', error }
+		return classifyRefusal(response.status, parsed)
 	} catch (error) {
 		return {
 			kind: 'retry',
@@ -302,6 +315,8 @@ export async function flushOutbox(
 		return 0
 	running = true
 	let sent = 0
+	/** The server removed or did not recognise this terminal: shifts wait too. */
+	let pairingProblem = false
 	const renumbered = new Map<string, number>()
 	try {
 		for (;;) {
@@ -381,6 +396,7 @@ export async function flushOutbox(
 					nextAttemptAt: 0,
 				})
 				options.onUnrecognised?.()
+				pairingProblem = true
 				break
 			} else if (result.kind === 'unpaired') {
 				// Release the claim without counting an attempt: nothing is wrong with the order.
@@ -390,6 +406,7 @@ export async function flushOutbox(
 					nextAttemptAt: 0,
 				})
 				options.onUnpaired?.()
+				pairingProblem = true
 				break
 			} else if (result.kind === 'rejected') {
 				await settle({
@@ -409,7 +426,7 @@ export async function flushOutbox(
 				break
 			}
 		}
-		await flushShifts(settings, options.force ?? false)
+		if (!pairingProblem) await flushShifts(settings, options)
 	} finally {
 		running = false
 	}
@@ -418,12 +435,13 @@ export async function flushOutbox(
 
 /**
  * Sends cash drawer shifts that changed, oldest first. Same rules as orders:
- * a shift the server kept for review counts as delivered; anything that may
- * clear is retried later with backoff.
+ * a shift the server kept for review counts as delivered; one it refuses for
+ * good is marked `rejected` (shown for attention, and the next shift still
+ * goes); anything that may clear is retried later with backoff.
  */
 async function flushShifts(
 	settings: PosSettings,
-	force: boolean,
+	options: FlushOptions,
 ): Promise<void> {
 	if (!settings.tenantApiUrl || !settings.deviceToken) return
 	const due = (
@@ -432,15 +450,16 @@ async function flushShifts(
 			.equals('pending')
 			.filter(
 				(s) =>
-					(force || s.nextAttemptAt <= Date.now()) && isSendable(s, settings),
+					(options.force || s.nextAttemptAt <= Date.now()) &&
+					isSendable(s, settings),
 			)
 			.sortBy('openedAt')
 	).slice(0, 20)
 	for (const shift of due) {
-		let ok = false
-		let error = ''
-		let held: string | null = null
+		let outcome:
+			{ kind: 'ok'; held: string | null } | ReturnType<typeof classifyRefusal>
 		try {
+			const sentAt = Date.now()
 			const response = await fetch(
 				`${settings.tenantApiUrl.replace(/\/+$/, '')}/pos/shifts`,
 				{
@@ -454,34 +473,58 @@ async function flushShifts(
 					signal: AbortSignal.timeout(15_000),
 				},
 			)
-			const body = (await response.json().catch(() => ({}))) as {
-				error?: string
-			}
-			ok = response.ok
-			if (response.status === 202) held = body.error ?? 'held'
-			error = body.error ?? `Server answered ${response.status}`
+			noteServerDate(response, sentAt)
+			const body = (await response
+				.json()
+				.then((b: RefusalBody) => b ?? {})
+				.catch(() => ({}))) as RefusalBody
+			outcome = response.ok
+				? {
+						kind: 'ok',
+						held: response.status === 202 ? (body.error ?? 'held') : null,
+					}
+				: classifyRefusal(response.status, body)
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Network error'
+			outcome = {
+				kind: 'retry',
+				error: e instanceof Error ? e.message : 'Network error',
+			}
 		}
 		await db.transaction('rw', db.shifts, async () => {
 			const current = await db.shifts.get(shift.id)
 			if (!current || current.revision !== shift.revision) return
-			if (ok)
+			if (outcome.kind === 'ok')
 				await db.shifts.update(shift.id, {
 					sync: 'synced',
 					lastError: null,
-					heldReason: held,
+					heldReason: outcome.held,
 				})
-			else {
+			else if (outcome.kind === 'rejected')
+				await db.shifts.update(shift.id, {
+					sync: 'rejected',
+					attempts: current.attempts + 1,
+					lastError: outcome.error,
+				})
+			else if (outcome.kind === 'retry') {
 				const attempts = current.attempts + 1
 				await db.shifts.update(shift.id, {
 					attempts,
-					lastError: error,
+					lastError: outcome.error,
 					nextAttemptAt: Date.now() + backoffFor(attempts),
+				})
+			} else {
+				// Removed or not recognised: nothing is wrong with the shift itself.
+				await db.shifts.update(shift.id, {
+					lastError: outcome.error,
+					nextAttemptAt: 0,
 				})
 			}
 		})
-		if (!ok) return
+		if (outcome.kind === 'ok' || outcome.kind === 'rejected') continue
+		if (outcome.kind === 'unpaired') options.onUnpaired?.()
+		else if (outcome.kind === 'unrecognised') options.onUnrecognised?.()
+		// The network, the server or the pairing is unhappy: stop for now.
+		return
 	}
 }
 
@@ -553,6 +596,7 @@ export async function checkDeviceDetailed(
 	if (typeof navigator !== 'undefined' && navigator.onLine === false)
 		return { verdict: 'unknown' }
 	try {
+		const sentAt = Date.now()
 		const response = await fetch(
 			`${settings.tenantApiUrl.replace(/\/+$/, '')}/pos/me`,
 			{
@@ -560,6 +604,7 @@ export async function checkDeviceDetailed(
 				signal: AbortSignal.timeout(8_000),
 			},
 		)
+		noteServerDate(response, sentAt)
 		if (response.ok) {
 			const body = (await response.json().catch(() => ({}))) as {
 				device?: {

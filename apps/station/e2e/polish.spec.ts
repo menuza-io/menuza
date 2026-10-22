@@ -44,7 +44,9 @@ test.describe('POS interaction polish', () => {
 		await openCategory(page, 'Starters')
 		await page.getByRole('searchbox').fill('a dish that does not exist')
 		await expect(page.getByText('Nothing found')).toBeVisible()
-		await expect(page.getByRole('status')).toContainText('0 items')
+		await expect(
+			page.getByRole('status').filter({ hasText: '0 items' }),
+		).toBeVisible()
 		await page
 			.getByRole('button', { name: 'Clear search' })
 			.filter({ hasText: 'Clear search' })

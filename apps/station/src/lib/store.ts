@@ -15,9 +15,19 @@ import {
 } from './config.ts'
 import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
-import { adoptTab, markTransferredAway, type ServerTab } from './orders.ts'
+import {
+	adoptTab,
+	canAdoptTab,
+	markTransferredAway,
+	type ServerTab,
+} from './orders.ts'
 import { checkDeviceDetailed, flushOutbox } from './outbox.ts'
-import { pairTerminal, parsePairingInput, withPairing } from './pairing.ts'
+import {
+	pairTerminal,
+	parsePairingInput,
+	serversProblem,
+	withPairing,
+} from './pairing.ts'
 import { type PhonePickup } from './pickup.ts'
 import { lineSignature, type Adjustment, type CartLine } from './pricing.ts'
 import {
@@ -34,7 +44,7 @@ import {
 	type MenuCategory,
 	type MenuLocation,
 } from './types.ts'
-import { syncZatcaUnit } from './zatca.ts'
+import { forgetZatcaUnit, syncZatcaUnit } from './zatca.ts'
 
 type CatalogStatus = 'loading' | 'ready' | 'empty' | 'error'
 
@@ -267,6 +277,7 @@ export const usePos = create<PosState>((set, get) => ({
 				}
 				saveSettings(settings)
 				set({ settings, pairingLost: true, session: null })
+				void forgetZatcaUnit()
 			},
 		})
 		// Orders going through proves the server knows us.
@@ -325,6 +336,8 @@ export const usePos = create<PosState>((set, get) => ({
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: true, session: null })
+		// A removed terminal must not keep a key that signs invoices in the restaurant's name.
+		await forgetZatcaUnit()
 	},
 
 	async otherTabs() {
@@ -358,6 +371,10 @@ export const usePos = create<PosState>((set, get) => ({
 		const { settings, session } = get()
 		if (!settings.deviceToken)
 			return t`This terminal is not paired with a restaurant.`
+		// Refuse before claiming: a claimed tab this till cannot bill would be stranded.
+		if (!canAdoptTab(tab.order))
+			return t`This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it.`
+		let claimed: ServerTab
 		try {
 			const response = await fetch(
 				apiUrl(settings, `/pos/tabs/${encodeURIComponent(tab.order.id)}/claim`),
@@ -382,10 +399,17 @@ export const usePos = create<PosState>((set, get) => ({
 			const status = response.status
 			if (!response.ok || !body.order)
 				return body.message ?? body.error ?? t`The server answered ${status}.`
-			await adoptTab(body.order, settings.slug.trim().toLowerCase())
-			return null
+			claimed = body.order
 		} catch {
 			return t`Could not reach the server. The tab stays where it is.`
+		}
+		try {
+			await adoptTab(claimed, settings.slug.trim().toLowerCase())
+			return null
+		} catch (e) {
+			return e instanceof Error
+				? e.message
+				: t`The tab was taken over but could not be saved on this device.`
 		}
 	},
 
@@ -443,17 +467,6 @@ export const usePos = create<PosState>((set, get) => ({
 	async pair(input) {
 		const parsed = parsePairingInput(input)
 		if (!parsed) return t`That does not look like a pairing code or link.`
-		// When this deployment names the servers it trusts, a link may not point elsewhere.
-		const trusted = (import.meta.env.VITE_POS_ALLOWED_ORIGINS ?? '')
-			.split(',')
-			.map((o: string) => o.trim())
-			.filter(Boolean)
-		if (trusted.length > 0) {
-			for (const origin of [parsed.tenantApiUrl, parsed.appUrl]) {
-				if (origin && !trusted.includes(origin))
-					return t`This link points to a server this app is not set up to trust.`
-			}
-		}
 		let settings = get().settings
 		// A link configures the whole terminal; a bare code uses what is already set.
 		settings = {
@@ -463,6 +476,9 @@ export const usePos = create<PosState>((set, get) => ({
 			slug: parsed.slug ?? settings.slug,
 			demo: parsed.slug || parsed.appUrl ? false : settings.demo,
 		}
+		// https only, and only servers this deployment names (see `serverOriginProblem`).
+		const problem = serversProblem([settings.tenantApiUrl, settings.appUrl])
+		if (problem) return problem
 		const result = await pairTerminal(settings.tenantApiUrl, parsed.code)
 		if (!result.ok) return result.error
 		const next = withPairing(settings, result)
@@ -484,6 +500,7 @@ export const usePos = create<PosState>((set, get) => ({
 		saveSettings(settings)
 		set({ settings, pairingLost: false, session: null })
 		void forgetCachedStaff()
+		void forgetZatcaUnit()
 	},
 
 	setOrderType: (orderType) =>

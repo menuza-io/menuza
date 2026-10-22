@@ -21,8 +21,21 @@ export type Csid = {
 
 export type FatooraResult<T> =
 	| { ok: true; value: T; status: number }
-	/** `retry`: the request may succeed later (network, 5xx, rate limit); otherwise ZATCA refused it. */
-	| { ok: false; status: number; retry: boolean; error: string; body: unknown }
+	/**
+	 * `retry`: the request may succeed later (network, timeout, 5xx, rate
+	 * limit); otherwise ZATCA refused it. `unauthorized`: ZATCA refused the
+	 * credentials (401: a revoked or expired CSID, or a wrong secret). Nothing
+	 * sent with them can succeed until the unit is onboarded again, so it is
+	 * neither a refusal of the document nor something to retry quietly.
+	 */
+	| {
+			ok: false
+			status: number
+			retry: boolean
+			unauthorized?: boolean
+			error: string
+			body: unknown
+	  }
 
 type Fetch = typeof fetch
 
@@ -63,15 +76,38 @@ async function call<T>(
 		string,
 		unknown
 	>
-	// 200: accepted. 202: accepted with warnings (reporting). Anything 4xx except 429 is a refusal.
-	if (response.status === 200 || response.status === 202)
+	// 200: accepted. 202: accepted with warnings (reporting), unless the
+	// validation results say it was not: ZATCA's status is the answer.
+	if (response.status === 200 || response.status === 202) {
+		if (refusedInBody(json))
+			return {
+				ok: false,
+				status: response.status,
+				retry: false,
+				error: summarizeErrors(json) ?? 'Not reported',
+				body: json,
+			}
 		return {
 			ok: true,
 			status: response.status,
 			value: read(json, response.status),
 		}
+	}
+	if (response.status === 401)
+		return {
+			ok: false,
+			status: 401,
+			retry: false,
+			unauthorized: true,
+			error: summarizeErrors(json) ?? 'ZATCA refused the CSID (HTTP 401)',
+			body: json,
+		}
+	// Anything 4xx except a timeout (408), too early (425) or a rate limit (429) is a refusal.
 	const retry =
-		response.status === 429 || response.status >= 500 || response.status === 401
+		response.status === 408 ||
+		response.status === 425 ||
+		response.status === 429 ||
+		response.status >= 500
 	return {
 		ok: false,
 		status: response.status,
@@ -79,6 +115,25 @@ async function call<T>(
 		error: summarizeErrors(json) ?? `HTTP ${response.status}`,
 		body: json,
 	}
+}
+
+/** A 2xx answer whose validation results or reporting status say it failed. */
+function refusedInBody(json: Record<string, unknown>): boolean {
+	const results = json.validationResults as { status?: unknown } | undefined
+	if (
+		typeof results?.status === 'string' &&
+		results.status.toUpperCase() === 'ERROR'
+	)
+		return true
+	for (const key of [
+		'reportingStatus',
+		'clearanceStatus',
+		'complianceStatus',
+	]) {
+		const value = json[key]
+		if (typeof value === 'string' && /^NOT[_ ]/i.test(value)) return true
+	}
+	return false
 }
 
 /** The first error ZATCA gives, in a line. */

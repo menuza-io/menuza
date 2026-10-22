@@ -800,7 +800,7 @@ msgstr "{created, plural, one {# task added.} other {# tasks added.}}"
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "{created} imported, {existing} already on your team, {notImported} not imported."
 
-#: app/components/pos/terminals-manager.tsx:1186
+#: app/components/pos/terminals-manager.tsx:1197
 msgid "{createdLabel} is ready to take orders."
 msgstr "{createdLabel} is ready to take orders."
 
@@ -7250,7 +7250,7 @@ msgstr "Clocked out, {firstName}"
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:559
-#: app/components/pos/terminals-manager.tsx:1272
+#: app/components/pos/terminals-manager.tsx:1285
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 msgid "Close"
@@ -7287,7 +7287,7 @@ msgstr "Close this window and open the party again to see the latest details."
 msgid "Close thread"
 msgstr "Close thread"
 
-#: app/components/pos/terminals-manager.tsx:1274
+#: app/components/pos/terminals-manager.tsx:1287
 #: app/components/staff/kiosk-manager.tsx:794
 msgid "Close, I'll finish later"
 msgstr "Close, I'll finish later"
@@ -7370,7 +7370,7 @@ msgstr "Closing time must be after opening time."
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1172
+#: app/components/pos/terminals-manager.tsx:1183
 msgid "Code copied."
 msgstr "Code copied."
 
@@ -7830,7 +7830,7 @@ msgstr ""
 msgid "Connect your POS"
 msgstr "Connect your POS"
 
-#: app/components/pos/terminals-manager.tsx:1191
+#: app/components/pos/terminals-manager.tsx:1202
 #: app/components/pos/zatca-settings.tsx:378
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:102
 #: app/components/settings/cards/organization/review-integrations-card.tsx:54
@@ -8083,7 +8083,7 @@ msgid "Copy All"
 msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/code-block.tsx:147
-#: app/components/pos/terminals-manager.tsx:1262
+#: app/components/pos/terminals-manager.tsx:1275
 msgid "Copy code"
 msgstr ""
 
@@ -8100,7 +8100,7 @@ msgid "Copy into this week"
 msgstr "Copy into this week"
 
 #: app/components/hiring/job-share-panel.tsx:87
-#: app/components/pos/terminals-manager.tsx:1262
+#: app/components/pos/terminals-manager.tsx:1275
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
@@ -8186,7 +8186,7 @@ msgstr "Could not change who can manage terminals."
 msgid "Could not connect the terminal."
 msgstr "Could not connect the terminal."
 
-#: app/components/pos/terminals-manager.tsx:1174
+#: app/components/pos/terminals-manager.tsx:1185
 msgid "Could not copy. Select it and copy it by hand."
 msgstr "Could not copy. Select it and copy it by hand."
 
@@ -10599,7 +10599,7 @@ msgstr "Don't take phone orders for"
 #: app/components/kiosk/kiosk-screens.tsx:720
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
-#: app/components/pos/terminals-manager.tsx:1195
+#: app/components/pos/terminals-manager.tsx:1206
 #: app/components/reservations/settings/setup-checklist.tsx:173
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -11954,7 +11954,7 @@ msgstr "Enter their first day."
 #~ msgid "Enter this code in the POS app's settings on the device. It works once."
 #~ msgstr "Enter this code in the POS app's settings on the device. It works once."
 
-#: app/components/pos/terminals-manager.tsx:1215
+#: app/components/pos/terminals-manager.tsx:1226
 msgid "Enter this code in the Station app's settings on the device. It works once."
 msgstr "Enter this code in the Station app's settings on the device. It works once."
 
@@ -12412,7 +12412,7 @@ msgstr "Expires at {expiresAt}"
 #~ msgid "Expires at <0>{0}</0>"
 #~ msgstr "Expires at <0>{0}</0>"
 
-#: app/components/pos/terminals-manager.tsx:1239
+#: app/components/pos/terminals-manager.tsx:1252
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -16173,7 +16173,7 @@ msgid "Link copied!"
 msgstr ""
 
 #: app/components/hiring/job-share-panel.tsx:49
-#: app/components/pos/terminals-manager.tsx:1172
+#: app/components/pos/terminals-manager.tsx:1183
 #: app/components/staff/kiosk-manager.tsx:697
 msgid "Link copied."
 msgstr "Link copied."
@@ -21091,7 +21091,7 @@ msgstr "Open the waitlist to see who is waiting."
 msgid "Open this on the tablet"
 msgstr "Open this on the tablet"
 
-#: app/components/pos/terminals-manager.tsx:1206
+#: app/components/pos/terminals-manager.tsx:1217
 msgid "Open this on the terminal"
 msgstr "Open this on the terminal"
 
@@ -21839,11 +21839,11 @@ msgstr "Pair your first terminal to start taking walk-in orders."
 msgid "Paired terminals"
 msgstr "Paired terminals"
 
-#: app/components/pos/terminals-manager.tsx:1244
+#: app/components/pos/terminals-manager.tsx:1257
 msgid "Pairing code"
 msgstr "Pairing code"
 
-#: app/components/pos/terminals-manager.tsx:1244
+#: app/components/pos/terminals-manager.tsx:1257
 #: app/components/staff/kiosk-manager.tsx:764
 msgid "Pairing link"
 msgstr "Pairing link"
@@ -23671,7 +23671,7 @@ msgstr "QR code that opens the pairing page"
 msgid "QR code that opens this job"
 msgstr "QR code that opens this job"
 
-#: app/components/pos/terminals-manager.tsx:1227
+#: app/components/pos/terminals-manager.tsx:1238
 msgid "QR code that pairs the terminal"
 msgstr "QR code that pairs the terminal"
 
@@ -26091,7 +26091,7 @@ msgstr "Say why. It is kept with the card."
 msgid "Scan QR Code or Enter Setup Key"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1210
+#: app/components/pos/terminals-manager.tsx:1221
 msgid "Scan the code with the device's camera, or open the link in its browser. It works once."
 msgstr "Scan the code with the device's camera, or open the link in its browser. It works once."
 
@@ -29600,7 +29600,7 @@ msgstr "Temporary forward"
 msgid "Terminal code"
 msgstr "Terminal code"
 
-#: app/components/pos/terminals-manager.tsx:1183
+#: app/components/pos/terminals-manager.tsx:1194
 msgid "Terminal paired"
 msgstr "Terminal paired"
 
@@ -31386,10 +31386,14 @@ msgstr "This Checkout Session is no longer active"
 msgid "This client will have access to:"
 msgstr ""
 
-#: app/components/pos/terminals-manager.tsx:1237
+#: app/components/pos/terminals-manager.tsx:1250
 #: app/components/staff/kiosk-manager.tsx:757
 msgid "This code expired. Make a new one."
 msgstr "This code expired. Make a new one."
+
+#: app/components/pos/terminals-manager.tsx:1248
+msgid "This code was removed. Make a new one."
+msgstr "This code was removed. Make a new one."
 
 #: app/routes/_app+/$orgSlug_+/customers.tsx:517
 #~ msgid "this customer"
@@ -34242,7 +34246,7 @@ msgstr "Waiting for a manager"
 msgid "Waiting for the tablet…"
 msgstr "Waiting for the tablet…"
 
-#: app/components/pos/terminals-manager.tsx:1267
+#: app/components/pos/terminals-manager.tsx:1280
 msgid "Waiting for the terminal…"
 msgstr "Waiting for the terminal…"
 

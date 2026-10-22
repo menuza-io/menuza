@@ -16,6 +16,7 @@ import {
 	applyPinFailure,
 	applyPinSuccess,
 	applyRefusedAttempt,
+	DEFAULT_SCOPE_ID,
 	EMPTY_PIN_BACKOFF_STATE,
 	normalizePinDigits,
 	pinBackoffRemainingSeconds,
@@ -63,9 +64,11 @@ import {
 } from '@repo/tenant-db'
 import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
 import { pinLookupFor, pinShapeOk } from './kiosk-pin-service.ts'
+import { fetchOrderContext } from './order-service.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { revokeZatcaUnitsForDevice } from './zatca-service.ts'
 
 /** Drizzle wraps driver errors; the SQLite message lives down the `cause` chain. */
 function errorChain(error: unknown): string {
@@ -141,6 +144,20 @@ export async function nextFreeNumber(
 const hashPairingCode = (code: string) =>
 	hmacHash(posPairingCodeHashMessage(code))
 
+/**
+ * The organization's locations, from the same App catalog the menu check uses.
+ * Null when it cannot be asked (App unreachable, or a site that is not
+ * published yet): pairing then trusts the manager rather than failing.
+ */
+async function knownLocationIds(
+	orgId: string,
+	locationId: string,
+): Promise<string[] | null> {
+	const context = await fetchOrderContext(orgId, locationId, null)
+	if (!context.ok) return null
+	return context.data.menu.locations.map((l) => l.id)
+}
+
 // ---------------------------------------------------------------------------
 // Pairing and terminals
 // ---------------------------------------------------------------------------
@@ -175,7 +192,7 @@ export async function createPairingCode(
 	if (!POS_TERMINAL_CODE.test(terminalCode)) {
 		return fail(422, 'invalid_terminal_code', 'Use 1 to 6 letters or digits.')
 	}
-	const scopeId = input.scopeId?.trim() || 'main'
+	const scopeId = input.scopeId?.trim() || DEFAULT_SCOPE_ID
 	if (!/^[A-Za-z0-9_-]{1,64}$/.test(scopeId))
 		return fail(422, 'invalid_scope', 'That workplace is not valid.')
 	const dayStartMinutes = input.dayStartMinutes ?? POS_DEFAULT_DAY_START_MINUTES
@@ -185,6 +202,24 @@ export async function createPairingCode(
 			'invalid_day_start',
 			'The business day must start between midnight and noon.',
 		)
+	}
+	// Workplaces are opaque scopes with no registry of their own: one is real
+	// when it is the default or someone is assigned to it. A typo would give a
+	// terminal on which nobody can ever sign in.
+	if (scopeId !== DEFAULT_SCOPE_ID) {
+		const [assigned] = await db
+			.select({ id: staffScopeAssignments.staffId })
+			.from(staffScopeAssignments)
+			.where(eq(staffScopeAssignments.scopeId, scopeId))
+			.limit(1)
+		if (!assigned)
+			return fail(422, 'invalid_scope', 'That workplace is not valid.')
+	}
+	if (input.locationId !== null) {
+		const known = await knownLocationIds(orgId, input.locationId)
+		if (known && !known.includes(input.locationId)) {
+			return fail(422, 'invalid_location', 'That location does not exist.')
+		}
 	}
 	return runTenantTransaction(db, async (tx) => {
 		// Spent and expired codes are noise: sweep them as we go.
@@ -389,18 +424,28 @@ export async function revokePendingCode(
 	return result.length === 1
 }
 
+/**
+ * Removes a terminal. Its ZATCA unit is revoked in the same transaction, so a
+ * removed till's signing key and certificate are never served or used again.
+ */
 export async function revokeDevice(
 	db: TenantDatabase,
 	id: string,
 	revokedBy: string,
 	now = Date.now(),
 ) {
-	const result = await db
-		.update(posDevices)
-		.set({ revokedAt: now, revokedBy })
-		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
-		.returning({ id: posDevices.id })
-	return result.length === 1
+	return retryOnSqliteBusy(() =>
+		runTenantTransaction(db, async (tx) => {
+			const result = await tx
+				.update(posDevices)
+				.set({ revokedAt: now, revokedBy })
+				.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
+				.returning({ id: posDevices.id })
+			if (result.length !== 1) return false
+			await revokeZatcaUnitsForDevice(tx, id, now)
+			return true
+		}),
+	)
 }
 
 // ---------------------------------------------------------------------------
@@ -623,6 +668,8 @@ export async function updateDeviceSettings(
 const LAST_SEEN_THROTTLE_MS = 60_000
 /** Guest first names and table notes typed at the till are cleared this long after the order closes. */
 export const POS_GUEST_NAME_RETENTION_DAYS = 30
+/** An open tab untouched this long is abandoned: its guest name and number are cleared. */
+export const POS_ABANDONED_TAB_RETENTION_DAYS = 90
 
 /**
  * Notes that a terminal is alive, at most once a minute, and uses that moment
@@ -646,23 +693,36 @@ export async function touchDevice(
 	await purgePosGuestNames(db, now)
 }
 
+/**
+ * Clears guest names and callback numbers past retention: on closed orders
+ * `POS_GUEST_NAME_RETENTION_DAYS` after their last change, and on open tabs
+ * nobody has touched for `POS_ABANDONED_TAB_RETENTION_DAYS` (a tab left open
+ * on a lost or retired till). Never before a scheduled pickup. Runs on terminal
+ * check-in and on the regional tick, so it also happens when POS is switched
+ * off or every terminal was removed. Held uploads are tidied at the same time.
+ */
 export async function purgePosGuestNames(
 	db: TenantDatabase,
 	now = Date.now(),
 ): Promise<number> {
-	const cutoff = now - POS_GUEST_NAME_RETENTION_DAYS * 24 * 60 * 60 * 1000
+	const day = 24 * 60 * 60 * 1000
+	const cutoff = now - POS_GUEST_NAME_RETENTION_DAYS * day
+	const abandoned = now - POS_ABANDONED_TAB_RETENTION_DAYS * day
 	const cleared = await db
 		.update(posOrders)
 		.set({ guestName: null, customerPhone: null })
 		.where(
 			and(
 				or(isNotNull(posOrders.guestName), isNotNull(posOrders.customerPhone)),
-				lt(posOrders.updatedAt, cutoff),
 				or(isNull(posOrders.pickupAt), lt(posOrders.pickupAt, cutoff)),
-				ne(posOrders.status, 'open'),
+				or(
+					and(ne(posOrders.status, 'open'), lt(posOrders.updatedAt, cutoff)),
+					and(eq(posOrders.status, 'open'), lt(posOrders.updatedAt, abandoned)),
+				),
 			),
 		)
 		.returning({ id: posOrders.id })
+	await purgePosHeldUploads(db, now)
 	return cleared.length
 }
 
@@ -775,11 +835,60 @@ export async function peekOrder(db: TenantDatabase, id: string) {
 			serverTotalCents: posOrders.serverTotalCents,
 			locationName: posOrders.locationName,
 			lines: posOrders.lines,
+			adjustments: posOrders.adjustments,
+			subtotalCents: posOrders.subtotalCents,
+			adjustmentCents: posOrders.adjustmentCents,
+			taxCents: posOrders.taxCents,
+			tipCents: posOrders.tipCents,
+			totalCents: posOrders.totalCents,
 		})
 		.from(posOrders)
 		.where(eq(posOrders.id, id))
 		.limit(1)
 	return row ?? null
+}
+
+/**
+ * Whether a stored order's earlier menu check still holds for this upload: only
+ * when the bill is exactly the one that was checked (lines, discounts and every
+ * total). A later revision that keeps the lines but changes the tax, adds a
+ * discount or lowers the total is checked again.
+ */
+export function billUnchanged(
+	prior: NonNullable<Awaited<ReturnType<typeof peekOrder>>>,
+	order: PosOrderRequest,
+): boolean {
+	return (
+		canonicalJson(prior.lines) === canonicalJson(order.lines) &&
+		canonicalJson(prior.adjustments) === canonicalJson(order.adjustments) &&
+		prior.subtotalCents === order.totals.subtotalCents &&
+		prior.adjustmentCents === order.totals.adjustmentCents &&
+		prior.taxCents === order.totals.taxCents &&
+		prior.tipCents === order.totals.tipCents &&
+		prior.totalCents === order.totals.totalCents
+	)
+}
+
+/** A discount above this share of the subtotal is shown to a manager. */
+export const POS_LARGE_DISCOUNT_SHARE = 0.5
+
+/**
+ * Discounts carry no approver on the wire, so a large one (more than half the
+ * bill) is flagged `large_discount` for a person to look at. The sale is kept.
+ */
+export function withDiscountCheck(
+	review: PosReview,
+	order: PosOrderRequest,
+): PosReview {
+	if (review.reviewReason) return review
+	const { subtotalCents, adjustmentCents } = order.totals
+	if (
+		adjustmentCents > 0 &&
+		adjustmentCents > subtotalCents * POS_LARGE_DISCOUNT_SHARE
+	) {
+		return { ...review, reviewReason: 'large_discount' }
+	}
+	return review
 }
 
 /** The sale is kept; nobody could check it against the menu yet, so a person is asked to look. */
@@ -903,6 +1012,19 @@ type Tx = Parameters<Parameters<TenantDatabase['transaction']>[0]>[0]
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
+/** JSON with object keys sorted, so two copies of the same data compare equal. */
+export function canonicalJson(value: unknown): string {
+	return JSON.stringify(value, (_key, v: unknown) =>
+		v && typeof v === 'object' && !Array.isArray(v)
+			? Object.fromEntries(
+					Object.entries(v as Record<string, unknown>).sort(([a], [b]) =>
+						a < b ? -1 : a > b ? 1 : 0,
+					),
+				)
+			: v,
+	)
+}
+
 /** Ids only for people, and no guest name: revision history is kept forever and holds no personal data. */
 export function revisionSnapshot(order: PosOrderRequest) {
 	const ref = (who: PosStaff | null) => (who ? { id: who.id } : null)
@@ -942,9 +1064,38 @@ const storedPaymentsOnly = (rows: PosPaymentRow[]) =>
 	rows.filter((r) => r.kind === 'payment')
 
 /**
+ * The devices that may write one terminal's fiscal chains: the terminal itself,
+ * and the removed terminals it replaced (same terminal code and location). A
+ * tablet removed and paired again gets a new device id but keeps its chain.
+ */
+async function fiscalLineage(tx: Tx, device: PosDevice): Promise<string[]> {
+	const predecessors = await tx
+		.select({ id: posDevices.id })
+		.from(posDevices)
+		.where(
+			and(
+				eq(posDevices.terminalCode, device.terminalCode),
+				device.locationId === null
+					? isNull(posDevices.locationId)
+					: eq(posDevices.locationId, device.locationId),
+				isNotNull(posDevices.revokedAt),
+			),
+		)
+		.orderBy(desc(posDevices.revokedAt))
+		.limit(50)
+	return [device.id, ...predecessors.map((p) => p.id)]
+}
+
+/**
  * Checks and stores the fiscal documents an upload carries. Nothing is refused:
  * a document that does not check out is kept with its problem, and the order is
  * flagged, because the sale and the till's record of it already exist.
+ *
+ * A chain belongs to the terminal that stored its first document (or one it
+ * replaced). A document another terminal files under that chain is kept with
+ * `chain_owner_mismatch` and never takes part in the owner's checks: the
+ * previous, twin and successor lookups only see the owner's documents, and only
+ * the owner's orders are ever flagged from here.
  */
 async function storeFiscalDocuments(
 	tx: Tx,
@@ -953,30 +1104,58 @@ async function storeFiscalDocuments(
 	now: number,
 ): Promise<string | null> {
 	let problem: string | null = null
+	if (order.fiscal.length === 0) return problem
+	const lineage = await fiscalLineage(tx, device)
+	const ours = new Set(lineage)
+	const owners = new Map<string, string | null>()
+	const chainOwner = async (chainId: string) => {
+		if (!owners.has(chainId)) {
+			const [first] = await tx
+				.select({ deviceId: posFiscalDocuments.deviceId })
+				.from(posFiscalDocuments)
+				.where(eq(posFiscalDocuments.chainId, chainId))
+				.orderBy(
+					asc(posFiscalDocuments.receivedAt),
+					asc(posFiscalDocuments.counter),
+				)
+				.limit(1)
+			owners.set(chainId, first?.deviceId ?? null)
+		}
+		return owners.get(chainId) ?? null
+	}
+	const inChain = (chainId: string, counter: number) =>
+		and(
+			eq(posFiscalDocuments.chainId, chainId),
+			eq(posFiscalDocuments.counter, counter),
+			// bounded: fiscalLineage returns at most 51 ids
+			inArray(posFiscalDocuments.deviceId, lineage),
+		)
 	for (const doc of order.fiscal) {
 		const { hash, ...unsigned } = doc
 		const [stored] = await tx
-			.select({ hash: posFiscalDocuments.hash })
+			.select({
+				hash: posFiscalDocuments.hash,
+				deviceId: posFiscalDocuments.deviceId,
+			})
 			.from(posFiscalDocuments)
 			.where(eq(posFiscalDocuments.docId, doc.docId))
 			.limit(1)
 		if (stored) {
-			if (stored.hash !== hash) problem ??= 'fiscal:document_changed'
+			if (!ours.has(stored.deviceId)) problem ??= 'fiscal:chain_owner_mismatch'
+			else if (stored.hash !== hash) problem ??= 'fiscal:document_changed'
 			continue
 		}
 		let docProblem: string | null = null
 		if (posFiscalHash(unsigned) !== hash) docProblem = 'hash_mismatch'
+		const owner = await chainOwner(doc.chainId)
+		const owned = owner === null || ours.has(owner)
+		if (!owned) docProblem = 'chain_owner_mismatch'
 		const [previous] =
-			doc.counter > 1
+			owned && doc.counter > 1
 				? await tx
 						.select({ hash: posFiscalDocuments.hash })
 						.from(posFiscalDocuments)
-						.where(
-							and(
-								eq(posFiscalDocuments.chainId, doc.chainId),
-								eq(posFiscalDocuments.counter, doc.counter - 1),
-							),
-						)
+						.where(inChain(doc.chainId, doc.counter - 1))
 						.limit(1)
 				: []
 		// The first document starts from the genesis value; a later one must link to
@@ -991,17 +1170,14 @@ async function storeFiscalDocuments(
 			docProblem = 'chain_break'
 		if (!docProblem && previous && previous.hash !== doc.previousHash)
 			docProblem = 'chain_break'
-		const [twin] = await tx
-			.select({ docId: posFiscalDocuments.docId })
-			.from(posFiscalDocuments)
-			.where(
-				and(
-					eq(posFiscalDocuments.chainId, doc.chainId),
-					eq(posFiscalDocuments.counter, doc.counter),
-				),
-			)
-			.limit(1)
-		if (!docProblem && twin) docProblem = 'counter_reused'
+		if (!docProblem) {
+			const [twin] = await tx
+				.select({ docId: posFiscalDocuments.docId })
+				.from(posFiscalDocuments)
+				.where(inChain(doc.chainId, doc.counter))
+				.limit(1)
+			if (twin) docProblem = 'counter_reused'
+		}
 		await tx.insert(posFiscalDocuments).values({
 			docId: doc.docId,
 			chainId: doc.chainId,
@@ -1018,7 +1194,9 @@ async function storeFiscalDocuments(
 			problem: docProblem,
 			receivedAt: now,
 		})
+		if (owner === null) owners.set(doc.chainId, device.id)
 		if (docProblem) problem ??= `fiscal:${docProblem}`
+		if (!owned) continue
 		// A successor that arrived first and does not link to this document is a break too.
 		const [successor] = await tx
 			.select({
@@ -1026,12 +1204,7 @@ async function storeFiscalDocuments(
 				orderId: posFiscalDocuments.orderId,
 			})
 			.from(posFiscalDocuments)
-			.where(
-				and(
-					eq(posFiscalDocuments.chainId, doc.chainId),
-					eq(posFiscalDocuments.counter, doc.counter + 1),
-				),
-			)
+			.where(inChain(doc.chainId, doc.counter + 1))
 			.limit(1)
 		if (successor && successor.previousHash !== hash) {
 			await tx
@@ -1040,6 +1213,8 @@ async function storeFiscalDocuments(
 				.where(
 					and(
 						eq(posOrders.id, successor.orderId),
+						// bounded: fiscalLineage returns at most 51 ids
+						inArray(posOrders.deviceId, lineage),
 						isNull(posOrders.reviewReason),
 					),
 				)
@@ -1066,6 +1241,10 @@ export async function fiscalChainGaps(
 			receivedAt: posFiscalDocuments.receivedAt,
 		})
 		.from(posFiscalDocuments)
+		// A document filed under another terminal's chain is not part of it.
+		.where(
+			sql`coalesce(${posFiscalDocuments.problem}, '') != 'chain_owner_mismatch'`,
+		)
 		.orderBy(asc(posFiscalDocuments.chainId), asc(posFiscalDocuments.counter))
 	const gaps: Array<{
 		chainId: string
@@ -1142,6 +1321,7 @@ export async function upsertPosOrder(
 						.from(posOrders)
 						.where(eq(posOrders.id, order.id))
 						.limit(1)
+					let continuesFrom: string | null = null
 					const storedMoney = existing
 						? await tx
 								.select()
@@ -1181,10 +1361,15 @@ export async function upsertPosOrder(
 									},
 								)
 							}
-							// A terminal that was removed and paired again continues its own
-							// tabs. Only a still-active other terminal is a real conflict.
+							// A terminal that was removed and paired again (same terminal code
+							// and location) continues its own tabs. Any other terminal takes a
+							// tab over only through claimTab, which records the transfer.
 							const [owner] = await tx
-								.select({ revokedAt: posDevices.revokedAt })
+								.select({
+									revokedAt: posDevices.revokedAt,
+									terminalCode: posDevices.terminalCode,
+									locationId: posDevices.locationId,
+								})
 								.from(posDevices)
 								.where(eq(posDevices.id, existing.deviceId))
 								.limit(1)
@@ -1195,8 +1380,48 @@ export async function upsertPosOrder(
 									'This order id belongs to another terminal.',
 								)
 							}
+							if (
+								owner.terminalCode !== device.terminalCode ||
+								owner.locationId !== device.locationId
+							) {
+								return fail(
+									409,
+									'order_owned_by_removed_terminal',
+									'This tab belongs to a removed terminal. Take it over from the open tabs first.',
+								)
+							}
+							continuesFrom = existing.deviceId
 						}
 						if (existing.revision >= order.revision) {
+							// The current revision sent again must say the same thing. One
+							// that differs is held for a person, not acknowledged as a replay
+							// (the till would drop its copy of what it really sold). An older
+							// revision arriving late is a plain replay.
+							const [stored] =
+								existing.revision !== order.revision
+									? []
+									: await tx
+											.select({ snapshot: posOrderRevisions.snapshot })
+											.from(posOrderRevisions)
+											.where(
+												and(
+													eq(posOrderRevisions.orderId, order.id),
+													eq(posOrderRevisions.revision, order.revision),
+												),
+											)
+											.limit(1)
+							if (
+								existing.revision === order.revision &&
+								stored &&
+								canonicalJson(stored.snapshot) !==
+									canonicalJson(revisionSnapshot(order))
+							) {
+								return fail(
+									409,
+									'revision_conflict',
+									'This revision was already received with different contents.',
+								)
+							}
 							return ok({
 								kind: 'replay',
 								order: existing,
@@ -1380,6 +1605,18 @@ export async function upsertPosOrder(
 					}
 
 					if (existing) {
+						if (continuesFrom) {
+							// The removed terminal's tab carries on here: say so in the
+							// transfer history, as a claim would.
+							await tx.insert(posOrderTransfers).values({
+								orderId: order.id,
+								fromDeviceId: continuesFrom,
+								toDeviceId: device.id,
+								revision: existing.revision,
+								staffId: order.staff?.id ?? null,
+								at: now,
+							})
+						}
 						await tx
 							.update(posOrders)
 							.set(values)
@@ -1837,7 +2074,10 @@ export async function fiscalChainHeads(db: TenantDatabase, deviceId: string) {
 		.where(
 			and(
 				eq(posFiscalDocuments.deviceId, deviceId),
-				sql`${posFiscalDocuments.counter} = (select max(d.counter) from pos_fiscal_documents d where d.chain_id = ${posFiscalDocuments.chainId})`,
+				// Only this terminal's own documents: one another terminal filed under
+				// its chain (chain_owner_mismatch) must not hide or move its head.
+				sql`coalesce(${posFiscalDocuments.problem}, '') != 'chain_owner_mismatch'`,
+				sql`${posFiscalDocuments.counter} = (select max(d.counter) from pos_fiscal_documents d where d.chain_id = ${posFiscalDocuments.chainId} and d.device_id = ${deviceId} and coalesce(d.problem, '') != 'chain_owner_mismatch')`,
 			),
 		)
 		.orderBy(desc(posFiscalDocuments.receivedAt))
@@ -1851,11 +2091,119 @@ export async function fiscalChainHeads(db: TenantDatabase, deviceId: string) {
 
 /** Unsettled held uploads one terminal may pile up before it is asked to wait. */
 export const MAX_HELD_PER_DEVICE = 1000
-const MAX_HELD_PAYLOAD_CHARS = 200_000
+/** Unsettled held uploads a whole organization may hold (all terminals together). */
+export const MAX_HELD_PER_ORG = 5000
+/** Unsettled uploads that were not even JSON one terminal may pile up. */
+export const MAX_UNREADABLE_HELD_PER_DEVICE = 20
+export const MAX_HELD_PAYLOAD_CHARS = 64_000
+const MAX_UNREADABLE_PAYLOAD_CHARS = 4_000
+/** Settled held uploads are deleted this long after a person settled them. */
+export const POS_HELD_RESOLVED_RETENTION_DAYS = 30
+
+/** Keys that hold a person (`{ id, name }`): only the id is kept in held payloads. */
+const HELD_STAFF_KEYS = new Set([
+	'staff',
+	'by',
+	'approvedBy',
+	'voidedBy',
+	'voidApprovedBy',
+	'openedBy',
+	'closedBy',
+])
+/** Keys a cashier types a guest into: never kept in held payloads. */
+const HELD_GUEST_KEYS = new Set([
+	'customerName',
+	'customerPhone',
+	'guestName',
+	'tableLabel',
+])
+
+function stripPeople(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(stripPeople)
+	if (!value || typeof value !== 'object') return value
+	const out: Record<string, unknown> = {}
+	for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+		if (HELD_GUEST_KEYS.has(key)) out[key] = null
+		else if (
+			HELD_STAFF_KEYS.has(key) &&
+			v &&
+			typeof v === 'object' &&
+			!Array.isArray(v) &&
+			typeof (v as { id?: unknown }).id === 'string'
+		)
+			out[key] = { id: (v as { id: string }).id }
+		else out[key] = stripPeople(v)
+	}
+	return out
+}
+
+const JSON_STRING = String.raw`"(?:[^"\\]|\\.)*"?`
+const GUEST_FIELD = new RegExp(
+	String.raw`("(?:${[...HELD_GUEST_KEYS].join('|')})"\s*:\s*)${JSON_STRING}`,
+	'g',
+)
+const STAFF_NAME = new RegExp(
+	String.raw`("(?:${[...HELD_STAFF_KEYS].join('|')})"\s*:\s*\{\s*"id"\s*:\s*${JSON_STRING})\s*,\s*"name"\s*:\s*${JSON_STRING}`,
+	'g',
+)
 
 /**
- * Keeps an upload the server could not apply, verbatim, for a person to settle.
- * Returns false when this terminal already has too many waiting (it retries later).
+ * A held upload as it may be kept: held records outlive guest retention and are
+ * not reached by erasure, so they hold no guest name, callback number or table
+ * note, and staff only as ids (the bill and the money stay, for review). A body
+ * that is not JSON is redacted by pattern and cut short.
+ */
+export function redactHeldPayload(payload: string): {
+	payload: string
+	readable: boolean
+} {
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(payload)
+	} catch {
+		return {
+			payload: payload
+				.replace(GUEST_FIELD, '$1null')
+				.replace(STAFF_NAME, '$1')
+				.slice(0, MAX_UNREADABLE_PAYLOAD_CHARS),
+			readable: false,
+		}
+	}
+	let stripped = stripPeople(parsed)
+	let text = JSON.stringify(stripped)
+	if (
+		text.length > MAX_HELD_PAYLOAD_CHARS &&
+		stripped &&
+		typeof stripped === 'object'
+	) {
+		// Signed ZATCA XML is the bulk of a large upload and is not needed to
+		// settle it by hand; the document hashes stay.
+		const fiscal = (stripped as { fiscal?: unknown }).fiscal
+		if (Array.isArray(fiscal)) {
+			stripped = {
+				...(stripped as Record<string, unknown>),
+				fiscal: fiscal.map((doc) =>
+					doc && typeof doc === 'object' && (doc as { zatca?: unknown }).zatca
+						? {
+								...(doc as Record<string, unknown>),
+								zatca: {
+									...(doc as { zatca: Record<string, unknown> }).zatca,
+									xml: null,
+								},
+							}
+						: doc,
+				),
+			}
+			text = JSON.stringify(stripped)
+		}
+	}
+	return { payload: text.slice(0, MAX_HELD_PAYLOAD_CHARS), readable: true }
+}
+
+/**
+ * Keeps an upload the server could not apply, redacted, for a person to settle.
+ * Returns false when this terminal or the organization already has too many
+ * waiting (the till retries later).
  */
 export async function holdUpload(
 	db: TenantDatabase,
@@ -1870,47 +2218,44 @@ export async function holdUpload(
 	},
 	now = Date.now(),
 ): Promise<boolean> {
-	// Held records can outlive guest retention. The financial payload does not
-	// need a callback number; keep it only on the current order and the till.
-	let payload = input.payload
-	try {
-		const parsed = JSON.parse(payload)
-		if (parsed && typeof parsed === 'object' && 'customerPhone' in parsed) {
-			parsed.customerPhone = null
-			if (parsed.orderSource === 'phone') parsed.customerName = null
-			payload = JSON.stringify(parsed)
-		}
-	} catch {
-		// Redact the known field even on a malformed JSON upload.
-		payload = payload.replace(/("customerPhone"\s*:\s*)"[^"]*"?/g, '$1null')
-	}
-	payload = payload.slice(0, MAX_HELD_PAYLOAD_CHARS)
-	const [count] = await db
-		.select({ n: sql<number>`count(*)` })
+	const { payload, readable } = redactHeldPayload(input.payload)
+	const unsettled = and(
+		eq(posHeldUploads.deviceId, device.id),
+		isNull(posHeldUploads.resolvedAt),
+	)
+	// The same upload held twice (a till retrying) is kept once.
+	const [twin] = await db
+		.select({ id: posHeldUploads.id })
 		.from(posHeldUploads)
 		.where(
 			and(
-				eq(posHeldUploads.deviceId, device.id),
-				isNull(posHeldUploads.resolvedAt),
+				unsettled,
+				input.orderId
+					? eq(posHeldUploads.orderId, input.orderId)
+					: isNull(posHeldUploads.orderId),
+				eq(posHeldUploads.error, input.error),
+				eq(posHeldUploads.payload, payload),
 			),
 		)
+		.limit(1)
+	if (twin) return true
+	const [count] = await db
+		.select({ n: sql<number>`count(*)` })
+		.from(posHeldUploads)
+		.where(unsettled)
 	if ((count?.n ?? 0) >= MAX_HELD_PER_DEVICE) return false
-	// The same upload held twice (a till retrying) is kept once.
-	if (input.orderId && input.revision !== null) {
-		const [twin] = await db
-			.select({ id: posHeldUploads.id })
+	if (!readable) {
+		const [unreadable] = await db
+			.select({ n: sql<number>`count(*)` })
 			.from(posHeldUploads)
-			.where(
-				and(
-					eq(posHeldUploads.deviceId, device.id),
-					eq(posHeldUploads.orderId, input.orderId),
-					eq(posHeldUploads.revision, input.revision),
-					eq(posHeldUploads.payload, payload),
-				),
-			)
-			.limit(1)
-		if (twin) return true
+			.where(and(unsettled, isNull(posHeldUploads.orderId)))
+		if ((unreadable?.n ?? 0) >= MAX_UNREADABLE_HELD_PER_DEVICE) return false
 	}
+	const [orgCount] = await db
+		.select({ n: sql<number>`count(*)` })
+		.from(posHeldUploads)
+		.where(isNull(posHeldUploads.resolvedAt))
+	if ((orgCount?.n ?? 0) >= MAX_HELD_PER_ORG) return false
 	await db.insert(posHeldUploads).values({
 		deviceId: device.id,
 		orderId: input.orderId,
@@ -1922,6 +2267,86 @@ export async function holdUpload(
 		receivedAt: now,
 	})
 	return true
+}
+
+/**
+ * Held-upload housekeeping for the regional tick: settled records are deleted
+ * after `POS_HELD_RESOLVED_RETENTION_DAYS`, and any record still carrying a
+ * guest's details (kept before payloads were redacted on arrival) is redacted.
+ * Unsettled records stay until a person settles them: they hold a sale.
+ */
+export async function purgePosHeldUploads(
+	db: TenantDatabase | Tx,
+	now = Date.now(),
+): Promise<{ deleted: number; redacted: number }> {
+	const cutoff = now - POS_HELD_RESOLVED_RETENTION_DAYS * 24 * 60 * 60 * 1000
+	const deleted = await db
+		.delete(posHeldUploads)
+		.where(
+			and(
+				isNotNull(posHeldUploads.resolvedAt),
+				lt(posHeldUploads.resolvedAt, cutoff),
+			),
+		)
+		.returning({ id: posHeldUploads.id })
+	const redacted = await redactHeldUploadsWhere(
+		db,
+		or(
+			...[...HELD_GUEST_KEYS].map(
+				(key) => sql`${posHeldUploads.payload} like ${`%"${key}":"%`}`,
+			),
+		),
+	)
+	return { deleted: deleted.length, redacted }
+}
+
+/** Redacts the held payloads a condition selects (in pages); returns how many changed. */
+async function redactHeldUploadsWhere(
+	db: TenantDatabase | Tx,
+	condition: ReturnType<typeof or>,
+): Promise<number> {
+	let changed = 0
+	let after = ''
+	for (;;) {
+		const rows = await db
+			.select({ id: posHeldUploads.id, payload: posHeldUploads.payload })
+			.from(posHeldUploads)
+			.where(and(condition, gt(posHeldUploads.id, after)))
+			.orderBy(asc(posHeldUploads.id))
+			.limit(200)
+		for (const row of rows) {
+			const { payload } = redactHeldPayload(row.payload)
+			if (payload === row.payload) continue
+			await db
+				.update(posHeldUploads)
+				.set({ payload })
+				.where(eq(posHeldUploads.id, row.id))
+			changed++
+		}
+		if (rows.length < 200) return changed
+		after = rows[rows.length - 1]!.id
+	}
+}
+
+/**
+ * Erasure of a person (customer or staff): held payloads are redacted on
+ * arrival, so this only catches a record kept before that, one naming the
+ * person by id or by phone digits.
+ */
+export async function erasePosHeldUploads(
+	tx: TenantDatabase | Tx,
+	identifiers: string[],
+): Promise<number> {
+	const terms = identifiers.filter((t) => t.length >= 4)
+	if (terms.length === 0) return 0
+	return redactHeldUploadsWhere(
+		tx,
+		or(
+			...terms.map(
+				(term) => sql`${posHeldUploads.payload} like ${`%${term}%`}`,
+			),
+		),
+	)
 }
 
 export async function listHeldUploads(
@@ -2046,4 +2471,6 @@ export async function erasePosStaffNames(
 			.set({ lineVoids })
 			.where(eq(posOrders.id, row.id))
 	}
+	// Held payloads keep staff as ids only; this catches one kept before that.
+	await erasePosHeldUploads(tx, [staffId])
 }

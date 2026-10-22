@@ -129,6 +129,10 @@ export function createTenantApiApp() {
 		if (origin && allowed) {
 			c.res.headers.set('Access-Control-Allow-Origin', origin)
 			c.res.headers.append('Vary', 'Origin')
+			// The till measures its clock skew from the server's Date header.
+			if (c.req.path.startsWith('/pos/')) {
+				c.res.headers.set('Access-Control-Expose-Headers', 'Date')
+			}
 		}
 	})
 

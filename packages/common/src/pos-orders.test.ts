@@ -307,6 +307,31 @@ describe('posOrderRequestSchema', () => {
 	})
 })
 
+describe('text that is signed into ZATCA documents', () => {
+	it('stores item names and variant labels without characters XML does not allow', () => {
+		const r = parse({
+			...base(),
+			lines: [
+				{
+					...line,
+					name: 'Bur\u0001ger\uD800 \uD83C\uDF54',
+					variantLabel: 'Large\u001F\uFFFF',
+				},
+			],
+		})
+		expect(r.success).toBe(true)
+		if (!r.success) return
+		expect(r.data.lines[0]!.name).toBe('Burger \uD83C\uDF54')
+		expect(r.data.lines[0]!.variantLabel).toBe('Large')
+	})
+
+	it('refuses a name that is nothing but such characters', () => {
+		expect(
+			parse({ ...base(), lines: [{ ...line, name: '\u0000\u0001' }] }).success,
+		).toBe(false)
+	})
+})
+
 describe('who did it', () => {
 	const ana = { id: 'staff-1', name: 'Ana K.' }
 

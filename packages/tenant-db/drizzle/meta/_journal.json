@@ -148,6 +148,13 @@
 			"when": 1792641527810,
 			"tag": "0020_pos_orders_and_terminals",
 			"breakpoints": true
+		},
+		{
+			"idx": 21,
+			"version": "6",
+			"when": 1792696886539,
+			"tag": "0021_pos_zatca_hardening",
+			"breakpoints": true
 		}
 	]
 }

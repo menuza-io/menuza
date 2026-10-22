@@ -235,6 +235,13 @@ export const test = base.extend<{
 	},
 	page: async ({ page, resetBackend }, use) => {
 		void resetBackend
+		// A fresh headless profile is refused persistent storage, which shows a
+		// banner on every screen. Grant it, as an installed app would get it.
+		await page.addInitScript(() => {
+			if (!navigator.storage) return
+			navigator.storage.persist = async () => true
+			navigator.storage.persisted = async () => true
+		})
 		await use(page)
 	},
 	demo: async ({ page, context }, use) => {
@@ -512,7 +519,10 @@ export async function signInWithPin(page: Page, pin: string) {
 	await expect(async () => {
 		const opened = (await lock.count()) === 0
 		const cleared =
-			(await lock.getByRole('img', { name: '0 digits entered' }).count()) === 1
+			(await lock
+				.getByRole('status')
+				.filter({ hasText: '0 digits entered' })
+				.count()) === 1
 		expect(opened || cleared).toBe(true)
 	}).toPass({ timeout: 10_000 })
 }
@@ -576,4 +586,15 @@ export async function giveReason(
 	}
 	await sheet.getByRole('button', { name: options.confirm }).click()
 	await expect(sheet).toHaveCount(0)
+}
+
+/**
+ * Opens a pairing link on the device and confirms it: a link never points the
+ * till at a server until someone has seen where and said yes.
+ */
+export async function openPairingLink(page: Page, link: string) {
+	await page.goto(link)
+	const ask = page.getByRole('dialog', { name: 'Pair this terminal?' })
+	await expect(ask.getByText('127.0.0.1:4711')).toBeVisible()
+	await ask.getByRole('button', { name: 'Pair with this link' }).click()
 }

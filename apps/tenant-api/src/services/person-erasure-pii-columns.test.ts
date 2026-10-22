@@ -150,6 +150,8 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'pos_shifts.closed_by_staff_name': staffAtTheTill,
 	'pos_cash_movements.staff_name': staffAtTheTill,
 	'pos_cash_movements.approved_by_staff_name': staffAtTheTill,
+	'pos_held_uploads.payload':
+		'guest names, callback numbers, table notes and staff names are removed on arrival (ids kept); erasure and the regional tick re-redact any record kept before that, and settled records are deleted after 30 days',
 	'pos_cash_movements.note':
 		'what cash taken from or put in the drawer was for, written by staff; not about a customer',
 	'pos_zatca_settings.postal_code':

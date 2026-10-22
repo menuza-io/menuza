@@ -491,20 +491,32 @@ export function isOperatorControlPlaneOrigin(origin: string) {
 }
 
 /**
+ * Operational config read live from `process.env` (populated from bindings on
+ * Workers), so a change or a removal takes effect without a restart. The varlock
+ * snapshot only ever adds keys, so it would keep a removed value forever.
+ */
+function liveEnv(name: string): string | undefined {
+	if (typeof process !== 'undefined' && process.env) return process.env[name]
+	syncEnvFromProcess()
+	const value = (ENV as Record<string, unknown>)[name]
+	return value === undefined || value === null ? undefined : String(value)
+}
+
+/**
  * Origins that host the POS web app (`POS_ORIGINS`, comma separated, exact
  * origins). Local development also allows localhost and `*.test` hosts. Used
  * only for `/pos/*` CORS: a terminal authenticates with its bearer secret, and
  * being listed here grants nothing else.
  */
 export function isPosOrigin(origin: string) {
-	// `POS_ORIGINS` is operational config: read the live environment so a change
-	// takes effect without a restart.
-	syncEnvFromProcess()
 	const url = parseOrigin(origin)
 	if (!url) return false
-	const isProd = ENV.NODE_ENV === 'production'
+	// Only an explicit development or test NODE_ENV is local: an unset one is
+	// production, so a misconfigured node never allows localhost or plain http.
+	const nodeEnv = liveEnv('NODE_ENV')
+	const isProd = nodeEnv !== 'development' && nodeEnv !== 'test'
 	if (isProd && url.protocol !== 'https:') return false
-	const listed = String((ENV as { POS_ORIGINS?: unknown }).POS_ORIGINS ?? '')
+	const listed = String(liveEnv('POS_ORIGINS') ?? '')
 		.split(',')
 		.map((entry) => parseOrigin(entry.trim()))
 		.filter((entry): entry is URL => entry !== null)

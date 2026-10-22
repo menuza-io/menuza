@@ -31,10 +31,14 @@ const decayed = (g: PinGuard, now: number): number => {
 	)
 }
 
-/** Whole seconds still to wait, or 0. */
+/**
+ * Whole seconds still to wait, or 0. Never more than the longest wait: a clock
+ * set back must not lock the till for hours. (A clock set forward is caught by
+ * the monotonic wait in `signin.ts` while the page stays open.)
+ */
 export const waitSeconds = (g: PinGuard, now: number): number =>
 	g.blockedUntil !== null && g.blockedUntil > now
-		? Math.ceil((g.blockedUntil - now) / 1000)
+		? Math.min(Math.ceil((g.blockedUntil - now) / 1000), MAX_DELAY_S)
 		: 0
 
 export function afterFailure(
