@@ -32,6 +32,7 @@ import { seal, sealContext } from '../lib/zatca-seal.ts'
 import {
 	queueZatcaDocuments,
 	reportDueZatca,
+	resealZatcaUnits,
 	revokeZatcaUnitsForDevice,
 	unitCredentials,
 	zatcaOverview,
@@ -459,6 +460,51 @@ describe('a removed terminal', () => {
 		})
 		const [unit] = await db.select().from(posZatcaUnits)
 		expect(unit!.status).toBe('revoked')
+	})
+})
+
+describe('rotating the seal key', () => {
+	it('moves unit secrets onto the current key, once, and skips a unit it cannot open', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const [other] = await db
+			.insert(posDevices)
+			.values({
+				label: 'Back',
+				terminalCode: 'T2',
+				secretHash: 'y',
+				pairedBy: 'test',
+			})
+			.returning()
+		// Sealed for another unit: the associated data does not match.
+		await addUnit(other!.id, {
+			privateKeySealed: seal(
+				'bb'.repeat(32),
+				sealContext(device.id, 'private_key'),
+			),
+		})
+		try {
+			process.env.ZATCA_SEAL_KEY = 'ab'.repeat(32)
+			expect(await resealZatcaUnits(db, NOW)).toEqual({ resealed: 1 })
+			const [unit] = await db
+				.select()
+				.from(posZatcaUnits)
+				.where(eq(posZatcaUnits.deviceId, device.id))
+			expect(unit!.privateKeySealed).toMatch(/^v2\.z/)
+			expect(unit!.productionSecretSealed).toMatch(/^v2\.z/)
+			expect((await unitCredentials(db, device.id))!.privateKeyHex).toBe(
+				'aa'.repeat(32),
+			)
+			expect(error).toHaveBeenCalledWith(
+				'ZATCA unit secret cannot be re-sealed',
+				{ deviceId: other!.id },
+			)
+			// Nothing left to move.
+			expect(await resealZatcaUnits(db, NOW)).toEqual({ resealed: 0 })
+		} finally {
+			// Empty instead of deleted: the varlock sync only copies defined values.
+			process.env.ZATCA_SEAL_KEY = ''
+			error.mockRestore()
+		}
 	})
 })
 

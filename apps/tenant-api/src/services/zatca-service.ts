@@ -28,7 +28,7 @@ import {
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { z } from 'zod'
-import { seal, sealContext, unseal } from '../lib/zatca-seal.ts'
+import { needsReseal, seal, sealContext, unseal } from '../lib/zatca-seal.ts'
 
 /**
  * ZATCA Phase 2 for walk-in sales. Each POS terminal is an EGS unit: the server
@@ -386,6 +386,55 @@ export async function revokeZatcaUnitsForDevice(
 				ne(posZatcaUnits.status, 'revoked'),
 			),
 		)
+}
+
+const SEALED_COLUMNS = [
+	['privateKeySealed', 'private_key'],
+	['complianceSecretSealed', 'compliance_secret'],
+	['productionSecretSealed', 'production_secret'],
+] as const
+
+/**
+ * Moves sealed unit secrets onto the current `ZATCA_SEAL_KEY`: values sealed
+ * with a previous key (`ZATCA_SEAL_KEY_PREVIOUS`), the derived key or the `v1`
+ * format are opened and sealed again. Runs on the regional tick; a unit whose
+ * secrets cannot be opened is logged and left as it is.
+ */
+export async function resealZatcaUnits(db: Db, now = Date.now()) {
+	// bounded: one row per terminal of the organization.
+	const units = await db
+		.select({
+			deviceId: posZatcaUnits.deviceId,
+			privateKeySealed: posZatcaUnits.privateKeySealed,
+			complianceSecretSealed: posZatcaUnits.complianceSecretSealed,
+			productionSecretSealed: posZatcaUnits.productionSecretSealed,
+		})
+		.from(posZatcaUnits)
+	let resealed = 0
+	for (const unit of units) {
+		try {
+			const changes: Partial<
+				Record<(typeof SEALED_COLUMNS)[number][0], string>
+			> = {}
+			for (const [field, column] of SEALED_COLUMNS) {
+				const sealed = unit[field]
+				if (!sealed || !needsReseal(sealed)) continue
+				const context = sealContext(unit.deviceId, column)
+				changes[field] = seal(unseal(sealed, context), context)
+			}
+			if (Object.keys(changes).length === 0) continue
+			await db
+				.update(posZatcaUnits)
+				.set({ ...changes, updatedAt: now })
+				.where(eq(posZatcaUnits.deviceId, unit.deviceId))
+			resealed++
+		} catch {
+			console.error('ZATCA unit secret cannot be re-sealed', {
+				deviceId: unit.deviceId,
+			})
+		}
+	}
+	return { resealed }
 }
 
 /** Documents still waiting to be reported (the tick re-arms sooner while there are some). */

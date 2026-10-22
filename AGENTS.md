@@ -606,9 +606,11 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   POS (`false` answers 503 on `/pos/*`; revoking a terminal always works) and
   the comma-separated POS web origins allowed to call `/pos/*` from a browser.
   `POS_URL` is App's: the POS origin used in pairing links. See `docs/pos.md`.
-- `ZATCA_SEAL_KEY` - Tenant-api only, optional (64 hex chars). Seals ZATCA EGS
-  keys and CSID secrets; without it they derive from `AUTH_HMAC_SECRET`. Set it
-  in production and never change it while units are onboarded.
+- `ZATCA_SEAL_KEY` / `ZATCA_SEAL_KEY_PREVIOUS` - Tenant-api only. The first (64
+  hex chars) seals ZATCA EGS keys and CSID secrets and is required in
+  production: the Node entry refuses to start without it. To rotate, move the
+  old value to `ZATCA_SEAL_KEY_PREVIOUS` (comma separated); the hourly tick
+  re-seals with the new key. See `docs/pos.md`.
 - `VITE_POS_ALLOWED_ORIGINS` - Station build only. App and tenant-api origins
   the till may talk to; required in production builds (empty refuses every
   server).

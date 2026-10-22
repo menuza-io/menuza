@@ -236,12 +236,20 @@ For restaurants in Saudi Arabia, each terminal can be an **EGS unit**.
   tag), and characters XML cannot carry are refused in the settings and stripped
   from item names before signing.
 - **Secrets at rest.** Signing keys and CSID secrets are sealed with AES-256-GCM
-  (16-byte tag), bound to the unit and column. The key is `ZATCA_SEAL_KEY` when
-  set, otherwise one derived from `AUTH_HMAC_SECRET`. Set `ZATCA_SEAL_KEY` in
-  production so rotating `AUTH_HMAC_SECRET` cannot destroy onboarded units, and
-  never change or remove it while units are onboarded. Values sealed before it
-  was set still open. One unit whose secret cannot be opened does not stop the
-  others from reporting.
+  (16-byte tag), bound to the unit and column, with `ZATCA_SEAL_KEY`. It is
+  required in production, so rotating `AUTH_HMAC_SECRET` can never destroy
+  onboarded units: the Node entry refuses to start without it, and the Worker
+  refuses to onboard (sealing) while still reporting what it already holds. Set
+  it on every node before deploying. In development, without it, the key is
+  derived from `AUTH_HMAC_SECRET`. One unit whose secret cannot be opened does
+  not stop the others from reporting.
+- **Rotating the seal key.** Move the current value to `ZATCA_SEAL_KEY_PREVIOUS`
+  (comma separated for several) and set a new `ZATCA_SEAL_KEY`. Values open with
+  either key, and the hourly regional tick re-seals every unit with the new one
+  (`resealZatcaUnits`; values sealed with the derived key or the `v1` format
+  move too). Remove the old key once the tick has run for every organization.
+  Never change `ZATCA_SEAL_KEY` without keeping the old value in
+  `ZATCA_SEAL_KEY_PREVIOUS`: its units would have to be onboarded again.
 - **Removing a terminal** retires its unit: the till deletes its key and the
   server no longer hands it out or onboards it. Documents it uploaded before
   removal are still reported, because ZATCA requires every issued invoice. Also
@@ -315,7 +323,8 @@ defaults to Arabic when the restaurant's default language is Arabic. Catalogs:
 | `POS_URL`                  | App                   | Origin of the POS web app, for pairing links and QR codes. When empty in development, defaults to `https://pos.<brand-slug>.test:2999`; no fallback in production. |
 | `POS_ORIGINS`              | every tenant-api node | Origins allowed to call `/pos/*` from a browser. Read live from the environment. Outside an explicit `NODE_ENV=development\|test`, only listed origins count.      |
 | `POS_ENABLED`              | tenant-api            | Kill switch. `false` answers 503 on `/pos/*` and refuses new pairing codes; revoking a terminal always works. Revoke terminals first, then flip it.                |
-| `ZATCA_SEAL_KEY`           | tenant-api            | Optional, 64 hex characters (`openssl rand -hex 32`). Seals ZATCA keys and CSID secrets. Set it in production; never change it while units are onboarded.          |
+| `ZATCA_SEAL_KEY`           | tenant-api            | Required in production, 64 hex characters (`openssl rand -hex 32`). Seals ZATCA keys and CSID secrets. Rotate only through `ZATCA_SEAL_KEY_PREVIOUS`.              |
+| `ZATCA_SEAL_KEY_PREVIOUS`  | tenant-api            | Rotation only: previous seal keys, comma separated. Still opened, and re-sealed by the hourly tick. Remove once every organization's tick has run.                 |
 | `VITE_POS_ALLOWED_ORIGINS` | Station build         | App and tenant-api origins the till may talk to. Required in production builds: when empty, the till refuses every server. Also sets the CSP `connect-src`.        |
 
 On the US Workers node the router confirms the organization with App before each

@@ -58,7 +58,11 @@ import { normalizeStaffLocale, renderStaffEmail } from '../lib/staff-email.ts'
 import { sendTenantEmail } from '../lib/tenant-email.ts'
 import { purgeExpiredApplications } from './hiring-service.ts'
 import { purgePosGuestNames } from './pos-service.ts'
-import { hasPendingZatca, reportDueZatca } from './zatca-service.ts'
+import {
+	hasPendingZatca,
+	reportDueZatca,
+	resealZatcaUnits,
+} from './zatca-service.ts'
 import { runOnboardingTick } from './onboarding-tick.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
 import { buildScheduleNotice } from './schedule-notify-service.ts'
@@ -1369,6 +1373,15 @@ async function runTick(
 
 		// Walk-in sales signed for ZATCA must be reported within 24 hours whether
 		// or not the staff module is in use: report what is due first.
+		try {
+			// Its own failure must never stop the reporting below.
+			await resealZatcaUnits(db)
+		} catch (error) {
+			console.error(
+				'ZATCA re-seal failed',
+				error instanceof Error ? error.message : 'unknown',
+			)
+		}
 		try {
 			await reportDueZatca(db)
 			pendingZatca.value = await hasPendingZatca(db)

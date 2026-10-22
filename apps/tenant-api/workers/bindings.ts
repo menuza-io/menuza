@@ -24,6 +24,7 @@ export interface TenantApiWorkerEnv {
 	JWT_SECRET: string
 	AUTH_HMAC_SECRET: string
 	ZATCA_SEAL_KEY?: string
+	ZATCA_SEAL_KEY_PREVIOUS?: string
 	INTERNAL_COMMAND_TOKEN: string
 	TENANT_OPERATOR_TOKEN: string
 	VOICE_AGENT_TOKEN?: string

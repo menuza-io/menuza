@@ -1,7 +1,13 @@
 import crypto from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { hmacHash } from './secrets.ts'
-import { seal, sealContext, unseal } from './zatca-seal.ts'
+import {
+	assertZatcaSealKey,
+	needsReseal,
+	seal,
+	sealContext,
+	unseal,
+} from './zatca-seal.ts'
 
 const context = sealContext('device-1', 'private_key')
 
@@ -21,8 +27,12 @@ function sealV1(plain: string) {
 	].join('.')
 }
 
+const nodeEnv = process.env.NODE_ENV
 afterEach(() => {
-	delete process.env.ZATCA_SEAL_KEY
+	// Empty instead of deleted: the varlock sync only copies defined values.
+	process.env.ZATCA_SEAL_KEY = ''
+	process.env.ZATCA_SEAL_KEY_PREVIOUS = ''
+	process.env.NODE_ENV = nodeEnv
 })
 
 describe('zatca seal', () => {
@@ -85,5 +95,56 @@ describe('zatca seal', () => {
 				context,
 			),
 		).toThrow()
+	})
+
+	describe('production', () => {
+		it('requires ZATCA_SEAL_KEY at startup and for new values', () => {
+			const derived = seal('derived', context)
+			process.env.NODE_ENV = 'production'
+			expect(() => assertZatcaSealKey()).toThrow(/must be set in production/)
+			expect(() => seal('new', context)).toThrow(/must be set in production/)
+			// Values already sealed still open, so reporting keeps working.
+			expect(unseal(derived, context)).toBe('derived')
+			expect(needsReseal(derived)).toBe(false)
+			process.env.ZATCA_SEAL_KEY = 'ab'.repeat(32)
+			expect(() => assertZatcaSealKey()).not.toThrow()
+			expect(seal('new', context)).toMatch(/^v2\.z/)
+		})
+
+		it('treats an unset NODE_ENV as production', () => {
+			delete process.env.NODE_ENV
+			expect(() => assertZatcaSealKey()).toThrow(/must be set in production/)
+		})
+
+		it('refuses a malformed previous key at startup', () => {
+			process.env.NODE_ENV = 'production'
+			process.env.ZATCA_SEAL_KEY = 'ab'.repeat(32)
+			process.env.ZATCA_SEAL_KEY_PREVIOUS = 'not-hex'
+			expect(() => assertZatcaSealKey()).toThrow(/ZATCA_SEAL_KEY_PREVIOUS/)
+		})
+	})
+
+	it('rotates: a previous key still opens, and its values need re-sealing', () => {
+		process.env.ZATCA_SEAL_KEY = 'ab'.repeat(32)
+		const old = seal('egs-private-key', context)
+		expect(needsReseal(old)).toBe(false)
+		process.env.ZATCA_SEAL_KEY = 'cd'.repeat(32)
+		expect(() => unseal(old, context)).toThrow(/not configured/)
+		process.env.ZATCA_SEAL_KEY_PREVIOUS = 'ab'.repeat(32)
+		expect(unseal(old, context)).toBe('egs-private-key')
+		expect(needsReseal(old)).toBe(true)
+		const resealed = seal(unseal(old, context), context)
+		expect(needsReseal(resealed)).toBe(false)
+		// The old key can go once everything is re-sealed.
+		process.env.ZATCA_SEAL_KEY_PREVIOUS = ''
+		expect(unseal(resealed, context)).toBe('egs-private-key')
+	})
+
+	it('marks v1 and derived-key values for re-sealing once a key is set', () => {
+		const v1 = sealV1('old')
+		const derived = seal('derived', context)
+		process.env.ZATCA_SEAL_KEY = 'ab'.repeat(32)
+		expect(needsReseal(v1)).toBe(true)
+		expect(needsReseal(derived)).toBe(true)
 	})
 })
