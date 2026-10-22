@@ -70,6 +70,7 @@ import { ImpersonationBanner } from './components/impersonation-banner.tsx'
 import { LeavePageDialog } from './components/leave-page-dialog.tsx'
 import { PostHogAnalytics } from './components/posthog-analytics.tsx'
 import { CookieConsentBanner } from './components/privacy-banner.tsx'
+import { SaveBar, SaveBarGuard } from './components/save-bar.tsx'
 import { useToast } from './components/toaster.tsx'
 import iconsHref from './components/ui/icons/sprite.svg?url'
 import {
@@ -666,6 +667,8 @@ function AppWithProviders() {
 					</div>
 				</div>
 				<LeavePageDialog />
+				<SaveBar />
+				<SaveBarGuard />
 				{isKiosk ? null : <EpicToaster />}
 				{isKiosk ? null : <CookieConsentBanner consent={data.cookieConsent} />}
 			</OpenImgContextProvider>

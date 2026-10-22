@@ -7,6 +7,7 @@ import {
 	OrganizationNoteStatus,
 } from '@repo/database'
 import { type ActionFunctionArgs } from 'react-router'
+import { NOTE_STATUS_NAME_MAX_LENGTH } from '#app/utils/note-status.ts'
 import {
 	requireUserWithOrganizationPermission,
 	ORG_PERMISSIONS,
@@ -34,6 +35,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const name = formData.get('name')?.toString().trim()
 	const color = formData.get('color')?.toString().trim() || '#6b7280'
 	if (!name) return new Response('Missing name', { status: 400 })
+	if (name.length > NOTE_STATUS_NAME_MAX_LENGTH)
+		return new Response('Name too long', { status: 400 })
 
 	// Prevent duplicate status names in org
 	const [existing] = await db

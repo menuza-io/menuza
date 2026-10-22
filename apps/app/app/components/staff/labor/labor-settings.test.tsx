@@ -115,12 +115,16 @@ describe('LaborSettingsForm standards per demand unit', () => {
 	it('leaves covers out for a business that is not a restaurant and keeps what is saved', async () => {
 		view('workplace')
 		expect(screen.queryByText(/Covers one person handles/)).toBeNull()
+		fireEvent.change(
+			within(group(/Orders one person handles/)).getByLabelText('Server'),
+			{ target: { value: '20' } },
+		)
 		fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 		await waitFor(() => expect(saveSettings).toHaveBeenCalled())
 		expect(saveSettings.mock.calls[0]![1]).toEqual({
 			scopeId: 'loc-1',
 			salesSource: 'manual',
-			ordersPerLaborHour: { cook: 12.5 },
+			ordersPerLaborHour: { cook: 12.5, server: 20 },
 		})
 	})
 

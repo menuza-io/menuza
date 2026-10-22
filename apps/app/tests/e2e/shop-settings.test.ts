@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { db, eq, Organization } from '@repo/database'
-import { expect, test } from '#tests/playwright-utils.ts'
+import { expect, saveBar, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Organization Shop Settings & Product Management', () => {
@@ -50,8 +50,7 @@ test.describe('Organization Shop Settings & Product Management', () => {
 		}
 
 		// Save product configuration and wait for form POST response
-		const saveButton = page.getByRole('button', { name: /save product/i })
-		await expect(saveButton).toBeVisible()
+		await expect(saveBar(page).save).toBeVisible()
 
 		await Promise.all([
 			page.waitForResponse(
@@ -59,7 +58,7 @@ test.describe('Organization Shop Settings & Product Management', () => {
 					res.url().includes('/settings/shop') &&
 					res.request().method() === 'POST',
 			),
-			saveButton.click(),
+			saveBar(page).save.click(),
 		])
 
 		// Verify success toast appears

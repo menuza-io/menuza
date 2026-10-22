@@ -380,11 +380,7 @@ export default function StaffProfileRoute() {
 					<div className="flex min-w-0 flex-col gap-6">
 						{section === 'details' ? (
 							<>
-								<DetailsTab
-									key={person.updatedAt ?? person.id}
-									detail={detail}
-									onChanged={changed}
-								/>
+								<DetailsTab detail={detail} onChanged={changed} />
 							</>
 						) : null}
 						{section === 'positions' ? (

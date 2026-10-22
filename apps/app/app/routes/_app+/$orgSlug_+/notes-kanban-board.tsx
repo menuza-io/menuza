@@ -32,6 +32,7 @@ import { StatusButton } from '@repo/ui/status-button'
 import React, { useState, useMemo, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { useFetcher, useFetchers } from 'react-router'
+import { NOTE_STATUS_NAME_MAX_LENGTH } from '#app/utils/note-status.ts'
 
 import { NoteCard } from './notes-cards.tsx'
 
@@ -850,6 +851,7 @@ function EditColumnForm({
 					name="name"
 					defaultValue={column.name}
 					autoFocus
+					maxLength={NOTE_STATUS_NAME_MAX_LENGTH}
 					className="h-10 flex-1 px-2"
 					onKeyDown={(e) => e.key === 'Escape' && onCancel()}
 					aria-label={t`Column name`}
@@ -896,7 +898,7 @@ function NewColumnButton({ orgSlug }: { orgSlug: string }) {
 							autoFocus
 							name="name"
 							placeholder={t`Column name`}
-							maxLength={24}
+							maxLength={NOTE_STATUS_NAME_MAX_LENGTH}
 							className="flex-1"
 							aria-label={t`Column name`}
 						/>

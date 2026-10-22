@@ -44,8 +44,10 @@ const shares: DashboardSharing['shares'] = [
 function renderDialog({
 	sharing,
 	respond = () => ({ ok: true }),
+	name = 'Team board',
 }: {
 	sharing: DashboardSharing
+	name?: string
 	respond?: () => unknown
 }) {
 	const submissions: Submission[] = []
@@ -61,7 +63,7 @@ function renderDialog({
 				element: (
 					<ShareDashboardDialog
 						action="/board"
-						name="Team board"
+						name={name}
 						sharing={sharing}
 					/>
 				),
@@ -77,9 +79,9 @@ function renderDialog({
 	return { submissions }
 }
 
-async function openDialog() {
+async function openDialog(name = 'Team board') {
 	await userEvent.click(screen.getByRole('button', { name: 'Share' }))
-	return screen.findByRole('dialog', { name: 'Share “Team board”' })
+	return screen.findByRole('dialog', { name: `Share “${name}”` })
 }
 
 async function choose(combobox: HTMLElement, option: string | RegExp) {
@@ -93,6 +95,13 @@ beforeEach(() => {
 })
 
 describe('ShareDashboardDialog', () => {
+	it('shows a dashboard name that contains HTML exactly as typed', async () => {
+		const name = '<i>Revenue</i> 😀 board'
+		renderDialog({ sharing: { shares: [], members }, name })
+
+		expect(await openDialog(name)).toBeInTheDocument()
+	})
+
 	it('opens with a member picker, an access select and no shares yet', async () => {
 		renderDialog({ sharing: { shares: [], members } })
 		const dialog = await openDialog()

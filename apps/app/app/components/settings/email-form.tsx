@@ -55,8 +55,20 @@ export function EmailChangeForm({
 		)
 	}
 
+	const formProps = getFormProps(form)
+
 	return (
-		<fetcher.Form method="POST" {...getFormProps(form)}>
+		<fetcher.Form
+			method="POST"
+			{...formProps}
+			onSubmit={(event) => {
+				// The dialog is portaled but still sits inside the profile form in
+				// the React tree, so stop the submit from reaching that form's
+				// conform handler (it throws on events from another form).
+				event.stopPropagation()
+				formProps.onSubmit?.(event)
+			}}
+		>
 			<input type="hidden" name="intent" value={changeEmailActionIntent} />
 			<FieldGroup>
 				<Field data-invalid={fields.email.errors?.length ? true : undefined}>

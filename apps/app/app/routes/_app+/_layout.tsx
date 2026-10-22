@@ -9,6 +9,7 @@ import { Outlet, useLoaderData } from 'react-router'
 import { ENV } from 'varlock/env'
 import { AIPanelProvider } from '#app/components/ai/ai-panel-context.tsx'
 import { GlobalAIChat } from '#app/components/ai/global-ai-panel.tsx'
+import { AppShellErrorScope } from '#app/components/error-boundary.tsx'
 import { MarketingLayout } from '#app/components/marketing-layout.tsx'
 import { getUserDefaultOrganization } from '#app/utils/organization/organizations.server.ts'
 import { getTrialStatus } from '#app/utils/payments.server.ts'
@@ -79,7 +80,9 @@ export default function MarketingLayoutRoute() {
 				trialStatus={trialStatus}
 				extensionId={extensionId}
 			>
-				<Outlet />
+				<AppShellErrorScope>
+					<Outlet />
+				</AppShellErrorScope>
 			</MarketingLayout>
 		</AIPanelProvider>
 	)

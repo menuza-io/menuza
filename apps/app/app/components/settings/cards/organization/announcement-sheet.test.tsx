@@ -10,7 +10,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LocaleContext } from '#app/components/website/locale-fields.tsx'
 import { TranslateProvider } from '#app/components/website/translate-provider.tsx'
-import { AnnouncementSheet } from './announcement-sheet'
+import { AnnouncementSheet, isSafeAnnouncementLink } from './announcement-sheet'
 
 beforeEach(() => {
 	i18n.load('en', {})
@@ -94,5 +94,24 @@ describe('AnnouncementSheet', () => {
 		expect(document.getElementById(describedBy!)).toHaveTextContent(
 			/content is required/i,
 		)
+	})
+})
+
+describe('isSafeAnnouncementLink', () => {
+	it('accepts http(s) URLs and site paths', () => {
+		for (const v of ['https://example.com/a', 'http://example.com', '/pricing'])
+			expect(isSafeAnnouncementLink(v)).toBe(true)
+	})
+
+	it('rejects script and other schemes, and protocol-relative URLs', () => {
+		for (const v of [
+			'javascript:alert(1)',
+			' JavaScript:alert(1)',
+			'data:text/html,hi',
+			'//evil.com',
+			'/\\evil.com',
+			'example.com',
+		])
+			expect(isSafeAnnouncementLink(v)).toBe(false)
 	})
 })

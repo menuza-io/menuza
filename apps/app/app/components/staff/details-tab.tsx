@@ -2,19 +2,18 @@ import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { STAFFING_PERMISSIONS as P } from '@repo/staffing'
 import { Alert, AlertDescription } from '@repo/ui/alert'
-import { Button } from '@repo/ui/button'
 import {
 	Frame,
 	FrameDescription,
-	FrameFooter,
 	FrameHeader,
 	FramePanel,
 	FrameTitle,
 } from '@repo/ui/frame'
 import { Skeleton } from '@repo/ui/skeleton'
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { useStaffClient, useStaffQuery } from '#app/hooks/use-staff-client.ts'
 import { describeStaffError } from '#app/utils/staffing/staff-errors.ts'
@@ -40,8 +39,46 @@ import { useTeamContext } from './team-context.ts'
 const blankToNull = (value: string) =>
 	value.trim() === '' ? null : value.trim()
 
-/** Name, contact and employment basics. Saves only what changed. */
+/**
+ * Name, contact and employment basics, then the personal details. Saves only
+ * what changed. The two forms are independent: saving the first reloads the
+ * person, and the first form remounts on that (see the key) without touching
+ * unsaved edits in the second.
+ */
 export function DetailsTab({
+	detail,
+	onChanged,
+}: {
+	detail: StaffDetail
+	onChanged: () => void
+}) {
+	const { can } = useStaffClient('staff')
+	const person = detail.staff
+	return (
+		<div className="flex flex-col gap-6">
+			<PersonForm
+				key={`${person.id}:${person.updatedAt ?? ''}`}
+				detail={detail}
+				onChanged={onChanged}
+			/>
+			{can(P.READ_STAFF_PRIVATE) ? (
+				<RevealGate
+					title={<Trans>Personal details</Trans>}
+					description={
+						<Trans>
+							Date of birth, address and emergency contact. Each time you view
+							these, it is recorded.
+						</Trans>
+					}
+				>
+					<PrivateDetails key={person.id} staffId={person.id} />
+				</RevealGate>
+			) : null}
+		</div>
+	)
+}
+
+function PersonForm({
 	detail,
 	onChanged,
 }: {
@@ -55,7 +92,6 @@ export function DetailsTab({
 	const person = detail.staff
 	const action = useStaffAction()
 	const canWrite = can(P.UPDATE_STAFF)
-	const canSeePrivate = can(P.READ_STAFF_PRIVATE)
 
 	const initial = {
 		firstName: person.firstName,
@@ -74,10 +110,26 @@ export function DetailsTab({
 		value: (typeof initial)[K],
 	) => setValues((current) => ({ ...current, [key]: value }))
 
+	// What the last successful save sent. Until the reload remounts this form
+	// with the new person, those values are saved even though `initial` is old.
+	const [saved, setSaved] = useState<typeof initial | null>(null)
+	const baseline = saved ?? initial
 	const dirty = (Object.keys(initial) as Array<keyof typeof initial>).some(
-		(key) => values[key] !== initial[key],
+		(key) => values[key] !== baseline[key],
 	)
 	const terminated = person.status === 'terminated'
+	const formRef = useRef<HTMLFormElement>(null)
+
+	useSaveBar({
+		dirty: canWrite && dirty,
+		saving: action.pending,
+		onSave: () => formRef.current?.requestSubmit(),
+		onDiscard: () => {
+			setValues(baseline)
+			setErrors({})
+			action.reset()
+		},
+	})
 
 	async function save(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
@@ -87,7 +139,7 @@ export function DetailsTab({
 		if (hasErrors(found)) return
 
 		const patch: Record<string, unknown> = {}
-		const changed = (key: keyof typeof initial) => values[key] !== initial[key]
+		const changed = (key: keyof typeof initial) => values[key] !== baseline[key]
 		if (changed('firstName')) patch.firstName = values.firstName.trim()
 		if (changed('lastName')) patch.lastName = values.lastName.trim()
 		if (changed('email')) patch.email = blankToNull(values.email)
@@ -109,6 +161,7 @@ export function DetailsTab({
 			),
 		)
 		if (result.ok) {
+			setSaved(values)
 			toast.success(_(t`Details saved.`))
 			reloadRoster()
 			onChanged()
@@ -116,154 +169,114 @@ export function DetailsTab({
 	}
 
 	return (
-		<div className="flex flex-col gap-6">
-			<form
-				onSubmit={(event) => void save(event)}
-				noValidate
-				aria-label={_(t`Details`)}
-			>
-				<Frame className="w-full">
-					<FrameHeader>
-						<FrameTitle>
-							<Trans>Details</Trans>
-						</FrameTitle>
-						<FrameDescription>
-							<Trans>Name, contact and payroll information.</Trans>
-						</FrameDescription>
-					</FrameHeader>
-					<FramePanel className="flex flex-col gap-5">
-						<div className="grid gap-4 sm:grid-cols-2">
-							<TextField
-								label={<Trans>First name</Trans>}
-								value={values.firstName}
-								onChange={(event) => set('firstName', event.target.value)}
-								error={errors.firstName}
-								disabled={!canWrite}
-								required
-							/>
-							<TextField
-								label={<Trans>Last name</Trans>}
-								value={values.lastName}
-								onChange={(event) => set('lastName', event.target.value)}
-								error={errors.lastName}
-								disabled={!canWrite}
-								required
-							/>
-						</div>
-						<div className="grid gap-4 sm:grid-cols-2">
-							<TextField
-								label={<Trans>Phone</Trans>}
-								type="tel"
-								inputMode="tel"
-								dir="ltr"
-								value={values.phone}
-								onChange={(event) => set('phone', event.target.value)}
-								error={errors.phone}
-								disabled={!canWrite}
-								optional
-							/>
-							<TextField
-								label={<Trans>Email</Trans>}
-								type="email"
-								inputMode="email"
-								dir="ltr"
-								value={values.email}
-								onChange={(event) => set('email', event.target.value)}
-								error={errors.email}
-								disabled={!canWrite}
-								optional
-							/>
-							<TextField
-								label={<Trans>Payroll ID</Trans>}
-								value={values.employeeNumber}
-								onChange={(event) => set('employeeNumber', event.target.value)}
-								disabled={!canWrite}
-								optional
-							/>
-							<TextField
-								label={<Trans>Hire date</Trans>}
-								type="date"
-								dir="ltr"
-								value={values.hiredDate}
-								onChange={(event) => set('hiredDate', event.target.value)}
-								disabled={!canWrite}
-								optional
-							/>
+		<form
+			ref={formRef}
+			onSubmit={(event) => void save(event)}
+			noValidate
+			aria-label={_(t`Details`)}
+		>
+			<Frame className="w-full">
+				<FrameHeader>
+					<FrameTitle>
+						<Trans>Details</Trans>
+					</FrameTitle>
+					<FrameDescription>
+						<Trans>Name, contact and payroll information.</Trans>
+					</FrameDescription>
+				</FrameHeader>
+				<FramePanel className="flex flex-col gap-5">
+					<div className="grid gap-4 sm:grid-cols-2">
+						<TextField
+							label={<Trans>First name</Trans>}
+							value={values.firstName}
+							onChange={(event) => set('firstName', event.target.value)}
+							error={errors.firstName}
+							disabled={!canWrite}
+							required
+						/>
+						<TextField
+							label={<Trans>Last name</Trans>}
+							value={values.lastName}
+							onChange={(event) => set('lastName', event.target.value)}
+							error={errors.lastName}
+							disabled={!canWrite}
+							required
+						/>
+					</div>
+					<div className="grid gap-4 sm:grid-cols-2">
+						<TextField
+							label={<Trans>Phone</Trans>}
+							type="tel"
+							inputMode="tel"
+							dir="ltr"
+							value={values.phone}
+							onChange={(event) => set('phone', event.target.value)}
+							error={errors.phone}
+							disabled={!canWrite}
+							optional
+						/>
+						<TextField
+							label={<Trans>Email</Trans>}
+							type="email"
+							inputMode="email"
+							dir="ltr"
+							value={values.email}
+							onChange={(event) => set('email', event.target.value)}
+							error={errors.email}
+							disabled={!canWrite}
+							optional
+						/>
+						<TextField
+							label={<Trans>Payroll ID</Trans>}
+							value={values.employeeNumber}
+							onChange={(event) => set('employeeNumber', event.target.value)}
+							disabled={!canWrite}
+							optional
+						/>
+						<TextField
+							label={<Trans>Hire date</Trans>}
+							type="date"
+							dir="ltr"
+							value={values.hiredDate}
+							onChange={(event) => set('hiredDate', event.target.value)}
+							disabled={!canWrite}
+							optional
+						/>
+						<SelectField
+							label={<Trans>Worker type</Trans>}
+							value={values.workerType}
+							onValueChange={(value) =>
+								set('workerType', value as StaffMemberRow['workerType'])
+							}
+							options={[
+								{ value: 'employee', label: _(t`Employee`) },
+								{ value: 'contractor', label: _(t`Contractor`) },
+							]}
+							disabled={!canWrite}
+						/>
+						{!terminated ? (
 							<SelectField
-								label={<Trans>Worker type</Trans>}
-								value={values.workerType}
+								label={<Trans>Status</Trans>}
+								value={values.status}
 								onValueChange={(value) =>
-									set('workerType', value as StaffMemberRow['workerType'])
+									set('status', value as 'active' | 'on_leave')
 								}
 								options={[
-									{ value: 'employee', label: _(t`Employee`) },
-									{ value: 'contractor', label: _(t`Contractor`) },
+									{ value: 'active', label: _(t`Active`) },
+									{ value: 'on_leave', label: _(t`On leave`) },
 								]}
 								disabled={!canWrite}
 							/>
-							{!terminated ? (
-								<SelectField
-									label={<Trans>Status</Trans>}
-									value={values.status}
-									onValueChange={(value) =>
-										set('status', value as 'active' | 'on_leave')
-									}
-									options={[
-										{ value: 'active', label: _(t`Active`) },
-										{ value: 'on_leave', label: _(t`On leave`) },
-									]}
-									disabled={!canWrite}
-								/>
-							) : null}
-						</div>
-						{action.error ? (
-							<Alert variant="destructive">
-								<AlertDescription>{action.error}</AlertDescription>
-							</Alert>
 						) : null}
-					</FramePanel>
-					{canWrite ? (
-						<FrameFooter className="flex-row items-center gap-3">
-							<Button type="submit" disabled={!dirty || action.pending}>
-								{action.pending ? (
-									<Trans>Saving…</Trans>
-								) : (
-									<Trans>Save changes</Trans>
-								)}
-							</Button>
-							{dirty ? (
-								<Button
-									type="button"
-									variant="ghost"
-									disabled={action.pending}
-									onClick={() => {
-										setValues(initial)
-										setErrors({})
-										action.reset()
-									}}
-								>
-									<Trans>Discard</Trans>
-								</Button>
-							) : null}
-						</FrameFooter>
+					</div>
+					{action.error ? (
+						<Alert variant="destructive">
+							<AlertDescription>{action.error}</AlertDescription>
+						</Alert>
 					) : null}
-				</Frame>
-			</form>
-
-			{canSeePrivate ? (
-				<RevealGate
-					title={<Trans>Personal details</Trans>}
-					description={
-						<Trans>
-							Date of birth, address and emergency contact. Each time you view
-							these, it is recorded.
-						</Trans>
-					}
-				>
-					<PrivateDetails staffId={person.id} />
-				</RevealGate>
-			) : null}
-		</div>
+				</FramePanel>
+			</Frame>
+		</form>
 	)
 }
 
@@ -338,6 +351,17 @@ function PrivateForm({
 	const dirty = PRIVATE_FIELDS.some((field) => values[field] !== saved[field])
 	const set = (field: PrivateField, value: string) =>
 		setValues((current) => ({ ...current, [field]: value }))
+	const formRef = useRef<HTMLFormElement>(null)
+
+	useSaveBar({
+		dirty: canWrite && dirty,
+		saving: action.pending,
+		onSave: () => formRef.current?.requestSubmit(),
+		onDiscard: () => {
+			setValues(saved)
+			action.reset()
+		},
+	})
 
 	const text = (field: PrivateField, label: string, extra = {}) => (
 		<TextField
@@ -369,6 +393,7 @@ function PrivateForm({
 
 	return (
 		<form
+			ref={formRef}
 			onSubmit={(event) => void save(event)}
 			noValidate
 			className="flex flex-col gap-4"
@@ -399,17 +424,6 @@ function PrivateForm({
 				<Alert variant="destructive">
 					<AlertDescription>{action.error}</AlertDescription>
 				</Alert>
-			) : null}
-			{canWrite ? (
-				<div>
-					<Button type="submit" disabled={!dirty || action.pending}>
-						{action.pending ? (
-							<Trans>Saving…</Trans>
-						) : (
-							<Trans>Save personal details</Trans>
-						)}
-					</Button>
-				</div>
 			) : null}
 		</form>
 	)

@@ -7,7 +7,6 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
@@ -26,7 +25,6 @@ import {
 	InputGroupButton,
 	InputGroupInput,
 } from '@repo/ui/input-group'
-import { StatusButton } from '@repo/ui/status-button'
 import { NameSchema, UsernameSchema } from '@repo/validation'
 import { useState } from 'react'
 import { useFetcher } from 'react-router'
@@ -35,10 +33,12 @@ import {
 	ErrorList,
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
+import { useConformSaveBar } from '#app/components/save-bar.tsx'
 import { EmailChangeForm } from '#app/components/settings/email-form.tsx'
 import { ProfilePhoto } from './profile-photo'
 
 export const ProfileFormSchema = z.object({
+	intent: z.string().optional(),
 	name: NameSchema.nullable().default(null),
 	username: UsernameSchema,
 })
@@ -66,11 +66,15 @@ export function ProfileCard({ user }: ProfileCardProps) {
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: ProfileFormSchema })
 		},
+		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
+			intent: profileUpdateActionIntent,
 			username: user.username,
 			name: user.name,
 		},
 	})
+
+	useConformSaveBar(form, fetcher)
 
 	return (
 		<Card className="w-full">
@@ -88,7 +92,22 @@ export function ProfileCard({ user }: ProfileCardProps) {
 						<ProfilePhoto user={user} size="small" />
 					</div>
 					<div className="grow">
-						<fetcher.Form method="POST" {...getFormProps(form)}>
+						<fetcher.Form
+							method="POST"
+							{...getFormProps(form)}
+							onSubmit={(event) => {
+								// The Change Email dialog is portaled out of this form but is
+								// still its React child, so its submit bubbles here. Conform
+								// throws on a submit from another form; only handle our own.
+								if (event.target !== event.currentTarget) return
+								form.onSubmit(event)
+							}}
+						>
+							<input
+								type="hidden"
+								name="intent"
+								value={profileUpdateActionIntent}
+							/>
 							<FieldGroup>
 								<Field
 									data-invalid={fields.name.errors?.length ? true : undefined}
@@ -178,20 +197,6 @@ export function ProfileCard({ user }: ProfileCardProps) {
 					</div>
 				</div>
 			</CardContent>
-			<CardFooter className="justify-end">
-				<StatusButton
-					size="sm"
-					form="edit-profile"
-					type="submit"
-					name="intent"
-					value={profileUpdateActionIntent}
-					status={
-						fetcher.state !== 'idle' ? 'pending' : (form.status ?? 'idle')
-					}
-				>
-					<Trans>Save changes</Trans>
-				</StatusButton>
-			</CardFooter>
 		</Card>
 	)
 }

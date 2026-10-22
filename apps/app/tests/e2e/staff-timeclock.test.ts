@@ -5,7 +5,7 @@ import {
 	DEFAULT_SCOPE_ID,
 	STAFFING_FLAG_KEYS,
 } from '@repo/staffing'
-import { expect, test } from '#tests/playwright-utils.ts'
+import { expect, saveBar, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 /**
@@ -353,11 +353,11 @@ test.describe('Time clock (manager)', () => {
 			await page.screenshot({ path: `${SCREENSHOTS}/rules-desktop.png` })
 
 			await page.getByRole('radio', { name: /Standard starter/ }).click()
-			await expect(page.getByText('You have unsaved changes.')).toBeVisible()
+			await expect(saveBar(page).bar).toBeVisible()
 			expect(api.requests.some((r) => r.method === 'PUT')).toBe(false)
 			await page.getByRole('switch', { name: 'Weekly overtime' }).click()
-			await page.getByRole('button', { name: 'Save changes' }).click()
-			await expect(page.getByText('All changes saved.')).toBeVisible()
+			await saveBar(page).save.click()
+			await expect(page.getByText('Labor rules saved.')).toBeVisible()
 			const put = api.requests.find((r) => r.method === 'PUT')!
 			expect(put.body.weeklyOvertime).toEqual({
 				thresholdMinutes: 2400,

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { test as base } from '@playwright/test'
+import { type Page, test as base } from '@playwright/test'
 import {
 	authSessionStorage,
 	MOCK_CODE_GITHUB_HEADER,
@@ -257,4 +257,14 @@ export async function waitFor<ReturnValue>(
 		await new Promise((r) => setTimeout(r, 100))
 	}
 	throw lastError
+}
+
+/** The global "Unsaved changes" bar that replaced per-form Save buttons. */
+export function saveBar(page: Page) {
+	const bar = page.getByRole('group', { name: 'Unsaved changes' })
+	return {
+		bar,
+		save: bar.getByRole('button', { name: 'Save', exact: true }),
+		discard: bar.getByRole('button', { name: 'Discard', exact: true }),
+	}
 }

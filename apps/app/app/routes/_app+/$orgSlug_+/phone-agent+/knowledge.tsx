@@ -207,11 +207,7 @@ function BusinessSection({
 					fieldErrors={verticalFieldErrors}
 				/>
 			) : null}
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save business details</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }
@@ -527,11 +523,7 @@ function FaqSection({
 				</Card>
 			</AnnotatedSection>
 			<FieldErrorText error={fieldErrors.faq} />
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save answers</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }
@@ -853,11 +845,7 @@ function SpeechSection({
 					</CardContent>
 				</Card>
 			</AnnotatedSection>
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save pronunciations and key terms</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }

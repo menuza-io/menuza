@@ -11,6 +11,8 @@ import {
 	useState,
 } from 'react'
 import { type BlockerFunction, useFetcher, useRevalidator } from 'react-router'
+import { toast } from 'sonner'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import {
 	useConfirmBlocker,
 	useDirtyBeforeUnload,
@@ -299,7 +301,12 @@ export function useSettingsFormState<TSaved>({
 		}
 	}, [base.cleanDraft, draftKey])
 
-	const result = fetcher.state === 'idle' ? fetcher.data : undefined
+	// Discard hides the last save's errors along with the edits.
+	const [dismissedResult, setDismissedResult] = useState<SettingsSaveResult>()
+	const result =
+		fetcher.state === 'idle' && fetcher.data !== dismissedResult
+			? fetcher.data
+			: undefined
 	const rawFieldErrors = result && !result.ok ? result.fieldErrors : undefined
 	const fieldErrors = useSettingsFieldErrors(rawFieldErrors)
 	const conflict = Boolean(result && !result.ok && result.error === 'conflict')
@@ -328,6 +335,11 @@ export function useSettingsFormState<TSaved>({
 				encType: 'application/json',
 			})
 		},
+		/** Drops unsaved edits and shows the settings as last saved. */
+		discard() {
+			adoptLatest()
+			setDismissedResult(fetcher.data)
+		},
 		/** Drops unsaved edits and shows the latest saved settings. */
 		reload() {
 			adoptLatest()
@@ -338,20 +350,47 @@ export function useSettingsFormState<TSaved>({
 
 export type SettingsForm = ReturnType<typeof useSettingsForm>
 
+/**
+ * Per-form status for a phone-agent settings form. Saving happens in the
+ * global save bar: this registers the enclosing `<form>` with it, shows
+ * errors and the reload prompt in place, and toasts a successful save.
+ * Several forms on one page share one toast id, so a combined save shows one.
+ */
 export function SettingsSaveBar({
 	canUpdate,
 	form,
 	disabled,
-	label,
 }: {
 	canUpdate: boolean
 	form: Pick<
 		SettingsForm,
-		'pending' | 'result' | 'error' | 'conflict' | 'reload'
+		'pending' | 'result' | 'error' | 'conflict' | 'reload' | 'dirty' | 'discard'
 	>
 	disabled?: boolean
-	label?: React.ReactNode
 }) {
+	const { _ } = useLingui()
+	const anchor = useRef<HTMLSpanElement>(null)
+	const { pending, result, error, conflict } = form
+	useSaveBar({
+		dirty: canUpdate && form.dirty,
+		saving: pending,
+		onSave: () => {
+			if (disabled) {
+				toast.error(_(msg`Select at least one language.`))
+				return
+			}
+			anchor.current?.closest('form')?.requestSubmit()
+		},
+		onDiscard: form.discard,
+		// The page's `useUnsavedChangesWarning` already blocks navigation.
+		guard: false,
+	})
+	const savedResult = result?.ok ? result : undefined
+	useEffect(() => {
+		if (savedResult)
+			toast.success(_(msg`Settings saved`), { id: 'settings-saved' })
+	}, [_, savedResult])
+
 	if (!canUpdate) {
 		return (
 			<p className="text-muted-foreground text-sm">
@@ -359,9 +398,9 @@ export function SettingsSaveBar({
 			</p>
 		)
 	}
-	const { pending, result, error, conflict } = form
 	return (
 		<div className="flex flex-wrap items-center justify-end gap-3">
+			<span ref={anchor} hidden />
 			{error ? (
 				<p role="alert" className="text-destructive text-sm">
 					{error}
@@ -372,14 +411,6 @@ export function SettingsSaveBar({
 					<Trans>Reload</Trans>
 				</Button>
 			) : null}
-			{result?.ok && !pending ? (
-				<p role="status" className="text-muted-foreground text-sm">
-					<Trans>Saved</Trans>
-				</p>
-			) : null}
-			<Button type="submit" disabled={pending || disabled}>
-				{pending ? <Trans>Saving…</Trans> : (label ?? <Trans>Save</Trans>)}
-			</Button>
 		</div>
 	)
 }

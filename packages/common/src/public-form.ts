@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { parseLocalizedString } from './site-locales.ts'
+
 export const publicFormFieldTypes = [
 	'name',
 	'text',
@@ -19,7 +21,15 @@ export const publicFormFieldObjectSchema = z.object({
 		.min(1)
 		.max(50)
 		.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-	label: z.string().trim().min(1).max(100),
+	// Labels are localized JSON, so a cleared label is `{"en":""}` or `{}`.
+	label: z
+		.string()
+		.trim()
+		.min(1)
+		.max(100)
+		.refine((label) => Object.keys(parseLocalizedString(label)).length > 0, {
+			message: 'Every field needs a label.',
+		}),
 	type: z.enum(publicFormFieldTypes),
 	required: z.boolean(),
 	options: z.array(z.string().trim().min(1).max(100)).max(20).optional(),

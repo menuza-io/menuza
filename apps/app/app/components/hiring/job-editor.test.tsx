@@ -11,6 +11,7 @@ import {
 } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { SaveBar } from '#app/components/save-bar.tsx'
 import { type PostingDetail } from '#app/utils/hiring/job-posting-types.ts'
 import { JobEditor } from './job-editor.tsx'
 
@@ -118,6 +119,7 @@ function renderEditor(
 	render(
 		<I18nProvider i18n={i18n}>
 			<RouterProvider router={router} />
+			<SaveBar />
 		</I18nProvider>,
 	)
 	return { submits, router }
@@ -293,6 +295,29 @@ describe('JobEditor', () => {
 		).toBe(true)
 	})
 
+	it('saves and discards edits to a saved job from the save bar', async () => {
+		const { submits } = renderEditor({ posting })
+		const title = () => screen.getByLabelText('Job title') as HTMLInputElement
+		expect(screen.queryByText('Unsaved changes')).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull()
+
+		fireEvent.change(title(), { target: { value: 'Head chef' } })
+		expect(await screen.findByText('Unsaved changes')).toBeTruthy()
+		fireEvent.click(screen.getByRole('button', { name: 'Discard' }))
+		expect(title().value).toBe('Line cook')
+		await waitFor(() =>
+			expect(screen.queryByText('Unsaved changes')).toBeNull(),
+		)
+
+		fireEvent.change(title(), { target: { value: 'Head chef' } })
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+		await waitFor(() => expect(submits).toHaveLength(1))
+		expect(submits[0]?.payload.title).toBe('Head chef')
+		await waitFor(() =>
+			expect(screen.queryByText('Unsaved changes')).toBeNull(),
+		)
+	})
+
 	it('shows a plain message when the server refuses', async () => {
 		renderEditor({ posting }, () => ({
 			ok: false,
@@ -302,7 +327,7 @@ describe('JobEditor', () => {
 		fireEvent.change(screen.getByLabelText('Job title'), {
 			target: { value: 'Head chef' },
 		})
-		fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+		fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 		expect(
 			await screen.findByText(
 				'This job no longer exists. Go back to the list.',
@@ -363,7 +388,7 @@ describe('JobEditor', () => {
 		fireEvent.click(screen.getByText('en'))
 		expect(title().value).toBe('Line cook')
 
-		fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+		fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 		await waitFor(() => expect(submits).toHaveLength(1))
 		expect(submits[0]?.payload.title).toBe('Line cook')
 		expect(submits[0]?.payload.translations).toEqual({ ar: { title: 'طباخ' } })
@@ -390,7 +415,7 @@ describe('JobEditor', () => {
 
 		fireEvent.click(screen.getByRole('checkbox', { name: 'Downtown' }))
 		fireEvent.click(screen.getByRole('checkbox', { name: 'Airport' }))
-		fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() => expect(submits).toHaveLength(1))
 		expect(submits[0]?.payload.locationIds).toEqual(['loc1', 'loc2'])
 	})

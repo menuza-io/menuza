@@ -109,6 +109,25 @@ describe('Kanban Routes Authorization (WO-88)', () => {
 				'update:settings:any',
 			)
 		})
+
+		it('rejects names over the max length instead of truncating (400)', async () => {
+			mockSelectResults([{ id: 'org-123' }])
+			mockRequirePermission.mockResolvedValue('user-1')
+
+			const formData = new FormData()
+			formData.append('name', 'x'.repeat(101))
+
+			const response = (await createStatusAction({
+				request: new Request('http://localhost:3000/org-slug/notes/statuses', {
+					method: 'POST',
+					body: formData,
+				}),
+				params: { orgSlug: 'org-slug' },
+				context: {},
+			} as any)) as Response
+
+			expect(response.status).toBe(400)
+		})
 	})
 
 	describe('notes.status.$statusId action (Rename / Delete Status)', () => {

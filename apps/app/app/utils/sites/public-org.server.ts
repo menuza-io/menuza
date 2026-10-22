@@ -21,6 +21,7 @@ import {
 	OrganizationAnnouncement,
 	WebsiteRedirect,
 } from '@repo/database'
+import { isSafeAnnouncementLink } from '#app/utils/safe-link.ts'
 import {
 	composePageSectionsWithChrome,
 	getDefaultConfig,
@@ -128,7 +129,11 @@ function toPublicAnnouncement(
 		id: announcement.id,
 		content,
 		type,
-		linkUrl: announcement.linkUrl,
+		// Rows saved before validation existed may hold `javascript:` URLs.
+		linkUrl:
+			announcement.linkUrl && isSafeAnnouncementLink(announcement.linkUrl)
+				? announcement.linkUrl
+				: null,
 		linkLabel,
 		linkNewTab: announcement.linkNewTab,
 	}
