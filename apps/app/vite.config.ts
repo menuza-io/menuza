@@ -129,6 +129,8 @@ export default defineConfig((config) => ({
 			: true,
 	},
 	optimizeDeps: {
+		// esbuild 0.28 rejects destructuring for Vite 6's default browser target list.
+		esbuildOptions: { target: 'es2022' },
 		include: ['@repo/email', '@repo/integrations'],
 		exclude: [
 			'@repo/ai',

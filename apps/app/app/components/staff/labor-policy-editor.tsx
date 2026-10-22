@@ -31,8 +31,9 @@ import { FieldSet } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Separator } from '@repo/ui/separator'
 import { Skeleton } from '@repo/ui/skeleton'
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import { SelectField, TextField } from '#app/components/staff/controls.tsx'
 import {
 	CoreRules,
@@ -378,6 +379,18 @@ function PolicyForm({
 		return () => onDirtyChange(false)
 	}, [dirty, onDirtyChange])
 
+	const formRef = useRef<HTMLFormElement>(null)
+	useSaveBar({
+		dirty: canWrite && dirty,
+		saving: action.pending,
+		onSave: () => formRef.current?.requestSubmit(),
+		onDiscard: () => {
+			action.reset()
+			setStale(false)
+			setPolicy(baseline)
+		},
+	})
+
 	const clientProblems = useMemo(() => policyFormProblems(policy), [policy])
 	const problems = [...clientProblems, ...serverProblems]
 	const serverWantsAggregate = serverProblems.some(
@@ -510,6 +523,7 @@ function PolicyForm({
 
 	return (
 		<form
+			ref={formRef}
 			onSubmit={(event) => {
 				event.preventDefault()
 				void save()
@@ -938,16 +952,9 @@ function PolicyForm({
 
 			<SaveBar
 				canWrite={canWrite}
-				dirty={dirty}
-				pending={action.pending}
 				problemCount={problems.length + (blockingAggregate ? 1 : 0)}
 				error={action.error}
 				stale={stale}
-				onDiscard={() => {
-					action.reset()
-					setStale(false)
-					setPolicy(baseline)
-				}}
 				onReload={() => onSaved()}
 			/>
 		</form>
@@ -1039,21 +1046,15 @@ function AdvancedSection({
 
 function SaveBar({
 	canWrite,
-	dirty,
-	pending,
 	problemCount,
 	error,
 	stale,
-	onDiscard,
 	onReload,
 }: {
 	canWrite: boolean
-	dirty: boolean
-	pending: boolean
 	problemCount: number
 	error: string | null
 	stale: boolean
-	onDiscard: () => void
 	onReload: () => void
 }) {
 	if (!canWrite) {
@@ -1063,49 +1064,29 @@ function SaveBar({
 			</p>
 		)
 	}
+	// Saving and discarding live in the global save bar; this only explains why
+	// a save did not go through.
+	if (!error && problemCount === 0 && !stale) return null
 	return (
-		<div className="bg-background/95 border-border sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur-sm md:-mx-6 md:px-6">
-			<div role="status" className="min-w-0 text-sm">
-				{error ? (
-					<span
-						role="alert"
-						className="text-destructive flex items-center gap-2"
-					>
-						<Icon name="alert-triangle" />
-						{error}
-					</span>
-				) : problemCount > 0 ? (
-					<span className="text-destructive">
-						<Trans>Fix the highlighted settings to save.</Trans>
-					</span>
-				) : dirty ? (
-					<span>
-						<Trans>You have unsaved changes.</Trans>
-					</span>
-				) : (
-					<span className="text-muted-foreground">
-						<Trans>All changes saved.</Trans>
-					</span>
-				)}
-			</div>
-			<div className="flex items-center gap-2">
-				{stale ? (
-					<Button type="button" variant="outline" onClick={onReload}>
-						<Trans>Reload</Trans>
-					</Button>
-				) : null}
-				<Button
-					type="button"
-					variant="ghost"
-					disabled={!dirty || pending}
-					onClick={onDiscard}
-				>
-					<Trans>Discard</Trans>
+		<div
+			role="status"
+			className="flex flex-wrap items-center justify-between gap-3 text-sm"
+		>
+			{error ? (
+				<span role="alert" className="text-destructive flex items-center gap-2">
+					<Icon name="alert-triangle" />
+					{error}
+				</span>
+			) : problemCount > 0 ? (
+				<span className="text-destructive">
+					<Trans>Fix the highlighted settings to save.</Trans>
+				</span>
+			) : null}
+			{stale ? (
+				<Button type="button" variant="outline" onClick={onReload}>
+					<Trans>Reload</Trans>
 				</Button>
-				<Button type="submit" disabled={!dirty || pending || problemCount > 0}>
-					{pending ? <Trans>Saving…</Trans> : <Trans>Save changes</Trans>}
-				</Button>
-			</div>
+			) : null}
 		</div>
 	)
 }

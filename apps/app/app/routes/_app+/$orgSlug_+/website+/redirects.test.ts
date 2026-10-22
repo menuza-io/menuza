@@ -251,6 +251,27 @@ describe('Website Redirects Route', () => {
 		expect(data.errors.toPath[0]).toBeDefined()
 	})
 
+	it('action create-redirect rejects javascript: destinations with a toPath error', async () => {
+		const formData = new FormData()
+		formData.set('intent', 'create-redirect')
+		formData.set('fromPath', '/loop')
+		formData.set('toPath', 'javascript:alert(1)')
+		formData.set('statusCode', '301')
+
+		const response = await action({
+			request: new Request('http://localhost/test-org/website/redirects', {
+				method: 'POST',
+				body: formData,
+			}),
+			params: { orgSlug: 'test-org' },
+			context: {},
+		} as any)
+
+		expect(response.status).toBe(400)
+		const data = (await response.json()) as any
+		expect(data.errors.toPath[0]).toBeDefined()
+	})
+
 	it('action toggle-redirect toggles redirect status and purges cache', async () => {
 		const formData = new FormData()
 		formData.set('intent', 'toggle-redirect')

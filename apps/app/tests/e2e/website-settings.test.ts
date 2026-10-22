@@ -1,5 +1,5 @@
 import { db, eq, Organization } from '@repo/database'
-import { expect, test } from '#tests/playwright-utils.ts'
+import { expect, saveBar, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Website General Settings & Site Locales', () => {
@@ -29,7 +29,7 @@ test.describe('Website General Settings & Site Locales', () => {
 					response.url().includes('/website/analytics') &&
 					response.request().method() === 'POST',
 			),
-			page.getByRole('button', { name: /save changes/i }).click(),
+			saveBar(page).save.click(),
 		])
 
 		const [savedOrganization] = await db
@@ -135,11 +135,8 @@ test.describe('Website General Settings & Site Locales', () => {
 		).toBeVisible()
 		await expect(page.getByText(/default language/i).first()).toBeVisible()
 
-		// Save languages button
-		const saveLanguagesBtn = page.getByRole('button', {
-			name: /save languages/i,
-		})
-		await expect(saveLanguagesBtn).toBeVisible()
+		// The save bar only appears once something changes
+		await expect(saveBar(page).bar).toBeHidden()
 
 		// Select Arabic as an additional supported language
 		const languagesDropdownTrigger = page.getByRole('button', {
@@ -155,7 +152,7 @@ test.describe('Website General Settings & Site Locales', () => {
 				(res) =>
 					res.url().includes('/website') && res.request().method() === 'POST',
 			),
-			saveLanguagesBtn.click(),
+			saveBar(page).save.click(),
 		])
 
 		await page.reload()

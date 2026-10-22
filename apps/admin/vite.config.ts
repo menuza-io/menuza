@@ -101,6 +101,8 @@ export default defineConfig((config) => ({
 		sourcemap: !isCloudflareDeploy,
 	},
 	optimizeDeps: {
+		// esbuild 0.28 rejects destructuring for Vite 6's default browser target list.
+		esbuildOptions: { target: 'es2022' },
 		include: ['@repo/email', '@repo/integrations', '@repo/ai', '@repo/ui'],
 		exclude: [
 			'@repo/flow-editor',

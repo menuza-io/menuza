@@ -887,7 +887,6 @@ function SettingsForm({
 				canUpdate={canUpdate}
 				form={form}
 				disabled={languages.length === 0}
-				label={<Trans>Save settings</Trans>}
 			/>
 		</form>
 	)

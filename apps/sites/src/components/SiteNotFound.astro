@@ -1,0 +1,42 @@
+---
+import { msg } from '@lingui/core/macro'
+import { getLocaleHref } from '@repo/common/site-locales'
+import SitePage from '~/components/SitePage.astro'
+import { siteBtnPrimaryClass } from '~/lib/form-classes'
+import { siteContainer } from '~/lib/media'
+import type { PublicOrganization } from '~/lib/org'
+
+// The branded body of a 404. The page that renders it sets the 404 status:
+// a component's frontmatter runs after the response has started streaming.
+interface Props {
+	organization: PublicOrganization
+}
+
+const { organization } = Astro.props
+const i18n = Astro.locals.i18n
+const defaultLocale = organization.defaultLocale || Astro.locals.defaultLocale || 'en'
+const locale = Astro.locals.requestedLocale || organization.locale || defaultLocale
+const homeHref = getLocaleHref('/', locale, locale, defaultLocale)
+
+const heading = i18n._(msg`Page not found`)
+const body = i18n._(msg`The page you are looking for does not exist or has moved.`)
+const goHome = i18n._(msg`Go to the home page`)
+---
+
+<SitePage
+	organization={organization}
+	page={{ id: 'not-found', title: heading, slug: '', isHomePage: false, sections: [] }}
+	title={`${heading} - ${organization.name}`}
+	noIndex
+>
+	<div class:list={[siteContainer, 'pb-16 sm:pb-20']}>
+		<div class="flex flex-col items-start gap-3 pt-10 sm:pt-16">
+			<p class="text-sm font-semibold text-muted-foreground">404</p>
+			<h1 class="text-3xl font-bold leading-tight tracking-tight text-balance text-foreground sm:text-4xl">
+				{heading}
+			</h1>
+			<p class="max-w-prose text-base text-muted-foreground">{body}</p>
+			<a href={homeHref} class:list={[siteBtnPrimaryClass, 'focus-ring mt-3']}>{goHome}</a>
+		</div>
+	</div>
+</SitePage>

@@ -9,7 +9,7 @@ import {
 	UserOrganization,
 	_RoleToUser,
 } from '@repo/database'
-import { expect, test } from '#tests/playwright-utils.ts'
+import { expect, saveBar, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
 
 test.describe('Organization Management', () => {
@@ -194,7 +194,7 @@ test.describe('Organization Management', () => {
 		await page.getByRole('textbox', { name: /name/i }).fill(newName)
 
 		// Save changes
-		await page.getByRole('button', { name: /save changes/i }).click()
+		await saveBar(page).save.click()
 
 		// Verify success message
 		await expect(page.getByText(/updated/i).first()).toBeVisible()

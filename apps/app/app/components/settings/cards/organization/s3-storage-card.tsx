@@ -20,9 +20,11 @@ import { Switch as ShadcnSwitch } from '@repo/ui/switch'
 import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import { Field, ErrorList } from '#app/components/forms.tsx'
+import { useConformSaveBar } from '#app/components/save-bar.tsx'
 
 export const S3StorageSchema = z
 	.object({
+		intent: z.string().optional(),
 		s3Enabled: z.boolean().default(false),
 		s3MigrateExistingFiles: z.boolean().optional(),
 		s3Endpoint: z.string().url().optional().or(z.literal('')),
@@ -100,14 +102,15 @@ function Switch({
 	name,
 	formId,
 	value,
-	defaultChecked: _defaultChecked,
+	defaultChecked,
 	...props
 }: SwitchProps) {
 	const control = useInputControl({
 		formId,
 		key: props.id,
 		name,
-		initialValue: value,
+		// Match the form's default, or the form starts dirty.
+		initialValue: value ?? (defaultChecked ? 'on' : ''),
 	})
 
 	return (
@@ -147,7 +150,9 @@ export function S3StorageCard({
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: S3StorageSchema })
 		},
+		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
+			intent: s3StorageActionIntent,
 			s3Enabled: organization.s3Config?.isEnabled ? 'on' : '',
 			s3Endpoint: organization.s3Config?.endpoint || '',
 			s3BucketName: organization.s3Config?.bucketName || '',
@@ -156,6 +161,8 @@ export function S3StorageCard({
 			s3Region: organization.s3Config?.region || '',
 		},
 	})
+
+	useConformSaveBar(form, fetcher)
 
 	const testConnectionFetcher = useFetcher()
 	const migration = activeMigration ?? latestMigration
@@ -188,6 +195,7 @@ export function S3StorageCard({
 						{...getFormProps(form)}
 						className="space-y-4"
 					>
+						<input type="hidden" name="intent" value={s3StorageActionIntent} />
 						<div className="flex items-center justify-between">
 							<div className="space-y-1">
 								<Label className="flex items-center gap-2">
@@ -232,12 +240,6 @@ export function S3StorageCard({
 										</div>
 									</div>
 								</div>
-
-								<input
-									type="hidden"
-									name="intent"
-									value={s3StorageActionIntent}
-								/>
 
 								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<Field
@@ -427,19 +429,6 @@ export function S3StorageCard({
 							</StatusButton>
 						</testConnectionFetcher.Form>
 					)}
-				<StatusButton
-					size="sm"
-					form={form.id}
-					type="submit"
-					variant="default"
-					name="intent"
-					value={s3StorageActionIntent}
-					status={
-						fetcher.state !== 'idle' ? 'pending' : (form.status ?? 'idle')
-					}
-				>
-					<Trans>Save</Trans>
-				</StatusButton>
 				{testConnectionFetcher.data?.connectionTest ? (
 					<div
 						className={`w-full rounded-lg border p-3 ${

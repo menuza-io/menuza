@@ -1,18 +1,17 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { Trans } from '@lingui/macro'
-import { Button } from '@repo/ui/button'
 import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
-import { Form, useNavigation } from 'react-router'
+import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import { ErrorList, Field } from '#app/components/forms.tsx'
+import { useConformSaveBar } from '#app/components/save-bar.tsx'
 
 export const siteAnalyticsActionIntent = 'update-site-analytics'
 
@@ -27,6 +26,7 @@ function optionalTrackingId(pattern: RegExp, message: string) {
 }
 
 export const SiteAnalyticsSchema = z.object({
+	intent: z.string().optional(),
 	organizationId: z.string(),
 	facebookPixelId: optionalTrackingId(
 		/^\d{5,20}$/,
@@ -59,17 +59,18 @@ export function SiteAnalyticsCard({
 	}
 	actionData?: { result?: unknown }
 }) {
-	const navigation = useNavigation()
-	const isSubmitting = navigation.state !== 'idle'
+	const fetcher = useFetcher()
 
 	const [form, fields] = useForm({
 		id: 'site-analytics-form',
 		constraint: getZodConstraint(SiteAnalyticsSchema),
-		lastResult: actionData?.result as never,
+		lastResult: (fetcher.data?.result ?? actionData?.result) as never,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: SiteAnalyticsSchema })
 		},
+		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
+			intent: siteAnalyticsActionIntent,
 			organizationId: organization.id,
 			facebookPixelId: organization.facebookPixelId ?? '',
 			googleTagManagerId: organization.googleTagManagerId ?? '',
@@ -78,8 +79,10 @@ export function SiteAnalyticsCard({
 		},
 	})
 
+	useConformSaveBar(form, fetcher)
+
 	return (
-		<Form method="post" {...getFormProps(form)}>
+		<fetcher.Form method="post" {...getFormProps(form)}>
 			<Card>
 				<CardHeader>
 					<CardTitle>
@@ -133,12 +136,7 @@ export function SiteAnalyticsCard({
 					/>
 					<ErrorList errors={form.errors} id={form.errorId} />
 				</CardContent>
-				<CardFooter className="justify-end border-t">
-					<Button type="submit" disabled={isSubmitting}>
-						<Trans>Save changes</Trans>
-					</Button>
-				</CardFooter>
 			</Card>
-		</Form>
+		</fetcher.Form>
 	)
 }

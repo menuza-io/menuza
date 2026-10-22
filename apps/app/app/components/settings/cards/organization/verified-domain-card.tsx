@@ -1,7 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { Trans } from '@lingui/macro'
-import { Button } from '@repo/ui/button'
 import {
 	Card,
 	CardContent,
@@ -14,11 +13,13 @@ import { FieldGroup } from '@repo/ui/field'
 import { Icon } from '@repo/ui/icon'
 import { Switch } from '@repo/ui/switch'
 import { useState } from 'react'
-import { Form, useFetcher } from 'react-router'
+import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import { ErrorList, Field } from '#app/components/forms.tsx'
+import { useConformSaveBar } from '#app/components/save-bar.tsx'
 
 export const VerifiedDomainSchema = z.object({
+	intent: z.string().optional(),
 	verifiedDomain: z.string().min(1, 'Domain is required'),
 	organizationId: z.string(),
 })
@@ -31,23 +32,27 @@ export default function VerifiedDomainCard({
 	actionData?: any
 }) {
 	const [isChecked, setIsChecked] = useState(!!organization.verifiedDomain)
+	const saveFetcher = useFetcher()
 
 	const [form, fields] = useForm({
 		id: 'verified-domain',
 		constraint: getZodConstraint(VerifiedDomainSchema),
-		lastResult: actionData?.result,
+		lastResult: saveFetcher.data?.result ?? actionData?.result,
 		onValidate({ formData }) {
 			return parseWithZod(formData, {
 				schema: VerifiedDomainSchema,
 			})
 		},
+		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
+			intent: 'verified-domain',
 			verifiedDomain: organization.verifiedDomain || '',
 			organizationId: organization.id,
 		},
 	})
 
 	const toggleFetcher = useFetcher()
+	useConformSaveBar(form, saveFetcher)
 
 	const handleSwitchChange = (checked: boolean) => {
 		setIsChecked(checked)
@@ -85,7 +90,7 @@ export default function VerifiedDomainCard({
 				}`}
 			>
 				<div className="overflow-hidden">
-					<Form method="POST" {...getFormProps(form)}>
+					<saveFetcher.Form method="POST" {...getFormProps(form)}>
 						<input type="hidden" name="intent" value="verified-domain" />
 						<input
 							{...getInputProps(fields.organizationId, { type: 'hidden' })}
@@ -117,14 +122,8 @@ export default function VerifiedDomainCard({
 									</Trans>
 								</p>
 							</div>
-							<Button
-								type="submit"
-								className="shrink-0 self-stretch sm:self-start"
-							>
-								<Trans>Save</Trans>
-							</Button>
 						</CardFooter>
-					</Form>
+					</saveFetcher.Form>
 				</div>
 			</div>
 		</Card>

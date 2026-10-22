@@ -343,6 +343,11 @@ function ShareRow({
 	)
 }
 
+// A private-use character stands in for the name while the title is
+// translated, so word order stays in the catalog but `Trans` never parses a
+// name like `<i>Revenue</i>` as markup.
+const NAME_SLOT = '\uE000'
+
 /**
  * The owner's Share button for a custom dashboard. Its dialog shares the
  * dashboard with active members of the organization, with View or Edit
@@ -359,6 +364,10 @@ export function ShareDashboardDialog({
 	sharing: DashboardSharing
 }) {
 	const listLabelId = useId()
+	const { _ } = useLingui()
+	const [titleBefore = '', titleAfter = ''] = _(
+		msg`Share “${{ name: NAME_SLOT }}”`,
+	).split(NAME_SLOT)
 
 	return (
 		<Dialog>
@@ -372,7 +381,9 @@ export function ShareDashboardDialog({
 				<DialogHeader>
 					<DialogTitle>
 						<span className="wrap-anywhere">
-							<Trans>Share “{name}”</Trans>
+							{titleBefore}
+							<bdi>{name}</bdi>
+							{titleAfter}
 						</span>
 					</DialogTitle>
 					<DialogDescription>

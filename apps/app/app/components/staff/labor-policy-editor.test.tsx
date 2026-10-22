@@ -162,8 +162,10 @@ describe('LaborPolicyEditor', () => {
 	it('starts clean: nothing to save until something changes', async () => {
 		stubApi()
 		view()
-		await screen.findByText('All changes saved.')
-		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		await screen.findByRole('heading', {
+			name: 'How strict do you want to be?',
+		})
+		expect(screen.queryByText('Unsaved changes')).toBeNull()
 	})
 
 	it('fills in the standard starter settings without saving them', async () => {
@@ -172,7 +174,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.click(
 			await screen.findByRole('radio', { name: /Standard starter/ }),
 		)
-		expect(screen.getByText('You have unsaved changes.')).toBeTruthy()
+		expect(await screen.findByText('Unsaved changes')).toBeTruthy()
 		expect(calls.some((call) => call.method === 'PUT')).toBe(false)
 		expect(
 			screen
@@ -191,7 +193,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.click(await screen.findByLabelText('Count as late after'))
 		const late = screen.getByLabelText('Count as late after')
 		fireEvent.change(late, { target: { value: '12' } })
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() =>
 			expect(calls.some((c) => c.method === 'PUT')).toBe(true),
 		)
@@ -202,9 +204,7 @@ describe('LaborPolicyEditor', () => {
 		expect(put.body).toEqual({ lateGraceMinutes: 12 })
 		// The form settles on what it saved.
 		await waitFor(() =>
-			expect(
-				screen.getByRole('button', { name: 'Save changes' }),
-			).toBeDisabled(),
+			expect(screen.queryByText('Unsaved changes')).toBeNull(),
 		)
 		await waitForSaveReload(calls)
 	})
@@ -218,7 +218,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.change(await screen.findByLabelText('Count as late after'), {
 			target: { value: '9' },
 		})
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() =>
 			expect(calls.some((c) => c.method === 'PUT')).toBe(true),
 		)
@@ -251,7 +251,7 @@ describe('LaborPolicyEditor', () => {
 
 		fireEvent.click(noClockIn)
 		expect(noClockIn.getAttribute('aria-checked')).toBe('false')
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() =>
 			expect(calls.some((c) => c.method === 'PUT')).toBe(true),
 		)
@@ -273,7 +273,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.click(
 			screen.getByRole('switch', { name: 'Warn managers about overtime' }),
 		)
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() =>
 			expect(calls.some((c) => c.method === 'PUT')).toBe(true),
 		)
@@ -292,7 +292,7 @@ describe('LaborPolicyEditor', () => {
 		)
 		expect(screen.getByDisplayValue('40')).toBeTruthy()
 		expect(screen.getByDisplayValue('1.5')).toBeTruthy()
-		expect(screen.getByRole('button', { name: 'Save changes' })).toBeEnabled()
+		expect(await screen.findByRole('button', { name: 'Save' })).toBeEnabled()
 	})
 
 	it('blocks a save the server would refuse, and says which setting', async () => {
@@ -310,7 +310,9 @@ describe('LaborPolicyEditor', () => {
 		expect(
 			screen.getByText('Double time must start after daily overtime.'),
 		).toBeTruthy()
-		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		expect(
+			screen.getByText('Fix the highlighted settings to save.'),
+		).toBeTruthy()
 		expect(calls.some((c) => c.method === 'PUT')).toBe(false)
 	})
 
@@ -335,7 +337,9 @@ describe('LaborPolicyEditor', () => {
 			screen.getByText('Choose how overtime is counted before saving.'),
 		).toBeTruthy()
 		fireEvent.click(screen.getByRole('switch', { name: 'Weekly overtime' }))
-		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		expect(
+			screen.getByText('Fix the highlighted settings to save.'),
+		).toBeTruthy()
 	})
 
 	it('offers the organization default only when there are several workplaces and full access', async () => {
@@ -355,7 +359,9 @@ describe('LaborPolicyEditor', () => {
 		cleanup()
 		stubApi()
 		view()
-		await screen.findByText('All changes saved.')
+		await screen.findByRole('heading', {
+			name: 'How strict do you want to be?',
+		})
 		expect(screen.queryByRole('combobox', { name: 'Rules for' })).toBeNull()
 	})
 
@@ -363,7 +369,7 @@ describe('LaborPolicyEditor', () => {
 		stubApi({ grants: ['read:labor_policy:any'] })
 		view()
 		await screen.findByText('You can view these rules but not change them.')
-		expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
 	})
 
 	it('reports a stale save and keeps the manager in the form', async () => {
@@ -380,7 +386,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.change(await screen.findByLabelText('Count as late after'), {
 			target: { value: '9' },
 		})
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		const alert = await screen.findByRole('alert')
 		expect(alert.textContent).toMatch(/Someone else changed these settings/)
 		expect(screen.getByRole('button', { name: 'Reload' })).toBeTruthy()
@@ -403,7 +409,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.change(await screen.findByLabelText('Count as late after'), {
 			target: { value: '9' },
 		})
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		expect(
 			await screen.findByText('This value is outside the allowed range.'),
 		).toBeTruthy()
@@ -444,7 +450,7 @@ describe('LaborPolicyEditor', () => {
 		fireEvent.change(await screen.findByLabelText('Flag shifts longer than'), {
 			target: { value: '10' },
 		})
-		fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() =>
 			expect(calls.some((c) => c.method === 'PUT')).toBe(true),
 		)
@@ -465,7 +471,9 @@ describe('LaborPolicyEditor', () => {
 		expect(
 			screen.getByText('Fix the highlighted settings to save.'),
 		).toBeTruthy()
-		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		expect(
+			screen.getByText('Fix the highlighted settings to save.'),
+		).toBeTruthy()
 		const discard = screen.getByRole('button', { name: 'Discard' })
 		expect(discard).toBeEnabled()
 		fireEvent.click(discard)
@@ -474,7 +482,9 @@ describe('LaborPolicyEditor', () => {
 				String(BUILTIN_LABOR_POLICY.longShiftMinutes / 60),
 			),
 		)
-		expect(screen.getByText('All changes saved.')).toBeTruthy()
+		await waitFor(() =>
+			expect(screen.queryByText('Unsaved changes')).toBeNull(),
+		)
 		expect(calls.some((c) => c.method === 'PUT')).toBe(false)
 	})
 
@@ -505,7 +515,9 @@ describe('LaborPolicyEditor', () => {
 		expect(screen.getByLabelText('For shifts longer than')).not.toHaveAttribute(
 			'aria-invalid',
 		)
-		expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+		expect(
+			screen.getByText('Fix the highlighted settings to save.'),
+		).toBeTruthy()
 	})
 
 	it('shows what the rules do on an example shift, and follows the rules', async () => {

@@ -1,6 +1,5 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Button } from '@repo/ui/button'
 import {
 	Frame,
 	FrameDescription,
@@ -8,9 +7,10 @@ import {
 	FramePanel,
 	FrameTitle,
 } from '@repo/ui/frame'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFetcher } from 'react-router'
 import { toast } from 'sonner'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import { SelectField } from '#app/components/staff/controls.tsx'
 import { getTimezoneOptions } from '#app/components/staff/timezone-options.ts'
 
@@ -34,6 +34,15 @@ export function TimeZoneCard({
 	const options = useMemo(() => getTimezoneOptions(timeZone), [timeZone])
 	const pending = fetcher.state !== 'idle'
 
+	const formRef = useRef<HTMLFormElement>(null)
+
+	useSaveBar({
+		dirty: canEdit && value !== timeZone,
+		saving: pending,
+		onSave: () => formRef.current?.requestSubmit(),
+		onDiscard: () => setValue(timeZone),
+	})
+
 	useEffect(() => {
 		if (fetcher.data?.ok) toast.success(_(t`Time zone saved.`))
 	}, [fetcher.data, _])
@@ -52,6 +61,7 @@ export function TimeZoneCard({
 			</FrameHeader>
 			<FramePanel>
 				<form
+					ref={formRef}
 					className="flex max-w-md flex-col gap-3"
 					onSubmit={(event) => {
 						event.preventDefault()
@@ -73,13 +83,6 @@ export function TimeZoneCard({
 								: undefined
 						}
 					/>
-					{canEdit ? (
-						<div>
-							<Button type="submit" disabled={pending || value === timeZone}>
-								{pending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-							</Button>
-						</div>
-					) : null}
 				</form>
 			</FramePanel>
 		</Frame>

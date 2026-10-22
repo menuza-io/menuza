@@ -76,8 +76,12 @@ export const NoteCard = ({
 	setEditingNote,
 }: NoteCardProps) => {
 	const { _ } = useLingui()
-	const [copied, setCopied] = useState(false)
+	const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+		'idle',
+	)
 	const [tooltipOpen, setTooltipOpen] = useState(false)
+	const copyAttemptRef = useRef(0)
+	const copyResetRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 	const [editTitle, setEditTitle] = useState(note.title)
 	const [editContent, setEditContent] = useState(
 		note.content
@@ -111,14 +115,7 @@ export const NoteCard = ({
 		}
 	}, [isEditing])
 
-	useEffect(() => {
-		if (!copied) return
-		const timeoutId = setTimeout(() => {
-			setCopied(false)
-			setTooltipOpen(false)
-		}, 2000)
-		return () => clearTimeout(timeoutId)
-	}, [copied])
+	useEffect(() => () => clearTimeout(copyResetRef.current), [])
 
 	const handleCardClick = useCallback(() => {
 		if (!isEditing) {
@@ -189,15 +186,38 @@ export const NoteCard = ({
 	)
 
 	const handleCopyLink = useCallback(
-		(e: React.MouseEvent) => {
+		async (e: React.MouseEvent) => {
 			e.stopPropagation()
 			const noteUrl = `${window.location.origin}${window.location.pathname}/${note.id}`
-			void navigator.clipboard.writeText(noteUrl)
-			setCopied(true)
+			const attempt = ++copyAttemptRef.current
+			let result: 'copied' | 'failed'
+			try {
+				await navigator.clipboard.writeText(noteUrl)
+				result = 'copied'
+			} catch {
+				// Blocked clipboard permission or an insecure context
+				result = 'failed'
+			}
+			// Writes can settle out of order; only the latest click reports.
+			if (attempt !== copyAttemptRef.current) return
+			setCopyState(result)
 			setTooltipOpen(true)
+			// Restart the timer on every click, even when the state is unchanged.
+			clearTimeout(copyResetRef.current)
+			copyResetRef.current = setTimeout(() => {
+				setCopyState('idle')
+				setTooltipOpen(false)
+			}, 2000)
 		},
 		[note.id],
 	)
+
+	const copyLabel =
+		copyState === 'copied'
+			? t`Link copied!`
+			: copyState === 'failed'
+				? t`Couldn't copy link`
+				: t`Copy link`
 
 	// Get the first media item for display (prioritize videos, then images)
 	const firstVideo = note.uploads.find((u) => u.type === 'video')
@@ -344,6 +364,7 @@ export const NoteCard = ({
 													<button
 														className="bg-background text-foreground flex items-center gap-1.5 rounded-bl-md border-b border-l border-black/10 px-2 py-1.5"
 														onClick={handleStartEdit}
+														aria-label={t`Quick edit`}
 													>
 														<Icon name="pencil" className="h-3.5 w-3.5" />
 													</button>
@@ -364,10 +385,12 @@ export const NoteCard = ({
 												<button
 													className="bg-background text-foreground flex items-center gap-1.5 rounded-tr-[16px] border-b border-l border-black/10 px-2 py-1.5"
 													onClick={handleCopyLink}
-													aria-label={copied ? t`Link copied!` : t`Copy link`}
+													aria-label={copyLabel}
 												>
-													{copied ? (
+													{copyState === 'copied' ? (
 														<Icon name="check" className="h-3.5 w-3.5" />
+													) : copyState === 'failed' ? (
+														<Icon name="x" className="h-3.5 w-3.5" />
 													) : (
 														<Icon name="copy" className="h-3.5 w-3.5" />
 													)}
@@ -375,9 +398,14 @@ export const NoteCard = ({
 											}
 										></TooltipTrigger>
 										<TooltipContent>
-											<p>{copied ? t`Link copied!` : t`Copy link`}</p>
+											<p>{copyLabel}</p>
 										</TooltipContent>
 									</Tooltip>
+									{/* A changed label on a focused button is not announced, so the
+									    result is also read out from a live region. */}
+									<span role="status" aria-live="polite" className="sr-only">
+										{copyState === 'idle' ? '' : copyLabel}
+									</span>
 								</div>
 							</div>
 

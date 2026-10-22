@@ -211,4 +211,48 @@ describe('getNavigationCommands', () => {
 			'Announcements',
 		])
 	})
+
+	it('hides sections that only match the typed letters out of order', async () => {
+		const user = userEvent.setup()
+		renderMenu()
+
+		await user.type(await screen.findByRole('combobox'), 'Test')
+
+		const listbox = screen.getByRole('listbox')
+		expect(
+			within(listbox).queryByRole('option', { name: 'Website' }),
+		).not.toBeInTheDocument()
+		expect(
+			within(listbox).queryByRole('option', { name: 'Phone agent' }),
+		).not.toBeInTheDocument()
+	})
+
+	it('lists a note the server returned for the query', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () =>
+				Response.json({
+					notes: [
+						{
+							id: 'n1',
+							title: '<img src=x> Test note',
+							content: '',
+							createdAt: '',
+							updatedAt: '',
+							createdByName: 'Kody',
+						},
+					],
+				}),
+			),
+		)
+		const user = userEvent.setup()
+		renderMenu()
+
+		await user.type(await screen.findByRole('combobox'), 'Test')
+
+		expect(
+			await screen.findByText('<img src=x> Test note'),
+		).toBeInTheDocument()
+		expect(screen.queryByText('No results found.')).not.toBeInTheDocument()
+	})
 })

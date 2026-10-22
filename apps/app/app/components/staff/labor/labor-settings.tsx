@@ -1,7 +1,6 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type SalesSource } from '@repo/staffing'
-import { Button } from '@repo/ui/button'
 import {
 	Field,
 	FieldContent,
@@ -16,8 +15,9 @@ import { Input } from '@repo/ui/input'
 import { Item, ItemActions, ItemContent, ItemGroup } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import { useScopeLabel } from '#app/components/staff/scope-wording-provider.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { saveSettings } from '#app/utils/staffing/labor-api.ts'
@@ -92,14 +92,39 @@ export function LaborSettingsForm({
 	const [source, setSource] = useState<SalesSource>(settings.salesSource)
 	// Guests (covers) only exist where scopes are restaurant locations.
 	const { isLocation } = useScopeLabel()
-	const [standards, setStandards] = useState<StandardsText>(
-		standardsText(positions, settings.ordersPerLaborHour),
+	const savedStandards = standardsText(positions, settings.ordersPerLaborHour)
+	const savedVisitStandards = standardsText(
+		positions,
+		settings.demandPerLaborHour.visits,
 	)
-	const [visitStandards, setVisitStandards] = useState<StandardsText>(
-		standardsText(positions, settings.demandPerLaborHour.visits),
-	)
+	const [standards, setStandards] = useState<StandardsText>(savedStandards)
+	const [visitStandards, setVisitStandards] =
+		useState<StandardsText>(savedVisitStandards)
 	const [problem, setProblem] = useState<string | null>(null)
 	const save = useStaffAction(describeLaborError)
+	const formRef = useRef<HTMLFormElement>(null)
+	const changed = (text: StandardsText, saved: StandardsText) =>
+		positions.some(
+			(position) =>
+				(text[position.id] ?? '').trim() !== (saved[position.id] ?? ''),
+		)
+	const dirty =
+		source !== settings.salesSource ||
+		changed(standards, savedStandards) ||
+		(isLocation && changed(visitStandards, savedVisitStandards))
+
+	useSaveBar({
+		dirty: canEdit && dirty,
+		saving: save.pending,
+		onSave: () => formRef.current?.requestSubmit(),
+		onDiscard: () => {
+			setSource(settings.salesSource)
+			setStandards(savedStandards)
+			setVisitStandards(savedVisitStandards)
+			setProblem(null)
+			save.reset()
+		},
+	})
 
 	async function submit() {
 		if (save.pending || !canEdit) return
@@ -128,6 +153,9 @@ export function LaborSettingsForm({
 			}),
 		)
 		if (result.ok) {
+			// Show the saved (canonical) text so "12.0" does not stay dirty.
+			setStandards(standardsText(positions, next))
+			if (visits) setVisitStandards(standardsText(positions, visits))
 			toast.success(_(t`Labor settings saved.`))
 			onSaved()
 		}
@@ -135,6 +163,7 @@ export function LaborSettingsForm({
 
 	return (
 		<form
+			ref={formRef}
 			className="flex max-w-2xl flex-col gap-8"
 			noValidate
 			onSubmit={(event) => {
@@ -142,7 +171,7 @@ export function LaborSettingsForm({
 				void submit()
 			}}
 		>
-			<FieldSet disabled={!canEdit}>
+			<FieldSet disabled={!canEdit || save.pending}>
 				<FieldLegend>
 					<Trans>Where sales come from</Trans>
 				</FieldLegend>
@@ -180,6 +209,7 @@ export function LaborSettingsForm({
 				values={standards}
 				locale={locale}
 				canEdit={canEdit}
+				readOnly={save.pending}
 				onChange={(id, value) => {
 					setStandards((current) => ({ ...current, [id]: value }))
 					setProblem(null)
@@ -202,6 +232,7 @@ export function LaborSettingsForm({
 					values={visitStandards}
 					locale={locale}
 					canEdit={canEdit}
+					readOnly={save.pending}
 					onChange={(id, value) => {
 						setVisitStandards((current) => ({ ...current, [id]: value }))
 						setProblem(null)
@@ -212,13 +243,7 @@ export function LaborSettingsForm({
 			{problem || save.error ? (
 				<FieldError>{problem ?? save.error}</FieldError>
 			) : null}
-			{canEdit ? (
-				<div>
-					<Button type="submit" disabled={save.pending}>
-						{save.pending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-					</Button>
-				</div>
-			) : (
+			{canEdit ? null : (
 				<p className="text-muted-foreground text-sm">
 					<Trans>You can look at these settings but not change them.</Trans>
 				</p>
@@ -236,6 +261,7 @@ function StandardsFieldSet({
 	values,
 	locale,
 	canEdit,
+	readOnly,
 	onChange,
 }: {
 	legend: ReactNode
@@ -246,6 +272,7 @@ function StandardsFieldSet({
 	values: StandardsText
 	locale: string
 	canEdit: boolean
+	readOnly: boolean
 	onChange: (positionId: string, value: string) => void
 }) {
 	return (
@@ -275,6 +302,7 @@ function StandardsFieldSet({
 									dir="ltr"
 									value={values[position.id] ?? ''}
 									placeholder="–"
+									readOnly={readOnly}
 									className="h-11 w-24 text-end tabular-nums md:h-8"
 									onChange={(event) =>
 										onChange(position.id, event.target.value)

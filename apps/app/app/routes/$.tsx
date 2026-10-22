@@ -26,7 +26,7 @@ export function ErrorBoundary() {
 	return (
 		<GeneralErrorBoundary
 			statusHandlers={{
-				404: NotFoundPage,
+				404: () => <NotFoundPage />,
 			}}
 		/>
 	)

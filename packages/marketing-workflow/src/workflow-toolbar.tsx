@@ -146,13 +146,13 @@ export function WorkflowToolbar({
 										}
 									/>
 									<DropdownMenuContent align="start" className="w-56">
-										<DropdownMenuItem onSelect={onViewRuns}>
+										<DropdownMenuItem onClick={onViewRuns}>
 											<Icon name="clock" className="mr-2 size-4" />
 											<Trans>Run history</Trans>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										<DropdownMenuItem
-											onSelect={() => setShowTestRunDialog(true)}
+											onClick={() => setShowTestRunDialog(true)}
 										>
 											<Icon name="play" className="mr-2 size-4" />
 											<Trans>Test run</Trans>
