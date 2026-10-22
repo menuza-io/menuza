@@ -415,7 +415,7 @@ describe('JobEditor', () => {
 
 		fireEvent.click(screen.getByRole('checkbox', { name: 'Downtown' }))
 		fireEvent.click(screen.getByRole('checkbox', { name: 'Airport' }))
-		fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+		fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
 		await waitFor(() => expect(submits).toHaveLength(1))
 		expect(submits[0]?.payload.locationIds).toEqual(['loc1', 'loc2'])
 	})
