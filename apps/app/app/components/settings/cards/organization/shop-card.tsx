@@ -11,11 +11,13 @@ import {
 import { Input } from '@repo/ui/input'
 import { Label } from '@repo/ui/label'
 import { Textarea } from '@repo/ui/textarea'
-import { Form } from 'react-router'
+import { useRef } from 'react'
+import { Form, useFetcher } from 'react-router'
 import {
 	MockPaymentsPanel,
 	type PaymentsMockUiState,
 } from '#app/components/settings/cards/organization/mock-payments-panel.tsx'
+import { useNativeFormSaveBar } from '#app/components/use-native-form-save-bar.ts'
 import {
 	SHOP_PLATFORM_FEE_PERCENT,
 	SHOP_PROCESSOR_CATALOG,
@@ -49,6 +51,15 @@ export function ShopCard({
 	configuredProcessors = [],
 	paymentsMock,
 }: ShopCardProps) {
+	const productFetcher = useFetcher<{
+		result?: { error?: Record<string, string[] | null> | null }
+	}>()
+	const productFormRef = useRef<HTMLFormElement>(null)
+	useNativeFormSaveBar(productFormRef, productFetcher.state !== 'idle')
+	const productErrors = Object.values(productFetcher.data?.result?.error ?? {})
+		.flat()
+		.filter((message): message is string => Boolean(message))
+
 	const isUsRegion = (organization.dataRegion || 'us') === 'us'
 	const processor = normalizeShopProcessor(organization.shopPaymentProvider)
 	const processorDefinition = getShopProcessorDefinition(processor)
@@ -68,6 +79,10 @@ export function ShopCard({
 			? (organization.shopProductPriceCents / 100).toFixed(2)
 			: '19.99'
 	const orgSharePercent = 100 - SHOP_PLATFORM_FEE_PERCENT
+	// The name is required, so a saved product always has one. Once saved, the
+	// fields show what was stored (a blank description stays blank), so the save
+	// bar sees a clean form after saving.
+	const productSaved = Boolean(organization.shopProductName)
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -232,7 +247,11 @@ export function ShopCard({
 								)}
 							</div>
 
-							<Form method="post" className="space-y-4 border-t pt-6">
+							<productFetcher.Form
+								ref={productFormRef}
+								method="post"
+								className="space-y-4 border-t pt-6"
+							>
 								<input
 									type="hidden"
 									name="intent"
@@ -288,8 +307,9 @@ export function ShopCard({
 										name="productDescription"
 										rows={3}
 										defaultValue={
-											organization.shopProductDescription ||
-											'A simple offering for your customers.'
+											productSaved
+												? (organization.shopProductDescription ?? '')
+												: 'A simple offering for your customers.'
 										}
 									/>
 								</div>
@@ -325,10 +345,12 @@ export function ShopCard({
 									<Trans>Show product on your public site</Trans>
 								</label>
 
-								<Button type="submit">
-									<Trans>Save product</Trans>
-								</Button>
-							</Form>
+								{productErrors.length > 0 ? (
+									<p role="alert" className="text-destructive text-sm">
+										{productErrors.join(' ')}
+									</p>
+								) : null}
+							</productFetcher.Form>
 
 							{organization.sitePublished ? (
 								<p className="text-muted-foreground text-sm">

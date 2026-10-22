@@ -34,7 +34,8 @@ import {
 	TableRow,
 } from '@repo/ui/table'
 import { useEffect, useRef, useState } from 'react'
-import { Form, Link, useNavigation } from 'react-router'
+import { Form, Link, useFetcher, useNavigation } from 'react-router'
+import { useNativeFormSaveBar } from '#app/components/use-native-form-save-bar.ts'
 import { useRoleLabels } from '#app/utils/organization/role-label.ts'
 import {
 	STAFFING_IMPLIED_PERMISSION_IDS,
@@ -502,20 +503,29 @@ export function RoleAccessForm({
 	staffingEnabled?: boolean
 }) {
 	const navigation = useNavigation()
-	const isSubmitting = navigation.state === 'submitting'
-	const error = errors?.error
-	const nameError = errors?.nameError
+	// Editing saves through a fetcher so the save bar's redirect to the list is
+	// not held back by its own leave guard; creating keeps a plain submit.
+	const fetcher = useFetcher<{ error?: string; nameError?: string }>()
+	const isSubmitting = role
+		? fetcher.state !== 'idle'
+		: navigation.state === 'submitting'
+	const RoleForm = role ? fetcher.Form : Form
+	const formRef = useRef<HTMLFormElement>(null)
+	// An edit's errors come back on the fetcher, a create's as action data.
+	const actionErrors = role ? (fetcher.data ?? errors) : errors
+	const error = actionErrors?.error
+	const nameError = actionErrors?.nameError
 	const errorRef = useRef<HTMLDivElement>(null)
 	const nameRef = useRef<HTMLInputElement>(null)
 	// The Create role button sits in the footer, far below both messages, so
 	// each failed submit moves focus to the message (or the field it is about).
 	// Focus also makes screen readers read it, so the message has no alert role
-	// (that would read it twice). `errors` is the action data, a new object on
-	// every submit, so a repeated identical error still moves focus.
+	// (that would read it twice). The action data is a new object on every
+	// submit, so a repeated identical error still moves focus.
 	useEffect(() => {
-		if (errors?.nameError) nameRef.current?.focus()
-		else if (errors?.error) errorRef.current?.focus()
-	}, [errors])
+		if (actionErrors?.nameError) nameRef.current?.focus()
+		else if (actionErrors?.error) errorRef.current?.focus()
+	}, [actionErrors])
 	const permissionGroups = getPermissionGroups().filter(
 		(group) => staffingEnabled || !group.staffing,
 	)
@@ -538,6 +548,19 @@ export function RoleAccessForm({
 	const [activePreset, setActivePreset] = useState<string | null>(
 		role ? null : (presets[0]?.name ?? null),
 	)
+
+	useNativeFormSaveBar(formRef, isSubmitting, {
+		enabled: Boolean(role),
+		extraDirty:
+			role !== undefined &&
+			[...selectedPermissionIds].sort().join() !==
+				[...role.permissionIds].sort().join(),
+		onDiscard: () => {
+			if (!role) return
+			setActivePreset(null)
+			setSelectedPermissionIds(role.permissionIds)
+		},
+	})
 
 	const togglePermission = (id: string, checked: boolean) => {
 		setActivePreset(null)
@@ -569,7 +592,12 @@ export function RoleAccessForm({
 				</div>
 			)}
 
-			<Form method="POST" id="role-access-form" className="space-y-6">
+			<RoleForm
+				ref={formRef}
+				method="POST"
+				id="role-access-form"
+				className="space-y-6"
+			>
 				{/* Role Details Frame */}
 				<Frame className="w-full">
 					<FrameHeader>
@@ -826,19 +854,19 @@ export function RoleAccessForm({
 							>
 								<Trans>Cancel</Trans>
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? (
-									<Trans>Saving…</Trans>
-								) : role ? (
-									<Trans>Save changes</Trans>
-								) : (
-									<Trans>Create role</Trans>
-								)}
-							</Button>
+							{role ? null : (
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting ? (
+										<Trans>Saving…</Trans>
+									) : (
+										<Trans>Create role</Trans>
+									)}
+								</Button>
+							)}
 						</div>
 					</FrameFooter>
 				</Frame>
-			</Form>
+			</RoleForm>
 		</div>
 	)
 }

@@ -3,7 +3,13 @@ import { faker } from '@faker-js/faker'
 import { verifyUserPassword } from '@repo/auth'
 import { db, eq, User } from '@repo/database'
 import { readEmail } from '#tests/mocks/utils.ts'
-import { expect, test, createUser, waitFor } from '#tests/playwright-utils.ts'
+import {
+	expect,
+	test,
+	createUser,
+	saveBar,
+	waitFor,
+} from '#tests/playwright-utils.ts'
 
 // const CODE_REGEX = /Here's your verification code: (?<code>[\d\w]+)/
 
@@ -21,7 +27,8 @@ test('Users can update their basic info', async ({ page, login, navigate }) => {
 		.getByRole('textbox', { name: /username/i })
 		.fill(newUserData.username)
 
-	await page.getByRole('button', { name: /save changes/i }).click()
+	await saveBar(page).save.click()
+	await expect(saveBar(page).bar).toBeHidden()
 })
 
 test('Users can update their password', async ({ page, login, navigate }) => {

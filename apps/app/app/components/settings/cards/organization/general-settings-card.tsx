@@ -1,24 +1,24 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { Trans } from '@lingui/macro'
+import { organizationSlugSchema } from '@repo/common'
 import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
 import { FieldGroup } from '@repo/ui/field'
-import { StatusButton } from '@repo/ui/status-button'
 import { useFetcher } from 'react-router'
-import { organizationSlugSchema } from '@repo/common'
 import { z } from 'zod'
 import { Field, ErrorList } from '#app/components/forms.tsx'
+import { useConformSaveBar } from '#app/components/save-bar.tsx'
 
 import { OrganizationPhoto } from './organization-photo-card'
 
 const SettingsSchema = z.object({
+	intent: z.string().optional(),
 	name: z.string().trim().min(1, 'Name is required'),
 	slug: organizationSlugSchema,
 })
@@ -47,11 +47,16 @@ export function GeneralSettingsCard({
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: SettingsSchema })
 		},
+		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
+			intent: organizationUpdateActionIntent,
 			name: organization.name,
 			slug: organization.slug,
 		},
 	})
+
+	// A slug change redirects, so the other forms save first.
+	useConformSaveBar(form, fetcher, { saveLast: true })
 
 	return (
 		<Card>
@@ -100,20 +105,6 @@ export function GeneralSettingsCard({
 					</div>
 				</div>
 			</CardContent>
-			<CardFooter className="justify-end">
-				<StatusButton
-					size="sm"
-					form={form.id}
-					type="submit"
-					name="intent"
-					value={organizationUpdateActionIntent}
-					status={
-						fetcher.state !== 'idle' ? 'pending' : (form.status ?? 'idle')
-					}
-				>
-					<Trans>Save changes</Trans>
-				</StatusButton>
-			</CardFooter>
 		</Card>
 	)
 }

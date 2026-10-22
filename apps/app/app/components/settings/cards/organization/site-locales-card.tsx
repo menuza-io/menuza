@@ -14,7 +14,6 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from '@repo/ui/card'
@@ -34,9 +33,10 @@ import {
 	SelectValue,
 } from '@repo/ui/select'
 import { useMemo, useState } from 'react'
-import { Form, useNavigation } from 'react-router'
+import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import { convertErrorsToFieldFormat } from '#app/components/forms.tsx'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 
 export const siteLocalesActionIntent = 'update-site-locales'
 
@@ -83,10 +83,8 @@ export function SiteLocalesCard({
 	actionData?: { result?: unknown }
 }) {
 	const { _ } = useLingui()
-	const navigation = useNavigation()
-	const isSubmitting =
-		navigation.state !== 'idle' &&
-		navigation.formData?.get('intent') === siteLocalesActionIntent
+	const fetcher = useFetcher()
+	const isSubmitting = fetcher.state !== 'idle'
 
 	const [selectedLocales, setSelectedLocales] = useState<SiteContentLocale[]>(
 		localesConfig.locales,
@@ -98,13 +96,32 @@ export function SiteLocalesCard({
 	const [form, fields] = useForm({
 		id: 'site-locales',
 		constraint: getZodConstraint(SiteLocalesSchema),
-		lastResult: actionData?.result as never,
+		lastResult: (fetcher.data?.result ?? actionData?.result) as never,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: SiteLocalesSchema })
 		},
 		defaultValue: {
 			organizationId: organization.id,
 			defaultLocale: localesConfig.defaultLocale,
+		},
+	})
+
+	// The draft lives in state and the hidden inputs mirror it, so Conform cannot
+	// see edits; compare with the saved config instead. Saving revalidates the
+	// loader, which makes the saved config equal the draft again.
+	const dirty =
+		defaultLocale !== localesConfig.defaultLocale ||
+		selectedLocales.join() !== localesConfig.locales.join()
+	useSaveBar({
+		dirty,
+		saving: isSubmitting,
+		onSave: () => {
+			const element = document.getElementById(form.id)
+			if (element instanceof HTMLFormElement) element.requestSubmit()
+		},
+		onDiscard: () => {
+			setSelectedLocales(localesConfig.locales)
+			setDefaultLocale(localesConfig.defaultLocale)
 		},
 	})
 
@@ -152,7 +169,7 @@ export function SiteLocalesCard({
 	}
 
 	return (
-		<Form method="POST" {...getFormProps(form)}>
+		<fetcher.Form method="POST" {...getFormProps(form)}>
 			<Card>
 				<CardHeader>
 					<CardTitle>
@@ -301,13 +318,7 @@ export function SiteLocalesCard({
 						</Field>
 					</div>
 				</CardContent>
-
-				<CardFooter className="justify-end border-t">
-					<Button type="submit" disabled={isSubmitting}>
-						<Trans>Save languages</Trans>
-					</Button>
-				</CardFooter>
 			</Card>
-		</Form>
+		</fetcher.Form>
 	)
 }

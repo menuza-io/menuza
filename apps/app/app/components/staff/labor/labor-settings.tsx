@@ -1,7 +1,6 @@
 import { Trans, t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type SalesSource } from '@repo/staffing'
-import { Button } from '@repo/ui/button'
 import {
 	Field,
 	FieldContent,
@@ -16,8 +15,9 @@ import { Input } from '@repo/ui/input'
 import { Item, ItemActions, ItemContent, ItemGroup } from '@repo/ui/item'
 import { Label } from '@repo/ui/label'
 import { RadioGroup, RadioGroupItem } from '@repo/ui/radio-group'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useSaveBar } from '#app/components/save-bar.tsx'
 import { useStaffAction } from '#app/hooks/use-staff-action.ts'
 import { saveSettings } from '#app/utils/staffing/labor-api.ts'
 import { describeLaborError } from '#app/utils/staffing/labor-errors.ts'
@@ -55,18 +55,38 @@ export function LaborSettingsForm({
 	const { _, i18n } = useLingui()
 	const locale = i18n.locale
 	const [source, setSource] = useState<SalesSource>(settings.salesSource)
-	const [standards, setStandards] = useState<Record<string, string>>(
-		Object.fromEntries(
-			positions.map((position) => [
-				position.id,
-				settings.ordersPerLaborHour[position.id] !== undefined
-					? String(settings.ordersPerLaborHour[position.id])
-					: '',
-			]),
-		),
+	const savedStandards = Object.fromEntries(
+		positions.map((position) => [
+			position.id,
+			settings.ordersPerLaborHour[position.id] !== undefined
+				? String(settings.ordersPerLaborHour[position.id])
+				: '',
+		]),
 	)
+	const [standards, setStandards] =
+		useState<Record<string, string>>(savedStandards)
 	const [problem, setProblem] = useState<string | null>(null)
 	const save = useStaffAction(describeLaborError)
+	const formRef = useRef<HTMLFormElement>(null)
+	const dirty =
+		source !== settings.salesSource ||
+		positions.some(
+			(position) =>
+				(standards[position.id] ?? '').trim() !==
+				(savedStandards[position.id] ?? ''),
+		)
+
+	useSaveBar({
+		dirty: canEdit && dirty,
+		saving: save.pending,
+		onSave: () => formRef.current?.requestSubmit(),
+		onDiscard: () => {
+			setSource(settings.salesSource)
+			setStandards(savedStandards)
+			setProblem(null)
+			save.reset()
+		},
+	})
 
 	async function submit() {
 		if (save.pending || !canEdit) return
@@ -94,6 +114,15 @@ export function LaborSettingsForm({
 			}),
 		)
 		if (result.ok) {
+			// Show the saved (canonical) text so "12.0" does not stay dirty.
+			setStandards(
+				Object.fromEntries(
+					positions.map((position) => [
+						position.id,
+						next[position.id] !== undefined ? String(next[position.id]) : '',
+					]),
+				),
+			)
 			toast.success(_(t`Labor settings saved.`))
 			onSaved()
 		}
@@ -101,6 +130,7 @@ export function LaborSettingsForm({
 
 	return (
 		<form
+			ref={formRef}
 			className="flex max-w-2xl flex-col gap-8"
 			noValidate
 			onSubmit={(event) => {
@@ -108,7 +138,7 @@ export function LaborSettingsForm({
 				void submit()
 			}}
 		>
-			<FieldSet disabled={!canEdit}>
+			<FieldSet disabled={!canEdit || save.pending}>
 				<FieldLegend>
 					<Trans>Where sales come from</Trans>
 				</FieldLegend>
@@ -165,6 +195,7 @@ export function LaborSettingsForm({
 										dir="ltr"
 										value={standards[position.id] ?? ''}
 										placeholder="–"
+										readOnly={save.pending}
 										className="h-11 w-24 text-end tabular-nums md:h-8"
 										onChange={(event) => {
 											const value = event.target.value
@@ -188,13 +219,7 @@ export function LaborSettingsForm({
 			{problem || save.error ? (
 				<FieldError>{problem ?? save.error}</FieldError>
 			) : null}
-			{canEdit ? (
-				<div>
-					<Button type="submit" disabled={save.pending}>
-						{save.pending ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-					</Button>
-				</div>
-			) : (
+			{canEdit ? null : (
 				<p className="text-muted-foreground text-sm">
 					<Trans>You can look at these settings but not change them.</Trans>
 				</p>

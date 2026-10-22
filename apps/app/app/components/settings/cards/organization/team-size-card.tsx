@@ -1,7 +1,11 @@
-import { getFormProps, getInputProps, useForm } from '@conform-to/react'
+import {
+	getFormProps,
+	getInputProps,
+	useForm,
+	useInputControl,
+} from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { t, Trans } from '@lingui/macro'
-import { Button } from '@repo/ui/button'
 import {
 	Card,
 	CardContent,
@@ -17,14 +21,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@repo/ui/select'
-import { Form } from 'react-router'
+import { useFetcher } from 'react-router'
 import { z } from 'zod'
 import {
 	ErrorList,
 	convertErrorsToFieldFormat,
 } from '#app/components/forms.tsx'
+import { useConformSaveBar } from '#app/components/save-bar.tsx'
 
 export const TeamSizeSchema = z.object({
+	intent: z.string().optional(),
 	size: z.string().min(1, 'Team size is required'),
 	organizationId: z.string(),
 })
@@ -36,18 +42,24 @@ export default function TeamSizeCard({
 	organization: { id: string; size?: string | null }
 	actionData?: any
 }) {
+	const fetcher = useFetcher()
 	const [form, fields] = useForm({
 		id: 'team-size-form',
 		constraint: getZodConstraint(TeamSizeSchema),
-		lastResult: actionData?.result,
+		lastResult: fetcher.data?.result ?? actionData?.result,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: TeamSizeSchema })
 		},
+		// Hidden inputs belong in the defaults, or Conform reports the form dirty.
 		defaultValue: {
+			intent: 'update-team-size',
 			size: organization.size || '',
 			organizationId: organization.id,
 		},
 	})
+
+	const sizeControl = useInputControl(fields.size)
+	useConformSaveBar(form, fetcher)
 
 	const teamSizeOptions = [
 		{ value: '1-10', label: t`1-10 people` },
@@ -58,7 +70,7 @@ export default function TeamSizeCard({
 	]
 
 	return (
-		<Form method="POST" {...getFormProps(form)}>
+		<fetcher.Form method="POST" {...getFormProps(form)}>
 			<Card>
 				<CardHeader className="pb-3">
 					<CardTitle className="text-base">
@@ -79,7 +91,8 @@ export default function TeamSizeCard({
 							<div className="min-w-0 flex-1">
 								<Select
 									name={fields.size.name}
-									defaultValue={organization.size || ''}
+									value={sizeControl.value ?? ''}
+									onValueChange={(value) => sizeControl.change(value ?? '')}
 									items={[
 										{ label: 'Select team size', value: null },
 										...teamSizeOptions,
@@ -100,18 +113,11 @@ export default function TeamSizeCard({
 									errors={convertErrorsToFieldFormat(fields.size.errors)}
 								/>
 							</div>
-							<Button
-								size="sm"
-								type="submit"
-								className="shrink-0 self-stretch sm:self-auto"
-							>
-								<Trans>Update</Trans>
-							</Button>
 						</div>
 					</Field>
 					<ErrorList errors={form.errors} id={form.errorId} />
 				</CardContent>
 			</Card>
-		</Form>
+		</fetcher.Form>
 	)
 }

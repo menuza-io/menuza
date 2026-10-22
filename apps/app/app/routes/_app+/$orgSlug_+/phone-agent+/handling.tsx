@@ -318,11 +318,7 @@ function FlowLinesSection({
 					</CardContent>
 				</Card>
 			</AnnotatedSection>
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save flow lines</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }
@@ -1013,11 +1009,7 @@ function TransfersSection({
 					</CardContent>
 				</Card>
 			</AnnotatedSection>
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save transfers</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }
@@ -1202,11 +1194,7 @@ function RatingsSection({
 					</CardContent>
 				</Card>
 			</AnnotatedSection>
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save ratings</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }
@@ -1618,11 +1606,7 @@ function AfterCallSection({
 					</CardContent>
 				</Card>
 			</AnnotatedSection>
-			<SettingsSaveBar
-				canUpdate={canUpdate}
-				form={form}
-				label={<Trans>Save after-call settings</Trans>}
-			/>
+			<SettingsSaveBar canUpdate={canUpdate} form={form} />
 		</form>
 	)
 }

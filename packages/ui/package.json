@@ -9,6 +9,7 @@
   "exports": {
     ".": "./index.ts",
     "./button": "./components/ui/button.tsx",
+    "./save-bar": "./components/ui/save-bar.tsx",
     "./input": "./components/ui/input.tsx",
     "./label": "./components/ui/label.tsx",
     "./textarea": "./components/ui/textarea.tsx",
