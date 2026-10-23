@@ -2,12 +2,12 @@ import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-	KioskApiError,
-	KioskNetworkError,
-	type KioskPunchBody,
-} from './kiosk-api.ts'
-import { createKioskQueue } from './kiosk-queue.ts'
-import { MAX_SYNC_ATTEMPTS, syncBackoffMs, syncQueue } from './kiosk-sync.ts'
+	ClockApiError as KioskApiError,
+	ClockNetworkError as KioskNetworkError,
+	type ClockPunchBody as KioskPunchBody,
+} from './clock-client.ts'
+import { createClockQueue as createKioskQueue } from './clock-queue.ts'
+import { MAX_SYNC_ATTEMPTS, syncBackoffMs, syncQueue } from './clock-sync.ts'
 
 type PunchFn = (body: KioskPunchBody) => Promise<unknown>
 

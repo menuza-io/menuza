@@ -2,11 +2,11 @@ import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-	createKioskQueue,
+	createClockQueue as createKioskQueue,
 	MAX_QUEUED_PUNCHES,
 	QueueUnavailableError,
 	type EnqueueInput,
-} from './kiosk-queue.ts'
+} from './clock-queue.ts'
 
 function punch(overrides: Partial<EnqueueInput> = {}): EnqueueInput {
 	return {
