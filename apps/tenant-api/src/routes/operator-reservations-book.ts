@@ -1154,19 +1154,33 @@ operatorReservationsBookRoutes.get(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const canReadGuestSensitive = hasReservationsGrant(
-				ctx,
-				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-			)
-			const detail = await getReservationDetail(db, rsvId, {
-				canReadGuestSensitive,
-			})
+			const detail = await getReservationDetail(db, rsvId, detailAccess(ctx))
 			return json({ ok: true, orgId: ctx.orgId, ...detail })
 		} catch (error) {
 			return handleRouteError(error)
 		}
 	},
 )
+
+/** What a reservation's detail may include for this caller. */
+function detailAccess(ctx: ReservationsAuthContext) {
+	const canReadGuestSensitive = hasReservationsGrant(
+		ctx,
+		RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+	)
+	return {
+		canReadGuestSensitive,
+		// Card details stay off a shared till unless its token holds the payment grant.
+		canReadPayments:
+			ctx.channel !== 'station' ||
+			hasReservationsGrant(
+				ctx,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+			),
+		// A till without guest details never reaches the guestbook, here included.
+		guestHistory: ctx.channel !== 'station' || canReadGuestSensitive,
+	}
+}
 
 operatorReservationsBookRoutes.get(
 	'/reservations/:id/events',
@@ -1733,12 +1747,7 @@ function requestDecisionHandler(decision: 'approve' | 'decline') {
 				})
 			}
 			const db = await getTenantDb(ctx.orgId)
-			const detail = await getReservationDetail(db, rsvId, {
-				canReadGuestSensitive: hasReservationsGrant(
-					ctx,
-					RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-				),
-			})
+			const detail = await getReservationDetail(db, rsvId, detailAccess(ctx))
 			return json({ ok: true, orgId: ctx.orgId, ...detail })
 		} catch (error) {
 			return handleRouteError(error)

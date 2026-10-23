@@ -54,7 +54,19 @@ export class HostApiError extends Error {
 
 	/** Someone else changed it first: reload and look again. */
 	get stale(): boolean {
-		return this.status === 409 && /stale|version|conflict/.test(this.code)
+		return (
+			this.status === 409 &&
+			!this.alreadyDone &&
+			/stale|version|conflict/.test(this.code)
+		)
+	}
+
+	/**
+	 * This idempotency key already carried a request (a retry after no answer,
+	 * with the form changed since): the first one went through.
+	 */
+	get alreadyDone(): boolean {
+		return this.code === 'idempotency_conflict'
 	}
 
 	/** The person must sign in again (an offline sign-in, or a session that ended). */

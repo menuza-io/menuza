@@ -27,6 +27,8 @@ export type Placing =
 			guestName: string
 			/** One per party: a retry after no answer can never seat them twice. */
 			key: string
+			/** The same for seating them anyway, over a booking. */
+			overbookKey: string
 	  }
 
 export const placingSize = (p: Placing) =>

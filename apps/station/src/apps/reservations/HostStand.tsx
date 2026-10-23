@@ -10,7 +10,7 @@ import {
 	UserPlus,
 	X,
 } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HostApiError } from './api.ts'
 import { Dock, placingSize, type Placing } from './Dock.tsx'
 import {
@@ -36,6 +36,7 @@ import {
 	type PartyCommand,
 } from './sheets.tsx'
 import { useHostStand } from './useHostStand.ts'
+import { holdLock } from '~/lib/activity.ts'
 import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
@@ -82,7 +83,7 @@ export function HostStand({
 	onSignIn: () => void
 }) {
 	const { _, i18n } = useLingui()
-	const { state, api, refresh, now } = useHostStand({
+	const { state, api, refresh, now, noteWrite } = useHostStand({
 		settings,
 		session,
 		online,
@@ -97,8 +98,6 @@ export function HostStand({
 	const [bookingOpen, setBookingOpen] = useState(false)
 	const [joinOpen, setJoinOpen] = useState(false)
 	const [busy, setBusy] = useState(false)
-	// A double tap on a toast's action must not run the change twice.
-	const busyRef = useRef(false)
 	/** Settles when the change in flight (and its refresh) is done. */
 	const settled = useRef<Promise<void>>(Promise.resolve())
 	/**
@@ -118,7 +117,11 @@ export function HostStand({
 				ref.current = crypto.randomUUID()
 				return result
 			} catch (error) {
-				if (!(error instanceof HostApiError && error.offline))
+				// No answer, or the server already has it under this key: keep the key.
+				if (!(
+					error instanceof HostApiError &&
+					(error.offline || error.alreadyDone)
+				))
 					ref.current = crypto.randomUUID()
 				throw error
 			}
@@ -132,6 +135,17 @@ export function HostStand({
 	} | null>(null)
 	const [toast, setToast] = useState<ToastMessage | null>(null)
 	const dockRef = useRef<HTMLElement>(null)
+	// A booking taken on the phone, a party in hand: a short idle lock waits.
+	const working =
+		bookingOpen ||
+		joinOpen ||
+		walkInOpen ||
+		placing !== null ||
+		tooSmall !== null
+	useEffect(() => {
+		if (!working) return
+		return holdLock()
+	}, [working])
 	const dismissToast = useCallback(() => setToast(null), [])
 	const say = useCallback(
 		(text: string, extra: Partial<ToastMessage> = {}) =>
@@ -173,24 +187,34 @@ export function HostStand({
 		}
 	}
 
-	/** Runs a change, reloads the day, and says what happened (or what went wrong). */
+	/**
+	 * Runs a change, says what happened (or what went wrong), and reloads the
+	 * day. The floor takes taps again as soon as the change is answered; the
+	 * reload runs behind it, and a toast action waits for it.
+	 */
 	const act = useCallback(
 		async (
 			work: () => Promise<unknown>,
 			done: string,
 			undo?: () => Promise<unknown>,
 			/** When the table is booked for part of the party's time: try again as an overbook. */
-			anyway?: { table: DayTable; run: () => void; restore: () => void },
+			anyway?: { table: DayTable; run: () => void },
+			/** Put the party back in the host's hand (it was not seated, or may not have been). */
+			restore?: () => void,
 		) => {
-			busyRef.current = true
 			setBusy(true)
+			noteWrite()
 			let finish: () => void = () => {}
 			settled.current = new Promise((resolve) => {
 				finish = resolve
 			})
 			let refreshed = false
 			try {
-				await work()
+				try {
+					await work()
+				} finally {
+					setBusy(false)
+				}
 				say(
 					done,
 					undo
@@ -200,19 +224,18 @@ export function HostStand({
 									// A tap while the floor is still reloading waits for it, then undoes.
 									run: () => {
 										void settled.current.then(async () => {
-											busyRef.current = true
 											setBusy(true)
+											noteWrite()
 											try {
 												await undo()
-												await refresh({ full: true })
 												say(_(t`Undone.`))
 											} catch {
 												say(_(t`Could not undo. Check the floor.`), {
 													tone: 'danger',
 												})
 											} finally {
-												busyRef.current = false
 												setBusy(false)
+												await refresh({ full: true })
 											}
 										})
 									},
@@ -223,6 +246,11 @@ export function HostStand({
 				return true
 			} catch (error) {
 				const failure = error instanceof HostApiError ? error : null
+				// The same request already landed (a retry after no answer): done, not a clash.
+				if (failure?.alreadyDone) {
+					say(_(t`That already went through. Here is the latest.`))
+					return true
+				}
 				if (failure?.occupied && anyway) {
 					// Look again first: only a table that is still free may be overbooked.
 					const fresh = await refresh({ full: true })
@@ -231,9 +259,9 @@ export function HostStand({
 					const kind =
 						table && fresh ? tableState(table, fresh, serverNow()).kind : null
 					const label = anyway.table.label
+					// Either way the party stays picked up, ready for a table.
+					restore?.()
 					if (kind !== 'open' && kind !== 'soon') {
-						// The party stays picked up, ready for the next table.
-						anyway.restore()
 						say(_(t`Table ${label} was just taken. Choose another table.`), {
 							tone: 'danger',
 						})
@@ -255,6 +283,8 @@ export function HostStand({
 					)
 					return false
 				}
+				// Not seated, or not known to be: the party stays in the host's hand.
+				if (failure?.offline) restore?.()
 				say(
 					failure?.stale
 						? _(t`Someone changed this a moment ago. Here is the latest.`)
@@ -271,12 +301,10 @@ export function HostStand({
 				return false
 			} finally {
 				if (!refreshed) await refresh({ full: true })
-				busyRef.current = false
-				setBusy(false)
 				finish()
 			}
 		},
-		[refresh, say, _],
+		[refresh, say, noteWrite, _],
 	)
 
 	const seatAt = async (table: DayTable, tableState: TableState) => {
@@ -304,11 +332,8 @@ export function HostStand({
 			: {}
 		const again = insist
 			? undefined
-			: {
-					table,
-					run: () => void seat(current, table, true),
-					restore: () => setPlacing(current),
-				}
+			: { table, run: () => void seat(current, table, true) }
+		const restore = () => setPlacing(current)
 		const latest = readyRef.current
 		if (current.kind === 'reservation') {
 			const r = current.reservation
@@ -327,6 +352,7 @@ export function HostStand({
 				_(t`Seated ${who} at ${table.label}.`),
 				() => api.undo(r.id),
 				again,
+				restore,
 			)
 		} else if (current.kind === 'waitlist') {
 			const entry = current.entry
@@ -338,6 +364,7 @@ export function HostStand({
 				_(t`Seated ${entry.displayName} at ${table.label}.`),
 				undefined,
 				again,
+				restore,
 			)
 		} else {
 			const size = current.partySize
@@ -350,12 +377,14 @@ export function HostStand({
 							guestName: current.guestName,
 							...overbook,
 						},
-						// Insisting is a new request; the first try keeps the party's key.
-						insist ? undefined : current.key,
+						// Each request keeps its own key for the party: a retry after no
+						// answer is the same request, never a second party.
+						insist ? current.overbookKey : current.key,
 					),
 				_(t`Seated a walk-in of ${size} at ${table.label}.`),
 				undefined,
 				again,
+				restore,
 			)
 		}
 	}
@@ -655,6 +684,7 @@ export function HostStand({
 						partySize: size,
 						guestName: '',
 						key: crypto.randomUUID(),
+						overbookKey: crypto.randomUUID(),
 					}
 					if (!fits(table, size)) setTooSmall({ placing: walkIn, table })
 					else void seat(walkIn, table, false)
@@ -670,6 +700,7 @@ export function HostStand({
 						partySize,
 						guestName,
 						key: crypto.randomUUID(),
+						overbookKey: crypto.randomUUID(),
 					})
 				}}
 			/>
@@ -679,14 +710,27 @@ export function HostStand({
 				today={feed.businessDate}
 				loadSlots={api.availability}
 				onClose={() => setBookingOpen(false)}
-				onBook={(input) =>
+				onBook={(input) => {
+					const first = input.firstName
+					const size = input.partySize
+					const time = input.timeLabel
+					// Another day is said out loud: it is what the caller will hear read back.
+					const day =
+						input.date === feed.businessDate
+							? null
+							: new Intl.DateTimeFormat(i18n.locale, {
+									weekday: 'short',
+									month: 'short',
+									day: 'numeric',
+									timeZone: 'UTC',
+								}).format(new Date(`${input.date}T12:00:00Z`))
 					void act(
 						() => keyed(bookingKey, (key) => api.book(input, key)),
-						_(
-							t`Booked ${input.firstName} for ${input.partySize} at ${input.timeLabel}.`,
-						),
+						day
+							? _(t`Booked ${first} for ${size} on ${day} at ${time}.`)
+							: _(t`Booked ${first} for ${size} at ${time}.`),
 					).then((ok) => ok && setBookingOpen(false))
-				}
+				}}
 			/>
 			<JoinWaitlistSheet
 				open={joinOpen}

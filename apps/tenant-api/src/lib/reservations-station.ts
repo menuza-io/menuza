@@ -11,8 +11,11 @@ import { peekRsvAuth } from './reservations-guard.ts'
  * route or field cannot leak them by forgetting a flag.
  */
 
-const PHONE_KEYS = new Set(['phone', 'phoneE164', 'phone_e164', 'guestPhone'])
-const EMAIL_KEYS = new Set(['email', 'emailNorm', 'email_norm', 'guestEmail'])
+// By pattern, not a list: a field added later (`contactPhoneE164`) is covered
+// the day a route starts returning it. Only text values are touched, so flags
+// such as `hasPhone` pass.
+const PHONE_KEY = /phone/i
+const EMAIL_KEY = /email/i
 
 /** `+12125550111` becomes `•••• 0111`. */
 export function maskPhone(value: string): string {
@@ -25,9 +28,9 @@ export function redactContacts(value: unknown): unknown {
 	if (!value || typeof value !== 'object') return value
 	const out: Record<string, unknown> = {}
 	for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-		if (PHONE_KEYS.has(key) && typeof entry === 'string')
+		if (PHONE_KEY.test(key) && typeof entry === 'string')
 			out[key] = maskPhone(entry)
-		else if (EMAIL_KEYS.has(key) && typeof entry === 'string') out[key] = null
+		else if (EMAIL_KEY.test(key) && typeof entry === 'string') out[key] = null
 		else out[key] = redactContacts(entry)
 	}
 	return out

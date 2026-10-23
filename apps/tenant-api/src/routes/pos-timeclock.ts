@@ -173,6 +173,7 @@ posTimeclockRoutes.post(
 				allowedEvents: described.allowedEvents,
 				positions: described.positions,
 				promptTips: described.promptTips,
+				staffId: verified.member.id,
 				breakKinds: described.breakKinds,
 				nextShifts: await nextShiftsFor(pos, verified.member.id, now),
 				serverNow: now,
@@ -202,6 +203,10 @@ posTimeclockRoutes.post(
 			if (!verified.ok) {
 				return pinRefused(verified.code, verified.retryAfterSeconds)
 			}
+			// The till knew whose punch this was; the PIN now names someone else
+			// (reissued since). Final: it is never recorded for the wrong person.
+			if (request.staffId && request.staffId !== verified.member.id)
+				return posError(409, 'pin_owner_changed')
 			const outcome = await processPunch(
 				pos.db,
 				{

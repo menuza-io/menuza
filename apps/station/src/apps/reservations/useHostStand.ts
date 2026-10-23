@@ -94,6 +94,14 @@ export function useHostStand({
 	/** Bumped when the person changes: answers for the one before are dropped. */
 	const generation = useRef(0)
 	const polling = useRef(false)
+	/**
+	 * Bumped when a change starts. A refresh sent before it may answer after
+	 * it with the day as it was, so such an answer is dropped.
+	 */
+	const writes = useRef(0)
+	const noteWrite = useCallback(() => {
+		writes.current += 1
+	}, [])
 	const [now, setNow] = useState(() => serverNow())
 
 	// A new person, a lock: their own token and a clean screen.
@@ -118,8 +126,11 @@ export function useHostStand({
 		async (options: { full?: boolean } = {}): Promise<DayFeed | null> => {
 			const ticket = ++issued.current
 			const forGeneration = generation.current
+			const sentAfterWrites = writes.current
 			const current = () =>
-				forGeneration === generation.current && ticket > shown.current
+				forGeneration === generation.current &&
+				ticket > shown.current &&
+				sentAfterWrites === writes.current
 			try {
 				const grant = await api.grant()
 				// "Unchanged" only means something against a day the stand still holds.
@@ -227,5 +238,5 @@ export function useHostStand({
 		return () => window.clearInterval(timer)
 	}, [])
 
-	return { state, api, refresh, now }
+	return { state, api, refresh, now, noteWrite }
 }

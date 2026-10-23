@@ -141,6 +141,7 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		)
 	}
 	// A terminal that will open with Station apps on is a change like any switch.
+	// Best effort: the code is already made and is shown only now.
 	if (parsed.data.timeclockEnabled || parsed.data.reservationsEnabled)
 		await writeOperatorAudit(g.db, g.auth.userId, null, {
 			action: 'pos.pairing_code.created',
@@ -151,7 +152,12 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 				reservationsEnabled: parsed.data.reservationsEnabled === true,
 				locationId: parsed.data.locationId ?? null,
 			},
-		})
+		}).catch((error: unknown) =>
+			console.error(
+				'Pairing code audit failed',
+				error instanceof Error ? error.name : 'unknown',
+			),
+		)
 	// The code is shown once: only its hash is stored.
 	return c.json(result.value, 201, noStore)
 })

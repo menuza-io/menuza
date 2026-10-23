@@ -152,6 +152,11 @@ export type KioskIdentifyResult = {
 	 * the default meal break (`meal` and `rest`); empty means a plain break.
 	 */
 	breakKinds: BreakKind[]
+	/**
+	 * The person's opaque id (Station only): a punch saved on the till carries
+	 * it, so it can never land on someone who was given the PIN since.
+	 */
+	staffId?: string
 	serverNow: number
 }
 

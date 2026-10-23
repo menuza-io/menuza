@@ -16,6 +16,14 @@ import { type ClockQueue } from './clock-queue.ts'
 /** After this many failed tries on server errors, give up and set it aside. */
 export const MAX_SYNC_ATTEMPTS = 8
 
+/**
+ * A punch still failing on server errors this long after it was made is set
+ * aside. Judged by age, not by tries: a till syncs every few seconds during a
+ * rush, and a few minutes of outage must never cost someone their clock-in
+ * (their later punches would then be refused as out of order).
+ */
+export const MAX_PENDING_AGE_MS = 48 * 60 * 60 * 1000
+
 export type SyncOutcome = {
 	synced: number
 	failed: number
@@ -85,7 +93,11 @@ export async function syncQueue(deps: {
 				}
 				if (error.transient) {
 					await queue.recordAttempt(item.id)
-					if (item.attempts + 1 >= MAX_SYNC_ATTEMPTS && error.status >= 500) {
+					if (
+						item.attempts + 1 >= MAX_SYNC_ATTEMPTS &&
+						error.status >= 500 &&
+						now() - item.createdAt > MAX_PENDING_AGE_MS
+					) {
 						await queue.markFailed(item.id, 'server_unavailable')
 						outcome.failed += 1
 						continue

@@ -62,6 +62,7 @@ import {
 	parseTimeToMinutes,
 	serializeReservationsForBook,
 	type SerializedBookReservation,
+	withoutSensitive,
 } from './rsv-day-feed-service.ts'
 import { loadStaffDayState, type StaffDayState } from './rsv-special-days.ts'
 import {
@@ -1643,7 +1644,16 @@ export async function createWalkIn(params: {
 export async function getReservationDetail(
 	db: DbOrTx,
 	reservationId: string,
-	opts?: { canReadGuestSensitive?: boolean },
+	opts?: {
+		canReadGuestSensitive?: boolean
+		/** Card brand, last digits and provider references. */
+		canReadPayments?: boolean
+		/**
+		 * The guest's profile and their bookings at every location. A host at a
+		 * till without guest details sees the booking, not the guestbook.
+		 */
+		guestHistory?: boolean
+	},
 ) {
 	const row = await db
 		.select()
@@ -1678,17 +1688,24 @@ export async function getReservationDetail(
 			.all(),
 	])
 
-	const guestDetail = row.guestId
-		? await getGuestSummary(db, row.guestId, { canReadSensitive }).catch(
-				() => null,
-			)
-		: null
+	const guestDetail =
+		row.guestId && opts?.guestHistory !== false
+			? await getGuestSummary(db, row.guestId, { canReadSensitive }).catch(
+					() => null,
+				)
+			: null
 
 	return {
 		reservation: serialized!,
-		events,
+		// The detail hides allergy and dietary notes without the grant; so does its history.
+		events: canReadSensitive
+			? events
+			: events.map((event) => ({
+					...event,
+					data: withoutSensitive(event.data ?? {}) as typeof event.data,
+				})),
 		guestDetail,
-		paymentIntents,
+		paymentIntents: opts?.canReadPayments === true ? paymentIntents : [],
 		messages,
 	}
 }

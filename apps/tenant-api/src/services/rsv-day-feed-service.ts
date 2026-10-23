@@ -2262,7 +2262,7 @@ const SENSITIVE_EVENT_KEYS = new Set([
 	'allergy_notes',
 ])
 
-function withoutSensitive(value: unknown): unknown {
+export function withoutSensitive(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(withoutSensitive)
 	if (!value || typeof value !== 'object') return value
 	const out: Record<string, unknown> = {}

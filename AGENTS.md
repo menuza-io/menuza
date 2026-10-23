@@ -837,9 +837,11 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - `@repo/staffing` - Staff module domain code shared by App and tenant-api: Zod
   schemas, permission and `staffing.*` flag keys, PIN rules, formula-safe CSV
   export, time math (`computeTimecard` / `computeWeek`), clock state machine,
-  and rule packs as data. No UI strings, no I/O. Neutral vocabulary: workplaces
-  are opaque **scopes** (`DEFAULT_SCOPE_ID`), never "locations" (see
-  `docs/staffing-plan.md`)
+  and rule packs as data. No UI strings, no I/O in the main entry; the
+  browser-only subpaths `clock-client`, `clock-queue` and `clock-sync` (fetch
+  and IndexedDB for the kiosk and the Station time clock) are the exception.
+  Neutral vocabulary: workplaces are opaque **scopes** (`DEFAULT_SCOPE_ID`),
+  never "locations" (see `docs/staffing-plan.md`)
 
 **Key Apps:**
 

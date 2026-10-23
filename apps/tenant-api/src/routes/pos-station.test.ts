@@ -349,6 +349,42 @@ describe('Station apps on a POS terminal', () => {
 			expect(breaks.map((b) => [b.kind, b.paid])).toEqual([['rest', true]])
 		})
 
+		it('a saved punch lands only on the person it was made for', async () => {
+			const { pin, staffId } = await h.seedStaff(ORG_A, {})
+			const { secret } = await pairTerminal()
+			const who = await request('POST', '/pos/timeclock/identify', {
+				secret,
+				body: { pin },
+			})
+			expect(who.body.staffId).toBe(staffId)
+			// The PIN has since been given to someone else: never their punch.
+			const wrong = await request('POST', '/pos/timeclock/punch', {
+				secret,
+				body: {
+					id: crypto.randomUUID(),
+					kind: 'clock_in',
+					pin,
+					staffId: 'stf_someone_else',
+					clientAt: h.clock.now,
+					offline: true,
+				},
+			})
+			expect(wrong.status).toBe(409)
+			expect(wrong.body.error).toBe('pin_owner_changed')
+			const right = await request('POST', '/pos/timeclock/punch', {
+				secret,
+				body: {
+					id: crypto.randomUUID(),
+					kind: 'clock_in',
+					pin,
+					staffId,
+					clientAt: h.clock.now,
+					offline: true,
+				},
+			})
+			expect(right.status).toBe(200)
+		})
+
 		it('replays the same punch id without a second punch', async () => {
 			const { pin } = await h.seedStaff(ORG_A, {})
 			const { secret } = await pairTerminal()

@@ -27,6 +27,7 @@ export const clockIdentifyResponseSchema = z.object({
 	promptTips: z.boolean().default(false),
 	/** An older node sends none: every break is the default one. */
 	breakKinds: z.array(z.enum(BREAK_KINDS)).default([]),
+	staffId: z.string().optional(),
 	serverNow: z.number(),
 })
 export type KioskIdentifyView = z.infer<typeof clockIdentifyResponseSchema>

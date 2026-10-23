@@ -26,6 +26,7 @@ import {
 	publicContext,
 	seedPublicOrg,
 } from './reservations-public-fixture.ts'
+import { reservationsOperatorRoutes } from './reservations-operator.ts'
 
 /**
  * The host stand payloads the Station till reads, recorded from the real
@@ -510,6 +511,41 @@ describe('Station host stand contract', () => {
 			rsv,
 		)
 		expect(stillThere.text).toContain('Peanuts')
+
+		// Every read a till can reach, with ids that exist: no full number, no
+		// email, no allergy or dietary note, no card detail, without guest details.
+		const waitingId = waiting.body.entry?.id ?? waiting.body.id
+		const fill = (route: string) =>
+			route
+				.replace(':locationId', PUBLIC_LOC)
+				.replace(':id', route.includes('/waitlist/') ? waitingId : bookedId)
+				.replace(/:[A-Za-z]+/g, 'unknown')
+		const reads = reservationsOperatorRoutes.routes
+			.filter(
+				(r) =>
+					r.method === 'GET' &&
+					r.path.startsWith('/book') &&
+					!r.path.startsWith('/book/guests'),
+			)
+			.map((r) => r.path)
+		expect(reads.length).toBeGreaterThan(5)
+		for (const route of new Set(reads)) {
+			const url = `/operator/reservations${fill(route)}?locationId=${PUBLIC_LOC}&date=${tomorrow}`
+			const reply = await call('GET', url, {
+				authorization: `Bearer ${plain.body.token}`,
+			})
+			expect(reply.status, `${route}: ${reply.text}`).toBeLessThan(500)
+			for (const secret of [
+				'+14155550111',
+				'14155550111',
+				'@example.com',
+				'Peanuts',
+				'sesame',
+				'last4',
+				'paymentMethodRef',
+			])
+				expect(reply.text, `${route} leaks ${secret}`).not.toContain(secret)
+		}
 
 		const normalize = makeNormalizer(recordedNow)
 		if (RECORD) fs.mkdirSync(FIXTURE_DIR, { recursive: true })

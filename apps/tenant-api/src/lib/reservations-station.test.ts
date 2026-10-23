@@ -44,4 +44,22 @@ describe('Station contact redaction', () => {
 			phoneVerified: true,
 		})
 	})
+
+	it('covers fields added later by their name, not a list', () => {
+		expect(
+			redactContacts({
+				notify: {
+					contactPhoneE164: '+14155550199',
+					contactEmailNorm: 'x@example.com',
+					hasPhone: true,
+				},
+			}),
+		).toEqual({
+			notify: {
+				contactPhoneE164: '•••• 0199',
+				contactEmailNorm: null,
+				hasPhone: true,
+			},
+		})
+	})
 })

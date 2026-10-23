@@ -16,7 +16,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { HostStand } from './apps/reservations/HostStand.tsx'
 import { TimeClock } from './apps/timeclock/TimeClock.tsx'
 import { applyLocale, effectiveLocale } from './i18n.ts'
-import { idleMs, shouldLock, touch } from '~/lib/activity.ts'
+import { idleMs, lockHeld, shouldLock, touch } from '~/lib/activity.ts'
 import { categoryItems } from '~/lib/catalog.ts'
 import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
 import { isConfigured, shownApp } from '~/lib/config.ts'
@@ -144,6 +144,7 @@ export function App() {
 					signedIn: st.session !== null,
 					idleLockSeconds: st.settings.idleLockSeconds,
 					idleMs: idleMs(),
+					held: lockHeld(),
 				})
 			) {
 				st.lock()
@@ -240,6 +241,11 @@ export function App() {
 	/** The time clock opened from the lock screen, over it. */
 	const [clockOverLock, setClockOverLock] = useState(false)
 	const locked = s.settings.signInRequired && s.session === null
+	// Unlocked some other way (sign-in turned off, pairing lost): the clock does
+	// not reopen by itself at the next lock.
+	useEffect(() => {
+		if (!locked) setClockOverLock(false)
+	}, [locked])
 	// Plain values for the messages below (translations interpolate names, not expressions).
 	const catalogError = s.catalogError
 	const loadProblem = catalogError ?? _(t`No connection`)
@@ -1026,11 +1032,17 @@ function ClockOverLock({
 }) {
 	const ref = useRef<HTMLDialogElement>(null)
 	const { _ } = useLingui()
+	// Opened after the lock's own dialog (both open in passive effects, the lock
+	// first), so it sits above it in the top layer.
 	useEffect(() => {
 		const dialog = ref.current
 		if (dialog && !dialog.open) dialog.showModal()
-		// Closed, not just removed: focus goes back to the lock screen's button,
-		// so a keyboard can type the next PIN without a tap first.
+	}, [])
+	// Closed while still in the page (a layout cleanup runs before React removes
+	// it), so focus goes back to the lock screen's button and a keyboard can type
+	// the next PIN without a tap first.
+	useLayoutEffect(() => {
+		const dialog = ref.current
 		return () => dialog?.close()
 	}, [])
 	return (

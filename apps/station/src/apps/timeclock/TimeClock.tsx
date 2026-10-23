@@ -152,17 +152,25 @@ export function TimeClock({
 	}, [flow.screen])
 
 	// A screen nobody touches goes back to the pad; a half-typed PIN is forgotten.
+	// Over the lock, a finished punch or an untouched pad goes back to signing
+	// in, so a cashier's sign-in PIN is never typed into the clock by habit.
 	useEffect(() => {
 		const idle =
 			flow.screen === 'pin'
 				? flow.pin.length > 0
 					? 30
-					: null
+					: onClose
+						? 60
+						: null
 				: IDLE_SECONDS[flow.screen]
 		if (idle === null) return
-		const timer = window.setTimeout(reset, idle * 1000)
+		const leave =
+			onClose && (flow.screen === 'done' || flow.screen === 'pin')
+				? onClose
+				: reset
+		const timer = window.setTimeout(leave, idle * 1000)
 		return () => window.clearTimeout(timer)
-	}, [flow, touched, reset])
+	}, [flow, touched, reset, onClose])
 
 	// A wrong-PIN wait counts down here; the server enforces it regardless.
 	const pausedUntil = flow.screen === 'pin' ? flow.pausedUntil : null
@@ -225,11 +233,18 @@ export function TimeClock({
 				await goOffline(pin)
 				return
 			}
-			// Punches saved during an outage go first, so the state shown is current.
+			// Punches saved during an outage go first, so the state shown is current,
+			// but nobody waits more than a few seconds for that.
 			let stillWaiting = false
 			if (waiting > 0) {
-				const sent = await flushPunches(settings, online).catch(() => null)
-				stillWaiting = (sent?.remaining ?? waiting) > 0
+				await Promise.race([
+					flushPunches(settings, online).catch(() => null),
+					new Promise((resolve) => window.setTimeout(resolve, 3_000)),
+				])
+				const queue = punchQueue()
+				stillWaiting =
+					queue.supported &&
+					(await queue.counts().catch(() => ({ queued: 0 }))).queued > 0
 				refreshWaiting()
 			}
 			setBehind(stillWaiting)
@@ -270,6 +285,9 @@ export function TimeClock({
 				flow.screen === 'offline'
 					? (offlineWho?.firstName ?? '')
 					: flow.who.firstName
+			// Whose punch it is, when the till knows: never recorded for someone else.
+			const staffId =
+				flow.screen === 'offline' ? offlineWho?.staffId : flow.who.staffId
 			busyRef.current = true
 			setBusy(true)
 			const id = crypto.randomUUID()
@@ -283,6 +301,7 @@ export function TimeClock({
 					? { cashTipsMinor: extras.cashTipsMinor }
 					: {}),
 				...(extras.breakKind ? { breakKind: extras.breakKind } : {}),
+				...(staffId ? { staffId } : {}),
 				// A saved punch counts at the time it was tapped, in the server's time.
 				clientAt: Math.round(serverNow(tappedAt)),
 			}
@@ -485,7 +504,11 @@ export function TimeClock({
 										onBack={reset}
 									/>
 								) : flow.screen === 'done' ? (
-									<Done done={flow.done} timeZone={timeZone} onFinish={reset} />
+									<Done
+										done={flow.done}
+										timeZone={timeZone}
+										onFinish={onClose ?? reset}
+									/>
 								) : null}
 							</Stagger>
 						) : null}
@@ -1263,7 +1286,7 @@ function Done({
 			<p className="t-stagger-line t-stagger-line--2 text-muted-foreground text-lg">
 				{done.queued ? (
 					<Trans>
-						Saved on this terminal. It is sent when the connection is back.
+						Saved on this terminal. It is sent as soon as it can be.
 					</Trans>
 				) : at ? (
 					<Trans>Recorded at {at}.</Trans>

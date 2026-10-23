@@ -7,7 +7,12 @@ import {
 	type ClockPunchBody as KioskPunchBody,
 } from './clock-client.ts'
 import { createClockQueue as createKioskQueue } from './clock-queue.ts'
-import { MAX_SYNC_ATTEMPTS, syncBackoffMs, syncQueue } from './clock-sync.ts'
+import {
+	MAX_PENDING_AGE_MS,
+	MAX_SYNC_ATTEMPTS,
+	syncBackoffMs,
+	syncQueue,
+} from './clock-sync.ts'
 
 type PunchFn = (body: KioskPunchBody) => Promise<unknown>
 
@@ -153,8 +158,17 @@ describe('syncQueue', () => {
 		expect((await queue.failed()).map((row) => row.id)).toEqual(['b'])
 	})
 
-	it('gives up on a punch after repeated server errors', async () => {
+	it('keeps a recent punch through any number of server errors', async () => {
 		await add('a', 1)
+		const punch = async () => {
+			throw new KioskApiError(500, 'Internal Server Error')
+		}
+		for (let i = 0; i < MAX_SYNC_ATTEMPTS * 3; i++) await run(punch)
+		expect(await queue.counts()).toEqual({ queued: 1, failed: 0 })
+	})
+
+	it('sets a punch aside only when server errors outlast its age limit', async () => {
+		await add('a', 5_000 - MAX_PENDING_AGE_MS - 1)
 		const punch = async () => {
 			throw new KioskApiError(500, 'Internal Server Error')
 		}

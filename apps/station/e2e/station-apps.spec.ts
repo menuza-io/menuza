@@ -74,10 +74,14 @@ test.describe('time clock', () => {
 			)
 			.toEqual([['clock_in', 'pos']])
 
-		// Back to signing in; the till is still locked.
-		await tc.getByRole('button', { name: 'Back to sign in' }).click()
+		// Done goes back to signing in: the till is still locked, and the lock's
+		// button has the focus again, so a keyboard can carry on.
+		await tc.getByRole('button', { name: 'Done' }).click()
 		await expect(clock(page)).toHaveCount(0)
 		await expect(lock).toBeVisible()
+		await expect(
+			lock.getByRole('button', { name: 'Clock in or out' }),
+		).toBeFocused()
 	})
 
 	test('a wrong PIN is refused and the pad shakes clean', async ({

@@ -81,10 +81,12 @@ async function recordHostStandOpened(
 			.from(rsvAuditLog)
 			.where(
 				and(
+					// Location first: the log's index is (location_id, at).
+					eq(rsvAuditLog.locationId, entry.locationId),
+					gte(rsvAuditLog.at, entry.since),
 					eq(rsvAuditLog.action, 'station.host_stand_opened'),
 					eq(rsvAuditLog.entityId, entry.deviceId),
 					eq(rsvAuditLog.actorId, entry.subject),
-					gte(rsvAuditLog.at, entry.since),
 				),
 			)
 		if (recent.some((r) => r.changes?.guestDetails === entry.guestDetails))

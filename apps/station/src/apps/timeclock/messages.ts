@@ -85,6 +85,11 @@ export function clockNotice(
 				message: msg`The time clock is turned off on this terminal. Ask a manager.`,
 				kind: 'manager',
 			}
+		case 'pin_owner_changed':
+			return {
+				message: msg`That PIN belongs to someone else now. Ask a manager to add this punch.`,
+				kind: 'manager',
+			}
 		case 'timeclock_was_off':
 			return {
 				message: msg`The time clock was off on this terminal when this was punched. Ask a manager to add it.`,

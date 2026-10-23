@@ -341,10 +341,13 @@ order. A saved punch is accepted if the clock was on at this terminal when it
 was made (`pos_devices.timeclock_disabled_at`); one made after answers 409
 `timeclock_was_off` and is listed on the till as refused. A flag known to be off
 holds it on the till. Offline, a PIN the till has seen online is greeted by name
-with its roles (a slow hash of the PIN, as for offline sign-in, with the same
-attempt guard); punches the server later refuses are listed on the clock until
-someone clears them. Where the rules have rest breaks, staff choose meal or
-rest.
+with its roles (a slow hash of the PIN, as for offline sign-in, with an attempt
+guard of its own that never locks the till's sign-in); punches the server later
+refuses are listed on the clock until someone clears them. A saved punch carries
+the person's opaque staff id when the till knew it, and is refused (409
+`pin_owner_changed`) if the PIN has since been given to someone else. A saved
+punch is set aside only after 48 hours of server errors, never after a number of
+tries. Where the rules have rest breaks, staff choose meal or rest, offline too.
 
 **Host stand.** An online sign-in returns a staff session (`pos-staff+jwt`,
 signed with a key derived from `AUTH_HMAC_SECRET`, bound to the organization and
@@ -362,9 +365,11 @@ operator, for:
   allergies) for hosts given them, which needs the guest permission in App;
 - five minutes, `channel: 'station'` and the terminal's id. Without guest
   details every answer has phones masked to their last four digits and emails
-  dropped (`lib/reservations-station.ts`), and allergy notes are hidden, in a
-  booking's history too. A known guest's profile (found by id, phone or email)
-  is linked but never changed: only what it lacks is filled in;
+  dropped (`lib/reservations-station.ts`: every field named like a phone or an
+  email), allergy notes are hidden (in a booking's history too), and a booking's
+  detail leaves out the guest's profile, their history and any card details. A
+  known guest's profile (found by id, phone or email) is linked but never
+  changed: only what it lacks is filled in;
 - subject `staff:<staffId>`, so the reservation history shows the action as
   taken by staff at a terminal. Opening the stand is recorded in `rsv_audit_log`
   (`station.host_stand_opened`, once per sign-in and again if guest details

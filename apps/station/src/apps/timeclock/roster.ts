@@ -19,11 +19,15 @@ const keyFor = async (pin: string) => derivePinKey(pin, await deviceSalt())
 /** Remembers whoever an online check just named. */
 export async function rememberClockPerson(
 	pin: string,
-	who: Pick<KioskIdentifyView, 'firstName' | 'positions' | 'breakKinds'>,
+	who: Pick<
+		KioskIdentifyView,
+		'firstName' | 'positions' | 'breakKinds' | 'staffId'
+	>,
 	now = Date.now(),
 ): Promise<void> {
 	await db.clockPeople.put({
 		key: await keyFor(pin),
+		...(who.staffId ? { staffId: who.staffId } : {}),
 		firstName: who.firstName,
 		positions: who.positions,
 		breakKinds: who.breakKinds,

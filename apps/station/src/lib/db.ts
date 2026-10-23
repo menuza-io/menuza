@@ -218,6 +218,8 @@ export type CachedStaff = {
  */
 export type ClockPerson = {
 	key: string
+	/** Opaque: a saved punch carries it, so it never lands on whoever has the PIN later. */
+	staffId?: string
 	firstName: string
 	positions: Array<{ id: string; name: string; nameAr: string | null }>
 	/** The breaks their workplace offers (meal and rest), when it offers a choice. */
