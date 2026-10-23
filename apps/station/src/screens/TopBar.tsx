@@ -13,7 +13,7 @@ import {
 import { db } from '~/lib/db.ts'
 import { isSendable } from '~/lib/orders.ts'
 import { usePos } from '~/lib/store.ts'
-import { Badge, IconButton, cn } from '~/ui/primitives.tsx'
+import { Badge, Button, IconButton, NumberPop, cn } from '~/ui/primitives.tsx'
 
 export function TopBar({
 	name,
@@ -104,25 +104,34 @@ export function TopBar({
 
 			<div className="ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
 				{onLock ? (
-					<button
-						type="button"
+					<Button
+						variant="outline"
 						onClick={onLock}
 						aria-label={
 							staffName
 								? _(t`Lock the till, signed in as ${staffName}`)
 								: _(t`Lock the till`)
 						}
-						className="border-border bg-card hover:bg-accent inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition active:scale-95"
+						className="px-3"
 					>
-						<Lock className="size-4" />
+						<Lock className="size-4 shrink-0" />
 						<span className="hidden max-w-28 truncate md:inline">
 							{staffName}
 						</span>
-					</button>
+					</Button>
 				) : null}
 				{/* A live region: going offline, sending and refusals are announced. */}
 				<div role="status" className="flex items-center">
 					<SyncStatus
+						key={
+							rejected > 0 || rejectedShifts > 0
+								? 'rejected'
+								: !online
+									? 'offline'
+									: waiting > 0
+										? 'sending'
+										: 'online'
+						}
 						online={online}
 						waiting={waiting}
 						rejected={rejected}
@@ -138,8 +147,8 @@ export function TopBar({
 						<RefreshCw className={cn('size-5', refreshing && 'animate-spin')} />
 					</IconButton>
 				</span>
-				<button
-					type="button"
+				<Button
+					variant="outline"
 					aria-label={
 						openTabs > 0
 							? _(
@@ -151,26 +160,31 @@ export function TopBar({
 							: _(t`Orders`)
 					}
 					onClick={onOrders}
-					className="border-border bg-card hover:bg-accent inline-flex h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition active:scale-95 sm:px-4"
+					className="px-3 sm:px-4"
 				>
-					<ReceiptText className="size-5" />
+					<ReceiptText className="size-5 shrink-0" />
 					<span className="hidden sm:inline">
 						<Trans>Orders</Trans>
 					</span>
 					{openTabs > 0 ? (
-						<span
-							className="tnum mono bg-primary text-primary-foreground flex min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-							aria-hidden
-						>
-							{openTabs}
+						// The count pops in when the first tab opens (notification badge).
+						<span className="t-badge" data-open="true" aria-hidden>
+							<span className="t-badge-dot tnum mono bg-primary text-primary-foreground flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold">
+								<NumberPop value={String(openTabs)} />
+							</span>
 						</span>
 					) : null}
-				</button>
+				</Button>
 				<IconButton
 					label={shiftOpen ? _(t`Shift (open)`) : _(t`Shift`)}
 					onClick={onShift}
 				>
-					<Wallet className={cn('size-5', shiftOpen && 'text-success')} />
+					<Wallet
+						className={cn(
+							'size-5 transition-colors',
+							shiftOpen && 'text-success',
+						)}
+					/>
 				</IconButton>
 				<IconButton label={_(t`Settings`)} onClick={onSettings}>
 					<Settings className="size-5" />
@@ -210,7 +224,7 @@ function SyncStatus({
 							other: '# uploads need attention',
 						})
 		return (
-			<Badge tone="danger">
+			<Badge tone="danger" className="t-pop-in">
 				<TriangleAlert className="size-3.5 shrink-0" aria-hidden />
 				{/* On a phone only the count shows; the words are still read out. */}
 				<span className="sm:hidden" aria-hidden>
@@ -222,7 +236,7 @@ function SyncStatus({
 	}
 	if (!online) {
 		return (
-			<Badge tone="warning" className="h-8 px-3 text-sm">
+			<Badge tone="warning" className="t-pop-in h-8 px-3 text-sm">
 				<CloudOff className="size-4" />
 				<span className="hidden sm:inline">
 					{waiting > 0 ? (
@@ -239,12 +253,12 @@ function SyncStatus({
 	}
 	if (waiting > 0) {
 		return (
-			<Badge tone="primary" className="h-8 px-3 text-sm">
+			<Badge tone="primary" className="t-pop-in h-8 px-3 text-sm">
 				<RefreshCw className="size-3.5 animate-spin" />{' '}
 				<span className="hidden sm:inline">
 					<Trans>Sending</Trans>{' '}
 				</span>
-				{waiting}
+				<NumberPop value={String(waiting)} className="tnum" />
 			</Badge>
 		)
 	}
@@ -254,9 +268,9 @@ function SyncStatus({
 			<span
 				role="img"
 				aria-label={_(t`Online`)}
-				className="bg-success size-2.5 shrink-0 rounded-full sm:hidden"
+				className="t-pop-in bg-success size-2.5 shrink-0 rounded-full sm:hidden"
 			/>
-			<span className="hidden sm:inline-flex">
+			<span className="t-pop-in hidden sm:inline-flex">
 				<Badge tone="success" className="h-8 px-3 text-sm">
 					<span className="bg-success size-2 rounded-full" />{' '}
 					<Trans>Online · all sent</Trans>

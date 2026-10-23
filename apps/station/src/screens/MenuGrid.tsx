@@ -1,12 +1,12 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Flame, Leaf, Plus, Search, X } from 'lucide-react'
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { lowestPriceCents } from '~/lib/menu-display.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import { type MenuCategory, type MenuItem } from '~/lib/types.ts'
-import { Button, cn } from '~/ui/primitives.tsx'
+import { Button, Chip, NumberPop, cn, fieldClass } from '~/ui/primitives.tsx'
 
 const POPULAR = '__popular'
 
@@ -94,6 +94,21 @@ export function MenuGrid({
 		return deepest ? categoryItems(deepest) : []
 	}, [all, popular, deepest, topId, deferredQuery])
 
+	// A category picked at the edge of the strip scrolls fully into view.
+	const navRef = useRef<HTMLElement>(null)
+	useEffect(() => {
+		const chip = navRef.current?.querySelector<HTMLElement>(
+			'[aria-current="true"]',
+		)
+		chip?.scrollIntoView({
+			block: 'nearest',
+			inline: 'nearest',
+			behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+				? 'auto'
+				: 'smooth',
+		})
+	}, [topId])
+
 	const choose = (depth: number, id: string | null) => {
 		setQuery('')
 		setPath((p) =>
@@ -123,20 +138,21 @@ export function MenuGrid({
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						placeholder={_(t`Search menu`)}
-						className="border-input bg-card placeholder:text-muted-foreground focus:border-ring h-12 w-full rounded-xl border ps-10 pe-12 text-base"
+						className={cn(fieldClass, 'bg-card ps-10 pe-12')}
 					/>
 					{query ? (
 						<button
 							type="button"
 							aria-label={_(t`Clear search`)}
 							onClick={() => setQuery('')}
-							className="text-muted-foreground hover:bg-accent absolute end-0.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg"
+							className="t-pop-in text-muted-foreground hover:bg-accent hover:text-foreground absolute end-0.5 top-0.5 flex size-11 items-center justify-center rounded-lg transition-colors"
 						>
 							<X className="size-4" />
 						</button>
 					) : null}
 				</label>
 				<nav
+					ref={navRef}
 					aria-label={_(t`Categories`)}
 					className="no-scrollbar -mx-3 flex min-w-0 flex-1 gap-2 overflow-x-auto px-3 py-1 sm:mx-0 sm:px-0"
 				>
@@ -146,6 +162,7 @@ export function MenuGrid({
 							<Chip
 								key={tab.id}
 								selected={selected}
+								aria-current={selected ? 'true' : undefined}
 								size="lg"
 								onClick={() => {
 									setQuery('')
@@ -157,7 +174,7 @@ export function MenuGrid({
 								<span
 									className={cn(
 										'tnum mono text-xs',
-										!selected && 'text-muted-foreground',
+										selected ? 'opacity-75' : 'text-muted-foreground',
 									)}
 								>
 									{tab.count}
@@ -177,6 +194,7 @@ export function MenuGrid({
 						>
 							<Chip
 								selected={selected === null}
+								aria-current={selected === null ? 'true' : undefined}
 								onClick={() => choose(depth, null)}
 							>
 								<Trans>All {node.displayName}</Trans>
@@ -185,13 +203,16 @@ export function MenuGrid({
 								<Chip
 									key={sub.id}
 									selected={selected === sub.id}
+									aria-current={selected === sub.id ? 'true' : undefined}
 									onClick={() => choose(depth, sub.id)}
 								>
 									{sub.displayName}
 									<span
 										className={cn(
 											'tnum mono text-xs',
-											selected !== sub.id && 'text-muted-foreground',
+											selected === sub.id
+												? 'opacity-75'
+												: 'text-muted-foreground',
 										)}
 									>
 										{categoryItems(sub).length}
@@ -214,8 +235,10 @@ export function MenuGrid({
 			</div>
 			<div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 sm:px-4">
 				{items.length === 0 ? (
-					<div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-						<Search className="mb-2 size-8" />
+					<div className="t-rise text-muted-foreground flex h-full flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+						<div className="bg-muted mb-2 flex size-16 items-center justify-center rounded-full">
+							<Search className="size-7" />
+						</div>
 						<p className="text-foreground text-lg font-medium">
 							<Trans>Nothing found</Trans>
 						</p>
@@ -237,7 +260,11 @@ export function MenuGrid({
 						) : null}
 					</div>
 				) : (
-					<ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] sm:gap-3">
+					<ul
+						// A new category rises in; typing a search does not replay it.
+						key={deferredQuery ? 'search' : [topId, ...path.slice(1)].join('/')}
+						className="t-rise grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] sm:gap-3"
+					>
 						{items.map((item) => (
 							<li key={item.id}>
 								<ItemCard
@@ -252,35 +279,6 @@ export function MenuGrid({
 				)}
 			</div>
 		</div>
-	)
-}
-
-function Chip({
-	selected,
-	size = 'md',
-	onClick,
-	children,
-}: {
-	selected: boolean
-	size?: 'md' | 'lg'
-	onClick: () => void
-	children: React.ReactNode
-}) {
-	return (
-		<button
-			type="button"
-			aria-current={selected ? 'true' : undefined}
-			onClick={onClick}
-			className={cn(
-				'flex shrink-0 items-center gap-2 rounded-xl border font-semibold transition active:scale-95',
-				size === 'lg' ? 'h-12 px-4' : 'h-11 px-3.5 text-sm',
-				selected
-					? 'border-primary bg-primary text-primary-foreground shadow-sm'
-					: 'border-border bg-card hover:bg-accent',
-			)}
-		>
-			{children}
-		</button>
 	)
 }
 
@@ -314,7 +312,7 @@ function ItemCard({
 			onClick={() => onPick(item)}
 			aria-label={label}
 			className={cn(
-				'group relative flex h-full min-h-36 w-full flex-col overflow-hidden rounded-2xl border-2 text-start transition active:scale-[0.99]',
+				'group relative flex h-full min-h-36 w-full flex-col overflow-hidden rounded-2xl border-2 text-start transition active:scale-[0.98]',
 				soldOut
 					? 'bg-muted/40 text-muted-foreground cursor-not-allowed border-dashed'
 					: inCart > 0
@@ -327,7 +325,7 @@ function ItemCard({
 					src={item.imageUrl}
 					alt=""
 					loading="lazy"
-					className="aspect-[16/9] w-full object-cover"
+					className="bg-muted aspect-[16/9] w-full object-cover"
 				/>
 			) : null}
 			<div className="flex flex-1 flex-col gap-1.5 p-3">
@@ -370,17 +368,21 @@ function ItemCard({
 					{!soldOut ? (
 						<Plus
 							aria-hidden="true"
-							className="text-muted-foreground group-hover:text-primary size-4 shrink-0"
+							className="text-muted-foreground group-hover:text-primary size-4 shrink-0 transition-colors"
 						/>
 					) : null}
 				</div>
 			</div>
 			{inCart > 0 ? (
+				// Pops in with the first one added; the count then ticks over.
 				<span
 					aria-hidden="true"
-					className="tnum mono bg-primary text-primary-foreground absolute end-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-bold"
+					className="t-badge absolute end-2 top-2"
+					data-open="true"
 				>
-					{inCart}
+					<span className="t-badge-dot tnum mono bg-primary text-primary-foreground elevated-card flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-bold">
+						<NumberPop value={String(inCart)} />
+					</span>
 				</span>
 			) : null}
 		</button>

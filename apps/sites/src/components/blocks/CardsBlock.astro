@@ -59,7 +59,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 								<img
 									src={src}
 									alt={item.title || ''}
-									class="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+									class:list={['size-full object-cover', linked && 'transition-transform duration-250 ease-out group-hover:scale-[1.03] motion-reduce:transform-none motion-reduce:transition-none']}
 									loading="lazy"
 								/>
 							</div>
@@ -85,7 +85,7 @@ const bodyClass = siteSectionBodyClass(config.background)
 				return linked ? (
 					<a
 						href={resolved.href}
-						class="group block overflow-hidden no-underline"
+						class="group focus-ring block rounded-[calc(var(--radius)+8px)] no-underline"
 						target={resolved.target}
 						rel={resolved.rel}
 					>

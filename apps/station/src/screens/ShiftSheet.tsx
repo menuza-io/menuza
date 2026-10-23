@@ -25,7 +25,14 @@ import {
 import { type ApprovalOutcome } from '~/lib/signin.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import { ManagerPinPad } from '~/ui/ManagerPinPad.tsx'
-import { Button, Modal, cn } from '~/ui/primitives.tsx'
+import {
+	Button,
+	Modal,
+	NumberPop,
+	Reveal,
+	cn,
+	fieldClass,
+} from '~/ui/primitives.tsx'
 
 type Step =
 	| { kind: 'overview' }
@@ -105,7 +112,7 @@ export function ShiftSheet({
 			(step.shift.countedCashCents ?? 0) - (step.shift.expectedCashCents ?? 0)
 		return (
 			<Modal open onClose={onClose} title={_(t`Shift closed`)} size="md">
-				<div className="space-y-4 p-5">
+				<div key="closed" className="t-rise space-y-4 p-5">
 					<div
 						role="status"
 						className={cn(
@@ -155,7 +162,7 @@ export function ShiftSheet({
 	if (!shift) {
 		return (
 			<Modal open onClose={onClose} title={_(t`Open a shift`)} size="md">
-				<div className="space-y-4 p-5">
+				<div key="open" className="t-rise space-y-4 p-5">
 					<RejectedShifts onRetry={onChanged} />
 					<p className="text-muted-foreground">
 						<Trans>
@@ -165,11 +172,11 @@ export function ShiftSheet({
 					</p>
 					<Readout label={_(t`Cash in the drawer`)} value={money(amount)} />
 					<Keypad value={digits} onChange={setDigits} />
-					{error ? (
+					<Reveal open={Boolean(error)}>
 						<p role="alert" className="text-destructive text-sm font-medium">
 							{error}
 						</p>
-					) : null}
+					</Reveal>
 					<Button
 						variant="primary"
 						size="xl"
@@ -212,7 +219,7 @@ export function ShiftSheet({
 				title={payIn ? _(t`Put cash in`) : _(t`Take cash out`)}
 				size="md"
 			>
-				<div className="space-y-4 p-5">
+				<div key="movement" className="t-rise space-y-4 p-5">
 					<Readout label={_(t`Amount`)} value={money(amount)} />
 					<Keypad value={digits} onChange={setDigits} />
 					<label className="block text-sm font-semibold">
@@ -223,14 +230,14 @@ export function ShiftSheet({
 							placeholder={
 								payIn ? _(t`Change from the bank`) : _(t`Milk from the shop`)
 							}
-							className="border-input bg-background mt-1 h-12 w-full rounded-xl border px-3 text-base font-normal"
+							className={cn(fieldClass, 'mt-1')}
 						/>
 					</label>
 					{needsApproval ? (
 						approvedBy ? (
 							<p
 								role="status"
-								className="bg-success/12 text-success flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
+								className="t-pop-in bg-success/12 text-success flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
 							>
 								<ShieldCheck className="size-5" />{' '}
 								<Trans>Approved by {approvedBy.name}</Trans>
@@ -260,11 +267,11 @@ export function ShiftSheet({
 							/>
 						)
 					) : null}
-					{error ? (
+					<Reveal open={Boolean(error)}>
 						<p role="alert" className="text-destructive text-sm font-medium">
 							{error}
 						</p>
-					) : null}
+					</Reveal>
 					<Button
 						variant="primary"
 						size="xl"
@@ -302,7 +309,7 @@ export function ShiftSheet({
 				title={_(t`Close the shift`)}
 				size="md"
 			>
-				<div className="space-y-4 p-5">
+				<div key="close" className="t-rise space-y-4 p-5">
 					<p className="text-muted-foreground">
 						<Trans>
 							Count all the cash in the drawer and enter it. You will see
@@ -319,11 +326,11 @@ export function ShiftSheet({
 							</Trans>
 						</p>
 					) : null}
-					{error ? (
+					<Reveal open={Boolean(error)}>
 						<p role="alert" className="text-destructive text-sm font-medium">
 							{error}
 						</p>
-					) : null}
+					</Reveal>
 					<Button
 						variant="danger"
 						size="xl"
@@ -348,7 +355,7 @@ export function ShiftSheet({
 
 	return (
 		<Modal open onClose={onClose} title={_(t`Shift`)} size="md">
-			<div className="space-y-4 p-5">
+			<div key="overview" className="t-rise space-y-4 p-5">
 				<RejectedShifts onRetry={onChanged} />
 				<p className="text-muted-foreground text-sm">
 					<Trans>
@@ -445,8 +452,8 @@ function Readout({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="border-primary flex min-h-24 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border px-4 py-3 text-start">
 			<span className="text-muted-foreground text-sm">{label}</span>
-			<span className="tnum max-w-full overflow-x-auto text-2xl font-semibold whitespace-nowrap">
-				{value}
+			<span className="tnum no-scrollbar max-w-full overflow-x-auto text-2xl font-semibold whitespace-nowrap">
+				<NumberPop value={value} />
 			</span>
 		</div>
 	)

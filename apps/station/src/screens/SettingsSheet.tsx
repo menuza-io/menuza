@@ -11,7 +11,14 @@ import {
 } from '~/lib/pairing.ts'
 import { DEMO_PIN } from '~/lib/signin.ts'
 import { type MenuLocation } from '~/lib/types.ts'
-import { Button, Modal } from '~/ui/primitives.tsx'
+import {
+	Button,
+	Checkbox,
+	Modal,
+	Reveal,
+	cn,
+	fieldClass,
+} from '~/ui/primitives.tsx'
 
 export function SettingsSheet({
 	open,
@@ -142,7 +149,7 @@ export function SettingsSheet({
 							onChange={(e) =>
 								void onSave({ locale: e.target.value === 'ar' ? 'ar' : 'en' })
 							}
-							className={`${inputClass} ps-10`}
+							className={cn(fieldClass, 'ps-10')}
 						>
 							<option value="en" lang="en">
 								English
@@ -243,9 +250,9 @@ export function SettingsSheet({
 								autoCorrect="off"
 								spellCheck={false}
 								placeholder={_(t`Pairing link or ppc1.… code`)}
-								className={inputClass}
+								className={fieldClass}
 							/>
-							{pastedHost ? (
+							<Reveal open={pastedHost !== null}>
 								<p className="text-muted-foreground text-sm">
 									<Trans>
 										Orders will be sent to{' '}
@@ -255,7 +262,7 @@ export function SettingsSheet({
 										.
 									</Trans>
 								</p>
-							) : null}
+							</Reveal>
 							<p
 								role="alert"
 								className="text-destructive text-sm font-medium empty:hidden"
@@ -283,7 +290,7 @@ export function SettingsSheet({
 					<button
 						type="button"
 						onClick={() => setShowManual(true)}
-						className="text-muted-foreground text-sm font-medium underline underline-offset-4"
+						className="text-muted-foreground hover:text-foreground text-sm font-medium underline underline-offset-4 transition-colors"
 					>
 						<Trans>Set up without pairing (menu only)</Trans>
 					</button>
@@ -299,7 +306,7 @@ export function SettingsSheet({
 								autoCapitalize="none"
 								autoCorrect="off"
 								spellCheck={false}
-								className={inputClass}
+								className={fieldClass}
 							/>
 						</Field>
 						<Field
@@ -314,7 +321,7 @@ export function SettingsSheet({
 								autoCorrect="off"
 								spellCheck={false}
 								placeholder="https://app.example.com"
-								className={inputClass}
+								className={fieldClass}
 							/>
 						</Field>
 						<Field
@@ -330,7 +337,7 @@ export function SettingsSheet({
 								autoCapitalize="none"
 								autoCorrect="off"
 								spellCheck={false}
-								className={inputClass}
+								className={fieldClass}
 							/>
 						</Field>
 						{paired ? (
@@ -361,7 +368,7 @@ export function SettingsSheet({
 									onChange={(e) =>
 										set('idleLockSeconds', Number(e.target.value))
 									}
-									className={inputClass}
+									className={fieldClass}
 								>
 									{IDLE_LOCK_CHOICES.map((c) => (
 										<option key={c.seconds} value={c.seconds}>
@@ -385,7 +392,7 @@ export function SettingsSheet({
 									disabled={paired}
 									onChange={(e) => set('terminalCode', e.target.value)}
 									maxLength={6}
-									className={`${inputClass} disabled:opacity-60`}
+									className={cn(fieldClass, 'disabled:opacity-60')}
 								/>
 							</Field>
 							{locations.length > 1 ? (
@@ -401,7 +408,7 @@ export function SettingsSheet({
 										value={draft.locationId ?? ''}
 										disabled={settings.locationLocked}
 										onChange={(e) => set('locationId', e.target.value || null)}
-										className={`${inputClass} disabled:opacity-60`}
+										className={cn(fieldClass, 'disabled:opacity-60')}
 									>
 										<option value="">{_(t`Default`)}</option>
 										{locations.map((l) => (
@@ -413,12 +420,10 @@ export function SettingsSheet({
 								</Field>
 							) : null}
 						</div>
-						<label className="border-border flex items-center gap-3 rounded-xl border p-3">
-							<input
-								type="checkbox"
+						<label className="border-border has-[:checked]:border-primary/50 has-[:checked]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors">
+							<Checkbox
 								checked={draft.demo}
 								onChange={(e) => set('demo', e.target.checked)}
-								className="size-5 shrink-0"
 							/>
 							<span>
 								<span className="block font-medium">
@@ -429,13 +434,11 @@ export function SettingsSheet({
 								</span>
 							</span>
 						</label>
-						{draft.demo ? (
-							<label className="border-border flex items-center gap-3 rounded-xl border p-3">
-								<input
-									type="checkbox"
+						<Reveal open={draft.demo}>
+							<label className="border-border has-[:checked]:border-primary/50 has-[:checked]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors">
+								<Checkbox
 									checked={draft.signInRequired}
 									onChange={(e) => set('signInRequired', e.target.checked)}
-									className="size-5 shrink-0"
 								/>
 								<span>
 									<span className="block font-medium">
@@ -449,7 +452,7 @@ export function SettingsSheet({
 									</span>
 								</span>
 							</label>
-						) : null}
+						</Reveal>
 					</>
 				)}
 				<p
@@ -477,9 +480,6 @@ export function SettingsSheet({
 		</Modal>
 	)
 }
-
-const inputClass =
-	'h-12 w-full rounded-xl border border-input bg-background px-3 text-base outline-none focus:border-ring'
 
 function Field({
 	label,

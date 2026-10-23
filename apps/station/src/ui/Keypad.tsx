@@ -58,9 +58,10 @@ export function Keypad({
 					}
 					className={cn(
 						'tnum mono h-16 rounded-xl text-2xl font-semibold transition active:scale-95',
+						// Touch has no hover: the pressed key darkens under the finger.
 						key === 'clear' || key === 'back'
-							? 'bg-muted text-muted-foreground hover:bg-accent'
-							: 'border-border bg-card hover:bg-accent border',
+							? 'bg-muted text-muted-foreground hover:bg-accent active:bg-accent'
+							: 'border-border bg-card hover:bg-accent active:bg-accent border',
 					)}
 				>
 					{key === 'back' ? (

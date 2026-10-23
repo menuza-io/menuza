@@ -43,8 +43,11 @@ import {
 	Button,
 	IconButton,
 	Modal,
+	NumberPop,
+	Reveal,
 	Segmented,
 	cn,
+	fieldClass,
 } from '~/ui/primitives.tsx'
 
 const TENDER: Record<TenderMethod, MessageDescriptor> = {
@@ -220,12 +223,12 @@ export function OrdersSheet({
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder={_(t`Search orders`)}
 							autoComplete="off"
-							className="border-input bg-background h-11 w-full rounded-lg border ps-10 pe-11 text-base sm:text-sm"
+							className={cn(fieldClass, 'h-11 ps-10 pe-11')}
 						/>
 						{query ? (
 							<IconButton
 								label={_(t`Clear search`)}
-								className="absolute end-0 top-0"
+								className="t-pop-in text-muted-foreground absolute end-0 top-0"
 								onClick={() => setQuery('')}
 							>
 								<X className="size-4" />
@@ -244,8 +247,10 @@ export function OrdersSheet({
 					/>
 				</div>
 			) : orders.length === 0 ? (
-				<div className="bg-background flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-8 text-center">
-					<ReceiptText className="text-muted-foreground size-10" />
+				<div className="t-rise bg-background flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-8 text-center">
+					<div className="bg-muted text-muted-foreground flex size-16 items-center justify-center rounded-full">
+						<ReceiptText className="size-7" />
+					</div>
 					<p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
 						{deferredQuery ? (
 							<Trans>No orders match your search.</Trans>
@@ -293,7 +298,7 @@ export function OrdersSheet({
 										}}
 										aria-current={selected?.id === o.id}
 										className={cn(
-											'border-border hover:bg-muted/60 flex w-full flex-col gap-2 border-b p-4 text-start transition',
+											'border-border hover:bg-muted/60 flex w-full flex-col gap-2 border-b p-4 text-start transition-colors',
 											selected?.id === o.id && 'bg-muted/60',
 										)}
 									>
@@ -345,15 +350,17 @@ export function OrdersSheet({
 
 					{selected ? (
 						<section
+							// Another order slides its details in.
+							key={selected.id}
 							aria-label={_(t`Order details`)}
-							className="border-border bg-card flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border"
+							className="t-rise border-border bg-card flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border"
 						>
 							<div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
 								{!wide ? (
 									<button
 										type="button"
 										onClick={() => setSelectedId(null)}
-										className="text-muted-foreground hover:bg-muted -ms-1 inline-flex h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold"
+										className="text-muted-foreground hover:bg-muted hover:text-foreground -ms-1 inline-flex h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold transition-colors"
 									>
 										<ArrowLeft className="size-4 rtl:rotate-180" />{' '}
 										<Trans>All orders</Trans>
@@ -628,14 +635,14 @@ export function OrdersSheet({
 								/>
 							</div>
 							<div className="border-border bg-card shrink-0 space-y-3 border-t p-4">
-								{error ? (
+								<Reveal open={Boolean(error)}>
 									<p
 										role="alert"
 										className="text-destructive text-sm font-medium"
 									>
 										{error}
 									</p>
-								) : null}
+								</Reveal>
 								<div className="flex flex-wrap items-center gap-2">
 									{selected.status === 'open' && !selected.transferredTo ? (
 										<>
@@ -817,7 +824,10 @@ function RefundSheet({
 					<span className="text-muted-foreground text-sm">
 						<Trans>Refund (up to {upTo})</Trans>
 					</span>
-					<span className="tnum mono text-2xl font-bold">{money(typed)}</span>
+					<NumberPop
+						value={money(typed)}
+						className="tnum mono text-2xl font-bold"
+					/>
 				</div>
 				<Keypad value={digits} onChange={setDigits} />
 				<Button
@@ -828,11 +838,11 @@ function RefundSheet({
 				>
 					<Trans>Full amount ({upTo})</Trans>
 				</Button>
-				{tooMuch ? (
+				<Reveal open={tooMuch}>
 					<p role="alert" className="text-destructive text-sm font-medium">
 						<Trans>That is more than can be refunded (up to {upTo}).</Trans>
 					</p>
-				) : null}
+				</Reveal>
 				{order.payments.some((p) => p.method !== 'cash') ? (
 					<label className="block text-sm font-semibold">
 						<Trans>Card terminal refund code (optional)</Trans>
@@ -842,7 +852,7 @@ function RefundSheet({
 								setReference(event.target.value.slice(0, 64))
 							}
 							autoComplete="off"
-							className="border-input bg-background mt-1 h-12 w-full rounded-xl border px-3 text-base font-normal"
+							className={cn(fieldClass, 'mt-1')}
 						/>
 					</label>
 				) : null}
@@ -879,9 +889,12 @@ function OtherTerminalsTabs({ onTaken }: { onTaken: () => void }) {
 	}, [otherTabs])
 
 	if (state.loading) {
+		const asking = _(t`Asking the other terminals…`)
 		return (
-			<p className="text-muted-foreground p-10 text-center">
-				<Trans>Asking the other terminals…</Trans>
+			<p role="status" className="p-10 text-center">
+				<span className="t-shimmer" data-text={asking}>
+					{asking}
+				</span>
 			</p>
 		)
 	}
@@ -904,7 +917,10 @@ function OtherTerminalsTabs({ onTaken }: { onTaken: () => void }) {
 				const money = moneyFormatter(order.currency)
 				const paid = order.payments.reduce((s, p) => s + p.amountCents, 0)
 				return (
-					<li key={order.id} className="flex items-center gap-3 px-4 py-3">
+					<li
+						key={order.id}
+						className="t-rise flex items-center gap-3 px-4 py-3"
+					>
 						<div className="min-w-0 flex-1">
 							<div className="font-semibold">#{order.number}</div>
 							<div className="text-muted-foreground truncate text-sm">

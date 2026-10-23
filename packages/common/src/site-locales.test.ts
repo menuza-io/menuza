@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
 	getLocaleHref,
+	getSiteLocaleLabel,
+	getSiteLocaleNativeLabel,
 	isReservedSiteLocaleSlug,
 	negotiateSiteLocale,
 	getLocalizedEditableValue,
@@ -12,6 +14,26 @@ import {
 } from './site-locales.ts'
 
 describe('site-locales', () => {
+	it.each([
+		['en', 'English'],
+		['ar', 'العربية'],
+		['es', 'Español'],
+		['fr', 'Français'],
+		['de', 'Deutsch'],
+		['zh', '中文'],
+	])('always displays %s in its own language', (locale, label) => {
+		expect(getSiteLocaleNativeLabel(locale)).toBe(label)
+	})
+
+	it('preserves the locale code for unsupported native language labels', () => {
+		expect(getSiteLocaleNativeLabel('unknown')).toBe('unknown')
+	})
+
+	it('keeps existing English labels available to operator interfaces', () => {
+		expect(getSiteLocaleLabel('ar')).toBe('Arabic')
+		expect(getSiteLocaleLabel('de')).toBe('German')
+	})
+
 	it('parses locales config with defaults', () => {
 		expect(parseSiteLocalesConfig(null, null)).toEqual({
 			locales: ['en'],

@@ -3,7 +3,6 @@ import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	Banknote,
-	Check,
 	CreditCard,
 	Printer,
 	Receipt as ReceiptIcon,
@@ -25,7 +24,17 @@ import {
 } from '~/lib/orders.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
-import { Badge, Button, Modal, Segmented, cn } from '~/ui/primitives.tsx'
+import {
+	Badge,
+	Button,
+	Chip,
+	Modal,
+	NumberPop,
+	Reveal,
+	Segmented,
+	cn,
+	fieldClass,
+} from '~/ui/primitives.tsx'
 
 const TIP_PRESETS = [0, 10, 15, 20]
 const SPLITS = [2, 3, 4]
@@ -206,8 +215,21 @@ export function Checkout({
 				dismissible={false}
 			>
 				<div className="flex flex-col items-center gap-3 p-6 text-center sm:p-8">
-					<div className="anim-pop bg-success flex size-20 items-center justify-center rounded-full text-white">
-						<Check className="size-10" strokeWidth={3} />
+					{/* The one celebration on the till: the disc pops, the check draws itself in. */}
+					<div className="t-success-disc bg-success flex size-20 items-center justify-center rounded-full text-white">
+						<span className="t-success-check" data-state="in" aria-hidden>
+							<svg
+								viewBox="0 0 24 24"
+								className="size-10"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={3}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<path d="M20 6 9 17l-5-5" />
+							</svg>
+						</span>
 					</div>
 					<p className="text-muted-foreground text-sm font-medium">
 						<Trans>Order #{doneNumber}</Trans>
@@ -380,9 +402,10 @@ export function Checkout({
 						<span className="text-lg font-semibold">
 							{hasPayments ? <Trans>Balance</Trans> : <Trans>Total due</Trans>}
 						</span>
-						<span className="tnum text-2xl font-semibold whitespace-nowrap">
-							{money(remaining)}
-						</span>
+						<NumberPop
+							value={money(remaining)}
+							className="tnum text-2xl font-semibold whitespace-nowrap"
+						/>
 					</div>
 					{tipsEnabled && !tipLocked ? (
 						<div className="mt-4">
@@ -391,20 +414,15 @@ export function Checkout({
 							</p>
 							<div className="grid grid-cols-4 gap-2">
 								{TIP_PRESETS.map((p) => (
-									<button
+									<Chip
 										key={p}
-										type="button"
+										selected={tipPercent === p}
 										aria-pressed={tipPercent === p}
 										onClick={() => setTipPercent(p)}
-										className={cn(
-											'h-11 rounded-lg border text-sm font-semibold transition active:scale-95',
-											tipPercent === p
-												? 'border-primary bg-primary text-primary-foreground'
-												: 'border-border bg-card hover:border-primary/50 hover:bg-muted/50',
-										)}
+										className="tnum px-2"
 									>
 										{p === 0 ? <Trans>None</Trans> : `${p}%`}
-									</button>
+									</Chip>
 								))}
 							</div>
 						</div>
@@ -418,7 +436,9 @@ export function Checkout({
 						</p>
 						<div className="flex flex-wrap gap-2">
 							<Chip
-								active={mode.kind === 'full'}
+								selected={mode.kind === 'full'}
+								aria-pressed={mode.kind === 'full'}
+								className="tnum px-4"
 								onClick={() => {
 									setMode({ kind: 'full' })
 									setCustomDigits('')
@@ -430,7 +450,9 @@ export function Checkout({
 							{SPLITS.map((n) => (
 								<Chip
 									key={n}
-									active={mode.kind === 'split' && mode.ways === n}
+									selected={mode.kind === 'split' && mode.ways === n}
+									aria-pressed={mode.kind === 'split' && mode.ways === n}
+									className="tnum px-4"
 									onClick={() => {
 										setMode({ kind: 'split', ways: n })
 										setCustomDigits('')
@@ -441,7 +463,9 @@ export function Checkout({
 								</Chip>
 							))}
 							<Chip
-								active={mode.kind === 'custom'}
+								selected={mode.kind === 'custom'}
+								aria-pressed={mode.kind === 'custom'}
+								className="tnum px-4"
 								onClick={() => {
 									setMode({ kind: 'custom' })
 									setField('amount')
@@ -450,13 +474,13 @@ export function Checkout({
 								<Trans>Amount</Trans>
 							</Chip>
 						</div>
-						{mode.kind === 'split' ? (
-							<p className="tnum text-muted-foreground mt-2 text-sm">
+						<Reveal open={mode.kind === 'split'}>
+							<p className="tnum text-muted-foreground pt-2 text-sm">
 								<Trans>
 									Each share is {shareText}. The last share takes any remainder.
 								</Trans>
 							</p>
-						) : null}
+						</Reveal>
 					</div>
 
 					<Segmented
@@ -506,7 +530,7 @@ export function Checkout({
 					</div>
 
 					{method === 'cash' ? (
-						<div className="flex flex-wrap gap-2">
+						<div key="cash" className="t-rise flex flex-wrap gap-2">
 							<Button
 								variant="outline"
 								onClick={() => {
@@ -530,7 +554,7 @@ export function Checkout({
 							))}
 						</div>
 					) : (
-						<div className="space-y-3">
+						<div key={method} className="t-rise space-y-3">
 							<div className="border-border text-muted-foreground flex items-start gap-3 rounded-2xl border border-dashed p-3 text-sm">
 								<ReceiptIcon className="mt-0.5 size-5 shrink-0" />
 								<p>
@@ -558,7 +582,7 @@ export function Checkout({
 										setReference(event.target.value.slice(0, 64))
 									}
 									autoComplete="off"
-									className="border-input bg-background mt-1 h-12 w-full rounded-xl border px-3 text-base font-normal"
+									className={cn(fieldClass, 'mt-1')}
 								/>
 							</label>
 						</div>
@@ -576,22 +600,22 @@ export function Checkout({
 							<Trans>Change {changeText}</Trans>
 						) : null}
 					</p>
-					{giveChange !== null ? (
+					<Reveal open={giveChange !== null}>
 						<p
 							role="status"
 							className="tnum bg-warning/15 text-warning rounded-xl p-3 text-center text-base font-semibold"
 						>
 							<Trans>Give {giveChangeText} change for that payment</Trans>
 						</p>
-					) : null}
-					{error ? (
+					</Reveal>
+					<Reveal open={Boolean(error)}>
 						<p
 							role="alert"
 							className="text-destructive text-center text-sm font-medium"
 						>
 							{error}
 						</p>
-					) : null}
+					</Reveal>
 					{hasPayments ? (
 						<Badge tone="warning" className="mx-auto flex w-fit">
 							<Trans>Closing now leaves {remainingText} open on the tab</Trans>
@@ -625,32 +649,6 @@ function Row({
 	)
 }
 
-function Chip({
-	active,
-	onClick,
-	children,
-}: {
-	active: boolean
-	onClick: () => void
-	children: React.ReactNode
-}) {
-	return (
-		<button
-			type="button"
-			aria-pressed={active}
-			onClick={onClick}
-			className={cn(
-				'tnum h-11 rounded-xl border px-4 text-sm font-semibold transition active:scale-95',
-				active
-					? 'border-primary bg-primary text-primary-foreground'
-					: 'border-border bg-card hover:bg-accent',
-			)}
-		>
-			{children}
-		</button>
-	)
-}
-
 function Readout({
 	label,
 	value,
@@ -679,11 +677,11 @@ function Readout({
 			<span className="text-muted-foreground text-sm">{label}</span>
 			<span
 				className={cn(
-					'tnum max-w-full overflow-x-auto text-2xl font-semibold whitespace-nowrap',
+					'tnum no-scrollbar max-w-full overflow-x-auto text-2xl font-semibold whitespace-nowrap transition-colors',
 					muted && 'text-muted-foreground',
 				)}
 			>
-				{value}
+				<NumberPop value={value} />
 			</span>
 		</button>
 	)

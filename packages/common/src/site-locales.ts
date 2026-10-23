@@ -22,6 +22,15 @@ export const SITE_CONTENT_LOCALE_LABELS: Record<SiteContentLocale, string> = {
 	zh: 'Chinese',
 }
 
+const SITE_CONTENT_LOCALE_NATIVE_LABELS: Record<SiteContentLocale, string> = {
+	en: 'English',
+	ar: 'العربية',
+	es: 'Español',
+	fr: 'Français',
+	de: 'Deutsch',
+	zh: '中文',
+}
+
 export const RTL_SITE_LOCALES = new Set<SiteContentLocale>(['ar'])
 
 export type SiteLocalesConfig = {
@@ -49,6 +58,13 @@ export function isSiteContentLocale(
 
 export function getSiteLocaleLabel(locale: string): string {
 	if (isSiteContentLocale(locale)) return SITE_CONTENT_LOCALE_LABELS[locale]
+	return locale
+}
+
+/** Native language names stay the same regardless of the active UI locale. */
+export function getSiteLocaleNativeLabel(locale: string): string {
+	if (isSiteContentLocale(locale))
+		return SITE_CONTENT_LOCALE_NATIVE_LABELS[locale]
 	return locale
 }
 

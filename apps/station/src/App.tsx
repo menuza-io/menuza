@@ -7,9 +7,12 @@ import {
 	CloudOff,
 	HardDrive,
 	Link2Off,
-	Store,
+	MapPinOff,
+	UtensilsCrossed,
+	Wallet,
+	type LucideIcon,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { applyLocale, effectiveLocale } from './i18n.ts'
 import { idleMs, shouldLock, touch } from '~/lib/activity.ts'
 import { categoryItems } from '~/lib/catalog.ts'
@@ -51,7 +54,14 @@ import { SettingsSheet } from '~/screens/SettingsSheet.tsx'
 import { ShiftSheet, useOpenShift } from '~/screens/ShiftSheet.tsx'
 import { TopBar } from '~/screens/TopBar.tsx'
 import { useIsDesktop } from '~/ui/hooks.ts'
-import { Modal, Button } from '~/ui/primitives.tsx'
+import {
+	Button,
+	Modal,
+	NumberPop,
+	Reveal,
+	cn,
+	motionMs,
+} from '~/ui/primitives.tsx'
 
 const SYNC_INTERVAL_MS = 30_000
 /**
@@ -238,6 +248,18 @@ export function App() {
 		else setSettingsOpen(true)
 	}
 	const needsSetup = !isConfigured(s.settings)
+	const menuLoading = s.catalogStatus === 'loading'
+	// The skeleton stays for the length of the reveal, then leaves the DOM.
+	const [skeleton, setSkeleton] = useState(menuLoading)
+	if (menuLoading && !skeleton) setSkeleton(true)
+	useLayoutEffect(() => {
+		if (menuLoading || !skeleton) return
+		const timer = window.setTimeout(
+			() => setSkeleton(false),
+			motionMs('--reveal-dur', 400),
+		)
+		return () => window.clearTimeout(timer)
+	}, [menuLoading, skeleton])
 	// Settings opened by a manager must not outlive their session: whoever signs in next
 	// would otherwise find them open underneath the lock.
 	const isManagerSession = s.session?.role === 'manager'
@@ -527,23 +549,24 @@ export function App() {
 					onShift={() => setShiftOpen(true)}
 					shiftOpen={Boolean(currentShift)}
 				/>
-				{needsShift ? (
+				<Reveal open={needsShift}>
 					<button
 						type="button"
 						onClick={() => setShiftOpen(true)}
-						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-start text-sm font-semibold"
+						className="bg-warning/15 text-warning hover:bg-warning/20 flex w-full items-center gap-2 px-4 py-2 text-start text-sm font-semibold transition-colors"
 					>
+						<Wallet className="size-4 shrink-0" />
 						<Trans>
 							No shift is open. Tap to count the drawer and open one before
 							selling.
 						</Trans>
 					</button>
-				) : null}
-				{s.pairingLost ? (
+				</Reveal>
+				<Reveal open={s.pairingLost}>
 					<button
 						type="button"
 						onClick={openSettings}
-						className="bg-destructive/12 text-destructive flex items-center gap-2 px-4 py-2 text-start text-sm font-semibold"
+						className="bg-destructive/12 text-destructive hover:bg-destructive/16 flex w-full items-center gap-2 px-4 py-2 text-start text-sm font-semibold transition-colors"
 					>
 						<Link2Off className="size-4 shrink-0" />
 						{s.settings.deviceToken ? (
@@ -558,8 +581,8 @@ export function App() {
 							</Trans>
 						)}
 					</button>
-				) : null}
-				{clockOff ? (
+				</Reveal>
+				<Reveal open={clockOff}>
 					<div
 						role="alert"
 						className="bg-destructive/12 text-destructive flex items-center gap-2 px-4 py-2 text-sm font-semibold"
@@ -571,8 +594,8 @@ export function App() {
 							tablet’s settings.
 						</Trans>
 					</div>
-				) : null}
-				{storagePersisted === false ? (
+				</Reveal>
+				<Reveal open={storagePersisted === false}>
 					<div
 						role="status"
 						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-sm font-medium"
@@ -584,83 +607,100 @@ export function App() {
 							kept.
 						</Trans>
 					</div>
-				) : null}
-				{s.catalogError && s.snapshot && s.online ? (
+				</Reveal>
+				<Reveal open={Boolean(s.catalogError && s.snapshot && s.online)}>
 					<div
 						role="status"
 						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-sm font-medium"
 					>
-						<CloudOff className="size-4" />{' '}
+						<CloudOff className="size-4 shrink-0" />{' '}
 						<Trans>
 							Couldn’t update the menu ({catalogError}). Selling from the copy
 							saved on this device.
 						</Trans>
 					</div>
-				) : null}
+				</Reveal>
 
 				<div className="flex min-h-0 flex-1">
 					<main className="flex min-w-0 flex-1 flex-col">
-						{s.catalogStatus === 'loading' ? (
-							<Message
-								title={_(t`Loading menu…`)}
-								body={_(t`Getting the latest menu for this restaurant.`)}
-							/>
-						) : s.catalogStatus === 'error' ? (
-							<Message
-								title={_(t`Can’t load the menu yet`)}
-								body={_(
-									t`${loadProblem}. The first load needs internet; after that the till works offline.`,
+						{/* First load: a skeleton of the menu pulses, then cross-fades to it. */}
+						<div
+							className={cn(
+								't-skel flex min-h-0 flex-1 flex-col',
+								!menuLoading && 'is-revealed',
+							)}
+						>
+							{skeleton ? (
+								<div className="t-skel-skeleton is-pulsing" aria-hidden>
+									<MenuSkeleton />
+								</div>
+							) : null}
+							<div className="t-skel-content flex flex-col">
+								{menuLoading ? (
+									<p role="status" className="sr-only">
+										{_(t`Loading menu…`)}
+									</p>
+								) : s.catalogStatus === 'error' ? (
+									<Message
+										icon={CloudOff}
+										title={_(t`Can’t load the menu yet`)}
+										body={_(
+											t`${loadProblem}. The first load needs internet; after that the till works offline.`,
+										)}
+										action={
+											<Button
+												variant="primary"
+												size="lg"
+												onClick={() => void s.refresh()}
+											>
+												<Trans>Try again</Trans>
+											</Button>
+										}
+									/>
+								) : s.locationMissing ? (
+									<Message
+										icon={MapPinOff}
+										title={_(t`This terminal’s location isn’t on the menu`)}
+										body={_(
+											t`It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh.`,
+										)}
+										action={
+											<Button
+												variant="primary"
+												size="lg"
+												onClick={() => void s.refresh()}
+											>
+												<Trans>Refresh</Trans>
+											</Button>
+										}
+									/>
+								) : s.catalogStatus === 'empty' ? (
+									<Message
+										icon={UtensilsCrossed}
+										title={_(t`No menu items`)}
+										body={_(
+											t`Publish a menu with items for this location, then refresh.`,
+										)}
+										action={
+											<Button
+												variant="primary"
+												size="lg"
+												onClick={() => void s.refresh()}
+											>
+												<Trans>Refresh</Trans>
+											</Button>
+										}
+									/>
+								) : (
+									<MenuGrid
+										categories={s.categories}
+										money={money}
+										counts={counts}
+										onPick={pick}
+									/>
 								)}
-								action={
-									<Button
-										variant="primary"
-										size="lg"
-										onClick={() => void s.refresh()}
-									>
-										<Trans>Try again</Trans>
-									</Button>
-								}
-							/>
-						) : s.locationMissing ? (
-							<Message
-								title={_(t`This terminal’s location isn’t on the menu`)}
-								body={_(
-									t`It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh.`,
-								)}
-								action={
-									<Button
-										variant="primary"
-										size="lg"
-										onClick={() => void s.refresh()}
-									>
-										<Trans>Refresh</Trans>
-									</Button>
-								}
-							/>
-						) : s.catalogStatus === 'empty' ? (
-							<Message
-								title={_(t`No menu items`)}
-								body={_(
-									t`Publish a menu with items for this location, then refresh.`,
-								)}
-								action={
-									<Button
-										variant="primary"
-										size="lg"
-										onClick={() => void s.refresh()}
-									>
-										<Trans>Refresh</Trans>
-									</Button>
-								}
-							/>
-						) : (
-							<MenuGrid
-								categories={s.categories}
-								money={money}
-								counts={counts}
-								onPick={pick}
-							/>
-						)}
+							</div>
+						</div>
 					</main>
 					{desktop ? (
 						<aside className="border-border flex min-h-0 w-[26rem] shrink-0 flex-col border-s">
@@ -677,8 +717,8 @@ export function App() {
 							className="mb-safe bg-primary text-primary-foreground elevated-card mx-3 mt-1 flex h-16 shrink-0 items-center justify-between gap-3 rounded-2xl px-5 transition active:scale-[0.98]"
 						>
 							<span className="flex items-center gap-3 font-semibold">
-								<span className="tnum mono bg-primary-foreground/20 flex size-8 items-center justify-center rounded-full text-sm font-bold">
-									{itemCount}
+								<span className="tnum mono bg-primary-foreground/20 flex h-8 min-w-8 items-center justify-center rounded-full px-1.5 text-sm font-bold">
+									<NumberPop value={String(itemCount)} />
 								</span>
 								{itemCount === 0 ? (
 									<Trans>Order is empty</Trans>
@@ -689,7 +729,7 @@ export function App() {
 								)}
 							</span>
 							<span className="tnum mono flex items-center gap-2 text-lg font-bold">
-								{money(cartTotals.totalCents)}
+								<NumberPop value={money(cartTotals.totalCents)} />
 								<ChevronUp className="size-5" />
 							</span>
 						</button>
@@ -917,22 +957,61 @@ export function App() {
 }
 
 function Message({
+	icon: Icon,
 	title,
 	body,
 	action,
 }: {
+	icon: LucideIcon
 	title: string
 	body: string
 	action?: React.ReactNode
 }) {
 	return (
-		<div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-			<div className="bg-muted text-muted-foreground flex size-16 items-center justify-center rounded-full">
-				<Store className="size-8" />
+		<div className="t-rise flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+			<div className="bg-muted text-muted-foreground mb-1 flex size-16 items-center justify-center rounded-full">
+				<Icon className="size-8" />
 			</div>
-			<h2 className="text-2xl font-bold">{title}</h2>
-			<p className="text-muted-foreground max-w-md">{body}</p>
-			{action}
+			<h2 className="text-2xl font-bold text-balance">{title}</h2>
+			<p className="text-muted-foreground max-w-md text-pretty">{body}</p>
+			{action ? <div className="mt-2">{action}</div> : null}
+		</div>
+	)
+}
+
+/** The shape of the menu while the first copy downloads: search, categories, dishes. */
+function MenuSkeleton() {
+	const { _ } = useLingui()
+	const label = _(t`Loading menu…`)
+	return (
+		<div className="flex h-full flex-col gap-4 overflow-hidden px-3 pt-3 sm:px-4">
+			<div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:gap-3">
+				<div data-bone className="bg-muted h-12 rounded-xl xl:w-64" />
+				<div className="flex gap-2 overflow-hidden py-1">
+					{['w-28', 'w-36', 'w-24', 'w-32', 'w-28'].map((width, i) => (
+						<div
+							key={i}
+							data-bone
+							className={cn('bg-muted h-12 shrink-0 rounded-xl', width)}
+						/>
+					))}
+				</div>
+			</div>
+			<span className="t-shimmer text-lg font-semibold" data-text={label}>
+				{label}
+			</span>
+			<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] sm:gap-3">
+				{Array.from({ length: 12 }, (_unused, i) => (
+					<div
+						key={i}
+						data-bone
+						className="border-border bg-card flex min-h-36 flex-col justify-end gap-2 rounded-2xl border-2 p-3"
+					>
+						<div className="bg-muted h-4 w-3/4 rounded-md" />
+						<div className="bg-muted h-3.5 w-1/3 rounded-md" />
+					</div>
+				))}
+			</div>
 		</div>
 	)
 }

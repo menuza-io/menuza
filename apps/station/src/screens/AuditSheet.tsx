@@ -7,7 +7,7 @@ import { type Reason, type StaffRef } from '~/lib/db.ts'
 import { type Audit } from '~/lib/orders.ts'
 import { type ApprovalOutcome } from '~/lib/signin.ts'
 import { ManagerPinPad } from '~/ui/ManagerPinPad.tsx'
-import { Button, Modal, cn } from '~/ui/primitives.tsx'
+import { Button, Chip, Modal, Reveal } from '~/ui/primitives.tsx'
 
 const REASON_LABEL: Record<Reason, MessageDescriptor> = {
 	mistake: msg`Rung up by mistake`,
@@ -134,20 +134,15 @@ export function AuditSheet({
 					</legend>
 					<div className="grid gap-2 sm:grid-cols-2">
 						{reasons.map((r) => (
-							<button
+							<Chip
 								key={r}
-								type="button"
+								selected={reason === r}
 								aria-pressed={reason === r}
 								onClick={() => setReason(r)}
-								className={cn(
-									'min-h-12 rounded-xl border px-3 text-start text-sm font-semibold transition active:scale-[0.98]',
-									reason === r
-										? 'border-primary bg-primary text-primary-foreground'
-										: 'border-border bg-card hover:bg-accent',
-								)}
+								className="h-auto min-h-12 justify-start px-3 py-2 text-start active:scale-[0.98]"
 							>
 								{reasonLabel(r)}
-							</button>
+							</Chip>
 						))}
 					</div>
 				</fieldset>
@@ -155,7 +150,7 @@ export function AuditSheet({
 					approvedBy ? (
 						<p
 							role="status"
-							className="bg-success/12 text-success flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
+							className="t-pop-in bg-success/12 text-success flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
 						>
 							<ShieldCheck className="size-5" />{' '}
 							<Trans>Approved by {approverName}</Trans>
@@ -170,11 +165,11 @@ export function AuditSheet({
 						/>
 					)
 				) : null}
-				{error ? (
+				<Reveal open={Boolean(error)}>
 					<p role="alert" className="text-destructive text-sm font-medium">
 						{error}
 					</p>
-				) : null}
+				</Reveal>
 			</div>
 		</Modal>
 	)
