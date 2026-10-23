@@ -64,6 +64,12 @@ export function Floor({
 		>
 			{/* The plan keeps its proportions and sits centred in whatever space it has. */}
 			<div className="floor-frame absolute inset-4 sm:inset-6">
+				{drawn ? (
+					// Only where the room is wider than the screen (a phone): it scrolls.
+					<p className="floor-hint" aria-hidden>
+						<Trans>Swipe to see the whole room</Trans>
+					</p>
+				) : null}
 				<div
 					className={cn(
 						'relative mx-auto',
@@ -240,12 +246,6 @@ function TableButton({
 						<>
 							<Users className="size-3" />
 							<span className="tnum">{state.party.partySize}</span>
-							{seatedFor !== null ? (
-								<>
-									<span>·</span>
-									<SoftText value={_(t`${seatedFor}m`)} />
-								</>
-							) : null}
 						</>
 					) : state.kind === 'soon' ? (
 						<span className="tnum text-warning font-semibold">
@@ -263,6 +263,15 @@ function TableButton({
 						</>
 					)}
 				</span>
+				{/* How long they have been seated, on its own line so a small round table never crops it. */}
+				{state.kind === 'seated' && seatedFor !== null ? (
+					<span
+						className="text-primary-foreground/85 text-xs leading-none font-medium"
+						aria-hidden
+					>
+						<SoftText value={_(t`${seatedFor}m`)} />
+					</span>
+				) : null}
 			</span>
 		</button>
 	)

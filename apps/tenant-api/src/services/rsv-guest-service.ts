@@ -458,8 +458,9 @@ async function resolveOrCreateGuestInner(
 		actorId?: string | null
 		/**
 		 * The caller cannot read guest details (a host at a till, a member without
-		 * the guest permission): a phone or email that matches a known guest links
-		 * the booking to them but never rewrites their name or allergy notes.
+		 * the guest permission): a booking for a known guest (by id, phone or
+		 * email) links to them but only fills what their profile lacks. It never
+		 * replaces a name, phone, email or allergy note it could not even see.
 		 */
 		keepMatchedProfile?: boolean
 	},
@@ -484,7 +485,11 @@ async function resolveOrCreateGuestInner(
 		if (!existing) {
 			throw notFound('Guest not found')
 		}
-		if (input.guest?.allergyNotes !== undefined) {
+		const keepProfile = input.keepMatchedProfile === true
+		if (
+			input.guest?.allergyNotes !== undefined &&
+			!(keepProfile && existing.allergyNotes)
+		) {
 			await db
 				.update(rsvGuests)
 				.set({
@@ -564,8 +569,12 @@ async function resolveOrCreateGuestInner(
 				lastName: keep
 					? matched.lastName
 					: g?.lastName?.trim() || matched.lastName,
-				phoneE164: phoneE164 ?? matched.phoneE164,
-				emailNorm: emailNorm ?? matched.emailNorm,
+				phoneE164: keep
+					? (matched.phoneE164 ?? phoneE164)
+					: (phoneE164 ?? matched.phoneE164),
+				emailNorm: keep
+					? (matched.emailNorm ?? emailNorm)
+					: (emailNorm ?? matched.emailNorm),
 				allergyNotes: nextAllergy,
 				updatedAt: now,
 			})

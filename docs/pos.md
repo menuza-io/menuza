@@ -338,11 +338,13 @@ saves it with the PIN encrypted at rest (the kiosk's queue,
 `@repo/staffing/clock-queue`) at the server's time as best known, and sends it,
 oldest first, with its other uploads; the server still checks the PIN and the
 order. A saved punch is accepted if the clock was on at this terminal when it
-was made (`pos_devices.timeclock_disabled_at`); a flag known to be off holds it
-on the till. Offline, a PIN the till has seen online is greeted by name with its
-roles (a slow hash of the PIN, as for offline sign-in, with the same attempt
-guard); punches the server later refuses are listed on the clock until someone
-clears them. Where the rules have rest breaks, staff choose meal or rest.
+was made (`pos_devices.timeclock_disabled_at`); one made after answers 409
+`timeclock_was_off` and is listed on the till as refused. A flag known to be off
+holds it on the till. Offline, a PIN the till has seen online is greeted by name
+with its roles (a slow hash of the PIN, as for offline sign-in, with the same
+attempt guard); punches the server later refuses are listed on the clock until
+someone clears them. Where the rules have rest breaks, staff choose meal or
+rest.
 
 **Host stand.** An online sign-in returns a staff session (`pos-staff+jwt`,
 signed with a key derived from `AUTH_HMAC_SECRET`, bound to the organization and
@@ -361,11 +363,12 @@ operator, for:
 - five minutes, `channel: 'station'` and the terminal's id. Without guest
   details every answer has phones masked to their last four digits and emails
   dropped (`lib/reservations-station.ts`), and allergy notes are hidden, in a
-  booking's history too. A known phone typed at the till links the guest but
-  never renames them;
+  booking's history too. A known guest's profile (found by id, phone or email)
+  is linked but never changed: only what it lacks is filled in;
 - subject `staff:<staffId>`, so the reservation history shows the action as
-  taken by staff at a terminal. Each token is recorded in `rsv_audit_log`
-  (`station.token_issued`).
+  taken by staff at a terminal. Opening the stand is recorded in `rsv_audit_log`
+  (`station.host_stand_opened`, once per sign-in and again if guest details
+  change; best effort, so the audit never takes the stand down).
 
 The till then calls `/operator/reservations/book/*` directly (CORS allows
 `POS_ORIGINS` on those routes only), so every check there applies unchanged. The

@@ -749,7 +749,12 @@ export function TerminalsManager({
 									{stationFeatures.reservations ? (
 										<HostRoleSelect
 											person={person}
-											canChange={canWrite && stationGrants.reservations}
+											// The roster is organization-wide: changing it needs every location.
+											canChange={
+												canWrite &&
+												stationGrants.reservations &&
+												stationGrants.locationIds === null
+											}
 											canGrantGuestDetails={stationGrants.guestDetails}
 											onChange={(role) => void setHostRole(person, role)}
 										/>

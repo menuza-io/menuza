@@ -15,9 +15,11 @@ import {
 	isPosHashUnavailable,
 	posError,
 	posUnavailableResponse,
+	type PosAuth,
 } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { rsvAuditLog } from '@repo/tenant-db'
+import { and, eq, gte } from 'drizzle-orm'
 import { getNodeRegion } from '../lib/region.ts'
 import { getOperatorToken } from '../lib/secrets.ts'
 import { reservationsGate } from '../services/pos-apps-service.ts'
@@ -56,6 +58,56 @@ const HOST_GRANTS: readonly ReservationsPermission[] = [
 	RESERVATIONS_PERMISSIONS.READ_RESERVATION,
 	RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION,
 ]
+
+/**
+ * Records the host stand opening for a person at a till. Best effort: the
+ * audit trail must not take the stand down mid-service, so a failed write is
+ * logged (ids only) and the token is still issued.
+ */
+async function recordHostStandOpened(
+	db: PosAuth['db'],
+	entry: {
+		subject: string
+		deviceId: string
+		locationId: string
+		guestDetails: boolean
+		since: number
+		at: number
+	},
+) {
+	try {
+		const recent = await db
+			.select({ changes: rsvAuditLog.changes })
+			.from(rsvAuditLog)
+			.where(
+				and(
+					eq(rsvAuditLog.action, 'station.host_stand_opened'),
+					eq(rsvAuditLog.entityId, entry.deviceId),
+					eq(rsvAuditLog.actorId, entry.subject),
+					gte(rsvAuditLog.at, entry.since),
+				),
+			)
+		if (recent.some((r) => r.changes?.guestDetails === entry.guestDetails))
+			return
+		await db.insert(rsvAuditLog).values({
+			id: `aud_${crypto.randomUUID()}`,
+			at: entry.at,
+			actorKind: 'operator',
+			actorId: entry.subject,
+			locationId: entry.locationId,
+			action: 'station.host_stand_opened',
+			entityType: 'pos_device',
+			entityId: entry.deviceId,
+			changes: { guestDetails: entry.guestDetails },
+		})
+	} catch (error) {
+		console.error(
+			'Host stand audit failed',
+			entry.deviceId,
+			error instanceof Error ? error.name : 'unknown',
+		)
+	}
+}
 
 posReservationsRoutes.post('/token', async (c) => {
 	const authed = await authenticatePosDevice(c)
@@ -135,17 +187,15 @@ posReservationsRoutes.post('/token', async (c) => {
 			.setExpirationTime(exp)
 			.sign(new TextEncoder().encode(operatorSecret))
 
-		// Who opened the host stand at which till, and whether with guest details.
-		await pos.db.insert(rsvAuditLog).values({
-			id: `aud_${crypto.randomUUID()}`,
-			at: iat * 1000,
-			actorKind: 'operator',
-			actorId: subject,
+		// Who opened the host stand at which till, and whether with guest details:
+		// once per sign-in (and again if the guest grant changes), not per renewal.
+		await recordHostStandOpened(pos.db, {
+			subject,
+			deviceId: pos.device.id,
 			locationId: gate.locationId,
-			action: 'station.token_issued',
-			entityType: 'pos_device',
-			entityId: pos.device.id,
-			changes: { guestDetails: canReadGuest, ttlSeconds },
+			guestDetails: canReadGuest,
+			since: staff.session.signedInAt,
+			at: iat * 1000,
 		})
 		await touchDevice(pos.db, pos.device).catch(() => {})
 		const response: PosReservationsTokenResponse = {

@@ -21,7 +21,13 @@ import { cn } from '~/ui/primitives.tsx'
 export type Placing =
 	| { kind: 'reservation'; reservation: DayReservation }
 	| { kind: 'waitlist'; entry: WaitlistEntry }
-	| { kind: 'walk_in'; partySize: number; guestName: string }
+	| {
+			kind: 'walk_in'
+			partySize: number
+			guestName: string
+			/** One per party: a retry after no answer can never seat them twice. */
+			key: string
+	  }
 
 export const placingSize = (p: Placing) =>
 	p.kind === 'reservation'
@@ -58,7 +64,10 @@ export function Dock({
 	onDetails,
 	onWaitlistDetails,
 	formatTime,
+	ref,
 }: {
+	/** The toast rises above the dock, so it never covers the next party. */
+	ref?: React.Ref<HTMLElement>
 	arrivals: DayReservation[]
 	/** Bookings whose time is over and whose party never came. */
 	missed: DayReservation[]
@@ -75,6 +84,7 @@ export function Dock({
 	const selected = placingKey(placing)
 	return (
 		<section
+			ref={ref}
 			aria-label={_(t`Parties to seat`)}
 			className="border-border bg-card pb-safe flex shrink-0 flex-col gap-2 border-t pt-3 lg:flex-row lg:items-stretch lg:gap-0"
 		>

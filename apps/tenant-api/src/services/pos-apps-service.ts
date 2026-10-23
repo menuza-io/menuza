@@ -22,9 +22,10 @@ export type TimeclockGate =
 	| { ok: true }
 	| {
 			ok: false
-			status: 403 | 503
+			status: 403 | 409 | 503
 			code:
 				| 'timeclock_not_enabled'
+				| 'timeclock_was_off'
 				| 'timeclock_disabled'
 				| 'kiosk_disabled'
 				| 'service_unavailable'
@@ -46,8 +47,13 @@ export async function timeclockGate(
 			replayAt !== null &&
 			device.timeclockDisabledAt !== null &&
 			replayAt < device.timeclockDisabledAt)
-	if (!offeredThen)
+	if (!offeredThen) {
+		// A punch saved offline after the clock was switched off here will never
+		// count: a final answer, so the till lists it for a manager instead of
+		// holding it (and everything behind it) for good.
+		if (replay) return { ok: false, status: 409, code: 'timeclock_was_off' }
 		return { ok: false, status: 403, code: 'timeclock_not_enabled' }
+	}
 	const flags = await getStaffingFeatures(orgId, options.now).catch(() => null)
 	if (!flags) {
 		if (replay) return { ok: true }

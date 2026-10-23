@@ -85,6 +85,11 @@ export function clockNotice(
 				message: msg`The time clock is turned off on this terminal. Ask a manager.`,
 				kind: 'manager',
 			}
+		case 'timeclock_was_off':
+			return {
+				message: msg`The time clock was off on this terminal when this was punched. Ask a manager to add it.`,
+				kind: 'manager',
+			}
 		case 'kiosk_disabled':
 		case 'service_unavailable':
 			return {

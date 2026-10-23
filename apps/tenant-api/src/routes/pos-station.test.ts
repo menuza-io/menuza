@@ -318,8 +318,8 @@ describe('Station apps on a POS terminal', () => {
 				secret,
 				body: { pin },
 			})
-			// Nothing to choose before clocking in.
-			expect(out.body.breakKinds).toEqual([])
+			// Known before clocking in too, so a till can offer it offline.
+			expect(out.body.breakKinds).toEqual(['meal', 'rest'])
 			expect((await punch(secret, pin, 'clock_in')).status).toBe(200)
 			const working = await request('POST', '/pos/timeclock/identify', {
 				secret,
@@ -452,8 +452,8 @@ describe('Station apps on a POS terminal', () => {
 				timeclockEnabled: false,
 			})
 			const sneaky = await replay(never.secret, h.clock.now)
-			expect(sneaky.status).toBe(403)
-			expect(sneaky.body.error).toBe('timeclock_not_enabled')
+			expect(sneaky.status).toBe(409)
+			expect(sneaky.body.error).toBe('timeclock_was_off')
 
 			// Switched off: punches made before still land, ones made after do not.
 			const { secret, deviceId } = await pairTerminal({ terminalCode: 'T8' })
@@ -464,8 +464,9 @@ describe('Station apps on a POS terminal', () => {
 				.set({ timeclockEnabled: false, timeclockDisabledAt: h.clock.now })
 				.where(eq(posDevices.id, deviceId))
 			const after = await replay(secret, h.clock.now + 60_000)
-			expect(after.status).toBe(403)
-			expect(after.body.error).toBe('timeclock_not_enabled')
+			// Final, not a pause: the till sets it aside for a manager.
+			expect(after.status).toBe(409)
+			expect(after.body.error).toBe('timeclock_was_off')
 
 			// The organization's clock known to be off holds it (the till keeps it, a pause code).
 			staffingFlags.set(ORG_A, {
@@ -760,6 +761,18 @@ describe('Station apps on a POS terminal', () => {
 			expect(((await refused.json()) as { error: string }).error).toBe(
 				'guest_permission_required',
 			)
+			// The roster is organization-wide: a member limited to some locations cannot change it.
+			const scoped = await mintOperator(ORG_A, {
+				timeclock: false,
+				reservations: true,
+				guestDetails: true,
+				locationIds: ['loc_elsewhere'],
+			})
+			const narrow = await put(scoped, false)
+			expect(narrow.status).toBe(403)
+			expect(((await narrow.json()) as { error: string }).error).toBe(
+				'location_not_allowed',
+			)
 			expect((await put(noGuest, false)).status).toBe(200)
 			expect((await put(await mintOperator(), true)).status).toBe(200)
 			// Who granted what, and when, stays on record.
@@ -907,14 +920,16 @@ describe('Station apps on a POS terminal', () => {
 				verified.ok &&
 					verified.context.grants.has('read:reservation_guest:any'),
 			).toBe(true)
-			// Each token is on record: who, at which till, with guest details.
+			// On record once per sign-in: who, at which till, with guest details.
+			expect((await token(secret, sessionToken)).status).toBe(200)
 			const db = await getTenantDb(ORG_A)
 			const { rsvAuditLog } = await import('@repo/tenant-db')
-			const [row] = await db
+			const rows = await db
 				.select()
 				.from(rsvAuditLog)
-				.where(eq(rsvAuditLog.action, 'station.token_issued'))
-			expect(row).toMatchObject({
+				.where(eq(rsvAuditLog.action, 'station.host_stand_opened'))
+			expect(rows).toHaveLength(1)
+			expect(rows[0]).toMatchObject({
 				actorId: `staff:${staffId}`,
 				entityType: 'pos_device',
 				changes: { guestDetails: true },

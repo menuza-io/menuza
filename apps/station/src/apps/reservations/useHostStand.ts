@@ -129,6 +129,8 @@ export function useHostStand({
 						: (etag.current ?? undefined),
 				)
 				const waitlist = await loadWaitlist(grant).catch(() => null)
+				// A waitlist that did not load is shown as it was, marked not up to date.
+				const waitlistStale = grant.features.waitlist && waitlist === null
 				if (!current()) return latest.current
 				shown.current = ticket
 				if (!('unchanged' in day)) latest.current = day.feed
@@ -142,14 +144,14 @@ export function useHostStand({
 										feed: held,
 										grant,
 										waitlist: waitlist ?? [],
-										stale: false,
+										stale: waitlistStale,
 									}
 								: previous
 						return {
 							...previous,
 							grant,
 							waitlist: waitlist ?? previous.waitlist,
-							stale: false,
+							stale: waitlistStale,
 						}
 					}
 					etag.current = day.etag
@@ -160,7 +162,7 @@ export function useHostStand({
 						waitlist:
 							waitlist ??
 							(previous.status === 'ready' ? previous.waitlist : []),
-						stale: false,
+						stale: waitlistStale,
 					}
 				})
 				return latest.current

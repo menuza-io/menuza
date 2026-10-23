@@ -129,6 +129,30 @@ describe('syncQueue', () => {
 		expect((await queue.pending())[0]!.attempts).toBe(0)
 	})
 
+	it('sets aside a punch made after the clock was switched off here, and goes on', async () => {
+		await add('a', 1)
+		await add('b', 2)
+		const seen: string[] = []
+		const outcome = await run(async (body) => {
+			seen.push(body.id)
+			if (body.id === 'a') throw new KioskApiError(409, 'timeclock_was_off')
+			return { outcome: 'accepted' }
+		})
+		// A final answer, not a pause: the punch behind it still goes out.
+		expect(seen).toEqual(['a', 'b'])
+		expect(outcome).toMatchObject({ synced: 1, failed: 1, remaining: 0 })
+		expect((await queue.failed())[0]!.failure).toBe('timeclock_was_off')
+	})
+
+	it('clears only the refused punches someone has seen', async () => {
+		await add('a', 1)
+		await add('b', 2)
+		await queue.markFailed('a', 'invalid_pin')
+		await queue.markFailed('b', 'invalid_pin')
+		await queue.clearFailed(['a'])
+		expect((await queue.failed()).map((row) => row.id)).toEqual(['b'])
+	})
+
 	it('gives up on a punch after repeated server errors', async () => {
 		await add('a', 1)
 		const punch = async () => {

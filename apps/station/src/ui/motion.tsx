@@ -106,10 +106,13 @@ export function Toast({
 	message,
 	onDone,
 	durationMs = 6000,
+	liftAbove,
 }: {
 	message: ToastMessage | null
 	onDone: () => void
 	durationMs?: number
+	/** Rise above this element (a dock of things to tap) instead of covering it. */
+	liftAbove?: React.RefObject<HTMLElement | null>
 }) {
 	const { _ } = useLingui()
 	const [shown, setShown] = useState<ToastMessage | null>(message)
@@ -118,6 +121,7 @@ export function Toast({
 	const ref = useRef<HTMLDivElement>(null)
 	const layer = useRef<HTMLDivElement>(null)
 	const host = useModalHost()
+	const lift = useHeightOf(liftAbove)
 	/** The message whose action already ran: a second tap does nothing. */
 	const acted = useRef<number | null>(null)
 
@@ -162,7 +166,13 @@ export function Toast({
 			<div
 				ref={layer}
 				popover="manual"
-				className="pb-safe pointer-events-none fixed inset-x-0 top-auto bottom-0 z-50 m-0 flex h-auto w-full max-w-none justify-center overflow-visible border-0 bg-transparent p-0 px-4 [&:not(:popover-open)]:hidden"
+				// Inside a sheet nothing sits under it: the lift is for the page only.
+				style={
+					{
+						'--toast-lift': `${host ? 0 : lift}px`,
+					} as React.CSSProperties
+				}
+				className="pb-safe pointer-events-none fixed inset-x-0 top-auto bottom-(--toast-lift) z-50 m-0 flex h-auto w-full max-w-none justify-center overflow-visible border-0 bg-transparent p-0 px-4 [&:not(:popover-open)]:hidden"
 			>
 				{shown ? (
 					<div
@@ -206,6 +216,20 @@ export function Toast({
 		</>
 	)
 	return host ? createPortal(toast, host) : toast
+}
+
+/** An element's height, kept current as it changes (0 without one). */
+function useHeightOf(ref?: React.RefObject<HTMLElement | null>): number {
+	const [height, setHeight] = useState(0)
+	useEffect(() => {
+		const el = ref?.current
+		if (!el || typeof ResizeObserver === 'undefined') return
+		const observer = new ResizeObserver(() => setHeight(el.offsetHeight))
+		observer.observe(el)
+		setHeight(el.offsetHeight)
+		return () => observer.disconnect()
+	}, [ref])
+	return height
 }
 
 /**

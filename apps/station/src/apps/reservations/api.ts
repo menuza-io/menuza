@@ -68,6 +68,11 @@ export class HostApiError extends Error {
 	get offline(): boolean {
 		return this.status === 0
 	}
+
+	/** The request went out and no answer came back in time: it may have been applied. */
+	get unsure(): boolean {
+		return this.code === 'timeout'
+	}
 }
 
 const errorBody = z
@@ -134,8 +139,11 @@ export function createHostApi(deps: HostDeps) {
 			})
 			noteServerDate(response, sentAt)
 			return response
-		} catch {
-			throw new HostApiError(0, 'network_unavailable')
+		} catch (error) {
+			// No answer in time is not the same as no connection: a write may have landed.
+			const timedOut =
+				error instanceof DOMException && error.name === 'TimeoutError'
+			throw new HostApiError(0, timedOut ? 'timeout' : 'network_unavailable')
 		}
 	}
 
@@ -243,7 +251,7 @@ export function createHostApi(deps: HostDeps) {
 	async function write(
 		path: string,
 		body: unknown,
-		idempotencyKey = crypto.randomUUID(),
+		idempotencyKey: string = crypto.randomUUID(),
 	) {
 		const result = await call('POST', path, z.unknown(), {
 			body,
@@ -345,58 +353,76 @@ export function createHostApi(deps: HostDeps) {
 			)
 		},
 
-		/** A party with no booking, seated now. */
+		/**
+		 * A party with no booking, seated now. Pass the same `idempotencyKey` when
+		 * trying again after no answer, so the party is never seated twice.
+		 */
 		async walkIn(
 			input: {
 				partySize: number
 				tableIds: string[]
 				guestName?: string
 			} & Overbook,
+			idempotencyKey?: string,
 		) {
-			return write('/walk-ins', {
-				locationId: await locationId(),
-				partySize: input.partySize,
-				tableIds: input.tableIds,
-				...(input.overbook
-					? { overbook: true, overbookReason: input.overbookReason }
-					: {}),
-				...(input.guestName?.trim()
-					? { guestName: input.guestName.trim() }
-					: {}),
-			})
-		},
-
-		async book(input: {
-			date: string
-			time: string
-			partySize: number
-			firstName: string
-			lastName: string
-			phone: string | null
-			notes: string | null
-			tableIds?: string[]
-		}) {
-			return write('/reservations', {
-				locationId: await locationId(),
-				date: input.date,
-				time: input.time,
-				partySize: input.partySize,
-				channel: 'host',
-				guest: {
-					firstName: input.firstName.trim(),
-					lastName: input.lastName.trim(),
-					...(input.phone ? { phone: input.phone } : {}),
+			return write(
+				'/walk-ins',
+				{
+					locationId: await locationId(),
+					partySize: input.partySize,
+					tableIds: input.tableIds,
+					...(input.overbook
+						? { overbook: true, overbookReason: input.overbookReason }
+						: {}),
+					...(input.guestName?.trim()
+						? { guestName: input.guestName.trim() }
+						: {}),
 				},
-				...(input.notes ? { staffNotes: input.notes } : {}),
-				...(input.tableIds?.length ? { tableIds: input.tableIds } : {}),
-			})
+				idempotencyKey,
+			)
 		},
 
-		async joinWaitlist(input: {
-			displayName: string
-			partySize: number
-			phone: string | null
-		}) {
+		async book(
+			input: {
+				date: string
+				time: string
+				partySize: number
+				firstName: string
+				lastName: string
+				phone: string | null
+				notes: string | null
+				tableIds?: string[]
+			},
+			idempotencyKey?: string,
+		) {
+			return write(
+				'/reservations',
+				{
+					locationId: await locationId(),
+					date: input.date,
+					time: input.time,
+					partySize: input.partySize,
+					channel: 'host',
+					guest: {
+						firstName: input.firstName.trim(),
+						lastName: input.lastName.trim(),
+						...(input.phone ? { phone: input.phone } : {}),
+					},
+					...(input.notes ? { staffNotes: input.notes } : {}),
+					...(input.tableIds?.length ? { tableIds: input.tableIds } : {}),
+				},
+				idempotencyKey,
+			)
+		},
+
+		async joinWaitlist(
+			input: {
+				displayName: string
+				partySize: number
+				phone: string | null
+			},
+			idempotencyKey: string = crypto.randomUUID(),
+		) {
 			const result = await call(
 				'POST',
 				'/waitlist',
@@ -408,7 +434,7 @@ export function createHostApi(deps: HostDeps) {
 						partySize: input.partySize,
 						...(input.phone ? { phone: input.phone } : {}),
 					},
-					idempotencyKey: crypto.randomUUID(),
+					idempotencyKey,
 				},
 			)
 			return 'data' in result ? result.data.entry : null

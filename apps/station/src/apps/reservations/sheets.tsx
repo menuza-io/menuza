@@ -536,9 +536,13 @@ export function TableSheet({
 }) {
 	const { _ } = useLingui()
 	const [size, setSize] = useState(2)
+	// A new table starts at two; the same table redrawn by a poll keeps the host's choice.
+	const tableId = target?.table.id ?? null
+	const maxCovers = target?.table.maxCovers ?? 2
 	useEffect(() => {
-		if (target) setSize(Math.min(target.table.maxCovers, 2))
-	}, [target])
+		if (tableId) setSize(Math.min(maxCovers, 2))
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- reset per table only
+	}, [tableId])
 	const state = target?.state
 	const next =
 		state && state.kind !== 'seated' ? state.next : (state?.next ?? null)

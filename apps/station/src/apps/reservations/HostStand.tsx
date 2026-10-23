@@ -99,12 +99,39 @@ export function HostStand({
 	const [busy, setBusy] = useState(false)
 	// A double tap on a toast's action must not run the change twice.
 	const busyRef = useRef(false)
+	/** Settles when the change in flight (and its refresh) is done. */
+	const settled = useRef<Promise<void>>(Promise.resolve())
+	/**
+	 * One key per booking or waitlist form: trying again after no answer sends
+	 * the same key, so the server records the guest once. A new form, a success
+	 * or a definite refusal starts a new one.
+	 */
+	const bookingKey = useRef(crypto.randomUUID())
+	const joinKey = useRef(crypto.randomUUID())
+	const keyed = useCallback(
+		async (
+			ref: { current: string },
+			send: (key: string) => Promise<unknown>,
+		) => {
+			try {
+				const result = await send(ref.current)
+				ref.current = crypto.randomUUID()
+				return result
+			} catch (error) {
+				if (!(error instanceof HostApiError && error.offline))
+					ref.current = crypto.randomUUID()
+				throw error
+			}
+		},
+		[],
+	)
 	/** A party bigger than the table the host tapped: asked before seating. */
 	const [tooSmall, setTooSmall] = useState<{
 		placing: Placing
 		table: DayTable
 	} | null>(null)
 	const [toast, setToast] = useState<ToastMessage | null>(null)
+	const dockRef = useRef<HTMLElement>(null)
 	const dismissToast = useCallback(() => setToast(null), [])
 	const say = useCallback(
 		(text: string, extra: Partial<ToastMessage> = {}) =>
@@ -157,6 +184,10 @@ export function HostStand({
 		) => {
 			busyRef.current = true
 			setBusy(true)
+			let finish: () => void = () => {}
+			settled.current = new Promise((resolve) => {
+				finish = resolve
+			})
 			let refreshed = false
 			try {
 				await work()
@@ -166,9 +197,11 @@ export function HostStand({
 						? {
 								action: {
 									label: _(t`Undo`),
+									// A tap while the floor is still reloading waits for it, then undoes.
 									run: () => {
-										if (busyRef.current) return
-										void (async () => {
+										void settled.current.then(async () => {
+											busyRef.current = true
+											setBusy(true)
 											try {
 												await undo()
 												await refresh({ full: true })
@@ -177,8 +210,11 @@ export function HostStand({
 												say(_(t`Could not undo. Check the floor.`), {
 													tone: 'danger',
 												})
+											} finally {
+												busyRef.current = false
+												setBusy(false)
 											}
-										})()
+										})
 									},
 								},
 							}
@@ -212,7 +248,7 @@ export function HostStand({
 							action: {
 								label: _(t`Seat anyway`),
 								run: () => {
-									if (!busyRef.current) anyway.run()
+									void settled.current.then(anyway.run)
 								},
 							},
 						},
@@ -222,10 +258,14 @@ export function HostStand({
 				say(
 					failure?.stale
 						? _(t`Someone changed this a moment ago. Here is the latest.`)
-						: failure?.offline
-							? _(t`No connection. Nothing was changed.`)
-							: failure?.serverMessage ||
-								_(t`That did not go through. Try again.`),
+						: failure?.unsure
+							? _(
+									t`No answer in time. It may have gone through: check the floor before trying again.`,
+								)
+							: failure?.offline
+								? _(t`No connection. Nothing was changed.`)
+								: failure?.serverMessage ||
+									_(t`That did not go through. Try again.`),
 					{ tone: 'danger' },
 				)
 				return false
@@ -233,6 +273,7 @@ export function HostStand({
 				if (!refreshed) await refresh({ full: true })
 				busyRef.current = false
 				setBusy(false)
+				finish()
 			}
 		},
 		[refresh, say, _],
@@ -302,12 +343,16 @@ export function HostStand({
 			const size = current.partySize
 			await act(
 				() =>
-					api.walkIn({
-						partySize: size,
-						tableIds: [table.id],
-						guestName: current.guestName,
-						...overbook,
-					}),
+					api.walkIn(
+						{
+							partySize: size,
+							tableIds: [table.id],
+							guestName: current.guestName,
+							...overbook,
+						},
+						// Insisting is a new request; the first try keeps the party's key.
+						insist ? undefined : current.key,
+					),
 				_(t`Seated a walk-in of ${size} at ${table.label}.`),
 				undefined,
 				again,
@@ -431,12 +476,15 @@ export function HostStand({
 						covers
 					</Trans>
 				</span>
-				{ready.stale ? (
-					<span className="text-warning inline-flex items-center gap-1.5 text-sm font-medium">
-						<CloudOff className="size-4" />
-						<Trans>Not up to date</Trans>
-					</span>
-				) : null}
+				{/* Always present, so going stale is announced. */}
+				<span role="status" className="contents">
+					{ready.stale ? (
+						<span className="text-warning inline-flex items-center gap-1.5 text-sm font-medium">
+							<CloudOff className="size-4" />
+							<Trans>Not up to date</Trans>
+						</span>
+					) : null}
+				</span>
 				<div className="ms-auto flex flex-wrap items-center gap-2">
 					<Button variant="outline" onClick={() => setWalkInOpen(true)}>
 						<UserPlus className="size-4" />
@@ -445,7 +493,10 @@ export function HostStand({
 					{ready.grant.features.waitlist ? (
 						<Button
 							variant="outline"
-							onClick={() => setJoinOpen(true)}
+							onClick={() => {
+								joinKey.current = crypto.randomUUID()
+								setJoinOpen(true)
+							}}
 							aria-label={_(t`Add to the waitlist`)}
 						>
 							<ListPlus className="size-4" />
@@ -454,13 +505,24 @@ export function HostStand({
 							</span>
 						</Button>
 					) : null}
-					<Button variant="primary" onClick={() => setBookingOpen(true)}>
+					<Button
+						variant="primary"
+						onClick={() => {
+							bookingKey.current = crypto.randomUUID()
+							setBookingOpen(true)
+						}}
+					>
 						<CalendarPlus className="size-4" />
 						<Trans>Booking</Trans>
 					</Button>
 				</div>
 			</div>
 
+			<p role="status" className="sr-only">
+				{placing
+					? _(t`Picked up ${placingName}. Tap a table to seat them.`)
+					: ''}
+			</p>
 			<Reveal open={placing !== null}>
 				<div className="bg-primary text-primary-foreground flex items-center gap-3 px-4 py-2.5">
 					<p className="min-w-0 flex-1 font-semibold">
@@ -527,6 +589,7 @@ export function HostStand({
 			)}
 
 			<Dock
+				ref={dockRef}
 				arrivals={due}
 				missed={missed}
 				waitlist={ready.waitlist}
@@ -591,6 +654,7 @@ export function HostStand({
 						kind: 'walk_in',
 						partySize: size,
 						guestName: '',
+						key: crypto.randomUUID(),
 					}
 					if (!fits(table, size)) setTooSmall({ placing: walkIn, table })
 					else void seat(walkIn, table, false)
@@ -601,7 +665,12 @@ export function HostStand({
 				onClose={() => setWalkInOpen(false)}
 				onPlace={(partySize, guestName) => {
 					setWalkInOpen(false)
-					setPlacing({ kind: 'walk_in', partySize, guestName })
+					setPlacing({
+						kind: 'walk_in',
+						partySize,
+						guestName,
+						key: crypto.randomUUID(),
+					})
 				}}
 			/>
 			<BookingSheet
@@ -612,7 +681,7 @@ export function HostStand({
 				onClose={() => setBookingOpen(false)}
 				onBook={(input) =>
 					void act(
-						() => api.book(input),
+						() => keyed(bookingKey, (key) => api.book(input, key)),
 						_(
 							t`Booked ${input.firstName} for ${input.partySize} at ${input.timeLabel}.`,
 						),
@@ -625,7 +694,7 @@ export function HostStand({
 				onClose={() => setJoinOpen(false)}
 				onJoin={(input) =>
 					void act(
-						() => api.joinWaitlist(input),
+						() => keyed(joinKey, (key) => api.joinWaitlist(input, key)),
 						_(t`${input.displayName} is on the waitlist.`),
 					).then((ok) => ok && setJoinOpen(false))
 				}
@@ -661,7 +730,7 @@ export function HostStand({
 					</Trans>
 				</p>
 			</Modal>
-			<Toast message={toast} onDone={dismissToast} />
+			<Toast message={toast} onDone={dismissToast} liftAbove={dockRef} />
 		</div>
 	)
 }

@@ -1029,6 +1029,9 @@ function ClockOverLock({
 	useEffect(() => {
 		const dialog = ref.current
 		if (dialog && !dialog.open) dialog.showModal()
+		// Closed, not just removed: focus goes back to the lock screen's button,
+		// so a keyboard can type the next PIN without a tap first.
+		return () => dialog?.close()
 	}, [])
 	return (
 		<dialog

@@ -112,6 +112,12 @@ export function TimeClock({
 	const [failedOpen, setFailedOpen] = useState(false)
 	/** Who an offline PIN belongs to, when this till has seen it online; null when not. */
 	const [offlineWho, setOfflineWho] = useState<ClockPerson | null>(null)
+	/** Why punches are being saved for later: no connection, or the server cannot judge them. */
+	const [offlineReason, setOfflineReason] = useState<'offline' | 'unavailable'>(
+		'offline',
+	)
+	/** Punches still waiting after trying to send them: what identify shows may be behind. */
+	const [behind, setBehind] = useState(false)
 	/** A break was chosen where the rules know more than one kind. */
 	const [pickingBreak, setPickingBreak] = useState(false)
 	/** Bumped by any touch, so a person still typing is not sent back to the pad. */
@@ -158,7 +164,7 @@ export function TimeClock({
 		return () => window.clearTimeout(timer)
 	}, [flow, touched, reset])
 
-	// A wrong-PIN wait counts down on the monotonic clock.
+	// A wrong-PIN wait counts down here; the server enforces it regardless.
 	const pausedUntil = flow.screen === 'pin' ? flow.pausedUntil : null
 	const [now, setNow] = useState(() => Date.now())
 	useEffect(() => {
@@ -196,21 +202,17 @@ export function TimeClock({
 	 * greets the person if it has seen their PIN online, and says plainly when
 	 * it cannot tell whose PIN it is.
 	 */
-	const goOffline = useCallback(async (pin: string) => {
-		const found = await findClockPerson(pin).catch(() => ({ person: null }))
-		// Too many PINs the till could not place: the same wait as signing in.
-		if ('wait' in found) {
-			dispatch({
-				type: 'rejected',
-				notice: { code: 'backoff', retryAfterSeconds: found.wait },
-				now: Date.now(),
-				mode: 'pin',
-			})
-			return
-		}
-		setOfflineWho(found.person)
-		dispatch({ type: 'offline' })
-	}, [])
+	const goOffline = useCallback(
+		async (pin: string, why: 'offline' | 'unavailable' = 'offline') => {
+			setOfflineReason(why)
+			const found = await findClockPerson(pin).catch(() => ({ person: null }))
+			// Too many PINs the till could not place: it stops putting names to PINs
+			// for a while, but the punch is still saved (and checked when sent).
+			setOfflineWho('wait' in found ? null : found.person)
+			dispatch({ type: 'offline' })
+		},
+		[],
+	)
 
 	const submitPin = useCallback(async () => {
 		if (flow.screen !== 'pin' || busyRef.current || flow.pin.length < 4) return
@@ -224,13 +226,19 @@ export function TimeClock({
 				return
 			}
 			// Punches saved during an outage go first, so the state shown is current.
-			if (waiting > 0) await flushPunches(settings, online).catch(() => null)
+			let stillWaiting = false
+			if (waiting > 0) {
+				const sent = await flushPunches(settings, online).catch(() => null)
+				stillWaiting = (sent?.remaining ?? waiting) > 0
+				refreshWaiting()
+			}
+			setBehind(stillWaiting)
 			const who = await api.identify(pin)
 			void rememberClockPerson(pin, who).catch(() => {})
 			dispatch({ type: 'identified', who })
 		} catch (error) {
-			if (error instanceof ClockNetworkError || worthSavingForLater(error))
-				await goOffline(pin)
+			if (error instanceof ClockNetworkError) await goOffline(pin)
+			else if (worthSavingForLater(error)) await goOffline(pin, 'unavailable')
 			else {
 				if (error instanceof ClockApiError && error.code === 'invalid_pin')
 					void forgetClockPin(pin).catch(() => {})
@@ -240,7 +248,7 @@ export function TimeClock({
 			busyRef.current = false
 			setBusy(false)
 		}
-	}, [flow, online, api, reject, goOffline, waiting, settings])
+	}, [flow, online, api, reject, goOffline, waiting, settings, refreshWaiting])
 
 	/**
 	 * Sends a punch. Its id is made once and reused if the answer is lost, so a
@@ -440,6 +448,7 @@ export function TimeClock({
 								) : flow.screen === 'actions' ? (
 									<Actions
 										flow={flow}
+										behind={behind}
 										busy={busy}
 										onChoose={choose}
 										onBack={reset}
@@ -469,11 +478,10 @@ export function TimeClock({
 								) : flow.screen === 'offline' ? (
 									<OfflineActions
 										who={offlineWho}
+										reason={offlineReason}
 										busy={busy}
 										locale={i18n.locale}
-										onChoose={(event, positionId) =>
-											void punch(event, positionId ? { positionId } : {})
-										}
+										onChoose={(event, extras) => void punch(event, extras)}
 										onBack={reset}
 									/>
 								) : flow.screen === 'done' ? (
@@ -749,6 +757,7 @@ function EventTile({
 
 function Actions({
 	flow,
+	behind,
 	busy,
 	onChoose,
 	onBack,
@@ -756,6 +765,8 @@ function Actions({
 	timeZone,
 }: {
 	flow: Extract<Flow, { screen: 'actions' }>
+	/** Punches saved earlier on this till have not gone out yet. */
+	behind: boolean
 	busy: boolean
 	onChoose: (event: ClockEvent) => void
 	onBack: () => void
@@ -786,6 +797,16 @@ function Actions({
 					{_(STATE_LINE[who.state])}
 				</p>
 			</div>
+			{behind ? (
+				<p className="t-stagger-line t-stagger-line--2 bg-warning/12 text-warning flex items-start gap-2 rounded-xl px-3 py-2 text-sm font-medium">
+					<CloudOff className="mt-0.5 size-4 shrink-0" />
+					<Trans>
+						Punches saved on this terminal have not gone out yet, so this may be
+						out of date. If you already punched here, ask a manager before
+						punching again.
+					</Trans>
+				</p>
+			) : null}
 			{who.allowedEvents.length > 0 ? (
 				<div className="t-stagger-line t-stagger-line--3 grid grid-cols-2 gap-3">
 					{who.allowedEvents.map((event, index) => (
@@ -928,6 +949,7 @@ function Tips({
 
 function OfflineActions({
 	who,
+	reason,
 	busy,
 	locale,
 	onChoose,
@@ -935,13 +957,29 @@ function OfflineActions({
 }: {
 	/** The person this PIN belonged to when the till last saw it online. */
 	who: ClockPerson | null
+	/** No connection at all, or the server cannot judge punches right now (an outage or a pause). */
+	reason: 'offline' | 'unavailable'
 	busy: boolean
 	locale: string
-	onChoose: (event: ClockEvent, positionId?: string) => void
+	onChoose: (
+		event: ClockEvent,
+		extras?: { positionId?: string; breakKind?: 'meal' | 'rest' },
+	) => void
 	onBack: () => void
 }) {
 	const [pickRole, setPickRole] = useState(false)
+	const [pickBreak, setPickBreak] = useState(false)
 	const positions = who?.positions ?? []
+	const breakKinds = who?.breakKinds ?? []
+	if (pickBreak)
+		return (
+			<BreakPick
+				kinds={breakKinds}
+				busy={busy}
+				onPick={(breakKind) => onChoose('break_start', { breakKind })}
+				onBack={() => setPickBreak(false)}
+			/>
+		)
 	if (pickRole)
 		return (
 			<>
@@ -957,7 +995,7 @@ function OfflineActions({
 							size="lg"
 							disabled={busy}
 							className="justify-start"
-							onClick={() => onChoose('clock_in', position.id)}
+							onClick={() => onChoose('clock_in', { positionId: position.id })}
 						>
 							{locale === 'ar' && position.nameAr
 								? position.nameAr
@@ -981,7 +1019,21 @@ function OfflineActions({
 				</h2>
 				<p className="t-stagger-line t-stagger-line--2 text-muted-foreground mt-1 flex items-start gap-2">
 					<CloudOff className="mt-1 size-4 shrink-0" />
-					{who ? (
+					{reason === 'unavailable' ? (
+						who ? (
+							<Trans>
+								The time clock cannot check punches right now. Your punch is
+								saved on this terminal and sent as soon as it can; your PIN is
+								checked then.
+							</Trans>
+						) : (
+							<Trans>
+								The time clock cannot check punches right now, and this terminal
+								does not know this PIN. Make sure it is yours: the punch is
+								saved, sent and checked as soon as it can be.
+							</Trans>
+						)
+					) : who ? (
 						<Trans>
 							No connection. Your punch is saved on this terminal and sent when
 							it is back; your PIN is checked then.
@@ -1005,7 +1057,9 @@ function OfflineActions({
 						onChoose={(chosen) =>
 							chosen === 'clock_in' && positions.length > 1
 								? setPickRole(true)
-								: onChoose(chosen)
+								: chosen === 'break_start' && breakKinds.length > 1
+									? setPickBreak(true)
+									: onChoose(chosen)
 						}
 					/>
 				))}
@@ -1092,9 +1146,14 @@ function FailedPunches({
 	useEffect(() => {
 		setArmed(false)
 		if (!open) return
-		void punchQueue()
-			.failed()
-			.then(setRows, () => setRows([]))
+		// Kept current while open: a sync may refuse another punch meanwhile.
+		const load = () =>
+			void punchQueue()
+				.failed()
+				.then(setRows, () => setRows([]))
+		load()
+		const timer = window.setInterval(load, 5_000)
+		return () => window.clearInterval(timer)
 	}, [open])
 	const time = new Intl.DateTimeFormat(i18n.locale, {
 		weekday: 'short',
@@ -1119,7 +1178,9 @@ function FailedPunches({
 							// Two taps: the list is the only record of these until a manager adds them.
 							if (!armed) return setArmed(true)
 							setArmed(false)
-							void punchQueue().clearFailed().finally(onCleared)
+							void punchQueue()
+								.clearFailed(rows.map((row) => row.id))
+								.finally(onCleared)
 						}}
 					>
 						{armed ? (

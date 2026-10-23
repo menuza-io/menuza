@@ -1561,12 +1561,17 @@ async function writeOrderLines(tx: Tx, order: PosOrderRequest) {
  * bound it to another one: its sale happened there, so it still uploads.
  */
 function startedBeforeBinding(
-	device: Pick<PosDevice, 'locationBoundAt'>,
+	device: Pick<PosDevice, 'locationBoundAt' | 'pairedAt'>,
 	order: Pick<PosOrderRequest, 'createdAt'>,
 ) {
 	if (device.locationBoundAt === null) return false
 	const startedAt = Date.parse(order.createdAt)
-	return Number.isFinite(startedAt) && startedAt < device.locationBoundAt
+	// Between pairing and binding: a till cannot claim an earlier sale than it could have made.
+	return (
+		Number.isFinite(startedAt) &&
+		startedAt >= device.pairedAt &&
+		startedAt < device.locationBoundAt
+	)
 }
 
 export async function upsertPosOrder(

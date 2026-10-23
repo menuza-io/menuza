@@ -31,6 +31,7 @@ import {
 	updateDeviceSettings,
 } from '../services/pos-service.ts'
 import { getStaffingFeatures } from '../lib/scope-context.ts'
+import { writeOperatorAudit } from '../services/staff-audit.ts'
 import {
 	dayReport,
 	listShifts,
@@ -139,6 +140,18 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			result.message ? { message: result.message } : {},
 		)
 	}
+	// A terminal that will open with Station apps on is a change like any switch.
+	if (parsed.data.timeclockEnabled || parsed.data.reservationsEnabled)
+		await writeOperatorAudit(g.db, g.auth.userId, null, {
+			action: 'pos.pairing_code.created',
+			entityType: 'pos_pairing_code',
+			entityId: result.value.terminalCode,
+			changes: {
+				timeclockEnabled: parsed.data.timeclockEnabled === true,
+				reservationsEnabled: parsed.data.reservationsEnabled === true,
+				locationId: parsed.data.locationId ?? null,
+			},
+		})
 	// The code is shown once: only its hash is stored.
 	return c.json(result.value, 201, noStore)
 })
@@ -351,6 +364,10 @@ operatorPosRoutes.put('/hosts/:staffId', async (c) => {
 	if ('error' in g) return g.error
 	if (!g.auth.stationApps.reservations)
 		return posError(403, 'reservations_permission_required')
+	// The roster is the organization's (a host can sign in at any of its tills):
+	// only someone whose reservations reach every location may change it.
+	if (g.auth.stationApps.locationIds !== null)
+		return posError(403, 'location_not_allowed')
 	const parsed = hostSchema.safeParse(await c.req.json().catch(() => ({})))
 	if (!parsed.success) return posError(400, 'invalid_request')
 	// Guests' phones, emails and allergies: only someone who may read them may share them.

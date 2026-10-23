@@ -11,6 +11,7 @@ import { CACHE_MAX_AGE_MS, resetMonotonicWait } from '~/lib/signin.ts'
 const rana = {
 	firstName: 'Rana',
 	positions: [{ id: 'p1', name: 'Server', nameAr: null }],
+	breakKinds: [] as Array<'meal' | 'rest'>,
 }
 
 beforeEach(async () => {

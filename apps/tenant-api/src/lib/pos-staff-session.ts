@@ -81,6 +81,8 @@ export type PosStaffSession = {
 	host: boolean
 	/** On the host roster with guest details: full contacts, allergies, notes. */
 	guestDetails: boolean
+	/** When the person signed in (epoch ms): one sign-in, one audit entry. */
+	signedInAt: number
 }
 
 const sessionInvalid = () => posError(401, 'staff_session_invalid')
@@ -176,6 +178,7 @@ export async function verifyPosStaffSession(
 			role: manager ? 'manager' : 'cashier',
 			host: Boolean(host),
 			guestDetails: host?.guestDetails === true,
+			signedInAt: typeof payload.iat === 'number' ? payload.iat * 1000 : 0,
 		},
 	}
 }

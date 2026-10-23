@@ -454,6 +454,63 @@ describe('Station host stand contract', () => {
 		expect(after.text).toContain('Haddad')
 		expect(after.text).not.toContain('"Mia"')
 
+		// Nor replaces a contact detail or an allergy note it could not see; it
+		// only fills what the profile lacks.
+		const hostWrite = (key: string, body: unknown) =>
+			call(
+				'POST',
+				'/operator/reservations/book/walk-ins',
+				{
+					authorization: `Bearer ${plain.body.token}`,
+					'Idempotency-Key': key,
+				},
+				body,
+			)
+		for (const [key, email] of [
+			['station-contract-fill', 'maya@example.com'],
+			['station-contract-replace', 'stranger@example.com'],
+		] as const) {
+			const r = await hostWrite(key, {
+				locationId: PUBLIC_LOC,
+				partySize: 2,
+				tableIds: ['tbl_pub_2'],
+				overbook: true,
+				overbookReason: 'test',
+				guest: { firstName: 'Mia', phone: '+14155550111', email },
+			})
+			expect(r.status, r.text).toBe(201)
+		}
+		const mayaFeed = await call(
+			'GET',
+			`/operator/reservations/book/day?locationId=${PUBLIC_LOC}&date=${tomorrow}`,
+			rsv,
+		)
+		const maya = (
+			mayaFeed.body.reservations as Array<{
+				id: string
+				guest: { id: string; email?: string | null; phone?: string | null }
+			}>
+		).find((r) => r.id === bookedId)!
+		expect(maya.guest.email).toBe('maya@example.com')
+		expect(maya.guest.phone).toBe('+14155550111')
+		// By id: a null allergy from the till never clears the guest's.
+		const byId = await hostWrite('station-contract-by-id', {
+			locationId: PUBLIC_LOC,
+			partySize: 2,
+			tableIds: ['tbl_pub_2'],
+			overbook: true,
+			overbookReason: 'test',
+			guestId: maya.guest.id,
+			guest: { firstName: 'Mia', allergyNotes: null },
+		})
+		expect(byId.status, byId.text).toBe(201)
+		const stillThere = await call(
+			'GET',
+			`/operator/reservations/book/day?locationId=${PUBLIC_LOC}&date=${tomorrow}`,
+			rsv,
+		)
+		expect(stillThere.text).toContain('Peanuts')
+
 		const normalize = makeNormalizer(recordedNow)
 		if (RECORD) fs.mkdirSync(FIXTURE_DIR, { recursive: true })
 		for (const [name, reply] of Object.entries(replies)) {

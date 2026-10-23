@@ -238,6 +238,15 @@ export const usePos = create<PosState>((set, get) => ({
 			settings.tenantApiUrl !== before.tenantApiUrl
 		)
 			await forgetCachedStaff()
+		// Punches waiting for another restaurant must never be sent to this one:
+		// their PINs would be checked against the wrong staff.
+		if (
+			settings.slug !== before.slug ||
+			settings.tenantApiUrl !== before.tenantApiUrl
+		)
+			await punchQueue()
+				.wipe()
+				.catch(() => {})
 		saveSettings(settings)
 		set({ settings })
 		const slugChanged =

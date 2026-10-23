@@ -230,13 +230,19 @@ export function createClockQueue(deps: Deps = {}) {
 			await done(tx)
 		},
 
-		/** Forget refused punches once someone has seen them. */
-		async clearFailed(): Promise<void> {
+		/**
+		 * Forget refused punches once someone has seen them: only `ids` when given
+		 * (the ones on screen), so one refused while the list was open stays.
+		 */
+		async clearFailed(ids?: readonly string[]): Promise<void> {
+			const only = ids ? new Set(ids) : null
 			const rows = await all()
 			const db = await open()
 			const tx = db.transaction(PUNCHES, 'readwrite')
 			for (const row of rows) {
-				if (row.status === 'failed') tx.objectStore(PUNCHES).delete(row.id)
+				if (row.status !== 'failed') continue
+				if (only && !only.has(row.id)) continue
+				tx.objectStore(PUNCHES).delete(row.id)
 			}
 			await done(tx)
 		},
