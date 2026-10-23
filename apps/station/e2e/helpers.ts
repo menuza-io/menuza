@@ -91,6 +91,7 @@ export const backend = {
 			last?: string
 			pin?: string | null
 			manager?: boolean
+			host?: boolean | 'guest'
 			scopeId?: string
 			status?: string
 		} = {},

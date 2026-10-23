@@ -1,6 +1,9 @@
 import { t } from '@lingui/macro'
 import { type PosFiscalChainHead } from '@repo/common/pos-fiscal'
-import { POS_CONTRACT_VERSION } from '@repo/common/pos-orders'
+import {
+	POS_CONTRACT_VERSION,
+	type PosDeviceApps,
+} from '@repo/common/pos-orders'
 import { noteServerDate } from './clock.ts'
 import { type PosSettings } from './config.ts'
 import { db, type PosOrder } from './db.ts'
@@ -570,8 +573,12 @@ export type DeviceCheck = {
 		dayStartMinutes: number | null
 		shiftsRequired: boolean
 	}
-	/** Station apps the terminal offers (its setting and the organization's flag). */
-	apps?: { timeclock: boolean; reservations: boolean }
+	/**
+	 * Station apps the terminal offers (its setting and the organization's flag).
+	 * An app the server could not decide (the Menuza app unreachable) is left out:
+	 * the till keeps what it last knew.
+	 */
+	apps?: Partial<PosDeviceApps>
 	/** Tabs another terminal took over from this one. */
 	transfers?: Array<{ orderId: string; terminalCode: string }>
 	/** This terminal's fiscal chains as the server has them. */
@@ -642,11 +649,7 @@ export async function checkDeviceDetailed(
 							shiftsRequired: d.shiftsRequired === true,
 						}
 					: undefined,
-				// An older node reports no apps: it offers none.
-				apps: {
-					timeclock: body.apps?.timeclock === true,
-					reservations: body.apps?.reservations === true,
-				},
+				apps: readApps(body.apps),
 				transfers: Array.isArray(body.transfers) ? body.transfers : [],
 				fiscalChains: Array.isArray(body.fiscalChains) ? body.fiscalChains : [],
 				zatca: body.zatca ?? null,
@@ -663,6 +666,18 @@ export async function checkDeviceDetailed(
 	} catch {
 		return { verdict: 'unknown' }
 	}
+}
+
+function readApps(raw: unknown): Partial<PosDeviceApps> {
+	// An older node reports no apps: it offers none.
+	if (!raw || typeof raw !== 'object')
+		return { timeclock: false, reservations: false }
+	const apps: Partial<PosDeviceApps> = {}
+	const body = raw as Record<string, unknown>
+	if (typeof body.timeclock === 'boolean') apps.timeclock = body.timeclock
+	if (typeof body.reservations === 'boolean')
+		apps.reservations = body.reservations
+	return apps
 }
 
 export async function checkDevice(

@@ -107,7 +107,12 @@ export function createHostApi(deps: HostDeps) {
 		forSession: string
 		grant: PosReservationsTokenResponse
 	} | null = null
-	let inFlight: Promise<PosReservationsTokenResponse> | null = null
+	let inFlight: {
+		forSession: string
+		promise: Promise<PosReservationsTokenResponse>
+	} | null = null
+	/** Bumped by `forget`: a token minted for the person before is never kept. */
+	let generation = 0
 
 	const base = () => deps.settings().tenantApiUrl.replace(/\/+$/, '')
 
@@ -166,15 +171,19 @@ export function createHostApi(deps: HostDeps) {
 			cached.grant.expiresAt - now() > TOKEN_MARGIN_MS
 		)
 			return cached.grant
-		inFlight ??= mint(sessionToken)
+		if (inFlight?.forSession === sessionToken) return inFlight.promise
+		const startedIn = generation
+		const promise = mint(sessionToken)
 			.then((fresh) => {
-				cached = { forSession: sessionToken, grant: fresh }
+				if (startedIn === generation)
+					cached = { forSession: sessionToken, grant: fresh }
 				return fresh
 			})
 			.finally(() => {
-				inFlight = null
+				if (inFlight?.promise === promise) inFlight = null
 			})
-		return inFlight
+		inFlight = { forSession: sessionToken, promise }
+		return promise
 	}
 
 	async function call<S extends z.ZodTypeAny>(
@@ -238,7 +247,9 @@ export function createHostApi(deps: HostDeps) {
 		grant,
 		/** Forget the token (the till locked, or someone else signed in). */
 		forget() {
+			generation += 1
 			cached = null
+			inFlight = null
 		},
 
 		/** Today at this terminal's location, or `unchanged` against `etag`. */

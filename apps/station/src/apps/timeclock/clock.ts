@@ -1,4 +1,5 @@
 import {
+	ClockApiError,
 	clockRequest,
 	type ClockPunchBody,
 	type ClockRequestOptions,
@@ -48,6 +49,25 @@ export function stationClockApi(settings: PosSettings) {
 }
 
 export type StationClockApi = ReturnType<typeof stationClockApi>
+
+/**
+ * Refusals that say nothing about the punch itself (the server, or the App it
+ * asks, is down or paused): the punch is saved on the till and sent later,
+ * like one made with no connection. A PIN backoff is never one of them.
+ */
+const SAVE_FOR_LATER = new Set([
+	'service_unavailable',
+	'time_zone_unavailable',
+	'kiosk_disabled',
+	'pos_disabled',
+	'rate_limit_exceeded',
+])
+
+export function worthSavingForLater(error: unknown): boolean {
+	if (!(error instanceof ClockApiError)) return false
+	if (error.code === 'backoff' || error.code === 'person_locked') return false
+	return error.status >= 500 || SAVE_FOR_LATER.has(error.code)
+}
 
 let queue: ClockQueue | null = null
 /** The till's punch queue, opened on first use (tests start from a fresh one). */

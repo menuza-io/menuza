@@ -49,11 +49,16 @@ export type PosSettings = {
 /** The apps a Station tablet can show: the till, the time clock, the host stand. */
 export type StationApp = 'pos' | 'timeclock' | 'reservations'
 
-/** The active app if the terminal still offers it, else the till. */
+/**
+ * The active app if the terminal still offers it, else the till. A till where
+ * staff sign in opens its time clock over the lock instead (nobody punches
+ * from inside someone else's session), so it never shows it as an app.
+ */
 export function shownApp(
-	s: Pick<PosSettings, 'apps' | 'activeApp'>,
+	s: Pick<PosSettings, 'apps' | 'activeApp' | 'signInRequired'>,
 ): StationApp {
-	if (s.activeApp === 'timeclock' && s.apps.timeclock) return 'timeclock'
+	if (s.activeApp === 'timeclock' && s.apps.timeclock && !s.signInRequired)
+		return 'timeclock'
 	if (s.activeApp === 'reservations' && s.apps.reservations)
 		return 'reservations'
 	return 'pos'

@@ -19,13 +19,17 @@ import {
 	resolveHeldUpload,
 	listPendingCodes,
 	listPosOrders,
+	isUnknownLocation,
 	listStaffRoster,
+	removeHost,
 	removeManager,
 	revokeDevice,
 	revokePendingCode,
+	setHost,
 	setManager,
 	updateDeviceSettings,
 } from '../services/pos-service.ts'
+import { getStaffingFeatures } from '../lib/scope-context.ts'
 import {
 	dayReport,
 	listShifts,
@@ -102,6 +106,8 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
+	const denied = await stationAppsDenied(g.auth, parsed.data)
+	if (denied) return denied
 	let result: Awaited<ReturnType<typeof createPairingCode>>
 	try {
 		result = await createPairingCode(g.db, g.auth.orgId, {
@@ -212,6 +218,30 @@ operatorPosRoutes.post('/held/:id/resolve', async (c) => {
 // Staff sign-in settings
 // ---------------------------------------------------------------------------
 
+/**
+ * Switching a Station app on needs that module's settings permission, which App
+ * signs into the token (`stationApps`); switching one off never does. The time
+ * clock also needs the organization's staffing flag when this node can read it.
+ */
+async function stationAppsDenied(
+	auth: {
+		orgId: string
+		stationApps: { timeclock: boolean; reservations: boolean }
+	},
+	patch: { timeclockEnabled?: boolean; reservationsEnabled?: boolean },
+): Promise<Response | null> {
+	if (patch.timeclockEnabled === true) {
+		if (!auth.stationApps.timeclock)
+			return posError(403, 'timeclock_permission_required')
+		const flags = await getStaffingFeatures(auth.orgId).catch(() => null)
+		if (flags && (!flags.features.enabled || !flags.features.timeclock))
+			return posError(422, 'timeclock_disabled')
+	}
+	if (patch.reservationsEnabled === true && !auth.stationApps.reservations)
+		return posError(403, 'reservations_permission_required')
+	return null
+}
+
 const patchTerminalSchema = z
 	.strictObject({
 		signInRequired: z.boolean().optional(),
@@ -219,6 +249,7 @@ const patchTerminalSchema = z
 		shiftsRequired: z.boolean().optional(),
 		timeclockEnabled: z.boolean().optional(),
 		reservationsEnabled: z.boolean().optional(),
+		locationId: z.string().trim().min(1).max(100).optional(),
 	})
 	.refine((p) => Object.values(p).some((value) => value !== undefined))
 
@@ -229,6 +260,13 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
+	const denied = await stationAppsDenied(g.auth, parsed.data)
+	if (denied) return denied
+	if (
+		parsed.data.locationId !== undefined &&
+		(await isUnknownLocation(g.auth.orgId, parsed.data.locationId))
+	)
+		return posError(422, 'invalid_location')
 	const result = await updateDeviceSettings(
 		g.db,
 		c.req.param('id'),
@@ -264,6 +302,35 @@ operatorPosRoutes.put('/managers/:staffId', async (c) => {
 	const g = await guard(c, 'orders:write')
 	if ('error' in g) return g.error
 	if (!(await setManager(g.db, c.req.param('staffId'), g.auth.userId)))
+		return posError(404, 'not_found')
+	return c.json({ ok: true }, 200, noStore)
+})
+
+// The host roster: who may run the host stand at a till. Reservations settings,
+// not the menu permission, decide it (App signs `stationApps.reservations`).
+const hostSchema = z.strictObject({ guestDetails: z.boolean().optional() })
+
+operatorPosRoutes.put('/hosts/:staffId', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	if (!g.auth.stationApps.reservations)
+		return posError(403, 'reservations_permission_required')
+	const parsed = hostSchema.safeParse(await c.req.json().catch(() => ({})))
+	if (!parsed.success) return posError(400, 'invalid_request')
+	if (
+		!(await setHost(g.db, c.req.param('staffId'), g.auth.userId, {
+			guestDetails: parsed.data.guestDetails ?? false,
+		}))
+	)
+		return posError(404, 'not_found')
+	return c.json({ ok: true }, 200, noStore)
+})
+
+operatorPosRoutes.delete('/hosts/:staffId', async (c) => {
+	// Taking someone off is always allowed to whoever manages terminals.
+	const g = await guard(c, 'orders:write', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	if (!(await removeHost(g.db, c.req.param('staffId'))))
 		return posError(404, 'not_found')
 	return c.json({ ok: true }, 200, noStore)
 })

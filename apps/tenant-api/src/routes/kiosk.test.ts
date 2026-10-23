@@ -333,6 +333,7 @@ describe('/kiosk', () => {
 				positions: [],
 				nextShifts: [],
 				promptTips: false,
+				breakKinds: [],
 				serverNow: h.clock.now,
 			})
 			for (const secretValue of ['Khalid', '1850', 'rate', 'phone', 'email']) {

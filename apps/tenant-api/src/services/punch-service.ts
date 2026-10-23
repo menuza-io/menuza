@@ -5,6 +5,7 @@ import {
 	businessDateOf,
 	checkOfflinePunchTime,
 	type ClockEvent,
+	type BreakKind,
 	type ClockState,
 	decideClockIn,
 	decideClockOut,
@@ -297,10 +298,17 @@ export async function describeClockState(
 					localDate,
 				)
 			: []
+	const allowedEvents =
+		elsewhere || !policy.timeTrackingEnabled ? [] : allowedClockEvents(state)
 	return {
 		state,
-		allowedEvents:
-			elsewhere || !policy.timeTrackingEnabled ? [] : allowedClockEvents(state),
+		allowedEvents,
+		// A workplace with rest-break rules lets people say which break they take.
+		breakKinds:
+			allowedEvents.includes('break_start') &&
+			policy.breakRules.rules.some((rule) => rule.kind === 'rest')
+				? (['meal', 'rest'] as BreakKind[])
+				: [],
 		positions: positionOptions(jobs).length > 1 ? positionOptions(jobs) : [],
 		// Ask for cash tips at clock-out only for a role marked as receiving tips.
 		promptTips:

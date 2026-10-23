@@ -6,9 +6,8 @@ import { type DayFeed } from './feed.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 
-/** The host stand redraws from the server this often while it is on screen. */
+/** The host stand redraws from the server (the day and the waitlist) this often while it is on screen. */
 export const DAY_POLL_MS = 10_000
-const WAITLIST_POLL_MS = 15_000
 
 const ACTIVE_WAITLIST = new Set(['waiting', 'notified', 'on_the_way'])
 
@@ -54,12 +53,25 @@ export function useHostStand({
 	const sessionToken = session?.serverSession?.token ?? null
 	const [state, setState] = useState<HostStandState>({ status: 'loading' })
 	const etag = useRef<string | null>(null)
+	/** The newest day the stand holds, so a caller can look again right after a refresh. */
+	const latest = useRef<DayFeed | null>(null)
+	/**
+	 * Every refresh takes a number; an answer older than one already shown is
+	 * dropped, so a slow poll never paints over a change the host just made.
+	 */
+	const issued = useRef(0)
+	const shown = useRef(0)
+	/** Bumped when the person changes: answers for the one before are dropped. */
+	const generation = useRef(0)
+	const polling = useRef(false)
 	const [now, setNow] = useState(() => Date.now())
 
 	// A new person, a lock: their own token and a clean screen.
 	useEffect(() => {
+		generation.current += 1
 		api.forget()
 		etag.current = null
+		latest.current = null
 		setState({ status: 'loading' })
 	}, [api, sessionToken])
 
@@ -73,13 +85,20 @@ export function useHostStand({
 	)
 
 	const refresh = useCallback(
-		async (options: { full?: boolean } = {}) => {
+		async (options: { full?: boolean } = {}): Promise<DayFeed | null> => {
+			const ticket = ++issued.current
+			const forGeneration = generation.current
+			const current = () =>
+				forGeneration === generation.current && ticket > shown.current
 			try {
 				const grant = await api.grant()
 				const day = await api.day(
 					options.full ? undefined : (etag.current ?? undefined),
 				)
 				const waitlist = await loadWaitlist(grant).catch(() => null)
+				if (!current()) return latest.current
+				shown.current = ticket
+				if (!('unchanged' in day)) latest.current = day.feed
 				setState((previous) => {
 					if ('unchanged' in day) {
 						if (previous.status !== 'ready') return previous
@@ -101,7 +120,9 @@ export function useHostStand({
 						stale: false,
 					}
 				})
+				return latest.current
 			} catch (error) {
+				if (!current()) return latest.current
 				const failure =
 					error instanceof HostApiError
 						? error
@@ -112,10 +133,22 @@ export function useHostStand({
 						? { ...previous, stale: true }
 						: { status: 'blocked', error: failure },
 				)
+				return latest.current
 			}
 		},
 		[api, loadWaitlist],
 	)
+
+	/** A timed look: skipped while the previous one is still out. */
+	const poll = useCallback(async () => {
+		if (polling.current || document.visibilityState !== 'visible') return
+		polling.current = true
+		try {
+			await refresh()
+		} finally {
+			polling.current = false
+		}
+	}, [refresh])
 
 	useEffect(() => {
 		if (!sessionToken) {
@@ -126,37 +159,14 @@ export function useHostStand({
 			return
 		}
 		void refresh()
-		let dayTimer = 0
-		const tick = () => {
-			if (document.visibilityState === 'visible') void refresh()
-		}
-		dayTimer = window.setInterval(tick, DAY_POLL_MS)
-		const onVisible = () => {
-			if (document.visibilityState === 'visible') void refresh()
-		}
+		const dayTimer = window.setInterval(() => void poll(), DAY_POLL_MS)
+		const onVisible = () => void poll()
 		document.addEventListener('visibilitychange', onVisible)
 		return () => {
 			window.clearInterval(dayTimer)
 			document.removeEventListener('visibilitychange', onVisible)
 		}
-	}, [sessionToken, refresh])
-
-	// The waitlist's quoted waits move even when the day does not.
-	const liveGrant = state.status === 'ready' ? state.grant : null
-	useEffect(() => {
-		if (!liveGrant?.features.waitlist) return
-		const timer = window.setInterval(() => {
-			if (document.visibilityState !== 'visible') return
-			void loadWaitlist(liveGrant).then(
-				(waitlist) =>
-					setState((previous) =>
-						previous.status === 'ready' ? { ...previous, waitlist } : previous,
-					),
-				() => {},
-			)
-		}, WAITLIST_POLL_MS)
-		return () => window.clearInterval(timer)
-	}, [liveGrant, loadWaitlist])
+	}, [sessionToken, refresh, poll])
 
 	// Coming back online, look again at once.
 	useEffect(() => {

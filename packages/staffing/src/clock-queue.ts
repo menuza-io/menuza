@@ -22,6 +22,8 @@ export type QueuedPunch = {
 	positionId?: string
 	breakKind?: 'meal' | 'rest'
 	cashTipsMinor?: number
+	/** Who the tablet took it for, when it knew; shown if the server refuses it. */
+	firstName?: string
 	/** The device clock when the person tapped. */
 	clientAt: number
 	createdAt: number

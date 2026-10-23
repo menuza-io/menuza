@@ -10,14 +10,17 @@ import {
 	UserPlus,
 	X,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { HostApiError } from './api.ts'
 import { Dock, placingSize, type Placing } from './Dock.tsx'
 import {
 	DEFAULT_TURN_MIN,
 	arrivals,
+	fits,
+	missedArrivals,
 	rooms,
 	shortName,
+	tableState,
 	type DayReservation,
 	type DayTable,
 	type TableState,
@@ -36,7 +39,14 @@ import { useHostStand } from './useHostStand.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 import { Toast, type ToastMessage } from '~/ui/motion.tsx'
-import { Button, cn, NumberPop, Reveal, Segmented } from '~/ui/primitives.tsx'
+import {
+	Button,
+	cn,
+	Modal,
+	NumberPop,
+	Reveal,
+	Segmented,
+} from '~/ui/primitives.tsx'
 
 const ROOM_KEY = 'station.hostStand.room'
 
@@ -88,6 +98,11 @@ export function HostStand({
 	const [bookingOpen, setBookingOpen] = useState(false)
 	const [joinOpen, setJoinOpen] = useState(false)
 	const [busy, setBusy] = useState(false)
+	/** A party bigger than the table the host tapped: asked before seating. */
+	const [tooSmall, setTooSmall] = useState<{
+		placing: Placing
+		table: DayTable
+	} | null>(null)
 	const [toast, setToast] = useState<ToastMessage | null>(null)
 	const dismissToast = useCallback(() => setToast(null), [])
 	const say = useCallback(
@@ -98,6 +113,9 @@ export function HostStand({
 
 	const ready = state.status === 'ready' ? state : null
 	const feed = ready?.feed ?? null
+	// What is on screen now, for a tap that acts on what the host sees (not what they picked up).
+	const readyRef = useRef(ready)
+	readyRef.current = ready
 	const timeZone = feed?.settings?.timeZone ?? undefined
 	const formatTime = useMemo(() => {
 		const format = new Intl.DateTimeFormat(i18n.locale, {
@@ -109,7 +127,11 @@ export function HostStand({
 	}, [i18n.locale, timeZone])
 	const roomList = useMemo(() => (feed ? rooms(feed) : []), [feed])
 	const room = roomList.find((r) => r.id === roomId) ?? roomList[0] ?? null
-	const due = useMemo(() => (feed ? arrivals(feed) : []), [feed])
+	const due = useMemo(() => (feed ? arrivals(feed, now) : []), [feed, now])
+	const missed = useMemo(
+		() => (feed ? missedArrivals(feed, now) : []),
+		[feed, now],
+	)
 	const party = feed?.reservations.find((r) => r.id === partyId) ?? null
 	const waitlistEntry =
 		ready?.waitlist.find((entry) => entry.id === waitlistId) ?? null
@@ -130,9 +152,10 @@ export function HostStand({
 			done: string,
 			undo?: () => Promise<unknown>,
 			/** When the table is booked for part of the party's time: try again as an overbook. */
-			anyway?: () => void,
+			anyway?: { table: DayTable; run: () => void },
 		) => {
 			setBusy(true)
+			let refreshed = false
 			try {
 				await work()
 				say(
@@ -162,13 +185,26 @@ export function HostStand({
 			} catch (error) {
 				const failure = error instanceof HostApiError ? error : null
 				if (failure?.occupied && anyway) {
+					// Look again first: only a table that is still free may be overbooked.
+					const fresh = await refresh({ full: true })
+					refreshed = true
+					const table = fresh?.tables.find((t) => t.id === anyway.table.id)
+					const kind =
+						table && fresh ? tableState(table, fresh, Date.now()).kind : null
+					const label = anyway.table.label
+					if (kind !== 'open' && kind !== 'soon') {
+						say(_(t`Table ${label} was just taken. Choose another table.`), {
+							tone: 'danger',
+						})
+						return false
+					}
 					say(
 						_(
 							t`Someone is booked on that table before this party would be done.`,
 						),
 						{
 							tone: 'danger',
-							action: { label: _(t`Seat anyway`), run: anyway },
+							action: { label: _(t`Seat anyway`), run: anyway.run },
 						},
 					)
 					return false
@@ -184,7 +220,7 @@ export function HostStand({
 				)
 				return false
 			} finally {
-				await refresh({ full: true })
+				if (!refreshed) await refresh({ full: true })
 				setBusy(false)
 			}
 		},
@@ -201,6 +237,11 @@ export function HostStand({
 		}
 		const current = placing
 		setPlacing(null)
+		// A bigger party than the table seats is the host's call, made on purpose.
+		if (!fits(table, placingSize(current))) {
+			setTooSmall({ placing: current, table })
+			return
+		}
 		await seat(current, table, false)
 	}
 
@@ -209,16 +250,22 @@ export function HostStand({
 		const overbook = insist
 			? { overbook: true, overbookReason: _(t`Seated at the host stand`) }
 			: {}
-		const again = insist ? undefined : () => void seat(current, table, true)
+		const again = insist
+			? undefined
+			: { table, run: () => void seat(current, table, true) }
+		const latest = readyRef.current
 		if (current.kind === 'reservation') {
 			const r = current.reservation
 			const who = shortName(r, _(t`Guest`))
+			// The version on screen now: a poll may have moved it since the party was picked up.
+			const version =
+				latest?.feed.reservations.find((x) => x.id === r.id)?.version ??
+				r.version
 			await act(
 				() =>
 					api.transition(r.id, 'seated', {
 						tableIds: [table.id],
-						// A retry follows a refusal: the version is still the one we saw.
-						expectedVersion: r.version,
+						expectedVersion: version,
 						...overbook,
 					}),
 				_(t`Seated ${who} at ${table.label}.`),
@@ -227,8 +274,11 @@ export function HostStand({
 			)
 		} else if (current.kind === 'waitlist') {
 			const entry = current.entry
+			const version =
+				latest?.waitlist.find((x) => x.id === entry.id)?.version ??
+				entry.version
 			await act(
-				() => api.seatWaitlist(entry.id, [table.id], entry.version, overbook),
+				() => api.seatWaitlist(entry.id, [table.id], version, overbook),
 				_(t`Seated ${entry.displayName} at ${table.label}.`),
 				undefined,
 				again,
@@ -310,6 +360,9 @@ export function HostStand({
 	}
 
 	const free = room ? freeTables(feed, room.id, now) : { free: 0, total: 0 }
+	const tooSmallLabel = tooSmall?.table.label ?? ''
+	const tooSmallSeats = tooSmall?.table.maxCovers ?? 0
+	const tooSmallParty = tooSmall ? placingSize(tooSmall.placing) : 0
 	const covers = due.reduce((sum, r) => sum + r.partySize, 0)
 	const placingName = placing
 		? placing.kind === 'reservation'
@@ -363,7 +416,11 @@ export function HostStand({
 						<Trans>Walk-in</Trans>
 					</Button>
 					{ready.grant.features.waitlist ? (
-						<Button variant="outline" onClick={() => setJoinOpen(true)}>
+						<Button
+							variant="outline"
+							onClick={() => setJoinOpen(true)}
+							aria-label={_(t`Add to the waitlist`)}
+						>
 							<ListPlus className="size-4" />
 							<span className="hidden sm:inline">
 								<Trans>Waitlist</Trans>
@@ -444,6 +501,7 @@ export function HostStand({
 
 			<Dock
 				arrivals={due}
+				missed={missed}
 				waitlist={ready.waitlist}
 				waitlistOn={ready.grant.features.waitlist}
 				placing={placing}
@@ -524,7 +582,7 @@ export function HostStand({
 				onClose={() => setBookingOpen(false)}
 				onBook={(input) =>
 					void act(
-						() => api.book({ ...input, notes: null }),
+						() => api.book(input),
 						_(
 							t`Booked ${input.firstName} for ${input.partySize} at ${input.timeLabel}.`,
 						),
@@ -542,6 +600,37 @@ export function HostStand({
 					).then((ok) => ok && setJoinOpen(false))
 				}
 			/>
+			<Modal
+				open={tooSmall !== null}
+				onClose={() => setTooSmall(null)}
+				title={_(t`Table ${tooSmallLabel} is small for them`)}
+				footer={
+					<div className="mb-safe grid grid-cols-2 gap-3">
+						<Button size="lg" onClick={() => setTooSmall(null)}>
+							<Trans>Choose another</Trans>
+						</Button>
+						<Button
+							variant="primary"
+							size="lg"
+							disabled={busy}
+							onClick={() => {
+								const pending = tooSmall
+								setTooSmall(null)
+								if (pending) void seat(pending.placing, pending.table, false)
+							}}
+						>
+							<Trans>Seat them here</Trans>
+						</Button>
+					</div>
+				}
+			>
+				<p className="text-muted-foreground p-5">
+					<Trans>
+						Table {tooSmallLabel} seats {tooSmallSeats}. This party is{' '}
+						{tooSmallParty}.
+					</Trans>
+				</p>
+			</Modal>
 			<Toast message={toast} onDone={dismissToast} />
 		</div>
 	)
@@ -590,12 +679,26 @@ function Blocked({
 				<Trans>Try again</Trans>
 			</Button>
 		)
+	} else if (error.code === 'not_a_host') {
+		title = <Trans>You are not on this terminal’s host list</Trans>
+		body = (
+			<Trans>
+				A manager adds hosts in the app, under Settings, Terminals. Someone on
+				the list can sign in here instead.
+			</Trans>
+		)
+		action = (
+			<Button variant="primary" size="lg" onClick={onSignIn}>
+				<Lock className="size-5" />
+				<Trans>Switch user</Trans>
+			</Button>
+		)
 	} else if (
 		[
 			'reservations_not_enabled',
 			'reservations_disabled',
-			'location_required',
-			'sign_in_required',
+			'reservations_needs_location',
+			'reservations_needs_sign_in',
 		].includes(error.code)
 	) {
 		title = <Trans>Reservations are off on this terminal</Trans>

@@ -4,7 +4,7 @@ import {
 	type ClockEvent,
 	type ClockState,
 } from './clock-state.ts'
-import { BREAK_KINDS } from './labor-policy.ts'
+import { BREAK_KINDS, type BreakKind } from './labor-policy.ts'
 import { timeZoneSchema } from './schemas.ts'
 
 /**
@@ -147,6 +147,11 @@ export type KioskIdentifyResult = {
 	 * tablet may offer a cash-tip declaration at clock-out.
 	 */
 	promptTips: boolean
+	/**
+	 * The breaks a person may start, when the workplace's rules name more than
+	 * the default meal break (`meal` and `rest`); empty means a plain break.
+	 */
+	breakKinds: BreakKind[]
 	serverNow: number
 }
 

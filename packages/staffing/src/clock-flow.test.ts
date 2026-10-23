@@ -18,6 +18,7 @@ const who = (
 	positions: [],
 	nextShifts: [],
 	promptTips: false,
+	breakKinds: [],
 	serverNow: 1,
 	...overrides,
 })

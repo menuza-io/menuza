@@ -65,7 +65,7 @@ export type SignInOutcome =
 
 const GUARD_KEY = 'pin-guard'
 
-async function deviceSalt(): Promise<string> {
+export async function deviceSalt(): Promise<string> {
 	const existing = await getMeta<string>(SALT_KEY)
 	if (existing) return existing
 	const salt = newSalt()
@@ -75,8 +75,9 @@ async function deviceSalt(): Promise<string> {
 
 /** Drops everyone remembered for offline sign-in, and the offline attempt counter. Used when the till moves to another restaurant or workplace. */
 export async function forgetCachedStaff(): Promise<void> {
-	await db.transaction('rw', db.staff, db.meta, async () => {
+	await db.transaction('rw', db.staff, db.meta, db.clockPeople, async () => {
 		await db.staff.clear()
+		await db.clockPeople.clear()
 		await db.meta.delete(GUARD_KEY)
 	})
 }

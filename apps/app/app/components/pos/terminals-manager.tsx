@@ -81,6 +81,9 @@ const staffSchema = z.object({
 	name: z.string(),
 	hasPin: z.boolean(),
 	isManager: z.boolean(),
+	// The host roster (Station host stand). Older servers: not sent.
+	isHost: z.boolean().default(false),
+	hostGuestDetails: z.boolean().default(false),
 })
 type StaffRow = z.infer<typeof staffSchema>
 const listSchema = z.object({
@@ -124,6 +127,7 @@ export function TerminalsManager({
 	appUrl,
 	locations = [],
 	stationFeatures = { timeclock: false, reservations: false },
+	stationGrants = { timeclock: false, reservations: false },
 }: {
 	orgSlug: string
 	canWrite: boolean
@@ -131,6 +135,8 @@ export function TerminalsManager({
 	appUrl: string
 	locations?: TerminalLocation[]
 	stationFeatures?: StationFeatures
+	/** Whether this member may switch each Station app on. */
+	stationGrants?: StationFeatures
 }) {
 	const { _ } = useLingui()
 	const { request, tenantApiUrl } = useOperatorClient(orgSlug, '/operator/pos')
@@ -262,10 +268,7 @@ export function TerminalsManager({
 		}
 	}
 
-	async function setStationApp(
-		device: Terminal,
-		patch: { timeclockEnabled: boolean } | { reservationsEnabled: boolean },
-	) {
+	async function setStationApp(device: Terminal, patch: StationAppPatch) {
 		try {
 			await request(`/terminals/${encodeURIComponent(device.id)}`, {
 				method: 'PATCH',
@@ -329,6 +332,31 @@ export function TerminalsManager({
 				error instanceof Error
 					? error.message
 					: _(t`Could not change who can manage terminals.`),
+			)
+		}
+	}
+
+	async function setHostRole(
+		person: StaffRow,
+		role: 'none' | 'host' | 'guest_details',
+	) {
+		try {
+			await request(`/hosts/${encodeURIComponent(person.id)}`, {
+				method: role === 'none' ? 'DELETE' : 'PUT',
+				...(role === 'none'
+					? {}
+					: {
+							body: JSON.stringify({
+								guestDetails: role === 'guest_details',
+							}),
+						}),
+			})
+			await load()
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: _(t`Could not change who runs the host stand.`),
 			)
 		}
 	}
@@ -550,6 +578,8 @@ export function TerminalsManager({
 										device={device}
 										canWrite={canWrite}
 										features={stationFeatures}
+										grants={stationGrants}
+										locations={locations}
 										locationName={
 											locations.find((l) => l.id === device.locationId)?.name ??
 											null
@@ -657,8 +687,10 @@ export function TerminalsManager({
 						</h3>
 						<p className="text-muted-foreground max-w-prose text-sm leading-relaxed">
 							<Trans>
-								Everyone with a PIN can take orders. Managers can also change a
-								terminal's settings. Set a person's PIN under Staff.
+								Everyone with a PIN can take orders and use the time clock.
+								Managers can also change a terminal's settings. The host stand
+								is for the people you choose here. Set a person's PIN under
+								Staff.
 							</Trans>
 						</p>
 					</CardHeader>
@@ -701,6 +733,13 @@ export function TerminalsManager({
 												<Trans>Make manager</Trans>
 											)}
 										</Button>
+									) : null}
+									{stationFeatures.reservations ? (
+										<HostRoleSelect
+											person={person}
+											canChange={canWrite && stationGrants.reservations}
+											onChange={(role) => void setHostRole(person, role)}
+										/>
 									) : null}
 								</li>
 							))}
@@ -751,7 +790,11 @@ export function TerminalsManager({
 				appUrl={appUrl}
 				orgSlug={orgSlug}
 				locations={locations}
-				stationFeatures={stationFeatures}
+				stationFeatures={{
+					timeclock: stationFeatures.timeclock && stationGrants.timeclock,
+					reservations:
+						stationFeatures.reservations && stationGrants.reservations,
+				}}
 				suggestedCode={suggestCode(
 					state.status === 'ready' ? state.data.devices : [],
 					pending,
@@ -841,26 +884,82 @@ const NO_LOCATION = '__any__'
  * whoever holds the tablet, so it needs a location and a staff PIN; the server
  * refuses otherwise, and the switch says why before anyone taps it.
  */
+/**
+ * Who runs the host stand at a till, and who among them also sees guests' full
+ * contact details, allergies and notes. Reservation settings decide it.
+ */
+function HostRoleSelect({
+	person,
+	canChange,
+	onChange,
+}: {
+	person: StaffRow
+	canChange: boolean
+	onChange: (role: 'none' | 'host' | 'guest_details') => void
+}) {
+	const { _ } = useLingui()
+	const role = !person.isHost
+		? 'none'
+		: person.hostGuestDetails
+			? 'guest_details'
+			: 'host'
+	const labels = {
+		none: _(t`No host stand`),
+		host: _(t`Host stand`),
+		guest_details: _(t`Host stand with guest details`),
+	} as const
+	if (!canChange)
+		return role === 'none' ? null : (
+			<Badge variant="secondary">{labels[role]}</Badge>
+		)
+	const name = person.name
+	return (
+		<Select
+			value={role}
+			onValueChange={(next) =>
+				next && onChange(next as 'none' | 'host' | 'guest_details')
+			}
+		>
+			<SelectTrigger
+				className="h-11 w-fit max-w-full md:h-8"
+				aria-label={_(t`Host stand for ${name}`)}
+			>
+				<SelectValue>{labels[role]}</SelectValue>
+			</SelectTrigger>
+			<SelectContent>
+				{(['none', 'host', 'guest_details'] as const).map((value) => (
+					<SelectItem key={value} value={value}>
+						{labels[value]}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	)
+}
+
 function StationApps({
 	device,
 	canWrite,
 	features,
+	grants,
+	locations,
 	locationName,
 	onChange,
 }: {
 	device: Terminal
 	canWrite: boolean
 	features: StationFeatures
+	/** Whether this member may switch each app on (its module's settings permission). */
+	grants: StationFeatures
+	locations: TerminalLocation[]
 	locationName: string | null
-	onChange: (
-		patch: { timeclockEnabled: boolean } | { reservationsEnabled: boolean },
-	) => void
+	onChange: (patch: StationAppPatch) => void
 }) {
 	const { _ } = useLingui()
 	const label = device.label
 	if (!features.timeclock && !features.reservations) return null
 	const reservationsBlocked = !device.locationId
-		? _(t`Pair it again with a location to use reservations.`)
+		? _(t`Choose the terminal's location to use reservations.`)
 		: !device.signInRequired
 			? _(t`Turn on the staff PIN to use reservations.`)
 			: null
@@ -870,14 +969,15 @@ function StationApps({
 		onLabel: React.ReactNode,
 		offLabel: React.ReactNode,
 		run: () => void,
-		disabled = false,
+		/** Switching on is not possible (switching off always is). */
+		cannotTurnOn: boolean,
 	) =>
 		canWrite ? (
 			<Button
 				variant={on ? 'secondary' : 'outline'}
 				className="h-11 md:h-8"
 				onClick={run}
-				disabled={disabled}
+				disabled={!on && cannotTurnOn}
 				aria-label={label}
 				aria-pressed={on}
 			>
@@ -904,6 +1004,7 @@ function StationApps({
 							<Trans>Time clock on</Trans>,
 							<Trans>Time clock off</Trans>,
 							() => onChange({ timeclockEnabled: !device.timeclockEnabled }),
+							!grants.timeclock,
 						)
 					: null}
 				{features.reservations
@@ -916,7 +1017,7 @@ function StationApps({
 							<Trans>Reservations off</Trans>,
 							() =>
 								onChange({ reservationsEnabled: !device.reservationsEnabled }),
-							!device.reservationsEnabled && reservationsBlocked !== null,
+							!grants.reservations || reservationsBlocked !== null,
 						)
 					: null}
 				{features.reservations && locationName ? (
@@ -924,15 +1025,57 @@ function StationApps({
 						<Trans>Host stand for {locationName}</Trans>
 					</span>
 				) : null}
+				{features.reservations &&
+				canWrite &&
+				!device.locationId &&
+				locations.length > 0 ? (
+					<Select
+						value=""
+						onValueChange={(next) => next && onChange({ locationId: next })}
+					>
+						<SelectTrigger
+							className="h-11 w-fit max-w-full md:h-8"
+							aria-label={_(t`Location of ${label}`)}
+						>
+							<SelectValue>
+								<Trans>Choose a location</Trans>
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							{locations.map((location) => (
+								<SelectItem key={location.id} value={location.id}>
+									{location.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				) : null}
 			</div>
 			{features.reservations &&
 			!device.reservationsEnabled &&
 			reservationsBlocked ? (
 				<p className="text-muted-foreground text-sm">{reservationsBlocked}</p>
 			) : null}
+			{canWrite &&
+			((features.timeclock && !grants.timeclock && !device.timeclockEnabled) ||
+				(features.reservations &&
+					!grants.reservations &&
+					!device.reservationsEnabled)) ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Turning an app on needs permission to change its settings (time
+						clock rules, or reservation settings).
+					</Trans>
+				</p>
+			) : null}
 		</div>
 	)
 }
+
+type StationAppPatch =
+	| { timeclockEnabled: boolean }
+	| { reservationsEnabled: boolean }
+	| { locationId: string }
 
 function DayStartSelect({
 	value,

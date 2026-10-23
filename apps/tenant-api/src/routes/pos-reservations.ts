@@ -33,9 +33,12 @@ import { touchDevice } from '../services/pos-service.ts'
  *
  * What a till token can do is fixed here, not chosen by the tablet: the `book`
  * scope only (day of service, waitlist), at the terminal's own location only.
- * Everyone signed in gets the host grants (names, party, tables, status);
- * a till manager also reads guest contact details, notes and allergies, which
- * shortens the token to five minutes. No guestbook, setup, payments or reports.
+ * Only people on the host roster get a token; it carries the host grants
+ * (names, party, tables, status). A host with guest details also reads full
+ * contact details, notes and allergies; without that, phone numbers are
+ * masked and emails dropped (`lib/reservations-station.ts`). The token is marked
+ * `channel: station` with the terminal's id, so the guestbook stays shut
+ * (`stationMayCall`), and lives five minutes. No setup, payments or reports.
  * The subject is `staff:<id>`, so the reservation history names who did what.
  */
 export const posReservationsRoutes = new Hono()
@@ -44,6 +47,9 @@ export const posReservationsRoutes = new Hono()
 export const posReservationsDeps = {
 	nowSeconds: () => Math.floor(Date.now() / 1000),
 }
+
+/** A till's host token lives five minutes and is renewed while the stand is open. */
+export const STATION_TOKEN_TTL_SECONDS = 5 * 60
 
 const HOST_GRANTS: readonly ReservationsPermission[] = [
 	RESERVATIONS_PERMISSIONS.READ_RESERVATION,
@@ -64,6 +70,9 @@ posReservationsRoutes.post('/token', async (c) => {
 		}
 		const staff = await verifyPosStaffSession(c, pos)
 		if ('error' in staff) return staff.error
+		// Taking orders is not running the host stand: someone who manages
+		// reservations puts people on the host roster (Settings, Terminals).
+		if (!staff.session.host) return posError(403, 'not_a_host')
 
 		const operatorSecret = getOperatorToken()
 		if (!operatorSecret || operatorSecret.length < 16) {
@@ -74,13 +83,18 @@ posReservationsRoutes.post('/token', async (c) => {
 			return posError(503, 'service_unavailable')
 		}
 
-		const canReadGuest = staff.session.role === 'manager'
+		const canReadGuest = staff.session.guestDetails
 		const grants = [...HOST_GRANTS]
-		const ttlSeconds = maxTokenTtlSeconds(
-			canReadGuest
-				? [...grants, RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST]
-				: grants,
-			false,
+		// Short on a shared tablet: a revoked terminal or a removed person stops
+		// within minutes, whatever the operator ceiling allows.
+		const ttlSeconds = Math.min(
+			STATION_TOKEN_TTL_SECONDS,
+			maxTokenTtlSeconds(
+				canReadGuest
+					? [...grants, RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST]
+					: grants,
+				false,
+			),
 		)
 		const iat = posReservationsDeps.nowSeconds()
 		const exp = iat + ttlSeconds
@@ -96,6 +110,8 @@ posReservationsRoutes.post('/token', async (c) => {
 			locationIds: [gate.locationId],
 			features: gate.context.features,
 			impersonated: false,
+			channel: 'station' as const,
+			deviceId: pos.device.id,
 			iat,
 			exp,
 		}

@@ -326,12 +326,12 @@ export const usePos = create<PosState>((set, get) => ({
 			}
 			// A manager may have turned the time clock or the host stand on or off.
 			const before = get().settings.apps
+			const after = { ...before, ...apps }
 			if (
-				apps &&
-				(apps.timeclock !== before.timeclock ||
-					apps.reservations !== before.reservations)
+				after.timeclock !== before.timeclock ||
+				after.reservations !== before.reservations
 			) {
-				const settings = { ...get().settings, apps }
+				const settings = { ...get().settings, apps: after }
 				saveSettings(settings)
 				set({ settings })
 			}

@@ -184,11 +184,29 @@ export const isOnFloor = (r: Pick<DayReservation, 'status'>) =>
 export const isWaitingAtStand = (r: Pick<DayReservation, 'status'>) =>
 	r.status === 'arrived' || r.status === 'partially_arrived'
 
-/** Parties still to seat, in the order they are due. */
-export function arrivals(feed: Pick<DayFeed, 'reservations'>) {
+/**
+ * Parties still to seat, in the order they are due. With `now`, a booking
+ * whose whole slot has passed without the party turning up is left out: it
+ * waits in `missedArrivals` for the host to mark it, not in the dock.
+ */
+export function arrivals(feed: Pick<DayFeed, 'reservations'>, now?: number) {
 	return feed.reservations
-		.filter(isUpcoming)
+		.filter(
+			(r) =>
+				isUpcoming(r) &&
+				(now === undefined || isWaitingAtStand(r) || r.endAt > now),
+		)
 		.sort((a, b) => a.startAt - b.startAt || a.partySize - b.partySize)
+}
+
+/** Bookings whose slot is over and whose party never arrived, latest first. */
+export function missedArrivals(
+	feed: Pick<DayFeed, 'reservations'>,
+	now: number,
+) {
+	return feed.reservations
+		.filter((r) => isUpcoming(r) && !isWaitingAtStand(r) && r.endAt <= now)
+		.sort((a, b) => b.startAt - a.startAt)
 }
 
 /** Minutes past the booked time (0 when not late yet). */
@@ -271,6 +289,18 @@ export type PlacedTable = {
 	height: number
 }
 
+/**
+ * Whether a manager has placed this room's tables. A room nobody has drawn yet
+ * (every table at the origin) is laid out as a tidy grid instead of a pile. A
+ * single table counts as drawn wherever it is.
+ */
+export function isDrawn(tables: Pick<DayTable, 'x' | 'y' | 'archivedAt'>[]) {
+	const live = tables.filter((t) => !t.archivedAt)
+	if (live.length === 0) return false
+	if (live.length === 1) return live[0]!.x !== 0 || live[0]!.y !== 0
+	return new Set(live.map((t) => `${t.x}:${t.y}`)).size > 1
+}
+
 /** The tables of one room, as fractions of the room. */
 export function placeTables(
 	area: Pick<DayArea, 'canvasW' | 'canvasH'>,
@@ -278,10 +308,7 @@ export function placeTables(
 ): PlacedTable[] {
 	const live = tables.filter((t) => !t.archivedAt)
 	if (live.length === 0) return []
-	// A room nobody has drawn yet (every table at the origin) is laid out as a
-	// tidy grid instead of a pile.
-	const drawn = new Set(live.map((t) => `${t.x}:${t.y}`)).size > 1
-	if (!drawn) return gridLayout(live)
+	if (!isDrawn(live)) return gridLayout(live)
 	const width = Math.max(area.canvasW, ...live.map((t) => t.x + t.w), 1)
 	const height = Math.max(area.canvasH, ...live.map((t) => t.y + t.h), 1)
 	return live.map((table) => ({

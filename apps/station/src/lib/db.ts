@@ -210,12 +210,26 @@ export type CachedStaff = {
 	cachedAt: number
 }
 
+/**
+ * Someone this till has seen at its time clock online, so an offline punch can
+ * greet them and offer their roles. `key` is the same slow salted hash of the
+ * PIN as `CachedStaff`; nothing here can punch on its own (the server checks
+ * the PIN when the punch goes out).
+ */
+export type ClockPerson = {
+	key: string
+	firstName: string
+	positions: Array<{ id: string; name: string; nameAr: string | null }>
+	cachedAt: number
+}
+
 class PosDatabase extends Dexie {
 	orders!: EntityTable<PosOrder, 'id'>
 	catalog!: EntityTable<CatalogSnapshot, 'key'>
 	meta!: EntityTable<KeyValue, 'key'>
 	staff!: EntityTable<CachedStaff, 'id'>
 	shifts!: EntityTable<Shift, 'id'>
+	clockPeople!: EntityTable<ClockPerson, 'key'>
 
 	constructor() {
 		super('pos')
@@ -279,6 +293,8 @@ class PosDatabase extends Dexie {
 			)
 		// v5: cash drawer shifts.
 		this.version(5).stores({ shifts: 'id, status, sync, openedAt' })
+		// v6: people seen at the time clock, for offline punches.
+		this.version(6).stores({ clockPeople: 'key' })
 	}
 }
 

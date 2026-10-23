@@ -11,6 +11,7 @@ import { resolvePosUrl } from '#app/utils/pos/url.server.ts'
 import { getReservationsFeatureState } from '#app/utils/reservations/access.server.ts'
 import { getStaffingFeatureState } from '#app/utils/staffing/access.server.ts'
 import { listScopableLocations } from '#app/utils/staffing/restaurant/location-scope.server.ts'
+import { getStationAppGrants } from '#app/utils/pos/station-apps.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const organization = await requireUserOrganization(
@@ -38,6 +39,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				timeclock: staffing.timeclock,
 				reservations: reservations.enabled,
 			},
+			// Whether this member may switch each one on (its own module's setting).
+			stationGrants: await getStationAppGrants(request, organization.id),
 			orgSlug: params.orgSlug || '',
 			canWrite,
 			posUrl: resolvePosUrl(ENV.POS_URL, process.env.NODE_ENV),
@@ -50,8 +53,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function TerminalsPage() {
-	const { orgSlug, canWrite, posUrl, appUrl, locations, stationFeatures } =
-		useLoaderData<typeof loader>()
+	const {
+		orgSlug,
+		canWrite,
+		posUrl,
+		appUrl,
+		locations,
+		stationFeatures,
+		stationGrants,
+	} = useLoaderData<typeof loader>()
 	return (
 		<div className="flex min-w-0 flex-col gap-8">
 			<TerminalsManager
@@ -61,6 +71,7 @@ export default function TerminalsPage() {
 				appUrl={appUrl}
 				locations={locations}
 				stationFeatures={stationFeatures}
+				stationGrants={stationGrants}
 			/>
 			<PosDayReport orgSlug={orgSlug} />
 			<ZatcaSettings orgSlug={orgSlug} canWrite={canWrite} />

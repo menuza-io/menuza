@@ -35,6 +35,9 @@ async function typePin(scope: Page | ReturnType<Page['locator']>, pin: string) {
 }
 
 const clock = (page: Page) => page.getByRole('dialog', { name: 'Time clock' })
+/** The toast said this (as it was announced to screen readers). */
+const expectToast = (page: Page, text: string) =>
+	expect(page.getByRole('status').filter({ hasText: text })).toBeAttached()
 
 test.describe('time clock', () => {
 	test('clocks in from the lock screen with the PIN, recorded as a till punch', async ({
@@ -105,9 +108,11 @@ test.describe('time clock', () => {
 		await context.setOffline(true)
 		await typePin(tc, '4321')
 		await tc.getByRole('button', { name: 'Continue' }).click()
+		// This till has never seen the PIN online: it says it cannot check it.
 		await expect(
 			tc.getByRole('heading', { name: 'What are you doing?' }),
 		).toBeVisible()
+		await expect(tc.getByText(/has not seen this PIN before/)).toBeVisible()
 		await capture(page, 'timeclock-offline')
 		await tc.getByRole('button', { name: 'Clock in' }).click()
 		await expect(tc.getByText(/Saved on this terminal/)).toBeVisible()
@@ -121,20 +126,56 @@ test.describe('time clock', () => {
 		expect(punch!.flags).toContain('offline_punch')
 	})
 
-	test('signed in, the switch opens the clock beside the register', async ({
+	test('offline, a PIN this till has seen online is greeted by name, with its roles', async ({
+		unpaired: page,
+		context,
+	}) => {
+		await backend.addStaff({ first: 'Rana', pin: '4321' })
+		await pairUi(page, { signInRequired: true, timeclockEnabled: true })
+		await lockScreen(page)
+			.getByRole('button', { name: 'Clock in or out' })
+			.click()
+		const tc = clock(page)
+		// Online once: the till learns whose PIN it is.
+		await typePin(tc, '4321')
+		await tc.getByRole('button', { name: 'Continue' }).click()
+		await expect(tc.getByRole('heading', { name: 'Hi Rana' })).toBeVisible()
+		await tc.getByRole('button', { name: 'Not me' }).click()
+
+		await context.setOffline(true)
+		await typePin(tc, '4321')
+		await tc.getByRole('button', { name: 'Continue' }).click()
+		await expect(
+			tc.getByRole('heading', { name: 'Hi Rana, what are you doing?' }),
+		).toBeVisible()
+		await tc.getByRole('button', { name: 'Clock in' }).click()
+		await expect(
+			tc.getByRole('heading', { name: 'Clocked in, Rana' }),
+		).toBeVisible()
+		await context.setOffline(false)
+		await expect
+			.poll(async () => (await backend.punches()).length, { timeout: 40_000 })
+			.toBe(1)
+	})
+
+	test('signed in, choosing the clock locks the till and opens the clock over the lock', async ({
 		unpaired: page,
 	}) => {
 		await backend.addStaff({ first: 'Rana', pin: '4321', manager: true })
 		await pairUi(page, { signInRequired: true, timeclockEnabled: true })
 		await signInWithPin(page, '4321')
-		const apps = page.getByRole('radiogroup', { name: 'Station app' })
-		await apps.getByRole('radio', { name: 'Time clock' }).click()
+		await page
+			.getByRole('radiogroup', { name: 'Station app' })
+			.getByRole('radio', { name: 'Time clock' })
+			.click()
+		// Nobody punches inside someone else's session.
+		const tc = clock(page)
 		await expect(
-			page.getByRole('heading', { name: 'Enter your PIN' }),
+			tc.getByRole('heading', { name: 'Enter your PIN' }),
 		).toBeVisible()
-		// The register's own controls stay with the register.
-		await expect(page.getByRole('button', { name: /^Orders/ })).toHaveCount(0)
-		await apps.getByRole('radio', { name: 'Register' }).click()
+		await tc.getByRole('button', { name: 'Back to sign in' }).click()
+		await expect(lockScreen(page)).toBeVisible()
+		await signInWithPin(page, '4321')
 		await expect(page.getByRole('button', { name: /^Orders/ })).toBeVisible()
 	})
 
@@ -175,7 +216,7 @@ test.describe('host stand', () => {
 	test('picks up a party at the stand and seats it on a table that fits, with undo', async ({
 		unpaired: page,
 	}) => {
-		await backend.addStaff({ first: 'Lina', pin: '4321' })
+		await backend.addStaff({ first: 'Lina', pin: '4321', host: true })
 		await openHostStand(page)
 		await capture(page, 'host-floor')
 		const dock = page.getByRole('region', { name: 'Parties to seat' })
@@ -187,7 +228,7 @@ test.describe('host stand', () => {
 		await expect(page.getByText(/Tap a table for Maya H\./)).toBeVisible()
 		await capture(page, 'host-placing')
 		await page.getByRole('button', { name: /^Table 1, open/ }).click()
-		await expect(page.getByText('Seated Maya H. at 1.')).toBeVisible()
+		await expectToast(page, 'Seated Maya H. at 1.')
 		await capture(page, 'host-seated-toast')
 		await expect(
 			page.getByRole('button', { name: /^Table 1, seated: Maya H\./ }),
@@ -195,7 +236,7 @@ test.describe('host stand', () => {
 
 		// Undo puts her back at the stand, still booked for table 2.
 		await page.getByRole('button', { name: 'Undo' }).click()
-		await expect(page.getByText('Undone.')).toBeVisible()
+		await expectToast(page, 'Undone.')
 		await expect(dock.getByText('At the stand')).toBeVisible()
 		await expect(
 			page.getByRole('button', { name: /^Table 1, (open|booked)/ }),
@@ -203,22 +244,22 @@ test.describe('host stand', () => {
 	})
 
 	test('seats a walk-in from a table', async ({ unpaired: page }) => {
-		await backend.addStaff({ pin: '4321' })
+		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		await page.getByRole('button', { name: /^Table 9, open/ }).click()
 		const sheet = page.getByRole('dialog', { name: 'Table 9' })
 		await sheet.getByRole('button', { name: 'Seat 2 now' }).click()
-		await expect(page.getByText('Seated a walk-in of 2 at 9.')).toBeVisible()
+		await expectToast(page, 'Seated a walk-in of 2 at 9.')
 		await expect(
 			page.getByRole('button', { name: /^Table 9, seated/ }),
 		).toBeVisible()
 	})
 
-	test('a cashier sees that there is an allergy; a till manager sees what it is', async ({
+	test('a host sees that there is an allergy and the end of the number; guest details show the rest', async ({
 		unpaired: page,
 	}) => {
-		await backend.addStaff({ first: 'Cash', pin: '1111' })
-		await backend.addStaff({ first: 'Lina', pin: '4321', manager: true })
+		await backend.addStaff({ first: 'Cash', pin: '1111', host: true })
+		await backend.addStaff({ first: 'Lina', pin: '4321', host: 'guest' })
 		await openHostStand(page, '1111')
 		const dock = page.getByRole('region', { name: 'Parties to seat' })
 		await dock.getByRole('button', { name: 'Details for Maya H.' }).click()
@@ -227,34 +268,61 @@ test.describe('host stand', () => {
 			sheet.getByText('Allergy noted. A manager can see the details.'),
 		).toBeVisible()
 		await expect(sheet.getByText('Peanuts')).toHaveCount(0)
+		// The number is masked by the server, and is not a link to call.
+		await expect(sheet.getByText(/^•••• \d{4}$/)).toBeVisible()
+		await expect(sheet.locator('a[href^="tel:"]')).toHaveCount(0)
 		await sheet.getByRole('button', { name: 'Close' }).click()
 
 		await page.getByRole('button', { name: /^Lock the till/ }).click()
 		await signInWithPin(page, '4321')
 		await dock.getByRole('button', { name: 'Details for Maya H.' }).click()
-		await expect(
-			page.getByRole('dialog', { name: 'Maya Haddad' }).getByText('Peanuts'),
-		).toBeVisible()
+		const full = page.getByRole('dialog', { name: 'Maya Haddad' })
+		await expect(full.getByText('Peanuts')).toBeVisible()
+		await expect(full.locator('a[href^="tel:+"]')).toBeVisible()
 		await capture(page, 'host-party-sheet')
+	})
+
+	test('someone not on the host list is told so, and can switch user', async ({
+		unpaired: page,
+	}) => {
+		await backend.addStaff({ first: 'Cash', pin: '1111' })
+		await backend.floor()
+		await pairUi(page, {
+			signInRequired: true,
+			reservationsEnabled: true,
+			locationId: 'loc-1',
+		})
+		await signInWithPin(page, '1111')
+		await page
+			.getByRole('radiogroup', { name: 'Station app' })
+			.getByRole('radio', { name: 'Reservations' })
+			.click()
+		await expect(
+			page.getByRole('heading', {
+				name: 'You are not on this terminal’s host list',
+			}),
+		).toBeVisible()
+		await page.getByRole('button', { name: 'Switch user' }).click()
+		await expect(lockScreen(page)).toBeVisible()
 	})
 
 	test('the waitlist sits in the dock and a party there is seated from it', async ({
 		unpaired: page,
 	}) => {
-		await backend.addStaff({ pin: '4321' })
+		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		const dock = page.getByRole('region', { name: 'Parties to seat' })
 		await dock.getByRole('button', { name: /Rana/ }).first().click()
 		await expect(page.getByText(/Tap a table for Rana Khalid/)).toBeVisible()
 		await page.getByRole('button', { name: /^Table 9, open/ }).click()
-		await expect(page.getByText('Seated Rana Khalid at 9.')).toBeVisible()
+		await expectToast(page, 'Seated Rana Khalid at 9.')
 		await expect(dock.getByText('Rana')).toHaveCount(0)
 	})
 
 	test('a table booked before the party would be done steps back, and the host may still insist', async ({
 		unpaired: page,
 	}) => {
-		await backend.addStaff({ pin: '4321' })
+		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		const dock = page.getByRole('region', { name: 'Parties to seat' })
 		await dock.getByRole('button', { name: /Rana/ }).first().click()
@@ -266,13 +334,13 @@ test.describe('host stand', () => {
 		).toHaveAttribute('data-fits', 'true')
 		await busy.click()
 		await page.getByRole('button', { name: 'Seat anyway' }).click()
-		await expect(page.getByText('Seated Rana Khalid at 1.')).toBeVisible()
+		await expectToast(page, 'Seated Rana Khalid at 1.')
 	})
 
 	test('a new booking takes its time from availability', async ({
 		unpaired: page,
 	}) => {
-		await backend.addStaff({ pin: '4321' })
+		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		await page.getByRole('button', { name: 'Booking' }).click()
 		const sheet = page.getByRole('dialog', { name: 'New booking' })
@@ -285,14 +353,14 @@ test.describe('host stand', () => {
 		await sheet.getByLabel('First name').fill('Zaid')
 		await sheet.getByLabel('Last name').fill('Omar')
 		await sheet.getByRole('button', { name: `Book 4 at ${time}` }).click()
-		await expect(page.getByText(`Booked Zaid for 4 at ${time}.`)).toBeVisible()
+		await expectToast(page, `Booked Zaid for 4 at ${time}.`)
 	})
 
 	test('on a phone, the floor and the dock still fit', async ({
 		unpaired: page,
 	}) => {
 		await page.setViewportSize({ width: 390, height: 844 })
-		await backend.addStaff({ pin: '4321' })
+		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		await capture(page, 'phone-host-floor')
 		await page
@@ -300,7 +368,7 @@ test.describe('host stand', () => {
 			.getByRole('radio', { name: 'Time clock' })
 			.click()
 		await expect(
-			page.getByRole('heading', { name: 'Enter your PIN' }),
+			clock(page).getByRole('heading', { name: 'Enter your PIN' }),
 		).toBeVisible()
 		await capture(page, 'phone-timeclock')
 	})
@@ -308,7 +376,7 @@ test.describe('host stand', () => {
 	test('right to left, the floor and the dock read in Arabic', async ({
 		unpaired: page,
 	}) => {
-		await backend.addStaff({ pin: '4321' })
+		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		await page.evaluate(() => {
 			const key = 'pos.settings.v1'

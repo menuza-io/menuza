@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { CLOCK_EVENTS, CLOCK_STATES, type ClockEvent } from './clock-state.ts'
+import { BREAK_KINDS } from './labor-policy.ts'
 import { PIN_MAX_LENGTH } from './pin.ts'
 
 /**
@@ -24,6 +25,8 @@ export const clockIdentifyResponseSchema = z.object({
 	positions: z.array(positionSchema),
 	nextShifts: z.array(z.object({ startAt: z.number(), endAt: z.number() })),
 	promptTips: z.boolean().default(false),
+	/** An older node sends none: every break is the default one. */
+	breakKinds: z.array(z.enum(BREAK_KINDS)).default([]),
 	serverNow: z.number(),
 })
 export type KioskIdentifyView = z.infer<typeof clockIdentifyResponseSchema>

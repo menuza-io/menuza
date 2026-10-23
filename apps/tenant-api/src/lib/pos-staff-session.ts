@@ -8,6 +8,7 @@ import {
 	type PosStaff,
 } from '@repo/common/pos-orders'
 import {
+	posHosts,
 	posManagers,
 	staffMembers,
 	staffScopeAssignments,
@@ -76,6 +77,10 @@ export type PosStaffSession = {
 	staffId: string
 	/** From the manager roster now, not from the token. */
 	role: 'cashier' | 'manager'
+	/** On the host roster now: may run the host stand. */
+	host: boolean
+	/** On the host roster with guest details: full contacts, allergies, notes. */
+	guestDetails: boolean
 }
 
 const sessionInvalid = () => posError(401, 'staff_session_invalid')
@@ -93,7 +98,7 @@ export async function verifyPosStaffSession(
 	const token = c.req.header(POS_STAFF_SESSION_HEADER)?.trim()
 	if (!token) return { error: posError(401, 'staff_session_required') }
 
-	let payload: Record<string, unknown>
+	let payload: Record<string, unknown> & { iat?: number }
 	try {
 		const verified = await jwtVerify(token, sessionKey(), {
 			audience: POS_STAFF_SESSION_AUDIENCE,
@@ -123,6 +128,7 @@ export async function verifyPosStaffSession(
 			id: staffMembers.id,
 			firstName: staffMembers.firstName,
 			lastName: staffMembers.lastName,
+			pinSetAt: staffScopeAssignments.pinSetAt,
 		})
 		.from(staffScopeAssignments)
 		.innerJoin(staffMembers, eq(staffMembers.id, staffScopeAssignments.staffId))
@@ -136,12 +142,27 @@ export async function verifyPosStaffSession(
 		)
 		.limit(1)
 	if (!row) return { error: sessionInvalid() }
+	// A PIN changed after this sign-in ends it: the old PIN proved nothing.
+	if (
+		row.pinSetAt !== null &&
+		typeof payload.iat === 'number' &&
+		row.pinSetAt > payload.iat * 1000
+	) {
+		return { error: sessionInvalid() }
+	}
 
-	const [manager] = await pos.db
-		.select({ id: posManagers.staffId })
-		.from(posManagers)
-		.where(eq(posManagers.staffId, staffId))
-		.limit(1)
+	const [[manager], [host]] = await Promise.all([
+		pos.db
+			.select({ id: posManagers.staffId })
+			.from(posManagers)
+			.where(eq(posManagers.staffId, staffId))
+			.limit(1),
+		pos.db
+			.select({ id: posHosts.staffId, guestDetails: posHosts.guestDetails })
+			.from(posHosts)
+			.where(eq(posHosts.staffId, staffId))
+			.limit(1),
+	])
 	return {
 		session: {
 			staffId,
@@ -150,6 +171,8 @@ export async function verifyPosStaffSession(
 				name: posStaffDisplayName(row.firstName, row.lastName),
 			},
 			role: manager ? 'manager' : 'cashier',
+			host: Boolean(host),
+			guestDetails: host?.guestDetails === true,
 		},
 	}
 }

@@ -555,7 +555,15 @@ export function App() {
 					shiftOpen={Boolean(currentShift)}
 					app={app}
 					apps={s.settings.apps}
-					onApp={(next) => void s.updateSettings({ activeApp: next })}
+					onApp={(next) => {
+						// Punching happens at the lock, never inside someone's session.
+						if (next === 'timeclock' && s.settings.signInRequired) {
+							s.lock()
+							setClockOverLock(true)
+							return
+						}
+						void s.updateSettings({ activeApp: next })
+					}}
 				/>
 				<Reveal open={needsShift && app === 'pos'}>
 					<button
@@ -640,9 +648,12 @@ export function App() {
 						businessName={businessName}
 						locationName={s.location?.name ?? null}
 						currency={s.location?.currency ?? 'USD'}
+						timeZone={s.location?.timezone}
 					/>
 				) : app === 'reservations' ? (
 					<HostStand
+						// Someone new at the till starts from a clean stand: nothing picked up, no sheet open.
+						key={s.session?.serverSession?.token ?? 'signed-out'}
 						settings={s.settings}
 						session={s.session}
 						online={s.online}
@@ -993,6 +1004,7 @@ export function App() {
 						businessName={businessName}
 						locationName={s.location?.name ?? null}
 						currency={s.location?.currency ?? 'USD'}
+						timeZone={s.location?.timezone}
 						onClose={() => setClockOverLock(false)}
 					/>
 				</ClockOverLock>

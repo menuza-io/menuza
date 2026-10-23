@@ -15,6 +15,7 @@ import {
 	ArrowLeft,
 	BriefcaseBusiness,
 	CalendarClock,
+	CircleAlert,
 	CloudOff,
 	Coffee,
 	LogIn,
@@ -29,15 +30,27 @@ import {
 	useRef,
 	useState,
 } from 'react'
-import { punchQueue, stationClockApi } from './clock.ts'
-import { clockNotice, EVENT_DONE, EVENT_LABEL, STATE_LINE } from './messages.ts'
-import { clockIsOff, useClock } from '~/lib/clock.ts'
+import { punchQueue, stationClockApi, worthSavingForLater } from './clock.ts'
+import {
+	BREAK_LABEL,
+	clockNotice,
+	EVENT_DONE,
+	EVENT_LABEL,
+	STATE_LINE,
+} from './messages.ts'
+import {
+	findClockPerson,
+	forgetClockPin,
+	rememberClockPerson,
+} from './roster.ts'
+import { clockIsOff, serverNow, useClock } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
+import { type ClockPerson } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import { Stagger, SuccessMark } from '~/ui/motion.tsx'
 import { PinDots } from '~/ui/PinDots.tsx'
-import { Button, cn, NumberPop } from '~/ui/primitives.tsx'
+import { Button, cn, Modal, NumberPop } from '~/ui/primitives.tsx'
 
 const EVENT_ICON: Record<ClockEvent, LucideIcon> = {
 	clock_in: LogIn,
@@ -71,6 +84,7 @@ export function TimeClock({
 	businessName,
 	locationName,
 	currency,
+	timeZone,
 	onClose,
 }: {
 	settings: PosSettings
@@ -79,6 +93,8 @@ export function TimeClock({
 	locationName: string | null
 	/** For declaring cash tips. */
 	currency: string
+	/** The location's: the clock and shift times read in the restaurant's time, not the tablet's. */
+	timeZone?: string
 	/** From the lock screen: back to signing in. */
 	onClose?: () => void
 }) {
@@ -87,14 +103,29 @@ export function TimeClock({
 	const [busy, setBusy] = useState(false)
 	const busyRef = useRef(false)
 	const [waiting, setWaiting] = useState(0)
+	const [failed, setFailed] = useState(0)
+	const [failedOpen, setFailedOpen] = useState(false)
+	/** Who an offline PIN belongs to, when this till has seen it online; null when not. */
+	const [offlineWho, setOfflineWho] = useState<ClockPerson | null>(null)
+	/** A break was chosen where the rules know more than one kind. */
+	const [pickingBreak, setPickingBreak] = useState(false)
+	/** Bumped by any touch, so a person still typing is not sent back to the pad. */
+	const [touched, setTouched] = useState(0)
 	const api = useMemo(() => stationClockApi(settings), [settings])
-	const reset = useCallback(() => dispatch({ type: 'reset', mode: 'pin' }), [])
+	const reset = useCallback(() => {
+		setOfflineWho(null)
+		setPickingBreak(false)
+		dispatch({ type: 'reset', mode: 'pin' })
+	}, [])
 
 	const refreshWaiting = useCallback(() => {
 		const queue = punchQueue()
 		if (!queue.supported) return
 		void queue.counts().then(
-			(counts) => setWaiting(counts.queued),
+			(counts) => {
+				setWaiting(counts.queued)
+				setFailed(counts.failed)
+			},
 			() => {},
 		)
 	}, [])
@@ -115,7 +146,7 @@ export function TimeClock({
 		if (idle === null) return
 		const timer = window.setTimeout(reset, idle * 1000)
 		return () => window.clearTimeout(timer)
-	}, [flow, reset])
+	}, [flow, touched, reset])
 
 	// A wrong-PIN wait counts down on the monotonic clock.
 	const pausedUntil = flow.screen === 'pin' ? flow.pausedUntil : null
@@ -150,26 +181,44 @@ export function TimeClock({
 		dispatch({ type: 'rejected', notice, now: Date.now(), mode: 'pin' })
 	}, [])
 
+	/**
+	 * No answer about this PIN: the punch can still be saved for later. The till
+	 * greets the person if it has seen their PIN online, and says plainly when
+	 * it cannot tell whose PIN it is.
+	 */
+	const goOffline = useCallback(async (pin: string) => {
+		const person = await findClockPerson(pin).catch(() => null)
+		setOfflineWho(person)
+		dispatch({ type: 'offline' })
+	}, [])
+
 	const submitPin = useCallback(async () => {
 		if (flow.screen !== 'pin' || busyRef.current || flow.pin.length < 4) return
 		if (flow.pausedUntil !== null) return
-		if (!online) {
-			dispatch({ type: 'offline' })
-			return
-		}
+		const { pin } = flow
 		busyRef.current = true
 		setBusy(true)
 		try {
-			const who = await api.identify(flow.pin)
+			if (!online) {
+				await goOffline(pin)
+				return
+			}
+			const who = await api.identify(pin)
+			void rememberClockPerson(pin, who).catch(() => {})
 			dispatch({ type: 'identified', who })
 		} catch (error) {
-			if (error instanceof ClockNetworkError) dispatch({ type: 'offline' })
-			else reject(error)
+			if (error instanceof ClockNetworkError || worthSavingForLater(error))
+				await goOffline(pin)
+			else {
+				if (error instanceof ClockApiError && error.code === 'invalid_pin')
+					void forgetClockPin(pin).catch(() => {})
+				reject(error)
+			}
 		} finally {
 			busyRef.current = false
 			setBusy(false)
 		}
-	}, [flow, online, api, reject])
+	}, [flow, online, api, reject, goOffline])
 
 	/**
 	 * Sends a punch. Its id is made once and reused if the answer is lost, so a
@@ -178,12 +227,19 @@ export function TimeClock({
 	const punch = useCallback(
 		async (
 			event: ClockEvent,
-			extras: { positionId?: string; cashTipsMinor?: number } = {},
+			extras: {
+				positionId?: string
+				cashTipsMinor?: number
+				breakKind?: 'meal' | 'rest'
+			} = {},
 		) => {
 			if (flow.screen === 'pin' || flow.screen === 'done') return
 			if (flow.screen === 'people' || busyRef.current) return
 			const { pin } = flow
-			const firstName = flow.screen === 'offline' ? '' : flow.who.firstName
+			const firstName =
+				flow.screen === 'offline'
+					? (offlineWho?.firstName ?? '')
+					: flow.who.firstName
 			busyRef.current = true
 			setBusy(true)
 			const id = crypto.randomUUID()
@@ -196,10 +252,16 @@ export function TimeClock({
 				...(extras.cashTipsMinor !== undefined
 					? { cashTipsMinor: extras.cashTipsMinor }
 					: {}),
-				clientAt: tappedAt,
+				...(extras.breakKind ? { breakKind: extras.breakKind } : {}),
+				// A saved punch counts at the time it was tapped, in the server's time.
+				clientAt: Math.round(serverNow(tappedAt)),
 			}
 			const saveForLater = async () => {
-				await punchQueue().enqueue({ ...body, createdAt: tappedAt })
+				await punchQueue().enqueue({
+					...body,
+					...(firstName ? { firstName } : {}),
+					createdAt: tappedAt,
+				})
 				refreshWaiting()
 				dispatch({
 					type: 'done',
@@ -226,7 +288,7 @@ export function TimeClock({
 					},
 				})
 			} catch (error) {
-				if (error instanceof ClockNetworkError) {
+				if (error instanceof ClockNetworkError || worthSavingForLater(error)) {
 					try {
 						await saveForLater()
 					} catch (queueError) {
@@ -246,11 +308,13 @@ export function TimeClock({
 				setBusy(false)
 			}
 		},
-		[flow, api, reject, refreshWaiting],
+		[flow, api, reject, refreshWaiting, offlineWho],
 	)
 
 	const choose = (event: ClockEvent) => {
 		if (flow.screen !== 'actions') return void punch(event)
+		if (event === 'break_start' && flow.who.breakKinds.length > 1)
+			return setPickingBreak(true)
 		const step = nextStepFor(flow, event)
 		if (step === 'role') dispatch({ type: 'chooseRole' })
 		else if (step === 'tips') dispatch({ type: 'chooseTips', positionId: null })
@@ -260,7 +324,9 @@ export function TimeClock({
 	return (
 		<div
 			className="bg-background flex min-h-0 flex-1 flex-col lg:flex-row"
+			onPointerDown={() => setTouched((n) => n + 1)}
 			onKeyDown={(event) => {
+				setTouched((n) => n + 1)
 				if (flow.screen !== 'pin' || busy) return
 				if (/^\d$/.test(event.key))
 					dispatch({ type: 'digit', digit: event.key })
@@ -271,9 +337,21 @@ export function TimeClock({
 			<ClockFace
 				businessName={businessName}
 				locationName={locationName}
+				timeZone={timeZone}
 				waiting={waiting}
+				failed={failed}
+				onFailed={() => setFailedOpen(true)}
 				online={online}
 				onClose={onClose}
+			/>
+			<FailedPunches
+				open={failedOpen}
+				timeZone={timeZone}
+				onClose={() => setFailedOpen(false)}
+				onCleared={() => {
+					setFailedOpen(false)
+					refreshWaiting()
+				}}
 			/>
 			<section
 				aria-label={_(t`Time clock`)}
@@ -325,16 +403,26 @@ export function TimeClock({
 					>
 						{flow.screen !== 'pin' && flow.screen !== 'people' ? (
 							<Stagger
-								replay={flow.screen}
+								replay={`${flow.screen}${pickingBreak ? ':break' : ''}`}
 								className="flex h-full flex-col gap-5"
 							>
-								{flow.screen === 'actions' ? (
+								{flow.screen === 'actions' && pickingBreak ? (
+									<BreakPick
+										kinds={flow.who.breakKinds}
+										busy={busy}
+										onPick={(breakKind) =>
+											void punch('break_start', { breakKind })
+										}
+										onBack={() => setPickingBreak(false)}
+									/>
+								) : flow.screen === 'actions' ? (
 									<Actions
 										flow={flow}
 										busy={busy}
 										onChoose={choose}
 										onBack={reset}
 										locale={i18n.locale}
+										timeZone={timeZone}
 									/>
 								) : flow.screen === 'role' ? (
 									<RolePick
@@ -358,12 +446,16 @@ export function TimeClock({
 									/>
 								) : flow.screen === 'offline' ? (
 									<OfflineActions
+										who={offlineWho}
 										busy={busy}
-										onChoose={(event) => void punch(event)}
+										locale={i18n.locale}
+										onChoose={(event, positionId) =>
+											void punch(event, positionId ? { positionId } : {})
+										}
 										onBack={reset}
 									/>
 								) : flow.screen === 'done' ? (
-									<Done done={flow.done} onFinish={reset} />
+									<Done done={flow.done} timeZone={timeZone} onFinish={reset} />
 								) : null}
 							</Stagger>
 						) : null}
@@ -378,28 +470,37 @@ export function TimeClock({
 function ClockFace({
 	businessName,
 	locationName,
+	timeZone,
 	waiting,
+	failed,
+	onFailed,
 	online,
 	onClose,
 }: {
 	businessName: string
 	locationName: string | null
+	timeZone?: string
 	waiting: number
+	failed: number
+	onFailed: () => void
 	online: boolean
 	onClose?: () => void
 }) {
 	const { i18n } = useLingui()
-	const [now, setNow] = useState(() => new Date())
+	const skewMs = useClock((s) => s.skewMs)
+	// The face shows the server's time, which is the time punches count at.
+	const [now, setNow] = useState(() => new Date(serverNow()))
 	useEffect(() => {
-		const timer = window.setInterval(() => setNow(new Date()), 1000)
+		const timer = window.setInterval(() => setNow(new Date(serverNow())), 1000)
 		return () => window.clearInterval(timer)
 	}, [])
 	// The till's clock may be off; punches then count at the server's time.
-	const skewed = clockIsOff(useClock((s) => s.skewMs))
+	const skewed = clockIsOff(skewMs)
 	// The digits carry the screen; "AM" and "PM" sit beside them, smaller.
 	const parts = new Intl.DateTimeFormat(i18n.locale, {
 		hour: 'numeric',
 		minute: '2-digit',
+		timeZone,
 	}).formatToParts(now)
 	const period = parts.find((part) => part.type === 'dayPeriod')?.value ?? ''
 	const time = parts
@@ -411,6 +512,7 @@ function ClockFace({
 		weekday: 'long',
 		month: 'long',
 		day: 'numeric',
+		timeZone,
 	}).format(now)
 	return (
 		<aside className="border-border bg-card flex shrink-0 flex-col gap-6 border-b p-5 sm:p-6 lg:w-[38%] lg:max-w-xl lg:justify-between lg:border-e lg:border-b-0 lg:p-10">
@@ -455,6 +557,19 @@ function ClockFace({
 								other: '# punches waiting to send',
 							})}
 						</p>
+					) : null}
+					{failed > 0 ? (
+						<button
+							type="button"
+							onClick={onFailed}
+							className="bg-destructive/10 text-destructive hover:bg-destructive/15 inline-flex min-h-11 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors"
+						>
+							<CircleAlert className="size-4 shrink-0" />
+							{plural(failed, {
+								one: '# punch not recorded',
+								other: '# punches not recorded',
+							})}
+						</button>
 					) : null}
 					{!online ? (
 						<p className="text-muted-foreground text-sm">
@@ -609,12 +724,14 @@ function Actions({
 	onChoose,
 	onBack,
 	locale,
+	timeZone,
 }: {
 	flow: Extract<Flow, { screen: 'actions' }>
 	busy: boolean
 	onChoose: (event: ClockEvent) => void
 	onBack: () => void
 	locale: string
+	timeZone?: string
 }) {
 	const { _ } = useLingui()
 	const { who } = flow
@@ -622,10 +739,12 @@ function Actions({
 		weekday: 'short',
 		hour: 'numeric',
 		minute: '2-digit',
+		timeZone,
 	})
 	const endTime = new Intl.DateTimeFormat(locale, {
 		hour: 'numeric',
 		minute: '2-digit',
+		timeZone,
 	})
 	return (
 		<>
@@ -779,27 +898,72 @@ function Tips({
 }
 
 function OfflineActions({
+	who,
 	busy,
+	locale,
 	onChoose,
 	onBack,
 }: {
+	/** The person this PIN belonged to when the till last saw it online. */
+	who: ClockPerson | null
 	busy: boolean
-	onChoose: (event: ClockEvent) => void
+	locale: string
+	onChoose: (event: ClockEvent, positionId?: string) => void
 	onBack: () => void
 }) {
+	const [pickRole, setPickRole] = useState(false)
+	const positions = who?.positions ?? []
+	if (pickRole)
+		return (
+			<>
+				<BackLink onBack={() => setPickRole(false)} />
+				<h2 className="t-stagger-line text-3xl font-bold">
+					<Trans>What are you working today?</Trans>
+				</h2>
+				<div className="t-stagger-line t-stagger-line--2 flex flex-col gap-2">
+					{positions.map((position) => (
+						<Button
+							key={position.id}
+							variant="outline"
+							size="lg"
+							disabled={busy}
+							className="justify-start"
+							onClick={() => onChoose('clock_in', position.id)}
+						>
+							{locale === 'ar' && position.nameAr
+								? position.nameAr
+								: position.name}
+						</Button>
+					))}
+				</div>
+			</>
+		)
+	const firstName = who?.firstName ?? ''
 	return (
 		<>
 			<BackLink onBack={onBack} />
 			<div>
 				<h2 className="t-stagger-line text-3xl font-bold">
-					<Trans>What are you doing?</Trans>
+					{who ? (
+						<Trans>Hi {firstName}, what are you doing?</Trans>
+					) : (
+						<Trans>What are you doing?</Trans>
+					)}
 				</h2>
 				<p className="t-stagger-line t-stagger-line--2 text-muted-foreground mt-1 flex items-start gap-2">
 					<CloudOff className="mt-1 size-4 shrink-0" />
-					<Trans>
-						No connection. Your punch is saved on this terminal and sent when it
-						is back; your PIN is checked then.
-					</Trans>
+					{who ? (
+						<Trans>
+							No connection. Your punch is saved on this terminal and sent when
+							it is back; your PIN is checked then.
+						</Trans>
+					) : (
+						<Trans>
+							No connection, and this terminal has not seen this PIN before, so
+							it cannot check it now. Make sure it is yours: the punch is sent,
+							and checked, when the connection is back.
+						</Trans>
+					)}
 				</p>
 			</div>
 			<div className="t-stagger-line t-stagger-line--3 grid grid-cols-2 gap-3">
@@ -809,7 +973,11 @@ function OfflineActions({
 						event={event}
 						primary={index === 0}
 						busy={busy}
-						onChoose={onChoose}
+						onChoose={(chosen) =>
+							chosen === 'clock_in' && positions.length > 1
+								? setPickRole(true)
+								: onChoose(chosen)
+						}
 					/>
 				))}
 			</div>
@@ -817,11 +985,151 @@ function OfflineActions({
 	)
 }
 
+function BreakPick({
+	kinds,
+	busy,
+	onPick,
+	onBack,
+}: {
+	kinds: Array<'meal' | 'rest'>
+	busy: boolean
+	onPick: (kind: 'meal' | 'rest') => void
+	onBack: () => void
+}) {
+	const { _ } = useLingui()
+	return (
+		<>
+			<BackLink onBack={onBack} />
+			<h2 className="t-stagger-line text-3xl font-bold">
+				<Trans>Which break are you taking?</Trans>
+			</h2>
+			<div className="t-stagger-line t-stagger-line--2 grid grid-cols-2 gap-3">
+				{kinds.map((kind, index) => (
+					<button
+						key={kind}
+						type="button"
+						disabled={busy}
+						onClick={() => onPick(kind)}
+						className={cn(
+							'flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-start transition active:scale-[0.97] disabled:opacity-50',
+							index === 0
+								? 'border-primary bg-primary text-primary-foreground elevated-card'
+								: 'border-border bg-card hover:bg-accent',
+						)}
+					>
+						<Coffee className="size-6" aria-hidden />
+						<span className="text-lg font-semibold">
+							{_(BREAK_LABEL[kind])}
+						</span>
+					</button>
+				))}
+			</div>
+		</>
+	)
+}
+
+/**
+ * Punches the server refused after they were saved offline (a wrong PIN, out of
+ * order). Nothing was recorded for them: the person, or a manager, adds them by
+ * hand. Seeing the list clears it.
+ */
+function FailedPunches({
+	open,
+	timeZone,
+	onClose,
+	onCleared,
+}: {
+	open: boolean
+	timeZone?: string
+	onClose: () => void
+	onCleared: () => void
+}) {
+	const { _, i18n } = useLingui()
+	const [rows, setRows] = useState<
+		Array<{
+			id: string
+			kind: ClockEvent
+			firstName?: string
+			clientAt: number
+			failure?: string
+		}>
+	>([])
+	useEffect(() => {
+		if (!open) return
+		void punchQueue()
+			.failed()
+			.then(setRows, () => setRows([]))
+	}, [open])
+	const time = new Intl.DateTimeFormat(i18n.locale, {
+		weekday: 'short',
+		hour: 'numeric',
+		minute: '2-digit',
+		timeZone,
+	})
+	return (
+		<Modal
+			open={open}
+			onClose={onClose}
+			title={_(t`Punches not recorded`)}
+			footer={
+				<div className="grid grid-cols-2 gap-3">
+					<Button variant="outline" size="lg" onClick={onClose}>
+						<Trans>Close</Trans>
+					</Button>
+					<Button
+						variant="primary"
+						size="lg"
+						onClick={() => void punchQueue().clearFailed().finally(onCleared)}
+					>
+						<Trans>Got it, clear</Trans>
+					</Button>
+				</div>
+			}
+		>
+			<div className="flex flex-col gap-3 p-5">
+				<p className="text-muted-foreground">
+					<Trans>
+						These were saved while offline, and the server did not accept them.
+						Tell a manager so they can add the right times.
+					</Trans>
+				</p>
+				<ul className="divide-border divide-y">
+					{rows.map((row) => {
+						const who = row.firstName ?? ''
+						const what = _(EVENT_LABEL[row.kind])
+						return (
+							<li key={row.id} className="flex flex-col gap-0.5 py-3">
+								<span className="font-semibold">
+									{who ? (
+										<Trans>
+											{what} · {who}
+										</Trans>
+									) : (
+										what
+									)}
+								</span>
+								<span className="text-muted-foreground tnum text-sm">
+									{time.format(row.clientAt)}
+								</span>
+								<span className="text-destructive text-sm">
+									{_(clockNotice(row.failure ?? 'unknown').message)}
+								</span>
+							</li>
+						)
+					})}
+				</ul>
+			</div>
+		</Modal>
+	)
+}
+
 function Done({
 	done,
+	timeZone,
 	onFinish,
 }: {
 	done: Extract<Flow, { screen: 'done' }>['done']
+	timeZone?: string
 	onFinish: () => void
 }) {
 	const { _, i18n } = useLingui()
@@ -831,6 +1139,7 @@ function Done({
 			: new Intl.DateTimeFormat(i18n.locale, {
 					hour: 'numeric',
 					minute: '2-digit',
+					timeZone,
 				}).format(done.at)
 	const label = _(EVENT_DONE[done.kind])
 	return (

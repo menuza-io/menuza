@@ -2207,6 +2207,21 @@ export const posManagers = sqliteTable('pos_managers', {
 	addedAt: integer('added_at').notNull().default(nowMs),
 })
 
+// People who may run the host stand on a Station terminal (book, seat, walk-ins,
+// waitlist), set by someone who manages reservations. Everyone else with a PIN
+// takes orders and punches the clock, nothing more. `guestDetails` also opens
+// guests' full phone numbers, emails, allergies and private notes.
+export const posHosts = sqliteTable('pos_hosts', {
+	staffId: text('staff_id')
+		.primaryKey()
+		.references(() => staffMembers.id, { onDelete: 'cascade' }),
+	guestDetails: integer('guest_details', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	addedBy: text('added_by').notNull(),
+	addedAt: integer('added_at').notNull().default(nowMs),
+})
+
 // Per-device PIN failure counters (escalating backoff, never a device lock).
 // Stored in the org database because the in-process rate limiter resets per
 // isolate and is not shared across Durable Objects or processes.

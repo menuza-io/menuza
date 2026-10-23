@@ -87,6 +87,14 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 			if (denied) return denied
 		}
 
+		// A Station till runs the host stand and nothing else: never the guestbook.
+		if (ctx.channel === 'station' && !stationMayCall(c.req.path)) {
+			return Response.json(
+				{ error: 'not_for_station', message: 'Not available at a till' },
+				{ status: 403 },
+			)
+		}
+
 		const requestedOrgId =
 			c.req.query('orgId')?.trim() || c.req.header('X-Org-Id')?.trim()
 		if (requestedOrgId && requestedOrgId !== ctx.orgId) {
@@ -109,6 +117,21 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 		c.set(RSV_AUTH_KEY, ctx)
 		await next()
 	}
+}
+
+/** The day of service and the waitlist; not guest search or guest history. */
+export function stationMayCall(path: string): boolean {
+	return (
+		path.startsWith('/operator/reservations/book/') &&
+		!path.startsWith('/operator/reservations/book/guests')
+	)
+}
+
+/** The auth context, if a guard on this request set one (for after-the-fact middleware). */
+export function peekRsvAuth(c: Context): ReservationsOperatorContext | null {
+	return (
+		(c.get(RSV_AUTH_KEY) as ReservationsOperatorContext | undefined) ?? null
+	)
 }
 
 export function getRsvAuth(c: Context): ReservationsOperatorContext {

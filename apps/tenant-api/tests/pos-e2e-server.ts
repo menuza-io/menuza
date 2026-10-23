@@ -63,6 +63,7 @@ const {
 	posDevices,
 	posFiscalDocuments,
 	posHeldUploads,
+	posHosts,
 	posManagers,
 	posOrderLines,
 	posOrderRevisions,
@@ -382,6 +383,7 @@ root.post('/__test/reset', async (c) => {
 	await db.delete(posPairingCodes)
 	await db.delete(posDevices)
 	await db.delete(posManagers)
+	await db.delete(posHosts)
 	await db.delete(staffScopeAssignments)
 	await db.delete(staffMembers)
 	published = baseCatalog()
@@ -468,6 +470,8 @@ root.post('/__test/staff', async (c) => {
 		last?: string
 		pin?: string | null
 		manager?: boolean
+		/** On the terminal's host list; `guest` also sees guests' contact details. */
+		host?: boolean | 'guest'
 		scopeId?: string
 		status?: string
 	}
@@ -487,6 +491,10 @@ root.post('/__test/staff', async (c) => {
 	})
 	if (b.manager)
 		await db.insert(posManagers).values({ staffId: id, addedBy: 'e2e' })
+	if (b.host)
+		await db
+			.insert(posHosts)
+			.values({ staffId: id, guestDetails: b.host === 'guest', addedBy: 'e2e' })
 	return c.json({ id })
 })
 root.post('/__test/staff-update', async (c) => {

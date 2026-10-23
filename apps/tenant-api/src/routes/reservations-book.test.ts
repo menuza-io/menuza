@@ -275,7 +275,8 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		)
 		expect(res1.status).toBe(200)
 		const etag1 = res1.headers.get('ETag')
-		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1:1"`)
+		// `.g`: this token reads guest details, which changes what the day says.
+		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1:1.g"`)
 		const body1 = (await res1.json()) as {
 			dayVersion: number
 			settingsVersion: number
@@ -302,7 +303,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			{
 				headers: {
 					Authorization: `Bearer ${token}`,
-					'If-None-Match': `"0.1.1"`,
+					'If-None-Match': `"0.1.1.g"`,
 				},
 			},
 		)
@@ -325,7 +326,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 				},
 			)
 			expect(resFloor.status).toBe(200)
-			expect(resFloor.headers.get('ETag')).toBe(`"${LOC_MAIN}:${DATE}:0:1:2"`)
+			expect(resFloor.headers.get('ETag')).toBe(`"${LOC_MAIN}:${DATE}:0:1:2.g"`)
 		} finally {
 			await db
 				.update(rsvLocationSettings)
@@ -1637,7 +1638,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			const unfilteredRes = await getDay(app, token)
 			const unfiltered = (await unfilteredRes.json()) as any
 			expect(unfilteredRes.headers.get('ETag')).toBe(
-				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1:1"`,
+				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1:1.g"`,
 			)
 			expect(unfiltered.counters).toEqual({ parties: 3, covers: 9 })
 

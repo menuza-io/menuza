@@ -95,6 +95,9 @@ export type ToastMessage = {
  * One toast at a time, rising from the bottom edge (toast): what just happened,
  * and an undo when there is one. It goes by itself after a few seconds, and a
  * newer message replaces it. Announced politely; the action is a real button.
+ *
+ * It is a manual popover, so it shows in the top layer: above a sheet that is
+ * open when it appears, not hidden behind it.
  */
 export function Toast({
 	message,
@@ -110,6 +113,16 @@ export function Toast({
 	const [open, setOpen] = useState(false)
 	if (message && message.id !== shown?.id) setShown(message)
 	const ref = useRef<HTMLDivElement>(null)
+	const layer = useRef<HTMLDivElement>(null)
+
+	// In the top layer while there is something to show (including its way out).
+	useLayoutEffect(() => {
+		const el = layer.current
+		if (!el || typeof el.showPopover !== 'function') return
+		const isOpen = el.matches(':popover-open')
+		if (shown && !isOpen) el.showPopover()
+		else if (!shown && isOpen) el.hidePopover()
+	}, [shown])
 
 	useEffect(() => {
 		if (!message) {
@@ -135,46 +148,52 @@ export function Toast({
 	}, [message, shown])
 
 	return (
-		<div
-			role="status"
-			aria-live="polite"
-			className="pb-safe pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4"
-		>
-			{shown ? (
-				<div
-					ref={ref}
-					className={cn(
-						't-toast pointer-events-auto flex max-w-lg items-center gap-3 rounded-2xl px-4 py-3 shadow-lg',
-						shown.tone === 'danger'
-							? 'bg-destructive text-white'
-							: 'bg-foreground text-background',
-						open && message && 'is-open',
-					)}
-				>
-					<p className="min-w-0 flex-1 text-sm font-medium">{shown.text}</p>
-					{shown.action ? (
+		<>
+			{/* Announced from outside the popover, which is not rendered while closed. */}
+			<p role="status" aria-live="polite" className="sr-only">
+				{message?.text ?? ''}
+			</p>
+			<div
+				ref={layer}
+				popover="manual"
+				className="pb-safe pointer-events-none fixed inset-x-0 top-auto bottom-0 z-50 m-0 flex h-auto w-full max-w-none justify-center overflow-visible border-0 bg-transparent p-0 px-4 [&:not(:popover-open)]:hidden"
+			>
+				{shown ? (
+					<div
+						ref={ref}
+						className={cn(
+							't-toast pointer-events-auto flex max-w-lg items-center gap-3 rounded-2xl px-4 py-3 shadow-lg',
+							shown.tone === 'danger'
+								? 'bg-destructive text-white'
+								: 'bg-foreground text-background',
+							open && message && 'is-open',
+						)}
+					>
+						<p className="min-w-0 flex-1 text-sm font-medium">{shown.text}</p>
+						{shown.action ? (
+							<button
+								type="button"
+								onClick={() => {
+									shown.action?.run()
+									onDone()
+								}}
+								className="h-10 shrink-0 rounded-xl px-3 text-sm font-bold underline-offset-4 hover:underline"
+							>
+								{shown.action.label}
+							</button>
+						) : null}
 						<button
 							type="button"
-							onClick={() => {
-								shown.action?.run()
-								onDone()
-							}}
-							className="h-10 shrink-0 rounded-xl px-3 text-sm font-bold underline-offset-4 hover:underline"
+							aria-label={_(t`Dismiss`)}
+							onClick={onDone}
+							className="-me-1 inline-flex size-10 shrink-0 items-center justify-center rounded-xl opacity-70 hover:opacity-100"
 						>
-							{shown.action.label}
+							<X className="size-4" />
 						</button>
-					) : null}
-					<button
-						type="button"
-						aria-label={_(t`Dismiss`)}
-						onClick={onDone}
-						className="-me-1 inline-flex size-10 shrink-0 items-center justify-center rounded-xl opacity-70 hover:opacity-100"
-					>
-						<X className="size-4" />
-					</button>
-				</div>
-			) : null}
-		</div>
+					</div>
+				) : null}
+			</div>
+		</>
 	)
 }
 

@@ -85,6 +85,12 @@ export function clockNotice(
 				message: msg`The time clock is turned off on this terminal. Ask a manager.`,
 				kind: 'manager',
 			}
+		case 'kiosk_disabled':
+		case 'service_unavailable':
+			return {
+				message: msg`The time clock is unavailable right now. Try again soon.`,
+				kind: 'offline',
+			}
 		case 'pos_disabled':
 			return {
 				message: msg`Terminals are paused right now. Try again soon.`,
@@ -127,6 +133,11 @@ export const EVENT_DONE: Record<ClockEvent, MessageDescriptor> = {
 	break_start: msg`Break started`,
 	break_end: msg`Back from break`,
 	clock_out: msg`Clocked out`,
+}
+
+export const BREAK_LABEL: Record<'meal' | 'rest', MessageDescriptor> = {
+	meal: msg`Meal break`,
+	rest: msg`Rest break`,
 }
 
 export const STATE_LINE: Record<ClockState, MessageDescriptor> = {

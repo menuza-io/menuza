@@ -45,18 +45,27 @@ export const posTimeclockDeps: { punch: PunchDeps } = {
 
 type Handler = (pos: PosAuth, c: Context) => Promise<Response>
 
+/** Whether the request is a punch the till made offline and sends now. */
+async function isOfflineReplay(c: Context): Promise<boolean> {
+	if (c.req.method !== 'POST' || !c.req.path.endsWith('/punch')) return false
+	const body = (await c.req.raw
+		.clone()
+		.json()
+		.catch(() => null)) as { offline?: unknown } | null
+	return body?.offline === true
+}
+
 function guarded(handler: Handler) {
 	return async (c: Context) => {
 		const authed = await authenticatePosDevice(c)
 		if ('error' in authed) return authed.error
 		const { pos } = authed
 		try {
-			const gate = await timeclockGate(
-				pos.orgId,
-				pos.device,
-				posTimeclockDeps.punch.now(),
-			)
-			if (!gate.ok) return posError(403, gate.code)
+			const gate = await timeclockGate(pos.orgId, pos.device, {
+				now: posTimeclockDeps.punch.now(),
+				offlineReplay: await isOfflineReplay(c),
+			})
+			if (!gate.ok) return posError(gate.status, gate.code)
 			await touchDevice(pos.db, pos.device).catch(() => {})
 			return await handler(pos, c)
 		} catch (error) {
@@ -156,6 +165,7 @@ posTimeclockRoutes.post(
 				allowedEvents: described.allowedEvents,
 				positions: described.positions,
 				promptTips: described.promptTips,
+				breakKinds: described.breakKinds,
 				nextShifts: await nextShiftsFor(pos, verified.member.id, now),
 				serverNow: now,
 			}

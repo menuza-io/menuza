@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react'
 import { Ban, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import {
+	isDrawn,
 	placeTables,
 	shortName,
 	takesParty,
@@ -42,18 +43,19 @@ export function Floor({
 	onTable: (table: DayTable, state: TableState) => void
 	formatTime: (epochMs: number) => string
 }) {
+	const roomTables = useMemo(
+		() => feed.tables.filter((table) => table.areaId === area.id),
+		[area.id, feed.tables],
+	)
 	const placed = useMemo(
-		() =>
-			placeTables(
-				area,
-				feed.tables.filter((table) => table.areaId === area.id),
-			),
-		[area, feed.tables],
+		() => placeTables(area, roomTables),
+		[area, roomTables],
 	)
 	const elements = feed.elements.filter(
 		(element) => !element.areaId || element.areaId === area.id,
 	)
-	const drawn = placed.length > 0 && elements.length > 0
+	// A drawn room keeps its proportions; an undrawn one is a grid that fills the space.
+	const drawn = isDrawn(roomTables)
 
 	return (
 		<div
@@ -119,14 +121,14 @@ function FloorElement({
 		top: `${(element.y / Math.max(area.canvasH, 1)) * 100}%`,
 		width: `${(element.w / Math.max(area.canvasW, 1)) * 100}%`,
 		height: `${(element.h / Math.max(area.canvasH, 1)) * 100}%`,
-		transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
-	}
+		'--turn': element.rotation ? `${element.rotation}deg` : undefined,
+	} as React.CSSProperties
 	return (
 		<div
 			aria-hidden
 			style={style}
 			className={cn(
-				'pointer-events-none absolute flex items-center justify-center overflow-hidden text-xs font-medium',
+				'floor-turn pointer-events-none absolute flex items-center justify-center overflow-hidden text-xs font-medium',
 				element.kind === 'wall' && 'bg-foreground/25 rounded-sm',
 				element.kind === 'bar' &&
 					'bg-foreground/8 text-muted-foreground border-foreground/15 rounded-lg border',
@@ -189,6 +191,11 @@ function TableButton({
 		default:
 			label = _(t`Table ${table.label}, open, seats ${covers}`)
 	}
+	// While a party is being placed, say whether this table takes it.
+	if (fits !== null)
+		label = fits
+			? _(t`${label}. Takes this party.`)
+			: _(t`${label}. Not a fit for this party.`)
 
 	return (
 		<button
@@ -197,12 +204,14 @@ function TableButton({
 			aria-label={label}
 			data-state={state.kind}
 			data-fits={fits === null ? undefined : String(fits)}
-			style={{
-				...style,
-				transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
-			}}
+			style={
+				{
+					...style,
+					'--turn': table.rotation ? `${table.rotation}deg` : undefined,
+				} as React.CSSProperties
+			}
 			className={cn(
-				'floor-table absolute flex min-h-14 min-w-14 flex-col items-center justify-center gap-0.5 overflow-hidden border-2 p-1 text-center',
+				'floor-table floor-turn absolute flex min-h-14 min-w-14 flex-col items-center justify-center gap-0.5 overflow-hidden border-2 p-1 text-center',
 				round ? 'rounded-full' : 'rounded-2xl',
 				state.kind === 'open' && 'border-border bg-card text-foreground',
 				state.kind === 'soon' &&
@@ -214,14 +223,7 @@ function TableButton({
 			)}
 		>
 			{/* Counter-rotate the words so a turned table still reads upright. */}
-			<span
-				className="flex flex-col items-center gap-0.5"
-				style={{
-					transform: table.rotation
-						? `rotate(${-table.rotation}deg)`
-						: undefined,
-				}}
-			>
+			<span className="floor-unturn flex flex-col items-center gap-0.5">
 				<span className="mono text-base leading-none font-bold sm:text-lg">
 					{table.label}
 				</span>

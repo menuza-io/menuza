@@ -862,7 +862,9 @@ export async function getDayFeed(
 		staffDayView.state === 'open'
 			? ''
 			: `.${staffDayView.state === 'closed' ? 'c' : 'o'}${staffDayView.closedSource === 'location_hours' ? 'l' : 'r'}`
-	const etagSuffix = `${filtersEtagSuffix(filters)}${stateSuffix}`
+	// The same day reads differently with and without guest details.
+	const grantSuffix = opts?.canReadGuestSensitive ? '.g' : ''
+	const etagSuffix = `${filtersEtagSuffix(filters)}${stateSuffix}${grantSuffix}`
 	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}:${floorPlanVersion}${etagSuffix}"`
 	const shortEtag = `"${dayVersion}.${settingsVersion}.${floorPlanVersion}${etagSuffix}"`
 

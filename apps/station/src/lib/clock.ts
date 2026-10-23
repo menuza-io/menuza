@@ -58,3 +58,7 @@ export const skewMinutes = (skew = clockSkewMs()): number =>
  */
 export const monotonicNow = (): number =>
 	typeof performance !== 'undefined' ? performance.now() : Date.now()
+
+/** The server's time as best known: the tablet's clock corrected by the measured offset. */
+export const serverNow = (now = Date.now()): number =>
+	now + (clockSkewMs() ?? 0)

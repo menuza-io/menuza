@@ -45,6 +45,7 @@ import {
 	posDevices,
 	posFiscalDocuments,
 	posHeldUploads,
+	posHosts,
 	posManagers,
 	posOrderLines,
 	posOrderRevisions,
@@ -70,6 +71,7 @@ import { fetchOrderContext } from './order-service.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import { writeDeviceAudit } from './staff-audit.ts'
 import { revokeZatcaUnitsForDevice } from './zatca-service.ts'
 
 /** Drizzle wraps driver errors; the SQLite message lives down the `cause` chain. */
@@ -158,6 +160,12 @@ async function knownLocationIds(
 	const context = await fetchOrderContext(orgId, locationId, null)
 	if (!context.ok) return null
 	return context.data.menu.locations.map((l) => l.id)
+}
+
+/** True when App's menu says the location does not exist (unknown when App cannot answer). */
+export async function isUnknownLocation(orgId: string, locationId: string) {
+	const known = await knownLocationIds(orgId, locationId)
+	return known !== null && !known.includes(locationId)
 }
 
 // ---------------------------------------------------------------------------
@@ -516,6 +524,19 @@ export async function verifyPosPin(
 ): Promise<SignInResult> {
 	const pin = normalizePinDigits(input.pin)
 	const { device } = input
+	// Someone keeps guessing PINs at this terminal (its lock screen and its time
+	// clock both take one): tell managers, as a kiosk does.
+	const alertPinFailures = (
+		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
+		state: PinBackoffState,
+	) =>
+		writeDeviceAudit(tx, 'pos', device, null, {
+			action: 'pos.pin.failures_high',
+			entityType: 'pos_device',
+			entityId: device.id,
+			scopeId: device.scopeId,
+			changes: { attemptsLastHour: state.hourFailures },
+		})
 	const save = async (
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 		state: PinBackoffState,
@@ -538,7 +559,9 @@ export async function verifyPosPin(
 			const state = toState(attempt)
 			const wait = pinBackoffRemainingSeconds(state, now)
 			if (wait > 0) {
-				await save(tx, applyRefusedAttempt(state, now).state)
+				const refused = applyRefusedAttempt(state, now)
+				await save(tx, refused.state)
+				if (refused.alertManager) await alertPinFailures(tx, refused.state)
 				return { ok: false, code: 'backoff', retryAfterSeconds: wait }
 			}
 			if (pinShapeOk(pin)) {
@@ -586,6 +609,7 @@ export async function verifyPosPin(
 			}
 			const failure = applyPinFailure(state, now)
 			await save(tx, failure.state)
+			if (failure.alertManager) await alertPinFailures(tx, failure.state)
 			return {
 				ok: false,
 				code: 'invalid_pin',
@@ -614,16 +638,21 @@ export async function listStaffRoster(db: TenantDatabase, scopeId: string) {
 			),
 		)
 		.orderBy(asc(staffMembers.lastName), asc(staffMembers.firstName))
-	const managers = new Set(
-		(await db.select({ id: posManagers.staffId }).from(posManagers)).map(
-			(m) => m.id,
-		),
-	)
+	const [managerRows, hostRows] = await Promise.all([
+		db.select({ id: posManagers.staffId }).from(posManagers),
+		db
+			.select({ id: posHosts.staffId, guestDetails: posHosts.guestDetails })
+			.from(posHosts),
+	])
+	const managers = new Set(managerRows.map((m) => m.id))
+	const hosts = new Map(hostRows.map((m) => [m.id, m.guestDetails]))
 	return rows.map((r) => ({
 		id: r.id,
 		name: posStaffDisplayName(r.firstName, r.lastName),
 		hasPin: r.pinLookup !== null,
 		isManager: managers.has(r.id),
+		isHost: hosts.has(r.id),
+		hostGuestDetails: hosts.get(r.id) === true,
 	}))
 }
 
@@ -644,6 +673,43 @@ export async function setManager(
 		.values({ staffId, addedBy, addedAt: now })
 		.onConflictDoNothing()
 	return true
+}
+
+/** Puts a person on the host roster: they may run the host stand at a till. */
+export async function setHost(
+	db: TenantDatabase,
+	staffId: string,
+	addedBy: string,
+	options: { guestDetails: boolean },
+	now = Date.now(),
+) {
+	const [member] = await db
+		.select({ id: staffMembers.id })
+		.from(staffMembers)
+		.where(and(eq(staffMembers.id, staffId), eq(staffMembers.status, 'active')))
+		.limit(1)
+	if (!member) return false
+	await db
+		.insert(posHosts)
+		.values({
+			staffId,
+			addedBy,
+			addedAt: now,
+			guestDetails: options.guestDetails,
+		})
+		.onConflictDoUpdate({
+			target: posHosts.staffId,
+			set: { guestDetails: options.guestDetails },
+		})
+	return true
+}
+
+export async function removeHost(db: TenantDatabase, staffId: string) {
+	const removed = await db
+		.delete(posHosts)
+		.where(eq(posHosts.staffId, staffId))
+		.returning({ id: posHosts.staffId })
+	return removed.length === 1
 }
 
 export async function removeManager(db: TenantDatabase, staffId: string) {
@@ -689,6 +755,12 @@ export type DeviceSettingsPatch = {
 	shiftsRequired?: boolean
 	timeclockEnabled?: boolean
 	reservationsEnabled?: boolean
+	/**
+	 * Binds a terminal that was paired without a location (so it can run that
+	 * location's host stand). A bound terminal keeps its location: moving one
+	 * would move its tabs, taxes and numbers, so it is paired again instead.
+	 */
+	locationId?: string
 }
 
 /** A manager changes how an existing terminal behaves; the till learns on its next check-in. */
@@ -716,10 +788,20 @@ export async function updateDeviceSettings(
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
 		.limit(1)
 	if (!device) return fail(404, 'not_found')
+	if (patch.locationId !== undefined) {
+		if (device.locationId !== null && device.locationId !== patch.locationId)
+			return fail(
+				409,
+				'location_already_set',
+				'Pair the terminal again to move it.',
+			)
+		if (!/^[A-Za-z0-9_-]{1,100}$/.test(patch.locationId))
+			return fail(422, 'invalid_location')
+	}
 	const problem = stationReservationsProblem({
 		reservationsEnabled:
 			patch.reservationsEnabled ?? device.reservationsEnabled,
-		locationId: device.locationId,
+		locationId: patch.locationId ?? device.locationId,
 		signInRequired: patch.signInRequired ?? device.signInRequired,
 	})
 	if (problem) return fail(422, problem.code, problem.message)
@@ -738,6 +820,7 @@ export async function updateDeviceSettings(
 		set.timeclockEnabled = patch.timeclockEnabled
 	if (patch.reservationsEnabled !== undefined)
 		set.reservationsEnabled = patch.reservationsEnabled
+	if (patch.locationId !== undefined) set.locationId = patch.locationId
 	await db.update(posDevices).set(set).where(eq(posDevices.id, id))
 	return ok(true)
 }

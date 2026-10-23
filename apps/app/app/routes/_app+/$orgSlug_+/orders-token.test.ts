@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
 	write: vi.fn(),
 	client: vi.fn(),
 	link: vi.fn(),
+	station: vi.fn(),
+}))
+vi.mock('#app/utils/pos/station-apps.server.ts', () => ({
+	getStationAppGrants: mocks.station,
 }))
 vi.mock('#app/utils/orders/customer-link.server.ts', () => ({
 	getOrderCustomerLinkAccess: mocks.link,
@@ -29,6 +33,7 @@ describe('order credentials', () => {
 		mocks.read.mockResolvedValue('operator')
 		mocks.write.mockResolvedValue('operator')
 		mocks.link.mockResolvedValue({ linkCustomers: false, linkGuests: false })
+		mocks.station.mockResolvedValue({ timeclock: false, reservations: false })
 		mocks.client.mockResolvedValue({
 			jwt: 'scoped-credential',
 			tenantApiUrl: 'https://regional.example',
@@ -78,6 +83,20 @@ describe('order credentials', () => {
 		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
 			scope: 'orders:read',
 			claims: { linkCustomers: true, linkGuests: false },
+		})
+	})
+
+	it('signs which Station apps the member may switch on, for write credentials only', async () => {
+		mocks.station.mockResolvedValue({ timeclock: true, reservations: false })
+		await run('?write=1')
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:write',
+			claims: { stationApps: { timeclock: true, reservations: false } },
+		})
+		mocks.client.mockClear()
+		await run()
+		expect(mocks.client).toHaveBeenCalledWith(expect.any(Request), 'cafe', {
+			scope: 'orders:read',
 		})
 	})
 })

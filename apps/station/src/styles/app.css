@@ -959,6 +959,17 @@ html[data-heading-font='custom'] {
 		);
 		aspect-ratio: var(--plan-w) / var(--plan-h);
 	}
+	/*
+	 * A turned table or wall, as drawn. `rotate` rather than `transform`, so the
+	 * lift and the press below (and the reduced-motion stop) leave the angle alone.
+	 * The words inside turn back, so they read upright.
+	 */
+	.floor-turn {
+		rotate: var(--turn, 0deg);
+	}
+	.floor-unturn {
+		rotate: calc(var(--turn, 0deg) * -1);
+	}
 	/* A table changes state in place: colour, ring and lift ride one curve. */
 	.floor-table {
 		transition:

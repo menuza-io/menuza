@@ -36,6 +36,11 @@ export type OperatorOrderAuth = {
 	scope: 'orders:read' | 'orders:write'
 	/** Signed claims from App: which person pages the operator may open. */
 	link: OrderLinkAccess
+	/**
+	 * Signed claims from App: which Station apps this operator may switch on for
+	 * a terminal (each needs its own module's settings permission).
+	 */
+	stationApps: { timeclock: boolean; reservations: boolean }
 }
 
 /**
@@ -69,6 +74,7 @@ export async function authenticateOrdersOperator(
 		scope?: string
 		linkCustomers?: boolean
 		linkGuests?: boolean
+		stationApps?: { timeclock?: unknown; reservations?: unknown }
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
@@ -111,6 +117,10 @@ export async function authenticateOrdersOperator(
 			link: {
 				linkCustomers: decoded.linkCustomers === true,
 				linkGuests: decoded.linkGuests === true,
+			},
+			stationApps: {
+				timeclock: decoded.stationApps?.timeclock === true,
+				reservations: decoded.stationApps?.reservations === true,
 			},
 		},
 	}

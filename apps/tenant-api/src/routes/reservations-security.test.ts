@@ -202,6 +202,8 @@ async function mintRsvToken(overrides?: {
 	impersonated?: boolean
 	ttlSeconds?: number
 	experiences?: boolean
+	/** A token tenant-api minted for a Station till (`/pos/reservations/token`). */
+	channel?: 'station'
 }) {
 	const now = Math.floor(Date.now() / 1000)
 	const ttl = overrides?.ttlSeconds ?? 300
@@ -227,6 +229,9 @@ async function mintRsvToken(overrides?: {
 			voice: false,
 		},
 		impersonated,
+		...(overrides?.channel
+			? { channel: overrides.channel, deviceId: 'dev_station_1' }
+			: {}),
 	})
 		.setProtectedHeader({
 			alg: 'HS256',
@@ -294,6 +299,31 @@ describe('Reservations security sweep: operator routes', () => {
 		await destroyTenantDb(ORG_B)
 		fs.rmSync(tmpDir, { recursive: true, force: true })
 		vi.unstubAllEnvs()
+	})
+
+	it('a Station till token reaches the day of service only, never the guestbook', async () => {
+		// Even holding every grant a scope allows, a `station` token is refused
+		// outside `/book` (other than the guest routes there).
+		const failures: string[] = []
+		for (const route of list) {
+			const outsideStand =
+				!route.path.startsWith('/operator/reservations/book/') ||
+				route.path.startsWith('/operator/reservations/book/guests')
+			if (!outsideStand) continue
+			const scope = scopeForRoute(route.path)
+			const token = await mintRsvToken({ scope, channel: 'station' })
+			const res = await app.request(fill(route.path), {
+				method: route.method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: route.method === 'GET' ? undefined : '{}',
+			})
+			if (res.status !== 403 && res.status !== 404)
+				failures.push(`${route.method} ${route.path} -> ${res.status}`)
+		}
+		expect(failures).toEqual([])
 	})
 
 	it('discovers all mounted operator reservation routes', () => {

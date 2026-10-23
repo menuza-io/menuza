@@ -162,6 +162,13 @@
 			"when": 1792730035978,
 			"tag": "0022_station_apps",
 			"breakpoints": true
+		},
+		{
+			"idx": 23,
+			"version": "6",
+			"when": 1792734815884,
+			"tag": "0023_station_hosts",
+			"breakpoints": true
 		}
 	]
 }

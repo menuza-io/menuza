@@ -1,7 +1,14 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type WaitlistEntry } from '@repo/reservations'
-import { BellRing, Clock3, Info, TriangleAlert, Users } from 'lucide-react'
+import {
+	BellRing,
+	Clock3,
+	Info,
+	TriangleAlert,
+	UserX,
+	Users,
+} from 'lucide-react'
 import {
 	isWaitingAtStand,
 	minutesLate,
@@ -37,9 +44,12 @@ export const placingKey = (p: Placing | null) =>
  * order they are due, then the waitlist in the order it was joined. Tap one to
  * pick it up (the floor then shows where it fits); tap the info button for its
  * details. Late parties say how late; parties already at the stand say so.
+ * Bookings whose slot passed with nobody arriving leave the dock for their own
+ * lane, where the host marks them.
  */
 export function Dock({
 	arrivals,
+	missed,
 	waitlist,
 	waitlistOn,
 	placing,
@@ -50,6 +60,8 @@ export function Dock({
 	formatTime,
 }: {
 	arrivals: DayReservation[]
+	/** Bookings whose time is over and whose party never came. */
+	missed: DayReservation[]
 	waitlist: WaitlistEntry[]
 	waitlistOn: boolean
 	placing: Placing | null
@@ -76,6 +88,8 @@ export function Dock({
 					const key = `r:${reservation.id}`
 					const late = minutesLate(reservation, now)
 					const here = isWaitingAtStand(reservation)
+					// The guest said they are running late (by text or a call).
+					const runningLate = reservation.runningLateMin ?? 0
 					return (
 						<li key={reservation.id} className="shrink-0">
 							<div
@@ -120,6 +134,10 @@ export function Dock({
 											<span className="text-success">
 												<Trans>At the stand</Trans>
 											</span>
+										) : runningLate > 0 ? (
+											<span className="text-warning">
+												<Trans>Running {runningLate} min late</Trans>
+											</span>
 										) : late > 0 ? (
 											<span className="text-warning">
 												<Trans>{late} min late</Trans>
@@ -152,6 +170,41 @@ export function Dock({
 					)
 				})}
 			</DockLane>
+			{missed.length > 0 ? (
+				<DockLane
+					title={_(t`Didn’t arrive`)}
+					count={missed.length}
+					empty=""
+					className="lg:border-border lg:min-w-0 lg:flex-[1] lg:border-s"
+				>
+					{missed.map((reservation) => {
+						const who = shortName(reservation, _(t`Guest`))
+						return (
+							<li key={reservation.id} className="shrink-0">
+								<button
+									type="button"
+									onClick={() => onDetails(reservation)}
+									aria-label={_(t`${who} did not arrive. Details`)}
+									className="dock-card bg-background border-border text-muted-foreground hover:bg-accent flex h-[5.5rem] w-40 flex-col justify-between rounded-2xl border border-dashed p-3 text-start transition-colors"
+								>
+									<span className="flex items-center gap-2">
+										<span className="mono text-base font-semibold line-through">
+											{formatTime(reservation.startAt)}
+										</span>
+										<UserX className="size-3.5" aria-hidden />
+									</span>
+									<bdi className="text-foreground truncate font-medium">
+										{who}
+									</bdi>
+									<span className="text-xs font-medium">
+										<Trans>Mark as no-show</Trans>
+									</span>
+								</button>
+							</li>
+						)
+					})}
+				</DockLane>
+			) : null}
 			{waitlistOn ? (
 				<DockLane
 					title={_(t`Waitlist`)}

@@ -34,6 +34,10 @@ export type ReservationsOperatorContext = {
 	features: ReservationsFeatureState
 	impersonated: boolean
 	region: 'us' | 'ksa'
+	/** `station` for a token minted for a Station till (see `pos-reservations.ts`). */
+	channel: 'station' | null
+	/** The Station terminal behind a `station` token. */
+	deviceId: string | null
 }
 
 export type ReservationsAuthContext = ReservationsOperatorContext
@@ -239,6 +243,8 @@ export async function verifyReservationsOperatorToken(
 			features: claims.features,
 			impersonated: claims.impersonated,
 			region: claims.region,
+			channel: claims.channel ?? null,
+			deviceId: claims.deviceId ?? null,
 		},
 	}
 }

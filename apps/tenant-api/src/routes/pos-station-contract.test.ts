@@ -6,7 +6,7 @@ import {
 	waitlistListingSchema,
 	type ReservationsContext,
 } from '@repo/reservations'
-import { getTenantDb, posManagers } from '@repo/tenant-db'
+import { getTenantDb, posHosts } from '@repo/tenant-db'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -194,7 +194,12 @@ function makeNormalizer(recordedNow: number) {
 }
 
 const mintOperator = () =>
-	new SignJWT({ orgId: ORG_A, role: 'operator', scope: 'orders:write' })
+	new SignJWT({
+		orgId: ORG_A,
+		role: 'operator',
+		scope: 'orders:write',
+		stationApps: { timeclock: true, reservations: true },
+	})
 		.setSubject('user_manager_1')
 		.setProtectedHeader({ alg: 'HS256' })
 		.setAudience('tenant-api-operator')
@@ -249,13 +254,18 @@ describe('Station host stand contract', () => {
 
 	it('the till reads and runs the day of service with its own token', async () => {
 		const recordedNow = Date.now()
-		// A till manager at a terminal bound to the location.
+		// A host with guest details at a terminal bound to the location, and a
+		// host without them.
 		const { pin, staffId } = await h.seedStaff(ORG_A, {
 			firstName: 'Lina',
 			lastName: 'Mansour',
 		})
+		const other = await h.seedStaff(ORG_A, { firstName: 'Sam' })
 		const db = await getTenantDb(ORG_A)
-		await db.insert(posManagers).values({ staffId, addedBy: 'test' })
+		await db.insert(posHosts).values([
+			{ staffId, addedBy: 'test', guestDetails: true },
+			{ staffId: other.staffId, addedBy: 'test', guestDetails: false },
+		])
 		const created = await call(
 			'POST',
 			'/operator/pos/pairing-codes',
@@ -366,8 +376,28 @@ describe('Station host stand contract', () => {
 		expect(waitlistListingSchema.safeParse(replies.waitlist.body).success).toBe(
 			true,
 		)
-		// A manager's token reads the allergy; the feed carries it.
+		// Guest details: the allergy and the full number. Without them, neither.
 		expect(replies['day-feed'].text).toContain('Peanuts')
+		expect(replies['day-feed'].text).toContain('+14155550111')
+		const plain = await call(
+			'POST',
+			'/pos/reservations/token',
+			{
+				...device,
+				[POS_STAFF_SESSION_HEADER]: (
+					await call('POST', '/pos/sign-in', device, { pin: other.pin })
+				).body.sessionToken,
+			},
+			{ scope: 'book' },
+		)
+		const masked = await call(
+			'GET',
+			`/operator/reservations/book/day?locationId=${PUBLIC_LOC}&date=${tomorrow}`,
+			{ authorization: `Bearer ${plain.body.token}` },
+		)
+		expect(masked.text).not.toContain('Peanuts')
+		expect(masked.text).not.toContain('+14155550111')
+		expect(masked.text).toContain('•••• 0111')
 
 		const normalize = makeNormalizer(recordedNow)
 		if (RECORD) fs.mkdirSync(FIXTURE_DIR, { recursive: true })

@@ -156,6 +156,7 @@ export function PartySheet({
 		: []
 	const has = (action: QuickAction) => actions.includes(action)
 	const run = (command: PartyCommand) => r && onCommand(r, command)
+	const phoneEnd = (r?.guest?.phone ?? '').replace(/\D/g, '').slice(-4)
 	const guestName =
 		r?.guest?.name?.trim() || (r ? shortName(r, _(t`Guest`)) : '')
 
@@ -305,13 +306,24 @@ export function PartySheet({
 					<div className="flex flex-col gap-3">
 						{r.guest?.phone ? (
 							<Detail icon={Phone}>
-								<a
-									href={`tel:${r.guest.phone}`}
-									className="tnum underline-offset-4 hover:underline"
-									dir="ltr"
-								>
-									{r.guest.phone}
-								</a>
+								{canReadGuest ? (
+									<a
+										href={`tel:${r.guest.phone}`}
+										className="tnum underline-offset-4 hover:underline"
+										dir="ltr"
+									>
+										{r.guest.phone}
+									</a>
+								) : (
+									// Only the end of the number: enough to recognise a guest on the phone.
+									<span
+										className="tnum"
+										dir="ltr"
+										aria-label={_(t`Phone ending ${phoneEnd}`)}
+									>
+										{r.guest.phone}
+									</span>
+								)}
 							</Detail>
 						) : null}
 						{r.hasAllergy ? (
@@ -377,6 +389,7 @@ export function WaitlistSheet({
 	onRemove: (entry: WaitlistEntry) => void
 	onClose: () => void
 }) {
+	const { _ } = useLingui()
 	const waited = entry
 		? Math.max(0, Math.floor((now - entry.joinedAt) / 60_000))
 		: 0
@@ -409,14 +422,12 @@ export function WaitlistSheet({
 								<Trans>Text: table ready</Trans>
 							</Button>
 						) : null}
-						<Button
-							variant="ghost"
-							size="lg"
-							disabled={busy}
-							onClick={() => onRemove(entry)}
-						>
-							<Trans>They left</Trans>
-						</Button>
+						<ConfirmButton
+							busy={busy}
+							onConfirm={() => onRemove(entry)}
+							label={_(t`They left`)}
+							confirmLabel={_(t`Tap again: remove`)}
+						/>
 					</div>
 				) : null
 			}
@@ -458,6 +469,43 @@ export function WaitlistSheet({
 }
 
 /** A table tapped outside of placing: who is there or due, and a walk-in for it. */
+/**
+ * A step that cannot be undone from the stand takes two taps: the first arms
+ * it (the label says what the next tap does), and it disarms by itself.
+ */
+function ConfirmButton({
+	label,
+	confirmLabel,
+	busy,
+	onConfirm,
+}: {
+	label: string
+	confirmLabel: string
+	busy: boolean
+	onConfirm: () => void
+}) {
+	const [armed, setArmed] = useState(false)
+	useEffect(() => {
+		if (!armed) return
+		const timer = window.setTimeout(() => setArmed(false), 4000)
+		return () => window.clearTimeout(timer)
+	}, [armed])
+	return (
+		<Button
+			variant={armed ? 'danger' : 'ghost'}
+			size="lg"
+			disabled={busy}
+			onClick={() => {
+				if (!armed) return setArmed(true)
+				setArmed(false)
+				onConfirm()
+			}}
+		>
+			{armed ? confirmLabel : label}
+		</Button>
+	)
+}
+
 export function TableSheet({
 	target,
 	busy,
@@ -673,6 +721,7 @@ export function BookingSheet({
 		firstName: string
 		lastName: string
 		phone: string | null
+		notes: string | null
 	}) => void
 	onClose: () => void
 }) {
@@ -696,6 +745,7 @@ export function BookingSheet({
 	const [first, setFirst] = useState('')
 	const [last, setLast] = useState('')
 	const [phone, setPhone] = useState('')
+	const [notes, setNotes] = useState('')
 	useEffect(() => {
 		if (!open) return
 		setDate(today)
@@ -704,6 +754,7 @@ export function BookingSheet({
 		setFirst('')
 		setLast('')
 		setPhone('')
+		setNotes('')
 	}, [open, today])
 	useEffect(() => {
 		if (!open) return
@@ -720,7 +771,9 @@ export function BookingSheet({
 		}
 	}, [open, date, size, loadSlots])
 	const open_ = (slots ?? []).filter((slot) => slot.available)
-	const ready = time !== null && first.trim().length > 0
+	const groups = groupSlots(open_)
+	const phoneProblem = phone.trim() !== '' && !looksLikePhone(phone)
+	const ready = time !== null && first.trim().length > 0 && !phoneProblem
 	return (
 		<Modal
 			open={open}
@@ -744,6 +797,7 @@ export function BookingSheet({
 								firstName: first,
 								lastName: last,
 								phone: phone.trim() || null,
+								notes: notes.trim() || null,
 							})
 						}
 					>
@@ -796,20 +850,34 @@ export function BookingSheet({
 							<Trans>No times left for {size} on this day.</Trans>
 						</p>
 					) : (
-						<div className="flex flex-wrap gap-2">
-							{open_.map((slot) => (
-								<Chip
-									key={slot.localStartMin}
-									selected={time === slot.time}
-									aria-pressed={time === slot.time}
-									onClick={() => {
-										setTime(slot.time)
-										setTimeLabel(slotLabel(slot.localStartMin))
-									}}
-									className="tnum min-w-20"
+						<div className="flex flex-col gap-3">
+							{groups.map((group) => (
+								<div
+									key={group.part}
+									role="group"
+									aria-label={_(PART_OF_DAY[group.part])}
+									className="flex flex-col gap-1.5"
 								>
-									{slotLabel(slot.localStartMin)}
-								</Chip>
+									<span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+										{_(PART_OF_DAY[group.part])}
+									</span>
+									<div className="flex flex-wrap gap-2">
+										{group.slots.map((slot) => (
+											<Chip
+												key={slot.localStartMin}
+												selected={time === slot.time}
+												aria-pressed={time === slot.time}
+												onClick={() => {
+													setTime(slot.time)
+													setTimeLabel(slotLabel(slot.localStartMin))
+												}}
+												className="tnum min-w-20"
+											>
+												{slotLabel(slot.localStartMin)}
+											</Chip>
+										))}
+									</div>
+								</div>
 							))}
 						</div>
 					)}
@@ -851,13 +919,72 @@ export function BookingSheet({
 							value={phone}
 							maxLength={32}
 							autoComplete="off"
+							aria-invalid={phoneProblem}
+							aria-describedby={
+								phoneProblem ? 'booking-phone-problem' : undefined
+							}
 							onChange={(event) => setPhone(event.target.value)}
+						/>
+						{phoneProblem ? (
+							<span
+								id="booking-phone-problem"
+								className="text-destructive text-sm"
+							>
+								<Trans>
+									Check the number: include the country code, like +1 212 555
+									0100.
+								</Trans>
+							</span>
+						) : null}
+					</label>
+					<label className="flex flex-col gap-2 sm:col-span-2">
+						<span className="font-semibold">
+							<Trans>Note for the team</Trans>
+						</span>
+						<textarea
+							className={cn(fieldClass, 'min-h-20 py-3')}
+							value={notes}
+							maxLength={500}
+							placeholder={_(t`High chair, birthday, by the window…`)}
+							onChange={(event) => setNotes(event.target.value)}
 						/>
 					</label>
 				</div>
 			</div>
 		</Modal>
 	)
+}
+
+type PartOfDay = 'morning' | 'afternoon' | 'evening'
+
+const PART_OF_DAY: Record<PartOfDay, MessageDescriptor> = {
+	morning: msg`Morning`,
+	afternoon: msg`Afternoon`,
+	evening: msg`Evening`,
+}
+
+/** Slots in the order of the day, under morning, afternoon and evening. */
+function groupSlots<T extends { localStartMin: number }>(slots: T[]) {
+	const part = (minutes: number): PartOfDay => {
+		const m = minutes % 1440
+		return m < 12 * 60 ? 'morning' : m < 17 * 60 ? 'afternoon' : 'evening'
+	}
+	const groups: Array<{ part: PartOfDay; slots: T[] }> = []
+	for (const slot of slots) {
+		const p = part(slot.localStartMin)
+		const last = groups[groups.length - 1]
+		if (last?.part === p) last.slots.push(slot)
+		else groups.push({ part: p, slots: [slot] })
+	}
+	return groups
+}
+
+/** A number the server can text: 8 to 15 digits, with the country code. */
+export function looksLikePhone(value: string) {
+	const trimmed = value.trim()
+	if (!/^\+?[\d\s().-]+$/.test(trimmed)) return false
+	const digits = trimmed.replace(/\D/g, '').length
+	return digits >= 8 && digits <= 15
 }
 
 /** Adds a party to the waitlist at the stand. */
@@ -887,6 +1014,7 @@ export function JoinWaitlistSheet({
 			setPhone('')
 		}
 	}, [open])
+	const phoneProblem = phone.trim() !== '' && !looksLikePhone(phone)
 	return (
 		<Modal
 			open={open}
@@ -898,7 +1026,7 @@ export function JoinWaitlistSheet({
 						variant="primary"
 						size="lg"
 						className="w-full"
-						disabled={!name.trim() || busy}
+						disabled={!name.trim() || phoneProblem || busy}
 						onClick={() =>
 							onJoin({
 								displayName: name,
@@ -943,8 +1071,23 @@ export function JoinWaitlistSheet({
 						value={phone}
 						maxLength={32}
 						autoComplete="off"
+						aria-invalid={phoneProblem}
+						aria-describedby={
+							phoneProblem ? 'waitlist-phone-problem' : undefined
+						}
 						onChange={(event) => setPhone(event.target.value)}
 					/>
+					{phoneProblem ? (
+						<span
+							id="waitlist-phone-problem"
+							className="text-destructive text-sm"
+						>
+							<Trans>
+								Check the number: include the country code, like +1 212 555
+								0100.
+							</Trans>
+						</span>
+					) : null}
 				</label>
 			</div>
 		</Modal>

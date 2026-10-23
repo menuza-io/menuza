@@ -352,6 +352,7 @@ describe('TerminalsManager', () => {
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
 			stationFeatures: { timeclock: true, reservations: true },
+			stationGrants: { timeclock: true, reservations: true },
 		})
 		await screen.findByText('Front counter')
 		fireEvent.click(screen.getByRole('button', { name: 'Pair a terminal' }))
@@ -392,6 +393,7 @@ describe('TerminalsManager', () => {
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
 			stationFeatures: { timeclock: true, reservations: true },
+			stationGrants: { timeclock: true, reservations: true },
 		})
 		await screen.findByText('Host stand')
 		const unbound = screen.getByRole('button', {
@@ -399,7 +401,7 @@ describe('TerminalsManager', () => {
 		}) as HTMLButtonElement
 		expect(unbound.disabled).toBe(true)
 		expect(
-			screen.getByText('Pair it again with a location to use reservations.'),
+			screen.getByText("Choose the terminal's location to use reservations."),
 		).toBeTruthy()
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Reservations on Host stand, off' }),
@@ -418,6 +420,34 @@ describe('TerminalsManager', () => {
 			]),
 		)
 		expect(await screen.findByText('Host stand for Downtown')).toBeTruthy()
+	})
+
+	it('without permission to change those settings, apps can be switched off but not on', async () => {
+		stubApi({
+			devices: [
+				terminal({
+					signInRequired: true,
+					locationId: 'loc_1',
+					timeclockEnabled: true,
+				}),
+			],
+		})
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: { timeclock: true, reservations: true },
+		})
+		await screen.findByText('Front counter')
+		const off = screen.getByRole('button', {
+			name: 'Time clock on Front counter, on',
+		}) as HTMLButtonElement
+		expect(off.disabled).toBe(false)
+		const on = screen.getByRole('button', {
+			name: 'Reservations on Front counter, off',
+		}) as HTMLButtonElement
+		expect(on.disabled).toBe(true)
+		expect(
+			screen.getByText(/needs permission to change its settings/),
+		).toBeTruthy()
 	})
 
 	it('uppercases the terminal code as it is typed', async () => {
