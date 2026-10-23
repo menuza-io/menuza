@@ -104,8 +104,13 @@ function mountFluidNav(container: HTMLElement): () => void {
 		frame = 0
 		hide()
 	}
+	// A click in the gap between items goes to the item under the pointer now,
+	// never to a highlight left behind by an earlier move.
 	function click(event: MouseEvent) {
-		if (event.target === container && current) current.click()
+		if (event.target !== container) return
+		point = { x: event.clientX, y: event.clientY }
+		pick()
+		current?.click()
 	}
 	function refresh() {
 		if (current?.isConnected && current.getClientRects().length) paint(current)
@@ -126,6 +131,15 @@ function mountFluidNav(container: HTMLElement): () => void {
 		container.removeEventListener('scroll', refresh)
 		highlight.remove()
 	}
+}
+
+/** Asks an enhanced disclosure to close with its exit motion. */
+export const SITE_DISCLOSURE_CLOSE = 'site-disclosure:close'
+
+export function closeSiteDisclosure(details: HTMLDetailsElement) {
+	if (details.dataset.motionReady) {
+		details.dispatchEvent(new Event(SITE_DISCLOSURE_CLOSE))
+	} else details.open = false
 }
 
 function mountDisclosure(details: HTMLDetailsElement): () => void {
@@ -190,6 +204,19 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 			trigger!.focus({ preventScroll: true })
 		}
 	}
+	// Tabbing out of a dropdown closes it, as with an outside click.
+	function focusout(event: FocusEvent) {
+		if (
+			dropdown &&
+			open &&
+			event.relatedTarget instanceof Node &&
+			!details.contains(event.relatedTarget)
+		)
+			setOpen(false)
+	}
+	function close() {
+		if (open) setOpen(false)
+	}
 	function followLink(event: MouseEvent) {
 		if (
 			dropdown &&
@@ -200,37 +227,53 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 	}
 	trigger.addEventListener('click', toggle)
 	panel.addEventListener('click', followLink)
-	document.addEventListener('click', outside)
+	if (dropdown) document.addEventListener('click', outside)
 	details.addEventListener('keydown', keydown)
+	details.addEventListener('focusout', focusout)
+	details.addEventListener(SITE_DISCLOSURE_CLOSE, close)
 	return () => {
 		clearTimeout(timer)
 		trigger.removeEventListener('click', toggle)
 		panel.removeEventListener('click', followLink)
 		document.removeEventListener('click', outside)
 		details.removeEventListener('keydown', keydown)
+		details.removeEventListener('focusout', focusout)
+		details.removeEventListener(SITE_DISCLOSURE_CLOSE, close)
 	}
 }
 
 export function mountSiteInteractions() {
-	let cleanups: Array<() => void> = []
+	const mounted = new Map<HTMLElement, () => void>()
+	/** Mounts new elements once; elements that survive an update keep their
+	 * state (an open menu stays open), and removed ones are cleaned up. */
 	function mount() {
-		cleanups.forEach((cleanup) => cleanup())
-		cleanups = [
-			...Array.from(
-				document.querySelectorAll<HTMLElement>('[data-fluid-nav]'),
-				mountFluidNav,
-			),
-			...Array.from(
-				document.querySelectorAll<HTMLDetailsElement>('[data-site-disclosure]'),
-				mountDisclosure,
-			),
-		]
+		for (const [element, cleanup] of mounted) {
+			if (element.isConnected) continue
+			cleanup()
+			mounted.delete(element)
+		}
+		const add = <T extends HTMLElement>(
+			elements: NodeListOf<T>,
+			mountOne: (element: T) => () => void,
+		) => {
+			for (const element of elements)
+				if (!mounted.has(element)) mounted.set(element, mountOne(element))
+		}
+		add(
+			document.querySelectorAll<HTMLElement>('[data-fluid-nav]'),
+			mountFluidNav,
+		)
+		add(
+			document.querySelectorAll<HTMLDetailsElement>('[data-site-disclosure]'),
+			mountDisclosure,
+		)
 	}
 	mount()
 	// The website editor replaces the rendered chrome and blocks in place.
 	document.addEventListener('sites:content-updated', mount)
 	return () => {
-		cleanups.forEach((cleanup) => cleanup())
+		mounted.forEach((cleanup) => cleanup())
+		mounted.clear()
 		document.removeEventListener('sites:content-updated', mount)
 	}
 }

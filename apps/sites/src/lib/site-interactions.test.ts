@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mountSiteInteractions, nearestNavItem } from './site-interactions'
+import {
+	closeSiteDisclosure,
+	mountSiteInteractions,
+	nearestNavItem,
+} from './site-interactions'
 
 let dispose: (() => void) | undefined
 let reduced = false
@@ -101,6 +105,48 @@ describe('native disclosure enhancement', () => {
 		trigger.click()
 		expect(details.open).toBe(false)
 		expect(details.querySelector('.is-closing')).toBeNull()
+	})
+
+	it('closes dropdowns when keyboard focus leaves them', () => {
+		const { details, trigger, panel } = disclosure()
+		const link = document.createElement('a')
+		link.href = '#profile'
+		panel.append(link)
+		const after = document.createElement('button')
+		document.body.append(after)
+		dispose = mountSiteInteractions()
+		trigger.click()
+		link.focus()
+		expect(trigger.getAttribute('aria-expanded')).toBe('true')
+		after.focus()
+		expect(trigger.getAttribute('aria-expanded')).toBe('false')
+		vi.runAllTimers()
+		expect(details.open).toBe(false)
+	})
+
+	it('keeps menus that survive a content update open', () => {
+		const { details, trigger } = disclosure()
+		dispose = mountSiteInteractions()
+		trigger.click()
+		document.dispatchEvent(new Event('sites:content-updated'))
+		expect(details.dataset.open).toBe('true')
+		trigger.click()
+		vi.runAllTimers()
+		expect(details.open).toBe(false)
+	})
+
+	it('closes through the close request, enhanced or not', () => {
+		const enhanced = disclosure()
+		dispose = mountSiteInteractions()
+		enhanced.trigger.click()
+		closeSiteDisclosure(enhanced.details)
+		expect(enhanced.trigger.getAttribute('aria-expanded')).toBe('false')
+		vi.runAllTimers()
+		expect(enhanced.details.open).toBe(false)
+		const plain = document.createElement('details')
+		plain.open = true
+		closeSiteDisclosure(plain)
+		expect(plain.open).toBe(false)
 	})
 
 	it('rebinds replaced editor previews without duplicate event handlers', () => {

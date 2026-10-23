@@ -65,7 +65,7 @@ const activeLocaleLabel = getSiteLocaleNativeLabel(activeLocaleCode)
 const signIn = i18n._(msg`Sign in`)
 const profile = i18n._(msg`Profile`)
 const logout = i18n._(msg`Logout`)
-const openMenu = i18n._(msg`Open menu`)
+const menuLabel = i18n._(msg`Menu`)
 const language = i18n._(msg`Language`)
 const primaryNav = i18n._(msg`Primary`)
 const mobileNav = i18n._(msg`Mobile`)
@@ -212,6 +212,7 @@ const languageIconNodes = LanguagesIcon.map(([tag, attributes]) => ({
 					<SiteAnchor
 						link={config.ctaUrl}
 						class={`${siteBtnPrimary} site-header-cta max-w-[min(38vw,12rem)]`}
+						title={config.ctaLabel}
 					>
 						<span class="truncate">{config.ctaLabel}</span>
 					</SiteAnchor>
@@ -219,7 +220,7 @@ const languageIconNodes = LanguagesIcon.map(([tag, attributes]) => ({
 			) : null}
 
 			<details data-site-disclosure data-header-menu class="site-header-menu">
-				<summary class="site-header-control site-header-menu-trigger focus-ring inline-flex" aria-label={openMenu}>
+				<summary class="site-header-control site-header-menu-trigger focus-ring inline-flex" aria-label={menuLabel}>
 					<svg {...iconAttrs} class="size-5"><path d="M4 8h16M4 16h16" /></svg>
 				</summary>
 				<div data-origin={menuOrigin} class="site-header-mobile-panel t-dropdown surface-overlay">
@@ -346,6 +347,9 @@ const languageIconNodes = LanguagesIcon.map(([tag, attributes]) => ({
 	.site-header-menu-trigger {
 		width: 2.75rem;
 		padding-inline: 0;
+	}
+	.site-header :global(.site-header-link) {
+		position: relative;
 	}
 	.site-header :global(.site-header-link[aria-current='page'])::after {
 		position: absolute;

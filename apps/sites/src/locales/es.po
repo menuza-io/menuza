@@ -1220,6 +1220,10 @@ msgstr "Gestionar"
 msgid "Manage reservation"
 msgstr "Gestionar reserva"
 
+#: src/components/SiteHeader.astro.ts:3
+msgid "Menu"
+msgstr "Menú"
+
 #: src/pages/menu.astro.ts:3
 msgid "Menu & ordering"
 msgstr "Menú y pedidos"
@@ -1433,10 +1437,6 @@ msgstr "Solo quedan {count} en {category}"
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "Abierto para pedidos"
-
-#: src/components/SiteHeader.astro.ts:3
-msgid "Open menu"
-msgstr "Abrir menú"
 
 #: src/lib/ordering-labels.ts:125
 msgid "Open now"

@@ -6,9 +6,15 @@ interface Props {
 	link: SiteLinkInput
 	class?: string
 	'aria-current'?: 'page'
+	title?: string
 }
 
-const { link, class: className, 'aria-current': ariaCurrent } = Astro.props
+const {
+	link,
+	class: className,
+	'aria-current': ariaCurrent,
+	title,
+} = Astro.props
 const resolved = resolveSiteLink(link)
 resolved.href = getLocaleHref(
 	resolved.href,
@@ -24,6 +30,7 @@ resolved.href = getLocaleHref(
 	target={resolved.target}
 	rel={resolved.rel}
 	aria-current={ariaCurrent}
+	title={title}
 >
 	<slot />
 </a>

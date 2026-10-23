@@ -163,6 +163,9 @@
 	opacity: 1;
 	filter: none;
 }
+.t-acc:not([data-motion-ready])[open] .t-acc-chevron {
+	transform: scaleY(-1);
+}
 
 [data-fluid-nav] {
 	position: relative;

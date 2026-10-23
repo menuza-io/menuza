@@ -87,13 +87,15 @@ export function IconButton({
 	)
 }
 
-/** Reads a duration token (`150ms`) from the root, so timers match the CSS. */
+/** Reads a duration token (`150ms` or `0.15s`) from the root, so timers match the CSS. */
 export function motionMs(name: string, fallback: number): number {
 	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0
-	const value = parseFloat(
-		getComputedStyle(document.documentElement).getPropertyValue(name),
-	)
-	return Number.isFinite(value) ? value : fallback
+	const value = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		.trim()
+	const amount = parseFloat(value)
+	if (!Number.isFinite(amount) || amount < 0) return fallback
+	return /\ds$/.test(value) ? amount * 1000 : amount
 }
 
 /**

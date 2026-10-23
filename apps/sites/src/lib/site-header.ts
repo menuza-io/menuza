@@ -1,3 +1,5 @@
+import { closeSiteDisclosure } from './site-interactions'
+
 /** Section links describe a location within a page, not the current page. */
 export function isCurrentHeaderLink(href: string, currentUrl: URL): boolean {
 	if (!href || href.startsWith('#')) return false
@@ -56,8 +58,11 @@ function mountHeader(header: HTMLElement): () => void {
 		const name = brand!.querySelector<HTMLElement>('[data-header-name]')
 		const logo = brand!.querySelector<HTMLElement>('img')
 		const brandGap = Number.parseFloat(getComputedStyle(brand!).columnGap) || 0
+		// The CSS `max-width` (in rem) is the cap, so it follows the font size.
+		const brandMax =
+			Number.parseFloat(getComputedStyle(brand!).maxWidth) || Infinity
 		const brandWidth = Math.min(
-			256,
+			brandMax,
 			(name?.scrollWidth ?? 0) +
 				(logo?.offsetWidth ?? 0) +
 				(name && logo ? brandGap : 0),
@@ -73,9 +78,8 @@ function mountHeader(header: HTMLElement): () => void {
 			gap,
 		})
 		header.toggleAttribute('data-compact', compact)
-		if (!compact && menu!.dataset.open === 'true') {
-			menu!.querySelector('summary')?.click()
-		}
+		if (!compact && menu instanceof HTMLDetailsElement && menu.open)
+			closeSiteDisclosure(menu)
 	}
 	function schedule() {
 		if (!frame) frame = requestAnimationFrame(measure)

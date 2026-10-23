@@ -1220,6 +1220,10 @@ msgstr "管理"
 msgid "Manage reservation"
 msgstr "管理预订"
 
+#: src/components/SiteHeader.astro.ts:3
+msgid "Menu"
+msgstr "菜单"
+
 #: src/pages/menu.astro.ts:3
 msgid "Menu & ordering"
 msgstr "菜单与点餐"
@@ -1433,10 +1437,6 @@ msgstr "{category}仅剩 {count} 件"
 #: src/pages/menu.astro.ts:3
 msgid "Open for orders"
 msgstr "接受订单中"
-
-#: src/components/SiteHeader.astro.ts:3
-msgid "Open menu"
-msgstr "打开菜单"
 
 #: src/lib/ordering-labels.ts:125
 msgid "Open now"
