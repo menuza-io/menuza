@@ -28,22 +28,22 @@ msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# minute} other {# minutes}}"
 
 #. placeholder {0}: entry.displayName
-#: src/apps/reservations/HostStand.tsx:536
+#: src/apps/reservations/HostStand.tsx:564
 msgid "{0} has been texted."
 msgstr "{0} has been texted."
 
 #. placeholder {0}: outcome.session.staff.name
-#: src/lib/signin.ts:398
+#: src/lib/signin.ts:425
 msgid "{0} is not a manager. Ask a manager to enter their PIN."
 msgstr "{0} is not a manager. Ask a manager to enter their PIN."
 
 #. placeholder {0}: input.displayName
-#: src/apps/reservations/HostStand.tsx:599
+#: src/apps/reservations/HostStand.tsx:629
 msgid "{0} is on the waitlist."
 msgstr "{0} is on the waitlist."
 
 #. placeholder {0}: entry.displayName
-#: src/apps/reservations/HostStand.tsx:542
+#: src/apps/reservations/HostStand.tsx:570
 msgid "{0} left the waitlist."
 msgstr "{0} left the waitlist."
 
@@ -75,7 +75,7 @@ msgstr "{count, plural, one {Subtotal · # item} other {Subtotal · # items}}"
 msgid "{count, plural, one {The server refused # shift. Its figures have not reached the restaurant.} other {The server refused # shifts. Their figures have not reached the restaurant.}}"
 msgstr "{count, plural, one {The server refused # shift. Its figures have not reached the restaurant.} other {The server refused # shifts. Their figures have not reached the restaurant.}}"
 
-#: src/apps/timeclock/TimeClock.tsx:568
+#: src/apps/timeclock/TimeClock.tsx:590
 msgid "{failed, plural, one {# punch not recorded} other {# punches not recorded}}"
 msgstr "{failed, plural, one {# punch not recorded} other {# punches not recorded}}"
 
@@ -96,7 +96,7 @@ msgid "{itemCount, plural, one {# item} other {# items}}"
 msgstr "{itemCount, plural, one {# item} other {# items}}"
 
 #. placeholder {0}: done.firstName
-#: src/apps/timeclock/TimeClock.tsx:1150
+#: src/apps/timeclock/TimeClock.tsx:1195
 msgid "{label}, {0}"
 msgstr "{label}, {0}"
 
@@ -189,7 +189,7 @@ msgstr "{waited} min"
 msgid "{waited} of {0} min"
 msgstr "{waited} of {0} min"
 
-#: src/apps/timeclock/TimeClock.tsx:555
+#: src/apps/timeclock/TimeClock.tsx:577
 msgid "{waiting, plural, one {# punch waiting to send} other {# punches waiting to send}}"
 msgstr "{waiting, plural, one {# punch waiting to send} other {# punches waiting to send}}"
 
@@ -197,7 +197,7 @@ msgstr "{waiting, plural, one {# punch waiting to send} other {# punches waiting
 msgid "{waitingOrders, plural, one {# order has not been sent yet. They stay on this device and send once it is paired again.} other {# orders have not been sent yet. They stay on this device and send once it is paired again.}}"
 msgstr "{waitingOrders, plural, one {# order has not been sent yet. They stay on this device and send once it is paired again.} other {# orders have not been sent yet. They stay on this device and send once it is paired again.}}"
 
-#: src/apps/timeclock/TimeClock.tsx:1104
+#: src/apps/timeclock/TimeClock.tsx:1149
 msgid "{what} · {who}"
 msgstr "{what} · {who}"
 
@@ -205,19 +205,19 @@ msgstr "{what} · {who}"
 msgid "{who} did not arrive. Details"
 msgstr "{who} did not arrive. Details"
 
-#: src/apps/reservations/HostStand.tsx:319
+#: src/apps/reservations/HostStand.tsx:334
 msgid "{who} finished. Table cleared."
 msgstr "{who} finished. Table cleared."
 
-#: src/apps/reservations/HostStand.tsx:317
+#: src/apps/reservations/HostStand.tsx:332
 msgid "{who} is here."
 msgstr "{who} is here."
 
-#: src/apps/reservations/HostStand.tsx:321
+#: src/apps/reservations/HostStand.tsx:336
 msgid "{who} marked as a no-show."
 msgstr "{who} marked as a no-show."
 
-#: src/apps/reservations/HostStand.tsx:394
+#: src/apps/reservations/HostStand.tsx:421
 msgid "<0/> to seat, <1/> covers"
 msgstr "<0/> to seat, <1/> covers"
 
@@ -229,7 +229,7 @@ msgstr "A bill can take at most {MAX_PAYMENTS} payments"
 msgid "A bill can take at most {MAX_REFUNDS} refunds"
 msgstr "A bill can take at most {MAX_REFUNDS} refunds"
 
-#: src/apps/reservations/HostStand.tsx:685
+#: src/apps/reservations/HostStand.tsx:715
 msgid "A manager adds hosts in the app, under Settings, Terminals. Someone on the list can sign in here instead."
 msgstr "A manager adds hosts in the app, under Settings, Terminals. Someone on the list can sign in here instead."
 
@@ -241,7 +241,11 @@ msgstr "A manager approves cash taken out with their PIN"
 msgid "A manager approves this with their PIN"
 msgstr "A manager approves this with their PIN"
 
-#: src/apps/reservations/HostStand.tsx:706
+#: src/apps/timeclock/TimeClock.tsx:1128
+msgid "A manager has these, clear"
+msgstr "A manager has these, clear"
+
+#: src/apps/reservations/HostStand.tsx:736
 msgid "A manager turns them on in the app, under Settings, Terminals. The terminal needs a location and staff sign-in."
 msgstr "A manager turns them on in the app, under Settings, Terminals. The terminal needs a location and staff sign-in."
 
@@ -275,9 +279,9 @@ msgstr "Add name"
 msgid "Add table"
 msgstr "Add table"
 
-#: src/apps/reservations/HostStand.tsx:422
-#: src/apps/reservations/sheets.tsx:1022
-#: src/apps/reservations/sheets.tsx:1038
+#: src/apps/reservations/HostStand.tsx:449
+#: src/apps/reservations/sheets.tsx:1031
+#: src/apps/reservations/sheets.tsx:1047
 msgid "Add to the waitlist"
 msgstr "Add to the waitlist"
 
@@ -285,7 +289,7 @@ msgstr "Add to the waitlist"
 msgid "Adding to tab #{tabNumber}"
 msgstr "Adding to tab #{tabNumber}"
 
-#: src/apps/reservations/sheets.tsx:962
+#: src/apps/reservations/sheets.tsx:971
 msgid "Afternoon"
 msgstr "Afternoon"
 
@@ -323,7 +327,7 @@ msgstr "An order can have at most {MAX_ORDER_LINES} different items. Split it ac
 msgid "another terminal had already taken this tab over"
 msgstr "another terminal had already taken this tab over"
 
-#: src/apps/timeclock/TimeClock.tsx:862
+#: src/apps/timeclock/TimeClock.tsx:891
 msgid "Any cash tips this shift?"
 msgstr "Any cash tips this shift?"
 
@@ -384,6 +388,7 @@ msgstr "At the stand"
 msgid "Awaiting payment"
 msgstr "Awaiting payment"
 
+#: src/apps/timeclock/TimeClock.tsx:710
 #: src/screens/AuditSheet.tsx:115
 msgid "Back"
 msgstr "Back"
@@ -396,7 +401,7 @@ msgstr "Back from break"
 msgid "Back to seated"
 msgstr "Back to seated"
 
-#: src/apps/timeclock/TimeClock.tsx:531
+#: src/apps/timeclock/TimeClock.tsx:553
 msgid "Back to sign in"
 msgstr "Back to sign in"
 
@@ -414,7 +419,7 @@ msgid "Bill"
 msgstr "Bill"
 
 #. placeholder {0}: state.reason
-#: src/apps/reservations/sheets.tsx:583
+#: src/apps/reservations/sheets.tsx:592
 msgid "Blocked: {0}"
 msgstr "Blocked: {0}"
 
@@ -422,7 +427,7 @@ msgstr "Blocked: {0}"
 #~ msgid "Book {size} at {time}"
 #~ msgstr "Book {size} at {time}"
 
-#: src/apps/reservations/sheets.tsx:805
+#: src/apps/reservations/sheets.tsx:814
 msgid "Book {size} at {timeLabel}"
 msgstr "Book {size} at {timeLabel}"
 
@@ -434,19 +439,19 @@ msgstr "Booked"
 #. placeholder {0}: input.firstName
 #. placeholder {1}: input.partySize
 #. placeholder {2}: input.timeLabel
-#: src/apps/reservations/HostStand.tsx:587
+#: src/apps/reservations/HostStand.tsx:617
 msgid "Booked {0} for {1} at {2}."
 msgstr "Booked {0} for {1} at {2}."
 
-#: src/apps/reservations/HostStand.tsx:432
+#: src/apps/reservations/HostStand.tsx:459
 msgid "Booking"
 msgstr "Booking"
 
-#: src/apps/reservations/HostStand.tsx:323
+#: src/apps/reservations/HostStand.tsx:338
 msgid "Booking for {who} cancelled."
 msgstr "Booking for {who} cancelled."
 
-#: src/apps/reservations/HostStand.tsx:324
+#: src/apps/reservations/HostStand.tsx:339
 msgid "Booking for {who} confirmed."
 msgstr "Booking for {who} confirmed."
 
@@ -466,7 +471,7 @@ msgstr "Callback number"
 msgid "Can’t load the menu yet"
 msgstr "Can’t load the menu yet"
 
-#: src/apps/reservations/HostStand.tsx:451
+#: src/apps/reservations/HostStand.tsx:478
 #: src/apps/reservations/sheets.tsx:279
 #: src/screens/PairingLinkDialog.tsx:85
 #: src/screens/PhoneOrderSheet.tsx:58
@@ -565,7 +570,7 @@ msgstr "Cash received"
 msgid "Cash taken"
 msgstr "Cash taken"
 
-#: src/apps/timeclock/TimeClock.tsx:872
+#: src/apps/timeclock/TimeClock.tsx:901
 msgid "Cash tips {amount}"
 msgstr "Cash tips {amount}"
 
@@ -598,12 +603,12 @@ msgstr "Charge"
 msgid "Charged the wrong amount"
 msgstr "Charged the wrong amount"
 
-#: src/apps/reservations/sheets.tsx:933
-#: src/apps/reservations/sheets.tsx:1085
+#: src/apps/reservations/sheets.tsx:942
+#: src/apps/reservations/sheets.tsx:1094
 msgid "Check the number: include the country code, like +1 212 555 0100."
 msgstr "Check the number: include the country code, like +1 212 555 0100."
 
-#: src/apps/timeclock/TimeClock.tsx:663
+#: src/apps/timeclock/TimeClock.tsx:685
 #: src/screens/LockScreen.tsx:187
 #: src/ui/ManagerPinPad.tsx:75
 msgid "Checking…"
@@ -634,12 +639,12 @@ msgid "Choose a size"
 msgstr "Choose a size"
 
 #: src/apps/reservations/sheets.tsx:208
-#: src/apps/reservations/sheets.tsx:412
-#: src/apps/reservations/sheets.tsx:669
+#: src/apps/reservations/sheets.tsx:415
+#: src/apps/reservations/sheets.tsx:678
 msgid "Choose a table"
 msgstr "Choose a table"
 
-#: src/apps/reservations/sheets.tsx:809
+#: src/apps/reservations/sheets.tsx:818
 msgid "Choose a time"
 msgstr "Choose a time"
 
@@ -651,7 +656,7 @@ msgstr "Choose a valid pickup time"
 msgid "Choose a valid pickup time zone"
 msgstr "Choose a valid pickup time zone"
 
-#: src/apps/reservations/HostStand.tsx:610
+#: src/apps/reservations/HostStand.tsx:640
 msgid "Choose another"
 msgstr "Choose another"
 
@@ -683,7 +688,7 @@ msgid "Clock in or out"
 msgstr "Clock in or out"
 
 #: src/apps/timeclock/messages.ts:127
-#: src/apps/timeclock/TimeClock.tsx:893
+#: src/apps/timeclock/TimeClock.tsx:922
 msgid "Clock out"
 msgstr "Clock out"
 
@@ -696,7 +701,7 @@ msgid "Clocked out"
 msgstr "Clocked out"
 
 #: src/App.tsx:958
-#: src/apps/timeclock/TimeClock.tsx:1077
+#: src/apps/timeclock/TimeClock.tsx:1113
 #: src/ui/primitives.tsx:355
 msgid "Close"
 msgstr "Close"
@@ -719,7 +724,7 @@ msgstr "Close the shift"
 msgid "Closed by {0}"
 msgstr "Closed by {0}"
 
-#: src/apps/reservations/HostStand.tsx:459
+#: src/apps/reservations/HostStand.tsx:486
 msgid "Closed today. Walk-ins can still be seated."
 msgstr "Closed today. Walk-ins can still be seated."
 
@@ -751,7 +756,7 @@ msgstr "Connect to the internet to see other terminals’ tabs."
 msgid "Connect to the internet to sign in. The first sign-in on this device needs a connection."
 msgstr "Connect to the internet to sign in. The first sign-in on this device needs a connection."
 
-#: src/apps/timeclock/TimeClock.tsx:666
+#: src/apps/timeclock/TimeClock.tsx:688
 msgid "Continue"
 msgstr "Continue"
 
@@ -764,7 +769,7 @@ msgstr "Could not cancel the tab"
 msgid "Could not check the PIN. Try again."
 msgstr "Could not check the PIN. Try again."
 
-#: src/apps/reservations/sheets.tsx:842
+#: src/apps/reservations/sheets.tsx:851
 msgid "Could not load the times. Check the connection."
 msgstr "Could not load the times. Check the connection."
 
@@ -800,7 +805,7 @@ msgstr "Could not save the payment"
 msgid "Could not start payment"
 msgstr "Could not start payment"
 
-#: src/apps/reservations/HostStand.tsx:174
+#: src/apps/reservations/HostStand.tsx:177
 msgid "Could not undo. Check the floor."
 msgstr "Could not undo. Check the floor."
 
@@ -816,7 +821,7 @@ msgstr "Count all the cash in the drawer and enter it. You will see whether it b
 msgid "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 msgstr "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 
-#: src/apps/timeclock/TimeClock.tsx:865
+#: src/apps/timeclock/TimeClock.tsx:894
 msgid "Count what you kept in cash. Card tips are counted for you."
 msgstr "Count what you kept in cash. Card tips are counted for you."
 
@@ -837,7 +842,7 @@ msgstr "Current order"
 msgid "Customer name"
 msgstr "Customer name"
 
-#: src/apps/reservations/sheets.tsx:819
+#: src/apps/reservations/sheets.tsx:828
 msgid "Day"
 msgstr "Day"
 
@@ -857,7 +862,7 @@ msgstr "Demo mode"
 msgid "Demo mode: the PIN is {DEMO_PIN}."
 msgstr "Demo mode: the PIN is {DEMO_PIN}."
 
-#: src/apps/reservations/sheets.tsx:575
+#: src/apps/reservations/sheets.tsx:584
 msgid "Details"
 msgstr "Details"
 
@@ -878,11 +883,11 @@ msgstr "Didn’t arrive"
 msgid "Dine in"
 msgstr "Dine in"
 
-#: src/ui/motion.tsx:187
+#: src/ui/motion.tsx:197
 msgid "Dismiss"
 msgstr "Dismiss"
 
-#: src/apps/timeclock/TimeClock.tsx:1172
+#: src/apps/timeclock/TimeClock.tsx:1217
 #: src/screens/Cart.tsx:377
 #: src/screens/ItemSheet.tsx:365
 #: src/screens/ShiftSheet.tsx:148
@@ -944,11 +949,11 @@ msgstr "Enter the cash you counted."
 msgid "Enter the orders server address first."
 msgstr "Enter the orders server address first."
 
-#: src/lib/signin.ts:246
+#: src/lib/signin.ts:273
 msgid "Enter your 4 to 6 digit PIN."
 msgstr "Enter your 4 to 6 digit PIN."
 
-#: src/apps/timeclock/TimeClock.tsx:624
+#: src/apps/timeclock/TimeClock.tsx:646
 msgid "Enter your PIN"
 msgstr "Enter your PIN"
 
@@ -956,7 +961,7 @@ msgstr "Enter your PIN"
 msgid "Enter your PIN to start"
 msgstr "Enter your PIN to start"
 
-#: src/apps/reservations/sheets.tsx:963
+#: src/apps/reservations/sheets.tsx:972
 msgid "Evening"
 msgstr "Evening"
 
@@ -978,7 +983,7 @@ msgstr "Fewer"
 msgid "Fewer {0}"
 msgstr "Fewer {0}"
 
-#: src/apps/reservations/sheets.tsx:846
+#: src/apps/reservations/sheets.tsx:855
 msgid "Finding times…"
 msgstr "Finding times…"
 
@@ -987,11 +992,11 @@ msgid "Finished"
 msgstr "Finished"
 
 #: src/apps/reservations/sheets.tsx:220
-#: src/apps/reservations/sheets.tsx:572
+#: src/apps/reservations/sheets.tsx:581
 msgid "Finished, clear table"
 msgstr "Finished, clear table"
 
-#: src/apps/reservations/sheets.tsx:888
+#: src/apps/reservations/sheets.tsx:897
 msgid "First name"
 msgstr "First name"
 
@@ -1028,19 +1033,19 @@ msgid "Gluten free"
 msgstr "Gluten free"
 
 #: src/apps/timeclock/TimeClock.tsx:1084
-msgid "Got it, clear"
-msgstr "Got it, clear"
+#~ msgid "Got it, clear"
+#~ msgstr "Got it, clear"
 
 #: src/apps/reservations/Dock.tsx:130
 #: src/apps/reservations/Dock.tsx:162
 #: src/apps/reservations/Dock.tsx:181
 #: src/apps/reservations/Floor.tsx:180
-#: src/apps/reservations/HostStand.tsx:259
-#: src/apps/reservations/HostStand.tsx:309
-#: src/apps/reservations/HostStand.tsx:369
+#: src/apps/reservations/HostStand.tsx:274
+#: src/apps/reservations/HostStand.tsx:324
+#: src/apps/reservations/HostStand.tsx:396
 #: src/apps/reservations/sheets.tsx:161
-#: src/apps/reservations/sheets.tsx:547
-#: src/apps/reservations/sheets.tsx:600
+#: src/apps/reservations/sheets.tsx:556
+#: src/apps/reservations/sheets.tsx:609
 msgid "Guest"
 msgstr "Guest"
 
@@ -1048,24 +1053,24 @@ msgstr "Guest"
 msgid "Guest changed their mind"
 msgstr "Guest changed their mind"
 
-#: src/apps/reservations/HostStand.tsx:657
+#: src/apps/reservations/HostStand.tsx:687
 msgid "Guests’ bookings open for the person signed in at this terminal, and only after an online sign-in."
 msgstr "Guests’ bookings open for the person signed in at this terminal, and only after an online sign-in."
 
 #. placeholder {0}: who.firstName
-#: src/apps/timeclock/TimeClock.tsx:754
+#: src/apps/timeclock/TimeClock.tsx:783
 msgid "Hi {0}"
 msgstr "Hi {0}"
 
-#: src/apps/timeclock/TimeClock.tsx:948
+#: src/apps/timeclock/TimeClock.tsx:977
 msgid "Hi {firstName}, what are you doing?"
 msgstr "Hi {firstName}, what are you doing?"
 
-#: src/apps/reservations/sheets.tsx:948
+#: src/apps/reservations/sheets.tsx:957
 msgid "High chair, birthday, by the window…"
 msgstr "High chair, birthday, by the window…"
 
-#: src/apps/reservations/sheets.tsx:677
+#: src/apps/reservations/sheets.tsx:686
 msgid "How many?"
 msgstr "How many?"
 
@@ -1145,7 +1150,7 @@ msgstr "Kitchen note"
 msgid "Language"
 msgstr "Language"
 
-#: src/apps/reservations/sheets.tsx:900
+#: src/apps/reservations/sheets.tsx:909
 msgid "Last name"
 msgstr "Last name"
 
@@ -1231,7 +1236,7 @@ msgstr "More"
 msgid "More {0}"
 msgstr "More {0}"
 
-#: src/apps/reservations/sheets.tsx:961
+#: src/apps/reservations/sheets.tsx:970
 msgid "Morning"
 msgstr "Morning"
 
@@ -1239,11 +1244,11 @@ msgstr "Morning"
 msgid "Moved to {movedTo}"
 msgstr "Moved to {movedTo}"
 
-#: src/apps/reservations/sheets.tsx:1046
+#: src/apps/reservations/sheets.tsx:1055
 msgid "Name"
 msgstr "Name"
 
-#: src/apps/reservations/sheets.tsx:683
+#: src/apps/reservations/sheets.tsx:692
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
@@ -1264,7 +1269,7 @@ msgstr "Net sales"
 msgid "Never"
 msgstr "Never"
 
-#: src/apps/reservations/sheets.tsx:782
+#: src/apps/reservations/sheets.tsx:791
 msgid "New booking"
 msgstr "New booking"
 
@@ -1272,11 +1277,11 @@ msgstr "New booking"
 msgid "New order"
 msgstr "New order"
 
-#: src/apps/reservations/sheets.tsx:597
+#: src/apps/reservations/sheets.tsx:606
 msgid "Next booking"
 msgstr "Next booking"
 
-#: src/apps/timeclock/TimeClock.tsx:885
+#: src/apps/timeclock/TimeClock.tsx:914
 msgid "No cash tips"
 msgstr "No cash tips"
 
@@ -1284,11 +1289,11 @@ msgstr "No cash tips"
 msgid "No connection"
 msgstr "No connection"
 
-#: src/apps/timeclock/TimeClock.tsx:961
+#: src/apps/timeclock/TimeClock.tsx:990
 msgid "No connection, and this terminal has not seen this PIN before, so it cannot check it now. Make sure it is yours: the punch is sent, and checked, when the connection is back."
 msgstr "No connection, and this terminal has not seen this PIN before, so it cannot check it now. Make sure it is yours: the punch is sent, and checked, when the connection is back."
 
-#: src/apps/reservations/HostStand.tsx:216
+#: src/apps/reservations/HostStand.tsx:226
 msgid "No connection. Nothing was changed."
 msgstr "No connection. Nothing was changed."
 
@@ -1296,7 +1301,7 @@ msgstr "No connection. Nothing was changed."
 msgid "No connection. Try again in a moment."
 msgstr "No connection. Try again in a moment."
 
-#: src/apps/timeclock/TimeClock.tsx:956
+#: src/apps/timeclock/TimeClock.tsx:985
 msgid "No connection. Your punch is saved on this terminal and sent when it is back; your PIN is checked then."
 msgstr "No connection. Your punch is saved on this terminal and sent when it is back; your PIN is checked then."
 
@@ -1344,11 +1349,11 @@ msgstr "No shift is open. Tap to count the drawer and open one before selling."
 msgid "No table yet"
 msgstr "No table yet"
 
-#: src/apps/reservations/HostStand.tsx:494
+#: src/apps/reservations/HostStand.tsx:521
 msgid "No tables yet. A manager adds the floor plan in the app, under Reservations, Setup."
 msgstr "No tables yet. A manager adds the floor plan in the app, under Reservations, Setup."
 
-#: src/apps/reservations/sheets.tsx:850
+#: src/apps/reservations/sheets.tsx:859
 msgid "No times left for {size} on this day."
 msgstr "No times left for {size} on this day."
 
@@ -1370,15 +1375,15 @@ msgstr "None"
 msgid "Not a no-show"
 msgstr "Not a no-show"
 
-#: src/apps/timeclock/TimeClock.tsx:681
+#: src/apps/timeclock/TimeClock.tsx:710
 msgid "Not me"
 msgstr "Not me"
 
-#: src/apps/reservations/HostStand.tsx:410
+#: src/apps/reservations/HostStand.tsx:437
 msgid "Not up to date"
 msgstr "Not up to date"
 
-#: src/apps/reservations/sheets.tsx:942
+#: src/apps/reservations/sheets.tsx:951
 msgid "Note for the team"
 msgstr "Note for the team"
 
@@ -1406,11 +1411,11 @@ msgstr "Offline · selling normally"
 msgid "Offline: people who have signed in here before can still sign in."
 msgstr "Offline: people who have signed in here before can still sign in."
 
-#: src/apps/timeclock/TimeClock.tsx:576
+#: src/apps/timeclock/TimeClock.tsx:598
 msgid "Offline: punches are saved and sent later."
 msgstr "Offline: punches are saved and sent later."
 
-#: src/apps/timeclock/TimeClock.tsx:644
+#: src/apps/timeclock/TimeClock.tsx:666
 msgid "Offline: your punch is saved and sent later."
 msgstr "Offline: your punch is saved and sent later."
 
@@ -1470,7 +1475,7 @@ msgstr "Open tabs · {openCount}"
 msgid "Opening float"
 msgstr "Opening float"
 
-#: src/apps/reservations/HostStand.tsx:356
+#: src/apps/reservations/HostStand.tsx:371
 msgid "Opening today’s floor…"
 msgstr "Opening today’s floor…"
 
@@ -1644,19 +1649,19 @@ msgid "Partly seated"
 msgstr "Partly seated"
 
 #. placeholder {0}: state.party.partySize
-#: src/apps/reservations/sheets.tsx:560
+#: src/apps/reservations/sheets.tsx:569
 msgid "Party of {0}"
 msgstr "Party of {0}"
 
 #. placeholder {0}: state.party.partySize
 #. placeholder {1}: Math.max( 0, Math.floor((now - state.party.seatedAt) / 60_000), )
-#: src/apps/reservations/sheets.tsx:551
+#: src/apps/reservations/sheets.tsx:560
 msgid "Party of {0}, seated {1} min"
 msgstr "Party of {0}, seated {1} min"
 
 #: src/apps/reservations/sheets.tsx:63
-#: src/apps/reservations/sheets.tsx:831
-#: src/apps/reservations/sheets.tsx:1058
+#: src/apps/reservations/sheets.tsx:840
+#: src/apps/reservations/sheets.tsx:1067
 msgid "Party size"
 msgstr "Party size"
 
@@ -1713,11 +1718,11 @@ msgstr "Phone"
 msgid "Phone · Pickup"
 msgstr "Phone · Pickup"
 
-#: src/apps/reservations/sheets.tsx:912
+#: src/apps/reservations/sheets.tsx:921
 msgid "Phone (for reminders)"
 msgstr "Phone (for reminders)"
 
-#: src/apps/reservations/sheets.tsx:1064
+#: src/apps/reservations/sheets.tsx:1073
 msgid "Phone (to text when the table is ready)"
 msgstr "Phone (to text when the table is ready)"
 
@@ -1796,7 +1801,7 @@ msgstr "Problem with the food"
 msgid "Publish a menu with items for this location, then refresh."
 msgstr "Publish a menu with items for this location, then refresh."
 
-#: src/apps/timeclock/TimeClock.tsx:1073
+#: src/apps/timeclock/TimeClock.tsx:1109
 msgid "Punches not recorded"
 msgstr "Punches not recorded"
 
@@ -1818,7 +1823,7 @@ msgstr "Record {0} in"
 msgid "Record {0} out"
 msgstr "Record {0} out"
 
-#: src/apps/timeclock/TimeClock.tsx:1163
+#: src/apps/timeclock/TimeClock.tsx:1208
 msgid "Recorded at {at}."
 msgstr "Recorded at {at}."
 
@@ -1904,11 +1909,11 @@ msgstr "Required"
 msgid "Reservations"
 msgstr "Reservations"
 
-#: src/apps/reservations/HostStand.tsx:704
+#: src/apps/reservations/HostStand.tsx:734
 msgid "Reservations are off on this terminal"
 msgstr "Reservations are off on this terminal"
 
-#: src/apps/reservations/HostStand.tsx:669
+#: src/apps/reservations/HostStand.tsx:699
 msgid "Reservations need a connection"
 msgstr "Reservations need a connection"
 
@@ -1920,7 +1925,7 @@ msgstr "Rest break"
 msgid "Restaurant time: {zone}"
 msgstr "Restaurant time: {zone}"
 
-#: src/apps/reservations/HostStand.tsx:380
+#: src/apps/reservations/HostStand.tsx:407
 msgid "Room"
 msgstr "Room"
 
@@ -1945,7 +1950,7 @@ msgstr "Save"
 msgid "Save tab"
 msgstr "Save tab"
 
-#: src/apps/timeclock/TimeClock.tsx:1159
+#: src/apps/timeclock/TimeClock.tsx:1204
 msgid "Saved on this terminal. It is sent when the connection is back."
 msgstr "Saved on this terminal. It is sent when the connection is back."
 
@@ -1980,19 +1985,19 @@ msgstr "Search orders"
 msgid "Search the menu"
 msgstr "Search the menu"
 
-#: src/apps/reservations/sheets.tsx:626
+#: src/apps/reservations/sheets.tsx:635
 msgid "Seat {size} now"
 msgstr "Seat {size} now"
 
-#: src/apps/reservations/sheets.tsx:611
+#: src/apps/reservations/sheets.tsx:620
 msgid "Seat a walk-in here"
 msgstr "Seat a walk-in here"
 
-#: src/apps/reservations/HostStand.tsx:207
+#: src/apps/reservations/HostStand.tsx:213
 msgid "Seat anyway"
 msgstr "Seat anyway"
 
-#: src/apps/reservations/HostStand.tsx:622
+#: src/apps/reservations/HostStand.tsx:652
 msgid "Seat them here"
 msgstr "Seat them here"
 
@@ -2002,21 +2007,21 @@ msgstr "Seated"
 
 #. placeholder {0}: entry.displayName
 #. placeholder {1}: table.label
-#: src/apps/reservations/HostStand.tsx:282
+#: src/apps/reservations/HostStand.tsx:297
 msgid "Seated {0} at {1}."
 msgstr "Seated {0} at {1}."
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/HostStand.tsx:271
+#: src/apps/reservations/HostStand.tsx:286
 msgid "Seated {who} at {0}."
 msgstr "Seated {who} at {0}."
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/HostStand.tsx:296
+#: src/apps/reservations/HostStand.tsx:311
 msgid "Seated a walk-in of {size} at {0}."
 msgstr "Seated a walk-in of {size} at {0}."
 
-#: src/apps/reservations/HostStand.tsx:251
+#: src/apps/reservations/HostStand.tsx:262
 msgid "Seated at the host stand"
 msgstr "Seated at the host stand"
 
@@ -2079,16 +2084,16 @@ msgstr "Shift closed"
 msgid "Short"
 msgstr "Short"
 
-#: src/apps/reservations/HostStand.tsx:665
+#: src/apps/reservations/HostStand.tsx:695
 #: src/screens/LockScreen.tsx:187
 msgid "Sign in"
 msgstr "Sign in"
 
-#: src/apps/reservations/HostStand.tsx:655
+#: src/apps/reservations/HostStand.tsx:685
 msgid "Sign in to open reservations"
 msgstr "Sign in to open reservations"
 
-#: src/lib/signin.ts:343
+#: src/lib/signin.ts:370
 msgid "Sign-in has been switched off for this terminal."
 msgstr "Sign-in has been switched off for this terminal."
 
@@ -2101,11 +2106,11 @@ msgstr "Simplified tax invoice"
 msgid "Sold out"
 msgstr "Sold out"
 
-#: src/apps/reservations/HostStand.tsx:214
+#: src/apps/reservations/HostStand.tsx:224
 msgid "Someone changed this a moment ago. Here is the latest."
 msgstr "Someone changed this a moment ago. Here is the latest."
 
-#: src/apps/reservations/HostStand.tsx:203
+#: src/apps/reservations/HostStand.tsx:208
 msgid "Someone is booked on that table before this party would be done."
 msgstr "Someone is booked on that table before this party would be done."
 
@@ -2154,7 +2159,7 @@ msgid "Switch to counter"
 msgstr "Switch to counter"
 
 #: src/App.tsx:968
-#: src/apps/reservations/HostStand.tsx:693
+#: src/apps/reservations/HostStand.tsx:723
 msgid "Switch user"
 msgstr "Switch user"
 
@@ -2172,12 +2177,12 @@ msgstr "Table"
 #. placeholder {0}: target.table.label
 #: src/apps/reservations/Dock.tsx:147
 #: src/apps/reservations/sheets.tsx:302
-#: src/apps/reservations/sheets.tsx:540
+#: src/apps/reservations/sheets.tsx:549
 msgid "Table {0}"
 msgstr "Table {0}"
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/HostStand.tsx:233
+#: src/apps/reservations/HostStand.tsx:244
 msgid "Table {0} is taken. Choose another table."
 msgstr "Table {0} is taken. Choose another table."
 
@@ -2204,7 +2209,7 @@ msgstr "Table {0}, open, seats {covers}"
 msgid "Table {0}, seated: {1}, party of {2}"
 msgstr "Table {0}, seated: {1}, party of {2}"
 
-#: src/apps/reservations/HostStand.tsx:196
+#: src/apps/reservations/HostStand.tsx:201
 msgid "Table {label} was just taken. Choose another table."
 msgstr "Table {label} was just taken. Choose another table."
 
@@ -2213,11 +2218,11 @@ msgstr "Table {label} was just taken. Choose another table."
 msgid "Table {table}"
 msgstr "Table {table}"
 
-#: src/apps/reservations/HostStand.tsx:606
+#: src/apps/reservations/HostStand.tsx:636
 msgid "Table {tooSmallLabel} is small for them"
 msgstr "Table {tooSmallLabel} is small for them"
 
-#: src/apps/reservations/HostStand.tsx:628
+#: src/apps/reservations/HostStand.tsx:658
 msgid "Table {tooSmallLabel} seats {tooSmallSeats}. This party is {tooSmallParty}."
 msgstr "Table {tooSmallLabel} seats {tooSmallSeats}. This party is {tooSmallParty}."
 
@@ -2282,11 +2287,15 @@ msgid "Tap a dish on the menu to start the order."
 msgstr "Tap a dish on the menu to start the order."
 
 #. placeholder {0}: placing ? placingSize(placing) : 0
-#: src/apps/reservations/HostStand.tsx:440
+#: src/apps/reservations/HostStand.tsx:467
 msgid "Tap a table for {placingName}, party of {0}"
 msgstr "Tap a table for {placingName}, party of {0}"
 
-#: src/apps/reservations/sheets.tsx:429
+#: src/apps/timeclock/TimeClock.tsx:1126
+msgid "Tap again to clear"
+msgstr "Tap again to clear"
+
+#: src/apps/reservations/sheets.tsx:432
 msgid "Tap again: remove"
 msgstr "Tap again: remove"
 
@@ -2335,7 +2344,7 @@ msgstr "Terminals are paused right now. Try again soon."
 msgid "Terminals are switched off for this restaurant right now."
 msgstr "Terminals are switched off for this restaurant right now."
 
-#: src/apps/reservations/sheets.tsx:422
+#: src/apps/reservations/sheets.tsx:425
 msgid "Text: table ready"
 msgstr "Text: table ready"
 
@@ -2351,7 +2360,7 @@ msgstr "That choice is sold out"
 msgid "That code has expired or was already used. Ask a manager for a new one."
 msgstr "That code has expired or was already used. Ask a manager for a new one."
 
-#: src/apps/reservations/HostStand.tsx:218
+#: src/apps/reservations/HostStand.tsx:228
 msgid "That did not go through. Try again."
 msgstr "That did not go through. Try again."
 
@@ -2373,11 +2382,11 @@ msgstr "That is more than was paid and not yet refunded"
 
 #: src/apps/timeclock/messages.ts:23
 #: src/lib/signin.ts:192
-#: src/lib/signin.ts:366
+#: src/lib/signin.ts:393
 msgid "That PIN is not right."
 msgstr "That PIN is not right."
 
-#: src/lib/signin.ts:263
+#: src/lib/signin.ts:290
 msgid "That PIN is not right. In demo mode it is 1234."
 msgstr "That PIN is not right. In demo mode it is 1234."
 
@@ -2389,7 +2398,7 @@ msgstr "That PIN is not right. Try again in {delaySeconds} seconds."
 msgid "That PIN is not right. Try again in {seconds} seconds."
 msgstr "That PIN is not right. Try again in {seconds} seconds."
 
-#: src/lib/signin.ts:365
+#: src/lib/signin.ts:392
 msgid "That PIN is not right. Try again in {wait} seconds."
 msgstr "That PIN is not right. Try again in {wait} seconds."
 
@@ -2475,7 +2484,7 @@ msgstr "The tab is kept, marked cancelled, with who cancelled it and why."
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "The tab was taken over but could not be saved on this device."
 
-#: src/apps/reservations/HostStand.tsx:671
+#: src/apps/reservations/HostStand.tsx:701
 msgid "The till keeps selling offline; bookings open again when the connection is back."
 msgstr "The till keeps selling offline; bookings open again when the connection is back."
 
@@ -2495,19 +2504,19 @@ msgstr "The time clock is turned off on this terminal. Ask a manager."
 msgid "The time clock is unavailable right now. Try again soon."
 msgstr "The time clock is unavailable right now. Try again soon."
 
-#: src/apps/timeclock/TimeClock.tsx:775
+#: src/apps/timeclock/TimeClock.tsx:804
 msgid "There is nothing to punch right now. Ask a manager."
 msgstr "There is nothing to punch right now. Ask a manager."
 
-#: src/apps/timeclock/TimeClock.tsx:1091
+#: src/apps/timeclock/TimeClock.tsx:1136
 msgid "These were saved while offline, and the server did not accept them. Tell a manager so they can add the right times."
 msgstr "These were saved while offline, and the server did not accept them. Tell a manager so they can add the right times."
 
-#: src/apps/reservations/sheets.tsx:462
+#: src/apps/reservations/sheets.tsx:471
 msgid "They have been told their table is ready."
 msgstr "They have been told their table is ready."
 
-#: src/apps/reservations/sheets.tsx:428
+#: src/apps/reservations/sheets.tsx:431
 msgid "They left"
 msgstr "They left"
 
@@ -2536,7 +2545,7 @@ msgstr "This browser may clear orders saved on this device when it runs low on s
 msgid "This category is empty."
 msgstr "This category is empty."
 
-#: src/lib/signin.ts:221
+#: src/lib/signin.ts:248
 msgid "This device could not check the PIN. Try again, or reload the app."
 msgstr "This device could not check the PIN. Try again, or reload the app."
 
@@ -2605,12 +2614,12 @@ msgstr "This tab was already saved (and may have gone to the kitchen). Taking of
 msgid "This tab was taken over by terminal {0}"
 msgstr "This tab was taken over by terminal {0}"
 
-#: src/apps/reservations/sheets.tsx:585
+#: src/apps/reservations/sheets.tsx:594
 msgid "This table is blocked right now."
 msgstr "This table is blocked right now."
 
 #. placeholder {0}: target.table.maxCovers
-#: src/apps/reservations/sheets.tsx:616
+#: src/apps/reservations/sheets.tsx:625
 msgid "This table seats {0}."
 msgstr "This table seats {0}."
 
@@ -2622,7 +2631,7 @@ msgstr "This tablet’s clock is about {clockMinutes} minutes off. Receipts and 
 msgid "This tablet’s clock is about {minutes} minutes off. Set the correct date and time in the tablet’s settings, then try again."
 msgstr "This tablet’s clock is about {minutes} minutes off. Set the correct date and time in the tablet’s settings, then try again."
 
-#: src/apps/timeclock/TimeClock.tsx:581
+#: src/apps/timeclock/TimeClock.tsx:603
 msgid "This tablet’s clock is off. Punches use the server’s time."
 msgstr "This tablet’s clock is off. Punches use the server’s time."
 
@@ -2639,7 +2648,7 @@ msgstr "This terminal is no longer paired. Ask a manager to pair it again."
 msgid "This terminal is not paired with a restaurant."
 msgstr "This terminal is not paired with a restaurant."
 
-#: src/lib/signin.ts:336
+#: src/lib/signin.ts:363
 msgid "This terminal was removed. Ask a manager to pair it again."
 msgstr "This terminal was removed. Ask a manager to pair it again."
 
@@ -2655,12 +2664,12 @@ msgstr "This terminal was removed. Pair it again to keep sending orders."
 msgid "This terminal’s location isn’t on the menu"
 msgstr "This terminal’s location isn’t on the menu"
 
-#: src/apps/reservations/sheets.tsx:838
+#: src/apps/reservations/sheets.tsx:847
 msgid "Time"
 msgstr "Time"
 
 #: src/App.tsx:1036
-#: src/apps/timeclock/TimeClock.tsx:357
+#: src/apps/timeclock/TimeClock.tsx:379
 #: src/screens/TopBar.tsx:255
 msgid "Time clock"
 msgstr "Time clock"
@@ -2681,7 +2690,7 @@ msgstr "Tip"
 msgid "Tips"
 msgstr "Tips"
 
-#: src/apps/timeclock/TimeClock.tsx:627
+#: src/apps/timeclock/TimeClock.tsx:649
 msgid "To clock in, take a break or clock out."
 msgstr "To clock in, take a break or clock out."
 
@@ -2689,7 +2698,7 @@ msgstr "To clock in, take a break or clock out."
 msgid "Today · {todayCount}"
 msgstr "Today · {todayCount}"
 
-#: src/apps/reservations/HostStand.tsx:712
+#: src/apps/reservations/HostStand.tsx:742
 msgid "Today’s bookings could not be loaded"
 msgstr "Today’s bookings could not be loaded"
 
@@ -2706,7 +2715,7 @@ msgid "Too many wrong PINs. Try again in {seconds} seconds."
 msgstr "Too many wrong PINs. Try again in {seconds} seconds."
 
 #: src/lib/signin.ts:147
-#: src/lib/signin.ts:352
+#: src/lib/signin.ts:379
 msgid "Too many wrong PINs. Try again in {wait} seconds."
 msgstr "Too many wrong PINs. Try again in {wait} seconds."
 
@@ -2721,13 +2730,13 @@ msgid "Total due"
 msgstr "Total due"
 
 #: src/App.tsx:696
-#: src/apps/reservations/HostStand.tsx:679
-#: src/apps/reservations/HostStand.tsx:717
+#: src/apps/reservations/HostStand.tsx:709
+#: src/apps/reservations/HostStand.tsx:747
 #: src/screens/OrdersSheet.tsx:700
 msgid "Try again"
 msgstr "Try again"
 
-#: src/apps/reservations/HostStand.tsx:713
+#: src/apps/reservations/HostStand.tsx:743
 msgid "Try again in a moment."
 msgstr "Try again in a moment."
 
@@ -2739,7 +2748,7 @@ msgstr "Try staff sign-in"
 msgid "Turned on or off for this terminal in the Menuza app (Menu, Terminals)."
 msgstr "Turned on or off for this terminal in the Menuza app (Menu, Terminals)."
 
-#: src/apps/reservations/HostStand.tsx:166
+#: src/apps/reservations/HostStand.tsx:168
 msgid "Undo"
 msgstr "Undo"
 
@@ -2747,11 +2756,11 @@ msgstr "Undo"
 msgid "Undo seating"
 msgstr "Undo seating"
 
-#: src/apps/reservations/HostStand.tsx:311
+#: src/apps/reservations/HostStand.tsx:326
 msgid "Undone for {who}."
 msgstr "Undone for {who}."
 
-#: src/apps/reservations/HostStand.tsx:172
+#: src/apps/reservations/HostStand.tsx:175
 msgid "Undone."
 msgstr "Undone."
 
@@ -2800,32 +2809,32 @@ msgstr "Vegetarian"
 msgid "View order"
 msgstr "View order"
 
-#: src/apps/reservations/sheets.tsx:448
+#: src/apps/reservations/sheets.tsx:451
 msgid "Waiting {waited} min"
 msgstr "Waiting {waited} min"
 
 #. placeholder {0}: entry.quotedMin
-#: src/apps/reservations/sheets.tsx:444
+#: src/apps/reservations/sheets.tsx:447
 msgid "Waiting {waited} min, quoted {0}"
 msgstr "Waiting {waited} min, quoted {0}"
 
 #: src/apps/reservations/Dock.tsx:210
-#: src/apps/reservations/HostStand.tsx:426
+#: src/apps/reservations/HostStand.tsx:453
 msgid "Waitlist"
 msgstr "Waitlist"
 
-#: src/apps/reservations/HostStand.tsx:372
-#: src/apps/reservations/HostStand.tsx:416
-#: src/apps/reservations/sheets.tsx:659
+#: src/apps/reservations/HostStand.tsx:399
+#: src/apps/reservations/HostStand.tsx:443
+#: src/apps/reservations/sheets.tsx:668
 msgid "Walk-in"
 msgstr "Walk-in"
 
-#: src/apps/timeclock/TimeClock.tsx:950
+#: src/apps/timeclock/TimeClock.tsx:979
 msgid "What are you doing?"
 msgstr "What are you doing?"
 
-#: src/apps/timeclock/TimeClock.tsx:817
-#: src/apps/timeclock/TimeClock.tsx:921
+#: src/apps/timeclock/TimeClock.tsx:846
+#: src/apps/timeclock/TimeClock.tsx:950
 msgid "What are you working today?"
 msgstr "What are you working today?"
 
@@ -2837,7 +2846,7 @@ msgstr "What is it for?"
 msgid "Where your Menuza app runs."
 msgstr "Where your Menuza app runs."
 
-#: src/apps/timeclock/TimeClock.tsx:1004
+#: src/apps/timeclock/TimeClock.tsx:1033
 msgid "Which break are you taking?"
 msgstr "Which break are you taking?"
 
@@ -2877,7 +2886,7 @@ msgstr "You are not clocked in."
 msgid "You are not on a break."
 msgstr "You are not on a break."
 
-#: src/apps/reservations/HostStand.tsx:683
+#: src/apps/reservations/HostStand.tsx:713
 msgid "You are not on this terminal’s host list"
 msgstr "You are not on this terminal’s host list"
 
@@ -2897,7 +2906,7 @@ msgstr "You do not have a shift right now. Ask a manager."
 msgid "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
 msgstr "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
 
-#: src/apps/timeclock/TimeClock.tsx:782
+#: src/apps/timeclock/TimeClock.tsx:811
 msgid "Your next shifts"
 msgstr "Your next shifts"
 

@@ -17,7 +17,7 @@ const session = (token = 'session-token-aaaaaaaaaaaaaaaaaaaa'): Session => ({
 	serverSession: { token, expiresAt: Date.now() + 3_600_000 },
 })
 
-function server() {
+function server(ttlMs = 15 * 60_000) {
 	let minted = 0
 	const calls: Array<{ url: string; init: RequestInit }> = []
 	const fetchImpl = vi.fn(
@@ -29,7 +29,7 @@ function server() {
 				minted += 1
 				return Response.json({
 					token: `rsv-token-${minted}-xxxxxxxxxxxxxxxxxxxx`,
-					expiresAt: Date.now() + 15 * 60_000,
+					expiresAt: Date.now() + ttlMs,
 					locationId: 'loc_pub_main',
 					canReadGuest: false,
 					features: { waitlist: true, online: true },
@@ -141,6 +141,49 @@ describe('host stand client', () => {
 			tableIds: ['t1'],
 			expectedVersion: 3,
 		})
+	})
+
+	it('judges a token’s age by this tablet’s clock, even when it runs fast', async () => {
+		// Five-minute tokens on a tablet 4.5 minutes ahead of the server.
+		const s = server(5 * 60_000)
+		const ahead = 270_000
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+			now: () => Date.now() + ahead,
+			skewMs: () => -ahead,
+		})
+		await api.day()
+		await api.day()
+		await api.day()
+		expect(s.minted()).toBe(1)
+	})
+
+	it('forgetting the person drops a token still being minted for them', async () => {
+		let release: () => void = () => {}
+		const gate = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		const s = server()
+		const fetchImpl = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				if (String(input).endsWith('/pos/reservations/token')) await gate
+				return s.fetchImpl(input, init)
+			},
+		)
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: fetchImpl as never,
+		})
+		const first = api.grant()
+		api.forget()
+		release()
+		await first
+		// The till locked meanwhile: the next call mints afresh, never reusing it.
+		await api.grant()
+		expect(s.minted()).toBe(2)
 	})
 
 	it('a lost connection is offline, not a refusal', async () => {

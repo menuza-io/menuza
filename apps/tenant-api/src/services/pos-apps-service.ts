@@ -11,9 +11,11 @@ import { getStaffingFeatures } from '../lib/scope-context.ts'
  *
  * A flag this node cannot read is never taken as on: a live punch then answers
  * 503 and the till keeps it as an offline punch. A punch made offline (sent
- * later) is accepted even if a switch was turned off since, because it
- * happened while the till offered the clock; only the regional kill switch for
- * tablet clocks (`STAFFING_KIOSK_ENABLED`) holds it, and the till keeps it.
+ * later) is accepted when the till offered the clock at the time it was made:
+ * the terminal's switch was on, or was turned off only after. A flag this node
+ * cannot read does not hold a replay (the punch already happened), but a flag
+ * known to be off does, and so does the regional kill switch; the till keeps
+ * those punches and tries again (both are pause codes to it).
  */
 
 export type TimeclockGate =
@@ -31,15 +33,26 @@ export type TimeclockGate =
 export async function timeclockGate(
 	orgId: string,
 	device: PosDevice,
-	options: { now?: number; offlineReplay?: boolean } = {},
+	/** Set for a punch the till saved offline: when it was made (null if it did not say). */
+	options: { now?: number; offlineReplay?: { at: number | null } | null } = {},
 ): Promise<TimeclockGate> {
 	if (!isKioskEnabled())
 		return { ok: false, status: 503, code: 'kiosk_disabled' }
-	if (options.offlineReplay) return { ok: true }
-	if (!device.timeclockEnabled)
+	const replayAt = options.offlineReplay?.at ?? null
+	const replay = Boolean(options.offlineReplay)
+	const offeredThen =
+		device.timeclockEnabled ||
+		(replay &&
+			replayAt !== null &&
+			device.timeclockDisabledAt !== null &&
+			replayAt < device.timeclockDisabledAt)
+	if (!offeredThen)
 		return { ok: false, status: 403, code: 'timeclock_not_enabled' }
 	const flags = await getStaffingFeatures(orgId, options.now).catch(() => null)
-	if (!flags) return { ok: false, status: 503, code: 'service_unavailable' }
+	if (!flags) {
+		if (replay) return { ok: true }
+		return { ok: false, status: 503, code: 'service_unavailable' }
+	}
 	if (!flags.features.enabled || !flags.features.timeclock) {
 		return { ok: false, status: 403, code: 'timeclock_disabled' }
 	}

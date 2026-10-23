@@ -71,7 +71,11 @@ import { fetchOrderContext } from './order-service.ts'
 import { hashPosSecret } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
-import { writeDeviceAudit } from './staff-audit.ts'
+import {
+	diffFields,
+	writeDeviceAudit,
+	writeOperatorAudit,
+} from './staff-audit.ts'
 import { revokeZatcaUnitsForDevice } from './zatca-service.ts'
 
 /** Drizzle wraps driver errors; the SQLite message lives down the `cause` chain. */
@@ -166,6 +170,19 @@ async function knownLocationIds(
 export async function isUnknownLocation(orgId: string, locationId: string) {
 	const known = await knownLocationIds(orgId, locationId)
 	return known !== null && !known.includes(locationId)
+}
+
+/**
+ * Whether App's menu has the location, or `unavailable` when App cannot answer.
+ * Binding a terminal is permanent, so it waits for an answer instead of trusting.
+ */
+export async function checkLocation(
+	orgId: string,
+	locationId: string,
+): Promise<'known' | 'unknown' | 'unavailable'> {
+	const known = await knownLocationIds(orgId, locationId)
+	if (known === null) return 'unavailable'
+	return known.includes(locationId) ? 'known' : 'unknown'
 }
 
 // ---------------------------------------------------------------------------
@@ -689,6 +706,11 @@ export async function setHost(
 		.where(and(eq(staffMembers.id, staffId), eq(staffMembers.status, 'active')))
 		.limit(1)
 	if (!member) return false
+	const [before] = await db
+		.select({ guestDetails: posHosts.guestDetails })
+		.from(posHosts)
+		.where(eq(posHosts.staffId, staffId))
+		.limit(1)
 	await db
 		.insert(posHosts)
 		.values({
@@ -699,17 +721,44 @@ export async function setHost(
 		})
 		.onConflictDoUpdate({
 			target: posHosts.staffId,
-			set: { guestDetails: options.guestDetails },
+			// Whoever changed the grant last answers for it.
+			set: { guestDetails: options.guestDetails, addedBy, addedAt: now },
 		})
+	await writeOperatorAudit(db, addedBy, null, {
+		action: before ? 'pos.host.changed' : 'pos.host.added',
+		entityType: 'pos_host',
+		entityId: staffId,
+		staffId,
+		changes: {
+			guestDetails: {
+				before: before?.guestDetails ?? null,
+				after: options.guestDetails,
+			},
+		},
+	})
 	return true
 }
 
-export async function removeHost(db: TenantDatabase, staffId: string) {
+export async function removeHost(
+	db: TenantDatabase,
+	staffId: string,
+	removedBy: string,
+) {
 	const removed = await db
 		.delete(posHosts)
 		.where(eq(posHosts.staffId, staffId))
-		.returning({ id: posHosts.staffId })
-	return removed.length === 1
+		.returning({ id: posHosts.staffId, guestDetails: posHosts.guestDetails })
+	if (removed.length !== 1) return false
+	await writeOperatorAudit(db, removedBy, null, {
+		action: 'pos.host.removed',
+		entityType: 'pos_host',
+		entityId: staffId,
+		staffId,
+		changes: {
+			guestDetails: { before: removed[0]!.guestDetails, after: null },
+		},
+	})
+	return true
 }
 
 export async function removeManager(db: TenantDatabase, staffId: string) {
@@ -749,6 +798,19 @@ export function stationReservationsProblem(settings: {
 	return null
 }
 
+/** A terminal's location and host stand switch, for permission checks before a change. */
+export async function deviceStationState(db: TenantDatabase, id: string) {
+	const [device] = await db
+		.select({
+			locationId: posDevices.locationId,
+			reservationsEnabled: posDevices.reservationsEnabled,
+		})
+		.from(posDevices)
+		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
+		.limit(1)
+	return device ?? null
+}
+
 export type DeviceSettingsPatch = {
 	signInRequired?: boolean
 	dayStartMinutes?: number
@@ -769,6 +831,8 @@ export async function updateDeviceSettings(
 	id: string,
 	patch: DeviceSettingsPatch,
 	now = Date.now(),
+	/** The operator making the change, for the audit trail. */
+	changedBy = 'unknown',
 ): Promise<PosResult<true>> {
 	if (Object.values(patch).every((value) => value === undefined)) {
 		return fail(400, 'invalid_request')
@@ -783,6 +847,7 @@ export async function updateDeviceSettings(
 			signInRequired: posDevices.signInRequired,
 			locationId: posDevices.locationId,
 			reservationsEnabled: posDevices.reservationsEnabled,
+			timeclockEnabled: posDevices.timeclockEnabled,
 		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
@@ -816,12 +881,40 @@ export async function updateDeviceSettings(
 		set.dayStartMinutes = patch.dayStartMinutes
 	if (patch.shiftsRequired !== undefined)
 		set.shiftsRequired = patch.shiftsRequired
-	if (patch.timeclockEnabled !== undefined)
+	if (patch.timeclockEnabled !== undefined) {
 		set.timeclockEnabled = patch.timeclockEnabled
+		// Punches the till saved offline before this still count; later ones do not.
+		if (!patch.timeclockEnabled && device.timeclockEnabled)
+			set.timeclockDisabledAt = now
+	}
 	if (patch.reservationsEnabled !== undefined)
 		set.reservationsEnabled = patch.reservationsEnabled
-	if (patch.locationId !== undefined) set.locationId = patch.locationId
+	if (patch.locationId !== undefined && device.locationId === null) {
+		set.locationId = patch.locationId
+		set.locationBoundAt = now
+	}
 	await db.update(posDevices).set(set).where(eq(posDevices.id, id))
+	const changes = diffFields(
+		{
+			signInRequired: device.signInRequired,
+			timeclockEnabled: device.timeclockEnabled,
+			reservationsEnabled: device.reservationsEnabled,
+			locationId: device.locationId,
+		} as Record<string, unknown>,
+		{
+			signInRequired: set.signInRequired,
+			timeclockEnabled: set.timeclockEnabled,
+			reservationsEnabled: set.reservationsEnabled,
+			locationId: set.locationId,
+		},
+	)
+	if (Object.keys(changes).length > 0)
+		await writeOperatorAudit(db, changedBy, null, {
+			action: 'pos.terminal.changed',
+			entityType: 'pos_device',
+			entityId: id,
+			changes,
+		})
 	return ok(true)
 }
 
@@ -1237,7 +1330,13 @@ async function fiscalLineage(tx: Tx, device: PosDevice): Promise<string[]> {
 				eq(posDevices.terminalCode, device.terminalCode),
 				device.locationId === null
 					? isNull(posDevices.locationId)
-					: eq(posDevices.locationId, device.locationId),
+					: device.locationBoundAt !== null
+						? // A till bound later chained on from its unbound predecessors.
+							or(
+								eq(posDevices.locationId, device.locationId),
+								isNull(posDevices.locationId),
+							)
+						: eq(posDevices.locationId, device.locationId),
 				isNotNull(posDevices.revokedAt),
 			),
 		)
@@ -1457,6 +1556,19 @@ async function writeOrderLines(tx: Tx, order: PosOrderRequest) {
  * `pos_order_revisions`, so anything taken off a tab after it reached the server
  * stays visible. The first review reason found sticks.
  */
+/**
+ * An order the till started at a location it chose itself, before a manager
+ * bound it to another one: its sale happened there, so it still uploads.
+ */
+function startedBeforeBinding(
+	device: Pick<PosDevice, 'locationBoundAt'>,
+	order: Pick<PosOrderRequest, 'createdAt'>,
+) {
+	if (device.locationBoundAt === null) return false
+	const startedAt = Date.parse(order.createdAt)
+	return Number.isFinite(startedAt) && startedAt < device.locationBoundAt
+}
+
 export async function upsertPosOrder(
 	db: TenantDatabase,
 	device: PosDevice,
@@ -1464,7 +1576,11 @@ export async function upsertPosOrder(
 	review: PosReview,
 	now = Date.now(),
 ): Promise<PosResult<UpsertOutcome>> {
-	if (device.locationId && device.locationId !== order.locationId) {
+	if (
+		device.locationId &&
+		device.locationId !== order.locationId &&
+		!startedBeforeBinding(device, order)
+	) {
 		return fail(
 			403,
 			'wrong_location',

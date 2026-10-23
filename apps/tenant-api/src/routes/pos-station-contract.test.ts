@@ -198,7 +198,12 @@ const mintOperator = () =>
 		orgId: ORG_A,
 		role: 'operator',
 		scope: 'orders:write',
-		stationApps: { timeclock: true, reservations: true },
+		stationApps: {
+			timeclock: true,
+			reservations: true,
+			guestDetails: true,
+			locationIds: null,
+		},
 	})
 		.setSubject('user_manager_1')
 		.setProtectedHeader({ alg: 'HS256' })
@@ -398,6 +403,56 @@ describe('Station host stand contract', () => {
 		expect(masked.text).not.toContain('Peanuts')
 		expect(masked.text).not.toContain('+14155550111')
 		expect(masked.text).toContain('•••• 0111')
+
+		// A booking's history carries the same health notes: hidden the same way.
+		const bookedId = booked.body.reservation?.id ?? booked.body.id
+		const noted = await write(`/reservations/${bookedId}/notes`, {
+			dietaryNotes: 'Severe sesame allergy',
+		})
+		expect(noted.status, noted.text).toBe(200)
+		const fullHistory = await call(
+			'GET',
+			`/operator/reservations/book/reservations/${bookedId}/events`,
+			rsv,
+		)
+		expect(fullHistory.status, fullHistory.text).toBe(200)
+		expect(fullHistory.text).toContain('Severe sesame allergy')
+		const hostHistory = await call(
+			'GET',
+			`/operator/reservations/book/reservations/${bookedId}/events`,
+			{ authorization: `Bearer ${plain.body.token}` },
+		)
+		expect(hostHistory.status, hostHistory.text).toBe(200)
+		expect(hostHistory.text).not.toContain('Severe sesame allergy')
+		expect(hostHistory.text).not.toContain('Peanuts')
+		expect(hostHistory.text).not.toContain('+14155550111')
+
+		// A host without guest details who types a known number links the walk-in
+		// to that guest, but never renames them.
+		const typed = await call(
+			'POST',
+			'/operator/reservations/book/walk-ins',
+			{
+				authorization: `Bearer ${plain.body.token}`,
+				'Idempotency-Key': 'station-contract-walkin-known-phone',
+			},
+			{
+				locationId: PUBLIC_LOC,
+				partySize: 2,
+				tableIds: ['tbl_pub_2'],
+				overbook: true,
+				overbookReason: 'test',
+				guest: { firstName: 'Mia', lastName: 'X', phone: '+14155550111' },
+			},
+		)
+		expect(typed.status, typed.text).toBe(201)
+		const after = await call(
+			'GET',
+			`/operator/reservations/book/day?locationId=${PUBLIC_LOC}&date=${tomorrow}`,
+			rsv,
+		)
+		expect(after.text).toContain('Haddad')
+		expect(after.text).not.toContain('"Mia"')
 
 		const normalize = makeNormalizer(recordedNow)
 		if (RECORD) fs.mkdirSync(FIXTURE_DIR, { recursive: true })

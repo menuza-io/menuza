@@ -14,7 +14,7 @@ import {
 	type Availability,
 	type DayFeed,
 } from './feed.ts'
-import { noteServerDate } from '~/lib/clock.ts'
+import { clockSkewMs, noteServerDate } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 
@@ -91,6 +91,8 @@ export type HostDeps = {
 	session: () => Session | null
 	fetchImpl?: typeof fetch
 	now?: () => number
+	/** Server time minus tablet time, as last measured (0 when unknown). */
+	skewMs?: () => number
 }
 
 /** Seat on a table that another booking also holds, with the host's reason. */
@@ -103,9 +105,15 @@ export function createHostApi(deps: HostDeps) {
 	const fetchImpl =
 		deps.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args))
 	const now = deps.now ?? (() => Date.now())
+	const skew = deps.skewMs ?? (() => clockSkewMs() ?? 0)
 	let cached: {
 		forSession: string
 		grant: PosReservationsTokenResponse
+		/**
+		 * When it expires by this tablet's clock. The server's `expiresAt` is in
+		 * its time; a tablet running fast would otherwise mint on every call.
+		 */
+		localExpiresAt: number
 	} | null = null
 	let inFlight: {
 		forSession: string
@@ -168,7 +176,7 @@ export function createHostApi(deps: HostDeps) {
 		if (
 			cached &&
 			cached.forSession === sessionToken &&
-			cached.grant.expiresAt - now() > TOKEN_MARGIN_MS
+			cached.localExpiresAt - now() > TOKEN_MARGIN_MS
 		)
 			return cached.grant
 		if (inFlight?.forSession === sessionToken) return inFlight.promise
@@ -176,7 +184,11 @@ export function createHostApi(deps: HostDeps) {
 		const promise = mint(sessionToken)
 			.then((fresh) => {
 				if (startedIn === generation)
-					cached = { forSession: sessionToken, grant: fresh }
+					cached = {
+						forSession: sessionToken,
+						grant: fresh,
+						localExpiresAt: fresh.expiresAt - skew(),
+					}
 				return fresh
 			})
 			.finally(() => {

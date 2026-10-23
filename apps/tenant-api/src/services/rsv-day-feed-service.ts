@@ -2254,7 +2254,29 @@ export async function getBookConflicts(
 	}
 }
 
-export async function getReservationEvents(db: DbOrTx, reservationId: string) {
+/** Health details a reservation's history may carry; shown only with the guest grant. */
+const SENSITIVE_EVENT_KEYS = new Set([
+	'dietaryNotes',
+	'dietary_notes',
+	'allergyNotes',
+	'allergy_notes',
+])
+
+function withoutSensitive(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(withoutSensitive)
+	if (!value || typeof value !== 'object') return value
+	const out: Record<string, unknown> = {}
+	for (const [key, entry] of Object.entries(value as Record<string, unknown>))
+		out[key] = SENSITIVE_EVENT_KEYS.has(key) ? null : withoutSensitive(entry)
+	return out
+}
+
+export async function getReservationEvents(
+	db: DbOrTx,
+	reservationId: string,
+	opts?: { canReadGuestSensitive?: boolean },
+) {
+	const canReadSensitive = opts?.canReadGuestSensitive === true
 	const res = await db
 		.select()
 		.from(rsvReservations)
@@ -2286,7 +2308,8 @@ export async function getReservationEvents(db: DbOrTx, reservationId: string) {
 			actorId: e.actorId,
 			actor_id: e.actorId,
 			type: e.type,
-			data: e.data ?? {},
+			// The detail hides allergy and dietary notes without the grant; so does its history.
+			data: canReadSensitive ? (e.data ?? {}) : withoutSensitive(e.data ?? {}),
 		})),
 	}
 }

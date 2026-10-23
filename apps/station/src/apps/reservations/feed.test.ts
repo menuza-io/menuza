@@ -4,7 +4,9 @@ import {
 	arrivals,
 	availabilitySchema,
 	dayFeedSchema,
+	isDrawn,
 	minutesLate,
+	missedArrivals,
 	placeTables,
 	rooms,
 	shortName,
@@ -108,6 +110,47 @@ describe('arrivals', () => {
 		expect(list.map((r) => r.status)).toEqual(['arrived', 'confirmed'])
 		expect(minutesLate(list[0]!, now + 25 * MIN)).toBe(10)
 		expect(minutesLate(list[1]!, now)).toBe(0)
+	})
+})
+
+describe('missed arrivals', () => {
+	it('a booking whose slot passed with nobody here leaves the dock for its own list', () => {
+		const now = Date.UTC(2026, 0, 16, 21, 0)
+		const gone = booking({
+			id: 'gone',
+			status: 'confirmed',
+			startAt: now - 120 * MIN,
+			endAt: now - 30 * MIN,
+		})
+		const late = booking({
+			id: 'late',
+			status: 'confirmed',
+			startAt: now - 20 * MIN,
+			endAt: now + 70 * MIN,
+		})
+		// Here but not seated, even past the slot: still the host's to seat.
+		const waiting = booking({
+			id: 'waiting',
+			status: 'arrived',
+			startAt: now - 120 * MIN,
+			endAt: now - 30 * MIN,
+		})
+		const day = { reservations: [gone, late, waiting] }
+		expect(arrivals(day, now).map((r) => r.id)).toEqual(['waiting', 'late'])
+		expect(missedArrivals(day, now).map((r) => r.id)).toEqual(['gone'])
+		// Without a time, nothing is held back.
+		expect(arrivals(day)).toHaveLength(3)
+	})
+})
+
+describe('isDrawn', () => {
+	const at = (x: number, y: number) => ({ x, y, archivedAt: null })
+	it('a room with every table at the origin is not drawn; one placed table is', () => {
+		expect(isDrawn([at(0, 0), at(0, 0)])).toBe(false)
+		expect(isDrawn([at(0, 0), at(120, 0)])).toBe(true)
+		expect(isDrawn([at(0, 0)])).toBe(false)
+		expect(isDrawn([at(40, 80)])).toBe(true)
+		expect(isDrawn([])).toBe(false)
 	})
 })
 

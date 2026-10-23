@@ -193,6 +193,33 @@ async function offlineSignIn(pin: string, now: number): Promise<SignInOutcome> {
 	}
 }
 
+/**
+ * An offline PIN check outside signing in (the time clock greeting someone by
+ * name). It shares signing in's attempt guard, and a PIN the till does not
+ * know counts as a wrong one, so the clock is no faster a way to find a valid
+ * PIN than the lock screen.
+ */
+export async function guardedOfflineLookup<T>(
+	pin: string,
+	find: (key: string) => Promise<T | null>,
+	now = Date.now(),
+): Promise<{ wait: number } | { found: T | null }> {
+	const guard = await loadGuard()
+	const wait = remainingWait(guard, now)
+	if (wait > 0) return { wait }
+	const key = await derivePinKey(pin, await deviceSalt())
+	const found = await find(key)
+	if (found) {
+		await setMeta(GUARD_KEY, afterSuccess(guard, now))
+		return { found }
+	}
+	const { guard: next, delaySeconds } = afterFailure(guard, now)
+	if (delaySeconds > 0)
+		monotonicBlockedUntil = monotonicNow() + delaySeconds * 1000
+	await setMeta(GUARD_KEY, next)
+	return delaySeconds > 0 ? { wait: delaySeconds } : { found: null }
+}
+
 export type SignInDeps = {
 	tenantApiUrl: string
 	deviceToken: string | null

@@ -352,7 +352,12 @@ describe('TerminalsManager', () => {
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
 			stationFeatures: { timeclock: true, reservations: true },
-			stationGrants: { timeclock: true, reservations: true },
+			stationGrants: {
+				timeclock: true,
+				reservations: true,
+				guestDetails: true,
+				locationIds: null,
+			},
 		})
 		await screen.findByText('Front counter')
 		fireEvent.click(screen.getByRole('button', { name: 'Pair a terminal' }))
@@ -377,6 +382,40 @@ describe('TerminalsManager', () => {
 		})
 	})
 
+	it('a member limited to other locations cannot open the host stand here', async () => {
+		stubApi({
+			devices: [
+				terminal({
+					id: 'd2',
+					label: 'Host stand',
+					terminalCode: 'T2',
+					locationId: 'loc_1',
+					signInRequired: true,
+				}),
+			],
+		})
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: { timeclock: true, reservations: true },
+			stationGrants: {
+				timeclock: true,
+				reservations: true,
+				guestDetails: false,
+				locationIds: ['loc_2'],
+			},
+		})
+		await screen.findByText('Host stand')
+		const button = screen.getByRole('button', {
+			name: 'Reservations on Host stand, off',
+		}) as HTMLButtonElement
+		expect(button).toBeDisabled()
+		expect(
+			screen.getByText(
+				'You can open the host stand only at your own locations.',
+			),
+		).toBeTruthy()
+	})
+
 	it('reservations wait for a location and a staff PIN; the time clock just switches', async () => {
 		const api = stubApi({
 			devices: [
@@ -393,13 +432,18 @@ describe('TerminalsManager', () => {
 		render({
 			locations: [{ id: 'loc_1', name: 'Downtown' }],
 			stationFeatures: { timeclock: true, reservations: true },
-			stationGrants: { timeclock: true, reservations: true },
+			stationGrants: {
+				timeclock: true,
+				reservations: true,
+				guestDetails: true,
+				locationIds: null,
+			},
 		})
 		await screen.findByText('Host stand')
 		const unbound = screen.getByRole('button', {
 			name: 'Reservations on Front counter, off',
 		}) as HTMLButtonElement
-		expect(unbound.disabled).toBe(true)
+		expect(unbound).toBeDisabled()
 		expect(
 			screen.getByText("Choose the terminal's location to use reservations."),
 		).toBeTruthy()
@@ -440,11 +484,11 @@ describe('TerminalsManager', () => {
 		const off = screen.getByRole('button', {
 			name: 'Time clock on Front counter, on',
 		}) as HTMLButtonElement
-		expect(off.disabled).toBe(false)
+		expect(off).toBeEnabled()
 		const on = screen.getByRole('button', {
 			name: 'Reservations on Front counter, off',
 		}) as HTMLButtonElement
-		expect(on.disabled).toBe(true)
+		expect(on).toBeDisabled()
 		expect(
 			screen.getByText(/needs permission to change its settings/),
 		).toBeTruthy()

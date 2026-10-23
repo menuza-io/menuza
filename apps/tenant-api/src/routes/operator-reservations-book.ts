@@ -1189,7 +1189,12 @@ operatorReservationsBookRoutes.get(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const res = await getReservationEvents(db, rsvId)
+			const res = await getReservationEvents(db, rsvId, {
+				canReadGuestSensitive: hasReservationsGrant(
+					ctx,
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+				),
+			})
 			return json({ ok: true, orgId: ctx.orgId, ...res })
 		} catch (error) {
 			return handleRouteError(error)

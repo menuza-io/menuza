@@ -3,6 +3,7 @@ import { type WaitlistEntry } from '@repo/reservations'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createHostApi, HostApiError, type HostApi } from './api.ts'
 import { type DayFeed } from './feed.ts'
+import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 
@@ -10,6 +11,35 @@ import { type Session } from '~/lib/signin.ts'
 export const DAY_POLL_MS = 10_000
 
 const ACTIVE_WAITLIST = new Set(['waiting', 'notified', 'on_the_way'])
+
+/** Refusals that are about this person or this till, not about the moment: the stand closes. */
+const BLOCKING_CODES = new Set([
+	'not_a_host',
+	'reservations_not_enabled',
+	'reservations_disabled',
+	'reservations_needs_location',
+	'reservations_needs_sign_in',
+	'invalid_device',
+	'device_revoked',
+])
+
+export const blocksStand = (failure: HostApiError) =>
+	failure.needsSignIn || BLOCKING_CODES.has(failure.code)
+
+/**
+ * What a failed refresh does to the stand. A floor already on screen stays
+ * (marked not up to date) through anything passing: an outage, a rate limit, a
+ * flag the server could not read. Only a refusal about the person or the till
+ * closes it.
+ */
+export function afterFailedRefresh(
+	previous: HostStandState,
+	failure: HostApiError,
+): HostStandState {
+	if (previous.status === 'ready' && !blocksStand(failure))
+		return { ...previous, stale: true }
+	return { status: 'blocked', error: failure }
+}
 
 export type HostStandState =
 	| { status: 'loading' }
@@ -64,7 +94,7 @@ export function useHostStand({
 	/** Bumped when the person changes: answers for the one before are dropped. */
 	const generation = useRef(0)
 	const polling = useRef(false)
-	const [now, setNow] = useState(() => Date.now())
+	const [now, setNow] = useState(() => serverNow())
 
 	// A new person, a lock: their own token and a clean screen.
 	useEffect(() => {
@@ -92,16 +122,29 @@ export function useHostStand({
 				forGeneration === generation.current && ticket > shown.current
 			try {
 				const grant = await api.grant()
+				// "Unchanged" only means something against a day the stand still holds.
 				const day = await api.day(
-					options.full ? undefined : (etag.current ?? undefined),
+					options.full || !latest.current
+						? undefined
+						: (etag.current ?? undefined),
 				)
 				const waitlist = await loadWaitlist(grant).catch(() => null)
 				if (!current()) return latest.current
 				shown.current = ticket
 				if (!('unchanged' in day)) latest.current = day.feed
+				const held = latest.current
 				setState((previous) => {
 					if ('unchanged' in day) {
-						if (previous.status !== 'ready') return previous
+						if (previous.status !== 'ready')
+							return held
+								? {
+										status: 'ready',
+										feed: held,
+										grant,
+										waitlist: waitlist ?? [],
+										stale: false,
+									}
+								: previous
 						return {
 							...previous,
 							grant,
@@ -127,12 +170,12 @@ export function useHostStand({
 					error instanceof HostApiError
 						? error
 						: new HostApiError(0, 'network_unavailable')
-				setState((previous) =>
-					previous.status === 'ready' &&
-					(failure.offline || failure.status >= 500)
-						? { ...previous, stale: true }
-						: { status: 'blocked', error: failure },
-				)
+				// A closed stand asks for the whole day when it opens again.
+				if (blocksStand(failure)) {
+					etag.current = null
+					latest.current = null
+				}
+				setState((previous) => afterFailedRefresh(previous, failure))
 				return latest.current
 			}
 		},
@@ -168,13 +211,17 @@ export function useHostStand({
 		}
 	}, [sessionToken, refresh, poll])
 
-	// Coming back online, look again at once.
+	// Coming back online, look again at once (the first load is the effect above's).
+	const wasOnline = useRef(online)
 	useEffect(() => {
-		if (online && sessionToken) void refresh()
+		const cameBack = online && !wasOnline.current
+		wasOnline.current = online
+		if (cameBack && sessionToken) void refresh()
 	}, [online, sessionToken, refresh])
 
+	// Lateness and waits count in the server's time, like the clock does.
 	useEffect(() => {
-		const timer = window.setInterval(() => setNow(Date.now()), 30_000)
+		const timer = window.setInterval(() => setNow(serverNow()), 30_000)
 		return () => window.clearInterval(timer)
 	}, [])
 

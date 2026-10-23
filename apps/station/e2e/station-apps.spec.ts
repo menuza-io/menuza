@@ -234,8 +234,9 @@ test.describe('host stand', () => {
 			page.getByRole('button', { name: /^Table 1, seated: Maya H\./ }),
 		).toBeVisible()
 
-		// Undo puts her back at the stand, still booked for table 2.
-		await page.getByRole('button', { name: 'Undo' }).click()
+		// Undo puts her back at the stand, still booked for table 2. A double
+		// tap undoes once, not twice.
+		await page.getByRole('button', { name: 'Undo' }).dblclick()
 		await expectToast(page, 'Undone.')
 		await expect(dock.getByText('At the stand')).toBeVisible()
 		await expect(
@@ -317,6 +318,22 @@ test.describe('host stand', () => {
 		await page.getByRole('button', { name: /^Table 9, open/ }).click()
 		await expectToast(page, 'Seated Rana Khalid at 9.')
 		await expect(dock.getByText('Rana')).toHaveCount(0)
+	})
+
+	test('a table too small for the party asks first, and the party stays picked up', async ({
+		unpaired: page,
+	}) => {
+		await backend.addStaff({ pin: '4321', host: true })
+		await openHostStand(page)
+		const dock = page.getByRole('region', { name: 'Parties to seat' })
+		await dock.getByRole('button', { name: /Tariq/ }).first().click()
+		await page.getByRole('button', { name: /^Table 2,/ }).click()
+		const ask = page.getByRole('dialog', { name: 'Table 2 is small for them' })
+		await expect(ask).toBeVisible()
+		await ask.getByRole('button', { name: 'Choose another' }).click()
+		await expect(page.getByText(/Tap a table for Tariq/)).toBeVisible()
+		await page.getByRole('button', { name: /^Table 7, open/ }).click()
+		await expectToast(page, 'Seated Tariq Aziz at 7.')
 	})
 
 	test('a table booked before the party would be done steps back, and the host may still insist', async ({

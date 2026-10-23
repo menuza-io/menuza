@@ -17,6 +17,7 @@ import {
 	posUnavailableResponse,
 } from '../lib/pos-auth.ts'
 import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
+import { rsvAuditLog } from '@repo/tenant-db'
 import { getNodeRegion } from '../lib/region.ts'
 import { getOperatorToken } from '../lib/secrets.ts'
 import { reservationsGate } from '../services/pos-apps-service.ts'
@@ -134,6 +135,18 @@ posReservationsRoutes.post('/token', async (c) => {
 			.setExpirationTime(exp)
 			.sign(new TextEncoder().encode(operatorSecret))
 
+		// Who opened the host stand at which till, and whether with guest details.
+		await pos.db.insert(rsvAuditLog).values({
+			id: `aud_${crypto.randomUUID()}`,
+			at: iat * 1000,
+			actorKind: 'operator',
+			actorId: subject,
+			locationId: gate.locationId,
+			action: 'station.token_issued',
+			entityType: 'pos_device',
+			entityId: pos.device.id,
+			changes: { guestDetails: canReadGuest, ttlSeconds },
+		})
 		await touchDevice(pos.db, pos.device).catch(() => {})
 		const response: PosReservationsTokenResponse = {
 			token,

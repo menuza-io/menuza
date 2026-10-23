@@ -8,6 +8,7 @@ import {
 	useState,
 	type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { cn, motionMs } from './primitives.tsx'
 
 /**
@@ -97,7 +98,9 @@ export type ToastMessage = {
  * newer message replaces it. Announced politely; the action is a real button.
  *
  * It is a manual popover, so it shows in the top layer: above a sheet that is
- * open when it appears, not hidden behind it.
+ * open when it appears, not hidden behind it. While a modal sheet is open the
+ * rest of the page is inert, so the toast (and its announcement) moves inside
+ * that sheet and stays reachable. Its action runs once, however many taps.
  */
 export function Toast({
 	message,
@@ -114,6 +117,9 @@ export function Toast({
 	if (message && message.id !== shown?.id) setShown(message)
 	const ref = useRef<HTMLDivElement>(null)
 	const layer = useRef<HTMLDivElement>(null)
+	const host = useModalHost()
+	/** The message whose action already ran: a second tap does nothing. */
+	const acted = useRef<number | null>(null)
 
 	// In the top layer while there is something to show (including its way out).
 	useLayoutEffect(() => {
@@ -122,7 +128,7 @@ export function Toast({
 		const isOpen = el.matches(':popover-open')
 		if (shown && !isOpen) el.showPopover()
 		else if (!shown && isOpen) el.hidePopover()
-	}, [shown])
+	}, [shown, host])
 
 	useEffect(() => {
 		if (!message) {
@@ -147,7 +153,7 @@ export function Toast({
 		return () => window.clearTimeout(timer)
 	}, [message, shown])
 
-	return (
+	const toast = (
 		<>
 			{/* Announced from outside the popover, which is not rendered while closed. */}
 			<p role="status" aria-live="polite" className="sr-only">
@@ -173,7 +179,11 @@ export function Toast({
 						{shown.action ? (
 							<button
 								type="button"
+								// Leaving, it can no longer be used.
+								disabled={!message}
 								onClick={() => {
+									if (!message || acted.current === shown.id) return
+									acted.current = shown.id
 									shown.action?.run()
 									onDone()
 								}}
@@ -195,6 +205,51 @@ export function Toast({
 			</div>
 		</>
 	)
+	return host ? createPortal(toast, host) : toast
+}
+
+/**
+ * The open modal dialog on top, if any. Everything outside it is inert, so
+ * whatever must stay usable while it is open (the toast) renders inside it.
+ */
+function useModalHost(): HTMLElement | null {
+	const [host, setHost] = useState<HTMLElement | null>(null)
+	useEffect(() => {
+		const pick = () => {
+			const open = Array.from(
+				document.querySelectorAll<HTMLDialogElement>('dialog[open]'),
+			).filter((dialog) => {
+				try {
+					return dialog.matches(':modal')
+				} catch {
+					return true
+				}
+			})
+			setHost(open.at(-1) ?? null)
+		}
+		pick()
+		const touchesDialogs = (records: MutationRecord[]) =>
+			records.some(
+				(r) =>
+					r.type === 'attributes' ||
+					[...r.addedNodes, ...r.removedNodes].some(
+						(node) =>
+							node instanceof Element &&
+							(node.tagName === 'DIALOG' || node.querySelector('dialog')),
+					),
+			)
+		const observer = new MutationObserver((records) => {
+			if (touchesDialogs(records)) pick()
+		})
+		observer.observe(document.body, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			attributeFilter: ['open'],
+		})
+		return () => observer.disconnect()
+	}, [])
+	return host
 }
 
 /** The till's one celebration: the disc pops and the check draws itself in (success check). */

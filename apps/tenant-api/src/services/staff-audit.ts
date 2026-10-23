@@ -87,6 +87,31 @@ export async function writeStaffAudit(
 	})
 }
 
+/**
+ * Appends an audit row for an operator change made through a route that has no
+ * staff token (the POS terminals page: host roster, Station app switches).
+ */
+export async function writeOperatorAudit(
+	db: StaffDb,
+	operatorId: string,
+	ipHash: string | null,
+	event: StaffAuditEvent,
+) {
+	await db.insert(staffAuditLog).values({
+		actorKind: 'operator',
+		actorId: operatorId,
+		impersonated: false,
+		action: event.action,
+		entityType: event.entityType,
+		entityId: event.entityId ?? null,
+		staffId: event.staffId ?? null,
+		scopeId: event.scopeId ?? null,
+		sensitivity: event.sensitivity ?? 'standard',
+		changes: event.changes ?? null,
+		ipHash,
+	})
+}
+
 /** Actor id recorded for changes made by the control plane, not an operator. */
 export const SYSTEM_ACTOR_ID = 'control-plane'
 

@@ -78,6 +78,16 @@ vi.mock('../lib/reservations-context.ts', async (importOriginal) => ({
 			(rsvContexts.get(orgId) as ReservationsContext | undefined) ?? null,
 	),
 }))
+/** What App's menu says about a location id; unset ids are known. */
+const locationAnswers = vi.hoisted(
+	() => new Map<string, 'known' | 'unknown' | 'unavailable'>(),
+)
+vi.mock('../services/pos-service.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../services/pos-service.ts')>()),
+	checkLocation: vi.fn(
+		async (_org: string, id: string) => locationAnswers.get(id) ?? 'known',
+	),
+}))
 vi.mock('../lib/origin.ts', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../lib/origin.ts')>()),
 	findActiveOrganizationById: vi.fn(async (id: string) => orgs.get(id) ?? null),
@@ -86,9 +96,11 @@ vi.mock('../lib/origin.ts', async (importOriginal) => ({
 /** App signs `stationApps` for someone who manages the time clock and reservations. */
 const mintOperator = (
 	orgId = ORG_A,
-	stationApps: { timeclock: boolean; reservations: boolean } | null = {
+	stationApps: Record<string, unknown> | null = {
 		timeclock: true,
 		reservations: true,
+		guestDetails: true,
+		locationIds: null,
 	},
 ) =>
 	new SignJWT({
@@ -421,6 +433,56 @@ describe('Station apps on a POS terminal', () => {
 			expect(paused.body.error).toBe('kiosk_disabled')
 		})
 
+		it('an offline punch needs the clock to have been on here when it was made', async () => {
+			const { pin } = await h.seedStaff(ORG_A, {})
+			const replay = (secret: string, clientAt: number) =>
+				request('POST', '/pos/timeclock/punch', {
+					secret,
+					body: {
+						id: crypto.randomUUID(),
+						kind: 'clock_in',
+						pin,
+						clientAt,
+						offline: true,
+					},
+				})
+			// A till that never offered the clock cannot punch by calling it offline.
+			const never = await pairTerminal({
+				terminalCode: 'T7',
+				timeclockEnabled: false,
+			})
+			const sneaky = await replay(never.secret, h.clock.now)
+			expect(sneaky.status).toBe(403)
+			expect(sneaky.body.error).toBe('timeclock_not_enabled')
+
+			// Switched off: punches made before still land, ones made after do not.
+			const { secret, deviceId } = await pairTerminal({ terminalCode: 'T8' })
+			const db = await getTenantDb(ORG_A)
+			const { posDevices } = await import('@repo/tenant-db')
+			await db
+				.update(posDevices)
+				.set({ timeclockEnabled: false, timeclockDisabledAt: h.clock.now })
+				.where(eq(posDevices.id, deviceId))
+			const after = await replay(secret, h.clock.now + 60_000)
+			expect(after.status).toBe(403)
+			expect(after.body.error).toBe('timeclock_not_enabled')
+
+			// The organization's clock known to be off holds it (the till keeps it, a pause code).
+			staffingFlags.set(ORG_A, {
+				enabled: true,
+				timeclock: false,
+				scheduling: false,
+				labor: false,
+				hiring: false,
+			})
+			const held = await replay(secret, h.clock.now - 60_000)
+			expect(held.status).toBe(403)
+			expect(held.body.error).toBe('timeclock_disabled')
+			// Not knowing the flag does not: the punch already happened.
+			staffingFlags.set(ORG_A, null)
+			expect((await replay(secret, h.clock.now - 60_000)).status).toBe(200)
+		})
+
 		it('refuses kiosk secrets, operator tokens, missing and revoked credentials', async () => {
 			const { pin } = await h.seedStaff(ORG_A, {})
 			const kiosk = await h.pair(ORG_A, LOC_1)
@@ -623,6 +685,120 @@ describe('Station apps on a POS terminal', () => {
 			expect(move.status).toBe(409)
 		})
 
+		it('a member limited to some locations opens the host stand only there', async () => {
+			await h.seedStaff(ORG_A, {})
+			const scoped = await mintOperator(ORG_A, {
+				timeclock: true,
+				reservations: true,
+				guestDetails: false,
+				locationIds: ['loc_elsewhere'],
+			})
+			const code = await h.app.request('/operator/pos/pairing-codes', {
+				method: 'POST',
+				headers: {
+					authorization: `Bearer ${scoped}`,
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({
+					label: 'Host stand',
+					terminalCode: 'T5',
+					scopeId: LOC_1,
+					locationId: PUBLIC_LOC,
+					signInRequired: true,
+					reservationsEnabled: true,
+				}),
+			})
+			expect(code.status).toBe(403)
+			expect(((await code.json()) as { error: string }).error).toBe(
+				'location_not_allowed',
+			)
+			const { deviceId } = await pairTerminal({ reservationsEnabled: false })
+			const flip = await h.app.request(`/operator/pos/terminals/${deviceId}`, {
+				method: 'PATCH',
+				headers: {
+					authorization: `Bearer ${scoped}`,
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({ reservationsEnabled: true }),
+			})
+			expect(flip.status).toBe(403)
+			// A claim without locations allows nothing.
+			const malformed = await mintOperator(ORG_A, {
+				timeclock: true,
+				reservations: true,
+			})
+			const again = await h.app.request(`/operator/pos/terminals/${deviceId}`, {
+				method: 'PATCH',
+				headers: {
+					authorization: `Bearer ${malformed}`,
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({ reservationsEnabled: true }),
+			})
+			expect(again.status).toBe(403)
+		})
+
+		it('giving a host guest details needs the guest permission', async () => {
+			const { staffId } = await h.seedStaff(ORG_A, {})
+			const put = async (token: string, guestDetails: boolean) =>
+				h.app.request(`/operator/pos/hosts/${staffId}`, {
+					method: 'PUT',
+					headers: {
+						authorization: `Bearer ${token}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ guestDetails }),
+				})
+			const noGuest = await mintOperator(ORG_A, {
+				timeclock: false,
+				reservations: true,
+				guestDetails: false,
+				locationIds: null,
+			})
+			const refused = await put(noGuest, true)
+			expect(refused.status).toBe(403)
+			expect(((await refused.json()) as { error: string }).error).toBe(
+				'guest_permission_required',
+			)
+			expect((await put(noGuest, false)).status).toBe(200)
+			expect((await put(await mintOperator(), true)).status).toBe(200)
+			// Who granted what, and when, stays on record.
+			const db = await getTenantDb(ORG_A)
+			const rows = await db
+				.select()
+				.from(staffAuditLog)
+				.where(eq(staffAuditLog.entityId, staffId))
+			expect(rows.map((r) => [r.action, r.actorId])).toEqual([
+				['pos.host.added', 'user_manager_1'],
+				['pos.host.changed', 'user_manager_1'],
+			])
+			expect(rows[1]!.changes).toEqual({
+				guestDetails: { before: false, after: true },
+			})
+		})
+
+		it('binding waits for App to confirm the location: it is permanent', async () => {
+			await h.seedStaff(ORG_A, {})
+			const { deviceId } = await pairTerminal({
+				locationId: null,
+				reservationsEnabled: false,
+			})
+			locationAnswers.set('loc_down', 'unavailable')
+			locationAnswers.set('loc_typo', 'unknown')
+			try {
+				const down = await patch(deviceId, { locationId: 'loc_down' })
+				expect(down.status).toBe(503)
+				const typo = await patch(deviceId, { locationId: 'loc_typo' })
+				expect(typo.status).toBe(422)
+				// Neither bound it.
+				expect((await patch(deviceId, { locationId: PUBLIC_LOC })).status).toBe(
+					200,
+				)
+			} finally {
+				locationAnswers.clear()
+			}
+		})
+
 		it('a manager turns the time clock on and off for one terminal', async () => {
 			const { pin } = await h.seedStaff(ORG_A, {})
 			const { secret, deviceId } = await pairTerminal({
@@ -731,6 +907,18 @@ describe('Station apps on a POS terminal', () => {
 				verified.ok &&
 					verified.context.grants.has('read:reservation_guest:any'),
 			).toBe(true)
+			// Each token is on record: who, at which till, with guest details.
+			const db = await getTenantDb(ORG_A)
+			const { rsvAuditLog } = await import('@repo/tenant-db')
+			const [row] = await db
+				.select()
+				.from(rsvAuditLog)
+				.where(eq(rsvAuditLog.action, 'station.token_issued'))
+			expect(row).toMatchObject({
+				actorId: `staff:${staffId}`,
+				entityType: 'pos_device',
+				changes: { guestDetails: true },
+			})
 		})
 
 		it('the token works on the day of service at its own location only, and on nothing else', async () => {
@@ -796,6 +984,23 @@ describe('Station apps on a POS terminal', () => {
 			await db
 				.update(staffScopeAssignments)
 				.set({ pinSetAt: Date.now() + 60_000 })
+				.where(eq(staffScopeAssignments.staffId, staffId))
+			const r = await token(secret, sessionToken)
+			expect(r.status).toBe(401)
+			expect(r.body.error).toBe('staff_session_invalid')
+		})
+
+		it('ends when a manager clears the person’s PIN', async () => {
+			const { pin, staffId } = await h.seedStaff(ORG_A, {})
+			await makeHost(staffId)
+			const { secret } = await pairTerminal()
+			const { sessionToken } = await signIn(secret, pin)
+			const db = await getTenantDb(ORG_A)
+			const { staffScopeAssignments } = await import('@repo/tenant-db')
+			// What "Clear PIN" in the staff module writes.
+			await db
+				.update(staffScopeAssignments)
+				.set({ pinLookup: null, pinSetAt: null })
 				.where(eq(staffScopeAssignments.staffId, staffId))
 			const r = await token(secret, sessionToken)
 			expect(r.status).toBe(401)

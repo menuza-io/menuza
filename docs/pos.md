@@ -308,37 +308,64 @@ with no second pairing and no App login. Each app is a per-terminal setting
 (`pos_devices.timeclock_enabled`, `reservations_enabled`, tenant-db migration
 `0022_station_apps`) that a manager switches in the App (Settings, Terminals,
 Station apps, or when pairing), **and** the organization's flag
-(`staffing.timeclock`, `reservations.enabled`). `/pos/me` reports the result as
-`apps: { timeclock, reservations }`; the till shows an app switch (Register,
+(`staffing.timeclock`, `reservations.enabled`). Switching an app on needs that
+module's settings permission (time clock rules, or reservation settings), which
+App signs into the operator token as `stationApps`; a member limited to some
+locations may open the host stand only at those. Every switch, location binding
+and host-roster change is in the staff audit log. `/pos/me` reports the result
+as `apps: { timeclock, reservations }`, leaving out an app whose flag it cannot
+read (the till keeps what it last knew); the till shows an app switch (Register,
 Time clock, Reservations) when it offers more than the register.
+
+A terminal paired without a location can be bound to one later (Station apps,
+"Choose a location"); App must confirm the location exists (503 otherwise), and
+orders the till started before the binding still upload
+(`pos_devices.location_bound_at`, migration `0024_station_device_times`).
 
 **Time clock.** `/pos/timeclock/identify` and `/pos/timeclock/punch` run the
 kiosk's punch engine (`services/punch-service.ts`) and take the kiosk's request
 shapes, on the terminal's own credential. Every punch names the person by PIN at
-the terminal's workplace (scope), even when someone is signed in at the till, so
-nobody clocks in a colleague. Wrong PINs share the terminal's sign-in backoff.
-Punches are recorded with `source: 'pos'` and the terminal as the audit actor.
-When App cannot be asked, an unknown staffing flag counts as on: people must be
-able to clock in during an outage; the terminal switch turns it off. The lock
-screen has a "Clock in or out" button, so nobody signs in to the till to punch.
-Offline, a punch is queued on the tablet with the PIN encrypted at rest (the
-kiosk's queue, `@repo/staffing/clock-queue`) and sent, oldest first, with the
-till's other uploads; the server still checks the PIN and the order.
+the terminal's workplace (scope), so nobody clocks in a colleague: on a till
+where staff sign in, the clock opens over the lock screen ("Clock in or out"),
+never inside someone's session. Wrong PINs share the terminal's sign-in backoff
+(offline replays included: they cannot be a way around it). Punches are recorded
+with `source: 'pos'` and the terminal as the audit actor.
+`STAFFING_KIOSK_ENABLED` stops it like the wall kiosk.
+
+When the server cannot judge a punch now (offline, a 5xx, a rate limit, the App
+behind it unreachable so the staffing flag is unknown, or a pause), the till
+saves it with the PIN encrypted at rest (the kiosk's queue,
+`@repo/staffing/clock-queue`) at the server's time as best known, and sends it,
+oldest first, with its other uploads; the server still checks the PIN and the
+order. A saved punch is accepted if the clock was on at this terminal when it
+was made (`pos_devices.timeclock_disabled_at`); a flag known to be off holds it
+on the till. Offline, a PIN the till has seen online is greeted by name with its
+roles (a slow hash of the PIN, as for offline sign-in, with the same attempt
+guard); punches the server later refuses are listed on the clock until someone
+clears them. Where the rules have rest breaks, staff choose meal or rest.
 
 **Host stand.** An online sign-in returns a staff session (`pos-staff+jwt`,
 signed with a key derived from `AUTH_HMAC_SECRET`, bound to the organization and
 the terminal, 12 hours, held in memory and dropped when the till locks). The
 till sends it in `Pos-Staff-Session` to `POST /pos/reservations/token`, which
-checks the person is still active there and mints the same `rsv+jwt` App mints
-for an operator, for:
+checks the person is still active there, on the host roster, and has not had
+their PIN reset or cleared since, and mints the same `rsv+jwt` App mints for an
+operator, for:
 
 - the `book` scope only (the day of service and the waitlist), at the terminal's
-  own location only;
-- host grants (`read`/`update:reservation`) for everyone, plus guest details
-  (`read:reservation_guest`: allergies, private notes) for till managers, which
-  shortens the token to five minutes;
+  own location only, never the guestbook (`/book/guests/*`);
+- host grants (`read`/`update:reservation`) for people on the **host roster**
+  (`pos_hosts`, migration `0023_station_hosts`; Settings, Terminals, the staff
+  list), plus guest details (`read:reservation_guest`: phones, emails,
+  allergies) for hosts given them, which needs the guest permission in App;
+- five minutes, `channel: 'station'` and the terminal's id. Without guest
+  details every answer has phones masked to their last four digits and emails
+  dropped (`lib/reservations-station.ts`), and allergy notes are hidden, in a
+  booking's history too. A known phone typed at the till links the guest but
+  never renames them;
 - subject `staff:<staffId>`, so the reservation history shows the action as
-  taken by staff at a terminal.
+  taken by staff at a terminal. Each token is recorded in `rsv_audit_log`
+  (`station.token_issued`).
 
 The till then calls `/operator/reservations/book/*` directly (CORS allows
 `POS_ORIGINS` on those routes only), so every check there applies unchanged. The

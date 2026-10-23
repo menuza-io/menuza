@@ -36,6 +36,7 @@ import {
 	type PartyCommand,
 } from './sheets.tsx'
 import { useHostStand } from './useHostStand.ts'
+import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 import { Toast, type ToastMessage } from '~/ui/motion.tsx'
@@ -90,14 +91,14 @@ export function HostStand({
 	const [placing, setPlacing] = useState<Placing | null>(null)
 	const [partyId, setPartyId] = useState<string | null>(null)
 	const [waitlistId, setWaitlistId] = useState<string | null>(null)
-	const [tableTarget, setTableTarget] = useState<{
-		table: DayTable
-		state: TableState
-	} | null>(null)
+	/** The table whose sheet is open; its state is read from the live day. */
+	const [tableTargetId, setTableTargetId] = useState<string | null>(null)
 	const [walkInOpen, setWalkInOpen] = useState(false)
 	const [bookingOpen, setBookingOpen] = useState(false)
 	const [joinOpen, setJoinOpen] = useState(false)
 	const [busy, setBusy] = useState(false)
+	// A double tap on a toast's action must not run the change twice.
+	const busyRef = useRef(false)
 	/** A party bigger than the table the host tapped: asked before seating. */
 	const [tooSmall, setTooSmall] = useState<{
 		placing: Placing
@@ -152,8 +153,9 @@ export function HostStand({
 			done: string,
 			undo?: () => Promise<unknown>,
 			/** When the table is booked for part of the party's time: try again as an overbook. */
-			anyway?: { table: DayTable; run: () => void },
+			anyway?: { table: DayTable; run: () => void; restore: () => void },
 		) => {
+			busyRef.current = true
 			setBusy(true)
 			let refreshed = false
 			try {
@@ -165,6 +167,7 @@ export function HostStand({
 								action: {
 									label: _(t`Undo`),
 									run: () => {
+										if (busyRef.current) return
 										void (async () => {
 											try {
 												await undo()
@@ -190,9 +193,11 @@ export function HostStand({
 					refreshed = true
 					const table = fresh?.tables.find((t) => t.id === anyway.table.id)
 					const kind =
-						table && fresh ? tableState(table, fresh, Date.now()).kind : null
+						table && fresh ? tableState(table, fresh, serverNow()).kind : null
 					const label = anyway.table.label
 					if (kind !== 'open' && kind !== 'soon') {
+						// The party stays picked up, ready for the next table.
+						anyway.restore()
 						say(_(t`Table ${label} was just taken. Choose another table.`), {
 							tone: 'danger',
 						})
@@ -204,7 +209,12 @@ export function HostStand({
 						),
 						{
 							tone: 'danger',
-							action: { label: _(t`Seat anyway`), run: anyway.run },
+							action: {
+								label: _(t`Seat anyway`),
+								run: () => {
+									if (!busyRef.current) anyway.run()
+								},
+							},
 						},
 					)
 					return false
@@ -221,6 +231,7 @@ export function HostStand({
 				return false
 			} finally {
 				if (!refreshed) await refresh({ full: true })
+				busyRef.current = false
 				setBusy(false)
 			}
 		},
@@ -252,7 +263,11 @@ export function HostStand({
 			: {}
 		const again = insist
 			? undefined
-			: { table, run: () => void seat(current, table, true) }
+			: {
+					table,
+					run: () => void seat(current, table, true),
+					restore: () => setPlacing(current),
+				}
 		const latest = readyRef.current
 		if (current.kind === 'reservation') {
 			const r = current.reservation
@@ -360,6 +375,18 @@ export function HostStand({
 	}
 
 	const free = room ? freeTables(feed, room.id, now) : { free: 0, total: 0 }
+	const targetTable = tableTargetId
+		? (feed.tables.find((t) => t.id === tableTargetId) ?? null)
+		: null
+	const tableTarget = targetTable
+		? { table: targetTable, state: tableState(targetTable, feed, now) }
+		: null
+	/** Not seating here after all: the party stays picked up for another table. */
+	const backToPlacing = () => {
+		const pending = tooSmall
+		setTooSmall(null)
+		if (pending) setPlacing(pending.placing)
+	}
 	const tooSmallLabel = tooSmall?.table.label ?? ''
 	const tooSmallSeats = tooSmall?.table.maxCovers ?? 0
 	const tooSmallParty = tooSmall ? placingSize(tooSmall.placing) : 0
@@ -485,7 +512,7 @@ export function HostStand({
 					onTable={(table, tableState) => {
 						if (busy) return
 						if (placing) void seatAt(table, tableState)
-						else setTableTarget({ table, state: tableState })
+						else setTableTargetId(table.id)
 					}}
 				/>
 			) : (
@@ -523,6 +550,7 @@ export function HostStand({
 			/>
 			<WaitlistSheet
 				entry={waitlistEntry}
+				canReadGuest={ready.grant.canReadGuest}
 				busy={busy}
 				now={now}
 				onClose={() => setWaitlistId(null)}
@@ -548,22 +576,24 @@ export function HostStand({
 				busy={busy}
 				now={now}
 				formatTime={formatTime}
-				onClose={() => setTableTarget(null)}
+				onClose={() => setTableTargetId(null)}
 				onDetails={(r) => {
-					setTableTarget(null)
+					setTableTargetId(null)
 					setPartyId(r.id)
 				}}
 				onFinish={(r) => {
-					setTableTarget(null)
+					setTableTargetId(null)
 					void onCommand(r, { kind: 'status', to: 'finished' })
 				}}
 				onWalkIn={(table, size) => {
-					setTableTarget(null)
-					void seat(
-						{ kind: 'walk_in', partySize: size, guestName: '' },
-						table,
-						false,
-					)
+					setTableTargetId(null)
+					const walkIn: Placing = {
+						kind: 'walk_in',
+						partySize: size,
+						guestName: '',
+					}
+					if (!fits(table, size)) setTooSmall({ placing: walkIn, table })
+					else void seat(walkIn, table, false)
 				}}
 			/>
 			<WalkInSheet
@@ -602,11 +632,11 @@ export function HostStand({
 			/>
 			<Modal
 				open={tooSmall !== null}
-				onClose={() => setTooSmall(null)}
+				onClose={backToPlacing}
 				title={_(t`Table ${tooSmallLabel} is small for them`)}
 				footer={
 					<div className="mb-safe grid grid-cols-2 gap-3">
-						<Button size="lg" onClick={() => setTooSmall(null)}>
+						<Button size="lg" onClick={backToPlacing}>
 							<Trans>Choose another</Trans>
 						</Button>
 						<Button

@@ -45,14 +45,22 @@ export const posTimeclockDeps: { punch: PunchDeps } = {
 
 type Handler = (pos: PosAuth, c: Context) => Promise<Response>
 
-/** Whether the request is a punch the till made offline and sends now. */
-async function isOfflineReplay(c: Context): Promise<boolean> {
-	if (c.req.method !== 'POST' || !c.req.path.endsWith('/punch')) return false
+/** A punch the till made offline and sends now (with the time it was made), or null. */
+async function offlineReplay(
+	c: Context,
+): Promise<{ at: number | null } | null> {
+	if (c.req.method !== 'POST' || !c.req.path.endsWith('/punch')) return null
 	const body = (await c.req.raw
 		.clone()
 		.json()
-		.catch(() => null)) as { offline?: unknown } | null
-	return body?.offline === true
+		.catch(() => null)) as { offline?: unknown; clientAt?: unknown } | null
+	if (body?.offline !== true) return null
+	return {
+		at:
+			typeof body.clientAt === 'number' && Number.isFinite(body.clientAt)
+				? body.clientAt
+				: null,
+	}
 }
 
 function guarded(handler: Handler) {
@@ -63,7 +71,7 @@ function guarded(handler: Handler) {
 		try {
 			const gate = await timeclockGate(pos.orgId, pos.device, {
 				now: posTimeclockDeps.punch.now(),
-				offlineReplay: await isOfflineReplay(c),
+				offlineReplay: await offlineReplay(c),
 			})
 			if (!gate.ok) return posError(gate.status, gate.code)
 			await touchDevice(pos.db, pos.device).catch(() => {})

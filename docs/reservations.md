@@ -38,9 +38,10 @@ and the page tab bar are Today, Calendar, Waitlist, Experiences and Settings
 
 A **Station till** can run the host stand for its location: today's floor,
 arrivals, walk-ins, the waitlist and new bookings, for the person signed in at
-the till with their PIN (host grants; guest details for till managers). It is a
-terminal setting in Settings, Terminals, and uses the same `book` routes with a
-token tenant-api mints from the terminal and the signed-in session. See
+the till with their PIN (people on the terminal's host roster; guest details
+only for hosts given them, otherwise phones are masked). It is a terminal
+setting in Settings, Terminals, and uses the same `book` routes with a token
+tenant-api mints from the terminal and the signed-in session. See
 [Station apps](./pos.md#station-apps-time-clock-and-host-stand).
 
 Guest-facing surfaces: the Sites `/reserve` pages (book, `/reserve/manage`,

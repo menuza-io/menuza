@@ -1074,6 +1074,7 @@ export async function createOperatorReservation(params: {
 				guestId: input.guestId,
 				guest: input.guest,
 				actorId: params.actorId,
+				keepMatchedProfile: params.canReadGuestSensitive !== true,
 			})
 
 			const resId = createId('rsv')
@@ -1503,6 +1504,7 @@ export async function createWalkIn(params: {
 					lastName: 'Guest',
 				},
 				actorId: params.actorId,
+				keepMatchedProfile: params.canReadGuestSensitive !== true,
 			})
 
 			const resId = createId('rsv')

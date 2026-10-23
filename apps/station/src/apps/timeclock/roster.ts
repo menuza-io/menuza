@@ -1,7 +1,11 @@
 import { type KioskIdentifyView } from '@repo/staffing/clock-flow'
 import { db, type ClockPerson } from '~/lib/db.ts'
 import { derivePinKey } from '~/lib/pin.ts'
-import { CACHE_MAX_AGE_MS, deviceSalt } from '~/lib/signin.ts'
+import {
+	CACHE_MAX_AGE_MS,
+	deviceSalt,
+	guardedOfflineLookup,
+} from '~/lib/signin.ts'
 
 /**
  * The people this till has seen at its time clock, so an offline punch can say
@@ -26,18 +30,29 @@ export async function rememberClockPerson(
 	})
 }
 
-/** The remembered person for this PIN, or null when the till has not seen it lately. */
+/**
+ * The remembered person for this PIN (null when the till has not seen it
+ * lately), or how long to wait: offline, each lookup goes through the same
+ * attempt guard as signing in, and an unknown PIN counts against it.
+ */
 export async function findClockPerson(
 	pin: string,
 	now = Date.now(),
-): Promise<ClockPerson | null> {
-	const person = await db.clockPeople.get(await keyFor(pin))
-	if (!person) return null
-	if (now - person.cachedAt > CACHE_MAX_AGE_MS) {
-		await db.clockPeople.delete(person.key)
-		return null
-	}
-	return person
+): Promise<{ wait: number } | { person: ClockPerson | null }> {
+	const result = await guardedOfflineLookup(
+		pin,
+		async (key) => {
+			const person = await db.clockPeople.get(key)
+			if (!person) return null
+			if (now - person.cachedAt > CACHE_MAX_AGE_MS) {
+				await db.clockPeople.delete(person.key)
+				return null
+			}
+			return person
+		},
+		now,
+	)
+	return 'wait' in result ? result : { person: result.found }
 }
 
 /** The server no longer knows this PIN: stop greeting anyone by it. */

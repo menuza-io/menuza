@@ -1735,6 +1735,13 @@ export const posDevices = sqliteTable(
 		timeclockEnabled: integer('timeclock_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// When the time clock was last switched off here. A punch the till made
+		// offline before then is still accepted; one made after is not.
+		timeclockDisabledAt: integer('timeclock_disabled_at'),
+		// When a manager bound a terminal paired without a location to one. Orders
+		// the till started before then (at the location it chose itself) still
+		// upload; anything newer must be at the bound location.
+		locationBoundAt: integer('location_bound_at'),
 		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),

@@ -118,6 +118,18 @@ const QUIET_AFTER_MS = 10 * 60 * 1000
 /** Walk-in POS terminals: pair a tablet or phone, see when each last sent an order, remove one that is lost. */
 /** The Station apps a terminal can offer, as the organization has them switched on. */
 export type StationFeatures = { timeclock: boolean; reservations: boolean }
+/** What this member may switch on: each app, guest details for hosts, and where. */
+export type StationGrants = StationFeatures & {
+	guestDetails: boolean
+	/** Locations whose host stand this member may open; null is all of them. */
+	locationIds: string[] | null
+}
+const NO_GRANTS: StationGrants = {
+	timeclock: false,
+	reservations: false,
+	guestDetails: false,
+	locationIds: [],
+}
 export type TerminalLocation = { id: string; name: string }
 
 export function TerminalsManager({
@@ -127,7 +139,7 @@ export function TerminalsManager({
 	appUrl,
 	locations = [],
 	stationFeatures = { timeclock: false, reservations: false },
-	stationGrants = { timeclock: false, reservations: false },
+	stationGrants = NO_GRANTS,
 }: {
 	orgSlug: string
 	canWrite: boolean
@@ -136,7 +148,7 @@ export function TerminalsManager({
 	locations?: TerminalLocation[]
 	stationFeatures?: StationFeatures
 	/** Whether this member may switch each Station app on. */
-	stationGrants?: StationFeatures
+	stationGrants?: StationGrants
 }) {
 	const { _ } = useLingui()
 	const { request, tenantApiUrl } = useOperatorClient(orgSlug, '/operator/pos')
@@ -738,6 +750,7 @@ export function TerminalsManager({
 										<HostRoleSelect
 											person={person}
 											canChange={canWrite && stationGrants.reservations}
+											canGrantGuestDetails={stationGrants.guestDetails}
 											onChange={(role) => void setHostRole(person, role)}
 										/>
 									) : null}
@@ -795,6 +808,7 @@ export function TerminalsManager({
 					reservations:
 						stationFeatures.reservations && stationGrants.reservations,
 				}}
+				hostLocationIds={stationGrants.locationIds}
 				suggestedCode={suggestCode(
 					state.status === 'ready' ? state.data.devices : [],
 					pending,
@@ -891,10 +905,13 @@ const NO_LOCATION = '__any__'
 function HostRoleSelect({
 	person,
 	canChange,
+	canGrantGuestDetails,
 	onChange,
 }: {
 	person: StaffRow
 	canChange: boolean
+	/** Guest details need the guest permission; taking them away never does. */
+	canGrantGuestDetails: boolean
 	onChange: (role: 'none' | 'host' | 'guest_details') => void
 }) {
 	const { _ } = useLingui()
@@ -928,7 +945,15 @@ function HostRoleSelect({
 			</SelectTrigger>
 			<SelectContent>
 				{(['none', 'host', 'guest_details'] as const).map((value) => (
-					<SelectItem key={value} value={value}>
+					<SelectItem
+						key={value}
+						value={value}
+						disabled={
+							value === 'guest_details' &&
+							role !== 'guest_details' &&
+							!canGrantGuestDetails
+						}
+					>
 						{labels[value]}
 					</SelectItem>
 				))}
@@ -950,7 +975,7 @@ function StationApps({
 	canWrite: boolean
 	features: StationFeatures
 	/** Whether this member may switch each app on (its module's settings permission). */
-	grants: StationFeatures
+	grants: StationGrants
 	locations: TerminalLocation[]
 	locationName: string | null
 	onChange: (patch: StationAppPatch) => void
@@ -962,7 +987,10 @@ function StationApps({
 		? _(t`Choose the terminal's location to use reservations.`)
 		: !device.signInRequired
 			? _(t`Turn on the staff PIN to use reservations.`)
-			: null
+			: grants.locationIds !== null &&
+				  !grants.locationIds.includes(device.locationId)
+				? _(t`You can open the host stand only at your own locations.`)
+				: null
 	const toggle = (
 		on: boolean,
 		label: string,
@@ -1201,6 +1229,7 @@ function PairDialog({
 	orgSlug,
 	locations,
 	stationFeatures,
+	hostLocationIds = null,
 	suggestedCode,
 }: {
 	open: boolean
@@ -1212,6 +1241,8 @@ function PairDialog({
 	orgSlug: string
 	locations: TerminalLocation[]
 	stationFeatures: StationFeatures
+	/** Locations whose host stand this member may open; null is all of them. */
+	hostLocationIds?: string[] | null
 	suggestedCode: string
 }) {
 	const { _ } = useLingui()
@@ -1231,7 +1262,10 @@ function PairDialog({
 	const [paired, setPaired] = useState(false)
 	// The host stand opens guests' details only for a signed-in person at one location.
 	const reservationsAllowed =
-		stationFeatures.reservations && locationId !== NO_LOCATION && signInRequired
+		stationFeatures.reservations &&
+		locationId !== NO_LOCATION &&
+		signInRequired &&
+		(hostLocationIds === null || hostLocationIds.includes(locationId))
 
 	useEffect(() => {
 		if (open) {

@@ -683,7 +683,7 @@ export type PosReservationsTokenResponse = {
 	/** Epoch milliseconds. */
 	expiresAt: number
 	locationId: string
-	/** Contact details, notes and allergies: managers only. */
+	/** Contact details, notes and allergies: hosts the manager gave guest details. */
 	canReadGuest: boolean
 	features: {
 		waitlist: boolean

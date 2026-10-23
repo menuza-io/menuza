@@ -30,7 +30,12 @@ import {
 	useRef,
 	useState,
 } from 'react'
-import { punchQueue, stationClockApi, worthSavingForLater } from './clock.ts'
+import {
+	flushPunches,
+	punchQueue,
+	stationClockApi,
+	worthSavingForLater,
+} from './clock.ts'
 import {
 	BREAK_LABEL,
 	clockNotice,
@@ -135,6 +140,11 @@ export function TimeClock({
 		return () => window.clearInterval(timer)
 	}, [refreshWaiting])
 
+	// The break choice belongs to one person's actions screen, never the next one's.
+	useEffect(() => {
+		if (flow.screen !== 'actions') setPickingBreak(false)
+	}, [flow.screen])
+
 	// A screen nobody touches goes back to the pad; a half-typed PIN is forgotten.
 	useEffect(() => {
 		const idle =
@@ -187,8 +197,18 @@ export function TimeClock({
 	 * it cannot tell whose PIN it is.
 	 */
 	const goOffline = useCallback(async (pin: string) => {
-		const person = await findClockPerson(pin).catch(() => null)
-		setOfflineWho(person)
+		const found = await findClockPerson(pin).catch(() => ({ person: null }))
+		// Too many PINs the till could not place: the same wait as signing in.
+		if ('wait' in found) {
+			dispatch({
+				type: 'rejected',
+				notice: { code: 'backoff', retryAfterSeconds: found.wait },
+				now: Date.now(),
+				mode: 'pin',
+			})
+			return
+		}
+		setOfflineWho(found.person)
 		dispatch({ type: 'offline' })
 	}, [])
 
@@ -203,6 +223,8 @@ export function TimeClock({
 				await goOffline(pin)
 				return
 			}
+			// Punches saved during an outage go first, so the state shown is current.
+			if (waiting > 0) await flushPunches(settings, online).catch(() => null)
 			const who = await api.identify(pin)
 			void rememberClockPerson(pin, who).catch(() => {})
 			dispatch({ type: 'identified', who })
@@ -218,7 +240,7 @@ export function TimeClock({
 			busyRef.current = false
 			setBusy(false)
 		}
-	}, [flow, online, api, reject, goOffline])
+	}, [flow, online, api, reject, goOffline, waiting, settings])
 
 	/**
 	 * Sends a punch. Its id is made once and reused if the answer is lost, so a
@@ -670,7 +692,14 @@ function PinPage({
 	)
 }
 
-function BackLink({ onBack }: { onBack: () => void }) {
+function BackLink({
+	onBack,
+	back = false,
+}: {
+	onBack: () => void
+	/** One step back within the same person's screens, not "this is not me". */
+	back?: boolean
+}) {
 	return (
 		<button
 			type="button"
@@ -678,7 +707,7 @@ function BackLink({ onBack }: { onBack: () => void }) {
 			className="text-muted-foreground hover:text-foreground -ms-2 inline-flex h-11 items-center gap-1.5 self-start rounded-xl px-2 text-sm font-medium transition-colors"
 		>
 			<ArrowLeft className="size-4 rtl:rotate-180" />
-			<Trans>Not me</Trans>
+			{back ? <Trans>Back</Trans> : <Trans>Not me</Trans>}
 		</button>
 	)
 }
@@ -916,7 +945,7 @@ function OfflineActions({
 	if (pickRole)
 		return (
 			<>
-				<BackLink onBack={() => setPickRole(false)} />
+				<BackLink back onBack={() => setPickRole(false)} />
 				<h2 className="t-stagger-line text-3xl font-bold">
 					<Trans>What are you working today?</Trans>
 				</h2>
@@ -999,7 +1028,7 @@ function BreakPick({
 	const { _ } = useLingui()
 	return (
 		<>
-			<BackLink onBack={onBack} />
+			<BackLink back onBack={onBack} />
 			<h2 className="t-stagger-line text-3xl font-bold">
 				<Trans>Which break are you taking?</Trans>
 			</h2>
@@ -1054,7 +1083,14 @@ function FailedPunches({
 			failure?: string
 		}>
 	>([])
+	const [armed, setArmed] = useState(false)
 	useEffect(() => {
+		if (!armed) return
+		const timer = window.setTimeout(() => setArmed(false), 4000)
+		return () => window.clearTimeout(timer)
+	}, [armed])
+	useEffect(() => {
+		setArmed(false)
 		if (!open) return
 		void punchQueue()
 			.failed()
@@ -1077,11 +1113,20 @@ function FailedPunches({
 						<Trans>Close</Trans>
 					</Button>
 					<Button
-						variant="primary"
+						variant={armed ? 'danger' : 'primary'}
 						size="lg"
-						onClick={() => void punchQueue().clearFailed().finally(onCleared)}
+						onClick={() => {
+							// Two taps: the list is the only record of these until a manager adds them.
+							if (!armed) return setArmed(true)
+							setArmed(false)
+							void punchQueue().clearFailed().finally(onCleared)
+						}}
 					>
-						<Trans>Got it, clear</Trans>
+						{armed ? (
+							<Trans>Tap again to clear</Trans>
+						) : (
+							<Trans>A manager has these, clear</Trans>
+						)}
 					</Button>
 				</div>
 			}

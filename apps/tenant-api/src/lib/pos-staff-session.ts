@@ -129,6 +129,7 @@ export async function verifyPosStaffSession(
 			firstName: staffMembers.firstName,
 			lastName: staffMembers.lastName,
 			pinSetAt: staffScopeAssignments.pinSetAt,
+			pinLookup: staffScopeAssignments.pinLookup,
 		})
 		.from(staffScopeAssignments)
 		.innerJoin(staffMembers, eq(staffMembers.id, staffScopeAssignments.staffId))
@@ -142,6 +143,8 @@ export async function verifyPosStaffSession(
 		)
 		.limit(1)
 	if (!row) return { error: sessionInvalid() }
+	// A cleared PIN ends it too: the person has no way to sign in any more.
+	if (row.pinLookup === null) return { error: sessionInvalid() }
 	// A PIN changed after this sign-in ends it: the old PIN proved nothing.
 	if (
 		row.pinSetAt !== null &&

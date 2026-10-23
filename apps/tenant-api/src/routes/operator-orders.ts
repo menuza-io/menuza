@@ -38,9 +38,34 @@ export type OperatorOrderAuth = {
 	link: OrderLinkAccess
 	/**
 	 * Signed claims from App: which Station apps this operator may switch on for
-	 * a terminal (each needs its own module's settings permission).
+	 * a terminal (each needs its own module's settings permission), whether they
+	 * may give a host guest details, and at which locations (null: all).
 	 */
-	stationApps: { timeclock: boolean; reservations: boolean }
+	stationApps: StationAppClaims
+}
+
+export type StationAppClaims = {
+	timeclock: boolean
+	reservations: boolean
+	guestDetails: boolean
+	locationIds: string[] | null
+}
+
+/** Reads the claim fail-closed: anything missing or malformed allows nothing. */
+function readStationApps(raw: unknown): StationAppClaims {
+	const claim = (raw ?? {}) as Record<string, unknown>
+	const locations = claim.locationIds
+	return {
+		timeclock: claim.timeclock === true,
+		reservations: claim.reservations === true,
+		guestDetails: claim.guestDetails === true,
+		locationIds:
+			locations === null
+				? null
+				: Array.isArray(locations)
+					? locations.filter((id): id is string => typeof id === 'string')
+					: [],
+	}
 }
 
 /**
@@ -74,7 +99,7 @@ export async function authenticateOrdersOperator(
 		scope?: string
 		linkCustomers?: boolean
 		linkGuests?: boolean
-		stationApps?: { timeclock?: unknown; reservations?: unknown }
+		stationApps?: unknown
 	}
 	try {
 		const secret = new TextEncoder().encode(operatorToken)
@@ -118,10 +143,7 @@ export async function authenticateOrdersOperator(
 				linkCustomers: decoded.linkCustomers === true,
 				linkGuests: decoded.linkGuests === true,
 			},
-			stationApps: {
-				timeclock: decoded.stationApps?.timeclock === true,
-				reservations: decoded.stationApps?.reservations === true,
-			},
+			stationApps: readStationApps(decoded.stationApps),
 		},
 	}
 }

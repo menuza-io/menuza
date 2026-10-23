@@ -374,6 +374,7 @@ export function PartySheet({
 /** A party on the waitlist: how long they have waited, and what to do next. */
 export function WaitlistSheet({
 	entry,
+	canReadGuest,
 	busy,
 	now,
 	onNotify,
@@ -382,6 +383,8 @@ export function WaitlistSheet({
 	onClose,
 }: {
 	entry: WaitlistEntry | null
+	/** Without guest details the server sends only the end of the number. */
+	canReadGuest: boolean
 	busy: boolean
 	now: number
 	onNotify: (entry: WaitlistEntry) => void
@@ -451,9 +454,15 @@ export function WaitlistSheet({
 					</p>
 					{entry.phone ? (
 						<Detail icon={Phone}>
-							<a href={`tel:${entry.phone}`} className="tnum" dir="ltr">
-								{entry.phone}
-							</a>
+							{canReadGuest ? (
+								<a href={`tel:${entry.phone}`} className="tnum" dir="ltr">
+									{entry.phone}
+								</a>
+							) : (
+								<span className="tnum" dir="ltr">
+									{entry.phone}
+								</span>
+							)}
 						</Detail>
 					) : null}
 					{entry.notes ? <Detail icon={UserRound}>{entry.notes}</Detail> : null}

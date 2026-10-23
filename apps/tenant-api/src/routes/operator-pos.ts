@@ -19,7 +19,8 @@ import {
 	resolveHeldUpload,
 	listPendingCodes,
 	listPosOrders,
-	isUnknownLocation,
+	checkLocation,
+	deviceStationState,
 	listStaffRoster,
 	removeHost,
 	removeManager,
@@ -46,6 +47,7 @@ import {
 import {
 	assertOperatorOrg,
 	authenticateOrdersOperator,
+	type StationAppClaims,
 } from './operator-orders.ts'
 
 /**
@@ -106,7 +108,11 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
-	const denied = await stationAppsDenied(g.auth, parsed.data)
+	const denied = await stationAppsDenied(
+		g.auth,
+		parsed.data,
+		parsed.data.locationId ?? null,
+	)
 	if (denied) return denied
 	let result: Awaited<ReturnType<typeof createPairingCode>>
 	try {
@@ -224,11 +230,10 @@ operatorPosRoutes.post('/held/:id/resolve', async (c) => {
  * clock also needs the organization's staffing flag when this node can read it.
  */
 async function stationAppsDenied(
-	auth: {
-		orgId: string
-		stationApps: { timeclock: boolean; reservations: boolean }
-	},
+	auth: { orgId: string; stationApps: StationAppClaims },
 	patch: { timeclockEnabled?: boolean; reservationsEnabled?: boolean },
+	/** The terminal's location once this change is made (null: none). */
+	hostLocationId: string | null = null,
 ): Promise<Response | null> {
 	if (patch.timeclockEnabled === true) {
 		if (!auth.stationApps.timeclock)
@@ -237,8 +242,17 @@ async function stationAppsDenied(
 		if (flags && (!flags.features.enabled || !flags.features.timeclock))
 			return posError(422, 'timeclock_disabled')
 	}
-	if (patch.reservationsEnabled === true && !auth.stationApps.reservations)
-		return posError(403, 'reservations_permission_required')
+	if (patch.reservationsEnabled === true) {
+		if (!auth.stationApps.reservations)
+			return posError(403, 'reservations_permission_required')
+		// A member limited to some locations opens the host stand only there.
+		const allowed = auth.stationApps.locationIds
+		if (
+			allowed !== null &&
+			(hostLocationId === null || !allowed.includes(hostLocationId))
+		)
+			return posError(403, 'location_not_allowed')
+	}
 	return null
 }
 
@@ -260,17 +274,39 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
-	const denied = await stationAppsDenied(g.auth, parsed.data)
-	if (denied) return denied
-	if (
-		parsed.data.locationId !== undefined &&
-		(await isUnknownLocation(g.auth.orgId, parsed.data.locationId))
+	const current = await deviceStationState(g.db, c.req.param('id'))
+	if (!current) return posError(404, 'not_found')
+	const hostLocationId = current.locationId ?? parsed.data.locationId ?? null
+	// Binding a location to a till whose host stand is on is opening it there.
+	const opensHostStand =
+		parsed.data.reservationsEnabled === true ||
+		(current.reservationsEnabled &&
+			parsed.data.reservationsEnabled !== false &&
+			parsed.data.locationId !== undefined &&
+			current.locationId === null)
+	const denied = await stationAppsDenied(
+		g.auth,
+		{
+			...parsed.data,
+			reservationsEnabled: opensHostStand
+				? true
+				: parsed.data.reservationsEnabled,
+		},
+		hostLocationId,
 	)
-		return posError(422, 'invalid_location')
+	if (denied) return denied
+	if (parsed.data.locationId !== undefined) {
+		// Binding is permanent: it waits for App to confirm the location exists.
+		const found = await checkLocation(g.auth.orgId, parsed.data.locationId)
+		if (found === 'unavailable') return posError(503, 'service_unavailable')
+		if (found === 'unknown') return posError(422, 'invalid_location')
+	}
 	const result = await updateDeviceSettings(
 		g.db,
 		c.req.param('id'),
 		parsed.data,
+		Date.now(),
+		g.auth.userId,
 	)
 	if (!result.ok) {
 		return posError(
@@ -317,6 +353,9 @@ operatorPosRoutes.put('/hosts/:staffId', async (c) => {
 		return posError(403, 'reservations_permission_required')
 	const parsed = hostSchema.safeParse(await c.req.json().catch(() => ({})))
 	if (!parsed.success) return posError(400, 'invalid_request')
+	// Guests' phones, emails and allergies: only someone who may read them may share them.
+	if (parsed.data.guestDetails === true && !g.auth.stationApps.guestDetails)
+		return posError(403, 'guest_permission_required')
 	if (
 		!(await setHost(g.db, c.req.param('staffId'), g.auth.userId, {
 			guestDetails: parsed.data.guestDetails ?? false,
@@ -330,7 +369,7 @@ operatorPosRoutes.delete('/hosts/:staffId', async (c) => {
 	// Taking someone off is always allowed to whoever manages terminals.
 	const g = await guard(c, 'orders:write', { keepWorkingWhenDisabled: true })
 	if ('error' in g) return g.error
-	if (!(await removeHost(g.db, c.req.param('staffId'))))
+	if (!(await removeHost(g.db, c.req.param('staffId'), g.auth.userId)))
 		return posError(404, 'not_found')
 	return c.json({ ok: true }, 200, noStore)
 })
