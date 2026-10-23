@@ -87,8 +87,11 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 			if (denied) return denied
 		}
 
-		// A Station till runs the host stand and nothing else: never the guestbook.
-		if (ctx.channel === 'station' && !stationMayCall(c.req.path)) {
+		// A Station till runs the host stand and nothing else (see `STATION_ROUTES`).
+		if (
+			ctx.channel === 'station' &&
+			!stationMayCall(c.req.method, c.req.path)
+		) {
 			return Response.json(
 				{ error: 'not_for_station', message: 'Not available at a till' },
 				{ status: 403 },
@@ -119,11 +122,34 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 	}
 }
 
-/** The day of service and the waitlist; not guest search or guest history. */
-export function stationMayCall(path: string): boolean {
-	return (
-		path.startsWith('/operator/reservations/book/') &&
-		!path.startsWith('/operator/reservations/book/guests')
+/**
+ * Exactly what the host stand on a till does (`apps/station/src/apps/
+ * reservations/api.ts`), and nothing else under `/book`: no guestbook, no
+ * resending messages to guests, no approving requests, no service notes or
+ * sections, no contact or course changes. A new till feature adds its route
+ * here on purpose.
+ */
+const STATION_ROUTES: ReadonlyArray<readonly [string, RegExp]> = [
+	['GET', /^\/day$/],
+	['GET', /^\/availability$/],
+	['GET', /^\/waitlist\/?$/],
+	['GET', /^\/waitlist\/quote$/],
+	['GET', /^\/reservations\/[^/]+$/],
+	['GET', /^\/reservations\/[^/]+\/events$/],
+	['POST', /^\/reservations$/],
+	['POST', /^\/walk-ins$/],
+	['POST', /^\/reservations\/[^/]+\/(?:status|assign|undo|running-late)$/],
+	['POST', /^\/waitlist\/?$/],
+	['POST', /^\/waitlist\/[^/]+\/(?:notify|seat|status)$/],
+]
+
+const BOOK_PREFIX = '/operator/reservations/book'
+
+export function stationMayCall(method: string, path: string): boolean {
+	if (!path.startsWith(`${BOOK_PREFIX}/`)) return false
+	const rest = path.slice(BOOK_PREFIX.length)
+	return STATION_ROUTES.some(
+		([allowed, pattern]) => allowed === method && pattern.test(rest),
 	)
 }
 

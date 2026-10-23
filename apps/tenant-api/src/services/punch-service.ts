@@ -23,6 +23,7 @@ import {
 	staffJobs,
 	type StaffJob,
 	type StaffScopeAssignment,
+	staffMembers,
 	type StaffMember,
 	staffPositions,
 	type StaffPosition,
@@ -361,6 +362,47 @@ function successResult(
 			serverNow: now,
 		},
 	}
+}
+
+/**
+ * A punch this device already recorded under this id, answered as it was
+ * (before any PIN check: the PIN may have been given to someone else since,
+ * and a lost answer must never turn a recorded punch into a refused one).
+ * Null when there is none, or it was refused.
+ */
+export async function replayRecordedPunch(
+	db: TenantDatabase,
+	deviceId: string,
+	request: Pick<KioskPunchRequest, 'id' | 'kind'>,
+	now: number,
+): Promise<PunchSuccess | null> {
+	const [existing] = await db
+		.select()
+		.from(timePunches)
+		.where(eq(timePunches.id, request.id))
+		.limit(1)
+	if (
+		!existing ||
+		existing.deviceId !== deviceId ||
+		existing.kind !== request.kind ||
+		existing.outcome !== 'accepted'
+	)
+		return null
+	const [member] = await db
+		.select()
+		.from(staffMembers)
+		.where(eq(staffMembers.id, existing.staffId))
+		.limit(1)
+	if (!member) return null
+	const state = await currentState(db, member.id)
+	return successResult(
+		existing.kind,
+		state,
+		member,
+		existing.effectiveAt ?? existing.serverAt,
+		now,
+		true,
+	)
 }
 
 /**

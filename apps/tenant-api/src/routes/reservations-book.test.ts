@@ -415,6 +415,22 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		})
 		expect(yes.status).toBe(200)
 		expect(await yes.text()).toContain(SECRET)
+
+		// Nor can they overwrite or clear the health notes they cannot see.
+		for (const [method, url] of [
+			['POST', `/reservations/${id}/notes`],
+			['PATCH', `/reservations/${id}`],
+		] as const) {
+			const res = await send(noGuestGrant, method, url, { dietaryNotes: null })
+			expect(res.status, `${method} ${url}`).toBe(403)
+			expect(((await res.json()) as { error: string }).error).toBe(
+				'guest_permission_required',
+			)
+		}
+		const kept = await send(token, 'POST', `/reservations/${id}/notes`, {
+			dietaryNotes: 'No sesame',
+		})
+		expect(kept.status).toBe(200)
 	})
 
 	it('creates booking via POST /book/reservations, transitions status, supports undo, and enforces expectedVersion (409 stale_version)', async () => {

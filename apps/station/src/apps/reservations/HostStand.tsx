@@ -33,6 +33,7 @@ import {
 	TableSheet,
 	WaitlistSheet,
 	WalkInSheet,
+	type BookingReadBackInfo,
 	type PartyCommand,
 } from './sheets.tsx'
 import { useHostStand } from './useHostStand.ts'
@@ -96,6 +97,9 @@ export function HostStand({
 	const [tableTargetId, setTableTargetId] = useState<string | null>(null)
 	const [walkInOpen, setWalkInOpen] = useState(false)
 	const [bookingOpen, setBookingOpen] = useState(false)
+	/** No answer to the booking: the form is frozen until the server is heard from. */
+	const [bookingLocked, setBookingLocked] = useState(false)
+	const [readBack, setReadBack] = useState<BookingReadBackInfo | null>(null)
 	const [joinOpen, setJoinOpen] = useState(false)
 	const [busy, setBusy] = useState(false)
 	/** Settles when the change in flight (and its refresh) is done. */
@@ -146,6 +150,17 @@ export function HostStand({
 		if (!working) return
 		return holdLock()
 	}, [working])
+	// Escape puts a picked-up party down (a sheet open on top handles its own).
+	useEffect(() => {
+		if (!placing) return
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return
+			if (document.querySelector('dialog[open]')) return
+			setPlacing(null)
+		}
+		window.addEventListener('keydown', onKey)
+		return () => window.removeEventListener('keydown', onKey)
+	}, [placing])
 	const dismissToast = useCallback(() => setToast(null), [])
 	const say = useCallback(
 		(text: string, extra: Partial<ToastMessage> = {}) =>
@@ -195,13 +210,25 @@ export function HostStand({
 	const act = useCallback(
 		async (
 			work: () => Promise<unknown>,
-			done: string,
-			undo?: () => Promise<unknown>,
-			/** When the table is booked for part of the party's time: try again as an overbook. */
-			anyway?: { table: DayTable; run: () => void },
-			/** Put the party back in the host's hand (it was not seated, or may not have been). */
-			restore?: () => void,
+			/** What to say once it is done (from the server's answer, when it matters). */
+			done: string | ((result: unknown) => string),
+			options: {
+				undo?: () => Promise<unknown>
+				/** When the table is booked for part of the party's time: try again as an overbook. */
+				anyway?: { table: DayTable; run: () => void }
+				/** Put the party back in the host's hand (it was not seated, or may not have been). */
+				restore?: () => void
+				/**
+				 * Runs the moment the change is answered, before the floor reloads:
+				 * a sheet closes (or shows its read-back) so a second tap cannot
+				 * send it again. Gets the server's answer (null when it was a retry).
+				 */
+				onSuccess?: (result: unknown) => void
+				/** No answer in time: the form is frozen, so a retry is the same request. */
+				onUnsure?: () => void
+			} = {},
 		) => {
+			const { undo, anyway, restore, onSuccess, onUnsure } = options
 			setBusy(true)
 			noteWrite()
 			let finish: () => void = () => {}
@@ -210,13 +237,18 @@ export function HostStand({
 			})
 			let refreshed = false
 			try {
+				let result: unknown
 				try {
-					await work()
+					result = await work()
 				} finally {
 					setBusy(false)
+					// A poll that left while the change was in flight may answer with
+					// the floor as it was: it is dropped too.
+					noteWrite()
 				}
+				onSuccess?.(result)
 				say(
-					done,
+					typeof done === 'function' ? done(result) : done,
 					undo
 						? {
 								action: {
@@ -248,7 +280,12 @@ export function HostStand({
 				const failure = error instanceof HostApiError ? error : null
 				// The same request already landed (a retry after no answer): done, not a clash.
 				if (failure?.alreadyDone) {
-					say(_(t`That already went through. Here is the latest.`))
+					onSuccess?.(null)
+					say(
+						_(
+							t`That already went through as first sent. Check the floor for what was recorded.`,
+						),
+					)
 					return true
 				}
 				if (failure?.occupied && anyway) {
@@ -285,6 +322,7 @@ export function HostStand({
 				}
 				// Not seated, or not known to be: the party stays in the host's hand.
 				if (failure?.offline) restore?.()
+				if (failure?.unsure) onUnsure?.()
 				say(
 					failure?.stale
 						? _(t`Someone changed this a moment ago. Here is the latest.`)
@@ -332,8 +370,16 @@ export function HostStand({
 			: {}
 		const again = insist
 			? undefined
-			: { table, run: () => void seat(current, table, true) }
-		const restore = () => setPlacing(current)
+			: {
+					table,
+					// Seating anyway puts the party down: nothing stays in hand after.
+					run: () => {
+						setPlacing(null)
+						void seat(current, table, true)
+					},
+				}
+		// Back in hand, unless the host has picked up someone else meanwhile.
+		const restore = () => setPlacing((held) => held ?? current)
 		const latest = readyRef.current
 		if (current.kind === 'reservation') {
 			const r = current.reservation
@@ -350,9 +396,7 @@ export function HostStand({
 						...overbook,
 					}),
 				_(t`Seated ${who} at ${table.label}.`),
-				() => api.undo(r.id),
-				again,
-				restore,
+				{ undo: () => api.undo(r.id), anyway: again, restore },
 			)
 		} else if (current.kind === 'waitlist') {
 			const entry = current.entry
@@ -362,9 +406,7 @@ export function HostStand({
 			await act(
 				() => api.seatWaitlist(entry.id, [table.id], version, overbook),
 				_(t`Seated ${entry.displayName} at ${table.label}.`),
-				undefined,
-				again,
-				restore,
+				{ anyway: again, restore },
 			)
 		} else {
 			const size = current.partySize
@@ -382,9 +424,7 @@ export function HostStand({
 						insist ? current.overbookKey : current.key,
 					),
 				_(t`Seated a walk-in of ${size} at ${table.label}.`),
-				undefined,
-				again,
-				restore,
+				{ anyway: again, restore },
 			)
 		}
 	}
@@ -396,6 +436,16 @@ export function HostStand({
 			return
 		}
 		const who = shortName(r, _(t`Guest`))
+		if (command.kind === 'late') {
+			const minutes = command.minutes
+			await act(
+				() => api.runningLate(r.id, minutes, r.version),
+				minutes > 0
+					? _(t`${who} is running ${minutes} min late.`)
+					: _(t`${who} is on time.`),
+			)
+			return
+		}
 		if (command.kind === 'undo') {
 			const ok = await act(() => api.undo(r.id), _(t`Undone for ${who}.`))
 			if (ok) setPartyId(null)
@@ -415,11 +465,12 @@ export function HostStand({
 		const ok = await act(
 			() =>
 				api.transition(r.id, command.to, {
-					expectedVersion: r.version,
+					// An armed confirm carries the version the host decided on.
+					expectedVersion: command.expectedVersion ?? r.version,
 					...(command.reason ? { reason: command.reason } : {}),
 				}),
 			done,
-			reversible ? () => api.undo(r.id) : undefined,
+			reversible ? { undo: () => api.undo(r.id) } : {},
 		)
 		if (ok) setPartyId(null)
 	}
@@ -538,6 +589,8 @@ export function HostStand({
 						variant="primary"
 						onClick={() => {
 							bookingKey.current = crypto.randomUUID()
+							setBookingLocked(false)
+							setReadBack(null)
 							setBookingOpen(true)
 						}}
 					>
@@ -707,6 +760,8 @@ export function HostStand({
 			<BookingSheet
 				open={bookingOpen}
 				busy={busy}
+				locked={bookingLocked}
+				readBack={readBack}
 				today={feed.businessDate}
 				loadSlots={api.availability}
 				onClose={() => setBookingOpen(false)}
@@ -729,18 +784,40 @@ export function HostStand({
 						day
 							? _(t`Booked ${first} for ${size} on ${day} at ${time}.`)
 							: _(t`Booked ${first} for ${size} at ${time}.`),
-					).then((ok) => ok && setBookingOpen(false))
+						{
+							// The sheet turns into the read-back at once: nothing to tap twice.
+							onSuccess: (result) => {
+								setBookingLocked(false)
+								setReadBack({
+									name: [first, input.lastName].join(' ').trim(),
+									partySize: size,
+									when: day ? _(t`${day} at ${time}`) : _(t`Today at ${time}`),
+									code: confirmationCodeOf(result),
+								})
+							},
+							onUnsure: () => setBookingLocked(true),
+						},
+					)
 				}}
 			/>
 			<JoinWaitlistSheet
 				open={joinOpen}
 				busy={busy}
+				loadQuote={api.waitlistQuote}
 				onClose={() => setJoinOpen(false)}
 				onJoin={(input) =>
 					void act(
 						() => keyed(joinKey, (key) => api.joinWaitlist(input, key)),
-						_(t`${input.displayName} is on the waitlist.`),
-					).then((ok) => ok && setJoinOpen(false))
+						(entry) => {
+							const name = input.displayName
+							const quoted = (entry as { quotedMin?: number | null } | null)
+								?.quotedMin
+							return typeof quoted === 'number'
+								? _(t`${name} is on the waitlist, about ${quoted} min.`)
+								: _(t`${name} is on the waitlist.`)
+						},
+						{ onSuccess: () => setJoinOpen(false) },
+					)
 				}
 			/>
 			<Modal
@@ -777,6 +854,17 @@ export function HostStand({
 			<Toast message={toast} onDone={dismissToast} liftAbove={dockRef} />
 		</div>
 	)
+}
+
+/** The code a booking's answer carries, to read back to the caller. */
+function confirmationCodeOf(result: unknown): string | null {
+	const reservation = (
+		result as { reservation?: { confirmationCode?: unknown } }
+	)?.reservation
+	return typeof reservation?.confirmationCode === 'string' &&
+		reservation.confirmationCode
+		? reservation.confirmationCode
+		: null
 }
 
 /** Why the host stand cannot open, and the one thing that fixes it. */

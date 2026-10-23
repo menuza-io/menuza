@@ -371,10 +371,11 @@ describe('Station apps on a POS terminal', () => {
 			})
 			expect(wrong.status).toBe(409)
 			expect(wrong.body.error).toBe('pin_owner_changed')
+			const id = crypto.randomUUID()
 			const right = await request('POST', '/pos/timeclock/punch', {
 				secret,
 				body: {
-					id: crypto.randomUUID(),
+					id,
 					kind: 'clock_in',
 					pin,
 					staffId,
@@ -383,6 +384,21 @@ describe('Station apps on a POS terminal', () => {
 				},
 			})
 			expect(right.status).toBe(200)
+			// Its answer was lost and the PIN changed since: the retry is still the
+			// recorded punch, never "refused".
+			const retry = await request('POST', '/pos/timeclock/punch', {
+				secret,
+				body: {
+					id,
+					kind: 'clock_in',
+					pin: '0000',
+					staffId,
+					clientAt: h.clock.now,
+					offline: true,
+				},
+			})
+			expect(retry.status).toBe(200)
+			expect(retry.body).toMatchObject({ outcome: 'accepted', duplicate: true })
 		})
 
 		it('replays the same punch id without a second punch', async () => {

@@ -10,6 +10,7 @@ import { createClockQueue as createKioskQueue } from './clock-queue.ts'
 import {
 	MAX_PENDING_AGE_MS,
 	MAX_SYNC_ATTEMPTS,
+	POISON_MIN_AGE_MS,
 	syncBackoffMs,
 	syncQueue,
 } from './clock-sync.ts'
@@ -30,6 +31,7 @@ describe('syncQueue', () => {
 		id: string,
 		createdAt: number,
 		kind = 'clock_in' as const,
+		staffId?: string,
 	) {
 		await queue.enqueue({
 			id,
@@ -37,6 +39,7 @@ describe('syncQueue', () => {
 			clientAt: createdAt,
 			pin: '4821',
 			createdAt,
+			...(staffId ? { staffId } : {}),
 		})
 	}
 	const run = (punch: PunchFn) =>
@@ -158,6 +161,31 @@ describe('syncQueue', () => {
 		expect((await queue.failed()).map((row) => row.id)).toEqual(['b'])
 	})
 
+	it('one person’s stuck punch holds only their own later punches', async () => {
+		await add('rana-in', 1, 'clock_in', 'rana')
+		await add('omar-in', 2, 'clock_in', 'omar')
+		await add('rana-out', 3, 'clock_out' as never, 'rana')
+		const seen: string[] = []
+		const outcome = await run(async (body) => {
+			seen.push(body.id)
+			if (body.id === 'rana-in') throw new KioskApiError(500, 'internal_error')
+			return { outcome: 'accepted' }
+		})
+		// Omar goes out; Rana's clock-out waits behind her clock-in.
+		expect(seen).toEqual(['rana-in', 'omar-in'])
+		expect(outcome).toMatchObject({ synced: 1, remaining: 2 })
+	})
+
+	it('sets aside a punch the server keeps breaking on, after half an hour of tries', async () => {
+		await add('a', 5_000 - POISON_MIN_AGE_MS - 1, 'clock_in', 'rana')
+		const punch = async () => {
+			throw new KioskApiError(500, 'internal_error')
+		}
+		for (let i = 0; i < MAX_SYNC_ATTEMPTS; i++) await run(punch)
+		expect(await queue.counts()).toEqual({ queued: 0, failed: 1 })
+		expect((await queue.failed())[0]!.failure).toBe('server_error')
+	})
+
 	it('keeps a recent punch through any number of server errors', async () => {
 		await add('a', 1)
 		const punch = async () => {
@@ -167,10 +195,10 @@ describe('syncQueue', () => {
 		expect(await queue.counts()).toEqual({ queued: 1, failed: 0 })
 	})
 
-	it('sets a punch aside only when server errors outlast its age limit', async () => {
+	it('sets a punch aside only when an outage outlasts its age limit', async () => {
 		await add('a', 5_000 - MAX_PENDING_AGE_MS - 1)
 		const punch = async () => {
-			throw new KioskApiError(500, 'Internal Server Error')
+			throw new KioskApiError(503, 'service_unavailable')
 		}
 		for (let i = 0; i < MAX_SYNC_ATTEMPTS; i++) await run(punch)
 		expect(await queue.counts()).toEqual({ queued: 0, failed: 1 })

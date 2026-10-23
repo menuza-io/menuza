@@ -32,6 +32,12 @@ export const backend = {
 		reservations?: boolean
 		waitlist?: boolean
 	}) => backend.post('/__test/station-flags', body),
+	bookings: async () =>
+		(
+			await backend.get<{
+				bookings: Array<{ id: string; firstName: string | null }>
+			}>('/__test/bookings')
+		).bookings,
 	punches: async () =>
 		(
 			await backend.get<{

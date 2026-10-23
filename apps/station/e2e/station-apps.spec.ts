@@ -373,8 +373,32 @@ test.describe('host stand', () => {
 		await slots.last().click()
 		await sheet.getByLabel('First name').fill('Zaid')
 		await sheet.getByLabel('Last name').fill('Omar')
-		await sheet.getByRole('button', { name: `Book 4 at ${time}` }).click()
+		// A double tap books once: the sheet turns into the read-back at once.
+		await sheet.getByRole('button', { name: `Book 4 at ${time}` }).dblclick()
 		await expectToast(page, `Booked Zaid for 4 at ${time}.`)
+		await expect(sheet.getByText('Zaid Omar, party of 4')).toBeVisible()
+		await expect(sheet.getByText('Confirmation code')).toBeVisible()
+		await capture(page, 'host-booking-readback')
+		await sheet.getByRole('button', { name: 'Done' }).click()
+		await expect(sheet).toHaveCount(0)
+		expect(
+			(await backend.bookings()).filter((b) => b.firstName === 'Zaid'),
+		).toHaveLength(1)
+	})
+
+	test('joining the waitlist says the wait before, and the toast repeats it', async ({
+		unpaired: page,
+	}) => {
+		await backend.addStaff({ pin: '4321', host: true })
+		await openHostStand(page)
+		await page.getByRole('button', { name: 'Add to the waitlist' }).click()
+		const sheet = page.getByRole('dialog', { name: 'Add to the waitlist' })
+		await expect(
+			sheet.getByText(/About \d+ min, number \d+ in line\.|No wait estimate/),
+		).toBeVisible()
+		await sheet.getByLabel('Name').fill('Noor')
+		await sheet.getByRole('button', { name: 'Add to the waitlist' }).click()
+		await expectToast(page, 'Noor is on the waitlist')
 	})
 
 	test('on a phone, the floor and the dock still fit', async ({

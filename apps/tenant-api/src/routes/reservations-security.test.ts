@@ -326,6 +326,51 @@ describe('Reservations security sweep: operator routes', () => {
 		expect(failures).toEqual([])
 	})
 
+	it('a Station till token reaches only what the host stand on a till does', async () => {
+		// The allowlist (`STATION_ROUTES`): everything else under /book, including
+		// resending messages, approving requests and service notes, is refused.
+		const allowed = new Set([
+			'GET /operator/reservations/book/day',
+			'GET /operator/reservations/book/availability',
+			'GET /operator/reservations/book/waitlist',
+			'GET /operator/reservations/book/waitlist/',
+			'GET /operator/reservations/book/waitlist/quote',
+			'GET /operator/reservations/book/reservations/:id',
+			'GET /operator/reservations/book/reservations/:id/events',
+			'POST /operator/reservations/book/reservations',
+			'POST /operator/reservations/book/walk-ins',
+			'POST /operator/reservations/book/reservations/:id/status',
+			'POST /operator/reservations/book/reservations/:id/assign',
+			'POST /operator/reservations/book/reservations/:id/undo',
+			'POST /operator/reservations/book/reservations/:id/running-late',
+			'POST /operator/reservations/book/waitlist',
+			'POST /operator/reservations/book/waitlist/',
+			'POST /operator/reservations/book/waitlist/:id/notify',
+			'POST /operator/reservations/book/waitlist/:id/seat',
+			'POST /operator/reservations/book/waitlist/:id/status',
+		])
+		const failures: string[] = []
+		for (const route of list) {
+			if (!route.path.startsWith('/operator/reservations/book/')) continue
+			if (allowed.has(`${route.method} ${route.path}`)) continue
+			const token = await mintRsvToken({ scope: 'book', channel: 'station' })
+			const res = await app.request(fill(route.path), {
+				method: route.method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: route.method === 'GET' ? undefined : '{}',
+			})
+			const body = (await res.json().catch(() => ({}))) as { error?: string }
+			if (res.status !== 403 || body.error !== 'not_for_station')
+				failures.push(
+					`${route.method} ${route.path} -> ${res.status} ${body.error}`,
+				)
+		}
+		expect(failures).toEqual([])
+	})
+
 	it('discovers all mounted operator reservation routes', () => {
 		expect(list.length).toBeGreaterThanOrEqual(8)
 		const keys = new Set(list.map((r) => `${r.method} ${r.path}`))

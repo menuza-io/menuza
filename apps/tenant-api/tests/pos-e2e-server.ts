@@ -94,6 +94,8 @@ const {
 	rsvServices,
 	rsvTables,
 	timePunches,
+	rsvGuests,
+	rsvReservations,
 } = await import('@repo/tenant-db')
 const { pinLookupFor } = await import('../src/services/kiosk-pin-service.ts')
 const { eq, sql } = await import('drizzle-orm')
@@ -723,6 +725,16 @@ root.post('/__test/station-flags', async (c) => {
 
 root.get('/__test/punches', async (c) =>
 	c.json({ punches: await db.select().from(timePunches) }),
+)
+
+// Bookings with their guest's first name, to count what a double tap made.
+root.get('/__test/bookings', async (c) =>
+	c.json({
+		bookings: await db
+			.select({ id: rsvReservations.id, firstName: rsvGuests.firstName })
+			.from(rsvReservations)
+			.leftJoin(rsvGuests, eq(rsvGuests.id, rsvReservations.guestId)),
+	}),
 )
 
 /** Local date and minutes after midnight at the location, now. */

@@ -6,7 +6,13 @@ import {
 	waitlistListingSchema,
 	type ReservationsContext,
 } from '@repo/reservations'
-import { getTenantDb, posHosts } from '@repo/tenant-db'
+import {
+	getTenantDb,
+	posHosts,
+	rsvPayments,
+	rsvReservations,
+} from '@repo/tenant-db'
+import { eq } from 'drizzle-orm'
 import { SignJWT } from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -26,6 +32,8 @@ import {
 	publicContext,
 	seedPublicOrg,
 } from './reservations-public-fixture.ts'
+import { stationMayCall } from '../lib/reservations-guard.ts'
+import { updateReservationNotes } from '../services/rsv-booking-service.ts'
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
 
 /**
@@ -407,10 +415,18 @@ describe('Station host stand contract', () => {
 
 		// A booking's history carries the same health notes: hidden the same way.
 		const bookedId = booked.body.reservation?.id ?? booked.body.id
-		const noted = await write(`/reservations/${bookedId}/notes`, {
+		// A manager adds it in the app (a till may not write notes at all).
+		const notTill = await write(`/reservations/${bookedId}/notes`, {
 			dietaryNotes: 'Severe sesame allergy',
 		})
-		expect(noted.status, noted.text).toBe(200)
+		expect(notTill.status).toBe(403)
+		await updateReservationNotes({
+			canReadGuestSensitive: true,
+			orgId: ORG_A,
+			reservationId: bookedId,
+			actorId: 'manager',
+			input: { dietaryNotes: 'Severe sesame allergy' },
+		})
 		const fullHistory = await call(
 			'GET',
 			`/operator/reservations/book/reservations/${bookedId}/events`,
@@ -514,6 +530,40 @@ describe('Station host stand contract', () => {
 
 		// Every read a till can reach, with ids that exist: no full number, no
 		// email, no allergy or dietary note, no card detail, without guest details.
+		// A card on file for Maya, so there is something to leak.
+		await (await getTenantDb(ORG_A)).insert(rsvPayments).values({
+			id: 'pay_station_contract',
+			locationId: PUBLIC_LOC,
+			reservationId: bookedId,
+			provider: 'stripe',
+			kind: 'card_setup',
+			status: 'succeeded',
+			cardBrand: 'visa',
+			cardLast4: '4242',
+			paymentMethodRef: 'pm_station_contract',
+			idempotencyKey: 'station-contract-card',
+		})
+		// A booking with a card on file is a manager's to cancel or mark no-show:
+		// either moves money.
+		await (
+			await getTenantDb(ORG_A)
+		)
+			.update(rsvReservations)
+			.set({ paymentStatus: 'guaranteed' })
+			.where(eq(rsvReservations.id, bookedId))
+		for (const toStatus of ['cancelled', 'no_show']) {
+			const refused = await call(
+				'POST',
+				`/operator/reservations/book/reservations/${bookedId}/status`,
+				{
+					authorization: `Bearer ${plain.body.token}`,
+					'Idempotency-Key': `station-contract-${toStatus}`,
+				},
+				{ toStatus },
+			)
+			expect(refused.status, refused.text).toBe(409)
+			expect(refused.body.error).toBe('manager_required')
+		}
 		const waitingId = waiting.body.entry?.id ?? waiting.body.id
 		const fill = (route: string) =>
 			route
@@ -530,19 +580,23 @@ describe('Station host stand contract', () => {
 			.map((r) => r.path)
 		expect(reads.length).toBeGreaterThan(5)
 		for (const route of new Set(reads)) {
-			const url = `/operator/reservations${fill(route)}?locationId=${PUBLIC_LOC}&date=${tomorrow}`
+			const url = `/operator/reservations${fill(route)}?locationId=${PUBLIC_LOC}&date=${tomorrow}&partySize=2`
 			const reply = await call('GET', url, {
 				authorization: `Bearer ${plain.body.token}`,
 			})
-			expect(reply.status, `${route}: ${reply.text}`).toBeLessThan(500)
+			// The till's own reads answer; anything else is refused outright.
+			if (stationMayCall('GET', `/operator/reservations${fill(route)}`))
+				expect(reply.status, `${route}: ${reply.text}`).toBe(200)
+			else expect(reply.status, `${route}: ${reply.text}`).toBe(403)
 			for (const secret of [
 				'+14155550111',
 				'14155550111',
 				'@example.com',
 				'Peanuts',
 				'sesame',
-				'last4',
-				'paymentMethodRef',
+				'4242',
+				'cardLast4',
+				'pm_station_contract',
 			])
 				expect(reply.text, `${route} leaks ${secret}`).not.toContain(secret)
 		}

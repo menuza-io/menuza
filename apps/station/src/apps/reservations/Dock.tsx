@@ -3,7 +3,9 @@ import { useLingui } from '@lingui/react'
 import { type WaitlistEntry } from '@repo/reservations'
 import {
 	BellRing,
+	Cake,
 	Clock3,
+	Crown,
 	Info,
 	TriangleAlert,
 	UserX,
@@ -16,6 +18,10 @@ import {
 	type DayReservation,
 } from './feed.ts'
 import { cn } from '~/ui/primitives.tsx'
+
+/** A guest the restaurant tagged as a VIP (the tag's own name, in any case). */
+const isVip = (r: DayReservation) =>
+	(r.guest?.tags ?? []).some((tag) => /\bvip\b/i.test(tag.name))
 
 /** What the host has picked up to place on the floor. */
 export type Placing =
@@ -102,6 +108,7 @@ export function Dock({
 					const here = isWaitingAtStand(reservation)
 					// The guest said they are running late (by text or a call).
 					const runningLate = reservation.runningLateMin ?? 0
+					const occasion = reservation.occasion ?? ''
 					return (
 						<li key={reservation.id} className="shrink-0">
 							<div
@@ -135,6 +142,18 @@ export function Dock({
 											<TriangleAlert
 												className="text-warning size-3.5"
 												aria-label={_(t`Allergy noted`)}
+											/>
+										) : null}
+										{isVip(reservation) ? (
+											<Crown
+												className="text-primary size-3.5"
+												aria-label={_(t`VIP`)}
+											/>
+										) : null}
+										{reservation.occasion ? (
+											<Cake
+												className="text-primary size-3.5"
+												aria-label={_(t`Occasion: ${occasion}`)}
 											/>
 										) : null}
 									</span>

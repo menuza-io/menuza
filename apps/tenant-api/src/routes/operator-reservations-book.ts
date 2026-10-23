@@ -1162,6 +1162,26 @@ operatorReservationsBookRoutes.get(
 	},
 )
 
+/**
+ * Allergy and dietary notes are health details: someone who cannot read them
+ * (a host at a till without guest details, a member without the guest
+ * permission) cannot overwrite or clear them either.
+ */
+function healthNotesDenied(
+	ctx: ReservationsAuthContext,
+	input: { dietaryNotes?: unknown },
+): Response | null {
+	if (input.dietaryNotes === undefined) return null
+	if (canReadGuests(ctx)) return null
+	return json(
+		{
+			error: 'guest_permission_required',
+			message: 'Only someone who can see allergy notes can change them.',
+		},
+		403,
+	)
+}
+
 /** What a reservation's detail may include for this caller. */
 function detailAccess(ctx: ReservationsAuthContext) {
 	const canReadGuestSensitive = hasReservationsGrant(
@@ -1262,6 +1282,8 @@ operatorReservationsBookRoutes.patch(
 
 		const parsed = await parseBody(c, patchReservationSchema)
 		if ('error' in parsed) return parsed.error
+		const notesDenied = healthNotesDenied(ctx, parsed.data)
+		if (notesDenied) return notesDenied
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(
@@ -1385,6 +1407,35 @@ operatorReservationsBookRoutes.post(
 			parsed.data.locationId ?? c.req.query('locationId'),
 		)
 		if (!locCheck.ok) return locCheck.response
+
+		const target = parsed.data.status ?? parsed.data.toStatus ?? ''
+		// A till's host does not touch money: cancelling or marking a no-show on
+		// a booking with a deposit or card on file refunds or charges it, so that
+		// is a manager's call in the app.
+		if (
+			ctx.channel === 'station' &&
+			(target === 'cancelled' || target === 'no_show') &&
+			!hasReservationsGrant(
+				ctx,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+			)
+		) {
+			const db = await getTenantDb(ctx.orgId)
+			const [row] = await db
+				.select({ paymentStatus: rsvReservations.paymentStatus })
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, rsvId))
+				.limit(1)
+			if (row && row.paymentStatus !== 'none')
+				return json(
+					{
+						error: 'manager_required',
+						message:
+							'This booking has a payment on it. A manager cancels it in the app.',
+					},
+					409,
+				)
+		}
 
 		try {
 			const result = await transitionReservationStatus({
@@ -1682,6 +1733,8 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, notesUpdateSchema)
 		if ('error' in parsed) return parsed.error
+		const notesDenied = healthNotesDenied(ctx, parsed.data)
+		if (notesDenied) return notesDenied
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(

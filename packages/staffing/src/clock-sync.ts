@@ -24,6 +24,13 @@ export const MAX_SYNC_ATTEMPTS = 8
  */
 export const MAX_PENDING_AGE_MS = 48 * 60 * 60 * 1000
 
+/**
+ * A punch the server keeps failing on with its own error (a 500 with a code:
+ * it judged the punch and broke, as opposed to being down) is set aside after
+ * `MAX_SYNC_ATTEMPTS` tries once it is this old, so a manager sees it.
+ */
+export const POISON_MIN_AGE_MS = 30 * 60 * 1000
+
 export type SyncOutcome = {
 	synced: number
 	failed: number
@@ -52,7 +59,14 @@ export async function syncQueue(deps: {
 		remaining: 0,
 	}
 
+	/**
+	 * People whose earlier punch is still waiting: their later punches wait
+	 * too (order matters per person), but nobody else's do. A punch that does
+	 * not say whose it is might be anyone's, so it waits behind any of them.
+	 */
+	const held = new Set<string>()
 	for (const item of await queue.pending()) {
+		if (held.size > 0 && (!item.staffId || held.has(item.staffId))) continue
 		let pin: string
 		try {
 			pin = await queue.readPin(item)
@@ -93,17 +107,27 @@ export async function syncQueue(deps: {
 				}
 				if (error.transient) {
 					await queue.recordAttempt(item.id)
+					const tries = item.attempts + 1
+					const age = now() - item.createdAt
+					// The server is down or limiting: everything would fail, so stop.
+					const outage = error.status !== 500
 					if (
-						item.attempts + 1 >= MAX_SYNC_ATTEMPTS &&
+						tries >= MAX_SYNC_ATTEMPTS &&
 						error.status >= 500 &&
-						now() - item.createdAt > MAX_PENDING_AGE_MS
+						(age > MAX_PENDING_AGE_MS || (!outage && age > POISON_MIN_AGE_MS))
 					) {
-						await queue.markFailed(item.id, 'server_unavailable')
+						await queue.markFailed(
+							item.id,
+							outage ? 'server_unavailable' : 'server_error',
+						)
 						outcome.failed += 1
 						continue
 					}
 					outcome.retryAfterSeconds = error.retryAfterSeconds || null
-					break
+					if (outage || !item.staffId) break
+					// The server broke on this one punch: hold this person's, send the rest.
+					held.add(item.staffId)
+					continue
 				}
 				await queue.markFailed(item.id, error.code)
 				outcome.failed += 1

@@ -146,6 +146,28 @@ export function TimeClock({
 		return () => window.clearInterval(timer)
 	}, [refreshWaiting])
 
+	// Focus follows the page: back on the pad, the clock itself takes the keys;
+	// on the next page, its first button (focus would otherwise fall to nowhere
+	// as the pad it was on goes inert).
+	const rootRef = useRef<HTMLDivElement>(null)
+	const pageTwoRef = useRef<HTMLDivElement>(null)
+	const onPad = flow.screen === 'pin'
+	useEffect(() => {
+		const frame = requestAnimationFrame(() => {
+			if (onPad) rootRef.current?.focus({ preventScroll: true })
+			else {
+				// The main action (never "Not me", so Enter does the expected thing).
+				const page = pageTwoRef.current
+				const target =
+					page?.querySelector<HTMLElement>(
+						'[data-autofocus]:not([disabled])',
+					) ?? page?.querySelector<HTMLElement>('button:not([disabled])')
+				target?.focus({ preventScroll: true })
+			}
+		})
+		return () => cancelAnimationFrame(frame)
+	}, [onPad, flow.screen, pickingBreak])
+
 	// The break choice belongs to one person's actions screen, never the next one's.
 	useEffect(() => {
 		if (flow.screen !== 'actions') setPickingBreak(false)
@@ -372,7 +394,10 @@ export function TimeClock({
 
 	return (
 		<div
-			className="bg-background flex min-h-0 flex-1 flex-col lg:flex-row"
+			ref={rootRef}
+			// Focusable, so a USB keypad or badge reader keeps typing PINs after each person.
+			tabIndex={-1}
+			className="bg-background flex min-h-0 flex-1 flex-col outline-none lg:flex-row"
 			onPointerDown={() => setTouched((n) => n + 1)}
 			onKeyDown={(event) => {
 				setTouched((n) => n + 1)
@@ -446,6 +471,7 @@ export function TimeClock({
 						)}
 					</div>
 					<div
+						ref={pageTwoRef}
 						className="t-page"
 						data-page-id="2"
 						inert={flow.screen === 'pin'}
@@ -763,6 +789,7 @@ function EventTile({
 		<button
 			type="button"
 			disabled={busy}
+			data-autofocus={primary || undefined}
 			onClick={() => onChoose(event)}
 			className={cn(
 				'flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-start transition active:scale-[0.97] disabled:opacity-50',
@@ -1295,6 +1322,7 @@ function Done({
 			<Button
 				variant="outline"
 				size="lg"
+				data-autofocus
 				className="t-stagger-line t-stagger-line--3 mt-2"
 				onClick={onFinish}
 			>

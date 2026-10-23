@@ -357,8 +357,15 @@ checks the person is still active there, on the host roster, and has not had
 their PIN reset or cleared since, and mints the same `rsv+jwt` App mints for an
 operator, for:
 
-- the `book` scope only (the day of service and the waitlist), at the terminal's
-  own location only, never the guestbook (`/book/guests/*`);
+- the `book` scope only, at the terminal's own location only, and within it only
+  what the till does (`STATION_ROUTES` in `lib/reservations-guard.ts`): the day,
+  availability, the waitlist and its quote, a booking's detail and history, new
+  bookings and walk-ins, status, table, undo and running late, and waitlist add,
+  text, seat and leave. Everything else (the guestbook, resending messages,
+  approving requests, service notes, sections) answers 403 `not_for_station`.
+  Cancelling or marking a no-show on a booking with a payment on it moves money,
+  so it answers 409 `manager_required` without the payment grant. Nobody who
+  cannot read allergy notes can change them;
 - host grants (`read`/`update:reservation`) for people on the **host roster**
   (`pos_hosts`, migration `0023_station_hosts`; Settings, Terminals, the staff
   list), plus guest details (`read:reservation_guest`: phones, emails,

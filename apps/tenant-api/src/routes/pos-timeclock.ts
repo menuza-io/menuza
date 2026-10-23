@@ -21,6 +21,7 @@ import {
 	defaultPunchDeps,
 	describeClockState,
 	processPunch,
+	replayRecordedPunch,
 	type PunchDeps,
 } from '../services/punch-service.ts'
 import { scheduleSeam } from '../services/schedule-seam.ts'
@@ -195,6 +196,14 @@ posTimeclockRoutes.post(
 		// One punch at a time per organization on this process; the unique
 		// indexes arbitrate across processes and Durable Object instances.
 		return runExclusive(pos.orgId, async () => {
+			// Recorded already (the answer was lost): the same answer, whatever the PIN is now.
+			const recorded = await replayRecordedPunch(
+				pos.db,
+				pos.device.id,
+				request,
+				posTimeclockDeps.punch.now(),
+			)
+			if (recorded) return json(recorded.result)
 			const verified = await verifyPosPin(
 				pos.db,
 				{ orgId: pos.orgId, device: pos.device, pin: request.pin },

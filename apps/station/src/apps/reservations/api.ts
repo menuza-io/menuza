@@ -5,7 +5,9 @@ import {
 import {
 	waitlistEntryResponseSchema,
 	waitlistListingSchema,
+	waitlistQuoteSchema,
 	type WaitlistListing,
+	type WaitlistQuote,
 } from '@repo/reservations'
 import { z } from 'zod'
 import {
@@ -341,6 +343,34 @@ export function createHostApi(deps: HostDeps) {
 					...options,
 				},
 			)
+		},
+
+		/** The guest called: they will be this many minutes late (0 clears it). */
+		runningLate(
+			reservationId: string,
+			minutes: number,
+			expectedVersion: number,
+		) {
+			return write(
+				`/reservations/${encodeURIComponent(reservationId)}/running-late`,
+				{ runningLateMin: minutes, expectedVersion },
+			)
+		},
+
+		/** How long a party of this size would wait now, to tell them before they join. */
+		async waitlistQuote(partySize: number): Promise<WaitlistQuote> {
+			const query = new URLSearchParams({
+				locationId: await locationId(),
+				partySize: String(partySize),
+			})
+			const result = await call(
+				'GET',
+				`/waitlist/quote?${query}`,
+				waitlistQuoteSchema,
+			)
+			if ('unchanged' in result)
+				throw new HostApiError(502, 'malformed_response')
+			return result.data
 		},
 
 		/** Steps the last status change back (seated to arrived, finished to seated). */
