@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import './motion.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -63,5 +64,176 @@
 	}
 	body {
 		@apply bg-background text-foreground;
+	}
+	:where(
+		a,
+		button,
+		summary,
+		input,
+		select,
+		textarea,
+		[tabindex]
+	):focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 3px;
+	}
+	::selection {
+		background-color: color-mix(in oklch, var(--primary) 24%, transparent);
+	}
+	:where(input, textarea) {
+		caret-color: var(--primary);
+	}
+	:where(button, summary, a) {
+		-webkit-tap-highlight-color: transparent;
+	}
+	:where(button:not(:disabled), summary) {
+		cursor: pointer;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+ * Shared controls. Everything here derives from the org theme tokens, so every
+ * palette and every `--radius` (pill to square) gets matching buttons, fields
+ * and floating layers.
+ * ------------------------------------------------------------------------- */
+
+:root {
+	/* Neutral elevation for floating layers. */
+	--elev-3: 0 12px 32px -8px oklch(0 0 0 / 0.22), 0 4px 8px oklch(0 0 0 / 0.06);
+}
+
+.dark {
+	--elev-3: 0 16px 40px -8px oklch(0 0 0 / 0.6);
+}
+
+/* One focus treatment for interactive elements that set their own shape. */
+@utility focus-ring {
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* Flat surface at rest: the default container for cards and sections. */
+@utility surface {
+	background-color: var(--card);
+	color: var(--card-foreground);
+	border: 1px solid var(--border);
+	border-radius: calc(var(--radius) + 4px);
+}
+
+/* Floating layers: modal, drawer, popovers. */
+@utility surface-overlay {
+	background-color: var(--card);
+	color: var(--card-foreground);
+	box-shadow: var(--elev-3);
+	outline: 1px solid color-mix(in oklch, var(--foreground) 6%, transparent);
+	outline-offset: -1px;
+}
+
+/* Primary CTA: 48px, org radius, used once per view. */
+@utility btn-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-height: 3rem;
+	padding-inline: 1.5rem;
+	border-radius: var(--radius);
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+	font-size: 1rem;
+	font-weight: 600;
+	transition:
+		background-color 160ms ease-out,
+		transform 120ms ease-out,
+		opacity 160ms ease-out;
+	@media (hover: hover) {
+		&:hover:not(:disabled, [aria-disabled='true']) {
+			background-color: color-mix(
+				in oklch,
+				var(--primary) 90%,
+				var(--foreground)
+			);
+		}
+	}
+	&:active:not(:disabled, [aria-disabled='true']) {
+		transform: scale(0.985);
+	}
+	&:is(:disabled, [aria-disabled='true']) {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		&:active:not(:disabled, [aria-disabled='true']) {
+			transform: none;
+		}
+	}
+}
+
+/* Secondary button: outline, org radius. */
+@utility btn-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-height: 2.75rem;
+	padding-inline: 1.25rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	background-color: var(--background);
+	color: var(--foreground);
+	font-size: 0.875rem;
+	font-weight: 600;
+	transition: background-color 160ms ease-out;
+	@media (hover: hover) {
+		&:hover:not(:disabled) {
+			background-color: var(--muted);
+		}
+	}
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	&:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+}
+
+/* 48px form field; 16px text so iOS does not zoom. */
+@utility field {
+	display: block;
+	width: 100%;
+	min-height: 3rem;
+	padding: 0.625rem 0.875rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--input);
+	background-color: var(--background);
+	color: var(--foreground);
+	font-size: 1rem;
+	line-height: 1.5rem;
+	transition:
+		border-color 160ms ease-out,
+		box-shadow 160ms ease-out;
+	&::placeholder {
+		color: var(--muted-foreground);
+	}
+	&:focus-visible {
+		outline: none;
+		border-color: var(--ring);
+		box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 35%, transparent);
+	}
+	&[aria-invalid='true'] {
+		border-color: var(--destructive);
+	}
+	&:disabled {
+		background-color: var(--muted);
+		color: var(--muted-foreground);
+		cursor: not-allowed;
 	}
 }

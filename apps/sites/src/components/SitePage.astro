@@ -2,7 +2,7 @@
 import {
 	getLocaleHref,
 	getSiteLocaleDirection,
-	getSiteLocaleLabel,
+	getSiteLocaleNativeLabel,
 } from '@repo/common/site-locales'
 import AnnouncementBanners from '~/components/AnnouncementBanners.astro'
 import SiteFooter from '~/components/SiteFooter.astro'
@@ -56,7 +56,7 @@ const defaultLocale =
 	organization.defaultLocale ?? Astro.locals.defaultLocale ?? 'en'
 const localeLinks: SiteLocaleLink[] = locales.map((locale) => ({
 	code: locale,
-	label: getSiteLocaleLabel(locale),
+	label: getSiteLocaleNativeLabel(locale),
 	href: getLocaleHref(
 		Astro.url.pathname,
 		locale,
@@ -166,6 +166,7 @@ const alternateLinks = [
 								if (currentContainer && newContainer) {
 									// Use replaceChildren with cloned nodes instead of innerHTML
 									currentContainer.replaceChildren(...Array.from(newContainer.cloneNode(true).childNodes));
+									document.dispatchEvent(new Event('sites:content-updated'));
 								}
 							} catch (err) {
 								console.error('Failed to update preview', err);

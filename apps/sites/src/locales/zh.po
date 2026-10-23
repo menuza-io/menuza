@@ -189,6 +189,10 @@ msgid "Logout"
 msgstr "退出"
 
 #: src/components/SiteHeader.astro.ts:3
+msgid "Menu"
+msgstr "菜单"
+
+#: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "移动端"
 
@@ -227,10 +231,6 @@ msgstr "暂无已保存的支付方式。"
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Online applications are not available right now. Ask a team member."
 msgstr "目前无法在线申请。请询问店内的团队成员。"
-
-#: src/components/SiteHeader.astro.ts:3
-msgid "Open menu"
-msgstr "打开菜单"
 
 #: src/pages/careers/index.astro.ts:3
 msgid "Open positions at {name}"

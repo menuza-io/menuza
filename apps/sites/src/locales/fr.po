@@ -189,6 +189,10 @@ msgid "Logout"
 msgstr "Déconnexion"
 
 #: src/components/SiteHeader.astro.ts:3
+msgid "Menu"
+msgstr "Menu"
+
+#: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "Mobile"
 
@@ -227,10 +231,6 @@ msgstr "Aucun moyen de paiement enregistré pour le moment."
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Online applications are not available right now. Ask a team member."
 msgstr "Les candidatures en ligne ne sont pas disponibles pour le moment. Adressez-vous à un membre de l'équipe."
-
-#: src/components/SiteHeader.astro.ts:3
-msgid "Open menu"
-msgstr "Ouvrir le menu"
 
 #: src/pages/careers/index.astro.ts:3
 msgid "Open positions at {name}"

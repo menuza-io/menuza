@@ -37,10 +37,10 @@ const navItems = [
 
 function navClass(active: boolean) {
 	return [
-		'flex min-h-10 items-center gap-2.5 rounded-[calc(var(--radius)*0.7)] px-3 py-2 text-sm font-medium transition-colors',
+		'focus-ring flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors',
 		active
 			? 'bg-background text-foreground shadow-sm ring-1 ring-border lg:bg-muted'
-			: 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+			: 'text-muted-foreground hover:text-foreground',
 	].join(' ')
 }
 ---
@@ -61,6 +61,7 @@ function navClass(active: boolean) {
 			aria-label={accountSettings}
 		>
 			<ul
+				data-fluid-nav="xy"
 				class="flex gap-1 overflow-x-auto border-b border-border pb-px lg:flex-col lg:gap-0.5 lg:overflow-visible lg:rounded-xl lg:border lg:border-border lg:bg-muted/20 lg:p-1.5 lg:pb-1.5"
 				role="list"
 			>

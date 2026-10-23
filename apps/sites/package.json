@@ -20,6 +20,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",
     "@astrojs/partytown": "^2.1.7",
+    "@hugeicons/core-free-icons": "^4.3.5",
     "@lingui/core": "^5.8.0",
     "@lingui/message-utils": "^5.8.0",
     "@repo/common": "*",

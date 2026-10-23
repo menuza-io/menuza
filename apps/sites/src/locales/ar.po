@@ -189,6 +189,10 @@ msgid "Logout"
 msgstr "تسجيل الخروج"
 
 #: src/components/SiteHeader.astro.ts:3
+msgid "Menu"
+msgstr "القائمة"
+
+#: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "الجوال"
 
@@ -227,10 +231,6 @@ msgstr "لا توجد بطاقات محفوظة بعد."
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Online applications are not available right now. Ask a team member."
 msgstr "التقديم عبر الإنترنت غير متاح حاليًا. اسأل أحد أفراد الفريق."
-
-#: src/components/SiteHeader.astro.ts:3
-msgid "Open menu"
-msgstr "فتح القائمة"
 
 #: src/pages/careers/index.astro.ts:3
 msgid "Open positions at {name}"

@@ -189,6 +189,10 @@ msgid "Logout"
 msgstr "Cerrar sesión"
 
 #: src/components/SiteHeader.astro.ts:3
+msgid "Menu"
+msgstr "Menú"
+
+#: src/components/SiteHeader.astro.ts:3
 msgid "Mobile"
 msgstr "Móvil"
 
@@ -227,10 +231,6 @@ msgstr "Aún no hay métodos de pago guardados."
 #: src/components/careers/ApplyPanel.astro.ts:3
 msgid "Online applications are not available right now. Ask a team member."
 msgstr "Las solicitudes en línea no están disponibles ahora. Pregunta a un miembro del equipo."
-
-#: src/components/SiteHeader.astro.ts:3
-msgid "Open menu"
-msgstr "Abrir menú"
 
 #: src/pages/careers/index.astro.ts:3
 msgid "Open positions at {name}"
