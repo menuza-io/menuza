@@ -1,3 +1,4 @@
+import { createOverlayMotion } from '../site-motion.ts'
 import { newLineId } from './cart-store.ts'
 import { remainingFor } from './constraints.ts'
 import { el, icon, lockScroll, prefersReducedMotion, trapFocus } from './dom.ts'
@@ -112,6 +113,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 	if (!dialog || !groupsEl || !variationsEl || !addBtn) {
 		throw new Error('ItemModal markup is missing required elements')
 	}
+	const motion = createOverlayMotion(root, dialog)
 
 	let item: OrderingItem | null = null
 	let opener: HTMLElement | null = null
@@ -979,9 +981,11 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		refreshCap()
 		updateAddButton()
 
-		root.classList.remove('hidden')
-		releaseScroll = lockScroll()
-		releaseTrap = trapFocus(dialog!)
+		if (!motion.isOpen()) {
+			releaseScroll = lockScroll()
+			releaseTrap = trapFocus(dialog!)
+		}
+		motion.open()
 		document.addEventListener('keydown', onKeydown)
 		dialog!.scrollTop = 0
 		dialog!
@@ -993,8 +997,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 	}
 
 	function close() {
-		if (root.classList.contains('hidden')) return
-		root.classList.add('hidden')
+		if (!motion.isOpen()) return
 		releaseTrap?.()
 		releaseTrap = null
 		releaseScroll?.()
@@ -1005,6 +1008,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 		item = null
 		opener = null
 		if (target && target.isConnected) target.focus({ preventScroll: true })
+		motion.close()
 	}
 
 	closeBtn?.addEventListener('click', close)
@@ -1026,7 +1030,7 @@ export function createItemModal(options: ItemModalOptions): ItemModal {
 	return {
 		open,
 		close,
-		isOpen: () => !root.classList.contains('hidden'),
+		isOpen: motion.isOpen,
 		openFromUrl() {
 			if (!syncUrl) return false
 			const id = new URL(window.location.href).searchParams.get('item')

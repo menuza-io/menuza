@@ -62,6 +62,135 @@
 	--font-heading: var(--pos-heading-font);
 }
 
+/* Every `transition` utility (hover, press, colour) runs on the motion scale below. */
+@theme {
+	--default-transition-duration: var(--duration-quick);
+	--default-transition-timing-function: var(--ease-smooth-out);
+}
+
+/*
+ * Motion scale (transitions.dev tokens). Components reference these by usage,
+ * never by a nearby number: a dialog opens on --duration-fast and closes on
+ * --duration-quick, whatever it measures.
+ */
+:root {
+	/* Durations */
+	--duration-stagger: 40ms; /* per-item stagger offset */
+	--duration-micro: 80ms; /* tooltip/path delay, shake segment */
+	--duration-quick: 150ms; /* modal/dropdown close, text swap, press */
+	--duration-fast: 250ms; /* modal open, tabs sliding, page slide */
+	--duration-medium: 350ms; /* panel close, toast close */
+	--duration-slow: 400ms; /* panel open, skeleton content reveal */
+	--duration-very-slow: 500ms; /* emphasis: badge appear, success check */
+	/* Easings */
+	--ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-in-out: ease-in-out;
+	--ease-out: ease-out;
+	--ease-linear: linear;
+	--ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+	--ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1);
+	/* Distances */
+	--distance-micro: 4px;
+	--distance-small: 6px;
+	--distance-base: 8px;
+	--distance-medium: 12px;
+	--distance-large: 30px;
+	/* Scales */
+	--scale-large: 0.96;
+	--scale-medium: 0.97;
+	--scale-small: 0.98;
+	--scale-tiny: 0.99;
+	/* Blur */
+	--blur-small: 2px;
+	--blur-medium: 3px;
+	--blur-large: 8px;
+
+	/* Modal open / close */
+	--modal-open-dur: var(--duration-fast);
+	--modal-close-dur: var(--duration-quick);
+	--modal-scale: var(--scale-large);
+	--modal-scale-close: var(--scale-large);
+	--modal-ease: var(--ease-smooth-out);
+	/* Phones get full-screen sheets: they rise instead of scaling. */
+	--sheet-distance: var(--distance-medium);
+
+	/* Tabs sliding (segmented controls) */
+	--tabs-dur: var(--duration-fast);
+	--tabs-ease: var(--ease-smooth-out);
+	--tabs-pill-bg: var(--card);
+
+	/* Number pop-in (totals, quantities, keypad readouts) */
+	--digit-dur: var(--duration-very-slow);
+	--digit-distance: var(--distance-base);
+	--digit-stagger: var(--duration-stagger);
+	--digit-blur: var(--blur-small);
+	--digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+	--digit-dir-x: 0;
+	--digit-dir-y: 1;
+
+	/* Notification badge (open tabs, in-order counts) */
+	--badge-slide-dur: 260ms;
+	--badge-pop-dur: var(--duration-very-slow);
+	--badge-pop-close-dur: var(--duration-quick);
+	--badge-fade-dur: var(--duration-slow);
+	--badge-fade-close-dur: var(--duration-quick);
+	--badge-blur: var(--blur-small);
+	/* Straight up rather than diagonal, so it reads the same right to left. */
+	--badge-offset-x: 0px;
+	--badge-offset-y: var(--distance-base);
+	--badge-slide-ease: var(--ease-smooth-out);
+	--badge-pop-ease: var(--ease-bounce);
+	--badge-close-ease: var(--ease-smooth-out);
+
+	/* Success check (payment taken) */
+	--check-opacity-dur: var(--duration-very-slow);
+	--check-rotate-dur: var(--duration-very-slow);
+	--check-rotate-from: 80deg;
+	--check-bob-dur: var(--duration-very-slow);
+	--check-y-amount: var(--distance-large);
+	--check-blur-dur: var(--duration-very-slow);
+	--check-blur-from: var(--blur-large);
+	--check-path-dur: var(--duration-very-slow);
+	--check-path-delay: var(--duration-micro);
+	--check-ease-out: var(--ease-smooth-out);
+	--check-ease-opacity: var(--ease-smooth-out);
+	--check-ease-rotate: var(--ease-smooth-out);
+	--check-ease-bob: cubic-bezier(0.34, 1.35, 0.64, 1);
+	--check-ease-path: var(--ease-smooth-out);
+
+	/* Checkbox check */
+	--check-box: var(--duration-quick);
+	--check-draw: 350ms;
+	--check-delay: 0ms;
+	--check-uncheck: var(--duration-quick);
+	--check-ease: var(--ease-smooth-out);
+
+	/* Error shake (wrong PIN) */
+	--shake-distance: var(--distance-small);
+	--shake-overshoot: var(--distance-micro);
+	--shake-dur-a: var(--duration-micro);
+	--shake-dur-b: 60ms;
+	--shake-ease: var(--ease-smooth-out);
+
+	/* Accordion expand (status banners) */
+	--acc-expand: var(--duration-fast);
+	--acc-collapse: var(--duration-fast);
+	--acc-ease: var(--ease-smooth-out);
+
+	/* Skeleton loader and reveal (first menu load) */
+	--pulse-dur: 1000ms;
+	--pulse-count: infinite;
+	--pulse-min: 0.5;
+	--reveal-dur: var(--duration-slow);
+	--reveal-blur: var(--blur-small);
+	--reveal-ease: var(--ease-in-out);
+
+	/* Shimmer text (loading labels) */
+	--shimmer-dur: 2000ms;
+	--shimmer-band: 400%;
+	--shimmer-ease: var(--ease-linear);
+}
+
 /* Status colours lean toward the brand so they sit inside any palette. */
 :root {
 	--success: color-mix(in oklch, oklch(0.49 0.13 155) 80%, var(--primary));
@@ -74,6 +203,9 @@
 	);
 	--elev-2: 0 1px 2px oklch(0 0 0 / 0.04), 0 8px 20px -6px oklch(0 0 0 / 0.1);
 	--elev-3: 0 -12px 40px -8px oklch(0 0 0 / 0.25);
+	/* Loading labels sweep from the secondary text colour to the main one. */
+	--shimmer-base: var(--pos-muted-foreground);
+	--shimmer-highlight: var(--foreground);
 	--pos-body-font:
 		ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 	--pos-heading-font: var(--pos-body-font);
@@ -116,6 +248,15 @@ html[data-heading-font='custom'] {
 		user-select: text;
 		-webkit-user-select: text;
 		caret-color: var(--primary);
+	}
+	/* Scrollbars (desktop tills, long sheets) take the palette, not the browser grey. */
+	html {
+		scrollbar-color: color-mix(
+				in oklch,
+				var(--muted-foreground) 45%,
+				transparent
+			)
+			transparent;
 	}
 	::selection {
 		color: var(--primary-foreground);
@@ -180,41 +321,520 @@ html[data-heading-font='custom'] {
 	font-variant-numeric: tabular-nums slashed-zero;
 	letter-spacing: -0.02em;
 }
-@keyframes sheet-up {
-	from {
-		transform: translateY(24px);
+/*
+ * Motion. Snippets from transitions.dev (the `t-*` classes), tuned through the
+ * tokens above, plus a few Station-specific pieces. They sit in the components
+ * layer so a Tailwind utility on the same element (position, radius, colour)
+ * still wins.
+ */
+@layer components {
+	/* ── Modal open / close ─────────────────────────────────────────────── */
+	.t-modal {
+		transform-origin: center;
+		transform: scale(var(--modal-scale));
 		opacity: 0;
+		pointer-events: none;
+		transition:
+			transform var(--modal-open-dur) var(--modal-ease),
+			opacity var(--modal-open-dur) var(--modal-ease);
+		will-change: transform, opacity;
 	}
-	to {
-		transform: none;
+	.t-modal.is-open {
+		transform: scale(1);
+		opacity: 1;
+		pointer-events: auto;
+	}
+	.t-modal.is-closing {
+		transform: scale(var(--modal-scale-close));
+		opacity: 0;
+		pointer-events: none;
+		/* The dialog is already closed (the till is usable again at once); these keep it
+		   painted in the top layer while it fades. Browsers without them just hide it. */
+		transition:
+			transform var(--modal-close-dur) var(--modal-ease),
+			opacity var(--modal-close-dur) var(--modal-ease),
+			display var(--modal-close-dur) allow-discrete,
+			overlay var(--modal-close-dur) allow-discrete;
+	}
+	.t-modal::backdrop {
+		opacity: 0;
+		transition: opacity var(--modal-open-dur) var(--modal-ease);
+	}
+	.t-modal.is-open::backdrop {
 		opacity: 1;
 	}
-}
-@keyframes fade-in {
-	from {
+	.t-modal.is-closing::backdrop {
 		opacity: 0;
+		transition:
+			opacity var(--modal-close-dur) var(--modal-ease),
+			display var(--modal-close-dur) allow-discrete,
+			overlay var(--modal-close-dur) allow-discrete;
 	}
-}
-@keyframes pop {
-	from {
-		transform: scale(0.94);
-		opacity: 0;
+	/* Full-screen sheets (every dialog on a phone, Orders everywhere) rise instead. */
+	.t-modal[data-sheet='true'],
+	.t-modal[data-sheet='true'].is-closing {
+		transform: translateY(var(--sheet-distance));
 	}
-	to {
+	.t-modal[data-sheet='true'].is-open {
 		transform: none;
+	}
+	@media (max-width: 39.99rem) {
+		.t-modal,
+		.t-modal.is-closing {
+			transform: translateY(var(--sheet-distance));
+		}
+		.t-modal.is-open {
+			transform: none;
+		}
+	}
+
+	/* ── Tabs sliding (segmented controls) ──────────────────────────────── */
+	.t-tab {
+		transition: color var(--tabs-dur) var(--tabs-ease);
+	}
+	.t-tabs-pill {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 0;
+		background: var(--tabs-pill-bg);
+		transform: translateX(0);
+		transition:
+			transform var(--tabs-dur) var(--tabs-ease),
+			width var(--tabs-dur) var(--tabs-ease);
+		will-change: transform, width;
+		z-index: 0;
+		pointer-events: none;
+	}
+
+	/* ── Number pop-in ──────────────────────────────────────────────────── */
+	@keyframes t-digit-pop-in {
+		0% {
+			transform: translate(
+				calc(var(--digit-distance) * var(--digit-dir-x)),
+				calc(var(--digit-distance) * var(--digit-dir-y))
+			);
+			opacity: 0;
+			filter: blur(var(--digit-blur));
+		}
+		100% {
+			transform: translate(0, 0);
+			opacity: 1;
+			filter: blur(0);
+		}
+	}
+	.t-digit-group {
+		display: inline-flex;
+		align-items: baseline;
+	}
+	.t-digit {
+		display: inline-block;
+		/* A space inside a formatted amount (12,50 €) keeps its width. */
+		white-space: pre;
+		will-change: transform, opacity, filter;
+	}
+	.t-digit::before {
+		content: attr(data-char);
+	}
+	.t-digit-group.is-animating .t-digit {
+		animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) both;
+	}
+	.t-digit-group.is-animating .t-digit[data-stagger='1'] {
+		animation-delay: var(--digit-stagger);
+	}
+	.t-digit-group.is-animating .t-digit[data-stagger='2'] {
+		animation-delay: calc(var(--digit-stagger) * 2);
+	}
+	/* Digits the old and new number share stay still; only the changed ones pop. */
+	.t-digit-group.is-animating .t-digit[data-same] {
+		animation: none;
+	}
+
+	/* ── Notification badge ─────────────────────────────────────────────── */
+	@keyframes t-badge-slide-in {
+		from {
+			transform: translate(var(--badge-offset-x), var(--badge-offset-y));
+		}
+		to {
+			transform: translate(0, 0);
+		}
+	}
+	.t-badge {
+		pointer-events: none;
+		will-change: transform;
+	}
+	.t-badge[data-open='true'] {
+		animation: t-badge-slide-in var(--badge-slide-dur) var(--badge-slide-ease);
+	}
+	.t-badge-dot {
+		display: block;
+		transform-origin: center;
+		transform: scale(1);
 		opacity: 1;
+		filter: blur(0);
+		transition:
+			transform var(--badge-pop-dur) var(--badge-pop-ease),
+			opacity var(--badge-fade-dur) var(--badge-pop-ease),
+			filter var(--badge-pop-dur) var(--badge-pop-ease);
+		will-change: transform, opacity, filter;
+	}
+	/* Badges mount when their count appears: start the pop from closed. */
+	@starting-style {
+		.t-badge[data-open='true'] .t-badge-dot {
+			transform: scale(0);
+			opacity: 0;
+			filter: blur(var(--badge-blur));
+		}
+	}
+	.t-badge[data-open='false'] .t-badge-dot {
+		transform: scale(0);
+		opacity: 0;
+		filter: blur(var(--badge-blur));
+		transition:
+			transform var(--badge-pop-close-dur) var(--badge-close-ease),
+			opacity var(--badge-fade-close-dur) var(--badge-close-ease),
+			filter var(--badge-pop-close-dur) var(--badge-close-ease);
+	}
+
+	/* ── Icon swap ──────────────────────────────────────────────────────── */
+	.t-icon-swap {
+		position: relative;
+		display: inline-grid;
+	}
+	.t-icon-swap .t-icon {
+		grid-area: 1 / 1;
+		transition:
+			opacity var(--duration-fast) var(--ease-in-out),
+			filter var(--duration-fast) var(--ease-in-out),
+			transform var(--duration-fast) var(--ease-in-out);
+	}
+	.t-icon-swap[data-state='a'] .t-icon[data-icon='a'],
+	.t-icon-swap[data-state='b'] .t-icon[data-icon='b'] {
+		opacity: 1;
+		filter: blur(0);
+		transform: scale(1);
+	}
+	.t-icon-swap[data-state='a'] .t-icon[data-icon='b'],
+	.t-icon-swap[data-state='b'] .t-icon[data-icon='a'] {
+		opacity: 0;
+		filter: blur(var(--blur-small));
+		transform: scale(0.25);
+	}
+
+	/* ── Success check ──────────────────────────────────────────────────── */
+	.t-success-check {
+		display: inline-block;
+		transform-origin: center;
+		opacity: 0;
+		will-change: transform, opacity, filter;
+	}
+	.t-success-check svg {
+		display: block;
+		overflow: visible;
+	}
+	/* 24 = the drawn path's getTotalLength() (22.6), rounded up. */
+	.t-success-check svg path {
+		stroke-dasharray: 24;
+		stroke-dashoffset: 24;
+	}
+	.t-success-check[data-state='in'] {
+		animation:
+			t-check-fade var(--check-opacity-dur) var(--check-ease-opacity) forwards,
+			t-check-rotate var(--check-rotate-dur) var(--check-ease-rotate) forwards,
+			t-check-blur var(--check-blur-dur) var(--check-ease-out) forwards,
+			t-check-bob var(--check-bob-dur) var(--check-ease-bob) forwards;
+	}
+	.t-success-check[data-state='in'] svg path {
+		animation: t-check-draw var(--check-path-dur) var(--check-ease-path)
+			var(--check-path-delay, 0ms) forwards;
+	}
+	@keyframes t-check-fade {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	@keyframes t-check-rotate {
+		from {
+			transform: rotate(var(--check-rotate-from));
+		}
+		to {
+			transform: rotate(0deg);
+		}
+	}
+	@keyframes t-check-blur {
+		from {
+			filter: blur(var(--check-blur-from));
+		}
+		to {
+			filter: blur(0);
+		}
+	}
+	@keyframes t-check-bob {
+		from {
+			translate: 0 var(--check-y-amount);
+		}
+		to {
+			translate: 0 0;
+		}
+	}
+	@keyframes t-check-draw {
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+	/* The disc behind the check pops once, on the same emphasis beat. */
+	.t-success-disc {
+		animation: t-success-disc var(--duration-very-slow) var(--ease-bounce) both;
+	}
+	@keyframes t-success-disc {
+		from {
+			transform: scale(0.6);
+			opacity: 0;
+		}
+	}
+
+	/* ── Checkbox check ─────────────────────────────────────────────────── */
+	.t-check {
+		transition:
+			background var(--check-box) var(--check-ease),
+			box-shadow var(--check-box) var(--check-ease);
+	}
+	.t-check svg path {
+		stroke-dasharray: var(--check-len, 15);
+		stroke-dashoffset: var(--check-len, 15);
+		transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+	}
+	.t-check[data-checked='true'] svg path {
+		stroke-dashoffset: 0;
+		transition: stroke-dashoffset var(--check-draw) var(--check-ease)
+			var(--check-delay);
+	}
+
+	/* ── Error state shake ──────────────────────────────────────────────── */
+	.t-input {
+		transition: border-color var(--duration-quick) var(--ease-out);
+		will-change: transform;
+	}
+	.t-input.is-shaking {
+		animation: t-input-shake
+			calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear;
+	}
+	@keyframes t-input-shake {
+		0% {
+			transform: translateX(0);
+			animation-timing-function: var(--shake-ease);
+		}
+		28.57% {
+			transform: translateX(var(--shake-distance));
+			animation-timing-function: var(--shake-ease);
+		}
+		57.14% {
+			transform: translateX(calc(var(--shake-distance) * -1));
+			animation-timing-function: var(--shake-ease);
+		}
+		78.57% {
+			transform: translateX(var(--shake-overshoot));
+			animation-timing-function: var(--shake-ease);
+		}
+		100% {
+			transform: translateX(0);
+		}
+	}
+
+	/* ── Accordion expand (status banners) ──────────────────────────────── */
+	.t-acc-panel {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows var(--acc-collapse) var(--acc-ease);
+	}
+	.t-acc[data-open='true'] .t-acc-panel {
+		grid-template-rows: 1fr;
+		transition: grid-template-rows var(--acc-expand) var(--acc-ease);
+	}
+	.t-acc-panel-inner {
+		overflow: hidden;
+		opacity: 0;
+		filter: blur(var(--blur-small));
+		transition:
+			opacity var(--acc-collapse) var(--acc-ease),
+			filter var(--acc-collapse) var(--acc-ease);
+	}
+	.t-acc[data-open='true'] .t-acc-panel-inner {
+		opacity: 1;
+		filter: blur(0);
+		transition:
+			opacity var(--acc-expand) var(--acc-ease),
+			filter var(--acc-expand) var(--acc-ease);
+	}
+
+	/* ── Skeleton loader and reveal ─────────────────────────────────────── */
+	.t-skel {
+		position: relative;
+	}
+	.t-skel-skeleton,
+	.t-skel-content {
+		position: absolute;
+		inset: 0;
+	}
+	.t-skel-skeleton {
+		z-index: 1;
+		opacity: 1;
+		filter: blur(0);
+		transition:
+			opacity var(--reveal-dur) var(--reveal-ease),
+			filter var(--reveal-dur) var(--reveal-ease);
+	}
+	.t-skel-content {
+		z-index: 2;
+		opacity: 0;
+		filter: blur(var(--reveal-blur));
+		transition:
+			opacity var(--reveal-dur) var(--reveal-ease),
+			filter var(--reveal-dur) var(--reveal-ease);
+	}
+	.t-skel.is-revealed .t-skel-skeleton {
+		opacity: 0;
+		filter: blur(var(--reveal-blur));
+	}
+	.t-skel.is-revealed .t-skel-content {
+		opacity: 1;
+		/* `none`, not blur(0): a filter would make the menu a containing block. */
+		filter: none;
+	}
+	.t-skel-skeleton.is-pulsing [data-bone] {
+		animation: t-skel-pulse var(--pulse-dur) ease-in-out var(--pulse-count);
+	}
+	@keyframes t-skel-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: var(--pulse-min);
+		}
+	}
+
+	/* ── Shimmer text ───────────────────────────────────────────────────── */
+	.t-shimmer {
+		position: relative;
+		display: inline-block;
+		color: var(--shimmer-base);
+	}
+	.t-shimmer::before {
+		content: attr(data-text);
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background-image: linear-gradient(
+			90deg,
+			transparent 0%,
+			transparent 40%,
+			var(--shimmer-highlight) 50%,
+			transparent 60%,
+			transparent 100%
+		);
+		background-size: var(--shimmer-band) 100%;
+		background-repeat: no-repeat;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+		animation: t-shimmer var(--shimmer-dur) var(--shimmer-ease) infinite;
+	}
+	@keyframes t-shimmer {
+		0% {
+			background-position: 100% 0;
+		}
+		100% {
+			background-position: 0% 0;
+		}
+	}
+
+	/* ── Station: a new order line rises in; a line that grows flashes once ─ */
+	.t-rise {
+		animation: t-rise var(--duration-fast) var(--ease-smooth-out) both;
+	}
+	@keyframes t-rise {
+		from {
+			opacity: 0;
+			transform: translateY(var(--distance-micro));
+			filter: blur(var(--blur-small));
+		}
+	}
+	.t-flash {
+		animation: t-flash var(--duration-very-slow) var(--ease-out);
+	}
+	@keyframes t-flash {
+		from {
+			background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+		}
+	}
+	/* The clear (×) in a search field fades and scales in from its own slot. */
+	.t-pop-in {
+		animation: t-pop-in var(--duration-quick) var(--ease-smooth-out) both;
+	}
+	@keyframes t-pop-in {
+		from {
+			opacity: 0;
+			transform: scale(var(--scale-large));
+		}
 	}
 }
-.anim-sheet {
-	animation: sheet-up 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.anim-fade {
-	animation: fade-in 150ms ease-out;
-}
-.anim-pop {
-	animation: pop 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
+
+/* Reduced motion: every snippet's own guard, then a blanket stop for the rest. */
 @media (prefers-reduced-motion: reduce) {
+	.t-modal,
+	.t-modal::backdrop {
+		transition: none !important;
+	}
+	.t-tabs-pill,
+	.t-tab {
+		transition: none !important;
+	}
+	.t-digit-group .t-digit {
+		animation: none !important;
+	}
+	.t-badge,
+	.t-badge-dot {
+		animation: none !important;
+		transition: none !important;
+	}
+	.t-icon-swap .t-icon {
+		transition: none !important;
+	}
+	.t-success-check {
+		animation: none !important;
+		opacity: 1;
+	}
+	.t-success-check svg path {
+		animation: none !important;
+		stroke-dashoffset: 0 !important;
+	}
+	.t-check,
+	.t-check svg path {
+		transition: none !important;
+	}
+	.t-input {
+		animation: none !important;
+		transform: none !important;
+	}
+	.t-acc-panel,
+	.t-acc-panel-inner {
+		transition: none !important;
+	}
+	.t-skel-skeleton,
+	.t-skel-content {
+		transition: none !important;
+	}
+	.t-skel-skeleton.is-pulsing [data-bone] {
+		animation: none !important;
+	}
+	.t-shimmer::before {
+		animation: none !important;
+	}
 	*,
 	*::before,
 	*::after {

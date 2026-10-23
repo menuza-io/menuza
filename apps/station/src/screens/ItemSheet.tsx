@@ -19,7 +19,15 @@ import {
 import { toCents, type MoneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents, type CartLine } from '~/lib/pricing.ts'
 import { type MenuItem } from '~/lib/types.ts'
-import { Badge, Button, IconButton, Modal, cn } from '~/ui/primitives.tsx'
+import {
+	Badge,
+	Button,
+	IconButton,
+	Modal,
+	NumberPop,
+	cn,
+	fieldClass,
+} from '~/ui/primitives.tsx'
 
 /** Chosen options of an existing cart line, so it can be edited in place. */
 function selectionsFromLine(line: CartLine): Selections {
@@ -42,13 +50,25 @@ export function ItemSheet({
 	onClose: () => void
 	onSubmit: (line: Omit<CartLine, 'id'>) => void
 }) {
-	if (!item) return null
-	// Remount per item so state always starts from that item's defaults.
+	// The last item stays on screen while the sheet closes. Each opening is a
+	// new session, so a dish picked again starts from its defaults.
+	const current = editing ?? null
+	const [shown, setShown] = useState({
+		item,
+		editing: current,
+		open: item !== null,
+		session: 0,
+	})
+	if (item && (!shown.open || shown.item !== item || shown.editing !== current))
+		setShown({ item, editing: current, open: true, session: shown.session + 1 })
+	else if (!item && shown.open) setShown({ ...shown, open: false })
+	if (!shown.item) return null
 	return (
 		<ItemSheetBody
-			key={`${item.id}:${editing?.id ?? 'new'}`}
-			item={item}
-			editing={editing ?? null}
+			key={shown.session}
+			open={item !== null}
+			item={shown.item}
+			editing={shown.editing}
 			money={money}
 			onClose={onClose}
 			onSubmit={onSubmit}
@@ -57,12 +77,14 @@ export function ItemSheet({
 }
 
 function ItemSheetBody({
+	open,
 	item,
 	editing,
 	money,
 	onClose,
 	onSubmit,
 }: {
+	open: boolean
 	item: MenuItem
 	editing: CartLine | null
 	money: MoneyFormatter
@@ -100,7 +122,7 @@ function ItemSheetBody({
 
 	return (
 		<Modal
-			open
+			open={open}
 			onClose={onClose}
 			title={item.displayName}
 			size="lg"
@@ -118,7 +140,7 @@ function ItemSheetBody({
 							className="tnum mono w-10 text-center text-xl font-bold"
 							aria-live="polite"
 						>
-							{quantity}
+							<NumberPop value={String(quantity)} />
 						</span>
 						<IconButton
 							label={_(t`More`)}
@@ -139,7 +161,7 @@ function ItemSheetBody({
 						{problem ?? (
 							<>
 								{editing ? <Trans>Update</Trans> : <Trans>Add</Trans>} ·{' '}
-								<span className="mono">{money(total)}</span>
+								<NumberPop value={money(total)} className="mono" />
 							</>
 						)}
 					</Button>
@@ -235,7 +257,7 @@ function ItemSheetBody({
 											<div
 												key={option.id}
 												className={cn(
-													'flex min-h-16 items-center justify-between gap-2 rounded-xl border p-2 ps-3',
+													'flex min-h-16 items-center justify-between gap-2 rounded-xl border p-2 ps-3 transition-colors',
 													qty > 0
 														? 'border-primary bg-primary/8'
 														: 'border-border bg-card',
@@ -309,7 +331,7 @@ function ItemSheetBody({
 						maxLength={280}
 						rows={2}
 						placeholder={_(t`Allergies, no onions, sauce on the side…`)}
-						className="border-input bg-background focus:border-ring w-full resize-none rounded-xl border p-3 text-base outline-none"
+						className={cn(fieldClass, 'h-auto resize-none p-3')}
 					/>
 				</section>
 			</div>
@@ -330,12 +352,21 @@ function SectionTitle({
 		<div className="mb-2 flex items-baseline justify-between gap-3">
 			<h3 className="text-base font-semibold">{title}</h3>
 			<span
+				// A new key swaps the words in place when the choice is made.
+				key={met ? 'met' : 'hint'}
 				className={cn(
-					'text-sm',
+					't-pop-in inline-flex items-center gap-1 text-sm',
 					met ? 'text-success font-medium' : 'text-muted-foreground',
 				)}
 			>
-				{met ? <Trans>Done</Trans> : hint}
+				{met ? (
+					<>
+						<Check className="size-3.5" strokeWidth={3} aria-hidden />
+						<Trans>Done</Trans>
+					</>
+				) : (
+					hint
+				)}
 			</span>
 		</div>
 	)
@@ -364,7 +395,7 @@ function Choice({
 			disabled={disabled}
 			onClick={onClick}
 			className={cn(
-				'relative flex min-h-16 flex-col items-start justify-center rounded-xl border p-3 text-start transition active:scale-[0.97] disabled:opacity-45',
+				'relative flex min-h-16 flex-col items-start justify-center rounded-xl border p-3 text-start transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45',
 				selected
 					? 'border-primary bg-primary/8 shadow-sm'
 					: 'border-border bg-card hover:bg-accent',
@@ -381,11 +412,16 @@ function Choice({
 					{detail}
 				</span>
 			) : null}
-			{selected ? (
-				<span className="bg-primary text-primary-foreground absolute end-2 top-2 flex size-5 items-center justify-center rounded-full">
+			{/* The check pops in and out with the choice (notification badge). */}
+			<span
+				aria-hidden
+				className="t-badge absolute end-2 top-2"
+				data-open={selected}
+			>
+				<span className="t-badge-dot bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full">
 					<Check className="size-3.5" strokeWidth={3} />
 				</span>
-			) : null}
+			</span>
 		</button>
 	)
 }

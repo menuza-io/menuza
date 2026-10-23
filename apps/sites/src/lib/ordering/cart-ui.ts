@@ -1,3 +1,4 @@
+import { createOverlayMotion } from '../site-motion.ts'
 import { type CartStore } from './cart-store.ts'
 import { linesExcluding, remainingFor } from './constraints.ts'
 import { el, icon, lockScroll, trapFocus } from './dom.ts'
@@ -44,8 +45,6 @@ export type CartUi = {
 }
 
 const STEP_BTN = 'icon-btn size-8 border-0'
-
-const DRAWER_HIDDEN = ['translate-x-full', 'rtl:-translate-x-full']
 
 export function computeTotals(
 	lines: CartItem[],
@@ -103,6 +102,8 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	const checkoutTotal = q<HTMLElement>('drawer-checkout-total')
 	const checkoutReason = q<HTMLElement>('drawer-checkout-reason')
 	const headerExtra = q<HTMLElement>('cart-drawer-header-extra')
+	const motion =
+		backdrop && drawer ? createOverlayMotion(backdrop, drawer) : null
 
 	let releaseTrap: (() => void) | null = null
 	let releaseScroll: (() => void) | null = null
@@ -342,29 +343,25 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 	}
 
 	function open() {
-		if (!backdrop || !drawer) return
+		if (!backdrop || !drawer || !motion || motion.isOpen()) return
 		opener =
 			document.activeElement instanceof HTMLElement
 				? document.activeElement
 				: null
 		refresh()
-		backdrop.classList.remove('hidden')
+		motion.open()
 		releaseScroll = lockScroll()
 		releaseTrap = trapFocus(drawer)
 		document.addEventListener('keydown', onKeydown)
-		requestAnimationFrame(() => {
-			drawer.classList.remove(...DRAWER_HIDDEN)
-			;(closeBtn ?? drawer).focus({ preventScroll: true })
-		})
+		;(closeBtn ?? drawer).focus({ preventScroll: true })
 	}
 
 	function isOpen() {
-		return Boolean(backdrop && !backdrop.classList.contains('hidden'))
+		return motion?.isOpen() ?? false
 	}
 
 	function close() {
-		if (!backdrop || !drawer || !isOpen()) return
-		drawer.classList.add(...DRAWER_HIDDEN)
+		if (!motion || !isOpen()) return
 		releaseTrap?.()
 		releaseTrap = null
 		releaseScroll?.()
@@ -372,8 +369,8 @@ export function mountCartUi(options: CartUiOptions): CartUi {
 		document.removeEventListener('keydown', onKeydown)
 		const target = opener
 		opener = null
-		window.setTimeout(() => backdrop.classList.add('hidden'), 300)
 		if (target && target.isConnected) target.focus({ preventScroll: true })
+		motion.close()
 	}
 
 	openBtn?.addEventListener('click', open)

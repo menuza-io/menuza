@@ -1,6 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Keypad } from './Keypad.tsx'
 import { PinDots } from './PinDots.tsx'
 import { Button } from './primitives.tsx'
@@ -28,6 +28,14 @@ export function ManagerPinPad({
 }) {
 	const { _ } = useLingui()
 	const canApprove = pin.length >= 4 && !busy
+	// A check that ends with the pad still showing was a refusal (an approval
+	// replaces the pad): shake the dots.
+	const [rejected, setRejected] = useState(0)
+	const [wasBusy, setWasBusy] = useState(busy)
+	if (busy !== wasBusy) {
+		setWasBusy(busy)
+		if (!busy) setRejected((n) => n + 1)
+	}
 	return (
 		<div
 			role="group"
@@ -51,7 +59,7 @@ export function ManagerPinPad({
 			className="border-border focus-visible:ring-ring space-y-2 rounded-2xl border p-3 outline-none focus-visible:ring-2"
 		>
 			<p className="text-sm font-semibold">{prompt}</p>
-			<PinDots length={pin.length} size="sm" />
+			<PinDots length={pin.length} size="sm" rejected={rejected} />
 			<Keypad
 				value={pin}
 				onChange={(next) => !busy && onPin(next.slice(0, 6))}

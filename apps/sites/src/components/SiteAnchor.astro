@@ -5,9 +5,10 @@ import { getLocaleHref } from '@repo/common/site-locales'
 interface Props {
 	link: SiteLinkInput
 	class?: string
+	'aria-current'?: 'page'
 }
 
-const { link, class: className } = Astro.props
+const { link, class: className, 'aria-current': ariaCurrent } = Astro.props
 const resolved = resolveSiteLink(link)
 resolved.href = getLocaleHref(
 	resolved.href,
@@ -22,6 +23,7 @@ resolved.href = getLocaleHref(
 	class={className}
 	target={resolved.target}
 	rel={resolved.rel}
+	aria-current={ariaCurrent}
 >
 	<slot />
 </a>

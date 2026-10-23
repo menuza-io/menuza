@@ -216,6 +216,7 @@ const truckIcon =
 <style is:global>
 	/* Bottom sheet below sm, centered dialog above. Tokens only. */
 	.od-sheet {
+		--od-duration: var(--duration-medium);
 		width: 100%;
 		max-width: 100%;
 		max-height: min(92dvh, 100%);
@@ -224,12 +225,13 @@ const truckIcon =
 		overflow: hidden;
 		transform: translateY(0);
 		transition:
-			transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
-			opacity 200ms ease-out,
-			overlay 320ms allow-discrete,
-			display 320ms allow-discrete;
+			transform var(--od-duration) var(--ease-smooth-out),
+			opacity var(--od-duration) var(--ease-smooth-out),
+			overlay var(--od-duration) allow-discrete,
+			display var(--od-duration) allow-discrete;
 	}
 	.od-sheet[open] {
+		--od-duration: var(--duration-slow);
 		display: flex;
 		flex-direction: column;
 	}
@@ -245,9 +247,9 @@ const truckIcon =
 		background-color: color-mix(in oklch, var(--foreground) 40%, transparent);
 		opacity: 1;
 		transition:
-			opacity 240ms ease-out,
-			overlay 320ms allow-discrete,
-			display 320ms allow-discrete;
+			opacity var(--od-duration) var(--ease-smooth-out),
+			overlay var(--od-duration) allow-discrete,
+			display var(--od-duration) allow-discrete;
 	}
 	.dark .od-sheet::backdrop {
 		background-color: color-mix(in oklch, var(--background) 80%, transparent);
@@ -265,18 +267,22 @@ const truckIcon =
 	}
 	@media (min-width: 40rem) {
 		.od-sheet {
+			--od-duration: var(--duration-quick);
 			max-width: 32rem;
 			max-height: min(85dvh, 46rem);
 			margin: auto;
 			border-radius: calc(var(--radius) + 8px);
 		}
+		.od-sheet[open] {
+			--od-duration: var(--duration-fast);
+		}
 		.od-sheet:not([open]) {
-			transform: translateY(0.5rem) scale(0.98);
+			transform: scale(var(--scale-large));
 			opacity: 0;
 		}
 		@starting-style {
 			.od-sheet[open] {
-				transform: translateY(0.5rem) scale(0.98);
+				transform: scale(var(--scale-large));
 				opacity: 0;
 			}
 		}

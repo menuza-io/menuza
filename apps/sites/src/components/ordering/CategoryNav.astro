@@ -20,7 +20,7 @@ const { items, label, rail = false, class: className } = Astro.props
 const chipBase =
 	"relative inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors duration-150 ease-out after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:opacity-0 after:transition-opacity after:content-[''] hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none motion-reduce:after:transition-none aria-[current=true]:text-foreground aria-[current=true]:after:opacity-100 [&.hidden]:hidden"
 const railBase =
-	'block truncate rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-ring motion-reduce:transition-none aria-[current=true]:bg-muted aria-[current=true]:font-semibold aria-[current=true]:text-foreground'
+	'block min-h-11 truncate rounded-md px-3 py-3 text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground focus-ring motion-reduce:transition-none aria-[current=true]:bg-muted aria-[current=true]:text-foreground'
 const activeClass = 'is-active'
 ---
 
@@ -28,6 +28,7 @@ const activeClass = 'is-active'
 	<nav
 		aria-label={label}
 		data-category-nav={rail ? 'rail' : 'chips'}
+		data-fluid-nav={rail ? 'y' : 'x'}
 		data-scroll-spy-scroller
 		data-active-class={activeClass}
 		data-inactive-class=""

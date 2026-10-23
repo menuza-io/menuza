@@ -36,6 +36,8 @@ export function LockScreen({
 	const [now, setNow] = useState(() => monotonicNow())
 	/** Spoken once when a wait ends (the countdown itself is not announced every second). */
 	const [ready, setReady] = useState(false)
+	/** Counts refusals, so the dots shake for each one. */
+	const [rejected, setRejected] = useState(0)
 
 	useEffect(() => {
 		const dialog = ref.current
@@ -70,6 +72,7 @@ export function LockScreen({
 			// On success the till unmounts this screen.
 			if (outcome.ok) return
 			setPin('')
+			setRejected((n) => n + 1)
 			setMessage(outcome.message)
 			if (outcome.retryAfterSeconds) {
 				const at = monotonicNow()
@@ -79,6 +82,7 @@ export function LockScreen({
 		} catch {
 			// Never leave the till stuck on "Checking…": say so and let them try again.
 			setPin('')
+			setRejected((n) => n + 1)
 			setMessage(_(t`Could not check the PIN. Try again.`))
 		} finally {
 			setBusy(false)
@@ -120,7 +124,7 @@ export function LockScreen({
 					</p>
 				</div>
 
-				<PinDots length={pin.length} />
+				<PinDots length={pin.length} rejected={rejected} />
 
 				<div className="min-h-12 text-center">
 					{/* Announced once, when it appears; the countdown below is not live. */}

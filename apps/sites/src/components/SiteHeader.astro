@@ -1,6 +1,12 @@
 ---
+import LanguagesIcon from '@hugeicons/core-free-icons/LanguagesIcon'
 import { msg } from '@lingui/core/macro'
-import { getLocaleHref, getSiteLocaleLabel } from '@repo/common/site-locales'
+import { resolveSiteLink } from '@repo/common/site-link'
+import {
+	getLocaleHref,
+	getSiteLocaleDirection,
+	getSiteLocaleNativeLabel,
+} from '@repo/common/site-locales'
 import SiteAnchor from '~/components/SiteAnchor.astro'
 import {
 	resolveMediaUrl,
@@ -8,6 +14,7 @@ import {
 	type SiteLocaleLink,
 	type SiteOrgChrome,
 } from '~/lib/media'
+import { isCurrentHeaderLink } from '~/lib/site-header'
 
 interface NavLink {
 	label?: string
@@ -28,7 +35,6 @@ interface Props {
 }
 
 const { config = {}, organization, locales = [] } = Astro.props
-const navLinks = Array.isArray(config.navLinks) ? config.navLinks.filter((link) => link.label) : []
 const showCta = config.showCta !== false && Boolean(config.ctaLabel)
 const showName = config.showName !== false
 const sticky = config.sticky !== false
@@ -37,9 +43,25 @@ const showLocales = locales.length > 1
 const requestedLocale = Astro.locals.requestedLocale
 const defaultLocale = Astro.locals.defaultLocale
 const i18n = Astro.locals.i18n
-const homeHref = getLocaleHref('/', requestedLocale, requestedLocale, defaultLocale)
-const loginHref = getLocaleHref('/login', requestedLocale, requestedLocale, defaultLocale)
-const profileHref = getLocaleHref('/profile', requestedLocale, requestedLocale, defaultLocale)
+const localeHref = (path: string) =>
+	getLocaleHref(path, requestedLocale, requestedLocale, defaultLocale)
+const homeHref = localeHref('/')
+const loginHref = localeHref('/login')
+const profileHref = localeHref('/profile')
+const currentUrl = new URL(Astro.url)
+currentUrl.pathname = localeHref(currentUrl.pathname)
+const navLinks = (Array.isArray(config.navLinks) ? config.navLinks : [])
+	.filter((link) => link.label)
+	.map((link) => ({
+		...link,
+		current: isCurrentHeaderLink(
+			localeHref(resolveSiteLink(link.url).href),
+			currentUrl,
+		),
+	}))
+const activeLocale = locales.find((locale) => locale.active)
+const activeLocaleCode = activeLocale?.code ?? requestedLocale
+const activeLocaleLabel = getSiteLocaleNativeLabel(activeLocaleCode)
 const signIn = i18n._(msg`Sign in`)
 const profile = i18n._(msg`Profile`)
 const logout = i18n._(msg`Logout`)
@@ -47,25 +69,56 @@ const openMenu = i18n._(msg`Open menu`)
 const language = i18n._(msg`Language`)
 const primaryNav = i18n._(msg`Primary`)
 const mobileNav = i18n._(msg`Mobile`)
+const menuOrigin =
+	getSiteLocaleDirection(requestedLocale) === 'rtl' ? 'top-left' : 'top-right'
+const iconAttrs = {
+	xmlns: 'http://www.w3.org/2000/svg',
+	viewBox: '0 0 24 24',
+	fill: 'none',
+	stroke: 'currentColor',
+	'stroke-width': '1.75',
+	'stroke-linecap': 'round',
+	'stroke-linejoin': 'round',
+	'aria-hidden': 'true',
+} as const
+// Hugeicons supplies camel-cased attributes; native SVG needs dashed names.
+const languageIconNodes = LanguagesIcon.map(([tag, attributes]) => ({
+	tag,
+	attributes: Object.fromEntries(
+		Object.entries(attributes)
+			.filter(([name]) => name !== 'key')
+			.map(([name, value]) => [
+				name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`),
+				value,
+			]),
+	),
+}))
 ---
 
 <header
+	data-site-header
 	class:list={[
-		'z-30 border-b border-border/70 bg-background/95 backdrop-blur-md',
-		sticky && 'sticky top-0',
+		'site-header z-30 border-b border-border/70 bg-background/95 backdrop-blur-md',
+		sticky ? 'sticky top-0' : 'relative',
 	]}
 >
-	<div class="mx-auto flex h-[4.25rem] w-full max-w-6xl items-center gap-4 px-5 sm:px-8">
-		<a href={homeHref} class="flex min-w-0 items-center gap-2.5 no-underline">
+	<div data-header-row class="site-header-row">
+		<a
+			data-header-brand
+			href={homeHref}
+			class="site-header-brand focus-ring flex min-h-11 min-w-0 items-center gap-2.5 rounded-[var(--radius)] no-underline"
+		>
 			{logoSrc ? (
 				<img
 					src={logoSrc}
 					alt=""
-					class="size-9 rounded-[calc(var(--radius)*0.7)] object-contain"
+					width="36"
+					height="36"
+					class="size-9 shrink-0 rounded-[calc(var(--radius)*0.7)] object-contain"
 				/>
 			) : null}
 			{showName || !logoSrc ? (
-				<span class="truncate font-heading text-[15px] tracking-tight text-foreground">
+				<span data-header-name class="truncate font-heading text-base font-semibold text-foreground">
 					{organization.name}
 				</span>
 			) : (
@@ -73,143 +126,284 @@ const mobileNav = i18n._(msg`Mobile`)
 			)}
 		</a>
 
-		<nav class="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex" aria-label={primaryNav}>
-			{navLinks.map((link) => (
-				<SiteAnchor
-					link={link.url}
-					class="rounded-[var(--radius)] px-3 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
-				>
-					{link.label}
-				</SiteAnchor>
-			))}
+		<nav class="site-header-desktop-nav" aria-label={primaryNav}>
+			<div data-header-links data-fluid-nav="x" class="mx-auto flex w-max items-center gap-1">
+				{navLinks.map((link) => (
+					<SiteAnchor
+						link={link.url}
+						aria-current={link.current ? 'page' : undefined}
+						class="site-header-link focus-ring inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius)] px-3 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground"
+					>
+						{link.label}
+					</SiteAnchor>
+				))}
+			</div>
 		</nav>
 
-		<div class="ml-auto flex items-center gap-2 lg:ml-0">
+		<div data-header-actions class="site-header-actions ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
 			{showLocales ? (
-				<nav class="hidden items-center gap-1 sm:flex" aria-label={language}>
-					{locales.map((locale) => (
-						<a
-							href={locale.href}
-							hreflang={locale.code}
-							aria-current={locale.active ? 'true' : undefined}
-							class:list={[
-								'rounded-md px-2 py-1 text-[11px] tracking-wide uppercase transition-colors',
-								locale.active
-									? 'bg-primary text-primary-foreground'
-									: 'text-muted-foreground hover:bg-muted hover:text-foreground',
-							]}
-						>
-							{getSiteLocaleLabel(locale.code)}
-						</a>
-					))}
-				</nav>
-			) : null}
-
-			<div data-auth="signed-in">
-				<details class="group relative hidden sm:block">
-					<summary class:list={[siteBtnPrimary, "cursor-pointer list-none appearance-none marker:content-none [&::-webkit-details-marker]:hidden"]}>
-						<span class="js-auth-name">{profile}</span>
-						<svg class="ml-2 size-4 opacity-70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+				<details data-site-disclosure class="site-header-languages relative hidden sm:block">
+					<summary
+						class="site-header-control focus-ring inline-flex"
+						aria-label={`${language}: ${activeLocaleLabel}`}
+					>
+						<svg {...iconAttrs} class="size-4 shrink-0">
+							{languageIconNodes.map(({ tag: Tag, attributes }) => (
+								<Tag {...attributes} />
+							))}
+						</svg>
+						<span lang={activeLocaleCode} dir={getSiteLocaleDirection(activeLocaleCode)} class="hidden max-w-24 truncate md:inline">{activeLocaleLabel}</span>
+						<svg {...iconAttrs} class="site-header-chevron size-3.5 text-muted-foreground">
+							<path d="m7 10 5 5 5-5" />
+						</svg>
 					</summary>
-					<div class="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-48 rounded-[var(--radius)] border border-border bg-background p-2 shadow-lg">
-						<a href={profileHref} class="block rounded-[calc(var(--radius)*0.7)] px-3 py-2 text-sm font-medium hover:bg-muted text-foreground">{profile}</a>
-						<button type="button" class="logout-button block w-full rounded-[calc(var(--radius)*0.7)] px-3 py-2 text-left text-sm font-medium hover:bg-muted text-foreground">{logout}</button>
-					</div>
-				</details>
-			</div>
-			<div data-auth="signed-out">
-				<div class="hidden items-center gap-2 sm:flex">
-					{showCta ? (
-						<>
-							<a
-								href={loginHref}
-								class="rounded-[var(--radius)] px-3 py-1.5 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
-							>
-								{signIn}
-							</a>
-							<SiteAnchor link={config.ctaUrl} class={siteBtnPrimary}>
-								{config.ctaLabel}
-							</SiteAnchor>
-						</>
-					) : (
-						<a href={loginHref} class:list={[siteBtnPrimary]}>
-							{signIn}
-						</a>
-					)}
-				</div>
-			</div>
-
-			<details class="relative lg:hidden">
-				<summary
-					class="flex size-10 cursor-pointer list-none items-center justify-center rounded-[var(--radius)] text-foreground marker:content-none [&::-webkit-details-marker]:hidden"
-					aria-label={openMenu}
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<line x1="4" x2="20" y1="6" y2="6"></line>
-						<line x1="4" x2="20" y1="12" y2="12"></line>
-						<line x1="4" x2="20" y1="18" y2="18"></line>
-					</svg>
-				</summary>
-				<div class="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-[var(--radius)] border border-border bg-background p-3 shadow-lg">
-					<nav class="flex flex-col gap-1" aria-label={mobileNav}>
-						{navLinks.map((link) => (
-							<SiteAnchor
-								link={link.url}
-								class="rounded-[var(--radius)] px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-							>
-								{link.label}
-							</SiteAnchor>
-						))}
-					</nav>
-					{showLocales ? (
-						<div class="mt-3 flex flex-wrap gap-1 border-t border-border pt-3">
+					<div data-origin={menuOrigin} class="t-dropdown surface-overlay absolute end-0 top-[calc(100%+0.75rem)] z-50 w-52 rounded-[calc(var(--radius)+8px)] p-2">
+						<nav data-fluid-nav="y" aria-label={language} class="flex flex-col gap-0.5">
 							{locales.map((locale) => (
 								<a
 									href={locale.href}
 									hreflang={locale.code}
-									class:list={[
-										'rounded-md px-2 py-1 text-[11px] tracking-wide uppercase',
-										locale.active
-											? 'bg-primary text-primary-foreground'
-											: 'bg-muted text-muted-foreground',
-									]}
+									lang={locale.code}
+									aria-current={locale.active ? 'true' : undefined}
+									class="site-header-menu-link focus-ring flex min-h-11 items-center justify-between gap-3 rounded-[var(--radius)] px-3 py-2 text-sm text-muted-foreground hover:text-foreground aria-[current=true]:bg-muted aria-[current=true]:text-foreground"
 								>
-									{getSiteLocaleLabel(locale.code)}
+									<span dir={getSiteLocaleDirection(locale.code)}>{getSiteLocaleNativeLabel(locale.code)}</span>
+									{locale.active ? (
+										<svg {...iconAttrs} class="size-4 shrink-0 text-foreground"><path d="m5 12 4 4L19 6" /></svg>
+									) : null}
 								</a>
 							))}
-						</div>
-					) : null}
-					<div data-auth="signed-in" class="mt-3 flex flex-col gap-1 border-t border-border pt-3">
-						<a href={profileHref} class="rounded-[var(--radius)] px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">{profile}</a>
-						<button type="button" class="logout-button rounded-[var(--radius)] px-3 py-2 text-left text-sm font-medium text-foreground hover:bg-muted">{logout}</button>
+						</nav>
 					</div>
-					<div data-auth="signed-out" class="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-							{showCta ? (
-								<>
+				</details>
+			) : null}
+
+			<div data-auth="signed-in">
+				<details data-site-disclosure class="relative hidden sm:block">
+					<summary class="site-header-control focus-ring inline-flex">
+						<svg {...iconAttrs} class="size-4 shrink-0">
+							<circle cx="12" cy="8" r="3" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+						</svg>
+						<span class="js-auth-name max-w-28 truncate">{profile}</span>
+						<svg {...iconAttrs} class="site-header-chevron size-3.5 text-muted-foreground"><path d="m7 10 5 5 5-5" /></svg>
+					</summary>
+					<div data-origin={menuOrigin} class="t-dropdown surface-overlay absolute end-0 top-[calc(100%+0.75rem)] z-50 w-52 rounded-[calc(var(--radius)+8px)] p-2">
+						<a href={profileHref} class="site-header-menu-link focus-ring flex min-h-11 items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm text-foreground hover:bg-muted">
+							<svg {...iconAttrs} class="size-4 text-muted-foreground"><circle cx="12" cy="8" r="3" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg>
+							{profile}
+						</a>
+						<button type="button" class="logout-button site-header-menu-link focus-ring flex min-h-11 w-full items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-start text-sm text-foreground hover:bg-muted">
+							<svg {...iconAttrs} class="size-4 text-muted-foreground"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+							{logout}
+						</button>
+					</div>
+				</details>
+			</div>
+
+			<div data-auth="signed-out">
+				<a href={loginHref} class:list={[
+					'hidden sm:inline-flex',
+					showCta ? 'site-header-control focus-ring' : siteBtnPrimary,
+				]}>{signIn}</a>
+			</div>
+
+			{showCta ? (
+				<div data-auth="signed-out">
+					<SiteAnchor
+						link={config.ctaUrl}
+						class={`${siteBtnPrimary} site-header-cta max-w-[min(38vw,12rem)]`}
+					>
+						<span class="truncate">{config.ctaLabel}</span>
+					</SiteAnchor>
+				</div>
+			) : null}
+
+			<details data-site-disclosure data-header-menu class="site-header-menu">
+				<summary class="site-header-control site-header-menu-trigger focus-ring inline-flex" aria-label={openMenu}>
+					<svg {...iconAttrs} class="size-5"><path d="M4 8h16M4 16h16" /></svg>
+				</summary>
+				<div data-origin={menuOrigin} class="site-header-mobile-panel t-dropdown surface-overlay">
+					{navLinks.length ? (
+						<nav data-fluid-nav="y" class="flex flex-col gap-1" aria-label={mobileNav}>
+							{navLinks.map((link) => (
+								<SiteAnchor
+									link={link.url}
+									aria-current={link.current ? 'page' : undefined}
+									class="site-header-menu-link focus-ring flex min-h-12 items-center justify-between gap-4 rounded-[var(--radius)] px-3 py-3 text-base font-medium text-muted-foreground hover:text-foreground aria-[current=page]:bg-muted aria-[current=page]:text-foreground"
+								>
+									<span>{link.label}</span>
+									{link.current ? (
+										<svg {...iconAttrs} class="size-4 shrink-0 text-foreground"><path d="m5 12 4 4L19 6" /></svg>
+									) : null}
+								</SiteAnchor>
+							))}
+						</nav>
+					) : null}
+
+					{showLocales ? (
+						<nav
+							aria-label={language}
+							class:list={['px-3 py-4', navLinks.length > 0 && 'mt-2 border-t border-border']}
+						>
+							<p class="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+								<svg {...iconAttrs} class="size-4">
+									{languageIconNodes.map(({ tag: Tag, attributes }) => (
+										<Tag {...attributes} />
+									))}
+								</svg>
+								{language}
+							</p>
+							<div class="flex flex-wrap gap-2">
+								{locales.map((locale) => (
 									<a
-										href={loginHref}
-										class="rounded-[var(--radius)] px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+										href={locale.href}
+										hreflang={locale.code}
+										lang={locale.code}
+										dir={getSiteLocaleDirection(locale.code)}
+										aria-current={locale.active ? 'true' : undefined}
+										class="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius)] border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground aria-[current=true]:border-foreground aria-[current=true]:bg-muted aria-[current=true]:text-foreground"
 									>
-										{signIn}
+										{getSiteLocaleNativeLabel(locale.code)}
 									</a>
-									<SiteAnchor
-										link={config.ctaUrl}
-										class:list={[siteBtnPrimary, 'w-full']}
-									>
-										{config.ctaLabel}
-									</SiteAnchor>
-								</>
-							) : (
-								<a href={loginHref} class:list={[siteBtnPrimary, 'w-full']}>
-									{signIn}
-								</a>
-							)}
+								))}
+							</div>
+						</nav>
+					) : null}
+
+					<div class:list={[
+						(navLinks.length > 0 || showLocales) && 'border-t border-border px-1 pt-2',
+					]}>
+						<div data-auth="signed-in" class="flex flex-col gap-1">
+							<a href={profileHref} class="site-header-menu-link focus-ring flex min-h-12 items-center rounded-[var(--radius)] px-3 py-3 text-sm font-medium text-foreground hover:bg-muted">{profile}</a>
+							<button type="button" class="logout-button site-header-menu-link focus-ring min-h-12 rounded-[var(--radius)] px-3 py-3 text-start text-sm text-muted-foreground hover:bg-muted hover:text-foreground">{logout}</button>
+						</div>
+						<div data-auth="signed-out">
+							<a href={loginHref} class="site-header-menu-link focus-ring flex min-h-12 items-center rounded-[var(--radius)] px-3 py-3 text-sm font-medium text-foreground hover:bg-muted">{signIn}</a>
+						</div>
 					</div>
 				</div>
 			</details>
 		</div>
 	</div>
 </header>
+
+<style>
+	.site-header-row {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		width: 100%;
+		max-width: 72rem;
+		min-height: 4.5rem;
+		margin-inline: auto;
+		padding-inline: 1.25rem;
+	}
+	.site-header-brand {
+		max-width: 16rem;
+		flex-shrink: 1;
+	}
+	.site-header-desktop-nav {
+		position: absolute;
+		visibility: hidden;
+		inline-size: 0;
+		overflow: hidden;
+	}
+	.site-header-control {
+		min-height: 2.75rem;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding-inline: 0.75rem;
+		border-radius: var(--radius);
+		list-style: none;
+		appearance: none;
+		font-size: 0.875rem;
+		font-weight: 500;
+		white-space: nowrap;
+		color: var(--foreground);
+		transition: background-color var(--fluid-hover-duration) ease-out;
+	}
+	summary.site-header-control {
+		cursor: pointer;
+	}
+	.site-header-control::-webkit-details-marker {
+		display: none;
+	}
+	.site-header-control:hover,
+	details[data-open='true'] > .site-header-control,
+	details:not([data-motion-ready])[open] > .site-header-control {
+		background-color: var(--muted);
+	}
+	.site-header-chevron {
+		transition: transform var(--duration-quick) var(--ease-smooth-out);
+	}
+	details[data-open='true'] > summary .site-header-chevron,
+	details:not([data-motion-ready])[open] > summary .site-header-chevron {
+		transform: rotate(180deg);
+		transition-duration: var(--duration-fast);
+	}
+	.site-header-menu-trigger {
+		width: 2.75rem;
+		padding-inline: 0;
+	}
+	.site-header :global(.site-header-link[aria-current='page'])::after {
+		position: absolute;
+		inset-inline: 0.75rem;
+		bottom: 0.25rem;
+		height: 2px;
+		border-radius: var(--radius);
+		background-color: var(--foreground);
+		content: '';
+	}
+	.site-header-mobile-panel {
+		position: absolute;
+		inset-inline: 1.25rem;
+		top: calc(100% + 0.5rem);
+		z-index: 50;
+		max-height: calc(100dvh - 6rem);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		border-radius: calc(var(--radius) + 12px);
+		padding: 0.5rem;
+	}
+	@media (min-width: 40rem) {
+		.site-header-row {
+			padding-inline: 2rem;
+		}
+		.site-header-mobile-panel {
+			inset-inline-start: auto;
+			inset-inline-end: 2rem;
+			width: 22rem;
+		}
+	}
+	@media (min-width: 64rem) {
+		.site-header:not([data-compact]) .site-header-desktop-nav {
+			position: static;
+			visibility: visible;
+			inline-size: auto;
+			flex: 1;
+			overflow: visible;
+		}
+		.site-header:not([data-compact]) .site-header-menu {
+			display: none;
+		}
+	}
+	@media (max-width: 39.999rem) {
+		.site-header-row {
+			gap: 0.75rem;
+		}
+		.site-header :global(.site-header-cta) {
+			padding-inline: 1rem;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.site-header-control,
+		.site-header-chevron {
+			transition: none;
+		}
+	}
+</style>
 
 <script>
 	import {
@@ -218,28 +412,26 @@ const mobileNav = i18n._(msg`Mobile`)
 		logoutTenantSession,
 	} from '~/lib/client-auth'
 	import { browserLocaleHref } from '~/lib/locale'
+	import { mountSiteHeaders } from '~/lib/site-header'
 
 	if (getAccessToken()) {
 		document.documentElement.dataset.customerSession = '1'
 	}
 
-	const claims = getAccessTokenClaims()
-	const firstName = claims?.name?.split(' ')[0]
-	if (firstName) {
-		document.querySelectorAll('.js-auth-name').forEach((el) => {
-			el.textContent = firstName
+	function updateCustomerName() {
+		const firstName = getAccessTokenClaims()?.name?.split(' ')[0]
+		if (!firstName) return
+		document.querySelectorAll('.js-auth-name').forEach((element) => {
+			element.textContent = firstName
 		})
 	}
 
+	updateCustomerName()
+	mountSiteHeaders()
+	document.addEventListener('sites:content-updated', updateCustomerName)
+
 	document.addEventListener('click', (event) => {
 		const target = event.target as HTMLElement | null
-		const openDetails = document.querySelectorAll('header details[open]')
-		openDetails.forEach((details) => {
-			if (!details.contains(target)) {
-				details.removeAttribute('open')
-			}
-		})
-
 		if (target?.closest('.logout-button')) {
 			void logoutTenantSession().finally(() => {
 				window.location.href = browserLocaleHref('/')

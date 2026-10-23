@@ -11,7 +11,7 @@ import {
 	Armchair,
 	Phone,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type OrderType } from '~/lib/db.ts'
@@ -23,7 +23,16 @@ import {
 	type Adjustment,
 	type CartLine,
 } from '~/lib/pricing.ts'
-import { Button, IconButton, Modal, Segmented, cn } from '~/ui/primitives.tsx'
+import {
+	Button,
+	IconButton,
+	Modal,
+	NumberPop,
+	Reveal,
+	Segmented,
+	cn,
+	fieldClass,
+} from '~/ui/primitives.tsx'
 
 export function Cart({
 	tabNumber,
@@ -96,6 +105,12 @@ export function Cart({
 		adjustments,
 	})
 	const count = lines.reduce((s, l) => s + l.quantity, 0)
+	// Lines on screen at first paint (opening the sheet, loading a tab) appear as
+	// they are; only lines added after that rise in and scroll into view.
+	const seen = useRef<Set<string> | null>(null)
+	useEffect(() => {
+		seen.current = new Set(lines.map((l) => l.id))
+	}, [lines])
 	const detail = orderType === 'dine_in' ? tableLabel : customerName
 	const detailText =
 		orderType === 'dine_in'
@@ -125,17 +140,17 @@ export function Cart({
 							<Trans>Current order</Trans>
 						</h2>
 						<span className="tnum mono bg-muted text-muted-foreground flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-sm">
-							{count}
+							<NumberPop value={String(count)} />
 						</span>
 					</div>
 				) : null}
-				{tabNumber ? (
+				<Reveal open={Boolean(tabNumber)}>
 					<div className="bg-primary/10 text-primary flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold">
 						<span>
 							<Trans>Adding to tab #{tabNumber}</Trans>
 						</span>
 					</div>
-				) : null}
+				</Reveal>
 				<div className="flex items-center justify-between gap-2">
 					{orderSource === 'phone' ? (
 						<Button variant="outline" onClick={onCounterOrder}>
@@ -193,7 +208,7 @@ export function Cart({
 						<button
 							type="button"
 							onClick={() => setNaming(true)}
-							className="border-border text-muted-foreground hover:bg-accent flex h-12 w-full items-center gap-3 rounded-xl border border-dashed px-3 text-start transition"
+							className="border-border text-muted-foreground hover:bg-accent hover:text-foreground flex h-12 w-full items-center gap-3 rounded-xl border border-dashed px-3 text-start transition active:scale-[0.99]"
 						>
 							{orderType === 'dine_in' ? (
 								<UtensilsCrossed className="size-5" />
@@ -224,7 +239,7 @@ export function Cart({
 
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				{lines.length === 0 ? (
-					<div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
+					<div className="t-rise text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
 						<div className="bg-muted flex size-16 items-center justify-center rounded-full">
 							<ShoppingBag className="size-7" />
 						</div>
@@ -238,78 +253,15 @@ export function Cart({
 				) : (
 					<ul className="divide-border divide-y">
 						{lines.map((line) => (
-							<li key={line.id} className="anim-fade p-4">
-								<div className="flex items-start gap-3">
-									<button
-										type="button"
-										onClick={() => onEdit(line)}
-										className="min-w-0 flex-1 text-start"
-										aria-label={_(t`Edit ${line.name}`)}
-									>
-										<div className="leading-tight font-semibold">
-											{line.name}
-										</div>
-										{line.variantLabel ? (
-											<div className="text-muted-foreground text-sm">
-												{line.variantLabel}
-											</div>
-										) : null}
-										{line.options.map((o) => (
-											<div
-												key={`${o.groupId}:${o.optionId}`}
-												className="text-muted-foreground text-sm"
-											>
-												{o.quantity > 1 ? `${o.quantity}× ` : ''}
-												{o.optionName}
-												{o.unitCents > 0
-													? ` +${money(o.unitCents * o.quantity)}`
-													: ''}
-											</div>
-										))}
-										{line.instructions ? (
-											<div className="text-warning text-sm italic">
-												“{line.instructions}”
-											</div>
-										) : null}
-									</button>
-									<span className="tnum shrink-0 font-semibold">
-										{money(lineTotalCents(line))}
-									</span>
-								</div>
-								<div className="mt-2 flex items-center justify-between">
-									<div className="bg-muted flex items-center gap-1 rounded-xl p-0.5">
-										<IconButton
-											label={_(t`Fewer ${line.name}`)}
-											onClick={() => onQuantity(line.id, line.quantity - 1)}
-										>
-											{line.quantity === 1 ? (
-												<Trash2 className="size-4" />
-											) : (
-												<Minus className="size-4" />
-											)}
-										</IconButton>
-										<span
-											className="tnum mono w-8 text-center font-bold"
-											aria-live="polite"
-										>
-											{line.quantity}
-										</span>
-										<IconButton
-											label={_(t`More ${line.name}`)}
-											onClick={() => onQuantity(line.id, line.quantity + 1)}
-										>
-											<Plus className="size-4" />
-										</IconButton>
-									</div>
-									<button
-										type="button"
-										className="text-muted-foreground hover:bg-destructive/8 hover:text-destructive min-h-11 rounded-lg px-3 py-2 text-sm font-medium"
-										onClick={() => onRemove(line.id)}
-									>
-										<Trans>Remove</Trans>
-									</button>
-								</div>
-							</li>
+							<LineItem
+								key={line.id}
+								line={line}
+								fresh={seen.current !== null && !seen.current.has(line.id)}
+								money={money}
+								onEdit={onEdit}
+								onQuantity={onQuantity}
+								onRemove={onRemove}
+							/>
 						))}
 					</ul>
 				)}
@@ -336,11 +288,11 @@ export function Cart({
 					))}
 					<Row label={taxLabel} value={money(totals.taxCents)} />
 				</dl>
-				{error ? (
+				<Reveal open={Boolean(error)}>
 					<p role="alert" className="text-destructive text-sm font-medium">
 						{error}
 					</p>
-				) : null}
+				</Reveal>
 				<div className="grid grid-cols-1 gap-2 @sm:grid-cols-[auto_minmax(0,1fr)]">
 					<Button
 						variant="outline"
@@ -371,9 +323,10 @@ export function Cart({
 								<Trans>Charge</Trans>
 							)}
 						</span>
-						<span className="tnum whitespace-nowrap">
-							{money(totals.totalCents)}
-						</span>
+						<NumberPop
+							value={money(totals.totalCents)}
+							className="tnum whitespace-nowrap"
+						/>
 					</Button>
 				</div>
 			</div>
@@ -418,7 +371,7 @@ export function Cart({
 								? _(t`e.g. 12 or Patio 3`)
 								: _(t`Name for the order`)
 						}
-						className="border-input bg-background focus:border-ring h-14 w-full rounded-xl border px-4 text-lg"
+						className={cn(fieldClass, 'h-14 px-4 text-lg')}
 					/>
 					<Button type="submit" variant="primary" size="lg" className="w-full">
 						<Trans>Done</Trans>
@@ -426,6 +379,125 @@ export function Cart({
 				</form>
 			</Modal>
 		</section>
+	)
+}
+
+/** One order line: tap to edit, step the quantity, or take it off. */
+function LineItem({
+	line,
+	fresh,
+	money,
+	onEdit,
+	onQuantity,
+	onRemove,
+}: {
+	line: CartLine
+	/** Added since the cart first showed: rise in and scroll into view. */
+	fresh: boolean
+	money: MoneyFormatter
+	onEdit: (line: CartLine) => void
+	onQuantity: (id: string, quantity: number) => void
+	onRemove: (id: string) => void
+}) {
+	const { _ } = useLingui()
+	const ref = useRef<HTMLLIElement>(null)
+	const [isFresh] = useState(fresh)
+	const quantity = useRef(line.quantity)
+
+	useLayoutEffect(() => {
+		if (!isFresh) return
+		ref.current?.scrollIntoView({
+			block: 'nearest',
+			behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+				? 'auto'
+				: 'smooth',
+		})
+	}, [isFresh])
+
+	// The same dish tapped again grows this line: flash it so the cashier sees where.
+	useLayoutEffect(() => {
+		const el = ref.current
+		const grew = line.quantity > quantity.current
+		quantity.current = line.quantity
+		if (!el || !grew) return
+		el.classList.remove('t-flash')
+		void el.offsetWidth
+		el.classList.add('t-flash')
+	}, [line.quantity])
+
+	return (
+		<li ref={ref} className={cn('p-4', isFresh && 't-rise')}>
+			<div className="flex items-start gap-3">
+				<button
+					type="button"
+					onClick={() => onEdit(line)}
+					className="min-w-0 flex-1 text-start"
+					aria-label={_(t`Edit ${line.name}`)}
+				>
+					<div className="leading-tight font-semibold">{line.name}</div>
+					{line.variantLabel ? (
+						<div className="text-muted-foreground text-sm">
+							{line.variantLabel}
+						</div>
+					) : null}
+					{line.options.map((o) => (
+						<div
+							key={`${o.groupId}:${o.optionId}`}
+							className="text-muted-foreground text-sm"
+						>
+							{o.quantity > 1 ? `${o.quantity}× ` : ''}
+							{o.optionName}
+							{o.unitCents > 0 ? ` +${money(o.unitCents * o.quantity)}` : ''}
+						</div>
+					))}
+					{line.instructions ? (
+						<div className="text-warning text-sm italic">
+							“{line.instructions}”
+						</div>
+					) : null}
+				</button>
+				<NumberPop
+					value={money(lineTotalCents(line))}
+					className="tnum shrink-0 font-semibold"
+				/>
+			</div>
+			<div className="mt-2 flex items-center justify-between">
+				<div className="bg-muted flex items-center gap-1 rounded-xl p-0.5">
+					<IconButton
+						label={_(t`Fewer ${line.name}`)}
+						onClick={() => onQuantity(line.id, line.quantity - 1)}
+					>
+						{/* At one, the minus becomes a bin: the next tap takes the line off. */}
+						<span
+							className="t-icon-swap"
+							data-state={line.quantity === 1 ? 'b' : 'a'}
+						>
+							<Minus className="t-icon size-4" data-icon="a" />
+							<Trash2 className="t-icon size-4" data-icon="b" />
+						</span>
+					</IconButton>
+					<span
+						className="tnum mono w-8 text-center font-bold"
+						aria-live="polite"
+					>
+						<NumberPop value={String(line.quantity)} />
+					</span>
+					<IconButton
+						label={_(t`More ${line.name}`)}
+						onClick={() => onQuantity(line.id, line.quantity + 1)}
+					>
+						<Plus className="size-4" />
+					</IconButton>
+				</div>
+				<button
+					type="button"
+					className="text-muted-foreground hover:bg-destructive/8 hover:text-destructive min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+					onClick={() => onRemove(line.id)}
+				>
+					<Trans>Remove</Trans>
+				</button>
+			</div>
+		</li>
 	)
 }
 

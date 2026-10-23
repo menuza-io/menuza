@@ -7,7 +7,13 @@ import {
 	pickupLocalValue,
 	type PhonePickup,
 } from '~/lib/pickup.ts'
-import { Button, Modal, Segmented } from '~/ui/primitives.tsx'
+import {
+	Button,
+	Modal,
+	Reveal,
+	Segmented,
+	fieldClass,
+} from '~/ui/primitives.tsx'
 
 /** The caller's details are committed together; Escape never changes the order. */
 export function PhoneOrderSheet({
@@ -41,8 +47,6 @@ export function PhoneOrderSheet({
 		details.pickupAt == null ? '' : pickupLocalValue(details.pickupAt, zone),
 	)
 	const [error, setError] = useState<string | null>(null)
-	const inputClass =
-		'border-input bg-background focus:border-ring h-12 w-full min-w-0 rounded-xl border px-3'
 	return (
 		<Modal
 			open
@@ -110,7 +114,7 @@ export function PhoneOrderSheet({
 						maxLength={120}
 						value={name}
 						onChange={(e) => setName(e.target.value)}
-						className={inputClass}
+						className={fieldClass}
 					/>
 				</div>
 				<div className="space-y-2">
@@ -129,7 +133,7 @@ export function PhoneOrderSheet({
 						maxLength={32}
 						value={phone}
 						onChange={(e) => setPhone(e.target.value)}
-						className={inputClass}
+						className={fieldClass}
 					/>
 				</div>
 				<div className="space-y-3">
@@ -142,8 +146,8 @@ export function PhoneOrderSheet({
 							{ value: 'scheduled', label: _(t`Scheduled`) },
 						]}
 					/>
-					{timing === 'scheduled' ? (
-						<div className="space-y-2">
+					<Reveal open={timing === 'scheduled'}>
+						<div className="space-y-2 pb-1">
 							<label
 								htmlFor={`${id}-time`}
 								className="block text-sm font-semibold"
@@ -157,20 +161,20 @@ export function PhoneOrderSheet({
 								required
 								value={localTime}
 								onChange={(e) => setLocalTime(e.target.value)}
-								className={inputClass}
+								className={fieldClass}
 								aria-describedby={`${id}-zone`}
 							/>
 						</div>
-					) : null}
+					</Reveal>
 					<p id={`${id}-zone`} className="text-muted-foreground text-sm">
 						<Trans>Restaurant time: {zone}</Trans>
 					</p>
 				</div>
-				{error ? (
-					<p role="alert" className="text-destructive text-sm">
+				<Reveal open={Boolean(error)}>
+					<p role="alert" className="text-destructive text-sm font-medium">
 						{error}
 					</p>
-				) : null}
+				</Reveal>
 			</form>
 		</Modal>
 	)

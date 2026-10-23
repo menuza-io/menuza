@@ -2,16 +2,16 @@ export const siteFieldLabelClass =
 	'text-sm font-medium leading-none text-foreground'
 
 export const siteInputClass =
-	'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+	'field file:border-0 file:bg-transparent file:text-sm file:font-medium'
 
 export const siteInputDisabledClass =
 	'flex h-10 w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground ring-offset-background cursor-not-allowed opacity-75'
 
 export const siteBtnPrimaryClass =
-	'inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:min-w-[8.5rem]'
+	'btn-cta w-full text-sm sm:w-auto sm:min-w-[8.5rem]'
 
 export const siteBtnLinkClass =
-	'inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+	'focus-ring inline-flex min-h-11 items-center justify-center rounded-[var(--radius)] px-4 text-sm font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline'
 
 export const siteCardClass =
 	'rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8'

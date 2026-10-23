@@ -49,11 +49,11 @@ const dividerClass = siteSectionDividerClass(config.background)
 
 		<div class:list={['divide-y border-y', dividerClass, borderClass]}>
 			{items.map((item) => (
-				<details class="group py-1">
-					<summary class:list={['flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-base font-medium marker:content-none [&::-webkit-details-marker]:hidden', headingClass]}>
+				<details data-site-disclosure class="t-acc group py-1">
+					<summary class:list={['focus-ring flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-[var(--radius)] py-4 text-start text-base font-medium marker:content-none [&::-webkit-details-marker]:hidden', headingClass]}>
 						<span>{item.question}</span>
 						<svg
-							class:list={['size-4 shrink-0 transition-transform group-open:rotate-45', bodyClass]}
+							class:list={['t-acc-chevron size-4 shrink-0', bodyClass]}
 							xmlns="http://www.w3.org/2000/svg"
 							viewBox="0 0 24 24"
 							fill="none"
@@ -63,12 +63,13 @@ const dividerClass = siteSectionDividerClass(config.background)
 							stroke-linejoin="round"
 							aria-hidden="true"
 						>
-							<line x1="12" x2="12" y1="5" y2="19"></line>
-							<line x1="5" x2="19" y1="12" y2="12"></line>
+							<path d="m6 9 6 6 6-6"></path>
 						</svg>
 					</summary>
-					<div class:list={['pb-5 pr-8 text-sm leading-relaxed', bodyClass]}>
-						<p>{item.answer}</p>
+					<div class="t-acc-panel">
+						<div class="t-acc-panel-inner">
+							<p class:list={['max-w-prose pb-5 pe-8 text-sm leading-relaxed', bodyClass]}>{item.answer}</p>
+						</div>
 					</div>
 				</details>
 			))}

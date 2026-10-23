@@ -1,0 +1,245 @@
+/* Surface choreography uses transitions.dev's usage-based scale. Fluid
+ * Functionalism's fast, critically damped tier carries navigation highlights.
+ * Keep this CSS-native: Sites does not hydrate a React application. */
+:root {
+	--duration-quick: 150ms;
+	--duration-fast: 250ms;
+	--duration-medium: 350ms;
+	--duration-slow: 400ms;
+	--ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-in-out: ease-in-out;
+	--distance-micro: 4px;
+	--blur-small: 2px;
+	--scale-large: 0.96;
+	--scale-medium: 0.97;
+	--scale-tiny: 0.99;
+	--modal-open-dur: var(--duration-fast);
+	--modal-close-dur: var(--duration-quick);
+	--modal-scale: var(--scale-large);
+	--modal-scale-close: var(--scale-large);
+	--modal-ease: var(--ease-smooth-out);
+	--dropdown-open-dur: var(--duration-fast);
+	--dropdown-close-dur: var(--duration-quick);
+	--dropdown-pre-scale: var(--scale-medium);
+	--dropdown-closing-scale: var(--scale-tiny);
+	--dropdown-ease: var(--ease-smooth-out);
+	--acc-expand: var(--duration-fast);
+	--acc-collapse: var(--duration-fast);
+	--acc-chevron: var(--duration-fast);
+	--acc-ease: var(--ease-smooth-out);
+	--fluid-hover-duration: 80ms;
+	--fluid-hover-exit: 60ms;
+	--fluid-hover-ease: linear(
+		0,
+		0.094,
+		0.29,
+		0.493,
+		0.66,
+		0.783,
+		0.867,
+		0.921,
+		0.954,
+		0.974,
+		0.985,
+		0.992,
+		0.996,
+		0.998,
+		0.999,
+		1
+	);
+}
+
+/* transitions.dev recipes, with their documented state hooks. */
+.t-modal {
+	transform-origin: center;
+	transform: scale(var(--modal-scale));
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		transform var(--modal-open-dur) var(--modal-ease),
+		opacity var(--modal-open-dur) var(--modal-ease);
+	will-change: transform, opacity;
+}
+.t-modal.is-open {
+	transform: scale(1);
+	opacity: 1;
+	pointer-events: auto;
+}
+.t-modal.is-closing {
+	transform: scale(var(--modal-scale-close));
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		transform var(--modal-close-dur) var(--modal-ease),
+		opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+.t-dropdown {
+	transform-origin: top left;
+	transform: scale(var(--dropdown-pre-scale));
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		transform var(--dropdown-open-dur) var(--dropdown-ease),
+		opacity var(--dropdown-open-dur) var(--dropdown-ease);
+	will-change: transform, opacity;
+}
+.t-dropdown[data-origin='top-right'] {
+	transform-origin: top right;
+}
+.t-dropdown[data-origin='top-center'] {
+	transform-origin: top center;
+}
+.t-dropdown[data-origin='bottom-left'] {
+	transform-origin: bottom left;
+}
+.t-dropdown[data-origin='bottom-center'] {
+	transform-origin: bottom center;
+}
+.t-dropdown[data-origin='bottom-right'] {
+	transform-origin: bottom right;
+}
+.t-dropdown.is-open {
+	transform: scale(1);
+	opacity: 1;
+	pointer-events: auto;
+}
+.t-dropdown.is-closing {
+	transform: scale(var(--dropdown-closing-scale));
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		transform var(--dropdown-close-dur) var(--dropdown-ease),
+		opacity var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+.t-acc-panel {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows var(--acc-collapse) var(--acc-ease);
+}
+.t-acc[data-open='true'] .t-acc-panel {
+	grid-template-rows: 1fr;
+	transition: grid-template-rows var(--acc-expand) var(--acc-ease);
+}
+.t-acc-panel-inner {
+	overflow: hidden;
+	opacity: 0;
+	filter: blur(2px);
+	transition:
+		opacity var(--acc-collapse) var(--acc-ease),
+		filter var(--acc-collapse) var(--acc-ease);
+}
+.t-acc[data-open='true'] .t-acc-panel-inner {
+	opacity: 1;
+	filter: blur(0);
+	transition:
+		opacity var(--acc-expand) var(--acc-ease),
+		filter var(--acc-expand) var(--acc-ease);
+}
+.t-acc-chevron {
+	display: inline-flex;
+	transform: scaleY(1);
+	transform-origin: center;
+	transition: transform var(--acc-chevron) var(--acc-ease);
+}
+.t-acc-chevron path {
+	vector-effect: non-scaling-stroke;
+}
+.t-acc[data-open='true'] .t-acc-chevron {
+	transform: scaleY(-1);
+}
+
+/* Native details remain usable before enhancement and without JavaScript. */
+[data-site-disclosure]:not([data-motion-ready])[open] > .t-dropdown {
+	transform: none;
+	opacity: 1;
+	pointer-events: auto;
+}
+.t-acc:not([data-motion-ready])[open] .t-acc-panel {
+	grid-template-rows: 1fr;
+}
+.t-acc:not([data-motion-ready])[open] .t-acc-panel-inner {
+	opacity: 1;
+	filter: none;
+}
+
+[data-fluid-nav] {
+	position: relative;
+	isolation: isolate;
+}
+[data-fluid-nav] :is(a, button) {
+	position: relative;
+}
+.site-nav-highlight {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: -1;
+	pointer-events: none;
+	border-radius: var(--radius);
+	background: var(--muted);
+	opacity: 0;
+	transition: opacity var(--fluid-hover-exit) ease-out;
+}
+.site-nav-highlight.is-positioned {
+	transition:
+		transform var(--fluid-hover-duration) var(--fluid-hover-ease),
+		opacity var(--fluid-hover-exit) ease-out;
+}
+.site-nav-highlight.is-visible {
+	opacity: 1;
+}
+
+/* Overlay visibility is owned by the shared, interruption-safe controller. */
+.site-overlay {
+	opacity: 0;
+	transition: opacity var(--modal-close-dur) var(--ease-smooth-out);
+}
+.site-overlay.is-open {
+	opacity: 1;
+	transition-duration: var(--modal-open-dur);
+}
+.site-drawer-overlay {
+	--modal-open-dur: var(--duration-slow);
+	--modal-close-dur: var(--duration-medium);
+}
+.site-drawer {
+	transform: translateX(100%);
+	transition: transform var(--duration-slow) var(--ease-smooth-out);
+}
+[dir='rtl'] .site-drawer {
+	transform: translateX(-100%);
+}
+.site-drawer.is-open {
+	transform: translateX(0);
+}
+.site-drawer.is-closing {
+	transition-duration: var(--duration-medium);
+}
+.site-cart-tray {
+	transition: translate var(--duration-medium) var(--ease-smooth-out);
+}
+.site-cart-tray[aria-hidden='false'] {
+	transition-duration: var(--duration-slow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.t-modal {
+		transition: none !important;
+	}
+	.t-dropdown {
+		transition: none !important;
+	}
+	.t-acc-panel,
+	.t-acc-panel-inner,
+	.t-acc-chevron {
+		transition: none !important;
+	}
+	.site-nav-highlight,
+	.site-overlay,
+	.site-drawer,
+	.site-cart-tray {
+		transition: none !important;
+	}
+}
