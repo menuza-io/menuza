@@ -197,6 +197,7 @@ export const ACTOR_KIND_LABELS: Record<string, MessageDescriptor> = {
 	operator: msg`Operator`,
 	system: msg`System`,
 	voice_agent: msg`Voice agent`,
+	station_staff: msg`Staff at a terminal`,
 }
 
 export const ELEMENT_KIND_LABELS: Record<string, MessageDescriptor> = {

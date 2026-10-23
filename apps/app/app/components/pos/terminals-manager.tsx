@@ -63,6 +63,9 @@ const terminalSchema = z.object({
 	dayStartMinutes: z.number().default(240),
 	// Sells only inside a cash drawer shift. Older servers: off.
 	shiftsRequired: z.boolean().default(false),
+	// Station apps beside the till. Older servers: off.
+	timeclockEnabled: z.boolean().default(false),
+	reservationsEnabled: z.boolean().default(false),
 	pairedAt: z.number(),
 	lastSeenAt: z.number().nullable(),
 	revokedAt: z.number().nullable(),
@@ -110,16 +113,24 @@ type Created = z.infer<typeof createdSchema> & { label: string }
 const QUIET_AFTER_MS = 10 * 60 * 1000
 
 /** Walk-in POS terminals: pair a tablet or phone, see when each last sent an order, remove one that is lost. */
+/** The Station apps a terminal can offer, as the organization has them switched on. */
+export type StationFeatures = { timeclock: boolean; reservations: boolean }
+export type TerminalLocation = { id: string; name: string }
+
 export function TerminalsManager({
 	orgSlug,
 	canWrite,
 	posUrl,
 	appUrl,
+	locations = [],
+	stationFeatures = { timeclock: false, reservations: false },
 }: {
 	orgSlug: string
 	canWrite: boolean
 	posUrl: string
 	appUrl: string
+	locations?: TerminalLocation[]
+	stationFeatures?: StationFeatures
 }) {
 	const { _ } = useLingui()
 	const { request, tenantApiUrl } = useOperatorClient(orgSlug, '/operator/pos')
@@ -237,6 +248,28 @@ export function TerminalsManager({
 			await request(`/terminals/${encodeURIComponent(device.id)}`, {
 				method: 'PATCH',
 				body: JSON.stringify({ shiftsRequired }),
+			})
+			toast.success(
+				_(t`Saved. The terminal updates the next time it connects.`),
+			)
+			await load()
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: _(t`Could not change the setting.`),
+			)
+		}
+	}
+
+	async function setStationApp(
+		device: Terminal,
+		patch: { timeclockEnabled: boolean } | { reservationsEnabled: boolean },
+	) {
+		try {
+			await request(`/terminals/${encodeURIComponent(device.id)}`, {
+				method: 'PATCH',
+				body: JSON.stringify(patch),
 			})
 			toast.success(
 				_(t`Saved. The terminal updates the next time it connects.`),
@@ -414,7 +447,7 @@ export function TerminalsManager({
 										) : null}
 									</div>
 								</CardHeader>
-								<CardFooter className="@container">
+								<CardFooter className="@container flex-col items-stretch gap-4">
 									<div className="grid w-full min-w-0 gap-4 @lg:grid-cols-3 @lg:gap-6">
 										<div className="flex min-w-0 items-center justify-between gap-3 @lg:flex-col @lg:items-start @lg:gap-2">
 											<span className="text-muted-foreground text-xs font-medium">
@@ -513,6 +546,16 @@ export function TerminalsManager({
 											)}
 										</div>
 									</div>
+									<StationApps
+										device={device}
+										canWrite={canWrite}
+										features={stationFeatures}
+										locationName={
+											locations.find((l) => l.id === device.locationId)?.name ??
+											null
+										}
+										onChange={(patch) => void setStationApp(device, patch)}
+									/>
 								</CardFooter>
 							</Card>
 						</li>
@@ -707,6 +750,8 @@ export function TerminalsManager({
 				posUrl={posUrl}
 				appUrl={appUrl}
 				orgSlug={orgSlug}
+				locations={locations}
+				stationFeatures={stationFeatures}
 				suggestedCode={suggestCode(
 					state.status === 'ready' ? state.data.devices : [],
 					pending,
@@ -789,6 +834,106 @@ function DayEnds({ minutes }: { minutes: number }) {
  * Orders after midnight belong to the previous business day until this time,
  * so a late service keeps one run of order numbers and one day's takings.
  */
+const NO_LOCATION = '__any__'
+
+/**
+ * Time clock and host stand on one terminal. The host stand shows guests to
+ * whoever holds the tablet, so it needs a location and a staff PIN; the server
+ * refuses otherwise, and the switch says why before anyone taps it.
+ */
+function StationApps({
+	device,
+	canWrite,
+	features,
+	locationName,
+	onChange,
+}: {
+	device: Terminal
+	canWrite: boolean
+	features: StationFeatures
+	locationName: string | null
+	onChange: (
+		patch: { timeclockEnabled: boolean } | { reservationsEnabled: boolean },
+	) => void
+}) {
+	const { _ } = useLingui()
+	const label = device.label
+	if (!features.timeclock && !features.reservations) return null
+	const reservationsBlocked = !device.locationId
+		? _(t`Pair it again with a location to use reservations.`)
+		: !device.signInRequired
+			? _(t`Turn on the staff PIN to use reservations.`)
+			: null
+	const toggle = (
+		on: boolean,
+		label: string,
+		onLabel: React.ReactNode,
+		offLabel: React.ReactNode,
+		run: () => void,
+		disabled = false,
+	) =>
+		canWrite ? (
+			<Button
+				variant={on ? 'secondary' : 'outline'}
+				className="h-11 md:h-8"
+				onClick={run}
+				disabled={disabled}
+				aria-label={label}
+				aria-pressed={on}
+			>
+				{on ? <Icon name="check" /> : null}
+				{on ? onLabel : offLabel}
+			</Button>
+		) : (
+			<Badge variant={on ? 'secondary' : 'outline'}>
+				{on ? onLabel : offLabel}
+			</Badge>
+		)
+	return (
+		<div className="border-border flex w-full min-w-0 flex-col gap-3 border-t pt-4">
+			<span className="text-muted-foreground text-xs font-medium">
+				<Trans>Station apps</Trans>
+			</span>
+			<div className="flex flex-wrap items-center gap-2">
+				{features.timeclock
+					? toggle(
+							device.timeclockEnabled,
+							device.timeclockEnabled
+								? _(t`Time clock on ${label}, on`)
+								: _(t`Time clock on ${label}, off`),
+							<Trans>Time clock on</Trans>,
+							<Trans>Time clock off</Trans>,
+							() => onChange({ timeclockEnabled: !device.timeclockEnabled }),
+						)
+					: null}
+				{features.reservations
+					? toggle(
+							device.reservationsEnabled,
+							device.reservationsEnabled
+								? _(t`Reservations on ${label}, on`)
+								: _(t`Reservations on ${label}, off`),
+							<Trans>Reservations on</Trans>,
+							<Trans>Reservations off</Trans>,
+							() =>
+								onChange({ reservationsEnabled: !device.reservationsEnabled }),
+							!device.reservationsEnabled && reservationsBlocked !== null,
+						)
+					: null}
+				{features.reservations && locationName ? (
+					<span className="text-muted-foreground text-sm">
+						<Trans>Host stand for {locationName}</Trans>
+					</span>
+				) : null}
+			</div>
+			{features.reservations &&
+			!device.reservationsEnabled &&
+			reservationsBlocked ? (
+				<p className="text-muted-foreground text-sm">{reservationsBlocked}</p>
+			) : null}
+		</div>
+	)
+}
+
 function DayStartSelect({
 	value,
 	label,
@@ -911,6 +1056,8 @@ function PairDialog({
 	posUrl,
 	appUrl,
 	orgSlug,
+	locations,
+	stationFeatures,
 	suggestedCode,
 }: {
 	open: boolean
@@ -920,9 +1067,16 @@ function PairDialog({
 	posUrl: string
 	appUrl: string
 	orgSlug: string
+	locations: TerminalLocation[]
+	stationFeatures: StationFeatures
 	suggestedCode: string
 }) {
 	const { _ } = useLingui()
+	/** One location is the obvious choice; with several the manager picks (or none). */
+	const firstLocation = locations.length === 1 ? locations[0]!.id : NO_LOCATION
+	const [locationId, setLocationId] = useState(firstLocation)
+	const [timeclockEnabled, setTimeclockEnabled] = useState(false)
+	const [reservationsEnabled, setReservationsEnabled] = useState(false)
 	const [label, setLabel] = useState('')
 	const [terminalCode, setTerminalCode] = useState(suggestedCode)
 	const [pending, setPending] = useState(false)
@@ -932,6 +1086,9 @@ function PairDialog({
 	const [created, setCreated] = useState<Created | null>(null)
 	const [apiUrl, setApiUrl] = useState<string | null>(null)
 	const [paired, setPaired] = useState(false)
+	// The host stand opens guests' details only for a signed-in person at one location.
+	const reservationsAllowed =
+		stationFeatures.reservations && locationId !== NO_LOCATION && signInRequired
 
 	useEffect(() => {
 		if (open) {
@@ -941,6 +1098,9 @@ function PairDialog({
 			setCreated(null)
 			setSignInRequired(true)
 			setDayStartMinutes(240)
+			setLocationId(firstLocation)
+			setTimeclockEnabled(false)
+			setReservationsEnabled(false)
 			setPaired(false)
 		}
 		// Re-seed only when the dialog opens.
@@ -960,6 +1120,9 @@ function PairDialog({
 						terminalCode: terminalCode.trim().toUpperCase(),
 						signInRequired,
 						dayStartMinutes,
+						locationId: locationId === NO_LOCATION ? null : locationId,
+						timeclockEnabled: timeclockEnabled && stationFeatures.timeclock,
+						reservationsEnabled: reservationsAllowed && reservationsEnabled,
 					}),
 				}),
 			)
@@ -1041,6 +1204,43 @@ function PairDialog({
 								dir="ltr"
 							/>
 						</FieldLabel>
+						{locations.length > 0 ? (
+							<div className="flex flex-col gap-1 text-sm">
+								<span className="font-medium">
+									<Trans>Location</Trans>
+								</span>
+								<Select
+									value={locationId}
+									onValueChange={(next) => setLocationId(next ?? NO_LOCATION)}
+								>
+									<SelectTrigger
+										className="h-11 w-fit max-w-full md:h-8"
+										aria-label={_(t`Location`)}
+									>
+										<SelectValue>
+											{locations.find((l) => l.id === locationId)?.name ??
+												_(t`Any location`)}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value={NO_LOCATION}>
+											<Trans>Any location</Trans>
+										</SelectItem>
+										{locations.map((location) => (
+											<SelectItem key={location.id} value={location.id}>
+												{location.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<span className="text-muted-foreground">
+									<Trans>
+										A terminal bound to a location sells only there and can run
+										its host stand.
+									</Trans>
+								</span>
+							</div>
+						) : null}
 						<div className="flex flex-col gap-1 text-sm">
 							<span className="font-medium">
 								<Trans>Business day</Trans>
@@ -1076,6 +1276,56 @@ function PairDialog({
 								</span>
 							</span>
 						</label>
+						{stationFeatures.timeclock ? (
+							<label className="flex items-start gap-3 text-sm">
+								<Checkbox
+									checked={timeclockEnabled}
+									onCheckedChange={(checked) =>
+										setTimeclockEnabled(checked === true)
+									}
+								/>
+								<span>
+									<span className="block font-medium">
+										<Trans>Time clock</Trans>
+									</span>
+									<span className="text-muted-foreground">
+										<Trans>
+											Staff clock in and out on this terminal with their PIN,
+											even while it is locked.
+										</Trans>
+									</span>
+								</span>
+							</label>
+						) : null}
+						{stationFeatures.reservations ? (
+							<label className="flex items-start gap-3 text-sm">
+								<Checkbox
+									checked={reservationsAllowed && reservationsEnabled}
+									disabled={!reservationsAllowed}
+									onCheckedChange={(checked) =>
+										setReservationsEnabled(checked === true)
+									}
+								/>
+								<span>
+									<span className="block font-medium">
+										<Trans>Reservations</Trans>
+									</span>
+									<span className="text-muted-foreground">
+										{reservationsAllowed ? (
+											<Trans>
+												The host stand for this location: today’s floor,
+												arrivals, walk-ins and the waitlist.
+											</Trans>
+										) : (
+											<Trans>
+												Needs a location and a staff PIN, so guests’ details
+												only open for someone signed in.
+											</Trans>
+										)}
+									</span>
+								</span>
+							</label>
+						) : null}
 						{error ? (
 							<Alert variant="destructive">
 								<AlertDescription>{error}</AlertDescription>
