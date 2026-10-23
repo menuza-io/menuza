@@ -17,7 +17,7 @@ import {
 	UserRound,
 	Users,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { type StatusTarget } from './api.ts'
 import {
 	shortName,
@@ -667,6 +667,8 @@ export function BookingSheet({
 	onBook: (input: {
 		date: string
 		time: string
+		/** The time as the stand shows it ("7:30 PM"). */
+		timeLabel: string
 		partySize: number
 		firstName: string
 		lastName: string
@@ -674,12 +676,23 @@ export function BookingSheet({
 	}) => void
 	onClose: () => void
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
+	// A slot is minutes after local midnight; show it the way the stand shows times.
+	const slotLabel = useMemo(() => {
+		const format = new Intl.DateTimeFormat(i18n.locale, {
+			hour: 'numeric',
+			minute: '2-digit',
+			timeZone: 'UTC',
+		})
+		return (minutes: number) =>
+			format.format(Date.UTC(2000, 0, 1, 0, minutes % 1440))
+	}, [i18n.locale])
 	const [date, setDate] = useState(today)
 	const [size, setSize] = useState(2)
 	const [slots, setSlots] = useState<Availability['slots'] | null>(null)
 	const [slotsError, setSlotsError] = useState(false)
 	const [time, setTime] = useState<string | null>(null)
+	const [timeLabel, setTimeLabel] = useState('')
 	const [first, setFirst] = useState('')
 	const [last, setLast] = useState('')
 	const [phone, setPhone] = useState('')
@@ -726,6 +739,7 @@ export function BookingSheet({
 							onBook({
 								date,
 								time,
+								timeLabel,
 								partySize: size,
 								firstName: first,
 								lastName: last,
@@ -735,7 +749,7 @@ export function BookingSheet({
 					>
 						{time ? (
 							<Trans>
-								Book {size} at {time}
+								Book {size} at {timeLabel}
 							</Trans>
 						) : (
 							<Trans>Choose a time</Trans>
@@ -788,10 +802,13 @@ export function BookingSheet({
 									key={slot.localStartMin}
 									selected={time === slot.time}
 									aria-pressed={time === slot.time}
-									onClick={() => setTime(slot.time)}
-									className="mono w-20"
+									onClick={() => {
+										setTime(slot.time)
+										setTimeLabel(slotLabel(slot.localStartMin))
+									}}
+									className="tnum min-w-20"
 								>
-									{slot.time}
+									{slotLabel(slot.localStartMin)}
 								</Chip>
 							))}
 						</div>

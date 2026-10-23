@@ -112,9 +112,9 @@ export function Dock({
 											/>
 										) : null}
 									</span>
-									<span className="truncate font-medium">
+									<bdi className="truncate font-medium">
 										{shortName(reservation, _(t`Guest`))}
-									</span>
+									</bdi>
 									<span className="text-xs font-medium">
 										{here ? (
 											<span className="text-success">
@@ -193,9 +193,9 @@ export function Dock({
 												/>
 											) : null}
 										</span>
-										<span className="truncate font-medium">
+										<bdi className="truncate font-medium">
 											{entry.firstName || entry.displayName}
-										</span>
+										</bdi>
 										<span className="text-muted-foreground inline-flex items-center gap-1 text-xs font-medium">
 											<Clock3 className="size-3" />
 											{entry.quotedMin !== null ? (

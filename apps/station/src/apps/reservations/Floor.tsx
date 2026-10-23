@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import {
 	placeTables,
 	shortName,
+	takesParty,
 	tableState,
 	type DayArea,
 	type DayElement,
@@ -32,8 +33,12 @@ export function Floor({
 	area: DayArea
 	feed: DayFeed
 	now: number
-	/** The party being placed, if any: how many it is and which tables already hold it. */
-	picking: { partySize: number } | null
+	/** The party being placed, if any: how many, for how long, and its own booking. */
+	picking: {
+		partySize: number
+		durationMin: number
+		reservationId?: string
+	} | null
 	onTable: (table: DayTable, state: TableState) => void
 	formatTime: (epochMs: number) => string
 }) {
@@ -84,7 +89,7 @@ export function Floor({
 								table={table}
 								state={state}
 								now={now}
-								fits={picking ? table.maxCovers >= picking.partySize : null}
+								fits={picking ? takesParty(table, state, picking, now) : null}
 								onClick={() => onTable(table, state)}
 								formatTime={formatTime}
 								style={{
@@ -249,7 +254,10 @@ function TableButton({
 					) : (
 						<>
 							<Users className="size-3" />
-							<span className="tnum">{covers}</span>
+							{/* "1–4" keeps its order right to left. */}
+							<span className="tnum" dir="ltr">
+								{covers}
+							</span>
 						</>
 					)}
 				</span>

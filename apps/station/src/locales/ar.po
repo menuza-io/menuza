@@ -28,7 +28,7 @@ msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}"
 
 #. placeholder {0}: entry.displayName
-#: src/apps/reservations/HostStand.tsx:432
+#: src/apps/reservations/HostStand.tsx:478
 msgid "{0} has been texted."
 msgstr "تم إرسال رسالة إلى {0}."
 
@@ -38,12 +38,12 @@ msgid "{0} is not a manager. Ask a manager to enter their PIN."
 msgstr "{0} ليس مديرًا. اطلب من أحد المديرين إدخال رمزه السري."
 
 #. placeholder {0}: input.displayName
-#: src/apps/reservations/HostStand.tsx:494
+#: src/apps/reservations/HostStand.tsx:541
 msgid "{0} is on the waitlist."
 msgstr "{0} على قائمة الانتظار."
 
 #. placeholder {0}: entry.displayName
-#: src/apps/reservations/HostStand.tsx:438
+#: src/apps/reservations/HostStand.tsx:484
 msgid "{0} left the waitlist."
 msgstr "غادر {0} قائمة الانتظار."
 
@@ -79,7 +79,7 @@ msgstr "{count, plural, zero {لم يرفض الخادم أي وردية.} one {
 msgid "{first} and {second}"
 msgstr "{first} و{second}"
 
-#: src/apps/reservations/Floor.tsx:274
+#: src/apps/reservations/Floor.tsx:282
 msgid "{free} of {total} free"
 msgstr "{free} من {total} متاحة"
 
@@ -92,7 +92,7 @@ msgid "{itemCount, plural, one {# item} other {# items}}"
 msgstr "{itemCount, plural, zero {لا أصناف} one {صنف واحد} two {صنفان} few {# أصناف} many {# صنفًا} other {# صنف}}"
 
 #. placeholder {0}: done.firstName
-#: src/apps/timeclock/TimeClock.tsx:825
+#: src/apps/timeclock/TimeClock.tsx:841
 msgid "{label}, {0}"
 msgstr "{label}، {0}"
 
@@ -148,7 +148,7 @@ msgstr "{rejected, plural, zero {لا طلبات تحتاج إلى مراجعة}
 msgid "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 msgstr "{rejectedShifts, plural, zero {لا ورديات تحتاج إلى مراجعة} one {وردية واحدة تحتاج إلى مراجعة} two {ورديتان تحتاجان إلى مراجعة} few {# ورديات تحتاج إلى مراجعة} many {# وردية تحتاج إلى مراجعة} other {# وردية تحتاج إلى مراجعة}}"
 
-#: src/apps/reservations/Floor.tsx:239
+#: src/apps/reservations/Floor.tsx:244
 msgid "{seatedFor}m"
 msgstr "{seatedFor}د"
 
@@ -177,7 +177,7 @@ msgstr "{waited} دقيقة"
 msgid "{waited} of {0} min"
 msgstr "{waited} من {0} دقيقة"
 
-#: src/apps/timeclock/TimeClock.tsx:442
+#: src/apps/timeclock/TimeClock.tsx:453
 msgid "{waiting, plural, one {# punch waiting to send} other {# punches waiting to send}}"
 msgstr "{waiting, plural, zero {لا توجد بصمات بانتظار الإرسال} one {بصمة واحدة بانتظار الإرسال} two {بصمتان بانتظار الإرسال} few {# بصمات بانتظار الإرسال} many {# بصمة بانتظار الإرسال} other {# بصمة بانتظار الإرسال}}"
 
@@ -185,19 +185,19 @@ msgstr "{waiting, plural, zero {لا توجد بصمات بانتظار الإر
 msgid "{waitingOrders, plural, one {# order has not been sent yet. They stay on this device and send once it is paired again.} other {# orders have not been sent yet. They stay on this device and send once it is paired again.}}"
 msgstr "{waitingOrders, plural, zero {لا طلبات بانتظار الإرسال.} one {طلب واحد لم يُرسل بعد. يبقى على هذا الجهاز ويُرسل بعد ربطه من جديد.} two {طلبان لم يُرسلا بعد. يبقيان على هذا الجهاز ويُرسلان بعد ربطه من جديد.} few {# طلبات لم تُرسل بعد. تبقى على هذا الجهاز وتُرسل بعد ربطه من جديد.} many {# طلبًا لم يُرسل بعد. تبقى على هذا الجهاز وتُرسل بعد ربطه من جديد.} other {# طلب لم يُرسل بعد. تبقى على هذا الجهاز وتُرسل بعد ربطه من جديد.}}"
 
-#: src/apps/reservations/HostStand.tsx:237
+#: src/apps/reservations/HostStand.tsx:269
 msgid "{who} finished. Table cleared."
 msgstr "انتهى {who}. أُخليت الطاولة."
 
-#: src/apps/reservations/HostStand.tsx:235
+#: src/apps/reservations/HostStand.tsx:267
 msgid "{who} is here."
 msgstr "وصل {who}."
 
-#: src/apps/reservations/HostStand.tsx:239
+#: src/apps/reservations/HostStand.tsx:271
 msgid "{who} marked as a no-show."
 msgstr "سُجّل {who} كعدم حضور."
 
-#: src/apps/reservations/HostStand.tsx:309
+#: src/apps/reservations/HostStand.tsx:341
 msgid "<0/> to seat, <1/> covers"
 msgstr "<0/> بانتظار الجلوس، <1/> أشخاص"
 
@@ -217,7 +217,7 @@ msgstr "يوافق المدير على سحب النقد برمزه السري"
 msgid "A manager approves this with their PIN"
 msgstr "يعتمد المدير هذا برمزه السري"
 
-#: src/apps/reservations/HostStand.tsx:556
+#: src/apps/reservations/HostStand.tsx:603
 msgid "A manager turns them on in the app, under Settings, Terminals. The terminal needs a location and staff sign-in."
 msgstr "يفعّلها المدير من التطبيق، في الإعدادات، الأجهزة الطرفية. يحتاج الجهاز إلى موقع وتسجيل دخول للموظفين."
 
@@ -251,8 +251,8 @@ msgstr "إضافة اسم"
 msgid "Add table"
 msgstr "إضافة طاولة"
 
-#: src/apps/reservations/sheets.tsx:877
-#: src/apps/reservations/sheets.tsx:893
+#: src/apps/reservations/sheets.tsx:894
+#: src/apps/reservations/sheets.tsx:910
 msgid "Add to the waitlist"
 msgstr "إضافة إلى قائمة الانتظار"
 
@@ -294,7 +294,7 @@ msgstr "يمكن أن يحتوي الطلب على {MAX_ORDER_LINES} صنفًا 
 msgid "another terminal had already taken this tab over"
 msgstr "نقطة بيع أخرى كانت قد تولّت هذا الحساب"
 
-#: src/apps/timeclock/TimeClock.tsx:727
+#: src/apps/timeclock/TimeClock.tsx:743
 msgid "Any cash tips this shift?"
 msgstr "هل حصلت على بقشيش نقدي في هذه الوردية؟"
 
@@ -367,7 +367,7 @@ msgstr "عاد من الاستراحة"
 msgid "Back to seated"
 msgstr "إرجاع إلى جالس"
 
-#: src/apps/timeclock/TimeClock.tsx:422
+#: src/apps/timeclock/TimeClock.tsx:429
 msgid "Back to sign in"
 msgstr "العودة إلى تسجيل الدخول"
 
@@ -390,8 +390,12 @@ msgid "Blocked: {0}"
 msgstr "محجوزة: {0}"
 
 #: src/apps/reservations/sheets.tsx:737
-msgid "Book {size} at {time}"
-msgstr "احجز {size} الساعة {time}"
+#~ msgid "Book {size} at {time}"
+#~ msgstr "احجز {size} الساعة {time}"
+
+#: src/apps/reservations/sheets.tsx:751
+msgid "Book {size} at {timeLabel}"
+msgstr "احجز {size} الساعة {timeLabel}"
 
 #: src/apps/reservations/sheets.tsx:32
 #: src/apps/reservations/sheets.tsx:297
@@ -400,20 +404,20 @@ msgstr "محجوز"
 
 #. placeholder {0}: input.firstName
 #. placeholder {1}: input.partySize
-#. placeholder {2}: input.time
-#: src/apps/reservations/HostStand.tsx:482
+#. placeholder {2}: input.timeLabel
+#: src/apps/reservations/HostStand.tsx:529
 msgid "Booked {0} for {1} at {2}."
 msgstr "تم حجز {0} لـ {1} الساعة {2}."
 
-#: src/apps/reservations/HostStand.tsx:343
+#: src/apps/reservations/HostStand.tsx:375
 msgid "Booking"
 msgstr "حجز"
 
-#: src/apps/reservations/HostStand.tsx:241
+#: src/apps/reservations/HostStand.tsx:273
 msgid "Booking for {who} cancelled."
 msgstr "أُلغي حجز {who}."
 
-#: src/apps/reservations/HostStand.tsx:242
+#: src/apps/reservations/HostStand.tsx:274
 msgid "Booking for {who} confirmed."
 msgstr "تم تأكيد حجز {who}."
 
@@ -433,7 +437,7 @@ msgstr "رقم التواصل"
 msgid "Can’t load the menu yet"
 msgstr "تعذّر تحميل القائمة بعد"
 
-#: src/apps/reservations/HostStand.tsx:362
+#: src/apps/reservations/HostStand.tsx:394
 #: src/apps/reservations/sheets.tsx:278
 #: src/screens/PairingLinkDialog.tsx:85
 #: src/screens/PhoneOrderSheet.tsx:58
@@ -532,7 +536,7 @@ msgstr "النقد المستلم"
 msgid "Cash taken"
 msgstr "النقد المحصّل"
 
-#: src/apps/timeclock/TimeClock.tsx:737
+#: src/apps/timeclock/TimeClock.tsx:753
 msgid "Cash tips {amount}"
 msgstr "البقشيش النقدي {amount}"
 
@@ -565,7 +569,7 @@ msgstr "تحصيل"
 msgid "Charged the wrong amount"
 msgstr "حُصّل مبلغ خاطئ"
 
-#: src/apps/timeclock/TimeClock.tsx:537
+#: src/apps/timeclock/TimeClock.tsx:548
 #: src/screens/LockScreen.tsx:187
 #: src/ui/ManagerPinPad.tsx:75
 msgid "Checking…"
@@ -601,7 +605,7 @@ msgstr "اختر حجمًا"
 msgid "Choose a table"
 msgstr "اختر طاولة"
 
-#: src/apps/reservations/sheets.tsx:741
+#: src/apps/reservations/sheets.tsx:755
 msgid "Choose a time"
 msgstr "اختر وقتًا"
 
@@ -641,7 +645,7 @@ msgid "Clock in or out"
 msgstr "تسجيل الحضور أو الانصراف"
 
 #: src/apps/timeclock/messages.ts:121
-#: src/apps/timeclock/TimeClock.tsx:758
+#: src/apps/timeclock/TimeClock.tsx:774
 msgid "Clock out"
 msgstr "تسجيل الانصراف"
 
@@ -676,7 +680,7 @@ msgstr "إغلاق الوردية"
 msgid "Closed by {0}"
 msgstr "أغلقها {0}"
 
-#: src/apps/reservations/HostStand.tsx:370
+#: src/apps/reservations/HostStand.tsx:402
 msgid "Closed today. Walk-ins can still be seated."
 msgstr "مغلق اليوم. لا يزال بالإمكان إجلاس الزبائن بدون حجز."
 
@@ -708,7 +712,7 @@ msgstr "اتصل بالإنترنت لرؤية حسابات نقاط البيع 
 msgid "Connect to the internet to sign in. The first sign-in on this device needs a connection."
 msgstr "اتصل بالإنترنت لتسجيل الدخول. أول تسجيل دخول على هذا الجهاز يحتاج إلى اتصال."
 
-#: src/apps/timeclock/TimeClock.tsx:540
+#: src/apps/timeclock/TimeClock.tsx:551
 msgid "Continue"
 msgstr "متابعة"
 
@@ -721,7 +725,7 @@ msgstr "تعذّر إلغاء الحساب"
 msgid "Could not check the PIN. Try again."
 msgstr "تعذّر التحقق من الرمز. حاول مرة أخرى."
 
-#: src/apps/reservations/sheets.tsx:774
+#: src/apps/reservations/sheets.tsx:788
 msgid "Could not load the times. Check the connection."
 msgstr "تعذّر تحميل الأوقات. تحقق من الاتصال."
 
@@ -757,7 +761,7 @@ msgstr "تعذّر حفظ الدفعة"
 msgid "Could not start payment"
 msgstr "تعذّر بدء الدفع"
 
-#: src/apps/reservations/HostStand.tsx:148
+#: src/apps/reservations/HostStand.tsx:151
 msgid "Could not undo. Check the floor."
 msgstr "تعذّر التراجع. تحقق من المخطط."
 
@@ -773,7 +777,7 @@ msgstr "عُدّ كل النقد في الدرج وأدخله. سترى إن ك�
 msgid "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 msgstr "عُدّ النقد في الدرج قبل أول عملية بيع. تُحسب كل المبيعات حتى إغلاق الوردية مقابله."
 
-#: src/apps/timeclock/TimeClock.tsx:730
+#: src/apps/timeclock/TimeClock.tsx:746
 msgid "Count what you kept in cash. Card tips are counted for you."
 msgstr "احسب ما احتفظت به نقدًا. بقشيش البطاقات يُحتسب تلقائيًا."
 
@@ -794,7 +798,7 @@ msgstr "الطلب الحالي"
 msgid "Customer name"
 msgstr "اسم العميل"
 
-#: src/apps/reservations/sheets.tsx:751
+#: src/apps/reservations/sheets.tsx:765
 msgid "Day"
 msgstr "اليوم"
 
@@ -835,7 +839,7 @@ msgstr "محلي"
 msgid "Dismiss"
 msgstr "إغلاق"
 
-#: src/apps/timeclock/TimeClock.tsx:847
+#: src/apps/timeclock/TimeClock.tsx:863
 #: src/screens/Cart.tsx:377
 #: src/screens/ItemSheet.tsx:365
 #: src/screens/ShiftSheet.tsx:148
@@ -901,7 +905,7 @@ msgstr "أدخل عنوان خادم الطلبات أولًا."
 msgid "Enter your 4 to 6 digit PIN."
 msgstr "أدخل رمزك السري المكوّن من 4 إلى 6 أرقام."
 
-#: src/apps/timeclock/TimeClock.tsx:498
+#: src/apps/timeclock/TimeClock.tsx:509
 msgid "Enter your PIN"
 msgstr "أدخل رمزك السري"
 
@@ -927,7 +931,7 @@ msgstr "أقل"
 msgid "Fewer {0}"
 msgstr "تقليل {0}"
 
-#: src/apps/reservations/sheets.tsx:778
+#: src/apps/reservations/sheets.tsx:792
 msgid "Finding times…"
 msgstr "جارٍ البحث عن الأوقات…"
 
@@ -940,7 +944,7 @@ msgstr "انتهى"
 msgid "Finished, clear table"
 msgstr "انتهى، أخلِ الطاولة"
 
-#: src/apps/reservations/sheets.tsx:803
+#: src/apps/reservations/sheets.tsx:820
 msgid "First name"
 msgstr "الاسم الأول"
 
@@ -978,10 +982,10 @@ msgstr "خالٍ من الغلوتين"
 
 #: src/apps/reservations/Dock.tsx:116
 #: src/apps/reservations/Dock.tsx:144
-#: src/apps/reservations/Floor.tsx:173
-#: src/apps/reservations/HostStand.tsx:191
-#: src/apps/reservations/HostStand.tsx:227
-#: src/apps/reservations/HostStand.tsx:284
+#: src/apps/reservations/Floor.tsx:178
+#: src/apps/reservations/HostStand.tsx:215
+#: src/apps/reservations/HostStand.tsx:259
+#: src/apps/reservations/HostStand.tsx:316
 #: src/apps/reservations/sheets.tsx:160
 #: src/apps/reservations/sheets.tsx:499
 #: src/apps/reservations/sheets.tsx:552
@@ -992,12 +996,12 @@ msgstr "ضيف"
 msgid "Guest changed their mind"
 msgstr "غيّر الضيف رأيه"
 
-#: src/apps/reservations/HostStand.tsx:521
+#: src/apps/reservations/HostStand.tsx:568
 msgid "Guests’ bookings open for the person signed in at this terminal, and only after an online sign-in."
 msgstr "تُفتح حجوزات الضيوف للشخص المسجّل دخوله على هذا الجهاز، وبعد تسجيل دخول متصل بالإنترنت فقط."
 
 #. placeholder {0}: who.firstName
-#: src/apps/timeclock/TimeClock.tsx:620
+#: src/apps/timeclock/TimeClock.tsx:635
 msgid "Hi {0}"
 msgstr "مرحبًا {0}"
 
@@ -1081,7 +1085,7 @@ msgstr "ملاحظة للمطبخ"
 msgid "Language"
 msgstr "اللغة"
 
-#: src/apps/reservations/sheets.tsx:815
+#: src/apps/reservations/sheets.tsx:832
 msgid "Last name"
 msgstr "اسم العائلة"
 
@@ -1163,7 +1167,7 @@ msgstr "زيادة {0}"
 msgid "Moved to {movedTo}"
 msgstr "نُقل إلى {movedTo}"
 
-#: src/apps/reservations/sheets.tsx:901
+#: src/apps/reservations/sheets.tsx:918
 msgid "Name"
 msgstr "الاسم"
 
@@ -1188,7 +1192,7 @@ msgstr "صافي المبيعات"
 msgid "Never"
 msgstr "أبدًا"
 
-#: src/apps/reservations/sheets.tsx:716
+#: src/apps/reservations/sheets.tsx:729
 msgid "New booking"
 msgstr "حجز جديد"
 
@@ -1200,7 +1204,7 @@ msgstr "طلب جديد"
 msgid "Next booking"
 msgstr "الحجز التالي"
 
-#: src/apps/timeclock/TimeClock.tsx:750
+#: src/apps/timeclock/TimeClock.tsx:766
 msgid "No cash tips"
 msgstr "لا يوجد بقشيش نقدي"
 
@@ -1208,7 +1212,7 @@ msgstr "لا يوجد بقشيش نقدي"
 msgid "No connection"
 msgstr "لا يوجد اتصال"
 
-#: src/apps/reservations/HostStand.tsx:165
+#: src/apps/reservations/HostStand.tsx:180
 msgid "No connection. Nothing was changed."
 msgstr "لا يوجد اتصال. لم يتغير شيء."
 
@@ -1216,7 +1220,7 @@ msgstr "لا يوجد اتصال. لم يتغير شيء."
 msgid "No connection. Try again in a moment."
 msgstr "لا يوجد اتصال. حاول مرة أخرى بعد قليل."
 
-#: src/apps/timeclock/TimeClock.tsx:783
+#: src/apps/timeclock/TimeClock.tsx:799
 msgid "No connection. Your punch is saved on this terminal and sent when it is back; your PIN is checked then."
 msgstr "لا يوجد اتصال. تُحفظ بصمتك على هذا الجهاز وتُرسل عند عودة الاتصال، ويُتحقق من رمزك السري حينها."
 
@@ -1264,11 +1268,11 @@ msgstr "لا توجد وردية مفتوحة. اضغط لعدّ الدرج وف
 msgid "No table yet"
 msgstr "لا توجد طاولة بعد"
 
-#: src/apps/reservations/HostStand.tsx:391
+#: src/apps/reservations/HostStand.tsx:437
 msgid "No tables yet. A manager adds the floor plan in the app, under Reservations, Setup."
 msgstr "لا توجد طاولات بعد. يضيف المدير مخطط الصالة من التطبيق، في الحجوزات، الإعداد."
 
-#: src/apps/reservations/sheets.tsx:782
+#: src/apps/reservations/sheets.tsx:796
 msgid "No times left for {size} on this day."
 msgstr "لا أوقات متبقية لـ {size} في هذا اليوم."
 
@@ -1290,11 +1294,11 @@ msgstr "بدون"
 msgid "Not a no-show"
 msgstr "ليس عدم حضور"
 
-#: src/apps/timeclock/TimeClock.tsx:555
+#: src/apps/timeclock/TimeClock.tsx:566
 msgid "Not me"
 msgstr "لست أنا"
 
-#: src/apps/reservations/HostStand.tsx:325
+#: src/apps/reservations/HostStand.tsx:357
 msgid "Not up to date"
 msgstr "غير محدّث"
 
@@ -1322,11 +1326,11 @@ msgstr "غير متصل · البيع مستمر"
 msgid "Offline: people who have signed in here before can still sign in."
 msgstr "دون اتصال: يمكن لمن سجّل الدخول هنا سابقًا تسجيل الدخول."
 
-#: src/apps/timeclock/TimeClock.tsx:450
+#: src/apps/timeclock/TimeClock.tsx:461
 msgid "Offline: punches are saved and sent later."
 msgstr "غير متصل: تُحفظ البصمات وتُرسل لاحقًا."
 
-#: src/apps/timeclock/TimeClock.tsx:518
+#: src/apps/timeclock/TimeClock.tsx:529
 msgid "Offline: your punch is saved and sent later."
 msgstr "غير متصل: تُحفظ بصمتك وتُرسل لاحقًا."
 
@@ -1386,7 +1390,7 @@ msgstr "الحسابات المفتوحة · {openCount}"
 msgid "Opening float"
 msgstr "رصيد الافتتاح"
 
-#: src/apps/reservations/HostStand.tsx:274
+#: src/apps/reservations/HostStand.tsx:306
 msgid "Opening today’s floor…"
 msgstr "جارٍ فتح مخطط اليوم…"
 
@@ -1571,8 +1575,8 @@ msgid "Party of {0}, seated {1} min"
 msgstr "مجموعة من {0}، جالسة منذ {1} دقيقة"
 
 #: src/apps/reservations/sheets.tsx:63
-#: src/apps/reservations/sheets.tsx:763
-#: src/apps/reservations/sheets.tsx:913
+#: src/apps/reservations/sheets.tsx:777
+#: src/apps/reservations/sheets.tsx:930
 msgid "Party size"
 msgstr "عدد الأشخاص"
 
@@ -1629,11 +1633,11 @@ msgstr "هاتفي"
 msgid "Phone · Pickup"
 msgstr "طلب هاتفي · استلام"
 
-#: src/apps/reservations/sheets.tsx:827
+#: src/apps/reservations/sheets.tsx:844
 msgid "Phone (for reminders)"
 msgstr "الهاتف (للتذكيرات)"
 
-#: src/apps/reservations/sheets.tsx:919
+#: src/apps/reservations/sheets.tsx:936
 msgid "Phone (to text when the table is ready)"
 msgstr "الهاتف (لإرسال رسالة عند جاهزية الطاولة)"
 
@@ -1726,7 +1730,7 @@ msgstr "تسجيل إيداع {0}"
 msgid "Record {0} out"
 msgstr "تسجيل سحب {0}"
 
-#: src/apps/timeclock/TimeClock.tsx:838
+#: src/apps/timeclock/TimeClock.tsx:854
 msgid "Recorded at {at}."
 msgstr "سُجّلت الساعة {at}."
 
@@ -1812,11 +1816,11 @@ msgstr "مطلوب"
 msgid "Reservations"
 msgstr "الحجوزات"
 
-#: src/apps/reservations/HostStand.tsx:554
+#: src/apps/reservations/HostStand.tsx:601
 msgid "Reservations are off on this terminal"
 msgstr "الحجوزات متوقفة على هذا الجهاز"
 
-#: src/apps/reservations/HostStand.tsx:533
+#: src/apps/reservations/HostStand.tsx:580
 msgid "Reservations need a connection"
 msgstr "تحتاج الحجوزات إلى اتصال"
 
@@ -1824,7 +1828,7 @@ msgstr "تحتاج الحجوزات إلى اتصال"
 msgid "Restaurant time: {zone}"
 msgstr "توقيت المطعم: {zone}"
 
-#: src/apps/reservations/HostStand.tsx:295
+#: src/apps/reservations/HostStand.tsx:327
 msgid "Room"
 msgstr "الصالة"
 
@@ -1845,7 +1849,7 @@ msgstr "حفظ"
 msgid "Save tab"
 msgstr "حفظ الحساب"
 
-#: src/apps/timeclock/TimeClock.tsx:834
+#: src/apps/timeclock/TimeClock.tsx:850
 msgid "Saved on this terminal. It is sent when the connection is back."
 msgstr "حُفظت على هذا الجهاز. تُرسل عند عودة الاتصال."
 
@@ -1888,26 +1892,33 @@ msgstr "أجلس {size} الآن"
 msgid "Seat a walk-in here"
 msgstr "إجلاس زبون بدون حجز هنا"
 
+#: src/apps/reservations/HostStand.tsx:171
+msgid "Seat anyway"
+msgstr "أجلسهم على أي حال"
+
 #: src/apps/reservations/sheets.tsx:37
 msgid "Seated"
 msgstr "جالس"
 
 #. placeholder {0}: entry.displayName
 #. placeholder {1}: table.label
-#: src/apps/reservations/HostStand.tsx:205
+#: src/apps/reservations/HostStand.tsx:232
 msgid "Seated {0} at {1}."
 msgstr "تم إجلاس {0} على {1}."
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/HostStand.tsx:198
+#: src/apps/reservations/HostStand.tsx:224
 msgid "Seated {who} at {0}."
 msgstr "تم إجلاس {who} على {0}."
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/HostStand.tsx:216
-#: src/apps/reservations/HostStand.tsx:460
+#: src/apps/reservations/HostStand.tsx:246
 msgid "Seated a walk-in of {size} at {0}."
 msgstr "تم إجلاس {size} بدون حجز على {0}."
+
+#: src/apps/reservations/HostStand.tsx:210
+msgid "Seated at the host stand"
+msgstr "أُجلسوا عند الاستقبال"
 
 #: src/screens/ShiftSheet.tsx:445
 msgid "Send again"
@@ -1968,12 +1979,12 @@ msgstr "أُغلقت الوردية"
 msgid "Short"
 msgstr "عجز"
 
-#: src/apps/reservations/HostStand.tsx:529
+#: src/apps/reservations/HostStand.tsx:576
 #: src/screens/LockScreen.tsx:187
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: src/apps/reservations/HostStand.tsx:519
+#: src/apps/reservations/HostStand.tsx:566
 msgid "Sign in to open reservations"
 msgstr "سجّل الدخول لفتح الحجوزات"
 
@@ -1990,9 +2001,13 @@ msgstr "فاتورة ضريبية مبسطة"
 msgid "Sold out"
 msgstr "نفد"
 
-#: src/apps/reservations/HostStand.tsx:163
+#: src/apps/reservations/HostStand.tsx:178
 msgid "Someone changed this a moment ago. Here is the latest."
 msgstr "غيّر أحدهم هذا قبل قليل. إليك أحدث نسخة."
+
+#: src/apps/reservations/HostStand.tsx:167
+msgid "Someone is booked on that table before this party would be done."
+msgstr "هناك حجز على هذه الطاولة قبل أن تنتهي هذه المجموعة."
 
 #: src/apps/timeclock/messages.ts:111
 #: src/screens/AuditSheet.tsx:99
@@ -2061,30 +2076,30 @@ msgid "Table {0}"
 msgstr "الطاولة {0}"
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/HostStand.tsx:182
+#: src/apps/reservations/HostStand.tsx:197
 msgid "Table {0} is taken. Choose another table."
 msgstr "الطاولة {0} مشغولة. اختر طاولة أخرى."
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/Floor.tsx:182
+#: src/apps/reservations/Floor.tsx:187
 msgid "Table {0}, blocked"
 msgstr "الطاولة {0}، محجوزة"
 
 #. placeholder {0}: table.label
 #. placeholder {1}: formatTime(state.next.startAt)
-#: src/apps/reservations/Floor.tsx:178
+#: src/apps/reservations/Floor.tsx:183
 msgid "Table {0}, booked at {1}, seats {covers}"
 msgstr "الطاولة {0}، محجوزة الساعة {1}، تتسع لـ {covers}"
 
 #. placeholder {0}: table.label
-#: src/apps/reservations/Floor.tsx:185
+#: src/apps/reservations/Floor.tsx:190
 msgid "Table {0}, open, seats {covers}"
 msgstr "الطاولة {0}، متاحة، تتسع لـ {covers}"
 
 #. placeholder {0}: table.label
 #. placeholder {1}: shortName(state.party, _(t`Guest`))
 #. placeholder {2}: state.party.partySize
-#: src/apps/reservations/Floor.tsx:173
+#: src/apps/reservations/Floor.tsx:178
 msgid "Table {0}, seated: {1}, party of {2}"
 msgstr "الطاولة {0}، جالس عليها: {1}، مجموعة من {2}"
 
@@ -2154,7 +2169,7 @@ msgid "Tap a dish on the menu to start the order."
 msgstr "اضغط على صنف في القائمة لبدء الطلب."
 
 #. placeholder {0}: placing ? placingSize(placing) : 0
-#: src/apps/reservations/HostStand.tsx:351
+#: src/apps/reservations/HostStand.tsx:383
 msgid "Tap a table for {placingName}, party of {0}"
 msgstr "اضغط على طاولة لـ {placingName}، مجموعة من {0}"
 
@@ -2219,7 +2234,7 @@ msgstr "هذا الخيار نفد"
 msgid "That code has expired or was already used. Ask a manager for a new one."
 msgstr "انتهت صلاحية هذا الرمز أو تم استخدامه. اطلب رمزًا جديدًا من المدير."
 
-#: src/apps/reservations/HostStand.tsx:167
+#: src/apps/reservations/HostStand.tsx:182
 msgid "That did not go through. Try again."
 msgstr "لم تتم العملية. حاول مرة أخرى."
 
@@ -2343,7 +2358,7 @@ msgstr "يُحتفظ بالحساب مُعلَّمًا كملغى، مع من أ
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "نُقلت الفاتورة المفتوحة إلى هنا لكن تعذّر حفظها على هذا الجهاز."
 
-#: src/apps/reservations/HostStand.tsx:535
+#: src/apps/reservations/HostStand.tsx:582
 msgid "The till keeps selling offline; bookings open again when the connection is back."
 msgstr "يستمر الكاشير في البيع دون اتصال، وتُفتح الحجوزات مجددًا عند عودة الاتصال."
 
@@ -2359,7 +2374,7 @@ msgstr "ساعة الدوام غير جاهزة بعد. اطلب من المدي
 msgid "The time clock is turned off on this terminal. Ask a manager."
 msgstr "ساعة الدوام متوقفة على هذا الجهاز. اطلب من المدير."
 
-#: src/apps/timeclock/TimeClock.tsx:640
+#: src/apps/timeclock/TimeClock.tsx:656
 msgid "There is nothing to punch right now. Ask a manager."
 msgstr "لا يوجد ما يُسجّل الآن. اطلب من المدير."
 
@@ -2482,7 +2497,7 @@ msgstr "ساعة هذا الجهاز اللوحي منحرفة بنحو {clockMi
 msgid "This tablet’s clock is about {minutes} minutes off. Set the correct date and time in the tablet’s settings, then try again."
 msgstr "ساعة هذا الجهاز اللوحي منحرفة بنحو {minutes} دقيقة. اضبط التاريخ والوقت الصحيحين في إعدادات الجهاز، ثم حاول مرة أخرى."
 
-#: src/apps/timeclock/TimeClock.tsx:455
+#: src/apps/timeclock/TimeClock.tsx:466
 msgid "This tablet’s clock is off. Punches use the server’s time."
 msgstr "ساعة هذا الجهاز غير مضبوطة. تُستخدم ساعة الخادم للبصمات."
 
@@ -2515,7 +2530,7 @@ msgstr "تمت إزالة نقطة البيع هذه. اربطها مجددًا 
 msgid "This terminal’s location isn’t on the menu"
 msgstr "فرع نقطة البيع هذه غير موجود في القائمة"
 
-#: src/apps/reservations/sheets.tsx:770
+#: src/apps/reservations/sheets.tsx:784
 msgid "Time"
 msgstr "الوقت"
 
@@ -2541,7 +2556,7 @@ msgstr "إكرامية"
 msgid "Tips"
 msgstr "الإكراميات"
 
-#: src/apps/timeclock/TimeClock.tsx:501
+#: src/apps/timeclock/TimeClock.tsx:512
 msgid "To clock in, take a break or clock out."
 msgstr "لتسجيل الحضور أو أخذ استراحة أو تسجيل الانصراف."
 
@@ -2549,7 +2564,7 @@ msgstr "لتسجيل الحضور أو أخذ استراحة أو تسجيل ا�
 msgid "Today · {todayCount}"
 msgstr "اليوم · {todayCount}"
 
-#: src/apps/reservations/HostStand.tsx:562
+#: src/apps/reservations/HostStand.tsx:609
 msgid "Today’s bookings could not be loaded"
 msgstr "تعذّر تحميل حجوزات اليوم"
 
@@ -2581,13 +2596,13 @@ msgid "Total due"
 msgstr "الإجمالي المستحق"
 
 #: src/App.tsx:685
-#: src/apps/reservations/HostStand.tsx:543
-#: src/apps/reservations/HostStand.tsx:567
+#: src/apps/reservations/HostStand.tsx:590
+#: src/apps/reservations/HostStand.tsx:614
 #: src/screens/OrdersSheet.tsx:700
 msgid "Try again"
 msgstr "حاول مجددًا"
 
-#: src/apps/reservations/HostStand.tsx:563
+#: src/apps/reservations/HostStand.tsx:610
 msgid "Try again in a moment."
 msgstr "حاول مرة أخرى بعد قليل."
 
@@ -2599,7 +2614,7 @@ msgstr "تجربة تسجيل دخول الموظفين"
 msgid "Turned on or off for this terminal in the Menuza app (Menu, Terminals)."
 msgstr "يُفعَّل أو يُوقف لنقطة البيع هذه من تطبيق Menuza (القائمة، نقاط البيع)."
 
-#: src/apps/reservations/HostStand.tsx:140
+#: src/apps/reservations/HostStand.tsx:143
 msgid "Undo"
 msgstr "تراجع"
 
@@ -2607,11 +2622,11 @@ msgstr "تراجع"
 msgid "Undo seating"
 msgstr "التراجع عن الإجلاس"
 
-#: src/apps/reservations/HostStand.tsx:229
+#: src/apps/reservations/HostStand.tsx:261
 msgid "Undone for {who}."
 msgstr "تم التراجع لـ {who}."
 
-#: src/apps/reservations/HostStand.tsx:146
+#: src/apps/reservations/HostStand.tsx:149
 msgid "Undone."
 msgstr "تم التراجع."
 
@@ -2670,21 +2685,21 @@ msgid "Waiting {waited} min, quoted {0}"
 msgstr "بالانتظار منذ {waited} دقيقة، الوقت المقدّر {0}"
 
 #: src/apps/reservations/Dock.tsx:157
-#: src/apps/reservations/HostStand.tsx:337
+#: src/apps/reservations/HostStand.tsx:369
 msgid "Waitlist"
 msgstr "قائمة الانتظار"
 
-#: src/apps/reservations/HostStand.tsx:287
-#: src/apps/reservations/HostStand.tsx:331
+#: src/apps/reservations/HostStand.tsx:319
+#: src/apps/reservations/HostStand.tsx:363
 #: src/apps/reservations/sheets.tsx:611
 msgid "Walk-in"
 msgstr "بدون حجز"
 
-#: src/apps/timeclock/TimeClock.tsx:779
+#: src/apps/timeclock/TimeClock.tsx:795
 msgid "What are you doing?"
 msgstr "ماذا تفعل الآن؟"
 
-#: src/apps/timeclock/TimeClock.tsx:682
+#: src/apps/timeclock/TimeClock.tsx:698
 msgid "What are you working today?"
 msgstr "ما الدور الذي تعمل فيه اليوم؟"
 
@@ -2748,7 +2763,7 @@ msgstr "ليس لديك وردية الآن. اطلب من المدير."
 msgid "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
 msgstr "فتحت رابط ربط. ستُرسل الطلبات، بما فيها أسماء الضيوف وأرقام هواتفهم، إلى الخادم أدناه. لا تتابع إلا إذا أعطاك مدير هذا الرابط وكنت تعرف العنوان."
 
-#: src/apps/timeclock/TimeClock.tsx:647
+#: src/apps/timeclock/TimeClock.tsx:663
 msgid "Your next shifts"
 msgstr "وردياتك القادمة"
 

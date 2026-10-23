@@ -14,6 +14,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { HostApiError } from './api.ts'
 import { Dock, placingSize, type Placing } from './Dock.tsx'
 import {
+	DEFAULT_TURN_MIN,
 	arrivals,
 	rooms,
 	shortName,
@@ -128,6 +129,8 @@ export function HostStand({
 			work: () => Promise<unknown>,
 			done: string,
 			undo?: () => Promise<unknown>,
+			/** When the table is booked for part of the party's time: try again as an overbook. */
+			anyway?: () => void,
 		) => {
 			setBusy(true)
 			try {
@@ -158,6 +161,18 @@ export function HostStand({
 				return true
 			} catch (error) {
 				const failure = error instanceof HostApiError ? error : null
+				if (failure?.occupied && anyway) {
+					say(
+						_(
+							t`Someone is booked on that table before this party would be done.`,
+						),
+						{
+							tone: 'danger',
+							action: { label: _(t`Seat anyway`), run: anyway },
+						},
+					)
+					return false
+				}
 				say(
 					failure?.stale
 						? _(t`Someone changed this a moment ago. Here is the latest.`)
@@ -186,6 +201,15 @@ export function HostStand({
 		}
 		const current = placing
 		setPlacing(null)
+		await seat(current, table, false)
+	}
+
+	/** Seats a party; when the table is booked soon, the host may insist (overbook). */
+	const seat = async (current: Placing, table: DayTable, insist: boolean) => {
+		const overbook = insist
+			? { overbook: true, overbookReason: _(t`Seated at the host stand`) }
+			: {}
+		const again = insist ? undefined : () => void seat(current, table, true)
 		if (current.kind === 'reservation') {
 			const r = current.reservation
 			const who = shortName(r, _(t`Guest`))
@@ -193,16 +217,21 @@ export function HostStand({
 				() =>
 					api.transition(r.id, 'seated', {
 						tableIds: [table.id],
+						// A retry follows a refusal: the version is still the one we saw.
 						expectedVersion: r.version,
+						...overbook,
 					}),
 				_(t`Seated ${who} at ${table.label}.`),
 				() => api.undo(r.id),
+				again,
 			)
 		} else if (current.kind === 'waitlist') {
 			const entry = current.entry
 			await act(
-				() => api.seatWaitlist(entry.id, [table.id], entry.version),
+				() => api.seatWaitlist(entry.id, [table.id], entry.version, overbook),
 				_(t`Seated ${entry.displayName} at ${table.label}.`),
+				undefined,
+				again,
 			)
 		} else {
 			const size = current.partySize
@@ -212,8 +241,11 @@ export function HostStand({
 						partySize: size,
 						tableIds: [table.id],
 						guestName: current.guestName,
+						...overbook,
 					}),
 				_(t`Seated a walk-in of ${size} at ${table.label}.`),
+				undefined,
+				again,
 			)
 		}
 	}
@@ -377,7 +409,21 @@ export function HostStand({
 					area={room}
 					feed={feed}
 					now={now}
-					picking={placing ? { partySize: placingSize(placing) } : null}
+					picking={
+						placing
+							? {
+									partySize: placingSize(placing),
+									durationMin:
+										placing.kind === 'reservation'
+											? placing.reservation.durationMin
+											: DEFAULT_TURN_MIN,
+									reservationId:
+										placing.kind === 'reservation'
+											? placing.reservation.id
+											: undefined,
+								}
+							: null
+					}
 					formatTime={formatTime}
 					onTable={(table, tableState) => {
 						if (busy) return
@@ -455,9 +501,10 @@ export function HostStand({
 				}}
 				onWalkIn={(table, size) => {
 					setTableTarget(null)
-					void act(
-						() => api.walkIn({ partySize: size, tableIds: [table.id] }),
-						_(t`Seated a walk-in of ${size} at ${table.label}.`),
+					void seat(
+						{ kind: 'walk_in', partySize: size, guestName: '' },
+						table,
+						false,
 					)
 				}}
 			/>
@@ -479,7 +526,7 @@ export function HostStand({
 					void act(
 						() => api.book({ ...input, notes: null }),
 						_(
-							t`Booked ${input.firstName} for ${input.partySize} at ${input.time}.`,
+							t`Booked ${input.firstName} for ${input.partySize} at ${input.timeLabel}.`,
 						),
 					).then((ok) => ok && setBookingOpen(false))
 				}

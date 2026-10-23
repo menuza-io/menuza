@@ -37,7 +37,7 @@ export function SoftText({
 		el.classList.add('is-swapping')
 		const timer = window.setTimeout(
 			() => setPair((p) => ({ old: null, now: p.now })),
-			motionMs('--text-soft-dur', 200) + 40,
+			motionMs('--text-soft-dur', 150) + 40,
 		)
 		return () => window.clearTimeout(timer)
 	}, [pair.old, pair.now])
@@ -129,7 +129,7 @@ export function Toast({
 		if (message || !shown) return
 		const timer = window.setTimeout(
 			() => setShown(null),
-			motionMs('--toast-close', 250),
+			motionMs('--toast-close', 350),
 		)
 		return () => window.clearTimeout(timer)
 	}, [message, shown])

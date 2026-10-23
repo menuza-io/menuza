@@ -6,7 +6,9 @@
  * database, so the suite proves the till, the contract and the server together.
  *
  *   App stub     http://127.0.0.1:4710   /resources/sites, /resources/sites/menu,
- *                                        /resources/order-context
+ *                                        /resources/order-context, and the
+ *                                        staffing and reservations contexts
+ *                                        the Station apps read
  *   Tenant API   http://127.0.0.1:4711   everything tenant-api serves, plus the
  *                                        test-only `/__test/*` controls below
  *
@@ -77,6 +79,21 @@ const {
 	staffScopeAssignments,
 } = await import('@repo/tenant-db')
 const { clearPosMenuCache } = await import('../src/routes/pos.ts')
+const { resetScopeContextCache } = await import('../src/lib/scope-context.ts')
+const { resetReservationsContextCache } =
+	await import('../src/lib/reservations-context.ts')
+const { publicContext } =
+	await import('../src/routes/reservations-public-fixture.ts')
+const { SignJWT } = await import('jose')
+const { brand } = await import('@repo/config/brand')
+const {
+	rsvAreas,
+	rsvFloorElements,
+	rsvLocationSettings,
+	rsvServices,
+	rsvTables,
+	timePunches,
+} = await import('@repo/tenant-db')
 const { pinLookupFor } = await import('../src/services/kiosk-pin-service.ts')
 const { eq, sql } = await import('drizzle-orm')
 const { createPairingCode, listDevices, listPosOrders, revokeDevice } =
@@ -187,6 +204,26 @@ const json = (
 	res.end(JSON.stringify(body))
 }
 
+/** The demo menu's one location, where the host stand runs. */
+const STATION_LOC = 'loc-1'
+const STATION_TZ = 'America/New_York'
+const stationFlags = { timeclock: true, reservations: true, waitlist: true }
+const reservationsContext = () => {
+	const base = publicContext(ORG_ID, {
+		enabled: stationFlags.reservations,
+		waitlist: stationFlags.waitlist,
+	})
+	return {
+		...base,
+		locations: base.locations.map((location) => ({
+			...location,
+			id: STATION_LOC,
+			name: 'Downtown',
+			timeZone: STATION_TZ,
+		})),
+	}
+}
+
 const appServer = createServer((req, res) => {
 	const url = new URL(req.url ?? '/', `http://127.0.0.1:${APP_PORT}`)
 	const slug = url.searchParams.get('slug')
@@ -200,6 +237,40 @@ const appServer = createServer((req, res) => {
 	if (url.pathname === '/resources/sites/menu') {
 		if (slug !== ORG_SLUG) return json(res, 404, { error: 'not_found' })
 		return json(res, 200, published.menu)
+	}
+	// The control plane's word that the organization exists (operator routes ask).
+	if (url.pathname === '/resources/tenant-organization') {
+		if (url.searchParams.get('orgId') !== ORG_ID)
+			return json(res, 404, { error: 'not_found' })
+		return json(res, 200, {
+			id: ORG_ID,
+			slug: ORG_SLUG,
+			customDomain: null,
+			hasProvisionedDb: true,
+			dataRegion: 'us',
+			name: 'Demo',
+		})
+	}
+	// The Station apps: staffing flags and workplace, reservations flags and location.
+	if (url.pathname === '/resources/staffing/scope-context') {
+		if (req.headers.authorization !== `Bearer ${INTERNAL_TOKEN}`)
+			return json(res, 401, { error: 'unauthorized' })
+		return json(res, 200, {
+			orgId: ORG_ID,
+			dataRegion: 'us',
+			features: {
+				enabled: stationFlags.timeclock,
+				timeclock: stationFlags.timeclock,
+				scheduling: false,
+				hiring: false,
+			},
+			scopes: [{ id: 'main', name: 'Downtown', timeZone: STATION_TZ }],
+		})
+	}
+	if (url.pathname === '/resources/reservations/context') {
+		if (req.headers.authorization !== `Bearer ${INTERNAL_TOKEN}`)
+			return json(res, 401, { error: 'unauthorized' })
+		return json(res, 200, reservationsContext())
 	}
 	if (url.pathname === '/resources/order-context') {
 		if (contextDown) return json(res, 503, { error: 'down' })
@@ -290,6 +361,8 @@ root.use('/pos/*', async (c, next) => {
 })
 
 root.post('/__test/reset', async (c) => {
+	// Punches, entries and bookings point at staff: they go first.
+	await clearReservations()
 	for (const name of triggerNames)
 		await db.run(sql.raw(`DROP TRIGGER IF EXISTS \`${name}\``))
 	await db.delete(posPayments)
@@ -317,8 +390,39 @@ root.post('/__test/reset', async (c) => {
 	contextDown = false
 	outage = null
 	seen.length = 0
+	Object.assign(stationFlags, {
+		timeclock: true,
+		reservations: true,
+		waitlist: true,
+	})
+	resetScopeContextCache()
+	resetReservationsContextCache()
 	return c.json({ ok: true })
 })
+
+/**
+ * Every reservations row, emptied for the next test. Their append-only
+ * triggers are set aside for the delete and put back, as for the POS tables.
+ */
+async function clearReservations() {
+	const triggers = (await db.all(
+		sql.raw(
+			"select name, sql from sqlite_master where type = 'trigger' and (tbl_name like 'rsv_%' or tbl_name like 'time_%' or tbl_name = 'staff_audit_log')",
+		),
+	)) as Array<{ name: string; sql: string }>
+	for (const trigger of triggers)
+		await db.run(sql.raw(`DROP TRIGGER IF EXISTS \`${trigger.name}\``))
+	const tables = (await db.all(
+		sql.raw(
+			"select name from sqlite_master where type = 'table' and (name like 'rsv_%' or name in ('time_punches','time_breaks','time_entries','time_entry_edits','staff_audit_log'))",
+		),
+	)) as Array<{ name: string }>
+	await db.run(sql.raw('PRAGMA foreign_keys = OFF'))
+	for (const table of tables)
+		await db.run(sql.raw(`DELETE FROM \`${table.name}\``))
+	await db.run(sql.raw('PRAGMA foreign_keys = ON'))
+	for (const trigger of triggers) await db.run(sql.raw(trigger.sql))
+}
 
 root.post('/__test/pairing-code', async (c) => {
 	const body = (await c.req.json()) as {
@@ -329,6 +433,8 @@ root.post('/__test/pairing-code', async (c) => {
 		signInRequired?: boolean
 		shiftsRequired?: boolean
 		scopeId?: string
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
 	}
 	const result = await createPairingCode(db, ORG_ID, {
 		label: body.label ?? 'Front counter',
@@ -338,6 +444,8 @@ root.post('/__test/pairing-code', async (c) => {
 		// Off unless a test asks: most of the suite is about selling, not signing in.
 		signInRequired: body.signInRequired ?? false,
 		shiftsRequired: body.shiftsRequired ?? false,
+		timeclockEnabled: body.timeclockEnabled ?? false,
+		reservationsEnabled: body.reservationsEnabled ?? false,
 		createdBy: 'e2e-manager',
 	})
 	if (!result.ok) return c.json(result, 409)
@@ -365,14 +473,12 @@ root.post('/__test/staff', async (c) => {
 	}
 	const id = crypto.randomUUID()
 	const scopeId = b.scopeId ?? 'main'
-	await db
-		.insert(staffMembers)
-		.values({
-			id,
-			firstName: b.first ?? 'Ana',
-			lastName: b.last ?? 'Karim',
-			status: (b.status ?? 'active') as never,
-		})
+	await db.insert(staffMembers).values({
+		id,
+		firstName: b.first ?? 'Ana',
+		lastName: b.last ?? 'Karim',
+		status: (b.status ?? 'active') as never,
+	})
 	await db.insert(staffScopeAssignments).values({
 		staffId: id,
 		scopeId,
@@ -415,10 +521,18 @@ root.post('/__test/terminal', async (c) => {
 		id: string
 		signInRequired?: boolean
 		shiftsRequired?: boolean
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
 	}
 	await db
 		.update(posDevices)
 		.set({
+			...(b.timeclockEnabled === undefined
+				? {}
+				: { timeclockEnabled: b.timeclockEnabled }),
+			...(b.reservationsEnabled === undefined
+				? {}
+				: { reservationsEnabled: b.reservationsEnabled }),
 			...(b.signInRequired === undefined
 				? {}
 				: { signInRequired: b.signInRequired }),
@@ -582,7 +696,284 @@ root.post('/__test/theme', async (c) => {
 	return c.json({ ok: true })
 })
 
-root.route('/', createTenantApiApp())
+const api = createTenantApiApp()
+root.route('/', api)
+
+// ---------------------------------------------------------------------------
+// Station apps
+// ---------------------------------------------------------------------------
+
+root.post('/__test/station-flags', async (c) => {
+	Object.assign(
+		stationFlags,
+		(await c.req.json()) as Partial<typeof stationFlags>,
+	)
+	resetScopeContextCache()
+	resetReservationsContextCache()
+	return c.json({ ok: true })
+})
+
+root.get('/__test/punches', async (c) =>
+	c.json({ punches: await db.select().from(timePunches) }),
+)
+
+/** Local date and minutes after midnight at the location, now. */
+function localNow(offsetMin = 0) {
+	const at = new Date(Date.now() + offsetMin * 60_000)
+	const parts = Object.fromEntries(
+		new Intl.DateTimeFormat('en-CA', {
+			timeZone: STATION_TZ,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			hourCycle: 'h23',
+		})
+			.formatToParts(at)
+			.map((part) => [part.type, part.value]),
+	)
+	return {
+		date: `${parts.year}-${parts.month}-${parts.day}`,
+		minutes: Number(parts.hour) * 60 + Number(parts.minute),
+	}
+}
+const hhmm = (minutes: number) =>
+	`${String(Math.floor(minutes / 60) % 24).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
+/**
+ * A floor for the host stand: two rooms drawn by a manager, a service that runs
+ * all day, and today's bookings around now (seated, due, later, at the stand),
+ * plus two parties on the waitlist. Bookings go through the real operator
+ * routes with a token like the one App mints.
+ */
+root.post('/__test/floor', async (c) => {
+	await clearReservations()
+	await db.insert(rsvLocationSettings).values({
+		locationId: STATION_LOC,
+		enabled: true,
+		onlineEnabled: true,
+		timeZone: STATION_TZ,
+		// The day turns at midnight, so the seeded bookings land on "today" at any hour.
+		dayStartMin: 0,
+		intervalMin: 15,
+		horizonDays: 60,
+		minNoticeMin: 0,
+		partyMax: 30,
+		waitlistEnabled: true,
+	})
+	await db.insert(rsvAreas).values([
+		{
+			id: 'area_main',
+			locationId: STATION_LOC,
+			name: 'Main room',
+			sort: 0,
+			canvasW: 1200,
+			canvasH: 760,
+		},
+		{
+			id: 'area_patio',
+			locationId: STATION_LOC,
+			name: 'Patio',
+			sort: 1,
+			canvasW: 1000,
+			canvasH: 600,
+		},
+	])
+	const table = (
+		id: string,
+		areaId: string,
+		label: string,
+		max: number,
+		shape: 'round' | 'square' | 'rect',
+		x: number,
+		y: number,
+		w: number,
+		h: number,
+	) => ({
+		id,
+		locationId: STATION_LOC,
+		areaId,
+		label,
+		minCovers: 1,
+		maxCovers: max,
+		shape,
+		x,
+		y,
+		w,
+		h,
+		onlineBookable: true,
+		resetBufferMin: 0,
+	})
+	await db
+		.insert(rsvTables)
+		.values([
+			table('tbl_1', 'area_main', '1', 2, 'round', 120, 120, 110, 110),
+			table('tbl_2', 'area_main', '2', 2, 'round', 300, 120, 110, 110),
+			table('tbl_3', 'area_main', '3', 4, 'square', 480, 110, 140, 130),
+			table('tbl_4', 'area_main', '4', 4, 'square', 680, 110, 140, 130),
+			table('tbl_5', 'area_main', '5', 6, 'rect', 120, 360, 240, 130),
+			table('tbl_6', 'area_main', '6', 6, 'rect', 420, 360, 240, 130),
+			table('tbl_7', 'area_main', '7', 8, 'rect', 720, 360, 300, 140),
+			table('tbl_8', 'area_main', '8', 2, 'round', 120, 580, 110, 110),
+			table('tbl_9', 'area_main', '9', 2, 'round', 300, 580, 110, 110),
+			table('tbl_p1', 'area_patio', 'P1', 4, 'round', 140, 140, 150, 150),
+			table('tbl_p2', 'area_patio', 'P2', 4, 'round', 420, 140, 150, 150),
+			table('tbl_p3', 'area_patio', 'P3', 6, 'rect', 140, 380, 300, 130),
+		])
+	await db.insert(rsvFloorElements).values([
+		{
+			id: 'el_bar',
+			locationId: STATION_LOC,
+			areaId: 'area_main',
+			kind: 'bar',
+			label: 'Bar',
+			x: 900,
+			y: 80,
+			w: 220,
+			h: 220,
+		},
+		{
+			id: 'el_door',
+			locationId: STATION_LOC,
+			areaId: 'area_main',
+			kind: 'door',
+			label: 'Entrance',
+			x: 560,
+			y: 720,
+			w: 160,
+			h: 24,
+		},
+		{
+			id: 'el_wall',
+			locationId: STATION_LOC,
+			areaId: 'area_main',
+			kind: 'wall',
+			x: 40,
+			y: 300,
+			w: 1040,
+			h: 12,
+		},
+	])
+	await db.insert(rsvServices).values({
+		id: 'svc_all_day',
+		locationId: STATION_LOC,
+		name: 'All day',
+		daysMask: 127,
+		firstSeatingMin: 0,
+		lastSeatingMin: 23 * 60 + 45,
+		endMin: 24 * 60,
+		onlineEnabled: true,
+		sort: 0,
+	})
+
+	const token = await new SignJWT({
+		role: 'operator',
+		region: 'us',
+		orgId: ORG_ID,
+		scope: 'book',
+		grants: ['read:reservation:any', 'update:reservation:any'],
+		locationIds: null,
+		features: {
+			enabled: true,
+			online: true,
+			waitlist: true,
+			payments: false,
+			experiences: false,
+			voice: false,
+		},
+		impersonated: false,
+	})
+		.setProtectedHeader({ alg: 'HS256', typ: 'rsv+jwt' })
+		.setAudience('tenant-api-reservations-operator')
+		.setIssuer(brand.shortName)
+		.setSubject('e2e-seed')
+		.setIssuedAt()
+		.setExpirationTime('10m')
+		.sign(new TextEncoder().encode(process.env.TENANT_OPERATOR_TOKEN!))
+	let key = 0
+	const call = async (path: string, body: unknown) => {
+		const response = await api.request(`/operator/reservations/book${path}`, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${token}`,
+				'Content-Type': 'application/json',
+				'Idempotency-Key': `e2e-floor-${Date.now()}-${++key}`,
+			},
+			body: JSON.stringify(body),
+		})
+		const text = await response.text()
+		if (!response.ok) throw new Error(`${path} ${response.status} ${text}`)
+		return JSON.parse(text) as Json
+	}
+	const now = localNow()
+	const slot = (offset: number) => {
+		const minutes = Math.round((now.minutes + offset) / 15) * 15
+		return hhmm(Math.max(0, Math.min(23 * 60 + 45, minutes)))
+	}
+	let phone = 100
+	const book = (
+		time: string,
+		size: number,
+		first: string,
+		last: string,
+		tableIds: string[],
+		extra: Json = {},
+	) =>
+		call('/reservations', {
+			locationId: STATION_LOC,
+			date: now.date,
+			time,
+			partySize: size,
+			tableIds,
+			overbook: true,
+			overbookReason: 'Seeded floor',
+			channel: 'phone',
+			// One number per guest: the same number is the same guest.
+			guest: { firstName: first, lastName: last, phone: `+1212555${++phone}` },
+			...extra,
+		})
+	const idOf = (created: Json) =>
+		(created.reservation?.id ?? created.id) as string
+	const seated = idOf(await book(slot(-45), 4, 'Omar', 'Saleh', ['tbl_3']))
+	await call(`/reservations/${seated}/status`, { toStatus: 'seated' })
+	const seated2 = idOf(await book(slot(-30), 6, 'Hala', 'Nasser', ['tbl_6']))
+	await call(`/reservations/${seated2}/status`, { toStatus: 'seated' })
+	const arrived = idOf(
+		await book(slot(0), 2, 'Maya', 'Haddad', ['tbl_2'], {
+			staffNotes: 'Window if possible',
+			guest: {
+				firstName: 'Maya',
+				lastName: 'Haddad',
+				phone: '+12125550111',
+				allergyNotes: 'Peanuts',
+			},
+		}),
+	)
+	await call(`/reservations/${arrived}/status`, { toStatus: 'arrived' })
+	await book(slot(15), 4, 'Yusuf', 'Rahman', ['tbl_4'])
+	await book(slot(45), 2, 'Lea', 'Martin', [])
+	await book(slot(75), 6, 'Sami', 'Khoury', ['tbl_5'])
+	await book(slot(120), 8, 'Nadia', 'Farah', ['tbl_7'])
+	await call('/walk-ins', {
+		locationId: STATION_LOC,
+		partySize: 2,
+		tableIds: ['tbl_8'],
+		guestName: 'Walk-in',
+	})
+	await call('/waitlist', {
+		locationId: STATION_LOC,
+		displayName: 'Rana Khalid',
+		partySize: 2,
+		phone: '+12125550123',
+	})
+	await call('/waitlist', {
+		locationId: STATION_LOC,
+		displayName: 'Tariq Aziz',
+		partySize: 4,
+	})
+	return c.json({ ok: true, date: now.date })
+})
 
 appServer.listen(APP_PORT, '127.0.0.1')
 serve({ fetch: root.fetch, port: API_PORT, hostname: '127.0.0.1' })

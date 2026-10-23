@@ -396,10 +396,17 @@ function ClockFace({
 	}, [])
 	// The till's clock may be off; punches then count at the server's time.
 	const skewed = clockIsOff(useClock((s) => s.skewMs))
-	const time = new Intl.DateTimeFormat(i18n.locale, {
+	// The digits carry the screen; "AM" and "PM" sit beside them, smaller.
+	const parts = new Intl.DateTimeFormat(i18n.locale, {
 		hour: 'numeric',
 		minute: '2-digit',
-	}).format(now)
+	}).formatToParts(now)
+	const period = parts.find((part) => part.type === 'dayPeriod')?.value ?? ''
+	const time = parts
+		.filter((part) => part.type !== 'dayPeriod')
+		.map((part) => part.value)
+		.join('')
+		.trim()
 	const date = new Intl.DateTimeFormat(i18n.locale, {
 		weekday: 'long',
 		month: 'long',
@@ -425,11 +432,15 @@ function ClockFace({
 			</div>
 			<div className="flex items-end justify-between gap-4 lg:flex-col lg:items-start">
 				<div>
-					<p
-						className="mono text-5xl leading-none font-semibold tracking-tight sm:text-6xl lg:text-8xl"
-						aria-live="off"
-					>
-						<NumberPop value={time} />
+					<p className="flex items-baseline gap-2" aria-live="off" dir="ltr">
+						<span className="mono text-5xl leading-none font-semibold tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl">
+							<NumberPop value={time} />
+						</span>
+						{period ? (
+							<span className="text-muted-foreground text-xl font-semibold sm:text-2xl lg:text-3xl">
+								{period}
+							</span>
+						) : null}
 					</p>
 					<p className="text-muted-foreground mt-3 text-base sm:text-lg">
 						{date}
@@ -562,11 +573,14 @@ function EventTile({
 	primary,
 	busy,
 	onChoose,
+	wide = false,
 }: {
 	event: ClockEvent
 	primary: boolean
 	busy: boolean
 	onChoose: (event: ClockEvent) => void
+	/** The only choice: it takes the whole row. */
+	wide?: boolean
 }) {
 	const { _ } = useLingui()
 	const Icon = EVENT_ICON[event]
@@ -577,6 +591,7 @@ function EventTile({
 			onClick={() => onChoose(event)}
 			className={cn(
 				'flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-start transition active:scale-[0.97] disabled:opacity-50',
+				wide && 'col-span-2 min-h-28',
 				primary
 					? 'border-primary bg-primary text-primary-foreground elevated-card'
 					: 'border-border bg-card hover:bg-accent',
@@ -632,6 +647,7 @@ function Actions({
 							primary={index === 0}
 							busy={busy}
 							onChoose={onChoose}
+							wide={who.allowedEvents.length === 1}
 						/>
 					))}
 				</div>

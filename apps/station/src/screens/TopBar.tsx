@@ -138,9 +138,9 @@ export function TopBar({
 						className="px-3"
 					>
 						<Lock className="size-4 shrink-0" />
-						<span className="hidden max-w-28 truncate md:inline">
+						<bdi className="hidden max-w-28 truncate md:inline">
 							{staffName}
-						</span>
+						</bdi>
 					</Button>
 				) : null}
 				{/* A live region: going offline, sending and refusals are announced. */}

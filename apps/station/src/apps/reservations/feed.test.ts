@@ -9,6 +9,7 @@ import {
 	rooms,
 	shortName,
 	tableState,
+	takesParty,
 	type DayFeed,
 	type DayReservation,
 } from './feed.ts'
@@ -130,5 +131,54 @@ describe('placeTables', () => {
 		const tables = feed.tables.map((t, i) => ({ ...t, x: 100 * i, y: 50 * i }))
 		const placed = placeTables({ canvasW: 1200, canvasH: 800 }, tables)
 		expect(placed[1]).toMatchObject({ left: 100 / 1200, top: 50 / 800 })
+	})
+})
+
+describe('takesParty', () => {
+	const table = { maxCovers: 4 }
+	const now = Date.UTC(2026, 0, 16, 18, 0)
+	const next = booking({ id: 'next', startAt: now + 60 * MIN })
+
+	it('wants a free table, big enough, free for the party’s whole stay', () => {
+		const party = { partySize: 2, durationMin: 90 }
+		expect(takesParty(table, { kind: 'open', next: null }, party, now)).toBe(
+			true,
+		)
+		expect(takesParty(table, { kind: 'open', next }, party, now)).toBe(false)
+		expect(
+			takesParty(
+				table,
+				{ kind: 'open', next },
+				{ ...party, durationMin: 45 },
+				now,
+			),
+		).toBe(true)
+		expect(
+			takesParty(
+				table,
+				{ kind: 'open', next: null },
+				{ ...party, partySize: 6 },
+				now,
+			),
+		).toBe(false)
+		expect(
+			takesParty(
+				table,
+				{ kind: 'blocked', reason: null, next: null },
+				party,
+				now,
+			),
+		).toBe(false)
+	})
+
+	it('a party’s own booking on the table never stands in its way', () => {
+		expect(
+			takesParty(
+				table,
+				{ kind: 'soon', next },
+				{ partySize: 2, durationMin: 90, reservationId: 'next' },
+				now,
+			),
+		).toBe(true)
 	})
 })

@@ -25,6 +25,25 @@ export const backend = {
 		return (await (await fetch(`${API}${path}`)).json()) as T
 	},
 	reset: () => backend.post('/__test/reset'),
+	/** Two rooms, today's bookings around now and two parties waiting (Station host stand). */
+	floor: () => backend.post<{ ok: boolean; date: string }>('/__test/floor'),
+	stationFlags: (body: {
+		timeclock?: boolean
+		reservations?: boolean
+		waitlist?: boolean
+	}) => backend.post('/__test/station-flags', body),
+	punches: async () =>
+		(
+			await backend.get<{
+				punches: Array<{
+					kind: string
+					source: string
+					outcome: string
+					flags: string[]
+					staffId: string
+				}>
+			}>('/__test/punches')
+		).punches,
 	pairingCode: (
 		body: {
 			label?: string
@@ -33,6 +52,8 @@ export const backend = {
 			ttlMs?: number
 			signInRequired?: boolean
 			shiftsRequired?: boolean
+			timeclockEnabled?: boolean
+			reservationsEnabled?: boolean
 		} = {},
 	) =>
 		backend.post<{ code: string; link: string; terminalCode: string }>(
@@ -305,6 +326,8 @@ export async function pairUi(
 		locationId?: string | null
 		signInRequired?: boolean
 		shiftsRequired?: boolean
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
 	} = {},
 ) {
 	const { code, terminalCode } = await backend.pairingCode(options)

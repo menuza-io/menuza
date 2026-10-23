@@ -47,6 +47,11 @@ export class HostApiError extends Error {
 		this.serverMessage = serverMessage
 	}
 
+	/** The table is taken for (part of) this party's time; the host may seat anyway. */
+	get occupied(): boolean {
+		return this.code === 'table_occupied'
+	}
+
 	/** Someone else changed it first: reload and look again. */
 	get stale(): boolean {
 		return this.status === 409 && /stale|version|conflict/.test(this.code)
@@ -87,6 +92,9 @@ export type HostDeps = {
 	fetchImpl?: typeof fetch
 	now?: () => number
 }
+
+/** Seat on a table that another booking also holds, with the host's reason. */
+export type Overbook = { overbook?: boolean; overbookReason?: string }
 
 export type StatusTarget =
 	'arrived' | 'seated' | 'finished' | 'no_show' | 'cancelled' | 'confirmed'
@@ -281,7 +289,7 @@ export function createHostApi(deps: HostDeps) {
 				tableIds?: string[]
 				expectedVersion?: number
 				reason?: string
-			} = {},
+			} & Overbook = {},
 		) {
 			return write(
 				`/reservations/${encodeURIComponent(reservationId)}/status`,
@@ -315,15 +323,20 @@ export function createHostApi(deps: HostDeps) {
 		},
 
 		/** A party with no booking, seated now. */
-		async walkIn(input: {
-			partySize: number
-			tableIds: string[]
-			guestName?: string
-		}) {
+		async walkIn(
+			input: {
+				partySize: number
+				tableIds: string[]
+				guestName?: string
+			} & Overbook,
+		) {
 			return write('/walk-ins', {
 				locationId: await locationId(),
 				partySize: input.partySize,
 				tableIds: input.tableIds,
+				...(input.overbook
+					? { overbook: true, overbookReason: input.overbookReason }
+					: {}),
 				...(input.guestName?.trim()
 					? { guestName: input.guestName.trim() }
 					: {}),
@@ -384,10 +397,16 @@ export function createHostApi(deps: HostDeps) {
 			})
 		},
 
-		seatWaitlist(entryId: string, tableIds: string[], expectedVersion: number) {
+		seatWaitlist(
+			entryId: string,
+			tableIds: string[],
+			expectedVersion: number,
+			overbook: Overbook = {},
+		) {
 			return write(`/waitlist/${encodeURIComponent(entryId)}/seat`, {
 				tableIds,
 				expectedVersion,
+				...overbook,
 			})
 		},
 

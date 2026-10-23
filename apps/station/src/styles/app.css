@@ -208,18 +208,18 @@
 	--stagger-ease: var(--ease-smooth-out);
 
 	/* Toast (host stand confirmations with undo) */
-	--toast-open: var(--duration-medium);
-	--toast-close: var(--duration-fast);
+	--toast-open: var(--duration-slow);
+	--toast-close: var(--duration-medium);
 	--toast-distance: 16px;
 	--toast-blur: var(--blur-small);
 	--toast-scale: var(--scale-medium);
 	--toast-ease: var(--ease-smooth-out);
 
 	/* Text swap soft (table timers and counts that tick over) */
-	--text-soft-dur: 200ms;
+	--text-soft-dur: var(--duration-quick);
 	--text-soft-blur: var(--blur-small);
 	--text-soft-ease: var(--ease-in-out);
-	--text-soft-resize-dur: 240ms;
+	--text-soft-resize-dur: var(--duration-fast);
 	--text-soft-resize-ease: var(--ease-smooth-out);
 
 	/* Host stand floor: a table changing state, a party being picked */
@@ -948,9 +948,15 @@ html[data-heading-font='custom'] {
 	/* The plan is as large as fits, in the room's own proportions. */
 	.floor-frame {
 		container-type: size;
+		overflow: auto;
+		overscroll-behavior: contain;
 	}
+	/* As large as fits; on a phone it keeps a readable size and scrolls instead. */
 	.floor-plan {
-		width: min(100cqw, calc(100cqh * var(--plan-w) / var(--plan-h)));
+		width: max(
+			36rem,
+			min(100cqw, calc(100cqh * var(--plan-w) / var(--plan-h)))
+		);
 		aspect-ratio: var(--plan-w) / var(--plan-h);
 	}
 	/* A table changes state in place: colour, ring and lift ride one curve. */

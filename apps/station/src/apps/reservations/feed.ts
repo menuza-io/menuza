@@ -237,6 +237,27 @@ export function tableState(
 export const fits = (table: Pick<DayTable, 'maxCovers'>, partySize: number) =>
 	partySize <= table.maxCovers
 
+/** How long a party without a booking is expected to stay. */
+export const DEFAULT_TURN_MIN = 90
+
+/**
+ * Whether a party being placed can sit at this table now: it is free, big
+ * enough, and nobody else is booked on it before the party would be done. The
+ * party's own booking on the table does not count against it.
+ */
+export function takesParty(
+	table: Pick<DayTable, 'maxCovers'>,
+	state: TableState,
+	party: { partySize: number; durationMin: number; reservationId?: string },
+	now: number,
+): boolean {
+	if (state.kind === 'seated' || state.kind === 'blocked') return false
+	if (!fits(table, party.partySize)) return false
+	const next = state.next
+	if (!next || next.id === party.reservationId) return true
+	return next.startAt - now >= party.durationMin * 60_000
+}
+
 // ---------------------------------------------------------------------------
 // Floor layout
 // ---------------------------------------------------------------------------
