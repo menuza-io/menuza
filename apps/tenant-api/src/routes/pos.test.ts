@@ -1883,8 +1883,16 @@ describe('POS terminals: pairing, upload and sync', () => {
 			const body = (await r.json()) as {
 				staff: { id: string; name: string }
 				role: string
+				sessionToken: string
+				sessionExpiresAt: number
 			}
-			expect(body).toEqual({ staff: { id, name: 'Ana K.' }, role: 'cashier' })
+			expect(body).toEqual({
+				staff: { id, name: 'Ana K.' },
+				role: 'cashier',
+				// Proof of this sign-in for the Station apps (reservations).
+				sessionToken: expect.any(String),
+				sessionExpiresAt: expect.any(Number),
+			})
 			expect(JSON.stringify(body)).not.toContain('4321')
 		})
 

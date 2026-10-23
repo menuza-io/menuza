@@ -29,13 +29,12 @@ import {
 	timeEntries,
 	type TimeEntry,
 	timePunches,
-	type KioskDevice,
 	type TenantDatabase,
 	runTenantTransaction,
 } from '@repo/tenant-db'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
-import { type StaffDb, writeKioskAudit } from './staff-audit.ts'
+import { type StaffDb, writeDeviceAudit } from './staff-audit.ts'
 import {
 	issuesForEntry,
 	loadBreaks,
@@ -96,9 +95,17 @@ export function resetShiftMatcher() {
 	defaultPunchDeps.matchShift = noScheduleMatcher
 }
 
+/** Which kind of paired tablet took a punch. */
+export type PunchSource = 'kiosk' | 'pos'
+
+/** The paired tablet that took a punch: a time-clock kiosk or a Station terminal. */
+export type PunchDevice = { id: string; scopeId: string }
+
 export type PunchSubject = {
 	orgId: string
-	device: KioskDevice
+	device: PunchDevice
+	/** A kiosk when omitted. */
+	source?: PunchSource
 	assignment: StaffScopeAssignment
 	member: StaffMember
 	ipHash: string | null
@@ -381,6 +388,7 @@ async function runPunch(
 	deps: PunchDeps,
 ): Promise<PunchOutcome> {
 	const { member, device, timeZone } = subject
+	const source = subject.source ?? 'kiosk'
 	const now = deps.now()
 	const scopeId = device.scopeId
 
@@ -437,7 +445,7 @@ async function runPunch(
 			clientAt: request.clientAt,
 			serverAt: now,
 			effectiveAt: null,
-			source: 'kiosk',
+			source,
 			deviceId: device.id,
 			outcome,
 			rejectCode: code,
@@ -448,8 +456,8 @@ async function runPunch(
 			ipHash: subject.ipHash,
 			createdAt: now,
 		})
-		await writeKioskAudit(tx, device, subject.ipHash, {
-			action: 'kiosk.punch.rejected',
+		await writeDeviceAudit(tx, source, device, subject.ipHash, {
+			action: `${source}.punch.rejected`,
 			entityType: 'time_punch',
 			entityId: request.id,
 			staffId: member.id,
@@ -620,6 +628,7 @@ async function runPunch(
 				request,
 				deps,
 				timeZone,
+				source,
 			})
 		}
 	}
@@ -633,7 +642,7 @@ async function runPunch(
 		clientAt: request.clientAt,
 		serverAt: now,
 		effectiveAt,
-		source: 'kiosk',
+		source,
 		deviceId: device.id,
 		outcome: 'accepted',
 		flags: [...new Set(flags)],
@@ -673,6 +682,7 @@ async function closeEntry(
 		request: KioskPunchRequest
 		deps: PunchDeps
 		timeZone: string
+		source: PunchSource
 	},
 ) {
 	const { entry, effectiveAt, now, policy, request } = input
@@ -713,7 +723,7 @@ async function closeEntry(
 		.update(timeEntries)
 		.set({
 			clockOutAt: effectiveAt,
-			clockOutKind: 'kiosk',
+			clockOutKind: input.source,
 			status: statusAfterClose(issues),
 			issues,
 			cashTipsMinor: request.cashTipsMinor ?? entry.cashTipsMinor,

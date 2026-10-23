@@ -80,6 +80,8 @@ const createCodeSchema = z.strictObject({
 	signInRequired: z.boolean().optional(),
 	dayStartMinutes: z.number().int().min(0).max(720).optional(),
 	shiftsRequired: z.boolean().optional(),
+	timeclockEnabled: z.boolean().optional(),
+	reservationsEnabled: z.boolean().optional(),
 })
 
 operatorPosRoutes.get('/terminals', async (c) => {
@@ -110,6 +112,8 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			signInRequired: parsed.data.signInRequired,
 			dayStartMinutes: parsed.data.dayStartMinutes,
 			shiftsRequired: parsed.data.shiftsRequired,
+			timeclockEnabled: parsed.data.timeclockEnabled,
+			reservationsEnabled: parsed.data.reservationsEnabled,
 			createdBy: g.auth.userId,
 		})
 	} catch (error) {
@@ -213,13 +217,10 @@ const patchTerminalSchema = z
 		signInRequired: z.boolean().optional(),
 		dayStartMinutes: z.number().int().min(0).max(720).optional(),
 		shiftsRequired: z.boolean().optional(),
+		timeclockEnabled: z.boolean().optional(),
+		reservationsEnabled: z.boolean().optional(),
 	})
-	.refine(
-		(p) =>
-			p.signInRequired !== undefined ||
-			p.dayStartMinutes !== undefined ||
-			p.shiftsRequired !== undefined,
-	)
+	.refine((p) => Object.values(p).some((value) => value !== undefined))
 
 operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	const g = await guard(c, 'orders:write')
@@ -228,8 +229,18 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
-	if (!(await updateDeviceSettings(g.db, c.req.param('id'), parsed.data)))
-		return posError(404, 'not_found')
+	const result = await updateDeviceSettings(
+		g.db,
+		c.req.param('id'),
+		parsed.data,
+	)
+	if (!result.ok) {
+		return posError(
+			result.status,
+			result.error,
+			result.message ? { message: result.message } : {},
+		)
+	}
 	return c.json({ ok: true }, 200, noStore)
 })
 

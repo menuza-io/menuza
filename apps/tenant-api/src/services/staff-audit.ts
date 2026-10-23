@@ -121,8 +121,19 @@ export async function writeKioskAudit(
 	ipHash: string | null,
 	event: StaffAuditEvent,
 ) {
+	await writeDeviceAudit(db, 'kiosk', device, ipHash, event)
+}
+
+/** An event recorded by a paired tablet: a time-clock kiosk or a Station terminal. */
+export async function writeDeviceAudit(
+	db: StaffDb,
+	actorKind: 'kiosk' | 'pos',
+	device: { id: string },
+	ipHash: string | null,
+	event: StaffAuditEvent,
+) {
 	await db.insert(staffAuditLog).values({
-		actorKind: 'kiosk',
+		actorKind,
 		actorId: device.id,
 		impersonated: false,
 		action: event.action,

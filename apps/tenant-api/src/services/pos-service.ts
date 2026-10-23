@@ -60,6 +60,8 @@ import {
 	type PosDevice,
 	type PosOrderRow,
 	type PosPaymentRow,
+	type StaffMember,
+	type StaffScopeAssignment,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
@@ -178,6 +180,10 @@ export async function createPairingCode(
 		dayStartMinutes?: number
 		/** Sell only inside a cash drawer shift. Default off. */
 		shiftsRequired?: boolean
+		/** Offer the time clock on this terminal. Default off. */
+		timeclockEnabled?: boolean
+		/** Offer the host stand on this terminal. Default off. */
+		reservationsEnabled?: boolean
 	},
 	now = Date.now(),
 ): Promise<
@@ -195,6 +201,13 @@ export async function createPairingCode(
 	const scopeId = input.scopeId?.trim() || DEFAULT_SCOPE_ID
 	if (!/^[A-Za-z0-9_-]{1,64}$/.test(scopeId))
 		return fail(422, 'invalid_scope', 'That workplace is not valid.')
+	const reservationsProblem = stationReservationsProblem({
+		reservationsEnabled: input.reservationsEnabled ?? false,
+		locationId: input.locationId,
+		signInRequired: input.signInRequired ?? true,
+	})
+	if (reservationsProblem)
+		return fail(422, reservationsProblem.code, reservationsProblem.message)
 	const dayStartMinutes = input.dayStartMinutes ?? POS_DEFAULT_DAY_START_MINUTES
 	if (!isValidDayStart(dayStartMinutes)) {
 		return fail(
@@ -274,6 +287,8 @@ export async function createPairingCode(
 			signInRequired: input.signInRequired ?? true,
 			dayStartMinutes,
 			shiftsRequired: input.shiftsRequired ?? false,
+			timeclockEnabled: input.timeclockEnabled ?? false,
+			reservationsEnabled: input.reservationsEnabled ?? false,
 			createdBy: input.createdBy,
 			expiresAt,
 			createdAt: now,
@@ -295,6 +310,8 @@ export type RedeemedTerminal = {
 		signInRequired: boolean
 		dayStartMinutes: number
 		shiftsRequired: boolean
+		timeclockEnabled: boolean
+		reservationsEnabled: boolean
 	}
 }
 
@@ -344,6 +361,8 @@ export async function redeemPairingCode(
 					signInRequiredSince: row.signInRequired ? now : null,
 					dayStartMinutes: row.dayStartMinutes,
 					shiftsRequired: row.shiftsRequired,
+					timeclockEnabled: row.timeclockEnabled,
+					reservationsEnabled: row.reservationsEnabled,
 					secretHash: hashPosSecret(secret),
 					pairedBy: row.createdBy,
 					pairedAt: now,
@@ -361,6 +380,8 @@ export async function redeemPairingCode(
 						signInRequired: row.signInRequired,
 						dayStartMinutes: row.dayStartMinutes,
 						shiftsRequired: row.shiftsRequired,
+						timeclockEnabled: row.timeclockEnabled,
+						reservationsEnabled: row.reservationsEnabled,
 					},
 				}
 			}),
@@ -382,6 +403,8 @@ export const serializeDevice = (row: PosDevice) => ({
 	signInRequired: row.signInRequired,
 	dayStartMinutes: row.dayStartMinutes,
 	shiftsRequired: row.shiftsRequired,
+	timeclockEnabled: row.timeclockEnabled,
+	reservationsEnabled: row.reservationsEnabled,
 	pairedAt: row.pairedAt,
 	lastSeenAt: row.lastSeenAt,
 	revokedAt: row.revokedAt,
@@ -402,6 +425,8 @@ export async function listPendingCodes(db: TenantDatabase, now = Date.now()) {
 			label: posPairingCodes.label,
 			terminalCode: posPairingCodes.terminalCode,
 			expiresAt: posPairingCodes.expiresAt,
+			timeclockEnabled: posPairingCodes.timeclockEnabled,
+			reservationsEnabled: posPairingCodes.reservationsEnabled,
 		})
 		.from(posPairingCodes)
 		.where(
@@ -453,7 +478,14 @@ export async function revokeDevice(
 // ---------------------------------------------------------------------------
 
 export type SignInResult =
-	| { ok: true; staff: PosStaff; role: 'cashier' | 'manager' }
+	| {
+			ok: true
+			staff: PosStaff
+			role: 'cashier' | 'manager'
+			/** The person and their workplace assignment, for the time clock. */
+			member: StaffMember
+			assignment: StaffScopeAssignment
+	  }
 	| { ok: false; code: 'invalid_pin' | 'backoff'; retryAfterSeconds: number }
 
 const toState = (
@@ -512,7 +544,10 @@ export async function verifyPosPin(
 			if (pinShapeOk(pin)) {
 				const lookup = pinLookupFor(input.orgId, device.scopeId, pin)
 				const [row] = await tx
-					.select({ member: staffMembers })
+					.select({
+						member: staffMembers,
+						assignment: staffScopeAssignments,
+					})
 					.from(staffScopeAssignments)
 					.innerJoin(
 						staffMembers,
@@ -544,6 +579,8 @@ export async function verifyPosPin(
 							),
 						},
 						role: manager ? 'manager' : 'cashier',
+						member: row.member,
+						assignment: row.assignment,
 					}
 				}
 			}
@@ -621,35 +658,71 @@ export async function removeManager(db: TenantDatabase, staffId: string) {
 export const isValidDayStart = (minutes: number) =>
 	Number.isInteger(minutes) && minutes >= 0 && minutes <= 720
 
+/**
+ * The host stand shows guests to whoever holds the tablet, so it needs a
+ * signed-in person, and it serves one location, so it needs the terminal's.
+ */
+export function stationReservationsProblem(settings: {
+	reservationsEnabled: boolean
+	locationId: string | null
+	signInRequired: boolean
+}): { code: string; message: string } | null {
+	if (!settings.reservationsEnabled) return null
+	if (!settings.locationId) {
+		return {
+			code: 'reservations_needs_location',
+			message: 'Choose a location for this terminal to use reservations.',
+		}
+	}
+	if (!settings.signInRequired) {
+		return {
+			code: 'reservations_needs_sign_in',
+			message: 'Turn on staff sign-in to use reservations on this terminal.',
+		}
+	}
+	return null
+}
+
+export type DeviceSettingsPatch = {
+	signInRequired?: boolean
+	dayStartMinutes?: number
+	shiftsRequired?: boolean
+	timeclockEnabled?: boolean
+	reservationsEnabled?: boolean
+}
+
 /** A manager changes how an existing terminal behaves; the till learns on its next check-in. */
 export async function updateDeviceSettings(
 	db: TenantDatabase,
 	id: string,
-	patch: {
-		signInRequired?: boolean
-		dayStartMinutes?: number
-		shiftsRequired?: boolean
-	},
+	patch: DeviceSettingsPatch,
 	now = Date.now(),
-) {
-	if (
-		patch.signInRequired === undefined &&
-		patch.dayStartMinutes === undefined &&
-		patch.shiftsRequired === undefined
-	) {
-		return false
+): Promise<PosResult<true>> {
+	if (Object.values(patch).every((value) => value === undefined)) {
+		return fail(400, 'invalid_request')
 	}
 	if (
 		patch.dayStartMinutes !== undefined &&
 		!isValidDayStart(patch.dayStartMinutes)
 	)
-		return false
+		return fail(422, 'invalid_day_start')
 	const [device] = await db
-		.select({ signInRequired: posDevices.signInRequired })
+		.select({
+			signInRequired: posDevices.signInRequired,
+			locationId: posDevices.locationId,
+			reservationsEnabled: posDevices.reservationsEnabled,
+		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
 		.limit(1)
-	if (!device) return false
+	if (!device) return fail(404, 'not_found')
+	const problem = stationReservationsProblem({
+		reservationsEnabled:
+			patch.reservationsEnabled ?? device.reservationsEnabled,
+		locationId: device.locationId,
+		signInRequired: patch.signInRequired ?? device.signInRequired,
+	})
+	if (problem) return fail(422, problem.code, problem.message)
 	const set: Partial<typeof posDevices.$inferInsert> = {}
 	if (patch.signInRequired !== undefined) {
 		set.signInRequired = patch.signInRequired
@@ -661,8 +734,12 @@ export async function updateDeviceSettings(
 		set.dayStartMinutes = patch.dayStartMinutes
 	if (patch.shiftsRequired !== undefined)
 		set.shiftsRequired = patch.shiftsRequired
+	if (patch.timeclockEnabled !== undefined)
+		set.timeclockEnabled = patch.timeclockEnabled
+	if (patch.reservationsEnabled !== undefined)
+		set.reservationsEnabled = patch.reservationsEnabled
 	await db.update(posDevices).set(set).where(eq(posDevices.id, id))
-	return true
+	return ok(true)
 }
 
 const LAST_SEEN_THROTTLE_MS = 60_000

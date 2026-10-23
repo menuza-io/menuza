@@ -646,6 +646,49 @@ export const posSignInRequestSchema = z.strictObject({
 export type PosSignInResponse = {
 	staff: PosStaff
 	role: 'cashier' | 'manager'
+	/**
+	 * Proof of this sign-in for the Station apps that act on the server as the
+	 * person (reservations), sent back in `POS_STAFF_SESSION_HEADER`. Only an
+	 * online sign-in has one; the till forgets it when it locks.
+	 */
+	sessionToken?: string
+	/** Epoch milliseconds when the session token stops working. */
+	sessionExpiresAt?: number
+}
+
+/** Header carrying a signed-in person's session token on Station app calls. */
+export const POS_STAFF_SESSION_HEADER = 'Pos-Staff-Session'
+
+// ---------------------------------------------------------------------------
+// Station apps beside the till
+// ---------------------------------------------------------------------------
+
+/**
+ * Which Station apps a terminal offers: the terminal's own setting, and the
+ * organization's feature flag, both on. The till sells regardless.
+ */
+export type PosDeviceApps = { timeclock: boolean; reservations: boolean }
+
+export const NO_POS_DEVICE_APPS: PosDeviceApps = {
+	timeclock: false,
+	reservations: false,
+}
+
+/**
+ * A short-lived reservations operator token for the signed-in person, scoped to
+ * the host stand (`book`) at the terminal's location.
+ */
+export type PosReservationsTokenResponse = {
+	token: string
+	/** Epoch milliseconds. */
+	expiresAt: number
+	locationId: string
+	/** Contact details, notes and allergies: managers only. */
+	canReadGuest: boolean
+	features: {
+		waitlist: boolean
+		online: boolean
+	}
 }
 
 /** Shown on receipts and lists: first name and last initial. */

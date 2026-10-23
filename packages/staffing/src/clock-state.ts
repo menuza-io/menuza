@@ -44,7 +44,14 @@ export function deriveClockState(
 	return openEntry.openBreak ? 'on_break' : 'in'
 }
 
-export const PUNCH_SOURCES = ['kiosk', 'web', 'mobile', 'manager'] as const
+export const PUNCH_SOURCES = [
+	'kiosk',
+	'web',
+	'mobile',
+	'manager',
+	// A paired Station tablet's time clock.
+	'pos',
+] as const
 export type PunchSource = (typeof PUNCH_SOURCES)[number]
 
 export const PUNCH_OUTCOMES = [

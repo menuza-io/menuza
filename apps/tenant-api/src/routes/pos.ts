@@ -18,7 +18,9 @@ import {
 	posError,
 	posUnavailableResponse,
 } from '../lib/pos-auth.ts'
+import { mintPosStaffSession } from '../lib/pos-staff-session.ts'
 import { fetchOrderContext } from '../services/order-service.ts'
+import { deviceApps } from '../services/pos-apps-service.ts'
 import {
 	billUnchanged,
 	claimTab,
@@ -170,10 +172,11 @@ posRoutes.get('/me', async (c) => {
 	if ('error' in auth) return auth.error
 	const { db, device } = auth.pos
 	await touchDevice(db, device)
-	const [transfers, fiscalChains, zatca] = await Promise.all([
+	const [transfers, fiscalChains, zatca, apps] = await Promise.all([
 		recentTransfersAway(db, device.id),
 		fiscalChainHeads(db, device.id),
 		unitStatus(db, device.id),
+		deviceApps(auth.pos.orgId, device),
 	])
 	return c.json({
 		device: {
@@ -186,6 +189,8 @@ posRoutes.get('/me', async (c) => {
 			dayStartMinutes: device.dayStartMinutes,
 			shiftsRequired: device.shiftsRequired,
 		},
+		// Station apps beside the till (time clock, host stand).
+		apps,
 		transfers,
 		fiscalChains,
 		// When active, the till fetches its signing key and certificate from /pos/zatca.
@@ -243,7 +248,23 @@ posRoutes.post('/sign-in', async (c) => {
 				},
 			)
 		}
-		return c.json({ staff: result.staff, role: result.role }, 200)
+		// Proof of this sign-in for the Station apps that act as the person.
+		const session = await mintPosStaffSession({
+			orgId: pos.orgId,
+			deviceId: pos.device.id,
+			staffId: result.staff.id,
+			role: result.role,
+		})
+		return c.json(
+			{
+				staff: result.staff,
+				role: result.role,
+				sessionToken: session.token,
+				sessionExpiresAt: session.expiresAt,
+			},
+			200,
+			{ 'Cache-Control': 'private, no-store' },
+		)
 	} catch (error) {
 		if (isPosHashUnavailable(error)) return posUnavailableResponse()
 		console.error(

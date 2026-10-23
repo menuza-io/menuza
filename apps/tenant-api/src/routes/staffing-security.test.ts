@@ -16,6 +16,8 @@ import { careersRoutes } from './careers.ts'
 import { hiringOperatorRoutes } from './hiring.ts'
 import { kioskRoutes } from './kiosk.ts'
 import { laborRoutes } from './labor.ts'
+import { posReservationsRoutes } from './pos-reservations.ts'
+import { posTimeclockRoutes } from './pos-timeclock.ts'
 import { scheduleLinkRoutes } from './schedule-link.ts'
 import { scheduleOperatorRoutes } from './schedule.ts'
 import { staffInternalRoutes } from './staff-internal.ts'
@@ -34,8 +36,9 @@ import { timeclockOperatorRoutes } from './timeclock.ts'
  *  2. The staffing mounts in `app.ts` and the matrix below cannot drift apart.
  *  3. Every router has a test file that proves another organization's data and
  *     another scope's data are unreachable.
- *  4. The credential-less surfaces (kiosk, schedule link, careers, internal
- *     commands) never answer a request with no credential with data or a 500.
+ *  4. The credential-less surfaces (kiosk, the Station time clock and host stand
+ *     token, schedule link, careers, internal commands) never answer a request
+ *     with no credential with data or a 500.
  */
 
 const orgs = vi.hoisted(() => new Map<string, TestOrg>())
@@ -60,6 +63,8 @@ const OPERATOR_MOUNTS = {
 /** Routes with a credential other than an operator token. */
 const OTHER_MOUNTS = {
 	'/kiosk': kioskRoutes,
+	'/pos/timeclock': posTimeclockRoutes,
+	'/pos/reservations': posReservationsRoutes,
 	'/schedule-link': scheduleLinkRoutes,
 	'/careers': careersRoutes,
 	'/internal/staff': staffInternalRoutes,

@@ -1506,6 +1506,8 @@ export const PUNCH_SOURCE_VALUES = [
 	'web',
 	'mobile',
 	'manager',
+	// A paired Station tablet's time clock.
+	'pos',
 ] as const
 export const PUNCH_OUTCOME_VALUES = [
 	'accepted',
@@ -1727,6 +1729,15 @@ export const posDevices = sqliteTable(
 		shiftsRequired: integer('shifts_required', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// Station apps beside the till. The time clock punches with each person's
+		// PIN; reservations open the host stand for the terminal's location and need
+		// sign-in. Each is also gated by the organization's feature flag.
+		timeclockEnabled: integer('timeclock_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		// Keyed hash of the device secret. The secret itself is never stored.
 		secretHash: text('secret_hash').notNull(),
 		pairedBy: text('paired_by').notNull(),
@@ -1764,6 +1775,12 @@ export const posPairingCodes = sqliteTable(
 			.notNull()
 			.default(POS_DEFAULT_DAY_START_MINUTES),
 		shiftsRequired: integer('shifts_required', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		timeclockEnabled: integer('timeclock_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
 			.notNull()
 			.default(false),
 		createdBy: text('created_by').notNull(),
