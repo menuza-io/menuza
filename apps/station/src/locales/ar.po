@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/screens/OrdersSheet.tsx:397
+#: src/screens/OrdersSheet.tsx:404
 msgid "(signed in without a connection)"
 msgstr "(سجّل الدخول دون اتصال)"
 
@@ -23,66 +23,104 @@ msgstr "(سجّل الدخول دون اتصال)"
 #~ msgstr "{0, plural, zero {لم يُدخَل أي رقم} one {أُدخل رقم واحد} two {أُدخل رقمان} few {أُدخلت # أرقام} many {أُدخل # رقمًا} other {أُدخل # رقم}}"
 
 #. placeholder {0}: seconds / 60
-#: src/screens/SettingsSheet.tsx:75
+#: src/screens/SettingsSheet.tsx:82
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}}"
 
+#. placeholder {0}: entry.displayName
+#: src/apps/reservations/HostStand.tsx:432
+msgid "{0} has been texted."
+msgstr "تم إرسال رسالة إلى {0}."
+
 #. placeholder {0}: outcome.session.staff.name
-#: src/lib/signin.ts:375
+#: src/lib/signin.ts:397
 msgid "{0} is not a manager. Ask a manager to enter their PIN."
 msgstr "{0} ليس مديرًا. اطلب من أحد المديرين إدخال رمزه السري."
 
+#. placeholder {0}: input.displayName
+#: src/apps/reservations/HostStand.tsx:494
+msgid "{0} is on the waitlist."
+msgstr "{0} على قائمة الانتظار."
+
+#. placeholder {0}: entry.displayName
+#: src/apps/reservations/HostStand.tsx:438
+msgid "{0} left the waitlist."
+msgstr "غادر {0} قائمة الانتظار."
+
+#. placeholder {0}: r.guest.noShows
+#: src/apps/reservations/sheets.tsx:350
+msgid "{0} no-shows"
+msgstr "{0} مرات عدم حضور"
+
 #. placeholder {0}: node.displayName
-#: src/screens/MenuGrid.tsx:175
+#: src/screens/MenuGrid.tsx:192
 msgid "{0} sections"
 msgstr "أقسام {0}"
 
 #. placeholder {0}: summary.orders.open
-#: src/screens/ShiftSheet.tsx:316
+#: src/screens/ShiftSheet.tsx:323
 msgid "{0} tabs from this shift are still open. They stay open and can be paid in the next shift."
 msgstr "لا تزال {0} حسابات من هذه الوردية مفتوحة. ستبقى مفتوحة ويمكن دفعها في الوردية التالية."
 
-#: src/screens/Cart.tsx:322
+#. placeholder {0}: r.guest.visits
+#: src/apps/reservations/sheets.tsx:343
+msgid "{0} visits before"
+msgstr "{0} زيارات سابقة"
+
+#: src/screens/Cart.tsx:274
 msgid "{count, plural, one {Subtotal · # item} other {Subtotal · # items}}"
 msgstr "{count, plural, zero {المجموع الفرعي · لا أصناف} one {المجموع الفرعي · صنف واحد} two {المجموع الفرعي · صنفان} few {المجموع الفرعي · # أصناف} many {المجموع الفرعي · # صنفًا} other {المجموع الفرعي · # صنف}}"
 
-#: src/screens/ShiftSheet.tsx:427
+#: src/screens/ShiftSheet.tsx:434
 msgid "{count, plural, one {The server refused # shift. Its figures have not reached the restaurant.} other {The server refused # shifts. Their figures have not reached the restaurant.}}"
 msgstr "{count, plural, zero {لم يرفض الخادم أي وردية.} one {رفض الخادم وردية واحدة. لم تصل أرقامها إلى المطعم.} two {رفض الخادم ورديتين. لم تصل أرقامهما إلى المطعم.} few {رفض الخادم # ورديات. لم تصل أرقامها إلى المطعم.} many {رفض الخادم # وردية. لم تصل أرقامها إلى المطعم.} other {رفض الخادم # وردية. لم تصل أرقامها إلى المطعم.}}"
 
-#: src/screens/OrdersSheet.tsx:782
+#: src/screens/OrdersSheet.tsx:789
 msgid "{first} and {second}"
 msgstr "{first} و{second}"
+
+#: src/apps/reservations/Floor.tsx:274
+msgid "{free} of {total} free"
+msgstr "{free} من {total} متاحة"
 
 #: src/lib/pairing.ts:108
 msgid "{host} is not a server this app is set up to trust."
 msgstr "{host} ليس خادمًا موثوقًا في إعدادات هذا التطبيق."
 
-#: src/screens/MenuGrid.tsx:212
+#: src/screens/MenuGrid.tsx:233
 msgid "{itemCount, plural, one {# item} other {# items}}"
 msgstr "{itemCount, plural, zero {لا أصناف} one {صنف واحد} two {صنفان} few {# أصناف} many {# صنفًا} other {# صنف}}"
 
-#: src/ui/PinDots.tsx:33
+#. placeholder {0}: done.firstName
+#: src/apps/timeclock/TimeClock.tsx:825
+msgid "{label}, {0}"
+msgstr "{label}، {0}"
+
+#: src/apps/reservations/Dock.tsx:125
+msgid "{late} min late"
+msgstr "متأخر {late} دقيقة"
+
+#: src/ui/PinDots.tsx:47
 msgid "{length, plural, one {# digit entered} other {# digits entered}}"
 msgstr "{length, plural, zero {لم يُدخَل أي رقم} one {أُدخل رقم واحد} two {أُدخل رقمان} few {أُدخلت # أرقام} many {أُدخل # رقمًا} other {أُدخل # رقم}}"
 
-#: src/App.tsx:612
+#: src/App.tsx:677
 msgid "{loadProblem}. The first load needs internet; after that the till works offline."
 msgstr "{loadProblem}. يحتاج التحميل الأول إلى الإنترنت، وبعدها تعمل نقطة البيع دون اتصال."
 
-#: src/screens/MenuGrid.tsx:309
+#: src/screens/MenuGrid.tsx:307
 msgid "{name}, {price}"
 msgstr "{name}، {price}"
 
-#: src/screens/MenuGrid.tsx:308
+#: src/screens/MenuGrid.tsx:306
 msgid "{name}, {price}, {inCart} in order"
 msgstr "{name}، {price}، {inCart} في الطلب"
 
-#: src/screens/MenuGrid.tsx:306
+#: src/screens/MenuGrid.tsx:304
 msgid "{name}, sold out"
 msgstr "{name}، نفد"
 
-#: src/screens/MenuGrid.tsx:305
+#: src/screens/MenuGrid.tsx:303
 msgid "{name}, sold out, {inCart} in order"
 msgstr "{name}، نفد، {inCart} في الطلب"
 
@@ -94,7 +132,7 @@ msgstr "{name}: اختر {min} على الأقل"
 msgid "{name}: choose at most {max}"
 msgstr "{name}: اختر {max} كحد أقصى"
 
-#: src/screens/TopBar.tsx:146
+#: src/screens/TopBar.tsx:182
 msgid "{openTabs, plural, one {Orders, # open tab} other {Orders, # open tabs}}"
 msgstr "{openTabs, plural, zero {الطلبات، لا حسابات مفتوحة} one {الطلبات، حساب مفتوح واحد} two {الطلبات، حسابان مفتوحان} few {الطلبات، # حسابات مفتوحة} many {الطلبات، # حسابًا مفتوحًا} other {الطلبات، # حساب مفتوح}}"
 
@@ -102,33 +140,66 @@ msgstr "{openTabs, plural, zero {الطلبات، لا حسابات مفتوحة
 #~ msgid "{rejected, plural, one {# order need attention} other {# orders need attention}}"
 #~ msgstr "{rejected, plural, zero {لا طلبات تحتاج إلى مراجعة} one {طلب واحد يحتاج إلى مراجعة} two {طلبان يحتاجان إلى مراجعة} few {# طلبات تحتاج إلى مراجعة} many {# طلبًا يحتاج إلى مراجعة} other {# طلب يحتاج إلى مراجعة}}"
 
-#: src/screens/TopBar.tsx:199
+#: src/screens/TopBar.tsx:294
 msgid "{rejected, plural, one {# order needs attention} other {# orders need attention}}"
 msgstr "{rejected, plural, zero {لا طلبات تحتاج إلى مراجعة} one {طلب واحد يحتاج إلى مراجعة} two {طلبان يحتاجان إلى مراجعة} few {# طلبات تحتاج إلى مراجعة} many {# طلبًا يحتاج إلى مراجعة} other {# طلب يحتاج إلى مراجعة}}"
 
-#: src/screens/TopBar.tsx:204
+#: src/screens/TopBar.tsx:299
 msgid "{rejectedShifts, plural, one {# shift needs attention} other {# shifts need attention}}"
 msgstr "{rejectedShifts, plural, zero {لا ورديات تحتاج إلى مراجعة} one {وردية واحدة تحتاج إلى مراجعة} two {ورديتان تحتاجان إلى مراجعة} few {# ورديات تحتاج إلى مراجعة} many {# وردية تحتاج إلى مراجعة} other {# وردية تحتاج إلى مراجعة}}"
 
-#: src/screens/SettingsSheet.tsx:74
+#: src/apps/reservations/Floor.tsx:239
+msgid "{seatedFor}m"
+msgstr "{seatedFor}د"
+
+#: src/screens/SettingsSheet.tsx:81
 msgid "{seconds, plural, one {# second} other {# seconds}}"
 msgstr "{seconds, plural, zero {# ثانية} one {ثانية واحدة} two {ثانيتان} few {# ثوانٍ} many {# ثانية} other {# ثانية}}"
 
-#: src/screens/LockScreen.tsx:140
+#: src/screens/LockScreen.tsx:147
 msgid "{secondsLeft, plural, one {Too many wrong PINs. Try again in # second.} other {Too many wrong PINs. Try again in # seconds.}}"
 msgstr "{secondsLeft, plural, zero {محاولات خاطئة كثيرة. حاول مرة أخرى الآن.} one {محاولات خاطئة كثيرة. حاول مرة أخرى بعد ثانية واحدة.} two {محاولات خاطئة كثيرة. حاول مرة أخرى بعد ثانيتين.} few {محاولات خاطئة كثيرة. حاول مرة أخرى بعد # ثوانٍ.} many {محاولات خاطئة كثيرة. حاول مرة أخرى بعد # ثانية.} other {محاولات خاطئة كثيرة. حاول مرة أخرى بعد # ثانية.}}"
 
-#: src/screens/Checkout.tsx:272
+#: src/screens/Checkout.tsx:294
 msgid "{shortBy} short"
 msgstr "ينقص {shortBy}"
 
-#: src/screens/TopBar.tsx:208
+#: src/screens/TopBar.tsx:303
 msgid "{total, plural, one {# upload needs attention} other {# uploads need attention}}"
 msgstr "{total, plural, zero {لا عمليات إرسال تحتاج إلى مراجعة} one {عملية إرسال واحدة تحتاج إلى مراجعة} two {عمليتا إرسال تحتاجان إلى مراجعة} few {# عمليات إرسال تحتاج إلى مراجعة} many {# عملية إرسال تحتاج إلى مراجعة} other {# عملية إرسال تحتاج إلى مراجعة}}"
 
-#: src/screens/SettingsSheet.tsx:174
+#: src/apps/reservations/Dock.tsx:206
+msgid "{waited} min"
+msgstr "{waited} دقيقة"
+
+#. placeholder {0}: entry.quotedMin
+#: src/apps/reservations/Dock.tsx:202
+msgid "{waited} of {0} min"
+msgstr "{waited} من {0} دقيقة"
+
+#: src/apps/timeclock/TimeClock.tsx:442
+msgid "{waiting, plural, one {# punch waiting to send} other {# punches waiting to send}}"
+msgstr "{waiting, plural, zero {لا توجد بصمات بانتظار الإرسال} one {بصمة واحدة بانتظار الإرسال} two {بصمتان بانتظار الإرسال} few {# بصمات بانتظار الإرسال} many {# بصمة بانتظار الإرسال} other {# بصمة بانتظار الإرسال}}"
+
+#: src/screens/SettingsSheet.tsx:181
 msgid "{waitingOrders, plural, one {# order has not been sent yet. They stay on this device and send once it is paired again.} other {# orders have not been sent yet. They stay on this device and send once it is paired again.}}"
 msgstr "{waitingOrders, plural, zero {لا طلبات بانتظار الإرسال.} one {طلب واحد لم يُرسل بعد. يبقى على هذا الجهاز ويُرسل بعد ربطه من جديد.} two {طلبان لم يُرسلا بعد. يبقيان على هذا الجهاز ويُرسلان بعد ربطه من جديد.} few {# طلبات لم تُرسل بعد. تبقى على هذا الجهاز وتُرسل بعد ربطه من جديد.} many {# طلبًا لم يُرسل بعد. تبقى على هذا الجهاز وتُرسل بعد ربطه من جديد.} other {# طلب لم يُرسل بعد. تبقى على هذا الجهاز وتُرسل بعد ربطه من جديد.}}"
+
+#: src/apps/reservations/HostStand.tsx:237
+msgid "{who} finished. Table cleared."
+msgstr "انتهى {who}. أُخليت الطاولة."
+
+#: src/apps/reservations/HostStand.tsx:235
+msgid "{who} is here."
+msgstr "وصل {who}."
+
+#: src/apps/reservations/HostStand.tsx:239
+msgid "{who} marked as a no-show."
+msgstr "سُجّل {who} كعدم حضور."
+
+#: src/apps/reservations/HostStand.tsx:309
+msgid "<0/> to seat, <1/> covers"
+msgstr "<0/> بانتظار الجلوس، <1/> أشخاص"
 
 #: src/lib/orders.ts:154
 msgid "A bill can take at most {MAX_PAYMENTS} payments"
@@ -138,13 +209,17 @@ msgstr "يمكن أن تقبل الفاتورة {MAX_PAYMENTS} دفعة كحد �
 msgid "A bill can take at most {MAX_REFUNDS} refunds"
 msgstr "يمكن أن تقبل الفاتورة {MAX_REFUNDS} استردادًا كحد أقصى"
 
-#: src/screens/ShiftSheet.tsx:241
+#: src/screens/ShiftSheet.tsx:248
 msgid "A manager approves cash taken out with their PIN"
 msgstr "يوافق المدير على سحب النقد برمزه السري"
 
-#: src/screens/AuditSheet.tsx:165
+#: src/screens/AuditSheet.tsx:160
 msgid "A manager approves this with their PIN"
 msgstr "يعتمد المدير هذا برمزه السري"
+
+#: src/apps/reservations/HostStand.tsx:556
+msgid "A manager turns them on in the app, under Settings, Terminals. The terminal needs a location and staff sign-in."
+msgstr "يفعّلها المدير من التطبيق، في الإعدادات، الأجهزة الطرفية. يحتاج الجهاز إلى موقع وتسجيل دخول للموظفين."
 
 #: src/lib/orders.ts:163
 #: src/lib/orders.ts:483
@@ -155,46 +230,59 @@ msgstr "يمكن أن يحتوي المرجع على حروف وأرقام وم�
 msgid "A shift is already open on this terminal."
 msgstr "توجد وردية مفتوحة بالفعل على نقطة البيع هذه."
 
-#: src/screens/ItemSheet.tsx:141
+#: src/screens/ItemSheet.tsx:163
 msgid "Add"
 msgstr "إضافة"
 
 #. placeholder {0}: option.displayName
-#: src/screens/ItemSheet.tsx:273
+#: src/screens/ItemSheet.tsx:295
 msgid "Add {0}"
 msgstr "إضافة {0}"
 
-#: src/screens/OrdersSheet.tsx:652
+#: src/screens/OrdersSheet.tsx:659
 msgid "Add items"
 msgstr "إضافة أصناف"
 
-#: src/screens/Cart.tsx:107
+#: src/screens/Cart.tsx:122
 msgid "Add name"
 msgstr "إضافة اسم"
 
-#: src/screens/Cart.tsx:104
+#: src/screens/Cart.tsx:119
 msgid "Add table"
 msgstr "إضافة طاولة"
 
-#: src/screens/Cart.tsx:135
+#: src/apps/reservations/sheets.tsx:877
+#: src/apps/reservations/sheets.tsx:893
+msgid "Add to the waitlist"
+msgstr "إضافة إلى قائمة الانتظار"
+
+#: src/screens/Cart.tsx:150
 msgid "Adding to tab #{tabNumber}"
 msgstr "إضافة إلى الحساب رقم {tabNumber}"
 
 #. placeholder {0}: node.displayName
-#: src/screens/MenuGrid.tsx:182
+#: src/screens/MenuGrid.tsx:200
 msgid "All {0}"
 msgstr "كل {0}"
 
-#: src/screens/OrdersSheet.tsx:359
+#: src/screens/OrdersSheet.tsx:366
 msgid "All orders"
 msgstr "كل الطلبات"
 
-#: src/screens/ItemSheet.tsx:311
+#: src/screens/ItemSheet.tsx:333
 msgid "Allergies, no onions, sauce on the side…"
 msgstr "حساسية، بدون بصل، الصلصة جانبًا…"
 
-#: src/screens/Checkout.tsx:450
-#: src/screens/ShiftSheet.tsx:216
+#: src/apps/reservations/Dock.tsx:111
+msgid "Allergy noted"
+msgstr "توجد حساسية"
+
+#: src/apps/reservations/sheets.tsx:322
+msgid "Allergy noted. A manager can see the details."
+msgstr "توجد حساسية. يمكن للمدير رؤية التفاصيل."
+
+#: src/screens/Checkout.tsx:474
+#: src/screens/ShiftSheet.tsx:223
 msgid "Amount"
 msgstr "مبلغ"
 
@@ -202,117 +290,194 @@ msgstr "مبلغ"
 msgid "An order can have at most {MAX_ORDER_LINES} different items. Split it across two orders."
 msgstr "يمكن أن يحتوي الطلب على {MAX_ORDER_LINES} صنفًا مختلفًا كحد أقصى. قسّمه على طلبين."
 
-#: src/screens/OrdersSheet.tsx:60
+#: src/screens/OrdersSheet.tsx:63
 msgid "another terminal had already taken this tab over"
 msgstr "نقطة بيع أخرى كانت قد تولّت هذا الحساب"
 
-#: src/screens/SettingsSheet.tsx:306
+#: src/apps/timeclock/TimeClock.tsx:727
+msgid "Any cash tips this shift?"
+msgstr "هل حصلت على بقشيش نقدي في هذه الوردية؟"
+
+#: src/screens/SettingsSheet.tsx:313
 msgid "App URL"
 msgstr "رابط التطبيق"
 
-#: src/screens/Checkout.tsx:551
+#: src/screens/Checkout.tsx:575
 msgid "Approval code from the card terminal (optional)"
 msgstr "رمز الموافقة من جهاز البطاقات (اختياري)"
 
-#: src/ui/ManagerPinPad.tsx:67
+#: src/ui/ManagerPinPad.tsx:75
 msgid "Approve"
 msgstr "اعتماد"
 
 #. placeholder {0}: r.approvedBy.name
 #. placeholder {0}: v.approvedBy.name
-#: src/screens/OrdersSheet.tsx:534
-#: src/screens/OrdersSheet.tsx:609
+#: src/screens/OrdersSheet.tsx:541
+#: src/screens/OrdersSheet.tsx:616
 msgid "approved by {0}"
 msgstr "باعتماد {0}"
 
 #. placeholder {0}: approvedBy.name
-#: src/screens/ShiftSheet.tsx:236
+#: src/screens/ShiftSheet.tsx:243
 msgid "Approved by {0}"
 msgstr "وافق عليه {0}"
 
-#: src/screens/AuditSheet.tsx:161
+#: src/screens/AuditSheet.tsx:156
 msgid "Approved by {approverName}"
 msgstr "اعتمده {approverName}"
 
-#: src/screens/OrdersSheet.tsx:421
+#: src/screens/OrdersSheet.tsx:428
 msgid "approved by {voidApprover}"
 msgstr "باعتماد {voidApprover}"
 
-#: src/screens/PhoneOrderSheet.tsx:141
+#: src/apps/reservations/Dock.tsx:70
+msgid "Arriving"
+msgstr "القادمون"
+
+#: src/screens/PhoneOrderSheet.tsx:145
 msgid "ASAP"
 msgstr "في أقرب وقت"
 
-#: src/screens/SettingsSheet.tsx:222
+#: src/screens/SettingsSheet.tsx:229
 msgid "Ask a manager for a pairing link in the Menuza app. Open it on this device, or paste it (or just the code) here."
 msgstr "اطلب من المدير رابط ربط من تطبيق Menuza. افتحه على هذا الجهاز، أو الصقه (أو الرمز وحده) هنا."
 
-#: src/screens/OrdersSheet.tsx:884
+#: src/screens/OrdersSheet.tsx:892
 msgid "Asking the other terminals…"
 msgstr "جارٍ سؤال نقاط البيع الأخرى…"
+
+#: src/apps/reservations/Dock.tsx:121
+#: src/apps/reservations/sheets.tsx:35
+msgid "At the stand"
+msgstr "عند الاستقبال"
+
+#: src/apps/reservations/sheets.tsx:42
+msgid "Awaiting payment"
+msgstr "بانتظار الدفع"
 
 #: src/screens/AuditSheet.tsx:115
 msgid "Back"
 msgstr "رجوع"
 
-#: src/screens/Checkout.tsx:381
+#: src/apps/timeclock/messages.ts:128
+msgid "Back from break"
+msgstr "عاد من الاستراحة"
+
+#: src/apps/reservations/sheets.tsx:252
+msgid "Back to seated"
+msgstr "إرجاع إلى جالس"
+
+#: src/apps/timeclock/TimeClock.tsx:422
+msgid "Back to sign in"
+msgstr "العودة إلى تسجيل الدخول"
+
+#: src/screens/Checkout.tsx:403
 msgid "Balance"
 msgstr "المتبقي"
 
-#: src/screens/OrdersSheet.tsx:618
+#: src/screens/OrdersSheet.tsx:625
 #: src/screens/Receipt.tsx:191
 msgid "Balance due"
 msgstr "المبلغ المستحق"
 
-#: src/screens/Checkout.tsx:303
+#: src/screens/Checkout.tsx:325
 msgid "Bill"
 msgstr "الفاتورة"
 
-#: src/screens/SettingsSheet.tsx:293
+#. placeholder {0}: state.reason
+#: src/apps/reservations/sheets.tsx:535
+msgid "Blocked: {0}"
+msgstr "محجوزة: {0}"
+
+#: src/apps/reservations/sheets.tsx:737
+msgid "Book {size} at {time}"
+msgstr "احجز {size} الساعة {time}"
+
+#: src/apps/reservations/sheets.tsx:32
+#: src/apps/reservations/sheets.tsx:297
+msgid "Booked"
+msgstr "محجوز"
+
+#. placeholder {0}: input.firstName
+#. placeholder {1}: input.partySize
+#. placeholder {2}: input.time
+#: src/apps/reservations/HostStand.tsx:482
+msgid "Booked {0} for {1} at {2}."
+msgstr "تم حجز {0} لـ {1} الساعة {2}."
+
+#: src/apps/reservations/HostStand.tsx:343
+msgid "Booking"
+msgstr "حجز"
+
+#: src/apps/reservations/HostStand.tsx:241
+msgid "Booking for {who} cancelled."
+msgstr "أُلغي حجز {who}."
+
+#: src/apps/reservations/HostStand.tsx:242
+msgid "Booking for {who} confirmed."
+msgstr "تم تأكيد حجز {who}."
+
+#: src/apps/timeclock/messages.ts:127
+msgid "Break started"
+msgstr "بدأت الاستراحة"
+
+#: src/screens/SettingsSheet.tsx:300
 msgid "Business address (slug)"
 msgstr "عنوان النشاط (المعرّف)"
 
-#: src/screens/PhoneOrderSheet.tsx:121
+#: src/screens/PhoneOrderSheet.tsx:125
 msgid "Callback number"
 msgstr "رقم التواصل"
 
-#: src/App.tsx:610
+#: src/App.tsx:675
 msgid "Can’t load the menu yet"
 msgstr "تعذّر تحميل القائمة بعد"
 
+#: src/apps/reservations/HostStand.tsx:362
+#: src/apps/reservations/sheets.tsx:278
 #: src/screens/PairingLinkDialog.tsx:85
-#: src/screens/PhoneOrderSheet.tsx:54
+#: src/screens/PhoneOrderSheet.tsx:58
 msgid "Cancel"
 msgstr "إلغاء"
 
-#: src/screens/OrdersSheet.tsx:662
+#: src/apps/reservations/sheets.tsx:189
+msgid "Cancel booking"
+msgstr "إلغاء الحجز"
+
+#: src/screens/OrdersSheet.tsx:669
 msgid "Cancel tab"
 msgstr "إلغاء الحساب"
 
-#: src/screens/OrdersSheet.tsx:708
+#: src/screens/OrdersSheet.tsx:715
 msgid "Cancel tab #{cancellingNumber}?"
 msgstr "إلغاء الحساب رقم {cancellingNumber}؟"
 
-#: src/screens/OrdersSheet.tsx:712
+#: src/screens/OrdersSheet.tsx:719
 msgid "Cancel the tab"
 msgstr "ألغِ الحساب"
 
-#: src/screens/OrdersSheet.tsx:963
+#: src/apps/reservations/sheets.tsx:173
+msgid "Cancel this booking?"
+msgstr "إلغاء هذا الحجز؟"
+
+#: src/apps/reservations/sheets.tsx:39
+#: src/screens/OrdersSheet.tsx:979
 msgid "Cancelled"
 msgstr "ملغى"
 
-#: src/screens/ShiftSheet.tsx:496
+#: src/screens/ShiftSheet.tsx:503
 msgid "Cancelled · items taken off"
 msgstr "ملغاة · أصناف محذوفة"
 
-#: src/screens/OrdersSheet.tsx:405
+#: src/screens/OrdersSheet.tsx:412
 msgid "Cancelled by <0>{cancelledBy}</0>"
 msgstr "ألغاه <0>{cancelledBy}</0>"
 
-#: src/screens/ShiftSheet.tsx:602
+#: src/screens/ShiftSheet.tsx:609
 msgid "Cancelled orders"
 msgstr "طلبات ملغاة"
 
-#: src/screens/OrdersSheet.tsx:417
+#: src/screens/OrdersSheet.tsx:424
 msgid "Cancelled: {voidReason}"
 msgstr "أُلغي: {voidReason}"
 
@@ -320,54 +485,58 @@ msgstr "أُلغي: {voidReason}"
 msgid "Cannot save an empty order"
 msgstr "لا يمكن حفظ طلب فارغ"
 
-#: src/screens/Checkout.tsx:34
-#: src/screens/OrdersSheet.tsx:52
+#: src/screens/Checkout.tsx:43
+#: src/screens/OrdersSheet.tsx:55
 #: src/screens/Receipt.tsx:16
-#: src/screens/ShiftSheet.tsx:471
-#: src/screens/ShiftSheet.tsx:565
+#: src/screens/ShiftSheet.tsx:478
+#: src/screens/ShiftSheet.tsx:572
 msgid "Card"
 msgstr "بطاقة"
 
-#: src/screens/OrdersSheet.tsx:838
+#: src/screens/OrdersSheet.tsx:848
 msgid "Card terminal refund code (optional)"
 msgstr "رمز الاسترداد من جهاز البطاقات (اختياري)"
 
-#: src/screens/Checkout.tsx:33
-#: src/screens/OrdersSheet.tsx:51
+#: src/screens/Checkout.tsx:42
+#: src/screens/OrdersSheet.tsx:54
 #: src/screens/Receipt.tsx:15
-#: src/screens/ShiftSheet.tsx:561
+#: src/screens/ShiftSheet.tsx:568
 msgid "Cash"
 msgstr "نقدًا"
 
-#: src/screens/ShiftSheet.tsx:312
+#: src/screens/ShiftSheet.tsx:319
 msgid "Cash counted"
 msgstr "النقد المعدود"
 
-#: src/screens/ShiftSheet.tsx:388
-#: src/screens/ShiftSheet.tsx:475
-#: src/screens/ShiftSheet.tsx:578
+#: src/screens/ShiftSheet.tsx:395
+#: src/screens/ShiftSheet.tsx:482
+#: src/screens/ShiftSheet.tsx:585
 msgid "Cash in"
 msgstr "إيداع نقدي"
 
-#: src/screens/ShiftSheet.tsx:166
+#: src/screens/ShiftSheet.tsx:173
 msgid "Cash in the drawer"
 msgstr "النقد في الدرج"
 
-#: src/screens/ShiftSheet.tsx:395
-#: src/screens/ShiftSheet.tsx:476
-#: src/screens/ShiftSheet.tsx:582
+#: src/screens/ShiftSheet.tsx:402
+#: src/screens/ShiftSheet.tsx:483
+#: src/screens/ShiftSheet.tsx:589
 msgid "Cash out"
 msgstr "سحب نقدي"
 
-#: src/screens/Checkout.tsx:499
+#: src/screens/Checkout.tsx:523
 msgid "Cash received"
 msgstr "النقد المستلم"
 
-#: src/screens/ShiftSheet.tsx:473
+#: src/screens/ShiftSheet.tsx:480
 msgid "Cash taken"
 msgstr "النقد المحصّل"
 
-#: src/screens/MenuGrid.tsx:140
+#: src/apps/timeclock/TimeClock.tsx:737
+msgid "Cash tips {amount}"
+msgstr "البقشيش النقدي {amount}"
+
+#: src/screens/MenuGrid.tsx:156
 msgid "Categories"
 msgstr "الفئات"
 
@@ -375,20 +544,20 @@ msgstr "الفئات"
 msgid "Change"
 msgstr "الباقي"
 
-#: src/screens/Checkout.tsx:576
+#: src/screens/Checkout.tsx:600
 msgid "Change {changeText}"
 msgstr "الباقي {changeText}"
 
-#: src/screens/Checkout.tsx:231
+#: src/screens/Checkout.tsx:253
 msgid "Change due"
 msgstr "الباقي المستحق"
 
-#: src/screens/ShiftSheet.tsx:224
+#: src/screens/ShiftSheet.tsx:231
 msgid "Change from the bank"
 msgstr "فكة من البنك"
 
-#: src/screens/Cart.tsx:371
-#: src/screens/Checkout.tsx:287
+#: src/screens/Cart.tsx:323
+#: src/screens/Checkout.tsx:309
 msgid "Charge"
 msgstr "تحصيل"
 
@@ -396,16 +565,17 @@ msgstr "تحصيل"
 msgid "Charged the wrong amount"
 msgstr "حُصّل مبلغ خاطئ"
 
-#: src/screens/LockScreen.tsx:180
-#: src/ui/ManagerPinPad.tsx:67
+#: src/apps/timeclock/TimeClock.tsx:537
+#: src/screens/LockScreen.tsx:187
+#: src/ui/ManagerPinPad.tsx:75
 msgid "Checking…"
 msgstr "جارٍ التحقق…"
 
-#: src/screens/ItemSheet.tsx:215
+#: src/screens/ItemSheet.tsx:237
 msgid "Choose {min}"
 msgstr "اختر {min}"
 
-#: src/screens/ItemSheet.tsx:214
+#: src/screens/ItemSheet.tsx:236
 msgid "Choose {min}–{max}"
 msgstr "اختر من {min} إلى {max}"
 
@@ -417,13 +587,23 @@ msgstr "اختر {missing}"
 msgid "Choose {name}"
 msgstr "اختر {name}"
 
-#: src/screens/PhoneOrderSheet.tsx:84
+#: src/screens/PhoneOrderSheet.tsx:88
 msgid "Choose a future pickup time in the restaurant’s time zone"
 msgstr "اختر وقت استلام لاحقًا حسب المنطقة الزمنية للمطعم"
 
 #: src/lib/item-config.ts:133
 msgid "Choose a size"
 msgstr "اختر حجمًا"
+
+#: src/apps/reservations/sheets.tsx:207
+#: src/apps/reservations/sheets.tsx:399
+#: src/apps/reservations/sheets.tsx:621
+msgid "Choose a table"
+msgstr "اختر طاولة"
+
+#: src/apps/reservations/sheets.tsx:741
+msgid "Choose a time"
+msgstr "اختر وقتًا"
 
 #: src/lib/orders.ts:206
 msgid "Choose a valid pickup time"
@@ -433,78 +613,123 @@ msgstr "اختر وقت استلام صالحًا"
 msgid "Choose a valid pickup time zone"
 msgstr "اختر منطقة زمنية صالحة للاستلام"
 
+#: src/apps/timeclock/messages.ts:64
+msgid "Choose the role you are working."
+msgstr "اختر الدور الذي تعمل فيه."
+
 #: src/ui/Keypad.tsx:57
 msgid "Clear"
 msgstr "مسح"
 
-#: src/screens/Cart.tsx:165
+#: src/screens/Cart.tsx:180
 msgid "Clear order"
 msgstr "مسح الطلب"
 
-#: src/screens/MenuGrid.tsx:131
-#: src/screens/MenuGrid.tsx:235
-#: src/screens/OrdersSheet.tsx:227
-#: src/screens/OrdersSheet.tsx:271
+#: src/screens/MenuGrid.tsx:146
+#: src/screens/MenuGrid.tsx:258
+#: src/screens/OrdersSheet.tsx:230
+#: src/screens/OrdersSheet.tsx:276
 msgid "Clear search"
 msgstr "مسح البحث"
 
-#: src/App.tsx:877
-#: src/ui/primitives.tsx:242
+#: src/apps/timeclock/messages.ts:118
+msgid "Clock in"
+msgstr "تسجيل الحضور"
+
+#: src/screens/LockScreen.tsx:197
+msgid "Clock in or out"
+msgstr "تسجيل الحضور أو الانصراف"
+
+#: src/apps/timeclock/messages.ts:121
+#: src/apps/timeclock/TimeClock.tsx:758
+msgid "Clock out"
+msgstr "تسجيل الانصراف"
+
+#: src/apps/timeclock/messages.ts:126
+msgid "Clocked in"
+msgstr "تم تسجيل الحضور"
+
+#: src/apps/timeclock/messages.ts:129
+msgid "Clocked out"
+msgstr "تم تسجيل الانصراف"
+
+#: src/App.tsx:947
+#: src/ui/primitives.tsx:355
 msgid "Close"
 msgstr "إغلاق"
 
-#: src/screens/Checkout.tsx:268
+#: src/screens/Checkout.tsx:290
 msgid "Close order · nothing to pay"
 msgstr "إغلاق الطلب · لا يوجد ما يُدفع"
 
-#: src/screens/ShiftSheet.tsx:342
-#: src/screens/ShiftSheet.tsx:404
+#: src/screens/ShiftSheet.tsx:349
+#: src/screens/ShiftSheet.tsx:411
 msgid "Close shift"
 msgstr "إغلاق الوردية"
 
-#: src/screens/ShiftSheet.tsx:302
+#: src/screens/ShiftSheet.tsx:309
 msgid "Close the shift"
 msgstr "إغلاق الوردية"
 
 #. placeholder {0}: shift.closedBy.name
-#: src/screens/ShiftSheet.tsx:536
+#: src/screens/ShiftSheet.tsx:543
 msgid "Closed by {0}"
 msgstr "أغلقها {0}"
 
-#: src/screens/Checkout.tsx:597
+#: src/apps/reservations/HostStand.tsx:370
+msgid "Closed today. Walk-ins can still be seated."
+msgstr "مغلق اليوم. لا يزال بالإمكان إجلاس الزبائن بدون حجز."
+
+#: src/screens/Checkout.tsx:621
 msgid "Closing now leaves {remainingText} open on the tab"
 msgstr "الإغلاق الآن يُبقي {remainingText} مستحقًا على الحساب"
 
-#: src/screens/Checkout.tsx:275
+#: src/screens/Checkout.tsx:297
 msgid "Confirm {appliedText}"
 msgstr "تأكيد {appliedText}"
 
-#: src/screens/Checkout.tsx:543
+#: src/screens/Checkout.tsx:567
 msgid "Confirm once this amount has been collected another way."
 msgstr "أكّد بعد تحصيل هذا المبلغ بطريقة أخرى."
 
-#: src/lib/store.ts:354
+#: src/apps/reservations/sheets.tsx:33
+msgid "Confirmed"
+msgstr "مؤكد"
+
+#: src/apps/reservations/sheets.tsx:239
+msgid "Confirmed by phone"
+msgstr "تم التأكيد هاتفيًا"
+
+#: src/lib/store.ts:373
 msgid "Connect to the internet to see other terminals’ tabs."
 msgstr "اتصل بالإنترنت لرؤية حسابات نقاط البيع الأخرى."
 
-#: src/lib/signin.ts:147
+#: src/lib/signin.ts:153
 msgid "Connect to the internet to sign in. The first sign-in on this device needs a connection."
 msgstr "اتصل بالإنترنت لتسجيل الدخول. أول تسجيل دخول على هذا الجهاز يحتاج إلى اتصال."
 
-#: src/screens/OrdersSheet.tsx:735
+#: src/apps/timeclock/TimeClock.tsx:540
+msgid "Continue"
+msgstr "متابعة"
+
+#: src/screens/OrdersSheet.tsx:742
 msgid "Could not cancel the tab"
 msgstr "تعذّر إلغاء الحساب"
 
 #: src/screens/AuditSheet.tsx:77
-#: src/screens/LockScreen.tsx:82
+#: src/screens/LockScreen.tsx:89
 msgid "Could not check the PIN. Try again."
 msgstr "تعذّر التحقق من الرمز. حاول مرة أخرى."
 
-#: src/screens/SettingsSheet.tsx:89
+#: src/apps/reservations/sheets.tsx:774
+msgid "Could not load the times. Check the connection."
+msgstr "تعذّر تحميل الأوقات. تحقق من الاتصال."
+
+#: src/screens/SettingsSheet.tsx:96
 msgid "Could not pair this terminal. Try again."
 msgstr "تعذّر ربط هذا الجهاز. حاول مرة أخرى."
 
-#: src/lib/store.ts:366
+#: src/lib/store.ts:385
 msgid "Could not reach the server."
 msgstr "تعذّر الوصول إلى الخادم."
 
@@ -512,56 +737,68 @@ msgstr "تعذّر الوصول إلى الخادم."
 msgid "Could not reach the server. Check the connection and try again."
 msgstr "تعذّر الوصول إلى الخادم. تحقق من الاتصال وحاول مرة أخرى."
 
-#: src/lib/store.ts:404
+#: src/lib/store.ts:423
 msgid "Could not reach the server. The tab stays where it is."
 msgstr "تعذّر الوصول إلى الخادم. يبقى الحساب حيث هو."
 
-#: src/screens/OrdersSheet.tsx:811
+#: src/screens/OrdersSheet.tsx:818
 msgid "Could not record the refund"
 msgstr "تعذّر تسجيل الاسترداد"
 
-#: src/App.tsx:354
+#: src/App.tsx:381
 msgid "Could not save the order"
 msgstr "تعذّر حفظ الطلب"
 
-#: src/screens/Checkout.tsx:189
+#: src/screens/Checkout.tsx:198
 msgid "Could not save the payment"
 msgstr "تعذّر حفظ الدفعة"
 
-#: src/App.tsx:388
+#: src/App.tsx:415
 msgid "Could not start payment"
 msgstr "تعذّر بدء الدفع"
 
-#: src/App.tsx:594
+#: src/apps/reservations/HostStand.tsx:148
+msgid "Could not undo. Check the floor."
+msgstr "تعذّر التراجع. تحقق من المخطط."
+
+#: src/App.tsx:629
 msgid "Couldn’t update the menu ({catalogError}). Selling from the copy saved on this device."
 msgstr "تعذّر تحديث القائمة ({catalogError}). البيع مستمر من النسخة المحفوظة على هذا الجهاز."
 
-#: src/screens/ShiftSheet.tsx:307
+#: src/screens/ShiftSheet.tsx:314
 msgid "Count all the cash in the drawer and enter it. You will see whether it balances after you confirm."
 msgstr "عُدّ كل النقد في الدرج وأدخله. سترى إن كان مطابقًا بعد التأكيد."
 
-#: src/screens/ShiftSheet.tsx:161
+#: src/screens/ShiftSheet.tsx:168
 msgid "Count the cash in the drawer before the first sale. Every sale until you close the shift is counted against it."
 msgstr "عُدّ النقد في الدرج قبل أول عملية بيع. تُحسب كل المبيعات حتى إغلاق الوردية مقابله."
 
-#: src/screens/ShiftSheet.tsx:479
-#: src/screens/ShiftSheet.tsx:591
+#: src/apps/timeclock/TimeClock.tsx:730
+msgid "Count what you kept in cash. Card tips are counted for you."
+msgstr "احسب ما احتفظت به نقدًا. بقشيش البطاقات يُحتسب تلقائيًا."
+
+#: src/screens/ShiftSheet.tsx:486
+#: src/screens/ShiftSheet.tsx:598
 msgid "Counted"
 msgstr "المعدود"
 
-#: src/App.tsx:699
-#: src/screens/Cart.tsx:118
-#: src/screens/Cart.tsx:125
+#: src/App.tsx:769
+#: src/screens/Cart.tsx:133
+#: src/screens/Cart.tsx:140
 msgid "Current order"
 msgstr "الطلب الحالي"
 
-#: src/screens/Cart.tsx:395
-#: src/screens/Cart.tsx:407
-#: src/screens/PhoneOrderSheet.tsx:103
+#: src/screens/Cart.tsx:348
+#: src/screens/Cart.tsx:360
+#: src/screens/PhoneOrderSheet.tsx:107
 msgid "Customer name"
 msgstr "اسم العميل"
 
-#: src/screens/SettingsSheet.tsx:406
+#: src/apps/reservations/sheets.tsx:751
+msgid "Day"
+msgstr "اليوم"
+
+#: src/screens/SettingsSheet.tsx:413
 msgid "Default"
 msgstr "الافتراضي"
 
@@ -569,54 +806,74 @@ msgstr "الافتراضي"
 msgid "Delete"
 msgstr "حذف"
 
-#: src/screens/SettingsSheet.tsx:425
+#: src/screens/SettingsSheet.tsx:430
 msgid "Demo mode"
 msgstr "الوضع التجريبي"
 
-#: src/screens/LockScreen.tsx:160
+#: src/screens/LockScreen.tsx:167
 msgid "Demo mode: the PIN is {DEMO_PIN}."
 msgstr "الوضع التجريبي: الرمز السري هو {DEMO_PIN}."
 
-#: src/screens/Cart.tsx:152
-#: src/screens/OrdersSheet.tsx:81
+#: src/apps/reservations/sheets.tsx:527
+msgid "Details"
+msgstr "التفاصيل"
+
+#. placeholder {0}: entry.firstName || entry.displayName
+#. placeholder {0}: shortName(reservation, _(t`Guest`))
+#: src/apps/reservations/Dock.tsx:144
+#: src/apps/reservations/Dock.tsx:214
+msgid "Details for {0}"
+msgstr "تفاصيل {0}"
+
+#: src/screens/Cart.tsx:167
+#: src/screens/OrdersSheet.tsx:84
 #: src/screens/Receipt.tsx:93
 msgid "Dine in"
 msgstr "محلي"
 
-#: src/screens/Cart.tsx:424
-#: src/screens/ItemSheet.tsx:338
-#: src/screens/ShiftSheet.tsx:141
+#: src/ui/motion.tsx:169
+msgid "Dismiss"
+msgstr "إغلاق"
+
+#: src/apps/timeclock/TimeClock.tsx:847
+#: src/screens/Cart.tsx:377
+#: src/screens/ItemSheet.tsx:365
+#: src/screens/ShiftSheet.tsx:148
 msgid "Done"
 msgstr "تم"
 
-#: src/screens/Cart.tsx:418
+#: src/screens/Cart.tsx:371
 msgid "e.g. 12 or Patio 3"
 msgstr "مثل 12 أو الجلسة الخارجية 3"
 
-#: src/screens/Checkout.tsx:455
+#: src/screens/Checkout.tsx:479
 msgid "Each share is {shareText}. The last share takes any remainder."
 msgstr "كل حصة {shareText}. تتحمّل الحصة الأخيرة أي فرق متبقٍ."
 
 #. placeholder {0}: line.name
-#: src/screens/Cart.tsx:247
+#: src/screens/Cart.tsx:435
 msgid "Edit {0}"
 msgstr "تعديل {0}"
 
-#: src/screens/Cart.tsx:177
+#: src/screens/Cart.tsx:192
 msgid "Edit phone order details"
 msgstr "تعديل تفاصيل الطلب الهاتفي"
 
+#: src/apps/timeclock/messages.ts:120
+msgid "End break"
+msgstr "إنهاء الاستراحة"
+
 #: src/lib/orders.ts:197
-#: src/screens/PhoneOrderSheet.tsx:68
+#: src/screens/PhoneOrderSheet.tsx:72
 msgid "Enter a customer name for this phone order"
 msgstr "أدخل اسم العميل لهذا الطلب الهاتفي"
 
 #: src/lib/orders.ts:199
-#: src/screens/PhoneOrderSheet.tsx:73
+#: src/screens/PhoneOrderSheet.tsx:77
 msgid "Enter a valid callback number"
 msgstr "أدخل رقم تواصل صالحًا"
 
-#: src/screens/Checkout.tsx:270
+#: src/screens/Checkout.tsx:292
 msgid "Enter an amount"
 msgstr "أدخل مبلغًا"
 
@@ -640,79 +897,129 @@ msgstr "أدخل النقد الذي عددته."
 msgid "Enter the orders server address first."
 msgstr "أدخل عنوان خادم الطلبات أولًا."
 
-#: src/lib/signin.ts:237
+#: src/lib/signin.ts:245
 msgid "Enter your 4 to 6 digit PIN."
 msgstr "أدخل رمزك السري المكوّن من 4 إلى 6 أرقام."
 
-#: src/screens/LockScreen.tsx:119
+#: src/apps/timeclock/TimeClock.tsx:498
+msgid "Enter your PIN"
+msgstr "أدخل رمزك السري"
+
+#: src/screens/LockScreen.tsx:126
 msgid "Enter your PIN to start"
 msgstr "أدخل رمزك السري للبدء"
 
-#: src/screens/Checkout.tsx:517
+#: src/screens/Checkout.tsx:541
 msgid "Exact"
 msgstr "المبلغ تمامًا"
 
-#: src/screens/ShiftSheet.tsx:477
-#: src/screens/ShiftSheet.tsx:586
+#: src/screens/ShiftSheet.tsx:484
+#: src/screens/ShiftSheet.tsx:593
 msgid "Expected in drawer"
 msgstr "المتوقع في الدرج"
 
-#: src/screens/ItemSheet.tsx:111
+#: src/screens/ItemSheet.tsx:133
 msgid "Fewer"
 msgstr "أقل"
 
 #. placeholder {0}: line.name
-#: src/screens/Cart.tsx:282
+#: src/screens/Cart.tsx:467
 msgid "Fewer {0}"
 msgstr "تقليل {0}"
 
-#: src/screens/SettingsSheet.tsx:135
+#: src/apps/reservations/sheets.tsx:778
+msgid "Finding times…"
+msgstr "جارٍ البحث عن الأوقات…"
+
+#: src/apps/reservations/sheets.tsx:38
+msgid "Finished"
+msgstr "انتهى"
+
+#: src/apps/reservations/sheets.tsx:219
+#: src/apps/reservations/sheets.tsx:524
+msgid "Finished, clear table"
+msgstr "انتهى، أخلِ الطاولة"
+
+#: src/apps/reservations/sheets.tsx:803
+msgid "First name"
+msgstr "الاسم الأول"
+
+#: src/apps/reservations/sheets.tsx:345
+msgid "First visit"
+msgstr "الزيارة الأولى"
+
+#: src/screens/SettingsSheet.tsx:142
 msgid "For this device only. Saved at once."
 msgstr "لهذا الجهاز فقط. يُحفظ فورًا."
 
-#: src/screens/MenuGrid.tsx:365
+#: src/screens/MenuGrid.tsx:363
 msgid "From {price}"
 msgstr "ابتداءً من {price}"
 
-#: src/screens/Checkout.tsx:428
+#: src/screens/Checkout.tsx:448
 msgid "Full · {remainingText}"
 msgstr "كامل · {remainingText}"
 
-#: src/screens/OrdersSheet.tsx:829
+#: src/screens/OrdersSheet.tsx:839
 msgid "Full amount ({upTo})"
 msgstr "المبلغ كاملًا ({upTo})"
 
 #: src/App.tsx:606
-msgid "Getting the latest menu for this restaurant."
-msgstr "جارٍ جلب أحدث قائمة لهذا المطعم."
+#~ msgid "Getting the latest menu for this restaurant."
+#~ msgstr "جارٍ جلب أحدث قائمة لهذا المطعم."
 
-#: src/screens/Checkout.tsx:584
+#: src/screens/Checkout.tsx:608
 msgid "Give {giveChangeText} change for that payment"
 msgstr "أعطِ {giveChangeText} باقيًا لتلك الدفعة"
 
-#: src/screens/ItemSheet.tsx:161
+#: src/screens/ItemSheet.tsx:183
 msgid "Gluten free"
 msgstr "خالٍ من الغلوتين"
+
+#: src/apps/reservations/Dock.tsx:116
+#: src/apps/reservations/Dock.tsx:144
+#: src/apps/reservations/Floor.tsx:173
+#: src/apps/reservations/HostStand.tsx:191
+#: src/apps/reservations/HostStand.tsx:227
+#: src/apps/reservations/HostStand.tsx:284
+#: src/apps/reservations/sheets.tsx:160
+#: src/apps/reservations/sheets.tsx:499
+#: src/apps/reservations/sheets.tsx:552
+msgid "Guest"
+msgstr "ضيف"
 
 #: src/screens/AuditSheet.tsx:14
 msgid "Guest changed their mind"
 msgstr "غيّر الضيف رأيه"
 
-#: src/screens/Checkout.tsx:417
+#: src/apps/reservations/HostStand.tsx:521
+msgid "Guests’ bookings open for the person signed in at this terminal, and only after an online sign-in."
+msgstr "تُفتح حجوزات الضيوف للشخص المسجّل دخوله على هذا الجهاز، وبعد تسجيل دخول متصل بالإنترنت فقط."
+
+#. placeholder {0}: who.firstName
+#: src/apps/timeclock/TimeClock.tsx:620
+msgid "Hi {0}"
+msgstr "مرحبًا {0}"
+
+#: src/apps/reservations/sheets.tsx:629
+msgid "How many?"
+msgstr "كم عددهم؟"
+
+#: src/screens/Checkout.tsx:435
 msgid "How much now?"
 msgstr "كم المبلغ الآن؟"
 
-#: src/screens/ShiftSheet.tsx:369
+#: src/screens/ShiftSheet.tsx:376
 msgid "In"
 msgstr "إيداع"
 
-#: src/screens/Cart.tsx:111
-#: src/screens/Checkout.tsx:361
-#: src/screens/OrdersSheet.tsx:564
+#: src/screens/Cart.tsx:126
+#: src/screens/Checkout.tsx:383
+#: src/screens/OrdersSheet.tsx:571
 msgid "Includes tax"
 msgstr "شامل الضريبة"
 
-#: src/screens/Cart.tsx:110
+#: src/screens/Cart.tsx:125
 msgid "Includes tax ({taxRatePercent}%)"
 msgstr "شامل الضريبة ({taxRatePercent}%)"
 
@@ -724,19 +1031,23 @@ msgstr "شامل الضريبة ({taxRatePercent}%)"
 msgid "Invoice {invoiceNumber}"
 msgstr "فاتورة {invoiceNumber}"
 
-#: src/lib/signin.ts:171
+#: src/lib/signin.ts:177
 msgid "It has been a while. Connect to the internet to sign in again."
 msgstr "مرّ وقت طويل. اتصل بالإنترنت لتسجيل الدخول مجددًا."
 
-#: src/App.tsx:628
+#: src/App.tsx:694
 msgid "It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh."
 msgstr "نقطة البيع مضبوطة على فرع غير موجود في القائمة المنشورة، لذلك لن تبيع من فرع آخر. اطلب من المدير التأكد من نشر الفرع، ثم حدّث."
 
-#: src/screens/ShiftSheet.tsx:606
+#: src/apps/timeclock/messages.ts:55
+msgid "It is too early to clock in for your shift."
+msgstr "الوقت مبكر جدًا لتسجيل الحضور لورديتك."
+
+#: src/screens/ShiftSheet.tsx:613
 msgid "Items taken off"
 msgstr "أصناف محذوفة"
 
-#: src/screens/OrdersSheet.tsx:63
+#: src/screens/OrdersSheet.tsx:66
 msgid "its payments differ from what the server already has"
 msgstr "دفعاته تختلف عمّا لدى الخادم"
 
@@ -744,11 +1055,15 @@ msgstr "دفعاته تختلف عمّا لدى الخادم"
 msgid "Keep current pairing"
 msgstr "الإبقاء على الربط الحالي"
 
-#: src/screens/SettingsSheet.tsx:197
+#: src/apps/reservations/sheets.tsx:180
+msgid "Keep it"
+msgstr "أبقِه"
+
+#: src/screens/SettingsSheet.tsx:204
 msgid "Keep paired"
 msgstr "الإبقاء على الربط"
 
-#: src/App.tsx:843
+#: src/App.tsx:913
 msgid "Keep working"
 msgstr "متابعة العمل"
 
@@ -756,187 +1071,282 @@ msgstr "متابعة العمل"
 msgid "Keypad"
 msgstr "لوحة الأرقام"
 
-#: src/screens/ItemSheet.tsx:303
-#: src/screens/ItemSheet.tsx:304
-#: src/screens/ItemSheet.tsx:306
+#: src/screens/ItemSheet.tsx:325
+#: src/screens/ItemSheet.tsx:326
+#: src/screens/ItemSheet.tsx:328
 msgid "Kitchen note"
 msgstr "ملاحظة للمطبخ"
 
-#: src/screens/SettingsSheet.tsx:134
+#: src/screens/SettingsSheet.tsx:141
 msgid "Language"
 msgstr "اللغة"
 
-#: src/screens/SettingsSheet.tsx:471
+#: src/apps/reservations/sheets.tsx:815
+msgid "Last name"
+msgstr "اسم العائلة"
+
+#: src/screens/SettingsSheet.tsx:474
 msgid "Last refresh failed: {error}."
 msgstr "فشل آخر تحديث: {error}."
 
-#: src/screens/SettingsSheet.tsx:125
+#: src/screens/SettingsSheet.tsx:132
 msgid "Load menu"
 msgstr "تحميل القائمة"
 
-#: src/App.tsx:605
+#: src/App.tsx:670
+#: src/App.tsx:1062
 msgid "Loading menu…"
 msgstr "جارٍ تحميل القائمة…"
 
-#: src/screens/SettingsSheet.tsx:393
+#: src/screens/SettingsSheet.tsx:400
 msgid "Location"
 msgstr "الفرع"
 
-#: src/screens/SettingsSheet.tsx:354
+#: src/screens/SettingsSheet.tsx:361
 msgid "Lock after"
 msgstr "القفل بعد"
 
-#: src/screens/TopBar.tsx:113
+#: src/screens/TopBar.tsx:136
 msgid "Lock the till"
 msgstr "قفل نقطة البيع"
 
-#: src/screens/SettingsSheet.tsx:445
+#: src/screens/SettingsSheet.tsx:448
 msgid "Lock the till behind a PIN, as paired terminals can. The demo PIN is {DEMO_PIN}."
 msgstr "اقفل نقطة البيع برمز سري كما في نقاط البيع المرتبطة. الرمز التجريبي هو {DEMO_PIN}."
 
-#: src/screens/TopBar.tsx:112
+#: src/screens/TopBar.tsx:135
 msgid "Lock the till, signed in as {staffName}"
 msgstr "قفل نقطة البيع، المستخدم الحالي {staffName}"
 
-#: src/screens/LockScreen.tsx:91
+#: src/screens/LockScreen.tsx:98
 msgid "Locked. Enter your PIN."
 msgstr "مقفلة. أدخل رمزك السري."
 
-#: src/ui/ManagerPinPad.tsx:34
+#: src/ui/ManagerPinPad.tsx:42
 msgid "Manager PIN"
 msgstr "رمز المدير"
+
+#: src/apps/reservations/sheets.tsx:175
+msgid "Mark this party as a no-show?"
+msgstr "تسجيل هذه المجموعة كعدم حضور؟"
 
 #: src/screens/PairingLinkDialog.tsx:151
 msgid "Menu and branding"
 msgstr "القائمة والهوية"
 
-#: src/screens/SettingsSheet.tsx:466
+#: src/screens/SettingsSheet.tsx:469
 msgid "Menu has not been downloaded yet."
 msgstr "لم تُنزَّل القائمة بعد."
 
-#: src/screens/SettingsSheet.tsx:464
+#: src/screens/SettingsSheet.tsx:467
 msgid "Menu last updated {lastUpdated}."
 msgstr "آخر تحديث للقائمة {lastUpdated}."
 
-#: src/screens/ShiftSheet.tsx:224
+#: src/screens/ShiftSheet.tsx:231
 msgid "Milk from the shop"
 msgstr "حليب من المتجر"
 
-#: src/screens/OrdersSheet.tsx:790
+#: src/screens/OrdersSheet.tsx:797
 msgid "Money goes back the way it was paid ({tenders}). Card refunds are made on the card terminal first; this records them."
 msgstr "يُعاد المال بطريقة الدفع نفسها ({tenders}). يتم استرداد البطاقات على جهاز البطاقات أولًا، وهنا يُسجَّل ذلك."
 
-#: src/screens/ItemSheet.tsx:124
+#: src/screens/ItemSheet.tsx:146
 msgid "More"
 msgstr "أكثر"
 
 #. placeholder {0}: line.name
-#: src/screens/Cart.tsx:298
+#: src/screens/Cart.tsx:486
 msgid "More {0}"
 msgstr "زيادة {0}"
 
-#: src/screens/OrdersSheet.tsx:957
+#: src/screens/OrdersSheet.tsx:973
 msgid "Moved to {movedTo}"
 msgstr "نُقل إلى {movedTo}"
 
-#: src/screens/Cart.tsx:419
+#: src/apps/reservations/sheets.tsx:901
+msgid "Name"
+msgstr "الاسم"
+
+#: src/apps/reservations/sheets.tsx:635
+msgid "Name (optional)"
+msgstr "الاسم (اختياري)"
+
+#: src/screens/Cart.tsx:372
 msgid "Name for the order"
 msgstr "اسم للطلب"
 
-#: src/screens/Cart.tsx:106
+#: src/screens/Cart.tsx:121
 msgid "Name: {detail}"
 msgstr "الاسم: {detail}"
 
-#: src/screens/ShiftSheet.tsx:468
-#: src/screens/ShiftSheet.tsx:553
+#: src/screens/ShiftSheet.tsx:475
+#: src/screens/ShiftSheet.tsx:560
 msgid "Net sales"
 msgstr "صافي المبيعات"
 
-#: src/screens/SettingsSheet.tsx:72
+#: src/screens/SettingsSheet.tsx:79
 msgid "Never"
 msgstr "أبدًا"
 
-#: src/screens/Checkout.tsx:248
+#: src/apps/reservations/sheets.tsx:716
+msgid "New booking"
+msgstr "حجز جديد"
+
+#: src/screens/Checkout.tsx:270
 msgid "New order"
 msgstr "طلب جديد"
 
-#: src/App.tsx:230
+#: src/apps/reservations/sheets.tsx:549
+msgid "Next booking"
+msgstr "الحجز التالي"
+
+#: src/apps/timeclock/TimeClock.tsx:750
+msgid "No cash tips"
+msgstr "لا يوجد بقشيش نقدي"
+
+#: src/App.tsx:245
 msgid "No connection"
 msgstr "لا يوجد اتصال"
 
-#: src/screens/MenuGrid.tsx:224
+#: src/apps/reservations/HostStand.tsx:165
+msgid "No connection. Nothing was changed."
+msgstr "لا يوجد اتصال. لم يتغير شيء."
+
+#: src/apps/timeclock/messages.ts:106
+msgid "No connection. Try again in a moment."
+msgstr "لا يوجد اتصال. حاول مرة أخرى بعد قليل."
+
+#: src/apps/timeclock/TimeClock.tsx:783
+msgid "No connection. Your punch is saved on this terminal and sent when it is back; your PIN is checked then."
+msgstr "لا يوجد اتصال. تُحفظ بصمتك على هذا الجهاز وتُرسل عند عودة الاتصال، ويُتحقق من رمزك السري حينها."
+
+#: src/screens/MenuGrid.tsx:247
 msgid "No items match “{query}”."
 msgstr "لا أصناف تطابق «{query}»."
 
-#: src/screens/Cart.tsx:232
+#: src/screens/Cart.tsx:247
 msgid "No items yet"
 msgstr "لا أصناف بعد"
 
-#: src/App.tsx:642
+#: src/App.tsx:709
 msgid "No menu items"
 msgstr "لا أصناف في القائمة"
 
-#: src/screens/OrdersSheet.tsx:258
+#: src/apps/reservations/Dock.tsx:72
+msgid "No more bookings today."
+msgstr "لا مزيد من الحجوزات اليوم."
+
+#: src/screens/OrdersSheet.tsx:263
 msgid "No open tabs. Use “Pay later” on an order and it waits here until the guest settles up."
 msgstr "لا حسابات مفتوحة. استخدم «الدفع لاحقًا» في الطلب وسينتظر هنا حتى يسدّد الضيف."
 
-#: src/screens/OrdersSheet.tsx:251
+#: src/screens/OrdersSheet.tsx:256
 msgid "No orders match your search."
 msgstr "لا توجد طلبات تطابق بحثك."
 
-#: src/screens/OrdersSheet.tsx:263
+#: src/screens/OrdersSheet.tsx:268
 msgid "No orders yet today. They appear the moment you save them, even offline."
 msgstr "لا طلبات اليوم بعد. تظهر فور حفظها، حتى دون اتصال."
 
-#: src/screens/OrdersSheet.tsx:897
+#: src/screens/OrdersSheet.tsx:910
 msgid "No other terminal has an open tab right now."
 msgstr "لا توجد حسابات مفتوحة على نقاط البيع الأخرى الآن."
 
-#: src/screens/OrdersSheet.tsx:253
+#: src/screens/OrdersSheet.tsx:258
 msgid "No phone orders yet. Choose “Phone order” in the current order to take a pickup request."
 msgstr "لا توجد طلبات هاتفية بعد. اختر «طلب هاتفي» في الطلب الحالي لتسجيل طلب استلام."
 
-#: src/App.tsx:536
+#: src/App.tsx:567
 msgid "No shift is open. Tap to count the drawer and open one before selling."
 msgstr "لا توجد وردية مفتوحة. اضغط لعدّ الدرج وفتح وردية قبل البيع."
 
-#: src/screens/Checkout.tsx:406
+#: src/apps/reservations/Dock.tsx:135
+msgid "No table yet"
+msgstr "لا توجد طاولة بعد"
+
+#: src/apps/reservations/HostStand.tsx:391
+msgid "No tables yet. A manager adds the floor plan in the app, under Reservations, Setup."
+msgstr "لا توجد طاولات بعد. يضيف المدير مخطط الصالة من التطبيق، في الحجوزات، الإعداد."
+
+#: src/apps/reservations/sheets.tsx:782
+msgid "No times left for {size} on this day."
+msgstr "لا أوقات متبقية لـ {size} في هذا اليوم."
+
+#: src/apps/reservations/sheets.tsx:40
+#: src/apps/reservations/sheets.tsx:191
+#: src/apps/reservations/sheets.tsx:267
+msgid "No-show"
+msgstr "عدم حضور"
+
+#: src/apps/reservations/Dock.tsx:159
+msgid "Nobody is waiting."
+msgstr "لا يوجد أحد بالانتظار."
+
+#: src/screens/Checkout.tsx:424
 msgid "None"
 msgstr "بدون"
 
-#: src/screens/MenuGrid.tsx:220
+#: src/apps/reservations/sheets.tsx:254
+msgid "Not a no-show"
+msgstr "ليس عدم حضور"
+
+#: src/apps/timeclock/TimeClock.tsx:555
+msgid "Not me"
+msgstr "لست أنا"
+
+#: src/apps/reservations/HostStand.tsx:325
+msgid "Not up to date"
+msgstr "غير محدّث"
+
+#: src/screens/MenuGrid.tsx:243
 msgid "Nothing found"
 msgstr "لم يُعثر على شيء"
 
-#: src/screens/SettingsSheet.tsx:347
+#: src/screens/SettingsSheet.tsx:354
 msgid "Off"
 msgstr "متوقف"
 
-#: src/screens/TopBar.tsx:235
+#: src/screens/TopBar.tsx:330
 msgid "Offline"
 msgstr "غير متصل"
 
-#: src/screens/TopBar.tsx:229
+#: src/screens/TopBar.tsx:324
 msgid "Offline · {waiting} saved"
 msgstr "غير متصل · {waiting} محفوظ"
 
-#: src/screens/TopBar.tsx:231
+#: src/screens/TopBar.tsx:326
 msgid "Offline · selling normally"
 msgstr "غير متصل · البيع مستمر"
 
-#: src/screens/LockScreen.tsx:152
+#: src/screens/LockScreen.tsx:159
 msgid "Offline: people who have signed in here before can still sign in."
 msgstr "دون اتصال: يمكن لمن سجّل الدخول هنا سابقًا تسجيل الدخول."
 
-#: src/screens/SettingsSheet.tsx:345
+#: src/apps/timeclock/TimeClock.tsx:450
+msgid "Offline: punches are saved and sent later."
+msgstr "غير متصل: تُحفظ البصمات وتُرسل لاحقًا."
+
+#: src/apps/timeclock/TimeClock.tsx:518
+msgid "Offline: your punch is saved and sent later."
+msgstr "غير متصل: تُحفظ بصمتك وتُرسل لاحقًا."
+
+#: src/screens/SettingsSheet.tsx:352
 msgid "On: staff sign in with their PIN"
 msgstr "مفعّل: يسجّل الموظفون الدخول برموزهم السرية"
 
-#: src/screens/TopBar.tsx:256
+#: src/apps/reservations/sheets.tsx:81
+msgid "One fewer"
+msgstr "أقل بواحد"
+
+#: src/apps/reservations/sheets.tsx:92
+msgid "One more"
+msgstr "أكثر بواحد"
+
+#: src/screens/TopBar.tsx:351
 msgid "Online"
 msgstr "متصل"
 
-#: src/screens/TopBar.tsx:262
+#: src/screens/TopBar.tsx:357
 msgid "Online · all sent"
 msgstr "متصل · أُرسل كل شيء"
 
@@ -944,52 +1354,56 @@ msgstr "متصل · أُرسل كل شيء"
 msgid "Only a paid order can be refunded"
 msgstr "لا يمكن استرداد إلا طلب مدفوع"
 
-#: src/screens/ShiftSheet.tsx:157
+#: src/screens/ShiftSheet.tsx:164
 msgid "Open a shift"
 msgstr "فتح وردية"
 
-#: src/App.tsx:116
+#: src/App.tsx:128
 msgid "Open a shift before taking orders."
 msgstr "افتح وردية قبل استقبال الطلبات."
 
 #. placeholder {0}: money(amount)
-#: src/screens/ShiftSheet.tsx:191
+#: src/screens/ShiftSheet.tsx:198
 msgid "Open shift with {0}"
 msgstr "فتح الوردية بمبلغ {0}"
 
 #. placeholder {0}: new Date(shift.openedAt).toLocaleTimeString(i18n.locale, { hour: 'numeric', minute: '2-digit', })
 #. placeholder {1}: shift.openedBy ? ` · ${shift.openedBy.name}` : ''
-#: src/screens/ShiftSheet.tsx:354
+#: src/screens/ShiftSheet.tsx:361
 msgid "Open since {0}{1}"
 msgstr "مفتوحة منذ {0}{1}"
 
-#: src/screens/OrdersSheet.tsx:978
+#: src/screens/OrdersSheet.tsx:994
 msgid "Open tab"
 msgstr "حساب مفتوح"
 
-#: src/screens/OrdersSheet.tsx:202
+#: src/screens/OrdersSheet.tsx:205
 msgid "Open tabs · {openCount}"
 msgstr "الحسابات المفتوحة · {openCount}"
 
-#: src/screens/ShiftSheet.tsx:474
-#: src/screens/ShiftSheet.tsx:574
+#: src/screens/ShiftSheet.tsx:481
+#: src/screens/ShiftSheet.tsx:581
 msgid "Opening float"
 msgstr "رصيد الافتتاح"
 
-#: src/screens/ItemSheet.tsx:218
-#: src/screens/ItemSheet.tsx:304
+#: src/apps/reservations/HostStand.tsx:274
+msgid "Opening today’s floor…"
+msgstr "جارٍ فتح مخطط اليوم…"
+
+#: src/screens/ItemSheet.tsx:240
+#: src/screens/ItemSheet.tsx:326
 msgid "Optional"
 msgstr "اختياري"
 
-#: src/screens/Checkout.tsx:213
+#: src/screens/Checkout.tsx:235
 msgid "Order #{doneNumber}"
 msgstr "الطلب رقم {doneNumber}"
 
-#: src/screens/OrdersSheet.tsx:348
+#: src/screens/OrdersSheet.tsx:355
 msgid "Order details"
 msgstr "تفاصيل الطلب"
 
-#: src/App.tsx:684
+#: src/App.tsx:754
 msgid "Order is empty"
 msgstr "الطلب فارغ"
 
@@ -1000,18 +1414,18 @@ msgstr "الطلب فارغ"
 msgid "Order not found"
 msgstr "الطلب غير موجود"
 
-#: src/screens/Checkout.tsx:307
+#: src/screens/Checkout.tsx:329
 msgid "Order summary"
 msgstr "ملخص الطلب"
 
-#: src/screens/Cart.tsx:146
+#: src/screens/Cart.tsx:161
 msgid "Order type"
 msgstr "نوع الطلب"
 
-#: src/screens/OrdersSheet.tsx:185
-#: src/screens/OrdersSheet.tsx:278
-#: src/screens/TopBar.tsx:151
-#: src/screens/TopBar.tsx:158
+#: src/screens/OrdersSheet.tsx:188
+#: src/screens/OrdersSheet.tsx:283
+#: src/screens/TopBar.tsx:187
+#: src/screens/TopBar.tsx:194
 msgid "Orders"
 msgstr "الطلبات"
 
@@ -1019,32 +1433,32 @@ msgstr "الطلبات"
 msgid "Orders server"
 msgstr "خادم الطلبات"
 
-#: src/screens/SettingsSheet.tsx:321
+#: src/screens/SettingsSheet.tsx:328
 msgid "Orders server URL"
 msgstr "رابط خادم الطلبات"
 
-#: src/screens/OrdersSheet.tsx:192
+#: src/screens/OrdersSheet.tsx:195
 msgid "Orders view"
 msgstr "عرض الطلبات"
 
-#: src/screens/SettingsSheet.tsx:250
+#: src/screens/SettingsSheet.tsx:257
 msgid "Orders will be sent to <0>{pastedHost}</0>."
 msgstr "ستُرسل الطلبات إلى <0>{pastedHost}</0>."
 
 #: src/screens/AuditSheet.tsx:18
-#: src/screens/Checkout.tsx:35
-#: src/screens/OrdersSheet.tsx:53
+#: src/screens/Checkout.tsx:44
+#: src/screens/OrdersSheet.tsx:56
 #: src/screens/Receipt.tsx:17
-#: src/screens/ShiftSheet.tsx:472
-#: src/screens/ShiftSheet.tsx:569
+#: src/screens/ShiftSheet.tsx:479
+#: src/screens/ShiftSheet.tsx:576
 msgid "Other"
 msgstr "أخرى"
 
-#: src/screens/OrdersSheet.tsx:206
+#: src/screens/OrdersSheet.tsx:209
 msgid "Other terminals"
 msgstr "نقاط البيع الأخرى"
 
-#: src/screens/ShiftSheet.tsx:369
+#: src/screens/ShiftSheet.tsx:376
 msgid "Out"
 msgstr "سحب"
 
@@ -1052,35 +1466,35 @@ msgstr "سحب"
 msgid "Out of stock"
 msgstr "نفد من المخزون"
 
-#: src/screens/ShiftSheet.tsx:122
-#: src/screens/ShiftSheet.tsx:596
+#: src/screens/ShiftSheet.tsx:129
+#: src/screens/ShiftSheet.tsx:603
 msgid "Over"
 msgstr "زيادة"
 
-#: src/screens/Checkout.tsx:204
-#: src/screens/Checkout.tsx:373
-#: src/screens/OrdersSheet.tsx:591
+#: src/screens/Checkout.tsx:213
+#: src/screens/Checkout.tsx:395
+#: src/screens/OrdersSheet.tsx:598
 #: src/screens/Receipt.tsx:166
 msgid "Paid"
 msgstr "مدفوع"
 
-#: src/screens/OrdersSheet.tsx:986
+#: src/screens/OrdersSheet.tsx:1002
 msgid "Paid · held for review"
 msgstr "مدفوع · محجوز للمراجعة"
 
-#: src/screens/OrdersSheet.tsx:1004
+#: src/screens/OrdersSheet.tsx:1020
 msgid "Paid · sent"
 msgstr "مدفوع · أُرسل"
 
-#: src/screens/OrdersSheet.tsx:1009
+#: src/screens/OrdersSheet.tsx:1025
 msgid "Paid · waiting to send"
 msgstr "مدفوع · بانتظار الإرسال"
 
-#: src/screens/ShiftSheet.tsx:541
+#: src/screens/ShiftSheet.tsx:548
 msgid "Paid orders"
 msgstr "طلبات مدفوعة"
 
-#: src/screens/SettingsSheet.tsx:275
+#: src/screens/SettingsSheet.tsx:282
 msgid "Pair terminal"
 msgstr "ربط نقطة البيع"
 
@@ -1096,28 +1510,28 @@ msgstr "الربط بمطعم آخر؟"
 msgid "Pair with this link"
 msgstr "الربط بهذا الرابط"
 
-#: src/screens/SettingsSheet.tsx:217
+#: src/screens/SettingsSheet.tsx:224
 msgid "Pair with your restaurant"
 msgstr "الربط بمطعمك"
 
-#: src/screens/SettingsSheet.tsx:162
+#: src/screens/SettingsSheet.tsx:169
 msgid "Paired as {pairedName}"
 msgstr "مرتبطة باسم {pairedName}"
 
-#: src/screens/SettingsSheet.tsx:156
+#: src/screens/SettingsSheet.tsx:163
 msgid "Pairing"
 msgstr "الربط"
 
-#: src/screens/SettingsSheet.tsx:229
+#: src/screens/SettingsSheet.tsx:236
 msgid "Pairing link or code"
 msgstr "رابط الربط أو الرمز"
 
-#: src/screens/SettingsSheet.tsx:245
+#: src/screens/SettingsSheet.tsx:252
 msgid "Pairing link or ppc1.… code"
 msgstr "رابط الربط أو رمز ppc1.…"
 
 #: src/screens/PairingLinkDialog.tsx:102
-#: src/screens/SettingsSheet.tsx:273
+#: src/screens/SettingsSheet.tsx:280
 msgid "Pairing…"
 msgstr "جارٍ الربط…"
 
@@ -1125,43 +1539,72 @@ msgstr "جارٍ الربط…"
 msgid "Part of this bill is already paid"
 msgstr "تم دفع جزء من هذه الفاتورة بالفعل"
 
-#: src/screens/OrdersSheet.tsx:976
+#: src/screens/OrdersSheet.tsx:992
 msgid "Part paid"
 msgstr "مدفوع جزئيًا"
 
-#: src/screens/OrdersSheet.tsx:998
+#: src/screens/OrdersSheet.tsx:1014
 msgid "Part refunded"
 msgstr "مسترد جزئيًا"
 
-#: src/screens/SettingsSheet.tsx:225
+#: src/apps/reservations/Dock.tsx:66
+msgid "Parties to seat"
+msgstr "مجموعات بانتظار الجلوس"
+
+#: src/apps/reservations/sheets.tsx:34
+msgid "Partly here"
+msgstr "وصل بعضهم"
+
+#: src/apps/reservations/sheets.tsx:36
+msgid "Partly seated"
+msgstr "جلس بعضهم"
+
+#. placeholder {0}: state.party.partySize
+#: src/apps/reservations/sheets.tsx:512
+msgid "Party of {0}"
+msgstr "مجموعة من {0}"
+
+#. placeholder {0}: state.party.partySize
+#. placeholder {1}: Math.max( 0, Math.floor((now - state.party.seatedAt) / 60_000), )
+#: src/apps/reservations/sheets.tsx:503
+msgid "Party of {0}, seated {1} min"
+msgstr "مجموعة من {0}، جالسة منذ {1} دقيقة"
+
+#: src/apps/reservations/sheets.tsx:63
+#: src/apps/reservations/sheets.tsx:763
+#: src/apps/reservations/sheets.tsx:913
+msgid "Party size"
+msgstr "عدد الأشخاص"
+
+#: src/screens/SettingsSheet.tsx:232
 msgid "Paste a pairing link or code from the Menuza app to send orders to your server."
 msgstr "الصق رابط ربط أو رمزًا من تطبيق Menuza لإرسال الطلبات إلى خادمك."
 
-#: src/screens/Checkout.tsx:287
+#: src/screens/Checkout.tsx:309
 msgid "Pay · #{currentNumber}"
 msgstr "دفع · رقم {currentNumber}"
 
-#: src/screens/OrdersSheet.tsx:644
+#: src/screens/OrdersSheet.tsx:651
 msgid "Pay {balanceDue}"
 msgstr "دفع {balanceDue}"
 
-#: src/screens/Cart.tsx:353
+#: src/screens/Cart.tsx:305
 msgid "Pay at pickup"
 msgstr "الدفع عند الاستلام"
 
-#: src/screens/Cart.tsx:357
+#: src/screens/Cart.tsx:309
 msgid "Pay later"
 msgstr "الدفع لاحقًا"
 
-#: src/screens/Cart.tsx:369
+#: src/screens/Cart.tsx:321
 msgid "Pay now"
 msgstr "الدفع الآن"
 
-#: src/screens/Checkout.tsx:492
+#: src/screens/Checkout.tsx:516
 msgid "Paying now"
 msgstr "المدفوع الآن"
 
-#: src/screens/Checkout.tsx:414
+#: src/screens/Checkout.tsx:432
 msgid "Payment"
 msgstr "الدفع"
 
@@ -1169,7 +1612,7 @@ msgstr "الدفع"
 msgid "Payment is more than the balance due"
 msgstr "الدفعة أكبر من الرصيد المستحق"
 
-#: src/screens/Checkout.tsx:464
+#: src/screens/Checkout.tsx:488
 msgid "Payment method"
 msgstr "طريقة الدفع"
 
@@ -1177,8 +1620,8 @@ msgstr "طريقة الدفع"
 msgid "Payment must be more than zero"
 msgstr "يجب أن تكون الدفعة أكبر من صفر"
 
-#: src/screens/OrdersSheet.tsx:79
-#: src/screens/OrdersSheet.tsx:138
+#: src/screens/OrdersSheet.tsx:82
+#: src/screens/OrdersSheet.tsx:141
 msgid "Phone"
 msgstr "هاتفي"
 
@@ -1186,12 +1629,20 @@ msgstr "هاتفي"
 msgid "Phone · Pickup"
 msgstr "طلب هاتفي · استلام"
 
-#: src/screens/Cart.tsx:219
-#: src/screens/PhoneOrderSheet.tsx:49
+#: src/apps/reservations/sheets.tsx:827
+msgid "Phone (for reminders)"
+msgstr "الهاتف (للتذكيرات)"
+
+#: src/apps/reservations/sheets.tsx:919
+msgid "Phone (to text when the table is ready)"
+msgstr "الهاتف (لإرسال رسالة عند جاهزية الطاولة)"
+
+#: src/screens/Cart.tsx:234
+#: src/screens/PhoneOrderSheet.tsx:53
 msgid "Phone order"
 msgstr "طلب هاتفي"
 
-#: src/screens/OrdersSheet.tsx:204
+#: src/screens/OrdersSheet.tsx:207
 msgid "Phone orders"
 msgstr "الطلبات الهاتفية"
 
@@ -1199,24 +1650,24 @@ msgstr "الطلبات الهاتفية"
 msgid "Phone orders are pickup only"
 msgstr "الطلبات الهاتفية للاستلام فقط"
 
-#: src/screens/OrdersSheet.tsx:79
+#: src/screens/OrdersSheet.tsx:82
 msgid "Pickup"
 msgstr "استلام"
 
-#: src/screens/OrdersSheet.tsx:324
+#: src/screens/OrdersSheet.tsx:329
 #: src/screens/PhonePickupDetails.tsx:42
 msgid "Pickup ASAP"
 msgstr "الاستلام في أقرب وقت"
 
-#: src/screens/PhoneOrderSheet.tsx:151
+#: src/screens/PhoneOrderSheet.tsx:155
 msgid "Pickup date and time"
 msgstr "تاريخ ووقت الاستلام"
 
-#: src/screens/PhoneOrderSheet.tsx:97
+#: src/screens/PhoneOrderSheet.tsx:101
 msgid "Pickup only. Take payment now or when the customer collects."
 msgstr "للاستلام فقط. سجّل الدفع الآن أو عند استلام العميل."
 
-#: src/screens/PhoneOrderSheet.tsx:137
+#: src/screens/PhoneOrderSheet.tsx:141
 msgid "Pickup time"
 msgstr "وقت الاستلام"
 
@@ -1229,23 +1680,23 @@ msgstr "الاستلام: {pickup}"
 #~ msgstr "نقطة البيع"
 
 #: src/screens/MenuGrid.tsx:60
-#: src/screens/MenuGrid.tsx:107
+#: src/screens/MenuGrid.tsx:122
 msgid "Popular"
 msgstr "الأكثر طلبًا"
 
-#: src/screens/SettingsSheet.tsx:380
+#: src/screens/SettingsSheet.tsx:387
 msgid "Prefix on order numbers."
 msgstr "بادئة أرقام الطلبات."
 
-#: src/screens/OrdersSheet.tsx:679
+#: src/screens/OrdersSheet.tsx:686
 msgid "Print bill"
 msgstr "طباعة الفاتورة"
 
-#: src/screens/OrdersSheet.tsx:681
+#: src/screens/OrdersSheet.tsx:688
 msgid "Print receipt"
 msgstr "طباعة الإيصال"
 
-#: src/screens/ShiftSheet.tsx:138
+#: src/screens/ShiftSheet.tsx:145
 msgid "Print Z report"
 msgstr "طباعة تقرير Z"
 
@@ -1253,121 +1704,153 @@ msgstr "طباعة تقرير Z"
 msgid "Problem with the food"
 msgstr "مشكلة في الطعام"
 
-#: src/App.tsx:644
+#: src/App.tsx:711
 msgid "Publish a menu with items for this location, then refresh."
 msgstr "انشر قائمة تحتوي أصنافًا لهذا الفرع، ثم حدّث."
 
-#: src/screens/ShiftSheet.tsx:212
+#: src/screens/ShiftSheet.tsx:219
 msgid "Put cash in"
 msgstr "إيداع نقد"
 
-#: src/screens/Checkout.tsx:240
+#: src/screens/Checkout.tsx:262
 msgid "Receipt"
 msgstr "الإيصال"
 
 #. placeholder {0}: money(amount)
-#: src/screens/ShiftSheet.tsx:287
+#: src/screens/ShiftSheet.tsx:294
 msgid "Record {0} in"
 msgstr "تسجيل إيداع {0}"
 
 #. placeholder {0}: money(amount)
-#: src/screens/ShiftSheet.tsx:289
+#: src/screens/ShiftSheet.tsx:296
 msgid "Record {0} out"
 msgstr "تسجيل سحب {0}"
 
-#: src/screens/Checkout.tsx:553
+#: src/apps/timeclock/TimeClock.tsx:838
+msgid "Recorded at {at}."
+msgstr "سُجّلت الساعة {at}."
+
+#: src/screens/Checkout.tsx:577
 msgid "Reference (optional)"
 msgstr "المرجع (اختياري)"
 
-#: src/App.tsx:636
-#: src/App.tsx:652
+#: src/App.tsx:702
+#: src/App.tsx:719
 msgid "Refresh"
 msgstr "تحديث"
 
-#: src/screens/TopBar.tsx:134
+#: src/screens/TopBar.tsx:168
 msgid "Refresh menu"
 msgstr "تحديث القائمة"
 
-#: src/screens/OrdersSheet.tsx:673
-#: src/screens/OrdersSheet.tsx:792
+#: src/screens/OrdersSheet.tsx:680
+#: src/screens/OrdersSheet.tsx:799
 msgid "Refund"
 msgstr "استرداد"
 
-#: src/screens/OrdersSheet.tsx:818
+#: src/screens/OrdersSheet.tsx:825
 msgid "Refund (up to {upTo})"
 msgstr "الاسترداد (حتى {upTo})"
 
-#: src/screens/OrdersSheet.tsx:792
+#: src/screens/OrdersSheet.tsx:799
 msgid "Refund {amountText}"
 msgstr "استرداد {amountText}"
 
-#: src/screens/OrdersSheet.tsx:788
+#: src/screens/OrdersSheet.tsx:795
 msgid "Refund #{number}"
 msgstr "استرداد الطلب رقم {number}"
 
-#: src/screens/OrdersSheet.tsx:606
-#: src/screens/OrdersSheet.tsx:969
+#: src/screens/OrdersSheet.tsx:613
+#: src/screens/OrdersSheet.tsx:985
 #: src/screens/Receipt.tsx:183
 msgid "Refunded"
 msgstr "مسترد"
 
-#: src/screens/ShiftSheet.tsx:467
-#: src/screens/ShiftSheet.tsx:549
+#: src/screens/ShiftSheet.tsx:474
+#: src/screens/ShiftSheet.tsx:556
 msgid "Refunds"
 msgstr "المستردات"
 
-#: src/screens/OrdersSheet.tsx:992
+#: src/screens/OrdersSheet.tsx:1008
 msgid "Refused"
 msgstr "مرفوض"
 
-#: src/screens/SettingsSheet.tsx:323
+#: src/screens/SettingsSheet.tsx:330
 msgid "Regional orders API. Filled in automatically by a pairing link."
 msgstr "واجهة الطلبات الإقليمية. يملؤها رابط الربط تلقائيًا."
 
-#: src/screens/Cart.tsx:309
+#: src/screens/TopBar.tsx:248
+msgid "Register"
+msgstr "الكاشير"
+
+#: src/screens/Cart.tsx:497
 msgid "Remove"
 msgstr "إزالة"
 
 #. placeholder {0}: option.displayName
-#: src/screens/ItemSheet.tsx:257
+#: src/screens/ItemSheet.tsx:279
 msgid "Remove {0}"
 msgstr "إزالة {0}"
 
-#: src/App.tsx:850
+#: src/App.tsx:920
 msgid "Replace it"
 msgstr "استبدله"
 
-#: src/App.tsx:835
+#: src/App.tsx:905
 msgid "Replace the order on screen?"
 msgstr "استبدال الطلب المعروض؟"
 
-#: src/screens/ItemSheet.tsx:171
+#: src/apps/reservations/sheets.tsx:41
+msgid "Request"
+msgstr "طلب"
+
+#: src/screens/ItemSheet.tsx:193
 msgid "Required"
 msgstr "مطلوب"
 
-#: src/screens/PhoneOrderSheet.tsx:166
+#: src/screens/TopBar.tsx:261
+msgid "Reservations"
+msgstr "الحجوزات"
+
+#: src/apps/reservations/HostStand.tsx:554
+msgid "Reservations are off on this terminal"
+msgstr "الحجوزات متوقفة على هذا الجهاز"
+
+#: src/apps/reservations/HostStand.tsx:533
+msgid "Reservations need a connection"
+msgstr "تحتاج الحجوزات إلى اتصال"
+
+#: src/screens/PhoneOrderSheet.tsx:170
 msgid "Restaurant time: {zone}"
 msgstr "توقيت المطعم: {zone}"
+
+#: src/apps/reservations/HostStand.tsx:295
+msgid "Room"
+msgstr "الصالة"
 
 #: src/screens/AuditSheet.tsx:13
 msgid "Rung up by mistake"
 msgstr "أُدخل بالخطأ"
 
-#: src/screens/ShiftSheet.tsx:466
-#: src/screens/ShiftSheet.tsx:545
+#: src/screens/ShiftSheet.tsx:473
+#: src/screens/ShiftSheet.tsx:552
 msgid "Sales"
 msgstr "المبيعات"
 
-#: src/screens/SettingsSheet.tsx:125
+#: src/screens/SettingsSheet.tsx:132
 msgid "Save"
 msgstr "حفظ"
 
-#: src/screens/Cart.tsx:355
+#: src/screens/Cart.tsx:307
 msgid "Save tab"
 msgstr "حفظ الحساب"
 
+#: src/apps/timeclock/TimeClock.tsx:834
+msgid "Saved on this terminal. It is sent when the connection is back."
+msgstr "حُفظت على هذا الجهاز. تُرسل عند عودة الاتصال."
+
 #: src/screens/AuditSheet.tsx:123
-#: src/screens/Checkout.tsx:266
+#: src/screens/Checkout.tsx:288
 msgid "Saving…"
 msgstr "جارٍ الحفظ…"
 
@@ -1379,33 +1862,62 @@ msgstr "اذكر الغرض من النقد."
 msgid "Say why items are coming off this tab"
 msgstr "اذكر سبب حذف أصناف من هذا الحساب"
 
-#: src/screens/PhoneOrderSheet.tsx:142
+#: src/screens/PhoneOrderSheet.tsx:146
 msgid "Scheduled"
 msgstr "موعد محدد"
 
-#: src/screens/MenuGrid.tsx:105
-#: src/screens/MenuGrid.tsx:125
+#: src/screens/MenuGrid.tsx:120
+#: src/screens/MenuGrid.tsx:140
 msgid "Search menu"
 msgstr "ابحث في القائمة"
 
-#: src/screens/OrdersSheet.tsx:214
-#: src/screens/OrdersSheet.tsx:221
+#: src/screens/OrdersSheet.tsx:217
+#: src/screens/OrdersSheet.tsx:224
 msgid "Search orders"
 msgstr "البحث في الطلبات"
 
-#: src/screens/MenuGrid.tsx:115
+#: src/screens/MenuGrid.tsx:130
 msgid "Search the menu"
 msgstr "البحث في القائمة"
 
-#: src/screens/ShiftSheet.tsx:438
+#: src/apps/reservations/sheets.tsx:578
+msgid "Seat {size} now"
+msgstr "أجلس {size} الآن"
+
+#: src/apps/reservations/sheets.tsx:563
+msgid "Seat a walk-in here"
+msgstr "إجلاس زبون بدون حجز هنا"
+
+#: src/apps/reservations/sheets.tsx:37
+msgid "Seated"
+msgstr "جالس"
+
+#. placeholder {0}: entry.displayName
+#. placeholder {1}: table.label
+#: src/apps/reservations/HostStand.tsx:205
+msgid "Seated {0} at {1}."
+msgstr "تم إجلاس {0} على {1}."
+
+#. placeholder {0}: table.label
+#: src/apps/reservations/HostStand.tsx:198
+msgid "Seated {who} at {0}."
+msgstr "تم إجلاس {who} على {0}."
+
+#. placeholder {0}: table.label
+#: src/apps/reservations/HostStand.tsx:216
+#: src/apps/reservations/HostStand.tsx:460
+msgid "Seated a walk-in of {size} at {0}."
+msgstr "تم إجلاس {size} بدون حجز على {0}."
+
+#: src/screens/ShiftSheet.tsx:445
 msgid "Send again"
 msgstr "أرسل مرة أخرى"
 
-#: src/screens/OrdersSheet.tsx:695
+#: src/screens/OrdersSheet.tsx:702
 msgid "Send now"
 msgstr "إرسال الآن"
 
-#: src/screens/TopBar.tsx:245
+#: src/screens/TopBar.tsx:340
 msgid "Sending"
 msgstr "جارٍ الإرسال"
 
@@ -1413,54 +1925,59 @@ msgstr "جارٍ الإرسال"
 msgid "Served by {servedBy}"
 msgstr "خدمكم {servedBy}"
 
-#: src/screens/SettingsSheet.tsx:100
+#: src/screens/SettingsSheet.tsx:107
 msgid "Set up this terminal"
 msgstr "إعداد نقطة البيع"
 
-#: src/screens/SettingsSheet.tsx:288
+#: src/screens/SettingsSheet.tsx:295
 msgid "Set up without pairing (menu only)"
 msgstr "الإعداد دون ربط (القائمة فقط)"
 
-#: src/screens/SettingsSheet.tsx:379
-#: src/screens/SettingsSheet.tsx:396
+#: src/screens/SettingsSheet.tsx:386
+#: src/screens/SettingsSheet.tsx:403
 msgid "Set when this terminal was paired."
 msgstr "حُدّد عند ربط نقطة البيع."
 
-#: src/screens/SettingsSheet.tsx:397
+#: src/screens/SettingsSheet.tsx:404
 msgid "Sets tax and menu overrides."
 msgstr "يحدد الضريبة وتعديلات القائمة."
 
-#: src/screens/TopBar.tsx:175
+#: src/screens/TopBar.tsx:218
 msgid "Settings"
 msgstr "الإعدادات"
 
-#: src/App.tsx:869
+#: src/App.tsx:939
 msgid "Settings are for managers"
 msgstr "الإعدادات للمديرين"
 
-#: src/screens/ShiftSheet.tsx:350
-#: src/screens/TopBar.tsx:170
+#: src/screens/ShiftSheet.tsx:357
+#: src/screens/TopBar.tsx:206
 msgid "Shift"
 msgstr "الوردية"
 
-#: src/screens/TopBar.tsx:170
+#: src/screens/TopBar.tsx:206
 msgid "Shift (open)"
 msgstr "الوردية (مفتوحة)"
 
-#: src/screens/ShiftSheet.tsx:107
+#: src/screens/ShiftSheet.tsx:114
 msgid "Shift closed"
 msgstr "أُغلقت الوردية"
 
-#: src/screens/ShiftSheet.tsx:124
-#: src/screens/ShiftSheet.tsx:596
+#: src/screens/ShiftSheet.tsx:131
+#: src/screens/ShiftSheet.tsx:603
 msgid "Short"
 msgstr "عجز"
 
-#: src/screens/LockScreen.tsx:180
+#: src/apps/reservations/HostStand.tsx:529
+#: src/screens/LockScreen.tsx:187
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: src/lib/signin.ts:320
+#: src/apps/reservations/HostStand.tsx:519
+msgid "Sign in to open reservations"
+msgstr "سجّل الدخول لفتح الحجوزات"
+
+#: src/lib/signin.ts:342
 msgid "Sign-in has been switched off for this terminal."
 msgstr "تم إيقاف تسجيل الدخول لنقطة البيع هذه."
 
@@ -1468,30 +1985,47 @@ msgstr "تم إيقاف تسجيل الدخول لنقطة البيع هذه."
 msgid "Simplified tax invoice"
 msgstr "فاتورة ضريبية مبسطة"
 
-#: src/screens/ItemSheet.tsx:188
-#: src/screens/MenuGrid.tsx:363
+#: src/screens/ItemSheet.tsx:210
+#: src/screens/MenuGrid.tsx:361
 msgid "Sold out"
 msgstr "نفد"
 
+#: src/apps/reservations/HostStand.tsx:163
+msgid "Someone changed this a moment ago. Here is the latest."
+msgstr "غيّر أحدهم هذا قبل قليل. إليك أحدث نسخة."
+
+#: src/apps/timeclock/messages.ts:111
 #: src/screens/AuditSheet.tsx:99
-#: src/screens/ShiftSheet.tsx:95
+#: src/screens/ShiftSheet.tsx:102
 msgid "Something went wrong. Try again."
 msgstr "حدث خطأ ما. حاول مرة أخرى."
 
-#: src/screens/Checkout.tsx:440
+#: src/screens/Checkout.tsx:462
 msgid "Split {n}"
 msgstr "تقسيم على {n}"
 
-#: src/screens/SettingsSheet.tsx:338
+#: src/apps/reservations/sheets.tsx:335
+msgid "Staff note:"
+msgstr "ملاحظة الموظفين:"
+
+#: src/screens/SettingsSheet.tsx:345
 msgid "Staff sign-in"
 msgstr "تسجيل دخول الموظفين"
 
-#: src/App.tsx:226
+#: src/apps/timeclock/messages.ts:119
+msgid "Start break"
+msgstr "بدء الاستراحة"
+
+#: src/App.tsx:238
 msgid "Station"
 msgstr "Station"
 
-#: src/screens/Checkout.tsx:352
-#: src/screens/OrdersSheet.tsx:548
+#: src/screens/TopBar.tsx:267
+msgid "Station app"
+msgstr "تطبيق المحطة"
+
+#: src/screens/Checkout.tsx:374
+#: src/screens/OrdersSheet.tsx:555
 #: src/screens/Receipt.tsx:131
 msgid "Subtotal"
 msgstr "المجموع الفرعي"
@@ -1500,110 +2034,152 @@ msgstr "المجموع الفرعي"
 msgid "Switch to a manager"
 msgstr "التبديل إلى مدير"
 
-#: src/screens/Cart.tsx:142
+#: src/screens/Cart.tsx:157
 msgid "Switch to counter"
 msgstr "التحويل إلى طلب مباشر"
 
-#: src/App.tsx:887
+#: src/App.tsx:957
 msgid "Switch user"
 msgstr "تبديل المستخدم"
 
-#: src/App.tsx:686
+#: src/App.tsx:756
 msgid "Tab #{activeTabNumber}"
 msgstr "الحساب رقم {activeTabNumber}"
 
-#: src/screens/Cart.tsx:395
-#: src/screens/Cart.tsx:407
+#: src/screens/Cart.tsx:348
+#: src/screens/Cart.tsx:360
 msgid "Table"
 msgstr "الطاولة"
 
-#: src/screens/OrdersSheet.tsx:81
+#. placeholder {0}: r.tableLabels.join(' + ')
+#. placeholder {0}: reservation.tableLabels.join(' + ')
+#. placeholder {0}: target.table.label
+#: src/apps/reservations/Dock.tsx:129
+#: src/apps/reservations/sheets.tsx:301
+#: src/apps/reservations/sheets.tsx:492
+msgid "Table {0}"
+msgstr "الطاولة {0}"
+
+#. placeholder {0}: table.label
+#: src/apps/reservations/HostStand.tsx:182
+msgid "Table {0} is taken. Choose another table."
+msgstr "الطاولة {0} مشغولة. اختر طاولة أخرى."
+
+#. placeholder {0}: table.label
+#: src/apps/reservations/Floor.tsx:182
+msgid "Table {0}, blocked"
+msgstr "الطاولة {0}، محجوزة"
+
+#. placeholder {0}: table.label
+#. placeholder {1}: formatTime(state.next.startAt)
+#: src/apps/reservations/Floor.tsx:178
+msgid "Table {0}, booked at {1}, seats {covers}"
+msgstr "الطاولة {0}، محجوزة الساعة {1}، تتسع لـ {covers}"
+
+#. placeholder {0}: table.label
+#: src/apps/reservations/Floor.tsx:185
+msgid "Table {0}, open, seats {covers}"
+msgstr "الطاولة {0}، متاحة، تتسع لـ {covers}"
+
+#. placeholder {0}: table.label
+#. placeholder {1}: shortName(state.party, _(t`Guest`))
+#. placeholder {2}: state.party.partySize
+#: src/apps/reservations/Floor.tsx:173
+msgid "Table {0}, seated: {1}, party of {2}"
+msgstr "الطاولة {0}، جالس عليها: {1}، مجموعة من {2}"
+
+#: src/screens/OrdersSheet.tsx:84
 #: src/screens/Receipt.tsx:93
 msgid "Table {table}"
 msgstr "طاولة {table}"
 
-#: src/screens/Cart.tsx:103
+#: src/screens/Cart.tsx:118
 msgid "Table: {detail}"
 msgstr "الطاولة: {detail}"
 
-#: src/screens/ShiftSheet.tsx:610
+#: src/screens/ShiftSheet.tsx:617
 msgid "Tabs left open"
 msgstr "حسابات بقيت مفتوحة"
 
-#: src/screens/Checkout.tsx:274
+#: src/screens/Checkout.tsx:296
 msgid "Take {appliedText} · {leftAfter} left"
 msgstr "تحصيل {appliedText} · يتبقى {leftAfter}"
 
-#: src/screens/ShiftSheet.tsx:212
+#: src/screens/ShiftSheet.tsx:219
 msgid "Take cash out"
 msgstr "سحب نقد"
 
-#: src/App.tsx:805
+#: src/App.tsx:875
 msgid "Take items off this tab?"
 msgstr "حذف أصناف من هذا الحساب؟"
 
-#: src/screens/OrdersSheet.tsx:942
+#: src/screens/OrdersSheet.tsx:958
 msgid "Take over"
 msgstr "تولّي الحساب"
 
-#: src/screens/Checkout.tsx:538
+#: src/screens/Checkout.tsx:562
 msgid "Take the card on your card terminal first, then confirm here. This till does not process cards yet."
 msgstr "حصّل البطاقة على جهاز البطاقات أولًا، ثم أكّد هنا. نقطة البيع هذه لا تعالج البطاقات بعد."
 
-#: src/App.tsx:809
+#: src/App.tsx:879
 msgid "Take them off"
 msgstr "احذفها"
 
-#: src/screens/Cart.tsx:157
-#: src/screens/OrdersSheet.tsx:82
-#: src/screens/OrdersSheet.tsx:375
-#: src/screens/OrdersSheet.tsx:376
+#: src/screens/Cart.tsx:172
+#: src/screens/OrdersSheet.tsx:85
+#: src/screens/OrdersSheet.tsx:382
+#: src/screens/OrdersSheet.tsx:383
 #: src/screens/Receipt.tsx:94
 msgid "Takeaway"
 msgstr "سفري"
 
-#: src/screens/OrdersSheet.tsx:388
+#: src/screens/OrdersSheet.tsx:395
 msgid "Taken by <0>{takenBy}</0>"
 msgstr "أخذه <0>{takenBy}</0>"
 
-#: src/screens/OrdersSheet.tsx:522
+#: src/screens/OrdersSheet.tsx:529
 msgid "Taken off"
 msgstr "محذوف"
 
-#: src/screens/OrdersSheet.tsx:339
+#: src/screens/OrdersSheet.tsx:344
 msgid "Taken today"
 msgstr "المحصَّل اليوم"
 
-#: src/screens/OrdersSheet.tsx:940
+#: src/screens/OrdersSheet.tsx:956
 msgid "Taking over…"
 msgstr "جارٍ تولّي الحساب…"
 
-#: src/screens/Cart.tsx:235
+#: src/screens/Cart.tsx:250
 msgid "Tap a dish on the menu to start the order."
 msgstr "اضغط على صنف في القائمة لبدء الطلب."
 
-#: src/screens/Cart.tsx:114
-#: src/screens/Checkout.tsx:361
-#: src/screens/OrdersSheet.tsx:566
+#. placeholder {0}: placing ? placingSize(placing) : 0
+#: src/apps/reservations/HostStand.tsx:351
+msgid "Tap a table for {placingName}, party of {0}"
+msgstr "اضغط على طاولة لـ {placingName}، مجموعة من {0}"
+
+#: src/screens/Cart.tsx:129
+#: src/screens/Checkout.tsx:383
+#: src/screens/OrdersSheet.tsx:573
 #: src/screens/Receipt.tsx:143
-#: src/screens/ShiftSheet.tsx:469
-#: src/screens/ShiftSheet.tsx:557
+#: src/screens/ShiftSheet.tsx:476
+#: src/screens/ShiftSheet.tsx:564
 msgid "Tax"
 msgstr "الضريبة"
 
-#: src/screens/Cart.tsx:113
+#: src/screens/Cart.tsx:128
 msgid "Tax ({taxRatePercent}%)"
 msgstr "الضريبة ({taxRatePercent}%)"
 
-#: src/screens/SettingsSheet.tsx:165
+#: src/screens/SettingsSheet.tsx:172
 msgid "Terminal {terminalCode}. Orders are sent to your restaurant’s server automatically."
 msgstr "نقطة البيع {terminalCode}. تُرسل الطلبات إلى خادم مطعمك تلقائيًا."
 
-#: src/screens/OrdersSheet.tsx:428
+#: src/screens/OrdersSheet.tsx:435
 msgid "Terminal {transferredTo} took this tab over. It is kept here as history only."
 msgstr "تولّت نقطة البيع {transferredTo} هذا الحساب. يُحتفظ به هنا سجلًّا فقط."
 
-#: src/screens/SettingsSheet.tsx:376
+#: src/screens/SettingsSheet.tsx:383
 msgid "Terminal code"
 msgstr "رمز نقطة البيع"
 
@@ -1611,17 +2187,25 @@ msgstr "رمز نقطة البيع"
 msgid "Terminal is not paired yet"
 msgstr "لم يتم ربط نقطة البيع بعد"
 
-#: src/screens/OrdersSheet.tsx:915
+#: src/screens/OrdersSheet.tsx:931
 msgid "terminal removed"
 msgstr "نقطة بيع محذوفة"
 
-#: src/screens/SettingsSheet.tsx:100
+#: src/screens/SettingsSheet.tsx:107
 msgid "Terminal settings"
 msgstr "إعدادات نقطة البيع"
+
+#: src/apps/timeclock/messages.ts:90
+msgid "Terminals are paused right now. Try again soon."
+msgstr "الأجهزة الطرفية متوقفة مؤقتًا. حاول مرة أخرى قريبًا."
 
 #: src/lib/pairing.ts:214
 msgid "Terminals are switched off for this restaurant right now."
 msgstr "نقاط البيع متوقفة لهذا المطعم حاليًا."
+
+#: src/apps/reservations/sheets.tsx:409
+msgid "Text: table ready"
+msgstr "رسالة: الطاولة جاهزة"
 
 #: src/screens/Receipt.tsx:198
 msgid "Thank you!"
@@ -1635,7 +2219,11 @@ msgstr "هذا الخيار نفد"
 msgid "That code has expired or was already used. Ask a manager for a new one."
 msgstr "انتهت صلاحية هذا الرمز أو تم استخدامه. اطلب رمزًا جديدًا من المدير."
 
-#: src/lib/store.ts:469
+#: src/apps/reservations/HostStand.tsx:167
+msgid "That did not go through. Try again."
+msgstr "لم تتم العملية. حاول مرة أخرى."
+
+#: src/lib/store.ts:488
 msgid "That does not look like a pairing code or link."
 msgstr "لا يبدو هذا رمز ربط أو رابطًا."
 
@@ -1643,7 +2231,7 @@ msgstr "لا يبدو هذا رمز ربط أو رابطًا."
 msgid "That does not look like a pairing link."
 msgstr "لا يبدو هذا رابط ربط."
 
-#: src/screens/OrdersSheet.tsx:833
+#: src/screens/OrdersSheet.tsx:843
 msgid "That is more than can be refunded (up to {upTo})."
 msgstr "هذا أكثر مما يمكن استرداده (حتى {upTo})."
 
@@ -1651,40 +2239,53 @@ msgstr "هذا أكثر مما يمكن استرداده (حتى {upTo})."
 msgid "That is more than was paid and not yet refunded"
 msgstr "هذا أكثر مما دُفع ولم يُسترد بعد"
 
-#: src/lib/signin.ts:185
-#: src/lib/signin.ts:343
+#: src/apps/timeclock/messages.ts:23
+#: src/lib/signin.ts:191
+#: src/lib/signin.ts:365
 msgid "That PIN is not right."
 msgstr "الرمز السري غير صحيح."
 
-#: src/lib/signin.ts:254
+#: src/lib/signin.ts:262
 msgid "That PIN is not right. In demo mode it is 1234."
 msgstr "الرمز السري غير صحيح. في الوضع التجريبي هو 1234."
 
-#: src/lib/signin.ts:184
+#: src/lib/signin.ts:190
 msgid "That PIN is not right. Try again in {delaySeconds} seconds."
 msgstr "الرمز السري غير صحيح. حاول مرة أخرى بعد {delaySeconds} ثانية."
 
-#: src/lib/signin.ts:342
+#: src/apps/timeclock/messages.ts:20
+msgid "That PIN is not right. Try again in {seconds} seconds."
+msgstr "الرمز السري غير صحيح. حاول مرة أخرى بعد {seconds} ثانية."
+
+#: src/lib/signin.ts:364
 msgid "That PIN is not right. Try again in {wait} seconds."
 msgstr "الرمز السري غير صحيح. حاول مرة أخرى بعد {wait} ثانية."
+
+#: src/apps/timeclock/messages.ts:67
+msgid "That role is not available. Choose another."
+msgstr "هذا الدور غير متاح. اختر دورًا آخر."
 
 #: src/lib/pairing.ts:94
 msgid "That server address is not a valid web address."
 msgstr "عنوان الخادم هذا ليس عنوان ويب صالحًا."
 
-#: src/screens/OrdersSheet.tsx:64
+#: src/apps/timeclock/messages.ts:50
+msgid "That time overlaps another shift. Ask a manager to fix it."
+msgstr "هذا الوقت يتداخل مع وردية أخرى. اطلب من المدير تصحيحه."
+
+#: src/screens/OrdersSheet.tsx:67
 msgid "the bill changed after a payment was taken"
 msgstr "تغيّرت الفاتورة بعد تحصيل دفعة"
 
-#: src/screens/ShiftSheet.tsx:120
+#: src/screens/ShiftSheet.tsx:127
 msgid "The drawer balances"
 msgstr "الدرج مطابق"
 
-#: src/screens/SettingsSheet.tsx:294
+#: src/screens/SettingsSheet.tsx:301
 msgid "The name in your site address, e.g. “joes-diner”."
 msgstr "الاسم في عنوان موقعك، مثل «joes-diner»."
 
-#: src/App.tsx:856
+#: src/App.tsx:926
 msgid "The order you are ringing up has not been saved. Opening tab #{replaceNumber} here will discard it. Save it with “Pay later” first if you want to keep it."
 msgstr "الطلب الذي تُدخله لم يُحفظ. فتح الحساب رقم {replaceNumber} هنا سيُلغيه. احفظه أولًا بـ«الدفع لاحقًا» إن أردت الإبقاء عليه."
 
@@ -1692,12 +2293,12 @@ msgstr "الطلب الذي تُدخله لم يُحفظ. فتح الحساب ر
 msgid "The server {host} does not use a secure (https) connection."
 msgstr "الخادم {host} لا يستخدم اتصالًا آمنًا (https)."
 
-#: src/screens/OrdersSheet.tsx:62
+#: src/screens/OrdersSheet.tsx:65
 msgid "the server already had this order closed"
 msgstr "كان الطلب مغلقًا لدى الخادم"
 
 #. placeholder {0}: response.status
-#: src/lib/store.ts:362
+#: src/lib/store.ts:381
 msgid "The server answered {0}."
 msgstr "ردّ الخادم بـ {0}."
 
@@ -1706,11 +2307,11 @@ msgstr "ردّ الخادم بـ {0}."
 msgid "The server answered {0}. Try again."
 msgstr "ردّ الخادم بـ {0}. حاول مرة أخرى."
 
-#: src/lib/store.ts:401
+#: src/lib/store.ts:420
 msgid "The server answered {status}."
 msgstr "ردّ الخادم بـ {status}."
 
-#: src/screens/OrdersSheet.tsx:61
+#: src/screens/OrdersSheet.tsx:64
 msgid "the server could not read it (this till may need updating)"
 msgstr "تعذّر على الخادم قراءته (قد تحتاج نقطة البيع إلى تحديث)"
 
@@ -1718,15 +2319,15 @@ msgstr "تعذّر على الخادم قراءته (قد تحتاج نقطة ا
 msgid "The server did not recognise this terminal. It will try again."
 msgstr "لم يتعرف الخادم على نقطة البيع هذه. ستحاول مرة أخرى."
 
-#: src/App.tsx:550
+#: src/App.tsx:581
 msgid "The server is not recognising this terminal. Orders are safe on this device. Tap to check or pair it again."
 msgstr "الخادم لا يتعرّف على نقطة البيع هذه. الطلبات محفوظة على هذا الجهاز. اضغط للتحقق أو لإعادة الربط."
 
-#: src/screens/OrdersSheet.tsx:436
+#: src/screens/OrdersSheet.tsx:443
 msgid "The server kept the last change for a manager to look at, because {heldBecause}. Nothing is lost."
 msgstr "احتفظ الخادم بآخر تعديل ليراجعه المدير، لأن {heldBecause}. لم يُفقد شيء."
 
-#: src/screens/OrdersSheet.tsx:476
+#: src/screens/OrdersSheet.tsx:483
 msgid "The server refused this order:"
 msgstr "رفض الخادم هذا الطلب:"
 
@@ -1734,17 +2335,45 @@ msgstr "رفض الخادم هذا الطلب:"
 msgid "The server’s answer was not a pairing. Check the link and try again."
 msgstr "ردّ الخادم ليس ردّ ربط. تحقّق من الرابط وحاول مرة أخرى."
 
-#: src/screens/OrdersSheet.tsx:710
+#: src/screens/OrdersSheet.tsx:717
 msgid "The tab is kept, marked cancelled, with who cancelled it and why."
 msgstr "يُحتفظ بالحساب مُعلَّمًا كملغى، مع من ألغاه ولماذا."
 
-#: src/lib/store.ts:412
+#: src/lib/store.ts:431
 msgid "The tab was taken over but could not be saved on this device."
 msgstr "نُقلت الفاتورة المفتوحة إلى هنا لكن تعذّر حفظها على هذا الجهاز."
 
-#: src/screens/SettingsSheet.tsx:356
+#: src/apps/reservations/HostStand.tsx:535
+msgid "The till keeps selling offline; bookings open again when the connection is back."
+msgstr "يستمر الكاشير في البيع دون اتصال، وتُفتح الحجوزات مجددًا عند عودة الاتصال."
+
+#: src/screens/SettingsSheet.tsx:363
 msgid "The till locks when nobody has touched it for this long. Staff sign in again with their PIN."
 msgstr "تُقفل نقطة البيع إذا لم يلمسها أحد طوال هذه المدة. يسجّل الموظفون الدخول مجددًا برموزهم السرية."
+
+#: src/apps/timeclock/messages.ts:79
+msgid "The time clock is not ready yet. Ask a manager."
+msgstr "ساعة الدوام غير جاهزة بعد. اطلب من المدير."
+
+#: src/apps/timeclock/messages.ts:85
+msgid "The time clock is turned off on this terminal. Ask a manager."
+msgstr "ساعة الدوام متوقفة على هذا الجهاز. اطلب من المدير."
+
+#: src/apps/timeclock/TimeClock.tsx:640
+msgid "There is nothing to punch right now. Ask a manager."
+msgstr "لا يوجد ما يُسجّل الآن. اطلب من المدير."
+
+#: src/apps/reservations/sheets.tsx:451
+msgid "They have been told their table is ready."
+msgstr "تم إبلاغهم بأن طاولتهم جاهزة."
+
+#: src/apps/reservations/sheets.tsx:418
+msgid "They left"
+msgstr "غادروا"
+
+#: src/apps/reservations/sheets.tsx:229
+msgid "They’re here"
+msgstr "لقد وصلوا"
 
 #: src/lib/pairing.ts:104
 msgid "This app was built without a list of trusted servers, so it cannot connect to {host}. Ask whoever installed it to set VITE_POS_ALLOWED_ORIGINS."
@@ -1759,15 +2388,15 @@ msgstr "لا يزال على هذه الفاتورة مبلغ مستحق"
 msgid "This bill took a payment: refund it instead of cancelling"
 msgstr "تم استلام دفعة على هذه الفاتورة: استردها بدلًا من الإلغاء"
 
-#: src/App.tsx:581
+#: src/App.tsx:612
 msgid "This browser may clear orders saved on this device when it runs low on space. Install Station (Add to Home Screen) so they are kept."
 msgstr "قد يحذف هذا المتصفح الطلبات المحفوظة على هذا الجهاز عند امتلاء المساحة. ثبّت Station (إضافة إلى الشاشة الرئيسية) للاحتفاظ بها."
 
-#: src/screens/MenuGrid.tsx:226
+#: src/screens/MenuGrid.tsx:249
 msgid "This category is empty."
 msgstr "هذه الفئة فارغة."
 
-#: src/lib/signin.ts:214
+#: src/lib/signin.ts:220
 msgid "This device could not check the PIN. Try again, or reload the app."
 msgstr "تعذّر على هذا الجهاز التحقق من الرمز. حاول مرة أخرى أو أعد تحميل التطبيق."
 
@@ -1779,7 +2408,7 @@ msgstr "هذا الجهاز مرتبط بالفعل باسم {deviceLabel}. فت
 msgid "This device is already paired. You opened a link that would pair it with a restaurant server. Only continue if a manager gave you this link. Orders already saved on this device stay here."
 msgstr "هذا الجهاز مرتبط بالفعل. فتحت رابطًا سيربطه بخادم مطعم. تابع فقط إن أعطاك المدير هذا الرابط. الطلبات المحفوظة على هذا الجهاز تبقى هنا."
 
-#: src/screens/SettingsSheet.tsx:180
+#: src/screens/SettingsSheet.tsx:187
 msgid "This device will stop sending orders until it is paired again."
 msgstr "سيتوقف هذا الجهاز عن إرسال الطلبات حتى يُربط من جديد."
 
@@ -1793,17 +2422,21 @@ msgstr "سيتوقف هذا الجهاز عن إرسال الطلبات حتى �
 msgid "This order is already closed"
 msgstr "هذا الطلب مغلق بالفعل"
 
-#: src/screens/OrdersSheet.tsx:460
+#: src/screens/OrdersSheet.tsx:467
 msgid "This order was first shown as #{renumberedFrom}. It was renumbered because that number was already taken."
 msgstr "ظهر هذا الطلب أولًا بالرقم {renumberedFrom}. أُعيد ترقيمه لأن ذلك الرقم كان مستخدمًا."
 
-#: src/screens/OrdersSheet.tsx:450
+#: src/screens/OrdersSheet.tsx:457
 msgid "This order was taken for “{takenFor}”, so it is held here and not sent to the restaurant this till is set up for now."
 msgstr "أُخذ هذا الطلب لـ«{takenFor}»، لذا يُحتفظ به هنا ولا يُرسل إلى المطعم المضبوطة عليه نقطة البيع الآن."
 
-#: src/screens/OrdersSheet.tsx:445
+#: src/screens/OrdersSheet.tsx:452
 msgid "This order was taken in demo mode, so it is kept here and never sent to a restaurant."
 msgstr "أُخذ هذا الطلب في الوضع التجريبي، لذا يُحتفظ به هنا ولا يُرسل إلى أي مطعم."
+
+#: src/apps/timeclock/messages.ts:74
+msgid "This punch could not be saved. Ask a manager to add it."
+msgstr "تعذّر حفظ هذه البصمة. اطلب من المدير إضافتها."
 
 #: src/lib/shifts.ts:95
 msgid "This shift has too many cash movements. Close it and open a new one."
@@ -1818,11 +2451,11 @@ msgid "This shift is closed."
 msgstr "هذه الوردية مغلقة."
 
 #: src/lib/orders.ts:686
-#: src/lib/store.ts:376
+#: src/lib/store.ts:395
 msgid "This tab has no tax rate on the server, so it cannot be billed here. Settle it on the terminal that opened it."
 msgstr "لا توجد نسبة ضريبة لهذه الفاتورة المفتوحة على الخادم، لذا لا يمكن تحصيلها هنا. سوّها على الجهاز الذي فتحها."
 
-#: src/App.tsx:807
+#: src/App.tsx:877
 msgid "This tab was already saved (and may have gone to the kitchen). Taking off {removalSummary} is recorded with who did it and why."
 msgstr "حُفظ هذا الحساب مسبقًا (وربما وصل إلى المطبخ). حذف {removalSummary} يُسجَّل مع من قام به ولماذا."
 
@@ -1832,7 +2465,16 @@ msgstr "حُفظ هذا الحساب مسبقًا (وربما وصل إلى ال
 msgid "This tab was taken over by terminal {0}"
 msgstr "تولّت نقطة البيع {0} هذا الحساب"
 
-#: src/App.tsx:568
+#: src/apps/reservations/sheets.tsx:537
+msgid "This table is blocked right now."
+msgstr "هذه الطاولة محجوزة حاليًا."
+
+#. placeholder {0}: target.table.maxCovers
+#: src/apps/reservations/sheets.tsx:568
+msgid "This table seats {0}."
+msgstr "تتسع هذه الطاولة لـ {0}."
+
+#: src/App.tsx:599
 msgid "This tablet’s clock is about {clockMinutes} minutes off. Receipts and invoices carry the wrong time until it is set correctly in the tablet’s settings."
 msgstr "ساعة هذا الجهاز اللوحي منحرفة بنحو {clockMinutes} دقيقة. ستحمل الإيصالات والفواتير وقتًا خاطئًا حتى تُضبط الساعة بشكل صحيح في إعدادات الجهاز."
 
@@ -1840,16 +2482,28 @@ msgstr "ساعة هذا الجهاز اللوحي منحرفة بنحو {clockMi
 msgid "This tablet’s clock is about {minutes} minutes off. Set the correct date and time in the tablet’s settings, then try again."
 msgstr "ساعة هذا الجهاز اللوحي منحرفة بنحو {minutes} دقيقة. اضبط التاريخ والوقت الصحيحين في إعدادات الجهاز، ثم حاول مرة أخرى."
 
-#: src/lib/store.ts:348
-#: src/lib/store.ts:373
+#: src/apps/timeclock/TimeClock.tsx:455
+msgid "This tablet’s clock is off. Punches use the server’s time."
+msgstr "ساعة هذا الجهاز غير مضبوطة. تُستخدم ساعة الخادم للبصمات."
+
+#: src/apps/timeclock/messages.ts:101
+msgid "This terminal cannot save punches without a connection. Try again when it is back."
+msgstr "لا يمكن لهذا الجهاز حفظ البصمات دون اتصال. حاول مرة أخرى عند عودته."
+
+#: src/apps/timeclock/messages.ts:96
+msgid "This terminal is no longer paired. Ask a manager to pair it again."
+msgstr "لم يعد هذا الجهاز مقترنًا. اطلب من المدير إقرانه مجددًا."
+
+#: src/lib/store.ts:367
+#: src/lib/store.ts:392
 msgid "This terminal is not paired with a restaurant."
 msgstr "نقطة البيع هذه غير مرتبطة بمطعم."
 
-#: src/lib/signin.ts:313
+#: src/lib/signin.ts:335
 msgid "This terminal was removed. Ask a manager to pair it again."
 msgstr "تمت إزالة نقطة البيع هذه. اطلب من المدير ربطها مجددًا."
 
-#: src/App.tsx:555
+#: src/App.tsx:586
 msgid "This terminal was removed. Orders are safe on this device. Tap to pair it again."
 msgstr "أُزيلت نقطة البيع هذه. الطلبات محفوظة على هذا الجهاز. اضغط لإعادة الربط."
 
@@ -1857,83 +2511,135 @@ msgstr "أُزيلت نقطة البيع هذه. الطلبات محفوظة ع�
 msgid "This terminal was removed. Pair it again to keep sending orders."
 msgstr "تمت إزالة نقطة البيع هذه. اربطها مجددًا لمتابعة إرسال الطلبات."
 
-#: src/App.tsx:626
+#: src/App.tsx:692
 msgid "This terminal’s location isn’t on the menu"
 msgstr "فرع نقطة البيع هذه غير موجود في القائمة"
 
-#: src/screens/Checkout.tsx:365
-#: src/screens/Checkout.tsx:390
-#: src/screens/OrdersSheet.tsx:574
+#: src/apps/reservations/sheets.tsx:770
+msgid "Time"
+msgstr "الوقت"
+
+#: src/App.tsx:1024
+#: src/apps/timeclock/TimeClock.tsx:279
+#: src/screens/TopBar.tsx:255
+msgid "Time clock"
+msgstr "ساعة الدوام"
+
+#: src/apps/timeclock/messages.ts:31
+msgid "Time tracking is turned off at this workplace."
+msgstr "تتبّع الوقت متوقف في مكان العمل هذا."
+
+#: src/screens/Checkout.tsx:387
+#: src/screens/Checkout.tsx:413
+#: src/screens/OrdersSheet.tsx:581
 #: src/screens/Receipt.tsx:152
 msgid "Tip"
 msgstr "إكرامية"
 
-#: src/screens/ShiftSheet.tsx:470
-#: src/screens/ShiftSheet.tsx:558
+#: src/screens/ShiftSheet.tsx:477
+#: src/screens/ShiftSheet.tsx:565
 msgid "Tips"
 msgstr "الإكراميات"
 
-#: src/screens/OrdersSheet.tsx:203
+#: src/apps/timeclock/TimeClock.tsx:501
+msgid "To clock in, take a break or clock out."
+msgstr "لتسجيل الحضور أو أخذ استراحة أو تسجيل الانصراف."
+
+#: src/screens/OrdersSheet.tsx:206
 msgid "Today · {todayCount}"
 msgstr "اليوم · {todayCount}"
+
+#: src/apps/reservations/HostStand.tsx:562
+msgid "Today’s bookings could not be loaded"
+msgstr "تعذّر تحميل حجوزات اليوم"
+
+#: src/apps/reservations/Dock.tsx:192
+msgid "Told their table is ready"
+msgstr "أُبلغوا بأن طاولتهم جاهزة"
 
 #: src/lib/orders.ts:369
 msgid "Too many changes to one tab. Cancel it and start a new one."
 msgstr "تغييرات كثيرة على حساب واحد. ألغه وابدأ حسابًا جديدًا."
 
-#: src/lib/signin.ts:140
-#: src/lib/signin.ts:329
+#: src/apps/timeclock/messages.ts:26
+msgid "Too many wrong PINs. Try again in {seconds} seconds."
+msgstr "محاولات خاطئة كثيرة. حاول مرة أخرى بعد {seconds} ثانية."
+
+#: src/lib/signin.ts:146
+#: src/lib/signin.ts:351
 msgid "Too many wrong PINs. Try again in {wait} seconds."
 msgstr "محاولات خاطئة كثيرة. حاول مرة أخرى بعد {wait} ثانية."
 
-#: src/screens/Checkout.tsx:368
-#: src/screens/OrdersSheet.tsx:581
+#: src/screens/Checkout.tsx:390
+#: src/screens/OrdersSheet.tsx:588
 #: src/screens/Receipt.tsx:159
 msgid "Total"
 msgstr "الإجمالي"
 
-#: src/screens/Checkout.tsx:381
+#: src/screens/Checkout.tsx:403
 msgid "Total due"
 msgstr "الإجمالي المستحق"
 
-#: src/App.tsx:620
-#: src/screens/OrdersSheet.tsx:693
+#: src/App.tsx:685
+#: src/apps/reservations/HostStand.tsx:543
+#: src/apps/reservations/HostStand.tsx:567
+#: src/screens/OrdersSheet.tsx:700
 msgid "Try again"
 msgstr "حاول مجددًا"
 
-#: src/screens/SettingsSheet.tsx:442
+#: src/apps/reservations/HostStand.tsx:563
+msgid "Try again in a moment."
+msgstr "حاول مرة أخرى بعد قليل."
+
+#: src/screens/SettingsSheet.tsx:445
 msgid "Try staff sign-in"
 msgstr "تجربة تسجيل دخول الموظفين"
 
-#: src/screens/SettingsSheet.tsx:340
+#: src/screens/SettingsSheet.tsx:347
 msgid "Turned on or off for this terminal in the Menuza app (Menu, Terminals)."
 msgstr "يُفعَّل أو يُوقف لنقطة البيع هذه من تطبيق Menuza (القائمة، نقاط البيع)."
 
-#: src/screens/SettingsSheet.tsx:191
+#: src/apps/reservations/HostStand.tsx:140
+msgid "Undo"
+msgstr "تراجع"
+
+#: src/apps/reservations/sheets.tsx:256
+msgid "Undo seating"
+msgstr "التراجع عن الإجلاس"
+
+#: src/apps/reservations/HostStand.tsx:229
+msgid "Undone for {who}."
+msgstr "تم التراجع لـ {who}."
+
+#: src/apps/reservations/HostStand.tsx:146
+msgid "Undone."
+msgstr "تم التراجع."
+
+#: src/screens/SettingsSheet.tsx:198
 msgid "Unpair"
 msgstr "إلغاء الربط"
 
-#: src/screens/SettingsSheet.tsx:208
+#: src/screens/SettingsSheet.tsx:215
 msgid "Unpair this terminal"
 msgstr "إلغاء ربط نقطة البيع"
 
-#: src/App.tsx:893
+#: src/App.tsx:963
 msgid "Unpairing, server addresses and demo mode can only be changed by a manager. Ask a manager to sign in, or switch user."
 msgstr "لا يغيّر إلغاء الربط وعناوين الخوادم والوضع التجريبي إلا المدير. اطلب من المدير تسجيل الدخول، أو بدّل المستخدم."
 
-#: src/screens/ItemSheet.tsx:217
+#: src/screens/ItemSheet.tsx:239
 msgid "Up to {max}"
 msgstr "حتى {max}"
 
-#: src/screens/ItemSheet.tsx:141
+#: src/screens/ItemSheet.tsx:163
 msgid "Update"
 msgstr "تحديث"
 
-#: src/screens/SettingsSheet.tsx:428
+#: src/screens/SettingsSheet.tsx:433
 msgid "Use a sample menu to try the till."
 msgstr "استخدم قائمة نموذجية لتجربة نقطة البيع."
 
-#: src/screens/PhoneOrderSheet.tsx:57
+#: src/screens/PhoneOrderSheet.tsx:61
 msgid "Use these details"
 msgstr "استخدام هذه التفاصيل"
 
@@ -1945,20 +2651,48 @@ msgstr "شامل ضريبة القيمة المضافة"
 msgid "VAT No. {vatNumber}"
 msgstr "الرقم الضريبي {vatNumber}"
 
-#: src/screens/ItemSheet.tsx:156
-#: src/screens/MenuGrid.tsx:345
+#: src/screens/ItemSheet.tsx:178
+#: src/screens/MenuGrid.tsx:343
 msgid "Vegetarian"
 msgstr "نباتي"
 
-#: src/App.tsx:688
+#: src/App.tsx:758
 msgid "View order"
 msgstr "عرض الطلب"
 
-#: src/screens/ShiftSheet.tsx:219
+#: src/apps/reservations/sheets.tsx:437
+msgid "Waiting {waited} min"
+msgstr "بالانتظار منذ {waited} دقيقة"
+
+#. placeholder {0}: entry.quotedMin
+#: src/apps/reservations/sheets.tsx:433
+msgid "Waiting {waited} min, quoted {0}"
+msgstr "بالانتظار منذ {waited} دقيقة، الوقت المقدّر {0}"
+
+#: src/apps/reservations/Dock.tsx:157
+#: src/apps/reservations/HostStand.tsx:337
+msgid "Waitlist"
+msgstr "قائمة الانتظار"
+
+#: src/apps/reservations/HostStand.tsx:287
+#: src/apps/reservations/HostStand.tsx:331
+#: src/apps/reservations/sheets.tsx:611
+msgid "Walk-in"
+msgstr "بدون حجز"
+
+#: src/apps/timeclock/TimeClock.tsx:779
+msgid "What are you doing?"
+msgstr "ماذا تفعل الآن؟"
+
+#: src/apps/timeclock/TimeClock.tsx:682
+msgid "What are you working today?"
+msgstr "ما الدور الذي تعمل فيه اليوم؟"
+
+#: src/screens/ShiftSheet.tsx:226
 msgid "What is it for?"
 msgstr "ما الغرض منه؟"
 
-#: src/screens/SettingsSheet.tsx:307
+#: src/screens/SettingsSheet.tsx:314
 msgid "Where your Menuza app runs."
 msgstr "حيث يعمل تطبيق Menuza."
 
@@ -1966,18 +2700,58 @@ msgstr "حيث يعمل تطبيق Menuza."
 msgid "Why?"
 msgstr "لماذا؟"
 
-#: src/screens/OrdersSheet.tsx:478
+#: src/screens/OrdersSheet.tsx:485
 msgid "Will retry automatically. Last problem:"
 msgstr "ستُعاد المحاولة تلقائيًا. آخر مشكلة:"
 
-#: src/screens/LockScreen.tsx:147
+#: src/apps/timeclock/messages.ts:35
+msgid "You are already clocked in."
+msgstr "أنت مسجّل حضورك بالفعل."
+
+#: src/apps/timeclock/messages.ts:39
+msgid "You are already on a break."
+msgstr "أنت في استراحة بالفعل."
+
+#: src/apps/timeclock/messages.ts:44
+msgid "You are clocked in at another workplace. Clock out there first."
+msgstr "أنت مسجّل حضورك في مكان عمل آخر. سجّل انصرافك هناك أولًا."
+
+#: src/apps/timeclock/messages.ts:134
+msgid "You are clocked in."
+msgstr "أنت مسجّل الحضور."
+
+#: src/apps/timeclock/messages.ts:133
+msgid "You are clocked out."
+msgstr "أنت مسجّل الانصراف."
+
+#: src/apps/timeclock/messages.ts:37
+msgid "You are not clocked in."
+msgstr "لم تسجّل حضورك."
+
+#: src/apps/timeclock/messages.ts:41
+msgid "You are not on a break."
+msgstr "لست في استراحة."
+
+#: src/apps/timeclock/messages.ts:135
+msgid "You are on a break."
+msgstr "أنت في استراحة."
+
+#: src/screens/LockScreen.tsx:154
 msgid "You can try your PIN again now."
 msgstr "يمكنك إدخال رمزك مرة أخرى الآن."
+
+#: src/apps/timeclock/messages.ts:60
+msgid "You do not have a shift right now. Ask a manager."
+msgstr "ليس لديك وردية الآن. اطلب من المدير."
 
 #: src/screens/PairingLinkDialog.tsx:129
 msgid "You opened a pairing link. Orders, with guest names and phone numbers, will be sent to the server below. Only continue if a manager gave you this link and you recognise the address."
 msgstr "فتحت رابط ربط. ستُرسل الطلبات، بما فيها أسماء الضيوف وأرقام هواتفهم، إلى الخادم أدناه. لا تتابع إلا إذا أعطاك مدير هذا الرابط وكنت تعرف العنوان."
 
-#: src/screens/ShiftSheet.tsx:526
+#: src/apps/timeclock/TimeClock.tsx:647
+msgid "Your next shifts"
+msgstr "وردياتك القادمة"
+
+#: src/screens/ShiftSheet.tsx:533
 msgid "Z report"
 msgstr "تقرير Z"

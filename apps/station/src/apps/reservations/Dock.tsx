@@ -1,0 +1,262 @@
+import { t, Trans } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
+import { type WaitlistEntry } from '@repo/reservations'
+import { BellRing, Clock3, Info, TriangleAlert, Users } from 'lucide-react'
+import {
+	isWaitingAtStand,
+	minutesLate,
+	shortName,
+	type DayReservation,
+} from './feed.ts'
+import { cn } from '~/ui/primitives.tsx'
+
+/** What the host has picked up to place on the floor. */
+export type Placing =
+	| { kind: 'reservation'; reservation: DayReservation }
+	| { kind: 'waitlist'; entry: WaitlistEntry }
+	| { kind: 'walk_in'; partySize: number; guestName: string }
+
+export const placingSize = (p: Placing) =>
+	p.kind === 'reservation'
+		? p.reservation.partySize
+		: p.kind === 'waitlist'
+			? p.entry.partySize
+			: p.partySize
+
+export const placingKey = (p: Placing | null) =>
+	!p
+		? null
+		: p.kind === 'reservation'
+			? `r:${p.reservation.id}`
+			: p.kind === 'waitlist'
+				? `w:${p.entry.id}`
+				: 'walk-in'
+
+/**
+ * The parties still to seat, along the bottom of the floor: bookings in the
+ * order they are due, then the waitlist in the order it was joined. Tap one to
+ * pick it up (the floor then shows where it fits); tap the info button for its
+ * details. Late parties say how late; parties already at the stand say so.
+ */
+export function Dock({
+	arrivals,
+	waitlist,
+	waitlistOn,
+	placing,
+	now,
+	onPick,
+	onDetails,
+	onWaitlistDetails,
+	formatTime,
+}: {
+	arrivals: DayReservation[]
+	waitlist: WaitlistEntry[]
+	waitlistOn: boolean
+	placing: Placing | null
+	now: number
+	onPick: (placing: Placing | null) => void
+	onDetails: (reservation: DayReservation) => void
+	onWaitlistDetails: (entry: WaitlistEntry) => void
+	formatTime: (epochMs: number) => string
+}) {
+	const { _ } = useLingui()
+	const selected = placingKey(placing)
+	return (
+		<section
+			aria-label={_(t`Parties to seat`)}
+			className="border-border bg-card pb-safe flex shrink-0 flex-col gap-2 border-t pt-3 lg:flex-row lg:items-stretch lg:gap-0"
+		>
+			<DockLane
+				title={_(t`Arriving`)}
+				count={arrivals.length}
+				empty={_(t`No more bookings today.`)}
+				className="lg:min-w-0 lg:flex-[3]"
+			>
+				{arrivals.map((reservation) => {
+					const key = `r:${reservation.id}`
+					const late = minutesLate(reservation, now)
+					const here = isWaitingAtStand(reservation)
+					return (
+						<li key={reservation.id} className="shrink-0">
+							<div
+								className={cn(
+									'dock-card bg-background flex h-[5.5rem] w-52 items-stretch overflow-hidden rounded-2xl border',
+									here ? 'border-success/60' : 'border-border',
+								)}
+								data-selected={selected === key}
+							>
+								<button
+									type="button"
+									aria-pressed={selected === key}
+									onClick={() =>
+										onPick(
+											selected === key
+												? null
+												: { kind: 'reservation', reservation },
+										)
+									}
+									className="flex min-w-0 flex-1 flex-col justify-between p-3 text-start"
+								>
+									<span className="flex items-center gap-2">
+										<span className="mono text-base font-semibold">
+											{formatTime(reservation.startAt)}
+										</span>
+										<span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
+											<Users className="size-3.5" />
+											<span className="tnum">{reservation.partySize}</span>
+										</span>
+										{reservation.hasAllergy ? (
+											<TriangleAlert
+												className="text-warning size-3.5"
+												aria-label={_(t`Allergy noted`)}
+											/>
+										) : null}
+									</span>
+									<span className="truncate font-medium">
+										{shortName(reservation, _(t`Guest`))}
+									</span>
+									<span className="text-xs font-medium">
+										{here ? (
+											<span className="text-success">
+												<Trans>At the stand</Trans>
+											</span>
+										) : late > 0 ? (
+											<span className="text-warning">
+												<Trans>{late} min late</Trans>
+											</span>
+										) : reservation.tableLabels.length ? (
+											<span className="text-muted-foreground">
+												<Trans>
+													Table {reservation.tableLabels.join(' + ')}
+												</Trans>
+											</span>
+										) : (
+											<span className="text-muted-foreground">
+												<Trans>No table yet</Trans>
+											</span>
+										)}
+									</span>
+								</button>
+								<button
+									type="button"
+									onClick={() => onDetails(reservation)}
+									aria-label={_(
+										t`Details for ${shortName(reservation, _(t`Guest`))}`,
+									)}
+									className="text-muted-foreground hover:bg-accent hover:text-foreground border-border flex w-11 shrink-0 items-center justify-center border-s transition-colors"
+								>
+									<Info className="size-4" />
+								</button>
+							</div>
+						</li>
+					)
+				})}
+			</DockLane>
+			{waitlistOn ? (
+				<DockLane
+					title={_(t`Waitlist`)}
+					count={waitlist.length}
+					empty={_(t`Nobody is waiting.`)}
+					className="lg:border-border lg:min-w-0 lg:flex-[2] lg:border-s"
+				>
+					{waitlist.map((entry) => {
+						const key = `w:${entry.id}`
+						const waited = Math.max(
+							0,
+							Math.floor((now - entry.joinedAt) / 60_000),
+						)
+						return (
+							<li key={entry.id} className="shrink-0">
+								<div
+									className="dock-card bg-background border-border flex h-[5.5rem] w-48 items-stretch overflow-hidden rounded-2xl border"
+									data-selected={selected === key}
+								>
+									<button
+										type="button"
+										aria-pressed={selected === key}
+										onClick={() =>
+											onPick(
+												selected === key ? null : { kind: 'waitlist', entry },
+											)
+										}
+										className="flex min-w-0 flex-1 flex-col justify-between p-3 text-start"
+									>
+										<span className="flex items-center gap-2">
+											<span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
+												<Users className="size-3.5" />
+												<span className="tnum">{entry.partySize}</span>
+											</span>
+											{entry.status === 'notified' ? (
+												<BellRing
+													className="text-success size-3.5"
+													aria-label={_(t`Told their table is ready`)}
+												/>
+											) : null}
+										</span>
+										<span className="truncate font-medium">
+											{entry.firstName || entry.displayName}
+										</span>
+										<span className="text-muted-foreground inline-flex items-center gap-1 text-xs font-medium">
+											<Clock3 className="size-3" />
+											{entry.quotedMin !== null ? (
+												<Trans>
+													{waited} of {entry.quotedMin} min
+												</Trans>
+											) : (
+												<Trans>{waited} min</Trans>
+											)}
+										</span>
+									</button>
+									<button
+										type="button"
+										onClick={() => onWaitlistDetails(entry)}
+										aria-label={_(
+											t`Details for ${entry.firstName || entry.displayName}`,
+										)}
+										className="text-muted-foreground hover:bg-accent hover:text-foreground border-border flex w-11 shrink-0 items-center justify-center border-s transition-colors"
+									>
+										<Info className="size-4" />
+									</button>
+								</div>
+							</li>
+						)
+					})}
+				</DockLane>
+			) : null}
+		</section>
+	)
+}
+
+function DockLane({
+	title,
+	count,
+	empty,
+	className,
+	children,
+}: {
+	title: string
+	count: number
+	empty: string
+	className?: string
+	children: React.ReactNode
+}) {
+	return (
+		<div className={cn('flex min-w-0 flex-col gap-2', className)}>
+			<h3 className="text-muted-foreground flex items-center gap-2 px-4 text-sm font-semibold">
+				{title}
+				<span className="bg-muted text-foreground tnum rounded-full px-2 py-0.5 text-xs">
+					{count}
+				</span>
+			</h3>
+			{count === 0 ? (
+				<p className="text-muted-foreground flex h-[5.5rem] items-center px-4 text-sm">
+					{empty}
+				</p>
+			) : (
+				<ul className="no-scrollbar flex gap-3 overflow-x-auto px-4 pt-1 pb-2">
+					{children}
+				</ul>
+			)}
+		</div>
+	)
+}

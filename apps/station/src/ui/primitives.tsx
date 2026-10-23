@@ -110,6 +110,7 @@ export function Segmented<T extends string>({
 	label,
 	size = 'md',
 	wrap = true,
+	iconsOnPhone = false,
 }: {
 	value: T
 	onChange: (value: T) => void
@@ -118,6 +119,8 @@ export function Segmented<T extends string>({
 	size?: 'md' | 'lg'
 	/** Compact filters stay on one line and can sit in a scrolling toolbar. */
 	wrap?: boolean
+	/** On a phone, options with an icon show only the icon (the name is still read out). */
+	iconsOnPhone?: boolean
 }) {
 	const barRef = useRef<HTMLDivElement>(null)
 	const pillRef = useRef<HTMLSpanElement>(null)
@@ -237,7 +240,11 @@ export function Segmented<T extends string>({
 						{option.icon ? (
 							<span className="shrink-0">{option.icon}</span>
 						) : null}
-						<span>{option.label}</span>
+						<span
+							className={cn(iconsOnPhone && option.icon && 'max-md:sr-only')}
+						>
+							{option.label}
+						</span>
 					</button>
 				)
 			})}

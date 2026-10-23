@@ -13,11 +13,13 @@ import {
 	type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { HostStand } from './apps/reservations/HostStand.tsx'
+import { TimeClock } from './apps/timeclock/TimeClock.tsx'
 import { applyLocale, effectiveLocale } from './i18n.ts'
 import { idleMs, shouldLock, touch } from '~/lib/activity.ts'
 import { categoryItems } from '~/lib/catalog.ts'
 import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
-import { isConfigured } from '~/lib/config.ts'
+import { isConfigured, shownApp } from '~/lib/config.ts'
 import { db, type PosOrder } from '~/lib/db.ts'
 import {
 	buildLine,
@@ -234,6 +236,9 @@ export function App() {
 	const clockMinutes = skewMinutes(skew)
 	const storagePersisted = useStoragePersistence((p) => p.persisted)
 	const businessName = s.snapshot?.organization.name ?? _(t`Station`)
+	const app = shownApp(s.settings)
+	/** The time clock opened from the lock screen, over it. */
+	const [clockOverLock, setClockOverLock] = useState(false)
 	const locked = s.settings.signInRequired && s.session === null
 	// Plain values for the messages below (translations interpolate names, not expressions).
 	const catalogError = s.catalogError
@@ -548,8 +553,11 @@ export function App() {
 					onLock={s.settings.signInRequired ? s.lock : undefined}
 					onShift={() => setShiftOpen(true)}
 					shiftOpen={Boolean(currentShift)}
+					app={app}
+					apps={s.settings.apps}
+					onApp={(next) => void s.updateSettings({ activeApp: next })}
 				/>
-				<Reveal open={needsShift}>
+				<Reveal open={needsShift && app === 'pos'}>
 					<button
 						type="button"
 						onClick={() => setShiftOpen(true)}
@@ -608,7 +616,11 @@ export function App() {
 						</Trans>
 					</div>
 				</Reveal>
-				<Reveal open={Boolean(s.catalogError && s.snapshot && s.online)}>
+				<Reveal
+					open={Boolean(
+						s.catalogError && s.snapshot && s.online && app === 'pos',
+					)}
+				>
 					<div
 						role="status"
 						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-sm font-medium"
@@ -621,95 +633,113 @@ export function App() {
 					</div>
 				</Reveal>
 
-				<div className="flex min-h-0 flex-1">
-					<main className="flex min-w-0 flex-1 flex-col">
-						{/* First load: a skeleton of the menu pulses, then cross-fades to it. */}
-						<div
-							className={cn(
-								't-skel flex min-h-0 flex-1 flex-col',
-								!menuLoading && 'is-revealed',
-							)}
-						>
-							{skeleton ? (
-								<div className="t-skel-skeleton is-pulsing" aria-hidden>
-									<MenuSkeleton />
-								</div>
-							) : null}
-							<div className="t-skel-content flex flex-col">
-								{menuLoading ? (
-									<p role="status" className="sr-only">
-										{_(t`Loading menu…`)}
-									</p>
-								) : s.catalogStatus === 'error' ? (
-									<Message
-										icon={CloudOff}
-										title={_(t`Can’t load the menu yet`)}
-										body={_(
-											t`${loadProblem}. The first load needs internet; after that the till works offline.`,
-										)}
-										action={
-											<Button
-												variant="primary"
-												size="lg"
-												onClick={() => void s.refresh()}
-											>
-												<Trans>Try again</Trans>
-											</Button>
-										}
-									/>
-								) : s.locationMissing ? (
-									<Message
-										icon={MapPinOff}
-										title={_(t`This terminal’s location isn’t on the menu`)}
-										body={_(
-											t`It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh.`,
-										)}
-										action={
-											<Button
-												variant="primary"
-												size="lg"
-												onClick={() => void s.refresh()}
-											>
-												<Trans>Refresh</Trans>
-											</Button>
-										}
-									/>
-								) : s.catalogStatus === 'empty' ? (
-									<Message
-										icon={UtensilsCrossed}
-										title={_(t`No menu items`)}
-										body={_(
-											t`Publish a menu with items for this location, then refresh.`,
-										)}
-										action={
-											<Button
-												variant="primary"
-												size="lg"
-												onClick={() => void s.refresh()}
-											>
-												<Trans>Refresh</Trans>
-											</Button>
-										}
-									/>
-								) : (
-									<MenuGrid
-										categories={s.categories}
-										money={money}
-										counts={counts}
-										onPick={pick}
-									/>
+				{app === 'timeclock' ? (
+					<TimeClock
+						settings={s.settings}
+						online={s.online}
+						businessName={businessName}
+						locationName={s.location?.name ?? null}
+						currency={s.location?.currency ?? 'USD'}
+					/>
+				) : app === 'reservations' ? (
+					<HostStand
+						settings={s.settings}
+						session={s.session}
+						online={s.online}
+						onSignIn={s.lock}
+					/>
+				) : null}
+				{app === 'pos' ? (
+					<div className="flex min-h-0 flex-1">
+						<main className="flex min-w-0 flex-1 flex-col">
+							{/* First load: a skeleton of the menu pulses, then cross-fades to it. */}
+							<div
+								className={cn(
+									't-skel flex min-h-0 flex-1 flex-col',
+									!menuLoading && 'is-revealed',
 								)}
+							>
+								{skeleton ? (
+									<div className="t-skel-skeleton is-pulsing" aria-hidden>
+										<MenuSkeleton />
+									</div>
+								) : null}
+								<div className="t-skel-content flex flex-col">
+									{menuLoading ? (
+										<p role="status" className="sr-only">
+											{_(t`Loading menu…`)}
+										</p>
+									) : s.catalogStatus === 'error' ? (
+										<Message
+											icon={CloudOff}
+											title={_(t`Can’t load the menu yet`)}
+											body={_(
+												t`${loadProblem}. The first load needs internet; after that the till works offline.`,
+											)}
+											action={
+												<Button
+													variant="primary"
+													size="lg"
+													onClick={() => void s.refresh()}
+												>
+													<Trans>Try again</Trans>
+												</Button>
+											}
+										/>
+									) : s.locationMissing ? (
+										<Message
+											icon={MapPinOff}
+											title={_(t`This terminal’s location isn’t on the menu`)}
+											body={_(
+												t`It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh.`,
+											)}
+											action={
+												<Button
+													variant="primary"
+													size="lg"
+													onClick={() => void s.refresh()}
+												>
+													<Trans>Refresh</Trans>
+												</Button>
+											}
+										/>
+									) : s.catalogStatus === 'empty' ? (
+										<Message
+											icon={UtensilsCrossed}
+											title={_(t`No menu items`)}
+											body={_(
+												t`Publish a menu with items for this location, then refresh.`,
+											)}
+											action={
+												<Button
+													variant="primary"
+													size="lg"
+													onClick={() => void s.refresh()}
+												>
+													<Trans>Refresh</Trans>
+												</Button>
+											}
+										/>
+									) : (
+										<MenuGrid
+											categories={s.categories}
+											money={money}
+											counts={counts}
+											onPick={pick}
+										/>
+									)}
+								</div>
 							</div>
-						</div>
-					</main>
-					{desktop ? (
-						<aside className="border-border flex min-h-0 w-[26rem] shrink-0 flex-col border-s">
-							{cart}
-						</aside>
-					) : null}
-				</div>
+						</main>
+						{desktop ? (
+							<aside className="border-border flex min-h-0 w-[26rem] shrink-0 flex-col border-s">
+								{cart}
+							</aside>
+						) : null}
+					</div>
+				) : null}
 
-				{!desktop ? (
+				{!desktop && app === 'pos' ? (
 					<>
 						<button
 							type="button"
@@ -950,9 +980,56 @@ export function App() {
 					online={s.online}
 					demo={s.settings.demo}
 					onSignIn={s.signIn}
+					onClockIn={
+						s.settings.apps.timeclock ? () => setClockOverLock(true) : undefined
+					}
 				/>
 			) : null}
+			{locked && clockOverLock ? (
+				<ClockOverLock onClose={() => setClockOverLock(false)}>
+					<TimeClock
+						settings={s.settings}
+						online={s.online}
+						businessName={businessName}
+						locationName={s.location?.name ?? null}
+						currency={s.location?.currency ?? 'USD'}
+						onClose={() => setClockOverLock(false)}
+					/>
+				</ClockOverLock>
+			) : null}
 		</>
+	)
+}
+
+/**
+ * The time clock over the lock: a full-screen dialog opened after the lock's
+ * own, so it sits above it in the top layer. Closing it is back to signing in.
+ */
+function ClockOverLock({
+	onClose,
+	children,
+}: {
+	onClose: () => void
+	children: React.ReactNode
+}) {
+	const ref = useRef<HTMLDialogElement>(null)
+	const { _ } = useLingui()
+	useEffect(() => {
+		const dialog = ref.current
+		if (dialog && !dialog.open) dialog.showModal()
+	}, [])
+	return (
+		<dialog
+			ref={ref}
+			aria-label={_(t`Time clock`)}
+			onCancel={(event) => {
+				event.preventDefault()
+				onClose()
+			}}
+			className="t-rise bg-background text-foreground backdrop:bg-background m-0 flex h-dvh max-h-none w-screen max-w-none flex-col overflow-hidden p-0"
+		>
+			{children}
+		</dialog>
 	)
 }
 

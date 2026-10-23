@@ -126,6 +126,12 @@ export const dayFeedSchema = z
 		businessDate: z.string(),
 		etag: z.string().optional(),
 		dayState: z.string().default('open'),
+		/** The location's own time zone: every time on the stand is shown in it. */
+		settings: z
+			.object({ timeZone: z.string().nullable().optional() })
+			.passthrough()
+			.nullable()
+			.optional(),
 		closedLabel: z.string().nullable().optional(),
 		areas: z.array(areaSchema).default([]),
 		tables: z.array(tableSchema).default([]),

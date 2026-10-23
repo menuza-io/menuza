@@ -189,6 +189,43 @@
 	--shimmer-dur: 2000ms;
 	--shimmer-band: 400%;
 	--shimmer-ease: var(--ease-linear);
+
+	/* Page side-by-side (time clock steps) */
+	--page-slide-dur: var(--duration-fast);
+	--page-fade-dur: var(--duration-fast);
+	--page-slide-distance: var(--distance-base);
+	--page-blur: var(--blur-medium);
+	--page-stagger: 0ms;
+	--page-exit-enabled: 1;
+	--page-slide-ease: var(--ease-smooth-out);
+	--page-fade-ease: var(--ease-smooth-out);
+
+	/* Texts reveal (the time clock's greeting and state line) */
+	--stagger-dur: var(--duration-very-slow);
+	--stagger-distance: var(--distance-medium);
+	--stagger-stagger: var(--duration-stagger);
+	--stagger-blur: var(--blur-medium);
+	--stagger-ease: var(--ease-smooth-out);
+
+	/* Toast (host stand confirmations with undo) */
+	--toast-open: var(--duration-medium);
+	--toast-close: var(--duration-fast);
+	--toast-distance: 16px;
+	--toast-blur: var(--blur-small);
+	--toast-scale: var(--scale-medium);
+	--toast-ease: var(--ease-smooth-out);
+
+	/* Text swap soft (table timers and counts that tick over) */
+	--text-soft-dur: 200ms;
+	--text-soft-blur: var(--blur-small);
+	--text-soft-ease: var(--ease-in-out);
+	--text-soft-resize-dur: 240ms;
+	--text-soft-resize-ease: var(--ease-smooth-out);
+
+	/* Host stand floor: a table changing state, a party being picked */
+	--floor-state-dur: var(--duration-fast);
+	--floor-ease: var(--ease-smooth-out);
+	--floor-lift: var(--distance-micro);
 }
 
 /* Status colours lean toward the brand so they sit inside any palette. */
@@ -782,6 +819,186 @@ html[data-heading-font='custom'] {
 			transform: scale(var(--scale-large));
 		}
 	}
+
+	/* ── Page side-by-side (transitions.dev): time clock steps ──────────── */
+	.t-page-slide {
+		position: relative;
+	}
+	.t-page-slide .t-page[data-page-id='1'] {
+		--t-page-from-x: calc(var(--page-slide-distance) * -1);
+	}
+	.t-page-slide .t-page[data-page-id='2'] {
+		--t-page-from-x: var(--page-slide-distance);
+	}
+	.t-page-slide .t-page {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateX(
+			calc(var(--t-page-from-x, 0px) * var(--page-exit-enabled))
+		);
+		filter: blur(calc(var(--page-blur) * var(--page-exit-enabled)));
+		transition:
+			opacity var(--page-fade-dur) var(--page-fade-ease),
+			transform var(--page-slide-dur) var(--page-slide-ease),
+			filter var(--page-slide-dur) var(--page-slide-ease);
+		will-change: opacity, transform, filter;
+	}
+	.t-page-slide[data-page='1'] .t-page[data-page-id='1'],
+	.t-page-slide[data-page='2'] .t-page[data-page-id='2'] {
+		opacity: 1;
+		pointer-events: auto;
+		transform: translateX(0);
+		filter: blur(0);
+		transition-delay: var(--page-stagger);
+	}
+	/* Right to left, the next step comes from the other side. */
+	[dir='rtl'] .t-page-slide .t-page {
+		transform: translateX(
+			calc(var(--t-page-from-x, 0px) * var(--page-exit-enabled) * -1)
+		);
+	}
+	[dir='rtl'] .t-page-slide[data-page='1'] .t-page[data-page-id='1'],
+	[dir='rtl'] .t-page-slide[data-page='2'] .t-page[data-page-id='2'] {
+		transform: translateX(0);
+	}
+
+	/* ── Texts reveal (transitions.dev): greeting, then the state line ──── */
+	.t-stagger-line {
+		display: block;
+		opacity: 0;
+		transform: translateY(var(--stagger-distance));
+		filter: blur(var(--stagger-blur));
+		transition:
+			opacity var(--stagger-dur) var(--stagger-ease),
+			transform var(--stagger-dur) var(--stagger-ease),
+			filter var(--stagger-dur) var(--stagger-ease);
+		will-change: transform, opacity, filter;
+	}
+	.t-stagger-line--2 {
+		transition-delay: var(--stagger-stagger);
+	}
+	.t-stagger-line--3 {
+		transition-delay: calc(var(--stagger-stagger) * 2);
+	}
+	.t-stagger.is-shown .t-stagger-line {
+		opacity: 1;
+		transform: translateY(0);
+		filter: blur(0);
+	}
+
+	/* ── Toast (transitions.dev): "Seated at T4 · Undo" ─────────────────── */
+	.t-toast {
+		opacity: 0;
+		transform: translateY(var(--toast-distance)) scale(var(--toast-scale));
+		filter: blur(var(--toast-blur));
+		will-change: transform, opacity, filter;
+		transition:
+			opacity var(--toast-close) var(--toast-ease),
+			transform var(--toast-close) var(--toast-ease),
+			filter var(--toast-close) var(--toast-ease);
+	}
+	.t-toast.is-open {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+		filter: blur(0);
+		transition:
+			opacity var(--toast-open) var(--toast-ease),
+			transform var(--toast-open) var(--toast-ease),
+			filter var(--toast-open) var(--toast-ease);
+	}
+
+	/* ── Text swap soft (transitions.dev): "42m" ticking to "43m" ───────── */
+	.t-text-soft {
+		display: inline-grid;
+		justify-items: var(--text-soft-align, start);
+		transition: width var(--text-soft-resize-dur) var(--text-soft-resize-ease);
+	}
+	.t-text-soft > span {
+		grid-area: 1 / 1;
+		white-space: pre;
+		transition:
+			filter var(--text-soft-dur) var(--text-soft-ease),
+			opacity var(--text-soft-dur) var(--text-soft-ease);
+	}
+	.t-text-soft-new {
+		opacity: 0;
+		filter: blur(var(--text-soft-blur));
+	}
+	.t-text-soft.is-swapping .t-text-soft-old {
+		opacity: 0;
+		filter: blur(var(--text-soft-blur));
+	}
+	.t-text-soft.is-swapping .t-text-soft-new {
+		opacity: 1;
+		filter: blur(0);
+	}
+
+	/* ── Station host stand: the floor ──────────────────────────────────── */
+	/* The room reads as a plan: a quiet dot grid on the muted surface. */
+	.floor-room {
+		background-color: color-mix(in oklch, var(--muted) 70%, var(--background));
+		background-image: radial-gradient(
+			color-mix(in oklch, var(--foreground) 9%, transparent) 1px,
+			transparent 1.2px
+		);
+		background-size: 24px 24px;
+	}
+	/* The plan is as large as fits, in the room's own proportions. */
+	.floor-frame {
+		container-type: size;
+	}
+	.floor-plan {
+		width: min(100cqw, calc(100cqh * var(--plan-w) / var(--plan-h)));
+		aspect-ratio: var(--plan-w) / var(--plan-h);
+	}
+	/* A table changes state in place: colour, ring and lift ride one curve. */
+	.floor-table {
+		transition:
+			background-color var(--floor-state-dur) var(--floor-ease),
+			color var(--floor-state-dur) var(--floor-ease),
+			border-color var(--floor-state-dur) var(--floor-ease),
+			box-shadow var(--floor-state-dur) var(--floor-ease),
+			opacity var(--floor-state-dur) var(--floor-ease),
+			transform var(--floor-state-dur) var(--floor-ease);
+	}
+	.floor-table:active {
+		transform: scale(var(--scale-medium));
+	}
+	/* Blocked: hatched, like a table taped off on the plan. */
+	.floor-table[data-state='blocked'] {
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent 0 6px,
+			color-mix(in oklch, var(--foreground) 8%, transparent) 6px 8px
+		);
+	}
+	/* Picking a party: tables that take it lift and ring; the rest step back. */
+	.floor[data-picking='true'] .floor-table[data-fits='true'] {
+		transform: translateY(calc(var(--floor-lift) * -1));
+		box-shadow:
+			0 0 0 3px color-mix(in oklch, var(--success) 70%, transparent),
+			var(--elev-2);
+	}
+	.floor[data-picking='true'] .floor-table[data-fits='false'] {
+		opacity: 0.38;
+	}
+	/* A party card leaving the dock (seated) folds away instead of vanishing. */
+	.dock-card {
+		transition:
+			opacity var(--duration-quick) var(--ease-smooth-out),
+			transform var(--duration-fast) var(--ease-smooth-out),
+			box-shadow var(--duration-fast) var(--ease-smooth-out),
+			border-color var(--duration-fast) var(--ease-smooth-out);
+	}
+	.dock-card[data-selected='true'] {
+		transform: translateY(calc(var(--floor-lift) * -1));
+		border-color: var(--primary);
+		box-shadow:
+			0 0 0 2px var(--primary),
+			var(--elev-2);
+	}
 }
 
 /* Reduced motion: every snippet's own guard, then a blanket stop for the rest. */
@@ -834,6 +1051,18 @@ html[data-heading-font='custom'] {
 	}
 	.t-shimmer::before {
 		animation: none !important;
+	}
+	.t-page-slide .t-page,
+	.t-stagger-line,
+	.t-toast,
+	.t-text-soft,
+	.t-text-soft > span {
+		transition: none !important;
+	}
+	.floor-table,
+	.dock-card {
+		transition: none !important;
+		transform: none !important;
 	}
 	*,
 	*::before,

@@ -1,19 +1,31 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type PosDeviceApps } from '@repo/common/pos-orders'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
+	CalendarDays,
+	Clock3,
 	CloudOff,
 	Lock,
+	ShoppingBag,
 	RefreshCw,
 	ReceiptText,
 	Settings,
 	TriangleAlert,
 	Wallet,
 } from 'lucide-react'
+import { type StationApp } from '~/lib/config.ts'
 import { db } from '~/lib/db.ts'
 import { isSendable } from '~/lib/orders.ts'
 import { usePos } from '~/lib/store.ts'
-import { Badge, Button, IconButton, NumberPop, cn } from '~/ui/primitives.tsx'
+import {
+	Badge,
+	Button,
+	IconButton,
+	NumberPop,
+	Segmented,
+	cn,
+} from '~/ui/primitives.tsx'
 
 export function TopBar({
 	name,
@@ -28,6 +40,9 @@ export function TopBar({
 	onLock,
 	onShift,
 	shiftOpen,
+	app = 'pos',
+	apps,
+	onApp,
 }: {
 	name: string
 	logoUrl: string | null
@@ -43,6 +58,10 @@ export function TopBar({
 	/** Opens the cash drawer shift; `shiftOpen` marks the button while one is running. */
 	onShift: () => void
 	shiftOpen: boolean
+	/** The Station app on screen, the ones this terminal offers, and the switch. */
+	app?: StationApp
+	apps?: PosDeviceApps
+	onApp?: (app: StationApp) => void
 }) {
 	const { _ } = useLingui()
 	const settings = usePos((s) => s.settings)
@@ -102,6 +121,10 @@ export function TopBar({
 				</div>
 			</div>
 
+			{apps && onApp && (apps.timeclock || apps.reservations) ? (
+				<AppSwitcher app={app} apps={apps} onApp={onApp} />
+			) : null}
+
 			<div className="ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
 				{onLock ? (
 					<Button
@@ -138,59 +161,117 @@ export function TopBar({
 						rejectedShifts={rejectedShifts}
 					/>
 				</div>
-				<span className="hidden sm:inline-flex">
-					<IconButton
-						label={_(t`Refresh menu`)}
-						onClick={onRefresh}
-						disabled={!online || refreshing}
-					>
-						<RefreshCw className={cn('size-5', refreshing && 'animate-spin')} />
-					</IconButton>
-				</span>
-				<Button
-					variant="outline"
-					aria-label={
-						openTabs > 0
-							? _(
-									plural(openTabs, {
-										one: 'Orders, # open tab',
-										other: 'Orders, # open tabs',
-									}),
-								)
-							: _(t`Orders`)
-					}
-					onClick={onOrders}
-					className="px-3 sm:px-4"
-				>
-					<ReceiptText className="size-5 shrink-0" />
-					<span className="hidden sm:inline">
-						<Trans>Orders</Trans>
-					</span>
-					{openTabs > 0 ? (
-						// The count pops in when the first tab opens (notification badge).
-						<span className="t-badge" data-open="true" aria-hidden>
-							<span className="t-badge-dot tnum mono bg-primary text-primary-foreground flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold">
-								<NumberPop value={String(openTabs)} />
-							</span>
+				{app === 'pos' ? (
+					<>
+						<span className="hidden sm:inline-flex">
+							<IconButton
+								label={_(t`Refresh menu`)}
+								onClick={onRefresh}
+								disabled={!online || refreshing}
+							>
+								<RefreshCw
+									className={cn('size-5', refreshing && 'animate-spin')}
+								/>
+							</IconButton>
 						</span>
-					) : null}
-				</Button>
-				<IconButton
-					label={shiftOpen ? _(t`Shift (open)`) : _(t`Shift`)}
-					onClick={onShift}
-				>
-					<Wallet
-						className={cn(
-							'size-5 transition-colors',
-							shiftOpen && 'text-success',
-						)}
-					/>
-				</IconButton>
+						<Button
+							variant="outline"
+							aria-label={
+								openTabs > 0
+									? _(
+											plural(openTabs, {
+												one: 'Orders, # open tab',
+												other: 'Orders, # open tabs',
+											}),
+										)
+									: _(t`Orders`)
+							}
+							onClick={onOrders}
+							className="px-3 sm:px-4"
+						>
+							<ReceiptText className="size-5 shrink-0" />
+							<span className="hidden sm:inline">
+								<Trans>Orders</Trans>
+							</span>
+							{openTabs > 0 ? (
+								// The count pops in when the first tab opens (notification badge).
+								<span className="t-badge" data-open="true" aria-hidden>
+									<span className="t-badge-dot tnum mono bg-primary text-primary-foreground flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold">
+										<NumberPop value={String(openTabs)} />
+									</span>
+								</span>
+							) : null}
+						</Button>
+						<IconButton
+							label={shiftOpen ? _(t`Shift (open)`) : _(t`Shift`)}
+							onClick={onShift}
+						>
+							<Wallet
+								className={cn(
+									'size-5 transition-colors',
+									shiftOpen && 'text-success',
+								)}
+							/>
+						</IconButton>
+					</>
+				) : null}
 				<IconButton label={_(t`Settings`)} onClick={onSettings}>
 					<Settings className="size-5" />
 				</IconButton>
 			</div>
 		</header>
+	)
+}
+
+/**
+ * Register, Time clock, Reservations: one slide-pill switch between the apps
+ * this terminal offers (tabs sliding). Icons only on a phone, where the bar is
+ * short; the names stay readable to assistive technology.
+ */
+function AppSwitcher({
+	app,
+	apps,
+	onApp,
+}: {
+	app: StationApp
+	apps: PosDeviceApps
+	onApp: (app: StationApp) => void
+}) {
+	const { _ } = useLingui()
+	const options: Array<{
+		value: StationApp
+		label: string
+		icon: React.ReactNode
+	}> = [
+		{
+			value: 'pos',
+			label: _(t`Register`),
+			icon: <ShoppingBag className="size-4" aria-hidden />,
+		},
+	]
+	if (apps.timeclock)
+		options.push({
+			value: 'timeclock',
+			label: _(t`Time clock`),
+			icon: <Clock3 className="size-4" aria-hidden />,
+		})
+	if (apps.reservations)
+		options.push({
+			value: 'reservations',
+			label: _(t`Reservations`),
+			icon: <CalendarDays className="size-4" aria-hidden />,
+		})
+	return (
+		<div className="min-w-0 shrink">
+			<Segmented
+				label={_(t`Station app`)}
+				value={app}
+				onChange={onApp}
+				options={options}
+				wrap={false}
+				iconsOnPhone
+			/>
+		</div>
 	)
 }
 

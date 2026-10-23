@@ -292,6 +292,14 @@ export function createHostApi(deps: HostDeps) {
 			)
 		},
 
+		/** Steps the last status change back (seated to arrived, finished to seated). */
+		undo(reservationId: string) {
+			return write(
+				`/reservations/${encodeURIComponent(reservationId)}/undo`,
+				{},
+			)
+		},
+
 		assign(
 			reservationId: string,
 			tableIds: string[],

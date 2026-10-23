@@ -1,6 +1,6 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { CloudOff, Lock } from 'lucide-react'
+import { Clock3, CloudOff, Lock } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { monotonicNow } from '~/lib/clock.ts'
 import { DEMO_PIN, type SignInOutcome } from '~/lib/signin.ts'
@@ -19,12 +19,15 @@ export function LockScreen({
 	online,
 	demo,
 	onSignIn,
+	onClockIn,
 }: {
 	businessName: string
 	logoUrl: string | null
 	online: boolean
 	demo: boolean
 	onSignIn: (pin: string) => Promise<SignInOutcome>
+	/** When the terminal is a time clock too: clock in without signing in to the till. */
+	onClockIn?: () => void
 }) {
 	const ref = useRef<HTMLDialogElement>(null)
 	const { _ } = useLingui()
@@ -183,6 +186,17 @@ export function LockScreen({
 				>
 					{busy ? <Trans>Checking…</Trans> : <Trans>Sign in</Trans>}
 				</Button>
+				{onClockIn ? (
+					<Button
+						variant="outline"
+						size="lg"
+						className="w-full"
+						onClick={onClockIn}
+					>
+						<Clock3 className="size-5" />
+						<Trans>Clock in or out</Trans>
+					</Button>
+				) : null}
 			</div>
 		</dialog>
 	)
