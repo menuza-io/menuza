@@ -12,17 +12,19 @@ paired devices or offline orders.
 
 ## Pieces
 
-| Where                                        | What                                                                                                                                                         |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `apps/station`                               | The tablet app (Vite, React, Dexie). `src/lib/orders.ts` is the order lifecycle, `src/lib/outbox.ts` the upload queue, `src/lib/fiscal.ts` the fiscal chain. |
-| `packages/common/src/pos-orders.ts`          | Wire contract (Zod), credentials, `POS_CONTRACT_VERSION`.                                                                                                    |
-| `packages/common/src/pos-fiscal.ts`          | Fiscal document chain (SHA-256, synchronous) and the ZATCA Phase 1 QR payload.                                                                               |
-| `packages/common/src/pos-reports.ts`         | The sales summary behind the till's Z report and the server's shift and day reports.                                                                         |
-| `packages/zatca` (`@repo/zatca`)             | ZATCA Phase 2: EGS keys and CSR, UBL simplified invoices and credit and debit notes, the XAdES signature, the Phase 2 QR code, and the Fatoora API client.   |
-| `packages/tenant-db` (migrations 0020, 0021) | `pos_*` tables, their append-only triggers, and phone pickup details.                                                                                        |
-| `apps/tenant-api/src/routes/pos.ts`          | Terminal routes: `/pos/pair`, `/pos/me`, `/pos/sign-in`, `/pos/orders`, `/pos/shifts`, `/pos/tabs`, `/pos/tabs/:id/claim`, `/pos/zatca`.                     |
-| `apps/tenant-api/src/routes/operator-pos.ts` | Manager routes under `/operator/pos` (terminals, pairing codes, orders, revisions, held uploads, staff and managers, shifts, day reports, ZATCA).            |
-| `apps/app` → Settings → Terminals            | Pair and remove terminals, PIN sign-in, shifts, business day, till managers, held uploads, the day report, ZATCA settings and onboarding.                    |
+| Where                                            | What                                                                                                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/station`                                   | The tablet app (Vite, React, Dexie). `src/lib/orders.ts` is the order lifecycle, `src/lib/outbox.ts` the upload queue, `src/lib/fiscal.ts` the fiscal chain. |
+| `packages/common/src/pos-orders.ts`              | Wire contract (Zod), credentials, `POS_CONTRACT_VERSION`.                                                                                                    |
+| `packages/common/src/pos-fiscal.ts`              | Fiscal document chain (SHA-256, synchronous) and the ZATCA Phase 1 QR payload.                                                                               |
+| `packages/common/src/pos-reports.ts`             | The sales summary behind the till's Z report and the server's shift and day reports.                                                                         |
+| `packages/zatca` (`@repo/zatca`)                 | ZATCA Phase 2: EGS keys and CSR, UBL simplified invoices and credit and debit notes, the XAdES signature, the Phase 2 QR code, and the Fatoora API client.   |
+| `packages/tenant-db` (migrations 0020, 0021)     | `pos_*` tables, their append-only triggers, and phone pickup details.                                                                                        |
+| `apps/tenant-api/src/routes/pos.ts`              | Terminal routes: `/pos/pair`, `/pos/me`, `/pos/sign-in`, `/pos/orders`, `/pos/shifts`, `/pos/tabs`, `/pos/tabs/:id/claim`, `/pos/zatca`.                     |
+| `apps/tenant-api/src/routes/operator-pos.ts`     | Manager routes under `/operator/pos` (terminals, pairing codes, orders, revisions, held uploads, staff and managers, shifts, day reports, ZATCA).            |
+| `apps/tenant-api/src/routes/pos-timeclock.ts`    | The time clock on a terminal: `/pos/timeclock/identify`, `/pos/timeclock/punch` (see [Station apps](#station-apps-time-clock-and-host-stand)).               |
+| `apps/tenant-api/src/routes/pos-reservations.ts` | The host stand's token: `POST /pos/reservations/token`.                                                                                                      |
+| `apps/app` → Settings → Terminals                | Pair and remove terminals, PIN sign-in, shifts, business day, till managers, held uploads, the day report, ZATCA settings and onboarding.                    |
 
 ## Trust model
 
@@ -298,6 +300,59 @@ terminal's scope). The server rules match the kiosk: escalating backoff per
 terminal, never a lockout. People who signed in online can sign in offline for
 **72 hours**. A person who has since left can still do so in that window, and
 their sales are flagged `inactive_staff`.
+
+## Station apps: time clock and host stand
+
+A paired terminal can also be the restaurant's time clock and its host stand,
+with no second pairing and no App login. Each app is a per-terminal setting
+(`pos_devices.timeclock_enabled`, `reservations_enabled`, tenant-db migration
+`0022_station_apps`) that a manager switches in the App (Settings, Terminals,
+Station apps, or when pairing), **and** the organization's flag
+(`staffing.timeclock`, `reservations.enabled`). `/pos/me` reports the result as
+`apps: { timeclock, reservations }`; the till shows an app switch (Register,
+Time clock, Reservations) when it offers more than the register.
+
+**Time clock.** `/pos/timeclock/identify` and `/pos/timeclock/punch` run the
+kiosk's punch engine (`services/punch-service.ts`) and take the kiosk's request
+shapes, on the terminal's own credential. Every punch names the person by PIN at
+the terminal's workplace (scope), even when someone is signed in at the till, so
+nobody clocks in a colleague. Wrong PINs share the terminal's sign-in backoff.
+Punches are recorded with `source: 'pos'` and the terminal as the audit actor.
+When App cannot be asked, an unknown staffing flag counts as on: people must be
+able to clock in during an outage; the terminal switch turns it off. The lock
+screen has a "Clock in or out" button, so nobody signs in to the till to punch.
+Offline, a punch is queued on the tablet with the PIN encrypted at rest (the
+kiosk's queue, `@repo/staffing/clock-queue`) and sent, oldest first, with the
+till's other uploads; the server still checks the PIN and the order.
+
+**Host stand.** An online sign-in returns a staff session (`pos-staff+jwt`,
+signed with a key derived from `AUTH_HMAC_SECRET`, bound to the organization and
+the terminal, 12 hours, held in memory and dropped when the till locks). The
+till sends it in `Pos-Staff-Session` to `POST /pos/reservations/token`, which
+checks the person is still active there and mints the same `rsv+jwt` App mints
+for an operator, for:
+
+- the `book` scope only (the day of service and the waitlist), at the terminal's
+  own location only;
+- host grants (`read`/`update:reservation`) for everyone, plus guest details
+  (`read:reservation_guest`: allergies, private notes) for till managers, which
+  shortens the token to five minutes;
+- subject `staff:<staffId>`, so the reservation history shows the action as
+  taken by staff at a terminal.
+
+The till then calls `/operator/reservations/book/*` directly (CORS allows
+`POS_ORIGINS` on those routes only), so every check there applies unchanged. The
+host stand needs a location and the staff PIN on the terminal (the server
+refuses the setting otherwise), works online only, and keeps nothing about
+guests on the device. Its screen is floor first: the room as drawn, a dock of
+arriving parties and the waitlist; picking a party lifts the tables it can
+finish at before the next booking, and a clash can be overruled as an overbook
+with a reason.
+
+The till's host-stand payloads are recorded fixtures
+(`apps/station/src/apps/reservations/fixtures`), kept in step by
+`apps/tenant-api/src/routes/pos-station-contract.test.ts` (re-record with
+`RECORD_STATION_FIXTURES=1`).
 
 ## Personal data
 

@@ -854,8 +854,12 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   PWA, IndexedDB). Uploads each order revision browser-direct to the regional
   tenant-api; money and history tables are append-only, refunds and removed
   items need a reason (and a manager when sign-in is on), and closed sales carry
-  a hash-chained fiscal document. Read `docs/pos.md` before changing the order
-  contract (`@repo/common/pos-orders`, `POS_CONTRACT_VERSION`)
+  a hash-chained fiscal document. A terminal can also be the time clock
+  (`/pos/timeclock/*`, PIN every punch) and the host stand for its location (a
+  `book`-scope reservations token minted at `/pos/reservations/token` from the
+  terminal and the signed-in staff session); both are per-terminal settings plus
+  the organization's flag. Read `docs/pos.md` before changing the order contract
+  (`@repo/common/pos-orders`, `POS_CONTRACT_VERSION`)
 - `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
   loads config from App and logs calls through tenant-api
 - `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):

@@ -36,6 +36,13 @@ reports). `/reservations/guests` and `/reservations/guests/<id>` redirect to
 and the page tab bar are Today, Calendar, Waitlist, Experiences and Settings
 (each gated by its flag and permission).
 
+A **Station till** can run the host stand for its location: today's floor,
+arrivals, walk-ins, the waitlist and new bookings, for the person signed in at
+the till with their PIN (host grants; guest details for till managers). It is a
+terminal setting in Settings, Terminals, and uses the same `book` routes with a
+token tenant-api mints from the terminal and the signed-in session. See
+[Station apps](./pos.md#station-apps-time-clock-and-host-stand).
+
 Guest-facing surfaces: the Sites `/reserve` pages (book, `/reserve/manage`,
 `/reserve/waitlist`, `/reserve/pay`), the native iOS and Android booking flows
 (`apps/ios`, `apps/android`, see the contract) and the AI phone agent actions
