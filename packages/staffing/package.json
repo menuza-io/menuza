@@ -14,6 +14,11 @@
       "types": "./src/demo-roster.ts",
       "import": "./src/demo-roster.ts",
       "default": "./src/demo-roster.ts"
+    },
+    "./clock-flow": {
+      "types": "./src/clock-flow.ts",
+      "import": "./src/clock-flow.ts",
+      "default": "./src/clock-flow.ts"
     }
   },
   "scripts": {

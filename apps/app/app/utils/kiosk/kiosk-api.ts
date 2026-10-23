@@ -1,8 +1,10 @@
+import { type CLOCK_EVENTS, KIOSK_IDENTIFY_MODES } from '@repo/staffing'
 import {
-	CLOCK_EVENTS,
-	CLOCK_STATES,
-	KIOSK_IDENTIFY_MODES,
-} from '@repo/staffing'
+	clockIdentifyResponseSchema,
+	clockPunchResponseSchema,
+	type KioskIdentifyView,
+	type KioskPunchView,
+} from '@repo/staffing/clock-flow'
 import { z } from 'zod'
 
 /**
@@ -32,33 +34,9 @@ const pairResponseSchema = kioskConfigSchema.extend({
 	deviceSecret: z.string().min(20),
 })
 
-const positionSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	nameAr: z.string().nullable(),
-})
-
-const identifyResponseSchema = z.object({
-	firstName: z.string(),
-	state: z.enum(CLOCK_STATES),
-	allowedEvents: z.array(z.enum(CLOCK_EVENTS)),
-	positions: z.array(positionSchema),
-	nextShifts: z.array(z.object({ startAt: z.number(), endAt: z.number() })),
-	promptTips: z.boolean().default(false),
-	serverNow: z.number(),
-})
-export type KioskIdentifyView = z.infer<typeof identifyResponseSchema>
-
-const punchResponseSchema = z.object({
-	outcome: z.literal('accepted'),
-	duplicate: z.boolean(),
-	kind: z.enum(CLOCK_EVENTS),
-	state: z.enum(CLOCK_STATES),
-	firstName: z.string(),
-	at: z.number(),
-	serverNow: z.number(),
-})
-export type KioskPunchView = z.infer<typeof punchResponseSchema>
+const identifyResponseSchema = clockIdentifyResponseSchema
+const punchResponseSchema = clockPunchResponseSchema
+export type { KioskIdentifyView, KioskPunchView }
 
 const peopleResponseSchema = z.object({
 	people: z.array(
