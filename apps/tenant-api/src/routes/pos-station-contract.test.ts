@@ -471,6 +471,24 @@ describe('Station host stand contract', () => {
 		expect(after.text).toContain('Haddad')
 		expect(after.text).not.toContain('"Mia"')
 
+		// A till changes a party's size or time, and nothing else on the booking.
+		const resized = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${seatedId}`,
+			{ authorization: `Bearer ${plain.body.token}` },
+			{ partySize: 3 },
+		)
+		expect(resized.status, resized.text).toBe(200)
+		expect(resized.body.reservation.partySize).toBe(3)
+		const noted2 = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${seatedId}`,
+			{ authorization: `Bearer ${plain.body.token}` },
+			{ partySize: 4, staffNotes: 'from the till' },
+		)
+		expect(noted2.status, noted2.text).toBe(403)
+		expect(noted2.body.error).toBe('not_for_station')
+
 		// Nor replaces a contact detail or an allergy note it could not see; it
 		// only fills what the profile lacks.
 		const hostWrite = (key: string, body: unknown) =>
@@ -564,6 +582,24 @@ describe('Station host stand contract', () => {
 			expect(refused.status, refused.text).toBe(409)
 			expect(refused.body.error).toBe('manager_required')
 		}
+		// Nor confirms one still awaiting its deposit: that would waive it.
+		await (
+			await getTenantDb(ORG_A)
+		)
+			.update(rsvReservations)
+			.set({ status: 'pending_payment', paymentStatus: 'pending' })
+			.where(eq(rsvReservations.id, bookedId))
+		const waived = await call(
+			'POST',
+			`/operator/reservations/book/reservations/${bookedId}/status`,
+			{
+				authorization: `Bearer ${plain.body.token}`,
+				'Idempotency-Key': 'station-contract-confirm-unpaid',
+			},
+			{ toStatus: 'confirmed' },
+		)
+		expect(waived.status, waived.text).toBe(409)
+		expect(waived.body.error).toBe('manager_required')
 		const waitingId = waiting.body.entry?.id ?? waiting.body.id
 		const fill = (route: string) =>
 			route

@@ -1,4 +1,5 @@
-import { t, Trans } from '@lingui/macro'
+import { type MessageDescriptor } from '@lingui/core'
+import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type WaitlistEntry } from '@repo/reservations'
 import {
@@ -28,6 +29,7 @@ import {
 import { Floor, FreeCount, freeTables } from './Floor.tsx'
 import {
 	BookingSheet,
+	ChangePartySheet,
 	JoinWaitlistSheet,
 	PartySheet,
 	TableSheet,
@@ -92,6 +94,8 @@ export function HostStand({
 	const [roomId, setRoomId] = useState<string | null>(readRoom)
 	const [placing, setPlacing] = useState<Placing | null>(null)
 	const [partyId, setPartyId] = useState<string | null>(null)
+	/** The booking whose size or time is being changed. */
+	const [changeId, setChangeId] = useState<string | null>(null)
 	const [waitlistId, setWaitlistId] = useState<string | null>(null)
 	/** The table whose sheet is open; its state is read from the live day. */
 	const [tableTargetId, setTableTargetId] = useState<string | null>(null)
@@ -121,12 +125,14 @@ export function HostStand({
 				ref.current = crypto.randomUUID()
 				return result
 			} catch (error) {
-				// No answer, or the server already has it under this key: keep the key.
-				if (!(
+				// No answer, an answer about the server rather than this request, or
+				// the server already has it under this key: keep the key, so the
+				// frozen form's next tap is the same request. Only a definite
+				// refusal starts a new one.
+				const keep =
 					error instanceof HostApiError &&
-					(error.offline || error.alreadyDone)
-				))
-					ref.current = crypto.randomUUID()
+					(error.retryable || error.alreadyDone)
+				if (!keep) ref.current = crypto.randomUUID()
 				throw error
 			}
 		},
@@ -144,6 +150,7 @@ export function HostStand({
 		bookingOpen ||
 		joinOpen ||
 		walkInOpen ||
+		changeId !== null ||
 		placing !== null ||
 		tooSmall !== null
 	useEffect(() => {
@@ -224,11 +231,13 @@ export function HostStand({
 				 * send it again. Gets the server's answer (null when it was a retry).
 				 */
 				onSuccess?: (result: unknown) => void
-				/** No answer in time: the form is frozen, so a retry is the same request. */
+				/** No answer: the form is frozen, so a retry is the same request. */
 				onUnsure?: () => void
+				/** A definite refusal: the form can be changed again. */
+				onRefused?: () => void
 			} = {},
 		) => {
-			const { undo, anyway, restore, onSuccess, onUnsure } = options
+			const { undo, anyway, restore, onSuccess, onUnsure, onRefused } = options
 			setBusy(true)
 			noteWrite()
 			let finish: () => void = () => {}
@@ -267,6 +276,7 @@ export function HostStand({
 												})
 											} finally {
 												setBusy(false)
+												noteWrite()
 												await refresh({ full: true })
 											}
 										})
@@ -321,8 +331,11 @@ export function HostStand({
 					return false
 				}
 				// Not seated, or not known to be: the party stays in the host's hand.
-				if (failure?.offline) restore?.()
-				if (failure?.unsure) onUnsure?.()
+				// A form stays as sent when there was no answer (it may have landed).
+				if (failure?.offline) {
+					restore?.()
+					onUnsure?.()
+				} else if (!failure?.retryable) onRefused?.()
 				say(
 					failure?.stale
 						? _(t`Someone changed this a moment ago. Here is the latest.`)
@@ -332,8 +345,7 @@ export function HostStand({
 								)
 							: failure?.offline
 								? _(t`No connection. Nothing was changed.`)
-								: failure?.serverMessage ||
-									_(t`That did not go through. Try again.`),
+								: _(refusalMessage(failure)),
 					{ tone: 'danger' },
 				)
 				return false
@@ -436,6 +448,11 @@ export function HostStand({
 			return
 		}
 		const who = shortName(r, _(t`Guest`))
+		if (command.kind === 'change') {
+			setPartyId(null)
+			setChangeId(r.id)
+			return
+		}
 		if (command.kind === 'late') {
 			const minutes = command.minutes
 			await act(
@@ -743,6 +760,34 @@ export function HostStand({
 					else void seat(walkIn, table, false)
 				}}
 			/>
+			<ChangePartySheet
+				reservation={feed.reservations.find((r) => r.id === changeId) ?? null}
+				busy={busy}
+				date={feed.businessDate}
+				loadSlots={api.availability}
+				formatTime={formatTime}
+				onClose={() => setChangeId(null)}
+				onSave={(change) => {
+					const r = feed.reservations.find((x) => x.id === changeId)
+					if (!r) return
+					const who = shortName(r, _(t`Guest`))
+					const size = change.partySize ?? r.partySize
+					const time = change.timeLabel ?? formatTime(r.startAt)
+					void act(
+						() =>
+							api.changeParty(
+								r.id,
+								{
+									...(change.partySize ? { partySize: change.partySize } : {}),
+									...(change.time ? { time: change.time } : {}),
+								},
+								r.version,
+							),
+						_(t`${who} is now ${size} at ${time}.`),
+						{ onSuccess: () => setChangeId(null) },
+					)
+				}}
+			/>
 			<WalkInSheet
 				open={walkInOpen}
 				onClose={() => setWalkInOpen(false)}
@@ -788,6 +833,18 @@ export function HostStand({
 							// The sheet turns into the read-back at once: nothing to tap twice.
 							onSuccess: (result) => {
 								setBookingLocked(false)
+								// A retry the server already had: it recorded the first
+								// request, which may differ from the form now.
+								if (result === null) {
+									setReadBack({
+										name: '',
+										partySize: 0,
+										when: '',
+										code: null,
+										asFirstSent: true,
+									})
+									return
+								}
 								setReadBack({
 									name: [first, input.lastName].join(' ').trim(),
 									partySize: size,
@@ -796,6 +853,7 @@ export function HostStand({
 								})
 							},
 							onUnsure: () => setBookingLocked(true),
+							onRefused: () => setBookingLocked(false),
 						},
 					)
 				}}
@@ -854,6 +912,29 @@ export function HostStand({
 			<Toast message={toast} onDone={dismissToast} liftAbove={dockRef} />
 		</div>
 	)
+}
+
+/** What a refusal means, in the host's language (the server's own text is English). */
+function refusalMessage(failure: HostApiError | null): MessageDescriptor {
+	switch (failure?.code) {
+		case 'manager_required':
+			return msg`This booking has a payment on it. A manager handles it in the app.`
+		case 'guest_permission_required':
+			return msg`That needs guest details, which this sign-in does not have.`
+		case 'not_for_station':
+			return msg`That is done in the app, not at a till.`
+		case 'not_a_host':
+			return msg`You are not on this terminal’s host list.`
+		case 'no_availability':
+		case 'slot_unavailable':
+			return msg`That time is no longer available. Choose another.`
+		case 'invalid_status_transition':
+			return msg`That cannot be done to this booking now. Here is the latest.`
+		case 'closed_day':
+			return msg`The restaurant is closed that day.`
+		default:
+			return msg`That did not go through. Try again.`
+	}
 }
 
 /** The code a booking's answer carries, to read back to the caller. */

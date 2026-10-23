@@ -36,7 +36,7 @@ async function typePin(scope: Page | ReturnType<Page['locator']>, pin: string) {
 
 const clock = (page: Page) => page.getByRole('dialog', { name: 'Time clock' })
 /** The toast said this (as it was announced to screen readers). */
-const expectToast = (page: Page, text: string) =>
+const expectToast = (page: Page, text: string | RegExp) =>
 	expect(page.getByRole('status').filter({ hasText: text })).toBeAttached()
 
 test.describe('time clock', () => {
@@ -384,6 +384,21 @@ test.describe('host stand', () => {
 		expect(
 			(await backend.bookings()).filter((b) => b.firstName === 'Zaid'),
 		).toHaveLength(1)
+	})
+
+	test('a party’s size changes from its sheet, at the till', async ({
+		unpaired: page,
+	}) => {
+		await backend.addStaff({ pin: '4321', host: true })
+		await openHostStand(page)
+		const dock = page.getByRole('region', { name: 'Parties to seat' })
+		await dock.getByRole('button', { name: /^Details for Yusuf/ }).click()
+		await page.getByRole('button', { name: 'Change size or time' }).click()
+		const sheet = page.getByRole('dialog', { name: 'Change size or time' })
+		await sheet.getByRole('button', { name: '6', exact: true }).click()
+		await sheet.getByRole('button', { name: 'Save' }).click()
+		await expectToast(page, /Yusuf R\. is now 6 at/)
+		await expect(sheet).toHaveCount(0)
 	})
 
 	test('joining the waitlist says the wait before, and the toast repeats it', async ({

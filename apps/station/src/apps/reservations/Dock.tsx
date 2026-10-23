@@ -16,6 +16,7 @@ import {
 	minutesLate,
 	shortName,
 	type DayReservation,
+	OCCASION_LABEL,
 } from './feed.ts'
 import { cn } from '~/ui/primitives.tsx'
 
@@ -108,7 +109,10 @@ export function Dock({
 					const here = isWaitingAtStand(reservation)
 					// The guest said they are running late (by text or a call).
 					const runningLate = reservation.runningLateMin ?? 0
-					const occasion = reservation.occasion ?? ''
+					const label = reservation.occasion
+						? OCCASION_LABEL[reservation.occasion]
+						: undefined
+					const occasion = label ? _(label) : (reservation.occasion ?? '')
 					return (
 						<li key={reservation.id} className="shrink-0">
 							<div
@@ -164,6 +168,13 @@ export function Dock({
 										{here ? (
 											<span className="text-success">
 												<Trans>At the stand</Trans>
+											</span>
+										) : runningLate > 0 && late > runningLate ? (
+											// Later than they said: the real figure, and what they said.
+											<span className="text-warning">
+												<Trans>
+													{late} min late (said {runningLate})
+												</Trans>
 											</span>
 										) : runningLate > 0 ? (
 											<span className="text-warning">

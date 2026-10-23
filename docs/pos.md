@@ -345,9 +345,14 @@ with its roles (a slow hash of the PIN, as for offline sign-in, with an attempt
 guard of its own that never locks the till's sign-in); punches the server later
 refuses are listed on the clock until someone clears them. A saved punch carries
 the person's opaque staff id when the till knew it, and is refused (409
-`pin_owner_changed`) if the PIN has since been given to someone else. A saved
-punch is set aside only after 48 hours of server errors, never after a number of
-tries. Where the rules have rest breaks, staff choose meal or rest, offline too.
+`pin_owner_changed`) if the PIN has since been given to someone else; a punch
+the server already recorded is answered as recorded, whatever the PIN is now.
+Punches go out oldest first, in order per person: one person's waiting punch
+holds only their later ones. An outage (500s with nothing else answered, or any
+502, 503, 504 or 429) stops the run and never costs a punch, until 48 hours have
+passed; a punch the server keeps breaking on while it answers others is set
+aside after eight such 500s over at least half an hour. Where the rules have
+rest breaks, staff choose meal or rest, offline too.
 
 **Host stand.** An online sign-in returns a staff session (`pos-staff+jwt`,
 signed with a key derived from `AUTH_HMAC_SECRET`, bound to the organization and
@@ -360,12 +365,15 @@ operator, for:
 - the `book` scope only, at the terminal's own location only, and within it only
   what the till does (`STATION_ROUTES` in `lib/reservations-guard.ts`): the day,
   availability, the waitlist and its quote, a booking's detail and history, new
-  bookings and walk-ins, status, table, undo and running late, and waitlist add,
-  text, seat and leave. Everything else (the guestbook, resending messages,
-  approving requests, service notes, sections) answers 403 `not_for_station`.
-  Cancelling or marking a no-show on a booking with a payment on it moves money,
-  so it answers 409 `manager_required` without the payment grant. Nobody who
-  cannot read allergy notes can change them;
+  bookings and walk-ins, status, table, undo and running late, a booking's party
+  size and time (`PATCH`, refusing any other field), and waitlist add, text,
+  seat and leave. Everything else (the guestbook, resending messages, approving
+  requests, service notes, sections) answers 403 `not_for_station`. Cancelling
+  or marking a no-show on a booking with a payment on it moves money, and
+  confirming one still awaiting its deposit waives it, so both answer 409
+  `manager_required` without the payment grant (checked on the booking inside
+  the write). Nobody who cannot read allergy notes or a guest's own requests can
+  change them;
 - host grants (`read`/`update:reservation`) for people on the **host roster**
   (`pos_hosts`, migration `0023_station_hosts`; Settings, Terminals, the staff
   list), plus guest details (`read:reservation_guest`: phones, emails,
@@ -395,6 +403,15 @@ The till's host-stand payloads are recorded fixtures
 (`apps/station/src/apps/reservations/fixtures`), kept in step by
 `apps/tenant-api/src/routes/pos-station-contract.test.ts` (re-record with
 `RECORD_STATION_FIXTURES=1`).
+
+### Menu names in several languages
+
+The published menu keeps every translation of a name or description as a JSON
+map (`{"en":"Starters","ar":"مقبلات"}`). The till keeps the menu as published
+and resolves each name for its own language when it reads it
+(`apps/station/src/lib/menu-text.ts`, `getLocalizedMenuValue` from
+`@repo/common/menu-types`), falling back to the restaurant's default language.
+Order lines saved before this are decoded when shown.
 
 ## Personal data
 

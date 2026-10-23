@@ -25,9 +25,10 @@ export const MAX_SYNC_ATTEMPTS = 8
 export const MAX_PENDING_AGE_MS = 48 * 60 * 60 * 1000
 
 /**
- * A punch the server keeps failing on with its own error (a 500 with a code:
- * it judged the punch and broke, as opposed to being down) is set aside after
- * `MAX_SYNC_ATTEMPTS` tries once it is this old, so a manager sees it.
+ * A punch the server breaks on (a 500 for it, while other punches in the same
+ * run are answered) is set aside after `MAX_SYNC_ATTEMPTS` such 500s spread
+ * over at least this long since the first, so a manager sees it. A 500 with
+ * nobody else answered is an outage, and counts toward nothing.
  */
 export const POISON_MIN_AGE_MS = 30 * 60 * 1000
 
@@ -65,6 +66,12 @@ export async function syncQueue(deps: {
 	 * not say whose it is might be anyone's, so it waits behind any of them.
 	 */
 	const held = new Set<string>()
+	/** Punches the server answered this run (accepted, or refused for good). */
+	let answered = 0
+	/** 500s in a row with nothing answered between them: an outage, stop. */
+	let failingInARow = 0
+	/** Punches that got a 500 this run: judged once the run shows whether others got through. */
+	const broke: Array<{ id: string }> = []
 	for (const item of await queue.pending()) {
 		if (held.size > 0 && (!item.staffId || held.has(item.staffId))) continue
 		let pin: string
@@ -92,6 +99,8 @@ export async function syncQueue(deps: {
 			})
 			await queue.remove(item.id)
 			outcome.synced += 1
+			answered += 1
+			failingInARow = 0
 		} catch (error) {
 			if (error instanceof ClockNetworkError) break
 			if (error instanceof ClockApiError) {
@@ -107,35 +116,49 @@ export async function syncQueue(deps: {
 				}
 				if (error.transient) {
 					await queue.recordAttempt(item.id)
-					const tries = item.attempts + 1
-					const age = now() - item.createdAt
-					// The server is down or limiting: everything would fail, so stop.
-					const outage = error.status !== 500
 					if (
-						tries >= MAX_SYNC_ATTEMPTS &&
+						item.attempts + 1 >= MAX_SYNC_ATTEMPTS &&
 						error.status >= 500 &&
-						(age > MAX_PENDING_AGE_MS || (!outage && age > POISON_MIN_AGE_MS))
+						now() - item.createdAt > MAX_PENDING_AGE_MS
 					) {
-						await queue.markFailed(
-							item.id,
-							outage ? 'server_unavailable' : 'server_error',
-						)
+						await queue.markFailed(item.id, 'server_unavailable')
 						outcome.failed += 1
 						continue
 					}
 					outcome.retryAfterSeconds = error.retryAfterSeconds || null
-					if (outage || !item.staffId) break
-					// The server broke on this one punch: hold this person's, send the rest.
+					// A 500 may be this punch, or the whole server: hold this person's
+					// punches and try the next person's, unless 500s keep coming with
+					// nothing answered (an outage) or the punch names nobody.
+					failingInARow += 1
+					if (error.status !== 500 || !item.staffId) break
+					broke.push({ id: item.id })
 					held.add(item.staffId)
+					if (failingInARow >= 2 && answered === 0) break
 					continue
 				}
 				await queue.markFailed(item.id, error.code)
 				outcome.failed += 1
+				answered += 1
+				failingInARow = 0
 				continue
 			}
 			// Anything unexpected: keep the punch and try again next time.
 			await queue.recordAttempt(item.id)
 			break
+		}
+	}
+	// Others got through, so the server is up: those 500s were about these punches.
+	if (answered > 0) {
+		for (const { id } of broke) {
+			const totals = await queue.recordServerError(id, now())
+			if (
+				totals &&
+				totals.count >= MAX_SYNC_ATTEMPTS &&
+				now() - totals.firstAt >= POISON_MIN_AGE_MS
+			) {
+				await queue.markFailed(id, 'server_error')
+				outcome.failed += 1
+			}
 		}
 	}
 	outcome.remaining = (await queue.counts()).queued

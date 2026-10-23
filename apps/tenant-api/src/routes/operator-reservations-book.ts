@@ -1169,9 +1169,11 @@ operatorReservationsBookRoutes.get(
  */
 function healthNotesDenied(
 	ctx: ReservationsAuthContext,
-	input: { dietaryNotes?: unknown },
+	input: { dietaryNotes?: unknown; guestRequests?: unknown },
 ): Response | null {
-	if (input.dietaryNotes === undefined) return null
+	// The guest's own request text is hidden the same way ("son has a peanut allergy").
+	if (input.dietaryNotes === undefined && input.guestRequests === undefined)
+		return null
 	if (canReadGuests(ctx)) return null
 	return json(
 		{
@@ -1236,6 +1238,18 @@ operatorReservationsBookRoutes.get(
 	},
 )
 
+/** What a till may change on a booking: its size and when. */
+const STATION_PATCH_FIELDS = new Set([
+	'locationId',
+	'expectedVersion',
+	'date',
+	'businessDate',
+	'time',
+	'slotLocal',
+	'localStartMin',
+	'partySize',
+])
+
 const patchReservationSchema = z.object({
 	locationId: z.string().trim().min(1).max(128).optional(),
 	expectedVersion: z.number().int().min(1).optional(),
@@ -1284,6 +1298,23 @@ operatorReservationsBookRoutes.patch(
 		if ('error' in parsed) return parsed.error
 		const notesDenied = healthNotesDenied(ctx, parsed.data)
 		if (notesDenied) return notesDenied
+		// At a till only the party's size and time move ("we're six now", "make
+		// it 8"): notes, tags, tables, locks and overbooking stay with the app.
+		if (ctx.channel === 'station') {
+			const extra = Object.keys(parsed.data).filter(
+				(key) =>
+					!STATION_PATCH_FIELDS.has(key) &&
+					parsed.data[key as keyof typeof parsed.data] !== undefined,
+			)
+			if (extra.length > 0)
+				return json(
+					{
+						error: 'not_for_station',
+						message: 'Only the party size and time change at a till.',
+					},
+					403,
+				)
+		}
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(
@@ -1408,41 +1439,19 @@ operatorReservationsBookRoutes.post(
 		)
 		if (!locCheck.ok) return locCheck.response
 
-		const target = parsed.data.status ?? parsed.data.toStatus ?? ''
-		// A till's host does not touch money: cancelling or marking a no-show on
-		// a booking with a deposit or card on file refunds or charges it, so that
-		// is a manager's call in the app.
-		if (
-			ctx.channel === 'station' &&
-			(target === 'cancelled' || target === 'no_show') &&
-			!hasReservationsGrant(
-				ctx,
-				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
-			)
-		) {
-			const db = await getTenantDb(ctx.orgId)
-			const [row] = await db
-				.select({ paymentStatus: rsvReservations.paymentStatus })
-				.from(rsvReservations)
-				.where(eq(rsvReservations.id, rsvId))
-				.limit(1)
-			if (row && row.paymentStatus !== 'none')
-				return json(
-					{
-						error: 'manager_required',
-						message:
-							'This booking has a payment on it. A manager cancels it in the app.',
-					},
-					409,
-				)
-		}
-
 		try {
 			const result = await transitionReservationStatus({
 				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// A till's host does not touch money (deposits, refunds, no-show fees).
+				paymentLocked:
+					ctx.channel === 'station' &&
+					!hasReservationsGrant(
+						ctx,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+					),
 				input: {
 					...parsed.data,
 					status: parsed.data.status ?? parsed.data.toStatus ?? '',

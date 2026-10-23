@@ -1,3 +1,5 @@
+import { type MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/macro'
 import { z } from 'zod'
 
 /**
@@ -356,6 +358,16 @@ export function rooms(feed: Pick<DayFeed, 'areas' | 'tables'>): DayArea[] {
 	return feed.areas
 		.filter((a) => !a.archivedAt && used.has(a.id))
 		.sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name))
+}
+
+/** Occasions a booking can carry, as the stand says them (an unknown one shows as itself). */
+export const OCCASION_LABEL: Record<string, MessageDescriptor> = {
+	birthday: msg`Birthday`,
+	anniversary: msg`Anniversary`,
+	date_night: msg`Date night`,
+	business: msg`Business`,
+	celebration: msg`Celebration`,
+	other: msg`Occasion`,
 }
 
 /** "Maya H." for the dock and the floor; the full name stays in the details. */

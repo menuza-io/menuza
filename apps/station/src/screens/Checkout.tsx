@@ -13,6 +13,7 @@ import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
 import { quickCashAmounts } from '~/lib/cash.ts'
 import { type PosOrder, type StaffRef, type TenderMethod } from '~/lib/db.ts'
+import { menuText } from '~/lib/menu-text.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import {
 	addPayment,
@@ -341,7 +342,7 @@ export function Checkout({
 							>
 								<div className="min-w-0 flex-1">
 									<p className="font-medium break-words">
-										{l.quantity} × {l.name}
+										{l.quantity} × {menuText(l.name)}
 									</p>
 									{l.variantLabel ? (
 										<p className="text-muted-foreground mt-1">

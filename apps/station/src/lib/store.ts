@@ -16,6 +16,8 @@ import {
 } from './config.ts'
 import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
+import { effectiveLocale } from './locale.ts'
+import { localizeMenu } from './menu-text.ts'
 import {
 	adoptTab,
 	canAdoptTab,
@@ -134,17 +136,27 @@ const apiUrl = (settings: PosSettings, path: string) =>
 	`${settings.tenantApiUrl.replace(/\/+$/, '')}${path}`
 
 function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
+	// Names and descriptions in the till's language: the published menu keeps
+	// every translation (`{"en":…,"ar":…}`). The snapshot itself stays as
+	// published, so a language switch only reads it again.
+	const menu = localizeMenu(
+		snapshot.menu,
+		effectiveLocale(
+			settings.locale ?? null,
+			snapshot.menu.organization.defaultLocale,
+		),
+	)
 	// A terminal bound to a location sells only there. If that location is not on
 	// the published menu, never fall back to another one: its taxes and prices
 	// would be wrong and the server would refuse every sale.
 	const bound = settings.locationLocked
-		? snapshot.menu.locations.find((l) => l.id === settings.locationId)
+		? menu.locations.find((l) => l.id === settings.locationId)
 		: undefined
 	const locationMissing = settings.locationLocked && !bound
 	const location = locationMissing
 		? null
-		: (bound ?? pickLocation(snapshot.menu, settings.locationId) ?? null)
-	const categories = location ? buildCategories(snapshot.menu, location.id) : []
+		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
+	const categories = location ? buildCategories(menu, location.id) : []
 	applyTheme(snapshot.organization)
 	document.title = `${snapshot.organization.name} · Station`
 	return {
@@ -257,7 +269,8 @@ export const usePos = create<PosState>((set, get) => ({
 			set({ snapshot: null, categories: [], catalogStatus: 'loading' })
 			applyTheme(null)
 			await get().refresh()
-		} else if (patch.locationId !== undefined) {
+		} else if (patch.locationId !== undefined || patch.locale !== undefined) {
+			// Another location, or another language for the menu's names.
 			const { snapshot } = get()
 			if (snapshot) set(adopt(snapshot, settings))
 		}

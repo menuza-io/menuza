@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { type StatusTarget } from './api.ts'
 import {
+	OCCASION_LABEL,
 	shortName,
 	type Availability,
 	type DayReservation,
@@ -54,6 +55,8 @@ export type PartyCommand =
 	  }
 	/** The guest called to say they are late (0 clears it). */
 	| { kind: 'late'; minutes: number }
+	/** Open the change sheet: the party's size or time. */
+	| { kind: 'change' }
 	| { kind: 'undo' }
 	| { kind: 'place' }
 
@@ -189,7 +192,12 @@ export function PartySheet({
 				finishedAtMs: r.finishedAt ?? null,
 			})
 		: []
-	const has = (action: QuickAction) => actions.includes(action)
+	// Awaiting its deposit: confirming would waive it and cancelling touches
+	// the payment, both a manager's call in the app.
+	const awaitingPayment = r?.status === 'pending_payment'
+	const has = (action: QuickAction) =>
+		actions.includes(action) &&
+		!(awaitingPayment && (action === 'confirm' || action === 'cancel'))
 	const run = (command: PartyCommand) => r && onCommand(r, command)
 	const phoneEnd = (r?.guest?.phone ?? '').replace(/\D/g, '').slice(-4)
 	const guestName =
@@ -279,6 +287,19 @@ export function PartySheet({
 									onClick={() => run({ kind: 'status', to: 'confirmed' })}
 								>
 									<Trans>Confirmed by phone</Trans>
+								</Button>
+							) : null}
+							{r.status === 'booked' ||
+							r.status === 'confirmed' ||
+							r.status === 'arrived' ? (
+								<Button
+									variant="outline"
+									size="lg"
+									className="flex-1"
+									disabled={busy}
+									onClick={() => run({ kind: 'change' })}
+								>
+									<Trans>Change size or time</Trans>
 								</Button>
 							) : null}
 							{has('undo_seat') || has('undo_finish') || has('undo_no_show') ? (
@@ -377,7 +398,11 @@ export function PartySheet({
 							</Detail>
 						) : null}
 						{r.occasion ? (
-							<Detail icon={CalendarPlus}>{r.occasion}</Detail>
+							<Detail icon={CalendarPlus}>
+								{OCCASION_LABEL[r.occasion]
+									? _(OCCASION_LABEL[r.occasion]!)
+									: r.occasion}
+							</Detail>
 						) : null}
 						{r.guestRequests ? (
 							<Detail icon={UserRound}>{r.guestRequests}</Detail>
@@ -720,6 +745,152 @@ export function TableSheet({
 	)
 }
 
+/**
+ * "We're six now", "can we make it 8:00": a booking's size or time, the only
+ * things a till changes on it. Times come from availability for the new size;
+ * keeping the time is the default.
+ */
+export function ChangePartySheet({
+	reservation,
+	busy,
+	date,
+	loadSlots,
+	formatTime,
+	onSave,
+	onClose,
+}: {
+	reservation: DayReservation | null
+	busy: boolean
+	/** The day the booking is on (the stand shows one day). */
+	date: string
+	loadSlots: (date: string, partySize: number) => Promise<Availability>
+	formatTime: (epochMs: number) => string
+	onSave: (change: {
+		partySize?: number
+		time?: string
+		/** The new time as the stand shows it, for the toast. */
+		timeLabel?: string
+	}) => void
+	onClose: () => void
+}) {
+	const { _, i18n } = useLingui()
+	const r = reservation
+	const [size, setSize] = useState(r?.partySize ?? 2)
+	const [time, setTime] = useState<{ value: string; label: string } | null>(
+		null,
+	)
+	const [slots, setSlots] = useState<Availability['slots'] | null>(null)
+	const id = r?.id ?? null
+	useEffect(() => {
+		if (!r) return
+		setSize(r.partySize)
+		setTime(null)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- reset per booking only
+	}, [id])
+	useEffect(() => {
+		if (!id) return
+		let live = true
+		setSlots(null)
+		loadSlots(date, size).then(
+			(result) => live && setSlots(result.closed ? [] : result.slots),
+			() => live && setSlots([]),
+		)
+		return () => {
+			live = false
+		}
+	}, [id, date, size, loadSlots])
+	const slotLabel = useMemo(() => {
+		const format = new Intl.DateTimeFormat(i18n.locale, {
+			hour: 'numeric',
+			minute: '2-digit',
+			timeZone: 'UTC',
+		})
+		return (minutes: number) =>
+			format.format(Date.UTC(2000, 0, 1, 0, minutes % 1440))
+	}, [i18n.locale])
+	const current = r ? formatTime(r.startAt) : ''
+	const changed = r !== null && (size !== r.partySize || time !== null)
+	const open_ = (slots ?? []).filter(
+		(slot) => slot.available && slot.time !== r?.time,
+	)
+	return (
+		<Modal
+			open={r !== null}
+			onClose={onClose}
+			size="lg"
+			title={_(t`Change size or time`)}
+			footer={
+				r ? (
+					<div className="mb-safe">
+						<Button
+							variant="primary"
+							size="lg"
+							className="w-full"
+							disabled={!changed || busy}
+							onClick={() =>
+								onSave({
+									...(size !== r.partySize ? { partySize: size } : {}),
+									...(time ? { time: time.value, timeLabel: time.label } : {}),
+								})
+							}
+						>
+							<Trans>Save</Trans>
+						</Button>
+					</div>
+				) : null
+			}
+		>
+			{r ? (
+				<div className="flex flex-col gap-6 p-4 sm:p-5">
+					<div className="flex flex-col gap-2">
+						<span className="font-semibold">
+							<Trans>Party size</Trans>
+						</span>
+						<PartySize value={size} onChange={setSize} />
+					</div>
+					<div className="flex flex-col gap-2">
+						<span className="font-semibold">
+							<Trans>Time</Trans>
+						</span>
+						<div className="flex flex-wrap gap-2">
+							<Chip
+								selected={time === null}
+								aria-pressed={time === null}
+								onClick={() => setTime(null)}
+								className="tnum"
+							>
+								<Trans>Keep {current}</Trans>
+							</Chip>
+							{slots === null ? (
+								<span className="t-shimmer self-center text-sm">
+									<Trans>Finding times…</Trans>
+								</span>
+							) : (
+								open_.map((slot) => (
+									<Chip
+										key={slot.localStartMin}
+										selected={time?.value === slot.time}
+										aria-pressed={time?.value === slot.time}
+										onClick={() =>
+											setTime({
+												value: slot.time,
+												label: slotLabel(slot.localStartMin),
+											})
+										}
+										className="tnum min-w-20"
+									>
+										{slotLabel(slot.localStartMin)}
+									</Chip>
+								))
+							)}
+						</div>
+					</div>
+				</div>
+			) : null}
+		</Modal>
+	)
+}
+
 /** A walk-in from the top bar: how many, then the floor picks the table. */
 export function WalkInSheet({
 	open,
@@ -788,6 +959,11 @@ export function WalkInSheet({
  * floor cannot seat (a manager can still overbook from the App).
  */
 export type BookingReadBackInfo = {
+	/**
+	 * A retry the server already had under this key: it holds the first
+	 * request as sent, so the form's details are not read back.
+	 */
+	asFirstSent?: boolean
 	name: string
 	partySize: number
 	/** "Fri, Oct 24 at 7:30 PM" or "Today at 7:30 PM", as said to the caller. */
@@ -1086,13 +1262,34 @@ export function BookingSheet({
 }
 
 /** What the host reads back to the caller once the booking is in. */
-function BookingReadBack({ name, partySize, when, code }: BookingReadBackInfo) {
+function BookingReadBack({
+	asFirstSent,
+	name,
+	partySize,
+	when,
+	code,
+}: BookingReadBackInfo) {
+	if (asFirstSent)
+		return (
+			<div className="flex flex-col items-center gap-3 p-6 text-center">
+				<SuccessMark tone="muted" />
+				<p className="text-xl font-bold">
+					<Trans>Already booked, as first sent</Trans>
+				</p>
+				<p className="text-muted-foreground">
+					<Trans>
+						Check today’s list for the time and party size it was booked with
+						before reading it back.
+					</Trans>
+				</p>
+			</div>
+		)
 	return (
 		<div className="flex flex-col items-center gap-4 p-6 text-center">
 			<SuccessMark />
 			<p className="text-2xl font-bold">
 				<Trans>
-					{name}, party of {partySize}
+					<bdi>{name}</bdi>, party of {partySize}
 				</Trans>
 			</p>
 			<p className="text-muted-foreground text-lg">{when}</p>

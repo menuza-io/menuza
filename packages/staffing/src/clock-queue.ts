@@ -28,6 +28,12 @@ export type QueuedPunch = {
 	clientAt: number
 	createdAt: number
 	attempts: number
+	/**
+	 * 500s the server gave this punch while it answered others (so it is this
+	 * punch it breaks on, not an outage), and when the first came.
+	 */
+	serverErrors?: number
+	firstServerErrorAt?: number
 	status: 'queued' | 'failed'
 	/** Why the server refused it; shown to the person at the tablet. */
 	failure?: string
@@ -211,6 +217,31 @@ export function createClockQueue(deps: Deps = {}) {
 			const row = await request<QueuedPunch | undefined>(table.get(id))
 			if (row) table.put({ ...row, attempts: row.attempts + 1 })
 			await done(tx)
+		},
+
+		/** A 500 on this punch while the server answered others; returns the running totals. */
+		async recordServerError(
+			id: string,
+			at: number,
+		): Promise<{ count: number; firstAt: number } | null> {
+			const db = await open()
+			const tx = db.transaction(PUNCHES, 'readwrite')
+			const table = tx.objectStore(PUNCHES)
+			const row = await request<QueuedPunch | undefined>(table.get(id))
+			let totals: { count: number; firstAt: number } | null = null
+			if (row) {
+				totals = {
+					count: (row.serverErrors ?? 0) + 1,
+					firstAt: row.firstServerErrorAt ?? at,
+				}
+				table.put({
+					...row,
+					serverErrors: totals.count,
+					firstServerErrorAt: totals.firstAt,
+				})
+			}
+			await done(tx)
+			return totals
 		},
 
 		/** The server refused this punch for good: keep the reason, drop the PIN. */

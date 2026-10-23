@@ -88,6 +88,7 @@ export const backend = {
 		prices?: Record<string, number>
 		remove?: string[]
 		publish?: boolean
+		translate?: boolean
 	}) => backend.post('/__test/live-menu', body),
 	publish: () => backend.post('/__test/publish'),
 	theme: (body: Record<string, unknown>) => backend.post('/__test/theme', body),

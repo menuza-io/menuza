@@ -71,6 +71,20 @@ export class HostApiError extends Error {
 		return this.code === 'idempotency_conflict'
 	}
 
+	/**
+	 * No answer, or one that says nothing about this request (a timeout, an
+	 * outage, a rate limit): retrying sends the same request under the same key.
+	 */
+	get retryable(): boolean {
+		return (
+			this.status === 0 ||
+			this.status === 408 ||
+			this.status === 425 ||
+			this.status === 429 ||
+			this.status >= 500
+		)
+	}
+
 	/** The person must sign in again (an offline sign-in, or a session that ended). */
 	get needsSignIn(): boolean {
 		return (
@@ -343,6 +357,31 @@ export function createHostApi(deps: HostDeps) {
 					...options,
 				},
 			)
+		},
+
+		/**
+		 * The party's size or time changed ("we're six now", "make it 8:00"): the
+		 * only booking fields a till may change. Checked against the version the
+		 * host saw.
+		 */
+		async changeParty(
+			reservationId: string,
+			change: { partySize?: number; time?: string },
+			expectedVersion: number,
+		) {
+			const result = await call(
+				'PATCH',
+				`/reservations/${encodeURIComponent(reservationId)}`,
+				z.unknown(),
+				{
+					body: {
+						locationId: await locationId(),
+						expectedVersion,
+						...change,
+					},
+				},
+			)
+			return 'data' in result ? result.data : null
 		},
 
 		/** The guest called: they will be this many minutes late (0 clears it). */

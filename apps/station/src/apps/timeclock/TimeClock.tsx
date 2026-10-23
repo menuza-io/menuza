@@ -161,7 +161,10 @@ export function TimeClock({
 				const target =
 					page?.querySelector<HTMLElement>(
 						'[data-autofocus]:not([disabled])',
-					) ?? page?.querySelector<HTMLElement>('button:not([disabled])')
+					) ??
+					page?.querySelector<HTMLElement>(
+						'button:not([disabled]):not([data-back])',
+					)
 				target?.focus({ preventScroll: true })
 			}
 		})
@@ -761,6 +764,7 @@ function BackLink({
 		<button
 			type="button"
 			onClick={onBack}
+			data-back
 			className="text-muted-foreground hover:text-foreground -ms-2 inline-flex h-11 items-center gap-1.5 self-start rounded-xl px-2 text-sm font-medium transition-colors"
 		>
 			<ArrowLeft className="size-4 rtl:rotate-180" />
@@ -917,9 +921,10 @@ function RolePick({
 				<Trans>What are you working today?</Trans>
 			</h2>
 			<div className="t-stagger-line t-stagger-line--2 flex flex-col gap-2">
-				{flow.who.positions.map((position) => (
+				{flow.who.positions.map((position, index) => (
 					<Button
 						key={position.id}
+						data-autofocus={index === 0 || undefined}
 						variant="outline"
 						size="lg"
 						disabled={busy}
@@ -981,7 +986,13 @@ function Tips({
 				/>
 			</div>
 			<div className="t-stagger-line t-stagger-line--3 grid grid-cols-2 gap-3">
-				<Button variant="outline" size="lg" disabled={busy} onClick={onSkip}>
+				<Button
+					variant="outline"
+					size="lg"
+					disabled={busy}
+					onClick={onSkip}
+					data-autofocus
+				>
 					<Trans>No cash tips</Trans>
 				</Button>
 				<Button
@@ -1038,9 +1049,10 @@ function OfflineActions({
 					<Trans>What are you working today?</Trans>
 				</h2>
 				<div className="t-stagger-line t-stagger-line--2 flex flex-col gap-2">
-					{positions.map((position) => (
+					{positions.map((position, index) => (
 						<Button
 							key={position.id}
+							data-autofocus={index === 0 || undefined}
 							variant="outline"
 							size="lg"
 							disabled={busy}
@@ -1142,6 +1154,7 @@ function BreakPick({
 						key={kind}
 						type="button"
 						disabled={busy}
+						data-autofocus={index === 0 || undefined}
 						onClick={() => onPick(kind)}
 						className={cn(
 							'flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-start transition active:scale-[0.97] disabled:opacity-50',

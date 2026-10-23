@@ -421,11 +421,33 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			['POST', `/reservations/${id}/notes`],
 			['PATCH', `/reservations/${id}`],
 		] as const) {
-			const res = await send(noGuestGrant, method, url, { dietaryNotes: null })
-			expect(res.status, `${method} ${url}`).toBe(403)
-			expect(((await res.json()) as { error: string }).error).toBe(
-				'guest_permission_required',
-			)
+			for (const body of [{ dietaryNotes: null }, { guestRequests: 'mine' }]) {
+				const res = await send(noGuestGrant, method, url, body)
+				expect(res.status, `${method} ${url}`).toBe(403)
+				expect(((await res.json()) as { error: string }).error).toBe(
+					'guest_permission_required',
+				)
+			}
+		}
+		// A waitlist entry's note and contact details are hidden the same way.
+		const joined = await send(token, 'POST', '/waitlist', {
+			locationId: LOC_MAIN,
+			displayName: 'Sweep Wait',
+			partySize: 2,
+			notes: 'wheelchair',
+		})
+		expect(joined.status).toBe(201)
+		const entryId = ((await joined.json()) as any).entry.id as string
+		for (const body of [
+			{ notes: null },
+			{ phone: '+14155550177' },
+			{ email: 'x@example.com' },
+		]) {
+			const res = await send(noGuestGrant, 'PATCH', `/waitlist/${entryId}`, {
+				locationId: LOC_MAIN,
+				...body,
+			})
+			expect(res.status, JSON.stringify(body)).toBe(403)
 		}
 		const kept = await send(token, 'POST', `/reservations/${id}/notes`, {
 			dietaryNotes: 'No sesame',

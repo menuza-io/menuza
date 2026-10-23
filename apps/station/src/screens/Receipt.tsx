@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type PosOrder } from '~/lib/db.ts'
+import { menuText } from '~/lib/menu-text.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
 import { cn } from '~/ui/primitives.tsx'
@@ -104,7 +105,7 @@ export function Receipt({
 				<div key={line.id} className="mb-1">
 					<Row>
 						<span>
-							{line.quantity} × {line.name}
+							{line.quantity} × {menuText(line.name)}
 							{line.variantLabel ? ` (${line.variantLabel})` : ''}
 						</span>
 						<span>{money(lineTotalCents(line))}</span>
@@ -113,7 +114,7 @@ export function Receipt({
 						<Row key={o.groupId + o.optionId} className="ps-2.5">
 							<span>
 								+ {o.quantity > 1 ? `${o.quantity} × ` : ''}
-								{o.optionName}
+								{menuText(o.optionName)}
 							</span>
 							{o.unitCents > 0 ? (
 								<span>{money(o.unitCents * o.quantity * line.quantity)}</span>

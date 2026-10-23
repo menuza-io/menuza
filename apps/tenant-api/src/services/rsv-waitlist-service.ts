@@ -923,7 +923,9 @@ export async function seatWaitlistEntry(params: {
 			tableIds: input.tableIds,
 			overbook,
 			overbookReason,
-			staffNotes: entry.notes,
+			// A waitlist note is hidden without guest details ("nut allergy,
+			// wheelchair"); seated, it stays hidden the same way, not as a staff note.
+			guestRequests: entry.notes,
 			guest: {
 				firstName: nameParts[0] || entry.displayName,
 				lastName: nameParts.slice(1).join(' '),

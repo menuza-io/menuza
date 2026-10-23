@@ -337,6 +337,7 @@ describe('Reservations security sweep: operator routes', () => {
 			'GET /operator/reservations/book/waitlist/quote',
 			'GET /operator/reservations/book/reservations/:id',
 			'GET /operator/reservations/book/reservations/:id/events',
+			'PATCH /operator/reservations/book/reservations/:id',
 			'POST /operator/reservations/book/reservations',
 			'POST /operator/reservations/book/walk-ins',
 			'POST /operator/reservations/book/reservations/:id/status',

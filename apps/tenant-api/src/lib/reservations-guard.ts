@@ -136,6 +136,8 @@ const STATION_ROUTES: ReadonlyArray<readonly [string, RegExp]> = [
 	['GET', /^\/waitlist\/quote$/],
 	['GET', /^\/reservations\/[^/]+$/],
 	['GET', /^\/reservations\/[^/]+\/events$/],
+	// Size and time only: the route refuses any other field from a till.
+	['PATCH', /^\/reservations\/[^/]+$/],
 	['POST', /^\/reservations$/],
 	['POST', /^\/walk-ins$/],
 	['POST', /^\/reservations\/[^/]+\/(?:status|assign|undo|running-late)$/],

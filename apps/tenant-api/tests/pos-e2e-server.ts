@@ -664,6 +664,23 @@ root.post('/__test/live-menu', async (c) => {
 		prices?: Record<string, number>
 		remove?: string[]
 		publish?: boolean
+		/** Names as the menu editor stores them once translated: JSON maps per language. */
+		translate?: boolean
+	}
+	if (body.translate) {
+		const both = (text: string) =>
+			text.startsWith('{')
+				? text
+				: JSON.stringify({ en: text, ar: `ع ${text}` })
+		const category = (c: Json) => {
+			c.displayName = both(c.displayName)
+			for (const item of c.items) {
+				item.displayName = both(item.displayName)
+				if (item.description) item.description = both(item.description)
+			}
+			c.subcategories?.forEach(category)
+		}
+		for (const m of live.menu.menus) m.categories.forEach(category)
 	}
 	walkItems(live.menu, (item) => {
 		if (body.prices?.[item.id] !== undefined) item.price = body.prices[item.id]

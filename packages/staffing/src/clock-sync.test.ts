@@ -176,14 +176,46 @@ describe('syncQueue', () => {
 		expect(outcome).toMatchObject({ synced: 1, remaining: 2 })
 	})
 
-	it('sets aside a punch the server keeps breaking on, after half an hour of tries', async () => {
-		await add('a', 5_000 - POISON_MIN_AGE_MS - 1, 'clock_in', 'rana')
-		const punch = async () => {
-			throw new KioskApiError(500, 'internal_error')
+	it('sets aside a punch the server keeps breaking on, while others get through', async () => {
+		await add('rana-in', 1, 'clock_in', 'rana')
+		let clock = 10_000
+		const runAt = (punch: PunchFn) =>
+			syncQueue({ queue, api: { punch: punch as never }, now: () => clock })
+		const punch = async (body: KioskPunchBody) => {
+			if (body.id === 'rana-in') throw new KioskApiError(500, 'internal_error')
+			return { outcome: 'accepted' }
 		}
-		for (let i = 0; i < MAX_SYNC_ATTEMPTS; i++) await run(punch)
+		// Eight runs, five minutes apart, each with someone else's punch going out.
+		for (let i = 0; i < MAX_SYNC_ATTEMPTS; i++) {
+			await add(`omar-${i}`, clock, 'clock_in', `omar-${i}`)
+			await runAt(punch)
+			clock += 5 * 60_000
+		}
 		expect(await queue.counts()).toEqual({ queued: 0, failed: 1 })
 		expect((await queue.failed())[0]!.failure).toBe('server_error')
+	})
+
+	it('an outage of 500s for everyone sets nothing aside, and stops early', async () => {
+		await add('a', 1, 'clock_in', 'rana')
+		await add('b', 2, 'clock_in', 'omar')
+		await add('c', 3, 'clock_in', 'lina')
+		let clock = 5_000 + POISON_MIN_AGE_MS * 4
+		const seen: string[] = []
+		const punch = async (body: KioskPunchBody) => {
+			seen.push(body.id)
+			throw new KioskApiError(500, 'internal_error')
+		}
+		for (let i = 0; i < MAX_SYNC_ATTEMPTS * 2; i++) {
+			await syncQueue({
+				queue,
+				api: { punch: punch as never },
+				now: () => clock,
+			})
+			clock += 5 * 60_000
+		}
+		expect(await queue.counts()).toEqual({ queued: 3, failed: 0 })
+		// Two 500s in a row with nothing answered: the run stops, never tries the third.
+		expect(seen.filter((id) => id === 'c')).toHaveLength(0)
 	})
 
 	it('keeps a recent punch through any number of server errors', async () => {

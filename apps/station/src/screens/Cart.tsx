@@ -15,6 +15,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type OrderType } from '~/lib/db.ts'
+import { menuText } from '~/lib/menu-text.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import { type PhonePickup } from '~/lib/pickup.ts'
 import {
@@ -434,7 +435,9 @@ function LineItem({
 					className="min-w-0 flex-1 text-start"
 					aria-label={_(t`Edit ${line.name}`)}
 				>
-					<div className="leading-tight font-semibold">{line.name}</div>
+					<div className="leading-tight font-semibold">
+						{menuText(line.name)}
+					</div>
 					{line.variantLabel ? (
 						<div className="text-muted-foreground text-sm">
 							{line.variantLabel}
@@ -446,7 +449,7 @@ function LineItem({
 							className="text-muted-foreground text-sm"
 						>
 							{o.quantity > 1 ? `${o.quantity}× ` : ''}
-							{o.optionName}
+							{menuText(o.optionName)}
 							{o.unitCents > 0 ? ` +${money(o.unitCents * o.quantity)}` : ''}
 						</div>
 					))}

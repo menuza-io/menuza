@@ -1309,6 +1309,8 @@ export async function createWalkIn(params: {
 		overbook?: boolean
 		overbookReason?: string | null
 		dietaryNotes?: string | null
+		/** The guest's own words (a waitlist note): shown only with guest details. */
+		guestRequests?: string | null
 		internalNotes?: string | null
 		staffNotes?: string | null
 		guestId?: string | null
@@ -1539,6 +1541,7 @@ export async function createWalkIn(params: {
 				comboId: assignedComboId,
 				overbooked: isOverbook,
 				dietaryNotes: input.dietaryNotes ?? null,
+				guestRequests: input.guestRequests ?? null,
 				staffNotes: input.internalNotes ?? input.staffNotes ?? null,
 				paymentStatus: 'none',
 				scheduleVersion: 1,
@@ -2748,6 +2751,12 @@ export async function transitionReservationStatus(params: {
 	actorId: string
 	/** The tick acts as `system` (no operator id on the event). */
 	actorKind?: 'operator' | 'system'
+	/**
+	 * The caller may not move money (a till without the payment grant). Judged
+	 * on the row as it is inside the write: confirming an unpaid booking waives
+	 * its deposit, and cancelling or a no-show on a paid one refunds or charges.
+	 */
+	paymentLocked?: boolean
 	input: {
 		status: string
 		covers?: number | null
@@ -2802,6 +2811,16 @@ export async function transitionReservationStatus(params: {
 			}
 
 			const targetStatus = params.input.status
+			if (
+				params.paymentLocked &&
+				(current.status === 'pending_payment' ||
+					((targetStatus === 'cancelled' || targetStatus === 'no_show') &&
+						current.paymentStatus !== 'none'))
+			)
+				throw conflict(
+					'manager_required',
+					'This booking has a payment on it. A manager changes it in the app.',
+				)
 			const allowedSet = VALID_STATUS_TRANSITIONS[current.status]
 			if (!allowedSet || !allowedSet.has(targetStatus)) {
 				throw conflict(

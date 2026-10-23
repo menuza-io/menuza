@@ -248,6 +248,21 @@ operatorReservationsWaitlistRoutes.on(
 		if (orgErr) return orgErr
 		const parsed = await readJsonBody(c, updateBodySchema)
 		if ('error' in parsed) return parsed.error
+		// Notes and contact details are hidden without the guest grant: whoever
+		// cannot read them cannot overwrite them either.
+		if (
+			!canReadGuest(ctx) &&
+			(parsed.data.notes !== undefined ||
+				parsed.data.phone !== undefined ||
+				parsed.data.email !== undefined)
+		)
+			return json(
+				{
+					error: 'guest_permission_required',
+					message: 'Only someone who can see guest details can change them.',
+				},
+				403,
+			)
 		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {

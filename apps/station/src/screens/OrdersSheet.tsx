@@ -20,6 +20,7 @@ import { AuditSheet, useReasonLabel } from './AuditSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
 import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
+import { menuText } from '~/lib/menu-text.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import {
 	balanceCents,
@@ -495,7 +496,7 @@ export function OrdersSheet({
 										>
 											<div className="min-w-0 flex-1 break-words">
 												<div className="font-medium">
-													{l.quantity} × {l.name}
+													{l.quantity} × {menuText(l.name)}
 												</div>
 												{l.variantLabel ? (
 													<div className="text-muted-foreground text-sm">
@@ -508,7 +509,7 @@ export function OrdersSheet({
 														className="text-muted-foreground text-sm"
 													>
 														{o.quantity > 1 ? `${o.quantity} × ` : ''}
-														{o.optionName}
+														{menuText(o.optionName)}
 													</div>
 												))}
 												{l.instructions ? (
