@@ -38,6 +38,12 @@ export type Session = {
 	role: StaffRole
 	mode: SignInMode
 	at: number
+	/**
+	 * The server's proof of this sign-in, for Station apps that act as the person
+	 * (the host stand). Only an online sign-in has one; it lives in memory with
+	 * the session and goes when the till locks.
+	 */
+	serverSession?: { token: string; expiresAt: number }
 }
 
 export type SignInOutcome =
@@ -223,6 +229,8 @@ const signInResponseSchema = z.object({
 		name: z.string().max(200),
 	}),
 	role: z.enum(['cashier', 'manager']),
+	sessionToken: z.string().min(20).max(4000).optional(),
+	sessionExpiresAt: z.number().int().positive().optional(),
 })
 
 async function signIn(
@@ -296,9 +304,23 @@ async function signIn(
 			/* signed in; not remembered for offline use this time */
 		}
 		monotonicBlockedUntil = null
+		const { sessionToken, sessionExpiresAt } = parsed.data
 		return {
 			ok: true,
-			session: { staff, role, mode: 'online', at: now },
+			session: {
+				staff,
+				role,
+				mode: 'online',
+				at: now,
+				...(sessionToken && sessionExpiresAt
+					? {
+							serverSession: {
+								token: sessionToken,
+								expiresAt: sessionExpiresAt,
+							},
+						}
+					: {}),
+			},
 		}
 	}
 

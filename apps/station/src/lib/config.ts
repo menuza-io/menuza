@@ -1,3 +1,5 @@
+import { NO_POS_DEVICE_APPS, type PosDeviceApps } from '@repo/common/pos-orders'
+
 /**
  * Device settings, kept in localStorage so the shell can boot with no network
  * and no IndexedDB round-trip. Nothing here is a secret except `deviceToken`.
@@ -38,6 +40,23 @@ export type PosSettings = {
 	demo: boolean
 	/** Interface language chosen on this device; null follows the restaurant's default. */
 	locale: 'en' | 'ar' | null
+	/** Station apps beside the till, as the server last reported them. */
+	apps: PosDeviceApps
+	/** The app on screen, kept per device so a host stand reopens as a host stand. */
+	activeApp: StationApp
+}
+
+/** The apps a Station tablet can show: the till, the time clock, the host stand. */
+export type StationApp = 'pos' | 'timeclock' | 'reservations'
+
+/** The active app if the terminal still offers it, else the till. */
+export function shownApp(
+	s: Pick<PosSettings, 'apps' | 'activeApp'>,
+): StationApp {
+	if (s.activeApp === 'timeclock' && s.apps.timeclock) return 'timeclock'
+	if (s.activeApp === 'reservations' && s.apps.reservations)
+		return 'reservations'
+	return 'pos'
 }
 
 const KEY = 'pos.settings.v1'
@@ -58,6 +77,8 @@ const defaults = (): PosSettings => ({
 	deviceLabel: null,
 	demo: import.meta.env.VITE_POS_DEMO === '1',
 	locale: null,
+	apps: { ...NO_POS_DEVICE_APPS },
+	activeApp: 'pos',
 })
 
 export function loadSettings(): PosSettings {

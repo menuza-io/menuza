@@ -347,6 +347,8 @@ describe('held uploads', () => {
 		deviceLabel: null,
 		demo: false,
 		locale: null,
+		apps: { timeclock: false, reservations: false },
+		activeApp: 'pos',
 	}
 
 	it('treats an upload the server kept for review as delivered, and a moved tab as moved', async () => {

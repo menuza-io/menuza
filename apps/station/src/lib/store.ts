@@ -1,5 +1,6 @@
 import { t } from '@lingui/macro'
 import { create } from 'zustand'
+import { flushPunches, punchQueue } from '../apps/timeclock/clock.ts'
 import { touch } from './activity.ts'
 import {
 	buildCategories,
@@ -274,12 +275,18 @@ export const usePos = create<PosState>((set, get) => ({
 					...get().settings,
 					deviceToken: null,
 					signInRequired: false,
+					apps: { timeclock: false, reservations: false },
 				}
 				saveSettings(settings)
 				set({ settings, pairingLost: true, session: null })
 				void forgetZatcaUnit()
 			},
 		})
+		// Punches waiting since the till was offline go out in their own queue.
+		const punches = await flushPunches(get().settings, get().online).catch(
+			() => null,
+		)
+		if (punches?.deviceGone) void get().verifyPairing()
 		// Orders going through proves the server knows us.
 		if (sent > 0 && get().unrecognisedStrikes > 0) {
 			set({
@@ -290,7 +297,7 @@ export const usePos = create<PosState>((set, get) => ({
 	},
 
 	async verifyPairing() {
-		const { verdict, device, transfers, fiscalChains, zatca } =
+		const { verdict, device, apps, transfers, fiscalChains, zatca } =
 			await checkDeviceDetailed(get().settings)
 		if (verdict === 'ok') {
 			if (get().unrecognisedStrikes > 0 || get().pairingLost)
@@ -317,6 +324,17 @@ export const usePos = create<PosState>((set, get) => ({
 				saveSettings(settings)
 				set({ settings })
 			}
+			// A manager may have turned the time clock or the host stand on or off.
+			const before = get().settings.apps
+			if (
+				apps &&
+				(apps.timeclock !== before.timeclock ||
+					apps.reservations !== before.reservations)
+			) {
+				const settings = { ...get().settings, apps }
+				saveSettings(settings)
+				set({ settings })
+			}
 			// Tabs another terminal took over stop being open here.
 			if (transfers && transfers.length > 0)
 				await markTransferredAway(transfers)
@@ -333,6 +351,7 @@ export const usePos = create<PosState>((set, get) => ({
 			...get().settings,
 			deviceToken: null,
 			signInRequired: false,
+			apps: { timeclock: false, reservations: false },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: true, session: null })
@@ -484,6 +503,8 @@ export const usePos = create<PosState>((set, get) => ({
 		const next = withPairing(settings, result)
 		await get().updateSettings({ ...next })
 		set({ pairingLost: false })
+		// Learn which Station apps this terminal offers now, not at the next check.
+		void get().verifyPairing()
 		// Anything saved while unpaired goes out now, not after a retry timer.
 		void get().sync(true)
 		return null
@@ -496,11 +517,16 @@ export const usePos = create<PosState>((set, get) => ({
 			deviceLabel: null,
 			locationLocked: false,
 			signInRequired: false,
+			apps: { timeclock: false, reservations: false },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: false, session: null })
 		void forgetCachedStaff()
 		void forgetZatcaUnit()
+		// Waiting punches hold encrypted PINs: they go with the pairing.
+		void punchQueue()
+			.wipe()
+			.catch(() => {})
 	},
 
 	setOrderType: (orderType) =>

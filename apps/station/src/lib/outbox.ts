@@ -570,6 +570,8 @@ export type DeviceCheck = {
 		dayStartMinutes: number | null
 		shiftsRequired: boolean
 	}
+	/** Station apps the terminal offers (its setting and the organization's flag). */
+	apps?: { timeclock: boolean; reservations: boolean }
 	/** Tabs another terminal took over from this one. */
 	transfers?: Array<{ orderId: string; terminalCode: string }>
 	/** This terminal's fiscal chains as the server has them. */
@@ -615,6 +617,7 @@ export async function checkDeviceDetailed(
 					dayStartMinutes?: number
 					shiftsRequired?: boolean
 				}
+				apps?: { timeclock?: boolean; reservations?: boolean }
 				transfers?: Array<{ orderId: string; terminalCode: string }>
 				fiscalChains?: PosFiscalChainHead[]
 				zatca?: {
@@ -639,6 +642,11 @@ export async function checkDeviceDetailed(
 							shiftsRequired: d.shiftsRequired === true,
 						}
 					: undefined,
+				// An older node reports no apps: it offers none.
+				apps: {
+					timeclock: body.apps?.timeclock === true,
+					reservations: body.apps?.reservations === true,
+				},
 				transfers: Array.isArray(body.transfers) ? body.transfers : [],
 				fiscalChains: Array.isArray(body.fiscalChains) ? body.fiscalChains : [],
 				zatca: body.zatca ?? null,
