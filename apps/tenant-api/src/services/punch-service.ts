@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lte, max, or } from 'drizzle-orm'
+import { and, desc, eq, gt, gte, isNull, lt, lte, max, or } from 'drizzle-orm'
 import {
 	allowedClockEvents,
 	breakIsPaid,
@@ -368,12 +368,15 @@ function successResult(
  * A punch this device already recorded under this id, answered as it was
  * (before any PIN check: the PIN may have been given to someone else since,
  * and a lost answer must never turn a recorded punch into a refused one).
- * Null when there is none, or it was refused.
+ * A tablet paired again keeps its waiting punches but has a new device id:
+ * its punch still counts as its own when it names the same person (ids are
+ * random, so only the till that made the punch knows it). Null when there is
+ * none, or it was refused.
  */
 export async function replayRecordedPunch(
 	db: TenantDatabase,
 	deviceId: string,
-	request: Pick<KioskPunchRequest, 'id' | 'kind'>,
+	request: Pick<KioskPunchRequest, 'id' | 'kind' | 'staffId'>,
 	now: number,
 ): Promise<PunchSuccess | null> {
 	const [existing] = await db
@@ -383,7 +386,8 @@ export async function replayRecordedPunch(
 		.limit(1)
 	if (
 		!existing ||
-		existing.deviceId !== deviceId ||
+		(existing.deviceId !== deviceId &&
+			(!request.staffId || existing.staffId !== request.staffId)) ||
 		existing.kind !== request.kind ||
 		existing.outcome !== 'accepted'
 	)
@@ -545,7 +549,29 @@ async function runPunch(
 	if (open && open.entry.scopeId !== scopeId) {
 		return reject('clocked_in_elsewhere', undefined, 'rejected_state')
 	}
-	const next = nextClockState(state, request.kind)
+	// A clock-out saved offline for a shift the server closed on its own in the
+	// meantime (automatic clock-out, while the till could not send): the time
+	// they actually left replaces the automatic one; the card keeps its
+	// auto_clock_out flag and stays with a manager.
+	let autoClosed: TimeEntry | null = null
+	if (!open && request.offline && request.kind === 'clock_out') {
+		const [candidate] = await tx
+			.select()
+			.from(timeEntries)
+			.where(
+				and(
+					eq(timeEntries.staffId, member.id),
+					eq(timeEntries.scopeId, scopeId),
+					eq(timeEntries.clockOutKind, 'auto'),
+					isNull(timeEntries.voidedAt),
+					lt(timeEntries.clockInAt, effectiveAt),
+					gt(timeEntries.clockOutAt, effectiveAt),
+				),
+			)
+			.limit(1)
+		autoClosed = candidate ?? null
+	}
+	const next = autoClosed ? 'out' : nextClockState(state, request.kind)
 	if (!next) {
 		return reject(
 			stateRejection(state, request.kind),
@@ -601,18 +627,24 @@ async function runPunch(
 					: undefined,
 			)
 		}
+		const early = !ruled.ok && ruled.code === 'early_clock_in'
 		const decision = ruled.ok
 			? ruled
 			: {
 					ok: true as const,
 					flags: [
-						ruled.code === 'early_clock_in'
-							? ('early_in' as const)
-							: ('unscheduled' as const),
+						early ? ('early_in' as const) : ('unscheduled' as const),
 						'offline_override' as const,
 					],
-					shift: null,
+					// Early still has its shift: its role, its end and the schedule link.
+					shift: early ? (shift ?? null) : null,
 				}
+		// Paid from the earliest allowed time, as if they had waited (as online);
+		// the punch itself keeps the time it was tapped.
+		const clockInAt =
+			!ruled.ok && ruled.code === 'early_clock_in'
+				? Math.max(effectiveAt, ruled.earliestAt)
+				: effectiveAt
 
 		let picked: JobWithPosition | null = null
 		if (request.positionId) {
@@ -654,7 +686,7 @@ async function runPunch(
 			jobId: picked?.job.id ?? null,
 			positionId,
 			shiftId: decision.shift?.id ?? null,
-			clockInAt: effectiveAt,
+			clockInAt,
 			timeZone,
 			localDate,
 			status: 'open',
@@ -666,7 +698,7 @@ async function runPunch(
 			updatedAt: now,
 		})
 	} else {
-		const entry = open!.entry
+		const entry = open?.entry ?? autoClosed!
 		entryId = entry.id
 		positionId = entry.positionId
 
@@ -688,9 +720,19 @@ async function runPunch(
 				.where(eq(timeBreaks.id, open!.openBreakId!))
 			await touchEntry(tx, entry, now, flags)
 		} else {
+			// A break the automatic clock-out ended ends when they left, too.
+			const autoEndedBreak = autoClosed
+				? ((await loadBreaks(tx, [entry.id])).get(entry.id) ?? []).find(
+						(b) =>
+							b.voidedAt === null &&
+							b.endPunchId === null &&
+							b.endAt === autoClosed!.clockOutAt &&
+							b.startAt < effectiveAt,
+					)
+				: undefined
 			await closeEntry(tx, {
 				entry,
-				openBreakId: open!.openBreakId,
+				openBreakId: open?.openBreakId ?? autoEndedBreak?.id ?? null,
 				effectiveAt,
 				now,
 				policy,

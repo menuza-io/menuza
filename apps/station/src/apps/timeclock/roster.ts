@@ -16,23 +16,41 @@ import {
 
 const keyFor = async (pin: string) => derivePinKey(pin, await deviceSalt())
 
-/** Remembers whoever an online check just named. */
+/**
+ * Remembers whoever an online check just named. Some of what it says depends
+ * on where they are in their shift: roles come only while clocked out, and
+ * whether they declare tips only while clocked in (for the job they are on).
+ * The rest is kept from the last time it was said, so a clock-in does not
+ * forget the tips and a clock-out does not forget the roles.
+ */
 export async function rememberClockPerson(
 	pin: string,
 	who: Pick<
 		KioskIdentifyView,
 		'firstName' | 'positions' | 'breakKinds' | 'staffId'
 	> &
-		Partial<Pick<KioskIdentifyView, 'promptTips'>>,
+		Partial<Pick<KioskIdentifyView, 'promptTips' | 'state'>>,
 	now = Date.now(),
 ): Promise<void> {
+	const key = await keyFor(pin)
+	const before = await db.clockPeople.get(key)
+	// The same person as before (a PIN can change hands).
+	const known =
+		before &&
+		(!who.staffId || !before.staffId || before.staffId === who.staffId)
+			? before
+			: undefined
+	const clockedIn = who.state === 'in' || who.state === 'on_break'
+	const positions = clockedIn && known ? known.positions : who.positions
+	const promptTips =
+		who.state === 'out' ? known?.promptTips === true : who.promptTips === true
 	await db.clockPeople.put({
-		key: await keyFor(pin),
+		key,
 		...(who.staffId ? { staffId: who.staffId } : {}),
 		firstName: who.firstName,
-		positions: who.positions,
+		positions,
 		breakKinds: who.breakKinds,
-		...(who.promptTips ? { promptTips: true } : {}),
+		...(promptTips ? { promptTips: true } : {}),
 		cachedAt: now,
 	})
 }

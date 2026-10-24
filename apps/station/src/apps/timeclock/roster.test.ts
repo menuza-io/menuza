@@ -34,13 +34,35 @@ describe('offline clock roster', () => {
 
 	it('remembers who declares cash tips, so an offline clock-out asks too', async () => {
 		const now = Date.UTC(2026, 9, 23, 12)
-		await rememberClockPerson('4321', { ...rana, promptTips: true }, now)
-		await rememberClockPerson('8765', rana, now)
+		// Clocked in: tips are known, roles are not sent.
+		await rememberClockPerson(
+			'4321',
+			{ ...rana, positions: [], state: 'in', promptTips: true },
+			now,
+		)
+		await rememberClockPerson('8765', { ...rana, state: 'in' }, now)
 		expect(await findClockPerson('4321', now)).toEqual({
 			person: expect.objectContaining({ promptTips: true }),
 		})
 		const other = await findClockPerson('8765', now)
 		expect('person' in other && other.person?.promptTips).toBeFalsy()
+		// Clocked out next time: the roles come back, the tips are kept.
+		await rememberClockPerson('4321', { ...rana, state: 'out' }, now)
+		expect(await findClockPerson('4321', now)).toEqual({
+			person: expect.objectContaining({
+				promptTips: true,
+				positions: rana.positions,
+			}),
+		})
+		// Clocked in again: the roles are kept.
+		await rememberClockPerson(
+			'4321',
+			{ ...rana, positions: [], state: 'in', promptTips: true },
+			now,
+		)
+		expect(await findClockPerson('4321', now)).toEqual({
+			person: expect.objectContaining({ positions: rana.positions }),
+		})
 	})
 
 	it('forgets people it has not seen for a while', async () => {

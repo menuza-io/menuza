@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react'
 import {
 	quickActionsFor,
 	type QuickAction,
+	TILL_NO_SHOW_GRACE_MS,
 	type WaitlistEntry,
 } from '@repo/reservations'
 import {
@@ -320,7 +321,7 @@ export function PartySheet({
 									)}
 								</Button>
 							) : null}
-							{has('no_show') ? (
+							{has('no_show') && now >= r.startAt + TILL_NO_SHOW_GRACE_MS ? (
 								<Button
 									variant="ghost"
 									size="lg"

@@ -37,6 +37,7 @@ import {
 	createOperatorReservation,
 	updateReservationNotes,
 } from '../services/rsv-booking-service.ts'
+import { createWaitlistEntry } from '../services/rsv-waitlist-service.ts'
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
 
 /**
@@ -454,21 +455,38 @@ describe('Station host stand contract', () => {
 
 		// A note typed on a waitlist entry rides on the booking once seated:
 		// hidden from this till under every name, history included.
-		const noted = await call(
-			'POST',
-			'/operator/reservations/book/waitlist',
-			{ ...rsv, 'Idempotency-Key': 'station-contract-waitlist-note' },
-			{
-				locationId: PUBLIC_LOC,
+		// (A till may not write the note, or an email, on the list itself.)
+		for (const extra of [
+			{ notes: 'Ramp access, sesame' },
+			{ email: 'jane@example.com' },
+		]) {
+			const refused = await call(
+				'POST',
+				'/operator/reservations/book/waitlist',
+				{
+					...rsv,
+					'Idempotency-Key': `station-contract-wl-${Object.keys(extra)[0]}`,
+				},
+				{ locationId: PUBLIC_LOC, displayName: 'Lina', partySize: 2, ...extra },
+			)
+			expect(refused.status, refused.text).toBe(403)
+			expect(refused.body.error).toBe('not_for_station')
+		}
+		const noted = await createWaitlistEntry({
+			orgId: ORG_A,
+			locationId: PUBLIC_LOC,
+			idempotencyKey: 'station-contract-waitlist-note',
+			channel: 'walk_in',
+			duplicateCode: 'duplicate_active_entry',
+			input: {
 				displayName: 'Lina Aziz',
 				partySize: 2,
 				notes: 'Ramp access, sesame',
 			},
-		)
-		expect(noted.status, noted.text).toBe(201)
+		})
 		const seatedFromList = await call(
 			'POST',
-			`/operator/reservations/book/waitlist/${noted.body.entry.id}/seat`,
+			`/operator/reservations/book/waitlist/${noted.entryId}/seat`,
 			{ ...rsv, 'Idempotency-Key': 'station-contract-waitlist-note-seat' },
 			{ tableIds: ['tbl_pub_2'] },
 		)

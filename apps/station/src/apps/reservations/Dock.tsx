@@ -221,12 +221,17 @@ export function Dock({
 				>
 					{missed.map((reservation) => {
 						const who = shortName(reservation, _(msg`Guest`))
+						const marked = reservation.status === 'no_show'
 						return (
 							<li key={reservation.id} className="shrink-0">
 								<button
 									type="button"
 									onClick={() => onDetails(reservation)}
-									aria-label={_(msg`${who} did not arrive. Details`)}
+									aria-label={
+										marked
+											? _(msg`${who} marked as a no-show.`)
+											: _(msg`${who} did not arrive. Details`)
+									}
 									className="dock-card bg-background border-border text-muted-foreground hover:bg-accent flex h-[5.5rem] w-40 flex-col justify-between rounded-2xl border border-dashed p-3 text-start transition-colors"
 								>
 									<span className="flex items-center gap-2">
@@ -239,7 +244,11 @@ export function Dock({
 										{who}
 									</bdi>
 									<span className="text-xs font-medium">
-										<Trans>Mark as no-show</Trans>
+										{marked ? (
+											<Trans>Not a no-show</Trans>
+										) : (
+											<Trans>Mark as no-show</Trans>
+										)}
 									</span>
 								</button>
 							</li>

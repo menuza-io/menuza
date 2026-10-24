@@ -131,10 +131,16 @@ describe('menu text', () => {
 				organization: { ...plain.organization, defaultLocale: 'ar' },
 			}),
 		).toBe('ar')
+		// The till's own location decides: a group's riyal branch records in
+		// Arabic, its dollar branch does not.
+		const riyadh = { ...plain.locations[0]!, currency: 'SAR' as const }
+		const group = { ...plain, locations: [...plain.locations, riyadh] }
+		expect(recordLocale(group, riyadh)).toBe('ar')
+		expect(recordLocale(group, plain.locations[0]!)).toBe('en')
 		expect(
 			recordLocale({
 				...plain,
-				locations: plain.locations.map((l) => ({ ...l, currency: 'SAR' })),
+				organization: { ...plain.organization, currency: 'SAR' as const },
 			}),
 		).toBe('ar')
 	})

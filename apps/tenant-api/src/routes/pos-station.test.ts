@@ -503,9 +503,45 @@ describe('Station apps on a POS terminal', () => {
 				terminalCode: 'T7',
 				timeclockEnabled: false,
 			})
+			{
+				// Paired now, by the test clock.
+				const db = await getTenantDb(ORG_A)
+				const { posDevices } = await import('@repo/tenant-db')
+				await db
+					.update(posDevices)
+					.set({ pairedAt: h.clock.now })
+					.where(eq(posDevices.id, never.deviceId))
+			}
 			const sneaky = await replay(never.secret, h.clock.now)
 			expect(sneaky.status).toBe(409)
 			expect(sneaky.body.error).toBe('timeclock_was_off')
+			// A punch saved before this pairing (the tablet was paired again with its
+			// waiting punches) is held until the clock is turned on here.
+			const earlier = h.clock.now - 60_000
+			const other = await h.seedStaff(ORG_A, {})
+			const otherReplay = () =>
+				request('POST', '/pos/timeclock/punch', {
+					secret: never.secret,
+					body: {
+						id: crypto.randomUUID(),
+						kind: 'clock_in',
+						pin: other.pin,
+						clientAt: earlier,
+						offline: true,
+					},
+				})
+			const beforePairing = await otherReplay()
+			expect(beforePairing.status).toBe(403)
+			expect(beforePairing.body.error).toBe('timeclock_not_enabled')
+			{
+				const db = await getTenantDb(ORG_A)
+				const { posDevices } = await import('@repo/tenant-db')
+				await db
+					.update(posDevices)
+					.set({ timeclockEnabled: true })
+					.where(eq(posDevices.id, never.deviceId))
+			}
+			expect((await otherReplay()).status).toBe(200)
 
 			// Switched off: punches made before still land, ones made after do not.
 			const { secret, deviceId } = await pairTerminal({ terminalCode: 'T8' })
@@ -513,7 +549,11 @@ describe('Station apps on a POS terminal', () => {
 			const { posDevices } = await import('@repo/tenant-db')
 			await db
 				.update(posDevices)
-				.set({ timeclockEnabled: false, timeclockDisabledAt: h.clock.now })
+				.set({
+					timeclockEnabled: false,
+					timeclockDisabledAt: h.clock.now,
+					pairedAt: h.clock.now - 60 * 60_000,
+				})
 				.where(eq(posDevices.id, deviceId))
 			const after = await replay(secret, h.clock.now + 60_000)
 			// Final, not a pause: the till sets it aside for a manager.
@@ -533,7 +573,8 @@ describe('Station apps on a POS terminal', () => {
 			expect(held.body.error).toBe('timeclock_disabled')
 			// Not knowing the flag does not: the punch already happened.
 			staffingFlags.set(ORG_A, null)
-			expect((await replay(secret, h.clock.now - 60_000)).status).toBe(200)
+			const landed = await replay(secret, h.clock.now - 60_000)
+			expect(landed.status).toBe(200)
 		})
 
 		it('refuses kiosk secrets, operator tokens, missing and revoked credentials', async () => {

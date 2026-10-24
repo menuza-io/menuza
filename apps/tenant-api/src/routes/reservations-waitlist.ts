@@ -164,12 +164,38 @@ operatorReservationsWaitlistRoutes.on(
 	},
 )
 
+const STATION_WAITLIST_FIELDS = new Set([
+	'locationId',
+	'displayName',
+	'partySize',
+	'phone',
+	'idempotencyKey',
+])
+
 operatorReservationsWaitlistRoutes.post('/', rsvGuard(WRITE), async (c) => {
 	const ctx = getRsvAuth(c)
 	const orgErr = await ensureActiveOrgInNodeRegion(ctx)
 	if (orgErr) return orgErr
 	const parsed = await readJsonBody(c, createBodySchema)
 	if ('error' in parsed) return parsed.error
+	// A till puts a name, a party size and a number on the list, nothing more:
+	// an email (looked up and written to when seated) or a note is the app's.
+	if (
+		ctx.channel === 'station' &&
+		Object.entries(parsed.data).some(
+			([key, value]) =>
+				value !== undefined &&
+				value !== null &&
+				!STATION_WAITLIST_FIELDS.has(key),
+		)
+	)
+		return json(
+			{
+				error: 'not_for_station',
+				message: 'That is done in the app, not at a till.',
+			},
+			403,
+		)
 	const loc = requireReservationsLocation(ctx, parsed.data.locationId)
 	if (!loc.ok) return loc.response
 	try {

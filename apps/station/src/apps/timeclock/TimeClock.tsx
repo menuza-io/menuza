@@ -120,6 +120,9 @@ export function TimeClock({
 	const [behind, setBehind] = useState(false)
 	/** A break was chosen where the rules know more than one kind. */
 	const [pickingBreak, setPickingBreak] = useState(false)
+	// Which offline step is showing (actions, role, break or tips): focus and
+	// the entrance follow it as they follow the screens.
+	const [offlineStep, setOfflineStep] = useState('actions')
 	/** Bumped by any touch, so a person still typing is not sent back to the pad. */
 	const [touched, setTouched] = useState(0)
 	const api = useMemo(() => stationClockApi(settings), [settings])
@@ -169,7 +172,7 @@ export function TimeClock({
 			}
 		})
 		return () => cancelAnimationFrame(frame)
-	}, [onPad, flow.screen, pickingBreak])
+	}, [onPad, flow.screen, pickingBreak, offlineStep])
 
 	// The break choice belongs to one person's actions screen, never the next one's.
 	useEffect(() => {
@@ -481,7 +484,7 @@ export function TimeClock({
 					>
 						{flow.screen !== 'pin' && flow.screen !== 'people' ? (
 							<Stagger
-								replay={`${flow.screen}${pickingBreak ? ':break' : ''}`}
+								replay={`${flow.screen}${pickingBreak ? ':break' : ''}${flow.screen === 'offline' ? `:${offlineStep}` : ''}`}
 								className="flex h-full flex-col gap-5"
 							>
 								{flow.screen === 'actions' && pickingBreak ? (
@@ -530,6 +533,7 @@ export function TimeClock({
 										busy={busy}
 										locale={i18n.locale}
 										currency={currency}
+										onStep={setOfflineStep}
 										onChoose={(event, extras) => void punch(event, extras)}
 										onBack={reset}
 									/>
@@ -1020,6 +1024,7 @@ function OfflineActions({
 	busy,
 	locale,
 	currency,
+	onStep,
 	onChoose,
 	onBack,
 }: {
@@ -1030,6 +1035,7 @@ function OfflineActions({
 	busy: boolean
 	locale: string
 	currency: string
+	onStep: (step: 'actions' | 'role' | 'break' | 'tips') => void
 	onChoose: (
 		event: ClockEvent,
 		extras?: {
@@ -1045,6 +1051,17 @@ function OfflineActions({
 	const [declareTips, setDeclareTips] = useState(false)
 	const positions = who?.positions ?? []
 	const breakKinds = who?.breakKinds ?? []
+	const step = declareTips
+		? 'tips'
+		: pickBreak
+			? 'break'
+			: pickRole
+				? 'role'
+				: 'actions'
+	useEffect(() => {
+		onStep(step)
+		return () => onStep('actions')
+	}, [step, onStep])
 	// Cash tips are declared at clock-out, connection or not.
 	if (declareTips)
 		return (

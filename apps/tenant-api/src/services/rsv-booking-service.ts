@@ -14,6 +14,7 @@ import {
 	type EngineServiceAvailabilityInput,
 	type EngineTableInput,
 	type ReservationStatus,
+	TILL_NO_SHOW_GRACE_MS,
 } from '@repo/reservations'
 import {
 	getTenantDb,
@@ -2805,9 +2806,6 @@ const JOURNEY_TRIGGER_FOR_STATUS: Record<
 	cancelled: 'reservation_cancelled',
 }
 
-/** How long after its time a till may call a booking a no-show. */
-const TILL_NO_SHOW_GRACE_MS = 15 * 60_000
-
 export async function transitionReservationStatus(params: {
 	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
 	canReadGuestSensitive?: boolean
@@ -2917,7 +2915,7 @@ export async function transitionReservationStatus(params: {
 						.get()
 					const today = instantToLocal(
 						now,
-						settings?.timeZone ?? 'UTC',
+						settings?.timeZone ?? current.timeZone ?? 'UTC',
 						settings?.dayStartMin ?? 240,
 					).businessDate
 					if (current.businessDate !== today)

@@ -207,7 +207,10 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		? null
 		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
 	const categories = location ? buildCategories(menu, location.id) : []
-	const record = localizeMenu(snapshot.menu, recordLocale(snapshot.menu))
+	const record = localizeMenu(
+		snapshot.menu,
+		recordLocale(snapshot.menu, location),
+	)
 	applyTheme(snapshot.organization)
 	document.title = `${snapshot.organization.name} · Station`
 	return {

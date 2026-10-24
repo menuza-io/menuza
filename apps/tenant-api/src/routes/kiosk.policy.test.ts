@@ -201,6 +201,50 @@ describe('kiosk punches under labor policy', () => {
 			})
 		})
 
+		it('lets a late clock-out replace the automatic one it arrived after', async () => {
+			await h.punch(secret, { pin, kind: 'clock_in' })
+			const clockedInAt = h.clock.now
+			h.advance(8 * HOUR)
+			const leftAt = h.clock.now
+			// The staff tick closed the shift on its own overnight (as it writes it).
+			const autoAt = clockedInAt + 14 * HOUR
+			const db = await h.db(ORG_A)
+			const [open] = await entries()
+			await db
+				.update(timeEntries)
+				.set({
+					clockOutAt: autoAt,
+					clockOutKind: 'auto',
+					status: 'needs_review',
+					issues: ['auto_clock_out'],
+				})
+				.where(eq(timeEntries.id, open!.id))
+			h.advance(10 * HOUR)
+			const late = await h.punch(secret, {
+				pin,
+				kind: 'clock_out',
+				offline: true,
+				clientAt: leftAt,
+			})
+			expect(late.status).toBe(200)
+			const [entry] = await entries()
+			expect(entry).toMatchObject({
+				clockOutAt: leftAt,
+				status: 'needs_review',
+			})
+			expect(entry!.issues).toEqual(
+				expect.arrayContaining(['auto_clock_out', 'offline_punch']),
+			)
+			// After the automatic close, or online, it is still refused.
+			const after = await h.punch(secret, {
+				pin,
+				kind: 'clock_out',
+				offline: true,
+				clientAt: autoAt + HOUR,
+			})
+			expect(after.status).toBe(409)
+		})
+
 		it('flags device clock skew and sends the card to review', async () => {
 			await h.punch(secret, {
 				pin,
@@ -746,6 +790,44 @@ describe('kiosk punches under labor policy', () => {
 				shiftId: 'shift-1',
 				issues: [],
 			})
+		})
+
+		it('records an early clock-in queued offline under its shift, paid from the earliest time', async () => {
+			await setPolicy(LOC_1, { preventEarlyMinutes: 10 })
+			const staff = await h.seedStaff(ORG_A, {
+				positions: [
+					{ name: 'Server', rateMinor: 1500 },
+					{ name: 'Bartender', rateMinor: 1900 },
+				],
+			})
+			const db = await h.db(ORG_A)
+			const jobs = await db.query.staffJobs.findMany({
+				where: (j, { eq: equals }) => equals(j.staffId, staff.staffId),
+			})
+			window = {
+				id: 'shift-3',
+				startAt: SHIFT_START,
+				endAt: SHIFT_END,
+				positionId: jobs[1]!.positionId,
+			}
+			h.setClock(SHIFT_START)
+			const replayed = await h.punch(secret, {
+				pin: staff.pin,
+				kind: 'clock_in',
+				offline: true,
+				clientAt: SHIFT_START - 30 * MIN,
+			})
+			expect(replayed.status).toBe(200)
+			const entry = (await entries()).find((e) => e.staffId === staff.staffId)
+			expect(entry).toMatchObject({
+				shiftId: 'shift-3',
+				positionId: jobs[1]!.positionId,
+				rateMinor: 1900,
+				clockInAt: SHIFT_START - 10 * MIN,
+			})
+			expect(entry!.issues).toEqual(
+				expect.arrayContaining(['early_in', 'offline_override']),
+			)
 		})
 
 		it('flags late arrivals past the grace period and early departures', async () => {

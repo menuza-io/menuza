@@ -25,17 +25,18 @@ export function menuText(
 
 /**
  * The language order lines, receipts and invoices are recorded in, whatever
- * each till shows. A restaurant that sells in riyals records in Arabic: a
- * Saudi tax invoice is issued in Arabic (another language may sit beside it).
- * Otherwise the restaurant's default, clamped to a till language: the website
- * may default to one no till shows (Spanish, French...).
+ * each till shows. A location that sells in riyals records in Arabic: a Saudi
+ * tax invoice is issued in Arabic (another language may sit beside it). It is
+ * this till's location that counts (a group's New York branch stays in
+ * English); without one, the restaurant's currency. Otherwise the
+ * restaurant's default, clamped to a till language: the website may default
+ * to one no till shows (Spanish, French...).
  */
-export function recordLocale(menu: MenuPayload): string {
-	if (
-		menu.organization.currency === 'SAR' ||
-		menu.locations.some((l) => l.currency === 'SAR')
-	)
-		return 'ar'
+export function recordLocale(
+	menu: MenuPayload,
+	location: { currency: string } | null = null,
+): string {
+	if ((location?.currency ?? menu.organization.currency) === 'SAR') return 'ar'
 	return effectiveLocale(null, menu.organization.defaultLocale)
 }
 

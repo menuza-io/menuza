@@ -19,6 +19,7 @@ import {
 	arrivals,
 	fits,
 	missedArrivals,
+	recentNoShows,
 	rooms,
 	shortName,
 	tableState,
@@ -223,8 +224,11 @@ export function HostStand({
 	const roomList = useMemo(() => (feed ? rooms(feed) : []), [feed])
 	const room = roomList.find((r) => r.id === roomId) ?? roomList[0] ?? null
 	const due = useMemo(() => (feed ? arrivals(feed, now) : []), [feed, now])
+	// Then the no-shows still inside the undo window, so a mis-tap is put right
+	// after its toast has gone.
 	const missed = useMemo(
-		() => (feed ? missedArrivals(feed, now) : []),
+		() =>
+			feed ? [...missedArrivals(feed, now), ...recentNoShows(feed, now)] : [],
 		[feed, now],
 	)
 	const party = feed?.reservations.find((r) => r.id === partyId) ?? null
@@ -554,18 +558,19 @@ export function HostStand({
 	const tableTarget = targetTable
 		? { table: targetTable, state: tableState(targetTable, feed, now) }
 		: null
-	const recentlyCleared = targetTable
-		? feed.reservations.filter((r) => {
-				if (!r.tableIds.includes(targetTable.id)) return false
-				const clearedAt =
-					r.status === 'finished'
-						? r.finishedAt
-						: r.status === 'no_show' && typeof r.noShowAt === 'number'
-							? r.noShowAt
-							: null
-				return clearedAt != null && now - clearedAt <= FINISHED_UNDO_WINDOW_MS
-			})
-		: []
+	// Parties cleared from this table still inside the undo window, while
+	// nobody else sits there (a no-show leaves its table, so it waits in the
+	// Didn't-arrive lane instead).
+	const recentlyCleared =
+		targetTable && tableTarget?.state.kind !== 'seated'
+			? feed.reservations.filter(
+					(r) =>
+						r.status === 'finished' &&
+						r.tableIds.includes(targetTable.id) &&
+						r.finishedAt != null &&
+						now - r.finishedAt <= FINISHED_UNDO_WINDOW_MS,
+				)
+			: []
 	/** Not seating here after all: the party stays picked up for another table. */
 	const backToPlacing = () => {
 		const pending = tooSmall
@@ -995,6 +1000,10 @@ function refusalMessage(failure: HostApiError | null): MessageDescriptor {
 		// A till seats today's bookings, and calls a no-show once its time has passed.
 		case 'not_today':
 		case 'too_early':
+		// An undo too late, or onto a table someone else now has: not worth a retry.
+		case 'table_occupied':
+		case 'undo_window_expired':
+		case 'cannot_undo':
 			return msg`That cannot be done to this booking now. Here is the latest.`
 		case 'closed_day':
 			return msg`The restaurant is closed that day.`

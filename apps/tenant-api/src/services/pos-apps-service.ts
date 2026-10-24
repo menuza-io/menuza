@@ -48,6 +48,11 @@ export async function timeclockGate(
 			device.timeclockDisabledAt !== null &&
 			replayAt < device.timeclockDisabledAt)
 	if (!offeredThen) {
+		// A punch saved before this pairing (the tablet was paired again, with
+		// its waiting punches) cannot be judged by this terminal's switch: held
+		// (a pause code to the till) until a manager turns the clock on here.
+		if (replay && replayAt !== null && replayAt < device.pairedAt)
+			return { ok: false, status: 403, code: 'timeclock_not_enabled' }
 		// A punch saved offline after the clock was switched off here will never
 		// count: a final answer, so the till lists it for a manager instead of
 		// holding it (and everything behind it) for good.

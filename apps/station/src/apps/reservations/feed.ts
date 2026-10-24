@@ -211,6 +211,27 @@ export function missedArrivals(
 		.sort((a, b) => b.startAt - a.startAt)
 }
 
+/** How long a till can still put right a no-show or a cleared table. */
+export const UNDO_WINDOW_MS = 30 * 60_000
+
+/**
+ * Parties marked as no-shows in the last half hour, latest first: they leave
+ * every lane, so a guest who walks in after all is found here to undo it.
+ */
+export function recentNoShows(
+	feed: Pick<DayFeed, 'reservations'>,
+	now: number,
+) {
+	const markedAt = (r: DayReservation) =>
+		typeof r.noShowAt === 'number' ? r.noShowAt : null
+	return feed.reservations
+		.filter((r) => {
+			const at = markedAt(r)
+			return r.status === 'no_show' && at !== null && now - at <= UNDO_WINDOW_MS
+		})
+		.sort((a, b) => (markedAt(b) ?? 0) - (markedAt(a) ?? 0))
+}
+
 /** Minutes past the booked time (0 when not late yet). */
 export const minutesLate = (r: Pick<DayReservation, 'startAt'>, now: number) =>
 	Math.max(0, Math.floor((now - r.startAt) / 60_000))
