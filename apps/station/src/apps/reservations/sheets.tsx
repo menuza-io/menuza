@@ -865,6 +865,10 @@ export function ChangePartySheet({
 								<span className="t-shimmer self-center text-sm">
 									<Trans>Finding times…</Trans>
 								</span>
+							) : open_.length === 0 ? (
+								<span className="text-muted-foreground self-center text-sm">
+									<Trans>No times left for {size} on this day.</Trans>
+								</span>
 							) : (
 								open_.map((slot) => (
 									<Chip

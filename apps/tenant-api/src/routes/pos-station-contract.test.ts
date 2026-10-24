@@ -600,6 +600,56 @@ describe('Station host stand contract', () => {
 		)
 		expect(waived.status, waived.text).toBe(409)
 		expect(waived.body.error).toBe('manager_required')
+		const till = { authorization: `Bearer ${plain.body.token}` }
+		// Nor resizes it: more covers on a deposit is money.
+		const resizedPaid = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${bookedId}`,
+			till,
+			{ partySize: 6 },
+		)
+		expect(resizedPaid.status, resizedPaid.text).toBe(409)
+		expect(resizedPaid.body.error).toBe('manager_required')
+		// Nor brings back a cancelled booking with money on it.
+		await (
+			await getTenantDb(ORG_A)
+		)
+			.update(rsvReservations)
+			.set({ status: 'cancelled', paymentStatus: 'guaranteed' })
+			.where(eq(rsvReservations.id, bookedId))
+		const revived = await call(
+			'POST',
+			`/operator/reservations/book/reservations/${bookedId}/undo`,
+			{ ...till, 'Idempotency-Key': 'station-contract-undo-paid' },
+			{},
+		)
+		expect(revived.status, revived.text).toBe(409)
+		expect(revived.body.error).toBe('manager_required')
+		// A booking that is over does not change size, for anyone.
+		const overResize = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${bookedId}`,
+			rsv,
+			{ partySize: 3 },
+		)
+		expect(overResize.status, overResize.text).toBe(409)
+		expect(overResize.body.error).toBe('invalid_status')
+		// A till seats parties on tables, but does not lock or swap them.
+		const locking = await call(
+			'POST',
+			`/operator/reservations/book/reservations/${seatedId}/assign`,
+			{ ...till, 'Idempotency-Key': 'station-contract-lock' },
+			{ tableIds: ['tbl_pub_4'], lock: true },
+		)
+		expect(locking.status, locking.text).toBe(403)
+		expect(locking.body.error).toBe('not_for_station')
+		// Times for changing a party leave out the party's own table.
+		const ownFree = await call(
+			'GET',
+			`/operator/reservations/book/availability?locationId=${PUBLIC_LOC}&date=${tomorrow}&partySize=4&excludeReservationId=${seatedId}`,
+			till,
+		)
+		expect(ownFree.status, ownFree.text).toBe(200)
 		const waitingId = waiting.body.entry?.id ?? waiting.body.id
 		const fill = (route: string) =>
 			route

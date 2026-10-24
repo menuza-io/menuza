@@ -16,8 +16,9 @@ import {
 } from './config.ts'
 import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
+import { decodedLine, renameLine } from './line-names.ts'
 import { effectiveLocale } from './locale.ts'
-import { localizeMenu } from './menu-text.ts'
+import { localizeMenu, menuText } from './menu-text.ts'
 import {
 	adoptTab,
 	canAdoptTab,
@@ -45,7 +46,9 @@ import { applyTheme } from './theme.ts'
 import {
 	type CatalogSnapshot,
 	type MenuCategory,
+	type MenuItem,
 	type MenuLocation,
+	type MenuPayload,
 } from './types.ts'
 import { forgetZatcaUnit, syncZatcaUnit } from './zatca.ts'
 
@@ -55,6 +58,10 @@ export type PosState = {
 	settings: PosSettings
 	snapshot: CatalogSnapshot | null
 	categories: MenuCategory[]
+	/** Menu items in the restaurant's default language: what order lines record. */
+	recordItems: Map<string, MenuItem>
+	/** Menu items in this till's language: what it shows. */
+	shownItems: Map<string, MenuItem>
 	location: MenuLocation | null
 	catalogStatus: CatalogStatus
 	catalogError: string | null
@@ -135,6 +142,37 @@ export type OtherTab = {
 const apiUrl = (settings: PosSettings, path: string) =>
 	`${settings.tenantApiUrl.replace(/\/+$/, '')}${path}`
 
+/** Every item of a menu by id (subcategories included). */
+function itemsById(menu: MenuPayload): Map<string, MenuItem> {
+	const items = new Map<string, MenuItem>()
+	const walk = (category: MenuCategory) => {
+		for (const item of category.items) items.set(item.id, item)
+		category.subcategories?.forEach(walk)
+	}
+	for (const m of menu.menus) m.categories.forEach(walk)
+	return items
+}
+
+/**
+ * A line as this till shows it: its names in the till's language when the
+ * menu still has the item, else as recorded (decoded if saved as raw maps).
+ */
+export function shownLine<T extends Parameters<typeof renameLine>[0]>(
+	line: T,
+): T {
+	return renameLine(
+		decodedLine(line),
+		usePos.getState().shownItems.get(line.itemId),
+	)
+}
+
+/** An item's name as this till shows it, else as recorded (for removed lines). */
+export function shownItemName(itemId: string, recorded: string): string {
+	return (
+		usePos.getState().shownItems.get(itemId)?.displayName || menuText(recorded)
+	)
+}
+
 function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 	// Names and descriptions in the till's language: the published menu keeps
 	// every translation (`{"en":…,"ar":…}`). The snapshot itself stays as
@@ -157,6 +195,10 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		? null
 		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
 	const categories = location ? buildCategories(menu, location.id) : []
+	const record = localizeMenu(
+		snapshot.menu,
+		snapshot.menu.organization.defaultLocale || 'en',
+	)
 	applyTheme(snapshot.organization)
 	document.title = `${snapshot.organization.name} · Station`
 	return {
@@ -164,6 +206,8 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		location,
 		locationMissing,
 		categories,
+		recordItems: itemsById(record),
+		shownItems: itemsById(menu),
 		catalogStatus: (categories.length > 0 ? 'ready' : 'empty') as CatalogStatus,
 		catalogError: null,
 	}
@@ -173,6 +217,8 @@ export const usePos = create<PosState>((set, get) => ({
 	settings: loadSettings(),
 	snapshot: null,
 	categories: [],
+	recordItems: new Map(),
+	shownItems: new Map(),
 	location: null,
 	catalogStatus: 'loading',
 	catalogError: null,
@@ -573,8 +619,10 @@ export const usePos = create<PosState>((set, get) => ({
 	setCustomerName: (customerName) => set({ customerName }),
 	setTableLabel: (tableLabel) => set({ tableLabel }),
 
-	addLine(line) {
+	addLine(added) {
 		set((s) => {
+			// One language of record for every line, whichever till rings it up.
+			const line = renameLine(added, s.recordItems.get(added.itemId))
 			const signature = lineSignature(line)
 			const existing = s.lines.find((l) => lineSignature(l) === signature)
 			if (existing) {
@@ -602,7 +650,9 @@ export const usePos = create<PosState>((set, get) => ({
 	replaceLine(lineId, line) {
 		set((s) => ({
 			lines: s.lines.map((l) =>
-				l.id === lineId ? { ...line, id: lineId } : l,
+				l.id === lineId
+					? { ...renameLine(line, s.recordItems.get(line.itemId)), id: lineId }
+					: l,
 			),
 		}))
 	},

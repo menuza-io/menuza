@@ -96,6 +96,14 @@ export function HostStand({
 	const [partyId, setPartyId] = useState<string | null>(null)
 	/** The booking whose size or time is being changed. */
 	const [changeId, setChangeId] = useState<string | null>(null)
+	/** The last change got no answer: it may have landed. */
+	const [changeUnsure, setChangeUnsure] = useState(false)
+	// Times for the change leave out the party's own table and covers.
+	const changeSlots = useCallback(
+		(date: string, partySize: number) =>
+			api.availability(date, partySize, changeId ?? undefined),
+		[api, changeId],
+	)
 	const [waitlistId, setWaitlistId] = useState<string | null>(null)
 	/** The table whose sheet is open; its state is read from the live day. */
 	const [tableTargetId, setTableTargetId] = useState<string | null>(null)
@@ -764,15 +772,29 @@ export function HostStand({
 				reservation={feed.reservations.find((r) => r.id === changeId) ?? null}
 				busy={busy}
 				date={feed.businessDate}
-				loadSlots={api.availability}
+				loadSlots={changeSlots}
 				formatTime={formatTime}
-				onClose={() => setChangeId(null)}
+				onClose={() => {
+					setChangeId(null)
+					setChangeUnsure(false)
+				}}
 				onSave={(change) => {
 					const r = feed.reservations.find((x) => x.id === changeId)
 					if (!r) return
 					const who = shortName(r, _(t`Guest`))
 					const size = change.partySize ?? r.partySize
 					const time = change.timeLabel ?? formatTime(r.startAt)
+					// The last try got no answer and the day now shows the change: it landed.
+					if (
+						changeUnsure &&
+						r.partySize === size &&
+						(!change.time || r.time === change.time)
+					) {
+						setChangeId(null)
+						setChangeUnsure(false)
+						say(_(t`${who} is now ${size} at ${time}.`))
+						return
+					}
 					void act(
 						() =>
 							api.changeParty(
@@ -784,7 +806,13 @@ export function HostStand({
 								r.version,
 							),
 						_(t`${who} is now ${size} at ${time}.`),
-						{ onSuccess: () => setChangeId(null) },
+						{
+							onSuccess: () => {
+								setChangeId(null)
+								setChangeUnsure(false)
+							},
+							onUnsure: () => setChangeUnsure(true),
+						},
 					)
 				}}
 			/>

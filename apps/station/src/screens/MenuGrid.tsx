@@ -5,6 +5,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { lowestPriceCents } from '~/lib/menu-display.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
+import { usePos } from '~/lib/store.ts'
 import { type MenuCategory, type MenuItem } from '~/lib/types.ts'
 import { Button, Chip, NumberPop, cn, fieldClass } from '~/ui/primitives.tsx'
 
@@ -82,17 +83,25 @@ export function MenuGrid({
 			selected: chain[depth + 1]?.id ?? null,
 		}))
 
+	// Search also matches the restaurant's own language ("burger" on an Arabic till).
+	const recordItems = usePos((s) => s.recordItems)
 	const items = useMemo(() => {
 		if (deferredQuery) {
-			return all.filter(
-				(i) =>
-					i.displayName.toLowerCase().includes(deferredQuery) ||
-					i.description?.toLowerCase().includes(deferredQuery),
-			)
+			const matches = (text: string | null | undefined) =>
+				Boolean(text?.toLowerCase().includes(deferredQuery))
+			return all.filter((i) => {
+				const recorded = recordItems.get(i.id)
+				return (
+					matches(i.displayName) ||
+					matches(i.description) ||
+					matches(recorded?.displayName) ||
+					matches(recorded?.description)
+				)
+			})
 		}
 		if (topId === POPULAR) return popular
 		return deepest ? categoryItems(deepest) : []
-	}, [all, popular, deepest, topId, deferredQuery])
+	}, [all, popular, deepest, topId, deferredQuery, recordItems])
 
 	// A category picked at the edge of the strip scrolls fully into view.
 	const navRef = useRef<HTMLElement>(null)

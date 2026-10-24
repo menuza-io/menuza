@@ -2218,6 +2218,12 @@ export async function updateReservation(params: {
 	orgId: string
 	reservationId: string
 	actorId: string
+	/**
+	 * The caller may not move money and may not overbook (a till without the
+	 * payment grant): a size or time change on a booking with a deposit, a
+	 * card policy or an experience is a manager's, and pacing is enforced.
+	 */
+	paymentLocked?: boolean
 	input: {
 		date?: string
 		time?: string | number
@@ -2339,6 +2345,46 @@ export async function updateReservation(params: {
 			}
 			const nextStartAt = resolvedInstant.instantMs
 			const nextEndAt = nextStartAt + nextDurationMin * 60_000
+
+			const sizeOrTimeChanged =
+				nextPartySize !== current.partySize ||
+				targetBusinessDate !== current.businessDate ||
+				nextLocalStartMin !== current.localStartMin
+			// A cancelled, finished or no-show booking does not change size or time
+			// (it would also message the guest about a booking that is over).
+			if (sizeOrTimeChanged && !ACTIVE_OCCUPANCY_STATUSES.has(current.status))
+				throw conflict(
+					'invalid_status',
+					'Only a live booking changes size or time.',
+				)
+			if (params.paymentLocked && sizeOrTimeChanged) {
+				const policyAmount = Number(
+					(current.policySnapshot as { totalAmountMinor?: unknown } | null)
+						?.totalAmountMinor ?? 0,
+				)
+				if (
+					current.status === 'pending_payment' ||
+					current.paymentStatus !== 'none' ||
+					current.experienceId !== null ||
+					policyAmount > 0
+				)
+					throw conflict(
+						'manager_required',
+						'This booking has a payment on it. A manager changes it in the app.',
+					)
+				// No overbooking from a till: the slot's pacing holds for the new size.
+				const others = state.dayResRows.filter(
+					(r) => r.id !== current.id && ACTIVE_OCCUPANCY_STATUSES.has(r.status),
+				)
+				for (const code of findOperatorPacingBreaches({
+					rules: state.pacingRules,
+					serviceId: nextServiceId,
+					localStartMin: nextLocalStartMin,
+					partySize: nextPartySize,
+					activeReservations: others,
+				}))
+					throw conflict(code, 'That time is full for this party size.')
+			}
 
 			const scheduleChanged =
 				targetBusinessDate !== current.businessDate ||

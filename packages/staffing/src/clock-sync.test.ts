@@ -214,8 +214,23 @@ describe('syncQueue', () => {
 			clock += 5 * 60_000
 		}
 		expect(await queue.counts()).toEqual({ queued: 3, failed: 0 })
-		// Two 500s in a row with nothing answered: the run stops, never tries the third.
-		expect(seen.filter((id) => id === 'c')).toHaveLength(0)
+		// Two 500s in a row with nothing answered: one untried punch is probed,
+		// once, and when it fails too the run stops.
+		expect(seen.filter((id) => id === 'c')).toHaveLength(1)
+	})
+
+	it('two broken punches at the head do not hold everyone: an untried one gets through', async () => {
+		await add('rana-in', 1, 'clock_in', 'rana')
+		await add('lina-in', 2, 'clock_in', 'lina')
+		await add('omar-in', 3, 'clock_in', 'omar')
+		const outcome = await run(async (body) => {
+			if (body.id !== 'omar-in') throw new KioskApiError(500, 'internal_error')
+			return { outcome: 'accepted' }
+		})
+		expect(outcome).toMatchObject({ synced: 1, remaining: 2 })
+		// Omar got an answer, so the two 500s count against those two punches.
+		const pending = await queue.pending()
+		expect(pending.map((p) => p.serverErrors)).toEqual([1, 1])
 	})
 
 	it('keeps a recent punch through any number of server errors', async () => {

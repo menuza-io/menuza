@@ -1420,6 +1420,8 @@ export async function getOperatorAvailability(
 				serviceId?: string | null
 				areaId?: string | null
 				durationMin?: number | null
+				/** Changing this booking: its own tables and covers do not count against it. */
+				excludeReservationId?: string | null
 		  },
 	maybeInput?: {
 		date: string
@@ -1427,6 +1429,7 @@ export async function getOperatorAvailability(
 		serviceId?: string | null
 		areaId?: string | null
 		durationMin?: number | null
+		excludeReservationId?: string | null
 	},
 ) {
 	const locationId =
@@ -1456,7 +1459,10 @@ export async function getOperatorAvailability(
 		])
 
 	const activeRes = dayResRows.filter(
-		(r) => r.status !== 'cancelled' && r.status !== 'no_show',
+		(r) =>
+			r.status !== 'cancelled' &&
+			r.status !== 'no_show' &&
+			r.id !== input.excludeReservationId,
 	)
 
 	const resIds = activeRes.map((r) => r.id)
@@ -1545,8 +1551,10 @@ export async function getOperatorAvailability(
 		warnings?: string[]
 	}> = []
 
-	const pacedRes = dayResRows.filter((r) =>
-		ACTIVE_OCCUPANCY_STATUSES.has(r.status),
+	const pacedRes = dayResRows.filter(
+		(r) =>
+			ACTIVE_OCCUPANCY_STATUSES.has(r.status) &&
+			r.id !== input.excludeReservationId,
 	)
 	const pacingExisting = pacedRes.map((r) => ({
 		id: r.id,

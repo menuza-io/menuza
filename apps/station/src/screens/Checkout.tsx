@@ -13,7 +13,6 @@ import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
 import { quickCashAmounts } from '~/lib/cash.ts'
 import { type PosOrder, type StaffRef, type TenderMethod } from '~/lib/db.ts'
-import { menuText } from '~/lib/menu-text.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import {
 	addPayment,
@@ -24,6 +23,7 @@ import {
 	type OrderDraft,
 } from '~/lib/orders.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
+import { shownLine } from '~/lib/store.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
 	Badge,
@@ -335,14 +335,14 @@ export function Checkout({
 						</div>
 					) : null}
 					<ul className="divide-border border-border mb-4 max-h-48 divide-y overflow-y-auto border-y text-sm md:max-h-64">
-						{lines.map((l) => (
+						{lines.map(shownLine).map((l) => (
 							<li
 								key={l.id}
 								className="flex items-start justify-between gap-4 py-3"
 							>
 								<div className="min-w-0 flex-1">
 									<p className="font-medium break-words">
-										{l.quantity} × {menuText(l.name)}
+										{l.quantity} × {l.name}
 									</p>
 									{l.variantLabel ? (
 										<p className="text-muted-foreground mt-1">

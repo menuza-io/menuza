@@ -15,7 +15,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type OrderType } from '~/lib/db.ts'
-import { menuText } from '~/lib/menu-text.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
 import { type PhonePickup } from '~/lib/pickup.ts'
 import {
@@ -24,6 +23,7 @@ import {
 	type Adjustment,
 	type CartLine,
 } from '~/lib/pricing.ts'
+import { shownLine } from '~/lib/store.ts'
 import {
 	Button,
 	IconButton,
@@ -401,6 +401,9 @@ function LineItem({
 	onRemove: (id: string) => void
 }) {
 	const { _ } = useLingui()
+	// Its names in this till's language (lines record the restaurant's).
+	const shown = shownLine(line)
+	const name = shown.name
 	const ref = useRef<HTMLLIElement>(null)
 	const [isFresh] = useState(fresh)
 	const quantity = useRef(line.quantity)
@@ -433,23 +436,21 @@ function LineItem({
 					type="button"
 					onClick={() => onEdit(line)}
 					className="min-w-0 flex-1 text-start"
-					aria-label={_(t`Edit ${line.name}`)}
+					aria-label={_(t`Edit ${shown.name}`)}
 				>
-					<div className="leading-tight font-semibold">
-						{menuText(line.name)}
-					</div>
-					{line.variantLabel ? (
+					<div className="leading-tight font-semibold">{name}</div>
+					{shown.variantLabel ? (
 						<div className="text-muted-foreground text-sm">
-							{line.variantLabel}
+							{shown.variantLabel}
 						</div>
 					) : null}
-					{line.options.map((o) => (
+					{shown.options.map((o) => (
 						<div
 							key={`${o.groupId}:${o.optionId}`}
 							className="text-muted-foreground text-sm"
 						>
 							{o.quantity > 1 ? `${o.quantity}× ` : ''}
-							{menuText(o.optionName)}
+							{o.optionName}
 							{o.unitCents > 0 ? ` +${money(o.unitCents * o.quantity)}` : ''}
 						</div>
 					))}
@@ -467,7 +468,7 @@ function LineItem({
 			<div className="mt-2 flex items-center justify-between">
 				<div className="bg-muted flex items-center gap-1 rounded-xl p-0.5">
 					<IconButton
-						label={_(t`Fewer ${line.name}`)}
+						label={_(t`Fewer ${shown.name}`)}
 						onClick={() => onQuantity(line.id, line.quantity - 1)}
 					>
 						{/* At one, the minus becomes a bin: the next tap takes the line off. */}
@@ -486,7 +487,7 @@ function LineItem({
 						<NumberPop value={String(line.quantity)} />
 					</span>
 					<IconButton
-						label={_(t`More ${line.name}`)}
+						label={_(t`More ${shown.name}`)}
 						onClick={() => onQuantity(line.id, line.quantity + 1)}
 					>
 						<Plus className="size-4" />

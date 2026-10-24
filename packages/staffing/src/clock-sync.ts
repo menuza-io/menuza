@@ -72,8 +72,15 @@ export async function syncQueue(deps: {
 	let failingInARow = 0
 	/** Punches that got a 500 this run: judged once the run shows whether others got through. */
 	const broke: Array<{ id: string }> = []
+	/**
+	 * Two 500s in a row with nothing answered looks like an outage, but may be
+	 * two broken punches at the head of the queue: one punch the server has
+	 * never seen (someone else's, untried) settles it before the run stops.
+	 */
+	let probing = false
 	for (const item of await queue.pending()) {
 		if (held.size > 0 && (!item.staffId || held.has(item.staffId))) continue
+		if (probing && item.attempts > 0) continue
 		let pin: string
 		try {
 			pin = await queue.readPin(item)
@@ -101,6 +108,7 @@ export async function syncQueue(deps: {
 			outcome.synced += 1
 			answered += 1
 			failingInARow = 0
+			probing = false
 		} catch (error) {
 			if (error instanceof ClockNetworkError) break
 			if (error instanceof ClockApiError) {
@@ -133,7 +141,11 @@ export async function syncQueue(deps: {
 					if (error.status !== 500 || !item.staffId) break
 					broke.push({ id: item.id })
 					held.add(item.staffId)
-					if (failingInARow >= 2 && answered === 0) break
+					if (failingInARow >= 2 && answered === 0) {
+						// The probe failed too: the server is down.
+						if (probing) break
+						probing = true
+					}
 					continue
 				}
 				await queue.markFailed(item.id, error.code)

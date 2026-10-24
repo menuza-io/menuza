@@ -81,7 +81,11 @@ export class HostApiError extends Error {
 			this.status === 408 ||
 			this.status === 425 ||
 			this.status === 429 ||
-			this.status >= 500
+			this.status >= 500 ||
+			// Refused at the door (sign-in, permission): it never reached the
+			// request, so whether the first one landed is still unknown.
+			this.status === 401 ||
+			this.status === 403
 		)
 	}
 
@@ -325,11 +329,17 @@ export function createHostApi(deps: HostDeps) {
 			return result.data
 		},
 
-		async availability(date: string, partySize: number): Promise<Availability> {
+		/** Open times; for changing a booking, without its own table and covers. */
+		async availability(
+			date: string,
+			partySize: number,
+			excludeReservationId?: string,
+		): Promise<Availability> {
 			const query = new URLSearchParams({
 				locationId: await locationId(),
 				date,
 				partySize: String(partySize),
+				...(excludeReservationId ? { excludeReservationId } : {}),
 			})
 			const result = await call(
 				'GET',

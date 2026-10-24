@@ -923,9 +923,12 @@ export async function seatWaitlistEntry(params: {
 			tableIds: input.tableIds,
 			overbook,
 			overbookReason,
-			// A waitlist note is hidden without guest details ("nut allergy,
-			// wheelchair"); seated, it stays hidden the same way, not as a staff note.
-			guestRequests: entry.notes,
+			// A note the guest wrote when joining online is their request (hidden
+			// without guest details, and theirs to see); a note staff typed at the
+			// stand stays a staff note, never shown to the guest.
+			...(entry.channel === 'remote'
+				? { guestRequests: entry.notes }
+				: { staffNotes: entry.notes }),
 			guest: {
 				firstName: nameParts[0] || entry.displayName,
 				lastName: nameParts.slice(1).join(' '),

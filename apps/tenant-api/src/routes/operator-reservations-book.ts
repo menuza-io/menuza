@@ -414,6 +414,8 @@ const availabilityQuerySchema = z.object({
 	areaId: z.string().trim().min(1).max(128).optional(),
 	diningAreaId: z.string().trim().min(1).max(128).optional(),
 	durationMin: z.coerce.number().int().min(15).max(720).optional(),
+	/** Times for changing this booking: its own tables and covers are free. */
+	excludeReservationId: z.string().trim().min(1).max(128).optional(),
 })
 
 operatorReservationsBookRoutes.get(
@@ -448,6 +450,7 @@ operatorReservationsBookRoutes.get(
 				serviceId: q.data.serviceId ?? null,
 				areaId: q.data.areaId ?? q.data.diningAreaId ?? null,
 				durationMin: q.data.durationMin ?? null,
+				excludeReservationId: q.data.excludeReservationId ?? null,
 			})
 			return json({ ok: true, orgId: ctx.orgId, ...availability })
 		} catch (error) {
@@ -1330,6 +1333,14 @@ operatorReservationsBookRoutes.patch(
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// A till changes size and time only within what the slot takes and
+				// never on a booking with money on it.
+				paymentLocked:
+					ctx.channel === 'station' &&
+					!hasReservationsGrant(
+						ctx,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+					),
 				input: {
 					...parsed.data,
 					date: parsed.data.date ?? parsed.data.businessDate,
@@ -1342,6 +1353,16 @@ operatorReservationsBookRoutes.patch(
 		}
 	},
 )
+
+/** What a till may send when it puts a party on tables. */
+const STATION_ASSIGN_FIELDS = new Set([
+	'locationId',
+	'tableIds',
+	'comboId',
+	'expectedVersion',
+	'overbook',
+	'overbookReason',
+])
 
 const assignTablesSchema = z.object({
 	locationId: z.string().trim().min(1).max(128).optional(),
@@ -1373,6 +1394,23 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, assignTablesSchema)
 		if ('error' in parsed) return parsed.error
+		// A till puts a party on tables; locking, unlocking and swapping with
+		// another party stay with the app.
+		if (ctx.channel === 'station') {
+			const extra = Object.keys(parsed.data).filter(
+				(key) =>
+					!STATION_ASSIGN_FIELDS.has(key) &&
+					parsed.data[key as keyof typeof parsed.data] !== undefined,
+			)
+			if (extra.length > 0)
+				return json(
+					{
+						error: 'not_for_station',
+						message: 'Locking and swapping tables is done in the app.',
+					},
+					403,
+				)
+		}
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(
@@ -1534,6 +1572,45 @@ operatorReservationsBookRoutes.post(
 			parsed.data.locationId ?? c.req.query('locationId'),
 		)
 		if (!locCheck.ok) return locCheck.response
+
+		// Undoing a cancel or a no-show brings back a booking whose payment may
+		// have been settled (a refund, a released card): with money on it, that
+		// is the app's call. Undoing a seating or an arrival never is.
+		if (
+			ctx.channel === 'station' &&
+			!hasReservationsGrant(
+				ctx,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+			)
+		) {
+			const db = await getTenantDb(ctx.orgId)
+			const [row] = await db
+				.select({
+					status: rsvReservations.status,
+					paymentStatus: rsvReservations.paymentStatus,
+					policySnapshot: rsvReservations.policySnapshot,
+				})
+				.from(rsvReservations)
+				.where(eq(rsvReservations.id, rsvId))
+				.limit(1)
+			const policyAmount = Number(
+				(row?.policySnapshot as { totalAmountMinor?: unknown } | null)
+					?.totalAmountMinor ?? 0,
+			)
+			if (
+				row &&
+				(row.status === 'cancelled' || row.status === 'no_show') &&
+				(row.paymentStatus !== 'none' || policyAmount > 0)
+			)
+				return json(
+					{
+						error: 'manager_required',
+						message:
+							'This booking has a payment on it. A manager changes it in the app.',
+					},
+					409,
+				)
+		}
 
 		try {
 			const result = await undoReservationTransition({
