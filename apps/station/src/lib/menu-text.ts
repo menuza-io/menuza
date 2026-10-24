@@ -1,5 +1,6 @@
 import { i18n } from '@lingui/core'
 import { getLocalizedMenuValue } from '@repo/common/menu-types'
+import { effectiveLocale } from './locale.ts'
 import {
 	type MenuCategory,
 	type MenuItem,
@@ -20,6 +21,22 @@ export function menuText(
 	defaultLocale = 'en',
 ): string {
 	return getLocalizedMenuValue(value, locale, defaultLocale)
+}
+
+/**
+ * The language order lines, receipts and invoices are recorded in, whatever
+ * each till shows. A restaurant that sells in riyals records in Arabic: a
+ * Saudi tax invoice is issued in Arabic (another language may sit beside it).
+ * Otherwise the restaurant's default, clamped to a till language: the website
+ * may default to one no till shows (Spanish, French...).
+ */
+export function recordLocale(menu: MenuPayload): string {
+	if (
+		menu.organization.currency === 'SAR' ||
+		menu.locations.some((l) => l.currency === 'SAR')
+	)
+		return 'ar'
+	return effectiveLocale(null, menu.organization.defaultLocale)
 }
 
 /** The whole published menu with every name and description in one language. */

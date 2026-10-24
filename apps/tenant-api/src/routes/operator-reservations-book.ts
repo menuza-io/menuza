@@ -934,25 +934,24 @@ const STATION_BOOKING_FIELDS = new Set([
 	'staffNotes',
 	'tableIds',
 ])
+// A walk-in is seated now (the server's clock and business day) and named by
+// the host; it never looks a guest up by phone or email, which a till without
+// guest details could otherwise use to learn whose number it is.
 const STATION_WALK_IN_FIELDS = new Set([
 	'locationId',
-	'date',
-	'time',
 	'partySize',
 	'tableIds',
 	'guestName',
-	'guest',
 	// "Seat anyway": the host's call on a table someone is due at, recorded.
 	'overbook',
 	'overbookReason',
 ])
-/** A guest typed in at a till: a name and how to reach them, nothing more. */
-const STATION_GUEST_FIELDS = new Set([
-	'firstName',
-	'lastName',
-	'phone',
-	'email',
-])
+/**
+ * A guest typed in at a till: a name and a phone number, nothing more. The
+ * host stand never asks for an email address, and a till without guest
+ * details may not use one to find out whose it is.
+ */
+const STATION_GUEST_FIELDS = new Set(['firstName', 'lastName', 'phone'])
 
 const stationRefusal = () =>
 	json(
@@ -1190,7 +1189,15 @@ operatorReservationsBookRoutes.post(
 				idempotencyKey: idempotencyKey ?? '',
 				input: {
 					...parsed.data,
-					guest: await withDefaultGuestLocale(ctx.orgId, parsed.data.guest),
+					// The name the host typed, when no profile came with it: a new
+					// guest under that name (no phone, so it matches nobody).
+					guest: await withDefaultGuestLocale(
+						ctx.orgId,
+						parsed.data.guest ??
+							(parsed.data.guestName?.trim()
+								? { firstName: parsed.data.guestName.trim(), lastName: '' }
+								: undefined),
+					),
 					date: parsed.data.date ?? parsed.data.businessDate,
 					time: parsed.data.time ?? parsed.data.slotLocal,
 					locationId: locCheck.locationId,
@@ -1565,6 +1572,7 @@ operatorReservationsBookRoutes.post(
 						ctx,
 						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
 					),
+				serviceDayOnly: ctx.channel === 'station',
 				input: {
 					...parsed.data,
 					status: parsed.data.status ?? parsed.data.toStatus ?? '',

@@ -2304,6 +2304,8 @@ export async function getReservationEvents(
 	return {
 		reservationId: res.id,
 		locationId: res.locationId,
+		// A till hides a waitlist note in this history as on the booking itself.
+		channel: res.channel,
 		events: rows.map((e) => ({
 			id: e.id,
 			reservationId: e.reservationId,

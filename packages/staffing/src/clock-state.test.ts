@@ -6,6 +6,7 @@ import {
 	checkOfflinePunchTime,
 	deriveClockState,
 	nextClockState,
+	OFFLINE_PUNCH_LATE_SYNC_MS,
 	OFFLINE_PUNCH_MAX_AGE_MS,
 } from './clock-state.ts'
 
@@ -64,6 +65,7 @@ describe('checkOfflinePunchTime', () => {
 			ok: true,
 			effectiveAtMs: server - 60 * 60_000,
 			flaggedSkew: false,
+			lateSync: false,
 		})
 	})
 	it('rejects a punch in the future and clamps trivial drift', () => {
@@ -74,13 +76,21 @@ describe('checkOfflinePunchTime', () => {
 		const drift = checkOfflinePunchTime(server + 30_000, server)
 		expect(drift).toMatchObject({ ok: true, effectiveAtMs: server })
 	})
-	it('rejects a punch older than 12 hours but accepts exactly 12', () => {
+	it('rejects a punch older than 48 hours but accepts exactly 48', () => {
 		expect(
 			checkOfflinePunchTime(server - OFFLINE_PUNCH_MAX_AGE_MS - 1, server),
 		).toEqual({ ok: false, reason: 'too_old' })
 		expect(
 			checkOfflinePunchTime(server - OFFLINE_PUNCH_MAX_AGE_MS, server).ok,
 		).toBe(true)
+	})
+	it('flags a punch sent more than 12 hours after it was made', () => {
+		expect(
+			checkOfflinePunchTime(server - OFFLINE_PUNCH_LATE_SYNC_MS, server),
+		).toMatchObject({ ok: true, lateSync: false })
+		expect(
+			checkOfflinePunchTime(server - OFFLINE_PUNCH_LATE_SYNC_MS - 1, server),
+		).toMatchObject({ ok: true, lateSync: true })
 	})
 	it('flags clock skew when the device clock is more than 5 minutes off', () => {
 		const t = server - 60_000

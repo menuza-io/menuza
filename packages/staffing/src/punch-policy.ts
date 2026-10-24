@@ -40,6 +40,8 @@ export const ENTRY_ISSUE_CODES = [
 	'offline_punch',
 	'clock_skew',
 	'auto_break_deducted',
+	'late_sync',
+	'offline_override',
 ] as const
 export type EntryIssueCode = (typeof ENTRY_ISSUE_CODES)[number]
 
@@ -54,6 +56,8 @@ export const PUNCH_FLAG_ISSUES = [
 	'early_out',
 	'offline_punch',
 	'clock_skew',
+	'late_sync',
+	'offline_override',
 	'auto_clock_out',
 	'edited',
 ] as const satisfies readonly EntryIssueCode[]
@@ -70,6 +74,8 @@ export const REVIEW_ISSUES = [
 	'long_shift',
 	'missed_break',
 	'clock_skew',
+	'late_sync',
+	'offline_override',
 	'open_break',
 	'negative_duration',
 	'break_outside_entry',

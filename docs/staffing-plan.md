@@ -151,7 +151,9 @@ write route; token lifetime means a removed grant lags by up to the token TTL
 The v1 kiosk is a public App route that tolerates being offline: client
 generated punch ids, a local queue, retry with backoff. Server time is
 authoritative; queued punches are accepted only if not in the future and within
-12 hours of server time, and clock skew over 5 minutes is flagged. A personal
+48 hours of server time (over 12 hours old they are flagged `late_sync` and the
+card waits for a manager, so a till shut overnight during an outage still
+records the closing shift), and clock skew over 5 minutes is flagged. A personal
 phone clock, the Expo staff tabs and push come later and need a staff principal
 first.
 

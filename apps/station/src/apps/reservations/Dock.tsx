@@ -1,4 +1,4 @@
-import { t, Trans } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type WaitlistEntry } from '@repo/reservations'
 import {
@@ -94,13 +94,13 @@ export function Dock({
 	return (
 		<section
 			ref={ref}
-			aria-label={_(t`Parties to seat`)}
+			aria-label={_(msg`Parties to seat`)}
 			className="border-border bg-card pb-safe flex shrink-0 flex-col gap-2 border-t pt-3 lg:flex-row lg:items-stretch lg:gap-0"
 		>
 			<DockLane
-				title={_(t`Arriving`)}
+				title={_(msg`Arriving`)}
 				count={arrivals.length}
-				empty={_(t`No more bookings today.`)}
+				empty={_(msg`No more bookings today.`)}
 				className="lg:min-w-0 lg:flex-[3]"
 			>
 				{arrivals.map((reservation) => {
@@ -145,24 +145,24 @@ export function Dock({
 										{reservation.hasAllergy ? (
 											<TriangleAlert
 												className="text-warning size-3.5"
-												aria-label={_(t`Allergy noted`)}
+												aria-label={_(msg`Allergy noted`)}
 											/>
 										) : null}
 										{isVip(reservation) ? (
 											<Crown
 												className="text-primary size-3.5"
-												aria-label={_(t`VIP`)}
+												aria-label={_(msg`VIP`)}
 											/>
 										) : null}
 										{reservation.occasion ? (
 											<Cake
 												className="text-primary size-3.5"
-												aria-label={_(t`Occasion: ${occasion}`)}
+												aria-label={_(msg`Occasion: ${occasion}`)}
 											/>
 										) : null}
 									</span>
 									<bdi className="truncate font-medium">
-										{shortName(reservation, _(t`Guest`))}
+										{shortName(reservation, _(msg`Guest`))}
 									</bdi>
 									<span className="text-xs font-medium">
 										{here ? (
@@ -201,7 +201,7 @@ export function Dock({
 									type="button"
 									onClick={() => onDetails(reservation)}
 									aria-label={_(
-										t`Details for ${shortName(reservation, _(t`Guest`))}`,
+										msg`Details for ${shortName(reservation, _(msg`Guest`))}`,
 									)}
 									className="text-muted-foreground hover:bg-accent hover:text-foreground border-border flex w-11 shrink-0 items-center justify-center border-s transition-colors"
 								>
@@ -214,19 +214,19 @@ export function Dock({
 			</DockLane>
 			{missed.length > 0 ? (
 				<DockLane
-					title={_(t`Didn’t arrive`)}
+					title={_(msg`Didn’t arrive`)}
 					count={missed.length}
 					empty=""
 					className="lg:border-border lg:min-w-0 lg:flex-[1] lg:border-s"
 				>
 					{missed.map((reservation) => {
-						const who = shortName(reservation, _(t`Guest`))
+						const who = shortName(reservation, _(msg`Guest`))
 						return (
 							<li key={reservation.id} className="shrink-0">
 								<button
 									type="button"
 									onClick={() => onDetails(reservation)}
-									aria-label={_(t`${who} did not arrive. Details`)}
+									aria-label={_(msg`${who} did not arrive. Details`)}
 									className="dock-card bg-background border-border text-muted-foreground hover:bg-accent flex h-[5.5rem] w-40 flex-col justify-between rounded-2xl border border-dashed p-3 text-start transition-colors"
 								>
 									<span className="flex items-center gap-2">
@@ -249,9 +249,9 @@ export function Dock({
 			) : null}
 			{waitlistOn ? (
 				<DockLane
-					title={_(t`Waitlist`)}
+					title={_(msg`Waitlist`)}
 					count={waitlist.length}
-					empty={_(t`Nobody is waiting.`)}
+					empty={_(msg`Nobody is waiting.`)}
 					className="lg:border-border lg:min-w-0 lg:flex-[2] lg:border-s"
 				>
 					{waitlist.map((entry) => {
@@ -284,7 +284,7 @@ export function Dock({
 											{entry.status === 'notified' ? (
 												<BellRing
 													className="text-success size-3.5"
-													aria-label={_(t`Told their table is ready`)}
+													aria-label={_(msg`Told their table is ready`)}
 												/>
 											) : null}
 										</span>
@@ -306,7 +306,7 @@ export function Dock({
 										type="button"
 										onClick={() => onWaitlistDetails(entry)}
 										aria-label={_(
-											t`Details for ${entry.firstName || entry.displayName}`,
+											msg`Details for ${entry.firstName || entry.displayName}`,
 										)}
 										className="text-muted-foreground hover:bg-accent hover:text-foreground border-border flex w-11 shrink-0 items-center justify-center border-s transition-colors"
 									>

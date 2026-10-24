@@ -18,7 +18,7 @@ import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
 import { decodedLine, renameLine } from './line-names.ts'
 import { effectiveLocale } from './locale.ts'
-import { localizeMenu, menuText } from './menu-text.ts'
+import { localizeMenu, menuText, recordLocale } from './menu-text.ts'
 import {
 	adoptTab,
 	canAdoptTab,
@@ -207,12 +207,7 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		? null
 		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
 	const categories = location ? buildCategories(menu, location.id) : []
-	// The language of record is a till language (English or Arabic): the
-	// website's default may be one no till shows (Spanish, French...).
-	const record = localizeMenu(
-		snapshot.menu,
-		effectiveLocale(null, snapshot.menu.organization.defaultLocale),
-	)
+	const record = localizeMenu(snapshot.menu, recordLocale(snapshot.menu))
 	applyTheme(snapshot.organization)
 	document.title = `${snapshot.organization.name} · Station`
 	return {
@@ -605,10 +600,11 @@ export const usePos = create<PosState>((set, get) => ({
 		set({ settings, pairingLost: false, session: null })
 		void forgetCachedStaff()
 		void forgetZatcaUnit()
-		// Waiting punches hold encrypted PINs: they go with the pairing.
-		void punchQueue()
-			.wipe()
-			.catch(() => {})
+		// Waiting and refused punches stay: unpairing is how a till the server
+		// stopped recognising is paired again, and they may be the only record of
+		// a shift. Pairing to another restaurant wipes them (updateSettings), and
+		// each carries its person's id, so the server refuses one whose PIN now
+		// belongs to someone else.
 	},
 
 	setOrderType: (orderType) =>
@@ -707,3 +703,12 @@ export const usePos = create<PosState>((set, get) => ({
 			activeTax: null,
 		}),
 }))
+
+// Punches saved while the tablet slept go out the moment it wakes, not on the
+// next sync tick: an offline punch is only recorded within 48 hours, and a
+// till shut overnight should not spend the morning waiting.
+if (typeof document !== 'undefined')
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible' && usePos.getState().online)
+			void usePos.getState().sync()
+	})

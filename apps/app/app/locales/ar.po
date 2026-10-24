@@ -1898,15 +1898,15 @@ msgstr "حجب ينتهي قبل أن يبدأ."
 msgid "A block points to a table that no longer exists."
 msgstr "حجب يشير إلى طاولة لم تعد موجودة."
 
-#: app/components/staff/timesheets/issue-copy.ts:38
+#: app/components/staff/timesheets/issue-copy.ts:42
 msgid "A break falls outside the shift. Fix its times."
 msgstr "هناك استراحة خارج الوردية. صحّح أوقاتها."
 
-#: app/components/staff/timesheets/issue-copy.ts:46
+#: app/components/staff/timesheets/issue-copy.ts:50
 msgid "A break was deducted automatically by your rules."
 msgstr "تم خصم استراحة تلقائيًا وفق قواعدك."
 
-#: app/components/staff/timesheets/issue-copy.ts:36
+#: app/components/staff/timesheets/issue-copy.ts:40
 msgid "A break was started and never ended. Set when it ended."
 msgstr "بدأت استراحة ولم تنتهِ. حدّد وقت انتهائها."
 
@@ -2048,7 +2048,7 @@ msgstr "يعتمدها مدير ويقفلها"
 msgid "A manager approves them"
 msgstr "يعتمدها مدير"
 
-#: app/components/staff/timesheets/issue-copy.ts:44
+#: app/components/staff/timesheets/issue-copy.ts:48
 msgid "A manager changed this card."
 msgstr "عدّل مدير هذه البطاقة."
 
@@ -2159,7 +2159,7 @@ msgstr "سياسة الدفع المسبق أو الوديعة تُلزم الض
 #~ msgid "A report covers at most 366 days. Choose a shorter range."
 #~ msgstr "يغطي التقرير 366 يومًا كحد أقصى. اختر نطاقًا أقصر."
 
-#: app/components/staff/timesheets/issue-copy.ts:34
+#: app/components/staff/timesheets/issue-copy.ts:36
 msgid "A required break was not taken or not recorded."
 msgstr "لم تُؤخذ استراحة مطلوبة أو لم تُسجَّل."
 
@@ -4301,7 +4301,7 @@ msgstr "اعتماد بطاقات الدوام وقفلها وفتحها. يشم
 #: app/components/reservations/requests-panel.tsx:274
 #: app/components/staff/schedule/time-off-page.tsx:282
 #: app/components/staff/timesheets/card-history.tsx:51
-#: app/components/staff/timesheets/issue-copy.ts:53
+#: app/components/staff/timesheets/issue-copy.ts:57
 msgid "Approved"
 msgstr "معتمدة"
 
@@ -5405,7 +5405,7 @@ msgstr "استراحة"
 msgid "Break {number}"
 msgstr "الاستراحة {number}"
 
-#: app/components/staff/timesheets/issue-copy.ts:27
+#: app/components/staff/timesheets/issue-copy.ts:29
 msgid "Break deducted"
 msgstr "استراحة مخصومة"
 
@@ -6603,6 +6603,10 @@ msgstr "راجع الحقول المحددة وحاول مرة أخرى."
 msgid "Check the highlighted fields."
 msgstr "تحقق من الحقول المميزة."
 
+#: app/components/staff/timesheets/issue-copy.ts:28
+msgid "Check the rules"
+msgstr "راجع القواعد"
+
 #: app/utils/staffing/alert-copy.ts:72
 msgid "Check the time cards before the limit is reached."
 msgstr "راجع بطاقات الوقت قبل بلوغ الحد."
@@ -6611,7 +6615,7 @@ msgstr "راجع بطاقات الوقت قبل بلوغ الحد."
 msgid "Check their contact details and emergency contact are right."
 msgstr "تحقق من صحة بيانات التواصل وجهة اتصال الطوارئ."
 
-#: app/components/staff/timesheets/issue-copy.ts:57
+#: app/components/staff/timesheets/issue-copy.ts:61
 msgid "Check this card"
 msgstr "راجع هذه البطاقة"
 
@@ -7212,23 +7216,27 @@ msgstr "تم تحديد وقت انصراف {name}."
 msgid "Clocked in"
 msgstr "تم تسجيل الحضور"
 
-#: app/components/staff/timesheets/issue-copy.ts:41
+#: app/components/staff/timesheets/issue-copy.ts:45
 msgid "Clocked in after the scheduled start."
 msgstr "سجّل الحضور بعد الوقت المجدول."
 
-#: app/components/staff/timesheets/issue-copy.ts:31
+#: app/components/staff/timesheets/issue-copy.ts:33
 msgid "Clocked in and never clocked out. Set the time they left."
 msgstr "سجّل الحضور ولم يسجّل الانصراف. حدّد وقت مغادرته."
 
-#: app/components/staff/timesheets/issue-copy.ts:42
+#: app/components/staff/timesheets/issue-copy.ts:46
 msgid "Clocked in before the scheduled start."
 msgstr "سجّل الحضور قبل الوقت المجدول."
+
+#: app/components/staff/timesheets/issue-copy.ts:39
+msgid "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it."
+msgstr "سُجّل الحضور دون اتصال في حالة كانت القواعد ستطلب فيها تأكيدًا أولًا (لا توجد وردية، أو مبكرًا جدًا، أو أي وظيفة). راجعه."
 
 #: app/components/staff/labor-example.tsx:148
 msgid "Clocked in to out"
 msgstr "من تسجيل الحضور إلى الانصراف"
 
-#: app/components/staff/timesheets/issue-copy.ts:40
+#: app/components/staff/timesheets/issue-copy.ts:44
 msgid "Clocked in without a scheduled shift."
 msgstr "سجّل الحضور دون وردية مجدولة."
 
@@ -7244,7 +7252,7 @@ msgstr "تم تسجيل الانصراف"
 msgid "Clocked out at, for {name}"
 msgstr "وقت انصراف {name}"
 
-#: app/components/staff/timesheets/issue-copy.ts:43
+#: app/components/staff/timesheets/issue-copy.ts:47
 msgid "Clocked out before the scheduled end."
 msgstr "سجّل الانصراف قبل الوقت المجدول."
 
@@ -7314,7 +7322,7 @@ msgstr "أغلق خدماتك المعتادة أو اختصرها أو استب
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
 #: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
-#: app/components/staff/timesheets/issue-copy.ts:52
+#: app/components/staff/timesheets/issue-copy.ts:56
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:457
 msgid "Closed"
 msgstr "مغلق"
@@ -16649,7 +16657,7 @@ msgstr "قفل تعيين الطاولة"
 
 #: app/components/my-schedule/time-cards-view.tsx:103
 #: app/components/staff/timesheets/card-history.tsx:52
-#: app/components/staff/timesheets/issue-copy.ts:54
+#: app/components/staff/timesheets/issue-copy.ts:58
 msgid "Locked"
 msgstr "مقفلة"
 
@@ -16728,7 +16736,7 @@ msgstr "أطول من"
 msgid "Longer than usual."
 msgstr "أطول من المعتاد."
 
-#: app/components/staff/timesheets/issue-copy.ts:33
+#: app/components/staff/timesheets/issue-copy.ts:35
 msgid "Longer than your long-shift limit. Check it is not a missed clock-out."
 msgstr "أطول من حد الوردية الطويلة لديك. تأكد أنها ليست انصرافًا لم يُسجَّل."
 
@@ -18182,7 +18190,7 @@ msgid "Needs reply"
 msgstr "يحتاج إلى رد"
 
 #: app/components/staff/timeclock-today.tsx:381
-#: app/components/staff/timesheets/issue-copy.ts:51
+#: app/components/staff/timesheets/issue-copy.ts:55
 #: app/components/staff/timesheets/timesheets-page.tsx:537
 #: app/utils/reservations/payments-view.ts:80
 #: app/utils/reservations/setup-api.ts:165
@@ -20880,7 +20888,7 @@ msgstr "فريقك وحده يرى الملاحظات. ولا يراها الم�
 #: app/components/favorite-notes.tsx:105
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
 #: app/components/pos/pos-day-report.tsx:291
-#: app/components/staff/timesheets/issue-copy.ts:50
+#: app/components/staff/timesheets/issue-copy.ts:54
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:519
@@ -23691,7 +23699,7 @@ msgstr "جارٍ النشر..."
 msgid "Publishing…"
 msgstr "جارٍ النشر…"
 
-#: app/components/staff/timesheets/issue-copy.ts:45
+#: app/components/staff/timesheets/issue-copy.ts:49
 msgid "Punched while the tablet was offline and sent later."
 msgstr "سُجّل أثناء انقطاع اتصال الجهاز اللوحي وأُرسل لاحقًا."
 
@@ -26014,6 +26022,10 @@ msgstr "تم حفظ التغييرات الخاصة بـ {name}."
 msgid "Saved for {activeServiceName} (v{0})"
 msgstr "تم الحفظ لـ {activeServiceName} (إصدار {0})"
 
+#: app/components/staff/timesheets/issue-copy.ts:38
+msgid "Saved offline and sent more than 12 hours later. Check the times."
+msgstr "حُفظ دون اتصال وأُرسل بعد أكثر من 12 ساعة. راجع الأوقات."
+
 #: app/components/kiosk/kiosk-screens.tsx:692
 msgid "Saved on this tablet. It will be recorded when the connection is back."
 msgstr "تم الحفظ على هذا الجهاز. سيُسجَّل عند عودة الاتصال."
@@ -27273,6 +27285,10 @@ msgstr "يُرسل بالبريد الإلكتروني إلى من لديهم ع
 #: app/components/pos/terminals-manager.tsx:1162
 msgid "Sent for a location this terminal is not paired to"
 msgstr "أُرسل لفرع غير مرتبط بنقطة البيع هذه"
+
+#: app/components/staff/timesheets/issue-copy.ts:27
+msgid "Sent late"
+msgstr "أُرسل متأخرًا"
 
 #: app/components/staff/timesheets/card-history.tsx:210
 msgid "sent later"
@@ -30972,7 +30988,7 @@ msgstr "الخطوات التي يتبعها الوكيل في كل مكالمة
 msgid "The steps to follow while taking an order."
 msgstr "الخطوات الواجب اتباعها أثناء تلقي الطلب."
 
-#: app/components/staff/timesheets/issue-copy.ts:32
+#: app/components/staff/timesheets/issue-copy.ts:34
 msgid "The system clocked them out. Check the time is right."
 msgstr "سجّل النظام انصرافه. تأكد أن الوقت صحيح."
 
@@ -31023,7 +31039,7 @@ msgstr "الطاولات التي يجلس عليها الضيوف، مجمّع�
 msgid "The tables stay as they are. Parties will no longer be seated on this combination."
 msgstr "تبقى الطاولات كما هي. لن يُجلَس الضيوف على هذا الدمج بعد الآن."
 
-#: app/components/staff/timesheets/issue-copy.ts:35
+#: app/components/staff/timesheets/issue-copy.ts:37
 msgid "The tablet clock was off when this was punched. Check the times."
 msgstr "كانت ساعة الجهاز اللوحي غير دقيقة عند التسجيل. راجع الأوقات."
 
@@ -31054,7 +31070,7 @@ msgstr "الفاصل بين أوقات البدء قيمة غير مدعومة."
 #~ msgid "The time-limit notice, the rating question, and the goodbye."
 #~ msgstr "تنبيه المهلة الزمنية وسؤال التقييم وعبارة الوداع."
 
-#: app/components/staff/timesheets/issue-copy.ts:37
+#: app/components/staff/timesheets/issue-copy.ts:41
 msgid "The times do not add up. Fix the start or the end."
 msgstr "الأوقات غير منطقية. صحّح البدء أو الانتهاء."
 
@@ -32947,7 +32963,7 @@ msgstr "حجزان يشتركان في طاولة واحدة في الوقت ن�
 msgid "Two break rules start at the same point in the shift."
 msgstr "قاعدتا استراحة تبدآن عند النقطة نفسها من الوردية."
 
-#: app/components/staff/timesheets/issue-copy.ts:39
+#: app/components/staff/timesheets/issue-copy.ts:43
 msgid "Two breaks overlap. Fix their times."
 msgstr "استراحتان متداخلتان. صحّح أوقاتهما."
 

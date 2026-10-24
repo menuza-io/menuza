@@ -2805,6 +2805,9 @@ const JOURNEY_TRIGGER_FOR_STATUS: Record<
 	cancelled: 'reservation_cancelled',
 }
 
+/** How long after its time a till may call a booking a no-show. */
+const TILL_NO_SHOW_GRACE_MS = 15 * 60_000
+
 export async function transitionReservationStatus(params: {
 	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
 	canReadGuestSensitive?: boolean
@@ -2819,6 +2822,12 @@ export async function transitionReservationStatus(params: {
 	 * its deposit, and cancelling or a no-show on a paid one refunds or charges.
 	 */
 	paymentLocked?: boolean
+	/**
+	 * A till works the service in front of it: it seats and checks in only
+	 * today's bookings, and calls a no-show only once the booking's time
+	 * (plus a grace) has passed, so a mis-tap cannot mark tonight's guest.
+	 */
+	serviceDayOnly?: boolean
 	input: {
 		status: string
 		covers?: number | null
@@ -2883,6 +2892,41 @@ export async function transitionReservationStatus(params: {
 					'manager_required',
 					'This booking has a payment on it. A manager changes it in the app.',
 				)
+			if (params.serviceDayOnly) {
+				if (
+					targetStatus === 'no_show' &&
+					now < current.startAt + TILL_NO_SHOW_GRACE_MS
+				)
+					throw conflict(
+						'too_early',
+						'It is too early to call this booking a no-show.',
+					)
+				if (
+					targetStatus === 'arrived' ||
+					targetStatus === 'partially_arrived' ||
+					targetStatus === 'seated' ||
+					targetStatus === 'partially_seated'
+				) {
+					const settings = await tx
+						.select({
+							timeZone: rsvLocationSettings.timeZone,
+							dayStartMin: rsvLocationSettings.dayStartMin,
+						})
+						.from(rsvLocationSettings)
+						.where(eq(rsvLocationSettings.locationId, current.locationId))
+						.get()
+					const today = instantToLocal(
+						now,
+						settings?.timeZone ?? 'UTC',
+						settings?.dayStartMin ?? 240,
+					).businessDate
+					if (current.businessDate !== today)
+						throw conflict(
+							'not_today',
+							"This booking is for another day. Seat today's bookings only.",
+						)
+				}
+			}
 			const allowedSet = VALID_STATUS_TRANSITIONS[current.status]
 			if (!allowedSet || !allowedSet.has(targetStatus)) {
 				throw conflict(

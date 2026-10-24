@@ -243,6 +243,7 @@ describe('Station host stand contract', () => {
 		await seedPublicOrg(ORG_A, { seedContext: false })
 	})
 	afterEach(async () => {
+		vi.useRealTimers()
 		vi.unstubAllGlobals()
 		await h.cleanup()
 	})
@@ -270,6 +271,10 @@ describe('Station host stand contract', () => {
 	}
 
 	it('the till reads and runs the day of service with its own token', async () => {
+		// Mid-morning today: a till seats only today's bookings, so the party it
+		// seats is booked for tonight.
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(new Date(`${dateAhead(0)}T10:00:00Z`))
 		const recordedNow = Date.now()
 		// A host with guest details at a terminal bound to the location, and a
 		// host without them.
@@ -350,7 +355,7 @@ describe('Station host stand contract', () => {
 		}
 		const seated = await write('/reservations', {
 			locationId: PUBLIC_LOC,
-			date: tomorrow,
+			date: dateAhead(0),
 			time: '19:30',
 			partySize: 4,
 			tableIds: ['tbl_pub_4'],
@@ -362,15 +367,37 @@ describe('Station host stand contract', () => {
 			toStatus: 'seated',
 		})
 		expect(seat.status, seat.text).toBe(200)
+		// Tomorrow's booking: a till neither seats it nor calls it a no-show.
+		const mayaId = booked.body.reservation.id
+		for (const [toStatus, error] of [
+			['seated', 'not_today'],
+			['arrived', 'not_today'],
+			['no_show', 'too_early'],
+		] as const) {
+			const refused = await write(`/reservations/${mayaId}/status`, {
+				toStatus,
+			})
+			expect(refused.status, refused.text).toBe(409)
+			expect(refused.body.error).toBe(error)
+		}
+		// A walk-in sits down now, under the name the host typed.
 		const walkIn = await write('/walk-ins', {
+			locationId: PUBLIC_LOC,
+			partySize: 3,
+			tableIds: ['tbl_pub_12'],
+			guestName: 'Patel',
+		})
+		expect(walkIn.status, walkIn.text).toBe(201)
+		expect(walkIn.body.reservation.businessDate).toBe(dateAhead(0))
+		expect(walkIn.body.reservation.guest.firstName).toBe('Patel')
+		const laterWalkIn = await write('/walk-ins', {
 			locationId: PUBLIC_LOC,
 			date: tomorrow,
 			time: '20:00',
-			partySize: 3,
+			partySize: 2,
 			tableIds: ['tbl_pub_12'],
-			guestName: 'Walk-in',
 		})
-		expect(walkIn.status, walkIn.text).toBe(201)
+		expect(laterWalkIn.status, laterWalkIn.text).toBe(403)
 		const waiting = await call(
 			'POST',
 			'/operator/reservations/book/waitlist',
@@ -425,6 +452,50 @@ describe('Station host stand contract', () => {
 		expect(masked.text).not.toContain('+14155550111')
 		expect(masked.text).toContain('•••• 0111')
 
+		// A note typed on a waitlist entry rides on the booking once seated:
+		// hidden from this till under every name, history included.
+		const noted = await call(
+			'POST',
+			'/operator/reservations/book/waitlist',
+			{ ...rsv, 'Idempotency-Key': 'station-contract-waitlist-note' },
+			{
+				locationId: PUBLIC_LOC,
+				displayName: 'Lina Aziz',
+				partySize: 2,
+				notes: 'Ramp access, sesame',
+			},
+		)
+		expect(noted.status, noted.text).toBe(201)
+		const seatedFromList = await call(
+			'POST',
+			`/operator/reservations/book/waitlist/${noted.body.entry.id}/seat`,
+			{ ...rsv, 'Idempotency-Key': 'station-contract-waitlist-note-seat' },
+			{ tableIds: ['tbl_pub_2'] },
+		)
+		expect(seatedFromList.status, seatedFromList.text).toBe(200)
+		const fromListId = seatedFromList.body.reservation.id
+		const today = dateAhead(0)
+		const plainAuth = { authorization: `Bearer ${plain.body.token}` }
+		for (const pathname of [
+			`/day?locationId=${PUBLIC_LOC}&date=${today}`,
+			`/reservations/${fromListId}`,
+			`/reservations/${fromListId}/events`,
+		]) {
+			const reply = await call(
+				'GET',
+				`/operator/reservations/book${pathname}`,
+				plainAuth,
+			)
+			expect(reply.status, reply.text).toBe(200)
+			expect(reply.text, pathname).not.toContain('Ramp access')
+		}
+		const managerDay = await call(
+			'GET',
+			`/operator/reservations/book/day?locationId=${PUBLIC_LOC}&date=${today}`,
+			rsv,
+		)
+		expect(managerDay.text).toContain('Ramp access')
+
 		// A booking's history carries the same health notes: hidden the same way.
 		const bookedId = booked.body.reservation.id
 		// A manager adds it in the app (a till may not write notes at all).
@@ -456,21 +527,20 @@ describe('Station host stand contract', () => {
 		expect(hostHistory.text).not.toContain('Peanuts')
 		expect(hostHistory.text).not.toContain('+14155550111')
 
-		// A host without guest details who types a known number links the walk-in
+		// A host without guest details who books a known number links the booking
 		// to that guest, but never renames them.
 		const typed = await call(
 			'POST',
-			'/operator/reservations/book/walk-ins',
+			'/operator/reservations/book/reservations',
 			{
 				authorization: `Bearer ${plain.body.token}`,
-				'Idempotency-Key': 'station-contract-walkin-known-phone',
+				'Idempotency-Key': 'station-contract-booking-known-phone',
 			},
 			{
 				locationId: PUBLIC_LOC,
+				date: tomorrow,
+				time: '21:00',
 				partySize: 2,
-				tableIds: ['tbl_pub_2'],
-				overbook: true,
-				overbookReason: 'test',
 				guest: { firstName: 'Mia', lastName: 'X', phone: '+14155550111' },
 			},
 		)
@@ -501,31 +571,41 @@ describe('Station host stand contract', () => {
 		expect(noted2.status, noted2.text).toBe(403)
 		expect(noted2.body.error).toBe('not_for_station')
 
-		// Nor replaces a contact detail or an allergy note it could not see; it
-		// only fills what the profile lacks.
-		const hostWrite = (key: string, body: unknown) =>
-			call(
+		// Nor looks a guest up by email, nor sends a profile with a walk-in: a
+		// till without guest details could learn whose address or number it is.
+		for (const [key, path, body] of [
+			[
+				'station-contract-email',
+				'/reservations',
+				{
+					locationId: PUBLIC_LOC,
+					date: tomorrow,
+					time: '21:00',
+					partySize: 2,
+					guest: { firstName: 'Mia', email: 'maya@example.com' },
+				},
+			],
+			[
+				'station-contract-walkin-guest',
+				'/walk-ins',
+				{
+					locationId: PUBLIC_LOC,
+					partySize: 2,
+					tableIds: ['tbl_pub_2'],
+					guest: { firstName: 'Mia', phone: '+14155550111' },
+				},
+			],
+		] as const) {
+			const r = await call(
 				'POST',
-				'/operator/reservations/book/walk-ins',
+				`/operator/reservations/book${path}`,
 				{
 					authorization: `Bearer ${plain.body.token}`,
 					'Idempotency-Key': key,
 				},
 				body,
 			)
-		for (const [key, email] of [
-			['station-contract-fill', 'maya@example.com'],
-			['station-contract-replace', 'stranger@example.com'],
-		] as const) {
-			const r = await hostWrite(key, {
-				locationId: PUBLIC_LOC,
-				partySize: 2,
-				tableIds: ['tbl_pub_2'],
-				overbook: true,
-				overbookReason: 'test',
-				guest: { firstName: 'Mia', phone: '+14155550111', email },
-			})
-			expect(r.status, r.text).toBe(201)
+			expect(r.status, `${path}: ${r.text}`).toBe(403)
 		}
 		const mayaFeed = await call(
 			'GET',
@@ -538,7 +618,7 @@ describe('Station host stand contract', () => {
 				guest: { id: string; email?: string | null; phone?: string | null }
 			}>
 		).find((r) => r.id === bookedId)!
-		expect(maya.guest.email).toBe('maya@example.com')
+		expect(maya.guest.email ?? null).toBeNull()
 		expect(maya.guest.phone).toBe('+14155550111')
 		// A till never attaches a guest profile by id, nor writes health notes,
 		// locks a table or books for another channel: its host stand never does.

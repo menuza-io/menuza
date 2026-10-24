@@ -533,6 +533,7 @@ async function runPunch(
 		effectiveAt = verdict.effectiveAtMs
 		flags.push('offline_punch')
 		if (verdict.flaggedSkew) flags.push('clock_skew')
+		if (verdict.lateSync) flags.push('late_sync')
 	}
 	const localDate = businessDateOf(
 		effectiveAt,
@@ -587,15 +588,31 @@ async function runPunch(
 			atMs: effectiveAt,
 			timeZone,
 		})
-		const decision = decideClockIn({ policy, atMs: effectiveAt, shift })
-		if (!decision.ok) {
+		const ruled = decideClockIn({ policy, atMs: effectiveAt, shift })
+		// Online the person is told to wait or ask. A punch queued offline was
+		// already accepted on the till and the person went to work: it is
+		// recorded, flagged, and the card waits for a manager, rather than lost
+		// along with the rest of that shift.
+		if (!ruled.ok && !request.offline) {
 			return reject(
-				decision.code,
-				decision.code === 'early_clock_in'
-					? { earliestAt: decision.earliestAt }
+				ruled.code,
+				ruled.code === 'early_clock_in'
+					? { earliestAt: ruled.earliestAt }
 					: undefined,
 			)
 		}
+		const decision = ruled.ok
+			? ruled
+			: {
+					ok: true as const,
+					flags: [
+						ruled.code === 'early_clock_in'
+							? ('early_in' as const)
+							: ('unscheduled' as const),
+						'offline_override' as const,
+					],
+					shift: null,
+				}
 
 		let picked: JobWithPosition | null = null
 		if (request.positionId) {
@@ -609,6 +626,10 @@ async function runPunch(
 				: undefined
 			if (scheduled) {
 				picked = scheduled
+			} else if (request.offline) {
+				// Nobody could be asked: the main job, for a manager to confirm.
+				picked = jobs[0]!
+				flags.push('offline_override')
 			} else {
 				// A prompt, not an event: nothing is recorded and the same punch id
 				// is reused when the person picks.

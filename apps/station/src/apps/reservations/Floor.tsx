@@ -1,4 +1,4 @@
-import { t, Trans } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Ban, Users } from 'lucide-react'
 import { useMemo } from 'react'
@@ -183,25 +183,25 @@ function TableButton({
 	switch (state.kind) {
 		case 'seated':
 			label = _(
-				t`Table ${table.label}, seated: ${shortName(state.party, _(t`Guest`))}, party of ${state.party.partySize}`,
+				msg`Table ${table.label}, seated: ${shortName(state.party, _(msg`Guest`))}, party of ${state.party.partySize}`,
 			)
 			break
 		case 'soon':
 			label = _(
-				t`Table ${table.label}, booked at ${formatTime(state.next.startAt)}, seats ${covers}`,
+				msg`Table ${table.label}, booked at ${formatTime(state.next.startAt)}, seats ${covers}`,
 			)
 			break
 		case 'blocked':
-			label = _(t`Table ${table.label}, blocked`)
+			label = _(msg`Table ${table.label}, blocked`)
 			break
 		default:
-			label = _(t`Table ${table.label}, open, seats ${covers}`)
+			label = _(msg`Table ${table.label}, open, seats ${covers}`)
 	}
 	// While a party is being placed, say whether this table takes it.
 	if (fits !== null)
 		label = fits
-			? _(t`${label}. Takes this party.`)
-			: _(t`${label}. Not a fit for this party.`)
+			? _(msg`${label}. Takes this party.`)
+			: _(msg`${label}. Not a fit for this party.`)
 
 	return (
 		<button
@@ -269,7 +269,7 @@ function TableButton({
 						className="text-primary-foreground/85 text-xs leading-none font-medium"
 						aria-hidden
 					>
-						<SoftText value={_(t`${seatedFor}m`)} />
+						<SoftText value={_(msg`${seatedFor}m`)} />
 					</span>
 				) : null}
 			</span>

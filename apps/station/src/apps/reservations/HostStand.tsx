@@ -1,7 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, t, Trans } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type WaitlistEntry } from '@repo/reservations'
+import { FINISHED_UNDO_WINDOW_MS, type WaitlistEntry } from '@repo/reservations'
 import {
 	CalendarPlus,
 	CloudOff,
@@ -292,7 +292,7 @@ export function HostStand({
 					undo
 						? {
 								action: {
-									label: _(t`Undo`),
+									label: _(msg`Undo`),
 									// A tap while the floor is still reloading waits for it, then undoes.
 									run: () => {
 										void settled.current.then(async () => {
@@ -300,9 +300,9 @@ export function HostStand({
 											noteWrite()
 											try {
 												await undo()
-												say(_(t`Undone.`))
+												say(_(msg`Undone.`))
 											} catch {
-												say(_(t`Could not undo. Check the floor.`), {
+												say(_(msg`Could not undo. Check the floor.`), {
 													tone: 'danger',
 												})
 											} finally {
@@ -324,7 +324,7 @@ export function HostStand({
 					onSuccess?.(null)
 					say(
 						_(
-							t`That already went through as first sent. Check the floor for what was recorded.`,
+							msg`That already went through as first sent. Check the floor for what was recorded.`,
 						),
 					)
 					return true
@@ -340,19 +340,19 @@ export function HostStand({
 					// Either way the party stays picked up, ready for a table.
 					restore?.()
 					if (kind !== 'open' && kind !== 'soon') {
-						say(_(t`Table ${label} was just taken. Choose another table.`), {
+						say(_(msg`Table ${label} was just taken. Choose another table.`), {
 							tone: 'danger',
 						})
 						return false
 					}
 					say(
 						_(
-							t`Someone is booked on that table before this party would be done.`,
+							msg`Someone is booked on that table before this party would be done.`,
 						),
 						{
 							tone: 'danger',
 							action: {
-								label: _(t`Seat anyway`),
+								label: _(msg`Seat anyway`),
 								run: () => {
 									void settled.current.then(anyway.run)
 								},
@@ -369,13 +369,13 @@ export function HostStand({
 				} else if (!failure?.retryable) onRefused?.()
 				say(
 					failure?.stale
-						? _(t`Someone changed this a moment ago. Here is the latest.`)
+						? _(msg`Someone changed this a moment ago. Here is the latest.`)
 						: failure?.unsure
 							? _(
-									t`No answer in time. It may have gone through: check the floor before trying again.`,
+									msg`No answer in time. It may have gone through: check the floor before trying again.`,
 								)
 							: failure?.offline
-								? _(t`No connection. Nothing was changed.`)
+								? _(msg`No connection. Nothing was changed.`)
 								: _(refusalMessage(failure)),
 					{ tone: 'danger' },
 				)
@@ -391,7 +391,7 @@ export function HostStand({
 	const seatAt = async (table: DayTable, tableState: TableState) => {
 		if (!placing) return
 		if (tableState.kind === 'seated' || tableState.kind === 'blocked') {
-			say(_(t`Table ${table.label} is taken. Choose another table.`), {
+			say(_(msg`Table ${table.label} is taken. Choose another table.`), {
 				tone: 'danger',
 			})
 			return
@@ -409,7 +409,7 @@ export function HostStand({
 	/** Seats a party; when the table is booked soon, the host may insist (overbook). */
 	const seat = async (current: Placing, table: DayTable, insist: boolean) => {
 		const overbook = insist
-			? { overbook: true, overbookReason: _(t`Seated at the host stand`) }
+			? { overbook: true, overbookReason: _(msg`Seated at the host stand`) }
 			: {}
 		const again = insist
 			? undefined
@@ -426,7 +426,7 @@ export function HostStand({
 		const latest = readyRef.current
 		if (current.kind === 'reservation') {
 			const r = current.reservation
-			const who = shortName(r, _(t`Guest`))
+			const who = shortName(r, _(msg`Guest`))
 			// The version on screen now: a poll may have moved it since the party was picked up.
 			const version =
 				latest?.feed.reservations.find((x) => x.id === r.id)?.version ??
@@ -438,7 +438,7 @@ export function HostStand({
 						expectedVersion: version,
 						...overbook,
 					}),
-				_(t`Seated ${who} at ${table.label}.`),
+				_(msg`Seated ${who} at ${table.label}.`),
 				{ undo: () => api.undo(r.id), anyway: again, restore },
 			)
 		} else if (current.kind === 'waitlist') {
@@ -448,7 +448,7 @@ export function HostStand({
 				entry.version
 			await act(
 				() => api.seatWaitlist(entry.id, [table.id], version, overbook),
-				_(t`Seated ${entry.displayName} at ${table.label}.`),
+				_(msg`Seated ${entry.displayName} at ${table.label}.`),
 				{ anyway: again, restore },
 			)
 		} else {
@@ -466,7 +466,7 @@ export function HostStand({
 						// answer is the same request, never a second party.
 						insist ? current.overbookKey : current.key,
 					),
-				_(t`Seated a walk-in of ${size} at ${table.label}.`),
+				_(msg`Seated a walk-in of ${size} at ${table.label}.`),
 				{ anyway: again, restore },
 			)
 		}
@@ -478,7 +478,7 @@ export function HostStand({
 			setPlacing({ kind: 'reservation', reservation: r })
 			return
 		}
-		const who = shortName(r, _(t`Guest`))
+		const who = shortName(r, _(msg`Guest`))
 		if (command.kind === 'change') {
 			setPartyId(null)
 			setChangeId(r.id)
@@ -489,26 +489,26 @@ export function HostStand({
 			await act(
 				() => api.runningLate(r.id, minutes, r.version),
 				minutes > 0
-					? _(t`${who} is running ${minutes} min late.`)
-					: _(t`${who} is on time.`),
+					? _(msg`${who} is running ${minutes} min late.`)
+					: _(msg`${who} is on time.`),
 			)
 			return
 		}
 		if (command.kind === 'undo') {
-			const ok = await act(() => api.undo(r.id), _(t`Undone for ${who}.`))
+			const ok = await act(() => api.undo(r.id), _(msg`Undone for ${who}.`))
 			if (ok) setPartyId(null)
 			return
 		}
 		const done =
 			command.to === 'arrived'
-				? _(t`${who} is here.`)
+				? _(msg`${who} is here.`)
 				: command.to === 'finished'
-					? _(t`${who} finished. Table cleared.`)
+					? _(msg`${who} finished. Table cleared.`)
 					: command.to === 'no_show'
-						? _(t`${who} marked as a no-show.`)
+						? _(msg`${who} marked as a no-show.`)
 						: command.to === 'cancelled'
-							? _(t`Booking for ${who} cancelled.`)
-							: _(t`Booking for ${who} confirmed.`)
+							? _(msg`Booking for ${who} cancelled.`)
+							: _(msg`Booking for ${who} confirmed.`)
 		const reversible = command.to === 'finished' || command.to === 'no_show'
 		const ok = await act(
 			() =>
@@ -554,6 +554,18 @@ export function HostStand({
 	const tableTarget = targetTable
 		? { table: targetTable, state: tableState(targetTable, feed, now) }
 		: null
+	const recentlyCleared = targetTable
+		? feed.reservations.filter((r) => {
+				if (!r.tableIds.includes(targetTable.id)) return false
+				const clearedAt =
+					r.status === 'finished'
+						? r.finishedAt
+						: r.status === 'no_show' && typeof r.noShowAt === 'number'
+							? r.noShowAt
+							: null
+				return clearedAt != null && now - clearedAt <= FINISHED_UNDO_WINDOW_MS
+			})
+		: []
 	/** Not seating here after all: the party stays picked up for another table. */
 	const backToPlacing = () => {
 		const pending = tooSmall
@@ -566,10 +578,10 @@ export function HostStand({
 	const covers = due.reduce((sum, r) => sum + r.partySize, 0)
 	const placingName = placing
 		? placing.kind === 'reservation'
-			? shortName(placing.reservation, _(t`Guest`))
+			? shortName(placing.reservation, _(msg`Guest`))
 			: placing.kind === 'waitlist'
 				? placing.entry.displayName
-				: placing.guestName.trim() || _(t`Walk-in`)
+				: placing.guestName.trim() || _(msg`Walk-in`)
 		: ''
 
 	return (
@@ -577,7 +589,7 @@ export function HostStand({
 			<div className="border-border bg-card flex shrink-0 flex-wrap items-center gap-3 border-b px-4 py-3">
 				{roomList.length > 1 && room ? (
 					<Segmented
-						label={_(t`Room`)}
+						label={_(msg`Room`)}
 						value={room.id}
 						onChange={chooseRoom}
 						options={roomList.map((r) => ({ value: r.id, label: r.name }))}
@@ -625,7 +637,7 @@ export function HostStand({
 								joinKey.current = crypto.randomUUID()
 								setJoinOpen(true)
 							}}
-							aria-label={_(t`Add to the waitlist`)}
+							aria-label={_(msg`Add to the waitlist`)}
 						>
 							<ListPlus className="size-4" />
 							<span className="hidden sm:inline">
@@ -650,7 +662,7 @@ export function HostStand({
 
 			<p role="status" className="sr-only">
 				{placing
-					? _(t`Picked up ${placingName}. Tap a table to seat them.`)
+					? _(msg`Picked up ${placingName}. Tap a table to seat them.`)
 					: ''}
 			</p>
 			<Reveal open={placing !== null}>
@@ -754,18 +766,19 @@ export function HostStand({
 				onNotify={(entry) =>
 					void act(
 						() => api.notifyWaitlist(entry.id, entry.version),
-						_(t`${entry.displayName} has been texted.`),
+						_(msg`${entry.displayName} has been texted.`),
 					)
 				}
 				onRemove={(entry) =>
 					void act(
 						() => api.leaveWaitlist(entry.id, entry.version),
-						_(t`${entry.displayName} left the waitlist.`),
+						_(msg`${entry.displayName} left the waitlist.`),
 					).then((ok) => ok && setWaitlistId(null))
 				}
 			/>
 			<TableSheet
 				target={tableTarget}
+				recent={recentlyCleared}
 				busy={busy}
 				now={now}
 				formatTime={formatTime}
@@ -804,10 +817,10 @@ export function HostStand({
 				onSave={(change) => {
 					const r = feed.reservations.find((x) => x.id === changeId)
 					if (!r) return
-					const who = shortName(r, _(t`Guest`))
+					const who = shortName(r, _(msg`Guest`))
 					const size = change.partySize ?? r.partySize
 					const time = change.timeLabel ?? formatTime(r.startAt)
-					const done = _(t`${who} is now ${size} at ${time}.`)
+					const done = _(msg`${who} is now ${size} at ${time}.`)
 					void act(
 						() =>
 							api.changeParty(
@@ -874,8 +887,8 @@ export function HostStand({
 					void act(
 						() => keyed(bookingKey, (key) => api.book(input, key)),
 						day
-							? _(t`Booked ${first} for ${size} on ${day} at ${time}.`)
-							: _(t`Booked ${first} for ${size} at ${time}.`),
+							? _(msg`Booked ${first} for ${size} on ${day} at ${time}.`)
+							: _(msg`Booked ${first} for ${size} at ${time}.`),
 						{
 							// The sheet turns into the read-back at once: nothing to tap twice.
 							onSuccess: (result) => {
@@ -895,7 +908,9 @@ export function HostStand({
 								setReadBack({
 									name: [first, input.lastName].join(' ').trim(),
 									partySize: size,
-									when: day ? _(t`${day} at ${time}`) : _(t`Today at ${time}`),
+									when: day
+										? _(msg`${day} at ${time}`)
+										: _(msg`Today at ${time}`),
 									code: confirmationCodeOf(result),
 								})
 							},
@@ -918,8 +933,8 @@ export function HostStand({
 							const quoted = (entry as { quotedMin?: number | null } | null)
 								?.quotedMin
 							return typeof quoted === 'number'
-								? _(t`${name} is on the waitlist, about ${quoted} min.`)
-								: _(t`${name} is on the waitlist.`)
+								? _(msg`${name} is on the waitlist, about ${quoted} min.`)
+								: _(msg`${name} is on the waitlist.`)
 						},
 						{ onSuccess: () => setJoinOpen(false) },
 					)
@@ -928,7 +943,7 @@ export function HostStand({
 			<Modal
 				open={tooSmall !== null}
 				onClose={backToPlacing}
-				title={_(t`Table ${tooSmallLabel} is small for them`)}
+				title={_(msg`Table ${tooSmallLabel} is small for them`)}
 				footer={
 					<div className="mb-safe grid grid-cols-2 gap-3">
 						<Button size="lg" onClick={backToPlacing}>
@@ -977,6 +992,9 @@ function refusalMessage(failure: HostApiError | null): MessageDescriptor {
 		case 'slot_unavailable':
 			return msg`That time is no longer available. Choose another.`
 		case 'invalid_status_transition':
+		// A till seats today's bookings, and calls a no-show once its time has passed.
+		case 'not_today':
+		case 'too_early':
 			return msg`That cannot be done to this booking now. Here is the latest.`
 		case 'closed_day':
 			return msg`The restaurant is closed that day.`

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { localizeMenu, menuText } from './menu-text.ts'
+import { localizeMenu, menuText, recordLocale } from './menu-text.ts'
 import { type MenuPayload } from './types.ts'
 
 const json = (value: Record<string, string>) => JSON.stringify(value)
@@ -114,6 +114,29 @@ describe('menu text', () => {
 		const category = ar.menus[0]!.categories[0]!
 		expect(category.displayName).toBe('مقبلات')
 		expect(category.items[0]!.displayName).toBe('Pizza')
+	})
+
+	it('records in Arabic where invoices are Saudi, else in a till language', () => {
+		const plain = menu()
+		expect(recordLocale(plain)).toBe('en')
+		expect(
+			recordLocale({
+				...plain,
+				organization: { ...plain.organization, defaultLocale: 'es' },
+			}),
+		).toBe('en')
+		expect(
+			recordLocale({
+				...plain,
+				organization: { ...plain.organization, defaultLocale: 'ar' },
+			}),
+		).toBe('ar')
+		expect(
+			recordLocale({
+				...plain,
+				locations: plain.locations.map((l) => ({ ...l, currency: 'SAR' })),
+			}),
+		).toBe('ar')
 	})
 
 	it('passes plain names through, and decodes lines saved before', () => {

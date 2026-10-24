@@ -170,22 +170,26 @@ describe('kiosk punches under labor policy', () => {
 			expect(drift.body.at).toBe(h.clock.now)
 		})
 
-		it('refuses a punch older than twelve hours and accepts one just inside', async () => {
+		it('refuses a punch older than 48 hours and flags one over 12 for review', async () => {
 			const old = await h.punch(secret, {
 				pin,
 				kind: 'clock_in',
 				offline: true,
-				clientAt: h.clock.now - 12 * HOUR - 1,
+				clientAt: h.clock.now - 48 * HOUR - 1,
 			})
 			expect(old.status).toBe(422)
 			expect(old.body.error).toBe('punch_too_old')
-			const edge = await h.punch(secret, {
+			const late = await h.punch(secret, {
 				pin,
 				kind: 'clock_in',
 				offline: true,
-				clientAt: h.clock.now - 12 * HOUR,
+				clientAt: h.clock.now - 13 * HOUR,
 			})
-			expect(edge.status).toBe(200)
+			expect(late.status).toBe(200)
+			await h.punch(secret, { pin, kind: 'clock_out' })
+			const [entry] = await entries()
+			expect(entry!.issues).toEqual(['offline_punch', 'late_sync'])
+			expect(entry!.status).toBe('needs_review')
 			const db = await h.db(ORG_A)
 			const rejected = (await db.select().from(timePunches)).filter(
 				(p) => p.outcome !== 'accepted',
@@ -782,6 +786,20 @@ describe('kiosk punches under labor policy', () => {
 			})
 			expect(refused.status).toBe(422)
 			expect(refused.body.error).toBe('unscheduled_not_allowed')
+
+			// Queued offline, the till already let them start: recorded, for a
+			// manager to check.
+			const replayed = await h.punch(secret, {
+				pin: other.pin,
+				kind: 'clock_in',
+				offline: true,
+				clientAt: h.clock.now - 10 * MIN,
+			})
+			expect(replayed.status).toBe(200)
+			const mine = (await entries()).find((e) => e.staffId === other.staffId)
+			expect(mine?.issues).toEqual(
+				expect.arrayContaining(['unscheduled', 'offline_override']),
+			)
 		})
 
 		it('uses the position on the shift to settle a role pick', async () => {

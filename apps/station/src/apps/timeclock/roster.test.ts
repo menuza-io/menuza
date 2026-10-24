@@ -32,6 +32,17 @@ describe('offline clock roster', () => {
 		expect(await findClockPerson('4321', now)).toEqual({ person: null })
 	})
 
+	it('remembers who declares cash tips, so an offline clock-out asks too', async () => {
+		const now = Date.UTC(2026, 9, 23, 12)
+		await rememberClockPerson('4321', { ...rana, promptTips: true }, now)
+		await rememberClockPerson('8765', rana, now)
+		expect(await findClockPerson('4321', now)).toEqual({
+			person: expect.objectContaining({ promptTips: true }),
+		})
+		const other = await findClockPerson('8765', now)
+		expect('person' in other && other.person?.promptTips).toBeFalsy()
+	})
+
 	it('forgets people it has not seen for a while', async () => {
 		const now = Date.UTC(2026, 9, 23, 12)
 		await rememberClockPerson('4321', rana, now - CACHE_MAX_AGE_MS - 1)

@@ -1,5 +1,5 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, t, Trans } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	quickActionsFor,
@@ -72,7 +72,7 @@ export function PartySize({
 	return (
 		<div
 			role="group"
-			aria-label={_(t`Party size`)}
+			aria-label={_(msg`Party size`)}
 			className="flex flex-wrap gap-2"
 		>
 			{[1, 2, 3, 4, 5, 6, 7, 8].map((size) => (
@@ -90,7 +90,7 @@ export function PartySize({
 			<div className="border-border bg-card flex h-12 items-center rounded-xl border">
 				<button
 					type="button"
-					aria-label={_(t`One fewer`)}
+					aria-label={_(msg`One fewer`)}
 					onClick={() => onChange(Math.max(1, value - 1))}
 					className="hover:bg-accent h-full w-11 rounded-s-xl text-lg font-semibold"
 				>
@@ -101,7 +101,7 @@ export function PartySize({
 				</span>
 				<button
 					type="button"
-					aria-label={_(t`One more`)}
+					aria-label={_(msg`One more`)}
 					onClick={() => onChange(Math.min(99, value + 1))}
 					className="hover:bg-accent h-full w-11 rounded-e-xl text-lg font-semibold"
 				>
@@ -201,7 +201,7 @@ export function PartySheet({
 	const run = (command: PartyCommand) => r && onCommand(r, command)
 	const phoneEnd = (r?.guest?.phone ?? '').replace(/\D/g, '').slice(-4)
 	const guestName =
-		r?.guest?.name?.trim() || (r ? shortName(r, _(t`Guest`)) : '')
+		r?.guest?.name?.trim() || (r ? shortName(r, _(msg`Guest`)) : '')
 
 	return (
 		<Modal
@@ -381,7 +381,7 @@ export function PartySheet({
 									<span
 										className="tnum"
 										dir="ltr"
-										aria-label={_(t`Phone ending ${phoneEnd}`)}
+										aria-label={_(msg`Phone ending ${phoneEnd}`)}
 									>
 										{r.guest.phone}
 									</span>
@@ -419,7 +419,7 @@ export function PartySheet({
 							// The guest called: the dock then says how late they are running.
 							<div
 								role="group"
-								aria-label={_(t`Running late`)}
+								aria-label={_(msg`Running late`)}
 								className="flex flex-wrap items-center gap-2"
 							>
 								<span className="text-muted-foreground text-sm font-medium">
@@ -527,8 +527,8 @@ export function WaitlistSheet({
 						<ConfirmButton
 							busy={busy}
 							onConfirm={() => onRemove(entry)}
-							label={_(t`They left`)}
-							confirmLabel={_(t`Tap again: remove`)}
+							label={_(msg`They left`)}
+							confirmLabel={_(msg`Tap again: remove`)}
 						/>
 					</div>
 				) : null
@@ -616,6 +616,7 @@ function ConfirmButton({
 
 export function TableSheet({
 	target,
+	recent = [],
 	busy,
 	now,
 	formatTime,
@@ -625,6 +626,11 @@ export function TableSheet({
 	onClose,
 }: {
 	target: { table: DayTable; state: TableState } | null
+	/**
+	 * Parties cleared from this table (finished or no-show) still inside the
+	 * undo window: a mis-tap is put right from here once its toast is gone.
+	 */
+	recent?: DayReservation[]
 	busy: boolean
 	now: number
 	formatTime: (epochMs: number) => string
@@ -649,14 +655,14 @@ export function TableSheet({
 		<Modal
 			open={target !== null}
 			onClose={onClose}
-			title={target ? _(t`Table ${target.table.label}`) : ''}
+			title={target ? _(msg`Table ${target.table.label}`) : ''}
 		>
 			{target && state ? (
 				<div className="flex flex-col gap-5 p-4 sm:p-5">
 					{state.kind === 'seated' ? (
 						<div className="border-border flex flex-col gap-3 rounded-2xl border p-4">
 							<p className="text-lg font-semibold">
-								{shortName(state.party, _(t`Guest`))}
+								{shortName(state.party, _(msg`Guest`))}
 							</p>
 							<p className="text-muted-foreground tnum">
 								{state.party.seatedAt ? (
@@ -698,6 +704,27 @@ export function TableSheet({
 							)}
 						</p>
 					) : null}
+					{recent.map((r) => {
+						const who = shortName(r, _(msg`Guest`))
+						return (
+							<button
+								key={r.id}
+								type="button"
+								onClick={() => onDetails(r)}
+								className="border-border hover:bg-accent flex items-center justify-between gap-3 rounded-2xl border p-4 text-start transition-colors"
+							>
+								<span className="text-muted-foreground">
+									{r.status === 'no_show'
+										? _(msg`${who} marked as a no-show.`)
+										: _(msg`${who} finished. Table cleared.`)}
+								</span>
+								<span className="flex shrink-0 items-center gap-2 font-semibold">
+									<Undo2 className="size-5" />
+									<Trans>Undo</Trans>
+								</span>
+							</button>
+						)
+					})}
 					{next ? (
 						<button
 							type="button"
@@ -709,7 +736,7 @@ export function TableSheet({
 									<Trans>Next booking</Trans>
 								</span>
 								<span className="font-semibold">
-									{shortName(next, _(t`Guest`))} · {next.partySize}
+									{shortName(next, _(msg`Guest`))} · {next.partySize}
 								</span>
 							</span>
 							<span className="mono text-xl font-semibold">
@@ -818,7 +845,7 @@ export function ChangePartySheet({
 			open={r !== null}
 			onClose={onClose}
 			size="lg"
-			title={_(t`Change size or time`)}
+			title={_(msg`Change size or time`)}
 			footer={
 				r ? (
 					<div className="mb-safe">
@@ -918,7 +945,7 @@ export function WalkInSheet({
 		<Modal
 			open={open}
 			onClose={onClose}
-			title={_(t`Walk-in`)}
+			title={_(msg`Walk-in`)}
 			footer={
 				<div className="mb-safe">
 					<Button
@@ -1061,7 +1088,7 @@ export function BookingSheet({
 			open={open}
 			onClose={onClose}
 			size="lg"
-			title={_(t`New booking`)}
+			title={_(msg`New booking`)}
 			footer={
 				readBack ? (
 					<div className="mb-safe">
@@ -1253,7 +1280,7 @@ export function BookingSheet({
 									className={cn(fieldClass, 'min-h-20 py-3')}
 									value={notes}
 									maxLength={500}
-									placeholder={_(t`High chair, birthday, by the window…`)}
+									placeholder={_(msg`High chair, birthday, by the window…`)}
 									onChange={(event) => setNotes(event.target.value)}
 								/>
 							</label>
@@ -1399,7 +1426,7 @@ export function JoinWaitlistSheet({
 		<Modal
 			open={open}
 			onClose={onClose}
-			title={_(t`Add to the waitlist`)}
+			title={_(msg`Add to the waitlist`)}
 			footer={
 				<div className="mb-safe">
 					<Button

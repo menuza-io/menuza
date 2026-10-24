@@ -22,7 +22,8 @@ export async function rememberClockPerson(
 	who: Pick<
 		KioskIdentifyView,
 		'firstName' | 'positions' | 'breakKinds' | 'staffId'
-	>,
+	> &
+		Partial<Pick<KioskIdentifyView, 'promptTips'>>,
 	now = Date.now(),
 ): Promise<void> {
 	await db.clockPeople.put({
@@ -31,6 +32,7 @@ export async function rememberClockPerson(
 		firstName: who.firstName,
 		positions: who.positions,
 		breakKinds: who.breakKinds,
+		...(who.promptTips ? { promptTips: true } : {}),
 		cachedAt: now,
 	})
 }

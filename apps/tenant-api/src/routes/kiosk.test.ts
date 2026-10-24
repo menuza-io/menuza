@@ -604,6 +604,22 @@ describe('/kiosk', () => {
 				expect(entry!.rateMinor).toBe(1900)
 			})
 
+			it('records an offline clock-in under the main job when nobody could pick', async () => {
+				const { pin } = await multi()
+				const replayed = await h.punch(secret, {
+					pin,
+					kind: 'clock_in',
+					offline: true,
+					clientAt: h.clock.now - 60_000,
+				})
+				expect(replayed.status).toBe(200)
+				const [entry] = await entries()
+				expect(entry?.positionId).toEqual(expect.any(String))
+				expect(entry?.issues).toEqual(
+					expect.arrayContaining(['offline_punch', 'offline_override']),
+				)
+			})
+
 			it('rejects a role the person does not hold, and records the rejection', async () => {
 				const { pin } = await multi()
 				const db = await h.db(ORG_A)

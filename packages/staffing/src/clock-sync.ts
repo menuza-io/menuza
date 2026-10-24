@@ -4,6 +4,7 @@ import {
 	type ClockPunchBody,
 } from './clock-client.ts'
 import { type ClockQueue } from './clock-queue.ts'
+import { OFFLINE_PUNCH_MAX_AGE_MS } from './clock-state.ts'
 
 /**
  * Sends queued punches to the server, oldest first, one at a time. The order
@@ -20,9 +21,10 @@ export const MAX_SYNC_ATTEMPTS = 8
  * A punch still failing on server errors this long after it was made is set
  * aside. Judged by age, not by tries: a till syncs every few seconds during a
  * rush, and a few minutes of outage must never cost someone their clock-in
- * (their later punches would then be refused as out of order).
+ * (their later punches would then be refused as out of order). The same age
+ * the server still records an offline punch at.
  */
-export const MAX_PENDING_AGE_MS = 48 * 60 * 60 * 1000
+export const MAX_PENDING_AGE_MS = OFFLINE_PUNCH_MAX_AGE_MS
 
 /**
  * A punch the server breaks on (a 500 for it, while other punches in the same

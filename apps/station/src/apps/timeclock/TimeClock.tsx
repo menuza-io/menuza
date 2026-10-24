@@ -1,4 +1,4 @@
-import { plural, t, Trans } from '@lingui/macro'
+import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type ClockEvent } from '@repo/staffing'
 import { ClockApiError, ClockNetworkError } from '@repo/staffing/clock-client'
@@ -431,7 +431,7 @@ export function TimeClock({
 				}}
 			/>
 			<section
-				aria-label={_(t`Time clock`)}
+				aria-label={_(msg`Time clock`)}
 				className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-4 sm:p-6 lg:items-center"
 			>
 				<div
@@ -529,6 +529,7 @@ export function TimeClock({
 										reason={offlineReason}
 										busy={busy}
 										locale={i18n.locale}
+										currency={currency}
 										onChoose={(event, extras) => void punch(event, extras)}
 										onBack={reset}
 									/>
@@ -616,8 +617,13 @@ function ClockFace({
 			</div>
 			<div className="flex items-end justify-between gap-4 lg:flex-col lg:items-start">
 				<div>
-					<p className="flex items-baseline gap-2" aria-live="off" dir="ltr">
-						<span className="mono text-5xl leading-none font-semibold tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl">
+					{/* Only the digits run left to right; the day period follows the page
+					    (after the time in English, before it reading Arabic). */}
+					<p className="flex items-baseline gap-2" aria-live="off">
+						<span
+							dir="ltr"
+							className="mono text-5xl leading-none font-semibold tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl"
+						>
 							<NumberPop value={time} />
 						</span>
 						{period ? (
@@ -974,7 +980,7 @@ function Tips({
 			</div>
 			<p
 				className="t-stagger-line t-stagger-line--2 mono text-center text-4xl font-semibold"
-				aria-label={_(t`Cash tips ${amount}`)}
+				aria-label={_(msg`Cash tips ${amount}`)}
 			>
 				<NumberPop value={amount} />
 			</p>
@@ -1013,6 +1019,7 @@ function OfflineActions({
 	reason,
 	busy,
 	locale,
+	currency,
 	onChoose,
 	onBack,
 }: {
@@ -1022,16 +1029,33 @@ function OfflineActions({
 	reason: 'offline' | 'unavailable'
 	busy: boolean
 	locale: string
+	currency: string
 	onChoose: (
 		event: ClockEvent,
-		extras?: { positionId?: string; breakKind?: 'meal' | 'rest' },
+		extras?: {
+			positionId?: string
+			breakKind?: 'meal' | 'rest'
+			cashTipsMinor?: number
+		},
 	) => void
 	onBack: () => void
 }) {
 	const [pickRole, setPickRole] = useState(false)
 	const [pickBreak, setPickBreak] = useState(false)
+	const [declareTips, setDeclareTips] = useState(false)
 	const positions = who?.positions ?? []
 	const breakKinds = who?.breakKinds ?? []
+	// Cash tips are declared at clock-out, connection or not.
+	if (declareTips)
+		return (
+			<Tips
+				currency={currency}
+				busy={busy}
+				onSkip={() => onChoose('clock_out')}
+				onDeclare={(cashTipsMinor) => onChoose('clock_out', { cashTipsMinor })}
+				onBack={() => setDeclareTips(false)}
+			/>
+		)
 	if (pickBreak)
 		return (
 			<BreakPick
@@ -1121,7 +1145,9 @@ function OfflineActions({
 								? setPickRole(true)
 								: chosen === 'break_start' && breakKinds.length > 1
 									? setPickBreak(true)
-									: onChoose(chosen)
+									: chosen === 'clock_out' && who?.promptTips
+										? setDeclareTips(true)
+										: onChoose(chosen)
 						}
 					/>
 				))}
@@ -1228,7 +1254,7 @@ function FailedPunches({
 		<Modal
 			open={open}
 			onClose={onClose}
-			title={_(t`Punches not recorded`)}
+			title={_(msg`Punches not recorded`)}
 			footer={
 				<div className="grid grid-cols-2 gap-3">
 					<Button variant="outline" size="lg" onClick={onClose}>

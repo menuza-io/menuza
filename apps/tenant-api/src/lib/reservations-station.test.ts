@@ -61,6 +61,43 @@ describe('Station contact redaction', () => {
 		})
 	})
 
+	it('hides that note under every name, and in the booking history', () => {
+		expect(
+			redactContacts({
+				reservation: {
+					channel: 'waitlist',
+					staffNotes: 'nut allergy',
+					internalNotes: 'nut allergy',
+					internal_notes: 'nut allergy',
+				},
+				events: [{ type: 'note', data: { staffNotes: 'nut allergy' } }],
+			}),
+		).toEqual({
+			reservation: {
+				channel: 'waitlist',
+				staffNotes: null,
+				internalNotes: null,
+				internal_notes: null,
+			},
+			events: [{ type: 'note', data: { staffNotes: null } }],
+		})
+		expect(
+			redactContacts({
+				channel: 'waitlist',
+				events: [{ data: { staffNotes: 'nut allergy' } }],
+			}),
+		).toEqual({ channel: 'waitlist', events: [{ data: { staffNotes: null } }] })
+		expect(
+			redactContacts({
+				channel: 'host',
+				events: [{ data: { staffNotes: 'window table' } }],
+			}),
+		).toEqual({
+			channel: 'host',
+			events: [{ data: { staffNotes: 'window table' } }],
+		})
+	})
+
 	it('covers fields added later by their name, not a list', () => {
 		expect(
 			redactContacts({

@@ -224,6 +224,8 @@ export type ClockPerson = {
 	positions: Array<{ id: string; name: string; nameAr: string | null }>
 	/** The breaks their workplace offers (meal and rest), when it offers a choice. */
 	breakKinds?: Array<'meal' | 'rest'>
+	/** They declare cash tips at clock-out, online or not. */
+	promptTips?: boolean
 	cachedAt: number
 }
 

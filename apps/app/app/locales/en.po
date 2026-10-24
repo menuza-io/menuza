@@ -1900,15 +1900,15 @@ msgstr "A block ends before it starts."
 msgid "A block points to a table that no longer exists."
 msgstr "A block points to a table that no longer exists."
 
-#: app/components/staff/timesheets/issue-copy.ts:38
+#: app/components/staff/timesheets/issue-copy.ts:42
 msgid "A break falls outside the shift. Fix its times."
 msgstr "A break falls outside the shift. Fix its times."
 
-#: app/components/staff/timesheets/issue-copy.ts:46
+#: app/components/staff/timesheets/issue-copy.ts:50
 msgid "A break was deducted automatically by your rules."
 msgstr "A break was deducted automatically by your rules."
 
-#: app/components/staff/timesheets/issue-copy.ts:36
+#: app/components/staff/timesheets/issue-copy.ts:40
 msgid "A break was started and never ended. Set when it ended."
 msgstr "A break was started and never ended. Set when it ended."
 
@@ -2053,7 +2053,7 @@ msgstr "A manager approves and locks them"
 msgid "A manager approves them"
 msgstr "A manager approves them"
 
-#: app/components/staff/timesheets/issue-copy.ts:44
+#: app/components/staff/timesheets/issue-copy.ts:48
 msgid "A manager changed this card."
 msgstr "A manager changed this card."
 
@@ -2164,7 +2164,7 @@ msgstr "A prepayment or deposit policy makes guests pay to book. Its cancellatio
 #~ msgid "A report covers at most 366 days. Choose a shorter range."
 #~ msgstr "A report covers at most 366 days. Choose a shorter range."
 
-#: app/components/staff/timesheets/issue-copy.ts:34
+#: app/components/staff/timesheets/issue-copy.ts:36
 msgid "A required break was not taken or not recorded."
 msgstr "A required break was not taken or not recorded."
 
@@ -4306,7 +4306,7 @@ msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 #: app/components/reservations/requests-panel.tsx:274
 #: app/components/staff/schedule/time-off-page.tsx:282
 #: app/components/staff/timesheets/card-history.tsx:51
-#: app/components/staff/timesheets/issue-copy.ts:53
+#: app/components/staff/timesheets/issue-copy.ts:57
 msgid "Approved"
 msgstr "Approved"
 
@@ -5410,7 +5410,7 @@ msgstr "Break"
 msgid "Break {number}"
 msgstr "Break {number}"
 
-#: app/components/staff/timesheets/issue-copy.ts:27
+#: app/components/staff/timesheets/issue-copy.ts:29
 msgid "Break deducted"
 msgstr "Break deducted"
 
@@ -6608,6 +6608,10 @@ msgstr "Check the highlighted fields and try again."
 msgid "Check the highlighted fields."
 msgstr "Check the highlighted fields."
 
+#: app/components/staff/timesheets/issue-copy.ts:28
+msgid "Check the rules"
+msgstr "Check the rules"
+
 #: app/utils/staffing/alert-copy.ts:72
 msgid "Check the time cards before the limit is reached."
 msgstr "Check the time cards before the limit is reached."
@@ -6616,7 +6620,7 @@ msgstr "Check the time cards before the limit is reached."
 msgid "Check their contact details and emergency contact are right."
 msgstr "Check their contact details and emergency contact are right."
 
-#: app/components/staff/timesheets/issue-copy.ts:57
+#: app/components/staff/timesheets/issue-copy.ts:61
 msgid "Check this card"
 msgstr "Check this card"
 
@@ -7217,23 +7221,27 @@ msgstr "Clock-out set for {name}."
 msgid "Clocked in"
 msgstr "Clocked in"
 
-#: app/components/staff/timesheets/issue-copy.ts:41
+#: app/components/staff/timesheets/issue-copy.ts:45
 msgid "Clocked in after the scheduled start."
 msgstr "Clocked in after the scheduled start."
 
-#: app/components/staff/timesheets/issue-copy.ts:31
+#: app/components/staff/timesheets/issue-copy.ts:33
 msgid "Clocked in and never clocked out. Set the time they left."
 msgstr "Clocked in and never clocked out. Set the time they left."
 
-#: app/components/staff/timesheets/issue-copy.ts:42
+#: app/components/staff/timesheets/issue-copy.ts:46
 msgid "Clocked in before the scheduled start."
 msgstr "Clocked in before the scheduled start."
+
+#: app/components/staff/timesheets/issue-copy.ts:39
+msgid "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it."
+msgstr "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it."
 
 #: app/components/staff/labor-example.tsx:148
 msgid "Clocked in to out"
 msgstr "Clocked in to out"
 
-#: app/components/staff/timesheets/issue-copy.ts:40
+#: app/components/staff/timesheets/issue-copy.ts:44
 msgid "Clocked in without a scheduled shift."
 msgstr "Clocked in without a scheduled shift."
 
@@ -7249,7 +7257,7 @@ msgstr "Clocked out"
 msgid "Clocked out at, for {name}"
 msgstr "Clocked out at, for {name}"
 
-#: app/components/staff/timesheets/issue-copy.ts:43
+#: app/components/staff/timesheets/issue-copy.ts:47
 msgid "Clocked out before the scheduled end."
 msgstr "Clocked out before the scheduled end."
 
@@ -7319,7 +7327,7 @@ msgstr "Close, shorten or replace your regular services on holidays, Ramadan, pr
 #: app/components/menu/drop-wizard/drop-preview.tsx:73
 #: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
-#: app/components/staff/timesheets/issue-copy.ts:52
+#: app/components/staff/timesheets/issue-copy.ts:56
 #: app/routes/_app+/$orgSlug_+/reservations+/calendar.tsx:457
 msgid "Closed"
 msgstr "Closed"
@@ -16657,7 +16665,7 @@ msgstr "Lock table assignment"
 
 #: app/components/my-schedule/time-cards-view.tsx:103
 #: app/components/staff/timesheets/card-history.tsx:52
-#: app/components/staff/timesheets/issue-copy.ts:54
+#: app/components/staff/timesheets/issue-copy.ts:58
 msgid "Locked"
 msgstr "Locked"
 
@@ -16736,7 +16744,7 @@ msgstr "Longer than"
 msgid "Longer than usual."
 msgstr "Longer than usual."
 
-#: app/components/staff/timesheets/issue-copy.ts:33
+#: app/components/staff/timesheets/issue-copy.ts:35
 msgid "Longer than your long-shift limit. Check it is not a missed clock-out."
 msgstr "Longer than your long-shift limit. Check it is not a missed clock-out."
 
@@ -18190,7 +18198,7 @@ msgid "Needs reply"
 msgstr "Needs reply"
 
 #: app/components/staff/timeclock-today.tsx:381
-#: app/components/staff/timesheets/issue-copy.ts:51
+#: app/components/staff/timesheets/issue-copy.ts:55
 #: app/components/staff/timesheets/timesheets-page.tsx:537
 #: app/utils/reservations/payments-view.ts:80
 #: app/utils/reservations/setup-api.ts:165
@@ -20888,7 +20896,7 @@ msgstr "Only your team sees notes. The applicant never does."
 #: app/components/favorite-notes.tsx:105
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
 #: app/components/pos/pos-day-report.tsx:291
-#: app/components/staff/timesheets/issue-copy.ts:50
+#: app/components/staff/timesheets/issue-copy.ts:54
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:519
@@ -23699,7 +23707,7 @@ msgstr ""
 msgid "Publishing…"
 msgstr "Publishing…"
 
-#: app/components/staff/timesheets/issue-copy.ts:45
+#: app/components/staff/timesheets/issue-copy.ts:49
 msgid "Punched while the tablet was offline and sent later."
 msgstr "Punched while the tablet was offline and sent later."
 
@@ -26022,6 +26030,10 @@ msgstr "Saved changes for {name}."
 msgid "Saved for {activeServiceName} (v{0})"
 msgstr "Saved for {activeServiceName} (v{0})"
 
+#: app/components/staff/timesheets/issue-copy.ts:38
+msgid "Saved offline and sent more than 12 hours later. Check the times."
+msgstr "Saved offline and sent more than 12 hours later. Check the times."
+
 #: app/components/kiosk/kiosk-screens.tsx:692
 msgid "Saved on this tablet. It will be recorded when the connection is back."
 msgstr "Saved on this tablet. It will be recorded when the connection is back."
@@ -27281,6 +27293,10 @@ msgstr "Sent by email to people who have an address on file."
 #: app/components/pos/terminals-manager.tsx:1162
 msgid "Sent for a location this terminal is not paired to"
 msgstr "Sent for a location this terminal is not paired to"
+
+#: app/components/staff/timesheets/issue-copy.ts:27
+msgid "Sent late"
+msgstr "Sent late"
 
 #: app/components/staff/timesheets/card-history.tsx:210
 msgid "sent later"
@@ -30980,7 +30996,7 @@ msgstr "The steps the agent follows on each call. The standard flow works for mo
 msgid "The steps to follow while taking an order."
 msgstr "The steps to follow while taking an order."
 
-#: app/components/staff/timesheets/issue-copy.ts:32
+#: app/components/staff/timesheets/issue-copy.ts:34
 msgid "The system clocked them out. Check the time is right."
 msgstr "The system clocked them out. Check the time is right."
 
@@ -31031,7 +31047,7 @@ msgstr "The tables guests sit at, grouped into dining areas."
 msgid "The tables stay as they are. Parties will no longer be seated on this combination."
 msgstr "The tables stay as they are. Parties will no longer be seated on this combination."
 
-#: app/components/staff/timesheets/issue-copy.ts:35
+#: app/components/staff/timesheets/issue-copy.ts:37
 msgid "The tablet clock was off when this was punched. Check the times."
 msgstr "The tablet clock was off when this was punched. Check the times."
 
@@ -31062,7 +31078,7 @@ msgstr "The time between start times is not a supported value."
 #~ msgid "The time-limit notice, the rating question, and the goodbye."
 #~ msgstr "The time-limit notice, the rating question, and the goodbye."
 
-#: app/components/staff/timesheets/issue-copy.ts:37
+#: app/components/staff/timesheets/issue-copy.ts:41
 msgid "The times do not add up. Fix the start or the end."
 msgstr "The times do not add up. Fix the start or the end."
 
@@ -32955,7 +32971,7 @@ msgstr "Two bookings share a table at the same time"
 msgid "Two break rules start at the same point in the shift."
 msgstr "Two break rules start at the same point in the shift."
 
-#: app/components/staff/timesheets/issue-copy.ts:39
+#: app/components/staff/timesheets/issue-copy.ts:43
 msgid "Two breaks overlap. Fix their times."
 msgstr "Two breaks overlap. Fix their times."
 
