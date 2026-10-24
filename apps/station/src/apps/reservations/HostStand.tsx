@@ -96,8 +96,13 @@ export function HostStand({
 	const [partyId, setPartyId] = useState<string | null>(null)
 	/** The booking whose size or time is being changed. */
 	const [changeId, setChangeId] = useState<string | null>(null)
-	/** The last change got no answer: it may have landed. */
-	const [changeUnsure, setChangeUnsure] = useState(false)
+	/** The last change got no answer: what it asked for, as it may have landed. */
+	const [changeUnsure, setChangeUnsure] = useState<{
+		id: string
+		partySize: number
+		time: string | null
+		say: string
+	} | null>(null)
 	// Times for the change leave out the party's own table and covers.
 	const changeSlots = useCallback(
 		(date: string, partySize: number) =>
@@ -182,6 +187,24 @@ export function HostStand({
 			setToast({ id: Date.now(), text, ...extra }),
 		[],
 	)
+	// A change that got no answer: once the day shows it, it landed. Say so and
+	// close, instead of leaving the host with a Save that has nothing to save.
+	const changedBooking = changeUnsure
+		? state.status === 'ready'
+			? state.feed.reservations.find((r) => r.id === changeUnsure.id)
+			: undefined
+		: undefined
+	useEffect(() => {
+		if (!changeUnsure || !changedBooking) return
+		if (
+			changedBooking.partySize === changeUnsure.partySize &&
+			(changeUnsure.time === null || changedBooking.time === changeUnsure.time)
+		) {
+			setChangeId(null)
+			setChangeUnsure(null)
+			say(changeUnsure.say)
+		}
+	}, [changeUnsure, changedBooking, say])
 
 	const ready = state.status === 'ready' ? state : null
 	const feed = ready?.feed ?? null
@@ -776,7 +799,7 @@ export function HostStand({
 				formatTime={formatTime}
 				onClose={() => {
 					setChangeId(null)
-					setChangeUnsure(false)
+					setChangeUnsure(null)
 				}}
 				onSave={(change) => {
 					const r = feed.reservations.find((x) => x.id === changeId)
@@ -784,17 +807,7 @@ export function HostStand({
 					const who = shortName(r, _(t`Guest`))
 					const size = change.partySize ?? r.partySize
 					const time = change.timeLabel ?? formatTime(r.startAt)
-					// The last try got no answer and the day now shows the change: it landed.
-					if (
-						changeUnsure &&
-						r.partySize === size &&
-						(!change.time || r.time === change.time)
-					) {
-						setChangeId(null)
-						setChangeUnsure(false)
-						say(_(t`${who} is now ${size} at ${time}.`))
-						return
-					}
+					const done = _(t`${who} is now ${size} at ${time}.`)
 					void act(
 						() =>
 							api.changeParty(
@@ -805,13 +818,19 @@ export function HostStand({
 								},
 								r.version,
 							),
-						_(t`${who} is now ${size} at ${time}.`),
+						done,
 						{
 							onSuccess: () => {
 								setChangeId(null)
-								setChangeUnsure(false)
+								setChangeUnsure(null)
 							},
-							onUnsure: () => setChangeUnsure(true),
+							onUnsure: () =>
+								setChangeUnsure({
+									id: r.id,
+									partySize: size,
+									time: change.time ?? null,
+									say: done,
+								}),
 						},
 					)
 				}}
@@ -950,6 +969,7 @@ function refusalMessage(failure: HostApiError | null): MessageDescriptor {
 		case 'guest_permission_required':
 			return msg`That needs guest details, which this sign-in does not have.`
 		case 'not_for_station':
+		case 'undo_not_allowed':
 			return msg`That is done in the app, not at a till.`
 		case 'not_a_host':
 			return msg`You are not on this terminal’s host list.`

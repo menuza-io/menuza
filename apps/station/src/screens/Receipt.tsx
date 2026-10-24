@@ -9,7 +9,7 @@ import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type PosOrder } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
-import { shownLine } from '~/lib/store.ts'
+import { saleLine } from '~/lib/store.ts'
 import { cn } from '~/ui/primitives.tsx'
 
 const TENDER_LABEL: Record<'cash' | 'card' | 'other', MessageDescriptor> = {
@@ -101,31 +101,33 @@ export function Receipt({
 				</div>
 			) : null}
 			<hr />
-			{order.lines.map(shownLine).map((line) => (
-				<div key={line.id} className="mb-1">
-					<Row>
-						<span>
-							{line.quantity} × {line.name}
-							{line.variantLabel ? ` (${line.variantLabel})` : ''}
-						</span>
-						<span>{money(lineTotalCents(line))}</span>
-					</Row>
-					{line.options.map((o) => (
-						<Row key={o.groupId + o.optionId} className="ps-2.5">
+			{order.lines
+				.map((line) => saleLine(line, order.status === 'open'))
+				.map((line) => (
+					<div key={line.id} className="mb-1">
+						<Row>
 							<span>
-								+ {o.quantity > 1 ? `${o.quantity} × ` : ''}
-								{o.optionName}
+								{line.quantity} × {line.name}
+								{line.variantLabel ? ` (${line.variantLabel})` : ''}
 							</span>
-							{o.unitCents > 0 ? (
-								<span>{money(o.unitCents * o.quantity * line.quantity)}</span>
-							) : null}
+							<span>{money(lineTotalCents(line))}</span>
 						</Row>
-					))}
-					{line.instructions ? (
-						<div className="ps-2.5 italic">“{line.instructions}”</div>
-					) : null}
-				</div>
-			))}
+						{line.options.map((o) => (
+							<Row key={o.groupId + o.optionId} className="ps-2.5">
+								<span>
+									+ {o.quantity > 1 ? `${o.quantity} × ` : ''}
+									{o.optionName}
+								</span>
+								{o.unitCents > 0 ? (
+									<span>{money(o.unitCents * o.quantity * line.quantity)}</span>
+								) : null}
+							</Row>
+						))}
+						{line.instructions ? (
+							<div className="ps-2.5 italic">“{line.instructions}”</div>
+						) : null}
+					</div>
+				))}
 			<hr />
 			<Row>
 				<span>

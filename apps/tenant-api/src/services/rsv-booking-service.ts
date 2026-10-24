@@ -2372,7 +2372,23 @@ export async function updateReservation(params: {
 						'manager_required',
 						'This booking has a payment on it. A manager changes it in the app.',
 					)
-				// No overbooking from a till: the slot's pacing holds for the new size.
+				const slotMoved =
+					targetBusinessDate !== current.businessDate ||
+					nextLocalStartMin !== current.localStartMin
+				// A till moves a booking forward in time only, never into the past.
+				if (slotMoved && nextStartAt < now - 15 * 60_000)
+					throw conflict('in_the_past', 'That time has already passed.')
+			}
+			// No overbooking from a till: the slot's pacing holds for the new size.
+			// Fewer covers in the same slot never needs room (a manager may have
+			// overbooked it already).
+			if (
+				params.paymentLocked &&
+				sizeOrTimeChanged &&
+				(targetBusinessDate !== current.businessDate ||
+					nextLocalStartMin !== current.localStartMin ||
+					nextPartySize > current.partySize)
+			) {
 				const others = state.dayResRows.filter(
 					(r) => r.id !== current.id && ACTIVE_OCCUPANCY_STATUSES.has(r.status),
 				)
@@ -3143,6 +3159,11 @@ export async function undoReservationTransition(params: {
 	orgId: string
 	reservationId: string
 	actorId: string
+	/**
+	 * Only the caller's own recent change may be undone (a till: the host's
+	 * slip, not a manager's decision or a guest's cancellation days ago).
+	 */
+	ownRecentOnly?: { withinMs: number }
 	input?: {
 		expectedVersion?: number
 		nowMs?: number
@@ -3226,6 +3247,18 @@ export async function undoReservationTransition(params: {
 					lastStatusEvent = e
 					break
 				}
+			}
+			if (params.ownRecentOnly) {
+				const nowMs = params.input?.nowMs ?? Date.now()
+				if (
+					!lastStatusEvent ||
+					lastStatusEvent.actorId !== params.actorId ||
+					nowMs - lastStatusEvent.at > params.ownRecentOnly.withinMs
+				)
+					throw conflict(
+						'undo_not_allowed',
+						'Only your own last change can be undone here. A manager changes it in the app.',
+					)
 			}
 			const previousStatus = blockedByUndo
 				? null

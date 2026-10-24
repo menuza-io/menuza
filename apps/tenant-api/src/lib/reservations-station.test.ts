@@ -45,6 +45,22 @@ describe('Station contact redaction', () => {
 		})
 	})
 
+	it('hides the note a seated waitlist party brought with it', () => {
+		expect(
+			redactContacts({
+				reservations: [
+					{ channel: 'waitlist', staffNotes: 'nut allergy, wheelchair' },
+					{ channel: 'host', staffNotes: 'window table' },
+				],
+			}),
+		).toEqual({
+			reservations: [
+				{ channel: 'waitlist', staffNotes: null },
+				{ channel: 'host', staffNotes: 'window table' },
+			],
+		})
+	})
+
 	it('covers fields added later by their name, not a list', () => {
 		expect(
 			redactContacts({

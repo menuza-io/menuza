@@ -74,13 +74,13 @@ export async function syncQueue(deps: {
 	const broke: Array<{ id: string }> = []
 	/**
 	 * Two 500s in a row with nothing answered looks like an outage, but may be
-	 * two broken punches at the head of the queue: one punch the server has
-	 * never seen (someone else's, untried) settles it before the run stops.
+	 * two broken punches at the head of the queue: the next person's punch
+	 * (their earliest still waiting, so their own order holds) settles it
+	 * before the run stops.
 	 */
 	let probing = false
 	for (const item of await queue.pending()) {
 		if (held.size > 0 && (!item.staffId || held.has(item.staffId))) continue
-		if (probing && item.attempts > 0) continue
 		let pin: string
 		try {
 			pin = await queue.readPin(item)
@@ -152,6 +152,7 @@ export async function syncQueue(deps: {
 				outcome.failed += 1
 				answered += 1
 				failingInARow = 0
+				probing = false
 				continue
 			}
 			// Anything unexpected: keep the punch and try again next time.

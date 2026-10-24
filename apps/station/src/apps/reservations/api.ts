@@ -82,10 +82,11 @@ export class HostApiError extends Error {
 			this.status === 425 ||
 			this.status === 429 ||
 			this.status >= 500 ||
-			// Refused at the door (sign-in, permission): it never reached the
-			// request, so whether the first one landed is still unknown.
+			// Refused at the door (the sign-in ended, or this person is off the
+			// host list): it never reached the request, so whether the first one
+			// landed is still unknown. A 403 about the request itself is final.
 			this.status === 401 ||
-			this.status === 403
+			(this.status === 403 && (this.needsSignIn || this.code === 'not_a_host'))
 		)
 	}
 

@@ -916,6 +916,71 @@ operatorReservationsBookRoutes.get(
 // 4. Create reservation, create walk-in, and reservation mutations
 // ============================================================================
 
+/**
+ * What a till sends when it books or seats a walk-in (apps/station
+ * src/apps/reservations/api.ts): no overbooking a future booking, no locks,
+ * no other channel, no attaching an existing guest profile, no health notes.
+ */
+const STATION_BOOKING_FIELDS = new Set([
+	'locationId',
+	'date',
+	'businessDate',
+	'time',
+	'slotLocal',
+	'localStartMin',
+	'partySize',
+	'channel',
+	'guest',
+	'staffNotes',
+	'tableIds',
+])
+const STATION_WALK_IN_FIELDS = new Set([
+	'locationId',
+	'date',
+	'time',
+	'partySize',
+	'tableIds',
+	'guestName',
+	'guest',
+	// "Seat anyway": the host's call on a table someone is due at, recorded.
+	'overbook',
+	'overbookReason',
+])
+/** A guest typed in at a till: a name and how to reach them, nothing more. */
+const STATION_GUEST_FIELDS = new Set([
+	'firstName',
+	'lastName',
+	'phone',
+	'email',
+])
+
+const stationRefusal = () =>
+	json(
+		{
+			error: 'not_for_station',
+			message: 'That is done in the app, not at a till.',
+		},
+		403,
+	)
+
+/** Refuses a till's request that carries fields its host stand never sends. */
+function stationBodyDenied(
+	data: Record<string, unknown>,
+	allowed: ReadonlySet<string>,
+): Response | null {
+	for (const [key, value] of Object.entries(data)) {
+		if (value === undefined) continue
+		if (!allowed.has(key)) return stationRefusal()
+	}
+	const guest = data.guest
+	if (guest && typeof guest === 'object')
+		for (const [key, value] of Object.entries(guest)) {
+			if (value === undefined) continue
+			if (!STATION_GUEST_FIELDS.has(key)) return stationRefusal()
+		}
+	return null
+}
+
 const guestInlineSchema = z.object({
 	id: z.string().trim().min(1).max(128).optional(),
 	firstName: z.string().trim().min(1).max(120),
@@ -999,6 +1064,12 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, createBookingBodySchema)
 		if ('error' in parsed) return parsed.error
+		if (ctx.channel === 'station') {
+			const denied = stationBodyDenied(parsed.data, STATION_BOOKING_FIELDS)
+			if (denied) return denied
+			if (parsed.data.channel !== undefined && parsed.data.channel !== 'host')
+				return stationRefusal()
+		}
 
 		const locCheck = resolveLocation(ctx, parsed.data.locationId)
 		if (!locCheck.ok) return locCheck.response
@@ -1097,6 +1168,10 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, createWalkInBodySchema)
 		if ('error' in parsed) return parsed.error
+		if (ctx.channel === 'station') {
+			const denied = stationBodyDenied(parsed.data, STATION_WALK_IN_FIELDS)
+			if (denied) return denied
+		}
 
 		const locCheck = resolveLocation(ctx, parsed.data.locationId)
 		if (!locCheck.ok) return locCheck.response
@@ -1618,6 +1693,10 @@ operatorReservationsBookRoutes.post(
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// At a till: the host's own slip, within half an hour.
+				...(ctx.channel === 'station'
+					? { ownRecentOnly: { withinMs: 30 * 60_000 } }
+					: {}),
 				input: parsed.data,
 			})
 			return json({ ok: true, orgId: ctx.orgId, ...result })

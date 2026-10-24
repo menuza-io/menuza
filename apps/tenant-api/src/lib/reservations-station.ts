@@ -23,11 +23,24 @@ export function maskPhone(value: string): string {
 	return digits.length >= 4 ? `•••• ${digits.slice(-4)}` : '••••'
 }
 
+/**
+ * A note typed on a waitlist entry is hidden from a till without guest
+ * details there (it may say "nut allergy, wheelchair"); seated, it travels on
+ * the booking as its staff note, so it stays hidden the same way.
+ */
+const NOTE_KEYS = new Set(['staffNotes', 'staff_notes'])
+
 export function redactContacts(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(redactContacts)
 	if (!value || typeof value !== 'object') return value
+	const record = value as Record<string, unknown>
+	const fromWaitlist = record.channel === 'waitlist'
 	const out: Record<string, unknown> = {}
-	for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+	for (const [key, entry] of Object.entries(record)) {
+		if (fromWaitlist && NOTE_KEYS.has(key) && typeof entry === 'string') {
+			out[key] = null
+			continue
+		}
 		if (PHONE_KEY.test(key) && typeof entry === 'string')
 			out[key] = maskPhone(entry)
 		else if (EMAIL_KEY.test(key) && typeof entry === 'string') out[key] = null

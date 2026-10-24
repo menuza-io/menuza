@@ -361,6 +361,21 @@ operatorReservationsWaitlistRoutes.on(
 		if (orgErr) return orgErr
 		const parsed = await readActionBody(c, seatBodySchema)
 		if ('error' in parsed) return parsed.error
+		// A till seats the party (overbooking with a reason, as the host
+		// insists); swapping or moving someone else's table stays with the app.
+		if (
+			ctx.channel === 'station' &&
+			((parsed.data.resolution !== undefined &&
+				parsed.data.resolution !== 'overbook') ||
+				parsed.data.moveToTableIds !== undefined)
+		)
+			return json(
+				{
+					error: 'not_for_station',
+					message: 'Moving or swapping another party is done in the app.',
+				},
+				403,
+			)
 		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {

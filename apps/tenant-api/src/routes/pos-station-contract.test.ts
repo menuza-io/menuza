@@ -33,7 +33,10 @@ import {
 	seedPublicOrg,
 } from './reservations-public-fixture.ts'
 import { stationMayCall } from '../lib/reservations-guard.ts'
-import { updateReservationNotes } from '../services/rsv-booking-service.ts'
+import {
+	createOperatorReservation,
+	updateReservationNotes,
+} from '../services/rsv-booking-service.ts'
 import { reservationsOperatorRoutes } from './reservations-operator.ts'
 
 /**
@@ -321,21 +324,30 @@ describe('Station host stand contract', () => {
 				body,
 			)
 
-		const booked = await write('/reservations', {
-			locationId: PUBLIC_LOC,
-			date: tomorrow,
-			time: '19:00',
-			partySize: 2,
-			tableIds: ['tbl_pub_2'],
-			guest: {
-				firstName: 'Maya',
-				lastName: 'Haddad',
-				phone: '+14155550111',
-				allergyNotes: 'Peanuts',
-			},
-			staffNotes: 'Window if possible',
-		})
-		expect(booked.status, booked.text).toBe(201)
+		// A till may not write allergy notes, so this booking comes from the app.
+		const booked = {
+			body: await createOperatorReservation({
+				canReadGuestSensitive: true,
+				orgId: ORG_A,
+				locationId: PUBLIC_LOC,
+				actorId: 'manager',
+				idempotencyKey: 'station-contract-maya',
+				input: {
+					locationId: PUBLIC_LOC,
+					date: tomorrow,
+					time: '19:00',
+					partySize: 2,
+					tableIds: ['tbl_pub_2'],
+					guest: {
+						firstName: 'Maya',
+						lastName: 'Haddad',
+						phone: '+14155550111',
+						allergyNotes: 'Peanuts',
+					},
+					staffNotes: 'Window if possible',
+				},
+			}),
+		}
 		const seated = await write('/reservations', {
 			locationId: PUBLIC_LOC,
 			date: tomorrow,
@@ -414,7 +426,7 @@ describe('Station host stand contract', () => {
 		expect(masked.text).toContain('•••• 0111')
 
 		// A booking's history carries the same health notes: hidden the same way.
-		const bookedId = booked.body.reservation?.id ?? booked.body.id
+		const bookedId = booked.body.reservation.id
 		// A manager adds it in the app (a till may not write notes at all).
 		const notTill = await write(`/reservations/${bookedId}/notes`, {
 			dietaryNotes: 'Severe sesame allergy',
@@ -528,17 +540,79 @@ describe('Station host stand contract', () => {
 		).find((r) => r.id === bookedId)!
 		expect(maya.guest.email).toBe('maya@example.com')
 		expect(maya.guest.phone).toBe('+14155550111')
-		// By id: a null allergy from the till never clears the guest's.
-		const byId = await hostWrite('station-contract-by-id', {
-			locationId: PUBLIC_LOC,
-			partySize: 2,
-			tableIds: ['tbl_pub_2'],
-			overbook: true,
-			overbookReason: 'test',
-			guestId: maya.guest.id,
-			guest: { firstName: 'Mia', allergyNotes: null },
-		})
-		expect(byId.status, byId.text).toBe(201)
+		// A till never attaches a guest profile by id, nor writes health notes,
+		// locks a table or books for another channel: its host stand never does.
+		for (const [key, path, body] of [
+			[
+				'station-contract-by-id',
+				'/walk-ins',
+				{
+					locationId: PUBLIC_LOC,
+					partySize: 2,
+					tableIds: ['tbl_pub_2'],
+					guestId: maya.guest.id,
+				},
+			],
+			[
+				'station-contract-allergy',
+				'/walk-ins',
+				{
+					locationId: PUBLIC_LOC,
+					partySize: 2,
+					tableIds: ['tbl_pub_2'],
+					guest: { firstName: 'Mia', allergyNotes: null },
+				},
+			],
+			[
+				'station-contract-overbook-booking',
+				'/reservations',
+				{
+					locationId: PUBLIC_LOC,
+					date: tomorrow,
+					time: '21:00',
+					partySize: 2,
+					overbook: true,
+					overbookReason: 'Regulars',
+					guest: { firstName: 'Zed' },
+				},
+			],
+			[
+				'station-contract-online-channel',
+				'/reservations',
+				{
+					locationId: PUBLIC_LOC,
+					date: tomorrow,
+					time: '21:00',
+					partySize: 2,
+					channel: 'online',
+					guest: { firstName: 'Zed' },
+				},
+			],
+		] as const) {
+			const refused = await call(
+				'POST',
+				`/operator/reservations/book${path}`,
+				{
+					authorization: `Bearer ${plain.body.token}`,
+					'Idempotency-Key': key,
+				},
+				body,
+			)
+			expect(refused.status, `${path}: ${refused.text}`).toBe(403)
+			expect(refused.body.error).toBe('not_for_station')
+		}
+		// Undoing someone else's change is not a till's to do.
+		const othersUndo = await call(
+			'POST',
+			`/operator/reservations/book/reservations/${seatedId}/undo`,
+			{
+				authorization: `Bearer ${plain.body.token}`,
+				'Idempotency-Key': 'station-contract-undo-others',
+			},
+			{},
+		)
+		expect(othersUndo.status, othersUndo.text).toBe(409)
+		expect(othersUndo.body.error).toBe('undo_not_allowed')
 		const stillThere = await call(
 			'GET',
 			`/operator/reservations/book/day?locationId=${PUBLIC_LOC}&date=${tomorrow}`,

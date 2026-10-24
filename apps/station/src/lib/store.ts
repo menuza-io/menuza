@@ -166,6 +166,18 @@ export function shownLine<T extends Parameters<typeof renameLine>[0]>(
 	)
 }
 
+/**
+ * A line of a sale as this till shows it: an open tab in the till's language,
+ * a closed sale as it was sold (what its receipt and invoice say, whatever the
+ * menu says today).
+ */
+export function saleLine<T extends Parameters<typeof renameLine>[0]>(
+	line: T,
+	open: boolean,
+): T {
+	return open ? shownLine(line) : decodedLine(line)
+}
+
 /** An item's name as this till shows it, else as recorded (for removed lines). */
 export function shownItemName(itemId: string, recorded: string): string {
 	return (
@@ -195,9 +207,11 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		? null
 		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
 	const categories = location ? buildCategories(menu, location.id) : []
+	// The language of record is a till language (English or Arabic): the
+	// website's default may be one no till shows (Spanish, French...).
 	const record = localizeMenu(
 		snapshot.menu,
-		snapshot.menu.organization.defaultLocale || 'en',
+		effectiveLocale(null, snapshot.menu.organization.defaultLocale),
 	)
 	applyTheme(snapshot.organization)
 	document.title = `${snapshot.organization.name} · Station`
@@ -672,7 +686,11 @@ export const usePos = create<PosState>((set, get) => ({
 			pickupTimeZone: order.pickupTimeZone ?? null,
 			customerName: order.customerName,
 			tableLabel: order.tableLabel,
-			lines: order.lines,
+			// A tab opened before (or on a till in another language) continues in
+			// the language of record, so its documents read one language.
+			lines: order.lines.map((line) =>
+				renameLine(decodedLine(line), get().recordItems.get(line.itemId)),
+			),
 			adjustments: order.adjustments,
 		}),
 	clearOrder: () =>

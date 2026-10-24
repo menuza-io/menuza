@@ -35,7 +35,7 @@ import {
 } from '~/lib/orders.ts'
 import { formatPickupAt } from '~/lib/pickup.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
-import { shownItemName, shownLine, usePos, type OtherTab } from '~/lib/store.ts'
+import { saleLine, shownItemName, usePos, type OtherTab } from '~/lib/store.ts'
 import { useIsTablet } from '~/ui/hooks.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
@@ -488,40 +488,42 @@ export function OrdersSheet({
 									</div>
 								) : null}
 								<ul className="divide-border border-border divide-y border-y">
-									{selected.lines.map(shownLine).map((l) => (
-										<li
-											key={l.id}
-											className="flex items-start justify-between gap-4 py-4"
-										>
-											<div className="min-w-0 flex-1 break-words">
-												<div className="font-medium">
-													{l.quantity} × {l.name}
+									{selected.lines
+										.map((line) => saleLine(line, selected.status === 'open'))
+										.map((l) => (
+											<li
+												key={l.id}
+												className="flex items-start justify-between gap-4 py-4"
+											>
+												<div className="min-w-0 flex-1 break-words">
+													<div className="font-medium">
+														{l.quantity} × {l.name}
+													</div>
+													{l.variantLabel ? (
+														<div className="text-muted-foreground text-sm">
+															{l.variantLabel}
+														</div>
+													) : null}
+													{l.options.map((o) => (
+														<div
+															key={o.groupId + o.optionId}
+															className="text-muted-foreground text-sm"
+														>
+															{o.quantity > 1 ? `${o.quantity} × ` : ''}
+															{o.optionName}
+														</div>
+													))}
+													{l.instructions ? (
+														<div className="text-muted-foreground text-sm italic">
+															“{l.instructions}”
+														</div>
+													) : null}
 												</div>
-												{l.variantLabel ? (
-													<div className="text-muted-foreground text-sm">
-														{l.variantLabel}
-													</div>
-												) : null}
-												{l.options.map((o) => (
-													<div
-														key={o.groupId + o.optionId}
-														className="text-muted-foreground text-sm"
-													>
-														{o.quantity > 1 ? `${o.quantity} × ` : ''}
-														{o.optionName}
-													</div>
-												))}
-												{l.instructions ? (
-													<div className="text-muted-foreground text-sm italic">
-														“{l.instructions}”
-													</div>
-												) : null}
-											</div>
-											<span className="tnum shrink-0 text-sm font-medium whitespace-nowrap">
-												{money(lineTotalCents(l))}
-											</span>
-										</li>
-									))}
+												<span className="tnum shrink-0 text-sm font-medium whitespace-nowrap">
+													{money(lineTotalCents(l))}
+												</span>
+											</li>
+										))}
 								</ul>
 								{(selected.lineVoids ?? []).length > 0 ? (
 									<div className="border-border rounded-xl border border-dashed p-3 text-sm">

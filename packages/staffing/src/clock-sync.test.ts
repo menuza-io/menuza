@@ -214,9 +214,24 @@ describe('syncQueue', () => {
 			clock += 5 * 60_000
 		}
 		expect(await queue.counts()).toEqual({ queued: 3, failed: 0 })
-		// Two 500s in a row with nothing answered: one untried punch is probed,
-		// once, and when it fails too the run stops.
-		expect(seen.filter((id) => id === 'c')).toHaveLength(1)
+		// Two 500s in a row with nothing answered: the next person's punch is
+		// probed (once a run), and when it fails too the run stops.
+		expect(seen.filter((id) => id === 'c')).toHaveLength(MAX_SYNC_ATTEMPTS * 2)
+	})
+
+	it('a probe keeps each person’s order: their earliest punch goes first', async () => {
+		await add('rana-in', 1, 'clock_in', 'rana')
+		await add('lina-in', 2, 'clock_in', 'lina')
+		await add('omar-in', 3, 'clock_in', 'omar')
+		await add('omar-break', 4, 'break_start' as never, 'omar')
+		await queue.recordAttempt('omar-in')
+		const seen: string[] = []
+		await run(async (body) => {
+			seen.push(body.id)
+			if (body.id.startsWith('omar')) return { outcome: 'accepted' }
+			throw new KioskApiError(500, 'internal_error')
+		})
+		expect(seen).toEqual(['rana-in', 'lina-in', 'omar-in', 'omar-break'])
 	})
 
 	it('two broken punches at the head do not hold everyone: an untried one gets through', async () => {
