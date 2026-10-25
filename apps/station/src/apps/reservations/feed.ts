@@ -204,6 +204,19 @@ export const availabilitySchema = z
 
 export type Availability = z.infer<typeof availabilitySchema>
 
+/**
+ * The open slot that starts at a minute. Slots are told apart by `localStartMin`,
+ * which runs past 1440 after midnight; their `time` string wraps (01:30 for
+ * minute 1530) and would match the wrong end of the day.
+ */
+export function openSlotAt(
+	slots: Availability['slots'],
+	startMin: number | null,
+) {
+	if (startMin === null) return undefined
+	return slots.find((slot) => slot.available && slot.localStartMin === startMin)
+}
+
 // ---------------------------------------------------------------------------
 // Where a party is in the service
 // ---------------------------------------------------------------------------
@@ -319,22 +332,87 @@ export const fits = (table: Pick<DayTable, 'maxCovers'>, partySize: number) =>
 /** How long a party without a booking is expected to stay. */
 export const DEFAULT_TURN_MIN = 90
 
+export type PartyToPlace = {
+	partySize: number
+	durationMin: number
+	reservationId?: string
+}
+
+/** Why a table cannot take the party being placed (or that it can). */
+export type FitVerdict =
+	| { fits: true }
+	/** Someone is seated there, or it is taped off. */
+	| { fits: false; why: 'taken' }
+	| { fits: false; why: 'small' }
+	/** Free now, but booked at `at` (an epoch), before the party would be done. */
+	| { fits: false; why: 'booked'; at: number }
+
 /**
  * Whether a party being placed can sit at this table now: it is free, big
  * enough, and nobody else is booked on it before the party would be done. The
- * party's own booking on the table does not count against it.
+ * party's own booking on the table does not count against it. When it cannot,
+ * the verdict says why, in the order a host would check: taken, too small, booked.
  */
-export function takesParty(
+export function fitVerdict(
 	table: Pick<DayTable, 'maxCovers'>,
 	state: TableState,
-	party: { partySize: number; durationMin: number; reservationId?: string },
+	party: PartyToPlace,
 	now: number,
-): boolean {
-	if (state.kind === 'seated' || state.kind === 'blocked') return false
-	if (!fits(table, party.partySize)) return false
+): FitVerdict {
+	if (state.kind === 'seated' || state.kind === 'blocked')
+		return { fits: false, why: 'taken' }
+	if (!fits(table, party.partySize)) return { fits: false, why: 'small' }
 	const next = state.next
-	if (!next || next.id === party.reservationId) return true
+	if (!next || next.id === party.reservationId) return { fits: true }
 	return next.startAt - now >= party.durationMin * 60_000
+		? { fits: true }
+		: { fits: false, why: 'booked', at: next.startAt }
+}
+
+export const takesParty = (
+	table: Pick<DayTable, 'maxCovers'>,
+	state: TableState,
+	party: PartyToPlace,
+	now: number,
+): boolean => fitVerdict(table, state, party, now).fits
+
+/**
+ * The table to suggest for a party: of the tables that take it, the smallest
+ * (so big tables stay free for big parties), the lowest number on a tie.
+ */
+export function bestFit(
+	candidates: Array<{ table: DayTable; state: TableState }>,
+	party: PartyToPlace,
+	now: number,
+): string | null {
+	const best = candidates
+		.filter((c) => takesParty(c.table, c.state, party, now))
+		.sort(
+			(a, b) =>
+				a.table.maxCovers - b.table.maxCovers ||
+				a.table.label.localeCompare(b.table.label, undefined, {
+					numeric: true,
+				}),
+		)[0]
+	return best?.table.id ?? null
+}
+
+/** How far ahead "free till" is worth saying: past this, a table is simply open. */
+export const FREE_UNTIL_HORIZON_MS = 3 * 60 * 60_000
+
+/**
+ * When an open table is next booked, if that is within the horizon: "free
+ * till 2:00 PM". Null for a table that is not open, or open for the long run.
+ */
+export function freeUntil(
+	state: TableState,
+	now: number,
+	horizonMs = FREE_UNTIL_HORIZON_MS,
+): { until: number; next: DayReservation } | null {
+	if (state.kind !== 'open' || !state.next) return null
+	return state.next.startAt - now <= horizonMs
+		? { until: state.next.startAt, next: state.next }
+		: null
 }
 
 // ---------------------------------------------------------------------------

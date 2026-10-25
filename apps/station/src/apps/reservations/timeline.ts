@@ -7,7 +7,7 @@ import {
 	type DayReservation,
 	type DayTable,
 } from './feed.ts'
-import { zonedEpoch } from './zoned.ts'
+import { safeZone, wallMinutesOn } from './zoned.ts'
 
 /**
  * The book as a grid: tables as rows grouped by room, time across the top,
@@ -29,18 +29,37 @@ export type TimelineRange = { startMin: number; endMin: number }
 /** A booking that takes a place on the grid (not cancelled, not a no-show). */
 export const onGrid = (r: Pick<DayReservation, 'status'>) => isCounted(r)
 
-/** Minutes a booking lasts, from its own start and end. */
-const lengthOf = (r: Pick<DayReservation, 'startAt' | 'endAt'>) =>
-	Math.max(SLOT_MIN, Math.round((r.endAt - r.startAt) / 60_000))
+type Clocked = Pick<DayFeed, 'businessDate' | 'settings'>
 
-/** The instant of the feed's local midnight. */
-export function dayOrigin(feed: Pick<DayFeed, 'businessDate' | 'settings'>) {
-	const zone = feed.settings?.timeZone || 'UTC'
-	try {
-		return zonedEpoch(feed.businessDate, 0, zone)
-	} catch {
-		return zonedEpoch(feed.businessDate, 0, 'UTC')
-	}
+/**
+ * Wall-clock minutes at an instant, from the feed's local midnight: the scale
+ * of `localStartMin`, and of everything on the grid. It is the clock on the
+ * wall, not the minutes elapsed since midnight, so a day the clocks change
+ * (23 or 25 hours long) still lines "now", bars and blocks up with each other.
+ */
+export function wallMinutes(epochMs: number, feed: Clocked): number {
+	return wallMinutesOn(
+		epochMs,
+		feed.businessDate,
+		safeZone(feed.settings?.timeZone),
+	)
+}
+
+/**
+ * Minutes a booking lasts on the wall clock, from its own start and end. With
+ * no feed to read the zone from, the minutes elapsed.
+ */
+function lengthOf(
+	r: Pick<DayReservation, 'startAt' | 'endAt'>,
+	feed?: Partial<Clocked>,
+) {
+	const elapsed = (r.endAt - r.startAt) / 60_000
+	const wall =
+		feed?.businessDate !== undefined
+			? wallMinutes(r.endAt, feed as Clocked) -
+				wallMinutes(r.startAt, feed as Clocked)
+			: elapsed
+	return Math.max(SLOT_MIN, Math.round(wall))
 }
 
 /**
@@ -49,7 +68,7 @@ export function dayOrigin(feed: Pick<DayFeed, 'businessDate' | 'settings'>) {
  * room on both sides; whole hours, never under three.
  */
 export function timelineRange(
-	feed: Pick<DayFeed, 'services' | 'reservations'>,
+	feed: Pick<DayFeed, 'services' | 'reservations'> & Partial<Clocked>,
 	serviceId: string | null = null,
 ): TimelineRange {
 	const services = liveServices(feed)
@@ -68,7 +87,9 @@ export function timelineRange(
 	}
 	if (bookings.length > 0) {
 		const first = Math.min(...bookings.map((r) => r.localStartMin))
-		const last = Math.max(...bookings.map((r) => r.localStartMin + lengthOf(r)))
+		const last = Math.max(
+			...bookings.map((r) => r.localStartMin + lengthOf(r, feed)),
+		)
 		// Services give the hours; bookings only widen them (a late stay, an odd hour).
 		// With no services, they give the hours with an hour to spare.
 		lo = lo === null ? first - 60 : Math.min(lo, first)
@@ -92,6 +113,8 @@ export type TimelineBar = {
 	overrun: boolean
 	/** Which stacked line it sits on when bars share a table. */
 	lane: number
+	/** In the "No table" row, though it names tables: all of them are gone from the floor plan. */
+	tableRemoved: boolean
 }
 
 export type TimelineBlock = {
@@ -147,13 +170,24 @@ export function layoutTimeline(
 	options: { serviceId?: string | null; now?: number | null } = {},
 ): TimelineGroup[] {
 	const { serviceId = null, now = null } = options
-	const origin = dayOrigin(feed)
-	const nowMin = now === null ? null : (now - origin) / 60_000
+	const nowMin = now === null ? null : wallMinutes(now, feed)
 	const bookings = feed.reservations.filter(
 		(r) => onGrid(r) && inService(feed, r, serviceId),
 	)
-	const barFor = (r: DayReservation): Omit<TimelineBar, 'lane'> | null => {
-		const scheduledEnd = r.localStartMin + lengthOf(r)
+	// Only tables the grid draws a row for count: a booking whose tables are
+	// all archived, or sit in an archived room, would have no row at all.
+	const roomList = rooms(feed)
+	const drawn = new Set(
+		roomList.flatMap((area) =>
+			feed.tables
+				.filter((t) => t.areaId === area.id && !t.archivedAt)
+				.map((t) => t.id),
+		),
+	)
+	const barFor = (
+		r: DayReservation,
+	): Omit<TimelineBar, 'lane' | 'tableRemoved'> | null => {
+		const scheduledEnd = r.localStartMin + lengthOf(r, feed)
 		const overrun = nowMin !== null && isOnFloor(r) && nowMin > scheduledEnd
 		const end = overrun ? Math.ceil(nowMin) : scheduledEnd
 		if (end <= range.startMin || r.localStartMin >= range.endMin) return null
@@ -175,7 +209,9 @@ export function layoutTimeline(
 		const bars = packLanes(
 			list.flatMap((r) => {
 				const bar = barFor(r)
-				return bar ? [bar] : []
+				return bar
+					? [{ ...bar, tableRemoved: table === null && r.tableIds.length > 0 }]
+					: []
 			}),
 		)
 		return {
@@ -188,13 +224,15 @@ export function layoutTimeline(
 	}
 
 	const groups: TimelineGroup[] = []
-	const unassigned = bookings.filter((r) => r.tableIds.length === 0)
+	const unassigned = bookings.filter(
+		(r) => !r.tableIds.some((id) => drawn.has(id)),
+	)
 	if (unassigned.length > 0) {
 		const row = rowOf('none', null, unassigned, [])
 		if (row.bars.length > 0)
 			groups.push({ key: 'none', area: null, rows: [row] })
 	}
-	for (const area of rooms(feed)) {
+	for (const area of roomList) {
 		const tables = feed.tables
 			.filter((t) => t.areaId === area.id && !t.archivedAt)
 			.sort(labelOrder)
@@ -213,9 +251,9 @@ export function layoutTimeline(
 						.flatMap((b) => {
 							const startMin = Math.max(
 								range.startMin,
-								(b.startAt - origin) / 60_000,
+								wallMinutes(b.startAt, feed),
 							)
-							const endMin = Math.min(range.endMin, (b.endAt - origin) / 60_000)
+							const endMin = Math.min(range.endMin, wallMinutes(b.endAt, feed))
 							return endMin > startMin
 								? [{ id: b.id, startMin, endMin, reason: b.reason ?? null }]
 								: []
@@ -233,7 +271,7 @@ export function nowOffset(
 	feed: Pick<DayFeed, 'businessDate' | 'settings'>,
 	range: TimelineRange,
 ): number | null {
-	const minutes = (now - dayOrigin(feed)) / 60_000
+	const minutes = wallMinutes(now, feed)
 	return minutes >= range.startMin && minutes <= range.endMin
 		? minutes - range.startMin
 		: null
@@ -257,6 +295,42 @@ export type SlotTotals = {
 }
 
 /**
+ * What a slot's pacing says once every service's row for it is merged. Two
+ * services can overlap (a brunch that runs into lunch), and the server sends a
+ * row per service for the same minute. Covers and parties add up (each row
+ * counts its own service's bookings). Capacity adds up too, since each service
+ * has its own pool of covers; and when any of the rows has no limit, the slot
+ * has no limit to show.
+ */
+export function mergePacing(
+	rows: Array<
+		Pick<DayFeed['pacing'][number], 'bookedCovers' | 'partyCount' | 'maxCovers'>
+	>,
+) {
+	return rows.reduce<{
+		bookedCovers: number
+		partyCount: number
+		maxCovers: number | null
+	} | null>((merged, row) => {
+		const cap = row.maxCovers ?? null
+		if (!merged)
+			return {
+				bookedCovers: row.bookedCovers,
+				partyCount: row.partyCount,
+				maxCovers: cap,
+			}
+		return {
+			bookedCovers: merged.bookedCovers + row.bookedCovers,
+			partyCount: merged.partyCount + row.partyCount,
+			maxCovers:
+				merged.maxCovers === null || cap === null
+					? null
+					: merged.maxCovers + cap,
+		}
+	}, null)
+}
+
+/**
  * The bottom row: covers (and parties) starting in each slot against what the
  * slot can take, from the feed's pacing; with no pacing, covers per hour.
  */
@@ -268,15 +342,18 @@ export function slotTotals(
 	const bookings = feed.reservations.filter(
 		(r) => onGrid(r) && inService(feed, r, serviceId),
 	)
+	const rowsAt = new Map<number, DayFeed['pacing']>()
+	for (const p of feed.pacing) {
+		if (
+			p.localMin < range.startMin ||
+			p.localMin >= range.endMin ||
+			(serviceId !== null && p.serviceId && p.serviceId !== serviceId)
+		)
+			continue
+		rowsAt.set(p.localMin, [...(rowsAt.get(p.localMin) ?? []), p])
+	}
 	const pacing = new Map(
-		feed.pacing
-			.filter(
-				(p) =>
-					p.localMin >= range.startMin &&
-					p.localMin < range.endMin &&
-					(serviceId === null || !p.serviceId || p.serviceId === serviceId),
-			)
-			.map((p) => [p.localMin, p]),
+		[...rowsAt].map(([localMin, rows]) => [localMin, mergePacing(rows)!]),
 	)
 	const usePacing = pacing.size > 0
 	const step = usePacing ? SLOT_MIN : 60

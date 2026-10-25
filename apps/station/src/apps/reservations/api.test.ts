@@ -213,4 +213,53 @@ describe('host stand client', () => {
 		const error = (await api.day().catch((e: unknown) => e)) as HostApiError
 		expect(error.offline).toBe(true)
 	})
+
+	it('books a table after midnight with the un-wrapped time, on the same day', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.book(
+			{
+				date: '2026-01-17',
+				time: '25:30',
+				localStartMin: 25 * 60 + 30,
+				partySize: 2,
+				firstName: 'Maya',
+				lastName: 'H',
+				phone: null,
+				notes: null,
+			},
+			'key-1',
+		)
+		const post = s.calls.find((c) => c.url.endsWith('/reservations'))!
+		const body = JSON.parse(String(post.init.body))
+		expect(body).toMatchObject({
+			date: '2026-01-17',
+			time: '25:30',
+			localStartMin: 1530,
+		})
+	})
+
+	it('changes a booking to a time after midnight without wrapping it', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.changeParty(
+			'r1',
+			{ time: '24:15', localStartMin: 24 * 60 + 15 },
+			3,
+		)
+		const patch = s.calls.find((c) => c.init.method === 'PATCH')!
+		expect(JSON.parse(String(patch.init.body))).toMatchObject({
+			time: '24:15',
+			localStartMin: 1455,
+			expectedVersion: 3,
+		})
+	})
 })

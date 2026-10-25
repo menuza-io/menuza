@@ -23,6 +23,8 @@ export function statusText(_: Translate, status: PartyStatus): string {
 		}
 		case 'confirmed':
 			return _(msg`Confirmed`)
+		case 'awaiting':
+			return _(msg`Awaiting payment`)
 		case 'finished':
 			return _(msg`Finished`)
 		case 'no_show':

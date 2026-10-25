@@ -1,8 +1,15 @@
 import { type PosReservationsTokenResponse } from '@repo/common/pos-orders'
 import { type WaitlistEntry } from '@repo/reservations'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from 'react'
 import { createHostApi, HostApiError, type HostApi } from './api.ts'
-import { demoClock, demoHostApi } from './demo.ts'
+import type * as DemoNamespace from './demo.ts'
 import { type DayFeed } from './feed.ts'
 import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
@@ -24,6 +31,48 @@ const BLOCKING_CODES = new Set([
 	'device_revoked',
 ])
 
+type DemoModule = typeof DemoNamespace
+let demoModule: DemoModule | null = null
+
+/**
+ * The sample day lives in its own chunk (it is over a thousand lines of sample
+ * data), loaded the first time a demo stand opens: a till with a real server
+ * never downloads it.
+ */
+const loadDemo = () =>
+	demoModule
+		? Promise.resolve(demoModule)
+		: import('./demo.ts').then((loaded) => (demoModule = loaded))
+
+/**
+ * The demo's api while its code may still be on its way: each call waits for
+ * the module, then goes to the one shared sample day. One stable object, with
+ * one stable function per call, so it can sit in effect dependencies.
+ */
+export function lazyDemoApi(): HostApi {
+	const calls = new Map<string, unknown>()
+	return new Proxy({} as HostApi, {
+		get: (_target, name) => {
+			if (typeof name !== 'string') return undefined
+			// The sample day has nothing to forget (no token).
+			if (name === 'forget') return () => {}
+			let call = calls.get(name)
+			if (!call) {
+				call = async (...args: unknown[]) => {
+					const loaded = await loadDemo()
+					const api = loaded.demoHostApi() as unknown as Record<
+						string,
+						(...a: unknown[]) => unknown
+					>
+					return api[name]!(...args)
+				}
+				calls.set(name, call)
+			}
+			return call
+		},
+	})
+}
+
 export const blocksStand = (failure: HostApiError) =>
 	failure.needsSignIn || BLOCKING_CODES.has(failure.code)
 
@@ -36,11 +85,23 @@ export const blocksStand = (failure: HostApiError) =>
 export function afterFailedRefresh(
 	previous: HostStandState,
 	failure: HostApiError,
+	/** The day the failed look was for (null is today). */
+	askedDate: string | null = null,
 ): HostStandState {
 	if (previous.status === 'ready' && !blocksStand(failure))
-		return { ...previous, stale: true }
+		return { ...previous, stale: true, dayFailed: { date: askedDate } }
 	return { status: 'blocked', error: failure }
 }
+
+/**
+ * Whether the day the host asked for is the one that failed to open: its own
+ * failure, so an older waitlist failure (`stale`) never reads as "could not
+ * open this day" while a day is merely loading.
+ */
+export const dayFailedFor = (state: HostStandState, date: string | null) =>
+	state.status === 'ready' &&
+	state.dayFailed !== null &&
+	state.dayFailed.date === date
 
 /**
  * The day on screen: today is `null` (it follows the server's date, so the stand
@@ -78,7 +139,243 @@ export type HostStandState =
 			grant: PosReservationsTokenResponse
 			/** The last refresh failed (offline, an outage); what is shown may be stale. */
 			stale: boolean
+			/** The last look at this day failed: which day it was for (null: none failed). */
+			dayFailed: { date: string | null } | null
 	  }
+
+/**
+ * The stand's days, held apart from React so the date and ETag logic is tested
+ * on its own: the day on screen (null is today), each day loaded with its
+ * ETag, and the rules for which answer may be drawn. The hook below wraps one
+ * store per person, and the screen reads it.
+ *
+ * - Every refresh takes a number; an answer older than one already shown is
+ *   dropped, so a slow poll never paints over a change the host just made.
+ * - `generation` changes with the person: answers for the one before are dropped.
+ * - `writes` counts changes started: a refresh sent before one may answer after
+ *   it with the day as it was, so such an answer is dropped.
+ */
+export function createDayStore(api: HostApi) {
+	let state: HostStandState = { status: 'loading' }
+	/** The day asked for (null is today): what the arrows move from. */
+	let date: string | null = null
+	/** The day the screen is drawn for (undefined before the first look). */
+	let painted: string | null | undefined = undefined
+	/** Each day the stand has loaded, with its ETag, so a poll can ask "unchanged?". */
+	const held = new Map<string, { feed: DayFeed; etag: string | null }>()
+	let today: string | null = null
+	let issued = 0
+	let shown = 0
+	let generation = 0
+	let writes = 0
+	let polling = false
+	const listeners = new Set<() => void>()
+	const emit = () => listeners.forEach((listener) => listener())
+	const update = (next: (previous: HostStandState) => HostStandState) => {
+		const changed = next(state)
+		if (changed === state) return
+		state = changed
+		emit()
+	}
+
+	const loadWaitlist = async (grant: PosReservationsTokenResponse) => {
+		if (!grant.features.waitlist) return []
+		const listing = await api.waitlist()
+		return listing.entries.filter((e) => ACTIVE_WAITLIST.has(e.status))
+	}
+
+	/** A new person, a lock: their own token, a clean screen, and today. */
+	function reset() {
+		generation += 1
+		api.forget()
+		held.clear()
+		today = null
+		date = null
+		painted = undefined
+		state = { status: 'loading' }
+		emit()
+	}
+
+	async function refresh(
+		options: { full?: boolean } = {},
+	): Promise<DayFeed | null> {
+		const ticket = ++issued
+		const asked = { generation, date }
+		const key = dayKey(asked.date)
+		const sentAfterWrites = writes
+		const current = () =>
+			mayPaint(asked, { generation, date }) &&
+			ticket > shown &&
+			sentAfterWrites === writes
+		const heldNow = () => held.get(key)?.feed ?? null
+		try {
+			const grant = await api.grant()
+			// "Unchanged" only means something against a day the stand still holds.
+			const have = held.get(key)
+			const askDay = api.day(
+				options.full || !have ? undefined : (have.etag ?? undefined),
+				asked.date ?? undefined,
+			)
+			// While another day is on screen, today is still looked at (a 304 when
+			// nothing moved): it is how a stand left on tomorrow learns it is now
+			// tomorrow, and what the way back to today is drawn from.
+			const askToday =
+				asked.date !== null
+					? api
+							.day(held.get(TODAY_KEY)?.etag ?? undefined, undefined)
+							.catch(() => null)
+					: null
+			const [day, todayDay] = await Promise.all([askDay, askToday])
+			// The waitlist is today's: another day leaves it as it was.
+			const waitlist =
+				asked.date === null ? await loadWaitlist(grant).catch(() => null) : null
+			// A waitlist that did not load is shown as it was, marked not up to date.
+			const waitlistStale =
+				asked.date === null && grant.features.waitlist && waitlist === null
+			// Whatever the answer, the day stays held for the next look.
+			if (asked.generation === generation) {
+				if (!('unchanged' in day)) {
+					held.set(key, { feed: day.feed, etag: day.etag })
+					if (asked.date === null) today = day.feed.businessDate
+				}
+				if (todayDay && !('unchanged' in todayDay)) {
+					held.set(TODAY_KEY, { feed: todayDay.feed, etag: todayDay.etag })
+					today = todayDay.feed.businessDate
+				}
+				// The day the host is looking at has become today (midnight passed):
+				// it is today now, with seating, and follows the server's date.
+				if (
+					asked.date !== null &&
+					asked.date === today &&
+					date === asked.date
+				) {
+					date = null
+					emit()
+					return await refresh()
+				}
+			}
+			if (!current()) return heldNow() ?? null
+			shown = ticket
+			const feed = heldNow()
+			if (!feed) return null
+			painted = asked.date
+			update((previous) => ({
+				status: 'ready',
+				feed,
+				feedDate: asked.date,
+				today:
+					asked.date === null
+						? feed.businessDate
+						: (today ??
+							(previous.status === 'ready'
+								? previous.today
+								: feed.businessDate)),
+				grant,
+				waitlist:
+					waitlist ?? (previous.status === 'ready' ? previous.waitlist : []),
+				stale: waitlistStale,
+				dayFailed: null,
+			}))
+			return feed
+		} catch (error) {
+			if (!current()) return heldNow()
+			const failure =
+				error instanceof HostApiError
+					? error
+					: new HostApiError(0, 'network_unavailable')
+			// A closed stand asks for the whole day when it opens again.
+			if (blocksStand(failure)) held.clear()
+			update((previous) => afterFailedRefresh(previous, failure, asked.date))
+			return heldNow()
+		}
+	}
+
+	/**
+	 * Looks at another day (null is today); the day on screen follows at once if
+	 * it is held. Asking again for the day already asked for looks again when the
+	 * screen is still on another day (that look failed or is slow): a retry.
+	 */
+	function setDate(next: string | null) {
+		const target = viewDate(next, today)
+		const cached = held.get(dayKey(target))
+		const paint = () => {
+			if (!cached) return
+			painted = target
+			update((previous) =>
+				previous.status === 'ready'
+					? { ...previous, feed: cached.feed, feedDate: target }
+					: previous,
+			)
+		}
+		if (target === date) {
+			if (painted === target) return
+			paint()
+			void refresh({ full: !cached })
+			return
+		}
+		date = target
+		emit()
+		paint()
+		void refresh({ full: !cached })
+	}
+
+	/** A timed look: skipped while the previous one is still out, or the page is hidden. */
+	async function poll() {
+		if (
+			polling ||
+			(typeof document !== 'undefined' &&
+				document.visibilityState !== 'visible')
+		)
+			return
+		polling = true
+		try {
+			await refresh()
+		} finally {
+			polling = false
+		}
+	}
+
+	/** Starts the timed looks (and one on coming back to the page); returns how to stop. */
+	function start(): () => void {
+		void refresh()
+		const timer = setInterval(() => void poll(), DAY_POLL_MS)
+		const onVisible = () => void poll()
+		if (typeof document !== 'undefined')
+			document.addEventListener('visibilitychange', onVisible)
+		return () => {
+			clearInterval(timer)
+			if (typeof document !== 'undefined')
+				document.removeEventListener('visibilitychange', onVisible)
+		}
+	}
+
+	return {
+		getState: () => state,
+		getDate: () => date,
+		subscribe(listener: () => void) {
+			listeners.add(listener)
+			return () => {
+				listeners.delete(listener)
+			}
+		},
+		/** The state to show when there is no one signed in. */
+		block(error: HostApiError) {
+			state = { status: 'blocked', error }
+			emit()
+		},
+		/** A change is starting: a refresh already out may answer with the day as it was. */
+		noteWrite() {
+			writes += 1
+		},
+		reset,
+		refresh,
+		setDate,
+		poll,
+		start,
+	}
+}
+
+export type DayStore = ReturnType<typeof createDayStore>
 
 /**
  * Loads and keeps the day of service fresh: the day feed (with its ETag, so an
@@ -108,188 +405,51 @@ export function useHostStand({
 	const api: HostApi = useMemo(
 		() =>
 			demo
-				? demoHostApi()
+				? lazyDemoApi()
 				: createHostApi({
 						settings: () => settingsRef.current,
 						session: () => sessionRef.current,
 					}),
-		[demo],
+		[demo, settingsRef, sessionRef],
 	)
 	const sessionToken = demo ? 'demo' : (session?.serverSession?.token ?? null)
-	const [state, setState] = useState<HostStandState>({ status: 'loading' })
-	/** The day on screen (null is today) and whether it is today's business date. */
-	const [date, setDateState] = useState<string | null>(null)
-	const dateRef = useRef<string | null>(null)
-	/** Each day the stand has loaded, with its ETag, so a poll can ask "unchanged?". */
-	const held = useRef(new Map<string, { feed: DayFeed; etag: string | null }>())
-	const todayRef = useRef<string | null>(null)
-	/**
-	 * Every refresh takes a number; an answer older than one already shown is
-	 * dropped, so a slow poll never paints over a change the host just made.
-	 */
-	const issued = useRef(0)
-	const shown = useRef(0)
-	/** Bumped when the person changes: answers for the one before are dropped. */
-	const generation = useRef(0)
-	const polling = useRef(false)
-	/**
-	 * Bumped when a change starts. A refresh sent before it may answer after
-	 * it with the day as it was, so such an answer is dropped.
-	 */
-	const writes = useRef(0)
-	const noteWrite = useCallback(() => {
-		writes.current += 1
-	}, [])
+	const store = useMemo(() => createDayStore(api), [api])
+	const state = useSyncExternalStore(store.subscribe, store.getState)
+	const date = useSyncExternalStore(store.subscribe, store.getDate)
 	/** The server's time (the demo keeps its own). */
-	const clock = useCallback(() => (demo ? demoClock() : serverNow()), [demo])
+	const clock = useCallback(
+		() => (demo ? (demoModule?.demoClock() ?? Date.now()) : serverNow()),
+		[demo],
+	)
 	const [now, setNow] = useState(clock)
-
-	// A new person, a lock: their own token, a clean screen, and today.
+	// The demo's own clock starts once its code is in.
 	useEffect(() => {
-		generation.current += 1
-		api.forget()
-		held.current.clear()
-		todayRef.current = null
-		dateRef.current = null
-		setDateState(null)
-		setState({ status: 'loading' })
-	}, [api, sessionToken])
-
-	const loadWaitlist = useCallback(
-		async (grant: PosReservationsTokenResponse) => {
-			if (!grant.features.waitlist) return []
-			const listing = await api.waitlist()
-			return listing.entries.filter((e) => ACTIVE_WAITLIST.has(e.status))
-		},
-		[api],
-	)
-
-	const refresh = useCallback(
-		async (options: { full?: boolean } = {}): Promise<DayFeed | null> => {
-			const ticket = ++issued.current
-			const asked = { generation: generation.current, date: dateRef.current }
-			const key = dayKey(asked.date)
-			const sentAfterWrites = writes.current
-			const current = () =>
-				mayPaint(asked, {
-					generation: generation.current,
-					date: dateRef.current,
-				}) &&
-				ticket > shown.current &&
-				sentAfterWrites === writes.current
-			const heldNow = () => held.current.get(key)?.feed ?? null
-			try {
-				const grant = await api.grant()
-				// "Unchanged" only means something against a day the stand still holds.
-				const have = held.current.get(key)
-				const day = await api.day(
-					options.full || !have ? undefined : (have.etag ?? undefined),
-					asked.date ?? undefined,
-				)
-				// The waitlist is today's: another day leaves it as it was.
-				const waitlist =
-					asked.date === null
-						? await loadWaitlist(grant).catch(() => null)
-						: null
-				// A waitlist that did not load is shown as it was, marked not up to date.
-				const waitlistStale =
-					asked.date === null && grant.features.waitlist && waitlist === null
-				// Whatever the answer, the day stays held for the next look.
-				if (asked.generation === generation.current && !('unchanged' in day)) {
-					held.current.set(key, { feed: day.feed, etag: day.etag })
-					if (asked.date === null) todayRef.current = day.feed.businessDate
-				}
-				if (!current()) return heldNow() ?? null
-				shown.current = ticket
-				const feed = heldNow()
-				if (!feed) return null
-				setState((previous) => ({
-					status: 'ready',
-					feed,
-					feedDate: asked.date,
-					today:
-						asked.date === null
-							? feed.businessDate
-							: (todayRef.current ??
-								(previous.status === 'ready'
-									? previous.today
-									: feed.businessDate)),
-					grant,
-					waitlist:
-						waitlist ?? (previous.status === 'ready' ? previous.waitlist : []),
-					stale: waitlistStale,
-				}))
-				return feed
-			} catch (error) {
-				if (!current()) return heldNow()
-				const failure =
-					error instanceof HostApiError
-						? error
-						: new HostApiError(0, 'network_unavailable')
-				// A closed stand asks for the whole day when it opens again.
-				if (blocksStand(failure)) held.current.clear()
-				setState((previous) => afterFailedRefresh(previous, failure))
-				return heldNow()
-			}
-		},
-		[api, loadWaitlist],
-	)
-
-	/** Looks at another day (null is today); the day on screen follows at once if it is held. */
-	const setDate = useCallback(
-		(next: string | null) => {
-			const target = viewDate(next, todayRef.current)
-			if (target === dateRef.current) return
-			dateRef.current = target
-			setDateState(target)
-			const cached = held.current.get(dayKey(target))
-			if (cached)
-				setState((previous) =>
-					previous.status === 'ready'
-						? { ...previous, feed: cached.feed, feedDate: target }
-						: previous,
-				)
-			void refresh({ full: !cached })
-		},
-		[refresh],
-	)
-
-	/** A timed look: skipped while the previous one is still out. */
-	const poll = useCallback(async () => {
-		if (polling.current || document.visibilityState !== 'visible') return
-		polling.current = true
-		try {
-			await refresh()
-		} finally {
-			polling.current = false
+		if (!demo) return
+		let live = true
+		void loadDemo().then(() => live && setNow(clock()))
+		return () => {
+			live = false
 		}
-	}, [refresh])
+	}, [demo, clock])
 
+	// A new person, a lock: their own token, a clean screen, and today; then the
+	// timed looks, for as long as someone is signed in.
 	useEffect(() => {
+		store.reset()
 		if (!sessionToken) {
-			setState({
-				status: 'blocked',
-				error: new HostApiError(401, 'staff_session_required'),
-			})
+			store.block(new HostApiError(401, 'staff_session_required'))
 			return
 		}
-		void refresh()
-		const dayTimer = window.setInterval(() => void poll(), DAY_POLL_MS)
-		const onVisible = () => void poll()
-		document.addEventListener('visibilitychange', onVisible)
-		return () => {
-			window.clearInterval(dayTimer)
-			document.removeEventListener('visibilitychange', onVisible)
-		}
-	}, [sessionToken, refresh, poll])
+		return store.start()
+	}, [store, sessionToken])
 
 	// Coming back online, look again at once (the first load is the effect above's).
 	const wasOnline = useRef(online)
 	useEffect(() => {
 		const cameBack = online && !wasOnline.current
 		wasOnline.current = online
-		if (cameBack && sessionToken) void refresh()
-	}, [online, sessionToken, refresh])
+		if (cameBack && sessionToken) void store.refresh()
+	}, [online, sessionToken, store, wasOnline])
 
 	// Lateness and waits count in the server's time, like the clock does.
 	useEffect(() => {
@@ -297,5 +457,14 @@ export function useHostStand({
 		return () => window.clearInterval(timer)
 	}, [clock])
 
-	return { state, api, refresh, now, clock, noteWrite, date, setDate }
+	return {
+		state,
+		api,
+		refresh: store.refresh,
+		now,
+		clock,
+		noteWrite: store.noteWrite,
+		date,
+		setDate: store.setDate,
+	}
 }

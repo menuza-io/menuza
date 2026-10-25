@@ -3,9 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
 	arrivals,
 	availabilitySchema,
+	bestFit,
 	dayFeedSchema,
+	fitVerdict,
+	freeUntil,
 	isDrawn,
 	minutesLate,
+	openSlotAt,
 	missedArrivals,
 	placeTables,
 	recentNoShows,
@@ -15,6 +19,8 @@ import {
 	takesParty,
 	type DayFeed,
 	type DayReservation,
+	type DayTable,
+	type TableState,
 } from './feed.ts'
 import availability from './fixtures/availability.json'
 import dayFeed from './fixtures/day-feed.json'
@@ -242,5 +248,132 @@ describe('takesParty', () => {
 				now,
 			),
 		).toBe(true)
+	})
+})
+
+describe('why a table does not take the party', () => {
+	const table = { maxCovers: 4 }
+	const now = Date.UTC(2026, 0, 16, 18, 0)
+	const next = booking({ id: 'next', startAt: now + 60 * MIN })
+	const party = { partySize: 2, durationMin: 90 }
+	it('says taken for a seated or blocked table, before anything else', () => {
+		const seated: TableState = {
+			kind: 'seated',
+			party: booking({}),
+			next: null,
+		}
+		expect(fitVerdict(table, seated, { ...party, partySize: 9 }, now)).toEqual({
+			fits: false,
+			why: 'taken',
+		})
+		expect(
+			fitVerdict(
+				table,
+				{ kind: 'blocked', reason: null, next: null },
+				party,
+				now,
+			),
+		).toEqual({ fits: false, why: 'taken' })
+	})
+	it('says too small, then booked (with when)', () => {
+		expect(
+			fitVerdict(
+				table,
+				{ kind: 'open', next: null },
+				{ ...party, partySize: 6 },
+				now,
+			),
+		).toEqual({ fits: false, why: 'small' })
+		expect(fitVerdict(table, { kind: 'open', next }, party, now)).toEqual({
+			fits: false,
+			why: 'booked',
+			at: next.startAt,
+		})
+		expect(fitVerdict(table, { kind: 'open', next: null }, party, now)).toEqual(
+			{
+				fits: true,
+			},
+		)
+	})
+})
+
+describe('the best table for a party', () => {
+	const now = Date.UTC(2026, 0, 16, 18, 0)
+	const make = (id: string, label: string, maxCovers: number): DayTable => ({
+		...feed.tables[0]!,
+		id,
+		label,
+		maxCovers,
+		minCovers: 1,
+	})
+	const open: TableState = { kind: 'open', next: null }
+	const party = { partySize: 2, durationMin: 90 }
+	it('is the smallest free table that fits, the lowest number on a tie', () => {
+		const candidates = [
+			{ table: make('a', '10', 6), state: open },
+			{ table: make('b', '12', 2), state: open },
+			{ table: make('c', '3', 2), state: open },
+			{ table: make('d', '1', 1), state: open },
+		]
+		expect(bestFit(candidates, party, now)).toBe('c')
+	})
+	it('skips a table that is taken or booked too soon', () => {
+		const next = booking({ id: 'n', startAt: now + 30 * MIN })
+		const candidates = [
+			{ table: make('a', '1', 2), state: { kind: 'open', next } as TableState },
+			{
+				table: make('b', '2', 2),
+				state: { kind: 'blocked', reason: null, next: null } as TableState,
+			},
+			{ table: make('c', '3', 8), state: open },
+		]
+		expect(bestFit(candidates, party, now)).toBe('c')
+	})
+	it('is none when nothing takes the party', () => {
+		expect(
+			bestFit([{ table: make('a', '1', 1), state: open }], party, now),
+		).toBeNull()
+		expect(bestFit([], party, now)).toBeNull()
+	})
+})
+
+describe('free until', () => {
+	const now = Date.UTC(2026, 0, 16, 18, 0)
+	it('names the next booking when it is within three hours', () => {
+		const next = booking({ id: 'n', startAt: now + 2 * 60 * MIN })
+		expect(freeUntil({ kind: 'open', next }, now)).toEqual({
+			until: next.startAt,
+			next,
+		})
+	})
+	it('is nothing for a table open the long run, or not open', () => {
+		const far = booking({ id: 'f', startAt: now + 4 * 60 * MIN })
+		expect(freeUntil({ kind: 'open', next: far }, now)).toBeNull()
+		expect(freeUntil({ kind: 'open', next: null }, now)).toBeNull()
+		expect(
+			freeUntil({ kind: 'blocked', reason: null, next: far }, now),
+		).toBeNull()
+	})
+})
+
+describe('the slot a booking starts at', () => {
+	const slot = (localStartMin: number, available = true) => ({
+		localStartMin,
+		time: `${String(Math.floor(localStartMin / 60) % 24).padStart(2, '0')}:${String(localStartMin % 60).padStart(2, '0')}`,
+		available,
+		suggestedTableIds: [],
+	})
+	it('is found by its minute, so 01:30 after midnight is not 01:30 in the morning', () => {
+		const slots = [slot(90), slot(25 * 60 + 30)]
+		// Both read "01:30"; the minute tells them apart.
+		expect(slots[0]!.time).toBe(slots[1]!.time)
+		expect(openSlotAt(slots, 25 * 60 + 30)).toBe(slots[1])
+		expect(openSlotAt(slots, 90)).toBe(slots[0])
+	})
+	it('is nothing when the slot is full, missing, or no time was asked for', () => {
+		const slots = [slot(19 * 60, false)]
+		expect(openSlotAt(slots, 19 * 60)).toBeUndefined()
+		expect(openSlotAt(slots, 20 * 60)).toBeUndefined()
+		expect(openSlotAt(slots, null)).toBeUndefined()
 	})
 })

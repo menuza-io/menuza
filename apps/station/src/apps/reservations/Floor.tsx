@@ -1,27 +1,59 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { Ban, Users } from 'lucide-react'
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
+	bestFit,
+	fitVerdict,
+	freeUntil,
 	isDrawn,
 	placeTables,
 	shortName,
-	takesParty,
 	tableState,
 	type DayArea,
 	type DayElement,
 	type DayFeed,
 	type DayTable,
+	type FitVerdict,
+	type PartyToPlace,
 	type TableState,
 } from './feed.ts'
+import { fitRoom, type PlacedPx } from './floorfit.ts'
 import { SoftText } from '~/ui/motion.tsx'
 import { cn } from '~/ui/primitives.tsx'
 
+/** Room kept under the plan for the names that hang below its last row of tables. */
+const CAPTION_ROOM_PX = 30
+
+/** An element's size, kept current (zero before it is measured). */
+function useSize(ref: React.RefObject<HTMLElement | null>) {
+	const [size, setSize] = useState({ w: 0, h: 0 })
+	useLayoutEffect(() => {
+		const el = ref.current
+		if (!el) return
+		const measure = () =>
+			setSize((previous) =>
+				previous.w === el.clientWidth && previous.h === el.clientHeight
+					? previous
+					: { w: el.clientWidth, h: el.clientHeight },
+			)
+		measure()
+		if (typeof ResizeObserver === 'undefined') return
+		const observer = new ResizeObserver(measure)
+		observer.observe(el)
+		return () => observer.disconnect()
+	}, [ref])
+	return size
+}
+
 /**
  * One room of the floor, as the manager drew it (or as a tidy grid when nobody
- * has yet). Each table shows its state at a glance: open, a party due within
- * half an hour, seated (and for how long), or blocked. While the host is
- * placing a party, tables that seat it lift and the rest step back.
+ * has yet). The plan is scaled to fill the pane, with every table at least a
+ * fingertip wide; only a room too big for that pans. Each table shows its
+ * state at a glance: open (and until when, if it is booked soon), a party due
+ * within half an hour, seated (and for how long), or blocked. While the host
+ * is placing a party, tables that seat it lift, the best one says so, and the
+ * rest step back with the reason under them.
  */
 export function Floor({
 	area,
@@ -30,82 +62,153 @@ export function Floor({
 	picking,
 	onTable,
 	formatTime,
+	formatShort,
 }: {
 	area: DayArea
 	feed: DayFeed
 	now: number
 	/** The party being placed, if any: how many, for how long, and its own booking. */
-	picking: {
-		partySize: number
-		durationMin: number
-		reservationId?: string
-	} | null
+	picking: PartyToPlace | null
 	onTable: (table: DayTable, state: TableState) => void
 	formatTime: (epochMs: number) => string
+	/** The same without "AM" or "PM": for a table, where there is no room for it. */
+	formatShort: (epochMs: number) => string
 }) {
 	const roomTables = useMemo(
 		() => feed.tables.filter((table) => table.areaId === area.id),
 		[area.id, feed.tables],
 	)
+	const live = useMemo(
+		() => roomTables.filter((table) => !table.archivedAt),
+		[roomTables],
+	)
 	const placed = useMemo(
 		() => placeTables(area, roomTables),
 		[area, roomTables],
 	)
-	const elements = feed.elements.filter(
-		(element) => !element.areaId || element.areaId === area.id,
+	const elements = useMemo(
+		() =>
+			feed.elements.filter(
+				(element) => !element.areaId || element.areaId === area.id,
+			),
+		[feed.elements, area.id],
 	)
-	// A drawn room keeps its proportions; an undrawn one is a grid that fills the space.
+	// A drawn room is fitted to the pane; an undrawn one is a grid that fills it.
 	const drawn = isDrawn(roomTables)
+	const frame = useRef<HTMLDivElement>(null)
+	const size = useSize(frame)
+	const fit = useMemo(
+		() =>
+			drawn
+				? fitRoom({
+						tables: live.map((t) => ({
+							id: t.id,
+							x: t.x,
+							y: t.y,
+							w: t.w,
+							h: t.h,
+						})),
+						extras: elements.map((e) => ({ x: e.x, y: e.y, w: e.w, h: e.h })),
+						frame: { w: size.w, h: Math.max(0, size.h - CAPTION_ROOM_PX) },
+					})
+				: null,
+		[drawn, live, elements, size.w, size.h],
+	)
+	const states = useMemo(
+		() =>
+			new Map(
+				live.map((table) => [table.id, tableState(table, feed, now)] as const),
+			),
+		[live, feed, now],
+	)
+	const best = useMemo(
+		() =>
+			picking
+				? bestFit(
+						live.map((table) => ({ table, state: states.get(table.id)! })),
+						picking,
+						now,
+					)
+				: null,
+		[picking, live, states, now],
+	)
 
 	return (
 		<div
 			className="floor floor-room relative min-h-0 flex-1 overflow-hidden"
 			data-picking={picking ? 'true' : 'false'}
 		>
-			{/* The plan keeps its proportions and sits centred in whatever space it has. */}
-			<div className="floor-frame absolute inset-4 sm:inset-6">
-				{drawn ? (
-					// Only where the room is wider than the screen (a phone): it scrolls.
-					<p className="floor-hint" aria-hidden>
-						<Trans>Swipe to see the whole room</Trans>
-					</p>
-				) : null}
+			{fit?.scrolls ? (
+				// Only where the room cannot fit at a usable size: it pans.
+				<p className="bk-floor-hint" aria-hidden>
+					<Trans>Swipe to see the whole room</Trans>
+				</p>
+			) : null}
+			{/* The plan is fitted to whatever space the pane has. */}
+			<div
+				ref={frame}
+				className="floor-frame bk-floor-frame absolute inset-3 sm:inset-5"
+				data-scroll={fit?.scrolls ?? false}
+			>
 				<div
-					className={cn(
-						'relative mx-auto',
-						drawn ? 'floor-plan' : 'h-full w-full',
-					)}
+					className={cn('bk-plan relative', !drawn && 'h-full w-full')}
+					data-grid={!drawn}
 					style={
-						drawn
-							? ({
-									'--plan-w': Math.max(area.canvasW, 1),
-									'--plan-h': Math.max(area.canvasH, 1),
-								} as React.CSSProperties)
-							: undefined
+						{
+							'--plan-w':
+								fit && fit.tables.size > 0 ? `${fit.width}px` : undefined,
+							'--plan-h':
+								fit && fit.tables.size > 0
+									? `${fit.height + CAPTION_ROOM_PX}px`
+									: undefined,
+						} as React.CSSProperties
 					}
 				>
-					{drawn
-						? elements.map((element) => (
-								<FloorElement key={element.id} element={element} area={area} />
+					{fit
+						? elements.map((element, index) => (
+								<FloorElement
+									key={element.id}
+									element={element}
+									box={fit.extras[index]}
+								/>
 							))
 						: null}
-					{placed.map(({ table, left, top, width, height }) => {
-						const state = tableState(table, feed, now)
+					{(drawn
+						? live.flatMap((table) => {
+								const px = fit?.tables.get(table.id)
+								return px ? [{ table, px, percent: null }] : []
+							})
+						: placed.map(({ table, left, top, width, height }) => ({
+								table,
+								px: null,
+								percent: { left, top, width, height },
+							}))
+					).map(({ table, px, percent }) => {
+						const state = states.get(table.id) ?? tableState(table, feed, now)
+						const verdict = picking
+							? fitVerdict(table, state, picking, now)
+							: null
 						return (
 							<TableButton
 								key={table.id}
 								table={table}
 								state={state}
 								now={now}
-								fits={picking ? takesParty(table, state, picking, now) : null}
+								verdict={verdict}
+								best={best === table.id}
 								onClick={() => onTable(table, state)}
 								formatTime={formatTime}
-								style={{
-									left: `${left * 100}%`,
-									top: `${top * 100}%`,
-									width: `${width * 100}%`,
-									height: `${height * 100}%`,
-								}}
+								formatShort={formatShort}
+								box={
+									px
+										? pxBox(px)
+										: {
+												l: `${percent!.left * 100}%`,
+												t: `${percent!.top * 100}%`,
+												w: `${percent!.width * 100}%`,
+												h: `${percent!.height * 100}%`,
+											}
+								}
 							/>
 						)
 					})}
@@ -115,26 +218,39 @@ export function Floor({
 	)
 }
 
+/** Where a box sits on the plan: CSS lengths (the `.bk-box` rule places it from them). */
+type Box = { l: string; t: string; w: string; h: string }
+
+const pxBox = (px: PlacedPx): Box => ({
+	l: `${px.left}px`,
+	t: `${px.top}px`,
+	w: `${px.width}px`,
+	h: `${px.height}px`,
+})
+
 function FloorElement({
 	element,
-	area,
+	box,
 }: {
 	element: DayElement
-	area: DayArea
+	box: PlacedPx | undefined
 }) {
-	const style = {
-		left: `${(element.x / Math.max(area.canvasW, 1)) * 100}%`,
-		top: `${(element.y / Math.max(area.canvasH, 1)) * 100}%`,
-		width: `${(element.w / Math.max(area.canvasW, 1)) * 100}%`,
-		height: `${(element.h / Math.max(area.canvasH, 1)) * 100}%`,
-		'--turn': element.rotation ? `${element.rotation}deg` : undefined,
-	} as React.CSSProperties
+	if (!box) return null
+	const at = pxBox(box)
 	return (
 		<div
 			aria-hidden
-			style={style}
+			style={
+				{
+					'--l': at.l,
+					'--t': at.t,
+					'--w': at.w,
+					'--h': at.h,
+					'--turn': element.rotation ? `${element.rotation}deg` : undefined,
+				} as React.CSSProperties
+			}
 			className={cn(
-				'floor-turn pointer-events-none absolute flex items-center justify-center overflow-hidden text-xs font-medium',
+				'bk-box floor-turn pointer-events-none flex items-center justify-center overflow-hidden text-xs font-medium',
 				element.kind === 'wall' && 'bg-foreground/25 rounded-sm',
 				element.kind === 'bar' &&
 					'bg-foreground/8 text-muted-foreground border-foreground/15 rounded-lg border',
@@ -155,18 +271,24 @@ function TableButton({
 	table,
 	state,
 	now,
-	fits,
+	verdict,
+	best,
 	onClick,
 	formatTime,
-	style,
+	formatShort,
+	box,
 }: {
 	table: DayTable
 	state: TableState
 	now: number
-	fits: boolean | null
+	/** While a party is being placed: whether this table takes them, and if not why. */
+	verdict: FitVerdict | null
+	/** The one table to suggest for the party in hand. */
+	best: boolean
 	onClick: () => void
 	formatTime: (epochMs: number) => string
-	style: React.CSSProperties
+	formatShort: (epochMs: number) => string
+	box: Box
 }) {
 	const { _ } = useLingui()
 	const round = table.shape === 'round' || table.shape === 'oval'
@@ -183,13 +305,28 @@ function TableButton({
 		state.kind === 'seated' && seatedFor !== null
 			? seatedFor / Math.max(1, state.party.durationMin)
 			: null
-	/** Who is there (or due), under the table: a small table has no room for a name inside. */
+	// An open table that is booked later says until when it is free.
+	const until = freeUntil(state, now)
+	const untilFull = until ? formatTime(until.until) : ''
+	const untilShort = until ? formatShort(until.until) : ''
+	const fits = verdict ? verdict.fits : null
+	/** Why a table does not take the party in hand, for under the table and for a screen reader. */
+	let reason: string | null = null
+	if (verdict && !verdict.fits) {
+		if (verdict.why === 'booked') {
+			const at = formatTime(verdict.at)
+			reason = _(msg`Booked ${at}`)
+		} else if (verdict.why === 'small') reason = _(msg`Too small`)
+		else reason = _(msg`Taken`)
+	}
+	/** Who is there (or due), or why the party in hand does not fit, under the table. */
 	const caption =
-		state.kind === 'seated'
+		reason ??
+		(state.kind === 'seated'
 			? shortName(state.party, _(msg`Guest`))
 			: state.kind === 'soon'
 				? shortName(state.next, _(msg`Guest`))
-				: null
+				: null)
 
 	let label: string
 	switch (state.kind) {
@@ -207,19 +344,33 @@ function TableButton({
 			label = _(msg`Table ${table.label}, blocked`)
 			break
 		default:
-			label = _(msg`Table ${table.label}, open, seats ${covers}`)
+			label = until
+				? _(
+						msg`Table ${table.label}, open, seats ${covers}, free until ${untilFull}`,
+					)
+				: _(msg`Table ${table.label}, open, seats ${covers}`)
 	}
-	// While a party is being placed, say whether this table takes it.
-	if (fits !== null)
-		label = fits
-			? _(msg`${label}. Takes this party.`)
-			: _(msg`${label}. Not a fit for this party.`)
+	// While a party is being placed, say whether this table takes it, and why not.
+	if (verdict)
+		label = verdict.fits
+			? best
+				? _(msg`${label}. Best fit for this party.`)
+				: _(msg`${label}. Takes this party.`)
+			: _(msg`${label}. ${reason ?? ''}.`)
 
 	return (
 		<div
-			className="bk-table min-h-14 min-w-14"
-			style={style}
+			className="bk-table bk-box"
+			style={
+				{
+					'--l': box.l,
+					'--t': box.t,
+					'--w': box.w,
+					'--h': box.h,
+				} as React.CSSProperties
+			}
 			data-state={state.kind}
+			data-round={round}
 		>
 			<button
 				type="button"
@@ -227,6 +378,7 @@ function TableButton({
 				aria-label={label}
 				data-state={state.kind}
 				data-fits={fits === null ? undefined : String(fits)}
+				data-best={best || undefined}
 				style={
 					{
 						'--turn': table.rotation ? `${table.rotation}deg` : undefined,
@@ -246,32 +398,35 @@ function TableButton({
 			>
 				{/* Counter-rotate the words so a turned table still reads upright. */}
 				<span className="floor-unturn flex flex-col items-center gap-0.5">
-					<span className="mono text-base leading-none font-bold sm:text-lg">
-						{table.label}
-					</span>
+					<span className="bk-t-num mono">{table.label}</span>
 					<span
 						className={cn(
-							'flex items-center gap-1 text-xs leading-none font-medium',
+							'bk-t-sub flex items-center gap-1',
 							state.kind === 'seated'
-								? 'text-primary-foreground/85'
+								? 'text-primary-foreground/90'
 								: 'text-muted-foreground',
 						)}
 						aria-hidden
 					>
 						{state.kind === 'seated' ? (
 							<>
-								<Users className="size-3" />
+								<Users className="size-3.5" />
 								<span className="tnum">{state.party.partySize}</span>
 							</>
 						) : state.kind === 'soon' ? (
-							<span className="tnum text-warning max-w-full text-center leading-tight font-semibold whitespace-normal">
-								{formatTime(state.next.startAt)}
+							// "12:55", no AM or PM: the full time is in the table's name.
+							<span className="tnum text-warning font-semibold">
+								{formatShort(state.next.startAt)}
 							</span>
 						) : state.kind === 'blocked' ? (
-							<Ban className="size-3.5" />
+							<Ban className="size-4" />
+						) : until ? (
+							<span className="tnum text-foreground font-semibold">
+								{_(msg`till ${untilShort}`)}
+							</span>
 						) : (
 							<>
-								<Users className="size-3" />
+								<Users className="size-3.5" />
 								{/* "1–4" keeps its order right to left. */}
 								<span className="tnum" dir="ltr">
 									{covers}
@@ -282,7 +437,7 @@ function TableButton({
 					{/* How long they have been seated, on its own line so a small round table never crops it. */}
 					{state.kind === 'seated' && seatedFor !== null ? (
 						<span
-							className="text-primary-foreground/85 relative z-1 text-xs leading-none font-medium"
+							className="bk-t-sub text-primary-foreground/90 relative z-1"
 							aria-hidden
 						>
 							<SoftText value={_(msg`${seatedFor}m`)} />
@@ -290,6 +445,11 @@ function TableButton({
 					) : null}
 				</span>
 			</button>
+			{best ? (
+				<span className="bk-bestfit" aria-hidden>
+					<Trans>Best fit</Trans>
+				</span>
+			) : null}
 			{caption || stay !== null ? (
 				<span className="bk-under" aria-hidden>
 					{stay !== null ? (
@@ -299,7 +459,11 @@ function TableButton({
 							style={{ '--p': Math.min(1, stay) } as React.CSSProperties}
 						/>
 					) : null}
-					{caption ? <bdi className="bk-caption">{caption}</bdi> : null}
+					{caption ? (
+						<bdi className="bk-caption" data-reason={reason !== null}>
+							{caption}
+						</bdi>
+					) : null}
 				</span>
 			) : null}
 		</div>

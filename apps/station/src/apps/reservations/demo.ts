@@ -1071,7 +1071,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 
 		async changeParty(
 			reservationId: string,
-			change: { partySize?: number; time?: string },
+			change: { partySize?: number; time?: string; localStartMin?: number },
 			expectedVersion: number,
 		) {
 			await wait()
@@ -1084,9 +1084,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			const party = change.partySize ?? r.partySize
 			if (change.partySize) patch.partySize = change.partySize
 			let startMin = r.localStartMin
-			if (change.time) {
-				const [h = 0, m = 0] = change.time.split(':').map(Number)
-				startMin = h * 60 + m
+			if (change.time || change.localStartMin !== undefined) {
+				const [h = 0, m = 0] = (change.time ?? '').split(':').map(Number)
+				startMin = change.localStartMin ?? h * 60 + m
 				const startAt = at(date, startMin)
 				Object.assign(patch, {
 					localStartMin: startMin,
@@ -1223,6 +1223,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			input: {
 				date: string
 				time: string
+				localStartMin?: number
 				partySize: number
 				firstName: string
 				lastName: string
@@ -1234,12 +1235,12 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		) {
 			await wait()
 			return once(idempotencyKey, () => {
+				const [h = 0, m = 0] = input.time.split(':').map(Number)
+				const startMin = input.localStartMin ?? h * 60 + m
 				const slot = slotsFor(input.date, input.partySize).find(
-					(s) => s.time === input.time,
+					(s) => s.localStartMin === startMin,
 				)
 				if (!slot?.available) throw refuse(409, 'slot_unavailable')
-				const [h = 0, m = 0] = input.time.split(':').map(Number)
-				const startMin = h * 60 + m
 				const startAt = at(input.date, startMin)
 				const duration = input.partySize >= 6 ? 120 : DEFAULT_TURN_MIN
 				const day = dayOf(input.date)

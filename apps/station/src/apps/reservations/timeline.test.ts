@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { at, day, rsv, SERVICES } from './testing.ts'
 import {
 	layoutTimeline,
+	mergePacing,
 	minuteAt,
 	minutesFormatter,
 	nowOffset,
 	packLanes,
 	slotTotals,
 	timelineRange,
+	wallMinutes,
 } from './timeline.ts'
+import { zonedEpoch } from './zoned.ts'
 
 const rows = (groups: ReturnType<typeof layoutTimeline>) =>
 	groups.flatMap((g) => g.rows)
@@ -294,5 +297,262 @@ describe('the clock and the pointer', () => {
 			'7:30 PM',
 		)
 		expect(minutesFormatter('en')(25 * 60)).toBe(minutesFormatter('en')(60))
+	})
+})
+
+/** A booking written by its wall-clock time on a business date in a zone (the server's way). */
+function localRsv(
+	date: string,
+	zone: string,
+	start: number,
+	durationMin: number,
+	over: Record<string, unknown> = {},
+) {
+	const startAt = zonedEpoch(date, start, zone)
+	return rsv({
+		start,
+		durationMin,
+		startAt,
+		endAt: zonedEpoch(date, start + durationMin, zone),
+		...over,
+	})
+}
+
+describe('a day the clocks change (America/New_York)', () => {
+	const NY = 'America/New_York'
+	const dayIn = (date: string, reservations: ReturnType<typeof rsv>[]) =>
+		day(reservations, {
+			businessDate: date,
+			settings: { timeZone: NY },
+		})
+	const range = { startMin: 17 * 60, endMin: 24 * 60 }
+
+	it('puts the now line where the wall clock is, on the day clocks go forward', () => {
+		const feed = dayIn('2026-03-08', [])
+		// 7:30 PM on the wall; 18.5 hours have passed since midnight.
+		const now = zonedEpoch('2026-03-08', 19 * 60 + 30, NY)
+		expect(wallMinutes(now, feed)).toBe(19 * 60 + 30)
+		expect(nowOffset(now, feed, range)).toBe(2 * 60 + 30)
+	})
+	it('and on the day they go back', () => {
+		const feed = dayIn('2026-11-01', [])
+		const now = zonedEpoch('2026-11-01', 19 * 60 + 30, NY)
+		expect(wallMinutes(now, feed)).toBe(19 * 60 + 30)
+		expect(nowOffset(now, feed, range)).toBe(2 * 60 + 30)
+	})
+	it('runs a seated party to now on the wall clock, not to the elapsed minutes', () => {
+		const feed = dayIn('2026-03-08', [
+			localRsv('2026-03-08', NY, 18 * 60, 60, {
+				tableIds: ['t1'],
+				status: 'seated',
+			}),
+		])
+		const now = zonedEpoch('2026-03-08', 19 * 60 + 20, NY)
+		const [bar] = rows(layoutTimeline(feed, range, { now })).find(
+			(r) => r.key === 't1',
+		)!.bars
+		// An hour and twenty minutes after 6 PM is 7:20 PM, however the elapsed time reads.
+		expect(bar).toMatchObject({
+			startMin: 18 * 60,
+			endMin: 19 * 60 + 20,
+			overrun: true,
+		})
+		const [onTime] = rows(
+			layoutTimeline(feed, range, {
+				now: zonedEpoch('2026-03-08', 18 * 60 + 30, NY),
+			}),
+		).find((r) => r.key === 't1')!.bars
+		expect(onTime).toMatchObject({ endMin: 19 * 60, overrun: false })
+	})
+	it('measures a booking that spans the change by the wall clock', () => {
+		// Two hours of elapsed time from 1 AM, across the missing hour: it ends at 4 AM on the wall.
+		const startAt = zonedEpoch('2026-03-08', 60, NY)
+		const spans = rsv({
+			start: 60,
+			startAt,
+			endAt: startAt + 120 * 60_000,
+			durationMin: 120,
+			tableIds: ['t1'],
+		})
+		const feed = dayIn('2026-03-08', [spans])
+		const [bar] = rows(
+			layoutTimeline(feed, { startMin: 0, endMin: 6 * 60 }),
+		).find((r) => r.key === 't1')!.bars
+		expect(bar!.startMin).toBe(60)
+		expect(bar!.endMin).toBe(4 * 60)
+	})
+	it('places a block by the wall clock', () => {
+		const feed = day([], {
+			businessDate: '2026-03-08',
+			settings: { timeZone: NY },
+			blocks: [
+				{
+					id: 'b',
+					tableId: 't1',
+					startAt: zonedEpoch('2026-03-08', 20 * 60, NY),
+					endAt: zonedEpoch('2026-03-08', 21 * 60, NY),
+				},
+			],
+		})
+		const row = rows(layoutTimeline(feed, range)).find((r) => r.key === 't1')!
+		expect(row.blocks[0]).toMatchObject({ startMin: 20 * 60, endMin: 21 * 60 })
+	})
+})
+
+describe('a zone that never changes (Asia/Riyadh)', () => {
+	it('reads now and bars on the same scale, past the tablet’s own midnight', () => {
+		const zone = 'Asia/Riyadh'
+		const feed = day(
+			[
+				localRsv('2026-03-02', zone, 21 * 60, 90, {
+					tableIds: ['t1'],
+					status: 'seated',
+				}),
+			],
+			{ settings: { timeZone: zone } },
+		)
+		// 22:30 UTC is 01:30 the next morning in Riyadh: minute 1530 of the 2nd.
+		const now = Date.UTC(2026, 2, 2, 22, 30)
+		expect(wallMinutes(now, feed)).toBe(25 * 60 + 30)
+		const [bar] = rows(
+			layoutTimeline(feed, { startMin: 20 * 60, endMin: 27 * 60 }, { now }),
+		).find((r) => r.key === 't1')!.bars
+		expect(bar).toMatchObject({
+			startMin: 21 * 60,
+			endMin: 25 * 60 + 30,
+			overrun: true,
+		})
+	})
+})
+
+describe('a booking whose tables are gone from the plan', () => {
+	const range = { startMin: 11 * 60, endMin: 23 * 60 }
+	it('with an archived table is drawn in the "No table" row, marked', () => {
+		const feed = day(
+			[rsv({ id: 'orphan', start: 12 * 60, tableIds: ['gone'] })],
+			{
+				tables: [
+					{
+						id: 'gone',
+						areaId: 'a1',
+						label: '9',
+						minCovers: 1,
+						maxCovers: 2,
+						archivedAt: at(1),
+					},
+					{ id: 't1', areaId: 'a1', label: '1', minCovers: 1, maxCovers: 2 },
+				],
+			},
+		)
+		const groups = layoutTimeline(feed, range)
+		const none = groups.find((g) => g.key === 'none')!
+		expect(none.rows[0]!.bars.map((b) => b.reservation.id)).toEqual(['orphan'])
+		expect(none.rows[0]!.bars[0]!.tableRemoved).toBe(true)
+	})
+	it('with a table in an archived room is drawn there too', () => {
+		const feed = day(
+			[rsv({ id: 'orphan', start: 12 * 60, tableIds: ['p1'] })],
+			{
+				areas: [
+					{ id: 'a1', name: 'Main', sort: 0 },
+					{ id: 'a2', name: 'Patio', sort: 1, archivedAt: at(1) },
+				],
+				tables: [
+					{ id: 't1', areaId: 'a1', label: '1', minCovers: 1, maxCovers: 2 },
+					{ id: 'p1', areaId: 'a2', label: 'P1', minCovers: 1, maxCovers: 2 },
+				],
+			},
+		)
+		const groups = layoutTimeline(feed, range)
+		expect(groups.find((g) => g.key === 'none')!.rows[0]!.bars).toHaveLength(1)
+		expect(groups.some((g) => g.key === 'a2')).toBe(false)
+	})
+	it('one table that is drawn keeps its bar on that table only', () => {
+		const feed = day(
+			[rsv({ id: 'two', start: 12 * 60, tableIds: ['t1', 'zz'] })],
+			{
+				tables: [
+					{ id: 't1', areaId: 'a1', label: '1', minCovers: 1, maxCovers: 2 },
+				],
+			},
+		)
+		const groups = layoutTimeline(feed, range)
+		expect(groups.find((g) => g.key === 'none')).toBeUndefined()
+		expect(rows(groups).find((r) => r.key === 't1')!.bars).toHaveLength(1)
+	})
+	it('a booking with no table at all is in the row but not marked removed', () => {
+		const feed = day([rsv({ id: 'free', start: 12 * 60 })])
+		const none = layoutTimeline(feed, range).find((g) => g.key === 'none')!
+		expect(none.rows[0]!.bars[0]!.tableRemoved).toBe(false)
+	})
+})
+
+describe('a booking after midnight', () => {
+	it('lies on this business day beyond minute 1440, and widens the grid to it', () => {
+		const feed = day([
+			rsv({ start: 24 * 60 + 30, durationMin: 60, tableIds: ['t1'] }),
+		])
+		const range = timelineRange(feed)
+		expect(range.endMin).toBeGreaterThanOrEqual(26 * 60)
+		const [bar] = rows(layoutTimeline(feed, range)).find(
+			(r) => r.key === 't1',
+		)!.bars
+		expect(bar).toMatchObject({ startMin: 24 * 60 + 30, endMin: 25 * 60 + 30 })
+	})
+	it('is counted in the hour it starts in, by its minute and not by the clock', () => {
+		const feed = day([rsv({ start: 25 * 60, partySize: 4 })])
+		const totals = slotTotals(feed, { startMin: 24 * 60, endMin: 26 * 60 })
+		expect(totals.cells.map((c) => c.covers)).toEqual([0, 4])
+	})
+})
+
+describe('two services whose pacing overlaps', () => {
+	it('adds covers and parties, and capacity when every row has one', () => {
+		expect(
+			mergePacing([
+				{ bookedCovers: 4, partyCount: 1, maxCovers: 20 },
+				{ bookedCovers: 2, partyCount: 1, maxCovers: 10 },
+			]),
+		).toEqual({ bookedCovers: 6, partyCount: 2, maxCovers: 30 })
+	})
+	it('has no limit to show when one of the rows has none', () => {
+		expect(
+			mergePacing([
+				{ bookedCovers: 4, partyCount: 1, maxCovers: 20 },
+				{ bookedCovers: 2, partyCount: 1, maxCovers: null },
+			])?.maxCovers,
+		).toBeNull()
+	})
+	it('keeps both rows of a minute in the all-day footer instead of dropping one', () => {
+		const feed = day([], {
+			services: SERVICES,
+			pacing: [
+				{
+					localMin: 17 * 60,
+					serviceId: 'lunch',
+					bookedCovers: 4,
+					partyCount: 1,
+					maxCovers: 10,
+				},
+				{
+					localMin: 17 * 60,
+					serviceId: 'dinner',
+					bookedCovers: 6,
+					partyCount: 2,
+					maxCovers: 20,
+				},
+			],
+		})
+		const range = { startMin: 17 * 60, endMin: 18 * 60 }
+		expect(slotTotals(feed, range).cells[0]).toMatchObject({
+			covers: 10,
+			parties: 3,
+			cap: 30,
+		})
+		// One service chosen: only its own row.
+		expect(slotTotals(feed, range, 'dinner').cells[0]).toMatchObject({
+			covers: 6,
+			cap: 20,
+		})
 	})
 })

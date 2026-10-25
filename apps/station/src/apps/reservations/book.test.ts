@@ -5,6 +5,7 @@ import {
 	inService,
 	liveServices,
 	matchesReservation,
+	foldDigits,
 	matchesWaitlistEntry,
 	newArrivals,
 	normalize,
@@ -188,7 +189,7 @@ describe('the list', () => {
 		expect(ids(list.missed)).toEqual(['gone', 'ns'])
 		expect(ids(list.finished)).toEqual(['early'])
 	})
-	it('narrows to a service but keeps whoever is on the floor', () => {
+	it('narrows to a service but keeps whoever is at the stand or on the floor', () => {
 		const dinner = bookList({
 			feed,
 			waitlist: [],
@@ -196,7 +197,8 @@ describe('the list', () => {
 			isToday: true,
 			serviceId: 'dinner',
 		})
-		expect(ids(dinner.toSeat)).toEqual(['dinner'])
+		// A lunch party already at the stand is still there at dinner time.
+		expect(ids(dinner.toSeat)).toEqual(['here', 'dinner'])
 		expect(ids(dinner.seated)).toEqual(['sat', 'sat2'])
 		expect(ids(dinner.finished)).toEqual([])
 	})
@@ -259,11 +261,109 @@ describe('the totals', () => {
 		expect(
 			dayTotals({ feed, now, isToday: true, serviceId: 'dinner' }),
 		).toEqual({
-			parties: 1,
-			covers: 6,
+			// The dinner booking and the party seated at lunch who is still on the floor.
+			parties: 2,
+			covers: 10,
 			toSeat: 1,
 			seated: 1,
 		})
+	})
+	it('counts a party at the stand whatever service is chosen', () => {
+		const now = at(13 * 60)
+		const feed = day(
+			[
+				rsv({ start: 12 * 60, status: 'arrived', partySize: 3 }),
+				rsv({ start: 12 * 60 + 30, status: 'booked', partySize: 2 }),
+				rsv({ start: 19 * 60, status: 'booked', partySize: 5 }),
+			],
+			{ services: SERVICES },
+		)
+		const totals = dayTotals({
+			feed,
+			now,
+			isToday: true,
+			serviceId: 'dinner',
+		})
+		expect(totals).toMatchObject({ parties: 2, covers: 8, toSeat: 2 })
+	})
+})
+
+describe('search in other digits', () => {
+	const maya = rsv({
+		start: 12 * 60,
+		guest: guest('Maya', 'Haddad', '+14155550142'),
+		confirmationCode: 'AB7K2Q',
+	})
+	it('reads Arabic-Indic and Persian digits as 0 to 9', () => {
+		expect(foldDigits('٠١٢٣٤٥٦٧٨٩')).toBe('0123456789')
+		expect(foldDigits('۰۱۲۳۴۵۶۷۸۹')).toBe('0123456789')
+		expect(normalize('٠١٤٢')).toBe('0142')
+	})
+	it('finds a phone by its last digits typed on an Arabic keyboard', () => {
+		expect(matchesReservation(maya, '٠١٤٢')).toBe(true)
+		expect(matchesReservation(maya, '۰۱۴۲')).toBe(true)
+		expect(matchesReservation(maya, '٠١٤٣')).toBe(false)
+		// And a phone stored with Arabic digits is found by Western ones.
+		const arabic = rsv({
+			start: 600,
+			guest: guest('Lina', 'S', '+٩٦٦٥٥٥٠١٤٢٧'),
+		})
+		expect(matchesReservation(arabic, '4276')).toBe(false)
+		expect(matchesReservation(arabic, '1427')).toBe(true)
+	})
+	it('finds a table or code typed with Arabic digits', () => {
+		const t = rsv({ start: 600, tableLabels: ['12'] })
+		expect(matchesReservation(t, '١٢')).toBe(true)
+	})
+})
+
+describe('bookings awaiting payment', () => {
+	const now = at(13 * 60)
+	const feed = day(
+		[
+			rsv({
+				id: 'pay',
+				start: 19 * 60,
+				status: 'pending_payment',
+				guest: guest('Pay', 'Later'),
+			}),
+			rsv({
+				id: 'ok',
+				start: 18 * 60,
+				status: 'booked',
+				guest: guest('Fine', 'Guest'),
+			}),
+		],
+		{ services: SERVICES },
+	)
+	it('appear in their own group, in time order, and are never to seat', () => {
+		const list = bookList({ feed, waitlist: [], now, isToday: true })
+		expect(list.awaiting.map((r) => r.id)).toEqual(['pay'])
+		expect(list.toSeat.map((r) => r.id)).toEqual(['ok'])
+	})
+	it('show on another day too, and are found by search', () => {
+		expect(
+			bookList({ feed, waitlist: [], now, isToday: false }).awaiting,
+		).toHaveLength(1)
+		expect(
+			bookList({ feed, waitlist: [], now, isToday: true, query: 'pay' })
+				.awaiting,
+		).toHaveLength(1)
+		expect(
+			bookList({ feed, waitlist: [], now, isToday: true, query: 'fine' })
+				.awaiting,
+		).toHaveLength(0)
+	})
+	it('follow the service filter and count in the day', () => {
+		expect(
+			bookList({ feed, waitlist: [], now, isToday: true, serviceId: 'lunch' })
+				.awaiting,
+		).toHaveLength(0)
+		expect(dayTotals({ feed, now, isToday: true }).parties).toBe(2)
+	})
+	it('are neither late nor due: they wait for the deposit', () => {
+		const held = rsv({ start: 12 * 60, status: 'pending_payment' })
+		expect(partyStatus(held, at(15 * 60)).kind).toBe('awaiting')
 	})
 })
 

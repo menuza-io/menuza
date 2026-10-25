@@ -75,12 +75,26 @@ export function inService(
 // Search
 // ---------------------------------------------------------------------------
 
-/** Lower case, without accents, so "José" is found by "jose". */
-export function normalize(text: string) {
-	return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().trim()
+/**
+ * Arabic-Indic (٠-٩) and Persian (۰-۹) digits as 0-9, so a number typed on an
+ * Arabic keyboard finds a phone number or a code stored with Western digits
+ * (and the other way round). NFKD folds the full-width digits already.
+ */
+export function foldDigits(text: string) {
+	return text.replace(/[\u0660-\u0669\u06f0-\u06f9]/g, (digit) =>
+		String(digit.charCodeAt(0) & 0xf),
+	)
 }
 
-const digitsOf = (text: string) => text.replace(/\D/g, '')
+/** Lower case, without accents, digits as 0-9, so "José" is found by "jose" and "٠٥٥" by "055". */
+export function normalize(text: string) {
+	return foldDigits(text.normalize('NFKD'))
+		.replace(/\p{M}/gu, '')
+		.toLowerCase()
+		.trim()
+}
+
+const digitsOf = (text: string) => foldDigits(text).replace(/\D/g, '')
 
 /**
  * Name words (each typed word must be inside some word of the name), the end
@@ -145,6 +159,7 @@ export type PartyStatus = {
 		| 'running'
 		| 'booked'
 		| 'confirmed'
+		| 'awaiting'
 		| 'finished'
 		| 'no_show'
 	/** Minutes past the booked time (0 when not late yet). */
@@ -164,6 +179,9 @@ export function partyStatus(
 	if (r.status === 'finished') return { kind: 'finished', late: 0, said: 0 }
 	if (r.status === 'no_show') return { kind: 'no_show', late: 0, said: 0 }
 	if (isWaitingAtStand(r)) return { kind: 'here', late, said }
+	// Held until its deposit is paid: not late, not due, whatever the clock says.
+	if (r.status === 'pending_payment')
+		return { kind: 'awaiting', late: 0, said: 0 }
 	// Later than they said: the real figure leads, and what they said follows it.
 	if (said > 0 && late > said) return { kind: 'late', late, said }
 	if (said > 0) return { kind: 'running', late, said }
@@ -182,6 +200,11 @@ export function partyStatus(
 export type BookList = {
 	/** Parties still to seat, in the order they are due. */
 	toSeat: DayReservation[]
+	/**
+	 * Bookings held until a deposit is paid, in time order. The till cannot
+	 * seat them (a manager settles the payment), so they offer details only.
+	 */
+	awaiting: DayReservation[]
 	/** Parties on the floor, the longest seated first. */
 	seated: DayReservation[]
 	/** Bookings whose time passed with nobody arriving, and recent no-shows. */
@@ -195,10 +218,17 @@ const byStart = (a: DayReservation, b: DayReservation) =>
 	a.startAt - b.startAt || a.partySize - b.partySize
 
 /**
+ * Whether a party is at the stand or on the floor: it is there whatever
+ * service is chosen, so a filter never hides someone the host must seat or serve.
+ */
+const isPresent = (r: Pick<DayReservation, 'status'>) =>
+	isWaitingAtStand(r) || isOnFloor(r)
+
+/**
  * The lists the stand's panel shows. Today, the host works the live service:
  * what is due, what is seated, what was missed. Another day is a book to read:
  * everything booked, in time order. A service narrows what is due and what
- * has left; parties on the floor always show (they are sitting there).
+ * has left; parties at the stand or on the floor always show (they are there).
  */
 export function bookList({
 	feed,
@@ -216,14 +246,18 @@ export function bookList({
 	query?: string
 }): BookList {
 	const scoped = {
-		reservations: feed.reservations.filter((r) =>
-			inService(feed, r, serviceId),
+		reservations: feed.reservations.filter(
+			(r) => isWaitingAtStand(r) || inService(feed, r, serviceId),
 		),
 	}
 	const find = (r: DayReservation) => matchesReservation(r, query)
 	const toSeat = (
 		isToday ? arrivals(scoped, now) : scoped.reservations.filter(isUpcoming)
 	)
+		.sort(byStart)
+		.filter(find)
+	const awaiting = scoped.reservations
+		.filter((r) => r.status === 'pending_payment')
 		.sort(byStart)
 		.filter(find)
 	const missed = (
@@ -243,6 +277,7 @@ export function bookList({
 		.filter(find)
 	return {
 		toSeat,
+		awaiting,
 		seated,
 		missed,
 		finished,
@@ -278,7 +313,7 @@ export function dayTotals(input: {
 }): DayTotals {
 	const { feed, serviceId = null } = input
 	const counted = feed.reservations.filter(
-		(r) => isCounted(r) && inService(feed, r, serviceId),
+		(r) => isCounted(r) && (isPresent(r) || inService(feed, r, serviceId)),
 	)
 	const list = bookList({ ...input, waitlist: [], serviceId, query: '' })
 	return {

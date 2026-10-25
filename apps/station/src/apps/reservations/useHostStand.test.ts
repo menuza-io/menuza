@@ -1,9 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { HostApiError } from './api.ts'
+import { describe, expect, it, vi } from 'vitest'
+import { HostApiError, type HostApi } from './api.ts'
 import { dayFeedSchema } from './feed.ts'
 import dayFeed from './fixtures/day-feed.json'
 import {
 	afterFailedRefresh,
+	createDayStore,
+	DAY_POLL_MS,
+	dayFailedFor,
 	dayKey,
 	mayPaint,
 	TODAY_KEY,
@@ -11,20 +14,23 @@ import {
 	type HostStandState,
 } from './useHostStand.ts'
 
+const grant = {
+	token: 't'.repeat(30),
+	expiresAt: 0,
+	locationId: 'loc',
+	canReadGuest: false,
+	features: { waitlist: true, online: true },
+}
+
 const ready: HostStandState = {
 	status: 'ready',
 	feed: dayFeedSchema.parse(dayFeed),
 	feedDate: null,
 	today: '2026-01-16',
 	waitlist: [],
-	grant: {
-		token: 't'.repeat(30),
-		expiresAt: 0,
-		locationId: 'loc',
-		canReadGuest: false,
-		features: { waitlist: true, online: true },
-	},
+	grant,
 	stale: false,
+	dayFailed: null,
 }
 
 describe('a failed refresh', () => {
@@ -87,5 +93,247 @@ describe('looking at another day', () => {
 		expect(mayPaint({ generation: 3, date: null }, now)).toBe(false)
 		// An answer for the person before (the till was locked meanwhile).
 		expect(mayPaint({ generation: 2, date: '2026-01-17' }, now)).toBe(false)
+	})
+})
+
+// ---------------------------------------------------------------------------
+// The store: dates, ETags and the timed looks (no React, a fake api, fake timers)
+// ---------------------------------------------------------------------------
+
+type DayAnswer =
+	| { unchanged: true }
+	| { feed: ReturnType<typeof dayFeedSchema.parse>; etag: string | null }
+
+/** A feed for a business date, with a version in its ETag. */
+const feedFor = (businessDate: string) =>
+	dayFeedSchema.parse({ ...dayFeed, businessDate })
+
+/** What the store asks of the api, scripted per test. */
+function fakeApi(
+	options: {
+		today?: () => string
+		fail?: (date: string | undefined) => boolean
+		waitlistFails?: () => boolean
+	} = {},
+) {
+	const calls: Array<{ etag: string | undefined; date: string | undefined }> =
+		[]
+	const known = new Map<string, string>()
+	const api = {
+		forget: vi.fn(),
+		grant: vi.fn(async () => grant),
+		waitlist: vi.fn(async () => {
+			if (options.waitlistFails?.()) throw new HostApiError(0, 'network')
+			return { entries: [] }
+		}),
+		day: vi.fn(async (etag: string | undefined, date: string | undefined) => {
+			calls.push({ etag, date })
+			if (options.fail?.(date)) throw new HostApiError(0, 'network')
+			const businessDate = date ?? options.today?.() ?? '2026-01-16'
+			const tag = `"v1-${businessDate}"`
+			if (etag && etag === tag) return { unchanged: true } as DayAnswer
+			known.set(businessDate, tag)
+			return { feed: feedFor(businessDate), etag: tag } as DayAnswer
+		}),
+	}
+	return { api: api as unknown as HostApi, calls, raw: api }
+}
+
+const settle = async () => {
+	// Let the promises of a refresh run (and the fake timers' microtasks).
+	for (let i = 0; i < 12; i += 1) await Promise.resolve()
+}
+
+describe('the day store', () => {
+	it('asks "unchanged?" with the ETag it holds, and keeps the feed on a 304', async () => {
+		const { api, calls } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		const first = store.getState()
+		expect(first).toMatchObject({ status: 'ready', feedDate: null })
+		await store.refresh()
+		expect(calls[1]!.etag).toBe('"v1-2026-01-16"')
+		// Unchanged: the same day, still drawn.
+		const second = store.getState()
+		expect(second.status === 'ready' && second.feed).toBe(
+			first.status === 'ready' && first.feed,
+		)
+		// A full look asks for the whole day.
+		await store.refresh({ full: true })
+		expect(calls[2]!.etag).toBeUndefined()
+	})
+
+	it('moves one day per tap however quickly, then draws the last day asked for', async () => {
+		const { api } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-17')
+		expect(store.getDate()).toBe('2026-01-17')
+		store.setDate('2026-01-18')
+		store.setDate('2026-01-19')
+		expect(store.getDate()).toBe('2026-01-19')
+		await settle()
+		const state = store.getState()
+		expect(state.status === 'ready' && state.feedDate).toBe('2026-01-19')
+		expect(state.status === 'ready' && state.feed.businessDate).toBe(
+			'2026-01-19',
+		)
+	})
+
+	it('looks again when the day asked for is not the one on screen (a retry)', async () => {
+		let down = true
+		const { api, raw } = fakeApi({ fail: (date) => down && date !== undefined })
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-17')
+		await settle()
+		// Offline: the day before stays on screen, and this day's own look failed.
+		let state = store.getState()
+		expect(state.status === 'ready' && state.feedDate).toBeNull()
+		expect(dayFailedFor(state, '2026-01-17')).toBe(true)
+		expect(dayFailedFor(state, null)).toBe(false)
+		const askedBefore = raw.day.mock.calls.length
+		// Asking again for the same day is a retry, not a no-op.
+		down = false
+		store.setDate('2026-01-17')
+		await settle()
+		expect(raw.day.mock.calls.length).toBeGreaterThan(askedBefore)
+		state = store.getState()
+		expect(state.status === 'ready' && state.feedDate).toBe('2026-01-17')
+		expect(dayFailedFor(state, '2026-01-17')).toBe(false)
+	})
+
+	it('does not read a waitlist that failed to load as a day that failed to open', async () => {
+		let waitlistDown = false
+		const { api } = fakeApi({ waitlistFails: () => waitlistDown })
+		const store = createDayStore(api)
+		await store.refresh()
+		waitlistDown = true
+		await store.refresh()
+		const stale = store.getState()
+		expect(stale).toMatchObject({
+			status: 'ready',
+			stale: true,
+			dayFailed: null,
+		})
+		// Now a day is merely loading: nothing says it failed.
+		store.setDate('2026-01-17')
+		const loading = store.getState()
+		expect(dayFailedFor(loading, '2026-01-17')).toBe(false)
+	})
+
+	it('draws a slow answer for the day before only if it is still the day asked for', async () => {
+		const { api } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-17')
+		store.setDate(null)
+		await settle()
+		const state = store.getState()
+		expect(state.status === 'ready' && state.feedDate).toBeNull()
+		expect(store.getDate()).toBeNull()
+	})
+
+	it('reads a day that turns out to be today as today', async () => {
+		const { api } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-16')
+		expect(store.getDate()).toBeNull()
+	})
+
+	it('leaves another day for today when midnight passes while it is on screen', async () => {
+		let today = '2026-01-16'
+		const { api } = fakeApi({ today: () => today })
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-17')
+		await settle()
+		let state = store.getState()
+		expect(state.status === 'ready' && state.today).toBe('2026-01-16')
+		// The clock passes midnight at the location: tomorrow is today now.
+		today = '2026-01-17'
+		await store.refresh()
+		await settle()
+		expect(store.getDate()).toBeNull()
+		state = store.getState()
+		expect(state).toMatchObject({
+			status: 'ready',
+			feedDate: null,
+			today: '2026-01-17',
+		})
+		expect(state.status === 'ready' && state.feed.businessDate).toBe(
+			'2026-01-17',
+		)
+	})
+
+	it('keeps today current while another day is on screen', async () => {
+		let today = '2026-01-16'
+		const { api } = fakeApi({ today: () => today })
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-20')
+		await settle()
+		today = '2026-01-17'
+		await store.refresh()
+		const state = store.getState()
+		expect(state.status === 'ready' && state.today).toBe('2026-01-17')
+		expect(state.status === 'ready' && state.feedDate).toBe('2026-01-20')
+	})
+
+	it('polls on a timer with the ETag it holds, and not while the page is hidden', async () => {
+		vi.useFakeTimers()
+		const visibility = { value: 'visible' }
+		vi.stubGlobal('document', {
+			get visibilityState() {
+				return visibility.value
+			},
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+		})
+		try {
+			const { api, calls } = fakeApi()
+			const store = createDayStore(api)
+			const stop = store.start()
+			await settle()
+			expect(calls).toHaveLength(1)
+			await vi.advanceTimersByTimeAsync(DAY_POLL_MS)
+			expect(calls).toHaveLength(2)
+			expect(calls[1]!.etag).toBe('"v1-2026-01-16"')
+			visibility.value = 'hidden'
+			await vi.advanceTimersByTimeAsync(DAY_POLL_MS * 3)
+			expect(calls).toHaveLength(2)
+			visibility.value = 'visible'
+			await vi.advanceTimersByTimeAsync(DAY_POLL_MS)
+			expect(calls).toHaveLength(3)
+			stop()
+			await vi.advanceTimersByTimeAsync(DAY_POLL_MS * 3)
+			expect(calls).toHaveLength(3)
+		} finally {
+			vi.useRealTimers()
+			vi.unstubAllGlobals()
+		}
+	})
+
+	it('drops what a refresh sent before a change answers after it', async () => {
+		const { api } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		const before = store.getState()
+		const slow = store.refresh({ full: true })
+		store.noteWrite()
+		await slow
+		expect(store.getState()).toBe(before)
+	})
+
+	it('starts clean for a new person', async () => {
+		const { api, raw } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		store.setDate('2026-01-17')
+		store.reset()
+		expect(raw.forget).toHaveBeenCalled()
+		expect(store.getState()).toEqual({ status: 'loading' })
+		expect(store.getDate()).toBeNull()
 	})
 })

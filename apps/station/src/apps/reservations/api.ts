@@ -384,7 +384,7 @@ export function createHostApi(deps: HostDeps) {
 		 */
 		async changeParty(
 			reservationId: string,
-			change: { partySize?: number; time?: string },
+			change: { partySize?: number; time?: string; localStartMin?: number },
 			expectedVersion: number,
 		) {
 			const result = await call(
@@ -484,7 +484,14 @@ export function createHostApi(deps: HostDeps) {
 		async book(
 			input: {
 				date: string
+				/** `HH:MM`; after midnight the hour runs on (`25:30`), as the server reads it. */
 				time: string
+				/**
+				 * The same time as minutes after the business day's midnight (up to
+				 * 1800): sent beside `time`, so a table after midnight stays on this
+				 * day however the clock string is read.
+				 */
+				localStartMin?: number
 				partySize: number
 				firstName: string
 				lastName: string
@@ -500,6 +507,9 @@ export function createHostApi(deps: HostDeps) {
 					locationId: await locationId(),
 					date: input.date,
 					time: input.time,
+					...(input.localStartMin !== undefined
+						? { localStartMin: input.localStartMin }
+						: {}),
 					partySize: input.partySize,
 					channel: 'host',
 					guest: {

@@ -90,6 +90,13 @@ export type ToastMessage = {
 	text: string
 	action?: { label: string; run: () => void }
 	tone?: 'neutral' | 'danger'
+	/**
+	 * Said some other way already (a live region of its own): the toast shows
+	 * but does not announce it a second time.
+	 */
+	silent?: boolean
+	/** What the toast is about (a booking's id): opening another's details sets it aside. */
+	subject?: string
 }
 
 /**
@@ -101,6 +108,8 @@ export type ToastMessage = {
  * open when it appears, not hidden behind it. While a modal sheet is open the
  * rest of the page is inert, so the toast (and its announcement) moves inside
  * that sheet and stays reachable. Its action runs once, however many taps.
+ * Inside a sheet it never covers the sheet's buttons: it sits below the card
+ * when there is room, else rises above the card's footer, else pins to the top.
  */
 export function Toast({
 	message,
@@ -122,6 +131,7 @@ export function Toast({
 	const layer = useRef<HTMLDivElement>(null)
 	const host = useModalHost()
 	const lift = useHeightOf(liftAbove)
+	const inSheet = useSheetClearance(host, shown !== null)
 	/** The message whose action already ran: a second tap does nothing. */
 	const acted = useRef<number | null>(null)
 
@@ -161,18 +171,20 @@ export function Toast({
 		<>
 			{/* Announced from outside the popover, which is not rendered while closed. */}
 			<p role="status" aria-live="polite" className="sr-only">
-				{message?.text ?? ''}
+				{message && !message.silent ? message.text : ''}
 			</p>
 			<div
 				ref={layer}
 				popover="manual"
 				// Inside a sheet nothing sits under it: the lift is for the page only.
+				// Inside a sheet with no room under it (and no footer to rise above): the top.
+				data-pin={host && inSheet === 'top' ? 'top' : undefined}
 				style={
 					{
-						'--toast-lift': `${host ? 0 : lift}px`,
+						'--toast-lift': `${host ? (inSheet === 'top' ? 0 : inSheet) : lift}px`,
 					} as React.CSSProperties
 				}
-				className="pb-safe pointer-events-none fixed inset-x-0 top-auto bottom-(--toast-lift) z-50 m-0 flex h-auto w-full max-w-none justify-center overflow-visible border-0 bg-transparent p-0 px-4 [&:not(:popover-open)]:hidden"
+				className="pb-safe pointer-events-none fixed inset-x-0 top-auto bottom-(--toast-lift) z-50 m-0 flex h-auto w-full max-w-none justify-center overflow-visible border-0 bg-transparent p-0 px-4 data-[pin=top]:top-3 data-[pin=top]:bottom-auto [&:not(:popover-open)]:hidden"
 			>
 				{shown ? (
 					<div
@@ -216,6 +228,52 @@ export function Toast({
 		</>
 	)
 	return host ? createPortal(toast, host) : toast
+}
+
+/** Room the toast needs under a sheet's card to sit there without touching it. */
+const TOAST_ROOM_PX = 88
+
+/**
+ * Where a toast shown inside an open sheet goes so it covers none of the
+ * sheet's controls: 0 (the usual place) when the card leaves room under it;
+ * else the pixels that lift it above the card's footer (the footer holds the
+ * sheet's actions); else `'top'`, for a sheet with no footer that fills the screen.
+ */
+function useSheetClearance(
+	host: HTMLElement | null,
+	active: boolean,
+): number | 'top' {
+	const [clearance, setClearance] = useState<number | 'top'>(0)
+	useLayoutEffect(() => {
+		if (!host || !active) {
+			setClearance(0)
+			return
+		}
+		const measure = () => {
+			const footer = host.querySelector('footer')
+			const card = host.getBoundingClientRect()
+			if (window.innerHeight - card.bottom >= TOAST_ROOM_PX)
+				return setClearance(0)
+			if (!footer) return setClearance('top')
+			setClearance(
+				Math.max(0, window.innerHeight - footer.getBoundingClientRect().top) +
+					8,
+			)
+		}
+		measure()
+		window.addEventListener('resize', measure)
+		if (typeof ResizeObserver === 'undefined')
+			return () => window.removeEventListener('resize', measure)
+		const observer = new ResizeObserver(measure)
+		observer.observe(host)
+		const footer = host.querySelector('footer')
+		if (footer) observer.observe(footer)
+		return () => {
+			window.removeEventListener('resize', measure)
+			observer.disconnect()
+		}
+	}, [host, active])
+	return clearance
 }
 
 /** An element's height, kept current as it changes (0 without one). */

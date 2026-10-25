@@ -1,8 +1,8 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, Trans } from '@lingui/macro'
+import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { FINISHED_UNDO_WINDOW_MS, type WaitlistEntry } from '@repo/reservations'
-import { Lock, RefreshCw, X } from 'lucide-react'
+import { List, Lock, RefreshCw, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HostApiError } from './api.ts'
 import {
@@ -43,12 +43,12 @@ import {
 import {
 	PaneTabs,
 	StandHeader,
+	StandStats,
 	type MainView,
 	type PaneTab,
 } from './StandHeader.tsx'
-import { Timeline } from './Timeline.tsx'
-import { useHostStand } from './useHostStand.ts'
-import { clockLabel } from './zoned.ts'
+import { Timeline, type TimelineRefusal } from './Timeline.tsx'
+import { dayFailedFor, useHostStand } from './useHostStand.ts'
 import './book.css'
 import { holdLock } from '~/lib/activity.ts'
 import { type PosSettings } from '~/lib/config.ts'
@@ -79,6 +79,7 @@ function readView(): MainView {
 /** A day's book on screen with nothing in it yet. */
 const NO_LIST: BookList = {
 	toSeat: [],
+	awaiting: [],
 	seated: [],
 	missed: [],
 	finished: [],
@@ -119,6 +120,10 @@ export function HostStand({
 			online,
 		})
 	const wide = useMediaQuery('(min-width: 700px)')
+	// A narrow tablet (an iPad upright): the list folds into a rail, so the floor keeps its room.
+	const roomy = useMediaQuery('(min-width: 900px)')
+	const rail = wide && !roomy
+	const [railOpen, setRailOpen] = useState(false)
 	const [roomId, setRoomId] = useState<string | null>(readRoom)
 	const [view, setView] = useState<MainView>(readView)
 	/** A phone shows one pane at a time. */
@@ -136,7 +141,8 @@ export function HostStand({
 	const [changeUnsure, setChangeUnsure] = useState<{
 		id: string
 		partySize: number
-		time: string | null
+		/** The new time as minutes after the day's midnight (null: not changed). */
+		localStartMin: number | null
 		say: string
 	} | null>(null)
 	// Times for the change leave out the party's own table and covers.
@@ -193,6 +199,13 @@ export function HostStand({
 		table: DayTable
 	} | null>(null)
 	const [toast, setToast] = useState<ToastMessage | null>(null)
+	const toastRef = useRef<ToastMessage | null>(null)
+	toastRef.current = toast
+	/** Arrival toasts that came while a toast with a button was up: shown after it goes. */
+	const queued = useRef<ToastMessage[]>([])
+	const toastId = useRef(0)
+	/** What an arrival says to a screen reader at once, whatever toast is showing. */
+	const [arrivalNote, setArrivalNote] = useState('')
 	// A booking taken on the phone, a party in hand: a short idle lock waits.
 	const working =
 		bookingOpen ||
@@ -216,12 +229,33 @@ export function HostStand({
 		window.addEventListener('keydown', onKey)
 		return () => window.removeEventListener('keydown', onKey)
 	}, [placing])
-	const dismissToast = useCallback(() => setToast(null), [])
-	const say = useCallback(
-		(text: string, extra: Partial<ToastMessage> = {}) =>
-			setToast({ id: Date.now(), text, ...extra }),
+	// A toast goes; the next one waiting (an arrival) takes its place.
+	const dismissToast = useCallback(
+		() => setToast(queued.current.shift() ?? null),
 		[],
 	)
+	const say = useCallback((text: string, extra: Partial<ToastMessage> = {}) => {
+		// A newer message replaces what shows, and what waits was about older news.
+		queued.current = []
+		toastId.current += 1
+		setToast({ id: toastId.current, text, ...extra })
+	}, [])
+	/**
+	 * A party arriving elsewhere: told in a live region of its own at once, and
+	 * shown as a toast that never replaces one with a button on it (an Undo, a
+	 * Seat anyway). It waits behind that one instead.
+	 */
+	const sayArrival = useCallback((text: string) => {
+		setArrivalNote(text)
+		toastId.current += 1
+		const message: ToastMessage = {
+			id: toastId.current,
+			text,
+			silent: true,
+		}
+		if (toastRef.current?.action) queued.current.push(message)
+		else setToast(message)
+	}, [])
 	// A change that got no answer: once the day shows it, it landed. Say so and
 	// close, instead of leaving the host with a Save that has nothing to save.
 	const changedBooking = changeUnsure
@@ -233,7 +267,8 @@ export function HostStand({
 		if (!changeUnsure || !changedBooking) return
 		if (
 			changedBooking.partySize === changeUnsure.partySize &&
-			(changeUnsure.time === null || changedBooking.time === changeUnsure.time)
+			(changeUnsure.localStartMin === null ||
+				changedBooking.localStartMin === changeUnsure.localStartMin)
 		) {
 			setChangeId(null)
 			setChangeUnsure(null)
@@ -241,25 +276,72 @@ export function HostStand({
 		}
 	}, [changeUnsure, changedBooking, say])
 
+	// Opening someone else's details (or a table, or a form) sets aside a toast
+	// about a party: its Undo is for the party it was about, not for this sheet.
+	const sheetKey = [
+		partyId,
+		tableTargetId,
+		waitlistId,
+		changeId,
+		walkInOpen,
+		bookingOpen,
+		joinOpen,
+	].join('|')
+	useEffect(() => {
+		const about = toastRef.current?.subject
+		if (!about) return
+		const opened =
+			partyId !== null ||
+			tableTargetId !== null ||
+			waitlistId !== null ||
+			changeId !== null ||
+			walkInOpen ||
+			bookingOpen ||
+			joinOpen
+		if (opened && partyId !== about) dismissToast()
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- runs when a sheet opens or changes, not when the toast does
+	}, [sheetKey])
+
 	const ready = state.status === 'ready' ? state : null
 	const feed = ready?.feed ?? null
 	// What is on screen now, for a tap that acts on what the host sees (not what they picked up).
 	const readyRef = useRef(ready)
 	readyRef.current = ready
 	const timeZone = feed?.settings?.timeZone ?? undefined
-	const formatTime = useMemo(() => {
-		const format = new Intl.DateTimeFormat(i18n.locale, {
-			hour: 'numeric',
-			minute: '2-digit',
-			...(timeZone ? { timeZone } : {}),
-		})
-		return (epochMs: number) => format.format(epochMs)
+	// "7:30 PM", and "7:30" for a table or a bar with no room for the rest. A
+	// zone name the runtime does not know (the server's, not ours) must not
+	// throw while drawing: times then show in this tablet's own zone.
+	const { formatTime, formatShort } = useMemo(() => {
+		const make = (zone: string | undefined) =>
+			new Intl.DateTimeFormat(i18n.locale, {
+				hour: 'numeric',
+				minute: '2-digit',
+				...(zone ? { timeZone: zone } : {}),
+			})
+		let format: Intl.DateTimeFormat
+		try {
+			format = make(timeZone)
+		} catch {
+			format = make(undefined)
+		}
+		return {
+			formatTime: (epochMs: number) => format.format(epochMs),
+			formatShort: (epochMs: number) =>
+				format
+					.formatToParts(epochMs)
+					.filter((part) => part.type !== 'dayPeriod')
+					.map((part) => part.value)
+					.join('')
+					.trim(),
+		}
 	}, [i18n.locale, timeZone])
 	const roomList = useMemo(() => (feed ? rooms(feed) : []), [feed])
 	const room = roomList.find((r) => r.id === roomId) ?? roomList[0] ?? null
 	const isToday = date === null
 	/** Another day's feed is still on its way: what is drawn is the day before. */
 	const dayLoading = ready !== null && ready.feedDate !== date
+	/** That day's own look failed (not a waitlist that did not load): the way is to try it again. */
+	const dayFailed = dayLoading && dayFailedFor(state, date)
 	const services = useMemo(() => (feed ? liveServices(feed) : []), [feed])
 	// A service the day no longer has is "All day".
 	const activeService =
@@ -293,6 +375,7 @@ export function HostStand({
 				? new Set(
 						[
 							...list.toSeat,
+							...list.awaiting,
 							...list.seated,
 							...list.missed,
 							...list.finished,
@@ -318,14 +401,19 @@ export function HostStand({
 		const first = arrived[0]!
 		const who = shortName(first, _(msg`Guest`))
 		const count = arrived.length
-		say(
+		sayArrival(
 			count > 1
-				? _(msg`${count} parties have arrived.`)
+				? _(
+						plural(count, {
+							one: '# party has arrived.',
+							other: '# parties have arrived.',
+						}),
+					)
 				: isVip(first)
 					? _(msg`VIP guest has arrived: ${who}.`)
 					: _(msg`${who} has arrived.`),
 		)
-	}, [feed, feedDate, say, _])
+	}, [feed, feedDate, sayArrival, _])
 
 	const chooseRoom = (id: string) => {
 		setRoomId(id)
@@ -362,9 +450,12 @@ export function HostStand({
 				onUnsure?: () => void
 				/** A definite refusal: the form can be changed again. */
 				onRefused?: () => void
+				/** The booking the toast is about, so another's details set it aside. */
+				subject?: string
 			} = {},
 		) => {
-			const { undo, anyway, restore, onSuccess, onUnsure, onRefused } = options
+			const { undo, anyway, restore, onSuccess, onUnsure, onRefused, subject } =
+				options
 			setBusy(true)
 			noteWrite()
 			let finish: () => void = () => {}
@@ -387,6 +478,7 @@ export function HostStand({
 					typeof done === 'function' ? done(result) : done,
 					undo
 						? {
+								...(subject ? { subject } : {}),
 								action: {
 									label: _(msg`Undo`),
 									// A tap while the floor is still reloading waits for it, then undoes.
@@ -535,7 +627,12 @@ export function HostStand({
 						...overbook,
 					}),
 				_(msg`Seated ${who} at ${table.label}.`),
-				{ undo: () => api.undo(r.id), anyway: again, restore },
+				{
+					undo: () => api.undo(r.id),
+					anyway: again,
+					restore,
+					subject: r.id,
+				},
 			)
 		} else if (current.kind === 'waitlist') {
 			const entry = current.entry
@@ -572,17 +669,22 @@ export function HostStand({
 	const pick = (next: Placing | null) => {
 		setPlacing(next)
 		if (next && !wide) setTab('floor')
+		// The floor is where the party goes: the drawer gets out of its way.
+		if (next) setRailOpen(false)
 	}
 
 	/** A new booking, from the header or from a table and a time on the timeline. */
 	const startBooking = (table: DayTable | null, startMin?: number) => {
-		if (!feed) return
+		if (!feed || !ready) return
+		const requestedDay = date ?? ready.today
 		bookingKey.current = crypto.randomUUID()
 		setBookingLocked(false)
 		setReadBack(null)
 		setBookingPrefill({
-			date: feed.businessDate,
-			...(startMin !== undefined ? { time: clockLabel(startMin) } : {}),
+			// Never a day that has passed: a booking looks forward.
+			date: requestedDay < ready.today ? ready.today : requestedDay,
+			// Not wrapped at midnight: a stretch after it is still this business day's.
+			...(startMin !== undefined ? { startMin } : {}),
 			tableIds: table ? [table.id] : [],
 			tableLabel: table?.label ?? '',
 			maxCovers: table?.maxCovers ?? 0,
@@ -659,7 +761,7 @@ export function HostStand({
 					...(command.reason ? { reason: command.reason } : {}),
 				}),
 			done,
-			reversible ? { undo: () => api.undo(r.id) } : {},
+			reversible ? { undo: () => api.undo(r.id), subject: r.id } : {},
 		)
 		if (ok) setPartyId(null)
 	}
@@ -688,6 +790,8 @@ export function HostStand({
 		)
 	}
 
+	// The day asked for: the arrows move from it, not from the day still drawn.
+	const requestedDate = date ?? ready.today
 	const free = room ? freeTables(feed, room.id, now) : { free: 0, total: 0 }
 	const targetTable = tableTargetId
 		? (feed.tables.find((t) => t.id === tableTargetId) ?? null)
@@ -736,6 +840,15 @@ export function HostStand({
 					placing.kind === 'reservation' ? placing.reservation.id : undefined,
 			}
 		: null
+	/** A tap on the grid that started nothing: say why, so it never feels dead. */
+	const onRefused = (why: TimelineRefusal) =>
+		say(
+			why === 'past'
+				? _(msg`That time has already passed.`)
+				: why === 'closed'
+					? _(msg`The restaurant is closed this day.`)
+					: _(msg`Past days are read only.`),
+		)
 	const onTable = (table: DayTable, state: TableState) => {
 		if (busy || !isToday) return
 		if (placing) void seatAt(table, state)
@@ -760,7 +873,7 @@ export function HostStand({
 				'--bk-dir': paneOrder.indexOf(id) < paneOrder.indexOf(pane) ? -1 : 1,
 			} as React.CSSProperties,
 		}) as const
-	const panel = (single: boolean) => (
+	const panel = (single: boolean, onClose?: () => void) => (
 		<BookPanel
 			list={list}
 			query={query}
@@ -778,6 +891,20 @@ export function HostStand({
 				joinKey.current = crypto.randomUUID()
 				setJoinOpen(true)
 			}}
+			onClose={onClose}
+		/>
+	)
+	// On a phone the header already says it (beside the service).
+	const summary = !wide ? null : (
+		<StandStats
+			totals={totals}
+			filtered={activeService !== null}
+			serviceName={
+				activeService
+					? services.find((s) => s.id === activeService)?.name
+					: null
+			}
+			isToday={isToday}
 		/>
 	)
 
@@ -786,7 +913,7 @@ export function HostStand({
 			<StandHeader
 				totals={totals}
 				filtered={activeService !== null}
-				date={feed.businessDate}
+				date={requestedDate}
 				isToday={isToday}
 				today={ready.today}
 				onDate={chooseDate}
@@ -819,6 +946,10 @@ export function HostStand({
 					? _(msg`Picked up ${placingName}. Tap a table to seat them.`)
 					: ''}
 			</p>
+			{/* Arrivals at another stand: told at once, even when a toast with a button is up. */}
+			<p role="status" className="sr-only">
+				{arrivalNote}
+			</p>
 			<Reveal open={placing !== null}>
 				<div className="bg-primary text-primary-foreground flex items-center gap-3 px-4 py-2.5">
 					<p className="min-w-0 flex-1 font-semibold">
@@ -847,7 +978,47 @@ export function HostStand({
 			) : null}
 
 			<div className="bk-shell relative">
-				{wide ? panel(false) : null}
+				{wide && !rail ? panel(false) : null}
+				{rail ? (
+					<>
+						<nav className="bk-rail" aria-label={_(msg`Parties to seat`)}>
+							<button
+								type="button"
+								className="bk-rail-button"
+								aria-expanded={railOpen}
+								aria-label={_(
+									msg`Open the list, ${list.toSeat.length + list.waitlist.length} waiting`,
+								)}
+								onClick={() => setRailOpen((open) => !open)}
+							>
+								<List aria-hidden className="size-6" />
+								<span className="bk-rail-count tnum" aria-hidden>
+									{list.toSeat.length + list.waitlist.length}
+								</span>
+							</button>
+						</nav>
+						{railOpen ? (
+							<>
+								<div
+									className="bk-scrim"
+									aria-hidden
+									onClick={() => setRailOpen(false)}
+								/>
+								<div
+									className="bk-drawer"
+									tabIndex={-1}
+									// Focus moves into the drawer when it opens.
+									ref={(el) => el?.focus()}
+									onKeyDown={(event) => {
+										if (event.key === 'Escape') setRailOpen(false)
+									}}
+								>
+									{panel(false, () => setRailOpen(false))}
+								</div>
+							</>
+						) : null}
+					</>
+				) : null}
 				<div className="bk-pages">
 					{!wide ? (
 						<div className="bk-page" {...paneProps('list')}>
@@ -873,6 +1044,8 @@ export function HostStand({
 										<h2 className="text-lg font-semibold">{room.name}</h2>
 									)}
 									<FreeCount free={free.free} total={free.total} />
+									{/* The header has no room for the day's figures below a wide screen: they sit here. */}
+									<div className="ms-auto min-w-0 xl:hidden">{summary}</div>
 									<ul
 										aria-label={_(msg`Table colours`)}
 										className="text-muted-foreground ms-auto flex items-center gap-3 text-xs font-medium max-xl:hidden"
@@ -901,6 +1074,7 @@ export function HostStand({
 									now={now}
 									picking={picking}
 									formatTime={formatTime}
+									formatShort={formatShort}
 									onTable={onTable}
 								/>
 							</>
@@ -926,9 +1100,12 @@ export function HostStand({
 							picking={picking}
 							active={pane === 'timeline'}
 							formatTime={formatTime}
+							formatShort={formatShort}
+							summary={summary}
 							onBar={(r) => setPartyId(r.id)}
 							onTable={onTable}
 							onEmpty={(table, minute) => startBooking(table, minute)}
+							onRefused={onRefused}
 						/>
 					</div>
 				</div>
@@ -937,13 +1114,27 @@ export function HostStand({
 						role="status"
 						className="bg-background/70 absolute inset-0 z-20 flex items-center justify-center"
 					>
-						<p className="t-shimmer text-lg font-medium">
-							{ready.stale ? (
-								<Trans>Could not open this day. Try the arrows again.</Trans>
+						<div className="flex flex-col items-center gap-3 text-center">
+							{dayFailed ? (
+								<>
+									<p className="text-lg font-medium">
+										<Trans>Could not open this day.</Trans>
+									</p>
+									<Button
+										variant="outline"
+										size="lg"
+										onClick={() => chooseDate(date)}
+									>
+										<RefreshCw className="size-5" />
+										<Trans>Try again</Trans>
+									</Button>
+								</>
 							) : (
-								<Trans>Opening the book…</Trans>
+								<p className="t-shimmer text-lg font-medium">
+									<Trans>Opening the book…</Trans>
+								</p>
 							)}
-						</p>
+						</div>
 					</div>
 				) : null}
 			</div>
@@ -1032,7 +1223,9 @@ export function HostStand({
 								r.id,
 								{
 									...(change.partySize ? { partySize: change.partySize } : {}),
-									...(change.time ? { time: change.time } : {}),
+									...(change.time && change.localStartMin !== undefined
+										? { time: change.time, localStartMin: change.localStartMin }
+										: {}),
 								},
 								r.version,
 							),
@@ -1046,7 +1239,7 @@ export function HostStand({
 								setChangeUnsure({
 									id: r.id,
 									partySize: size,
-									time: change.time ?? null,
+									localStartMin: change.localStartMin ?? null,
 									say: done,
 								}),
 						},

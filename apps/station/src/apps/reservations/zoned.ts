@@ -25,6 +25,17 @@ function formatFor(timeZone: string) {
 	return format
 }
 
+/** A zone the runtime knows, else UTC: a bad zone name from the server must never throw while drawing. */
+export function safeZone(timeZone: string | null | undefined): string {
+	const zone = timeZone || 'UTC'
+	try {
+		formatFor(zone)
+		return zone
+	} catch {
+		return 'UTC'
+	}
+}
+
 /** The zone's wall clock at an instant. */
 function wallClock(epochMs: number, timeZone: string) {
 	const parts: Record<string, number> = {}
@@ -51,6 +62,37 @@ export function zonedDate(epochMs: number, timeZone: string): string {
 /** Minutes after local midnight in the zone at an instant. */
 export function zonedMinutes(epochMs: number, timeZone: string): number {
 	return wallClock(epochMs, timeZone).minutes
+}
+
+/** Whole days from one calendar date to another (negative when `to` is earlier). */
+export function daysBetween(from: string, to: string): number {
+	const parse = (date: string) => {
+		const [year, month, day] = date.split('-').map(Number) as [
+			number,
+			number,
+			number,
+		]
+		return Date.UTC(year, month - 1, day)
+	}
+	return Math.round((parse(to) - parse(from)) / 86_400_000)
+}
+
+/**
+ * Wall-clock minutes at an instant, counted from the local midnight that
+ * starts `businessDate`: the same scale as a booking's `localStartMin`. Past
+ * midnight it runs on (1530 is 1:30 the next morning), and it is the clock
+ * on the wall, not the minutes elapsed since midnight: on a day the clocks
+ * change, 9 PM is minute 1260 whatever the length of that day. Fractions of a
+ * minute are kept, so a "now" line moves smoothly.
+ */
+export function wallMinutesOn(
+	epochMs: number,
+	businessDate: string,
+	timeZone: string,
+): number {
+	const w = wallClock(epochMs, safeZone(timeZone))
+	const calendar = `${w.year}-${pad(w.month)}-${pad(w.day)}`
+	return w.minutes + w.seconds / 60 + 1440 * daysBetween(businessDate, calendar)
 }
 
 /** The instant a wall-clock time (minutes after midnight) happens on a date in the zone. */
@@ -92,6 +134,16 @@ export function addDays(date: string, days: number): string {
 /** `07:30` for minutes after midnight (24 hour, the server's slot format). */
 export function clockLabel(minutes: number): string {
 	const m = ((minutes % 1440) + 1440) % 1440
+	return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`
+}
+
+/**
+ * `HH:MM` for minutes after the business day's midnight, not wrapped: 25:30 is
+ * 1:30 the next morning. The server reads it that way (hours up to 29), so a
+ * booking after midnight stays on the day it was taken for.
+ */
+export function serverTime(minutes: number): string {
+	const m = Math.max(0, Math.floor(minutes))
 	return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`
 }
 

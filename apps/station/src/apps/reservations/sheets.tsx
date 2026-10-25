@@ -1,5 +1,5 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, Trans } from '@lingui/macro'
+import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	quickActionsFor,
@@ -20,8 +20,10 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { type StatusTarget } from './api.ts'
+import { partyStatus } from './book.ts'
 import {
 	OCCASION_LABEL,
+	openSlotAt,
 	shortName,
 	UNDO_WINDOW_MS,
 	type Availability,
@@ -29,6 +31,8 @@ import {
 	type DayTable,
 	type TableState,
 } from './feed.ts'
+import { statusText } from './labels.ts'
+import { serverTime } from './zoned.ts'
 import { SuccessMark } from '~/ui/motion.tsx'
 import { Badge, Button, Chip, cn, fieldClass, Modal } from '~/ui/primitives.tsx'
 
@@ -44,6 +48,13 @@ export const STATUS_LABEL: Record<string, MessageDescriptor> = {
 	no_show: msg`No-show`,
 	requested: msg`Request`,
 	pending_payment: msg`Awaiting payment`,
+}
+
+/** One equal column per button in a row of actions. */
+const EQUAL_COLUMNS: Record<number, string> = {
+	1: 'grid-cols-1',
+	2: 'grid-cols-2',
+	3: 'grid-cols-3',
 }
 
 /** What a sheet asks the host stand to do; the stand runs it and reports back. */
@@ -62,7 +73,10 @@ export type PartyCommand =
 	| { kind: 'undo' }
 	| { kind: 'place' }
 
-/** Party size as big targets: 1 to 8 one tap away, more with the stepper. */
+/**
+ * Party size as big targets: 1 to 8 one tap away, and "9+" for a larger party,
+ * which brings in a stepper. One control at a time, never chips and a stepper side by side.
+ */
 export function PartySize({
 	value,
 	onChange,
@@ -71,11 +85,12 @@ export function PartySize({
 	onChange: (size: number) => void
 }) {
 	const { _ } = useLingui()
+	const large = value > 8
 	return (
 		<div
 			role="group"
 			aria-label={_(msg`Party size`)}
-			className="flex flex-wrap gap-2"
+			className="flex flex-wrap items-center gap-2"
 		>
 			{[1, 2, 3, 4, 5, 6, 7, 8].map((size) => (
 				<Chip
@@ -84,32 +99,44 @@ export function PartySize({
 					selected={value === size}
 					aria-pressed={value === size}
 					onClick={() => onChange(size)}
-					className="tnum w-12"
+					className="tnum w-11 px-0"
 				>
 					{size}
 				</Chip>
 			))}
-			<div className="border-border bg-card flex h-12 items-center rounded-xl border">
-				<button
-					type="button"
-					aria-label={_(msg`One fewer`)}
-					onClick={() => onChange(Math.max(1, value - 1))}
-					className="hover:bg-accent h-full w-11 rounded-s-xl text-lg font-semibold"
-				>
-					−
-				</button>
-				<span className="tnum mono w-10 text-center text-lg font-semibold">
-					{value}
-				</span>
-				<button
-					type="button"
-					aria-label={_(msg`One more`)}
-					onClick={() => onChange(Math.min(99, value + 1))}
-					className="hover:bg-accent h-full w-11 rounded-e-xl text-lg font-semibold"
-				>
-					+
-				</button>
-			</div>
+			<Chip
+				size="lg"
+				selected={large}
+				aria-pressed={large}
+				onClick={() => onChange(Math.max(value, 9))}
+				className="tnum w-12 px-0"
+			>
+				{/* "9+" keeps its order right to left. */}
+				<span dir="ltr">9+</span>
+			</Chip>
+			{large ? (
+				<div className="border-border bg-card flex h-12 items-center rounded-xl border">
+					<button
+						type="button"
+						aria-label={_(msg`One fewer`)}
+						onClick={() => onChange(Math.max(1, value - 1))}
+						className="hover:bg-accent h-full w-11 rounded-s-xl text-lg font-semibold"
+					>
+						−
+					</button>
+					<span className="tnum mono w-10 text-center text-lg font-semibold">
+						{value}
+					</span>
+					<button
+						type="button"
+						aria-label={_(msg`One more`)}
+						onClick={() => onChange(Math.min(99, value + 1))}
+						className="hover:bg-accent h-full w-11 rounded-e-xl text-lg font-semibold"
+					>
+						+
+					</button>
+				</div>
+			) : null}
 		</div>
 	)
 }
@@ -217,6 +244,25 @@ export function PartySheet({
 			now - r.seatedAt > UNDO_WINDOW_MS
 		)
 	const run = (command: PartyCommand) => r && onCommand(r, command)
+	// The buttons, in three groups: the next step, changing the booking, ending it.
+	const canSeat = has('seat') || has('partially_seat')
+	const canFinish = has('finish')
+	const canArrive = has('arrive') && r?.status !== 'arrived'
+	const canConfirm = has('confirm')
+	const canChange =
+		r?.status === 'booked' ||
+		r?.status === 'confirmed' ||
+		r?.status === 'arrived'
+	const canUndo = has('undo_seat') || has('undo_finish') || has('undo_no_show')
+	const canNoShow =
+		has('no_show') && r !== null && now >= r.startAt + TILL_NO_SHOW_GRACE_MS
+	const canCancel = has('cancel')
+	const primary = [canSeat, canFinish, canArrive].filter(Boolean)
+	const secondary = [canConfirm, canChange, canUndo].filter(Boolean)
+	const destructive = [canNoShow, canCancel].filter(Boolean)
+	const actionsShown =
+		primary.length + secondary.length + destructive.length > 0
+	const standing = r ? partyStatus(r, now) : null
 	const phoneEnd = (r?.guest?.phone ?? '').replace(/\D/g, '').slice(-4)
 	const guestName =
 		r?.guest?.name?.trim() || (r ? shortName(r, _(msg`Guest`)) : '')
@@ -261,106 +307,128 @@ export function PartySheet({
 								</Button>
 							</div>
 						</div>
-					) : (
-						<div className="mb-safe flex flex-wrap gap-3">
-							{has('seat') || has('partially_seat') ? (
-								<Button
-									variant="primary"
-									size="lg"
-									className="min-w-40 flex-1"
-									disabled={busy}
-									onClick={() => run({ kind: 'place' })}
-								>
-									<Armchair className="size-5" />
-									<Trans>Choose a table</Trans>
-								</Button>
+					) : actionsShown ? (
+						<div className="mb-safe flex flex-col gap-3">
+							{/* The next step for this party. */}
+							{primary.length > 0 ? (
+								<div className="flex gap-3">
+									{canSeat ? (
+										<Button
+											variant="primary"
+											size="lg"
+											className="min-w-0 flex-1"
+											disabled={busy}
+											onClick={() => run({ kind: 'place' })}
+										>
+											<Armchair className="size-5" />
+											<Trans>Choose a table</Trans>
+										</Button>
+									) : null}
+									{canFinish ? (
+										<Button
+											variant="primary"
+											size="lg"
+											className="min-w-0 flex-1"
+											disabled={busy}
+											onClick={() => run({ kind: 'status', to: 'finished' })}
+										>
+											<CheckCheck className="size-5" />
+											<Trans>Finished, clear table</Trans>
+										</Button>
+									) : null}
+									{canArrive ? (
+										<Button
+											size="lg"
+											className="min-w-0 flex-1"
+											disabled={busy}
+											onClick={() => run({ kind: 'status', to: 'arrived' })}
+										>
+											<Trans>They’re here</Trans>
+										</Button>
+									) : null}
+								</div>
 							) : null}
-							{has('finish') ? (
-								<Button
-									variant="primary"
-									size="lg"
-									className="min-w-40 flex-1"
-									disabled={busy}
-									onClick={() => run({ kind: 'status', to: 'finished' })}
+							{/* Changing the booking: equal buttons in one row. */}
+							{secondary.length > 0 ? (
+								<div
+									className={cn('grid gap-3', EQUAL_COLUMNS[secondary.length])}
 								>
-									<CheckCheck className="size-5" />
-									<Trans>Finished, clear table</Trans>
-								</Button>
+									{canConfirm ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="h-auto min-h-14 py-2 leading-tight"
+											disabled={busy}
+											onClick={() => run({ kind: 'status', to: 'confirmed' })}
+										>
+											<Trans>Confirmed by phone</Trans>
+										</Button>
+									) : null}
+									{canChange ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="h-auto min-h-14 py-2 leading-tight"
+											disabled={busy}
+											onClick={() => run({ kind: 'change' })}
+										>
+											<Trans>Change size or time</Trans>
+										</Button>
+									) : null}
+									{canUndo ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="h-auto min-h-14 py-2 leading-tight"
+											disabled={busy}
+											onClick={() => run({ kind: 'undo' })}
+										>
+											<Undo2 className="size-5 shrink-0" />
+											{has('undo_finish') ? (
+												<Trans>Back to seated</Trans>
+											) : has('undo_no_show') ? (
+												<Trans>Not a no-show</Trans>
+											) : (
+												<Trans>Undo seating</Trans>
+											)}
+										</Button>
+									) : null}
+								</div>
 							) : null}
-							{has('arrive') && r.status !== 'arrived' ? (
-								<Button
-									size="lg"
-									className="flex-1"
-									disabled={busy}
-									onClick={() => run({ kind: 'status', to: 'arrived' })}
-								>
-									<Trans>They’re here</Trans>
-								</Button>
-							) : null}
-							{has('confirm') ? (
-								<Button
-									size="lg"
-									className="flex-1"
-									disabled={busy}
-									onClick={() => run({ kind: 'status', to: 'confirmed' })}
-								>
-									<Trans>Confirmed by phone</Trans>
-								</Button>
-							) : null}
-							{r.status === 'booked' ||
-							r.status === 'confirmed' ||
-							r.status === 'arrived' ? (
-								<Button
-									variant="outline"
-									size="lg"
-									className="flex-1"
-									disabled={busy}
-									onClick={() => run({ kind: 'change' })}
-								>
-									<Trans>Change size or time</Trans>
-								</Button>
-							) : null}
-							{has('undo_seat') || has('undo_finish') || has('undo_no_show') ? (
-								<Button
-									variant="outline"
-									size="lg"
-									className="flex-1"
-									disabled={busy}
-									onClick={() => run({ kind: 'undo' })}
-								>
-									<Undo2 className="size-5" />
-									{has('undo_finish') ? (
-										<Trans>Back to seated</Trans>
-									) : has('undo_no_show') ? (
-										<Trans>Not a no-show</Trans>
-									) : (
-										<Trans>Undo seating</Trans>
+							{/* Ending the booking: apart, so it is never tapped by mistake. */}
+							{destructive.length > 0 ? (
+								<div
+									className={cn(
+										'border-border grid gap-3 border-t pt-3',
+										EQUAL_COLUMNS[destructive.length],
 									)}
-								</Button>
-							) : null}
-							{has('no_show') && now >= r.startAt + TILL_NO_SHOW_GRACE_MS ? (
-								<Button
-									variant="ghost"
-									size="lg"
-									disabled={busy}
-									onClick={() => arm('no_show')}
 								>
-									<Trans>No-show</Trans>
-								</Button>
-							) : null}
-							{has('cancel') ? (
-								<Button
-									variant="ghost"
-									size="lg"
-									className="text-destructive"
-									disabled={busy}
-									onClick={() => arm('cancelled')}
-								>
-									<Trans>Cancel</Trans>
-								</Button>
+									{canNoShow ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="border-destructive/40 text-destructive hover:bg-destructive/10"
+											disabled={busy}
+											onClick={() => arm('no_show')}
+										>
+											<Trans>No-show</Trans>
+										</Button>
+									) : null}
+									{canCancel ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="border-destructive/40 text-destructive hover:bg-destructive/10"
+											disabled={busy}
+											onClick={() => arm('cancelled')}
+										>
+											<Trans>Cancel booking</Trans>
+										</Button>
+									) : null}
+								</div>
 							) : null}
 						</div>
-					)
+					) : null
 				) : null
 			}
 		>
@@ -377,6 +445,11 @@ export function PartySheet({
 						<Badge tone={r.status === 'arrived' ? 'success' : 'muted'}>
 							{_(STATUS_LABEL[r.status] ?? msg`Booked`)}
 						</Badge>
+						{standing &&
+						!viewOnly &&
+						(standing.kind === 'late' || standing.kind === 'running') ? (
+							<Badge tone="warning">{statusText(_, standing)}</Badge>
+						) : null}
 						{r.tableLabels.length ? (
 							<Badge tone="primary">
 								<Trans>Table {r.tableLabels.join(' + ')}</Trans>
@@ -470,14 +543,24 @@ export function PartySheet({
 						{r.guest ? (
 							<p className="text-muted-foreground text-sm">
 								{r.guest.visits > 0 ? (
-									<Trans>{r.guest.visits} visits before</Trans>
+									_(
+										plural(r.guest.visits, {
+											one: '# visit before',
+											other: '# visits before',
+										}),
+									)
 								) : (
 									<Trans>First visit</Trans>
 								)}
 								{r.guest.noShows > 0 ? (
 									<>
 										{' · '}
-										<Trans>{r.guest.noShows} no-shows</Trans>
+										{_(
+											plural(r.guest.noShows, {
+												one: '# no-show',
+												other: '# no-shows',
+											}),
+										)}
 									</>
 								) : null}
 							</p>
@@ -670,16 +753,58 @@ export function TableSheet({
 	const state = target?.state
 	const next =
 		state && state.kind !== 'seated' ? state.next : (state?.next ?? null)
+	const free = state ? state.kind === 'open' || state.kind === 'soon' : false
+	// How long the table stays free: until its next booking (any time today), if there is one.
+	const until = state && free && next ? next.startAt : null
+	const nextWho = next ? shortName(next, _(msg`Guest`)) : ''
+	const nextSize = next?.partySize ?? 0
+	const untilText = until !== null ? formatTime(until) : ''
 	return (
 		<Modal
 			open={target !== null}
 			onClose={onClose}
 			title={target ? _(msg`Table ${target.table.label}`) : ''}
+			// The walk-in's button (or the clear-table one) sits in the footer, so a
+			// toast rising over the sheet never covers it.
+			footer={
+				target && state ? (
+					state.kind === 'seated' ? (
+						<div className="mb-safe flex gap-3">
+							<Button
+								variant="primary"
+								size="lg"
+								className="min-w-0 flex-1"
+								disabled={busy}
+								onClick={() => onFinish(state.party)}
+							>
+								<CheckCheck className="size-5" />
+								<Trans>Finished, clear table</Trans>
+							</Button>
+							<Button size="lg" onClick={() => onDetails(state.party)}>
+								<Trans>Details</Trans>
+							</Button>
+						</div>
+					) : state.kind !== 'blocked' ? (
+						<div className="mb-safe">
+							<Button
+								variant="primary"
+								size="lg"
+								className="w-full"
+								disabled={busy}
+								onClick={() => onWalkIn(target.table, size)}
+							>
+								<Armchair className="size-5" />
+								<Trans>Seat {size} now</Trans>
+							</Button>
+						</div>
+					) : undefined
+				) : undefined
+			}
 		>
 			{target && state ? (
 				<div className="flex flex-col gap-5 p-4 sm:p-5">
 					{state.kind === 'seated' ? (
-						<div className="border-border flex flex-col gap-3 rounded-2xl border p-4">
+						<div className="border-border flex flex-col gap-1 rounded-2xl border p-4">
 							<p className="text-lg font-semibold">
 								{shortName(state.party, _(msg`Guest`))}
 							</p>
@@ -697,21 +822,6 @@ export function TableSheet({
 									<Trans>Party of {state.party.partySize}</Trans>
 								)}
 							</p>
-							<div className="flex flex-wrap gap-3">
-								<Button
-									variant="primary"
-									size="lg"
-									className="flex-1"
-									disabled={busy}
-									onClick={() => onFinish(state.party)}
-								>
-									<CheckCheck className="size-5" />
-									<Trans>Finished, clear table</Trans>
-								</Button>
-								<Button size="lg" onClick={() => onDetails(state.party)}>
-									<Trans>Details</Trans>
-								</Button>
-							</div>
 						</div>
 					) : null}
 					{state.kind === 'blocked' ? (
@@ -744,7 +854,37 @@ export function TableSheet({
 							</button>
 						)
 					})}
-					{next ? (
+					{free && next && until !== null ? (
+						// What the table is good for: free until its next booking, and who that is.
+						<button
+							type="button"
+							onClick={() => onDetails(next)}
+							className="border-border hover:bg-accent flex items-center justify-between gap-3 rounded-2xl border p-4 text-start transition-colors"
+						>
+							<span className="min-w-0">
+								<span className="block text-lg font-semibold">
+									{until > now ? (
+										<Trans>Free until {untilText}</Trans>
+									) : (
+										<Trans>Booked {untilText}</Trans>
+									)}
+								</span>
+								<span className="text-muted-foreground block">
+									<Trans>
+										Then <bdi>{nextWho}</bdi> ({nextSize})
+									</Trans>
+								</span>
+							</span>
+							<span className="text-muted-foreground shrink-0 text-sm font-semibold">
+								<Trans>Details</Trans>
+							</span>
+						</button>
+					) : free ? (
+						<p className="text-success text-lg font-semibold">
+							<Trans>Free for the rest of the day</Trans>
+						</p>
+					) : null}
+					{!free && next ? (
 						<button
 							type="button"
 							onClick={() => onDetails(next)}
@@ -755,7 +895,7 @@ export function TableSheet({
 									<Trans>Next booking</Trans>
 								</span>
 								<span className="font-semibold">
-									{shortName(next, _(msg`Guest`))} · {next.partySize}
+									{nextWho} · {nextSize}
 								</span>
 							</span>
 							<span className="mono text-xl font-semibold">
@@ -774,15 +914,6 @@ export function TableSheet({
 									<Trans>This table seats {target.table.maxCovers}.</Trans>
 								</p>
 							) : null}
-							<Button
-								variant="primary"
-								size="lg"
-								disabled={busy}
-								onClick={() => onWalkIn(target.table, size)}
-							>
-								<Armchair className="size-5" />
-								<Trans>Seat {size} now</Trans>
-							</Button>
 						</div>
 					) : null}
 				</div>
@@ -814,6 +945,8 @@ export function ChangePartySheet({
 	onSave: (change: {
 		partySize?: number
 		time?: string
+		/** The new time as minutes after the day's midnight (past 1440 after midnight). */
+		localStartMin?: number
 		/** The new time as the stand shows it, for the toast. */
 		timeLabel?: string
 	}) => void
@@ -822,9 +955,7 @@ export function ChangePartySheet({
 	const { _, i18n } = useLingui()
 	const r = reservation
 	const [size, setSize] = useState(r?.partySize ?? 2)
-	const [time, setTime] = useState<{ value: string; label: string } | null>(
-		null,
-	)
+	const [time, setTime] = useState<{ min: number; label: string } | null>(null)
 	const [slots, setSlots] = useState<Availability['slots'] | null>(null)
 	const id = r?.id ?? null
 	useEffect(() => {
@@ -856,8 +987,9 @@ export function ChangePartySheet({
 	}, [i18n.locale])
 	const current = r ? formatTime(r.startAt) : ''
 	const changed = r !== null && (size !== r.partySize || time !== null)
+	// Slots are told apart by their minute, not their clock string: that wraps at midnight.
 	const open_ = (slots ?? []).filter(
-		(slot) => slot.available && slot.time !== r?.time,
+		(slot) => slot.available && slot.localStartMin !== r?.localStartMin,
 	)
 	return (
 		<Modal
@@ -876,7 +1008,13 @@ export function ChangePartySheet({
 							onClick={() =>
 								onSave({
 									...(size !== r.partySize ? { partySize: size } : {}),
-									...(time ? { time: time.value, timeLabel: time.label } : {}),
+									...(time
+										? {
+												time: serverTime(time.min),
+												localStartMin: time.min,
+												timeLabel: time.label,
+											}
+										: {}),
 								})
 							}
 						>
@@ -919,11 +1057,11 @@ export function ChangePartySheet({
 								open_.map((slot) => (
 									<Chip
 										key={slot.localStartMin}
-										selected={time?.value === slot.time}
-										aria-pressed={time?.value === slot.time}
+										selected={time?.min === slot.localStartMin}
+										aria-pressed={time?.min === slot.localStartMin}
 										onClick={() =>
 											setTime({
-												value: slot.time,
+												min: slot.localStartMin,
 												label: slotLabel(slot.localStartMin),
 											})
 										}
@@ -1025,8 +1163,11 @@ export type BookingReadBackInfo = {
 /** A booking started from a table and a time (an empty stretch of the timeline). */
 export type BookingPrefill = {
 	date: string
-	/** `HH:MM`, as the server names a slot. */
-	time?: string
+	/**
+	 * The time as minutes after the business day's midnight, not wrapped: a
+	 * stretch after midnight is 1440 and more, and is still this day's.
+	 */
+	startMin?: number
 	tableIds: string[]
 	tableLabel: string
 	/** The table's seats: a bigger party books without the table. */
@@ -1057,7 +1198,10 @@ export function BookingSheet({
 	loadSlots: (date: string, partySize: number) => Promise<Availability>
 	onBook: (input: {
 		date: string
+		/** `HH:MM` for the server; after midnight the hour runs on (`25:30`). */
 		time: string
+		/** The same time as minutes after the day's midnight. */
+		localStartMin: number
 		/** The time as the stand shows it ("7:30 PM"). */
 		timeLabel: string
 		partySize: number
@@ -1084,8 +1228,11 @@ export function BookingSheet({
 	const [size, setSize] = useState(2)
 	const [slots, setSlots] = useState<Availability['slots'] | null>(null)
 	const [slotsError, setSlotsError] = useState(false)
-	const [time, setTime] = useState<string | null>(null)
+	/** The chosen slot, as minutes after the day's midnight (what tells slots apart). */
+	const [time, setTime] = useState<number | null>(null)
 	const [timeLabel, setTimeLabel] = useState('')
+	/** The time the booking was started at has no room: said, so a blank choice is not a mystery. */
+	const [wantedGone, setWantedGone] = useState<string | null>(null)
 	const [first, setFirst] = useState('')
 	const [last, setLast] = useState('')
 	const [phone, setPhone] = useState('')
@@ -1093,13 +1240,13 @@ export function BookingSheet({
 	/** The table the booking was started from, until the host lets it go. */
 	const [tableIds, setTableIds] = useState<string[]>([])
 	/** The time the booking was started at, picked again whenever the times reload. */
-	const wantTime = useRef<string | null>(null)
+	const wantTime = useRef<number | null>(null)
 	useEffect(() => {
 		if (!open) return
 		setDate(prefill?.date ?? today)
 		setSize(2)
 		setTime(null)
-		wantTime.current = prefill?.time ?? null
+		wantTime.current = prefill?.startMin ?? null
 		setTableIds(prefill?.tableIds ?? [])
 		setFirst('')
 		setLast('')
@@ -1112,20 +1259,19 @@ export function BookingSheet({
 		setSlots(null)
 		setSlotsError(false)
 		setTime(null)
+		setWantedGone(null)
 		loadSlots(date, size).then(
 			(result) => {
 				if (!live) return
 				const list = result.closed ? [] : result.slots
 				setSlots(list)
-				const wanted = wantTime.current
-					? list.find(
-							(slot) => slot.available && slot.time === wantTime.current,
-						)
-					: undefined
+				const wantedMin = wantTime.current
+				// Matched by minute: the slot's clock string wraps at midnight, its minute does not.
+				const wanted = openSlotAt(list, wantedMin)
 				if (wanted) {
-					setTime(wanted.time)
+					setTime(wanted.localStartMin)
 					setTimeLabel(slotLabel(wanted.localStartMin))
-				}
+				} else if (wantedMin !== null) setWantedGone(slotLabel(wantedMin))
 			},
 			() => live && setSlotsError(true),
 		)
@@ -1176,10 +1322,11 @@ export function BookingSheet({
 							className="w-full"
 							disabled={!ready || busy}
 							onClick={() =>
-								time &&
+								time !== null &&
 								onBook({
 									date,
-									time,
+									time: serverTime(time),
+									localStartMin: time,
 									timeLabel,
 									partySize: size,
 									firstName: first,
@@ -1190,7 +1337,7 @@ export function BookingSheet({
 								})
 							}
 						>
-							{time ? (
+							{time !== null ? (
 								<Trans>
 									Book {size} at {timeLabel}
 								</Trans>
@@ -1264,9 +1411,20 @@ export function BookingSheet({
 								</p>
 							) : (
 								<div className="flex flex-col gap-3">
+									{wantedGone ? (
+										<p
+											className="text-warning text-sm font-medium"
+											role="status"
+										>
+											<Trans>
+												{wantedGone} is not open for {size}. Choose another
+												time.
+											</Trans>
+										</p>
+									) : null}
 									{groups.map((group) => (
 										<div
-											key={group.part}
+											key={`${group.part}-${group.slots[0]?.localStartMin}`}
 											role="group"
 											aria-label={_(PART_OF_DAY[group.part])}
 											className="flex flex-col gap-1.5"
@@ -1278,11 +1436,12 @@ export function BookingSheet({
 												{group.slots.map((slot) => (
 													<Chip
 														key={slot.localStartMin}
-														selected={time === slot.time}
-														aria-pressed={time === slot.time}
+														selected={time === slot.localStartMin}
+														aria-pressed={time === slot.localStartMin}
 														onClick={() => {
 															wantTime.current = null
-															setTime(slot.time)
+															setWantedGone(null)
+															setTime(slot.localStartMin)
 															setTimeLabel(slotLabel(slot.localStartMin))
 														}}
 														className="tnum min-w-20"
@@ -1417,20 +1576,26 @@ function BookingReadBack({
 	)
 }
 
-type PartOfDay = 'morning' | 'afternoon' | 'evening'
+type PartOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
 
 const PART_OF_DAY: Record<PartOfDay, MessageDescriptor> = {
 	morning: msg`Morning`,
 	afternoon: msg`Afternoon`,
 	evening: msg`Evening`,
+	night: msg`After midnight`,
 }
 
 /** Slots in the order of the day, under morning, afternoon and evening. */
-function groupSlots<T extends { localStartMin: number }>(slots: T[]) {
-	const part = (minutes: number): PartOfDay => {
-		const m = minutes % 1440
-		return m < 12 * 60 ? 'morning' : m < 17 * 60 ? 'afternoon' : 'evening'
-	}
+export function groupSlots<T extends { localStartMin: number }>(slots: T[]) {
+	// Past 1440 it is still this business day, but after midnight on the wall.
+	const part = (minutes: number): PartOfDay =>
+		minutes >= 1440
+			? 'night'
+			: minutes < 12 * 60
+				? 'morning'
+				: minutes < 17 * 60
+					? 'afternoon'
+					: 'evening'
 	const groups: Array<{ part: PartOfDay; slots: T[] }> = []
 	for (const slot of slots) {
 		const p = part(slot.localStartMin)

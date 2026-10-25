@@ -17,7 +17,7 @@
 	}
 	.bk-panel {
 		display: flex;
-		width: clamp(18rem, 30vw, 24rem);
+		width: clamp(16rem, 26vw, 24rem);
 		flex-shrink: 0;
 		flex-direction: column;
 		min-height: 0;
@@ -122,6 +122,7 @@
 		padding-inline: 0.75rem;
 		font-size: 0.875rem;
 		font-weight: 600;
+		white-space: nowrap;
 		color: var(--pos-muted-foreground);
 		transition: color var(--duration-quick) var(--ease-smooth-out);
 	}
@@ -134,6 +135,12 @@
 	}
 
 	/* ── Header ────────────────────────────────────────────────────────── */
+	/*
+	 * One row from iPad landscape up: the day and service on the left, the view
+	 * switch and the three actions on the right (the day's figures join them in
+	 * the corner on a wide screen, and sit in the pane's toolbar below that).
+	 * Narrower, it wraps; a phone lays it out as two short rows.
+	 */
 	.bk-header {
 		display: flex;
 		flex-shrink: 0;
@@ -145,10 +152,88 @@
 		background: var(--card);
 		padding: 0.625rem 1rem;
 	}
+	.bk-stats-xl {
+		display: none;
+		min-width: 0;
+	}
+	.bk-datebar {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+	}
+	.bk-services {
+		min-width: 0;
+		max-width: 100%;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	.bk-services::-webkit-scrollbar {
+		display: none;
+	}
+	.bk-actions {
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin-inline-start: auto;
+	}
+	/* Below iPad landscape the actions are icons; their names stay for a screen reader. */
+	@media (max-width: 1023px) {
+		.bk-action-label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+		.bk-actions > button {
+			width: 2.75rem;
+			padding-inline: 0;
+		}
+	}
+	@media (min-width: 1024px) {
+		.bk-header {
+			flex-wrap: nowrap;
+		}
+	}
+	@media (min-width: 1280px) {
+		.bk-stats-xl {
+			display: block;
+		}
+	}
+	/* A phone: the date and actions on one row, the figures and service on the next. */
+	.bk-header[data-wide='false'] {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas: 'date actions' 'stats services';
+		align-items: center;
+		padding: 0.5rem 0.75rem;
+		row-gap: 0.375rem;
+	}
+	.bk-header[data-wide='false'] .bk-datebar {
+		grid-area: date;
+		min-width: 0;
+	}
+	.bk-header[data-wide='false'] .bk-actions {
+		grid-area: actions;
+		gap: 0.375rem;
+	}
+	.bk-header[data-wide='false'] .bk-stats-phone {
+		grid-area: stats;
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.bk-header[data-wide='false'] .bk-services {
+		grid-area: services;
+		width: 8.5rem;
+	}
 	.bk-date {
 		position: relative;
 		display: inline-flex;
-		min-width: 8.5rem;
+		min-width: 7.5rem;
 		min-height: 2.75rem;
 		align-items: center;
 		justify-content: center;
@@ -177,10 +262,15 @@
 		outline-offset: 2px;
 	}
 
-	/* A phone: a tighter header, and a grid with a narrower table column. */
+	/* A phone: the date label gives way to the arrows, and the grid has a narrower table column. */
 	@media (max-width: 699px) {
-		.bk-header {
-			padding: 0.5rem 0.75rem;
+		.bk-date {
+			min-width: 0;
+			flex: 1;
+			padding-inline: 0.5rem;
+		}
+		.bk-datebar {
+			width: 100%;
 		}
 		.tl {
 			--tl-label: 4.5rem;
@@ -295,6 +385,21 @@
 	.bk-row[data-tone='no_show'] {
 		--stripe: var(--border);
 	}
+	.bk-row[data-tone='awaiting'] {
+		--stripe: color-mix(in oklab, var(--warning) 60%, transparent);
+	}
+	/* A booking held for its deposit: tagged, and never a "Seat" button. */
+	.bk-pay-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		border-radius: var(--radius-md);
+		border: 1px dashed var(--warning);
+		padding: 0.25rem 0.5rem;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--warning);
+	}
 	.bk-row-info {
 		display: flex;
 		width: 2.75rem;
@@ -346,6 +451,91 @@
 		color: var(--primary-foreground);
 	}
 
+	/* ── A narrow tablet: the list is a rail with a count, and opens as a drawer ── */
+	.bk-rail {
+		display: flex;
+		width: 4rem;
+		flex-shrink: 0;
+		flex-direction: column;
+		align-items: center;
+		padding-block: 0.75rem;
+		border-inline-end: 1px solid var(--border);
+		background: var(--card);
+	}
+	.bk-rail-button {
+		position: relative;
+		display: inline-flex;
+		width: 3rem;
+		height: 3rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-xl);
+		border: 1px solid var(--border);
+		background: var(--card);
+		transition: background-color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-rail-button:hover,
+	.bk-rail-button[aria-expanded='true'] {
+		background: var(--accent);
+	}
+	.bk-rail-count {
+		position: absolute;
+		top: -0.375rem;
+		inset-inline-end: -0.375rem;
+		display: flex;
+		min-width: 1.375rem;
+		height: 1.375rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		background: var(--primary);
+		padding-inline: 0.3125rem;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		color: var(--primary-foreground);
+	}
+	.bk-scrim {
+		position: absolute;
+		inset: 0;
+		z-index: 29;
+		background: color-mix(in oklab, var(--foreground) 28%, transparent);
+		animation: bk-fade var(--duration-fast) var(--ease-smooth-out) both;
+	}
+	.bk-drawer {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 0;
+		z-index: 30;
+		display: flex;
+		width: min(22rem, 92%);
+		box-shadow: var(--elev-2);
+		animation: bk-drawer-in var(--duration-fast) var(--ease-smooth-out) both;
+	}
+	.bk-drawer .bk-panel {
+		width: 100%;
+		border-inline-end: 0;
+	}
+	@keyframes bk-fade {
+		from {
+			opacity: 0;
+		}
+	}
+	@keyframes bk-drawer-in {
+		from {
+			opacity: 0;
+			transform: translateX(-1rem);
+		}
+	}
+	[dir='rtl'] .bk-drawer {
+		animation-name: bk-drawer-in-rtl;
+	}
+	@keyframes bk-drawer-in-rtl {
+		from {
+			opacity: 0;
+			transform: translateX(1rem);
+		}
+	}
+
 	/* ── Timeline ──────────────────────────────────────────────────────── */
 	.tl {
 		--tl-slot: 3rem;
@@ -360,6 +550,7 @@
 		background: var(--card);
 	}
 	.tl-scroll {
+		--tl-scroll: 0px;
 		position: relative;
 		min-height: 0;
 		flex: 1;
@@ -535,6 +726,10 @@
 		width: calc(var(--tl-slot) * var(--span) / 15 - 2px);
 		height: calc(var(--tl-row) - 0.25rem);
 		display: block;
+		--shift: max(
+			0px,
+			calc(var(--tl-scroll) - var(--tl-slot) * var(--from) / 15)
+		);
 		border-radius: var(--radius-md);
 		border: 1px solid var(--bar-edge, var(--border));
 		border-inline-start-width: 4px;
@@ -550,19 +745,18 @@
 	}
 	/*
 	 * The words stay in sight: a bar that starts before the left edge of the
-	 * grid keeps its name beside the table column (sticky), and the party size
-	 * waits at the bar's far end.
+	 * grid pushes its words in by the part that is scrolled away (--shift, from
+	 * the grid's scroll position), so the name starts at the table column and
+	 * is cut at the bar's far end, never at its start.
 	 */
 	.tl-bar-in {
-		position: sticky;
-		inset-inline-start: var(--tl-label);
 		display: flex;
-		width: max-content;
-		max-width: calc(100% - 0.5rem);
+		width: 100%;
 		height: 100%;
 		align-items: center;
 		gap: 0.375rem;
-		padding-inline: 0.5rem;
+		overflow: hidden;
+		padding-inline: calc(0.5rem + var(--shift, 0px)) 0.5rem;
 	}
 	.tl-bar-size {
 		display: inline-flex;
@@ -657,7 +851,7 @@
 		bottom: 0;
 		z-index: 6;
 		display: flex;
-		height: 3.25rem;
+		height: 2.5rem;
 		border-top: 1px solid var(--border);
 		background: var(--card);
 	}
@@ -670,11 +864,17 @@
 		flex-shrink: 0;
 		flex-direction: column;
 		justify-content: center;
-		padding-inline: 0.75rem;
+		overflow: hidden;
+		padding-inline: 0.5rem 0.25rem;
 		font-size: 0.75rem;
-		line-height: 1.25;
+		line-height: 1.2;
+		white-space: nowrap;
 		border-inline-end: 1px solid var(--border);
 		background: var(--card);
+	}
+	.tl-foot-label > * {
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.tl-cells {
 		position: relative;
@@ -687,28 +887,55 @@
 		display: flex;
 		width: calc(var(--tl-slot) * var(--span) / 15);
 		flex-shrink: 0;
-		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		overflow: hidden;
 		font-family: var(--pos-mono-font);
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
 		line-height: 1.2;
 		border-inline-start: 1px solid
-			color-mix(in oklab, var(--border) 60%, transparent);
+			color-mix(in oklab, var(--border) 45%, transparent);
+	}
+	/* The hour lines of the grid above continue down through the totals. */
+	.tl-cell[data-hour='true'] {
+		border-inline-start-color: var(--border);
+	}
+	.tl-cell-text {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 1px;
+	}
+	.tl-cell-n {
+		font-weight: 600;
+	}
+	.tl-cell-cap {
+		font-size: 0.75rem;
+		color: var(--pos-muted-foreground);
 	}
 	.tl-cell[data-zero='true'] {
 		color: color-mix(in oklab, var(--pos-muted-foreground) 55%, transparent);
 	}
-	.tl-cell-cap {
-		color: var(--pos-muted-foreground);
+	/* Filling up: amber from four fifths, red when the slot is full. */
+	.tl-cell[data-level='high'] {
+		background: color-mix(in oklab, var(--warning) 20%, transparent);
+	}
+	.tl-cell[data-level='full'] {
+		background: color-mix(in oklab, var(--destructive) 20%, transparent);
+		color: var(--destructive);
+	}
+	.tl-cell[data-level='full'] .tl-cell-cap {
+		color: inherit;
+	}
+	/* The slot we are in now. */
+	.tl-cell[data-now='true'] .tl-cell-n {
+		font-weight: 800;
 	}
 	/* How full the slot is: a thin bar along the cell's floor, drawn with transform only. */
 	.tl-cell-fill {
 		position: absolute;
 		inset-inline: 0;
 		bottom: 0;
-		height: 0.25rem;
+		height: 0.1875rem;
 		background: var(--primary);
 		opacity: 0.55;
 		transform-origin: left;
@@ -718,27 +945,197 @@
 	[dir='rtl'] .tl-cell-fill {
 		transform-origin: right;
 	}
-	.tl-cell[data-full='true'] .tl-cell-fill {
+	.tl-cell[data-level='high'] .tl-cell-fill {
 		background: var(--warning);
 		opacity: 0.9;
 	}
+	.tl-cell[data-level='full'] .tl-cell-fill {
+		background: var(--destructive);
+		opacity: 0.9;
+	}
+	/* The current hour is the bold one in the header. */
+	.tl-hour {
+		color: var(--pos-muted-foreground);
+	}
+	.tl-hour[data-now='true'] {
+		font-weight: 800;
+		color: var(--foreground);
+	}
 
-	/* ── Floor: more on each table ─────────────────────────────────────── */
-	/* Names sit under the tables: a bottom row's never makes the plan scroll down. */
-	.floor .floor-frame {
-		overflow-y: hidden;
+	/* ── Timeline: toolbar, bars, keyboard ────────────────────────────── */
+	.bk-toolbar {
+		display: flex;
+		flex-shrink: 0;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--card);
+		padding: 0.5rem 0.75rem;
+	}
+	.bk-toolbar-stats {
+		min-width: 0;
+	}
+	/* A bar with little of it in view gives up the time first, then the icon, never the name. */
+	.tl-bar-in > svg {
+		flex-shrink: 1;
+		min-width: 0;
+	}
+	.tl-bar-time {
+		flex-shrink: 10;
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		color: var(--pos-muted-foreground);
+	}
+	.tl-bar-time::after {
+		content: ' ·';
+	}
+	.tl-bar-note {
+		flex-shrink: 0;
+		border-radius: var(--radius-sm);
+		background: color-mix(in oklab, var(--warning) 16%, transparent);
+		padding-inline: 0.25rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--warning);
+		white-space: nowrap;
+	}
+	.tl-bar[data-tone='awaiting'] {
+		--bar-edge: var(--warning);
+		--bar-bg: color-mix(in oklab, var(--warning) 8%, var(--card));
+		border-style: dashed;
+	}
+	/* "Book this table": the keyboard's way to a stretch the pointer taps. Out of sight until it has focus. */
+	.tl-book-key:not(:focus-visible) {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.tl-book-key:focus-visible {
+		position: absolute;
+		z-index: 5;
+		top: 50%;
+		inset-inline-start: 0.5rem;
+		transform: translateY(-50%);
+		display: inline-flex;
+		min-height: 2.75rem;
+		align-items: center;
+		gap: 0.375rem;
+		border-radius: var(--radius-xl);
+		background: var(--primary);
+		padding-inline: 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--primary-foreground);
+		box-shadow: var(--elev-2);
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+
+	/* ── Floor: fitted to the pane, more on each table ──────────────────── */
+	/*
+	 * The plan is sized in script to fill the pane (floorfit.ts); here it only
+	 * sits in the middle of the frame. Names hang under the tables, so the plan
+	 * keeps a strip of room below its last row.
+	 */
+	.floor .bk-floor-frame {
+		display: flex;
+		overflow: hidden;
+	}
+	.floor .bk-floor-frame[data-scroll='true'] {
+		overflow: auto;
+	}
+	.bk-plan {
+		flex-shrink: 0;
+		margin: auto;
+	}
+	.bk-plan[style*='--plan-w'] {
+		width: var(--plan-w);
+		height: var(--plan-h);
+	}
+	/* A table or fixture on the plan: where the fit (or the grid) put it. */
+	.bk-box {
+		position: absolute;
+		left: var(--l);
+		top: var(--t);
+		width: var(--w);
+		height: var(--h);
+	}
+	.bk-floor-hint {
+		position: absolute;
+		inset-inline: 0;
+		top: 0.375rem;
+		z-index: 2;
+		text-align: center;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--muted-foreground);
+		pointer-events: none;
+	}
+	.floor .bk-floor-frame[data-scroll='true'] {
+		padding-block-start: 1.25rem;
 	}
 	.bk-table {
 		position: absolute;
+	}
+	/* A room nobody has drawn is a grid of fractions: a table never shrinks below a fingertip there. */
+	.bk-plan[data-grid='true'] .bk-table {
+		min-width: 4.5rem;
+		min-height: 4.5rem;
 	}
 	.bk-table .floor-table {
 		position: absolute;
 		inset: 0;
 	}
+	/* A table's words: the number, then what it holds, never under 13px. */
+	.bk-t-num {
+		font-size: 1.125rem;
+		font-weight: 700;
+		line-height: 1;
+	}
+	@media (min-width: 640px) {
+		.bk-t-num {
+			font-size: 1.25rem;
+		}
+	}
+	.bk-t-sub {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		line-height: 1.1;
+	}
 	/* A free table reads as open: a faint green edge on the card. */
 	.floor-table[data-state='open'] {
 		border-color: color-mix(in oklab, var(--success) 38%, var(--border));
 		background: color-mix(in oklab, var(--success) 5%, var(--card));
+	}
+	/* The one table to suggest for the party in hand. */
+	.floor-table[data-best='true'] {
+		border-color: var(--success);
+	}
+	.bk-bestfit {
+		position: absolute;
+		z-index: 3;
+		top: -0.625rem;
+		inset-inline-start: 50%;
+		translate: -50% 0;
+		border-radius: 999px;
+		background: var(--success);
+		padding: 0.0625rem 0.5rem;
+		font-size: 0.75rem;
+		font-weight: 700;
+		line-height: 1.25rem;
+		white-space: nowrap;
+		color: var(--background);
+		pointer-events: none;
+	}
+	[dir='rtl'] .bk-bestfit {
+		translate: 50% 0;
 	}
 	/* What sits under a table: how far through the stay they are, and who. */
 	.bk-under {
@@ -779,16 +1176,22 @@
 	}
 	/* The guest's name, under the table, where a small table has no room for it. */
 	.bk-caption {
-		max-width: 8rem;
+		max-width: 9rem;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		border-radius: var(--radius-sm);
 		background: color-mix(in oklab, var(--background) 82%, transparent);
 		padding: 0 0.25rem;
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
 		font-weight: 600;
 		line-height: 1.25rem;
+	}
+	/* Why a table does not take the party in hand: legible over the dimmed room. */
+	.bk-caption[data-reason='true'] {
+		background: var(--card);
+		border: 1px solid var(--border);
+		color: var(--foreground);
 	}
 	.bk-dot {
 		display: inline-block;
@@ -830,6 +1233,8 @@
 	.tl-bar,
 	.tl-label,
 	.tl-cell-fill,
+	.bk-scrim,
+	.bk-drawer,
 	.bk-elapsed::after {
 		transition: none !important;
 		animation: none !important;

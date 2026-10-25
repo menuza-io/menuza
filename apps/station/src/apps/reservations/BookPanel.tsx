@@ -1,4 +1,4 @@
-import { msg, Trans } from '@lingui/macro'
+import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type WaitlistEntry } from '@repo/reservations'
 import {
@@ -6,6 +6,7 @@ import {
 	Cake,
 	ChevronDown,
 	Clock3,
+	CreditCard,
 	Crown,
 	Info,
 	Search,
@@ -28,7 +29,8 @@ import { placingKey, type Placing } from './placing.ts'
 import { SoftText } from '~/ui/motion.tsx'
 import { cn, fieldClass, IconButton, Reveal } from '~/ui/primitives.tsx'
 
-type SectionId = 'waitlist' | 'toSeat' | 'seated' | 'missed' | 'finished'
+type SectionId =
+	'waitlist' | 'toSeat' | 'awaiting' | 'seated' | 'missed' | 'finished'
 
 /**
  * The left of the host stand: a search over everything, then the day in
@@ -51,6 +53,7 @@ export function BookPanel({
 	onDetails,
 	onWaitlistDetails,
 	onAddWaitlist,
+	onClose,
 }: {
 	list: BookList
 	query: string
@@ -67,11 +70,14 @@ export function BookPanel({
 	onDetails: (reservation: DayReservation) => void
 	onWaitlistDetails: (entry: WaitlistEntry) => void
 	onAddWaitlist: () => void
+	/** The panel is a drawer over the floor (a narrow tablet): how to put it away. */
+	onClose?: () => void
 }) {
 	const { _ } = useLingui()
 	const [closed, setClosed] = useState<Record<SectionId, boolean>>({
 		waitlist: false,
 		toSeat: false,
+		awaiting: false,
 		seated: false,
 		missed: true,
 		finished: true,
@@ -82,14 +88,15 @@ export function BookPanel({
 	const open = (id: SectionId) => searching || !closed[id]
 	const toggle = (id: SectionId) =>
 		setClosed((previous) => ({ ...previous, [id]: !previous[id] }))
-	const found = list.toSeat.length + list.seated.length + list.waitlist.length
-	const nothing =
+	// Everything the search finds, in every section (not only the ones open by default).
+	const found =
 		list.toSeat.length +
-			list.seated.length +
-			list.missed.length +
-			list.finished.length +
-			list.waitlist.length ===
-		0
+		list.awaiting.length +
+		list.seated.length +
+		list.missed.length +
+		list.finished.length +
+		list.waitlist.length
+	const nothing = found === 0
 	// While searching, a section with no match steps aside instead of saying "nobody".
 	const show = (count: number) => !searching || count > 0
 
@@ -99,8 +106,13 @@ export function BookPanel({
 			className="bk-panel"
 			data-single={single}
 		>
-			<div className="border-border shrink-0 border-b p-3">
-				<label className="relative block">
+			<div className="border-border flex shrink-0 items-center gap-2 border-b p-3">
+				{onClose ? (
+					<IconButton label={_(msg`Close the list`)} onClick={onClose}>
+						<X className="size-5" />
+					</IconButton>
+				) : null}
+				<label className="relative block min-w-0 flex-1">
 					<span className="sr-only">
 						<Trans>Search parties</Trans>
 					</span>
@@ -240,6 +252,34 @@ export function BookPanel({
 								))}
 							</ul>
 						)}
+					</Section>
+				) : null}
+
+				{list.awaiting.length > 0 ? (
+					<Section
+						title={_(msg`Awaiting payment`)}
+						subtitle={_(msg`held until the deposit is paid`)}
+						count={list.awaiting.length}
+						covers={coversOf(list.awaiting)}
+						open={open('awaiting')}
+						onToggle={() => toggle('awaiting')}
+					>
+						<ul>
+							{list.awaiting.map((reservation, index) => (
+								<ReservationRow
+									key={reservation.id}
+									reservation={reservation}
+									index={index}
+									now={now}
+									formatTime={formatTime}
+									mode="awaiting"
+									canPick={false}
+									selected={false}
+									onPick={() => onDetails(reservation)}
+									onDetails={() => onDetails(reservation)}
+								/>
+							))}
+						</ul>
 					</Section>
 				) : null}
 
@@ -383,13 +423,17 @@ function Section({
 					<span className="ms-auto flex shrink-0 items-center gap-2">
 						<span
 							className="bg-background tnum rounded-full px-2 py-0.5 text-xs font-semibold"
-							aria-label={_(msg`${count} parties`)}
+							aria-label={_(
+								plural(count, { one: '# party', other: '# parties' }),
+							)}
 						>
 							{count}
 						</span>
 						<span
 							className="text-muted-foreground tnum inline-flex items-center gap-1 text-xs font-semibold"
-							aria-label={_(msg`${covers} covers`)}
+							aria-label={_(
+								plural(covers, { one: '# cover', other: '# covers' }),
+							)}
 						>
 							<Users aria-hidden className="size-3.5" />
 							{covers}
@@ -462,7 +506,7 @@ function ReservationRow({
 	index: number
 	now: number
 	formatTime: (epochMs: number) => string
-	mode: 'toSeat' | 'seated' | 'missed' | 'finished'
+	mode: 'toSeat' | 'awaiting' | 'seated' | 'missed' | 'finished'
 	canPick: boolean
 	selected: boolean
 	onPick: () => void
@@ -503,6 +547,19 @@ function ReservationRow({
 				) : (
 					<Trans>Mark as no-show</Trans>
 				)}
+			</span>
+		)
+	else if (status.kind === 'awaiting')
+		line = (
+			<span className="text-warning font-semibold">
+				<Trans>Awaiting payment</Trans>
+			</span>
+		)
+	else if (status.kind === 'seated')
+		// Seated with no time recorded: say so, never "Booked".
+		line = (
+			<span>
+				<Trans>Seated</Trans>
 			</span>
 		)
 	else if (status.kind === 'here')
@@ -619,6 +676,11 @@ function ReservationRow({
 				</span>
 				{mode === 'missed' ? (
 					<UserX aria-hidden className="text-muted-foreground size-4" />
+				) : mode === 'awaiting' ? (
+					<span className="bk-pay-tag">
+						<CreditCard aria-hidden className="size-3.5" />
+						<Trans>Deposit</Trans>
+					</span>
 				) : tables ? (
 					<span className="bk-badge">
 						<span className="sr-only">
