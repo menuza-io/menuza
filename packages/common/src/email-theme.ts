@@ -186,6 +186,54 @@ export function resolveEmailAssetUrl(
 	}
 }
 
+const SOLID_HEX = /^#[0-9a-fA-F]{6}$/
+
+/**
+ * A color as a solid `#rrggbb`, for consumers that accept nothing else (the
+ * reservations context): a transparent `rgba()` (a dark theme's border) is laid
+ * over `backdrop`, a short `#rgb` is expanded, and anything else takes
+ * `fallback`.
+ */
+export function toSolidHex(
+	value: string,
+	backdrop: string,
+	fallback: string,
+): string {
+	const trimmed = value.trim()
+	if (SOLID_HEX.test(trimmed)) return trimmed
+	const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(trimmed)
+	if (short)
+		return `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`
+	const rgba =
+		/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(
+			trimmed,
+		)
+	const under = SOLID_HEX.test(backdrop) ? backdrop : fallback
+	if (!rgba || !SOLID_HEX.test(under)) return fallback
+	const alpha = rgba[4] === undefined ? 1 : Math.min(1, Number(rgba[4]))
+	if (Number.isNaN(alpha)) return fallback
+	const mixed = [1, 2, 3].map((i) => {
+		const top = Math.min(255, Number(rgba[i]))
+		const bottom = Number.parseInt(under.slice(i * 2 - 1, i * 2 + 1), 16)
+		return Math.round(top * alpha + bottom * (1 - alpha))
+	})
+	return `#${mixed.map((c) => c.toString(16).padStart(2, '0')).join('')}`
+}
+
+/** The theme with every color as a solid `#rrggbb` (see `toSolidHex`). */
+export function solidEmailTheme(theme: EmailTheme): EmailTheme {
+	const solid = { ...theme }
+	for (const key of Object.keys(LIGHT_FALLBACKS) as Array<
+		keyof typeof LIGHT_FALLBACKS
+	>)
+		solid[key] = toSolidHex(
+			theme[key],
+			key === 'background' ? LIGHT_FALLBACKS.background : solid.background,
+			LIGHT_FALLBACKS[key],
+		)
+	return solid
+}
+
 export function resolveEmailTheme(input: EmailThemeInput): EmailTheme {
 	const config =
 		typeof input.siteTheme === 'string' || input.siteTheme == null

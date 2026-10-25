@@ -5,7 +5,9 @@ import {
 	radiusToPx,
 	resolveEmailAssetUrl,
 	resolveEmailTheme,
+	solidEmailTheme,
 	toEmailColor,
+	toSolidHex,
 } from './email-theme'
 
 describe('oklchToHex', () => {
@@ -101,5 +103,56 @@ describe('resolveEmailTheme', () => {
 			siteTheme: JSON.stringify({ baseColor: 'zinc', theme: 'blue' }),
 		})
 		expect(theme.primary).not.toMatch(/oklch/)
+	})
+})
+
+describe('solid colors for the reservations context', () => {
+	it('lays a transparent color over the background and expands short hex', () => {
+		expect(toSolidHex('#E4E4E7', '#000000', '#111111')).toBe('#E4E4E7')
+		expect(toSolidHex('#abc', '#000000', '#111111')).toBe('#aabbcc')
+		// White at 10% over black is the grey a dark theme's border looks like.
+		expect(toSolidHex('rgba(255, 255, 255, 0.1)', '#000000', '#111111')).toBe(
+			'#1a1a1a',
+		)
+		expect(toSolidHex('rgb(255, 0, 0)', '#000000', '#111111')).toBe('#ff0000')
+		expect(
+			toSolidHex('color-mix(in oklab, red, blue)', '#000000', '#111111'),
+		).toBe('#111111')
+		// An unusable backdrop mixes over the fallback instead.
+		expect(toSolidHex('rgba(1, 2, 3, 0.5)', 'not-a-color', '#111111')).toBe(
+			'#090a0a',
+		)
+	})
+
+	it('a dark theme resolves to colors the context schema accepts', () => {
+		const theme = solidEmailTheme(
+			resolveEmailTheme({
+				organizationName: 'Acme',
+				siteTheme: JSON.stringify({
+					baseColor: 'neutral',
+					theme: 'violet',
+					radius: 'full',
+					mode: 'dark',
+					headingFont: 'inter',
+					bodyFont: 'inter',
+					headingCustomFont: null,
+					bodyCustomFont: null,
+					cssVars: null,
+				}),
+			}),
+		)
+		for (const key of [
+			'background',
+			'card',
+			'foreground',
+			'muted',
+			'mutedForeground',
+			'border',
+			'primary',
+			'primaryForeground',
+			'accent',
+			'accentForeground',
+		] as const)
+			expect(theme[key], key).toMatch(/^#[0-9a-fA-F]{6}$/)
 	})
 })
