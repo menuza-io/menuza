@@ -11,6 +11,7 @@ import {
 	type DayFeed,
 	type DayReservation,
 } from './feed.ts'
+import { foldDigits } from './phone.ts'
 import { clockLabel, zonedDate, zonedEpoch, zonedMinutes } from './zoned.ts'
 
 /**
@@ -47,6 +48,8 @@ type Table = {
 	y: number
 	w: number
 	h: number
+	/** Minutes a table is kept after a party's stay (the server's conflict checks add it). */
+	resetBufferMin: number
 }
 
 const AREAS = [
@@ -61,8 +64,10 @@ function table(
 	covers: [number, number],
 	shape: Table['shape'],
 	box: [number, number, number, number],
+	resetBufferMin = 0,
 ): Table {
 	return {
+		resetBufferMin,
 		id,
 		areaId,
 		label,
@@ -77,22 +82,22 @@ function table(
 }
 
 const TABLES: Table[] = [
-	table('t1', 'area_main', '1', [1, 2], 'round', [110, 110, 80, 80]),
+	table('t1', 'area_main', '1', [1, 2], 'round', [110, 110, 80, 80], 0),
 	table('t2', 'area_main', '2', [1, 2], 'round', [240, 110, 80, 80]),
 	table('t3', 'area_main', '3', [1, 2], 'round', [370, 110, 80, 80]),
-	table('t4', 'area_main', '4', [2, 4], 'square', [520, 100, 100, 100]),
+	table('t4', 'area_main', '4', [2, 4], 'square', [520, 100, 100, 100], 10),
 	table('t5', 'area_main', '5', [2, 4], 'square', [660, 100, 100, 100]),
-	table('t6', 'area_main', '6', [4, 6], 'square', [110, 310, 190, 100]),
-	table('t7', 'area_main', '7', [4, 6], 'square', [350, 310, 190, 100]),
-	table('t8', 'area_main', '8', [6, 10], 'square', [590, 310, 270, 110]),
-	table('t9', 'area_main', '9', [3, 5], 'round', [150, 530, 110, 110]),
-	table('t10', 'area_main', '10', [3, 5], 'round', [370, 530, 110, 110]),
+	table('t6', 'area_main', '6', [4, 6], 'square', [110, 310, 190, 100], 10),
+	table('t7', 'area_main', '7', [4, 6], 'square', [350, 310, 190, 100], 10),
+	table('t8', 'area_main', '8', [6, 10], 'square', [590, 310, 270, 110], 15),
+	table('t9', 'area_main', '9', [3, 5], 'round', [150, 530, 110, 110], 5),
+	table('t10', 'area_main', '10', [3, 5], 'round', [370, 530, 110, 110], 5),
 	table('p1', 'area_patio', 'P1', [1, 2], 'round', [120, 140, 80, 80]),
 	table('p2', 'area_patio', 'P2', [1, 2], 'round', [260, 140, 80, 80]),
 	table('p3', 'area_patio', 'P3', [1, 2], 'round', [400, 140, 80, 80]),
-	table('p4', 'area_patio', 'P4', [2, 4], 'square', [140, 360, 100, 100]),
-	table('p5', 'area_patio', 'P5', [2, 4], 'square', [330, 360, 100, 100]),
-	table('p6', 'area_patio', 'P6', [4, 8], 'square', [560, 330, 300, 110]),
+	table('p4', 'area_patio', 'P4', [2, 4], 'square', [140, 360, 100, 100], 5),
+	table('p5', 'area_patio', 'P5', [2, 4], 'square', [330, 360, 100, 100], 5),
+	table('p6', 'area_patio', 'P6', [4, 8], 'square', [560, 330, 300, 110], 10),
 ]
 
 const ELEMENTS = [
@@ -190,6 +195,8 @@ type Seed = {
 	lastVisitDays?: number
 	/** Notes the restaurant pinned to the guest (shown only with the guest grant). */
 	pinned?: string[]
+	/** For a finished party: minutes ago they left (so their table may still be resetting). */
+	finishedAgo?: number
 }
 
 /**
@@ -212,6 +219,8 @@ const TODAY_SEEDS: Seed[] = [
 		party: 4,
 		status: 'finished',
 		tables: ['t4'],
+		// Left a few minutes ago: Table 4 is still being reset.
+		finishedAgo: 4,
 	},
 	// On the floor now, for different lengths of time.
 	{
@@ -448,19 +457,26 @@ type WaitlistSeed = {
 	joinedAgo: number
 	/** Joined through the restaurant's own page, not at the stand. */
 	online?: boolean
-	/** No consent to be texted. */
-	noConsent?: boolean
+	/** Agreed to be texted (a stand-added entry has not: the stand cannot record it). */
+	consent?: boolean
+	/** Simulates an SMS-less node for this one entry: telling them queues no text. */
+	noSms?: boolean
 	/** Already told their table is ready: minutes ago, and minutes until the hold ends. */
 	told?: { agoMin: number; holdsMin: number }
 }
 
 const WAITLIST_SEEDS: WaitlistSeed[] = [
+	// Joined online and agreed to texts, but this entry simulates a node that
+	// sends none: marking them ready queues no text, so the stand says to call.
 	{
 		name: ['Jamal', 'Hussein'] as const,
 		phone: '+14155550132',
 		party: 2,
 		quoted: 10,
 		joinedAgo: 8,
+		online: true,
+		consent: true,
+		noSms: true,
 	},
 	{
 		name: ['Sofia', 'Marchetti'] as const,
@@ -483,6 +499,8 @@ const WAITLIST_SEEDS: WaitlistSeed[] = [
 		party: 2,
 		quoted: 15,
 		joinedAgo: 22,
+		online: true,
+		consent: true,
 		told: { agoMin: 4, holdsMin: 6 },
 	},
 	// Joined online, from the restaurant's page.
@@ -493,6 +511,7 @@ const WAITLIST_SEEDS: WaitlistSeed[] = [
 		quoted: 20,
 		joinedAgo: 6,
 		online: true,
+		consent: true,
 	},
 	// A number, but no consent to text it.
 	{
@@ -501,7 +520,6 @@ const WAITLIST_SEEDS: WaitlistSeed[] = [
 		party: 2,
 		quoted: 15,
 		joinedAgo: 11,
-		noConsent: true,
 	},
 ]
 
@@ -511,6 +529,17 @@ export type DemoHostOptions = {
 	timeZone?: string
 	/** A pause before every answer, so busy states show (default: none). */
 	latencyMs?: number
+	/**
+	 * Whether the signed-in person has the guest-details grant (default: yes).
+	 * Without it the server sends only the end of a phone number, no allergy
+	 * notes and no pinned notes, and the stand offers no call or text.
+	 */
+	canReadGuest?: boolean
+	/**
+	 * Whether this node sends texts at all (default: yes). A KSA node, or a
+	 * location with SMS off, never does: "tell them" then queues no text.
+	 */
+	smsEnabled?: boolean
 }
 
 type DemoDay = {
@@ -520,6 +549,23 @@ type DemoDay = {
 }
 
 const refuse = (status: number, code: string) => new HostApiError(status, code)
+
+/**
+ * A number as the server stores it (E.164, `+14155550142`), from what a host
+ * typed: spaces and Arabic digits folded, `00` for the plus, a bare ten digit
+ * number as the demo's own country (+1), a national number with a trunk zero
+ * as the Gulf's (+966).
+ */
+export function toE164(phone: string | null): string | null {
+	if (!phone) return null
+	const typed = foldDigits(phone.normalize('NFKD')).trim()
+	const digits = typed.replace(/\D/g, '')
+	if (digits === '') return null
+	if (typed.startsWith('+')) return `+${digits}`
+	if (digits.startsWith('00')) return `+${digits.slice(2)}`
+	if (digits.startsWith('0')) return `+966${digits.slice(1)}`
+	return digits.length === 10 ? `+1${digits}` : `+${digits}`
+}
 
 /** The device's own time zone, UTC when it cannot say. */
 function deviceZone() {
@@ -538,6 +584,10 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		latency > 0
 			? new Promise<void>((resolve) => setTimeout(resolve, latency))
 			: Promise.resolve()
+
+	/** The guest-details grant, and whether texts go out, switchable while the stand is open. */
+	let canRead = options.canReadGuest ?? true
+	let smsEnabled = options.smsEnabled ?? true
 
 	const today = () => zonedDate(clock(), timeZone)
 	const at = (date: string, minutes: number) =>
@@ -670,6 +720,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 	) {
 		const now = clock()
 		const table = tableById.get(tableId)
+		// The server keeps a table through its reset buffer after each stay: a
+		// window is the stay plus the buffer, and so is what a booking holds.
+		const reset = (table?.resetBufferMin ?? 0) * MIN
 		const booked = day.reservations.some((r) => {
 			if (r.id === ignoreId || !r.tableIds.includes(tableId)) return false
 			if (!(
@@ -680,7 +733,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 				return false
 			// A party still sitting past its time holds the table until it leaves.
 			const end = isOnFloor(r) ? Math.max(r.endAt, now) : r.endAt
-			return r.startAt < to && end > from
+			return r.startAt < to + reset && end + reset > from
 		})
 		const blocked = day.blocks.some(
 			(b) =>
@@ -755,7 +808,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 								: null,
 					finishedAt:
 						seed.status === 'finished'
-							? past(Math.max(startAt + 80 * MIN, now - 40 * MIN))
+							? seed.finishedAgo !== undefined
+								? now - seed.finishedAgo * MIN
+								: past(Math.max(startAt + 80 * MIN, now - 40 * MIN))
 							: null,
 					noShowAt: seed.status === 'no_show' ? now - 6 * MIN : null,
 				}),
@@ -884,7 +939,8 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		quoted: number
 		joinedAt: number
 		online?: boolean
-		noConsent?: boolean
+		/** The guest agreed to be texted (only a guest who joined online can have). */
+		consent?: boolean
 		told?: { notifiedAt: number; deadlineAt: number }
 	}): WaitlistEntry {
 		const [first = '', ...rest] = input.displayName.trim().split(/\s+/)
@@ -910,7 +966,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			reservationId: null,
 			sortKey: waitlistSort,
 			notes: null,
-			smsOptIn: Boolean(input.phone) && !input.noConsent,
+			smsOptIn: Boolean(input.phone) && input.consent === true,
 			locale: null,
 			version: 1,
 			joinedAt: input.joinedAt,
@@ -918,24 +974,27 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			position: waitlistSort,
 		}
 	}
-	for (const seed of WAITLIST_SEEDS)
-		waitlist.push(
-			newWaitlistEntry({
-				displayName: seed.name.join(' '),
-				party: seed.party,
-				phone: seed.phone,
-				quoted: seed.quoted,
-				joinedAt: clock() - seed.joinedAgo * MIN,
-				online: seed.online,
-				noConsent: seed.noConsent,
-				told: seed.told
-					? {
-							notifiedAt: clock() - seed.told.agoMin * MIN,
-							deadlineAt: clock() + seed.told.holdsMin * MIN,
-						}
-					: undefined,
-			}),
-		)
+	/** Entries that simulate a node that sends no texts, whatever the guest agreed to. */
+	const noSmsEntries = new Set<string>()
+	for (const seed of WAITLIST_SEEDS) {
+		const entry = newWaitlistEntry({
+			displayName: seed.name.join(' '),
+			party: seed.party,
+			phone: seed.phone,
+			quoted: seed.quoted,
+			joinedAt: clock() - seed.joinedAgo * MIN,
+			online: seed.online,
+			consent: seed.consent,
+			told: seed.told
+				? {
+						notifiedAt: clock() - seed.told.agoMin * MIN,
+						deadlineAt: clock() + seed.told.holdsMin * MIN,
+					}
+				: undefined,
+		})
+		waitlist.push(entry)
+		if (seed.noSms) noSmsEntries.add(entry.id)
+	}
 	const entryOf = (id: string) => {
 		const entry = waitlist.find((e) => e.id === id)
 		if (!entry) throw refuse(404, 'not_found')
@@ -1082,6 +1141,8 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					bookedCovers: starting.reduce((sum, r) => sum + r.partySize, 0),
 					partyCount: starting.length,
 					maxCovers: SLOT_CAP,
+					// A rule sets this cap: it is the restaurant's own, not the server's default.
+					maxCoversIsDefault: false,
 				})
 			}
 			return rows
@@ -1090,7 +1151,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 
 	function feedFor(date: string): { feed: DayFeed; etag: string } {
 		const day = dayOf(date)
-		const etag = `"demo-${date}-${day.revision}"`
+		const etag = `"demo-${date}-${day.revision}-${canRead ? 'g' : 'n'}"`
 		const feed = dayFeedSchema.parse({
 			locationId: DEMO_LOCATION,
 			businessDate: date,
@@ -1104,10 +1165,34 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			blocks: day.blocks,
 			services: SERVICES,
 			pacing: pacing(day),
-			reservations: day.reservations,
+			reservations: day.reservations.map(forGrant),
 		})
 		return { feed, etag }
 	}
+
+	// ---- The guest-details grant: what the server leaves out without it -----------
+
+	/** Only the end of a number, as the server sends it to someone without the grant. */
+	const masked = (phone: string | null | undefined) =>
+		phone ? `••••${phone.replace(/\D/g, '').slice(-4)}` : null
+	const forGrant = (r: DayReservation): DayReservation =>
+		canRead || !r.guest
+			? r
+			: ({
+					...r,
+					dietaryNotes: null,
+					guest: {
+						...r.guest,
+						phone: masked(r.guest.phone),
+						email: null,
+						allergyNotes: null,
+						pinnedNotes: [],
+					},
+				} as DayReservation)
+	const entryForGrant = (entry: WaitlistEntry): WaitlistEntry =>
+		canRead
+			? entry
+			: { ...entry, phone: masked(entry.phone), email: null, notes: null }
 
 	// ---- Idempotency: the same key answers the same way ---------------------------
 
@@ -1125,7 +1210,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		token: 'demo-token-xxxxxxxxxxxxxxxxxxxxxxxx',
 		expiresAt: clock() + 60 * 60 * MIN,
 		locationId: DEMO_LOCATION,
-		canReadGuest: true,
+		canReadGuest: canRead,
 		features: { waitlist: true, online: true },
 	})
 
@@ -1157,7 +1242,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					notified: entries.filter((e) => e.status === 'notified').length,
 					onTheWay: entries.filter((e) => e.status === 'on_the_way').length,
 				},
-				entries,
+				entries: entries.map(entryForGrant),
 			}
 		},
 
@@ -1200,6 +1285,12 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			}
 			if (!allowed[toStatus].includes(from))
 				throw refuse(409, 'invalid_status_transition')
+			// A deposit or a card on it: cancelling and a no-show touch the money, a manager's.
+			if (
+				(toStatus === 'cancelled' || toStatus === 'no_show') &&
+				r.paymentStatus !== 'none'
+			)
+				throw refuse(409, 'manager_required')
 			// A till works the live day: only a booking can be confirmed or cancelled ahead.
 			if (toStatus !== 'confirmed' && toStatus !== 'cancelled') requireToday(r)
 			if (toStatus === 'no_show' && now < r.startAt + NO_SHOW_GRACE_MIN * MIN)
@@ -1239,20 +1330,38 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 
 		async changeParty(
 			reservationId: string,
-			change: { partySize?: number; time?: string; localStartMin?: number },
-			expectedVersion: number,
+			change: {
+				partySize?: number
+				time?: string
+				localStartMin?: number
+				durationMin?: number
+			},
+			expectedVersion?: number,
 		) {
 			await wait()
 			const r = locate(reservationId).reservation
 			checkVersion(r, expectedVersion)
-			if (!['booked', 'confirmed', 'arrived'].includes(r.status))
+			const seated = r.status === 'seated'
+			if (!['booked', 'confirmed', 'arrived', 'seated'].includes(r.status))
 				throw refuse(409, 'invalid_status_transition')
+			const movesTime =
+				Boolean(change.time) || change.localStartMin !== undefined
+			const resizes =
+				change.partySize !== undefined && change.partySize !== r.partySize
+			// A deposit, a card or an experience: a size or time change is a manager's.
+			if ((movesTime || resizes) && r.paymentStatus !== 'none')
+				throw refuse(409, 'manager_required')
+			// A longer stay than a till may set is a manager's.
+			if (change.durationMin !== undefined && change.durationMin > 360)
+				throw refuse(409, 'manager_required')
+			// Someone already at the table has no time to move.
+			if (seated && movesTime) throw refuse(409, 'invalid_status')
 			const date = (r as { businessDate?: string }).businessDate ?? today()
 			const patch: Partial<DayReservation> = {}
 			const party = change.partySize ?? r.partySize
 			if (change.partySize) patch.partySize = change.partySize
 			let startMin = r.localStartMin
-			if (change.time || change.localStartMin !== undefined) {
+			if (movesTime) {
 				const [h = 0, m = 0] = (change.time ?? '').split(':').map(Number)
 				startMin = change.localStartMin ?? h * 60 + m
 				const startAt = at(date, startMin)
@@ -1264,19 +1373,35 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					serviceId: serviceAt(startMin)?.id ?? null,
 				})
 			}
-			// A table the party no longer fits (or the new time clashes on) is let go.
+			// How long the table is kept: the stay asked for, else (for a new size) a turn.
+			const durationMin = change.durationMin ?? r.durationMin
+			if (change.durationMin !== undefined) {
+				patch.durationMin = durationMin
+				patch.endAt = (patch.startAt ?? r.startAt) + durationMin * MIN
+			}
 			const startAt = at(date, startMin)
 			const day = dayOf(date)
-			const keep = r.tableIds.filter((id) => {
-				const t = tableById.get(id)
-				return (
-					t &&
-					t.maxCovers >= party &&
-					!busy(day, id, startAt, startAt + r.durationMin * MIN, r.id)
+			if (seated) {
+				// A party at the table stays on it: the table must seat them (or the
+				// server would move them by itself, which a till does not do).
+				const seats = r.tableIds.reduce(
+					(sum, id) => sum + (tableById.get(id)?.maxCovers ?? 0),
+					0,
 				)
-			})
-			if (keep.length !== r.tableIds.length)
-				Object.assign(patch, { tableIds: keep, tableLabels: labelOf(keep) })
+				if (party > seats) throw refuse(409, 'no_availability')
+			} else {
+				// A table the party no longer fits (or the new time clashes on) is let go.
+				const keep = r.tableIds.filter((id) => {
+					const t = tableById.get(id)
+					return (
+						t &&
+						t.maxCovers >= party &&
+						!busy(day, id, startAt, startAt + durationMin * MIN, r.id)
+					)
+				})
+				if (keep.length !== r.tableIds.length)
+					Object.assign(patch, { tableIds: keep, tableLabels: labelOf(keep) })
+			}
 			return { reservation: update(r.id, patch) }
 		},
 
@@ -1354,10 +1479,20 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			reservationId: string,
 			tableIds: string[],
 			expectedVersion?: number,
+			overbook: { overbook?: boolean; overbookReason?: string } = {},
 		) {
 			await wait()
 			const r = locate(reservationId).reservation
 			checkVersion(r, expectedVersion)
+			if (!['booked', 'confirmed', 'arrived', 'seated'].includes(r.status))
+				throw refuse(409, 'reservation_not_active')
+			// A party at the table moves for the rest of their stay; a booking, for all of it.
+			const remaining = isOnFloor(r)
+				? Math.max(15, Math.ceil((r.endAt - clock()) / MIN))
+				: r.durationMin
+			if (isOnFloor(r)) {
+				checkTables(tableIds, remaining, overbook.overbook === true, r.id)
+			} else if (tableIds.length === 0) throw refuse(400, 'table_required')
 			return {
 				reservation: update(r.id, { tableIds, tableLabels: labelOf(tableIds) }),
 			}
@@ -1431,7 +1566,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					status: 'booked',
 					tables,
 					name: [input.firstName.trim(), input.lastName.trim()],
-					phone: input.phone,
+					phone: toE164(input.phone),
 					staffNotes: input.notes,
 					channel: 'host',
 					durationMin: duration,
@@ -1453,9 +1588,12 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 				const entry = newWaitlistEntry({
 					displayName: input.displayName,
 					party: input.partySize,
-					phone: input.phone,
+					// The stand cannot record that a guest agreed to texts: only the
+					// restaurant's own page or app can, so a stand-added entry has none.
+					phone: toE164(input.phone),
 					quoted,
 					joinedAt: clock(),
+					consent: false,
 				})
 				waitlist.push(entry)
 				return entry
@@ -1466,12 +1604,18 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			await wait()
 			const entry = entryOf(entryId)
 			if (entry.version !== expectedVersion) throw refuse(409, 'stale_version')
-			if (!entry.phone) throw refuse(409, 'no_phone')
-			// Texting needs their consent, and only a party still waiting is told.
-			if (!entry.smsOptIn) throw refuse(409, 'no_sms_consent')
+			// Only a party still waiting is told. Marking them ready never needs a
+			// text: whether one was queued is the answer's to say.
 			if (entry.status !== 'waiting')
 				throw refuse(409, 'invalid_status_transition')
+			const textQueued =
+				Boolean(entry.phone) &&
+				entry.smsOptIn &&
+				smsEnabled &&
+				!noSmsEntries.has(entry.id)
 			return {
+				changed: true,
+				textQueued,
 				entry: updateEntry(entryId, {
 					status: 'notified',
 					notifiedAt: clock(),
@@ -1502,11 +1646,15 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			return { entry: waitlist.find((e) => e.id === entryId), reservation }
 		},
 
-		async leaveWaitlist(entryId: string, expectedVersion: number) {
+		async leaveWaitlist(
+			entryId: string,
+			expectedVersion: number,
+			target: 'left' | 'no_response' = 'left',
+		) {
 			await wait()
 			const entry = entryOf(entryId)
 			if (entry.version !== expectedVersion) throw refuse(409, 'stale_version')
-			return { entry: updateEntry(entryId, { status: 'left' }) }
+			return { entry: updateEntry(entryId, { status: target }) }
 		},
 	}
 
@@ -1554,6 +1702,14 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		arrive(id) {
 			update(id, { status: 'arrived', arrivedAt: clock() })
 		},
+		setGuestDetails(on) {
+			canRead = on
+			// The days read differently now: every held day is looked at again.
+			for (const day of days.values()) touch(day)
+		},
+		setSmsEnabled(on) {
+			smsEnabled = on
+		},
 	}
 	return Object.assign(api, { controls })
 }
@@ -1571,6 +1727,14 @@ export type DemoControls = {
 	resize: (id: string, party: number) => void
 	/** Another host marks a party as here. */
 	arrive: (id: string) => void
+	/**
+	 * Gives or takes away the guest-details grant: without it phone numbers
+	 * show only their end, allergy notes and pinned notes are not sent, and
+	 * nothing can be called or texted.
+	 */
+	setGuestDetails: (on: boolean) => void
+	/** Turns texting on or off for the whole node (off: marking ready queues no text). */
+	setSmsEnabled: (on: boolean) => void
 }
 
 /** The controls of this tab's sample day. */
@@ -1601,6 +1765,22 @@ let shared: HostApi | null = null
 
 /** The one sample day of this tab: it keeps its changes while the stand is closed and opened again. */
 export function demoHostApi(): HostApi {
-	shared ??= createDemoHostApi({ now: demoClock, latencyMs: 90 })
+	shared ??= createDemoHostApi({
+		now: demoClock,
+		latencyMs: 90,
+		// `localStorage.setItem('station.demo.guestDetails', 'off')` shows the stand as
+		// someone without the guest-details grant sees it (masked phones, no call or text).
+		canReadGuest: demoSwitch('station.demo.guestDetails'),
+		smsEnabled: demoSwitch('station.demo.sms'),
+	})
 	return shared
+}
+
+/** A demo switch kept in this browser: on unless it says `off`. */
+function demoSwitch(key: string): boolean {
+	try {
+		return localStorage.getItem(key) !== 'off'
+	} catch {
+		return true
+	}
 }

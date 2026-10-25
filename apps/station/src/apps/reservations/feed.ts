@@ -120,6 +120,15 @@ const tableSchema = z
 		w: z.number().default(60),
 		h: z.number().default(60),
 		rotation: z.number().default(0),
+		/**
+		 * Minutes the server keeps a table after a party's booked end before it
+		 * counts the table free again (its conflict checks add it). Zero when the
+		 * table has none, or an older server does not say.
+		 */
+		resetBufferMin: z
+			.number()
+			.nullish()
+			.transform((minutes) => Math.max(0, Math.round(minutes ?? 0))),
 		archivedAt: epoch,
 	})
 	.passthrough()
@@ -334,14 +343,31 @@ export type TableState =
 	| { kind: 'soon'; next: DayReservation }
 	| { kind: 'seated'; party: DayReservation; next: DayReservation | null }
 	| { kind: 'blocked'; reason: string | null; next: DayReservation | null }
+	/**
+	 * A party finished here a moment ago and the table keeps its reset buffer
+	 * (it is being cleared and laid): ready again at `readyAt`.
+	 */
+	| {
+			kind: 'resetting'
+			party: DayReservation
+			readyAt: number
+			next: DayReservation | null
+	  }
+
+/** What a table is doing: the kind of `TableState`. */
+export type TableKind = TableState['kind']
+
+/** A table the host may seat someone at without being asked first. */
+export const isFreeKind = (kind: TableKind) =>
+	kind === 'open' || kind === 'soon'
 
 /**
- * What a table is doing at `now`: blocked, occupied, about to be (a party due
- * within half an hour is booked on it), or open. A party seated on several
- * tables occupies each of them.
+ * What a table is doing at `now`: blocked, occupied, being reset after a party
+ * left, about to be (a party due within half an hour is booked on it), or
+ * open. A party seated on several tables occupies each of them.
  */
 export function tableState(
-	table: Pick<DayTable, 'id' | 'areaId'>,
+	table: Pick<DayTable, 'id' | 'areaId'> & { resetBufferMin?: number },
 	feed: Pick<DayFeed, 'reservations' | 'blocks'>,
 	now: number,
 ): TableState {
@@ -359,6 +385,25 @@ export function tableState(
 	)
 	if (party) return { kind: 'seated', party, next }
 	if (block) return { kind: 'blocked', reason: block.reason ?? null, next }
+	const resetMs = (table.resetBufferMin ?? 0) * 60_000
+	if (resetMs > 0) {
+		const left = mine
+			.filter(
+				(r) =>
+					r.status === 'finished' &&
+					typeof r.finishedAt === 'number' &&
+					r.finishedAt <= now &&
+					r.finishedAt + resetMs > now,
+			)
+			.sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0))[0]
+		if (left)
+			return {
+				kind: 'resetting',
+				party: left,
+				readyAt: (left.finishedAt ?? 0) + resetMs,
+				next,
+			}
+	}
 	if (next && next.startAt - now <= DUE_SOON_MIN * 60_000)
 		return { kind: 'soon', next }
 	return { kind: 'open', next }
@@ -382,6 +427,8 @@ export type FitVerdict =
 	| { fits: true }
 	/** Someone is seated there, or it is taped off. */
 	| { fits: false; why: 'taken' }
+	/** A party just left and the table is being reset: ready again at `until`. */
+	| { fits: false; why: 'resetting'; until: number }
 	| { fits: false; why: 'small' }
 	/** Free now, but booked at `at` (an epoch), before the party would be done. */
 	| { fits: false; why: 'booked'; at: number }
@@ -393,23 +440,29 @@ export type FitVerdict =
  * the verdict says why, in the order a host would check: taken, too small, booked.
  */
 export function fitVerdict(
-	table: Pick<DayTable, 'maxCovers'>,
+	table: Pick<DayTable, 'maxCovers'> & { resetBufferMin?: number },
 	state: TableState,
 	party: PartyToPlace,
 	now: number,
 ): FitVerdict {
 	if (state.kind === 'seated' || state.kind === 'blocked')
 		return { fits: false, why: 'taken' }
+	if (state.kind === 'resetting')
+		return { fits: false, why: 'resetting', until: state.readyAt }
 	if (!fits(table, party.partySize)) return { fits: false, why: 'small' }
 	const next = state.next
 	if (!next || next.id === party.reservationId) return { fits: true }
-	return next.startAt - now >= party.durationMin * 60_000
+	// The server keeps a table through its reset buffer after the stay, so the
+	// party's window is its stay plus that buffer: a booking that starts inside
+	// it is a clash (the server refuses it as `table_occupied`).
+	const windowMs = (party.durationMin + (table.resetBufferMin ?? 0)) * 60_000
+	return next.startAt - now >= windowMs
 		? { fits: true }
 		: { fits: false, why: 'booked', at: next.startAt }
 }
 
 export const takesParty = (
-	table: Pick<DayTable, 'maxCovers'>,
+	table: Pick<DayTable, 'maxCovers'> & { resetBufferMin?: number },
 	state: TableState,
 	party: PartyToPlace,
 	now: number,

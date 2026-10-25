@@ -1,6 +1,12 @@
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Armchair, CheckCheck, TriangleAlert, Undo2 } from 'lucide-react'
+import {
+	Armchair,
+	CheckCheck,
+	RefreshCw,
+	TriangleAlert,
+	Undo2,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
 	shortName,
@@ -8,7 +14,7 @@ import {
 	type DayTable,
 	type TableState,
 } from './feed.ts'
-import { heldFor } from './held.ts'
+import { heldFor, heldLead } from './held.ts'
 import { PartySize } from './sheets.tsx'
 import { Button, Modal } from '~/ui/primitives.tsx'
 
@@ -58,8 +64,7 @@ export function TableSheet({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- reset per table only
 	}, [tableId])
 	const state = target?.state
-	const next =
-		state && state.kind !== 'seated' ? state.next : (state?.next ?? null)
+	const next = state?.next ?? null
 	const free = state ? state.kind === 'open' || state.kind === 'soon' : false
 	// How long the table stays free: until its next booking (any time today), if there is one.
 	const until = state && free && next ? next.startAt : null
@@ -71,8 +76,15 @@ export function TableSheet({
 	const heldSize = held?.reservation.partySize ?? 0
 	const heldDue = held ? formatTime(held.reservation.startAt) : ''
 	const heldLate = held?.lateMin ?? 0
-	// A walk-in is the lead only when no party is held for the table.
-	const showWalkIn = held === null || walkInAnyway
+	const readyText = state?.kind === 'resetting' ? formatTime(state.readyAt) : ''
+	const resetLeft =
+		state?.kind === 'resetting'
+			? Math.max(1, Math.ceil((state.readyAt - now) / 60_000))
+			: 0
+	// The held party leads only when they are here (or late): a party merely due
+	// is not at the door, so the walk-in leads and seating them is second.
+	const leadsWithParty = held !== null && heldLead(held) === 'party'
+	const showWalkIn = !leadsWithParty || walkInAnyway
 	return (
 		<Modal
 			open={target !== null}
@@ -99,24 +111,22 @@ export function TableSheet({
 							</Button>
 						</div>
 					) : state.kind !== 'blocked' ? (
-						held && !walkInAnyway ? (
+						leadsWithParty && held && !walkInAnyway ? (
 							<div className="mb-safe flex flex-col gap-3">
-								{held.canSeat ? (
-									<Button
-										variant="primary"
-										size="lg"
-										className="w-full"
-										disabled={busy}
-										onClick={() => onSeatHeld(target.table, held.reservation)}
-									>
-										<Armchair className="size-5 shrink-0" />
-										<span className="truncate">
-											<Trans>
-												Seat <bdi>{heldWho}</bdi> here
-											</Trans>
-										</span>
-									</Button>
-								) : null}
+								<Button
+									variant="primary"
+									size="lg"
+									className="w-full"
+									disabled={busy}
+									onClick={() => onSeatHeld(target.table, held.reservation)}
+								>
+									<Armchair className="size-5 shrink-0" />
+									<span className="truncate">
+										<Trans>
+											Seat <bdi>{heldWho}</bdi> here
+										</Trans>
+									</span>
+								</Button>
 								<Button
 									variant="outline"
 									size="lg"
@@ -144,7 +154,7 @@ export function TableSheet({
 									</p>
 								) : null}
 								<div className="flex gap-3">
-									{held ? (
+									{leadsWithParty ? (
 										<Button
 											size="lg"
 											className="shrink-0 px-4"
@@ -164,6 +174,22 @@ export function TableSheet({
 										<Trans>Seat {size} now</Trans>
 									</Button>
 								</div>
+								{/* A party not here yet: seating them is the second choice. */}
+								{held && !leadsWithParty && held.canSeat ? (
+									<Button
+										variant="outline"
+										size="lg"
+										className="w-full"
+										disabled={busy}
+										onClick={() => onSeatHeld(target.table, held.reservation)}
+									>
+										<span className="truncate">
+											<Trans>
+												Seat <bdi>{heldWho}</bdi> here
+											</Trans>
+										</span>
+									</Button>
+								) : null}
 							</div>
 						)
 					) : undefined
@@ -191,6 +217,27 @@ export function TableSheet({
 									<Trans>Party of {state.party.partySize}</Trans>
 								)}
 							</p>
+						</div>
+					) : null}
+					{state.kind === 'resetting' ? (
+						<div className="border-border flex items-start gap-3 rounded-2xl border p-4">
+							<RefreshCw
+								aria-hidden
+								className="text-muted-foreground mt-1 size-5 shrink-0"
+							/>
+							<div className="flex min-w-0 flex-col gap-1">
+								<p className="text-lg font-semibold">
+									<Trans>Resetting, ready {readyText}</Trans>
+								</p>
+								<p className="text-muted-foreground tnum">
+									{_(
+										plural(resetLeft, {
+											one: '# min left. Seating someone now asks first.',
+											other: '# min left. Seating someone now asks first.',
+										}),
+									)}
+								</p>
+							</div>
 						</div>
 					) : null}
 					{state.kind === 'blocked' ? (

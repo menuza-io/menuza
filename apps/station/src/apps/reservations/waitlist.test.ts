@@ -1,12 +1,18 @@
+import { i18n } from '@lingui/core'
 import { describe, expect, it } from 'vitest'
 import { entry, MIN, at } from './testing.ts'
 import {
 	joinedOnline,
 	minutesWaited,
+	notifiedToast,
 	textability,
 	textedState,
+	textQueuedOf,
+	toldHow,
 	URGENT_MS,
 } from './waitlist.ts'
+
+const _ = i18n._.bind(i18n)
 
 const now = at(13 * 60 + 52)
 const told = (overrides: Parameters<typeof entry>[0] = {}) =>
@@ -71,6 +77,65 @@ describe('whether a party can be texted', () => {
 		)
 		expect(textability({ phone: null, smsOptIn: false })).toBe('no_phone')
 		expect(textability({ phone: null, smsOptIn: true })).toBe('no_phone')
+	})
+})
+
+describe('whether a party can be texted: number x consent x node', () => {
+	const phones = [null, '+14155550132']
+	const consents = [false, true]
+	const nodes = [undefined, true, false] as const
+	for (const phone of phones)
+		for (const smsOptIn of consents)
+			for (const smsAvailable of nodes) {
+				const expected = !phone
+					? 'no_phone'
+					: !smsOptIn
+						? 'no_consent'
+						: smsAvailable === false
+							? 'no_sms'
+							: 'ok'
+				it(`phone ${phone ?? 'none'}, consent ${smsOptIn}, node sends texts ${smsAvailable ?? 'unknown'}: ${expected}`, () => {
+					expect(textability({ phone, smsOptIn }, { smsAvailable })).toBe(
+						expected,
+					)
+				})
+			}
+	it('counts a node whose texting is not known as one that texts', () => {
+		expect(textability({ phone: '+1415', smsOptIn: true }, {})).toBe('ok')
+	})
+})
+
+describe('what "tell them it\'s ready" did about a text', () => {
+	it('reads the answer: true only when a text was queued', () => {
+		expect(textQueuedOf({ ok: true, textQueued: true })).toBe(true)
+		expect(textQueuedOf({ ok: true, textQueued: false })).toBe(false)
+		// An older server, or a repeat tap that queued nothing, says nothing.
+		expect(textQueuedOf({ ok: true })).toBeUndefined()
+		expect(textQueuedOf(null)).toBeUndefined()
+		expect(textQueuedOf({ textQueued: 'yes' })).toBeUndefined()
+		expect(textQueuedOf(undefined)).toBeUndefined()
+	})
+	it('says "Texted" only when the answer says so', () => {
+		expect(notifiedToast(_, 'Sofia', true)).toBe(
+			'Texted Sofia: your table is ready.',
+		)
+		expect(notifiedToast(_, 'Sofia', false)).toBe(
+			'Marked ready. No text was sent, call Sofia.',
+		)
+		expect(notifiedToast(_, 'Sofia', undefined)).toBe('Marked ready: Sofia.')
+	})
+	it('knows how a party was told: the answer first, then what is certain', () => {
+		const texted = { phone: '+14155550132', smsOptIn: true }
+		expect(toldHow(texted, true)).toBe('text_sent')
+		// The answer beats what the entry suggests, either way.
+		expect(toldHow(texted, false)).toBe('no_text')
+		expect(toldHow({ phone: null, smsOptIn: false }, true)).toBe('text_sent')
+		// No answer: a party that cannot be texted certainly was not; any other is only told.
+		expect(toldHow(texted, undefined)).toBe('told')
+		expect(toldHow({ phone: '+14155550132', smsOptIn: false }, undefined)).toBe(
+			'no_text',
+		)
+		expect(toldHow({ phone: null, smsOptIn: true }, undefined)).toBe('no_text')
 	})
 })
 

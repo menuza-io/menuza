@@ -338,7 +338,14 @@ operatorReservationsWaitlistRoutes.on(
 				loaded.entry.id,
 				canReadGuest(ctx),
 			)
-			return json({ ok: true, orgId: ctx.orgId, changed: out.changed, entry })
+			return json({
+				ok: true,
+				orgId: ctx.orgId,
+				changed: out.changed,
+				// Only when this call queued a message (a repeat tap queues none).
+				...('textQueued' in out ? { textQueued: out.textQueued } : {}),
+				entry,
+			})
 		} catch (error) {
 			return handleRouteError(error)
 		}

@@ -1,12 +1,13 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Ban, Users } from 'lucide-react'
+import { Ban, Clock3, RefreshCw, Users } from 'lucide-react'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
 	bestFit,
 	fitVerdict,
 	freeUntil,
 	isDrawn,
+	isFreeKind,
 	placeTables,
 	shortName,
 	tableState,
@@ -19,6 +20,7 @@ import {
 	type TableState,
 } from './feed.ts'
 import { fitRoom, type PlacedPx } from './floorfit.ts'
+import { stayOf } from './stay.ts'
 import { SoftText } from '~/ui/motion.tsx'
 import { cn } from '~/ui/primitives.tsx'
 
@@ -303,28 +305,54 @@ function TableButton({
 		table.minCovers > 0 && table.minCovers < table.maxCovers
 			? `${table.minCovers}–${table.maxCovers}`
 			: String(table.maxCovers)
-	const seatedFor =
-		state.kind === 'seated' && state.party.seatedAt
-			? Math.max(0, Math.floor((now - state.party.seatedAt) / 60_000))
-			: null
+	// How long they have sat, and how long until the table is expected to clear.
+	const sitting = state.kind === 'seated' ? stayOf(state.party, now) : null
+	const seatedFor = sitting?.seatedMin ?? null
+	const leftMin = sitting?.leftMin ?? 0
+	const overMin = sitting?.overMin ?? 0
 	// How far through the booked stay they are: a thin bar that turns amber past the end.
-	const stay =
-		state.kind === 'seated' && seatedFor !== null
-			? seatedFor / Math.max(1, state.party.durationMin)
-			: null
+	const stay = sitting ? sitting.ratio : null
+	// A table being cleared after a party left: minutes until it is ready again.
+	const resetLeft =
+		state.kind === 'resetting'
+			? Math.max(1, Math.ceil((state.readyAt - now) / 60_000))
+			: 0
 	// An open table that is booked later says until when it is free.
 	const until = freeUntil(state, now)
 	const untilFull = until ? formatTime(until.until) : ''
 	const untilShort = until ? formatShort(until.until) : ''
 	const fits = verdict ? verdict.fits : null
-	/** Why a table does not take the party in hand, for under the table and for a screen reader. */
+	/**
+	 * Why a table does not take the party in hand, for under the table and for
+	 * a screen reader; `short` is what a phone has room for (a time, a word).
+	 */
 	let reason: string | null = null
+	let reasonShort: React.ReactNode = null
 	if (verdict && !verdict.fits) {
 		if (verdict.why === 'booked') {
 			const at = formatTime(verdict.at)
 			reason = _(msg`Booked ${at}`)
-		} else if (verdict.why === 'small') reason = _(msg`Too small`)
-		else reason = _(msg`Taken`)
+			reasonShort = (
+				<span className="inline-flex items-center gap-0.5">
+					<Clock3 aria-hidden className="size-3" />
+					{formatShort(verdict.at)}
+				</span>
+			)
+		} else if (verdict.why === 'small') {
+			reason = _(msg`Too small`)
+			reasonShort = _(msg`Small`)
+		} else if (verdict.why === 'resetting') {
+			reason = _(msg`Resetting ${resetLeft}m`)
+			reasonShort = (
+				<span className="inline-flex items-center gap-0.5">
+					<RefreshCw aria-hidden className="size-3" />
+					{_(msg`${resetLeft}m`)}
+				</span>
+			)
+		} else {
+			reason = _(msg`Taken`)
+			reasonShort = null
+		}
 	}
 	/** Who is there (or due), or why the party in hand does not fit, under the table. */
 	const caption =
@@ -333,14 +361,23 @@ function TableButton({
 			? shortName(state.party, _(msg`Guest`))
 			: state.kind === 'soon'
 				? shortName(state.next, _(msg`Guest`))
-				: null)
+				: state.kind === 'resetting'
+					? _(msg`Resetting ${resetLeft}m`)
+					: null)
+	// A phone has room for the word, not the minutes (the table says them).
+	if (reasonShort === null && state.kind === 'resetting' && !reason)
+		reasonShort = _(msg`Resetting`)
 
 	let label: string
 	switch (state.kind) {
 		case 'seated':
-			label = _(
-				msg`Table ${table.label}, seated: ${shortName(state.party, _(msg`Guest`))}, party of ${state.party.partySize}`,
-			)
+			label = sitting?.over
+				? _(
+						msg`Table ${table.label}, seated: ${shortName(state.party, _(msg`Guest`))}, party of ${state.party.partySize}, ${overMin} min over`,
+					)
+				: _(
+						msg`Table ${table.label}, seated: ${shortName(state.party, _(msg`Guest`))}, party of ${state.party.partySize}, about ${leftMin} min left`,
+					)
 			break
 		case 'soon':
 			label = _(
@@ -349,6 +386,11 @@ function TableButton({
 			break
 		case 'blocked':
 			label = _(msg`Table ${table.label}, blocked`)
+			break
+		case 'resetting':
+			label = _(
+				msg`Table ${table.label}, being reset, ready in ${resetLeft} min`,
+			)
 			break
 		default:
 			label = until
@@ -401,6 +443,8 @@ function TableButton({
 						'border-primary bg-primary text-primary-foreground elevated-card',
 					state.kind === 'blocked' &&
 						'border-border bg-muted text-muted-foreground',
+					state.kind === 'resetting' &&
+						'border-border text-muted-foreground border-dashed',
 				)}
 			>
 				{/* Counter-rotate the words so a turned table still reads upright. */}
@@ -427,6 +471,13 @@ function TableButton({
 							</span>
 						) : state.kind === 'blocked' ? (
 							<Ban className="size-4" />
+						) : state.kind === 'resetting' ? (
+							<>
+								<RefreshCw aria-hidden className="size-3.5" />
+								<span className="tnum font-semibold">
+									{_(msg`${resetLeft}m`)}
+								</span>
+							</>
 						) : until ? (
 							<span className="tnum text-foreground font-semibold">
 								{_(msg`till ${untilShort}`)}
@@ -441,13 +492,22 @@ function TableButton({
 							</>
 						)}
 					</span>
-					{/* How long they have been seated, on its own line so a small round table never crops it. */}
+					{/* How long until the table clears (past the end: how long over), on its own line so a small round table never crops it. */}
 					{state.kind === 'seated' && seatedFor !== null ? (
 						<span
-							className="bk-t-sub text-primary-foreground/90 relative z-1"
+							className="bk-t-sub bk-left relative z-1"
+							data-over={sitting?.over ?? false}
 							aria-hidden
 						>
-							<SoftText value={_(msg`${seatedFor}m`)} />
+							{sitting?.over ? (
+								<SoftText value={_(msg`+${overMin}m`)} />
+							) : (
+								<>
+									<SoftText value={_(msg`~${leftMin}m`)} />
+									{/* A small round table has no room for the word: the number says it. */}
+									<span className="bk-left-word"> {_(msg`left`)}</span>
+								</>
+							)}
 						</span>
 					) : null}
 				</span>
@@ -468,7 +528,14 @@ function TableButton({
 					) : null}
 					{caption ? (
 						<bdi className="bk-caption" data-reason={reason !== null}>
-							{caption}
+							{reasonShort !== null ? (
+								<>
+									<span className="bk-reason-long">{caption}</span>
+									<span className="bk-reason-short">{reasonShort}</span>
+								</>
+							) : (
+								caption
+							)}
 						</bdi>
 					) : null}
 				</span>
@@ -480,10 +547,9 @@ function TableButton({
 /** "3 of 12 tables free" over the room. */
 export function freeTables(feed: DayFeed, areaId: string, now: number) {
 	const tables = feed.tables.filter((t) => t.areaId === areaId && !t.archivedAt)
-	const free = tables.filter((table) => {
-		const kind = tableState(table, feed, now).kind
-		return kind === 'open' || kind === 'soon'
-	}).length
+	const free = tables.filter((table) =>
+		isFreeKind(tableState(table, feed, now).kind),
+	).length
 	return { free, total: tables.length }
 }
 

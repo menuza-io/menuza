@@ -2,6 +2,7 @@ import { type WaitlistEntry } from '@repo/reservations'
 import { foldDigits, normalize } from './book.ts'
 import { type DayReservation } from './feed.ts'
 import { formatPhone } from './guest.ts'
+import { phoneDigits, samePhone } from './phone.ts'
 
 /**
  * Finding a guest the host is already looking at: a booking that repeats one
@@ -21,20 +22,7 @@ const LIVE = new Set([
 	'seated',
 ])
 
-const digitsOf = (value: string | null | undefined) =>
-	foldDigits(value ?? '').replace(/\D/g, '')
-
-/** The same number: one ends the way the other does (a country code may be missing from one). */
-export function samePhone(
-	a: string | null | undefined,
-	b: string | null | undefined,
-) {
-	const x = digitsOf(a)
-	const y = digitsOf(b)
-	if (x.length < 7 || y.length < 7) return false
-	const tail = Math.min(x.length, y.length, 10)
-	return x.slice(-tail) === y.slice(-tail)
-}
+export { samePhone }
 
 const fullName = (...parts: Array<string | null | undefined>) =>
 	normalize(parts.filter(Boolean).join(' ')).replace(/\s+/g, ' ')
@@ -93,7 +81,7 @@ const capitalize = (word: string) =>
  */
 export function guestFromQuery(query: string): TypedGuest {
 	const typed = query.trim()
-	const digits = digitsOf(typed)
+	const digits = phoneDigits(typed)
 	if (/^[+\d\s().٠-٩۰-۹-]+$/.test(typed) && digits.length >= 3)
 		return {
 			first: '',

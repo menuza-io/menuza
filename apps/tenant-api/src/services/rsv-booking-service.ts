@@ -2353,14 +2353,18 @@ export async function updateReservation(params: {
 				nextPartySize !== current.partySize ||
 				targetBusinessDate !== current.businessDate ||
 				nextLocalStartMin !== current.localStartMin
-			// A cancelled, finished or no-show booking does not change size or time
-			// (it would also message the guest about a booking that is over).
-			if (sizeOrTimeChanged && !ACTIVE_OCCUPANCY_STATUSES.has(current.status))
+			const stayChanged = nextDurationMin !== current.durationMin
+			// A cancelled, finished or no-show booking does not change size, time or
+			// stay (it would also message the guest about a booking that is over).
+			if (
+				(sizeOrTimeChanged || stayChanged) &&
+				!ACTIVE_OCCUPANCY_STATUSES.has(current.status)
+			)
 				throw conflict(
 					'invalid_status',
 					'Only a live booking changes size or time.',
 				)
-			if (params.paymentLocked && sizeOrTimeChanged) {
+			if (params.paymentLocked && (sizeOrTimeChanged || stayChanged)) {
 				const policyAmount = Number(
 					(current.policySnapshot as { totalAmountMinor?: unknown } | null)
 						?.totalAmountMinor ?? 0,

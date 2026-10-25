@@ -49,24 +49,58 @@ export const NOTE_PHRASES = [
 	'Birthday',
 ] as const
 
+/** The most a note for the team holds. */
+export const NOTE_MAX = 500
+
 const sameText = (a: string, b: string) =>
 	a.trim().toLowerCase() === b.trim().toLowerCase()
-const noteParts = (notes: string) =>
-	notes
-		.split(/\s*[,;\n]\s*/)
-		.map((part) => part.trim())
-		.filter(Boolean)
+/** Where a note is cut into its pieces: a comma, a semicolon, a new line (with the space round it). */
+const SEPARATOR = /\s*[,;\n]\s*/
+
+/** The note's pieces, each with where it sits in the text as typed. */
+function notePieces(notes: string) {
+	const pieces: Array<{ text: string; from: number; to: number }> = []
+	let from = 0
+	const cut = new RegExp(SEPARATOR.source, 'g')
+	for (const match of notes.matchAll(cut)) {
+		pieces.push({ text: notes.slice(from, match.index), from, to: match.index })
+		from = match.index + match[0].length
+	}
+	pieces.push({ text: notes.slice(from), from, to: notes.length })
+	return pieces.filter((piece) => piece.text.trim() !== '')
+}
 
 /** Whether the note already says the phrase (any case, as a whole piece of it). */
 export const hasNote = (notes: string, phrase: string) =>
-	noteParts(notes).some((part) => sameText(part, phrase))
+	notePieces(notes).some((piece) => sameText(piece.text, phrase))
 
-/** The note with the phrase added at the end, or taken out when it is there: "High chair, Window". */
-export function toggleNote(notes: string, phrase: string, maxLength = 500) {
-	const parts = noteParts(notes)
-	if (parts.some((part) => sameText(part, phrase)))
-		return parts.filter((part) => !sameText(part, phrase)).join(', ')
-	const next = [...parts, phrase].join(', ')
+/**
+ * The note with the phrase added at the end, or taken out when it is there:
+ * "High chair, Window". What the host typed is never rewritten: taking a
+ * phrase out removes that piece and one separator beside it, and the rest
+ * stays as it was typed (its spacing, its case, its separators). A phrase
+ * that would not fit leaves the note exactly as it was.
+ */
+export function toggleNote(
+	notes: string,
+	phrase: string,
+	maxLength = NOTE_MAX,
+) {
+	const pieces = notePieces(notes)
+	const at = pieces.findIndex((piece) => sameText(piece.text, phrase))
+	if (at !== -1) {
+		const piece = pieces[at]!
+		const before = notes.slice(0, piece.from)
+		const after = notes.slice(piece.to)
+		// Take one separator with it: the one after it, else the one before.
+		const rest = after.replace(new RegExp(`^${SEPARATOR.source}`), '')
+		if (rest !== after || before === '') return `${before}${rest}`
+		return `${before.replace(new RegExp(`${SEPARATOR.source}$`), '')}${after}`
+	}
+	const base = notes.replace(/\s+$/, '')
+	const joiner =
+		base === '' || /[,;]$/.test(base) ? (base === '' ? '' : ' ') : ', '
+	const next = `${base}${joiner}${phrase}`
 	return next.length > maxLength ? notes : next
 }
 

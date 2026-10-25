@@ -225,7 +225,7 @@ export function JoinWaitlistSheet({
 				</div>
 				<label className="flex flex-col gap-2">
 					<span className="font-semibold">
-						<Trans>Phone (to text when the table is ready)</Trans>
+						<Trans>Phone</Trans>
 					</span>
 					<input
 						className={cn(fieldClass, 'tnum')}
@@ -249,6 +249,10 @@ export function JoinWaitlistSheet({
 							)
 						}}
 					/>
+					{/* The stand cannot record a guest's agreement: only the restaurant's own page or app can. */}
+					<span className="text-muted-foreground text-sm">
+						<Trans>A text is sent only if the guest agreed to messages.</Trans>
+					</span>
 					{phoneProblem ? (
 						<span
 							id="waitlist-phone-problem"

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { type StatusTarget } from './api.ts'
 import { keepOpenTime } from './booking.ts'
 import { type Availability, type DayReservation } from './feed.ts'
+import { foldDigits } from './phone.ts'
 import { serverTime } from './zoned.ts'
 import { Button, Chip, cn, Modal } from '~/ui/primitives.tsx'
 
@@ -43,6 +44,10 @@ export type PartyCommand =
 	| { kind: 'late'; minutes: number }
 	/** Open the change sheet: the party's size or time. */
 	| { kind: 'change' }
+	/** Move a seated party to another table (the floor asks which). */
+	| { kind: 'move' }
+	/** Lengthen a seated party's stay by a step (15 minutes). */
+	| { kind: 'extend' }
 	| { kind: 'undo' }
 	| { kind: 'place' }
 	/** Seat them at the table they are booked at (one tap, no choosing). */
@@ -57,9 +62,12 @@ export type PartyCommand =
 export function PartySize({
 	value,
 	onChange,
+	max = 99,
 }: {
 	value: number
 	onChange: (size: number) => void
+	/** The most this party can be (a seated party at a table that seats so many). */
+	max?: number
 }) {
 	const { _ } = useLingui()
 	const large = value > 8
@@ -75,6 +83,7 @@ export function PartySize({
 					size="lg"
 					selected={value === size}
 					aria-pressed={value === size}
+					disabled={size > max}
 					onClick={() => onChange(size)}
 					className="tnum w-11 px-0"
 				>
@@ -85,6 +94,7 @@ export function PartySize({
 				size="lg"
 				selected={large}
 				aria-pressed={large}
+				disabled={max < 9}
 				onClick={() => onChange(Math.max(value, 9))}
 				className="tnum w-12 px-0"
 			>
@@ -107,7 +117,7 @@ export function PartySize({
 					<button
 						type="button"
 						aria-label={_(msg`One more`)}
-						onClick={() => onChange(Math.min(99, value + 1))}
+						onClick={() => onChange(Math.min(max, 99, value + 1))}
 						className="hover:bg-accent h-full w-11 rounded-e-xl text-lg font-semibold"
 					>
 						+
@@ -151,20 +161,34 @@ export function ConfirmButton({
 	confirmLabel,
 	busy,
 	onConfirm,
+	token,
 	className,
 }: {
 	label: string
 	confirmLabel: string
 	busy: boolean
-	onConfirm: () => void
+	/** Gets the `token` the first tap armed (what the host decided about). */
+	onConfirm: (armedToken: string | number | undefined) => void
+	/**
+	 * What is being decided about, as it stands (a version): it is captured when
+	 * the first tap arms the button, and arming ends if it changes meanwhile,
+	 * so the second tap never confirms something that is no longer what was seen.
+	 */
+	token?: string | number
 	className?: string
 }) {
-	const [armed, setArmed] = useState(false)
+	const [armed, setArmed] = useState<{
+		token: string | number | undefined
+	} | null>(null)
 	useEffect(() => {
 		if (!armed) return
-		const timer = window.setTimeout(() => setArmed(false), 4000)
+		const timer = window.setTimeout(() => setArmed(null), 4000)
 		return () => window.clearTimeout(timer)
 	}, [armed])
+	// Changed since it was armed: the decision was about something else.
+	useEffect(() => {
+		if (armed && armed.token !== token) setArmed(null)
+	}, [armed, token])
 	return (
 		<Button
 			variant={armed ? 'danger' : 'outline'}
@@ -176,9 +200,10 @@ export function ConfirmButton({
 			)}
 			disabled={busy}
 			onClick={() => {
-				if (!armed) return setArmed(true)
-				setArmed(false)
-				onConfirm()
+				if (!armed) return setArmed({ token })
+				const decided = armed.token
+				setArmed(null)
+				onConfirm(decided)
 			}}
 		>
 			{armed ? confirmLabel : label}
@@ -193,6 +218,8 @@ export function ConfirmButton({
  */
 export function ChangePartySheet({
 	reservation,
+	seated = false,
+	maxSize = null,
 	busy,
 	date,
 	loadSlots,
@@ -201,6 +228,13 @@ export function ChangePartySheet({
 	onClose,
 }: {
 	reservation: DayReservation | null
+	/**
+	 * They are at the table already: only the size changes ("we're six now"),
+	 * with no times to choose from.
+	 */
+	seated?: boolean
+	/** The most the party can be: what the tables they sit at seat (null: not known). */
+	maxSize?: number | null
 	busy: boolean
 	/** The day the booking is on (the stand shows one day). */
 	date: string
@@ -229,7 +263,7 @@ export function ChangePartySheet({
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- reset per booking only
 	}, [id])
 	useEffect(() => {
-		if (!id) return
+		if (!id || seated) return
 		let live = true
 		setSlots(null)
 		loadSlots(date, size).then(
@@ -251,7 +285,7 @@ export function ChangePartySheet({
 		return () => {
 			live = false
 		}
-	}, [id, date, size, loadSlots])
+	}, [id, date, size, loadSlots, seated])
 	const slotLabel = useMemo(() => {
 		const format = new Intl.DateTimeFormat(i18n.locale, {
 			hour: 'numeric',
@@ -272,7 +306,7 @@ export function ChangePartySheet({
 			open={r !== null}
 			onClose={onClose}
 			size="lg"
-			title={_(msg`Change size or time`)}
+			title={seated ? _(msg`Change party size`) : _(msg`Change size or time`)}
 			footer={
 				r ? (
 					<div className="mb-safe">
@@ -281,7 +315,7 @@ export function ChangePartySheet({
 							size="lg"
 							className="w-full"
 							// Not while the times for this size are still on their way.
-							disabled={!changed || busy || slots === null}
+							disabled={!changed || busy || (!seated && slots === null)}
 							onClick={() =>
 								onSave({
 									...(size !== r.partySize ? { partySize: size } : {}),
@@ -307,49 +341,63 @@ export function ChangePartySheet({
 						<span className="font-semibold">
 							<Trans>Party size</Trans>
 						</span>
-						<PartySize value={size} onChange={setSize} />
+						<PartySize
+							value={size}
+							onChange={setSize}
+							max={maxSize ?? undefined}
+						/>
+						{seated && maxSize !== null ? (
+							<p className="text-muted-foreground text-sm">
+								<Trans>
+									Their table seats {maxSize}. For more, move them to a bigger
+									table first.
+								</Trans>
+							</p>
+						) : null}
 					</div>
-					<div className="flex flex-col gap-2">
-						<span className="font-semibold">
-							<Trans>Time</Trans>
-						</span>
-						<div className="flex flex-wrap gap-2">
-							<Chip
-								selected={time === null}
-								aria-pressed={time === null}
-								onClick={() => setTime(null)}
-								className="tnum"
-							>
-								<Trans>Keep {current}</Trans>
-							</Chip>
-							{slots === null ? (
-								<span className="t-shimmer self-center text-sm">
-									<Trans>Finding times…</Trans>
-								</span>
-							) : open_.length === 0 ? (
-								<span className="text-muted-foreground self-center text-sm">
-									<Trans>No times left for {size} on this day.</Trans>
-								</span>
-							) : (
-								open_.map((slot) => (
-									<Chip
-										key={slot.localStartMin}
-										selected={time?.min === slot.localStartMin}
-										aria-pressed={time?.min === slot.localStartMin}
-										onClick={() =>
-											setTime({
-												min: slot.localStartMin,
-												label: slotLabel(slot.localStartMin),
-											})
-										}
-										className="tnum min-w-20"
-									>
-										{slotLabel(slot.localStartMin)}
-									</Chip>
-								))
-							)}
+					{seated ? null : (
+						<div className="flex flex-col gap-2">
+							<span className="font-semibold">
+								<Trans>Time</Trans>
+							</span>
+							<div className="flex flex-wrap gap-2">
+								<Chip
+									selected={time === null}
+									aria-pressed={time === null}
+									onClick={() => setTime(null)}
+									className="tnum"
+								>
+									<Trans>Keep {current}</Trans>
+								</Chip>
+								{slots === null ? (
+									<span className="t-shimmer self-center text-sm">
+										<Trans>Finding times…</Trans>
+									</span>
+								) : open_.length === 0 ? (
+									<span className="text-muted-foreground self-center text-sm">
+										<Trans>No times left for {size} on this day.</Trans>
+									</span>
+								) : (
+									open_.map((slot) => (
+										<Chip
+											key={slot.localStartMin}
+											selected={time?.min === slot.localStartMin}
+											aria-pressed={time?.min === slot.localStartMin}
+											onClick={() =>
+												setTime({
+													min: slot.localStartMin,
+													label: slotLabel(slot.localStartMin),
+												})
+											}
+											className="tnum min-w-20"
+										>
+											{slotLabel(slot.localStartMin)}
+										</Chip>
+									))
+								)}
+							</div>
 						</div>
-					</div>
+					)}
 				</div>
 			) : null}
 		</Modal>
@@ -388,7 +436,8 @@ export function groupSlots<T extends { localStartMin: number }>(slots: T[]) {
 
 /** A number the server can text: 8 to 15 digits, with the country code. */
 export function looksLikePhone(value: string) {
-	const trimmed = value.trim()
+	// Digits from an Arabic keyboard count as the digits they are.
+	const trimmed = foldDigits(value).trim()
 	if (!/^\+?[\d\s().-]+$/.test(trimmed)) return false
 	const digits = trimmed.replace(/\D/g, '').length
 	return digits >= 8 && digits <= 15

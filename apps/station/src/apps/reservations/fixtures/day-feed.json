@@ -783,7 +783,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1035,
@@ -794,7 +795,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1050,
@@ -805,7 +807,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1065,
@@ -816,7 +819,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1080,
@@ -827,7 +831,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1095,
@@ -838,7 +843,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1110,
@@ -849,7 +855,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1125,
@@ -860,7 +867,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1140,
@@ -871,7 +879,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 1,
 			"maxCovers": 18,
-			"utilizationPct": 11
+			"utilizationPct": 11,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1155,
@@ -882,7 +891,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1170,
@@ -893,7 +903,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 1,
 			"maxCovers": 18,
-			"utilizationPct": 22
+			"utilizationPct": 22,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1185,
@@ -904,7 +915,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1200,
@@ -915,7 +927,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 1,
 			"maxCovers": 18,
-			"utilizationPct": 17
+			"utilizationPct": 17,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1215,
@@ -926,7 +939,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1230,
@@ -937,7 +951,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1245,
@@ -948,7 +963,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1260,
@@ -959,7 +975,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1275,
@@ -970,7 +987,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1290,
@@ -981,7 +999,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		},
 		{
 			"localMin": 1305,
@@ -992,7 +1011,8 @@
 			"arrivedCovers": 0,
 			"partyCount": 0,
 			"maxCovers": 18,
-			"utilizationPct": 0
+			"utilizationPct": 0,
+			"maxCoversIsDefault": true
 		}
 	],
 	"stats": {

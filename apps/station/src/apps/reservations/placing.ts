@@ -5,6 +5,8 @@ import { type DayReservation } from './feed.ts'
 export type Placing =
 	| { kind: 'reservation'; reservation: DayReservation }
 	| { kind: 'waitlist'; entry: WaitlistEntry }
+	/** A party already seated, picked up to be moved to another table. */
+	| { kind: 'move'; reservation: DayReservation }
 	| {
 			kind: 'walk_in'
 			partySize: number
@@ -16,7 +18,7 @@ export type Placing =
 	  }
 
 export const placingSize = (p: Placing) =>
-	p.kind === 'reservation'
+	p.kind === 'reservation' || p.kind === 'move'
 		? p.reservation.partySize
 		: p.kind === 'waitlist'
 			? p.entry.partySize
@@ -27,6 +29,8 @@ export const placingKey = (p: Placing | null) =>
 		? null
 		: p.kind === 'reservation'
 			? `r:${p.reservation.id}`
-			: p.kind === 'waitlist'
-				? `w:${p.entry.id}`
-				: 'walk-in'
+			: p.kind === 'move'
+				? `m:${p.reservation.id}`
+				: p.kind === 'waitlist'
+					? `w:${p.entry.id}`
+					: 'walk-in'

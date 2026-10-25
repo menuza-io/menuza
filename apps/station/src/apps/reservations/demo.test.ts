@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { HostApiError } from './api.ts'
-import { createDemoHostApi, demoShift, type DemoControls } from './demo.ts'
+import {
+	createDemoHostApi,
+	demoShift,
+	toE164,
+	type DemoControls,
+	type DemoHostOptions,
+} from './demo.ts'
 import { dayFeedSchema, tableState, type DayFeed } from './feed.ts'
+import { newlyFree, pickOffer, tableKinds } from './freeTable.ts'
+import { textQueuedOf } from './waitlist.ts'
 import { addDays, zonedDate, zonedMinutes } from './zoned.ts'
 
 const MIN = 60_000
@@ -9,9 +17,9 @@ const ZONE = 'UTC'
 /** 1:20 PM on a Saturday: the sample is built around this clock. */
 const T0 = Date.UTC(2026, 9, 24, 13, 20)
 
-function demo() {
+function demo(options: DemoHostOptions = {}) {
 	let now = T0
-	const api = createDemoHostApi({ now: () => now, timeZone: ZONE })
+	const api = createDemoHostApi({ now: () => now, timeZone: ZONE, ...options })
 	return {
 		api,
 		advance: (minutes: number) => (now += minutes * MIN),
@@ -544,19 +552,46 @@ describe('the waitlist', () => {
 		expect(seated).toMatchObject({ status: 'seated', tableIds: ['t6'] })
 	})
 
-	it('cannot text a party with no number, and lets one leave', async () => {
+	it('marks a party with no number ready without a text, and lets one leave', async () => {
 		const d = demo()
 		const sofia = (await d.api.waitlist()).entries.find(
 			(e) => e.firstName === 'Sofia',
 		)!
 		expect(sofia.phone).toBeNull()
-		expect(
-			await refusal(d.api.notifyWaitlist(sofia.id, sofia.version)),
-		).toEqual([409, 'no_phone'])
-		await d.api.leaveWaitlist(sofia.id, sofia.version)
+		// Marking ready works; the answer says no text was queued.
+		const answer = await d.api.notifyWaitlist(sofia.id, sofia.version)
+		expect(textQueuedOf(answer)).toBe(false)
+		const told = (await d.api.waitlist()).entries.find(
+			(e) => e.id === sofia.id,
+		)!
+		expect(told.status).toBe('notified')
+		await d.api.leaveWaitlist(sofia.id, told.version)
 		expect(
 			(await d.api.waitlist()).entries.some((e) => e.id === sofia.id),
 		).toBe(false)
+	})
+
+	it('records a hold that ran out as no response, not as left', async () => {
+		const d = demo()
+		const amira = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Amira',
+		)!
+		const answer = (await d.api.leaveWaitlist(
+			amira.id,
+			amira.version,
+			'no_response',
+		)) as { entry: { status: string } }
+		expect(answer.entry.status).toBe('no_response')
+		expect(
+			(await d.api.waitlist()).entries.some((e) => e.id === amira.id),
+		).toBe(false)
+		const wei = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Wei',
+		)!
+		const left = (await d.api.leaveWaitlist(wei.id, wei.version)) as {
+			entry: { status: string }
+		}
+		expect(left.entry.status).toBe('left')
 	})
 
 	it('seating them anyway is the same rules as a booking: not on a taken table', async () => {
@@ -648,13 +683,12 @@ describe('the sample for the guest card and the notices', () => {
 		})
 	})
 
-	it('will not text a party with no consent, or one already told', async () => {
+	it('marks a party with no consent ready, says no text was queued, and refuses one already told', async () => {
 		const d = demo()
 		const { entries } = await d.api.waitlist()
 		const bilal = entries.find((e) => e.firstName === 'Bilal')!
-		expect(
-			await refusal(d.api.notifyWaitlist(bilal.id, bilal.version)),
-		).toEqual([409, 'no_sms_consent'])
+		const answer = await d.api.notifyWaitlist(bilal.id, bilal.version)
+		expect(answer).toMatchObject({ changed: true, textQueued: false })
 		const amira = entries.find((e) => e.firstName === 'Amira')!
 		expect(
 			await refusal(d.api.notifyWaitlist(amira.id, amira.version)),
@@ -712,5 +746,438 @@ describe('what other people do while the host looks', () => {
 		controls.bookOnline({})
 		const next = await d.api.day(first.etag ?? undefined)
 		expect('unchanged' in next).toBe(false)
+	})
+})
+
+describe('the texting of the waitlist, as the server does it', () => {
+	const NAMES = ['Jamal', 'Sofia', 'Wei', 'Theo', 'Bilal'] as const
+	/** The entry's answer to "tell them it's ready": was a text queued? */
+	async function told(options: DemoHostOptions, first: string) {
+		const d = demo(options)
+		const entry = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === first,
+		)!
+		return textQueuedOf(await d.api.notifyWaitlist(entry.id, entry.version))
+	}
+
+	// number x consent x node: only a guest with a number AND consent, on a node that texts, is texted.
+	const expected = (
+		phone: boolean,
+		consent: boolean,
+		sms: boolean,
+		quirk = false,
+	) => phone && consent && sms && !quirk
+	const SEEDS: Record<(typeof NAMES)[number], [boolean, boolean, boolean]> = {
+		// [has a number, agreed to texts, this entry simulates an SMS-less node]
+		Jamal: [true, true, true],
+		Sofia: [false, false, false],
+		Wei: [true, false, false],
+		Theo: [true, true, false],
+		Bilal: [true, false, false],
+	}
+	for (const name of NAMES)
+		for (const sms of [true, false]) {
+			const [phone, consent, quirk] = SEEDS[name]
+			it(`${name}, ${sms ? 'a node that texts' : 'a KSA node with no SMS'}: textQueued is ${expected(phone, consent, sms, quirk)}`, async () => {
+				expect(await told({ smsEnabled: sms }, name)).toBe(
+					expected(phone, consent, sms, quirk),
+				)
+			})
+		}
+
+	it('has a party who joined online, agreed, and gets the text', async () => {
+		const d = demo()
+		const theo = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Theo',
+		)!
+		expect(theo).toMatchObject({ channel: 'remote', smsOptIn: true })
+		const answer = await d.api.notifyWaitlist(theo.id, theo.version)
+		expect(answer).toMatchObject({ changed: true, textQueued: true })
+	})
+
+	it('has no consent for a party added at the stand, whatever number it was given', async () => {
+		const d = demo()
+		const joined = (await d.api.joinWaitlist({
+			displayName: 'Maha Nasser',
+			partySize: 2,
+			phone: '+966 55 123 4567',
+		})) as { id: string; version: number; smsOptIn: boolean; phone: string }
+		expect(joined.smsOptIn).toBe(false)
+		// Stored the way the server keeps a number.
+		expect(joined.phone).toBe('+966551234567')
+		const answer = await d.api.notifyWaitlist(joined.id, joined.version)
+		expect(textQueuedOf(answer)).toBe(false)
+	})
+
+	it('can be switched to an SMS-less node while the stand is open', async () => {
+		const d = demo()
+		const controls = (d.api as unknown as { controls: DemoControls }).controls
+		controls.setSmsEnabled(false)
+		const theo = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Theo',
+		)!
+		expect(
+			textQueuedOf(await d.api.notifyWaitlist(theo.id, theo.version)),
+		).toBe(false)
+	})
+
+	it('marks a party already told as such, and refuses to tell them twice', async () => {
+		const d = demo()
+		const theo = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Theo',
+		)!
+		await d.api.notifyWaitlist(theo.id, theo.version)
+		expect(
+			await refusal(d.api.notifyWaitlist(theo.id, theo.version + 1)),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+})
+
+describe('phone numbers, stored as the server stores them', () => {
+	it('become E.164 from what a host types', () => {
+		expect(toE164('+1 212 555 0100')).toBe('+12125550100')
+		expect(toE164('(415) 555-0142')).toBe('+14155550142')
+		expect(toE164('00966 55 123 4567')).toBe('+966551234567')
+		expect(toE164('055 123 4567')).toBe('+966551234567')
+		expect(toE164('+٩٦٦٥٥١٢٣٤٥٦٧')).toBe('+966551234567')
+		expect(toE164('')).toBeNull()
+		expect(toE164(null)).toBeNull()
+		expect(toE164('abc')).toBeNull()
+	})
+	it('are kept so on a booking made at the stand', async () => {
+		const d = demo()
+		const slot = (await d.api.availability(d.today(), 2)).slots.find(
+			(s) => s.available,
+		)!
+		const made = (await d.api.book({
+			date: d.today(),
+			time: slot.time,
+			localStartMin: slot.localStartMin,
+			partySize: 2,
+			firstName: 'Hind',
+			lastName: 'Said',
+			phone: '+971 50 123 4567',
+			notes: null,
+		})) as { reservation: { guest: { phone: string } } }
+		expect(made.reservation.guest.phone).toBe('+971501234567')
+	})
+	it('are all E.164 in the sample', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		for (const r of feed.reservations)
+			if (r.guest?.phone) expect(r.guest.phone).toMatch(/^\+\d{8,15}$/)
+		for (const e of (await d.api.waitlist()).entries)
+			if (e.phone) expect(e.phone).toMatch(/^\+\d{8,15}$/)
+	})
+})
+
+describe('seen without the guest-details grant', () => {
+	it('sends only the end of a number, no allergy notes and no pinned notes', async () => {
+		const d = demo({ canReadGuest: false })
+		expect((await d.api.grant()).canReadGuest).toBe(false)
+		const feed = await d.feed()
+		const marco = named(feed, 'Marco')
+		expect(marco.guest!.phone).toBe('••••0112')
+		expect(marco.guest!.pinnedNotes).toEqual([])
+		const omar = named(feed, 'Omar')
+		expect(omar.guest!.allergyNotes).toBeNull()
+		expect(omar.dietaryNotes).toBeNull()
+		// The flag still says there is something: a manager can read it.
+		expect(omar.hasAllergy).toBe(true)
+		for (const e of (await d.api.waitlist()).entries)
+			if (e.phone) expect(e.phone).toMatch(/^••••\d{4}$/)
+	})
+	it('sends all of it with the grant, and switches while the stand is open', async () => {
+		const d = demo()
+		expect((await d.api.grant()).canReadGuest).toBe(true)
+		const first = await d.api.day()
+		if ('unchanged' in first) throw new Error('unexpected 304')
+		expect(named(first.feed, 'Marco').guest!.phone).toBe('+14155550112')
+		const controls = (d.api as unknown as { controls: DemoControls }).controls
+		controls.setGuestDetails(false)
+		expect((await d.api.grant()).canReadGuest).toBe(false)
+		// The held day is read again: its ETag changed.
+		const again = await d.api.day(first.etag ?? undefined)
+		if ('unchanged' in again) throw new Error('the day should be read again')
+		expect(named(again.feed, 'Marco').guest!.phone).toBe('••••0112')
+		controls.setGuestDetails(true)
+		const back = await d.api.day()
+		if ('unchanged' in back) throw new Error('unexpected 304')
+		expect(named(back.feed, 'Marco').guest!.phone).toBe('+14155550112')
+	})
+})
+
+describe('tables kept through a reset', () => {
+	it('send each table’s reset buffer, and a party that just left is resetting', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		expect(feed.tables.find((t) => t.id === 't4')!.resetBufferMin).toBe(10)
+		expect(feed.tables.find((t) => t.id === 't1')!.resetBufferMin).toBe(0)
+		const table = feed.tables.find((t) => t.id === 't4')!
+		const state = tableState(table, feed, d.now())
+		expect(state).toMatchObject({ kind: 'resetting' })
+		expect(state.kind === 'resetting' && state.readyAt - d.now()).toBe(6 * MIN)
+	})
+	it('is free again once the buffer has passed', async () => {
+		const d = demo()
+		d.advance(7)
+		const feed = await d.feed()
+		const table = feed.tables.find((t) => t.id === 't4')!
+		expect(tableState(table, feed, d.now()).kind).not.toBe('resetting')
+	})
+	it('keeps a table through its buffer, as the server does: a booking right after is a clash', async () => {
+		// Table 9 keeps 5 minutes after a stay; Nadia is booked on it at 15:00.
+		const seatWalkIn = async (afterMinutes: number) => {
+			const d = demo()
+			const layla = named(await d.feed(), 'Layla')
+			await d.api.transition(layla.id, 'finished', {
+				expectedVersion: layla.version,
+			})
+			d.advance(afterMinutes)
+			return refusal(d.api.walkIn({ partySize: 2, tableIds: ['t9'] }))
+		}
+		// 13:24: a 90 minute stay and the buffer end at 14:59, a minute before the booking.
+		expect(await seatWalkIn(4)).toBeNull()
+		// 13:26: the stay alone would end at 14:56, but with the buffer it runs past 15:00.
+		expect(await seatWalkIn(6)).toEqual([409, 'table_occupied'])
+	})
+	it('frees a table the moment a party is cleared when it has no buffer, and offers it', async () => {
+		const d = demo()
+		const before = await d.feed()
+		const omar = named(before, 'Omar')
+		expect(omar.tableIds).toEqual(['t2'])
+		const kindsBefore = tableKinds(before, d.now())
+		expect(kindsBefore.get('t2')).toBe('seated')
+		await d.api.transition(omar.id, 'finished', {
+			expectedVersion: omar.version,
+		})
+		const after = await d.feed()
+		const kindsAfter = tableKinds(after, d.now())
+		expect(kindsAfter.get('t2')).toBe('open')
+		const freed = newlyFree(kindsBefore, kindsAfter)
+		expect(freed).toContain('t2')
+		// Table 2 seats two: the longest-waiting party of two or fewer is Amira, told 4 minutes ago.
+		const offer = pickOffer({
+			freed,
+			feed: after,
+			waitlist: (await d.api.waitlist()).entries,
+			now: d.now(),
+			dismissed: new Set(),
+		})
+		expect(offer?.placing).toMatchObject({
+			kind: 'waitlist',
+			entry: { firstName: 'Amira' },
+		})
+		expect(offer?.waitedMin).toBe(22)
+	})
+	it('resets a table on finishing when it has a buffer', async () => {
+		const d = demo()
+		const before = await d.feed()
+		const sarah = named(before, 'Sarah')
+		await d.api.transition(sarah.id, 'finished', {
+			expectedVersion: sarah.version,
+		})
+		const after = await d.feed()
+		const state = tableState(
+			after.tables.find((t) => t.id === 't7')!,
+			after,
+			d.now(),
+		)
+		expect(state).toMatchObject({ kind: 'resetting' })
+		expect(
+			newlyFree(tableKinds(before, d.now()), tableKinds(after, d.now())),
+		).not.toContain('t7')
+	})
+	it('seats a party at a table that is still resetting: the stand asks, the server does not', async () => {
+		const d = demo()
+		const before = await d.feed()
+		const layla = named(before, 'Layla')
+		await d.api.transition(layla.id, 'finished', {
+			expectedVersion: layla.version,
+		})
+		const resetting = await d.feed()
+		const t9 = resetting.tables.find((t) => t.id === 't9')!
+		expect(tableState(t9, resetting, d.now()).kind).toBe('resetting')
+		const answer = (await d.api.walkIn({
+			partySize: 2,
+			tableIds: ['t9'],
+		})) as { reservation: { tableIds: string[]; status: string } }
+		expect(answer.reservation).toMatchObject({
+			status: 'seated',
+			tableIds: ['t9'],
+		})
+	})
+})
+
+describe('a party at the table', () => {
+	const seatedAt = async (d: ReturnType<typeof demo>, first: string) => {
+		const feed = await d.feed()
+		return named(feed, first)
+	}
+	it('moves to a free table, and not onto one that someone sits at', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		expect(
+			await refusal(d.api.assign(sarah.id, ['t9'], sarah.version)),
+		).toEqual([409, 'table_occupied'])
+		const moved = (await d.api.assign(sarah.id, ['t6'], sarah.version)) as {
+			reservation: { tableIds: string[]; tableLabels: string[]; status: string }
+		}
+		expect(moved.reservation).toMatchObject({
+			status: 'seated',
+			tableIds: ['t6'],
+			tableLabels: ['6'],
+		})
+	})
+	it('moves back where they were with no version to go by (an undo)', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		await d.api.assign(sarah.id, ['t6'], sarah.version)
+		const back = (await d.api.assign(sarah.id, ['t7'])) as {
+			reservation: { tableIds: string[] }
+		}
+		expect(back.reservation.tableIds).toEqual(['t7'])
+	})
+	it('refuses a move from a stale version, and for a booking that is over', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		expect(
+			await refusal(d.api.assign(sarah.id, ['t6'], sarah.version + 5)),
+		).toEqual([409, 'stale_version'])
+		const noor = await seatedAt(d, 'Noor')
+		expect(noor.status).toBe('finished')
+		expect(await refusal(d.api.assign(noor.id, ['t6'], noor.version))).toEqual([
+			409,
+			'reservation_not_active',
+		])
+	})
+	it('may overbook a move onto a table booked soon, with the host’s reason', async () => {
+		const d = demo()
+		const chris = await seatedAt(d, 'Chris')
+		// Table 8 is booked in half an hour for eight: a move there is refused...
+		expect(
+			await refusal(d.api.assign(chris.id, ['t8'], chris.version)),
+		).toEqual([409, 'table_occupied'])
+		// ...unless the host insists.
+		const insisted = (await d.api.assign(chris.id, ['t8'], chris.version, {
+			overbook: true,
+			overbookReason: 'Seated at the host stand',
+		})) as { reservation: { tableIds: string[] } }
+		expect(insisted.reservation.tableIds).toEqual(['t8'])
+	})
+	it('can stay a quarter hour longer, and the table’s expected clear moves with it', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		const longer = (await d.api.changeParty(
+			sarah.id,
+			{ durationMin: sarah.durationMin + 15 },
+			sarah.version,
+		)) as { reservation: { durationMin: number; endAt: number } }
+		expect(longer.reservation.durationMin).toBe(sarah.durationMin + 15)
+		expect(longer.reservation.endAt).toBe(sarah.endAt + 15 * MIN)
+	})
+	it('may not be given a stay longer than a till can set', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		expect(
+			await refusal(
+				d.api.changeParty(sarah.id, { durationMin: 361 }, sarah.version),
+			),
+		).toEqual([409, 'manager_required'])
+	})
+	it('changes size at the door, on the same table and with the same stay', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		const smaller = (await d.api.changeParty(
+			sarah.id,
+			{ partySize: 5, durationMin: sarah.durationMin },
+			sarah.version,
+		)) as {
+			reservation: {
+				partySize: number
+				tableIds: string[]
+				endAt: number
+				status: string
+			}
+		}
+		expect(smaller.reservation).toMatchObject({
+			partySize: 5,
+			tableIds: ['t7'],
+			status: 'seated',
+			endAt: sarah.endAt,
+		})
+	})
+	it('may not grow past the table, or have its time moved', async () => {
+		const d = demo()
+		const sarah = await seatedAt(d, 'Sarah')
+		// Table 7 seats six.
+		expect(
+			await refusal(
+				d.api.changeParty(sarah.id, { partySize: 7 }, sarah.version),
+			),
+		).toEqual([409, 'no_availability'])
+		expect(
+			await refusal(
+				d.api.changeParty(
+					sarah.id,
+					{ time: '19:00', localStartMin: 19 * 60 },
+					sarah.version,
+				),
+			),
+		).toEqual([409, 'invalid_status'])
+	})
+})
+
+describe('a booking with money on it', () => {
+	it('is not resized, cancelled or marked a no-show from a till', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const nadia = named(feed, 'Nadia')
+		expect(nadia.paymentStatus).toBe('paid')
+		expect(
+			await refusal(
+				d.api.changeParty(nadia.id, { partySize: 3 }, nadia.version),
+			),
+		).toEqual([409, 'manager_required'])
+		expect(
+			await refusal(
+				d.api.transition(nadia.id, 'cancelled', {
+					expectedVersion: nadia.version,
+				}),
+			),
+		).toEqual([409, 'manager_required'])
+		d.advance(120)
+		const rana = named(await d.feed(), 'Rana')
+		expect(rana.paymentStatus).toBe('paid')
+		expect(
+			await refusal(
+				d.api.transition(rana.id, 'no_show', { expectedVersion: rana.version }),
+			),
+		).toEqual([409, 'manager_required'])
+	})
+	it('may still be given a longer stay once seated (it is not money)', async () => {
+		const d = demo()
+		const rana = named(await d.feed(), 'Rana')
+		const seated = (await d.api.transition(rana.id, 'seated', {
+			tableIds: ['t6'],
+			expectedVersion: rana.version,
+		})) as { reservation: { version: number; durationMin: number } }
+		const longer = (await d.api.changeParty(
+			rana.id,
+			{ durationMin: seated.reservation.durationMin + 15 },
+			seated.reservation.version,
+		)) as { reservation: { durationMin: number } }
+		expect(longer.reservation.durationMin).toBe(
+			seated.reservation.durationMin + 15,
+		)
+	})
+})
+
+describe('the day’s pacing', () => {
+	it('marks its caps as the restaurant’s own, not the server’s default', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		expect(feed.pacing.length).toBeGreaterThan(0)
+		expect(feed.pacing.every((p) => p.maxCoversIsDefault === false)).toBe(true)
 	})
 })

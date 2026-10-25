@@ -9,17 +9,19 @@ import {
 	WalkInSheet,
 	type WaitlistPrefill,
 } from './AddSheets.tsx'
-import { HostApiError } from './api.ts'
+import { HostApiError, type LeaveTarget } from './api.ts'
 import {
 	bookList,
+	createSelfMarks,
 	dayNotices,
 	daySnapshot,
 	dayTotals,
 	liveServices,
 	newArrivals,
+	snapshotToCompare,
 	type BookList,
-	type DaySnapshot,
 	type DayTotals,
+	type SeenDay,
 } from './book.ts'
 import { bookingAnswerOf } from './bookingAnswer.ts'
 import {
@@ -37,10 +39,20 @@ import {
 	tableState,
 	type DayReservation,
 	type DayTable,
+	type TableKind,
 	type TableState,
 } from './feed.ts'
 import { Floor, FreeCount, freeTables } from './Floor.tsx'
+import {
+	FREE_OFFER_MS,
+	newlyFree,
+	pickOffer,
+	tableKinds,
+	type FreeTableOffer,
+} from './freeTable.ts'
+import { FreeTableBanner } from './FreeTableBanner.tsx'
 import { formatPhone } from './guest.ts'
+import { keyed } from './keyed.ts'
 import {
 	displayNameOf,
 	findRepeat,
@@ -53,14 +65,17 @@ import { placingSize, type Placing } from './placing.ts'
 import { ChangePartySheet, type PartyCommand } from './sheets.tsx'
 import {
 	PaneTabs,
+	StandDock,
 	StandHeader,
 	StandStats,
 	type MainView,
 	type PaneTab,
 } from './StandHeader.tsx'
+import { EXTEND_STEP_MIN } from './stay.ts'
 import { TableSheet } from './TableSheet.tsx'
 import { Timeline, type TimelineRefusal } from './Timeline.tsx'
 import { dayFailedFor, useHostStand } from './useHostStand.ts'
+import { notifiedToast, textQueuedOf } from './waitlist.ts'
 import { WaitlistSheet } from './WaitlistSheet.tsx'
 import './book.css'
 import { holdLock } from '~/lib/activity.ts'
@@ -190,34 +205,30 @@ export function HostStand({
 	 */
 	const bookingKey = useRef(crypto.randomUUID())
 	const joinKey = useRef(crypto.randomUUID())
-	const keyed = useCallback(
-		async (
-			ref: { current: string },
-			send: (key: string) => Promise<unknown>,
-		) => {
-			try {
-				const result = await send(ref.current)
-				ref.current = crypto.randomUUID()
-				return result
-			} catch (error) {
-				// No answer, an answer about the server rather than this request, or
-				// the server already has it under this key: keep the key, so the
-				// frozen form's next tap is the same request. Only a definite
-				// refusal starts a new one.
-				const keep =
-					error instanceof HostApiError &&
-					(error.retryable || error.alreadyDone)
-				if (!keep) ref.current = crypto.randomUUID()
-				throw error
-			}
-		},
-		[],
-	)
 	/** A party bigger than the table the host tapped: asked before seating. */
 	const [tooSmall, setTooSmall] = useState<{
 		placing: Placing
 		table: DayTable
 	} | null>(null)
+	/** A table still being reset, tapped for a party: asked before seating. */
+	const [resetAsk, setResetAsk] = useState<{
+		placing: Placing
+		table: DayTable
+		readyAt: number
+	} | null>(null)
+	/**
+	 * What "tell them it's ready" answered about a text, per waitlist entry:
+	 * true only when one was queued. Kept for this tablet's session; a party
+	 * told elsewhere has no answer here.
+	 */
+	const [textedBy, setTextedBy] = useState<ReadonlyMap<string, boolean>>(
+		new Map(),
+	)
+	/** Tables that freed up while the host was looking, and the offers already put away. */
+	const [freed, setFreed] = useState<ReadonlyMap<string, number>>(new Map())
+	const [dismissedOffers, setDismissedOffers] = useState<ReadonlySet<string>>(
+		new Set(),
+	)
 	const [toast, setToast] = useState<ToastMessage | null>(null)
 	const toastRef = useRef<ToastMessage | null>(null)
 	toastRef.current = toast
@@ -240,7 +251,8 @@ export function HostStand({
 		walkInOpen ||
 		changeId !== null ||
 		placing !== null ||
-		tooSmall !== null
+		tooSmall !== null ||
+		resetAsk !== null
 	useEffect(() => {
 		if (!working) return
 		return holdLock()
@@ -424,6 +436,7 @@ export function HostStand({
 		[list, query],
 	)
 	const party = feed?.reservations.find((r) => r.id === partyId) ?? null
+	const changing = feed?.reservations.find((r) => r.id === changeId) ?? null
 	const waitlistEntry =
 		ready?.waitlist.find((entry) => entry.id === waitlistId) ?? null
 
@@ -431,10 +444,10 @@ export function HostStand({
 	// another host's stand (VIPs by name), a booking made online or cancelled, a
 	// party size changed. What this tablet did itself says so already. Only today
 	// is watched, and the first look at a day (or a new day) says nothing.
-	const seen = useRef<{ date: string; snapshot: DaySnapshot } | null>(null)
-	const selfArrived = useRef(new Set<string>())
-	/** Changes this tablet made to a booking (a cancel, a new size): not news to it. */
-	const selfChanged = useRef(new Set<string>())
+	const seen = useRef<SeenDay | null>(null)
+	/** Parties this tablet marked here, and changes it made to a booking: not news to it. */
+	const selfArrived = useRef(createSelfMarks())
+	const selfChanged = useRef(createSelfMarks())
 	const feedDate = ready?.feedDate
 	useEffect(() => {
 		if (!feed || feedDate !== null) {
@@ -442,14 +455,22 @@ export function HostStand({
 			seen.current = null
 			return
 		}
-		const before =
-			seen.current?.date === feed.businessDate ? seen.current.snapshot : null
-		seen.current = { date: feed.businessDate, snapshot: daySnapshot(feed) }
-		const arrivals = newArrivals(before, feed, selfArrived.current)
+		const at = clock()
+		// A look long ago (a tablet that slept) is no basis for news: nothing is announced.
+		const before = snapshotToCompare(seen.current, feed.businessDate, at)
+		seen.current = {
+			date: feed.businessDate,
+			snapshot: daySnapshot(feed),
+			at,
+		}
+		const arrivals = newArrivals(before, feed, selfArrived.current.live(at))
 		const notices = dayNotices(before, feed, {
-			now: clock(),
-			byUs: selfChanged.current,
+			now: at,
+			byUs: selfChanged.current.live(at),
 		})
+		// What the day has now shown is no longer the stand's to hide from the next look.
+		selfArrived.current.settle(before, feed)
+		selfChanged.current.settle(before, feed)
 		const { items, toast: said } = newsOf(_, {
 			arrivals,
 			notices,
@@ -463,7 +484,7 @@ export function HostStand({
 			.map((notice) => notice.reservation.id)
 		if (made.length > 0)
 			setFreshIds((previous) => new Set([...previous, ...made]))
-	}, [feed, feedDate, sayNews, clock, formatTime, _])
+	}, [ready, feed, feedDate, sayNews, clock, formatTime, _])
 	// Opening a booking's details clears its dot.
 	useEffect(() => {
 		if (partyId === null) return
@@ -474,6 +495,49 @@ export function HostStand({
 			return next
 		})
 	}, [partyId])
+
+	// A table that frees up (a party cleared, or its reset over) is offered to
+	// whoever has waited longest and fits. Only what happens while the host is
+	// looking counts: the first look at a day offers nothing.
+	const kindsSeen = useRef<{
+		date: string
+		kinds: Map<string, TableKind>
+	} | null>(null)
+	useEffect(() => {
+		if (!feed || feedDate !== null) {
+			kindsSeen.current = null
+			return
+		}
+		const at = clock()
+		const kinds = tableKinds(feed, at)
+		const before =
+			kindsSeen.current?.date === feed.businessDate
+				? kindsSeen.current.kinds
+				: null
+		kindsSeen.current = { date: feed.businessDate, kinds }
+		const ids = newlyFree(before, kinds)
+		if (ids.length === 0) return
+		setFreed((previous) => {
+			const next = new Map(previous)
+			for (const id of ids) next.set(id, at)
+			return next
+		})
+	}, [ready, feed, feedDate, now, clock])
+	const offer: FreeTableOffer | null = useMemo(() => {
+		if (!feed || !ready || feedDate !== null || placing !== null) return null
+		const recent = [...freed]
+			.filter(([, at]) => now - at <= FREE_OFFER_MS)
+			.sort((a, b) => b[1] - a[1])
+			.map(([id]) => id)
+		if (recent.length === 0) return null
+		return pickOffer({
+			freed: recent,
+			feed,
+			waitlist: ready.waitlist,
+			now,
+			dismissed: dismissedOffers,
+		})
+	}, [feed, ready, feedDate, placing, freed, now, dismissedOffers])
 
 	const chooseRoom = (id: string) => {
 		setRoomId(id)
@@ -587,7 +651,8 @@ export function HostStand({
 					const label = anyway.table.label
 					// Either way the party stays picked up, ready for a table.
 					restore?.()
-					if (kind !== 'open' && kind !== 'soon') {
+					// A table still being reset can be overbooked too: it is not "taken".
+					if (kind !== 'open' && kind !== 'soon' && kind !== 'resetting') {
 						say(_(msg`Table ${label} was just taken. Choose another table.`), {
 							tone: 'danger',
 						})
@@ -636,8 +701,47 @@ export function HostStand({
 		[refresh, say, noteWrite, clock, _],
 	)
 
+	/** What a table is doing now, as the day stands (for a tap that acts on what is on screen). */
+	const stateOf = (table: DayTable): TableState => {
+		const latest = readyRef.current
+		return latest
+			? tableState(table, latest.feed, clock())
+			: { kind: 'open', next: null }
+	}
+
+	/**
+	 * Takes a party to a table the host chose, asking first where it matters: a
+	 * table still being reset (it can be seated anyway), and a party bigger than
+	 * the table seats (the host's call, made on purpose). `reset` skips the
+	 * first question once it has been answered.
+	 */
+	const proceed = (
+		current: Placing,
+		table: DayTable,
+		state: TableState,
+		reset = false,
+	) => {
+		if (state.kind === 'resetting' && !reset) {
+			setResetAsk({ placing: current, table, readyAt: state.readyAt })
+			return
+		}
+		if (!fits(table, placingSize(current))) {
+			setTooSmall({ placing: current, table })
+			return
+		}
+		void seat(current, table, false)
+	}
+
 	const seatAt = async (table: DayTable, tableState: TableState) => {
 		if (!placing) return
+		// Picked up to be moved: the table they are at is not a place to move them to.
+		if (
+			placing.kind === 'move' &&
+			placing.reservation.tableIds.includes(table.id)
+		) {
+			say(_(msg`They are at Table ${table.label} already. Choose another.`))
+			return
+		}
 		if (tableState.kind === 'seated' || tableState.kind === 'blocked') {
 			say(_(msg`Table ${table.label} is taken. Choose another table.`), {
 				tone: 'danger',
@@ -646,12 +750,7 @@ export function HostStand({
 		}
 		const current = placing
 		setPlacing(null)
-		// A bigger party than the table seats is the host's call, made on purpose.
-		if (!fits(table, placingSize(current))) {
-			setTooSmall({ placing: current, table })
-			return
-		}
-		await seat(current, table, false)
+		proceed(current, table, tableState)
 	}
 
 	/** Seats a party; when the table is booked soon, the host may insist (overbook). */
@@ -703,6 +802,22 @@ export function HostStand({
 				() => api.seatWaitlist(entry.id, [table.id], version, overbook),
 				_(msg`Seated ${entry.displayName} at ${table.label}.`),
 				{ anyway: again, restore },
+			)
+		} else if (current.kind === 'move') {
+			const r = current.reservation
+			const who = shortName(r, _(msg`Guest`))
+			const fresh = latest?.feed.reservations.find((x) => x.id === r.id) ?? r
+			const from = fresh.tableIds
+			await act(
+				() => api.assign(r.id, [table.id], fresh.version, overbook),
+				_(msg`Moved ${who} to ${table.label}.`),
+				{
+					// Back to where they were; the version is whatever it is by then.
+					undo: () => api.assign(r.id, from),
+					anyway: again,
+					restore,
+					subject: r.id,
+				},
 			)
 		} else {
 			const size = current.partySize
@@ -799,12 +914,9 @@ export function HostStand({
 		}
 	}
 
-	/** Seats a booking at a table now (the table it holds, or one the host tapped): a bigger party is asked about first. */
-	const seatBooking = (r: DayReservation, table: DayTable) => {
-		const booking: Placing = { kind: 'reservation', reservation: r }
-		if (!fits(table, r.partySize)) setTooSmall({ placing: booking, table })
-		else void seat(booking, table, false)
-	}
+	/** Seats a booking at a table now (the table it holds, or one the host tapped): asked about first where it matters. */
+	const seatBooking = (r: DayReservation, table: DayTable) =>
+		proceed({ kind: 'reservation', reservation: r }, table, stateOf(table))
 
 	const onCommand = async (r: DayReservation, command: PartyCommand) => {
 		if (command.kind === 'place') {
@@ -820,6 +932,29 @@ export function HostStand({
 			// A table that is gone: back to choosing one.
 			if (table) seatBooking(r, table)
 			else pick({ kind: 'reservation', reservation: r })
+			return
+		}
+		if (command.kind === 'move') {
+			// The floor asks which table, the same way it does for a party to seat.
+			setPartyId(null)
+			pick({ kind: 'move', reservation: r })
+			return
+		}
+		if (command.kind === 'extend') {
+			const who = shortName(r, _(msg`Guest`))
+			const clears = formatTime(r.endAt + EXTEND_STEP_MIN * 60_000)
+			const longer = r.durationMin + EXTEND_STEP_MIN
+			await act(
+				() => api.changeParty(r.id, { durationMin: longer }, r.version),
+				_(
+					msg`${who}: ${EXTEND_STEP_MIN} more minutes, expected clear about ${clears}.`,
+				),
+				{
+					// Back to the stay they had; the version is whatever it is by then.
+					undo: () => api.changeParty(r.id, { durationMin: r.durationMin }),
+					subject: r.id,
+				},
+			)
 			return
 		}
 		if (command.kind === 'again') {
@@ -839,11 +974,17 @@ export function HostStand({
 			})
 			return
 		}
-		// What this tablet marks itself is not announced again as news.
-		if (command.kind === 'status' && command.to === 'arrived')
-			selfArrived.current.add(r.id)
-		if (command.kind === 'status' && command.to === 'cancelled')
-			selfChanged.current.add(r.id)
+		// What this tablet marks itself is not announced again as news (until the
+		// day shows it, a while passes, or the change turns out not to have happened).
+		const markedAt = clock()
+		const marks =
+			command.kind === 'status' && command.to === 'arrived'
+				? selfArrived.current
+				: command.kind === 'status' && command.to === 'cancelled'
+					? selfChanged.current
+					: null
+		marks?.mark(r.id, markedAt)
+		const unmark = () => marks?.unmark(r.id)
 		const who = shortName(r, _(msg`Guest`))
 		if (command.kind === 'change') {
 			setPartyId(null)
@@ -889,7 +1030,10 @@ export function HostStand({
 					...(command.reason ? { reason: command.reason } : {}),
 				}),
 			done,
-			reversible ? { undo: () => api.undo(r.id), subject: r.id } : {},
+			{
+				...(reversible ? { undo: () => api.undo(r.id), subject: r.id } : {}),
+				onRefused: unmark,
+			},
 		)
 		if (ok) setPartyId(null)
 	}
@@ -943,15 +1087,26 @@ export function HostStand({
 			: []
 	/** Not seating here after all: the party stays picked up for another table. */
 	const backToPlacing = () => {
-		const pending = tooSmall
+		const pending = tooSmall ?? resetAsk
 		setTooSmall(null)
+		setResetAsk(null)
 		if (pending) setPlacing(pending.placing)
+	}
+	const resetLabel = resetAsk?.table.label ?? ''
+	const resetReady = resetAsk ? formatTime(resetAsk.readyAt) : ''
+	/** An offer put away: never made again for this table and party. */
+	const dismissOffer = (made: FreeTableOffer) =>
+		setDismissedOffers((previous) => new Set(previous).add(made.key))
+	/** One tap on an offer seats them, by the same rules as any seating. */
+	const acceptOffer = (made: FreeTableOffer) => {
+		dismissOffer(made)
+		proceed(made.placing, made.table, stateOf(made.table))
 	}
 	const tooSmallLabel = tooSmall?.table.label ?? ''
 	const tooSmallSeats = tooSmall?.table.maxCovers ?? 0
 	const tooSmallParty = tooSmall ? placingSize(tooSmall.placing) : 0
 	const placingName = placing
-		? placing.kind === 'reservation'
+		? placing.kind === 'reservation' || placing.kind === 'move'
 			? shortName(placing.reservation, _(msg`Guest`))
 			: placing.kind === 'waitlist'
 				? placing.entry.displayName
@@ -963,9 +1118,17 @@ export function HostStand({
 				durationMin:
 					placing.kind === 'reservation'
 						? placing.reservation.durationMin
-						: DEFAULT_TURN_MIN,
+						: placing.kind === 'move'
+							? // A party moved has the rest of their stay left, not a whole turn.
+								Math.max(
+									15,
+									Math.ceil((placing.reservation.endAt - now) / 60_000),
+								)
+							: DEFAULT_TURN_MIN,
 				reservationId:
-					placing.kind === 'reservation' ? placing.reservation.id : undefined,
+					placing.kind === 'reservation' || placing.kind === 'move'
+						? placing.reservation.id
+						: undefined,
 			}
 		: null
 	/** A tap on the grid that started nothing: say why, so it never feels dead. */
@@ -1013,6 +1176,8 @@ export function HostStand({
 			waitlistOn={ready.grant.features.waitlist}
 			single={single}
 			fresh={freshIds}
+			canReadGuest={ready.grant.canReadGuest}
+			textedBy={textedBy}
 			onPick={pick}
 			onDetails={(r) => setPartyId(r.id)}
 			onWaitlistDetails={(entry) => setWaitlistId(entry.id)}
@@ -1099,6 +1264,14 @@ export function HostStand({
 					</Button>
 				</div>
 			</Reveal>
+
+			{offer ? (
+				<FreeTableBanner
+					offer={offer}
+					onSeat={() => acceptOffer(offer)}
+					onDismiss={() => dismissOffer(offer)}
+				/>
+			) : null}
 
 			{feed.dayState !== 'open' ? (
 				<p className="bg-warning/12 text-warning px-4 py-2 text-sm font-medium">
@@ -1194,6 +1367,10 @@ export function HostStand({
 											<Trans>Seated</Trans>
 										</li>
 										<li className="flex items-center gap-1.5">
+											<span className="bk-dot" data-kind="resetting" />
+											<Trans>Resetting</Trans>
+										</li>
+										<li className="flex items-center gap-1.5">
 											<span className="bk-dot" data-kind="blocked" />
 											<Trans>Blocked</Trans>
 										</li>
@@ -1230,6 +1407,7 @@ export function HostStand({
 							matchIds={matchIds}
 							picking={picking}
 							active={pane === 'timeline'}
+							canReadGuest={ready.grant.canReadGuest}
 							formatTime={formatTime}
 							formatShort={formatShort}
 							summary={summary}
@@ -1274,6 +1452,10 @@ export function HostStand({
 				reservation={party}
 				viewOnly={!isToday}
 				canReadGuest={ready.grant.canReadGuest}
+				tableKindOf={(tableId) => {
+					const t = feed.tables.find((x) => x.id === tableId)
+					return t ? tableState(t, feed, now).kind : null
+				}}
 				busy={busy}
 				now={now}
 				formatTime={formatTime}
@@ -1292,16 +1474,28 @@ export function HostStand({
 					setWaitlistId(null)
 					pick({ kind: 'waitlist', entry })
 				}}
+				textQueued={waitlistEntry ? textedBy.get(waitlistEntry.id) : undefined}
 				onNotify={(entry) => {
 					const who = entry.firstName || entry.displayName
 					void act(
 						() => api.notifyWaitlist(entry.id, entry.version),
-						_(msg`Texted ${who}: your table is ready.`),
+						// A text is claimed only when the server says one was queued.
+						(result) => notifiedToast(_, who, textQueuedOf(result)),
+						{
+							onSuccess: (result) => {
+								const queued = textQueuedOf(result)
+								if (queued !== undefined)
+									setTextedBy((previous) =>
+										new Map(previous).set(entry.id, queued),
+									)
+							},
+						},
 					)
 				}}
-				onRemove={(entry) =>
+				onRemove={(entry, version, target: LeaveTarget) =>
 					void act(
-						() => api.leaveWaitlist(entry.id, entry.version),
+						// The version the host saw when they armed it: a change since is refused.
+						() => api.leaveWaitlist(entry.id, version, target),
 						_(msg`${entry.displayName} left the waitlist.`),
 					).then((ok) => ok && setWaitlistId(null))
 				}
@@ -1334,12 +1528,21 @@ export function HostStand({
 						key: crypto.randomUUID(),
 						overbookKey: crypto.randomUUID(),
 					}
-					if (!fits(table, size)) setTooSmall({ placing: walkIn, table })
-					else void seat(walkIn, table, false)
+					proceed(walkIn, table, stateOf(table))
 				}}
 			/>
 			<ChangePartySheet
-				reservation={feed.reservations.find((r) => r.id === changeId) ?? null}
+				reservation={changing}
+				seated={changing?.status === 'seated'}
+				maxSize={
+					changing?.status === 'seated'
+						? changing.tableIds.reduce(
+								(sum, id) =>
+									sum + (feed.tables.find((t) => t.id === id)?.maxCovers ?? 0),
+								0,
+							) || null
+						: null
+				}
 				busy={busy}
 				date={feed.businessDate}
 				loadSlots={changeSlots}
@@ -1352,10 +1555,14 @@ export function HostStand({
 					const r = feed.reservations.find((x) => x.id === changeId)
 					if (!r) return
 					const who = shortName(r, _(msg`Guest`))
-					selfChanged.current.add(r.id)
+					const marks = selfChanged.current
+					marks.mark(r.id, clock())
 					const size = change.partySize ?? r.partySize
 					const time = change.timeLabel ?? formatTime(r.startAt)
-					const done = _(msg`${who} is now ${size} at ${time}.`)
+					const atTable = r.status === 'seated'
+					const done = atTable
+						? _(msg`${who} is now ${size}.`)
+						: _(msg`${who} is now ${size} at ${time}.`)
 					void act(
 						() =>
 							api.changeParty(
@@ -1364,6 +1571,11 @@ export function HostStand({
 									...(change.partySize ? { partySize: change.partySize } : {}),
 									...(change.time && change.localStartMin !== undefined
 										? { time: change.time, localStartMin: change.localStartMin }
+										: {}),
+									// The server gives a new size a turn's stay of its own; one
+									// already at the table keeps the stay it has (with any "+15").
+									...(atTable && change.partySize
+										? { durationMin: r.durationMin }
 										: {}),
 								},
 								r.version,
@@ -1374,6 +1586,7 @@ export function HostStand({
 								setChangeId(null)
 								setChangeUnsure(null)
 							},
+							onRefused: () => marks.unmark(r.id),
 							onUnsure: () =>
 								setChangeUnsure({
 									id: r.id,
@@ -1408,6 +1621,7 @@ export function HostStand({
 				prefill={bookingPrefill}
 				loadSlots={api.availability}
 				repeatOf={repeatOf}
+				checkedDay={feed.businessDate}
 				onOpenRepeat={(repeat) => {
 					setBookingOpen(false)
 					if (repeat.kind === 'booking') setPartyId(repeat.reservation.id)
@@ -1459,7 +1673,6 @@ export function HostStand({
 										when: '',
 										code: null,
 										table: null,
-										textSent: false,
 										asFirstSent: true,
 									})
 									return
@@ -1473,7 +1686,6 @@ export function HostStand({
 										: _(msg`Today at ${time}`),
 									code: answer.code,
 									table: answer.table,
-									textSent: answer.textSent,
 								})
 							},
 							onUnsure: () => setBookingLocked(true),
@@ -1531,6 +1743,53 @@ export function HostStand({
 					<Trans>
 						Table {tooSmallLabel} seats {tooSmallSeats}. This party is{' '}
 						{tooSmallParty}.
+					</Trans>
+				</p>
+			</Modal>
+			{/* A phone's three adds sit at the bottom, where a thumb is. */}
+			{!wide ? (
+				<StandDock
+					isToday={isToday}
+					waitlistOn={ready.grant.features.waitlist}
+					onWalkIn={() => setWalkInOpen(true)}
+					onWaitlist={() => openJoin(null)}
+					onBooking={() => startBooking(null)}
+				/>
+			) : null}
+			<Modal
+				open={resetAsk !== null}
+				onClose={backToPlacing}
+				title={_(msg`Table ${resetLabel} is still resetting`)}
+				footer={
+					<div className="mb-safe grid grid-cols-2 gap-3">
+						<Button size="lg" onClick={backToPlacing}>
+							<Trans>Choose another</Trans>
+						</Button>
+						<Button
+							variant="primary"
+							size="lg"
+							disabled={busy}
+							onClick={() => {
+								const pending = resetAsk
+								setResetAsk(null)
+								if (pending)
+									proceed(
+										pending.placing,
+										pending.table,
+										stateOf(pending.table),
+										true,
+									)
+							}}
+						>
+							<Trans>Seat anyway</Trans>
+						</Button>
+					</div>
+				}
+			>
+				<p className="text-muted-foreground p-5">
+					<Trans>
+						Table {resetLabel} is ready about {resetReady}. Seat them there
+						anyway?
 					</Trans>
 				</p>
 			</Modal>

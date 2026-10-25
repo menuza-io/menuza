@@ -136,6 +136,9 @@ export type HostDeps = {
 /** Seat on a table that another booking also holds, with the host's reason. */
 export type Overbook = { overbook?: boolean; overbookReason?: string }
 
+/** Why a party comes off the waitlist without being seated. */
+export type LeaveTarget = 'left' | 'no_response'
+
 export type StatusTarget =
 	'arrived' | 'seated' | 'finished' | 'no_show' | 'cancelled' | 'confirmed'
 
@@ -378,14 +381,20 @@ export function createHostApi(deps: HostDeps) {
 		},
 
 		/**
-		 * The party's size or time changed ("we're six now", "make it 8:00"): the
-		 * only booking fields a till may change. Checked against the version the
+		 * The party's size, time or stay changed ("we're six now", "make it 8:00",
+		 * "they are staying a while"): the only booking fields a till may change.
+		 * `durationMin` is minutes (15 to 360). Checked against the version the
 		 * host saw.
 		 */
 		async changeParty(
 			reservationId: string,
-			change: { partySize?: number; time?: string; localStartMin?: number },
-			expectedVersion: number,
+			change: {
+				partySize?: number
+				time?: string
+				localStartMin?: number
+				durationMin?: number
+			},
+			expectedVersion?: number,
 		) {
 			const result = await call(
 				'PATCH',
@@ -394,7 +403,7 @@ export function createHostApi(deps: HostDeps) {
 				{
 					body: {
 						locationId: await locationId(),
-						expectedVersion,
+						...(expectedVersion !== undefined ? { expectedVersion } : {}),
 						...change,
 					},
 				},
@@ -438,16 +447,25 @@ export function createHostApi(deps: HostDeps) {
 			)
 		},
 
+		/**
+		 * Puts a booking on these tables (a party seated at one moves to another).
+		 * A till sends only the tables, the version it saw, and an overbook with
+		 * its reason: no swapping with another party, no locking.
+		 */
 		assign(
 			reservationId: string,
 			tableIds: string[],
 			expectedVersion?: number,
+			overbook: Overbook = {},
 		) {
 			return write(
 				`/reservations/${encodeURIComponent(reservationId)}/assign`,
 				{
 					tableIds,
 					expectedVersion,
+					...(overbook.overbook
+						? { overbook: true, overbookReason: overbook.overbookReason }
+						: {}),
 				},
 			)
 		},
@@ -568,9 +586,17 @@ export function createHostApi(deps: HostDeps) {
 			})
 		},
 
-		leaveWaitlist(entryId: string, expectedVersion: number) {
+		/**
+		 * Takes a party off the waitlist: they `left`, or their hold ran out with
+		 * no answer (`no_response`, which the server records as such).
+		 */
+		leaveWaitlist(
+			entryId: string,
+			expectedVersion: number,
+			target: LeaveTarget = 'left',
+		) {
 			return write(`/waitlist/${encodeURIComponent(entryId)}/status`, {
-				status: 'left',
+				status: target,
 				expectedVersion,
 			})
 		},

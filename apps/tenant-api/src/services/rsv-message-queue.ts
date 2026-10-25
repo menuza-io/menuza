@@ -419,14 +419,23 @@ export async function enqueueWaitlistMessage(
 	ctx: QueueContext,
 	input: { entryId: string; kind: WaitlistKind; milestone?: string | number },
 ): Promise<string[]> {
+	return (await enqueueWaitlistMessageVia(tx, ctx, input)).ids
+}
+
+/** The same, and the channels it queued on (a text is only ever one of them when SMS is possible). */
+export async function enqueueWaitlistMessageVia(
+	tx: Tx,
+	ctx: QueueContext,
+	input: { entryId: string; kind: WaitlistKind; milestone?: string | number },
+): Promise<{ ids: string[]; channels: string[] }> {
 	const entry = await tx
 		.select()
 		.from(rsvWaitlistEntries)
 		.where(eq(rsvWaitlistEntries.id, input.entryId))
 		.get()
-	if (!entry) return []
+	if (!entry) return { ids: [], channels: [] }
 	const settings = await loadMessagingSettings(tx, entry.locationId)
-	if (!settings.kinds[input.kind]) return []
+	if (!settings.kinds[input.kind]) return { ids: [], channels: [] }
 	const channels = channelsFor({
 		dataRegion: nodeRegion(),
 		smsOptIn: entry.smsOptIn && settings.smsEnabled && !!entry.phoneE164,
@@ -454,7 +463,7 @@ export async function enqueueWaitlistMessage(
 		ctx,
 		ids.map((id) => ({ id, sendAt: ctx.now })),
 	)
-	return ids
+	return { ids, channels: channels.map(String) }
 }
 
 /** Queues `notify_available`; each notification of a request is its own milestone. */

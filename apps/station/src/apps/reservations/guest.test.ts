@@ -3,12 +3,14 @@ import { describe, expect, it } from 'vitest'
 import {
 	bookingMeta,
 	depositState,
+	dietaryNoteOf,
 	dietaryOf,
 	formatPhone,
 	freeDietaryText,
 	hasAnyAllergy,
 	historyLine,
 	isGuestChannel,
+	showsAllergyMark,
 	sourceLabel,
 	tagChips,
 } from './guest.ts'
@@ -181,5 +183,110 @@ describe('phone numbers', () => {
 		expect(formatPhone('+1 41555')).toBe('+1 415 55')
 		expect(formatPhone('+1 (415) 555-0142')).toBe('+1 415 555 0142')
 		expect(formatPhone('  12 ')).toBe('12')
+	})
+})
+
+describe('the allergy banner', () => {
+	// The server raises `hasAllergy` for ANY dietary note: "vegan" and "halal" included.
+	const booking = (over: Record<string, unknown> = {}) =>
+		rsv({ start: 600, ...over })
+
+	describe('with the guest-details grant', () => {
+		it('warns for a coded allergen', () => {
+			const r = booking({
+				hasAllergy: true,
+				dietaryCodes: ['shellfish_allergy', 'vegan'],
+			})
+			expect(dietaryNoteOf(_, r, true)).toEqual({
+				kind: 'allergy',
+				allergens: ['shellfish'],
+				text: null,
+			})
+			expect(showsAllergyMark(r, true)).toBe(true)
+		})
+		it('warns for allergy text, the guest’s or the booking’s', () => {
+			const own = booking({
+				hasAllergy: true,
+				guest: {
+					id: 'g',
+					name: 'A B',
+					firstName: 'A',
+					allergyNotes: 'Peanuts, severe',
+				},
+			})
+			expect(dietaryNoteOf(_, own, true)).toEqual({
+				kind: 'allergy',
+				allergens: [],
+				text: 'Peanuts, severe',
+			})
+			const typed = booking({ hasAllergy: true, dietaryNotes: 'no raw onion' })
+			expect(dietaryNoteOf(_, typed, true)).toMatchObject({
+				kind: 'allergy',
+				text: 'no raw onion',
+			})
+		})
+		it('says a diet as a quiet line, never as an allergy', () => {
+			const vegan = booking({
+				hasAllergy: true,
+				dietaryCodes: ['vegan'],
+				dietaryNotes: 'vegan',
+			})
+			expect(dietaryNoteOf(_, vegan, true)).toEqual({
+				kind: 'diet',
+				diets: ['Vegan'],
+			})
+			expect(showsAllergyMark(vegan, true)).toBe(false)
+			const both = booking({
+				hasAllergy: true,
+				dietaryCodes: ['vegan', 'halal'],
+			})
+			expect(dietaryNoteOf(_, both, true)).toEqual({
+				kind: 'diet',
+				diets: ['Vegan', 'Halal'],
+			})
+		})
+		it('says nothing when there is nothing to say', () => {
+			expect(dietaryNoteOf(_, booking(), true)).toBeNull()
+			// Flagged but with nothing readable and no diet: nothing to show.
+			expect(dietaryNoteOf(_, booking({ hasAllergy: true }), true)).toBeNull()
+			expect(showsAllergyMark(booking(), true)).toBe(false)
+		})
+	})
+
+	describe('without the grant', () => {
+		it('still warns for a coded allergen, which every host is sent', () => {
+			const r = booking({ hasAllergy: true, dietaryCodes: ['nut_allergy'] })
+			expect(dietaryNoteOf(_, r, false)).toEqual({
+				kind: 'allergy',
+				allergens: ['tree nuts'],
+				text: null,
+			})
+			expect(showsAllergyMark(r, false)).toBe(true)
+		})
+		it('says a note is on file when it cannot say what it is, not that it is an allergy', () => {
+			const r = booking({ hasAllergy: true, dietaryNotes: 'Peanuts, severe' })
+			expect(dietaryNoteOf(_, r, false)).toEqual({ kind: 'unreadable' })
+			// A flag nobody can explain is treated as an allergy: the safe way round.
+			expect(showsAllergyMark(r, false)).toBe(true)
+		})
+		it('never leaks the text the grant guards', () => {
+			const r = booking({
+				hasAllergy: true,
+				dietaryNotes: 'Peanuts, severe',
+				guest: {
+					id: 'g',
+					name: 'A B',
+					firstName: 'A',
+					allergyNotes: 'Peanuts',
+				},
+			})
+			expect(JSON.stringify(dietaryNoteOf(_, r, false))).not.toContain(
+				'Peanuts',
+			)
+		})
+		it('says nothing for a booking with no flag', () => {
+			expect(dietaryNoteOf(_, booking(), false)).toBeNull()
+			expect(showsAllergyMark(booking(), false)).toBe(false)
+		})
 	})
 })

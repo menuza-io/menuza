@@ -584,6 +584,25 @@ describe('Station host stand contract', () => {
 		)
 		expect(resized.status, resized.text).toBe(200)
 		expect(resized.body.reservation.partySize).toBe(3)
+		// A till can keep a table longer (+15 min), within what the app allows it.
+		const longer = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${seatedId}`,
+			{ authorization: `Bearer ${plain.body.token}` },
+			{ durationMin: resized.body.reservation.durationMin + 15 },
+		)
+		expect(longer.status, longer.text).toBe(200)
+		expect(longer.body.reservation.durationMin).toBe(
+			resized.body.reservation.durationMin + 15,
+		)
+		const tooLong = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${seatedId}`,
+			{ authorization: `Bearer ${plain.body.token}` },
+			{ durationMin: 400 },
+		)
+		expect(tooLong.status, tooLong.text).toBe(409)
+		expect(tooLong.body.error).toBe('manager_required')
 		const noted2 = await call(
 			'PATCH',
 			`/operator/reservations/book/reservations/${seatedId}`,
@@ -786,6 +805,15 @@ describe('Station host stand contract', () => {
 		)
 		expect(resizedPaid.status, resizedPaid.text).toBe(409)
 		expect(resizedPaid.body.error).toBe('manager_required')
+		// Nor keeps its table longer.
+		const stayPaid = await call(
+			'PATCH',
+			`/operator/reservations/book/reservations/${bookedId}`,
+			till,
+			{ durationMin: 150 },
+		)
+		expect(stayPaid.status, stayPaid.text).toBe(409)
+		expect(stayPaid.body.error).toBe('manager_required')
 		// Nor brings back a cancelled booking with money on it.
 		await (
 			await getTenantDb(ORG_A)

@@ -12,6 +12,7 @@ import {
 	type DayService,
 } from './feed.ts'
 import { isGuestChannel } from './guest.ts'
+import { foldDigits, nationalDigits, phoneDigits } from './phone.ts'
 
 /**
  * What the host stand's list and header say about the day: which parties are
@@ -76,16 +77,7 @@ export function inService(
 // Search
 // ---------------------------------------------------------------------------
 
-/**
- * Arabic-Indic (٠-٩) and Persian (۰-۹) digits as 0-9, so a number typed on an
- * Arabic keyboard finds a phone number or a code stored with Western digits
- * (and the other way round). NFKD folds the full-width digits already.
- */
-export function foldDigits(text: string) {
-	return text.replace(/[\u0660-\u0669\u06f0-\u06f9]/g, (digit) =>
-		String(digit.charCodeAt(0) & 0xf),
-	)
-}
+export { foldDigits }
 
 /** Lower case, without accents, digits as 0-9, so "José" is found by "jose" and "٠٥٥" by "055". */
 export function normalize(text: string) {
@@ -94,8 +86,6 @@ export function normalize(text: string) {
 		.toLowerCase()
 		.trim()
 }
-
-const digitsOf = (text: string) => foldDigits(text).replace(/\D/g, '')
 
 /**
  * Name words (each typed word must be inside some word of the name), the end
@@ -115,13 +105,16 @@ function matches(
 	const name = normalize(fields.name)
 	const words = q.split(/\s+/)
 	if (words.every((word) => name.includes(word))) return true
-	const digits = digitsOf(q)
-	const phone = digitsOf(fields.phone ?? '')
+	const digits = phoneDigits(q)
+	const phone = phoneDigits(fields.phone)
 	if (digits.length >= 2 && phone) {
+		// A few digits are the end of the number; more are looked for as typed
+		// and as the number reads without its trunk zero (`0551234567` is the
+		// end of `+966551234567`).
 		const hit =
 			digits.length <= 4
 				? phone.slice(-4).includes(digits)
-				: phone.includes(digits)
+				: phone.includes(digits) || phone.includes(nationalDigits(q))
 		if (hit) return true
 	}
 	if (
@@ -425,3 +418,74 @@ export function dayNotices(
 	}
 	return notices
 }
+
+/**
+ * A look older than this is no basis for news: a tablet that slept, or a poll
+ * that stalled, would otherwise announce the whole gap as if it had just
+ * happened. Past it, the next look is a first look again (it says nothing).
+ */
+export const NEWS_FRESH_MS = 3 * 60_000
+
+/** The last look at the day, as the stand kept it. */
+export type SeenDay = { date: string; snapshot: DaySnapshot; at: number }
+
+/**
+ * The look to compare the day with now: the last one, if it is of this day and
+ * recent enough to be news. Null otherwise (nothing is announced).
+ */
+export function snapshotToCompare(
+	seen: SeenDay | null,
+	date: string,
+	now: number,
+): DaySnapshot | null {
+	if (!seen || seen.date !== date) return null
+	const age = now - seen.at
+	return age >= 0 && age <= NEWS_FRESH_MS ? seen.snapshot : null
+}
+
+/** How long a change this tablet made is remembered as its own, if it never shows up. */
+export const SELF_MARK_MS = 2 * 60_000
+
+/**
+ * Bookings this tablet changed itself (marked here, cancelled, resized): the
+ * stand already said so, so the next look does not announce it again. A mark
+ * is dropped when the change fails, when the day shows it (`settle`), and by
+ * itself after a while, so a later change by someone else is never swallowed.
+ */
+export function createSelfMarks(ttlMs = SELF_MARK_MS) {
+	const marks = new Map<string, number>()
+	return {
+		mark(id: string, now: number) {
+			marks.set(id, now)
+		},
+		unmark(id: string) {
+			marks.delete(id)
+		},
+		/** The ids still marked at `now` (older ones are forgotten). */
+		live(now: number): Set<string> {
+			for (const [id, at] of marks)
+				if (now - at > ttlMs || now < at) marks.delete(id)
+			return new Set(marks.keys())
+		},
+		/**
+		 * Drops the marks the day has now shown: a marked booking whose status or
+		 * size is not what the last look held.
+		 */
+		settle(before: DaySnapshot | null, feed: Pick<DayFeed, 'reservations'>) {
+			for (const id of marks.keys()) {
+				const r = feed.reservations.find((x) => x.id === id)
+				const was = before?.get(id)
+				if (
+					!r ||
+					!was ||
+					was.status !== r.status ||
+					was.partySize !== r.partySize
+				)
+					marks.delete(id)
+			}
+		},
+		size: () => marks.size,
+	}
+}
+
+export type SelfMarks = ReturnType<typeof createSelfMarks>

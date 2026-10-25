@@ -34,3 +34,13 @@ export function heldFor(state: TableState, now: number): Held | null {
 		canSeat: SEATABLE.has(r.status),
 	}
 }
+
+/**
+ * What a held table's sheet leads with. Seating the held party leads only when
+ * they are here to be seated: at the stand, or already late. A party that is
+ * merely due is not at the door yet: the table can take a walk-in meanwhile
+ * (with the caution that it may delay them), and seating the party is the
+ * second choice, one tap away.
+ */
+export const heldLead = (held: Held): 'party' | 'walk_in' =>
+	held.canSeat && (held.atStand || held.lateMin > 0) ? 'party' : 'walk_in'

@@ -62,16 +62,33 @@ describe('quick notes', () => {
 		expect(notes).toBe('Window')
 		expect(hasNote(notes, 'High chair')).toBe(false)
 	})
-	it('keep what the host typed', () => {
+	it('keep what the host typed, exactly', () => {
+		// Adding appends: the typed words and their separators are not rewritten.
 		expect(toggleNote('Allergic to figs; wants the corner', 'Quiet')).toBe(
-			'Allergic to figs, wants the corner, Quiet',
+			'Allergic to figs; wants the corner, Quiet',
 		)
+		expect(toggleNote('Window,', 'Quiet')).toBe('Window, Quiet')
+		expect(toggleNote('  nut free  ', 'Quiet')).toBe('  nut free, Quiet')
+		// Taking a phrase back removes that piece and one separator, nothing else.
+		expect(toggleNote('Allergic;  quiet ;Window', 'Quiet')).toBe(
+			'Allergic;  Window',
+		)
+		expect(toggleNote('Quiet; a  b ,c', 'Quiet')).toBe('a  b ,c')
+		expect(toggleNote('Keep CAPS, Quiet', 'Quiet')).toBe('Keep CAPS')
 		// A phrase inside a longer sentence is not "already there".
 		expect(hasNote('Birthday cake please', 'Birthday')).toBe(false)
+		expect(toggleNote('Birthday cake please', 'Birthday')).toBe(
+			'Birthday cake please, Birthday',
+		)
 	})
-	it('never grow past the field’s limit', () => {
+	it('never grow past the field’s limit, and leave the note exactly as it was', () => {
 		const full = 'x'.repeat(498)
 		expect(toggleNote(full, 'Quiet', 500)).toBe(full)
+		const spaced = `a ;  b${'x'.repeat(490)}`
+		expect(toggleNote(spaced, 'Quiet', 500)).toBe(spaced)
+		// Taking a phrase out always works, however full the note is.
+		const withPhrase = `${'x'.repeat(490)}, Quiet`
+		expect(toggleNote(withPhrase, 'Quiet', 500)).toBe('x'.repeat(490))
 	})
 })
 

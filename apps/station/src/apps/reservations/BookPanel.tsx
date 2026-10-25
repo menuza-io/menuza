@@ -29,10 +29,16 @@ import {
 	shortName,
 	type DayReservation,
 } from './feed.ts'
-import { depositState, hasAnyAllergy } from './guest.ts'
+import { depositState, showsAllergyMark } from './guest.ts'
 import { highlightRanges } from './lookup.ts'
 import { placingKey, type Placing } from './placing.ts'
-import { joinedOnline, minutesWaited, textedState } from './waitlist.ts'
+import { stayOf } from './stay.ts'
+import {
+	joinedOnline,
+	minutesWaited,
+	textedState,
+	toldHow,
+} from './waitlist.ts'
 import { SoftText } from '~/ui/motion.tsx'
 import { Button, cn, fieldClass, IconButton, Reveal } from '~/ui/primitives.tsx'
 
@@ -57,6 +63,8 @@ export function BookPanel({
 	waitlistOn,
 	single,
 	fresh,
+	canReadGuest,
+	textedBy,
 	onPick,
 	onDetails,
 	onWaitlistDetails,
@@ -78,6 +86,10 @@ export function BookPanel({
 	single: boolean
 	/** Bookings that came in while the host was looking and have not been opened since: they carry a dot. */
 	fresh: ReadonlySet<string>
+	/** Whether guest details are readable: an allergy mark needs more than the server's flag then. */
+	canReadGuest: boolean
+	/** What each told party's notify answer said about a text (by waitlist entry id). */
+	textedBy: ReadonlyMap<string, boolean>
 	onPick: (placing: Placing | null) => void
 	onDetails: (reservation: DayReservation) => void
 	onWaitlistDetails: (entry: WaitlistEntry) => void
@@ -241,6 +253,7 @@ export function BookPanel({
 										now={now}
 										query={typed}
 										formatTime={formatTime}
+										textQueued={textedBy.get(entry.id)}
 										selected={selected === `w:${entry.id}`}
 										onPick={() =>
 											onPick(
@@ -288,6 +301,7 @@ export function BookPanel({
 										now={now}
 										query={typed}
 										fresh={fresh.has(reservation.id)}
+										canReadGuest={canReadGuest}
 										formatTime={formatTime}
 										mode="toSeat"
 										canPick={isToday}
@@ -325,6 +339,7 @@ export function BookPanel({
 									now={now}
 									query={typed}
 									fresh={fresh.has(reservation.id)}
+									canReadGuest={canReadGuest}
 									formatTime={formatTime}
 									mode="awaiting"
 									canPick={false}
@@ -360,6 +375,7 @@ export function BookPanel({
 										now={now}
 										query={typed}
 										fresh={fresh.has(reservation.id)}
+										canReadGuest={canReadGuest}
 										formatTime={formatTime}
 										mode="seated"
 										canPick={false}
@@ -390,6 +406,7 @@ export function BookPanel({
 									now={now}
 									query={typed}
 									fresh={fresh.has(reservation.id)}
+									canReadGuest={canReadGuest}
 									formatTime={formatTime}
 									mode="missed"
 									canPick={false}
@@ -419,6 +436,7 @@ export function BookPanel({
 									now={now}
 									query={typed}
 									fresh={fresh.has(reservation.id)}
+									canReadGuest={canReadGuest}
 									formatTime={formatTime}
 									mode="finished"
 									canPick={false}
@@ -576,6 +594,7 @@ function ReservationRow({
 	now,
 	query,
 	fresh,
+	canReadGuest,
 	formatTime,
 	mode,
 	canPick,
@@ -590,6 +609,7 @@ function ReservationRow({
 	query: string
 	/** Came in since the host last looked, and not opened yet: a dot. */
 	fresh: boolean
+	canReadGuest: boolean
 	formatTime: (epochMs: number) => string
 	mode: 'toSeat' | 'awaiting' | 'seated' | 'missed' | 'finished'
 	canPick: boolean
@@ -606,10 +626,10 @@ function ReservationRow({
 			? _(OCCASION_LABEL[r.occasion]!)
 			: r.occasion
 		: ''
-	const seatedFor =
-		mode === 'seated' && r.seatedAt
-			? Math.max(0, Math.floor((now - r.seatedAt) / 60_000))
-			: null
+	const stay = mode === 'seated' ? stayOf(r, now) : null
+	const seatedFor = stay?.seatedMin ?? null
+	const leftMin = stay?.leftMin ?? 0
+	const overMin = stay?.overMin ?? 0
 	const tables = r.tableLabels.join(' + ')
 	const marked = r.status === 'no_show'
 	const deposit = depositState(r)
@@ -623,8 +643,10 @@ function ReservationRow({
 	let line: ReactNode
 	if (mode === 'seated' && seatedFor !== null)
 		line = (
-			<span className="tnum">
+			<span className={cn('tnum', stay?.over && 'text-warning font-semibold')}>
 				<SoftText value={_(msg`${seatedFor} min`)} />
+				{' · '}
+				{stay?.over ? _(msg`${overMin}m over`) : _(msg`~${leftMin}m left`)}
 			</span>
 		)
 	else if (mode === 'missed')
@@ -703,7 +725,9 @@ function ReservationRow({
 	return (
 		<li
 			className="bk-row"
-			data-tone={mode === 'missed' ? 'no_show' : status.kind}
+			data-tone={
+				mode === 'missed' ? 'no_show' : stay?.over ? 'late' : status.kind
+			}
 			data-selected={selected}
 			data-muted={mode === 'finished' || mode === 'missed'}
 			style={{ '--bk-i': index } as React.CSSProperties}
@@ -731,7 +755,7 @@ function ReservationRow({
 						<bdi className="truncate font-semibold">
 							<Highlight text={who} query={query} />
 						</bdi>
-						{hasAnyAllergy(r) ? (
+						{showsAllergyMark(r, canReadGuest) ? (
 							<Mark
 								icon={TriangleAlert}
 								label={_(msg`Allergy noted`)}
@@ -796,9 +820,12 @@ function ReservationRow({
 				{mode === 'missed' ? (
 					<UserX aria-hidden className="text-muted-foreground size-4" />
 				) : mode === 'awaiting' ? (
-					<span className="bk-pay-tag">
+					// The row already says "Awaiting payment": the tag is a mark, so the words keep their room.
+					<span className="bk-pay-tag" title={_(msg`Deposit`)}>
 						<CreditCard aria-hidden className="size-3.5" />
-						<Trans>Deposit</Trans>
+						<span className="sr-only">
+							<Trans>Deposit</Trans>
+						</span>
 					</span>
 				) : tables ? (
 					<span className="bk-badge">
@@ -833,6 +860,7 @@ function WaitlistRow({
 	now,
 	query,
 	formatTime,
+	textQueued,
 	selected,
 	onPick,
 	onDetails,
@@ -842,6 +870,8 @@ function WaitlistRow({
 	now: number
 	query: string
 	formatTime: (epochMs: number) => string
+	/** What the notify answer said about a text, when this tablet told them. */
+	textQueued: boolean | undefined
 	selected: boolean
 	onPick: () => void
 	onDetails: () => void
@@ -854,6 +884,7 @@ function WaitlistRow({
 	const name = entry.firstName || entry.displayName
 	const heldFor = texted?.minutesLeft ?? 0
 	const textedAt = texted ? formatTime(texted.notifiedAt) : ''
+	const textSent = toldHow(entry, textQueued) === 'text_sent'
 	const online = joinedOnline(entry)
 	return (
 		<li
@@ -925,16 +956,27 @@ function WaitlistRow({
 						>
 							{texted ? (
 								texted.expired ? (
-									<Trans>Texted, no response</Trans>
+									textSent ? (
+										<Trans>Texted, no response</Trans>
+									) : (
+										<Trans>Told, no response</Trans>
+									)
 								) : texted.minutesLeft !== null ? (
 									_(
-										plural(heldFor, {
-											one: 'Texted, holds # min',
-											other: 'Texted, holds # min',
-										}),
+										textSent
+											? plural(heldFor, {
+													one: 'Texted, holds # min',
+													other: 'Texted, holds # min',
+												})
+											: plural(heldFor, {
+													one: 'Told, holds # min',
+													other: 'Told, holds # min',
+												}),
 									)
-								) : (
+								) : textSent ? (
 									<Trans>Texted {textedAt}</Trans>
+								) : (
+									<Trans>Told {textedAt}</Trans>
 								)
 							) : quoted !== null ? (
 								_(

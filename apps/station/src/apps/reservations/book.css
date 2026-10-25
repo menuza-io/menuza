@@ -24,8 +24,14 @@
 		border-inline-end: 1px solid var(--border);
 		background: var(--card);
 	}
+	/*
+	 * The panel as a whole page (a phone's List tab) fills the page's height and
+	 * scrolls inside it: without this it kept its content's height, and the page
+	 * (which clips) left the rows below the fold out of reach.
+	 */
 	.bk-panel[data-single='true'] {
 		width: 100%;
+		flex: 1 1 0;
 		border-inline-end: 0;
 	}
 	.bk-scroll {
@@ -177,8 +183,8 @@
 		gap: 0.5rem;
 		margin-inline-start: auto;
 	}
-	/* Below iPad landscape the actions are icons; their names stay for a screen reader. */
-	@media (max-width: 1023px) {
+	/* Below a portrait tablet the actions are icons; their names stay for a screen reader. */
+	@media (max-width: 759px) {
 		.bk-action-label {
 			position: absolute;
 			width: 1px;
@@ -202,11 +208,15 @@
 			display: block;
 		}
 	}
-	/* A phone: the date and actions on one row, the figures and service on the next. */
+	/*
+	 * A phone: the day and the service on one row, the day's figures on the
+	 * next. The three adds are not here: they sit at the bottom (`.bk-dock`),
+	 * where one thumb reaches them.
+	 */
 	.bk-header[data-wide='false'] {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		grid-template-areas: 'date actions' 'stats services';
+		grid-template-areas: 'date services' 'stats actions';
 		align-items: center;
 		padding: 0.5rem 0.75rem;
 		row-gap: 0.375rem;
@@ -215,9 +225,10 @@
 		grid-area: date;
 		min-width: 0;
 	}
+	/* Only the "not up to date" mark is left in a phone's header (it is empty otherwise). */
 	.bk-header[data-wide='false'] .bk-actions {
 		grid-area: actions;
-		gap: 0.375rem;
+		justify-self: end;
 	}
 	.bk-header[data-wide='false'] .bk-stats-phone {
 		grid-area: stats;
@@ -229,6 +240,19 @@
 	.bk-header[data-wide='false'] .bk-services {
 		grid-area: services;
 		width: 8.5rem;
+	}
+	/* The adds of a phone, under the panes: equal buttons, with the safe area below them. */
+	.bk-dock {
+		display: grid;
+		flex-shrink: 0;
+		grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+		gap: 0.5rem;
+		border-top: 1px solid var(--border);
+		background: var(--card);
+		padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+	}
+	.bk-dock[data-count='2'] {
+		--cols: 2;
 	}
 	.bk-date {
 		position: relative;
@@ -756,6 +780,12 @@
 		background: var(--bar-bg, var(--card));
 		text-align: start;
 		font-size: 0.875rem;
+		/*
+		 * Words pinned to the visible edge never leave their own bar: a stay that
+		 * ended before the visible part has nothing to pin, and its icon must not
+		 * peek out at the table column.
+		 */
+		overflow: hidden;
 		transition:
 			opacity var(--duration-fast) var(--ease-smooth-out),
 			background-color var(--duration-fast) var(--ease-smooth-out),
@@ -777,6 +807,8 @@
 		gap: 0.375rem;
 		overflow: hidden;
 		padding-inline: calc(0.5rem + var(--shift, 0px)) 0.5rem;
+		/* Its own content box is what is in view (the pinned padding is not), so the words below ask it. */
+		container-type: inline-size;
 	}
 	.tl-bar-size {
 		display: inline-flex;
@@ -871,7 +903,7 @@
 		bottom: 0;
 		z-index: 6;
 		display: flex;
-		height: 2.5rem;
+		height: 3rem;
 		border-top: 1px solid var(--border);
 		background: var(--card);
 	}
@@ -907,9 +939,10 @@
 		display: flex;
 		width: calc(var(--tl-slot) * var(--span) / 15);
 		flex-shrink: 0;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: center;
 		overflow: hidden;
+		padding-top: 0.3125rem;
 		font-family: var(--pos-mono-font);
 		font-size: 0.8125rem;
 		line-height: 1.2;
@@ -928,6 +961,18 @@
 	.tl-cell-n {
 		font-weight: 600;
 	}
+	/* The time under a cell at each :00 and :30. */
+	.tl-cell-tick {
+		position: absolute;
+		inset-inline-start: 0.25rem;
+		bottom: 0.25rem;
+		font-size: 0.625rem;
+		font-weight: 500;
+		line-height: 1;
+		color: var(--pos-muted-foreground);
+		pointer-events: none;
+	}
+
 	.tl-cell-cap {
 		font-size: 0.75rem;
 		color: var(--pos-muted-foreground);
@@ -1002,7 +1047,7 @@
 		min-width: 0;
 	}
 	.tl-bar-time {
-		flex-shrink: 10;
+		flex-shrink: 1000;
 		min-width: 0;
 		overflow: hidden;
 		white-space: nowrap;
@@ -1012,6 +1057,17 @@
 	}
 	.tl-bar-time::after {
 		content: ' ·';
+	}
+	/* What is in view of a bar keeps the name, the allergy mark and the size: the time, then the extra marks, go first. */
+	@container (max-width: 12rem) {
+		.tl-bar-time {
+			display: none;
+		}
+	}
+	@container (max-width: 11rem) {
+		.tl-extra {
+			display: none;
+		}
 	}
 	.tl-bar-note {
 		flex-shrink: 0;
@@ -1067,6 +1123,10 @@
 	.floor .bk-floor-frame {
 		display: flex;
 		overflow: hidden;
+	}
+	/* A room that fits has nothing to pan: its tables' labels (Best fit) may sit past the plan's edge. */
+	.floor .bk-floor-frame[data-scroll='false'] {
+		overflow: visible;
 	}
 	.floor .bk-floor-frame[data-scroll='true'] {
 		overflow: auto;
@@ -1134,6 +1194,61 @@
 		border-color: color-mix(in oklab, var(--success) 38%, var(--border));
 		background: color-mix(in oklab, var(--success) 5%, var(--card));
 	}
+	/* Resetting: neutral and hatched the other way from a taped-off table, with a countdown. */
+	.floor-table[data-state='resetting'] {
+		background-color: color-mix(in oklab, var(--muted) 70%, var(--card));
+		background-image: repeating-linear-gradient(
+			45deg,
+			transparent 0 6px,
+			color-mix(in oklab, var(--foreground) 9%, transparent) 6px 8px
+		);
+		border-color: color-mix(in oklab, var(--foreground) 35%, var(--border));
+	}
+	/* A table asks for its own width: "~20m left" drops "left" on a tile too small to hold it. */
+	.bk-table {
+		container-type: inline-size;
+	}
+	.bk-left-word {
+		white-space: nowrap;
+	}
+	@container (max-width: 5.5rem) {
+		.bk-left-word {
+			display: none;
+		}
+	}
+	/* How long until a seated table clears; amber chip once they are past their time. */
+	.bk-left {
+		border-radius: 999px;
+		padding-inline: 0.25rem;
+		color: color-mix(in oklab, var(--primary-foreground) 92%, transparent);
+	}
+	.bk-left[data-over='true'] {
+		background: var(--warning);
+		color: var(--background);
+		font-weight: 700;
+	}
+	/* Still being reset: it can be seated after a question, so it does not step back as far as a taken table. */
+	.floor[data-picking='true']
+		.floor-table[data-fits='false'][data-state='resetting'] {
+		opacity: 0.62;
+	}
+	/* Why a table does not take the party in hand: a word, or on a phone a time or a few minutes. */
+	.bk-reason-short {
+		display: none;
+	}
+	@media (max-width: 699px) {
+		.bk-reason-long {
+			display: none;
+		}
+		.bk-reason-short {
+			display: inline;
+		}
+		.bk-caption[data-reason='true'] {
+			max-width: 4.5rem;
+			padding-inline: 0.1875rem;
+			font-size: 0.75rem;
+		}
+	}
 	/* The one table to suggest for the party in hand. */
 	.floor-table[data-best='true'] {
 		border-color: var(--success);
@@ -1141,7 +1256,7 @@
 	.bk-bestfit {
 		position: absolute;
 		z-index: 3;
-		top: -0.625rem;
+		top: -0.875rem;
 		inset-inline-start: 50%;
 		translate: -50% 0;
 		border-radius: 999px;
@@ -1231,6 +1346,15 @@
 	.bk-dot[data-kind='seated'] {
 		background: var(--primary);
 		border-color: var(--primary);
+	}
+	/* A table being cleared after a party left: neutral, hatched, never a colour of its own. */
+	.bk-dot[data-kind='resetting'] {
+		border: 2px dashed var(--pos-muted-foreground);
+		background-image: repeating-linear-gradient(
+			45deg,
+			transparent 0 2px,
+			color-mix(in oklab, var(--foreground) 22%, transparent) 2px 3px
+		);
 	}
 	.bk-dot[data-kind='blocked'] {
 		border-color: var(--border);

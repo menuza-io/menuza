@@ -9,6 +9,7 @@ import {
 	UserRound,
 	Users,
 } from 'lucide-react'
+import { type LeaveTarget } from './api.ts'
 import { ContactRow } from './contact.tsx'
 import { ConfirmButton, Detail } from './sheets.tsx'
 import {
@@ -16,6 +17,7 @@ import {
 	minutesWaited,
 	textability,
 	textedState,
+	toldHow,
 } from './waitlist.ts'
 import { Badge, Button, cn, Modal } from '~/ui/primitives.tsx'
 
@@ -31,6 +33,7 @@ export function WaitlistSheet({
 	busy,
 	now,
 	formatTime,
+	textQueued,
 	onNotify,
 	onPlace,
 	onRemove,
@@ -42,9 +45,20 @@ export function WaitlistSheet({
 	busy: boolean
 	now: number
 	formatTime: (epochMs: number) => string
+	/**
+	 * What the server said when this party was told their table is ready: a
+	 * text was queued (true), none was (false), or it did not say / this tablet
+	 * did not tell them (undefined).
+	 */
+	textQueued?: boolean
 	onNotify: (entry: WaitlistEntry) => void
 	onPlace: (entry: WaitlistEntry) => void
-	onRemove: (entry: WaitlistEntry) => void
+	/**
+	 * Take them off. `version` is the entry's version when the host armed the
+	 * button (so a change made meanwhile is refused, not overwritten); `target`
+	 * says whether they left or their hold ran out with no answer.
+	 */
+	onRemove: (entry: WaitlistEntry, version: number, target: LeaveTarget) => void
 	onClose: () => void
 }) {
 	const { _ } = useLingui()
@@ -52,6 +66,7 @@ export function WaitlistSheet({
 	const quoted = entry?.quotedMin ?? null
 	const texted = entry ? textedState(entry, now) : null
 	const canText = entry ? textability(entry) : 'ok'
+	const how = entry ? toldHow(entry, textQueued) : 'told'
 	const textedAt = texted ? formatTime(texted.notifiedAt) : ''
 	const holdsUntil =
 		texted?.deadlineAt != null ? formatTime(texted.deadlineAt) : ''
@@ -85,35 +100,54 @@ export function WaitlistSheet({
 						>
 							{entry.status === 'waiting' ? (
 								<>
+									{/* Marking them ready works with or without a text: the answer says which. */}
 									<Button
 										variant="outline"
 										size="lg"
 										className="h-auto min-h-14 py-2 leading-tight"
-										disabled={busy || canText !== 'ok'}
+										disabled={busy}
 										onClick={() => onNotify(entry)}
 									>
 										<BellRing className="size-5 shrink-0" />
-										<Trans>Tell them it’s ready</Trans>
+										{canText === 'ok' ? (
+											<Trans>Tell them it’s ready</Trans>
+										) : (
+											<Trans>Mark ready</Trans>
+										)}
 									</Button>
 									<ConfirmButton
 										busy={busy}
-										onConfirm={() => onRemove(entry)}
+										token={entry.version}
+										onConfirm={(version) =>
+											onRemove(entry, Number(version ?? entry.version), 'left')
+										}
 										label={_(msg`They left`)}
 										confirmLabel={_(msg`Tap again: remove`)}
 										className="h-auto min-h-14 py-2 leading-tight"
 									/>
 								</>
 							) : texted?.expired ? (
+								// The hold ran out with no answer: recorded as that, not as "left".
 								<ConfirmButton
 									busy={busy}
-									onConfirm={() => onRemove(entry)}
+									token={entry.version}
+									onConfirm={(version) =>
+										onRemove(
+											entry,
+											Number(version ?? entry.version),
+											'no_response',
+										)
+									}
 									label={_(msg`No response, remove`)}
 									confirmLabel={_(msg`Tap again: remove`)}
 								/>
 							) : (
 								<ConfirmButton
 									busy={busy}
-									onConfirm={() => onRemove(entry)}
+									token={entry.version}
+									onConfirm={(version) =>
+										onRemove(entry, Number(version ?? entry.version), 'left')
+									}
 									label={_(msg`They left`)}
 									confirmLabel={_(msg`Tap again: remove`)}
 								/>
@@ -148,14 +182,20 @@ export function WaitlistSheet({
 							role="status"
 							className={cn(
 								'flex flex-col gap-1 rounded-2xl px-4 py-3',
-								texted.urgent
+								texted.urgent || how === 'no_text'
 									? 'bg-warning/12 text-warning'
 									: 'bg-success/12 text-success',
 							)}
 						>
 							<p className="flex items-center gap-2 font-semibold">
 								<BellRing aria-hidden className="size-5 shrink-0" />
-								<Trans>Texted {textedAt}</Trans>
+								{how === 'text_sent' ? (
+									<Trans>Told {textedAt} · text sent</Trans>
+								) : how === 'no_text' ? (
+									<Trans>Told {textedAt} · no text sent, call them</Trans>
+								) : (
+									<Trans>Told {textedAt}</Trans>
+								)}
 							</p>
 							{texted.deadlineAt !== null ? (
 								<p className="tnum font-medium">
@@ -182,16 +222,18 @@ export function WaitlistSheet({
 							phone={entry.phone}
 							canContact={canReadGuest}
 							canText={entry.smsOptIn}
+							// Nothing was texted: calling them is the way to reach them.
+							callFirst={entry.status !== 'waiting' && how === 'no_text'}
 						/>
 					) : null}
 					{entry.status === 'waiting' && canText === 'no_consent' ? (
 						<Detail icon={MessageSquareOff} tone="warning">
-							<Trans>No SMS consent: they cannot be texted.</Trans>
+							<Trans>No SMS consent: no text will be sent. Call them.</Trans>
 						</Detail>
 					) : null}
 					{entry.status === 'waiting' && canText === 'no_phone' ? (
 						<Detail icon={MessageSquareOff}>
-							<Trans>No phone number to text.</Trans>
+							<Trans>No phone number: nothing to text.</Trans>
 						</Detail>
 					) : null}
 					{entry.notes ? <Detail icon={UserRound}>{entry.notes}</Detail> : null}

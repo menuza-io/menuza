@@ -419,3 +419,19 @@ export function minutesFormatter(locale: string) {
 	return (minutes: number) =>
 		format.format(Date.UTC(2000, 0, 1, 0, ((minutes % 1440) + 1440) % 1440))
 }
+
+/** The same without "AM" or "PM" ("1:30"): for a tick under a cell, where there is no room for it. */
+export function minutesShortFormatter(locale: string) {
+	const format = new Intl.DateTimeFormat(locale, {
+		hour: 'numeric',
+		minute: '2-digit',
+		timeZone: 'UTC',
+	})
+	return (minutes: number) =>
+		format
+			.formatToParts(Date.UTC(2000, 0, 1, 0, ((minutes % 1440) + 1440) % 1440))
+			.filter((part) => part.type !== 'dayPeriod')
+			.map((part) => part.value)
+			.join('')
+			.trim()
+}

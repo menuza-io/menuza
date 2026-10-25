@@ -380,43 +380,47 @@ export function StandHeader({
 						]}
 					/>
 				) : null}
-				<Button
-					variant="outline"
-					onClick={onWalkIn}
-					disabled={!isToday}
-					aria-label={_(msg`Walk-in`)}
-					title={_(msg`Walk-in`)}
-				>
-					<UserPlus className="size-4" />
-					<span className="bk-action-label">
-						<Trans>Walk-in</Trans>
-					</span>
-				</Button>
-				{waitlistOn ? (
-					<Button
-						variant="outline"
-						onClick={onWaitlist}
-						disabled={!isToday}
-						aria-label={_(msg`Add to the waitlist`)}
-						title={_(msg`Add to the waitlist`)}
-					>
-						<ListPlus className="size-4" />
-						<span className="bk-action-label">
-							<Trans>Waitlist</Trans>
-						</span>
-					</Button>
+				{wide ? (
+					<>
+						<Button
+							variant="outline"
+							onClick={onWalkIn}
+							disabled={!isToday}
+							aria-label={_(msg`Walk-in`)}
+							title={_(msg`Walk-in`)}
+						>
+							<UserPlus className="size-4" />
+							<span className="bk-action-label">
+								<Trans>Walk-in</Trans>
+							</span>
+						</Button>
+						{waitlistOn ? (
+							<Button
+								variant="outline"
+								onClick={onWaitlist}
+								disabled={!isToday}
+								aria-label={_(msg`Add to the waitlist`)}
+								title={_(msg`Add to the waitlist`)}
+							>
+								<ListPlus className="size-4" />
+								<span className="bk-action-label">
+									<Trans>Waitlist</Trans>
+								</span>
+							</Button>
+						) : null}
+						<Button
+							variant="primary"
+							onClick={onBooking}
+							aria-label={_(msg`New booking`)}
+							title={_(msg`New booking`)}
+						>
+							<CalendarPlus className="size-4" />
+							<span className="bk-action-label">
+								<Trans>Book</Trans>
+							</span>
+						</Button>
+					</>
 				) : null}
-				<Button
-					variant="primary"
-					onClick={onBooking}
-					aria-label={_(msg`New booking`)}
-					title={_(msg`New booking`)}
-				>
-					<CalendarPlus className="size-4" />
-					<span className="bk-action-label">
-						<Trans>Book</Trans>
-					</span>
-				</Button>
 			</div>
 		</header>
 	)
@@ -461,5 +465,73 @@ export function PaneTabs({
 				]}
 			/>
 		</div>
+	)
+}
+
+/**
+ * The three things a host does all shift, at the bottom of a phone where a
+ * thumb rests: a walk-in, a name on the waitlist, a booking. Each has its own
+ * icon and its word; the header above keeps the day and the service.
+ */
+export function StandDock({
+	isToday,
+	waitlistOn,
+	onWalkIn,
+	onWaitlist,
+	onBooking,
+}: {
+	isToday: boolean
+	waitlistOn: boolean
+	onWalkIn: () => void
+	onWaitlist: () => void
+	onBooking: () => void
+}) {
+	const { _ } = useLingui()
+	return (
+		<nav
+			aria-label={_(msg`Add to the book`)}
+			className="bk-dock"
+			data-count={waitlistOn ? 3 : 2}
+		>
+			<Button
+				variant="outline"
+				size="lg"
+				onClick={onWalkIn}
+				disabled={!isToday}
+				className="h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5"
+			>
+				<UserPlus aria-hidden className="size-5 shrink-0" />
+				<span className="min-w-0 text-center leading-tight">
+					<Trans>Walk-in</Trans>
+				</span>
+			</Button>
+			{waitlistOn ? (
+				<Button
+					variant="outline"
+					size="lg"
+					onClick={onWaitlist}
+					disabled={!isToday}
+					aria-label={_(msg`Add to the waitlist`)}
+					className="h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5"
+				>
+					<ListPlus aria-hidden className="size-5 shrink-0" />
+					<span className="min-w-0 text-center leading-tight">
+						<Trans>Waitlist</Trans>
+					</span>
+				</Button>
+			) : null}
+			<Button
+				variant="primary"
+				size="lg"
+				onClick={onBooking}
+				aria-label={_(msg`New booking`)}
+				className="h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5"
+			>
+				<CalendarPlus aria-hidden className="size-5 shrink-0" />
+				<span className="min-w-0 text-center leading-tight">
+					<Trans>Book</Trans>
+				</span>
+			</Button>
+		</nav>
 	)
 }

@@ -2,27 +2,34 @@ import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	Armchair,
+	ArrowRightLeft,
 	CalendarPlus,
 	CheckCheck,
 	Clock3,
 	CreditCard,
 	Crown,
 	RotateCcw,
+	TimerReset,
 	TriangleAlert,
 	Undo2,
 	UserRound,
 	Users,
+	Utensils,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { partyStatus } from './book.ts'
 import { ContactRow } from './contact.tsx'
-import { OCCASION_LABEL, shortName, type DayReservation } from './feed.ts'
+import {
+	OCCASION_LABEL,
+	shortName,
+	type DayReservation,
+	type TableKind,
+} from './feed.ts'
 import {
 	bookingMeta,
 	depositState,
+	dietaryNoteOf,
 	dietaryOf,
-	freeDietaryText,
-	hasAnyAllergy,
 	historyLine,
 	tagChips,
 } from './guest.ts'
@@ -39,6 +46,7 @@ import {
 	STATUS_LABEL,
 	type PartyCommand,
 } from './sheets.tsx'
+import { EXTEND_STEP_MIN, stayOf } from './stay.ts'
 import { Badge, Button, Chip, cn, Modal } from '~/ui/primitives.tsx'
 
 /** Whole minutes between two instants, never negative. */
@@ -59,6 +67,7 @@ export function PartySheet({
 	formatTime,
 	formatDay,
 	viewOnly = false,
+	tableKindOf,
 	onCommand,
 	onClose,
 }: {
@@ -74,6 +83,8 @@ export function PartySheet({
 	 * nothing about arrival, seating or no-shows (the server refuses those off today).
 	 */
 	viewOnly?: boolean
+	/** What a table is doing now: "Seat at Table 3" is offered only while it is free. */
+	tableKindOf?: (tableId: string) => TableKind | null
 	onCommand: (reservation: DayReservation, command: PartyCommand) => void
 	onClose: () => void
 }) {
@@ -98,15 +109,31 @@ export function PartySheet({
 		reservation &&
 		setConfirm({ to, version: reservation.version, status: reservation.status })
 	const r = reservation
-	const a = r ? partyActions({ r, now, viewOnly }) : null
+	const bookedTable = r?.tableIds.length === 1 ? r.tableIds[0] : undefined
+	const a = r
+		? partyActions({
+				r,
+				now,
+				viewOnly,
+				seatTableKind:
+					bookedTable !== undefined
+						? (tableKindOf?.(bookedTable) ?? null)
+						: null,
+			})
+		: null
 	const run = (command: PartyCommand) => r && onCommand(r, command)
 	const primary = a
 		? [a.canSeat, a.canFinish, a.canArrive].filter(Boolean).length
 		: 0
 	const secondary = a
-		? [a.canConfirm, a.canChange, a.undo !== null, a.canBookAgain].filter(
-				Boolean,
-			).length
+		? [
+				a.canConfirm,
+				a.canChange,
+				a.canMove,
+				a.canExtend,
+				a.undo !== null,
+				a.canBookAgain,
+			].filter(Boolean).length
 		: 0
 	const destructive = a ? [a.canNoShow, a.canCancel].filter(Boolean).length : 0
 	const standing = r ? partyStatus(r, now) : null
@@ -114,10 +141,13 @@ export function PartySheet({
 		r?.guest?.name?.trim() || (r ? shortName(r, _(msg`Guest`)) : '')
 	const chips = r ? tagChips(r) : []
 	const dietary = r ? dietaryOf(_, r) : { allergens: [], diets: [] }
-	const allergyText =
-		r && canReadGuest
-			? r.guest?.allergyNotes || freeDietaryText(r.dietaryNotes)
-			: null
+	// An allergy is a warning; a diet is a quiet line; a note we may not read is said as a note.
+	const note = r ? dietaryNoteOf(_, r, canReadGuest) : null
+	const dietLine = note?.kind === 'diet' ? note.diets.join(', ') : ''
+	const stayNow = r ? stayOf(r, now) : null
+	const clearClock = stayNow ? formatTime(stayNow.clearAt) : ''
+	const seatedMin = stayNow?.seatedMin ?? 0
+	const overMin = stayNow?.overMin ?? 0
 	const history = r?.guest ? historyLine(_, r.guest, formatDay) : null
 	const meta = r ? bookingMeta(_, r, formatDay) : null
 	const deposit = r ? depositState(r) : null
@@ -130,13 +160,8 @@ export function PartySheet({
 	const stay: { text: string; minutes: number | null; sofar: boolean } | null =
 		!r
 			? null
-			: (r.status === 'seated' || r.status === 'partially_seated') &&
-				  r.seatedAt != null
-				? {
-						text: _(msg`Seated ${seatedClock}`),
-						minutes: minutesBetween(r.seatedAt, now),
-						sofar: true,
-					}
+			: stayNow
+				? null
 				: r.status === 'finished' && r.finishedAt != null
 					? r.seatedAt != null
 						? {
@@ -294,7 +319,35 @@ export function PartySheet({
 											disabled={busy}
 											onClick={() => run({ kind: 'change' })}
 										>
-											<Trans>Change size or time</Trans>
+											{a.changeKind === 'size' ? (
+												<Trans>Change party size</Trans>
+											) : (
+												<Trans>Change size or time</Trans>
+											)}
+										</Button>
+									) : null}
+									{a.canMove ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="h-auto min-h-14 py-2 leading-tight"
+											disabled={busy}
+											onClick={() => run({ kind: 'move' })}
+										>
+											<ArrowRightLeft className="size-5 shrink-0" />
+											<Trans>Move table</Trans>
+										</Button>
+									) : null}
+									{a.canExtend ? (
+										<Button
+											variant="outline"
+											size="lg"
+											className="h-auto min-h-14 py-2 leading-tight"
+											disabled={busy}
+											onClick={() => run({ kind: 'extend' })}
+										>
+											<TimerReset className="size-5 shrink-0" />
+											<Trans>+{EXTEND_STEP_MIN} min</Trans>
 										</Button>
 									) : null}
 									{a.undo !== null ? (
@@ -328,6 +381,18 @@ export function PartySheet({
 										</Button>
 									) : null}
 								</div>
+							) : null}
+							{/* A deposit or a card is on it: changing and ending it are the manager's. */}
+							{a.managerHandles ? (
+								<p
+									role="note"
+									className="text-muted-foreground flex items-start gap-2 text-sm font-medium"
+								>
+									<CreditCard aria-hidden className="mt-0.5 size-4 shrink-0" />
+									<Trans>
+										A manager handles this booking: it has a deposit.
+									</Trans>
+								</p>
 							) : null}
 							{/* Ending the booking: apart, so it is never tapped by mistake. */}
 							{destructive > 0 ? (
@@ -392,36 +457,45 @@ export function PartySheet({
 					</div>
 
 					{/* An allergy first: said in words, from the codes whoever is signed in. */}
-					{hasAnyAllergy(r) ? (
+					{note?.kind === 'allergy' ? (
 						<div
 							role="note"
 							className="bg-warning/12 text-warning flex items-start gap-3 rounded-2xl px-4 py-3"
 						>
 							<TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0" />
 							<div className="flex min-w-0 flex-col gap-1">
-								{dietary.allergens.length > 0 ? (
+								{note.allergens.length > 0 ? (
 									<>
 										<p className="font-semibold break-words">
 											<Trans>Allergy: {allergenList}</Trans>
 										</p>
-										{allergyText ? (
-											<p className="font-medium break-words">{allergyText}</p>
+										{note.text ? (
+											<p className="font-medium break-words">{note.text}</p>
 										) : null}
 									</>
-								) : allergyText ? (
-									<p className="font-semibold break-words">
-										<Trans>Allergy: {allergyText}</Trans>
-									</p>
 								) : (
-									<p className="font-semibold">
-										<Trans>Allergy noted. A manager can see the details.</Trans>
+									<p className="font-semibold break-words">
+										<Trans>Allergy: {note.text}</Trans>
 									</p>
 								)}
 							</div>
 						</div>
 					) : null}
+					{note?.kind === 'unreadable' ? (
+						<Detail icon={Utensils}>
+							<Trans>
+								Dietary note on file. A manager can see the details.
+							</Trans>
+						</Detail>
+					) : null}
+					{note?.kind === 'diet' ? (
+						<Detail icon={Utensils}>
+							<Trans>Dietary: {dietLine}</Trans>
+						</Detail>
+					) : null}
 
-					{chips.length > 0 || dietary.diets.length > 0 ? (
+					{chips.length > 0 ||
+					(dietary.diets.length > 0 && note?.kind !== 'diet') ? (
 						<ul
 							aria-label={_(msg`Guest tags`)}
 							className="flex flex-wrap items-center gap-2"
@@ -439,11 +513,13 @@ export function PartySheet({
 									</Badge>
 								</li>
 							))}
-							{dietary.diets.map((diet) => (
-								<li key={diet}>
-									<Badge className="px-3 py-1 text-sm">{diet}</Badge>
-								</li>
-							))}
+							{note?.kind === 'diet'
+								? null
+								: dietary.diets.map((diet) => (
+										<li key={diet}>
+											<Badge className="px-3 py-1 text-sm">{diet}</Badge>
+										</li>
+									))}
 						</ul>
 					) : null}
 
@@ -486,6 +562,20 @@ export function PartySheet({
 								{note.body}
 							</Detail>
 						))}
+						{stayNow ? (
+							// Where the stay stands: how long, and when the table should clear.
+							<Detail icon={Clock3} tone={stayNow.over ? 'warning' : undefined}>
+								<span className="tnum">
+									{stayNow.over
+										? _(
+												msg`Seated ${seatedMin} min, ${overMin} min over (expected clear ${clearClock})`,
+											)
+										: _(
+												msg`Seated ${seatedMin} min, expected clear about ${clearClock}`,
+											)}
+								</span>
+							</Detail>
+						) : null}
 						{stay ? (
 							<Detail icon={Clock3}>
 								<span className="tnum">

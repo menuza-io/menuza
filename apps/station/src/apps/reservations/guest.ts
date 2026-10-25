@@ -2,6 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg, plural } from '@lingui/macro'
 import { type useLingui } from '@lingui/react'
 import { type DayReservation } from './feed.ts'
+import { foldDigits } from './phone.ts'
 
 type Translate = ReturnType<typeof useLingui>['_']
 
@@ -97,6 +98,64 @@ export const hasAllergenCodes = (r: Pick<DayReservation, 'dietaryCodes'>) =>
 export const hasAnyAllergy = (
 	r: Pick<DayReservation, 'hasAllergy' | 'dietaryCodes'>,
 ) => r.hasAllergy || hasAllergenCodes(r)
+
+/**
+ * The words about an allergy the signed-in person may read: the guest's own
+ * allergy note, or the free text of the booking's dietary note.
+ */
+export const allergyTextOf = (
+	r: Pick<DayReservation, 'guest' | 'dietaryNotes'>,
+	canReadGuest: boolean,
+): string | null =>
+	canReadGuest
+		? r.guest?.allergyNotes?.trim() || freeDietaryText(r.dietaryNotes)
+		: null
+
+/**
+ * Whether a mark for an allergy is warranted. The server raises `hasAllergy`
+ * for ANY dietary note ("vegan", "halal"), so the flag alone is a warning only
+ * to someone who cannot read what it is about: with the guest grant, a mark
+ * needs a coded allergen or allergy text; without it, an unexplained flag is
+ * treated as an allergy (the safe way round).
+ */
+export function showsAllergyMark(
+	r: Pick<
+		DayReservation,
+		'hasAllergy' | 'dietaryCodes' | 'guest' | 'dietaryNotes'
+	>,
+	canReadGuest: boolean,
+): boolean {
+	if (hasAllergenCodes(r)) return true
+	if (canReadGuest) return allergyTextOf(r, true) !== null
+	return r.hasAllergy
+}
+
+/**
+ * What the sheet says about food, once, in the weight it deserves: an allergy
+ * is a warning; a preference ("Dietary: Vegan") is a quiet line; a note the
+ * signed-in person cannot read is said as a note, not as an allergy.
+ */
+export type DietaryNote =
+	| { kind: 'allergy'; allergens: string[]; text: string | null }
+	| { kind: 'diet'; diets: string[] }
+	| { kind: 'unreadable' }
+
+export function dietaryNoteOf(
+	_: Translate,
+	r: Pick<
+		DayReservation,
+		'hasAllergy' | 'dietaryCodes' | 'guest' | 'dietaryNotes'
+	>,
+	canReadGuest: boolean,
+): DietaryNote | null {
+	const { allergens, diets } = dietaryOf(_, r)
+	const text = allergyTextOf(r, canReadGuest)
+	if (allergens.length > 0 || text) return { kind: 'allergy', allergens, text }
+	if (!r.hasAllergy) return null
+	// Flagged, with no allergen and nothing readable: a diet, or a note we may not read.
+	if (!canReadGuest) return { kind: 'unreadable' }
+	return diets.length > 0 ? { kind: 'diet', diets } : null
+}
 
 // ---------------------------------------------------------------------------
 // Tags
@@ -313,7 +372,7 @@ function groupNational(digits: string): string {
  * what a person is typing: it keeps what was typed and only spaces it.
  */
 export function formatPhone(value: string): string {
-	const trimmed = value.trim()
+	const trimmed = foldDigits(value).trim()
 	const digits = trimmed.replace(/\D/g, '')
 	if (!digits) return trimmed.startsWith('+') ? '+' : ''
 	if (!trimmed.startsWith('+')) return groupNational(digits)

@@ -8,6 +8,7 @@ import {
 	bookingDirty,
 	dayChips,
 	hasNote,
+	NOTE_MAX,
 	NOTE_PHRASES,
 	toggleNote,
 } from './booking.ts'
@@ -45,8 +46,6 @@ export type BookingReadBackInfo = {
 	code: string | null
 	/** The table the booking was given ("1"), when the server's answer said. */
 	table: string | null
-	/** The guest was texted a confirmation: only when the server's answer says so. */
-	textSent: boolean
 }
 
 /** A booking started from a table and a time (an empty stretch of the timeline), or for a guest. */
@@ -83,6 +82,7 @@ export function BookingSheet({
 	prefill = null,
 	loadSlots,
 	repeatOf,
+	checkedDay,
 	onOpenRepeat,
 	formatTime,
 	onBook,
@@ -104,6 +104,11 @@ export function BookingSheet({
 		who: { first: string; last: string; phone: string },
 		date: string,
 	) => Repeat | null
+	/**
+	 * The one day a repeat is looked for (the day the stand has loaded): a
+	 * booking on another day is not compared, and the sheet says so.
+	 */
+	checkedDay: string
 	/** Look at the booking (or waitlist entry) the guest already has. */
 	onOpenRepeat: (repeat: Repeat) => void
 	formatTime: (epochMs: number) => string
@@ -170,6 +175,8 @@ export function BookingSheet({
 	const started = useRef({ first: '', last: '', phone: '', notes: '' })
 	/** The time the booking was started at, picked again whenever the times reload. */
 	const wantTime = useRef<number | null>(null)
+	// The same prefill drawn again (an equal copy, a re-render) does not start the form over.
+	const prefillKey = prefill ? JSON.stringify(prefill) : ''
 	useEffect(() => {
 		if (!open) return
 		const guest = prefill?.guest
@@ -190,7 +197,8 @@ export function BookingSheet({
 			phone: guest?.phone ?? '',
 			notes: '',
 		}
-	}, [open, today, prefill])
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- the prefill's content (its key) starts the form, not its identity
+	}, [open, today, prefillKey])
 	useEffect(() => {
 		if (!open) return
 		let live = true
@@ -228,6 +236,7 @@ export function BookingSheet({
 	const blocker = bookingBlocker({ time, first, phoneProblem })
 	const ready = blocker === null
 	const chips = useMemo(() => dayChips(today), [today])
+	const checkedDayLabel = dayFormat.long(checkedDay)
 	const onChip = chips.some((chip) => chip.date === date)
 	const showDateField = picking || !onChip
 	// A guest who is already in the book (or waiting) is said before a second booking is made.
@@ -239,13 +248,31 @@ export function BookingSheet({
 			: `w:${repeat.entry.id}`
 		: null
 	const showRepeat = repeat !== null && repeatKey !== bookedBeside
-	// A name, a number or a note typed is not thrown away by a stray tap outside.
+	/** "Open it": the booking to look at once this form is let go (asked about first when it holds something). */
+	const opening = useRef<Repeat | null>(null)
+	// A name, a number or a note typed is not thrown away by a stray tap outside,
+	// and not by "Open it" either: it asks the same question first.
 	const guard = useDiscardGuard({
 		open,
 		dirty:
 			!readBack && bookingDirty({ first, last, phone, notes }, started.current),
-		onClose,
+		onClose: () => {
+			const repeatToOpen = opening.current
+			opening.current = null
+			if (repeatToOpen) onOpenRepeat(repeatToOpen)
+			else onClose()
+		},
 	})
+	// Not asking (kept editing, or closed): nothing is waiting to open.
+	useEffect(() => {
+		if (!guard.asking) opening.current = null
+	}, [guard.asking])
+	/** The quick note that would not fit: said, so a tap is never dead. */
+	const [noteFull, setNoteFull] = useState(false)
+	// Whether the repeat check covers the day picked, and a name or number is typed to check.
+	const unchecked =
+		date !== checkedDay &&
+		[first, last, phone].some((field) => field.trim() !== '')
 	return (
 		<Modal
 			open={open}
@@ -281,9 +308,23 @@ export function BookingSheet({
 								today={today}
 								dayLabel={dayFormat.long(date)}
 								formatTime={formatTime}
-								onOpen={() => onOpenRepeat(repeat)}
+								onOpen={() => {
+									opening.current = repeat
+									guard.requestClose()
+								}}
 								onBookAnother={() => setBookedBeside(repeatKey)}
 							/>
+						) : null}
+						{unchecked && !showRepeat ? (
+							<p className="text-muted-foreground text-xs" role="status">
+								{checkedDay === today ? (
+									<Trans>Duplicates are checked for today only.</Trans>
+								) : (
+									<Trans>
+										Duplicates are checked for {checkedDayLabel} only.
+									</Trans>
+								)}
+							</p>
 						) : null}
 						{locked ? (
 							<p className="text-warning text-sm font-medium" role="status">
@@ -465,7 +506,8 @@ export function BookingSheet({
 														selected={time === slot.localStartMin}
 														aria-pressed={time === slot.localStartMin}
 														onClick={() => {
-															wantTime.current = null
+															// The time they picked is the one wanted: a change of size looks for it again.
+															wantTime.current = slot.localStartMin
 															setWantedGone(null)
 															setTime(slot.localStartMin)
 															setTimeLabel(slotLabel(slot.localStartMin))
@@ -552,9 +594,12 @@ export function BookingSheet({
 									<textarea
 										className={cn(fieldClass, 'min-h-20 py-3')}
 										value={notes}
-										maxLength={500}
+										maxLength={NOTE_MAX}
 										placeholder={_(msg`High chair, birthday, by the window…`)}
-										onChange={(event) => setNotes(event.target.value)}
+										onChange={(event) => {
+											setNotes(event.target.value)
+											setNoteFull(false)
+										}}
 									/>
 								</label>
 								<div
@@ -570,13 +615,26 @@ export function BookingSheet({
 												key={phrase}
 												selected={on}
 												aria-pressed={on}
-												onClick={() => setNotes(toggleNote(notes, label))}
+												onClick={() => {
+													const next = toggleNote(notes, label, NOTE_MAX)
+													// Nothing changed and it was not there to take out: it does not fit.
+													setNoteFull(next === notes && !on)
+													setNotes(next)
+												}}
 											>
 												{label}
 											</Chip>
 										)
 									})}
 								</div>
+								{noteFull ? (
+									<p className="text-warning text-sm font-medium" role="status">
+										<Trans>
+											The note is full ({NOTE_MAX} characters). Shorten it to
+											add more.
+										</Trans>
+									</p>
+								) : null}
 							</div>
 						</div>
 					</div>
@@ -669,7 +727,6 @@ function BookingReadBack({
 	when,
 	code,
 	table,
-	textSent,
 }: BookingReadBackInfo) {
 	if (asFirstSent)
 		return (
@@ -709,11 +766,6 @@ function BookingReadBack({
 						{code}
 					</span>
 				</div>
-			) : null}
-			{textSent ? (
-				<p className="text-success text-sm font-medium">
-					<Trans>A confirmation text was sent.</Trans>
-				</p>
 			) : null}
 		</div>
 	)

@@ -1373,7 +1373,7 @@ operatorReservationsBookRoutes.get(
 	},
 )
 
-/** What a till may change on a booking: its size and when. */
+/** What a till may change on a booking: its size, when, and how long the table is kept. */
 const STATION_PATCH_FIELDS = new Set([
 	'locationId',
 	'expectedVersion',
@@ -1383,7 +1383,10 @@ const STATION_PATCH_FIELDS = new Set([
 	'slotLocal',
 	'localStartMin',
 	'partySize',
+	'durationMin',
 ])
+/** The longest stay a till may set (a manager goes beyond it in the app). */
+const STATION_MAX_DURATION_MIN = 360
 
 const patchReservationSchema = z.object({
 	locationId: z.string().trim().min(1).max(128).optional(),
@@ -1445,9 +1448,20 @@ operatorReservationsBookRoutes.patch(
 				return json(
 					{
 						error: 'not_for_station',
-						message: 'Only the party size and time change at a till.',
+						message: 'Only the party size, time and stay change at a till.',
 					},
 					403,
+				)
+			if (
+				parsed.data.durationMin !== undefined &&
+				parsed.data.durationMin > STATION_MAX_DURATION_MIN
+			)
+				return json(
+					{
+						error: 'manager_required',
+						message: 'A longer stay is a manager’s to set in the app.',
+					},
+					409,
 				)
 		}
 

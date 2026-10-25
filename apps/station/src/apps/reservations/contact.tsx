@@ -2,10 +2,11 @@ import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { MessageSquare, Phone } from 'lucide-react'
 import { formatPhone } from './guest.ts'
+import { foldDigits } from './phone.ts'
 import { cn } from '~/ui/primitives.tsx'
 
 /** Digits and a leading plus: what a `tel:` or `sms:` link dials. */
-const dialable = (phone: string) => phone.replace(/[^\d+]/g, '')
+const dialable = (phone: string) => foldDigits(phone).replace(/[^\d+]/g, '')
 
 const buttonClass =
 	'border-border bg-card hover:bg-accent inline-flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-4 font-semibold transition active:scale-[0.97]'
@@ -20,6 +21,7 @@ export function ContactRow({
 	phone,
 	canContact,
 	canText = true,
+	callFirst = false,
 	className,
 }: {
 	phone: string
@@ -27,10 +29,12 @@ export function ContactRow({
 	canContact: boolean
 	/** False for a guest who did not agree to be texted: only Call is offered. */
 	canText?: boolean
+	/** Calling is the way to reach them (nothing was texted): Call stands out. */
+	callFirst?: boolean
 	className?: string
 }) {
 	const { _ } = useLingui()
-	const ending = phone.replace(/\D/g, '').slice(-4)
+	const ending = foldDigits(phone).replace(/\D/g, '').slice(-4)
 	if (!canContact)
 		return (
 			<p className={cn('flex items-center gap-3 text-base', className)}>
@@ -59,7 +63,14 @@ export function ContactRow({
 				{formatPhone(phone)}
 			</span>
 			<span className="ms-auto flex shrink-0 gap-2">
-				<a href={`tel:${dial}`} className={buttonClass}>
+				<a
+					href={`tel:${dial}`}
+					className={cn(
+						buttonClass,
+						callFirst &&
+							'border-primary bg-primary text-primary-foreground hover:bg-primary/90',
+					)}
+				>
 					<Phone aria-hidden className="size-5" />
 					<Trans>Call</Trans>
 				</a>

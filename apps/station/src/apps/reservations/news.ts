@@ -11,6 +11,9 @@ type Translate = ReturnType<typeof useLingui>['_']
  * online, one that was cancelled, a party size that changed. One change is
  * said as itself; several as a count (the screen reader still hears each).
  */
+/** A screen reader is told this many changes in full; the rest as a count. */
+export const MAX_SPOKEN = 3
+
 export function newsOf(
 	_: Translate,
 	input: {
@@ -19,11 +22,11 @@ export function newsOf(
 		formatTime: (epochMs: number) => string
 	},
 ): { items: string[]; toast: string | null } {
-	const items: string[] = []
+	const all: string[] = []
 	const guest = _(msg`Guest`)
 	const { arrivals } = input
 	if (arrivals.length > 1)
-		items.push(
+		all.push(
 			_(
 				plural(arrivals.length, {
 					one: '# party has arrived.',
@@ -33,7 +36,7 @@ export function newsOf(
 		)
 	else if (arrivals[0]) {
 		const who = shortName(arrivals[0], guest)
-		items.push(
+		all.push(
 			isVip(arrivals[0])
 				? _(msg`VIP guest has arrived: ${who}.`)
 				: _(msg`${who} has arrived.`),
@@ -45,22 +48,27 @@ export function newsOf(
 		const time = input.formatTime(r.startAt)
 		const size = r.partySize
 		if (notice.kind === 'online')
-			items.push(_(msg`New online booking: ${who}, ${size} at ${time}`))
+			all.push(_(msg`New online booking: ${who}, ${size} at ${time}`))
 		else if (notice.kind === 'cancelled')
-			items.push(_(msg`Cancelled: ${who}, ${time}`))
+			all.push(_(msg`Cancelled: ${who}, ${time}`))
 		else {
 			const from = notice.from
-			items.push(_(msg`Party size changed: ${who}, ${from} to ${size}`))
+			all.push(_(msg`Party size changed: ${who}, ${from} to ${size}`))
 		}
 	}
-	const count = items.length
+	const count = all.length
+	// Said in full for the first few; a burst is a count, never a long reading.
+	const items = all.slice(0, MAX_SPOKEN)
+	const more = count - items.length
+	if (more > 0)
+		items.push(_(plural(more, { one: 'and # more', other: 'and # more' })))
 	return {
 		items,
 		toast:
 			count === 0
 				? null
 				: count === 1
-					? items[0]!
+					? all[0]!
 					: _(
 							plural(count, {
 								one: '# update at the stand',

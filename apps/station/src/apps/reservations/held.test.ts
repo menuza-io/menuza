@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DUE_SOON_MIN, tableState } from './feed.ts'
-import { heldFor } from './held.ts'
+import { heldFor, heldLead } from './held.ts'
 import { at, day, MIN, rsv } from './testing.ts'
 
 const NOW = at(13 * 60)
@@ -80,5 +80,59 @@ describe('a table held for the next party', () => {
 			NOW,
 		)
 		expect(heldFor(blocked, NOW)).toBeNull()
+	})
+})
+
+describe('what a held table leads with', () => {
+	it('leads with the party when they are at the stand', () => {
+		const held = heldFor(
+			stateOf([
+				rsv({ start: 13 * 60 - 5, tableIds: ['t2'], status: 'arrived' }),
+			]),
+			NOW,
+		)!
+		expect(heldLead(held)).toBe('party')
+	})
+	it('leads with the party when they are late, whatever else they are', () => {
+		const held = heldFor(
+			stateOf([
+				rsv({ start: 13 * 60 - 1, tableIds: ['t2'], status: 'confirmed' }),
+			]),
+			NOW,
+		)!
+		expect(held.lateMin).toBe(1)
+		expect(heldLead(held)).toBe('party')
+	})
+	it('leads with the walk-in for a party that is only due', () => {
+		for (const minutes of [0, 10, DUE_SOON_MIN]) {
+			const held = heldFor(
+				stateOf([
+					rsv({ start: 13 * 60 + minutes, tableIds: ['t2'], status: 'booked' }),
+				]),
+				NOW,
+			)!
+			expect(held.lateMin).toBe(0)
+			expect(heldLead(held)).toBe('walk_in')
+		}
+	})
+	it('leads with the walk-in when the till cannot seat the party at all', () => {
+		const held = heldFor(
+			stateOf([
+				rsv({
+					start: 13 * 60 - 5,
+					tableIds: ['t2'],
+					status: 'partially_arrived',
+				}),
+			]),
+			NOW,
+		)
+		if (held) expect(heldLead({ ...held, canSeat: false })).toBe('walk_in')
+		const late = heldFor(
+			stateOf([
+				rsv({ start: 13 * 60 - 20, tableIds: ['t2'], status: 'booked' }),
+			]),
+			NOW,
+		)!
+		expect(heldLead({ ...late, canSeat: false })).toBe('walk_in')
 	})
 })

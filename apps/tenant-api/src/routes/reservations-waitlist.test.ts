@@ -893,6 +893,47 @@ describe('public waitlist join and status', () => {
 	})
 })
 
+describe('telling a party their table is ready', () => {
+	it('says whether a text was queued: only for a guest who agreed, on a node that sends texts', async () => {
+		// Joined online and agreed to texts, US node: a text goes out.
+		const online = await join(60)
+		expect(online.status).toBe(201)
+		const onlineId = online.body.entry?.id ?? online.body.id
+		const list = await operator('GET', `${WL}?locationId=${PUBLIC_LOC}`)
+		const joined = list.body.entries.find(
+			(e: { channel?: string }) => e.channel === 'remote',
+		)
+		const told = await operator(
+			'POST',
+			`${WL}/${joined?.id ?? onlineId}/notify`,
+		)
+		expect(told.status).toBe(200)
+		expect(told.body).toMatchObject({ changed: true, textQueued: true })
+		// A repeat tap queues nothing and says nothing about a text.
+		const again = await operator(
+			'POST',
+			`${WL}/${joined?.id ?? onlineId}/notify`,
+		)
+		expect(again.body.changed).toBe(false)
+		expect('textQueued' in again.body).toBe(false)
+		// Added at the stand: no consent, so no text.
+		const added = await operator('POST', WL, {
+			body: {
+				locationId: PUBLIC_LOC,
+				displayName: 'Walk-up',
+				partySize: 2,
+				phone: '+14155550777',
+			},
+		})
+		expect(added.status).toBe(201)
+		const standTold = await operator(
+			'POST',
+			`${WL}/${added.body.entry.id}/notify`,
+		)
+		expect(standTold.body).toMatchObject({ changed: true, textQueued: false })
+	})
+})
+
 describe('KSA node', () => {
 	it('sends waitlist messages by email only and never queues an SMS (VAL-WAIT-020)', async () => {
 		process.env.DATA_REGION = 'ksa'

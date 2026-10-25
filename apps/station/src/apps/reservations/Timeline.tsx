@@ -27,6 +27,7 @@ import {
 import { partyStatus } from './book.ts'
 import {
 	fitVerdict,
+	isOnFloor,
 	hasNotes,
 	isVip,
 	shortName,
@@ -37,11 +38,13 @@ import {
 	type PartyToPlace,
 	type TableState,
 } from './feed.ts'
+import { showsAllergyMark } from './guest.ts'
 import { statusText } from './labels.ts'
 import {
 	layoutTimeline,
 	minuteAt,
 	minutesFormatter,
+	minutesShortFormatter,
 	nowOffset,
 	SLOT_MIN,
 	slotTotals,
@@ -98,6 +101,7 @@ export function Timeline({
 	matchIds,
 	picking,
 	active,
+	canReadGuest,
 	formatTime,
 	formatShort,
 	summary,
@@ -118,6 +122,8 @@ export function Timeline({
 	picking: PartyToPlace | null
 	/** The pane is on screen (it opens at "now" when it first is). */
 	active: boolean
+	/** Whether guest details are readable: the allergy mark needs more than the server's flag then. */
+	canReadGuest: boolean
 	formatTime: (epochMs: number) => string
 	/** The same without "AM" or "PM": for a bar, where there is no room for it. */
 	formatShort: (epochMs: number) => string
@@ -157,6 +163,11 @@ export function Timeline({
 		[feed, range, serviceId],
 	)
 	const fmt = useMemo(() => minutesFormatter(i18n.locale), [i18n.locale])
+	/** "1:30" without "PM": the tick under a cell, where there is no room for the rest. */
+	const fmtShort = useMemo(
+		() => minutesShortFormatter(i18n.locale),
+		[i18n.locale],
+	)
 	const slots = (range.endMin - range.startMin) / SLOT_MIN
 	const hours = Math.ceil((range.endMin - range.startMin) / 60)
 	const nowMin = isToday ? nowOffset(now, feed, range) : null
@@ -373,6 +384,7 @@ export function Timeline({
 									bookable={bookable}
 									matchIds={matchIds}
 									picking={picking}
+									canReadGuest={canReadGuest}
 									formatTime={formatTime}
 									formatShort={formatShort}
 									onBar={onBar}
@@ -438,6 +450,7 @@ export function Timeline({
 										}
 										data-hour={cell.startMin % 60 === 0}
 										data-now={current}
+										data-tick={cell.startMin % 30 === 0}
 										title={
 											cap !== null
 												? _(msg`${at}: ${covers} of ${cap} covers`)
@@ -450,6 +463,12 @@ export function Timeline({
 												<span className="tl-cell-cap">/{cap}</span>
 											) : null}
 										</span>
+										{/* The time under the cell at each :00 and :30, so a number is never guessed at. */}
+										{cell.startMin % 30 === 0 ? (
+											<span aria-hidden className="tl-cell-tick" dir="ltr">
+												{fmtShort(cell.startMin)}
+											</span>
+										) : null}
 										{cap !== null ? <span className="tl-cell-fill" /> : null}
 									</span>
 								)
@@ -470,6 +489,7 @@ function Row({
 	bookable,
 	matchIds,
 	picking,
+	canReadGuest,
 	formatTime,
 	formatShort,
 	onBar,
@@ -484,6 +504,7 @@ function Row({
 	bookable: boolean
 	matchIds: Set<string> | null
 	picking: PartyToPlace | null
+	canReadGuest: boolean
 	formatTime: (epochMs: number) => string
 	formatShort: (epochMs: number) => string
 	onBar: (reservation: DayReservation) => void
@@ -580,6 +601,7 @@ function Row({
 						range={range}
 						now={now}
 						tableLabel={table?.label ?? null}
+						canReadGuest={canReadGuest}
 						formatShort={formatShort}
 						formatTime={formatTime}
 						dim={matchIds !== null && !matchIds.has(bar.reservation.id)}
@@ -597,6 +619,7 @@ function BarButton({
 	range,
 	now,
 	tableLabel,
+	canReadGuest,
 	formatTime,
 	formatShort,
 	dim,
@@ -608,6 +631,7 @@ function BarButton({
 	now: number
 	/** The table this row is (null: the "No table" row). */
 	tableLabel: string | null
+	canReadGuest: boolean
 	formatTime: (epochMs: number) => string
 	formatShort: (epochMs: number) => string
 	dim: boolean
@@ -622,6 +646,11 @@ function BarButton({
 	const size = r.partySize
 	const standing = statusText(_, status)
 	const time = formatTime(r.startAt)
+	// A stay that began before the grid starts has no start to show: how long they have sat.
+	const elapsed =
+		bar.clippedStart && isOnFloor(r) && typeof r.seatedAt === 'number'
+			? Math.max(0, Math.floor((now - r.seatedAt) / 60_000))
+			: null
 	const where = tableLabel
 		? _(msg`table ${tableLabel}`)
 		: bar.tableRemoved
@@ -648,10 +677,12 @@ function BarButton({
 			}
 		>
 			<span className="tl-bar-in">
-				{Icon ? <Icon aria-hidden className="size-4 shrink-0" /> : null}
+				{Icon ? (
+					<Icon aria-hidden className="tl-extra size-4 shrink-0" />
+				) : null}
 				{/* "7:45 · Elena V.": the start time leads, so a row reads as a schedule. */}
 				<span aria-hidden className="tl-bar-time tnum">
-					{formatShort(r.startAt)}
+					{elapsed !== null ? _(msg`${elapsed}m`) : formatShort(r.startAt)}
 				</span>
 				<bdi className="min-w-0 truncate font-semibold">{who}</bdi>
 				{bar.tableRemoved ? (
@@ -660,21 +691,27 @@ function BarButton({
 					</span>
 				) : null}
 				{isVip(r) ? (
-					<Crown aria-hidden className="text-primary size-3.5 shrink-0" />
+					<Crown
+						aria-hidden
+						className="tl-extra text-primary size-3.5 shrink-0"
+					/>
 				) : null}
-				{r.hasAllergy ? (
+				{showsAllergyMark(r, canReadGuest) ? (
 					<TriangleAlert
 						aria-hidden
 						className="text-warning size-3.5 shrink-0"
 					/>
 				) : null}
 				{r.occasion ? (
-					<Cake aria-hidden className="text-primary size-3.5 shrink-0" />
+					<Cake
+						aria-hidden
+						className="tl-extra text-primary size-3.5 shrink-0"
+					/>
 				) : null}
 				{hasNotes(r) ? (
 					<StickyNote
 						aria-hidden
-						className="text-muted-foreground size-3.5 shrink-0"
+						className="tl-extra text-muted-foreground size-3.5 shrink-0"
 					/>
 				) : null}
 				<span aria-hidden className="tl-bar-size tnum">

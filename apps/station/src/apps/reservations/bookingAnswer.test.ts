@@ -16,7 +16,7 @@ describe('what a booking’s answer says', () => {
 					tableLabels: ['1'],
 				},
 			}),
-		).toEqual({ code: 'WHSNGV', table: '1', textSent: false })
+		).toEqual({ code: 'WHSNGV', table: '1' })
 	})
 	it('names a table given only by id, from the floor', () => {
 		expect(
@@ -31,23 +31,16 @@ describe('what a booking’s answer says', () => {
 	it('says no table when the answer gives none', () => {
 		expect(bookingAnswerOf({ reservation: { tableIds: [] } }).table).toBeNull()
 		expect(bookingAnswerOf({ reservation: {} }).table).toBeNull()
-		expect(bookingAnswerOf(null)).toEqual({
-			code: null,
-			table: null,
-			textSent: false,
-		})
+		expect(bookingAnswerOf(null)).toEqual({ code: null, table: null })
 		expect(bookingAnswerOf('nonsense').code).toBeNull()
 	})
-	it('says a text was sent only when the answer says so', () => {
-		expect(
-			bookingAnswerOf({ confirmationSent: true, reservation: {} }).textSent,
-		).toBe(true)
-		expect(bookingAnswerOf({ reservation: { smsSent: true } }).textSent).toBe(
-			true,
-		)
-		// Anything but a plain true is no claim.
-		expect(bookingAnswerOf({ confirmationSent: 'yes' }).textSent).toBe(false)
-		expect(bookingAnswerOf({ confirmationSent: false }).textSent).toBe(false)
-		expect(bookingAnswerOf({}).textSent).toBe(false)
+	it('never claims a confirmation text: the create route does not say one went out', () => {
+		const answer = bookingAnswerOf({
+			confirmationSent: true,
+			smsSent: true,
+			reservation: { confirmationCode: 'ABC123', smsSent: true },
+		})
+		expect(answer).toEqual({ code: 'ABC123', table: null })
+		expect(Object.keys(answer)).not.toContain('textSent')
 	})
 })

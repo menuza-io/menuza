@@ -12,12 +12,17 @@ const NOW = at(13 * 60)
 const actionsFor = (
 	status: string,
 	over: Record<string, unknown> = {},
-	options: { now?: number; viewOnly?: boolean } = {},
+	options: {
+		now?: number
+		viewOnly?: boolean
+		seatTableKind?: PartyActionsInput['seatTableKind']
+	} = {},
 ) =>
 	partyActions({
 		r: rsv({ start: 13 * 60, status, ...over }) as PartyActionsInput['r'],
 		now: options.now ?? NOW,
 		viewOnly: options.viewOnly ?? false,
+		seatTableKind: options.seatTableKind,
 	})
 
 describe('what a till may do to a booking', () => {
@@ -143,6 +148,143 @@ describe('what a till may do to a booking', () => {
 		expect(actionsFor('seated').canBookAgain).toBe(false)
 		// A cancelled booking still has this one button.
 		expect(actionsFor('cancelled').any).toBe(true)
+	})
+})
+
+describe('a booking with money on it', () => {
+	// What a till can do to a booking at each step of its life, with and without a deposit.
+	const LIVE = [
+		'booked',
+		'confirmed',
+		'arrived',
+		'partially_arrived',
+		'seated',
+	] as const
+	const PAYMENTS = [
+		'none',
+		'pending',
+		'paid',
+		'guaranteed',
+		'refund_pending',
+		'refunded',
+		'partially_refunded',
+		'fee_pending',
+	]
+	// A no-show needs the grace to have passed.
+	const late = { now: NOW + TILL_NO_SHOW_GRACE_MS * 4 }
+
+	for (const status of LIVE) {
+		for (const paymentStatus of PAYMENTS) {
+			const paid = paymentStatus !== 'none'
+			it(`${status} with payment "${paymentStatus}": ${paid ? 'size, cancel and no-show go to a manager' : 'the till keeps them'}`, () => {
+				const a = actionsFor(status, { paymentStatus }, late)
+				if (paid) {
+					expect(a.canChange).toBe(false)
+					expect(a.canNoShow).toBe(false)
+					expect(a.canCancel).toBe(false)
+					expect(a.managerHandles).toBe(true)
+					// The footer still shows: the line that says whose it is.
+					expect(a.any).toBe(true)
+				} else {
+					expect(a.managerHandles).toBe(false)
+					expect(a.canChange).toBe(
+						status === 'booked' ||
+							status === 'confirmed' ||
+							status === 'arrived' ||
+							status === 'seated',
+					)
+					expect(a.canCancel).toBe(
+						status === 'booked' ||
+							status === 'confirmed' ||
+							status === 'arrived' ||
+							status === 'partially_arrived',
+					)
+				}
+			})
+		}
+	}
+
+	it('still lets the till do what the money does not touch', () => {
+		const a = actionsFor('arrived', { paymentStatus: 'paid' }, late)
+		expect(a.canSeat).toBe(true)
+		const seated = actionsFor('seated', { paymentStatus: 'paid' })
+		expect(seated.canFinish).toBe(true)
+		// Moving a party to another table and a longer stay are not money.
+		expect(seated.canMove).toBe(true)
+		expect(seated.canExtend).toBe(true)
+	})
+
+	it('says nothing twice about a booking still awaiting its deposit', () => {
+		const held = actionsFor('pending_payment', { paymentStatus: 'pending' })
+		expect(held.awaitingPayment).toBe(true)
+		expect(held.managerHandles).toBe(false)
+		expect(held.canChange).toBe(false)
+		expect(held.canCancel).toBe(false)
+	})
+
+	it('has no manager line for a booking that is over', () => {
+		for (const status of ['finished', 'no_show', 'cancelled'])
+			expect(actionsFor(status, { paymentStatus: 'paid' }).managerHandles).toBe(
+				false,
+			)
+	})
+})
+
+describe('a party at the table', () => {
+	const seated = (over: Record<string, unknown> = {}) =>
+		actionsFor('seated', { seatedAt: NOW - 30 * MIN, ...over })
+	it('can have its size changed at the door, but not its time', () => {
+		const a = seated()
+		expect(a.canChange).toBe(true)
+		expect(a.changeKind).toBe('size')
+		expect(actionsFor('booked').changeKind).toBe('size_time')
+	})
+	it('can move to another table, and stay a quarter hour longer', () => {
+		expect(seated()).toMatchObject({ canMove: true, canExtend: true })
+	})
+	it('cannot be extended past what a till may set', () => {
+		expect(seated({ durationMin: 345 }).canExtend).toBe(true)
+		expect(seated({ durationMin: 346 }).canExtend).toBe(false)
+		expect(seated({ durationMin: 360 }).canExtend).toBe(false)
+	})
+	it('is not moved, extended or resized from another day', () => {
+		const a = actionsFor('seated', {}, { viewOnly: true })
+		expect(a).toMatchObject({
+			canMove: false,
+			canExtend: false,
+			canChange: false,
+		})
+	})
+	it('is only for a party that is seated', () => {
+		for (const status of ['booked', 'arrived', 'finished', 'no_show']) {
+			const a = actionsFor(status)
+			expect(a.canMove).toBe(false)
+			expect(a.canExtend).toBe(false)
+		}
+	})
+})
+
+describe('seating at the booked table in one tap', () => {
+	const here = { tableIds: ['t3'], tableLabels: ['3'] }
+	it('only while the table is free', () => {
+		for (const kind of ['open', 'soon'] as const)
+			expect(
+				actionsFor('arrived', here, { seatTableKind: kind }).seatAt,
+			).toEqual({ label: '3', tableId: 't3' })
+		// A table that is taken, taped off or being reset is not one tap away.
+		for (const kind of ['seated', 'blocked', 'resetting'] as const)
+			expect(
+				actionsFor('arrived', here, { seatTableKind: kind }).seatAt,
+			).toBeNull()
+		// Unknown (the table is not on this floor): as before.
+		expect(
+			actionsFor('arrived', here, { seatTableKind: null }).seatAt,
+		).not.toBeNull()
+	})
+	it('still lets them choose a table when the booked one is not free', () => {
+		const a = actionsFor('arrived', here, { seatTableKind: 'seated' })
+		expect(a.canSeat).toBe(true)
+		expect(a.seatAt).toBeNull()
 	})
 })
 

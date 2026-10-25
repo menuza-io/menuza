@@ -25,6 +25,7 @@ import {
 import availability from './fixtures/availability.json'
 import dayFeed from './fixtures/day-feed.json'
 import waitlist from './fixtures/waitlist.json'
+import { at, day, rsv } from './testing.ts'
 
 /** The recorded payloads are the server's real answers (see the contract test). */
 const feed = dayFeedSchema.parse(dayFeed)
@@ -375,5 +376,178 @@ describe('the slot a booking starts at', () => {
 		expect(openSlotAt(slots, 19 * 60)).toBeUndefined()
 		expect(openSlotAt(slots, 20 * 60)).toBeUndefined()
 		expect(openSlotAt(slots, null)).toBeUndefined()
+	})
+})
+
+describe('a table kept through its reset buffer', () => {
+	const NOW_AT = at(13 * 60)
+	const reset = (minutes: number) => ({
+		id: 'tr',
+		areaId: 'a1',
+		resetBufferMin: minutes,
+	})
+	const feedOf = (
+		reservations: ReturnType<typeof rsv>[],
+		extra: Partial<Record<string, unknown>> = {},
+	) => day(reservations, extra)
+	const left = (minutesAgo: number) =>
+		rsv({
+			start: 11 * 60,
+			status: 'finished',
+			tableIds: ['tr'],
+			seatedAt: NOW_AT - 90 * MIN,
+			finishedAt: NOW_AT - minutesAgo * MIN,
+		})
+
+	it('is resetting for the buffer after a party is cleared, then open', () => {
+		const feed = feedOf([left(4)])
+		const state = tableState(reset(10), feed, NOW_AT)
+		expect(state).toMatchObject({ kind: 'resetting' })
+		expect(state.kind === 'resetting' && state.readyAt).toBe(NOW_AT + 6 * MIN)
+		// The minute it is over, the table is open again.
+		expect(tableState(reset(10), feed, NOW_AT + 6 * MIN - 1).kind).toBe(
+			'resetting',
+		)
+		expect(tableState(reset(10), feed, NOW_AT + 6 * MIN).kind).toBe('open')
+	})
+	it('is never resetting for a table with no buffer, or a party cleared long ago', () => {
+		expect(tableState(reset(0), feedOf([left(1)]), NOW_AT).kind).toBe('open')
+		expect(tableState(reset(10), feedOf([left(11)]), NOW_AT).kind).toBe('open')
+		expect(
+			tableState({ id: 'tr', areaId: 'a1' }, feedOf([left(1)]), NOW_AT).kind,
+		).toBe('open')
+	})
+	it('is only for a party that finished (a no-show or a cancel leaves no mess)', () => {
+		for (const status of ['no_show', 'cancelled'])
+			expect(
+				tableState(
+					reset(10),
+					feedOf([
+						rsv({
+							start: 11 * 60,
+							status,
+							tableIds: ['tr'],
+							finishedAt: NOW_AT - MIN,
+						}),
+					]),
+					NOW_AT,
+				).kind,
+			).toBe('open')
+	})
+	it('uses the latest party when two left in a row', () => {
+		const state = tableState(reset(10), feedOf([left(8), left(2)]), NOW_AT)
+		expect(state.kind === 'resetting' && state.readyAt).toBe(NOW_AT + 8 * MIN)
+	})
+	it('gives way to someone seated or a block, and keeps the next booking', () => {
+		const sitting = rsv({
+			start: 13 * 60,
+			status: 'seated',
+			tableIds: ['tr'],
+			seatedAt: NOW_AT,
+		})
+		expect(tableState(reset(10), feedOf([left(2), sitting]), NOW_AT).kind).toBe(
+			'seated',
+		)
+		const taped = feedOf([left(2)], {
+			blocks: [
+				{ id: 'b', tableId: 'tr', startAt: NOW_AT - MIN, endAt: NOW_AT + MIN },
+			],
+		})
+		expect(tableState(reset(10), taped, NOW_AT).kind).toBe('blocked')
+		const due = rsv({
+			start: 13 * 60 + 20,
+			tableIds: ['tr'],
+			status: 'confirmed',
+		})
+		const state = tableState(reset(10), feedOf([left(2), due]), NOW_AT)
+		expect(state).toMatchObject({ kind: 'resetting', next: { id: due.id } })
+	})
+	it('counts as taken for the party in hand, with when it is ready', () => {
+		const state = tableState(reset(10), feedOf([left(4)]), NOW_AT)
+		expect(
+			fitVerdict(
+				{ maxCovers: 4, resetBufferMin: 10 },
+				state,
+				{ partySize: 2, durationMin: 90 },
+				NOW_AT,
+			),
+		).toEqual({ fits: false, why: 'resetting', until: NOW_AT + 6 * MIN })
+		expect(
+			takesParty(
+				{ maxCovers: 4 },
+				state,
+				{ partySize: 2, durationMin: 90 },
+				NOW_AT,
+			),
+		).toBe(false)
+	})
+	it('is not the best table for a party, however well it fits', () => {
+		const feed = feedOf([left(4)])
+		const table = {
+			...feed.tables[1]!,
+			id: 'tr',
+			resetBufferMin: 10,
+		}
+		const resetting = tableState(table, feed, NOW_AT)
+		expect(resetting.kind).toBe('resetting')
+		expect(
+			bestFit(
+				[{ table, state: resetting }],
+				{ partySize: 2, durationMin: 90 },
+				NOW_AT,
+			),
+		).toBeNull()
+	})
+	it('keeps the buffer in the party’s window, as the server does', () => {
+		// A booking 100 minutes out: a 90 minute stay fits with no buffer, not with 15.
+		const next = rsv({ start: 14 * 60 + 40, status: 'booked', tableIds: ['x'] })
+		const open: TableState = { kind: 'soon', next }
+		const party = { partySize: 2, durationMin: 90 }
+		expect(
+			fitVerdict({ maxCovers: 4, resetBufferMin: 0 }, open, party, NOW_AT),
+		).toEqual({ fits: true })
+		expect(
+			fitVerdict({ maxCovers: 4, resetBufferMin: 10 }, open, party, NOW_AT),
+		).toEqual({ fits: true })
+		expect(
+			fitVerdict({ maxCovers: 4, resetBufferMin: 15 }, open, party, NOW_AT),
+		).toEqual({ fits: false, why: 'booked', at: next.startAt })
+		// Exactly the stay and the buffer is still a fit; a minute less is not.
+		const edge: TableState = {
+			kind: 'soon',
+			next: rsv({ start: 14 * 60 + 45, status: 'booked' }),
+		}
+		expect(
+			fitVerdict({ maxCovers: 4, resetBufferMin: 15 }, edge, party, NOW_AT)
+				.fits,
+		).toBe(true)
+		expect(
+			fitVerdict({ maxCovers: 4, resetBufferMin: 16 }, edge, party, NOW_AT)
+				.fits,
+		).toBe(false)
+	})
+	it('reads the buffer from the feed, and counts none for an older server', () => {
+		const withReset = feedOf([], {
+			tables: [
+				{
+					id: 'tr',
+					areaId: 'a1',
+					label: 'R',
+					minCovers: 1,
+					maxCovers: 2,
+					resetBufferMin: 12,
+				},
+				{ id: 'tn', areaId: 'a1', label: 'N', minCovers: 1, maxCovers: 2 },
+				{
+					id: 'tz',
+					areaId: 'a1',
+					label: 'Z',
+					minCovers: 1,
+					maxCovers: 2,
+					resetBufferMin: null,
+				},
+			],
+		})
+		expect(withReset.tables.map((t) => t.resetBufferMin)).toEqual([12, 0, 0])
 	})
 })
