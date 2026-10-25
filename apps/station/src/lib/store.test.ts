@@ -1,5 +1,11 @@
 import 'fake-indexeddb/auto'
+import { createClockQueue } from '@repo/staffing/clock-queue'
+import { IDBFactory } from 'fake-indexeddb'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+	flushPunches,
+	resetPunchQueueForTests,
+} from '../apps/timeclock/clock.ts'
 import { db } from './db.ts'
 import { usePos } from './store.ts'
 
@@ -32,6 +38,7 @@ beforeEach(async () => {
 
 afterEach(() => {
 	vi.unstubAllGlobals()
+	resetPunchQueueForTests()
 })
 
 const settled = () => new Promise((resolve) => setTimeout(resolve, 20))
@@ -57,6 +64,66 @@ describe('a terminal that stops being this restaurant’s', () => {
 		await usePos.getState().verifyPairing()
 		expect(usePos.getState().pairingLost).toBe(true)
 		expect(await db.meta.get('zatca:unit')).toBeUndefined()
+	})
+})
+
+describe('punches on a till that can no longer send them', () => {
+	it('sets aside those too old to record, PINs dropped, and sends the rest once paired again', async () => {
+		const hour = 60 * 60 * 1000
+		const queue = createClockQueue({
+			indexedDB: new IDBFactory(),
+			crypto,
+			dbName: 'store-punches',
+		})
+		resetPunchQueueForTests(queue)
+		const punch = { kind: 'clock_in' as const, pin: '4821' }
+		await queue.enqueue({
+			...punch,
+			id: 'old',
+			clientAt: Date.now() - 50 * hour,
+			createdAt: 1,
+		})
+		await queue.enqueue({
+			...punch,
+			id: 'recent',
+			clientAt: Date.now() - 47 * hour,
+			createdAt: 2,
+		})
+		const fetchMock = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({
+						outcome: 'accepted',
+						duplicate: false,
+						kind: 'clock_in',
+						state: 'in',
+						firstName: 'Rana',
+						at: Date.now(),
+						serverNow: Date.now(),
+					}),
+				),
+		)
+		vi.stubGlobal('fetch', fetchMock)
+		// A manager removed the tablet: no device secret, so nothing can be sent.
+		usePos.setState({
+			settings: { ...usePos.getState().settings, deviceToken: null },
+		})
+		await usePos.getState().sync()
+		expect(fetchMock).not.toHaveBeenCalled()
+		expect(await queue.failed()).toEqual([
+			expect.objectContaining({
+				id: 'old',
+				failure: 'punch_too_old',
+				pin: null,
+			}),
+		])
+		// Paired again within 48 hours: the rest still goes out.
+		await flushPunches(
+			{ ...usePos.getState().settings, deviceToken: 'pdv1.again' },
+			true,
+		)
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+		expect(await queue.counts()).toEqual({ queued: 0, failed: 1 })
 	})
 })
 

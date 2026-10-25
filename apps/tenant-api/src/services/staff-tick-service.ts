@@ -75,8 +75,8 @@ import {
 	issuesForEntry,
 	loadBreaks,
 	refreshStaffCaches,
+	snapshotCard,
 } from './time-entry-calc.ts'
-import { snapshotCard } from './timesheet-write-service.ts'
 import { inJsonList } from '../lib/chunked-in.ts'
 
 /**

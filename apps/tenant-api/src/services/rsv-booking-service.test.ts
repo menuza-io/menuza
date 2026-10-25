@@ -21,7 +21,7 @@ import {
 	rsvTables,
 	rsvTags,
 } from '@repo/tenant-db'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import {
 	assignReservationTables,
@@ -29,6 +29,7 @@ import {
 	createWalkIn,
 	getReservationDetail,
 	transitionReservationStatus,
+	tillUndoable,
 	undoReservationTransition,
 	updateReservation,
 	updateReservationContactStatus,
@@ -920,6 +921,145 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 			.where(eq(rsvReservations.id, created.reservation.id))
 			.get()
 		expect(afterSecond?.status).toBe(undone.reservation.status)
+	})
+
+	describe('a till undoing a no-show', () => {
+		const book = async (key: string, time: string, tableId: string) => {
+			const created = await createOperatorReservation({
+				orgId: ORG_ID,
+				locationId: LOC_ID,
+				actorId: 'user_kody',
+				idempotencyKey: key,
+				input: {
+					locationId: LOC_ID,
+					date: DATE,
+					time,
+					partySize: 2,
+					tableIds: [tableId],
+					guest: { firstName: 'Late', lastName: 'Guest' },
+				},
+			})
+			return created.reservation
+		}
+		const activeTables = async (id: string) => {
+			const db = await getTenantDb(ORG_ID)
+			return (
+				await db
+					.select()
+					.from(rsvTableOccupancies)
+					.where(eq(rsvTableOccupancies.reservationId, id))
+					.all()
+			)
+				.filter((o) => o.active)
+				.map((o) => o.tableId)
+		}
+		const till = { ownRecentOnly: { withinMs: 30 * 60_000 } }
+
+		it('brings the guest back without a table when theirs was given away, but not a cancellation', async () => {
+			const maya = await book('idem-till-undo-1', '10:00', 'tbl_1')
+			const noShow = await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: maya.id,
+				actorId: 'host_1',
+				input: { status: 'no_show', expectedVersion: maya.version },
+			})
+			// The host gives T1 to someone else; then Maya turns up.
+			const other = await book('idem-till-undo-2', '10:00', 'tbl_1')
+			const back = await undoReservationTransition({
+				orgId: ORG_ID,
+				reservationId: maya.id,
+				actorId: 'host_1',
+				...till,
+				input: { expectedVersion: noShow.reservation.version },
+			})
+			expect(back.reservation.status).not.toBe('no_show')
+			expect(await activeTables(maya.id)).toEqual([])
+			expect(await activeTables(other.id)).toEqual(['tbl_1'])
+
+			// A cancellation is only put back with its tables.
+			const cancelled = await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: other.id,
+				actorId: 'host_1',
+				input: { status: 'cancelled', reason: 'test' },
+			})
+			const third = await book('idem-till-undo-3', '10:00', 'tbl_1')
+			await expect(
+				undoReservationTransition({
+					orgId: ORG_ID,
+					reservationId: other.id,
+					actorId: 'host_1',
+					input: { expectedVersion: cancelled.reservation.version },
+				}),
+			).rejects.toMatchObject({ status: 409, code: 'table_occupied' })
+			expect(await activeTables(third.id)).toEqual(['tbl_1'])
+		})
+
+		it('keeps a still-free table with the party it comes back to', async () => {
+			const r = await book('idem-till-undo-4', '08:00', 'tbl_2')
+			const noShow = await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: r.id,
+				actorId: 'host_1',
+				input: { status: 'no_show', expectedVersion: r.version },
+			})
+			await undoReservationTransition({
+				orgId: ORG_ID,
+				reservationId: r.id,
+				actorId: 'host_1',
+				...till,
+				input: { expectedVersion: noShow.reservation.version },
+			})
+			expect(await activeTables(r.id)).toEqual(['tbl_2'])
+		})
+
+		it('lets a till undo its own person’s change or the system’s, not another host’s', async () => {
+			const own = await book('idem-till-undo-5', '07:00', 'tbl_1')
+			await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: own.id,
+				actorId: 'host_1',
+				input: { status: 'no_show' },
+			})
+			const auto = await book('idem-till-undo-6', '06:00', 'tbl_2')
+			await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: auto.id,
+				actorId: 'staff-tick',
+				actorKind: 'system',
+				input: { status: 'no_show', reason: 'auto_no_show' },
+			})
+			const db = await getTenantDb(ORG_ID)
+			const rows = (
+				await db
+					.select()
+					.from(rsvReservations)
+					.where(inArray(rsvReservations.id, [own.id, auto.id]))
+			).map((r) => ({ id: r.id, status: r.status, noShowAt: r.noShowAt }))
+			const asHost = await tillUndoable(db, rows, 'host_1', Date.now())
+			expect([...asHost.candidates].sort()).toEqual([own.id, auto.id].sort())
+			expect([...asHost.allowed].sort()).toEqual([own.id, auto.id].sort())
+			const asOther = await tillUndoable(db, rows, 'host_2', Date.now())
+			// Another host sees the system's no-show as theirs to undo, not the first host's.
+			expect([...asOther.allowed]).toEqual([auto.id])
+			await expect(
+				undoReservationTransition({
+					orgId: ORG_ID,
+					reservationId: own.id,
+					actorId: 'host_2',
+					...till,
+					input: {},
+				}),
+			).rejects.toMatchObject({ status: 409, code: 'undo_not_allowed' })
+			// Past the window nobody's is offered.
+			const later = await tillUndoable(
+				db,
+				rows,
+				'host_1',
+				Date.now() + 31 * 60_000,
+			)
+			expect(later.candidates.size).toBe(0)
+		})
 	})
 
 	it('the generic status route cannot approve a pending_approval request', async () => {

@@ -15,6 +15,7 @@ import {
 	type EngineTableInput,
 	type ReservationStatus,
 	TILL_NO_SHOW_GRACE_MS,
+	TILL_UNDO_WINDOW_MS,
 } from '@repo/reservations'
 import {
 	getTenantDb,
@@ -39,6 +40,7 @@ import {
 	rsvTurnTimes,
 	type RSV_COURSE_STATUS_VALUES,
 	type RSV_CONTACT_STATUS_VALUES,
+	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, isNull, lte, gte, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
@@ -3195,6 +3197,99 @@ export async function transitionReservationStatus(params: {
 
 const UNDO_FINISHED_WINDOW_MS = 30 * 60_000
 
+type ReservationEventRow = typeof rsvReservationEvents.$inferSelect
+
+/**
+ * The status change an undo reverses: the latest one. An earlier `status_undo`
+ * never counts (undo must not undo itself): once the latest status change is
+ * an undo, there is nothing left to undo.
+ */
+function statusChangeToUndo(
+	/** Newest first. */
+	events: readonly ReservationEventRow[],
+	status: string,
+): {
+	lastStatusEvent: ReservationEventRow | undefined
+	blockedByUndo: boolean
+} {
+	for (const e of events) {
+		if (e.fromStatus === null || e.fromStatus === e.toStatus) continue
+		if (e.type === 'status_undo')
+			return { lastStatusEvent: undefined, blockedByUndo: true }
+		if (e.toStatus === status)
+			return { lastStatusEvent: e, blockedByUndo: false }
+	}
+	return { lastStatusEvent: undefined, blockedByUndo: false }
+}
+
+/** A till undoes its own person's recent change, or the system's. */
+function tillMayUndo(
+	event: Pick<ReservationEventRow, 'actorId' | 'actorKind' | 'at'>,
+	actorId: string,
+	nowMs: number,
+	withinMs: number,
+) {
+	return (
+		(event.actorId === actorId || event.actorKind === 'system') &&
+		nowMs - event.at <= withinMs
+	)
+}
+
+/**
+ * Which of the day's recent no-shows and finished parties a till may undo, so
+ * it never offers an undo it would be refused. `candidates` are those changed
+ * within the window (the ones a till would show an undo for at all).
+ */
+export async function tillUndoable(
+	db: TenantDatabase,
+	reservations: ReadonlyArray<{
+		id: string
+		status: string
+		noShowAt?: number | null
+		finishedAt?: number | null
+	}>,
+	actorId: string,
+	nowMs: number,
+): Promise<{ candidates: Set<string>; allowed: Set<string> }> {
+	const recent = reservations.filter((r) => {
+		const at =
+			r.status === 'no_show'
+				? r.noShowAt
+				: r.status === 'finished'
+					? r.finishedAt
+					: null
+		return typeof at === 'number' && nowMs - at <= TILL_UNDO_WINDOW_MS
+	})
+	const candidates = new Set(recent.map((r) => r.id))
+	const allowed = new Set<string>()
+	if (recent.length === 0) return { candidates, allowed }
+	const events = await queryInChunks([...candidates], (chunk) =>
+		db
+			.select()
+			.from(rsvReservationEvents)
+			.where(inArray(rsvReservationEvents.reservationId, chunk)),
+	)
+	const byReservation = new Map<string, ReservationEventRow[]>()
+	for (const event of events) {
+		const list = byReservation.get(event.reservationId) ?? []
+		list.push(event)
+		byReservation.set(event.reservationId, list)
+	}
+	for (const r of recent) {
+		// Newest first, as the undo reads them.
+		const list = (byReservation.get(r.id) ?? []).sort(
+			(a, b) => b.at - a.at || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0),
+		)
+		const { lastStatusEvent } = statusChangeToUndo(list, r.status)
+		if (
+			lastStatusEvent &&
+			tillMayUndo(lastStatusEvent, actorId, nowMs, TILL_UNDO_WINDOW_MS)
+		)
+			allowed.add(r.id)
+	}
+	return { candidates, allowed }
+}
+
 export async function undoReservationTransition(params: {
 	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
 	canReadGuestSensitive?: boolean
@@ -3202,8 +3297,9 @@ export async function undoReservationTransition(params: {
 	reservationId: string
 	actorId: string
 	/**
-	 * Only the caller's own recent change may be undone (a till: the host's
-	 * slip, not a manager's decision or a guest's cancellation days ago).
+	 * Only the caller's own recent change, or the system's (an automatic
+	 * no-show), may be undone: a till fixes the host's slip or the system's
+	 * guess, not a manager's decision or a guest's cancellation days ago.
 	 */
 	ownRecentOnly?: { withinMs: number }
 	input?: {
@@ -3277,31 +3373,26 @@ export async function undoReservationTransition(params: {
 				.orderBy(desc(rsvReservationEvents.at), desc(rsvReservationEvents.id))
 				.all()
 
-			let lastStatusEvent: (typeof events)[number] | undefined
-			let blockedByUndo = false
-			for (const e of events) {
-				if (e.fromStatus === null || e.fromStatus === e.toStatus) continue
-				if (e.type === 'status_undo') {
-					blockedByUndo = true
-					break
-				}
-				if (e.toStatus === current.status) {
-					lastStatusEvent = e
-					break
-				}
-			}
-			if (params.ownRecentOnly) {
-				const nowMs = params.input?.nowMs ?? Date.now()
-				if (
-					!lastStatusEvent ||
-					lastStatusEvent.actorId !== params.actorId ||
-					nowMs - lastStatusEvent.at > params.ownRecentOnly.withinMs
-				)
-					throw conflict(
-						'undo_not_allowed',
-						'Only your own last change can be undone here. A manager changes it in the app.',
+			const { lastStatusEvent, blockedByUndo } = statusChangeToUndo(
+				events,
+				current.status,
+			)
+			if (
+				params.ownRecentOnly &&
+				!(
+					lastStatusEvent &&
+					tillMayUndo(
+						lastStatusEvent,
+						params.actorId,
+						params.input?.nowMs ?? Date.now(),
+						params.ownRecentOnly.withinMs,
 					)
-			}
+				)
+			)
+				throw conflict(
+					'undo_not_allowed',
+					'Only your own last change can be undone here. A manager changes it in the app.',
+				)
 			const previousStatus = blockedByUndo
 				? null
 				: (lastStatusEvent?.fromStatus ??
@@ -3423,8 +3514,12 @@ export async function undoReservationTransition(params: {
 				current.status === 'cancelled' ||
 				current.status === 'no_show'
 			) {
-				// Reactivate occupancies if still free
+				// Reactivate occupancies if still free. A no-show who turns up after
+				// all comes back even when their table was given away: with no table
+				// (none of it, so a party is never left at half a table), for the
+				// host to place. A cancellation is put back only with its tables.
 				const prevOccs = await loadReleasedOccupancies()
+				const taken: boolean[] = []
 				for (const occ of prevOccs) {
 					const conflictingOcc = await tx
 						.select()
@@ -3438,16 +3533,25 @@ export async function undoReservationTransition(params: {
 							),
 						)
 						.get()
-					if (conflictingOcc && conflictingOcc.reservationId !== current.id) {
-						throw conflict(
-							'table_occupied',
-							'Cannot undo because the table is now occupied',
-						)
+					taken.push(
+						Boolean(
+							conflictingOcc && conflictingOcc.reservationId !== current.id,
+						),
+					)
+				}
+				if (taken.some(Boolean) && current.status !== 'no_show') {
+					throw conflict(
+						'table_occupied',
+						'Cannot undo because the table is now occupied',
+					)
+				}
+				if (!taken.some(Boolean)) {
+					for (const occ of prevOccs) {
+						await tx
+							.update(rsvTableOccupancies)
+							.set({ active: true })
+							.where(eq(rsvTableOccupancies.id, occ.id))
 					}
-					await tx
-						.update(rsvTableOccupancies)
-						.set({ active: true })
-						.where(eq(rsvTableOccupancies.id, occ.id))
 				}
 
 				if (current.guestId) {

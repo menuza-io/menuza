@@ -68,7 +68,7 @@ import {
 import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
 import { pinLookupFor, pinShapeOk } from './kiosk-pin-service.ts'
 import { fetchOrderContext } from './order-service.ts'
-import { hashPosSecret } from '../lib/pos-auth.ts'
+import { hashPosSecret, posStaffScopeId } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import {
@@ -401,7 +401,7 @@ export async function redeemPairingCode(
 						label: row.label,
 						terminalCode: row.terminalCode,
 						locationId: row.locationId,
-						scopeId: row.scopeId,
+						scopeId: posStaffScopeId(row),
 						signInRequired: row.signInRequired,
 						dayStartMinutes: row.dayStartMinutes,
 						shiftsRequired: row.shiftsRequired,
@@ -424,7 +424,7 @@ export const serializeDevice = (row: PosDevice) => ({
 	label: row.label,
 	terminalCode: row.terminalCode,
 	locationId: row.locationId,
-	scopeId: row.scopeId,
+	scopeId: posStaffScopeId(row),
 	signInRequired: row.signInRequired,
 	dayStartMinutes: row.dayStartMinutes,
 	shiftsRequired: row.shiftsRequired,
@@ -637,8 +637,16 @@ export async function verifyPosPin(
 }
 
 /** Everyone assigned to a workplace, whether they have a PIN yet, and who may manage a till. */
-export async function listStaffRoster(db: TenantDatabase, scopeId: string) {
-	const rows = await db
+/**
+ * The people who work at a workplace, or at any of them (`null`): managers and
+ * hosts are chosen once for every till, and an organization with locations has
+ * one workplace per location. A PIN at any of a person's workplaces counts.
+ */
+export async function listStaffRoster(
+	db: TenantDatabase,
+	scopeId: string | null,
+) {
+	const assigned = await db
 		.select({
 			id: staffMembers.id,
 			firstName: staffMembers.firstName,
@@ -649,12 +657,21 @@ export async function listStaffRoster(db: TenantDatabase, scopeId: string) {
 		.innerJoin(staffMembers, eq(staffMembers.id, staffScopeAssignments.staffId))
 		.where(
 			and(
-				eq(staffScopeAssignments.scopeId, scopeId),
+				scopeId === null
+					? undefined
+					: eq(staffScopeAssignments.scopeId, scopeId),
 				eq(staffScopeAssignments.active, true),
 				eq(staffMembers.status, 'active'),
 			),
 		)
 		.orderBy(asc(staffMembers.lastName), asc(staffMembers.firstName))
+	const people = new Map<string, (typeof assigned)[number]>()
+	for (const row of assigned) {
+		const seen = people.get(row.id)
+		if (!seen || (seen.pinLookup === null && row.pinLookup !== null))
+			people.set(row.id, row)
+	}
+	const rows = [...people.values()]
 	const [managerRows, hostRows] = await Promise.all([
 		db.select({ id: posManagers.staffId }).from(posManagers),
 		db
@@ -803,6 +820,7 @@ export async function deviceStationState(db: TenantDatabase, id: string) {
 	const [device] = await db
 		.select({
 			locationId: posDevices.locationId,
+			scopeId: posDevices.scopeId,
 			reservationsEnabled: posDevices.reservationsEnabled,
 		})
 		.from(posDevices)

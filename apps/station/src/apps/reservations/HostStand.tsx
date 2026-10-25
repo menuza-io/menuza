@@ -566,6 +566,7 @@ export function HostStand({
 			? feed.reservations.filter(
 					(r) =>
 						r.status === 'finished' &&
+						r.canUndo !== false &&
 						r.tableIds.includes(targetTable.id) &&
 						r.finishedAt != null &&
 						now - r.finishedAt <= FINISHED_UNDO_WINDOW_MS,

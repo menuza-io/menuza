@@ -188,6 +188,19 @@ export async function getScopeFacts(
 }
 
 /**
+ * Whether the control plane has this scope (with a usable time zone), or
+ * `null` when the App cannot be reached and nothing is cached.
+ */
+export async function hasScope(
+	orgId: string,
+	scopeId: string,
+	now = Date.now(),
+): Promise<boolean | null> {
+	const context = await loadContext(orgId, now)
+	return context ? context.scopes.has(scopeId) : null
+}
+
+/**
  * The organization's staffing flags, or `null` when unknown. Callers fail
  * closed on `null`: a tick that cannot confirm the flags does nothing and the
  * next one tries again. A flag turned off takes effect within the cache window

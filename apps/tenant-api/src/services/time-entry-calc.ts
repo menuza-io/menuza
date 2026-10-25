@@ -175,3 +175,32 @@ export async function refreshStaffCaches(
 			.where(eq(timeEntries.id, row.id))
 	}
 }
+
+export function snapshotCard(
+	entry: TimeEntry,
+	breaks: readonly TimeBreakRow[],
+): Record<string, unknown> {
+	return {
+		scopeId: entry.scopeId,
+		positionId: entry.positionId,
+		jobId: entry.jobId,
+		clockInAt: entry.clockInAt,
+		clockOutAt: entry.clockOutAt,
+		localDate: entry.localDate,
+		status: entry.status,
+		breaks: breaks
+			.filter((b) => b.voidedAt === null)
+			.map((b) => ({
+				kind: b.kind,
+				paid: b.paid,
+				startAt: b.startAt,
+				endAt: b.endAt,
+			})),
+		rateMinor: entry.rateMinor,
+		currency: entry.currency,
+		cashTipsMinor: entry.cashTipsMinor,
+		creditTipsMinor: entry.creditTipsMinor,
+		managerNote: entry.managerNote,
+		paidMinutes: entry.paidMinutes,
+	}
+}

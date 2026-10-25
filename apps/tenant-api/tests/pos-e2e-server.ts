@@ -98,7 +98,7 @@ const {
 	rsvReservations,
 } = await import('@repo/tenant-db')
 const { pinLookupFor } = await import('../src/services/kiosk-pin-service.ts')
-const { eq, sql } = await import('drizzle-orm')
+const { and, eq, sql } = await import('drizzle-orm')
 const { createPairingCode, listDevices, listPosOrders, revokeDevice } =
 	await import('../src/services/pos-service.ts')
 const { listShifts } = await import('../src/services/pos-shift-service.ts')
@@ -267,7 +267,11 @@ const appServer = createServer((req, res) => {
 				scheduling: false,
 				hiring: false,
 			},
-			scopes: [{ id: 'main', name: 'Downtown', timeZone: STATION_TZ }],
+			// A till bound to a location works at that location's scope.
+			scopes: [
+				{ id: 'main', name: 'Downtown', timeZone: STATION_TZ },
+				{ id: STATION_LOC, name: 'Downtown', timeZone: STATION_TZ },
+			],
 		})
 	}
 	if (url.pathname === '/resources/reservations/context') {
@@ -485,12 +489,14 @@ root.post('/__test/staff', async (c) => {
 		lastName: b.last ?? 'Karim',
 		status: (b.status ?? 'active') as never,
 	})
-	await db.insert(staffScopeAssignments).values({
-		staffId: id,
-		scopeId,
-		pinLookup:
-			b.pin === null ? null : pinLookupFor(ORG_ID, scopeId, b.pin ?? '4321'),
-	})
+	// The default workplace also works at the location tills are bound to.
+	for (const scope of scopeId === 'main' ? ['main', STATION_LOC] : [scopeId])
+		await db.insert(staffScopeAssignments).values({
+			staffId: id,
+			scopeId: scope,
+			pinLookup:
+				b.pin === null ? null : pinLookupFor(ORG_ID, scope, b.pin ?? '4321'),
+		})
 	if (b.manager)
 		await db.insert(posManagers).values({ staffId: id, addedBy: 'e2e' })
 	if (b.host)
@@ -512,10 +518,16 @@ root.post('/__test/staff-update', async (c) => {
 			.set({ status: b.status as never })
 			.where(eq(staffMembers.id, b.id))
 	if (b.pin)
-		await db
-			.update(staffScopeAssignments)
-			.set({ pinLookup: pinLookupFor(ORG_ID, 'main', b.pin) })
-			.where(eq(staffScopeAssignments.staffId, b.id))
+		for (const scope of ['main', STATION_LOC])
+			await db
+				.update(staffScopeAssignments)
+				.set({ pinLookup: pinLookupFor(ORG_ID, scope, b.pin) })
+				.where(
+					and(
+						eq(staffScopeAssignments.staffId, b.id),
+						eq(staffScopeAssignments.scopeId, scope),
+					),
+				)
 	if (b.manager === true)
 		await db
 			.insert(posManagers)

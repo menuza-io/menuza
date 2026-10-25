@@ -10,6 +10,7 @@ import {
 } from '@repo/staffing/clock-flow'
 import { createClockQueue, type ClockQueue } from '@repo/staffing/clock-queue'
 import { syncQueue, type SyncOutcome } from '@repo/staffing/clock-sync'
+import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 
 /**
@@ -77,6 +78,16 @@ export function punchQueue(): ClockQueue {
 }
 export function resetPunchQueueForTests(next: ClockQueue | null = null) {
 	queue = next
+}
+
+/**
+ * Sets aside, PINs dropped, waiting punches the server would refuse as too
+ * old, judged by the server's time as best known (punches are stamped in it).
+ * Runs whether or not this till can send: a removed or unpaired till would
+ * otherwise keep their encrypted PINs, and the key beside them, for good.
+ */
+export function expirePunches(at = serverNow()): Promise<number> {
+	return punchQueue().expire(at)
 }
 
 let flushing: Promise<SyncOutcome | null> | null = null

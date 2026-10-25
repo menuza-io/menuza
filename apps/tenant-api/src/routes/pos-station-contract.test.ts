@@ -69,6 +69,9 @@ vi.mock('../lib/scope-context.ts', () => ({
 	getScopeFacts: vi.fn(
 		async (_org: string, scope: string) => facts.get(scope) ?? null,
 	),
+	hasScope: vi.fn(async (_org: string, scope: string) =>
+		facts.size ? facts.has(scope) : null,
+	),
 	getStaffingFeatures: vi.fn(async () => ({
 		features: {
 			enabled: true,
@@ -216,6 +219,7 @@ const mintOperator = () =>
 			reservations: true,
 			guestDetails: true,
 			locationIds: null,
+			scopeIds: null,
 		},
 	})
 		.setSubject('user_manager_1')

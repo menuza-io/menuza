@@ -1,4 +1,7 @@
-import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import {
+	RESERVATIONS_PERMISSIONS,
+	TILL_UNDO_WINDOW_MS,
+} from '@repo/reservations'
 import { getTenantDb, rsvReservations } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
@@ -27,6 +30,7 @@ import {
 	getReservationDetail,
 	resendReservationConfirmation,
 	transitionReservationStatus,
+	tillUndoable,
 	undoReservationTransition,
 	updateReservation,
 	updateReservationContactStatus,
@@ -194,6 +198,34 @@ const dayQuerySchema = z.object({
 	tag: z.string().trim().min(1).max(128).optional(),
 })
 
+/**
+ * Marks each recent no-show and finished party with whether this till may undo
+ * it, and keys the ETag to the answer: it depends on who is asking.
+ */
+function withTillUndo<
+	T extends {
+		etag: string
+		shortEtag: string
+		reservations: Array<{ id: string }>
+	},
+>(feed: T, undo: { candidates: Set<string>; allowed: Set<string> }): T {
+	if (undo.candidates.size === 0) return feed
+	const allowed = [...undo.allowed].sort().join(',')
+	let hash = 0
+	for (let i = 0; i < allowed.length; i++)
+		hash = (Math.imul(hash, 31) + allowed.charCodeAt(i)) | 0
+	const tag = (etag: string) =>
+		etag.replace(/"$/, `:u${(hash >>> 0).toString(36)}"`)
+	return {
+		...feed,
+		etag: tag(feed.etag),
+		shortEtag: tag(feed.shortEtag),
+		reservations: feed.reservations.map((r) =>
+			undo.candidates.has(r.id) ? { ...r, canUndo: undo.allowed.has(r.id) } : r,
+		),
+	}
+}
+
 operatorReservationsBookRoutes.get(
 	'/day',
 	rsvGuard({
@@ -223,7 +255,7 @@ operatorReservationsBookRoutes.get(
 				ctx,
 				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
 			)
-			const feed = await getDayFeed(db, locCheck.locationId, businessDate, {
+			const day = await getDayFeed(db, locCheck.locationId, businessDate, {
 				canReadGuestSensitive,
 				filters: {
 					serviceId: q.data.serviceId,
@@ -232,6 +264,15 @@ operatorReservationsBookRoutes.get(
 					tag: q.data.tag,
 				},
 			})
+			// A till is told which recent no-shows and cleared parties it may undo
+			// (its person's or the system's), so it never offers one it would be refused.
+			const feed =
+				ctx.channel === 'station'
+					? withTillUndo(
+							day,
+							await tillUndoable(db, day.reservations, ctx.userId, Date.now()),
+						)
+					: day
 
 			const ifNoneMatch = c.req.header('If-None-Match')
 			if (matchesDayFeedEtag(ifNoneMatch, feed.etag, feed.shortEtag)) {
@@ -1703,7 +1744,7 @@ operatorReservationsBookRoutes.post(
 				actorId: ctx.userId,
 				// At a till: the host's own slip, within half an hour.
 				...(ctx.channel === 'station'
-					? { ownRecentOnly: { withinMs: 30 * 60_000 } }
+					? { ownRecentOnly: { withinMs: TILL_UNDO_WINDOW_MS } }
 					: {}),
 				input: parsed.data,
 			})

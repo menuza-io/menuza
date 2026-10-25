@@ -227,10 +227,10 @@ export function Dock({
 								<button
 									type="button"
 									onClick={() => onDetails(reservation)}
+									// A marked card is named by its visible text (time, name, action), so a
+									// voice command can say what it reads.
 									aria-label={
-										marked
-											? _(msg`${who} marked as a no-show.`)
-											: _(msg`${who} did not arrive. Details`)
+										marked ? undefined : _(msg`${who} did not arrive. Details`)
 									}
 									className="dock-card bg-background border-border text-muted-foreground hover:bg-accent flex h-[5.5rem] w-40 flex-col justify-between rounded-2xl border border-dashed p-3 text-start transition-colors"
 								>

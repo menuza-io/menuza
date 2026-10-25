@@ -1,9 +1,10 @@
 import 'fake-indexeddb/auto'
-import { IDBFactory } from 'fake-indexeddb'
+import { forceCloseDatabase, IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
 	createClockQueue as createKioskQueue,
 	MAX_QUEUED_PUNCHES,
+	QUEUED_PUNCH_MAX_AGE_MS,
 	QueueUnavailableError,
 	type EnqueueInput,
 } from './clock-queue.ts'
@@ -17,6 +18,27 @@ function punch(overrides: Partial<EnqueueInput> = {}): EnqueueInput {
 		...overrides,
 	}
 }
+
+/**
+ * A queue, and every database connection it opens, so a test can close one
+ * the way a browser would.
+ */
+function watchedQueue() {
+	const factory = new IDBFactory()
+	const connections: IDBDatabase[] = []
+	const open = factory.open.bind(factory)
+	factory.open = (name, version) => {
+		const req = open(name, version)
+		req.addEventListener('success', () => connections.push(req.result))
+		return req
+	}
+	const dbName = `w-${Math.random()}`
+	const queue = createKioskQueue({ indexedDB: factory, crypto, dbName })
+	return { queue, connections, factory, dbName }
+}
+
+const ids = async (rows: Promise<Array<{ id: string }>>) =>
+	(await rows).map((row) => row.id)
 
 describe('kiosk queue', () => {
 	let queue: ReturnType<typeof createKioskQueue>
@@ -116,5 +138,150 @@ describe('kiosk queue', () => {
 		await queue.enqueue(punch({ id: 'b', pin: '1234' }))
 		const [row] = await queue.pending()
 		expect(await queue.readPin(row!)).toBe('1234')
+	})
+})
+
+describe('kiosk queue, when the browser drops its connection', () => {
+	it('opens a new one after the browser closes it', async () => {
+		const { queue, connections } = watchedQueue()
+		await queue.enqueue(punch({ id: 'a', createdAt: 1 }))
+		// Site data cleared, or storage evicted: closed, with a close event.
+		forceCloseDatabase(connections[0] as never)
+		// The queue knows it is gone, and never tries it again.
+		connections[0]!.transaction = () => {
+			throw new Error('used a closed connection')
+		}
+		await queue.enqueue(punch({ id: 'b', createdAt: 2, pin: '1234' }))
+		const pending = await queue.pending()
+		expect(pending.map((row) => row.id)).toEqual(['a', 'b'])
+		expect(await queue.readPin(pending[1]!)).toBe('1234')
+		expect(connections).toHaveLength(2)
+	})
+
+	it('tries once more on a new connection when the old one died without a word', async () => {
+		const { queue, connections } = watchedQueue()
+		await queue.enqueue(punch({ id: 'a', createdAt: 1, pin: '1234' }))
+		// Safari lost its IndexedDB server while the iPad slept: no close event,
+		// and every transaction on the old connection fails.
+		connections[0]!.transaction = () => {
+			throw new DOMException(
+				'Connection to Indexed Database server lost. Refresh the page to try again',
+				'UnknownError',
+			)
+		}
+		expect(await ids(queue.pending())).toEqual(['a'])
+		// Closed under the queue without telling it: InvalidStateError.
+		connections[1]!.close()
+		await queue.enqueue(punch({ id: 'b', createdAt: 2 }))
+		connections[2]!.close()
+		const [first] = await queue.pending()
+		connections[3]!.close()
+		// The sync step still reads the PIN and settles the punch.
+		expect(await queue.readPin(first!)).toBe('1234')
+		connections[4]!.close()
+		await queue.remove('a')
+		expect(await ids(queue.pending())).toEqual(['b'])
+		expect(connections).toHaveLength(6)
+	})
+
+	it('tries only once', async () => {
+		const { queue, connections, factory } = watchedQueue()
+		await queue.enqueue(punch({ id: 'a' }))
+		// Every new connection is dead on arrival too: the error comes back.
+		const open = factory.open.bind(factory)
+		factory.open = (name, version) => {
+			const req = open(name, version)
+			req.addEventListener('success', () => req.result.close())
+			return req
+		}
+		connections[0]!.close()
+		const error = await queue.pending().catch((caught: unknown) => caught)
+		expect((error as DOMException).name).toBe('InvalidStateError')
+		expect(connections).toHaveLength(2)
+	})
+
+	it('lets another tab upgrade the database instead of blocking it', async () => {
+		const { queue, factory, dbName } = watchedQueue()
+		await queue.enqueue(punch({ id: 'a' }))
+		const upgraded = await new Promise<IDBDatabase>((resolve, reject) => {
+			const req = factory.open(dbName, 2)
+			req.onblocked = () => reject(new Error('blocked'))
+			req.onsuccess = () => resolve(req.result)
+			req.onerror = () => reject(req.error)
+		})
+		expect(upgraded.version).toBe(2)
+		upgraded.close()
+	})
+})
+
+describe('kiosk queue expiry', () => {
+	const hour = 60 * 60 * 1000
+	const now = Date.UTC(2026, 9, 24, 12)
+	let queue: ReturnType<typeof createKioskQueue>
+	beforeEach(() => {
+		queue = createKioskQueue({
+			indexedDB: new IDBFactory(),
+			crypto,
+			dbName: `e-${Math.random()}`,
+		})
+	})
+
+	it('allows the server’s 48 hours and an hour for a clock that is off', () => {
+		expect(QUEUED_PUNCH_MAX_AGE_MS).toBe(49 * hour)
+	})
+
+	it('sets aside punches too old to record, and drops their PINs', async () => {
+		await queue.enqueue(
+			punch({
+				id: 'old',
+				clientAt: now - QUEUED_PUNCH_MAX_AGE_MS - 1,
+				createdAt: 1,
+			}),
+		)
+		await queue.enqueue(
+			punch({
+				id: 'edge',
+				clientAt: now - QUEUED_PUNCH_MAX_AGE_MS,
+				createdAt: 2,
+			}),
+		)
+		await queue.enqueue(
+			punch({ id: 'recent', clientAt: now - 47 * hour, createdAt: 3 }),
+		)
+		expect(await queue.expire(now)).toBe(1)
+		expect(await ids(queue.pending())).toEqual(['edge', 'recent'])
+		const [old] = await queue.failed()
+		expect(old).toMatchObject({
+			id: 'old',
+			status: 'failed',
+			failure: 'punch_too_old',
+			pin: null,
+		})
+		await expect(queue.readPin(old!)).rejects.toThrow('pin_removed')
+		// Ten hours on the recent one is due too; one the server already refused
+		// keeps its own reason, and a second run finds nothing.
+		await queue.markFailed('edge', 'invalid_pin')
+		expect(await queue.expire(now + 10 * hour)).toBe(1)
+		expect((await queue.failed()).map((row) => [row.id, row.failure])).toEqual([
+			['old', 'punch_too_old'],
+			['edge', 'invalid_pin'],
+			['recent', 'punch_too_old'],
+		])
+		expect(await queue.expire(now + 10 * hour)).toBe(0)
+	})
+
+	it('keeps everything a till paired again within 48 hours still sends', async () => {
+		await queue.enqueue(punch({ id: 'a', clientAt: now - 48 * hour }))
+		await queue.enqueue(punch({ id: 'b', clientAt: now - hour }))
+		expect(await queue.expire(now)).toBe(0)
+		expect(await queue.counts()).toEqual({ queued: 2, failed: 0 })
+	})
+
+	it('does nothing without IndexedDB', async () => {
+		const none = createKioskQueue({
+			indexedDB: null as unknown as IDBFactory,
+			crypto: {} as Crypto,
+		})
+		expect(await none.expire(now)).toBe(0)
 	})
 })

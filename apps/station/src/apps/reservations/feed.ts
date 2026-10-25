@@ -57,6 +57,11 @@ export const reservationSchema = z
 		arrivedAt: epoch,
 		seatedAt: epoch,
 		finishedAt: epoch,
+		/**
+		 * Whether this till may undo the recent no-show or clearing (its own
+		 * person's change, or the system's). Absent from an older server: allowed.
+		 */
+		canUndo: z.boolean().optional(),
 		guest: guestSchema.nullable().default(null),
 	})
 	.passthrough()
@@ -227,7 +232,12 @@ export function recentNoShows(
 	return feed.reservations
 		.filter((r) => {
 			const at = markedAt(r)
-			return r.status === 'no_show' && at !== null && now - at <= UNDO_WINDOW_MS
+			return (
+				r.status === 'no_show' &&
+				r.canUndo !== false &&
+				at !== null &&
+				now - at <= UNDO_WINDOW_MS
+			)
 		})
 		.sort((a, b) => (markedAt(b) ?? 0) - (markedAt(a) ?? 0))
 }

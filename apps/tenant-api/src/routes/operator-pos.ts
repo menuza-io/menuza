@@ -1,12 +1,14 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
+import { DEFAULT_SCOPE_ID } from '@repo/staffing'
 import { getTenantDb, posDevices } from '@repo/tenant-db'
 import {
 	isPosEnabled,
 	isPosHashUnavailable,
 	posDisabledResponse,
 	posError,
+	posStaffScopeId,
 	posUnavailableResponse,
 } from '../lib/pos-auth.ts'
 import {
@@ -30,7 +32,7 @@ import {
 	setManager,
 	updateDeviceSettings,
 } from '../services/pos-service.ts'
-import { getStaffingFeatures } from '../lib/scope-context.ts'
+import { getStaffingFeatures, hasScope } from '../lib/scope-context.ts'
 import { writeOperatorAudit } from '../services/staff-audit.ts'
 import {
 	dayReport,
@@ -113,6 +115,10 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		g.auth,
 		parsed.data,
 		parsed.data.locationId ?? null,
+		posStaffScopeId({
+			scopeId: parsed.data.scopeId ?? DEFAULT_SCOPE_ID,
+			locationId: parsed.data.locationId ?? null,
+		}),
 	)
 	if (denied) return denied
 	let result: Awaited<ReturnType<typeof createPairingCode>>
@@ -246,20 +252,36 @@ operatorPosRoutes.post('/held/:id/resolve', async (c) => {
 /**
  * Switching a Station app on needs that module's settings permission, which App
  * signs into the token (`stationApps`); switching one off never does. The time
- * clock also needs the organization's staffing flag when this node can read it.
+ * clock also needs the organization's staffing flag when this node can read it,
+ * and a workplace the member manages that the organization really has.
  */
 async function stationAppsDenied(
 	auth: { orgId: string; stationApps: StationAppClaims },
 	patch: { timeclockEnabled?: boolean; reservationsEnabled?: boolean },
 	/** The terminal's location once this change is made (null: none). */
-	hostLocationId: string | null = null,
+	hostLocationId: string | null,
+	/** Its staffing workplace once this change is made (`posStaffScopeId`). */
+	workplace: string,
 ): Promise<Response | null> {
 	if (patch.timeclockEnabled === true) {
 		if (!auth.stationApps.timeclock)
 			return posError(403, 'timeclock_permission_required')
+		// A member limited to some workplaces turns the clock on only there.
+		const allowed = auth.stationApps.scopeIds
+		if (allowed !== null && !allowed.includes(workplace))
+			return posError(403, 'scope_not_allowed')
 		const flags = await getStaffingFeatures(auth.orgId).catch(() => null)
 		if (flags && (!flags.features.enabled || !flags.features.timeclock))
 			return posError(422, 'timeclock_disabled')
+		// Where people work by location, a till with none has nobody to clock in.
+		if ((await hasScope(auth.orgId, workplace).catch(() => null)) === false)
+			return workplace === DEFAULT_SCOPE_ID
+				? posError(422, 'timeclock_needs_location', {
+						message: 'Choose the terminal’s location to use the time clock.',
+					})
+				: posError(422, 'invalid_scope', {
+						message: 'That workplace cannot use the time clock.',
+					})
 	}
 	if (patch.reservationsEnabled === true) {
 		if (!auth.stationApps.reservations)
@@ -312,6 +334,7 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 				: parsed.data.reservationsEnabled,
 		},
 		hostLocationId,
+		posStaffScopeId({ scopeId: current.scopeId, locationId: hostLocationId }),
 	)
 	if (denied) return denied
 	if (parsed.data.locationId !== undefined) {
@@ -337,7 +360,11 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	return c.json({ ok: true }, 200, noStore)
 })
 
-/** The people who can sign in at a workplace, whether each has a PIN, and who may manage a till. */
+/**
+ * The people who can sign in at a workplace (`main` unless `scopeId` says
+ * otherwise; `scope=all`: at any of them, to choose managers and hosts from),
+ * whether each has a PIN, and who may manage a till or host.
+ */
 operatorPosRoutes.get('/staff', async (c) => {
 	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
 	if ('error' in g) return g.error
@@ -347,7 +374,12 @@ operatorPosRoutes.get('/staff', async (c) => {
 		.safeParse(c.req.query('scopeId') ?? 'main')
 	if (!scopeId.success) return posError(400, 'invalid_request')
 	return c.json(
-		{ staff: await listStaffRoster(g.db, scopeId.data) },
+		{
+			staff: await listStaffRoster(
+				g.db,
+				c.req.query('scope') === 'all' ? null : scopeId.data,
+			),
+		},
 		200,
 		noStore,
 	)

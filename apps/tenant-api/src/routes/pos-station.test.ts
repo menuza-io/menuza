@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	createClockHarness,
 	LOC_1,
+	LOC_2,
 	ORG_A,
 	ORG_B,
 	type ClockHarness,
@@ -63,6 +64,9 @@ vi.mock('../lib/scope-context.ts', () => ({
 	getScopeFacts: vi.fn(
 		async (_org: string, scope: string) => facts.get(scope) ?? null,
 	),
+	hasScope: vi.fn(async (_org: string, scope: string) =>
+		facts.size ? facts.has(scope) : null,
+	),
 	getStaffingFeatures: vi.fn(async (orgId: string) => {
 		const features = staffingFlags.has(orgId)
 			? staffingFlags.get(orgId)
@@ -101,6 +105,7 @@ const mintOperator = (
 		reservations: true,
 		guestDetails: true,
 		locationIds: null,
+		scopeIds: null,
 	},
 ) =>
 	new SignJWT({
@@ -185,6 +190,8 @@ describe('Station apps on a POS terminal', () => {
 			reservationsEnabled?: boolean
 			locationId?: string | null
 			signInRequired?: boolean
+			/** `null` leaves the workplace to follow the location, as App pairs. */
+			scopeId?: string | null
 		} = {},
 	) {
 		const orgId = options.orgId ?? ORG_A
@@ -197,7 +204,9 @@ describe('Station apps on a POS terminal', () => {
 			body: JSON.stringify({
 				label: 'Front counter',
 				terminalCode: options.terminalCode ?? 'T1',
-				scopeId: LOC_1,
+				...(options.scopeId === null
+					? {}
+					: { scopeId: options.scopeId ?? LOC_1 }),
 				locationId:
 					options.locationId === undefined ? PUBLIC_LOC : options.locationId,
 				signInRequired: options.signInRequired ?? true,
@@ -243,6 +252,141 @@ describe('Station apps on a POS terminal', () => {
 	// -----------------------------------------------------------------------
 	// Time clock
 	// -----------------------------------------------------------------------
+
+	describe('a tablet paired again', () => {
+		it('is told a punch its old pairing recorded is recorded, for the same person only', async () => {
+			const { pin, staffId } = await h.seedStaff(ORG_A, { scopeIds: [LOC_1] })
+			const other = await h.seedStaff(ORG_A, { scopeIds: [LOC_1] })
+			const old = await pairTerminal({ terminalCode: 'T1' })
+			const id = crypto.randomUUID()
+			expect((await punch(old.secret, pin, 'clock_in', id)).status).toBe(200)
+			// The manager removes the tablet and pairs it again; its queue still holds the punch.
+			await h.app.request(`/operator/pos/terminals/${old.deviceId}`, {
+				method: 'DELETE',
+				headers: { authorization: `Bearer ${await mintOperator()}` },
+			})
+			const fresh = await pairTerminal({ terminalCode: 'T1' })
+			const replay = (secret: string, body: Record<string, unknown>) =>
+				request('POST', '/pos/timeclock/punch', {
+					secret,
+					body: {
+						id,
+						kind: 'clock_in',
+						clientAt: h.clock.now,
+						offline: true,
+						...body,
+					},
+				})
+			// The PIN may have changed since: the person it names is what counts.
+			const known = await replay(fresh.secret, { pin: '0000', staffId })
+			expect(known.status, known.raw).toBe(200)
+			expect(known.body).toMatchObject({ state: 'in' })
+			// Another person's id, or none at all, never gets someone else's answer.
+			const wrong = await replay(fresh.secret, {
+				pin: other.pin,
+				staffId: other.staffId,
+			})
+			expect(wrong.body.error).toBe('punch_id_conflict')
+			const nameless = await replay(fresh.secret, { pin })
+			expect(nameless.body.error).toBe('punch_id_conflict')
+		})
+	})
+
+	describe('workplace', () => {
+		it('a till at a location serves the people who work there', async () => {
+			// Where an organization has locations, people are assigned to them.
+			const { pin, staffId } = await h.seedStaff(ORG_A, { scopeIds: [LOC_1] })
+			const { secret } = await pairTerminal({
+				scopeId: null,
+				locationId: LOC_1,
+				reservationsEnabled: false,
+			})
+			const me = await request('GET', '/pos/me', { secret })
+			expect(me.body.device.scopeId).toBe(LOC_1)
+			expect((await signIn(secret, pin)).staff.id).toBe(staffId)
+			expect((await punch(secret, pin, 'clock_in')).body).toMatchObject({
+				outcome: 'accepted',
+				state: 'in',
+			})
+			const db = await getTenantDb(ORG_A)
+			const [entry] = await db
+				.select()
+				.from(timeEntries)
+				.where(eq(timeEntries.staffId, staffId))
+			expect(entry?.scopeId).toBe(LOC_1)
+		})
+
+		it('lists the people of every workplace to choose managers and hosts from', async () => {
+			const here = await h.seedStaff(ORG_A, { scopeIds: [LOC_1] })
+			const there = await h.seedStaff(ORG_A, { scopeIds: [LOC_2] })
+			const both = await h.seedStaff(ORG_A, { scopeIds: [LOC_1, LOC_2] })
+			const list = async (query = '') => {
+				const response = await h.app.request(`/operator/pos/staff${query}`, {
+					headers: { authorization: `Bearer ${await mintOperator()}` },
+				})
+				expect(response.status).toBe(200)
+				const body = (await response.json()) as { staff: Array<{ id: string }> }
+				return body.staff.map((s) => s.id).sort()
+			}
+			expect(await list('?scope=all')).toEqual(
+				[here.staffId, there.staffId, both.staffId].sort(),
+			)
+			expect(await list(`?scopeId=${LOC_2}`)).toEqual(
+				[there.staffId, both.staffId].sort(),
+			)
+		})
+
+		it('switches the time clock on only where people clock in, and at a member’s own workplaces', async () => {
+			let n = 0
+			const create = async (token: string, body: Record<string, unknown>) => {
+				n += 1
+				const response = await h.app.request('/operator/pos/pairing-codes', {
+					method: 'POST',
+					headers: {
+						authorization: `Bearer ${token}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({
+						label: 'Bar',
+						terminalCode: `T${n + 1}`,
+						timeclockEnabled: true,
+						...body,
+					}),
+				})
+				return {
+					status: response.status,
+					error: ((await response.json()) as { error?: string }).error,
+				}
+			}
+			// People here work by location: a till with none has nobody to clock in.
+			expect(await create(await mintOperator(), { locationId: null })).toEqual({
+				status: 422,
+				error: 'timeclock_needs_location',
+			})
+			const limited = await mintOperator(ORG_A, {
+				timeclock: true,
+				reservations: false,
+				guestDetails: false,
+				locationIds: [],
+				scopeIds: [LOC_2],
+			})
+			expect(await create(limited, { locationId: LOC_1 })).toEqual({
+				status: 403,
+				error: 'scope_not_allowed',
+			})
+			// A token from an App that does not sign workplaces allows nothing.
+			const unsigned = await mintOperator(ORG_A, {
+				timeclock: true,
+				reservations: false,
+				guestDetails: false,
+				locationIds: null,
+			})
+			expect((await create(unsigned, { locationId: LOC_1 })).status).toBe(403)
+			expect(
+				(await create(await mintOperator(), { locationId: LOC_1 })).status,
+			).toBe(201)
+		})
+	})
 
 	describe('time clock', () => {
 		it('identifies by PIN and clocks in and out, recorded as a POS punch', async () => {

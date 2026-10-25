@@ -8,6 +8,7 @@ import {
 	minutesLate,
 	missedArrivals,
 	placeTables,
+	recentNoShows,
 	rooms,
 	shortName,
 	tableState,
@@ -140,6 +141,24 @@ describe('missed arrivals', () => {
 		expect(missedArrivals(day, now).map((r) => r.id)).toEqual(['gone'])
 		// Without a time, nothing is held back.
 		expect(arrivals(day)).toHaveLength(3)
+	})
+})
+
+describe('recent no-shows', () => {
+	const NOW = 100 * MIN
+	const marked = (overrides: Partial<DayReservation>) =>
+		booking({ status: 'no_show', noShowAt: NOW - 5 * MIN, ...overrides })
+	it('lists those inside the undo window the till may undo, latest first', () => {
+		const mine = marked({ id: 'mine', noShowAt: NOW - 10 * MIN })
+		const auto = marked({ id: 'auto', canUndo: true, noShowAt: NOW - 2 * MIN })
+		const old = marked({ id: 'old', noShowAt: NOW - 31 * MIN })
+		// Someone else's change is a manager's to put right in the app.
+		const others = marked({ id: 'others', canUndo: false })
+		const shown = recentNoShows(
+			{ reservations: [mine, auto, old, others] },
+			NOW,
+		)
+		expect(shown.map((r) => r.id)).toEqual(['auto', 'mine'])
 	})
 })
 

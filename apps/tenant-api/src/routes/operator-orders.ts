@@ -49,22 +49,25 @@ export type StationAppClaims = {
 	reservations: boolean
 	guestDetails: boolean
 	locationIds: string[] | null
+	/** Staffing workplaces where the time clock may be switched on; null is all. */
+	scopeIds: string[] | null
 }
 
 /** Reads the claim fail-closed: anything missing or malformed allows nothing. */
 function readStationApps(raw: unknown): StationAppClaims {
 	const claim = (raw ?? {}) as Record<string, unknown>
-	const locations = claim.locationIds
+	const ids = (value: unknown) =>
+		value === null
+			? null
+			: Array.isArray(value)
+				? value.filter((id): id is string => typeof id === 'string')
+				: []
 	return {
 		timeclock: claim.timeclock === true,
 		reservations: claim.reservations === true,
 		guestDetails: claim.guestDetails === true,
-		locationIds:
-			locations === null
-				? null
-				: Array.isArray(locations)
-					? locations.filter((id): id is string => typeof id === 'string')
-					: [],
+		locationIds: ids(claim.locationIds),
+		scopeIds: ids(claim.scopeIds),
 	}
 }
 

@@ -71,7 +71,7 @@ function stubApi(
 					tenantApiUrl: API,
 				})
 			}
-			if (url.endsWith('/operator/pos/staff') && method === 'GET') {
+			if (url.endsWith('/operator/pos/staff?scope=all') && method === 'GET') {
 				return options.staffError
 					? new Response('off', { status: 503 })
 					: Response.json({ staff })
@@ -357,6 +357,7 @@ describe('TerminalsManager', () => {
 				reservations: true,
 				guestDetails: true,
 				locationIds: null,
+				scopeIds: null,
 			},
 		})
 		await screen.findByText('Front counter')
@@ -402,6 +403,7 @@ describe('TerminalsManager', () => {
 				reservations: true,
 				guestDetails: false,
 				locationIds: ['loc_2'],
+				scopeIds: null,
 			},
 		})
 		await screen.findByText('Host stand')
@@ -416,7 +418,7 @@ describe('TerminalsManager', () => {
 		).toBeTruthy()
 	})
 
-	it('reservations wait for a location and a staff PIN; the time clock just switches', async () => {
+	it('reservations wait for a location and a staff PIN; the time clock waits for a location', async () => {
 		const api = stubApi({
 			devices: [
 				terminal({ signInRequired: true }),
@@ -437,6 +439,7 @@ describe('TerminalsManager', () => {
 				reservations: true,
 				guestDetails: true,
 				locationIds: null,
+				scopeIds: null,
 			},
 		})
 		await screen.findByText('Host stand')
@@ -447,11 +450,18 @@ describe('TerminalsManager', () => {
 		expect(
 			screen.getByText("Choose the terminal's location to use reservations."),
 		).toBeTruthy()
+		// People work by location here: a terminal with none has nobody to clock in.
+		expect(
+			screen.getByRole('button', { name: 'Time clock on Front counter, off' }),
+		).toBeDisabled()
+		expect(
+			screen.getByText("Choose the terminal's location to use the time clock."),
+		).toBeTruthy()
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Reservations on Host stand, off' }),
 		)
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Time clock on Front counter, off' }),
+			screen.getByRole('button', { name: 'Time clock on Host stand, off' }),
 		)
 		await waitFor(() =>
 			expect(
@@ -460,7 +470,7 @@ describe('TerminalsManager', () => {
 					.map((c) => [c.url.split('/').pop(), c.body]),
 			).toEqual([
 				['d2', { reservationsEnabled: true }],
-				['d1', { timeclockEnabled: true }],
+				['d2', { timeclockEnabled: true }],
 			]),
 		)
 		expect(await screen.findByText('Host stand for Downtown')).toBeTruthy()

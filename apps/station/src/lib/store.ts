@@ -1,6 +1,10 @@
 import { t } from '@lingui/macro'
 import { create } from 'zustand'
-import { flushPunches, punchQueue } from '../apps/timeclock/clock.ts'
+import {
+	expirePunches,
+	flushPunches,
+	punchQueue,
+} from '../apps/timeclock/clock.ts'
 import { touch } from './activity.ts'
 import {
 	buildCategories,
@@ -363,6 +367,9 @@ export const usePos = create<PosState>((set, get) => ({
 			},
 		})
 		// Punches waiting since the till was offline go out in their own queue.
+		// Any too old to record are set aside first, PINs dropped, even when this
+		// till cannot send them (unpaired, removed or offline).
+		await expirePunches().catch(() => 0)
 		const punches = await flushPunches(get().settings, get().online).catch(
 			() => null,
 		)
@@ -607,7 +614,8 @@ export const usePos = create<PosState>((set, get) => ({
 		// stopped recognising is paired again, and they may be the only record of
 		// a shift. Pairing to another restaurant wipes them (updateSettings), and
 		// each carries its person's id, so the server refuses one whose PIN now
-		// belongs to someone else.
+		// belongs to someone else. Once too old to record, `sync` sets them aside
+		// and drops their PINs.
 	},
 
 	setOrderType: (orderType) =>

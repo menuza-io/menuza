@@ -123,12 +123,15 @@ export type StationGrants = StationFeatures & {
 	guestDetails: boolean
 	/** Locations whose host stand this member may open; null is all of them. */
 	locationIds: string[] | null
+	/** Workplaces where this member may switch the time clock on; null is all of them. */
+	scopeIds: string[] | null
 }
 const NO_GRANTS: StationGrants = {
 	timeclock: false,
 	reservations: false,
 	guestDetails: false,
 	locationIds: [],
+	scopeIds: [],
 }
 export type TerminalLocation = { id: string; name: string }
 
@@ -183,7 +186,7 @@ export function TerminalsManager({
 			try {
 				const roster = z
 					.object({ staff: z.array(staffSchema) })
-					.parse(await request('/staff'))
+					.parse(await request('/staff?scope=all'))
 				setStaff(roster.staff)
 			} catch {
 				setStaff([])
@@ -814,6 +817,7 @@ export function TerminalsManager({
 						stationFeatures.reservations && stationGrants.reservations,
 				}}
 				hostLocationIds={stationGrants.locationIds}
+				clockScopeIds={stationGrants.scopeIds}
 				suggestedCode={suggestCode(
 					state.status === 'ready' ? state.data.devices : [],
 					pending,
@@ -988,6 +992,13 @@ function StationApps({
 	const { _ } = useLingui()
 	const label = device.label
 	if (!features.timeclock && !features.reservations) return null
+	// Where staff work by location, the clock needs the terminal's own (its workplace).
+	const timeclockBlocked =
+		!device.locationId && locations.length > 0
+			? _(t`Choose the terminal's location to use the time clock.`)
+			: grants.scopeIds !== null && !grants.scopeIds.includes(device.scopeId)
+				? _(t`You can turn on the time clock only at your own locations.`)
+				: null
 	const reservationsBlocked = !device.locationId
 		? _(t`Choose the terminal's location to use reservations.`)
 		: !device.signInRequired
@@ -1037,7 +1048,7 @@ function StationApps({
 							<Trans>Time clock on</Trans>,
 							<Trans>Time clock off</Trans>,
 							() => onChange({ timeclockEnabled: !device.timeclockEnabled }),
-							!grants.timeclock,
+							!grants.timeclock || timeclockBlocked !== null,
 						)
 					: null}
 				{features.reservations
@@ -1058,7 +1069,7 @@ function StationApps({
 						<Trans>Host stand for {locationName}</Trans>
 					</span>
 				) : null}
-				{features.reservations &&
+				{(features.reservations || features.timeclock) &&
 				canWrite &&
 				!device.locationId &&
 				locations.length > 0 ? (
@@ -1084,6 +1095,12 @@ function StationApps({
 					</Select>
 				) : null}
 			</div>
+			{features.timeclock &&
+			grants.timeclock &&
+			!device.timeclockEnabled &&
+			timeclockBlocked ? (
+				<p className="text-muted-foreground text-sm">{timeclockBlocked}</p>
+			) : null}
 			{features.reservations &&
 			!device.reservationsEnabled &&
 			reservationsBlocked ? (
@@ -1235,6 +1252,7 @@ function PairDialog({
 	locations,
 	stationFeatures,
 	hostLocationIds = null,
+	clockScopeIds = null,
 	suggestedCode,
 }: {
 	open: boolean
@@ -1248,6 +1266,8 @@ function PairDialog({
 	stationFeatures: StationFeatures
 	/** Locations whose host stand this member may open; null is all of them. */
 	hostLocationIds?: string[] | null
+	/** Workplaces where this member may switch the time clock on; null is all of them. */
+	clockScopeIds?: string[] | null
 	suggestedCode: string
 }) {
 	const { _ } = useLingui()
@@ -1265,6 +1285,12 @@ function PairDialog({
 	const [created, setCreated] = useState<Created | null>(null)
 	const [apiUrl, setApiUrl] = useState<string | null>(null)
 	const [paired, setPaired] = useState(false)
+	// Where staff work by location, the clock needs the terminal's own (its workplace).
+	const timeclockAllowed =
+		stationFeatures.timeclock &&
+		(locationId === NO_LOCATION
+			? locations.length === 0 && clockScopeIds === null
+			: clockScopeIds === null || clockScopeIds.includes(locationId))
 	// The host stand opens guests' details only for a signed-in person at one location.
 	const reservationsAllowed =
 		stationFeatures.reservations &&
@@ -1303,7 +1329,7 @@ function PairDialog({
 						signInRequired,
 						dayStartMinutes,
 						locationId: locationId === NO_LOCATION ? null : locationId,
-						timeclockEnabled: timeclockEnabled && stationFeatures.timeclock,
+						timeclockEnabled: timeclockAllowed && timeclockEnabled,
 						reservationsEnabled: reservationsAllowed && reservationsEnabled,
 					}),
 				}),
@@ -1461,7 +1487,8 @@ function PairDialog({
 						{stationFeatures.timeclock ? (
 							<label className="flex items-start gap-3 text-sm">
 								<Checkbox
-									checked={timeclockEnabled}
+									checked={timeclockAllowed && timeclockEnabled}
+									disabled={!timeclockAllowed}
 									onCheckedChange={(checked) =>
 										setTimeclockEnabled(checked === true)
 									}
@@ -1471,10 +1498,20 @@ function PairDialog({
 										<Trans>Time clock</Trans>
 									</span>
 									<span className="text-muted-foreground">
-										<Trans>
-											Staff clock in and out on this terminal with their PIN,
-											even while it is locked.
-										</Trans>
+										{timeclockAllowed ? (
+											<Trans>
+												Staff clock in and out on this terminal with their PIN,
+												even while it is locked.
+											</Trans>
+										) : locationId === NO_LOCATION ? (
+											_(
+												t`Choose the terminal's location to use the time clock.`,
+											)
+										) : (
+											_(
+												t`You can turn on the time clock only at your own locations.`,
+											)
+										)}
 									</span>
 								</span>
 							</label>

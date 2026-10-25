@@ -1,7 +1,13 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { parseDate, zonedLocalToUtc, type ShiftWindow } from '@repo/staffing'
-import { staffAuditLog, timeEntries, timePunches } from '@repo/tenant-db'
+import {
+	staffAuditLog,
+	timeBreaks,
+	timeEntries,
+	timeEntryEdits,
+	timePunches,
+} from '@repo/tenant-db'
 import {
 	createClockHarness,
 	LOC_1,
@@ -235,7 +241,7 @@ describe('kiosk punches under labor policy', () => {
 			expect(entry!.issues).toEqual(
 				expect.arrayContaining(['auto_clock_out', 'offline_punch']),
 			)
-			// After the automatic close, or online, it is still refused.
+			// The card has its clock-out now: another is refused.
 			const after = await h.punch(secret, {
 				pin,
 				kind: 'clock_out',
@@ -243,6 +249,182 @@ describe('kiosk punches under labor policy', () => {
 				clientAt: autoAt + HOUR,
 			})
 			expect(after.status).toBe(409)
+		})
+
+		/** As the staff tick writes it: closed at `closeAt`, a running break ended then too. */
+		async function autoClose(staffId: string, closeAt: number) {
+			const db = await h.db(ORG_A)
+			const [open] = await db
+				.select()
+				.from(timeEntries)
+				.where(
+					and(eq(timeEntries.staffId, staffId), isNull(timeEntries.clockOutAt)),
+				)
+			await db
+				.update(timeEntries)
+				.set({
+					clockOutAt: closeAt,
+					clockOutKind: 'auto',
+					status: 'needs_review',
+					issues: ['auto_clock_out'],
+				})
+				.where(eq(timeEntries.id, open!.id))
+			await db
+				.update(timeBreaks)
+				.set({ endAt: closeAt })
+				.where(and(eq(timeBreaks.entryId, open!.id), isNull(timeBreaks.endAt)))
+			return open!.id
+		}
+		async function staffIdOf(staffPin: string) {
+			const db = await h.db(ORG_A)
+			const rows = await db.select().from(timePunches)
+			return rows.find((row) => row.outcome === 'accepted')!.staffId
+		}
+		const breaksOf = async (entryId: string) => {
+			const db = await h.db(ORG_A)
+			return db.select().from(timeBreaks).where(eq(timeBreaks.entryId, entryId))
+		}
+
+		it('lets a clock-out queued after the automatic time replace it, and logs it on the card', async () => {
+			await h.punch(secret, { pin, kind: 'clock_in' })
+			const t0 = h.clock.now
+			// The tick records the shift's end; they really left 40 minutes later.
+			const autoAt = t0 + 5 * HOUR
+			const leftAt = autoAt + 40 * MIN
+			h.setClock(autoAt + HOUR)
+			const id = await autoClose(await staffIdOf(pin), autoAt)
+			h.advance(8 * HOUR)
+			const late = await h.punch(secret, {
+				pin,
+				kind: 'clock_out',
+				offline: true,
+				clientAt: leftAt,
+			})
+			expect(late.status, late.raw).toBe(200)
+			const [entry] = await entries()
+			expect(entry).toMatchObject({
+				clockOutAt: leftAt,
+				clockOutKind: 'kiosk',
+				status: 'needs_review',
+			})
+			expect(entry!.issues).toEqual(
+				expect.arrayContaining(['auto_clock_out', 'offline_punch']),
+			)
+			const db = await h.db(ORG_A)
+			const [edit] = await db
+				.select()
+				.from(timeEntryEdits)
+				.where(eq(timeEntryEdits.entryId, id))
+			expect(edit).toMatchObject({ via: 'kiosk', action: 'late_punch' })
+			expect(edit!.before).toMatchObject({ clockOutAt: autoAt })
+			expect(edit!.after).toMatchObject({ clockOutAt: leftAt })
+		})
+
+		it('lands a queued break end on the automatically closed card', async () => {
+			await h.punch(secret, { pin, kind: 'clock_in' })
+			const t0 = h.clock.now
+			h.advance(2 * HOUR)
+			expect((await h.punch(secret, { pin, kind: 'break_start' })).status).toBe(
+				200,
+			)
+			// The till drops: the break's end and the clock-out wait in its queue,
+			// and the automatic clock-out ends the running break with the card.
+			const autoAt = t0 + 5 * HOUR
+			h.setClock(autoAt + HOUR)
+			const id = await autoClose(await staffIdOf(pin), autoAt)
+			h.advance(HOUR)
+			for (const [kind, minutes] of [
+				['break_end', 150],
+				['clock_out', 290],
+			] as const) {
+				const r = await h.punch(secret, {
+					pin,
+					kind,
+					offline: true,
+					clientAt: t0 + minutes * MIN,
+				})
+				expect(r.status, r.raw).toBe(200)
+			}
+			const [entry] = await entries()
+			expect(entry!.clockOutAt).toBe(t0 + 290 * MIN)
+			expect(
+				(await breaksOf(id)).map((b) => [b.startAt - t0, b.endAt! - t0]),
+			).toEqual([[120 * MIN, 150 * MIN]])
+		})
+
+		it('stretches the card to breaks taken after the automatic time', async () => {
+			await h.punch(secret, { pin, kind: 'clock_in' })
+			const t0 = h.clock.now
+			const autoAt = t0 + 5 * HOUR
+			h.setClock(autoAt + HOUR)
+			const id = await autoClose(await staffIdOf(pin), autoAt)
+			h.advance(HOUR)
+			for (const [kind, minutes] of [
+				['break_start', 320],
+				['break_end', 330],
+			] as const) {
+				const r = await h.punch(secret, {
+					pin,
+					kind,
+					offline: true,
+					clientAt: t0 + minutes * MIN,
+				})
+				expect(r.status, r.raw).toBe(200)
+			}
+			// Seen until the break ended, even before their clock-out arrives.
+			expect((await entries())[0]).toMatchObject({
+				clockOutAt: t0 + 330 * MIN,
+				clockOutKind: 'auto',
+			})
+			const out = await h.punch(secret, {
+				pin,
+				kind: 'clock_out',
+				offline: true,
+				clientAt: t0 + 340 * MIN,
+			})
+			expect(out.status, out.raw).toBe(200)
+			expect((await entries())[0]!.clockOutAt).toBe(t0 + 340 * MIN)
+			expect(
+				(await breaksOf(id)).map((b) => [b.startAt - t0, b.endAt! - t0]),
+			).toEqual([[320 * MIN, 330 * MIN]])
+		})
+
+		it('leaves a card a manager edited, approved or locked to the manager', async () => {
+			const db = await h.db(ORG_A)
+			for (const done of [
+				{ status: 'approved' as const, approvedBy: 'op-1', approvedAt: 1 },
+				{ issues: ['auto_clock_out', 'edited'] },
+				{ status: 'locked' as const, lockedBy: 'op-1', lockedAt: 2 },
+			]) {
+				const person = await h.seedStaff(ORG_A, {})
+				h.setClock(h.clock.now + 24 * HOUR)
+				await h.punch(secret, { pin: person.pin, kind: 'clock_in' })
+				const t0 = h.clock.now
+				h.setClock(t0 + 6 * HOUR)
+				const id = await autoClose(person.staffId, t0 + 5 * HOUR)
+				await db.update(timeEntries).set(done).where(eq(timeEntries.id, id))
+				const late = await h.punch(secret, {
+					pin: person.pin,
+					kind: 'clock_out',
+					offline: true,
+					clientAt: t0 + 5 * HOUR + 30 * MIN,
+				})
+				expect(late.status, late.raw).toBe(409)
+				expect(late.body.error).toBe('not_clocked_in')
+				const [card] = await db
+					.select()
+					.from(timeEntries)
+					.where(eq(timeEntries.id, id))
+				expect(card!.clockOutAt).toBe(t0 + 5 * HOUR)
+				// Refused on that card, for the manager to see.
+				const refused = await db
+					.select()
+					.from(timePunches)
+					.where(eq(timePunches.staffId, person.staffId))
+				expect(refused.find((row) => row.outcome !== 'accepted')?.entryId).toBe(
+					id,
+				)
+			}
 		})
 
 		it('flags device clock skew and sends the card to review', async () => {
@@ -827,6 +1009,24 @@ describe('kiosk punches under labor policy', () => {
 			})
 			expect(entry!.issues).toEqual(
 				expect.arrayContaining(['early_in', 'offline_override']),
+			)
+		})
+
+		it('starts an early offline clock-in that arrives before its earliest time when it arrives', async () => {
+			await setPolicy(LOC_1, { preventEarlyMinutes: 10 })
+			h.setClock(SHIFT_START - 29 * MIN)
+			const replayed = await h.punch(secret, {
+				pin,
+				kind: 'clock_in',
+				offline: true,
+				clientAt: SHIFT_START - 30 * MIN,
+			})
+			expect(replayed.status, replayed.raw).toBe(200)
+			expect((await entries())[0]!.clockInAt).toBe(SHIFT_START - 29 * MIN)
+			// Never in the future: a break before the earliest time still lands.
+			h.setClock(SHIFT_START - 20 * MIN)
+			expect((await h.punch(secret, { pin, kind: 'break_start' })).status).toBe(
+				200,
 			)
 		})
 

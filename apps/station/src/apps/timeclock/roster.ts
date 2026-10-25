@@ -34,9 +34,11 @@ export async function rememberClockPerson(
 ): Promise<void> {
 	const key = await keyFor(pin)
 	const before = await db.clockPeople.get(key)
-	// The same person as before (a PIN can change hands).
+	// The same person as before (a PIN can change hands), seen lately enough to
+	// trust: a lookup has already forgotten an older record, so must this.
 	const known =
 		before &&
+		now - before.cachedAt <= CACHE_MAX_AGE_MS &&
 		(!who.staffId || !before.staffId || before.staffId === who.staffId)
 			? before
 			: undefined

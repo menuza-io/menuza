@@ -196,9 +196,12 @@ export function PartySheet({
 	// Awaiting its deposit: confirming would waive it and cancelling touches
 	// the payment, both a manager's call in the app.
 	const awaitingPayment = r?.status === 'pending_payment'
+	// The server says when the till may not undo this one (someone else's change).
+	const notYours = r?.canUndo === false
 	const has = (action: QuickAction) =>
 		actions.includes(action) &&
-		!(awaitingPayment && (action === 'confirm' || action === 'cancel'))
+		!(awaitingPayment && (action === 'confirm' || action === 'cancel')) &&
+		!(notYours && (action === 'undo_finish' || action === 'undo_no_show'))
 	const run = (command: PartyCommand) => r && onCommand(r, command)
 	const phoneEnd = (r?.guest?.phone ?? '').replace(/\D/g, '').slice(-4)
 	const guestName =

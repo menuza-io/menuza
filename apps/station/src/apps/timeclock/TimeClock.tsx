@@ -31,6 +31,7 @@ import {
 	useState,
 } from 'react'
 import {
+	expirePunches,
 	flushPunches,
 	punchQueue,
 	stationClockApi,
@@ -135,13 +136,17 @@ export function TimeClock({
 	const refreshWaiting = useCallback(() => {
 		const queue = punchQueue()
 		if (!queue.supported) return
-		void queue.counts().then(
-			(counts) => {
-				setWaiting(counts.queued)
-				setFailed(counts.failed)
-			},
-			() => {},
-		)
+		// Punches too old to record are set aside first, so the counts say so.
+		void expirePunches()
+			.catch(() => 0)
+			.then(() => queue.counts())
+			.then(
+				(counts) => {
+					setWaiting(counts.queued)
+					setFailed(counts.failed)
+				},
+				() => {},
+			)
 	}, [])
 	useEffect(() => {
 		refreshWaiting()

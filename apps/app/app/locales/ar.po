@@ -798,7 +798,7 @@ msgstr "{created, plural, one {أُضيفت مهمة واحدة.} two {أُضي�
 msgid "{created} imported, {existing} already on your team, {notImported} not imported."
 msgstr "تم استيراد {created}، و{existing} موجودون في فريقك أصلًا، و{notImported} لم يتم استيرادهم."
 
-#: app/components/pos/terminals-manager.tsx:1629
+#: app/components/pos/terminals-manager.tsx:1664
 msgid "{createdLabel} is ready to take orders."
 msgstr "{createdLabel} جاهز لاستقبال الطلبات."
 
@@ -1029,7 +1029,7 @@ msgstr "انتهت صلاحية {label}"
 msgid "{label} note (guest-facing)"
 msgstr "ملاحظة {label} (تظهر للضيف)"
 
-#: app/components/pos/terminals-manager.tsx:227
+#: app/components/pos/terminals-manager.tsx:230
 msgid "{label} was removed."
 msgstr "تمت إزالة {label}."
 
@@ -1442,7 +1442,7 @@ msgstr "{remainingMinutes, plural, zero {متبقي # دقيقة} one {متبق�
 msgid "{remainingText} until overtime starts."
 msgstr "المتبقي {remainingText} قبل بدء الساعات الإضافية."
 
-#: app/components/pos/terminals-manager.tsx:833
+#: app/components/pos/terminals-manager.tsx:837
 msgid "{removingLabel} will stop sending orders at once. Orders it has already saved stay on that device and send after it is paired again. Nothing already received is deleted."
 msgstr "سيتوقف {removingLabel} عن إرسال الطلبات فورًا. تبقى الطلبات التي حفظها بالفعل على ذلك الجهاز وتُرسل بعد إقرانه من جديد. لا يُحذف أي شيء تم استلامه بالفعل."
 
@@ -1945,7 +1945,7 @@ msgstr "كان متصل غير راضٍ أو أبلغ عن مشكلة."
 msgid "A change applies the next time their Staff session refreshes, within 15 minutes."
 msgstr "يسري التغيير عند تحديث جلسة الموظفين الخاصة بهم في المرة القادمة، خلال 15 دقيقة."
 
-#: app/components/pos/terminals-manager.tsx:1160
+#: app/components/pos/terminals-manager.tsx:1177
 msgid "A change to a bill that was already settled"
 msgstr "تعديل على فاتورة تمت تسويتها بالفعل"
 
@@ -2292,11 +2292,11 @@ msgstr "يمكن أن يحتوي القالب على 30 مهمة كحد أقصى
 msgid "A template with that name already exists."
 msgstr "يوجد قالب بهذا الاسم مسبقًا."
 
-#: app/components/pos/terminals-manager.tsx:1419
+#: app/components/pos/terminals-manager.tsx:1445
 msgid "A terminal bound to a location sells only there and can run its host stand."
 msgstr "الجهاز المرتبط بموقع يبيع فيه فقط ويمكنه تشغيل مكتب الاستقبال الخاص به."
 
-#: app/components/pos/terminals-manager.tsx:617
+#: app/components/pos/terminals-manager.tsx:620
 msgid "A terminal sent something the server could not apply, such as a change to a closed bill or an order from an out-of-date terminal. Nothing was lost: check it against the terminal, enter it by hand if needed, then mark it settled."
 msgstr "أرسلت إحدى نقاط البيع شيئًا لم يتمكن الخادم من تطبيقه، مثل تعديل على فاتورة مغلقة أو طلب من نقطة بيع بإصدار قديم. لم يُفقد أي شيء: راجعه على نقطة البيع، وأدخله يدويًا عند الحاجة، ثم ضع علامة على أنه تمت تسويته."
 
@@ -4121,8 +4121,8 @@ msgstr "هل تلقيت إكراميات نقدية في هذه الوردية؟
 msgid "Any language"
 msgstr "أي لغة"
 
-#: app/components/pos/terminals-manager.tsx:1404
-#: app/components/pos/terminals-manager.tsx:1409
+#: app/components/pos/terminals-manager.tsx:1430
+#: app/components/pos/terminals-manager.tsx:1435
 msgid "Any location"
 msgstr "أي موقع"
 
@@ -5575,8 +5575,8 @@ msgid "Business date"
 msgstr "تاريخ العمل"
 
 #: app/components/pos/pos-day-report.tsx:137
-#: app/components/pos/terminals-manager.tsx:572
-#: app/components/pos/terminals-manager.tsx:1428
+#: app/components/pos/terminals-manager.tsx:575
+#: app/components/pos/terminals-manager.tsx:1454
 msgid "Business day"
 msgstr "يوم العمل"
 
@@ -5909,8 +5909,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/phone-agent/phone-number-dialogs.tsx:676
 #: app/components/phone-agent/training-rules-section.tsx:639
 #: app/components/phone-agent/training-rules-section.tsx:691
-#: app/components/pos/terminals-manager.tsx:681
-#: app/components/pos/terminals-manager.tsx:1523
+#: app/components/pos/terminals-manager.tsx:684
+#: app/components/pos/terminals-manager.tsx:1558
 #: app/components/pos/zatca-settings.tsx:562
 #: app/components/reservations/booking-sheet.tsx:590
 #: app/components/reservations/detail-sheet.tsx:1625
@@ -6222,7 +6222,7 @@ msgid "Cash"
 msgstr "نقدًا"
 
 #: app/components/pos/pos-day-report.tsx:264
-#: app/components/pos/terminals-manager.tsx:535
+#: app/components/pos/terminals-manager.tsx:538
 msgid "Cash drawer shifts"
 msgstr "ورديات درج النقد"
 
@@ -6754,7 +6754,7 @@ msgstr "اختيار ملف"
 msgid "Choose a JPEG, PNG, GIF, WebP, or AVIF image."
 msgstr "اختر صورة بتنسيق JPEG أو PNG أو GIF أو WebP أو AVIF."
 
-#: app/components/pos/terminals-manager.tsx:1074
+#: app/components/pos/terminals-manager.tsx:1085
 msgid "Choose a location"
 msgstr "اختر موقعًا"
 
@@ -6959,9 +6959,14 @@ msgstr "اختر الأعضاء الذين يعملون هنا أيضًا. ست�
 msgid "Choose the role you are working."
 msgstr "اختر الدور الذي تعمل فيه."
 
-#: app/components/pos/terminals-manager.tsx:992
+#: app/components/pos/terminals-manager.tsx:1003
 msgid "Choose the terminal's location to use reservations."
 msgstr "اختر موقع الجهاز لاستخدام الحجوزات."
+
+#: app/components/pos/terminals-manager.tsx:998
+#: app/components/pos/terminals-manager.tsx:1507
+msgid "Choose the terminal's location to use the time clock."
+msgstr "اختر موقع الجهاز لاستخدام ساعة الدوام."
 
 #: app/utils/people/people-errors.ts:12
 msgid "Choose two different customers to merge."
@@ -7229,8 +7234,8 @@ msgid "Clocked in before the scheduled start."
 msgstr "سجّل الحضور قبل الوقت المجدول."
 
 #: app/components/staff/timesheets/issue-copy.ts:39
-msgid "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it."
-msgstr "سُجّل الحضور دون اتصال في حالة كانت القواعد ستطلب فيها تأكيدًا أولًا (لا توجد وردية، أو مبكرًا جدًا، أو أي وظيفة). راجعه."
+msgid "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it. If they were early, pay starts at the earliest time the rules allow."
+msgstr "سُجّل الحضور دون اتصال في حالة كانت القواعد ستطلب فيها تأكيدًا أولًا (لا توجد وردية، أو مبكرًا جدًا، أو أي وظيفة). راجعه. إذا كان مبكرًا، يبدأ الاحتساب من أبكر وقت تسمح به القواعد."
 
 #: app/components/staff/labor-example.tsx:148
 msgid "Clocked in to out"
@@ -7270,7 +7275,7 @@ msgstr "تم تسجيل انصرافك، {firstName}"
 #: app/components/kiosk/kiosk-chrome.tsx:255
 #: app/components/onboarding-checklist.tsx:177
 #: app/components/phone-agent/voice-picker.tsx:559
-#: app/components/pos/terminals-manager.tsx:1717
+#: app/components/pos/terminals-manager.tsx:1752
 #: app/components/staff/kiosk-manager.tsx:792
 #: app/components/staff/timesheets/card-sheet.tsx:275
 msgid "Close"
@@ -7307,7 +7312,7 @@ msgstr "أغلق هذه النافذة وافتح المجموعة مرة أخر
 msgid "Close thread"
 msgstr "إغلاق سلسلة الردود"
 
-#: app/components/pos/terminals-manager.tsx:1719
+#: app/components/pos/terminals-manager.tsx:1754
 #: app/components/staff/kiosk-manager.tsx:794
 msgid "Close, I'll finish later"
 msgstr "إغلاق، سأكمل لاحقًا"
@@ -7387,7 +7392,7 @@ msgstr "يجب أن يكون وقت الإغلاق بعد وقت الفتح."
 msgid "Cloudflare is not configured in this environment. Domain is stored for local testing; SSL automation requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID."
 msgstr "لم يتم تكوين Cloudflare في هذه البيئة. يتم تخزين النطاق للاختبار المحلي؛ تتطلب أتمتة SSL كلاً من CLOUDFLARE_API_TOKEN و CLOUDFLARE_ZONE_ID."
 
-#: app/components/pos/terminals-manager.tsx:1615
+#: app/components/pos/terminals-manager.tsx:1650
 msgid "Code copied."
 msgstr "تم نسخ الرمز."
 
@@ -7847,7 +7852,7 @@ msgstr "اربط عميل الذكاء الاصطناعي المفضل لديك 
 msgid "Connect your POS"
 msgstr "اربط نظام نقاط البيع"
 
-#: app/components/pos/terminals-manager.tsx:1634
+#: app/components/pos/terminals-manager.tsx:1669
 #: app/components/pos/zatca-settings.tsx:378
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:102
 #: app/components/settings/cards/organization/review-integrations-card.tsx:54
@@ -8100,7 +8105,7 @@ msgid "Copy All"
 msgstr "نسخ الكل"
 
 #: ../../packages/ai/src/components/ai-elements/code-block.tsx:147
-#: app/components/pos/terminals-manager.tsx:1707
+#: app/components/pos/terminals-manager.tsx:1742
 msgid "Copy code"
 msgstr "نسخ الكود"
 
@@ -8117,7 +8122,7 @@ msgid "Copy into this week"
 msgstr "نسخ إلى هذا الأسبوع"
 
 #: app/components/hiring/job-share-panel.tsx:87
-#: app/components/pos/terminals-manager.tsx:1707
+#: app/components/pos/terminals-manager.tsx:1742
 #: app/components/staff/kiosk-manager.tsx:782
 #: app/routes/_app+/$orgSlug_+/media.tsx:919
 #: app/routes/_app+/$orgSlug_+/notes-cards.tsx:220
@@ -8181,14 +8186,14 @@ msgstr "تعذّر تعيين الطاولة."
 msgid "Could not be sent"
 msgstr "تعذّر الإرسال"
 
-#: app/components/pos/terminals-manager.tsx:386
+#: app/components/pos/terminals-manager.tsx:389
 msgid "Could not cancel the code."
 msgstr "تعذّر إلغاء الرمز."
 
-#: app/components/pos/terminals-manager.tsx:259
-#: app/components/pos/terminals-manager.tsx:278
-#: app/components/pos/terminals-manager.tsx:297
-#: app/components/pos/terminals-manager.tsx:316
+#: app/components/pos/terminals-manager.tsx:262
+#: app/components/pos/terminals-manager.tsx:281
+#: app/components/pos/terminals-manager.tsx:300
+#: app/components/pos/terminals-manager.tsx:319
 msgid "Could not change the setting."
 msgstr "تعذّر تغيير الإعداد."
 
@@ -8196,11 +8201,11 @@ msgstr "تعذّر تغيير الإعداد."
 msgid "Could not change the status."
 msgstr "تعذر تغيير الحالة."
 
-#: app/components/pos/terminals-manager.tsx:346
+#: app/components/pos/terminals-manager.tsx:349
 msgid "Could not change who can manage terminals."
 msgstr "تعذّر تغيير من يمكنه إدارة الأجهزة."
 
-#: app/components/pos/terminals-manager.tsx:371
+#: app/components/pos/terminals-manager.tsx:374
 msgid "Could not change who runs the host stand."
 msgstr "تعذّر تغيير من يدير مكتب الاستقبال."
 
@@ -8208,7 +8213,7 @@ msgstr "تعذّر تغيير من يدير مكتب الاستقبال."
 msgid "Could not connect the terminal."
 msgstr "تعذّر ربط نقطة البيع."
 
-#: app/components/pos/terminals-manager.tsx:1617
+#: app/components/pos/terminals-manager.tsx:1652
 msgid "Could not copy. Select it and copy it by hand."
 msgstr "تعذّر النسخ. حدّده وانسخه يدويًا."
 
@@ -8228,7 +8233,7 @@ msgstr "تعذّر النسخ. حدّد الرمز وانسخه بنفسك."
 msgid "Could not create a draft. Try again."
 msgstr "تعذّر إنشاء المسودة. حاول مرة أخرى."
 
-#: app/components/pos/terminals-manager.tsx:1317
+#: app/components/pos/terminals-manager.tsx:1343
 msgid "Could not create a pairing code. Try again."
 msgstr "تعذّر إنشاء رمز الإقران. حاول مرة أخرى."
 
@@ -8270,7 +8275,7 @@ msgstr "تعذّر تحميل الردود."
 msgid "Could not load reservation settings"
 msgstr "تعذر تحميل إعدادات الحجوزات"
 
-#: app/components/pos/terminals-manager.tsx:197
+#: app/components/pos/terminals-manager.tsx:200
 msgid "Could not load terminals."
 msgstr "تعذّر تحميل أجهزة البيع."
 
@@ -8302,7 +8307,7 @@ msgstr "تعذّر تحميل إعدادات الفوترة الإلكتروني
 msgid "Could not make a PIN. Try again."
 msgstr "تعذّر إنشاء رمز PIN. حاول مرة أخرى."
 
-#: app/components/pos/terminals-manager.tsx:331
+#: app/components/pos/terminals-manager.tsx:334
 msgid "Could not mark it settled."
 msgstr "تعذّر وضع علامة التسوية."
 
@@ -8326,7 +8331,7 @@ msgstr "تعذر نشر ردك."
 msgid "Could not reach the time clock. Check the connection and try again."
 msgstr "تعذّر الوصول إلى ساعة الدوام. تحقق من الاتصال وحاول مرة أخرى."
 
-#: app/components/pos/terminals-manager.tsx:234
+#: app/components/pos/terminals-manager.tsx:237
 msgid "Could not remove the terminal."
 msgstr "تعذّرت إزالة الجهاز."
 
@@ -8875,7 +8880,7 @@ msgstr "إنشاء ملاحظات"
 msgid "Create Option"
 msgstr "إنشاء خيار"
 
-#: app/components/pos/terminals-manager.tsx:1532
+#: app/components/pos/terminals-manager.tsx:1567
 #: app/components/staff/kiosk-manager.tsx:616
 msgid "Create pairing code"
 msgstr "إنشاء رمز الربط"
@@ -9011,7 +9016,7 @@ msgstr "إنشاء الصفحة"
 msgid "Creating..."
 msgstr "جاري الإنشاء..."
 
-#: app/components/pos/terminals-manager.tsx:1530
+#: app/components/pos/terminals-manager.tsx:1565
 #: app/components/reservations/experiences/experience-create-sheet.tsx:178
 #: app/components/staff/kiosk-manager.tsx:614
 #: app/components/website/create-form-dialog.tsx:305
@@ -9406,7 +9411,7 @@ msgstr "يوم"
 msgid "Day controls"
 msgstr "عناصر التحكم في اليوم"
 
-#: app/components/pos/terminals-manager.tsx:892
+#: app/components/pos/terminals-manager.tsx:896
 msgid "Day ends {time}"
 msgstr "ينتهي اليوم {time}"
 
@@ -10621,7 +10626,7 @@ msgstr "عدم قبول الطلبات الهاتفية لـ"
 #: app/components/kiosk/kiosk-screens.tsx:720
 #: app/components/note/share-note-button.tsx:365
 #: app/components/phone-agent/call-request-card.tsx:41
-#: app/components/pos/terminals-manager.tsx:1638
+#: app/components/pos/terminals-manager.tsx:1673
 #: app/components/reservations/settings/setup-checklist.tsx:173
 #: app/components/settings/backup-codes-display.tsx:108
 #: app/components/staff/kiosk-manager.tsx:722
@@ -11976,7 +11981,7 @@ msgstr "أدخل أول يوم عمل لهم."
 #~ msgid "Enter this code in the POS app's settings on the device. It works once."
 #~ msgstr "أدخل هذا الرمز في إعدادات تطبيق نقطة البيع على الجهاز. يعمل مرة واحدة فقط."
 
-#: app/components/pos/terminals-manager.tsx:1658
+#: app/components/pos/terminals-manager.tsx:1693
 msgid "Enter this code in the Station app's settings on the device. It works once."
 msgstr "أدخل هذا الرمز في إعدادات تطبيق Station على الجهاز. يُستخدم لمرة واحدة."
 
@@ -12274,7 +12279,7 @@ msgstr "جميع أعضاء الفريق"
 msgid "Everyone who has ordered, signed in or booked a table, in one list. Data is served from your tenant region."
 msgstr "كل من طلب أو سجّل الدخول أو حجز طاولة، في قائمة واحدة. تُقدَّم البيانات من منطقة بيانات مؤسستك."
 
-#: app/components/pos/terminals-manager.tsx:701
+#: app/components/pos/terminals-manager.tsx:704
 msgid "Everyone with a PIN can take orders and use the time clock. Managers can also change a terminal's settings. The host stand is for the people you choose here. Set a person's PIN under Staff."
 msgstr "يمكن لكل من لديه رمز سري أخذ الطلبات واستخدام ساعة الدوام. ويمكن للمديرين أيضًا تغيير إعدادات الجهاز. مكتب الاستقبال للأشخاص الذين تختارهم هنا. عيّن الرمز السري للشخص من قسم الموظفين."
 
@@ -12438,7 +12443,7 @@ msgstr "ينتهي في {expiresAt}"
 #~ msgid "Expires at <0>{0}</0>"
 #~ msgstr "تنتهي في {expiresAt}"
 
-#: app/components/pos/terminals-manager.tsx:1684
+#: app/components/pos/terminals-manager.tsx:1719
 #: app/components/staff/kiosk-manager.tsx:367
 #: app/components/staff/kiosk-manager.tsx:759
 msgid "Expires in {left}"
@@ -13482,7 +13487,7 @@ msgstr "من هنا يتولى الذكاء الاصطناعي بقية المك
 msgid "From Name (Optional)"
 msgstr "اسم المرسل (اختياري)"
 
-#: app/components/pos/terminals-manager.tsx:1372
+#: app/components/pos/terminals-manager.tsx:1398
 msgid "Front counter"
 msgstr "الكاونتر الأمامي"
 
@@ -14315,7 +14320,7 @@ msgstr "إخفاء التفاصيل"
 msgid "Hide from search engines"
 msgstr "إخفاء عن محركات البحث"
 
-#: app/components/pos/terminals-manager.tsx:778
+#: app/components/pos/terminals-manager.tsx:781
 msgid "Hide removed terminals"
 msgstr "إخفاء الأجهزة المُزالة"
 
@@ -14480,16 +14485,16 @@ msgstr "مضيف استقبال"
 msgid "Host Notes"
 msgstr "ملاحظات المضيف"
 
-#: app/components/pos/terminals-manager.tsx:930
+#: app/components/pos/terminals-manager.tsx:934
 #: app/utils/reservations/labels.ts:49
 msgid "Host stand"
 msgstr "منصة الاستقبال"
 
-#: app/components/pos/terminals-manager.tsx:1058
+#: app/components/pos/terminals-manager.tsx:1069
 msgid "Host stand for {locationName}"
 msgstr "مكتب الاستقبال لـ {locationName}"
 
-#: app/components/pos/terminals-manager.tsx:947
+#: app/components/pos/terminals-manager.tsx:951
 msgid "Host stand for {name}"
 msgstr "مكتب الاستقبال لـ {name}"
 
@@ -14499,7 +14504,7 @@ msgstr "مكتب الاستقبال لـ {name}"
 #~ msgid "Host stand views"
 #~ msgstr "عروض منصة الاستقبال"
 
-#: app/components/pos/terminals-manager.tsx:931
+#: app/components/pos/terminals-manager.tsx:935
 msgid "Host stand with guest details"
 msgstr "مكتب الاستقبال مع بيانات الضيوف"
 
@@ -15466,7 +15471,7 @@ msgstr "متابعة التعديل"
 #~ msgid "Keep forever"
 #~ msgstr "الاحتفاظ دائمًا"
 
-#: app/components/pos/terminals-manager.tsx:842
+#: app/components/pos/terminals-manager.tsx:846
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
@@ -16212,7 +16217,7 @@ msgid "Link copied!"
 msgstr "تم نسخ الرابط!"
 
 #: app/components/hiring/job-share-panel.tsx:49
-#: app/components/pos/terminals-manager.tsx:1615
+#: app/components/pos/terminals-manager.tsx:1650
 #: app/components/staff/kiosk-manager.tsx:697
 msgid "Link copied."
 msgstr "تم نسخ الرابط."
@@ -16577,8 +16582,8 @@ msgstr "جارٍ التحميل…"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:249
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:37
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
-#: app/components/pos/terminals-manager.tsx:1392
-#: app/components/pos/terminals-manager.tsx:1400
+#: app/components/pos/terminals-manager.tsx:1418
+#: app/components/pos/terminals-manager.tsx:1426
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
@@ -16607,7 +16612,7 @@ msgstr "تفاصيل الفرع"
 msgid "Location Name"
 msgstr "اسم الفرع"
 
-#: app/components/pos/terminals-manager.tsx:1071
+#: app/components/pos/terminals-manager.tsx:1082
 msgid "Location of {label}"
 msgstr "موقع {label}"
 
@@ -16827,7 +16832,7 @@ msgstr "مكان العمل الرئيسي"
 msgid "Maintenance"
 msgstr "صيانة"
 
-#: app/components/pos/terminals-manager.tsx:865
+#: app/components/pos/terminals-manager.tsx:869
 msgid "Make {name} a manager"
 msgstr "تعيين {name} مديرًا"
 
@@ -16844,7 +16849,7 @@ msgstr "إجراء مكالمة تجريبية"
 msgid "Make it more detailed"
 msgstr "اجعلها أكثر تفصيلاً"
 
-#: app/components/pos/terminals-manager.tsx:745
+#: app/components/pos/terminals-manager.tsx:748
 msgid "Make manager"
 msgstr "تعيين كمدير"
 
@@ -17039,7 +17044,7 @@ msgstr "أدر اسم مطعمك ومعرّفه وصورة ملفه."
 msgid "Manage your restaurant's subscription"
 msgstr "أدر اشتراك مطعمك"
 
-#: app/components/pos/terminals-manager.tsx:726
+#: app/components/pos/terminals-manager.tsx:729
 #: app/components/staff/timesheets/card-history.tsx:67
 msgid "Manager"
 msgstr "مدير"
@@ -17162,7 +17167,7 @@ msgstr "تحديد كمقروء"
 msgid "Mark ready"
 msgstr "تمييز كجاهز"
 
-#: app/components/pos/terminals-manager.tsx:648
+#: app/components/pos/terminals-manager.tsx:651
 msgid "Mark settled"
 msgstr "تمت التسوية"
 
@@ -18053,7 +18058,7 @@ msgstr "رابط جدولي"
 #: app/components/customers/people-list-screen.tsx:391
 #: app/components/customers/person-profile-screen.tsx:1113
 #: app/components/dashboard/dashboard-name-dialog.tsx:124
-#: app/components/pos/terminals-manager.tsx:1364
+#: app/components/pos/terminals-manager.tsx:1390
 #: app/components/reservations/policies/policy-sheet.tsx:217
 #: app/components/reservations/waitlist/party-fields.tsx:62
 #: app/components/reservations/walk-in-dialog.tsx:239
@@ -18089,7 +18094,7 @@ msgstr "الاسم (يظهر للضيف)"
 #~ msgid "Name in Arabic"
 #~ msgstr "الاسم بالعربية"
 
-#: app/components/pos/terminals-manager.tsx:1356
+#: app/components/pos/terminals-manager.tsx:1382
 msgid "Name it so you can tell it apart. The code prefixes its order numbers."
 msgstr "أعطه اسمًا لتميّزه. يُضاف الرمز في بداية أرقام طلباته."
 
@@ -18149,7 +18154,7 @@ msgstr "بحاجة إلى رمز جديد؟ اطلب واحداً هنا."
 msgid "Need an integration but don't see it here?"
 msgstr "هل تحتاج إلى تكامل ولكن لا تراه هنا؟"
 
-#: app/components/pos/terminals-manager.tsx:1502
+#: app/components/pos/terminals-manager.tsx:1537
 msgid "Needs a location and a staff PIN, so guests’ details only open for someone signed in."
 msgstr "يتطلب موقعًا ورمزًا سريًا للموظفين، حتى لا تُفتح بيانات الضيوف إلا لشخص مسجّل دخوله."
 
@@ -18931,7 +18936,7 @@ msgstr "بلا تجميع"
 #~ msgid "No guests match your search"
 #~ msgstr "لا يوجد ضيوف مطابقون لبحثك"
 
-#: app/components/pos/terminals-manager.tsx:929
+#: app/components/pos/terminals-manager.tsx:933
 msgid "No host stand"
 msgstr "بدون مكتب الاستقبال"
 
@@ -19418,7 +19423,7 @@ msgstr "لا توجد نوافذ استلام مجدولة"
 msgid "No PIN at {first} yet"
 msgstr "لا يوجد رمز سري في {first} بعد"
 
-#: app/components/pos/terminals-manager.tsx:721
+#: app/components/pos/terminals-manager.tsx:724
 #: app/components/staff/access-tab.tsx:160
 msgid "No PIN yet"
 msgstr "لا يوجد رمز PIN بعد"
@@ -19710,7 +19715,7 @@ msgstr "لا يوجد زملاء متاحون"
 msgid "No templates yet. Save a week you like and it will show up here."
 msgstr "لا توجد قوالب بعد. احفظ أسبوعًا يعجبك وسيظهر هنا."
 
-#: app/components/pos/terminals-manager.tsx:442
+#: app/components/pos/terminals-manager.tsx:445
 msgid "No terminals yet"
 msgstr "لا توجد أجهزة بيع بعد"
 
@@ -20078,11 +20083,11 @@ msgstr "لم يُفتح بعد."
 msgid "Not reached yet"
 msgstr "لم يتم التواصل بعد"
 
-#: app/components/pos/terminals-manager.tsx:565
+#: app/components/pos/terminals-manager.tsx:568
 msgid "Not required"
 msgstr "غير مطلوب"
 
-#: app/components/pos/terminals-manager.tsx:1188
+#: app/components/pos/terminals-manager.tsx:1205
 #: app/components/staff/kiosk-manager.tsx:442
 msgid "Not seen yet"
 msgstr "لم يُرَ بعد"
@@ -21144,7 +21149,7 @@ msgstr "افتح قائمة الانتظار لمعرفة من ينتظر."
 msgid "Open this on the tablet"
 msgstr "افتح هذا على الجهاز اللوحي"
 
-#: app/components/pos/terminals-manager.tsx:1649
+#: app/components/pos/terminals-manager.tsx:1684
 msgid "Open this on the terminal"
 msgstr "افتح هذا على جهاز البيع"
 
@@ -21401,7 +21406,7 @@ msgstr "نافذة الطلب"
 msgid "Orders"
 msgstr "الطلبات"
 
-#: app/components/pos/terminals-manager.tsx:1436
+#: app/components/pos/terminals-manager.tsx:1462
 msgid "Orders after midnight count towards the previous day until then, so a late service keeps one day's numbers and takings."
 msgstr "تُحسب الطلبات بعد منتصف الليل على اليوم السابق حتى هذا الوقت، فتبقى أرقام الطلبات والإيرادات للخدمة المتأخرة ضمن يوم واحد."
 
@@ -21874,8 +21879,8 @@ msgstr "إجازة مدفوعة"
 msgid "Pair a tablet"
 msgstr "ربط جهاز لوحي"
 
-#: app/components/pos/terminals-manager.tsx:412
-#: app/components/pos/terminals-manager.tsx:1353
+#: app/components/pos/terminals-manager.tsx:415
+#: app/components/pos/terminals-manager.tsx:1379
 msgid "Pair a terminal"
 msgstr "إقران جهاز بيع"
 
@@ -21888,19 +21893,19 @@ msgstr "إقران جهاز بيع"
 msgid "Pair this tablet"
 msgstr "ربط هذا الجهاز اللوحي"
 
-#: app/components/pos/terminals-manager.tsx:444
+#: app/components/pos/terminals-manager.tsx:447
 msgid "Pair your first terminal to start taking walk-in orders."
 msgstr "اقرن أول جهاز بيع لبدء استقبال طلبات الزبائن داخل المطعم."
 
-#: app/components/pos/terminals-manager.tsx:452
+#: app/components/pos/terminals-manager.tsx:455
 msgid "Paired terminals"
 msgstr "أجهزة البيع المقترنة"
 
-#: app/components/pos/terminals-manager.tsx:1689
+#: app/components/pos/terminals-manager.tsx:1724
 msgid "Pairing code"
 msgstr "رمز الإقران"
 
-#: app/components/pos/terminals-manager.tsx:1689
+#: app/components/pos/terminals-manager.tsx:1724
 #: app/components/staff/kiosk-manager.tsx:764
 msgid "Pairing link"
 msgstr "رابط الربط"
@@ -22791,21 +22796,21 @@ msgstr "تم تعيين الرمز"
 msgid "PIN set on {setOn}"
 msgstr "تم تعيين الرمز في {setOn}"
 
-#: app/components/pos/terminals-manager.tsx:251
+#: app/components/pos/terminals-manager.tsx:254
 msgid "PIN sign-in is off. The terminal updates the next time it connects."
 msgstr "تسجيل الدخول برمز PIN متوقف. سيتحدّث الجهاز عند اتصاله في المرة القادمة."
 
-#: app/components/pos/terminals-manager.tsx:248
+#: app/components/pos/terminals-manager.tsx:251
 msgid "PIN sign-in is on. The terminal updates the next time it connects."
 msgstr "تسجيل الدخول برمز PIN مفعّل. سيتحدّث الجهاز عند اتصاله في المرة القادمة."
 
-#: app/components/pos/terminals-manager.tsx:516
-#: app/components/pos/terminals-manager.tsx:528
+#: app/components/pos/terminals-manager.tsx:519
+#: app/components/pos/terminals-manager.tsx:531
 msgid "PIN sign-in off"
 msgstr "تسجيل الدخول برمز PIN متوقف"
 
-#: app/components/pos/terminals-manager.tsx:514
-#: app/components/pos/terminals-manager.tsx:526
+#: app/components/pos/terminals-manager.tsx:517
+#: app/components/pos/terminals-manager.tsx:529
 msgid "PIN sign-in on"
 msgstr "تسجيل الدخول برمز PIN مفعّل"
 
@@ -23728,7 +23733,7 @@ msgstr "رمز QR يفتح صفحة الربط"
 msgid "QR code that opens this job"
 msgstr "رمز QR يفتح هذه الوظيفة"
 
-#: app/components/pos/terminals-manager.tsx:1670
+#: app/components/pos/terminals-manager.tsx:1705
 msgid "QR code that pairs the terminal"
 msgstr "رمز QR لإقران جهاز البيع"
 
@@ -24400,7 +24405,7 @@ msgstr "الإزالة غير منشورة"
 #: app/components/menu/option-form.tsx:379
 #: app/components/note/share-note-button.tsx:265
 #: app/components/phone-agent/phone-number-dialogs.tsx:178
-#: app/components/pos/terminals-manager.tsx:485
+#: app/components/pos/terminals-manager.tsx:488
 #: app/components/reservations/experiences/experience-editor.tsx:1005
 #: app/components/settings/cards/organization/site-icon-card.tsx:224
 #: app/components/settings/cards/organization/site-theme-card.tsx:299
@@ -24436,12 +24441,12 @@ msgid "Remove {guest} from the waitlist?"
 msgstr "إزالة {guest} من قائمة الانتظار؟"
 
 #: app/components/chat/chat-compose-dialog.tsx:129
-#: app/components/pos/terminals-manager.tsx:869
+#: app/components/pos/terminals-manager.tsx:873
 #: app/components/reservations/experiences/schedule-sheet.tsx:295
 msgid "Remove {label}"
 msgstr "إزالة {label}"
 
-#: app/components/pos/terminals-manager.tsx:864
+#: app/components/pos/terminals-manager.tsx:868
 msgid "Remove {name} as manager"
 msgstr "إزالة {name} من المديرين"
 
@@ -24532,7 +24537,7 @@ msgstr "إزالة الدعوة"
 msgid "Remove link"
 msgstr "إزالة الرابط"
 
-#: app/components/pos/terminals-manager.tsx:743
+#: app/components/pos/terminals-manager.tsx:746
 msgid "Remove manager"
 msgstr "إزالة المدير"
 
@@ -24621,7 +24626,7 @@ msgstr "إزالة أعضاء الفريق"
 msgid "Remove template {templateName}"
 msgstr "إزالة القالب {templateName}"
 
-#: app/components/pos/terminals-manager.tsx:847
+#: app/components/pos/terminals-manager.tsx:851
 msgid "Remove terminal"
 msgstr "إزالة الجهاز"
 
@@ -24657,7 +24662,7 @@ msgstr "إزالة هذه المهمة؟"
 msgid "Remove this template?"
 msgstr "إزالة هذا القالب؟"
 
-#: app/components/pos/terminals-manager.tsx:830
+#: app/components/pos/terminals-manager.tsx:834
 msgid "Remove this terminal?"
 msgstr "إزالة هذا الجهاز؟"
 
@@ -24915,12 +24920,12 @@ msgstr "جاري طلب التفويض"
 msgid "Requests"
 msgstr "الطلبات"
 
-#: app/components/pos/terminals-manager.tsx:875
+#: app/components/pos/terminals-manager.tsx:879
 msgid "Require a cash drawer shift before {label} sells"
 msgstr "اشتراط وردية درج نقد قبل أن تبيع {label}"
 
-#: app/components/pos/terminals-manager.tsx:494
-#: app/components/pos/terminals-manager.tsx:1451
+#: app/components/pos/terminals-manager.tsx:497
+#: app/components/pos/terminals-manager.tsx:1477
 msgid "Require a staff PIN"
 msgstr "طلب رمز PIN للموظف"
 
@@ -24928,7 +24933,7 @@ msgstr "طلب رمز PIN للموظف"
 msgid "Require re-authorization to reconnect"
 msgstr "يتطلب إعادة التفويض لإعادة الاتصال"
 
-#: app/components/pos/terminals-manager.tsx:557
+#: app/components/pos/terminals-manager.tsx:560
 msgid "Require shifts"
 msgstr "اشتراط الورديات"
 
@@ -25031,7 +25036,7 @@ msgstr "سيتم حذف سجلات الحجوزات أيضاً"
 #: app/components/app-sidebar.tsx:435
 #: app/components/customers/person-profile-screen.tsx:114
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
-#: app/components/pos/terminals-manager.tsx:1493
+#: app/components/pos/terminals-manager.tsx:1528
 #: app/components/roles/tenant-role-access-manager.tsx:385
 #: app/components/settings/cards/organization/integrations-card.tsx:63
 #: app/components/workspace-breadcrumb.tsx:75
@@ -25056,19 +25061,19 @@ msgstr "مدير الحجوزات"
 #~ msgid "Reservations navigation"
 #~ msgstr "تنقل الحجوزات"
 
-#: app/components/pos/terminals-manager.tsx:1050
+#: app/components/pos/terminals-manager.tsx:1061
 msgid "Reservations off"
 msgstr "الحجوزات متوقفة"
 
-#: app/components/pos/terminals-manager.tsx:1049
+#: app/components/pos/terminals-manager.tsx:1060
 msgid "Reservations on"
 msgstr "الحجوزات مفعّلة"
 
-#: app/components/pos/terminals-manager.tsx:1048
+#: app/components/pos/terminals-manager.tsx:1059
 msgid "Reservations on {label}, off"
 msgstr "الحجوزات على {label}، متوقفة"
 
-#: app/components/pos/terminals-manager.tsx:1047
+#: app/components/pos/terminals-manager.tsx:1058
 msgid "Reservations on {label}, on"
 msgstr "الحجوزات على {label}، مفعّلة"
 
@@ -25709,8 +25714,8 @@ msgstr "تمت إزالة مبيعات {label}."
 msgid "Sales for {label} saved."
 msgstr "تم حفظ مبيعات {label}."
 
-#: app/components/pos/terminals-manager.tsx:610
-#: app/components/pos/terminals-manager.tsx:614
+#: app/components/pos/terminals-manager.tsx:613
+#: app/components/pos/terminals-manager.tsx:617
 msgid "Sales held for review"
 msgstr "مبيعات محجوزة للمراجعة"
 
@@ -26058,9 +26063,9 @@ msgstr "يُحفظ مع الحجز للمدير."
 msgid "Saved."
 msgstr "تم الحفظ."
 
-#: app/components/pos/terminals-manager.tsx:271
-#: app/components/pos/terminals-manager.tsx:290
-#: app/components/pos/terminals-manager.tsx:309
+#: app/components/pos/terminals-manager.tsx:274
+#: app/components/pos/terminals-manager.tsx:293
+#: app/components/pos/terminals-manager.tsx:312
 msgid "Saved. The terminal updates the next time it connects."
 msgstr "تم الحفظ. تتحدّث نقطة البيع عند اتصالها التالي."
 
@@ -26170,7 +26175,7 @@ msgstr "اذكر السبب. يُحفظ مع البطاقة."
 msgid "Scan QR Code or Enter Setup Key"
 msgstr "مسح رمز QR أو إدخال مفتاح الإعداد"
 
-#: app/components/pos/terminals-manager.tsx:1653
+#: app/components/pos/terminals-manager.tsx:1688
 msgid "Scan the code with the device's camera, or open the link in its browser. It works once."
 msgstr "امسح الرمز بكاميرا الجهاز، أو افتح الرابط في متصفحه. يعمل مرة واحدة فقط."
 
@@ -26856,7 +26861,7 @@ msgstr "عرض وظائفك"
 msgid "See your own published shifts. Only useful for people who also work shifts."
 msgstr "عرض ورديّاتك المنشورة. مفيد فقط لمن يعملون في الورديات أيضاً."
 
-#: app/components/pos/terminals-manager.tsx:1203
+#: app/components/pos/terminals-manager.tsx:1220
 msgid "Seen {label}"
 msgstr "شوهد {label}"
 
@@ -26864,7 +26869,7 @@ msgstr "شوهد {label}"
 msgid "Seen {seen}"
 msgstr "شوهد {seen}"
 
-#: app/components/pos/terminals-manager.tsx:1190
+#: app/components/pos/terminals-manager.tsx:1207
 msgid "Seen just now"
 msgstr "شوهد الآن"
 
@@ -27266,7 +27271,7 @@ msgstr "أُرسلت"
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
 
-#: app/components/pos/terminals-manager.tsx:1154
+#: app/components/pos/terminals-manager.tsx:1171
 msgid "Sent after another terminal took the tab over"
 msgstr "أُرسل بعد أن تولّت نقطة بيع أخرى هذا الحساب"
 
@@ -27282,7 +27287,7 @@ msgstr "يُرسل قبل موعد الحجز بالمدة المحددة أدن
 msgid "Sent by email to people who have an address on file."
 msgstr "يُرسل بالبريد الإلكتروني إلى من لديهم عنوان بريد محفوظ."
 
-#: app/components/pos/terminals-manager.tsx:1162
+#: app/components/pos/terminals-manager.tsx:1179
 msgid "Sent for a location this terminal is not paired to"
 msgstr "أُرسل لفرع غير مرتبط بنقطة البيع هذه"
 
@@ -27751,8 +27756,8 @@ msgstr "Shift مع السهم لأعلى أو لليمين يجعل الوردي
 msgid "Shifts"
 msgstr "الورديات"
 
-#: app/components/pos/terminals-manager.tsx:555
-#: app/components/pos/terminals-manager.tsx:563
+#: app/components/pos/terminals-manager.tsx:558
+#: app/components/pos/terminals-manager.tsx:566
 msgid "Shifts required"
 msgstr "الورديات مطلوبة"
 
@@ -27820,7 +27825,7 @@ msgstr "إظهار"
 msgid "Show \"Popular\" badge on menus."
 msgstr "إظهار شارة \"شائع\" في القوائم."
 
-#: app/components/pos/terminals-manager.tsx:780
+#: app/components/pos/terminals-manager.tsx:783
 msgid "Show {removedCount} removed"
 msgstr "عرض {removedCount} من الأجهزة المُزالة"
 
@@ -28439,7 +28444,7 @@ msgstr "تنبيهات الفريق"
 msgid "Staff at a terminal"
 msgstr "موظف على جهاز طرفي"
 
-#: app/components/pos/terminals-manager.tsx:1474
+#: app/components/pos/terminals-manager.tsx:1502
 msgid "Staff clock in and out on this terminal with their PIN, even while it is locked."
 msgstr "يسجّل الموظفون حضورهم وانصرافهم على هذا الجهاز برمزهم السري، حتى وهو مقفل."
 
@@ -28745,11 +28750,11 @@ msgstr "الولاية أو المنطقة"
 msgid "Station"
 msgstr "Station"
 
-#: app/components/pos/terminals-manager.tsx:1028
+#: app/components/pos/terminals-manager.tsx:1039
 msgid "Station apps"
 msgstr "تطبيقات المحطة"
 
-#: app/components/pos/terminals-manager.tsx:396
+#: app/components/pos/terminals-manager.tsx:399
 msgid "Station terminals"
 msgstr "أجهزة Station"
 
@@ -28858,7 +28863,7 @@ msgstr "إيقاف انتحال الشخصية"
 msgid "Stop preview"
 msgstr "إيقاف المعاينة"
 
-#: app/components/pos/terminals-manager.tsx:874
+#: app/components/pos/terminals-manager.tsx:878
 msgid "Stop requiring cash drawer shifts on {label}"
 msgstr "إيقاف اشتراط ورديات درج النقد في {label}"
 
@@ -29695,11 +29700,11 @@ msgstr "تحافظ إعادة التوجيه المؤقتة (302) على فهر�
 msgid "Temporary forward"
 msgstr "إعادة توجيه مؤقتة"
 
-#: app/components/pos/terminals-manager.tsx:1378
+#: app/components/pos/terminals-manager.tsx:1404
 msgid "Terminal code"
 msgstr "رمز الجهاز"
 
-#: app/components/pos/terminals-manager.tsx:1626
+#: app/components/pos/terminals-manager.tsx:1661
 msgid "Terminal paired"
 msgstr "تم إقران الجهاز"
 
@@ -29712,7 +29717,7 @@ msgstr "أجهزة البيع"
 msgid "Terminals connected to ZATCA"
 msgstr "نقاط البيع المرتبطة بالهيئة"
 
-#: app/components/pos/terminals-manager.tsx:399
+#: app/components/pos/terminals-manager.tsx:402
 msgid "Terminals take walk-in orders in the restaurant, even without internet, and send them here when they reconnect. Pair a tablet or a waiter's phone with a one-time code."
 msgstr "تستقبل أجهزة البيع طلبات الزبائن داخل المطعم، حتى بدون إنترنت، وترسلها إلى هنا عند عودة الاتصال. اقرن جهازًا لوحيًا أو هاتف نادل برمز يُستخدم مرة واحدة."
 
@@ -30605,7 +30610,7 @@ msgstr "أُرسل إلى الضيف رابط لتأكيد هذا الخصم م�
 msgid "The header is shared across every page."
 msgstr "الترويسة مشتركة عبر كل صفحة."
 
-#: app/components/pos/terminals-manager.tsx:1497
+#: app/components/pos/terminals-manager.tsx:1532
 msgid "The host stand for this location: today’s floor, arrivals, walk-ins and the waitlist."
 msgstr "مكتب الاستقبال لهذا الموقع: مخطط اليوم، والقادمون، والزبائن بدون حجز، وقائمة الانتظار."
 
@@ -30929,7 +30934,7 @@ msgstr "الوردية الثانية تتداخل مع الأولى."
 msgid "The section layouts for this location could not be loaded."
 msgstr "تعذّر تحميل تخطيطات الأقسام لهذا الفرع."
 
-#: app/components/pos/terminals-manager.tsx:1164
+#: app/components/pos/terminals-manager.tsx:1181
 msgid "The server could not apply it"
 msgstr "لم يتمكن الخادم من تطبيقه"
 
@@ -31055,11 +31060,11 @@ msgstr "تعذّر تغيير الوسم. حاول مرة أخرى."
 msgid "The tasks a new hire starts with. Due dates count from the day they are hired."
 msgstr "المهام التي يبدأ بها الموظف الجديد. تُحسب تواريخ الاستحقاق من يوم توظيفه."
 
-#: app/components/pos/terminals-manager.tsx:1454
+#: app/components/pos/terminals-manager.tsx:1480
 msgid "The terminal locks when idle and each order records who took it. Staff need a PIN set under Staff."
 msgstr "يُقفل الجهاز عند عدم الاستخدام ويسجّل كل طلب من أخذه. يحتاج الموظفون إلى رمز PIN من قسم الموظفين."
 
-#: app/components/pos/terminals-manager.tsx:1152
+#: app/components/pos/terminals-manager.tsx:1169
 msgid "The terminal's app may be out of date"
 msgstr "قد يكون تطبيق نقطة البيع قديمًا"
 
@@ -31489,12 +31494,12 @@ msgstr "جلسة الدفع هذه لم تعد نشطة"
 msgid "This client will have access to:"
 msgstr "سيتمكن هذا العميل من الوصول إلى:"
 
-#: app/components/pos/terminals-manager.tsx:1682
+#: app/components/pos/terminals-manager.tsx:1717
 #: app/components/staff/kiosk-manager.tsx:757
 msgid "This code expired. Make a new one."
 msgstr "انتهت صلاحية هذا الرمز. أنشئ رمزًا جديدًا."
 
-#: app/components/pos/terminals-manager.tsx:1680
+#: app/components/pos/terminals-manager.tsx:1715
 msgid "This code was removed. Make a new one."
 msgstr "أُزيل هذا الرمز. أنشئ رمزًا جديدًا."
 
@@ -32124,25 +32129,25 @@ msgstr "بطاقات الدوام: {timeCardCount} (غير مشمولة في ا�
 
 #: app/components/app-sidebar.tsx:492
 #: app/components/command-menu.tsx:122
-#: app/components/pos/terminals-manager.tsx:1471
+#: app/components/pos/terminals-manager.tsx:1498
 #: app/components/workspace-breadcrumb.tsx:30
 #: app/routes/_app+/$orgSlug_+/staff+/timeclock.tsx:54
 msgid "Time clock"
 msgstr "ساعة الدوام"
 
-#: app/components/pos/terminals-manager.tsx:1038
+#: app/components/pos/terminals-manager.tsx:1049
 msgid "Time clock off"
 msgstr "ساعة الدوام متوقفة"
 
-#: app/components/pos/terminals-manager.tsx:1037
+#: app/components/pos/terminals-manager.tsx:1048
 msgid "Time clock on"
 msgstr "ساعة الدوام مفعّلة"
 
-#: app/components/pos/terminals-manager.tsx:1036
+#: app/components/pos/terminals-manager.tsx:1047
 msgid "Time clock on {label}, off"
 msgstr "ساعة الدوام على {label}، متوقفة"
 
-#: app/components/pos/terminals-manager.tsx:1035
+#: app/components/pos/terminals-manager.tsx:1046
 msgid "Time clock on {label}, on"
 msgstr "ساعة الدوام على {label}، مفعّلة"
 
@@ -32776,7 +32781,7 @@ msgstr "جرّب تعديل البحث أو الفلتر."
 #: app/components/phone-agent/call-detail-sheet.tsx:367
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
-#: app/components/pos/terminals-manager.tsx:430
+#: app/components/pos/terminals-manager.tsx:433
 #: app/components/reservations/experiences/experience-editor.tsx:256
 #: app/components/reservations/experiences/experiences-screen.tsx:247
 #: app/components/reservations/messages/message-settings.tsx:377
@@ -32844,7 +32849,7 @@ msgstr "إيقاف"
 msgid "Turn off agent audio"
 msgstr "إيقاف صوت الوكيل"
 
-#: app/components/pos/terminals-manager.tsx:858
+#: app/components/pos/terminals-manager.tsx:862
 msgid "Turn off PIN sign-in for {label}"
 msgstr "إيقاف تسجيل الدخول برمز PIN لـ {label}"
 
@@ -32884,7 +32889,7 @@ msgstr "تشغيل"
 msgid "Turn on agent audio"
 msgstr "تشغيل صوت الوكيل"
 
-#: app/components/pos/terminals-manager.tsx:859
+#: app/components/pos/terminals-manager.tsx:863
 msgid "Turn on PIN sign-in for {label}"
 msgstr "تفعيل تسجيل الدخول برمز PIN لـ {label}"
 
@@ -32897,7 +32902,7 @@ msgstr "فعّل الحجوزات لاستخدام هذا المشغّل"
 msgid "Turn on the agent"
 msgstr "شغّل الوكيل"
 
-#: app/components/pos/terminals-manager.tsx:994
+#: app/components/pos/terminals-manager.tsx:1005
 msgid "Turn on the staff PIN to use reservations."
 msgstr "فعّل الرمز السري للموظفين لاستخدام الحجوزات."
 
@@ -32932,7 +32937,7 @@ msgstr "تم إيقاف قاعدة التدريب \"{title}\""
 msgid "Turned on training rule \"{title}\""
 msgstr "تم تشغيل قاعدة التدريب \"{title}\""
 
-#: app/components/pos/terminals-manager.tsx:1098
+#: app/components/pos/terminals-manager.tsx:1115
 msgid "Turning an app on needs permission to change its settings (time clock rules, or reservation settings)."
 msgstr "يتطلب تفعيل أي تطبيق صلاحية تغيير إعداداته (قواعد ساعة الدوام، أو إعدادات الحجوزات)."
 
@@ -33250,7 +33255,7 @@ msgstr "فرع غير معروف"
 msgid "Unknown role"
 msgstr "دور غير معروف"
 
-#: app/components/pos/terminals-manager.tsx:632
+#: app/components/pos/terminals-manager.tsx:635
 msgid "Unknown terminal"
 msgstr "نقطة بيع غير معروفة"
 
@@ -34374,12 +34379,12 @@ msgstr "بانتظار المدير"
 msgid "Waiting for the tablet…"
 msgstr "بانتظار الجهاز اللوحي…"
 
-#: app/components/pos/terminals-manager.tsx:1712
+#: app/components/pos/terminals-manager.tsx:1747
 msgid "Waiting for the terminal…"
 msgstr "في انتظار الجهاز…"
 
-#: app/components/pos/terminals-manager.tsx:659
-#: app/components/pos/terminals-manager.tsx:663
+#: app/components/pos/terminals-manager.tsx:662
+#: app/components/pos/terminals-manager.tsx:666
 #: app/components/staff/kiosk-manager.tsx:167
 msgid "Waiting to be paired"
 msgstr "بانتظار الربط"
@@ -35070,11 +35075,11 @@ msgstr "عندما يقوم شخص ما بالتسجيل باستخدام بري
 #~ msgid "When the agent can't help, it transfers to your staff phone number from Setup."
 #~ msgstr "عندما لا يستطيع الوكيل المساعدة، يحوّل المكالمة إلى رقم هاتف الفريق المحدد في الإعداد."
 
-#: app/components/pos/terminals-manager.tsx:1432
+#: app/components/pos/terminals-manager.tsx:1458
 msgid "When the business day ends"
 msgstr "متى ينتهي يوم العمل"
 
-#: app/components/pos/terminals-manager.tsx:879
+#: app/components/pos/terminals-manager.tsx:883
 msgid "When the business day ends for {label}"
 msgstr "متى ينتهي يوم العمل في {label}"
 
@@ -35202,8 +35207,8 @@ msgstr "من يمكنه الوصول إلى هذه القناة؟"
 msgid "Who can book online, how far ahead, and how bookings are confirmed."
 msgstr "من يمكنه الحجز عبر الإنترنت، وإلى أي مدى مسبقًا، وكيف تُؤكَّد الحجوزات."
 
-#: app/components/pos/terminals-manager.tsx:693
-#: app/components/pos/terminals-manager.tsx:698
+#: app/components/pos/terminals-manager.tsx:696
+#: app/components/pos/terminals-manager.tsx:701
 msgid "Who can manage terminals"
 msgstr "من يمكنه إدارة الأجهزة"
 
@@ -35664,7 +35669,7 @@ msgstr "يمكنك الاطلاع على هذه الإعدادات لكن لا �
 msgid "You can look at this card but not change it."
 msgstr "يمكنك الاطلاع على هذه البطاقة لكن لا يمكنك تغييرها."
 
-#: app/components/pos/terminals-manager.tsx:997
+#: app/components/pos/terminals-manager.tsx:1008
 msgid "You can open the host stand only at your own locations."
 msgstr "يمكنك تشغيل منصة الاستقبال في مواقعك فقط."
 
@@ -35675,6 +35680,11 @@ msgstr "يمكنك إلغاء الوصول في أي وقت من قسم العم
 #: app/routes/mcp+/authorize.tsx:410
 msgid "You can revoke this access at any time from your MCP settings page. The access token will expire in 1 hour."
 msgstr "يمكنك إلغاء هذا الوصول في أي وقت من صفحة إعدادات MCP. ستنتهي صلاحية رمز الوصول بعد ساعة واحدة."
+
+#: app/components/pos/terminals-manager.tsx:1000
+#: app/components/pos/terminals-manager.tsx:1510
+msgid "You can turn on the time clock only at your own locations."
+msgstr "يمكنك تشغيل ساعة الدوام في مواقعك فقط."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.special-days.tsx:689
 msgid "You can view special days and blocks but not change them."
