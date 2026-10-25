@@ -186,6 +186,22 @@ describe('host stand client', () => {
 		expect(s.minted()).toBe(2)
 	})
 
+	it('asks for another day by its business date, and for today with none', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.day(undefined, '2026-01-17')
+		await api.day()
+		const days = s.calls.filter((c) => c.url.includes('/book/day'))
+		expect(days[0]!.url).toBe(
+			'https://us.node.test/operator/reservations/book/day?locationId=loc_pub_main&date=2026-01-17',
+		)
+		expect(days[1]!.url).not.toContain('date=')
+	})
+
 	it('a lost connection is offline, not a refusal', async () => {
 		const api = createHostApi({
 			settings: () => settings,

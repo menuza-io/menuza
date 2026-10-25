@@ -178,6 +178,18 @@ function TableButton({
 		state.kind === 'seated' && state.party.seatedAt
 			? Math.max(0, Math.floor((now - state.party.seatedAt) / 60_000))
 			: null
+	// How far through the booked stay they are: a thin bar that turns amber past the end.
+	const stay =
+		state.kind === 'seated' && seatedFor !== null
+			? seatedFor / Math.max(1, state.party.durationMin)
+			: null
+	/** Who is there (or due), under the table: a small table has no room for a name inside. */
+	const caption =
+		state.kind === 'seated'
+			? shortName(state.party, _(msg`Guest`))
+			: state.kind === 'soon'
+				? shortName(state.next, _(msg`Guest`))
+				: null
 
 	let label: string
 	switch (state.kind) {
@@ -204,76 +216,93 @@ function TableButton({
 			: _(msg`${label}. Not a fit for this party.`)
 
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			aria-label={label}
+		<div
+			className="bk-table min-h-14 min-w-14"
+			style={style}
 			data-state={state.kind}
-			data-fits={fits === null ? undefined : String(fits)}
-			style={
-				{
-					...style,
-					'--turn': table.rotation ? `${table.rotation}deg` : undefined,
-				} as React.CSSProperties
-			}
-			className={cn(
-				'floor-table floor-turn absolute flex min-h-14 min-w-14 flex-col items-center justify-center gap-0.5 overflow-hidden border-2 p-1 text-center',
-				round ? 'rounded-full' : 'rounded-2xl',
-				state.kind === 'open' && 'border-border bg-card text-foreground',
-				state.kind === 'soon' &&
-					'border-warning bg-warning/10 text-foreground border-dashed',
-				state.kind === 'seated' &&
-					'border-primary bg-primary text-primary-foreground elevated-card',
-				state.kind === 'blocked' &&
-					'border-border bg-muted text-muted-foreground',
-			)}
 		>
-			{/* Counter-rotate the words so a turned table still reads upright. */}
-			<span className="floor-unturn flex flex-col items-center gap-0.5">
-				<span className="mono text-base leading-none font-bold sm:text-lg">
-					{table.label}
-				</span>
-				<span
-					className={cn(
-						'flex items-center gap-1 text-xs leading-none font-medium',
-						state.kind === 'seated'
-							? 'text-primary-foreground/85'
-							: 'text-muted-foreground',
-					)}
-					aria-hidden
-				>
-					{state.kind === 'seated' ? (
-						<>
-							<Users className="size-3" />
-							<span className="tnum">{state.party.partySize}</span>
-						</>
-					) : state.kind === 'soon' ? (
-						<span className="tnum text-warning font-semibold">
-							{formatTime(state.next.startAt)}
-						</span>
-					) : state.kind === 'blocked' ? (
-						<Ban className="size-3.5" />
-					) : (
-						<>
-							<Users className="size-3" />
-							{/* "1–4" keeps its order right to left. */}
-							<span className="tnum" dir="ltr">
-								{covers}
-							</span>
-						</>
-					)}
-				</span>
-				{/* How long they have been seated, on its own line so a small round table never crops it. */}
-				{state.kind === 'seated' && seatedFor !== null ? (
+			<button
+				type="button"
+				onClick={onClick}
+				aria-label={label}
+				data-state={state.kind}
+				data-fits={fits === null ? undefined : String(fits)}
+				style={
+					{
+						'--turn': table.rotation ? `${table.rotation}deg` : undefined,
+					} as React.CSSProperties
+				}
+				className={cn(
+					'floor-table floor-turn flex flex-col items-center justify-center gap-0.5 overflow-hidden border-2 p-1 text-center',
+					round ? 'rounded-full' : 'rounded-2xl',
+					state.kind === 'open' && 'text-foreground',
+					state.kind === 'soon' &&
+						'border-warning bg-warning/10 text-foreground border-dashed',
+					state.kind === 'seated' &&
+						'border-primary bg-primary text-primary-foreground elevated-card',
+					state.kind === 'blocked' &&
+						'border-border bg-muted text-muted-foreground',
+				)}
+			>
+				{/* Counter-rotate the words so a turned table still reads upright. */}
+				<span className="floor-unturn flex flex-col items-center gap-0.5">
+					<span className="mono text-base leading-none font-bold sm:text-lg">
+						{table.label}
+					</span>
 					<span
-						className="text-primary-foreground/85 text-xs leading-none font-medium"
+						className={cn(
+							'flex items-center gap-1 text-xs leading-none font-medium',
+							state.kind === 'seated'
+								? 'text-primary-foreground/85'
+								: 'text-muted-foreground',
+						)}
 						aria-hidden
 					>
-						<SoftText value={_(msg`${seatedFor}m`)} />
+						{state.kind === 'seated' ? (
+							<>
+								<Users className="size-3" />
+								<span className="tnum">{state.party.partySize}</span>
+							</>
+						) : state.kind === 'soon' ? (
+							<span className="tnum text-warning max-w-full text-center leading-tight font-semibold whitespace-normal">
+								{formatTime(state.next.startAt)}
+							</span>
+						) : state.kind === 'blocked' ? (
+							<Ban className="size-3.5" />
+						) : (
+							<>
+								<Users className="size-3" />
+								{/* "1–4" keeps its order right to left. */}
+								<span className="tnum" dir="ltr">
+									{covers}
+								</span>
+							</>
+						)}
 					</span>
-				) : null}
-			</span>
-		</button>
+					{/* How long they have been seated, on its own line so a small round table never crops it. */}
+					{state.kind === 'seated' && seatedFor !== null ? (
+						<span
+							className="text-primary-foreground/85 relative z-1 text-xs leading-none font-medium"
+							aria-hidden
+						>
+							<SoftText value={_(msg`${seatedFor}m`)} />
+						</span>
+					) : null}
+				</span>
+			</button>
+			{caption || stay !== null ? (
+				<span className="bk-under" aria-hidden>
+					{stay !== null ? (
+						<span
+							className="bk-elapsed"
+							data-over={stay > 1}
+							style={{ '--p': Math.min(1, stay) } as React.CSSProperties}
+						/>
+					) : null}
+					{caption ? <bdi className="bk-caption">{caption}</bdi> : null}
+				</span>
+			) : null}
+		</div>
 	)
 }
 

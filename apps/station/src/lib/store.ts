@@ -138,6 +138,15 @@ export type PosState = {
 
 const newId = () => crypto.randomUUID()
 
+/**
+ * Demo mode offers the host stand too: it runs on a sample day that lives in
+ * the tab (`apps/reservations/demo.ts`), so it needs no pairing.
+ */
+const withDemoApps = (settings: PosSettings): PosSettings =>
+	settings.demo && !settings.apps.reservations
+		? { ...settings, apps: { ...settings.apps, reservations: true } }
+		: settings
+
 export type OtherTab = {
 	terminal: { code: string; label: string; removed?: boolean }
 	order: ServerTab
@@ -230,7 +239,7 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 }
 
 export const usePos = create<PosState>((set, get) => ({
-	settings: loadSettings(),
+	settings: withDemoApps(loadSettings()),
 	snapshot: null,
 	categories: [],
 	recordItems: new Map(),
@@ -303,7 +312,13 @@ export const usePos = create<PosState>((set, get) => ({
 
 	async updateSettings(patch) {
 		const before = get().settings
-		const settings = { ...before, ...patch }
+		// Leaving demo mode takes its host stand away (a paired till gets its own back at the next check).
+		const left = before.demo && patch.demo === false
+		const settings = withDemoApps({
+			...before,
+			...patch,
+			...(left ? { apps: { ...before.apps, reservations: false } } : {}),
+		})
 		// A different restaurant or workplace has different staff: never let the old
 		// ones sign in offline.
 		if (

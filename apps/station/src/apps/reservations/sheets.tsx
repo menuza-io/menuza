@@ -18,7 +18,7 @@ import {
 	UserRound,
 	Users,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { type StatusTarget } from './api.ts'
 import {
 	OCCASION_LABEL,
@@ -147,6 +147,7 @@ export function PartySheet({
 	busy,
 	now,
 	formatTime,
+	viewOnly = false,
 	onCommand,
 	onClose,
 }: {
@@ -155,6 +156,11 @@ export function PartySheet({
 	busy: boolean
 	now: number
 	formatTime: (epochMs: number) => string
+	/**
+	 * Another day: details, confirming, changing and cancelling stay, but
+	 * nothing about arrival, seating or no-shows (the server refuses those off today).
+	 */
+	viewOnly?: boolean
 	onCommand: (reservation: DayReservation, command: PartyCommand) => void
 	onClose: () => void
 }) {
@@ -201,6 +207,7 @@ export function PartySheet({
 	const notYours = r?.canUndo === false
 	const has = (action: QuickAction) =>
 		actions.includes(action) &&
+		!(viewOnly && action !== 'confirm' && action !== 'cancel') &&
 		!(awaitingPayment && (action === 'confirm' || action === 'cancel')) &&
 		!(notYours && (action === 'undo_finish' || action === 'undo_no_show')) &&
 		// A till undoes seating only within the window (the server refuses later).
@@ -426,8 +433,9 @@ export function PartySheet({
 								{r.staffNotes}
 							</Detail>
 						) : null}
-						{r.status === 'booked' || r.status === 'confirmed' ? (
-							// The guest called: the dock then says how late they are running.
+						{!viewOnly &&
+						(r.status === 'booked' || r.status === 'confirmed') ? (
+							// The guest called: the list then says how late they are running.
 							<div
 								role="group"
 								aria-label={_(msg`Running late`)}
@@ -1014,12 +1022,24 @@ export type BookingReadBackInfo = {
 	code: string | null
 }
 
+/** A booking started from a table and a time (an empty stretch of the timeline). */
+export type BookingPrefill = {
+	date: string
+	/** `HH:MM`, as the server names a slot. */
+	time?: string
+	tableIds: string[]
+	tableLabel: string
+	/** The table's seats: a bigger party books without the table. */
+	maxCovers: number
+}
+
 export function BookingSheet({
 	open,
 	busy,
 	locked,
 	readBack,
 	today,
+	prefill = null,
 	loadSlots,
 	onBook,
 	onClose,
@@ -1030,7 +1050,10 @@ export function BookingSheet({
 	locked: boolean
 	/** Booked: what to read back to the caller instead of the form. */
 	readBack: BookingReadBackInfo | null
+	/** The first day that can be booked (today). */
 	today: string
+	/** Start from this day, table and time instead of today. */
+	prefill?: BookingPrefill | null
 	loadSlots: (date: string, partySize: number) => Promise<Availability>
 	onBook: (input: {
 		date: string
@@ -1042,6 +1065,7 @@ export function BookingSheet({
 		lastName: string
 		phone: string | null
 		notes: string | null
+		tableIds?: string[]
 	}) => void
 	onClose: () => void
 }) {
@@ -1066,16 +1090,22 @@ export function BookingSheet({
 	const [last, setLast] = useState('')
 	const [phone, setPhone] = useState('')
 	const [notes, setNotes] = useState('')
+	/** The table the booking was started from, until the host lets it go. */
+	const [tableIds, setTableIds] = useState<string[]>([])
+	/** The time the booking was started at, picked again whenever the times reload. */
+	const wantTime = useRef<string | null>(null)
 	useEffect(() => {
 		if (!open) return
-		setDate(today)
+		setDate(prefill?.date ?? today)
 		setSize(2)
 		setTime(null)
+		wantTime.current = prefill?.time ?? null
+		setTableIds(prefill?.tableIds ?? [])
 		setFirst('')
 		setLast('')
 		setPhone('')
 		setNotes('')
-	}, [open, today])
+	}, [open, today, prefill])
 	useEffect(() => {
 		if (!open) return
 		let live = true
@@ -1083,13 +1113,31 @@ export function BookingSheet({
 		setSlotsError(false)
 		setTime(null)
 		loadSlots(date, size).then(
-			(result) => live && setSlots(result.closed ? [] : result.slots),
+			(result) => {
+				if (!live) return
+				const list = result.closed ? [] : result.slots
+				setSlots(list)
+				const wanted = wantTime.current
+					? list.find(
+							(slot) => slot.available && slot.time === wantTime.current,
+						)
+					: undefined
+				if (wanted) {
+					setTime(wanted.time)
+					setTimeLabel(slotLabel(wanted.localStartMin))
+				}
+			},
 			() => live && setSlotsError(true),
 		)
 		return () => {
 			live = false
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- reload on the day or size, not on every label change
 	}, [open, date, size, loadSlots])
+	const tableFits = prefill ? size <= prefill.maxCovers : true
+	const tableLabel = prefill?.tableLabel ?? ''
+	const maxCovers = prefill?.maxCovers ?? 0
+	const bookedTables = tableIds.length > 0 && tableFits ? tableIds : undefined
 	const open_ = (slots ?? []).filter((slot) => slot.available)
 	const groups = groupSlots(open_)
 	const phoneProblem = phone.trim() !== '' && !looksLikePhone(phone)
@@ -1138,6 +1186,7 @@ export function BookingSheet({
 									lastName: last,
 									phone: phone.trim() || null,
 									notes: notes.trim() || null,
+									...(bookedTables ? { tableIds: bookedTables } : {}),
 								})
 							}
 						>
@@ -1179,6 +1228,24 @@ export function BookingSheet({
 								<PartySize value={size} onChange={setSize} />
 							</div>
 						</div>
+						{prefill && tableIds.length > 0 ? (
+							<div className="border-border bg-muted/60 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3">
+								<Armchair aria-hidden className="size-5 shrink-0" />
+								<p className="min-w-0 flex-1 text-sm font-medium">
+									{tableFits ? (
+										<Trans>Table {tableLabel}, if it is free then.</Trans>
+									) : (
+										<Trans>
+											Table {tableLabel} seats {maxCovers}. A table is found for
+											this party.
+										</Trans>
+									)}
+								</p>
+								<Button variant="ghost" onClick={() => setTableIds([])}>
+									<Trans>Any table</Trans>
+								</Button>
+							</div>
+						) : null}
 						<div className="flex flex-col gap-2">
 							<span className="font-semibold">
 								<Trans>Time</Trans>
@@ -1214,6 +1281,7 @@ export function BookingSheet({
 														selected={time === slot.time}
 														aria-pressed={time === slot.time}
 														onClick={() => {
+															wantTime.current = null
 															setTime(slot.time)
 															setTimeLabel(slotLabel(slot.localStartMin))
 														}}

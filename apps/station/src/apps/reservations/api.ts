@@ -305,11 +305,18 @@ export function createHostApi(deps: HostDeps) {
 			inFlight = null
 		},
 
-		/** Today at this terminal's location, or `unchanged` against `etag`. */
+		/**
+		 * The day at this terminal's location (today, or the business `date`
+		 * asked for), or `unchanged` against `etag`.
+		 */
 		async day(
 			etag?: string,
+			date?: string,
 		): Promise<{ unchanged: true } | { feed: DayFeed; etag: string | null }> {
-			const query = new URLSearchParams({ locationId: await locationId() })
+			const query = new URLSearchParams({
+				locationId: await locationId(),
+				...(date ? { date } : {}),
+			})
 			const result = await call('GET', `/day?${query}`, dayFeedSchema, { etag })
 			if ('unchanged' in result) return result
 			return {

@@ -54,9 +54,11 @@ export const reservationSchema = z
 		dietaryNotes: z.string().nullable().optional(),
 		staffNotes: z.string().nullable().optional(),
 		hasAllergy: z.boolean().default(false),
+		serviceId: z.string().nullable().optional(),
 		arrivedAt: epoch,
 		seatedAt: epoch,
 		finishedAt: epoch,
+		noShowAt: epoch,
 		/**
 		 * Whether this till may undo the recent no-show or clearing (its own
 		 * person's change, or the system's). Absent from an older server: allowed.
@@ -127,6 +129,34 @@ const blockSchema = z
 	})
 	.passthrough()
 
+/** A service of the day (Lunch, Dinner): when it seats and when it ends, in minutes after local midnight. */
+const serviceSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		firstSeatingMin: z.number().int(),
+		lastSeatingMin: z.number().int(),
+		endMin: z.number().int(),
+		sort: z.number().default(0),
+		archivedAt: epoch,
+	})
+	.passthrough()
+
+export type DayService = z.infer<typeof serviceSchema>
+
+/** One slot of the day's pacing: covers booked against what the slot can take. */
+const pacingSchema = z
+	.object({
+		localMin: z.number().int(),
+		serviceId: z.string().nullable().optional(),
+		bookedCovers: z.number().default(0),
+		partyCount: z.number().default(0),
+		maxCovers: z.number().nullable().optional(),
+	})
+	.passthrough()
+
+export type DayPacing = z.infer<typeof pacingSchema>
+
 export const dayFeedSchema = z
 	.object({
 		locationId: z.string(),
@@ -144,6 +174,9 @@ export const dayFeedSchema = z
 		tables: z.array(tableSchema).default([]),
 		elements: z.array(elementSchema).default([]),
 		blocks: z.array(blockSchema).default([]),
+		/** Absent from an older server: the stand then has one "All day". */
+		services: z.array(serviceSchema).default([]),
+		pacing: z.array(pacingSchema).default([]),
 		reservations: z.array(reservationSchema).default([]),
 	})
 	.passthrough()
@@ -396,7 +429,25 @@ export const OCCASION_LABEL: Record<string, MessageDescriptor> = {
 	other: msg`Occasion`,
 }
 
-/** "Maya H." for the dock and the floor; the full name stays in the details. */
+/** A guest the restaurant tagged as a VIP (the tag's own name, in any case). */
+export const isVip = (r: Pick<DayReservation, 'guest'>) =>
+	(r.guest?.tags ?? []).some((tag) => /\bvip\b/i.test(tag.name))
+
+/** Notes the host should know about before seating (the guest's requests, dietary, staff). */
+export const hasNotes = (
+	r: Pick<
+		DayReservation,
+		'guestRequests' | 'dietaryNotes' | 'staffNotes' | 'hasAllergy'
+	>,
+) =>
+	Boolean(
+		r.guestRequests?.trim() ||
+		r.staffNotes?.trim() ||
+		// An allergy already has its own mark.
+		(!r.hasAllergy && r.dietaryNotes?.trim()),
+	)
+
+/** "Maya H." for the list and the floor; the full name stays in the details. */
 export function shortName(r: Pick<DayReservation, 'guest'>, fallback: string) {
 	const first = r.guest?.firstName?.trim() ?? ''
 	const last = r.guest?.lastName?.trim() ?? ''

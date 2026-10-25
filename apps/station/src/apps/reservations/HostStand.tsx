@@ -2,24 +2,23 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { FINISHED_UNDO_WINDOW_MS, type WaitlistEntry } from '@repo/reservations'
-import {
-	CalendarPlus,
-	CloudOff,
-	ListPlus,
-	Lock,
-	RefreshCw,
-	UserPlus,
-	X,
-} from 'lucide-react'
+import { Lock, RefreshCw, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HostApiError } from './api.ts'
-import { Dock, placingSize, type Placing } from './Dock.tsx'
+import {
+	bookList,
+	dayTotals,
+	liveServices,
+	newArrivals,
+	statusMap,
+	type BookList,
+	type DayTotals,
+} from './book.ts'
+import { BookPanel } from './BookPanel.tsx'
 import {
 	DEFAULT_TURN_MIN,
-	arrivals,
 	fits,
-	missedArrivals,
-	recentNoShows,
+	isVip,
 	rooms,
 	shortName,
 	tableState,
@@ -28,6 +27,7 @@ import {
 	type TableState,
 } from './feed.ts'
 import { Floor, FreeCount, freeTables } from './Floor.tsx'
+import { placingSize, type Placing } from './placing.ts'
 import {
 	BookingSheet,
 	ChangePartySheet,
@@ -36,25 +36,29 @@ import {
 	TableSheet,
 	WaitlistSheet,
 	WalkInSheet,
+	type BookingPrefill,
 	type BookingReadBackInfo,
 	type PartyCommand,
 } from './sheets.tsx'
+import {
+	PaneTabs,
+	StandHeader,
+	type MainView,
+	type PaneTab,
+} from './StandHeader.tsx'
+import { Timeline } from './Timeline.tsx'
 import { useHostStand } from './useHostStand.ts'
+import { clockLabel } from './zoned.ts'
+import './book.css'
 import { holdLock } from '~/lib/activity.ts'
-import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
+import { useMediaQuery } from '~/ui/hooks.ts'
 import { Toast, type ToastMessage } from '~/ui/motion.tsx'
-import {
-	Button,
-	cn,
-	Modal,
-	NumberPop,
-	Reveal,
-	Segmented,
-} from '~/ui/primitives.tsx'
+import { Button, cn, Modal, Reveal, Segmented } from '~/ui/primitives.tsx'
 
 const ROOM_KEY = 'station.hostStand.room'
+const VIEW_KEY = 'station.hostStand.view'
 
 function readRoom(): string | null {
 	try {
@@ -64,12 +68,33 @@ function readRoom(): string | null {
 	}
 }
 
+function readView(): MainView {
+	try {
+		return localStorage.getItem(VIEW_KEY) === 'timeline' ? 'timeline' : 'floor'
+	} catch {
+		return 'floor'
+	}
+}
+
+/** A day's book on screen with nothing in it yet. */
+const NO_LIST: BookList = {
+	toSeat: [],
+	seated: [],
+	missed: [],
+	finished: [],
+	waitlist: [],
+}
+const NO_TOTALS: DayTotals = { parties: 0, covers: 0, toSeat: 0, seated: 0 }
+
 /**
- * The host stand, floor first: the room fills the screen with every table's
- * state, and the parties still to seat wait in a dock along the bottom. Pick a
- * party up, tap a table that lifts, and they are seated; a toast says so and
- * offers to undo. Tap a table on its own to see who is there or due, or to seat
- * a walk-in on it.
+ * The host stand, as a reservation book. A header says what the day holds and
+ * which day and service is on screen; a panel beside the main view lists the
+ * waitlist, the bookings still to seat, who is seated and who never came; the
+ * main view is the floor plan or a timeline of every table. On a phone the
+ * panel is a tab. Pick a party up in the panel, tap a table that lifts, and
+ * they are seated; a toast says so and offers to undo. Tap a table on its own
+ * to see who is there or due, or to seat a walk-in on it. Another day is a
+ * book to read and to book into: nothing is seated or marked there.
  *
  * Everything goes browser to region with a short-lived token for the person
  * signed in at the till; nothing about guests is kept on the device.
@@ -87,12 +112,22 @@ export function HostStand({
 	onSignIn: () => void
 }) {
 	const { _, i18n } = useLingui()
-	const { state, api, refresh, now, noteWrite } = useHostStand({
-		settings,
-		session,
-		online,
-	})
+	const { state, api, refresh, now, clock, noteWrite, date, setDate } =
+		useHostStand({
+			settings,
+			session,
+			online,
+		})
+	const wide = useMediaQuery('(min-width: 700px)')
 	const [roomId, setRoomId] = useState<string | null>(readRoom)
+	const [view, setView] = useState<MainView>(readView)
+	/** A phone shows one pane at a time. */
+	const [tab, setTab] = useState<PaneTab>('list')
+	const [serviceId, setServiceId] = useState<string | null>(null)
+	const [query, setQuery] = useState('')
+	const [bookingPrefill, setBookingPrefill] = useState<BookingPrefill | null>(
+		null,
+	)
 	const [placing, setPlacing] = useState<Placing | null>(null)
 	const [partyId, setPartyId] = useState<string | null>(null)
 	/** The booking whose size or time is being changed. */
@@ -158,7 +193,6 @@ export function HostStand({
 		table: DayTable
 	} | null>(null)
 	const [toast, setToast] = useState<ToastMessage | null>(null)
-	const dockRef = useRef<HTMLElement>(null)
 	// A booking taken on the phone, a party in hand: a short idle lock waits.
 	const working =
 		bookingOpen ||
@@ -223,17 +257,75 @@ export function HostStand({
 	}, [i18n.locale, timeZone])
 	const roomList = useMemo(() => (feed ? rooms(feed) : []), [feed])
 	const room = roomList.find((r) => r.id === roomId) ?? roomList[0] ?? null
-	const due = useMemo(() => (feed ? arrivals(feed, now) : []), [feed, now])
-	// Then the no-shows still inside the undo window, so a mis-tap is put right
-	// after its toast has gone.
-	const missed = useMemo(
+	const isToday = date === null
+	/** Another day's feed is still on its way: what is drawn is the day before. */
+	const dayLoading = ready !== null && ready.feedDate !== date
+	const services = useMemo(() => (feed ? liveServices(feed) : []), [feed])
+	// A service the day no longer has is "All day".
+	const activeService =
+		serviceId && services.some((s) => s.id === serviceId) ? serviceId : null
+	const list = useMemo(
 		() =>
-			feed ? [...missedArrivals(feed, now), ...recentNoShows(feed, now)] : [],
-		[feed, now],
+			feed && ready
+				? bookList({
+						feed,
+						waitlist: ready.waitlist,
+						now,
+						isToday,
+						serviceId: activeService,
+						query,
+					})
+				: NO_LIST,
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- `ready` carries the waitlist; its other parts do not change the list
+		[feed, ready?.waitlist, now, isToday, activeService, query],
+	)
+	const totals = useMemo(
+		() =>
+			feed
+				? dayTotals({ feed, now, isToday, serviceId: activeService })
+				: NO_TOTALS,
+		[feed, now, isToday, activeService],
+	)
+	// While searching, the timeline lights what the search found and steps the rest back.
+	const matchIds = useMemo(
+		() =>
+			query.trim()
+				? new Set(
+						[
+							...list.toSeat,
+							...list.seated,
+							...list.missed,
+							...list.finished,
+						].map((r) => r.id),
+					)
+				: null,
+		[list, query],
 	)
 	const party = feed?.reservations.find((r) => r.id === partyId) ?? null
 	const waitlistEntry =
 		ready?.waitlist.find((entry) => entry.id === waitlistId) ?? null
+
+	// A party that turns up at another host's stand is announced here (a toast, and
+	// to a screen reader), VIPs by name. What this tablet marked itself says so already.
+	const seenStatus = useRef<Map<string, string> | null>(null)
+	const selfArrived = useRef(new Set<string>())
+	const feedDate = ready?.feedDate
+	useEffect(() => {
+		if (!feed || feedDate !== null) return
+		const arrived = newArrivals(seenStatus.current, feed, selfArrived.current)
+		seenStatus.current = statusMap(feed)
+		if (arrived.length === 0) return
+		const first = arrived[0]!
+		const who = shortName(first, _(msg`Guest`))
+		const count = arrived.length
+		say(
+			count > 1
+				? _(msg`${count} parties have arrived.`)
+				: isVip(first)
+					? _(msg`VIP guest has arrived: ${who}.`)
+					: _(msg`${who} has arrived.`),
+		)
+	}, [feed, feedDate, say, _])
 
 	const chooseRoom = (id: string) => {
 		setRoomId(id)
@@ -339,7 +431,7 @@ export function HostStand({
 					refreshed = true
 					const table = fresh?.tables.find((t) => t.id === anyway.table.id)
 					const kind =
-						table && fresh ? tableState(table, fresh, serverNow()).kind : null
+						table && fresh ? tableState(table, fresh, clock()).kind : null
 					const label = anyway.table.label
 					// Either way the party stays picked up, ready for a table.
 					restore?.()
@@ -389,7 +481,7 @@ export function HostStand({
 				finish()
 			}
 		},
-		[refresh, say, noteWrite, _],
+		[refresh, say, noteWrite, clock, _],
 	)
 
 	const seatAt = async (table: DayTable, tableState: TableState) => {
@@ -476,12 +568,52 @@ export function HostStand({
 		}
 	}
 
+	/** Picks a party up (or puts it down); on a phone the floor then comes to the front. */
+	const pick = (next: Placing | null) => {
+		setPlacing(next)
+		if (next && !wide) setTab('floor')
+	}
+
+	/** A new booking, from the header or from a table and a time on the timeline. */
+	const startBooking = (table: DayTable | null, startMin?: number) => {
+		if (!feed) return
+		bookingKey.current = crypto.randomUUID()
+		setBookingLocked(false)
+		setReadBack(null)
+		setBookingPrefill({
+			date: feed.businessDate,
+			...(startMin !== undefined ? { time: clockLabel(startMin) } : {}),
+			tableIds: table ? [table.id] : [],
+			tableLabel: table?.label ?? '',
+			maxCovers: table?.maxCovers ?? 0,
+		})
+		setBookingOpen(true)
+	}
+
+	const chooseDate = (next: string | null) => {
+		// Seating is today's: nothing stays picked up on another day.
+		if (next !== null) setPlacing(null)
+		setDate(next)
+	}
+
+	const chooseView = (next: MainView) => {
+		setView(next)
+		try {
+			localStorage.setItem(VIEW_KEY, next)
+		} catch {
+			/* remembered for this session only */
+		}
+	}
+
 	const onCommand = async (r: DayReservation, command: PartyCommand) => {
 		if (command.kind === 'place') {
 			setPartyId(null)
-			setPlacing({ kind: 'reservation', reservation: r })
+			pick({ kind: 'reservation', reservation: r })
 			return
 		}
+		// What this tablet marks itself is not announced again as an arrival.
+		if (command.kind === 'status' && command.to === 'arrived')
+			selfArrived.current.add(r.id)
 		const who = shortName(r, _(msg`Guest`))
 		if (command.kind === 'change') {
 			setPartyId(null)
@@ -504,7 +636,7 @@ export function HostStand({
 			if (ok) {
 				setPartyId(null)
 				// The guest is here after all, maybe with no table now: pick them up to place.
-				if (wasNoShow) setPlacing({ kind: 'reservation', reservation: r })
+				if (wasNoShow) pick({ kind: 'reservation', reservation: r })
 			}
 			return
 		}
@@ -586,7 +718,6 @@ export function HostStand({
 	const tooSmallLabel = tooSmall?.table.label ?? ''
 	const tooSmallSeats = tooSmall?.table.maxCovers ?? 0
 	const tooSmallParty = tooSmall ? placingSize(tooSmall.placing) : 0
-	const covers = due.reduce((sum, r) => sum + r.partySize, 0)
 	const placingName = placing
 		? placing.kind === 'reservation'
 			? shortName(placing.reservation, _(msg`Guest`))
@@ -594,82 +725,94 @@ export function HostStand({
 				? placing.entry.displayName
 				: placing.guestName.trim() || _(msg`Walk-in`)
 		: ''
+	const picking = placing
+		? {
+				partySize: placingSize(placing),
+				durationMin:
+					placing.kind === 'reservation'
+						? placing.reservation.durationMin
+						: DEFAULT_TURN_MIN,
+				reservationId:
+					placing.kind === 'reservation' ? placing.reservation.id : undefined,
+			}
+		: null
+	const onTable = (table: DayTable, state: TableState) => {
+		if (busy || !isToday) return
+		if (placing) void seatAt(table, state)
+		else setTableTargetId(table.id)
+	}
+	// Another day has no floor to look at (it is how the room is now): the timeline stands in.
+	const mainView: MainView = isToday ? view : 'timeline'
+	const pane: PaneTab = wide
+		? mainView
+		: tab === 'floor' && !isToday
+			? 'timeline'
+			: tab
+	const paneOrder: PaneTab[] = wide
+		? ['floor', 'timeline']
+		: ['list', 'floor', 'timeline']
+	const paneProps = (id: PaneTab) =>
+		({
+			'data-active': pane === id,
+			'aria-hidden': pane === id ? undefined : true,
+			inert: pane !== id,
+			style: {
+				'--bk-dir': paneOrder.indexOf(id) < paneOrder.indexOf(pane) ? -1 : 1,
+			} as React.CSSProperties,
+		}) as const
+	const panel = (single: boolean) => (
+		<BookPanel
+			list={list}
+			query={query}
+			onQuery={setQuery}
+			placing={placing}
+			now={now}
+			formatTime={formatTime}
+			isToday={isToday}
+			waitlistOn={ready.grant.features.waitlist}
+			single={single}
+			onPick={pick}
+			onDetails={(r) => setPartyId(r.id)}
+			onWaitlistDetails={(entry) => setWaitlistId(entry.id)}
+			onAddWaitlist={() => {
+				joinKey.current = crypto.randomUUID()
+				setJoinOpen(true)
+			}}
+		/>
+	)
 
 	return (
 		<div className="relative flex min-h-0 flex-1 flex-col">
-			<div className="border-border bg-card flex shrink-0 flex-wrap items-center gap-3 border-b px-4 py-3">
-				{roomList.length > 1 && room ? (
-					<Segmented
-						label={_(msg`Room`)}
-						value={room.id}
-						onChange={chooseRoom}
-						options={roomList.map((r) => ({ value: r.id, label: r.name }))}
-						wrap={false}
-					/>
-				) : room ? (
-					<h2 className="text-lg font-semibold">{room.name}</h2>
-				) : null}
-				<FreeCount free={free.free} total={free.total} />
-				<span className="text-muted-foreground hidden text-sm md:inline">
-					·
-				</span>
-				<span className="text-muted-foreground hidden text-sm md:inline">
-					<Trans>
-						<NumberPop
-							value={String(due.length)}
-							className="tnum text-foreground font-semibold"
-						/>{' '}
-						to seat,{' '}
-						<NumberPop
-							value={String(covers)}
-							className="tnum text-foreground font-semibold"
-						/>{' '}
-						covers
-					</Trans>
-				</span>
-				{/* Always present, so going stale is announced. */}
-				<span role="status" className="contents">
-					{ready.stale ? (
-						<span className="text-warning inline-flex items-center gap-1.5 text-sm font-medium">
-							<CloudOff className="size-4" />
-							<Trans>Not up to date</Trans>
-						</span>
-					) : null}
-				</span>
-				<div className="ms-auto flex flex-wrap items-center gap-2">
-					<Button variant="outline" onClick={() => setWalkInOpen(true)}>
-						<UserPlus className="size-4" />
-						<Trans>Walk-in</Trans>
-					</Button>
-					{ready.grant.features.waitlist ? (
-						<Button
-							variant="outline"
-							onClick={() => {
-								joinKey.current = crypto.randomUUID()
-								setJoinOpen(true)
-							}}
-							aria-label={_(msg`Add to the waitlist`)}
-						>
-							<ListPlus className="size-4" />
-							<span className="hidden sm:inline">
-								<Trans>Waitlist</Trans>
-							</span>
-						</Button>
-					) : null}
-					<Button
-						variant="primary"
-						onClick={() => {
-							bookingKey.current = crypto.randomUUID()
-							setBookingLocked(false)
-							setReadBack(null)
-							setBookingOpen(true)
-						}}
-					>
-						<CalendarPlus className="size-4" />
-						<Trans>Booking</Trans>
-					</Button>
-				</div>
-			</div>
+			<StandHeader
+				totals={totals}
+				filtered={activeService !== null}
+				date={feed.businessDate}
+				isToday={isToday}
+				today={ready.today}
+				onDate={chooseDate}
+				services={services}
+				serviceId={activeService}
+				onService={setServiceId}
+				wide={wide}
+				view={view}
+				onView={chooseView}
+				waitlistOn={ready.grant.features.waitlist}
+				stale={ready.stale}
+				onWalkIn={() => setWalkInOpen(true)}
+				onWaitlist={() => {
+					joinKey.current = crypto.randomUUID()
+					setJoinOpen(true)
+				}}
+				onBooking={() => startBooking(null)}
+			/>
+			{!wide ? (
+				<PaneTabs
+					value={pane}
+					onChange={setTab}
+					floorOn={isToday}
+					listCount={list.toSeat.length + list.waitlist.length}
+				/>
+			) : null}
 
 			<p role="status" className="sr-only">
 				{placing
@@ -703,60 +846,111 @@ export function HostStand({
 				</p>
 			) : null}
 
-			{room ? (
-				<Floor
-					area={room}
-					feed={feed}
-					now={now}
-					picking={
-						placing
-							? {
-									partySize: placingSize(placing),
-									durationMin:
-										placing.kind === 'reservation'
-											? placing.reservation.durationMin
-											: DEFAULT_TURN_MIN,
-									reservationId:
-										placing.kind === 'reservation'
-											? placing.reservation.id
-											: undefined,
-								}
-							: null
-					}
-					formatTime={formatTime}
-					onTable={(table, tableState) => {
-						if (busy) return
-						if (placing) void seatAt(table, tableState)
-						else setTableTargetId(table.id)
-					}}
-				/>
-			) : (
-				<div className="floor-room flex flex-1 items-center justify-center p-6 text-center">
-					<p className="text-muted-foreground max-w-sm">
-						<Trans>
-							No tables yet. A manager adds the floor plan in the app, under
-							Reservations, Setup.
-						</Trans>
-					</p>
+			<div className="bk-shell relative">
+				{wide ? panel(false) : null}
+				<div className="bk-pages">
+					{!wide ? (
+						<div className="bk-page" {...paneProps('list')}>
+							{panel(true)}
+						</div>
+					) : null}
+					<div className="bk-page" {...paneProps('floor')}>
+						{room ? (
+							<>
+								<div className="border-border bg-card flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b px-4 py-2.5">
+									{roomList.length > 1 ? (
+										<Segmented
+											label={_(msg`Room`)}
+											value={room.id}
+											onChange={chooseRoom}
+											options={roomList.map((r) => ({
+												value: r.id,
+												label: r.name,
+											}))}
+											wrap={false}
+										/>
+									) : (
+										<h2 className="text-lg font-semibold">{room.name}</h2>
+									)}
+									<FreeCount free={free.free} total={free.total} />
+									<ul
+										aria-label={_(msg`Table colours`)}
+										className="text-muted-foreground ms-auto flex items-center gap-3 text-xs font-medium max-xl:hidden"
+									>
+										<li className="flex items-center gap-1.5">
+											<span className="bk-dot" data-kind="open" />
+											<Trans>Open</Trans>
+										</li>
+										<li className="flex items-center gap-1.5">
+											<span className="bk-dot" data-kind="soon" />
+											<Trans>Due soon</Trans>
+										</li>
+										<li className="flex items-center gap-1.5">
+											<span className="bk-dot" data-kind="seated" />
+											<Trans>Seated</Trans>
+										</li>
+										<li className="flex items-center gap-1.5">
+											<span className="bk-dot" data-kind="blocked" />
+											<Trans>Blocked</Trans>
+										</li>
+									</ul>
+								</div>
+								<Floor
+									area={room}
+									feed={feed}
+									now={now}
+									picking={picking}
+									formatTime={formatTime}
+									onTable={onTable}
+								/>
+							</>
+						) : (
+							<div className="floor-room flex flex-1 items-center justify-center p-6 text-center">
+								<p className="text-muted-foreground max-w-sm">
+									<Trans>
+										No tables yet. A manager adds the floor plan in the app,
+										under Reservations, Setup.
+									</Trans>
+								</p>
+							</div>
+						)}
+					</div>
+					<div className="bk-page" {...paneProps('timeline')}>
+						<Timeline
+							feed={feed}
+							now={now}
+							isToday={isToday}
+							bookable={feed.businessDate >= ready.today}
+							serviceId={activeService}
+							matchIds={matchIds}
+							picking={picking}
+							active={pane === 'timeline'}
+							formatTime={formatTime}
+							onBar={(r) => setPartyId(r.id)}
+							onTable={onTable}
+							onEmpty={(table, minute) => startBooking(table, minute)}
+						/>
+					</div>
 				</div>
-			)}
-
-			<Dock
-				ref={dockRef}
-				arrivals={due}
-				missed={missed}
-				waitlist={ready.waitlist}
-				waitlistOn={ready.grant.features.waitlist}
-				placing={placing}
-				now={now}
-				formatTime={formatTime}
-				onPick={setPlacing}
-				onDetails={(r) => setPartyId(r.id)}
-				onWaitlistDetails={(entry) => setWaitlistId(entry.id)}
-			/>
+				{dayLoading ? (
+					<div
+						role="status"
+						className="bg-background/70 absolute inset-0 z-20 flex items-center justify-center"
+					>
+						<p className="t-shimmer text-lg font-medium">
+							{ready.stale ? (
+								<Trans>Could not open this day. Try the arrows again.</Trans>
+							) : (
+								<Trans>Opening the book…</Trans>
+							)}
+						</p>
+					</div>
+				) : null}
+			</div>
 
 			<PartySheet
 				reservation={party}
+				viewOnly={!isToday}
 				canReadGuest={ready.grant.canReadGuest}
 				busy={busy}
 				now={now}
@@ -772,7 +966,7 @@ export function HostStand({
 				onClose={() => setWaitlistId(null)}
 				onPlace={(entry: WaitlistEntry) => {
 					setWaitlistId(null)
-					setPlacing({ kind: 'waitlist', entry })
+					pick({ kind: 'waitlist', entry })
 				}}
 				onNotify={(entry) =>
 					void act(
@@ -864,7 +1058,7 @@ export function HostStand({
 				onClose={() => setWalkInOpen(false)}
 				onPlace={(partySize, guestName) => {
 					setWalkInOpen(false)
-					setPlacing({
+					pick({
 						kind: 'walk_in',
 						partySize,
 						guestName,
@@ -878,7 +1072,8 @@ export function HostStand({
 				busy={busy}
 				locked={bookingLocked}
 				readBack={readBack}
-				today={feed.businessDate}
+				today={ready.today}
+				prefill={bookingPrefill}
 				loadSlots={api.availability}
 				onClose={() => setBookingOpen(false)}
 				onBook={(input) => {
@@ -887,7 +1082,7 @@ export function HostStand({
 					const time = input.timeLabel
 					// Another day is said out loud: it is what the caller will hear read back.
 					const day =
-						input.date === feed.businessDate
+						input.date === ready.today
 							? null
 							: new Intl.DateTimeFormat(i18n.locale, {
 									weekday: 'short',
@@ -982,7 +1177,7 @@ export function HostStand({
 					</Trans>
 				</p>
 			</Modal>
-			<Toast message={toast} onDone={dismissToast} liftAbove={dockRef} />
+			<Toast message={toast} onDone={dismissToast} />
 		</div>
 	)
 }

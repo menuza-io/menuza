@@ -1,0 +1,837 @@
+/*
+ * The host stand's book: header, party list, the page-to-page switch, the
+ * timeline and the floor's extra table detail. Everything is built from the
+ * tokens in styles/app.css (colours, motion), with logical properties so it
+ * reads right to left. This file is imported before app.css, so it names the
+ * layer order first; its rules sit in `components`, below Tailwind utilities,
+ * like the snippets in app.css.
+ */
+@layer theme, base, components, utilities;
+
+@layer components {
+	/* ── Shell ─────────────────────────────────────────────────────────── */
+	.bk-shell {
+		display: flex;
+		min-height: 0;
+		flex: 1;
+	}
+	.bk-panel {
+		display: flex;
+		width: clamp(18rem, 30vw, 24rem);
+		flex-shrink: 0;
+		flex-direction: column;
+		min-height: 0;
+		border-inline-end: 1px solid var(--border);
+		background: var(--card);
+	}
+	.bk-panel[data-single='true'] {
+		width: 100%;
+		border-inline-end: 0;
+	}
+	.bk-scroll {
+		min-height: 0;
+		flex: 1;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	/* ── Pages: Floor, Timeline (and List on a phone) slide side by side ─── */
+	.bk-pages {
+		position: relative;
+		min-width: 0;
+		min-height: 0;
+		flex: 1;
+		overflow: hidden;
+	}
+	.bk-page {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		/* The page that is not shown waits a step to the side it left toward. */
+		transform: translateX(
+			calc(
+				var(--page-slide-distance) * var(--bk-dir, 1) * var(--page-exit-enabled)
+			)
+		);
+		transition:
+			opacity var(--page-fade-dur) var(--page-fade-ease),
+			transform var(--page-slide-dur) var(--page-slide-ease),
+			visibility 0s linear var(--page-fade-dur);
+	}
+	[dir='rtl'] .bk-page {
+		transform: translateX(
+			calc(
+				var(--page-slide-distance) * var(--bk-dir, 1) *
+					var(--page-exit-enabled) * -1
+			)
+		);
+	}
+	.bk-page[data-active='true'],
+	[dir='rtl'] .bk-page[data-active='true'] {
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transform: none;
+		transition:
+			opacity var(--page-fade-dur) var(--page-fade-ease),
+			transform var(--page-slide-dur) var(--page-slide-ease),
+			visibility 0s;
+	}
+
+	/* ── Segmented tabs (Floor | Timeline, List | Floor | Timeline) ──────── */
+	.bk-tabs {
+		position: relative;
+		isolation: isolate;
+		display: grid;
+		grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+		gap: 0;
+		border-radius: var(--radius-2xl);
+		background: var(--muted);
+		padding: 0.25rem;
+	}
+	.bk-tabs-pill {
+		position: absolute;
+		z-index: 0;
+		inset-block: 0.25rem;
+		inset-inline-start: 0.25rem;
+		width: calc((100% - 0.5rem) / var(--n));
+		border-radius: var(--radius-xl);
+		background: var(--tabs-pill-bg);
+		box-shadow: 0 1px 2px oklch(0 0 0 / 0.08);
+		transform: translateX(calc(var(--i) * 100%));
+		transition: transform var(--tabs-dur) var(--tabs-ease);
+	}
+	[dir='rtl'] .bk-tabs-pill {
+		transform: translateX(calc(var(--i) * -100%));
+	}
+	.bk-tab {
+		position: relative;
+		z-index: 1;
+		display: inline-flex;
+		min-height: 2.75rem;
+		min-width: 0;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		border-radius: var(--radius-xl);
+		padding-inline: 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--pos-muted-foreground);
+		transition: color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-tab[aria-checked='true'] {
+		color: var(--foreground);
+	}
+	.bk-tab[aria-disabled='true'] {
+		cursor: default;
+		opacity: 0.45;
+	}
+
+	/* ── Header ────────────────────────────────────────────────────────── */
+	.bk-header {
+		display: flex;
+		flex-shrink: 0;
+		flex-wrap: wrap;
+		align-items: center;
+		column-gap: 0.75rem;
+		row-gap: 0.5rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--card);
+		padding: 0.625rem 1rem;
+	}
+	.bk-date {
+		position: relative;
+		display: inline-flex;
+		min-width: 8.5rem;
+		min-height: 2.75rem;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		border-radius: var(--radius-xl);
+		border: 1px solid var(--border);
+		background: var(--card);
+		padding-inline: 0.75rem;
+		font-weight: 600;
+		transition: background-color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-date:hover {
+		background: var(--accent);
+	}
+	/* The native date field sits invisibly over the label: a tap opens its picker. */
+	.bk-date input {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+	.bk-date:focus-within {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+
+	/* A phone: a tighter header, and a grid with a narrower table column. */
+	@media (max-width: 699px) {
+		.bk-header {
+			padding: 0.5rem 0.75rem;
+		}
+		.tl {
+			--tl-label: 4.5rem;
+			--tl-slot: 2.75rem;
+		}
+	}
+
+	/* ── Panel sections ───────────────────────────────────────────────── */
+	.bk-section-head {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		border-block: 1px solid var(--border);
+		background: color-mix(in oklab, var(--muted) 80%, var(--card));
+	}
+	.bk-section-toggle {
+		display: flex;
+		min-height: 2.75rem;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+		gap: 0.5rem;
+		padding-inline: 0.75rem 0.25rem;
+		text-align: start;
+	}
+	.bk-chevron {
+		flex-shrink: 0;
+		color: var(--pos-muted-foreground);
+		transition: transform var(--duration-fast) var(--ease-smooth-out);
+	}
+	.bk-section-toggle[aria-expanded='false'] .bk-chevron {
+		transform: rotate(-90deg);
+	}
+	[dir='rtl'] .bk-section-toggle[aria-expanded='false'] .bk-chevron {
+		transform: rotate(90deg);
+	}
+
+	/* ── Rows ──────────────────────────────────────────────────────────── */
+	.bk-row {
+		position: relative;
+		display: flex;
+		min-height: 3.5rem;
+		align-items: stretch;
+		border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+		background: var(--card);
+		animation: bk-row-in var(--duration-fast) var(--ease-smooth-out) both;
+		animation-delay: calc(min(var(--bk-i, 0), 8) * var(--duration-stagger));
+		transition:
+			background-color var(--duration-fast) var(--ease-smooth-out),
+			box-shadow var(--duration-fast) var(--ease-smooth-out),
+			opacity var(--duration-quick) var(--ease-smooth-out);
+	}
+	@keyframes bk-row-in {
+		from {
+			opacity: 0;
+			transform: translateY(var(--distance-small));
+		}
+	}
+	.bk-row[data-selected='true'] {
+		background: color-mix(in oklab, var(--primary) 7%, var(--card));
+		box-shadow: inset 0 0 0 2px var(--primary);
+	}
+	.bk-row[data-muted='true'] {
+		opacity: 0.62;
+	}
+	.bk-row-main {
+		display: grid;
+		min-width: 0;
+		flex: 1;
+		grid-template-columns: 0.25rem 3.25rem minmax(0, 1fr) auto;
+		align-items: center;
+		column-gap: 0.5rem;
+		text-align: start;
+		padding-inline-end: 0.5rem;
+		transition: background-color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-row-main:not(:disabled):hover {
+		background: var(--accent);
+	}
+	.bk-row-main:not(:disabled):active {
+		background: color-mix(in oklab, var(--accent) 80%, var(--foreground));
+	}
+	.bk-stripe {
+		align-self: stretch;
+		border-radius: 0 2px 2px 0;
+		background: var(--stripe, var(--border));
+		transition: background-color var(--duration-fast) var(--ease-smooth-out);
+	}
+	[dir='rtl'] .bk-stripe {
+		border-radius: 2px 0 0 2px;
+	}
+	.bk-row[data-tone='booked'] {
+		--stripe: color-mix(in oklab, var(--foreground) 22%, transparent);
+	}
+	.bk-row[data-tone='confirmed'] {
+		--stripe: color-mix(in oklab, var(--foreground) 62%, transparent);
+	}
+	.bk-row[data-tone='here'] {
+		--stripe: var(--success);
+	}
+	.bk-row[data-tone='late'],
+	.bk-row[data-tone='running'] {
+		--stripe: var(--warning);
+	}
+	.bk-row[data-tone='seated'] {
+		--stripe: var(--primary);
+	}
+	.bk-row[data-tone='finished'],
+	.bk-row[data-tone='no_show'] {
+		--stripe: var(--border);
+	}
+	.bk-row-info {
+		display: flex;
+		width: 2.75rem;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		color: var(--pos-muted-foreground);
+		border-inline-start: 1px solid
+			color-mix(in oklab, var(--border) 70%, transparent);
+		transition:
+			background-color var(--duration-quick) var(--ease-smooth-out),
+			color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-row-info:hover {
+		background: var(--accent);
+		color: var(--foreground);
+	}
+	.bk-badge {
+		display: inline-flex;
+		min-width: 2.25rem;
+		justify-content: center;
+		border-radius: var(--radius-md);
+		background: var(--primary);
+		padding: 0.25rem 0.5rem;
+		font-family: var(--pos-mono-font);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--primary-foreground);
+	}
+	.bk-seat {
+		display: inline-flex;
+		min-height: 2.25rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--border);
+		background: var(--card);
+		padding-inline: 0.625rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		transition:
+			background-color var(--duration-quick) var(--ease-smooth-out),
+			color var(--duration-quick) var(--ease-smooth-out),
+			border-color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-row[data-selected='true'] .bk-seat {
+		border-color: var(--primary);
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	/* ── Timeline ──────────────────────────────────────────────────────── */
+	.tl {
+		--tl-slot: 3rem;
+		--tl-label: 5.5rem;
+		--tl-row: 3rem;
+		--tl-head: 2.5rem;
+		position: relative;
+		display: flex;
+		min-height: 0;
+		flex: 1;
+		flex-direction: column;
+		background: var(--card);
+	}
+	.tl-scroll {
+		position: relative;
+		min-height: 0;
+		flex: 1;
+		overflow: auto;
+		overscroll-behavior: contain;
+	}
+	.tl-grid {
+		position: relative;
+		width: calc(var(--tl-label) + var(--tl-slots) * var(--tl-slot));
+		min-height: 100%;
+	}
+	.tl-head {
+		position: sticky;
+		top: 0;
+		z-index: 6;
+		display: flex;
+		height: var(--tl-head);
+		border-bottom: 1px solid var(--border);
+		background: var(--card);
+	}
+	.tl-corner {
+		position: sticky;
+		inset-inline-start: 0;
+		z-index: 7;
+		display: flex;
+		width: var(--tl-label);
+		flex-shrink: 0;
+		align-items: center;
+		padding-inline: 0.75rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--pos-muted-foreground);
+		border-inline-end: 1px solid var(--border);
+		background: var(--card);
+	}
+	.tl-hours {
+		position: relative;
+		width: calc(var(--tl-slots) * var(--tl-slot));
+		flex-shrink: 0;
+	}
+	.tl-hour {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: calc(var(--tl-slot) * 4 * var(--h));
+		display: flex;
+		align-items: center;
+		padding-inline-start: 0.5rem;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		white-space: nowrap;
+		border-inline-start: 1px solid var(--border);
+	}
+	.tl-group {
+		position: relative;
+		display: flex;
+		height: 2rem;
+		align-items: center;
+		background: var(--muted);
+		border-bottom: 1px solid var(--border);
+	}
+	.tl-group-label {
+		position: sticky;
+		inset-inline-start: 0;
+		z-index: 3;
+		padding-inline: 0.75rem;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--pos-muted-foreground);
+	}
+	.tl-row {
+		position: relative;
+		display: flex;
+		height: calc(var(--tl-row) * var(--lanes, 1));
+		border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+	}
+	.tl-label {
+		position: sticky;
+		inset-inline-start: 0;
+		z-index: 5;
+		display: flex;
+		width: var(--tl-label);
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.25rem;
+		padding-inline: 0.75rem 0.5rem;
+		background: var(--card);
+		border-inline-end: 1px solid var(--border);
+		text-align: start;
+		transition:
+			background-color var(--duration-quick) var(--ease-smooth-out),
+			box-shadow var(--duration-fast) var(--ease-smooth-out),
+			opacity var(--duration-fast) var(--ease-smooth-out);
+	}
+	button.tl-label:hover {
+		background: var(--accent);
+	}
+	.tl-label[data-fits='true'] {
+		background: color-mix(in oklab, var(--success) 14%, var(--card));
+		box-shadow: inset 0 0 0 2px var(--success);
+	}
+	/* Steps back in colour, not opacity: a bar slid under the column must not show through. */
+	.tl-label[data-fits='false'] {
+		background: color-mix(in oklab, var(--muted) 70%, var(--card));
+		color: color-mix(in oklab, var(--pos-muted-foreground) 60%, transparent);
+	}
+	.tl-track {
+		position: relative;
+		width: calc(var(--tl-slots) * var(--tl-slot));
+		flex-shrink: 0;
+		background-image:
+			linear-gradient(to right, var(--border) 1px, transparent 1px),
+			linear-gradient(
+				to right,
+				color-mix(in oklab, var(--border) 45%, transparent) 1px,
+				transparent 1px
+			);
+		background-size:
+			calc(var(--tl-slot) * 4) 100%,
+			var(--tl-slot) 100%;
+	}
+	[dir='rtl'] .tl-track {
+		background-image:
+			linear-gradient(to left, var(--border) 1px, transparent 1px),
+			linear-gradient(
+				to left,
+				color-mix(in oklab, var(--border) 45%, transparent) 1px,
+				transparent 1px
+			);
+		background-position: 100% 0;
+	}
+	.tl-track[data-tappable='true'] {
+		cursor: copy;
+	}
+	.tl-past {
+		position: absolute;
+		z-index: 1;
+		inset-block: var(--tl-head) 0;
+		inset-inline-start: var(--tl-label);
+		width: calc(var(--tl-slot) * var(--now) / 15);
+		background: color-mix(in oklab, var(--muted) 60%, transparent);
+		pointer-events: none;
+	}
+	.tl-now {
+		position: absolute;
+		z-index: 4;
+		inset-block: 0;
+		inset-inline-start: calc(
+			var(--tl-label) + var(--tl-slot) * var(--now) / 15
+		);
+		width: 2px;
+		margin-inline-start: -1px;
+		background: var(--destructive);
+		pointer-events: none;
+	}
+	.tl-now::before {
+		content: '';
+		position: absolute;
+		top: calc(var(--tl-head) - 0.25rem);
+		inset-inline-start: -4px;
+		width: 10px;
+		height: 10px;
+		border-radius: 999px;
+		background: var(--destructive);
+	}
+	.tl-bar {
+		position: absolute;
+		z-index: 2;
+		top: calc(var(--tl-row) * var(--lane, 0) + 0.125rem);
+		inset-inline-start: calc(var(--tl-slot) * var(--from) / 15 + 1px);
+		width: calc(var(--tl-slot) * var(--span) / 15 - 2px);
+		height: calc(var(--tl-row) - 0.25rem);
+		display: block;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--bar-edge, var(--border));
+		border-inline-start-width: 4px;
+		background: var(--bar-bg, var(--card));
+		text-align: start;
+		font-size: 0.875rem;
+		transition:
+			opacity var(--duration-fast) var(--ease-smooth-out),
+			background-color var(--duration-fast) var(--ease-smooth-out),
+			border-color var(--duration-fast) var(--ease-smooth-out),
+			transform var(--duration-quick) var(--ease-smooth-out);
+		animation: bk-bar-in var(--duration-fast) var(--ease-smooth-out) both;
+	}
+	/*
+	 * The words stay in sight: a bar that starts before the left edge of the
+	 * grid keeps its name beside the table column (sticky), and the party size
+	 * waits at the bar's far end.
+	 */
+	.tl-bar-in {
+		position: sticky;
+		inset-inline-start: var(--tl-label);
+		display: flex;
+		width: max-content;
+		max-width: calc(100% - 0.5rem);
+		height: 100%;
+		align-items: center;
+		gap: 0.375rem;
+		padding-inline: 0.5rem;
+	}
+	.tl-bar-size {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.125rem;
+		border-radius: var(--radius-sm);
+		background: color-mix(in oklab, var(--background) 70%, transparent);
+		padding-inline: 0.25rem;
+		font-size: 0.75rem;
+		font-weight: 700;
+	}
+	@keyframes bk-bar-in {
+		from {
+			opacity: 0;
+			transform: scale(var(--scale-medium));
+		}
+	}
+	.tl-bar:active {
+		transform: scale(var(--scale-small));
+	}
+	.tl-bar[data-tone='booked'] {
+		--bar-edge: color-mix(in oklab, var(--foreground) 28%, var(--border));
+		--bar-bg: var(--secondary);
+	}
+	.tl-bar[data-tone='confirmed'] {
+		--bar-edge: color-mix(in oklab, var(--foreground) 62%, var(--border));
+		--bar-bg: color-mix(in oklab, var(--foreground) 9%, var(--card));
+	}
+	.tl-bar[data-tone='here'] {
+		--bar-edge: var(--success);
+		--bar-bg: color-mix(in oklab, var(--success) 16%, var(--card));
+	}
+	.tl-bar[data-tone='late'],
+	.tl-bar[data-tone='running'] {
+		--bar-edge: var(--warning);
+		--bar-bg: color-mix(in oklab, var(--warning) 14%, var(--card));
+	}
+	.tl-bar[data-tone='seated'] {
+		--bar-edge: var(--primary);
+		--bar-bg: color-mix(in oklab, var(--primary) 16%, var(--card));
+	}
+	.tl-bar[data-tone='finished'] {
+		--bar-edge: var(--border);
+		--bar-bg: var(--muted);
+		color: var(--pos-muted-foreground);
+	}
+	.tl-bar[data-overrun='true'] {
+		background-image: linear-gradient(
+			to right,
+			transparent calc(100% - 1.5rem),
+			color-mix(in oklab, var(--warning) 35%, transparent)
+		);
+	}
+	[dir='rtl'] .tl-bar[data-overrun='true'] {
+		background-image: linear-gradient(
+			to left,
+			transparent calc(100% - 1.5rem),
+			color-mix(in oklab, var(--warning) 35%, transparent)
+		);
+	}
+	.tl-bar[data-dim='true'] {
+		opacity: 0.32;
+	}
+	.tl-bar[data-match='true'] {
+		box-shadow: 0 0 0 2px var(--primary);
+	}
+	.tl-block {
+		position: absolute;
+		z-index: 1;
+		inset-block: 0.125rem;
+		inset-inline-start: calc(var(--tl-slot) * var(--from) / 15);
+		width: calc(var(--tl-slot) * var(--span) / 15);
+		display: flex;
+		align-items: center;
+		overflow: hidden;
+		padding-inline: 0.5rem;
+		border-radius: var(--radius-md);
+		border: 1px dashed color-mix(in oklab, var(--foreground) 28%, transparent);
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent 0 6px,
+			color-mix(in oklab, var(--foreground) 10%, transparent) 6px 8px
+		);
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--pos-muted-foreground);
+		pointer-events: none;
+	}
+	.tl-foot {
+		position: sticky;
+		bottom: 0;
+		z-index: 6;
+		display: flex;
+		height: 3.25rem;
+		border-top: 1px solid var(--border);
+		background: var(--card);
+	}
+	.tl-foot-label {
+		position: sticky;
+		inset-inline-start: 0;
+		z-index: 7;
+		display: flex;
+		width: var(--tl-label);
+		flex-shrink: 0;
+		flex-direction: column;
+		justify-content: center;
+		padding-inline: 0.75rem;
+		font-size: 0.75rem;
+		line-height: 1.25;
+		border-inline-end: 1px solid var(--border);
+		background: var(--card);
+	}
+	.tl-cells {
+		position: relative;
+		display: flex;
+		width: calc(var(--tl-slots) * var(--tl-slot));
+		flex-shrink: 0;
+	}
+	.tl-cell {
+		position: relative;
+		display: flex;
+		width: calc(var(--tl-slot) * var(--span) / 15);
+		flex-shrink: 0;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		font-family: var(--pos-mono-font);
+		font-size: 0.75rem;
+		line-height: 1.2;
+		border-inline-start: 1px solid
+			color-mix(in oklab, var(--border) 60%, transparent);
+	}
+	.tl-cell[data-zero='true'] {
+		color: color-mix(in oklab, var(--pos-muted-foreground) 55%, transparent);
+	}
+	.tl-cell-cap {
+		color: var(--pos-muted-foreground);
+	}
+	/* How full the slot is: a thin bar along the cell's floor, drawn with transform only. */
+	.tl-cell-fill {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
+		height: 0.25rem;
+		background: var(--primary);
+		opacity: 0.55;
+		transform-origin: left;
+		transform: scaleX(var(--fill, 0));
+		transition: transform var(--duration-fast) var(--ease-smooth-out);
+	}
+	[dir='rtl'] .tl-cell-fill {
+		transform-origin: right;
+	}
+	.tl-cell[data-full='true'] .tl-cell-fill {
+		background: var(--warning);
+		opacity: 0.9;
+	}
+
+	/* ── Floor: more on each table ─────────────────────────────────────── */
+	/* Names sit under the tables: a bottom row's never makes the plan scroll down. */
+	.floor .floor-frame {
+		overflow-y: hidden;
+	}
+	.bk-table {
+		position: absolute;
+	}
+	.bk-table .floor-table {
+		position: absolute;
+		inset: 0;
+	}
+	/* A free table reads as open: a faint green edge on the card. */
+	.floor-table[data-state='open'] {
+		border-color: color-mix(in oklab, var(--success) 38%, var(--border));
+		background: color-mix(in oklab, var(--success) 5%, var(--card));
+	}
+	/* What sits under a table: how far through the stay they are, and who. */
+	.bk-under {
+		position: absolute;
+		z-index: 2;
+		top: calc(100% + 0.1875rem);
+		inset-inline: -0.75rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.125rem;
+		pointer-events: none;
+	}
+	.bk-elapsed {
+		position: relative;
+		width: 70%;
+		max-width: 4.5rem;
+		height: 0.25rem;
+		border-radius: 999px;
+		overflow: hidden;
+		background: color-mix(in oklab, var(--foreground) 16%, transparent);
+	}
+	.bk-elapsed::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: var(--primary);
+		transform-origin: left;
+		transform: scaleX(var(--p, 0));
+		transition: transform var(--floor-state-dur) var(--floor-ease);
+	}
+	[dir='rtl'] .bk-elapsed::after {
+		transform-origin: right;
+	}
+	.bk-elapsed[data-over='true']::after {
+		background: var(--warning);
+	}
+	/* The guest's name, under the table, where a small table has no room for it. */
+	.bk-caption {
+		max-width: 8rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		border-radius: var(--radius-sm);
+		background: color-mix(in oklab, var(--background) 82%, transparent);
+		padding: 0 0.25rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1.25rem;
+	}
+	.bk-dot {
+		display: inline-block;
+		width: 0.625rem;
+		height: 0.625rem;
+		flex-shrink: 0;
+		border-radius: 999px;
+		border: 2px solid transparent;
+	}
+	.bk-dot[data-kind='open'] {
+		border-color: color-mix(in oklab, var(--success) 60%, var(--border));
+		background: color-mix(in oklab, var(--success) 18%, var(--card));
+	}
+	.bk-dot[data-kind='soon'] {
+		border: 2px dashed var(--warning);
+	}
+	.bk-dot[data-kind='seated'] {
+		background: var(--primary);
+		border-color: var(--primary);
+	}
+	.bk-dot[data-kind='blocked'] {
+		border-color: var(--border);
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent 0 2px,
+			color-mix(in oklab, var(--foreground) 22%, transparent) 2px 3px
+		);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bk-page,
+	.bk-tabs-pill,
+	.bk-tab,
+	.bk-row,
+	.bk-row-main,
+	.bk-stripe,
+	.bk-chevron,
+	.tl-bar,
+	.tl-label,
+	.tl-cell-fill,
+	.bk-elapsed::after {
+		transition: none !important;
+		animation: none !important;
+	}
+}
