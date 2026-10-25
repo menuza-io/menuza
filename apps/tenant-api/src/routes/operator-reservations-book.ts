@@ -270,7 +270,16 @@ operatorReservationsBookRoutes.get(
 				ctx.channel === 'station'
 					? withTillUndo(
 							day,
-							await tillUndoable(db, day.reservations, ctx.userId, Date.now()),
+							await tillUndoable(
+								db,
+								day.reservations,
+								ctx.userId,
+								Date.now(),
+								hasReservationsGrant(
+									ctx,
+									RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+								),
+							),
 						)
 					: day
 

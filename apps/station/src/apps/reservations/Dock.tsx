@@ -227,11 +227,8 @@ export function Dock({
 								<button
 									type="button"
 									onClick={() => onDetails(reservation)}
-									// A marked card is named by its visible text (time, name, action), so a
-									// voice command can say what it reads.
-									aria-label={
-										marked ? undefined : _(msg`${who} did not arrive. Details`)
-									}
+									// Named by its visible text (time, name, action), so a voice command
+									// can say what it reads.
 									className="dock-card bg-background border-border text-muted-foreground hover:bg-accent flex h-[5.5rem] w-40 flex-col justify-between rounded-2xl border border-dashed p-3 text-start transition-colors"
 								>
 									<span className="flex items-center gap-2">
@@ -245,7 +242,12 @@ export function Dock({
 									</bdi>
 									<span className="text-xs font-medium">
 										{marked ? (
-											<Trans>Not a no-show</Trans>
+											// Undo only where the server lets this till; else it just says so.
+											reservation.canUndo === false ? (
+												<Trans>No-show</Trans>
+											) : (
+												<Trans>Not a no-show</Trans>
+											)
 										) : (
 											<Trans>Mark as no-show</Trans>
 										)}

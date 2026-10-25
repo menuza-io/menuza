@@ -499,8 +499,13 @@ export function HostStand({
 			return
 		}
 		if (command.kind === 'undo') {
+			const wasNoShow = r.status === 'no_show'
 			const ok = await act(() => api.undo(r.id), _(msg`Undone for ${who}.`))
-			if (ok) setPartyId(null)
+			if (ok) {
+				setPartyId(null)
+				// The guest is here after all, maybe with no table now: pick them up to place.
+				if (wasNoShow) setPlacing({ kind: 'reservation', reservation: r })
+			}
 			return
 		}
 		const done =

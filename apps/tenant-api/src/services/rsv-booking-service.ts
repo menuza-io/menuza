@@ -3222,15 +3222,16 @@ function statusChangeToUndo(
 	return { lastStatusEvent: undefined, blockedByUndo: false }
 }
 
-/** A till undoes its own person's recent change, or the system's. */
+/** A till undoes its own person's recent change, or the system's automatic no-show. */
 function tillMayUndo(
-	event: Pick<ReservationEventRow, 'actorId' | 'actorKind' | 'at'>,
+	event: Pick<ReservationEventRow, 'actorId' | 'actorKind' | 'at' | 'toStatus'>,
 	actorId: string,
 	nowMs: number,
 	withinMs: number,
 ) {
 	return (
-		(event.actorId === actorId || event.actorKind === 'system') &&
+		(event.actorId === actorId ||
+			(event.actorKind === 'system' && event.toStatus === 'no_show')) &&
 		nowMs - event.at <= withinMs
 	)
 }
@@ -3250,6 +3251,8 @@ export async function tillUndoable(
 	}>,
 	actorId: string,
 	nowMs: number,
+	/** The till may settle money (the payment grant); else a booking with money on it is the app's. */
+	mayTouchMoney = true,
 ): Promise<{ candidates: Set<string>; allowed: Set<string> }> {
 	const recent = reservations.filter((r) => {
 		const at =
@@ -3286,6 +3289,31 @@ export async function tillUndoable(
 			tillMayUndo(lastStatusEvent, actorId, nowMs, TILL_UNDO_WINDOW_MS)
 		)
 			allowed.add(r.id)
+	}
+	if (!mayTouchMoney) {
+		// As the undo route refuses: a no-show with a payment or deposit on it.
+		const noShows = recent.filter(
+			(r) => allowed.has(r.id) && r.status === 'no_show',
+		)
+		const rows = await queryInChunks(
+			noShows.map((r) => r.id),
+			(chunk) =>
+				db
+					.select({
+						id: rsvReservations.id,
+						paymentStatus: rsvReservations.paymentStatus,
+						policySnapshot: rsvReservations.policySnapshot,
+					})
+					.from(rsvReservations)
+					.where(inArray(rsvReservations.id, chunk)),
+		)
+		for (const row of rows) {
+			const amount = Number(
+				(row.policySnapshot as { totalAmountMinor?: unknown } | null)
+					?.totalAmountMinor ?? 0,
+			)
+			if (row.paymentStatus !== 'none' || amount > 0) allowed.delete(row.id)
+		}
 	}
 	return { candidates, allowed }
 }

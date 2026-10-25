@@ -23,6 +23,7 @@ import { type StatusTarget } from './api.ts'
 import {
 	OCCASION_LABEL,
 	shortName,
+	UNDO_WINDOW_MS,
 	type Availability,
 	type DayReservation,
 	type DayTable,
@@ -201,7 +202,13 @@ export function PartySheet({
 	const has = (action: QuickAction) =>
 		actions.includes(action) &&
 		!(awaitingPayment && (action === 'confirm' || action === 'cancel')) &&
-		!(notYours && (action === 'undo_finish' || action === 'undo_no_show'))
+		!(notYours && (action === 'undo_finish' || action === 'undo_no_show')) &&
+		// A till undoes seating only within the window (the server refuses later).
+		!(
+			action === 'undo_seat' &&
+			r?.seatedAt != null &&
+			now - r.seatedAt > UNDO_WINDOW_MS
+		)
 	const run = (command: PartyCommand) => r && onCommand(r, command)
 	const phoneEnd = (r?.guest?.phone ?? '').replace(/\D/g, '').slice(-4)
 	const guestName =

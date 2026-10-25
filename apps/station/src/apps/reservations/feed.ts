@@ -232,12 +232,7 @@ export function recentNoShows(
 	return feed.reservations
 		.filter((r) => {
 			const at = markedAt(r)
-			return (
-				r.status === 'no_show' &&
-				r.canUndo !== false &&
-				at !== null &&
-				now - at <= UNDO_WINDOW_MS
-			)
+			return r.status === 'no_show' && at !== null && now - at <= UNDO_WINDOW_MS
 		})
 		.sort((a, b) => (markedAt(b) ?? 0) - (markedAt(a) ?? 0))
 }

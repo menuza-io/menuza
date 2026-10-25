@@ -1059,6 +1059,35 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 				Date.now() + 31 * 60_000,
 			)
 			expect(later.candidates.size).toBe(0)
+			// Money on a no-show is the app's, unless the till may settle money.
+			await db
+				.update(rsvReservations)
+				.set({ paymentStatus: 'guaranteed' })
+				.where(eq(rsvReservations.id, auto.id))
+			const noMoney = await tillUndoable(db, rows, 'host_1', Date.now(), false)
+			expect([...noMoney.allowed]).toEqual([own.id])
+			const withMoney = await tillUndoable(db, rows, 'host_1', Date.now(), true)
+			expect(withMoney.allowed.has(auto.id)).toBe(true)
+		})
+
+		it('does not open any other system change to a till', async () => {
+			const erased = await book('idem-till-undo-7', '05:00', 'tbl_1')
+			await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: erased.id,
+				actorId: 'person-erasure',
+				actorKind: 'system',
+				input: { status: 'cancelled', reason: 'guest_erased' },
+			})
+			await expect(
+				undoReservationTransition({
+					orgId: ORG_ID,
+					reservationId: erased.id,
+					actorId: 'host_1',
+					...till,
+					input: {},
+				}),
+			).rejects.toMatchObject({ status: 409, code: 'undo_not_allowed' })
 		})
 	})
 
