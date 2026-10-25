@@ -14,6 +14,19 @@ import { z } from 'zod'
 
 const epoch = z.number().nullable().optional()
 
+const guestTagSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		/** `first_visit`, `vip` and the like: the system's own tags. */
+		systemKey: z.string().nullable().optional(),
+		category: z.string().nullable().optional(),
+		sensitive: z.boolean().optional(),
+	})
+	.passthrough()
+
+export type GuestTag = z.infer<typeof guestTagSchema>
+
 const guestSchema = z
 	.object({
 		id: z.string(),
@@ -27,8 +40,17 @@ const guestSchema = z
 		hasAllergy: z.boolean().default(false),
 		visits: z.number().default(0),
 		noShows: z.number().default(0),
-		tags: z
-			.array(z.object({ id: z.string(), name: z.string() }).passthrough())
+		tags: z.array(guestTagSchema).default([]),
+		/** Bookings cancelled too late to rebook the table. */
+		lateCancels: z.number().default(0),
+		lastVisitAt: epoch,
+		locale: z.string().nullable().optional(),
+		/**
+		 * The restaurant's pinned notes about the guest: only with the
+		 * guest-details grant (the server sends an empty list without it).
+		 */
+		pinnedNotes: z
+			.array(z.object({ id: z.string(), body: z.string() }).passthrough())
 			.default([]),
 	})
 	.passthrough()
@@ -54,6 +76,21 @@ export const reservationSchema = z
 		dietaryNotes: z.string().nullable().optional(),
 		staffNotes: z.string().nullable().optional(),
 		hasAllergy: z.boolean().default(false),
+		/**
+		 * Coded dietary values and allergens (`shellfish_allergy`, `vegan`): the
+		 * server sends these to every host, with or without the guest grant, so
+		 * an allergy can be said without free text.
+		 */
+		dietaryCodes: z.array(z.string()).default([]),
+		/** `web`, `ios`, `android`, or the till's own (`operator`): how it was made. */
+		client: z.string().nullable().optional(),
+		/** When the booking was made (epoch ms). */
+		createdAt: epoch,
+		/** `none`, `pending` (deposit awaited), `paid`, `guaranteed` (card held), and refunds. */
+		paymentStatus: z.string().default('none'),
+		contactStatus: z.string().nullable().optional(),
+		overbooked: z.boolean().default(false),
+		locked: z.boolean().default(false),
 		serviceId: z.string().nullable().optional(),
 		arrivedAt: epoch,
 		seatedAt: epoch,
@@ -152,6 +189,8 @@ const pacingSchema = z
 		bookedCovers: z.number().default(0),
 		partyCount: z.number().default(0),
 		maxCovers: z.number().nullable().optional(),
+		/** Set by a server that marks a cap as its own default (none does yet). */
+		maxCoversIsDefault: z.boolean().nullable().optional(),
 	})
 	.passthrough()
 

@@ -295,39 +295,52 @@ export type SlotTotals = {
 }
 
 /**
- * What a slot's pacing says once every service's row for it is merged. Two
- * services can overlap (a brunch that runs into lunch), and the server sends a
- * row per service for the same minute. Covers and parties add up (each row
- * counts its own service's bookings). Capacity adds up too, since each service
- * has its own pool of covers; and when any of the rows has no limit, the slot
- * has no limit to show.
+ * What a slot's pacing says when more than one row is for the same minute.
+ * The server emits one pacing row per minute and service window with
+ * `bookedCovers` counting every booking in that 15 minute bucket (not only the
+ * row's own service), so two rows for a minute repeat the same bookings:
+ * adding them would count each cover twice. The booked figure is therefore the
+ * largest row, and the rule shown is the first row's (the service that starts
+ * the slot).
  */
 export function mergePacing(
 	rows: Array<
-		Pick<DayFeed['pacing'][number], 'bookedCovers' | 'partyCount' | 'maxCovers'>
+		Pick<
+			DayFeed['pacing'][number],
+			'bookedCovers' | 'partyCount' | 'maxCovers' | 'maxCoversIsDefault'
+		>
 	>,
 ) {
-	return rows.reduce<{
-		bookedCovers: number
-		partyCount: number
-		maxCovers: number | null
-	} | null>((merged, row) => {
-		const cap = row.maxCovers ?? null
-		if (!merged)
-			return {
-				bookedCovers: row.bookedCovers,
-				partyCount: row.partyCount,
-				maxCovers: cap,
-			}
-		return {
-			bookedCovers: merged.bookedCovers + row.bookedCovers,
-			partyCount: merged.partyCount + row.partyCount,
-			maxCovers:
-				merged.maxCovers === null || cap === null
-					? null
-					: merged.maxCovers + cap,
-		}
-	}, null)
+	const [first, ...rest] = rows
+	if (!first) return null
+	return {
+		bookedCovers: Math.max(
+			first.bookedCovers,
+			...rest.map((r) => r.bookedCovers),
+		),
+		partyCount: Math.max(first.partyCount, ...rest.map((r) => r.partyCount)),
+		maxCovers: first.maxCovers ?? null,
+		maxCoversIsDefault: first.maxCoversIsDefault ?? null,
+	}
+}
+
+/**
+ * The covers a slot may take, only when somebody configured it. The server
+ * sends a cap for every slot: with no pacing rule it is its own default,
+ * max(every table's seats, 10), which says nothing about pace. It does not
+ * mark that default today, so a cap is treated as configured only when it is
+ * below the seats on the floor (a default can never be). A feed that marks its
+ * default (`maxCoversIsDefault`) is believed. A cap of 0 or less is no cap.
+ */
+export function configuredCap(
+	row:
+		| { maxCovers?: number | null; maxCoversIsDefault?: boolean | null }
+		| undefined,
+	totalSeats: number,
+): number | null {
+	const cap = row?.maxCovers ?? null
+	if (cap === null || cap <= 0 || row?.maxCoversIsDefault === true) return null
+	return totalSeats > 0 && cap >= totalSeats ? null : cap
 }
 
 /**
@@ -335,10 +348,14 @@ export function mergePacing(
  * slot can take, from the feed's pacing; with no pacing, covers per hour.
  */
 export function slotTotals(
-	feed: Pick<DayFeed, 'reservations' | 'pacing' | 'services'>,
+	feed: Pick<DayFeed, 'reservations' | 'pacing' | 'services'> &
+		Partial<Pick<DayFeed, 'tables'>>,
 	range: TimelineRange,
 	serviceId: string | null = null,
 ): SlotTotals {
+	const totalSeats = (feed.tables ?? [])
+		.filter((t) => !t.archivedAt)
+		.reduce((sum, t) => sum + t.maxCovers, 0)
 	const bookings = feed.reservations.filter(
 		(r) => onGrid(r) && inService(feed, r, serviceId),
 	)
@@ -368,7 +385,7 @@ export function slotTotals(
 			spanMin: step,
 			covers: pace ? pace.bookedCovers : sum(starting),
 			parties: pace ? pace.partyCount : starting.length,
-			cap: pace?.maxCovers ?? null,
+			cap: configuredCap(pace, totalSeats),
 		})
 	}
 	return {

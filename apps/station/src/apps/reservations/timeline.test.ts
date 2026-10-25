@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { at, day, rsv, SERVICES } from './testing.ts'
 import {
 	layoutTimeline,
+	configuredCap,
 	mergePacing,
 	minuteAt,
 	minutesFormatter,
@@ -235,14 +236,14 @@ describe('what the bottom row counts', () => {
 						serviceId: 'dinner',
 						bookedCovers: 4,
 						partyCount: 1,
-						maxCovers: 18,
+						maxCovers: 12,
 					},
 					{
 						localMin: 17 * 60 + 15,
 						serviceId: 'dinner',
 						bookedCovers: 2,
 						partyCount: 1,
-						maxCovers: 18,
+						maxCovers: 12,
 					},
 				],
 			},
@@ -253,10 +254,10 @@ describe('what the bottom row counts', () => {
 		expect(totals.cells[0]).toMatchObject({
 			covers: 4,
 			parties: 1,
-			cap: 18,
+			cap: 12,
 			spanMin: 15,
 		})
-		expect(totals.cells[1]).toMatchObject({ covers: 2, cap: 18 })
+		expect(totals.cells[1]).toMatchObject({ covers: 2, cap: 12 })
 		// A slot pacing says nothing of still counts what starts in it.
 		expect(totals.cells[2]).toMatchObject({ covers: 0, cap: null })
 		expect(totals).toMatchObject({ parties: 2, covers: 6 })
@@ -507,31 +508,38 @@ describe('a booking after midnight', () => {
 })
 
 describe('two services whose pacing overlaps', () => {
-	it('adds covers and parties, and capacity when every row has one', () => {
+	it('does not add the rows: each already counts every booking in the bucket', () => {
 		expect(
 			mergePacing([
 				{ bookedCovers: 4, partyCount: 1, maxCovers: 20 },
-				{ bookedCovers: 2, partyCount: 1, maxCovers: 10 },
+				{ bookedCovers: 4, partyCount: 1, maxCovers: 10 },
 			]),
-		).toEqual({ bookedCovers: 6, partyCount: 2, maxCovers: 30 })
-	})
-	it('has no limit to show when one of the rows has none', () => {
+		).toMatchObject({ bookedCovers: 4, partyCount: 1, maxCovers: 20 })
 		expect(
 			mergePacing([
-				{ bookedCovers: 4, partyCount: 1, maxCovers: 20 },
-				{ bookedCovers: 2, partyCount: 1, maxCovers: null },
+				{ bookedCovers: 2, partyCount: 1, maxCovers: 12 },
+				{ bookedCovers: 6, partyCount: 2, maxCovers: null },
+			]),
+		).toMatchObject({ bookedCovers: 6, partyCount: 2, maxCovers: 12 })
+		expect(mergePacing([])).toBeNull()
+	})
+	it('takes the first row’s rule, and none when it has none', () => {
+		expect(
+			mergePacing([
+				{ bookedCovers: 4, partyCount: 1, maxCovers: null },
+				{ bookedCovers: 4, partyCount: 1, maxCovers: 10 },
 			])?.maxCovers,
 		).toBeNull()
 	})
-	it('keeps both rows of a minute in the all-day footer instead of dropping one', () => {
+	it('counts a minute with two rows once in the all-day footer', () => {
 		const feed = day([], {
 			services: SERVICES,
 			pacing: [
 				{
 					localMin: 17 * 60,
 					serviceId: 'lunch',
-					bookedCovers: 4,
-					partyCount: 1,
+					bookedCovers: 6,
+					partyCount: 2,
 					maxCovers: 10,
 				},
 				{
@@ -539,20 +547,63 @@ describe('two services whose pacing overlaps', () => {
 					serviceId: 'dinner',
 					bookedCovers: 6,
 					partyCount: 2,
-					maxCovers: 20,
+					maxCovers: 12,
 				},
 			],
 		})
 		const range = { startMin: 17 * 60, endMin: 18 * 60 }
 		expect(slotTotals(feed, range).cells[0]).toMatchObject({
-			covers: 10,
-			parties: 3,
-			cap: 30,
+			covers: 6,
+			parties: 2,
+			cap: 10,
 		})
 		// One service chosen: only its own row.
 		expect(slotTotals(feed, range, 'dinner').cells[0]).toMatchObject({
 			covers: 6,
-			cap: 20,
+			cap: 12,
 		})
+	})
+})
+
+describe('a cap that is only the server’s default', () => {
+	// The test floor seats 2 + 4 + 8 + 2 = 16.
+	it('is not a cap: it is at or above every seat on the floor', () => {
+		expect(configuredCap({ maxCovers: 18 }, 16)).toBeNull()
+		expect(configuredCap({ maxCovers: 16 }, 16)).toBeNull()
+		expect(configuredCap({ maxCovers: 10 }, 6)).toBeNull()
+		expect(configuredCap({ maxCovers: 12 }, 16)).toBe(12)
+	})
+	it('is believed when the feed marks it, and absent without a number', () => {
+		expect(
+			configuredCap({ maxCovers: 8, maxCoversIsDefault: true }, 16),
+		).toBeNull()
+		expect(configuredCap({ maxCovers: null }, 16)).toBeNull()
+		expect(configuredCap(undefined, 16)).toBeNull()
+		expect(configuredCap({ maxCovers: 0 }, 16)).toBeNull()
+		// Seats unknown (no tables): the number stands.
+		expect(configuredCap({ maxCovers: 18 }, 0)).toBe(18)
+	})
+	it('does not shade a slot in the bottom row', () => {
+		const feed = day([], {
+			services: SERVICES,
+			pacing: [
+				{
+					localMin: 17 * 60,
+					serviceId: 'dinner',
+					bookedCovers: 15,
+					maxCovers: 18,
+				},
+				{
+					localMin: 17 * 60 + 15,
+					serviceId: 'dinner',
+					bookedCovers: 9,
+					maxCovers: 10,
+				},
+			],
+		})
+		const cells = slotTotals(feed, { startMin: 17 * 60, endMin: 18 * 60 }).cells
+		expect(cells[0]).toMatchObject({ covers: 15, cap: null })
+		// Below the seats (16): somebody set it, so it shades.
+		expect(cells[1]).toMatchObject({ covers: 9, cap: 10 })
 	})
 })

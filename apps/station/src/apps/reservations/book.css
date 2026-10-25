@@ -389,6 +389,26 @@
 		--stripe: color-mix(in oklab, var(--warning) 60%, transparent);
 	}
 	/* A booking held for its deposit: tagged, and never a "Seat" button. */
+	/* A booking that came in while the host was looking, until its details are opened. */
+	.bk-new {
+		display: inline-block;
+		width: 0.5rem;
+		height: 0.5rem;
+		flex-shrink: 0;
+		border-radius: 999px;
+		background: var(--primary);
+		box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
+	}
+	/* The typed words, marked in a name. */
+	.bk-hit {
+		border-radius: 0.2rem;
+		background: color-mix(in oklab, var(--primary) 20%, transparent);
+		color: inherit;
+		padding-inline: 0.05rem;
+	}
+	.bk-row[data-fresh='true'] {
+		background: color-mix(in oklab, var(--primary) 6%, var(--card));
+	}
 	.bk-pay-tag {
 		display: inline-flex;
 		align-items: center;

@@ -1,24 +1,37 @@
 import { type MessageDescriptor } from '@lingui/core'
-import { msg, plural, Trans } from '@lingui/macro'
+import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { FINISHED_UNDO_WINDOW_MS, type WaitlistEntry } from '@repo/reservations'
 import { List, Lock, RefreshCw, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	JoinWaitlistSheet,
+	WalkInSheet,
+	type WaitlistPrefill,
+} from './AddSheets.tsx'
 import { HostApiError } from './api.ts'
 import {
 	bookList,
+	dayNotices,
+	daySnapshot,
 	dayTotals,
 	liveServices,
 	newArrivals,
-	statusMap,
 	type BookList,
+	type DaySnapshot,
 	type DayTotals,
 } from './book.ts'
+import { bookingAnswerOf } from './bookingAnswer.ts'
+import {
+	BookingSheet,
+	type BookingPrefill,
+	type BookingReadBackInfo,
+} from './BookingSheet.tsx'
 import { BookPanel } from './BookPanel.tsx'
+import { useDrawerFocus } from './drawer.ts'
 import {
 	DEFAULT_TURN_MIN,
 	fits,
-	isVip,
 	rooms,
 	shortName,
 	tableState,
@@ -27,19 +40,17 @@ import {
 	type TableState,
 } from './feed.ts'
 import { Floor, FreeCount, freeTables } from './Floor.tsx'
-import { placingSize, type Placing } from './placing.ts'
+import { formatPhone } from './guest.ts'
 import {
-	BookingSheet,
-	ChangePartySheet,
-	JoinWaitlistSheet,
-	PartySheet,
-	TableSheet,
-	WaitlistSheet,
-	WalkInSheet,
-	type BookingPrefill,
-	type BookingReadBackInfo,
-	type PartyCommand,
-} from './sheets.tsx'
+	displayNameOf,
+	findRepeat,
+	guestFromQuery,
+	type Repeat,
+} from './lookup.ts'
+import { newsOf } from './news.ts'
+import { PartySheet } from './PartySheet.tsx'
+import { placingSize, type Placing } from './placing.ts'
+import { ChangePartySheet, type PartyCommand } from './sheets.tsx'
 import {
 	PaneTabs,
 	StandHeader,
@@ -47,8 +58,10 @@ import {
 	type MainView,
 	type PaneTab,
 } from './StandHeader.tsx'
+import { TableSheet } from './TableSheet.tsx'
 import { Timeline, type TimelineRefusal } from './Timeline.tsx'
 import { dayFailedFor, useHostStand } from './useHostStand.ts'
+import { WaitlistSheet } from './WaitlistSheet.tsx'
 import './book.css'
 import { holdLock } from '~/lib/activity.ts'
 import { type PosSettings } from '~/lib/config.ts'
@@ -124,6 +137,9 @@ export function HostStand({
 	const roomy = useMediaQuery('(min-width: 900px)')
 	const rail = wide && !roomy
 	const [railOpen, setRailOpen] = useState(false)
+	// Focus goes into the drawer once when it opens, and back to its button when it closes.
+	const railButton = useRef<HTMLButtonElement>(null)
+	const drawerRef = useDrawerFocus<HTMLDivElement>(railOpen, railButton)
 	const [roomId, setRoomId] = useState<string | null>(readRoom)
 	const [view, setView] = useState<MainView>(readView)
 	/** A phone shows one pane at a time. */
@@ -160,6 +176,10 @@ export function HostStand({
 	const [bookingLocked, setBookingLocked] = useState(false)
 	const [readBack, setReadBack] = useState<BookingReadBackInfo | null>(null)
 	const [joinOpen, setJoinOpen] = useState(false)
+	/** A name or number a search found no one for, carried onto the waitlist form. */
+	const [joinPrefill, setJoinPrefill] = useState<WaitlistPrefill | null>(null)
+	/** Bookings that came in online while the host was looking, until their details are opened. */
+	const [freshIds, setFreshIds] = useState<ReadonlySet<string>>(new Set())
 	const [busy, setBusy] = useState(false)
 	/** Settles when the change in flight (and its refresh) is done. */
 	const settled = useRef<Promise<void>>(Promise.resolve())
@@ -204,8 +224,15 @@ export function HostStand({
 	/** Arrival toasts that came while a toast with a button was up: shown after it goes. */
 	const queued = useRef<ToastMessage[]>([])
 	const toastId = useRef(0)
-	/** What an arrival says to a screen reader at once, whatever toast is showing. */
-	const [arrivalNote, setArrivalNote] = useState('')
+	/**
+	 * What a change at the stand says to a screen reader at once, whatever toast
+	 * is showing. A new `seq` re-announces the same words (a region whose text
+	 * did not change is not read again).
+	 */
+	const [news, setNews] = useState<{ seq: number; text: string }>({
+		seq: 0,
+		text: '',
+	})
 	// A booking taken on the phone, a party in hand: a short idle lock waits.
 	const working =
 		bookingOpen ||
@@ -241,12 +268,13 @@ export function HostStand({
 		setToast({ id: toastId.current, text, ...extra })
 	}, [])
 	/**
-	 * A party arriving elsewhere: told in a live region of its own at once, and
-	 * shown as a toast that never replaces one with a button on it (an Undo, a
-	 * Seat anyway). It waits behind that one instead.
+	 * A change at the stand (a party arriving, a booking made online or
+	 * cancelled): told in a live region of its own at once, and shown as a toast
+	 * that never replaces one with a button on it (an Undo, a Seat anyway). It
+	 * waits behind that one instead.
 	 */
-	const sayArrival = useCallback((text: string) => {
-		setArrivalNote(text)
+	const sayNews = useCallback((text: string, spoken: string) => {
+		setNews((previous) => ({ seq: previous.seq + 1, text: spoken }))
 		toastId.current += 1
 		const message: ToastMessage = {
 			id: toastId.current,
@@ -311,21 +339,32 @@ export function HostStand({
 	// "7:30 PM", and "7:30" for a table or a bar with no room for the rest. A
 	// zone name the runtime does not know (the server's, not ours) must not
 	// throw while drawing: times then show in this tablet's own zone.
-	const { formatTime, formatShort } = useMemo(() => {
+	const { formatTime, formatShort, formatDay } = useMemo(() => {
 		const make = (zone: string | undefined) =>
 			new Intl.DateTimeFormat(i18n.locale, {
 				hour: 'numeric',
 				minute: '2-digit',
 				...(zone ? { timeZone: zone } : {}),
 			})
+		const makeDay = (zone: string | undefined) =>
+			new Intl.DateTimeFormat(i18n.locale, {
+				month: 'short',
+				day: 'numeric',
+				...(zone ? { timeZone: zone } : {}),
+			})
 		let format: Intl.DateTimeFormat
+		let dayFormat: Intl.DateTimeFormat
 		try {
 			format = make(timeZone)
+			dayFormat = makeDay(timeZone)
 		} catch {
 			format = make(undefined)
+			dayFormat = makeDay(undefined)
 		}
 		return {
 			formatTime: (epochMs: number) => format.format(epochMs),
+			/** "Oct 3": a day in the restaurant's own zone. */
+			formatDay: (epochMs: number) => dayFormat.format(epochMs),
 			formatShort: (epochMs: number) =>
 				format
 					.formatToParts(epochMs)
@@ -388,32 +427,53 @@ export function HostStand({
 	const waitlistEntry =
 		ready?.waitlist.find((entry) => entry.id === waitlistId) ?? null
 
-	// A party that turns up at another host's stand is announced here (a toast, and
-	// to a screen reader), VIPs by name. What this tablet marked itself says so already.
-	const seenStatus = useRef<Map<string, string> | null>(null)
+	// What changed since the last look is said quietly: a party that turns up at
+	// another host's stand (VIPs by name), a booking made online or cancelled, a
+	// party size changed. What this tablet did itself says so already. Only today
+	// is watched, and the first look at a day (or a new day) says nothing.
+	const seen = useRef<{ date: string; snapshot: DaySnapshot } | null>(null)
 	const selfArrived = useRef(new Set<string>())
+	/** Changes this tablet made to a booking (a cancel, a new size): not news to it. */
+	const selfChanged = useRef(new Set<string>())
 	const feedDate = ready?.feedDate
 	useEffect(() => {
-		if (!feed || feedDate !== null) return
-		const arrived = newArrivals(seenStatus.current, feed, selfArrived.current)
-		seenStatus.current = statusMap(feed)
-		if (arrived.length === 0) return
-		const first = arrived[0]!
-		const who = shortName(first, _(msg`Guest`))
-		const count = arrived.length
-		sayArrival(
-			count > 1
-				? _(
-						plural(count, {
-							one: '# party has arrived.',
-							other: '# parties have arrived.',
-						}),
-					)
-				: isVip(first)
-					? _(msg`VIP guest has arrived: ${who}.`)
-					: _(msg`${who} has arrived.`),
-		)
-	}, [feed, feedDate, sayArrival, _])
+		if (!feed || feedDate !== null) {
+			// Another day, or none yet: coming back to today is a first look again.
+			seen.current = null
+			return
+		}
+		const before =
+			seen.current?.date === feed.businessDate ? seen.current.snapshot : null
+		seen.current = { date: feed.businessDate, snapshot: daySnapshot(feed) }
+		const arrivals = newArrivals(before, feed, selfArrived.current)
+		const notices = dayNotices(before, feed, {
+			now: clock(),
+			byUs: selfChanged.current,
+		})
+		const { items, toast: said } = newsOf(_, {
+			arrivals,
+			notices,
+			formatTime,
+		})
+		if (said === null) return
+		sayNews(said, items.join(' '))
+		// A booking a guest made is marked until the host opens it.
+		const made = notices
+			.filter((notice) => notice.kind === 'online')
+			.map((notice) => notice.reservation.id)
+		if (made.length > 0)
+			setFreshIds((previous) => new Set([...previous, ...made]))
+	}, [feed, feedDate, sayNews, clock, formatTime, _])
+	// Opening a booking's details clears its dot.
+	useEffect(() => {
+		if (partyId === null) return
+		setFreshIds((previous) => {
+			if (!previous.has(partyId)) return previous
+			const next = new Set(previous)
+			next.delete(partyId)
+			return next
+		})
+	}, [partyId])
 
 	const chooseRoom = (id: string) => {
 		setRoomId(id)
@@ -674,7 +734,12 @@ export function HostStand({
 	}
 
 	/** A new booking, from the header or from a table and a time on the timeline. */
-	const startBooking = (table: DayTable | null, startMin?: number) => {
+	const startBooking = (
+		table: DayTable | null,
+		startMin?: number,
+		/** Start for a guest: booking again, or a name or number a search found no one for. */
+		who?: { first: string; last: string; phone: string; partySize?: number },
+	) => {
 		if (!feed || !ready) return
 		const requestedDay = date ?? ready.today
 		bookingKey.current = crypto.randomUUID()
@@ -688,8 +753,35 @@ export function HostStand({
 			tableIds: table ? [table.id] : [],
 			tableLabel: table?.label ?? '',
 			maxCovers: table?.maxCovers ?? 0,
+			...(who
+				? {
+						guest: { first: who.first, last: who.last, phone: who.phone },
+						...(who.partySize ? { partySize: who.partySize } : {}),
+					}
+				: {}),
 		})
 		setBookingOpen(true)
+	}
+
+	/** The waitlist form, empty or with a name and number carried over from a search. */
+	const openJoin = (prefill: WaitlistPrefill | null) => {
+		joinKey.current = crypto.randomUUID()
+		setJoinPrefill(prefill)
+		setJoinOpen(true)
+	}
+
+	/** Whether the person being booked is already in the book that day, or on the waitlist. */
+	const repeatOf = (
+		who: { first: string; last: string; phone: string },
+		date: string,
+	): Repeat | null => {
+		const latest = readyRef.current
+		if (!latest) return null
+		return findRepeat(
+			who,
+			date === latest.feed.businessDate ? latest.feed.reservations : [],
+			date === latest.today ? latest.waitlist : [],
+		)
 	}
 
 	const chooseDate = (next: string | null) => {
@@ -707,15 +799,51 @@ export function HostStand({
 		}
 	}
 
+	/** Seats a booking at a table now (the table it holds, or one the host tapped): a bigger party is asked about first. */
+	const seatBooking = (r: DayReservation, table: DayTable) => {
+		const booking: Placing = { kind: 'reservation', reservation: r }
+		if (!fits(table, r.partySize)) setTooSmall({ placing: booking, table })
+		else void seat(booking, table, false)
+	}
+
 	const onCommand = async (r: DayReservation, command: PartyCommand) => {
 		if (command.kind === 'place') {
 			setPartyId(null)
 			pick({ kind: 'reservation', reservation: r })
 			return
 		}
-		// What this tablet marks itself is not announced again as an arrival.
+		if (command.kind === 'seatAt') {
+			const table = readyRef.current?.feed.tables.find(
+				(t) => t.id === command.tableId,
+			)
+			setPartyId(null)
+			// A table that is gone: back to choosing one.
+			if (table) seatBooking(r, table)
+			else pick({ kind: 'reservation', reservation: r })
+			return
+		}
+		if (command.kind === 'again') {
+			setPartyId(null)
+			const guest = r.guest
+			const canRead = readyRef.current?.grant.canReadGuest === true
+			startBooking(null, undefined, {
+				first: guest?.firstName?.trim() || guest?.name?.split(/\s+/)[0] || '',
+				last:
+					guest?.lastName?.trim() ||
+					(guest?.firstName?.trim()
+						? ''
+						: (guest?.name?.split(/\s+/).slice(1).join(' ') ?? '')),
+				// Without the guest grant the number is only its end: never carried over.
+				phone: canRead && guest?.phone ? formatPhone(guest.phone) : '',
+				partySize: r.partySize,
+			})
+			return
+		}
+		// What this tablet marks itself is not announced again as news.
 		if (command.kind === 'status' && command.to === 'arrived')
 			selfArrived.current.add(r.id)
+		if (command.kind === 'status' && command.to === 'cancelled')
+			selfChanged.current.add(r.id)
 		const who = shortName(r, _(msg`Guest`))
 		if (command.kind === 'change') {
 			setPartyId(null)
@@ -884,12 +1012,18 @@ export function HostStand({
 			isToday={isToday}
 			waitlistOn={ready.grant.features.waitlist}
 			single={single}
+			fresh={freshIds}
 			onPick={pick}
 			onDetails={(r) => setPartyId(r.id)}
 			onWaitlistDetails={(entry) => setWaitlistId(entry.id)}
-			onAddWaitlist={() => {
-				joinKey.current = crypto.randomUUID()
-				setJoinOpen(true)
+			onAddWaitlist={() => openJoin(null)}
+			onBookFor={(typed) => {
+				const who = guestFromQuery(typed)
+				startBooking(null, undefined, who)
+			}}
+			onWaitlistFor={(typed) => {
+				const who = guestFromQuery(typed)
+				openJoin({ displayName: displayNameOf(who), phone: who.phone })
 			}}
 			onClose={onClose}
 		/>
@@ -926,10 +1060,7 @@ export function HostStand({
 				waitlistOn={ready.grant.features.waitlist}
 				stale={ready.stale}
 				onWalkIn={() => setWalkInOpen(true)}
-				onWaitlist={() => {
-					joinKey.current = crypto.randomUUID()
-					setJoinOpen(true)
-				}}
+				onWaitlist={() => openJoin(null)}
 				onBooking={() => startBooking(null)}
 			/>
 			{!wide ? (
@@ -946,9 +1077,9 @@ export function HostStand({
 					? _(msg`Picked up ${placingName}. Tap a table to seat them.`)
 					: ''}
 			</p>
-			{/* Arrivals at another stand: told at once, even when a toast with a button is up. */}
-			<p role="status" className="sr-only">
-				{arrivalNote}
+			{/* Changes at the stand (a party here, a booking made or cancelled): told at once, even when a toast with a button is up. */}
+			<p key={news.seq} role="status" className="sr-only">
+				{news.text}
 			</p>
 			<Reveal open={placing !== null}>
 				<div className="bg-primary text-primary-foreground flex items-center gap-3 px-4 py-2.5">
@@ -983,6 +1114,7 @@ export function HostStand({
 					<>
 						<nav className="bk-rail" aria-label={_(msg`Parties to seat`)}>
 							<button
+								ref={railButton}
 								type="button"
 								className="bk-rail-button"
 								aria-expanded={railOpen}
@@ -1007,8 +1139,7 @@ export function HostStand({
 								<div
 									className="bk-drawer"
 									tabIndex={-1}
-									// Focus moves into the drawer when it opens.
-									ref={(el) => el?.focus()}
+									ref={drawerRef}
 									onKeyDown={(event) => {
 										if (event.key === 'Escape') setRailOpen(false)
 									}}
@@ -1146,6 +1277,7 @@ export function HostStand({
 				busy={busy}
 				now={now}
 				formatTime={formatTime}
+				formatDay={formatDay}
 				onCommand={(r, command) => void onCommand(r, command)}
 				onClose={() => setPartyId(null)}
 			/>
@@ -1154,17 +1286,19 @@ export function HostStand({
 				canReadGuest={ready.grant.canReadGuest}
 				busy={busy}
 				now={now}
+				formatTime={formatTime}
 				onClose={() => setWaitlistId(null)}
 				onPlace={(entry: WaitlistEntry) => {
 					setWaitlistId(null)
 					pick({ kind: 'waitlist', entry })
 				}}
-				onNotify={(entry) =>
+				onNotify={(entry) => {
+					const who = entry.firstName || entry.displayName
 					void act(
 						() => api.notifyWaitlist(entry.id, entry.version),
-						_(msg`${entry.displayName} has been texted.`),
+						_(msg`Texted ${who}: your table is ready.`),
 					)
-				}
+				}}
 				onRemove={(entry) =>
 					void act(
 						() => api.leaveWaitlist(entry.id, entry.version),
@@ -1186,6 +1320,10 @@ export function HostStand({
 				onFinish={(r) => {
 					setTableTargetId(null)
 					void onCommand(r, { kind: 'status', to: 'finished' })
+				}}
+				onSeatHeld={(table, r) => {
+					setTableTargetId(null)
+					seatBooking(r, table)
 				}}
 				onWalkIn={(table, size) => {
 					setTableTargetId(null)
@@ -1214,6 +1352,7 @@ export function HostStand({
 					const r = feed.reservations.find((x) => x.id === changeId)
 					if (!r) return
 					const who = shortName(r, _(msg`Guest`))
+					selfChanged.current.add(r.id)
 					const size = change.partySize ?? r.partySize
 					const time = change.timeLabel ?? formatTime(r.startAt)
 					const done = _(msg`${who} is now ${size} at ${time}.`)
@@ -1268,6 +1407,13 @@ export function HostStand({
 				today={ready.today}
 				prefill={bookingPrefill}
 				loadSlots={api.availability}
+				repeatOf={repeatOf}
+				onOpenRepeat={(repeat) => {
+					setBookingOpen(false)
+					if (repeat.kind === 'booking') setPartyId(repeat.reservation.id)
+					else setWaitlistId(repeat.entry.id)
+				}}
+				formatTime={formatTime}
 				onClose={() => setBookingOpen(false)}
 				onBook={(input) => {
 					const first = input.firstName
@@ -1285,9 +1431,21 @@ export function HostStand({
 								}).format(new Date(`${input.date}T12:00:00Z`))
 					void act(
 						() => keyed(bookingKey, (key) => api.book(input, key)),
-						day
-							? _(msg`Booked ${first} for ${size} on ${day} at ${time}.`)
-							: _(msg`Booked ${first} for ${size} at ${time}.`),
+						(result) => {
+							// The table is said only when the answer names one.
+							const table = bookingAnswerOf(result, feed.tables).table
+							return day
+								? table
+									? _(
+											msg`Booked ${first} for ${size} on ${day} at ${time}, table ${table}.`,
+										)
+									: _(msg`Booked ${first} for ${size} on ${day} at ${time}.`)
+								: table
+									? _(
+											msg`Booked ${first} for ${size} at ${time}, table ${table}.`,
+										)
+									: _(msg`Booked ${first} for ${size} at ${time}.`)
+						},
 						{
 							// The sheet turns into the read-back at once: nothing to tap twice.
 							onSuccess: (result) => {
@@ -1300,17 +1458,22 @@ export function HostStand({
 										partySize: 0,
 										when: '',
 										code: null,
+										table: null,
+										textSent: false,
 										asFirstSent: true,
 									})
 									return
 								}
+								const answer = bookingAnswerOf(result, feed.tables)
 								setReadBack({
 									name: [first, input.lastName].join(' ').trim(),
 									partySize: size,
 									when: day
 										? _(msg`${day} at ${time}`)
 										: _(msg`Today at ${time}`),
-									code: confirmationCodeOf(result),
+									code: answer.code,
+									table: answer.table,
+									textSent: answer.textSent,
 								})
 							},
 							onUnsure: () => setBookingLocked(true),
@@ -1322,6 +1485,7 @@ export function HostStand({
 			<JoinWaitlistSheet
 				open={joinOpen}
 				busy={busy}
+				prefill={joinPrefill}
 				loadQuote={api.waitlistQuote}
 				onClose={() => setJoinOpen(false)}
 				onJoin={(input) =>
@@ -1404,17 +1568,6 @@ function refusalMessage(failure: HostApiError | null): MessageDescriptor {
 		default:
 			return msg`That did not go through. Try again.`
 	}
-}
-
-/** The code a booking's answer carries, to read back to the caller. */
-function confirmationCodeOf(result: unknown): string | null {
-	const reservation = (
-		result as { reservation?: { confirmationCode?: unknown } }
-	)?.reservation
-	return typeof reservation?.confirmationCode === 'string' &&
-		reservation.confirmationCode
-		? reservation.confirmationCode
-		: null
 }
 
 /** Why the host stand cannot open, and the one thing that fixes it. */

@@ -11,6 +11,7 @@ import {
 	type DayReservation,
 	type DayService,
 } from './feed.ts'
+import { isGuestChannel } from './guest.ts'
 
 /**
  * What the host stand's list and header say about the day: which parties are
@@ -324,26 +325,103 @@ export function dayTotals(input: {
 	}
 }
 
-/** Every booking's status by id: what to compare the next look at the day against. */
-export const statusMap = (feed: Pick<DayFeed, 'reservations'>) =>
-	new Map(feed.reservations.map((r) => [r.id, r.status]))
+/** What the stand knew of each booking at one look: to compare the next look with. */
+export type DaySnapshot = ReadonlyMap<
+	string,
+	{ status: string; partySize: number }
+>
+
+export const daySnapshot = (feed: Pick<DayFeed, 'reservations'>): DaySnapshot =>
+	new Map(
+		feed.reservations.map((r) => [
+			r.id,
+			{ status: r.status, partySize: r.partySize },
+		]),
+	)
+
+/** Where a party is before it has turned up: only a step from one of these is an arrival. */
+const PRE_ARRIVAL = new Set([
+	'booked',
+	'confirmed',
+	'requested',
+	'pending_payment',
+])
 
 /**
- * Parties that have turned up since `before` (an earlier `statusMap`): at the
- * stand now, known and not there before, and not marked here by this tablet
- * (which says so itself). Nothing on the first look at a day.
+ * Parties that have turned up since `before` (an earlier snapshot): at the
+ * stand now, and expected at the last look (booked, confirmed, requested or
+ * awaiting payment), and not marked here by this tablet (which says so
+ * itself). Undoing a seating also leaves a party "arrived", but from seated:
+ * that is not an arrival. Nothing on the first look at a day.
  */
 export function newArrivals(
-	before: ReadonlyMap<string, string> | null,
+	before: DaySnapshot | null,
 	feed: Pick<DayFeed, 'reservations'>,
 	markedHere: ReadonlySet<string> = new Set(),
 ): DayReservation[] {
 	if (!before) return []
-	return feed.reservations.filter(
-		(r) =>
+	return feed.reservations.filter((r) => {
+		const was = before.get(r.id)?.status
+		return (
 			r.status === 'arrived' &&
-			before.has(r.id) &&
-			before.get(r.id) !== 'arrived' &&
-			!markedHere.has(r.id),
-	)
+			was !== undefined &&
+			PRE_ARRIVAL.has(was) &&
+			!markedHere.has(r.id)
+		)
+	})
+}
+
+export type DayNotice =
+	| { kind: 'online'; reservation: DayReservation }
+	| { kind: 'cancelled'; reservation: DayReservation }
+	| { kind: 'size'; reservation: DayReservation; from: number }
+
+/** A booking made this recently is "new": an older one that merely appears was moved onto the day. */
+export const NEW_BOOKING_WINDOW_MS = 30 * 60_000
+
+/** Steps a booking takes while it still holds a table (not over, not cancelled). */
+const STANDING = new Set([
+	'requested',
+	'pending_payment',
+	'booked',
+	'confirmed',
+	'partially_arrived',
+	'arrived',
+])
+
+/**
+ * What changed in the book since the last look, for a quiet word at the stand:
+ * a booking a guest made online or in an app, one that was cancelled, a party
+ * size that changed. Not what this tablet did itself (`byUs`), and nothing on
+ * the first look at a day. Arrivals are `newArrivals`.
+ */
+export function dayNotices(
+	before: DaySnapshot | null,
+	feed: Pick<DayFeed, 'reservations'>,
+	options: { now: number; byUs?: ReadonlySet<string> },
+): DayNotice[] {
+	if (!before) return []
+	const byUs = options.byUs ?? new Set<string>()
+	const notices: DayNotice[] = []
+	for (const r of feed.reservations) {
+		if (byUs.has(r.id)) continue
+		const was = before.get(r.id)
+		if (!was) {
+			const recent =
+				typeof r.createdAt !== 'number' ||
+				options.now - r.createdAt <= NEW_BOOKING_WINDOW_MS
+			if (isGuestChannel(r.channel) && STANDING.has(r.status) && recent)
+				notices.push({ kind: 'online', reservation: r })
+			continue
+		}
+		if (r.status === 'cancelled' && STANDING.has(was.status))
+			notices.push({ kind: 'cancelled', reservation: r })
+		else if (
+			STANDING.has(r.status) &&
+			STANDING.has(was.status) &&
+			was.partySize !== r.partySize
+		)
+			notices.push({ kind: 'size', reservation: r, from: was.partySize })
+	}
+	return notices
 }

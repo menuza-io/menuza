@@ -2,14 +2,18 @@ import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type WaitlistEntry } from '@repo/reservations'
 import {
+	BadgeCheck,
 	BellRing,
 	Cake,
+	CalendarPlus,
 	ChevronDown,
 	Clock3,
 	CreditCard,
 	Crown,
+	Globe,
 	Info,
 	Search,
+	Smartphone,
 	StickyNote,
 	TriangleAlert,
 	UserX,
@@ -25,9 +29,12 @@ import {
 	shortName,
 	type DayReservation,
 } from './feed.ts'
+import { depositState, hasAnyAllergy } from './guest.ts'
+import { highlightRanges } from './lookup.ts'
 import { placingKey, type Placing } from './placing.ts'
+import { joinedOnline, minutesWaited, textedState } from './waitlist.ts'
 import { SoftText } from '~/ui/motion.tsx'
-import { cn, fieldClass, IconButton, Reveal } from '~/ui/primitives.tsx'
+import { Button, cn, fieldClass, IconButton, Reveal } from '~/ui/primitives.tsx'
 
 type SectionId =
 	'waitlist' | 'toSeat' | 'awaiting' | 'seated' | 'missed' | 'finished'
@@ -49,10 +56,13 @@ export function BookPanel({
 	isToday,
 	waitlistOn,
 	single,
+	fresh,
 	onPick,
 	onDetails,
 	onWaitlistDetails,
 	onAddWaitlist,
+	onBookFor,
+	onWaitlistFor,
 	onClose,
 }: {
 	list: BookList
@@ -66,10 +76,16 @@ export function BookPanel({
 	waitlistOn: boolean
 	/** The panel is the whole screen (a phone's List tab). */
 	single: boolean
+	/** Bookings that came in while the host was looking and have not been opened since: they carry a dot. */
+	fresh: ReadonlySet<string>
 	onPick: (placing: Placing | null) => void
 	onDetails: (reservation: DayReservation) => void
 	onWaitlistDetails: (entry: WaitlistEntry) => void
 	onAddWaitlist: () => void
+	/** A search found no one: book what was typed (a name, or a number). */
+	onBookFor: (typed: string) => void
+	/** The same, onto the waitlist. */
+	onWaitlistFor: (typed: string) => void
 	/** The panel is a drawer over the floor (a narrow tablet): how to put it away. */
 	onClose?: () => void
 }) {
@@ -153,11 +169,43 @@ export function BookPanel({
 						: ''}
 				</p>
 				{searching && nothing ? (
-					<p className="text-muted-foreground p-6 text-center">
-						<Trans>
-							No one matches “<bdi>{typed}</bdi>”.
-						</Trans>
-					</p>
+					<div className="flex flex-col items-center gap-3 p-6 text-center">
+						<p className="text-muted-foreground">
+							<Trans>
+								No one matches “<bdi>{typed}</bdi>”.
+							</Trans>
+						</p>
+						<div className="flex w-full max-w-xs flex-col gap-2">
+							<Button
+								variant="primary"
+								size="lg"
+								className="h-auto min-h-14 py-2 leading-tight"
+								onClick={() => onBookFor(typed)}
+							>
+								<CalendarPlus aria-hidden className="size-5 shrink-0" />
+								<span className="min-w-0 truncate">
+									<Trans>
+										Book “<bdi>{typed}</bdi>”
+									</Trans>
+								</span>
+							</Button>
+							{waitlistOn && isToday ? (
+								<Button
+									variant="outline"
+									size="lg"
+									className="h-auto min-h-14 py-2 leading-tight"
+									onClick={() => onWaitlistFor(typed)}
+								>
+									<Users aria-hidden className="size-5 shrink-0" />
+									<span className="min-w-0 truncate">
+										<Trans>
+											Add “<bdi>{typed}</bdi>” to the waitlist
+										</Trans>
+									</span>
+								</Button>
+							) : null}
+						</div>
+					</div>
 				) : null}
 
 				{waitlistOn && isToday && show(list.waitlist.length) ? (
@@ -191,6 +239,8 @@ export function BookPanel({
 										entry={entry}
 										index={index}
 										now={now}
+										query={typed}
+										formatTime={formatTime}
 										selected={selected === `w:${entry.id}`}
 										onPick={() =>
 											onPick(
@@ -236,6 +286,8 @@ export function BookPanel({
 										reservation={reservation}
 										index={index}
 										now={now}
+										query={typed}
+										fresh={fresh.has(reservation.id)}
 										formatTime={formatTime}
 										mode="toSeat"
 										canPick={isToday}
@@ -271,6 +323,8 @@ export function BookPanel({
 									reservation={reservation}
 									index={index}
 									now={now}
+									query={typed}
+									fresh={fresh.has(reservation.id)}
 									formatTime={formatTime}
 									mode="awaiting"
 									canPick={false}
@@ -304,6 +358,8 @@ export function BookPanel({
 										reservation={reservation}
 										index={index}
 										now={now}
+										query={typed}
+										fresh={fresh.has(reservation.id)}
 										formatTime={formatTime}
 										mode="seated"
 										canPick={false}
@@ -332,6 +388,8 @@ export function BookPanel({
 									reservation={reservation}
 									index={index}
 									now={now}
+									query={typed}
+									fresh={fresh.has(reservation.id)}
 									formatTime={formatTime}
 									mode="missed"
 									canPick={false}
@@ -359,6 +417,8 @@ export function BookPanel({
 									reservation={reservation}
 									index={index}
 									now={now}
+									query={typed}
+									fresh={fresh.has(reservation.id)}
 									formatTime={formatTime}
 									mode="finished"
 									canPick={false}
@@ -473,6 +533,25 @@ function Stacked({ text, className }: { text: string; className?: string }) {
 	)
 }
 
+/** A name with the typed words marked (accents and case ignored, as the search is). */
+function Highlight({ text, query }: { text: string; query: string }) {
+	const ranges = highlightRanges(text, query)
+	if (ranges.length === 0) return <>{text}</>
+	const parts: ReactNode[] = []
+	let at = 0
+	ranges.forEach(([from, to], i) => {
+		if (from > at) parts.push(text.slice(at, from))
+		parts.push(
+			<mark key={i} className="bk-hit">
+				{text.slice(from, to)}
+			</mark>,
+		)
+		at = to
+	})
+	if (at < text.length) parts.push(text.slice(at))
+	return <>{parts}</>
+}
+
 /** A small icon that says what it means to a screen reader too. */
 function Mark({
 	icon: Icon,
@@ -495,6 +574,8 @@ function ReservationRow({
 	reservation: r,
 	index,
 	now,
+	query,
+	fresh,
 	formatTime,
 	mode,
 	canPick,
@@ -505,6 +586,10 @@ function ReservationRow({
 	reservation: DayReservation
 	index: number
 	now: number
+	/** What is typed in the search: marked in the name. */
+	query: string
+	/** Came in since the host last looked, and not opened yet: a dot. */
+	fresh: boolean
 	formatTime: (epochMs: number) => string
 	mode: 'toSeat' | 'awaiting' | 'seated' | 'missed' | 'finished'
 	canPick: boolean
@@ -527,6 +612,13 @@ function ReservationRow({
 			: null
 	const tables = r.tableLabels.join(' + ')
 	const marked = r.status === 'no_show'
+	const deposit = depositState(r)
+	const source =
+		r.channel === 'online'
+			? 'online'
+			: r.channel === 'native' || r.channel === 'voice_agent'
+				? 'app'
+				: null
 
 	let line: ReactNode
 	if (mode === 'seated' && seatedFor !== null)
@@ -629,8 +721,17 @@ function ReservationRow({
 				/>
 				<span className="min-w-0 py-2">
 					<span className="flex min-w-0 items-center gap-1.5">
-						<bdi className="truncate font-semibold">{who}</bdi>
-						{r.hasAllergy ? (
+						{fresh ? (
+							<span className="bk-new" title={_(msg`New`)}>
+								<span className="sr-only">
+									<Trans>New</Trans>
+								</span>
+							</span>
+						) : null}
+						<bdi className="truncate font-semibold">
+							<Highlight text={who} query={query} />
+						</bdi>
+						{hasAnyAllergy(r) ? (
 							<Mark
 								icon={TriangleAlert}
 								label={_(msg`Allergy noted`)}
@@ -652,6 +753,24 @@ function ReservationRow({
 								icon={StickyNote}
 								label={_(msg`Has notes`)}
 								className="text-muted-foreground"
+							/>
+						) : null}
+						{source && mode !== 'finished' && mode !== 'missed' ? (
+							<Mark
+								icon={source === 'online' ? Globe : Smartphone}
+								label={
+									source === 'online'
+										? _(msg`Booked online`)
+										: _(msg`Booked in the app`)
+								}
+								className="text-muted-foreground"
+							/>
+						) : null}
+						{deposit === 'paid' && mode !== 'finished' && mode !== 'missed' ? (
+							<Mark
+								icon={BadgeCheck}
+								label={_(msg`Deposit paid`)}
+								className="text-success"
 							/>
 						) : null}
 						{status.said > 0 && mode === 'toSeat' && status.kind !== 'here' ? (
@@ -712,6 +831,8 @@ function WaitlistRow({
 	entry,
 	index,
 	now,
+	query,
+	formatTime,
 	selected,
 	onPick,
 	onDetails,
@@ -719,20 +840,32 @@ function WaitlistRow({
 	entry: WaitlistEntry
 	index: number
 	now: number
+	query: string
+	formatTime: (epochMs: number) => string
 	selected: boolean
 	onPick: () => void
 	onDetails: () => void
 }) {
 	const { _ } = useLingui()
-	const waited = Math.max(0, Math.floor((now - entry.joinedAt) / 60_000))
+	const waited = minutesWaited(entry, now)
 	const quoted = entry.quotedMin
+	const texted = textedState(entry, now)
 	const over = quoted !== null && waited > quoted
 	const name = entry.firstName || entry.displayName
+	const heldFor = texted?.minutesLeft ?? 0
+	const textedAt = texted ? formatTime(texted.notifiedAt) : ''
+	const online = joinedOnline(entry)
 	return (
 		<li
 			className="bk-row"
 			data-tone={
-				entry.status === 'notified' ? 'here' : over ? 'late' : 'booked'
+				texted?.urgent
+					? 'late'
+					: entry.status === 'notified'
+						? 'here'
+						: over
+							? 'late'
+							: 'booked'
 			}
 			data-selected={selected}
 			style={{ '--bk-i': index } as React.CSSProperties}
@@ -745,17 +878,26 @@ function WaitlistRow({
 			>
 				<span className="bk-stripe" aria-hidden />
 				<Stacked
-					text={_(msg`${waited} min`)}
+					text={_(plural(waited, { one: '# min', other: '# min' }))}
 					className={over ? 'text-warning' : undefined}
 				/>
 				<span className="min-w-0 py-2">
 					<span className="flex min-w-0 items-center gap-1.5">
-						<bdi className="truncate font-semibold">{name}</bdi>
+						<bdi className="truncate font-semibold">
+							<Highlight text={name} query={query} />
+						</bdi>
+						{online ? (
+							<Mark
+								icon={Smartphone}
+								label={_(msg`Joined online`)}
+								className="text-primary"
+							/>
+						) : null}
 						{entry.status === 'notified' ? (
 							<Mark
 								icon={BellRing}
 								label={_(msg`Told their table is ready`)}
-								className="text-success"
+								className={texted?.urgent ? 'text-warning' : 'text-success'}
 							/>
 						) : null}
 						{entry.notes ? (
@@ -775,9 +917,32 @@ function WaitlistRow({
 							</span>
 						</span>
 						<span aria-hidden>·</span>
-						<span className="truncate">
-							{quoted !== null ? (
-								<Trans>Quoted {quoted} min</Trans>
+						<span
+							className={cn(
+								'truncate',
+								texted?.urgent && 'text-warning font-semibold',
+							)}
+						>
+							{texted ? (
+								texted.expired ? (
+									<Trans>Texted, no response</Trans>
+								) : texted.minutesLeft !== null ? (
+									_(
+										plural(heldFor, {
+											one: 'Texted, holds # min',
+											other: 'Texted, holds # min',
+										}),
+									)
+								) : (
+									<Trans>Texted {textedAt}</Trans>
+								)
+							) : quoted !== null ? (
+								_(
+									plural(quoted, {
+										one: 'Quoted # min',
+										other: 'Quoted # min',
+									}),
+								)
 							) : (
 								<Trans>No quote</Trans>
 							)}

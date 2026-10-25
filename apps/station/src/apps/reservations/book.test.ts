@@ -11,7 +11,8 @@ import {
 	normalize,
 	partyStatus,
 	serviceOf,
-	statusMap,
+	dayNotices,
+	daySnapshot,
 } from './book.ts'
 import { at, day, entry, MIN, rsv, SERVICES } from './testing.ts'
 
@@ -381,16 +382,137 @@ describe('arrivals', () => {
 	])
 	it('are the parties that came to the stand since the last look', () => {
 		const ids = (list: Array<{ id: string }>) => list.map((r) => r.id)
-		expect(ids(newArrivals(statusMap(before), later))).toEqual(['a', 'b'])
+		expect(ids(newArrivals(daySnapshot(before), later))).toEqual(['a', 'b'])
 	})
 	it('leave out ones this tablet marked itself, and a first look at the day', () => {
 		expect(
-			newArrivals(statusMap(before), later, new Set(['a'])).map((r) => r.id),
+			newArrivals(daySnapshot(before), later, new Set(['a'])).map((r) => r.id),
 		).toEqual(['b'])
 		expect(newArrivals(null, later)).toEqual([])
 		// A booking made after the last look walks in already at the stand: not "arrived".
 		expect(
-			newArrivals(statusMap(before), later).some((r) => r.id === 'd'),
+			newArrivals(daySnapshot(before), later).some((r) => r.id === 'd'),
 		).toBe(false)
+	})
+})
+
+describe('an undo is not an arrival', () => {
+	it('does not count a seating put back as someone arriving', () => {
+		const before = day([rsv({ id: 's', start: 720, status: 'seated' })])
+		const later = day([rsv({ id: 's', start: 720, status: 'arrived' })])
+		expect(newArrivals(daySnapshot(before), later)).toEqual([])
+	})
+	it('does not count a no-show put right, or a party seated and then here', () => {
+		const before = day([
+			rsv({ id: 'n', start: 720, status: 'no_show' }),
+			rsv({ id: 'p', start: 730, status: 'partially_seated' }),
+		])
+		const later = day([
+			rsv({ id: 'n', start: 720, status: 'arrived' }),
+			rsv({ id: 'p', start: 730, status: 'arrived' }),
+		])
+		expect(newArrivals(daySnapshot(before), later)).toEqual([])
+	})
+	it('counts a booking awaiting payment, or a request, that turns up', () => {
+		const before = day([
+			rsv({ id: 'a', start: 720, status: 'pending_payment' }),
+			rsv({ id: 'b', start: 730, status: 'requested' }),
+		])
+		const later = day([
+			rsv({ id: 'a', start: 720, status: 'arrived' }),
+			rsv({ id: 'b', start: 730, status: 'arrived' }),
+		])
+		expect(newArrivals(daySnapshot(before), later).map((r) => r.id)).toEqual([
+			'a',
+			'b',
+		])
+	})
+})
+
+describe('what changed in the book', () => {
+	const NOW = at(13 * 60)
+	const kinds = (
+		before: ReturnType<typeof daySnapshot> | null,
+		feed: ReturnType<typeof day>,
+		byUs?: Set<string>,
+	) =>
+		dayNotices(before, feed, { now: NOW, byUs }).map((n) => [
+			n.kind,
+			n.reservation.id,
+		])
+	const existing = day([
+		rsv({ id: 'x', start: 1200, status: 'booked', partySize: 2 }),
+		rsv({ id: 'y', start: 1230, status: 'confirmed', partySize: 4 }),
+	])
+
+	it('says nothing on the first look at a day', () => {
+		expect(kinds(null, existing)).toEqual([])
+	})
+
+	it('announces a booking a guest made online or in an app, once it is new', () => {
+		const later = day([
+			...existing.reservations,
+			rsv({ id: 'o', start: 1260, channel: 'online', createdAt: NOW - 60_000 }),
+			rsv({ id: 'a', start: 1290, channel: 'native', createdAt: NOW - 60_000 }),
+			// Made by staff: the stand knows about its own.
+			rsv({ id: 'p', start: 1320, channel: 'phone', createdAt: NOW - 60_000 }),
+			rsv({ id: 'h', start: 1350, channel: 'host', createdAt: NOW - 60_000 }),
+		])
+		expect(kinds(daySnapshot(existing), later)).toEqual([
+			['online', 'o'],
+			['online', 'a'],
+		])
+	})
+
+	it('does not call an old booking new because it moved onto this day', () => {
+		const later = day([
+			...existing.reservations,
+			rsv({
+				id: 'm',
+				start: 1260,
+				channel: 'online',
+				createdAt: NOW - 3 * 3600_000,
+			}),
+			rsv({
+				id: 'z',
+				start: 1290,
+				channel: 'online',
+				status: 'cancelled',
+				createdAt: NOW,
+			}),
+		])
+		expect(kinds(daySnapshot(existing), later)).toEqual([])
+		// A booking with no creation time yet is taken as new.
+		const unknown = day([
+			...existing.reservations,
+			rsv({ id: 'u', start: 1260, channel: 'online' }),
+		])
+		expect(kinds(daySnapshot(existing), unknown)).toEqual([['online', 'u']])
+	})
+
+	it('announces a cancelled booking, and a party size that changed', () => {
+		const later = day([
+			rsv({ id: 'x', start: 1200, status: 'cancelled', partySize: 2 }),
+			rsv({ id: 'y', start: 1230, status: 'confirmed', partySize: 6 }),
+		])
+		const notices = dayNotices(daySnapshot(existing), later, { now: NOW })
+		expect(notices.map((n) => n.kind)).toEqual(['cancelled', 'size'])
+		expect(notices[1]).toMatchObject({ kind: 'size', from: 4 })
+	})
+
+	it('leaves out what this tablet did itself, and what was never standing', () => {
+		const later = day([
+			rsv({ id: 'x', start: 1200, status: 'cancelled', partySize: 2 }),
+			rsv({ id: 'y', start: 1230, status: 'confirmed', partySize: 6 }),
+		])
+		expect(kinds(daySnapshot(existing), later, new Set(['x', 'y']))).toEqual([])
+		// A party that finished and is edited later is no news at the stand.
+		const done = day([
+			rsv({ id: 'f', start: 700, status: 'finished', partySize: 2 }),
+		])
+		const edited = day([
+			rsv({ id: 'f', start: 700, status: 'finished', partySize: 3 }),
+		])
+		expect(kinds(daySnapshot(done), edited)).toEqual([])
 	})
 })

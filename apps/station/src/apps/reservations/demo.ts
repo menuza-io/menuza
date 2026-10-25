@@ -176,6 +176,20 @@ type Seed = {
 	channel?: string
 	visits?: number
 	noShows?: number
+	/** Guest tags by name (a tag named VIP is the VIP tag). */
+	tags?: string[]
+	/** Coded dietary values: an allergy said without any free text. */
+	codes?: string[]
+	/** `pending` (deposit awaited), `paid`, `guaranteed`, or none. */
+	payment?: string
+	/** Minutes before "now" the booking was made (default: a few days ago). */
+	madeAgo?: number
+	client?: string
+	lateCancels?: number
+	/** Days before today of the guest's last visit. */
+	lastVisitDays?: number
+	/** Notes the restaurant pinned to the guest (shown only with the guest grant). */
+	pinned?: string[]
 }
 
 /**
@@ -248,7 +262,11 @@ const TODAY_SEEDS: Seed[] = [
 		party: 2,
 		status: 'no_show',
 		tables: ['t6'],
-		noShows: 1,
+		// A guest with a record: three visits, two no-shows, a late cancel.
+		visits: 3,
+		noShows: 2,
+		lateCancels: 1,
+		lastVisitDays: 40,
 	},
 	// Booked and late: nobody has heard from them.
 	{
@@ -271,6 +289,11 @@ const TODAY_SEEDS: Seed[] = [
 		allergy: 'Shellfish',
 		vip: true,
 		visits: 9,
+		channel: 'online',
+		client: 'web',
+		payment: 'paid',
+		madeAgo: 60 * 24 * 6,
+		lastVisitDays: 21,
 	},
 	// Running late: they called.
 	{
@@ -320,6 +343,59 @@ const TODAY_SEEDS: Seed[] = [
 		tables: ['p5'],
 		vip: true,
 		visits: 15,
+		lastVisitDays: 9,
+		pinned: ['Prefers the corner table, no bread basket'],
+	},
+	// A tag-rich regular: three tags, nine visits.
+	{
+		offset: 75,
+		name: ['Giulia', 'Romano'],
+		phone: '+14155550116',
+		party: 2,
+		status: 'confirmed',
+		tables: ['t4'],
+		tags: ['VIP', 'Wine lover', 'Friend of chef'],
+		visits: 9,
+		lastVisitDays: 18,
+		madeAgo: 60 * 24 * 12,
+	},
+	// Booked online a few minutes ago, with the deposit paid.
+	{
+		offset: 105,
+		name: ['Nadia', 'Farouk'],
+		phone: '+14155550117',
+		party: 4,
+		status: 'booked',
+		tables: ['t9'],
+		channel: 'online',
+		client: 'ios',
+		payment: 'paid',
+		madeAgo: 4,
+	},
+	// Held until the deposit is paid.
+	{
+		offset: 90,
+		name: ['Dalia', 'Mourad'],
+		phone: '+14155550118',
+		party: 6,
+		status: 'pending_payment',
+		tables: [],
+		channel: 'online',
+		client: 'web',
+		payment: 'pending',
+		madeAgo: 40,
+	},
+	// An allergy told in codes only: no free text to read, whoever is signed in.
+	{
+		offset: 135,
+		name: ['Hannah', 'Berg'],
+		phone: '+14155550119',
+		party: 3,
+		status: 'booked',
+		tables: ['t5'],
+		codes: ['shellfish_allergy', 'nut_allergy', 'gluten_free'],
+		visits: 2,
+		lastVisitDays: 30,
 	},
 	{
 		offset: 120,
@@ -364,7 +440,21 @@ const OTHER_DAY: Array<{ min: number; name: [string, string]; party: number }> =
 		{ min: 20 * 60 + 30, name: ['Kenji', 'Mori'], party: 3 },
 	]
 
-const WAITLIST_SEEDS = [
+type WaitlistSeed = {
+	name: readonly [string, string]
+	phone: string | null
+	party: number
+	quoted: number
+	joinedAgo: number
+	/** Joined through the restaurant's own page, not at the stand. */
+	online?: boolean
+	/** No consent to be texted. */
+	noConsent?: boolean
+	/** Already told their table is ready: minutes ago, and minutes until the hold ends. */
+	told?: { agoMin: number; holdsMin: number }
+}
+
+const WAITLIST_SEEDS: WaitlistSeed[] = [
 	{
 		name: ['Jamal', 'Hussein'] as const,
 		phone: '+14155550132',
@@ -385,6 +475,33 @@ const WAITLIST_SEEDS = [
 		party: 3,
 		quoted: 25,
 		joinedAgo: 3,
+	},
+	// Told their table is ready: the hold runs down.
+	{
+		name: ['Amira', 'Saad'] as const,
+		phone: '+14155550141',
+		party: 2,
+		quoted: 15,
+		joinedAgo: 22,
+		told: { agoMin: 4, holdsMin: 6 },
+	},
+	// Joined online, from the restaurant's page.
+	{
+		name: ['Theo', 'Laurent'] as const,
+		phone: '+14155550142',
+		party: 3,
+		quoted: 20,
+		joinedAgo: 6,
+		online: true,
+	},
+	// A number, but no consent to text it.
+	{
+		name: ['Bilal', 'Qureshi'] as const,
+		phone: '+14155550143',
+		party: 2,
+		quoted: 15,
+		joinedAgo: 11,
+		noConsent: true,
 	},
 ]
 
@@ -460,6 +577,14 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		durationMin?: number
 		visits?: number
 		noShows?: number
+		tags?: string[]
+		codes?: string[]
+		payment?: string
+		madeAgo?: number
+		client?: string
+		lateCancels?: number
+		lastVisitDays?: number
+		pinned?: string[]
 		arrivedAt?: number | null
 		seatedAt?: number | null
 		finishedAt?: number | null
@@ -469,6 +594,12 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		const startAt = at(input.date, input.startMin)
 		const [first, last] = input.name ?? ['', '']
 		const id = nextId('rsv')
+		const now = clock()
+		const codes = input.codes ?? []
+		// The server marks any dietary value as an allergy flag.
+		const flagged = Boolean(input.allergy) || codes.length > 0
+		const tagNames = [...(input.vip ? ['VIP'] : []), ...(input.tags ?? [])]
+		const uniqueTags = [...new Set(tagNames)]
 		return reservationSchema.parse({
 			id,
 			version: 1,
@@ -476,6 +607,10 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			businessDate: input.date,
 			status: input.status,
 			channel: input.channel ?? 'phone',
+			client: input.client ?? (input.channel === 'online' ? 'web' : 'operator'),
+			createdAt: now - (input.madeAgo ?? 60 * 24 * 3) * MIN,
+			paymentStatus: input.payment ?? 'none',
+			dietaryCodes: codes,
 			partySize: input.party,
 			localStartMin: input.startMin,
 			time: clockLabel(input.startMin),
@@ -489,8 +624,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			occasion: input.occasion ?? null,
 			staffNotes: input.staffNotes ?? null,
 			guestRequests: input.requests ?? null,
-			dietaryNotes: input.allergy ?? null,
-			hasAllergy: Boolean(input.allergy),
+			dietaryNotes:
+				input.allergy ?? (codes.length > 0 ? codes.join(', ') : null),
+			hasAllergy: flagged,
 			arrivedAt: input.arrivedAt ?? null,
 			seatedAt: input.seatedAt ?? null,
 			finishedAt: input.finishedAt ?? null,
@@ -503,10 +639,22 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 						lastName: last,
 						phone: input.phone ?? null,
 						allergyNotes: input.allergy ?? null,
-						hasAllergy: Boolean(input.allergy),
+						hasAllergy: flagged,
 						visits: input.visits ?? 0,
 						noShows: input.noShows ?? 0,
-						tags: input.vip ? [{ id: 'tag_vip', name: 'VIP' }] : [],
+						lateCancels: input.lateCancels ?? 0,
+						lastVisitAt:
+							input.lastVisitDays !== undefined
+								? now - input.lastVisitDays * 24 * 60 * MIN
+								: null,
+						tags: uniqueTags.map((name) => ({
+							id: `tag_${name.toLowerCase().replace(/\W+/g, '_')}`,
+							name,
+						})),
+						pinnedNotes: (input.pinned ?? []).map((body, index) => ({
+							id: `note_${index}`,
+							body,
+						})),
 					}
 				: null,
 		})
@@ -585,6 +733,14 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					channel: seed.channel,
 					visits: seed.visits,
 					noShows: seed.noShows,
+					tags: seed.tags,
+					codes: seed.codes,
+					payment: seed.payment,
+					madeAgo: seed.madeAgo,
+					client: seed.client,
+					lateCancels: seed.lateCancels,
+					lastVisitDays: seed.lastVisitDays,
+					pinned: seed.pinned,
 					arrivedAt:
 						seed.status === 'arrived'
 							? past(now - 7 * MIN)
@@ -727,6 +883,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		phone: string | null
 		quoted: number
 		joinedAt: number
+		online?: boolean
+		noConsent?: boolean
+		told?: { notifiedAt: number; deadlineAt: number }
 	}): WaitlistEntry {
 		const [first = '', ...rest] = input.displayName.trim().split(/\s+/)
 		waitlistSort += 1
@@ -742,16 +901,16 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			email: null,
 			partySize: input.party,
 			areaPrefId: null,
-			channel: 'walk_in',
-			status: 'waiting',
+			channel: input.online ? 'remote' : 'walk_in',
+			status: input.told ? 'notified' : 'waiting',
 			quotedMin: input.quoted,
 			quotedReadyAt: input.joinedAt + input.quoted * MIN,
-			notifiedAt: null,
-			responseDeadlineAt: null,
+			notifiedAt: input.told?.notifiedAt ?? null,
+			responseDeadlineAt: input.told?.deadlineAt ?? null,
 			reservationId: null,
 			sortKey: waitlistSort,
 			notes: null,
-			smsOptIn: Boolean(input.phone),
+			smsOptIn: Boolean(input.phone) && !input.noConsent,
 			locale: null,
 			version: 1,
 			joinedAt: input.joinedAt,
@@ -767,6 +926,14 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 				phone: seed.phone,
 				quoted: seed.quoted,
 				joinedAt: clock() - seed.joinedAgo * MIN,
+				online: seed.online,
+				noConsent: seed.noConsent,
+				told: seed.told
+					? {
+							notifiedAt: clock() - seed.told.agoMin * MIN,
+							deadlineAt: clock() + seed.told.holdsMin * MIN,
+						}
+					: undefined,
 			}),
 		)
 	const entryOf = (id: string) => {
@@ -841,6 +1008,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			name: input.name?.trim() ? [first, rest.join(' ')] : null,
 			channel: input.channel,
 			durationMin: DEFAULT_TURN_MIN,
+			madeAgo: 0,
 			arrivedAt: now,
 			seatedAt: now,
 		})
@@ -1267,6 +1435,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					staffNotes: input.notes,
 					channel: 'host',
 					durationMin: duration,
+					madeAgo: 0,
 				})
 				day.reservations.push(reservation)
 				touch(day)
@@ -1298,6 +1467,10 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			const entry = entryOf(entryId)
 			if (entry.version !== expectedVersion) throw refuse(409, 'stale_version')
 			if (!entry.phone) throw refuse(409, 'no_phone')
+			// Texting needs their consent, and only a party still waiting is told.
+			if (!entry.smsOptIn) throw refuse(409, 'no_sms_consent')
+			if (entry.status !== 'waiting')
+				throw refuse(409, 'invalid_status_transition')
 			return {
 				entry: updateEntry(entryId, {
 					status: 'notified',
@@ -1336,7 +1509,73 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			return { entry: updateEntry(entryId, { status: 'left' }) }
 		},
 	}
-	return api
+
+	/**
+	 * What other people do while the host looks: a guest books online, cancels,
+	 * changes the size, another host marks a party here. For trying how the stand
+	 * tells the host (and for tests); nothing in the stand itself calls these.
+	 */
+	const controls: DemoControls = {
+		bookOnline(input) {
+			const startMin = input.startMin ?? baseMin + 150
+			const party = input.party ?? 4
+			const startAt = at(seedDate, startMin)
+			const duration = party >= 6 ? 120 : DEFAULT_TURN_MIN
+			const table = suggest(
+				dayOf(seedDate),
+				party,
+				startAt,
+				startAt + duration * MIN,
+			)
+			const reservation = makeReservation({
+				date: seedDate,
+				startMin,
+				party,
+				status: 'booked',
+				tables: table ? [table.id] : [],
+				name: input.name ?? ['Layla', 'Ibrahim'],
+				phone: '+14155550150',
+				channel: input.channel ?? 'online',
+				client: input.channel === 'native' ? 'ios' : 'web',
+				madeAgo: 0,
+				durationMin: duration,
+			})
+			const day = dayOf(seedDate)
+			day.reservations.push(reservation)
+			touch(day)
+			return reservation.id
+		},
+		cancel(id) {
+			update(id, { status: 'cancelled' })
+		},
+		resize(id, party) {
+			update(id, { partySize: party })
+		},
+		arrive(id) {
+			update(id, { status: 'arrived', arrivedAt: clock() })
+		},
+	}
+	return Object.assign(api, { controls })
+}
+
+/** What can happen at the sample day from outside the stand (see `controls` above). */
+export type DemoControls = {
+	/** A guest books online (or in the app): the booking id. */
+	bookOnline: (input: {
+		name?: [string, string]
+		party?: number
+		startMin?: number
+		channel?: 'online' | 'native'
+	}) => string
+	cancel: (id: string) => void
+	resize: (id: string, party: number) => void
+	/** Another host marks a party as here. */
+	arrive: (id: string) => void
+}
+
+/** The controls of this tab's sample day. */
+export function demoControls(): DemoControls {
+	return (demoHostApi() as HostApi & { controls: DemoControls }).controls
 }
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { HostApiError } from './api.ts'
-import { createDemoHostApi, demoShift } from './demo.ts'
+import { createDemoHostApi, demoShift, type DemoControls } from './demo.ts'
 import { dayFeedSchema, tableState, type DayFeed } from './feed.ts'
 import { addDays, zonedDate, zonedMinutes } from './zoned.ts'
 
@@ -67,7 +67,7 @@ describe('the sample day', () => {
 		expect(feed.reservations.some((r) => r.occasion)).toBe(true)
 		expect(feed.pacing.length).toBeGreaterThan(10)
 		const list = await d.api.waitlist()
-		expect(list.entries).toHaveLength(3)
+		expect(list.entries).toHaveLength(6)
 		expect(list.entries.every((e) => e.quotedMin !== null)).toBe(true)
 	})
 
@@ -506,8 +506,9 @@ describe('booking', () => {
 describe('the waitlist', () => {
 	it('quotes a wait, adds a party, texts them, and seats them', async () => {
 		const d = demo()
+		const waiting = (await d.api.waitlist()).entries.length
 		const quote = await d.api.waitlistQuote(2)
-		expect(quote.position).toBe(4)
+		expect(quote.position).toBe(waiting + 1)
 		expect(quote.quotedMin).toBeGreaterThan(0)
 		const entry = await d.api.joinWaitlist(
 			{ displayName: 'Lina Haddad', partySize: 2, phone: '+14155550999' },
@@ -522,7 +523,7 @@ describe('the waitlist', () => {
 			{ displayName: 'Lina Haddad', partySize: 2, phone: '+14155550999' },
 			'wl-1',
 		)
-		expect((await d.api.waitlist()).entries).toHaveLength(4)
+		expect((await d.api.waitlist()).entries).toHaveLength(waiting + 1)
 
 		await d.api.notifyWaitlist(entry!.id, entry!.version)
 		const told = (await d.api.waitlist()).entries.find(
@@ -567,5 +568,149 @@ describe('the waitlist', () => {
 		expect(
 			await refusal(d.api.seatWaitlist(jamal.id, [seatedTable], jamal.version)),
 		).toEqual([409, 'table_occupied'])
+	})
+})
+
+describe('the sample for the guest card and the notices', () => {
+	it('has a booking held for its deposit, and one made online a few minutes ago', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const held = named(feed, 'Dalia')
+		expect(held).toMatchObject({
+			status: 'pending_payment',
+			paymentStatus: 'pending',
+			channel: 'online',
+		})
+		const fresh = named(feed, 'Nadia')
+		expect(fresh).toMatchObject({
+			status: 'booked',
+			channel: 'online',
+			client: 'ios',
+			paymentStatus: 'paid',
+		})
+		expect(d.now() - fresh.createdAt!).toBeLessThanOrEqual(10 * MIN)
+		// A booking made at the stand today is as new as it gets; the others are older.
+		expect(d.now() - named(feed, 'Chris').createdAt!).toBeGreaterThan(60 * MIN)
+	})
+
+	it('has a regular with several tags and a record, and a no-show with a bad one', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const regular = named(feed, 'Giulia')
+		expect(regular.guest!.tags.map((t) => t.name)).toEqual([
+			'VIP',
+			'Wine lover',
+			'Friend of chef',
+		])
+		expect(regular.guest).toMatchObject({ visits: 9 })
+		expect(regular.guest!.lastVisitAt).toBeLessThan(d.now())
+		const missed = named(feed, 'Dana')
+		expect(missed.status).toBe('no_show')
+		expect(missed.guest).toMatchObject({
+			visits: 3,
+			noShows: 2,
+			lateCancels: 1,
+		})
+		// Pinned notes ride with the guest.
+		expect(named(feed, 'Marco').guest!.pinnedNotes).toHaveLength(1)
+	})
+
+	it('has an allergy told only in codes, with no free text of the guest’s own', async () => {
+		const d = demo()
+		const hannah = named(await d.feed(), 'Hannah')
+		expect(hannah.dietaryCodes).toEqual([
+			'shellfish_allergy',
+			'nut_allergy',
+			'gluten_free',
+		])
+		expect(hannah.hasAllergy).toBe(true)
+		expect(hannah.guest!.allergyNotes).toBeNull()
+		// The older sample still has its free-text allergies.
+		expect(named(await d.feed(), 'Omar').guest!.allergyNotes).toMatch(
+			/peanuts/i,
+		)
+	})
+
+	it('has a party told their table is ready, one who joined online, one with no consent', async () => {
+		const d = demo()
+		const { entries } = await d.api.waitlist()
+		const told = entries.find((e) => e.firstName === 'Amira')!
+		expect(told).toMatchObject({ status: 'notified' })
+		expect(told.notifiedAt).toBeLessThan(d.now())
+		expect(told.responseDeadlineAt).toBeGreaterThan(d.now())
+		expect(entries.find((e) => e.firstName === 'Theo')).toMatchObject({
+			channel: 'remote',
+			smsOptIn: true,
+		})
+		expect(entries.find((e) => e.firstName === 'Bilal')).toMatchObject({
+			phone: expect.any(String),
+			smsOptIn: false,
+		})
+	})
+
+	it('will not text a party with no consent, or one already told', async () => {
+		const d = demo()
+		const { entries } = await d.api.waitlist()
+		const bilal = entries.find((e) => e.firstName === 'Bilal')!
+		expect(
+			await refusal(d.api.notifyWaitlist(bilal.id, bilal.version)),
+		).toEqual([409, 'no_sms_consent'])
+		const amira = entries.find((e) => e.firstName === 'Amira')!
+		expect(
+			await refusal(d.api.notifyWaitlist(amira.id, amira.version)),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+
+	it('lets the hold run out: the deadline passes with the clock', async () => {
+		const d = demo()
+		const amira = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Amira',
+		)!
+		d.advance(7)
+		expect(d.now()).toBeGreaterThan(amira.responseDeadlineAt!)
+		// Still on the list: the host decides, the sample does not expire them.
+		expect(
+			(await d.api.waitlist()).entries.some((e) => e.id === amira.id),
+		).toBe(true)
+	})
+})
+
+describe('what other people do while the host looks', () => {
+	it('a guest books online, cancels, changes the size, another host marks a party here', async () => {
+		const d = demo()
+		const controls = (d.api as unknown as { controls: DemoControls }).controls
+		const before = (await d.feed()).reservations.length
+		const id = controls.bookOnline({ name: ['Zara', 'Quinn'], party: 3 })
+		let feed = await d.feed()
+		expect(feed.reservations).toHaveLength(before + 1)
+		const made = feed.reservations.find((r) => r.id === id)!
+		expect(made).toMatchObject({
+			channel: 'online',
+			status: 'booked',
+			partySize: 3,
+		})
+		expect(d.now() - made.createdAt!).toBeLessThan(MIN)
+		controls.resize(id, 5)
+		feed = await d.feed()
+		expect(feed.reservations.find((r) => r.id === id)!.partySize).toBe(5)
+		controls.cancel(id)
+		feed = await d.feed()
+		expect(feed.reservations.find((r) => r.id === id)!.status).toBe('cancelled')
+		const booked = named(feed, 'Elena')
+		controls.arrive(booked.id)
+		feed = await d.feed()
+		expect(feed.reservations.find((r) => r.id === booked.id)!.status).toBe(
+			'arrived',
+		)
+	})
+
+	it('changes the ETag, so the stand’s next look sees it', async () => {
+		const d = demo()
+		const controls = (d.api as unknown as { controls: DemoControls }).controls
+		const first = await d.api.day()
+		if ('unchanged' in first) throw new Error('unexpected 304')
+		controls.bookOnline({})
+		const next = await d.api.day(first.etag ?? undefined)
+		expect('unchanged' in next).toBe(false)
 	})
 })

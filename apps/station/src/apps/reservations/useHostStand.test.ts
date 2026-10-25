@@ -8,6 +8,7 @@ import {
 	DAY_POLL_MS,
 	dayFailedFor,
 	dayKey,
+	HELD_DAYS,
 	mayPaint,
 	TODAY_KEY,
 	viewDate,
@@ -139,10 +140,45 @@ function fakeApi(
 	return { api: api as unknown as HostApi, calls, raw: api }
 }
 
-const settle = async () => {
-	// Let the promises of a refresh run (and the fake timers' microtasks).
-	for (let i = 0; i < 12; i += 1) await Promise.resolve()
+/** What the store has drawn: the day on screen, or null before there is one. */
+const drawn = (store: ReturnType<typeof createDayStore>) => {
+	const state = store.getState()
+	return state.status === 'ready' ? state : null
 }
+
+/**
+ * An api whose look at today waits until the test answers it, so answers can
+ * come in any order; a look at another day answers at once.
+ */
+function gatedApi() {
+	const waiting: Array<{
+		etag: string | undefined
+		answer: (value: DayAnswer) => void
+		fail: (error: unknown) => void
+	}> = []
+	const raw = {
+		forget: vi.fn(),
+		grant: vi.fn(async () => grant),
+		waitlist: vi.fn(async () => ({ entries: [] })),
+		day: vi.fn((etag: string | undefined, date: string | undefined) => {
+			if (date !== undefined)
+				return Promise.resolve({
+					feed: feedFor(date),
+					etag: `"v1-${date}"`,
+				} as DayAnswer)
+			return new Promise<DayAnswer>((answer, fail) =>
+				waiting.push({ etag, answer, fail }),
+			)
+		}),
+	}
+	return { api: raw as unknown as HostApi, waiting, raw }
+}
+
+/** Today's feed as a given look saw it (told apart by its etag field). */
+const lookAt = (version: string) => ({
+	feed: dayFeedSchema.parse({ ...dayFeed, etag: version }),
+	etag: `"${version}"`,
+})
 
 describe('the day store', () => {
 	it('asks "unchanged?" with the ETag it holds, and keeps the feed on a 304', async () => {
@@ -172,12 +208,8 @@ describe('the day store', () => {
 		store.setDate('2026-01-18')
 		store.setDate('2026-01-19')
 		expect(store.getDate()).toBe('2026-01-19')
-		await settle()
-		const state = store.getState()
-		expect(state.status === 'ready' && state.feedDate).toBe('2026-01-19')
-		expect(state.status === 'ready' && state.feed.businessDate).toBe(
-			'2026-01-19',
-		)
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-19'))
+		expect(drawn(store)?.feed.businessDate).toBe('2026-01-19')
 	})
 
 	it('looks again when the day asked for is not the one on screen (a retry)', async () => {
@@ -186,7 +218,9 @@ describe('the day store', () => {
 		const store = createDayStore(api)
 		await store.refresh()
 		store.setDate('2026-01-17')
-		await settle()
+		await vi.waitFor(() =>
+			expect(dayFailedFor(store.getState(), '2026-01-17')).toBe(true),
+		)
 		// Offline: the day before stays on screen, and this day's own look failed.
 		let state = store.getState()
 		expect(state.status === 'ready' && state.feedDate).toBeNull()
@@ -196,7 +230,7 @@ describe('the day store', () => {
 		// Asking again for the same day is a retry, not a no-op.
 		down = false
 		store.setDate('2026-01-17')
-		await settle()
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-17'))
 		expect(raw.day.mock.calls.length).toBeGreaterThan(askedBefore)
 		state = store.getState()
 		expect(state.status === 'ready' && state.feedDate).toBe('2026-01-17')
@@ -223,12 +257,14 @@ describe('the day store', () => {
 	})
 
 	it('draws a slow answer for the day before only if it is still the day asked for', async () => {
-		const { api } = fakeApi()
+		const { api, raw } = fakeApi()
 		const store = createDayStore(api)
 		await store.refresh()
 		store.setDate('2026-01-17')
 		store.setDate(null)
-		await settle()
+		// Let the look at the day just left come in: it is not drawn.
+		await vi.waitFor(() => expect(raw.day.mock.calls.length).toBeGreaterThan(2))
+		await vi.waitFor(() => expect(store.heldDays()).toContain('2026-01-17'))
 		const state = store.getState()
 		expect(state.status === 'ready' && state.feedDate).toBeNull()
 		expect(store.getDate()).toBeNull()
@@ -248,14 +284,14 @@ describe('the day store', () => {
 		const store = createDayStore(api)
 		await store.refresh()
 		store.setDate('2026-01-17')
-		await settle()
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-17'))
 		let state = store.getState()
 		expect(state.status === 'ready' && state.today).toBe('2026-01-16')
 		// The clock passes midnight at the location: tomorrow is today now.
 		today = '2026-01-17'
 		await store.refresh()
-		await settle()
-		expect(store.getDate()).toBeNull()
+		await vi.waitFor(() => expect(store.getDate()).toBeNull())
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBeNull())
 		state = store.getState()
 		expect(state).toMatchObject({
 			status: 'ready',
@@ -273,7 +309,7 @@ describe('the day store', () => {
 		const store = createDayStore(api)
 		await store.refresh()
 		store.setDate('2026-01-20')
-		await settle()
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-20'))
 		today = '2026-01-17'
 		await store.refresh()
 		const state = store.getState()
@@ -295,7 +331,7 @@ describe('the day store', () => {
 			const { api, calls } = fakeApi()
 			const store = createDayStore(api)
 			const stop = store.start()
-			await settle()
+			await vi.waitFor(() => expect(drawn(store)).not.toBeNull())
 			expect(calls).toHaveLength(1)
 			await vi.advanceTimersByTimeAsync(DAY_POLL_MS)
 			expect(calls).toHaveLength(2)
@@ -335,5 +371,131 @@ describe('the day store', () => {
 		expect(raw.forget).toHaveBeenCalled()
 		expect(store.getState()).toEqual({ status: 'loading' })
 		expect(store.getDate()).toBeNull()
+	})
+
+	it('keeps the newest look at a day when an older, slower answer comes in after it', async () => {
+		const { api, waiting } = gatedApi()
+		const store = createDayStore(api)
+		const older = store.refresh()
+		const newer = store.refresh({ full: true })
+		await vi.waitFor(() => expect(waiting).toHaveLength(2))
+		waiting[1]!.answer(lookAt('newer'))
+		await newer
+		expect(drawn(store)?.feed.etag).toBe('newer')
+		waiting[0]!.answer(lookAt('older'))
+		await older
+		// Not drawn, and not held: going to another day and back draws the newer one.
+		expect(drawn(store)?.feed.etag).toBe('newer')
+		store.setDate('2026-01-17')
+		store.setDate(null)
+		expect(drawn(store)?.feed.etag).toBe('newer')
+		// And its ETag is the one the next look asks with.
+		const asked = waiting.length
+		const next = store.refresh()
+		await vi.waitFor(() => expect(waiting.length).toBeGreaterThan(asked))
+		expect(waiting.at(-1)!.etag).toBe('"newer"')
+		waiting.at(-1)!.answer({ unchanged: true })
+		await next
+	})
+
+	it('holds a week of days, never today or the day on screen', async () => {
+		const { api } = fakeApi()
+		const store = createDayStore(api)
+		await store.refresh()
+		for (let day = 17; day <= 28; day += 1) {
+			const date = `2026-01-${day}`
+			store.setDate(date)
+			await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe(date))
+			expect(store.heldDays().length).toBeLessThanOrEqual(HELD_DAYS)
+			expect(store.heldDays()).toContain(TODAY_KEY)
+			expect(store.heldDays()).toContain(date)
+		}
+		// The longest unused went first.
+		expect(store.heldDays()).not.toContain('2026-01-17')
+		expect(store.heldDays()).toContain('2026-01-28')
+		// A day used again outlives the ones after it.
+		store.setDate('2026-01-24')
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-24'))
+		store.setDate('2026-01-29')
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-29'))
+		store.setDate('2026-01-30')
+		await vi.waitFor(() => expect(drawn(store)?.feedDate).toBe('2026-01-30'))
+		expect(store.heldDays()).toContain('2026-01-24')
+	})
+
+	it('drops an answer that comes in after the person changed', async () => {
+		const { api, waiting, raw } = gatedApi()
+		const store = createDayStore(api)
+		const inFlight = store.refresh()
+		await vi.waitFor(() => expect(waiting).toHaveLength(1))
+		store.reset()
+		expect(raw.forget).toHaveBeenCalled()
+		waiting[0]!.answer(lookAt('before'))
+		await inFlight
+		// Still the clean screen of the new person, and nothing of the old one held.
+		expect(store.getState()).toEqual({ status: 'loading' })
+		expect(store.heldDays()).toEqual([])
+		// The new person's own look draws.
+		const own = store.refresh()
+		await vi.waitFor(() => expect(waiting).toHaveLength(2))
+		expect(waiting[1]!.etag).toBeUndefined()
+		waiting[1]!.answer(lookAt('own'))
+		await own
+		expect(drawn(store)?.feed.etag).toBe('own')
+	})
+
+	it('looks again when the page comes back, once, and stops listening when it stops', async () => {
+		vi.useFakeTimers()
+		const visibility = { value: 'visible' }
+		const listeners = new Map<string, () => void>()
+		vi.stubGlobal('document', {
+			get visibilityState() {
+				return visibility.value
+			},
+			addEventListener: vi.fn((name: string, fn: () => void) =>
+				listeners.set(name, fn),
+			),
+			removeEventListener: vi.fn((name: string, fn: () => void) => {
+				if (listeners.get(name) === fn) listeners.delete(name)
+			}),
+		})
+		try {
+			const { api, calls } = fakeApi()
+			const store = createDayStore(api)
+			const stop = store.start()
+			await vi.waitFor(() => expect(calls).toHaveLength(1))
+			const onVisible = listeners.get('visibilitychange')!
+			expect(onVisible).toBeTypeOf('function')
+			// Hidden: the change of visibility asks nothing.
+			visibility.value = 'hidden'
+			onVisible()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(calls).toHaveLength(1)
+			// Back on screen: one look at once, asking with the ETag held.
+			visibility.value = 'visible'
+			onVisible()
+			await vi.waitFor(() => expect(calls).toHaveLength(2))
+			expect(calls[1]!.etag).toBe('"v1-2026-01-16"')
+			stop()
+			expect(listeners.has('visibilitychange')).toBe(false)
+		} finally {
+			vi.useRealTimers()
+			vi.unstubAllGlobals()
+		}
+	})
+
+	it('does not start a second look while one is still out', async () => {
+		const { api, waiting } = gatedApi()
+		const store = createDayStore(api)
+		const first = store.poll()
+		await vi.waitFor(() => expect(waiting).toHaveLength(1))
+		await store.poll()
+		expect(waiting).toHaveLength(1)
+		waiting[0]!.answer(lookAt('a'))
+		await first
+		const second = store.poll()
+		await vi.waitFor(() => expect(waiting).toHaveLength(2))
+		waiting[1]!.answer({ unchanged: true })
+		await second
 	})
 })

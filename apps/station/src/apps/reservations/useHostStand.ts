@@ -111,6 +111,9 @@ export const dayFailedFor = (state: HostStandState, date: string | null) =>
 export const viewDate = (date: string | null, today: string | null) =>
 	date !== null && date === today ? null : date
 
+/** How many days the stand keeps for a quick way back (today and the day on screen are never let go). */
+export const HELD_DAYS = 7
+
 /** Where a day is held while the stand is open: one entry per day, with its ETag. */
 export const TODAY_KEY = 'today'
 export const dayKey = (date: string | null) => date ?? TODAY_KEY
@@ -162,7 +165,45 @@ export function createDayStore(api: HostApi) {
 	/** The day the screen is drawn for (undefined before the first look). */
 	let painted: string | null | undefined = undefined
 	/** Each day the stand has loaded, with its ETag, so a poll can ask "unchanged?". */
-	const held = new Map<string, { feed: DayFeed; etag: string | null }>()
+	const held = new Map<
+		string,
+		{ feed: DayFeed; etag: string | null; ticket: number }
+	>()
+	/**
+	 * Keeps a day's answer, unless a newer look at that day is already held (a
+	 * slow older answer must not put an older day over a newer one, nor its
+	 * ETag). The map is kept in the order days were last used and holds a
+	 * week of them: the one longest unused goes first, never today and never
+	 * the day on screen.
+	 */
+	const hold = (
+		key: string,
+		answer: { feed: DayFeed; etag: string | null },
+		ticket: number,
+	): boolean => {
+		const existing = held.get(key)
+		if (existing && existing.ticket >= ticket) return false
+		held.delete(key)
+		held.set(key, { ...answer, ticket })
+		for (const candidate of held.keys()) {
+			if (held.size <= HELD_DAYS) break
+			if (
+				candidate === TODAY_KEY ||
+				candidate === dayKey(date) ||
+				candidate === key
+			)
+				continue
+			held.delete(candidate)
+		}
+		return true
+	}
+	/** A held day was just used: it is the last to go. */
+	const touch = (key: string) => {
+		const entry = held.get(key)
+		if (!entry) return
+		held.delete(key)
+		held.set(key, entry)
+	}
 	let today: string | null = null
 	let issued = 0
 	let shown = 0
@@ -235,12 +276,12 @@ export function createDayStore(api: HostApi) {
 			// Whatever the answer, the day stays held for the next look.
 			if (asked.generation === generation) {
 				if (!('unchanged' in day)) {
-					held.set(key, { feed: day.feed, etag: day.etag })
-					if (asked.date === null) today = day.feed.businessDate
+					if (hold(key, day, ticket) && asked.date === null)
+						today = day.feed.businessDate
 				}
 				if (todayDay && !('unchanged' in todayDay)) {
-					held.set(TODAY_KEY, { feed: todayDay.feed, etag: todayDay.etag })
-					today = todayDay.feed.businessDate
+					if (hold(TODAY_KEY, todayDay, ticket))
+						today = todayDay.feed.businessDate
 				}
 				// The day the host is looking at has become today (midnight passed):
 				// it is today now, with seating, and follows the server's date.
@@ -300,6 +341,7 @@ export function createDayStore(api: HostApi) {
 		const cached = held.get(dayKey(target))
 		const paint = () => {
 			if (!cached) return
+			touch(dayKey(target))
 			painted = target
 			update((previous) =>
 				previous.status === 'ready'
@@ -367,6 +409,8 @@ export function createDayStore(api: HostApi) {
 		noteWrite() {
 			writes += 1
 		},
+		/** The days held, the one longest unused first (for tests). */
+		heldDays: () => [...held.keys()],
 		reset,
 		refresh,
 		setDate,

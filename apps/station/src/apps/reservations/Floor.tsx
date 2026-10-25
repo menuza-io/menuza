@@ -107,8 +107,15 @@ export function Floor({
 							y: t.y,
 							w: t.w,
 							h: t.h,
+							rotation: t.rotation,
 						})),
-						extras: elements.map((e) => ({ x: e.x, y: e.y, w: e.w, h: e.h })),
+						extras: elements.map((e) => ({
+							x: e.x,
+							y: e.y,
+							w: e.w,
+							h: e.h,
+							rotation: e.rotation,
+						})),
 						frame: { w: size.w, h: Math.max(0, size.h - CAPTION_ROOM_PX) },
 					})
 				: null,

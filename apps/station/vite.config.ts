@@ -161,6 +161,10 @@ export default defineConfig(({ mode }) => {
 				},
 				workbox: {
 					globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+					// The sample day for demo mode (a thousand lines of fake bookings)
+					// loads on demand, from the network, the first time a demo stand
+					// opens: a real till never downloads or caches it.
+					globIgnores: ['**/demo-*.js'],
 					navigateFallback: '/index.html',
 					runtimeCaching: [
 						{
