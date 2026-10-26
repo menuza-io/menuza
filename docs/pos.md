@@ -365,7 +365,7 @@ access. Responses are `no-store` and contain food, preparation instructions,
 order numbers and table labels, never guest contacts, addresses, prices or staff
 names.
 
-Tenant migration `0025_station_kds` adds location settings, versioned kitchen
+Tenant migration `0022_station_apps` adds location settings, versioned kitchen
 progress and append-only kitchen events. Commands and setup changes use the
 organization write lock and a real regional SQLite transaction; stale ticket or
 setup versions answer 409. The order upload contract is unchanged.
@@ -397,7 +397,7 @@ visible warnings. Changing apps does not discard the register's cart.
 A terminal paired without a location can be bound to one later (Station apps,
 "Choose a location"); App must confirm the location exists (503 otherwise), and
 orders the till started before the binding still upload
-(`pos_devices.location_bound_at`, migration `0024_station_device_times`).
+(`pos_devices.location_bound_at`, migration `0022_station_apps`).
 
 **Time clock.** `/pos/timeclock/identify` and `/pos/timeclock/punch` run the
 kiosk's punch engine (`services/punch-service.ts`) and take the kiosk's request
@@ -453,7 +453,7 @@ operator, for:
   booking inside the write). Nobody who cannot read allergy notes or a guest's
   own requests can change them;
 - host grants (`read`/`update:reservation`) for people on the **host roster**
-  (`pos_hosts`, migration `0023_station_hosts`; Settings, Terminals, the staff
+  (`pos_hosts`, migration `0022_station_apps`; Settings, Terminals, the staff
   list), plus guest details (`read:reservation_guest`: phones, emails,
   allergies) for hosts given them, which needs the guest permission in App;
 - five minutes, `channel: 'station'` and the terminal's id. Without guest

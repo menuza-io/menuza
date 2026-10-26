@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "fdc5ed9b-433c-4c20-8911-5d44d3937aca",
+	"id": "ef809180-ae07-4611-b244-d53de98eb2b5",
 	"prevId": "cea6ce32-0b49-4f6a-ba22-2fa9212d0b60",
 	"tables": {
 		"customer_payment_methods": {
@@ -1273,6 +1273,180 @@
 				}
 			},
 			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"kds_events": {
+			"name": "kds_events",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"location_id": {
+					"name": "location_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"device_id": {
+					"name": "device_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"staff_id": {
+					"name": "staff_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"source": {
+					"name": "source",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"order_id": {
+					"name": "order_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"action": {
+					"name": "action",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"at": {
+					"name": "at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"kds_location_settings": {
+			"name": "kds_location_settings",
+			"columns": {
+				"location_id": {
+					"name": "location_id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"version": {
+					"name": "version",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"config": {
+					"name": "config",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"kds_tickets": {
+			"name": "kds_tickets",
+			"columns": {
+				"source": {
+					"name": "source",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"order_id": {
+					"name": "order_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"location_id": {
+					"name": "location_id",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"version": {
+					"name": "version",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"progress": {
+					"name": "progress",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"completed_at": {
+					"name": "completed_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"idx_kds_tickets_location_done": {
+					"name": "idx_kds_tickets_location_done",
+					"columns": ["location_id", "completed_at"],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {
+				"kds_tickets_source_order_id_pk": {
+					"columns": ["source", "order_id"],
+					"name": "kds_tickets_source_order_id_pk"
+				}
+			},
 			"uniqueConstraints": {},
 			"checkConstraints": {}
 		},
@@ -3102,6 +3276,20 @@
 					"autoincrement": false,
 					"default": false
 				},
+				"timeclock_disabled_at": {
+					"name": "timeclock_disabled_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
+				"location_bound_at": {
+					"name": "location_bound_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"autoincrement": false
+				},
 				"reservations_enabled": {
 					"name": "reservations_enabled",
 					"type": "integer",
@@ -3395,6 +3583,56 @@
 				}
 			},
 			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		},
+		"pos_hosts": {
+			"name": "pos_hosts",
+			"columns": {
+				"staff_id": {
+					"name": "staff_id",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"guest_details": {
+					"name": "guest_details",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": false
+				},
+				"added_by": {
+					"name": "added_by",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"added_at": {
+					"name": "added_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false,
+					"default": "(cast(strftime('%s', 'now') as integer) * 1000)"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"pos_hosts_staff_id_staff_members_id_fk": {
+					"name": "pos_hosts_staff_id_staff_members_id_fk",
+					"tableFrom": "pos_hosts",
+					"tableTo": "staff_members",
+					"columnsFrom": ["staff_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
 			"checkConstraints": {}
@@ -15344,7 +15582,6 @@
 	"views": {},
 	"enums": {},
 	"_meta": {
-		"schemas": {},
 		"tables": {},
 		"columns": {}
 	},
