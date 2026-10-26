@@ -23,6 +23,7 @@ import {
 } from '@repo/ui/select'
 import { Skeleton } from '@repo/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/toggle-group'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLoaderData, useParams, useSearchParams } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -509,24 +510,24 @@ export default function PhoneAgentCallsRoute() {
 							</Select>
 						</div>
 					) : (
-						<div className="flex items-center gap-1">
-							<Button
-								variant={requestStatus === 'open' ? 'secondary' : 'ghost'}
-								size="sm"
-								aria-pressed={requestStatus === 'open'}
-								onClick={() => setRequestStatus('open')}
-							>
+						<ToggleGroup
+							aria-label={_(msg`Status`)}
+							value={[requestStatus]}
+							onValueChange={(next) => {
+								const picked = next[0]
+								if (picked === 'open' || picked === 'done') {
+									setRequestStatus(picked)
+								}
+							}}
+							variant="segmented"
+						>
+							<ToggleGroupItem value="open">
 								<Trans>Open</Trans>
-							</Button>
-							<Button
-								variant={requestStatus === 'done' ? 'secondary' : 'ghost'}
-								size="sm"
-								aria-pressed={requestStatus === 'done'}
-								onClick={() => setRequestStatus('done')}
-							>
+							</ToggleGroupItem>
+							<ToggleGroupItem value="done">
 								<Trans>Done</Trans>
-							</Button>
-						</div>
+							</ToggleGroupItem>
+						</ToggleGroup>
 					)}
 				</div>
 
