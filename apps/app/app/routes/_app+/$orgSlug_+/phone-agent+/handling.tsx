@@ -37,7 +37,7 @@ import {
 	PhraseOverridesSection,
 	usePhraseDrafts,
 } from '#app/components/phone-agent/phrase-fields.tsx'
-import { PhoneAgentSettingsHeader } from '#app/components/phone-agent/settings-nav.tsx'
+import { type PhoneAgentSettingsHandle } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	localId,
@@ -126,6 +126,10 @@ const EVENT_COPY: Record<
 	},
 }
 
+export const handle: PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: 'handling',
+}
+
 export default function PhoneAgentHandling() {
 	const data = useLoaderData<LoaderData>()
 	const [flowDirty, setFlowDirty] = useState(false)
@@ -148,7 +152,6 @@ export default function PhoneAgentHandling() {
 	}, [hash])
 	return (
 		<div className="flex flex-col gap-8">
-			<PhoneAgentSettingsHeader active="handling" />
 			<AnnotatedLayout>
 				<CallFlowSection publishedFlow={data.publishedFlow} />
 				<FlowLinesSection

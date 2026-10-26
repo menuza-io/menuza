@@ -10,6 +10,10 @@ import {
 import { WorkspacePage } from '@repo/ui/workspace'
 import { Outlet, useLoaderData, useLocation } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import {
+	PhoneAgentSettingsHeader,
+	usePhoneAgentSettingsTab,
+} from '#app/components/phone-agent/settings-nav.tsx'
 import { TestCallSheet } from '#app/components/phone-agent/test-call-sheet.tsx'
 import { requirePhoneAgentSectionAccess } from '#app/utils/phone-agent/access.server.ts'
 import { getLiveKitConfig } from '#app/utils/phone-agent/livekit.server.ts'
@@ -34,6 +38,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export default function PhoneAgentLayout() {
 	const { regionSupported, canReadAgent } = useLoaderData<typeof loader>()
 	const location = useLocation()
+	// The settings pages share one header here, so its tabs stay mounted and
+	// the underline glides between Agent, What it knows and Call handling.
+	const pageTab = usePhoneAgentSettingsTab()
+	const settingsTab = canReadAgent ? pageTab : null
 	const testSheet = canReadAgent ? (
 		<TestCallSheet regionSupported={regionSupported} />
 	) : null
@@ -69,7 +77,14 @@ export default function PhoneAgentLayout() {
 					</ItemContent>
 				</Item>
 			)}
-			<Outlet />
+			{settingsTab ? (
+				<div className="flex flex-col gap-8">
+					<PhoneAgentSettingsHeader active={settingsTab} />
+					<Outlet />
+				</div>
+			) : (
+				<Outlet />
+			)}
 			{testSheet}
 		</WorkspacePage>
 	)

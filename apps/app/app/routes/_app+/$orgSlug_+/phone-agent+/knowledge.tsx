@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { BusinessDetailsSection } from '#app/components/phone-agent/business-details-section.tsx'
-import { PhoneAgentSettingsHeader } from '#app/components/phone-agent/settings-nav.tsx'
+import { type PhoneAgentSettingsHandle } from '#app/components/phone-agent/settings-nav.tsx'
 import {
 	FieldErrorText,
 	localId,
@@ -81,6 +81,10 @@ function initialRows(saved: FaqEntry[]): FaqRow[] {
 	return [...bank, ...custom]
 }
 
+export const handle: PhoneAgentSettingsHandle = {
+	phoneAgentSettingsTab: 'knowledge',
+}
+
 export default function PhoneAgentKnowledge() {
 	const data = useLoaderData<LoaderData>()
 	const { faq, pronunciations, keyterms, scopes, canUpdate, versions } = data
@@ -92,7 +96,6 @@ export default function PhoneAgentKnowledge() {
 	)
 	return (
 		<div className="flex flex-col gap-8">
-			<PhoneAgentSettingsHeader active="knowledge" />
 			<AnnotatedLayout>
 				<BusinessSection
 					business={data.business}

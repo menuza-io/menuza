@@ -320,6 +320,35 @@ describe('kiosk punches under labor policy', () => {
 			expect(edit!.after).toMatchObject({ clockOutAt: leftAt })
 		})
 
+		it('preserves the earliest automatic close time across non-monotonic late edits', async () => {
+			await h.punch(secret, { pin, kind: 'clock_in' })
+			const t0 = h.clock.now
+			const autoAt = t0 + 5 * HOUR
+			h.setClock(autoAt + HOUR)
+			const id = await autoClose(await staffIdOf(pin), autoAt)
+
+			// First late punch replaces autoAt with 60m later
+			h.advance(8 * HOUR)
+			const late1 = await h.punch(secret, {
+				pin,
+				kind: 'clock_out',
+				offline: true,
+				clientAt: autoAt + 60 * MIN,
+			})
+			expect(late1.status).toBe(200)
+
+			const db = await h.db(ORG_A)
+			const edits = await db
+				.select()
+				.from(timeEntryEdits)
+				.where(eq(timeEntryEdits.entryId, id))
+			expect(edits.length).toBeGreaterThanOrEqual(1)
+			const beforeTimes = edits
+				.map((e) => (e.before as { clockOutAt?: unknown })?.clockOutAt)
+				.filter((t): t is number => typeof t === 'number' && Number.isFinite(t))
+			expect(Math.min(...beforeTimes)).toBe(autoAt)
+		})
+
 		it('lands a queued break end on the automatically closed card', async () => {
 			await h.punch(secret, { pin, kind: 'clock_in' })
 			const t0 = h.clock.now

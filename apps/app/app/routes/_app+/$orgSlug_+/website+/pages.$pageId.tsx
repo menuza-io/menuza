@@ -16,8 +16,8 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Trans } from '@lingui/macro'
-import { useLingui } from '@lingui/react/macro'
+import { Trans, msg } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
 import { invalidateUserOrganizationsCache } from '@repo/cache'
@@ -87,6 +87,7 @@ import {
 import { ScrollArea } from '@repo/ui/scroll-area'
 import { Spinner } from '@repo/ui/spinner'
 import { Switch } from '@repo/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@repo/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/tooltip'
 import * as cookie from 'cookie'
 import {
@@ -4206,7 +4207,7 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 }
 
 function ReservationBlockEditor({ config, updateField }: EditorProps) {
-	const { t } = useLingui()
+	const { _ } = useLingui()
 	const { reservationLocations } = useLoaderData<typeof loader>()
 	const locationId = String(config.locationId || '')
 	const layout = config.layout === 'inline' ? 'inline' : 'button'
@@ -4221,18 +4222,18 @@ function ReservationBlockEditor({ config, updateField }: EditorProps) {
 		<div className="space-y-5">
 			<EditorSection title={<Trans>Content</Trans>}>
 				<FieldInput
-					label={t`Heading`}
+					label={_(msg`Heading`)}
 					value={(config.heading as string) ?? ''}
 					onChange={(v) => updateField('heading', v)}
 				/>
 				<FieldTextarea
-					label={t`Description`}
+					label={_(msg`Description`)}
 					value={(config.body as string) ?? ''}
 					onChange={(v) => updateField('body', v)}
 					rows={3}
 				/>
 				<FieldInput
-					label={t`Button label`}
+					label={_(msg`Button label`)}
 					value={(config.buttonLabel as string) ?? ''}
 					onChange={(v) => updateField('buttonLabel', v)}
 				/>
@@ -5289,60 +5290,54 @@ function InspectorTabs({
 	value: InspectorId
 	onChange: (next: InspectorId) => void
 }) {
+	const { _ } = useLingui()
 	const items = [
 		{
 			id: 'sections' as const,
 			icon: 'blocks' as const,
 			label: <Trans>Sections</Trans>,
-			ariaLabel: 'Sections',
+			ariaLabel: _(msg`Sections`),
 		},
 		{
 			id: 'branding' as const,
 			icon: 'paintbrush' as const,
 			label: <Trans>Branding</Trans>,
-			ariaLabel: 'Branding',
+			ariaLabel: _(msg`Branding`),
 		},
 		{
 			id: 'page' as const,
 			icon: 'file-text' as const,
 			label: <Trans>Settings</Trans>,
-			ariaLabel: 'Page Settings',
+			ariaLabel: _(msg`Page Settings`),
 		},
 	]
 
 	return (
-		<nav aria-label="Builder panels" className="w-full">
-			<div
-				role="tablist"
-				aria-orientation="horizontal"
-				className="bg-muted grid grid-cols-3 gap-0.5 rounded-lg p-0.5"
+		<Tabs
+			value={value}
+			onValueChange={(next) => {
+				const picked = items.find((item) => item.id === next)
+				if (picked) onChange(picked.id)
+			}}
+			className="w-full"
+		>
+			<TabsList
+				aria-label={_(msg`Builder panels`)}
+				className="grid w-full grid-cols-3"
 			>
-				{items.map((item) => {
-					const selected = value === item.id
-					return (
-						<Button
-							key={item.id}
-							variant="ghost"
-							size="sm"
-							role="tab"
-							aria-selected={selected}
-							aria-label={item.ariaLabel}
-							className={cn(
-								'text-muted-foreground min-w-0 gap-1 rounded-md px-1.5 text-xs transition-colors duration-150 ease-out',
-								'hover:text-foreground hover:bg-background/60',
-								'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
-								selected &&
-									'bg-background text-foreground hover:bg-background shadow-sm',
-							)}
-							onClick={() => onChange(item.id)}
-						>
-							<Icon name={item.icon} className="size-3.5 shrink-0" />
-							<span className="truncate">{item.label}</span>
-						</Button>
-					)
-				})}
-			</div>
-		</nav>
+				{items.map((item) => (
+					<TabsTrigger
+						key={item.id}
+						value={item.id}
+						aria-label={item.ariaLabel}
+						className="min-w-0 gap-1 px-1.5"
+					>
+						<Icon name={item.icon} className="size-3.5 shrink-0" />
+						<span className="truncate">{item.label}</span>
+					</TabsTrigger>
+				))}
+			</TabsList>
+		</Tabs>
 	)
 }
 

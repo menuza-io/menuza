@@ -18,7 +18,7 @@ const who = (
 	positions: [],
 	nextShifts: [],
 	promptTips: false,
-	breakKinds: [],
+	breakKinds: ['meal'],
 	serverNow: 1,
 	...overrides,
 })
