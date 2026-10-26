@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNull, lt, lte, max, or } from 'drizzle-orm'
+import { and, desc, eq, gte, isNull, lt, lte, max, or } from 'drizzle-orm'
 import {
 	allowedClockEvents,
 	breakIsPaid,
@@ -600,7 +600,7 @@ async function runPunch(
 			const breaks = (
 				(await loadBreaks(tx, [latest.id])).get(latest.id) ?? []
 			).filter((b) => b.voidedAt === null)
-			const [firstLateEdit] = await tx
+			const lateEdits = await tx
 				.select({ before: timeEntryEdits.before })
 				.from(timeEntryEdits)
 				.where(
@@ -609,14 +609,16 @@ async function runPunch(
 						eq(timeEntryEdits.action, 'late_punch'),
 					),
 				)
-				.orderBy(asc(timeEntryEdits.createdAt), asc(timeEntryEdits.id))
-				.limit(1)
-			const firstBeforeClose = (
-				firstLateEdit?.before as { clockOutAt?: unknown } | null | undefined
-			)?.clockOutAt
+			const priorCloseTimes = lateEdits
+				.map(
+					(e) =>
+						(e.before as { clockOutAt?: unknown } | null | undefined)
+							?.clockOutAt,
+				)
+				.filter((t): t is number => typeof t === 'number')
 			const originalClose =
-				typeof firstBeforeClose === 'number'
-					? firstBeforeClose
+				priorCloseTimes.length > 0
+					? Math.min(...priorCloseTimes)
 					: latest.clockOutAt
 			autoClosed = {
 				entry: latest,
