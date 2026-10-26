@@ -267,6 +267,22 @@ describe('syncQueue', () => {
 		expect((await queue.failed())[0]!.failure).toBe('server_unavailable')
 	})
 
+	it('sets aside a punch that keeps throwing an unexpected local error so it cannot starve the queue', async () => {
+		await add('bad', 1)
+		await add('good', 2)
+		const punch = async (body: KioskPunchBody) => {
+			if (body.id === 'bad') throw new Error('local bug')
+			return { outcome: 'accepted' }
+		}
+		for (let i = 0; i < MAX_SYNC_ATTEMPTS - 1; i++) {
+			const r = await run(punch)
+			expect(r).toMatchObject({ synced: 0, failed: 0, remaining: 2 })
+		}
+		const final = await run(punch)
+		expect(final).toMatchObject({ synced: 1, failed: 1, remaining: 0 })
+		expect((await queue.failed())[0]!.failure).toBe('client_error')
+	})
+
 	it('is a no-op for an empty queue', async () => {
 		const punch = vi.fn<PunchFn>()
 		const outcome = await run(punch)

@@ -389,6 +389,25 @@ describe('kiosk punches under labor policy', () => {
 			).toEqual([[320 * MIN, 330 * MIN]])
 		})
 
+		it('refuses a late break more than 12 hours past the automatic close so an old card is never stretched across days', async () => {
+			await h.punch(secret, { pin, kind: 'clock_in' })
+			const t0 = h.clock.now
+			const autoAt = t0 + 5 * HOUR
+			h.setClock(autoAt + HOUR)
+			const id = await autoClose(await staffIdOf(pin), autoAt)
+			h.setClock(autoAt + 31 * HOUR)
+			const r = await h.punch(secret, {
+				pin,
+				kind: 'break_start',
+				offline: true,
+				clientAt: autoAt + 30 * HOUR,
+			})
+			expect(r.status).toBe(409)
+			expect(r.body.error).toBe('time_conflict')
+			expect((await entries())[0]!.clockOutAt).toBe(autoAt)
+			void id
+		})
+
 		it('leaves a card a manager edited, approved or locked to the manager', async () => {
 			const db = await h.db(ORG_A)
 			for (const done of [

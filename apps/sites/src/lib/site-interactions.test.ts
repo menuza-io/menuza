@@ -276,6 +276,19 @@ describe('fluid navigation mounting', () => {
 		gap()
 		expect(followed).not.toHaveBeenCalled()
 		hover = true
+		// A touch tap on a hybrid device synthesises an untyped click after pointerdown.
+		container.dispatchEvent(
+			Object.assign(
+				new MouseEvent('pointerdown', {
+					bubbles: true,
+					clientX: 84,
+					clientY: 20,
+				}),
+				{ pointerType: 'touch' },
+			),
+		)
+		gap()
+		expect(followed).not.toHaveBeenCalled()
 		gap()
 		expect(followed).toHaveBeenCalledTimes(1)
 	})

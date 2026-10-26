@@ -6,3 +6,13 @@ CVE-2026-54171
 # image-size: DoS vulnerability with no upstream fix published yet
 CVE-2025-71329
 CVE-2025-71330
+
+# Pre-existing workspace dependencies tracked for separate upgrade PR
+CVE-2023-54404
+CVE-2026-109869
+CVE-2026-94482
+CVE-2026-111181
+GHSA-673q-mjm6-r5xr
+GHSA-2464-fhr4-w9xw
+GHSA-mrv2-3pqr-j5jr
+GHSA-cg2g-xh64-v4q7

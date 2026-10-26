@@ -65,9 +65,10 @@ const HOST_GRANTS: readonly ReservationsPermission[] = [
 ]
 
 /**
- * Records the host stand opening for a person at a till. Best effort: the
- * audit trail must not take the stand down mid-service, so a failed write is
- * logged (ids only) and the token is still issued.
+ * Records the host stand opening for a person at a till. Returns whether the
+ * audit trail has the opening on record: a masked token stays best-effort so an
+ * audit hiccup does not take the stand down mid-service, while guest contact
+ * details are only unlocked when the opening is recorded.
  */
 async function recordHostStandOpened(
 	db: PosAuth['db'],
@@ -79,7 +80,7 @@ async function recordHostStandOpened(
 		since: number
 		at: number
 	},
-) {
+): Promise<boolean> {
 	try {
 		const recent = await db
 			.select({ changes: rsvAuditLog.changes })
@@ -94,8 +95,9 @@ async function recordHostStandOpened(
 					eq(rsvAuditLog.actorId, entry.subject),
 				),
 			)
+			.limit(10)
 		if (recent.some((r) => r.changes?.guestDetails === entry.guestDetails))
-			return
+			return true
 		await db.insert(rsvAuditLog).values({
 			id: `aud_${crypto.randomUUID()}`,
 			at: entry.at,
@@ -107,12 +109,14 @@ async function recordHostStandOpened(
 			entityId: entry.deviceId,
 			changes: { guestDetails: entry.guestDetails },
 		})
+		return true
 	} catch (error) {
 		console.error(
 			'Host stand audit failed',
 			entry.deviceId,
 			error instanceof Error ? error.name : 'unknown',
 		)
+		return false
 	}
 }
 
@@ -143,7 +147,20 @@ posReservationsRoutes.post('/token', async (c) => {
 			return posError(503, 'service_unavailable')
 		}
 
-		const canReadGuest = staff.session.guestDetails
+		const subject = `staff:${staff.session.staffId}`
+		const iat = posReservationsDeps.nowSeconds()
+		// Who opened the host stand at which till, and whether with guest details:
+		// once per sign-in (and again if the guest grant changes), not per renewal.
+		// Guest contact details are only unlocked when the audit record succeeds.
+		const audited = await recordHostStandOpened(pos.db, {
+			subject,
+			deviceId: pos.device.id,
+			locationId: gate.locationId,
+			guestDetails: staff.session.guestDetails,
+			since: staff.session.signedInAt,
+			at: iat * 1000,
+		})
+		const canReadGuest = staff.session.guestDetails && audited
 		const grants = [...HOST_GRANTS]
 		// Short on a shared tablet: a revoked terminal or a removed person stops
 		// within minutes, whatever the operator ceiling allows.
@@ -156,9 +173,7 @@ posReservationsRoutes.post('/token', async (c) => {
 				false,
 			),
 		)
-		const iat = posReservationsDeps.nowSeconds()
 		const exp = iat + ttlSeconds
-		const subject = `staff:${staff.session.staffId}`
 		const claims = {
 			aud: RESERVATIONS_TOKEN_AUDIENCE,
 			role: 'operator' as const,
@@ -193,17 +208,6 @@ posReservationsRoutes.post('/token', async (c) => {
 			.setIssuedAt(iat)
 			.setExpirationTime(exp)
 			.sign(new TextEncoder().encode(operatorSecret))
-
-		// Who opened the host stand at which till, and whether with guest details:
-		// once per sign-in (and again if the guest grant changes), not per renewal.
-		await recordHostStandOpened(pos.db, {
-			subject,
-			deviceId: pos.device.id,
-			locationId: gate.locationId,
-			guestDetails: canReadGuest,
-			since: staff.session.signedInAt,
-			at: iat * 1000,
-		})
 		await touchDevice(pos.db, pos.device).catch(() => {})
 		const response: PosReservationsTokenResponse = {
 			token,

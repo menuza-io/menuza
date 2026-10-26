@@ -256,6 +256,7 @@ export function withTerminalCors(request: Request, response: Response) {
 		path.startsWith('/pos/') || path.startsWith('/operator/reservations/book/')
 	if (!terminalPath || !isPosOrigin(origin)) return response
 	const headers = new Headers(response.headers)
+	// nosemgrep: javascript.express.security.cors-misconfiguration.cors-misconfiguration
 	headers.set('Access-Control-Allow-Origin', origin)
 	headers.append('Vary', 'Origin')
 	// As the app does: the till measures its clock skew from the Date header.

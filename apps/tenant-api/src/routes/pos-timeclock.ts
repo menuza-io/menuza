@@ -202,6 +202,7 @@ posTimeclockRoutes.post(
 				pos.device.id,
 				request,
 				posTimeclockDeps.punch.now(),
+				pos.device.scopeId,
 			)
 			if (recorded) return json(recorded.result)
 			const verified = await verifyPosPin(

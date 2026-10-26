@@ -110,6 +110,12 @@ export type ClockRequestOptions = {
  * answer at all throws `ClockNetworkError`; an answer that is not the expected
  * shape (a proxy's HTML page) is treated as an outage.
  */
+function trimTrailingSlashes(url: string): string {
+	let end = url.length
+	while (end > 0 && url.charCodeAt(end - 1) === 47) end -= 1
+	return end === url.length ? url : url.slice(0, end)
+}
+
 export async function clockRequest<S extends z.ZodTypeAny>(
 	options: ClockRequestOptions,
 	path: string,
@@ -129,23 +135,30 @@ export async function clockRequest<S extends z.ZodTypeAny>(
 	const controller = new AbortController()
 	const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8000)
 	let response: Response
+	let text: string
 	try {
-		response = await fetchImpl(
-			`${options.baseUrl.replace(/\/+$/, '')}${path}`,
-			{
-				method: init.method ?? 'GET',
-				headers,
-				body,
-				...options.requestInit,
-				signal: controller.signal,
-			},
-		)
-	} catch (error) {
-		throw new ClockNetworkError(error)
+		try {
+			response = await fetchImpl(
+				`${trimTrailingSlashes(options.baseUrl)}${path}`,
+				{
+					method: init.method ?? 'GET',
+					headers,
+					body,
+					...options.requestInit,
+					signal: controller.signal,
+				},
+			)
+		} catch (error) {
+			throw new ClockNetworkError(error)
+		}
+		text = await response.text().catch(() => {
+			if (controller.signal.aborted)
+				throw new ClockNetworkError(controller.signal.reason)
+			return ''
+		})
 	} finally {
 		clearTimeout(timer)
 	}
-	const text = await response.text().catch(() => '')
 	let parsed: unknown = null
 	try {
 		parsed = text ? JSON.parse(text) : null

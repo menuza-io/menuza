@@ -44,6 +44,7 @@ function mountFluidNav(container: HTMLElement): () => void {
 	let current: HTMLElement | null = null
 	let frame = 0
 	let point: { x: number; y: number } | null = null
+	let touched = false
 	const items = () =>
 		Array.from(
 			container.querySelectorAll<HTMLElement>('a[href], button'),
@@ -100,8 +101,12 @@ function mountFluidNav(container: HTMLElement): () => void {
 		if (item && distance <= 16) paint(item)
 		else hide()
 	}
+	function down(event: PointerEvent) {
+		touched = event.pointerType === 'touch'
+	}
 	function move(event: PointerEvent) {
 		if (!hovers(event)) return
+		touched = false
 		point = { x: event.clientX, y: event.clientY }
 		if (!frame) frame = requestAnimationFrame(pick)
 	}
@@ -114,7 +119,9 @@ function mountFluidNav(container: HTMLElement): () => void {
 	// A click in the gap between items goes to the item under the pointer now,
 	// never to a highlight left behind by an earlier move.
 	function click(event: MouseEvent) {
-		if (event.target !== container || !hovers(event)) return
+		const touchTap = touched
+		touched = false
+		if (event.target !== container || touchTap || !hovers(event)) return
 		point = { x: event.clientX, y: event.clientY }
 		pick()
 		current?.click()
@@ -125,6 +132,7 @@ function mountFluidNav(container: HTMLElement): () => void {
 	}
 	const observer = new ResizeObserver(refresh)
 	observer.observe(container)
+	container.addEventListener('pointerdown', down)
 	container.addEventListener('pointermove', move)
 	container.addEventListener('pointerleave', leave)
 	container.addEventListener('click', click)
@@ -132,6 +140,7 @@ function mountFluidNav(container: HTMLElement): () => void {
 	return () => {
 		leave()
 		observer.disconnect()
+		container.removeEventListener('pointerdown', down)
 		container.removeEventListener('pointermove', move)
 		container.removeEventListener('pointerleave', leave)
 		container.removeEventListener('click', click)

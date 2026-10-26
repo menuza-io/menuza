@@ -368,19 +368,28 @@ function successResult(
 }
 
 /**
+ * The longest a late break or clock-out saved offline may stretch a card the
+ * automatic clock-out closed (`OFFLINE_PUNCH_LATE_SYNC_MS`). Anything further
+ * past the automatic close is refused as a time conflict for a manager to look
+ * at, rather than silently stretching an old card across days.
+ */
+const MAX_AUTO_CLOSED_STRETCH_MS = 12 * 60 * 60 * 1000
+
+/**
  * A punch this device already recorded under this id, answered as it was
  * (before any PIN check: the PIN may have been given to someone else since,
  * and a lost answer must never turn a recorded punch into a refused one).
- * A tablet paired again keeps its waiting punches but has a new device id:
- * its punch still counts as its own when it names the same person (ids are
- * random, so only the till that made the punch knows it). Null when there is
- * none, or it was refused.
+ * A tablet paired again at the same workplace keeps its waiting punches but
+ * has a new device id: its punch still counts as its own when it names the
+ * same person (ids are random, so only the till that made the punch knows it).
+ * Null when there is none, or it was refused.
  */
 export async function replayRecordedPunch(
 	db: TenantDatabase,
 	deviceId: string,
 	request: Pick<KioskPunchRequest, 'id' | 'kind' | 'staffId'>,
 	now: number,
+	scopeId?: string,
 ): Promise<PunchSuccess | null> {
 	const [existing] = await db
 		.select()
@@ -390,7 +399,9 @@ export async function replayRecordedPunch(
 	if (
 		!existing ||
 		(existing.deviceId !== deviceId &&
-			(!request.staffId || existing.staffId !== request.staffId)) ||
+			(!request.staffId ||
+				existing.staffId !== request.staffId ||
+				(scopeId !== undefined && existing.scopeId !== scopeId))) ||
 		existing.kind !== request.kind ||
 		existing.outcome !== 'accepted'
 	)
@@ -640,7 +651,10 @@ async function runPunch(
 				b === autoClosed!.running ? b.startAt : (b.endAt ?? b.startAt),
 			),
 		)
-		if (effectiveAt < floor)
+		if (
+			effectiveAt < floor ||
+			effectiveAt - autoClosed.clockOutAt > MAX_AUTO_CLOSED_STRETCH_MS
+		)
 			return reject(
 				'time_conflict',
 				undefined,

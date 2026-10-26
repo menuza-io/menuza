@@ -122,6 +122,10 @@ describe('solid colors for the reservations context', () => {
 		expect(toSolidHex('rgba(1, 2, 3, 0.5)', 'not-a-color', '#111111')).toBe(
 			'#090a0a',
 		)
+		// Alpha is clamped to [0, 1].
+		expect(toSolidHex('rgba(255, 255, 255, 0)', '#000000', '#111111')).toBe(
+			'#000000',
+		)
 	})
 
 	it('a dark theme resolves to colors the context schema accepts', () => {

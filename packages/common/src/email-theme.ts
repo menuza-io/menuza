@@ -210,7 +210,8 @@ export function toSolidHex(
 		)
 	const under = SOLID_HEX.test(backdrop) ? backdrop : fallback
 	if (!rgba || !SOLID_HEX.test(under)) return fallback
-	const alpha = rgba[4] === undefined ? 1 : Math.min(1, Number(rgba[4]))
+	const alpha =
+		rgba[4] === undefined ? 1 : Math.max(0, Math.min(1, Number(rgba[4])))
 	if (Number.isNaN(alpha)) return fallback
 	const mixed = [1, 2, 3].map((i) => {
 		const top = Math.min(255, Number(rgba[i]))

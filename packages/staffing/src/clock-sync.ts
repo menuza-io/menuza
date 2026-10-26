@@ -157,8 +157,14 @@ export async function syncQueue(deps: {
 				probing = false
 				continue
 			}
-			// Anything unexpected: keep the punch and try again next time.
+			// Anything unexpected: keep the punch and try again next time, unless
+			// it keeps failing locally and would starve the queue behind it.
 			await queue.recordAttempt(item.id)
+			if (item.attempts + 1 >= MAX_SYNC_ATTEMPTS) {
+				await queue.markFailed(item.id, 'client_error')
+				outcome.failed += 1
+				continue
+			}
 			break
 		}
 	}

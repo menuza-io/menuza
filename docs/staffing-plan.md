@@ -205,12 +205,14 @@ apply policy, append the punch, update the entry and breaks, and recompute
 cached minutes through `computeCachedMinutes` / `computeEntryIssues` in
 `@repo/staffing` (which call `computeTimecard` and `computeWeek`). Server time
 is authoritative; only a punch the tablet marks as queued offline may use device
-time, inside the 12 hour and one minute bounds, flagged `offline_punch` and
-`clock_skew`. A rejection is recorded and audited. A role pick for
-multi-position staff is a prompt (`position_required`), not an event, so the
-same punch id is reused. Cached minutes of neighbouring cards are refreshed when
-a card closes, except approved and locked cards, which only an explicit edit or
-unlock recomputes. Timesheets compute live from the same functions.
+time, inside the 48 hour and one minute bounds, flagged `offline_punch` (plus
+`late_sync` when over 12 hours old, and `clock_skew` when the device clock
+differs from server time by over 5 minutes). A rejection is recorded and
+audited. A role pick for multi-position staff is a prompt (`position_required`),
+not an event, so the same punch id is reused. Cached minutes of neighbouring
+cards are refreshed when a card closes, except approved and locked cards, which
+only an explicit edit or unlock recomputes. Timesheets compute live from the
+same functions.
 
 **Schedule seam.** Late grace, prevent-early and unscheduled-punch rules need
 the schedule. `ShiftMatcher` in `punch-service.ts` is the seam: until scheduling
