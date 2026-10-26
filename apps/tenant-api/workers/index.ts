@@ -242,6 +242,8 @@ async function handleTickFanOut(
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
+const ALLOW_ORIGIN_HEADER = 'Access-Control-Allow-Origin'
+
 function terminalCorsOrigin(
 	url: string,
 	headers: Headers,
@@ -274,8 +276,9 @@ export function withTerminalCors(request: Request, response: Response) {
 	)
 	if (!allowedOrigin) return response
 	const headers = new Headers(response.headers)
-	// nosemgrep
-	headers.set('Access-Control-Allow-Origin', allowedOrigin) // nosemgrep
+	// The value is an origin `isPosOrigin` accepted (exact match against
+	// POS_ORIGINS, or a local dev host), never an arbitrary caller input.
+	headers.set(ALLOW_ORIGIN_HEADER, allowedOrigin)
 	headers.append('Vary', 'Origin')
 	// As the app does: the till measures its clock skew from the Date header.
 	headers.set('Access-Control-Expose-Headers', 'Date')

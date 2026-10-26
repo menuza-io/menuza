@@ -611,9 +611,12 @@ async function runPunch(
 				)
 				.orderBy(asc(timeEntryEdits.createdAt), asc(timeEntryEdits.id))
 				.limit(1)
+			const firstBeforeClose = (
+				firstLateEdit?.before as { clockOutAt?: unknown } | null | undefined
+			)?.clockOutAt
 			const originalClose =
-				typeof firstLateEdit?.before?.clockOutAt === 'number'
-					? firstLateEdit.before.clockOutAt
+				typeof firstBeforeClose === 'number'
+					? firstBeforeClose
 					: latest.clockOutAt
 			autoClosed = {
 				entry: latest,
