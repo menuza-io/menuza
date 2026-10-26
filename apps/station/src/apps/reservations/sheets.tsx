@@ -1,7 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type Phone } from 'lucide-react'
+import { Icon, type IconName } from '@repo/ui/icon'
 import { useEffect, useMemo, useState } from 'react'
 import { type StatusTarget } from './api.ts'
 import { keepOpenTime } from './booking.ts'
@@ -39,7 +39,11 @@ export type PartyCommand =
 			reason?: string
 			/** The version the host saw when they decided (an armed confirm). */
 			expectedVersion?: number
+			/** How many of the party are at the door: sent with `arrived` (some are here). */
+			arrivedCovers?: number
 	  }
+	/** Seat only the ones who are here, at a table the floor asks for. */
+	| { kind: 'seatPart'; covers: number }
 	/** The guest called to say they are late (0 clears it). */
 	| { kind: 'late'; minutes: number }
 	/** Open the change sheet: the party's size or time. */
@@ -54,6 +58,9 @@ export type PartyCommand =
 	| { kind: 'seatAt'; tableId: string }
 	/** Start a new booking for the same guest: their name, number and party size. */
 	| { kind: 'again' }
+
+/** Sizes offered beside the stepper for a large party. */
+export const LARGE_QUICK_PICKS = [10, 12, 14] as const
 
 /**
  * Party size as big targets: 1 to 8 one tap away, and "9+" for a larger party,
@@ -79,61 +86,79 @@ export function PartySize({
 		>
 			{[1, 2, 3, 4, 5, 6, 7, 8].map((size) => (
 				<Chip
+					look="outlined"
 					key={size}
 					size="lg"
 					selected={value === size}
 					aria-pressed={value === size}
 					disabled={size > max}
 					onClick={() => onChange(size)}
-					className="tnum w-11 px-0"
+					className="w-11 px-0 tabular-nums"
 				>
 					{size}
 				</Chip>
 			))}
 			<Chip
+				look="outlined"
 				size="lg"
 				selected={large}
 				aria-pressed={large}
 				disabled={max < 9}
 				onClick={() => onChange(Math.max(value, 9))}
-				className="tnum w-12 px-0"
+				className="w-12 px-0 tabular-nums"
 			>
 				{/* "9+" keeps its order right to left. */}
 				<span dir="ltr">9+</span>
 			</Chip>
 			{large ? (
-				<div className="border-border bg-card flex h-12 items-center rounded-xl border">
-					<button
-						type="button"
-						aria-label={_(msg`One fewer`)}
-						onClick={() => onChange(Math.max(1, value - 1))}
-						className="hover:bg-accent h-full w-11 rounded-s-xl text-lg font-semibold"
-					>
-						−
-					</button>
-					<span className="tnum mono w-10 text-center text-lg font-semibold">
-						{value}
-					</span>
-					<button
-						type="button"
-						aria-label={_(msg`One more`)}
-						onClick={() => onChange(Math.min(max, 99, value + 1))}
-						className="hover:bg-accent h-full w-11 rounded-e-xl text-lg font-semibold"
-					>
-						+
-					</button>
-				</div>
+				<>
+					<div className="border-border bg-card flex h-12 items-center rounded-(--station-control-radius) border">
+						<button
+							type="button"
+							aria-label={_(msg`One fewer`)}
+							onClick={() => onChange(Math.max(1, value - 1))}
+							className="hover:bg-accent h-full w-11 rounded-s-(--station-control-radius) text-base font-semibold"
+						>
+							<Icon name="minus" className="mx-auto size-5" />
+						</button>
+						<span className="tnum mono w-10 text-center text-base font-semibold">
+							{value}
+						</span>
+						<button
+							type="button"
+							aria-label={_(msg`One more`)}
+							onClick={() => onChange(Math.min(max, 99, value + 1))}
+							className="hover:bg-accent h-full w-11 rounded-e-(--station-control-radius) text-base font-semibold"
+						>
+							<Icon name="plus" className="mx-auto size-5" />
+						</button>
+					</div>
+					{/* The sizes a large party usually is: one tap, then the stepper for the rest. */}
+					{LARGE_QUICK_PICKS.filter((size) => size <= max).map((size) => (
+						<Chip
+							look="outlined"
+							key={size}
+							size="lg"
+							selected={value === size}
+							aria-pressed={value === size}
+							onClick={() => onChange(size)}
+							className="w-12 px-0 tabular-nums"
+						>
+							{size}
+						</Chip>
+					))}
+				</>
 			) : null}
 		</div>
 	)
 }
 
 export function Detail({
-	icon: Icon,
+	icon,
 	children,
 	tone,
 }: {
-	icon: typeof Phone
+	icon: IconName
 	children: React.ReactNode
 	tone?: 'warning'
 }) {
@@ -144,7 +169,10 @@ export function Detail({
 				tone === 'warning' && 'text-warning font-medium',
 			)}
 		>
-			<Icon className="text-muted-foreground mt-0.5 size-5 shrink-0" />
+			<Icon
+				name={icon}
+				className="text-muted-foreground mt-0.5 size-5 shrink-0 self-start"
+			/>
 			<span className="min-w-0 break-words">{children}</span>
 		</p>
 	)
@@ -309,7 +337,7 @@ export function ChangePartySheet({
 			title={seated ? _(msg`Change party size`) : _(msg`Change size or time`)}
 			footer={
 				r ? (
-					<div className="mb-safe">
+					<div>
 						<Button
 							variant="primary"
 							size="lg"
@@ -362,10 +390,11 @@ export function ChangePartySheet({
 							</span>
 							<div className="flex flex-wrap gap-2">
 								<Chip
+									look="outlined"
 									selected={time === null}
 									aria-pressed={time === null}
 									onClick={() => setTime(null)}
-									className="tnum"
+									className="tabular-nums"
 								>
 									<Trans>Keep {current}</Trans>
 								</Chip>
@@ -380,6 +409,7 @@ export function ChangePartySheet({
 								) : (
 									open_.map((slot) => (
 										<Chip
+											look="outlined"
 											key={slot.localStartMin}
 											selected={time?.min === slot.localStartMin}
 											aria-pressed={time?.min === slot.localStartMin}
@@ -389,7 +419,7 @@ export function ChangePartySheet({
 													label: slotLabel(slot.localStartMin),
 												})
 											}
-											className="tnum min-w-20"
+											className="min-w-20 tabular-nums"
 										>
 											{slotLabel(slot.localStartMin)}
 										</Chip>

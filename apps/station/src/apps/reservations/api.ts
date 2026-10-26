@@ -1,6 +1,7 @@
 import {
 	POS_STAFF_SESSION_HEADER,
 	type PosReservationsTokenResponse,
+	type PosServersResponse,
 } from '@repo/common/pos-orders'
 import {
 	waitlistEntryResponseSchema,
@@ -54,13 +55,13 @@ export class HostApiError extends Error {
 		return this.code === 'table_occupied'
 	}
 
-	/** Someone else changed it first: reload and look again. */
+	/**
+	 * Someone else changed it first: reload and look again. Only the server's
+	 * own version check counts: a `locked_table_conflict` or any other refusal
+	 * that has "conflict" in its name is about the tables, not about a change.
+	 */
 	get stale(): boolean {
-		return (
-			this.status === 409 &&
-			!this.alreadyDone &&
-			/stale|version|conflict/.test(this.code)
-		)
+		return this.status === 409 && this.code === 'stale_version'
 	}
 
 	/**
@@ -120,6 +121,32 @@ const tokenSchema = z.object({
 	features: z.object({ waitlist: z.boolean(), online: z.boolean() }),
 })
 
+const serversSchema = z.object({
+	available: z.boolean(),
+	servers: z
+		.array(
+			z.object({
+				staffId: z.string(),
+				firstName: z.string(),
+				lastInitial: z.string().default(''),
+				position: z.string().nullable().default(null),
+				onClock: z.boolean().default(false),
+				shift: z
+					.object({ startAt: z.number(), endAt: z.number() })
+					.nullable()
+					.default(null),
+			}),
+		)
+		.default([]),
+}) satisfies z.ZodType<PosServersResponse, z.ZodTypeDef, unknown>
+
+/** Who works which section in a service: a person on the staff, a typed name, or nobody (left out). */
+export type SectionAssignmentInput = {
+	sectionId: string
+	staffId: string | null
+	serverLabel: string
+}
+
 /** Refresh this long before the token expires, so a slow tap never lands on a dead one. */
 const TOKEN_MARGIN_MS = 60_000
 const TIMEOUT_MS = 10_000
@@ -138,6 +165,9 @@ export type Overbook = { overbook?: boolean; overbookReason?: string }
 
 /** Why a party comes off the waitlist without being seated. */
 export type LeaveTarget = 'left' | 'no_response'
+
+/** Where a party goes back to on the waitlist: the line, as if they had never been told. */
+export type BackInLine = 'waiting'
 
 export type StatusTarget =
 	'arrived' | 'seated' | 'finished' | 'no_show' | 'cancelled' | 'confirmed'
@@ -328,6 +358,61 @@ export function createHostApi(deps: HostDeps) {
 			}
 		},
 
+		/**
+		 * Who can take a section between `from` and `to` (a service): clocked in
+		 * or scheduled at this workplace. Asked with the till's own credential
+		 * and the host's session, like the token.
+		 */
+		async servers(window: {
+			from: number
+			to: number
+		}): Promise<PosServersResponse> {
+			const { deviceToken } = deps.settings()
+			const sessionToken = deps.session()?.serverSession?.token
+			if (!deviceToken) throw new HostApiError(401, 'invalid_device')
+			if (!sessionToken) throw new HostApiError(401, 'staff_session_required')
+			const query = new URLSearchParams({
+				from: String(Math.round(window.from)),
+				to: String(Math.round(window.to)),
+			})
+			const response = await send(
+				`${base()}/pos/reservations/servers?${query}`,
+				{
+					method: 'GET',
+					headers: {
+						Authorization: `Bearer ${deviceToken}`,
+						[POS_STAFF_SESSION_HEADER]: sessionToken,
+						Accept: 'application/json',
+					},
+				},
+			)
+			if (!response.ok) throw await refusal(response)
+			const parsed = serversSchema.safeParse(
+				await response.json().catch(() => null),
+			)
+			if (!parsed.success) throw new HostApiError(502, 'malformed_response')
+			return parsed.data
+		},
+
+		/**
+		 * Who works each section in a service of a day. Replaces the service's
+		 * assignments as a whole: a section left out has nobody.
+		 */
+		async assignSections(input: {
+			date: string
+			serviceId: string
+			assignments: SectionAssignmentInput[]
+		}) {
+			await call('PUT', '/section-assignments', z.unknown(), {
+				body: {
+					locationId: await locationId(),
+					date: input.date,
+					serviceId: input.serviceId,
+					assignments: input.assignments,
+				},
+			})
+		},
+
 		async waitlist(): Promise<WaitlistListing> {
 			const query = new URLSearchParams({ locationId: await locationId() })
 			const result = await call(
@@ -367,8 +452,17 @@ export function createHostApi(deps: HostDeps) {
 			toStatus: StatusTarget,
 			options: {
 				tableIds?: string[]
+				/** The defined combination the tables are (several seated as one). */
+				comboId?: string
 				expectedVersion?: number
 				reason?: string
+				/**
+				 * How many of the party are at the door: sent with `arrived` (the
+				 * server has no partial statuses; it keeps the count on the booking).
+				 */
+				arrivedCovers?: number
+				/** How many of the party sit down now: sent with `seated`, with the tables. */
+				seatedCovers?: number
 			} & Overbook = {},
 		) {
 			return write(
@@ -457,12 +551,15 @@ export function createHostApi(deps: HostDeps) {
 			tableIds: string[],
 			expectedVersion?: number,
 			overbook: Overbook = {},
+			/** The defined combination the tables are, so it stays one on the book. */
+			comboId?: string | null,
 		) {
 			return write(
 				`/reservations/${encodeURIComponent(reservationId)}/assign`,
 				{
 					tableIds,
 					expectedVersion,
+					...(comboId ? { comboId } : {}),
 					...(overbook.overbook
 						? { overbook: true, overbookReason: overbook.overbookReason }
 						: {}),
@@ -588,12 +685,14 @@ export function createHostApi(deps: HostDeps) {
 
 		/**
 		 * Takes a party off the waitlist: they `left`, or their hold ran out with
-		 * no answer (`no_response`, which the server records as such).
+		 * no answer (`no_response`, which the server records as such). `waiting`
+		 * puts a told party (or one whose hold ran out) back in line: the server
+		 * clears their hold.
 		 */
 		leaveWaitlist(
 			entryId: string,
 			expectedVersion: number,
-			target: LeaveTarget = 'left',
+			target: LeaveTarget | BackInLine = 'left',
 		) {
 			return write(`/waitlist/${encodeURIComponent(entryId)}/status`, {
 				status: target,

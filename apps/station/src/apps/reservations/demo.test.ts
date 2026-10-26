@@ -50,7 +50,7 @@ describe('the sample day', () => {
 		expect(dayFeedSchema.safeParse(feed).success).toBe(true)
 		expect(feed.businessDate).toBe('2026-10-24')
 		expect(feed.areas.map((a) => a.name)).toEqual(['Main room', 'Patio'])
-		expect(feed.tables).toHaveLength(16)
+		expect(feed.tables).toHaveLength(18)
 		expect(feed.services.map((s) => s.name)).toEqual(['Lunch', 'Dinner'])
 		expect(feed.reservations.length).toBeGreaterThanOrEqual(14)
 		const statuses = new Set(feed.reservations.map((r) => r.status))
@@ -137,7 +137,8 @@ describe('seating', () => {
 					expectedVersion: rana.version,
 				}),
 			),
-		).toEqual([409, 'table_occupied'])
+			// A party sitting there is never moved to make room: the server's `locked_table_conflict`.
+		).toEqual([409, 'locked_table_conflict'])
 		await d.api.transition(rana.id, 'seated', {
 			tableIds: ['t6'],
 			expectedVersion: rana.version,
@@ -162,7 +163,8 @@ describe('seating', () => {
 		const d = demo()
 		const feed = await d.feed()
 		const rana = named(feed, 'Rana')
-		// Table 8 is booked for Ahmed within the half hour: Rana's stay would run into it.
+		// Table 8 is booked for Ahmed within the half hour: Rana's stay would run into
+		// it, and he is too close to his time to be moved (the server's freeze window).
 		expect(
 			await refusal(
 				d.api.transition(rana.id, 'seated', {
@@ -170,7 +172,7 @@ describe('seating', () => {
 					expectedVersion: rana.version,
 				}),
 			),
-		).toEqual([409, 'table_occupied'])
+		).toEqual([409, 'locked_table_conflict'])
 		await d.api.transition(rana.id, 'seated', {
 			tableIds: ['t8'],
 			expectedVersion: rana.version,
@@ -182,7 +184,7 @@ describe('seating', () => {
 		).toBe('seated')
 	})
 
-	it('refuses a taped-off table even when the host insists', async () => {
+	it('refuses a table taped off right now even when the host insists', async () => {
 		const d = demo()
 		const rana = named(await d.feed(), 'Rana')
 		expect(
@@ -444,8 +446,8 @@ describe('booking', () => {
 				}),
 			),
 		).toEqual([409, 'slot_unavailable'])
-		// A party of twelve fits no table.
-		const big = await d.api.availability(addDays(today, 1), 12)
+		// A party of fourteen fits no table, and no combination.
+		const big = await d.api.availability(addDays(today, 1), 14)
 		expect(big.slots.every((s) => !s.available)).toBe(true)
 	})
 
@@ -582,9 +584,10 @@ describe('the waitlist', () => {
 			'no_response',
 		)) as { entry: { status: string } }
 		expect(answer.entry.status).toBe('no_response')
+		// Out of the line, but kept a while on the stand to be put back.
 		expect(
-			(await d.api.waitlist()).entries.some((e) => e.id === amira.id),
-		).toBe(false)
+			(await d.api.waitlist()).entries.find((e) => e.id === amira.id)?.status,
+		).toBe('no_response')
 		const wei = (await d.api.waitlist()).entries.find(
 			(e) => e.firstName === 'Wei',
 		)!
@@ -706,6 +709,28 @@ describe('the sample for the guest card and the notices', () => {
 		expect(
 			(await d.api.waitlist()).entries.some((e) => e.id === amira.id),
 		).toBe(true)
+	})
+})
+
+describe('the connection going down', () => {
+	it('fails every call as an unreachable server does, and comes back', async () => {
+		const d = demo()
+		const controls = (d.api as unknown as { controls: DemoControls }).controls
+		const elena = named(await d.feed(), 'Elena')
+		controls.setOffline(true)
+		expect(await refusal(d.api.day())).toEqual([0, 'network_unavailable'])
+		expect(await refusal(d.api.grant())).toEqual([0, 'network_unavailable'])
+		expect(
+			await refusal(
+				d.api.transition(elena.id, 'arrived', {
+					expectedVersion: elena.version,
+				}),
+			),
+		).toEqual([0, 'network_unavailable'])
+		controls.setOffline(false)
+		// Nothing was changed while it was down.
+		const after = named(await d.feed(), 'Elena')
+		expect(after.status).toBe(elena.status)
 	})
 })
 
@@ -1009,6 +1034,36 @@ describe('tables kept through a reset', () => {
 	})
 })
 
+describe('a table given to a booking for its own time', () => {
+	it('is judged by the booking’s window, as on the server: a party there now who clears before it does not stand in the way', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const omar = named(feed, 'Omar')
+		const jonas = named(feed, 'Jonas')
+		// Omar sits at Table 2 until 13:35; Jonas is booked from 15:15.
+		expect(omar).toMatchObject({ status: 'seated', tableIds: ['t2'] })
+		expect(jonas.startAt).toBeGreaterThan(omar.endAt)
+		const given = (await d.api.assign(jonas.id, ['t2'], jonas.version)) as {
+			reservation: { tableIds: string[]; status: string }
+		}
+		expect(given.reservation).toMatchObject({
+			status: 'booked',
+			tableIds: ['t2'],
+		})
+	})
+	it('is refused while the party there is still in the booking’s window', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const omar = named(feed, 'Omar')
+		const tariq = named(feed, 'Tariq')
+		// Tariq is due at 13:15, inside Omar's booked time at Table 2: a party sitting there is never moved.
+		expect(tariq.startAt).toBeLessThan(omar.endAt)
+		expect(
+			await refusal(d.api.assign(tariq.id, ['t2'], tariq.version)),
+		).toEqual([409, 'locked_table_conflict'])
+	})
+})
+
 describe('a party at the table', () => {
 	const seatedAt = async (d: ReturnType<typeof demo>, first: string) => {
 		const feed = await d.feed()
@@ -1115,7 +1170,7 @@ describe('a party at the table', () => {
 			await refusal(
 				d.api.changeParty(sarah.id, { partySize: 7 }, sarah.version),
 			),
-		).toEqual([409, 'no_availability'])
+		).toEqual([409, 'party_too_large_for_table'])
 		expect(
 			await refusal(
 				d.api.changeParty(
@@ -1155,21 +1210,22 @@ describe('a booking with money on it', () => {
 			),
 		).toEqual([409, 'manager_required'])
 	})
-	it('may still be given a longer stay once seated (it is not money)', async () => {
+	it('is not given a longer stay from a till once seated: it is behind the same lock as size and time', async () => {
 		const d = demo()
 		const rana = named(await d.feed(), 'Rana')
 		const seated = (await d.api.transition(rana.id, 'seated', {
 			tableIds: ['t6'],
 			expectedVersion: rana.version,
 		})) as { reservation: { version: number; durationMin: number } }
-		const longer = (await d.api.changeParty(
-			rana.id,
-			{ durationMin: seated.reservation.durationMin + 15 },
-			seated.reservation.version,
-		)) as { reservation: { durationMin: number } }
-		expect(longer.reservation.durationMin).toBe(
-			seated.reservation.durationMin + 15,
-		)
+		expect(
+			await refusal(
+				d.api.changeParty(
+					rana.id,
+					{ durationMin: seated.reservation.durationMin + 15 },
+					seated.reservation.version,
+				),
+			),
+		).toEqual([409, 'manager_required'])
 	})
 })
 
@@ -1179,5 +1235,483 @@ describe('the day’s pacing', () => {
 		const feed = await d.feed()
 		expect(feed.pacing.length).toBeGreaterThan(0)
 		expect(feed.pacing.every((p) => p.maxCoversIsDefault === false)).toBe(true)
+	})
+})
+
+describe('a large party and tables joined', () => {
+	it('has a twelve-top booked on a defined combination, and tables that join', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const twelve = named(feed, 'Hassan')
+		expect(twelve).toMatchObject({
+			partySize: 12,
+			tableIds: ['t6', 't7'],
+			comboId: 'combo_67',
+		})
+		expect(feed.combos).toHaveLength(1)
+		expect(feed.combos[0]).toMatchObject({
+			tableIds: ['t6', 't7'],
+			maxCovers: 12,
+		})
+		const combinable = feed.tables.filter((t) => t.combinable).map((t) => t.id)
+		expect(combinable.sort()).toEqual(
+			['p6', 'p7', 'p8', 't10', 't6', 't7', 't9'].sort(),
+		)
+	})
+	it('seats a walk-in at several tables as one party', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		// Tables 6 and 7: 7 is taken by Sarah's birthday, so use 9 and 10's neighbours: P4 and P5 are booked; 6 + P6 are free.
+		const answer = (await d.api.walkIn(
+			{ partySize: 10, tableIds: ['t6', 'p6'] },
+			'k1',
+		)) as { reservation: { tableIds: string[]; partySize: number } }
+		expect(answer.reservation).toMatchObject({
+			partySize: 10,
+			tableIds: ['t6', 'p6'],
+		})
+		const after = await d.feed()
+		expect(
+			tableState(
+				after.tables.find((t) => t.id === 'p6')!,
+				after,
+				d.now(),
+			).kind,
+		).toBe('seated')
+		expect(feed.reservations.length).toBeLessThan(after.reservations.length)
+	})
+	it('refuses a walk-in joined onto a table with someone on it', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const seatedTable = feed.reservations.find((r) => r.status === 'seated')!
+			.tableIds[0]!
+		expect(
+			await refusal(
+				d.api.walkIn({ partySize: 10, tableIds: ['t6', seatedTable] }, 'k2'),
+			),
+		).toEqual([409, 'table_occupied'])
+	})
+	it('seats a booking at its combination and keeps it as one on the book', async () => {
+		const d = demo()
+		const first = await d.feed()
+		const twelve = named(first, 'Hassan')
+		// Sarah's birthday has left Table 7 by the time the twelve are here.
+		const sarah = named(first, 'Sarah')
+		await d.api.transition(sarah.id, 'finished', {
+			expectedVersion: sarah.version,
+		})
+		d.advance(160)
+		const here = (await d.api.transition(twelve.id, 'arrived', {
+			expectedVersion: twelve.version,
+		})) as { reservation: { version: number } }
+		const seated = (await d.api.transition(twelve.id, 'seated', {
+			tableIds: ['t6', 't7'],
+			comboId: 'combo_67',
+			expectedVersion: here.reservation.version,
+		})) as { reservation: { tableIds: string[]; comboId: string | null } }
+		expect(seated.reservation).toMatchObject({
+			tableIds: ['t6', 't7'],
+			comboId: 'combo_67',
+		})
+	})
+	it('moves a seated party onto several tables, with the combination kept', async () => {
+		const d = demo()
+		const chris = named(await d.feed(), 'Chris')
+		const moved = (await d.api.assign(
+			chris.id,
+			['t6', 'p6'],
+			chris.version,
+			{},
+			null,
+		)) as { reservation: { tableIds: string[]; comboId: string | null } }
+		expect(moved.reservation.tableIds).toEqual(['t6', 'p6'])
+		expect(moved.reservation.comboId).toBeNull()
+		// Moved back as one combination: the combination is kept, under the version it has now.
+		const now = named(await d.feed(), 'Chris')
+		const back = (await d.api.assign(
+			chris.id,
+			['p6', 't6'],
+			now.version,
+			{},
+			'combo_x',
+		)) as { reservation: { tableIds: string[]; comboId: string | null } }
+		expect(back.reservation).toMatchObject({
+			tableIds: ['p6', 't6'],
+			comboId: 'combo_x',
+		})
+	})
+})
+
+describe('seating a booking, as the server assigns tables', () => {
+	it('moves a soft booking that is not due soon to another table to make room', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const rana = named(feed, 'Rana')
+		const giulia = named(feed, 'Giulia')
+		expect(giulia.tableIds).toEqual(['t4'])
+		// Giulia is booked 75 minutes from now at Table 4: well beyond the freeze window.
+		await d.api.transition(rana.id, 'seated', {
+			tableIds: ['t4'],
+			expectedVersion: rana.version,
+		})
+		const after = await d.feed()
+		const moved = after.reservations.find((r) => r.id === giulia.id)!
+		expect(moved.tableIds).not.toEqual(['t4'])
+		expect(moved.tableIds).toHaveLength(1)
+	})
+	it('does not move a party that is due within the freeze window (the next party is due)', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const rana = named(feed, 'Rana')
+		// Elena is booked at Table P4 in fifteen minutes.
+		expect(named(feed, 'Elena').tableIds).toEqual(['p4'])
+		expect(
+			await refusal(
+				d.api.transition(rana.id, 'seated', {
+					tableIds: ['p4'],
+					expectedVersion: rana.version,
+				}),
+			),
+		).toEqual([409, 'locked_table_conflict'])
+	})
+	it('refuses a table taped off from a time inside the stay, as the server does, and an overbook lets it through', async () => {
+		const d = demo()
+		const rana = named(await d.feed(), 'Rana')
+		// Table P2 is taped off for a private party from 45 minutes from now.
+		expect(
+			await refusal(
+				d.api.transition(rana.id, 'seated', {
+					tableIds: ['p2'],
+					expectedVersion: rana.version,
+				}),
+			),
+		).toEqual([409, 'table_blocked'])
+		const insisted = (await d.api.transition(rana.id, 'seated', {
+			tableIds: ['p2'],
+			expectedVersion: rana.version,
+			overbook: true,
+			overbookReason: 'Seated at the host stand',
+		})) as { reservation: { status: string } }
+		expect(insisted.reservation.status).toBe('seated')
+	})
+	it('is not a blocked table for a walk-in: the server calls it occupied', async () => {
+		const d = demo()
+		expect(
+			await refusal(d.api.walkIn({ partySize: 2, tableIds: ['p2'] }, 'k3')),
+		).toEqual([409, 'table_occupied'])
+	})
+})
+
+describe('a party that is only partly here', () => {
+	it('keeps a partial arrival as an arrived booking short of its size, and seats some of them with the tables in one call', async () => {
+		const d = demo()
+		const dina = named(await d.feed(), 'Dina')
+		expect(dina).toMatchObject({
+			status: 'arrived',
+			partySize: 5,
+			arrivedCovers: 3,
+		})
+		// One call, as the server takes it: the status, the tables and how many sit.
+		const partly = (await d.api.transition(dina.id, 'seated', {
+			tableIds: ['t6'],
+			seatedCovers: 3,
+			expectedVersion: dina.version,
+		})) as {
+			reservation: {
+				status: string
+				seatedCovers: number
+				tableIds: string[]
+				version: number
+			}
+		}
+		expect(partly.reservation).toMatchObject({
+			status: 'seated',
+			seatedCovers: 3,
+			tableIds: ['t6'],
+		})
+		// They are on the floor: Table 6 is theirs.
+		const feed = await d.feed()
+		expect(
+			tableState(
+				feed.tables.find((t) => t.id === 't6')!,
+				feed,
+				d.now(),
+			).kind,
+		).toBe('seated')
+		// The server has nothing to add the rest with: seated goes only to finished.
+		expect(
+			await refusal(
+				d.api.transition(dina.id, 'seated', {
+					seatedCovers: 5,
+					expectedVersion: partly.reservation.version,
+				}),
+			),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+	it('seats as many as were marked here when no count is sent, and all of them when it says so', async () => {
+		const d = demo()
+		const dina = named(await d.feed(), 'Dina')
+		const whole = (await d.api.transition(dina.id, 'seated', {
+			tableIds: ['t6'],
+			seatedCovers: 5,
+			expectedVersion: dina.version,
+		})) as { reservation: { seatedCovers: number } }
+		expect(whole.reservation.seatedCovers).toBe(5)
+		const other = demo()
+		const again = named(await other.feed(), 'Dina')
+		const bare = (await other.api.transition(again.id, 'seated', {
+			tableIds: ['t6'],
+			expectedVersion: again.version,
+		})) as { reservation: { seatedCovers: number } }
+		// The server falls back to the count of the ones at the door.
+		expect(bare.reservation.seatedCovers).toBe(3)
+	})
+	it('marks some of a booked party here as `arrived` with the count, and cannot raise it after', async () => {
+		const d = demo()
+		const elena = named(await d.feed(), 'Elena')
+		const some = (await d.api.transition(elena.id, 'arrived', {
+			arrivedCovers: 2,
+			expectedVersion: elena.version,
+		})) as {
+			reservation: { status: string; arrivedCovers: number; version: number }
+		}
+		expect(some.reservation).toMatchObject({
+			status: 'arrived',
+			arrivedCovers: 2,
+		})
+		// arrived -> arrived is not a step the server has: no way to raise the count.
+		expect(
+			await refusal(
+				d.api.transition(elena.id, 'arrived', {
+					arrivedCovers: 4,
+					expectedVersion: some.reservation.version,
+				}),
+			),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+	it('has no partial statuses: the server would refuse them', async () => {
+		const d = demo()
+		const elena = named(await d.feed(), 'Elena')
+		expect(
+			await refusal(
+				d.api.transition(elena.id, 'partially_arrived' as never, {
+					arrivedCovers: 2,
+					expectedVersion: elena.version,
+				}),
+			),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+	it('never counts more than the party', async () => {
+		const d = demo()
+		const elena = named(await d.feed(), 'Elena')
+		const some = (await d.api.transition(elena.id, 'arrived', {
+			arrivedCovers: 40,
+			expectedVersion: elena.version,
+		})) as { reservation: { arrivedCovers: number } }
+		expect(some.reservation.arrivedCovers).toBe(4)
+	})
+})
+
+describe('a guest marked a no-show who walks in', () => {
+	it('can be taken back within the undo window', async () => {
+		const d = demo()
+		const mariam = named(await d.feed(), 'Mariam')
+		expect(mariam.status).toBe('no_show')
+		const back = (await d.api.undo(mariam.id)) as {
+			reservation: { status: string }
+		}
+		expect(['booked', 'confirmed', 'arrived']).toContain(
+			back.reservation.status,
+		)
+	})
+	it('cannot be reopened by a till once the undo window has passed', async () => {
+		const d = demo()
+		const faisal = named(await d.feed(), 'Faisal')
+		expect(faisal.status).toBe('no_show')
+		expect(await refusal(d.api.undo(faisal.id))).toEqual([
+			409,
+			'undo_window_expired',
+		])
+		expect(
+			await refusal(
+				d.api.transition(faisal.id, 'arrived', {
+					expectedVersion: faisal.version,
+				}),
+			),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+})
+
+describe('a stay, as the server lets a till change it', () => {
+	it('only grows, never shrinks', async () => {
+		const d = demo()
+		const sarah = named(await d.feed(), 'Sarah')
+		expect(
+			await refusal(
+				d.api.changeParty(
+					sarah.id,
+					{ durationMin: sarah.durationMin - 15 },
+					sarah.version,
+				),
+			),
+		).toEqual([409, 'manager_required'])
+	})
+	it('grows a party seated past their time by a quarter hour from now', async () => {
+		const d = demo()
+		const sarah = named(await d.feed(), 'Sarah')
+		d.advance(150)
+		const feed = await d.feed()
+		const late = feed.reservations.find((r) => r.id === sarah.id)!
+		expect(late.endAt).toBeLessThan(d.now())
+		const wanted = Math.ceil((d.now() + 15 * MIN - late.startAt) / MIN)
+		const longer = (await d.api.changeParty(
+			sarah.id,
+			{ durationMin: wanted },
+			late.version,
+		)) as { reservation: { endAt: number } }
+		expect(longer.reservation.endAt).toBeGreaterThan(d.now())
+	})
+	it('refuses a time moved into the past', async () => {
+		const d = demo()
+		const feed = await d.feed()
+		const priya = named(feed, 'Priya')
+		expect(
+			await refusal(
+				d.api.changeParty(
+					priya.id,
+					{ time: '00:30', localStartMin: 30 },
+					priya.version,
+				),
+			),
+		).toEqual([409, 'in_the_past'])
+	})
+})
+
+describe('a hold that ran out, as the server’s tick does it', () => {
+	it('takes a party out of line when the hold ends, texted or not, and lists them to be put back', async () => {
+		const d = demo()
+		const jamal = (await d.api.waitlist()).entries[0]!
+		await d.api.notifyWaitlist(jamal.id, jamal.version)
+		d.advance(11)
+		const list = await d.api.waitlist()
+		const gone = list.entries.find((e) => e.id === jamal.id)!
+		expect(gone.status).toBe('no_response')
+		// Not counted as waiting any more.
+		expect(list.counts.active).toBe(
+			list.entries.filter((e) => e.status !== 'no_response').length,
+		)
+	})
+	it('puts a party back in line, clearing the hold', async () => {
+		const d = demo()
+		const jamal = (await d.api.waitlist()).entries[0]!
+		await d.api.notifyWaitlist(jamal.id, jamal.version)
+		d.advance(11)
+		const gone = (await d.api.waitlist()).entries.find(
+			(e) => e.id === jamal.id,
+		)!
+		const back = (await d.api.leaveWaitlist(
+			gone.id,
+			gone.version,
+			'waiting',
+		)) as {
+			entry: {
+				status: string
+				notifiedAt: number | null
+				responseDeadlineAt: number | null
+			}
+		}
+		expect(back.entry).toMatchObject({
+			status: 'waiting',
+			notifiedAt: null,
+			responseDeadlineAt: null,
+		})
+	})
+	it('puts a party told by mistake back in line', async () => {
+		const d = demo()
+		const amira = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Amira',
+		)!
+		expect(amira.status).toBe('notified')
+		const back = (await d.api.leaveWaitlist(
+			amira.id,
+			amira.version,
+			'waiting',
+		)) as {
+			entry: { status: string }
+		}
+		expect(back.entry.status).toBe('waiting')
+	})
+	it('does not put back a party who is already waiting, left, or seated', async () => {
+		const d = demo()
+		const sofia = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Sofia',
+		)!
+		// Already waiting: nothing to do.
+		const same = (await d.api.leaveWaitlist(
+			sofia.id,
+			sofia.version,
+			'waiting',
+		)) as {
+			entry: { status: string }
+		}
+		expect(same.entry.status).toBe('waiting')
+		const wei = (await d.api.waitlist()).entries.find(
+			(e) => e.firstName === 'Wei',
+		)!
+		const left = (await d.api.leaveWaitlist(wei.id, wei.version)) as {
+			entry: { status: string; version: number }
+		}
+		expect(
+			await refusal(d.api.leaveWaitlist(wei.id, left.entry.version, 'waiting')),
+		).toEqual([409, 'invalid_status_transition'])
+	})
+	it('stops listing a party whose hold ended long ago', async () => {
+		const d = demo()
+		const jamal = (await d.api.waitlist()).entries[0]!
+		await d.api.notifyWaitlist(jamal.id, jamal.version)
+		d.advance(11 + 31)
+		expect(
+			(await d.api.waitlist()).entries.some((e) => e.id === jamal.id),
+		).toBe(false)
+	})
+})
+
+describe('availability for a large party', () => {
+	it('offers a defined combination when no single table seats the party', async () => {
+		const d = demo()
+		d.advance(120)
+		const slots = (await d.api.availability(d.today(), 12)).slots
+		const open = slots.filter((s) => s.available)
+		expect(open.length).toBeGreaterThan(0)
+		for (const slot of open)
+			expect(slot.suggestedTableIds).toEqual(['t6', 't7'])
+		// A party no combination seats has no time at all.
+		expect(
+			(await d.api.availability(d.today(), 14)).slots.some((s) => s.available),
+		).toBe(false)
+	})
+	it('books the twelve on the combination and keeps it as one', async () => {
+		const d = demo()
+		d.advance(120)
+		const slot = (await d.api.availability(d.today(), 12)).slots.find(
+			(s) => s.available,
+		)!
+		const answer = (await d.api.book(
+			{
+				date: d.today(),
+				time: slot.time,
+				localStartMin: slot.localStartMin,
+				partySize: 12,
+				firstName: 'Ola',
+				lastName: 'Hansen',
+				phone: null,
+				notes: null,
+			},
+			'bk12',
+		)) as { reservation: { tableIds: string[]; comboId: string | null } }
+		expect(answer.reservation).toMatchObject({
+			tableIds: ['t6', 't7'],
+			comboId: 'combo_67',
+		})
 	})
 })

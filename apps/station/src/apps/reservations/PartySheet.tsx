@@ -1,22 +1,8 @@
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import {
-	Armchair,
-	ArrowRightLeft,
-	CalendarPlus,
-	CheckCheck,
-	Clock3,
-	CreditCard,
-	Crown,
-	RotateCcw,
-	TimerReset,
-	TriangleAlert,
-	Undo2,
-	UserRound,
-	Users,
-	Utensils,
-} from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useEffect, useState } from 'react'
+import { coversHere } from './arrival.ts'
 import { partyStatus } from './book.ts'
 import { ContactRow } from './contact.tsx'
 import {
@@ -31,9 +17,11 @@ import {
 	dietaryNoteOf,
 	dietaryOf,
 	historyLine,
+	listText,
 	tagChips,
 } from './guest.ts'
-import { statusText } from './labels.ts'
+import { coversText, statusText } from './labels.ts'
+import { OfflineNote } from './OfflineStrip.tsx'
 import {
 	ARMED_FOR_MS,
 	armedStillHolds,
@@ -70,6 +58,7 @@ export function PartySheet({
 	tableKindOf,
 	onCommand,
 	onClose,
+	offlineReason = null,
 }: {
 	reservation: DayReservation | null
 	canReadGuest: boolean
@@ -87,8 +76,10 @@ export function PartySheet({
 	tableKindOf?: (tableId: string) => TableKind | null
 	onCommand: (reservation: DayReservation, command: PartyCommand) => void
 	onClose: () => void
+	/** The connection is down: the actions wait for it, and the sheet says so. */
+	offlineReason?: string | null
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	/**
 	 * An armed cancel or no-show, with the booking as the host saw it. If it
 	 * changes meanwhile (another host marks them arrived), it disarms: the
@@ -109,6 +100,23 @@ export function PartySheet({
 		reservation &&
 		setConfirm({ to, version: reservation.version, status: reservation.status })
 	const r = reservation
+	const partly = r ? coversHere(r) : null
+	/**
+	 * How many, for "Some are here" (a booking not marked here yet: all but one
+	 * to start) and for "Seat N now" (a party at the stand short of its size:
+	 * the ones the host marked here).
+	 */
+	const [here, setHere] = useState(1)
+	const hereKey = r ? `${r.id}:${r.status}:${r.arrivedCovers ?? ''}` : ''
+	useEffect(() => {
+		if (!r) return
+		setHere(
+			partly && partly.stage === 'door'
+				? partly.here
+				: Math.max(1, r.partySize - 1),
+		)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- starts over when the party or what it said changes
+	}, [hereKey])
 	const bookedTable = r?.tableIds.length === 1 ? r.tableIds[0] : undefined
 	const a = r
 		? partyActions({
@@ -123,7 +131,8 @@ export function PartySheet({
 		: null
 	const run = (command: PartyCommand) => r && onCommand(r, command)
 	const primary = a
-		? [a.canSeat, a.canFinish, a.canArrive].filter(Boolean).length
+		? [a.canSeat, a.canSeatPart, a.canFinish, a.canArrive].filter(Boolean)
+				.length
 		: 0
 	const secondary = a
 		? [
@@ -143,7 +152,8 @@ export function PartySheet({
 	const dietary = r ? dietaryOf(_, r) : { allergens: [], diets: [] }
 	// An allergy is a warning; a diet is a quiet line; a note we may not read is said as a note.
 	const note = r ? dietaryNoteOf(_, r, canReadGuest) : null
-	const dietLine = note?.kind === 'diet' ? note.diets.join(', ') : ''
+	const dietLine =
+		note?.kind === 'diet' ? listText(note.diets, i18n.locale) : ''
 	const stayNow = r ? stayOf(r, now) : null
 	const clearClock = stayNow ? formatTime(stayNow.clearAt) : ''
 	const seatedMin = stayNow?.seatedMin ?? 0
@@ -181,7 +191,7 @@ export function PartySheet({
 								sofar: false,
 							}
 						: null
-	const allergenList = dietary.allergens.join(', ')
+	const allergenList = listText(dietary.allergens, i18n.locale)
 	const seatLabel = a?.seatAt?.label ?? ''
 
 	return (
@@ -192,7 +202,7 @@ export function PartySheet({
 			footer={
 				r && a ? (
 					confirm ? (
-						<div className="mb-safe flex flex-col gap-3">
+						<div className="flex flex-col gap-3">
 							<p className="font-medium">
 								{confirm.to === 'cancelled' ? (
 									<Trans>Cancel this booking?</Trans>
@@ -225,7 +235,8 @@ export function PartySheet({
 							</div>
 						</div>
 					) : a.any ? (
-						<div className="mb-safe flex flex-col gap-3">
+						<div className="flex flex-col gap-3">
+							<OfflineNote reason={offlineReason} />
 							{/* The next step for this party. */}
 							{primary > 0 ? (
 								<div className="flex gap-3">
@@ -241,7 +252,7 @@ export function PartySheet({
 													run({ kind: 'seatAt', tableId: a.seatAt!.tableId })
 												}
 											>
-												<Armchair className="size-5 shrink-0" />
+												<Icon name="armchair" className="size-5 shrink-0" />
 												<span className="truncate">
 													<Trans>Seat at Table {seatLabel}</Trans>
 												</span>
@@ -264,9 +275,33 @@ export function PartySheet({
 											disabled={busy}
 											onClick={() => run({ kind: 'place' })}
 										>
-											<Armchair className="size-5" />
+											<Icon name="armchair" className="size-5" />
 											<Trans>Choose a table</Trans>
 										</Button>
+									) : null}
+									{a.canSeatPart ? (
+										// Only some are here: how many to seat now, then the table.
+										<>
+											<CoversStepper
+												value={here}
+												max={r.partySize}
+												busy={busy}
+												onChange={setHere}
+												partySize={r.partySize}
+											/>
+											<Button
+												variant="primary"
+												size="lg"
+												className="min-w-0 flex-1"
+												disabled={busy}
+												onClick={() => run({ kind: 'seatPart', covers: here })}
+											>
+												<Icon name="armchair" className="size-5 shrink-0" />
+												<span className="truncate">
+													<Trans>Seat {here} now</Trans>
+												</span>
+											</Button>
+										</>
 									) : null}
 									{a.canFinish ? (
 										<Button
@@ -276,7 +311,7 @@ export function PartySheet({
 											disabled={busy}
 											onClick={() => run({ kind: 'status', to: 'finished' })}
 										>
-											<CheckCheck className="size-5" />
+											<Icon name="check-check" className="size-5" />
 											<Trans>Finished, clear table</Trans>
 										</Button>
 									) : null}
@@ -304,25 +339,25 @@ export function PartySheet({
 										<Button
 											variant="outline"
 											size="lg"
-											className="h-auto min-h-14 py-2 leading-tight"
+											className="h-14 px-2 leading-tight"
 											disabled={busy}
 											onClick={() => run({ kind: 'status', to: 'confirmed' })}
 										>
-											<Trans>Mark confirmed</Trans>
+											<Trans>Confirm</Trans>
 										</Button>
 									) : null}
 									{a.canChange ? (
 										<Button
 											variant="outline"
 											size="lg"
-											className="h-auto min-h-14 py-2 leading-tight"
+											className="h-14 px-2 leading-tight"
 											disabled={busy}
 											onClick={() => run({ kind: 'change' })}
 										>
 											{a.changeKind === 'size' ? (
-												<Trans>Change party size</Trans>
+												<Trans>Party size</Trans>
 											) : (
-												<Trans>Change size or time</Trans>
+												<Trans>Size or time</Trans>
 											)}
 										</Button>
 									) : null}
@@ -330,11 +365,14 @@ export function PartySheet({
 										<Button
 											variant="outline"
 											size="lg"
-											className="h-auto min-h-14 py-2 leading-tight"
+											className="h-14 px-2 leading-tight"
 											disabled={busy}
 											onClick={() => run({ kind: 'move' })}
 										>
-											<ArrowRightLeft className="size-5 shrink-0" />
+											<Icon
+												name="arrow-right-left"
+												className="size-5 shrink-0"
+											/>
 											<Trans>Move table</Trans>
 										</Button>
 									) : null}
@@ -342,11 +380,11 @@ export function PartySheet({
 										<Button
 											variant="outline"
 											size="lg"
-											className="h-auto min-h-14 py-2 leading-tight"
+											className="h-14 px-2 leading-tight"
 											disabled={busy}
 											onClick={() => run({ kind: 'extend' })}
 										>
-											<TimerReset className="size-5 shrink-0" />
+											<Icon name="timer-reset" className="size-5 shrink-0" />
 											<Trans>+{EXTEND_STEP_MIN} min</Trans>
 										</Button>
 									) : null}
@@ -354,11 +392,11 @@ export function PartySheet({
 										<Button
 											variant="outline"
 											size="lg"
-											className="h-auto min-h-14 py-2 leading-tight"
+											className="h-14 px-2 leading-tight"
 											disabled={busy}
 											onClick={() => run({ kind: 'undo' })}
 										>
-											<Undo2 className="size-5 shrink-0" />
+											<Icon name="undo-2" className="size-5 shrink-0" />
 											{a.undo === 'finish' ? (
 												<Trans>Back to seated</Trans>
 											) : a.undo === 'no_show' ? (
@@ -372,11 +410,11 @@ export function PartySheet({
 										<Button
 											variant="outline"
 											size="lg"
-											className="h-auto min-h-14 py-2 leading-tight"
+											className="h-14 px-2 leading-tight"
 											disabled={busy}
 											onClick={() => run({ kind: 'again' })}
 										>
-											<RotateCcw className="size-5 shrink-0" />
+											<Icon name="rotate-ccw" className="size-5 shrink-0" />
 											<Trans>Book again</Trans>
 										</Button>
 									) : null}
@@ -388,7 +426,11 @@ export function PartySheet({
 									role="note"
 									className="text-muted-foreground flex items-start gap-2 text-sm font-medium"
 								>
-									<CreditCard aria-hidden className="mt-0.5 size-4 shrink-0" />
+									<Icon
+										name="credit-card"
+										aria-hidden
+										className="mt-0.5 size-4 shrink-0 self-start"
+									/>
 									<Trans>
 										A manager handles this booking: it has a deposit.
 									</Trans>
@@ -437,13 +479,18 @@ export function PartySheet({
 						<span className="mono text-3xl font-semibold">
 							{formatTime(r.startAt)}
 						</span>
-						<span className="text-muted-foreground inline-flex items-center gap-1.5 text-lg">
-							<Users className="size-5" />
+						<span className="text-muted-foreground inline-flex items-center gap-1.5 text-base">
+							<Icon name="users" className="size-5" />
 							<span className="tnum">{r.partySize}</span>
 						</span>
-						<Badge tone={r.status === 'arrived' ? 'success' : 'muted'}>
-							{_(STATUS_LABEL[r.status] ?? msg`Booked`)}
-						</Badge>
+						{partly ? (
+							// "3 of 5 here" says it all: no second badge for "At the stand".
+							<Badge tone="warning">{coversText(_, partly)}</Badge>
+						) : (
+							<Badge tone={r.status === 'arrived' ? 'success' : 'muted'}>
+								{_(STATUS_LABEL[r.status] ?? msg`Booked`)}
+							</Badge>
+						)}
 						{standing &&
 						!viewOnly &&
 						(standing.kind === 'late' || standing.kind === 'running') ? (
@@ -460,9 +507,13 @@ export function PartySheet({
 					{note?.kind === 'allergy' ? (
 						<div
 							role="note"
-							className="bg-warning/12 text-warning flex items-start gap-3 rounded-2xl px-4 py-3"
+							className="notice-warning flex items-start gap-3 rounded-(--station-panel-radius) px-4 py-3"
 						>
-							<TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0" />
+							<Icon
+								name="alert-triangle"
+								aria-hidden
+								className="mt-0.5 size-5 shrink-0 self-start"
+							/>
 							<div className="flex min-w-0 flex-col gap-1">
 								{note.allergens.length > 0 ? (
 									<>
@@ -482,14 +533,14 @@ export function PartySheet({
 						</div>
 					) : null}
 					{note?.kind === 'unreadable' ? (
-						<Detail icon={Utensils}>
+						<Detail icon={'utensils'}>
 							<Trans>
 								Dietary note on file. A manager can see the details.
 							</Trans>
 						</Detail>
 					) : null}
 					{note?.kind === 'diet' ? (
-						<Detail icon={Utensils}>
+						<Detail icon={'utensils'}>
 							<Trans>Dietary: {dietLine}</Trans>
 						</Detail>
 					) : null}
@@ -507,7 +558,7 @@ export function PartySheet({
 										className="px-3 py-1 text-sm"
 									>
 										{chip.tone === 'vip' ? (
-											<Crown aria-hidden className="size-3.5" />
+											<Icon name="crown" aria-hidden className="size-3.5" />
 										) : null}
 										<bdi>{chip.label}</bdi>
 									</Badge>
@@ -529,7 +580,7 @@ export function PartySheet({
 
 					<div className="flex flex-col gap-3 empty:hidden">
 						{a?.awaitingPayment ? (
-							<Detail icon={CreditCard}>
+							<Detail icon={'credit-card'}>
 								<Trans>
 									Held until the deposit is paid. A manager settles it in the
 									app.
@@ -537,17 +588,17 @@ export function PartySheet({
 							</Detail>
 						) : null}
 						{r.occasion ? (
-							<Detail icon={CalendarPlus}>
+							<Detail icon={'calendar-plus'}>
 								{OCCASION_LABEL[r.occasion]
 									? _(OCCASION_LABEL[r.occasion]!)
 									: r.occasion}
 							</Detail>
 						) : null}
 						{r.guestRequests ? (
-							<Detail icon={UserRound}>{r.guestRequests}</Detail>
+							<Detail icon={'user-round'}>{r.guestRequests}</Detail>
 						) : null}
 						{r.staffNotes ? (
-							<Detail icon={UserRound}>
+							<Detail icon={'user-round'}>
 								<span className="text-muted-foreground">
 									<Trans>Staff note:</Trans>
 								</span>{' '}
@@ -555,7 +606,7 @@ export function PartySheet({
 							</Detail>
 						) : null}
 						{pinned.map((note) => (
-							<Detail key={note.id} icon={UserRound}>
+							<Detail key={note.id} icon={'user-round'}>
 								<span className="text-muted-foreground">
 									<Trans>Guest note:</Trans>
 								</span>{' '}
@@ -564,7 +615,10 @@ export function PartySheet({
 						))}
 						{stayNow ? (
 							// Where the stay stands: how long, and when the table should clear.
-							<Detail icon={Clock3} tone={stayNow.over ? 'warning' : undefined}>
+							<Detail
+								icon={'clock-3'}
+								tone={stayNow.over ? 'warning' : undefined}
+							>
 								<span className="tnum">
 									{stayNow.over
 										? _(
@@ -577,7 +631,7 @@ export function PartySheet({
 							</Detail>
 						) : null}
 						{stay ? (
-							<Detail icon={Clock3}>
+							<Detail icon={'clock-3'}>
 								<span className="tnum">
 									{stay.text}
 									{stay.minutes !== null ? (
@@ -601,6 +655,41 @@ export function PartySheet({
 								</span>
 							</Detail>
 						) : null}
+						{a?.canPartlyHere ? (
+							// Only some of the party are here: how many, then mark them (the rest follow).
+							<div
+								role="group"
+								aria-label={_(msg`Some are here`)}
+								className="border-border flex flex-col gap-2 border-y py-3"
+							>
+								<span className="text-muted-foreground text-sm font-medium">
+									<Trans>Some are here</Trans>
+								</span>
+								<div className="flex flex-wrap items-center gap-3">
+									<CoversStepper
+										value={here}
+										max={r.partySize - 1}
+										busy={busy}
+										onChange={setHere}
+										partySize={r.partySize}
+									/>
+									<Button
+										variant="outline"
+										size="lg"
+										disabled={busy}
+										onClick={() =>
+											run({
+												kind: 'status',
+												to: 'arrived',
+												arrivedCovers: here,
+											})
+										}
+									>
+										<Trans>Mark {here} here</Trans>
+									</Button>
+								</div>
+							</div>
+						) : null}
 						{!viewOnly &&
 						(r.status === 'booked' || r.status === 'confirmed') ? (
 							// The guest called: the list then says how late they are running.
@@ -614,18 +703,20 @@ export function PartySheet({
 								</span>
 								{[10, 15, 20, 30].map((minutes) => (
 									<Chip
+										look="outlined"
 										key={minutes}
 										selected={(r.runningLateMin ?? 0) === minutes}
 										aria-pressed={(r.runningLateMin ?? 0) === minutes}
 										disabled={busy}
 										onClick={() => run({ kind: 'late', minutes })}
-										className="tnum"
+										className="tabular-nums"
 									>
 										{_(plural(minutes, { one: '# min', other: '# min' }))}
 									</Chip>
 								))}
 								{(r.runningLateMin ?? 0) > 0 ? (
 									<Chip
+										look="outlined"
 										selected={false}
 										disabled={busy}
 										onClick={() => run({ kind: 'late', minutes: 0 })}
@@ -672,7 +763,7 @@ export function PartySheet({
 										}
 										className="ms-1"
 									>
-										<CreditCard aria-hidden className="size-3.5" />
+										<Icon name="credit-card" aria-hidden className="size-3.5" />
 										{deposit === 'awaiting' ? (
 											<Trans>Awaiting deposit</Trans>
 										) : deposit === 'paid' ? (
@@ -700,5 +791,50 @@ export function PartySheet({
 				</div>
 			) : null}
 		</Modal>
+	)
+}
+
+/** "3 of 5" with a minus and a plus: how many of the party (one to `max`). */
+function CoversStepper({
+	value,
+	max,
+	partySize,
+	busy,
+	onChange,
+}: {
+	value: number
+	max: number
+	partySize: number
+	busy: boolean
+	onChange: (value: number) => void
+}) {
+	const { _ } = useLingui()
+	const clamped = Math.min(Math.max(1, value), Math.max(1, max))
+	return (
+		<div className="border-border bg-card flex h-12 shrink-0 items-center rounded-(--station-control-radius) border">
+			<button
+				type="button"
+				aria-label={_(msg`One fewer`)}
+				disabled={clamped <= 1 || busy}
+				onClick={() => onChange(Math.max(1, clamped - 1))}
+				className="hover:bg-accent flex h-full w-11 items-center justify-center rounded-s-(--station-control-radius) disabled:opacity-40"
+			>
+				<Icon name="minus" aria-hidden className="size-5" />
+			</button>
+			<span className="tnum min-w-[4.5rem] text-center text-base font-semibold">
+				<Trans>
+					{clamped} of {partySize}
+				</Trans>
+			</span>
+			<button
+				type="button"
+				aria-label={_(msg`One more`)}
+				disabled={clamped >= max || busy}
+				onClick={() => onChange(Math.min(max, clamped + 1))}
+				className="hover:bg-accent flex h-full w-11 items-center justify-center rounded-e-(--station-control-radius) disabled:opacity-40"
+			>
+				<Icon name="plus" aria-hidden className="size-5" />
+			</button>
+		</div>
 	)
 }

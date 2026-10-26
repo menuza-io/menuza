@@ -126,7 +126,8 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
  * Exactly what the host stand on a till does (`apps/station/src/apps/
  * reservations/api.ts`), and nothing else under `/book`: no guestbook, no
  * resending messages to guests, no approving requests, no service notes or
- * sections, no contact or course changes. A new till feature adds its route
+ * section layouts (assigning servers to sections is the host's), no contact
+ * or course changes. A new till feature adds its route
  * here on purpose.
  */
 const STATION_ROUTES: ReadonlyArray<readonly [string, RegExp]> = [
@@ -143,6 +144,8 @@ const STATION_ROUTES: ReadonlyArray<readonly [string, RegExp]> = [
 	['POST', /^\/reservations\/[^/]+\/(?:status|assign|undo|running-late)$/],
 	['POST', /^\/waitlist\/?$/],
 	['POST', /^\/waitlist\/[^/]+\/(?:notify|seat|status)$/],
+	// Which server has which section tonight: hosts assign it at the start of a shift.
+	['PUT', /^\/section-assignments$/],
 ]
 
 const BOOK_PREFIX = '/operator/reservations/book'

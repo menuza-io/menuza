@@ -829,6 +829,40 @@ describe('Station host stand contract', () => {
 		)
 		expect(revived.status, revived.text).toBe(409)
 		expect(revived.body.error).toBe('manager_required')
+		// A deposit or fee policy is money too, whatever the payment status says:
+		// the till neither cancels it nor would be able to undo that.
+		await (
+			await getTenantDb(ORG_A)
+		)
+			.update(rsvReservations)
+			.set({
+				status: 'booked',
+				paymentStatus: 'none',
+				policySnapshot: { totalAmountMinor: 2000 },
+			})
+			.where(eq(rsvReservations.id, bookedId))
+		const cancelPolicy = await call(
+			'POST',
+			`/operator/reservations/book/reservations/${bookedId}/status`,
+			{ ...till, 'Idempotency-Key': 'station-contract-cancel-policy' },
+			{ toStatus: 'cancelled' },
+		)
+		expect(cancelPolicy.status, cancelPolicy.text).toBe(409)
+		expect(cancelPolicy.body.error).toBe('manager_required')
+		await (
+			await getTenantDb(ORG_A)
+		)
+			.update(rsvReservations)
+			.set({ status: 'cancelled' })
+			.where(eq(rsvReservations.id, bookedId))
+		const revivedPolicy = await call(
+			'POST',
+			`/operator/reservations/book/reservations/${bookedId}/undo`,
+			{ ...till, 'Idempotency-Key': 'station-contract-undo-policy' },
+			{},
+		)
+		expect(revivedPolicy.status, revivedPolicy.text).toBe(409)
+		expect(revivedPolicy.body.error).toBe('manager_required')
 		// A booking that is over does not change size, for anyone.
 		const overResize = await call(
 			'PATCH',

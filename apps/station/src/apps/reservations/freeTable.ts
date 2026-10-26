@@ -123,6 +123,7 @@ export function pickOffer({
 				state,
 				{ partySize: entry.partySize, durationMin: DEFAULT_TURN_MIN },
 				now,
+				feed,
 			)
 			if (!verdict.fits) continue
 			return {
@@ -143,8 +144,12 @@ export function pickOffer({
 					partySize: r.partySize,
 					durationMin: r.durationMin,
 					reservationId: r.id,
+					// A booking is seated against its own booked window.
+					startAt: r.startAt,
+					endAt: r.endAt,
 				},
 				now,
+				feed,
 			)
 			if (!verdict.fits) continue
 			return {

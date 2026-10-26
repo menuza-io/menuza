@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@source '../../../../packages/ui/components/icon.tsx';
+@source '../../../../packages/ui/components/ui/{button,input,badge,item,empty,popover,scroll-area,separator}.tsx';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -49,17 +51,22 @@
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
 	--color-border: var(--border);
+	--color-border-strong: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 	--color-success: var(--success);
 	--color-warning: var(--warning);
-	--radius-sm: calc(var(--radius) - 6px);
-	--radius-md: calc(var(--radius) - 3px);
+	/* A checkbox stays a square at any brand radius: round, it would read as a radio. */
+	--radius-xs: min(var(--radius), 0.375rem);
+	--radius-sm: var(--radius);
+	--radius-md: var(--radius);
 	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
-	--radius-2xl: calc(var(--radius) + 10px);
+	--radius-xl: var(--radius);
+	--radius-2xl: var(--radius);
 	--font-sans: var(--pos-body-font);
 	--font-heading: var(--pos-heading-font);
+	/* Shared popovers float on Station's own elevation. */
+	--shadow-pop: var(--elev-2);
 }
 
 /* Every `transition` utility (hover, press, colour) runs on the motion scale below. */
@@ -113,6 +120,13 @@
 	--modal-ease: var(--ease-smooth-out);
 	/* Phones get full-screen sheets: they rise instead of scaling. */
 	--sheet-distance: var(--distance-medium);
+
+	/* App launcher: anchored dropdown, with a quieter and quicker close. */
+	--dropdown-open-dur: var(--duration-fast);
+	--dropdown-close-dur: var(--duration-quick);
+	--dropdown-pre-scale: var(--scale-medium);
+	--dropdown-closing-scale: var(--scale-tiny);
+	--dropdown-ease: var(--ease-smooth-out);
 
 	/* Tabs sliding (segmented controls) */
 	--tabs-dur: var(--duration-fast);
@@ -232,6 +246,22 @@
 :root {
 	--success: color-mix(in oklch, oklch(0.49 0.13 155) 80%, var(--primary));
 	--warning: color-mix(in oklch, oklch(0.5 0.12 65) 85%, var(--foreground));
+	/* Shape roles pass the published restaurant radius through unchanged. */
+	--station-control-radius: var(--radius);
+	--station-group-radius: var(--radius);
+	--station-panel-radius: var(--radius);
+	--station-inset-radius: var(--radius);
+	/* oklab, not oklch: mixing a brand colour with white in oklch swings its hue toward 0 (green turns pink). */
+	--station-work-surface: color-mix(
+		in oklab,
+		var(--muted) 42%,
+		var(--background)
+	);
+	--station-occupied-surface: color-mix(
+		in oklab,
+		var(--primary) 12%,
+		var(--card)
+	);
 	/* Keep secondary text readable on the brand's muted surfaces as well as white. */
 	--pos-muted-foreground: color-mix(
 		in oklch,
@@ -246,9 +276,6 @@
 	--pos-body-font:
 		ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 	--pos-heading-font: var(--pos-body-font);
-	--pos-mono-font:
-		ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas,
-		'Roboto Mono', monospace;
 }
 .dark {
 	--success: color-mix(in oklch, oklch(0.74 0.14 155) 80%, var(--primary));
@@ -317,6 +344,15 @@ html[data-heading-font='custom'] {
 	}
 }
 
+/* The shared ScrollArea's thumb takes the palette, as the page scrollbar does above. */
+[data-slot='scroll-area-thumb'] {
+	background-color: color-mix(
+		in oklab,
+		var(--muted-foreground) 45%,
+		transparent
+	);
+}
+
 /* Keep field focus visible even where a screen removes the native outline. */
 :is(input, textarea, select):focus-visible {
 	outline: 2px solid var(--ring);
@@ -340,6 +376,10 @@ html[data-heading-font='custom'] {
 @utility pt-safe {
 	padding-top: env(safe-area-inset-top);
 }
+@utility header-safe {
+	min-height: calc(var(--spacing) * 16 + env(safe-area-inset-top, 0px));
+	padding-top: calc(var(--spacing) * 2 + env(safe-area-inset-top, 0px));
+}
 @utility pb-safe {
 	padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
@@ -347,16 +387,38 @@ html[data-heading-font='custom'] {
 	margin-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
+/*
+ * Notices: one tint, one weight. A status message is a quiet 10% wash of its
+ * semantic colour with the colour carried by the text, never a solid block.
+ * Layout (strip or inline, radius, padding) stays with the caller.
+ */
+@utility notice-warning {
+	background-color: color-mix(in oklch, var(--warning) 10%, transparent);
+	color: var(--warning);
+	font-weight: 500;
+}
+@utility notice-danger {
+	background-color: color-mix(in oklch, var(--destructive) 10%, transparent);
+	color: var(--destructive);
+	font-weight: 500;
+}
+@utility notice-success {
+	background-color: color-mix(in oklch, var(--success) 10%, transparent);
+	color: var(--success);
+	font-weight: 500;
+}
+
 /* Tabular figures so totals and keypads never jitter. */
 @utility tnum {
 	font-variant-numeric: tabular-nums;
 }
 
-/* Amounts and counts in a monospace face: crisp columns, and the till feels like an instrument. */
+/*
+ * Amounts and counts: tabular figures in the restaurant's own face, so columns
+ * line up without a second typeface. Every price on the till reads the same.
+ */
 @utility mono {
-	font-family: var(--pos-mono-font);
-	font-variant-numeric: tabular-nums slashed-zero;
-	letter-spacing: -0.02em;
+	font-variant-numeric: tabular-nums;
 }
 /*
  * Motion. Snippets from transitions.dev (the `t-*` classes), tuned through the
@@ -365,6 +427,103 @@ html[data-heading-font='custom'] {
  * still wins.
  */
 @layer components {
+	.station-header {
+		min-width: 0;
+	}
+	/*
+	 * The register has extra cash/order controls. On a small phone, give
+	 * identity its own line rather than shrinking the app name to nothing.
+	 */
+	@media (max-width: 26rem) {
+		.station-header[data-app='pos'] {
+			flex-wrap: wrap;
+			row-gap: 0.25rem;
+		}
+		.station-header[data-app='pos'] .station-launcher {
+			flex-basis: 100%;
+		}
+		.station-header[data-app='pos'] .station-header-actions {
+			width: 100%;
+			justify-content: space-between;
+		}
+	}
+
+	/* Flat working surfaces: a queue's lane is not another card. */
+	.kitchen-board {
+		background: var(--background);
+	}
+	.kitchen-lane {
+		min-width: 0;
+		padding-inline: 0.75rem;
+		padding-block-end: 0.75rem;
+		background: transparent;
+	}
+	.kitchen-lane-head {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		display: flex;
+		min-height: 3rem;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-block-end: 0.75rem;
+		border-bottom: 1px solid var(--border);
+		background: var(--station-work-surface);
+		font-size: 0.875rem;
+		font-weight: 500;
+	}
+	.kitchen-ticket-head {
+		background: var(--card);
+	}
+	/* A dish from a later round of a tab: brand-tinted, so the line starts it with its table. */
+	.kitchen-added {
+		display: inline-flex;
+		width: fit-content;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 0.25rem;
+		border-radius: var(--station-inset-radius);
+		background: color-mix(in oklab, var(--primary) 12%, transparent);
+		padding: 0.125rem 0.5rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--primary);
+	}
+	/* A dish that already went out on a tab that ordered more: quiet, so the eye lands on what to make. */
+	.kitchen-served {
+		display: inline-flex;
+		width: fit-content;
+		align-items: center;
+		gap: 0.25rem;
+		margin-top: 0.25rem;
+		border-radius: var(--station-inset-radius);
+		background: var(--muted);
+		padding: 0.125rem 0.5rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--muted-foreground);
+	}
+	[data-kitchen-ticket] li[data-served] {
+		color: var(--muted-foreground);
+	}
+	/* The ticket's timer badge carries urgency; lanes stay neutral. */
+
+	/*
+	 * Both time-clock pages contribute their real height. Short viewports
+	 * scroll the section instead of clipping a PIN action below an absolute
+	 * page's guessed height. Inert and the existing page transition stay intact.
+	 */
+	.station-clock-pages {
+		display: grid;
+	}
+	.t-page-slide.station-clock-pages > .t-page {
+		position: relative;
+		inset: auto;
+		grid-area: 1 / 1;
+		min-width: 0;
+	}
+
 	/* ── Modal open / close ─────────────────────────────────────────────── */
 	.t-modal {
 		transform-origin: center;
@@ -425,6 +584,46 @@ html[data-heading-font='custom'] {
 		}
 	}
 
+	/* ── Menu dropdown (app launcher) ──────────────────────────────────── */
+	.t-dropdown {
+		transform-origin: top left;
+		transform: scale(var(--dropdown-pre-scale));
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			transform var(--dropdown-open-dur) var(--dropdown-ease),
+			opacity var(--dropdown-open-dur) var(--dropdown-ease);
+		will-change: transform, opacity;
+	}
+	.t-dropdown[data-origin='top-right'] {
+		transform-origin: top right;
+	}
+	.t-dropdown[data-origin='top-center'] {
+		transform-origin: top center;
+	}
+	.t-dropdown[data-origin='bottom-left'] {
+		transform-origin: bottom left;
+	}
+	.t-dropdown[data-origin='bottom-center'] {
+		transform-origin: bottom center;
+	}
+	.t-dropdown[data-origin='bottom-right'] {
+		transform-origin: bottom right;
+	}
+	.t-dropdown.is-open {
+		transform: scale(1);
+		opacity: 1;
+		pointer-events: auto;
+	}
+	.t-dropdown.is-closing {
+		transform: scale(var(--dropdown-closing-scale));
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			transform var(--dropdown-close-dur) var(--dropdown-ease),
+			opacity var(--dropdown-close-dur) var(--dropdown-ease);
+	}
+
 	/* ── Tabs sliding (segmented controls) ──────────────────────────────── */
 	.t-tab {
 		transition: color var(--tabs-dur) var(--tabs-ease);
@@ -434,7 +633,6 @@ html[data-heading-font='custom'] {
 		top: 0;
 		left: 0;
 		width: 0;
-		background: var(--tabs-pill-bg);
 		transform: translateX(0);
 		transition:
 			transform var(--tabs-dur) var(--tabs-ease),
@@ -442,6 +640,15 @@ html[data-heading-font='custom'] {
 		will-change: transform, width;
 		z-index: 0;
 		pointer-events: none;
+	}
+	/* Keep the full button height measurable and tappable; inset only the paint. */
+	.t-tabs-pill::before {
+		content: '';
+		position: absolute;
+		inset: 0.25rem 0;
+		border-radius: inherit;
+		background: var(--tabs-pill-bg);
+		box-shadow: 0 1px 2px oklch(0 0 0 / 0.08);
 	}
 
 	/* ── Number pop-in ──────────────────────────────────────────────────── */
@@ -568,11 +775,7 @@ html[data-heading-font='custom'] {
 	.t-success-check svg {
 		display: block;
 		overflow: visible;
-	}
-	/* 24 = the drawn path's getTotalLength() (22.6), rounded up. */
-	.t-success-check svg path {
-		stroke-dasharray: 24;
-		stroke-dashoffset: 24;
+		clip-path: inset(0 100% 0 0);
 	}
 	.t-success-check[data-state='in'] {
 		animation:
@@ -581,7 +784,7 @@ html[data-heading-font='custom'] {
 			t-check-blur var(--check-blur-dur) var(--check-ease-out) forwards,
 			t-check-bob var(--check-bob-dur) var(--check-ease-bob) forwards;
 	}
-	.t-success-check[data-state='in'] svg path {
+	.t-success-check[data-state='in'] svg {
 		animation: t-check-draw var(--check-path-dur) var(--check-ease-path)
 			var(--check-path-delay, 0ms) forwards;
 	}
@@ -619,7 +822,7 @@ html[data-heading-font='custom'] {
 	}
 	@keyframes t-check-draw {
 		to {
-			stroke-dashoffset: 0;
+			clip-path: inset(0);
 		}
 	}
 	/* The disc behind the check pops once, on the same emphasis beat. */
@@ -639,15 +842,13 @@ html[data-heading-font='custom'] {
 			background var(--check-box) var(--check-ease),
 			box-shadow var(--check-box) var(--check-ease);
 	}
-	.t-check svg path {
-		stroke-dasharray: var(--check-len, 15);
-		stroke-dashoffset: var(--check-len, 15);
-		transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+	.t-check svg {
+		clip-path: inset(0 100% 0 0);
+		transition: clip-path var(--check-uncheck) var(--check-ease);
 	}
-	.t-check[data-checked='true'] svg path {
-		stroke-dashoffset: 0;
-		transition: stroke-dashoffset var(--check-draw) var(--check-ease)
-			var(--check-delay);
+	.t-check[data-checked='true'] svg {
+		clip-path: inset(0);
+		transition: clip-path var(--check-draw) var(--check-ease) var(--check-delay);
 	}
 
 	/* ── Error state shake ──────────────────────────────────────────────── */
@@ -936,14 +1137,9 @@ html[data-heading-font='custom'] {
 	}
 
 	/* ── Station host stand: the floor ──────────────────────────────────── */
-	/* The room reads as a plan: a quiet dot grid on the muted surface. */
+	/* Furniture and saved room landmarks carry the plan; the ground stays quiet. */
 	.floor-room {
-		background-color: color-mix(in oklch, var(--muted) 70%, var(--background));
-		background-image: radial-gradient(
-			color-mix(in oklch, var(--foreground) 9%, transparent) 1px,
-			transparent 1.2px
-		);
-		background-size: 24px 24px;
+		background-color: var(--background);
 	}
 	/* The plan is as large as fits, in the room's own proportions. */
 	.floor-frame {
@@ -1005,7 +1201,7 @@ html[data-heading-font='custom'] {
 	}
 	/* Blocked: hatched, like a table taped off on the plan. */
 	.floor-table[data-state='blocked'] {
-		background-image: repeating-linear-gradient(
+		--table-hatch: repeating-linear-gradient(
 			-45deg,
 			transparent 0 6px,
 			color-mix(in oklch, var(--foreground) 8%, transparent) 6px 8px
@@ -1013,10 +1209,8 @@ html[data-heading-font='custom'] {
 	}
 	/* Picking a party: tables that take it lift and ring; the rest step back. */
 	.floor[data-picking='true'] .floor-table[data-fits='true'] {
-		transform: translateY(calc(var(--floor-lift) * -1));
-		box-shadow:
-			0 0 0 3px color-mix(in oklch, var(--success) 70%, transparent),
-			var(--elev-2);
+		outline: 2px solid var(--success);
+		outline-offset: 3px;
 	}
 	.floor[data-picking='true'] .floor-table[data-fits='false'] {
 		opacity: 0.38;
@@ -1040,6 +1234,9 @@ html[data-heading-font='custom'] {
 
 /* Reduced motion: every snippet's own guard, then a blanket stop for the rest. */
 @media (prefers-reduced-motion: reduce) {
+	.t-dropdown {
+		transition: none !important;
+	}
 	.t-modal,
 	.t-modal::backdrop {
 		transition: none !important;
@@ -1063,12 +1260,12 @@ html[data-heading-font='custom'] {
 		animation: none !important;
 		opacity: 1;
 	}
-	.t-success-check svg path {
+	.t-success-check svg {
 		animation: none !important;
-		stroke-dashoffset: 0 !important;
+		clip-path: none !important;
 	}
 	.t-check,
-	.t-check svg path {
+	.t-check svg {
 		transition: none !important;
 	}
 	.t-input {
@@ -1125,9 +1322,94 @@ html[data-heading-font='custom'] {
 		width: 72mm;
 		color: #000;
 		background: #fff;
-		font-size: 11px;
+		font-size: 0.75rem;
 	}
 	@page {
 		margin: 4mm;
 	}
+}
+
+/*
+ * The host stand's toolbar (day, service, figures, view, three adds) and the
+ * kitchen's (view, filters, status, setup) need a row of their own until the
+ * screen is very wide. Unlayered, so it outranks the
+ * header's own breakpoint utilities.
+ */
+@media (max-width: 1799px) {
+	.station-header:is([data-app='reservations'], [data-app='kitchen'])
+		.station-context {
+		order: 99;
+		flex-basis: 100%;
+	}
+	.station-header:is([data-app='reservations'], [data-app='kitchen'])
+		.station-launcher {
+		max-width: none;
+		flex: 1 1 0%;
+	}
+}
+
+/* Where a sent dish is in the kitchen, beside it on the register and in Orders. */
+.dish-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	border-radius: 999px;
+	padding: 0.0625rem 0.5rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	white-space: nowrap;
+	color: var(--pos-muted-foreground);
+	background: var(--muted);
+}
+.dish-status-dot {
+	width: 0.375rem;
+	height: 0.375rem;
+	border-radius: 999px;
+	background: currentColor;
+}
+.dish-status[data-status='preparing'] {
+	color: var(--warning);
+	background: color-mix(in oklab, var(--warning) 12%, transparent);
+}
+.dish-status[data-status='ready'] {
+	color: var(--success);
+	background: color-mix(in oklab, var(--success) 12%, transparent);
+}
+
+/* The kitchen's "all day" strip: dishes still to make on the board, most first. */
+.kitchen-allday {
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	border-bottom: 1px solid var(--border);
+	background: var(--card);
+	padding: 0.625rem 1rem;
+}
+.kitchen-allday-title {
+	flex-shrink: 0;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--pos-muted-foreground);
+}
+.kitchen-allday-list {
+	display: flex;
+	min-width: 0;
+	flex-wrap: wrap;
+	gap: 0.375rem 1rem;
+	font-size: 0.875rem;
+}
+.kitchen-allday-item {
+	display: inline-flex;
+	gap: 0.375rem;
+}
+
+/* New work on the kitchen board: a ticket that just came in, or a table that added dishes. */
+/* An inset outline, drawn over the ticket's header and dishes (a shadow would sit under them). */
+[data-kitchen-ticket] {
+	outline: 2px solid transparent;
+	outline-offset: -2px;
+	transition: outline-color var(--duration-slow) var(--ease-smooth-out);
+}
+[data-kitchen-ticket][data-fresh='true'] {
+	outline-color: var(--primary);
 }

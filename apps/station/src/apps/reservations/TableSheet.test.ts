@@ -116,34 +116,64 @@ describe('a table held for a party', () => {
 		expect(has(/^Seat Rana K\. here$/)).toBe(true)
 		expect(has('Seat a walk-in anyway')).toBe(true)
 	})
-	it('leads with the walk-in for a party that is only due, and puts seating them second', () => {
+	it('leads with seating a party that is only due when a walk-in would run into them, and warns on the walk-in', () => {
 		const seated = vi.fn()
 		const walkIn = vi.fn()
 		sheet([held(13 * 60 + 20, 'booked')], {
 			onSeatHeld: seated,
 			onWalkIn: walkIn,
 		})
-		expect(has(/^Seat \d+ now$/)).toBe(true)
+		// The table is free for 20 minutes: a walk-in is given a turn of 90.
+		const free = /^Seat \d+ · free 20 min$/
+		expect(has(free)).toBe(true)
 		expect(has('Seat a walk-in anyway')).toBe(false)
 		expect(has(/^Seat Rana K\. here$/)).toBe(true)
 		expect(hasText('is due at 1:20 PM. A walk-in here may delay them.')).toBe(
 			true,
 		)
-		// The walk-in comes first in the sheet, the party second.
+		// The party comes first, the walk-in (in a warning style) second.
 		const order = buttons()
-		expect(order.findIndex((t) => /^Seat \d+ now$/.test(t))).toBeLessThan(
-			order.findIndex((t) => /^Seat Rana K\. here$/.test(t)),
+		expect(order.findIndex((t) => /^Seat Rana K\. here$/.test(t))).toBeLessThan(
+			order.findIndex((t) => free.test(t)),
 		)
+		const walkInButton = [...dialog().querySelectorAll('button')].find((b) =>
+			free.test(b.textContent?.trim() ?? ''),
+		)!
+		expect(walkInButton.className).toContain('text-warning')
 		press(/^Seat Rana K\. here$/)
 		expect(seated).toHaveBeenCalledTimes(1)
-		press(/^Seat \d+ now$/)
+		press(free)
 		expect(walkIn).toHaveBeenCalledWith(
 			expect.objectContaining({ id: 't2' }),
 			2,
 		)
 	})
+	it('says how long the table is free on the walk-in button, with no warning when the stay fits', () => {
+		// Booked 100 minutes from now: not a held table, free for longer than a turn.
+		sheet([held(13 * 60 + 100, 'booked')])
+		const fits = [...dialog().querySelectorAll('button')].find((b) =>
+			/^Seat \d+ · free 100 min$/.test(b.textContent?.trim() ?? ''),
+		)!
+		expect(fits).toBeDefined()
+		expect(fits.className).not.toContain('text-warning')
+		expect(has(/^Seat Rana K\. here$/)).toBe(false)
+	})
+	it('says nothing of how long it is free when nothing is booked, or not for hours', () => {
+		sheet([])
+		expect(has(/^Seat \d+ now$/)).toBe(true)
+		sheet([held(13 * 60 + 5 * 60, 'booked')])
+		expect(has(/^Seat \d+ now$/)).toBe(true)
+	})
+	it('says a table is big for a small party', () => {
+		sheet([])
+		expect(hasText('leaves it mostly empty')).toBe(false)
+		press('1')
+		expect(
+			hasText('This table seats 4: a party of 1 leaves it mostly empty.'),
+		).toBe(true)
+	})
 	it('leads with the walk-in, and has no "Seat here", for a party the till cannot seat', () => {
-		sheet([held(13 * 60 - 10, 'partially_arrived')])
+		sheet([held(13 * 60 - 10, 'pending_payment')])
 		expect(has(/^Seat \d+ now$/)).toBe(true)
 		expect(has(/^Seat Rana K\. here$/)).toBe(false)
 	})

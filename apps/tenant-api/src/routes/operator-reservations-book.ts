@@ -13,6 +13,7 @@ import {
 	json,
 } from '../lib/http.ts'
 import {
+	filterReservationsLocations,
 	hasReservationsGrant,
 	requireReservationsLocation,
 	type ReservationsAuthContext,
@@ -955,7 +956,14 @@ operatorReservationsBookRoutes.get(
 			const summary = await getGuestSummary(db, c.req.param('id'), {
 				canReadSensitive,
 			})
-			return json({ ok: true, orgId: ctx.orgId, ...summary })
+			// The guest is the organization's; their bookings elsewhere are not
+			// this member's to see.
+			return json({
+				ok: true,
+				orgId: ctx.orgId,
+				...summary,
+				reservations: filterReservationsLocations(ctx, summary.reservations),
+			})
 		} catch (error) {
 			return handleRouteError(error)
 		}
@@ -1487,6 +1495,7 @@ operatorReservationsBookRoutes.patch(
 						ctx,
 						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
 					),
+				stayOnlyGrows: ctx.channel === 'station',
 				input: {
 					...parsed.data,
 					date: parsed.data.date ?? parsed.data.businessDate,
@@ -1720,51 +1729,19 @@ operatorReservationsBookRoutes.post(
 		)
 		if (!locCheck.ok) return locCheck.response
 
-		// Undoing a cancel or a no-show brings back a booking whose payment may
-		// have been settled (a refund, a released card): with money on it, that
-		// is the app's call. Undoing a seating or an arrival never is.
-		if (
-			ctx.channel === 'station' &&
-			!hasReservationsGrant(
-				ctx,
-				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
-			)
-		) {
-			const db = await getTenantDb(ctx.orgId)
-			const [row] = await db
-				.select({
-					status: rsvReservations.status,
-					paymentStatus: rsvReservations.paymentStatus,
-					policySnapshot: rsvReservations.policySnapshot,
-				})
-				.from(rsvReservations)
-				.where(eq(rsvReservations.id, rsvId))
-				.limit(1)
-			const policyAmount = Number(
-				(row?.policySnapshot as { totalAmountMinor?: unknown } | null)
-					?.totalAmountMinor ?? 0,
-			)
-			if (
-				row &&
-				(row.status === 'cancelled' || row.status === 'no_show') &&
-				(row.paymentStatus !== 'none' || policyAmount > 0)
-			)
-				return json(
-					{
-						error: 'manager_required',
-						message:
-							'This booking has a payment on it. A manager changes it in the app.',
-					},
-					409,
-				)
-		}
-
 		try {
 			const result = await undoReservationTransition({
 				canReadGuestSensitive: canReadGuests(ctx),
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// A till's host does not bring back a cancel or no-show with money on it.
+				paymentLocked:
+					ctx.channel === 'station' &&
+					!hasReservationsGrant(
+						ctx,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+					),
 				// At a till: the host's own slip, within half an hour.
 				...(ctx.channel === 'station'
 					? { ownRecentOnly: { withinMs: TILL_UNDO_WINDOW_MS } }

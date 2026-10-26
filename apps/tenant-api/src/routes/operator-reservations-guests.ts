@@ -4,6 +4,7 @@ import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { ECHOING_CODES, handleRouteError, json } from '../lib/http.ts'
 import {
+	filterReservationsLocations,
 	hasReservationsGrant,
 	requireReservationsLocation,
 } from '../lib/reservations-auth.ts'
@@ -592,7 +593,13 @@ operatorReservationsGuestsRoutes.get(
 			const summary = await getGuestSummary(db, c.req.param('id'), {
 				canReadSensitive: true,
 			})
-			return json({ ok: true, orgId: ctx.orgId, ...summary })
+			// The guest is the organization's; their bookings show at the member's locations only.
+			return json({
+				ok: true,
+				orgId: ctx.orgId,
+				...summary,
+				reservations: filterReservationsLocations(ctx, summary.reservations),
+			})
 		} catch (error) {
 			return handleRouteError(error)
 		}

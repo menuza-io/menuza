@@ -13,6 +13,7 @@ import {
 	serviceOf,
 	dayNotices,
 	daySnapshot,
+	stripeOf,
 } from './book.ts'
 import { at, day, entry, MIN, rsv, SERVICES } from './testing.ts'
 
@@ -237,6 +238,34 @@ describe('the list', () => {
 		const list = bookList({ feed, waitlist: [a, b], now, isToday: true })
 		expect(list.waitlist.map((e) => e.displayName)).toEqual(['A', 'B'])
 	})
+	it('keeps a party whose hold ran out apart from the line, latest first', () => {
+		const inLine = entry({ displayName: 'Waiting' })
+		const earlier = entry({
+			displayName: 'Earlier',
+			status: 'no_response',
+			responseDeadlineAt: at(13 * 60 + 10),
+		})
+		const later = entry({
+			displayName: 'Later',
+			status: 'no_response',
+			responseDeadlineAt: at(13 * 60 + 40),
+		})
+		const list = bookList({
+			feed,
+			waitlist: [earlier, inLine, later],
+			now,
+			isToday: true,
+		})
+		expect(list.waitlist.map((e) => e.displayName)).toEqual(['Waiting'])
+		expect(list.noResponse.map((e) => e.displayName)).toEqual([
+			'Later',
+			'Earlier',
+		])
+		// Another day has no waitlist at all.
+		expect(
+			bookList({ feed, waitlist: [earlier], now, isToday: false }).noResponse,
+		).toEqual([])
+	})
 })
 
 describe('the totals', () => {
@@ -405,7 +434,7 @@ describe('an undo is not an arrival', () => {
 	it('does not count a no-show put right, or a party seated and then here', () => {
 		const before = day([
 			rsv({ id: 'n', start: 720, status: 'no_show' }),
-			rsv({ id: 'p', start: 730, status: 'partially_seated' }),
+			rsv({ id: 'p', start: 730, status: 'seated' }),
 		])
 		const later = day([
 			rsv({ id: 'n', start: 720, status: 'arrived' }),
@@ -514,5 +543,25 @@ describe('what changed in the book', () => {
 			rsv({ id: 'f', start: 700, status: 'finished', partySize: 3 }),
 		])
 		expect(kinds(daySnapshot(done), edited)).toEqual([])
+	})
+})
+
+describe('the list’s left accent bar', () => {
+	const NOW = at(13 * 60)
+	const stripe = (status: string, start: number, over = {}) =>
+		stripeOf(rsv({ start, status, ...over }), NOW)
+	it('says only due soon, late, at the stand and seated', () => {
+		expect(stripe('booked', 13 * 60 + 20)).toBe('soon')
+		expect(stripe('confirmed', 13 * 60 + 30)).toBe('soon')
+		expect(stripe('booked', 12 * 60 + 30)).toBe('late')
+		expect(stripe('booked', 13 * 60 + 40, { runningLateMin: 15 })).toBe('late')
+		expect(stripe('arrived', 13 * 60 - 5)).toBe('here')
+		expect(stripe('seated', 12 * 60)).toBe('seated')
+	})
+	it('says nothing for a booking that is only booked, confirmed, held, finished or gone', () => {
+		expect(stripe('booked', 13 * 60 + 31)).toBeNull()
+		expect(stripe('confirmed', 18 * 60)).toBeNull()
+		for (const status of ['pending_payment', 'finished', 'no_show'])
+			expect(stripe(status, 13 * 60 - 60)).toBeNull()
 	})
 })

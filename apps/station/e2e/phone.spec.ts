@@ -151,23 +151,24 @@ test.describe('on a phone', () => {
 		await expect(orders.getByRole('button', { name: /#T1-0001/ })).toBeVisible()
 	})
 
-	test('the header fits: brand, status, Orders and Settings all on screen', async ({
+	test('the header fits: launcher, status, Orders and Settings all on screen', async ({
 		demo: page,
 	}) => {
 		const viewport = page.viewportSize()!
 		for (const locator of [
-			page.getByRole('heading', { name: 'Demo Kitchen' }),
+			page.getByRole('button', { name: 'Apps', exact: true }),
 			page.getByRole('button', { name: /^Orders/ }),
 			page.getByRole('button', { name: 'Settings' }),
-			page
-				.locator('header')
-				.getByRole('img', { name: /Online|Offline|Sending/ }),
+			page.getByRole('banner').getByRole('status'),
 		]) {
 			const box = await locator.boundingBox()
 			expect(box).not.toBeNull()
 			expect(box!.x).toBeGreaterThanOrEqual(0)
 			expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width)
 		}
+		await expect(page.getByRole('banner').getByRole('status')).toContainText(
+			'Online · all sent',
+		)
 	})
 
 	test('category chips and the search box stack and scroll without breaking the page', async ({

@@ -1,14 +1,8 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { type PosSalesSummary } from '@repo/common/pos-reports'
+import { Icon } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-	ArrowDownToLine,
-	ArrowUpFromLine,
-	Lock,
-	Printer,
-	ShieldCheck,
-} from 'lucide-react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { db, type Shift, type StaffRef } from '~/lib/db.ts'
@@ -26,12 +20,12 @@ import { type ApprovalOutcome } from '~/lib/signin.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import { ManagerPinPad } from '~/ui/ManagerPinPad.tsx'
 import {
+	Input,
 	Button,
 	Modal,
 	NumberPop,
 	Reveal,
 	cn,
-	fieldClass,
 } from '~/ui/primitives.tsx'
 
 type Step =
@@ -116,10 +110,8 @@ export function ShiftSheet({
 					<div
 						role="status"
 						className={cn(
-							'rounded-2xl p-4 text-center',
-							overShort === 0
-								? 'bg-success/12 text-success'
-								: 'bg-warning/15 text-warning',
+							'rounded-(--station-panel-radius) p-4 text-center',
+							overShort === 0 ? 'notice-success' : 'notice-warning',
 						)}
 					>
 						<p className="text-sm font-semibold">
@@ -131,7 +123,7 @@ export function ShiftSheet({
 								<Trans>Short</Trans>
 							)}
 						</p>
-						<p className="tnum mono text-3xl font-bold">
+						<p className="tnum mono text-3xl font-semibold">
 							{money(Math.abs(overShort))}
 						</p>
 					</div>
@@ -142,7 +134,8 @@ export function ShiftSheet({
 					/>
 					<div className="grid grid-cols-2 gap-3">
 						<Button variant="outline" size="lg" onClick={() => window.print()}>
-							<Printer className="size-5" /> <Trans>Print Z report</Trans>
+							<Icon name="printer" className="size-5" />{' '}
+							<Trans>Print Z report</Trans>
 						</Button>
 						<Button variant="primary" size="lg" onClick={onClose}>
 							<Trans>Done</Trans>
@@ -171,7 +164,7 @@ export function ShiftSheet({
 						</Trans>
 					</p>
 					<Readout label={_(t`Cash in the drawer`)} value={money(amount)} />
-					<Keypad value={digits} onChange={setDigits} />
+					<Keypad value={digits} onChange={setDigits} keyboard />
 					<Reveal open={Boolean(error)}>
 						<p role="alert" className="text-destructive text-sm font-medium">
 							{error}
@@ -221,25 +214,25 @@ export function ShiftSheet({
 			>
 				<div key="movement" className="t-rise space-y-4 p-5">
 					<Readout label={_(t`Amount`)} value={money(amount)} />
-					<Keypad value={digits} onChange={setDigits} />
+					<Keypad value={digits} onChange={setDigits} keyboard />
 					<label className="block text-sm font-semibold">
 						<Trans>What is it for?</Trans>
-						<input
+						<Input
 							value={note}
 							onChange={(event) => setNote(event.target.value.slice(0, 200))}
 							placeholder={
 								payIn ? _(t`Change from the bank`) : _(t`Milk from the shop`)
 							}
-							className={cn(fieldClass, 'mt-1')}
+							className={cn('mt-1')}
 						/>
 					</label>
 					{needsApproval ? (
 						approvedBy ? (
 							<p
 								role="status"
-								className="t-pop-in bg-success/12 text-success flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
+								className="t-pop-in notice-success flex items-center gap-2 rounded-(--station-control-radius) p-3 text-sm"
 							>
-								<ShieldCheck className="size-5" />{' '}
+								<Icon name="shield-check" className="size-5" />{' '}
 								<Trans>Approved by {approvedBy.name}</Trans>
 							</p>
 						) : (
@@ -317,9 +310,9 @@ export function ShiftSheet({
 						</Trans>
 					</p>
 					<Readout label={_(t`Cash counted`)} value={money(amount)} />
-					<Keypad value={digits} onChange={setDigits} />
+					<Keypad value={digits} onChange={setDigits} keyboard />
 					{summary.orders.open > 0 ? (
-						<p className="bg-warning/12 text-warning rounded-xl p-3 text-sm">
+						<p className="notice-warning rounded-(--station-control-radius) p-3 text-sm">
 							<Trans>
 								{summary.orders.open} tabs from this shift are still open. They
 								stay open and can be paid in the next shift.
@@ -346,7 +339,7 @@ export function ShiftSheet({
 							})
 						}
 					>
-						<Lock className="size-5" /> <Trans>Close shift</Trans>
+						<Icon name="lock" className="size-5" /> <Trans>Close shift</Trans>
 					</Button>
 				</div>
 			</Modal>
@@ -369,7 +362,7 @@ export function ShiftSheet({
 				</p>
 				<SummaryTable summary={summary} money={money} counted={null} />
 				{shift.movements.length > 0 ? (
-					<ul className="border-border space-y-1 rounded-xl border p-3 text-sm">
+					<ul className="divide-border space-y-1 border-y py-3 text-sm">
 						{shift.movements.map((m) => (
 							<li key={m.id} className="flex justify-between gap-3">
 								<span>
@@ -392,14 +385,16 @@ export function ShiftSheet({
 						size="lg"
 						onClick={() => reset({ kind: 'movement', movement: 'pay_in' })}
 					>
-						<ArrowDownToLine className="size-5" /> <Trans>Cash in</Trans>
+						<Icon name="arrow-down-to-line" className="size-5" />{' '}
+						<Trans>Cash in</Trans>
 					</Button>
 					<Button
 						variant="outline"
 						size="lg"
 						onClick={() => reset({ kind: 'movement', movement: 'pay_out' })}
 					>
-						<ArrowUpFromLine className="size-5" /> <Trans>Cash out</Trans>
+						<Icon name="arrow-up-from-line" className="size-5" />{' '}
+						<Trans>Cash out</Trans>
 					</Button>
 				</div>
 				<Button
@@ -408,7 +403,7 @@ export function ShiftSheet({
 					className="w-full"
 					onClick={() => reset({ kind: 'close' })}
 				>
-					<Lock className="size-5" /> <Trans>Close shift</Trans>
+					<Icon name="lock" className="size-5" /> <Trans>Close shift</Trans>
 				</Button>
 			</div>
 		</Modal>
@@ -428,7 +423,7 @@ function RejectedShifts({ onRetry }: { onRetry: () => void }) {
 	return (
 		<div
 			role="alert"
-			className="bg-destructive/10 text-destructive space-y-2 rounded-xl p-3 text-sm"
+			className="notice-danger space-y-2 rounded-(--station-control-radius) p-3 text-sm"
 		>
 			<p className="font-semibold">
 				{plural(count, {
@@ -450,7 +445,7 @@ function RejectedShifts({ onRetry }: { onRetry: () => void }) {
 
 function Readout({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="border-primary flex min-h-24 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border px-4 py-3 text-start">
+		<div className="flex min-h-20 min-w-0 flex-col items-start justify-center gap-1 py-3 text-start">
 			<span className="text-muted-foreground text-sm">{label}</span>
 			<span className="tnum no-scrollbar max-w-full overflow-x-auto text-2xl font-semibold whitespace-nowrap">
 				<NumberPop value={value} />
@@ -469,45 +464,78 @@ function SummaryTable({
 	counted: number | null
 }) {
 	const { _ } = useLingui()
-	const rows: Array<[string, number, boolean?]> = [
-		[_(t`Sales`), summary.grossSalesCents],
-		[_(t`Refunds`), -summary.refundsCents],
-		[_(t`Net sales`), summary.netSalesCents, true],
-		[_(t`Tax`), summary.taxCents],
-		[_(t`Tips`), summary.tipsCents],
-		[_(t`Card`), summary.byTender.card.netCents],
-		[_(t`Other`), summary.byTender.other.netCents],
-		[_(t`Cash taken`), summary.byTender.cash.netCents],
-		[_(t`Opening float`), summary.cash.openingFloatCents],
-		[_(t`Cash in`), summary.cash.payInsCents],
-		[_(t`Cash out`), -summary.cash.payOutsCents],
-		[_(t`Expected in drawer`), summary.cash.expectedCents, true],
+	type Row = [string, number, boolean?]
+	// Three groups a manager reads in turn: what was sold, how it was paid, what the drawer should hold.
+	const groups: Array<{ title: string | null; rows: Row[] }> = [
+		{
+			title: null,
+			rows: [
+				[_(t`Sales`), summary.grossSalesCents],
+				[_(t`Refunds`), -summary.refundsCents],
+				[_(t`Net sales`), summary.netSalesCents, true],
+				[_(t`Tax`), summary.taxCents],
+				[_(t`Tips`), summary.tipsCents],
+			],
+		},
+		{
+			title: _(t`Payments`),
+			rows: [
+				[_(t`Card`), summary.byTender.card.netCents],
+				[_(t`Other`), summary.byTender.other.netCents],
+				[_(t`Cash taken`), summary.byTender.cash.netCents],
+			],
+		},
+		{
+			title: _(t`Cash drawer`),
+			rows: [
+				[_(t`Opening float`), summary.cash.openingFloatCents],
+				[_(t`Cash in`), summary.cash.payInsCents],
+				[_(t`Cash out`), -summary.cash.payOutsCents],
+				[_(t`Expected in drawer`), summary.cash.expectedCents, true],
+				...(counted !== null
+					? ([[_(t`Counted`), counted, true]] as Row[])
+					: []),
+			],
+		},
 	]
-	if (counted !== null) rows.push([_(t`Counted`), counted, true])
 	return (
-		<dl className="tnum space-y-1 text-sm">
-			{rows.map(([label, value, strong]) => (
-				<div
-					key={label}
-					className={cn(
-						'flex justify-between',
-						strong ? 'font-bold' : 'text-muted-foreground',
-					)}
+		<div className="tnum divide-border divide-y text-sm">
+			{groups.map((group, index) => (
+				<dl
+					key={group.title ?? index}
+					className="space-y-1 py-3 first:pt-0 last:pb-0"
 				>
-					<dt>{label}</dt>
-					<dd>{value < 0 ? `-${money(-value)}` : money(value)}</dd>
-				</div>
+					{group.title ? (
+						<p className="text-muted-foreground pb-1 text-xs font-semibold">
+							{group.title}
+						</p>
+					) : null}
+					{group.rows.map(([label, value, strong]) => (
+						<div
+							key={label}
+							className={cn(
+								'flex justify-between',
+								strong ? 'font-semibold' : 'text-muted-foreground',
+							)}
+						>
+							<dt>{label}</dt>
+							<dd>{value < 0 ? `-${money(-value)}` : money(value)}</dd>
+						</div>
+					))}
+				</dl>
 			))}
-			<div className="text-muted-foreground flex justify-between">
-				<dt>
-					<Trans>Cancelled · items taken off</Trans>
-				</dt>
-				<dd>
-					{summary.voids.cancelledOrders} · {summary.voids.removedItems} (
-					{money(summary.voids.cancelledCents + summary.voids.removedCents)})
-				</dd>
-			</div>
-		</dl>
+			<dl className="pt-3">
+				<div className="text-muted-foreground flex justify-between">
+					<dt>
+						<Trans>Cancelled · items taken off</Trans>
+					</dt>
+					<dd>
+						{summary.voids.cancelledOrders} · {summary.voids.removedItems} (
+						{money(summary.voids.cancelledCents + summary.voids.removedCents)})
+					</dd>
+				</div>
+			</dl>
+		</div>
 	)
 }
 
@@ -528,8 +556,8 @@ function ZReport({
 		(shift.countedCashCents ?? 0) - (shift.expectedCashCents ?? 0)
 	return createPortal(
 		<div id="receipt" className="hidden print:block" aria-hidden>
-			<div className="text-center text-sm font-bold">{businessName}</div>
-			<div className="text-center font-bold">
+			<div className="text-center text-sm font-semibold">{businessName}</div>
+			<div className="text-center font-semibold">
 				<Trans>Z report</Trans> · {shift.businessDate}
 			</div>
 			<div className="text-center">
@@ -632,7 +660,7 @@ function Line({
 	bold?: boolean
 }) {
 	return (
-		<div className={cn('flex justify-between', bold && 'font-bold')}>
+		<div className={cn('flex justify-between', bold && 'font-semibold')}>
 			<span>{label}</span>
 			<span>{value}</span>
 		</div>

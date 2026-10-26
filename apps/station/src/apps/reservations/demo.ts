@@ -15,7 +15,7 @@ import { foldDigits } from './phone.ts'
 import { clockLabel, zonedDate, zonedEpoch, zonedMinutes } from './zoned.ts'
 
 /**
- * Demo mode's host stand: a sample day (two rooms, sixteen tables, lunch and
+ * Demo mode's host stand: a sample day (two rooms, eighteen tables, lunch and
  * dinner, a waitlist) that lives in this tab's memory and keeps the regional
  * server's rules for a till, so every flow on the stand works without a
  * backend: seat only onto a table nobody is on (or booked soon, unless the
@@ -50,6 +50,8 @@ type Table = {
 	h: number
 	/** Minutes a table is kept after a party's stay (the server's conflict checks add it). */
 	resetBufferMin: number
+	/** The manager marked it as one that joins others for a large party. */
+	combinable: boolean
 }
 
 const AREAS = [
@@ -65,9 +67,11 @@ function table(
 	shape: Table['shape'],
 	box: [number, number, number, number],
 	resetBufferMin = 0,
+	combinable = false,
 ): Table {
 	return {
 		resetBufferMin,
+		combinable,
 		id,
 		areaId,
 		label,
@@ -87,17 +91,89 @@ const TABLES: Table[] = [
 	table('t3', 'area_main', '3', [1, 2], 'round', [370, 110, 80, 80]),
 	table('t4', 'area_main', '4', [2, 4], 'square', [520, 100, 100, 100], 10),
 	table('t5', 'area_main', '5', [2, 4], 'square', [660, 100, 100, 100]),
-	table('t6', 'area_main', '6', [4, 6], 'square', [110, 310, 190, 100], 10),
-	table('t7', 'area_main', '7', [4, 6], 'square', [350, 310, 190, 100], 10),
+	table(
+		't6',
+		'area_main',
+		'6',
+		[4, 6],
+		'square',
+		[110, 310, 190, 100],
+		10,
+		true,
+	),
+	table(
+		't7',
+		'area_main',
+		'7',
+		[4, 6],
+		'square',
+		[350, 310, 190, 100],
+		10,
+		true,
+	),
 	table('t8', 'area_main', '8', [6, 10], 'square', [590, 310, 270, 110], 15),
-	table('t9', 'area_main', '9', [3, 5], 'round', [150, 530, 110, 110], 5),
-	table('t10', 'area_main', '10', [3, 5], 'round', [370, 530, 110, 110], 5),
+	table('t9', 'area_main', '9', [3, 5], 'round', [150, 530, 110, 110], 5, true),
+	table(
+		't10',
+		'area_main',
+		'10',
+		[3, 5],
+		'round',
+		[370, 530, 110, 110],
+		5,
+		true,
+	),
 	table('p1', 'area_patio', 'P1', [1, 2], 'round', [120, 140, 80, 80]),
 	table('p2', 'area_patio', 'P2', [1, 2], 'round', [260, 140, 80, 80]),
 	table('p3', 'area_patio', 'P3', [1, 2], 'round', [400, 140, 80, 80]),
 	table('p4', 'area_patio', 'P4', [2, 4], 'square', [140, 360, 100, 100], 5),
 	table('p5', 'area_patio', 'P5', [2, 4], 'square', [330, 360, 100, 100], 5),
-	table('p6', 'area_patio', 'P6', [4, 8], 'square', [560, 330, 300, 110], 10),
+	table(
+		'p6',
+		'area_patio',
+		'P6',
+		[4, 8],
+		'square',
+		[560, 330, 300, 110],
+		10,
+		true,
+	),
+	// Two small patio tables beside the big one: free all evening, to join for a large party.
+	table(
+		'p7',
+		'area_patio',
+		'P7',
+		[2, 4],
+		'square',
+		[900, 330, 100, 110],
+		0,
+		true,
+	),
+	table(
+		'p8',
+		'area_patio',
+		'P8',
+		[2, 4],
+		'square',
+		[900, 490, 100, 110],
+		0,
+		true,
+	),
+]
+
+/**
+ * Tables the manager defined as one: Tables 6 and 7 side by side seat twelve.
+ * Tables 9 and 10 are marked combinable too, with no combination defined: the
+ * stand joins them by where they stand.
+ */
+const COMBOS = [
+	{
+		id: 'combo_67',
+		label: '6 + 7',
+		minCovers: 6,
+		maxCovers: 12,
+		tableIds: ['t6', 't7'],
+	},
 ]
 
 const ELEMENTS = [
@@ -141,6 +217,7 @@ const SERVICES = [
 		lastSeatingMin: 15 * 60 + 30,
 		endMin: 16 * 60 + 30,
 		sort: 0,
+		sectionLayoutId: 'layout_demo',
 	},
 	{
 		id: 'svc_dinner',
@@ -149,8 +226,48 @@ const SERVICES = [
 		lastSeatingMin: 21 * 60 + 30,
 		endMin: 23 * 60 + 30,
 		sort: 1,
+		sectionLayoutId: 'layout_demo',
 	},
 ]
+
+/** The floor split between three servers, as a manager would draw it in the App. */
+const SECTION_LAYOUTS = [
+	{
+		id: 'layout_demo',
+		name: 'Three sections',
+		sections: [
+			{
+				id: 'sec_window',
+				name: 'Window',
+				colorToken: 'blue',
+				sort: 0,
+				tableIds: ['t1', 't2', 't3', 't4', 't5'],
+			},
+			{
+				id: 'sec_floor',
+				name: 'Floor',
+				colorToken: 'emerald',
+				sort: 1,
+				tableIds: ['t6', 't7', 't8', 't9', 't10'],
+			},
+			{
+				id: 'sec_patio',
+				name: 'Patio',
+				colorToken: 'amber',
+				sort: 2,
+				tableIds: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'],
+			},
+		],
+	},
+]
+
+/** The sample staff: two on the clock, two scheduled (`/pos/reservations/servers`). */
+const DEMO_SERVERS = [
+	{ staffId: 'staff_maya', firstName: 'Maya', lastInitial: 'S', clock: true },
+	{ staffId: 'staff_omar', firstName: 'Omar', lastInitial: 'H', clock: true },
+	{ staffId: 'staff_lina', firstName: 'Lina', lastInitial: 'K', clock: false },
+	{ staffId: 'staff_sami', firstName: 'Sami', lastInitial: 'R', clock: false },
+] as const
 
 const serviceAt = (minutes: number) =>
 	SERVICES.find((s) => minutes >= s.firstSeatingMin && minutes < s.endMin)
@@ -197,6 +314,16 @@ type Seed = {
 	pinned?: string[]
 	/** For a finished party: minutes ago they left (so their table may still be resetting). */
 	finishedAgo?: number
+	/** For a no-show: minutes ago they were marked (default 6: still inside the undo window). */
+	noShowAgo?: number
+	/** For a party only partly at the door: how many are here. */
+	arrivedCovers?: number
+	/** Minutes before "now" the party was marked here (default 7). */
+	arrivedAgo?: number
+	/** Longer than a turn: minutes the table is kept. */
+	durationMin?: number
+	/** The defined combination the tables are. */
+	comboId?: string
 }
 
 /**
@@ -303,6 +430,50 @@ const TODAY_SEEDS: Seed[] = [
 		payment: 'paid',
 		madeAgo: 60 * 24 * 6,
 		lastVisitDays: 21,
+	},
+	// Only some of them are here: three of five (an arrived booking short of its
+	// size, as the server keeps it), waiting for the rest.
+	{
+		offset: -5,
+		name: ['Dina', 'Khoury'],
+		phone: '+14155550155',
+		party: 5,
+		status: 'arrived',
+		tables: [],
+		arrivedCovers: 3,
+		arrivedAgo: 8,
+	},
+	// Here ahead of their time: booked 25 minutes from now, no table of their own yet.
+	{
+		offset: 25,
+		name: ['Karim', 'Haddad'],
+		phone: '+14155550151',
+		party: 3,
+		status: 'arrived',
+		tables: [],
+		arrivedAgo: 3,
+	},
+	// A no-show, marked a few minutes ago (still inside the undo window): a guest
+	// who then walks in is found by name and put back on this booking.
+	{
+		offset: -50,
+		name: ['Mariam', 'Qadri'],
+		phone: '+14155550154',
+		party: 3,
+		status: 'no_show',
+		tables: [],
+		noShowAgo: 6,
+	},
+	// A no-show marked long ago (past the undo window): the server does not let a till reopen it.
+	{
+		offset: -140,
+		name: ['Faisal', 'Rahman'],
+		phone: '+14155550153',
+		party: 2,
+		status: 'no_show',
+		tables: [],
+		noShowAgo: 100,
+		visits: 2,
 	},
 	// Running late: they called.
 	{
@@ -412,6 +583,19 @@ const TODAY_SEEDS: Seed[] = [
 		party: 2,
 		status: 'booked',
 		tables: [],
+	},
+	// A large party: twelve at Tables 6 and 7 joined (a defined combination).
+	{
+		offset: 165,
+		name: ['Hassan', 'Al-Mutairi'],
+		phone: '+14155550152',
+		party: 12,
+		status: 'confirmed',
+		tables: ['t6', 't7'],
+		comboId: 'combo_67',
+		occasion: 'birthday',
+		staffNotes: 'Birthday dinner, set the long table',
+		visits: 6,
 	},
 	{
 		offset: 150,
@@ -546,6 +730,13 @@ type DemoDay = {
 	reservations: DayReservation[]
 	blocks: Block[]
 	revision: number
+	/** Who works which section, by service. */
+	sections?: Array<{
+		serviceId: string
+		sectionId: string
+		staffId: string | null
+		serverLabel: string | null
+	}>
 }
 
 const refuse = (status: number, code: string) => new HostApiError(status, code)
@@ -580,10 +771,12 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 	const clock = options.now ?? (() => Date.now())
 	const timeZone = options.timeZone ?? deviceZone()
 	const latency = options.latencyMs ?? 0
-	const wait = () =>
-		latency > 0
-			? new Promise<void>((resolve) => setTimeout(resolve, latency))
-			: Promise.resolve()
+	/** The connection is down (a control switches it): every call fails as an unreachable server does. */
+	let offline = false
+	const wait = async () => {
+		if (latency > 0) await new Promise<void>((r) => setTimeout(r, latency))
+		if (offline) throw new HostApiError(0, 'network_unavailable')
+	}
 
 	/** The guest-details grant, and whether texts go out, switchable while the stand is open. */
 	let canRead = options.canReadGuest ?? true
@@ -639,6 +832,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		seatedAt?: number | null
 		finishedAt?: number | null
 		noShowAt?: number | null
+		arrivedCovers?: number | null
+		seatedCovers?: number | null
+		comboId?: string | null
 	}): DayReservation {
 		const durationMin = input.durationMin ?? (input.party >= 6 ? 120 : 90)
 		const startAt = at(input.date, input.startMin)
@@ -677,6 +873,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			dietaryNotes:
 				input.allergy ?? (codes.length > 0 ? codes.join(', ') : null),
 			hasAllergy: flagged,
+			comboId: input.comboId ?? null,
+			arrivedCovers: input.arrivedCovers ?? null,
+			seatedCovers: input.seatedCovers ?? null,
 			arrivedAt: input.arrivedAt ?? null,
 			seatedAt: input.seatedAt ?? null,
 			finishedAt: input.finishedAt ?? null,
@@ -726,9 +925,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		const booked = day.reservations.some((r) => {
 			if (r.id === ignoreId || !r.tableIds.includes(tableId)) return false
 			if (!(
-				['booked', 'confirmed', 'partially_arrived', 'arrived'].includes(
-					r.status,
-				) || isOnFloor(r)
+				['booked', 'confirmed', 'arrived'].includes(r.status) || isOnFloor(r)
 			))
 				return false
 			// A party still sitting past its time holds the table until it leaves.
@@ -755,6 +952,26 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		return (
 			TABLES.filter(
 				(t) => t.maxCovers >= party && !busy(day, t.id, from, to, ignoreId),
+			).sort((a, b) => a.maxCovers - b.maxCovers)[0] ?? null
+		)
+	}
+
+	/**
+	 * The tables for a party no single table seats: a defined combination whose
+	 * tables are all free for the stay (the smallest that seats them).
+	 */
+	function suggestCombo(
+		day: DemoDay,
+		party: number,
+		from: number,
+		to: number,
+		ignoreId?: string,
+	) {
+		return (
+			COMBOS.filter(
+				(combo) =>
+					combo.maxCovers >= party &&
+					combo.tableIds.every((id) => !busy(day, id, from, to, ignoreId)),
 			).sort((a, b) => a.maxCovers - b.maxCovers)[0] ?? null
 		)
 	}
@@ -794,9 +1011,12 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					lateCancels: seed.lateCancels,
 					lastVisitDays: seed.lastVisitDays,
 					pinned: seed.pinned,
+					durationMin: seed.durationMin,
+					comboId: seed.comboId,
+					arrivedCovers: seed.arrivedCovers,
 					arrivedAt:
 						seed.status === 'arrived'
-							? past(now - 7 * MIN)
+							? past(now - (seed.arrivedAgo ?? 7) * MIN)
 							: seed.status === 'seated' || seed.status === 'finished'
 								? past(startAt)
 								: null,
@@ -812,7 +1032,10 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 								? now - seed.finishedAgo * MIN
 								: past(Math.max(startAt + 80 * MIN, now - 40 * MIN))
 							: null,
-					noShowAt: seed.status === 'no_show' ? now - 6 * MIN : null,
+					noShowAt:
+						seed.status === 'no_show'
+							? now - (seed.noShowAgo ?? 6) * MIN
+							: null,
 				}),
 			)
 		}
@@ -825,6 +1048,32 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			endAt: at(seedDate, baseMin + 150),
 			reason: 'Wobbly leg',
 		})
+		// Table P2 is kept for a private party from a little later.
+		day.blocks.push({
+			id: 'blk_demo_2',
+			tableId: 'p2',
+			areaId: null,
+			startAt: at(seedDate, baseMin + 45),
+			endAt: at(seedDate, baseMin + 200),
+			reason: 'Private party',
+		})
+		// Tonight's servers are on: Window and Floor have theirs, the patio waits for one.
+		const service = serviceAt(baseMin)
+		if (service)
+			day.sections = [
+				{
+					serviceId: service.id,
+					sectionId: 'sec_window',
+					staffId: 'staff_maya',
+					serverLabel: 'Maya S.',
+				},
+				{
+					serviceId: service.id,
+					sectionId: 'sec_floor',
+					staffId: 'staff_omar',
+					serverLabel: 'Omar H.',
+				},
+			]
 		return day
 	}
 
@@ -995,6 +1244,22 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		waitlist.push(entry)
 		if (seed.noSms) noSmsEntries.add(entry.id)
 	}
+	/**
+	 * The server's tick: a party told their table is ready who has not answered
+	 * by the end of their hold is no longer in line (`no_response`), whether or
+	 * not a text was ever sent. Looked at whenever the waitlist is read.
+	 */
+	function expireHolds() {
+		const now = clock()
+		for (const entry of waitlist) {
+			if (
+				entry.status === 'notified' &&
+				typeof entry.responseDeadlineAt === 'number' &&
+				entry.responseDeadlineAt <= now
+			)
+				updateEntry(entry.id, { status: 'no_response' })
+		}
+	}
 	const entryOf = (id: string) => {
 		const entry = waitlist.find((e) => e.id === id)
 		if (!entry) throw refuse(404, 'not_found')
@@ -1047,6 +1312,107 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			)
 				throw refuse(409, 'table_occupied')
 		}
+	}
+
+	/** Statuses of a booking that holds its tables (the server's active occupancy). */
+	const HOLDS_TABLE = [
+		'pending_payment',
+		'booked',
+		'confirmed',
+		'arrived',
+		'seated',
+	]
+	/** The server's default freeze: a booking this close (or already begun) is not moved to make room. */
+	const FREEZE_MIN = 30
+
+	/**
+	 * Puts a booking on tables the way the server's assignment does, judged
+	 * against the booking's own window (its start to its end, plus each table's
+	 * reset buffer): a block over it is `table_blocked`; another booking over it is
+	 * moved to another table when it is soft and not due within the freeze window,
+	 * else `locked_table_conflict` (a party sitting there is never moved). An
+	 * overbook skips all of it.
+	 *
+	 * A party on the floor counts by its booked window too, as on the server (its
+	 * table is held to its booked end, however late it sat): a booking given a
+	 * table for later is judged by that alone. Seating someone now also refuses
+	 * a table someone is still sitting at, which the server's window check does
+	 * not; the stand never sends that seating (such a table reads "taken").
+	 */
+	function checkBookingTables(
+		r: DayReservation,
+		tableIds: string[],
+		overbook: boolean,
+		/** The party sits down now (not a table given to a booking for its own time). */
+		seatingNow: boolean,
+	) {
+		if (tableIds.length === 0) throw refuse(400, 'table_required')
+		const now = clock()
+		const date = (r as { businessDate?: string }).businessDate ?? today()
+		const day = dayOf(date)
+		const moves: Array<{ other: DayReservation; to: string }> = []
+		for (const tableId of tableIds) {
+			const table = tableById.get(tableId)
+			if (!table) throw refuse(404, 'not_found')
+			// Taped off right now: nobody sits there, whatever the host insists.
+			if (
+				day.blocks.some(
+					(b) =>
+						(b.tableId ? b.tableId === tableId : b.areaId === table.areaId) &&
+						b.startAt <= now &&
+						b.endAt > now,
+				)
+			)
+				throw refuse(409, 'table_occupied')
+			if (overbook) continue
+			const reset = table.resetBufferMin * MIN
+			const from = r.startAt
+			const until = r.endAt + reset
+			const taped = day.blocks.some(
+				(b) =>
+					(b.tableId ? b.tableId === tableId : b.areaId === table.areaId) &&
+					b.startAt < until &&
+					b.endAt > from,
+			)
+			if (taped) throw refuse(409, 'table_blocked')
+			const overlapping = day.reservations.filter(
+				(o) =>
+					o.id !== r.id &&
+					HOLDS_TABLE.includes(o.status) &&
+					o.tableIds.includes(tableId) &&
+					o.startAt < until &&
+					o.endAt + reset > from,
+			)
+			for (const other of overlapping) {
+				const soft = ['pending_payment', 'booked', 'confirmed'].includes(
+					other.status,
+				)
+				const frozen =
+					other.startAt >= now - 12 * 60 * MIN &&
+					other.startAt - now <= FREEZE_MIN * MIN
+				if (!soft || frozen) throw refuse(409, 'locked_table_conflict')
+				const replacement = TABLES.filter(
+					(t) =>
+						t.maxCovers >= other.partySize &&
+						!tableIds.includes(t.id) &&
+						!moves.some((m) => m.to === t.id) &&
+						!busy(day, t.id, other.startAt, other.endAt, other.id),
+				).sort((a, b) => a.maxCovers - b.maxCovers)[0]
+				if (!replacement) throw refuse(409, 'reflow_failed')
+				moves.push({ other, to: replacement.id })
+			}
+			// Seating now, someone still sitting there whose booked time does not reach
+			// this window (an early arrival): the table is not free to put them at yet.
+			if (
+				seatingNow &&
+				day.reservations.some(
+					(o) => o.id !== r.id && isOnFloor(o) && o.tableIds.includes(tableId),
+				)
+			)
+				throw refuse(409, 'table_occupied')
+		}
+		for (const { other, to } of moves)
+			update(other.id, { tableIds: [to], tableLabels: labelOf([to]) })
 	}
 
 	function createSeated(input: {
@@ -1106,11 +1472,16 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					from >= now - 5 * MIN
 						? suggest(day, party, from, from + duration * MIN, excludeId)
 						: null
+				// No table seats them alone: a defined combination may.
+				const combo =
+					from >= now - 5 * MIN && free === null
+						? suggestCombo(day, party, from, from + duration * MIN, excludeId)
+						: null
 				slots.push({
 					localStartMin: minute,
 					time: clockLabel(minute),
-					available: free !== null,
-					suggestedTableIds: free ? [free.id] : [],
+					available: free !== null || combo !== null,
+					suggestedTableIds: free ? [free.id] : (combo?.tableIds ?? []),
 				})
 			}
 		}
@@ -1161,11 +1532,14 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			closedLabel: null,
 			areas: AREAS,
 			tables: TABLES,
+			combos: COMBOS,
 			elements: ELEMENTS,
 			blocks: day.blocks,
 			services: SERVICES,
 			pacing: pacing(day),
 			reservations: day.reservations.map(forGrant),
+			sectionLayouts: SECTION_LAYOUTS,
+			sectionAssignments: day.sections ?? [],
 		})
 		return { feed, etag }
 	}
@@ -1228,8 +1602,46 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			return { feed, etag: current }
 		},
 
+		async servers(window: { from: number; to: number }) {
+			await wait()
+			return {
+				available: true,
+				servers: DEMO_SERVERS.map((person, index) => ({
+					staffId: person.staffId,
+					firstName: person.firstName,
+					lastInitial: person.lastInitial,
+					position: 'Server',
+					onClock: person.clock,
+					shift: person.clock
+						? null
+						: {
+								startAt: window.from + index * 30 * MIN,
+								endAt: window.to,
+							},
+				})),
+			}
+		},
+
+		async assignSections(input) {
+			await wait()
+			const day = dayOf(input.date)
+			day.sections = [
+				...(day.sections ?? []).filter(
+					(row) => row.serviceId !== input.serviceId,
+				),
+				...input.assignments.map((row) => ({
+					serviceId: input.serviceId,
+					sectionId: row.sectionId,
+					staffId: row.staffId,
+					serverLabel: row.serverLabel.trim() || null,
+				})),
+			]
+			touch(day)
+		},
+
 		async waitlist() {
 			await wait()
+			expireHolds()
 			const entries = activeWaitlist()
 			return {
 				locationId: DEMO_LOCATION,
@@ -1242,7 +1654,15 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					notified: entries.filter((e) => e.status === 'notified').length,
 					onTheWay: entries.filter((e) => e.status === 'on_the_way').length,
 				},
-				entries: entries.map(entryForGrant),
+				// Parties whose hold just ran out are listed too: the stand offers a way back.
+				entries: [
+					...entries,
+					...waitlist.filter(
+						(e) =>
+							e.status === 'no_response' &&
+							clock() - (e.responseDeadlineAt ?? 0) <= 30 * MIN,
+					),
+				].map(entryForGrant),
 			}
 		},
 
@@ -1264,8 +1684,11 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			toStatus: StatusTarget,
 			options: {
 				tableIds?: string[]
+				comboId?: string
 				expectedVersion?: number
 				reason?: string
+				arrivedCovers?: number
+				seatedCovers?: number
 				overbook?: boolean
 				overbookReason?: string
 			} = {},
@@ -1275,6 +1698,8 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			checkVersion(r, options.expectedVersion)
 			const now = clock()
 			const from = r.status
+			// The steps the server's status route allows a till (its transition map):
+			// there are no partial statuses, only counts kept on `arrived` and `seated`.
 			const allowed: Record<StatusTarget, string[]> = {
 				confirmed: ['booked'],
 				arrived: ['booked', 'confirmed'],
@@ -1283,7 +1708,7 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 				no_show: ['booked', 'confirmed', 'arrived'],
 				cancelled: ['booked', 'confirmed', 'arrived'],
 			}
-			if (!allowed[toStatus].includes(from))
+			if (!allowed[toStatus]?.includes(from))
 				throw refuse(409, 'invalid_status_transition')
 			// A deposit or a card on it: cancelling and a no-show touch the money, a manager's.
 			if (
@@ -1299,21 +1724,42 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 				const tableIds = options.tableIds?.length
 					? options.tableIds
 					: r.tableIds
-				checkTables(tableIds, r.durationMin, options.overbook === true, r.id)
+				if (tableIds.length === 0) throw refuse(400, 'table_required')
+				// Put on the tables the way an assignment does (a booking's own window).
+				const changed =
+					tableIds.length !== r.tableIds.length ||
+					!tableIds.every((id) => r.tableIds.includes(id))
+				if (changed)
+					checkBookingTables(r, tableIds, options.overbook === true, true)
+				else checkTables(tableIds, 0, true, r.id)
 				priorTables.set(r.id, r.tableIds)
 				return {
 					reservation: update(r.id, {
 						status: 'seated',
 						tableIds,
 						tableLabels: labelOf(tableIds),
+						comboId: changed ? (options.comboId ?? null) : (r.comboId ?? null),
 						arrivedAt: r.arrivedAt ?? now,
 						seatedAt: now,
+						// Without a count the server seats as many as were marked here.
+						seatedCovers:
+							options.seatedCovers ??
+							r.seatedCovers ??
+							r.arrivedCovers ??
+							r.partySize,
 					}),
 				}
 			}
 			if (toStatus === 'arrived')
 				return {
-					reservation: update(r.id, { status: 'arrived', arrivedAt: now }),
+					reservation: update(r.id, {
+						status: 'arrived',
+						arrivedAt: now,
+						arrivedCovers: Math.min(
+							options.arrivedCovers ?? r.arrivedCovers ?? r.partySize,
+							r.partySize,
+						),
+					}),
 				}
 			if (toStatus === 'finished')
 				return {
@@ -1341,21 +1787,32 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			await wait()
 			const r = locate(reservationId).reservation
 			checkVersion(r, expectedVersion)
-			const seated = r.status === 'seated'
+			const now = clock()
+			const seated = isOnFloor(r)
+			// A party at the door or at its table: its size and stay change, never where it sits.
+			const present = r.status === 'arrived' || seated
 			if (!['booked', 'confirmed', 'arrived', 'seated'].includes(r.status))
-				throw refuse(409, 'invalid_status_transition')
+				throw refuse(409, 'invalid_status')
 			const movesTime =
 				Boolean(change.time) || change.localStartMin !== undefined
 			const resizes =
 				change.partySize !== undefined && change.partySize !== r.partySize
-			// A deposit, a card or an experience: a size or time change is a manager's.
-			if ((movesTime || resizes) && r.paymentStatus !== 'none')
+			const lengthens =
+				change.durationMin !== undefined && change.durationMin !== r.durationMin
+			// A deposit, a card or an experience: a size, time or stay change is a manager's.
+			if (
+				(movesTime || resizes || lengthens) &&
+				(r.paymentStatus !== 'none' || r.status === 'pending_payment')
+			)
 				throw refuse(409, 'manager_required')
-			// A longer stay than a till may set is a manager's.
-			if (change.durationMin !== undefined && change.durationMin > 360)
-				throw refuse(409, 'manager_required')
+			// A till only keeps a table longer, and no longer than it may set.
+			if (change.durationMin !== undefined) {
+				if (change.durationMin < r.durationMin)
+					throw refuse(409, 'manager_required')
+				if (change.durationMin > 360) throw refuse(409, 'manager_required')
+			}
 			// Someone already at the table has no time to move.
-			if (seated && movesTime) throw refuse(409, 'invalid_status')
+			if (present && movesTime) throw refuse(409, 'invalid_status')
 			const date = (r as { businessDate?: string }).businessDate ?? today()
 			const patch: Partial<DayReservation> = {}
 			const party = change.partySize ?? r.partySize
@@ -1365,6 +1822,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 				const [h = 0, m = 0] = (change.time ?? '').split(':').map(Number)
 				startMin = change.localStartMin ?? h * 60 + m
 				const startAt = at(date, startMin)
+				// A till moves a booking forward, never into the past.
+				if (startMin !== r.localStartMin && startAt < now - 15 * MIN)
+					throw refuse(409, 'in_the_past')
 				Object.assign(patch, {
 					localStartMin: startMin,
 					time: clockLabel(startMin),
@@ -1381,15 +1841,16 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			}
 			const startAt = at(date, startMin)
 			const day = dayOf(date)
-			if (seated) {
-				// A party at the table stays on it: the table must seat them (or the
-				// server would move them by itself, which a till does not do).
+			if (present) {
+				// A party at the door or the table stays on its tables: growing past their
+				// seats is a manager's call (a bigger table), never done by itself.
 				const seats = r.tableIds.reduce(
 					(sum, id) => sum + (tableById.get(id)?.maxCovers ?? 0),
 					0,
 				)
-				if (party > seats) throw refuse(409, 'no_availability')
-			} else {
+				if (resizes && r.tableIds.length > 0 && party > seats)
+					throw refuse(409, 'party_too_large_for_table')
+			} else if (!lengthens || resizes || movesTime) {
 				// A table the party no longer fits (or the new time clashes on) is let go.
 				const keep = r.tableIds.filter((id) => {
 					const t = tableById.get(id)
@@ -1480,21 +1941,28 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 			tableIds: string[],
 			expectedVersion?: number,
 			overbook: { overbook?: boolean; overbookReason?: string } = {},
+			comboId?: string | null,
 		) {
 			await wait()
 			const r = locate(reservationId).reservation
 			checkVersion(r, expectedVersion)
 			if (!['booked', 'confirmed', 'arrived', 'seated'].includes(r.status))
 				throw refuse(409, 'reservation_not_active')
-			// A party at the table moves for the rest of their stay; a booking, for all of it.
+			// A party at the table moves for the rest of their stay; a booking, by its own window.
 			const remaining = isOnFloor(r)
 				? Math.max(15, Math.ceil((r.endAt - clock()) / MIN))
 				: r.durationMin
 			if (isOnFloor(r)) {
 				checkTables(tableIds, remaining, overbook.overbook === true, r.id)
-			} else if (tableIds.length === 0) throw refuse(400, 'table_required')
+			} else {
+				checkBookingTables(r, tableIds, overbook.overbook === true, false)
+			}
 			return {
-				reservation: update(r.id, { tableIds, tableLabels: labelOf(tableIds) }),
+				reservation: update(r.id, {
+					tableIds,
+					tableLabels: labelOf(tableIds),
+					comboId: comboId ?? null,
+				}),
 			}
 		},
 
@@ -1571,6 +2039,13 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 					channel: 'host',
 					durationMin: duration,
 					madeAgo: 0,
+					// Several tables that are a defined combination stay one on the book.
+					comboId:
+						COMBOS.find(
+							(c) =>
+								c.tableIds.length === tables.length &&
+								c.tableIds.every((id) => tables.includes(id)),
+						)?.id ?? null,
 				})
 				day.reservations.push(reservation)
 				touch(day)
@@ -1649,12 +2124,31 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		async leaveWaitlist(
 			entryId: string,
 			expectedVersion: number,
-			target: 'left' | 'no_response' = 'left',
+			target: 'left' | 'no_response' | 'waiting' = 'left',
 		) {
 			await wait()
+			expireHolds()
 			const entry = entryOf(entryId)
 			if (entry.version !== expectedVersion) throw refuse(409, 'stale_version')
-			return { entry: updateEntry(entryId, { status: target }) }
+			// The server's own steps for a waitlist party.
+			const next: Record<string, string[]> = {
+				waiting: ['left', 'no_response'],
+				notified: ['left', 'no_response', 'waiting'],
+				on_the_way: ['left', 'no_response', 'waiting'],
+				no_response: ['waiting'],
+			}
+			if (entry.status === target) return { entry }
+			if (!next[entry.status]?.includes(target))
+				throw refuse(409, 'invalid_status_transition')
+			// Back in line: told no longer, and the hold is cleared.
+			return {
+				entry: updateEntry(
+					entryId,
+					target === 'waiting'
+						? { status: 'waiting', notifiedAt: null, responseDeadlineAt: null }
+						: { status: target },
+				),
+			}
 		},
 	}
 
@@ -1710,6 +2204,9 @@ export function createDemoHostApi(options: DemoHostOptions = {}): HostApi {
 		setSmsEnabled(on) {
 			smsEnabled = on
 		},
+		setOffline(on) {
+			offline = on
+		},
 	}
 	return Object.assign(api, { controls })
 }
@@ -1735,6 +2232,11 @@ export type DemoControls = {
 	setGuestDetails: (on: boolean) => void
 	/** Turns texting on or off for the whole node (off: marking ready queues no text). */
 	setSmsEnabled: (on: boolean) => void
+	/**
+	 * Cuts the connection: every call fails as an unreachable server does, so
+	 * the stand's next look fails and it shows "offline" with the book as it was.
+	 */
+	setOffline: (on: boolean) => void
 }
 
 /** The controls of this tab's sample day. */

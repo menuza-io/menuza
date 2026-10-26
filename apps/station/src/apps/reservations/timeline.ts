@@ -1,6 +1,7 @@
 import { inService, isCounted, liveServices } from './book.ts'
 import {
 	isOnFloor,
+	isWaitingAtStand,
 	rooms,
 	type DayArea,
 	type DayFeed,
@@ -224,8 +225,14 @@ export function layoutTimeline(
 	}
 
 	const groups: TimelineGroup[] = []
+	// The "No table" row is for bookings that still need one: a stay that is over
+	// (finished) or a booking whose time has passed with nobody at the stand
+	// (missed) has nothing to place, and must not take up the row's height.
+	const needsTable = (r: DayReservation) =>
+		r.status !== 'finished' &&
+		!(now !== null && !isWaitingAtStand(r) && r.endAt <= now)
 	const unassigned = bookings.filter(
-		(r) => !r.tableIds.some((id) => drawn.has(id)),
+		(r) => !r.tableIds.some((id) => drawn.has(id)) && needsTable(r),
 	)
 	if (unassigned.length > 0) {
 		const row = rowOf('none', null, unassigned, [])
@@ -263,6 +270,39 @@ export function layoutTimeline(
 		})
 	}
 	return groups
+}
+
+/** How many lines the "No table" row shows before it asks to be opened. */
+export const NO_TABLE_LANES = 3
+
+export type CappedRow = {
+	/** The bars to draw: those on the first `maxLanes` lines. */
+	bars: TimelineBar[]
+	/** How many lines tall the row is now. */
+	lanes: number
+	/** Bookings left out of view (to place), counted once each. */
+	hidden: number
+}
+
+/**
+ * A row cut to its first `maxLanes` lines: the rest of its bars wait behind a
+ * "+N to place" button instead of making the row as tall as the busiest hour.
+ * `maxLanes` of `Infinity` is the row as it is.
+ */
+export function capLanes(
+	row: Pick<TimelineRow, 'bars' | 'lanes'>,
+	maxLanes: number,
+): CappedRow {
+	const bars = row.bars.filter((bar) => bar.lane < maxLanes)
+	return {
+		bars,
+		lanes: Math.max(1, Math.min(row.lanes, maxLanes)),
+		hidden: new Set(
+			row.bars
+				.filter((bar) => bar.lane >= maxLanes)
+				.map((bar) => bar.reservation.id),
+		).size,
+	}
 }
 
 /** Where "now" falls, as minutes from the start of the range (null outside it). */
@@ -400,6 +440,19 @@ const sum = (list: Array<{ partySize: number }>) =>
 	list.reduce((total, r) => total + r.partySize, 0)
 
 /** The slot under a pointer: `offsetPx` from the start of the track, in slots of `slotPx`. */
+/**
+ * How far into the track a tap landed, counted from where the day starts: the
+ * left edge, or the right one in a right-to-left layout (the time axis is
+ * mirrored there, so the morning is on the right).
+ */
+export function trackOffset(
+	rect: { left: number; right: number },
+	clientX: number,
+	rtl: boolean,
+): number {
+	return rtl ? rect.right - clientX : clientX - rect.left
+}
+
 export function minuteAt(
 	offsetPx: number,
 	slotPx: number,

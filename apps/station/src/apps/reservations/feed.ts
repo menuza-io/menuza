@@ -92,6 +92,14 @@ export const reservationSchema = z
 		overbooked: z.boolean().default(false),
 		locked: z.boolean().default(false),
 		serviceId: z.string().nullable().optional(),
+		/** A booked experience (a tasting menu): its price is a manager's to change. */
+		experienceId: z.string().nullable().optional(),
+		/** The defined combination of tables the party sits at, if it is one. */
+		comboId: z.string().nullable().optional(),
+		/** How many of a partly arrived party are at the door (null: all, or not said). */
+		arrivedCovers: z.number().int().nullish(),
+		/** How many of a partly seated party are at their table. */
+		seatedCovers: z.number().int().nullish(),
 		arrivedAt: epoch,
 		seatedAt: epoch,
 		finishedAt: epoch,
@@ -120,6 +128,8 @@ const tableSchema = z
 		w: z.number().default(60),
 		h: z.number().default(60),
 		rotation: z.number().default(0),
+		/** The manager marked it as one that joins others for a large party. */
+		combinable: z.boolean().default(false),
 		/**
 		 * Minutes the server keeps a table after a party's booked end before it
 		 * counts the table free again (its conflict checks add it). Zero when the
@@ -134,6 +144,20 @@ const tableSchema = z
 	.passthrough()
 
 export type DayTable = z.infer<typeof tableSchema>
+
+/** A defined combination of tables ("Tables 6 + 7") that seats a large party together. */
+const comboSchema = z
+	.object({
+		id: z.string(),
+		label: z.string().default(''),
+		minCovers: z.number().int().default(1),
+		maxCovers: z.number().int(),
+		tableIds: z.array(z.string()).default([]),
+		archivedAt: epoch,
+	})
+	.passthrough()
+
+export type DayCombo = z.infer<typeof comboSchema>
 
 const areaSchema = z
 	.object({
@@ -185,10 +209,48 @@ const serviceSchema = z
 		endMin: z.number().int(),
 		sort: z.number().default(0),
 		archivedAt: epoch,
+		/** The sections the floor is split into for this service, by default. */
+		sectionLayoutId: z.string().nullable().optional(),
 	})
 	.passthrough()
 
 export type DayService = z.infer<typeof serviceSchema>
+
+/** A way of splitting the floor between servers (drawn by a manager in the App). */
+const sectionLayoutSchema = z
+	.object({
+		id: z.string(),
+		name: z.string(),
+		sections: z
+			.array(
+				z
+					.object({
+						id: z.string(),
+						name: z.string(),
+						/** A palette token (`blue`, `2`) or a hex colour. */
+						colorToken: z.string().nullable().optional(),
+						sort: z.number().default(0),
+						tableIds: z.array(z.string()).default([]),
+					})
+					.passthrough(),
+			)
+			.default([]),
+	})
+	.passthrough()
+
+export type DaySectionLayout = z.infer<typeof sectionLayoutSchema>
+
+/** Who works a section in one service of the day: a person on the staff, or a typed name. */
+const sectionAssignmentSchema = z
+	.object({
+		serviceId: z.string(),
+		sectionId: z.string(),
+		staffId: z.string().nullable().optional(),
+		serverLabel: z.string().nullable().optional(),
+	})
+	.passthrough()
+
+export type DaySectionAssignment = z.infer<typeof sectionAssignmentSchema>
 
 /** One slot of the day's pacing: covers booked against what the slot can take. */
 const pacingSchema = z
@@ -220,12 +282,23 @@ export const dayFeedSchema = z
 		closedLabel: z.string().nullable().optional(),
 		areas: z.array(areaSchema).default([]),
 		tables: z.array(tableSchema).default([]),
+		/** Defined combinations of tables: absent from an older server. */
+		combos: z.array(comboSchema).default([]),
 		elements: z.array(elementSchema).default([]),
 		blocks: z.array(blockSchema).default([]),
 		/** Absent from an older server: the stand then has one "All day". */
 		services: z.array(serviceSchema).default([]),
 		pacing: z.array(pacingSchema).default([]),
 		reservations: z.array(reservationSchema).default([]),
+		/** Absent from an older server, or empty where nobody drew sections. */
+		sectionLayouts: z
+			.array(sectionLayoutSchema)
+			.nullish()
+			.transform((layouts) => layouts ?? []),
+		sectionAssignments: z
+			.array(sectionAssignmentSchema)
+			.nullish()
+			.transform((rows) => rows ?? []),
 	})
 	.passthrough()
 
@@ -331,6 +404,24 @@ export function recentNoShows(
 		.sort((a, b) => (markedAt(b) ?? 0) - (markedAt(a) ?? 0))
 }
 
+/**
+ * When a seated party's table should clear: the booking's own end, or the
+ * stay it was booked for counted from when they actually sat, whichever is
+ * later. A party booked at 7:00 for 90 minutes and seated at 7:50 is not over
+ * their time at 8:30 (the booking's end): they have only just begun.
+ */
+export function clearAtOf(
+	r: Pick<DayReservation, 'endAt' | 'seatedAt' | 'durationMin' | 'status'> & {
+		startAt?: number
+	},
+): number {
+	const fromSeating =
+		typeof r.seatedAt === 'number'
+			? r.seatedAt + r.durationMin * 60_000
+			: r.endAt
+	return Math.max(r.endAt, fromSeating)
+}
+
 /** Minutes past the booked time (0 when not late yet). */
 export const minutesLate = (r: Pick<DayReservation, 'startAt'>, now: number) =>
 	Math.max(0, Math.floor((now - r.startAt) / 60_000))
@@ -420,6 +511,19 @@ export type PartyToPlace = {
 	partySize: number
 	durationMin: number
 	reservationId?: string
+	/**
+	 * The booking's own window, when the party is a booking being seated: the
+	 * server checks a seating against `startAt .. endAt` (plus the table's reset
+	 * buffer), not against "now plus a turn". Absent for a party seated now.
+	 */
+	startAt?: number
+	endAt?: number
+	/**
+	 * The party is given a table for its own time, not seated now: a table that
+	 * is taken or being reset at the moment is judged by the window like any
+	 * other (it may be free again by then).
+	 */
+	future?: boolean
 }
 
 /** Why a table cannot take the party being placed (or that it can). */
@@ -432,56 +536,155 @@ export type FitVerdict =
 	| { fits: false; why: 'small' }
 	/** Free now, but booked at `at` (an epoch), before the party would be done. */
 	| { fits: false; why: 'booked'; at: number }
+	/** Free now, but taped off from `at` (an epoch), inside the party's stay: the server refuses it. */
+	| { fits: false; why: 'blocked'; at: number }
+
+/** What a table's other bookings and blocks are, for the window a party would hold it. */
+export type Occupancy = Pick<DayFeed, 'reservations' | 'blocks'>
+
+/** Statuses of a booking that holds its tables on the server (its occupancy is active). */
+const HOLDS_TABLE = new Set([
+	'pending_payment',
+	'booked',
+	'confirmed',
+	'partially_arrived',
+	'arrived',
+	'partially_seated',
+	'seated',
+])
 
 /**
- * Whether a party being placed can sit at this table now: it is free, big
- * enough, and nobody else is booked on it before the party would be done. The
- * party's own booking on the table does not count against it. When it cannot,
- * the verdict says why, in the order a host would check: taken, too small, booked.
+ * The window a party would hold a table: its own booked window, or now to the
+ * end of its stay, plus the table's reset buffer (the server's conflict checks
+ * add it to the end).
+ */
+export function windowOf(
+	party: PartyToPlace,
+	resetBufferMin: number,
+	now: number,
+): { start: number; end: number } {
+	const start = party.startAt ?? now
+	const end = party.endAt ?? start + party.durationMin * 60_000
+	return { start, end: end + resetBufferMin * 60_000 }
+}
+
+/**
+ * Whether a party being placed can sit at this table now, as the server
+ * judges it: nobody is on it, it is big enough, and no other booking or block
+ * overlaps the window the party would hold it. The party's own booking does
+ * not count against it. When it cannot, the verdict says why, in the order a
+ * host would check: taken, too small, booked, taped off.
+ *
+ * With `occupancy` (the day's bookings and blocks) the check is the server's
+ * own: every booking and block that overlaps the party's window counts, a late
+ * one (booked earlier, never arrived) and a block that starts inside the stay
+ * included. Without it, the table's next booking (`state.next`) stands in.
+ *
+ * One judgement goes past the server's: for a booking given a table for its
+ * own time (`future`), a party sitting there counts until they are expected to
+ * clear, not until their booked end (the server holds the booked end). The
+ * table is then "taken" for it, though a tap still sends it, as the host's call.
  */
 export function fitVerdict(
-	table: Pick<DayTable, 'maxCovers'> & { resetBufferMin?: number },
+	table: Pick<DayTable, 'maxCovers'> & {
+		resetBufferMin?: number
+		id?: string
+		areaId?: string
+	},
 	state: TableState,
 	party: PartyToPlace,
 	now: number,
+	occupancy?: Occupancy,
 ): FitVerdict {
-	if (state.kind === 'seated' || state.kind === 'blocked')
+	const byWindow = party.future === true && occupancy !== undefined
+	if (!byWindow && (state.kind === 'seated' || state.kind === 'blocked'))
 		return { fits: false, why: 'taken' }
-	if (state.kind === 'resetting')
+	if (!byWindow && state.kind === 'resetting')
 		return { fits: false, why: 'resetting', until: state.readyAt }
 	if (!fits(table, party.partySize)) return { fits: false, why: 'small' }
+	const reset = table.resetBufferMin ?? 0
+	const window = windowOf(party, reset, now)
+	if (occupancy && table.id !== undefined) {
+		const resetMs = reset * 60_000
+		/**
+		 * Until when another booking keeps the table: its booked end, as the
+		 * server holds it. A party on the floor for a later booking's window
+		 * keeps it until they are expected to clear (seated late, they have their
+		 * whole stay; over their time, they are still there now): the server
+		 * would take the booking, but the table would not be free for it.
+		 */
+		const heldUntil = (r: DayReservation) =>
+			byWindow && isOnFloor(r) ? Math.max(clearAtOf(r), now) : r.endAt
+		// Another booking whose own stay (and reset) overlaps the party's window.
+		const clash = occupancy.reservations
+			.filter(
+				(r) =>
+					r.id !== party.reservationId &&
+					HOLDS_TABLE.has(r.status) &&
+					r.tableIds.includes(table.id!) &&
+					r.startAt < window.end &&
+					heldUntil(r) + resetMs > window.start,
+			)
+			.sort((a, b) => a.startAt - b.startAt)[0]
+		// Someone sitting there who will still be there: the table is taken, not booked at a time already past.
+		if (clash && byWindow && isOnFloor(clash))
+			return { fits: false, why: 'taken' }
+		if (clash) return { fits: false, why: 'booked', at: clash.startAt }
+		const block = occupancy.blocks
+			.filter(
+				(b) =>
+					(b.tableId
+						? b.tableId === table.id
+						: b.areaId === table.areaId && table.areaId !== undefined) &&
+					b.startAt < window.end &&
+					b.endAt > window.start,
+			)
+			.sort((a, b) => a.startAt - b.startAt)[0]
+		if (block)
+			return { fits: false, why: 'blocked', at: Math.max(block.startAt, now) }
+		return { fits: true }
+	}
 	const next = state.next
 	if (!next || next.id === party.reservationId) return { fits: true }
 	// The server keeps a table through its reset buffer after the stay, so the
 	// party's window is its stay plus that buffer: a booking that starts inside
 	// it is a clash (the server refuses it as `table_occupied`).
-	const windowMs = (party.durationMin + (table.resetBufferMin ?? 0)) * 60_000
-	return next.startAt - now >= windowMs
-		? { fits: true }
-		: { fits: false, why: 'booked', at: next.startAt }
+	return next.startAt < window.end
+		? { fits: false, why: 'booked', at: next.startAt }
+		: { fits: true }
 }
 
 export const takesParty = (
-	table: Pick<DayTable, 'maxCovers'> & { resetBufferMin?: number },
+	table: Pick<DayTable, 'maxCovers'> & {
+		resetBufferMin?: number
+		id?: string
+		areaId?: string
+	},
 	state: TableState,
 	party: PartyToPlace,
 	now: number,
-): boolean => fitVerdict(table, state, party, now).fits
+	occupancy?: Occupancy,
+): boolean => fitVerdict(table, state, party, now, occupancy).fits
 
 /**
  * The table to suggest for a party: of the tables that take it, the smallest
- * (so big tables stay free for big parties), the lowest number on a tie.
+ * (so big tables stay free for big parties), then the section whose turn it is
+ * (`rank`), the lowest number on a tie.
  */
 export function bestFit(
 	candidates: Array<{ table: DayTable; state: TableState }>,
 	party: PartyToPlace,
 	now: number,
+	occupancy?: Occupancy,
+	/** Among tables of one size, the lower first: the server section that is up next. */
+	rank: (tableId: string) => number = () => 0,
 ): string | null {
 	const best = candidates
-		.filter((c) => takesParty(c.table, c.state, party, now))
+		.filter((c) => takesParty(c.table, c.state, party, now, occupancy))
 		.sort(
 			(a, b) =>
 				a.table.maxCovers - b.table.maxCovers ||
+				rank(a.table.id) - rank(b.table.id) ||
 				a.table.label.localeCompare(b.table.label, undefined, {
 					numeric: true,
 				}),

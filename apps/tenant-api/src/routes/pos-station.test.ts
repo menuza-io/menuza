@@ -31,6 +31,10 @@ import {
 import { verifyReservationsOperatorToken } from '../lib/reservations-auth.ts'
 import { policyFieldsToColumns } from '../services/labor-policy-service.ts'
 import { defaultPunchDeps } from '../services/punch-service.ts'
+import {
+	registerShiftLister,
+	resetShiftLister,
+} from '../services/schedule-seam.ts'
 import { posReservationsDeps } from './pos-reservations.ts'
 import { posTimeclockDeps } from './pos-timeclock.ts'
 import { publicContext, PUBLIC_LOC } from './reservations-public-fixture.ts'
@@ -923,6 +927,72 @@ describe('Station apps on a POS terminal', () => {
 			expect(move.status).toBe(409)
 		})
 
+		it('binding a location that moves a till’s time clock needs the time clock permission there', async () => {
+			// Paired at `main` before the organization worked by location.
+			facts.clear()
+			const { deviceId } = await pairTerminal({
+				scopeId: null,
+				locationId: null,
+				reservationsEnabled: false,
+			})
+			facts.set(LOC_1, { name: 'Downtown', timeZone: 'America/Chicago' })
+			const bind = async (stationApps: Record<string, unknown>) => {
+				const r = await h.app.request(`/operator/pos/terminals/${deviceId}`, {
+					method: 'PATCH',
+					headers: {
+						authorization: `Bearer ${await mintOperator(ORG_A, stationApps)}`,
+						'content-type': 'application/json',
+					},
+					body: JSON.stringify({ locationId: LOC_1 }),
+				})
+				return {
+					status: r.status,
+					error: ((await r.json()) as { error?: string }).error,
+				}
+			}
+			const base = {
+				reservations: true,
+				guestDetails: false,
+				locationIds: null,
+				scopeIds: null,
+			}
+			expect(await bind({ ...base, timeclock: false })).toEqual({
+				status: 403,
+				error: 'timeclock_permission_required',
+			})
+			expect(
+				await bind({ ...base, timeclock: true, scopeIds: [LOC_2] }),
+			).toEqual({ status: 403, error: 'scope_not_allowed' })
+			expect((await bind({ ...base, timeclock: true })).status).toBe(200)
+			const me = await request('GET', '/operator/pos/terminals', {
+				authorization: `Bearer ${await mintOperator()}`,
+			})
+			expect(
+				me.body.devices.find((d: { id: string }) => d.id === deviceId)
+					?.locationId,
+			).toBe(LOC_1)
+
+			// A till whose clock already has its own workplace keeps it: no permission needed.
+			await h.seedStaff(ORG_A, {})
+			const own = await pairTerminal({
+				terminalCode: 'T2',
+				locationId: null,
+				reservationsEnabled: false,
+			})
+			const r = await h.app.request(`/operator/pos/terminals/${own.deviceId}`, {
+				method: 'PATCH',
+				headers: {
+					authorization: `Bearer ${await mintOperator(ORG_A, {
+						...base,
+						timeclock: false,
+					})}`,
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({ locationId: PUBLIC_LOC }),
+			})
+			expect(r.status).toBe(200)
+		})
+
 		it('a member limited to some locations opens the host stand only there', async () => {
 			await h.seedStaff(ORG_A, {})
 			const scoped = await mintOperator(ORG_A, {
@@ -1093,6 +1163,93 @@ describe('Station apps on a POS terminal', () => {
 			})
 			expect(r.status).toBe(200)
 		}
+
+		it('lists who can take a section: clocked in and scheduled, first name and initial only', async () => {
+			const host = await h.seedStaff(ORG_A, {
+				firstName: 'Hana',
+				lastName: 'Karam',
+			})
+			await makeHost(host.staffId)
+			const omar = await h.seedStaff(ORG_A, {
+				firstName: 'Omar',
+				lastName: 'Haddad',
+			})
+			const maya = await h.seedStaff(ORG_A, {
+				firstName: 'Maya',
+				lastName: 'Saleh',
+			})
+			const { secret } = await pairTerminal()
+			const from = h.clock.now
+			const to = from + 6 * 60 * 60 * 1000
+			staffingFlags.set(ORG_A, {
+				enabled: true,
+				timeclock: true,
+				scheduling: true,
+				hiring: false,
+			})
+			registerShiftLister(async (_db, query) => [
+				{
+					id: 'shift_1',
+					staffId: maya.staffId,
+					scopeId: query.scopeId ?? 'main',
+					startAt: from + 60 * 60 * 1000,
+					endAt: from + 7 * 60 * 60 * 1000,
+					positionId: null,
+				},
+			])
+			try {
+				expect((await punch(secret, omar.pin, 'clock_in')).status).toBe(200)
+				const { sessionToken } = await signIn(secret, host.pin)
+				const servers = (session: string, query = `from=${from}&to=${to}`) =>
+					request('GET', `/pos/reservations/servers?${query}`, {
+						secret,
+						session,
+					})
+				const r = await servers(sessionToken)
+				expect(r.status).toBe(200)
+				expect(r.headers.get('Cache-Control')).toContain('no-store')
+				expect(r.body).toEqual({
+					available: true,
+					servers: [
+						{
+							staffId: omar.staffId,
+							firstName: 'Omar',
+							lastInitial: 'H',
+							position: null,
+							onClock: true,
+							shift: null,
+						},
+						{
+							staffId: maya.staffId,
+							firstName: 'Maya',
+							lastInitial: 'S',
+							position: null,
+							onClock: false,
+							shift: {
+								startAt: from + 60 * 60 * 1000,
+								endAt: from + 7 * 60 * 60 * 1000,
+							},
+						},
+					],
+				})
+				expect(r.raw).not.toContain('Haddad')
+				expect(r.raw).not.toContain('Saleh')
+
+				// Hosts only, a sane window, and nothing to list with the staff module off.
+				const notHost = await signIn(secret, omar.pin)
+				expect((await servers(notHost.sessionToken)).status).toBe(403)
+				expect(
+					(await servers(sessionToken, `from=${to}&to=${from}`)).status,
+				).toBe(400)
+				staffingFlags.set(ORG_A, null)
+				expect((await servers(sessionToken)).body).toEqual({
+					available: false,
+					servers: [],
+				})
+			} finally {
+				resetShiftLister()
+			}
+		})
 
 		it('mints a host token for the signed-in person at the terminal location', async () => {
 			const { pin, staffId } = await h.seedStaff(ORG_A, {})

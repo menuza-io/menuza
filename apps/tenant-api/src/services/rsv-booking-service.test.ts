@@ -923,6 +923,106 @@ describe('Reservations Book, Host Stand & Guest services', () => {
 		expect(afterSecond?.status).toBe(undone.reservation.status)
 	})
 
+	describe('a party at its table is not moved by a stay or size change', () => {
+		const seatedAt = async (key: string, time: string, tableId: string) => {
+			const created = await createOperatorReservation({
+				orgId: ORG_ID,
+				locationId: LOC_ID,
+				actorId: 'user_kody',
+				idempotencyKey: key,
+				input: {
+					locationId: LOC_ID,
+					date: DATE,
+					time,
+					partySize: 2,
+					tableIds: [tableId],
+					guest: { firstName: 'Seated', lastName: 'Stay' },
+				},
+			})
+			const seated = await transitionReservationStatus({
+				orgId: ORG_ID,
+				reservationId: created.reservation.id,
+				actorId: 'host_1',
+				input: {
+					status: 'seated',
+					expectedVersion: created.reservation.version,
+					tableIds: [tableId],
+				},
+			})
+			return seated.reservation
+		}
+		const tablesOf = async (id: string) => {
+			const db = await getTenantDb(ORG_ID)
+			return (
+				await db
+					.select()
+					.from(rsvTableOccupancies)
+					.where(eq(rsvTableOccupancies.reservationId, id))
+					.all()
+			)
+				.filter((o) => o.active)
+				.map((o) => o.tableId)
+		}
+
+		it('keeps them where they sit when the stay grows, and a till can only grow it', async () => {
+			const party = await seatedAt('idem-stay-1', '03:00', 'tbl_1')
+			const grown = await updateReservation({
+				orgId: ORG_ID,
+				reservationId: party.id,
+				actorId: 'host_1',
+				paymentLocked: true,
+				stayOnlyGrows: true,
+				input: {
+					expectedVersion: party.version,
+					durationMin: party.durationMin + 15,
+				},
+			})
+			expect(grown.reservation.durationMin).toBe(party.durationMin + 15)
+			expect(await tablesOf(party.id)).toEqual(['tbl_1'])
+			await expect(
+				updateReservation({
+					orgId: ORG_ID,
+					reservationId: party.id,
+					actorId: 'host_1',
+					paymentLocked: true,
+					stayOnlyGrows: true,
+					input: { durationMin: 30 },
+				}),
+			).rejects.toMatchObject({ status: 409, code: 'manager_required' })
+			expect(await tablesOf(party.id)).toEqual(['tbl_1'])
+		})
+
+		it('does not move them to another table when the size changes, and refuses more than their seats', async () => {
+			const party = await seatedAt('idem-stay-2', '02:00', 'tbl_2')
+			// One fewer or the same: they keep tbl_2.
+			const fewer = await updateReservation({
+				orgId: ORG_ID,
+				reservationId: party.id,
+				actorId: 'host_1',
+				paymentLocked: true,
+				stayOnlyGrows: true,
+				input: { partySize: 1, durationMin: party.durationMin },
+			})
+			expect(fewer.reservation.partySize).toBe(1)
+			expect(await tablesOf(party.id)).toEqual(['tbl_2'])
+			// More than the table seats is a manager's call, not a silent move.
+			await expect(
+				updateReservation({
+					orgId: ORG_ID,
+					reservationId: party.id,
+					actorId: 'host_1',
+					paymentLocked: true,
+					stayOnlyGrows: true,
+					input: { partySize: 3, durationMin: party.durationMin },
+				}),
+			).rejects.toMatchObject({
+				status: 409,
+				code: 'party_too_large_for_table',
+			})
+			expect(await tablesOf(party.id)).toEqual(['tbl_2'])
+		})
+	})
+
 	describe('a till undoing a no-show', () => {
 		const book = async (key: string, time: string, tableId: string) => {
 			const created = await createOperatorReservation({

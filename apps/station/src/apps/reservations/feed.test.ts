@@ -551,3 +551,191 @@ describe('a table kept through its reset buffer', () => {
 		expect(withReset.tables.map((t) => t.resetBufferMin)).toEqual([12, 0, 0])
 	})
 })
+
+describe('the server’s own window for seating a booking', () => {
+	// A table for four, a booking seated at its own booked time (18:00 to 19:30).
+	const NOW = at(18 * 60)
+
+	const verdict = (
+		reservations: DayReservation[],
+		party: Parameters<typeof fitVerdict>[2],
+		now: number,
+		blocks: Array<Record<string, unknown>> = [],
+		extra: Record<string, unknown> = {},
+	) => {
+		const f = day(reservations, {
+			tables: [
+				{
+					id: 'tx',
+					areaId: 'a1',
+					label: '9',
+					minCovers: 1,
+					maxCovers: 4,
+					...extra,
+				},
+			],
+			blocks,
+		})
+		const t = f.tables[0]!
+		return fitVerdict(t, tableState(t, f, now), party, now, f)
+	}
+	const mine = rsv({ start: 18 * 60, partySize: 2, status: 'arrived' })
+	const own = {
+		partySize: 2,
+		durationMin: 90,
+		reservationId: mine.id,
+		startAt: mine.startAt,
+		endAt: mine.endAt,
+	}
+
+	it('judges an early arrival by the booked window, not by now plus a stay', () => {
+		// They are at the door at 17:30 for an 18:00 booking. Someone else is booked
+		// 19:15 on the table: inside the booking (18:00 to 19:30) though not inside
+		// "17:30 plus 90 minutes" (19:00).
+		const other = rsv({
+			start: 19 * 60 + 15,
+			tableIds: ['tx'],
+			tableLabels: ['9'],
+		})
+		const early = at(17 * 60 + 30)
+		expect(verdict([other], own, early)).toEqual({
+			fits: false,
+			why: 'booked',
+			at: other.startAt,
+		})
+		// The old way of reading it (now plus a stay) would have said it fits.
+		expect(
+			verdict([other], { partySize: 2, durationMin: 90 }, early).fits,
+		).toBe(true)
+	})
+	it('judges a late arrival by the booked window, so a party booked earlier still counts', () => {
+		// They arrive at 18:50 for an 18:00 booking, and someone booked at 18:20 holds table 9.
+		const other = rsv({
+			start: 18 * 60 + 20,
+			tableIds: ['tx'],
+			tableLabels: ['9'],
+		})
+		expect(verdict([other], own, at(18 * 60 + 50))).toMatchObject({
+			fits: false,
+			why: 'booked',
+			at: other.startAt,
+		})
+	})
+	it('does not count a booking that ends before the party’s window starts', () => {
+		const before = rsv({
+			start: 16 * 60,
+			durationMin: 90,
+			tableIds: ['tx'],
+			tableLabels: ['9'],
+		})
+		expect(verdict([before], own, NOW).fits).toBe(true)
+	})
+	it('counts a booking whose reset buffer reaches into the window', () => {
+		// Booked 16:30 to 18:00, and the table is kept 10 minutes after: it holds until 18:10.
+		const before = rsv({
+			start: 16 * 60 + 30,
+			durationMin: 90,
+			tableIds: ['tx'],
+			tableLabels: ['9'],
+		})
+		expect(
+			verdict([before], own, NOW, [], { resetBufferMin: 10 }),
+		).toMatchObject({
+			fits: false,
+			why: 'booked',
+		})
+		expect(verdict([before], own, NOW, [], { resetBufferMin: 0 }).fits).toBe(
+			true,
+		)
+	})
+	it('counts a cancelled or finished booking as nothing', () => {
+		for (const status of ['cancelled', 'no_show', 'finished'])
+			expect(
+				verdict(
+					[
+						rsv({
+							start: 18 * 60 + 20,
+							status,
+							tableIds: ['tx'],
+							tableLabels: ['9'],
+						}),
+					],
+					own,
+					NOW,
+				).fits,
+			).toBe(true)
+	})
+	it('says a table is taped off from a time inside the stay', () => {
+		const block = {
+			id: 'b1',
+			tableId: 'tx',
+			startAt: at(18 * 60 + 40),
+			endAt: at(23 * 60),
+			reason: 'Private party',
+		}
+		expect(verdict([], own, NOW, [block])).toEqual({
+			fits: false,
+			why: 'blocked',
+			at: at(18 * 60 + 40),
+		})
+		// A block that starts after the window is no trouble; one for the whole room counts.
+		expect(
+			verdict([], own, NOW, [{ ...block, startAt: at(19 * 60 + 40) }]).fits,
+		).toBe(true)
+		expect(
+			verdict([], own, NOW, [{ ...block, tableId: null, areaId: 'a1' }]),
+		).toMatchObject({ fits: false, why: 'blocked' })
+		expect(
+			verdict([], own, NOW, [{ ...block, tableId: null, areaId: 'a2' }]).fits,
+		).toBe(true)
+	})
+	it('still says taken for a table taped off right now', () => {
+		const block = {
+			id: 'b1',
+			tableId: 'tx',
+			startAt: at(17 * 60),
+			endAt: at(23 * 60),
+		}
+		expect(verdict([], own, NOW, [block])).toEqual({
+			fits: false,
+			why: 'taken',
+		})
+	})
+	it('judges a party seated now (a walk-in) from now', () => {
+		const walkIn = { partySize: 2, durationMin: 60 }
+		const later = rsv({
+			start: 19 * 60 + 5,
+			tableIds: ['tx'],
+			tableLabels: ['9'],
+		})
+		expect(verdict([later], walkIn, NOW).fits).toBe(true)
+		expect(verdict([later], { ...walkIn, durationMin: 90 }, NOW)).toMatchObject(
+			{
+				fits: false,
+				why: 'booked',
+			},
+		)
+	})
+	it('picks the best table with the same window', () => {
+		const f = day([
+			rsv({ start: 19 * 60 + 15, tableIds: ['t2'], tableLabels: ['2'] }),
+		])
+		const candidates = f.tables.map((t) => ({
+			table: t,
+			state: tableState(t, f, at(17 * 60 + 30)),
+		}))
+		const early = at(17 * 60 + 30)
+		const bookingParty = {
+			partySize: 3,
+			durationMin: 90,
+			startAt: at(18 * 60),
+			endAt: at(19 * 60 + 30),
+		}
+		// Table 2 (seats four) is booked 19:15, inside the party's window: table 10 is the one.
+		expect(bestFit(candidates, bookingParty, early, f)).toBe('t10')
+		// Without the booking's own window, "now plus a stay" ends at 19:00: table 2 would be offered.
+		expect(
+			bestFit(candidates, { partySize: 3, durationMin: 90 }, early, f),
+		).toBe('t2')
+	})
+})

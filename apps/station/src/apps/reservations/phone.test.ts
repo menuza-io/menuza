@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { matchesReservation } from './book.ts'
 import { formatPhone } from './guest.ts'
-import { foldDigits, nationalDigits, phoneDigits, samePhone } from './phone.ts'
+import {
+	foldDigits,
+	locationCountryCode,
+	nationalDigits,
+	phoneDigits,
+	samePhone,
+} from './phone.ts'
 import { looksLikePhone } from './sheets.tsx'
 import { rsv } from './testing.ts'
 
@@ -47,6 +53,73 @@ describe('the same number typed the way a guest says it', () => {
 	})
 	it('does not take a different number for the same one', () => {
 		expect(samePhone('+966551234567', '+971551234567')).toBe(false)
+	})
+})
+
+describe('a number typed without a country code', () => {
+	// Saudi 05x and Emirati 05x numbers share their nine national digits.
+	const ksaTyped = '0551234567'
+	const uaeStored = '+971551234567'
+	const ksaStored = '+966551234567'
+	it('is a Saudi guest at a Saudi location, never an Emirati one', () => {
+		expect(samePhone(ksaTyped, ksaStored, { countryCode: '966' })).toBe(true)
+		expect(samePhone(ksaTyped, uaeStored, { countryCode: '966' })).toBe(false)
+	})
+	it('is an Emirati guest at an Emirati location, never a Saudi one', () => {
+		expect(samePhone(ksaTyped, uaeStored, { countryCode: '971' })).toBe(true)
+		expect(samePhone(ksaTyped, ksaStored, { countryCode: '971' })).toBe(false)
+	})
+	it('works whichever side holds the code', () => {
+		expect(samePhone(uaeStored, ksaTyped, { countryCode: '966' })).toBe(false)
+		expect(samePhone(ksaStored, ksaTyped, { countryCode: '966' })).toBe(true)
+	})
+	it('keeps an American number typed with its own 1 (no plus) the same', () => {
+		expect(
+			samePhone('1 415 555 0142', '+14155550142', { countryCode: '1' }),
+		).toBe(true)
+		expect(samePhone('4155550142', '+14155550142', { countryCode: '1' })).toBe(
+			true,
+		)
+		expect(
+			samePhone('4155550142', '+4414155550142', { countryCode: '1' }),
+		).toBe(false)
+	})
+	it('does not second-guess a number that says its country', () => {
+		expect(
+			samePhone('+966551234567', '+966551234567', { countryCode: '971' }),
+		).toBe(true)
+		expect(
+			samePhone('00966551234567', '+966551234567', { countryCode: '971' }),
+		).toBe(true)
+		expect(
+			samePhone('+966551234567', '+971551234567', { countryCode: '966' }),
+		).toBe(false)
+	})
+	it('is compared as it always was when the location’s country is not known', () => {
+		expect(samePhone(ksaTyped, uaeStored)).toBe(true)
+		expect(samePhone(ksaTyped, uaeStored, { countryCode: null })).toBe(true)
+	})
+})
+
+describe('the country a location’s numbers are in', () => {
+	const phones = ['+971501111111', '+971502222222', '+966551234567', null, '']
+	it('comes from the time zone when that says', () => {
+		expect(locationCountryCode({ timeZone: 'Asia/Riyadh', phones })).toBe('966')
+		expect(locationCountryCode({ timeZone: 'Asia/Dubai', phones: [] })).toBe(
+			'971',
+		)
+		expect(
+			locationCountryCode({ timeZone: 'America/Chicago', phones: [] }),
+		).toBe('1')
+	})
+	it('is the most common code in the book when the zone says nothing', () => {
+		expect(locationCountryCode({ timeZone: 'UTC', phones })).toBe('971')
+		expect(locationCountryCode({ phones })).toBe('971')
+	})
+	it('ignores numbers with no code, or only an ending', () => {
+		expect(
+			locationCountryCode({ phones: ['0551234567', '••••4567', '4155550142'] }),
+		).toBeNull()
 	})
 })
 

@@ -134,7 +134,7 @@ export function PairingLinkDialog({
 					)}
 				</p>
 				{api || app ? (
-					<dl className="border-border space-y-2 rounded-xl border p-3 text-sm">
+					<dl className="border-border space-y-2 border-y py-3 text-sm">
 						{api ? (
 							<div>
 								<dt className="text-muted-foreground">

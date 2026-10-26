@@ -25,8 +25,19 @@ export function nearestNavItem(
 	return nearest
 }
 
+// Taps get no hover preview, so they never light or forward to an item.
+function hovers(event: MouseEvent): boolean {
+	return (
+		(event as PointerEvent).pointerType !== 'touch' &&
+		window.matchMedia('(hover: hover)').matches
+	)
+}
+
 function mountFluidNav(container: HTMLElement): () => void {
-	const highlight = document.createElement('span')
+	// A list may only hold list items; the hidden one stays out of the count.
+	const highlight = document.createElement(
+		container.matches('ul, ol') ? 'li' : 'span',
+	)
 	highlight.className = 'site-nav-highlight'
 	highlight.setAttribute('aria-hidden', 'true')
 	container.prepend(highlight)
@@ -90,11 +101,7 @@ function mountFluidNav(container: HTMLElement): () => void {
 		else hide()
 	}
 	function move(event: PointerEvent) {
-		if (
-			event.pointerType === 'touch' ||
-			!window.matchMedia('(hover: hover)').matches
-		)
-			return
+		if (!hovers(event)) return
 		point = { x: event.clientX, y: event.clientY }
 		if (!frame) frame = requestAnimationFrame(pick)
 	}
@@ -107,7 +114,7 @@ function mountFluidNav(container: HTMLElement): () => void {
 	// A click in the gap between items goes to the item under the pointer now,
 	// never to a highlight left behind by an earlier move.
 	function click(event: MouseEvent) {
-		if (event.target !== container) return
+		if (event.target !== container || !hovers(event)) return
 		point = { x: event.clientX, y: event.clientY }
 		pick()
 		current?.click()
@@ -149,16 +156,19 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 	if (!trigger || !panel) return () => {}
 	let timer: ReturnType<typeof setTimeout> | undefined
 	let open = details.open
+	let closing = false
 	details.dataset.motionReady = 'true'
 	details.dataset.open = String(open)
 	trigger.setAttribute('aria-expanded', String(open))
 	panel.classList.toggle('is-open', open)
-	panel.inert = !open
 
 	function setOpen(next: boolean) {
 		clearTimeout(timer)
 		open = next
+		closing = !open
 		trigger!.setAttribute('aria-expanded', String(open))
+		// Only the exit needs inert: a closed <details> already hides its
+		// content, and inert would also hide it from find-in-page.
 		panel!.inert = !open
 		if (open) {
 			details.open = true
@@ -171,7 +181,9 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 			panel!.classList.remove('is-open')
 			if (dropdown) panel!.classList.add('is-closing')
 			const finish = () => {
+				closing = false
 				details.open = false
+				panel!.inert = false
 				panel!.classList.remove('is-closing')
 			}
 			const duration = reducedMotion()
@@ -180,13 +192,19 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 						details,
 						dropdown ? '--dropdown-close-dur' : '--acc-collapse',
 					)
-			if (duration === 0) finish()
+			// A natively closed element has no exit left to show.
+			if (duration === 0 || !details.open) finish()
 			else timer = setTimeout(finish, duration)
 		}
 	}
 	function toggle(event: MouseEvent) {
 		event.preventDefault()
 		setOpen(!open)
+	}
+	// Find-in-page and scripts open or close the element natively.
+	function sync() {
+		if (details.open && !open && !closing) setOpen(true)
+		else if (!details.open && open) setOpen(false)
 	}
 	function outside(event: MouseEvent) {
 		if (
@@ -226,6 +244,7 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 			setOpen(false)
 	}
 	trigger.addEventListener('click', toggle)
+	details.addEventListener('toggle', sync)
 	panel.addEventListener('click', followLink)
 	if (dropdown) document.addEventListener('click', outside)
 	details.addEventListener('keydown', keydown)
@@ -234,6 +253,7 @@ function mountDisclosure(details: HTMLDetailsElement): () => void {
 	return () => {
 		clearTimeout(timer)
 		trigger.removeEventListener('click', toggle)
+		details.removeEventListener('toggle', sync)
 		panel.removeEventListener('click', followLink)
 		document.removeEventListener('click', outside)
 		details.removeEventListener('keydown', keydown)

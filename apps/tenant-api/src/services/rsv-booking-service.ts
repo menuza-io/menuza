@@ -140,6 +140,14 @@ export function generateConfirmationCode(length = 6): string {
 	return out
 }
 
+/** A party that is at the door or at its table. */
+const PARTY_PRESENT_STATUSES = new Set([
+	'arrived',
+	'partially_arrived',
+	'seated',
+	'partially_seated',
+])
+
 const SOFT_REFLOWABLE_STATUSES = new Set([
 	'pending_payment',
 	'pending_approval',
@@ -2227,6 +2235,8 @@ export async function updateReservation(params: {
 	 * card policy or an experience is a manager's, and pacing is enforced.
 	 */
 	paymentLocked?: boolean
+	/** A till may keep a table longer, never shorten the stay. */
+	stayOnlyGrows?: boolean
 	input: {
 		date?: string
 		time?: string | number
@@ -2354,6 +2364,21 @@ export async function updateReservation(params: {
 				targetBusinessDate !== current.businessDate ||
 				nextLocalStartMin !== current.localStartMin
 			const stayChanged = nextDurationMin !== current.durationMin
+			// A till can only keep a table longer: shortening a stay would show the
+			// table free while the party is still sitting at it.
+			if (params.stayOnlyGrows && nextDurationMin < current.durationMin)
+				throw conflict(
+					'manager_required',
+					'A shorter stay is a manager’s to set in the app.',
+				)
+			// A party at the door or at its table stays put: only the stay or the
+			// size changes, never where they sit.
+			const partyPresent =
+				PARTY_PRESENT_STATUSES.has(current.status) &&
+				targetBusinessDate === current.businessDate &&
+				nextLocalStartMin === current.localStartMin
+			const stayOnlyChange =
+				!sizeOrTimeChanged && stayChanged && !params.input.tableIds
 			// A cancelled, finished or no-show booking does not change size, time or
 			// stay (it would also message the guest about a booking that is over).
 			if (
@@ -2392,6 +2417,8 @@ export async function updateReservation(params: {
 			if (
 				params.paymentLocked &&
 				sizeOrTimeChanged &&
+				// Pacing limits new bookings, not a party already at the door or seated.
+				!partyPresent &&
 				(targetBusinessDate !== current.businessDate ||
 					nextLocalStartMin !== current.localStartMin ||
 					nextPartySize > current.partySize)
@@ -2461,16 +2488,33 @@ export async function updateReservation(params: {
 						)
 				}
 
-				// Check if nextTableIds fit partySize and are free (or can reflow soft overlapping bookings)
-				const capacityFits =
-					nextTableIds.length > 0 &&
+				// A party already at its table is never moved by a size or stay change:
+				// it keeps its tables unless a manager moves it. Growing past the seats
+				// it has is a manager's call (or an overbook).
+				if (
+					partyPresent &&
+					!params.input.tableIds &&
+					!isOverbook &&
 					nextTableIds.reduce(
 						(sum, tid) => sum + (state.tableById.get(tid)?.maxCovers ?? 0),
 						0,
-					) >= nextPartySize &&
-					(nextTableIds.length > 1 ||
-						(state.tableById.get(nextTableIds[0]!)?.minCovers ?? 1) <=
-							nextPartySize)
+					) < nextPartySize
+				)
+					throw conflict(
+						'party_too_large_for_table',
+						'No room for that many at their table. A manager moves them.',
+					)
+				// Check if nextTableIds fit partySize and are free (or can reflow soft overlapping bookings)
+				const capacityFits =
+					((partyPresent || stayOnlyChange) && !params.input.tableIds) ||
+					(nextTableIds.length > 0 &&
+						nextTableIds.reduce(
+							(sum, tid) => sum + (state.tableById.get(tid)?.maxCovers ?? 0),
+							0,
+						) >= nextPartySize &&
+						(nextTableIds.length > 1 ||
+							(state.tableById.get(nextTableIds[0]!)?.minCovers ?? 1) <=
+								nextPartySize))
 
 				if (!capacityFits && !params.input.tableIds && !isOverbook) {
 					const assignRes = assignTables({
@@ -2890,7 +2934,7 @@ export async function transitionReservationStatus(params: {
 				params.paymentLocked &&
 				(current.status === 'pending_payment' ||
 					((targetStatus === 'cancelled' || targetStatus === 'no_show') &&
-						current.paymentStatus !== 'none'))
+						hasMoneyOnIt(current)))
 			)
 				throw conflict(
 					'manager_required',
@@ -3241,6 +3285,22 @@ function tillMayUndo(
 }
 
 /**
+ * A payment, a card on file, or a deposit or fee policy: cancelling such a
+ * booking, calling it a no-show or undoing either is a manager's (money), not
+ * a till's without the payment grant.
+ */
+function hasMoneyOnIt(row: {
+	paymentStatus: string
+	policySnapshot: unknown
+}): boolean {
+	const amount = Number(
+		(row.policySnapshot as { totalAmountMinor?: unknown } | null)
+			?.totalAmountMinor ?? 0,
+	)
+	return row.paymentStatus !== 'none' || amount > 0
+}
+
+/**
  * Which of the day's recent no-shows and finished parties a till may undo, so
  * it never offers an undo it would be refused. `candidates` are those changed
  * within the window (the ones a till would show an undo for at all).
@@ -3311,13 +3371,7 @@ export async function tillUndoable(
 					.from(rsvReservations)
 					.where(inArray(rsvReservations.id, chunk)),
 		)
-		for (const row of rows) {
-			const amount = Number(
-				(row.policySnapshot as { totalAmountMinor?: unknown } | null)
-					?.totalAmountMinor ?? 0,
-			)
-			if (row.paymentStatus !== 'none' || amount > 0) allowed.delete(row.id)
-		}
+		for (const row of rows) if (hasMoneyOnIt(row)) allowed.delete(row.id)
 	}
 	return { candidates, allowed }
 }
@@ -3334,6 +3388,12 @@ export async function undoReservationTransition(params: {
 	 * guess, not a manager's decision or a guest's cancellation days ago.
 	 */
 	ownRecentOnly?: { withinMs: number }
+	/**
+	 * The caller may not move money (a till without the payment grant): a
+	 * cancel or no-show on a booking with money on it stays, judged on the row
+	 * inside the write.
+	 */
+	paymentLocked?: boolean
 	input?: {
 		expectedVersion?: number
 		nowMs?: number
@@ -3373,6 +3433,19 @@ export async function undoReservationTransition(params: {
 					`Expected version ${params.input.expectedVersion}, found ${current.version}`,
 				)
 			}
+
+			// Undoing a cancel or a no-show brings back a booking whose payment may
+			// have been settled (a refund, a released card): with money on it, that
+			// is the app's call. Undoing a seating or an arrival never is.
+			if (
+				params.paymentLocked &&
+				(current.status === 'cancelled' || current.status === 'no_show') &&
+				hasMoneyOnIt(current)
+			)
+				throw conflict(
+					'manager_required',
+					'This booking has a payment on it. A manager changes it in the app.',
+				)
 
 			// A refund already requested for a cancelled booking cannot be taken
 			// back by undoing the cancellation.

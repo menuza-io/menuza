@@ -7,8 +7,8 @@ import {
 } from '@playwright/test'
 import { posOrderRequestSchema } from '@repo/common/pos-orders'
 
-export const API = 'http://127.0.0.1:4711'
-export const APP = 'http://127.0.0.1:4710'
+export const API = `http://127.0.0.1:${process.env.POS_E2E_API_PORT || 4711}`
+export const APP = `http://127.0.0.1:${process.env.POS_E2E_APP_PORT || 4710}`
 export const SETTINGS_KEY = 'pos.settings.v1'
 
 /** What the backend harness exposes for inspection and control. */
@@ -321,6 +321,15 @@ export const test = base.extend<{
 
 export { expect }
 
+/** App choices live behind the nine-dot launcher on every screen size. */
+export async function selectStationApp(page: Page, name: string) {
+	await page.getByRole('button', { name: 'Apps', exact: true }).click()
+	await page
+		.getByRole('dialog', { name: 'Station apps' })
+		.getByRole('button', { name, exact: true })
+		.click()
+}
+
 // ---------------------------------------------------------------------------
 // Till actions
 // ---------------------------------------------------------------------------
@@ -626,6 +635,6 @@ export async function giveReason(
 export async function openPairingLink(page: Page, link: string) {
 	await page.goto(link)
 	const ask = page.getByRole('dialog', { name: 'Pair this terminal?' })
-	await expect(ask.getByText('127.0.0.1:4711')).toBeVisible()
+	await expect(ask.getByText(new URL(API).host, { exact: true })).toBeVisible()
 	await ask.getByRole('button', { name: 'Pair with this link' }).click()
 }

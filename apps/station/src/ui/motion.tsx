@@ -1,6 +1,6 @@
 import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { X } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import {
 	useEffect,
 	useLayoutEffect,
@@ -89,7 +89,8 @@ export type ToastMessage = {
 	id: number
 	text: string
 	action?: { label: string; run: () => void }
-	tone?: 'neutral' | 'danger'
+	/** `highlight`: in the brand colour, for news worth a second look (a VIP, a large party). */
+	tone?: 'neutral' | 'danger' | 'highlight'
 	/**
 	 * Said some other way already (a live region of its own): the toast shows
 	 * but does not announce it a second time.
@@ -193,7 +194,9 @@ export function Toast({
 							't-toast pointer-events-auto flex max-w-lg items-center gap-3 rounded-2xl px-4 py-3 shadow-lg',
 							shown.tone === 'danger'
 								? 'bg-destructive text-white'
-								: 'bg-foreground text-background',
+								: shown.tone === 'highlight'
+									? 'bg-primary text-primary-foreground'
+									: 'bg-foreground text-background',
 							open && message && 'is-open',
 						)}
 					>
@@ -209,7 +212,7 @@ export function Toast({
 									shown.action?.run()
 									onDone()
 								}}
-								className="h-10 shrink-0 rounded-xl px-3 text-sm font-bold underline-offset-4 hover:underline"
+								className="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold underline-offset-4 hover:underline"
 							>
 								{shown.action.label}
 							</button>
@@ -220,7 +223,7 @@ export function Toast({
 							onClick={onDone}
 							className="-me-1 inline-flex size-10 shrink-0 items-center justify-center rounded-xl opacity-70 hover:opacity-100"
 						>
-							<X className="size-4" />
+							<Icon name="x" className="size-4" />
 						</button>
 					</div>
 				) : null}
@@ -334,7 +337,7 @@ function useModalHost(): HTMLElement | null {
 	return host
 }
 
-/** The till's one celebration: the disc pops and the check draws itself in (success check). */
+/** The till's one celebration: the disc pops and the shared check reveals itself. */
 export function SuccessMark({
 	tone = 'success',
 	size = 'md',
@@ -353,17 +356,7 @@ export function SuccessMark({
 			)}
 		>
 			<span className="t-success-check" data-state="in" aria-hidden>
-				<svg
-					viewBox="0 0 24 24"
-					className={size === 'lg' ? 'size-12' : 'size-10'}
-					fill="none"
-					stroke="currentColor"
-					strokeWidth={3}
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<path d="M20 6 9 17l-5-5" />
-				</svg>
+				<Icon name="check" className={size === 'lg' ? 'size-12' : 'size-10'} />
 			</span>
 		</div>
 	)

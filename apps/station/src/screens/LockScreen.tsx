@@ -1,6 +1,6 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Clock3, CloudOff, Lock } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useEffect, useRef, useState } from 'react'
 import { monotonicNow } from '~/lib/clock.ts'
 import { DEMO_PIN, type SignInOutcome } from '~/lib/signin.ts'
@@ -108,28 +108,34 @@ export function LockScreen({
 			}}
 			className="bg-background text-foreground backdrop:bg-background m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto p-0"
 		>
-			<div className="pt-safe mx-auto flex min-h-full w-full max-w-sm flex-col items-center justify-center gap-6 p-6">
-				<div className="flex flex-col items-center gap-3 text-center">
+			<div className="pt-safe pb-safe mx-auto flex min-h-full w-full max-w-md flex-col items-center justify-center gap-4 px-6 py-6 sm:px-8">
+				<div className="mb-2 flex w-full items-center justify-center gap-3">
 					{logoUrl ? (
 						<img
 							src={logoUrl}
 							alt=""
-							className="size-16 rounded-2xl object-cover"
+							className="size-10 shrink-0 rounded-(--station-panel-radius) object-contain"
 						/>
 					) : (
-						<div className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-2xl text-2xl font-bold">
+						<div
+							className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-(--station-panel-radius) text-base font-semibold"
+							aria-hidden
+						>
 							{businessName.slice(0, 1).toUpperCase()}
 						</div>
 					)}
-					<h1 className="text-xl font-bold">{businessName}</h1>
-					<p className="text-muted-foreground flex items-center gap-2">
-						<Lock className="size-4" /> <Trans>Enter your PIN to start</Trans>
-					</p>
+					<h1 className="min-w-0 text-xl leading-tight font-semibold break-words">
+						{businessName}
+					</h1>
 				</div>
 
+				<p className="text-muted-foreground flex items-center justify-center gap-2 text-center">
+					<Icon name="lock" className="size-4 shrink-0" aria-hidden />{' '}
+					<Trans>Enter your PIN to start</Trans>
+				</p>
 				<PinDots length={pin.length} rejected={rejected} />
 
-				<div className="min-h-12 text-center">
+				<div className="min-h-6 w-full text-center">
 					{/* Announced once, when it appears; the countdown below is not live. */}
 					<p
 						role="alert"
@@ -155,7 +161,7 @@ export function LockScreen({
 					</p>
 					{!message && !waiting && !online && !demo ? (
 						<p className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
-							<CloudOff className="size-4" />{' '}
+							<Icon name="cloud-off" className="size-4" />{' '}
 							<Trans>
 								Offline: people who have signed in here before can still sign
 								in.
@@ -188,12 +194,13 @@ export function LockScreen({
 				</Button>
 				{onClockIn ? (
 					<Button
-						variant="outline"
+						data-clock-trigger
+						variant="ghost"
 						size="lg"
-						className="w-full"
+						className="mt-1 w-full"
 						onClick={onClockIn}
 					>
-						<Clock3 className="size-5" />
+						<Icon name="clock-3" className="size-5" />
 						<Trans>Clock in or out</Trans>
 					</Button>
 				) : null}

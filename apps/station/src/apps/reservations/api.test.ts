@@ -262,4 +262,91 @@ describe('host stand client', () => {
 			expectedVersion: 3,
 		})
 	})
+
+	it('seats a party at several tables as one, with the combination it is', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.transition('r1', 'seated', {
+			tableIds: ['t6', 't7'],
+			comboId: 'c67',
+			expectedVersion: 4,
+		})
+		const status = s.calls.find((c) =>
+			c.url.endsWith('/reservations/r1/status'),
+		)!
+		expect(JSON.parse(String(status.init.body))).toEqual({
+			toStatus: 'seated',
+			tableIds: ['t6', 't7'],
+			comboId: 'c67',
+			expectedVersion: 4,
+		})
+		await api.assign('r1', ['t6', 't7'], 5, {}, 'c67')
+		const assign = s.calls.find((c) =>
+			c.url.endsWith('/reservations/r1/assign'),
+		)!
+		expect(JSON.parse(String(assign.init.body))).toEqual({
+			tableIds: ['t6', 't7'],
+			expectedVersion: 5,
+			comboId: 'c67',
+		})
+		// No combination named: none sent (a move back to one table).
+		await api.assign('r2', ['t1'], 2)
+		const plain = s.calls.filter((c) => c.url.endsWith('/assign')).at(-1)!
+		expect(JSON.parse(String(plain.init.body))).toEqual({
+			tableIds: ['t1'],
+			expectedVersion: 2,
+		})
+	})
+
+	it('marks some of a party here, and seats some of them with their tables, as one call each', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.transition('r1', 'arrived', {
+			arrivedCovers: 3,
+			expectedVersion: 2,
+		})
+		await api.transition('r1', 'seated', {
+			tableIds: ['t4'],
+			seatedCovers: 3,
+			expectedVersion: 3,
+		})
+		const bodies = s.calls
+			.filter((c) => c.url.endsWith('/status'))
+			.map((c) => JSON.parse(String(c.init.body)))
+		// Only statuses the server's transition map has, never `partially_*`; the
+		// tables travel with the seating (no assign first).
+		expect(bodies).toEqual([
+			{ toStatus: 'arrived', arrivedCovers: 3, expectedVersion: 2 },
+			{
+				toStatus: 'seated',
+				tableIds: ['t4'],
+				seatedCovers: 3,
+				expectedVersion: 3,
+			},
+		])
+		expect(s.calls.some((c) => c.url.endsWith('/assign'))).toBe(false)
+	})
+
+	it('puts a party back in line, with the version seen', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.leaveWaitlist('w1', 7, 'waiting')
+		const call = s.calls.find((c) => c.url.endsWith('/waitlist/w1/status'))!
+		expect(JSON.parse(String(call.init.body))).toEqual({
+			status: 'waiting',
+			expectedVersion: 7,
+		})
+	})
 })

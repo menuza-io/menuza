@@ -88,6 +88,9 @@ export function toWireOrder(order: PosOrder) {
 		voidReason: order.voidReason ?? null,
 		voidApprovedBy: staffOrNull(order.voidApprovedBy),
 		lines: order.lines.map((l) => ({
+			// The kitchen's key for the dish and its round; local marks (served) stay here.
+			id: l.id,
+			...(l.sentAt ? { sentAt: new Date(l.sentAt).toISOString() } : {}),
 			itemId: l.itemId,
 			name: l.name,
 			variantId: l.variantId,
@@ -285,7 +288,7 @@ async function claimNext(
 		const next = await db.orders
 			.where('sync')
 			.equals('pending')
-			// `force` (a person tapping "Send now") skips the retry backoff.
+			// `force` (a person tapping "Upload now") skips the retry backoff.
 			.filter((o) => (force || o.nextAttemptAt <= now) && sendable(o))
 			.sortBy('createdAt')
 			.then((rows) => rows[0])

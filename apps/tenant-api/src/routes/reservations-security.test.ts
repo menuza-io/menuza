@@ -349,6 +349,7 @@ describe('Reservations security sweep: operator routes', () => {
 			'POST /operator/reservations/book/waitlist/:id/notify',
 			'POST /operator/reservations/book/waitlist/:id/seat',
 			'POST /operator/reservations/book/waitlist/:id/status',
+			'PUT /operator/reservations/book/section-assignments',
 		])
 		const failures: string[] = []
 		for (const route of list) {
@@ -745,6 +746,59 @@ describe('Reservations security sweep: operator routes', () => {
 			locations: Array<{ locationId: string }>
 		}
 		expect(overviewJson.locations.map((l) => l.locationId)).toEqual([LOC_1])
+	})
+
+	it('a guest summary on the book shows a location-scoped member only bookings at their locations', async () => {
+		const db = await provisionTenantDb(ORG_A)
+		await db
+			.insert(rsvGuests)
+			.values({
+				id: 'guest_two_locations',
+				firstName: 'Two',
+				lastName: 'Rooms',
+			})
+			.onConflictDoNothing()
+		const startAt = Date.UTC(2026, 6, 15, 19)
+		for (const [id, locationId] of [
+			['rsv_summary_loc1', LOC_1],
+			['rsv_summary_loc2', LOC_2],
+		] as const) {
+			await db
+				.insert(rsvReservations)
+				.values({
+					id,
+					locationId,
+					guestId: 'guest_two_locations',
+					confirmationCode: id.toUpperCase().slice(-8),
+					businessDate: '2026-07-15',
+					localStartMin: 19 * 60,
+					timeZone: 'UTC',
+					startAt,
+					endAt: startAt + 90 * 60_000,
+					durationMin: 90,
+					partySize: 2,
+					status: 'booked',
+					channel: 'online',
+				})
+				.onConflictDoNothing()
+		}
+		const summary = async (locationIds: string[] | null) => {
+			const token = await mintRsvToken({ orgId: ORG_A, locationIds })
+			const res = await app.request(
+				'/operator/reservations/book/guests/guest_two_locations/summary',
+				{ headers: { Authorization: `Bearer ${token}` } },
+			)
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as {
+				reservations: Array<{ id: string }>
+			}
+			return body.reservations.map((r) => r.id).sort()
+		}
+		expect(await summary([LOC_1])).toEqual(['rsv_summary_loc1'])
+		expect(await summary(null)).toEqual([
+			'rsv_summary_loc1',
+			'rsv_summary_loc2',
+		])
 	})
 
 	it('VAL-SETUP-027 & VAL-SETUP-028: enforces read vs update grants on all setup routes and blocks cross-location/cross-org setup mutations by entity ID', async () => {

@@ -167,6 +167,11 @@
       "import": "./src/restaurant-orders.ts",
       "default": "./src/restaurant-orders.ts"
     },
+    "./kds": {
+      "types": "./src/kds.ts",
+      "import": "./src/kds.ts",
+      "default": "./src/kds.ts"
+    },
     "./pos-orders": {
       "types": "./src/pos-orders.ts",
       "import": "./src/pos-orders.ts",

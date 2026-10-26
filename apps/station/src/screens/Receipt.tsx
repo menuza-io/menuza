@@ -66,19 +66,19 @@ export function Receipt({
 	// Portalled to <body>: a <dialog> clips and offsets anything printed inside it.
 	return createPortal(
 		<div id="receipt" className="hidden print:block" aria-hidden>
-			<div className="text-center text-sm font-bold">{businessName}</div>
+			<div className="text-center text-sm font-semibold">{businessName}</div>
 			{vatNumber ? (
 				<div className="text-center">
 					<Trans>VAT No. {vatNumber}</Trans>
 				</div>
 			) : null}
 			{(vatNumber || signed) && invoice ? (
-				<div className="text-center font-bold">
+				<div className="text-center font-semibold">
 					<Trans>Simplified tax invoice</Trans>
 				</div>
 			) : null}
 			<div className="text-center">{when}</div>
-			<div className="my-1.5 text-center text-base font-bold">
+			<div className="my-1.5 text-center text-base font-semibold">
 				#{order.number}
 			</div>
 			{invoice ? (
@@ -185,7 +185,7 @@ export function Receipt({
 					<span>{money(order.totals.tipCents)}</span>
 				</Row>
 			) : null}
-			<Row className="text-sm font-bold">
+			<Row className="text-sm font-semibold">
 				<span>
 					<Trans>Total</Trans>
 				</span>
@@ -222,7 +222,7 @@ export function Receipt({
 				</Row>
 			))}
 			{balance > 0 ? (
-				<Row className="text-sm font-bold">
+				<Row className="text-sm font-semibold">
 					<span>
 						<Trans>Balance due</Trans>
 					</span>

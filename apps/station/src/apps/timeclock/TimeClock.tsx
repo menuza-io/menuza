@@ -11,17 +11,7 @@ import {
 	type Notice,
 } from '@repo/staffing/clock-flow'
 import { QueueUnavailableError } from '@repo/staffing/clock-queue'
-import {
-	ArrowLeft,
-	BriefcaseBusiness,
-	CalendarClock,
-	CircleAlert,
-	CloudOff,
-	Coffee,
-	LogIn,
-	LogOut,
-	type LucideIcon,
-} from 'lucide-react'
+import { Icon, type IconName } from '@repo/ui/icon'
 import {
 	useCallback,
 	useEffect,
@@ -58,11 +48,11 @@ import { Stagger, SuccessMark } from '~/ui/motion.tsx'
 import { PinDots } from '~/ui/PinDots.tsx'
 import { Button, cn, Modal, NumberPop } from '~/ui/primitives.tsx'
 
-const EVENT_ICON: Record<ClockEvent, LucideIcon> = {
-	clock_in: LogIn,
-	break_start: Coffee,
-	break_end: BriefcaseBusiness,
-	clock_out: LogOut,
+const EVENT_ICON: Record<ClockEvent, IconName> = {
+	clock_in: 'log-in',
+	break_start: 'coffee',
+	break_end: 'briefcase-business',
+	clock_out: 'log-out',
 }
 
 /** An offline till shows every action: it cannot know where the person stands. */
@@ -408,7 +398,7 @@ export function TimeClock({
 			ref={rootRef}
 			// Focusable, so a USB keypad or badge reader keeps typing PINs after each person.
 			tabIndex={-1}
-			className="bg-background flex min-h-0 flex-1 flex-col outline-none lg:flex-row"
+			className="bg-background flex min-h-0 flex-1 flex-col outline-none"
 			onPointerDown={() => setTouched((n) => n + 1)}
 			onKeyDown={(event) => {
 				setTouched((n) => n + 1)
@@ -440,14 +430,11 @@ export function TimeClock({
 			/>
 			<section
 				aria-label={_(msg`Time clock`)}
-				className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-4 sm:p-6 lg:items-center"
+				className="flex min-h-0 min-w-0 flex-1 items-start justify-center overflow-y-auto p-5 sm:p-8"
 			>
 				<div
-					// Pages sit on top of each other; this keeps the taller one's room.
-					className={cn(
-						't-page-slide w-full max-w-md',
-						flow.screen === 'pin' ? 'min-h-136' : 'min-h-120',
-					)}
+					// Grid-overlaid pages keep their real height, including long notices.
+					className="t-page-slide station-clock-pages my-auto w-full max-w-sm"
 					data-page={flow.screen === 'pin' ? '1' : '2'}
 				>
 					<div
@@ -607,10 +594,10 @@ function ClockFace({
 		timeZone,
 	}).format(now)
 	return (
-		<aside className="border-border bg-card flex shrink-0 flex-col gap-6 border-b p-5 sm:p-6 lg:w-[38%] lg:max-w-xl lg:justify-between lg:border-e lg:border-b-0 lg:p-10">
-			<div className="flex items-center justify-between gap-3">
-				<div className="min-w-0">
-					<p className="truncate font-semibold">{businessName}</p>
+		<aside className="border-border flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-6">
+			<div className="flex min-w-0 flex-wrap items-center gap-3">
+				<div className={onClose ? 'min-w-0' : 'sr-only'}>
+					<p className="truncate text-sm font-medium">{businessName}</p>
 					{locationName ? (
 						<p className="text-muted-foreground truncate text-sm">
 							{locationName}
@@ -618,37 +605,37 @@ function ClockFace({
 					) : null}
 				</div>
 				{onClose ? (
-					<Button variant="outline" onClick={onClose} className="shrink-0">
-						<ArrowLeft className="size-4 rtl:rotate-180" />
+					<Button
+						variant="outline"
+						onClick={onClose}
+						className="h-auto min-h-11 shrink-0 px-3 py-2"
+					>
+						<Icon
+							name="arrow-left"
+							className="size-4 shrink-0 rtl:rotate-180"
+						/>
 						<Trans>Back to sign in</Trans>
 					</Button>
 				) : null}
 			</div>
-			<div className="flex items-end justify-between gap-4 lg:flex-col lg:items-start">
-				<div>
+			<div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-2">
+				<div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
 					{/* Only the digits run left to right; the day period follows the page
 					    (after the time in English, before it reading Arabic). */}
-					<p className="flex items-baseline gap-2" aria-live="off">
-						<span
-							dir="ltr"
-							className="mono text-5xl leading-none font-semibold tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl"
-						>
+					<p className="flex flex-wrap items-baseline gap-2" aria-live="off">
+						<span dir="ltr" className="tnum text-xl leading-none font-medium">
 							<NumberPop value={time} />
 						</span>
 						{period ? (
-							<span className="text-muted-foreground text-xl font-semibold sm:text-2xl lg:text-3xl">
-								{period}
-							</span>
+							<span className="text-muted-foreground text-sm">{period}</span>
 						) : null}
 					</p>
-					<p className="text-muted-foreground mt-3 text-base sm:text-lg">
-						{date}
-					</p>
+					<p className="text-muted-foreground text-sm">{date}</p>
 				</div>
-				<div className="flex flex-col items-end gap-2 lg:items-start">
+				<div className="flex max-w-full flex-col items-start gap-2">
 					{waiting > 0 ? (
-						<p className="bg-warning/12 text-warning inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold">
-							<CloudOff className="size-4 shrink-0" />
+						<p className="notice-warning inline-flex items-center gap-2 rounded-(--station-control-radius) px-3 py-2 text-sm">
+							<Icon name="cloud-off" className="size-4 shrink-0" />
 							{plural(waiting, {
 								one: '# punch waiting to send',
 								other: '# punches waiting to send',
@@ -659,9 +646,9 @@ function ClockFace({
 						<button
 							type="button"
 							onClick={onFailed}
-							className="bg-destructive/10 text-destructive hover:bg-destructive/15 inline-flex min-h-11 items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors"
+							className="notice-danger inline-flex min-h-11 items-center gap-2 rounded-(--station-control-radius) px-3 py-2 text-start text-sm transition-colors"
 						>
-							<CircleAlert className="size-4 shrink-0" />
+							<Icon name="circle-alert" className="size-4 shrink-0" />
 							{plural(failed, {
 								one: '# punch not recorded',
 								other: '# punches not recorded',
@@ -715,17 +702,17 @@ function PinPage({
 		lastNotice.current = flow.notice
 	}, [flow.notice])
 	return (
-		<div className="flex h-full flex-col gap-5">
+		<div className="flex h-full flex-col gap-4">
 			<div className="text-center">
-				<h2 className="text-2xl font-bold">
+				<h2 className="text-xl leading-tight font-semibold">
 					<Trans>Enter your PIN</Trans>
 				</h2>
-				<p className="text-muted-foreground mt-1">
+				<p className="text-muted-foreground mt-2">
 					<Trans>To clock in, take a break or clock out.</Trans>
 				</p>
 			</div>
 			<PinDots length={flow.pin.length} rejected={rejected} />
-			<div className="min-h-11 text-center">
+			<div className="min-h-6 text-center">
 				<p
 					role="alert"
 					className={cn(
@@ -737,7 +724,7 @@ function PinPage({
 				</p>
 				{!notice && !online ? (
 					<p className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
-						<CloudOff className="size-4" />
+						<Icon name="cloud-off" className="size-4" />
 						<Trans>Offline: your punch is saved and sent later.</Trans>
 					</p>
 				) : null}
@@ -780,9 +767,9 @@ function BackLink({
 			type="button"
 			onClick={onBack}
 			data-back
-			className="text-muted-foreground hover:text-foreground -ms-2 inline-flex h-11 items-center gap-1.5 self-start rounded-xl px-2 text-sm font-medium transition-colors"
+			className="text-muted-foreground hover:text-foreground -ms-2 inline-flex h-11 items-center gap-1.5 self-start rounded-(--station-control-radius) px-2 text-sm font-medium transition-colors"
 		>
-			<ArrowLeft className="size-4 rtl:rotate-180" />
+			<Icon name="arrow-left" className="size-4 rtl:rotate-180" />
 			{back ? <Trans>Back</Trans> : <Trans>Not me</Trans>}
 		</button>
 	)
@@ -803,24 +790,22 @@ function EventTile({
 	wide?: boolean
 }) {
 	const { _ } = useLingui()
-	const Icon = EVENT_ICON[event]
+	const icon = EVENT_ICON[event]
 	return (
-		<button
+		<Button
 			type="button"
+			variant={primary ? 'primary' : 'ghost'}
 			disabled={busy}
 			data-autofocus={primary || undefined}
 			onClick={() => onChoose(event)}
 			className={cn(
-				'flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-start transition active:scale-[0.97] disabled:opacity-50',
-				wide && 'col-span-2 min-h-28',
-				primary
-					? 'border-primary bg-primary text-primary-foreground elevated-card'
-					: 'border-border bg-card hover:bg-accent',
+				'h-auto min-h-16 justify-start gap-3 px-4 py-3 text-start',
+				wide && 'col-span-2',
 			)}
 		>
-			<Icon className="size-6" aria-hidden />
-			<span className="text-lg font-semibold">{_(EVENT_LABEL[event])}</span>
-		</button>
+			<Icon name={icon} className="size-5" aria-hidden />
+			<span className="text-base font-medium">{_(EVENT_LABEL[event])}</span>
+		</Button>
 	)
 }
 
@@ -859,16 +844,19 @@ function Actions({
 		<>
 			<BackLink onBack={onBack} />
 			<div>
-				<h2 className="t-stagger-line text-3xl font-bold">
+				<h2 className="t-stagger-line text-xl font-semibold">
 					<Trans>Hi {who.firstName}</Trans>
 				</h2>
-				<p className="t-stagger-line t-stagger-line--2 text-muted-foreground mt-1 text-lg">
+				<p className="t-stagger-line t-stagger-line--2 text-muted-foreground mt-1 text-base">
 					{_(STATE_LINE[who.state])}
 				</p>
 			</div>
 			{behind ? (
-				<p className="t-stagger-line t-stagger-line--2 bg-warning/12 text-warning flex items-start gap-2 rounded-xl px-3 py-2 text-sm font-medium">
-					<CloudOff className="mt-0.5 size-4 shrink-0" />
+				<p className="t-stagger-line t-stagger-line--2 notice-warning flex items-start gap-2 rounded-(--station-control-radius) px-3 py-2 text-sm">
+					<Icon
+						name="cloud-off"
+						className="mt-0.5 size-4 shrink-0 self-start"
+					/>
 					<Trans>
 						Punches saved on this terminal have not gone out yet, so this may be
 						out of date. If you already punched here, ask a manager before
@@ -895,9 +883,9 @@ function Actions({
 				</p>
 			)}
 			{who.nextShifts.length > 0 ? (
-				<div className="t-stagger-line t-stagger-line--3 border-border rounded-2xl border p-4">
+				<div className="t-stagger-line t-stagger-line--3 border-border border-t pt-4">
 					<p className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
-						<CalendarClock className="size-4" />
+						<Icon name="calendar-clock" className="size-4" />
 						<Trans>Your next shifts</Trans>
 					</p>
 					<ul className="mt-2 space-y-1">
@@ -932,7 +920,7 @@ function RolePick({
 	return (
 		<>
 			<BackLink onBack={onBack} />
-			<h2 className="t-stagger-line text-3xl font-bold">
+			<h2 className="t-stagger-line text-xl font-semibold">
 				<Trans>What are you working today?</Trans>
 			</h2>
 			<div className="t-stagger-line t-stagger-line--2 flex flex-col gap-2">
@@ -978,7 +966,7 @@ function Tips({
 		<>
 			<BackLink onBack={onBack} />
 			<div>
-				<h2 className="t-stagger-line text-3xl font-bold">
+				<h2 className="t-stagger-line text-xl font-semibold">
 					<Trans>Any cash tips this shift?</Trans>
 				</h2>
 				<p className="t-stagger-line t-stagger-line--2 text-muted-foreground mt-1">
@@ -1091,7 +1079,7 @@ function OfflineActions({
 		return (
 			<>
 				<BackLink back onBack={() => setPickRole(false)} />
-				<h2 className="t-stagger-line text-3xl font-bold">
+				<h2 className="t-stagger-line text-xl font-semibold">
 					<Trans>What are you working today?</Trans>
 				</h2>
 				<div className="t-stagger-line t-stagger-line--2 flex flex-col gap-2">
@@ -1118,7 +1106,7 @@ function OfflineActions({
 		<>
 			<BackLink onBack={onBack} />
 			<div>
-				<h2 className="t-stagger-line text-3xl font-bold">
+				<h2 className="t-stagger-line text-xl font-semibold">
 					{who ? (
 						<Trans>Hi {firstName}, what are you doing?</Trans>
 					) : (
@@ -1126,7 +1114,7 @@ function OfflineActions({
 					)}
 				</h2>
 				<p className="t-stagger-line t-stagger-line--2 text-muted-foreground mt-1 flex items-start gap-2">
-					<CloudOff className="mt-1 size-4 shrink-0" />
+					<Icon name="cloud-off" className="mt-1 size-4 shrink-0 self-start" />
 					{reason === 'unavailable' ? (
 						who ? (
 							<Trans>
@@ -1193,29 +1181,27 @@ function BreakPick({
 	return (
 		<>
 			<BackLink back onBack={onBack} />
-			<h2 className="t-stagger-line text-3xl font-bold">
+			<h2 className="t-stagger-line text-xl font-semibold">
 				<Trans>Which break are you taking?</Trans>
 			</h2>
 			<div className="t-stagger-line t-stagger-line--2 grid grid-cols-2 gap-3">
 				{kinds.map((kind, index) => (
-					<button
+					<Button
 						key={kind}
 						type="button"
+						variant={index === 0 ? 'primary' : 'ghost'}
 						disabled={busy}
 						data-autofocus={index === 0 || undefined}
 						onClick={() => onPick(kind)}
 						className={cn(
-							'flex min-h-24 flex-col items-start justify-between gap-3 rounded-2xl border p-4 text-start transition active:scale-[0.97] disabled:opacity-50',
-							index === 0
-								? 'border-primary bg-primary text-primary-foreground elevated-card'
-								: 'border-border bg-card hover:bg-accent',
+							'h-auto min-h-16 justify-start gap-3 px-4 py-3 text-start',
 						)}
 					>
-						<Coffee className="size-6" aria-hidden />
-						<span className="text-lg font-semibold">
+						<Icon name="coffee" className="size-5" aria-hidden />
+						<span className="text-base font-medium">
 							{_(BREAK_LABEL[kind])}
 						</span>
-					</button>
+					</Button>
 				))}
 			</div>
 		</>
@@ -1362,7 +1348,7 @@ function Done({
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
 			<SuccessMark tone={done.queued ? 'muted' : 'success'} size="lg" />
-			<h2 className="t-stagger-line text-3xl font-bold">
+			<h2 className="t-stagger-line text-xl font-semibold">
 				{done.firstName ? (
 					<Trans>
 						{label}, {done.firstName}
@@ -1371,7 +1357,7 @@ function Done({
 					label
 				)}
 			</h2>
-			<p className="t-stagger-line t-stagger-line--2 text-muted-foreground text-lg">
+			<p className="t-stagger-line t-stagger-line--2 text-muted-foreground text-base">
 				{done.queued ? (
 					<Trans>
 						Saved on this terminal. It is sent as soon as it can be.
@@ -1384,7 +1370,7 @@ function Done({
 				variant="outline"
 				size="lg"
 				data-autofocus
-				className="t-stagger-line t-stagger-line--3 mt-2"
+				className="mt-2"
 				onClick={onFinish}
 			>
 				<Trans>Done</Trans>

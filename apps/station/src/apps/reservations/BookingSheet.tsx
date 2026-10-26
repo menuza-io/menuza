@@ -1,7 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Armchair, CalendarDays, TriangleAlert } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
 	bookingBlocker,
@@ -23,9 +23,10 @@ import {
 	PartySize,
 	STATUS_LABEL,
 } from './sheets.tsx'
+import { type SlotReason } from './slotReasons.ts'
 import { serverTime } from './zoned.ts'
 import { SuccessMark } from '~/ui/motion.tsx'
-import { Button, Chip, cn, fieldClass, Modal } from '~/ui/primitives.tsx'
+import { Input, Button, Chip, cn, fieldClass, Modal } from '~/ui/primitives.tsx'
 
 /**
  * A booking taken at the stand or on the phone: when, how many, who. Times come
@@ -81,6 +82,7 @@ export function BookingSheet({
 	today,
 	prefill = null,
 	loadSlots,
+	slotReason,
 	repeatOf,
 	checkedDay,
 	onOpenRepeat,
@@ -99,6 +101,15 @@ export function BookingSheet({
 	/** Start from this day, table, time or guest instead of today. */
 	prefill?: BookingPrefill | null
 	loadSlots: (date: string, partySize: number) => Promise<Availability>
+	/**
+	 * Why a time is not open, when the stand can tell (no table seats a party this
+	 * big, the slot is full). Without it a time that is not open says "Not open".
+	 */
+	slotReason?: (
+		slot: Availability['slots'][number],
+		partySize: number,
+		date: string,
+	) => SlotReason
 	/** Whether this guest already has a booking that day (or is on the waitlist). */
 	repeatOf: (
 		who: { first: string; last: string; phone: string },
@@ -130,6 +141,15 @@ export function BookingSheet({
 	onClose: () => void
 }) {
 	const { _, i18n } = useLingui()
+	/** The few words under a time that is not open. */
+	const reasonWords = (reason: SlotReason) =>
+		reason === 'big'
+			? _(msg`Needs a bigger table`)
+			: reason === 'full'
+				? _(msg`Full`)
+				: reason === 'held'
+					? _(msg`Held`)
+					: _(msg`Not open`)
 	// A slot is minutes after local midnight; show it the way the stand shows times.
 	const slotLabel = useMemo(() => {
 		const format = new Intl.DateTimeFormat(i18n.locale, {
@@ -231,7 +251,9 @@ export function BookingSheet({
 	const maxCovers = prefill?.maxCovers ?? 0
 	const bookedTables = tableIds.length > 0 && tableFits ? tableIds : undefined
 	const open_ = (slots ?? []).filter((slot) => slot.available)
-	const groups = groupSlots(open_)
+	// Every time stays on the grid, the ones not open dimmed with why (so a host
+	// can tell a caller "we are full at 8" and offer the times either side).
+	const groups = groupSlots(slots ?? [])
 	const phoneProblem = phone.trim() !== '' && !looksLikePhone(phone)
 	const blocker = bookingBlocker({ time, first, phoneProblem })
 	const ready = blocker === null
@@ -282,7 +304,7 @@ export function BookingSheet({
 			title={_(msg`New booking`)}
 			footer={
 				readBack ? (
-					<div className="mb-safe">
+					<div>
 						<Button
 							variant="primary"
 							size="lg"
@@ -299,7 +321,7 @@ export function BookingSheet({
 						onDiscard={guard.discard}
 					/>
 				) : (
-					<div className="mb-safe flex flex-col gap-2">
+					<div className="flex flex-col gap-2">
 						{/* In the footer, so it is in view whatever the form has scrolled to. */}
 						{showRepeat && repeat ? (
 							<RepeatWarning
@@ -392,6 +414,7 @@ export function BookingSheet({
 							>
 								{chips.map((chip) => (
 									<Chip
+										look="outlined"
 										key={chip.date}
 										selected={chip.date === date && !picking}
 										aria-pressed={chip.date === date && !picking}
@@ -399,7 +422,7 @@ export function BookingSheet({
 											setPicking(false)
 											setDate(chip.date)
 										}}
-										className="tnum"
+										className="tabular-nums"
 									>
 										{chip.kind === 'today' ? (
 											<Trans>Today</Trans>
@@ -411,20 +434,21 @@ export function BookingSheet({
 									</Chip>
 								))}
 								<Chip
+									look="outlined"
 									selected={showDateField}
 									aria-pressed={showDateField}
 									onClick={() => setPicking(true)}
 								>
-									<CalendarDays aria-hidden className="size-4" />
+									<Icon name="calendar-days" aria-hidden className="size-4" />
 									<Trans>Pick date</Trans>
 								</Chip>
 							</div>
 							{showDateField ? (
 								<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-									<input
+									<Input
 										type="date"
 										aria-label={_(msg`Day`)}
-										className={cn(fieldClass, 'tnum w-auto')}
+										className={cn('w-auto tabular-nums')}
 										min={today}
 										value={date}
 										onChange={(event) => setDate(event.target.value || today)}
@@ -443,8 +467,8 @@ export function BookingSheet({
 							<PartySize value={size} onChange={setSize} />
 						</div>
 						{prefill && tableIds.length > 0 ? (
-							<div className="border-border bg-muted/60 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3">
-								<Armchair aria-hidden className="size-5 shrink-0" />
+							<div className="border-border bg-muted/60 flex flex-wrap items-center gap-3 rounded-(--station-panel-radius) border px-4 py-3">
+								<Icon name="armchair" aria-hidden className="size-5 shrink-0" />
 								<p className="min-w-0 flex-1 text-sm font-medium">
 									{tableFits ? (
 										<Trans>Table {tableLabel}, if it is free then.</Trans>
@@ -472,12 +496,17 @@ export function BookingSheet({
 								<p className="t-shimmer text-sm">
 									<Trans>Finding times…</Trans>
 								</p>
-							) : open_.length === 0 ? (
+							) : slots.length === 0 ? (
 								<p className="text-muted-foreground text-sm">
 									<Trans>No times left for {size} on this day.</Trans>
 								</p>
 							) : (
 								<div className="flex flex-col gap-3">
+									{open_.length === 0 ? (
+										<p className="text-muted-foreground text-sm">
+											<Trans>No times left for {size} on this day.</Trans>
+										</p>
+									) : null}
 									{wantedGone ? (
 										<p
 											className="text-warning text-sm font-medium"
@@ -502,9 +531,11 @@ export function BookingSheet({
 											<div className="flex flex-wrap gap-2">
 												{group.slots.map((slot) => (
 													<Chip
+														look="outlined"
 														key={slot.localStartMin}
 														selected={time === slot.localStartMin}
 														aria-pressed={time === slot.localStartMin}
+														disabled={!slot.available}
 														onClick={() => {
 															// The time they picked is the one wanted: a change of size looks for it again.
 															wantTime.current = slot.localStartMin
@@ -512,9 +543,20 @@ export function BookingSheet({
 															setTime(slot.localStartMin)
 															setTimeLabel(slotLabel(slot.localStartMin))
 														}}
-														className="tnum min-w-20"
+														className={cn(
+															'min-w-20 tabular-nums',
+															!slot.available &&
+																'h-auto min-h-11 max-w-28 flex-col gap-0 py-1 text-center leading-tight',
+														)}
 													>
 														{slotLabel(slot.localStartMin)}
+														{slot.available ? null : (
+															<span className="text-muted-foreground text-xs font-medium">
+																{reasonWords(
+																	slotReason?.(slot, size, date) ?? 'closed',
+																)}
+															</span>
+														)}
 													</Chip>
 												))}
 											</div>
@@ -528,8 +570,7 @@ export function BookingSheet({
 								<span className="font-semibold">
 									<Trans>First name</Trans>
 								</span>
-								<input
-									className={fieldClass}
+								<Input
 									value={first}
 									maxLength={120}
 									autoComplete="off"
@@ -540,8 +581,7 @@ export function BookingSheet({
 								<span className="font-semibold">
 									<Trans>Last name</Trans>
 								</span>
-								<input
-									className={fieldClass}
+								<Input
 									value={last}
 									maxLength={120}
 									autoComplete="off"
@@ -552,8 +592,8 @@ export function BookingSheet({
 								<span className="font-semibold">
 									<Trans>Phone (for reminders)</Trans>
 								</span>
-								<input
-									className={cn(fieldClass, 'tnum')}
+								<Input
+									className={cn('tabular-nums')}
 									type="tel"
 									inputMode="tel"
 									dir="ltr"
@@ -612,6 +652,7 @@ export function BookingSheet({
 										const on = hasNote(notes, label)
 										return (
 											<Chip
+												look="outlined"
 												key={phrase}
 												selected={on}
 												aria-pressed={on}
@@ -701,10 +742,14 @@ function RepeatWarning({
 	return (
 		<div
 			role="status"
-			className="bg-warning/12 flex flex-col gap-2 rounded-2xl px-4 py-2.5"
+			className="bg-warning/10 flex flex-col gap-2 rounded-(--station-control-radius) px-4 py-3"
 		>
 			<p className="text-warning flex items-start gap-3 text-sm font-medium">
-				<TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+				<Icon
+					name="alert-triangle"
+					aria-hidden
+					className="mt-0.5 size-4 shrink-0 self-start"
+				/>
 				<span className="min-w-0">{text}</span>
 			</p>
 			<div className="flex flex-wrap gap-2">
@@ -732,7 +777,7 @@ function BookingReadBack({
 		return (
 			<div className="flex flex-col items-center gap-3 p-6 text-center">
 				<SuccessMark tone="muted" />
-				<p className="text-xl font-bold">
+				<p className="text-xl font-semibold">
 					<Trans>Already booked, as first sent</Trans>
 				</p>
 				<p className="text-muted-foreground">
@@ -746,14 +791,14 @@ function BookingReadBack({
 	return (
 		<div className="flex flex-col items-center gap-4 p-6 text-center">
 			<SuccessMark />
-			<p className="text-2xl font-bold">
+			<p className="text-2xl font-semibold">
 				<Trans>
 					<bdi>{name}</bdi>, party of {partySize}
 				</Trans>
 			</p>
-			<p className="text-muted-foreground text-lg">{when}</p>
+			<p className="text-muted-foreground text-base">{when}</p>
 			{table ? (
-				<p className="text-lg font-semibold">
+				<p className="text-base font-semibold">
 					<Trans>Table {table}</Trans>
 				</p>
 			) : null}
@@ -762,7 +807,10 @@ function BookingReadBack({
 					<span className="text-muted-foreground text-sm font-medium">
 						<Trans>Confirmation code</Trans>
 					</span>
-					<span className="mono text-3xl font-bold tracking-widest" dir="ltr">
+					<span
+						className="mono text-3xl font-semibold tracking-widest"
+						dir="ltr"
+					>
 						{code}
 					</span>
 				</div>

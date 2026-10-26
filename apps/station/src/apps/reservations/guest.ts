@@ -2,7 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { msg, plural } from '@lingui/macro'
 import { type useLingui } from '@lingui/react'
 import { type DayReservation } from './feed.ts'
-import { foldDigits } from './phone.ts'
+import { callingCodeOf, foldDigits } from './phone.ts'
 
 type Translate = ReturnType<typeof useLingui>['_']
 
@@ -297,61 +297,6 @@ export function depositState(
 // Phone numbers
 // ---------------------------------------------------------------------------
 
-/** Country calling codes: one digit, then the two digit ones; any other is three digits. */
-const ONE_DIGIT = new Set(['1', '7'])
-const TWO_DIGIT = new Set([
-	'20',
-	'27',
-	'30',
-	'31',
-	'32',
-	'33',
-	'34',
-	'36',
-	'39',
-	'40',
-	'41',
-	'43',
-	'44',
-	'45',
-	'46',
-	'47',
-	'48',
-	'49',
-	'51',
-	'52',
-	'53',
-	'54',
-	'55',
-	'56',
-	'57',
-	'58',
-	'60',
-	'61',
-	'62',
-	'63',
-	'64',
-	'65',
-	'66',
-	'81',
-	'82',
-	'84',
-	'86',
-	'90',
-	'91',
-	'92',
-	'93',
-	'94',
-	'95',
-	'98',
-])
-
-const callingCodeOf = (digits: string) => {
-	if (ONE_DIGIT.has(digits.slice(0, 1))) return digits.slice(0, 1)
-	if (TWO_DIGIT.has(digits.slice(0, 2))) return digits.slice(0, 2)
-	return digits.slice(0, 3)
-}
-
 /** Digits in groups of 3, with the last group 3 or 4 (never a lone digit). */
 function groupNational(digits: string): string {
 	if (digits.length <= 4) return digits
@@ -383,3 +328,57 @@ export function formatPhone(value: string): string {
 
 /** What a phone field holds as it is typed: spaced as it is read out, nothing else kept. */
 export const formatPhoneTyping = (value: string) => formatPhone(value)
+
+/**
+ * A list said the way the language says it: "shellfish, tree nuts" in English,
+ * with the Arabic comma and "و" in Arabic. Falls back to commas where the
+ * runtime has no list formatter.
+ */
+export function listText(items: readonly string[], locale: string): string {
+	if (items.length < 2) return items.join('')
+	try {
+		return new Intl.ListFormat(locale, {
+			type: 'conjunction',
+			style: 'narrow',
+		}).format(items)
+	} catch {
+		return items.join(', ')
+	}
+}
+
+// ---------------------------------------------------------------------------
+// What a table's tile says about its guest
+// ---------------------------------------------------------------------------
+
+/** A signal a table's tile can carry in its corner. */
+export type TileSignal = 'allergy' | 'vip' | 'occasion' | 'deposit'
+
+/** The most signals a tile has room for. */
+export const MAX_TILE_SIGNALS = 2
+
+/**
+ * The corner marks of a table, from the booking on it (the party seated, or
+ * the next one due): an allergy first (it matters most at the table), then a
+ * VIP, then an occasion, then a paid deposit. Never more than two.
+ */
+export function tileSignals(
+	r: Pick<
+		DayReservation,
+		| 'hasAllergy'
+		| 'dietaryCodes'
+		| 'dietaryNotes'
+		| 'guest'
+		| 'occasion'
+		| 'paymentStatus'
+		| 'status'
+	>,
+	canReadGuest: boolean,
+): TileSignal[] {
+	const all: TileSignal[] = []
+	if (showsAllergyMark(r, canReadGuest)) all.push('allergy')
+	if ((r.guest?.tags ?? []).some((tag) => /\bvip\b/i.test(tag.name)))
+		all.push('vip')
+	if (r.occasion) all.push('occasion')
+	if (depositState(r) === 'paid') all.push('deposit')
+	return all.slice(0, MAX_TILE_SIGNALS)
+}

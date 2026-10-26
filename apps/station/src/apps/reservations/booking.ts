@@ -147,8 +147,11 @@ export const walkInDirty = (form: { name: string; size: number }) =>
 /** The waitlist form holds something: a name, a number, or a party size other than the start. */
 export const waitlistDirty = (
 	form: { name: string; phone: string; size: number },
-	started: { name: string; phone: string } = { name: '', phone: '' },
+	started: { name: string; phone: string; size?: number } = {
+		name: '',
+		phone: '',
+	},
 ) =>
 	form.name.trim() !== started.name.trim() ||
 	form.phone.trim() !== started.phone.trim() ||
-	form.size !== 2
+	form.size !== (started.size ?? 2)

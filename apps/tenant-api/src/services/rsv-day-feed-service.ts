@@ -1060,7 +1060,7 @@ export async function getDayFeed(
 			partyCount: inBucket.length,
 			maxCovers,
 			// No rule covers this slot: the cap is only the default, not a configured limit.
-			maxCoversIsDefault: rule?.maxCovers === undefined,
+			maxCoversIsDefault: rule?.maxCovers == null,
 			utilizationPct:
 				maxCovers > 0
 					? Math.min(100, Math.round((bookedCovers / maxCovers) * 100))

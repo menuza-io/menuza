@@ -1801,6 +1801,50 @@ export const posPairingCodes = sqliteTable(
 
 export const POS_ORDER_STATUSES = ['open', 'paid', 'void', 'refunded'] as const
 
+// Kitchen progress is separate from the bill and never changes a fiscal revision.
+export const kdsLocationSettings = sqliteTable('kds_location_settings', {
+	locationId: text('location_id').primaryKey(),
+	version: integer('version').notNull(),
+	config: text('config', { mode: 'json' }).notNull(),
+	updatedAt: integer('updated_at').notNull(),
+})
+
+export const kdsTickets = sqliteTable(
+	'kds_tickets',
+	{
+		source: text('source', { enum: ['pos', 'online'] }).notNull(),
+		orderId: text('order_id').notNull(),
+		locationId: text('location_id').notNull(),
+		version: integer('version').notNull(),
+		// Each dish's stage by id, plus `served:<id>`: when a ready dish left the pass.
+		progress: text('progress', { mode: 'json' })
+			.$type<Record<string, 'new' | 'preparing' | 'ready' | number>>()
+			.notNull(),
+		completedAt: integer('completed_at'),
+		updatedAt: integer('updated_at').notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.source, table.orderId] }),
+		index('idx_kds_tickets_location_done').on(
+			table.locationId,
+			table.completedAt,
+		),
+	],
+)
+
+export const kdsEvents = sqliteTable('kds_events', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => randomUUID()),
+	locationId: text('location_id').notNull(),
+	deviceId: text('device_id').notNull(),
+	staffId: text('staff_id'),
+	source: text('source'),
+	orderId: text('order_id'),
+	action: text('action').notNull(),
+	at: integer('at').notNull(),
+})
+
 // `id` is the terminal's own UUID, which doubles as the idempotency key.
 export const posOrders = sqliteTable(
 	'pos_orders',

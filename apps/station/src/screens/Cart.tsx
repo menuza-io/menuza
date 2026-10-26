@@ -1,21 +1,25 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
-	Minus,
-	Pencil,
-	Plus,
-	ShoppingBag,
-	Trash2,
-	User,
-	UtensilsCrossed,
-	Armchair,
-	Phone,
-} from 'lucide-react'
+	Empty,
+	EmptyHeader,
+	EmptyTitle,
+	EmptyDescription,
+} from '@repo/ui/empty'
+import { Icon } from '@repo/ui/icon'
+import { Item, ItemContent, ItemActions, ItemFooter } from '@repo/ui/item'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
 import { PhoneOrderSheet } from './PhoneOrderSheet.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type OrderType } from '~/lib/db.ts'
+import {
+	dishStatuses,
+	type DishStatus,
+	useKitchenTickets,
+} from '~/lib/kitchen-status.ts'
 import { type MoneyFormatter } from '~/lib/money.ts'
+import { MAX_ORDER_LINES } from '~/lib/orders.ts'
 import { type PhonePickup } from '~/lib/pickup.ts'
 import {
 	computeTotals,
@@ -23,6 +27,7 @@ import {
 	type Adjustment,
 	type CartLine,
 } from '~/lib/pricing.ts'
+import { roundsOf, servedOf } from '~/lib/rounds.ts'
 import { shownLine } from '~/lib/store.ts'
 import {
 	Button,
@@ -32,11 +37,15 @@ import {
 	Reveal,
 	Segmented,
 	cn,
-	fieldClass,
+	Input,
 } from '~/ui/primitives.tsx'
 
 export function Cart({
 	tabNumber,
+	orderId = null,
+	onRepeat,
+	sameTableTab = null,
+	onJoinTab,
 	error,
 	lines,
 	adjustments,
@@ -66,6 +75,13 @@ export function Cart({
 }: {
 	/** Set when the cart is an open tab being added to. */
 	tabNumber: string | null
+	/** That tab's order id: its sent dishes show where they are in the kitchen. */
+	orderId?: string | null
+	/** Ring a sent round again as new items. */
+	onRepeat?: (lines: CartLine[]) => void
+	/** Another open tab already has this table (its number): offer to add to it instead. */
+	sameTableTab?: string | null
+	onJoinTab?: () => void
 	error: string | null
 	lines: CartLine[]
 	adjustments: Adjustment[]
@@ -106,6 +122,14 @@ export function Cart({
 		adjustments,
 	})
 	const count = lines.reduce((s, l) => s + l.quantity, 0)
+	// A tab that already went to the kitchen shows each round, and what is not sent yet.
+	const rounds = roundsOf(lines)
+	const tracked = rounds.some((round) => round.sentAt !== null)
+	const tickets = useKitchenTickets(Boolean(orderId))
+	const statuses = dishStatuses(
+		lines,
+		orderId ? tickets?.get(orderId) : undefined,
+	)
 	// Lines on screen at first paint (opening the sheet, loading a tab) appear as
 	// they are; only lines added after that rise in and scroll into view.
 	const seen = useRef<Set<string> | null>(null)
@@ -134,13 +158,13 @@ export function Cart({
 			aria-label={_(t`Current order`)}
 			className="bg-card @container flex min-h-0 flex-1 flex-col"
 		>
-			<div className="border-border shrink-0 space-y-3 border-b p-4">
+			<div className="border-border shrink-0 space-y-2 border-b px-4 py-3">
 				{showHeading ? (
 					<div className="flex items-center justify-between gap-3">
-						<h2 className="text-lg font-semibold">
+						<h2 className="text-base font-semibold">
 							<Trans>Current order</Trans>
 						</h2>
-						<span className="tnum mono bg-muted text-muted-foreground flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-sm">
+						<span className="tnum text-muted-foreground text-sm">
 							<NumberPop value={String(count)} />
 						</span>
 					</div>
@@ -166,12 +190,12 @@ export function Cart({
 								{
 									value: 'dine_in',
 									label: _(t`Dine in`),
-									icon: <Armchair className="size-4" />,
+									icon: <Icon name="armchair" className="size-4" />,
 								},
 								{
 									value: 'takeaway',
 									label: _(t`Takeaway`),
-									icon: <ShoppingBag className="size-4" />,
+									icon: <Icon name="shopping-bag" className="size-4" />,
 								},
 							]}
 						/>
@@ -182,7 +206,7 @@ export function Cart({
 							onClick={onClear}
 							className="text-muted-foreground"
 						>
-							<Trash2 className="size-5" />
+							<Icon name="trash-2" className="size-5" />
 						</IconButton>
 					) : null}
 				</div>
@@ -191,7 +215,7 @@ export function Cart({
 						type="button"
 						onClick={() => setPhoneDetailsOpen(true)}
 						aria-label={_(t`Edit phone order details`)}
-						className="border-border hover:bg-accent flex w-full items-start justify-between gap-3 rounded-xl border p-3 text-start transition"
+						className="hover:bg-accent flex min-h-11 w-full items-start justify-between gap-3 rounded-(--station-control-radius) p-3 text-start transition"
 					>
 						<PhonePickupDetails
 							order={{
@@ -202,19 +226,19 @@ export function Cart({
 								pickupTimeZone,
 							}}
 						/>
-						<Pencil className="mt-1 size-4 shrink-0" />
+						<Icon name="pencil" className="mt-1 size-4 shrink-0 self-start" />
 					</button>
 				) : (
-					<>
+					<div className="flex min-w-0 items-center gap-1">
 						<button
 							type="button"
 							onClick={() => setNaming(true)}
-							className="border-border text-muted-foreground hover:bg-accent hover:text-foreground flex h-12 w-full items-center gap-3 rounded-xl border border-dashed px-3 text-start transition active:scale-[0.99]"
+							className="text-muted-foreground hover:bg-accent hover:text-foreground flex min-h-11 w-full items-center gap-3 rounded-(--station-control-radius) px-3 text-start text-sm transition"
 						>
 							{orderType === 'dine_in' ? (
-								<UtensilsCrossed className="size-5" />
+								<Icon name="utensils-crossed" className="size-5" />
 							) : (
-								<User className="size-5" />
+								<Icon name="user" className="size-5" />
 							)}
 							<span
 								className={cn(
@@ -224,50 +248,99 @@ export function Cart({
 							>
 								{detailText}
 							</span>
-							<Pencil className="size-4" />
+							<Icon name="pencil" className="size-4" />
 						</button>
-						<Button
-							variant="outline"
-							className="w-full"
+						<IconButton
+							label={_(t`Phone order`)}
 							onClick={() => setPhoneDetailsOpen(true)}
 						>
-							<Phone className="size-4" />
-							<Trans>Phone order</Trans>
-						</Button>
-					</>
-				)}
-			</div>
-
-			<div className="min-h-0 flex-1 overflow-y-auto">
-				{lines.length === 0 ? (
-					<div className="t-rise text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
-						<div className="bg-muted flex size-16 items-center justify-center rounded-full">
-							<ShoppingBag className="size-7" />
-						</div>
-						<p className="text-foreground text-lg font-semibold">
-							<Trans>No items yet</Trans>
-						</p>
-						<p className="text-sm">
-							<Trans>Tap a dish on the menu to start the order.</Trans>
-						</p>
+							<Icon name="phone" className="size-4" />
+						</IconButton>
 					</div>
-				) : (
-					<ul className="divide-border divide-y">
-						{lines.map((line) => (
-							<LineItem
-								key={line.id}
-								line={line}
-								fresh={seen.current !== null && !seen.current.has(line.id)}
-								money={money}
-								onEdit={onEdit}
-								onQuantity={onQuantity}
-								onRemove={onRemove}
-							/>
-						))}
-					</ul>
 				)}
 			</div>
 
+			{sameTableTab && onJoinTab ? (
+				<button
+					type="button"
+					onClick={onJoinTab}
+					className="notice-warning flex w-full items-center gap-2 px-4 py-2.5 text-start text-sm"
+				>
+					<Icon name="receipt-text" aria-hidden className="size-4 shrink-0" />
+					<span className="min-w-0 flex-1">
+						<Trans>
+							This table already has tab #{sameTableTab}. Add these items to it
+						</Trans>
+					</span>
+					<Icon
+						name="chevron-right"
+						aria-hidden
+						className="size-4 shrink-0 rtl:rotate-180"
+					/>
+				</button>
+			) : null}
+			<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+				{lines.length === 0 ? (
+					<Empty>
+						<EmptyHeader>
+							<EmptyTitle>
+								<Trans>No items yet</Trans>
+							</EmptyTitle>
+							<EmptyDescription>
+								<Trans>Tap a dish on the menu to start the order.</Trans>
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
+				) : (
+					<div>
+						{rounds.map((round) => (
+							<div key={round.sentAt ?? 'new'}>
+								{tracked ? (
+									<RoundHeading
+										sentAt={round.sentAt}
+										servedAt={servedOf(round.lines)}
+										onRepeat={
+											onRepeat && round.sentAt !== null
+												? () => onRepeat(round.lines)
+												: undefined
+										}
+										items={round.lines.reduce((sum, l) => sum + l.quantity, 0)}
+									/>
+								) : null}
+								<ul className="divide-border divide-y">
+									{round.lines.map((line) => (
+										<LineItem
+											key={line.id}
+											line={line}
+											status={statuses.get(line.id) ?? null}
+											fresh={
+												seen.current !== null && !seen.current.has(line.id)
+											}
+											money={money}
+											onEdit={onEdit}
+											onQuantity={onQuantity}
+											onRemove={onRemove}
+										/>
+									))}
+								</ul>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
+
+			{lines.length >= MAX_ORDER_LINES - 5 ? (
+				// Each round is new lines: a long tab nears what one order can hold.
+				<p className="notice-warning px-4 py-2 text-sm">
+					{lines.length > MAX_ORDER_LINES
+						? _(
+								t`This order has more than ${MAX_ORDER_LINES} lines and cannot be saved. Take off the newest items and ring them up as a new order.`,
+							)
+						: _(
+								t`This order is close to the ${MAX_ORDER_LINES}-line limit. Ring many more rounds as a new order.`,
+							)}
+				</p>
+			) : null}
 			<div className="border-border bg-card shrink-0 space-y-4 border-t p-4">
 				<dl className="tnum space-y-1 text-sm">
 					<Row
@@ -355,7 +428,7 @@ export function Cart({
 						setNaming(false)
 					}}
 				>
-					<input
+					<Input
 						autoFocus
 						aria-label={
 							orderType === 'dine_in' ? _(t`Table`) : _(t`Customer name`)
@@ -372,7 +445,7 @@ export function Cart({
 								? _(t`e.g. 12 or Patio 3`)
 								: _(t`Name for the order`)
 						}
-						className={cn(fieldClass, 'h-14 px-4 text-lg')}
+						className="h-14 px-4"
 					/>
 					<Button type="submit" variant="primary" size="lg" className="w-full">
 						<Trans>Done</Trans>
@@ -386,6 +459,7 @@ export function Cart({
 /** One order line: tap to edit, step the quantity, or take it off. */
 function LineItem({
 	line,
+	status,
 	fresh,
 	money,
 	onEdit,
@@ -393,6 +467,8 @@ function LineItem({
 	onRemove,
 }: {
 	line: CartLine
+	/** Where it is in the kitchen, once sent (null: not sent, or no kitchen to ask). */
+	status: DishStatus | null
 	/** Added since the cart first showed: rise in and scroll into view. */
 	fresh: boolean
 	money: MoneyFormatter
@@ -430,77 +506,90 @@ function LineItem({
 	}, [line.quantity])
 
 	return (
-		<li ref={ref} className={cn('p-4', isFresh && 't-rise')}>
-			<div className="flex items-start gap-3">
-				<button
-					type="button"
-					onClick={() => onEdit(line)}
-					className="min-w-0 flex-1 text-start"
-					aria-label={_(t`Edit ${shown.name}`)}
-				>
-					<div className="leading-tight font-semibold">{name}</div>
-					{shown.variantLabel ? (
-						<div className="text-muted-foreground text-sm">
-							{shown.variantLabel}
-						</div>
-					) : null}
-					{shown.options.map((o) => (
-						<div
-							key={`${o.groupId}:${o.optionId}`}
-							className="text-muted-foreground text-sm"
-						>
-							{o.quantity > 1 ? `${o.quantity}× ` : ''}
-							{o.optionName}
-							{o.unitCents > 0 ? ` +${money(o.unitCents * o.quantity)}` : ''}
-						</div>
-					))}
-					{line.instructions ? (
-						<div className="text-warning text-sm italic">
-							“{line.instructions}”
-						</div>
-					) : null}
-				</button>
-				<NumberPop
-					value={money(lineTotalCents(line))}
-					className="tnum shrink-0 font-semibold"
-				/>
-			</div>
-			<div className="mt-2 flex items-center justify-between">
-				<div className="bg-muted flex items-center gap-1 rounded-xl p-0.5">
-					<IconButton
-						label={_(t`Fewer ${shown.name}`)}
-						onClick={() => onQuantity(line.id, line.quantity - 1)}
+		<li ref={ref} className={cn('px-1 py-1', isFresh && 't-rise')}>
+			<Item size="sm">
+				<ItemContent className="min-w-0">
+					<button
+						type="button"
+						onClick={() => onEdit(line)}
+						className="min-h-11 min-w-0 text-start"
+						aria-label={_(t`Edit ${shown.name}`)}
 					>
-						{/* At one, the minus becomes a bin: the next tap takes the line off. */}
+						<div className="leading-snug font-semibold break-words">{name}</div>
+						{status ? (
+							<div className="mt-1">
+								<DishStatusBadge status={status} />
+							</div>
+						) : null}
+						{shown.variantLabel ? (
+							<div className="text-muted-foreground text-sm">
+								{shown.variantLabel}
+							</div>
+						) : null}
+						{shown.options.map((o) => (
+							<div
+								key={`${o.groupId}:${o.optionId}`}
+								className="text-muted-foreground text-sm"
+							>
+								{o.quantity > 1 ? `${o.quantity}× ` : ''}
+								{o.optionName}
+								{o.unitCents > 0 ? ` +${money(o.unitCents * o.quantity)}` : ''}
+							</div>
+						))}
+						{line.instructions ? (
+							<div className="text-warning text-sm italic">
+								“{line.instructions}”
+							</div>
+						) : null}
+					</button>
+				</ItemContent>
+				<ItemActions>
+					<NumberPop
+						value={money(lineTotalCents(line))}
+						className="tnum shrink-0 font-semibold"
+					/>
+				</ItemActions>
+				<ItemFooter>
+					<div className="flex items-center gap-1">
+						<IconButton
+							label={_(t`Fewer ${shown.name}`)}
+							onClick={() => onQuantity(line.id, line.quantity - 1)}
+						>
+							{/* At one, the minus becomes a bin: the next tap takes the line off. */}
+							<span
+								className="t-icon-swap"
+								data-state={line.quantity === 1 ? 'b' : 'a'}
+							>
+								<span className="t-icon inline-flex size-4" data-icon="a">
+									<Icon name="minus" className="size-4" />
+								</span>
+								<span className="t-icon inline-flex size-4" data-icon="b">
+									<Icon name="trash-2" className="size-4" />
+								</span>
+							</span>
+						</IconButton>
 						<span
-							className="t-icon-swap"
-							data-state={line.quantity === 1 ? 'b' : 'a'}
+							className="tnum w-8 text-center text-sm font-medium"
+							aria-live="polite"
 						>
-							<Minus className="t-icon size-4" data-icon="a" />
-							<Trash2 className="t-icon size-4" data-icon="b" />
+							<NumberPop value={String(line.quantity)} />
 						</span>
-					</IconButton>
-					<span
-						className="tnum mono w-8 text-center font-bold"
-						aria-live="polite"
+						<IconButton
+							label={_(t`More ${shown.name}`)}
+							onClick={() => onQuantity(line.id, line.quantity + 1)}
+						>
+							<Icon name="plus" className="size-4" />
+						</IconButton>
+					</div>
+					<button
+						type="button"
+						className="text-muted-foreground hover:bg-destructive/8 hover:text-destructive min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+						onClick={() => onRemove(line.id)}
 					>
-						<NumberPop value={String(line.quantity)} />
-					</span>
-					<IconButton
-						label={_(t`More ${shown.name}`)}
-						onClick={() => onQuantity(line.id, line.quantity + 1)}
-					>
-						<Plus className="size-4" />
-					</IconButton>
-				</div>
-				<button
-					type="button"
-					className="text-muted-foreground hover:bg-destructive/8 hover:text-destructive min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-					onClick={() => onRemove(line.id)}
-				>
-					<Trans>Remove</Trans>
-				</button>
-			</div>
+						<Trans>Remove</Trans>
+					</button>
+				</ItemFooter>
+			</Item>
 		</li>
 	)
 }

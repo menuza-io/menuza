@@ -3,6 +3,7 @@ import {
 	TILL_NO_SHOW_GRACE_MS,
 	type QuickAction,
 } from '@repo/reservations'
+import { coversHere } from './arrival.ts'
 import { UNDO_WINDOW_MS, type DayReservation, type TableKind } from './feed.ts'
 import { canExtendStay } from './stay.ts'
 
@@ -25,6 +26,12 @@ export type PartyActionsInput = {
 		| 'tableLabels'
 		| 'paymentStatus'
 		| 'durationMin'
+		| 'startAt'
+		| 'endAt'
+		| 'experienceId'
+		| 'partySize'
+		| 'arrivedCovers'
+		| 'seatedCovers'
 	>
 	now: number
 	/** Another day: no arrival, seating or no-shows (the server refuses those off today). */
@@ -37,14 +44,7 @@ export type PartyActionsInput = {
 }
 
 /** Statuses where a booking is live: it holds a table or will. */
-const LIVE_STATUSES = new Set([
-	'booked',
-	'confirmed',
-	'partially_arrived',
-	'arrived',
-	'partially_seated',
-	'seated',
-])
+const LIVE_STATUSES = new Set(['booked', 'confirmed', 'arrived', 'seated'])
 
 /**
  * A booking with a deposit, a card held on it, or any refund state: the server
@@ -54,6 +54,16 @@ const LIVE_STATUSES = new Set([
  */
 export const hasPayment = (r: Pick<DayReservation, 'paymentStatus'>) =>
 	r.paymentStatus !== 'none'
+
+/**
+ * Money is on the booking as far as the server's lock for a till is concerned:
+ * a payment or a card on it, or a booked experience. A policy amount without
+ * either is not in the day feed: the server refuses that one itself
+ * (`manager_required`, said as such), so the stand cannot hide the button for it.
+ */
+export const hasMoneyOn = (
+	r: Pick<DayReservation, 'paymentStatus' | 'experienceId'>,
+) => hasPayment(r) || Boolean(r.experienceId)
 
 export type UndoKind = 'seat' | 'finish' | 'no_show'
 
@@ -74,6 +84,18 @@ export type PartyActions = {
 	canMove: boolean
 	/** Add 15 minutes to a seated party's stay. */
 	canExtend: boolean
+	/**
+	 * Some of a party of two or more are here: mark how many at the door
+	 * (a booking not marked here yet). The server keeps the count as
+	 * `arrivedCovers` on an arrived booking and cannot raise it afterwards.
+	 */
+	canPartlyHere: boolean
+	/**
+	 * A party only partly here (arrived, short of its size): seat as many as are
+	 * here now, with a stepper for how many. It replaces the plain seating, which
+	 * is for a party that is all here.
+	 */
+	canSeatPart: boolean
 	/** Put right the last step: which one, or null. */
 	undo: UndoKind | null
 	/** A no-show: only once the grace after the booked time has passed. */
@@ -127,8 +149,18 @@ export function partyActions({
 			r.seatedAt != null &&
 			now - r.seatedAt > UNDO_WINDOW_MS
 		)
-	const canSeat = has('seat') || has('partially_seat')
-	const atStand = r.status === 'arrived' || r.status === 'partially_arrived'
+	const manyInParty = r.partySize >= 2
+	// Short of its size at the door: "Seat 3 now" (a stepper) takes the place of a plain seating.
+	const partlyHere = coversHere(r)?.stage === 'door'
+	const canSeatPart =
+		manyInParty && partlyHere && r.status === 'arrived' && has('seat')
+	const canSeat = has('seat') && !canSeatPart
+	const canPartlyHere =
+		manyInParty &&
+		!viewOnly &&
+		(r.status === 'booked' || r.status === 'confirmed') &&
+		has('arrive')
+	const atStand = r.status === 'arrived'
 	const undo: UndoKind | null = has('undo_finish')
 		? 'finish'
 		: has('undo_no_show')
@@ -142,14 +174,17 @@ export function partyActions({
 	const seated = r.status === 'seated' && !viewOnly
 	// Size and time of a booking to come; the size alone once they are seated
 	// (more people at the table). Never with money on it: the server refuses.
+	const money = hasMoneyOn(r)
 	const canChange =
-		!paid &&
+		!money &&
 		(r.status === 'booked' ||
 			r.status === 'confirmed' ||
 			r.status === 'arrived' ||
 			seated)
 	const canMove = seated
-	const canExtend = seated && canExtendStay(r)
+	// Lengthening a stay is a change the server locks behind the same money
+	// rule as a size or time change, and it only grows up to what a till may set.
+	const canExtend = seated && !money && canExtendStay(r, now)
 	const canNoShow = has('no_show') && now >= r.startAt + TILL_NO_SHOW_GRACE_MS
 	const canCancel = has('cancel')
 	const label = r.tableLabels[0]
@@ -174,6 +209,8 @@ export function partyActions({
 		r.status === 'cancelled'
 	return {
 		canSeat,
+		canSeatPart,
+		canPartlyHere,
 		canFinish,
 		canArrive,
 		canConfirm,
@@ -190,6 +227,8 @@ export function partyActions({
 		canBookAgain,
 		any:
 			canSeat ||
+			canSeatPart ||
+			canPartlyHere ||
 			canFinish ||
 			canArrive ||
 			canConfirm ||

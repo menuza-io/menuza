@@ -48,6 +48,7 @@ const base = (over: Partial<Props> = {}): Props => ({
 	onNotify: () => undefined,
 	onPlace: () => undefined,
 	onRemove: () => undefined,
+	onBack: () => undefined,
 	onClose: () => undefined,
 	...over,
 })
@@ -83,9 +84,10 @@ const told = (over: Parameters<typeof entry>[0] = {}) =>
 	})
 
 describe('what the sheet says about being told', () => {
-	it('says a text was sent only when the answer said one was queued', () => {
+	it('says a text is on its way only when the answer said one was queued', () => {
 		draw(base({ entry: told(), textQueued: true }))
-		expect(hasText('Told 12:56 PM · text sent')).toBe(true)
+		expect(hasText('Told 12:56 PM · text on its way')).toBe(true)
+		expect(hasText('text sent')).toBe(false)
 		expect(hasText('call them')).toBe(false)
 	})
 	it('says no text was sent, and makes Call the way to reach them', () => {
@@ -199,5 +201,69 @@ describe('taking a party off the list', () => {
 		// Disarmed: a stray second tap lands on the first-tap state and sends nothing.
 		press('They left')
 		expect(onRemove).not.toHaveBeenCalled()
+	})
+})
+
+describe('putting a party back in line', () => {
+	it('is offered to a party told their table is ready, with the version seen', () => {
+		const onBack = vi.fn()
+		const holding = told({ version: 6 })
+		draw(base({ entry: holding, onBack }))
+		press('Back in line')
+		expect(onBack).toHaveBeenCalledWith(holding, 6)
+		// Still can be seated, and can still be taken off.
+		expect(button('Choose a table')).toBeDefined()
+		expect(button('They left')).toBeDefined()
+	})
+	it('is offered when the hold ran out too, beside "No response, remove"', () => {
+		const onBack = vi.fn()
+		const expired = told({ responseDeadlineAt: NOW - MIN, version: 7 })
+		draw(base({ entry: expired, onBack }))
+		expect(button('No response, remove')).toBeDefined()
+		press('Back in line')
+		expect(onBack).toHaveBeenCalledWith(expired, 7)
+	})
+	it('is not offered to a party still waiting their turn', () => {
+		draw(base({ entry: entry() }))
+		expect(button('Back in line')).toBeUndefined()
+	})
+	it('is the only way on for a party the server already took off the line', () => {
+		const onBack = vi.fn()
+		const gone = entry({
+			status: 'no_response',
+			phone: '+14155550132',
+			smsOptIn: true,
+			notifiedAt: NOW - 14 * MIN,
+			responseDeadlineAt: NOW - 4 * MIN,
+			version: 9,
+		})
+		draw(base({ entry: gone, onBack }))
+		expect(hasText('Did not respond')).toBe(true)
+		expect(hasText('they left the line')).toBe(true)
+		expect(button('Choose a table')).toBeUndefined()
+		expect(button('They left')).toBeUndefined()
+		expect(button('Mark ready')).toBeUndefined()
+		press('Back in line')
+		expect(onBack).toHaveBeenCalledWith(gone, 9)
+	})
+})
+
+describe('saying plainly when a hold ends', () => {
+	it('says when it ends and that they leave the line then', () => {
+		draw(base({ entry: told() }))
+		expect(hasText('Holds until 1:06 PM, then they leave the line')).toBe(true)
+	})
+	it('says it ended with no response once it has', () => {
+		draw(base({ entry: told({ responseDeadlineAt: NOW - MIN }) }))
+		expect(hasText('No response by 12:59 PM')).toBe(true)
+	})
+	it('keeps one live region for the end of the hold, so it is announced when it comes', () => {
+		draw(base({ entry: told() }))
+		const region = dialog().querySelector('[role="status"]')!
+		expect(region.textContent).toBe('')
+		// The same sheet a minute later, past the end: the same region now says so.
+		draw(base({ entry: told({ responseDeadlineAt: NOW - MIN }), now: NOW }))
+		expect(dialog().querySelector('[role="status"]')).toBe(region)
+		expect(region.textContent).toContain('No response by')
 	})
 })

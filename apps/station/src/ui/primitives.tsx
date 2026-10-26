@@ -1,7 +1,10 @@
 import { t } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { Badge as SharedBadge } from '@repo/ui/badge'
+import { Button as SharedButton } from '@repo/ui/button'
+import { Icon } from '@repo/ui/icon'
+import { Input as SharedInput } from '@repo/ui/input'
 import { cn } from 'cn'
-import { X } from 'lucide-react'
 import {
 	useEffect,
 	useId,
@@ -10,7 +13,10 @@ import {
 	useState,
 	type ButtonHTMLAttributes,
 	type InputHTMLAttributes,
+	type HTMLAttributes,
 	type ReactNode,
+	type Ref,
+	type SelectHTMLAttributes,
 } from 'react'
 
 /**
@@ -18,9 +24,8 @@ import {
  * across the monorepo (`@repo/ui` re-exports the same). A caller's class wins
  * over a base class for the same property.
  *
- * The components below stay local rather than `@repo/ui`'s: Station is an
- * offline PWA for touch tills, with its own sizes (44 px+ targets), a native
- * `<dialog>` modal that keeps working with no network, and a small bundle.
+ * Shared controls carry the design-system behavior; these thin adapters keep
+ * Station's 44px+ touch targets. Dialog and select remain native controls.
  */
 export { cn }
 
@@ -29,19 +34,12 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 	size?: 'md' | 'lg' | 'xl'
 }
 
-const buttonBase =
-	'inline-flex min-w-0 select-none items-center justify-center gap-2 rounded-xl font-semibold transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45'
 const buttonVariants = {
-	primary: 'bg-primary text-primary-foreground shadow-sm hover:brightness-110',
-	secondary: 'bg-secondary text-secondary-foreground hover:bg-accent',
-	ghost: 'text-foreground hover:bg-accent',
-	outline: 'border border-border bg-card text-foreground hover:bg-accent',
-	danger: 'bg-destructive text-white hover:brightness-110',
-} as const
-const buttonSizes = {
-	md: 'h-11 px-4 text-sm',
-	lg: 'h-14 px-6 text-base',
-	xl: 'h-16 px-8 text-lg',
+	primary: 'default',
+	secondary: 'secondary',
+	ghost: 'ghost',
+	outline: 'outline',
+	danger: 'destructive',
 } as const
 
 export function Button({
@@ -52,12 +50,18 @@ export function Button({
 	...props
 }: ButtonProps) {
 	return (
-		<button
+		<SharedButton
 			type={type}
+			variant={buttonVariants[variant]}
+			size="lg"
+			data-autofocus={props.autoFocus ? '' : undefined}
 			className={cn(
-				buttonBase,
-				buttonVariants[variant],
-				buttonSizes[size],
+				'min-w-0 gap-2 rounded-(--station-control-radius) whitespace-normal shadow-none after:hidden',
+				size === 'xl'
+					? 'h-16 px-6 text-base'
+					: size === 'lg'
+						? 'h-14 px-6 text-base'
+						: 'h-11 px-4 text-sm',
 				className,
 			)}
 			{...props}
@@ -70,20 +74,25 @@ export function IconButton({
 	className,
 	children,
 	...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+	label: string
+	ref?: Ref<HTMLButtonElement>
+}) {
 	return (
-		<button
+		<SharedButton
 			type="button"
+			variant="ghost"
+			size="icon-lg"
 			aria-label={label}
 			title={label}
 			className={cn(
-				'text-foreground hover:bg-accent inline-flex size-11 shrink-0 items-center justify-center rounded-xl transition active:scale-95 disabled:pointer-events-none disabled:opacity-45',
+				'text-muted-foreground size-11 rounded-(--station-control-radius) after:hidden',
 				className,
 			)}
 			{...props}
 		>
 			{children}
-		</button>
+		</SharedButton>
 	)
 }
 
@@ -174,7 +183,7 @@ export function Segmented<T extends string>({
 			ref={barRef}
 			role="radiogroup"
 			aria-label={label}
-			className="bg-muted relative isolate flex min-w-0 gap-1 rounded-2xl p-1"
+			className="bg-muted relative isolate flex min-w-0 gap-1 rounded-(--station-group-radius) px-1"
 			onKeyDown={(event) => {
 				const keys = [
 					'ArrowLeft',
@@ -214,7 +223,7 @@ export function Segmented<T extends string>({
 			<span
 				ref={pillRef}
 				aria-hidden
-				className="t-tabs-pill rounded-xl shadow-sm"
+				className="t-tabs-pill rounded-(--station-control-radius)"
 			/>
 			{options.map((option) => {
 				const active = option.value === value
@@ -227,7 +236,7 @@ export function Segmented<T extends string>({
 						tabIndex={active ? 0 : -1}
 						onClick={() => onChange(option.value)}
 						className={cn(
-							't-tab relative z-10 inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 font-semibold sm:px-4',
+							't-tab relative z-10 inline-flex min-w-11 items-center justify-center gap-2 rounded-(--station-control-radius) px-3 font-semibold sm:px-4',
 							wrap ? 'flex-1' : 'shrink-0 whitespace-nowrap',
 							size === 'lg'
 								? 'min-h-14 py-2 text-sm sm:text-base'
@@ -277,6 +286,7 @@ export function Modal({
 	scrollable?: boolean
 }) {
 	const ref = useRef<HTMLDialogElement>(null)
+	const returnFocus = useRef<HTMLElement | null>(null)
 	const titleId = useId()
 	const { _ } = useLingui()
 	/**
@@ -295,18 +305,28 @@ export function Modal({
 		if (phase === 'entering') {
 			// Reopened while still fading out: it may sit in the top layer a moment longer.
 			if (!dialog.open) {
+				const active = document.activeElement
+				if (active instanceof HTMLElement && !dialog.contains(active))
+					returnFocus.current = active
 				try {
 					dialog.showModal()
 				} catch {
 					dialog.close()
 					dialog.showModal()
 				}
+				// React focuses `autoFocus` before the dialog is open; opening then moves
+				// focus to its first control (Close). Put it back where the sheet asked.
+				dialog
+					.querySelector<HTMLElement>('[data-autofocus]')
+					?.focus({ preventScroll: true })
 			}
 			// Paint the resting pre-open state before opening, or there is nothing to animate from.
 			void dialog.offsetWidth
 			setPhase('open')
 		} else if (phase === 'closing') {
 			if (dialog.open) dialog.close()
+			if (returnFocus.current?.isConnected)
+				returnFocus.current.focus({ preventScroll: true })
 			const timer = window.setTimeout(
 				() => setPhase('gone'),
 				motionMs('--modal-close-dur', 150),
@@ -314,6 +334,19 @@ export function Modal({
 			return () => window.clearTimeout(timer)
 		}
 	}, [phase])
+
+	// Many task sheets unmount immediately after closing. Close before removal,
+	// while the native dialog can still return focus to its opening control.
+	const mounted = phase !== 'gone'
+	useLayoutEffect(() => {
+		const dialog = ref.current
+		return () => {
+			if (!dialog?.open) return
+			dialog.close()
+			if (returnFocus.current?.isConnected)
+				returnFocus.current.focus({ preventScroll: true })
+		}
+	}, [mounted])
 
 	if (phase === 'gone') return null
 	const sheet = size === 'full'
@@ -339,7 +372,7 @@ export function Modal({
 			}}
 			className={cn(
 				// Fixed and centred by itself, not by `:modal`, so it holds its place while fading out.
-				't-modal border-border bg-card text-card-foreground elevated-sheet fixed inset-0 m-auto flex-col overflow-hidden rounded-2xl border p-0 backdrop:bg-black/40 backdrop:backdrop-blur-xs open:flex',
+				't-modal bg-card text-card-foreground elevated-sheet fixed inset-0 m-auto flex-col overflow-hidden rounded-(--station-panel-radius) p-0 backdrop:bg-black/40 open:flex',
 				phase === 'open' && 'is-open',
 				phase === 'closing' && 'is-closing',
 				size !== 'full' && 'max-h-[94dvh]',
@@ -348,25 +381,27 @@ export function Modal({
 			)}
 		>
 			<header className="border-border flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
-				<h2 id={titleId} className="min-w-0 text-lg font-semibold break-words">
+				<h2 id={titleId} className="min-w-0 text-xl font-semibold break-words">
 					{title}
 				</h2>
 				{dismissible ? (
 					<IconButton label={_(t`Close`)} onClick={onClose}>
-						<X className="size-5" />
+						<Icon name="x" className="size-5" />
 					</IconButton>
 				) : null}
 			</header>
 			<div
 				className={cn(
 					'min-h-0 flex-1',
-					scrollable ? 'overflow-y-auto' : 'flex flex-col overflow-hidden',
+					scrollable
+						? 'overflow-y-auto overscroll-contain'
+						: 'flex flex-col overflow-hidden',
 				)}
 			>
 				{children}
 			</div>
 			{footer ? (
-				<footer className="border-border bg-card pb-safe shrink-0 border-t px-4 pt-4">
+				<footer className="border-border bg-card pb-safe shrink-0 border-t px-4 pt-4 sm:px-5">
 					{footer}
 				</footer>
 			) : null}
@@ -378,34 +413,86 @@ export function Badge({
 	children,
 	tone = 'muted',
 	className,
-}: {
-	children: ReactNode
+	...props
+}: HTMLAttributes<HTMLSpanElement> & {
 	tone?: 'muted' | 'success' | 'warning' | 'danger' | 'primary'
-	className?: string
 }) {
 	const tones = {
-		muted: 'bg-muted text-muted-foreground',
-		success: 'bg-success/12 text-success',
-		warning: 'bg-warning/15 text-warning',
-		danger: 'bg-destructive/12 text-destructive',
-		primary: 'bg-primary/10 text-primary',
+		muted: 'secondary',
+		success: 'success',
+		warning: 'warning',
+		danger: 'destructive',
+		primary: 'default',
 	} as const
 	return (
-		<span
+		<SharedBadge
+			variant={tones[tone]}
 			className={cn(
-				'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold',
-				tones[tone],
+				'h-auto min-h-5 rounded-(--station-control-radius) px-2 py-0.5 whitespace-normal',
 				className,
 			)}
+			{...props}
 		>
 			{children}
-		</span>
+		</SharedBadge>
 	)
 }
 
 /** One look for every text field: height, radius, border, focus colour. */
 export const fieldClass =
-	'border-input bg-background placeholder:text-muted-foreground focus:border-ring h-12 w-full min-w-0 rounded-xl border px-3 text-base font-normal transition-colors'
+	'border-input bg-card placeholder:text-muted-foreground focus:border-ring h-12 w-full min-w-0 rounded-(--station-control-radius) border px-3 text-base font-normal transition-colors'
+
+export function Input({
+	className,
+	...props
+}: InputHTMLAttributes<HTMLInputElement>) {
+	return (
+		<SharedInput
+			data-autofocus={props.autoFocus ? '' : undefined}
+			className={cn(
+				'h-12 rounded-(--station-control-radius) px-3 text-base font-normal md:text-base',
+				className,
+			)}
+			{...props}
+		/>
+	)
+}
+
+/** Native choices and keyboard behavior, with the same chevron as every other control. */
+export function Select({
+	className,
+	containerClassName,
+	ref,
+	...props
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+	ref?: Ref<HTMLSelectElement>
+	containerClassName?: string
+}) {
+	const listbox = props.multiple || (props.size !== undefined && props.size > 1)
+	return (
+		<span
+			dir={props.dir}
+			className={cn('relative inline-grid w-full min-w-0', containerClassName)}
+		>
+			<select
+				ref={ref}
+				className={cn(
+					fieldClass,
+					'peer disabled:opacity-60',
+					!listbox && 'appearance-none pe-10',
+					className,
+				)}
+				{...props}
+			/>
+			{!listbox ? (
+				<Icon
+					name="chevron-down"
+					className="text-muted-foreground pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 peer-disabled:opacity-45"
+				/>
+			) : null}
+		</span>
+	)
+}
 
 /**
  * A pressable choice in a row of choices (categories, split, tip, reason). The
@@ -415,22 +502,39 @@ export const fieldClass =
 export function Chip({
 	selected,
 	size = 'md',
+	look = 'quiet',
 	className,
 	type = 'button',
 	...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
 	selected: boolean
 	size?: 'md' | 'lg'
+	/**
+	 * `quiet` is borderless and navigates (categories, filters). `outlined` is
+	 * for choosing a value in a form (tip, split, quick cash): the same outline
+	 * as a secondary button, and the brand-tinted selection of a readout.
+	 * `filled` is the register's menu categories: a card that turns solid brand
+	 * when chosen, so the section in view reads from across the counter.
+	 */
+	look?: 'quiet' | 'outlined' | 'filled'
 }) {
 	return (
-		<button
+		<Button
 			type={type}
+			variant={look === 'quiet' ? 'ghost' : 'outline'}
 			className={cn(
-				'inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border font-semibold transition active:scale-95 disabled:pointer-events-none disabled:opacity-45',
-				size === 'lg' ? 'h-12 px-4' : 'h-11 px-3.5 text-sm',
-				selected
-					? 'border-primary bg-primary text-primary-foreground shadow-sm'
-					: 'border-border bg-card hover:bg-accent',
+				size === 'lg' ? 'h-11 px-4' : 'h-11 px-3.5 text-sm',
+				look === 'filled'
+					? selected
+						? 'border-primary bg-primary text-primary-foreground hover:bg-primary font-semibold shadow-sm'
+						: 'border-border bg-card text-foreground hover:bg-accent font-semibold'
+					: look === 'outlined'
+						? selected
+							? 'border-primary bg-primary/5 text-foreground'
+							: 'text-foreground'
+						: selected
+							? 'bg-secondary text-secondary-foreground'
+							: 'text-muted-foreground',
 				className,
 			)}
 			{...props}
@@ -544,7 +648,7 @@ export function Reveal({
 }
 
 /**
- * A native checkbox drawn as a box that fills, then strokes its check in
+ * A native checkbox drawn as a box that fills, then reveals its shared check
  * (checkbox check). The real input sits on top, invisible, so labels, forms,
  * keyboard and assistive technology all see an ordinary checkbox.
  */
@@ -560,25 +664,15 @@ export function Checkbox({
 			<input
 				type="checkbox"
 				checked={checked}
-				className="peer absolute inset-0 m-0 size-full cursor-pointer appearance-none rounded-sm opacity-0"
+				className="peer absolute inset-0 m-0 size-full cursor-pointer appearance-none rounded-xs opacity-0"
 				{...props}
 			/>
 			<span
 				aria-hidden
 				data-checked={checked}
-				className="t-check border-input bg-card text-primary-foreground peer-focus-visible:outline-ring peer-checked:border-primary peer-checked:bg-primary pointer-events-none flex size-full items-center justify-center rounded-sm border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2"
+				className="t-check border-input bg-card text-primary-foreground peer-focus-visible:outline-ring peer-checked:border-primary peer-checked:bg-primary pointer-events-none flex size-full items-center justify-center rounded-xs border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2"
 			>
-				<svg
-					viewBox="0 0 10.1668 10.1668"
-					className="size-3.5"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth={1.8}
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<path d="M1 5.52L3.92 9.17L9.17 1" />
-				</svg>
+				<Icon name="check" className="size-3.5" />
 			</span>
 		</span>
 	)

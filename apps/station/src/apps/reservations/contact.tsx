@@ -1,6 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { MessageSquare, Phone } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { formatPhone } from './guest.ts'
 import { foldDigits } from './phone.ts'
 import { cn } from '~/ui/primitives.tsx'
@@ -9,7 +9,7 @@ import { cn } from '~/ui/primitives.tsx'
 const dialable = (phone: string) => foldDigits(phone).replace(/[^\d+]/g, '')
 
 const buttonClass =
-	'border-border bg-card hover:bg-accent inline-flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-4 font-semibold transition active:scale-[0.97]'
+	'hover:bg-accent inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-(--station-control-radius) px-3 text-sm font-medium transition'
 
 /**
  * A guest's number, and one tap to call or text them. With the guest-details
@@ -38,7 +38,11 @@ export function ContactRow({
 	if (!canContact)
 		return (
 			<p className={cn('flex items-center gap-3 text-base', className)}>
-				<Phone aria-hidden className="text-muted-foreground size-5 shrink-0" />
+				<Icon
+					name="phone"
+					aria-hidden
+					className="text-muted-foreground size-5 shrink-0"
+				/>
 				<span
 					className="tnum"
 					dir="ltr"
@@ -52,14 +56,11 @@ export function ContactRow({
 	return (
 		<div
 			className={cn(
-				'border-border flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border p-3',
+				'flex flex-wrap items-center gap-x-4 gap-y-2 py-2',
 				className,
 			)}
 		>
-			<span
-				className="tnum mono min-w-0 text-lg font-semibold tracking-tight"
-				dir="ltr"
-			>
+			<span className="tnum min-w-0 text-base font-medium" dir="ltr">
 				{formatPhone(phone)}
 			</span>
 			<span className="ms-auto flex shrink-0 gap-2">
@@ -71,12 +72,12 @@ export function ContactRow({
 							'border-primary bg-primary text-primary-foreground hover:bg-primary/90',
 					)}
 				>
-					<Phone aria-hidden className="size-5" />
+					<Icon name="phone" aria-hidden className="size-5" />
 					<Trans>Call</Trans>
 				</a>
 				{canText ? (
 					<a href={`sms:${dial}`} className={buttonClass}>
-						<MessageSquare aria-hidden className="size-5" />
+						<Icon name="message-square" aria-hidden className="size-5" />
 						<Trans>Text</Trans>
 					</a>
 				) : null}

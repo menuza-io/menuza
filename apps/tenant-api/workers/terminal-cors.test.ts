@@ -40,6 +40,7 @@ describe('refusals made at the edge', () => {
 			const response = withTerminalCors(from(path, TILL), refusal())
 			expect(response.status).toBe(401)
 			expect(response.headers.get('Access-Control-Allow-Origin')).toBe(TILL)
+			expect(response.headers.get('Access-Control-Expose-Headers')).toBe('Date')
 		}
 	})
 

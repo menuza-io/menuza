@@ -23,7 +23,7 @@ paired devices or offline orders.
 | `apps/tenant-api/src/routes/pos.ts`              | Terminal routes: `/pos/pair`, `/pos/me`, `/pos/sign-in`, `/pos/orders`, `/pos/shifts`, `/pos/tabs`, `/pos/tabs/:id/claim`, `/pos/zatca`.                     |
 | `apps/tenant-api/src/routes/operator-pos.ts`     | Manager routes under `/operator/pos` (terminals, pairing codes, orders, revisions, held uploads, staff and managers, shifts, day reports, ZATCA).            |
 | `apps/tenant-api/src/routes/pos-timeclock.ts`    | The time clock on a terminal: `/pos/timeclock/identify`, `/pos/timeclock/punch` (see [Station apps](#station-apps-time-clock-and-host-stand)).               |
-| `apps/tenant-api/src/routes/pos-reservations.ts` | The host stand's token: `POST /pos/reservations/token`.                                                                                                      |
+| `apps/tenant-api/src/routes/pos-reservations.ts` | The host stand's token (`POST /pos/reservations/token`) and who can take a server section (`GET /pos/reservations/servers`).                                 |
 | `apps/app` → Settings → Terminals                | Pair and remove terminals, PIN sign-in, shifts, business day, till managers, held uploads, the day report, ZATCA settings and onboarding.                    |
 
 ## Trust model
@@ -301,6 +301,75 @@ terminal, never a lockout. People who signed in online can sign in offline for
 **72 hours**. A person who has since left can still do so in that window, and
 their sales are flagged `inactive_staff`.
 
+## Kitchen display
+
+Open **Apps** (the nine-dot button), then **Kitchen**, on a paired terminal
+bound to a location. No second pairing or App login is needed. The kitchen
+combines uploaded Station orders (counter and phone, saved or paid) with online
+orders at that location. Unsynced offline sales appear only after upload. Online
+orders must be accepted, preparing or ready, and either paid or payable at
+handoff. Checkout attempts awaiting online payment are not kitchen tickets.
+
+**Kitchen setup** is shared by the location. Choose whole-ticket or individual
+item preparation, optionally skip Preparing for quick service, name up to 12
+prep stations, route menu items, and choose a default for everything else. Each
+screen remembers its own station and source filter. **All stations · pass** can
+clear a ticket only when every station's items are ready. Done clears food from
+the board; recent completed tickets can be recalled for four hours. Neither
+action collects an online order, closes a Station bill, records payment, or
+creates a fiscal document. Online preparation advances the receipt to Preparing
+or Ready, forward only.
+
+The initial setup uses one Kitchen station, whole tickets, a Preparing step,
+warnings after 10 minutes, late after 20, and firing 30 minutes before pickup.
+Each item routes to exactly one station; a station-filtered preparation action
+changes only that station's items. Use **Save kitchen setup** to apply a draft;
+Cancel leaves the live setup unchanged. Publish and refresh the menu if item
+routing choices are missing.
+
+Scheduled orders stay in **Scheduled** until the configured fire-ahead window.
+Both ordinary scheduled orders and dated drop pickup slots use their stored due
+time and time zone. Age and warning/late thresholds run from firing, not from an
+advance order's creation. Changed or added dishes reopen as new work; unchanged
+dishes keep their progress, including when setup reroutes them. Recent
+cancellations, voids and full refunds show a stop-prep warning for 30 minutes
+and cannot be prepared.
+
+The board polls every five seconds while visible. Offline, an unsuccessful
+refresh, or a feed older than 15 seconds pauses preparation controls. Kitchen
+state stays in memory, not IndexedDB, and writes are never queued or blindly
+replayed. After an uncertain write the screen reads back before proceeding. The
+feed is bounded to 500 tickets per source, prioritizing unfinished work, and
+warns if that limit is reached.
+
+In demo mode the Kitchen needs no pairing or network. It shows a sample rush for
+the demo menu across six prep stations (new, preparing, ready, scheduled, done
+and one cancellation), plus the sales rung up on that tablet in demo mode. It
+keeps the same rules (stale versions refused, Done only when every dish is
+ready, recall only of a done ticket) in the tab's memory. Nothing is sent, and a
+reload starts a fresh sample rush.
+
+If a ticket changed on another screen, refresh and review its latest state
+before retrying. If setup changed while its panel was open, close and reopen the
+panel before editing again. After a connection failure, reconnect and use **Try
+again**; do not assume the last visible queue is live or repeat an uncertain
+preparation action without checking the read-back.
+
+The browser calls the regional `/pos/kds` API directly: `GET /`,
+`POST /command`, and `PUT /settings`. Every call verifies the device and its
+server-bound location; signed-in terminals also require a current
+`Pos-Staff-Session`. Setup requires a current till manager when sign-in is on.
+With sign-in off, a paired terminal may configure the kitchen, like its other
+local setup. `POS_ENABLED=false` and terminal revocation stop all kitchen
+access. Responses are `no-store` and contain food, preparation instructions,
+order numbers and table labels, never guest contacts, addresses, prices or staff
+names.
+
+Tenant migration `0025_station_kds` adds location settings, versioned kitchen
+progress and append-only kitchen events. Commands and setup changes use the
+organization write lock and a real regional SQLite transaction; stale ticket or
+setup versions answer 409. The order upload contract is unchanged.
+
 ## Station apps: time clock and host stand
 
 A paired terminal can also be the restaurant's time clock and its host stand,
@@ -314,8 +383,16 @@ App signs into the operator token as `stationApps`; a member limited to some
 locations may open the host stand only at those. Every switch, location binding
 and host-roster change is in the staff audit log. `/pos/me` reports the result
 as `apps: { timeclock, reservations }`, leaving out an app whose flag it cannot
-read (the till keeps what it last knew); the till shows an app switch (Register,
-Time clock, Reservations) when it offers more than the register.
+read (the till keeps what it last knew). **Apps**, the nine-dot button at the
+start of the header, opens the available apps: Register, Kitchen, and the
+enabled Time clock and Reservations. The launcher also shows the business name,
+logo and location. The current app is marked; Tab or the arrow keys move between
+choices, Enter selects, and Escape closes and returns focus.
+
+Orders remains a direct header action, with its open-tab count. Refresh menu (on
+larger screens), Shift, Settings and staff lock share a quiet utility row. A
+green dot means every upload is sent; offline, saved and refused uploads retain
+visible warnings. Changing apps does not discard the register's cart.
 
 A terminal paired without a location can be bound to one later (Station apps,
 "Choose a location"); App must confirm the location exists (503 otherwise), and
@@ -367,13 +444,14 @@ operator, for:
   availability, the waitlist and its quote, a booking's detail and history, new
   bookings and walk-ins, status, table, undo and running late, a booking's party
   size and time (`PATCH`, refusing any other field), and waitlist add, text,
-  seat and leave. Everything else (the guestbook, resending messages, approving
-  requests, service notes, sections) answers 403 `not_for_station`. Cancelling
-  or marking a no-show on a booking with a payment on it moves money, and
-  confirming one still awaiting its deposit waives it, so both answer 409
-  `manager_required` without the payment grant (checked on the booking inside
-  the write). Nobody who cannot read allergy notes or a guest's own requests can
-  change them;
+  seat and leave, and which server works each section of the floor in a service
+  (`PUT /section-assignments`). Everything else (the guestbook, resending
+  messages, approving requests, service notes, drawing sections) answers 403
+  `not_for_station`. Cancelling or marking a no-show on a booking with a payment
+  on it moves money, and confirming one still awaiting its deposit waives it, so
+  both answer 409 `manager_required` without the payment grant (checked on the
+  booking inside the write). Nobody who cannot read allergy notes or a guest's
+  own requests can change them;
 - host grants (`read`/`update:reservation`) for people on the **host roster**
   (`pos_hosts`, migration `0023_station_hosts`; Settings, Terminals, the staff
   list), plus guest details (`read:reservation_guest`: phones, emails,
@@ -389,6 +467,20 @@ operator, for:
   taken by staff at a terminal. Opening the stand is recorded in `rsv_audit_log`
   (`station.host_stand_opened`, once per sign-in and again if guest details
   change; best effort, so the audit never takes the stand down).
+
+**Server sections.** A manager draws sections (which tables each server takes)
+in App and picks a layout per service; the host gives each section a server at
+the start of the shift. `GET /pos/reservations/servers?from=&to=` (the device
+secret plus a host's session, a window of at most 24 hours) lists who can take
+one: people clocked in at the terminal's workplace (time clock on) and people
+with a published shift there overlapping the window (scheduling on), first name
+and last initial only (`services/pos-servers-service.ts`). With the staff module
+off it answers `available: false` and the host types names. The assignment keeps
+the staff id and the name as typed, so the day feed shows it without another
+lookup. On the floor, each table carries its section's colour and its server's
+initials, a strip shows each server's covers and free tables, and the suggested
+table leans to the section that has been sat least in the last 45 minutes
+(`apps/station/src/apps/reservations/sections.ts`).
 
 The till then calls `/operator/reservations/book/*` directly (CORS allows
 `POS_ORIGINS` on those routes only), so every check there applies unchanged. The

@@ -1,16 +1,7 @@
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import {
-	CalendarPlus,
-	ChevronLeft,
-	ChevronRight,
-	CloudOff,
-	LayoutGrid,
-	List,
-	ListPlus,
-	Rows3,
-	UserPlus,
-} from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/popover'
 import { useMemo } from 'react'
 import { type DayTotals } from './book.ts'
 import { type DayService } from './feed.ts'
@@ -21,9 +12,28 @@ import {
 	IconButton,
 	NumberPop,
 	Segmented,
+	Select,
 } from '~/ui/primitives.tsx'
 
-export type MainView = 'floor' | 'timeline'
+/**
+ * A control that sends a change to the server: while the connection is down it
+ * is shown as unavailable (aria-disabled, with the reason as its title) and does
+ * nothing, instead of failing after the tap.
+ */
+export function whenOnline(
+	onClick: () => void,
+	offlineReason: string | null | undefined,
+) {
+	return offlineReason
+		? ({
+				'aria-disabled': true,
+				title: offlineReason,
+				className: 'cursor-not-allowed opacity-45',
+			} as const)
+		: { onClick }
+}
+
+export type MainView = 'list' | 'floor' | 'timeline'
 export type PaneTab = 'list' | 'floor' | 'timeline'
 
 /**
@@ -59,16 +69,25 @@ export function ViewTabs<T extends string>({
 		<div
 			role="radiogroup"
 			aria-label={label}
-			className={cn('bk-tabs', className)}
+			className={cn(
+				'bk-tabs bg-muted relative isolate grid gap-0 rounded-(--station-group-radius) px-1',
+				className,
+			)}
 			style={{ '--n': options.length, '--i': index } as React.CSSProperties}
 			onKeyDown={(event) => {
-				if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return
+				if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))
+					return
 				event.preventDefault()
 				const rtl = getComputedStyle(event.currentTarget).direction === 'rtl'
 				const step = (event.key === 'ArrowRight') !== rtl ? 1 : -1
 				const usable = options.filter((option) => !option.disabled)
 				const at = usable.findIndex((option) => option.value === value)
-				const next = usable[(at + step + usable.length) % usable.length]
+				const next =
+					event.key === 'Home'
+						? usable[0]
+						: event.key === 'End'
+							? usable.at(-1)
+							: usable[(at + step + usable.length) % usable.length]
 				if (next) {
 					onChange(next.value)
 					const radios =
@@ -79,7 +98,10 @@ export function ViewTabs<T extends string>({
 				}
 			}}
 		>
-			<span aria-hidden className="bk-tabs-pill" />
+			<span
+				aria-hidden
+				className="bk-tabs-pill absolute inset-y-1 start-1 z-0 rounded-(--station-control-radius)"
+			/>
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -90,7 +112,7 @@ export function ViewTabs<T extends string>({
 					tabIndex={option.value === value ? 0 : -1}
 					onClick={() => !option.disabled && onChange(option.value)}
 					title={option.label}
-					className="bk-tab"
+					className="bk-tab relative z-1 inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-(--station-control-radius) px-3 text-sm font-medium whitespace-nowrap"
 				>
 					{option.icon}
 					<span className={cn(option.compact && 'max-2xl:sr-only')}>
@@ -138,7 +160,7 @@ export function StandStats({
 		>
 			<p
 				className={cn(
-					'leading-tight font-semibold',
+					'leading-snug font-semibold',
 					inline ? 'text-sm' : 'text-base',
 				)}
 			>
@@ -146,7 +168,7 @@ export function StandStats({
 				{' · '}
 				<NumberPop value={covers} className="tnum text-foreground" />
 			</p>
-			<p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm leading-tight">
+			<p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-sm leading-snug">
 				{isToday ? (
 					<span>
 						<Trans>
@@ -178,11 +200,46 @@ export function StandStats({
 }
 
 /**
- * The top of the host stand: which day and service is on screen, how to look
- * at it (floor or timeline), and the three things a host does all shift: seat
- * a walk-in, add to the waitlist, take a booking. One row from iPad landscape
- * up (the day's figures sit in its corner on a wide screen, in the pane's own
- * toolbar below that); a phone has two short rows.
+ * The day in one short line for the header: covers, and (today) how many are
+ * still to seat. Parties and seated counts are in its title and in the list.
+ */
+export function HeaderStats({
+	totals,
+	isToday,
+}: {
+	totals: DayTotals
+	isToday: boolean
+}) {
+	const { _ } = useLingui()
+	const parties = _(
+		plural(totals.parties, { one: '# party', other: '# parties' }),
+	)
+	const covers = _(plural(totals.covers, { one: '# cover', other: '# covers' }))
+	const waiting = totals.toSeat
+	const toSeat = _(plural(waiting, { one: '# to seat', other: '# to seat' }))
+	return (
+		<p
+			className="inline-flex min-w-0 items-center gap-1.5 text-sm whitespace-nowrap"
+			title={`${parties} · ${covers}`}
+		>
+			<Icon name="users" aria-hidden className="text-muted-foreground size-4" />
+			<NumberPop value={covers} className="tnum font-semibold" />
+			{isToday ? (
+				<>
+					<span aria-hidden className="text-muted-foreground">
+						·
+					</span>
+					<NumberPop value={toSeat} className="tnum text-muted-foreground" />
+				</>
+			) : null}
+		</p>
+	)
+}
+
+/**
+ * The host stand's context in the shared app header: day, service and adds.
+ * The pane toolbar owns Floor | Timeline and the day's figures; a phone puts
+ * its adds in the bottom dock instead.
  */
 export function StandHeader({
 	totals,
@@ -195,13 +252,13 @@ export function StandHeader({
 	serviceId,
 	onService,
 	wide,
-	view,
-	onView,
 	waitlistOn,
 	stale,
 	onWalkIn,
 	onWaitlist,
 	onBooking,
+	offlineReason = null,
+	view = null,
 }: {
 	totals: DayTotals
 	/** A service narrows the totals: say so. */
@@ -217,17 +274,30 @@ export function StandHeader({
 	services: DayService[]
 	serviceId: string | null
 	onService: (id: string | null) => void
-	/** Two panes: the Floor | Timeline switch lives here (a phone has tabs instead). */
+	/** Two panes: show adds here; a phone uses the bottom dock. */
 	wide: boolean
-	view: MainView
-	onView: (view: MainView) => void
 	waitlistOn: boolean
 	stale: boolean
 	onWalkIn: () => void
 	onWaitlist: () => void
 	onBooking: () => void
+	/** The connection is down: the three adds wait for it (and say so). */
+	offlineReason?: string | null
+	/** Floor | Timeline, beside the adds on a wide screen. */
+	view?: React.ReactNode
 }) {
 	const { _, i18n } = useLingui()
+	const shortLabel = useMemo(() => {
+		// A phone has no room for the month: "Sun 25" (built from parts: en-US alone would say "25 Sun").
+		const parts = new Intl.DateTimeFormat(i18n.locale, {
+			weekday: 'short',
+			day: 'numeric',
+			timeZone: 'UTC',
+		}).formatToParts(new Date(`${date}T12:00:00Z`))
+		const part = (type: Intl.DateTimeFormatPartTypes) =>
+			parts.find((p) => p.type === type)?.value ?? ''
+		return `${part('weekday')} ${part('day')}`
+	}, [date, i18n.locale])
 	const label = useMemo(() => {
 		const format = new Intl.DateTimeFormat(i18n.locale, {
 			weekday: 'short',
@@ -255,24 +325,22 @@ export function StandHeader({
 	)
 
 	return (
-		<header
-			className="bk-header"
+		<div
+			className="bk-header min-w-0 shrink-0 flex-wrap gap-x-3"
+			role="group"
 			data-wide={wide}
 			aria-label={_(msg`Today’s book`)}
 		>
-			{wide ? <div className="bk-stats-xl">{stats}</div> : null}
-
-			<div className="bk-datebar">
-				<IconButton
-					label={_(msg`Previous day`)}
-					onClick={() => go(-1)}
-					className="border-border bg-card border"
-				>
-					<ChevronLeft className="size-5 rtl:rotate-180" />
+			<div className="bk-datebar flex shrink-0 items-center gap-1.5">
+				<IconButton label={_(msg`Previous day`)} onClick={() => go(-1)}>
+					<Icon name="chevron-left" className="size-5 rtl:rotate-180" />
 				</IconButton>
-				<label className="bk-date">
-					<span className="tnum" aria-hidden>
+				<label className="bk-date relative inline-flex items-center justify-center gap-2 rounded-(--station-control-radius) border-0 text-sm font-semibold">
+					<span className="bk-date-long tnum" aria-hidden>
 						{label}
+					</span>
+					<span className="bk-date-short tnum" aria-hidden>
+						{shortLabel}
 					</span>
 					<input
 						type="date"
@@ -284,58 +352,56 @@ export function StandHeader({
 						aria-label={_(msg`Choose the day, now ${label}`)}
 					/>
 				</label>
-				<IconButton
-					label={_(msg`Next day`)}
-					onClick={() => go(1)}
-					className="border-border bg-card border"
-				>
-					<ChevronRight className="size-5 rtl:rotate-180" />
+				<IconButton label={_(msg`Next day`)} onClick={() => go(1)}>
+					<Icon name="chevron-right" className="size-5 rtl:rotate-180" />
 				</IconButton>
 				{wide && !isToday ? (
-					<Button variant="outline" onClick={() => onDate(null)}>
+					<Button variant="ghost" onClick={() => onDate(null)}>
 						<Trans>Today</Trans>
 					</Button>
 				) : null}
 			</div>
 
-			<div className="bk-services">
+			<div className="bk-services [scrollbar-width:none] overflow-x-auto">
 				{services.length > 0 && !wide ? (
 					// A phone has no room for the segments: a plain choice list.
-					<select
+					<Select
 						aria-label={_(msg`Service`)}
 						value={serviceId ?? ''}
 						onChange={(event) => onService(event.target.value || null)}
-						className="border-border bg-card h-11 w-full min-w-0 rounded-xl border px-3 text-sm font-semibold"
+						className="border-border bg-card h-11 w-full min-w-0 rounded-(--station-control-radius) border px-3 text-base font-semibold sm:text-sm"
 					>
-						<option value="">{_(msg`All day`)}</option>
+						<option value="">{_(msg`All services`)}</option>
 						{services.map((s) => (
 							<option key={s.id} value={s.id}>
 								{s.name}
 							</option>
 						))}
-					</select>
+					</Select>
 				) : services.length > 0 ? (
 					<Segmented
 						label={_(msg`Service`)}
 						value={serviceId ?? ''}
 						onChange={(value) => onService(value || null)}
 						options={[
-							{ value: '', label: _(msg`All day`) },
+							{ value: '', label: _(msg`All services`) },
 							...services.map((s) => ({ value: s.id, label: s.name })),
 						]}
 						wrap={false}
 					/>
 				) : (
-					<span className="bg-muted inline-flex min-h-11 items-center rounded-2xl px-4 text-sm font-semibold">
+					<span className="bg-muted inline-flex min-h-11 items-center rounded-(--station-control-radius) px-4 text-sm font-semibold">
 						<Trans>All day</Trans>
 					</span>
 				)}
 			</div>
 
+			{wide ? <HeaderStats totals={totals} isToday={isToday} /> : null}
+
 			{!wide ? (
 				<div className="bk-stats-phone">
 					{!isToday ? (
-						<Button variant="outline" onClick={() => onDate(null)}>
+						<Button variant="ghost" onClick={() => onDate(null)}>
 							<Trans>Today</Trans>
 						</Button>
 					) : null}
@@ -343,7 +409,7 @@ export function StandHeader({
 				</div>
 			) : null}
 
-			<div className="bk-actions">
+			<div className="bk-actions ms-auto flex max-w-full flex-wrap items-center gap-2">
 				{/* Always present, so going stale is announced. */}
 				<span role="status" className="contents">
 					{stale ? (
@@ -351,7 +417,7 @@ export function StandHeader({
 							className="text-warning inline-flex items-center gap-1 text-sm font-medium"
 							title={_(msg`Not up to date`)}
 						>
-							<CloudOff className="size-4" />
+							<Icon name="cloud-off" className="size-4" />
 							<span className="max-xl:sr-only">
 								<Trans>Not up to date</Trans>
 							</span>
@@ -359,62 +425,41 @@ export function StandHeader({
 					) : null}
 				</span>
 				{wide ? (
-					<ViewTabs
-						label={_(msg`View`)}
-						value={isToday ? view : 'timeline'}
-						onChange={onView}
-						options={[
-							{
-								value: 'floor',
-								label: _(msg`Floor`),
-								icon: <LayoutGrid className="size-4" />,
-								disabled: !isToday,
-								compact: true,
-							},
-							{
-								value: 'timeline',
-								label: _(msg`Timeline`),
-								icon: <Rows3 className="size-4" />,
-								compact: true,
-							},
-						]}
-					/>
-				) : null}
-				{wide ? (
 					<>
+						{view}
 						<Button
-							variant="outline"
-							onClick={onWalkIn}
+							variant="ghost"
 							disabled={!isToday}
 							aria-label={_(msg`Walk-in`)}
 							title={_(msg`Walk-in`)}
+							{...whenOnline(onWalkIn, offlineReason)}
 						>
-							<UserPlus className="size-4" />
-							<span className="bk-action-label">
+							<Icon name="user-plus" className="size-4" />
+							<span className="bk-action-label" data-compact>
 								<Trans>Walk-in</Trans>
 							</span>
 						</Button>
 						{waitlistOn ? (
 							<Button
-								variant="outline"
-								onClick={onWaitlist}
+								variant="ghost"
 								disabled={!isToday}
 								aria-label={_(msg`Add to the waitlist`)}
 								title={_(msg`Add to the waitlist`)}
+								{...whenOnline(onWaitlist, offlineReason)}
 							>
-								<ListPlus className="size-4" />
-								<span className="bk-action-label">
+								<Icon name="list-plus" className="size-4" />
+								<span className="bk-action-label" data-compact>
 									<Trans>Waitlist</Trans>
 								</span>
 							</Button>
 						) : null}
 						<Button
 							variant="primary"
-							onClick={onBooking}
 							aria-label={_(msg`New booking`)}
 							title={_(msg`New booking`)}
+							{...whenOnline(onBooking, offlineReason)}
 						>
-							<CalendarPlus className="size-4" />
+							<Icon name="calendar-plus" className="size-4" />
 							<span className="bk-action-label">
 								<Trans>Book</Trans>
 							</span>
@@ -422,7 +467,7 @@ export function StandHeader({
 					</>
 				) : null}
 			</div>
-		</header>
+		</div>
 	)
 }
 
@@ -449,18 +494,20 @@ export function PaneTabs({
 					{
 						value: 'list',
 						label: _(msg`List (${listCount})`),
-						icon: <List className="size-4 max-[430px]:hidden" />,
+						icon: <Icon name="list" className="size-4 max-[430px]:hidden" />,
 					},
 					{
 						value: 'floor',
 						label: _(msg`Floor`),
-						icon: <LayoutGrid className="size-4 max-[430px]:hidden" />,
+						icon: (
+							<Icon name="layout-grid" className="size-4 max-[430px]:hidden" />
+						),
 						disabled: !floorOn,
 					},
 					{
 						value: 'timeline',
 						label: _(msg`Timeline`),
-						icon: <Rows3 className="size-4 max-[430px]:hidden" />,
+						icon: <Icon name="rows-3" className="size-4 max-[430px]:hidden" />,
 					},
 				]}
 			/>
@@ -479,42 +526,55 @@ export function StandDock({
 	onWalkIn,
 	onWaitlist,
 	onBooking,
+	dockRef,
+	offlineReason = null,
 }: {
 	isToday: boolean
 	waitlistOn: boolean
 	onWalkIn: () => void
 	onWaitlist: () => void
 	onBooking: () => void
+	/** The dock itself, so a toast can rise above it instead of covering it. */
+	dockRef?: React.Ref<HTMLElement>
+	/** The connection is down: the adds wait for it (and say so). */
+	offlineReason?: string | null
 }) {
 	const { _ } = useLingui()
 	return (
 		<nav
+			ref={dockRef}
 			aria-label={_(msg`Add to the book`)}
-			className="bk-dock"
+			className="bk-dock border-border bg-card grid shrink-0 gap-2 border-t"
 			data-count={waitlistOn ? 3 : 2}
 		>
 			<Button
-				variant="outline"
+				variant="ghost"
 				size="lg"
-				onClick={onWalkIn}
 				disabled={!isToday}
-				className="h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5"
+				{...whenOnline(onWalkIn, offlineReason)}
+				className={cn(
+					'h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5',
+					offlineReason && 'cursor-not-allowed opacity-45',
+				)}
 			>
-				<UserPlus aria-hidden className="size-5 shrink-0" />
+				<Icon name="user-plus" aria-hidden className="size-5 shrink-0" />
 				<span className="min-w-0 text-center leading-tight">
 					<Trans>Walk-in</Trans>
 				</span>
 			</Button>
 			{waitlistOn ? (
 				<Button
-					variant="outline"
+					variant="ghost"
 					size="lg"
-					onClick={onWaitlist}
 					disabled={!isToday}
 					aria-label={_(msg`Add to the waitlist`)}
-					className="h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5"
+					{...whenOnline(onWaitlist, offlineReason)}
+					className={cn(
+						'h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5',
+						offlineReason && 'cursor-not-allowed opacity-45',
+					)}
 				>
-					<ListPlus aria-hidden className="size-5 shrink-0" />
+					<Icon name="list-plus" aria-hidden className="size-5 shrink-0" />
 					<span className="min-w-0 text-center leading-tight">
 						<Trans>Waitlist</Trans>
 					</span>
@@ -523,15 +583,60 @@ export function StandDock({
 			<Button
 				variant="primary"
 				size="lg"
-				onClick={onBooking}
 				aria-label={_(msg`New booking`)}
-				className="h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5"
+				{...whenOnline(onBooking, offlineReason)}
+				className={cn(
+					'h-auto min-h-12 min-w-0 gap-1.5 px-2 py-1.5',
+					offlineReason && 'cursor-not-allowed opacity-45',
+				)}
 			>
-				<CalendarPlus aria-hidden className="size-5 shrink-0" />
+				<Icon name="calendar-plus" aria-hidden className="size-5 shrink-0" />
 				<span className="min-w-0 text-center leading-tight">
 					<Trans>Book</Trans>
 				</span>
 			</Button>
 		</nav>
+	)
+}
+
+/**
+ * What the table colours mean, one tap away instead of across the toolbar:
+ * the floor's states are learnt once and read every minute after.
+ */
+export function TableLegend() {
+	const { _ } = useLingui()
+	const states = [
+		{ kind: 'open', label: _(msg`Open`) },
+		{ kind: 'soon', label: _(msg`Due soon`) },
+		{ kind: 'seated', label: _(msg`Seated`) },
+		{ kind: 'resetting', label: _(msg`Resetting`) },
+		{ kind: 'blocked', label: _(msg`Blocked`) },
+	]
+	return (
+		<Popover>
+			<PopoverTrigger
+				render={
+					<IconButton label={_(msg`Table colours`)} className="ms-auto">
+						<Icon name="info" className="size-5" />
+					</IconButton>
+				}
+			/>
+			<PopoverContent align="end" className="w-56">
+				<ul
+					aria-label={_(msg`Table colours`)}
+					className="flex flex-col gap-2.5 p-1"
+				>
+					{states.map((state) => (
+						<li key={state.kind} className="flex items-center gap-2.5 text-sm">
+							<span
+								className="bk-dot inline-block h-2.5 w-2.5 shrink-0"
+								data-kind={state.kind}
+							/>
+							{state.label}
+						</li>
+					))}
+				</ul>
+			</PopoverContent>
+		</Popover>
 	)
 }

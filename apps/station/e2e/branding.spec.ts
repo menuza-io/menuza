@@ -22,11 +22,12 @@ test.describe("the till wears the restaurant's brand", () => {
 		await expect(
 			page.getByRole('heading', { name: 'Demo Kitchen' }),
 		).toBeVisible()
-		await expect(page.getByText('Downtown')).toBeVisible()
+		await page.getByRole('button', { name: 'Apps', exact: true }).click()
+		const launcher = page.getByRole('dialog', { name: 'Station apps' })
+		await expect(launcher.getByText('Downtown', { exact: true })).toBeVisible()
 		await expect(page).toHaveTitle('Demo Kitchen · Station')
-		await expect(
-			page.locator('header').getByText('D', { exact: true }),
-		).toBeVisible()
+		await expect(launcher.getByText('D', { exact: true })).toBeVisible()
+		await page.keyboard.press('Escape')
 		expect(await cssVar(page, '--primary')).toBe('oklch(.46 .11 150)')
 		expect(await cssVar(page, '--radius')).toBe('.875rem')
 		await expect(page.locator('style#org-theme')).toHaveCount(1)
@@ -60,11 +61,12 @@ test.describe("the till wears the restaurant's brand", () => {
 			card.evaluate((el) =>
 				parseFloat(getComputedStyle(el).borderTopLeftRadius),
 			)
-		const rounded = await radius() // --radius .875rem (14px) + 10px
+		const rounded = await radius()
+		expect(rounded).toBe(14) // Published .875rem, without a Station offset.
 		await theme(':root{--radius:0rem}')
 		await refresh(page)
 		await expect.poll(radius).toBeLessThan(rounded)
-		expect(await radius()).toBe(10)
+		expect(await radius()).toBe(0)
 	})
 
 	test('a dark brand turns the whole till dark', async ({ unpaired: page }) => {

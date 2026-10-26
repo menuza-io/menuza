@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { at, day, rsv, SERVICES } from './testing.ts'
 import {
+	capLanes,
 	layoutTimeline,
+	NO_TABLE_LANES,
 	configuredCap,
 	mergePacing,
 	minuteAt,
@@ -10,6 +12,7 @@ import {
 	packLanes,
 	slotTotals,
 	timelineRange,
+	trackOffset,
 	wallMinutes,
 } from './timeline.ts'
 import { zonedEpoch } from './zoned.ts'
@@ -292,6 +295,20 @@ describe('the clock and the pointer', () => {
 		expect(minuteAt(100, 48, range)).toBe(11 * 60 + 30)
 		expect(minuteAt(-20, 48, range)).toBe(11 * 60)
 		expect(minuteAt(9999, 48, range)).toBe(11 * 60 + 45)
+	})
+	it('reads a tap from the right edge in Arabic, where the time axis is mirrored', () => {
+		const range = { startMin: 11 * 60, endMin: 12 * 60 }
+		const rect = { left: 100, right: 292 }
+		// 100px into the track from where the day starts, either way round.
+		expect(minuteAt(trackOffset(rect, 200, false), 48, range)).toBe(
+			11 * 60 + 30,
+		)
+		expect(minuteAt(trackOffset(rect, 192, true), 48, range)).toBe(11 * 60 + 30)
+		// The right end is the first slot in Arabic and the last in English.
+		expect(minuteAt(trackOffset(rect, 290, true), 48, range)).toBe(11 * 60)
+		expect(minuteAt(trackOffset(rect, 290, false), 48, range)).toBe(
+			11 * 60 + 45,
+		)
 	})
 	it('formats minutes after midnight as a clock time', () => {
 		expect(minutesFormatter('en')(19 * 60 + 30).replace(/\s/g, ' ')).toBe(
@@ -605,5 +622,73 @@ describe('a cap that is only the server’s default', () => {
 		expect(cells[0]).toMatchObject({ covers: 15, cap: null })
 		// Below the seats (16): somebody set it, so it shades.
 		expect(cells[1]).toMatchObject({ covers: 9, cap: 10 })
+	})
+})
+
+describe('the "No table" row', () => {
+	const range = { startMin: 11 * 60, endMin: 23 * 60 }
+	const now = at(13 * 60 + 32)
+	const none = (feed: ReturnType<typeof day>, at: number | null) =>
+		layoutTimeline(feed, range, { now: at }).find((g) => g.key === 'none')
+	it('leaves out a booking whose time has passed with nobody at the stand, so it takes no height', () => {
+		const feed = day([
+			rsv({ id: 'missed', start: 11 * 60 + 30, tableIds: [] }),
+			rsv({ id: 'live', start: 14 * 60, tableIds: [] }),
+		])
+		expect(none(feed, now)!.rows[0]!.bars.map((b) => b.reservation.id)).toEqual(
+			['live'],
+		)
+		// Not when the day is not today (no "now"): everything still to place shows.
+		expect(none(feed, null)!.rows[0]!.bars).toHaveLength(2)
+	})
+	it('keeps a party at the stand with no table, even past its time, and drops a finished one', () => {
+		const feed = day([
+			rsv({ id: 'here', start: 11 * 60 + 30, status: 'arrived', tableIds: [] }),
+			rsv({ id: 'done', start: 12 * 60, status: 'finished', tableIds: [] }),
+		])
+		expect(none(feed, now)!.rows[0]!.bars.map((b) => b.reservation.id)).toEqual(
+			['here'],
+		)
+	})
+	it('is no row at all when every booking left in it is gone', () => {
+		const feed = day([rsv({ start: 11 * 60 + 30, tableIds: [] })])
+		expect(none(feed, now)).toBeUndefined()
+	})
+	it('sizes its lines from the bars that are left', () => {
+		const feed = day([
+			...Array.from({ length: 6 }, (_u, i) =>
+				rsv({ id: `old${i}`, start: 11 * 60 + i * 5, tableIds: [] }),
+			),
+			rsv({ id: 'a', start: 15 * 60, tableIds: [] }),
+			rsv({ id: 'b', start: 15 * 60, tableIds: [] }),
+		])
+		expect(none(feed, now)!.rows[0]!.lanes).toBe(2)
+	})
+})
+
+describe('a row cut to its first lines', () => {
+	const range = { startMin: 11 * 60, endMin: 23 * 60 }
+	const feed = day(
+		Array.from({ length: 7 }, (_u, i) =>
+			rsv({ id: `r${i}`, start: 15 * 60 + i, tableIds: [] }),
+		),
+	)
+	const row = layoutTimeline(feed, range).find((g) => g.key === 'none')!
+		.rows[0]!
+	it('shows the first lines and counts the bookings behind the button', () => {
+		expect(NO_TABLE_LANES).toBe(3)
+		const capped = capLanes(row, NO_TABLE_LANES)
+		expect(row.lanes).toBe(7)
+		expect(capped.lanes).toBe(3)
+		expect(capped.bars).toHaveLength(3)
+		expect(capped.hidden).toBe(4)
+	})
+	it('is the row as it is when it fits, or when the cap is lifted', () => {
+		expect(capLanes(row, Infinity)).toMatchObject({ lanes: 7, hidden: 0 })
+		expect(capLanes({ bars: [], lanes: 1 }, 3)).toEqual({
+			bars: [],
+			lanes: 1,
+			hidden: 0,
+		})
 	})
 })

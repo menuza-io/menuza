@@ -134,6 +134,12 @@ export type PosState = {
 	removeLine: (lineId: string) => void
 	loadTab: (order: PosOrder) => void
 	clearOrder: () => void
+	/**
+	 * The tab in the cart moved to another terminal: the cart lets it go and
+	 * keeps only what was not sent yet, as a new order (the rest is that
+	 * terminal's now).
+	 */
+	releaseTab: () => void
 }
 
 const newId = () => crypto.randomUUID()
@@ -236,6 +242,63 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		catalogStatus: (categories.length > 0 ? 'ready' : 'empty') as CatalogStatus,
 		catalogError: null,
 	}
+}
+
+/** A line as rung up now: not sent, not served, whatever it was copied from. */
+function unsent(
+	line: Omit<CartLine, 'id'> & { id?: string },
+): Omit<CartLine, 'id'> {
+	const {
+		id: _id,
+		sentAt: _sent,
+		servedAt: _served,
+		sentQuantity: _had,
+		...rest
+	} = line
+	return rest
+}
+
+/**
+ * Adds a line not sent yet. It joins a line not sent yet with the same dish,
+ * never one the kitchen already has: that comes again as a new round.
+ */
+function withUnsent(
+	lines: CartLine[],
+	added: Omit<CartLine, 'id'> & { id?: string },
+): CartLine[] {
+	const line = unsent(added)
+	const signature = lineSignature(line)
+	const existing = lines.find(
+		(l) => !l.sentAt && lineSignature(l) === signature,
+	)
+	if (!existing) return [...lines, { ...line, id: newId() }]
+	// A line holds at most 50: the rest starts another line, never vanishes.
+	const total = existing.quantity + line.quantity
+	const merged = lines.map((l) =>
+		l.id === existing.id ? { ...l, quantity: Math.min(50, total) } : l,
+	)
+	return total > 50
+		? [...merged, { ...line, quantity: Math.min(50, total - 50), id: newId() }]
+		: merged
+}
+
+/**
+ * `quantity` of a dish already sent: the sent line comes back up to what the
+ * kitchen has (nothing to send again, no void), the rest is a new round.
+ */
+function moreOfSent(
+	lines: CartLine[],
+	line: CartLine,
+	quantity: number,
+): CartLine[] {
+	const had = Math.max(line.quantity, line.sentQuantity ?? line.quantity)
+	const back = Math.min(quantity, had)
+	const restored = lines.map((l) =>
+		l.id === line.id ? { ...l, quantity: back } : l,
+	)
+	return quantity > back
+		? withUnsent(restored, { ...line, quantity: quantity - back })
+		: restored
 }
 
 export const usePos = create<PosState>((set, get) => ({
@@ -656,41 +719,62 @@ export const usePos = create<PosState>((set, get) => ({
 	setTableLabel: (tableLabel) => set({ tableLabel }),
 
 	addLine(added) {
-		set((s) => {
+		set((s) => ({
 			// One language of record for every line, whichever till rings it up.
-			const line = renameLine(added, s.recordItems.get(added.itemId))
-			const signature = lineSignature(line)
-			const existing = s.lines.find((l) => lineSignature(l) === signature)
-			if (existing) {
-				return {
-					lines: s.lines.map((l) =>
-						l.id === existing.id
-							? { ...l, quantity: Math.min(50, l.quantity + line.quantity) }
-							: l,
-					),
-				}
-			}
-			return { lines: [...s.lines, { ...line, id: newId() }] }
-		})
-	},
-	setQuantity(lineId, quantity) {
-		set((s) => ({
-			lines:
-				quantity <= 0
-					? s.lines.filter((l) => l.id !== lineId)
-					: s.lines.map((l) =>
-							l.id === lineId ? { ...l, quantity: Math.min(50, quantity) } : l,
-						),
-		}))
-	},
-	replaceLine(lineId, line) {
-		set((s) => ({
-			lines: s.lines.map((l) =>
-				l.id === lineId
-					? { ...renameLine(line, s.recordItems.get(line.itemId)), id: lineId }
-					: l,
+			lines: withUnsent(
+				s.lines,
+				renameLine(added, s.recordItems.get(added.itemId)),
 			),
 		}))
+	},
+	setQuantity(lineId, quantity) {
+		set((s) => {
+			const line = s.lines.find((l) => l.id === lineId)
+			// More of a dish already sent: back up to what the kitchen has, and
+			// anything beyond is a new line (the kitchen's ticket stays as it was).
+			if (line?.sentAt && quantity > line.quantity)
+				return { lines: moreOfSent(s.lines, line, quantity) }
+			return {
+				lines:
+					quantity <= 0
+						? s.lines.filter((l) => l.id !== lineId)
+						: s.lines.map((l) =>
+								l.id === lineId
+									? { ...l, quantity: Math.min(50, quantity) }
+									: l,
+							),
+			}
+		})
+	},
+	replaceLine(lineId, line) {
+		set((s) => {
+			const old = s.lines.find((l) => l.id === lineId)
+			if (!old) return {}
+			const next = renameLine(line, s.recordItems.get(line.itemId))
+			const same = lineSignature(next) === lineSignature(old)
+			// A sent dish asked for more: it stays as sent, and the extra goes as a new round.
+			if (old.sentAt && same && next.quantity > old.quantity)
+				return { lines: moreOfSent(s.lines, old, next.quantity) }
+			return {
+				lines: s.lines.map((l) =>
+					l.id === lineId
+						? {
+								...unsent(next),
+								id: lineId,
+								// Changed, it is new work for the kitchen; unchanged, it stays sent (and
+								// served), with what was sent (so more of it is not a new round).
+								...(same
+									? {
+											sentAt: old.sentAt,
+											servedAt: old.servedAt,
+											sentQuantity: old.sentQuantity,
+										}
+									: {}),
+							}
+						: l,
+				),
+			}
+		})
 	},
 	removeLine: (lineId) =>
 		set((s) => ({ lines: s.lines.filter((l) => l.id !== lineId) })),
@@ -710,11 +794,23 @@ export const usePos = create<PosState>((set, get) => ({
 			tableLabel: order.tableLabel,
 			// A tab opened before (or on a till in another language) continues in
 			// the language of record, so its documents read one language.
-			lines: order.lines.map((line) =>
-				renameLine(decodedLine(line), get().recordItems.get(line.itemId)),
-			),
+			lines: order.lines.map((line) => ({
+				...renameLine(decodedLine(line), get().recordItems.get(line.itemId)),
+				// Saved before lines carried their time: they were sent when the tab was opened.
+				sentAt: line.sentAt ?? order.createdAt,
+				sentQuantity: line.quantity,
+			})),
 			adjustments: order.adjustments,
 		}),
+	releaseTab: () =>
+		set((s) => ({
+			activeOrderId: null,
+			activeTax: null,
+			adjustments: [],
+			lines: s.lines
+				.filter((line) => !line.sentAt)
+				.map((line) => ({ ...unsent(line), id: line.id })),
+		})),
 	clearOrder: () =>
 		set({
 			lines: [],

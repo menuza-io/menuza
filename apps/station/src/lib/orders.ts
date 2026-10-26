@@ -187,7 +187,7 @@ export function validateOrderDraft(draft: OrderDraft) {
 	if (draft.lines.length === 0) throw new Error(t`Cannot save an empty order`)
 	if (draft.lines.length > MAX_ORDER_LINES) {
 		throw new Error(
-			t`An order can have at most ${MAX_ORDER_LINES} different items. Split it across two orders.`,
+			t`An order holds at most ${MAX_ORDER_LINES} lines. Take off the newest items, save, then ring them up as a new order.`,
 		)
 	}
 	if (draft.orderSource === 'phone') {
@@ -221,6 +221,75 @@ const contactDetails = (draft: OrderDraft) =>
 				pickupAt: null,
 				pickupTimeZone: null,
 			}
+
+/**
+ * The kitchen cleared this tab's ticket from the pass at `clearedAt`: every
+ * dish sent before then has left the kitchen. Recorded as served on this till,
+ * so a later round reopening the ticket does not show those dishes as ready.
+ */
+export async function markCleared(
+	id: string,
+	clearedAt: number,
+): Promise<void> {
+	await db.transaction('rw', db.orders, async () => {
+		const order = await db.orders.get(id)
+		if (!order || order.status !== 'open') return
+		const done = (line: CartLine) =>
+			Boolean(line.sentAt) && line.sentAt! <= clearedAt && !line.servedAt
+		if (!order.lines.some(done)) return
+		await db.orders.update(id, {
+			lines: order.lines.map((line) =>
+				done(line) ? { ...line, servedAt: clearedAt } : line,
+			),
+		})
+	})
+}
+
+/**
+ * Saving sends what was not sent yet: every line without a time gets this
+ * save's time, so one save is one round to the kitchen.
+ */
+export const sendLines = (lines: CartLine[], now: number): CartLine[] =>
+	lines.map((line) => (line.sentAt ? line : { ...line, sentAt: now }))
+
+/**
+ * A tab saved from the cart keeps what was marked served meanwhile (in Orders):
+ * an unchanged line carries its saved mark over.
+ */
+function keepServed(lines: CartLine[], saved: CartLine[]): CartLine[] {
+	const before = new Map(saved.map((line) => [line.id, line]))
+	return lines.map((line) => {
+		const was = before.get(line.id)
+		return !line.servedAt &&
+			was?.servedAt &&
+			lineSignature(was) === lineSignature(line)
+			? { ...line, servedAt: was.servedAt }
+			: line
+	})
+}
+
+/**
+ * Marks dishes of an open tab as brought to the table. It is this till's note
+ * for its staff: the bill, its revision and the upload are untouched.
+ */
+export async function markServed(
+	id: string,
+	lineIds: readonly string[],
+	at: number = Date.now(),
+): Promise<void> {
+	const ids = new Set(lineIds)
+	await db.transaction('rw', db.orders, async () => {
+		const order = await db.orders.get(id)
+		if (!order || order.status !== 'open') return
+		await db.orders.update(id, {
+			lines: order.lines.map((line) =>
+				ids.has(line.id) && line.sentAt && !line.servedAt
+					? { ...line, servedAt: at }
+					: line,
+			),
+		})
+	})
+}
 
 /**
  * What a new version of a saved order takes off it: lines that are gone, the
@@ -283,7 +352,7 @@ export async function createOrder(
 			taxInclusive: draft.taxInclusive ?? false,
 			catalogFetchedAt: draft.catalogFetchedAt ?? null,
 			shiftId,
-			lines: draft.lines,
+			lines: sendLines(draft.lines, now),
 			lineVoids: [],
 			adjustments: draft.adjustments,
 			totals: computeTotals({
@@ -374,7 +443,7 @@ export async function updateTab(
 			...contactDetails(draft),
 			customerName: draft.customerName.trim(),
 			tableLabel: draft.tableLabel.trim(),
-			lines: draft.lines,
+			lines: keepServed(sendLines(draft.lines, now), order.lines),
 			lineVoids,
 			adjustments: draft.adjustments,
 			totals: computeTotals({
@@ -659,7 +728,13 @@ export type ServerTab = {
 	tableLabel: string | null
 	staff: StaffRef | null
 	signIn: SignInMode | null
-	lines: Array<Omit<CartLine, 'id'>>
+	/** As uploaded: the till's id for the line and when it was sent, from a contract 4 till. */
+	lines: Array<
+		Omit<CartLine, 'id' | 'sentAt' | 'servedAt' | 'sentQuantity'> & {
+			id?: string
+			sentAt?: string
+		}
+	>
 	lineVoids: Array<Omit<LineVoid, 'at'> & { at: string }>
 	adjustments: Adjustment[]
 	totals: PosOrder['totals']
@@ -704,7 +779,13 @@ export async function adoptTab(
 		taxRatePercent,
 		taxInclusive: tab.taxInclusive,
 		catalogFetchedAt: null,
-		lines: tab.lines.map((l) => ({ ...l, id: crypto.randomUUID() })),
+		// Everything on it was sent by the terminal that had it: the same ids (the
+		// kitchen keeps its progress) and rounds, or the tab's opening for an older till's.
+		lines: tab.lines.map((l) => ({
+			...l,
+			id: l.id ?? crypto.randomUUID(),
+			sentAt: l.sentAt ? Date.parse(l.sentAt) : Date.parse(tab.createdAt),
+		})),
 		lineVoids: tab.lineVoids.map((v) => ({ ...v, at: Date.parse(v.at) })),
 		adjustments: tab.adjustments,
 		totals: tab.totals,

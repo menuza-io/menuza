@@ -1,20 +1,30 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Armchair } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useEffect, useState } from 'react'
 import { waitlistDirty, walkInDirty } from './booking.ts'
 import { DiscardAsk, DiscardClose, useDiscardGuard } from './discard.tsx'
+import { shortName } from './feed.ts'
 import { formatPhoneTyping } from './guest.ts'
+import { type LateGuest } from './lookup.ts'
 import { looksLikePhone, PartySize } from './sheets.tsx'
-import { Button, cn, fieldClass, Modal } from '~/ui/primitives.tsx'
+import { Input, Button, cn, Modal } from '~/ui/primitives.tsx'
 
 /** A walk-in from the top bar: how many, then the floor picks the table. */
 export function WalkInSheet({
 	open,
+	lateGuests,
+	formatTime,
+	onUseLate,
 	onPlace,
 	onClose,
 }: {
 	open: boolean
+	/** Today's late and missed parties (and no-shows) a typed name may really be. */
+	lateGuests?: (typed: string) => LateGuest[]
+	formatTime?: (epochMs: number) => string
+	/** Seat one of them on their own booking instead of making a second one. */
+	onUseLate?: (guest: LateGuest) => void
 	onPlace: (partySize: number, guestName: string) => void
 	onClose: () => void
 }) {
@@ -47,14 +57,14 @@ export function WalkInSheet({
 						onDiscard={guard.discard}
 					/>
 				) : (
-					<div className="mb-safe">
+					<div>
 						<Button
 							variant="primary"
 							size="lg"
 							className="w-full"
 							onClick={() => onPlace(size, name)}
 						>
-							<Armchair className="size-5" />
+							<Icon name="armchair" className="size-5" />
 							<Trans>Choose a table</Trans>
 						</Button>
 					</div>
@@ -73,21 +83,108 @@ export function WalkInSheet({
 					<span className="font-semibold">
 						<Trans>Name (optional)</Trans>
 					</span>
-					<input
-						className={fieldClass}
+					<Input
 						value={name}
 						maxLength={120}
 						onChange={(event) => setName(event.target.value)}
 						autoComplete="off"
 					/>
 				</label>
+				{/* A guest who has a booking, walking in: seat that booking, not a second one. */}
+				<LateGuests
+					typed={name}
+					find={lateGuests}
+					formatTime={formatTime}
+					onUse={onUseLate}
+				/>
 			</div>
 		</Modal>
 	)
 }
 
+/**
+ * Under a name field: the late or missed parties (and no-shows) the typed name
+ * could be. One tap seats that booking instead of making a second one for the
+ * same guest.
+ */
+export function LateGuests({
+	typed,
+	find,
+	formatTime,
+	onUse,
+}: {
+	typed: string
+	find?: (typed: string) => LateGuest[]
+	formatTime?: (epochMs: number) => string
+	onUse?: (guest: LateGuest) => void
+}) {
+	const { _ } = useLingui()
+	const found = find && onUse && formatTime ? find(typed) : []
+	if (found.length === 0 || !formatTime || !onUse) return null
+	return (
+		<div
+			className="flex flex-col gap-2"
+			role="group"
+			aria-label={_(msg`Already booked?`)}
+		>
+			<span className="text-muted-foreground text-sm font-medium">
+				<Trans>Already booked? Seat their booking.</Trans>
+			</span>
+			<ul className="flex flex-col gap-2">
+				{found.slice(0, 3).map((guest) => {
+					const r = guest.reservation
+					const who = shortName(r, _(msg`Guest`))
+					const time = formatTime(r.startAt)
+					const size = r.partySize
+					return (
+						<li key={r.id}>
+							<button
+								type="button"
+								onClick={() => onUse(guest)}
+								className="border-border bg-card hover:bg-accent flex min-h-14 w-full items-center gap-3 rounded-(--station-panel-radius) border px-4 py-2 text-start"
+							>
+								<Icon
+									name="user-check"
+									aria-hidden
+									className="text-primary size-5 shrink-0"
+								/>
+								<span className="min-w-0 flex-1">
+									<span className="block truncate font-semibold">
+										<Trans>
+											Seat <bdi>{who}</bdi> (booked {time})
+										</Trans>
+									</span>
+									<span className="text-muted-foreground block text-xs">
+										{guest.kind === 'seat' ? (
+											<Trans>Party of {size}, not here yet.</Trans>
+										) : guest.kind === 'undo' ? (
+											<Trans>
+												Party of {size}, marked as a no-show. Taken back first.
+											</Trans>
+										) : (
+											<Trans>
+												Party of {size}, marked as a no-show. Marked here, then
+												seated.
+											</Trans>
+										)}
+									</span>
+								</span>
+							</button>
+						</li>
+					)
+				})}
+			</ul>
+		</div>
+	)
+}
+
 /** What the waitlist form starts with: a name, or a number, typed into a search that found no one. */
-export type WaitlistPrefill = { displayName: string; phone: string }
+export type WaitlistPrefill = {
+	displayName: string
+	phone: string
+	/** The party's size, when it is known (a party with no table, put on the waitlist). */
+	partySize?: number
+}
 
 /** Adds a party to the waitlist at the stand. */
 export function JoinWaitlistSheet({
@@ -95,11 +192,19 @@ export function JoinWaitlistSheet({
 	busy,
 	prefill = null,
 	loadQuote,
+	lateGuests,
+	formatTime,
+	onUseLate,
 	onJoin,
 	onClose,
 }: {
 	open: boolean
 	busy: boolean
+	/** Today's late and missed parties (and no-shows) a typed name may really be. */
+	lateGuests?: (typed: string) => LateGuest[]
+	formatTime?: (epochMs: number) => string
+	/** Seat one of them on their own booking instead of adding them to the line. */
+	onUseLate?: (guest: LateGuest) => void
 	/** Start with this name and number instead of an empty form. */
 	prefill?: WaitlistPrefill | null
 	/** How long a party this size would wait now, to tell them before they join. */
@@ -121,7 +226,7 @@ export function JoinWaitlistSheet({
 	useEffect(() => {
 		if (open) {
 			setName(prefill?.displayName ?? '')
-			setSize(2)
+			setSize(prefill?.partySize ?? 2)
 			setPhone(prefill?.phone ?? '')
 		}
 	}, [open, prefill])
@@ -149,7 +254,11 @@ export function JoinWaitlistSheet({
 		open,
 		dirty: waitlistDirty(
 			{ name, phone, size },
-			{ name: prefill?.displayName ?? '', phone: prefill?.phone ?? '' },
+			{
+				name: prefill?.displayName ?? '',
+				phone: prefill?.phone ?? '',
+				size: prefill?.partySize ?? 2,
+			},
 		),
 		onClose,
 	})
@@ -167,7 +276,7 @@ export function JoinWaitlistSheet({
 						onDiscard={guard.discard}
 					/>
 				) : (
-					<div className="mb-safe">
+					<div>
 						<Button
 							variant="primary"
 							size="lg"
@@ -199,14 +308,19 @@ export function JoinWaitlistSheet({
 					<span className="font-semibold">
 						<Trans>Name</Trans>
 					</span>
-					<input
-						className={fieldClass}
+					<Input
 						value={name}
 						maxLength={120}
 						autoComplete="off"
 						onChange={(event) => setName(event.target.value)}
 					/>
 				</label>
+				<LateGuests
+					typed={name}
+					find={lateGuests}
+					formatTime={formatTime}
+					onUse={onUseLate}
+				/>
 				<div className="flex flex-col gap-2">
 					<span className="font-semibold">
 						<Trans>Party size</Trans>
@@ -227,8 +341,8 @@ export function JoinWaitlistSheet({
 					<span className="font-semibold">
 						<Trans>Phone</Trans>
 					</span>
-					<input
-						className={cn(fieldClass, 'tnum')}
+					<Input
+						className={cn('tabular-nums')}
 						type="tel"
 						inputMode="tel"
 						dir="ltr"

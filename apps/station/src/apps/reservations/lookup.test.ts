@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	displayNameOf,
+	findLateGuests,
 	findRepeat,
 	guestFromQuery,
 	highlightRanges,
@@ -60,6 +61,18 @@ describe('a booking that repeats one in the book', () => {
 			[],
 		)
 		expect(found).toMatchObject({ reservation: { id: rana.id } })
+	})
+	it('is not found by a Saudi number typed without its code when the booking is Emirati', () => {
+		const uae = rsv({
+			start: 13 * 60,
+			guest: guest('Hind', 'Said', '+971551234567'),
+		})
+		const typed = { first: 'Someone', last: '', phone: '0551234567' }
+		// Not knowing the location's country, the endings agree.
+		expect(findRepeat(typed, [uae], [])).not.toBeNull()
+		// Knowing it is Saudi Arabia, a number typed at home is a Saudi one.
+		expect(findRepeat(typed, [uae], [], { countryCode: '966' })).toBeNull()
+		expect(findRepeat(typed, [uae], [], { countryCode: '971' })).not.toBeNull()
 	})
 	it('is never a first name alone', () => {
 		expect(
@@ -160,5 +173,94 @@ describe('where the typed words are in a name', () => {
 		expect(marked('Maya', 'may ya')).toEqual(['Maya'])
 		expect(marked('Maya', 'zzz')).toEqual([])
 		expect(marked('Maya', '   ')).toEqual([])
+	})
+})
+
+describe('a guest who walks in with a booking', () => {
+	const NOW = Date.UTC(2026, 2, 2, 13, 30)
+	const MIN = 60_000
+	const WINDOW = 30 * MIN
+	const g = (first: string, last: string) => ({
+		id: `g-${first}`,
+		name: `${first} ${last}`,
+		firstName: first,
+		lastName: last,
+		phone: null,
+	})
+	const yusuf = rsv({
+		start: 12 * 60 + 55,
+		status: 'confirmed',
+		guest: g('Yusuf', 'Barakat'),
+	})
+	const lateFound = (typed: string, list = [yusuf]) =>
+		findLateGuests(list, typed, NOW, WINDOW)
+	it('offers a late party whose name the typed words start', () => {
+		expect(lateFound('yus')).toEqual([{ reservation: yusuf, kind: 'seat' }])
+		expect(lateFound('Yusuf Bar')).toHaveLength(1)
+		expect(lateFound('bara')).toHaveLength(1)
+		expect(lateFound('mohammed')).toEqual([])
+	})
+	it('offers nothing for fewer than two letters', () => {
+		expect(lateFound('y')).toEqual([])
+		expect(lateFound('')).toEqual([])
+		expect(lateFound('  ')).toEqual([])
+	})
+	it('ignores accents and case', () => {
+		const jose = rsv({
+			start: 12 * 60,
+			status: 'booked',
+			guest: g('José', 'Núñez'),
+		})
+		expect(lateFound('jos', [jose])).toHaveLength(1)
+	})
+	it('does not offer a party that is not late yet, here, seated or gone', () => {
+		const notYet = rsv({
+			start: 14 * 60,
+			status: 'booked',
+			guest: g('Yusuf', 'Aziz'),
+		})
+		expect(lateFound('yusuf', [notYet])).toEqual([])
+		for (const status of ['arrived', 'seated', 'finished', 'cancelled']) {
+			const r = rsv({ start: 12 * 60, status, guest: g('Yusuf', 'Aziz') })
+			expect(lateFound('yusuf', [r])).toEqual([])
+		}
+	})
+	it('offers a recent no-show to undo, and an older one to reopen', () => {
+		const recent = rsv({
+			start: 12 * 60,
+			status: 'no_show',
+			noShowAt: NOW - 6 * MIN,
+			guest: g('Yusuf', 'Aziz'),
+		})
+		const old = rsv({
+			start: 11 * 60,
+			status: 'no_show',
+			noShowAt: NOW - 90 * MIN,
+			guest: g('Yusuf', 'Nasser'),
+		})
+		expect(lateFound('yusuf', [recent, old]).map((l) => l.kind)).toEqual([
+			'reopen',
+			'undo',
+		])
+	})
+	it('does not offer an undo of a no-show that was someone else’s call', () => {
+		const theirs = rsv({
+			start: 12 * 60,
+			status: 'no_show',
+			noShowAt: NOW - 6 * MIN,
+			canUndo: false,
+			guest: g('Yusuf', 'Aziz'),
+		})
+		expect(lateFound('yusuf', [theirs])[0]!.kind).toBe('reopen')
+	})
+	it('lists the earliest booking first', () => {
+		const later = rsv({
+			start: 13 * 60,
+			status: 'booked',
+			guest: g('Yusuf', 'Aziz'),
+		})
+		expect(
+			lateFound('yusuf', [later, yusuf]).map((l) => l.reservation.id),
+		).toEqual([yusuf.id, later.id])
 	})
 })

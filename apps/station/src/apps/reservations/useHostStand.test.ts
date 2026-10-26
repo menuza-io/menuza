@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { HostApiError, type HostApi } from './api.ts'
+import { connectionOf } from './connection.ts'
 import { dayFeedSchema } from './feed.ts'
 import dayFeed from './fixtures/day-feed.json'
 import {
@@ -31,6 +32,7 @@ const ready: HostStandState = {
 	waitlist: [],
 	grant,
 	stale: false,
+	readAt: 0,
 	dayFailed: null,
 }
 
@@ -360,6 +362,47 @@ describe('the day store', () => {
 		store.noteWrite()
 		await slow
 		expect(store.getState()).toBe(before)
+	})
+
+	it('does not hold today as a look sent before a change saw it', async () => {
+		const { api, waiting } = gatedApi()
+		const store = createDayStore(api)
+		const first = store.refresh()
+		await vi.waitFor(() => expect(waiting).toHaveLength(1))
+		waiting[0]!.answer(lookAt('first'))
+		await first
+		const slow = store.refresh()
+		await vi.waitFor(() => expect(waiting).toHaveLength(2))
+		store.noteWrite()
+		waiting[1]!.answer(lookAt('before-change'))
+		await slow
+		expect(drawn(store)?.feed.etag).toBe('first')
+		// The next look asks with what was held before, never with the dropped answer's ETag,
+		// and going to another day and back draws no floor from before the change.
+		store.setDate('2026-01-17')
+		store.setDate(null)
+		expect(drawn(store)?.feed.etag).toBe('first')
+		const asked = waiting.length
+		const next = store.refresh()
+		await vi.waitFor(() => expect(waiting.length).toBeGreaterThan(asked))
+		expect(waiting.at(-1)!.etag).toBe('"first"')
+		for (const look of waiting.slice(2)) look.answer({ unchanged: true })
+		await next
+	})
+
+	it('blocks writes after a failed look at today (today is null on both sides)', async () => {
+		let down = false
+		const { api } = fakeApi({ fail: () => down })
+		const store = createDayStore(api)
+		await store.refresh()
+		down = true
+		await store.refresh()
+		const state = store.getState()
+		expect(state).toMatchObject({ stale: true, dayFailed: { date: null } })
+		expect(connectionOf(true, state, store.getDate())).toMatchObject({
+			kind: 'stale',
+			blocksWrites: true,
+		})
 	})
 
 	it('starts clean for a new person', async () => {

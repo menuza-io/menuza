@@ -10,6 +10,8 @@ import {
 	createOrder,
 	isSendable,
 	localDate,
+	markCleared,
+	markServed,
 	MAX_ORDER_LINES,
 	MAX_PAYMENTS,
 	openTabs,
@@ -315,7 +317,7 @@ describe('limits of the wire contract are enforced where the money is taken', ()
 			line({ id: `l${i}`, itemId: `item-${i}` }),
 		)
 		await expect(createOrder({ ...draft, lines })).rejects.toThrow(
-			/at most 50 different items/,
+			/at most 50 lines/,
 		)
 		expect(await db.orders.count()).toBe(0)
 		const ok = Array.from({ length: MAX_ORDER_LINES }, (_, i) =>
@@ -448,5 +450,69 @@ describe('adopting a tab taken over from another terminal', () => {
 			sync: 'synced',
 		})
 		expect((await db.orders.get(tab.id))!.transferredTo).toBeUndefined()
+	})
+})
+
+describe('a tab’s rounds: sent to the kitchen, then served', () => {
+	it('stamps lines when the tab is saved, and only new lines on the next save', async () => {
+		const tab = await createOrder(draft)
+		const first = tab.lines[0]!.sentAt
+		expect(first).toBeGreaterThan(0)
+		const next = await updateTab(tab.id, {
+			...draft,
+			lines: [...tab.lines, line({ id: 'l2', itemId: 'b', name: 'Fries' })],
+		})
+		expect(next.lines[0]!.sentAt).toBe(first)
+		expect(next.lines[1]!.sentAt).toBeGreaterThanOrEqual(first!)
+		// The kitchen gets each line's id and round; served marks stay on this till.
+		const wire = toWireOrder(next)
+		expect(wire.lines.map((l) => [l.id, l.sentAt])).toEqual([
+			['l1', new Date(first!).toISOString()],
+			['l2', new Date(next.lines[1]!.sentAt!).toISOString()],
+		])
+		expect(JSON.stringify(wire)).not.toMatch(/servedAt|sentQuantity/)
+	})
+
+	it('marks sent dishes served without a new revision, and keeps the mark through a save', async () => {
+		const tab = await createOrder(draft)
+		await markServed(tab.id, ['l1'], 42)
+		const served = (await db.orders.get(tab.id))!
+		expect(served.lines[0]!.servedAt).toBe(42)
+		expect(served.revision).toBe(tab.revision)
+		expect(served.sync).toBe(tab.sync)
+		// The cart still holds the line without the mark: saving keeps it.
+		const saved = await updateTab(tab.id, {
+			...draft,
+			lines: [
+				{ ...tab.lines[0]! },
+				line({ id: 'l2', itemId: 'b', name: 'Fries' }),
+			],
+		})
+		expect(saved.lines.map((l) => l.servedAt ?? null)).toEqual([42, null])
+		expect(JSON.stringify(toWireOrder(saved))).not.toContain('servedAt')
+	})
+})
+
+describe('a ticket the kitchen cleared from the pass', () => {
+	it('marks what was sent before the clear as served, and leaves later rounds alone', async () => {
+		const tab = await createOrder(draft)
+		const sentAt = tab.lines[0]!.sentAt!
+		const next = await updateTab(tab.id, {
+			...draft,
+			lines: [...tab.lines, line({ id: 'l2', itemId: 'b', name: 'Fries' })],
+		})
+		// Round two went after the clear.
+		await db.orders.update(tab.id, {
+			lines: next.lines.map((l) =>
+				l.id === 'l2' ? { ...l, sentAt: sentAt + 10_000 } : l,
+			),
+		})
+		await markCleared(tab.id, sentAt + 5_000)
+		const after = (await db.orders.get(tab.id))!
+		expect(after.lines.map((l) => l.servedAt ?? null)).toEqual([
+			sentAt + 5_000,
+			null,
+		])
+		expect(after.revision).toBe(next.revision)
 	})
 })

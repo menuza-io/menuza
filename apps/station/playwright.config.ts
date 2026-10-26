@@ -11,8 +11,9 @@ import { defineConfig, devices } from '@playwright/test'
  * Tests share one backend and reset it in `beforeEach`, so they run serially.
  * Disk-light on purpose: no video, no traces, screenshots only on failure.
  */
-const POS_PORT = 3110
-const API_PORT = 4711
+const POS_PORT = Number(process.env.POS_E2E_PORT || 3110)
+const API_PORT = Number(process.env.POS_E2E_API_PORT || 4711)
+const APP_PORT = Number(process.env.POS_E2E_APP_PORT || 4710)
 
 export default defineConfig({
 	testDir: './e2e',
@@ -63,7 +64,7 @@ export default defineConfig({
 			env: {
 				VITE_POS_ALLOWED_ORIGINS: [
 					`http://127.0.0.1:${API_PORT}`,
-					'http://127.0.0.1:4710',
+					`http://127.0.0.1:${APP_PORT}`,
 					'http://127.0.0.1:9',
 				].join(','),
 			},

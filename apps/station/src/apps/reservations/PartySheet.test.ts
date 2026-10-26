@@ -180,8 +180,8 @@ describe('the party sheet, over status, day, grant and payment', () => {
 			expect.arrayContaining([
 				'Choose a table',
 				'They’re here',
-				'Mark confirmed',
-				'Change size or time',
+				'Confirm',
+				'Size or time',
 				'No-show',
 				'Cancel booking',
 			]),
@@ -194,12 +194,12 @@ describe('the party sheet, over status, day, grant and payment', () => {
 		expect(buttons()).toEqual(
 			expect.arrayContaining([
 				'Finished, clear table',
-				'Change party size',
+				'Party size',
 				'Move table',
 				'+15 min',
 			]),
 		)
-		expect(has('Change size or time')).toBe(false)
+		expect(has('Size or time')).toBe(false)
 		// Undoing a seating is only for the first half hour.
 		expect(has('Undo seating')).toBe(false)
 		draw({ r: booking('seated', { seatedAt: NOW - 5 * MIN }) })
@@ -220,7 +220,7 @@ describe('the party sheet, over status, day, grant and payment', () => {
 			)
 		press('Move table')
 		press('+15 min')
-		press('Change party size')
+		press('Party size')
 		expect(sent).toEqual(['move', 'extend', 'change'])
 	})
 
@@ -321,5 +321,120 @@ describe('a sheet that was never asked to open', () => {
 		draw({ r: null, onCommand })
 		expect(host.querySelector('dialog')).toBeNull()
 		expect(onCommand).not.toHaveBeenCalled()
+	})
+})
+
+describe('a party that is only partly here', () => {
+	const press = (label: string | RegExp) =>
+		act(() => {
+			const target = [...dialog().querySelectorAll('button')].find((b) => {
+				const words =
+					b.getAttribute('aria-label') ?? b.textContent?.trim() ?? ''
+				return typeof label === 'string' ? words === label : label.test(words)
+			})
+			if (!target) throw new Error(`no button ${String(label)}`)
+			target.click()
+		})
+	const group = () =>
+		dialog().querySelector('[role="group"][aria-label="Some are here"]')
+
+	it('offers to mark some of a booked party here, starting at all but one', () => {
+		const onCommand = vi.fn()
+		const r = booking('booked', { partySize: 5 })
+		draw({ r, onCommand })
+		expect(group()).not.toBeNull()
+		expect(hasText('4 of 5')).toBe(true)
+		press('One fewer')
+		expect(hasText('3 of 5')).toBe(true)
+		press('Mark 3 here')
+		// The server has no partial status: it is `arrived` with the count.
+		expect(onCommand).toHaveBeenCalledWith(r, {
+			kind: 'status',
+			to: 'arrived',
+			arrivedCovers: 3,
+		})
+		// Not yet at the stand: nothing to seat now.
+		expect(has(/^Seat \d now$/)).toBe(false)
+	})
+	it('never goes below one, nor up to the whole party', () => {
+		draw({ r: booking('booked', { partySize: 3 }) })
+		for (let i = 0; i < 5; i += 1) press('One fewer')
+		expect(hasText('1 of 3')).toBe(true)
+		for (let i = 0; i < 5; i += 1) press('One more')
+		expect(hasText('2 of 3')).toBe(true)
+	})
+	it('says how many are here, and seats the ones who are, with a stepper', () => {
+		const onCommand = vi.fn()
+		const r = booking('arrived', { partySize: 5, arrivedCovers: 3 })
+		draw({ r, onCommand })
+		expect(hasText('3 of 5 here')).toBe(true)
+		// One badge for it, not "At the stand" as well.
+		expect(hasText('At the stand')).toBe(false)
+		// The count cannot be marked again: there is no step for it.
+		expect(group()).toBeNull()
+		// The plain seating is for a party that is all here.
+		expect(has('Choose a table')).toBe(false)
+		press('Seat 3 now')
+		expect(onCommand).toHaveBeenCalledWith(r, { kind: 'seatPart', covers: 3 })
+	})
+	it('lets more sit than the count said, up to the whole party, but never fewer than one', () => {
+		const onCommand = vi.fn()
+		const r = booking('arrived', { partySize: 5, arrivedCovers: 3 })
+		draw({ r, onCommand })
+		press('One more')
+		press('One more')
+		press('One more')
+		expect(has('Seat 5 now')).toBe(true)
+		press('Seat 5 now')
+		expect(onCommand).toHaveBeenLastCalledWith(r, {
+			kind: 'seatPart',
+			covers: 5,
+		})
+		for (let i = 0; i < 9; i += 1) press('One fewer')
+		expect(has('Seat 1 now')).toBe(true)
+	})
+	it('seats a party that is all here the plain way, with no stepper', () => {
+		draw({ r: booking('arrived', { partySize: 5, arrivedCovers: 5 }) })
+		expect(has('Choose a table')).toBe(true)
+		expect(has(/^Seat \d now$/)).toBe(false)
+	})
+	it('has no way to say they are all here once some are: nothing to press for it', () => {
+		draw({ r: booking('arrived', { partySize: 5, arrivedCovers: 3 }) })
+		expect(has('They’re all here')).toBe(false)
+		expect(has('They’re here')).toBe(false)
+	})
+	it('says "seated 3 of 5" for a party that sat down short of its size, with nothing more to seat', () => {
+		const r = booking('seated', {
+			partySize: 5,
+			seatedCovers: 3,
+			arrivedCovers: 5,
+			seatedAt: NOW - 10 * MIN,
+			tableIds: ['t3'],
+			tableLabels: ['3'],
+		})
+		draw({ r })
+		expect(hasText('seated 3 of 5')).toBe(true)
+		expect(has('Choose a table')).toBe(false)
+		expect(has(/^Seat /)).toBe(false)
+		expect(has('Finished, clear table')).toBe(true)
+	})
+	it('is not offered for a party of one, a party that is seated, or another day', () => {
+		draw({ r: booking('booked', { partySize: 1 }) })
+		expect(group()).toBeNull()
+		draw({ r: booking('seated', { partySize: 4 }) })
+		expect(group()).toBeNull()
+		draw({ r: booking('booked', { partySize: 4 }), viewOnly: true })
+		expect(group()).toBeNull()
+	})
+})
+
+describe('a longer stay', () => {
+	it('is not offered for a booking with money on it, or an experience', () => {
+		draw({ r: booking('seated', { paymentStatus: 'paid' }) })
+		expect(has('+15 min')).toBe(false)
+		draw({ r: booking('seated', { experienceId: 'exp_1' }) })
+		expect(has('+15 min')).toBe(false)
+		draw({ r: booking('seated') })
+		expect(has('+15 min')).toBe(true)
 	})
 })

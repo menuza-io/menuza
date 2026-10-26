@@ -1,22 +1,29 @@
 import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import {
-	Armchair,
-	CheckCheck,
-	RefreshCw,
-	TriangleAlert,
-	Undo2,
-} from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useEffect, useState } from 'react'
 import {
+	DEFAULT_TURN_MIN,
 	shortName,
 	type DayReservation,
 	type DayTable,
 	type TableState,
 } from './feed.ts'
-import { heldFor, heldLead } from './held.ts'
+import {
+	bigTableFor,
+	freeForMin,
+	heldFor,
+	heldLead,
+	runsIntoNext,
+} from './held.ts'
+import { OfflineNote } from './OfflineStrip.tsx'
+import { type FloorSection } from './sections.ts'
+import { SectionDot } from './SectionStrip.tsx'
 import { PartySize } from './sheets.tsx'
-import { Button, Modal } from '~/ui/primitives.tsx'
+import { Button, cn, Modal } from '~/ui/primitives.tsx'
+
+/** A table free longer than this is simply free: the button does not say how long. */
+const FREE_FOR_SAID_MIN = 180
 
 /**
  * A table tapped outside of placing: who is there or due, and a walk-in for
@@ -25,6 +32,7 @@ import { Button, Modal } from '~/ui/primitives.tsx'
  */
 export function TableSheet({
 	target,
+	section = null,
 	recent = [],
 	busy,
 	now,
@@ -34,8 +42,11 @@ export function TableSheet({
 	onFinish,
 	onDetails,
 	onClose,
+	offlineReason = null,
 }: {
 	target: { table: DayTable; state: TableState } | null
+	/** The table's server section this service, if the floor is split into sections. */
+	section?: FloorSection | null
 	/**
 	 * Parties cleared from this table (finished or no-show) still inside the
 	 * undo window: a mis-tap is put right from here once its toast is gone.
@@ -50,6 +61,8 @@ export function TableSheet({
 	onFinish: (reservation: DayReservation) => void
 	onDetails: (reservation: DayReservation) => void
 	onClose: () => void
+	/** The connection is down: seating and clearing wait for it, and the sheet says so. */
+	offlineReason?: string | null
 }) {
 	const { _ } = useLingui()
 	const [size, setSize] = useState(2)
@@ -85,6 +98,18 @@ export function TableSheet({
 	// is not at the door, so the walk-in leads and seating them is second.
 	const leadsWithParty = held !== null && heldLead(held) === 'party'
 	const showWalkIn = !leadsWithParty || walkInAnyway
+	// How long the table stays free, against the stay a walk-in is given: a walk-in that
+	// would run into the next booking is a warning, and the booked party leads.
+	const freeFor = target && state ? freeForMin(state, target.table, now) : null
+	const tight = runsIntoNext(freeFor, DEFAULT_TURN_MIN)
+	const partyFirst = held !== null && held.canSeat && !leadsWithParty && tight
+	const seats = target?.table.maxCovers ?? 0
+	const walkInWords =
+		freeFor === null || freeFor > FREE_FOR_SAID_MIN
+			? _(msg`Seat ${size} now`)
+			: freeFor === 0
+				? _(msg`Seat ${size} · due now`)
+				: _(msg`Seat ${size} · free ${freeFor} min`)
 	return (
 		<Modal
 			open={target !== null}
@@ -95,7 +120,7 @@ export function TableSheet({
 			footer={
 				target && state ? (
 					state.kind === 'seated' ? (
-						<div className="mb-safe flex gap-3">
+						<div className="flex gap-3">
 							<Button
 								variant="primary"
 								size="lg"
@@ -103,7 +128,7 @@ export function TableSheet({
 								disabled={busy}
 								onClick={() => onFinish(state.party)}
 							>
-								<CheckCheck className="size-5" />
+								<Icon name="check-check" className="size-5" />
 								<Trans>Finished, clear table</Trans>
 							</Button>
 							<Button size="lg" onClick={() => onDetails(state.party)}>
@@ -112,7 +137,7 @@ export function TableSheet({
 						</div>
 					) : state.kind !== 'blocked' ? (
 						leadsWithParty && held && !walkInAnyway ? (
-							<div className="mb-safe flex flex-col gap-3">
+							<div className="flex flex-col gap-3">
 								<Button
 									variant="primary"
 									size="lg"
@@ -120,7 +145,7 @@ export function TableSheet({
 									disabled={busy}
 									onClick={() => onSeatHeld(target.table, held.reservation)}
 								>
-									<Armchair className="size-5 shrink-0" />
+									<Icon name="armchair" className="size-5 shrink-0" />
 									<span className="truncate">
 										<Trans>
 											Seat <bdi>{heldWho}</bdi> here
@@ -138,12 +163,13 @@ export function TableSheet({
 								</Button>
 							</div>
 						) : (
-							<div className="mb-safe flex flex-col gap-3">
+							<div className="flex flex-col gap-3">
 								{held ? (
 									<p className="text-warning flex items-start gap-2 text-sm font-medium">
-										<TriangleAlert
+										<Icon
+											name="alert-triangle"
 											aria-hidden
-											className="mt-0.5 size-4 shrink-0"
+											className="mt-0.5 size-4 shrink-0 self-start"
 										/>
 										<span>
 											<Trans>
@@ -152,6 +178,23 @@ export function TableSheet({
 											</Trans>
 										</span>
 									</p>
+								) : null}
+								{/* A booked party the table would be taken from leads, when a walk-in would run into them. */}
+								{partyFirst && held ? (
+									<Button
+										variant="primary"
+										size="lg"
+										className="w-full"
+										disabled={busy}
+										onClick={() => onSeatHeld(target.table, held.reservation)}
+									>
+										<Icon name="armchair" className="size-5 shrink-0" />
+										<span className="truncate">
+											<Trans>
+												Seat <bdi>{heldWho}</bdi> here
+											</Trans>
+										</span>
+									</Button>
 								) : null}
 								<div className="flex gap-3">
 									{leadsWithParty ? (
@@ -164,18 +207,25 @@ export function TableSheet({
 										</Button>
 									) : null}
 									<Button
-										variant="primary"
+										variant={tight ? 'outline' : 'primary'}
 										size="lg"
-										className="min-w-0 flex-1"
+										className={cn(
+											'min-w-0 flex-1',
+											tight &&
+												'border-warning bg-warning/10 text-warning hover:bg-warning/20',
+										)}
 										disabled={busy}
 										onClick={() => onWalkIn(target.table, size)}
 									>
-										<Armchair className="size-5 shrink-0" />
-										<Trans>Seat {size} now</Trans>
+										<Icon
+											name={tight ? 'alert-triangle' : 'armchair'}
+											className="size-5 shrink-0"
+										/>
+										<span className="truncate">{walkInWords}</span>
 									</Button>
 								</div>
 								{/* A party not here yet: seating them is the second choice. */}
-								{held && !leadsWithParty && held.canSeat ? (
+								{held && !leadsWithParty && held.canSeat && !partyFirst ? (
 									<Button
 										variant="outline"
 										size="lg"
@@ -198,9 +248,24 @@ export function TableSheet({
 		>
 			{target && state ? (
 				<div className="flex flex-col gap-5 p-4 sm:p-5">
+					<OfflineNote reason={offlineReason} />
+					{section ? (
+						<p className="flex items-center gap-2 text-sm">
+							<SectionDot color={section.color} />
+							<span className="font-medium">{section.name}</span>
+							<span className="text-muted-foreground">·</span>
+							{section.server ? (
+								<span>{section.server.name}</span>
+							) : (
+								<span className="text-warning">
+									<Trans>No server</Trans>
+								</span>
+							)}
+						</p>
+					) : null}
 					{state.kind === 'seated' ? (
-						<div className="border-border flex flex-col gap-1 rounded-2xl border p-4">
-							<p className="text-lg font-semibold">
+						<div className="flex flex-col gap-1 py-2">
+							<p className="text-base font-semibold">
 								{shortName(state.party, _(msg`Guest`))}
 							</p>
 							<p className="text-muted-foreground tnum">
@@ -220,13 +285,14 @@ export function TableSheet({
 						</div>
 					) : null}
 					{state.kind === 'resetting' ? (
-						<div className="border-border flex items-start gap-3 rounded-2xl border p-4">
-							<RefreshCw
+						<div className="flex items-start gap-3 py-2">
+							<Icon
+								name="refresh-cw"
 								aria-hidden
-								className="text-muted-foreground mt-1 size-5 shrink-0"
+								className="text-muted-foreground mt-1 size-5 shrink-0 self-start"
 							/>
 							<div className="flex min-w-0 flex-col gap-1">
-								<p className="text-lg font-semibold">
+								<p className="text-base font-semibold">
 									<Trans>Resetting, ready {readyText}</Trans>
 								</p>
 								<p className="text-muted-foreground tnum">
@@ -256,7 +322,7 @@ export function TableSheet({
 								key={r.id}
 								type="button"
 								onClick={() => onDetails(r)}
-								className="border-border hover:bg-accent flex items-center justify-between gap-3 rounded-2xl border p-4 text-start transition-colors"
+								className="hover:bg-accent flex min-h-14 items-center justify-between gap-3 rounded-(--station-control-radius) px-2 py-3 text-start transition-colors"
 							>
 								<span className="text-muted-foreground">
 									{r.status === 'no_show'
@@ -264,7 +330,7 @@ export function TableSheet({
 										: _(msg`${who} finished. Table cleared.`)}
 								</span>
 								<span className="flex shrink-0 items-center gap-2 font-semibold">
-									<Undo2 className="size-5" />
+									<Icon name="undo-2" className="size-5" />
 									<Trans>Undo</Trans>
 								</span>
 							</button>
@@ -275,10 +341,10 @@ export function TableSheet({
 						<button
 							type="button"
 							onClick={() => onDetails(held.reservation)}
-							className="border-border hover:bg-accent flex items-center justify-between gap-3 rounded-2xl border p-4 text-start transition-colors"
+							className="hover:bg-accent flex min-h-14 items-center justify-between gap-3 rounded-(--station-control-radius) px-2 py-3 text-start transition-colors"
 						>
 							<span className="min-w-0">
-								<span className="block text-lg font-semibold">
+								<span className="block text-base font-semibold">
 									<Trans>
 										Held for{' '}
 										<bdi>
@@ -312,10 +378,10 @@ export function TableSheet({
 						<button
 							type="button"
 							onClick={() => onDetails(next)}
-							className="border-border hover:bg-accent flex items-center justify-between gap-3 rounded-2xl border p-4 text-start transition-colors"
+							className="hover:bg-accent flex min-h-14 items-center justify-between gap-3 rounded-(--station-control-radius) px-2 py-3 text-start transition-colors"
 						>
 							<span className="min-w-0">
-								<span className="block text-lg font-semibold">
+								<span className="block text-base font-semibold">
 									{until > now ? (
 										<Trans>Free until {untilText}</Trans>
 									) : (
@@ -336,7 +402,7 @@ export function TableSheet({
 							</span>
 						</button>
 					) : free ? (
-						<p className="text-success text-lg font-semibold">
+						<p className="text-success text-base font-semibold">
 							<Trans>Free for the rest of the day</Trans>
 						</p>
 					) : null}
@@ -344,7 +410,7 @@ export function TableSheet({
 						<button
 							type="button"
 							onClick={() => onDetails(next)}
-							className="border-border hover:bg-accent flex items-center justify-between gap-3 rounded-2xl border p-4 text-start transition-colors"
+							className="hover:bg-accent flex min-h-14 items-center justify-between gap-3 rounded-(--station-control-radius) px-2 py-3 text-start transition-colors"
 						>
 							<span>
 								<span className="text-muted-foreground block text-sm">
@@ -366,6 +432,14 @@ export function TableSheet({
 								<Trans>Seat a walk-in here</Trans>
 							</p>
 							<PartySize value={size} onChange={setSize} />
+							{bigTableFor(size, target.table.maxCovers) ? (
+								<p className="text-muted-foreground text-sm font-medium">
+									<Trans>
+										This table seats {seats}: a party of {size} leaves it mostly
+										empty.
+									</Trans>
+								</p>
+							) : null}
 							{size > target.table.maxCovers ? (
 								<p className="text-warning text-sm font-medium">
 									<Trans>This table seats {target.table.maxCovers}.</Trans>

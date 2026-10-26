@@ -94,9 +94,10 @@ export const posPairingCodeHashMessage = (code: string) => `pos-pair:${code}`
  * contract, a till and a regional node deployed at different times) holds it
  * for review instead of refusing it, so a paid sale is never stranded on a
  * tablet. Every field added since version 1 has a default, so version 1 tills
- * keep working.
+ * keep working. Version 4 adds each line's id and when it was sent (both
+ * optional): deploy the regional API first, as a version 3 node holds them.
  */
-export const POS_CONTRACT_VERSION = 3
+export const POS_CONTRACT_VERSION = 4
 export const POS_CONTRACT_HEADER = 'Pos-Contract'
 
 export const POS_ORDER_STATUS_VALUES = [
@@ -193,6 +194,12 @@ export const posOrderOptionSchema = z.strictObject({
 })
 
 export const posOrderLineSchema = z.strictObject({
+	/**
+	 * The till's own id for the line, the same in every revision (contract 4).
+	 * The kitchen tells dishes apart by it, so taking one off does not reset the
+	 * progress of the dishes after it.
+	 */
+	id: z.string().min(1).max(100).optional(),
 	itemId: z.string().min(1).max(100),
 	name: signedText(200),
 	variantId: z.string().min(1).max(100).nullable(),
@@ -205,6 +212,8 @@ export const posOrderLineSchema = z.strictObject({
 	baseCents: cents,
 	instructions: z.string().trim().max(280),
 	options: z.array(posOrderOptionSchema).max(50),
+	/** When the till sent the line to the kitchen: its round on a tab (contract 4). */
+	sentAt: instant.optional(),
 })
 
 /**
@@ -689,6 +698,29 @@ export type PosReservationsTokenResponse = {
 		waitlist: boolean
 		online: boolean
 	}
+}
+
+/**
+ * `GET /pos/reservations/servers`: who can take a section of the floor for a
+ * service, for the host stand to assign. People clocked in at the terminal's
+ * workplace and people with a published shift in the window, first name and
+ * last initial only. `available` is false when the staff module (or both its
+ * time clock and scheduling) is off: the host then types names.
+ */
+export type PosServer = {
+	staffId: string
+	firstName: string
+	/** One letter, to tell two people of the same first name apart. */
+	lastInitial: string
+	/** The position they clocked in as, or their shift's. */
+	position: string | null
+	onClock: boolean
+	/** Their published shift that overlaps the window, epoch milliseconds. */
+	shift: { startAt: number; endAt: number } | null
+}
+export type PosServersResponse = {
+	available: boolean
+	servers: PosServer[]
 }
 
 /** Shown on receipts and lists: first name and last initial. */

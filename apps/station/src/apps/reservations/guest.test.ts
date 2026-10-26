@@ -10,9 +10,11 @@ import {
 	hasAnyAllergy,
 	historyLine,
 	isGuestChannel,
+	listText,
 	showsAllergyMark,
 	sourceLabel,
 	tagChips,
+	tileSignals,
 } from './guest.ts'
 import { at, rsv } from './testing.ts'
 
@@ -288,5 +290,66 @@ describe('the allergy banner', () => {
 			expect(dietaryNoteOf(_, booking(), false)).toBeNull()
 			expect(showsAllergyMark(booking(), false)).toBe(false)
 		})
+	})
+})
+
+describe('a list said the way the language says it', () => {
+	it('keeps English as commas, with no "and"', () => {
+		expect(listText(['shellfish', 'tree nuts', 'soy'], 'en')).toBe(
+			'shellfish, tree nuts, soy',
+		)
+		expect(listText(['vegan', 'halal'], 'en')).toBe('vegan, halal')
+	})
+	it('uses the Arabic way of joining in Arabic', () => {
+		const text = listText(['قشريات', 'مكسرات'], 'ar')
+		expect(text).toContain('و')
+		expect(text).not.toContain(', ')
+	})
+	it('is the item itself for one, and nothing for none', () => {
+		expect(listText(['peanuts'], 'ar')).toBe('peanuts')
+		expect(listText([], 'en')).toBe('')
+	})
+	it('falls back to commas for a locale the runtime does not know', () => {
+		expect(listText(['a', 'b'], 'not a locale')).toBe('a, b')
+	})
+})
+
+describe('what a table tile says about its guest', () => {
+	const vip = { id: 'g', name: 'V', tags: [{ id: 't', name: 'VIP' }] }
+	it('is nothing for a booking with nothing to flag', () => {
+		expect(tileSignals(rsv({ start: 600 }), true)).toEqual([])
+	})
+	it('says each kind: allergy, VIP, occasion, a paid deposit', () => {
+		expect(
+			tileSignals(rsv({ start: 600, dietaryCodes: ['nut_allergy'] }), true),
+		).toEqual(['allergy'])
+		expect(tileSignals(rsv({ start: 600, guest: vip }), true)).toEqual(['vip'])
+		expect(
+			tileSignals(rsv({ start: 600, occasion: 'birthday' }), true),
+		).toEqual(['occasion'])
+		expect(
+			tileSignals(rsv({ start: 600, paymentStatus: 'paid' }), true),
+		).toEqual(['deposit'])
+		// An unpaid or awaited deposit is not a tick.
+		expect(
+			tileSignals(rsv({ start: 600, paymentStatus: 'pending' }), true),
+		).toEqual([])
+	})
+	it('keeps two, the allergy first, then the VIP, then the occasion', () => {
+		const all = rsv({
+			start: 600,
+			dietaryCodes: ['nut_allergy'],
+			guest: vip,
+			occasion: 'birthday',
+			paymentStatus: 'paid',
+		})
+		expect(tileSignals(all, true)).toEqual(['allergy', 'vip'])
+		const noAllergy = rsv({
+			start: 600,
+			guest: vip,
+			occasion: 'birthday',
+			paymentStatus: 'paid',
+		})
+		expect(tileSignals(noAllergy, true)).toEqual(['vip', 'occasion'])
 	})
 })

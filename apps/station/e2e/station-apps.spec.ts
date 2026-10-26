@@ -6,6 +6,7 @@ import {
 	expect,
 	lockScreen,
 	pairUi,
+	selectStationApp,
 	signInWithPin,
 	test,
 } from './helpers.ts'
@@ -168,10 +169,7 @@ test.describe('time clock', () => {
 		await backend.addStaff({ first: 'Rana', pin: '4321', manager: true })
 		await pairUi(page, { signInRequired: true, timeclockEnabled: true })
 		await signInWithPin(page, '4321')
-		await page
-			.getByRole('radiogroup', { name: 'Station app' })
-			.getByRole('radio', { name: 'Time clock' })
-			.click()
+		await selectStationApp(page, 'Time clock')
 		// Nobody punches inside someone else's session.
 		const tc = clock(page)
 		await expect(
@@ -183,7 +181,7 @@ test.describe('time clock', () => {
 		await expect(page.getByRole('button', { name: /^Orders/ })).toBeVisible()
 	})
 
-	test('a terminal without the clock shows neither the switch nor the button', async ({
+	test('a terminal without the clock hides its option and lock-screen button, but still offers Kitchen', async ({
 		unpaired: page,
 	}) => {
 		await backend.addStaff({ pin: '4321' })
@@ -192,9 +190,14 @@ test.describe('time clock', () => {
 			lockScreen(page).getByRole('button', { name: 'Clock in or out' }),
 		).toHaveCount(0)
 		await signInWithPin(page, '4321')
+		await page.getByRole('button', { name: 'Apps', exact: true }).click()
+		const apps = page.getByRole('dialog', { name: 'Station apps' })
 		await expect(
-			page.getByRole('radiogroup', { name: 'Station app' }),
+			apps.getByRole('button', { name: 'Time clock', exact: true }),
 		).toHaveCount(0)
+		await expect(
+			apps.getByRole('button', { name: 'Kitchen', exact: true }),
+		).toBeVisible()
 	})
 })
 
@@ -208,10 +211,7 @@ test.describe('host stand', () => {
 			locationId: 'loc-1',
 		})
 		await signInWithPin(page, pin)
-		await page
-			.getByRole('radiogroup', { name: 'Station app' })
-			.getByRole('radio', { name: 'Reservations' })
-			.click()
+		await selectStationApp(page, 'Reservations')
 		await expect(
 			page.getByRole('region', { name: 'Parties to seat' }),
 		).toBeVisible()
@@ -231,20 +231,20 @@ test.describe('host stand', () => {
 			.click()
 		await expect(page.getByText(/Tap a table for Maya H\./)).toBeVisible()
 		await capture(page, 'host-placing')
-		await page.getByRole('button', { name: /^Table 1, open/ }).click()
-		await expectToast(page, 'Seated Maya H. at 1.')
+		// Table 9 stays open even when future bookings fall near midnight.
+		await page.getByRole('button', { name: /^Table 9, open/ }).click()
+		await expectToast(page, 'Seated Maya H. at 9.')
 		await capture(page, 'host-seated-toast')
 		await expect(
-			page.getByRole('button', { name: /^Table 1, seated: Maya H\./ }),
+			page.getByRole('button', { name: /^Table 9, seated: Maya H\./ }),
 		).toBeVisible()
 
-		// Undo puts her back at the stand, still booked for table 2. A double
-		// tap undoes once, not twice.
+		// Undo puts her back at the stand. A double tap undoes once, not twice.
 		await page.getByRole('button', { name: 'Undo' }).dblclick()
 		await expectToast(page, 'Undone.')
 		await expect(dock.getByText('At the stand')).toBeVisible()
 		await expect(
-			page.getByRole('button', { name: /^Table 1, (open|booked)/ }),
+			page.getByRole('button', { name: /^Table 9, (open|booked)/ }),
 		).toBeVisible()
 	})
 
@@ -270,7 +270,7 @@ test.describe('host stand', () => {
 		await dock.getByRole('button', { name: 'Details for Maya H.' }).click()
 		const sheet = page.getByRole('dialog', { name: 'Maya Haddad' })
 		await expect(
-			sheet.getByText('Allergy noted. A manager can see the details.'),
+			sheet.getByText('Dietary note on file. A manager can see the details.'),
 		).toBeVisible()
 		await expect(sheet.getByText('Peanuts')).toHaveCount(0)
 		// The number is masked by the server, and is not a link to call.
@@ -298,10 +298,7 @@ test.describe('host stand', () => {
 			locationId: 'loc-1',
 		})
 		await signInWithPin(page, '1111')
-		await page
-			.getByRole('radiogroup', { name: 'Station app' })
-			.getByRole('radio', { name: 'Reservations' })
-			.click()
+		await selectStationApp(page, 'Reservations')
 		await expect(
 			page.getByRole('heading', {
 				name: 'You are not on this terminal’s host list',
@@ -321,7 +318,12 @@ test.describe('host stand', () => {
 		await expect(page.getByText(/Tap a table for Rana Khalid/)).toBeVisible()
 		await page.getByRole('button', { name: /^Table 9, open/ }).click()
 		await expectToast(page, 'Seated Rana Khalid at 9.')
-		await expect(dock.getByText('Rana')).toHaveCount(0)
+		await expect(
+			dock.getByRole('button', { name: 'Details for Rana', exact: true }),
+		).toHaveCount(0)
+		await expect(
+			page.getByRole('button', { name: /^Table 9, seated: Rana K\./ }),
+		).toBeVisible()
 	})
 
 	test('a table too small for the party asks first, and the party stays picked up', async ({
@@ -336,8 +338,9 @@ test.describe('host stand', () => {
 		await expect(ask).toBeVisible()
 		await ask.getByRole('button', { name: 'Choose another' }).click()
 		await expect(page.getByText(/Tap a table for Tariq/)).toBeVisible()
-		await page.getByRole('button', { name: /^Table 7, open/ }).click()
-		await expectToast(page, 'Seated Tariq Aziz at 7.')
+		await page.getByRole('radio', { name: /^Patio/ }).click()
+		await page.getByRole('button', { name: /^Table P1, open/ }).click()
+		await expectToast(page, 'Seated Tariq Aziz at P1.')
 	})
 
 	test('a table booked before the party would be done steps back, and the host may still insist', async ({
@@ -365,8 +368,10 @@ test.describe('host stand', () => {
 		await openHostStand(page)
 		await page.getByRole('button', { name: 'Booking' }).click()
 		const sheet = page.getByRole('dialog', { name: 'New booking' })
+		// Tomorrow has a complete service even when this test runs near closing.
+		await sheet.getByRole('button', { name: 'Tomorrow', exact: true }).click()
 		await sheet.getByRole('button', { name: '4', exact: true }).click()
-		const slots = sheet.locator('button.tnum.min-w-20')
+		const slots = sheet.locator('button.tabular-nums.min-w-20:enabled')
 		await expect(slots.first()).toBeVisible()
 		await capture(page, 'host-booking-sheet')
 		const time = (await slots.last().textContent())!.trim()
@@ -375,8 +380,8 @@ test.describe('host stand', () => {
 		await sheet.getByLabel('Last name').fill('Omar')
 		// A double tap books once: the sheet turns into the read-back at once.
 		await sheet.getByRole('button', { name: `Book 4 at ${time}` }).dblclick()
-		await expectToast(page, `Booked Zaid for 4 at ${time}.`)
 		await expect(sheet.getByText('Zaid Omar, party of 4')).toBeVisible()
+		await expect(sheet.getByText(new RegExp(`at ${time}$`))).toBeVisible()
 		await expect(sheet.getByText('Confirmation code')).toBeVisible()
 		await capture(page, 'host-booking-readback')
 		await sheet.getByRole('button', { name: 'Done' }).click()
@@ -393,7 +398,9 @@ test.describe('host stand', () => {
 		await openHostStand(page)
 		const dock = page.getByRole('region', { name: 'Parties to seat' })
 		await dock.getByRole('button', { name: /^Details for Yusuf/ }).click()
-		await page.getByRole('button', { name: 'Change size or time' }).click()
+		await page
+			.getByRole('button', { name: 'Size or time', exact: true })
+			.click()
 		const sheet = page.getByRole('dialog', { name: 'Change size or time' })
 		await sheet.getByRole('button', { name: '6', exact: true }).click()
 		await sheet.getByRole('button', { name: 'Save' }).click()
@@ -423,10 +430,7 @@ test.describe('host stand', () => {
 		await backend.addStaff({ pin: '4321', host: true })
 		await openHostStand(page)
 		await capture(page, 'phone-host-floor')
-		await page
-			.getByRole('radiogroup', { name: 'Station app' })
-			.getByRole('radio', { name: 'Time clock' })
-			.click()
+		await selectStationApp(page, 'Time clock')
 		await expect(
 			clock(page).getByRole('heading', { name: 'Enter your PIN' }),
 		).toBeVisible()

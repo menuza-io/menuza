@@ -11,14 +11,13 @@ import {
 import { createHostApi, HostApiError, type HostApi } from './api.ts'
 import type * as DemoNamespace from './demo.ts'
 import { type DayFeed } from './feed.ts'
+import { staysOnStand } from './waitlist.ts'
 import { serverNow } from '~/lib/clock.ts'
 import { type PosSettings } from '~/lib/config.ts'
 import { type Session } from '~/lib/signin.ts'
 
 /** The host stand redraws from the server (the day and the waitlist) this often while it is on screen. */
 export const DAY_POLL_MS = 10_000
-
-const ACTIVE_WAITLIST = new Set(['waiting', 'notified', 'on_the_way'])
 
 /** Refusals that are about this person or this till, not about the moment: the stand closes. */
 const BLOCKING_CODES = new Set([
@@ -142,6 +141,8 @@ export type HostStandState =
 			grant: PosReservationsTokenResponse
 			/** The last refresh failed (offline, an outage); what is shown may be stale. */
 			stale: boolean
+			/** When the book on screen was last read successfully (epoch ms, by the stand's clock). */
+			readAt: number
 			/** The last look at this day failed: which day it was for (null: none failed). */
 			dayFailed: { date: string | null } | null
 	  }
@@ -158,7 +159,11 @@ export type HostStandState =
  * - `writes` counts changes started: a refresh sent before one may answer after
  *   it with the day as it was, so such an answer is dropped.
  */
-export function createDayStore(api: HostApi) {
+export function createDayStore(
+	api: HostApi,
+	/** The stand's clock, for when the book was last read. */
+	clock: () => number = Date.now,
+) {
 	let state: HostStandState = { status: 'loading' }
 	/** The day asked for (null is today): what the arrows move from. */
 	let date: string | null = null
@@ -222,7 +227,8 @@ export function createDayStore(api: HostApi) {
 	const loadWaitlist = async (grant: PosReservationsTokenResponse) => {
 		if (!grant.features.waitlist) return []
 		const listing = await api.waitlist()
-		return listing.entries.filter((e) => ACTIVE_WAITLIST.has(e.status))
+		// In line, or a hold that just ended with no answer (kept to be put back in line).
+		return listing.entries.filter((e) => staysOnStand(e, listing.now))
 	}
 
 	/** A new person, a lock: their own token, a clean screen, and today. */
@@ -273,8 +279,11 @@ export function createDayStore(api: HostApi) {
 			// A waitlist that did not load is shown as it was, marked not up to date.
 			const waitlistStale =
 				asked.date === null && grant.features.waitlist && waitlist === null
-			// Whatever the answer, the day stays held for the next look.
-			if (asked.generation === generation) {
+			// Whatever the answer, the day stays held for the next look, unless a
+			// change started after it was asked for: it may be the day as it was
+			// before that change, and holding it (with its ETag) would let going to
+			// another day and back draw the floor without the change.
+			if (asked.generation === generation && sentAfterWrites === writes) {
 				if (!('unchanged' in day)) {
 					if (hold(key, day, ticket) && asked.date === null)
 						today = day.feed.businessDate
@@ -315,6 +324,7 @@ export function createDayStore(api: HostApi) {
 				waitlist:
 					waitlist ?? (previous.status === 'ready' ? previous.waitlist : []),
 				stale: waitlistStale,
+				readAt: clock(),
 				dayFailed: null,
 			}))
 			return feed
@@ -457,7 +467,12 @@ export function useHostStand({
 		[demo, settingsRef, sessionRef],
 	)
 	const sessionToken = demo ? 'demo' : (session?.serverSession?.token ?? null)
-	const store = useMemo(() => createDayStore(api), [api])
+	// The clock the stand shows times by (the demo's moves it into the afternoon).
+	const readClock = useRef<() => number>(() => Date.now())
+	const store = useMemo(
+		() => createDayStore(api, () => readClock.current()),
+		[api],
+	)
 	const state = useSyncExternalStore(store.subscribe, store.getState)
 	const date = useSyncExternalStore(store.subscribe, store.getDate)
 	/** The server's time (the demo keeps its own). */
@@ -465,6 +480,7 @@ export function useHostStand({
 		() => (demo ? (demoModule?.demoClock() ?? Date.now()) : serverNow()),
 		[demo],
 	)
+	readClock.current = clock
 	const [now, setNow] = useState(clock)
 	// The demo's own clock starts once its code is in.
 	useEffect(() => {

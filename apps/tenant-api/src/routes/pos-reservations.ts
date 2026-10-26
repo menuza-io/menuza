@@ -1,7 +1,10 @@
 import { Hono } from 'hono'
 import { SignJWT } from 'jose'
 import { brand } from '@repo/config/brand'
-import { type PosReservationsTokenResponse } from '@repo/common/pos-orders'
+import {
+	type PosReservationsTokenResponse,
+	type PosServersResponse,
+} from '@repo/common/pos-orders'
 import {
 	maxTokenTtlSeconds,
 	RESERVATIONS_PERMISSIONS,
@@ -21,9 +24,11 @@ import { verifyPosStaffSession } from '../lib/pos-staff-session.ts'
 import { rsvAuditLog } from '@repo/tenant-db'
 import { and, eq, gte } from 'drizzle-orm'
 import { getNodeRegion } from '../lib/region.ts'
+import { getStaffingFeatures } from '../lib/scope-context.ts'
 import { getOperatorToken } from '../lib/secrets.ts'
 import { reservationsGate } from '../services/pos-apps-service.ts'
 import { touchDevice } from '../services/pos-service.ts'
+import { serversOnShift } from '../services/pos-servers-service.ts'
 
 /**
  * `/pos/reservations`: the host stand on a paired Station terminal.
@@ -216,6 +221,71 @@ posReservationsRoutes.post('/token', async (c) => {
 		console.error(
 			'POS reservations token failed',
 			error instanceof Error ? error.message : error,
+		)
+		return posError(500, 'internal_error')
+	}
+})
+
+/** The longest window the host stand may ask about: one service, with room to spare. */
+const MAX_SERVERS_WINDOW_MS = 24 * 60 * 60_000
+
+/**
+ * Who the host can give a section of the floor to for a service (`from`..`to`,
+ * epoch milliseconds): people clocked in at this terminal's workplace and
+ * people with a published shift there in the window. Hosts only, like the
+ * token; first name and last initial only (`services/pos-servers-service.ts`).
+ * With the staff module off, `available` is false and the host types names.
+ */
+posReservationsRoutes.get('/servers', async (c) => {
+	const authed = await authenticatePosDevice(c)
+	if ('error' in authed) return authed.error
+	const { pos } = authed
+	const from = Number(c.req.query('from'))
+	const to = Number(c.req.query('to'))
+	if (
+		!Number.isFinite(from) ||
+		!Number.isFinite(to) ||
+		to <= from ||
+		to - from > MAX_SERVERS_WINDOW_MS
+	)
+		return posError(400, 'invalid_window')
+	try {
+		const gate = await reservationsGate(pos.orgId, pos.device)
+		if (!gate.ok) {
+			return posError(
+				gate.code === 'service_unavailable' ? 503 : 403,
+				gate.code,
+			)
+		}
+		const staff = await verifyPosStaffSession(c, pos)
+		if ('error' in staff) return staff.error
+		if (!staff.session.host) return posError(403, 'not_a_host')
+
+		const flags = await getStaffingFeatures(pos.orgId)
+		const timeclock = Boolean(
+			flags?.features.enabled && flags.features.timeclock,
+		)
+		const scheduling = Boolean(
+			flags?.features.enabled && flags.features.scheduling,
+		)
+		const response: PosServersResponse =
+			timeclock || scheduling
+				? {
+						available: true,
+						servers: await serversOnShift(pos.db, {
+							scopeId: pos.device.scopeId,
+							window: { from, to },
+							timeclock,
+							scheduling,
+						}),
+					}
+				: { available: false, servers: [] }
+		return c.json(response, 200, { 'Cache-Control': 'private, no-store' })
+	} catch (error) {
+		if (isPosHashUnavailable(error)) return posUnavailableResponse()
+		console.error(
+			'POS servers list failed',
+			error instanceof Error ? error.name : 'unknown',
 		)
 		return posError(500, 'internal_error')
 	}

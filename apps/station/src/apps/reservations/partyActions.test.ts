@@ -153,13 +153,7 @@ describe('what a till may do to a booking', () => {
 
 describe('a booking with money on it', () => {
 	// What a till can do to a booking at each step of its life, with and without a deposit.
-	const LIVE = [
-		'booked',
-		'confirmed',
-		'arrived',
-		'partially_arrived',
-		'seated',
-	] as const
+	const LIVE = ['booked', 'confirmed', 'arrived', 'seated'] as const
 	const PAYMENTS = [
 		'none',
 		'pending',
@@ -196,8 +190,7 @@ describe('a booking with money on it', () => {
 					expect(a.canCancel).toBe(
 						status === 'booked' ||
 							status === 'confirmed' ||
-							status === 'arrived' ||
-							status === 'partially_arrived',
+							status === 'arrived',
 					)
 				}
 			})
@@ -209,9 +202,31 @@ describe('a booking with money on it', () => {
 		expect(a.canSeat).toBe(true)
 		const seated = actionsFor('seated', { paymentStatus: 'paid' })
 		expect(seated.canFinish).toBe(true)
-		// Moving a party to another table and a longer stay are not money.
+		// Moving a party to another table is not money.
 		expect(seated.canMove).toBe(true)
-		expect(seated.canExtend).toBe(true)
+	})
+
+	it('keeps a longer stay, like a size change, from a booking with money or an experience on it', () => {
+		const sat = { seatedAt: NOW - 30 * MIN }
+		// The server refuses a stay change behind the same lock as size and time.
+		for (const paymentStatus of [
+			'pending',
+			'paid',
+			'guaranteed',
+			'refund_pending',
+			'refunded',
+		]) {
+			const a = actionsFor('seated', { ...sat, paymentStatus })
+			expect(a.canExtend).toBe(false)
+			expect(a.canChange).toBe(false)
+		}
+		const tasting = actionsFor('seated', { ...sat, experienceId: 'exp_1' })
+		expect(tasting.canExtend).toBe(false)
+		expect(tasting.canChange).toBe(false)
+		// Nothing owed and no experience: the till may.
+		const plain = actionsFor('seated', { ...sat, paymentStatus: 'none' })
+		expect(plain.canExtend).toBe(true)
+		expect(plain.canChange).toBe(true)
 	})
 
 	it('says nothing twice about a booking still awaiting its deposit', () => {
@@ -246,6 +261,11 @@ describe('a party at the table', () => {
 		expect(seated({ durationMin: 345 }).canExtend).toBe(true)
 		expect(seated({ durationMin: 346 }).canExtend).toBe(false)
 		expect(seated({ durationMin: 360 }).canExtend).toBe(false)
+	})
+	it('can still be given a quarter hour when it is over its time', () => {
+		// 13:00 for 90 minutes: over at 14:30; at 15:00 a quarter hour from now is 15:15.
+		const a = actionsFor('seated', { seatedAt: NOW }, { now: NOW + 120 * MIN })
+		expect(a.canExtend).toBe(true)
 	})
 	it('is not moved, extended or resized from another day', () => {
 		const a = actionsFor('seated', {}, { viewOnly: true })
@@ -299,5 +319,66 @@ describe('an armed cancel or no-show', () => {
 			false,
 		)
 		expect(armedStillHolds(armed, null)).toBe(false)
+	})
+})
+
+describe('a party that is only partly here', () => {
+	it('can be marked partly here while it has not been marked here at all', () => {
+		for (const status of ['booked', 'confirmed'])
+			expect(actionsFor(status, { partySize: 5 }).canPartlyHere).toBe(true)
+	})
+	it('cannot be marked partly here once at the stand: the server cannot raise or lower the count', () => {
+		// arrived -> arrived is not a step the server has.
+		expect(actionsFor('arrived', { partySize: 5 }).canPartlyHere).toBe(false)
+		expect(
+			actionsFor('arrived', { partySize: 5, arrivedCovers: 3 }).canPartlyHere,
+		).toBe(false)
+	})
+	it('is for a party of two or more, today, and not for one seated or gone', () => {
+		expect(actionsFor('booked', { partySize: 1 }).canPartlyHere).toBe(false)
+		expect(
+			actionsFor('booked', { partySize: 5 }, { viewOnly: true }).canPartlyHere,
+		).toBe(false)
+		for (const status of ['seated', 'finished', 'no_show', 'cancelled'])
+			expect(actionsFor(status, { partySize: 5 }).canPartlyHere).toBe(false)
+	})
+	it('seats the ones who are here (a stepper) once the party is at the stand short of its size', () => {
+		const a = actionsFor('arrived', { partySize: 5, arrivedCovers: 3 })
+		expect(a.canSeatPart).toBe(true)
+		// The plain seating is for a party that is all here.
+		expect(a.canSeat).toBe(false)
+		expect(a.any).toBe(true)
+	})
+	it('seats a whole party the plain way', () => {
+		for (const arrivedCovers of [5, null]) {
+			const a = actionsFor('arrived', { partySize: 5, arrivedCovers })
+			expect(a.canSeat).toBe(true)
+			expect(a.canSeatPart).toBe(false)
+		}
+	})
+	it('has no seat-part for a booking not at the stand, a lone guest, or another day', () => {
+		expect(actionsFor('booked', { partySize: 5 }).canSeatPart).toBe(false)
+		expect(
+			actionsFor('arrived', { partySize: 1, arrivedCovers: 1 }).canSeatPart,
+		).toBe(false)
+		expect(
+			actionsFor(
+				'arrived',
+				{ partySize: 5, arrivedCovers: 3 },
+				{ viewOnly: true },
+			).canSeatPart,
+		).toBe(false)
+	})
+	it('has nothing to seat for a party that sat down short of its size: the rest cannot be added', () => {
+		const a = actionsFor('seated', {
+			partySize: 5,
+			arrivedCovers: 5,
+			seatedCovers: 3,
+			tableIds: ['t2'],
+			tableLabels: ['2'],
+		})
+		expect(a.canSeat).toBe(false)
+		expect(a.canSeatPart).toBe(false)
+		expect(a.canFinish).toBe(true)
 	})
 })

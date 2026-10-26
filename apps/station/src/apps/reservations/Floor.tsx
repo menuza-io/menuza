@@ -1,7 +1,9 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Ban, Clock3, RefreshCw, Users } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { coversHere } from './arrival.ts'
+import { type JoinVerdict } from './combine.ts'
 import {
 	bestFit,
 	fitVerdict,
@@ -20,6 +22,9 @@ import {
 	type TableState,
 } from './feed.ts'
 import { fitRoom, type PlacedPx } from './floorfit.ts'
+import { tileSignals, type TileSignal } from './guest.ts'
+import { coversText, formatCount } from './labels.ts'
+import { initialsOf, type FloorSection } from './sections.ts'
 import { stayOf } from './stay.ts'
 import { SoftText } from '~/ui/motion.tsx'
 import { cn } from '~/ui/primitives.tsx'
@@ -62,6 +67,10 @@ export function Floor({
 	feed,
 	now,
 	picking,
+	join = null,
+	canReadGuest = false,
+	sections = null,
+	rank,
 	onTable,
 	formatTime,
 	formatShort,
@@ -71,6 +80,17 @@ export function Floor({
 	now: number
 	/** The party being placed, if any: how many, for how long, and its own booking. */
 	picking: PartyToPlace | null
+	/**
+	 * Joining tables for the party in hand: how each table reads (chosen, free
+	 * beside the group, or why not). Without it, each table is judged alone.
+	 */
+	join?: ((table: DayTable, state: TableState) => JoinVerdict) | null
+	/** Whether guest details are readable: an allergy mark needs more than the server's flag then. */
+	canReadGuest?: boolean
+	/** Server sections, by table: drawn on the tables while the host shows them. */
+	sections?: ReadonlyMap<string, FloorSection> | null
+	/** The rotation: among tables of the same size, the lower rank is suggested first. */
+	rank?: (tableId: string) => number
 	onTable: (table: DayTable, state: TableState) => void
 	formatTime: (epochMs: number) => string
 	/** The same without "AM" or "PM": for a table, where there is no room for it. */
@@ -132,14 +152,16 @@ export function Floor({
 	)
 	const best = useMemo(
 		() =>
-			picking
+			picking && !join
 				? bestFit(
 						live.map((table) => ({ table, state: states.get(table.id)! })),
 						picking,
 						now,
+						feed,
+						rank,
 					)
 				: null,
-		[picking, live, states, now],
+		[picking, join, live, states, now, feed, rank],
 	)
 
 	return (
@@ -149,7 +171,10 @@ export function Floor({
 		>
 			{fit?.scrolls ? (
 				// Only where the room cannot fit at a usable size: it pans.
-				<p className="bk-floor-hint" aria-hidden>
+				<p
+					className="text-muted-foreground pointer-events-none absolute inset-x-0 top-1.5 z-2 text-center text-sm font-medium"
+					aria-hidden
+				>
 					<Trans>Swipe to see the whole room</Trans>
 				</p>
 			) : null}
@@ -160,7 +185,10 @@ export function Floor({
 				data-scroll={fit?.scrolls ?? false}
 			>
 				<div
-					className={cn('bk-plan relative', !drawn && 'h-full w-full')}
+					className={cn(
+						'bk-plan relative m-auto shrink-0',
+						!drawn && 'h-full w-full',
+					)}
 					data-grid={!drawn}
 					style={
 						{
@@ -194,9 +222,12 @@ export function Floor({
 							}))
 					).map(({ table, px, percent }) => {
 						const state = states.get(table.id) ?? tableState(table, feed, now)
-						const verdict = picking
-							? fitVerdict(table, state, picking, now)
-							: null
+						const joined = join ? join(table, state) : null
+						const verdict = joined
+							? joinedAsVerdict(joined)
+							: picking
+								? fitVerdict(table, state, picking, now, feed)
+								: null
 						return (
 							<TableButton
 								key={table.id}
@@ -204,7 +235,10 @@ export function Floor({
 								state={state}
 								now={now}
 								verdict={verdict}
+								chosen={joined?.kind === 'selected'}
 								best={best === table.id}
+								section={sections?.get(table.id) ?? null}
+								canReadGuest={canReadGuest}
 								onClick={() => onTable(table, state)}
 								formatTime={formatTime}
 								formatShort={formatShort}
@@ -225,6 +259,31 @@ export function Floor({
 			</div>
 		</div>
 	)
+}
+
+const SIGNAL_ICON = {
+	allergy: 'alert-triangle',
+	vip: 'crown',
+	occasion: 'cake',
+	deposit: 'badge-check',
+} as const
+
+/** What a table says about the party in hand: a fit verdict, or (joining tables) that it is far or the group is full. */
+type TableVerdict = FitVerdict | { fits: false; why: 'far' | 'full' }
+
+/** The join verdict as the floor words a table's reason. */
+function joinedAsVerdict(joined: JoinVerdict): TableVerdict {
+	switch (joined.kind) {
+		case 'selected':
+		case 'addable':
+			return { fits: true }
+		case 'far':
+			return { fits: false, why: 'far' }
+		case 'full':
+			return { fits: false, why: 'full' }
+		default:
+			return joined.verdict
+	}
 }
 
 /** Where a box sits on the plan: CSS lengths (the `.bk-box` rule places it from them). */
@@ -281,7 +340,10 @@ function TableButton({
 	state,
 	now,
 	verdict,
+	chosen,
 	best,
+	section,
+	canReadGuest,
 	onClick,
 	formatTime,
 	formatShort,
@@ -291,15 +353,22 @@ function TableButton({
 	state: TableState
 	now: number
 	/** While a party is being placed: whether this table takes them, and if not why. */
-	verdict: FitVerdict | null
+	verdict: TableVerdict | null
+	/** Joining tables: this one is already in the group. */
+	chosen: boolean
 	/** The one table to suggest for the party in hand. */
 	best: boolean
+	/** Its server section, while the floor shows them. */
+	section: FloorSection | null
+	canReadGuest: boolean
 	onClick: () => void
 	formatTime: (epochMs: number) => string
 	formatShort: (epochMs: number) => string
 	box: Box
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
+	const arabic = i18n.locale.startsWith('ar')
+	const count = (n: number) => formatCount(n, i18n.locale)
 	const round = table.shape === 'round' || table.shape === 'oval'
 	const covers =
 		table.minCovers > 0 && table.minCovers < table.maxCovers
@@ -307,9 +376,17 @@ function TableButton({
 			: String(table.maxCovers)
 	// How long they have sat, and how long until the table is expected to clear.
 	const sitting = state.kind === 'seated' ? stayOf(state.party, now) : null
+	const partly = state.kind === 'seated' ? coversHere(state.party) : null
 	const seatedFor = sitting?.seatedMin ?? null
 	const leftMin = sitting?.leftMin ?? 0
 	const overMin = sitting?.overMin ?? 0
+	// What the booking on the table (the party seated, or the one due soon) has to flag.
+	const signals: TileSignal[] =
+		state.kind === 'seated'
+			? tileSignals(state.party, canReadGuest)
+			: state.kind === 'soon'
+				? tileSignals(state.next, canReadGuest)
+				: []
 	// How far through the booked stay they are: a thin bar that turns amber past the end.
 	const stay = sitting ? sitting.ratio : null
 	// A table being cleared after a party left: minutes until it is ready again.
@@ -317,6 +394,9 @@ function TableButton({
 		state.kind === 'resetting'
 			? Math.max(1, Math.ceil((state.readyAt - now) / 60_000))
 			: 0
+	const resetLeftText = count(resetLeft)
+	const leftText = count(leftMin)
+	const overText = count(overMin)
 	// An open table that is booked later says until when it is free.
 	const until = freeUntil(state, now)
 	const untilFull = until ? formatTime(until.until) : ''
@@ -334,19 +414,35 @@ function TableButton({
 			reason = _(msg`Booked ${at}`)
 			reasonShort = (
 				<span className="inline-flex items-center gap-0.5">
-					<Clock3 aria-hidden className="size-3" />
+					<Icon name="clock-3" aria-hidden className="size-3" />
 					{formatShort(verdict.at)}
 				</span>
 			)
+		} else if (verdict.why === 'blocked') {
+			const at = formatTime(verdict.at)
+			reason = _(msg`Blocked ${at}`)
+			reasonShort = (
+				<span className="inline-flex items-center gap-0.5">
+					<Icon name="ban" aria-hidden className="size-3" />
+					{formatShort(verdict.at)}
+				</span>
+			)
+		} else if (verdict.why === 'far') {
+			reason = _(msg`Not next to it`)
+			reasonShort = _(msg`Far`)
+		} else if (verdict.why === 'full') {
+			reason = _(msg`Group is full`)
+			reasonShort = _(msg`Full`)
 		} else if (verdict.why === 'small') {
 			reason = _(msg`Too small`)
 			reasonShort = _(msg`Small`)
 		} else if (verdict.why === 'resetting') {
+			// While a party is in hand the reason is said under the tile (it explains why it steps back).
 			reason = _(msg`Resetting ${resetLeft}m`)
 			reasonShort = (
 				<span className="inline-flex items-center gap-0.5">
-					<RefreshCw aria-hidden className="size-3" />
-					{_(msg`${resetLeft}m`)}
+					<Icon name="refresh-cw" aria-hidden className="size-3" />
+					{_(msg`${resetLeftText}m`)}
 				</span>
 			)
 		} else {
@@ -355,18 +451,17 @@ function TableButton({
 		}
 	}
 	/** Who is there (or due), or why the party in hand does not fit, under the table. */
+	// A resetting tile says its minutes inside; under it only a reason (a party in hand) is said, never the minutes twice.
 	const caption =
-		reason ??
-		(state.kind === 'seated'
-			? shortName(state.party, _(msg`Guest`))
-			: state.kind === 'soon'
-				? shortName(state.next, _(msg`Guest`))
-				: state.kind === 'resetting'
-					? _(msg`Resetting ${resetLeft}m`)
-					: null)
-	// A phone has room for the word, not the minutes (the table says them).
-	if (reasonShort === null && state.kind === 'resetting' && !reason)
-		reasonShort = _(msg`Resetting`)
+		state.kind === 'resetting' && reason === null
+			? null
+			: (reason ??
+				(chosen ? _(msg`Chosen`) : null) ??
+				(state.kind === 'seated'
+					? shortName(state.party, _(msg`Guest`))
+					: state.kind === 'soon'
+						? shortName(state.next, _(msg`Guest`))
+						: null))
 
 	let label: string
 	switch (state.kind) {
@@ -399,27 +494,45 @@ function TableButton({
 					)
 				: _(msg`Table ${table.label}, open, seats ${covers}`)
 	}
+	// Whose table it is, while the floor shows sections.
+	if (section) {
+		const sectionName = section.name
+		const server = section.server?.name
+		label = server
+			? _(msg`${label}. ${sectionName}, ${server}.`)
+			: _(msg`${label}. ${sectionName}, no server.`)
+	}
+	const initials = section?.server ? initialsOf(section.server.name) : ''
+	// Only some of the party sit here: said, so a screen reader hears it too.
+	if (partly) {
+		const partlyText = coversText(_, partly)
+		label = _(msg`${label}. ${partlyText}.`)
+	}
 	// While a party is being placed, say whether this table takes it, and why not.
 	if (verdict)
-		label = verdict.fits
-			? best
-				? _(msg`${label}. Best fit for this party.`)
-				: _(msg`${label}. Takes this party.`)
-			: _(msg`${label}. ${reason ?? ''}.`)
+		label = chosen
+			? _(msg`${label}. Chosen for this party.`)
+			: verdict.fits
+				? best
+					? _(msg`${label}. Best fit for this party.`)
+					: _(msg`${label}. Takes this party.`)
+				: _(msg`${label}. ${reason ?? ''}.`)
 
 	return (
 		<div
-			className="bk-table bk-box"
+			className="bk-table bk-box @container"
 			style={
 				{
 					'--l': box.l,
 					'--t': box.t,
 					'--w': box.w,
 					'--h': box.h,
+					'--section': section?.color,
 				} as React.CSSProperties
 			}
 			data-state={state.kind}
 			data-round={round}
+			data-section={section ? section.id : undefined}
 		>
 			<button
 				type="button"
@@ -428,41 +541,85 @@ function TableButton({
 				data-state={state.kind}
 				data-fits={fits === null ? undefined : String(fits)}
 				data-best={best || undefined}
+				data-chosen={chosen || undefined}
+				aria-pressed={chosen || undefined}
 				style={
 					{
 						'--turn': table.rotation ? `${table.rotation}deg` : undefined,
 					} as React.CSSProperties
 				}
 				className={cn(
-					'floor-table floor-turn flex flex-col items-center justify-center gap-0.5 overflow-hidden border-2 p-1 text-center',
-					round ? 'rounded-full' : 'rounded-2xl',
-					state.kind === 'open' && 'text-foreground',
-					state.kind === 'soon' &&
-						'border-warning bg-warning/10 text-foreground border-dashed',
-					state.kind === 'seated' &&
-						'border-primary bg-primary text-primary-foreground elevated-card',
-					state.kind === 'blocked' &&
-						'border-border bg-muted text-muted-foreground',
-					state.kind === 'resetting' &&
-						'border-border text-muted-foreground border-dashed',
+					'floor-table floor-turn flex flex-col items-center justify-center gap-0.5 p-0 text-center',
+					round ? 'rounded-full' : 'rounded-(--station-panel-radius)',
+					(state.kind === 'open' || state.kind === 'soon') && 'text-foreground',
+					(state.kind === 'blocked' || state.kind === 'resetting') &&
+						'text-muted-foreground',
 				)}
 			>
+				{/* A VIP, an allergy, an occasion, a paid deposit: up to two marks in the corner. */}
+				{signals.length > 0 ? (
+					<span
+						className="bk-signals pointer-events-none absolute z-3 flex flex-col gap-0.5"
+						aria-hidden
+					>
+						{signals.map((signal) => (
+							<span
+								key={signal}
+								className="bk-signal bg-card inline-flex h-4.5 w-4.5 items-center justify-center p-0.5"
+								data-signal={signal}
+							>
+								<Icon name={SIGNAL_ICON[signal]} className="size-full" />
+							</span>
+						))}
+					</span>
+				) : null}
+				{/* The server's initials, in the section's colour. */}
+				{initials ? (
+					<span
+						aria-hidden
+						className={cn(
+							'bg-card text-foreground pointer-events-none absolute z-3 inline-flex h-5 min-w-6 items-center justify-center rounded-full border-2 border-(--section) px-0.5 text-xs leading-none font-semibold',
+							// Just outside the corner, like a badge: never over the table's own words.
+							round ? '-start-1 -top-1' : '-start-2 -top-2',
+						)}
+					>
+						{initials}
+					</span>
+				) : null}
+				{/* Outside the counter-rotated words: those would become the corner it sits in. */}
+				{chosen ? (
+					<span
+						aria-hidden
+						className="bk-chosen-mark bg-primary text-primary-foreground absolute end-1 top-1 z-3 inline-flex size-4 rounded-full p-0.75"
+					>
+						<Icon name="check" className="size-full" />
+					</span>
+				) : null}
 				{/* Counter-rotate the words so a turned table still reads upright. */}
-				<span className="floor-unturn flex flex-col items-center gap-0.5">
-					<span className="bk-t-num mono">{table.label}</span>
+				<span className="bk-table-words floor-unturn relative z-2 flex max-w-full flex-col items-center gap-0.5 [overflow-wrap:anywhere]">
+					<span className="bk-t-num tnum text-base leading-none font-semibold">
+						{table.label}
+					</span>
 					<span
 						className={cn(
 							'bk-t-sub flex items-center gap-1',
 							state.kind === 'seated'
-								? 'text-primary-foreground/90'
+								? 'text-foreground'
 								: 'text-muted-foreground',
 						)}
 						aria-hidden
 					>
 						{state.kind === 'seated' ? (
 							<>
-								<Users className="size-3.5" />
-								<span className="tnum">{state.party.partySize}</span>
+								<Icon name="users" className="size-3.5" />
+								{partly ? (
+									// Partly seated: how many sit here of how many are coming.
+									<span className="tnum" dir="ltr">
+										{partly.here}/{partly.of}
+									</span>
+								) : (
+									<span className="tnum">{state.party.partySize}</span>
+								)}
 							</>
 						) : state.kind === 'soon' ? (
 							// "12:55", no AM or PM: the full time is in the table's name.
@@ -470,13 +627,13 @@ function TableButton({
 								{formatShort(state.next.startAt)}
 							</span>
 						) : state.kind === 'blocked' ? (
-							<Ban className="size-4" />
+							<Icon name="ban" className="size-4" />
 						) : state.kind === 'resetting' ? (
 							<>
-								<RefreshCw aria-hidden className="size-3.5" />
-								<span className="tnum font-semibold">
-									{_(msg`${resetLeft}m`)}
-								</span>
+								<Icon name="refresh-cw" aria-hidden className="size-3.5" />
+								<bdi className="tnum font-semibold">
+									{_(msg`${resetLeftText}m`)}
+								</bdi>
 							</>
 						) : until ? (
 							<span className="tnum text-foreground font-semibold">
@@ -484,7 +641,7 @@ function TableButton({
 							</span>
 						) : (
 							<>
-								<Users className="size-3.5" />
+								<Icon name="users" className="size-3.5" />
 								{/* "1–4" keeps its order right to left. */}
 								<span className="tnum" dir="ltr">
 									{covers}
@@ -495,17 +652,27 @@ function TableButton({
 					{/* How long until the table clears (past the end: how long over), on its own line so a small round table never crops it. */}
 					{state.kind === 'seated' && seatedFor !== null ? (
 						<span
-							className="bk-t-sub bk-left relative z-1"
+							className="bk-t-sub bk-left relative z-1 rounded-full px-1"
 							data-over={sitting?.over ?? false}
 							aria-hidden
 						>
 							{sitting?.over ? (
-								<SoftText value={_(msg`+${overMin}m`)} />
+								<bdi>
+									<SoftText value={_(msg`+${overText}m`)} />
+								</bdi>
+							) : arabic ? (
+								// "٢٥ د": the number, then the short unit; "left" is in the table's name for a screen reader.
+								<bdi>
+									<SoftText value={_(msg`${leftText}m`)} />
+								</bdi>
 							) : (
 								<>
-									<SoftText value={_(msg`~${leftMin}m`)} />
+									<SoftText value={_(msg`~${leftText}m`)} />
 									{/* A small round table has no room for the word: the number says it. */}
-									<span className="bk-left-word"> {_(msg`left`)}</span>
+									<span className="bk-left-word whitespace-nowrap">
+										{' '}
+										{_(msg`left`)}
+									</span>
 								</>
 							)}
 						</span>
@@ -513,21 +680,30 @@ function TableButton({
 				</span>
 			</button>
 			{best ? (
-				<span className="bk-bestfit" aria-hidden>
+				<span
+					className="bk-bestfit bg-success text-background pointer-events-none absolute start-1/2 -top-3.5 z-3 rounded-full px-2 py-0.25 text-xs leading-5 font-semibold whitespace-nowrap"
+					aria-hidden
+				>
 					<Trans>Best fit</Trans>
 				</span>
 			) : null}
 			{caption || stay !== null ? (
-				<span className="bk-under" aria-hidden>
+				<span
+					className="bk-under pointer-events-none absolute -inset-x-3 z-2 flex flex-col items-center gap-0.5"
+					aria-hidden
+				>
 					{stay !== null ? (
 						<span
-							className="bk-elapsed"
+							className="bk-elapsed h-1 max-w-18 overflow-hidden"
 							data-over={stay > 1}
 							style={{ '--p': Math.min(1, stay) } as React.CSSProperties}
 						/>
 					) : null}
 					{caption ? (
-						<bdi className="bk-caption" data-reason={reason !== null}>
+						<bdi
+							className="bk-caption overflow-hidden leading-5 text-ellipsis whitespace-nowrap"
+							data-reason={reason !== null}
+						>
 							{reasonShort !== null ? (
 								<>
 									<span className="bk-reason-long">{caption}</span>

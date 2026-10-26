@@ -21,22 +21,19 @@ import os from 'node:os'
 import path from 'node:path'
 import { createServer } from 'node:http'
 
-const APP_PORT = 4710
-const API_PORT = 4711
+const APP_PORT = Number(process.env.POS_E2E_APP_PORT || 4710)
+const API_PORT = Number(process.env.POS_E2E_API_PORT || 4711)
+const POS_PORT = Number(process.env.POS_E2E_PORT || 3110)
 const ORG_ID = 'org_e2e_pos'
 const ORG_SLUG = 'demo'
 const INTERNAL_TOKEN = 'e2e-internal-token-very-long-and-secure-123456'
-const POS_ORIGINS = ['http://localhost:3110', 'http://127.0.0.1:3110']
+const POS_ORIGINS = [
+	`http://localhost:${POS_PORT}`,
+	`http://127.0.0.1:${POS_PORT}`,
+]
 
-// Playwright stops this process with SIGKILL, so no exit handler can be relied on
-// to clean up. Sweep leftovers from earlier runs first, then use one fresh dir.
-for (const entry of fs.readdirSync(os.tmpdir())) {
-	if (entry.startsWith('pos-e2e-')) {
-		try {
-			fs.rmSync(path.join(os.tmpdir(), entry), { recursive: true, force: true })
-		} catch {}
-	}
-}
+// Each harness owns a fresh directory. Never sweep other harnesses' databases:
+// another browser session may still be using one, even on different ports.
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-e2e-'))
 Object.assign(process.env, {
 	NODE_ENV: 'development',
@@ -68,6 +65,7 @@ const {
 	posOrderLines,
 	posOrderRevisions,
 	posOrders,
+	restaurantOrders,
 	posOrderTransfers,
 	posPairingCodes,
 	posPayments,
@@ -102,7 +100,7 @@ const { and, eq, sql } = await import('drizzle-orm')
 const { createPairingCode, listDevices, listPosOrders, revokeDevice } =
 	await import('../src/services/pos-service.ts')
 const { listShifts } = await import('../src/services/pos-shift-service.ts')
-const { seal } = await import('../src/lib/zatca-seal.ts')
+const { seal, sealContext } = await import('../src/lib/zatca-seal.ts')
 const { generatePrivateKey, toHex } = await import('@repo/zatca')
 
 // ZATCA is never called from tests: reporting answers "reported" here.
@@ -384,6 +382,7 @@ root.post('/__test/reset', async (c) => {
 	await db.delete(posZatcaUnits)
 	await db.delete(posZatcaSettings)
 	await db.delete(posOrders)
+	await db.delete(restaurantOrders)
 	for (const statement of posTriggers) await db.run(sql.raw(statement))
 	await db.delete(posPinAttempts)
 	await db.delete(posPairingCodes)
@@ -415,14 +414,14 @@ root.post('/__test/reset', async (c) => {
 async function clearReservations() {
 	const triggers = (await db.all(
 		sql.raw(
-			"select name, sql from sqlite_master where type = 'trigger' and (tbl_name like 'rsv_%' or tbl_name like 'time_%' or tbl_name = 'staff_audit_log')",
+			"select name, sql from sqlite_master where type = 'trigger' and (tbl_name like 'rsv_%' or tbl_name like 'time_%' or tbl_name like 'kds_%' or tbl_name = 'staff_audit_log')",
 		),
 	)) as Array<{ name: string; sql: string }>
 	for (const trigger of triggers)
 		await db.run(sql.raw(`DROP TRIGGER IF EXISTS \`${trigger.name}\``))
 	const tables = (await db.all(
 		sql.raw(
-			"select name from sqlite_master where type = 'table' and (name like 'rsv_%' or name in ('time_punches','time_breaks','time_entries','time_entry_edits','staff_audit_log'))",
+			"select name from sqlite_master where type = 'table' and (name like 'rsv_%' or name like 'kds_%' or name in ('time_punches','time_breaks','time_entries','time_entry_edits','staff_audit_log'))",
 		),
 	)) as Array<{ name: string }>
 	await db.run(sql.raw('PRAGMA foreign_keys = OFF'))
@@ -461,7 +460,7 @@ root.post('/__test/pairing-code', async (c) => {
 		// Lets a test hand out a code that is already expired.
 		await db.update(posPairingCodes).set({ expiresAt: Date.now() + body.ttlMs })
 	}
-	const link = `http://localhost:3110/#a=${encodeURIComponent(`http://127.0.0.1:${API_PORT}`)}&u=${encodeURIComponent(`http://127.0.0.1:${APP_PORT}`)}&s=${ORG_SLUG}&c=${encodeURIComponent(result.value.code)}`
+	const link = `http://localhost:${POS_PORT}/#a=${encodeURIComponent(`http://127.0.0.1:${API_PORT}`)}&u=${encodeURIComponent(`http://127.0.0.1:${APP_PORT}`)}&s=${ORG_SLUG}&c=${encodeURIComponent(result.value.code)}`
 	return c.json({
 		code: result.value.code,
 		link,
@@ -568,6 +567,43 @@ root.post('/__test/terminal', async (c) => {
 root.get('/__test/orders', async (c) =>
 	c.json({ orders: await listPosOrders(db, { limit: 200 }) }),
 )
+root.post('/__test/kitchen-orders', async (c) => {
+	const { scheduled = false } = (await c.req.json().catch(() => ({}))) as {
+		scheduled?: boolean
+	}
+	await db.insert(restaurantOrders).values({
+		id: crypto.randomUUID(),
+		orgId: ORG_ID,
+		number: scheduled ? 'WEB-LATER' : 'WEB-0042',
+		status: 'accepted',
+		paymentMethod: 'handoff',
+		paymentStatus: 'unpaid',
+		fulfillment: 'pickup',
+		locationId: 'loc-1',
+		locationName: 'Downtown',
+		contactName: 'Kitchen test guest',
+		contactPhone: '+15555550123',
+		currency: 'USD',
+		subtotalCents: 750,
+		taxCents: 0,
+		totalCents: 750,
+		lines: [
+			{
+				itemId: 'i-fries',
+				itemName: 'Truffle Fries',
+				variantId: null,
+				quantity: 1,
+				instructions: 'No salt · allergy: sesame',
+				options: [],
+			},
+		],
+		scheduledFor: scheduled ? new Date(Date.now() + 3 * 3_600_000) : null,
+		idempotencyKey: crypto.randomUUID(),
+		requestHash: 'test',
+		receiptTokenHash: 'test',
+	})
+	return c.json({ ok: true })
+})
 root.get('/__test/devices', async (c) =>
 	c.json({ devices: await listDevices(db) }),
 )
@@ -631,9 +667,15 @@ root.post('/__test/zatca', async (c) => {
 		const unit = {
 			environment: 'sandbox' as const,
 			status: 'active' as const,
-			privateKeySealed: seal(toHex(generatePrivateKey())),
+			privateKeySealed: seal(
+				toHex(generatePrivateKey()),
+				sealContext(device.id, 'private_key'),
+			),
 			productionToken: certificate,
-			productionSecretSealed: seal('e2e-secret'),
+			productionSecretSealed: seal(
+				'e2e-secret',
+				sealContext(device.id, 'production_secret'),
+			),
 			complianceRequestId: '1',
 			onboardedAt: Date.now(),
 		}

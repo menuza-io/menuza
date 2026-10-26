@@ -9,7 +9,13 @@ import {
 	SELF_MARK_MS,
 	snapshotToCompare,
 } from './book.ts'
-import { MAX_SPOKEN, newsOf } from './news.ts'
+import {
+	CHANGE_TAG_MS,
+	liveTags,
+	MAX_NAMED,
+	MAX_SPOKEN,
+	newsOf,
+} from './news.ts'
 import { at, day, rsv } from './testing.ts'
 
 const _ = i18n._.bind(i18n)
@@ -62,7 +68,14 @@ function news(later: ReturnType<typeof day>) {
 
 describe('what the stand says about a change', () => {
 	it('says nothing when nothing changed', () => {
-		expect(news(before)).toEqual({ items: [], toast: null })
+		expect(news(before)).toEqual({
+			items: [],
+			toast: null,
+			summary: false,
+			highlight: false,
+			ids: [],
+			tags: new Map(),
+		})
 	})
 	it('says a new online booking with who, how many and when', () => {
 		const later = day([
@@ -75,7 +88,7 @@ describe('what the stand says about a change', () => {
 				guest: guest('Omar', 'Said'),
 			}),
 		])
-		expect(news(later).toast).toBe('New online booking: Omar S., 4 at 7:30 PM')
+		expect(news(later).toast).toBe('Omar S. booked 4 for 7:30 PM')
 	})
 	it('says a cancellation and a changed party size', () => {
 		const cancelled = day([
@@ -89,7 +102,7 @@ describe('what the stand says about a change', () => {
 			before.reservations[1]!,
 			before.reservations[2]!,
 		])
-		expect(news(cancelled).toast).toBe('Cancelled: Priya N., 8:00 PM')
+		expect(news(cancelled).toast).toBe('Priya N. cancelled')
 		const resized = day([
 			before.reservations[0]!,
 			rsv({
@@ -101,7 +114,7 @@ describe('what the stand says about a change', () => {
 			}),
 			before.reservations[2]!,
 		])
-		expect(news(resized).toast).toBe('Party size changed: Omar R., 4 to 6')
+		expect(news(resized).toast).toBe('Omar R. changed from 4 to 6')
 	})
 	it('says an arrival, a VIP by name, and counts several changes', () => {
 		const arrived = day([
@@ -115,7 +128,7 @@ describe('what the stand says about a change', () => {
 			before.reservations[1]!,
 			before.reservations[2]!,
 		])
-		expect(news(arrived).toast).toBe('Priya N. has arrived.')
+		expect(news(arrived).toast).toBe('Priya N. has arrived')
 		const vip = day([
 			before.reservations[0]!,
 			before.reservations[1]!,
@@ -129,7 +142,8 @@ describe('what the stand says about a change', () => {
 				},
 			}),
 		])
-		expect(news(vip).toast).toBe('VIP guest has arrived: Chris T..')
+		expect(news(vip).toast).toBe('VIP: Chris T. has arrived')
+		expect(news(vip).highlight).toBe(true)
 		const several = day([
 			rsv({
 				id: 'a',
@@ -147,11 +161,11 @@ describe('what the stand says about a change', () => {
 			before.reservations[2]!,
 		])
 		const result = news(several)
-		expect(result.toast).toBe('2 updates at the stand')
-		expect(result.items).toEqual([
-			'Priya N. has arrived.',
-			'Cancelled: Omar R., 8:15 PM',
-		])
+		// One or two are named, not counted.
+		expect(MAX_NAMED).toBe(2)
+		expect(result.summary).toBe(false)
+		expect(result.toast).toBe('Priya N. has arrived · Omar R. cancelled')
+		expect(result.items).toEqual(['Priya N. has arrived', 'Omar R. cancelled'])
 	})
 })
 
@@ -174,11 +188,11 @@ describe('a burst of changes', () => {
 		const said = news(many(50))
 		expect(said.items).toHaveLength(MAX_SPOKEN + 1)
 		expect(said.items[MAX_SPOKEN]).toBe('and 47 more')
-		expect(said.items.slice(0, MAX_SPOKEN).join(' ')).toContain(
-			'New online booking',
-		)
-		// The toast is one count, not fifty lines.
-		expect(said.toast).toBe('50 updates at the stand')
+		expect(said.items.slice(0, MAX_SPOKEN).join(' ')).toContain('booked 2')
+		// The toast is one summary, not fifty lines; it can be tapped to see them.
+		expect(said.toast).toBe('50 new')
+		expect(said.summary).toBe(true)
+		expect(said.ids).toHaveLength(50)
 	})
 	it('reads out a few changes in full, with no "and more"', () => {
 		const said = news(many(MAX_SPOKEN))
@@ -230,8 +244,8 @@ describe('how old a look may be and still be news', () => {
 				arrivals: newArrivals(base, later),
 				notices: dayNotices(base, later, { now: NOW + 60 * 60_000 }),
 				formatTime,
-			}),
-		).toEqual({ items: [], toast: null })
+			}).toast,
+		).toBeNull()
 	})
 	it('is no basis for another day, or for no look at all', () => {
 		expect(snapshotToCompare(seen(NOW), '2030-01-01', NOW)).toBeNull()
@@ -305,5 +319,101 @@ describe('changes this tablet made itself', () => {
 				byUs: marks.live(gap),
 			}),
 		).toEqual([expect.objectContaining({ kind: 'cancelled' })])
+	})
+})
+
+describe('a summary of more than two changes', () => {
+	const online = (id: string, over: Record<string, unknown> = {}) =>
+		rsv({
+			id,
+			start: 19 * 60,
+			channel: 'online',
+			partySize: 2,
+			createdAt: NOW - 60_000,
+			guest: guest('Guest', id),
+			...over,
+		})
+	it('counts what kind of change each is, in a fixed order', () => {
+		const later = day([
+			{ ...before.reservations[0]!, status: 'cancelled' },
+			{ ...before.reservations[1]!, partySize: 6 },
+			before.reservations[2]!,
+			online('n1'),
+			online('n2'),
+			online('n3'),
+		])
+		const said = news(later)
+		expect(said.summary).toBe(true)
+		expect(said.toast).toBe('3 new, 1 cancelled, 1 changed')
+	})
+	it('says how many were VIPs or large parties, and stands out', () => {
+		const later = day([
+			...before.reservations,
+			online('x1', { partySize: 12 }),
+			online('x2', {
+				guest: { ...guest('Vi', 'Pee'), tags: [{ id: 'v', name: 'VIP' }] },
+			}),
+			online('x3'),
+		])
+		const said = news(later)
+		expect(said.toast).toBe('3 new · 2 VIPs or large parties')
+		expect(said.highlight).toBe(true)
+		expect(
+			news(
+				day([...before.reservations, online('x1'), online('x2'), online('x3')]),
+			).highlight,
+		).toBe(false)
+	})
+	it('names a large party and a VIP, one or two at a time', () => {
+		const said = news(
+			day([...before.reservations, online('x1', { partySize: 12 })]),
+		)
+		expect(said.toast).toBe('Large party: Guest X. booked 12 for 7:00 PM')
+		expect(said.highlight).toBe(true)
+		const both = news(
+			day([
+				...before.reservations,
+				online('x2', {
+					partySize: 9,
+					guest: { ...guest('Vi', 'Pee'), tags: [{ id: 'v', name: 'VIP' }] },
+				}),
+			]),
+		)
+		expect(both.items[0]).toBe('VIP, large party: Vi P. booked 9 for 7:00 PM')
+	})
+	it('lists every booking that changed, and tags a new one and a resized one', () => {
+		const said = news(
+			day([
+				before.reservations[0]!,
+				{ ...before.reservations[1]!, partySize: 6 },
+				before.reservations[2]!,
+				online('n1'),
+			]),
+		)
+		expect(said.ids).toEqual(['b', 'n1'])
+		expect(said.tags).toEqual(
+			new Map([
+				['b', 'changed'],
+				['n1', 'new'],
+			]),
+		)
+	})
+})
+
+describe('the tags a changed row carries', () => {
+	it('last a minute', () => {
+		const tagged = new Map<string, { tag: 'new' | 'changed'; at: number }>([
+			['a', { tag: 'new', at: NOW }],
+			['b', { tag: 'changed', at: NOW - 30_000 }],
+			['c', { tag: 'new', at: NOW - CHANGE_TAG_MS - 1 }],
+		])
+		expect(liveTags(tagged, NOW)).toEqual(
+			new Map([
+				['a', 'new'],
+				['b', 'changed'],
+			]),
+		)
+		expect(liveTags(tagged, NOW + CHANGE_TAG_MS).has('a')).toBe(true)
+		expect(liveTags(tagged, NOW + CHANGE_TAG_MS + 1).has('a')).toBe(false)
 	})
 })

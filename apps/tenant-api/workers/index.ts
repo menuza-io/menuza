@@ -258,6 +258,8 @@ export function withTerminalCors(request: Request, response: Response) {
 	const headers = new Headers(response.headers)
 	headers.set('Access-Control-Allow-Origin', origin)
 	headers.append('Vary', 'Origin')
+	// As the app does: the till measures its clock skew from the Date header.
+	headers.set('Access-Control-Expose-Headers', 'Date')
 	return new Response(response.body, {
 		status: response.status,
 		statusText: response.statusText,

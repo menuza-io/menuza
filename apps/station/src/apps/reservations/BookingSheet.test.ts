@@ -155,7 +155,9 @@ describe('the time the host picked', () => {
 		await press('8:00 PM')
 		expect(pressed('8:00 PM')).toBe('true')
 		await press('4')
-		expect(button('8:00 PM')).toBeUndefined()
+		// The time stays on the grid, dimmed, and cannot be picked.
+		const gone = button(/^8:00 PM/) as HTMLButtonElement
+		expect(gone.disabled).toBe(true)
 		expect(hasText('8:00 PM is not open for 4. Choose another time.')).toBe(
 			true,
 		)
@@ -298,5 +300,73 @@ describe('the duplicate check', () => {
 		await draw(base({ checkedDay: TODAY }))
 		await press('Tomorrow')
 		expect(hasText('Duplicates are checked')).toBe(false)
+	})
+})
+
+describe('a time that is not open stays on the grid', () => {
+	const slotChip = (label: string) =>
+		button(new RegExp(`^${label}`)) as HTMLButtonElement
+	it('is dimmed and cannot be picked, with a short word for why', async () => {
+		await draw(base())
+		await press('4')
+		const eight = slotChip('8:00 PM')
+		expect(eight.disabled).toBe(true)
+		expect(eight.textContent).toContain('Not open')
+		// Picking it does nothing.
+		await act(async () => eight.click())
+		expect(slotChip('8:00 PM').getAttribute('aria-pressed')).toBe('false')
+		// The open ones are plain chips.
+		expect(slotChip('7:00 PM').disabled).toBe(false)
+		expect(slotChip('7:00 PM').textContent).toBe('7:00 PM')
+	})
+	it('says what the stand knows about why: full, a bigger table, held', async () => {
+		const reasons = ['full', 'big', 'held', 'closed'] as const
+		await draw(
+			base({
+				slotReason: (slot) => reasons[(slot.localStartMin / 60) % 4]!,
+			}),
+		)
+		await press('4')
+		// 8:00 PM (hour 20 -> index 0) is the only one closed at size 4.
+		expect(slotChip('8:00 PM').textContent).toContain('Full')
+		await draw(base({ slotReason: () => 'big' }))
+		expect(slotChip('8:00 PM').textContent).toContain('Needs a bigger table')
+		await draw(base({ slotReason: () => 'held' }))
+		expect(slotChip('8:00 PM').textContent).toContain('Held')
+	})
+	it('keeps the times visible when none is open, with the plain words about it', async () => {
+		await draw(
+			base({
+				loadSlots: async () => ({
+					businessDate: TODAY,
+					closed: false,
+					slots: [18 * 60, 19 * 60].map((min) => ({
+						localStartMin: min,
+						time: `${min / 60}:00`,
+						available: false,
+						suggestedTableIds: [],
+					})),
+				}),
+			}),
+		)
+		expect(hasText('No times left for 2 on this day.')).toBe(true)
+		expect(slotChip('6:00 PM').disabled).toBe(true)
+		expect(slotChip('7:00 PM').disabled).toBe(true)
+		expect(button(/^Choose a time/)).toBeDefined()
+	})
+})
+
+describe('a large party', () => {
+	it('has quick sizes beside the stepper once it is nine or more', async () => {
+		await draw(base())
+		expect(button('10')).toBeUndefined()
+		await press('9+')
+		expect(button('10')).toBeDefined()
+		expect(button('12')).toBeDefined()
+		expect(button('14')).toBeDefined()
+		await press('12')
+		expect(pressed('12')).toBe('true')
+		expect(pressed('10')).toBe('false')
+		expect(dialog().textContent).toContain('12')
 	})
 })

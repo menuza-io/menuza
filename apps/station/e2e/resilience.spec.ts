@@ -186,7 +186,7 @@ test.describe('resilience', () => {
 		await sheet.getByRole('button', { name: 'Split 4' }).click()
 		await sheet.getByRole('button', { name: 'Split 2' }).click()
 		await sheet.getByRole('button', { name: 'Amount' }).click()
-		await sheet.getByRole('button', { name: 'Full · $16.24' }).click()
+		await sheet.getByRole('button', { name: 'Full' }).click()
 		await expect(
 			sheet.getByRole('button', { name: /^Paying now/ }),
 		).toContainText('$16.24')
@@ -231,7 +231,7 @@ test.describe('resilience', () => {
 		// race under test, so a click that finds nothing left to send is fine.
 		const sendNow = (sheet: Locator) =>
 			sheet
-				.getByRole('button', { name: 'Send now' })
+				.getByRole('button', { name: 'Upload now' })
 				.first()
 				.click({ timeout: 5_000 })
 				.catch(() => undefined)

@@ -13,12 +13,13 @@ test.describe('responsive layout', () => {
 		['wide tablet landscape', 1366, 1024, true],
 		['tablet landscape', 1180, 820, true],
 		['small tablet landscape', 1024, 768, true],
-		['tablet portrait', 820, 1180, false],
-		['small tablet portrait', 768, 1024, false],
+		['tablet portrait', 820, 1180, true],
+		['small tablet portrait', 768, 1024, true],
 		['large phone', 430, 932, false],
 		['phone', 390, 844, false],
 		['small phone', 360, 640, false],
 		['smallest phone', 320, 568, false],
+		['phone landscape', 915, 412, false],
 	] as const) {
 		test(`${name} (${width}×${height}): ${sideCart ? 'order panel beside the menu' : 'order bar at the bottom'}, nothing overflows`, async ({
 			demo: page,

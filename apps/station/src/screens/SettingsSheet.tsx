@@ -1,6 +1,7 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { CheckCircle2, Languages, Link2, Unlink } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
+import { Item, ItemMedia, ItemContent } from '@repo/ui/item'
 import { useState } from 'react'
 import { IDLE_LOCK_CHOICES } from '~/lib/activity.ts'
 import { type PosSettings } from '~/lib/config.ts'
@@ -12,12 +13,14 @@ import {
 import { DEMO_PIN } from '~/lib/signin.ts'
 import { type MenuLocation } from '~/lib/types.ts'
 import {
+	Input,
 	Button,
 	Checkbox,
 	Modal,
 	Reveal,
 	cn,
 	fieldClass,
+	Select,
 } from '~/ui/primitives.tsx'
 
 export function SettingsSheet({
@@ -142,14 +145,17 @@ export function SettingsSheet({
 					hint={_(t`For this device only. Saved at once.`)}
 				>
 					<span className="relative block">
-						<Languages className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-5 -translate-y-1/2" />
-						<select
+						<Icon
+							name="languages"
+							className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 z-10 size-5 -translate-y-1/2"
+						/>
+						<Select
 							// The language in use now: chosen here, or the restaurant's default.
 							value={i18n.locale === 'ar' ? 'ar' : 'en'}
 							onChange={(e) =>
 								void onSave({ locale: e.target.value === 'ar' ? 'ar' : 'en' })
 							}
-							className={cn(fieldClass, 'ps-10')}
+							className="ps-10"
 						>
 							<option value="en" lang="en">
 								English
@@ -157,14 +163,16 @@ export function SettingsSheet({
 							<option value="ar" lang="ar">
 								العربية
 							</option>
-						</select>
+						</Select>
 					</span>
 				</Field>
 				<section aria-label={_(t`Pairing`)} className="space-y-3">
 					{paired ? (
-						<div className="border-success/40 bg-success/8 flex items-start gap-3 rounded-2xl border p-4">
-							<CheckCircle2 className="text-success mt-0.5 size-6 shrink-0" />
-							<div className="min-w-0 flex-1">
+						<Item size="sm">
+							<ItemMedia variant="icon">
+								<Icon name="circle-check" className="text-success size-5" />
+							</ItemMedia>
+							<ItemContent className="min-w-0">
 								<p className="font-semibold">
 									<Trans>Paired as {pairedName}</Trans>
 								</p>
@@ -175,7 +183,7 @@ export function SettingsSheet({
 									</Trans>
 								</p>
 								{confirmUnpair ? (
-									<div className="bg-destructive/10 mt-3 space-y-2 rounded-xl p-3 text-sm">
+									<div className="notice-danger mt-3 space-y-2 rounded-(--station-control-radius) p-3 text-sm">
 										<p>
 											{waitingOrders > 0
 												? plural(waitingOrders, {
@@ -211,16 +219,16 @@ export function SettingsSheet({
 										className="text-destructive -ms-3 mt-2"
 										onClick={() => setConfirmUnpair(true)}
 									>
-										<Unlink className="size-4" />{' '}
+										<Icon name="unlink" className="size-4" />{' '}
 										<Trans>Unpair this terminal</Trans>
 									</Button>
 								)}
-							</div>
-						</div>
+							</ItemContent>
+						</Item>
 					) : (
-						<div className="border-border space-y-3 rounded-2xl border p-4">
+						<div className="border-border space-y-3 border-t pt-5">
 							<div className="flex items-center gap-2 font-semibold">
-								<Link2 className="size-5 shrink-0" />{' '}
+								<Icon name="link-2" className="size-5 shrink-0" />{' '}
 								<Trans>Pair with your restaurant</Trans>
 							</div>
 							<p className="text-muted-foreground text-sm">
@@ -232,7 +240,7 @@ export function SettingsSheet({
 											t`Paste a pairing link or code from the Menuza app to send orders to your server.`,
 										)}
 							</p>
-							<input
+							<Input
 								aria-label={_(t`Pairing link or code`)}
 								value={pairingText}
 								onChange={(e) => {
@@ -250,7 +258,6 @@ export function SettingsSheet({
 								autoCorrect="off"
 								spellCheck={false}
 								placeholder={_(t`Pairing link or ppc1.… code`)}
-								className={fieldClass}
 							/>
 							<Reveal open={pastedHost !== null}>
 								<p className="text-muted-foreground text-sm">
@@ -290,56 +297,67 @@ export function SettingsSheet({
 					<button
 						type="button"
 						onClick={() => setShowManual(true)}
-						className="text-muted-foreground hover:text-foreground text-sm font-medium underline underline-offset-4 transition-colors"
+						className="text-muted-foreground hover:text-foreground min-h-11 text-start text-sm font-medium underline underline-offset-4 transition-colors"
 					>
 						<Trans>Set up without pairing (menu only)</Trans>
 					</button>
 				) : (
 					<>
-						<Field
-							label={_(t`Business address (slug)`)}
-							hint={_(t`The name in your site address, e.g. “joes-diner”.`)}
+						<details
+							open={!paired}
+							className="group border-border border-y py-2"
 						>
-							<input
-								value={draft.slug}
-								onChange={(e) => set('slug', e.target.value)}
-								autoCapitalize="none"
-								autoCorrect="off"
-								spellCheck={false}
-								className={fieldClass}
-							/>
-						</Field>
-						<Field
-							label={_(t`App URL`)}
-							hint={_(t`Where your Menuza app runs.`)}
-						>
-							<input
-								value={draft.appUrl}
-								onChange={(e) => set('appUrl', e.target.value)}
-								inputMode="url"
-								autoCapitalize="none"
-								autoCorrect="off"
-								spellCheck={false}
-								placeholder="https://app.example.com"
-								className={fieldClass}
-							/>
-						</Field>
-						<Field
-							label={_(t`Orders server URL`)}
-							hint={_(
-								t`Regional orders API. Filled in automatically by a pairing link.`,
-							)}
-						>
-							<input
-								value={draft.tenantApiUrl}
-								onChange={(e) => set('tenantApiUrl', e.target.value)}
-								inputMode="url"
-								autoCapitalize="none"
-								autoCorrect="off"
-								spellCheck={false}
-								className={fieldClass}
-							/>
-						</Field>
+							<summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+								<Trans>Connection details</Trans>
+								<Icon
+									name="chevron-down"
+									className="size-4 shrink-0 transition-transform group-open:rotate-180"
+								/>
+							</summary>
+							<div className="space-y-4 pt-3 pb-2">
+								<Field
+									label={_(t`Business address (slug)`)}
+									hint={_(t`The name in your site address, e.g. “joes-diner”.`)}
+								>
+									<Input
+										value={draft.slug}
+										onChange={(e) => set('slug', e.target.value)}
+										autoCapitalize="none"
+										autoCorrect="off"
+										spellCheck={false}
+									/>
+								</Field>
+								<Field
+									label={_(t`App URL`)}
+									hint={_(t`Where your Menuza app runs.`)}
+								>
+									<Input
+										value={draft.appUrl}
+										onChange={(e) => set('appUrl', e.target.value)}
+										inputMode="url"
+										autoCapitalize="none"
+										autoCorrect="off"
+										spellCheck={false}
+										placeholder="https://app.example.com"
+									/>
+								</Field>
+								<Field
+									label={_(t`Orders server URL`)}
+									hint={_(
+										t`Regional orders API. Filled in automatically by a pairing link.`,
+									)}
+								>
+									<Input
+										value={draft.tenantApiUrl}
+										onChange={(e) => set('tenantApiUrl', e.target.value)}
+										inputMode="url"
+										autoCapitalize="none"
+										autoCorrect="off"
+										spellCheck={false}
+									/>
+								</Field>
+							</div>
+						</details>
 						{paired ? (
 							<Field
 								label={_(t`Staff sign-in`)}
@@ -347,7 +365,7 @@ export function SettingsSheet({
 									t`Turned on or off for this terminal in the Menuza app (Menu, Terminals).`,
 								)}
 							>
-								<p className="border-border bg-muted flex h-12 items-center rounded-xl border px-3 text-base font-medium">
+								<p className="border-border bg-muted flex min-h-12 items-center rounded-(--station-control-radius) border px-3 py-2 text-base font-medium">
 									{settings.signInRequired ? (
 										<Trans>On: staff sign in with their PIN</Trans>
 									) : (
@@ -363,7 +381,7 @@ export function SettingsSheet({
 									t`The till locks when nobody has touched it for this long. Staff sign in again with their PIN.`,
 								)}
 							>
-								<select
+								<Select
 									value={draft.idleLockSeconds}
 									onChange={(e) =>
 										set('idleLockSeconds', Number(e.target.value))
@@ -375,7 +393,7 @@ export function SettingsSheet({
 											{lockLabel(c.seconds)}
 										</option>
 									))}
-								</select>
+								</Select>
 							</Field>
 						) : null}
 						<div className="grid gap-4 sm:grid-cols-2">
@@ -387,12 +405,12 @@ export function SettingsSheet({
 										: _(t`Prefix on order numbers.`)
 								}
 							>
-								<input
+								<Input
 									value={paired ? settings.terminalCode : draft.terminalCode}
 									disabled={paired}
 									onChange={(e) => set('terminalCode', e.target.value)}
 									maxLength={6}
-									className={cn(fieldClass, 'disabled:opacity-60')}
+									className={cn('disabled:opacity-60')}
 								/>
 							</Field>
 							{locations.length > 1 ? (
@@ -404,7 +422,7 @@ export function SettingsSheet({
 											: _(t`Sets tax and menu overrides.`)
 									}
 								>
-									<select
+									<Select
 										value={draft.locationId ?? ''}
 										disabled={settings.locationLocked}
 										onChange={(e) => set('locationId', e.target.value || null)}
@@ -416,11 +434,11 @@ export function SettingsSheet({
 												{l.name}
 											</option>
 										))}
-									</select>
+									</Select>
 								</Field>
 							) : null}
 						</div>
-						<label className="border-border has-[:checked]:border-primary/50 has-[:checked]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors">
+						<label className="hover:bg-muted flex min-h-14 cursor-pointer items-center gap-3 px-1 py-3 transition-colors">
 							<Checkbox
 								checked={draft.demo}
 								onChange={(e) => set('demo', e.target.checked)}
@@ -435,7 +453,7 @@ export function SettingsSheet({
 							</span>
 						</label>
 						<Reveal open={draft.demo}>
-							<label className="border-border has-[:checked]:border-primary/50 has-[:checked]:bg-primary/5 flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors">
+							<label className="hover:bg-muted flex min-h-14 cursor-pointer items-center gap-3 px-1 py-3 transition-colors">
 								<Checkbox
 									checked={draft.signInRequired}
 									onChange={(e) => set('signInRequired', e.target.checked)}

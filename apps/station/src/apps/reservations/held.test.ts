@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { DUE_SOON_MIN, tableState } from './feed.ts'
-import { heldFor, heldLead } from './held.ts'
+import {
+	bigTableFor,
+	freeForMin,
+	heldFor,
+	heldLead,
+	runsIntoNext,
+} from './held.ts'
 import { at, day, MIN, rsv } from './testing.ts'
 
 const NOW = at(13 * 60)
@@ -48,11 +54,17 @@ describe('a table held for the next party', () => {
 		expect(heldFor(state, NOW)).toMatchObject({ atStand: true, canSeat: true })
 	})
 
-	it('cannot seat a party that is only partly here', () => {
+	it('can seat a party that is only partly here (the ones who are, as the stand picks them up)', () => {
 		const state = stateOf([
-			rsv({ start: 13 * 60, tableIds: ['t2'], status: 'partially_arrived' }),
+			rsv({
+				start: 13 * 60,
+				tableIds: ['t2'],
+				status: 'arrived',
+				partySize: 4,
+				arrivedCovers: 2,
+			}),
 		])
-		expect(heldFor(state, NOW)).toMatchObject({ atStand: true, canSeat: false })
+		expect(heldFor(state, NOW)).toMatchObject({ atStand: true, canSeat: true })
 	})
 
 	it('is nothing for an open, seated or blocked table', () => {
@@ -118,15 +130,11 @@ describe('what a held table leads with', () => {
 	it('leads with the walk-in when the till cannot seat the party at all', () => {
 		const held = heldFor(
 			stateOf([
-				rsv({
-					start: 13 * 60 - 5,
-					tableIds: ['t2'],
-					status: 'partially_arrived',
-				}),
+				rsv({ start: 13 * 60 - 5, tableIds: ['t2'], status: 'arrived' }),
 			]),
 			NOW,
-		)
-		if (held) expect(heldLead({ ...held, canSeat: false })).toBe('walk_in')
+		)!
+		expect(heldLead({ ...held, canSeat: false })).toBe('walk_in')
 		const late = heldFor(
 			stateOf([
 				rsv({ start: 13 * 60 - 20, tableIds: ['t2'], status: 'booked' }),
@@ -134,5 +142,48 @@ describe('what a held table leads with', () => {
 			NOW,
 		)!
 		expect(heldLead({ ...late, canSeat: false })).toBe('walk_in')
+	})
+})
+
+describe('how long a free table stays free', () => {
+	it('is the minutes to the next booking, less the table’s reset', () => {
+		const state = stateOf([
+			rsv({ start: 13 * 60 + 28, tableIds: ['t2'], partySize: 2 }),
+		])
+		expect(freeForMin(state, { resetBufferMin: 0 }, NOW)).toBe(28)
+		expect(freeForMin(state, { resetBufferMin: 10 }, NOW)).toBe(18)
+		expect(freeForMin(state, {}, NOW)).toBe(28)
+	})
+	it('is zero for a booking already due, and never negative', () => {
+		const state = stateOf([
+			rsv({ start: 13 * 60 - 5, tableIds: ['t2'], partySize: 2 }),
+		])
+		expect(freeForMin(state, { resetBufferMin: 10 }, NOW)).toBe(0)
+		const near = stateOf([
+			rsv({ start: 13 * 60 + 8, tableIds: ['t2'], partySize: 2 }),
+		])
+		expect(freeForMin(near, { resetBufferMin: 10 }, NOW)).toBe(0)
+	})
+	it('is nothing for a table with nothing booked, or one that is not free', () => {
+		expect(freeForMin(stateOf([]), {}, NOW)).toBeNull()
+		const seated = stateOf([
+			rsv({ start: 12 * 60, tableIds: ['t2'], status: 'seated' }),
+		])
+		expect(freeForMin(seated, {}, NOW)).toBeNull()
+	})
+	it('is short for a party when it is less than their stay', () => {
+		expect(runsIntoNext(28, 90)).toBe(true)
+		expect(runsIntoNext(90, 90)).toBe(false)
+		expect(runsIntoNext(null, 90)).toBe(false)
+	})
+})
+
+describe('a party much smaller than the table', () => {
+	it('is under half its seats', () => {
+		expect(bigTableFor(2, 10)).toBe(true)
+		expect(bigTableFor(4, 8)).toBe(false)
+		expect(bigTableFor(5, 10)).toBe(false)
+		expect(bigTableFor(1, 2)).toBe(false)
+		expect(bigTableFor(1, 3)).toBe(true)
 	})
 })

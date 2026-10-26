@@ -325,16 +325,27 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 			parsed.data.reservationsEnabled !== false &&
 			parsed.data.locationId !== undefined &&
 			current.locationId === null)
+	const workplace = posStaffScopeId({
+		scopeId: current.scopeId,
+		locationId: hostLocationId,
+	})
+	// Binding can also move a till's time clock to that location's people.
+	const opensTimeclock =
+		parsed.data.timeclockEnabled === true ||
+		(current.timeclockEnabled &&
+			parsed.data.timeclockEnabled !== false &&
+			workplace !== posStaffScopeId(current))
 	const denied = await stationAppsDenied(
 		g.auth,
 		{
 			...parsed.data,
+			timeclockEnabled: opensTimeclock ? true : parsed.data.timeclockEnabled,
 			reservationsEnabled: opensHostStand
 				? true
 				: parsed.data.reservationsEnabled,
 		},
 		hostLocationId,
-		posStaffScopeId({ scopeId: current.scopeId, locationId: hostLocationId }),
+		workplace,
 	)
 	if (denied) return denied
 	if (parsed.data.locationId !== undefined) {

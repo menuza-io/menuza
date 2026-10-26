@@ -815,13 +815,14 @@ export function stationReservationsProblem(settings: {
 	return null
 }
 
-/** A terminal's location and host stand switch, for permission checks before a change. */
+/** A terminal's location and Station app switches, for permission checks before a change. */
 export async function deviceStationState(db: TenantDatabase, id: string) {
 	const [device] = await db
 		.select({
 			locationId: posDevices.locationId,
 			scopeId: posDevices.scopeId,
 			reservationsEnabled: posDevices.reservationsEnabled,
+			timeclockEnabled: posDevices.timeclockEnabled,
 		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
@@ -1283,6 +1284,28 @@ type Tx = Parameters<Parameters<TenantDatabase['transaction']>[0]>[0]
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
+/**
+ * A revision as sold: without each line's kitchen keys (its id and when it was
+ * sent, contract 4). A till updated between sending a revision and hearing back
+ * resends it with them, and that is the same sale, not a conflict.
+ */
+function saleOf(snapshot: unknown) {
+	const body = snapshot as { lines?: unknown } | null
+	if (!body || !Array.isArray(body.lines)) return snapshot
+	return {
+		...body,
+		lines: body.lines.map((line) => {
+			if (!line || typeof line !== 'object') return line
+			const {
+				id: ignoredId,
+				sentAt: ignoredSentAt,
+				...sold
+			} = line as Record<string, unknown>
+			return sold
+		}),
+	}
+}
+
 /** JSON with object keys sorted, so two copies of the same data compare equal. */
 export function canonicalJson(value: unknown): string {
 	return JSON.stringify(value, (_key, v: unknown) =>
@@ -1712,8 +1735,8 @@ export async function upsertPosOrder(
 							if (
 								existing.revision === order.revision &&
 								stored &&
-								canonicalJson(stored.snapshot) !==
-									canonicalJson(revisionSnapshot(order))
+								canonicalJson(saleOf(stored.snapshot)) !==
+									canonicalJson(saleOf(revisionSnapshot(order)))
 							) {
 								return fail(
 									409,

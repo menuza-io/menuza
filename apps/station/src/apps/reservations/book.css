@@ -9,20 +9,11 @@
 @layer theme, base, components, utilities;
 
 @layer components {
-	/* ── Shell ─────────────────────────────────────────────────────────── */
-	.bk-shell {
-		display: flex;
-		min-height: 0;
-		flex: 1;
-	}
 	.bk-panel {
-		display: flex;
-		width: clamp(16rem, 26vw, 24rem);
+		width: 21rem;
 		flex-shrink: 0;
 		flex-direction: column;
-		min-height: 0;
 		border-inline-end: 1px solid var(--border);
-		background: var(--card);
 	}
 	/*
 	 * The panel as a whole page (a phone's List tab) fills the page's height and
@@ -34,27 +25,19 @@
 		flex: 1 1 0;
 		border-inline-end: 0;
 	}
-	.bk-scroll {
-		min-height: 0;
-		flex: 1;
-		overflow-y: auto;
-		overscroll-behavior: contain;
+
+	/* The List view of a wide screen: the whole book side by side, the panel as the page. */
+	.bk-panel[data-columns='true'] {
+		width: 100%;
+		flex: 1 1 0;
+		border-inline-end: 0;
 	}
 
-	/* ── Pages: Floor, Timeline (and List on a phone) slide side by side ─── */
-	.bk-pages {
-		position: relative;
-		min-width: 0;
-		min-height: 0;
-		flex: 1;
-		overflow: hidden;
+	.bk-columns > * + * {
+		border-inline-start: 1px solid var(--border);
 	}
+
 	.bk-page {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		flex-direction: column;
-		min-height: 0;
 		opacity: 0;
 		visibility: hidden;
 		pointer-events: none;
@@ -91,22 +74,10 @@
 
 	/* ── Segmented tabs (Floor | Timeline, List | Floor | Timeline) ──────── */
 	.bk-tabs {
-		position: relative;
-		isolation: isolate;
-		display: grid;
 		grid-template-columns: repeat(var(--n), minmax(0, 1fr));
-		gap: 0;
-		border-radius: var(--radius-2xl);
-		background: var(--muted);
-		padding: 0.25rem;
 	}
 	.bk-tabs-pill {
-		position: absolute;
-		z-index: 0;
-		inset-block: 0.25rem;
-		inset-inline-start: 0.25rem;
 		width: calc((100% - 0.5rem) / var(--n));
-		border-radius: var(--radius-xl);
 		background: var(--tabs-pill-bg);
 		box-shadow: 0 1px 2px oklch(0 0 0 / 0.08);
 		transform: translateX(calc(var(--i) * 100%));
@@ -116,19 +87,6 @@
 		transform: translateX(calc(var(--i) * -100%));
 	}
 	.bk-tab {
-		position: relative;
-		z-index: 1;
-		display: inline-flex;
-		min-height: 2.75rem;
-		min-width: 0;
-		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
-		border-radius: var(--radius-xl);
-		padding-inline: 0.75rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		white-space: nowrap;
 		color: var(--pos-muted-foreground);
 		transition: color var(--duration-quick) var(--ease-smooth-out);
 	}
@@ -149,40 +107,23 @@
 	 */
 	.bk-header {
 		display: flex;
-		flex-shrink: 0;
-		flex-wrap: wrap;
 		align-items: center;
-		column-gap: 0.75rem;
-		row-gap: 0.5rem;
-		border-bottom: 1px solid var(--border);
-		background: var(--card);
-		padding: 0.625rem 1rem;
+		row-gap: 0.25rem;
+		padding: 0;
 	}
 	.bk-stats-xl {
 		display: none;
 		min-width: 0;
 	}
-	.bk-datebar {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-	}
+
 	.bk-services {
 		min-width: 0;
-		max-width: 100%;
-		overflow-x: auto;
-		scrollbar-width: none;
+		max-width: min(100%, 24rem);
 	}
 	.bk-services::-webkit-scrollbar {
 		display: none;
 	}
-	.bk-actions {
-		display: flex;
-		flex-wrap: nowrap;
-		align-items: center;
-		gap: 0.5rem;
-		margin-inline-start: auto;
-	}
+
 	/* Below a portrait tablet the actions are icons; their names stay for a screen reader. */
 	@media (max-width: 759px) {
 		.bk-action-label {
@@ -198,16 +139,27 @@
 			padding-inline: 0;
 		}
 	}
-	@media (min-width: 1024px) {
-		.bk-header {
-			flex-wrap: nowrap;
-		}
-	}
 	@media (min-width: 1280px) {
 		.bk-stats-xl {
 			display: block;
 		}
 	}
+	/* Below the widest screens Walk-in and Waitlist are icons; Book keeps its word. */
+	@media (max-width: 1535px) {
+		.bk-action-label[data-compact] {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+		.bk-actions > button:has(.bk-action-label[data-compact]) {
+			width: 2.75rem;
+			padding-inline: 0;
+		}
+	}
+
 	/*
 	 * A phone: the day and the service on one row, the day's figures on the
 	 * next. The three adds are not here: they sit at the bottom (`.bk-dock`),
@@ -243,34 +195,27 @@
 	}
 	/* The adds of a phone, under the panes: equal buttons, with the safe area below them. */
 	.bk-dock {
-		display: grid;
-		flex-shrink: 0;
 		grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
-		gap: 0.5rem;
-		border-top: 1px solid var(--border);
-		background: var(--card);
 		padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
 	}
 	.bk-dock[data-count='2'] {
 		--cols: 2;
 	}
 	.bk-date {
-		position: relative;
-		display: inline-flex;
 		min-width: 7.5rem;
 		min-height: 2.75rem;
-		align-items: center;
-		justify-content: center;
-		gap: 0.5rem;
-		border-radius: var(--radius-xl);
-		border: 1px solid var(--border);
-		background: var(--card);
+		background: var(--muted);
 		padding-inline: 0.75rem;
-		font-weight: 600;
 		transition: background-color var(--duration-quick) var(--ease-smooth-out);
 	}
 	.bk-date:hover {
 		background: var(--accent);
+	}
+	.bk-date > span {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	/* The native date field sits invisibly over the label: a tap opens its picker. */
 	.bk-date input {
@@ -303,28 +248,18 @@
 	}
 
 	/* ── Panel sections ───────────────────────────────────────────────── */
+	/* The scrollbar rides over the sticky section heads, contained to its own list. */
+	[data-slot='scroll-area'] {
+		isolation: isolate;
+	}
+	[data-slot='scroll-area-scrollbar'] {
+		z-index: 10;
+	}
 	.bk-section-head {
-		position: sticky;
-		top: 0;
-		z-index: 2;
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		border-block: 1px solid var(--border);
-		background: color-mix(in oklab, var(--muted) 80%, var(--card));
+		background: color-mix(in oklab, var(--muted) 55%, var(--card));
 	}
-	.bk-section-toggle {
-		display: flex;
-		min-height: 2.75rem;
-		min-width: 0;
-		flex: 1;
-		align-items: center;
-		gap: 0.5rem;
-		padding-inline: 0.75rem 0.25rem;
-		text-align: start;
-	}
+
 	.bk-chevron {
-		flex-shrink: 0;
 		color: var(--pos-muted-foreground);
 		transition: transform var(--duration-fast) var(--ease-smooth-out);
 	}
@@ -337,14 +272,7 @@
 
 	/* ── Rows ──────────────────────────────────────────────────────────── */
 	.bk-row {
-		position: relative;
-		display: flex;
-		min-height: 3.5rem;
-		align-items: stretch;
-		border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
 		background: var(--card);
-		animation: bk-row-in var(--duration-fast) var(--ease-smooth-out) both;
-		animation-delay: calc(min(var(--bk-i, 0), 8) * var(--duration-stagger));
 		transition:
 			background-color var(--duration-fast) var(--ease-smooth-out),
 			box-shadow var(--duration-fast) var(--ease-smooth-out),
@@ -358,20 +286,13 @@
 	}
 	.bk-row[data-selected='true'] {
 		background: color-mix(in oklab, var(--primary) 7%, var(--card));
-		box-shadow: inset 0 0 0 2px var(--primary);
+		box-shadow: inset 0 0 0 1px var(--primary);
 	}
 	.bk-row[data-muted='true'] {
 		opacity: 0.62;
 	}
 	.bk-row-main {
-		display: grid;
-		min-width: 0;
-		flex: 1;
-		grid-template-columns: 0.25rem 3.25rem minmax(0, 1fr) auto;
-		align-items: center;
-		column-gap: 0.5rem;
-		text-align: start;
-		padding-inline-end: 0.5rem;
+		grid-template-columns: 3rem minmax(0, 1fr) auto;
 		transition: background-color var(--duration-quick) var(--ease-smooth-out);
 	}
 	.bk-row-main:not(:disabled):hover {
@@ -380,15 +301,42 @@
 	.bk-row-main:not(:disabled):active {
 		background: color-mix(in oklab, var(--accent) 80%, var(--foreground));
 	}
-	.bk-stripe {
-		align-self: stretch;
-		border-radius: 0 2px 2px 0;
-		background: var(--stripe, var(--border));
-		transition: background-color var(--duration-fast) var(--ease-smooth-out);
+
+	/* A list ordered by time reads time first, then who, then where (or Seat). */
+	.bk-row-main > :nth-child(2) {
+		grid-column: 1;
+		grid-row: 1;
 	}
-	[dir='rtl'] .bk-stripe {
-		border-radius: 2px 0 0 2px;
+	.bk-row-main > :nth-child(3) {
+		grid-column: 2;
+		grid-row: 1;
 	}
+	.bk-row-main > :nth-child(4) {
+		grid-column: 3;
+		grid-row: 1;
+		justify-self: end;
+	}
+	/* The lead mark of a row: a table or Seat, one size, a neutral edge; only a seated table is filled. */
+	.bk-row-main > .bk-badge,
+	.bk-row-main > .bk-seat {
+		width: 3rem;
+		height: 2.25rem;
+		min-height: 0;
+		padding-inline: 0.25rem;
+		border: 1px solid color-mix(in oklab, var(--foreground) 24%, var(--border));
+		border-radius: var(--station-control-radius);
+		background: transparent;
+		color: var(--foreground);
+		font-size: 0.875rem;
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+	.bk-row-main > .bk-badge[data-solid='true'] {
+		border-color: var(--primary);
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
 	.bk-row[data-tone='booked'] {
 		--stripe: color-mix(in oklab, var(--foreground) 22%, transparent);
 	}
@@ -413,46 +361,20 @@
 		--stripe: color-mix(in oklab, var(--warning) 60%, transparent);
 	}
 	/* A booking held for its deposit: tagged, and never a "Seat" button. */
-	/* A booking that came in while the host was looking, until its details are opened. */
-	.bk-new {
-		display: inline-block;
-		width: 0.5rem;
-		height: 0.5rem;
-		flex-shrink: 0;
-		border-radius: 999px;
-		background: var(--primary);
-		box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
-	}
+
 	/* The typed words, marked in a name. */
 	.bk-hit {
 		border-radius: 0.2rem;
-		background: color-mix(in oklab, var(--primary) 20%, transparent);
-		color: inherit;
 		padding-inline: 0.05rem;
 	}
 	.bk-row[data-fresh='true'] {
 		background: color-mix(in oklab, var(--primary) 6%, var(--card));
 	}
 	.bk-pay-tag {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		border-radius: var(--radius-md);
 		border: 1px dashed var(--warning);
-		padding: 0.25rem 0.5rem;
-		font-size: 0.8125rem;
-		font-weight: 600;
-		color: var(--warning);
 	}
 	.bk-row-info {
-		display: flex;
-		width: 2.75rem;
-		flex-shrink: 0;
-		align-items: center;
-		justify-content: center;
 		color: var(--pos-muted-foreground);
-		border-inline-start: 1px solid
-			color-mix(in oklab, var(--border) 70%, transparent);
 		transition:
 			background-color var(--duration-quick) var(--ease-smooth-out),
 			color var(--duration-quick) var(--ease-smooth-out);
@@ -462,26 +384,19 @@
 		color: var(--foreground);
 	}
 	.bk-badge {
-		display: inline-flex;
 		min-width: 2.25rem;
-		justify-content: center;
-		border-radius: var(--radius-md);
-		background: var(--primary);
+		border-radius: var(--station-inset-radius);
+		background: var(--station-occupied-surface);
 		padding: 0.25rem 0.5rem;
-		font-family: var(--pos-mono-font);
+		font-variant-numeric: tabular-nums;
 		font-size: 0.875rem;
-		font-weight: 700;
-		color: var(--primary-foreground);
+		font-weight: 600;
+		color: var(--foreground);
 	}
 	.bk-seat {
-		display: inline-flex;
-		min-height: 2.25rem;
-		align-items: center;
-		justify-content: center;
-		border-radius: var(--radius-lg);
-		border: 1px solid var(--border);
-		background: var(--card);
-		padding-inline: 0.625rem;
+		border-radius: var(--station-control-radius);
+		background: transparent;
+		padding-inline: 0.125rem;
 		font-size: 0.875rem;
 		font-weight: 600;
 		transition:
@@ -495,26 +410,7 @@
 		color: var(--primary-foreground);
 	}
 
-	/* ── A narrow tablet: the list is a rail with a count, and opens as a drawer ── */
-	.bk-rail {
-		display: flex;
-		width: 4rem;
-		flex-shrink: 0;
-		flex-direction: column;
-		align-items: center;
-		padding-block: 0.75rem;
-		border-inline-end: 1px solid var(--border);
-		background: var(--card);
-	}
 	.bk-rail-button {
-		position: relative;
-		display: inline-flex;
-		width: 3rem;
-		height: 3rem;
-		align-items: center;
-		justify-content: center;
-		border-radius: var(--radius-xl);
-		border: 1px solid var(--border);
 		background: var(--card);
 		transition: background-color var(--duration-quick) var(--ease-smooth-out);
 	}
@@ -522,37 +418,12 @@
 	.bk-rail-button[aria-expanded='true'] {
 		background: var(--accent);
 	}
-	.bk-rail-count {
-		position: absolute;
-		top: -0.375rem;
-		inset-inline-end: -0.375rem;
-		display: flex;
-		min-width: 1.375rem;
-		height: 1.375rem;
-		align-items: center;
-		justify-content: center;
-		border-radius: 999px;
-		background: var(--primary);
-		padding-inline: 0.3125rem;
-		font-size: 0.8125rem;
-		font-weight: 700;
-		color: var(--primary-foreground);
-	}
+
 	.bk-scrim {
-		position: absolute;
-		inset: 0;
-		z-index: 29;
-		background: color-mix(in oklab, var(--foreground) 28%, transparent);
 		animation: bk-fade var(--duration-fast) var(--ease-smooth-out) both;
 	}
 	.bk-drawer {
-		position: absolute;
-		inset-block: 0;
-		inset-inline-start: 0;
-		z-index: 30;
-		display: flex;
 		width: min(22rem, 92%);
-		box-shadow: var(--elev-2);
 		animation: bk-drawer-in var(--duration-fast) var(--ease-smooth-out) both;
 	}
 	.bk-drawer .bk-panel {
@@ -595,97 +466,37 @@
 	}
 	.tl-scroll {
 		--tl-scroll: 0px;
-		position: relative;
-		min-height: 0;
-		flex: 1;
-		overflow: auto;
-		overscroll-behavior: contain;
 	}
 	.tl-grid {
-		position: relative;
 		width: calc(var(--tl-label) + var(--tl-slots) * var(--tl-slot));
-		min-height: 100%;
 	}
 	.tl-head {
-		position: sticky;
-		top: 0;
-		z-index: 6;
-		display: flex;
 		height: var(--tl-head);
-		border-bottom: 1px solid var(--border);
-		background: var(--card);
 	}
 	.tl-corner {
-		position: sticky;
-		inset-inline-start: 0;
-		z-index: 7;
-		display: flex;
 		width: var(--tl-label);
-		flex-shrink: 0;
-		align-items: center;
-		padding-inline: 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 600;
 		color: var(--pos-muted-foreground);
-		border-inline-end: 1px solid var(--border);
-		background: var(--card);
 	}
 	.tl-hours {
-		position: relative;
 		width: calc(var(--tl-slots) * var(--tl-slot));
-		flex-shrink: 0;
 	}
 	.tl-hour {
-		position: absolute;
-		inset-block: 0;
 		inset-inline-start: calc(var(--tl-slot) * 4 * var(--h));
-		display: flex;
-		align-items: center;
-		padding-inline-start: 0.5rem;
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 		font-weight: 600;
-		white-space: nowrap;
-		border-inline-start: 1px solid var(--border);
 	}
-	.tl-group {
-		position: relative;
-		display: flex;
-		height: 2rem;
-		align-items: center;
-		background: var(--muted);
-		border-bottom: 1px solid var(--border);
-	}
+
 	.tl-group-label {
-		position: sticky;
-		inset-inline-start: 0;
-		z-index: 3;
-		padding-inline: 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 700;
 		letter-spacing: 0.04em;
-		text-transform: uppercase;
 		color: var(--pos-muted-foreground);
 	}
 	.tl-row {
-		position: relative;
-		display: flex;
 		height: calc(var(--tl-row) * var(--lanes, 1));
-		border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
 	}
 	.tl-label {
-		position: sticky;
-		inset-inline-start: 0;
-		z-index: 5;
-		display: flex;
 		width: var(--tl-label);
-		flex-shrink: 0;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.25rem;
-		padding-inline: 0.75rem 0.5rem;
 		background: var(--card);
-		border-inline-end: 1px solid var(--border);
-		text-align: start;
 		transition:
 			background-color var(--duration-quick) var(--ease-smooth-out),
 			box-shadow var(--duration-fast) var(--ease-smooth-out),
@@ -704,9 +515,7 @@
 		color: color-mix(in oklab, var(--pos-muted-foreground) 60%, transparent);
 	}
 	.tl-track {
-		position: relative;
 		width: calc(var(--tl-slots) * var(--tl-slot));
-		flex-shrink: 0;
 		background-image:
 			linear-gradient(to right, var(--border) 1px, transparent 1px),
 			linear-gradient(
@@ -732,25 +541,18 @@
 		cursor: copy;
 	}
 	.tl-past {
-		position: absolute;
-		z-index: 1;
 		inset-block: var(--tl-head) 0;
 		inset-inline-start: var(--tl-label);
 		width: calc(var(--tl-slot) * var(--now) / 15);
-		background: color-mix(in oklab, var(--muted) 60%, transparent);
-		pointer-events: none;
 	}
 	.tl-now {
 		position: absolute;
-		z-index: 4;
 		inset-block: 0;
 		inset-inline-start: calc(
 			var(--tl-label) + var(--tl-slot) * var(--now) / 15
 		);
 		width: 2px;
-		margin-inline-start: -1px;
 		background: var(--destructive);
-		pointer-events: none;
 	}
 	.tl-now::before {
 		content: '';
@@ -769,23 +571,14 @@
 		inset-inline-start: calc(var(--tl-slot) * var(--from) / 15 + 1px);
 		width: calc(var(--tl-slot) * var(--span) / 15 - 2px);
 		height: calc(var(--tl-row) - 0.25rem);
-		display: block;
 		--shift: max(
 			0px,
 			calc(var(--tl-scroll) - var(--tl-slot) * var(--from) / 15)
 		);
-		border-radius: var(--radius-md);
+		border-radius: var(--station-inset-radius);
 		border: 1px solid var(--bar-edge, var(--border));
-		border-inline-start-width: 4px;
+		border-inline-start-width: 1px;
 		background: var(--bar-bg, var(--card));
-		text-align: start;
-		font-size: 0.875rem;
-		/*
-		 * Words pinned to the visible edge never leave their own bar: a stay that
-		 * ended before the visible part has nothing to pin, and its icon must not
-		 * peek out at the table column.
-		 */
-		overflow: hidden;
 		transition:
 			opacity var(--duration-fast) var(--ease-smooth-out),
 			background-color var(--duration-fast) var(--ease-smooth-out),
@@ -800,26 +593,10 @@
 	 * is cut at the bar's far end, never at its start.
 	 */
 	.tl-bar-in {
-		display: flex;
-		width: 100%;
-		height: 100%;
-		align-items: center;
-		gap: 0.375rem;
-		overflow: hidden;
 		padding-inline: calc(0.5rem + var(--shift, 0px)) 0.5rem;
-		/* Its own content box is what is in view (the pinned padding is not), so the words below ask it. */
-		container-type: inline-size;
 	}
 	.tl-bar-size {
-		display: inline-flex;
-		flex-shrink: 0;
-		align-items: center;
-		gap: 0.125rem;
-		border-radius: var(--radius-sm);
 		background: color-mix(in oklab, var(--background) 70%, transparent);
-		padding-inline: 0.25rem;
-		font-size: 0.75rem;
-		font-weight: 700;
 	}
 	@keyframes bk-bar-in {
 		from {
@@ -877,74 +654,32 @@
 		box-shadow: 0 0 0 2px var(--primary);
 	}
 	.tl-block {
-		position: absolute;
-		z-index: 1;
-		inset-block: 0.125rem;
 		inset-inline-start: calc(var(--tl-slot) * var(--from) / 15);
 		width: calc(var(--tl-slot) * var(--span) / 15);
-		display: flex;
-		align-items: center;
-		overflow: hidden;
-		padding-inline: 0.5rem;
-		border-radius: var(--radius-md);
 		border: 1px dashed color-mix(in oklab, var(--foreground) 28%, transparent);
 		background-image: repeating-linear-gradient(
 			-45deg,
 			transparent 0 6px,
 			color-mix(in oklab, var(--foreground) 10%, transparent) 6px 8px
 		);
-		font-size: 0.75rem;
-		font-weight: 500;
 		color: var(--pos-muted-foreground);
-		pointer-events: none;
 	}
-	.tl-foot {
-		position: sticky;
-		bottom: 0;
-		z-index: 6;
-		display: flex;
-		height: 3rem;
-		border-top: 1px solid var(--border);
-		background: var(--card);
-	}
+
 	.tl-foot-label {
-		position: sticky;
-		inset-inline-start: 0;
-		z-index: 7;
-		display: flex;
 		width: var(--tl-label);
-		flex-shrink: 0;
-		flex-direction: column;
-		justify-content: center;
-		overflow: hidden;
-		padding-inline: 0.5rem 0.25rem;
 		font-size: 0.75rem;
 		line-height: 1.2;
-		white-space: nowrap;
-		border-inline-end: 1px solid var(--border);
-		background: var(--card);
 	}
 	.tl-foot-label > * {
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 	.tl-cells {
-		position: relative;
-		display: flex;
 		width: calc(var(--tl-slots) * var(--tl-slot));
-		flex-shrink: 0;
 	}
 	.tl-cell {
-		position: relative;
-		display: flex;
 		width: calc(var(--tl-slot) * var(--span) / 15);
-		flex-shrink: 0;
-		align-items: flex-start;
-		justify-content: center;
-		overflow: hidden;
-		padding-top: 0.3125rem;
-		font-family: var(--pos-mono-font);
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 		line-height: 1.2;
 		border-inline-start: 1px solid
 			color-mix(in oklab, var(--border) 45%, transparent);
@@ -953,28 +688,16 @@
 	.tl-cell[data-hour='true'] {
 		border-inline-start-color: var(--border);
 	}
-	.tl-cell-text {
-		display: inline-flex;
-		align-items: baseline;
-		gap: 1px;
-	}
+
 	.tl-cell-n {
 		font-weight: 600;
 	}
 	/* The time under a cell at each :00 and :30. */
 	.tl-cell-tick {
-		position: absolute;
-		inset-inline-start: 0.25rem;
-		bottom: 0.25rem;
-		font-size: 0.625rem;
-		font-weight: 500;
-		line-height: 1;
 		color: var(--pos-muted-foreground);
-		pointer-events: none;
 	}
 
 	.tl-cell-cap {
-		font-size: 0.75rem;
 		color: var(--pos-muted-foreground);
 	}
 	.tl-cell[data-zero='true'] {
@@ -993,14 +716,10 @@
 	}
 	/* The slot we are in now. */
 	.tl-cell[data-now='true'] .tl-cell-n {
-		font-weight: 800;
+		font-weight: 600;
 	}
 	/* How full the slot is: a thin bar along the cell's floor, drawn with transform only. */
 	.tl-cell-fill {
-		position: absolute;
-		inset-inline: 0;
-		bottom: 0;
-		height: 0.1875rem;
 		background: var(--primary);
 		opacity: 0.55;
 		transform-origin: left;
@@ -1023,24 +742,10 @@
 		color: var(--pos-muted-foreground);
 	}
 	.tl-hour[data-now='true'] {
-		font-weight: 800;
+		font-weight: 600;
 		color: var(--foreground);
 	}
 
-	/* ── Timeline: toolbar, bars, keyboard ────────────────────────────── */
-	.bk-toolbar {
-		display: flex;
-		flex-shrink: 0;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.5rem 1rem;
-		border-bottom: 1px solid var(--border);
-		background: var(--card);
-		padding: 0.5rem 0.75rem;
-	}
-	.bk-toolbar-stats {
-		min-width: 0;
-	}
 	/* A bar with little of it in view gives up the time first, then the icon, never the name. */
 	.tl-bar-in > svg {
 		flex-shrink: 1;
@@ -1048,11 +753,6 @@
 	}
 	.tl-bar-time {
 		flex-shrink: 1000;
-		min-width: 0;
-		overflow: hidden;
-		white-space: nowrap;
-		font-size: 0.8125rem;
-		font-weight: 700;
 		color: var(--pos-muted-foreground);
 	}
 	.tl-bar-time::after {
@@ -1069,16 +769,7 @@
 			display: none;
 		}
 	}
-	.tl-bar-note {
-		flex-shrink: 0;
-		border-radius: var(--radius-sm);
-		background: color-mix(in oklab, var(--warning) 16%, transparent);
-		padding-inline: 0.25rem;
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: var(--warning);
-		white-space: nowrap;
-	}
+
 	.tl-bar[data-tone='awaiting'] {
 		--bar-edge: var(--warning);
 		--bar-bg: color-mix(in oklab, var(--warning) 8%, var(--card));
@@ -1103,7 +794,7 @@
 		min-height: 2.75rem;
 		align-items: center;
 		gap: 0.375rem;
-		border-radius: var(--radius-xl);
+		border-radius: var(--station-control-radius);
 		background: var(--primary);
 		padding-inline: 0.75rem;
 		font-size: 0.875rem;
@@ -1131,10 +822,7 @@
 	.floor .bk-floor-frame[data-scroll='true'] {
 		overflow: auto;
 	}
-	.bk-plan {
-		flex-shrink: 0;
-		margin: auto;
-	}
+
 	.bk-plan[style*='--plan-w'] {
 		width: var(--plan-w);
 		height: var(--plan-h);
@@ -1147,17 +835,7 @@
 		width: var(--w);
 		height: var(--h);
 	}
-	.bk-floor-hint {
-		position: absolute;
-		inset-inline: 0;
-		top: 0.375rem;
-		z-index: 2;
-		text-align: center;
-		font-size: 0.8125rem;
-		font-weight: 500;
-		color: var(--muted-foreground);
-		pointer-events: none;
-	}
+
 	.floor .bk-floor-frame[data-scroll='true'] {
 		padding-block-start: 1.25rem;
 	}
@@ -1169,48 +847,53 @@
 		min-width: 4.5rem;
 		min-height: 4.5rem;
 	}
+	.floor-table {
+		--table-edge: var(--border);
+		--table-surface: var(--card);
+		--table-hatch: none;
+		--table-edge-style: solid;
+	}
 	.bk-table .floor-table {
 		position: absolute;
 		inset: 0;
+		isolation: isolate;
+		background-color: var(--table-surface);
+		background-image: var(--table-hatch);
+		border: 1px var(--table-edge-style) var(--table-edge);
 	}
-	/* A table's words: the number, then what it holds, never under 13px. */
-	.bk-t-num {
-		font-size: 1.125rem;
-		font-weight: 700;
-		line-height: 1;
-	}
-	@media (min-width: 640px) {
-		.bk-t-num {
-			font-size: 1.25rem;
-		}
-	}
+
 	.bk-t-sub {
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 		font-weight: 600;
 		line-height: 1.1;
 	}
-	/* A free table reads as open: a faint green edge on the card. */
+	/* Simple table states take their quiet tint from the published theme. */
+	/* Open is the resting state: a plain card with a clear neutral edge, so a seated table is the only filled one. */
 	.floor-table[data-state='open'] {
-		border-color: color-mix(in oklab, var(--success) 38%, var(--border));
-		background: color-mix(in oklab, var(--success) 5%, var(--card));
+		--table-edge: color-mix(in oklab, var(--foreground) 28%, var(--border));
+		--table-surface: var(--card);
 	}
-	/* Resetting: neutral and hatched the other way from a taped-off table, with a countdown. */
+	.floor-table[data-state='soon'] {
+		--table-edge: var(--warning);
+		--table-surface: color-mix(in oklab, var(--warning) 5%, var(--card));
+		--table-edge-style: dashed;
+	}
+	.floor-table[data-state='blocked'] {
+		--table-surface: var(--muted);
+	}
+	/* Occupied is a state, not an action: a quiet brand fill and a clear edge. */
+	.floor-table[data-state='seated'] {
+		--table-edge: color-mix(in oklab, var(--primary) 65%, var(--border));
+		--table-surface: var(--station-occupied-surface);
+		color: var(--foreground);
+	}
+	/* Resetting stays dashed and carries its countdown. */
 	.floor-table[data-state='resetting'] {
-		background-color: color-mix(in oklab, var(--muted) 70%, var(--card));
-		background-image: repeating-linear-gradient(
-			45deg,
-			transparent 0 6px,
-			color-mix(in oklab, var(--foreground) 9%, transparent) 6px 8px
-		);
-		border-color: color-mix(in oklab, var(--foreground) 35%, var(--border));
+		--table-surface: color-mix(in oklab, var(--muted) 70%, var(--card));
+		--table-edge: color-mix(in oklab, var(--foreground) 35%, var(--border));
+		--table-edge-style: dashed;
 	}
-	/* A table asks for its own width: "~20m left" drops "left" on a tile too small to hold it. */
-	.bk-table {
-		container-type: inline-size;
-	}
-	.bk-left-word {
-		white-space: nowrap;
-	}
+
 	@container (max-width: 5.5rem) {
 		.bk-left-word {
 			display: none;
@@ -1218,14 +901,12 @@
 	}
 	/* How long until a seated table clears; amber chip once they are past their time. */
 	.bk-left {
-		border-radius: 999px;
-		padding-inline: 0.25rem;
-		color: color-mix(in oklab, var(--primary-foreground) 92%, transparent);
+		color: var(--foreground);
 	}
 	.bk-left[data-over='true'] {
 		background: var(--warning);
 		color: var(--background);
-		font-weight: 700;
+		font-weight: 600;
 	}
 	/* Still being reset: it can be seated after a question, so it does not step back as far as a taken table. */
 	.floor[data-picking='true']
@@ -1249,48 +930,38 @@
 			font-size: 0.75rem;
 		}
 	}
+	/*
+	 * Server sections: a band of the section's colour across the top of each
+	 * table (the initials and chips are utilities in the components). The band
+	 * is inside the table, so picking and joining keep their own rings.
+	 */
+	.bk-table[data-section] .floor-table {
+		box-shadow: inset 0 4px 0 0 var(--section);
+	}
+	.bk-table[data-section] .floor-table[data-chosen='true'] {
+		box-shadow:
+			inset 0 4px 0 0 var(--section),
+			0 0 0 3px color-mix(in oklab, var(--primary) 55%, transparent),
+			var(--elev-2);
+	}
 	/* The one table to suggest for the party in hand. */
 	.floor-table[data-best='true'] {
-		border-color: var(--success);
+		--table-edge: var(--success);
 	}
 	.bk-bestfit {
-		position: absolute;
-		z-index: 3;
-		top: -0.875rem;
-		inset-inline-start: 50%;
 		translate: -50% 0;
-		border-radius: 999px;
-		background: var(--success);
-		padding: 0.0625rem 0.5rem;
-		font-size: 0.75rem;
-		font-weight: 700;
-		line-height: 1.25rem;
-		white-space: nowrap;
-		color: var(--background);
-		pointer-events: none;
 	}
 	[dir='rtl'] .bk-bestfit {
 		translate: 50% 0;
 	}
 	/* What sits under a table: how far through the stay they are, and who. */
 	.bk-under {
-		position: absolute;
-		z-index: 2;
 		top: calc(100% + 0.1875rem);
-		inset-inline: -0.75rem;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.125rem;
-		pointer-events: none;
 	}
 	.bk-elapsed {
 		position: relative;
 		width: 70%;
-		max-width: 4.5rem;
-		height: 0.25rem;
 		border-radius: 999px;
-		overflow: hidden;
 		background: color-mix(in oklab, var(--foreground) 16%, transparent);
 	}
 	.bk-elapsed::after {
@@ -1312,15 +983,11 @@
 	/* The guest's name, under the table, where a small table has no room for it. */
 	.bk-caption {
 		max-width: 9rem;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		border-radius: var(--radius-sm);
+		border-radius: var(--station-inset-radius);
 		background: color-mix(in oklab, var(--background) 82%, transparent);
 		padding: 0 0.25rem;
-		font-size: 0.8125rem;
+		font-size: 0.875rem;
 		font-weight: 600;
-		line-height: 1.25rem;
 	}
 	/* Why a table does not take the party in hand: legible over the dimmed room. */
 	.bk-caption[data-reason='true'] {
@@ -1329,16 +996,12 @@
 		color: var(--foreground);
 	}
 	.bk-dot {
-		display: inline-block;
-		width: 0.625rem;
-		height: 0.625rem;
-		flex-shrink: 0;
 		border-radius: 999px;
 		border: 2px solid transparent;
 	}
 	.bk-dot[data-kind='open'] {
-		border-color: color-mix(in oklab, var(--success) 60%, var(--border));
-		background: color-mix(in oklab, var(--success) 18%, var(--card));
+		border-color: color-mix(in oklab, var(--foreground) 28%, var(--border));
+		background: var(--card);
 	}
 	.bk-dot[data-kind='soon'] {
 		border: 2px dashed var(--warning);
@@ -1363,6 +1026,470 @@
 			transparent 0 2px,
 			color-mix(in oklab, var(--foreground) 22%, transparent) 2px 3px
 		);
+	}
+
+	/* ── Large parties and tables joined ───────────────────────────────── */
+	/* A party of eight or more: a quiet chip on the list row. */
+	.bk-large {
+		font-size: 0.75rem;
+		line-height: 1.1rem;
+	}
+	/* The same on a timeline bar, which has room for an icon only. */
+	.tl-large {
+		color: var(--primary);
+	}
+	/* A table chosen to be joined with others: ringed and ticked, so the group reads at a glance. */
+	.floor-table[data-chosen='true'] {
+		--table-edge: var(--primary);
+		box-shadow:
+			0 0 0 3px color-mix(in oklab, var(--primary) 55%, transparent),
+			var(--elev-2);
+	}
+
+	/* The seats of a group still short of the party: said louder. */
+	[data-short='true'] {
+		background: var(--warning);
+		color: var(--background);
+	}
+	/* The waitlist's section of parties who did not answer: quieter than the line. */
+	.bk-row[data-muted='true'] .bk-badge {
+		opacity: 0.7;
+	}
+
+	/* ── A dense day's list: filters, hour headers, a long waitlist in one row ── */
+	.bk-panel {
+		--bk-section-h: 2.75rem;
+	}
+
+	.bk-chip-n {
+		background: color-mix(in oklab, var(--foreground) 10%, transparent);
+	}
+	.bk-chip[aria-pressed='true'] .bk-chip-n {
+		background: color-mix(in oklab, var(--primary-foreground) 22%, transparent);
+	}
+	.bk-now {
+		background: transparent;
+	}
+	.bk-now:hover {
+		background: var(--accent);
+	}
+	/*
+	 * The hour headers stick under the section's own header. The section's
+	 * collapsing panel clips its content (overflow hidden makes a scroll box that
+	 * sticky would stick inside), so for this list it clips without scrolling.
+	 */
+	.bk-sticky .t-acc-panel-inner {
+		overflow: clip;
+		min-height: 0;
+	}
+	.bk-hour {
+		top: var(--bk-section-h);
+		background: color-mix(in oklab, var(--card) 88%, var(--muted));
+		color: var(--pos-muted-foreground);
+	}
+	.bk-hour-covers[data-level] {
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--warning) 22%, transparent);
+		padding-inline: 0.375rem;
+		font-weight: 600;
+		color: var(--warning);
+	}
+	.bk-hour-covers[data-level='full'] {
+		background: var(--warning);
+		color: var(--background);
+	}
+	.bk-row {
+		scroll-margin-top: calc(var(--bk-section-h) + 2rem);
+	}
+	/* The quote strip: a party size over how long it would wait now. */
+	.bk-quotes {
+		padding: 0.5rem 0.75rem 0.625rem;
+	}
+	.bk-quotes-caption {
+		color: var(--pos-muted-foreground);
+	}
+
+	.bk-quote {
+		border: 1px solid color-mix(in oklab, var(--foreground) 16%, var(--border));
+		background: var(--card);
+		transition: background-color var(--duration-quick) var(--ease-smooth-out);
+	}
+	.bk-quote:not([data-blocked]):hover {
+		background: var(--accent);
+	}
+	.bk-quote[data-blocked] {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	.bk-quote-wait {
+		color: var(--pos-muted-foreground);
+	}
+
+	.bk-wl-less {
+		color: var(--pos-muted-foreground);
+	}
+	.bk-wl-less:hover {
+		background: var(--accent);
+	}
+
+	.bk-tag[data-tag='new'] {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+	.bk-tag[data-tag='changed'] {
+		background: color-mix(in oklab, var(--warning) 22%, transparent);
+		color: var(--warning);
+	}
+	/* Something here waits for the connection: shown as unavailable, with its reason in the title. */
+	.bk-blocked,
+	.bk-row-main[data-blocked='true'] {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	/*
+	 * The accent bar says only what the floor's colours say: due soon (dashed
+	 * amber), late (amber), at the stand (green), seated (solid brand colour).
+	 * Anything else has no bar.
+	 */
+	.bk-stripe {
+		background: transparent;
+	}
+	.bk-row[data-stripe='late'] .bk-stripe {
+		background: var(--warning);
+	}
+	.bk-row[data-stripe='here'] .bk-stripe {
+		background: var(--success);
+	}
+	.bk-row[data-stripe='seated'] .bk-stripe {
+		background: var(--primary);
+	}
+	.bk-row[data-stripe='soon'] .bk-stripe {
+		background: repeating-linear-gradient(
+			to bottom,
+			var(--warning) 0 0.375rem,
+			transparent 0.375rem 0.625rem
+		);
+	}
+	/* A table assigned to a party that has not sat down is an outline; seated is solid. */
+	.bk-badge {
+		border: 2px solid var(--primary);
+		background: transparent;
+		color: var(--primary);
+	}
+	.bk-badge[data-solid='true'] {
+		border-color: var(--primary);
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	/* ── Timeline: the now line, bar colours, the "No table" strip, the legend ── */
+	.tl {
+		--tl-head: 2.875rem;
+	}
+
+	/* One pixel, behind the words: bars are a little see-through so it shows faintly through them. */
+	.tl-now {
+		width: 1px;
+	}
+	.tl-now::before {
+		display: none;
+	}
+	.tl-now-flag {
+		inset-inline-start: calc(var(--tl-slot) * var(--now) / 15);
+		translate: -50% 0;
+		border-radius: 0.25rem;
+		color: white;
+	}
+	[dir='rtl'] .tl-now-flag {
+		translate: 50% 0;
+	}
+	.tl-bar {
+		background-color: color-mix(
+			in oklab,
+			var(--bar-bg, var(--card)) 90%,
+			transparent
+		);
+	}
+	/* At the stand: a green outline and a light fill. */
+	.tl-bar[data-tone='here'] {
+		border-width: 2px;
+		border-inline-start-width: 1px;
+	}
+	/* Seated: solid, as on the floor. */
+	.tl-bar[data-tone='seated'] {
+		--bar-edge: var(--primary);
+		background-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+	.tl-bar[data-tone='seated'] .tl-ico-primary,
+	.tl-bar[data-tone='seated'] .tl-ico-muted,
+	.tl-bar[data-tone='seated'] .tl-large {
+		color: inherit;
+	}
+	.tl-bar[data-tone='seated'] .tl-ico-warn {
+		color: color-mix(in oklab, var(--warning) 55%, white);
+	}
+	.tl-bar[data-tone='seated'] .tl-bar-time {
+		color: color-mix(in oklab, var(--primary-foreground) 75%, transparent);
+	}
+	.tl-bar[data-tone='seated'] .tl-bar-size {
+		background: color-mix(in oklab, var(--primary-foreground) 22%, transparent);
+	}
+	.tl-ico-primary {
+		color: var(--primary);
+	}
+	.tl-ico-warn {
+		color: var(--warning);
+	}
+	.tl-ico-muted {
+		color: var(--pos-muted-foreground);
+	}
+	/* Late, or sitting past the booked end: an amber hatch on the end of the bar. */
+	.tl-bar[data-overrun='true'],
+	[dir='rtl'] .tl-bar[data-overrun='true'] {
+		background-image: none;
+	}
+	.tl-bar[data-hatch='true']::after {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		inset-inline-end: 0;
+		width: 2rem;
+		background: repeating-linear-gradient(
+			-45deg,
+			color-mix(in oklab, var(--warning) 75%, transparent) 0 4px,
+			transparent 4px 8px
+		);
+		pointer-events: none;
+	}
+	/*
+	 * A bar begun before the visible edge (scrolled away, --shift): a fade and a
+	 * chevron sit on the visible edge. Both are as wide as the part scrolled away,
+	 * up to their size, so a bar in full view shows neither.
+	 */
+	.tl-bar::before {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: var(--shift, 0px);
+		z-index: 1;
+		width: min(1.5rem, var(--shift, 0px));
+		background: linear-gradient(
+			to right,
+			color-mix(in oklab, var(--foreground) 22%, transparent),
+			transparent
+		);
+		pointer-events: none;
+	}
+	[dir='rtl'] .tl-bar::before {
+		background: linear-gradient(
+			to left,
+			color-mix(in oklab, var(--foreground) 22%, transparent),
+			transparent
+		);
+	}
+	.tl-clip {
+		inset-inline-start: var(--shift, 0px);
+		width: min(1.125rem, var(--shift, 0px));
+	}
+	.tl-clip::after {
+		content: '';
+		flex-shrink: 0;
+		width: 0.5rem;
+		height: 0.5rem;
+		margin-inline-start: 0.375rem;
+		border-left: 2px solid currentColor;
+		border-bottom: 2px solid currentColor;
+		transform: rotate(45deg);
+	}
+	[dir='rtl'] .tl-clip::after {
+		border-left: 0;
+		border-right: 2px solid currentColor;
+		transform: rotate(-45deg);
+	}
+	.tl-bar-left {
+		flex-shrink: 1000;
+		font-size: 0.75rem;
+		font-weight: 600;
+		opacity: 0.9;
+	}
+	.tl-bar-left[data-over='true'] {
+		font-weight: 600;
+		opacity: 1;
+	}
+	@container (max-width: 12rem) {
+		.tl-bar-left {
+			display: none;
+		}
+	}
+	/* The bookings with no table: a strip under the time header, its first lines only. */
+	.tl-none {
+		position: sticky;
+		top: var(--tl-head);
+		box-shadow:
+			0 1px 0 var(--border),
+			0 6px 8px -6px oklch(0 0 0 / 0.18);
+	}
+	.tl-none[data-open='true'] {
+		position: relative;
+		top: auto;
+		box-shadow: none;
+	}
+	.tl-more {
+		font-size: 0.75rem;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	.tl-label-none {
+		align-items: flex-start;
+	}
+	/* The legend: what a bar's colour means, the same words as the floor's. */
+	.bk-legend {
+		display: flex;
+		color: var(--pos-muted-foreground);
+	}
+	.bk-legend::-webkit-scrollbar {
+		display: none;
+	}
+	.bk-legend li {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.375rem;
+	}
+	@media (max-width: 1099px) {
+		.bk-legend {
+			order: 3;
+			flex: 1 1 100%;
+		}
+	}
+	.bk-swatch {
+		border-radius: 0.25rem;
+		border: 1.5px solid transparent;
+	}
+	.bk-swatch[data-kind='booked'] {
+		border-color: color-mix(in oklab, var(--foreground) 28%, var(--border));
+		background: var(--secondary);
+	}
+	.bk-swatch[data-kind='here'] {
+		border-color: var(--success);
+		background: color-mix(in oklab, var(--success) 16%, var(--card));
+	}
+	.bk-swatch[data-kind='seated'] {
+		border-color: var(--primary);
+		background: var(--primary);
+	}
+	.bk-swatch[data-kind='late'] {
+		border-color: var(--warning);
+		background: repeating-linear-gradient(
+			-45deg,
+			color-mix(in oklab, var(--warning) 75%, transparent) 0 2px,
+			var(--secondary) 2px 4px
+		);
+	}
+
+	/* ── Floor tiles carry up to two guest signals in a corner ────────────── */
+	.bk-signals {
+		top: 0.1875rem;
+		inset-inline-end: 0.1875rem;
+	}
+	.bk-table[data-round='true'] .bk-signals {
+		top: 0.5rem;
+		inset-inline-end: 0.5rem;
+	}
+	.bk-signal {
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		color: var(--foreground);
+	}
+	.bk-signal[data-signal='allergy'] {
+		border-color: var(--warning);
+		color: var(--warning);
+	}
+	.bk-signal[data-signal='vip'],
+	.bk-signal[data-signal='occasion'] {
+		color: var(--primary);
+	}
+	.bk-signal[data-signal='deposit'] {
+		color: var(--success);
+	}
+
+	/* ── Chrome: the date on a phone, the stats, rows that wrap, the offline strip ── */
+	.bk-date-short {
+		display: none;
+	}
+	@media (max-width: 699px) {
+		.bk-date-long {
+			display: none;
+		}
+		.bk-date-short {
+			display: inline;
+		}
+		.bk-header[data-wide='false'] .bk-services {
+			width: auto;
+			min-width: 8.5rem;
+			max-width: 11rem;
+		}
+		.bk-header[data-wide='false'] {
+			grid-template-columns: minmax(0, 1fr) auto;
+		}
+	}
+	@media (max-width: 399px) {
+		/* Keep the date readable and tappable beside long service labels. */
+		.bk-header[data-wide='false'] {
+			grid-template-areas: 'date date' 'services services' 'stats actions';
+		}
+		.bk-header[data-wide='false'] .bk-services {
+			width: 100%;
+			max-width: none;
+		}
+		.bk-header[data-wide='false'] .bk-stats-phone {
+			grid-column: 1 / -1;
+		}
+	}
+	.bk-stats-phone p,
+	.bk-stats-xl p,
+	.bk-toolbar-stats p {
+		overflow-wrap: anywhere;
+	}
+	/* A row's second line wraps to a second line before it is cut (a long status in any language). */
+	.bk-subline {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+	}
+	.bk-strip {
+		border-bottom: 1px solid
+			color-mix(in oklab, var(--warning) 40%, var(--border));
+		background: color-mix(in oklab, var(--warning) 14%, var(--card));
+		font-size: 0.875rem;
+		line-height: 1.3;
+	}
+	.bk-strip strong {
+		font-weight: 600;
+		color: var(--warning);
+	}
+	/* A narrow tablet's rail: the waitlist count and its longest wait, pinned under the list button. */
+	.bk-rail-wait {
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--border);
+		font-size: 0.75rem;
+		line-height: 1.1;
+	}
+	.bk-rail-wait[data-over='true'] {
+		border-color: var(--warning);
+		color: var(--warning);
+	}
+
+	.bk-subline {
+		flex: 1 1 5rem;
+	}
+
+	.tl-more {
+		line-height: 1.15;
 	}
 }
 

@@ -1,6 +1,6 @@
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { X } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Button, IconButton } from '~/ui/primitives.tsx'
 
@@ -77,7 +77,7 @@ export function DiscardClose({ onClick }: { onClick: () => void }) {
 			onClick={onClick}
 			className="absolute end-3 top-2 z-10"
 		>
-			<X className="size-5" />
+			<Icon name="x" className="size-5" />
 		</IconButton>
 	)
 }
@@ -93,7 +93,7 @@ export function DiscardAsk({
 	onDiscard: () => void
 }) {
 	return (
-		<div className="mb-safe flex flex-col gap-3">
+		<div className="flex flex-col gap-3">
 			<p role="status" className="font-medium">
 				{question}
 			</p>

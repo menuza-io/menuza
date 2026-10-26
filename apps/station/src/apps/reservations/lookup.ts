@@ -41,7 +41,11 @@ export function findRepeat(
 	who: { first: string; last: string; phone: string },
 	reservations: DayReservation[],
 	waitlist: WaitlistEntry[],
+	/** The location's country calling code: a number typed without one is taken to be in it. */
+	options: { countryCode?: string | null } = {},
 ): Repeat | null {
+	const same = (typed: string, stored: string | null | undefined) =>
+		samePhone(typed, stored, options)
 	const typed = fullName(who.first, who.last)
 	const hasFullName = who.first.trim() !== '' && who.last.trim() !== ''
 	const nameMatches = (name: string) => hasFullName && fullName(name) === typed
@@ -50,7 +54,7 @@ export function findRepeat(
 		.sort((a, b) => a.startAt - b.startAt)
 	for (const r of live) {
 		if (
-			samePhone(who.phone, r.guest?.phone) ||
+			same(who.phone, r.guest?.phone) ||
 			nameMatches(
 				r.guest?.name || [r.guest?.firstName, r.guest?.lastName].join(' '),
 			)
@@ -60,7 +64,7 @@ export function findRepeat(
 	for (const entry of waitlist) {
 		if (!['waiting', 'notified', 'on_the_way'].includes(entry.status)) continue
 		if (
-			samePhone(who.phone, entry.phone) ||
+			same(who.phone, entry.phone) ||
 			nameMatches(entry.displayName || `${entry.firstName} ${entry.lastName}`)
 		)
 			return { kind: 'waitlist', entry }
@@ -139,4 +143,69 @@ export function highlightRanges(
 		else merged.push([range[0], range[1]])
 	}
 	return merged
+}
+
+// ---------------------------------------------------------------------------
+// A guest who has a booking but walks in as if they had not
+// ---------------------------------------------------------------------------
+
+/**
+ * A booking a walk-in may really be: someone expected who is late, or whose
+ * time has passed unmarked, or who was marked a no-show a while ago.
+ */
+export type LateGuest = {
+	reservation: DayReservation
+	/**
+	 * What seating them takes: `seat` (the booking is still open: seat it),
+	 * `undo` (a no-show the till may still take back), or `reopen` (a no-show
+	 * past that: the till asks the server to mark them arrived, which it may
+	 * refuse).
+	 */
+	kind: 'seat' | 'undo' | 'reopen'
+}
+
+/** A guest this much of a name is worth suggesting for. */
+const MIN_TYPED_LETTERS = 2
+
+/** Bookings of today that are still open but whose time has come (late or missed), as the list calls them. */
+const OPEN_STATUSES = new Set(['booked', 'confirmed'])
+
+/**
+ * Today's late and missed parties, and no-shows, whose name matches what is
+ * typed into a walk-in's name field ("yus" offers "Yusuf B., booked 12:55"):
+ * seating one of these re-uses their booking instead of making a second one.
+ * Every typed word must start a word of the name. Earliest booking first;
+ * nothing for fewer than two letters.
+ */
+export function findLateGuests(
+	reservations: readonly DayReservation[],
+	typed: string,
+	now: number,
+	undoWindowMs: number,
+): LateGuest[] {
+	const words = normalize(typed).split(/\s+/).filter(Boolean)
+	if (words.join('').length < MIN_TYPED_LETTERS) return []
+	const found: LateGuest[] = []
+	for (const r of reservations) {
+		let kind: LateGuest['kind'] | null = null
+		if (OPEN_STATUSES.has(r.status) && r.startAt <= now) kind = 'seat'
+		else if (r.status === 'no_show')
+			kind =
+				r.canUndo !== false &&
+				typeof r.noShowAt === 'number' &&
+				now - r.noShowAt <= undoWindowMs
+					? 'undo'
+					: 'reopen'
+		if (!kind) continue
+		const nameWords = normalize(
+			r.guest?.name || [r.guest?.firstName, r.guest?.lastName].join(' '),
+		)
+			.split(/\s+/)
+			.filter(Boolean)
+		const hit = words.every((word) =>
+			nameWords.some((nameWord) => nameWord.startsWith(word)),
+		)
+		if (hit) found.push({ reservation: r, kind })
+	}
+	return found.sort((a, b) => a.reservation.startAt - b.reservation.startAt)
 }

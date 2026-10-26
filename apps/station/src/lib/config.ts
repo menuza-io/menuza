@@ -47,7 +47,7 @@ export type PosSettings = {
 }
 
 /** The apps a Station tablet can show: the till, the time clock, the host stand. */
-export type StationApp = 'pos' | 'timeclock' | 'reservations'
+export type StationApp = 'pos' | 'timeclock' | 'reservations' | 'kitchen'
 
 /**
  * The active app if the terminal still offers it, else the till. A till where
@@ -61,6 +61,7 @@ export function shownApp(
 		return 'timeclock'
 	if (s.activeApp === 'reservations' && s.apps.reservations)
 		return 'reservations'
+	if (s.activeApp === 'kitchen') return 'kitchen'
 	return 'pos'
 }
 

@@ -1,5 +1,6 @@
-import { msg } from '@lingui/macro'
+import { msg, plural } from '@lingui/macro'
 import { type useLingui } from '@lingui/react'
+import { type CoversHere } from './arrival.ts'
 import { type PartyStatus } from './book.ts'
 
 type Translate = ReturnType<typeof useLingui>['_']
@@ -32,4 +33,55 @@ export function statusText(_: Translate, status: PartyStatus): string {
 		default:
 			return _(msg`Booked`)
 	}
+}
+
+/** "3 of 5 here" for the ones at the door, "seated 3 of 5" for the ones at the table. */
+export function coversText(_: Translate, partly: CoversHere): string {
+	const { here, of } = partly
+	return partly.stage === 'table'
+		? _(msg`seated ${here} of ${of}`)
+		: _(msg`${here} of ${of} here`)
+}
+
+const countFormats = new Map<string, Intl.NumberFormat>()
+
+/**
+ * A count in the language's own digits, the way the rest of the stand writes
+ * its times and dates (the runtime's default for the locale), so a figure and
+ * the clock beside it never mix two kinds of digit.
+ */
+export function formatCount(value: number, locale: string): string {
+	let format = countFormats.get(locale)
+	if (!format) {
+		try {
+			format = new Intl.NumberFormat(locale)
+		} catch {
+			format = new Intl.NumberFormat('en')
+		}
+		countFormats.set(locale, format)
+	}
+	return format.format(value)
+}
+
+/**
+ * What the floor and the timeline say when there is nothing to draw: it names
+ * the location (this terminal's own, else "this location") and how many tables
+ * came in, so a manager can tell "never set up" from "set up but not shown".
+ */
+export function noTablesText(
+	_: Translate,
+	locationName: string | null,
+	received: number,
+): string {
+	const place = locationName?.trim() || _(msg`this location`)
+	return received === 0
+		? _(
+				msg`${place} has no tables yet. A manager adds the floor plan in the app, under Reservations, Setup.`,
+			)
+		: _(
+				plural(received, {
+					one: `${place} sent # table, but none is in a room that shows. A manager checks the rooms in the app, under Reservations, Setup.`,
+					other: `${place} sent # tables, but none is in a room that shows. A manager checks the rooms in the app, under Reservations, Setup.`,
+				}),
+			)
 }

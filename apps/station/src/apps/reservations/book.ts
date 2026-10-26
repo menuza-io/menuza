@@ -1,6 +1,7 @@
 import { type WaitlistEntry } from '@repo/reservations'
 import {
 	arrivals,
+	DUE_SOON_MIN,
 	isOnFloor,
 	isUpcoming,
 	isWaitingAtStand,
@@ -13,6 +14,7 @@ import {
 } from './feed.ts'
 import { isGuestChannel } from './guest.ts'
 import { foldDigits, nationalDigits, phoneDigits } from './phone.ts'
+import { isNoResponse } from './waitlist.ts'
 
 /**
  * What the host stand's list and header say about the day: which parties are
@@ -187,6 +189,34 @@ export function partyStatus(
 	}
 }
 
+/**
+ * What the list's left accent bar says: only the four things the floor's own
+ * colours say (due soon, late, at the stand, seated); nothing for a booking
+ * that is merely booked, confirmed, waiting on a deposit, finished or gone.
+ */
+export type Stripe = 'soon' | 'late' | 'here' | 'seated'
+
+export function stripeOf(
+	r: Pick<DayReservation, 'status' | 'startAt' | 'runningLateMin'>,
+	now: number,
+): Stripe | null {
+	const status = partyStatus(r, now)
+	switch (status.kind) {
+		case 'seated':
+			return 'seated'
+		case 'here':
+			return 'here'
+		case 'late':
+		case 'running':
+			return 'late'
+		case 'booked':
+		case 'confirmed':
+			return r.startAt - now <= DUE_SOON_MIN * 60_000 ? 'soon' : null
+		default:
+			return null
+	}
+}
+
 // ---------------------------------------------------------------------------
 // The list
 // ---------------------------------------------------------------------------
@@ -206,6 +236,11 @@ export type BookList = {
 	/** Parties that have left, the latest first. */
 	finished: DayReservation[]
 	waitlist: WaitlistEntry[]
+	/**
+	 * Parties whose hold ended with no answer, latest first: they are out of the
+	 * line, and stay a little while to be put back in it.
+	 */
+	noResponse: WaitlistEntry[]
 }
 
 const byStart = (a: DayReservation, b: DayReservation) =>
@@ -276,11 +311,22 @@ export function bookList({
 		missed,
 		finished,
 		waitlist: isToday
-			? [...waitlist]
+			? waitlist
+					.filter((e) => !isNoResponse(e))
 					.sort(
 						(a, b) =>
 							(a.position ?? a.sortKey) - (b.position ?? b.sortKey) ||
 							a.joinedAt - b.joinedAt,
+					)
+					.filter((e) => matchesWaitlistEntry(e, query))
+			: [],
+		noResponse: isToday
+			? waitlist
+					.filter(isNoResponse)
+					.sort(
+						(a, b) =>
+							(b.responseDeadlineAt ?? b.notifiedAt ?? 0) -
+							(a.responseDeadlineAt ?? a.notifiedAt ?? 0),
 					)
 					.filter((e) => matchesWaitlistEntry(e, query))
 			: [],
