@@ -1,7 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { ShieldCheck } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useState } from 'react'
 import { type Reason, type StaffRef } from '~/lib/db.ts'
 import { type Audit } from '~/lib/orders.ts'
@@ -135,6 +135,7 @@ export function AuditSheet({
 					<div className="grid gap-2 sm:grid-cols-2">
 						{reasons.map((r) => (
 							<Chip
+								look="outlined"
 								key={r}
 								selected={reason === r}
 								aria-pressed={reason === r}
@@ -150,9 +151,9 @@ export function AuditSheet({
 					approvedBy ? (
 						<p
 							role="status"
-							className="t-pop-in bg-success/12 text-success flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
+							className="t-pop-in notice-success flex items-center gap-2 rounded-(--station-control-radius) p-3 text-sm"
 						>
-							<ShieldCheck className="size-5" />{' '}
+							<Icon name="shield-check" className="size-5" />{' '}
 							<Trans>Approved by {approverName}</Trans>
 						</p>
 					) : (

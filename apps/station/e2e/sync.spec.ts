@@ -540,8 +540,8 @@ test.describe('flaky networks and servers', () => {
 		await expect(orders.getByText(/Will retry automatically/)).toBeVisible()
 
 		await backend.clearOutage()
-		// "Send now" overrides the retry wait.
-		await orders.getByRole('button', { name: 'Send now' }).click()
+		// "Upload now" overrides the retry wait.
+		await orders.getByRole('button', { name: 'Upload now' }).click()
 		const [stored] = await expectStored(1)
 		expect(stored!.number).toBe('T1-0001')
 		await expect(orders.getByText('Paid · sent').first()).toBeVisible()
@@ -566,7 +566,7 @@ test.describe('flaky networks and servers', () => {
 		await expect(
 			orders.getByText('Paid · waiting to send').first(),
 		).toBeVisible()
-		await orders.getByRole('button', { name: 'Send now' }).click()
+		await orders.getByRole('button', { name: 'Upload now' }).click()
 		await expect(orders.getByText('Paid · sent').first()).toBeVisible()
 		const all = await backend.orders()
 		expect(all).toHaveLength(1)
@@ -587,7 +587,7 @@ test.describe('flaky networks and servers', () => {
 		await sellFries(page)
 		const orders = await openOrders(page, 'today')
 		await orders
-			.getByRole('button', { name: 'Send now' })
+			.getByRole('button', { name: 'Upload now' })
 			.first()
 			.click()
 			.catch(() => undefined)

@@ -1506,6 +1506,8 @@ export const PUNCH_SOURCE_VALUES = [
 	'web',
 	'mobile',
 	'manager',
+	// A paired Station tablet's time clock.
+	'pos',
 ] as const
 export const PUNCH_OUTCOME_VALUES = [
 	'accepted',
@@ -1727,6 +1729,22 @@ export const posDevices = sqliteTable(
 		shiftsRequired: integer('shifts_required', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		// Station apps beside the till. The time clock punches with each person's
+		// PIN; reservations open the host stand for the terminal's location and need
+		// sign-in. Each is also gated by the organization's feature flag.
+		timeclockEnabled: integer('timeclock_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		// When the time clock was last switched off here. A punch the till made
+		// offline before then is still accepted; one made after is not.
+		timeclockDisabledAt: integer('timeclock_disabled_at'),
+		// When a manager bound a terminal paired without a location to one. Orders
+		// the till started before then (at the location it chose itself) still
+		// upload; anything newer must be at the bound location.
+		locationBoundAt: integer('location_bound_at'),
+		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		// Keyed hash of the device secret. The secret itself is never stored.
 		secretHash: text('secret_hash').notNull(),
 		pairedBy: text('paired_by').notNull(),
@@ -1766,6 +1784,12 @@ export const posPairingCodes = sqliteTable(
 		shiftsRequired: integer('shifts_required', { mode: 'boolean' })
 			.notNull()
 			.default(false),
+		timeclockEnabled: integer('timeclock_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
+		reservationsEnabled: integer('reservations_enabled', { mode: 'boolean' })
+			.notNull()
+			.default(false),
 		createdBy: text('created_by').notNull(),
 		expiresAt: integer('expires_at').notNull(),
 		usedAt: integer('used_at'),
@@ -1776,6 +1800,50 @@ export const posPairingCodes = sqliteTable(
 )
 
 export const POS_ORDER_STATUSES = ['open', 'paid', 'void', 'refunded'] as const
+
+// Kitchen progress is separate from the bill and never changes a fiscal revision.
+export const kdsLocationSettings = sqliteTable('kds_location_settings', {
+	locationId: text('location_id').primaryKey(),
+	version: integer('version').notNull(),
+	config: text('config', { mode: 'json' }).notNull(),
+	updatedAt: integer('updated_at').notNull(),
+})
+
+export const kdsTickets = sqliteTable(
+	'kds_tickets',
+	{
+		source: text('source', { enum: ['pos', 'online'] }).notNull(),
+		orderId: text('order_id').notNull(),
+		locationId: text('location_id').notNull(),
+		version: integer('version').notNull(),
+		// Each dish's stage by id, plus `served:<id>`: when a ready dish left the pass.
+		progress: text('progress', { mode: 'json' })
+			.$type<Record<string, 'new' | 'preparing' | 'ready' | number>>()
+			.notNull(),
+		completedAt: integer('completed_at'),
+		updatedAt: integer('updated_at').notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.source, table.orderId] }),
+		index('idx_kds_tickets_location_done').on(
+			table.locationId,
+			table.completedAt,
+		),
+	],
+)
+
+export const kdsEvents = sqliteTable('kds_events', {
+	id: text('id')
+		.primaryKey()
+		.$defaultFn(() => randomUUID()),
+	locationId: text('location_id').notNull(),
+	deviceId: text('device_id').notNull(),
+	staffId: text('staff_id'),
+	source: text('source'),
+	orderId: text('order_id'),
+	action: text('action').notNull(),
+	at: integer('at').notNull(),
+})
 
 // `id` is the terminal's own UUID, which doubles as the idempotency key.
 export const posOrders = sqliteTable(
@@ -2186,6 +2254,21 @@ export const posManagers = sqliteTable('pos_managers', {
 	staffId: text('staff_id')
 		.primaryKey()
 		.references(() => staffMembers.id, { onDelete: 'cascade' }),
+	addedBy: text('added_by').notNull(),
+	addedAt: integer('added_at').notNull().default(nowMs),
+})
+
+// People who may run the host stand on a Station terminal (book, seat, walk-ins,
+// waitlist), set by someone who manages reservations. Everyone else with a PIN
+// takes orders and punches the clock, nothing more. `guestDetails` also opens
+// guests' full phone numbers, emails, allergies and private notes.
+export const posHosts = sqliteTable('pos_hosts', {
+	staffId: text('staff_id')
+		.primaryKey()
+		.references(() => staffMembers.id, { onDelete: 'cascade' }),
+	guestDetails: integer('guest_details', { mode: 'boolean' })
+		.notNull()
+		.default(false),
 	addedBy: text('added_by').notNull(),
 	addedAt: integer('added_at').notNull().default(nowMs),
 })

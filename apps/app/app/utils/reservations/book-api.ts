@@ -2077,7 +2077,12 @@ function normalizeAuditEntries(rawEvents: unknown[]): ReservationAuditEntry[] {
 		)
 		.map((e, idx) => ({
 			id: String(e.id ?? `ev-${idx}`),
-			actorType: String(e.actorType ?? e.actorKind ?? 'operator'),
+			// A Station till acts with a token for the person signed in there
+			// (`staff:<id>`), not for a member of the organization.
+			actorType:
+				typeof e.actorId === 'string' && e.actorId.startsWith('staff:')
+					? 'station_staff'
+					: String(e.actorType ?? e.actorKind ?? 'operator'),
 			actorId: typeof e.actorId === 'string' ? e.actorId : null,
 			action: String(e.action ?? e.type ?? 'updated'),
 			reason:

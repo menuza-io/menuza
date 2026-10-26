@@ -33,7 +33,11 @@ test.describe('a terminal bound to a location', () => {
 	test('whose location is not on the published menu refuses to sell from another one', async ({
 		unpaired: page,
 	}) => {
-		await pairUi(page, { terminalCode: 'T1', locationId: 'loc-elsewhere' })
+		// Pair to a real location, then publish a menu that no longer contains it.
+		// Unknown control-plane locations are correctly refused during pairing.
+		await pairUi(page, { terminalCode: 'T1', locationId: 'loc-1' })
+		await backend.location({ id: 'loc-elsewhere' })
+		await page.getByRole('button', { name: 'Refresh menu' }).click()
 		await expect(page.getByText(/location isn’t on the menu/)).toBeVisible()
 		await expect(
 			page.getByRole('button', { name: /^Smash Burger,/ }),

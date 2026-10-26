@@ -87,6 +87,17 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 			if (denied) return denied
 		}
 
+		// A Station till runs the host stand and nothing else (see `STATION_ROUTES`).
+		if (
+			ctx.channel === 'station' &&
+			!stationMayCall(c.req.method, c.req.path)
+		) {
+			return Response.json(
+				{ error: 'not_for_station', message: 'Not available at a till' },
+				{ status: 403 },
+			)
+		}
+
 		const requestedOrgId =
 			c.req.query('orgId')?.trim() || c.req.header('X-Org-Id')?.trim()
 		if (requestedOrgId && requestedOrgId !== ctx.orgId) {
@@ -109,6 +120,49 @@ export function rsvGuard(options: RsvGuardOptions = {}): MiddlewareHandler {
 		c.set(RSV_AUTH_KEY, ctx)
 		await next()
 	}
+}
+
+/**
+ * Exactly what the host stand on a till does (`apps/station/src/apps/
+ * reservations/api.ts`), and nothing else under `/book`: no guestbook, no
+ * resending messages to guests, no approving requests, no service notes or
+ * section layouts (assigning servers to sections is the host's), no contact
+ * or course changes. A new till feature adds its route
+ * here on purpose.
+ */
+const STATION_ROUTES: ReadonlyArray<readonly [string, RegExp]> = [
+	['GET', /^\/day$/],
+	['GET', /^\/availability$/],
+	['GET', /^\/waitlist\/?$/],
+	['GET', /^\/waitlist\/quote$/],
+	['GET', /^\/reservations\/[^/]+$/],
+	['GET', /^\/reservations\/[^/]+\/events$/],
+	// Size and time only: the route refuses any other field from a till.
+	['PATCH', /^\/reservations\/[^/]+$/],
+	['POST', /^\/reservations$/],
+	['POST', /^\/walk-ins$/],
+	['POST', /^\/reservations\/[^/]+\/(?:status|assign|undo|running-late)$/],
+	['POST', /^\/waitlist\/?$/],
+	['POST', /^\/waitlist\/[^/]+\/(?:notify|seat|status)$/],
+	// Which server has which section tonight: hosts assign it at the start of a shift.
+	['PUT', /^\/section-assignments$/],
+]
+
+const BOOK_PREFIX = '/operator/reservations/book'
+
+export function stationMayCall(method: string, path: string): boolean {
+	if (!path.startsWith(`${BOOK_PREFIX}/`)) return false
+	const rest = path.slice(BOOK_PREFIX.length)
+	return STATION_ROUTES.some(
+		([allowed, pattern]) => allowed === method && pattern.test(rest),
+	)
+}
+
+/** The auth context, if a guard on this request set one (for after-the-fact middleware). */
+export function peekRsvAuth(c: Context): ReservationsOperatorContext | null {
+	return (
+		(c.get(RSV_AUTH_KEY) as ReservationsOperatorContext | undefined) ?? null
+	)
 }
 
 export function getRsvAuth(c: Context): ReservationsOperatorContext {

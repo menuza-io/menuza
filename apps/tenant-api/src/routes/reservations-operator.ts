@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
 import { z } from 'zod'
 import { json, readQuery } from '../lib/http.ts'
+import { stationContactRedaction } from '../lib/reservations-station.ts'
 import {
 	requireReservationsLocation,
 	type ReservationsAuthContext,
@@ -34,6 +35,9 @@ async function resolveLocationParam(
 }
 
 export const reservationsOperatorRoutes = new Hono()
+
+// A Station till's token sees guest contact details only with the guest grant.
+reservationsOperatorRoutes.use('*', stationContactRedaction())
 
 const requiredLocationQuerySchema = z.object({
 	locationId: z.string().trim().min(1).max(128),

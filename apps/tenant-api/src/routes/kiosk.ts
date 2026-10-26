@@ -307,6 +307,7 @@ kioskRoutes.post(
 				allowedEvents: described.allowedEvents,
 				positions: described.positions,
 				promptTips: described.promptTips,
+				breakKinds: described.breakKinds,
 				nextShifts: await nextShiftsFor(kiosk, verified.member.id, now),
 				serverNow: now,
 			}

@@ -3,6 +3,11 @@
 These icons were downloaded from https://icons.radix-ui.com/ which is licensed
 under MIT: https://github.com/radix-ui/icons/blob/master/LICENSE
 
+Icons added for Station (the till, kitchen and host stand) come from
+[Hugeicons](https://hugeicons.com/) free icons, MIT licensed, copied from the
+installed `@hugeicons/core-free-icons` package (4.3.5). Each file names its
+Hugeicons source in a comment; the file name stays the name the code uses.
+
 Integration brand marks retain their brand colors rather than inheriting the
 interface's text color. Sources:
 

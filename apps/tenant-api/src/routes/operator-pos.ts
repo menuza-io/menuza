@@ -1,12 +1,14 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
+import { DEFAULT_SCOPE_ID } from '@repo/staffing'
 import { getTenantDb, posDevices } from '@repo/tenant-db'
 import {
 	isPosEnabled,
 	isPosHashUnavailable,
 	posDisabledResponse,
 	posError,
+	posStaffScopeId,
 	posUnavailableResponse,
 } from '../lib/pos-auth.ts'
 import {
@@ -19,13 +21,19 @@ import {
 	resolveHeldUpload,
 	listPendingCodes,
 	listPosOrders,
+	checkLocation,
+	deviceStationState,
 	listStaffRoster,
+	removeHost,
 	removeManager,
 	revokeDevice,
 	revokePendingCode,
+	setHost,
 	setManager,
 	updateDeviceSettings,
 } from '../services/pos-service.ts'
+import { getStaffingFeatures, hasScope } from '../lib/scope-context.ts'
+import { writeOperatorAudit } from '../services/staff-audit.ts'
 import {
 	dayReport,
 	listShifts,
@@ -42,6 +50,7 @@ import {
 import {
 	assertOperatorOrg,
 	authenticateOrdersOperator,
+	type StationAppClaims,
 } from './operator-orders.ts'
 
 /**
@@ -80,6 +89,8 @@ const createCodeSchema = z.strictObject({
 	signInRequired: z.boolean().optional(),
 	dayStartMinutes: z.number().int().min(0).max(720).optional(),
 	shiftsRequired: z.boolean().optional(),
+	timeclockEnabled: z.boolean().optional(),
+	reservationsEnabled: z.boolean().optional(),
 })
 
 operatorPosRoutes.get('/terminals', async (c) => {
@@ -100,6 +111,16 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
+	const denied = await stationAppsDenied(
+		g.auth,
+		parsed.data,
+		parsed.data.locationId ?? null,
+		posStaffScopeId({
+			scopeId: parsed.data.scopeId ?? DEFAULT_SCOPE_ID,
+			locationId: parsed.data.locationId ?? null,
+		}),
+	)
+	if (denied) return denied
 	let result: Awaited<ReturnType<typeof createPairingCode>>
 	try {
 		result = await createPairingCode(g.db, g.auth.orgId, {
@@ -110,6 +131,8 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			signInRequired: parsed.data.signInRequired,
 			dayStartMinutes: parsed.data.dayStartMinutes,
 			shiftsRequired: parsed.data.shiftsRequired,
+			timeclockEnabled: parsed.data.timeclockEnabled,
+			reservationsEnabled: parsed.data.reservationsEnabled,
 			createdBy: g.auth.userId,
 		})
 	} catch (error) {
@@ -123,6 +146,24 @@ operatorPosRoutes.post('/pairing-codes', async (c) => {
 			result.message ? { message: result.message } : {},
 		)
 	}
+	// A terminal that will open with Station apps on is a change like any switch.
+	// Best effort: the code is already made and is shown only now.
+	if (parsed.data.timeclockEnabled || parsed.data.reservationsEnabled)
+		await writeOperatorAudit(g.db, g.auth.userId, null, {
+			action: 'pos.pairing_code.created',
+			entityType: 'pos_pairing_code',
+			entityId: result.value.terminalCode,
+			changes: {
+				timeclockEnabled: parsed.data.timeclockEnabled === true,
+				reservationsEnabled: parsed.data.reservationsEnabled === true,
+				locationId: parsed.data.locationId ?? null,
+			},
+		}).catch((error: unknown) =>
+			console.error(
+				'Pairing code audit failed',
+				error instanceof Error ? error.name : 'unknown',
+			),
+		)
 	// The code is shown once: only its hash is stored.
 	return c.json(result.value, 201, noStore)
 })
@@ -208,18 +249,64 @@ operatorPosRoutes.post('/held/:id/resolve', async (c) => {
 // Staff sign-in settings
 // ---------------------------------------------------------------------------
 
+/**
+ * Switching a Station app on needs that module's settings permission, which App
+ * signs into the token (`stationApps`); switching one off never does. The time
+ * clock also needs the organization's staffing flag when this node can read it,
+ * and a workplace the member manages that the organization really has.
+ */
+async function stationAppsDenied(
+	auth: { orgId: string; stationApps: StationAppClaims },
+	patch: { timeclockEnabled?: boolean; reservationsEnabled?: boolean },
+	/** The terminal's location once this change is made (null: none). */
+	hostLocationId: string | null,
+	/** Its staffing workplace once this change is made (`posStaffScopeId`). */
+	workplace: string,
+): Promise<Response | null> {
+	if (patch.timeclockEnabled === true) {
+		if (!auth.stationApps.timeclock)
+			return posError(403, 'timeclock_permission_required')
+		// A member limited to some workplaces turns the clock on only there.
+		const allowed = auth.stationApps.scopeIds
+		if (allowed !== null && !allowed.includes(workplace))
+			return posError(403, 'scope_not_allowed')
+		const flags = await getStaffingFeatures(auth.orgId).catch(() => null)
+		if (flags && (!flags.features.enabled || !flags.features.timeclock))
+			return posError(422, 'timeclock_disabled')
+		// Where people work by location, a till with none has nobody to clock in.
+		if ((await hasScope(auth.orgId, workplace).catch(() => null)) === false)
+			return workplace === DEFAULT_SCOPE_ID
+				? posError(422, 'timeclock_needs_location', {
+						message: 'Choose the terminal’s location to use the time clock.',
+					})
+				: posError(422, 'invalid_scope', {
+						message: 'That workplace cannot use the time clock.',
+					})
+	}
+	if (patch.reservationsEnabled === true) {
+		if (!auth.stationApps.reservations)
+			return posError(403, 'reservations_permission_required')
+		// A member limited to some locations opens the host stand only there.
+		const allowed = auth.stationApps.locationIds
+		if (
+			allowed !== null &&
+			(hostLocationId === null || !allowed.includes(hostLocationId))
+		)
+			return posError(403, 'location_not_allowed')
+	}
+	return null
+}
+
 const patchTerminalSchema = z
 	.strictObject({
 		signInRequired: z.boolean().optional(),
 		dayStartMinutes: z.number().int().min(0).max(720).optional(),
 		shiftsRequired: z.boolean().optional(),
+		timeclockEnabled: z.boolean().optional(),
+		reservationsEnabled: z.boolean().optional(),
+		locationId: z.string().trim().min(1).max(100).optional(),
 	})
-	.refine(
-		(p) =>
-			p.signInRequired !== undefined ||
-			p.dayStartMinutes !== undefined ||
-			p.shiftsRequired !== undefined,
-	)
+	.refine((p) => Object.values(p).some((value) => value !== undefined))
 
 operatorPosRoutes.patch('/terminals/:id', async (c) => {
 	const g = await guard(c, 'orders:write')
@@ -228,12 +315,67 @@ operatorPosRoutes.patch('/terminals/:id', async (c) => {
 		await c.req.json().catch(() => null),
 	)
 	if (!parsed.success) return posError(400, 'invalid_request')
-	if (!(await updateDeviceSettings(g.db, c.req.param('id'), parsed.data)))
-		return posError(404, 'not_found')
+	const current = await deviceStationState(g.db, c.req.param('id'))
+	if (!current) return posError(404, 'not_found')
+	const hostLocationId = current.locationId ?? parsed.data.locationId ?? null
+	// Binding a location to a till whose host stand is on is opening it there.
+	const opensHostStand =
+		parsed.data.reservationsEnabled === true ||
+		(current.reservationsEnabled &&
+			parsed.data.reservationsEnabled !== false &&
+			parsed.data.locationId !== undefined &&
+			current.locationId === null)
+	const workplace = posStaffScopeId({
+		scopeId: current.scopeId,
+		locationId: hostLocationId,
+	})
+	// Binding can also move a till's time clock to that location's people.
+	const opensTimeclock =
+		parsed.data.timeclockEnabled === true ||
+		(current.timeclockEnabled &&
+			parsed.data.timeclockEnabled !== false &&
+			workplace !== posStaffScopeId(current))
+	const denied = await stationAppsDenied(
+		g.auth,
+		{
+			...parsed.data,
+			timeclockEnabled: opensTimeclock ? true : parsed.data.timeclockEnabled,
+			reservationsEnabled: opensHostStand
+				? true
+				: parsed.data.reservationsEnabled,
+		},
+		hostLocationId,
+		workplace,
+	)
+	if (denied) return denied
+	if (parsed.data.locationId !== undefined) {
+		// Binding is permanent: it waits for App to confirm the location exists.
+		const found = await checkLocation(g.auth.orgId, parsed.data.locationId)
+		if (found === 'unavailable') return posError(503, 'service_unavailable')
+		if (found === 'unknown') return posError(422, 'invalid_location')
+	}
+	const result = await updateDeviceSettings(
+		g.db,
+		c.req.param('id'),
+		parsed.data,
+		Date.now(),
+		g.auth.userId,
+	)
+	if (!result.ok) {
+		return posError(
+			result.status,
+			result.error,
+			result.message ? { message: result.message } : {},
+		)
+	}
 	return c.json({ ok: true }, 200, noStore)
 })
 
-/** The people who can sign in at a workplace, whether each has a PIN, and who may manage a till. */
+/**
+ * The people who can sign in at a workplace (`main` unless `scopeId` says
+ * otherwise; `scope=all`: at any of them, to choose managers and hosts from),
+ * whether each has a PIN, and who may manage a till or host.
+ */
 operatorPosRoutes.get('/staff', async (c) => {
 	const g = await guard(c, 'orders:read', { keepWorkingWhenDisabled: true })
 	if ('error' in g) return g.error
@@ -243,7 +385,12 @@ operatorPosRoutes.get('/staff', async (c) => {
 		.safeParse(c.req.query('scopeId') ?? 'main')
 	if (!scopeId.success) return posError(400, 'invalid_request')
 	return c.json(
-		{ staff: await listStaffRoster(g.db, scopeId.data) },
+		{
+			staff: await listStaffRoster(
+				g.db,
+				c.req.query('scope') === 'all' ? null : scopeId.data,
+			),
+		},
 		200,
 		noStore,
 	)
@@ -253,6 +400,42 @@ operatorPosRoutes.put('/managers/:staffId', async (c) => {
 	const g = await guard(c, 'orders:write')
 	if ('error' in g) return g.error
 	if (!(await setManager(g.db, c.req.param('staffId'), g.auth.userId)))
+		return posError(404, 'not_found')
+	return c.json({ ok: true }, 200, noStore)
+})
+
+// The host roster: who may run the host stand at a till. Reservations settings,
+// not the menu permission, decide it (App signs `stationApps.reservations`).
+const hostSchema = z.strictObject({ guestDetails: z.boolean().optional() })
+
+operatorPosRoutes.put('/hosts/:staffId', async (c) => {
+	const g = await guard(c, 'orders:write')
+	if ('error' in g) return g.error
+	if (!g.auth.stationApps.reservations)
+		return posError(403, 'reservations_permission_required')
+	// The roster is the organization's (a host can sign in at any of its tills):
+	// only someone whose reservations reach every location may change it.
+	if (g.auth.stationApps.locationIds !== null)
+		return posError(403, 'location_not_allowed')
+	const parsed = hostSchema.safeParse(await c.req.json().catch(() => ({})))
+	if (!parsed.success) return posError(400, 'invalid_request')
+	// Guests' phones, emails and allergies: only someone who may read them may share them.
+	if (parsed.data.guestDetails === true && !g.auth.stationApps.guestDetails)
+		return posError(403, 'guest_permission_required')
+	if (
+		!(await setHost(g.db, c.req.param('staffId'), g.auth.userId, {
+			guestDetails: parsed.data.guestDetails ?? false,
+		}))
+	)
+		return posError(404, 'not_found')
+	return c.json({ ok: true }, 200, noStore)
+})
+
+operatorPosRoutes.delete('/hosts/:staffId', async (c) => {
+	// Taking someone off is always allowed to whoever manages terminals.
+	const g = await guard(c, 'orders:write', { keepWorkingWhenDisabled: true })
+	if ('error' in g) return g.error
+	if (!(await removeHost(g.db, c.req.param('staffId'), g.auth.userId)))
 		return posError(404, 'not_found')
 	return c.json({ ok: true }, 200, noStore)
 })

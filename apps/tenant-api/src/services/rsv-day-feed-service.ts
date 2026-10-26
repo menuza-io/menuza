@@ -862,7 +862,9 @@ export async function getDayFeed(
 		staffDayView.state === 'open'
 			? ''
 			: `.${staffDayView.state === 'closed' ? 'c' : 'o'}${staffDayView.closedSource === 'location_hours' ? 'l' : 'r'}`
-	const etagSuffix = `${filtersEtagSuffix(filters)}${stateSuffix}`
+	// The same day reads differently with and without guest details.
+	const grantSuffix = opts?.canReadGuestSensitive ? '.g' : ''
+	const etagSuffix = `${filtersEtagSuffix(filters)}${stateSuffix}${grantSuffix}`
 	const etag = `"${locationId}:${businessDate}:${dayVersion}:${settingsVersion}:${floorPlanVersion}${etagSuffix}"`
 	const shortEtag = `"${dayVersion}.${settingsVersion}.${floorPlanVersion}${etagSuffix}"`
 
@@ -1013,6 +1015,7 @@ export async function getDayFeed(
 		arrivedCovers: number
 		partyCount: number
 		maxCovers: number
+		maxCoversIsDefault: boolean
 		utilizationPct: number
 	}> = []
 
@@ -1056,6 +1059,8 @@ export async function getDayFeed(
 			arrivedCovers,
 			partyCount: inBucket.length,
 			maxCovers,
+			// No rule covers this slot: the cap is only the default, not a configured limit.
+			maxCoversIsDefault: rule?.maxCovers == null,
 			utilizationPct:
 				maxCovers > 0
 					? Math.min(100, Math.round((bookedCovers / maxCovers) * 100))
@@ -1418,6 +1423,8 @@ export async function getOperatorAvailability(
 				serviceId?: string | null
 				areaId?: string | null
 				durationMin?: number | null
+				/** Changing this booking: its own tables and covers do not count against it. */
+				excludeReservationId?: string | null
 		  },
 	maybeInput?: {
 		date: string
@@ -1425,6 +1432,7 @@ export async function getOperatorAvailability(
 		serviceId?: string | null
 		areaId?: string | null
 		durationMin?: number | null
+		excludeReservationId?: string | null
 	},
 ) {
 	const locationId =
@@ -1454,7 +1462,10 @@ export async function getOperatorAvailability(
 		])
 
 	const activeRes = dayResRows.filter(
-		(r) => r.status !== 'cancelled' && r.status !== 'no_show',
+		(r) =>
+			r.status !== 'cancelled' &&
+			r.status !== 'no_show' &&
+			r.id !== input.excludeReservationId,
 	)
 
 	const resIds = activeRes.map((r) => r.id)
@@ -1543,8 +1554,10 @@ export async function getOperatorAvailability(
 		warnings?: string[]
 	}> = []
 
-	const pacedRes = dayResRows.filter((r) =>
-		ACTIVE_OCCUPANCY_STATUSES.has(r.status),
+	const pacedRes = dayResRows.filter(
+		(r) =>
+			ACTIVE_OCCUPANCY_STATUSES.has(r.status) &&
+			r.id !== input.excludeReservationId,
 	)
 	const pacingExisting = pacedRes.map((r) => ({
 		id: r.id,
@@ -2252,7 +2265,29 @@ export async function getBookConflicts(
 	}
 }
 
-export async function getReservationEvents(db: DbOrTx, reservationId: string) {
+/** Health details a reservation's history may carry; shown only with the guest grant. */
+const SENSITIVE_EVENT_KEYS = new Set([
+	'dietaryNotes',
+	'dietary_notes',
+	'allergyNotes',
+	'allergy_notes',
+])
+
+export function withoutSensitive(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(withoutSensitive)
+	if (!value || typeof value !== 'object') return value
+	const out: Record<string, unknown> = {}
+	for (const [key, entry] of Object.entries(value as Record<string, unknown>))
+		out[key] = SENSITIVE_EVENT_KEYS.has(key) ? null : withoutSensitive(entry)
+	return out
+}
+
+export async function getReservationEvents(
+	db: DbOrTx,
+	reservationId: string,
+	opts?: { canReadGuestSensitive?: boolean },
+) {
+	const canReadSensitive = opts?.canReadGuestSensitive === true
 	const res = await db
 		.select()
 		.from(rsvReservations)
@@ -2272,6 +2307,8 @@ export async function getReservationEvents(db: DbOrTx, reservationId: string) {
 	return {
 		reservationId: res.id,
 		locationId: res.locationId,
+		// A till hides a waitlist note in this history as on the booking itself.
+		channel: res.channel,
 		events: rows.map((e) => ({
 			id: e.id,
 			reservationId: e.reservationId,
@@ -2284,7 +2321,8 @@ export async function getReservationEvents(db: DbOrTx, reservationId: string) {
 			actorId: e.actorId,
 			actor_id: e.actorId,
 			type: e.type,
-			data: e.data ?? {},
+			// The detail hides allergy and dietary notes without the grant; so does its history.
+			data: canReadSensitive ? (e.data ?? {}) : withoutSensitive(e.data ?? {}),
 		})),
 	}
 }

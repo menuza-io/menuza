@@ -1520,6 +1520,37 @@ describe('POS terminals: pairing, upload and sync', () => {
 			).toBe(201)
 		})
 
+		it('a till bound to a location later still uploads the orders it started before', async () => {
+			const { deviceSecret, device } = await pair({ locationId: null })
+			const tab = wireOrder({ locationId: 'loc-2' })
+			expect((await upload(deviceSecret, tab)).status).toBe(201)
+			// A manager binds the till to loc-1 (as PATCH does) after the tab was opened.
+			const db = await getTenantDb(ORG_A)
+			await db
+				.update(posDevices)
+				.set({
+					locationId: 'loc-1',
+					locationBoundAt: Date.parse(tab.createdAt) + 1,
+				})
+				.where(eq(posDevices.id, device.id))
+			const settled = await upload(deviceSecret, {
+				...wireOrder({
+					id: tab.id,
+					locationId: 'loc-2',
+					revision: 2,
+					payments: [{ amountCents: tab.totals.totalCents }],
+				}),
+				createdAt: tab.createdAt,
+			})
+			expect(settled.status).toBeLessThan(300)
+			// Anything started after the binding belongs to the bound location.
+			const later = {
+				...wireOrder({ locationId: 'loc-2' }),
+				createdAt: new Date(Date.now() + 60_000).toISOString(),
+			}
+			await expectHeld(await upload(deviceSecret, later), 'wrong_location')
+		})
+
 		it('takes sales while online ordering is closed, with kitchen notes the menu disables online', async () => {
 			contextFor = (orgId) => menuContext(orgId, { onlineClosed: true })
 			const { deviceSecret } = await pair()
@@ -1883,8 +1914,16 @@ describe('POS terminals: pairing, upload and sync', () => {
 			const body = (await r.json()) as {
 				staff: { id: string; name: string }
 				role: string
+				sessionToken: string
+				sessionExpiresAt: number
 			}
-			expect(body).toEqual({ staff: { id, name: 'Ana K.' }, role: 'cashier' })
+			expect(body).toEqual({
+				staff: { id, name: 'Ana K.' },
+				role: 'cashier',
+				// Proof of this sign-in for the Station apps (reservations).
+				sessionToken: expect.any(String),
+				sessionExpiresAt: expect.any(Number),
+			})
 			expect(JSON.stringify(body)).not.toContain('4321')
 		})
 

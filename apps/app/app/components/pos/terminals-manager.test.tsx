@@ -71,7 +71,7 @@ function stubApi(
 					tenantApiUrl: API,
 				})
 			}
-			if (url.endsWith('/operator/pos/staff') && method === 'GET') {
+			if (url.endsWith('/operator/pos/staff?scope=all') && method === 'GET') {
 				return options.staffError
 					? new Response('off', { status: 503 })
 					: Response.json({ staff })
@@ -339,9 +339,169 @@ describe('TerminalsManager', () => {
 			terminalCode: 'T2',
 			signInRequired: true,
 			dayStartMinutes: 240,
+			locationId: null,
+			timeclockEnabled: false,
+			reservationsEnabled: false,
 		})
 		expect(create.auth).toBe('Bearer write-token')
 		expect(within(dialog).getByText('Waiting for the terminal…')).toBeTruthy()
+	})
+
+	it('pairs a host stand: one location chosen for you, the time clock and reservations on', async () => {
+		const api = stubApi({ devices: [terminal()] })
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: { timeclock: true, reservations: true },
+			stationGrants: {
+				timeclock: true,
+				reservations: true,
+				guestDetails: true,
+				locationIds: null,
+				scopeIds: null,
+			},
+		})
+		await screen.findByText('Front counter')
+		fireEvent.click(screen.getByRole('button', { name: 'Pair a terminal' }))
+		const dialog = await screen.findByRole('dialog')
+		fireEvent.change(within(dialog).getByLabelText('Name'), {
+			target: { value: 'Host stand' },
+		})
+		fireEvent.click(
+			within(dialog).getByRole('checkbox', { name: /Time clock/ }),
+		)
+		fireEvent.click(
+			within(dialog).getByRole('checkbox', { name: /Reservations/ }),
+		)
+		fireEvent.click(
+			within(dialog).getByRole('button', { name: 'Create pairing code' }),
+		)
+		await within(dialog).findByLabelText('Pairing link')
+		expect(api.calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+			locationId: 'loc_1',
+			timeclockEnabled: true,
+			reservationsEnabled: true,
+		})
+	})
+
+	it('a member limited to other locations cannot open the host stand here', async () => {
+		stubApi({
+			devices: [
+				terminal({
+					id: 'd2',
+					label: 'Host stand',
+					terminalCode: 'T2',
+					locationId: 'loc_1',
+					signInRequired: true,
+				}),
+			],
+		})
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: { timeclock: true, reservations: true },
+			stationGrants: {
+				timeclock: true,
+				reservations: true,
+				guestDetails: false,
+				locationIds: ['loc_2'],
+				scopeIds: null,
+			},
+		})
+		await screen.findByText('Host stand')
+		const button = screen.getByRole('button', {
+			name: 'Reservations on Host stand, off',
+		}) as HTMLButtonElement
+		expect(button).toBeDisabled()
+		expect(
+			screen.getByText(
+				'You can open the host stand only at your own locations.',
+			),
+		).toBeTruthy()
+	})
+
+	it('reservations wait for a location and a staff PIN; the time clock waits for a location', async () => {
+		const api = stubApi({
+			devices: [
+				terminal({ signInRequired: true }),
+				terminal({
+					id: 'd2',
+					label: 'Host stand',
+					terminalCode: 'T2',
+					locationId: 'loc_1',
+					signInRequired: true,
+				}),
+			],
+		})
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: { timeclock: true, reservations: true },
+			stationGrants: {
+				timeclock: true,
+				reservations: true,
+				guestDetails: true,
+				locationIds: null,
+				scopeIds: null,
+			},
+		})
+		await screen.findByText('Host stand')
+		const unbound = screen.getByRole('button', {
+			name: 'Reservations on Front counter, off',
+		}) as HTMLButtonElement
+		expect(unbound).toBeDisabled()
+		expect(
+			screen.getByText("Choose the terminal's location to use reservations."),
+		).toBeTruthy()
+		// People work by location here: a terminal with none has nobody to clock in.
+		expect(
+			screen.getByRole('button', { name: 'Time clock on Front counter, off' }),
+		).toBeDisabled()
+		expect(
+			screen.getByText("Choose the terminal's location to use the time clock."),
+		).toBeTruthy()
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Reservations on Host stand, off' }),
+		)
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Time clock on Host stand, off' }),
+		)
+		await waitFor(() =>
+			expect(
+				api.calls
+					.filter((c) => c.method === 'PATCH')
+					.map((c) => [c.url.split('/').pop(), c.body]),
+			).toEqual([
+				['d2', { reservationsEnabled: true }],
+				['d2', { timeclockEnabled: true }],
+			]),
+		)
+		expect(await screen.findByText('Host stand for Downtown')).toBeTruthy()
+	})
+
+	it('without permission to change those settings, apps can be switched off but not on', async () => {
+		stubApi({
+			devices: [
+				terminal({
+					signInRequired: true,
+					locationId: 'loc_1',
+					timeclockEnabled: true,
+				}),
+			],
+		})
+		render({
+			locations: [{ id: 'loc_1', name: 'Downtown' }],
+			stationFeatures: { timeclock: true, reservations: true },
+		})
+		await screen.findByText('Front counter')
+		const off = screen.getByRole('button', {
+			name: 'Time clock on Front counter, on',
+		}) as HTMLButtonElement
+		expect(off).toBeEnabled()
+		const on = screen.getByRole('button', {
+			name: 'Reservations on Front counter, off',
+		}) as HTMLButtonElement
+		expect(on).toBeDisabled()
+		expect(
+			screen.getByText(/needs permission to change its settings/),
+		).toBeTruthy()
 	})
 
 	it('uppercases the terminal code as it is typed', async () => {

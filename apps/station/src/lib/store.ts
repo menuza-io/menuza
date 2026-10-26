@@ -1,5 +1,10 @@
 import { t } from '@lingui/macro'
 import { create } from 'zustand'
+import {
+	expirePunches,
+	flushPunches,
+	punchQueue,
+} from '../apps/timeclock/clock.ts'
 import { touch } from './activity.ts'
 import {
 	buildCategories,
@@ -15,6 +20,9 @@ import {
 } from './config.ts'
 import { type OrderType, type PosOrder } from './db.ts'
 import { adoptServerChain } from './fiscal.ts'
+import { decodedLine, renameLine } from './line-names.ts'
+import { effectiveLocale } from './locale.ts'
+import { localizeMenu, menuText, recordLocale } from './menu-text.ts'
 import {
 	adoptTab,
 	canAdoptTab,
@@ -42,7 +50,9 @@ import { applyTheme } from './theme.ts'
 import {
 	type CatalogSnapshot,
 	type MenuCategory,
+	type MenuItem,
 	type MenuLocation,
+	type MenuPayload,
 } from './types.ts'
 import { forgetZatcaUnit, syncZatcaUnit } from './zatca.ts'
 
@@ -52,6 +62,10 @@ export type PosState = {
 	settings: PosSettings
 	snapshot: CatalogSnapshot | null
 	categories: MenuCategory[]
+	/** Menu items in the restaurant's default language: what order lines record. */
+	recordItems: Map<string, MenuItem>
+	/** Menu items in this till's language: what it shows. */
+	shownItems: Map<string, MenuItem>
 	location: MenuLocation | null
 	catalogStatus: CatalogStatus
 	catalogError: string | null
@@ -120,9 +134,24 @@ export type PosState = {
 	removeLine: (lineId: string) => void
 	loadTab: (order: PosOrder) => void
 	clearOrder: () => void
+	/**
+	 * The tab in the cart moved to another terminal: the cart lets it go and
+	 * keeps only what was not sent yet, as a new order (the rest is that
+	 * terminal's now).
+	 */
+	releaseTab: () => void
 }
 
 const newId = () => crypto.randomUUID()
+
+/**
+ * Demo mode offers the host stand too: it runs on a sample day that lives in
+ * the tab (`apps/reservations/demo.ts`), so it needs no pairing.
+ */
+const withDemoApps = (settings: PosSettings): PosSettings =>
+	settings.demo && !settings.apps.reservations
+		? { ...settings, apps: { ...settings.apps, reservations: true } }
+		: settings
 
 export type OtherTab = {
 	terminal: { code: string; label: string; removed?: boolean }
@@ -132,18 +161,75 @@ export type OtherTab = {
 const apiUrl = (settings: PosSettings, path: string) =>
 	`${settings.tenantApiUrl.replace(/\/+$/, '')}${path}`
 
+/** Every item of a menu by id (subcategories included). */
+function itemsById(menu: MenuPayload): Map<string, MenuItem> {
+	const items = new Map<string, MenuItem>()
+	const walk = (category: MenuCategory) => {
+		for (const item of category.items) items.set(item.id, item)
+		category.subcategories?.forEach(walk)
+	}
+	for (const m of menu.menus) m.categories.forEach(walk)
+	return items
+}
+
+/**
+ * A line as this till shows it: its names in the till's language when the
+ * menu still has the item, else as recorded (decoded if saved as raw maps).
+ */
+export function shownLine<T extends Parameters<typeof renameLine>[0]>(
+	line: T,
+): T {
+	return renameLine(
+		decodedLine(line),
+		usePos.getState().shownItems.get(line.itemId),
+	)
+}
+
+/**
+ * A line of a sale as this till shows it: an open tab in the till's language,
+ * a closed sale as it was sold (what its receipt and invoice say, whatever the
+ * menu says today).
+ */
+export function saleLine<T extends Parameters<typeof renameLine>[0]>(
+	line: T,
+	open: boolean,
+): T {
+	return open ? shownLine(line) : decodedLine(line)
+}
+
+/** An item's name as this till shows it, else as recorded (for removed lines). */
+export function shownItemName(itemId: string, recorded: string): string {
+	return (
+		usePos.getState().shownItems.get(itemId)?.displayName || menuText(recorded)
+	)
+}
+
 function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
+	// Names and descriptions in the till's language: the published menu keeps
+	// every translation (`{"en":…,"ar":…}`). The snapshot itself stays as
+	// published, so a language switch only reads it again.
+	const menu = localizeMenu(
+		snapshot.menu,
+		effectiveLocale(
+			settings.locale ?? null,
+			snapshot.menu.organization.defaultLocale,
+		),
+	)
 	// A terminal bound to a location sells only there. If that location is not on
 	// the published menu, never fall back to another one: its taxes and prices
 	// would be wrong and the server would refuse every sale.
 	const bound = settings.locationLocked
-		? snapshot.menu.locations.find((l) => l.id === settings.locationId)
+		? menu.locations.find((l) => l.id === settings.locationId)
 		: undefined
 	const locationMissing = settings.locationLocked && !bound
 	const location = locationMissing
 		? null
-		: (bound ?? pickLocation(snapshot.menu, settings.locationId) ?? null)
-	const categories = location ? buildCategories(snapshot.menu, location.id) : []
+		: (bound ?? pickLocation(menu, settings.locationId) ?? null)
+	const categories = location ? buildCategories(menu, location.id) : []
+	const record = localizeMenu(
+		snapshot.menu,
+		recordLocale(snapshot.menu, location),
+	)
 	applyTheme(snapshot.organization)
 	document.title = `${snapshot.organization.name} · Station`
 	return {
@@ -151,15 +237,76 @@ function adopt(snapshot: CatalogSnapshot, settings: PosSettings) {
 		location,
 		locationMissing,
 		categories,
+		recordItems: itemsById(record),
+		shownItems: itemsById(menu),
 		catalogStatus: (categories.length > 0 ? 'ready' : 'empty') as CatalogStatus,
 		catalogError: null,
 	}
 }
 
+/** A line as rung up now: not sent, not served, whatever it was copied from. */
+function unsent(
+	line: Omit<CartLine, 'id'> & { id?: string },
+): Omit<CartLine, 'id'> {
+	const {
+		id: _id,
+		sentAt: _sent,
+		servedAt: _served,
+		sentQuantity: _had,
+		...rest
+	} = line
+	return rest
+}
+
+/**
+ * Adds a line not sent yet. It joins a line not sent yet with the same dish,
+ * never one the kitchen already has: that comes again as a new round.
+ */
+function withUnsent(
+	lines: CartLine[],
+	added: Omit<CartLine, 'id'> & { id?: string },
+): CartLine[] {
+	const line = unsent(added)
+	const signature = lineSignature(line)
+	const existing = lines.find(
+		(l) => !l.sentAt && lineSignature(l) === signature,
+	)
+	if (!existing) return [...lines, { ...line, id: newId() }]
+	// A line holds at most 50: the rest starts another line, never vanishes.
+	const total = existing.quantity + line.quantity
+	const merged = lines.map((l) =>
+		l.id === existing.id ? { ...l, quantity: Math.min(50, total) } : l,
+	)
+	return total > 50
+		? [...merged, { ...line, quantity: Math.min(50, total - 50), id: newId() }]
+		: merged
+}
+
+/**
+ * `quantity` of a dish already sent: the sent line comes back up to what the
+ * kitchen has (nothing to send again, no void), the rest is a new round.
+ */
+function moreOfSent(
+	lines: CartLine[],
+	line: CartLine,
+	quantity: number,
+): CartLine[] {
+	const had = Math.max(line.quantity, line.sentQuantity ?? line.quantity)
+	const back = Math.min(quantity, had)
+	const restored = lines.map((l) =>
+		l.id === line.id ? { ...l, quantity: back } : l,
+	)
+	return quantity > back
+		? withUnsent(restored, { ...line, quantity: quantity - back })
+		: restored
+}
+
 export const usePos = create<PosState>((set, get) => ({
-	settings: loadSettings(),
+	settings: withDemoApps(loadSettings()),
 	snapshot: null,
 	categories: [],
+	recordItems: new Map(),
+	shownItems: new Map(),
 	location: null,
 	catalogStatus: 'loading',
 	catalogError: null,
@@ -228,7 +375,13 @@ export const usePos = create<PosState>((set, get) => ({
 
 	async updateSettings(patch) {
 		const before = get().settings
-		const settings = { ...before, ...patch }
+		// Leaving demo mode takes its host stand away (a paired till gets its own back at the next check).
+		const left = before.demo && patch.demo === false
+		const settings = withDemoApps({
+			...before,
+			...patch,
+			...(left ? { apps: { ...before.apps, reservations: false } } : {}),
+		})
 		// A different restaurant or workplace has different staff: never let the old
 		// ones sign in offline.
 		if (
@@ -237,6 +390,15 @@ export const usePos = create<PosState>((set, get) => ({
 			settings.tenantApiUrl !== before.tenantApiUrl
 		)
 			await forgetCachedStaff()
+		// Punches waiting for another restaurant must never be sent to this one:
+		// their PINs would be checked against the wrong staff.
+		if (
+			settings.slug !== before.slug ||
+			settings.tenantApiUrl !== before.tenantApiUrl
+		)
+			await punchQueue()
+				.wipe()
+				.catch(() => {})
 		saveSettings(settings)
 		set({ settings })
 		const slugChanged =
@@ -247,7 +409,8 @@ export const usePos = create<PosState>((set, get) => ({
 			set({ snapshot: null, categories: [], catalogStatus: 'loading' })
 			applyTheme(null)
 			await get().refresh()
-		} else if (patch.locationId !== undefined) {
+		} else if (patch.locationId !== undefined || patch.locale !== undefined) {
+			// Another location, or another language for the menu's names.
 			const { snapshot } = get()
 			if (snapshot) set(adopt(snapshot, settings))
 		}
@@ -274,12 +437,21 @@ export const usePos = create<PosState>((set, get) => ({
 					...get().settings,
 					deviceToken: null,
 					signInRequired: false,
+					apps: { timeclock: false, reservations: false },
 				}
 				saveSettings(settings)
 				set({ settings, pairingLost: true, session: null })
 				void forgetZatcaUnit()
 			},
 		})
+		// Punches waiting since the till was offline go out in their own queue.
+		// Any too old to record are set aside first, PINs dropped, even when this
+		// till cannot send them (unpaired, removed or offline).
+		await expirePunches().catch(() => 0)
+		const punches = await flushPunches(get().settings, get().online).catch(
+			() => null,
+		)
+		if (punches?.deviceGone) void get().verifyPairing()
 		// Orders going through proves the server knows us.
 		if (sent > 0 && get().unrecognisedStrikes > 0) {
 			set({
@@ -290,7 +462,7 @@ export const usePos = create<PosState>((set, get) => ({
 	},
 
 	async verifyPairing() {
-		const { verdict, device, transfers, fiscalChains, zatca } =
+		const { verdict, device, apps, transfers, fiscalChains, zatca } =
 			await checkDeviceDetailed(get().settings)
 		if (verdict === 'ok') {
 			if (get().unrecognisedStrikes > 0 || get().pairingLost)
@@ -317,6 +489,17 @@ export const usePos = create<PosState>((set, get) => ({
 				saveSettings(settings)
 				set({ settings })
 			}
+			// A manager may have turned the time clock or the host stand on or off.
+			const before = get().settings.apps
+			const after = { ...before, ...apps }
+			if (
+				after.timeclock !== before.timeclock ||
+				after.reservations !== before.reservations
+			) {
+				const settings = { ...get().settings, apps: after }
+				saveSettings(settings)
+				set({ settings })
+			}
 			// Tabs another terminal took over stop being open here.
 			if (transfers && transfers.length > 0)
 				await markTransferredAway(transfers)
@@ -333,6 +516,7 @@ export const usePos = create<PosState>((set, get) => ({
 			...get().settings,
 			deviceToken: null,
 			signInRequired: false,
+			apps: { timeclock: false, reservations: false },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: true, session: null })
@@ -484,6 +668,8 @@ export const usePos = create<PosState>((set, get) => ({
 		const next = withPairing(settings, result)
 		await get().updateSettings({ ...next })
 		set({ pairingLost: false })
+		// Learn which Station apps this terminal offers now, not at the next check.
+		void get().verifyPairing()
 		// Anything saved while unpaired goes out now, not after a retry timer.
 		void get().sync(true)
 		return null
@@ -496,11 +682,18 @@ export const usePos = create<PosState>((set, get) => ({
 			deviceLabel: null,
 			locationLocked: false,
 			signInRequired: false,
+			apps: { timeclock: false, reservations: false },
 		}
 		saveSettings(settings)
 		set({ settings, pairingLost: false, session: null })
 		void forgetCachedStaff()
 		void forgetZatcaUnit()
+		// Waiting and refused punches stay: unpairing is how a till the server
+		// stopped recognising is paired again, and they may be the only record of
+		// a shift. Pairing to another restaurant wipes them (updateSettings), and
+		// each carries its person's id, so the server refuses one whose PIN now
+		// belongs to someone else. Once too old to record, `sync` sets them aside
+		// and drops their PINs.
 	},
 
 	setOrderType: (orderType) =>
@@ -525,38 +718,63 @@ export const usePos = create<PosState>((set, get) => ({
 	setCustomerName: (customerName) => set({ customerName }),
 	setTableLabel: (tableLabel) => set({ tableLabel }),
 
-	addLine(line) {
-		set((s) => {
-			const signature = lineSignature(line)
-			const existing = s.lines.find((l) => lineSignature(l) === signature)
-			if (existing) {
-				return {
-					lines: s.lines.map((l) =>
-						l.id === existing.id
-							? { ...l, quantity: Math.min(50, l.quantity + line.quantity) }
-							: l,
-					),
-				}
-			}
-			return { lines: [...s.lines, { ...line, id: newId() }] }
-		})
-	},
-	setQuantity(lineId, quantity) {
+	addLine(added) {
 		set((s) => ({
-			lines:
-				quantity <= 0
-					? s.lines.filter((l) => l.id !== lineId)
-					: s.lines.map((l) =>
-							l.id === lineId ? { ...l, quantity: Math.min(50, quantity) } : l,
-						),
-		}))
-	},
-	replaceLine(lineId, line) {
-		set((s) => ({
-			lines: s.lines.map((l) =>
-				l.id === lineId ? { ...line, id: lineId } : l,
+			// One language of record for every line, whichever till rings it up.
+			lines: withUnsent(
+				s.lines,
+				renameLine(added, s.recordItems.get(added.itemId)),
 			),
 		}))
+	},
+	setQuantity(lineId, quantity) {
+		set((s) => {
+			const line = s.lines.find((l) => l.id === lineId)
+			// More of a dish already sent: back up to what the kitchen has, and
+			// anything beyond is a new line (the kitchen's ticket stays as it was).
+			if (line?.sentAt && quantity > line.quantity)
+				return { lines: moreOfSent(s.lines, line, quantity) }
+			return {
+				lines:
+					quantity <= 0
+						? s.lines.filter((l) => l.id !== lineId)
+						: s.lines.map((l) =>
+								l.id === lineId
+									? { ...l, quantity: Math.min(50, quantity) }
+									: l,
+							),
+			}
+		})
+	},
+	replaceLine(lineId, line) {
+		set((s) => {
+			const old = s.lines.find((l) => l.id === lineId)
+			if (!old) return {}
+			const next = renameLine(line, s.recordItems.get(line.itemId))
+			const same = lineSignature(next) === lineSignature(old)
+			// A sent dish asked for more: it stays as sent, and the extra goes as a new round.
+			if (old.sentAt && same && next.quantity > old.quantity)
+				return { lines: moreOfSent(s.lines, old, next.quantity) }
+			return {
+				lines: s.lines.map((l) =>
+					l.id === lineId
+						? {
+								...unsent(next),
+								id: lineId,
+								// Changed, it is new work for the kitchen; unchanged, it stays sent (and
+								// served), with what was sent (so more of it is not a new round).
+								...(same
+									? {
+											sentAt: old.sentAt,
+											servedAt: old.servedAt,
+											sentQuantity: old.sentQuantity,
+										}
+									: {}),
+							}
+						: l,
+				),
+			}
+		})
 	},
 	removeLine: (lineId) =>
 		set((s) => ({ lines: s.lines.filter((l) => l.id !== lineId) })),
@@ -574,9 +792,25 @@ export const usePos = create<PosState>((set, get) => ({
 			pickupTimeZone: order.pickupTimeZone ?? null,
 			customerName: order.customerName,
 			tableLabel: order.tableLabel,
-			lines: order.lines,
+			// A tab opened before (or on a till in another language) continues in
+			// the language of record, so its documents read one language.
+			lines: order.lines.map((line) => ({
+				...renameLine(decodedLine(line), get().recordItems.get(line.itemId)),
+				// Saved before lines carried their time: they were sent when the tab was opened.
+				sentAt: line.sentAt ?? order.createdAt,
+				sentQuantity: line.quantity,
+			})),
 			adjustments: order.adjustments,
 		}),
+	releaseTab: () =>
+		set((s) => ({
+			activeOrderId: null,
+			activeTax: null,
+			adjustments: [],
+			lines: s.lines
+				.filter((line) => !line.sentAt)
+				.map((line) => ({ ...unsent(line), id: line.id })),
+		})),
 	clearOrder: () =>
 		set({
 			lines: [],
@@ -591,3 +825,12 @@ export const usePos = create<PosState>((set, get) => ({
 			activeTax: null,
 		}),
 }))
+
+// Punches saved while the tablet slept go out the moment it wakes, not on the
+// next sync tick: an offline punch is only recorded within 48 hours, and a
+// till shut overnight should not spend the morning waiting.
+if (typeof document !== 'undefined')
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible' && usePos.getState().online)
+			void usePos.getState().sync()
+	})

@@ -36,6 +36,18 @@ export type ReservationActor = (typeof RESERVATION_ACTORS)[number]
 /** Operator undo `finished -> seated` is allowed within 30 minutes of `finished_at`. */
 export const FINISHED_UNDO_WINDOW_MS = 30 * 60_000
 
+/**
+ * A till (the Station host stand) calls a booking a no-show only this long
+ * after its time: a mis-tap cannot mark tonight's guest.
+ */
+export const TILL_NO_SHOW_GRACE_MS = 15 * 60_000
+
+/**
+ * How long a till can still put right a no-show or a cleared table: its own
+ * person's change, or the system's (an automatic no-show), never someone else's.
+ */
+export const TILL_UNDO_WINDOW_MS = 30 * 60_000
+
 const CAPACITY_CONSUMING_STATUSES: ReadonlySet<ReservationStatus> =
 	new Set<ReservationStatus>([
 		'pending_payment',

@@ -202,6 +202,8 @@ async function mintRsvToken(overrides?: {
 	impersonated?: boolean
 	ttlSeconds?: number
 	experiences?: boolean
+	/** A token tenant-api minted for a Station till (`/pos/reservations/token`). */
+	channel?: 'station'
 }) {
 	const now = Math.floor(Date.now() / 1000)
 	const ttl = overrides?.ttlSeconds ?? 300
@@ -227,6 +229,9 @@ async function mintRsvToken(overrides?: {
 			voice: false,
 		},
 		impersonated,
+		...(overrides?.channel
+			? { channel: overrides.channel, deviceId: 'dev_station_1' }
+			: {}),
 	})
 		.setProtectedHeader({
 			alg: 'HS256',
@@ -294,6 +299,78 @@ describe('Reservations security sweep: operator routes', () => {
 		await destroyTenantDb(ORG_B)
 		fs.rmSync(tmpDir, { recursive: true, force: true })
 		vi.unstubAllEnvs()
+	})
+
+	it('a Station till token reaches the day of service only, never the guestbook', async () => {
+		// Even holding every grant a scope allows, a `station` token is refused
+		// outside `/book` (other than the guest routes there).
+		const failures: string[] = []
+		for (const route of list) {
+			const outsideStand =
+				!route.path.startsWith('/operator/reservations/book/') ||
+				route.path.startsWith('/operator/reservations/book/guests')
+			if (!outsideStand) continue
+			const scope = scopeForRoute(route.path)
+			const token = await mintRsvToken({ scope, channel: 'station' })
+			const res = await app.request(fill(route.path), {
+				method: route.method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: route.method === 'GET' ? undefined : '{}',
+			})
+			if (res.status !== 403 && res.status !== 404)
+				failures.push(`${route.method} ${route.path} -> ${res.status}`)
+		}
+		expect(failures).toEqual([])
+	})
+
+	it('a Station till token reaches only what the host stand on a till does', async () => {
+		// The allowlist (`STATION_ROUTES`): everything else under /book, including
+		// resending messages, approving requests and service notes, is refused.
+		const allowed = new Set([
+			'GET /operator/reservations/book/day',
+			'GET /operator/reservations/book/availability',
+			'GET /operator/reservations/book/waitlist',
+			'GET /operator/reservations/book/waitlist/',
+			'GET /operator/reservations/book/waitlist/quote',
+			'GET /operator/reservations/book/reservations/:id',
+			'GET /operator/reservations/book/reservations/:id/events',
+			'PATCH /operator/reservations/book/reservations/:id',
+			'POST /operator/reservations/book/reservations',
+			'POST /operator/reservations/book/walk-ins',
+			'POST /operator/reservations/book/reservations/:id/status',
+			'POST /operator/reservations/book/reservations/:id/assign',
+			'POST /operator/reservations/book/reservations/:id/undo',
+			'POST /operator/reservations/book/reservations/:id/running-late',
+			'POST /operator/reservations/book/waitlist',
+			'POST /operator/reservations/book/waitlist/',
+			'POST /operator/reservations/book/waitlist/:id/notify',
+			'POST /operator/reservations/book/waitlist/:id/seat',
+			'POST /operator/reservations/book/waitlist/:id/status',
+			'PUT /operator/reservations/book/section-assignments',
+		])
+		const failures: string[] = []
+		for (const route of list) {
+			if (!route.path.startsWith('/operator/reservations/book/')) continue
+			if (allowed.has(`${route.method} ${route.path}`)) continue
+			const token = await mintRsvToken({ scope: 'book', channel: 'station' })
+			const res = await app.request(fill(route.path), {
+				method: route.method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: route.method === 'GET' ? undefined : '{}',
+			})
+			const body = (await res.json().catch(() => ({}))) as { error?: string }
+			if (res.status !== 403 || body.error !== 'not_for_station')
+				failures.push(
+					`${route.method} ${route.path} -> ${res.status} ${body.error}`,
+				)
+		}
+		expect(failures).toEqual([])
 	})
 
 	it('discovers all mounted operator reservation routes', () => {
@@ -669,6 +746,59 @@ describe('Reservations security sweep: operator routes', () => {
 			locations: Array<{ locationId: string }>
 		}
 		expect(overviewJson.locations.map((l) => l.locationId)).toEqual([LOC_1])
+	})
+
+	it('a guest summary on the book shows a location-scoped member only bookings at their locations', async () => {
+		const db = await provisionTenantDb(ORG_A)
+		await db
+			.insert(rsvGuests)
+			.values({
+				id: 'guest_two_locations',
+				firstName: 'Two',
+				lastName: 'Rooms',
+			})
+			.onConflictDoNothing()
+		const startAt = Date.UTC(2026, 6, 15, 19)
+		for (const [id, locationId] of [
+			['rsv_summary_loc1', LOC_1],
+			['rsv_summary_loc2', LOC_2],
+		] as const) {
+			await db
+				.insert(rsvReservations)
+				.values({
+					id,
+					locationId,
+					guestId: 'guest_two_locations',
+					confirmationCode: id.toUpperCase().slice(-8),
+					businessDate: '2026-07-15',
+					localStartMin: 19 * 60,
+					timeZone: 'UTC',
+					startAt,
+					endAt: startAt + 90 * 60_000,
+					durationMin: 90,
+					partySize: 2,
+					status: 'booked',
+					channel: 'online',
+				})
+				.onConflictDoNothing()
+		}
+		const summary = async (locationIds: string[] | null) => {
+			const token = await mintRsvToken({ orgId: ORG_A, locationIds })
+			const res = await app.request(
+				'/operator/reservations/book/guests/guest_two_locations/summary',
+				{ headers: { Authorization: `Bearer ${token}` } },
+			)
+			expect(res.status).toBe(200)
+			const body = (await res.json()) as {
+				reservations: Array<{ id: string }>
+			}
+			return body.reservations.map((r) => r.id).sort()
+		}
+		expect(await summary([LOC_1])).toEqual(['rsv_summary_loc1'])
+		expect(await summary(null)).toEqual([
+			'rsv_summary_loc1',
+			'rsv_summary_loc2',
+		])
 	})
 
 	it('VAL-SETUP-027 & VAL-SETUP-028: enforces read vs update grants on all setup routes and blocks cross-location/cross-org setup mutations by entity ID', async () => {

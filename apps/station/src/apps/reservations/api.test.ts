@@ -1,0 +1,352 @@
+import { describe, expect, it, vi } from 'vitest'
+import { createHostApi, HostApiError } from './api.ts'
+import dayFeed from './fixtures/day-feed.json'
+import { type PosSettings } from '~/lib/config.ts'
+import { type Session } from '~/lib/signin.ts'
+
+const settings = {
+	tenantApiUrl: 'https://us.node.test/',
+	deviceToken: 'pdv1.org.dev.secret',
+} as PosSettings
+
+const session = (token = 'session-token-aaaaaaaaaaaaaaaaaaaa'): Session => ({
+	staff: { id: 's1', name: 'Rana K.' },
+	role: 'cashier',
+	mode: 'online',
+	at: 0,
+	serverSession: { token, expiresAt: Date.now() + 3_600_000 },
+})
+
+function server(ttlMs = 15 * 60_000) {
+	let minted = 0
+	const calls: Array<{ url: string; init: RequestInit }> = []
+	const fetchImpl = vi.fn(
+		async (input: RequestInfo | URL, init?: RequestInit) => {
+			const url = String(input)
+			calls.push({ url, init: init ?? {} })
+			const headers = new Headers(init?.headers)
+			if (url.endsWith('/pos/reservations/token')) {
+				minted += 1
+				return Response.json({
+					token: `rsv-token-${minted}-xxxxxxxxxxxxxxxxxxxx`,
+					expiresAt: Date.now() + ttlMs,
+					locationId: 'loc_pub_main',
+					canReadGuest: false,
+					features: { waitlist: true, online: true },
+				})
+			}
+			if (headers.get('If-None-Match') === '"v1"')
+				return new Response(null, { status: 304 })
+			return Response.json(dayFeed, { headers: { ETag: '"v1"' } })
+		},
+	)
+	return { fetchImpl, calls, minted: () => minted }
+}
+
+describe('host stand client', () => {
+	it('trades the device secret and the session for a token, then reuses it', async () => {
+		const s = server()
+		let current: Session | null = session()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => current,
+			fetchImpl: s.fetchImpl as never,
+		})
+		const first = await api.day()
+		expect('feed' in first && first.feed.reservations).toHaveLength(3)
+		const mint = s.calls[0]!
+		expect(mint.url).toBe('https://us.node.test/pos/reservations/token')
+		const mintHeaders = new Headers(mint.init.headers)
+		expect(mintHeaders.get('Authorization')).toBe(
+			`Bearer ${settings.deviceToken}`,
+		)
+		expect(mintHeaders.get('Pos-Staff-Session')).toBe(
+			current.serverSession!.token,
+		)
+		const day = s.calls[1]!
+		expect(day.url).toBe(
+			'https://us.node.test/operator/reservations/book/day?locationId=loc_pub_main',
+		)
+		expect(new Headers(day.init.headers).get('Authorization')).toBe(
+			'Bearer rsv-token-1-xxxxxxxxxxxxxxxxxxxx',
+		)
+
+		// Polling with the ETag answers "unchanged" and mints nothing new.
+		expect(await api.day('"v1"')).toEqual({ unchanged: true })
+		expect(s.minted()).toBe(1)
+
+		// Someone else signs in: their own token.
+		current = session('another-session-bbbbbbbbbbbbbbbbbbbb')
+		await api.day()
+		expect(s.minted()).toBe(2)
+	})
+
+	it('refuses without an online sign-in, and says so', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => ({ ...session(), serverSession: undefined }),
+			fetchImpl: s.fetchImpl as never,
+		})
+		const error = await api.day().catch((e: unknown) => e)
+		expect(error).toBeInstanceOf(HostApiError)
+		expect((error as HostApiError).needsSignIn).toBe(true)
+		expect(s.calls).toHaveLength(0)
+	})
+
+	it('mints again once when a token dies early', async () => {
+		let dayCalls = 0
+		const s = server()
+		const fetchImpl = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				if (String(input).includes('/book/day') && dayCalls++ === 0)
+					return Response.json({ error: 'expired' }, { status: 401 })
+				return s.fetchImpl(input, init)
+			},
+		)
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: fetchImpl as never,
+		})
+		const result = await api.day()
+		expect('feed' in result).toBe(true)
+		expect(s.minted()).toBe(2)
+	})
+
+	it('sends writes with an idempotency key and reports a stale version', async () => {
+		const s = server()
+		const fetchImpl = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				if (String(input).includes('/status'))
+					return Response.json({ error: 'stale_version' }, { status: 409 })
+				return s.fetchImpl(input, init)
+			},
+		)
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: fetchImpl as never,
+		})
+		const error = (await api
+			.transition('res_1', 'seated', { tableIds: ['t1'], expectedVersion: 3 })
+			.catch((e: unknown) => e)) as HostApiError
+		expect(error.stale).toBe(true)
+		const [, init] = fetchImpl.mock.calls.at(-1)! as [string, RequestInit]
+		expect(new Headers(init.headers).get('Idempotency-Key')).toMatch(
+			/[0-9a-f-]{36}/,
+		)
+		expect(JSON.parse(String(init.body))).toEqual({
+			toStatus: 'seated',
+			tableIds: ['t1'],
+			expectedVersion: 3,
+		})
+	})
+
+	it('judges a token’s age by this tablet’s clock, even when it runs fast', async () => {
+		// Five-minute tokens on a tablet 4.5 minutes ahead of the server.
+		const s = server(5 * 60_000)
+		const ahead = 270_000
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+			now: () => Date.now() + ahead,
+			skewMs: () => -ahead,
+		})
+		await api.day()
+		await api.day()
+		await api.day()
+		expect(s.minted()).toBe(1)
+	})
+
+	it('forgetting the person drops a token still being minted for them', async () => {
+		let release: () => void = () => {}
+		const gate = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		const s = server()
+		const fetchImpl = vi.fn(
+			async (input: RequestInfo | URL, init?: RequestInit) => {
+				if (String(input).endsWith('/pos/reservations/token')) await gate
+				return s.fetchImpl(input, init)
+			},
+		)
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: fetchImpl as never,
+		})
+		const first = api.grant()
+		api.forget()
+		release()
+		await first
+		// The till locked meanwhile: the next call mints afresh, never reusing it.
+		await api.grant()
+		expect(s.minted()).toBe(2)
+	})
+
+	it('asks for another day by its business date, and for today with none', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.day(undefined, '2026-01-17')
+		await api.day()
+		const days = s.calls.filter((c) => c.url.includes('/book/day'))
+		expect(days[0]!.url).toBe(
+			'https://us.node.test/operator/reservations/book/day?locationId=loc_pub_main&date=2026-01-17',
+		)
+		expect(days[1]!.url).not.toContain('date=')
+	})
+
+	it('a lost connection is offline, not a refusal', async () => {
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: (async () => {
+				throw new TypeError('Failed to fetch')
+			}) as never,
+		})
+		const error = (await api.day().catch((e: unknown) => e)) as HostApiError
+		expect(error.offline).toBe(true)
+	})
+
+	it('books a table after midnight with the un-wrapped time, on the same day', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.book(
+			{
+				date: '2026-01-17',
+				time: '25:30',
+				localStartMin: 25 * 60 + 30,
+				partySize: 2,
+				firstName: 'Maya',
+				lastName: 'H',
+				phone: null,
+				notes: null,
+			},
+			'key-1',
+		)
+		const post = s.calls.find((c) => c.url.endsWith('/reservations'))!
+		const body = JSON.parse(String(post.init.body))
+		expect(body).toMatchObject({
+			date: '2026-01-17',
+			time: '25:30',
+			localStartMin: 1530,
+		})
+	})
+
+	it('changes a booking to a time after midnight without wrapping it', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.changeParty(
+			'r1',
+			{ time: '24:15', localStartMin: 24 * 60 + 15 },
+			3,
+		)
+		const patch = s.calls.find((c) => c.init.method === 'PATCH')!
+		expect(JSON.parse(String(patch.init.body))).toMatchObject({
+			time: '24:15',
+			localStartMin: 1455,
+			expectedVersion: 3,
+		})
+	})
+
+	it('seats a party at several tables as one, with the combination it is', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.transition('r1', 'seated', {
+			tableIds: ['t6', 't7'],
+			comboId: 'c67',
+			expectedVersion: 4,
+		})
+		const status = s.calls.find((c) =>
+			c.url.endsWith('/reservations/r1/status'),
+		)!
+		expect(JSON.parse(String(status.init.body))).toEqual({
+			toStatus: 'seated',
+			tableIds: ['t6', 't7'],
+			comboId: 'c67',
+			expectedVersion: 4,
+		})
+		await api.assign('r1', ['t6', 't7'], 5, {}, 'c67')
+		const assign = s.calls.find((c) =>
+			c.url.endsWith('/reservations/r1/assign'),
+		)!
+		expect(JSON.parse(String(assign.init.body))).toEqual({
+			tableIds: ['t6', 't7'],
+			expectedVersion: 5,
+			comboId: 'c67',
+		})
+		// No combination named: none sent (a move back to one table).
+		await api.assign('r2', ['t1'], 2)
+		const plain = s.calls.filter((c) => c.url.endsWith('/assign')).at(-1)!
+		expect(JSON.parse(String(plain.init.body))).toEqual({
+			tableIds: ['t1'],
+			expectedVersion: 2,
+		})
+	})
+
+	it('marks some of a party here, and seats some of them with their tables, as one call each', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.transition('r1', 'arrived', {
+			arrivedCovers: 3,
+			expectedVersion: 2,
+		})
+		await api.transition('r1', 'seated', {
+			tableIds: ['t4'],
+			seatedCovers: 3,
+			expectedVersion: 3,
+		})
+		const bodies = s.calls
+			.filter((c) => c.url.endsWith('/status'))
+			.map((c) => JSON.parse(String(c.init.body)))
+		// Only statuses the server's transition map has, never `partially_*`; the
+		// tables travel with the seating (no assign first).
+		expect(bodies).toEqual([
+			{ toStatus: 'arrived', arrivedCovers: 3, expectedVersion: 2 },
+			{
+				toStatus: 'seated',
+				tableIds: ['t4'],
+				seatedCovers: 3,
+				expectedVersion: 3,
+			},
+		])
+		expect(s.calls.some((c) => c.url.endsWith('/assign'))).toBe(false)
+	})
+
+	it('puts a party back in line, with the version seen', async () => {
+		const s = server()
+		const api = createHostApi({
+			settings: () => settings,
+			session: () => session(),
+			fetchImpl: s.fetchImpl as never,
+		})
+		await api.leaveWaitlist('w1', 7, 'waiting')
+		const call = s.calls.find((c) => c.url.endsWith('/waitlist/w1/status'))!
+		expect(JSON.parse(String(call.init.body))).toEqual({
+			status: 'waiting',
+			expectedVersion: 7,
+		})
+	})
+})

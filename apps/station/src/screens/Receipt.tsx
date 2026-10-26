@@ -9,6 +9,7 @@ import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { type PosOrder } from '~/lib/db.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
+import { saleLine } from '~/lib/store.ts'
 import { cn } from '~/ui/primitives.tsx'
 
 const TENDER_LABEL: Record<'cash' | 'card' | 'other', MessageDescriptor> = {
@@ -42,8 +43,10 @@ export function Receipt({
 	)
 	const invoice = (order.fiscal ?? []).find((d) => d.kind === 'invoice') ?? null
 	const invoiceCounter = invoice?.counter ?? 0
-	const table = order.tableLabel
-	const servedBy = order.staff?.name ?? null
+	// Typed text and names in the language of record are isolated (<bdi>), so
+	// text in the other direction never reorders the punctuation beside it.
+	const table = order.tableLabel ? <bdi>{order.tableLabel}</bdi> : null
+	const servedBy = order.staff?.name ? <bdi>{order.staff.name}</bdi> : null
 	// An onboarded ZATCA unit signed this invoice: print its Phase 2 QR and number.
 	const signed = invoice?.zatca ?? null
 	const qr = useInvoiceQr(
@@ -63,19 +66,19 @@ export function Receipt({
 	// Portalled to <body>: a <dialog> clips and offsets anything printed inside it.
 	return createPortal(
 		<div id="receipt" className="hidden print:block" aria-hidden>
-			<div className="text-center text-sm font-bold">{businessName}</div>
+			<div className="text-center text-sm font-semibold">{businessName}</div>
 			{vatNumber ? (
 				<div className="text-center">
 					<Trans>VAT No. {vatNumber}</Trans>
 				</div>
 			) : null}
 			{(vatNumber || signed) && invoice ? (
-				<div className="text-center font-bold">
+				<div className="text-center font-semibold">
 					<Trans>Simplified tax invoice</Trans>
 				</div>
 			) : null}
 			<div className="text-center">{when}</div>
-			<div className="my-1.5 text-center text-base font-bold">
+			<div className="my-1.5 text-center text-base font-semibold">
 				#{order.number}
 			</div>
 			{invoice ? (
@@ -89,9 +92,27 @@ export function Receipt({
 				</div>
 			) : (
 				<div className="text-center">
-					{order.orderType === 'dine_in'
-						? `${_(t`Dine in`)}${table ? ` · ${_(t`Table ${table}`)}` : ''}`
-						: `${_(t`Takeaway`)}${order.customerName ? ` · ${order.customerName}` : ''}`}
+					{order.orderType === 'dine_in' ? (
+						<>
+							{_(t`Dine in`)}
+							{table ? (
+								<>
+									{' · '}
+									<Trans>Table {table}</Trans>
+								</>
+							) : null}
+						</>
+					) : (
+						<>
+							{_(t`Takeaway`)}
+							{order.customerName ? (
+								<>
+									{' · '}
+									<bdi>{order.customerName}</bdi>
+								</>
+							) : null}
+						</>
+					)}
 				</div>
 			)}
 			{servedBy ? (
@@ -100,31 +121,41 @@ export function Receipt({
 				</div>
 			) : null}
 			<hr />
-			{order.lines.map((line) => (
-				<div key={line.id} className="mb-1">
-					<Row>
-						<span>
-							{line.quantity} × {line.name}
-							{line.variantLabel ? ` (${line.variantLabel})` : ''}
-						</span>
-						<span>{money(lineTotalCents(line))}</span>
-					</Row>
-					{line.options.map((o) => (
-						<Row key={o.groupId + o.optionId} className="ps-2.5">
+			{order.lines
+				.map((line) => saleLine(line, order.status === 'open'))
+				.map((line) => (
+					<div key={line.id} className="mb-1">
+						<Row>
 							<span>
-								+ {o.quantity > 1 ? `${o.quantity} × ` : ''}
-								{o.optionName}
+								{line.quantity} × <bdi>{line.name}</bdi>
+								{line.variantLabel ? (
+									<>
+										{' ('}
+										<bdi>{line.variantLabel}</bdi>
+										{')'}
+									</>
+								) : null}
 							</span>
-							{o.unitCents > 0 ? (
-								<span>{money(o.unitCents * o.quantity * line.quantity)}</span>
-							) : null}
+							<span>{money(lineTotalCents(line))}</span>
 						</Row>
-					))}
-					{line.instructions ? (
-						<div className="ps-2.5 italic">“{line.instructions}”</div>
-					) : null}
-				</div>
-			))}
+						{line.options.map((o) => (
+							<Row key={o.groupId + o.optionId} className="ps-2.5">
+								<span>
+									+ {o.quantity > 1 ? `${o.quantity} × ` : ''}
+									<bdi>{o.optionName}</bdi>
+								</span>
+								{o.unitCents > 0 ? (
+									<span>{money(o.unitCents * o.quantity * line.quantity)}</span>
+								) : null}
+							</Row>
+						))}
+						{line.instructions ? (
+							<div className="ps-2.5 italic">
+								“<bdi>{line.instructions}</bdi>”
+							</div>
+						) : null}
+					</div>
+				))}
 			<hr />
 			<Row>
 				<span>
@@ -154,7 +185,7 @@ export function Receipt({
 					<span>{money(order.totals.tipCents)}</span>
 				</Row>
 			) : null}
-			<Row className="text-sm font-bold">
+			<Row className="text-sm font-semibold">
 				<span>
 					<Trans>Total</Trans>
 				</span>
@@ -164,7 +195,12 @@ export function Receipt({
 				<Row key={p.id}>
 					<span>
 						{_(t`Paid`)} · {_(TENDER_LABEL[p.method])}
-						{p.reference ? ` · ${p.reference}` : ''}
+						{p.reference ? (
+							<>
+								{' · '}
+								<bdi>{p.reference}</bdi>
+							</>
+						) : null}
 					</span>
 					<span>{money(p.tenderedCents)}</span>
 				</Row>
@@ -186,7 +222,7 @@ export function Receipt({
 				</Row>
 			))}
 			{balance > 0 ? (
-				<Row className="text-sm font-bold">
+				<Row className="text-sm font-semibold">
 					<span>
 						<Trans>Balance due</Trans>
 					</span>

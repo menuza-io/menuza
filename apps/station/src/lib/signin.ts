@@ -38,6 +38,12 @@ export type Session = {
 	role: StaffRole
 	mode: SignInMode
 	at: number
+	/**
+	 * The server's proof of this sign-in, for Station apps that act as the person
+	 * (the host stand). Only an online sign-in has one; it lives in memory with
+	 * the session and goes when the till locks.
+	 */
+	serverSession?: { token: string; expiresAt: number }
 }
 
 export type SignInOutcome =
@@ -59,7 +65,7 @@ export type SignInOutcome =
 
 const GUARD_KEY = 'pin-guard'
 
-async function deviceSalt(): Promise<string> {
+export async function deviceSalt(): Promise<string> {
 	const existing = await getMeta<string>(SALT_KEY)
 	if (existing) return existing
 	const salt = newSalt()
@@ -69,9 +75,11 @@ async function deviceSalt(): Promise<string> {
 
 /** Drops everyone remembered for offline sign-in, and the offline attempt counter. Used when the till moves to another restaurant or workplace. */
 export async function forgetCachedStaff(): Promise<void> {
-	await db.transaction('rw', db.staff, db.meta, async () => {
+	await db.transaction('rw', db.staff, db.meta, db.clockPeople, async () => {
 		await db.staff.clear()
+		await db.clockPeople.clear()
 		await db.meta.delete(GUARD_KEY)
+		await db.meta.delete('clock-pin-guard')
 	})
 }
 
@@ -186,6 +194,33 @@ async function offlineSignIn(pin: string, now: number): Promise<SignInOutcome> {
 	}
 }
 
+/**
+ * An offline PIN check outside signing in (the time clock greeting someone by
+ * name), with an attempt guard of its own: a PIN the till does not know counts
+ * as a wrong one, so the clock is no faster a way to find a valid PIN than the
+ * lock screen. It never touches sign-in's guard, so a crowd of unfamiliar PINs
+ * at the clock cannot lock the till's sign-in.
+ */
+export async function guardedOfflineLookup<T>(
+	pin: string,
+	find: (key: string) => Promise<T | null>,
+	now = Date.now(),
+	guardKey = 'clock-pin-guard',
+): Promise<{ wait: number } | { found: T | null }> {
+	const guard = (await getMeta<PinGuard>(guardKey)) ?? EMPTY_GUARD
+	const wait = waitSeconds(guard, now)
+	if (wait > 0) return { wait }
+	const key = await derivePinKey(pin, await deviceSalt())
+	const found = await find(key)
+	if (found) {
+		await setMeta(guardKey, afterSuccess(guard, now))
+		return { found }
+	}
+	const { guard: next, delaySeconds } = afterFailure(guard, now)
+	await setMeta(guardKey, next)
+	return delaySeconds > 0 ? { wait: delaySeconds } : { found: null }
+}
+
 export type SignInDeps = {
 	tenantApiUrl: string
 	deviceToken: string | null
@@ -223,6 +258,8 @@ const signInResponseSchema = z.object({
 		name: z.string().max(200),
 	}),
 	role: z.enum(['cashier', 'manager']),
+	sessionToken: z.string().min(20).max(4000).optional(),
+	sessionExpiresAt: z.number().int().positive().optional(),
 })
 
 async function signIn(
@@ -296,9 +333,23 @@ async function signIn(
 			/* signed in; not remembered for offline use this time */
 		}
 		monotonicBlockedUntil = null
+		const { sessionToken, sessionExpiresAt } = parsed.data
 		return {
 			ok: true,
-			session: { staff, role, mode: 'online', at: now },
+			session: {
+				staff,
+				role,
+				mode: 'online',
+				at: now,
+				...(sessionToken && sessionExpiresAt
+					? {
+							serverSession: {
+								token: sessionToken,
+								expiresAt: sessionExpiresAt,
+							},
+						}
+					: {}),
+			},
 		}
 	}
 

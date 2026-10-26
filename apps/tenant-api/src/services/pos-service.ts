@@ -45,6 +45,7 @@ import {
 	posDevices,
 	posFiscalDocuments,
 	posHeldUploads,
+	posHosts,
 	posManagers,
 	posOrderLines,
 	posOrderRevisions,
@@ -60,14 +61,21 @@ import {
 	type PosDevice,
 	type PosOrderRow,
 	type PosPaymentRow,
+	type StaffMember,
+	type StaffScopeAssignment,
 	type TenantDatabase,
 } from '@repo/tenant-db'
 import { chunkIds, inJsonList } from '../lib/chunked-in.ts'
 import { pinLookupFor, pinShapeOk } from './kiosk-pin-service.ts'
 import { fetchOrderContext } from './order-service.ts'
-import { hashPosSecret } from '../lib/pos-auth.ts'
+import { hashPosSecret, posStaffScopeId } from '../lib/pos-auth.ts'
 import { hmacHash } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
+import {
+	diffFields,
+	writeDeviceAudit,
+	writeOperatorAudit,
+} from './staff-audit.ts'
 import { revokeZatcaUnitsForDevice } from './zatca-service.ts'
 
 /** Drizzle wraps driver errors; the SQLite message lives down the `cause` chain. */
@@ -158,6 +166,25 @@ async function knownLocationIds(
 	return context.data.menu.locations.map((l) => l.id)
 }
 
+/** True when App's menu says the location does not exist (unknown when App cannot answer). */
+export async function isUnknownLocation(orgId: string, locationId: string) {
+	const known = await knownLocationIds(orgId, locationId)
+	return known !== null && !known.includes(locationId)
+}
+
+/**
+ * Whether App's menu has the location, or `unavailable` when App cannot answer.
+ * Binding a terminal is permanent, so it waits for an answer instead of trusting.
+ */
+export async function checkLocation(
+	orgId: string,
+	locationId: string,
+): Promise<'known' | 'unknown' | 'unavailable'> {
+	const known = await knownLocationIds(orgId, locationId)
+	if (known === null) return 'unavailable'
+	return known.includes(locationId) ? 'known' : 'unknown'
+}
+
 // ---------------------------------------------------------------------------
 // Pairing and terminals
 // ---------------------------------------------------------------------------
@@ -178,6 +205,10 @@ export async function createPairingCode(
 		dayStartMinutes?: number
 		/** Sell only inside a cash drawer shift. Default off. */
 		shiftsRequired?: boolean
+		/** Offer the time clock on this terminal. Default off. */
+		timeclockEnabled?: boolean
+		/** Offer the host stand on this terminal. Default off. */
+		reservationsEnabled?: boolean
 	},
 	now = Date.now(),
 ): Promise<
@@ -195,6 +226,13 @@ export async function createPairingCode(
 	const scopeId = input.scopeId?.trim() || DEFAULT_SCOPE_ID
 	if (!/^[A-Za-z0-9_-]{1,64}$/.test(scopeId))
 		return fail(422, 'invalid_scope', 'That workplace is not valid.')
+	const reservationsProblem = stationReservationsProblem({
+		reservationsEnabled: input.reservationsEnabled ?? false,
+		locationId: input.locationId,
+		signInRequired: input.signInRequired ?? true,
+	})
+	if (reservationsProblem)
+		return fail(422, reservationsProblem.code, reservationsProblem.message)
 	const dayStartMinutes = input.dayStartMinutes ?? POS_DEFAULT_DAY_START_MINUTES
 	if (!isValidDayStart(dayStartMinutes)) {
 		return fail(
@@ -274,6 +312,8 @@ export async function createPairingCode(
 			signInRequired: input.signInRequired ?? true,
 			dayStartMinutes,
 			shiftsRequired: input.shiftsRequired ?? false,
+			timeclockEnabled: input.timeclockEnabled ?? false,
+			reservationsEnabled: input.reservationsEnabled ?? false,
 			createdBy: input.createdBy,
 			expiresAt,
 			createdAt: now,
@@ -295,6 +335,8 @@ export type RedeemedTerminal = {
 		signInRequired: boolean
 		dayStartMinutes: number
 		shiftsRequired: boolean
+		timeclockEnabled: boolean
+		reservationsEnabled: boolean
 	}
 }
 
@@ -344,6 +386,8 @@ export async function redeemPairingCode(
 					signInRequiredSince: row.signInRequired ? now : null,
 					dayStartMinutes: row.dayStartMinutes,
 					shiftsRequired: row.shiftsRequired,
+					timeclockEnabled: row.timeclockEnabled,
+					reservationsEnabled: row.reservationsEnabled,
 					secretHash: hashPosSecret(secret),
 					pairedBy: row.createdBy,
 					pairedAt: now,
@@ -357,10 +401,12 @@ export async function redeemPairingCode(
 						label: row.label,
 						terminalCode: row.terminalCode,
 						locationId: row.locationId,
-						scopeId: row.scopeId,
+						scopeId: posStaffScopeId(row),
 						signInRequired: row.signInRequired,
 						dayStartMinutes: row.dayStartMinutes,
 						shiftsRequired: row.shiftsRequired,
+						timeclockEnabled: row.timeclockEnabled,
+						reservationsEnabled: row.reservationsEnabled,
 					},
 				}
 			}),
@@ -378,10 +424,12 @@ export const serializeDevice = (row: PosDevice) => ({
 	label: row.label,
 	terminalCode: row.terminalCode,
 	locationId: row.locationId,
-	scopeId: row.scopeId,
+	scopeId: posStaffScopeId(row),
 	signInRequired: row.signInRequired,
 	dayStartMinutes: row.dayStartMinutes,
 	shiftsRequired: row.shiftsRequired,
+	timeclockEnabled: row.timeclockEnabled,
+	reservationsEnabled: row.reservationsEnabled,
 	pairedAt: row.pairedAt,
 	lastSeenAt: row.lastSeenAt,
 	revokedAt: row.revokedAt,
@@ -402,6 +450,8 @@ export async function listPendingCodes(db: TenantDatabase, now = Date.now()) {
 			label: posPairingCodes.label,
 			terminalCode: posPairingCodes.terminalCode,
 			expiresAt: posPairingCodes.expiresAt,
+			timeclockEnabled: posPairingCodes.timeclockEnabled,
+			reservationsEnabled: posPairingCodes.reservationsEnabled,
 		})
 		.from(posPairingCodes)
 		.where(
@@ -453,7 +503,14 @@ export async function revokeDevice(
 // ---------------------------------------------------------------------------
 
 export type SignInResult =
-	| { ok: true; staff: PosStaff; role: 'cashier' | 'manager' }
+	| {
+			ok: true
+			staff: PosStaff
+			role: 'cashier' | 'manager'
+			/** The person and their workplace assignment, for the time clock. */
+			member: StaffMember
+			assignment: StaffScopeAssignment
+	  }
 	| { ok: false; code: 'invalid_pin' | 'backoff'; retryAfterSeconds: number }
 
 const toState = (
@@ -484,6 +541,19 @@ export async function verifyPosPin(
 ): Promise<SignInResult> {
 	const pin = normalizePinDigits(input.pin)
 	const { device } = input
+	// Someone keeps guessing PINs at this terminal (its lock screen and its time
+	// clock both take one): tell managers, as a kiosk does.
+	const alertPinFailures = (
+		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
+		state: PinBackoffState,
+	) =>
+		writeDeviceAudit(tx, 'pos', device, null, {
+			action: 'pos.pin.failures_high',
+			entityType: 'pos_device',
+			entityId: device.id,
+			scopeId: device.scopeId,
+			changes: { attemptsLastHour: state.hourFailures },
+		})
 	const save = async (
 		tx: Parameters<Parameters<TenantDatabase['transaction']>[0]>[0],
 		state: PinBackoffState,
@@ -506,13 +576,18 @@ export async function verifyPosPin(
 			const state = toState(attempt)
 			const wait = pinBackoffRemainingSeconds(state, now)
 			if (wait > 0) {
-				await save(tx, applyRefusedAttempt(state, now).state)
+				const refused = applyRefusedAttempt(state, now)
+				await save(tx, refused.state)
+				if (refused.alertManager) await alertPinFailures(tx, refused.state)
 				return { ok: false, code: 'backoff', retryAfterSeconds: wait }
 			}
 			if (pinShapeOk(pin)) {
 				const lookup = pinLookupFor(input.orgId, device.scopeId, pin)
 				const [row] = await tx
-					.select({ member: staffMembers })
+					.select({
+						member: staffMembers,
+						assignment: staffScopeAssignments,
+					})
 					.from(staffScopeAssignments)
 					.innerJoin(
 						staffMembers,
@@ -544,11 +619,14 @@ export async function verifyPosPin(
 							),
 						},
 						role: manager ? 'manager' : 'cashier',
+						member: row.member,
+						assignment: row.assignment,
 					}
 				}
 			}
 			const failure = applyPinFailure(state, now)
 			await save(tx, failure.state)
+			if (failure.alertManager) await alertPinFailures(tx, failure.state)
 			return {
 				ok: false,
 				code: 'invalid_pin',
@@ -559,8 +637,16 @@ export async function verifyPosPin(
 }
 
 /** Everyone assigned to a workplace, whether they have a PIN yet, and who may manage a till. */
-export async function listStaffRoster(db: TenantDatabase, scopeId: string) {
-	const rows = await db
+/**
+ * The people who work at a workplace, or at any of them (`null`): managers and
+ * hosts are chosen once for every till, and an organization with locations has
+ * one workplace per location. A PIN at any of a person's workplaces counts.
+ */
+export async function listStaffRoster(
+	db: TenantDatabase,
+	scopeId: string | null,
+) {
+	const assigned = await db
 		.select({
 			id: staffMembers.id,
 			firstName: staffMembers.firstName,
@@ -571,22 +657,36 @@ export async function listStaffRoster(db: TenantDatabase, scopeId: string) {
 		.innerJoin(staffMembers, eq(staffMembers.id, staffScopeAssignments.staffId))
 		.where(
 			and(
-				eq(staffScopeAssignments.scopeId, scopeId),
+				scopeId === null
+					? undefined
+					: eq(staffScopeAssignments.scopeId, scopeId),
 				eq(staffScopeAssignments.active, true),
 				eq(staffMembers.status, 'active'),
 			),
 		)
 		.orderBy(asc(staffMembers.lastName), asc(staffMembers.firstName))
-	const managers = new Set(
-		(await db.select({ id: posManagers.staffId }).from(posManagers)).map(
-			(m) => m.id,
-		),
-	)
+	const people = new Map<string, (typeof assigned)[number]>()
+	for (const row of assigned) {
+		const seen = people.get(row.id)
+		if (!seen || (seen.pinLookup === null && row.pinLookup !== null))
+			people.set(row.id, row)
+	}
+	const rows = [...people.values()]
+	const [managerRows, hostRows] = await Promise.all([
+		db.select({ id: posManagers.staffId }).from(posManagers),
+		db
+			.select({ id: posHosts.staffId, guestDetails: posHosts.guestDetails })
+			.from(posHosts),
+	])
+	const managers = new Set(managerRows.map((m) => m.id))
+	const hosts = new Map(hostRows.map((m) => [m.id, m.guestDetails]))
 	return rows.map((r) => ({
 		id: r.id,
 		name: posStaffDisplayName(r.firstName, r.lastName),
 		hasPin: r.pinLookup !== null,
 		isManager: managers.has(r.id),
+		isHost: hosts.has(r.id),
+		hostGuestDetails: hosts.get(r.id) === true,
 	}))
 }
 
@@ -609,6 +709,75 @@ export async function setManager(
 	return true
 }
 
+/** Puts a person on the host roster: they may run the host stand at a till. */
+export async function setHost(
+	db: TenantDatabase,
+	staffId: string,
+	addedBy: string,
+	options: { guestDetails: boolean },
+	now = Date.now(),
+) {
+	const [member] = await db
+		.select({ id: staffMembers.id })
+		.from(staffMembers)
+		.where(and(eq(staffMembers.id, staffId), eq(staffMembers.status, 'active')))
+		.limit(1)
+	if (!member) return false
+	const [before] = await db
+		.select({ guestDetails: posHosts.guestDetails })
+		.from(posHosts)
+		.where(eq(posHosts.staffId, staffId))
+		.limit(1)
+	await db
+		.insert(posHosts)
+		.values({
+			staffId,
+			addedBy,
+			addedAt: now,
+			guestDetails: options.guestDetails,
+		})
+		.onConflictDoUpdate({
+			target: posHosts.staffId,
+			// Whoever changed the grant last answers for it.
+			set: { guestDetails: options.guestDetails, addedBy, addedAt: now },
+		})
+	await writeOperatorAudit(db, addedBy, null, {
+		action: before ? 'pos.host.changed' : 'pos.host.added',
+		entityType: 'pos_host',
+		entityId: staffId,
+		staffId,
+		changes: {
+			guestDetails: {
+				before: before?.guestDetails ?? null,
+				after: options.guestDetails,
+			},
+		},
+	})
+	return true
+}
+
+export async function removeHost(
+	db: TenantDatabase,
+	staffId: string,
+	removedBy: string,
+) {
+	const removed = await db
+		.delete(posHosts)
+		.where(eq(posHosts.staffId, staffId))
+		.returning({ id: posHosts.staffId, guestDetails: posHosts.guestDetails })
+	if (removed.length !== 1) return false
+	await writeOperatorAudit(db, removedBy, null, {
+		action: 'pos.host.removed',
+		entityType: 'pos_host',
+		entityId: staffId,
+		staffId,
+		changes: {
+			guestDetails: { before: removed[0]!.guestDetails, after: null },
+		},
+	})
+	return true
+}
+
 export async function removeManager(db: TenantDatabase, staffId: string) {
 	const removed = await db
 		.delete(posManagers)
@@ -621,35 +790,105 @@ export async function removeManager(db: TenantDatabase, staffId: string) {
 export const isValidDayStart = (minutes: number) =>
 	Number.isInteger(minutes) && minutes >= 0 && minutes <= 720
 
+/**
+ * The host stand shows guests to whoever holds the tablet, so it needs a
+ * signed-in person, and it serves one location, so it needs the terminal's.
+ */
+export function stationReservationsProblem(settings: {
+	reservationsEnabled: boolean
+	locationId: string | null
+	signInRequired: boolean
+}): { code: string; message: string } | null {
+	if (!settings.reservationsEnabled) return null
+	if (!settings.locationId) {
+		return {
+			code: 'reservations_needs_location',
+			message: 'Choose a location for this terminal to use reservations.',
+		}
+	}
+	if (!settings.signInRequired) {
+		return {
+			code: 'reservations_needs_sign_in',
+			message: 'Turn on staff sign-in to use reservations on this terminal.',
+		}
+	}
+	return null
+}
+
+/** A terminal's location and Station app switches, for permission checks before a change. */
+export async function deviceStationState(db: TenantDatabase, id: string) {
+	const [device] = await db
+		.select({
+			locationId: posDevices.locationId,
+			scopeId: posDevices.scopeId,
+			reservationsEnabled: posDevices.reservationsEnabled,
+			timeclockEnabled: posDevices.timeclockEnabled,
+		})
+		.from(posDevices)
+		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
+		.limit(1)
+	return device ?? null
+}
+
+export type DeviceSettingsPatch = {
+	signInRequired?: boolean
+	dayStartMinutes?: number
+	shiftsRequired?: boolean
+	timeclockEnabled?: boolean
+	reservationsEnabled?: boolean
+	/**
+	 * Binds a terminal that was paired without a location (so it can run that
+	 * location's host stand). A bound terminal keeps its location: moving one
+	 * would move its tabs, taxes and numbers, so it is paired again instead.
+	 */
+	locationId?: string
+}
+
 /** A manager changes how an existing terminal behaves; the till learns on its next check-in. */
 export async function updateDeviceSettings(
 	db: TenantDatabase,
 	id: string,
-	patch: {
-		signInRequired?: boolean
-		dayStartMinutes?: number
-		shiftsRequired?: boolean
-	},
+	patch: DeviceSettingsPatch,
 	now = Date.now(),
-) {
-	if (
-		patch.signInRequired === undefined &&
-		patch.dayStartMinutes === undefined &&
-		patch.shiftsRequired === undefined
-	) {
-		return false
+	/** The operator making the change, for the audit trail. */
+	changedBy = 'unknown',
+): Promise<PosResult<true>> {
+	if (Object.values(patch).every((value) => value === undefined)) {
+		return fail(400, 'invalid_request')
 	}
 	if (
 		patch.dayStartMinutes !== undefined &&
 		!isValidDayStart(patch.dayStartMinutes)
 	)
-		return false
+		return fail(422, 'invalid_day_start')
 	const [device] = await db
-		.select({ signInRequired: posDevices.signInRequired })
+		.select({
+			signInRequired: posDevices.signInRequired,
+			locationId: posDevices.locationId,
+			reservationsEnabled: posDevices.reservationsEnabled,
+			timeclockEnabled: posDevices.timeclockEnabled,
+		})
 		.from(posDevices)
 		.where(and(eq(posDevices.id, id), isNull(posDevices.revokedAt)))
 		.limit(1)
-	if (!device) return false
+	if (!device) return fail(404, 'not_found')
+	if (patch.locationId !== undefined) {
+		if (device.locationId !== null && device.locationId !== patch.locationId)
+			return fail(
+				409,
+				'location_already_set',
+				'Pair the terminal again to move it.',
+			)
+		if (!/^[A-Za-z0-9_-]{1,100}$/.test(patch.locationId))
+			return fail(422, 'invalid_location')
+	}
+	const problem = stationReservationsProblem({
+		reservationsEnabled:
+			patch.reservationsEnabled ?? device.reservationsEnabled,
+		locationId: patch.locationId ?? device.locationId,
+		signInRequired: patch.signInRequired ?? device.signInRequired,
+	})
+	if (problem) return fail(422, problem.code, problem.message)
 	const set: Partial<typeof posDevices.$inferInsert> = {}
 	if (patch.signInRequired !== undefined) {
 		set.signInRequired = patch.signInRequired
@@ -661,8 +900,41 @@ export async function updateDeviceSettings(
 		set.dayStartMinutes = patch.dayStartMinutes
 	if (patch.shiftsRequired !== undefined)
 		set.shiftsRequired = patch.shiftsRequired
+	if (patch.timeclockEnabled !== undefined) {
+		set.timeclockEnabled = patch.timeclockEnabled
+		// Punches the till saved offline before this still count; later ones do not.
+		if (!patch.timeclockEnabled && device.timeclockEnabled)
+			set.timeclockDisabledAt = now
+	}
+	if (patch.reservationsEnabled !== undefined)
+		set.reservationsEnabled = patch.reservationsEnabled
+	if (patch.locationId !== undefined && device.locationId === null) {
+		set.locationId = patch.locationId
+		set.locationBoundAt = now
+	}
 	await db.update(posDevices).set(set).where(eq(posDevices.id, id))
-	return true
+	const changes = diffFields(
+		{
+			signInRequired: device.signInRequired,
+			timeclockEnabled: device.timeclockEnabled,
+			reservationsEnabled: device.reservationsEnabled,
+			locationId: device.locationId,
+		} as Record<string, unknown>,
+		{
+			signInRequired: set.signInRequired,
+			timeclockEnabled: set.timeclockEnabled,
+			reservationsEnabled: set.reservationsEnabled,
+			locationId: set.locationId,
+		},
+	)
+	if (Object.keys(changes).length > 0)
+		await writeOperatorAudit(db, changedBy, null, {
+			action: 'pos.terminal.changed',
+			entityType: 'pos_device',
+			entityId: id,
+			changes,
+		})
+	return ok(true)
 }
 
 const LAST_SEEN_THROTTLE_MS = 60_000
@@ -1012,6 +1284,28 @@ type Tx = Parameters<Parameters<TenantDatabase['transaction']>[0]>[0]
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
+/**
+ * A revision as sold: without each line's kitchen keys (its id and when it was
+ * sent, contract 4). A till updated between sending a revision and hearing back
+ * resends it with them, and that is the same sale, not a conflict.
+ */
+function saleOf(snapshot: unknown) {
+	const body = snapshot as { lines?: unknown } | null
+	if (!body || !Array.isArray(body.lines)) return snapshot
+	return {
+		...body,
+		lines: body.lines.map((line) => {
+			if (!line || typeof line !== 'object') return line
+			const {
+				id: ignoredId,
+				sentAt: ignoredSentAt,
+				...sold
+			} = line as Record<string, unknown>
+			return sold
+		}),
+	}
+}
+
 /** JSON with object keys sorted, so two copies of the same data compare equal. */
 export function canonicalJson(value: unknown): string {
 	return JSON.stringify(value, (_key, v: unknown) =>
@@ -1077,7 +1371,13 @@ async function fiscalLineage(tx: Tx, device: PosDevice): Promise<string[]> {
 				eq(posDevices.terminalCode, device.terminalCode),
 				device.locationId === null
 					? isNull(posDevices.locationId)
-					: eq(posDevices.locationId, device.locationId),
+					: device.locationBoundAt !== null
+						? // A till bound later chained on from its unbound predecessors.
+							or(
+								eq(posDevices.locationId, device.locationId),
+								isNull(posDevices.locationId),
+							)
+						: eq(posDevices.locationId, device.locationId),
 				isNotNull(posDevices.revokedAt),
 			),
 		)
@@ -1297,6 +1597,24 @@ async function writeOrderLines(tx: Tx, order: PosOrderRequest) {
  * `pos_order_revisions`, so anything taken off a tab after it reached the server
  * stays visible. The first review reason found sticks.
  */
+/**
+ * An order the till started at a location it chose itself, before a manager
+ * bound it to another one: its sale happened there, so it still uploads.
+ */
+function startedBeforeBinding(
+	device: Pick<PosDevice, 'locationBoundAt' | 'pairedAt'>,
+	order: Pick<PosOrderRequest, 'createdAt'>,
+) {
+	if (device.locationBoundAt === null) return false
+	const startedAt = Date.parse(order.createdAt)
+	// Between pairing and binding: a till cannot claim an earlier sale than it could have made.
+	return (
+		Number.isFinite(startedAt) &&
+		startedAt >= device.pairedAt &&
+		startedAt < device.locationBoundAt
+	)
+}
+
 export async function upsertPosOrder(
 	db: TenantDatabase,
 	device: PosDevice,
@@ -1304,7 +1622,11 @@ export async function upsertPosOrder(
 	review: PosReview,
 	now = Date.now(),
 ): Promise<PosResult<UpsertOutcome>> {
-	if (device.locationId && device.locationId !== order.locationId) {
+	if (
+		device.locationId &&
+		device.locationId !== order.locationId &&
+		!startedBeforeBinding(device, order)
+	) {
 		return fail(
 			403,
 			'wrong_location',
@@ -1413,8 +1735,8 @@ export async function upsertPosOrder(
 							if (
 								existing.revision === order.revision &&
 								stored &&
-								canonicalJson(stored.snapshot) !==
-									canonicalJson(revisionSnapshot(order))
+								canonicalJson(saleOf(stored.snapshot)) !==
+									canonicalJson(saleOf(revisionSnapshot(order)))
 							) {
 								return fail(
 									409,

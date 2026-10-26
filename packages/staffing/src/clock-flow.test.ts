@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { type KioskIdentifyView } from './kiosk-api.ts'
 import {
 	amountToMinor,
 	flowReducer,
@@ -7,7 +6,8 @@ import {
 	nextStepFor,
 	startFlow,
 	type Flow,
-} from './kiosk-flow.ts'
+	type KioskIdentifyView,
+} from './clock-flow.ts'
 
 const who = (
 	overrides: Partial<KioskIdentifyView> = {},
@@ -18,6 +18,7 @@ const who = (
 	positions: [],
 	nextShifts: [],
 	promptTips: false,
+	breakKinds: [],
 	serverNow: 1,
 	...overrides,
 })

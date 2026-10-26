@@ -63,6 +63,9 @@ const terminalSchema = z.object({
 	dayStartMinutes: z.number().default(240),
 	// Sells only inside a cash drawer shift. Older servers: off.
 	shiftsRequired: z.boolean().default(false),
+	// Station apps beside the till. Older servers: off.
+	timeclockEnabled: z.boolean().default(false),
+	reservationsEnabled: z.boolean().default(false),
 	pairedAt: z.number(),
 	lastSeenAt: z.number().nullable(),
 	revokedAt: z.number().nullable(),
@@ -78,6 +81,9 @@ const staffSchema = z.object({
 	name: z.string(),
 	hasPin: z.boolean(),
 	isManager: z.boolean(),
+	// The host roster (Station host stand). Older servers: not sent.
+	isHost: z.boolean().default(false),
+	hostGuestDetails: z.boolean().default(false),
 })
 type StaffRow = z.infer<typeof staffSchema>
 const listSchema = z.object({
@@ -110,16 +116,42 @@ type Created = z.infer<typeof createdSchema> & { label: string }
 const QUIET_AFTER_MS = 10 * 60 * 1000
 
 /** Walk-in POS terminals: pair a tablet or phone, see when each last sent an order, remove one that is lost. */
+/** The Station apps a terminal can offer, as the organization has them switched on. */
+export type StationFeatures = { timeclock: boolean; reservations: boolean }
+/** What this member may switch on: each app, guest details for hosts, and where. */
+export type StationGrants = StationFeatures & {
+	guestDetails: boolean
+	/** Locations whose host stand this member may open; null is all of them. */
+	locationIds: string[] | null
+	/** Workplaces where this member may switch the time clock on; null is all of them. */
+	scopeIds: string[] | null
+}
+const NO_GRANTS: StationGrants = {
+	timeclock: false,
+	reservations: false,
+	guestDetails: false,
+	locationIds: [],
+	scopeIds: [],
+}
+export type TerminalLocation = { id: string; name: string }
+
 export function TerminalsManager({
 	orgSlug,
 	canWrite,
 	posUrl,
 	appUrl,
+	locations = [],
+	stationFeatures = { timeclock: false, reservations: false },
+	stationGrants = NO_GRANTS,
 }: {
 	orgSlug: string
 	canWrite: boolean
 	posUrl: string
 	appUrl: string
+	locations?: TerminalLocation[]
+	stationFeatures?: StationFeatures
+	/** Whether this member may switch each Station app on. */
+	stationGrants?: StationGrants
 }) {
 	const { _ } = useLingui()
 	const { request, tenantApiUrl } = useOperatorClient(orgSlug, '/operator/pos')
@@ -154,7 +186,7 @@ export function TerminalsManager({
 			try {
 				const roster = z
 					.object({ staff: z.array(staffSchema) })
-					.parse(await request('/staff'))
+					.parse(await request('/staff?scope=all'))
 				setStaff(roster.staff)
 			} catch {
 				setStaff([])
@@ -251,6 +283,25 @@ export function TerminalsManager({
 		}
 	}
 
+	async function setStationApp(device: Terminal, patch: StationAppPatch) {
+		try {
+			await request(`/terminals/${encodeURIComponent(device.id)}`, {
+				method: 'PATCH',
+				body: JSON.stringify(patch),
+			})
+			toast.success(
+				_(t`Saved. The terminal updates the next time it connects.`),
+			)
+			await load()
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: _(t`Could not change the setting.`),
+			)
+		}
+	}
+
 	async function setDayStart(device: Terminal, dayStartMinutes: number) {
 		try {
 			await request(`/terminals/${encodeURIComponent(device.id)}`, {
@@ -296,6 +347,31 @@ export function TerminalsManager({
 				error instanceof Error
 					? error.message
 					: _(t`Could not change who can manage terminals.`),
+			)
+		}
+	}
+
+	async function setHostRole(
+		person: StaffRow,
+		role: 'none' | 'host' | 'guest_details',
+	) {
+		try {
+			await request(`/hosts/${encodeURIComponent(person.id)}`, {
+				method: role === 'none' ? 'DELETE' : 'PUT',
+				...(role === 'none'
+					? {}
+					: {
+							body: JSON.stringify({
+								guestDetails: role === 'guest_details',
+							}),
+						}),
+			})
+			await load()
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: _(t`Could not change who runs the host stand.`),
 			)
 		}
 	}
@@ -414,7 +490,7 @@ export function TerminalsManager({
 										) : null}
 									</div>
 								</CardHeader>
-								<CardFooter className="@container">
+								<CardFooter className="@container flex-col items-stretch gap-4">
 									<div className="grid w-full min-w-0 gap-4 @lg:grid-cols-3 @lg:gap-6">
 										<div className="flex min-w-0 items-center justify-between gap-3 @lg:flex-col @lg:items-start @lg:gap-2">
 											<span className="text-muted-foreground text-xs font-medium">
@@ -513,6 +589,18 @@ export function TerminalsManager({
 											)}
 										</div>
 									</div>
+									<StationApps
+										device={device}
+										canWrite={canWrite}
+										features={stationFeatures}
+										grants={stationGrants}
+										locations={locations}
+										locationName={
+											locations.find((l) => l.id === device.locationId)?.name ??
+											null
+										}
+										onChange={(patch) => void setStationApp(device, patch)}
+									/>
 								</CardFooter>
 							</Card>
 						</li>
@@ -614,8 +702,10 @@ export function TerminalsManager({
 						</h3>
 						<p className="text-muted-foreground max-w-prose text-sm leading-relaxed">
 							<Trans>
-								Everyone with a PIN can take orders. Managers can also change a
-								terminal's settings. Set a person's PIN under Staff.
+								Everyone with a PIN can take orders and use the time clock.
+								Managers can also change a terminal's settings. The host stand
+								is for the people you choose here. Set a person's PIN under
+								Staff.
 							</Trans>
 						</p>
 					</CardHeader>
@@ -658,6 +748,19 @@ export function TerminalsManager({
 												<Trans>Make manager</Trans>
 											)}
 										</Button>
+									) : null}
+									{stationFeatures.reservations ? (
+										<HostRoleSelect
+											person={person}
+											// The roster is organization-wide: changing it needs every location.
+											canChange={
+												canWrite &&
+												stationGrants.reservations &&
+												stationGrants.locationIds === null
+											}
+											canGrantGuestDetails={stationGrants.guestDetails}
+											onChange={(role) => void setHostRole(person, role)}
+										/>
 									) : null}
 								</li>
 							))}
@@ -707,6 +810,14 @@ export function TerminalsManager({
 				posUrl={posUrl}
 				appUrl={appUrl}
 				orgSlug={orgSlug}
+				locations={locations}
+				stationFeatures={{
+					timeclock: stationFeatures.timeclock && stationGrants.timeclock,
+					reservations:
+						stationFeatures.reservations && stationGrants.reservations,
+				}}
+				hostLocationIds={stationGrants.locationIds}
+				clockScopeIds={stationGrants.scopeIds}
 				suggestedCode={suggestCode(
 					state.status === 'ready' ? state.data.devices : [],
 					pending,
@@ -789,6 +900,233 @@ function DayEnds({ minutes }: { minutes: number }) {
  * Orders after midnight belong to the previous business day until this time,
  * so a late service keeps one run of order numbers and one day's takings.
  */
+const NO_LOCATION = '__any__'
+
+/**
+ * Time clock and host stand on one terminal. The host stand shows guests to
+ * whoever holds the tablet, so it needs a location and a staff PIN; the server
+ * refuses otherwise, and the switch says why before anyone taps it.
+ */
+/**
+ * Who runs the host stand at a till, and who among them also sees guests' full
+ * contact details, allergies and notes. Reservation settings decide it.
+ */
+function HostRoleSelect({
+	person,
+	canChange,
+	canGrantGuestDetails,
+	onChange,
+}: {
+	person: StaffRow
+	canChange: boolean
+	/** Guest details need the guest permission; taking them away never does. */
+	canGrantGuestDetails: boolean
+	onChange: (role: 'none' | 'host' | 'guest_details') => void
+}) {
+	const { _ } = useLingui()
+	const role = !person.isHost
+		? 'none'
+		: person.hostGuestDetails
+			? 'guest_details'
+			: 'host'
+	const labels = {
+		none: _(t`No host stand`),
+		host: _(t`Host stand`),
+		guest_details: _(t`Host stand with guest details`),
+	} as const
+	if (!canChange)
+		return role === 'none' ? null : (
+			<Badge variant="secondary">{labels[role]}</Badge>
+		)
+	const name = person.name
+	return (
+		<Select
+			value={role}
+			onValueChange={(next) =>
+				next && onChange(next as 'none' | 'host' | 'guest_details')
+			}
+		>
+			<SelectTrigger
+				className="h-11 w-fit max-w-full md:h-8"
+				aria-label={_(t`Host stand for ${name}`)}
+			>
+				<SelectValue>{labels[role]}</SelectValue>
+			</SelectTrigger>
+			<SelectContent>
+				{(['none', 'host', 'guest_details'] as const).map((value) => (
+					<SelectItem
+						key={value}
+						value={value}
+						disabled={
+							value === 'guest_details' &&
+							role !== 'guest_details' &&
+							!canGrantGuestDetails
+						}
+					>
+						{labels[value]}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	)
+}
+
+function StationApps({
+	device,
+	canWrite,
+	features,
+	grants,
+	locations,
+	locationName,
+	onChange,
+}: {
+	device: Terminal
+	canWrite: boolean
+	features: StationFeatures
+	/** Whether this member may switch each app on (its module's settings permission). */
+	grants: StationGrants
+	locations: TerminalLocation[]
+	locationName: string | null
+	onChange: (patch: StationAppPatch) => void
+}) {
+	const { _ } = useLingui()
+	const label = device.label
+	if (!features.timeclock && !features.reservations) return null
+	// Where staff work by location, the clock needs the terminal's own (its workplace).
+	const timeclockBlocked =
+		!device.locationId && locations.length > 0
+			? _(t`Choose the terminal's location to use the time clock.`)
+			: grants.scopeIds !== null && !grants.scopeIds.includes(device.scopeId)
+				? _(t`You can turn on the time clock only at your own locations.`)
+				: null
+	const reservationsBlocked = !device.locationId
+		? _(t`Choose the terminal's location to use reservations.`)
+		: !device.signInRequired
+			? _(t`Turn on the staff PIN to use reservations.`)
+			: grants.locationIds !== null &&
+				  !grants.locationIds.includes(device.locationId)
+				? _(t`You can open the host stand only at your own locations.`)
+				: null
+	const toggle = (
+		on: boolean,
+		label: string,
+		onLabel: React.ReactNode,
+		offLabel: React.ReactNode,
+		run: () => void,
+		/** Switching on is not possible (switching off always is). */
+		cannotTurnOn: boolean,
+	) =>
+		canWrite ? (
+			<Button
+				variant={on ? 'secondary' : 'outline'}
+				className="h-11 md:h-8"
+				onClick={run}
+				disabled={!on && cannotTurnOn}
+				aria-label={label}
+				aria-pressed={on}
+			>
+				{on ? <Icon name="check" /> : null}
+				{on ? onLabel : offLabel}
+			</Button>
+		) : (
+			<Badge variant={on ? 'secondary' : 'outline'}>
+				{on ? onLabel : offLabel}
+			</Badge>
+		)
+	return (
+		<div className="border-border flex w-full min-w-0 flex-col gap-3 border-t pt-4">
+			<span className="text-muted-foreground text-xs font-medium">
+				<Trans>Station apps</Trans>
+			</span>
+			<div className="flex flex-wrap items-center gap-2">
+				{features.timeclock
+					? toggle(
+							device.timeclockEnabled,
+							device.timeclockEnabled
+								? _(t`Time clock on ${label}, on`)
+								: _(t`Time clock on ${label}, off`),
+							<Trans>Time clock on</Trans>,
+							<Trans>Time clock off</Trans>,
+							() => onChange({ timeclockEnabled: !device.timeclockEnabled }),
+							!grants.timeclock || timeclockBlocked !== null,
+						)
+					: null}
+				{features.reservations
+					? toggle(
+							device.reservationsEnabled,
+							device.reservationsEnabled
+								? _(t`Reservations on ${label}, on`)
+								: _(t`Reservations on ${label}, off`),
+							<Trans>Reservations on</Trans>,
+							<Trans>Reservations off</Trans>,
+							() =>
+								onChange({ reservationsEnabled: !device.reservationsEnabled }),
+							!grants.reservations || reservationsBlocked !== null,
+						)
+					: null}
+				{features.reservations && locationName ? (
+					<span className="text-muted-foreground text-sm">
+						<Trans>Host stand for {locationName}</Trans>
+					</span>
+				) : null}
+				{(features.reservations || features.timeclock) &&
+				canWrite &&
+				!device.locationId &&
+				locations.length > 0 ? (
+					<Select
+						value=""
+						onValueChange={(next) => next && onChange({ locationId: next })}
+					>
+						<SelectTrigger
+							className="h-11 w-fit max-w-full md:h-8"
+							aria-label={_(t`Location of ${label}`)}
+						>
+							<SelectValue>
+								<Trans>Choose a location</Trans>
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							{locations.map((location) => (
+								<SelectItem key={location.id} value={location.id}>
+									{location.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				) : null}
+			</div>
+			{features.timeclock &&
+			grants.timeclock &&
+			!device.timeclockEnabled &&
+			timeclockBlocked ? (
+				<p className="text-muted-foreground text-sm">{timeclockBlocked}</p>
+			) : null}
+			{features.reservations &&
+			!device.reservationsEnabled &&
+			reservationsBlocked ? (
+				<p className="text-muted-foreground text-sm">{reservationsBlocked}</p>
+			) : null}
+			{canWrite &&
+			((features.timeclock && !grants.timeclock && !device.timeclockEnabled) ||
+				(features.reservations &&
+					!grants.reservations &&
+					!device.reservationsEnabled)) ? (
+				<p className="text-muted-foreground text-sm">
+					<Trans>
+						Turning an app on needs permission to change its settings (time
+						clock rules, or reservation settings).
+					</Trans>
+				</p>
+			) : null}
+		</div>
+	)
+}
+
+type StationAppPatch =
+	| { timeclockEnabled: boolean }
+	| { reservationsEnabled: boolean }
+	| { locationId: string }
+
 function DayStartSelect({
 	value,
 	label,
@@ -911,6 +1249,10 @@ function PairDialog({
 	posUrl,
 	appUrl,
 	orgSlug,
+	locations,
+	stationFeatures,
+	hostLocationIds = null,
+	clockScopeIds = null,
 	suggestedCode,
 }: {
 	open: boolean
@@ -920,9 +1262,20 @@ function PairDialog({
 	posUrl: string
 	appUrl: string
 	orgSlug: string
+	locations: TerminalLocation[]
+	stationFeatures: StationFeatures
+	/** Locations whose host stand this member may open; null is all of them. */
+	hostLocationIds?: string[] | null
+	/** Workplaces where this member may switch the time clock on; null is all of them. */
+	clockScopeIds?: string[] | null
 	suggestedCode: string
 }) {
 	const { _ } = useLingui()
+	/** One location is the obvious choice; with several the manager picks (or none). */
+	const firstLocation = locations.length === 1 ? locations[0]!.id : NO_LOCATION
+	const [locationId, setLocationId] = useState(firstLocation)
+	const [timeclockEnabled, setTimeclockEnabled] = useState(false)
+	const [reservationsEnabled, setReservationsEnabled] = useState(false)
 	const [label, setLabel] = useState('')
 	const [terminalCode, setTerminalCode] = useState(suggestedCode)
 	const [pending, setPending] = useState(false)
@@ -932,6 +1285,18 @@ function PairDialog({
 	const [created, setCreated] = useState<Created | null>(null)
 	const [apiUrl, setApiUrl] = useState<string | null>(null)
 	const [paired, setPaired] = useState(false)
+	// Where staff work by location, the clock needs the terminal's own (its workplace).
+	const timeclockAllowed =
+		stationFeatures.timeclock &&
+		(locationId === NO_LOCATION
+			? locations.length === 0 && clockScopeIds === null
+			: clockScopeIds === null || clockScopeIds.includes(locationId))
+	// The host stand opens guests' details only for a signed-in person at one location.
+	const reservationsAllowed =
+		stationFeatures.reservations &&
+		locationId !== NO_LOCATION &&
+		signInRequired &&
+		(hostLocationIds === null || hostLocationIds.includes(locationId))
 
 	useEffect(() => {
 		if (open) {
@@ -941,6 +1306,9 @@ function PairDialog({
 			setCreated(null)
 			setSignInRequired(true)
 			setDayStartMinutes(240)
+			setLocationId(firstLocation)
+			setTimeclockEnabled(false)
+			setReservationsEnabled(false)
 			setPaired(false)
 		}
 		// Re-seed only when the dialog opens.
@@ -960,6 +1328,9 @@ function PairDialog({
 						terminalCode: terminalCode.trim().toUpperCase(),
 						signInRequired,
 						dayStartMinutes,
+						locationId: locationId === NO_LOCATION ? null : locationId,
+						timeclockEnabled: timeclockAllowed && timeclockEnabled,
+						reservationsEnabled: reservationsAllowed && reservationsEnabled,
 					}),
 				}),
 			)
@@ -1041,6 +1412,43 @@ function PairDialog({
 								dir="ltr"
 							/>
 						</FieldLabel>
+						{locations.length > 0 ? (
+							<div className="flex flex-col gap-1 text-sm">
+								<span className="font-medium">
+									<Trans>Location</Trans>
+								</span>
+								<Select
+									value={locationId}
+									onValueChange={(next) => setLocationId(next ?? NO_LOCATION)}
+								>
+									<SelectTrigger
+										className="h-11 w-fit max-w-full md:h-8"
+										aria-label={_(t`Location`)}
+									>
+										<SelectValue>
+											{locations.find((l) => l.id === locationId)?.name ??
+												_(t`Any location`)}
+										</SelectValue>
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value={NO_LOCATION}>
+											<Trans>Any location</Trans>
+										</SelectItem>
+										{locations.map((location) => (
+											<SelectItem key={location.id} value={location.id}>
+												{location.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<span className="text-muted-foreground">
+									<Trans>
+										A terminal bound to a location sells only there and can run
+										its host stand.
+									</Trans>
+								</span>
+							</div>
+						) : null}
 						<div className="flex flex-col gap-1 text-sm">
 							<span className="font-medium">
 								<Trans>Business day</Trans>
@@ -1076,6 +1484,67 @@ function PairDialog({
 								</span>
 							</span>
 						</label>
+						{stationFeatures.timeclock ? (
+							<label className="flex items-start gap-3 text-sm">
+								<Checkbox
+									checked={timeclockAllowed && timeclockEnabled}
+									disabled={!timeclockAllowed}
+									onCheckedChange={(checked) =>
+										setTimeclockEnabled(checked === true)
+									}
+								/>
+								<span>
+									<span className="block font-medium">
+										<Trans>Time clock</Trans>
+									</span>
+									<span className="text-muted-foreground">
+										{timeclockAllowed ? (
+											<Trans>
+												Staff clock in and out on this terminal with their PIN,
+												even while it is locked.
+											</Trans>
+										) : locationId === NO_LOCATION ? (
+											_(
+												t`Choose the terminal's location to use the time clock.`,
+											)
+										) : (
+											_(
+												t`You can turn on the time clock only at your own locations.`,
+											)
+										)}
+									</span>
+								</span>
+							</label>
+						) : null}
+						{stationFeatures.reservations ? (
+							<label className="flex items-start gap-3 text-sm">
+								<Checkbox
+									checked={reservationsAllowed && reservationsEnabled}
+									disabled={!reservationsAllowed}
+									onCheckedChange={(checked) =>
+										setReservationsEnabled(checked === true)
+									}
+								/>
+								<span>
+									<span className="block font-medium">
+										<Trans>Reservations</Trans>
+									</span>
+									<span className="text-muted-foreground">
+										{reservationsAllowed ? (
+											<Trans>
+												The host stand for this location: today’s floor,
+												arrivals, walk-ins and the waitlist.
+											</Trans>
+										) : (
+											<Trans>
+												Needs a location and a staff PIN, so guests’ details
+												only open for someone signed in.
+											</Trans>
+										)}
+									</span>
+								</span>
+							</label>
+						) : null}
 						{error ? (
 							<Alert variant="destructive">
 								<AlertDescription>{error}</AlertDescription>

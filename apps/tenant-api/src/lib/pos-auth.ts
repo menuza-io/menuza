@@ -6,6 +6,7 @@ import {
 	parsePosDeviceSecret,
 	posSecretHashMessage,
 } from '@repo/common/pos-orders'
+import { DEFAULT_SCOPE_ID } from '@repo/staffing'
 import {
 	getTenantDb,
 	posDevices,
@@ -84,6 +85,20 @@ export const posUnavailableResponse = () => posError(503, 'service_unavailable')
 export type PosAuth = { orgId: string; device: PosDevice; db: TenantDatabase }
 
 /**
+ * The workplace whose staff sign in, clock in and host at this terminal. One
+ * left at the default scope follows its location: an organization with
+ * locations has a staffing scope per location (its id) and no `main` at all,
+ * so that location's people could otherwise never use the till.
+ */
+export function posStaffScopeId(
+	device: Pick<PosDevice, 'scopeId' | 'locationId'>,
+): string {
+	return device.scopeId === DEFAULT_SCOPE_ID && device.locationId
+		? device.locationId
+		: device.scopeId
+}
+
+/**
  * Order: kill switch, secret shape, the organization's database, the device
  * row, the keyed hash (constant time), revocation. Unknown device and bad
  * secret answer the same `invalid_device`.
@@ -123,5 +138,11 @@ export async function authenticatePosDevice(
 	if (device.revokedAt !== null) {
 		return { error: posError(401, 'device_revoked') }
 	}
-	return { pos: { orgId: parsed.orgId, device, db } }
+	return {
+		pos: {
+			orgId: parsed.orgId,
+			device: { ...device, scopeId: posStaffScopeId(device) },
+			db,
+		},
+	}
 }

@@ -164,12 +164,38 @@ operatorReservationsWaitlistRoutes.on(
 	},
 )
 
+const STATION_WAITLIST_FIELDS = new Set([
+	'locationId',
+	'displayName',
+	'partySize',
+	'phone',
+	'idempotencyKey',
+])
+
 operatorReservationsWaitlistRoutes.post('/', rsvGuard(WRITE), async (c) => {
 	const ctx = getRsvAuth(c)
 	const orgErr = await ensureActiveOrgInNodeRegion(ctx)
 	if (orgErr) return orgErr
 	const parsed = await readJsonBody(c, createBodySchema)
 	if ('error' in parsed) return parsed.error
+	// A till puts a name, a party size and a number on the list, nothing more:
+	// an email (looked up and written to when seated) or a note is the app's.
+	if (
+		ctx.channel === 'station' &&
+		Object.entries(parsed.data).some(
+			([key, value]) =>
+				value !== undefined &&
+				value !== null &&
+				!STATION_WAITLIST_FIELDS.has(key),
+		)
+	)
+		return json(
+			{
+				error: 'not_for_station',
+				message: 'That is done in the app, not at a till.',
+			},
+			403,
+		)
 	const loc = requireReservationsLocation(ctx, parsed.data.locationId)
 	if (!loc.ok) return loc.response
 	try {
@@ -248,6 +274,21 @@ operatorReservationsWaitlistRoutes.on(
 		if (orgErr) return orgErr
 		const parsed = await readJsonBody(c, updateBodySchema)
 		if ('error' in parsed) return parsed.error
+		// Notes and contact details are hidden without the guest grant: whoever
+		// cannot read them cannot overwrite them either.
+		if (
+			!canReadGuest(ctx) &&
+			(parsed.data.notes !== undefined ||
+				parsed.data.phone !== undefined ||
+				parsed.data.email !== undefined)
+		)
+			return json(
+				{
+					error: 'guest_permission_required',
+					message: 'Only someone who can see guest details can change them.',
+				},
+				403,
+			)
 		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {
@@ -297,7 +338,14 @@ operatorReservationsWaitlistRoutes.on(
 				loaded.entry.id,
 				canReadGuest(ctx),
 			)
-			return json({ ok: true, orgId: ctx.orgId, changed: out.changed, entry })
+			return json({
+				ok: true,
+				orgId: ctx.orgId,
+				changed: out.changed,
+				// Only when this call queued a message (a repeat tap queues none).
+				...('textQueued' in out ? { textQueued: out.textQueued } : {}),
+				entry,
+			})
 		} catch (error) {
 			return handleRouteError(error)
 		}
@@ -346,6 +394,21 @@ operatorReservationsWaitlistRoutes.on(
 		if (orgErr) return orgErr
 		const parsed = await readActionBody(c, seatBodySchema)
 		if ('error' in parsed) return parsed.error
+		// A till seats the party (overbooking with a reason, as the host
+		// insists); swapping or moving someone else's table stays with the app.
+		if (
+			ctx.channel === 'station' &&
+			((parsed.data.resolution !== undefined &&
+				parsed.data.resolution !== 'overbook') ||
+				parsed.data.moveToTableIds !== undefined)
+		)
+			return json(
+				{
+					error: 'not_for_station',
+					message: 'Moving or swapping another party is done in the app.',
+				},
+				403,
+			)
 		const loaded = await loadEntryFor(ctx, entryIdOf(c), parsed.data.locationId)
 		if ('response' in loaded) return loaded.response
 		try {

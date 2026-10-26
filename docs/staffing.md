@@ -109,6 +109,14 @@ pay or private grants.
 A flag cannot stop a tablet that is already paired: its device secret lives on
 the tablet. The kill switch and device revocation are the controls for that.
 
+A paired Station till can also be a time clock (`/pos/timeclock/*`, the same
+punch engine and PIN rules, punches recorded with `source: 'pos'`). It is a
+terminal setting in Settings, Terminals; `POS_ENABLED=false`,
+`STAFFING_KIOSK_ENABLED=false` and revoking the terminal stop it, and
+`staffing.timeclock` off stops it. While App cannot be reached the till saves
+punches and sends them later. See
+[Station apps](./pos.md#station-apps-time-clock-and-host-stand).
+
 ## Runbook
 
 **Turning a flag off (any of timeclock, scheduling, hiring, or the master).**

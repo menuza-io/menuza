@@ -1,6 +1,9 @@
 import { t } from '@lingui/macro'
 import { type PosFiscalChainHead } from '@repo/common/pos-fiscal'
-import { POS_CONTRACT_VERSION } from '@repo/common/pos-orders'
+import {
+	POS_CONTRACT_VERSION,
+	type PosDeviceApps,
+} from '@repo/common/pos-orders'
 import { noteServerDate } from './clock.ts'
 import { type PosSettings } from './config.ts'
 import { db, type PosOrder } from './db.ts'
@@ -85,6 +88,9 @@ export function toWireOrder(order: PosOrder) {
 		voidReason: order.voidReason ?? null,
 		voidApprovedBy: staffOrNull(order.voidApprovedBy),
 		lines: order.lines.map((l) => ({
+			// The kitchen's key for the dish and its round; local marks (served) stay here.
+			id: l.id,
+			...(l.sentAt ? { sentAt: new Date(l.sentAt).toISOString() } : {}),
 			itemId: l.itemId,
 			name: l.name,
 			variantId: l.variantId,
@@ -282,7 +288,7 @@ async function claimNext(
 		const next = await db.orders
 			.where('sync')
 			.equals('pending')
-			// `force` (a person tapping "Send now") skips the retry backoff.
+			// `force` (a person tapping "Upload now") skips the retry backoff.
 			.filter((o) => (force || o.nextAttemptAt <= now) && sendable(o))
 			.sortBy('createdAt')
 			.then((rows) => rows[0])
@@ -570,6 +576,12 @@ export type DeviceCheck = {
 		dayStartMinutes: number | null
 		shiftsRequired: boolean
 	}
+	/**
+	 * Station apps the terminal offers (its setting and the organization's flag).
+	 * An app the server could not decide (the Menuza app unreachable) is left out:
+	 * the till keeps what it last knew.
+	 */
+	apps?: Partial<PosDeviceApps>
 	/** Tabs another terminal took over from this one. */
 	transfers?: Array<{ orderId: string; terminalCode: string }>
 	/** This terminal's fiscal chains as the server has them. */
@@ -615,6 +627,7 @@ export async function checkDeviceDetailed(
 					dayStartMinutes?: number
 					shiftsRequired?: boolean
 				}
+				apps?: { timeclock?: boolean; reservations?: boolean }
 				transfers?: Array<{ orderId: string; terminalCode: string }>
 				fiscalChains?: PosFiscalChainHead[]
 				zatca?: {
@@ -639,6 +652,7 @@ export async function checkDeviceDetailed(
 							shiftsRequired: d.shiftsRequired === true,
 						}
 					: undefined,
+				apps: readApps(body.apps),
 				transfers: Array.isArray(body.transfers) ? body.transfers : [],
 				fiscalChains: Array.isArray(body.fiscalChains) ? body.fiscalChains : [],
 				zatca: body.zatca ?? null,
@@ -655,6 +669,18 @@ export async function checkDeviceDetailed(
 	} catch {
 		return { verdict: 'unknown' }
 	}
+}
+
+function readApps(raw: unknown): Partial<PosDeviceApps> {
+	// An older node reports no apps: it offers none.
+	if (!raw || typeof raw !== 'object')
+		return { timeclock: false, reservations: false }
+	const apps: Partial<PosDeviceApps> = {}
+	const body = raw as Record<string, unknown>
+	if (typeof body.timeclock === 'boolean') apps.timeclock = body.timeclock
+	if (typeof body.reservations === 'boolean')
+		apps.reservations = body.reservations
+	return apps
 }
 
 export async function checkDevice(

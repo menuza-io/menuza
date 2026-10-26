@@ -125,6 +125,14 @@ export const reservationsTokenClaimsSchema = z
 		locationIds: z.array(reservationsLocationIdSchema).max(200).nullable(),
 		features: reservationsFeaturesSchema,
 		impersonated: z.boolean(),
+		/**
+		 * `station`: minted by tenant-api for a person signed in at a paired
+		 * Station till (`POST /pos/reservations/token`). Limited to the day-of-service
+		 * routes; guest contact details are masked without the guest grant.
+		 */
+		channel: z.literal('station').optional(),
+		/** The Station terminal the token was minted for. */
+		deviceId: z.string().min(1).max(64).optional(),
 		iat: z.number().int().positive(),
 		exp: z.number().int().positive(),
 	})

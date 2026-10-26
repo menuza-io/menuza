@@ -1,0 +1,363 @@
+import { t } from '@lingui/macro'
+import { useLingui } from '@lingui/react'
+import { Icon } from '@repo/ui/icon'
+import {
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+	type ReactNode,
+} from 'react'
+import { createPortal } from 'react-dom'
+import { cn, motionMs } from './primitives.tsx'
+
+/**
+ * A value that changes in place (a table's "42m" becoming "43m", a party count)
+ * cross-blurs into the new one where it stands (text swap soft). Nothing moves
+ * on first paint; the words are read once, as the new value.
+ */
+export function SoftText({
+	value,
+	className,
+}: {
+	value: string
+	className?: string
+}) {
+	const [pair, setPair] = useState<{ old: string | null; now: string }>({
+		old: null,
+		now: value,
+	})
+	if (pair.now !== value) setPair({ old: pair.now, now: value })
+	const ref = useRef<HTMLSpanElement>(null)
+
+	useLayoutEffect(() => {
+		const el = ref.current
+		if (!el || pair.old === null) return
+		el.classList.remove('is-swapping')
+		void el.offsetWidth
+		el.classList.add('is-swapping')
+		const timer = window.setTimeout(
+			() => setPair((p) => ({ old: null, now: p.now })),
+			motionMs('--text-soft-dur', 150) + 40,
+		)
+		return () => window.clearTimeout(timer)
+	}, [pair.old, pair.now])
+
+	if (pair.old === null)
+		return <span className={cn('tnum', className)}>{pair.now}</span>
+	return (
+		<span ref={ref} className={cn('t-text-soft tnum', className)}>
+			<span className="t-text-soft-old" aria-hidden>
+				{pair.old}
+			</span>
+			<span className="t-text-soft-new">{pair.now}</span>
+		</span>
+	)
+}
+
+/**
+ * Stacked lines that arrive with rhythm (texts reveal): the first line, then
+ * the next a beat later. Give each child `t-stagger-line` (plus `--2`, `--3`).
+ * A new `replay` key plays it again.
+ */
+export function Stagger({
+	children,
+	className,
+	replay,
+}: {
+	children: ReactNode
+	className?: string
+	replay?: string | number
+}) {
+	const ref = useRef<HTMLDivElement>(null)
+	useLayoutEffect(() => {
+		const el = ref.current
+		if (!el) return
+		el.classList.remove('is-shown')
+		void el.offsetWidth
+		const frame = requestAnimationFrame(() => el.classList.add('is-shown'))
+		return () => cancelAnimationFrame(frame)
+	}, [replay])
+	return (
+		<div ref={ref} className={cn('t-stagger', className)}>
+			{children}
+		</div>
+	)
+}
+
+export type ToastMessage = {
+	id: number
+	text: string
+	action?: { label: string; run: () => void }
+	/** `highlight`: in the brand colour, for news worth a second look (a VIP, a large party). */
+	tone?: 'neutral' | 'danger' | 'highlight'
+	/**
+	 * Said some other way already (a live region of its own): the toast shows
+	 * but does not announce it a second time.
+	 */
+	silent?: boolean
+	/** What the toast is about (a booking's id): opening another's details sets it aside. */
+	subject?: string
+}
+
+/**
+ * One toast at a time, rising from the bottom edge (toast): what just happened,
+ * and an undo when there is one. It goes by itself after a few seconds, and a
+ * newer message replaces it. Announced politely; the action is a real button.
+ *
+ * It is a manual popover, so it shows in the top layer: above a sheet that is
+ * open when it appears, not hidden behind it. While a modal sheet is open the
+ * rest of the page is inert, so the toast (and its announcement) moves inside
+ * that sheet and stays reachable. Its action runs once, however many taps.
+ * Inside a sheet it never covers the sheet's buttons: it sits below the card
+ * when there is room, else rises above the card's footer, else pins to the top.
+ */
+export function Toast({
+	message,
+	onDone,
+	durationMs = 6000,
+	liftAbove,
+}: {
+	message: ToastMessage | null
+	onDone: () => void
+	durationMs?: number
+	/** Rise above this element (a dock of things to tap) instead of covering it. */
+	liftAbove?: React.RefObject<HTMLElement | null>
+}) {
+	const { _ } = useLingui()
+	const [shown, setShown] = useState<ToastMessage | null>(message)
+	const [open, setOpen] = useState(false)
+	if (message && message.id !== shown?.id) setShown(message)
+	const ref = useRef<HTMLDivElement>(null)
+	const layer = useRef<HTMLDivElement>(null)
+	const host = useModalHost()
+	const lift = useHeightOf(liftAbove)
+	const inSheet = useSheetClearance(host, shown !== null)
+	/** The message whose action already ran: a second tap does nothing. */
+	const acted = useRef<number | null>(null)
+
+	// In the top layer while there is something to show (including its way out).
+	useLayoutEffect(() => {
+		const el = layer.current
+		if (!el || typeof el.showPopover !== 'function') return
+		const isOpen = el.matches(':popover-open')
+		if (shown && !isOpen) el.showPopover()
+		else if (!shown && isOpen) el.hidePopover()
+	}, [shown, host])
+
+	useEffect(() => {
+		if (!message) {
+			setOpen(false)
+			return
+		}
+		void ref.current?.offsetWidth
+		const frame = requestAnimationFrame(() => setOpen(true))
+		const timer = window.setTimeout(onDone, durationMs)
+		return () => {
+			cancelAnimationFrame(frame)
+			window.clearTimeout(timer)
+		}
+	}, [message, durationMs, onDone])
+
+	useEffect(() => {
+		if (message || !shown) return
+		const timer = window.setTimeout(
+			() => setShown(null),
+			motionMs('--toast-close', 350),
+		)
+		return () => window.clearTimeout(timer)
+	}, [message, shown])
+
+	const toast = (
+		<>
+			{/* Announced from outside the popover, which is not rendered while closed. */}
+			<p role="status" aria-live="polite" className="sr-only">
+				{message && !message.silent ? message.text : ''}
+			</p>
+			<div
+				ref={layer}
+				popover="manual"
+				// Inside a sheet nothing sits under it: the lift is for the page only.
+				// Inside a sheet with no room under it (and no footer to rise above): the top.
+				data-pin={host && inSheet === 'top' ? 'top' : undefined}
+				style={
+					{
+						'--toast-lift': `${host ? (inSheet === 'top' ? 0 : inSheet) : lift}px`,
+					} as React.CSSProperties
+				}
+				className="pb-safe pointer-events-none fixed inset-x-0 top-auto bottom-(--toast-lift) z-50 m-0 flex h-auto w-full max-w-none justify-center overflow-visible border-0 bg-transparent p-0 px-4 data-[pin=top]:top-3 data-[pin=top]:bottom-auto [&:not(:popover-open)]:hidden"
+			>
+				{shown ? (
+					<div
+						ref={ref}
+						className={cn(
+							't-toast pointer-events-auto flex max-w-lg items-center gap-3 rounded-2xl px-4 py-3 shadow-lg',
+							shown.tone === 'danger'
+								? 'bg-destructive text-white'
+								: shown.tone === 'highlight'
+									? 'bg-primary text-primary-foreground'
+									: 'bg-foreground text-background',
+							open && message && 'is-open',
+						)}
+					>
+						<p className="min-w-0 flex-1 text-sm font-medium">{shown.text}</p>
+						{shown.action ? (
+							<button
+								type="button"
+								// Leaving, it can no longer be used.
+								disabled={!message}
+								onClick={() => {
+									if (!message || acted.current === shown.id) return
+									acted.current = shown.id
+									shown.action?.run()
+									onDone()
+								}}
+								className="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold underline-offset-4 hover:underline"
+							>
+								{shown.action.label}
+							</button>
+						) : null}
+						<button
+							type="button"
+							aria-label={_(t`Dismiss`)}
+							onClick={onDone}
+							className="-me-1 inline-flex size-10 shrink-0 items-center justify-center rounded-xl opacity-70 hover:opacity-100"
+						>
+							<Icon name="x" className="size-4" />
+						</button>
+					</div>
+				) : null}
+			</div>
+		</>
+	)
+	return host ? createPortal(toast, host) : toast
+}
+
+/** Room the toast needs under a sheet's card to sit there without touching it. */
+const TOAST_ROOM_PX = 88
+
+/**
+ * Where a toast shown inside an open sheet goes so it covers none of the
+ * sheet's controls: 0 (the usual place) when the card leaves room under it;
+ * else the pixels that lift it above the card's footer (the footer holds the
+ * sheet's actions); else `'top'`, for a sheet with no footer that fills the screen.
+ */
+function useSheetClearance(
+	host: HTMLElement | null,
+	active: boolean,
+): number | 'top' {
+	const [clearance, setClearance] = useState<number | 'top'>(0)
+	useLayoutEffect(() => {
+		if (!host || !active) {
+			setClearance(0)
+			return
+		}
+		const measure = () => {
+			const footer = host.querySelector('footer')
+			const card = host.getBoundingClientRect()
+			if (window.innerHeight - card.bottom >= TOAST_ROOM_PX)
+				return setClearance(0)
+			if (!footer) return setClearance('top')
+			setClearance(
+				Math.max(0, window.innerHeight - footer.getBoundingClientRect().top) +
+					8,
+			)
+		}
+		measure()
+		window.addEventListener('resize', measure)
+		if (typeof ResizeObserver === 'undefined')
+			return () => window.removeEventListener('resize', measure)
+		const observer = new ResizeObserver(measure)
+		observer.observe(host)
+		const footer = host.querySelector('footer')
+		if (footer) observer.observe(footer)
+		return () => {
+			window.removeEventListener('resize', measure)
+			observer.disconnect()
+		}
+	}, [host, active])
+	return clearance
+}
+
+/** An element's height, kept current as it changes (0 without one). */
+function useHeightOf(ref?: React.RefObject<HTMLElement | null>): number {
+	const [height, setHeight] = useState(0)
+	useEffect(() => {
+		const el = ref?.current
+		if (!el || typeof ResizeObserver === 'undefined') return
+		const observer = new ResizeObserver(() => setHeight(el.offsetHeight))
+		observer.observe(el)
+		setHeight(el.offsetHeight)
+		return () => observer.disconnect()
+	}, [ref])
+	return height
+}
+
+/**
+ * The open modal dialog on top, if any. Everything outside it is inert, so
+ * whatever must stay usable while it is open (the toast) renders inside it.
+ */
+function useModalHost(): HTMLElement | null {
+	const [host, setHost] = useState<HTMLElement | null>(null)
+	useEffect(() => {
+		const pick = () => {
+			const open = Array.from(
+				document.querySelectorAll<HTMLDialogElement>('dialog[open]'),
+			).filter((dialog) => {
+				try {
+					return dialog.matches(':modal')
+				} catch {
+					return true
+				}
+			})
+			setHost(open.at(-1) ?? null)
+		}
+		pick()
+		const touchesDialogs = (records: MutationRecord[]) =>
+			records.some(
+				(r) =>
+					r.type === 'attributes' ||
+					[...r.addedNodes, ...r.removedNodes].some(
+						(node) =>
+							node instanceof Element &&
+							(node.tagName === 'DIALOG' || node.querySelector('dialog')),
+					),
+			)
+		const observer = new MutationObserver((records) => {
+			if (touchesDialogs(records)) pick()
+		})
+		observer.observe(document.body, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			attributeFilter: ['open'],
+		})
+		return () => observer.disconnect()
+	}, [])
+	return host
+}
+
+/** The till's one celebration: the disc pops and the shared check reveals itself. */
+export function SuccessMark({
+	tone = 'success',
+	size = 'md',
+}: {
+	tone?: 'success' | 'muted'
+	size?: 'md' | 'lg'
+}) {
+	return (
+		<div
+			className={cn(
+				't-success-disc flex items-center justify-center rounded-full',
+				tone === 'success'
+					? 'bg-success text-white'
+					: 'bg-muted text-foreground',
+				size === 'lg' ? 'size-24' : 'size-20',
+			)}
+		>
+			<span className="t-success-check" data-state="in" aria-hidden>
+				<Icon name="check" className={size === 'lg' ? 'size-12' : 'size-10'} />
+			</span>
+		</div>
+	)
+}

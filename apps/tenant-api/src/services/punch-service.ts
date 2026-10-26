@@ -1,10 +1,11 @@
-import { and, desc, eq, gte, isNull, lte, max, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, isNull, lt, lte, max, or } from 'drizzle-orm'
 import {
 	allowedClockEvents,
 	breakIsPaid,
 	businessDateOf,
 	checkOfflinePunchTime,
 	type ClockEvent,
+	type BreakKind,
 	type ClockState,
 	decideClockIn,
 	decideClockOut,
@@ -22,25 +23,28 @@ import {
 	staffJobs,
 	type StaffJob,
 	type StaffScopeAssignment,
+	staffMembers,
 	type StaffMember,
 	staffPositions,
 	type StaffPosition,
 	timeBreaks,
+	type TimeBreakRow,
 	timeEntries,
+	timeEntryEdits,
 	type TimeEntry,
 	timePunches,
-	type KioskDevice,
 	type TenantDatabase,
 	runTenantTransaction,
 } from '@repo/tenant-db'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { resolvePolicy } from './labor-policy-service.ts'
-import { type StaffDb, writeKioskAudit } from './staff-audit.ts'
+import { type StaffDb, writeDeviceAudit } from './staff-audit.ts'
 import {
 	issuesForEntry,
 	loadBreaks,
 	persistedPunchFlags,
 	refreshStaffCaches,
+	snapshotCard,
 } from './time-entry-calc.ts'
 
 /**
@@ -96,9 +100,17 @@ export function resetShiftMatcher() {
 	defaultPunchDeps.matchShift = noScheduleMatcher
 }
 
+/** Which kind of paired tablet took a punch. */
+export type PunchSource = 'kiosk' | 'pos'
+
+/** The paired tablet that took a punch: a time-clock kiosk or a Station terminal. */
+export type PunchDevice = { id: string; scopeId: string }
+
 export type PunchSubject = {
 	orgId: string
-	device: KioskDevice
+	device: PunchDevice
+	/** A kiosk when omitted. */
+	source?: PunchSource
 	assignment: StaffScopeAssignment
 	member: StaffMember
 	ipHash: string | null
@@ -290,10 +302,16 @@ export async function describeClockState(
 					localDate,
 				)
 			: []
+	const allowedEvents =
+		elsewhere || !policy.timeTrackingEnabled ? [] : allowedClockEvents(state)
 	return {
 		state,
-		allowedEvents:
-			elsewhere || !policy.timeTrackingEnabled ? [] : allowedClockEvents(state),
+		allowedEvents,
+		// A workplace with rest-break rules lets people say which break they take.
+		// Sent whatever the state, so a till can remember it for offline breaks.
+		breakKinds: policy.breakRules.rules.some((rule) => rule.kind === 'rest')
+			? (['meal', 'rest'] as BreakKind[])
+			: [],
 		positions: positionOptions(jobs).length > 1 ? positionOptions(jobs) : [],
 		// Ask for cash tips at clock-out only for a role marked as receiving tips.
 		promptTips:
@@ -350,6 +368,62 @@ function successResult(
 }
 
 /**
+ * The longest a late break or clock-out saved offline may stretch a card the
+ * automatic clock-out closed (`OFFLINE_PUNCH_LATE_SYNC_MS`). Anything further
+ * past the automatic close is refused as a time conflict for a manager to look
+ * at, rather than silently stretching an old card across days.
+ */
+const MAX_AUTO_CLOSED_STRETCH_MS = 12 * 60 * 60 * 1000
+
+/**
+ * A punch this device already recorded under this id, answered as it was
+ * (before any PIN check: the PIN may have been given to someone else since,
+ * and a lost answer must never turn a recorded punch into a refused one).
+ * A tablet paired again at the same workplace keeps its waiting punches but
+ * has a new device id: its punch still counts as its own when it names the
+ * same person (ids are random, so only the till that made the punch knows it).
+ * Null when there is none, or it was refused.
+ */
+export async function replayRecordedPunch(
+	db: TenantDatabase,
+	deviceId: string,
+	request: Pick<KioskPunchRequest, 'id' | 'kind' | 'staffId'>,
+	now: number,
+	scopeId?: string,
+): Promise<PunchSuccess | null> {
+	const [existing] = await db
+		.select()
+		.from(timePunches)
+		.where(eq(timePunches.id, request.id))
+		.limit(1)
+	if (
+		!existing ||
+		(existing.deviceId !== deviceId &&
+			(!request.staffId ||
+				existing.staffId !== request.staffId ||
+				(scopeId !== undefined && existing.scopeId !== scopeId))) ||
+		existing.kind !== request.kind ||
+		existing.outcome !== 'accepted'
+	)
+		return null
+	const [member] = await db
+		.select()
+		.from(staffMembers)
+		.where(eq(staffMembers.id, existing.staffId))
+		.limit(1)
+	if (!member) return null
+	const state = await currentState(db, member.id)
+	return successResult(
+		existing.kind,
+		state,
+		member,
+		existing.effectiveAt ?? existing.serverAt,
+		now,
+		true,
+	)
+}
+
+/**
  * Processes one kiosk punch. Idempotent on `request.id`. Safe to call
  * concurrently for the same person: the open-entry and open-break unique
  * indexes are the arbiter, and a lost race is retried once against the new
@@ -381,6 +455,7 @@ async function runPunch(
 	deps: PunchDeps,
 ): Promise<PunchOutcome> {
 	const { member, device, timeZone } = subject
+	const source = subject.source ?? 'kiosk'
 	const now = deps.now()
 	const scopeId = device.scopeId
 
@@ -427,17 +502,19 @@ async function runPunch(
 		code: KioskErrorCode,
 		extra?: Record<string, unknown>,
 		outcome: 'rejected_state' | 'rejected_policy' = 'rejected_policy',
+		/** The card a refused punch concerns, when it is not the open one. */
+		entryId: string | null = open?.entry.id ?? null,
 	): Promise<PunchFailure> => {
 		await tx.insert(timePunches).values({
 			id: request.id,
 			staffId: member.id,
 			scopeId,
-			entryId: open?.entry.id ?? null,
+			entryId,
 			kind: request.kind,
 			clientAt: request.clientAt,
 			serverAt: now,
 			effectiveAt: null,
-			source: 'kiosk',
+			source,
 			deviceId: device.id,
 			outcome,
 			rejectCode: code,
@@ -448,8 +525,8 @@ async function runPunch(
 			ipHash: subject.ipHash,
 			createdAt: now,
 		})
-		await writeKioskAudit(tx, device, subject.ipHash, {
-			action: 'kiosk.punch.rejected',
+		await writeDeviceAudit(tx, source, device, subject.ipHash, {
+			action: `${source}.punch.rejected`,
 			entityType: 'time_punch',
 			entityId: request.id,
 			staffId: member.id,
@@ -476,6 +553,7 @@ async function runPunch(
 		effectiveAt = verdict.effectiveAtMs
 		flags.push('offline_punch')
 		if (verdict.flaggedSkew) flags.push('clock_skew')
+		if (verdict.lateSync) flags.push('late_sync')
 	}
 	const localDate = businessDateOf(
 		effectiveAt,
@@ -487,12 +565,80 @@ async function runPunch(
 	if (open && open.entry.scopeId !== scopeId) {
 		return reject('clocked_in_elsewhere', undefined, 'rejected_state')
 	}
-	const next = nextClockState(state, request.kind)
+	// A punch saved offline after the server closed the shift on its own
+	// (automatic clock-out, while the till could not send) belongs to that card:
+	// the person was still there. A clock-out replaces the automatic time,
+	// earlier or later; a break lands on the card and stretches it to when they
+	// were last seen, until their clock-out arrives. The card keeps its
+	// auto_clock_out flag and stays with a manager. One a manager has already
+	// edited, approved or locked is left alone: the punch is refused, on it.
+	let autoClosed: AutoClosedCard | null = null
+	if (!open && request.offline && request.kind !== 'clock_in') {
+		const [latest] = await tx
+			.select()
+			.from(timeEntries)
+			.where(
+				and(
+					eq(timeEntries.staffId, member.id),
+					isNull(timeEntries.voidedAt),
+					lt(timeEntries.clockInAt, effectiveAt),
+				),
+			)
+			.orderBy(desc(timeEntries.clockInAt))
+			.limit(1)
+		if (
+			latest?.clockOutKind === 'auto' &&
+			latest.clockOutAt !== null &&
+			latest.scopeId === scopeId
+		) {
+			if (
+				latest.status === 'approved' ||
+				latest.status === 'locked' ||
+				latest.issues.includes('edited')
+			)
+				return reject('not_clocked_in', undefined, 'rejected_state', latest.id)
+			const breaks = (
+				(await loadBreaks(tx, [latest.id])).get(latest.id) ?? []
+			).filter((b) => b.voidedAt === null)
+			const [firstLateEdit] = await tx
+				.select({ before: timeEntryEdits.before })
+				.from(timeEntryEdits)
+				.where(
+					and(
+						eq(timeEntryEdits.entryId, latest.id),
+						eq(timeEntryEdits.action, 'late_punch'),
+					),
+				)
+				.orderBy(asc(timeEntryEdits.createdAt), asc(timeEntryEdits.id))
+				.limit(1)
+			const firstBeforeClose = (
+				firstLateEdit?.before as { clockOutAt?: unknown } | null | undefined
+			)?.clockOutAt
+			const originalClose =
+				typeof firstBeforeClose === 'number'
+					? firstBeforeClose
+					: latest.clockOutAt
+			autoClosed = {
+				entry: latest,
+				clockOutAt: latest.clockOutAt,
+				autoClosedAt: originalClose,
+				breaks,
+				// Still running when the card closed: it ends with the card.
+				running:
+					breaks.find(
+						(b) => b.endPunchId === null && b.endAt === latest.clockOutAt,
+					) ?? null,
+			}
+		}
+	}
+	const from = autoClosed ? (autoClosed.running ? 'on_break' : 'in') : state
+	const next = nextClockState(from, request.kind)
 	if (!next) {
 		return reject(
-			stateRejection(state, request.kind),
+			stateRejection(from, request.kind),
 			undefined,
 			'rejected_state',
+			autoClosed?.entry.id,
 		)
 	}
 
@@ -516,6 +662,24 @@ async function runPunch(
 		)
 		if (effectiveAt < floor)
 			return reject('time_conflict', undefined, 'rejected_state')
+	} else if (autoClosed) {
+		// Never before a break that is already on the card.
+		const floor = Math.max(
+			autoClosed.entry.clockInAt,
+			...autoClosed.breaks.map((b) =>
+				b === autoClosed!.running ? b.startAt : (b.endAt ?? b.startAt),
+			),
+		)
+		if (
+			effectiveAt < floor ||
+			effectiveAt - autoClosed.autoClosedAt > MAX_AUTO_CLOSED_STRETCH_MS
+		)
+			return reject(
+				'time_conflict',
+				undefined,
+				'rejected_state',
+				autoClosed.entry.id,
+			)
 	}
 
 	// 5. Apply.
@@ -523,22 +687,50 @@ async function runPunch(
 	let positionId: string | null = null
 
 	if (request.kind === 'clock_in') {
-		const jobs = await activeJobs(tx, member.id, scopeId, localDate)
 		const shift = await deps.matchShift(tx, {
 			staffId: member.id,
 			scopeId,
 			atMs: effectiveAt,
 			timeZone,
 		})
-		const decision = decideClockIn({ policy, atMs: effectiveAt, shift })
-		if (!decision.ok) {
+		const ruled = decideClockIn({ policy, atMs: effectiveAt, shift })
+		// Online the person is told to wait or ask. A punch queued offline was
+		// already accepted on the till and the person went to work: it is
+		// recorded, flagged, and the card waits for a manager, rather than lost
+		// along with the rest of that shift.
+		if (!ruled.ok && !request.offline) {
 			return reject(
-				decision.code,
-				decision.code === 'early_clock_in'
-					? { earliestAt: decision.earliestAt }
+				ruled.code,
+				ruled.code === 'early_clock_in'
+					? { earliestAt: ruled.earliestAt }
 					: undefined,
 			)
 		}
+		const early = !ruled.ok && ruled.code === 'early_clock_in'
+		const decision = ruled.ok
+			? ruled
+			: {
+					ok: true as const,
+					flags: [
+						early ? ('early_in' as const) : ('unscheduled' as const),
+						'offline_override' as const,
+					],
+					// Early still has its shift: its role, its end and the schedule link.
+					shift: early ? (shift ?? null) : null,
+				}
+		// Paid from the earliest allowed time, as if they had waited (as online);
+		// the punch itself keeps the time it was tapped.
+		// Never after now: a replay that arrives before then starts when it arrives.
+		const clockInAt =
+			!ruled.ok && ruled.code === 'early_clock_in'
+				? Math.min(Math.max(effectiveAt, ruled.earliestAt), now)
+				: effectiveAt
+		const entryLocalDate = businessDateOf(
+			clockInAt,
+			timeZone,
+			policy.workdayStartMinute,
+		)
+		const jobs = await activeJobs(tx, member.id, scopeId, entryLocalDate)
 
 		let picked: JobWithPosition | null = null
 		if (request.positionId) {
@@ -552,6 +744,10 @@ async function runPunch(
 				: undefined
 			if (scheduled) {
 				picked = scheduled
+			} else if (request.offline) {
+				// Nobody could be asked: the main job, for a manager to confirm.
+				picked = jobs[0]!
+				flags.push('offline_override')
 			} else {
 				// A prompt, not an event: nothing is recorded and the same punch id
 				// is reused when the person picks.
@@ -576,9 +772,9 @@ async function runPunch(
 			jobId: picked?.job.id ?? null,
 			positionId,
 			shiftId: decision.shift?.id ?? null,
-			clockInAt: effectiveAt,
+			clockInAt,
 			timeZone,
-			localDate,
+			localDate: entryLocalDate,
 			status: 'open',
 			issues: [...new Set(flags)],
 			rateMinor: rateMinor ?? null,
@@ -586,6 +782,20 @@ async function runPunch(
 			overtimeExempt: picked?.job.overtimeExempt ?? false,
 			createdAt: now,
 			updatedAt: now,
+		})
+	} else if (autoClosed) {
+		entryId = autoClosed.entry.id
+		positionId = autoClosed.entry.positionId
+		await applyToAutoClosedCard(tx, autoClosed, {
+			effectiveAt,
+			now,
+			policy,
+			flags,
+			request,
+			deps,
+			timeZone,
+			source,
+			deviceId: device.id,
 		})
 	} else {
 		const entry = open!.entry
@@ -620,6 +830,7 @@ async function runPunch(
 				request,
 				deps,
 				timeZone,
+				source,
 			})
 		}
 	}
@@ -633,7 +844,7 @@ async function runPunch(
 		clientAt: request.clientAt,
 		serverAt: now,
 		effectiveAt,
-		source: 'kiosk',
+		source,
 		deviceId: device.id,
 		outcome: 'accepted',
 		flags: [...new Set(flags)],
@@ -644,7 +855,133 @@ async function runPunch(
 		createdAt: now,
 	})
 
-	return successResult(request.kind, next, member, effectiveAt, now, false)
+	// A punch landing on a closed card leaves the person clocked out.
+	return successResult(
+		request.kind,
+		autoClosed ? 'out' : next,
+		member,
+		effectiveAt,
+		now,
+		false,
+	)
+}
+
+/** A card the automatic clock-out closed, with the breaks on it. */
+type AutoClosedCard = {
+	entry: TimeEntry
+	clockOutAt: number
+	/** The original automatic clock-out time before any late punch stretched it. */
+	autoClosedAt: number
+	breaks: TimeBreakRow[]
+	/** A break still running when the card closed: it ends with the card. */
+	running: TimeBreakRow | null
+}
+
+/**
+ * Lands a punch saved offline on a card the automatic clock-out has closed
+ * since (see `runPunch`), and writes the change to the card's history.
+ */
+async function applyToAutoClosedCard(
+	tx: StaffDb,
+	card: AutoClosedCard,
+	input: {
+		effectiveAt: number
+		now: number
+		policy: LaborPolicyView
+		flags: string[]
+		request: KioskPunchRequest
+		deps: PunchDeps
+		timeZone: string
+		source: PunchSource
+		deviceId: string
+	},
+) {
+	const { entry, running } = card
+	const { effectiveAt, now, policy, request } = input
+	if (request.kind === 'clock_out') {
+		await closeEntry(tx, {
+			entry,
+			openBreakId: running?.id ?? null,
+			effectiveAt,
+			now,
+			policy,
+			flags: input.flags,
+			request,
+			deps: input.deps,
+			timeZone: input.timeZone,
+			source: input.source,
+			reopenReview: true,
+		})
+	} else {
+		// Seen at work until then: the card stretches, and a running break with it.
+		const clockOutAt = Math.max(card.clockOutAt, effectiveAt)
+		if (request.kind === 'break_start') {
+			const kind = request.breakKind ?? 'meal'
+			await tx.insert(timeBreaks).values({
+				entryId: entry.id,
+				kind,
+				paid: breakIsPaid(policy.breakRules.rules, kind),
+				startAt: effectiveAt,
+				endAt: clockOutAt,
+				startPunchId: request.id,
+				createdAt: now,
+			})
+		} else {
+			await tx
+				.update(timeBreaks)
+				.set({ endAt: effectiveAt, endPunchId: request.id })
+				.where(eq(timeBreaks.id, running!.id))
+		}
+		const breaks = (await loadBreaks(tx, [entry.id])).get(entry.id) ?? []
+		const issues = issuesForEntry(
+			{ ...entry, clockOutAt },
+			breaks,
+			policy,
+			input.flags,
+		)
+		await tx
+			.update(timeEntries)
+			.set({
+				clockOutAt,
+				status: statusAfterClose(issues),
+				issues,
+				// Changed since a manager looked at it.
+				reviewedBy: null,
+				reviewedAt: null,
+				version: entry.version + 1,
+				updatedAt: now,
+			})
+			.where(eq(timeEntries.id, entry.id))
+		await refreshStaffCaches(
+			tx,
+			entry.staffId,
+			{ clockInAt: entry.clockInAt },
+			now,
+		)
+	}
+	const [settled] = await tx
+		.select()
+		.from(timeEntries)
+		.where(eq(timeEntries.id, entry.id))
+		.limit(1)
+	const breaksAfter = (await loadBreaks(tx, [entry.id])).get(entry.id) ?? []
+	await tx.insert(timeEntryEdits).values({
+		entryId: entry.id,
+		staffId: entry.staffId,
+		scopeId: entry.scopeId,
+		editorId: input.deviceId,
+		via: input.source,
+		action: 'late_punch',
+		reason:
+			'A punch saved while the time clock was offline arrived after the automatic clock-out.',
+		before: snapshotCard(entry, card.breaks),
+		after: snapshotCard(settled ?? entry, breaksAfter),
+		hoursDeltaMinutes:
+			settled?.paidMinutes != null && entry.paidMinutes != null
+				? settled.paidMinutes - entry.paidMinutes
+				: null,
+		createdAt: now,
+	})
 }
 
 /** Carries punch-derived flags onto an open entry and bumps its version. */
@@ -673,6 +1010,9 @@ async function closeEntry(
 		request: KioskPunchRequest
 		deps: PunchDeps
 		timeZone: string
+		source: PunchSource
+		/** The card was closed and may have been looked at: it needs a fresh look. */
+		reopenReview?: boolean
 	},
 ) {
 	const { entry, effectiveAt, now, policy, request } = input
@@ -713,10 +1053,11 @@ async function closeEntry(
 		.update(timeEntries)
 		.set({
 			clockOutAt: effectiveAt,
-			clockOutKind: 'kiosk',
+			clockOutKind: input.source,
 			status: statusAfterClose(issues),
 			issues,
 			cashTipsMinor: request.cashTipsMinor ?? entry.cashTipsMinor,
+			...(input.reopenReview ? { reviewedBy: null, reviewedAt: null } : {}),
 			version: entry.version + 1,
 			updatedAt: now,
 		})

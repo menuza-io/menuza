@@ -14,6 +14,8 @@ import {
 	type EngineServiceAvailabilityInput,
 	type EngineTableInput,
 	type ReservationStatus,
+	TILL_NO_SHOW_GRACE_MS,
+	TILL_UNDO_WINDOW_MS,
 } from '@repo/reservations'
 import {
 	getTenantDb,
@@ -38,6 +40,7 @@ import {
 	rsvTurnTimes,
 	type RSV_COURSE_STATUS_VALUES,
 	type RSV_CONTACT_STATUS_VALUES,
+	type TenantDatabase,
 } from '@repo/tenant-db'
 import { and, asc, desc, eq, inArray, isNull, lte, gte, sql } from 'drizzle-orm'
 import { queryInChunks } from '../lib/chunked-in.ts'
@@ -62,6 +65,7 @@ import {
 	parseTimeToMinutes,
 	serializeReservationsForBook,
 	type SerializedBookReservation,
+	withoutSensitive,
 } from './rsv-day-feed-service.ts'
 import { loadStaffDayState, type StaffDayState } from './rsv-special-days.ts'
 import {
@@ -135,6 +139,14 @@ export function generateConfirmationCode(length = 6): string {
 	}
 	return out
 }
+
+/** A party that is at the door or at its table. */
+const PARTY_PRESENT_STATUSES = new Set([
+	'arrived',
+	'partially_arrived',
+	'seated',
+	'partially_seated',
+])
 
 const SOFT_REFLOWABLE_STATUSES = new Set([
 	'pending_payment',
@@ -1074,6 +1086,7 @@ export async function createOperatorReservation(params: {
 				guestId: input.guestId,
 				guest: input.guest,
 				actorId: params.actorId,
+				keepMatchedProfile: params.canReadGuestSensitive !== true,
 			})
 
 			const resId = createId('rsv')
@@ -1307,6 +1320,8 @@ export async function createWalkIn(params: {
 		overbook?: boolean
 		overbookReason?: string | null
 		dietaryNotes?: string | null
+		/** The guest's own words (a waitlist note): shown only with guest details. */
+		guestRequests?: string | null
 		internalNotes?: string | null
 		staffNotes?: string | null
 		guestId?: string | null
@@ -1503,6 +1518,7 @@ export async function createWalkIn(params: {
 					lastName: 'Guest',
 				},
 				actorId: params.actorId,
+				keepMatchedProfile: params.canReadGuestSensitive !== true,
 			})
 
 			const resId = createId('rsv')
@@ -1536,6 +1552,7 @@ export async function createWalkIn(params: {
 				comboId: assignedComboId,
 				overbooked: isOverbook,
 				dietaryNotes: input.dietaryNotes ?? null,
+				guestRequests: input.guestRequests ?? null,
 				staffNotes: input.internalNotes ?? input.staffNotes ?? null,
 				paymentStatus: 'none',
 				scheduleVersion: 1,
@@ -1641,7 +1658,16 @@ export async function createWalkIn(params: {
 export async function getReservationDetail(
 	db: DbOrTx,
 	reservationId: string,
-	opts?: { canReadGuestSensitive?: boolean },
+	opts?: {
+		canReadGuestSensitive?: boolean
+		/** Card brand, last digits and provider references. */
+		canReadPayments?: boolean
+		/**
+		 * The guest's profile and their bookings at every location. A host at a
+		 * till without guest details sees the booking, not the guestbook.
+		 */
+		guestHistory?: boolean
+	},
 ) {
 	const row = await db
 		.select()
@@ -1676,17 +1702,24 @@ export async function getReservationDetail(
 			.all(),
 	])
 
-	const guestDetail = row.guestId
-		? await getGuestSummary(db, row.guestId, { canReadSensitive }).catch(
-				() => null,
-			)
-		: null
+	const guestDetail =
+		row.guestId && opts?.guestHistory !== false
+			? await getGuestSummary(db, row.guestId, { canReadSensitive }).catch(
+					() => null,
+				)
+			: null
 
 	return {
 		reservation: serialized!,
-		events,
+		// The detail hides allergy and dietary notes without the grant; so does its history.
+		events: canReadSensitive
+			? events
+			: events.map((event) => ({
+					...event,
+					data: withoutSensitive(event.data ?? {}) as typeof event.data,
+				})),
 		guestDetail,
-		paymentIntents,
+		paymentIntents: opts?.canReadPayments === true ? paymentIntents : [],
 		messages,
 	}
 }
@@ -2196,6 +2229,14 @@ export async function updateReservation(params: {
 	orgId: string
 	reservationId: string
 	actorId: string
+	/**
+	 * The caller may not move money and may not overbook (a till without the
+	 * payment grant): a size or time change on a booking with a deposit, a
+	 * card policy or an experience is a manager's, and pacing is enforced.
+	 */
+	paymentLocked?: boolean
+	/** A till may keep a table longer, never shorten the stay. */
+	stayOnlyGrows?: boolean
 	input: {
 		date?: string
 		time?: string | number
@@ -2318,6 +2359,83 @@ export async function updateReservation(params: {
 			const nextStartAt = resolvedInstant.instantMs
 			const nextEndAt = nextStartAt + nextDurationMin * 60_000
 
+			const sizeOrTimeChanged =
+				nextPartySize !== current.partySize ||
+				targetBusinessDate !== current.businessDate ||
+				nextLocalStartMin !== current.localStartMin
+			const stayChanged = nextDurationMin !== current.durationMin
+			// A till can only keep a table longer: shortening a stay would show the
+			// table free while the party is still sitting at it.
+			if (params.stayOnlyGrows && nextDurationMin < current.durationMin)
+				throw conflict(
+					'manager_required',
+					'A shorter stay is a manager’s to set in the app.',
+				)
+			// A party at the door or at its table stays put: only the stay or the
+			// size changes, never where they sit.
+			const partyPresent =
+				PARTY_PRESENT_STATUSES.has(current.status) &&
+				targetBusinessDate === current.businessDate &&
+				nextLocalStartMin === current.localStartMin
+			const stayOnlyChange =
+				!sizeOrTimeChanged && stayChanged && !params.input.tableIds
+			// A cancelled, finished or no-show booking does not change size, time or
+			// stay (it would also message the guest about a booking that is over).
+			if (
+				(sizeOrTimeChanged || stayChanged) &&
+				!ACTIVE_OCCUPANCY_STATUSES.has(current.status)
+			)
+				throw conflict(
+					'invalid_status',
+					'Only a live booking changes size or time.',
+				)
+			if (params.paymentLocked && (sizeOrTimeChanged || stayChanged)) {
+				const policyAmount = Number(
+					(current.policySnapshot as { totalAmountMinor?: unknown } | null)
+						?.totalAmountMinor ?? 0,
+				)
+				if (
+					current.status === 'pending_payment' ||
+					current.paymentStatus !== 'none' ||
+					current.experienceId !== null ||
+					policyAmount > 0
+				)
+					throw conflict(
+						'manager_required',
+						'This booking has a payment on it. A manager changes it in the app.',
+					)
+				const slotMoved =
+					targetBusinessDate !== current.businessDate ||
+					nextLocalStartMin !== current.localStartMin
+				// A till moves a booking forward in time only, never into the past.
+				if (slotMoved && nextStartAt < now - 15 * 60_000)
+					throw conflict('in_the_past', 'That time has already passed.')
+			}
+			// No overbooking from a till: the slot's pacing holds for the new size.
+			// Fewer covers in the same slot never needs room (a manager may have
+			// overbooked it already).
+			if (
+				params.paymentLocked &&
+				sizeOrTimeChanged &&
+				// Pacing limits new bookings, not a party already at the door or seated.
+				!partyPresent &&
+				(targetBusinessDate !== current.businessDate ||
+					nextLocalStartMin !== current.localStartMin ||
+					nextPartySize > current.partySize)
+			) {
+				const others = state.dayResRows.filter(
+					(r) => r.id !== current.id && ACTIVE_OCCUPANCY_STATUSES.has(r.status),
+				)
+				for (const code of findOperatorPacingBreaches({
+					rules: state.pacingRules,
+					serviceId: nextServiceId,
+					localStartMin: nextLocalStartMin,
+					partySize: nextPartySize,
+					activeReservations: others,
+				}))
+					throw conflict(code, 'That time is full for this party size.')
+			}
+
 			const scheduleChanged =
 				targetBusinessDate !== current.businessDate ||
 				nextLocalStartMin !== current.localStartMin ||
@@ -2370,16 +2488,33 @@ export async function updateReservation(params: {
 						)
 				}
 
-				// Check if nextTableIds fit partySize and are free (or can reflow soft overlapping bookings)
-				const capacityFits =
-					nextTableIds.length > 0 &&
+				// A party already at its table is never moved by a size or stay change:
+				// it keeps its tables unless a manager moves it. Growing past the seats
+				// it has is a manager's call (or an overbook).
+				if (
+					partyPresent &&
+					!params.input.tableIds &&
+					!isOverbook &&
 					nextTableIds.reduce(
 						(sum, tid) => sum + (state.tableById.get(tid)?.maxCovers ?? 0),
 						0,
-					) >= nextPartySize &&
-					(nextTableIds.length > 1 ||
-						(state.tableById.get(nextTableIds[0]!)?.minCovers ?? 1) <=
-							nextPartySize)
+					) < nextPartySize
+				)
+					throw conflict(
+						'party_too_large_for_table',
+						'No room for that many at their table. A manager moves them.',
+					)
+				// Check if nextTableIds fit partySize and are free (or can reflow soft overlapping bookings)
+				const capacityFits =
+					((partyPresent || stayOnlyChange) && !params.input.tableIds) ||
+					(nextTableIds.length > 0 &&
+						nextTableIds.reduce(
+							(sum, tid) => sum + (state.tableById.get(tid)?.maxCovers ?? 0),
+							0,
+						) >= nextPartySize &&
+						(nextTableIds.length > 1 ||
+							(state.tableById.get(nextTableIds[0]!)?.minCovers ?? 1) <=
+								nextPartySize))
 
 				if (!capacityFits && !params.input.tableIds && !isOverbook) {
 					const assignRes = assignTables({
@@ -2729,6 +2864,18 @@ export async function transitionReservationStatus(params: {
 	actorId: string
 	/** The tick acts as `system` (no operator id on the event). */
 	actorKind?: 'operator' | 'system'
+	/**
+	 * The caller may not move money (a till without the payment grant). Judged
+	 * on the row as it is inside the write: confirming an unpaid booking waives
+	 * its deposit, and cancelling or a no-show on a paid one refunds or charges.
+	 */
+	paymentLocked?: boolean
+	/**
+	 * A till works the service in front of it: it seats and checks in only
+	 * today's bookings, and calls a no-show only once the booking's time
+	 * (plus a grace) has passed, so a mis-tap cannot mark tonight's guest.
+	 */
+	serviceDayOnly?: boolean
 	input: {
 		status: string
 		covers?: number | null
@@ -2783,6 +2930,51 @@ export async function transitionReservationStatus(params: {
 			}
 
 			const targetStatus = params.input.status
+			if (
+				params.paymentLocked &&
+				(current.status === 'pending_payment' ||
+					((targetStatus === 'cancelled' || targetStatus === 'no_show') &&
+						hasMoneyOnIt(current)))
+			)
+				throw conflict(
+					'manager_required',
+					'This booking has a payment on it. A manager changes it in the app.',
+				)
+			if (params.serviceDayOnly) {
+				if (
+					targetStatus === 'no_show' &&
+					now < current.startAt + TILL_NO_SHOW_GRACE_MS
+				)
+					throw conflict(
+						'too_early',
+						'It is too early to call this booking a no-show.',
+					)
+				if (
+					targetStatus === 'arrived' ||
+					targetStatus === 'partially_arrived' ||
+					targetStatus === 'seated' ||
+					targetStatus === 'partially_seated'
+				) {
+					const settings = await tx
+						.select({
+							timeZone: rsvLocationSettings.timeZone,
+							dayStartMin: rsvLocationSettings.dayStartMin,
+						})
+						.from(rsvLocationSettings)
+						.where(eq(rsvLocationSettings.locationId, current.locationId))
+						.get()
+					const today = instantToLocal(
+						now,
+						settings?.timeZone ?? current.timeZone ?? 'UTC',
+						settings?.dayStartMin ?? 240,
+					).businessDate
+					if (current.businessDate !== today)
+						throw conflict(
+							'not_today',
+							"This booking is for another day. Seat today's bookings only.",
+						)
+				}
+			}
 			const allowedSet = VALID_STATUS_TRANSITIONS[current.status]
 			if (!allowedSet || !allowedSet.has(targetStatus)) {
 				throw conflict(
@@ -3053,12 +3245,155 @@ export async function transitionReservationStatus(params: {
 
 const UNDO_FINISHED_WINDOW_MS = 30 * 60_000
 
+type ReservationEventRow = typeof rsvReservationEvents.$inferSelect
+
+/**
+ * The status change an undo reverses: the latest one. An earlier `status_undo`
+ * never counts (undo must not undo itself): once the latest status change is
+ * an undo, there is nothing left to undo.
+ */
+function statusChangeToUndo(
+	/** Newest first. */
+	events: readonly ReservationEventRow[],
+	status: string,
+): {
+	lastStatusEvent: ReservationEventRow | undefined
+	blockedByUndo: boolean
+} {
+	for (const e of events) {
+		if (e.fromStatus === null || e.fromStatus === e.toStatus) continue
+		if (e.type === 'status_undo')
+			return { lastStatusEvent: undefined, blockedByUndo: true }
+		if (e.toStatus === status)
+			return { lastStatusEvent: e, blockedByUndo: false }
+	}
+	return { lastStatusEvent: undefined, blockedByUndo: false }
+}
+
+/** A till undoes its own person's recent change, or the system's automatic no-show. */
+function tillMayUndo(
+	event: Pick<ReservationEventRow, 'actorId' | 'actorKind' | 'at' | 'toStatus'>,
+	actorId: string,
+	nowMs: number,
+	withinMs: number,
+) {
+	return (
+		(event.actorId === actorId ||
+			(event.actorKind === 'system' && event.toStatus === 'no_show')) &&
+		nowMs - event.at <= withinMs
+	)
+}
+
+/**
+ * A payment, a card on file, or a deposit or fee policy: cancelling such a
+ * booking, calling it a no-show or undoing either is a manager's (money), not
+ * a till's without the payment grant.
+ */
+function hasMoneyOnIt(row: {
+	paymentStatus: string
+	policySnapshot: unknown
+}): boolean {
+	const amount = Number(
+		(row.policySnapshot as { totalAmountMinor?: unknown } | null)
+			?.totalAmountMinor ?? 0,
+	)
+	return row.paymentStatus !== 'none' || amount > 0
+}
+
+/**
+ * Which of the day's recent no-shows and finished parties a till may undo, so
+ * it never offers an undo it would be refused. `candidates` are those changed
+ * within the window (the ones a till would show an undo for at all).
+ */
+export async function tillUndoable(
+	db: TenantDatabase,
+	reservations: ReadonlyArray<{
+		id: string
+		status: string
+		noShowAt?: number | null
+		finishedAt?: number | null
+	}>,
+	actorId: string,
+	nowMs: number,
+	/** The till may settle money (the payment grant); else a booking with money on it is the app's. */
+	mayTouchMoney = true,
+): Promise<{ candidates: Set<string>; allowed: Set<string> }> {
+	const recent = reservations.filter((r) => {
+		const at =
+			r.status === 'no_show'
+				? r.noShowAt
+				: r.status === 'finished'
+					? r.finishedAt
+					: null
+		return typeof at === 'number' && nowMs - at <= TILL_UNDO_WINDOW_MS
+	})
+	const candidates = new Set(recent.map((r) => r.id))
+	const allowed = new Set<string>()
+	if (recent.length === 0) return { candidates, allowed }
+	const events = await queryInChunks([...candidates], (chunk) =>
+		db
+			.select()
+			.from(rsvReservationEvents)
+			.where(inArray(rsvReservationEvents.reservationId, chunk)),
+	)
+	const byReservation = new Map<string, ReservationEventRow[]>()
+	for (const event of events) {
+		const list = byReservation.get(event.reservationId) ?? []
+		list.push(event)
+		byReservation.set(event.reservationId, list)
+	}
+	for (const r of recent) {
+		// Newest first, as the undo reads them.
+		const list = (byReservation.get(r.id) ?? []).sort(
+			(a, b) => b.at - a.at || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0),
+		)
+		const { lastStatusEvent } = statusChangeToUndo(list, r.status)
+		if (
+			lastStatusEvent &&
+			tillMayUndo(lastStatusEvent, actorId, nowMs, TILL_UNDO_WINDOW_MS)
+		)
+			allowed.add(r.id)
+	}
+	if (!mayTouchMoney) {
+		// As the undo route refuses: a no-show with a payment or deposit on it.
+		const noShows = recent.filter(
+			(r) => allowed.has(r.id) && r.status === 'no_show',
+		)
+		const rows = await queryInChunks(
+			noShows.map((r) => r.id),
+			(chunk) =>
+				db
+					.select({
+						id: rsvReservations.id,
+						paymentStatus: rsvReservations.paymentStatus,
+						policySnapshot: rsvReservations.policySnapshot,
+					})
+					.from(rsvReservations)
+					.where(inArray(rsvReservations.id, chunk)),
+		)
+		for (const row of rows) if (hasMoneyOnIt(row)) allowed.delete(row.id)
+	}
+	return { candidates, allowed }
+}
+
 export async function undoReservationTransition(params: {
 	/** The caller holds the guest-data grant: allergy notes and sensitive tags stay in the response. */
 	canReadGuestSensitive?: boolean
 	orgId: string
 	reservationId: string
 	actorId: string
+	/**
+	 * Only the caller's own recent change, or the system's (an automatic
+	 * no-show), may be undone: a till fixes the host's slip or the system's
+	 * guess, not a manager's decision or a guest's cancellation days ago.
+	 */
+	ownRecentOnly?: { withinMs: number }
+	/**
+	 * The caller may not move money (a till without the payment grant): a
+	 * cancel or no-show on a booking with money on it stays, judged on the row
+	 * inside the write.
+	 */
+	paymentLocked?: boolean
 	input?: {
 		expectedVersion?: number
 		nowMs?: number
@@ -3099,6 +3434,19 @@ export async function undoReservationTransition(params: {
 				)
 			}
 
+			// Undoing a cancel or a no-show brings back a booking whose payment may
+			// have been settled (a refund, a released card): with money on it, that
+			// is the app's call. Undoing a seating or an arrival never is.
+			if (
+				params.paymentLocked &&
+				(current.status === 'cancelled' || current.status === 'no_show') &&
+				hasMoneyOnIt(current)
+			)
+				throw conflict(
+					'manager_required',
+					'This booking has a payment on it. A manager changes it in the app.',
+				)
+
 			// A refund already requested for a cancelled booking cannot be taken
 			// back by undoing the cancellation.
 			if (current.status === 'cancelled' || current.status === 'no_show') {
@@ -3130,19 +3478,26 @@ export async function undoReservationTransition(params: {
 				.orderBy(desc(rsvReservationEvents.at), desc(rsvReservationEvents.id))
 				.all()
 
-			let lastStatusEvent: (typeof events)[number] | undefined
-			let blockedByUndo = false
-			for (const e of events) {
-				if (e.fromStatus === null || e.fromStatus === e.toStatus) continue
-				if (e.type === 'status_undo') {
-					blockedByUndo = true
-					break
-				}
-				if (e.toStatus === current.status) {
-					lastStatusEvent = e
-					break
-				}
-			}
+			const { lastStatusEvent, blockedByUndo } = statusChangeToUndo(
+				events,
+				current.status,
+			)
+			if (
+				params.ownRecentOnly &&
+				!(
+					lastStatusEvent &&
+					tillMayUndo(
+						lastStatusEvent,
+						params.actorId,
+						params.input?.nowMs ?? Date.now(),
+						params.ownRecentOnly.withinMs,
+					)
+				)
+			)
+				throw conflict(
+					'undo_not_allowed',
+					'Only your own last change can be undone here. A manager changes it in the app.',
+				)
 			const previousStatus = blockedByUndo
 				? null
 				: (lastStatusEvent?.fromStatus ??
@@ -3264,8 +3619,12 @@ export async function undoReservationTransition(params: {
 				current.status === 'cancelled' ||
 				current.status === 'no_show'
 			) {
-				// Reactivate occupancies if still free
+				// Reactivate occupancies if still free. A no-show who turns up after
+				// all comes back even when their table was given away: with no table
+				// (none of it, so a party is never left at half a table), for the
+				// host to place. A cancellation is put back only with its tables.
 				const prevOccs = await loadReleasedOccupancies()
+				const taken: boolean[] = []
 				for (const occ of prevOccs) {
 					const conflictingOcc = await tx
 						.select()
@@ -3279,16 +3638,25 @@ export async function undoReservationTransition(params: {
 							),
 						)
 						.get()
-					if (conflictingOcc && conflictingOcc.reservationId !== current.id) {
-						throw conflict(
-							'table_occupied',
-							'Cannot undo because the table is now occupied',
-						)
+					taken.push(
+						Boolean(
+							conflictingOcc && conflictingOcc.reservationId !== current.id,
+						),
+					)
+				}
+				if (taken.some(Boolean) && current.status !== 'no_show') {
+					throw conflict(
+						'table_occupied',
+						'Cannot undo because the table is now occupied',
+					)
+				}
+				if (!taken.some(Boolean)) {
+					for (const occ of prevOccs) {
+						await tx
+							.update(rsvTableOccupancies)
+							.set({ active: true })
+							.where(eq(rsvTableOccupancies.id, occ.id))
 					}
-					await tx
-						.update(rsvTableOccupancies)
-						.set({ active: true })
-						.where(eq(rsvTableOccupancies.id, occ.id))
 				}
 
 				if (current.guestId) {

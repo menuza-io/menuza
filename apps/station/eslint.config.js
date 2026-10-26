@@ -8,6 +8,28 @@ export default [
 		rules: { 'epic-web/prefer-dispose-in-tests': 'off' },
 	},
 	{
+		// The host stand's book (`apps/reservations/book.css`) is its own stylesheet,
+		// imported by the components, so its class names are not in the Tailwind
+		// entry (`src/styles/app.css`) the rule reads: name them here instead.
+		files: ['src/apps/reservations/**/*.tsx'],
+		rules: {
+			'shadcn/no-unknown-classes': [
+				'error',
+				{
+					allow: [
+						'cn-calendar-dropdown-root',
+						'cn-calendar-caption-label',
+						'cn-input-otp',
+						'toaster',
+						'bk-*',
+						'tl',
+						'tl-*',
+					],
+				},
+			],
+		},
+	},
+	{
 		// Playwright fixtures are plain functions named `use`, not React hooks.
 		files: ['e2e/**/*.ts'],
 		rules: { 'react-hooks/rules-of-hooks': 'off' },

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { sql } from 'drizzle-orm'
 import { migrate } from 'drizzle-orm/libsql/migrator'
+import { readMigrationFiles } from 'drizzle-orm/migrator'
 import type { TenantDatabase } from './types.ts'
 
 /**
@@ -98,6 +99,94 @@ async function recordLegacyBaselineIfComplete(db: TenantDatabase) {
 	await db.run(sql`
 		INSERT INTO __drizzle_migrations (hash, created_at)
 		VALUES (${hash}, ${LEGACY_BASELINE_MILLIS})
+	`)
+	return true
+}
+
+/**
+ * Early local POS databases ran the baseline and phone-pickup delta separately.
+ * Their timestamps precede the consolidated 0020, so Drizzle otherwise replays
+ * its CREATE TABLEs. Recognize only that history and a complete baseline, never
+ * skip the later ZATCA or Station migrations.
+ */
+async function recordLegacyPosBaselineIfComplete(db: TenantDatabase) {
+	const folder = tenantMigrationsFolder()
+	const baseline = readMigrationFiles({ migrationsFolder: folder })[20]!
+	const applied = await db.all<{ hash: string; createdAt: number }>(
+		sql`SELECT hash, created_at AS createdAt FROM __drizzle_migrations`,
+	)
+	if (
+		applied.some((row) => row.createdAt >= baseline.folderMillis) ||
+		!applied.some(
+			(row) =>
+				row.createdAt === 1792632749463 &&
+				row.hash ===
+					'1cbfd042f5883967d978a68feb796b1dded0f95461c72ce97e633656eee059e8',
+		) ||
+		!applied.some(
+			(row) =>
+				row.createdAt === 1792640118613 &&
+				row.hash ===
+					'92e35c595cb9e5bafb77886da47a1da11606fb821c974710d9ef35b825e05230',
+		)
+	)
+		return false
+
+	const snapshot = JSON.parse(
+		fs.readFileSync(path.join(folder, 'meta', '0020_snapshot.json'), 'utf8'),
+	) as {
+		tables: Record<
+			string,
+			{
+				columns: Record<string, { type: string; notNull: boolean }>
+				indexes: Record<string, unknown>
+			}
+		>
+	}
+	const objects = await db.all<{ name: string; type: string }>(
+		sql`SELECT name, type FROM sqlite_master`,
+	)
+	for (const [name, table] of Object.entries(snapshot.tables)) {
+		if (!name.startsWith('pos_')) continue
+		const columns = await db.all<{
+			name: string
+			type: string
+			notnull: number
+		}>(sql`PRAGMA table_info(${sql.identifier(name)})`)
+		if (
+			!Object.entries(table.columns).every(([columnName, expected]) =>
+				columns.some(
+					(column) =>
+						column.name === columnName &&
+						column.type.toLowerCase() === expected.type &&
+						Boolean(column.notnull) === expected.notNull,
+				),
+			) ||
+			!Object.keys(table.indexes).every((index) =>
+				objects.some(
+					(object) => object.type === 'index' && object.name === index,
+				),
+			)
+		)
+			return false
+	}
+	for (const statement of baseline.sql) {
+		const trigger = statement.match(/\bCREATE TRIGGER `([^`]+)`/i)?.[1]
+		if (
+			trigger &&
+			!objects.some(
+				(object) => object.type === 'trigger' && object.name === trigger,
+			)
+		)
+			return false
+	}
+
+	await db.run(sql`
+		INSERT INTO __drizzle_migrations (hash, created_at)
+		SELECT ${baseline.hash}, ${baseline.folderMillis}
+		WHERE NOT EXISTS (
+			SELECT 1 FROM __drizzle_migrations WHERE created_at >= ${baseline.folderMillis}
+		)
 	`)
 	return true
 }
@@ -262,6 +351,16 @@ export async function applyTenantMigrations(
 			if (
 				isLegacyBaselineCollision(error) &&
 				(await recordLegacyBaselineIfComplete(db))
+			) {
+				continue
+			}
+			if (
+				collectErrorMessages(error).some((message) =>
+					/\btable [`"']?pos_cash_movements[`"']? already exists\b/i.test(
+						message,
+					),
+				) &&
+				(await recordLegacyPosBaselineIfComplete(db))
 			) {
 				continue
 			}

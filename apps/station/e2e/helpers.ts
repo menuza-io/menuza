@@ -7,8 +7,8 @@ import {
 } from '@playwright/test'
 import { posOrderRequestSchema } from '@repo/common/pos-orders'
 
-export const API = 'http://127.0.0.1:4711'
-export const APP = 'http://127.0.0.1:4710'
+export const API = `http://127.0.0.1:${process.env.POS_E2E_API_PORT || 4711}`
+export const APP = `http://127.0.0.1:${process.env.POS_E2E_APP_PORT || 4710}`
 export const SETTINGS_KEY = 'pos.settings.v1'
 
 /** What the backend harness exposes for inspection and control. */
@@ -25,6 +25,31 @@ export const backend = {
 		return (await (await fetch(`${API}${path}`)).json()) as T
 	},
 	reset: () => backend.post('/__test/reset'),
+	/** Two rooms, today's bookings around now and two parties waiting (Station host stand). */
+	floor: () => backend.post<{ ok: boolean; date: string }>('/__test/floor'),
+	stationFlags: (body: {
+		timeclock?: boolean
+		reservations?: boolean
+		waitlist?: boolean
+	}) => backend.post('/__test/station-flags', body),
+	bookings: async () =>
+		(
+			await backend.get<{
+				bookings: Array<{ id: string; firstName: string | null }>
+			}>('/__test/bookings')
+		).bookings,
+	punches: async () =>
+		(
+			await backend.get<{
+				punches: Array<{
+					kind: string
+					source: string
+					outcome: string
+					flags: string[]
+					staffId: string
+				}>
+			}>('/__test/punches')
+		).punches,
 	pairingCode: (
 		body: {
 			label?: string
@@ -33,6 +58,8 @@ export const backend = {
 			ttlMs?: number
 			signInRequired?: boolean
 			shiftsRequired?: boolean
+			timeclockEnabled?: boolean
+			reservationsEnabled?: boolean
 		} = {},
 	) =>
 		backend.post<{ code: string; link: string; terminalCode: string }>(
@@ -61,6 +88,7 @@ export const backend = {
 		prices?: Record<string, number>
 		remove?: string[]
 		publish?: boolean
+		translate?: boolean
 	}) => backend.post('/__test/live-menu', body),
 	publish: () => backend.post('/__test/publish'),
 	theme: (body: Record<string, unknown>) => backend.post('/__test/theme', body),
@@ -70,6 +98,7 @@ export const backend = {
 			last?: string
 			pin?: string | null
 			manager?: boolean
+			host?: boolean | 'guest'
 			scopeId?: string
 			status?: string
 		} = {},
@@ -292,6 +321,15 @@ export const test = base.extend<{
 
 export { expect }
 
+/** App choices live behind the nine-dot launcher on every screen size. */
+export async function selectStationApp(page: Page, name: string) {
+	await page.getByRole('button', { name: 'Apps', exact: true }).click()
+	await page
+		.getByRole('dialog', { name: 'Station apps' })
+		.getByRole('button', { name, exact: true })
+		.click()
+}
+
 // ---------------------------------------------------------------------------
 // Till actions
 // ---------------------------------------------------------------------------
@@ -305,6 +343,8 @@ export async function pairUi(
 		locationId?: string | null
 		signInRequired?: boolean
 		shiftsRequired?: boolean
+		timeclockEnabled?: boolean
+		reservationsEnabled?: boolean
 	} = {},
 ) {
 	const { code, terminalCode } = await backend.pairingCode(options)
@@ -595,6 +635,6 @@ export async function giveReason(
 export async function openPairingLink(page: Page, link: string) {
 	await page.goto(link)
 	const ask = page.getByRole('dialog', { name: 'Pair this terminal?' })
-	await expect(ask.getByText('127.0.0.1:4711')).toBeVisible()
+	await expect(ask.getByText(new URL(API).host, { exact: true })).toBeVisible()
 	await ask.getByRole('button', { name: 'Pair with this link' }).click()
 }

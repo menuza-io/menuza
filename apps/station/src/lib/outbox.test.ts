@@ -45,6 +45,8 @@ const settings: PosSettings = {
 	deviceLabel: 'Front counter',
 	demo: false,
 	locale: null,
+	apps: { timeclock: false, reservations: false },
+	activeApp: 'pos',
 }
 
 const line: CartLine = {
@@ -323,8 +325,14 @@ describe('revisions', () => {
 
 describe('wire format', () => {
 	it('is a snapshot of what was rung up: names, cents and choices', async () => {
-		const wire = toWireOrder(await place())
+		const order = await place()
+		const wire = toWireOrder(order)
 		expect(wire.lines[0]).toEqual({
+			// The kitchen's key for the dish and when it was sent (contract 4).
+			id: order.lines[0]!.id,
+			...(order.lines[0]!.sentAt
+				? { sentAt: new Date(order.lines[0]!.sentAt).toISOString() }
+				: {}),
 			itemId: 'burger',
 			name: 'Burger',
 			variantId: null,

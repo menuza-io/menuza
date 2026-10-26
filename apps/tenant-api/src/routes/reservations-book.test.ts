@@ -275,7 +275,8 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		)
 		expect(res1.status).toBe(200)
 		const etag1 = res1.headers.get('ETag')
-		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1:1"`)
+		// `.g`: this token reads guest details, which changes what the day says.
+		expect(etag1).toBe(`"${LOC_MAIN}:${DATE}:0:1:1.g"`)
 		const body1 = (await res1.json()) as {
 			dayVersion: number
 			settingsVersion: number
@@ -302,7 +303,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			{
 				headers: {
 					Authorization: `Bearer ${token}`,
-					'If-None-Match': `"0.1.1"`,
+					'If-None-Match': `"0.1.1.g"`,
 				},
 			},
 		)
@@ -325,7 +326,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 				},
 			)
 			expect(resFloor.status).toBe(200)
-			expect(resFloor.headers.get('ETag')).toBe(`"${LOC_MAIN}:${DATE}:0:1:2"`)
+			expect(resFloor.headers.get('ETag')).toBe(`"${LOC_MAIN}:${DATE}:0:1:2.g"`)
 		} finally {
 			await db
 				.update(rsvLocationSettings)
@@ -414,6 +415,44 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 		})
 		expect(yes.status).toBe(200)
 		expect(await yes.text()).toContain(SECRET)
+
+		// Nor can they overwrite or clear the health notes they cannot see.
+		for (const [method, url] of [
+			['POST', `/reservations/${id}/notes`],
+			['PATCH', `/reservations/${id}`],
+		] as const) {
+			for (const body of [{ dietaryNotes: null }, { guestRequests: 'mine' }]) {
+				const res = await send(noGuestGrant, method, url, body)
+				expect(res.status, `${method} ${url}`).toBe(403)
+				expect(((await res.json()) as { error: string }).error).toBe(
+					'guest_permission_required',
+				)
+			}
+		}
+		// A waitlist entry's note and contact details are hidden the same way.
+		const joined = await send(token, 'POST', '/waitlist', {
+			locationId: LOC_MAIN,
+			displayName: 'Sweep Wait',
+			partySize: 2,
+			notes: 'wheelchair',
+		})
+		expect(joined.status).toBe(201)
+		const entryId = ((await joined.json()) as any).entry.id as string
+		for (const body of [
+			{ notes: null },
+			{ phone: '+14155550177' },
+			{ email: 'x@example.com' },
+		]) {
+			const res = await send(noGuestGrant, 'PATCH', `/waitlist/${entryId}`, {
+				locationId: LOC_MAIN,
+				...body,
+			})
+			expect(res.status, JSON.stringify(body)).toBe(403)
+		}
+		const kept = await send(token, 'POST', `/reservations/${id}/notes`, {
+			dietaryNotes: 'No sesame',
+		})
+		expect(kept.status).toBe(200)
 	})
 
 	it('creates booking via POST /book/reservations, transitions status, supports undo, and enforces expectedVersion (409 stale_version)', async () => {
@@ -1637,7 +1676,7 @@ describe('/operator/reservations/book/*, /guests/*, and /internal/reservations/s
 			const unfilteredRes = await getDay(app, token)
 			const unfiltered = (await unfilteredRes.json()) as any
 			expect(unfilteredRes.headers.get('ETag')).toBe(
-				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1:1"`,
+				`"${LOC_MAIN}:${DATE}:${unfiltered.dayVersion}:1:1.g"`,
 			)
 			expect(unfiltered.counters).toEqual({ parties: 3, covers: 9 })
 

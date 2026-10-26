@@ -1,8 +1,39 @@
 import { type Page } from '@playwright/test'
-import { addQuick, expect, menuItem, openCategory, test } from './helpers.ts'
+import {
+	addQuick,
+	backend,
+	expect,
+	menuItem,
+	openCategory,
+	test,
+} from './helpers.ts'
 
 const categories = (page: Page) =>
 	page.getByRole('navigation', { name: 'Categories' })
+
+test.describe('translated menus', () => {
+	test('names saved in several languages show in the till’s language, never as raw text', async ({
+		paired: page,
+	}) => {
+		await backend.liveMenu({ translate: true, publish: true })
+		await page.reload()
+		const nav = categories(page)
+		await expect(nav.getByRole('button', { name: /^Mains/ })).toBeVisible()
+		await expect(menuItem(page, 'Smash Burger')).toBeVisible()
+		await expect(page.getByText('{"en"', { exact: false })).toHaveCount(0)
+		// In Arabic, the Arabic names.
+		await page.evaluate(() => {
+			const key = 'pos.settings.v1'
+			const settings = JSON.parse(localStorage.getItem(key) ?? '{}')
+			localStorage.setItem(key, JSON.stringify({ ...settings, locale: 'ar' }))
+		})
+		await page.reload()
+		await expect(
+			page.getByText('ع Smash Burger', { exact: true }),
+		).toBeVisible()
+		await expect(page.getByText('{"en"', { exact: false })).toHaveCount(0)
+	})
+})
 
 test.describe('menu browsing', () => {
 	test('shows branded categories with item counts and lands on the first one', async ({

@@ -1,13 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { msg, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import {
-	Banknote,
-	CreditCard,
-	Printer,
-	Receipt as ReceiptIcon,
-	Wallet,
-} from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useMemo, useState } from 'react'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
@@ -23,8 +17,10 @@ import {
 	type OrderDraft,
 } from '~/lib/orders.ts'
 import { computeTotals, lineTotalCents } from '~/lib/pricing.ts'
+import { shownLine } from '~/lib/store.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
+	Input,
 	Badge,
 	Button,
 	Chip,
@@ -33,7 +29,6 @@ import {
 	Reveal,
 	Segmented,
 	cn,
-	fieldClass,
 } from '~/ui/primitives.tsx'
 
 const TIP_PRESETS = [0, 10, 15, 20]
@@ -215,20 +210,10 @@ export function Checkout({
 				dismissible={false}
 			>
 				<div className="flex flex-col items-center gap-3 p-6 text-center sm:p-8">
-					{/* The one celebration on the till: the disc pops, the check draws itself in. */}
+					{/* The one celebration on the till: the disc pops, the shared check reveals itself. */}
 					<div className="t-success-disc bg-success flex size-20 items-center justify-center rounded-full text-white">
 						<span className="t-success-check" data-state="in" aria-hidden>
-							<svg
-								viewBox="0 0 24 24"
-								className="size-10"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth={3}
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<path d="M20 6 9 17l-5-5" />
-							</svg>
+							<Icon name="check" className="size-10" />
 						</span>
 					</div>
 					<p className="text-muted-foreground text-sm font-medium">
@@ -248,7 +233,7 @@ export function Checkout({
 						</ul>
 					) : null}
 					{totalChange > 0 ? (
-						<div className="bg-warning/15 rounded-2xl px-6 py-3">
+						<div className="bg-warning/10 rounded-(--station-panel-radius) px-6 py-3">
 							<p className="text-warning text-sm font-medium">
 								<Trans>Change due</Trans>
 							</p>
@@ -259,7 +244,7 @@ export function Checkout({
 					) : null}
 					<div className="mt-4 grid w-full grid-cols-2 gap-3">
 						<Button variant="outline" size="lg" onClick={() => window.print()}>
-							<Printer className="size-5" /> <Trans>Receipt</Trans>
+							<Icon name="printer" className="size-5" /> <Trans>Receipt</Trans>
 						</Button>
 						<Button
 							variant="primary"
@@ -333,8 +318,8 @@ export function Checkout({
 							<PhonePickupDetails order={draft} />
 						</div>
 					) : null}
-					<ul className="divide-border border-border mb-4 max-h-48 divide-y overflow-y-auto border-y text-sm md:max-h-64">
-						{lines.map((l) => (
+					<ul className="divide-border border-border mb-4 max-h-48 divide-y overflow-y-auto overscroll-contain border-y text-sm md:max-h-64">
+						{lines.map(shownLine).map((l) => (
 							<li
 								key={l.id}
 								className="flex items-start justify-between gap-4 py-3"
@@ -399,7 +384,7 @@ export function Checkout({
 						))}
 					</dl>
 					<div className="border-border mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t pt-4">
-						<span className="text-lg font-semibold">
+						<span className="text-base font-semibold">
 							{hasPayments ? <Trans>Balance</Trans> : <Trans>Total due</Trans>}
 						</span>
 						<NumberPop
@@ -409,17 +394,18 @@ export function Checkout({
 					</div>
 					{tipsEnabled && !tipLocked ? (
 						<div className="mt-4">
-							<p className="mb-2 text-sm font-semibold">
+							<p className="mb-2 text-base font-semibold">
 								<Trans>Tip</Trans>
 							</p>
 							<div className="grid grid-cols-4 gap-2">
 								{TIP_PRESETS.map((p) => (
 									<Chip
+										look="outlined"
 										key={p}
 										selected={tipPercent === p}
 										aria-pressed={tipPercent === p}
 										onClick={() => setTipPercent(p)}
-										className="tnum px-2"
+										className="px-2 tabular-nums"
 									>
 										{p === 0 ? <Trans>None</Trans> : `${p}%`}
 									</Chip>
@@ -431,28 +417,30 @@ export function Checkout({
 
 				<section aria-label={_(t`Payment`)} className="space-y-4 p-4 sm:p-5">
 					<div>
-						<p className="mb-2 text-sm font-semibold">
+						<p className="mb-2 text-base font-semibold">
 							<Trans>How much now?</Trans>
 						</p>
 						<div className="flex flex-wrap gap-2">
 							<Chip
+								look="outlined"
 								selected={mode.kind === 'full'}
 								aria-pressed={mode.kind === 'full'}
-								className="tnum px-4"
+								className="px-4 tabular-nums"
 								onClick={() => {
 									setMode({ kind: 'full' })
 									setCustomDigits('')
 									setField('cash')
 								}}
 							>
-								<Trans>Full · {remainingText}</Trans>
+								<Trans context="Pay the whole balance at once">Full</Trans>
 							</Chip>
 							{SPLITS.map((n) => (
 								<Chip
+									look="outlined"
 									key={n}
 									selected={mode.kind === 'split' && mode.ways === n}
 									aria-pressed={mode.kind === 'split' && mode.ways === n}
-									className="tnum px-4"
+									className="px-4 tabular-nums"
 									onClick={() => {
 										setMode({ kind: 'split', ways: n })
 										setCustomDigits('')
@@ -463,9 +451,10 @@ export function Checkout({
 								</Chip>
 							))}
 							<Chip
+								look="outlined"
 								selected={mode.kind === 'custom'}
 								aria-pressed={mode.kind === 'custom'}
-								className="tnum px-4"
+								className="px-4 tabular-nums"
 								onClick={() => {
 									setMode({ kind: 'custom' })
 									setField('amount')
@@ -496,17 +485,17 @@ export function Checkout({
 							{
 								value: 'cash',
 								label: _(METHOD_LABEL.cash),
-								icon: <Banknote className="size-5" />,
+								icon: <Icon name="banknote" className="size-5" />,
 							},
 							{
 								value: 'card',
 								label: _(METHOD_LABEL.card),
-								icon: <CreditCard className="size-5" />,
+								icon: <Icon name="credit-card" className="size-5" />,
 							},
 							{
 								value: 'other',
 								label: _(METHOD_LABEL.other),
-								icon: <Wallet className="size-5" />,
+								icon: <Icon name="wallet" className="size-5" />,
 							},
 						]}
 					/>
@@ -555,8 +544,11 @@ export function Checkout({
 						</div>
 					) : (
 						<div key={method} className="t-rise space-y-3">
-							<div className="border-border text-muted-foreground flex items-start gap-3 rounded-2xl border border-dashed p-3 text-sm">
-								<ReceiptIcon className="mt-0.5 size-5 shrink-0" />
+							<div className="bg-muted/50 text-muted-foreground flex items-start gap-3 rounded-(--station-panel-radius) p-3 text-sm">
+								<Icon
+									name="receipt"
+									className="mt-0.5 size-5 shrink-0 self-start"
+								/>
 								<p>
 									{method === 'card' ? (
 										<Trans>
@@ -576,24 +568,24 @@ export function Checkout({
 								) : (
 									<Trans>Reference (optional)</Trans>
 								)}
-								<input
+								<Input
 									value={reference}
 									onChange={(event) =>
 										setReference(event.target.value.slice(0, 64))
 									}
 									autoComplete="off"
-									className={cn(fieldClass, 'mt-1')}
+									className={cn('mt-1')}
 								/>
 							</label>
 						</div>
 					)}
 
 					{method === 'cash' || mode.kind === 'custom' ? (
-						<Keypad value={keypadValue} onChange={onKeypad} />
+						<Keypad value={keypadValue} onChange={onKeypad} keyboard />
 					) : null}
 					{/* Stays mounted so the change is announced as it appears and updates. */}
 					<p
-						className="tnum text-warning text-center text-lg font-semibold empty:absolute"
+						className="tnum text-warning text-center text-base font-semibold empty:absolute"
 						aria-live="polite"
 					>
 						{method === 'cash' && change > 0 ? (
@@ -603,7 +595,7 @@ export function Checkout({
 					<Reveal open={giveChange !== null}>
 						<p
 							role="status"
-							className="tnum bg-warning/15 text-warning rounded-xl p-3 text-center text-base font-semibold"
+							className="tnum notice-warning rounded-(--station-control-radius) p-3 text-center text-base"
 						>
 							<Trans>Give {giveChangeText} change for that payment</Trans>
 						</p>
@@ -668,7 +660,7 @@ function Readout({
 			onClick={onClick}
 			aria-pressed={active}
 			className={cn(
-				'flex min-h-24 min-w-0 flex-col items-start justify-center gap-1 rounded-xl border-2 px-4 py-3 text-start transition',
+				'flex min-h-24 min-w-0 flex-col items-start justify-center gap-1 rounded-(--station-control-radius) border px-4 py-3 text-start transition',
 				active
 					? 'border-primary bg-primary/5'
 					: 'border-input bg-card hover:bg-muted/40',

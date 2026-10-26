@@ -26,7 +26,7 @@ export function PinDots({
 			// A new key replays the shake from rest.
 			key={rejected}
 			className={cn(
-				't-input flex justify-center gap-3',
+				't-input flex min-h-6 items-center justify-center gap-3',
 				rejected > 0 && 'is-shaking',
 			)}
 		>
@@ -37,8 +37,11 @@ export function PinDots({
 					className={cn(
 						'rounded-full border-2 transition',
 						size === 'sm' ? 'size-3.5' : 'size-4',
-						error ? 'border-destructive' : 'border-primary',
-						i < length && 'bg-primary scale-110',
+						error
+							? 'border-destructive bg-destructive/10'
+							: i < length
+								? 'border-primary bg-primary'
+								: 'border-muted-foreground/50 bg-muted',
 					)}
 				/>
 			))}

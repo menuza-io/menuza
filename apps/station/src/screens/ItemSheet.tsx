@@ -1,6 +1,6 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { Check, Minus, Plus, Salad, Wheat } from 'lucide-react'
+import { Icon } from '@repo/ui/icon'
 import { useMemo, useState } from 'react'
 import { isAvailable } from '~/lib/availability.ts'
 import {
@@ -128,16 +128,16 @@ function ItemSheetBody({
 			size="lg"
 			footer={
 				<div className="flex flex-wrap items-center gap-3">
-					<div className="bg-muted flex items-center gap-1 rounded-2xl p-1">
+					<div className="flex items-center gap-1">
 						<IconButton
 							label={_(t`Fewer`)}
 							onClick={() => setQuantity((q) => Math.max(1, q - 1))}
 							disabled={quantity <= 1}
 						>
-							<Minus className="size-5" />
+							<Icon name="minus" className="size-5" />
 						</IconButton>
 						<span
-							className="tnum mono w-10 text-center text-xl font-bold"
+							className="tnum mono w-10 text-center text-xl font-semibold"
 							aria-live="polite"
 						>
 							<NumberPop value={String(quantity)} />
@@ -146,7 +146,7 @@ function ItemSheetBody({
 							label={_(t`More`)}
 							onClick={() => setQuantity((q) => Math.min(50, q + 1))}
 						>
-							<Plus className="size-5" />
+							<Icon name="plus" className="size-5" />
 						</IconButton>
 					</div>
 					<Button
@@ -175,12 +175,14 @@ function ItemSheetBody({
 				<div className="flex flex-wrap gap-2">
 					{item.isVegetarian ? (
 						<Badge tone="success">
-							<Salad className="size-3.5" /> <Trans>Vegetarian</Trans>
+							<Icon name="salad" className="size-3.5" />{' '}
+							<Trans>Vegetarian</Trans>
 						</Badge>
 					) : null}
 					{item.isGlutenFree ? (
 						<Badge tone="warning">
-							<Wheat className="size-3.5" /> <Trans>Gluten free</Trans>
+							<Icon name="wheat" className="size-3.5" />{' '}
+							<Trans>Gluten free</Trans>
 						</Badge>
 					) : null}
 					{item.allergens.map((a) => (
@@ -257,14 +259,14 @@ function ItemSheetBody({
 											<div
 												key={option.id}
 												className={cn(
-													'flex min-h-16 items-center justify-between gap-2 rounded-xl border p-2 ps-3 transition-colors',
+													'flex min-h-16 items-center justify-between gap-2 rounded-(--station-control-radius) border p-2 ps-3 transition-colors',
 													qty > 0
 														? 'border-primary bg-primary/8'
 														: 'border-border bg-card',
 												)}
 											>
 												<div className="min-w-0">
-													<div className="truncate font-medium">
+													<div className="font-medium break-words">
 														{option.displayName}
 													</div>
 													{price ? (
@@ -273,7 +275,7 @@ function ItemSheetBody({
 														</div>
 													) : null}
 												</div>
-												<div className="flex items-center gap-1">
+												<div className="flex shrink-0 items-center gap-1">
 													{qty > 0 ? (
 														<IconButton
 															label={_(t`Remove ${option.displayName}`)}
@@ -283,11 +285,11 @@ function ItemSheetBody({
 																)
 															}
 														>
-															<Minus className="size-4" />
+															<Icon name="minus" className="size-4" />
 														</IconButton>
 													) : null}
 													{qty > 0 ? (
-														<span className="tnum mono w-5 text-center font-bold">
+														<span className="tnum mono w-5 text-center font-semibold">
 															{qty}
 														</span>
 													) : null}
@@ -299,7 +301,7 @@ function ItemSheetBody({
 															)
 														}
 													>
-														<Plus className="size-4" />
+														<Icon name="plus" className="size-4" />
 													</IconButton>
 												</div>
 											</div>
@@ -361,7 +363,7 @@ function SectionTitle({
 			>
 				{met ? (
 					<>
-						<Check className="size-3.5" strokeWidth={3} aria-hidden />
+						<Icon name="check" className="size-3.5" aria-hidden />
 						<Trans>Done</Trans>
 					</>
 				) : (
@@ -395,7 +397,7 @@ function Choice({
 			disabled={disabled}
 			onClick={onClick}
 			className={cn(
-				'relative flex min-h-16 flex-col items-start justify-center rounded-xl border p-3 text-start transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45',
+				'relative flex min-h-16 flex-col items-start justify-center rounded-(--station-control-radius) border p-3 text-start transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45',
 				selected
 					? 'border-primary bg-primary/8 shadow-sm'
 					: 'border-border bg-card hover:bg-accent',
@@ -419,7 +421,7 @@ function Choice({
 				data-open={selected}
 			>
 				<span className="t-badge-dot bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full">
-					<Check className="size-3.5" strokeWidth={3} />
+					<Icon name="check" className="size-3.5" />
 				</span>
 			</span>
 		</button>

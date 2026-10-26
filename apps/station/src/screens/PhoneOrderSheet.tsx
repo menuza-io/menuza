@@ -7,13 +7,7 @@ import {
 	pickupLocalValue,
 	type PhonePickup,
 } from '~/lib/pickup.ts'
-import {
-	Button,
-	Modal,
-	Reveal,
-	Segmented,
-	fieldClass,
-} from '~/ui/primitives.tsx'
+import { Input, Button, Modal, Reveal, Segmented } from '~/ui/primitives.tsx'
 
 /** The caller's details are committed together; Escape never changes the order. */
 export function PhoneOrderSheet({
@@ -106,7 +100,7 @@ export function PhoneOrderSheet({
 					<label htmlFor={`${id}-name`} className="block text-sm font-semibold">
 						<Trans>Customer name</Trans>
 					</label>
-					<input
+					<Input
 						id={`${id}-name`}
 						autoFocus
 						autoComplete="off"
@@ -114,7 +108,6 @@ export function PhoneOrderSheet({
 						maxLength={120}
 						value={name}
 						onChange={(e) => setName(e.target.value)}
-						className={fieldClass}
 					/>
 				</div>
 				<div className="space-y-2">
@@ -124,7 +117,7 @@ export function PhoneOrderSheet({
 					>
 						<Trans>Callback number</Trans>
 					</label>
-					<input
+					<Input
 						id={`${id}-phone`}
 						type="tel"
 						dir="ltr"
@@ -133,7 +126,6 @@ export function PhoneOrderSheet({
 						maxLength={32}
 						value={phone}
 						onChange={(e) => setPhone(e.target.value)}
-						className={fieldClass}
 					/>
 				</div>
 				<div className="space-y-3">
@@ -154,14 +146,14 @@ export function PhoneOrderSheet({
 							>
 								<Trans>Pickup date and time</Trans>
 							</label>
-							<input
+							<Input
 								id={`${id}-time`}
 								type="datetime-local"
 								dir="ltr"
 								required
 								value={localTime}
 								onChange={(e) => setLocalTime(e.target.value)}
-								className={fieldClass}
+
 								aria-describedby={`${id}-zone`}
 							/>
 						</div>

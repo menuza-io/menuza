@@ -1,23 +1,24 @@
 import { t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { useLiveQuery } from 'dexie-react-hooks'
 import {
-	ChevronUp,
-	Clock,
-	CloudOff,
-	HardDrive,
-	Link2Off,
-	MapPinOff,
-	UtensilsCrossed,
-	Wallet,
-	type LucideIcon,
-} from 'lucide-react'
+	Empty,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+	EmptyDescription,
+	EmptyContent,
+} from '@repo/ui/empty'
+import { Icon, type IconName } from '@repo/ui/icon'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Kitchen } from './apps/kitchen/Kitchen.tsx'
+import { HostStand } from './apps/reservations/HostStand.tsx'
+import { TimeClock } from './apps/timeclock/TimeClock.tsx'
 import { applyLocale, effectiveLocale } from './i18n.ts'
-import { idleMs, shouldLock, touch } from '~/lib/activity.ts'
-import { categoryItems } from '~/lib/catalog.ts'
+import { idleMs, lockHeld, shouldLock, touch } from '~/lib/activity.ts'
+import { categoryItems, isSoldOut } from '~/lib/catalog.ts'
 import { clockIsOff, skewMinutes, useClock } from '~/lib/clock.ts'
-import { isConfigured } from '~/lib/config.ts'
+import { isConfigured, shownApp } from '~/lib/config.ts'
 import { db, type PosOrder } from '~/lib/db.ts'
 import {
 	buildLine,
@@ -29,6 +30,7 @@ import { moneyFormatter } from '~/lib/money.ts'
 import {
 	createOrder,
 	DEMO_ORIGIN,
+	openTabs,
 	pruneSettledOrders,
 	removedLines,
 	updateTab,
@@ -39,6 +41,7 @@ import {
 import { computeTotals, type CartLine } from '~/lib/pricing.ts'
 import { useStoragePersistence } from '~/lib/storage.ts'
 import { usePos } from '~/lib/store.ts'
+import { tabForTable } from '~/lib/tabs.ts'
 import { tipsAllowed } from '~/lib/tips.ts'
 import { type MenuItem } from '~/lib/types.ts'
 import { applyUpdateIfIdle } from '~/lib/update.ts'
@@ -53,9 +56,10 @@ import { PairingLinkDialog } from '~/screens/PairingLinkDialog.tsx'
 import { SettingsSheet } from '~/screens/SettingsSheet.tsx'
 import { ShiftSheet, useOpenShift } from '~/screens/ShiftSheet.tsx'
 import { TopBar } from '~/screens/TopBar.tsx'
-import { useIsDesktop } from '~/ui/hooks.ts'
+import { useMediaQuery } from '~/ui/hooks.ts'
 import {
 	Button,
+	IconButton,
 	Modal,
 	NumberPop,
 	Reveal,
@@ -106,7 +110,9 @@ export function App() {
 	const [confirmReplace, setConfirmReplace] = useState<PosOrder | null>(null)
 	const [cartOpen, setCartOpen] = useState(false)
 	const [cartError, setCartError] = useState<string | null>(null)
-	const desktop = useIsDesktop()
+	const wideRegister = useMediaQuery(
+		'(min-width: 768px) and (min-height: 600px)',
+	)
 	const [ordersOpen, setOrdersOpen] = useState(false)
 	const [settingsOpen, setSettingsOpen] = useState(false)
 	/** Settings were asked for by someone who is not a manager. */
@@ -142,6 +148,7 @@ export function App() {
 					signedIn: st.session !== null,
 					idleLockSeconds: st.settings.idleLockSeconds,
 					idleMs: idleMs(),
+					held: lockHeld(),
 				})
 			) {
 				st.lock()
@@ -233,8 +240,28 @@ export function App() {
 	const clockOff = clockIsOff(skew)
 	const clockMinutes = skewMinutes(skew)
 	const storagePersisted = useStoragePersistence((p) => p.persisted)
+	// Read once a shift: whoever saw it can put it away until the app reloads.
+	const [storageNoticeHidden, setStorageNoticeHidden] = useState(false)
+	const hideStorageNotice = () => setStorageNoticeHidden(true)
 	const businessName = s.snapshot?.organization.name ?? _(t`Station`)
+	const app = shownApp(s.settings)
+	const previousApp = useRef(app)
+	useLayoutEffect(() => {
+		if (previousApp.current === app) return
+		previousApp.current = app
+		// Each app owns its header placement, so switching can replace the trigger.
+		document
+			.querySelector<HTMLButtonElement>('[data-station-launcher]')
+			?.focus({ preventScroll: true })
+	}, [app])
+	/** The time clock opened from the lock screen, over it. */
+	const [clockOverLock, setClockOverLock] = useState(false)
 	const locked = s.settings.signInRequired && s.session === null
+	// Unlocked some other way (sign-in turned off, pairing lost): the clock does
+	// not reopen by itself at the next lock.
+	useEffect(() => {
+		if (!locked) setClockOverLock(false)
+	}, [locked])
 	// Plain values for the messages below (translations interpolate names, not expressions).
 	const catalogError = s.catalogError
 	const loadProblem = catalogError ?? _(t`No connection`)
@@ -418,7 +445,7 @@ export function App() {
 		s.loadTab(order)
 		setOrdersOpen(false)
 		setConfirmReplace(null)
-		setCartOpen(!desktop)
+		setCartOpen(!wideRegister)
 	}
 	const addItemsToTab = (order: PosOrder) => {
 		// Never throw away an order that is being rung up without asking.
@@ -452,11 +479,71 @@ export function App() {
 		[s.activeOrderId],
 		null,
 	)
+	// The tab in the cart taken over by another terminal meanwhile: what was not
+	// sent yet stays here as a new order, and the cashier is told why.
+	const movedTo = useLiveQuery(
+		async () =>
+			s.activeOrderId
+				? ((await db.orders.get(s.activeOrderId))?.transferredTo ?? null)
+				: null,
+		[s.activeOrderId],
+		null,
+	)
+	useEffect(() => {
+		if (!movedTo) return
+		const number = activeTabNumber ?? ''
+		s.releaseTab()
+		setCartError(
+			_(
+				t`Tab #${number} moved to terminal ${movedTo}. Items not sent yet stay here as a new order.`,
+			),
+		)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per move, as it is noticed
+	}, [movedTo])
+	// One tab per table: a new order for a table that already has one offers to join it.
+	const tabList = useLiveQuery(() => openTabs(), [], [] as PosOrder[])
+	const sameTableTab =
+		s.orderType === 'dine_in' && !s.activeOrderId
+			? tabForTable(tabList, s.tableLabel, {
+					adding: s.lines.length,
+					locationId: s.location?.id ?? null,
+					origin: s.settings.demo
+						? DEMO_ORIGIN
+						: s.settings.slug.trim().toLowerCase(),
+				})
+			: null
+	const joinTab = (tab: PosOrder) => {
+		const pending = usePos.getState().lines.filter((line) => !line.sentAt)
+		usePos.getState().loadTab(tab)
+		for (const {
+			id: _id,
+			sentAt: _sent,
+			servedAt: _served,
+			...line
+		} of pending)
+			usePos.getState().addLine(line)
+	}
 
 	const cart = (
 		<Cart
-			showHeading={desktop}
+			showHeading={wideRegister}
 			tabNumber={activeTabNumber}
+			orderId={s.activeOrderId}
+			sameTableTab={sameTableTab ? sameTableTab.number : null}
+			onJoinTab={() => sameTableTab && joinTab(sameTableTab)}
+			onRepeat={(lines) => {
+				// A dish sold out (or gone from the menu) since is not rung again.
+				const missing: string[] = []
+				for (const { id: _id, sentAt: _sent, ...line } of lines) {
+					const item = itemsById.get(line.itemId)
+					if (!item || isSoldOut(item)) missing.push(line.name)
+					else s.addLine(line)
+				}
+				const names = missing.join(', ')
+				setCartError(
+					missing.length ? _(t`Sold out, not added: ${names}`) : null,
+				)
+			}}
 			error={cartError}
 			lines={s.lines}
 			adjustments={s.adjustments}
@@ -527,197 +614,270 @@ export function App() {
 		)
 	}
 
+	// Device and connection notices sit under the header in every app.
+	const notices = (
+		<>
+			<Reveal open={needsShift && app === 'pos'}>
+				<button
+					type="button"
+					onClick={() => setShiftOpen(true)}
+					className="notice-warning flex w-full items-center gap-2 px-4 py-2 text-start text-sm transition-colors"
+				>
+					<Icon name="wallet" className="size-4 shrink-0" />
+					<Trans>
+						No shift is open. Tap to count the drawer and open one before
+						selling.
+					</Trans>
+				</button>
+			</Reveal>
+			<Reveal open={s.pairingLost}>
+				<button
+					type="button"
+					onClick={openSettings}
+					className="notice-danger flex w-full items-center gap-2 px-4 py-2 text-start text-sm transition-colors"
+				>
+					<Icon name="link-2-off" className="size-4 shrink-0" />
+					{s.settings.deviceToken ? (
+						<Trans>
+							The server is not recognising this terminal. Orders are safe on
+							this device. Tap to check or pair it again.
+						</Trans>
+					) : (
+						<Trans>
+							This terminal was removed. Orders are safe on this device. Tap to
+							pair it again.
+						</Trans>
+					)}
+				</button>
+			</Reveal>
+			<Reveal open={clockOff}>
+				<div
+					role="alert"
+					className="notice-danger flex items-center gap-2 px-4 py-2 text-sm"
+				>
+					<Icon name="clock" className="size-4 shrink-0" />{' '}
+					<Trans>
+						This tablet’s clock is about {clockMinutes} minutes off. Receipts
+						and invoices carry the wrong time until it is set correctly in the
+						tablet’s settings.
+					</Trans>
+				</div>
+			</Reveal>
+			<Reveal open={storagePersisted === false && !storageNoticeHidden}>
+				<div
+					role="status"
+					className="notice-warning flex items-center gap-2 px-4 py-2 text-sm"
+				>
+					<Icon name="hard-drive" className="size-4 shrink-0" />{' '}
+					<Trans>
+						This browser may clear orders saved on this device when it runs low
+						on space. Install Station (Add to Home Screen) so they are kept.
+					</Trans>
+					<IconButton
+						label={_(t`Hide until the app reloads`)}
+						onClick={hideStorageNotice}
+						className="text-warning -my-2 ms-auto size-9"
+					>
+						<Icon name="x" className="size-4" />
+					</IconButton>
+				</div>
+			</Reveal>
+			<Reveal
+				open={Boolean(
+					s.catalogError && s.snapshot && s.online && app === 'pos',
+				)}
+			>
+				<div
+					role="status"
+					className="notice-warning flex items-center gap-2 px-4 py-2 text-sm"
+				>
+					<Icon name="cloud-off" className="size-4 shrink-0" />{' '}
+					<Trans>
+						Couldn’t update the menu ({catalogError}). Selling from the copy
+						saved on this device.
+					</Trans>
+				</div>
+			</Reveal>
+		</>
+	)
+
+	const renderHeader = (context?: React.ReactNode) => (
+		<>
+			<TopBar
+				context={context}
+				name={businessName}
+				logoUrl={resolveAsset(
+					s.snapshot?.organization.siteIcon?.appleTouchIcon,
+					s.settings.appUrl,
+				)}
+				locationName={s.location?.name ?? null}
+				online={s.online}
+				refreshing={s.refreshing}
+				onRefresh={() => void s.refresh()}
+				onOrders={() => setOrdersOpen(true)}
+				onSettings={openSettings}
+				staffName={
+					s.settings.signInRequired ? (s.session?.staff.name ?? null) : null
+				}
+				onLock={s.settings.signInRequired ? s.lock : undefined}
+				onShift={() => setShiftOpen(true)}
+				shiftOpen={Boolean(currentShift)}
+				app={app}
+				apps={s.settings.apps}
+				onApp={(next) => {
+					// Punching happens at the lock, never inside someone's session.
+					if (next === 'timeclock' && s.settings.signInRequired) {
+						s.lock()
+						setClockOverLock(true)
+						return
+					}
+					void s.updateSettings({ activeApp: next })
+				}}
+			/>
+			{notices}
+		</>
+	)
+
 	return (
 		<>
 			<div className="flex h-full flex-col" inert={locked}>
-				<TopBar
-					name={businessName}
-					logoUrl={resolveAsset(
-						s.snapshot?.organization.siteIcon?.appleTouchIcon,
-						s.settings.appUrl,
-					)}
-					locationName={s.location?.name ?? null}
-					online={s.online}
-					refreshing={s.refreshing}
-					onRefresh={() => void s.refresh()}
-					onOrders={() => setOrdersOpen(true)}
-					onSettings={openSettings}
-					staffName={
-						s.settings.signInRequired ? (s.session?.staff.name ?? null) : null
-					}
-					onLock={s.settings.signInRequired ? s.lock : undefined}
-					onShift={() => setShiftOpen(true)}
-					shiftOpen={Boolean(currentShift)}
-				/>
-				<Reveal open={needsShift}>
-					<button
-						type="button"
-						onClick={() => setShiftOpen(true)}
-						className="bg-warning/15 text-warning hover:bg-warning/20 flex w-full items-center gap-2 px-4 py-2 text-start text-sm font-semibold transition-colors"
-					>
-						<Wallet className="size-4 shrink-0" />
-						<Trans>
-							No shift is open. Tap to count the drawer and open one before
-							selling.
-						</Trans>
-					</button>
-				</Reveal>
-				<Reveal open={s.pairingLost}>
-					<button
-						type="button"
-						onClick={openSettings}
-						className="bg-destructive/12 text-destructive hover:bg-destructive/16 flex w-full items-center gap-2 px-4 py-2 text-start text-sm font-semibold transition-colors"
-					>
-						<Link2Off className="size-4 shrink-0" />
-						{s.settings.deviceToken ? (
-							<Trans>
-								The server is not recognising this terminal. Orders are safe on
-								this device. Tap to check or pair it again.
-							</Trans>
-						) : (
-							<Trans>
-								This terminal was removed. Orders are safe on this device. Tap
-								to pair it again.
-							</Trans>
-						)}
-					</button>
-				</Reveal>
-				<Reveal open={clockOff}>
-					<div
-						role="alert"
-						className="bg-destructive/12 text-destructive flex items-center gap-2 px-4 py-2 text-sm font-semibold"
-					>
-						<Clock className="size-4 shrink-0" />{' '}
-						<Trans>
-							This tablet’s clock is about {clockMinutes} minutes off. Receipts
-							and invoices carry the wrong time until it is set correctly in the
-							tablet’s settings.
-						</Trans>
-					</div>
-				</Reveal>
-				<Reveal open={storagePersisted === false}>
-					<div
-						role="status"
-						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-sm font-medium"
-					>
-						<HardDrive className="size-4 shrink-0" />{' '}
-						<Trans>
-							This browser may clear orders saved on this device when it runs
-							low on space. Install Station (Add to Home Screen) so they are
-							kept.
-						</Trans>
-					</div>
-				</Reveal>
-				<Reveal open={Boolean(s.catalogError && s.snapshot && s.online)}>
-					<div
-						role="status"
-						className="bg-warning/15 text-warning flex items-center gap-2 px-4 py-2 text-sm font-medium"
-					>
-						<CloudOff className="size-4 shrink-0" />{' '}
-						<Trans>
-							Couldn’t update the menu ({catalogError}). Selling from the copy
-							saved on this device.
-						</Trans>
-					</div>
-				</Reveal>
-
-				<div className="flex min-h-0 flex-1">
-					<main className="flex min-w-0 flex-1 flex-col">
-						{/* First load: a skeleton of the menu pulses, then cross-fades to it. */}
-						<div
-							className={cn(
-								't-skel flex min-h-0 flex-1 flex-col',
-								!menuLoading && 'is-revealed',
-							)}
-						>
-							{skeleton ? (
-								<div className="t-skel-skeleton is-pulsing" aria-hidden>
-									<MenuSkeleton />
-								</div>
-							) : null}
-							<div className="t-skel-content flex flex-col">
-								{menuLoading ? (
-									<p role="status" className="sr-only">
-										{_(t`Loading menu…`)}
-									</p>
-								) : s.catalogStatus === 'error' ? (
-									<Message
-										icon={CloudOff}
-										title={_(t`Can’t load the menu yet`)}
-										body={_(
-											t`${loadProblem}. The first load needs internet; after that the till works offline.`,
-										)}
-										action={
-											<Button
-												variant="primary"
-												size="lg"
-												onClick={() => void s.refresh()}
-											>
-												<Trans>Try again</Trans>
-											</Button>
-										}
-									/>
-								) : s.locationMissing ? (
-									<Message
-										icon={MapPinOff}
-										title={_(t`This terminal’s location isn’t on the menu`)}
-										body={_(
-											t`It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh.`,
-										)}
-										action={
-											<Button
-												variant="primary"
-												size="lg"
-												onClick={() => void s.refresh()}
-											>
-												<Trans>Refresh</Trans>
-											</Button>
-										}
-									/>
-								) : s.catalogStatus === 'empty' ? (
-									<Message
-										icon={UtensilsCrossed}
-										title={_(t`No menu items`)}
-										body={_(
-											t`Publish a menu with items for this location, then refresh.`,
-										)}
-										action={
-											<Button
-												variant="primary"
-												size="lg"
-												onClick={() => void s.refresh()}
-											>
-												<Trans>Refresh</Trans>
-											</Button>
-										}
-									/>
-								) : (
-									<MenuGrid
-										categories={s.categories}
-										money={money}
-										counts={counts}
-										onPick={pick}
-									/>
+				{app !== 'reservations' && app !== 'kitchen' ? renderHeader() : null}
+				{app === 'kitchen' ? (
+					<Kitchen
+						renderHeader={renderHeader}
+						key={`${s.settings.tenantApiUrl}:${s.settings.deviceToken}:${s.settings.locationId}:${s.session?.serverSession?.token ?? ''}`}
+						settings={s.settings}
+						session={s.session}
+						online={s.online}
+						categories={s.categories}
+						timeZone={s.location?.timezone}
+						onSignIn={s.lock}
+					/>
+				) : app === 'timeclock' ? (
+					<TimeClock
+						settings={s.settings}
+						online={s.online}
+						businessName={businessName}
+						locationName={s.location?.name ?? null}
+						currency={s.location?.currency ?? 'USD'}
+						timeZone={s.location?.timezone}
+					/>
+				) : app === 'reservations' ? (
+					<HostStand
+						renderHeader={renderHeader}
+						// Someone new at the till starts from a clean stand: nothing picked up, no sheet open.
+						key={s.session?.serverSession?.token ?? 'signed-out'}
+						settings={s.settings}
+						session={s.session}
+						online={s.online}
+						onSignIn={s.lock}
+					/>
+				) : null}
+				{app === 'pos' ? (
+					<div className="flex min-h-0 flex-1">
+						<main className="flex min-w-0 flex-1 flex-col">
+							{/* First load: a skeleton of the menu pulses, then cross-fades to it. */}
+							<div
+								className={cn(
+									't-skel flex min-h-0 flex-1 flex-col',
+									!menuLoading && 'is-revealed',
 								)}
+							>
+								{skeleton ? (
+									<div className="t-skel-skeleton is-pulsing" aria-hidden>
+										<MenuSkeleton />
+									</div>
+								) : null}
+								<div className="t-skel-content flex flex-col">
+									{menuLoading ? (
+										<p role="status" className="sr-only">
+											{_(t`Loading menu…`)}
+										</p>
+									) : s.catalogStatus === 'error' ? (
+										<Message
+											icon={'cloud-off'}
+											title={_(t`Can’t load the menu yet`)}
+											body={_(
+												t`${loadProblem}. The first load needs internet; after that the till works offline.`,
+											)}
+											action={
+												<Button
+													variant="primary"
+													size="lg"
+													onClick={() => void s.refresh()}
+												>
+													<Trans>Try again</Trans>
+												</Button>
+											}
+										/>
+									) : s.locationMissing ? (
+										<Message
+											icon={'map-pin-off'}
+											title={_(t`This terminal’s location isn’t on the menu`)}
+											body={_(
+												t`It is set up for a location that is not on the published menu, so it will not sell from another one. Ask a manager to check the location is published, then refresh.`,
+											)}
+											action={
+												<Button
+													variant="primary"
+													size="lg"
+													onClick={() => void s.refresh()}
+												>
+													<Trans>Refresh</Trans>
+												</Button>
+											}
+										/>
+									) : s.catalogStatus === 'empty' ? (
+										<Message
+											icon={'utensils-crossed'}
+											title={_(t`No menu items`)}
+											body={_(
+												t`Publish a menu with items for this location, then refresh.`,
+											)}
+											action={
+												<Button
+													variant="primary"
+													size="lg"
+													onClick={() => void s.refresh()}
+												>
+													<Trans>Refresh</Trans>
+												</Button>
+											}
+										/>
+									) : (
+										<MenuGrid
+											categories={s.categories}
+											money={money}
+											counts={counts}
+											onPick={pick}
+										/>
+									)}
+								</div>
 							</div>
-						</div>
-					</main>
-					{desktop ? (
-						<aside className="border-border flex min-h-0 w-[26rem] shrink-0 flex-col border-s">
-							{cart}
-						</aside>
-					) : null}
-				</div>
+						</main>
+						{wideRegister ? (
+							<aside className="border-border flex min-h-0 w-80 shrink-0 flex-col border-s xl:w-96">
+								{cart}
+							</aside>
+						) : null}
+					</div>
+				) : null}
 
-				{!desktop ? (
+				{!wideRegister && app === 'pos' ? (
 					<>
 						<button
 							type="button"
 							onClick={() => setCartOpen(true)}
-							className="mb-safe bg-primary text-primary-foreground elevated-card mx-3 mt-1 flex h-16 shrink-0 items-center justify-between gap-3 rounded-2xl px-5 transition active:scale-[0.98]"
+							className={cn(
+								'mb-safe mx-3 mt-1 flex h-14 shrink-0 items-center justify-between gap-3 rounded-(--station-control-radius) px-4 transition active:scale-[0.98]',
+								// Brand fill once there is something to charge; quiet while empty.
+								itemCount === 0
+									? 'bg-muted text-muted-foreground'
+									: 'bg-primary text-primary-foreground',
+							)}
 						>
 							<span className="flex items-center gap-3 font-semibold">
-								<span className="tnum mono bg-primary-foreground/20 flex h-8 min-w-8 items-center justify-center rounded-full px-1.5 text-sm font-bold">
+								<span className="tnum mono flex h-8 min-w-8 items-center justify-center rounded-full bg-current/15 px-1.5 text-sm font-semibold">
 									<NumberPop value={String(itemCount)} />
 								</span>
 								{itemCount === 0 ? (
@@ -728,9 +888,9 @@ export function App() {
 									<Trans>View order</Trans>
 								)}
 							</span>
-							<span className="tnum mono flex items-center gap-2 text-lg font-bold">
+							<span className="tnum mono flex items-center gap-2 text-base font-semibold">
 								<NumberPop value={money(cartTotals.totalCents)} />
-								<ChevronUp className="size-5" />
+								<Icon name="chevron-up" className="size-5" />
 							</span>
 						</button>
 						<Modal
@@ -950,32 +1110,98 @@ export function App() {
 					online={s.online}
 					demo={s.settings.demo}
 					onSignIn={s.signIn}
+					onClockIn={
+						s.settings.apps.timeclock ? () => setClockOverLock(true) : undefined
+					}
 				/>
+			) : null}
+			{locked && clockOverLock ? (
+				<ClockOverLock onClose={() => setClockOverLock(false)}>
+					<TimeClock
+						settings={s.settings}
+						online={s.online}
+						businessName={businessName}
+						locationName={s.location?.name ?? null}
+						currency={s.location?.currency ?? 'USD'}
+						timeZone={s.location?.timezone}
+						onClose={() => setClockOverLock(false)}
+					/>
+				</ClockOverLock>
 			) : null}
 		</>
 	)
 }
 
+/**
+ * The time clock over the lock: a full-screen dialog opened after the lock's
+ * own, so it sits above it in the top layer. Closing it is back to signing in.
+ */
+function ClockOverLock({
+	onClose,
+	children,
+}: {
+	onClose: () => void
+	children: React.ReactNode
+}) {
+	const ref = useRef<HTMLDialogElement>(null)
+	const { _ } = useLingui()
+	// Opened after the lock's own dialog (both open in passive effects, the lock
+	// first), so it sits above it in the top layer.
+	useEffect(() => {
+		const dialog = ref.current
+		if (dialog && !dialog.open) dialog.showModal()
+	}, [])
+	// Closed while still in the page (a layout cleanup runs before React removes
+	// it), so focus goes back to the lock screen's button and a keyboard can type
+	// the next PIN without a tap first.
+	useLayoutEffect(() => {
+		const dialog = ref.current
+		return () => {
+			dialog?.close()
+			document
+				.querySelector<HTMLButtonElement>('[data-clock-trigger]')
+				?.focus({ preventScroll: true })
+		}
+	}, [])
+	return (
+		<dialog
+			ref={ref}
+			aria-label={_(t`Time clock`)}
+			onCancel={(event) => {
+				event.preventDefault()
+				onClose()
+			}}
+			className="t-rise bg-background text-foreground backdrop:bg-background m-0 flex h-dvh max-h-none w-screen max-w-none flex-col overflow-hidden p-0"
+		>
+			{children}
+		</dialog>
+	)
+}
+
 function Message({
-	icon: Icon,
+	icon,
 	title,
 	body,
 	action,
 }: {
-	icon: LucideIcon
+	icon: IconName
 	title: string
 	body: string
 	action?: React.ReactNode
 }) {
 	return (
-		<div className="t-rise flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-			<div className="bg-muted text-muted-foreground mb-1 flex size-16 items-center justify-center rounded-full">
-				<Icon className="size-8" />
-			</div>
-			<h2 className="text-2xl font-bold text-balance">{title}</h2>
-			<p className="text-muted-foreground max-w-md text-pretty">{body}</p>
-			{action ? <div className="mt-2">{action}</div> : null}
-		</div>
+		<Empty>
+			<EmptyHeader>
+				<EmptyMedia>
+					<Icon name={icon} className="text-muted-foreground size-5" />
+				</EmptyMedia>
+				<EmptyTitle>
+					<h2>{title}</h2>
+				</EmptyTitle>
+				<EmptyDescription>{body}</EmptyDescription>
+			</EmptyHeader>
+			{action ? <EmptyContent>{action}</EmptyContent> : null}
+		</Empty>
 	)
 }
 
@@ -997,15 +1223,15 @@ function MenuSkeleton() {
 					))}
 				</div>
 			</div>
-			<span className="t-shimmer text-lg font-semibold" data-text={label}>
+			<span className="t-shimmer text-base font-semibold" data-text={label}>
 				{label}
 			</span>
-			<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9rem),1fr))] gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] sm:gap-3">
+			<div className="grid grid-cols-1 gap-x-5 gap-y-1 lg:grid-cols-2 2xl:grid-cols-3">
 				{Array.from({ length: 12 }, (_unused, i) => (
 					<div
 						key={i}
 						data-bone
-						className="border-border bg-card flex min-h-36 flex-col justify-end gap-2 rounded-2xl border-2 p-3"
+						className="bg-muted/40 flex min-h-24 flex-col justify-center gap-2 rounded-(--station-control-radius) p-3"
 					>
 						<div className="bg-muted h-4 w-3/4 rounded-md" />
 						<div className="bg-muted h-3.5 w-1/3 rounded-md" />

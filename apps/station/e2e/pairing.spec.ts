@@ -1,5 +1,7 @@
 import { type Page } from '@playwright/test'
 import {
+	API,
+	APP,
 	backend,
 	cart,
 	dialog,
@@ -112,20 +114,22 @@ test.describe('pairing', () => {
 
 		const other = await browser.newContext()
 		const second = await other.newPage()
-		await second.addInitScript(() =>
-			localStorage.setItem(
-				'pos.settings.v1',
-				JSON.stringify({
-					appUrl: 'http://127.0.0.1:4710',
-					slug: 'demo',
-					tenantApiUrl: 'http://127.0.0.1:4711',
-					terminalCode: 'T9',
-					locationId: null,
-					deviceToken: null,
-					deviceLabel: null,
-					demo: false,
-				}),
-			),
+		await second.addInitScript(
+			({ appUrl, tenantApiUrl }) =>
+				localStorage.setItem(
+					'pos.settings.v1',
+					JSON.stringify({
+						appUrl,
+						slug: 'demo',
+						tenantApiUrl,
+						terminalCode: 'T9',
+						locationId: null,
+						deviceToken: null,
+						deviceLabel: null,
+						demo: false,
+					}),
+				),
+			{ appUrl: APP, tenantApiUrl: API },
 		)
 		await second.goto('/')
 		await second.getByRole('button', { name: 'Settings' }).click()
@@ -155,20 +159,22 @@ test.describe('pairing', () => {
 		page,
 		context,
 	}) => {
-		await context.addInitScript(() =>
-			localStorage.setItem(
-				'pos.settings.v1',
-				JSON.stringify({
-					appUrl: 'http://127.0.0.1:4710',
-					slug: 'demo',
-					tenantApiUrl: 'http://127.0.0.1:9',
-					terminalCode: 'T1',
-					locationId: null,
-					deviceToken: null,
-					deviceLabel: null,
-					demo: false,
-				}),
-			),
+		await context.addInitScript(
+			(appUrl) =>
+				localStorage.setItem(
+					'pos.settings.v1',
+					JSON.stringify({
+						appUrl,
+						slug: 'demo',
+						tenantApiUrl: 'http://127.0.0.1:9',
+						terminalCode: 'T1',
+						locationId: null,
+						deviceToken: null,
+						deviceLabel: null,
+						demo: false,
+					}),
+				),
+			APP,
 		)
 		await page.goto('/')
 		await page.getByRole('button', { name: 'Settings' }).click()

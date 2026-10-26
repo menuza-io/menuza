@@ -7,7 +7,10 @@ import { createTenantApiApp } from '../src/app.ts'
 import { registerReservationsDemandSource } from '../src/restaurant/reservations-demand-source.ts'
 import { registerReservationVoiceActions } from '../src/restaurant/reservations-voice-actions.ts'
 import { registerRestaurantOrderSource } from '../src/restaurant/staffing-order-source.ts'
-import { organizationFromProvisionPayload } from '../src/lib/origin.ts'
+import {
+	isPosOrigin,
+	organizationFromProvisionPayload,
+} from '../src/lib/origin.ts'
 import {
 	DEPROVISION_RECORDING_BUDGET_MS,
 	deleteOrganizationRecordings,
@@ -239,109 +242,164 @@ async function handleTickFanOut(
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
+const ALLOW_ORIGIN_HEADER = 'Access-Control-Allow-Origin'
+
+function terminalCorsOrigin(
+	url: string,
+	headers: Headers,
+	hasAllowOrigin: boolean,
+): string | null {
+	if (hasAllowOrigin) return null
+	const candidate = headers.get('Origin')
+	if (!candidate) return null
+	const path = new URL(url).pathname
+	const terminalPath =
+		path.startsWith('/pos/') || path.startsWith('/operator/reservations/book/')
+	if (!terminalPath || !isPosOrigin(candidate)) return null
+	try {
+		return new URL(candidate).origin
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Refusals made here, before a request reaches the app (and its CORS layer),
+ * still carry CORS for a Station till's origin, so the till reads the code
+ * ("invalid_device", "region_mismatch") instead of a bare network error.
+ */
+export function withTerminalCors(request: Request, response: Response) {
+	const allowedOrigin = terminalCorsOrigin(
+		request.url,
+		request.headers,
+		response.headers.has('Access-Control-Allow-Origin'),
+	)
+	if (!allowedOrigin) return response
+	const headers = new Headers(response.headers)
+	// The value is an origin `isPosOrigin` accepted (exact match against
+	// POS_ORIGINS, or a local dev host), never an arbitrary caller input.
+	headers.set(ALLOW_ORIGIN_HEADER, allowedOrigin)
+	headers.append('Vary', 'Origin')
+	// As the app does: the till measures its clock skew from the Date header.
+	headers.set('Access-Control-Expose-Headers', 'Date')
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	})
+}
+
 export default {
 	async fetch(
 		request: Request,
 		env: TenantApiWorkerEnv,
 		ctx: ExecutionContext,
 	): Promise<Response> {
-		applyWorkerEnv(env)
-		assertTenantApiSecrets()
-		// No consent-origin assert here: a missing TENANT_API_URL must not take
-		// the whole Worker (health, login, provisioning) down. Each email send
-		// checks `consentBaseUrl()` and skips (or fails the broadcast) instead.
-		// The hard startup assert stays on the Node entry (`src/index.ts`).
+		return withTerminalCors(request, await handle(request, env, ctx))
+	},
+}
 
-		setListTenantOrgIdsProvider(async () => registryStub(env).list())
+async function handle(
+	request: Request,
+	env: TenantApiWorkerEnv,
+	ctx: ExecutionContext,
+): Promise<Response> {
+	applyWorkerEnv(env)
+	assertTenantApiSecrets()
+	// No consent-origin assert here: a missing TENANT_API_URL must not take
+	// the whole Worker (health, login, provisioning) down. Each email send
+	// checks `consentBaseUrl()` and skips (or fails the broadcast) instead.
+	// The hard startup assert stays on the Node entry (`src/index.ts`).
 
-		const url = new URL(request.url)
+	setListTenantOrgIdsProvider(async () => registryStub(env).list())
 
-		if (request.method === 'OPTIONS') {
-			return edgeApp.fetch(request, env)
-		}
+	const url = new URL(request.url)
 
-		if (url.pathname === '/health' || url.pathname === '/api/health') {
-			return edgeApp.fetch(request, env)
-		}
+	if (request.method === 'OPTIONS') {
+		return edgeApp.fetch(request, env)
+	}
 
-		if (url.pathname === '/api/provision' && request.method === 'POST') {
-			return handleProvision(request, env, ctx, 'provision')
-		}
+	if (url.pathname === '/health' || url.pathname === '/api/health') {
+		return edgeApp.fetch(request, env)
+	}
 
-		if (url.pathname === '/api/deprovision' && request.method === 'POST') {
-			return handleProvision(request, env, ctx, 'deprovision')
-		}
+	if (url.pathname === '/api/provision' && request.method === 'POST') {
+		return handleProvision(request, env, ctx, 'provision')
+	}
 
-		if (
-			url.pathname === '/api/marketing/sync-engagement' &&
-			request.method === 'POST'
-		) {
-			const orgId = await resolveOrgId(request, env)
-			if (orgId) {
-				const regionDenied = await assertOrgOnUsNode(orgId, env)
-				if (regionDenied) return regionDenied
-				return forwardToOrg(request, env, orgId)
-			}
-			return edgeApp.fetch(request, env)
-		}
+	if (url.pathname === '/api/deprovision' && request.method === 'POST') {
+		return handleProvision(request, env, ctx, 'deprovision')
+	}
 
-		const tickModule: TickModuleName | null =
-			request.method !== 'POST'
-				? null
-				: url.pathname === '/api/staff/tick'
-					? 'staff'
-					: url.pathname === '/api/reservations/tick'
-						? 'reservations'
-						: null
-		if (tickModule) {
-			const tickOrgId = await resolveOrgId(request, env)
-			if (tickOrgId) {
-				const regionDenied = await assertOrgOnUsNode(tickOrgId, env)
-				if (regionDenied) return regionDenied
-				return forwardToOrg(request, env, tickOrgId)
-			}
-			return handleTickFanOut(request, env, tickModule)
-		}
-
+	if (
+		url.pathname === '/api/marketing/sync-engagement' &&
+		request.method === 'POST'
+	) {
 		const orgId = await resolveOrgId(request, env)
-		const isTerminalPath =
-			url.pathname.startsWith('/kiosk/') || url.pathname.startsWith('/pos/')
-		if (!orgId && isTerminalPath) {
-			return Response.json(
-				{
-					error:
-						url.pathname === '/kiosk/pair' || url.pathname === '/pos/pair'
-							? 'invalid_pairing_code'
-							: 'invalid_device',
-				},
-				{ status: 401 },
-			)
-		}
-		if (!orgId && isPublicReservationsPath(url.pathname)) {
-			return reservationsPublicNotFound()
-		}
-		if (!orgId) {
-			return Response.json(
-				{ error: 'Could not resolve tenant organization for this request' },
-				{ status: 400 },
-			)
-		}
-
-		if (isTerminalPath) {
-			const kioskDenied = await assertKioskOrgOnUsNode(
-				orgId,
-				url.pathname,
-				request.headers.get('CF-Connecting-IP'),
-			)
-			if (kioskDenied) return kioskDenied
+		if (orgId) {
+			const regionDenied = await assertOrgOnUsNode(orgId, env)
+			if (regionDenied) return regionDenied
 			return forwardToOrg(request, env, orgId)
 		}
+		return edgeApp.fetch(request, env)
+	}
 
-		const regionDenied = isPublicReservationsPath(url.pathname)
-			? await assertReservationsOrgOnUsNode(orgId)
-			: await assertOrgOnUsNode(orgId, env)
-		if (regionDenied) return regionDenied
+	const tickModule: TickModuleName | null =
+		request.method !== 'POST'
+			? null
+			: url.pathname === '/api/staff/tick'
+				? 'staff'
+				: url.pathname === '/api/reservations/tick'
+					? 'reservations'
+					: null
+	if (tickModule) {
+		const tickOrgId = await resolveOrgId(request, env)
+		if (tickOrgId) {
+			const regionDenied = await assertOrgOnUsNode(tickOrgId, env)
+			if (regionDenied) return regionDenied
+			return forwardToOrg(request, env, tickOrgId)
+		}
+		return handleTickFanOut(request, env, tickModule)
+	}
 
+	const orgId = await resolveOrgId(request, env)
+	const isTerminalPath =
+		url.pathname.startsWith('/kiosk/') || url.pathname.startsWith('/pos/')
+	if (!orgId && isTerminalPath) {
+		return Response.json(
+			{
+				error:
+					url.pathname === '/kiosk/pair' || url.pathname === '/pos/pair'
+						? 'invalid_pairing_code'
+						: 'invalid_device',
+			},
+			{ status: 401 },
+		)
+	}
+	if (!orgId && isPublicReservationsPath(url.pathname)) {
+		return reservationsPublicNotFound()
+	}
+	if (!orgId) {
+		return Response.json(
+			{ error: 'Could not resolve tenant organization for this request' },
+			{ status: 400 },
+		)
+	}
+
+	if (isTerminalPath) {
+		const kioskDenied = await assertKioskOrgOnUsNode(
+			orgId,
+			url.pathname,
+			request.headers.get('CF-Connecting-IP'),
+		)
+		if (kioskDenied) return kioskDenied
 		return forwardToOrg(request, env, orgId)
-	},
+	}
+
+	const regionDenied = isPublicReservationsPath(url.pathname)
+		? await assertReservationsOrgOnUsNode(orgId)
+		: await assertOrgOnUsNode(orgId, env)
+	if (regionDenied) return regionDenied
+
+	return forwardToOrg(request, env, orgId)
 }

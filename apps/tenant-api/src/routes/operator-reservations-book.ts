@@ -1,4 +1,7 @@
-import { RESERVATIONS_PERMISSIONS } from '@repo/reservations'
+import {
+	RESERVATIONS_PERMISSIONS,
+	TILL_UNDO_WINDOW_MS,
+} from '@repo/reservations'
 import { getTenantDb, rsvReservations } from '@repo/tenant-db'
 import { eq } from 'drizzle-orm'
 import { type Context, Hono } from 'hono'
@@ -10,6 +13,7 @@ import {
 	json,
 } from '../lib/http.ts'
 import {
+	filterReservationsLocations,
 	hasReservationsGrant,
 	requireReservationsLocation,
 	type ReservationsAuthContext,
@@ -27,6 +31,7 @@ import {
 	getReservationDetail,
 	resendReservationConfirmation,
 	transitionReservationStatus,
+	tillUndoable,
 	undoReservationTransition,
 	updateReservation,
 	updateReservationContactStatus,
@@ -194,6 +199,34 @@ const dayQuerySchema = z.object({
 	tag: z.string().trim().min(1).max(128).optional(),
 })
 
+/**
+ * Marks each recent no-show and finished party with whether this till may undo
+ * it, and keys the ETag to the answer: it depends on who is asking.
+ */
+function withTillUndo<
+	T extends {
+		etag: string
+		shortEtag: string
+		reservations: Array<{ id: string }>
+	},
+>(feed: T, undo: { candidates: Set<string>; allowed: Set<string> }): T {
+	if (undo.candidates.size === 0) return feed
+	const allowed = [...undo.allowed].sort().join(',')
+	let hash = 0
+	for (let i = 0; i < allowed.length; i++)
+		hash = (Math.imul(hash, 31) + allowed.charCodeAt(i)) | 0
+	const tag = (etag: string) =>
+		etag.replace(/"$/, `:u${(hash >>> 0).toString(36)}"`)
+	return {
+		...feed,
+		etag: tag(feed.etag),
+		shortEtag: tag(feed.shortEtag),
+		reservations: feed.reservations.map((r) =>
+			undo.candidates.has(r.id) ? { ...r, canUndo: undo.allowed.has(r.id) } : r,
+		),
+	}
+}
+
 operatorReservationsBookRoutes.get(
 	'/day',
 	rsvGuard({
@@ -223,7 +256,7 @@ operatorReservationsBookRoutes.get(
 				ctx,
 				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
 			)
-			const feed = await getDayFeed(db, locCheck.locationId, businessDate, {
+			const day = await getDayFeed(db, locCheck.locationId, businessDate, {
 				canReadGuestSensitive,
 				filters: {
 					serviceId: q.data.serviceId,
@@ -232,6 +265,24 @@ operatorReservationsBookRoutes.get(
 					tag: q.data.tag,
 				},
 			})
+			// A till is told which recent no-shows and cleared parties it may undo
+			// (its person's or the system's), so it never offers one it would be refused.
+			const feed =
+				ctx.channel === 'station'
+					? withTillUndo(
+							day,
+							await tillUndoable(
+								db,
+								day.reservations,
+								ctx.userId,
+								Date.now(),
+								hasReservationsGrant(
+									ctx,
+									RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+								),
+							),
+						)
+					: day
 
 			const ifNoneMatch = c.req.header('If-None-Match')
 			if (matchesDayFeedEtag(ifNoneMatch, feed.etag, feed.shortEtag)) {
@@ -414,6 +465,8 @@ const availabilityQuerySchema = z.object({
 	areaId: z.string().trim().min(1).max(128).optional(),
 	diningAreaId: z.string().trim().min(1).max(128).optional(),
 	durationMin: z.coerce.number().int().min(15).max(720).optional(),
+	/** Times for changing this booking: its own tables and covers are free. */
+	excludeReservationId: z.string().trim().min(1).max(128).optional(),
 })
 
 operatorReservationsBookRoutes.get(
@@ -448,6 +501,7 @@ operatorReservationsBookRoutes.get(
 				serviceId: q.data.serviceId ?? null,
 				areaId: q.data.areaId ?? q.data.diningAreaId ?? null,
 				durationMin: q.data.durationMin ?? null,
+				excludeReservationId: q.data.excludeReservationId ?? null,
 			})
 			return json({ ok: true, orgId: ctx.orgId, ...availability })
 		} catch (error) {
@@ -902,7 +956,14 @@ operatorReservationsBookRoutes.get(
 			const summary = await getGuestSummary(db, c.req.param('id'), {
 				canReadSensitive,
 			})
-			return json({ ok: true, orgId: ctx.orgId, ...summary })
+			// The guest is the organization's; their bookings elsewhere are not
+			// this member's to see.
+			return json({
+				ok: true,
+				orgId: ctx.orgId,
+				...summary,
+				reservations: filterReservationsLocations(ctx, summary.reservations),
+			})
 		} catch (error) {
 			return handleRouteError(error)
 		}
@@ -912,6 +973,70 @@ operatorReservationsBookRoutes.get(
 // ============================================================================
 // 4. Create reservation, create walk-in, and reservation mutations
 // ============================================================================
+
+/**
+ * What a till sends when it books or seats a walk-in (apps/station
+ * src/apps/reservations/api.ts): no overbooking a future booking, no locks,
+ * no other channel, no attaching an existing guest profile, no health notes.
+ */
+const STATION_BOOKING_FIELDS = new Set([
+	'locationId',
+	'date',
+	'businessDate',
+	'time',
+	'slotLocal',
+	'localStartMin',
+	'partySize',
+	'channel',
+	'guest',
+	'staffNotes',
+	'tableIds',
+])
+// A walk-in is seated now (the server's clock and business day) and named by
+// the host; it never looks a guest up by phone or email, which a till without
+// guest details could otherwise use to learn whose number it is.
+const STATION_WALK_IN_FIELDS = new Set([
+	'locationId',
+	'partySize',
+	'tableIds',
+	'guestName',
+	// "Seat anyway": the host's call on a table someone is due at, recorded.
+	'overbook',
+	'overbookReason',
+])
+/**
+ * A guest typed in at a till: a name and a phone number, nothing more. The
+ * host stand never asks for an email address, and a till without guest
+ * details may not use one to find out whose it is.
+ */
+const STATION_GUEST_FIELDS = new Set(['firstName', 'lastName', 'phone'])
+
+const stationRefusal = () =>
+	json(
+		{
+			error: 'not_for_station',
+			message: 'That is done in the app, not at a till.',
+		},
+		403,
+	)
+
+/** Refuses a till's request that carries fields its host stand never sends. */
+function stationBodyDenied(
+	data: Record<string, unknown>,
+	allowed: ReadonlySet<string>,
+): Response | null {
+	for (const [key, value] of Object.entries(data)) {
+		if (value === undefined) continue
+		if (!allowed.has(key)) return stationRefusal()
+	}
+	const guest = data.guest
+	if (guest && typeof guest === 'object')
+		for (const [key, value] of Object.entries(guest)) {
+			if (value === undefined) continue
+			if (!STATION_GUEST_FIELDS.has(key)) return stationRefusal()
+		}
+	return null
+}
 
 const guestInlineSchema = z.object({
 	id: z.string().trim().min(1).max(128).optional(),
@@ -996,6 +1121,12 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, createBookingBodySchema)
 		if ('error' in parsed) return parsed.error
+		if (ctx.channel === 'station') {
+			const denied = stationBodyDenied(parsed.data, STATION_BOOKING_FIELDS)
+			if (denied) return denied
+			if (parsed.data.channel !== undefined && parsed.data.channel !== 'host')
+				return stationRefusal()
+		}
 
 		const locCheck = resolveLocation(ctx, parsed.data.locationId)
 		if (!locCheck.ok) return locCheck.response
@@ -1094,6 +1225,10 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, createWalkInBodySchema)
 		if ('error' in parsed) return parsed.error
+		if (ctx.channel === 'station') {
+			const denied = stationBodyDenied(parsed.data, STATION_WALK_IN_FIELDS)
+			if (denied) return denied
+		}
 
 		const locCheck = resolveLocation(ctx, parsed.data.locationId)
 		if (!locCheck.ok) return locCheck.response
@@ -1112,7 +1247,15 @@ operatorReservationsBookRoutes.post(
 				idempotencyKey: idempotencyKey ?? '',
 				input: {
 					...parsed.data,
-					guest: await withDefaultGuestLocale(ctx.orgId, parsed.data.guest),
+					// The name the host typed, when no profile came with it: a new
+					// guest under that name (no phone, so it matches nobody).
+					guest: await withDefaultGuestLocale(
+						ctx.orgId,
+						parsed.data.guest ??
+							(parsed.data.guestName?.trim()
+								? { firstName: parsed.data.guestName.trim(), lastName: '' }
+								: undefined),
+					),
 					date: parsed.data.date ?? parsed.data.businessDate,
 					time: parsed.data.time ?? parsed.data.slotLocal,
 					locationId: locCheck.locationId,
@@ -1154,19 +1297,55 @@ operatorReservationsBookRoutes.get(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const canReadGuestSensitive = hasReservationsGrant(
-				ctx,
-				RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-			)
-			const detail = await getReservationDetail(db, rsvId, {
-				canReadGuestSensitive,
-			})
+			const detail = await getReservationDetail(db, rsvId, detailAccess(ctx))
 			return json({ ok: true, orgId: ctx.orgId, ...detail })
 		} catch (error) {
 			return handleRouteError(error)
 		}
 	},
 )
+
+/**
+ * Allergy and dietary notes are health details: someone who cannot read them
+ * (a host at a till without guest details, a member without the guest
+ * permission) cannot overwrite or clear them either.
+ */
+function healthNotesDenied(
+	ctx: ReservationsAuthContext,
+	input: { dietaryNotes?: unknown; guestRequests?: unknown },
+): Response | null {
+	// The guest's own request text is hidden the same way ("son has a peanut allergy").
+	if (input.dietaryNotes === undefined && input.guestRequests === undefined)
+		return null
+	if (canReadGuests(ctx)) return null
+	return json(
+		{
+			error: 'guest_permission_required',
+			message: 'Only someone who can see allergy notes can change them.',
+		},
+		403,
+	)
+}
+
+/** What a reservation's detail may include for this caller. */
+function detailAccess(ctx: ReservationsAuthContext) {
+	const canReadGuestSensitive = hasReservationsGrant(
+		ctx,
+		RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+	)
+	return {
+		canReadGuestSensitive,
+		// Card details stay off a shared till unless its token holds the payment grant.
+		canReadPayments:
+			ctx.channel !== 'station' ||
+			hasReservationsGrant(
+				ctx,
+				RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+			),
+		// A till without guest details never reaches the guestbook, here included.
+		guestHistory: ctx.channel !== 'station' || canReadGuestSensitive,
+	}
+}
 
 operatorReservationsBookRoutes.get(
 	'/reservations/:id/events',
@@ -1189,13 +1368,33 @@ operatorReservationsBookRoutes.get(
 
 		try {
 			const db = await getTenantDb(ctx.orgId)
-			const res = await getReservationEvents(db, rsvId)
+			const res = await getReservationEvents(db, rsvId, {
+				canReadGuestSensitive: hasReservationsGrant(
+					ctx,
+					RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
+				),
+			})
 			return json({ ok: true, orgId: ctx.orgId, ...res })
 		} catch (error) {
 			return handleRouteError(error)
 		}
 	},
 )
+
+/** What a till may change on a booking: its size, when, and how long the table is kept. */
+const STATION_PATCH_FIELDS = new Set([
+	'locationId',
+	'expectedVersion',
+	'date',
+	'businessDate',
+	'time',
+	'slotLocal',
+	'localStartMin',
+	'partySize',
+	'durationMin',
+])
+/** The longest stay a till may set (a manager goes beyond it in the app). */
+const STATION_MAX_DURATION_MIN = 360
 
 const patchReservationSchema = z.object({
 	locationId: z.string().trim().min(1).max(128).optional(),
@@ -1243,6 +1442,36 @@ operatorReservationsBookRoutes.patch(
 
 		const parsed = await parseBody(c, patchReservationSchema)
 		if ('error' in parsed) return parsed.error
+		const notesDenied = healthNotesDenied(ctx, parsed.data)
+		if (notesDenied) return notesDenied
+		// At a till only the party's size and time move ("we're six now", "make
+		// it 8"): notes, tags, tables, locks and overbooking stay with the app.
+		if (ctx.channel === 'station') {
+			const extra = Object.keys(parsed.data).filter(
+				(key) =>
+					!STATION_PATCH_FIELDS.has(key) &&
+					parsed.data[key as keyof typeof parsed.data] !== undefined,
+			)
+			if (extra.length > 0)
+				return json(
+					{
+						error: 'not_for_station',
+						message: 'Only the party size, time and stay change at a till.',
+					},
+					403,
+				)
+			if (
+				parsed.data.durationMin !== undefined &&
+				parsed.data.durationMin > STATION_MAX_DURATION_MIN
+			)
+				return json(
+					{
+						error: 'manager_required',
+						message: 'A longer stay is a manager’s to set in the app.',
+					},
+					409,
+				)
+		}
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(
@@ -1258,6 +1487,15 @@ operatorReservationsBookRoutes.patch(
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// A till changes size and time only within what the slot takes and
+				// never on a booking with money on it.
+				paymentLocked:
+					ctx.channel === 'station' &&
+					!hasReservationsGrant(
+						ctx,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+					),
+				stayOnlyGrows: ctx.channel === 'station',
 				input: {
 					...parsed.data,
 					date: parsed.data.date ?? parsed.data.businessDate,
@@ -1270,6 +1508,16 @@ operatorReservationsBookRoutes.patch(
 		}
 	},
 )
+
+/** What a till may send when it puts a party on tables. */
+const STATION_ASSIGN_FIELDS = new Set([
+	'locationId',
+	'tableIds',
+	'comboId',
+	'expectedVersion',
+	'overbook',
+	'overbookReason',
+])
 
 const assignTablesSchema = z.object({
 	locationId: z.string().trim().min(1).max(128).optional(),
@@ -1301,6 +1549,23 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, assignTablesSchema)
 		if ('error' in parsed) return parsed.error
+		// A till puts a party on tables; locking, unlocking and swapping with
+		// another party stay with the app.
+		if (ctx.channel === 'station') {
+			const extra = Object.keys(parsed.data).filter(
+				(key) =>
+					!STATION_ASSIGN_FIELDS.has(key) &&
+					parsed.data[key as keyof typeof parsed.data] !== undefined,
+			)
+			if (extra.length > 0)
+				return json(
+					{
+						error: 'not_for_station',
+						message: 'Locking and swapping tables is done in the app.',
+					},
+					403,
+				)
+		}
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(
@@ -1373,6 +1638,14 @@ operatorReservationsBookRoutes.post(
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// A till's host does not touch money (deposits, refunds, no-show fees).
+				paymentLocked:
+					ctx.channel === 'station' &&
+					!hasReservationsGrant(
+						ctx,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+					),
+				serviceDayOnly: ctx.channel === 'station',
 				input: {
 					...parsed.data,
 					status: parsed.data.status ?? parsed.data.toStatus ?? '',
@@ -1462,6 +1735,17 @@ operatorReservationsBookRoutes.post(
 				orgId: ctx.orgId,
 				reservationId: rsvId,
 				actorId: ctx.userId,
+				// A till's host does not bring back a cancel or no-show with money on it.
+				paymentLocked:
+					ctx.channel === 'station' &&
+					!hasReservationsGrant(
+						ctx,
+						RESERVATIONS_PERMISSIONS.UPDATE_RESERVATION_PAYMENT,
+					),
+				// At a till: the host's own slip, within half an hour.
+				...(ctx.channel === 'station'
+					? { ownRecentOnly: { withinMs: TILL_UNDO_WINDOW_MS } }
+					: {}),
 				input: parsed.data,
 			})
 			return json({ ok: true, orgId: ctx.orgId, ...result })
@@ -1663,6 +1947,8 @@ operatorReservationsBookRoutes.post(
 
 		const parsed = await parseBody(c, notesUpdateSchema)
 		if ('error' in parsed) return parsed.error
+		const notesDenied = healthNotesDenied(ctx, parsed.data)
+		if (notesDenied) return notesDenied
 
 		const rsvId = c.req.param('id')
 		const locCheck = await resolveReservationLocation(
@@ -1728,12 +2014,7 @@ function requestDecisionHandler(decision: 'approve' | 'decline') {
 				})
 			}
 			const db = await getTenantDb(ctx.orgId)
-			const detail = await getReservationDetail(db, rsvId, {
-				canReadGuestSensitive: hasReservationsGrant(
-					ctx,
-					RESERVATIONS_PERMISSIONS.READ_RESERVATION_GUEST,
-				),
-			})
+			const detail = await getReservationDetail(db, rsvId, detailAccess(ctx))
 			return json({ ok: true, orgId: ctx.orgId, ...detail })
 		} catch (error) {
 			return handleRouteError(error)

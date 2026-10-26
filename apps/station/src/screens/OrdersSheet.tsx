@@ -1,25 +1,21 @@
 import { type I18n, type MessageDescriptor } from '@lingui/core'
-import { msg, t, Trans } from '@lingui/macro'
+import { msg, plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { Icon } from '@repo/ui/icon'
+import { Item, ItemContent } from '@repo/ui/item'
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-	ArrowLeft,
-	ArrowRightLeft,
-	CreditCard,
-	PlusCircle,
-	Printer,
-	ReceiptText,
-	RefreshCw,
-	RotateCcw,
-	Search,
-	X,
-	XCircle,
-} from 'lucide-react'
 import { useDeferredValue, useEffect, useState } from 'react'
 import { AuditSheet, useReasonLabel } from './AuditSheet.tsx'
+import { DishStatusBadge, RoundHeading } from './KitchenRounds.tsx'
 import { PhonePickupDetails } from './PhonePickupDetails.tsx'
 import { Receipt } from './Receipt.tsx'
 import { type PosOrder, type TenderMethod } from '~/lib/db.ts'
+import { shortDuration } from '~/lib/duration.ts'
+import {
+	dishStatuses,
+	readyDishes,
+	useKitchenTickets,
+} from '~/lib/kitchen-status.ts'
 import { moneyFormatter } from '~/lib/money.ts'
 import {
 	balanceCents,
@@ -32,22 +28,25 @@ import {
 	requeueRejected,
 	todaysOrders,
 	voidTab,
+	markServed,
 } from '~/lib/orders.ts'
 import { formatPickupAt } from '~/lib/pickup.ts'
 import { lineTotalCents } from '~/lib/pricing.ts'
-import { usePos, type OtherTab } from '~/lib/store.ts'
-import { useIsTablet } from '~/ui/hooks.ts'
+import { roundsOf, servedOf } from '~/lib/rounds.ts'
+import { saleLine, shownItemName, usePos, type OtherTab } from '~/lib/store.ts'
+import { useIsTablet, useNow } from '~/ui/hooks.ts'
 import { Keypad } from '~/ui/Keypad.tsx'
 import {
+	Input,
 	Badge,
 	Button,
+	Chip,
 	IconButton,
 	Modal,
 	NumberPop,
 	Reveal,
 	Segmented,
 	cn,
-	fieldClass,
 } from '~/ui/primitives.tsx'
 
 const TENDER: Record<TenderMethod, MessageDescriptor> = {
@@ -129,8 +128,17 @@ export function OrdersSheet({
 	const wide = useIsTablet()
 	const canSeeOthers = !settings.demo && Boolean(settings.deviceToken)
 
+	// A server's own tables: the open tabs the signed-in person rang up.
+	const [mineOnly, setMineOnly] = useState(false)
+	const myTabs = me ? tabs.filter((order) => order.staff?.id === me.id) : []
 	const sourceOrders =
-		view === 'open' ? tabs : view === 'phone' ? phones : today
+		view === 'open'
+			? mineOnly && me
+				? myTabs
+				: tabs
+			: view === 'phone'
+				? phones
+				: today
 	const orders = deferredQuery
 		? sourceOrders.filter((order) =>
 				[
@@ -160,7 +168,26 @@ export function OrdersSheet({
 			(o.refunds ?? []).reduce((a, r) => a + r.amountCents, 0),
 		0,
 	)
-	const money = moneyFormatter(selected?.currency ?? currency)
+	const money = moneyFormatter(selected?.currency ?? currency, i18n.locale)
+	const now = useNow()
+	/** How many of a tab's dishes wait at the pass: a server sees which table to run food to. */
+	const readyCount = (order: PosOrder) =>
+		order.status === 'open' ? readyDishes(order, tickets?.get(order.id)) : 0
+	const openMinutes = (order: PosOrder) =>
+		Math.max(0, Math.floor((now - order.createdAt) / 60_000))
+	// An open tab shows its rounds to the kitchen, and where each sent dish is now.
+	const tickets = useKitchenTickets(
+		view === 'open' || selected?.status === 'open',
+	)
+	const selectedLines = selected
+		? selected.lines.map((line) => saleLine(line, selected.status === 'open'))
+		: []
+	const rounds = roundsOf(selectedLines)
+	const tracked =
+		selected?.status === 'open' && rounds.some((round) => round.sentAt !== null)
+	const statuses = selected
+		? dishStatuses(selected.lines, tickets?.get(selected.id))
+		: new Map()
 	const openCount = tabs.length
 	const todayCount = today.length
 	// Plain values for the messages below (translations interpolate names, not expressions).
@@ -211,27 +238,42 @@ export function OrdersSheet({
 						]}
 					/>
 				</div>
+				{view === 'open' && me ? (
+					<Chip
+						selected={mineOnly}
+						aria-pressed={mineOnly}
+						onClick={() => {
+							setMineOnly(!mineOnly)
+							setSelectedId(null)
+						}}
+					>
+						{_(t`Mine · ${myTabs.length}`)}
+					</Chip>
+				) : null}
 				{view !== 'others' ? (
 					<label className="relative ms-auto block w-full sm:w-72">
 						<span className="sr-only">
 							<Trans>Search orders</Trans>
 						</span>
-						<Search className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" />
-						<input
+						<Icon
+							name="search"
+							className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2"
+						/>
+						<Input
 							type="search"
 							value={query}
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder={_(t`Search orders`)}
 							autoComplete="off"
-							className={cn(fieldClass, 'h-11 ps-10 pe-11')}
+							className={cn('h-11 ps-10 pe-11')}
 						/>
 						{query ? (
 							<IconButton
 								label={_(t`Clear search`)}
-								className="t-pop-in text-muted-foreground absolute end-0 top-0"
+								className="text-muted-foreground absolute end-0 top-0"
 								onClick={() => setQuery('')}
 							>
-								<X className="size-4" />
+								<Icon name="x" className="size-4" />
 							</IconButton>
 						) : null}
 					</label>
@@ -248,9 +290,6 @@ export function OrdersSheet({
 				</div>
 			) : orders.length === 0 ? (
 				<div className="t-rise bg-background flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-8 text-center">
-					<div className="bg-muted text-muted-foreground flex size-16 items-center justify-center rounded-full">
-						<ReceiptText className="size-7" />
-					</div>
 					<p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
 						{deferredQuery ? (
 							<Trans>No orders match your search.</Trans>
@@ -278,63 +317,93 @@ export function OrdersSheet({
 					) : null}
 				</div>
 			) : (
-				<div className="bg-background grid min-h-0 flex-1 gap-4 p-3 sm:p-4 md:grid-cols-[20rem_minmax(0,1fr)] lg:gap-6 lg:p-6">
+				<div className="bg-background grid min-h-0 flex-1 md:grid-cols-[19rem_minmax(0,1fr)]">
 					<ul
 						aria-label={_(t`Orders`)}
 						className={cn(
-							'border-border bg-card min-h-0 overflow-y-auto rounded-xl border',
+							'border-border bg-card min-h-0 overflow-y-auto overscroll-contain md:border-e',
 							selected && !wide && 'hidden',
 						)}
 					>
 						{orders.map((o) => {
 							const owed = balanceCents(o)
+							const ready = readyCount(o)
+							const openTime = shortDuration(openMinutes(o), i18n.locale)
 							return (
-								<li key={o.id}>
-									<button
-										type="button"
-										onClick={() => {
-											setSelectedId(o.id)
-											setError(null)
-										}}
-										aria-current={selected?.id === o.id}
-										className={cn(
-											'border-border hover:bg-muted/60 flex w-full flex-col gap-2 border-b p-4 text-start transition-colors',
-											selected?.id === o.id && 'bg-muted/60',
-										)}
+								<li
+									key={o.id}
+									className={cn(
+										'hover:bg-muted',
+										selected?.id === o.id && 'bg-muted',
+									)}
+								>
+									<Item
+										size="sm"
+										render={
+											<button
+												type="button"
+												onClick={() => {
+													setSelectedId(o.id)
+													setError(null)
+												}}
+												aria-current={selected?.id === o.id}
+											/>
+										}
 									>
-										<div className="flex w-full flex-wrap items-center justify-between gap-2">
-											<span className="font-semibold">#{o.number}</span>
-											<StatusBadge order={o} />
-										</div>
-										<div className="flex w-full items-baseline justify-between gap-3 text-sm">
-											<span className="min-w-0 truncate">
-												{placeLabel(_, o)}
+										<ItemContent className="min-w-0">
+											<span className="flex items-baseline justify-between gap-3">
+												<span className="font-semibold">#{o.number}</span>
+												<span className="tnum shrink-0 font-semibold whitespace-nowrap">
+													{moneyFormatter(
+														o.currency,
+														i18n.locale,
+													)(o.status === 'open' ? owed : o.totals.totalCents)}
+												</span>
 											</span>
-											<span className="tnum shrink-0 font-medium whitespace-nowrap">
-												{moneyFormatter(o.currency)(
-													o.status === 'open' ? owed : o.totals.totalCents,
+											<span className="flex items-center justify-between gap-3">
+												<span className="text-muted-foreground min-w-0 truncate text-sm">
+													{placeLabel(_, o)}
+												</span>
+												{ready > 0 ? (
+													<span
+														className="dish-status shrink-0"
+														data-status="ready"
+													>
+														<span aria-hidden className="dish-status-dot" />
+														{_(
+															plural(ready, {
+																one: '# ready',
+																other: '# ready',
+															}),
+														)}
+													</span>
+												) : (
+													<StatusBadge order={o} />
 												)}
 											</span>
-										</div>
-										<span className="text-muted-foreground text-xs">
-											{new Date(o.createdAt).toLocaleTimeString(i18n.locale, {
-												hour: 'numeric',
-												minute: '2-digit',
-											})}
-											{o.staff ? ` · ${o.staff.name}` : ''}
-										</span>
-										{o.orderSource === 'phone' ? (
-											<span className="text-muted-foreground text-xs">
-												{o.pickupAt == null
-													? _(t`Pickup ASAP`)
-													: formatPickupAt(
-															o.pickupAt,
-															i18n.locale,
-															o.pickupTimeZone,
-														)}
+											<span className="text-muted-foreground tnum block text-start text-xs">
+												{new Date(o.createdAt).toLocaleTimeString(i18n.locale, {
+													hour: 'numeric',
+													minute: '2-digit',
+												})}
+												{o.status === 'open'
+													? ` · ${_(t`open ${openTime}`)}`
+													: ''}
+												{o.staff ? ` · ${o.staff.name}` : ''}
+												{o.orderSource === 'phone'
+													? ` · ${
+															o.pickupAt == null
+																? _(t`Pickup ASAP`)
+																: formatPickupAt(
+																		o.pickupAt,
+																		i18n.locale,
+																		o.pickupTimeZone,
+																	)
+														}`
+													: ''}
 											</span>
-										) : null}
-									</button>
+										</ItemContent>
+									</Item>
 								</li>
 							)
 						})}
@@ -343,7 +412,7 @@ export function OrdersSheet({
 								<span>
 									<Trans>Taken today</Trans>
 								</span>
-								<span>{moneyFormatter(currency)(takenToday)}</span>
+								<span>{moneyFormatter(currency, i18n.locale)(takenToday)}</span>
 							</li>
 						) : null}
 					</ul>
@@ -353,16 +422,16 @@ export function OrdersSheet({
 							// Another order slides its details in.
 							key={selected.id}
 							aria-label={_(t`Order details`)}
-							className="t-rise border-border bg-card flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border"
+							className="bg-card flex min-h-0 min-w-0 flex-col overflow-hidden"
 						>
-							<div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
+							<div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:p-6">
 								{!wide ? (
 									<button
 										type="button"
 										onClick={() => setSelectedId(null)}
 										className="text-muted-foreground hover:bg-muted hover:text-foreground -ms-1 inline-flex h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold transition-colors"
 									>
-										<ArrowLeft className="size-4 rtl:rotate-180" />{' '}
+										<Icon name="arrow-left" className="size-4 rtl:rotate-180" />{' '}
 										<Trans>All orders</Trans>
 									</button>
 								) : null}
@@ -431,7 +500,7 @@ export function OrdersSheet({
 									</p>
 								) : null}
 								{selected.transferredTo ? (
-									<p className="bg-muted text-muted-foreground rounded-xl p-3 text-sm">
+									<p className="bg-muted text-muted-foreground rounded-(--station-control-radius) p-3 text-sm">
 										<Trans>
 											Terminal {transferredTo} took this tab over. It is kept
 											here as history only.
@@ -439,7 +508,7 @@ export function OrdersSheet({
 									</p>
 								) : null}
 								{selected.heldReason ? (
-									<p className="bg-warning/12 text-warning rounded-xl p-3 text-sm">
+									<p className="notice-warning rounded-(--station-control-radius) p-3 text-sm">
 										<Trans>
 											The server kept the last change for a manager to look at,
 											because {heldBecause}. Nothing is lost.
@@ -447,7 +516,7 @@ export function OrdersSheet({
 									</p>
 								) : null}
 								{!isSendable(selected, settings) ? (
-									<p className="bg-warning/12 text-warning rounded-xl p-3 text-sm">
+									<p className="notice-warning rounded-(--station-control-radius) p-3 text-sm">
 										{selected.origin === DEMO_ORIGIN ? (
 											<Trans>
 												This order was taken in demo mode, so it is kept here
@@ -463,7 +532,7 @@ export function OrdersSheet({
 									</p>
 								) : null}
 								{selected.renumberedFrom ? (
-									<p className="bg-muted text-muted-foreground rounded-xl p-3 text-sm">
+									<p className="bg-muted text-muted-foreground rounded-(--station-control-radius) p-3 text-sm">
 										<Trans>
 											This order was first shown as #{renumberedFrom}. It was
 											renumbered because that number was already taken.
@@ -473,10 +542,10 @@ export function OrdersSheet({
 								{selected.lastError && selected.sync !== 'synced' ? (
 									<div
 										className={cn(
-											'rounded-xl p-3 text-sm',
+											'rounded-(--station-control-radius) p-3 text-sm',
 											selected.sync === 'rejected'
-												? 'bg-destructive/10 text-destructive'
-												: 'bg-warning/12 text-warning',
+												? 'notice-danger'
+												: 'notice-warning',
 										)}
 									>
 										{selected.sync === 'rejected' ? (
@@ -487,44 +556,81 @@ export function OrdersSheet({
 										{selected.lastError}
 									</div>
 								) : null}
-								<ul className="divide-border border-border divide-y border-y">
-									{selected.lines.map((l) => (
-										<li
-											key={l.id}
-											className="flex items-start justify-between gap-4 py-4"
-										>
-											<div className="min-w-0 flex-1 break-words">
-												<div className="font-medium">
-													{l.quantity} × {l.name}
-												</div>
-												{l.variantLabel ? (
-													<div className="text-muted-foreground text-sm">
-														{l.variantLabel}
-													</div>
-												) : null}
-												{l.options.map((o) => (
-													<div
-														key={o.groupId + o.optionId}
-														className="text-muted-foreground text-sm"
-													>
-														{o.quantity > 1 ? `${o.quantity} × ` : ''}
-														{o.optionName}
-													</div>
-												))}
-												{l.instructions ? (
-													<div className="text-muted-foreground text-sm italic">
-														“{l.instructions}”
-													</div>
-												) : null}
-											</div>
-											<span className="tnum shrink-0 text-sm font-medium whitespace-nowrap">
-												{money(lineTotalCents(l))}
-											</span>
-										</li>
+								<div className="border-border border-y">
+									{(tracked
+										? rounds
+										: [{ sentAt: null, lines: selectedLines }]
+									).map((round) => (
+										<div key={round.sentAt ?? 'new'}>
+											{tracked ? (
+												<RoundHeading
+													sentAt={round.sentAt}
+													servedAt={servedOf(round.lines)}
+													onServed={
+														round.sentAt !== null && selected.status === 'open'
+															? () =>
+																	void markServed(
+																		selected.id,
+																		round.lines.map((line) => line.id),
+																	)
+															: undefined
+													}
+													items={round.lines.reduce(
+														(sum, l) => sum + l.quantity,
+														0,
+													)}
+													className="mt-3 rounded-(--station-inset-radius) px-3"
+												/>
+											) : null}
+											<ul className="divide-border divide-y">
+												{round.lines.map((l) => {
+													const status = statuses.get(l.id)
+													return (
+														<li
+															key={l.id}
+															className="flex items-start justify-between gap-4 py-4"
+														>
+															<div className="min-w-0 flex-1 break-words">
+																<div className="font-medium">
+																	{l.quantity} × {l.name}
+																</div>
+																{l.variantLabel ? (
+																	<div className="text-muted-foreground text-sm">
+																		{l.variantLabel}
+																	</div>
+																) : null}
+																{l.options.map((o) => (
+																	<div
+																		key={o.groupId + o.optionId}
+																		className="text-muted-foreground text-sm"
+																	>
+																		{o.quantity > 1 ? `${o.quantity} × ` : ''}
+																		{o.optionName}
+																	</div>
+																))}
+																{l.instructions ? (
+																	<div className="text-muted-foreground text-sm italic">
+																		“{l.instructions}”
+																	</div>
+																) : null}
+															</div>
+															<div className="flex shrink-0 flex-col items-end gap-1.5">
+																<span className="tnum text-sm font-medium whitespace-nowrap">
+																	{money(lineTotalCents(l))}
+																</span>
+																{status ? (
+																	<DishStatusBadge status={status} />
+																) : null}
+															</div>
+														</li>
+													)
+												})}
+											</ul>
+										</div>
 									))}
-								</ul>
+								</div>
 								{(selected.lineVoids ?? []).length > 0 ? (
-									<div className="border-border rounded-xl border border-dashed p-3 text-sm">
+									<div className="border-border border-y py-3 text-sm">
 										<p className="mb-1 font-semibold">
 											<Trans>Taken off</Trans>
 										</p>
@@ -533,7 +639,7 @@ export function OrdersSheet({
 												<li key={v.id} className="flex justify-between gap-3">
 													<span>
 														<s>
-															{v.quantity} × {v.name}
+															{v.quantity} × {shownItemName(v.itemId, v.name)}
 														</s>{' '}
 														· {reasonLabel(v.reason)}
 														{v.by ? ` · ${v.by.name}` : ''}
@@ -583,7 +689,7 @@ export function OrdersSheet({
 											<dd>{money(selected.totals.tipCents)}</dd>
 										</div>
 									) : null}
-									<div className="border-border flex justify-between border-t pt-3 text-lg font-semibold">
+									<div className="border-border flex justify-between border-t pt-3 text-base font-semibold">
 										<dt>
 											<Trans>Total</Trans>
 										</dt>
@@ -620,7 +726,7 @@ export function OrdersSheet({
 										</div>
 									))}
 									{selected.status === 'open' ? (
-										<div className="flex justify-between text-lg font-semibold">
+										<div className="flex justify-between text-base font-semibold">
 											<dt>
 												<Trans>Balance due</Trans>
 											</dt>
@@ -647,7 +753,7 @@ export function OrdersSheet({
 									{selected.status === 'open' && !selected.transferredTo ? (
 										<>
 											<Button variant="primary" onClick={() => onPay(selected)}>
-												<CreditCard className="size-4" />{' '}
+												<Icon name="credit-card" className="size-4" />{' '}
 												<Trans>Pay {balanceDue}</Trans>
 											</Button>
 											{selected.payments.length === 0 ? (
@@ -655,7 +761,7 @@ export function OrdersSheet({
 													variant="outline"
 													onClick={() => onAddItems(selected)}
 												>
-													<PlusCircle className="size-4" />{' '}
+													<Icon name="circle-plus" className="size-4" />{' '}
 													<Trans>Add items</Trans>
 												</Button>
 											) : null}
@@ -665,7 +771,7 @@ export function OrdersSheet({
 													className="text-destructive"
 													onClick={() => setCancelling(selected)}
 												>
-													<XCircle className="size-4" />{' '}
+													<Icon name="circle-x" className="size-4" />{' '}
 													<Trans>Cancel tab</Trans>
 												</Button>
 											) : null}
@@ -677,29 +783,31 @@ export function OrdersSheet({
 											className="text-destructive"
 											onClick={() => setRefunding(selected)}
 										>
-											<RotateCcw className="size-4" /> <Trans>Refund</Trans>
+											<Icon name="rotate-ccw" className="size-4" />{' '}
+											<Trans>Refund</Trans>
 										</Button>
 									) : null}
 									<Button variant="outline" onClick={() => window.print()}>
-										<Printer className="size-4" />{' '}
+										<Icon name="printer" className="size-4" />{' '}
 										{selected.status === 'open' ? (
 											<Trans>Print bill</Trans>
 										) : (
 											<Trans>Print receipt</Trans>
 										)}
 									</Button>
-									{selected.sync !== 'synced' ? (
+									{selected.sync !== 'synced' &&
+									isSendable(selected, settings) ? (
 										<Button
 											variant="outline"
 											onClick={() => {
 												void requeueRejected(selected.id).then(onRetry)
 											}}
 										>
-											<RefreshCw className="size-4" />{' '}
+											<Icon name="refresh-cw" className="size-4" />{' '}
 											{selected.sync === 'rejected' ? (
 												<Trans>Try again</Trans>
 											) : (
-												<Trans>Send now</Trans>
+												<Trans>Upload now</Trans>
 											)}
 										</Button>
 									) : null}
@@ -768,11 +876,11 @@ function RefundSheet({
 	onClose: () => void
 	onDone: () => void
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const me = usePos((s) => s.session?.staff ?? null)
 	const needsManager = usePos((s) => s.needsManager)
 	const approve = usePos((s) => s.approve)
-	const money = moneyFormatter(order.currency)
+	const money = moneyFormatter(order.currency, i18n.locale)
 	const available = refundableCents(order)
 	// Starts empty: typing on a pre-filled amount would append to it. "Full
 	// amount" fills it in one tap.
@@ -820,16 +928,16 @@ function RefundSheet({
 			}}
 		>
 			<div className="space-y-2">
-				<div className="border-primary flex items-baseline justify-between rounded-xl border px-4 py-3">
+				<div className="border-primary flex items-baseline justify-between rounded-(--station-control-radius) border px-4 py-3">
 					<span className="text-muted-foreground text-sm">
 						<Trans>Refund (up to {upTo})</Trans>
 					</span>
 					<NumberPop
 						value={money(typed)}
-						className="tnum mono text-2xl font-bold"
+						className="tnum mono text-2xl font-semibold"
 					/>
 				</div>
-				<Keypad value={digits} onChange={setDigits} />
+				<Keypad value={digits} onChange={setDigits} keyboard />
 				<Button
 					variant="outline"
 					className="w-full"
@@ -846,13 +954,13 @@ function RefundSheet({
 				{order.payments.some((p) => p.method !== 'cash') ? (
 					<label className="block text-sm font-semibold">
 						<Trans>Card terminal refund code (optional)</Trans>
-						<input
+						<Input
 							value={reference}
 							onChange={(event) =>
 								setReference(event.target.value.slice(0, 64))
 							}
 							autoComplete="off"
-							className={cn(fieldClass, 'mt-1')}
+							className={cn('mt-1')}
 						/>
 					</label>
 				) : null}
@@ -863,7 +971,7 @@ function RefundSheet({
 
 /** Open tabs held by this location's other terminals, which this one can take over. */
 function OtherTerminalsTabs({ onTaken }: { onTaken: () => void }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const otherTabs = usePos((s) => s.otherTabs)
 	const takeOverTab = usePos((s) => s.takeOverTab)
 	const [state, setState] = useState<{
@@ -914,7 +1022,7 @@ function OtherTerminalsTabs({ onTaken }: { onTaken: () => void }) {
 	return (
 		<ul className="divide-border divide-y">
 			{state.tabs.map(({ terminal, order }) => {
-				const money = moneyFormatter(order.currency)
+				const money = moneyFormatter(order.currency, i18n.locale)
 				const paid = order.payments.reduce((s, p) => s + p.amountCents, 0)
 				return (
 					<li
@@ -951,7 +1059,7 @@ function OtherTerminalsTabs({ onTaken }: { onTaken: () => void }) {
 								})
 							}}
 						>
-							<ArrowRightLeft className="size-4" />{' '}
+							<Icon name="arrow-right-left" className="size-4" />{' '}
 							{busyId === order.id ? (
 								<Trans>Taking over…</Trans>
 							) : (

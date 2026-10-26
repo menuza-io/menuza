@@ -24,6 +24,8 @@ export const ISSUE_LABELS: Record<string, MessageDescriptor> = {
 	overlapping_breaks: msg`Breaks overlap`,
 	offline_punch: msg`Offline punch`,
 	clock_skew: msg`Clock was off`,
+	late_sync: msg`Sent late`,
+	offline_override: msg`Check the rules`,
 	auto_break_deducted: msg`Break deducted`,
 }
 
@@ -33,6 +35,8 @@ export const ISSUE_HELP: Record<string, MessageDescriptor> = {
 	long_shift: msg`Longer than your long-shift limit. Check it is not a missed clock-out.`,
 	missed_break: msg`A required break was not taken or not recorded.`,
 	clock_skew: msg`The tablet clock was off when this was punched. Check the times.`,
+	late_sync: msg`Saved offline and sent more than 12 hours later. Check the times.`,
+	offline_override: msg`Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it. If they were early, pay starts at the earliest time the rules allow.`,
 	open_break: msg`A break was started and never ended. Set when it ended.`,
 	negative_duration: msg`The times do not add up. Fix the start or the end.`,
 	break_outside_entry: msg`A break falls outside the shift. Fix its times.`,

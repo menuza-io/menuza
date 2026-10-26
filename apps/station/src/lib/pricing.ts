@@ -27,6 +27,18 @@ export type CartLine = {
 	baseCents: number
 	instructions: string
 	options: CartOption[]
+	/**
+	 * When this line went to the kitchen (the tab was saved or the sale made).
+	 * Absent: not sent yet. Kept on this till only; the upload never carries it.
+	 */
+	sentAt?: number
+	/** When a server marked it brought to the table. This till only, like `sentAt`. */
+	servedAt?: number
+	/**
+	 * How many of it the kitchen has, while a tab is open in the cart: "one
+	 * fewer, then one more" puts it back instead of sending it again.
+	 */
+	sentQuantity?: number
 }
 
 /**

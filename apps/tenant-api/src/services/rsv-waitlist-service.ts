@@ -25,7 +25,10 @@ import {
 import { getLocationBusinessDate } from './rsv-business-date.ts'
 import { type DbOrTx } from './rsv-guest-service.ts'
 import { type ReservationMoveReport } from './rsv-booking-service.ts'
-import { enqueueWaitlistMessage } from './rsv-message-queue.ts'
+import {
+	enqueueWaitlistMessage,
+	enqueueWaitlistMessageVia,
+} from './rsv-message-queue.ts'
 import { enqueueManagerAlert } from './rsv-outbox.ts'
 import {
 	waitlistOccupiedHandler,
@@ -747,7 +750,7 @@ export async function notifyWaitlistEntry(params: {
 				.where(eq(rsvWaitlistEntries.id, current.id))
 			// The version before this bump names the transition, so a party that is
 			// revived and notified again is told again.
-			await enqueueWaitlistMessage(
+			const queued = await enqueueWaitlistMessageVia(
 				tx,
 				{
 					orgId: params.orgId,
@@ -760,7 +763,13 @@ export async function notifyWaitlistEntry(params: {
 					milestone: `v${current.version}`,
 				},
 			)
-			return { entryId: current.id, changed: true }
+			// Whether the guest was actually texted: a node or location with SMS
+			// off, a guest who did not agree, or no number queues nothing to text.
+			return {
+				entryId: current.id,
+				changed: true,
+				textQueued: queued.channels.includes('sms'),
+			}
 		},
 	)
 }
@@ -923,7 +932,12 @@ export async function seatWaitlistEntry(params: {
 			tableIds: input.tableIds,
 			overbook,
 			overbookReason,
-			staffNotes: entry.notes,
+			// A note the guest wrote when joining online is their request (hidden
+			// without guest details, and theirs to see); a note staff typed at the
+			// stand stays a staff note, never shown to the guest.
+			...(entry.channel === 'remote'
+				? { guestRequests: entry.notes }
+				: { staffNotes: entry.notes }),
 			guest: {
 				firstName: nameParts[0] || entry.displayName,
 				lastName: nameParts.slice(1).join(' '),

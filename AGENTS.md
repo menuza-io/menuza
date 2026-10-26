@@ -837,9 +837,11 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - `@repo/staffing` - Staff module domain code shared by App and tenant-api: Zod
   schemas, permission and `staffing.*` flag keys, PIN rules, formula-safe CSV
   export, time math (`computeTimecard` / `computeWeek`), clock state machine,
-  and rule packs as data. No UI strings, no I/O. Neutral vocabulary: workplaces
-  are opaque **scopes** (`DEFAULT_SCOPE_ID`), never "locations" (see
-  `docs/staffing-plan.md`)
+  and rule packs as data. No UI strings, no I/O in the main entry; the
+  browser-only subpaths `clock-client`, `clock-queue` and `clock-sync` (fetch
+  and IndexedDB for the kiosk and the Station time clock) are the exception.
+  Neutral vocabulary: workplaces are opaque **scopes** (`DEFAULT_SCOPE_ID`),
+  never "locations" (see `docs/staffing-plan.md`)
 
 **Key Apps:**
 
@@ -854,8 +856,16 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   PWA, IndexedDB). Uploads each order revision browser-direct to the regional
   tenant-api; money and history tables are append-only, refunds and removed
   items need a reason (and a manager when sign-in is on), and closed sales carry
-  a hash-chained fiscal document. Read `docs/pos.md` before changing the order
-  contract (`@repo/common/pos-orders`, `POS_CONTRACT_VERSION`)
+  a hash-chained fiscal document. A terminal can also be the time clock
+  (`/pos/timeclock/*`, PIN every punch) and the host stand for its location (a
+  `book`-scope reservations token minted at `/pos/reservations/token` from the
+  terminal and the signed-in staff session); both are per-terminal settings plus
+  the organization's flag. A terminal bound to a location uses that location's
+  staffing scope (an organization with locations has no `main`). Deploy App
+  before tenant-api when the `stationApps` claim gains a field: a missing one
+  fails closed and refuses switching an app on. Read `docs/pos.md` before
+  changing the order contract (`@repo/common/pos-orders`,
+  `POS_CONTRACT_VERSION`)
 - `apps/voice-agent` - LiveKit worker that answers phone-agent calls (US only);
   loads config from App and logs calls through tenant-api
 - `apps/ios` - Tenant customer iOS app (SwiftUI + `TenantKit` Swift package):

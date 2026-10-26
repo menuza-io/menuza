@@ -39,6 +39,9 @@ import { operatorOrderRoutes } from './routes/operator-orders.ts'
 import { operatorPeopleRoutes } from './routes/operator-people.ts'
 import { operatorPosRoutes } from './routes/operator-pos.ts'
 import { posRoutes } from './routes/pos.ts'
+import { posKdsRoutes } from './routes/pos-kds.ts'
+import { posReservationsRoutes } from './routes/pos-reservations.ts'
+import { posTimeclockRoutes } from './routes/pos-timeclock.ts'
 import {
 	publicVoiceRoutes,
 	voiceOperatorRoutes,
@@ -103,8 +106,13 @@ export function createTenantApiApp() {
 
 	app.use('*', async (c, next) => {
 		const origin = c.req.header('Origin')
+		// A Station till also runs the host stand: it calls the day-of-service
+		// routes with a bearer token it minted at `/pos/reservations/token`.
+		const posPath =
+			c.req.path.startsWith('/pos/') ||
+			c.req.path.startsWith('/operator/reservations/book/')
 		const allowed = origin
-			? (c.req.path.startsWith('/pos/') && isPosOrigin(origin)) ||
+			? (posPath && isPosOrigin(origin)) ||
 				(await isAllowedAnalyticsOrigin(origin))
 			: false
 
@@ -130,7 +138,7 @@ export function createTenantApiApp() {
 			c.res.headers.set('Access-Control-Allow-Origin', origin)
 			c.res.headers.append('Vary', 'Origin')
 			// The till measures its clock skew from the server's Date header.
-			if (c.req.path.startsWith('/pos/')) {
+			if (posPath) {
 				c.res.headers.set('Access-Control-Expose-Headers', 'Date')
 			}
 		}
@@ -270,6 +278,9 @@ export function createTenantApiApp() {
 	app.route('/careers', careersRoutes)
 	app.route('/internal/staff', staffInternalRoutes)
 	app.route('/kiosk', kioskRoutes)
+	app.route('/pos/timeclock', posTimeclockRoutes)
+	app.route('/pos/reservations', posReservationsRoutes)
+	app.route('/pos/kds', posKdsRoutes)
 	app.route('/pos', posRoutes)
 	app.route('/schedule-link', scheduleLinkRoutes)
 	app.route('/operator/reservations', reservationsOperatorRoutes)

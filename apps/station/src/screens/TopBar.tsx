@@ -1,16 +1,13 @@
 import { plural, t, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { type PosDeviceApps } from '@repo/common/pos-orders'
+import { Icon } from '@repo/ui/icon'
 import { useLiveQuery } from 'dexie-react-hooks'
-import {
-	CloudOff,
-	Lock,
-	RefreshCw,
-	ReceiptText,
-	Settings,
-	TriangleAlert,
-	Wallet,
-} from 'lucide-react'
-import { db } from '~/lib/db.ts'
+import { type ReactNode } from 'react'
+import { AppLauncher } from './AppLauncher.tsx'
+import { type StationApp } from '~/lib/config.ts'
+import { db, type PosOrder } from '~/lib/db.ts'
+import { readyDishes, useKitchenTickets } from '~/lib/kitchen-status.ts'
 import { isSendable } from '~/lib/orders.ts'
 import { usePos } from '~/lib/store.ts'
 import { Badge, Button, IconButton, NumberPop, cn } from '~/ui/primitives.tsx'
@@ -28,7 +25,12 @@ export function TopBar({
 	onLock,
 	onShift,
 	shiftOpen,
+	app = 'pos',
+	apps,
+	onApp,
+	context,
 }: {
+	context?: ReactNode
 	name: string
 	logoUrl: string | null
 	locationName: string | null
@@ -43,6 +45,10 @@ export function TopBar({
 	/** Opens the cash drawer shift; `shiftOpen` marks the button while one is running. */
 	onShift: () => void
 	shiftOpen: boolean
+	/** The Station app on screen, the ones this terminal offers, and the switch. */
+	app?: StationApp
+	apps?: PosDeviceApps
+	onApp?: (app: StationApp) => void
 }) {
 	const { _ } = useLingui()
 	const settings = usePos((s) => s.settings)
@@ -67,6 +73,22 @@ export function TopBar({
 		[],
 		0,
 	)
+	// Food at the pass for an open tab: the register says so, so someone runs it.
+	const openOrders = useLiveQuery(
+		() =>
+			db.orders
+				.where('status')
+				.equals('open')
+				.filter((o) => !o.transferredTo)
+				.toArray(),
+		[],
+		[] as PosOrder[],
+	)
+	const kitchen = useKitchenTickets(app === 'pos' && openOrders.length > 0)
+	const readyFood = openOrders.reduce(
+		(sum, order) => sum + readyDishes(order, kitchen?.get(order.id)),
+		0,
+	)
 	const rejected = useLiveQuery(
 		() => db.orders.where('sync').equals('rejected').count(),
 		[],
@@ -79,49 +101,31 @@ export function TopBar({
 	)
 
 	return (
-		<header className="border-border bg-card pt-safe flex h-16 shrink-0 items-center gap-2 border-b px-3 sm:gap-3 sm:px-4">
-			<div className="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
-				{logoUrl ? (
-					<img
-						src={logoUrl}
-						alt=""
-						className="size-10 rounded-xl object-cover"
-					/>
-				) : (
-					<div className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-xl text-lg font-bold">
-						{name.slice(0, 1).toUpperCase()}
-					</div>
-				)}
-				<div className="min-w-0 leading-tight">
-					<h1 className="truncate text-lg font-bold">{name}</h1>
-					{locationName ? (
-						<p className="text-muted-foreground hidden truncate text-sm sm:block">
-							{locationName}
-						</p>
-					) : null}
+		<header
+			className="station-header header-safe border-border bg-card flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-3 pb-2 sm:px-4"
+			data-app={app}
+		>
+			<h1 className="sr-only">{name}</h1>
+			<AppLauncher
+				compact={Boolean(context)}
+				name={name}
+				logoUrl={logoUrl}
+				locationName={locationName}
+				app={app}
+				apps={apps}
+				onApp={onApp}
+			/>
+			{context ? (
+				<div className="station-context order-last min-w-0 basis-full 2xl:order-none 2xl:flex-1 2xl:basis-auto">
+					{context}
 				</div>
-			</div>
-
-			<div className="ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-				{onLock ? (
-					<Button
-						variant="outline"
-						onClick={onLock}
-						aria-label={
-							staffName
-								? _(t`Lock the till, signed in as ${staffName}`)
-								: _(t`Lock the till`)
-						}
-						className="px-3"
-					>
-						<Lock className="size-4 shrink-0" />
-						<span className="hidden max-w-28 truncate md:inline">
-							{staffName}
-						</span>
-					</Button>
-				) : null}
+			) : null}
+			<div className="station-header-actions flex shrink-0 items-center gap-1 sm:gap-2">
 				{/* A live region: going offline, sending and refusals are announced. */}
-				<div role="status" className="flex items-center">
+				<div
+					role="status"
+					className="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
+				>
 					<SyncStatus
 						key={
 							rejected > 0 || rejectedShifts > 0
@@ -138,57 +142,116 @@ export function TopBar({
 						rejectedShifts={rejectedShifts}
 					/>
 				</div>
-				<span className="hidden sm:inline-flex">
-					<IconButton
-						label={_(t`Refresh menu`)}
-						onClick={onRefresh}
-						disabled={!online || refreshing}
-					>
-						<RefreshCw className={cn('size-5', refreshing && 'animate-spin')} />
-					</IconButton>
-				</span>
-				<Button
-					variant="outline"
-					aria-label={
-						openTabs > 0
-							? _(
-									plural(openTabs, {
-										one: 'Orders, # open tab',
-										other: 'Orders, # open tabs',
-									}),
-								)
-							: _(t`Orders`)
-					}
-					onClick={onOrders}
-					className="px-3 sm:px-4"
-				>
-					<ReceiptText className="size-5 shrink-0" />
-					<span className="hidden sm:inline">
-						<Trans>Orders</Trans>
-					</span>
-					{openTabs > 0 ? (
-						// The count pops in when the first tab opens (notification badge).
-						<span className="t-badge" data-open="true" aria-hidden>
-							<span className="t-badge-dot tnum mono bg-primary text-primary-foreground flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold">
-								<NumberPop value={String(openTabs)} />
+				{app === 'pos' ? (
+					<>
+						<Button
+							variant="ghost"
+							aria-label={[
+								openTabs > 0
+									? _(
+											plural(openTabs, {
+												one: 'Orders, # open tab',
+												other: 'Orders, # open tabs',
+											}),
+										)
+									: _(t`Orders`),
+								readyFood > 0
+									? _(
+											plural(readyFood, {
+												one: '# dish ready at the pass',
+												other: '# dishes ready at the pass',
+											}),
+										)
+									: null,
+							]
+								.filter(Boolean)
+								.join(', ')}
+							onClick={onOrders}
+							className="relative w-11 px-0 sm:w-auto sm:px-4"
+						>
+							<Icon name="receipt-text" className="size-5 shrink-0" />
+							<span className="hidden sm:inline">
+								<Trans>Orders</Trans>
 							</span>
-						</span>
-					) : null}
-				</Button>
-				<IconButton
-					label={shiftOpen ? _(t`Shift (open)`) : _(t`Shift`)}
-					onClick={onShift}
-				>
-					<Wallet
-						className={cn(
-							'size-5 transition-colors',
-							shiftOpen && 'text-success',
-						)}
+							{openTabs > 0 ? (
+								// The count pops in when the first tab opens (notification badge).
+								<span
+									className="t-badge absolute end-0 top-0 sm:static"
+									data-open="true"
+									aria-hidden
+								>
+									<span className="t-badge-dot tnum bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold sm:h-6 sm:min-w-6 sm:px-1.5">
+										<NumberPop value={String(openTabs)} />
+									</span>
+								</span>
+							) : null}
+							{readyFood > 0 ? (
+								<span
+									aria-hidden
+									className="dish-status t-pop-in absolute -end-1 bottom-0 sm:static"
+									data-status="ready"
+								>
+									<span className="dish-status-dot" />
+									<span className="hidden sm:inline">
+										{_(plural(readyFood, { one: '# ready', other: '# ready' }))}
+									</span>
+								</span>
+							) : null}
+						</Button>
+					</>
+				) : null}
+				{app === 'pos' ? (
+					<span
+						aria-hidden
+						className="bg-border mx-1 hidden h-5 w-px shrink-0 sm:block"
 					/>
-				</IconButton>
-				<IconButton label={_(t`Settings`)} onClick={onSettings}>
-					<Settings className="size-5" />
-				</IconButton>
+				) : null}
+				<div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+					{app === 'pos' ? (
+						<>
+							<span className="hidden sm:inline-flex">
+								<IconButton
+									label={_(t`Refresh menu`)}
+									onClick={onRefresh}
+									disabled={!online || refreshing}
+								>
+									<Icon
+										name="refresh-cw"
+										className={cn('size-5', refreshing && 'animate-spin')}
+										aria-hidden
+									/>
+								</IconButton>
+							</span>
+							<IconButton
+								label={shiftOpen ? _(t`Shift (open)`) : _(t`Shift`)}
+								onClick={onShift}
+							>
+								<Icon
+									name="wallet"
+									className={cn(
+										'size-5 transition-colors',
+										shiftOpen && 'text-success',
+									)}
+								/>
+							</IconButton>
+						</>
+					) : null}
+					<IconButton label={_(t`Settings`)} onClick={onSettings}>
+						<Icon name="settings" className="size-5" />
+					</IconButton>
+					{onLock ? (
+						<IconButton
+							label={
+								staffName
+									? _(t`Lock the till, signed in as ${staffName}`)
+									: _(t`Lock the till`)
+							}
+							onClick={onLock}
+						>
+							<Icon name="lock" className="size-5" aria-hidden />
+						</IconButton>
+					) : null}
+				</div>
 			</div>
 		</header>
 	)
@@ -224,8 +287,8 @@ function SyncStatus({
 							other: '# uploads need attention',
 						})
 		return (
-			<Badge tone="danger" className="t-pop-in">
-				<TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+			<Badge tone="danger" className="">
+				<Icon name="alert-triangle" className="size-3.5 shrink-0" aria-hidden />
 				{/* On a phone only the count shows; the words are still read out. */}
 				<span className="sm:hidden" aria-hidden>
 					{total}
@@ -236,8 +299,8 @@ function SyncStatus({
 	}
 	if (!online) {
 		return (
-			<Badge tone="warning" className="t-pop-in h-8 px-3 text-sm">
-				<CloudOff className="size-4" />
+			<Badge tone="warning" className="h-8 px-3 text-sm">
+				<Icon name="cloud-off" className="size-4" />
 				<span className="hidden sm:inline">
 					{waiting > 0 ? (
 						<Trans>Offline · {waiting} saved</Trans>
@@ -245,7 +308,9 @@ function SyncStatus({
 						<Trans>Offline · selling normally</Trans>
 					)}
 				</span>
-				<span className="sm:hidden">
+				<span
+					className={cn('sm:hidden', waiting === 0 && 'max-[359px]:sr-only')}
+				>
 					{waiting > 0 ? waiting : <Trans>Offline</Trans>}
 				</span>
 			</Badge>
@@ -253,8 +318,8 @@ function SyncStatus({
 	}
 	if (waiting > 0) {
 		return (
-			<Badge tone="primary" className="t-pop-in h-8 px-3 text-sm">
-				<RefreshCw className="size-3.5 animate-spin" />{' '}
+			<Badge tone="primary" className="h-8 px-3 text-sm">
+				<Icon name="refresh-cw" className="size-3.5 animate-spin" />{' '}
 				<span className="hidden sm:inline">
 					<Trans>Sending</Trans>{' '}
 				</span>
@@ -263,19 +328,17 @@ function SyncStatus({
 		)
 	}
 	return (
-		<>
-			{/* On a phone, "all is well" is a dot: words are for when something needs a look. */}
+		<span
+			title={_(t`Online · all sent`)}
+			className="flex size-8 items-center justify-center"
+		>
 			<span
-				role="img"
-				aria-label={_(t`Online`)}
-				className="t-pop-in bg-success size-2.5 shrink-0 rounded-full sm:hidden"
+				className="t-pop-in bg-success size-2 shrink-0 rounded-full"
+				aria-hidden
 			/>
-			<span className="t-pop-in hidden sm:inline-flex">
-				<Badge tone="success" className="h-8 px-3 text-sm">
-					<span className="bg-success size-2 rounded-full" />{' '}
-					<Trans>Online · all sent</Trans>
-				</Badge>
+			<span className="sr-only">
+				<Trans>Online · all sent</Trans>
 			</span>
-		</>
+		</span>
 	)
 }

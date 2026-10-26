@@ -456,6 +456,13 @@ async function resolveOrCreateGuestInner(
 			tagIds?: string[]
 		} | null
 		actorId?: string | null
+		/**
+		 * The caller cannot read guest details (a host at a till, a member without
+		 * the guest permission): a booking for a known guest (by id, phone or
+		 * email) links to them but only fills what their profile lacks. It never
+		 * replaces a name, phone, email or allergy note it could not even see.
+		 */
+		keepMatchedProfile?: boolean
 	},
 ): Promise<typeof rsvGuests.$inferSelect> {
 	const now = Date.now()
@@ -478,7 +485,11 @@ async function resolveOrCreateGuestInner(
 		if (!existing) {
 			throw notFound('Guest not found')
 		}
-		if (input.guest?.allergyNotes !== undefined) {
+		const keepProfile = input.keepMatchedProfile === true
+		if (
+			input.guest?.allergyNotes !== undefined &&
+			!(keepProfile && existing.allergyNotes)
+		) {
 			await db
 				.update(rsvGuests)
 				.set({
@@ -544,15 +555,26 @@ async function resolveOrCreateGuestInner(
 	}
 
 	if (matched) {
+		const keep = input.keepMatchedProfile === true
 		const nextAllergy =
-			g?.allergyNotes !== undefined ? g.allergyNotes : matched.allergyNotes
+			g?.allergyNotes !== undefined && !(keep && matched.allergyNotes)
+				? g.allergyNotes
+				: matched.allergyNotes
 		await db
 			.update(rsvGuests)
 			.set({
-				firstName: g?.firstName?.trim() || matched.firstName,
-				lastName: g?.lastName?.trim() || matched.lastName,
-				phoneE164: phoneE164 ?? matched.phoneE164,
-				emailNorm: emailNorm ?? matched.emailNorm,
+				firstName: keep
+					? matched.firstName
+					: g?.firstName?.trim() || matched.firstName,
+				lastName: keep
+					? matched.lastName
+					: g?.lastName?.trim() || matched.lastName,
+				phoneE164: keep
+					? (matched.phoneE164 ?? phoneE164)
+					: (phoneE164 ?? matched.phoneE164),
+				emailNorm: keep
+					? (matched.emailNorm ?? emailNorm)
+					: (emailNorm ?? matched.emailNorm),
 				allergyNotes: nextAllergy,
 				updatedAt: now,
 			})

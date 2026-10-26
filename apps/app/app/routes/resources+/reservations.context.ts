@@ -1,4 +1,4 @@
-import { resolveEmailTheme } from '@repo/common/email-theme'
+import { resolveEmailTheme, solidEmailTheme } from '@repo/common/email-theme'
 import { getLocationCurrency } from '@repo/common/location-currency'
 import {
 	and,
@@ -182,6 +182,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		appUrl,
 		siteTheme: org.siteTheme,
 	})
+	// The context accepts only solid #rrggbb: a dark theme's transparent border
+	// (or any color the converter cannot read) must not fail the whole context,
+	// which switches reservations off at every terminal and public form.
+	const solidTheme = solidEmailTheme(resolvedTheme)
 	const defaultLocale = org.siteDefaultLocale || 'en'
 	const locales = parseLocales(org.siteLocales, defaultLocale)
 	const siteOrigin = resolveSitesOrigin({
@@ -221,7 +225,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			locales,
 			siteOrigin,
 			sitePublished: Boolean(org.sitePublished),
-			emailTheme: resolvedTheme,
+			emailTheme: solidTheme,
 			logoUrl: resolvedTheme.logoUrl,
 		},
 		locations: locationRows.map((loc) => ({
