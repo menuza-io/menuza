@@ -14,6 +14,26 @@
       "types": "./src/demo-roster.ts",
       "import": "./src/demo-roster.ts",
       "default": "./src/demo-roster.ts"
+    },
+    "./clock-flow": {
+      "types": "./src/clock-flow.ts",
+      "import": "./src/clock-flow.ts",
+      "default": "./src/clock-flow.ts"
+    },
+    "./clock-client": {
+      "types": "./src/clock-client.ts",
+      "import": "./src/clock-client.ts",
+      "default": "./src/clock-client.ts"
+    },
+    "./clock-queue": {
+      "types": "./src/clock-queue.ts",
+      "import": "./src/clock-queue.ts",
+      "default": "./src/clock-queue.ts"
+    },
+    "./clock-sync": {
+      "types": "./src/clock-sync.ts",
+      "import": "./src/clock-sync.ts",
+      "default": "./src/clock-sync.ts"
     }
   },
   "scripts": {

@@ -94,7 +94,7 @@ minutes; money is integer minor units with an explicit currency; multipliers are
 integer basis points. Migrations are additive only. The scope time zone and
 local business date are stored on every shift, entry and punch.
 
-Regional tables, all in the single tenant migration `0012_staffing_foundation`
+Regional tables, all in the single tenant migration `0014_staffing_foundation`
 (grouped here by slice):
 
 | Migration             | Tables                                                                                                                                                                                          |
@@ -108,7 +108,7 @@ Regional tables, all in the single tenant migration `0012_staffing_foundation`
 
 Control-plane additions: permission rows,
 `OrganizationInvitation.staffMemberId`, `StaffingOutbox`, `JobPosting` and
-`Organization.staffingTimeZone`. All of it is in `0018_staffing_foundation`.
+`Organization.staffingTimeZone`. All of it is in `0022_staffing_foundation`.
 
 Draft versus published shifts do not duplicate rows: editing a published shift
 writes the proposed change to `draft_patch`, staff keep seeing the published
@@ -151,13 +151,15 @@ write route; token lifetime means a removed grant lags by up to the token TTL
 The v1 kiosk is a public App route that tolerates being offline: client
 generated punch ids, a local queue, retry with backoff. Server time is
 authoritative; queued punches are accepted only if not in the future and within
-12 hours of server time, and clock skew over 5 minutes is flagged. A personal
+48 hours of server time (over 12 hours old they are flagged `late_sync` and the
+card waits for a manager, so a till shut overnight during an outage still
+records the closing shift), and clock skew over 5 minutes is flagged. A personal
 phone clock, the Expo staff tabs and push come later and need a staff principal
 first.
 
 ### Time clock engine (built: regional data, punch engine, API)
 
-Regional migration `0012_staffing_foundation` includes `labor_policies`,
+Regional migration `0014_staffing_foundation` includes `labor_policies`,
 `time_punches`, `time_entries`, `time_breaks`, `time_entry_edits`,
 `timesheet_periods`, `kiosk_devices`, `kiosk_pairing_codes` and
 `kiosk_attempts`. Triggers keep punches and the edit log append-only (the edit
@@ -203,12 +205,14 @@ apply policy, append the punch, update the entry and breaks, and recompute
 cached minutes through `computeCachedMinutes` / `computeEntryIssues` in
 `@repo/staffing` (which call `computeTimecard` and `computeWeek`). Server time
 is authoritative; only a punch the tablet marks as queued offline may use device
-time, inside the 12 hour and one minute bounds, flagged `offline_punch` and
-`clock_skew`. A rejection is recorded and audited. A role pick for
-multi-position staff is a prompt (`position_required`), not an event, so the
-same punch id is reused. Cached minutes of neighbouring cards are refreshed when
-a card closes, except approved and locked cards, which only an explicit edit or
-unlock recomputes. Timesheets compute live from the same functions.
+time, inside the 48-hour and one-minute bounds, flagged `offline_punch` (plus
+`late_sync` when over 12 hours old, and `clock_skew` when the device clock
+differs from server time by over 5 minutes). A rejection is recorded and
+audited. A role pick for multi-position staff is a prompt (`position_required`),
+not an event, so the same punch id is reused. Cached minutes of neighbouring
+cards are refreshed when a card closes, except approved and locked cards, which
+only an explicit edit or unlock recomputes. Timesheets compute live from the
+same functions.
 
 **Schedule seam.** Late grace, prevent-early and unscheduled-punch rules need
 the schedule. `ShiftMatcher` in `punch-service.ts` is the seam: until scheduling
@@ -616,7 +620,7 @@ with an App-minted token of scope `schedule`, which the App mints only while
 and does no flag lookup. Views need `read:schedule:any` and `read:staff:any`
 (the grid names people); writes need `update:schedule:any` (decisions on time
 off, availability and requests included). The schema is part of
-`0012_staffing_foundation`; the pure domain (wall-clock placement, conflicts,
+`0014_staffing_foundation`; the pure domain (wall-clock placement, conflicts,
 copy and recommend planning, demand and estimate math, the stable error codes)
 lives in `@repo/staffing` (`schedule-*.ts`), the services and routes in
 tenant-api (`services/schedule-*.ts`, `routes/schedule.ts`).
@@ -1049,7 +1053,7 @@ route test checks the hand-calculated week against the labor suite's 20.09%).
 
 A posting is **public content with no person data**, so it lives in the control
 plane (ADR 047, decision 8) as `JobPosting` (control-plane migration
-`0018_staffing_foundation`): organization, `slug` unique per organization,
+`0022_staffing_foundation`): organization, `slug` unique per organization,
 title, position name, employment type, pay type and minimum/maximum in minor
 units with a currency, sanitized description HTML, screener questions JSON,
 `isGeneral`, `status` (`draft`, `published`, `closed`, `expired`) and timestamps
@@ -1105,7 +1109,7 @@ only, no Node APIs) on Sites.
 
 ### Onboarding checklists and certificates (built: flag `staffing.hiring`)
 
-Regional tables (in `0012_staffing_foundation`): `onboarding_templates` (one
+Regional tables (in `0014_staffing_foundation`): `onboarding_templates` (one
 live default, enforced by a partial unique index), `onboarding_template_tasks`,
 the extended `onboarding_tasks` (type, instructions, form link, assignee,
 template of origin, reminder stage) and `staff_certificates` (kind, optional
@@ -1307,8 +1311,8 @@ already in the App.
   (`apps/tenant-api/workers/migrations.generated.ts`, regenerated by
   `generate:do-migrations`, which `typecheck` and `build` run). The tick uses
   Durable Object alarms on Workers and an in-process interval on Node.
-- The control-plane schema is one migration, `0018_staffing_foundation`, and the
-  tenant schema one migration, `0012_staffing_foundation`; both are generated
+- The control-plane schema is one migration, `0022_staffing_foundation`, and the
+  tenant schema one migration, `0014_staffing_foundation`; both are generated
   from the final schemas and are additive only.
 - Manager alerts reuse the App's existing notification system (bell, stream,
   preferences, email) rather than a new channel; the payload crossing the plane

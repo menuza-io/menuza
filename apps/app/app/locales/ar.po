@@ -450,7 +450,7 @@ msgstr "{avgPerDay} متوسط يومي"
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr "{backupCodesRemaining} رموز غير مستخدمة متبقية"
 
-#: app/routes/organizations+/create.tsx:1416
+#: app/routes/organizations+/create.tsx:1413
 msgid "{basePriceLabel} billed annually"
 msgstr "{basePriceLabel} يُفوتر سنوياً"
 
@@ -1046,7 +1046,7 @@ msgstr "{weekText} من {limitText}"
 msgid "{who} to cover {when}"
 msgstr "{who} لتغطية {when}"
 
-#: app/routes/organizations+/create.tsx:702
+#: app/routes/organizations+/create.tsx:699
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
 
@@ -1180,15 +1180,15 @@ msgstr "51-200 شخص"
 msgid "6-digit verification code"
 msgstr "رمز التحقق المكوّن من 6 أرقام"
 
-#: app/components/staff/timesheets/issue-copy.ts:38
+#: app/components/staff/timesheets/issue-copy.ts:42
 msgid "A break falls outside the shift. Fix its times."
 msgstr "هناك استراحة خارج الوردية. صحّح أوقاتها."
 
-#: app/components/staff/timesheets/issue-copy.ts:46
+#: app/components/staff/timesheets/issue-copy.ts:50
 msgid "A break was deducted automatically by your rules."
 msgstr "تم خصم استراحة تلقائيًا وفق قواعدك."
 
-#: app/components/staff/timesheets/issue-copy.ts:36
+#: app/components/staff/timesheets/issue-copy.ts:40
 msgid "A break was started and never ended. Set when it ended."
 msgstr "بدأت استراحة ولم تنتهِ. حدّد وقت انتهائها."
 
@@ -1284,7 +1284,7 @@ msgstr "يعتمدها مدير ويقفلها"
 msgid "A manager approves them"
 msgstr "يعتمدها مدير"
 
-#: app/components/staff/timesheets/issue-copy.ts:44
+#: app/components/staff/timesheets/issue-copy.ts:48
 msgid "A manager changed this card."
 msgstr "عدّل مدير هذه البطاقة."
 
@@ -1364,7 +1364,7 @@ msgstr "رسالة مهذبة تفيد بأنك لن تتابع مع الطلب 
 msgid "A position with that name already exists."
 msgstr "يوجد منصب بهذا الاسم بالفعل."
 
-#: app/components/staff/timesheets/issue-copy.ts:34
+#: app/components/staff/timesheets/issue-copy.ts:36
 msgid "A required break was not taken or not recorded."
 msgstr "لم تُؤخذ استراحة مطلوبة أو لم تُسجَّل."
 
@@ -1495,11 +1495,11 @@ msgstr "الحساب معلق"
 msgid "Acknowledge a policy"
 msgstr "الإقرار بسياسة"
 
-#: app/routes/organizations+/create.tsx:760
+#: app/routes/organizations+/create.tsx:757
 msgid "acme"
 msgstr "acme"
 
-#: app/routes/organizations+/create.tsx:725
+#: app/routes/organizations+/create.tsx:722
 msgid "Acme Inc."
 msgstr "شركة Acme"
 
@@ -1760,7 +1760,7 @@ msgid "Add announcement"
 msgstr "إضافة إعلان"
 
 #: app/components/organization-invitations.tsx:317
-#: app/routes/organizations+/create.tsx:1186
+#: app/routes/organizations+/create.tsx:1183
 msgid "Add another invitation"
 msgstr "إضافة دعوة أخرى"
 
@@ -2074,7 +2074,7 @@ msgstr "إضافة رابط"
 msgid "Add your business details to see what the assistant is told."
 msgstr "أضف تفاصيل نشاطك التجاري لترى ما يُقال للمساعد."
 
-#: app/routes/organizations+/create.tsx:977
+#: app/routes/organizations+/create.tsx:974
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr "أضف أعضاء فريقك للبدء. يمكنك دائمًا دعوة المزيد من الأشخاص لاحقًا."
 
@@ -2117,11 +2117,11 @@ msgstr "إضافة قسم"
 msgid "Adding…"
 msgstr "جارٍ الإضافة…"
 
-#: app/routes/organizations+/create.tsx:1435
+#: app/routes/organizations+/create.tsx:1432
 msgid "Additional users: {monthlyPriceLabel}/user/month"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر"
 
-#: app/routes/organizations+/create.tsx:1428
+#: app/routes/organizations+/create.tsx:1425
 msgid "Additional users: {monthlyPriceLabel}/user/month<0>({annualPriceLabel} billed annually per user)</0>"
 msgstr "مستخدمون إضافيون: {monthlyPriceLabel}/مستخدم/شهر<0>({annualPriceLabel} يُفوتر سنوياً لكل مستخدم)</0>"
 
@@ -2318,7 +2318,7 @@ msgstr "كل المكالمات"
 msgid "All checks passed. This workflow is ready to publish."
 msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاهز للنشر."
 
-#: app/routes/organizations+/create.tsx:1440
+#: app/routes/organizations+/create.tsx:1437
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
@@ -2486,7 +2486,7 @@ msgstr "تمت جدولة مقابلة"
 msgid "An interview was updated"
 msgstr "تم تحديث مقابلة"
 
-#: app/routes/organizations+/create.tsx:626
+#: app/routes/organizations+/create.tsx:623
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr "المنظمة هي مساحة عمل حيث تجمع الفرق وتنظم وتعمل معًا."
 
@@ -2516,8 +2516,8 @@ msgstr "الإعلانات"
 msgid "Annual salary"
 msgstr "الراتب السنوي"
 
-#: app/components/staff/timesheets/card-history.tsx:106
-#: app/components/staff/timesheets/card-history.tsx:109
+#: app/components/staff/timesheets/card-history.tsx:107
+#: app/components/staff/timesheets/card-history.tsx:110
 msgid "another position"
 msgstr "منصب آخر"
 
@@ -2713,7 +2713,7 @@ msgstr "اعتماد بطاقات الدوام وقفلها وفتحها. يشم
 #: app/components/my-schedule/time-cards-view.tsx:101
 #: app/components/staff/schedule/time-off-page.tsx:282
 #: app/components/staff/timesheets/card-history.tsx:51
-#: app/components/staff/timesheets/issue-copy.ts:53
+#: app/components/staff/timesheets/issue-copy.ts:57
 msgid "Approved"
 msgstr "معتمدة"
 
@@ -2783,7 +2783,7 @@ msgstr "القسم"
 msgid "Arrangement"
 msgstr "الترتيب"
 
-#: app/components/staff/timesheets/card-history.tsx:187
+#: app/components/staff/timesheets/card-history.tsx:188
 msgid "As punched"
 msgstr "كما سُجّلت"
 
@@ -3204,7 +3204,7 @@ msgstr "استراحة"
 msgid "Break {number}"
 msgstr "الاستراحة {number}"
 
-#: app/components/staff/timesheets/issue-copy.ts:27
+#: app/components/staff/timesheets/issue-copy.ts:29
 msgid "Break deducted"
 msgstr "استراحة مخصومة"
 
@@ -3254,7 +3254,7 @@ msgstr "لا يمكن أن تتداخل الاستراحات."
 msgid "Breaks overlap"
 msgstr "استراحات متداخلة"
 
-#: app/components/staff/timesheets/card-history.tsx:118
+#: app/components/staff/timesheets/card-history.tsx:119
 msgid "Breaks: {before} to {after}"
 msgstr "الاستراحات: من {before} إلى {after}"
 
@@ -3404,7 +3404,7 @@ msgstr "الأزرار"
 msgid "by {createdByName}"
 msgstr "بواسطة {createdByName}"
 
-#: app/components/staff/timesheets/card-history.tsx:159
+#: app/components/staff/timesheets/card-history.tsx:160
 msgid "by a manager"
 msgstr "بواسطة مدير"
 
@@ -3429,7 +3429,7 @@ msgstr "حسب ساعات العمل"
 msgid "By position percentage"
 msgstr "حسب نسبة كل وظيفة"
 
-#: app/components/staff/timesheets/card-history.tsx:160
+#: app/components/staff/timesheets/card-history.tsx:161
 msgid "by the time clock"
 msgstr "بواسطة ساعة الدوام"
 
@@ -3688,8 +3688,8 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1495
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1579
-#: app/routes/organizations+/create.tsx:822
-#: app/routes/organizations+/create.tsx:957
+#: app/routes/organizations+/create.tsx:819
+#: app/routes/organizations+/create.tsx:954
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -3798,7 +3798,7 @@ msgstr "الإكراميات النقدية"
 msgid "Cash tips have no card fee. Up to 10 percent."
 msgstr "الإكراميات النقدية بلا رسوم بطاقة. حتى 10 بالمئة."
 
-#: app/components/staff/timesheets/card-history.tsx:97
+#: app/components/staff/timesheets/card-history.tsx:98
 msgid "Cash tips: {from} to {to}"
 msgstr "الإكراميات النقدية: من {from} إلى {to}"
 
@@ -4001,6 +4001,10 @@ msgstr "راجع الحقول المحددة وحاول مرة أخرى."
 msgid "Check the highlighted fields."
 msgstr "تحقق من الحقول المميزة."
 
+#: app/components/staff/timesheets/issue-copy.ts:28
+msgid "Check the rules"
+msgstr "راجع القواعد"
+
 #: app/utils/staffing/alert-copy.ts:72
 msgid "Check the time cards before the limit is reached."
 msgstr "راجع بطاقات الوقت قبل بلوغ الحد."
@@ -4009,7 +4013,7 @@ msgstr "راجع بطاقات الوقت قبل بلوغ الحد."
 msgid "Check their contact details and emergency contact are right."
 msgstr "تحقق من صحة بيانات التواصل وجهة اتصال الطوارئ."
 
-#: app/components/staff/timesheets/issue-copy.ts:57
+#: app/components/staff/timesheets/issue-copy.ts:61
 msgid "Check this card"
 msgstr "راجع هذه البطاقة"
 
@@ -4293,7 +4297,7 @@ msgstr "اختر لمن هذه المهمة."
 msgid "Choose who worked."
 msgstr "اختر من عمل."
 
-#: app/routes/organizations+/create.tsx:875
+#: app/routes/organizations+/create.tsx:872
 msgid "Choose your plan"
 msgstr "اختر خطتك"
 
@@ -4397,7 +4401,7 @@ msgstr "تسجيل الحضور"
 msgid "Clock in {from} to {to}"
 msgstr "الحضور من {from} إلى {to}"
 
-#: app/components/staff/timesheets/card-history.tsx:87
+#: app/components/staff/timesheets/card-history.tsx:88
 msgid "Clock in: {from} to {to}"
 msgstr "تسجيل الحضور: من {from} إلى {to}"
 
@@ -4418,7 +4422,7 @@ msgstr "الانصراف من {from} إلى {to}"
 msgid "Clock out after the shift ends by"
 msgstr "تسجيل الانصراف بعد انتهاء الوردية بـ"
 
-#: app/components/staff/timesheets/card-history.tsx:92
+#: app/components/staff/timesheets/card-history.tsx:93
 msgid "Clock out: {from} to {to}"
 msgstr "تسجيل الانصراف: من {from} إلى {to}"
 
@@ -4442,23 +4446,27 @@ msgstr "تم تحديد وقت انصراف {name}."
 msgid "Clocked in"
 msgstr "تم تسجيل الحضور"
 
-#: app/components/staff/timesheets/issue-copy.ts:41
+#: app/components/staff/timesheets/issue-copy.ts:45
 msgid "Clocked in after the scheduled start."
 msgstr "سجّل الحضور بعد الوقت المجدول."
 
-#: app/components/staff/timesheets/issue-copy.ts:31
+#: app/components/staff/timesheets/issue-copy.ts:33
 msgid "Clocked in and never clocked out. Set the time they left."
 msgstr "سجّل الحضور ولم يسجّل الانصراف. حدّد وقت مغادرته."
 
-#: app/components/staff/timesheets/issue-copy.ts:42
+#: app/components/staff/timesheets/issue-copy.ts:46
 msgid "Clocked in before the scheduled start."
 msgstr "سجّل الحضور قبل الوقت المجدول."
+
+#: app/components/staff/timesheets/issue-copy.ts:39
+msgid "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it. If they were early, pay starts at the earliest time the rules allow."
+msgstr "سُجّل الحضور دون اتصال في حالة كانت القواعد ستطلب فيها تأكيدًا أولًا (لا توجد وردية، أو مبكرًا جدًا، أو أي وظيفة). راجعه. إذا كان مبكرًا، يبدأ الاحتساب من أبكر وقت تسمح به القواعد."
 
 #: app/components/staff/labor-example.tsx:148
 msgid "Clocked in to out"
 msgstr "من تسجيل الحضور إلى الانصراف"
 
-#: app/components/staff/timesheets/issue-copy.ts:40
+#: app/components/staff/timesheets/issue-copy.ts:44
 msgid "Clocked in without a scheduled shift."
 msgstr "سجّل الحضور دون وردية مجدولة."
 
@@ -4474,7 +4482,7 @@ msgstr "تم تسجيل الانصراف"
 msgid "Clocked out at, for {name}"
 msgstr "وقت انصراف {name}"
 
-#: app/components/staff/timesheets/issue-copy.ts:43
+#: app/components/staff/timesheets/issue-copy.ts:47
 msgid "Clocked out before the scheduled end."
 msgstr "سجّل الانصراف قبل الوقت المجدول."
 
@@ -4524,7 +4532,7 @@ msgstr "إغلاق، سأكمل لاحقًا"
 #: app/components/hiring/job-labels.ts:51
 #: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
-#: app/components/staff/timesheets/issue-copy.ts:52
+#: app/components/staff/timesheets/issue-copy.ts:56
 msgid "Closed"
 msgstr "مغلق"
 
@@ -4669,7 +4677,7 @@ msgstr "إكمال المكالمات والطلبات وإعادة فتحها،
 msgid "Complete authentication"
 msgstr "إكمال المصادقة"
 
-#: app/routes/organizations+/create.tsx:1116
+#: app/routes/organizations+/create.tsx:1113
 msgid "Complete Setup"
 msgstr "إكمال الإعداد"
 
@@ -4859,7 +4867,7 @@ msgstr "نموذج اتصال"
 msgid "Contact sales"
 msgstr "تواصل مع المبيعات"
 
-#: app/routes/organizations+/create.tsx:1378
+#: app/routes/organizations+/create.tsx:1375
 msgid "Contact support"
 msgstr "اتصل بالدعم"
 
@@ -4893,7 +4901,7 @@ msgstr "محرر المحتوى"
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:682
 #: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:95
-#: app/routes/organizations+/create.tsx:827
+#: app/routes/organizations+/create.tsx:824
 msgid "Continue"
 msgstr "متابعة"
 
@@ -4901,7 +4909,7 @@ msgstr "متابعة"
 msgid "Continue payout setup"
 msgstr "متابعة إعداد المدفوعات"
 
-#: app/routes/organizations+/create.tsx:960
+#: app/routes/organizations+/create.tsx:957
 msgid "Continue to Payment"
 msgstr "المتابعة إلى الدفع"
 
@@ -5236,7 +5244,7 @@ msgstr "أنشئ دورًا مخصصًا لتعيين صلاحيات محددة 
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr "إنشاء مفتاح API جديد لربط مساعدي الذكاء الاصطناعي ببيانات {orgName}."
 
-#: app/routes/organizations+/create.tsx:621
+#: app/routes/organizations+/create.tsx:618
 msgid "Create a new organization"
 msgstr "إنشاء منظمة جديدة"
 
@@ -5476,7 +5484,7 @@ msgstr "جارٍ الإنشاء…"
 msgid "Credit tips"
 msgstr "إكراميات البطاقات"
 
-#: app/components/staff/timesheets/card-history.tsx:102
+#: app/components/staff/timesheets/card-history.tsx:103
 msgid "Credit tips: {from} to {to}"
 msgstr "إكراميات البطاقات: من {from} إلى {to}"
 
@@ -6178,7 +6186,7 @@ msgstr "صف متى يجب على الوكيل التحويل إلى جهة ات
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3734
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4044
-#: app/routes/organizations+/create.tsx:799
+#: app/routes/organizations+/create.tsx:796
 msgid "Description"
 msgstr "الوصف"
 
@@ -7132,7 +7140,7 @@ msgid "Enter each percentage as a number from 0 to 100."
 msgstr "أدخل كل نسبة كرقم من 0 إلى 100."
 
 #: app/components/organization-invitations.tsx:456
-#: app/routes/organizations+/create.tsx:1227
+#: app/routes/organizations+/create.tsx:1224
 msgid "Enter email address"
 msgstr "أدخل عنوان البريد الإلكتروني"
 
@@ -8472,7 +8480,7 @@ msgid "Hiring…"
 msgstr "جارٍ التوظيف…"
 
 #: app/components/hiring/candidate-sheet.tsx:361
-#: app/components/staff/timesheets/card-history.tsx:132
+#: app/components/staff/timesheets/card-history.tsx:133
 msgid "History"
 msgstr "السجل"
 
@@ -8846,7 +8854,7 @@ msgstr "يُشمل عند تقسيم الإكراميات."
 msgid "Includes {includesSeatsValue} user seats"
 msgstr "يتضمن {includesSeatsValue} مقعد مستخدم"
 
-#: app/routes/organizations+/create.tsx:1423
+#: app/routes/organizations+/create.tsx:1420
 msgid "Includes {seats} user seats"
 msgstr "يتضمن {seats} مقعد مستخدم"
 
@@ -8997,7 +9005,7 @@ msgstr "دعوة أعضاء"
 msgid "Invite new members"
 msgstr "دعوة أعضاء جدد"
 
-#: app/routes/organizations+/create.tsx:974
+#: app/routes/organizations+/create.tsx:971
 msgid "Invite team members"
 msgstr "دعوة أعضاء الفريق"
 
@@ -9874,7 +9882,7 @@ msgstr "قفل ({lockCount})"
 
 #: app/components/my-schedule/time-cards-view.tsx:103
 #: app/components/staff/timesheets/card-history.tsx:52
-#: app/components/staff/timesheets/issue-copy.ts:54
+#: app/components/staff/timesheets/issue-copy.ts:58
 msgid "Locked"
 msgstr "مقفلة"
 
@@ -9904,7 +9912,7 @@ msgid "Login with a passkey"
 msgstr "تسجيل الدخول بمفتاح المرور"
 
 #: app/components/website/branding-panel.tsx:262
-#: app/routes/organizations+/create.tsx:649
+#: app/routes/organizations+/create.tsx:646
 msgid "Logo"
 msgstr "الشعار"
 
@@ -9945,7 +9953,7 @@ msgstr "أطول من"
 msgid "Longer than usual."
 msgstr "أطول من المعتاد."
 
-#: app/components/staff/timesheets/issue-copy.ts:33
+#: app/components/staff/timesheets/issue-copy.ts:35
 msgid "Longer than your long-shift limit. Check it is not a missed clock-out."
 msgstr "أطول من حد الوردية الطويلة لديك. تأكد أنها ليست انصرافًا لم يُسجَّل."
 
@@ -10150,7 +10158,7 @@ msgstr "إدارة بياناتك الشخصية وفقاً للمادة 20 من
 msgid "Manage your public organization website and appearance."
 msgstr "إدارة موقع مؤسستك العام ومظهره."
 
-#: app/components/staff/timesheets/card-history.tsx:66
+#: app/components/staff/timesheets/card-history.tsx:67
 msgid "Manager"
 msgstr "مدير"
 
@@ -10528,7 +10536,7 @@ msgid "Month"
 msgstr "الشهر"
 
 #: app/components/settings/cards/organization/billing-card.tsx:232
-#: app/routes/organizations+/create.tsx:906
+#: app/routes/organizations+/create.tsx:903
 msgid "Monthly"
 msgstr "شهري"
 
@@ -10670,7 +10678,7 @@ msgstr "رابط جدولي"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4342
-#: app/routes/organizations+/create.tsx:716
+#: app/routes/organizations+/create.tsx:713
 #: app/utils/website/field-types.ts:25
 #: app/utils/website/field-types.ts:28
 msgid "Name"
@@ -10744,7 +10752,7 @@ msgid "Needs follow-up"
 msgstr "تحتاج إلى متابعة"
 
 #: app/components/staff/timeclock-today.tsx:381
-#: app/components/staff/timesheets/issue-copy.ts:51
+#: app/components/staff/timesheets/issue-copy.ts:55
 #: app/components/staff/timesheets/timesheets-page.tsx:537
 msgid "Needs review"
 msgstr "يحتاج إلى مراجعة"
@@ -11651,7 +11659,7 @@ msgstr "لم يُعيَّن أحد بعد"
 msgid "Nobody else holds this position here."
 msgstr "لا أحد آخر يشغل هذا المنصب هنا."
 
-#: app/components/staff/timesheets/card-history.tsx:136
+#: app/components/staff/timesheets/card-history.tsx:137
 msgid "Nobody has changed this card. It is exactly as it was punched."
 msgstr "لم يعدّل أحد هذه البطاقة. هي كما سُجّلت تمامًا."
 
@@ -11689,10 +11697,10 @@ msgstr "لن يصل بريد إلى أحد."
 msgid "Nodes"
 msgstr "العُقد"
 
-#: app/components/staff/timesheets/card-history.tsx:73
-#: app/components/staff/timesheets/card-history.tsx:76
-#: app/components/staff/timesheets/card-history.tsx:107
-#: app/components/staff/timesheets/card-history.tsx:110
+#: app/components/staff/timesheets/card-history.tsx:74
+#: app/components/staff/timesheets/card-history.tsx:77
+#: app/components/staff/timesheets/card-history.tsx:108
+#: app/components/staff/timesheets/card-history.tsx:111
 msgid "none"
 msgstr "لا شيء"
 
@@ -11855,7 +11863,7 @@ msgstr "أُضيفت ملاحظة"
 msgid "Note added."
 msgstr "تمت إضافة الملاحظة."
 
-#: app/components/staff/timesheets/card-history.tsx:114
+#: app/components/staff/timesheets/card-history.tsx:115
 msgid "Note changed"
 msgstr "تم تغيير الملاحظة"
 
@@ -11872,7 +11880,7 @@ msgstr "تم حذف الملاحظة."
 msgid "Note for your manager"
 msgstr "ملاحظة لمديرك"
 
-#: app/components/staff/timesheets/card-history.tsx:114
+#: app/components/staff/timesheets/card-history.tsx:115
 msgid "Note removed"
 msgstr "تمت إزالة الملاحظة"
 
@@ -12330,7 +12338,7 @@ msgstr "فريقك وحده يرى الملاحظات. ولا يراها الم�
 
 #: app/components/favorite-notes.tsx:105
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
-#: app/components/staff/timesheets/issue-copy.ts:50
+#: app/components/staff/timesheets/issue-copy.ts:54
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:525
@@ -12625,7 +12633,7 @@ msgstr "تفاصيل المنظمة وإعداداتها."
 msgid "Organization logo"
 msgstr "شعار المؤسسة"
 
-#: app/routes/organizations+/create.tsx:657
+#: app/routes/organizations+/create.tsx:654
 msgid "Organization logo preview"
 msgstr "معاينة شعار المنظمة"
 
@@ -12637,7 +12645,7 @@ msgstr "إعدادات المنظمة"
 msgid "Organization site"
 msgstr "موقع المؤسسة"
 
-#: app/routes/organizations+/create.tsx:1042
+#: app/routes/organizations+/create.tsx:1039
 msgid "Organization size"
 msgstr "حجم المنظمة"
 
@@ -12825,11 +12833,11 @@ msgstr "استراحة مدفوعة"
 msgid "Paid hours"
 msgstr "الساعات المدفوعة"
 
-#: app/components/staff/timesheets/card-history.tsx:125
+#: app/components/staff/timesheets/card-history.tsx:126
 msgid "Paid hours +{hours}"
 msgstr "الساعات المدفوعة +{hours}"
 
-#: app/components/staff/timesheets/card-history.tsx:125
+#: app/components/staff/timesheets/card-history.tsx:126
 msgid "Paid hours −{hours}"
 msgstr "الساعات المدفوعة −{hours}"
 
@@ -13145,7 +13153,7 @@ msgid "Per hour"
 msgstr "في الساعة"
 
 #: app/components/settings/cards/organization/billing-card.tsx:464
-#: app/routes/organizations+/create.tsx:1411
+#: app/routes/organizations+/create.tsx:1408
 msgid "per month"
 msgstr "شهرياً"
 
@@ -13226,7 +13234,7 @@ msgstr "رابط الدعوة الشخصي"
 #: app/components/staff/details-tab.tsx:208
 #: app/components/staff/review-rows.tsx:96
 #: app/components/staff/review-rows.tsx:104
-#: app/components/staff/timesheets/card-history.tsx:65
+#: app/components/staff/timesheets/card-history.tsx:66
 #: app/components/website/link-inspector.tsx:370
 #: app/components/website/link-inspector.tsx:489
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
@@ -13460,7 +13468,7 @@ msgstr "نص عادي احتياطي (اختياري)"
 msgid "Plan Name"
 msgstr "اسم الخطة"
 
-#: app/routes/organizations+/create.tsx:1338
+#: app/routes/organizations+/create.tsx:1335
 msgid "Plan not available"
 msgstr "الخطة غير متاحة"
 
@@ -13584,7 +13592,7 @@ msgstr "تُشغَّل عند إيقاف التحويلات أو خارج ساع
 msgid "Played while a transfer is ringing."
 msgstr "تُشغَّل أثناء رنين التحويل."
 
-#: app/routes/organizations+/create.tsx:1341
+#: app/routes/organizations+/create.tsx:1338
 msgid "Please check configuration"
 msgstr "يرجى التحقق من التكوين"
 
@@ -13682,7 +13690,7 @@ msgstr "تم شغل الوظيفة"
 msgid "Position saved."
 msgstr "تم حفظ المنصب."
 
-#: app/components/staff/timesheets/card-history.tsx:111
+#: app/components/staff/timesheets/card-history.tsx:112
 msgid "Position: {from} to {to}"
 msgstr "المنصب: من {from} إلى {to}"
 
@@ -13813,7 +13821,7 @@ msgid "Price (USD)"
 msgstr "السعر (USD)"
 
 #: app/components/settings/cards/organization/billing-card.tsx:435
-#: app/routes/organizations+/create.tsx:1375
+#: app/routes/organizations+/create.tsx:1372
 msgid "Price not configured"
 msgstr "السعر غير مكوّن"
 
@@ -13846,7 +13854,7 @@ msgstr "تحديد أولوية هذه المهام"
 msgid "Priority"
 msgstr "الأولوية"
 
-#: app/routes/organizations+/create.tsx:1444
+#: app/routes/organizations+/create.tsx:1441
 msgid "Priority support"
 msgstr "دعم الأولوية"
 
@@ -14029,7 +14037,7 @@ msgstr "جارٍ النشر..."
 msgid "Publishing…"
 msgstr "جارٍ النشر…"
 
-#: app/components/staff/timesheets/issue-copy.ts:45
+#: app/components/staff/timesheets/issue-copy.ts:49
 msgid "Punched while the tablet was offline and sent later."
 msgstr "سُجّل أثناء انقطاع اتصال الجهاز اللوحي وأُرسل لاحقًا."
 
@@ -14537,7 +14545,7 @@ msgstr "إزالة من مكان العمل"
 msgid "Remove image"
 msgstr "إزالة الصورة"
 
-#: app/routes/organizations+/create.tsx:1286
+#: app/routes/organizations+/create.tsx:1283
 msgid "Remove invite"
 msgstr "إزالة الدعوة"
 
@@ -14865,7 +14873,7 @@ msgstr "إعادة تعيين رمز PIN"
 msgid "Reset this PIN?"
 msgstr "إعادة تعيين رمز PIN هذا؟"
 
-#: app/routes/organizations+/create.tsx:783
+#: app/routes/organizations+/create.tsx:780
 msgid "Reset to auto-generated"
 msgstr "إعادة تعيين إلى التلقائي"
 
@@ -15289,7 +15297,7 @@ msgid "Save"
 msgstr "حفظ"
 
 #: app/components/settings/cards/organization/billing-card.tsx:245
-#: app/routes/organizations+/create.tsx:922
+#: app/routes/organizations+/create.tsx:919
 msgid "Save 20%"
 msgstr "وفّر 20٪"
 
@@ -15420,6 +15428,10 @@ msgstr "احفظ تغييراتك قبل الإغلاق."
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 msgid "Saved"
 msgstr "تم الحفظ"
+
+#: app/components/staff/timesheets/issue-copy.ts:38
+msgid "Saved offline and sent more than 12 hours later. Check the times."
+msgstr "حُفظ دون اتصال وأُرسل بعد أكثر من 12 ساعة. راجع الأوقات."
 
 #: app/components/kiosk/kiosk-screens.tsx:692
 msgid "Saved on this tablet. It will be recorded when the connection is back."
@@ -15897,7 +15909,7 @@ msgstr "اختر تخطيطاً أولياً لصفحتك الجديدة."
 msgid "Select a submission to read the details and start a reply."
 msgstr "اختر ردًا لقراءة تفاصيله وبدء الإجابة عليه."
 
-#: app/routes/organizations+/create.tsx:878
+#: app/routes/organizations+/create.tsx:875
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr "اختر خطة اشتراك للبدء مع منظمتك. ستبدأ تجربتك بعد إعداد الدفع."
 
@@ -16033,7 +16045,7 @@ msgid "Send invitation"
 msgstr "إرسال الدعوة"
 
 #: app/components/organization-invitations.tsx:328
-#: app/routes/organizations+/create.tsx:1193
+#: app/routes/organizations+/create.tsx:1190
 msgid "Send Invitations"
 msgstr "إرسال الدعوات"
 
@@ -16112,7 +16124,11 @@ msgstr "أُعيد إرسالها"
 msgid "Sent by email to people who have an address on file."
 msgstr "يُرسل بالبريد الإلكتروني إلى من لديهم عنوان بريد محفوظ."
 
-#: app/components/staff/timesheets/card-history.tsx:209
+#: app/components/staff/timesheets/issue-copy.ts:27
+msgid "Sent late"
+msgstr "أُرسل متأخرًا"
+
+#: app/components/staff/timesheets/card-history.tsx:210
 msgid "sent later"
 msgstr "أُرسل لاحقًا"
 
@@ -16588,7 +16604,7 @@ msgstr "الحجم"
 msgid "Size:"
 msgstr "الحجم:"
 
-#: app/routes/organizations+/create.tsx:997
+#: app/routes/organizations+/create.tsx:994
 msgid "Skip for now"
 msgstr "تخطي الآن"
 
@@ -16601,7 +16617,7 @@ msgid "Skipped"
 msgstr "تم تخطيها"
 
 #: app/components/settings/cards/organization/general-settings-card.tsx:97
-#: app/routes/organizations+/create.tsx:737
+#: app/routes/organizations+/create.tsx:734
 msgid "Slug"
 msgstr "الرابط الثابت"
 
@@ -16995,6 +17011,10 @@ msgstr "يبدأ في"
 msgid "State or region"
 msgstr "الولاية أو المنطقة"
 
+#: app/components/staff/timesheets/card-history.tsx:64
+msgid "Station"
+msgstr "Station"
+
 #: app/utils/dashboards/config.ts:75
 msgid "Stats"
 msgstr "الإحصائيات"
@@ -17025,7 +17045,7 @@ msgstr "البقاء"
 msgid "Stayed on current page"
 msgstr "تم البقاء في الصفحة الحالية"
 
-#: app/routes/organizations+/create.tsx:539
+#: app/routes/organizations+/create.tsx:536
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
@@ -17430,11 +17450,11 @@ msgstr "إبلاغ المديرين عندما لا يسجّل أحدهم حضو
 msgid "Tell me more"
 msgstr "أخبرني المزيد"
 
-#: app/routes/organizations+/create.tsx:804
+#: app/routes/organizations+/create.tsx:801
 msgid "Tell us about your organization..."
 msgstr "أخبرنا عن منظمتك..."
 
-#: app/routes/organizations+/create.tsx:1021
+#: app/routes/organizations+/create.tsx:1018
 msgid "Tell us more about your organization"
 msgstr "أخبرنا المزيد عن منظمتك"
 
@@ -18250,11 +18270,11 @@ msgstr "الصوت القياسي للغة مساعدك الذكي."
 msgid "The steps the agent follows on each call. The standard flow works for most businesses, so change it only if your calls need a different order."
 msgstr "الخطوات التي يتبعها الوكيل في كل مكالمة. يناسب المسار القياسي معظم الأنشطة التجارية، لذا غيّره فقط إذا كانت مكالماتك تحتاج إلى ترتيب مختلف."
 
-#: app/components/staff/timesheets/issue-copy.ts:32
+#: app/components/staff/timesheets/issue-copy.ts:34
 msgid "The system clocked them out. Check the time is right."
 msgstr "سجّل النظام انصرافه. تأكد أن الوقت صحيح."
 
-#: app/components/staff/timesheets/issue-copy.ts:35
+#: app/components/staff/timesheets/issue-copy.ts:37
 msgid "The tablet clock was off when this was punched. Check the times."
 msgstr "كانت ساعة الجهاز اللوحي غير دقيقة عند التسجيل. راجع الأوقات."
 
@@ -18270,7 +18290,7 @@ msgstr "المهام التي يبدأ بها الموظف الجديد. تُح�
 #~ msgid "The time-limit notice, the rating question, and the goodbye."
 #~ msgstr "تنبيه المهلة الزمنية وسؤال التقييم وعبارة الوداع."
 
-#: app/components/staff/timesheets/issue-copy.ts:37
+#: app/components/staff/timesheets/issue-copy.ts:41
 msgid "The times do not add up. Fix the start or the end."
 msgstr "الأوقات غير منطقية. صحّح البدء أو الانتهاء."
 
@@ -18660,7 +18680,7 @@ msgstr "هذا الجهاز"
 msgid "This draft shift is deleted straight away."
 msgstr "تُحذف مسودة الوردية هذه فورًا."
 
-#: app/routes/organizations+/create.tsx:1024
+#: app/routes/organizations+/create.tsx:1021
 msgid "This helps us customize your experience and provide better insights."
 msgstr "يساعدنا هذا في تخصيص تجربتك وتقديم رؤى أفضل."
 
@@ -19632,7 +19652,7 @@ msgstr "اثنان"
 msgid "Two break rules start at the same point in the shift."
 msgstr "قاعدتا استراحة تبدآن عند النقطة نفسها من الوردية."
 
-#: app/components/staff/timesheets/issue-copy.ts:39
+#: app/components/staff/timesheets/issue-copy.ts:43
 msgid "Two breaks overlap. Fix their times."
 msgstr "استراحتان متداخلتان. صحّح أوقاتهما."
 
@@ -20009,7 +20029,7 @@ msgstr "تحميل جديد"
 msgid "Upload photo"
 msgstr "تحميل صورة"
 
-#: app/routes/organizations+/create.tsx:698
+#: app/routes/organizations+/create.tsx:695
 msgid "Upload your logo"
 msgstr "تحميل شعارك"
 
@@ -20809,7 +20829,7 @@ msgstr "سنرسل لك بريداً إلكترونياً إلى <0>{userEmail}<
 msgid "We've sent you a code to verify your email address."
 msgstr "لقد أرسلنا لك رمزاً للتحقق من عنوان بريدك الإلكتروني."
 
-#: app/components/staff/timesheets/card-history.tsx:64
+#: app/components/staff/timesheets/card-history.tsx:65
 msgid "Web"
 msgstr "الويب"
 
@@ -21391,7 +21411,7 @@ msgid "year"
 msgstr "سنة"
 
 #: app/components/settings/cards/organization/billing-card.tsx:243
-#: app/routes/organizations+/create.tsx:920
+#: app/routes/organizations+/create.tsx:917
 msgid "Yearly"
 msgstr "سنوي"
 
@@ -21734,7 +21754,7 @@ msgstr "يمكن لعملائك الشراء من <0>/shop</0> على موقعك
 msgid "Your dashboard changes could not be saved."
 msgstr "تعذّر حفظ تغييرات لوحة التحكم."
 
-#: app/routes/organizations+/create.tsx:1079
+#: app/routes/organizations+/create.tsx:1076
 msgid "Your department"
 msgstr "قسمك"
 

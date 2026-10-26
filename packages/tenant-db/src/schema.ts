@@ -1273,6 +1273,7 @@ export const PUNCH_SOURCE_VALUES = [
 	'web',
 	'mobile',
 	'manager',
+	'pos',
 ] as const
 export const PUNCH_OUTCOME_VALUES = [
 	'accepted',

@@ -452,7 +452,7 @@ msgstr ""
 msgid "{backupCodesRemaining} unused codes remaining"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1416
+#: app/routes/organizations+/create.tsx:1413
 msgid "{basePriceLabel} billed annually"
 msgstr ""
 
@@ -1048,7 +1048,7 @@ msgstr "{weekText} of {limitText}"
 msgid "{who} to cover {when}"
 msgstr "{who} to cover {when}"
 
-#: app/routes/organizations+/create.tsx:702
+#: app/routes/organizations+/create.tsx:699
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr ""
 
@@ -1182,15 +1182,15 @@ msgstr ""
 msgid "6-digit verification code"
 msgstr "6-digit verification code"
 
-#: app/components/staff/timesheets/issue-copy.ts:38
+#: app/components/staff/timesheets/issue-copy.ts:42
 msgid "A break falls outside the shift. Fix its times."
 msgstr "A break falls outside the shift. Fix its times."
 
-#: app/components/staff/timesheets/issue-copy.ts:46
+#: app/components/staff/timesheets/issue-copy.ts:50
 msgid "A break was deducted automatically by your rules."
 msgstr "A break was deducted automatically by your rules."
 
-#: app/components/staff/timesheets/issue-copy.ts:36
+#: app/components/staff/timesheets/issue-copy.ts:40
 msgid "A break was started and never ended. Set when it ended."
 msgstr "A break was started and never ended. Set when it ended."
 
@@ -1286,7 +1286,7 @@ msgstr "A manager approves and locks them"
 msgid "A manager approves them"
 msgstr "A manager approves them"
 
-#: app/components/staff/timesheets/issue-copy.ts:44
+#: app/components/staff/timesheets/issue-copy.ts:48
 msgid "A manager changed this card."
 msgstr "A manager changed this card."
 
@@ -1366,7 +1366,7 @@ msgstr "A polite note that you will not be moving forward right now."
 msgid "A position with that name already exists."
 msgstr "A position with that name already exists."
 
-#: app/components/staff/timesheets/issue-copy.ts:34
+#: app/components/staff/timesheets/issue-copy.ts:36
 msgid "A required break was not taken or not recorded."
 msgstr "A required break was not taken or not recorded."
 
@@ -1497,11 +1497,11 @@ msgstr ""
 msgid "Acknowledge a policy"
 msgstr "Acknowledge a policy"
 
-#: app/routes/organizations+/create.tsx:760
+#: app/routes/organizations+/create.tsx:757
 msgid "acme"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:725
+#: app/routes/organizations+/create.tsx:722
 msgid "Acme Inc."
 msgstr ""
 
@@ -1762,7 +1762,7 @@ msgid "Add announcement"
 msgstr ""
 
 #: app/components/organization-invitations.tsx:317
-#: app/routes/organizations+/create.tsx:1186
+#: app/routes/organizations+/create.tsx:1183
 msgid "Add another invitation"
 msgstr ""
 
@@ -2076,7 +2076,7 @@ msgstr ""
 msgid "Add your business details to see what the assistant is told."
 msgstr "Add your business details to see what the assistant is told."
 
-#: app/routes/organizations+/create.tsx:977
+#: app/routes/organizations+/create.tsx:974
 msgid "Add your team members to get started. You can always invite more people later."
 msgstr ""
 
@@ -2119,11 +2119,11 @@ msgstr "Adding section"
 msgid "Adding…"
 msgstr "Adding…"
 
-#: app/routes/organizations+/create.tsx:1435
+#: app/routes/organizations+/create.tsx:1432
 msgid "Additional users: {monthlyPriceLabel}/user/month"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1428
+#: app/routes/organizations+/create.tsx:1425
 msgid "Additional users: {monthlyPriceLabel}/user/month<0>({annualPriceLabel} billed annually per user)</0>"
 msgstr ""
 
@@ -2320,7 +2320,7 @@ msgstr "All calls"
 msgid "All checks passed. This workflow is ready to publish."
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1440
+#: app/routes/organizations+/create.tsx:1437
 msgid "All core features included"
 msgstr ""
 
@@ -2488,7 +2488,7 @@ msgstr "An interview was scheduled"
 msgid "An interview was updated"
 msgstr "An interview was updated"
 
-#: app/routes/organizations+/create.tsx:626
+#: app/routes/organizations+/create.tsx:623
 msgid "An organization is a workspace where teams collect, organize, and work together."
 msgstr ""
 
@@ -2518,8 +2518,8 @@ msgstr ""
 msgid "Annual salary"
 msgstr "Annual salary"
 
-#: app/components/staff/timesheets/card-history.tsx:106
-#: app/components/staff/timesheets/card-history.tsx:109
+#: app/components/staff/timesheets/card-history.tsx:107
+#: app/components/staff/timesheets/card-history.tsx:110
 msgid "another position"
 msgstr "another position"
 
@@ -2715,7 +2715,7 @@ msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 #: app/components/my-schedule/time-cards-view.tsx:101
 #: app/components/staff/schedule/time-off-page.tsx:282
 #: app/components/staff/timesheets/card-history.tsx:51
-#: app/components/staff/timesheets/issue-copy.ts:53
+#: app/components/staff/timesheets/issue-copy.ts:57
 msgid "Approved"
 msgstr "Approved"
 
@@ -2785,7 +2785,7 @@ msgstr "Area"
 msgid "Arrangement"
 msgstr ""
 
-#: app/components/staff/timesheets/card-history.tsx:187
+#: app/components/staff/timesheets/card-history.tsx:188
 msgid "As punched"
 msgstr "As punched"
 
@@ -3206,7 +3206,7 @@ msgstr "Break"
 msgid "Break {number}"
 msgstr "Break {number}"
 
-#: app/components/staff/timesheets/issue-copy.ts:27
+#: app/components/staff/timesheets/issue-copy.ts:29
 msgid "Break deducted"
 msgstr "Break deducted"
 
@@ -3256,7 +3256,7 @@ msgstr "Breaks cannot overlap each other."
 msgid "Breaks overlap"
 msgstr "Breaks overlap"
 
-#: app/components/staff/timesheets/card-history.tsx:118
+#: app/components/staff/timesheets/card-history.tsx:119
 msgid "Breaks: {before} to {after}"
 msgstr "Breaks: {before} to {after}"
 
@@ -3406,7 +3406,7 @@ msgstr ""
 msgid "by {createdByName}"
 msgstr ""
 
-#: app/components/staff/timesheets/card-history.tsx:159
+#: app/components/staff/timesheets/card-history.tsx:160
 msgid "by a manager"
 msgstr "by a manager"
 
@@ -3431,7 +3431,7 @@ msgstr "By hours worked"
 msgid "By position percentage"
 msgstr "By position percentage"
 
-#: app/components/staff/timesheets/card-history.tsx:160
+#: app/components/staff/timesheets/card-history.tsx:161
 msgid "by the time clock"
 msgstr "by the time clock"
 
@@ -3690,8 +3690,8 @@ msgstr "Can't text that number"
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1495
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1541
 #: app/routes/_app+/$orgSlug_+/website+/redirects.tsx:1579
-#: app/routes/organizations+/create.tsx:822
-#: app/routes/organizations+/create.tsx:957
+#: app/routes/organizations+/create.tsx:819
+#: app/routes/organizations+/create.tsx:954
 msgid "Cancel"
 msgstr ""
 
@@ -3800,7 +3800,7 @@ msgstr "Cash tips"
 msgid "Cash tips have no card fee. Up to 10 percent."
 msgstr "Cash tips have no card fee. Up to 10 percent."
 
-#: app/components/staff/timesheets/card-history.tsx:97
+#: app/components/staff/timesheets/card-history.tsx:98
 msgid "Cash tips: {from} to {to}"
 msgstr "Cash tips: {from} to {to}"
 
@@ -4003,6 +4003,10 @@ msgstr "Check the highlighted fields and try again."
 msgid "Check the highlighted fields."
 msgstr "Check the highlighted fields."
 
+#: app/components/staff/timesheets/issue-copy.ts:28
+msgid "Check the rules"
+msgstr "Check the rules"
+
 #: app/utils/staffing/alert-copy.ts:72
 msgid "Check the time cards before the limit is reached."
 msgstr "Check the time cards before the limit is reached."
@@ -4011,7 +4015,7 @@ msgstr "Check the time cards before the limit is reached."
 msgid "Check their contact details and emergency contact are right."
 msgstr "Check their contact details and emergency contact are right."
 
-#: app/components/staff/timesheets/issue-copy.ts:57
+#: app/components/staff/timesheets/issue-copy.ts:61
 msgid "Check this card"
 msgstr "Check this card"
 
@@ -4295,7 +4299,7 @@ msgstr "Choose who this task is for."
 msgid "Choose who worked."
 msgstr "Choose who worked."
 
-#: app/routes/organizations+/create.tsx:875
+#: app/routes/organizations+/create.tsx:872
 msgid "Choose your plan"
 msgstr ""
 
@@ -4399,7 +4403,7 @@ msgstr "Clock in"
 msgid "Clock in {from} to {to}"
 msgstr "Clock in {from} to {to}"
 
-#: app/components/staff/timesheets/card-history.tsx:87
+#: app/components/staff/timesheets/card-history.tsx:88
 msgid "Clock in: {from} to {to}"
 msgstr "Clock in: {from} to {to}"
 
@@ -4420,7 +4424,7 @@ msgstr "Clock out {from} to {to}"
 msgid "Clock out after the shift ends by"
 msgstr "Clock out after the shift ends by"
 
-#: app/components/staff/timesheets/card-history.tsx:92
+#: app/components/staff/timesheets/card-history.tsx:93
 msgid "Clock out: {from} to {to}"
 msgstr "Clock out: {from} to {to}"
 
@@ -4444,23 +4448,27 @@ msgstr "Clock-out set for {name}."
 msgid "Clocked in"
 msgstr "Clocked in"
 
-#: app/components/staff/timesheets/issue-copy.ts:41
+#: app/components/staff/timesheets/issue-copy.ts:45
 msgid "Clocked in after the scheduled start."
 msgstr "Clocked in after the scheduled start."
 
-#: app/components/staff/timesheets/issue-copy.ts:31
+#: app/components/staff/timesheets/issue-copy.ts:33
 msgid "Clocked in and never clocked out. Set the time they left."
 msgstr "Clocked in and never clocked out. Set the time they left."
 
-#: app/components/staff/timesheets/issue-copy.ts:42
+#: app/components/staff/timesheets/issue-copy.ts:46
 msgid "Clocked in before the scheduled start."
 msgstr "Clocked in before the scheduled start."
+
+#: app/components/staff/timesheets/issue-copy.ts:39
+msgid "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it. If they were early, pay starts at the earliest time the rules allow."
+msgstr "Clocked in offline where the rules would have asked first (no shift, too early, or which job). Check it. If they were early, pay starts at the earliest time the rules allow."
 
 #: app/components/staff/labor-example.tsx:148
 msgid "Clocked in to out"
 msgstr "Clocked in to out"
 
-#: app/components/staff/timesheets/issue-copy.ts:40
+#: app/components/staff/timesheets/issue-copy.ts:44
 msgid "Clocked in without a scheduled shift."
 msgstr "Clocked in without a scheduled shift."
 
@@ -4476,7 +4484,7 @@ msgstr "Clocked out"
 msgid "Clocked out at, for {name}"
 msgstr "Clocked out at, for {name}"
 
-#: app/components/staff/timesheets/issue-copy.ts:43
+#: app/components/staff/timesheets/issue-copy.ts:47
 msgid "Clocked out before the scheduled end."
 msgstr "Clocked out before the scheduled end."
 
@@ -4526,7 +4534,7 @@ msgstr "Close, I'll finish later"
 #: app/components/hiring/job-labels.ts:51
 #: app/components/phone-agent/business-details-section.tsx:244
 #: app/components/phone-agent/flow-editor/flow-meta.ts:98
-#: app/components/staff/timesheets/issue-copy.ts:52
+#: app/components/staff/timesheets/issue-copy.ts:56
 msgid "Closed"
 msgstr "Closed"
 
@@ -4671,7 +4679,7 @@ msgstr "Complete and reopen calls and requests, and tag calls. Needs View calls.
 msgid "Complete authentication"
 msgstr "Complete authentication"
 
-#: app/routes/organizations+/create.tsx:1116
+#: app/routes/organizations+/create.tsx:1113
 msgid "Complete Setup"
 msgstr ""
 
@@ -4861,7 +4869,7 @@ msgstr "Contact form"
 msgid "Contact sales"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1378
+#: app/routes/organizations+/create.tsx:1375
 msgid "Contact support"
 msgstr ""
 
@@ -4895,7 +4903,7 @@ msgstr "Content editor"
 #: app/routes/_app+/$orgSlug_+/staff+/team_.$staffId.terminate.tsx:156
 #: app/routes/_auth+/login.tsx:682
 #: app/routes/mock-payments+/checkout-com.3ds.$attemptId.tsx:95
-#: app/routes/organizations+/create.tsx:827
+#: app/routes/organizations+/create.tsx:824
 msgid "Continue"
 msgstr ""
 
@@ -4903,7 +4911,7 @@ msgstr ""
 msgid "Continue payout setup"
 msgstr "Continue payout setup"
 
-#: app/routes/organizations+/create.tsx:960
+#: app/routes/organizations+/create.tsx:957
 msgid "Continue to Payment"
 msgstr ""
 
@@ -5238,7 +5246,7 @@ msgstr "Create a custom role to assign specific permissions to teammates."
 msgid "Create a new API key to connect your AI assistants to {orgName} data."
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:621
+#: app/routes/organizations+/create.tsx:618
 msgid "Create a new organization"
 msgstr ""
 
@@ -5478,7 +5486,7 @@ msgstr "Creating…"
 msgid "Credit tips"
 msgstr "Credit tips"
 
-#: app/components/staff/timesheets/card-history.tsx:102
+#: app/components/staff/timesheets/card-history.tsx:103
 msgid "Credit tips: {from} to {to}"
 msgstr "Credit tips: {from} to {to}"
 
@@ -6180,7 +6188,7 @@ msgstr "Describe when the agent should transfer to a specific contact. For examp
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:297
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3734
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4044
-#: app/routes/organizations+/create.tsx:799
+#: app/routes/organizations+/create.tsx:796
 msgid "Description"
 msgstr ""
 
@@ -7134,7 +7142,7 @@ msgid "Enter each percentage as a number from 0 to 100."
 msgstr "Enter each percentage as a number from 0 to 100."
 
 #: app/components/organization-invitations.tsx:456
-#: app/routes/organizations+/create.tsx:1227
+#: app/routes/organizations+/create.tsx:1224
 msgid "Enter email address"
 msgstr ""
 
@@ -8474,7 +8482,7 @@ msgid "Hiring…"
 msgstr "Hiring…"
 
 #: app/components/hiring/candidate-sheet.tsx:361
-#: app/components/staff/timesheets/card-history.tsx:132
+#: app/components/staff/timesheets/card-history.tsx:133
 msgid "History"
 msgstr "History"
 
@@ -8848,7 +8856,7 @@ msgstr "Included when tips are divided."
 msgid "Includes {includesSeatsValue} user seats"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1423
+#: app/routes/organizations+/create.tsx:1420
 msgid "Includes {seats} user seats"
 msgstr ""
 
@@ -8999,7 +9007,7 @@ msgstr ""
 msgid "Invite new members"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:974
+#: app/routes/organizations+/create.tsx:971
 msgid "Invite team members"
 msgstr ""
 
@@ -9876,7 +9884,7 @@ msgstr "Lock ({lockCount})"
 
 #: app/components/my-schedule/time-cards-view.tsx:103
 #: app/components/staff/timesheets/card-history.tsx:52
-#: app/components/staff/timesheets/issue-copy.ts:54
+#: app/components/staff/timesheets/issue-copy.ts:58
 msgid "Locked"
 msgstr "Locked"
 
@@ -9906,7 +9914,7 @@ msgid "Login with a passkey"
 msgstr ""
 
 #: app/components/website/branding-panel.tsx:262
-#: app/routes/organizations+/create.tsx:649
+#: app/routes/organizations+/create.tsx:646
 msgid "Logo"
 msgstr ""
 
@@ -9947,7 +9955,7 @@ msgstr "Longer than"
 msgid "Longer than usual."
 msgstr "Longer than usual."
 
-#: app/components/staff/timesheets/issue-copy.ts:33
+#: app/components/staff/timesheets/issue-copy.ts:35
 msgid "Longer than your long-shift limit. Check it is not a missed clock-out."
 msgstr "Longer than your long-shift limit. Check it is not a missed clock-out."
 
@@ -10152,7 +10160,7 @@ msgstr ""
 msgid "Manage your public organization website and appearance."
 msgstr ""
 
-#: app/components/staff/timesheets/card-history.tsx:66
+#: app/components/staff/timesheets/card-history.tsx:67
 msgid "Manager"
 msgstr "Manager"
 
@@ -10530,7 +10538,7 @@ msgid "Month"
 msgstr "Month"
 
 #: app/components/settings/cards/organization/billing-card.tsx:232
-#: app/routes/organizations+/create.tsx:906
+#: app/routes/organizations+/create.tsx:903
 msgid "Monthly"
 msgstr ""
 
@@ -10672,7 +10680,7 @@ msgstr "My schedule link"
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:235
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:197
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4342
-#: app/routes/organizations+/create.tsx:716
+#: app/routes/organizations+/create.tsx:713
 #: app/utils/website/field-types.ts:25
 #: app/utils/website/field-types.ts:28
 msgid "Name"
@@ -10746,7 +10754,7 @@ msgid "Needs follow-up"
 msgstr "Needs follow-up"
 
 #: app/components/staff/timeclock-today.tsx:381
-#: app/components/staff/timesheets/issue-copy.ts:51
+#: app/components/staff/timesheets/issue-copy.ts:55
 #: app/components/staff/timesheets/timesheets-page.tsx:537
 msgid "Needs review"
 msgstr "Needs review"
@@ -11653,7 +11661,7 @@ msgstr "Nobody assigned yet"
 msgid "Nobody else holds this position here."
 msgstr "Nobody else holds this position here."
 
-#: app/components/staff/timesheets/card-history.tsx:136
+#: app/components/staff/timesheets/card-history.tsx:137
 msgid "Nobody has changed this card. It is exactly as it was punched."
 msgstr "Nobody has changed this card. It is exactly as it was punched."
 
@@ -11691,10 +11699,10 @@ msgstr "Nobody will be emailed."
 msgid "Nodes"
 msgstr ""
 
-#: app/components/staff/timesheets/card-history.tsx:73
-#: app/components/staff/timesheets/card-history.tsx:76
-#: app/components/staff/timesheets/card-history.tsx:107
-#: app/components/staff/timesheets/card-history.tsx:110
+#: app/components/staff/timesheets/card-history.tsx:74
+#: app/components/staff/timesheets/card-history.tsx:77
+#: app/components/staff/timesheets/card-history.tsx:108
+#: app/components/staff/timesheets/card-history.tsx:111
 msgid "none"
 msgstr "none"
 
@@ -11857,7 +11865,7 @@ msgstr "Note added"
 msgid "Note added."
 msgstr "Note added."
 
-#: app/components/staff/timesheets/card-history.tsx:114
+#: app/components/staff/timesheets/card-history.tsx:115
 msgid "Note changed"
 msgstr "Note changed"
 
@@ -11874,7 +11882,7 @@ msgstr "Note deleted."
 msgid "Note for your manager"
 msgstr "Note for your manager"
 
-#: app/components/staff/timesheets/card-history.tsx:114
+#: app/components/staff/timesheets/card-history.tsx:115
 msgid "Note removed"
 msgstr "Note removed"
 
@@ -12332,7 +12340,7 @@ msgstr "Only your team sees notes. The applicant never does."
 
 #: app/components/favorite-notes.tsx:105
 #: app/components/phone-agent/flow-editor/flow-meta.ts:97
-#: app/components/staff/timesheets/issue-copy.ts:50
+#: app/components/staff/timesheets/issue-copy.ts:54
 #: app/components/staff/timesheets/timesheet-table.tsx:325
 #: app/components/staff/timesheets/timesheet-table.tsx:529
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:525
@@ -12627,7 +12635,7 @@ msgstr "Organization details and configuration."
 msgid "Organization logo"
 msgstr "Organization logo"
 
-#: app/routes/organizations+/create.tsx:657
+#: app/routes/organizations+/create.tsx:654
 msgid "Organization logo preview"
 msgstr ""
 
@@ -12639,7 +12647,7 @@ msgstr "Organization Settings"
 msgid "Organization site"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1042
+#: app/routes/organizations+/create.tsx:1039
 msgid "Organization size"
 msgstr ""
 
@@ -12827,11 +12835,11 @@ msgstr "Paid break"
 msgid "Paid hours"
 msgstr "Paid hours"
 
-#: app/components/staff/timesheets/card-history.tsx:125
+#: app/components/staff/timesheets/card-history.tsx:126
 msgid "Paid hours +{hours}"
 msgstr "Paid hours +{hours}"
 
-#: app/components/staff/timesheets/card-history.tsx:125
+#: app/components/staff/timesheets/card-history.tsx:126
 msgid "Paid hours −{hours}"
 msgstr "Paid hours −{hours}"
 
@@ -13147,7 +13155,7 @@ msgid "Per hour"
 msgstr "Per hour"
 
 #: app/components/settings/cards/organization/billing-card.tsx:464
-#: app/routes/organizations+/create.tsx:1411
+#: app/routes/organizations+/create.tsx:1408
 msgid "per month"
 msgstr ""
 
@@ -13228,7 +13236,7 @@ msgstr ""
 #: app/components/staff/details-tab.tsx:208
 #: app/components/staff/review-rows.tsx:96
 #: app/components/staff/review-rows.tsx:104
-#: app/components/staff/timesheets/card-history.tsx:65
+#: app/components/staff/timesheets/card-history.tsx:66
 #: app/components/website/link-inspector.tsx:370
 #: app/components/website/link-inspector.tsx:489
 #: app/routes/_app+/$orgSlug_+/phone-agent+/calls.tsx:305
@@ -13462,7 +13470,7 @@ msgstr ""
 msgid "Plan Name"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1338
+#: app/routes/organizations+/create.tsx:1335
 msgid "Plan not available"
 msgstr ""
 
@@ -13586,7 +13594,7 @@ msgstr "Played when transfers are off or outside transfer hours."
 msgid "Played while a transfer is ringing."
 msgstr "Played while a transfer is ringing."
 
-#: app/routes/organizations+/create.tsx:1341
+#: app/routes/organizations+/create.tsx:1338
 msgid "Please check configuration"
 msgstr ""
 
@@ -13684,7 +13692,7 @@ msgstr "Position filled"
 msgid "Position saved."
 msgstr "Position saved."
 
-#: app/components/staff/timesheets/card-history.tsx:111
+#: app/components/staff/timesheets/card-history.tsx:112
 msgid "Position: {from} to {to}"
 msgstr "Position: {from} to {to}"
 
@@ -13815,7 +13823,7 @@ msgid "Price (USD)"
 msgstr ""
 
 #: app/components/settings/cards/organization/billing-card.tsx:435
-#: app/routes/organizations+/create.tsx:1375
+#: app/routes/organizations+/create.tsx:1372
 msgid "Price not configured"
 msgstr ""
 
@@ -13848,7 +13856,7 @@ msgstr ""
 msgid "Priority"
 msgstr "Priority"
 
-#: app/routes/organizations+/create.tsx:1444
+#: app/routes/organizations+/create.tsx:1441
 msgid "Priority support"
 msgstr ""
 
@@ -14031,7 +14039,7 @@ msgstr ""
 msgid "Publishing…"
 msgstr "Publishing…"
 
-#: app/components/staff/timesheets/issue-copy.ts:45
+#: app/components/staff/timesheets/issue-copy.ts:49
 msgid "Punched while the tablet was offline and sent later."
 msgstr "Punched while the tablet was offline and sent later."
 
@@ -14539,7 +14547,7 @@ msgstr "Remove from workplace"
 msgid "Remove image"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1286
+#: app/routes/organizations+/create.tsx:1283
 msgid "Remove invite"
 msgstr ""
 
@@ -14867,7 +14875,7 @@ msgstr "Reset PIN"
 msgid "Reset this PIN?"
 msgstr "Reset this PIN?"
 
-#: app/routes/organizations+/create.tsx:783
+#: app/routes/organizations+/create.tsx:780
 msgid "Reset to auto-generated"
 msgstr ""
 
@@ -15291,7 +15299,7 @@ msgid "Save"
 msgstr ""
 
 #: app/components/settings/cards/organization/billing-card.tsx:245
-#: app/routes/organizations+/create.tsx:922
+#: app/routes/organizations+/create.tsx:919
 msgid "Save 20%"
 msgstr ""
 
@@ -15422,6 +15430,10 @@ msgstr "Save your changes before closing."
 #: app/components/dashboard/dashboard-edit-toolbar.tsx:95
 msgid "Saved"
 msgstr "Saved"
+
+#: app/components/staff/timesheets/issue-copy.ts:38
+msgid "Saved offline and sent more than 12 hours later. Check the times."
+msgstr "Saved offline and sent more than 12 hours later. Check the times."
 
 #: app/components/kiosk/kiosk-screens.tsx:692
 msgid "Saved on this tablet. It will be recorded when the connection is back."
@@ -15899,7 +15911,7 @@ msgstr ""
 msgid "Select a submission to read the details and start a reply."
 msgstr "Select a submission to read the details and start a reply."
 
-#: app/routes/organizations+/create.tsx:878
+#: app/routes/organizations+/create.tsx:875
 msgid "Select a subscription plan to get started with your organization. Your trial will begin after payment setup."
 msgstr ""
 
@@ -16035,7 +16047,7 @@ msgid "Send invitation"
 msgstr "Send invitation"
 
 #: app/components/organization-invitations.tsx:328
-#: app/routes/organizations+/create.tsx:1193
+#: app/routes/organizations+/create.tsx:1190
 msgid "Send Invitations"
 msgstr ""
 
@@ -16114,7 +16126,11 @@ msgstr "sent again"
 msgid "Sent by email to people who have an address on file."
 msgstr "Sent by email to people who have an address on file."
 
-#: app/components/staff/timesheets/card-history.tsx:209
+#: app/components/staff/timesheets/issue-copy.ts:27
+msgid "Sent late"
+msgstr "Sent late"
+
+#: app/components/staff/timesheets/card-history.tsx:210
 msgid "sent later"
 msgstr "sent later"
 
@@ -16590,7 +16606,7 @@ msgstr "Size"
 msgid "Size:"
 msgstr "Size:"
 
-#: app/routes/organizations+/create.tsx:997
+#: app/routes/organizations+/create.tsx:994
 msgid "Skip for now"
 msgstr ""
 
@@ -16603,7 +16619,7 @@ msgid "Skipped"
 msgstr "Skipped"
 
 #: app/components/settings/cards/organization/general-settings-card.tsx:97
-#: app/routes/organizations+/create.tsx:737
+#: app/routes/organizations+/create.tsx:734
 msgid "Slug"
 msgstr ""
 
@@ -16997,6 +17013,10 @@ msgstr "Starts on"
 msgid "State or region"
 msgstr "State or region"
 
+#: app/components/staff/timesheets/card-history.tsx:64
+msgid "Station"
+msgstr "Station"
+
 #: app/utils/dashboards/config.ts:75
 msgid "Stats"
 msgstr "Stats"
@@ -17027,7 +17047,7 @@ msgstr "Stay"
 msgid "Stayed on current page"
 msgstr "Stayed on current page"
 
-#: app/routes/organizations+/create.tsx:539
+#: app/routes/organizations+/create.tsx:536
 msgid "Step {currentStep} of {totalSteps}"
 msgstr ""
 
@@ -17432,11 +17452,11 @@ msgstr "Tell managers when someone has not clocked in"
 msgid "Tell me more"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:804
+#: app/routes/organizations+/create.tsx:801
 msgid "Tell us about your organization..."
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:1021
+#: app/routes/organizations+/create.tsx:1018
 msgid "Tell us more about your organization"
 msgstr ""
 
@@ -18252,11 +18272,11 @@ msgstr "The standard voice for your agent's language."
 msgid "The steps the agent follows on each call. The standard flow works for most businesses, so change it only if your calls need a different order."
 msgstr "The steps the agent follows on each call. The standard flow works for most businesses, so change it only if your calls need a different order."
 
-#: app/components/staff/timesheets/issue-copy.ts:32
+#: app/components/staff/timesheets/issue-copy.ts:34
 msgid "The system clocked them out. Check the time is right."
 msgstr "The system clocked them out. Check the time is right."
 
-#: app/components/staff/timesheets/issue-copy.ts:35
+#: app/components/staff/timesheets/issue-copy.ts:37
 msgid "The tablet clock was off when this was punched. Check the times."
 msgstr "The tablet clock was off when this was punched. Check the times."
 
@@ -18272,7 +18292,7 @@ msgstr "The tasks a new hire starts with. Due dates count from the day they are 
 #~ msgid "The time-limit notice, the rating question, and the goodbye."
 #~ msgstr "The time-limit notice, the rating question, and the goodbye."
 
-#: app/components/staff/timesheets/issue-copy.ts:37
+#: app/components/staff/timesheets/issue-copy.ts:41
 msgid "The times do not add up. Fix the start or the end."
 msgstr "The times do not add up. Fix the start or the end."
 
@@ -18662,7 +18682,7 @@ msgstr ""
 msgid "This draft shift is deleted straight away."
 msgstr "This draft shift is deleted straight away."
 
-#: app/routes/organizations+/create.tsx:1024
+#: app/routes/organizations+/create.tsx:1021
 msgid "This helps us customize your experience and provide better insights."
 msgstr ""
 
@@ -19634,7 +19654,7 @@ msgstr ""
 msgid "Two break rules start at the same point in the shift."
 msgstr "Two break rules start at the same point in the shift."
 
-#: app/components/staff/timesheets/issue-copy.ts:39
+#: app/components/staff/timesheets/issue-copy.ts:43
 msgid "Two breaks overlap. Fix their times."
 msgstr "Two breaks overlap. Fix their times."
 
@@ -20011,7 +20031,7 @@ msgstr "Upload new"
 msgid "Upload photo"
 msgstr ""
 
-#: app/routes/organizations+/create.tsx:698
+#: app/routes/organizations+/create.tsx:695
 msgid "Upload your logo"
 msgstr ""
 
@@ -20811,7 +20831,7 @@ msgstr ""
 msgid "We've sent you a code to verify your email address."
 msgstr ""
 
-#: app/components/staff/timesheets/card-history.tsx:64
+#: app/components/staff/timesheets/card-history.tsx:65
 msgid "Web"
 msgstr "Web"
 
@@ -21393,7 +21413,7 @@ msgid "year"
 msgstr "year"
 
 #: app/components/settings/cards/organization/billing-card.tsx:243
-#: app/routes/organizations+/create.tsx:920
+#: app/routes/organizations+/create.tsx:917
 msgid "Yearly"
 msgstr ""
 
@@ -21736,7 +21756,7 @@ msgstr ""
 msgid "Your dashboard changes could not be saved."
 msgstr "Your dashboard changes could not be saved."
 
-#: app/routes/organizations+/create.tsx:1079
+#: app/routes/organizations+/create.tsx:1076
 msgid "Your department"
 msgstr ""
 

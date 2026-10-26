@@ -61,6 +61,7 @@ export function CardHistory({
 	}
 	const punchSources: Record<string, string> = {
 		kiosk: _(t`Tablet`),
+		pos: _(t`Station`),
 		web: _(t`Web`),
 		mobile: _(t`Phone`),
 		manager: _(t`Manager`),

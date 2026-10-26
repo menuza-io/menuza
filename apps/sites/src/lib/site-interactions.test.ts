@@ -8,11 +8,15 @@ import {
 
 let dispose: (() => void) | undefined
 let reduced = false
+let hover = true
 
 beforeEach(() => {
 	vi.useFakeTimers()
 	reduced = false
-	vi.stubGlobal('matchMedia', () => ({ matches: reduced }))
+	hover = true
+	vi.stubGlobal('matchMedia', (query: string) => ({
+		matches: query.includes('hover') ? hover : reduced,
+	}))
 })
 
 afterEach(() => {
@@ -149,6 +153,37 @@ describe('native disclosure enhancement', () => {
 		expect(plain.open).toBe(false)
 	})
 
+	it('leaves closed FAQ answers findable and follows native toggles', () => {
+		const { details, trigger, panel } = disclosure(false)
+		dispose = mountSiteInteractions()
+		expect(panel.inert).toBeFalsy()
+		trigger.click()
+		trigger.click()
+		vi.runAllTimers()
+		expect(details.open).toBe(false)
+		expect(panel.inert).toBe(false)
+		// Find-in-page expands a closed <details> natively.
+		details.open = true
+		details.dispatchEvent(new Event('toggle'))
+		expect(details.dataset.open).toBe('true')
+		expect(trigger.getAttribute('aria-expanded')).toBe('true')
+		details.open = false
+		details.dispatchEvent(new Event('toggle'))
+		expect(details.dataset.open).toBe('false')
+		expect(panel.inert).toBe(false)
+	})
+
+	it('ignores a stale open toggle while the exit runs', () => {
+		const { details, trigger } = disclosure(false)
+		dispose = mountSiteInteractions()
+		trigger.click()
+		trigger.click()
+		details.dispatchEvent(new Event('toggle'))
+		expect(trigger.getAttribute('aria-expanded')).toBe('false')
+		vi.runAllTimers()
+		expect(details.open).toBe(false)
+	})
+
 	it('rebinds replaced editor previews without duplicate event handlers', () => {
 		const first = disclosure()
 		dispose = mountSiteInteractions()
@@ -181,5 +216,87 @@ describe('fluid navigation picking', () => {
 	})
 	it('returns no item for an empty navigation', () => {
 		expect(nearestNavItem([], 0, 0, 'y')).toBe(-1)
+	})
+})
+
+describe('fluid navigation mounting', () => {
+	function nav(tag: 'nav' | 'ul') {
+		vi.stubGlobal(
+			'ResizeObserver',
+			class {
+				observe() {}
+				disconnect() {}
+			},
+		)
+		const container = document.createElement(tag)
+		container.dataset.fluidNav = 'x'
+		const link = document.createElement('a')
+		link.href = '#menu'
+		const rect = {
+			left: 0,
+			right: 80,
+			top: 0,
+			bottom: 44,
+			width: 80,
+			height: 44,
+		}
+		link.getClientRects = () => [rect] as unknown as DOMRectList
+		link.getBoundingClientRect = () => rect as DOMRect
+		if (tag === 'ul') {
+			const item = document.createElement('li')
+			item.append(link)
+			container.append(item)
+		} else container.append(link)
+		container.getBoundingClientRect = () =>
+			({ left: 0, top: 0, width: 200, height: 44 }) as DOMRect
+		document.body.append(container)
+		const followed = vi.fn((event: Event) => event.preventDefault())
+		link.addEventListener('click', followed)
+		return { container, link, followed }
+	}
+
+	it('keeps list content valid with a hidden list item highlight', () => {
+		const list = nav('ul')
+		const plain = nav('nav')
+		dispose = mountSiteInteractions()
+		const highlight = list.container.firstElementChild
+		expect(highlight?.tagName).toBe('LI')
+		expect(highlight?.getAttribute('aria-hidden')).toBe('true')
+		expect(plain.container.firstElementChild?.tagName).toBe('SPAN')
+	})
+
+	it('forwards gap clicks only for hover pointers', () => {
+		const { container, followed } = nav('nav')
+		dispose = mountSiteInteractions()
+		const gap = () =>
+			container.dispatchEvent(
+				new MouseEvent('click', { bubbles: true, clientX: 84, clientY: 20 }),
+			)
+		hover = false
+		gap()
+		expect(followed).not.toHaveBeenCalled()
+		hover = true
+		// A touch tap on a hybrid device synthesises an untyped click after pointerdown.
+		container.dispatchEvent(
+			Object.assign(
+				new MouseEvent('pointerdown', {
+					bubbles: true,
+					clientX: 84,
+					clientY: 20,
+				}),
+				{ pointerType: 'touch' },
+			),
+		)
+		gap()
+		expect(followed).not.toHaveBeenCalled()
+		gap()
+		expect(followed).toHaveBeenCalledTimes(1)
+	})
+
+	it('does not activate a link twice when it is clicked directly', () => {
+		const { link, followed } = nav('nav')
+		dispose = mountSiteInteractions()
+		link.click()
+		expect(followed).toHaveBeenCalledTimes(1)
 	})
 })
