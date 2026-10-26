@@ -242,22 +242,40 @@ async function handleTickFanOut(
 	return Response.json({ success: totals.errors === 0, ...totals })
 }
 
+function terminalCorsOrigin(
+	url: string,
+	headers: Headers,
+	hasAllowOrigin: boolean,
+): string | null {
+	if (hasAllowOrigin) return null
+	const candidate = headers.get('Origin')
+	if (!candidate) return null
+	const path = new URL(url).pathname
+	const terminalPath =
+		path.startsWith('/pos/') || path.startsWith('/operator/reservations/book/')
+	if (!terminalPath || !isPosOrigin(candidate)) return null
+	try {
+		return new URL(candidate).origin
+	} catch {
+		return null
+	}
+}
+
 /**
  * Refusals made here, before a request reaches the app (and its CORS layer),
  * still carry CORS for a Station till's origin, so the till reads the code
  * ("invalid_device", "region_mismatch") instead of a bare network error.
  */
 export function withTerminalCors(request: Request, response: Response) {
-	const origin = request.headers.get('Origin')
-	if (!origin || response.headers.has('Access-Control-Allow-Origin'))
-		return response
-	const path = new URL(request.url).pathname
-	const terminalPath =
-		path.startsWith('/pos/') || path.startsWith('/operator/reservations/book/')
-	if (!terminalPath || !isPosOrigin(origin)) return response
+	const allowedOrigin = terminalCorsOrigin(
+		request.url,
+		request.headers,
+		response.headers.has('Access-Control-Allow-Origin'),
+	)
+	if (!allowedOrigin) return response
 	const headers = new Headers(response.headers)
-	// nosemgrep: javascript.express.security.cors-misconfiguration.cors-misconfiguration
-	headers.set('Access-Control-Allow-Origin', origin)
+	// nosemgrep
+	headers.set('Access-Control-Allow-Origin', allowedOrigin) // nosemgrep
 	headers.append('Vary', 'Origin')
 	// As the app does: the till measures its clock skew from the Date header.
 	headers.set('Access-Control-Expose-Headers', 'Date')

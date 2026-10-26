@@ -405,6 +405,26 @@ describe('kiosk punches under labor policy', () => {
 			expect(r.status).toBe(409)
 			expect(r.body.error).toBe('time_conflict')
 			expect((await entries())[0]!.clockOutAt).toBe(autoAt)
+
+			// A break_start at +11h stretches clockOutAt, but a subsequent break_end
+			// at +22h is still measured against the original automatic close.
+			const b1 = await h.punch(secret, {
+				pin,
+				kind: 'break_start',
+				offline: true,
+				clientAt: autoAt + 11 * HOUR,
+			})
+			expect(b1.status, b1.raw).toBe(200)
+			expect((await entries())[0]!.clockOutAt).toBe(autoAt + 11 * HOUR)
+			const b2 = await h.punch(secret, {
+				pin,
+				kind: 'break_end',
+				offline: true,
+				clientAt: autoAt + 22 * HOUR,
+			})
+			expect(b2.status).toBe(409)
+			expect(b2.body.error).toBe('time_conflict')
+			expect((await entries())[0]!.clockOutAt).toBe(autoAt + 11 * HOUR)
 			void id
 		})
 

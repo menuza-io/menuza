@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lt, lte, max, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, isNull, lt, lte, max, or } from 'drizzle-orm'
 import {
 	allowedClockEvents,
 	breakIsPaid,
@@ -600,9 +600,25 @@ async function runPunch(
 			const breaks = (
 				(await loadBreaks(tx, [latest.id])).get(latest.id) ?? []
 			).filter((b) => b.voidedAt === null)
+			const [firstLateEdit] = await tx
+				.select({ before: timeEntryEdits.before })
+				.from(timeEntryEdits)
+				.where(
+					and(
+						eq(timeEntryEdits.entryId, latest.id),
+						eq(timeEntryEdits.action, 'late_punch'),
+					),
+				)
+				.orderBy(asc(timeEntryEdits.createdAt), asc(timeEntryEdits.id))
+				.limit(1)
+			const originalClose =
+				typeof firstLateEdit?.before?.clockOutAt === 'number'
+					? firstLateEdit.before.clockOutAt
+					: latest.clockOutAt
 			autoClosed = {
 				entry: latest,
 				clockOutAt: latest.clockOutAt,
+				autoClosedAt: originalClose,
 				breaks,
 				// Still running when the card closed: it ends with the card.
 				running:
@@ -653,7 +669,7 @@ async function runPunch(
 		)
 		if (
 			effectiveAt < floor ||
-			effectiveAt - autoClosed.clockOutAt > MAX_AUTO_CLOSED_STRETCH_MS
+			effectiveAt - autoClosed.autoClosedAt > MAX_AUTO_CLOSED_STRETCH_MS
 		)
 			return reject(
 				'time_conflict',
@@ -668,7 +684,6 @@ async function runPunch(
 	let positionId: string | null = null
 
 	if (request.kind === 'clock_in') {
-		const jobs = await activeJobs(tx, member.id, scopeId, localDate)
 		const shift = await deps.matchShift(tx, {
 			staffId: member.id,
 			scopeId,
@@ -707,6 +722,12 @@ async function runPunch(
 			!ruled.ok && ruled.code === 'early_clock_in'
 				? Math.min(Math.max(effectiveAt, ruled.earliestAt), now)
 				: effectiveAt
+		const entryLocalDate = businessDateOf(
+			clockInAt,
+			timeZone,
+			policy.workdayStartMinute,
+		)
+		const jobs = await activeJobs(tx, member.id, scopeId, entryLocalDate)
 
 		let picked: JobWithPosition | null = null
 		if (request.positionId) {
@@ -750,7 +771,7 @@ async function runPunch(
 			shiftId: decision.shift?.id ?? null,
 			clockInAt,
 			timeZone,
-			localDate,
+			localDate: entryLocalDate,
 			status: 'open',
 			issues: [...new Set(flags)],
 			rateMinor: rateMinor ?? null,
@@ -846,6 +867,8 @@ async function runPunch(
 type AutoClosedCard = {
 	entry: TimeEntry
 	clockOutAt: number
+	/** The original automatic clock-out time before any late punch stretched it. */
+	autoClosedAt: number
 	breaks: TimeBreakRow[]
 	/** A break still running when the card closed: it ends with the card. */
 	running: TimeBreakRow | null

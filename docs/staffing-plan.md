@@ -205,7 +205,7 @@ apply policy, append the punch, update the entry and breaks, and recompute
 cached minutes through `computeCachedMinutes` / `computeEntryIssues` in
 `@repo/staffing` (which call `computeTimecard` and `computeWeek`). Server time
 is authoritative; only a punch the tablet marks as queued offline may use device
-time, inside the 48 hour and one minute bounds, flagged `offline_punch` (plus
+time, inside the 48-hour and one-minute bounds, flagged `offline_punch` (plus
 `late_sync` when over 12 hours old, and `clock_skew` when the device clock
 differs from server time by over 5 minutes). A rejection is recorded and
 audited. A role pick for multi-position staff is a prompt (`position_required`),

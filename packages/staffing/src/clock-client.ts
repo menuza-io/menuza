@@ -151,10 +151,10 @@ export async function clockRequest<S extends z.ZodTypeAny>(
 		} catch (error) {
 			throw new ClockNetworkError(error)
 		}
-		text = await response.text().catch(() => {
-			if (controller.signal.aborted)
-				throw new ClockNetworkError(controller.signal.reason)
-			return ''
+		text = await response.text().catch((error) => {
+			throw new ClockNetworkError(
+				controller.signal.aborted ? controller.signal.reason : error,
+			)
 		})
 	} finally {
 		clearTimeout(timer)
