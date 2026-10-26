@@ -16,7 +16,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Trans, msg, t } from '@lingui/macro'
+import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { parseFormData } from '@mjackson/form-data-parser'
 import { requireUserId } from '@repo/auth'
@@ -4207,6 +4207,7 @@ function FormBlockEditor({ config, updateField }: EditorProps) {
 }
 
 function ReservationBlockEditor({ config, updateField }: EditorProps) {
+	const { _ } = useLingui()
 	const { reservationLocations } = useLoaderData<typeof loader>()
 	const locationId = String(config.locationId || '')
 	const layout = config.layout === 'inline' ? 'inline' : 'button'
@@ -4221,18 +4222,18 @@ function ReservationBlockEditor({ config, updateField }: EditorProps) {
 		<div className="space-y-5">
 			<EditorSection title={<Trans>Content</Trans>}>
 				<FieldInput
-					label={t`Heading`}
+					label={_(msg`Heading`)}
 					value={(config.heading as string) ?? ''}
 					onChange={(v) => updateField('heading', v)}
 				/>
 				<FieldTextarea
-					label={t`Description`}
+					label={_(msg`Description`)}
 					value={(config.body as string) ?? ''}
 					onChange={(v) => updateField('body', v)}
 					rows={3}
 				/>
 				<FieldInput
-					label={t`Button label`}
+					label={_(msg`Button label`)}
 					value={(config.buttonLabel as string) ?? ''}
 					onChange={(v) => updateField('buttonLabel', v)}
 				/>

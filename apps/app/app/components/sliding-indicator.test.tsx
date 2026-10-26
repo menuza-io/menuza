@@ -6,8 +6,9 @@ import { WorkspaceTabBar } from '@repo/ui/workspace'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { renderToString } from 'react-dom/server'
-import { MemoryRouter } from 'react-router'
+import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { usePhoneAgentSettingsTab } from './phone-agent/settings-nav.tsx'
 
 afterEach(() => {
 	vi.restoreAllMocks()
@@ -130,5 +131,49 @@ describe('sliding selection indicator', () => {
 		expect(tabsIndicator?.hasAttribute('hidden')).toBe(true)
 		// The shared line classes place the underline by this attribute.
 		expect(tabsIndicator?.getAttribute('data-orientation')).toBe('horizontal')
+	})
+
+	it('TabsList retains height classes for horizontal orientation', () => {
+		const defaultList = renderToString(
+			<Tabs value="a">
+				<TabsList aria-label="Views">
+					<TabsTrigger value="a">A</TabsTrigger>
+				</TabsList>
+			</Tabs>,
+		)
+		expect(defaultList).toContain('h-8')
+
+		const lineList = renderToString(
+			<Tabs value="a">
+				<TabsList aria-label="Views" variant="line">
+					<TabsTrigger value="a">A</TabsTrigger>
+				</TabsList>
+			</Tabs>,
+		)
+		expect(lineList).toContain('data-[variant=line]:h-9')
+	})
+
+	it('resolves phone agent settings tab from route handle, or returns null when missing', () => {
+		function TestRoute() {
+			const tab = usePhoneAgentSettingsTab()
+			return <div data-testid="tab-value">{tab ?? 'none'}</div>
+		}
+
+		const routerWithoutHandle = createMemoryRouter([
+			{ path: '/', element: <TestRoute /> },
+		])
+		const { unmount } = render(<RouterProvider router={routerWithoutHandle} />)
+		expect(screen.getByTestId('tab-value').textContent).toBe('none')
+		unmount()
+
+		const routerWithHandle = createMemoryRouter([
+			{
+				path: '/',
+				element: <TestRoute />,
+				handle: { phoneAgentSettingsTab: 'agent' },
+			},
+		])
+		render(<RouterProvider router={routerWithHandle} />)
+		expect(screen.getByTestId('tab-value').textContent).toBe('agent')
 	})
 })

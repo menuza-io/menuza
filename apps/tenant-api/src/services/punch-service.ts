@@ -615,7 +615,7 @@ async function runPunch(
 						(e.before as { clockOutAt?: unknown } | null | undefined)
 							?.clockOutAt,
 				)
-				.filter((t): t is number => typeof t === 'number')
+				.filter((t): t is number => typeof t === 'number' && Number.isFinite(t))
 			const originalClose =
 				priorCloseTimes.length > 0
 					? Math.min(...priorCloseTimes)
