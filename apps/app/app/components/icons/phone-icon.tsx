@@ -1,65 +1,21 @@
-'use client'
-
-import { cn } from '@repo/ui'
 import { type Variants, motion } from 'motion/react'
-import { type HTMLAttributes, forwardRef } from 'react'
 import {
-	type IconAnimationHandle,
-	useIconAnimation,
-} from './use-icon-animation.tsx'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface PhoneIconHandle extends IconAnimationHandle {}
+export type PhoneIconHandle = AnimatedIconHandle
 
-interface PhoneIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const ringVariants: Variants = {
+const RING_VARIANTS: Variants = {
 	normal: { rotate: 0 },
-	animate: {
-		rotate: [0, -12, 10, -8, 6, 0],
-		transition: { duration: 0.6 },
-	},
+	animate: { rotate: [0, -12, 10, -8, 6, 0], transition: { duration: 0.6 } },
 }
 
-const PhoneIcon = forwardRef<PhoneIconHandle, PhoneIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const { controls, handleMouseEnter, handleMouseLeave } = useIconAnimation(
-			ref,
-			{ onMouseEnter, onMouseLeave },
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					className="overflow-visible"
-					fill="none"
-					height={size}
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth="2"
-					viewBox="0 0 24 24"
-					width={size}
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<motion.path
-						animate={controls}
-						d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-						className="origin-center"
-						variants={ringVariants}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-PhoneIcon.displayName = 'PhoneIcon'
-
-export { PhoneIcon }
+/** Hugeicons `call`: the handset rings. */
+export const PhoneIcon = createAnimatedIcon('PhoneIcon', (controls) => (
+	<motion.path
+		d="M4.91186 10.5413L7.55229 7.90088C8.09091 7.36227 8.27728 6.56642 8.05944 5.83652C7.8891 5.26577 7.69718 4.57964 7.56961 3.99292C7.45162 3.45027 6.97545 3 6.42012 3H4.91186C3.8012 3 2.88911 3.90384 3.01094 5.0078C3.93709 13.3996 10.6004 20.0629 18.9922 20.9891C20.0962 21.1109 21 20.1988 21 19.0881V17.5799C21 17.0246 20.5479 16.569 20.0015 16.4696C19.3988 16.36 18.7611 16.1804 18.2276 16.0103C17.4611 15.7659 16.6091 15.9377 16.0403 16.5065L13.4587 19.0881"
+		variants={RING_VARIANTS}
+		animate={controls}
+	/>
+))

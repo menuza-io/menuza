@@ -1,67 +1,23 @@
-'use client'
-
-import { cn } from '@repo/ui'
 import { type Variants, motion } from 'motion/react'
-import { type HTMLAttributes, forwardRef } from 'react'
 import {
-	type IconAnimationHandle,
-	useIconAnimation,
-} from './use-icon-animation.tsx'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface CalendarIconHandle extends IconAnimationHandle {}
+export type CalendarIconHandle = AnimatedIconHandle
 
-interface CalendarIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const spring = { type: 'spring', stiffness: 200, damping: 13 } as const
-
-const frameVariants: Variants = {
-	normal: { y: 0, transition: spring },
-	animate: { y: [-1, 0], transition: spring },
-}
-
-const CalendarIcon = forwardRef<CalendarIconHandle, CalendarIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const { controls, handleMouseEnter, handleMouseLeave } = useIconAnimation(
-			ref,
-			{ onMouseEnter, onMouseLeave },
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					fill="none"
-					height={size}
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth="2"
-					viewBox="0 0 24 24"
-					width={size}
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<motion.g
-						animate={controls}
-						initial="normal"
-						variants={frameVariants}
-					>
-						<path d="M8 2v4" />
-						<path d="M16 2v4" />
-						<rect width="18" height="18" x="3" y="4" rx="2" />
-						<path d="M3 10h18" />
-					</motion.g>
-				</svg>
-			</div>
-		)
+const FRAME_VARIANTS: Variants = {
+	normal: { y: 0, transition: { type: 'spring', stiffness: 200, damping: 13 } },
+	animate: {
+		y: [-1, 0],
+		transition: { type: 'spring', stiffness: 200, damping: 13 },
 	},
-)
+}
 
-CalendarIcon.displayName = 'CalendarIcon'
-
-export { CalendarIcon }
+/** Hugeicons `calendar-03`: the page settles back into place. */
+export const CalendarIcon = createAnimatedIcon('CalendarIcon', (controls) => (
+	<motion.g variants={FRAME_VARIANTS} animate={controls} initial="normal">
+		<path d="M16 2v4M8 2v4m5-2h-2C7.229 4 5.343 4 4.172 5.172S3 8.229 3 12v2c0 3.771 0 5.657 1.172 6.828S7.229 22 11 22h2c3.771 0 5.657 0 6.828-1.172S21 17.771 21 14v-2c0-3.771 0-5.657-1.172-6.828S16.771 4 13 4M3 10h18" />
+		<path d="M12.126 14H12m.125 4H12m-4.376-4H7.5m.125 4H7.5m9.125-4H16.5m-4.25 0a.25.25 0 1 1-.5 0a.25.25 0 0 1 .5 0m0 4a.25.25 0 1 1-.5 0a.25.25 0 0 1 .5 0m-4.5-4a.25.25 0 1 1-.5 0a.25.25 0 0 1 .5 0m0 4a.25.25 0 1 1-.5 0a.25.25 0 0 1 .5 0m9-4a.25.25 0 1 1-.5 0a.25.25 0 0 1 .5 0" />
+	</motion.g>
+))

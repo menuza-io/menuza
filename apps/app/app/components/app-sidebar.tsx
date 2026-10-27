@@ -7,7 +7,6 @@ import { BuildingIcon } from '@repo/ui/building-icon'
 import { Button } from '@repo/ui/button'
 import { Card, CardContent, CardDescription, CardHeader } from '@repo/ui/card'
 import { CircleHelpIcon } from '@repo/ui/circle-help'
-import { FoldersIcon } from '@repo/ui/folders-icon'
 import { HomeIcon } from '@repo/ui/home-icon'
 import { Icon } from '@repo/ui/icon'
 import { Kbd } from '@repo/ui/kbd'
@@ -63,6 +62,7 @@ import { ChartPieIcon } from './icons/chart-pie-icon'
 import { ExternalLinkIcon } from './icons/external-link-icon'
 import { GalleryHorizontalEndIcon } from './icons/gallery-horizontal-end-icon'
 import { MailboxIcon } from './icons/mailbox-icon'
+import { NoteIcon } from './icons/note-icon'
 import { PhoneIcon } from './icons/phone-icon'
 import { ReceiptIcon } from './icons/receipt-icon'
 import { SendIcon } from './icons/send-icon'
@@ -318,7 +318,7 @@ function OrganizationSidebar({
 			title: _(msg`Notes`),
 			url: `/${orgSlug}/notes`,
 			isActive: location.pathname.includes(`/${orgSlug}/notes`),
-			icon: FoldersIcon,
+			icon: NoteIcon,
 		},
 		{
 			title: _(msg`Media library`),

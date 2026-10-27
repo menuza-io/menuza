@@ -1,145 +1,44 @@
-import {
-	type Transition,
-	type Variants,
-	motion,
-	useAnimation,
-} from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
+'use client'
 
-import { cn } from '../../lib/utils'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface ClockIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type ClockIconHandle = AnimatedIconHandle
 
-interface ClockIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const handTransition: Transition = {
-	duration: 0.6,
-	ease: [0.4, 0, 0.2, 1],
-}
-
-const handVariants: Variants = {
-	normal: {
-		rotate: 0,
-		originX: '0%',
-		originY: '100%',
-	},
+// Each hand turns around the clock's centre, at (12, 12).
+const MINUTE_HAND_VARIANTS: Variants = {
+	normal: { rotate: 0, originX: '50%', originY: '100%' },
 	animate: {
 		rotate: 360,
-		originX: '0%',
+		originX: '50%',
 		originY: '100%',
+		transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
 	},
 }
 
-const minuteHandTransition: Transition = {
-	duration: 0.5,
-	ease: 'easeInOut',
-}
-
-const minuteHandVariants: Variants = {
-	normal: {
-		rotate: 0,
-		originX: '0%',
-		originY: '100%',
-	},
+const HOUR_HAND_VARIANTS: Variants = {
+	normal: { rotate: 0, originX: '0%', originY: '0%' },
 	animate: {
 		rotate: 45,
 		originX: '0%',
-		originY: '100%',
+		originY: '0%',
+		transition: { duration: 0.5, ease: 'easeInOut' },
 	},
 }
 
-const ClockIcon = forwardRef<ClockIconHandle, ClockIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => controls.start('animate'),
-				stopAnimation: () => controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<circle cx="12" cy="12" r="10" />
-					<motion.line
-						x1="12"
-						y1="12"
-						x2="12"
-						y2="6"
-						variants={handVariants}
-						animate={controls}
-						initial="normal"
-						transition={handTransition}
-					/>
-					<motion.line
-						x1="12"
-						y1="12"
-						x2="16"
-						y2="12"
-						variants={minuteHandVariants}
-						animate={controls}
-						initial="normal"
-						transition={minuteHandTransition}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-ClockIcon.displayName = 'ClockIcon'
-
-export { ClockIcon }
+/** Hugeicons `clock-01`: both hands turn around the centre. */
+export const ClockIcon = createAnimatedIcon('ClockIcon', (controls) => (
+	<>
+		<circle cx="12" cy="12" r="10" />
+		<motion.path
+			d="M12 8V12"
+			variants={MINUTE_HAND_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M12 12L14 14"
+			variants={HOUR_HAND_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

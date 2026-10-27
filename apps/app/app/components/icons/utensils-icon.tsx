@@ -1,77 +1,34 @@
-'use client'
-
-import { cn } from '@repo/ui'
 import { type Variants, motion } from 'motion/react'
-import { type HTMLAttributes, forwardRef } from 'react'
 import {
-	type IconAnimationHandle,
-	useIconAnimation,
-} from './use-icon-animation.tsx'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface UtensilsIconHandle extends IconAnimationHandle {}
-
-interface UtensilsIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
+export type UtensilsIconHandle = AnimatedIconHandle
 
 const FORK_VARIANTS: Variants = {
 	normal: {
 		rotate: 0,
-		transition: {
-			type: 'spring',
-			stiffness: 260,
-			damping: 20,
-		},
+		transition: { type: 'spring', stiffness: 260, damping: 20 },
 	},
 	animate: {
 		rotate: [0, -8, 6, 0],
-		transition: {
-			duration: 0.42,
-			ease: [0.16, 1, 0.3, 1],
-		},
+		transition: { duration: 0.42, ease: [0.16, 1, 0.3, 1] },
 	},
 }
 
-const UtensilsIcon = forwardRef<UtensilsIconHandle, UtensilsIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const { controls, handleMouseEnter, handleMouseLeave } = useIconAnimation(
-			ref,
-			{ onMouseEnter, onMouseLeave },
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					fill="none"
-					height={size}
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth="2"
-					viewBox="0 0 24 24"
-					width={size}
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<motion.g
-						animate={controls}
-						className="origin-center"
-						variants={FORK_VARIANTS}
-					>
-						<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-						<path d="M7 2v20" />
-					</motion.g>
-					<path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-				</svg>
-			</div>
-		)
-	},
-)
-
-UtensilsIcon.displayName = 'UtensilsIcon'
-
-export { UtensilsIcon }
+/** Hugeicons `utensils`: the fork wiggles. */
+export const UtensilsIcon = createAnimatedIcon('UtensilsIcon', (controls) => (
+	<>
+		<motion.g
+			variants={FORK_VARIANTS}
+			animate={controls}
+			initial="normal"
+			style={{ originX: '7px', originY: '21px' }}
+		>
+			<path d="M7 11.5V21M4 3V8C4 8.93188 4 9.39782 4.15224 9.76537C4.35523 10.2554 4.74458 10.6448 5.23463 10.8478C5.60218 11 6.06812 11 7 11C7.93188 11 8.39782 11 8.76537 10.8478C9.25542 10.6448 9.64477 10.2554 9.84776 9.76537C10 9.39782 10 8.93188 10 8V3" />
+			<path d="M7 8V3" />
+		</motion.g>
+		<path d="M16 21V14M16 14V3C18.2091 3 20 4.79086 20 7V10.3333C20 11.8971 20 12.6789 19.5867 13.2175C19.4803 13.3562 19.3562 13.4803 19.2175 13.5867C18.6789 14 17.8971 14 16.3333 14H16Z" />
+	</>
+))
