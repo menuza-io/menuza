@@ -3814,8 +3814,8 @@ export const JobPosting = sqliteTable(
 )
 
 // --- Print shop (operator B2B prints: designs, renders, shipped orders) ---
-// Operator business data only: no guest PII. Table-card artwork embeds table
-// tokens (place capabilities that are printed in public anyway).
+// Operator business data only: no customer PII. Artwork may embed a print
+// vertical's QR codes (capabilities that are printed in public anyway).
 
 export const PrintDesign = sqliteTable(
 	'PrintDesign',
@@ -4078,7 +4078,7 @@ export const PrintOrderItem = sqliteTable(
 		sizeKey: text().notNull(),
 		vendor: text().notNull(),
 		vendorSku: text().notNull(),
-		// Copies of each piece (a table-card design has one piece per table).
+		// Copies of each piece (a set of cards has one piece per card).
 		quantity: integer().notNull(),
 		pieces: integer().notNull(),
 		wholesaleCents: integer().notNull(),

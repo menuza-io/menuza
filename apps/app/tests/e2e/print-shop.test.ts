@@ -1,9 +1,8 @@
 import { type Page } from '@playwright/test'
 import { PRINT_SHOP_FLAG_KEYS } from '@repo/common/print-shop'
-import { QR_ORDERING_FLAG_KEYS } from '@repo/common/qr-ordering'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import {
 	and,
-	ConfigFlag,
 	db,
 	eq,
 	inArray,
@@ -11,95 +10,20 @@ import {
 	PrintDesign,
 	PrintOrder,
 	PrintVendorProduct,
-	UserOrganization,
 } from '@repo/database'
 import { MockStripeCheckoutPage } from '#tests/playwright-payments-mock.ts'
 import { expect, test } from '#tests/playwright-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
-
-type Role = 'admin' | 'member' | 'viewer' | 'guest'
-
-async function setFlags(organizationId: string, keys: string[]) {
-	if (keys.length === 0) return
-	await db.insert(ConfigFlag).values(
-		keys.map((key) => ({
-			key,
-			value: true,
-			level: 'organization' as const,
-			organizationId,
-		})),
-	)
-}
-
-async function setRole(userId: string, organizationId: string, role: Role) {
-	await db
-		.update(UserOrganization)
-		.set({ organizationRoleId: `org_role_${role}` })
-		.where(
-			and(
-				eq(UserOrganization.userId, userId),
-				eq(UserOrganization.organizationId, organizationId),
-			),
-		)
-}
-
-async function setup(
-	login: (options?: any) => Promise<{ id: string }>,
-	options: { role?: Role; flags?: string[] } = {},
-) {
-	const user = await login()
-	const org = await createTestOrganization(user.id, options.role ?? 'admin')
-	await setFlags(org.id, options.flags ?? [PRINT_SHOP_FLAG_KEYS.enabled])
-	return { user, org }
-}
-
-const designUrl = (slug: string, id: string) => `/${slug}/marketing/print/${id}`
-const downloadUrl = (
-	slug: string,
-	id: string,
-	query = 'format=home&sheet=letter',
-) => `${designUrl(slug, id)}/download?${query}`
-
-/** A Base UI `Button` rendered as a link exposes the button role. */
-const linkOrButton = (page: Page, name: string | RegExp) =>
-	page.getByRole('link', { name }).or(page.getByRole('button', { name }))
-
-async function createDesign(
-	page: Page,
-	slug: string,
-	options: { product?: string; name?: string } = {},
-) {
-	await page.goto(`/${slug}/marketing/print/new`)
-	await expect(
-		page.getByRole('heading', { name: 'New print', level: 1 }),
-	).toBeVisible()
-	// Choices made before hydration are reset by the form state.
-	await page.waitForLoadState('networkidle')
-	if (options.product) {
-		await page
-			.getByRole('radio', { name: new RegExp(`^${options.product}`) })
-			.click()
-	}
-	if (options.name) await page.getByLabel('Name').fill(options.name)
-	await page.getByRole('button', { name: 'Continue' }).click()
-	// `/print/new` matches the editor pattern too: wait for the redirect.
-	await page.waitForURL(
-		(url) =>
-			/\/marketing\/print\/[^/]+$/.test(url.pathname) &&
-			!url.pathname.endsWith('/new'),
-	)
-	return new URL(page.url()).pathname.split('/').at(-1)!
-}
-
-async function saveAndApprove(page: Page, headline: string) {
-	await page.getByLabel('Headline').first().fill(headline)
-	await page.getByRole('button', { name: 'Save and update proof' }).click()
-	await expect(
-		page.frameLocator('iframe[title="Print proof"]').getByText(headline),
-	).toBeVisible()
-	await page.getByRole('button', { name: 'Approve proof' }).click()
-	await expect(page.getByText('Free PDFs of the approved proof.')).toBeVisible()
-}
+import {
+	createDesign,
+	designUrl,
+	downloadUrl,
+	linkOrButton,
+	saveAndApprove,
+	setFlags,
+	setRole,
+	setup,
+} from './print-shop-helpers.ts'
 
 test.describe('Print shop: access', () => {
 	test('every page is hidden while the Print shop is off', async ({
@@ -226,7 +150,8 @@ test.describe('Print shop: designing', () => {
 		await linkOrButton(page, 'Create a print').click()
 
 		const name = page.getByLabel('Name')
-		await expect(name).toHaveValue('Table QR cards')
+		// The name starts as the first product's.
+		await expect(name).not.toHaveValue('')
 		await expect(page.getByText('Can ship')).toHaveCount(0)
 
 		await page.getByRole('radio', { name: /^Flyer/ }).click()
@@ -273,9 +198,6 @@ test.describe('Print shop: designing', () => {
 		await expect(page.getByText('Draft', { exact: true })).toBeVisible()
 		await expect(
 			page.getByText('Approve the proof to download it.'),
-		).toBeVisible()
-		await expect(
-			page.getByText('Your menu has no dishes to feature yet.'),
 		).toBeVisible()
 		// Not approved yet: the file is refused.
 		expect(
@@ -490,87 +412,6 @@ test.describe('Print shop: designing', () => {
 	})
 })
 
-test.describe('Print shop: table cards', () => {
-	test('without QR ordering, table cards cannot point at a table', async ({
-		page,
-		login,
-	}) => {
-		const { org } = await setup(login)
-		await createDesign(page, org.slug)
-		await expect(
-			page
-				.getByRole('radio', { name: 'Order ahead (menu)' })
-				.or(page.getByRole('radio', { name: 'A page on your website' }))
-				.first(),
-		).toBeVisible()
-		await expect(
-			page.getByRole('radio', { name: 'Order at the table' }),
-		).toHaveCount(0)
-		// Table cards never go without a QR code.
-		await expect(page.getByRole('radio', { name: 'No QR code' })).toHaveCount(0)
-	})
-
-	test('with no tables yet, a table set cannot be saved or approved', async ({
-		page,
-		login,
-	}) => {
-		const { org } = await setup(login, {
-			flags: [
-				PRINT_SHOP_FLAG_KEYS.enabled,
-				QR_ORDERING_FLAG_KEYS.enabled,
-				QR_ORDERING_FLAG_KEYS.dineIn,
-			],
-		})
-		await createDesign(page, org.slug)
-		await expect(
-			page.getByRole('radio', { name: 'Order at the table' }),
-		).toBeChecked()
-		await expect(
-			page.getByText(
-				'Add tables in QR ordering first. Each table gets its own card.',
-			),
-		).toBeVisible()
-		await page.getByRole('button', { name: 'Save and update proof' }).click()
-		await expect(
-			page.getByText('Choose at least one table for the cards.'),
-		).toBeVisible()
-		// No region serves this test organization: the proof says the codes
-		// are unavailable (503) instead of failing with a server error.
-		const designId = new URL(page.url()).pathname.split('/').at(-1)!
-		const proof = await page.request.get(
-			`${designUrl(org.slug, designId)}/proof`,
-		)
-		expect(proof.status()).toBe(503)
-	})
-
-	test('a member cannot see the table codes on a table set', async ({
-		page,
-		login,
-	}) => {
-		const { user, org } = await setup(login, {
-			flags: [
-				PRINT_SHOP_FLAG_KEYS.enabled,
-				QR_ORDERING_FLAG_KEYS.enabled,
-				QR_ORDERING_FLAG_KEYS.dineIn,
-			],
-		})
-		const designId = await createDesign(page, org.slug)
-		await setRole(user.id, org.id, 'member')
-		await page.goto(designUrl(org.slug, designId))
-		await expect(
-			page.getByText(
-				"Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it.",
-			),
-		).toBeVisible()
-		await expect(page.getByTitle('Print proof')).toHaveCount(0)
-		expect(
-			(
-				await page.request.get(`${designUrl(org.slug, designId)}/proof`)
-			).status(),
-		).toBe(403)
-	})
-})
-
 test.describe('Print shop: shipped orders', () => {
 	// Shipped prints need an active vendor product per size; the emulator
 	// (`PRINT_MOCK`, set by playwright.config.ts) stands in for the vendor.
@@ -648,8 +489,12 @@ test.describe('Print shop: shipped orders', () => {
 		await expect(linkOrButton(page, 'Print orders')).toBeVisible()
 
 		await page.goto(`/${org.slug}/marketing/print/new`)
-		// Table cards, posters and flyers ship; tents and stickers are PDF only.
-		await expect(page.getByText('Can ship')).toHaveCount(3)
+		// Only shippable products say so (stickers are PDF only).
+		await expect(page.getByText('Can ship')).toHaveCount(
+			Object.values(printCatalog.products).filter(
+				(product) => product.shippable,
+			).length,
+		)
 
 		await page.goto(`/${org.slug}/marketing/print/orders`)
 		await expect(page.getByText('No print orders yet')).toBeVisible()

@@ -1,15 +1,19 @@
 import { type PrintSnapshot } from '@repo/common/print-shop'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { printDocumentCsp, renderPrintHtml } from './print-document.server.tsx'
+
+vi.mock('@repo/common/print-shop-catalog', async () => ({
+	printCatalog: (await import('./test-catalog.ts')).testPrintCatalog,
+}))
 
 function snapshot(overrides: Partial<PrintSnapshot> = {}): PrintSnapshot {
 	return {
-		product: 'table_card',
+		product: 'desk_card',
 		sizeKey: 'a6',
 		style: 'classic',
 		templateVersion: 1,
 		brand: {
-			name: 'Bistro <script>alert(1)</script>',
+			name: 'Studio <script>alert(1)</script>',
 			logoDataUri: null,
 			background: '#ffffff',
 			foreground: '#111111',
@@ -25,11 +29,11 @@ function snapshot(overrides: Partial<PrintSnapshot> = {}): PrintSnapshot {
 			{
 				locale: 'en',
 				dir: 'ltr',
-				headline: 'Scan to order',
+				headline: 'Scan to check in',
 				body: '',
 				callToAction: 'Order and pay from your phone',
-				qrCaption: 'Scan to order',
-				pieceWord: 'Table',
+				qrCaption: 'Scan to check in',
+				pieceWord: 'Desk',
 			},
 			{
 				locale: 'ar',
@@ -38,17 +42,17 @@ function snapshot(overrides: Partial<PrintSnapshot> = {}): PrintSnapshot {
 				body: '',
 				callToAction: 'اطلب وادفع من هاتفك',
 				qrCaption: 'امسح للطلب',
-				pieceWord: 'طاولة',
+				pieceWord: 'مكتب',
 			},
 		],
 		featured: [],
 		address: '1 Main Street',
-		website: 'bistro.example.com',
+		website: 'studio.example.com',
 		pieces: Array.from({ length: 5 }, (_, index) => ({
-			label: `T${index + 1}`,
-			qrUrl: `https://bistro.example.com/menu?location=l#table=t${index}`,
+			label: `D${index + 1}`,
+			qrUrl: `https://studio.example.com/check-in#desk=d${index}`,
 		})),
-		qr: { kind: 'table', tableIds: ['all'] },
+		qr: { kind: 'desk', deskIds: ['all'] },
 		facts: { featured: [], pieces: [] },
 		...overrides,
 	}
@@ -95,8 +99,8 @@ describe('print documents', () => {
 			qrSvgs: Array(5).fill(svg),
 		})
 		expect(html).toContain('lang="ar" dir="rtl"')
-		expect(html).toContain('طاولة T1')
-		expect(html).toContain('Table T1')
+		expect(html).toContain('مكتب D1')
+		expect(html).toContain('Desk D1')
 	})
 
 	it('escapes the organization name and limits the proof', () => {
@@ -115,7 +119,7 @@ describe('print documents', () => {
 			snapshot: snapshot({
 				product: 'poster',
 				sizeKey: 'a2',
-				pieces: [{ label: null, qrUrl: 'https://x.example/menu' }],
+				pieces: [{ label: null, qrUrl: 'https://x.example/visit' }],
 			}),
 			format: 'home',
 			homeSheet: 'a4',
@@ -123,7 +127,7 @@ describe('print documents', () => {
 		})
 		expect(poster).toContain('class="fit"')
 		const tent = renderPrintHtml({
-			snapshot: snapshot({ product: 'table_tent', sizeKey: '4x6' }),
+			snapshot: snapshot({ product: 'desk_tent', sizeKey: '4x6' }),
 			format: 'pro',
 			qrSvgs: Array(5).fill(svg),
 		})

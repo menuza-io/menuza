@@ -18,11 +18,11 @@ import {
 	PRINT_ORDER_STATUS_LABELS,
 	printOrderStatusTone,
 } from '#app/components/print/print-order-labels.ts'
-import { formatMoney } from '#app/utils/orders/order-model.ts'
 import {
 	isPrintShippingPaused,
 	requirePrintShopAccess,
 } from '#app/utils/print/access.server.ts'
+import { formatMoney } from '#app/utils/print/money.ts'
 import { listPrintOrders } from '#app/utils/print/orders.server.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {

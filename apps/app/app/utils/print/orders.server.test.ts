@@ -35,6 +35,9 @@ const stripeMock = vi.hoisted(() => ({
 	refunds: { create: vi.fn(async () => ({ id: 're_1' })) },
 }))
 
+vi.mock('@repo/common/print-shop-catalog', async () => ({
+	printCatalog: (await import('./test-catalog.ts')).testPrintCatalog,
+}))
 vi.mock('#app/utils/shop.server.ts', () => ({
 	getShopCommerce: () => ({ getPlatformStripe: () => stripeMock }),
 }))
@@ -58,12 +61,12 @@ const {
 
 function snapshot(pieces = 2): PrintSnapshot {
 	return {
-		product: 'table_card',
+		product: 'desk_card',
 		sizeKey: 'a6',
 		style: 'classic',
 		templateVersion: 1,
 		brand: {
-			name: 'Bistro',
+			name: 'Studio',
 			logoDataUri: null,
 			background: '#ffffff',
 			foreground: '#111111',
@@ -79,21 +82,21 @@ function snapshot(pieces = 2): PrintSnapshot {
 			{
 				locale: 'en',
 				dir: 'ltr',
-				headline: 'Scan to order',
+				headline: 'Scan to check in',
 				body: '',
 				callToAction: '',
-				qrCaption: 'Scan to order',
-				pieceWord: 'Table',
+				qrCaption: 'Scan to check in',
+				pieceWord: 'Desk',
 			},
 		],
 		featured: [],
 		address: null,
 		website: null,
 		pieces: Array.from({ length: pieces }, (_, index) => ({
-			label: `T${index + 1}`,
-			qrUrl: `https://bistro.example/menu#table=${index}`,
+			label: `D${index + 1}`,
+			qrUrl: `https://studio.example/check-in#desk=${index}`,
 		})),
-		qr: { kind: 'table', tableIds: ['all'] },
+		qr: { kind: 'desk', deskIds: ['all'] },
 		facts: { featured: [], pieces: [] },
 	}
 }
@@ -134,8 +137,8 @@ async function setup() {
 		.values({
 			organizationId: organization.id,
 			createdById: user.id,
-			name: 'Table cards',
-			product: 'table_card',
+			name: 'Desk cards',
+			product: 'desk_card',
 			sizeKey: 'a6',
 			style: 'classic',
 			templateVersion: 1,
@@ -151,10 +154,10 @@ async function setup() {
 describe('shipped print orders', () => {
 	beforeEach(async () => {
 		vi.stubEnv('PRINT_MOCK', 'true')
-		vi.stubEnv('BASE_URL', 'https://app.menuza.test:2999')
+		vi.stubEnv('BASE_URL', 'https://app.studio.test:2999')
 		await db.delete(PrintVendorProduct)
 		await db.insert(PrintVendorProduct).values({
-			product: 'table_card',
+			product: 'desk_card',
 			sizeKey: 'a6',
 			vendor: 'gelato',
 			vendorSku: 'cards_a6_test',
@@ -193,7 +196,7 @@ describe('shipped print orders', () => {
 			new Request('https://app.test/'),
 			access,
 			orderId,
-			'https://app.menuza.test/x',
+			'https://app.studio.test/x',
 		)
 		const sessionId = url.split('/').pop()!
 		const sessionArgs = (
@@ -267,7 +270,7 @@ describe('shipped print orders', () => {
 			new Request('https://app.test/'),
 			access,
 			orderId,
-			'https://app.menuza.test/x',
+			'https://app.studio.test/x',
 		)
 		await handlePrintStripeSession(
 			{
@@ -333,7 +336,7 @@ describe('shipped print orders', () => {
 				scopeId: null,
 			},
 		)
-		// The operator re-approves the design with many more tables.
+		// The operator re-approves the design with many more desks.
 		await db
 			.update(PrintDesign)
 			.set({ snapshot: snapshot(30), snapshotHash: 'hash-30' })
@@ -342,7 +345,7 @@ describe('shipped print orders', () => {
 			new Request('https://app.test/'),
 			access,
 			orderId,
-			'https://app.menuza.test/x',
+			'https://app.studio.test/x',
 		)
 		const { order, items } = await getPrintOrderDetail(
 			access.organization.id,
