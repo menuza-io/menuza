@@ -512,6 +512,8 @@ export const PRINT_ORDER_STATUS_VALUES = [
 	'quote',
 	'awaiting_payment',
 	'paid',
+	'submitting',
+	'cancelling',
 	'submitted',
 	'in_production',
 	'shipped',

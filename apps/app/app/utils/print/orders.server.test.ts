@@ -41,6 +41,7 @@ const {
 	handlePrintStripeSession,
 	startPrintCheckout,
 	getPrintOrderDetail,
+	submitPrintOrder,
 } = await import('./orders.server.ts')
 
 function snapshot(pieces = 2): PrintSnapshot {
@@ -292,5 +293,83 @@ describe('shipped print orders', () => {
 				locationId: null,
 			}),
 		).rejects.toMatchObject({ code: 'not_shippable' })
+	})
+
+	it('prints the snapshot that was priced, even if the design changes before payment', async () => {
+		const { access, design } = await setup()
+		const orderId = await createPrintQuote(access, {
+			lines: [{ designId: design.id, quantity: 2 }],
+			address,
+			locationId: null,
+		})
+		// The operator re-approves the design with many more tables.
+		await db
+			.update(PrintDesign)
+			.set({ snapshot: snapshot(30), snapshotHash: 'hash-30' })
+			.where(eq(PrintDesign.id, design.id))
+		const url = await startPrintCheckout(
+			access,
+			orderId,
+			'https://app.menuza.test/x',
+		)
+		const { order, items } = await getPrintOrderDetail(
+			access.organization.id,
+			orderId,
+		)
+		await handlePrintStripeSession(
+			{
+				id: url.split('/').pop()!,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: 'pi_frozen',
+			} as never,
+			'checkout.session.completed',
+		)
+		const [paid] = await db
+			.select()
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, orderId))
+		expect(paid?.status).toBe('submitted')
+		expect((items[0]!.item.snapshot as PrintSnapshot).pieces).toHaveLength(2)
+	})
+
+	it('refuses a cancel while the order is being sent, and never overwrites a cancel', async () => {
+		const { access, design } = await setup()
+		const orderId = await createPrintQuote(access, {
+			lines: [{ designId: design.id, quantity: 1 }],
+			address,
+			locationId: null,
+		})
+		await db
+			.update(PrintOrder)
+			.set({ status: 'submitting' })
+			.where(eq(PrintOrder.id, orderId))
+		await expect(cancelPrintOrder(access, orderId)).rejects.toMatchObject({
+			code: 'order_busy',
+		})
+
+		// A submission that finds the order no longer paid does nothing.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'refunded' })
+			.where(eq(PrintOrder.id, orderId))
+		await submitPrintOrder(orderId)
+		const [order] = await db
+			.select()
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, orderId))
+		expect(order?.status).toBe('refunded')
+		const [vendorOrder] = await db
+			.select()
+			.from(PrintVendorOrder)
+			.where(eq(PrintVendorOrder.orderId, orderId))
+		expect(vendorOrder?.vendorOrderId).toBeNull()
 	})
 })

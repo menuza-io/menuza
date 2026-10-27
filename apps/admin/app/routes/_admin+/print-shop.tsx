@@ -59,6 +59,8 @@ const STATUS_LABELS: Record<string, MessageDescriptor> = {
 	quote: msg`Price ready`,
 	awaiting_payment: msg`Waiting for payment`,
 	paid: msg`Paid`,
+	submitting: msg`Sending to the printer`,
+	cancelling: msg`Cancelling`,
 	submitted: msg`Sent to the printer`,
 	in_production: msg`Printing`,
 	shipped: msg`Shipped`,
@@ -79,6 +81,8 @@ const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	cancelled_by_operator: msg`Cancelled by the organization`,
 	refunded_by_admin: msg`Refunded by an admin`,
 	payment_failed: msg`The payment failed`,
+	submission_error: msg`Sending to the vendor failed unexpectedly`,
+	refund_failed: msg`The vendor order was cancelled but the refund failed`,
 }
 
 /** A fetcher action that asks first: money and catalog changes are not undone. */

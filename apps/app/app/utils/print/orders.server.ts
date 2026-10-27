@@ -205,6 +205,7 @@ export async function createPrintQuote(
 		vendorSku: string
 		quantity: number
 		pieces: number
+		snapshot: PrintSnapshot
 	}
 	const drafts: Draft[] = []
 	for (const line of input.lines) {
@@ -249,6 +250,8 @@ export async function createPrintQuote(
 			vendorSku: mapping.vendorSku,
 			quantity: line.quantity,
 			pieces: (design.snapshot as PrintSnapshot).pieces.length,
+			// Frozen now: what is priced is exactly what prints.
+			snapshot: design.snapshot as PrintSnapshot,
 		})
 	}
 
@@ -368,6 +371,7 @@ export async function createPrintQuote(
 				vendorOrderId: vendorOrder!.id,
 				designId: draft.designId,
 				snapshotHash: draft.snapshotHash,
+				snapshot: draft.snapshot,
 				product: draft.product,
 				sizeKey: draft.sizeKey,
 				vendor,
@@ -662,7 +666,7 @@ async function hold(orderId: string, reason: string) {
 	await db
 		.update(PrintOrder)
 		.set({ status: 'held', holdReason: reason })
-		.where(eq(PrintOrder.id, orderId))
+		.where(and(eq(PrintOrder.id, orderId), eq(PrintOrder.status, 'submitting')))
 }
 
 function webhookUrl(vendor: PrintVendorName) {
@@ -678,13 +682,9 @@ async function pieceFileUrls(
 	item: ItemRow,
 	bleedMm: number,
 ): Promise<string[] | null> {
-	const [design] = await db
-		.select({ snapshot: PrintDesign.snapshot })
-		.from(PrintDesign)
-		.where(eq(PrintDesign.id, item.designId))
-		.limit(1)
-	const snapshot = design?.snapshot as PrintSnapshot | null
-	if (!snapshot) return null
+	// The snapshot frozen on the item at quote time, never the live design.
+	const snapshot = item.snapshot as PrintSnapshot | null
+	if (!snapshot || snapshot.pieces.length !== item.pieces) return null
 	const urls: string[] = []
 	for (const piece of snapshot.pieces) {
 		const file = await getPrintFile({
@@ -714,11 +714,35 @@ export async function submitPrintOrder(
 	orderId: string,
 	options: { ignoreDrift?: boolean } = {},
 ) {
+	// Claim the order first: only one submission runs, and a cancel or refund
+	// cannot slip between the vendor call and the status write.
+	const claimed = await db
+		.update(PrintOrder)
+		.set({ status: 'submitting' })
+		.where(
+			and(
+				eq(PrintOrder.id, orderId),
+				inArray(PrintOrder.status, ['paid', 'held']),
+			),
+		)
+		.returning({ id: PrintOrder.id })
+	if (claimed.length === 0) return
+	try {
+		await submitClaimedOrder(orderId, options)
+	} catch (error) {
+		await hold(orderId, 'submission_error')
+		throw error
+	}
+}
+
+async function submitClaimedOrder(
+	orderId: string,
+	options: { ignoreDrift?: boolean },
+) {
 	const { order, vendorOrders, items } = await getPrintOrderDetail(
 		null,
 		orderId,
 	)
-	if (order.status !== 'paid' && order.status !== 'held') return
 	const settings = await getPrintSettings()
 	const [placer] = order.placedById
 		? await db
@@ -805,7 +829,9 @@ export async function submitPrintOrder(
 	await db
 		.update(PrintOrder)
 		.set({ status: 'submitted', holdReason: null })
-		.where(eq(PrintOrder.id, order.id))
+		.where(
+			and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'submitting')),
+		)
 }
 
 // ---------------------------------------------------------------------------
@@ -996,6 +1022,9 @@ export async function cancelPrintOrder(
 		access.organization.id,
 		orderId,
 	)
+	if (order.status === 'submitting' || order.status === 'cancelling') {
+		throw busyError()
+	}
 	if (!PRINT_SELF_CANCEL_STATUSES.includes(order.status as PrintOrderStatus)) {
 		throw new PrintOrderError(
 			409,
@@ -1009,20 +1038,62 @@ export async function cancelPrintOrder(
 				.expire(order.stripeCheckoutSessionId)
 				.catch(() => null)
 		}
-		await db
+		const cancelled = await db
 			.update(PrintOrder)
 			.set({ status: 'cancelled', cancelledAt: new Date() })
-			.where(eq(PrintOrder.id, order.id))
+			.where(
+				and(
+					eq(PrintOrder.id, order.id),
+					inArray(PrintOrder.status, ['quote', 'awaiting_payment']),
+				),
+			)
+			.returning({ id: PrintOrder.id })
+		// Paid in the meantime: the paid path owns it now.
+		if (cancelled.length === 0) throw busyError()
 		return
 	}
-	if (!(await cancelAtVendors(vendorOrders))) {
+	// Claim it from the exact state we saw: a submission in flight holds the
+	// order as `submitting`, so a cancel never races a vendor order.
+	const claimed = await db
+		.update(PrintOrder)
+		.set({ status: 'cancelling' })
+		.where(
+			and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, order.status)),
+		)
+		.returning({ id: PrintOrder.id })
+	if (claimed.length === 0) throw busyError()
+	const restore = () =>
+		db
+			.update(PrintOrder)
+			.set({ status: order.status })
+			.where(
+				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'cancelling')),
+			)
+	let cancelledAtVendors = false
+	try {
+		cancelledAtVendors = await cancelAtVendors(vendorOrders)
+	} catch (error) {
+		await restore()
+		throw error
+	}
+	if (!cancelledAtVendors) {
+		await restore()
 		throw new PrintOrderError(
 			409,
 			'too_late',
 			'Production has started, so this order can no longer be cancelled.',
 		)
 	}
-	await refundInFull(order)
+	try {
+		await refundInFull(order)
+	} catch (error) {
+		// Vendors are cancelled but the money did not move: Admin refunds it.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'refund_failed' })
+			.where(eq(PrintOrder.id, order.id))
+		throw error
+	}
 	await db
 		.update(PrintOrder)
 		.set({
@@ -1033,9 +1104,20 @@ export async function cancelPrintOrder(
 		.where(eq(PrintOrder.id, order.id))
 }
 
+function busyError() {
+	return new PrintOrderError(
+		409,
+		'order_busy',
+		'This order is changing right now. Refresh and try again.',
+	)
+}
+
 /** Admin: refund in full whatever the state (after a vendor defect claim, etc.). */
 export async function adminRefundPrintOrder(orderId: string) {
 	const { order } = await getPrintOrderDetail(null, orderId)
+	if (order.status === 'submitting' || order.status === 'cancelling') {
+		throw busyError()
+	}
 	await refundInFull(order)
 	await db
 		.update(PrintOrder)

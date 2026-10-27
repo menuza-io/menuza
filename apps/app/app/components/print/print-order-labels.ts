@@ -9,6 +9,8 @@ export const PRINT_ORDER_STATUS_LABELS: Record<
 	quote: msg`Price ready`,
 	awaiting_payment: msg`Waiting for payment`,
 	paid: msg`Paid`,
+	submitting: msg`Sending to the printer`,
+	cancelling: msg`Cancelling`,
 	submitted: msg`Sent to the printer`,
 	in_production: msg`Printing`,
 	shipped: msg`Shipped`,
@@ -41,6 +43,7 @@ export const PRINT_ORDER_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	too_late: msg`Production has started, so this order can no longer be cancelled.`,
 	shipping_paused: msg`Shipped prints are paused for a moment. Try again later.`,
 	no_lines: msg`Choose at least one print and how many copies.`,
+	order_busy: msg`This order is changing right now. Refresh and try again.`,
 }
 
 export const PRINT_ORDER_ERROR_FALLBACK = msg`That did not work. Try again.`

@@ -67,6 +67,7 @@ CREATE TABLE `PrintOrderItem` (
 	`vendorOrderId` text,
 	`designId` text NOT NULL,
 	`snapshotHash` text NOT NULL,
+	`snapshot` text NOT NULL,
 	`product` text NOT NULL,
 	`sizeKey` text NOT NULL,
 	`vendor` text NOT NULL,

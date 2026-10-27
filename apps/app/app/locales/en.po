@@ -858,11 +858,11 @@ msgstr ""
 msgid "{deviceName} was removed."
 msgstr "{deviceName} was removed."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:165
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:163
 msgid "{diffSec}s"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:162
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:160
 msgid "{diffSec}s (running)"
 msgstr ""
 
@@ -1123,7 +1123,7 @@ msgstr "{minutes} min"
 msgid "{minutes} minutes"
 msgstr "{minutes} minutes"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:168
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
 msgid "{minutes}m {remainingSec}s"
 msgstr ""
 
@@ -2529,7 +2529,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:996
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:707
@@ -3752,7 +3752,7 @@ msgstr ""
 msgid "All core features included"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:241
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:239
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr ""
 
@@ -4375,7 +4375,7 @@ msgstr "Approve a print, then order copies shipped to any US address."
 msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 msgstr "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 
-#: app/components/print/print-order-labels.ts:35
+#: app/components/print/print-order-labels.ts:37
 msgid "Approve each print before ordering it."
 msgstr "Approve each print before ordering it."
 
@@ -4491,7 +4491,7 @@ msgid "archived"
 msgstr ""
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:142
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/reservations/experiences-view.ts:39
 msgid "Archived"
@@ -4794,7 +4794,7 @@ msgstr "At the table"
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:416
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr ""
 
@@ -4805,7 +4805,7 @@ msgstr "Attempts"
 #~ msgid "Attention Needed"
 #~ msgstr "Attention Needed"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:276
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
 msgid "Audit Trail"
 msgstr ""
 
@@ -6255,11 +6255,11 @@ msgstr "Cancellations by who"
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/my-schedule/status-badge.tsx:17
 #: app/components/orders/order-detail.tsx:163
-#: app/components/print/print-order-labels.ts:18
+#: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
 #: app/components/staff/schedule/time-off-page.tsx:286
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:149
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/orders/status-label.ts:10
 #: app/utils/reservations/labels.ts:22
@@ -6286,6 +6286,10 @@ msgstr "Cancelled moving {cancelledGuestName}."
 #: app/components/pos/pos-day-report.tsx:212
 msgid "Cancelled orders"
 msgstr "Cancelled orders"
+
+#: app/components/print/print-order-labels.ts:13
+msgid "Cancelling"
+msgstr "Cancelling"
 
 #: app/components/roles/tenant-role-access-manager.tsx:241
 msgid "Cannot be undone"
@@ -7042,7 +7046,7 @@ msgstr "Choose at least one day."
 msgid "Choose at least one location."
 msgstr "Choose at least one location."
 
-#: app/components/print/print-order-labels.ts:43
+#: app/components/print/print-order-labels.ts:45
 msgid "Choose at least one print and how many copies."
 msgstr "Choose at least one print and how many copies."
 
@@ -7823,7 +7827,7 @@ msgstr ""
 #: app/components/onboarding-checklist.tsx:249
 #: app/components/orders/order-detail.tsx:158
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/orders/status-label.ts:9
@@ -9473,7 +9477,7 @@ msgstr "Customer reviews"
 msgid "Customer since"
 msgstr "Customer since"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
 msgid "Customer UUID"
 msgstr ""
 
@@ -10272,7 +10276,7 @@ msgstr "Deleting…"
 msgid "Deliver queued events"
 msgstr "Deliver queued events"
 
-#: app/components/print/print-order-labels.ts:15
+#: app/components/print/print-order-labels.ts:17
 msgid "Delivered"
 msgstr "Delivered"
 
@@ -10961,7 +10965,7 @@ msgstr ""
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:117
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:773
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
@@ -11179,7 +11183,7 @@ msgid "Duplicates and data"
 msgstr "Duplicates and data"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:212
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:272
 msgid "Duration"
 msgstr ""
 
@@ -12593,11 +12597,11 @@ msgstr "Exclusive seating"
 #~ msgid "Execution History ({0})"
 #~ msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:235
 msgid "Execution History ({runCount})"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:218
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:216
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "Execution runs and step history, triggered by \"{triggerLabel}\"."
 
@@ -12783,8 +12787,8 @@ msgstr "Fail authentication"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
-#: app/components/print/print-order-labels.ts:17
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:148
+#: app/components/print/print-order-labels.ts:19
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
 msgid "Failed"
@@ -12987,7 +12991,7 @@ msgstr "Failed to load reservation setup for this location."
 #~ msgid "Failed to load special days and table blocks."
 #~ msgstr "Failed to load special days and table blocks."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:124
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
 msgid "Failed to load timeline"
 msgstr ""
 
@@ -16255,7 +16259,7 @@ msgstr "Latest visit"
 msgid "Launch run"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:260
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:258
 msgid "Launch Test Run in Builder"
 msgstr ""
 
@@ -16845,7 +16849,7 @@ msgstr "Loading settings…"
 msgid "Loading special days…"
 msgstr "Loading special days…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:377
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:375
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr ""
 
@@ -19271,7 +19275,7 @@ msgstr "No dining areas yet"
 msgid "No dining times yet. Until you add them, the default time is used."
 msgstr "No dining times yet. Until you add them, the default time is used."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:382
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:380
 msgid "No discrete action step dispatches recorded for this run."
 msgstr ""
 
@@ -19303,7 +19307,7 @@ msgstr ""
 msgid "No events yet."
 msgstr "No events yet."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:249
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
 msgid "No execution runs recorded yet for this automation."
 msgstr ""
 
@@ -20971,7 +20975,7 @@ msgstr "Older"
 msgid "On break"
 msgstr "On break"
 
-#: app/components/print/print-order-labels.ts:16
+#: app/components/print/print-order-labels.ts:18
 msgid "On hold"
 msgstr "On hold"
 
@@ -21622,7 +21626,7 @@ msgstr "Open Today to check on the affected guests."
 msgid "Open Today to review the bookings."
 msgstr "Open Today to review the bookings."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:229
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:227
 msgid "Open visual builder"
 msgstr "Open visual builder"
 
@@ -22606,7 +22610,7 @@ msgstr ""
 #: app/components/phone-agent/phone-number-dialogs.tsx:136
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:141
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
 msgid "Paused"
 msgstr ""
 
@@ -22710,7 +22714,7 @@ msgstr "Payment failed. Nothing was charged."
 msgid "Payment hold (seconds)"
 msgstr "Payment hold (seconds)"
 
-#: app/components/print/print-order-labels.ts:40
+#: app/components/print/print-order-labels.ts:42
 msgid "Payment is unavailable right now. Try again in a minute."
 msgstr "Payment is unavailable right now. Try again in a minute."
 
@@ -22822,7 +22826,7 @@ msgid "Peanut Allergy"
 msgstr "Peanut Allergy"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:395
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:393
 msgid "Pending"
 msgstr ""
 
@@ -24021,7 +24025,7 @@ msgstr "Printed and shipped to your door. You can cancel until production starts
 msgid "Printed on receipts. Letters and digits only; leave empty if not registered."
 msgstr "Printed on receipts. Letters and digits only; leave empty if not registered."
 
-#: app/components/print/print-order-labels.ts:13
+#: app/components/print/print-order-labels.ts:15
 msgid "Printing"
 msgstr "Printing"
 
@@ -24087,7 +24091,7 @@ msgstr ""
 msgid "Production (live invoices)"
 msgstr "Production (live invoices)"
 
-#: app/components/print/print-order-labels.ts:41
+#: app/components/print/print-order-labels.ts:43
 msgid "Production has started, so this order can no longer be cancelled."
 msgstr "Production has started, so this order can no longer be cancelled."
 
@@ -24835,7 +24839,7 @@ msgstr "Refund queued"
 msgid "Refund this booking?"
 msgstr "Refund this booking?"
 
-#: app/components/print/print-order-labels.ts:19
+#: app/components/print/print-order-labels.ts:21
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:344
 #: app/utils/reservations/payments-view.ts:37
 #: app/utils/reservations/payments-view.ts:77
@@ -26151,7 +26155,7 @@ msgstr "Rules teach the agent how your business works, the way you'd explain it 
 #~ msgid "Run again"
 #~ msgstr "Run again"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:341
 msgid "Run Execution Timeline"
 msgstr ""
 
@@ -26159,11 +26163,11 @@ msgstr ""
 msgid "Run history"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
 msgid "Run ID"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:363
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:361
 msgid "Run ID: {selectedRunId}"
 msgstr ""
 
@@ -26172,7 +26176,7 @@ msgid "runId is required"
 msgstr ""
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 msgid "Running"
 msgstr ""
 
@@ -27863,6 +27867,10 @@ msgstr "Send the reminder this many hours before"
 msgid "Sending message"
 msgstr ""
 
+#: app/components/print/print-order-labels.ts:12
+msgid "Sending to the printer"
+msgstr "Sending to the printer"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:51
 msgid "Sending..."
 msgstr ""
@@ -27928,7 +27936,7 @@ msgstr "sent later"
 msgid "Sent to {formatted}"
 msgstr "Sent to {formatted}"
 
-#: app/components/print/print-order-labels.ts:12
+#: app/components/print/print-order-labels.ts:14
 msgid "Sent to the printer"
 msgstr "Sent to the printer"
 
@@ -28413,7 +28421,7 @@ msgstr "Shifts, time cards, and labor cost. Only applies when the matching Staff
 msgid "Ship to"
 msgstr "Ship to"
 
-#: app/components/print/print-order-labels.ts:14
+#: app/components/print/print-order-labels.ts:16
 msgid "Shipped"
 msgstr "Shipped"
 
@@ -28425,7 +28433,7 @@ msgstr "Shipped prints are paused for a moment"
 msgid "Shipped prints are paused for a moment. Downloads still work."
 msgstr "Shipped prints are paused for a moment. Downloads still work."
 
-#: app/components/print/print-order-labels.ts:42
+#: app/components/print/print-order-labels.ts:44
 msgid "Shipped prints are paused for a moment. Try again later."
 msgstr "Shipped prints are paused for a moment. Try again later."
 
@@ -29390,7 +29398,7 @@ msgstr "Start with an example and change it to match your business."
 msgid "Start with table QR cards so guests can order from their phone."
 msgstr "Start with table QR cards so guests can order from their phone."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:273
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
 msgid "Started At"
 msgstr ""
 
@@ -29464,7 +29472,7 @@ msgstr "Stats"
 #: app/components/staff/timesheets/timesheet-table.tsx:232
 #: app/components/workspace-breadcrumb.tsx:73
 #: app/components/workspace-breadcrumb.tsx:98
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:272
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:501
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:304
@@ -29517,7 +29525,7 @@ msgstr "Stayed on current page"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:388
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:386
 msgid "Step Executions ({timelineCount})"
 msgstr ""
 
@@ -30702,7 +30710,7 @@ msgstr "That date is already listed."
 msgid "That did not work"
 msgstr "That did not work"
 
-#: app/components/print/print-order-labels.ts:46
+#: app/components/print/print-order-labels.ts:49
 #: app/components/qr/open-tabs.tsx:91
 #: app/components/qr/tables-manager.tsx:93
 #: app/components/reservations/experiences/experience-editor.tsx:365
@@ -32484,9 +32492,13 @@ msgstr "This order could not be loaded."
 msgid "This order does not exist or was removed."
 msgstr "This order does not exist or was removed."
 
-#: app/components/print/print-order-labels.ts:38
+#: app/components/print/print-order-labels.ts:40
 msgid "This order is already paid or closed."
 msgstr "This order is already paid or closed."
+
+#: app/components/print/print-order-labels.ts:46
+msgid "This order is changing right now. Refresh and try again."
+msgstr "This order is changing right now. Refresh and try again."
 
 #: app/components/orders/order-detail.tsx:149
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
@@ -32612,7 +32624,7 @@ msgstr "This preview couldn't play."
 msgid "This price has expired."
 msgstr "This price has expired."
 
-#: app/components/print/print-order-labels.ts:39
+#: app/components/print/print-order-labels.ts:41
 msgid "This price has expired. Get a new price."
 msgstr "This price has expired. Get a new price."
 
@@ -32620,7 +32632,7 @@ msgstr "This price has expired. Get a new price."
 msgid "This price is held until {expiresAt}."
 msgstr "This price is held until {expiresAt}."
 
-#: app/components/print/print-order-labels.ts:36
+#: app/components/print/print-order-labels.ts:38
 msgid "This print or size cannot be shipped right now."
 msgstr "This print or size cannot be shipped right now."
 
@@ -35040,7 +35052,7 @@ msgstr "View team schedule"
 msgid "View time cards"
 msgstr "View time cards"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:322
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:320
 msgid "View Timeline →"
 msgstr ""
 
@@ -35503,7 +35515,7 @@ msgstr "We could not find that. Refresh and try again."
 msgid "We could not find this workplace's time zone. Set it in the time clock settings."
 msgstr "We could not find this workplace's time zone. Set it in the time clock settings."
 
-#: app/components/print/print-order-labels.ts:37
+#: app/components/print/print-order-labels.ts:39
 msgid "We could not get a price right now. Try again in a minute."
 msgstr "We could not get a price right now. Try again in a minute."
 
@@ -36300,7 +36312,7 @@ msgstr "Work eligibility"
 msgid "Worker type"
 msgstr "Worker type"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:370
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:368
 msgid "Workflow Error:"
 msgstr ""
 

@@ -1022,4 +1022,113 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			).status,
 		).toBe(503)
 	})
+
+	it('freezes the tab from the pay request, so later rounds cannot ride on an older amount', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, 0)).json()
+
+		// Before any provider session: new rounds are refused.
+		const blocked = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+		expect((await blocked.json()).error).toBe('tab_paying')
+
+		// A round slipped in any other way changes the total: the bridge refuses
+		// to quote or bind the stale amount.
+		const db = await getTenantDb(orgId)
+		const [round] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.tabId, first.tab.id))
+		await db.insert(restaurantOrders).values({
+			...round!,
+			id: crypto.randomUUID(),
+			number: `${round!.number}-x`,
+			idempotencyKey: crypto.randomUUID(),
+		})
+		const quote = await system('/quote', {
+			orgId,
+			orderId: intent.orderRef,
+			paymentToken: intent.tabPaymentToken,
+		})
+		expect(quote.status).toBe(409)
+		expect((await quote.json()).error).toBe('amount_changed')
+
+		// An abandoned pay request stops freezing the tab after 30 minutes.
+		await db
+			.update(qrTabs)
+			.set({ paymentEventAt: Date.now() - 31 * 60_000 })
+			.where(eq(qrTabs.id, first.tab.id))
+		const later = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+		expect(later.status).toBe(201)
+		const [tab] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(tab?.paymentAmountCents).toBeNull()
+	})
+
+	it('keeps a paid event that no longer matches the tab for review', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, 0)).json()
+		await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_review',
+			processor: 'connect',
+		})
+		const db = await getTenantDb(orgId)
+		const [round] = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.tabId, first.tab.id))
+		await db.insert(restaurantOrders).values({
+			...round!,
+			id: crypto.randomUUID(),
+			number: `${round!.number}-y`,
+			idempotencyKey: crypto.randomUUID(),
+		})
+		const paid = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_review',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await paid.json()).paymentStatus).toBe('review')
+		const [tab] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(tab?.status).toBe('open')
+	})
+
+	it("never copies another guest's details onto a round's receipt", async () => {
+		const table = await createTable()
+		await operator('/settings', {
+			method: 'PATCH',
+			body: { requireGuestName: true, requireGuestPhone: true },
+		})
+		await placeRound(
+			{ 'X-Table-Token': table.token },
+			{ contact: { name: 'Guest A', phone: '+15550001111' } },
+		)
+		const second = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		const receipt = await request(`/orders/${second.order.id}?slug=test-org`, {
+			headers: { authorization: `Bearer ${second.receiptToken}` },
+		})
+		const body = JSON.stringify(await receipt.json())
+		expect(body).not.toContain('Guest A')
+		expect(body).not.toContain('5550001111')
+	})
 })

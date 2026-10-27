@@ -903,9 +903,11 @@ export async function prepareTabPayment(
 		await tx
 			.update(qrTabs)
 			.set({
-				guestName: input.contact.name,
-				guestPhone: input.contact.phone,
+				// The guest who opened the tab keeps their details on it.
+				guestName: tab.guestName ?? input.contact.name,
+				guestPhone: tab.guestPhone ?? input.contact.phone,
 				paymentTipCents: tipCents,
+				paymentEventAt: Date.now(),
 				paymentAmountCents: amountCents,
 				paymentTokenHash: sha256Hex(tabPaymentToken),
 				updatedAt: Date.now(),
@@ -938,6 +940,19 @@ async function loadPayableTab(
 	return tab ?? null
 }
 
+/**
+ * What the tab costs right now (rounds that count, plus the tip fixed at the
+ * pay request). Every bridge step compares it with the stored amount, so a
+ * round added after the pay request can never be settled by an older payment.
+ */
+async function currentPayableCents(
+	db: Parameters<typeof loadPayableTab>[0],
+	tab: QrTabRow,
+): Promise<number> {
+	const rounds = await listTabRounds(db, [tab.id])
+	return tabTotals(tab, rounds).totalCents + (tab.paymentTipCents ?? 0)
+}
+
 /** `POST /api/orders/quote` for `tab:<id>`: amounts and state only. */
 export async function getTabQuote(
 	orgId: string,
@@ -954,6 +969,17 @@ export async function getTabQuote(
 	}
 	if (tab.paymentAmountCents == null) {
 		return fail(409, 'not_online_order', 'This tab has no payment in progress.')
+	}
+	if (
+		tab.status === 'open' &&
+		tab.paymentStatus !== 'paid' &&
+		(await currentPayableCents(db, tab)) !== tab.paymentAmountCents
+	) {
+		return fail(
+			409,
+			'amount_changed',
+			'The tab changed. Start the payment again.',
+		)
 	}
 	return {
 		ok: true as const,
@@ -1005,6 +1031,13 @@ export async function bindTabPaymentSession(input: {
 				409,
 				'session_conflict',
 				'This tab already has a bound payment session.',
+			)
+		}
+		if ((await currentPayableCents(tx, tab)) !== tab.paymentAmountCents) {
+			return fail(
+				409,
+				'amount_changed',
+				'The tab changed. Start the payment again.',
 			)
 		}
 		if (tab.paymentSessionId !== input.sessionId) {
@@ -1093,7 +1126,12 @@ export async function applyTabPaymentEvent(input: {
 			if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
 				return result(tab.paymentStatus)
 			}
-			if (tab.status !== 'open') {
+			// Settled elsewhere meanwhile, or the tab no longer costs what was
+			// paid: keep the money for a person to look at, never close blind.
+			if (
+				tab.status !== 'open' ||
+				(await currentPayableCents(tx, tab)) !== input.amountCents
+			) {
 				await tx
 					.update(qrTabs)
 					.set({

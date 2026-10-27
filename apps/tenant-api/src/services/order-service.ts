@@ -41,6 +41,7 @@ import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
 import {
+	isTabPaymentOpen,
 	openTab,
 	readQrSettings,
 	resolveDineIn,
@@ -627,15 +628,33 @@ export async function placeOrder(input: {
 						)
 					}
 					tableRow = resolved.data.table
-					if (existingTab?.paymentStatus === 'pending') {
-						// The guest is at the payment page: the total is frozen.
+					if (existingTab && isTabPaymentOpen(existingTab, now)) {
+						// A payment was started: the total is frozen until it ends, so
+						// a round can never ride along on an older, smaller amount.
 						return orderFailure(
 							409,
 							'tab_paying',
 							'This tab is being paid. Order again after payment, or ask a team member.',
 						)
 					}
-					if (existingTab) {
+					let openTabRow = existingTab
+					if (existingTab && existingTab.paymentAmountCents != null) {
+						// A payment started long ago and never reached the provider:
+						// forget it so the table can keep ordering.
+						const [cleared] = await tx
+							.update(qrTabs)
+							.set({
+								paymentAmountCents: null,
+								paymentTipCents: null,
+								paymentTokenHash: null,
+								updatedAt: now.getTime(),
+							})
+							.where(eq(qrTabs.id, existingTab.id))
+							.returning()
+						openTabRow = cleared ?? existingTab
+					}
+					if (openTabRow) {
+						const existingTab = openTabRow
 						tabRow = existingTab
 						const fill: Partial<typeof qrTabs.$inferInsert> = {}
 						if (!existingTab.guestName && request.contact.name) {
@@ -711,8 +730,10 @@ export async function placeOrder(input: {
 								pickupDate: result.pickup?.date ?? null,
 								pickupTime: result.pickup?.time ?? null,
 								pickupTimezone: result.pickup?.timezone ?? null,
-								contactName: request.contact.name ?? tabRow?.guestName ?? '',
-								contactPhone: request.contact.phone ?? tabRow?.guestPhone ?? '',
+								// Only what this placer typed: another guest's name or phone on
+								// the tab must never reach this round's receipt.
+								contactName: request.contact.name ?? '',
+								contactPhone: request.contact.phone ?? '',
 								contactEmail: request.contact.email ?? null,
 								tabId: tabRow?.id ?? null,
 								tableId: tableRow?.id ?? null,

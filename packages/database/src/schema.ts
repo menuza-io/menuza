@@ -3952,8 +3952,8 @@ export const PrintOrder = sqliteTable(
 			onDelete: 'set null',
 			onUpdate: 'cascade',
 		}),
-		// quote | awaiting_payment | paid | submitted | in_production | shipped
-		// | delivered | held | failed | cancelled | refunded
+		// quote | awaiting_payment | paid | submitting | submitted | in_production
+		// | shipped | delivered | held | failed | cancelled | refunded
 		status: text().default('quote').notNull(),
 		currency: text().default('USD').notNull(),
 		itemsCents: integer().notNull(),
@@ -4070,6 +4070,9 @@ export const PrintOrderItem = sqliteTable(
 				onUpdate: 'cascade',
 			}),
 		snapshotHash: text().notNull(),
+		// The approved snapshot as quoted: files are printed from this copy,
+		// never from the design row, which the operator may edit later.
+		snapshot: text({ mode: 'json' }).notNull(),
 		product: text().notNull(),
 		sizeKey: text().notNull(),
 		vendor: text().notNull(),

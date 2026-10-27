@@ -1,7 +1,7 @@
 {
 	"version": "6",
 	"dialect": "sqlite",
-	"id": "836344eb-720a-43e9-8b65-1af5f0eb950f",
+	"id": "545ebcfc-70d0-47ee-9fc1-6a32f5d0f103",
 	"prevId": "d19f8cb4-8ae3-42ab-b6b6-896d35c31039",
 	"tables": {
 		"ApiKey": {
@@ -9443,6 +9443,13 @@
 				},
 				"snapshotHash": {
 					"name": "snapshotHash",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"snapshot": {
+					"name": "snapshot",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true,

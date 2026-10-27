@@ -856,11 +856,11 @@ msgstr "منذ {days} يوم"
 msgid "{deviceName} was removed."
 msgstr "تمت إزالة {deviceName}."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:165
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:163
 msgid "{diffSec}s"
 msgstr "{diffSec} ث"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:162
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:160
 msgid "{diffSec}s (running)"
 msgstr "{diffSec} ث (قيد التشغيل)"
 
@@ -1121,7 +1121,7 @@ msgstr "{minutes} د"
 msgid "{minutes} minutes"
 msgstr "{minutes} دقيقة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:168
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:166
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
@@ -2524,7 +2524,7 @@ msgstr "نشط"
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:89
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:60
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:259
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:138
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:996
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:983
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:707
@@ -3747,7 +3747,7 @@ msgstr "اجتازت جميع الفحوصات. سير العمل هذا جاه�
 msgid "All core features included"
 msgstr "جميع الميزات الأساسية مضمنة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:241
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:239
 msgid "All customer automation workflows orchestrated durably by Cloudflare Workflows and executed by the regional data engine."
 msgstr "جميع سير عمل أتمتة العملاء تُنسَّق بشكل دائم عبر Cloudflare Workflows وتُنفَّذ بواسطة محرك البيانات الإقليمي."
 
@@ -4370,7 +4370,7 @@ msgstr "اعتمد مطبوعة، ثم اطلب نسخًا تُشحن إلى أ�
 msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 msgstr "اعتمد بطاقة طاولة أو ملصقًا أو منشورًا أولًا. لا يمكن طلب إلا المطبوعات المعتمدة بمقاس قابل للشحن."
 
-#: app/components/print/print-order-labels.ts:35
+#: app/components/print/print-order-labels.ts:37
 msgid "Approve each print before ordering it."
 msgstr "اعتمد كل مطبوعة قبل طلبها."
 
@@ -4486,7 +4486,7 @@ msgid "archived"
 msgstr "مؤرشف"
 
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:62
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:142
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:140
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:204
 #: app/utils/reservations/experiences-view.ts:39
 msgid "Archived"
@@ -4789,7 +4789,7 @@ msgstr "على الطاولة"
 msgid "Attach secondary modifier groups that appear when this modifier item is selected by a customer (e.g. selecting \"French Fries\" prompts for \"Fry Size\")."
 msgstr "إرفاق مجموعات معدِّلات فرعية تظهر عندما يختار العميل هذا العنصر (مثل اختيار \"بطاطس مقلية\" يفتح \"حجم البطاطس\")."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:416
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:414
 msgid "Attempt: {attempt} • Executed: {executedAtLabel}"
 msgstr "المحاولة: {attempt} • التنفيذ: {executedAtLabel}"
 
@@ -4800,7 +4800,7 @@ msgstr "المحاولات"
 #~ msgid "Attention Needed"
 #~ msgstr "يتطلب الانتباه"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:276
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
 msgid "Audit Trail"
 msgstr "سجل التدقيق"
 
@@ -6250,11 +6250,11 @@ msgstr "الإلغاءات حسب الجهة"
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/my-schedule/status-badge.tsx:17
 #: app/components/orders/order-detail.tsx:163
-#: app/components/print/print-order-labels.ts:18
+#: app/components/print/print-order-labels.ts:20
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
 #: app/components/staff/schedule/time-off-page.tsx:286
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:149
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:242
 #: app/utils/orders/status-label.ts:10
 #: app/utils/reservations/labels.ts:22
@@ -6281,6 +6281,10 @@ msgstr "تم إلغاء نقل {cancelledGuestName}."
 #: app/components/pos/pos-day-report.tsx:212
 msgid "Cancelled orders"
 msgstr "طلبات ملغاة"
+
+#: app/components/print/print-order-labels.ts:13
+msgid "Cancelling"
+msgstr "جارٍ الإلغاء"
 
 #: app/components/roles/tenant-role-access-manager.tsx:241
 msgid "Cannot be undone"
@@ -7037,7 +7041,7 @@ msgstr "اختر يومًا واحدًا على الأقل."
 msgid "Choose at least one location."
 msgstr "اختر فرعًا واحدًا على الأقل."
 
-#: app/components/print/print-order-labels.ts:43
+#: app/components/print/print-order-labels.ts:45
 msgid "Choose at least one print and how many copies."
 msgstr "اختر مطبوعة واحدة على الأقل وعدد النسخ."
 
@@ -7815,7 +7819,7 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: app/components/onboarding-checklist.tsx:249
 #: app/components/orders/order-detail.tsx:158
 #: app/components/reservations/status-style.tsx:143
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:237
 #: app/utils/orders/status-label.ts:9
@@ -9465,7 +9469,7 @@ msgstr "تقييمات العملاء"
 msgid "Customer since"
 msgstr "عميل منذ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
 msgid "Customer UUID"
 msgstr "معرّف العميل الفريد"
 
@@ -10264,7 +10268,7 @@ msgstr "جارٍ الحذف…"
 msgid "Deliver queued events"
 msgstr "تسليم الأحداث المنتظرة"
 
-#: app/components/print/print-order-labels.ts:15
+#: app/components/print/print-order-labels.ts:17
 msgid "Delivered"
 msgstr "تم التسليم"
 
@@ -10953,7 +10957,7 @@ msgstr "مسودة"
 #: app/components/staff/schedule/shift-block.tsx:33
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:117
 #: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:773
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
@@ -11171,7 +11175,7 @@ msgid "Duplicates and data"
 msgstr "التكرارات والبيانات"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:212
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:274
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:272
 msgid "Duration"
 msgstr "المدة"
 
@@ -12585,11 +12589,11 @@ msgstr "جلوس حصري"
 #~ msgid "Execution History ({0})"
 #~ msgstr "سجل التنفيذ ({0})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:237
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:235
 msgid "Execution History ({runCount})"
 msgstr "سجل التنفيذ ({runCount})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:218
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:216
 msgid "Execution runs and step history, triggered by \"{triggerLabel}\"."
 msgstr "عمليات التشغيل وسجل الخطوات، المُطلقة بواسطة \"{triggerLabel}\"."
 
@@ -12775,8 +12779,8 @@ msgstr "فشل المصادقة"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
-#: app/components/print/print-order-labels.ts:17
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:148
+#: app/components/print/print-order-labels.ts:19
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
 msgid "Failed"
@@ -12979,7 +12983,7 @@ msgstr "فشل في تحميل إعدادات الحجوزات لهذا الفر
 #~ msgid "Failed to load special days and table blocks."
 #~ msgstr "فشل في تحميل الأيام الخاصة وحظر الطاولات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:124
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:122
 msgid "Failed to load timeline"
 msgstr "فشل تحميل الجدول الزمني"
 
@@ -16247,7 +16251,7 @@ msgstr "أحدث زيارة"
 msgid "Launch run"
 msgstr "بدء التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:260
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:258
 msgid "Launch Test Run in Builder"
 msgstr "بدء تشغيل اختباري في المُنشئ"
 
@@ -16837,7 +16841,7 @@ msgstr "جارٍ تحميل الإعدادات…"
 msgid "Loading special days…"
 msgstr "جارٍ تحميل الأيام الخاصة…"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:377
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:375
 msgid "Loading step executions from regional SQLite outbox..."
 msgstr "جارٍ تحميل تنفيذات الخطوات من صندوق الصادر SQLite الإقليمي..."
 
@@ -19263,7 +19267,7 @@ msgstr "لا توجد مناطق جلوس بعد"
 msgid "No dining times yet. Until you add them, the default time is used."
 msgstr "لا توجد مدد جلوس بعد. حتى تضيفها سيتم استخدام المدة الافتراضية."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:382
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:380
 msgid "No discrete action step dispatches recorded for this run."
 msgstr "لم تُسجَّل إرسالات خطوات إجراء منفصلة لهذا التشغيل."
 
@@ -19295,7 +19299,7 @@ msgstr "لم يتم العثور على رموز تعبيرية"
 msgid "No events yet."
 msgstr "لا توجد أحداث بعد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:249
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:247
 msgid "No execution runs recorded yet for this automation."
 msgstr "لم تُسجَّل عمليات تنفيذ بعد لهذه الأتمتة."
 
@@ -20963,7 +20967,7 @@ msgstr "الأقدم"
 msgid "On break"
 msgstr "في استراحة"
 
-#: app/components/print/print-order-labels.ts:16
+#: app/components/print/print-order-labels.ts:18
 msgid "On hold"
 msgstr "معلّق"
 
@@ -21614,7 +21618,7 @@ msgstr "افتح «اليوم» للاطمئنان على الضيوف المت�
 msgid "Open Today to review the bookings."
 msgstr "افتح «اليوم» لمراجعة الحجوزات."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:229
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:227
 msgid "Open visual builder"
 msgstr "فتح المنشئ المرئي"
 
@@ -22598,7 +22602,7 @@ msgstr "متوقف مؤقتاً"
 #: app/components/phone-agent/phone-number-dialogs.tsx:136
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:61
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:261
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:141
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:139
 msgid "Paused"
 msgstr "متوقف مؤقتاً"
 
@@ -22702,7 +22706,7 @@ msgstr "فشل الدفع. لم يتم خصم أي مبلغ."
 msgid "Payment hold (seconds)"
 msgstr "مهلة حجز الدفع (بالثواني)"
 
-#: app/components/print/print-order-labels.ts:40
+#: app/components/print/print-order-labels.ts:42
 msgid "Payment is unavailable right now. Try again in a minute."
 msgstr "الدفع غير متاح الآن. حاول مجددًا بعد دقيقة."
 
@@ -22814,7 +22818,7 @@ msgid "Peanut Allergy"
 msgstr "حساسية الفول السوداني"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:44
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:395
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:393
 msgid "Pending"
 msgstr "قيد الانتظار"
 
@@ -24013,7 +24017,7 @@ msgstr "تُطبع وتُشحن حتى بابك. يمكنك الإلغاء حت�
 msgid "Printed on receipts. Letters and digits only; leave empty if not registered."
 msgstr "يُطبع على الإيصالات. حروف وأرقام فقط؛ اتركه فارغًا إذا لم تكن مسجلًا."
 
-#: app/components/print/print-order-labels.ts:13
+#: app/components/print/print-order-labels.ts:15
 msgid "Printing"
 msgstr "قيد الطباعة"
 
@@ -24079,7 +24083,7 @@ msgstr "اسم المنتج"
 msgid "Production (live invoices)"
 msgstr "الإنتاج (فواتير فعلية)"
 
-#: app/components/print/print-order-labels.ts:41
+#: app/components/print/print-order-labels.ts:43
 msgid "Production has started, so this order can no longer be cancelled."
 msgstr "بدأ الإنتاج، لذلك لم يعد بالإمكان إلغاء هذا الطلب."
 
@@ -24827,7 +24831,7 @@ msgstr "استرداد في قائمة الانتظار"
 msgid "Refund this booking?"
 msgstr "استرداد هذا الحجز؟"
 
-#: app/components/print/print-order-labels.ts:19
+#: app/components/print/print-order-labels.ts:21
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:344
 #: app/utils/reservations/payments-view.ts:37
 #: app/utils/reservations/payments-view.ts:77
@@ -26143,7 +26147,7 @@ msgstr "تعلّم القواعد الوكيلَ كيف يعمل نشاطك ال
 #~ msgid "Run again"
 #~ msgstr "تشغيل مرة أخرى"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:343
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:341
 msgid "Run Execution Timeline"
 msgstr "الجدول الزمني لتنفيذ التشغيل"
 
@@ -26151,11 +26155,11 @@ msgstr "الجدول الزمني لتنفيذ التشغيل"
 msgid "Run history"
 msgstr "سجل التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:269
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:267
 msgid "Run ID"
 msgstr "معرّف التشغيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:363
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:361
 msgid "Run ID: {selectedRunId}"
 msgstr "معرّف التشغيل: {selectedRunId}"
 
@@ -26164,7 +26168,7 @@ msgid "runId is required"
 msgstr "معرّف التشغيل مطلوب"
 
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:45
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:147
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:145
 msgid "Running"
 msgstr "قيد التشغيل"
 
@@ -27855,6 +27859,10 @@ msgstr "أرسل التذكير قبل هذا العدد من الساعات"
 msgid "Sending message"
 msgstr "جاري إرسال الرسالة"
 
+#: app/components/print/print-order-labels.ts:12
+msgid "Sending to the printer"
+msgstr "جارٍ الإرسال إلى المطبعة"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:51
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
@@ -27920,7 +27928,7 @@ msgstr "أُرسل لاحقًا"
 msgid "Sent to {formatted}"
 msgstr "أُرسل إلى {formatted}"
 
-#: app/components/print/print-order-labels.ts:12
+#: app/components/print/print-order-labels.ts:14
 msgid "Sent to the printer"
 msgstr "أُرسل إلى المطبعة"
 
@@ -28405,7 +28413,7 @@ msgstr "الورديات وبطاقات الدوام وتكلفة العمالة
 msgid "Ship to"
 msgstr "الشحن إلى"
 
-#: app/components/print/print-order-labels.ts:14
+#: app/components/print/print-order-labels.ts:16
 msgid "Shipped"
 msgstr "تم الشحن"
 
@@ -28417,7 +28425,7 @@ msgstr "المطبوعات المشحونة متوقفة مؤقتًا"
 msgid "Shipped prints are paused for a moment. Downloads still work."
 msgstr "المطبوعات المشحونة متوقفة مؤقتًا. التنزيلات ما زالت تعمل."
 
-#: app/components/print/print-order-labels.ts:42
+#: app/components/print/print-order-labels.ts:44
 msgid "Shipped prints are paused for a moment. Try again later."
 msgstr "المطبوعات المشحونة متوقفة مؤقتًا. حاول لاحقًا."
 
@@ -29382,7 +29390,7 @@ msgstr "ابدأ بمثال وعدّله ليناسب نشاطك التجاري.
 msgid "Start with table QR cards so guests can order from their phone."
 msgstr "ابدأ ببطاقات QR للطاولات ليتمكن الضيوف من الطلب من هواتفهم."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:273
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:271
 msgid "Started At"
 msgstr "بدأ في"
 
@@ -29456,7 +29464,7 @@ msgstr "الإحصائيات"
 #: app/components/staff/timesheets/timesheet-table.tsx:232
 #: app/components/workspace-breadcrumb.tsx:73
 #: app/components/workspace-breadcrumb.tsx:98
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:272
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:270
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:963
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:501
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:304
@@ -29509,7 +29517,7 @@ msgstr "تم البقاء في الصفحة الحالية"
 msgid "Step {currentStep} of {totalSteps}"
 msgstr "الخطوة {currentStep} من {totalSteps}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:388
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:386
 msgid "Step Executions ({timelineCount})"
 msgstr "تنفيذات الخطوات ({timelineCount})"
 
@@ -30694,7 +30702,7 @@ msgstr "هذا التاريخ مضاف بالفعل."
 msgid "That did not work"
 msgstr "لم ينجح ذلك"
 
-#: app/components/print/print-order-labels.ts:46
+#: app/components/print/print-order-labels.ts:49
 #: app/components/qr/open-tabs.tsx:91
 #: app/components/qr/tables-manager.tsx:93
 #: app/components/reservations/experiences/experience-editor.tsx:365
@@ -32476,9 +32484,13 @@ msgstr "تعذر تحميل هذا الطلب."
 msgid "This order does not exist or was removed."
 msgstr "هذا الطلب غير موجود أو تمت إزالته."
 
-#: app/components/print/print-order-labels.ts:38
+#: app/components/print/print-order-labels.ts:40
 msgid "This order is already paid or closed."
 msgstr "هذا الطلب مدفوع أو مغلق بالفعل."
+
+#: app/components/print/print-order-labels.ts:46
+msgid "This order is changing right now. Refresh and try again."
+msgstr "هذا الطلب يتغيّر الآن. حدّث الصفحة وحاول مجددًا."
 
 #: app/components/orders/order-detail.tsx:149
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
@@ -32604,7 +32616,7 @@ msgstr "تعذّر تشغيل هذه المعاينة."
 msgid "This price has expired."
 msgstr "انتهت صلاحية هذا السعر."
 
-#: app/components/print/print-order-labels.ts:39
+#: app/components/print/print-order-labels.ts:41
 msgid "This price has expired. Get a new price."
 msgstr "انتهت صلاحية هذا السعر. احصل على سعر جديد."
 
@@ -32612,7 +32624,7 @@ msgstr "انتهت صلاحية هذا السعر. احصل على سعر جدي
 msgid "This price is held until {expiresAt}."
 msgstr "هذا السعر محجوز حتى {expiresAt}."
 
-#: app/components/print/print-order-labels.ts:36
+#: app/components/print/print-order-labels.ts:38
 msgid "This print or size cannot be shipped right now."
 msgstr "لا يمكن شحن هذه المطبوعة أو هذا المقاس الآن."
 
@@ -35032,7 +35044,7 @@ msgstr "عرض جدول الفريق"
 msgid "View time cards"
 msgstr "عرض بطاقات الدوام"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:322
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:320
 msgid "View Timeline →"
 msgstr "عرض الجدول الزمني ←"
 
@@ -35495,7 +35507,7 @@ msgstr "لم نعثر على ذلك. حدّث الصفحة وحاول مرة أ�
 msgid "We could not find this workplace's time zone. Set it in the time clock settings."
 msgstr "تعذّر العثور على المنطقة الزمنية لمكان العمل هذا. حدّدها من إعدادات ساعة الدوام."
 
-#: app/components/print/print-order-labels.ts:37
+#: app/components/print/print-order-labels.ts:39
 msgid "We could not get a price right now. Try again in a minute."
 msgstr "تعذّر الحصول على سعر الآن. حاول مجددًا بعد دقيقة."
 
@@ -36292,7 +36304,7 @@ msgstr "أهلية العمل"
 msgid "Worker type"
 msgstr "نوع العامل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:370
+#: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:368
 msgid "Workflow Error:"
 msgstr "خطأ في سير العمل:"
 

@@ -357,3 +357,25 @@ export async function markTabRoundsPaid(
 			),
 		)
 }
+
+/** How long a started tab payment freezes the tab without a provider session. */
+export const QR_TAB_PAYMENT_FREEZE_MS = 30 * 60 * 1000
+
+/**
+ * True while a tab payment is in progress: a provider session is bound, or
+ * the guest asked to pay recently (the amount is fixed from that moment).
+ */
+export function isTabPaymentOpen(
+	tab: Pick<
+		QrTabRow,
+		'paymentStatus' | 'paymentAmountCents' | 'paymentEventAt'
+	>,
+	now: Date,
+): boolean {
+	if (tab.paymentStatus === 'pending') return true
+	return (
+		tab.paymentAmountCents != null &&
+		tab.paymentEventAt != null &&
+		now.getTime() - tab.paymentEventAt < QR_TAB_PAYMENT_FREEZE_MS
+	)
+}
