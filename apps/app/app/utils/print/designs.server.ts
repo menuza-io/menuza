@@ -1,23 +1,22 @@
 import {
-	getPrintSize,
-	PRINT_PRODUCTS,
 	PRINT_TEMPLATE_VERSION,
-	printDesignContentSchema,
-	printTargetsFor,
 	type PrintDesignContent,
 	type PrintProductKey,
+	type PrintQrTarget,
 	type PrintSnapshot,
 	type PrintTemplateStyle,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { and, db, desc, eq, isNull, PrintDesign } from '@repo/database'
 import { type PrintShopAccess } from './access.server.ts'
 import {
 	buildPrintSnapshot,
-	listOrgLocations,
+	listPrintScopes,
 	orgLocales,
+	pickScope,
 	snapshotHash,
 } from './print-snapshot.server.ts'
-import { canPrintQrTables, isQrDineInOn } from './qr-tables.server.ts'
+import { printVertical } from './vertical.server.ts'
 
 export type PrintDesignRow = typeof PrintDesign.$inferSelect
 
@@ -35,11 +34,11 @@ export type PrintDesignView = {
 }
 
 export function toDesignView(row: PrintDesignRow): PrintDesignView {
-	const content = printDesignContentSchema.safeParse(row.content)
+	const content = printCatalog.designContentSchema.safeParse(row.content)
 	return {
 		id: row.id,
 		name: row.name,
-		product: row.product as PrintProductKey,
+		product: row.product,
 		sizeKey: row.sizeKey,
 		style: row.style as PrintTemplateStyle,
 		status: row.status === 'approved' ? 'approved' : 'draft',
@@ -92,26 +91,30 @@ async function defaultContent(
 	product: PrintProductKey,
 ): Promise<PrintDesignContent> {
 	const { defaultLocale } = orgLocales(access.organization)
-	const locations = await listOrgLocations(access.organization.id)
-	const location =
-		locations.find((candidate) => candidate.isDefault) ?? locations[0] ?? null
-	const targets = printTargetsFor(product)
-	const tableTarget =
-		targets.includes('table') &&
-		(await isQrDineInOn(access.organization.id)) &&
-		(await canPrintQrTables(access.userId, access.organization.id))
+	const scope = pickScope(await listPrintScopes(access.organization.id), null)
+	// The first target (in the product's order) the vertical can start with.
+	let qr: PrintQrTarget = { kind: 'site', path: '/' }
+	const spec = printCatalog.products[product]
+	for (const kind of printCatalog.targetsFor(product)) {
+		const start = spec
+			? await printVertical.qrTargets?.[kind]?.defaultFor?.(access, {
+					product: spec,
+					scope,
+				})
+			: null
+		if (start) {
+			qr = start
+			break
+		}
+	}
 	return {
 		locales: [defaultLocale],
 		headline: {},
 		body: {},
 		callToAction: {},
-		qr: tableTarget
-			? { kind: 'table', tableIds: ['all'] }
-			: location
-				? { kind: 'menu', locationId: location.id }
-				: { kind: 'site', path: '/' },
+		qr,
 		featuredItemIds: [],
-		locationId: location?.id ?? null,
+		scopeId: scope?.id ?? null,
 		showAddress: true,
 		showWebsite: true,
 	}
@@ -126,7 +129,7 @@ export async function createPrintDesign(
 		style: PrintTemplateStyle
 	},
 ) {
-	if (!getPrintSize(input.product, input.sizeKey)) {
+	if (!printCatalog.getSize(input.product, input.sizeKey)) {
 		throw new Response('Unknown size', { status: 400 })
 	}
 	const [row] = await db
@@ -160,14 +163,16 @@ export async function savePrintDesign(
 		content: PrintDesignContent
 	},
 ) {
-	const product = row.product as PrintProductKey
-	if (!getPrintSize(product, input.sizeKey)) {
+	const product = row.product
+	if (!printCatalog.getSize(product, input.sizeKey)) {
 		throw new Response('Unknown size', { status: 400 })
 	}
-	if (!printTargetsFor(product).includes(input.content.qr.kind)) {
+	if (!printCatalog.targetsFor(product).includes(input.content.qr.kind)) {
 		throw new Response('This print cannot use that QR code', { status: 400 })
 	}
-	if (!PRINT_PRODUCTS[product].featuredItems) input.content.featuredItemIds = []
+	if (!printCatalog.products[product]?.featuredItems) {
+		input.content.featuredItemIds = []
+	}
 	const [updated] = await db
 		.update(PrintDesign)
 		.set({
@@ -193,38 +198,21 @@ export async function currentSnapshot(
 	const view = toDesignView(row)
 	return buildPrintSnapshot({
 		request,
-		org: access.organization,
+		access,
 		skipImages: options.skipImages,
 		design: {
 			id: row.id,
 			product: view.product,
 			sizeKey: view.sizeKey,
 			style: view.style,
-			content: await expandAllTables(request, access, view.content),
+			content: view.content,
 		},
 	})
 }
 
-/** `['all']` (the new-design default) means every live table at print time. */
-async function expandAllTables(
-	request: Request,
-	access: PrintShopAccess,
-	content: PrintDesignContent,
-): Promise<PrintDesignContent> {
-	if (content.qr.kind !== 'table' || !content.qr.tableIds.includes('all')) {
-		return content
-	}
-	const { fetchQrTablesForPrint } = await import('./qr-tables.server.ts')
-	const tables = await fetchQrTablesForPrint(request, access.organization.slug)
-	return {
-		...content,
-		qr: { kind: 'table', tableIds: tables.map((table) => table.id) },
-	}
-}
-
 /**
- * Approval freezes the proof: the snapshot (with table labels, tokens'
- * versions and menu prices as they are now) is what every download and order
+ * Approval freezes the proof: the snapshot (with piece labels, code
+ * versions and item prices as they are now) is what every download and order
  * of this design prints until the operator approves again.
  */
 export async function approvePrintDesign(

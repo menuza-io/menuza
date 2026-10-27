@@ -1,9 +1,13 @@
 # Print shop
 
 **Marketing, Print shop** turns the organization's branding into print-ready
-table QR cards, posters, flyers, table tents and window stickers. Every approved
-print downloads as a free PDF; table cards, posters and flyers can also be
-printed and shipped (US addresses in v1), with Menuza as the merchant.
+posters, flyers and window stickers. Every approved print downloads as a free
+PDF; posters and flyers can also be printed and shipped (US addresses in v1),
+with the platform as the merchant.
+
+The core knows no business type. A print vertical adds products (cards, tents),
+QR codes of its own, featured items and the business's places: see
+[print-shop-verticals.md](./print-shop-verticals.md).
 
 ## Turning it on
 
@@ -21,29 +25,26 @@ for shipped prints also needs the settings (billing) permission.
 1. **New print:** pick the product, size and one of three styles (Classic, Bold,
    Minimal).
 2. **Editor:** words per language (one or two of the organization's site
-   languages; empty fields use the suggested words), the QR target (a table set,
-   the order-ahead menu of a location, reservations, or a page on the
-   organization's own site; never an external URL), up to four featured dishes
-   with menu photos and location prices, address and website.
+   languages; empty fields use the suggested words), the QR target (a page on
+   the organization's own site, never an external URL; no QR code; or a
+   vertical's own target), up to four featured items when the vertical has an
+   item source, the address of one of its places, and the website.
 3. **Proof:** the live proof shows the cut line and bleed. **Approve proof**
-   freezes a snapshot (copy, prices, table labels and code versions, images);
+   freezes a snapshot (copy, prices, piece labels and code versions, images);
    downloads and orders print that snapshot until the next approval.
-4. The page warns when the menu or the tables changed since approval. A table
-   card whose codes or labels changed cannot be ordered until it is approved
+4. The page warns when items or codes changed since approval. A print whose
+   per-piece codes or labels changed cannot be ordered until it is approved
    again.
 
-Table cards also need the menu edit permission (the right that mints table codes
-on the QR tables page): a table code lets anyone order at that table, so the
-marketing permissions alone do not reach it, not even through a proof or a
-download of a card someone else approved. Codes are checked again when the price
-is made and when payment starts; a code renewed after that (an order held for
-days) is not caught, so renew codes only after shipped cards arrive.
+A vertical's QR codes can be capabilities (a code that lets someone in to
+something). The vertical then says who may see them, and that check guards the
+proof, the download and the order, whoever approved the print. Such codes are
+checked again when the price is made and when payment starts; a code renewed
+after that (an order held for days) is not caught.
 
 QR codes encode the destination directly with
 `utm_source=print&utm_medium=qr&utm_campaign=<design id>`: there is no redirect
-service, so a printed code keeps working as long as the page exists. Table cards
-carry each table's code (see [qr-ordering.md](./qr-ordering.md)); **New QR
-code** on a table invalidates its printed cards.
+service, so a printed code keeps working as long as the page exists.
 
 ## Downloads (free)
 
@@ -119,7 +120,7 @@ how held orders are rerouted), and the last 100 orders with margin, **Retry**,
 - **Refund in full** cancels vendor orders not yet printing first; if a vendor
   already started, it refunds nothing and says so.
 - **Refund, vendor keeps printing** (in production, shipped, delivered or held
-  orders): a defect claim or a lost parcel, Menuza still pays the vendor.
+  orders): a defect claim or a lost parcel, the platform still pays the vendor.
 - **Refund part** (held `partial_cancel` orders only, enforced by the App): the
   amount that was cancelled; the rest keeps printing and is tracked again,
   unless a vendor order is still waiting to be sent (then it stays held).
@@ -141,8 +142,9 @@ App (`checkout.session.*`).
 
 ## Launch checklist (business)
 
-- Confirm each vendor's terms allow resale with Menuza as merchant of record.
-- Register for sales tax where Menuza has nexus and enable Stripe Tax.
+- Confirm each vendor's terms allow resale with the platform as merchant of
+  record.
+- Register for sales tax where the platform has nexus and enable Stripe Tax.
 - Map SKUs in Admin and place a sandbox order per product (Prodigi sandbox,
   Gelato draft orders); check colour on a real print (RGB files).
 - Shipping outside the US (KSA via Gelato's UAE production) is a later step:

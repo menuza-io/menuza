@@ -30,14 +30,13 @@ export function foldPrintShopFeatures(raw: {
 // Catalog
 // ---------------------------------------------------------------------------
 
-export const PRINT_PRODUCT_KEYS = [
-	'table_card',
-	'poster',
-	'flyer',
-	'table_tent',
-	'window_sticker',
-] as const
-export type PrintProductKey = (typeof PRINT_PRODUCT_KEYS)[number]
+/**
+ * A product key. The core ships posters, flyers and window stickers; a
+ * vertical adds its own through `createPrintCatalog` (see
+ * `print-shop-catalog.ts`). Keys are stored on designs and orders: keep them
+ * stable once used.
+ */
+export type PrintProductKey = string
 
 export const PRINT_TEMPLATE_STYLES = ['classic', 'bold', 'minimal'] as const
 export type PrintTemplateStyle = (typeof PRINT_TEMPLATE_STYLES)[number]
@@ -55,29 +54,24 @@ export type PrintSize = {
 
 export type PrintProduct = {
 	key: PrintProductKey
-	/** Cards carry one QR per table and little text; pages carry more. */
+	/** Cards carry one QR per piece and little text; pages carry more. */
 	family: 'card' | 'page'
 	/** Has a shipped (vendor) version; the rest are print-it-yourself. */
 	shippable: boolean
 	sizes: PrintSize[]
-	/** Table tents fold: the artwork repeats upside down on the back panel. */
+	/** Folded cards repeat the artwork upside down on the back panel. */
 	folded?: boolean
-	/** Featured menu items fit on this product. */
+	/** Featured items (from the vertical's item source) fit on this product. */
 	featuredItems: boolean
+	/**
+	 * QR targets this product accepts, in the order the editor lists them.
+	 * Default: every single-piece target, then "no QR code".
+	 */
+	qrTargets?: readonly string[]
 }
 
-export const PRINT_PRODUCTS: Record<PrintProductKey, PrintProduct> = {
-	table_card: {
-		key: 'table_card',
-		family: 'card',
-		shippable: true,
-		featuredItems: false,
-		sizes: [
-			{ key: 'a6', widthMm: 105, heightMm: 148, label: 'A6 · 105 × 148 mm' },
-			{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in' },
-		],
-	},
-	poster: {
+const CORE_PRODUCTS: PrintProduct[] = [
+	{
 		key: 'poster',
 		family: 'page',
 		shippable: true,
@@ -88,7 +82,7 @@ export const PRINT_PRODUCTS: Record<PrintProductKey, PrintProduct> = {
 			{ key: '18x24', widthMm: 457, heightMm: 610, label: '18 × 24 in' },
 		],
 	},
-	flyer: {
+	{
 		key: 'flyer',
 		family: 'page',
 		shippable: true,
@@ -99,17 +93,7 @@ export const PRINT_PRODUCTS: Record<PrintProductKey, PrintProduct> = {
 			{ key: 'letter', widthMm: 216, heightMm: 279, label: 'US Letter' },
 		],
 	},
-	table_tent: {
-		key: 'table_tent',
-		family: 'card',
-		shippable: false,
-		folded: true,
-		featuredItems: false,
-		sizes: [
-			{ key: '4x6', widthMm: 102, heightMm: 152, label: '4 × 6 in (folded)' },
-		],
-	},
-	window_sticker: {
+	{
 		key: 'window_sticker',
 		family: 'card',
 		shippable: false,
@@ -118,16 +102,7 @@ export const PRINT_PRODUCTS: Record<PrintProductKey, PrintProduct> = {
 			{ key: '200sq', widthMm: 200, heightMm: 200, label: '200 × 200 mm' },
 		],
 	},
-}
-
-export function getPrintSize(
-	product: PrintProductKey,
-	sizeKey: string,
-): PrintSize | null {
-	return (
-		PRINT_PRODUCTS[product].sizes.find((size) => size.key === sizeKey) ?? null
-	)
-}
+]
 
 /** Bleed of the professional download; vendors may ask for their own. */
 export const PRINT_DEFAULT_BLEED_MM = 3
@@ -139,7 +114,8 @@ export const PRINT_SAFE_MM = 5
 // ---------------------------------------------------------------------------
 
 export const PRINT_MAX_FEATURED_ITEMS = 4
-export const PRINT_MAX_TABLES_PER_DESIGN = 200
+/** Pieces one design may print (a card per seat, desk or booth). */
+export const PRINT_MAX_PIECES_PER_DESIGN = 200
 export const PRINT_TEXT_MAX = {
 	headline: 80,
 	body: 280,
@@ -159,56 +135,81 @@ export const PRINT_HOME_SHEET_SIZES: Record<
 	a4: { widthMm: 210, heightMm: 297 },
 }
 
-/** Where a print's QR code leads. Tokens are never stored on the design. */
-export const printQrTargetSchema = z.discriminatedUnion('kind', [
-	z.strictObject({
-		kind: z.literal('table'),
-		tableIds: z
-			.array(z.string().trim().min(1).max(100))
-			.min(1)
-			.max(PRINT_MAX_TABLES_PER_DESIGN),
-	}),
-	z.strictObject({
-		kind: z.literal('menu'),
-		locationId: z.string().trim().min(1).max(100),
-	}),
-	z.strictObject({
-		kind: z.literal('reservations'),
-		locationId: z.string().trim().min(1).max(100).nullable(),
-	}),
-	z.strictObject({
+/**
+ * Where a print's QR code leads. The core has a page of the organization's
+ * own site and no QR code; a vertical adds kinds of its own. Codes and
+ * tokens are never stored on the design: the vertical resolves them when the
+ * proof is drawn or approved.
+ */
+export type PrintQrTarget = { kind: string } & Record<string, unknown>
+
+export type PrintTargetCopy = {
+	headline: string
+	callToAction: string
+	qrCaption: string
+}
+
+export type PrintQrTargetSpec = {
+	kind: string
+	/** A strict object with `kind: z.literal(kind)`. */
+	schema: z.ZodType<PrintQrTarget>
+	/** Resolves to one piece per item (a card each), not a single page. */
+	perPiece?: boolean
+	/** Default words for this target, in one locale. */
+	copy(locale: string): PrintTargetCopy
+	/** Word printed before a piece's label, in one locale ("Desk 4"). */
+	pieceWord?(locale: string): string
+}
+
+/** Path on the org's own site: never an external URL. */
+export const printSitePathSchema = z
+	.string()
+	.trim()
+	.max(200)
+	.regex(/^\/(?!\/)[A-Za-z0-9\-._~/%?=&]*$/, 'Use a path on your site')
+
+const SITE_TARGET: PrintQrTargetSpec = {
+	kind: 'site',
+	schema: z.strictObject({
 		kind: z.literal('site'),
-		/** A path on the org's own site: never an external URL. */
-		path: z
-			.string()
-			.trim()
-			.max(200)
-			.regex(/^\/(?!\/)[A-Za-z0-9\-._~/%?=&]*$/, 'Use a path on your site'),
+		path: printSitePathSchema,
 	}),
-	z.strictObject({ kind: z.literal('none') }),
-])
-export type PrintQrTarget = z.infer<typeof printQrTargetSchema>
+	copy: (locale) => ({
+		headline: printCopy(locale, 'visitUs'),
+		callToAction: printCopy(locale, 'scanToVisit'),
+		qrCaption: printCopy(locale, 'scanToVisit'),
+	}),
+}
+
+const NO_QR_TARGET: PrintQrTargetSpec = {
+	kind: 'none',
+	schema: z.strictObject({ kind: z.literal('none') }),
+	copy: SITE_TARGET.copy,
+}
+
+/** The path of a site target, or null for any other kind. */
+export function printSitePath(target: PrintQrTarget): string | null {
+	return target.kind === 'site' && typeof target.path === 'string'
+		? target.path
+		: null
+}
 
 const localizedText = (max: number) =>
 	z.record(z.string().min(2).max(10), z.string().trim().max(max))
 
-export const printDesignContentSchema = z.strictObject({
+export type PrintDesignContent = {
 	/** One or two of the org's site locales; the first is the main language. */
-	locales: z.array(z.string().min(2).max(10)).min(1).max(2),
-	headline: localizedText(PRINT_TEXT_MAX.headline),
-	body: localizedText(PRINT_TEXT_MAX.body),
-	callToAction: localizedText(PRINT_TEXT_MAX.callToAction),
-	qr: printQrTargetSchema,
-	featuredItemIds: z
-		.array(z.string().min(1).max(100))
-		.max(PRINT_MAX_FEATURED_ITEMS)
-		.default([]),
-	/** Location whose address and menu prices the print shows. */
-	locationId: z.string().min(1).max(100).nullable(),
-	showAddress: z.boolean().default(true),
-	showWebsite: z.boolean().default(true),
-})
-export type PrintDesignContent = z.infer<typeof printDesignContentSchema>
+	locales: string[]
+	headline: Record<string, string>
+	body: Record<string, string>
+	callToAction: Record<string, string>
+	qr: PrintQrTarget
+	featuredItemIds: string[]
+	/** The vertical's scope whose address and item prices the print shows. */
+	scopeId: string | null
+	showAddress: boolean
+	showWebsite: boolean
+}
 
 /**
  * Everything a template needs, resolved at proof or approval time. The
@@ -242,16 +243,23 @@ export type PrintArtworkCopy = {
 	body: string
 	callToAction: string
 	qrCaption: string
-	/** "Table" in this locale, before the label on a table card. */
-	tableWord: string
+	/** Word before a piece's label in this locale, when the target has one. */
+	pieceWord: string | null
 }
 
-/** One printed piece (a table card per table; one page otherwise). */
+/** One printed piece (a card per item of a per-piece target; else a page). */
 export type PrintPiece = {
-	/** Table label on a table card, else null. */
-	tableLabel: string | null
+	/** Label printed on the piece, or null. */
+	label: string | null
 	qrUrl: string | null
 }
+
+/**
+ * A versioned fact behind a piece. A re-order compares these with what the
+ * vertical resolves now: a piece removed, renamed or with a renewed code
+ * would print something that no longer works.
+ */
+export type PrintPieceFact = { id: string; label: string; version: number }
 
 export type PrintSnapshot = {
 	product: PrintProductKey
@@ -263,11 +271,13 @@ export type PrintSnapshot = {
 	featured: PrintFeaturedItem[]
 	address: string | null
 	website: string | null
+	/** The target as designed (re-resolved for the pre-order check). */
+	qr: PrintQrTarget
 	pieces: PrintPiece[]
-	/** Menu facts the stale check compares on re-order. */
+	/** Facts the stale check compares on re-order. */
 	facts: {
 		featured: Array<{ id: string; name: string; price: string }>
-		tables: Array<{ id: string; label: string; tokenVersion: number }>
+		pieces: PrintPieceFact[]
 	}
 }
 
@@ -289,134 +299,146 @@ export function printUtmParams(designId: string): Record<string, string> {
 // Default copy per locale (the org's site locales: en, ar, es, fr, de, zh)
 // ---------------------------------------------------------------------------
 
-type CopyKey =
-	| 'scanToOrder'
-	| 'scanForMenu'
-	| 'scanToBook'
-	| 'scanToVisit'
-	| 'orderAtTable'
-	| 'orderAhead'
-	| 'bookTable'
-	| 'visitUs'
-	| 'table'
+/** Picks a locale's words from words-per-locale, English as the fallback. */
+export function localeCopy<Key extends string>(
+	byLocale: Record<string, Record<Key, string>>,
+	locale: string,
+	key: Key,
+): string {
+	const base = locale.split('-')[0]!.toLowerCase()
+	return (byLocale[base] ?? byLocale.en!)[key]
+}
+
+type CopyKey = 'scanToVisit' | 'visitUs'
 
 const COPY: Record<string, Record<CopyKey, string>> = {
-	en: {
-		scanToOrder: 'Scan to order',
-		scanForMenu: 'Scan for our menu',
-		scanToBook: 'Scan to book',
-		scanToVisit: 'Scan to visit us',
-		orderAtTable: 'Order and pay from your phone',
-		orderAhead: 'Order ahead, skip the line',
-		bookTable: 'Book your table',
-		visitUs: 'Visit us online',
-		table: 'Table',
-	},
-	ar: {
-		scanToOrder: 'امسح للطلب',
-		scanForMenu: 'امسح لعرض القائمة',
-		scanToBook: 'امسح للحجز',
-		scanToVisit: 'امسح لزيارتنا',
-		orderAtTable: 'اطلب وادفع من هاتفك',
-		orderAhead: 'اطلب مسبقًا ووفّر وقت الانتظار',
-		bookTable: 'احجز طاولتك',
-		visitUs: 'زورونا على الإنترنت',
-		table: 'طاولة',
-	},
-	es: {
-		scanToOrder: 'Escanea para pedir',
-		scanForMenu: 'Escanea para ver el menú',
-		scanToBook: 'Escanea para reservar',
-		scanToVisit: 'Escanea para visitarnos',
-		orderAtTable: 'Pide y paga desde tu móvil',
-		orderAhead: 'Pide con antelación y evita la fila',
-		bookTable: 'Reserva tu mesa',
-		visitUs: 'Visítanos en línea',
-		table: 'Mesa',
-	},
+	en: { scanToVisit: 'Scan to visit us', visitUs: 'Visit us online' },
+	ar: { scanToVisit: 'امسح لزيارتنا', visitUs: 'زورونا على الإنترنت' },
+	es: { scanToVisit: 'Escanea para visitarnos', visitUs: 'Visítanos en línea' },
 	fr: {
-		scanToOrder: 'Scannez pour commander',
-		scanForMenu: 'Scannez pour voir le menu',
-		scanToBook: 'Scannez pour réserver',
 		scanToVisit: 'Scannez pour nous rendre visite',
-		orderAtTable: 'Commandez et payez depuis votre téléphone',
-		orderAhead: 'Commandez à l’avance, sans attendre',
-		bookTable: 'Réservez votre table',
 		visitUs: 'Retrouvez-nous en ligne',
-		table: 'Table',
 	},
 	de: {
-		scanToOrder: 'Scannen und bestellen',
-		scanForMenu: 'Scannen für die Speisekarte',
-		scanToBook: 'Scannen und reservieren',
 		scanToVisit: 'Scannen und besuchen',
-		orderAtTable: 'Mit dem Handy bestellen und bezahlen',
-		orderAhead: 'Vorbestellen statt anstehen',
-		bookTable: 'Tisch reservieren',
 		visitUs: 'Besuchen Sie uns online',
-		table: 'Tisch',
 	},
-	zh: {
-		scanToOrder: '扫码点餐',
-		scanForMenu: '扫码查看菜单',
-		scanToBook: '扫码预订',
-		scanToVisit: '扫码访问我们',
-		orderAtTable: '用手机点餐和付款',
-		orderAhead: '提前点餐，免排队',
-		bookTable: '预订餐桌',
-		visitUs: '在线访问我们',
-		table: '桌号',
-	},
+	zh: { scanToVisit: '扫码访问我们', visitUs: '在线访问我们' },
 }
 
 export const PRINT_COPY_LOCALES = Object.keys(COPY)
 
 export function printCopy(locale: string, key: CopyKey): string {
-	const base = locale.split('-')[0]!.toLowerCase()
-	return (COPY[base] ?? COPY.en!)[key]
+	return localeCopy(COPY, locale, key)
 }
 
-/** Default headline and QR caption for a target, in one locale. */
-export function defaultPrintCopy(
-	locale: string,
-	target: PrintQrTarget['kind'],
-): { headline: string; callToAction: string; qrCaption: string } {
-	switch (target) {
-		case 'table':
-			return {
-				headline: printCopy(locale, 'scanToOrder'),
-				callToAction: printCopy(locale, 'orderAtTable'),
-				qrCaption: printCopy(locale, 'scanToOrder'),
-			}
-		case 'menu':
-			return {
-				headline: printCopy(locale, 'orderAhead'),
-				callToAction: printCopy(locale, 'scanForMenu'),
-				qrCaption: printCopy(locale, 'scanToOrder'),
-			}
-		case 'reservations':
-			return {
-				headline: printCopy(locale, 'bookTable'),
-				callToAction: printCopy(locale, 'scanToBook'),
-				qrCaption: printCopy(locale, 'scanToBook'),
-			}
-		default:
-			return {
-				headline: printCopy(locale, 'visitUs'),
-				callToAction: printCopy(locale, 'scanToVisit'),
-				qrCaption: printCopy(locale, 'scanToVisit'),
-			}
-	}
+// ---------------------------------------------------------------------------
+// The catalog a deployment prints (core plus its vertical)
+// ---------------------------------------------------------------------------
+
+export type PrintCatalogExtension = {
+	/** Extra products. Keys must not repeat a core product's. */
+	products?: PrintProduct[]
+	/** Product keys in the order the "new print" form lists them. */
+	productOrder?: readonly string[]
+	/** Extra QR targets. Kinds must not repeat `site` or `none`. */
+	qrTargets?: PrintQrTargetSpec[]
 }
 
-/** Which QR targets a product accepts. */
-export function printTargetsFor(
-	product: PrintProductKey,
-): ReadonlyArray<PrintQrTarget['kind']> {
-	if (product === 'table_card' || product === 'table_tent') {
-		return ['table', 'menu', 'reservations', 'site']
+export type PrintCatalog = {
+	products: Readonly<Record<PrintProductKey, PrintProduct>>
+	/** Every product key, in listing order. */
+	productKeys: readonly PrintProductKey[]
+	qrTargets: Readonly<Record<string, PrintQrTargetSpec>>
+	isProduct(key: string): boolean
+	getSize(product: PrintProductKey, sizeKey: string): PrintSize | null
+	/** QR target kinds a product accepts, in editor order. */
+	targetsFor(product: PrintProductKey): readonly string[]
+	qrTargetSchema: z.ZodType<PrintQrTarget>
+	designContentSchema: z.ZodType<PrintDesignContent>
+	defaultCopy(locale: string, kind: string): PrintTargetCopy
+	pieceWord(locale: string, kind: string): string | null
+}
+
+export function createPrintCatalog(
+	extension: PrintCatalogExtension = {},
+): PrintCatalog {
+	const products: Record<string, PrintProduct> = {}
+	for (const product of [...CORE_PRODUCTS, ...(extension.products ?? [])]) {
+		if (products[product.key]) {
+			throw new Error(`Duplicate print product: ${product.key}`)
+		}
+		products[product.key] = product
 	}
-	return ['menu', 'reservations', 'site', 'none']
+	const order = extension.productOrder ?? []
+	const productKeys = [
+		...order.filter((key) => products[key]),
+		...Object.keys(products).filter((key) => !order.includes(key)),
+	]
+
+	const targets: Record<string, PrintQrTargetSpec> = {}
+	for (const target of [
+		...(extension.qrTargets ?? []),
+		SITE_TARGET,
+		NO_QR_TARGET,
+	]) {
+		if (targets[target.kind]) {
+			throw new Error(`Duplicate print QR target: ${target.kind}`)
+		}
+		targets[target.kind] = target
+	}
+	const singlePiece = Object.values(targets)
+		.filter((target) => !target.perPiece && target.kind !== 'none')
+		.map((target) => target.kind)
+
+	const qrTargetSchema = z
+		.object({ kind: z.string().min(1).max(40) })
+		.passthrough()
+		.superRefine((value, ctx) => {
+			const spec = targets[value.kind]
+			const parsed = spec?.schema.safeParse(value)
+			if (!parsed?.success) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: spec ? 'Invalid QR code target' : 'Unknown QR code target',
+					path: parsed?.error.issues[0]?.path ?? ['kind'],
+				})
+			}
+		})
+		.transform((value) => targets[value.kind]!.schema.parse(value))
+
+	const designContentSchema = z.strictObject({
+		locales: z.array(z.string().min(2).max(10)).min(1).max(2),
+		headline: localizedText(PRINT_TEXT_MAX.headline),
+		body: localizedText(PRINT_TEXT_MAX.body),
+		callToAction: localizedText(PRINT_TEXT_MAX.callToAction),
+		qr: qrTargetSchema,
+		featuredItemIds: z
+			.array(z.string().min(1).max(100))
+			.max(PRINT_MAX_FEATURED_ITEMS)
+			.default([]),
+		scopeId: z.string().min(1).max(100).nullable(),
+		showAddress: z.boolean().default(true),
+		showWebsite: z.boolean().default(true),
+	}) as unknown as z.ZodType<PrintDesignContent>
+
+	return {
+		products,
+		productKeys,
+		qrTargets: targets,
+		isProduct: (key) => Object.prototype.hasOwnProperty.call(products, key),
+		getSize: (product, sizeKey) =>
+			products[product]?.sizes.find((size) => size.key === sizeKey) ?? null,
+		targetsFor: (product) =>
+			products[product]?.qrTargets?.filter((kind) => targets[kind]) ?? [
+				...singlePiece,
+				'none',
+			],
+		qrTargetSchema: qrTargetSchema as unknown as z.ZodType<PrintQrTarget>,
+		designContentSchema,
+		defaultCopy: (locale, kind) => (targets[kind] ?? SITE_TARGET).copy(locale),
+		pieceWord: (locale, kind) => targets[kind]?.pieceWord?.(locale) ?? null,
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -513,7 +535,7 @@ export type PrintShippingAddress = z.infer<typeof printShippingAddressSchema>
 
 export const printOrderLineSchema = z.strictObject({
 	designId: z.string().min(1).max(100),
-	/** Copies of every piece (a table-card set prints each table this many times). */
+	/** Copies of every piece (a set of cards prints each card this many times). */
 	quantity: z.number().int().min(1).max(PRINT_MAX_COPIES),
 })
 

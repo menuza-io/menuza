@@ -2,16 +2,13 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { type LocationAddress } from '@repo/common/location-types'
 import {
-	getPrintSize,
 	PRINT_MAX_COPIES,
 	PRINT_MAX_ORDER_LINES,
-	PRINT_PRODUCTS,
 	PRINT_US_STATES,
 	printShippingAddressSchema,
-	type PrintProductKey,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import { Button } from '@repo/ui/button'
 import {
@@ -37,11 +34,12 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import { EmptyState } from '#app/components/empty-state.tsx'
-import { PRINT_PRODUCT_LABELS } from '#app/components/print/print-labels.ts'
+import { printProductLabel } from '#app/components/print/print-labels.ts'
 import {
 	PRINT_ORDER_ERROR_FALLBACK,
 	PRINT_ORDER_ERROR_LABELS,
 } from '#app/components/print/print-order-labels.ts'
+import { printShopUi } from '#app/components/print/vertical-ui.tsx'
 import {
 	isPrintShippingPaused,
 	requirePrintShopAccess,
@@ -52,12 +50,12 @@ import {
 	PrintOrderError,
 	shippableSizes,
 } from '#app/utils/print/orders.server.ts'
-import { listOrgLocations } from '#app/utils/print/print-snapshot.server.ts'
+import { listPrintScopes } from '#app/utils/print/print-snapshot.server.ts'
 
 const OrderFormSchema = printShippingAddressSchema
 	.omit({ country: true })
 	.extend({
-		locationId: z.string().max(100).optional(),
+		scopeId: z.string().max(100).optional(),
 		// Conform does not coerce inside a record: the field text arrives as is.
 		copies: z
 			.record(
@@ -75,32 +73,14 @@ const OrderFormSchema = printShippingAddressSchema
 			.default({}),
 	})
 
-function locationAddress(raw: string | null) {
-	try {
-		const address = raw ? (JSON.parse(raw) as LocationAddress | null) : null
-		if (!address) return null
-		return {
-			line1: [address.streetNumber, address.streetName]
-				.filter(Boolean)
-				.join(' '),
-			line2: address.unit ?? '',
-			city: address.city ?? '',
-			state: (address.state ?? '').toUpperCase(),
-			postalCode: address.postalCode ?? '',
-		}
-	} catch {
-		return null
-	}
-}
-
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requirePrintShopAccess(request, params.orgSlug, {
 		pay: true,
 	})
-	const [designs, shippable, locations] = await Promise.all([
+	const [designs, shippable, scopes] = await Promise.all([
 		listPrintDesigns(access.organization.id),
 		shippableSizes(),
-		listOrgLocations(access.organization.id),
+		listPrintScopes(access.organization.id),
 	])
 	return {
 		orgSlug: access.organization.slug,
@@ -111,7 +91,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			.filter(
 				(design) =>
 					design.status === 'approved' &&
-					PRINT_PRODUCTS[design.product].shippable &&
+					printCatalog.products[design.product]?.shippable &&
 					shippable.has(`${design.product}:${design.sizeKey}`),
 			)
 			.map((design) => ({
@@ -119,12 +99,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				name: design.name,
 				product: design.product,
 				size:
-					getPrintSize(design.product, design.sizeKey)?.label ?? design.sizeKey,
+					printCatalog.getSize(design.product, design.sizeKey)?.label ??
+					design.sizeKey,
 			})),
-		locations: locations.map((location) => ({
-			id: location.id,
-			name: location.name,
-			address: locationAddress(location.address),
+		// The vertical's places prefill the ship-to (a business's own address).
+		scopes: scopes.map((scope) => ({
+			id: scope.id,
+			name: scope.name,
+			address: scope.shipTo,
 		})),
 	}
 }
@@ -142,7 +124,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (submission.status !== 'success') {
 		return { result: submission.reply(), error: null }
 	}
-	const { copies, locationId, ...address } = submission.value
+	const { copies, scopeId, ...address } = submission.value
 	const lines = Object.entries(copies)
 		.filter(([, quantity]) => quantity > 0)
 		.map(([designId, quantity]) => ({ designId, quantity }))
@@ -157,7 +139,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const orderId = await createPrintQuote(request, access, {
 			lines,
 			address: { ...address, country: 'US' },
-			locationId: locationId || null,
+			scopeId: scopeId || null,
 		})
 		return redirect(
 			`/${access.organization.slug}/marketing/print/orders/${orderId}`,
@@ -175,7 +157,7 @@ export default function NewPrintOrderRoute() {
 	const data = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const busy = useNavigation().state !== 'idle'
-	const first = data.locations[0]
+	const first = data.scopes[0]
 	const [address, setAddress] = useState({
 		recipientName: data.orgName,
 		...(first?.address ?? {
@@ -242,7 +224,8 @@ export default function NewPrintOrderRoute() {
 				<EmptyState
 					title={_(msg`Nothing to ship yet`)}
 					description={_(
-						msg`Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered.`,
+						printShopUi.copy?.nothingToShip ??
+							msg`Approve a print first. Only approved prints in a shippable size can be ordered.`,
 					)}
 					icons={['printer']}
 					action={
@@ -265,7 +248,7 @@ export default function NewPrintOrderRoute() {
 							<CardTitle>{_(msg`What to print`)}</CardTitle>
 							<CardDescription>
 								{_(
-									msg`Copies of each print. A table-card set prints every table this many times.`,
+									msg`Copies of each print. A set of cards prints every card this many times.`,
 								)}
 							</CardDescription>
 						</CardHeader>
@@ -285,12 +268,8 @@ export default function NewPrintOrderRoute() {
 											>
 												<span className="wrap-anywhere">{design.name}</span>
 												<span className="text-muted-foreground text-xs font-normal">
-													{_(
-														PRINT_PRODUCT_LABELS[
-															design.product as PrintProductKey
-														].name,
-													)}{' '}
-													· <bdi>{design.size}</bdi>
+													{_(printProductLabel(design.product).name)} ·{' '}
+													<bdi>{design.size}</bdi>
 												</span>
 											</FieldLabel>
 											<Input
@@ -325,18 +304,18 @@ export default function NewPrintOrderRoute() {
 							<CardTitle>{_(msg`Ship to`)}</CardTitle>
 						</CardHeader>
 						<CardContent className="grid gap-4 sm:grid-cols-2">
-							{data.locations.length > 1 ? (
+							{data.scopes.length > 1 ? (
 								<Field className="sm:col-span-2">
-									<FieldLabel htmlFor="order-location">
-										{_(msg`Location`)}
+									<FieldLabel htmlFor="order-scope">
+										{_(printShopUi.scope?.label ?? msg`Ship from`)}
 									</FieldLabel>
 									<select
-										id="order-location"
-										name="locationId"
+										id="order-scope"
+										name="scopeId"
 										defaultValue={first?.id}
 										onChange={(event) => {
-											const next = data.locations.find(
-												(l) => l.id === event.target.value,
+											const next = data.scopes.find(
+												(scope) => scope.id === event.target.value,
 											)
 											if (next?.address)
 												setAddress((current) => ({
@@ -346,15 +325,15 @@ export default function NewPrintOrderRoute() {
 										}}
 										className="border-input bg-background h-11 rounded-md border px-3 text-sm"
 									>
-										{data.locations.map((location) => (
-											<option key={location.id} value={location.id}>
-												{location.name}
+										{data.scopes.map((scope) => (
+											<option key={scope.id} value={scope.id}>
+												{scope.name}
 											</option>
 										))}
 									</select>
 								</Field>
 							) : first ? (
-								<input type="hidden" name="locationId" value={first.id} />
+								<input type="hidden" name="scopeId" value={first.id} />
 							) : null}
 							<AddressField
 								label={_(msg`Recipient`)}

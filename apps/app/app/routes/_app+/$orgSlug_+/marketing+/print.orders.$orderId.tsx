@@ -4,7 +4,6 @@ import {
 	PRINT_SELF_CANCEL_STATUSES,
 	PRINT_VENDOR_CHECK_HOLDS,
 	type PrintOrderStatus,
-	type PrintProductKey,
 } from '@repo/common/print-shop'
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import {
@@ -40,7 +39,7 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { z } from 'zod'
-import { PRINT_PRODUCT_LABELS } from '#app/components/print/print-labels.ts'
+import { printProductLabel } from '#app/components/print/print-labels.ts'
 import {
 	PRINT_ORDER_ERROR_FALLBACK,
 	PRINT_ORDER_ERROR_LABELS,
@@ -106,7 +105,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		items: items.map(({ item, designName }) => ({
 			id: item.id,
 			name: designName,
-			product: item.product as PrintProductKey,
+			product: item.product,
 			quantity: item.quantity,
 			pieces: item.pieces,
 			retailCents: item.retailCents,
@@ -189,7 +188,7 @@ export default function PrintOrderRoute() {
 		(order.status === 'quote' || order.status === 'awaiting_payment') &&
 		!expired &&
 		!waitingForBank
-	// An order the printer may already have is settled by Menuza support.
+	// An order the printer may already have is settled by platform support.
 	const cancellable =
 		data.canPay &&
 		PRINT_SELF_CANCEL_STATUSES.includes(order.status) &&
@@ -303,7 +302,7 @@ export default function PrintOrderRoute() {
 											{item.name}
 										</span>
 										<span className="text-muted-foreground text-sm">
-											{_(PRINT_PRODUCT_LABELS[item.product].name)}
+											{_(printProductLabel(item.product).name)}
 											{' · '}
 											{(() => {
 												const copies = item.quantity * item.pieces

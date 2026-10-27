@@ -29,7 +29,7 @@ function snapshot(overrides: Partial<PrintSnapshot> = {}): PrintSnapshot {
 				body: '',
 				callToAction: 'Order and pay from your phone',
 				qrCaption: 'Scan to order',
-				tableWord: 'Table',
+				pieceWord: 'Table',
 			},
 			{
 				locale: 'ar',
@@ -38,17 +38,18 @@ function snapshot(overrides: Partial<PrintSnapshot> = {}): PrintSnapshot {
 				body: '',
 				callToAction: 'اطلب وادفع من هاتفك',
 				qrCaption: 'امسح للطلب',
-				tableWord: 'طاولة',
+				pieceWord: 'طاولة',
 			},
 		],
 		featured: [],
 		address: '1 Main Street',
 		website: 'bistro.example.com',
 		pieces: Array.from({ length: 5 }, (_, index) => ({
-			tableLabel: `T${index + 1}`,
+			label: `T${index + 1}`,
 			qrUrl: `https://bistro.example.com/menu?location=l#table=t${index}`,
 		})),
-		facts: { featured: [], tables: [] },
+		qr: { kind: 'table', tableIds: ['all'] },
+		facts: { featured: [], pieces: [] },
 		...overrides,
 	}
 }
@@ -114,7 +115,7 @@ describe('print documents', () => {
 			snapshot: snapshot({
 				product: 'poster',
 				sizeKey: 'a2',
-				pieces: [{ tableLabel: null, qrUrl: 'https://x.example/menu' }],
+				pieces: [{ label: null, qrUrl: 'https://x.example/menu' }],
 			}),
 			format: 'home',
 			homeSheet: 'a4',

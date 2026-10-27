@@ -1,51 +1,42 @@
 import crypto from 'node:crypto'
 import { resolveEmailTheme, solidEmailTheme } from '@repo/common/email-theme'
-import { type LocationAddress } from '@repo/common/location-types'
 import {
-	defaultPrintCopy,
 	localeDirection,
-	PRINT_PRODUCTS,
 	PRINT_TEMPLATE_VERSION,
-	printCopy,
+	printSitePath,
 	printUtmParams,
 	type PrintDesignContent,
 	type PrintFeaturedItem,
 	type PrintPiece,
+	type PrintPieceFact,
 	type PrintProductKey,
 	type PrintQrTarget,
 	type PrintSnapshot,
 	type PrintTemplateStyle,
 } from '@repo/common/print-shop'
-import { qrPosterUrl, qrTableUrl } from '@repo/common/qr-ordering'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { parseSiteLocalesConfig } from '@repo/common/site-locales'
-import {
-	and,
-	db,
-	eq,
-	OrganizationLocation,
-	OrganizationMediaAsset,
-	or,
-} from '@repo/database'
+import { and, db, eq, OrganizationMediaAsset, or } from '@repo/database'
 import QRCode from 'qrcode'
 import { ENV } from 'varlock/env'
-import { buildPublicSiteMenuPayload } from '#app/utils/menu/public-menu-context.server.ts'
-import { type PublicMenuItemData } from '#app/utils/menu/public-serializers.server.ts'
-import { resolveSitesOrigin } from '#app/utils/reservations/sites-origin.server.ts'
+import { resolveSitesOrigin } from '#app/utils/sites/sites-origin.server.ts'
 import { getSignedGetRequestInfoAsync } from '#app/utils/storage.server.ts'
 import { type PrintShopAccess } from './access.server.ts'
-import { fetchQrTablesForPrint } from './qr-tables.server.ts'
+import { type PrintOrg, type PrintScope } from './vertical-contract.server.ts'
+import { printVertical } from './vertical.server.ts'
 
 /**
  * Resolves a design into the frozen `PrintSnapshot` a template renders:
- * brand colors and logo, copy per locale (operator text or the template
- * default), featured menu items with location prices, the address, and one
- * piece per printed item (a table card per table, with its QR URL). Images
- * are inlined as data URIs so the renderer needs no network access to the App.
+ * brand colors and logo, copy per locale (operator text or the target's
+ * default), featured items with their scope's prices, the scope's address,
+ * and one piece per printed item with its QR URL (the print vertical
+ * resolves its own targets). Images are inlined as data URIs so the
+ * renderer needs no network access to the App.
  */
 
-const MAX_IMAGE_BYTES = 3 * 1024 * 1024
+export type { PrintOrg }
 
-export type PrintOrg = PrintShopAccess['organization']
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 
 export function orgSiteOrigin(org: PrintOrg): string {
 	return resolveSitesOrigin({
@@ -107,125 +98,32 @@ async function mediaObjectKey(
 	return asset?.objectKey ?? null
 }
 
-function formatAddress(raw: string | null): string | null {
-	if (!raw) return null
-	try {
-		const address = JSON.parse(raw) as LocationAddress | null
-		if (!address) return null
-		if (address.formattedAddress) return address.formattedAddress
-		const line = [address.streetNumber, address.streetName]
-			.filter(Boolean)
-			.join(' ')
-		return (
-			[line, address.city, address.state].filter(Boolean).join(', ') || null
-		)
-	} catch {
-		return null
-	}
+/** The vertical's scopes of the org (none without a vertical). */
+export async function listPrintScopes(organizationId: string) {
+	return (await printVertical.scopes?.list(organizationId)) ?? []
 }
 
-export async function listOrgLocations(organizationId: string) {
-	return db
-		.select({
-			id: OrganizationLocation.id,
-			name: OrganizationLocation.name,
-			address: OrganizationLocation.address,
-			isDefault: OrganizationLocation.isDefault,
-		})
-		.from(OrganizationLocation)
-		.where(
-			and(
-				eq(OrganizationLocation.organizationId, organizationId),
-				eq(OrganizationLocation.isActive, true),
-			),
-		)
+/** The design's scope, else the default one, else the first. */
+export function pickScope(scopes: PrintScope[], scopeId: string | null) {
+	return (
+		scopes.find((scope) => scope.id === scopeId) ??
+		scopes.find((scope) => scope.isDefault) ??
+		scopes[0] ??
+		null
+	)
 }
 
-export type MenuItemChoice = {
-	id: string
-	name: string
-	priceCents: number
-	hasImage: boolean
-}
-
-/** Items of the location's live menus (no drops), with location prices. */
+/** Items a page can feature, priced for a scope (none without a source). */
 export async function listFeaturableItems(
 	org: PrintOrg,
-	locationId: string | null,
-): Promise<{
-	items: Array<MenuItemChoice & { raw: PublicMenuItemData }>
-	currency: string
-}> {
-	const currency = org.dataRegion === 'ksa' ? 'SAR' : 'USD'
-	const { payload } = await buildPublicSiteMenuPayload(
-		{
-			id: org.id,
-			name: org.name,
-			slug: org.slug,
-			currency,
-			siteDefaultLocale: org.siteDefaultLocale,
-			siteLocales: org.siteLocales,
-			customDomain: org.customDomain,
-		},
-		locationId,
-	)
-	const overrides = locationId
-		? (payload.locationOverrides[locationId] ?? [])
-		: []
-	const priceOverride = new Map(
-		overrides
-			.filter(
-				(override) =>
-					override.entityType === 'item' &&
-					typeof (override as { price?: unknown }).price === 'number',
-			)
-			.map((override) => [
-				override.entityId,
-				(override as { price: number }).price,
-			]),
-	)
-	const disabled = new Set(
-		overrides
-			.filter(
-				(override) =>
-					override.entityType === 'item' &&
-					(override as { isEnabled?: unknown }).isEnabled === false,
-			)
-			.map((override) => override.entityId),
-	)
-	const seen = new Map<string, MenuItemChoice & { raw: PublicMenuItemData }>()
-	const visit = (items: PublicMenuItemData[]) => {
-		for (const item of items) {
-			if (seen.has(item.id) || disabled.has(item.id)) continue
-			if (item.availabilityStatus !== 'available') continue
-			seen.set(item.id, {
-				id: item.id,
-				name: item.displayName,
-				priceCents: Math.round(
-					(priceOverride.get(item.id) ?? item.price) * 100,
-				),
-				hasImage: Boolean(item.imageKey || item.imageUrl),
-				raw: item,
-			})
+	scopeId: string | null,
+) {
+	return (
+		(await printVertical.featuredItems?.list(org, scopeId)) ?? {
+			items: [],
+			currency: org.dataRegion === 'ksa' ? 'SAR' : 'USD',
 		}
-	}
-	type Category = { items: PublicMenuItemData[]; subcategories?: Category[] }
-	const walk = (categories: Category[]) => {
-		for (const category of categories) {
-			visit(category.items ?? [])
-			walk(category.subcategories ?? [])
-		}
-	}
-	for (const menu of payload.menus) {
-		if (menu.menuType === 'drop' || menu.availabilityStatus !== 'available') {
-			continue
-		}
-		walk(menu.categories as Category[])
-	}
-	return {
-		items: [...seen.values()],
-		currency: payload.organization.currency || currency,
-	}
+	)
 }
 
 function formatMoney(cents: number, currency: string, locale: string) {
@@ -249,76 +147,38 @@ function siteUrl(origin: string, path: string, params: Record<string, string>) {
 	return url.toString()
 }
 
-async function resolvePieces(input: {
+/** The pieces and facts of a target: the core's own, or the vertical's. */
+export async function resolvePrintPieces(input: {
 	request: Request
-	org: PrintOrg
+	access: PrintShopAccess
 	designId: string
 	target: PrintQrTarget
-	product: PrintProductKey
-}): Promise<{
-	pieces: PrintPiece[]
-	tables: PrintSnapshot['facts']['tables']
-}> {
-	const origin = orgSiteOrigin(input.org)
+}): Promise<{ pieces: PrintPiece[]; facts: PrintPieceFact[] }> {
+	const siteOrigin = orgSiteOrigin(input.access.organization)
 	const utm = printUtmParams(input.designId)
-	const target = input.target
-	switch (target.kind) {
-		case 'table': {
-			const tables = await fetchQrTablesForPrint(
-				input.request,
-				input.org.slug,
-				target.tableIds,
-			)
-			return {
-				pieces: tables.map((table) => ({
-					tableLabel: table.label,
-					qrUrl: qrTableUrl(origin, table.locationId, table.token, utm),
-				})),
-				tables: tables.map((table) => ({
-					id: table.id,
-					label: table.label,
-					tokenVersion: table.tokenVersion,
-				})),
-			}
+	const path = printSitePath(input.target)
+	if (path !== null) {
+		return {
+			pieces: [{ label: null, qrUrl: siteUrl(siteOrigin, path || '/', utm) }],
+			facts: [],
 		}
-		case 'menu':
-			return {
-				pieces: [
-					{
-						tableLabel: null,
-						qrUrl: qrPosterUrl(origin, target.locationId, utm),
-					},
-				],
-				tables: [],
-			}
-		case 'reservations':
-			return {
-				pieces: [
-					{
-						tableLabel: null,
-						qrUrl: siteUrl(origin, '/reserve', {
-							...(target.locationId ? { location: target.locationId } : {}),
-							...utm,
-						}),
-					},
-				],
-				tables: [],
-			}
-		case 'site':
-			return {
-				pieces: [
-					{ tableLabel: null, qrUrl: siteUrl(origin, target.path || '/', utm) },
-				],
-				tables: [],
-			}
-		default:
-			return { pieces: [{ tableLabel: null, qrUrl: null }], tables: [] }
 	}
+	const target = printVertical.qrTargets?.[input.target.kind]
+	if (!target || input.target.kind === 'none') {
+		return { pieces: [{ label: null, qrUrl: null }], facts: [] }
+	}
+	return target.resolve(input.target, {
+		request: input.request,
+		access: input.access,
+		designId: input.designId,
+		siteOrigin,
+		utm,
+	})
 }
 
 export async function buildPrintSnapshot(input: {
 	request: Request
-	org: PrintOrg
+	access: PrintShopAccess
 	design: {
 		id: string
 		product: PrintProductKey
@@ -329,10 +189,11 @@ export async function buildPrintSnapshot(input: {
 	/** Facts only (stale check): no logo or photo downloads. */
 	skipImages?: boolean
 }): Promise<PrintSnapshot> {
-	const { org, design } = input
+	const { design } = input
+	const org = input.access.organization
 	const withImages = input.skipImages !== true
 	const content = design.content
-	const product = PRINT_PRODUCTS[design.product]
+	const product = printCatalog.products[design.product]
 	const theme = solidEmailTheme(
 		resolveEmailTheme({
 			organizationName: org.name,
@@ -352,7 +213,7 @@ export async function buildPrintSnapshot(input: {
 	if (locales.length === 0) locales.push(defaultLocale)
 
 	const copy = locales.map((locale) => {
-		const defaults = defaultPrintCopy(locale, content.qr.kind)
+		const defaults = printCatalog.defaultCopy(locale, content.qr.kind)
 		return {
 			locale,
 			dir: localeDirection(locale),
@@ -361,23 +222,18 @@ export async function buildPrintSnapshot(input: {
 			callToAction:
 				content.callToAction[locale]?.trim() || defaults.callToAction,
 			qrCaption: defaults.qrCaption,
-			tableWord: printCopy(locale, 'table'),
+			pieceWord: printCatalog.pieceWord(locale, content.qr.kind),
 		}
 	})
 
-	const locations = await listOrgLocations(org.id)
-	const location =
-		locations.find((candidate) => candidate.id === content.locationId) ??
-		locations.find((candidate) => candidate.isDefault) ??
-		locations[0] ??
-		null
+	const scope = pickScope(await listPrintScopes(org.id), content.scopeId)
 
 	let featured: PrintFeaturedItem[] = []
 	const featuredFacts: PrintSnapshot['facts']['featured'] = []
-	if (product.featuredItems && content.featuredItemIds.length > 0) {
+	if (product?.featuredItems && content.featuredItemIds.length > 0) {
 		const { items, currency } = await listFeaturableItems(
 			org,
-			location?.id ?? null,
+			scope?.id ?? null,
 		)
 		const byId = new Map(items.map((item) => [item.id, item]))
 		const picked = content.featuredItemIds
@@ -385,9 +241,10 @@ export async function buildPrintSnapshot(input: {
 			.filter((item): item is NonNullable<typeof item> => Boolean(item))
 		featured = await Promise.all(
 			picked.map(async (item) => {
-				const imageKey = item.raw.imageKey
 				const objectKey =
-					withImages && imageKey ? await mediaObjectKey(org.id, imageKey) : null
+					withImages && item.imageKey
+						? await mediaObjectKey(org.id, item.imageKey)
+						: null
 				const price = formatMoney(item.priceCents, currency, locales[0]!)
 				featuredFacts.push({ id: item.id, name: item.name, price })
 				return {
@@ -402,12 +259,11 @@ export async function buildPrintSnapshot(input: {
 		)
 	}
 
-	const { pieces, tables } = await resolvePieces({
+	const { pieces, facts } = await resolvePrintPieces({
 		request: input.request,
-		org,
+		access: input.access,
 		designId: design.id,
 		target: content.qr,
-		product: design.product,
 	})
 
 	const origin = orgSiteOrigin(org)
@@ -431,12 +287,11 @@ export async function buildPrintSnapshot(input: {
 		},
 		copy,
 		featured,
-		address: content.showAddress
-			? formatAddress(location?.address ?? null)
-			: null,
+		address: content.showAddress ? (scope?.address ?? null) : null,
 		website: content.showWebsite ? new URL(origin).host : null,
+		qr: content.qr,
 		pieces,
-		facts: { featured: featuredFacts, tables },
+		facts: { featured: featuredFacts, pieces: facts },
 	}
 }
 
@@ -480,16 +335,16 @@ export function staleFacts(
 			changes.push(`featured:${item.id}:price`)
 		else if (live.name !== item.name) changes.push(`featured:${item.id}:name`)
 	}
-	const tablesNow = new Map(
-		current.facts.tables.map((table) => [table.id, table]),
+	const piecesNow = new Map(
+		(current.facts.pieces ?? []).map((piece) => [piece.id, piece]),
 	)
-	for (const table of approved.facts.tables) {
-		const live = tablesNow.get(table.id)
-		if (!live) changes.push(`table:${table.id}:removed`)
-		else if (live.tokenVersion !== table.tokenVersion) {
-			changes.push(`table:${table.id}:token`)
-		} else if (live.label !== table.label)
-			changes.push(`table:${table.id}:label`)
+	for (const piece of approved.facts.pieces ?? []) {
+		const live = piecesNow.get(piece.id)
+		if (!live) changes.push(`piece:${piece.id}:removed`)
+		else if (live.version !== piece.version) {
+			changes.push(`piece:${piece.id}:code`)
+		} else if (live.label !== piece.label)
+			changes.push(`piece:${piece.id}:label`)
 	}
 	return changes
 }

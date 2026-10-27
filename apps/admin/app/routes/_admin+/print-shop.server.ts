@@ -1,5 +1,5 @@
 import { requireUserWithRole } from '@repo/auth'
-import { PRINT_PRODUCT_KEYS, PRINT_PRODUCTS } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import {
 	and,
 	asc,
@@ -99,15 +99,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				)),
 		)
 	}
-	const sizes = PRINT_PRODUCT_KEYS.filter(
-		(key) => PRINT_PRODUCTS[key].shippable,
-	).flatMap((key) =>
-		PRINT_PRODUCTS[key].sizes.map((size) => ({
-			product: key,
-			sizeKey: size.key,
-			label: size.label,
-		})),
-	)
+	const sizes = printCatalog.productKeys
+		.filter((key) => printCatalog.products[key]!.shippable)
+		.flatMap((key) =>
+			printCatalog.products[key]!.sizes.map((size) => ({
+				product: key,
+				sizeKey: size.key,
+				label: size.label,
+			})),
+		)
 	return {
 		settings: {
 			markupBp: settings?.markupBp ?? 3000,
@@ -133,7 +133,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					vendor: reference.vendor,
 					pending: reference.status === 'pending',
 				})),
-			// Kept after tax: what Menuza earns over the vendor's wholesale.
+			// Kept after tax: what the platform earns over the vendor's wholesale.
 			// Only money actually collected and kept counts.
 			marginCents: MARGIN_STATUSES.has(order.status)
 				? order.totalCents - order.taxCents - order.wholesaleCents
@@ -151,7 +151,7 @@ const ActionSchema = z.discriminatedUnion('_action', [
 	}),
 	z.object({
 		_action: z.literal('catalog'),
-		product: z.enum(PRINT_PRODUCT_KEYS),
+		product: z.string().refine((key) => printCatalog.isProduct(key)),
 		sizeKey: z.string().trim().min(1).max(20),
 		vendor: z.enum(PRINT_ADMIN_VENDORS),
 		vendorSku: z.string().trim().min(1).max(200),
@@ -265,9 +265,9 @@ export async function action({
 			return { ok: true }
 		}
 		case 'catalog': {
-			const product = PRINT_PRODUCTS[input.product]
+			const product = printCatalog.products[input.product]
 			if (
-				!product.shippable ||
+				!product?.shippable ||
 				!product.sizes.some((size) => size.key === input.sizeKey)
 			) {
 				return {

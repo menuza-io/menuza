@@ -172,6 +172,16 @@
       "import": "./src/print-shop.ts",
       "default": "./src/print-shop.ts"
     },
+    "./print-shop-catalog": {
+      "types": "./src/print-shop-catalog.ts",
+      "import": "./src/print-shop-catalog.ts",
+      "default": "./src/print-shop-catalog.ts"
+    },
+    "./print-shop-restaurant": {
+      "types": "./src/print-shop-restaurant.ts",
+      "import": "./src/print-shop-restaurant.ts",
+      "default": "./src/print-shop-restaurant.ts"
+    },
     "./qr-ordering": {
       "types": "./src/qr-ordering.ts",
       "import": "./src/qr-ordering.ts",

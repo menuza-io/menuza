@@ -2,6 +2,7 @@ import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import { PRINT_VENDOR_CHECK_HOLDS } from '@repo/common/print-shop'
+import { brand } from '@repo/config/brand'
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -34,6 +35,7 @@ import {
 } from '@repo/ui/table'
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
+import { PRINT_VERTICAL_PRODUCT_LABELS } from '#app/components/print/vertical-labels.ts'
 import {
 	action,
 	loader,
@@ -51,10 +53,14 @@ function money(cents: number, locale: string) {
 }
 
 const PRODUCT_LABELS: Record<string, MessageDescriptor> = {
-	table_card: msg`Table QR cards`,
 	poster: msg`Poster`,
 	flyer: msg`Flyer`,
+	window_sticker: msg`Window sticker`,
+	...PRINT_VERTICAL_PRODUCT_LABELS,
 }
+
+/** The platform is the merchant of shipped prints. */
+const platform = brand.name
 
 const STATUS_LABELS: Record<string, MessageDescriptor> = {
 	quote: msg`Price ready`,
@@ -388,8 +394,8 @@ function CatalogRow({
 	const fetcher = useFetcher<PrintAdminResult>()
 	const { _ } = useLingui()
 	const formId = `catalog-${size.product}-${size.sizeKey}`
-	// Every control names its row: a screen reader hears "Vendor, Table card
-	// A6", not fifteen identical "Vendor" fields.
+	// Every control names its row: a screen reader hears "Vendor, Poster A3",
+	// not fifteen identical "Vendor" fields.
 	const item = `${
 		PRODUCT_LABELS[size.product]
 			? _(PRODUCT_LABELS[size.product]!)
@@ -527,7 +533,7 @@ function OrderActions({
 	}, [fetcher.state, fetcher.data, retryFetcher.state, retryFetcher.data])
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
-	// then means Menuza still pays the vendor, so it is its own action.
+	// then means the platform still pays the vendor, so it is its own action.
 	const vendorMayPrint = [
 		'in_production',
 		'shipped',
@@ -652,7 +658,7 @@ function OrderActions({
 						accessibleLabel={_(msg`Accept new price, ${orderName}`)}
 						title={_(msg`Accept the new wholesale price?`)}
 						description={_(
-							msg`The order goes to the vendor at today's price. The organization already paid ${amount}; Menuza absorbs the difference.`,
+							msg`The order goes to the vendor at today's price. The organization already paid ${amount}; ${platform} absorbs the difference.`,
 						)}
 						confirmLabel={_(msg`Accept and send`)}
 						variant="outline"
@@ -684,7 +690,7 @@ function OrderActions({
 					title={_(msg`Refund ${amount} and keep the vendor order?`)}
 					description={
 						_(
-							msg`For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at Menuza's cost. This cannot be undone.`,
+							msg`For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at ${platform}'s cost. This cannot be undone.`,
 						) + checkNote
 					}
 					confirmLabel={_(msg`Refund in full`)}

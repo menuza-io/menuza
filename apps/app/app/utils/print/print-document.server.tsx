@@ -1,11 +1,10 @@
 import {
-	getPrintSize,
 	PRINT_HOME_SHEET_SIZES,
-	PRINT_PRODUCTS,
 	PRINT_SAFE_MM,
 	type PrintHomeSheet,
 	type PrintSnapshot,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { PrintArtwork } from '#app/components/print/print-artwork.tsx'
 
@@ -26,7 +25,7 @@ export type PrintDocumentInput = {
 	qrSvgs: Array<string | null>
 	homeSheet?: PrintHomeSheet
 	bleedMm?: number
-	/** Proof only: how many pieces to show (a table set can be long). */
+	/** Proof only: how many pieces to show (a set of cards can be long). */
 	proofLimit?: number
 	/** Fallback renderer: open the browser print dialog once fonts load. */
 	autoPrint?: boolean
@@ -76,9 +75,9 @@ type Box = { widthMm: number; heightMm: number }
 
 /** The flat piece: a folded tent is two panels, the top one upside down. */
 function pieceBox(snapshot: PrintSnapshot): Box & { panelHeightMm: number } {
-	const size = getPrintSize(snapshot.product, snapshot.sizeKey)
+	const size = printCatalog.getSize(snapshot.product, snapshot.sizeKey)
 	if (!size) throw new Error('Unknown print size')
-	const folded = PRINT_PRODUCTS[snapshot.product].folded === true
+	const folded = printCatalog.products[snapshot.product]?.folded === true
 	return {
 		widthMm: size.widthMm,
 		heightMm: folded ? size.heightMm * 2 : size.heightMm,
@@ -95,7 +94,7 @@ function pieceMarkup(
 	const artwork = renderToStaticMarkup(
 		<PrintArtwork snapshot={snapshot} piece={piece} qrSvg={qrSvg} />,
 	)
-	if (!PRINT_PRODUCTS[snapshot.product].folded) return artwork
+	if (!printCatalog.products[snapshot.product]?.folded) return artwork
 	return `<div class="tent"><div class="tent-panel tent-back">${artwork}</div><div class="tent-panel">${artwork}</div><div class="fold-line"></div></div>`
 }
 
@@ -129,7 +128,7 @@ function documentCss(input: {
 }) {
 	const { snapshot, page, piece, bleedMm, format } = input
 	const brand = snapshot.brand
-	const size = getPrintSize(snapshot.product, snapshot.sizeKey)!
+	const size = printCatalog.getSize(snapshot.product, snapshot.sizeKey)!
 	const shortEdge = Math.min(size.widthMm, size.heightMm)
 	const heading = `${cssString(familyName(brand.headingFont) || 'Inter')}, ${SCRIPT_FONTS.map(cssString).join(', ')}, sans-serif`
 	const body = `${cssString(familyName(brand.bodyFont) || 'Inter')}, ${SCRIPT_FONTS.map(cssString).join(', ')}, sans-serif`
@@ -191,7 +190,7 @@ ${[300, 280, 260, 240]
 .logo { max-height: calc(var(--u) * 12); max-width: calc(var(--u) * 40); object-fit: contain; }
 .brand-name { font-family: var(--heading); font-weight: 600; font-size: calc(var(--u) * 4.2); letter-spacing: .01em; overflow-wrap: anywhere; }
 .logo + .brand-name { font-size: calc(var(--u) * 3.2); }
-.brand, .qr, .footer, .table-label { flex-shrink: 0; }
+.brand, .qr, .footer, .piece-label { flex-shrink: 0; }
 .message { display: flex; flex-direction: column; gap: calc(var(--u) * 2); min-height: 0; overflow: hidden; }
 /* Long copy is clamped so the QR code and footer always stay inside the trim. */
 .headline .text-main, .headline .text-second { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
@@ -202,8 +201,8 @@ ${[300, 280, 260, 240]
 .body { margin: 0; font-size: calc(var(--u) * 3.6); color: var(--muted); text-wrap: pretty; }
 .text-main, .text-second { display: block; }
 .text-second { font-size: .72em; opacity: .85; margin-top: .3em; }
-.table-label { font-family: var(--heading); font-weight: 800; font-size: calc(var(--u) * 7); padding: calc(var(--u) * 1.2) calc(var(--u) * 4); border-radius: calc(var(--u) * 2); background: var(--primary); color: var(--primary-fg); }
-.table-label .text-second { font-size: .6em; }
+.piece-label { font-family: var(--heading); font-weight: 800; font-size: calc(var(--u) * 7); padding: calc(var(--u) * 1.2) calc(var(--u) * 4); border-radius: calc(var(--u) * 2); background: var(--primary); color: var(--primary-fg); }
+.piece-label .text-second { font-size: .6em; }
 .qr { margin: 0; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1.6); }
 .qr-code { width: calc(var(--u) * 46); height: calc(var(--u) * 46); padding: calc(var(--u) * 2.4); background: #ffffff; border-radius: calc(var(--u) * 3); border: calc(var(--u) * 0.6) solid var(--primary); }
 .qr-code svg { display: block; width: 100%; height: 100%; }
@@ -229,7 +228,7 @@ ${[300, 280, 260, 240]
 .style-bold .headline { color: var(--primary-fg); font-size: calc(var(--u) * 9); }
 .family-page.style-bold .headline { font-size: calc(var(--u) * 10); }
 .style-bold .body, .style-bold .footer, .style-bold .featured-price { color: var(--primary-fg); opacity: .85; }
-.style-bold .table-label { background: var(--primary-fg); color: var(--primary); }
+.style-bold .piece-label { background: var(--primary-fg); color: var(--primary); }
 .style-bold .qr-code { border-color: var(--primary-fg); }
 
 .style-minimal .bg { background: #ffffff; }
@@ -263,7 +262,7 @@ export function printDocumentCsp(nonce?: string) {
 export function renderPrintHtml(input: PrintDocumentInput): string {
 	const { snapshot, format } = input
 	const piece = pieceBox(snapshot)
-	const family = PRINT_PRODUCTS[snapshot.product].family
+	const family = printCatalog.products[snapshot.product]?.family ?? 'page'
 	const bleedMm = format === 'home' ? 0 : (input.bleedMm ?? 3)
 	const indexes = snapshot.pieces.map((_, index) => index)
 	const shown =

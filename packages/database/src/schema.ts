@@ -3963,7 +3963,8 @@ export const PrintOrder = sqliteTable(
 		wholesaleCents: integer().notNull(),
 		markupBp: integer().notNull(),
 		quoteExpiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
-		locationId: text(),
+		// The vertical's scope whose address prefilled the ship-to (opaque).
+		scopeId: text(),
 		recipientName: text().notNull(),
 		recipientPhone: text().notNull(),
 		addressLine1: text().notNull(),

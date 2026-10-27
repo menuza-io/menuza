@@ -3,11 +3,10 @@ import { parseWithZod } from '@conform-to/zod'
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
-	PRINT_PRODUCT_KEYS,
-	PRINT_PRODUCTS,
 	PRINT_TEMPLATE_STYLES,
 	type PrintProductKey,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import {
@@ -33,7 +32,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import {
-	PRINT_PRODUCT_LABELS,
+	printProductLabel,
 	PRINT_STYLE_LABELS,
 } from '#app/components/print/print-labels.ts'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
@@ -41,7 +40,9 @@ import { createPrintDesign } from '#app/utils/print/designs.server.ts'
 
 const NewPrintSchema = z.object({
 	name: z.string().trim().min(1).max(120),
-	product: z.enum(PRINT_PRODUCT_KEYS),
+	product: z
+		.string()
+		.refine((key) => printCatalog.isProduct(key), 'Choose what to print'),
 	sizeKey: z.string().trim().min(1).max(20),
 	style: z.enum(PRINT_TEMPLATE_STYLES),
 })
@@ -66,7 +67,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (submission.status !== 'success') {
 		return { result: submission.reply() }
 	}
-	const product = PRINT_PRODUCTS[submission.value.product]
+	const product = printCatalog.products[submission.value.product]!
 	if (!product.sizes.some((size) => size.key === submission.value.sizeKey)) {
 		return {
 			result: submission.reply({ fieldErrors: { sizeKey: ['Choose a size'] } }),
@@ -80,9 +81,10 @@ export default function NewPrintRoute() {
 	const { _ } = useLingui()
 	const { orgSlug, shipping } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
-	const [product, setProduct] = useState<PrintProductKey>('table_card')
+	const firstProduct = printCatalog.productKeys[0]!
+	const [product, setProduct] = useState<PrintProductKey>(firstProduct)
 	const [sizeKey, setSizeKey] = useState(
-		PRINT_PRODUCTS.table_card.sizes[0]!.key,
+		printCatalog.products[firstProduct]!.sizes[0]!.key,
 	)
 	const [form, fields] = useForm({
 		id: 'new-print',
@@ -91,13 +93,13 @@ export default function NewPrintRoute() {
 			parseWithZod(formData, { schema: NewPrintSchema }),
 	})
 
-	const [name, setName] = useState(_(PRINT_PRODUCT_LABELS.table_card.name))
+	const [name, setName] = useState(_(printProductLabel(firstProduct).name))
 	const [nameEdited, setNameEdited] = useState(false)
 	const chooseProduct = (next: PrintProductKey) => {
 		setProduct(next)
-		setSizeKey(PRINT_PRODUCTS[next].sizes[0]!.key)
+		setSizeKey(printCatalog.products[next]!.sizes[0]!.key)
 		// Follow the product until the operator types a name of their own.
-		if (!nameEdited) setName(_(PRINT_PRODUCT_LABELS[next].name))
+		if (!nameEdited) setName(_(printProductLabel(next).name))
 	}
 
 	return (
@@ -117,7 +119,7 @@ export default function NewPrintRoute() {
 						onValueChange={(value) => chooseProduct(value as PrintProductKey)}
 						className="grid gap-3 sm:grid-cols-2"
 					>
-						{PRINT_PRODUCT_KEYS.map((key) => (
+						{printCatalog.productKeys.map((key) => (
 							<Label
 								key={key}
 								className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-4"
@@ -125,13 +127,13 @@ export default function NewPrintRoute() {
 								<RadioGroupItem value={key} className="mt-0.5" />
 								<span className="flex flex-col gap-1">
 									<span className="flex flex-wrap items-center gap-2 font-medium">
-										{_(PRINT_PRODUCT_LABELS[key].name)}
-										{shipping && PRINT_PRODUCTS[key].shippable ? (
+										{_(printProductLabel(key).name)}
+										{shipping && printCatalog.products[key]!.shippable ? (
 											<Badge variant="secondary">{_(msg`Can ship`)}</Badge>
 										) : null}
 									</span>
 									<span className="text-muted-foreground text-sm font-normal">
-										{_(PRINT_PRODUCT_LABELS[key].description)}
+										{_(printProductLabel(key).description)}
 									</span>
 								</span>
 							</Label>
@@ -147,7 +149,7 @@ export default function NewPrintRoute() {
 						onValueChange={(value) => setSizeKey(String(value))}
 						className="flex flex-wrap gap-3"
 					>
-						{PRINT_PRODUCTS[product].sizes.map((size) => (
+						{printCatalog.products[product]!.sizes.map((size) => (
 							<Label
 								key={size.key}
 								className="border-border has-[[data-checked]]:border-primary flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-4"

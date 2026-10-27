@@ -27,17 +27,6 @@ export async function canPrintQrTables(userId: string, organizationId: string) {
 	)
 }
 
-/** A snapshot with table codes (proof, download) needs the same right. */
-export async function requireTableCodeAccess(
-	access: { userId: string; organization: { id: string } },
-	snapshot: { facts: { tables: unknown[] } },
-) {
-	if (snapshot.facts.tables.length === 0) return
-	if (!(await canPrintQrTables(access.userId, access.organization.id))) {
-		throw new Response('Forbidden', { status: 403 })
-	}
-}
-
 export async function isQrDineInOn(organizationId: string) {
 	const [enabled, dineIn] = await Promise.all([
 		getFeatureFlag(QR_ORDERING_FLAG_KEYS.enabled, { organizationId }),

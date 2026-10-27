@@ -3,18 +3,15 @@ import { parseWithZod } from '@conform-to/zod'
 import { msg, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
-	defaultPrintCopy,
-	getPrintSize,
 	localeDirection,
 	PRINT_MAX_FEATURED_ITEMS,
-	PRINT_PRODUCTS,
 	PRINT_TEMPLATE_STYLES,
 	PRINT_TEXT_MAX,
-	printDesignContentSchema,
-	printTargetsFor,
+	printSitePath,
 	type PrintDesignContent,
 	type PrintQrTarget,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { getSiteLocaleNativeLabel } from '@repo/common/site-locales'
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/alert'
 import {
@@ -58,10 +55,11 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 import {
-	PRINT_PRODUCT_LABELS,
-	PRINT_QR_TARGET_LABELS,
 	PRINT_STYLE_LABELS,
+	printProductLabel,
+	printTargetLabel,
 } from '#app/components/print/print-labels.ts'
+import { printShopUi } from '#app/components/print/vertical-ui.tsx'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
 import {
 	approvedSnapshot,
@@ -74,15 +72,15 @@ import {
 } from '#app/utils/print/designs.server.ts'
 import {
 	listFeaturableItems,
-	listOrgLocations,
+	listPrintScopes,
 	orgLocales,
 	staleFacts,
 } from '#app/utils/print/print-snapshot.server.ts'
 import {
-	canPrintQrTables,
-	fetchQrTablesForPrint,
-	isQrDineInOn,
-} from '#app/utils/print/qr-tables.server.ts'
+	availableQrTargets,
+	canViewQrCodes,
+} from '#app/utils/print/qr-access.server.ts'
+import { printVertical } from '#app/utils/print/vertical.server.ts'
 
 /** Width the proof document renders at (fits the aside on every screen). */
 const PROOF_WIDTH_PX = 320
@@ -100,20 +98,34 @@ const DesignFormSchema = z.object({
 	headline: localized(PRINT_TEXT_MAX.headline),
 	body: localized(PRINT_TEXT_MAX.body),
 	callToAction: localized(PRINT_TEXT_MAX.callToAction),
-	qrKind: z.enum(['table', 'menu', 'reservations', 'site', 'none']),
-	qrLocationId: z.string().max(100).optional(),
+	qrKind: z.string().min(1).max(40),
 	qrPath: z.string().max(200).optional(),
-	allTables: z.boolean().optional(),
-	tableIds: z.array(z.string().max(100)).optional().default([]),
 	featuredItemIds: z.array(z.string().max(100)).optional().default([]),
-	locationId: z.string().max(100).optional(),
+	scopeId: z.string().max(100).optional(),
 	showAddress: z.boolean().optional(),
 	showWebsite: z.boolean().optional(),
 })
 
 type DesignForm = z.infer<typeof DesignFormSchema>
 
-function toContent(form: DesignForm, siteLocales: readonly string[]) {
+/** The target the form chose: the core's own kinds, or the vertical's. */
+function qrFromForm(
+	form: DesignForm,
+	formData: FormData,
+): PrintQrTarget | 'empty' {
+	if (form.qrKind === 'site') {
+		return { kind: 'site', path: form.qrPath?.trim() || '/' }
+	}
+	if (form.qrKind === 'none') return { kind: 'none' }
+	const target = printVertical.qrTargets?.[form.qrKind]
+	return target ? target.fromForm(formData) : { kind: form.qrKind }
+}
+
+function toContent(
+	form: DesignForm,
+	qr: PrintQrTarget,
+	siteLocales: readonly string[],
+) {
 	const locales = [form.locale1, form.locale2]
 		.filter((locale): locale is string => Boolean(locale))
 		.filter((locale, index, list) => list.indexOf(locale) === index)
@@ -122,34 +134,14 @@ function toContent(form: DesignForm, siteLocales: readonly string[]) {
 		Object.fromEntries(
 			locales.map((locale) => [locale, (map[locale] ?? '').trim()]),
 		)
-	let qr: PrintQrTarget
-	switch (form.qrKind) {
-		case 'table':
-			qr = {
-				kind: 'table',
-				tableIds: form.allTables ? ['all'] : form.tableIds,
-			}
-			break
-		case 'menu':
-			qr = { kind: 'menu', locationId: form.qrLocationId || '' }
-			break
-		case 'reservations':
-			qr = { kind: 'reservations', locationId: form.qrLocationId || null }
-			break
-		case 'site':
-			qr = { kind: 'site', path: form.qrPath?.trim() || '/' }
-			break
-		default:
-			qr = { kind: 'none' }
-	}
-	return printDesignContentSchema.safeParse({
+	return printCatalog.designContentSchema.safeParse({
 		locales,
 		headline: pick(form.headline),
 		body: pick(form.body),
 		callToAction: pick(form.callToAction),
 		qr,
 		featuredItemIds: form.featuredItemIds.slice(0, PRINT_MAX_FEATURED_ITEMS),
-		locationId: form.locationId || null,
+		scopeId: form.scopeId || null,
 		showAddress: form.showAddress === true,
 		showWebsite: form.showWebsite === true,
 	} satisfies Record<keyof PrintDesignContent, unknown>)
@@ -159,45 +151,35 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const access = await requirePrintShopAccess(request, params.orgSlug)
 	const row = await requirePrintDesign(access.organization.id, params.designId)
 	const design = toDesignView(row)
-	const product = PRINT_PRODUCTS[design.product]
+	const product = printCatalog.products[design.product]
+	if (!product) throw new Response('Not Found', { status: 404 })
 	const { locales, defaultLocale } = orgLocales(access.organization)
-	const locations = (await listOrgLocations(access.organization.id)).map(
-		(location) => ({ id: location.id, name: location.name }),
+	const scopes = (await listPrintScopes(access.organization.id)).map(
+		(scope) => ({ id: scope.id, name: scope.name }),
 	)
-	const targets = [...printTargetsFor(design.product)].filter(
-		(target) => target !== 'table',
-	) as Array<PrintQrTarget['kind']>
-	let tables: Array<{ id: string; label: string; locationId: string }> = []
-	if (
-		printTargetsFor(design.product).includes('table') &&
-		(await isQrDineInOn(access.organization.id)) &&
-		(await canPrintQrTables(access.userId, access.organization.id))
-	) {
-		targets.unshift('table')
-		tables = (
-			await fetchQrTablesForPrint(request, access.organization.slug).catch(
-				() => [],
-			)
-		).map((table) => ({
-			id: table.id,
-			label: table.label,
-			locationId: table.locationId,
-		}))
+	const targets = await availableQrTargets(
+		access,
+		printCatalog.targetsFor(design.product),
+	)
+	// Editor data of the vertical's targets (for example the codes to pick).
+	const targetData: Record<string, unknown> = {}
+	for (const kind of targets) {
+		const editorData = printVertical.qrTargets?.[kind]?.editorData
+		if (editorData) targetData[kind] = await editorData(request, access)
 	}
-	const items = product.featuredItems
-		? (
-				await listFeaturableItems(
-					access.organization,
-					design.content.locationId,
-				)
-			).items.map((item) => ({
-				id: item.id,
-				name: item.name,
-				hasImage: item.hasImage,
-			}))
-		: []
+	const featuredSource = Boolean(printVertical.featuredItems)
+	const items =
+		product.featuredItems && featuredSource
+			? (
+					await listFeaturableItems(access.organization, design.content.scopeId)
+				).items.map((item) => ({
+					id: item.id,
+					name: item.name,
+					hasImage: Boolean(item.imageKey),
+				}))
+			: []
 
-	// Re-order check: what changed in the menu or tables since approval.
+	// Re-order check: what changed in the items or codes since approval.
 	let stale: string[] = []
 	const approved = approvedSnapshot(row)
 	if (approved) {
@@ -211,15 +193,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		}
 	}
 
-	const size = getPrintSize(design.product, design.sizeKey)
+	const size = printCatalog.getSize(design.product, design.sizeKey)
 	const pieceCount = approved?.pieces.length ?? null
-	// Pieces the proof stands for (a table set is one card per table).
-	const proofPieces =
-		design.content.qr.kind === 'table'
-			? design.content.qr.tableIds.includes('all')
-				? tables.length
-				: design.content.qr.tableIds.length
-			: 1
+	// Pieces the proof stands for (a per-piece target prints one card each).
+	const countPieces =
+		printVertical.qrTargets?.[design.content.qr.kind]?.pieceCount
+	const proofPieces = countPieces
+		? countPieces(design.content.qr, targetData[design.content.qr.kind])
+		: 1
 	return {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
@@ -229,16 +210,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			const value = new URL(request.url).searchParams.get('download')
 			return value === 'limited' || value === 'failed' ? value : null
 		})(),
-		// Table cards carry live table codes: only menu editors see them.
-		tableCodesHidden:
-			design.content.qr.kind === 'table' &&
-			!(await canPrintQrTables(access.userId, access.organization.id)),
+		// Some codes are capabilities: the vertical decides who sees them.
+		qrHidden: !(await canViewQrCodes(access, design.content.qr)),
 		design,
 		locales,
 		defaultLocale,
-		locations,
+		scopes,
 		targets,
-		tables,
+		targetData,
+		featuredSource,
 		items,
 		stale,
 		pieceCount,
@@ -262,15 +242,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	if (submission.status !== 'success') {
 		return { result: submission.reply(), error: null }
 	}
-	if (
-		submission.value.qrKind === 'table' &&
-		!submission.value.allTables &&
-		submission.value.tableIds.length === 0
-	) {
-		return { result: submission.reply(), error: 'no_tables' as const }
+	const qr = qrFromForm(submission.value, formData)
+	if (qr === 'empty') {
+		return { result: submission.reply(), error: 'qr_empty' as const }
 	}
 	const { locales } = orgLocales(access.organization)
-	const content = toContent(submission.value, locales)
+	const content = toContent(submission.value, qr, locales)
 	if (!content.success) {
 		const onQr = content.error.issues.some((issue) => issue.path[0] === 'qr')
 		return {
@@ -288,15 +265,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		try {
 			await approvePrintDesign(request, access, saved)
 		} catch (error) {
-			// Nothing to print (for example a table set with no tables yet).
+			// Nothing to print (for example a set of cards with none chosen).
 			if (error instanceof Response && error.status === 422) {
-				return { result: submission.reply(), error: 'no_tables' as const }
+				return { result: submission.reply(), error: 'qr_empty' as const }
 			}
-			// The region holding the table codes is unreachable: saved, not approved.
+			// The codes' source is unreachable: saved, not approved.
 			if (error instanceof Response && error.status === 503) {
 				return {
 					result: submission.reply(),
-					error: 'tables_unavailable' as const,
+					error: 'qr_unavailable' as const,
 				}
 			}
 			throw error
@@ -313,16 +290,18 @@ export default function PrintDesignRoute() {
 	const busy = navigation.state !== 'idle'
 	const { design, orgSlug, canWrite } = data
 	const content = design.content
-	const product = PRINT_PRODUCTS[design.product]
+	const product = printCatalog.products[design.product]!
 
 	const [locale1, setLocale1] = useState(
 		content.locales[0] ?? data.defaultLocale,
 	)
 	const [locale2, setLocale2] = useState(content.locales[1] ?? '')
 	const [qrKind, setQrKind] = useState<PrintQrTarget['kind']>(content.qr.kind)
-	const initialTables =
-		content.qr.kind === 'table' ? content.qr.tableIds : ['all']
-	const [allTables, setAllTables] = useState(initialTables.includes('all'))
+	const targetUi = printShopUi.qrTargets?.[qrKind]
+	const TargetFields = targetUi?.Fields
+	const hiddenNote =
+		printShopUi.qrTargets?.[content.qr.kind]?.hidden ??
+		msg`This print carries private QR codes, so only people who may see them can see the proof and download it.`
 
 	// Approving must approve what the proof shows: unsaved edits first.
 	const [dirty, setDirty] = useState(false)
@@ -346,10 +325,6 @@ export default function PrintDesignRoute() {
 	const shownLocales = [locale1, locale2].filter(
 		(locale, index, list) => Boolean(locale) && list.indexOf(locale) === index,
 	)
-	const qrLocationId =
-		content.qr.kind === 'menu' || content.qr.kind === 'reservations'
-			? (content.qr.locationId ?? '')
-			: (content.locationId ?? data.locations[0]?.id ?? '')
 	const proofSrc = `/${orgSlug}/marketing/print/${design.id}/proof?v=${encodeURIComponent(design.updatedAt)}`
 	const proofHeight = Math.round(
 		Math.min(3, Math.max(1, data.proofPieces)) *
@@ -362,7 +337,7 @@ export default function PrintDesignRoute() {
 		<div className="space-y-8">
 			<PageHeader
 				title={design.name}
-				description={`${_(PRINT_PRODUCT_LABELS[design.product].name)} · ${getPrintSize(design.product, design.sizeKey)?.label ?? ''}`}
+				description={`${_(printProductLabel(design.product).name)} · ${printCatalog.getSize(design.product, design.sizeKey)?.label ?? ''}`}
 				actions={
 					<Button
 						variant="outline"
@@ -376,20 +351,23 @@ export default function PrintDesignRoute() {
 			{actionData?.error ? (
 				<Alert variant="destructive" role="alert">
 					<AlertTitle>
-						{actionData.error === 'tables_unavailable'
+						{actionData.error === 'qr_unavailable'
 							? _(msg`We could not approve this print`)
 							: _(msg`We could not save this print`)}
 					</AlertTitle>
 					<AlertDescription>
-						{actionData.error === 'no_tables'
-							? _(msg`Choose at least one table for the cards.`)
-							: actionData.error === 'tables_unavailable'
+						{actionData.error === 'qr_empty'
+							? _(
+									printShopUi.qrTargets?.[qrKind]?.empty ??
+										msg`Choose what the QR codes are for.`,
+								)
+							: actionData.error === 'qr_unavailable'
 								? _(
-										msg`Your changes are saved, but table codes could not be loaded to approve the proof. Try again in a minute.`,
+										msg`Your changes are saved, but the QR codes could not be loaded to approve the proof. Try again in a minute.`,
 									)
 								: actionData.error === 'invalid_qr'
 									? _(
-											msg`Check the QR code: use a page on your own website, like /menu.`,
+											msg`Check the QR code: use a page on your own website, like /contact.`,
 										)
 									: _(msg`Check the words and choices, then save again.`)}
 					</AlertDescription>
@@ -414,11 +392,11 @@ export default function PrintDesignRoute() {
 			{data.stale.length > 0 ? (
 				<Alert>
 					<AlertTitle>
-						{_(msg`Your menu or tables changed since approval`)}
+						{_(msg`Details on this print changed since approval`)}
 					</AlertTitle>
 					<AlertDescription>
 						{_(
-							msg`Prices, dish names or table codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version.`,
+							msg`Prices, names or QR codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version.`,
 						)}
 					</AlertDescription>
 				</Alert>
@@ -551,7 +529,9 @@ export default function PrintDesignRoute() {
 												name={`headline.${locale}`}
 												dir={localeDirection(locale)}
 												defaultValue={content.headline[locale] ?? ''}
-												placeholder={defaultPrintCopy(locale, qrKind).headline}
+												placeholder={
+													printCatalog.defaultCopy(locale, qrKind).headline
+												}
 												maxLength={PRINT_TEXT_MAX.headline}
 											/>
 										</Field>
@@ -578,7 +558,7 @@ export default function PrintDesignRoute() {
 												dir={localeDirection(locale)}
 												defaultValue={content.callToAction[locale] ?? ''}
 												placeholder={
-													defaultPrintCopy(locale, qrKind).callToAction
+													printCatalog.defaultCopy(locale, qrKind).callToAction
 												}
 												maxLength={PRINT_TEXT_MAX.callToAction}
 											/>
@@ -593,7 +573,7 @@ export default function PrintDesignRoute() {
 								<CardTitle>{_(msg`QR code`)}</CardTitle>
 								<CardDescription>
 									{_(
-										msg`Where a guest lands when they scan. Links point at your own website only.`,
+										msg`Where people land when they scan. Links point at your own website only.`,
 									)}
 								</CardDescription>
 							</CardHeader>
@@ -612,78 +592,19 @@ export default function PrintDesignRoute() {
 											className="flex min-h-11 cursor-pointer items-center gap-3"
 										>
 											<RadioGroupItem value={target} />
-											{_(PRINT_QR_TARGET_LABELS[target])}
+											{_(printTargetLabel(target))}
 										</Label>
 									))}
 								</RadioGroup>
 
-								{qrKind === 'table' ? (
-									data.tables.length === 0 ? (
-										<p className="text-muted-foreground text-sm">
-											{_(
-												msg`Add tables in QR ordering first. Each table gets its own card.`,
-											)}
-										</p>
-									) : (
-										<FieldSet>
-											<Label className="flex min-h-11 items-center gap-3">
-												<Switch
-													name="allTables"
-													checked={allTables}
-													onCheckedChange={setAllTables}
-												/>
-												{_(
-													msg`Every table (new tables are added when you approve)`,
-												)}
-											</Label>
-											{!allTables ? (
-												<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-3">
-													{data.tables.map((table) => (
-														<Label
-															key={table.id}
-															className="flex min-h-11 items-center gap-3"
-														>
-															<Checkbox
-																name="tableIds"
-																value={table.id}
-																defaultChecked={initialTables.includes(
-																	table.id,
-																)}
-															/>
-															<bdi className="wrap-anywhere">{table.label}</bdi>
-														</Label>
-													))}
-												</div>
-											) : null}
-										</FieldSet>
-									)
-								) : null}
-
-								{(qrKind === 'menu' || qrKind === 'reservations') &&
-								data.locations.length > 1 ? (
-									<Field>
-										<FieldLabel htmlFor="qr-location">
-											{_(msg`Location`)}
-										</FieldLabel>
-										<select
-											id="qr-location"
-											name="qrLocationId"
-											defaultValue={qrLocationId}
-											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
-										>
-											{data.locations.map((location) => (
-												<option key={location.id} value={location.id}>
-													{location.name}
-												</option>
-											))}
-										</select>
-									</Field>
-								) : (qrKind === 'menu' || qrKind === 'reservations') &&
-								  data.locations[0] ? (
-									<input
-										type="hidden"
-										name="qrLocationId"
-										value={data.locations[0].id}
+								{TargetFields ? (
+									<TargetFields
+										key={qrKind}
+										target={
+											content.qr.kind === qrKind ? content.qr : { kind: qrKind }
+										}
+										data={data.targetData[qrKind] ?? null}
+										scopes={data.scopes}
 									/>
 								) : null}
 
@@ -694,30 +615,34 @@ export default function PrintDesignRoute() {
 											id="qr-path"
 											name="qrPath"
 											dir="ltr"
-											defaultValue={
-												content.qr.kind === 'site' ? content.qr.path : '/'
-											}
-											placeholder="/menu"
+											defaultValue={printSitePath(content.qr) ?? '/'}
+											placeholder="/contact"
 										/>
 									</Field>
 								) : null}
 							</CardContent>
 						</Card>
 
-						{product.featuredItems ? (
+						{product.featuredItems && data.featuredSource ? (
 							<Card>
 								<CardHeader>
-									<CardTitle>{_(msg`Featured dishes`)}</CardTitle>
+									<CardTitle>
+										{_(printShopUi.featuredItems?.title ?? msg`Featured items`)}
+									</CardTitle>
 									<CardDescription>
 										{_(
-											msg`Pick up to 4 dishes. Names, prices and photos come from your menu.`,
+											printShopUi.featuredItems?.description ??
+												msg`Pick up to 4 items. Names, prices and photos come from your catalog.`,
 										)}
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
 									{data.items.length === 0 ? (
 										<p className="text-muted-foreground text-sm">
-											{_(msg`Your menu has no dishes to feature yet.`)}
+											{_(
+												printShopUi.featuredItems?.empty ??
+													msg`There are no items to feature yet.`,
+											)}
 										</p>
 									) : (
 										<div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2">
@@ -754,38 +679,40 @@ export default function PrintDesignRoute() {
 								<CardTitle>{_(msg`Details`)}</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
-								{data.locations.length > 1 ? (
+								{data.scopes.length > 1 ? (
 									<Field>
-										<FieldLabel htmlFor="print-location">
-											{_(msg`Address and prices from`)}
+										<FieldLabel htmlFor="print-scope">
+											{_(printShopUi.scope?.source ?? msg`Address from`)}
 										</FieldLabel>
 										<select
-											id="print-location"
-											name="locationId"
-											defaultValue={content.locationId ?? ''}
+											id="print-scope"
+											name="scopeId"
+											defaultValue={content.scopeId ?? ''}
 											className="border-input bg-background h-11 rounded-md border px-3 text-sm"
 										>
-											{data.locations.map((location) => (
-												<option key={location.id} value={location.id}>
-													{location.name}
+											{data.scopes.map((scope) => (
+												<option key={scope.id} value={scope.id}>
+													{scope.name}
 												</option>
 											))}
 										</select>
 									</Field>
-								) : data.locations[0] ? (
+								) : data.scopes[0] ? (
 									<input
 										type="hidden"
-										name="locationId"
-										value={data.locations[0].id}
+										name="scopeId"
+										value={data.scopes[0].id}
 									/>
 								) : null}
-								<Label className="flex min-h-11 items-center gap-3">
-									<Switch
-										name="showAddress"
-										defaultChecked={content.showAddress}
-									/>
-									{_(msg`Show the address`)}
-								</Label>
+								{data.scopes.length > 0 ? (
+									<Label className="flex min-h-11 items-center gap-3">
+										<Switch
+											name="showAddress"
+											defaultChecked={content.showAddress}
+										/>
+										{_(msg`Show the address`)}
+									</Label>
+								) : null}
 								<Label className="flex min-h-11 items-center gap-3">
 									<Switch
 										name="showWebsite"
@@ -843,7 +770,7 @@ export default function PrintDesignRoute() {
 									<Badge variant="secondary">{_(msg`Draft`)}</Badge>
 								)}
 							</CardTitle>
-							{data.tableCodesHidden ? null : (
+							{data.qrHidden ? null : (
 								<CardDescription>
 									{_(
 										msg`The dashed line is where the print is cut. Keep words away from the edge.`,
@@ -852,11 +779,9 @@ export default function PrintDesignRoute() {
 							)}
 						</CardHeader>
 						<CardContent>
-							{data.tableCodesHidden ? (
+							{data.qrHidden ? (
 								<p className="text-muted-foreground text-sm" role="note">
-									{_(
-										msg`Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it.`,
-									)}
+									{_(hiddenNote)}
 								</p>
 							) : data.proofPieces > 3 ? (
 								<p className="text-muted-foreground mb-2 text-sm">
@@ -868,7 +793,7 @@ export default function PrintDesignRoute() {
 									})()}
 								</p>
 							) : null}
-							{data.tableCodesHidden ? null : (
+							{data.qrHidden ? null : (
 								<iframe
 									key={proofSrc}
 									title={_(msg`Print proof`)}
@@ -885,7 +810,7 @@ export default function PrintDesignRoute() {
 						orgSlug={orgSlug}
 						designId={design.id}
 						approved={isApproved}
-						hidden={data.tableCodesHidden}
+						hidden={data.qrHidden}
 					/>
 
 					{data.canOrder && product.shippable ? (
@@ -965,7 +890,7 @@ function DownloadCard({
 	orgSlug: string
 	designId: string
 	approved: boolean
-	/** Table codes on this print are not for this user (menu edit needed). */
+	/** The QR codes on this print are not for this user (vertical's rule). */
 	hidden: boolean
 }) {
 	const { _ } = useLingui()
@@ -977,7 +902,7 @@ function DownloadCard({
 				<CardDescription>
 					{hidden
 						? _(
-								msg`Only people who can edit the menu can download table cards, because they carry each table's ordering code.`,
+								msg`Only people who may see its QR codes can download this print.`,
 							)
 						: approved
 							? _(msg`Free PDFs of the approved proof.`)

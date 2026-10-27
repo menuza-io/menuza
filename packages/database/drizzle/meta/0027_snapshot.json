@@ -9233,8 +9233,8 @@
 					"notNull": true,
 					"autoincrement": false
 				},
-				"locationId": {
-					"name": "locationId",
+				"scopeId": {
+					"name": "scopeId",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": false,

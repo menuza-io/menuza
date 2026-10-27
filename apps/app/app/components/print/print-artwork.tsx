@@ -2,11 +2,11 @@
    artwork is a standalone print document styled by the stylesheet in
    utils/print/print-document.server.tsx, not by Tailwind. */
 import {
-	PRINT_PRODUCTS,
 	type PrintArtworkCopy,
 	type PrintPiece,
 	type PrintSnapshot,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 
 /**
  * One printed piece, rendered to static HTML for the proof and the PDF. It
@@ -24,9 +24,9 @@ export function PrintArtwork({
 	/** Inline SVG markup of the QR code (generated server-side), or null. */
 	qrSvg: string | null
 }) {
-	const product = PRINT_PRODUCTS[snapshot.product]
+	const product = printCatalog.products[snapshot.product]
 	const [main, second] = snapshot.copy
-	if (!main) return null
+	if (!main || !product) return null
 	const family = product.family
 	const featured = product.featuredItems ? snapshot.featured : []
 	return (
@@ -44,12 +44,16 @@ export function PrintArtwork({
 					<span className="brand-name">{snapshot.brand.name}</span>
 				</header>
 
-				{piece.tableLabel ? (
-					<div className="table-label">
+				{piece.label ? (
+					<div className="piece-label">
 						<Bilingual
 							main={main}
 							second={second}
-							pick={(copy) => `${copy.tableWord} ${piece.tableLabel}`}
+							pick={(copy) =>
+								copy.pieceWord
+									? `${copy.pieceWord} ${piece.label}`
+									: piece.label!
+							}
 						/>
 					</div>
 				) : null}

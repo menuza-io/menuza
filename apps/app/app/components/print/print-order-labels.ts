@@ -46,9 +46,9 @@ export const PRINT_ORDER_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	order_busy: msg`This order is changing right now. Refresh and try again.`,
 	payment_processing: msg`Your payment is being confirmed. This page updates in a moment.`,
 	partial_cancel: msg`Part of this order was already printing. Our team will refund what was cancelled.`,
-	design_stale: msg`Table codes or labels changed since this card was approved. Approve the proof again, then order.`,
-	tables_unavailable: msg`Table codes could not be checked right now. Try again in a minute.`,
-	tables_forbidden: msg`Ordering table cards also needs permission to edit the menu.`,
+	design_stale: msg`QR codes or labels changed since this print was approved. Approve the proof again, then order.`,
+	qr_unavailable: msg`The QR codes could not be checked right now. Try again in a minute.`,
+	qr_forbidden: msg`Ordering this print also needs permission to see its QR codes.`,
 	needs_support: msg`Our team is checking this order with the printer. It cannot be cancelled here right now.`,
 }
 

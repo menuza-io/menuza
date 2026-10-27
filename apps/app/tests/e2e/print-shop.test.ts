@@ -384,7 +384,7 @@ test.describe('Print shop: designing', () => {
 		const path = page.getByLabel('Page', { exact: true })
 		const save = page.getByRole('button', { name: 'Save and update proof' })
 		const refused = page.getByText(
-			'Check the QR code: use a page on your own website, like /menu.',
+			'Check the QR code: use a page on your own website, like /contact.',
 		)
 
 		for (const value of [

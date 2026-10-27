@@ -1,6 +1,4 @@
 import {
-	getPrintSize,
-	PRINT_PRODUCTS,
 	PRINT_SELF_CANCEL_STATUSES,
 	PRINT_VENDOR_CHECK_HOLDS,
 	type PrintOrderStatus,
@@ -8,6 +6,8 @@ import {
 	type PrintShippingAddress,
 	type PrintSnapshot,
 } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
+import { brand } from '@repo/config/brand'
 import {
 	and,
 	asc,
@@ -37,8 +37,8 @@ import { getPrintFileUrl } from '#app/utils/storage.server.ts'
 import { type PrintShopAccess } from './access.server.ts'
 import { exceedsDrift, retailCents } from './pricing.ts'
 import { getPrintFile } from './print-files.server.ts'
-import { staleFacts } from './print-snapshot.server.ts'
-import { fetchQrTablesForPrint, type PrintTable } from './qr-tables.server.ts'
+import { resolvePrintPieces, staleFacts } from './print-snapshot.server.ts'
+import { canViewQrCodes } from './qr-access.server.ts'
 import { getPrintVendor, isPrintMock } from './vendors/index.server.ts'
 import {
 	PRINT_VENDORS,
@@ -49,15 +49,15 @@ import {
 	type VendorOrderState,
 } from './vendors/types.ts'
 
-/** Menuza is the merchant: the platform account, mocked under MOCKS. */
+/** The platform is the merchant: its own Stripe account, mocked under MOCKS. */
 const platformStripe = () => getShopCommerce().getPlatformStripe()
 
 /**
- * Shipped prints. Menuza is the merchant: the operator pays retail (live
+ * Shipped prints. The platform is the merchant: the operator pays retail (live
  * vendor wholesale times the markup, plus shipping at cost, plus Stripe Tax)
  * through a one-off Stripe Checkout on the organization's customer; the vendor
  * order is placed only after Stripe confirms payment, one order per vendor.
- * Operator B2B data only (control plane): no guest data is involved.
+ * Operator B2B data only (control plane): no customer data is involved.
  */
 
 export class PrintOrderError extends Error {
@@ -158,7 +158,7 @@ function vendorAddress(
 	}
 }
 
-/** One vendor item per printed piece (a table-card set is one card per table). */
+/** One vendor item per printed piece (a set of cards is one item per card). */
 function vendorItemsFor(
 	item: Pick<ItemRow, 'id' | 'vendorSku' | 'quantity' | 'pieces'>,
 ): VendorItem[] {
@@ -185,49 +185,56 @@ function allocate(total: number, weights: number[]): number[] {
 }
 
 /**
- * Table cards print each table's code as of approval. A code renewed (or a
- * table renamed or archived) since then would ship cards that no longer
- * work, so such a design has to be approved again before it is sold.
+ * A print with per-piece codes prints each code as of approval. A code
+ * renewed (or a piece renamed or removed) since then would ship prints that
+ * no longer work, so such a design has to be approved again before it is
+ * sold.
  */
-async function requireFreshTables(
+async function requireFreshCodes(
 	request: Request,
 	access: PrintShopAccess,
+	designId: string,
 	snapshot: PrintSnapshot,
 ) {
-	if (snapshot.facts.tables.length === 0) return
-	let live: PrintTable[]
+	if (!snapshot.qr || (snapshot.facts.pieces ?? []).length === 0) return
+	if (!(await canViewQrCodes(access, snapshot.qr))) {
+		throw new PrintOrderError(
+			403,
+			'qr_forbidden',
+			'Ordering this print also needs permission to see its QR codes.',
+		)
+	}
+	let live: Awaited<ReturnType<typeof resolvePrintPieces>>
 	try {
-		live = await fetchQrTablesForPrint(request, access.organization.slug)
+		live = await resolvePrintPieces({
+			request,
+			access,
+			designId,
+			target: snapshot.qr,
+		})
 	} catch (error) {
 		if (error instanceof Response && error.status === 403) {
 			throw new PrintOrderError(
 				403,
-				'tables_forbidden',
-				'Ordering table cards also needs permission to edit the menu.',
+				'qr_forbidden',
+				'Ordering this print also needs permission to see its QR codes.',
 			)
 		}
 		throw new PrintOrderError(
 			503,
-			'tables_unavailable',
-			'Table codes could not be checked right now. Try again in a minute.',
+			'qr_unavailable',
+			'The QR codes could not be checked right now. Try again in a minute.',
 		)
 	}
 	const changes = staleFacts(snapshot, {
 		...snapshot,
-		facts: {
-			...snapshot.facts,
-			tables: live.map((table) => ({
-				id: table.id,
-				label: table.label,
-				tokenVersion: table.tokenVersion,
-			})),
-		},
+		facts: { ...snapshot.facts, pieces: live.facts },
 	})
 	if (changes.length > 0) {
 		throw new PrintOrderError(
 			409,
 			'design_stale',
-			'Table codes or labels changed since this card was approved. Approve the proof again, then order.',
+			'QR codes or labels changed since this print was approved. Approve the proof again, then order.',
 		)
 	}
 }
@@ -238,7 +245,7 @@ export async function createPrintQuote(
 	input: {
 		lines: Array<{ designId: string; quantity: number }>
 		address: PrintShippingAddress
-		locationId: string | null
+		scopeId: string | null
 	},
 ): Promise<string> {
 	const settings = await getPrintSettings()
@@ -280,10 +287,10 @@ export async function createPrintQuote(
 				'Approve each print before ordering it.',
 			)
 		}
-		const product = design.product as PrintProductKey
+		const product = design.product
 		if (
-			!PRINT_PRODUCTS[product]?.shippable ||
-			!getPrintSize(product, design.sizeKey)
+			!printCatalog.products[product]?.shippable ||
+			!printCatalog.getSize(product, design.sizeKey)
 		) {
 			throw new PrintOrderError(
 				422,
@@ -299,7 +306,12 @@ export async function createPrintQuote(
 				'This size cannot be shipped right now.',
 			)
 		}
-		await requireFreshTables(request, access, design.snapshot as PrintSnapshot)
+		await requireFreshCodes(
+			request,
+			access,
+			design.id,
+			design.snapshot as PrintSnapshot,
+		)
 		drafts.push({
 			designId: design.id,
 			snapshotHash: design.snapshotHash ?? '',
@@ -384,7 +396,7 @@ export async function createPrintQuote(
 			quoteExpiresAt: new Date(
 				now.getTime() + settings.quoteTtlMinutes * 60_000,
 			),
-			locationId: input.locationId,
+			scopeId: input.scopeId,
 			recipientName: input.address.recipientName,
 			recipientPhone: input.address.recipientPhone,
 			addressLine1: input.address.line1,
@@ -565,11 +577,16 @@ export async function startPrintCheckout(
 			'This price has expired. Get a new price.',
 		)
 	}
-	// A table code renewed since the quote would ship dead cards: check again
-	// right before money moves (the last step with a signed-in user).
+	// A code renewed since the quote would ship dead prints: check again right
+	// before money moves (the last step with a signed-in user).
 	for (const { item } of items) {
 		if (item.snapshot) {
-			await requireFreshTables(request, access, item.snapshot as PrintSnapshot)
+			await requireFreshCodes(
+				request,
+				access,
+				item.designId,
+				item.snapshot as PrintSnapshot,
+			)
 		}
 	}
 	// One live payment per order: re-serve the open session, and never start a
@@ -1266,7 +1283,7 @@ export async function cancelPrintOrder(
 		order.status === 'held' &&
 		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
 	) {
-		// The vendor may hold an order we never recorded: Menuza support checks
+		// The vendor may hold an order we never recorded: platform support checks
 		// the vendor before anything is refunded.
 		throw new PrintOrderError(
 			409,
@@ -1384,7 +1401,7 @@ const ADMIN_REFUND_REFUSED = [
 /**
  * Admin refunds. In full: vendor orders still waiting are cancelled first;
  * if a vendor already started, Admin must say the vendor keeps printing
- * (`keepPrinting`, e.g. a defect claim or a lost parcel), so Menuza never
+ * (`keepPrinting`, e.g. a defect claim or a lost parcel), so the platform never
  * refunds in full by accident while still paying the vendor. A part
  * (`amountCents`, e.g. what was cancelled after `partial_cancel`) leaves the
  * order printing and clears its hold.
@@ -1420,7 +1437,7 @@ export async function adminRefundPrintOrder(
 		!options.checkedVendor
 	) {
 		// A vendor may hold an order we never recorded: refunding without a
-		// look would leave Menuza paying for prints nobody pays for.
+		// look would leave the platform paying for prints nobody pays for.
 		throw new PrintOrderError(
 			409,
 			'check_vendor',
@@ -1461,7 +1478,7 @@ export async function adminRefundPrintOrder(
 			throw new PrintOrderError(
 				409,
 				'vendor_printing',
-				"A vendor already started printing this order. Refund anyway only if the vendor should keep printing and shipping at Menuza's cost.",
+				`A vendor already started printing this order. Refund anyway only if the vendor should keep printing and shipping at ${brand.name}'s cost.`,
 			)
 		}
 		vendorsCancelled = cancelled

@@ -12,7 +12,7 @@ import {
 } from '#app/utils/print/designs.server.ts'
 import { printDocumentCsp } from '#app/utils/print/print-document.server.tsx'
 import { getPrintFile } from '#app/utils/print/print-files.server.ts'
-import { requireTableCodeAccess } from '#app/utils/print/qr-tables.server.ts'
+import { requireQrCodeAccess } from '#app/utils/print/qr-access.server.ts'
 
 const querySchema = z.object({
 	format: z.enum(PRINT_DOWNLOAD_FORMATS).default('pro'),
@@ -44,7 +44,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	if (!snapshot) {
 		throw new Response('Approve the proof before downloading', { status: 409 })
 	}
-	await requireTableCodeAccess(access, snapshot)
+	await requireQrCodeAccess(access, snapshot)
 	const query = querySchema.safeParse(
 		Object.fromEntries(new URL(request.url).searchParams),
 	)

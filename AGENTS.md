@@ -1034,16 +1034,25 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 
 - Operator B2B data in the control plane (`PrintDesign`, `PrintRender`,
   `PrintOrder`, `PrintVendorOrder`, `PrintOrderItem`, `PrintVendorProduct`,
-  `PrintSettings`, `PrintVendorEvent`; migration `0027_print_shop`). Catalog,
-  flags and schemas in `@repo/common/print-shop`; templates in
-  `apps/app/app/components/print/`, rendering and orders in
+  `PrintSettings`, `PrintVendorEvent`; migration `0027_print_shop`, upstream's
+  `0020_print_shop`). Catalog, flags and schemas in `@repo/common/print-shop`;
+  templates in `apps/app/app/components/print/`, rendering and orders in
   `apps/app/app/utils/print/`.
+- Generic core plus a vertical, like the phone agent: the restaurant vertical
+  (table cards and tents, table, order-ahead and booking codes, dishes,
+  locations as scopes) lives in `@repo/common/print-shop-restaurant` and the
+  `restaurant/` folders, registered in `print-shop-catalog.ts`,
+  `utils/print/vertical.server.ts`, `components/print/vertical-ui.tsx` and
+  Admin's `components/print/vertical-labels.ts`. Keep restaurant words out of
+  the core (`utils/print/vocabulary.test.ts`). Docs:
+  `docs/print-shop-verticals.md`, `docs/print-shop-restaurant.md`.
 - Flags `print_shop.enabled` (designs, free PDFs) and `print_shop.shipping`
   (paid orders). Campaign permissions design; paying also needs
   `update:settings:any`. Every print route awaits `requirePrintShopAccess` first
   (`print-guards.test.ts`).
 - Table cards fetch table codes server-side with a short-lived `qr:write` token
-  that never reaches the browser.
+  that never reaches the browser; the vertical's `canView` (menu edit) guards
+  proofs, downloads and orders of prints with table codes.
 - Shipped prints: Menuza is the merchant (Stripe Checkout on the platform
   account, metadata `type: 'print_order'`); vendor orders are placed only after
   payment; vendor webhooks only trigger a status fetch. Docs:

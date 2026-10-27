@@ -1,6 +1,6 @@
 /**
  * Print vendor adapter contract. Every vendor speaks in integer cents (USD in
- * v1) and our own references; nothing a guest typed ever reaches a vendor.
+ * v1) and our own references; nothing a customer typed ever reaches a vendor.
  * The only personal data sent is the operator's shipping recipient.
  */
 

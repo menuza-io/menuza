@@ -1,6 +1,6 @@
 import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
-import { getPrintSize } from '@repo/common/print-shop'
+import { printCatalog } from '@repo/common/print-shop-catalog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Icon } from '@repo/ui/icon'
@@ -16,9 +16,10 @@ import { PageHeader } from '@repo/ui/page-header'
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { EmptyState } from '#app/components/empty-state.tsx'
 import {
-	PRINT_PRODUCT_LABELS,
+	printProductLabel,
 	PRINT_STYLE_LABELS,
 } from '#app/components/print/print-labels.ts'
+import { printShopUi } from '#app/components/print/vertical-ui.tsx'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
 import { listPrintDesigns } from '#app/utils/print/designs.server.ts'
 
@@ -43,10 +44,12 @@ export default function PrintShopIndexRoute() {
 				description={
 					shipping
 						? _(
-								msg`Design branded table cards, posters and flyers. Download a print-ready PDF for free, or have them printed and shipped.`,
+								printShopUi.copy?.introWithShipping ??
+									msg`Design branded posters, flyers and signs. Download a print-ready PDF for free, or have them printed and shipped.`,
 							)
 						: _(
-								msg`Design branded table cards, posters and flyers, and download a print-ready PDF for free.`,
+								printShopUi.copy?.intro ??
+									msg`Design branded posters, flyers and signs, and download a print-ready PDF for free.`,
 							)
 				}
 				actions={
@@ -75,7 +78,8 @@ export default function PrintShopIndexRoute() {
 				<EmptyState
 					title={_(msg`No prints yet`)}
 					description={_(
-						msg`Start with table QR cards so guests can order from their phone.`,
+						printShopUi.copy?.empty ??
+							msg`Start with a poster for your door or window.`,
 					)}
 					icons={['printer', 'file-text', 'download']}
 					action={
@@ -90,7 +94,7 @@ export default function PrintShopIndexRoute() {
 			) : (
 				<ItemGroup>
 					{designs.map((design) => {
-						const size = getPrintSize(design.product, design.sizeKey)
+						const size = printCatalog.getSize(design.product, design.sizeKey)
 						return (
 							<Item
 								key={design.id}
@@ -103,7 +107,7 @@ export default function PrintShopIndexRoute() {
 								<ItemContent>
 									<ItemTitle className="wrap-anywhere">{design.name}</ItemTitle>
 									<ItemDescription>
-										{_(PRINT_PRODUCT_LABELS[design.product].name)}
+										{_(printProductLabel(design.product).name)}
 										{' · '}
 										<bdi>{size?.label ?? design.sizeKey}</bdi>
 										{' · '}

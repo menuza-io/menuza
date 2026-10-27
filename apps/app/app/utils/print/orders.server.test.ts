@@ -83,17 +83,18 @@ function snapshot(pieces = 2): PrintSnapshot {
 				body: '',
 				callToAction: '',
 				qrCaption: 'Scan to order',
-				tableWord: 'Table',
+				pieceWord: 'Table',
 			},
 		],
 		featured: [],
 		address: null,
 		website: null,
 		pieces: Array.from({ length: pieces }, (_, index) => ({
-			tableLabel: `T${index + 1}`,
+			label: `T${index + 1}`,
 			qrUrl: `https://bistro.example/menu#table=${index}`,
 		})),
-		facts: { featured: [], tables: [] },
+		qr: { kind: 'table', tableIds: ['all'] },
+		facts: { featured: [], pieces: [] },
 	}
 }
 
@@ -173,7 +174,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 3 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		const { order, vendorOrders, items } = await getPrintOrderDetail(
@@ -259,7 +260,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		await startPrintCheckout(
@@ -298,7 +299,7 @@ describe('shipped print orders', () => {
 			createPrintQuote(new Request('https://app.test/'), access, {
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			}),
 		).rejects.toMatchObject({ code: 'design_not_approved' })
 
@@ -307,7 +308,7 @@ describe('shipped print orders', () => {
 			createPrintQuote(new Request('https://app.test/'), other.access, {
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			}),
 		).rejects.toMatchObject({ code: 'design_not_approved' })
 
@@ -316,7 +317,7 @@ describe('shipped print orders', () => {
 			createPrintQuote(new Request('https://app.test/'), other.access, {
 				lines: [{ designId: other.design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			}),
 		).rejects.toMatchObject({ code: 'not_shippable' })
 	})
@@ -329,7 +330,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 2 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		// The operator re-approves the design with many more tables.
@@ -379,7 +380,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		await db
@@ -416,7 +417,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		const url = await startPrintCheckout(
@@ -466,7 +467,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		await startPrintCheckout(
@@ -496,7 +497,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		await db
@@ -528,7 +529,7 @@ describe('shipped print orders', () => {
 		const orderId = await createPrintQuote(request, access, {
 			lines: [{ designId: design.id, quantity: 1 }],
 			address,
-			locationId: null,
+			scopeId: null,
 		})
 		const url = await startPrintCheckout(
 			request,
@@ -564,7 +565,7 @@ describe('shipped print orders', () => {
 			{
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
-				locationId: null,
+				scopeId: null,
 			},
 		)
 		await expect(adminRefundPrintOrder(unpaid)).rejects.toMatchObject({

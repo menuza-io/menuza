@@ -35,7 +35,7 @@ CREATE TABLE `PrintOrder` (
 	`wholesaleCents` integer NOT NULL,
 	`markupBp` integer NOT NULL,
 	`quoteExpiresAt` integer NOT NULL,
-	`locationId` text,
+	`scopeId` text,
 	`recipientName` text NOT NULL,
 	`recipientPhone` text NOT NULL,
 	`addressLine1` text NOT NULL,
