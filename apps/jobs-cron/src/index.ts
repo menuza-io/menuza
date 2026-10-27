@@ -40,6 +40,9 @@ const TENANT_HOURLY_CRON = '0 * * * *'
 // to be a handler or ExportedHandler, and a string constant fails startup.
 const RESERVATION_PAYMENTS_RECONCILE_PATH =
 	'/resources/jobs/reservation-payments-reconcile'
+// Hourly App job: fetches the status of shipped print orders whose vendor
+// webhook may have been missed.
+const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -390,6 +393,10 @@ export default {
 					'Reservation payments reconcile',
 					(jobEnv: Env) =>
 						invokeJob(jobEnv, RESERVATION_PAYMENTS_RECONCILE_PATH),
+				],
+				[
+					'Print order sync',
+					(jobEnv: Env) => invokeJob(jobEnv, PRINT_SYNC_PATH),
 				],
 			] as const) {
 				ctx.waitUntil(

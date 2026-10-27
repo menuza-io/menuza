@@ -384,7 +384,7 @@ msgid "{0, plural, one {# would be an open shift, because its person cannot work
 msgstr "{0, plural, one {ستصبح وردية واحدة شاغرة لأن صاحبها لا يستطيع العمل فيها:} two {ستصبح ورديتان شاغرتين لأن صاحبيهما لا يستطيعان العمل فيهما:} few {ستصبح # ورديات شاغرة لأن أصحابها لا يستطيعون العمل فيها:} many {ستصبح # وردية شاغرة لأن أصحابها لا يستطيعون العمل فيها:} other {ستصبح # وردية شاغرة لأن أصحابها لا يستطيعون العمل فيها:}}"
 
 #. placeholder {0}: list.length
-#: app/components/qr/tables-manager.tsx:108
+#: app/components/qr/tables-manager.tsx:106
 msgid "{0, plural, one {Added # table} other {Added # tables}}"
 msgstr "{0, plural, zero {لم تُضف أي طاولة} one {أُضيفت طاولة واحدة} two {أُضيفت طاولتان} few {أُضيفت # طاولات} many {أُضيفت # طاولة} other {أُضيفت # طاولة}}"
 
@@ -650,6 +650,10 @@ msgstr "تم إنجاز {complete} من {total}"
 msgid "{conflicts, plural, one {# conflict} other {# conflicts}}"
 msgstr "{conflicts, plural, one {تعارض واحد} two {تعارضان} few {# تعارضات} many {# تعارضًا} other {# تعارض}}"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:216
+msgid "{copies} printed"
+msgstr "{copies} مطبوعة"
+
 #: app/utils/reservations/count-labels.ts:92
 msgid "{count, plural, one {# allergy} other {# allergies}}"
 msgstr "{count, plural, zero {# حساسية} one {# حساسية} two {# حساسيتان} few {# حساسيات} many {# حساسية} other {# حساسية}}"
@@ -844,7 +848,7 @@ msgstr "{dayName}: عدد المجدولين {people}، والورديات ال�
 msgid "{days} days"
 msgstr "{days} يومًا"
 
-#: app/components/ui/notification-bell.tsx:71
+#: app/components/ui/notification-bell.tsx:75
 msgid "{days}d ago"
 msgstr "منذ {days} يوم"
 
@@ -990,7 +994,7 @@ msgstr "{hours} س"
 msgid "{hours}h {rest}m"
 msgstr "{hours} س {rest} د"
 
-#: app/components/ui/notification-bell.tsx:67
+#: app/components/ui/notification-bell.tsx:71
 msgid "{hours}h ago"
 msgstr "منذ {hours} ساعة"
 
@@ -1121,7 +1125,7 @@ msgstr "{minutes} دقيقة"
 msgid "{minutes}m {remainingSec}s"
 msgstr "{minutes} د {remainingSec} ث"
 
-#: app/components/ui/notification-bell.tsx:63
+#: app/components/ui/notification-bell.tsx:67
 msgid "{minutes}m ago"
 msgstr "منذ {minutes} دقيقة"
 
@@ -1471,7 +1475,7 @@ msgstr "{runsCount} تشغيل"
 msgid "{seconds, plural, one {Closing in # second} other {Closing in # seconds}}"
 msgstr "{seconds, plural, one {يُغلق خلال ثانية} two {يُغلق خلال ثانيتين} few {يُغلق خلال # ثوانٍ} many {يُغلق خلال # ثانية} other {يُغلق خلال # ثانية}}"
 
-#: app/components/ui/notification-bell.tsx:59
+#: app/components/ui/notification-bell.tsx:63
 msgid "{seconds}s ago"
 msgstr "منذ {seconds} ثانية"
 
@@ -1549,7 +1553,7 @@ msgstr "{total, plural, one {# طلب عبر الإنترنت في يوم عاد
 msgid "{total} submissions"
 msgstr "عدد الردود: {total}"
 
-#: app/components/orders/order-detail.tsx:658
+#: app/components/orders/order-detail.tsx:654
 msgid "{totalMoney} was received for this order. Cancelling does not refund it: refund it separately with your payment processor."
 msgstr "تم استلام {totalMoney} لهذا الطلب. إلغاء الطلب لا يسترد المبلغ: استرده بشكل منفصل عبر معالج الدفع."
 
@@ -1604,6 +1608,18 @@ msgstr "{windowCapacityPreview} طلبات كحد أقصى في هذه النا�
 #: app/routes/organizations+/create.tsx:933
 msgid "*.png, *.jpeg files up to 5 MB"
 msgstr "ملفات *.png و *.jpeg حتى 5 ميجابايت"
+
+#: app/utils/print/print-notifications.ts:23
+msgid "**Print order paid**"
+msgstr "**تم دفع طلب الطباعة**"
+
+#: app/utils/print/print-notifications.ts:31
+msgid "**Print order refunded**"
+msgstr "**تم استرداد مبلغ طلب الطباعة**"
+
+#: app/utils/print/print-notifications.ts:27
+msgid "**Your prints are on the way**"
+msgstr "**مطبوعاتك في الطريق**"
 
 #. placeholder {0}: data.field === 'phoneVerified' ? 'Verification Status' : conditionFieldLabel(data.field || 'email')
 #. placeholder {1}: data.field === 'phoneVerified' ? ' is ' : data.operator === 'equals' ? ' equals ' : data.operator === 'not_equals' ? ' does not equal ' : ' contains '
@@ -2193,7 +2209,7 @@ msgstr "المطعم هو مساحة عملك لإدارة الفروع وقوا
 msgid "A role is required"
 msgstr "الدور مطلوب"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:163
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:179
 msgid "A safety limit against misuse of a table code."
 msgstr "حدّ أمان يمنع إساءة استخدام رمز الطاولة."
 
@@ -2371,7 +2387,7 @@ msgstr "لون التمييز"
 msgid "Accept"
 msgstr "قبول"
 
-#: app/components/orders/order-detail.tsx:180
+#: app/components/orders/order-detail.tsx:177
 msgid "Accept and start preparing"
 msgstr "قبول وبدء التحضير"
 
@@ -2528,7 +2544,7 @@ msgstr "الحجوزات المؤقتة النشطة: {holdsCount}"
 msgid "Active Location"
 msgstr "فرع نشط"
 
-#: app/components/orders/order-detail.tsx:581
+#: app/components/orders/order-detail.tsx:578
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:690
 msgid "Activity"
 msgstr "النشاط"
@@ -2539,7 +2555,7 @@ msgstr "النشاط"
 #~ msgid "Actual versus configured, by party size"
 #~ msgstr "الفعلي مقابل المضبوط حسب عدد الأشخاص"
 
-#: app/components/qr/tables-manager.tsx:167
+#: app/components/qr/tables-manager.tsx:169
 #: app/components/reservations/experiences/schedule-sheet.tsx:277
 #: app/components/staff/labor-policy-editor.tsx:1352
 #: app/components/staff/positions-tab.tsx:375
@@ -3011,7 +3027,7 @@ msgstr "إضافة فرع"
 msgid "Add meal break"
 msgstr "إضافة استراحة وجبة"
 
-#: app/components/app-sidebar.tsx:811
+#: app/components/app-sidebar.tsx:812
 msgid "Add members"
 msgstr "إضافة أعضاء"
 
@@ -3249,11 +3265,11 @@ msgstr "أضف معلومات توضيحية."
 msgid "Add table"
 msgstr "إضافة طاولة"
 
-#: app/components/qr/tables-manager.tsx:152
+#: app/components/qr/tables-manager.tsx:151
 msgid "Add tables"
 msgstr "إضافة طاولات"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:511
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:512
 msgid "Add tables in QR ordering first. Each table gets its own card."
 msgstr "أضف الطاولات في الطلب عبر QR أولًا. لكل طاولة بطاقتها الخاصة."
 
@@ -3415,6 +3431,10 @@ msgstr "تمت إضافة العنصر {presetLabel} عند ({createdX}, {create
 msgid "Added a shift"
 msgstr "إضافة وردية"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:239
+msgid "Added at payment"
+msgstr "تُضاف عند الدفع"
+
 #: app/components/staff/timesheets/card-history.tsx:47
 msgid "Added by a manager"
 msgstr "أضافها مدير"
@@ -3473,7 +3493,7 @@ msgstr "مستخدمون إضافيون: ${monthlyPrice}/مستخدم/شهر"
 msgid "Address"
 msgstr "العنوان"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:647
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:648
 msgid "Address and prices from"
 msgstr "العنوان والأسعار من"
 
@@ -3767,8 +3787,8 @@ msgstr "كل الفروع"
 msgid "All messages in this channel are permanently deleted for everyone. This can't be undone."
 msgstr "ستُحذف جميع الرسائل في هذه القناة نهائياً للجميع. لا يمكن التراجع عن هذا الإجراء."
 
-#: app/components/ui/notification-bell.tsx:390
-#: app/components/ui/notification-bell.tsx:491
+#: app/components/ui/notification-bell.tsx:417
+#: app/components/ui/notification-bell.tsx:518
 msgid "All Notifications"
 msgstr "جميع الإشعارات"
 
@@ -3789,7 +3809,7 @@ msgstr "يمكن لجميع أعضاء المنظمة عرض هذه الملاح
 msgid "All positions"
 msgstr "كل المناصب"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:301
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:302
 msgid "All prints"
 msgstr "كل المطبوعات"
 
@@ -3975,7 +3995,7 @@ msgstr "موجود بالفعل."
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
-#: app/components/ui/notification-bell.tsx:214
+#: app/components/ui/notification-bell.tsx:241
 msgid "Already read"
 msgstr "تمت قراءتها بالفعل"
 
@@ -4201,6 +4221,10 @@ msgstr "يمكن لأي شخص لديه هذا الرابط رؤية الوظي�
 msgid "Anything else you need done, like handing over a uniform."
 msgstr "أي شيء آخر تحتاج إلى إنجازه، مثل تسليم الزي."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:264
+msgid "Apartment, suite (optional)"
+msgstr "الشقة أو الجناح (اختياري)"
+
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:556
 msgid "API Key"
 msgstr "مفتاح API"
@@ -4213,7 +4237,7 @@ msgstr "تم إنشاء مفتاح API"
 msgid "API Keys"
 msgstr "مفاتيح API"
 
-#: app/components/app-sidebar.tsx:838
+#: app/components/app-sidebar.tsx:839
 msgid "App header"
 msgstr "ترويسة التطبيق"
 
@@ -4338,13 +4362,25 @@ msgstr "موافقة"
 msgid "Approve ({approveCount})"
 msgstr "موافقة ({approveCount})"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:705
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:71
+msgid "Approve a print, then order copies shipped to any US address."
+msgstr "اعتمد مطبوعة، ثم اطلب نسخًا تُشحن إلى أي عنوان في الولايات المتحدة."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:193
+msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
+msgstr "اعتمد بطاقة طاولة أو ملصقًا أو منشورًا أولًا. لا يمكن طلب إلا المطبوعات المعتمدة بمقاس قابل للشحن."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:706
 msgid "Approve proof"
 msgstr "اعتماد البروفة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:783
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:808
 msgid "Approve the proof to download it."
 msgstr "اعتمد البروفة لتنزيلها."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:754
+msgid "Approve the proof to order prints."
+msgstr "اعتمد البروفة لطلب المطبوعات."
 
 #: app/components/roles/tenant-role-access-manager.tsx:342
 msgid "Approve time cards"
@@ -4360,8 +4396,8 @@ msgstr "اعتماد بطاقات الدوام وقفلها وفتحها. يشم
 #: app/components/staff/schedule/time-off-page.tsx:282
 #: app/components/staff/timesheets/card-history.tsx:51
 #: app/components/staff/timesheets/issue-copy.ts:57
-#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:105
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:717
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:115
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:718
 msgid "Approved"
 msgstr "معتمدة"
 
@@ -4392,7 +4428,7 @@ msgstr "العربية"
 #~ msgid "Arabic service name"
 #~ msgstr "مثال: العشاء"
 
-#: app/components/qr/tables-manager.tsx:357
+#: app/components/qr/tables-manager.tsx:359
 #: app/components/reservations/experiences/experience-editor.tsx:536
 #: app/components/reservations/experiences/experience-editor.tsx:1040
 #: app/components/reservations/policies/policies-screen.tsx:558
@@ -4424,7 +4460,7 @@ msgstr "أرشفة هذه التجربة؟"
 msgid "Archive this policy?"
 msgstr "أرشفة هذه السياسة؟"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:755
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:780
 msgid "Archive this print"
 msgstr "أرشفة هذه المطبوعة"
 
@@ -4584,11 +4620,11 @@ msgstr "طلب تقييم"
 msgid "Ask for reconfirmation this many hours before"
 msgstr "اطلب إعادة التأكيد قبل هذا العدد من الساعات"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:105
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:117
 msgid "Ask for the guest’s name"
 msgstr "طلب اسم الضيف"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:118
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:130
 msgid "Ask for the guest’s phone number"
 msgstr "طلب رقم هاتف الضيف"
 
@@ -4616,7 +4652,7 @@ msgstr "يُطرح في نهاية المكالمة عند تفعيل تقييم
 msgid "Asked before a transfer when texting the caller back is on."
 msgstr "يُطرح قبل التحويل عند تفعيل إرسال رسالة نصية للمتصل."
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:107
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:119
 msgid "Asked once, on the first order of a tab."
 msgstr "يُطلب مرة واحدة، في أول طلب ضمن الحساب."
 
@@ -4730,7 +4766,7 @@ msgstr "تعليمات المساعد"
 msgid "At slot time"
 msgstr "عند وقت الموعد"
 
-#: app/components/orders/order-detail.tsx:370
+#: app/components/orders/order-detail.tsx:367
 #: app/routes/_app+/$orgSlug_+/orders.tsx:244
 msgid "At the table"
 msgstr "على الطاولة"
@@ -5157,7 +5193,7 @@ msgstr "فرق السعر الأساسي ($)"
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "المعرّفات الأساسية والرابط والإعدادات الإقليمية."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:331
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:332
 msgid "Basics"
 msgstr "الأساسيات"
 
@@ -5844,7 +5880,7 @@ msgstr "تسجيل المكالمات"
 msgid "Call time limit"
 msgstr "الحد الزمني للمكالمة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:464
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:465
 msgid "Call to action"
 msgstr "دعوة لاتخاذ إجراء"
 
@@ -6016,10 +6052,10 @@ msgstr "تعذّر إرسال رسالة نصية إلى هذا الرقم"
 #: app/components/pos/terminals-manager.tsx:684
 #: app/components/pos/terminals-manager.tsx:1560
 #: app/components/pos/zatca-settings.tsx:562
-#: app/components/qr/open-tabs.tsx:293
-#: app/components/qr/open-tabs.tsx:351
-#: app/components/qr/tables-manager.tsx:300
-#: app/components/qr/tables-manager.tsx:341
+#: app/components/qr/open-tabs.tsx:300
+#: app/components/qr/open-tabs.tsx:361
+#: app/components/qr/tables-manager.tsx:302
+#: app/components/qr/tables-manager.tsx:343
 #: app/components/reservations/booking-sheet.tsx:590
 #: app/components/reservations/detail-sheet.tsx:1625
 #: app/components/reservations/experiences/experience-create-sheet.tsx:171
@@ -6134,14 +6170,16 @@ msgstr "إلغاء التعديل"
 msgid "Cancel interview"
 msgstr "إلغاء المقابلة"
 
-#: app/components/orders/order-detail.tsx:631
+#: app/components/orders/order-detail.tsx:628
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:265
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:279
 msgid "Cancel order"
 msgstr "إلغاء الطلب"
 
 #~ msgid "Cancel order {0}?"
 #~ msgstr "إلغاء الطلب {0}؟"
 
-#: app/components/orders/order-detail.tsx:653
+#: app/components/orders/order-detail.tsx:649
 msgid "Cancel order {orderNumber}?"
 msgstr "إلغاء الطلب {orderNumber}؟"
 
@@ -6161,6 +6199,10 @@ msgstr "إلغاء الحجز"
 #: app/components/reservations/detail-sheet.tsx:1434
 msgid "Cancel Reservation"
 msgstr "إلغاء الحجز"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:268
+msgid "Cancel this order?"
+msgstr "إلغاء هذا الطلب؟"
 
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:409
 #~ msgid "Cancel this order? Any captured payment requires a separate refund with your payment processor."
@@ -6191,7 +6233,8 @@ msgstr "الإلغاءات حسب الجهة"
 
 #: app/components/hiring/applicant-labels.ts:42
 #: app/components/my-schedule/status-badge.tsx:17
-#: app/components/orders/order-detail.tsx:166
+#: app/components/orders/order-detail.tsx:163
+#: app/components/print/print-order-labels.ts:18
 #: app/components/reservations/status-style.tsx:144
 #: app/components/reservations/status-style.tsx:211
 #: app/components/staff/schedule/time-off-page.tsx:286
@@ -6819,6 +6862,10 @@ msgstr "Checkout.com: حقيقي"
 msgid "Choices"
 msgstr "الخيارات"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:276
+msgid "Choose"
+msgstr "اختر"
+
 #: app/components/chat/chat-view.tsx:668
 msgid "Choose a channel, group, or direct message from the list."
 msgstr "اختر قناة أو مجموعة أو رسالة مباشرة من القائمة."
@@ -7172,6 +7219,7 @@ msgstr "دائرة"
 #: app/components/locations/address-autocomplete.tsx:253
 #: app/components/pos/zatca-settings.tsx:327
 #: app/components/staff/details-tab.tsx:411
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:265
 msgid "City"
 msgstr "المدينة"
 
@@ -7406,14 +7454,14 @@ msgstr "الإغلاق عند الكاونتر"
 msgid "Close email design"
 msgstr "إغلاق تصميم البريد"
 
-#: app/components/qr/open-tabs.tsx:269
+#: app/components/qr/open-tabs.tsx:276
 msgid "Close it once the guest has paid the total below."
 msgstr "أغلقه بعد أن يدفع الضيف الإجمالي أدناه."
 
 #~ msgid "Close order details"
 #~ msgstr "إغلاق تفاصيل الطلب"
 
-#: app/components/qr/open-tabs.tsx:302
+#: app/components/qr/open-tabs.tsx:309
 msgid "Close tab"
 msgstr "إغلاق الحساب"
 
@@ -7429,7 +7477,7 @@ msgstr "إغلاق هذه الوظيفة"
 msgid "Close this job?"
 msgstr "إغلاق هذه الوظيفة؟"
 
-#: app/components/qr/open-tabs.tsx:260
+#: app/components/qr/open-tabs.tsx:267
 msgid "Close this tab at the counter?"
 msgstr "إغلاق هذا الحساب عند الكاونتر؟"
 
@@ -7693,7 +7741,7 @@ msgstr "إكمال المكالمات والطلبات وإعادة فتحها،
 msgid "Complete authentication"
 msgstr "إكمال المصادقة"
 
-#: app/components/orders/order-detail.tsx:184
+#: app/components/orders/order-detail.tsx:181
 msgid "Complete order"
 msgstr "إكمال الطلب"
 
@@ -7733,7 +7781,7 @@ msgstr "أكمل التسجيل للانضمام إلى المنظمة"
 #: ../../packages/ai/src/components/ai-elements/tool.tsx:46
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:9
 #: app/components/onboarding-checklist.tsx:249
-#: app/components/orders/order-detail.tsx:161
+#: app/components/orders/order-detail.tsx:158
 #: app/components/reservations/status-style.tsx:143
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:144
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:67
@@ -7826,7 +7874,7 @@ msgstr "اضبط تفاصيل فرع مطعمك الجديد وساعات الع
 msgid "Confirm"
 msgstr "تأكيد"
 
-#: app/components/orders/order-detail.tsx:677
+#: app/components/orders/order-detail.tsx:673
 msgid "Confirm cancellation"
 msgstr "تأكيد الإلغاء"
 
@@ -8201,6 +8249,10 @@ msgstr "تصل الورديات المنسوخة كمسودات. لا يصل ش�
 msgid "Copied!"
 msgstr "تم النسخ!"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:202
+msgid "Copies of each print. A table-card set prints every table this many times."
+msgstr "عدد النسخ من كل مطبوعة. تُطبع بطاقة كل طاولة بهذا العدد."
+
 #: app/components/organization-invitations.tsx:224
 #: app/components/phone-agent/agent-details.tsx:239
 #: app/components/staff/schedule/shift-editor-sheet.tsx:693
@@ -8239,7 +8291,7 @@ msgstr "نسخ الكل"
 msgid "Copy code"
 msgstr "نسخ الكود"
 
-#: app/components/orders/order-detail.tsx:327
+#: app/components/orders/order-detail.tsx:324
 msgid "Copy email address"
 msgstr "نسخ البريد الإلكتروني"
 
@@ -8259,11 +8311,11 @@ msgstr "نسخ إلى هذا الأسبوع"
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
-#: app/components/orders/order-detail.tsx:222
+#: app/components/orders/order-detail.tsx:219
 msgid "Copy order number"
 msgstr "نسخ رقم الطلب"
 
-#: app/components/orders/order-detail.tsx:313
+#: app/components/orders/order-detail.tsx:310
 msgid "Copy phone number"
 msgstr "نسخ رقم الهاتف"
 
@@ -8805,7 +8857,7 @@ msgstr "إنشاء خطة"
 msgid "Create a prepaid or ticketed dining experience, give it seating times, and publish it on your website."
 msgstr "أنشئ تجربة طعام بدفع مسبق أو بتذاكر، وحدد أوقات الجلوس، ثم انشرها على موقعك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:74
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:84
 msgid "Create a print"
 msgstr "إنشاء مطبوعة"
 
@@ -9324,8 +9376,8 @@ msgstr "مخصص: ما لديك الآن"
 msgid "customer"
 msgstr "عميل"
 
-#: app/components/orders/order-detail.tsx:273
-#: app/components/orders/order-detail.tsx:297
+#: app/components/orders/order-detail.tsx:270
+#: app/components/orders/order-detail.tsx:294
 #: app/components/workspace-breadcrumb.tsx:96
 #: app/routes/_app+/$orgSlug_+/orders.tsx:220
 msgid "Customer"
@@ -10176,6 +10228,10 @@ msgstr "جارٍ الحذف…"
 msgid "Deliver queued events"
 msgstr "تسليم الأحداث المنتظرة"
 
+#: app/components/print/print-order-labels.ts:15
+msgid "Delivered"
+msgstr "تم التسليم"
+
 #~ msgid "Delivered ({0})"
 #~ msgstr "تسليم الأحداث المعلقة"
 
@@ -10189,7 +10245,7 @@ msgstr "Deliveroo"
 
 #: app/components/customers/person-orders-panel.tsx:218
 #: app/components/locations/location-form.tsx:732
-#: app/components/orders/order-detail.tsx:368
+#: app/components/orders/order-detail.tsx:365
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:26
 #: app/components/reservations/messages/message-settings.tsx:530
 #: app/components/settings/cards/organization/pos-integrations-card.tsx:131
@@ -10211,7 +10267,7 @@ msgstr "التوصيل مسموح"
 msgid "Delivery areas, fees, and pickup alternatives."
 msgstr "مناطق التوصيل والرسوم وبدائل الاستلام."
 
-#: app/components/orders/order-detail.tsx:498
+#: app/components/orders/order-detail.tsx:495
 msgid "Delivery fee"
 msgstr "رسوم التوصيل"
 
@@ -10219,7 +10275,7 @@ msgstr "رسوم التوصيل"
 msgid "Delivery is blocked or disallowed for this specific zone"
 msgstr "التوصيل محظور أو غير مسموح في هذه المنطقة تحديدًا"
 
-#: app/components/orders/order-detail.tsx:415
+#: app/components/orders/order-detail.tsx:412
 msgid "Delivery notes:"
 msgstr "ملاحظات التوصيل:"
 
@@ -10388,7 +10444,7 @@ msgstr "إعدادات مدمرة لا يمكن التراجع عنها. سيت�
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
 #: app/components/workspace-breadcrumb.tsx:154
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:641
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:642
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:628
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1251
@@ -10826,7 +10882,7 @@ msgid "Down by {absTrend}% this period"
 msgstr "انخفض بنسبة {absTrend}٪ في هذه الفترة"
 
 #: app/components/settings/backup-codes-display.tsx:99
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:779
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:804
 msgid "Download"
 msgstr "تنزيل"
 
@@ -10862,8 +10918,8 @@ msgstr "مسودة"
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:59
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
-#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:107
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:719
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:117
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:720
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
@@ -11026,7 +11082,7 @@ msgstr "عنوان الطرح"
 #~ msgid "Drop visibility"
 #~ msgstr "ظهور الطرح"
 
-#: app/components/orders/order-detail.tsx:422
+#: app/components/orders/order-detail.tsx:419
 msgid "Drop:"
 msgstr "الإطلاق:"
 
@@ -11258,7 +11314,7 @@ msgstr "تنتمي كل طاولة إلى قسم واحد على الأكثر. �
 #~ msgid "Each table can belong to at most one section in a layout. Clicking a table assigned to another section moves it to the selected section."
 #~ msgstr "يمكن أن تنتمي كل طاولة إلى قسم واحد على الأكثر في التخطيط. النقر على طاولة معينة لقسم آخر ينقلها إلى القسم المحدد."
 
-#: app/components/qr/tables-manager.tsx:201
+#: app/components/qr/tables-manager.tsx:203
 msgid "Each table gets its own QR code. Guests scan it to order, and every phone at the table shares one tab."
 msgstr "لكل طاولة رمز QR خاص بها. يمسحه الضيوف للطلب، وتتشارك كل الهواتف على الطاولة حسابًا واحدًا."
 
@@ -12377,7 +12433,7 @@ msgstr "كل بضع دقائق"
 msgid "Every no-show over the last 30 days with its date, service, party size and source. No guest details."
 msgstr "كل حالات عدم الحضور خلال آخر 30 يومًا مع التاريخ والخدمة وحجم المجموعة والمصدر. دون تفاصيل الضيوف."
 
-#: app/components/qr/tables-manager.tsx:336
+#: app/components/qr/tables-manager.tsx:338
 msgid "Every printed card for this table stops working right away, including cards you ordered. Print the new card before you replace the old one."
 msgstr "تتوقف كل البطاقات المطبوعة لهذه الطاولة عن العمل فورًا، بما فيها البطاقات التي طلبتها. اطبع البطاقة الجديدة قبل استبدال القديمة."
 
@@ -12393,7 +12449,7 @@ msgstr "جميع التقييمات في مكان واحد"
 msgid "Every schedule has ended. Add or extend a schedule before publishing."
 msgstr "انتهت جميع الجداول. أضف جدولًا أو مدّد جدولًا قبل النشر."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:523
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:524
 msgid "Every table (new tables are added when you approve)"
 msgstr "كل الطاولات (تُضاف الطاولات الجديدة عند الاعتماد)"
 
@@ -12683,6 +12739,7 @@ msgstr "فشل المصادقة"
 
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/components/phone-agent/call-data.ts:136
+#: app/components/print/print-order-labels.ts:17
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:146
 #: app/routes/_app+/$orgSlug_+/marketing+/campaigns._index.tsx:69
 #: app/utils/reservations/payments-view.ts:72
@@ -13050,7 +13107,7 @@ msgstr "معاينة الميزة"
 msgid "Feature this item prominently in ordering flows."
 msgstr "أبرز هذا العنصر في مسارات الطلب."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:597
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:598
 msgid "Featured dishes"
 msgstr "أطباق مميزة"
 
@@ -13419,7 +13476,7 @@ msgstr "مصمم مخطط الصالة"
 msgid "Floor plan saved."
 msgstr "تم حفظ مخطط الصالة."
 
-#: app/components/qr/tables-manager.tsx:123
+#: app/components/qr/tables-manager.tsx:121
 msgid "Floor plan tables are in sync"
 msgstr "طاولات مخطط القاعة متزامنة"
 
@@ -13457,7 +13514,7 @@ msgstr "بطاقة مناولة الأغذية"
 msgid "For"
 msgstr "لـ"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:800
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:825
 msgid "For a print shop (with bleed)"
 msgstr "لمطبعة (مع هامش القص)"
 
@@ -13473,7 +13530,7 @@ msgstr "مثلًا، أضف الحجم بقيمتي صغير ومتوسط، ثم
 msgid "For example, every 15 minutes."
 msgstr "مثلًا كل 15 دقيقة."
 
-#: app/components/qr/open-tabs.tsx:346
+#: app/components/qr/open-tabs.tsx:356
 msgid "For example: the guest left"
 msgstr "مثال: غادر الضيف"
 
@@ -13602,7 +13659,7 @@ msgstr "إلغاء مجاني حتى {hours} ساعة قبل الموعد؛ بع
 msgid "Free cancellation until {hours} h before; after that the payment is kept."
 msgstr "إلغاء مجاني حتى {hours} ساعة قبل الموعد؛ بعد ذلك يُحتفظ بالمبلغ المدفوع."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:782
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:807
 msgid "Free PDFs of the approved proof."
 msgstr "ملفات PDF مجانية من البروفة المعتمدة."
 
@@ -13658,7 +13715,7 @@ msgstr "من ملف"
 msgid "From DoorDash Portal or onboarding"
 msgstr "من بوابة DoorDash أو أثناء الإعداد"
 
-#: app/components/qr/tables-manager.tsx:312
+#: app/components/qr/tables-manager.tsx:314
 msgid "From floor plan"
 msgstr "من مخطط القاعة"
 
@@ -13682,7 +13739,7 @@ msgid "Front of house, Warehouse…"
 msgstr "صالة الطعام، المستودع…"
 
 #: app/components/customers/person-orders-panel.tsx:168
-#: app/components/orders/order-detail.tsx:356
+#: app/components/orders/order-detail.tsx:353
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:620
 msgid "Fulfillment"
 msgstr "التنفيذ"
@@ -13781,12 +13838,16 @@ msgstr "جاري الإنشاء..."
 #~ msgid "German"
 #~ msgstr "الألمانية"
 
-#: app/components/app-sidebar.tsx:803
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:297
+msgid "Get a new price"
+msgstr "الحصول على سعر جديد"
+
+#: app/components/app-sidebar.tsx:804
 msgid "Get chrome extension"
 msgstr "احصل على إضافة كروم"
 
 #: app/components/app-sidebar.tsx:177
-#: app/components/app-sidebar.tsx:818
+#: app/components/app-sidebar.tsx:819
 msgid "Get help"
 msgstr "احصل على المساعدة"
 
@@ -13818,7 +13879,7 @@ msgid "Give away {when}"
 msgstr "التخلي عن {when}"
 
 #: app/components/app-sidebar.tsx:185
-#: app/components/app-sidebar.tsx:826
+#: app/components/app-sidebar.tsx:827
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr "إرسال ملاحظات"
@@ -14041,7 +14102,7 @@ msgstr "مجموعات"
 msgid "Guest"
 msgstr "ضيف"
 
-#: app/components/orders/order-detail.tsx:298
+#: app/components/orders/order-detail.tsx:295
 #: app/components/settings/cards/organization/shop-card.tsx:436
 #: app/routes/_app+/$orgSlug_+/orders.tsx:221
 msgid "Guest checkout"
@@ -14366,6 +14427,10 @@ msgstr "لديه حساسية"
 msgid "Has approved time off"
 msgstr "لديه إجازة معتمدة"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:750
+msgid "Have it printed"
+msgstr "اطلب طباعتها"
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:18
 #: app/components/hiring/description-editor.tsx:115
 #: app/components/hiring/description-editor.tsx:116
@@ -14379,7 +14444,7 @@ msgstr "عنوان"
 msgid "Headings"
 msgstr "العناوين"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:441
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:442
 msgid "Headline"
 msgstr "العنوان الرئيسي"
 
@@ -14918,7 +14983,7 @@ msgstr "أوافق على شروط الخدمة وسياسة الخصوصية"
 msgid "I cannot work it"
 msgstr "لا أستطيع العمل فيها"
 
-#: app/components/orders/order-detail.tsx:621
+#: app/components/orders/order-detail.tsx:618
 msgid "I have received payment at handoff"
 msgstr "لقد استلمت الدفع عند التسليم"
 
@@ -15041,7 +15106,7 @@ msgstr "استيراد المبيعات اليومية"
 msgid "Import finished"
 msgstr "اكتمل الاستيراد"
 
-#: app/components/qr/tables-manager.tsx:176
+#: app/components/qr/tables-manager.tsx:178
 msgid "Import floor plan"
 msgstr "استيراد مخطط القاعة"
 
@@ -15493,7 +15558,7 @@ msgstr "مائل"
 msgid "item"
 msgstr "عنصر"
 
-#: app/components/orders/order-detail.tsx:445
+#: app/components/orders/order-detail.tsx:442
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:312
 msgid "Item"
 msgstr "العنصر"
@@ -15521,7 +15586,7 @@ msgstr "عناصر"
 
 #: app/components/app-sidebar.tsx:359
 #: app/components/customers/person-orders-panel.tsx:171
-#: app/components/orders/order-detail.tsx:431
+#: app/components/orders/order-detail.tsx:428
 #: app/routes/_app+/$orgSlug_+/menu+/_layout.tsx:52
 #: app/routes/_app+/$orgSlug_+/menu+/categories._index.tsx:301
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:262
@@ -15679,7 +15744,7 @@ msgstr "متابعة التعديل"
 msgid "Keep it"
 msgstr "إبقاؤه"
 
-#: app/components/orders/order-detail.tsx:667
+#: app/components/orders/order-detail.tsx:663
 msgid "Keep order"
 msgstr "الاحتفاظ بالطلب"
 
@@ -15703,6 +15768,10 @@ msgstr "الإبقاء على الحجز"
 #: app/components/reservations/experiences/experience-editor.tsx:996
 msgid "Keep schedule"
 msgstr "الإبقاء على الجدول"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:276
+msgid "Keep the order"
+msgstr "الإبقاء على الطلب"
 
 #: app/components/hiring/applicant-labels.ts:79
 msgid "Keep their details on file"
@@ -15915,6 +15984,10 @@ msgstr "وقت تحضير إضافي للطلبات الكبيرة (دقائق)"
 msgid "Large Order Threshold Rule"
 msgstr "قاعدة حد الطلبات الكبيرة"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:321
+msgid "Large orders can arrive in more than one parcel."
+msgstr "قد تصل الطلبات الكبيرة في أكثر من طرد."
+
 #~ msgid "Large Parties (6+ Covers)"
 #~ msgstr "مجموعات كبيرة (6+ ضيوف)"
 
@@ -16034,7 +16107,7 @@ msgstr "آخر طلب"
 msgid "Last seating"
 msgstr "آخر جلوس"
 
-#: app/components/orders/order-detail.tsx:597
+#: app/components/orders/order-detail.tsx:594
 msgid "Last updated"
 msgstr "آخر تحديث"
 
@@ -16161,7 +16234,7 @@ msgstr "اعرف المزيد"
 msgid "Leave"
 msgstr "مغادرة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:388
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:389
 msgid "Leave a field empty to use the suggested words. Add a second language for a bilingual print."
 msgstr "اترك الحقل فارغًا لاستخدام النص المقترح. أضف لغة ثانية لمطبوعة بلغتين."
 
@@ -16328,7 +16401,7 @@ msgstr "أقل من الحد الأدنى للراحة منذ آخر وردية 
 msgid "Let guests choose"
 msgstr "دع الضيوف يختارون"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:132
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:146
 msgid "Let guests pay the tab from their phone"
 msgstr "السماح للضيوف بدفع الحساب من هواتفهم"
 
@@ -16707,7 +16780,7 @@ msgstr "جارٍ تحميل تخطيطات الأقسام…"
 #~ msgid "Loading services…"
 #~ msgstr "جارٍ تحميل فترات الخدمة…"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:93
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:105
 msgid "Loading settings…"
 msgstr "جارٍ تحميل الإعدادات…"
 
@@ -16727,7 +16800,7 @@ msgstr "جارٍ تحميل الردود"
 msgid "Loading tables..."
 msgstr "جارٍ تحميل الطاولات..."
 
-#: app/components/qr/tables-manager.tsx:195
+#: app/components/qr/tables-manager.tsx:197
 msgid "Loading tables…"
 msgstr "جارٍ تحميل الطاولات…"
 
@@ -16799,9 +16872,10 @@ msgstr "جارٍ التحميل…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/components/pos/terminals-manager.tsx:1418
 #: app/components/pos/terminals-manager.tsx:1426
-#: app/components/qr/tables-manager.tsx:130
+#: app/components/qr/tables-manager.tsx:128
 #: app/components/reservations/header-controls.tsx:39
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:553
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:554
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:4245
@@ -17032,7 +17106,7 @@ msgstr "مصادر صندوق الوارد"
 msgid "Main"
 msgstr "طبق رئيسي"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:396
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:397
 msgid "Main language"
 msgstr "اللغة الرئيسية"
 
@@ -17063,11 +17137,11 @@ msgstr "تعيين {name} مديرًا"
 #~ msgid "Make a copy"
 #~ msgstr "عمل نسخة"
 
-#: app/components/qr/tables-manager.tsx:346
+#: app/components/qr/tables-manager.tsx:348
 msgid "Make a new code"
 msgstr "إنشاء رمز جديد"
 
-#: app/components/qr/tables-manager.tsx:332
+#: app/components/qr/tables-manager.tsx:334
 msgid "Make a new QR code for this table?"
 msgstr "إنشاء رمز QR جديد لهذه الطاولة؟"
 
@@ -17310,7 +17384,7 @@ msgstr "تحديد {reviewableCount} كمراجَعة"
 msgid "Mark Active"
 msgstr "تعيين كـنشط"
 
-#: app/components/ui/notification-bell.tsx:516
+#: app/components/ui/notification-bell.tsx:543
 msgid "Mark all as read"
 msgstr "تحديد الكل كمقروء"
 
@@ -17334,7 +17408,7 @@ msgstr "وضع علامة غير منجزة"
 msgid "Mark as preselected"
 msgstr "تعيين كمحدد مسبقًا"
 
-#: app/components/ui/notification-bell.tsx:216
+#: app/components/ui/notification-bell.tsx:243
 msgid "Mark as read"
 msgstr "تحديد كمقروء"
 
@@ -17394,7 +17468,7 @@ msgstr "تحديد كـ في الطريق"
 msgid "Mark read"
 msgstr "تحديد كمقروء"
 
-#: app/components/orders/order-detail.tsx:183
+#: app/components/orders/order-detail.tsx:180
 msgid "Mark ready"
 msgstr "تمييز كجاهز"
 
@@ -17747,7 +17821,7 @@ msgstr "دمج المكرر"
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:582
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:452
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:453
 msgid "Message"
 msgstr "الرسالة"
 
@@ -17805,7 +17879,7 @@ msgstr "الرسائل المراد إرسالها"
 msgid "Meta description"
 msgstr "وصف الميتا"
 
-#: app/components/orders/order-detail.tsx:548
+#: app/components/orders/order-detail.tsx:545
 msgid "Method"
 msgstr "الطريقة"
 
@@ -18303,7 +18377,7 @@ msgstr "رابط جدولي"
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:335
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:336
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:182
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:682
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:683
@@ -18428,7 +18502,7 @@ msgstr "يحتاج إلى تأكيد البطاقة"
 msgid "Needs follow-up"
 msgstr "تحتاج إلى متابعة"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:134
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:149
 msgid "Needs online payments to be set up. Guests can always pay at the counter."
 msgstr "يتطلب إعداد الدفع الإلكتروني. يمكن للضيوف دائمًا الدفع عند الكاونتر."
 
@@ -18685,16 +18759,16 @@ msgstr "رمز سري جديد لـ {scopeName}"
 msgid "New policy"
 msgstr "سياسة جديدة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:59
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:68
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:103
 msgid "New print"
 msgstr "مطبوعة جديدة"
 
-#: app/components/qr/tables-manager.tsx:325
+#: app/components/qr/tables-manager.tsx:327
 msgid "New QR code"
 msgstr "رمز QR جديد"
 
-#: app/components/qr/tables-manager.tsx:230
+#: app/components/qr/tables-manager.tsx:232
 msgid "New QR code made. Print and replace the old card."
 msgstr "أُنشئ رمز QR جديد. اطبعه واستبدل البطاقة القديمة."
 
@@ -19085,7 +19159,7 @@ msgstr "لا توجد ملاحظة مخصصة. هذا هو النص الافتر
 msgid "No custom roles created yet."
 msgstr "لم يتم إنشاء أدوار مخصصة بعد."
 
-#: app/components/orders/order-detail.tsx:346
+#: app/components/orders/order-detail.tsx:343
 msgid "No customer profile"
 msgstr "لا يوجد ملف عميل"
 
@@ -19639,7 +19713,7 @@ msgstr "لم يتم تحديد أي أجر بعد."
 msgid "No payment"
 msgstr "بدون دفع"
 
-#: app/components/orders/order-detail.tsx:661
+#: app/components/orders/order-detail.tsx:657
 msgid "No payment has been received, so there is nothing to refund. The order moves to Cancelled and cannot be reopened."
 msgstr "لم يتم استلام أي دفعة، لذا لا يوجد ما يُسترد. سيصبح الطلب ملغى ولا يمكن إعادة فتحه."
 
@@ -19712,7 +19786,11 @@ msgstr "لا توجد مناصب بعد"
 msgid "No preference"
 msgstr "بلا تفضيل"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:66
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:70
+msgid "No print orders yet"
+msgstr "لا توجد طلبات طباعة بعد"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:76
 msgid "No prints yet"
 msgstr "لا توجد مطبوعات بعد"
 
@@ -19958,7 +20036,7 @@ msgstr "لا توجد طاولات في هذه المنطقة بعد. أضف ط�
 msgid "No tables were moved automatically."
 msgstr "لم تُنقل أي طاولات تلقائيًا."
 
-#: app/components/qr/tables-manager.tsx:198
+#: app/components/qr/tables-manager.tsx:200
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:913
 msgid "No tables yet"
 msgstr "لا توجد طاولات بعد"
@@ -20243,7 +20321,7 @@ msgstr "لا شيء"
 #: app/components/staff/schedule/publish-dialog.tsx:160
 #: app/components/website/link-inspector.tsx:615
 #: app/components/website/link-inspector.tsx:634
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:423
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:424
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3421
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3451
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3913
@@ -20554,11 +20632,15 @@ msgstr "لم يتغير شيء في هذه البطاقة بعد."
 msgid "Nothing could be answered from your business details. Add the answers yourself."
 msgstr "تعذرت الإجابة عن أي شيء من تفاصيل نشاطك التجاري. أضف الإجابات بنفسك."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:271
+msgid "Nothing has been charged yet."
+msgstr "لم يُحصَّل أي مبلغ بعد."
+
 #: app/components/staff/onboarding/onboarding-tab.tsx:212
 msgid "Nothing has been set up for this person."
 msgstr "لم يتم إعداد أي شيء لهذا الشخص."
 
-#: app/components/ui/notification-bell.tsx:273
+#: app/components/ui/notification-bell.tsx:300
 msgid "Nothing here yet!"
 msgstr "لا شيء هنا بعد!"
 
@@ -20570,7 +20652,7 @@ msgstr "لا يوجد في هذا الملف ما يمكن استيراده بع
 msgid "Nothing in this timeframe matches the report's filters."
 msgstr "لا يوجد في هذا الإطار الزمني ما يطابق عوامل تصفية التقرير."
 
-#: app/components/qr/open-tabs.tsx:331
+#: app/components/qr/open-tabs.tsx:341
 msgid "Nothing is charged. Orders the kitchen has not finished are cancelled."
 msgstr "لن يُحصَّل أي مبلغ. تُلغى الطلبات التي لم ينتهِ منها المطبخ."
 
@@ -20622,6 +20704,10 @@ msgstr "لا يوجد ما يُعرض هنا"
 #: app/components/my-schedule/requests-view.tsx:239
 msgid "Nothing waiting for a manager."
 msgstr "لا شيء بانتظار المدير."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:177
+msgid "Nothing was charged. You can pay again below."
+msgstr "لم يُحصَّل أي مبلغ. يمكنك الدفع مجددًا أدناه."
 
 #: app/routes/mock-payments+/stripe.connect.dashboard.$accountId.tsx:79
 msgid "Nothing yet."
@@ -20804,6 +20890,10 @@ msgstr "الأقدم"
 msgid "On break"
 msgstr "في استراحة"
 
+#: app/components/print/print-order-labels.ts:16
+msgid "On hold"
+msgstr "معلّق"
+
 #: app/components/staff/details-tab.tsx:266
 #: app/components/staff/schedule/week-grid.tsx:298
 #: app/components/staff/staff-status.tsx:14
@@ -20949,7 +21039,7 @@ msgstr "رابط كلمة المرور لمرة واحدة"
 
 #: app/components/chat/chat-view.tsx:609
 #: app/components/kiosk/kiosk-chrome.tsx:126
-#: app/components/orders/order-detail.tsx:555
+#: app/components/orders/order-detail.tsx:552
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:864
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:803
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:982
@@ -20960,7 +21050,7 @@ msgstr "متصل"
 #~ msgid "Online ({0})"
 #~ msgstr "عبر الإنترنت ({0})"
 
-#: app/components/orders/order-detail.tsx:554
+#: app/components/orders/order-detail.tsx:551
 msgid "Online ({processor})"
 msgstr "عبر الإنترنت ({processor})"
 
@@ -21293,7 +21383,7 @@ msgstr "افتح إعدادات Kiro IDE"
 msgid "Open link"
 msgstr "فتح الرابط"
 
-#: app/components/ui/notification-bell.tsx:506
+#: app/components/ui/notification-bell.tsx:533
 msgid "Open menu"
 msgstr "فتح القائمة"
 
@@ -21625,7 +21715,7 @@ msgid "Orange"
 msgstr "برتقالي"
 
 #: app/components/customers/person-orders-panel.tsx:159
-#: app/components/orders/order-detail.tsx:235
+#: app/components/orders/order-detail.tsx:232
 msgid "Order"
 msgstr "الطلب"
 
@@ -21641,7 +21731,7 @@ msgstr "الطلب من الطاولة"
 msgid "Order cutoff"
 msgstr "موعد إيقاف الطلب"
 
-#: app/components/orders/order-detail.tsx:195
+#: app/components/orders/order-detail.tsx:192
 msgid "Order details"
 msgstr "تفاصيل الطلب"
 
@@ -21664,6 +21754,14 @@ msgstr "روابط الطلب"
 msgid "Order Preparation Time"
 msgstr "وقت تحضير الطلب"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:762
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:765
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:63
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:75
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:167
+msgid "Order prints"
+msgstr "اطلب مطبوعات"
+
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:14
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:39
 msgid "Ordering"
@@ -21685,7 +21783,7 @@ msgstr "نافذة الطلب"
 #: app/components/customers/people-list-screen.tsx:411
 #: app/components/customers/person-orders-panel.tsx:111
 #: app/components/customers/person-profile-screen.tsx:442
-#: app/components/orders/order-detail.tsx:203
+#: app/components/orders/order-detail.tsx:200
 #: app/components/workspace-breadcrumb.tsx:12
 #: app/routes/_app+/$orgSlug_+/orders.tsx:121
 msgid "Orders"
@@ -21729,7 +21827,7 @@ msgstr "فتح الطلبات"
 msgid "orders per slot"
 msgstr "طلبات لكل موعد"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:141
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:157
 msgid "Orders per table per hour"
 msgstr "الطلبات لكل طاولة في الساعة"
 
@@ -22064,7 +22162,7 @@ msgstr "تم حذف قاعدة التدفق."
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
 #: app/components/workspace-breadcrumb.tsx:102
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:579
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:580
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:610
 msgid "Page"
 msgstr "صفحة"
@@ -22107,13 +22205,14 @@ msgid "Pages"
 msgstr "الصفحات"
 
 #: app/components/orders/order-status.tsx:32
+#: app/components/print/print-order-labels.ts:11
 msgid "Paid"
 msgstr "مدفوع"
 
 #~ msgid "Paid {0}"
 #~ msgstr "تم دفع {0}"
 
-#: app/components/orders/order-detail.tsx:562
+#: app/components/orders/order-detail.tsx:559
 msgid "Paid {totalMoney}"
 msgstr "تم دفع {totalMoney}"
 
@@ -22121,7 +22220,7 @@ msgstr "تم دفع {totalMoney}"
 msgid "Paid <0>{paid}</0>"
 msgstr "مدفوع <0>{paid}</0>"
 
-#: app/components/orders/order-detail.tsx:572
+#: app/components/orders/order-detail.tsx:569
 msgid "Paid at"
 msgstr "تاريخ الدفع"
 
@@ -22164,7 +22263,7 @@ msgstr "الوقت المدفوع <0>{totalLabel}</0>"
 msgid "Paid time off"
 msgstr "إجازة مدفوعة"
 
-#: app/components/orders/order-detail.tsx:381
+#: app/components/orders/order-detail.tsx:378
 msgid "Paid when the tab closes"
 msgstr "يُدفع عند إغلاق الحساب"
 
@@ -22439,7 +22538,7 @@ msgstr "الأجر"
 msgid "Pay and rates"
 msgstr "الأجر والمعدلات"
 
-#: app/components/orders/order-detail.tsx:552
+#: app/components/orders/order-detail.tsx:549
 msgid "Pay at handoff"
 msgstr "الدفع عند التسليم"
 
@@ -22471,6 +22570,10 @@ msgstr "إعدادات فترة الرواتب"
 msgid "Pay rate"
 msgstr "معدل الأجر"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:259
+msgid "Pay securely"
+msgstr "ادفع بأمان"
+
 #: app/components/staff/positions-tab.tsx:550
 #: app/routes/_app+/$orgSlug_+/staff+/team.tsx:243
 msgid "Pay type"
@@ -22480,7 +22583,7 @@ msgstr "نوع الأجر"
 msgid "Pay week"
 msgstr "أسبوع الأجور"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:120
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:133
 msgid "Paying from the phone always asks for a name and phone number."
 msgstr "الدفع من الهاتف يطلب دائمًا الاسم ورقم الهاتف."
 
@@ -22488,13 +22591,13 @@ msgstr "الدفع من الهاتف يطلب دائمًا الاسم ورقم �
 msgid "Paying online"
 msgstr "يدفع إلكترونيًا"
 
-#: app/components/orders/order-detail.tsx:247
-#: app/components/orders/order-detail.tsx:545
+#: app/components/orders/order-detail.tsx:244
+#: app/components/orders/order-detail.tsx:542
 #: app/routes/mock-payments+/checkout-com.dashboard.tsx:219
 msgid "Payment"
 msgstr "الدفعة"
 
-#: app/components/orders/order-detail.tsx:149
+#: app/components/orders/order-detail.tsx:146
 msgid "Payment arrived after the hold on this order ran out, so it was not confirmed automatically. The money was received: start preparing to honor the order, or cancel it and refund through your payment processor."
 msgstr "وصلت الدفعة بعد انتهاء مدة حجز الطلب، لذلك لم يتم تأكيده تلقائيًا. تم استلام المبلغ: ابدأ التحضير لتنفيذ الطلب، أو ألغِه واسترد المبلغ عبر معالج الدفع."
 
@@ -22510,7 +22613,7 @@ msgstr "انتهت صلاحية الدفع"
 msgid "Payment failed"
 msgstr "فشل الدفع"
 
-#: app/components/orders/order-detail.tsx:564
+#: app/components/orders/order-detail.tsx:561
 msgid "Payment failed. Nothing was charged."
 msgstr "فشل الدفع. لم يتم خصم أي مبلغ."
 
@@ -22528,7 +22631,11 @@ msgstr "المدفوعات الوهمية"
 msgid "Payment needs review"
 msgstr "الدفع يحتاج إلى مراجعة"
 
-#: app/components/orders/order-detail.tsx:567
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:176
+msgid "Payment not finished"
+msgstr "لم يكتمل الدفع"
+
+#: app/components/orders/order-detail.tsx:564
 msgid "Payment not yet received"
 msgstr "لم يُستلم الدفع بعد"
 
@@ -22549,7 +22656,8 @@ msgstr "سياسات الدفع"
 msgid "Payment policy"
 msgstr "سياسة الدفع"
 
-#: app/components/orders/order-detail.tsx:158
+#: app/components/orders/order-detail.tsx:155
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:168
 msgid "Payment received"
 msgstr "تم استلام الدفعة"
 
@@ -22557,7 +22665,7 @@ msgstr "تم استلام الدفعة"
 msgid "Payment under review"
 msgstr "الدفع قيد المراجعة"
 
-#: app/components/orders/order-detail.tsx:566
+#: app/components/orders/order-detail.tsx:563
 msgid "Payment window expired before it was paid."
 msgstr "انتهت مهلة الدفع قبل إتمامه."
 
@@ -22826,6 +22934,10 @@ msgstr "مكالمة هاتفية"
 msgid "Phone call (for landlines)"
 msgstr "مكالمة هاتفية (للخطوط الأرضية)"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:259
+msgid "Phone for the carrier"
+msgstr "هاتف لشركة الشحن"
+
 #: app/components/website/link-inspector.tsx:501
 msgid "Phone links only work on devices that can place phone calls."
 msgstr "تعمل روابط الهاتف فقط على الأجهزة القادرة على إجراء مكالمات هاتفية."
@@ -23025,7 +23137,7 @@ msgstr "اختر أول يوم في أي فترة. تبدأ فترة جديدة 
 msgid "Pick the party size. The best open table is assigned unless you choose one."
 msgstr "اختر عدد الضيوف. تُخصَّص أفضل طاولة متاحة ما لم تختر طاولة بنفسك."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:600
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:601
 msgid "Pick up to 4 dishes. Names, prices and photos come from your menu."
 msgstr "اختر حتى 4 أطباق. تأتي الأسماء والأسعار والصور من قائمتك."
 
@@ -23050,7 +23162,7 @@ msgid "Picked up the shift {range}."
 msgstr "تم رفع الوردية {range}."
 
 #: app/components/customers/person-orders-panel.tsx:219
-#: app/components/orders/order-detail.tsx:371
+#: app/components/orders/order-detail.tsx:368
 #: app/routes/_app+/$orgSlug_+/orders.tsx:245
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:675
 msgid "Pickup"
@@ -23173,7 +23285,7 @@ msgstr "المكان"
 #~ msgid "Place temporary holds on a specific table or entire dining area for maintenance, private events, weather, or staff holds."
 #~ msgstr "وضع حظر مؤقت على طاولة محددة أو منطقة طعام كاملة للصيانة أو المناسبات الخاصة أو الطقس أو حجوزات الموظفين."
 
-#: app/components/orders/order-detail.tsx:157
+#: app/components/orders/order-detail.tsx:154
 msgid "Placed"
 msgstr "تم الطلب"
 
@@ -23683,7 +23795,7 @@ msgid "Previous week"
 msgstr "الأسبوع السابق"
 
 #: app/components/menu/location-overrides-card.tsx:145
-#: app/components/orders/order-detail.tsx:448
+#: app/components/orders/order-detail.tsx:445
 #: app/components/reservations/experiences/experiences-screen.tsx:295
 #: app/routes/_app+/$orgSlug_+/menu+/items._index.tsx:315
 msgid "Price"
@@ -23727,11 +23839,15 @@ msgstr "السعر لكل ضيف"
 msgid "Price not configured"
 msgstr "السعر غير مكوّن"
 
+#: app/components/print/print-order-labels.ts:9
+msgid "Price ready"
+msgstr "السعر جاهز"
+
 #: app/components/locations/location-form.tsx:459
 msgid "Prices include tax"
 msgstr "الأسعار شاملة الضريبة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:320
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:321
 msgid "Prices, dish names or table codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version."
 msgstr "الأسعار أو أسماء الأطباق أو رموز الطاولات في هذه المطبوعة لم تعد محدّثة. اعتمد البروفة مجددًا لتحديثها، أو تابع طباعة النسخة المعتمدة."
 
@@ -23766,15 +23882,26 @@ msgstr "الزر الأساسي"
 msgid "Print"
 msgstr "طباعة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:795
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:820
 msgid "Print at home (A4)"
 msgstr "الطباعة في المنزل (A4)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:790
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:815
 msgid "Print at home (US Letter)"
 msgstr "الطباعة في المنزل (US Letter)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:731
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:157
+msgid "Print order"
+msgstr "طلب طباعة"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:59
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:54
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:161
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:173
+msgid "Print orders"
+msgstr "طلبات الطباعة"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:732
 msgid "Print proof"
 msgstr "بروفة الطباعة"
 
@@ -23785,7 +23912,7 @@ msgstr "بروفة الطباعة"
 msgid "Print shop"
 msgstr "المطبعة"
 
-#: app/components/qr/tables-manager.tsx:186
+#: app/components/qr/tables-manager.tsx:188
 msgid "Print table cards"
 msgstr "طباعة بطاقات الطاولات"
 
@@ -23793,9 +23920,21 @@ msgstr "طباعة بطاقات الطاولات"
 msgid "Print this view"
 msgstr "طباعة هذا العرض"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:58
+msgid "Printed and shipped to your door. You can cancel until production starts."
+msgstr "تُطبع وتُشحن حتى بابك. يمكنك الإلغاء حتى يبدأ الإنتاج."
+
 #: app/components/locations/location-form.tsx:444
 msgid "Printed on receipts. Letters and digits only; leave empty if not registered."
 msgstr "يُطبع على الإيصالات. حروف وأرقام فقط؛ اتركه فارغًا إذا لم تكن مسجلًا."
+
+#: app/components/print/print-order-labels.ts:13
+msgid "Printing"
+msgstr "قيد الطباعة"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:228
+msgid "Prints"
+msgstr "المطبوعات"
 
 #: ../../packages/ai/src/components/ai-chat.tsx:463
 msgid "Prioritize these tasks"
@@ -23898,7 +24037,7 @@ msgstr "الرسالة الصوتية"
 msgid "Pronunciations"
 msgstr "طرق النطق"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:715
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:716
 msgid "Proof"
 msgstr "البروفة"
 
@@ -24064,7 +24203,7 @@ msgstr "اجمع طاولتين أو أكثر قابلتين للدمج لاست
 
 #: app/components/hiring/applicant-labels.ts:31
 #: app/components/settings/two-factor-form.tsx:176
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:480
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:481
 msgid "QR code"
 msgstr "رمز QR"
 
@@ -24084,7 +24223,7 @@ msgstr "رمز QR يفتح هذه الوظيفة"
 msgid "QR code that pairs the terminal"
 msgstr "رمز QR لإقران جهاز البيع"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:80
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:87
 msgid "QR ordering settings"
 msgstr "إعدادات الطلب عبر QR"
 
@@ -24094,7 +24233,7 @@ msgstr "إعدادات الطلب عبر QR"
 msgid "QR tables"
 msgstr "طاولات QR"
 
-#: app/components/orders/order-detail.tsx:439
+#: app/components/orders/order-detail.tsx:436
 msgid "Qty"
 msgstr "الكمية"
 
@@ -24327,7 +24466,7 @@ msgstr "جاهز لاستقبال الحجوزات"
 msgid "Ready, {suggestions}"
 msgstr "جاهز، {suggestions}"
 
-#: app/components/qr/open-tabs.tsx:339
+#: app/components/qr/open-tabs.tsx:349
 #: app/components/reservations/detail-sheet.tsx:1502
 #: app/components/reservations/payment-panel.tsx:690
 #: app/components/reservations/waitlist/seat-dialog.tsx:236
@@ -24393,6 +24532,10 @@ msgstr "الطلبات الأخيرة"
 
 #~ msgid "Recently updated"
 #~ msgstr "المحدّثة مؤخرًا"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:257
+msgid "Recipient"
+msgstr "المستلم"
 
 #: ../../packages/marketing/src/components/campaign-list.tsx:81
 msgid "recipients"
@@ -24594,6 +24737,8 @@ msgstr "استرداد في قائمة الانتظار"
 msgid "Refund this booking?"
 msgstr "استرداد هذا الحجز؟"
 
+#: app/components/print/print-order-labels.ts:19
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:249
 #: app/utils/reservations/payments-view.ts:37
 #: app/utils/reservations/payments-view.ts:77
 msgid "Refunded"
@@ -25073,7 +25218,7 @@ msgid "Removing…"
 msgstr "جارٍ الإزالة…"
 
 #: app/components/dashboard/dashboard-options-menu.tsx:132
-#: app/components/qr/tables-manager.tsx:319
+#: app/components/qr/tables-manager.tsx:321
 msgid "Rename"
 msgstr "إعادة تسمية"
 
@@ -26091,6 +26236,10 @@ msgstr "المبيعات في الساعة"
 msgid "Sales per labor hour"
 msgstr "المبيعات لكل ساعة عمل"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:236
+msgid "Sales tax"
+msgstr "ضريبة المبيعات"
+
 #: app/components/locations/location-form.tsx:414
 msgid "Sales Tax Rate (%)"
 msgstr "نسبة ضريبة المبيعات (%)"
@@ -26160,7 +26309,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/menu/drop-wizard/drop-drawers.tsx:780
 #: app/components/note/comment-input.tsx:192
 #: app/components/organization-members.tsx:145
-#: app/components/qr/tables-manager.tsx:289
+#: app/components/qr/tables-manager.tsx:291
 #: app/components/reservations/experiences/schedule-sheet.tsx:183
 #: app/components/reservations/floor-plan-canvas.tsx:799
 #: app/components/reservations/policies/policy-sheet.tsx:186
@@ -26179,7 +26328,7 @@ msgstr "المملكة العربية السعودية (KSA)"
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:170
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:186
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
 msgstr "حفظ"
@@ -26197,7 +26346,7 @@ msgstr "وفّر 20٪"
 msgid "Save and test"
 msgstr "حفظ واختبار"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:696
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:697
 msgid "Save and update proof"
 msgstr "حفظ وتحديث البروفة"
 
@@ -26851,7 +27000,7 @@ msgstr "البحث في الأصوات"
 msgid "Search..."
 msgstr "البحث..."
 
-#: app/components/app-sidebar.tsx:877
+#: app/components/app-sidebar.tsx:878
 msgid "Search…"
 msgstr "بحث…"
 
@@ -27017,7 +27166,7 @@ msgstr "المقاعد"
 msgid "Seats used / capacity: {coversInSlot} / {maxCovers}"
 msgstr "المقاعد المستخدمة / السعة: {coversInSlot} / {maxCovers}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:414
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:415
 msgid "Second language"
 msgstr "اللغة الثانية"
 
@@ -27214,6 +27363,10 @@ msgstr "عرض إعدادات الوكيل ومسار المكالمة والأ�
 
 #~ msgid "See the agent's settings, phone menu, numbers, and training rules."
 #~ msgstr "عرض إعدادات الوكيل وقائمة الهاتف والأرقام وقواعد التدريب."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:291
+msgid "See the price"
+msgstr "عرض السعر"
 
 #: app/components/roles/tenant-role-access-manager.tsx:392
 msgid "See the reservation book, timeline, floor plan, calendar, overview, and waitlist."
@@ -27673,6 +27826,10 @@ msgstr "أُرسل لاحقًا"
 msgid "Sent to {formatted}"
 msgstr "أُرسل إلى {formatted}"
 
+#: app/components/print/print-order-labels.ts:12
+msgid "Sent to the printer"
+msgstr "أُرسل إلى المطبعة"
+
 #: app/components/reservations/messages/message-labels.ts:20
 msgid "Sent when a booking is made, with the manage link."
 msgstr "يُرسل عند إنشاء الحجز مع رابط إدارة الحجز."
@@ -27963,7 +28120,7 @@ msgid "Settings"
 msgstr "الإعدادات"
 
 #: app/components/phone-agent/settings-page.tsx:391
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:61
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:65
 msgid "Settings saved"
 msgstr "تم حفظ الإعدادات"
 
@@ -28149,6 +28306,31 @@ msgstr "الورديات وبطاقات الدوام وكل يوم عمل تتب
 msgid "Shifts, time cards, and labor cost. Only applies when the matching Staff features are turned on."
 msgstr "الورديات وبطاقات الدوام وتكلفة العمالة. تنطبق فقط عند تفعيل ميزات الموظفين المطابقة."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:307
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:231
+msgid "Ship to"
+msgstr "الشحن إلى"
+
+#: app/components/print/print-order-labels.ts:14
+msgid "Shipped"
+msgstr "تم الشحن"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:179
+msgid "Shipped prints are paused for a moment"
+msgstr "المطبوعات المشحونة متوقفة مؤقتًا"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:57
+msgid "Shipped prints are paused for a moment. Downloads still work."
+msgstr "المطبوعات المشحونة متوقفة مؤقتًا. التنزيلات ما زالت تعمل."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:169
+msgid "Shipped to a US address. You see the full price, with shipping, before you pay."
+msgstr "تُشحن إلى عنوان في الولايات المتحدة. ترى السعر الكامل مع الشحن قبل الدفع."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:232
+msgid "Shipping"
+msgstr "الشحن"
+
 #: app/components/app-sidebar.tsx:635
 #: app/components/workspace-breadcrumb.tsx:69
 msgid "Shop"
@@ -28281,7 +28463,7 @@ msgstr "عرض الطلبات"
 msgid "Show specific examples"
 msgstr "أرني أمثلة محددة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:674
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:675
 msgid "Show the address"
 msgstr "إظهار العنوان"
 
@@ -28291,7 +28473,7 @@ msgstr "إظهار العنوان"
 #~ msgid "Show the last 90 days"
 #~ msgstr "عرض آخر 90 يومًا"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:681
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:682
 msgid "Show the website"
 msgstr "إظهار الموقع الإلكتروني"
 
@@ -28468,7 +28650,7 @@ msgstr "متجر الموقع"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:169
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:171
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:345
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:346
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:140
 msgid "Size"
 msgstr "الحجم"
@@ -29059,7 +29241,7 @@ msgstr "بدء الرحلة عند حدث دورة الحياة"
 #~ msgid "Start of the call"
 #~ msgstr "بداية المكالمة"
 
-#: app/components/orders/order-detail.tsx:181
+#: app/components/orders/order-detail.tsx:178
 msgid "Start preparing"
 msgstr "بدء التحضير"
 
@@ -29090,7 +29272,7 @@ msgstr "ابدأ بقالب"
 msgid "Start with an example and change it to match your business."
 msgstr "ابدأ بمثال وعدّله ليناسب نشاطك التجاري."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:68
+#: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:78
 msgid "Start with table QR cards so guests can order from their phone."
 msgstr "ابدأ ببطاقات QR للطاولات ليتمكن الضيوف من الطلب من هواتفهم."
 
@@ -29128,6 +29310,10 @@ msgstr "يبدأ في {startedOn}"
 msgid "Starts on"
 msgstr "يبدأ في"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:267
+msgid "State"
+msgstr "الولاية"
+
 #: app/components/locations/address-autocomplete.tsx:266
 msgid "State / Province"
 msgstr "الولاية / المنطقة"
@@ -29155,7 +29341,7 @@ msgstr "الإحصائيات"
 #: app/components/customers/person-orders-panel.tsx:165
 #: app/components/customers/person-profile-screen.tsx:756
 #: app/components/customers/person-profile-screen.tsx:981
-#: app/components/orders/order-detail.tsx:558
+#: app/components/orders/order-detail.tsx:555
 #: app/components/reservations/experiences/experiences-screen.tsx:292
 #: app/components/roles/tenant-role-access-manager.tsx:1126
 #: app/components/settings/cards/sessions-card.tsx:239
@@ -29290,6 +29476,10 @@ msgstr "واجهة المتجر وإتمام الطلب"
 msgid "Street"
 msgstr "الشارع"
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:263
+msgid "Street address"
+msgstr "عنوان الشارع"
+
 #: app/components/locations/address-autocomplete.tsx:223
 msgid "Street Address"
 msgstr "عنوان الشارع"
@@ -29322,7 +29512,7 @@ msgstr "فحوصات هيكلية للمحفّزات والاتصالات وإع
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:363
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:364
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:163
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3700
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3769
@@ -29421,7 +29611,7 @@ msgstr "الاشتراك غير نشط"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/components/orders/order-detail.tsx:493
+#: app/components/orders/order-detail.tsx:490
 msgid "Subtotal"
 msgstr "المجموع الفرعي"
 
@@ -29465,6 +29655,7 @@ msgstr "تلخيص هذه الملاحظة"
 
 #: app/components/phone-agent/call-detail-sheet.tsx:415
 #: app/components/staff/timesheets/timesheets-page.tsx:538
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:199
 msgid "Summary"
 msgstr "الملخص"
 
@@ -29588,7 +29779,7 @@ msgstr "أُلغي الحساب {number}"
 msgid "Tab locked. Guests can no longer add to it."
 msgstr "قُفل الحساب. لم يعد بإمكان الضيوف الإضافة إليه."
 
-#: app/components/qr/tables-manager.tsx:309
+#: app/components/qr/tables-manager.tsx:311
 msgid "Tab open"
 msgstr "حساب مفتوح"
 
@@ -29621,7 +29812,7 @@ msgstr "الطاولة {0} مشغولة بواسطة {1} ({2} أشخاص)"
 msgid "Table {createdTableLabel} created."
 msgstr "تم إنشاء الطاولة {createdTableLabel}."
 
-#: app/components/orders/order-detail.tsx:377
+#: app/components/orders/order-detail.tsx:374
 #: app/components/qr/open-tabs.tsx:116
 #: app/routes/_app+/$orgSlug_+/orders.tsx:209
 #: app/routes/_app+/$orgSlug_+/orders.tsx:242
@@ -29684,7 +29875,7 @@ msgstr "حظر الطاولات والمناطق"
 msgid "Table and time changes you save next will ignore overlaps with other parties. Two parties may end up on the same table at the same time."
 msgstr "ستتجاهل تغييرات الطاولة والوقت التي تحفظها تاليًا التداخل مع المجموعات الأخرى. قد تجلس مجموعتان على الطاولة نفسها في الوقت نفسه."
 
-#: app/components/qr/tables-manager.tsx:240
+#: app/components/qr/tables-manager.tsx:242
 msgid "Table archived"
 msgstr "أُرشفت الطاولة"
 
@@ -29742,7 +29933,7 @@ msgstr "تم حذف الطاولة."
 #~ msgid "Table Inspector"
 #~ msgstr "فاحص الطاولة"
 
-#: app/components/qr/tables-manager.tsx:281
+#: app/components/qr/tables-manager.tsx:283
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1254
 msgid "Table label"
 msgstr "تسمية الطاولة"
@@ -29771,7 +29962,7 @@ msgstr "تفضيل الطاولة"
 msgid "Table QR cards"
 msgstr "بطاقات QR للطاولات"
 
-#: app/components/qr/tables-manager.tsx:220
+#: app/components/qr/tables-manager.tsx:222
 msgid "Table renamed"
 msgstr "تمت إعادة تسمية الطاولة"
 
@@ -29796,7 +29987,7 @@ msgstr "تم إنشاء حظر الطاولة/المنطقة."
 
 #: app/components/reservations/settings/setup-checklist.tsx:21
 #: app/components/workspace-breadcrumb.tsx:84
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:84
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:96
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:883
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1090
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1382
@@ -29968,7 +30159,7 @@ msgstr "المهام"
 msgid "Tasks to finish when someone joins."
 msgstr "مهام يجب إنجازها عند انضمام شخص جديد."
 
-#: app/components/orders/order-detail.tsx:503
+#: app/components/orders/order-detail.tsx:500
 #: app/components/pos/pos-day-report.tsx:206
 msgid "Tax"
 msgstr "الضريبة"
@@ -30389,10 +30580,14 @@ msgstr "هذا التاريخ ليس بداية فترة رواتب."
 msgid "That date is already listed."
 msgstr "هذا التاريخ مضاف بالفعل."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:190
+msgid "That did not work"
+msgstr "لم ينجح ذلك"
+
 #: app/components/qr/open-tabs.tsx:90
-#: app/components/qr/tables-manager.tsx:90
+#: app/components/qr/tables-manager.tsx:88
 #: app/components/reservations/experiences/experience-editor.tsx:365
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:66
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:70
 #: app/utils/my-schedule/my-schedule-messages.ts:45
 msgid "That did not work. Try again."
 msgstr "لم تنجح العملية. حاول مرة أخرى."
@@ -31096,7 +31291,7 @@ msgstr "تم نشر الوظيفة."
 msgid "The jobs people do here. Assign them from a person's profile."
 msgstr "الوظائف التي يؤديها الناس هنا. عيّنها من الملف الشخصي للشخص."
 
-#: app/components/qr/open-tabs.tsx:264
+#: app/components/qr/open-tabs.tsx:271
 msgid "The kitchen is still working on part of this tab. Close it only when the guest has paid."
 msgstr "ما زال المطبخ يعمل على جزء من هذا الحساب. أغلقه فقط بعد أن يدفع الضيف."
 
@@ -31204,6 +31399,10 @@ msgstr "لا يمكن أن يزيد الحد الأدنى عبر الإنترن�
 msgid "The online party size limits do not fit together."
 msgstr "حدود حجم المجموعة عبر الإنترنت غير متوافقة."
 
+#: app/utils/print/print-notifications.ts:32
+msgid "The order could not be completed, so we refunded it in full."
+msgstr "تعذّر إكمال الطلب، لذلك استرددنا المبلغ كاملًا."
+
 #: app/components/phone-agent/restaurant/order-handoff-details.tsx:11
 msgid "The order on this link can't be shown."
 msgstr "لا يمكن عرض الطلب الموجود في هذا الرابط."
@@ -31211,6 +31410,10 @@ msgstr "لا يمكن عرض الطلب الموجود في هذا الرابط.
 #: app/components/hiring/job-editor.tsx:771
 msgid "The page will not mention pay. Showing a range tends to bring more applications."
 msgstr "لن تذكر الصفحة الأجر. إظهار نطاق للأجر يجلب عادةً طلبات أكثر."
+
+#: app/utils/print/print-notifications.ts:28
+msgid "The parcel has shipped. Tracking is on the order page."
+msgstr "تم شحن الطرد. التتبع متاح في صفحة الطلب."
 
 #: app/components/reservations/waitlist/waitlist-settings.tsx:129
 msgid "The party limit must be a whole number from 1 to {MAX_PARTIES}, or empty for no limit."
@@ -31300,7 +31503,7 @@ msgstr "تعرض المعاينة الإعدادات المحفوظة. احفظ 
 msgid "The provider could not issue the refund."
 msgstr "تعذّر على المزوّد إصدار الاسترداد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:724
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:725
 msgid "The red dashed line is where the print is cut. Keep words away from the edge."
 msgstr "الخط الأحمر المتقطع هو موضع القص. أبعِد النص عن الحافة."
 
@@ -32154,7 +32357,7 @@ msgstr "تعذر تحميل هذا الطلب."
 msgid "This order does not exist or was removed."
 msgstr "هذا الطلب غير موجود أو تمت إزالته."
 
-#: app/components/orders/order-detail.tsx:152
+#: app/components/orders/order-detail.tsx:149
 msgid "This order needs a manual check before it goes ahead. Start preparing to accept it, or cancel it."
 msgstr "يحتاج هذا الطلب إلى مراجعة يدوية قبل المتابعة. ابدأ التحضير لقبوله، أو ألغِه."
 
@@ -32265,6 +32468,14 @@ msgstr "لم تعد هذه السياسة موجودة. تمت إعادة تحم
 #: app/components/phone-agent/voice-picker.tsx:643
 msgid "This preview couldn't play."
 msgstr "تعذّر تشغيل هذه المعاينة."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:295
+msgid "This price has expired."
+msgstr "انتهت صلاحية هذا السعر."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:288
+msgid "This price is held until {expiresAt}."
+msgstr "هذا السعر محجوز حتى {expiresAt}."
 
 #: app/utils/kiosk/kiosk-messages.ts:101
 msgid "This punch could not be saved. Ask a manager to add it."
@@ -32712,18 +32923,18 @@ msgstr "المنطقة الزمنية"
 msgid "Timing and notes"
 msgstr "التوقيت والملاحظات"
 
-#: app/components/orders/order-detail.tsx:512
+#: app/components/orders/order-detail.tsx:509
 msgid "Tip"
 msgstr "البقشيش"
 
 #~ msgid "Tip ({0}%)"
 #~ msgstr "البقشيش ({0}%)"
 
-#: app/components/orders/order-detail.tsx:511
+#: app/components/orders/order-detail.tsx:508
 msgid "Tip ({tipPercent}%)"
 msgstr "البقشيش ({tipPercent}%)"
 
-#: app/components/qr/open-tabs.tsx:275
+#: app/components/qr/open-tabs.tsx:282
 msgid "Tip (optional)"
 msgstr "إكرامية (اختياري)"
 
@@ -32860,7 +33071,7 @@ msgstr "حجوزات اليوم حسب الحالة وعدد الضيوف حسب
 msgid "Toggle announcement visibility"
 msgstr "تبديل ظهور الإعلان"
 
-#: app/components/ui/notification-bell.tsx:447
+#: app/components/ui/notification-bell.tsx:474
 msgid "Toggle notifications"
 msgstr "تبديل الإشعارات"
 
@@ -32925,12 +33136,13 @@ msgstr "إضافة"
 
 #: app/components/customers/person-orders-panel.tsx:174
 #: app/components/notes-chart.tsx:69
-#: app/components/orders/order-detail.tsx:531
+#: app/components/orders/order-detail.tsx:528
 #: app/components/staff/labor/labor-overview.tsx:219
 #: app/components/staff/labor/labor-tips.tsx:276
 #: app/components/staff/timesheets/payroll-summary.tsx:426
 #: app/components/staff/timesheets/timesheet-table.tsx:376
 #: app/components/staff/timesheets/timesheet-table.tsx:559
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:244
 msgid "Total"
 msgstr "الإجمالي"
 
@@ -32952,7 +33164,7 @@ msgstr "إجمالي الملاحظات"
 msgid "Total notes, the daily average and the trend."
 msgstr "إجمالي الملاحظات والمتوسط اليومي والاتجاه."
 
-#: app/components/qr/open-tabs.tsx:287
+#: app/components/qr/open-tabs.tsx:294
 msgid "Total paid: {amount}"
 msgstr "الإجمالي المدفوع: {amount}"
 
@@ -32972,6 +33184,10 @@ msgstr "إجمالي الوحدات"
 #: app/components/staff/labor-core-rules.tsx:279
 msgid "Track time at this workplace"
 msgstr "تتبّع الوقت في مكان العمل هذا"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:320
+msgid "Tracking"
+msgstr "التتبع"
 
 #: app/components/phone-agent/agent-details.tsx:313
 msgid "Training"
@@ -33269,6 +33485,10 @@ msgstr "حاول مرة أخرى"
 msgid "Try again later, or ask your manager."
 msgstr "حاول لاحقًا أو اسأل مديرك."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:180
+msgid "Try again later. Downloads still work."
+msgstr "حاول لاحقًا. التنزيلات ما زالت تعمل."
+
 #: ../../packages/ai/src/components/ai-chat.tsx:970
 #: ../../packages/ai/src/components/ai-chat.tsx:971
 msgid "Try another answer"
@@ -33471,7 +33691,7 @@ msgstr "اكتب <0>{orgSlug}</0> للتأكيد"
 msgid "Type in each day's sales, or upload a file from your register. The share is judged against your target."
 msgstr "اكتب مبيعات كل يوم، أو ارفع ملفًا من صندوقك. تُقيَّم النسبة مقابل هدفك."
 
-#: app/components/qr/tables-manager.tsx:161
+#: app/components/qr/tables-manager.tsx:162
 msgid "Type one label, a range like T1-T12, or a list separated by commas."
 msgstr "اكتب اسمًا واحدًا، أو نطاقًا مثل T1-T12، أو قائمة مفصولة بفواصل."
 
@@ -33534,7 +33754,7 @@ msgstr "تعذّر تحميل الطلبات. حاول مرة أخرى."
 msgid "Unable to load reviews."
 msgstr "تعذر تحميل التقييمات."
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:45
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:48
 msgid "Unable to load settings. Try again."
 msgstr "تعذّر تحميل الإعدادات. حاول مجددًا."
 
@@ -33542,7 +33762,7 @@ msgstr "تعذّر تحميل الإعدادات. حاول مجددًا."
 msgid "Unable to load submissions. Try again."
 msgstr "تعذّر تحميل الردود. حاول مرة أخرى."
 
-#: app/components/qr/tables-manager.tsx:69
+#: app/components/qr/tables-manager.tsx:67
 msgid "Unable to load tables. Try again."
 msgstr "تعذّر تحميل الطاولات. حاول مجددًا."
 
@@ -33812,8 +34032,8 @@ msgstr "إلغاء النشر"
 msgid "Unread"
 msgstr "غير مقروء"
 
-#: app/components/ui/notification-bell.tsx:391
-#: app/components/ui/notification-bell.tsx:496
+#: app/components/ui/notification-bell.tsx:418
+#: app/components/ui/notification-bell.tsx:523
 msgid "Unread Notifications"
 msgstr "الإشعارات غير المقروءة"
 
@@ -34525,7 +34745,7 @@ msgstr "عرض"
 msgid "View all"
 msgstr "عرض الكل"
 
-#: app/components/orders/order-detail.tsx:339
+#: app/components/orders/order-detail.tsx:336
 msgid "View all orders"
 msgstr "عرض كل الطلبات"
 
@@ -34785,11 +35005,11 @@ msgstr "تبقى رسائل البريد الصوتي وطلبات معاودة 
 msgid "Void"
 msgstr "إلغاء"
 
-#: app/components/qr/open-tabs.tsx:361
+#: app/components/qr/open-tabs.tsx:371
 msgid "Void tab"
 msgstr "إلغاء الحساب"
 
-#: app/components/qr/open-tabs.tsx:328
+#: app/components/qr/open-tabs.tsx:338
 msgid "Void this tab?"
 msgstr "إلغاء هذا الحساب؟"
 
@@ -34855,6 +35075,10 @@ msgstr "بانتظار الإبلاغ {waiting}"
 #: app/components/my-schedule/status-badge.tsx:18
 msgid "Waiting for a manager"
 msgstr "بانتظار المدير"
+
+#: app/components/print/print-order-labels.ts:10
+msgid "Waiting for payment"
+msgstr "بانتظار الدفع"
 
 #: app/components/staff/kiosk-manager.tsx:787
 msgid "Waiting for the tablet…"
@@ -35007,6 +35231,14 @@ msgstr "تحذيرات"
 msgid "Warnings do not stop you from saving or publishing."
 msgstr "التحذيرات لا تمنعك من الحفظ أو النشر."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:184
+msgid "We are checking it with the printer and will update you by email. You can still cancel for a full refund."
+msgstr "نتحقق منه مع المطبعة وسنبلغك بالبريد الإلكتروني. ما زال بإمكانك الإلغاء واسترداد المبلغ كاملًا."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:170
+msgid "We are confirming it with the bank. This page updates in a moment."
+msgstr "نؤكده مع البنك. ستتحدّث هذه الصفحة بعد لحظات."
+
 #: app/routes/mock-payments+/__card-errors.ts:16
 #: app/routes/mock-payments+/__card-errors.ts:17
 msgid "We are unable to authenticate your payment method. Please choose a different payment method and try again."
@@ -35143,6 +35375,10 @@ msgstr "تعذّر تحميل المناصب. أغلق هذه النافذة و�
 msgid "We could not load your templates. Try again."
 msgstr "تعذّر تحميل قوالبك. حاول مرة أخرى."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:185
+msgid "We could not price this order"
+msgstr "تعذّر تسعير هذا الطلب"
+
 #: app/utils/staffing/staff-errors.ts:52
 msgid "We could not reach the staff service. Check your connection."
 msgstr "تعذّر الوصول إلى خدمة الموظفين. تحقق من اتصالك."
@@ -35155,7 +35391,7 @@ msgstr "تعذّرت قراءة هذا الملف."
 msgid "We could not save the time zone. Try again."
 msgstr "تعذّر حفظ المنطقة الزمنية. حاول مرة أخرى."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:308
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:309
 msgid "We could not save this print"
 msgstr "تعذّر حفظ هذه المطبوعة"
 
@@ -35179,6 +35415,14 @@ msgstr "أرسلنا لك للتو رسالة نصية تحتوي على راب�
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:67
 msgid "We only deliver within 5 miles. Offer pickup otherwise."
 msgstr "نوصّل فقط ضمن مسافة 5 أميال. اعرض الاستلام بخلاف ذلك."
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:753
+msgid "We print and ship it to your door."
+msgstr "نطبعها ونشحنها حتى بابك."
+
+#: app/utils/print/print-notifications.ts:24
+msgid "We sent it to the printer. You can cancel until production starts."
+msgstr "أرسلناه إلى المطبعة. يمكنك الإلغاء حتى يبدأ الإنتاج."
 
 #: app/components/privacy-banner.tsx:22
 msgid "We use cookies to enhance your experience, analyze site traffic and deliver personalized content. <0>Read our Cookie Policy</0>."
@@ -35363,7 +35607,7 @@ msgstr "كم الأجر؟"
 msgid "What else should I know?"
 msgstr "ماذا يجب أن أعرف أيضاً؟"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:81
+#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:89
 msgid "What guests are asked for when they order at the table."
 msgstr "ما يُطلب من الضيوف عند الطلب من الطاولة."
 
@@ -35444,6 +35688,7 @@ msgid "What to do when the agent mishears or can't help."
 msgstr "ما يجب فعله عندما يسيء الوكيل فهم المتصل أو لا يستطيع المساعدة."
 
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:110
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:200
 msgid "What to print"
 msgstr "ما الذي تريد طباعته"
 
@@ -35600,7 +35845,7 @@ msgstr "عندما يطلب الزوار أو محركات البحث عنوان
 msgid "When you close it"
 msgstr "عندما تغلقها"
 
-#: app/components/ui/notification-bell.tsx:276
+#: app/components/ui/notification-bell.tsx:303
 msgid "When you get notifications, they'll show up here."
 msgstr "عند وصول الإشعارات، ستظهر هنا."
 
@@ -35614,7 +35859,7 @@ msgstr "عندما تكون مغلقًا"
 msgid "Where"
 msgstr "المكان"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:483
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:484
 msgid "Where a guest lands when they scan. Links point at your own website only."
 msgstr "الوجهة التي يصل إليها الضيف عند المسح. الروابط تشير إلى موقعك فقط."
 
@@ -35867,7 +36112,7 @@ msgstr "الكلمة"
 msgid "Word, e.g. Nguyen"
 msgstr "الكلمة، مثل Nguyen"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:385
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:386
 msgid "Words"
 msgstr "النصوص"
 
@@ -36313,6 +36558,10 @@ msgstr "ليست لديك صلاحية للقيام بذلك."
 msgid "You don't have permission to see this report's data."
 msgstr "ليست لديك صلاحية لعرض بيانات هذا التقرير."
 
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:272
+msgid "You get a full refund to the card you paid with."
+msgstr "يُسترد المبلغ كاملًا إلى البطاقة التي دفعت بها."
+
 #: app/components/phone-agent/training-rules-section.tsx:166
 msgid "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add another."
 msgstr "لديك {MAX_TRAINING_RULES} قاعدة، وهو الحد الأقصى المسموح. احذف قاعدة لإضافة أخرى."
@@ -36541,11 +36790,11 @@ msgstr "رابط خادم MCP الخاص بك"
 msgid "Your media library is empty"
 msgstr "مكتبة الوسائط فارغة"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:607
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:608
 msgid "Your menu has no dishes to feature yet."
 msgstr "لا توجد أطباق في قائمتك لعرضها بعد."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:316
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:317
 msgid "Your menu or tables changed since approval"
 msgstr "تغيّرت قائمتك أو طاولاتك منذ الاعتماد"
 
@@ -36560,6 +36809,10 @@ msgstr "ورديّاتك القادمة"
 #: app/components/staff/schedule/time-off-page.tsx:510
 msgid "Your note: {text}"
 msgstr "ملاحظتك: {text}"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.$orderId.tsx:182
+msgid "Your order is on hold"
+msgstr "طلبك معلّق"
 
 #~ msgid "Your organization's current plan and billing status"
 #~ msgstr "الخطة الحالية لمؤسستك وحالة الفوترة"
@@ -36674,6 +36927,10 @@ msgstr "بدون صلاحيات"
 
 #: app/routes/mock-payments+/__card-form.tsx:106
 msgid "ZIP"
+msgstr "الرمز البريدي"
+
+#: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:285
+msgid "ZIP code"
 msgstr "الرمز البريدي"
 
 #: app/components/locations/delivery-zone-map.tsx:360

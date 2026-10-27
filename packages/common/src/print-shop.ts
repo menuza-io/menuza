@@ -418,3 +418,116 @@ export function printTargetsFor(
 	}
 	return ['menu', 'reservations', 'site', 'none']
 }
+
+// ---------------------------------------------------------------------------
+// Shipped orders (US only in v1)
+// ---------------------------------------------------------------------------
+
+export const PRINT_MAX_ORDER_LINES = 20
+export const PRINT_MAX_COPIES = 500
+
+export const PRINT_US_STATES = [
+	'AL',
+	'AK',
+	'AZ',
+	'AR',
+	'CA',
+	'CO',
+	'CT',
+	'DE',
+	'DC',
+	'FL',
+	'GA',
+	'HI',
+	'ID',
+	'IL',
+	'IN',
+	'IA',
+	'KS',
+	'KY',
+	'LA',
+	'ME',
+	'MD',
+	'MA',
+	'MI',
+	'MN',
+	'MS',
+	'MO',
+	'MT',
+	'NE',
+	'NV',
+	'NH',
+	'NJ',
+	'NM',
+	'NY',
+	'NC',
+	'ND',
+	'OH',
+	'OK',
+	'OR',
+	'PA',
+	'RI',
+	'SC',
+	'SD',
+	'TN',
+	'TX',
+	'UT',
+	'VT',
+	'VA',
+	'WA',
+	'WV',
+	'WI',
+	'WY',
+] as const
+
+export const printShippingAddressSchema = z.strictObject({
+	recipientName: z
+		.string()
+		.trim()
+		.min(2, 'Enter who receives the parcel')
+		.max(80),
+	recipientPhone: z
+		.string()
+		.trim()
+		.regex(/^\+?[\d\s\-().]{7,25}$/, 'Enter a phone number for the carrier'),
+	line1: z.string().trim().min(3, 'Enter a street address').max(120),
+	line2: z.string().trim().max(120).optional(),
+	city: z.string().trim().min(2, 'Enter a city').max(80),
+	state: z.enum(PRINT_US_STATES, { message: 'Choose a state' }),
+	postalCode: z
+		.string()
+		.trim()
+		.regex(/^\d{5}(-\d{4})?$/, 'Enter a 5-digit ZIP code'),
+	country: z.literal('US'),
+})
+export type PrintShippingAddress = z.infer<typeof printShippingAddressSchema>
+
+export const printOrderLineSchema = z.strictObject({
+	designId: z.string().min(1).max(100),
+	/** Copies of every piece (a table-card set prints each table this many times). */
+	quantity: z.number().int().min(1).max(PRINT_MAX_COPIES),
+})
+
+export const PRINT_ORDER_STATUS_VALUES = [
+	'quote',
+	'awaiting_payment',
+	'paid',
+	'submitted',
+	'in_production',
+	'shipped',
+	'delivered',
+	'held',
+	'failed',
+	'cancelled',
+	'refunded',
+] as const
+export type PrintOrderStatus = (typeof PRINT_ORDER_STATUS_VALUES)[number]
+
+/** Statuses an operator may still cancel themselves (production not started). */
+export const PRINT_SELF_CANCEL_STATUSES: readonly PrintOrderStatus[] = [
+	'quote',
+	'awaiting_payment',
+	'paid',
+	'submitted',
+	'held',
+]

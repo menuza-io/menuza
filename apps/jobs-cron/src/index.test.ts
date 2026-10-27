@@ -514,6 +514,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
@@ -550,9 +551,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						[
+							'https://app.example.com/resources/jobs/print-sync',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(7)
+				expect(calls).toHaveLength(8)
 			})
 
 			it('posts the payments reconcile to the App once, with the internal token and no tenant node involved', async () => {
@@ -594,6 +600,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'fulfilled',
 					'rejected',
+					'fulfilled',
 				])
 				expect(String((results[3] as PromiseRejectedResult).reason)).toContain(
 					'Job /resources/jobs/reservation-payments-reconcile failed: 502',
@@ -674,6 +681,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'rejected',
 					'fulfilled',
 					'fulfilled',
+					'fulfilled',
 				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
@@ -702,6 +710,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					'fulfilled',
 					'rejected',
 					'fulfilled',
+					'fulfilled',
 				])
 				expect(String((results[2] as PromiseRejectedResult).reason)).toContain(
 					'Tenant reservations tick failed for https://tenant-us.example.com',
@@ -724,6 +733,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				await Promise.allSettled(promises)
 				expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
 					'https://app.example.com/resources/jobs/reservation-payments-reconcile',
+					'https://app.example.com/resources/jobs/print-sync',
 				])
 			})
 		})

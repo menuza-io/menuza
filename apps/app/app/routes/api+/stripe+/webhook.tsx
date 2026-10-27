@@ -7,6 +7,10 @@ import {
 	handleTrialEnd,
 } from '#app/utils/payments.server.ts'
 import {
+	handlePrintStripeSession,
+	isPrintStripeMetadata,
+} from '#app/utils/print/orders.server.ts'
+import {
 	handleReservationStripeDisputeEvent,
 	handleReservationStripeRefundEvent,
 	handleReservationStripeSessionEvent,
@@ -132,6 +136,12 @@ export async function action({ request }: ActionFunctionArgs) {
 					await handleReservationStripeSessionEvent(session, event.type)
 					break
 				}
+				if (isPrintStripeMetadata(session.metadata)) {
+					// Print shop orders (platform account): a paid session submits
+					// the order to its vendors.
+					await handlePrintStripeSession(session, event.type)
+					break
+				}
 				if (isRestaurantStripeMetadata(session.metadata)) {
 					// Restaurant orders: forward the non-PII payment facts to the
 					// org's regional tenant service. A regional failure throws so
@@ -150,6 +160,10 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (isReservationStripeMetadata(paymentIntent.metadata)) {
 					// Reservation payments settle on the session (or, for staff fee
 					// charges, synchronously); the intent event adds nothing.
+					break
+				}
+				if (isPrintStripeMetadata(paymentIntent.metadata)) {
+					// Print orders settle on the session event.
 					break
 				}
 				if (isRestaurantStripeMetadata(paymentIntent.metadata)) {

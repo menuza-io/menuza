@@ -42,7 +42,7 @@ msgstr "{0} numbers"
 msgid "{0} of {1} targeted"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:192
+#: app/routes/_admin+/index.tsx:195
 msgid "{active} active • +{recent} new this week"
 msgstr ""
 
@@ -149,7 +149,7 @@ msgstr ""
 msgid "+{moreCount} more users"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:161
+#: app/routes/_admin+/index.tsx:164
 msgid "+{recentUsers} new this week"
 msgstr ""
 
@@ -216,6 +216,10 @@ msgstr "A picture, logo, or product shot."
 msgid "Accept"
 msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:243
+msgid "Accept new price"
+msgstr "Accept new price"
+
 #: app/routes/_admin+/waitlist.tsx:254
 msgid "Access"
 msgstr "Access"
@@ -246,9 +250,9 @@ msgstr ""
 msgid "Action failed"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:377
-#: app/components/admin/feature-flags.tsx:483
-#: app/components/admin/feature-flags.tsx:654
+#: app/components/admin/feature-flags.tsx:378
+#: app/components/admin/feature-flags.tsx:484
+#: app/components/admin/feature-flags.tsx:655
 #: app/components/sso-user-management.tsx:177
 #: app/routes/_admin+/cache.tsx:619
 #: app/routes/_admin+/gdpr-requests.tsx:508
@@ -256,6 +260,8 @@ msgstr ""
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
 #: app/routes/_admin+/phone-numbers.tsx:356
+#: app/routes/_admin+/print-shop.tsx:143
+#: app/routes/_admin+/print-shop.tsx:297
 #: app/routes/_admin+/roles+/index.tsx:412
 #: app/routes/_admin+/roles+/index.tsx:454
 #: app/routes/_admin+/waitlist.tsx:354
@@ -291,7 +297,7 @@ msgstr ""
 msgid "Active Sessions"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:236
+#: app/routes/_admin+/index.tsx:238
 msgid "Active Users"
 msgstr ""
 
@@ -346,8 +352,8 @@ msgstr "Add block"
 msgid "Add feature"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:94
-#: app/components/admin/feature-flags.tsx:752
+#: app/components/admin/feature-flags.tsx:95
+#: app/components/admin/feature-flags.tsx:761
 msgid "Add Flag"
 msgstr ""
 
@@ -363,8 +369,8 @@ msgstr "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 msgid "Add or change an override"
 msgstr "Add or change an override"
 
-#: app/components/admin/feature-flags.tsx:536
-#: app/components/admin/feature-flags.tsx:714
+#: app/components/admin/feature-flags.tsx:537
+#: app/components/admin/feature-flags.tsx:715
 msgid "Add Override"
 msgstr ""
 
@@ -389,8 +395,8 @@ msgstr "Add points to {0}'s current total of {1}."
 msgid "Add waitlist points"
 msgstr "Add waitlist points"
 
-#: app/components/admin-sidebar.tsx:155
-#: app/components/admin-sidebar.tsx:163
+#: app/components/admin-sidebar.tsx:161
+#: app/components/admin-sidebar.tsx:169
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
@@ -398,8 +404,8 @@ msgstr "Add waitlist points"
 msgid "Admin"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:181
-#: app/routes/_admin+/index.tsx:126
+#: app/components/admin-sidebar.tsx:187
+#: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr ""
 
@@ -735,6 +741,11 @@ msgstr ""
 msgid "Blacklisted IPs"
 msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:141
+#: app/routes/_admin+/print-shop.tsx:204
+msgid "Bleed (mm)"
+msgstr "Bleed (mm)"
+
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:83
 msgid "Block types"
 msgstr "Block types"
@@ -759,7 +770,7 @@ msgstr "Booking sources"
 msgid "Bookings cancelled after the free-cancellation window over the last 30 days."
 msgstr "Bookings cancelled after the free-cancellation window over the last 30 days."
 
-#: app/components/admin/feature-flags.tsx:144
+#: app/components/admin/feature-flags.tsx:145
 msgid "Boolean"
 msgstr ""
 
@@ -797,12 +808,12 @@ msgid "Button label"
 msgstr "Button label"
 
 #: app/components/admin-sidebar.tsx:111
-#: app/routes/_admin+/index.tsx:372
+#: app/routes/_admin+/index.tsx:375
 msgid "Cache"
 msgstr ""
 
 #: app/routes/_admin+/cache.tsx:275
-#: app/routes/_admin+/index.tsx:391
+#: app/routes/_admin+/index.tsx:394
 msgid "Cache Management"
 msgstr ""
 
@@ -862,7 +873,7 @@ msgstr "Choose from library"
 msgid "Clear {typeUpper}"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:494
+#: app/routes/_admin+/index.tsx:497
 msgid "Clear Cache"
 msgstr ""
 
@@ -1051,7 +1062,7 @@ msgstr "Covers in each start time against the pacing limit over the last 7 days,
 msgid "Covers today"
 msgstr "Covers today"
 
-#: app/components/admin/feature-flags.tsx:100
+#: app/components/admin/feature-flags.tsx:101
 msgid "Create a new feature flag at system level."
 msgstr ""
 
@@ -1059,11 +1070,11 @@ msgstr ""
 msgid "Create a new role with custom permissions"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:249
+#: app/components/admin/feature-flags.tsx:250
 msgid "Create an override at organization level."
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:251
+#: app/components/admin/feature-flags.tsx:252
 msgid "Create an override at user level."
 msgstr ""
 
@@ -1075,7 +1086,7 @@ msgstr ""
 msgid "Create Broadcast"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:188
+#: app/components/admin/feature-flags.tsx:189
 msgid "Create Flag"
 msgstr ""
 
@@ -1083,11 +1094,11 @@ msgstr ""
 msgid "Create New Role"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:346
+#: app/components/admin/feature-flags.tsx:347
 msgid "Create Override"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:242
+#: app/components/admin/feature-flags.tsx:243
 msgid "Create Override for \"{flagKey}\""
 msgstr ""
 
@@ -1142,7 +1153,7 @@ msgstr ""
 msgid "Current active login sessions"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:259
+#: app/routes/_admin+/index.tsx:261
 msgid "Currently logged in users"
 msgstr ""
 
@@ -1212,7 +1223,7 @@ msgstr ""
 #~ msgid "Data Subject Requests"
 #~ msgstr ""
 
-#: app/components/admin/feature-flags.tsx:147
+#: app/components/admin/feature-flags.tsx:148
 #: app/routes/_admin+/waitlist.tsx:276
 msgid "Date"
 msgstr ""
@@ -1245,7 +1256,7 @@ msgstr ""
 msgid "Delay unit is required."
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:408
+#: app/components/admin/feature-flags.tsx:409
 #: app/routes/_admin+/marketing+/automations._index.tsx:289
 msgid "Delete"
 msgstr ""
@@ -1370,6 +1381,10 @@ msgstr ""
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
+#: app/routes/_admin+/print-shop.tsx:85
+msgid "Drift limit (%)"
+msgstr "Drift limit (%)"
+
 #: app/routes/_admin+/marketing+/automations._index.tsx:275
 msgid "Duplicate"
 msgstr ""
@@ -1426,7 +1441,11 @@ msgstr ""
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 
-#: app/components/admin/feature-flags.tsx:401
+#: app/routes/_admin+/print-shop.tsx:127
+msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
+msgstr "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
+
+#: app/components/admin/feature-flags.tsx:402
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
 #: app/routes/_admin+/marketing+/automations._index.tsx:231
@@ -1437,25 +1456,25 @@ msgstr ""
 msgid "Edit design"
 msgstr "Edit design"
 
-#: app/components/admin/feature-flags.tsx:94
+#: app/components/admin/feature-flags.tsx:95
 msgid "Edit Flag"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:534
-#: app/components/admin/feature-flags.tsx:712
+#: app/components/admin/feature-flags.tsx:535
+#: app/components/admin/feature-flags.tsx:713
 msgid "Edit Override"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:240
+#: app/components/admin/feature-flags.tsx:241
 msgid "Edit Override for \"{flagKey}\""
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:98
+#: app/components/admin/feature-flags.tsx:99
 msgid "Edit the details of the feature flag."
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:477
-#: app/components/admin/feature-flags.tsx:648
+#: app/components/admin/feature-flags.tsx:478
+#: app/components/admin/feature-flags.tsx:649
 msgid "Effective Value"
 msgstr ""
 
@@ -1520,6 +1539,7 @@ msgid "Empty subject"
 msgstr ""
 
 #: app/components/sso-configuration-overview.tsx:132
+#: app/routes/_admin+/print-shop.tsx:208
 msgid "Enable"
 msgstr ""
 
@@ -1531,7 +1551,7 @@ msgstr ""
 msgid "Enable SSO"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:305
+#: app/components/admin/feature-flags.tsx:306
 #: app/components/sso-configuration-overview.tsx:101
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:415
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:440
@@ -1567,11 +1587,11 @@ msgstr ""
 msgid "Enter feature name"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:451
+#: app/components/admin/feature-flags.tsx:452
 msgid "Enter Organization ID"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:606
+#: app/components/admin/feature-flags.tsx:607
 msgid "Enter Organization ID (optional - for per-org overrides)"
 msgstr ""
 
@@ -1591,7 +1611,7 @@ msgstr ""
 msgid "Enter the reason for banning this user..."
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:597
+#: app/components/admin/feature-flags.tsx:598
 msgid "Enter User ID (required)"
 msgstr ""
 
@@ -1741,7 +1761,7 @@ msgstr ""
 #~ msgid "Filters"
 #~ msgstr ""
 
-#: app/routes/_admin+/index.tsx:437
+#: app/routes/_admin+/index.tsx:440
 msgid "Find and manage user accounts"
 msgstr ""
 
@@ -1759,24 +1779,24 @@ msgstr ""
 msgid "Fix validation errors before publishing"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:122
+#: app/components/admin/feature-flags.tsx:123
 msgid "Flag Key"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:154
-#: app/components/admin/feature-flags.tsx:163
+#: app/components/admin/feature-flags.tsx:155
+#: app/components/admin/feature-flags.tsx:164
 msgid "Flag Value"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:467
+#: app/components/admin/feature-flags.tsx:468
 msgid "Flags for Organization: {searchedOrgId}"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:636
+#: app/components/admin/feature-flags.tsx:637
 msgid "Flags for User: {searchedUserId} (Global)"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:632
+#: app/components/admin/feature-flags.tsx:633
 msgid "Flags for User: {searchedUserId} (Org: {searchedOrgId})"
 msgstr ""
 
@@ -2095,9 +2115,9 @@ msgstr "Keep editing"
 msgid "Keep forever"
 msgstr "Keep forever"
 
-#: app/components/admin/feature-flags.tsx:371
-#: app/components/admin/feature-flags.tsx:474
-#: app/components/admin/feature-flags.tsx:645
+#: app/components/admin/feature-flags.tsx:372
+#: app/components/admin/feature-flags.tsx:475
+#: app/components/admin/feature-flags.tsx:646
 #: app/routes/_admin+/cache.tsx:607
 #: app/routes/_admin+/roles+/$roleId.tsx:492
 #: app/routes/_admin+/roles+/$roleId.tsx:541
@@ -2200,7 +2220,7 @@ msgstr ""
 msgid "Launch status is currently <0>{launchStatus}</0>. The waitlist is only active when LAUNCH_STATUS is set to CLOSED_BETA."
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:618
+#: app/components/admin/feature-flags.tsx:619
 msgid "Leave Organization ID empty to view/set global user overrides. Enter an Organization ID to view/set overrides for that specific organization."
 msgstr ""
 
@@ -2258,7 +2278,7 @@ msgstr ""
 msgid "Manage all users in the system"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:400
+#: app/routes/_admin+/index.tsx:403
 msgid "Manage Cache →"
 msgstr ""
 
@@ -2270,11 +2290,11 @@ msgstr ""
 msgid "Manage organization and system roles and permissions"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:355
+#: app/routes/_admin+/index.tsx:358
 msgid "Manage Organizations"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:497
+#: app/routes/_admin+/index.tsx:500
 msgid "Manage system performance"
 msgstr ""
 
@@ -2282,7 +2302,7 @@ msgstr ""
 msgid "Manage team chat retention for {organizationName}."
 msgstr "Manage team chat retention for {organizationName}."
 
-#: app/routes/_admin+/index.tsx:319
+#: app/routes/_admin+/index.tsx:322
 msgid "Manage Users"
 msgstr ""
 
@@ -2290,7 +2310,7 @@ msgstr ""
 msgid "Manage users who authenticate through SSO for {organizationName}"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:128
+#: app/routes/_admin+/index.tsx:131
 msgid "Manage users, organizations, and system settings"
 msgstr ""
 
@@ -2321,9 +2341,21 @@ msgstr ""
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:294
+msgid "Margin"
+msgstr "Margin"
+
+#: app/routes/_admin+/print-shop.tsx:282
+msgid "Margin on the last 100 orders: {total}"
+msgstr "Margin on the last 100 orders: {total}"
+
 #: app/components/admin-sidebar.tsx:68
 msgid "Marketing"
 msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:79
+msgid "Markup (%)"
+msgstr "Markup (%)"
 
 #: app/components/sso-configuration-form.tsx:395
 #: app/components/sso-user-management.tsx:104
@@ -2368,7 +2400,7 @@ msgstr ""
 msgid "Minutes"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:247
+#: app/components/admin/feature-flags.tsx:248
 msgid "Modify the override value."
 msgstr ""
 
@@ -2376,7 +2408,7 @@ msgstr ""
 msgid "Monitor and manage IP addresses accessing your website"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:394
+#: app/routes/_admin+/index.tsx:397
 msgid "Monitor and manage system cache"
 msgstr ""
 
@@ -2384,7 +2416,7 @@ msgstr ""
 msgid "Monitor and manage system cache performance"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:467
+#: app/routes/_admin+/index.tsx:470
 msgid "Monitor organization activity"
 msgstr ""
 
@@ -2514,8 +2546,8 @@ msgstr ""
 msgid "No description"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:494
-#: app/components/admin/feature-flags.tsx:665
+#: app/components/admin/feature-flags.tsx:495
+#: app/components/admin/feature-flags.tsx:666
 msgid "No flags configured"
 msgstr ""
 
@@ -2584,11 +2616,11 @@ msgid "No SSO Users"
 msgstr ""
 
 #: app/components/admin-organizations-table.tsx:86
-#: app/routes/_admin+/index.tsx:284
+#: app/routes/_admin+/index.tsx:287
 msgid "No Subscription"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:388
+#: app/components/admin/feature-flags.tsx:389
 msgid "No system flags configured"
 msgstr ""
 
@@ -2668,7 +2700,7 @@ msgstr ""
 msgid "Notes Created"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:141
+#: app/components/admin/feature-flags.tsx:142
 #: app/routes/_admin+/phone-numbers.tsx:347
 msgid "Number"
 msgstr ""
@@ -2724,16 +2756,21 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:277
+msgid "Orders"
+msgstr "Orders"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:894
 msgid "org - Organization resources"
 msgstr ""
 
 #: app/components/admin-organizations-table.tsx:139
 #: app/components/admin-users-table.tsx:235
-#: app/components/admin/feature-flags.tsx:744
+#: app/components/admin/feature-flags.tsx:753
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/phone-numbers.tsx:353
+#: app/routes/_admin+/print-shop.tsx:290
 msgid "Organization"
 msgstr ""
 
@@ -2746,7 +2783,7 @@ msgstr ""
 msgid "Organization Created"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:519
+#: app/components/admin/feature-flags.tsx:520
 msgid "Organization Override"
 msgstr ""
 
@@ -2778,8 +2815,8 @@ msgstr "Organization slug or ID for {e164}"
 #: app/components/admin-user-detail.tsx:255
 #: app/components/admin-user-detail.tsx:324
 #: app/components/admin-users-table.tsx:124
-#: app/routes/_admin+/index.tsx:169
-#: app/routes/_admin+/index.tsx:336
+#: app/routes/_admin+/index.tsx:172
+#: app/routes/_admin+/index.tsx:339
 #: app/routes/_admin+/organizations+/index.tsx:115
 msgid "Organizations"
 msgstr ""
@@ -2792,8 +2829,8 @@ msgstr "Organizations will appear here once they are created."
 msgid "Outline"
 msgstr "Outline"
 
-#: app/components/admin/feature-flags.tsx:284
-#: app/components/admin/feature-flags.tsx:293
+#: app/components/admin/feature-flags.tsx:285
+#: app/components/admin/feature-flags.tsx:294
 msgid "Override Value"
 msgstr ""
 
@@ -2916,7 +2953,7 @@ msgstr ""
 msgid "Persistent cache stored in SQLite database"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:227
+#: app/routes/_admin+/index.tsx:230
 msgid "Personal + Organization notes"
 msgstr ""
 
@@ -2963,6 +3000,10 @@ msgstr "Pick an organization by name or slug. Saving again replaces its override
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:295
+msgid "Placed"
+msgstr "Placed"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:365
 msgid "Plaintext Fallback (Optional)"
@@ -3023,6 +3064,15 @@ msgstr "Points to add"
 #~ msgid "Previous"
 #~ msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:64
+msgid "Pricing rules"
+msgstr "Pricing rules"
+
+#: app/components/admin-sidebar.tsx:143
+#: app/routes/_admin+/print-shop.tsx:269
+msgid "Print shop"
+msgstr "Print shop"
+
 #: ../../packages/marketing-workflow/src/node-palette.tsx:40
 #: ../../packages/marketing/src/components/campaign-form.tsx:77
 msgid "Pro"
@@ -3037,6 +3087,10 @@ msgstr ""
 #: app/components/admin-cache-confirmation-dialog.tsx:122
 msgid "Processing..."
 msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:138
+msgid "Product and size"
+msgstr "Product and size"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:20
 msgid "Profile Completed"
@@ -3079,13 +3133,17 @@ msgstr ""
 msgid "Publishing..."
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:409
+#: app/routes/_admin+/index.tsx:412
 msgid "Quick Actions"
 msgstr ""
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:294
 msgid "Quick apply industry-standard retention policies"
 msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:91
+msgid "Quote valid (minutes)"
+msgstr "Quote valid (minutes)"
 
 #: app/routes/_admin+/waitlist.tsx:274
 #: app/routes/_admin+/waitlist.tsx:330
@@ -3161,6 +3219,10 @@ msgstr ""
 msgid "Referrals"
 msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:253
+msgid "Refund in full"
+msgstr "Refund in full"
+
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
 msgstr ""
@@ -3178,7 +3240,7 @@ msgstr "Remove block"
 msgid "Remove design"
 msgstr "Remove design"
 
-#: app/components/admin/feature-flags.tsx:339
+#: app/components/admin/feature-flags.tsx:340
 msgid "Remove Override"
 msgstr ""
 
@@ -3240,7 +3302,7 @@ msgstr "Reservation No-Show"
 msgid "Reservations"
 msgstr "Reservations"
 
-#: app/components/admin-sidebar.tsx:143
+#: app/components/admin-sidebar.tsx:149
 msgid "Reservations fees"
 msgstr "Reservations fees"
 
@@ -3255,6 +3317,10 @@ msgstr ""
 #: app/routes/_admin+/audit-logs.tsx:286
 msgid "Resource"
 msgstr "Resource"
+
+#: app/routes/_admin+/print-shop.tsx:67
+msgid "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
+msgstr "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:75
 msgid "Retention period"
@@ -3283,6 +3349,10 @@ msgstr "Retire {e164}? It can't be assigned again, and any agent using it stops 
 #: app/routes/_admin+/phone-numbers.tsx:125
 msgid "Retired"
 msgstr "Retired"
+
+#: app/routes/_admin+/print-shop.tsx:236
+msgid "Retry"
+msgstr "Retry"
 
 #: app/routes/_admin+/_layout.tsx:103
 #: app/routes/_admin+/cache.tsx:941
@@ -3426,6 +3496,7 @@ msgstr "Sales per labor hour"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
+#: app/routes/_admin+/print-shop.tsx:96
 msgid "Save"
 msgstr "Save"
 
@@ -3466,6 +3537,10 @@ msgstr ""
 msgid "Saved"
 msgstr "Saved"
 
+#: app/routes/_admin+/print-shop.tsx:44
+msgid "Saved."
+msgstr "Saved."
+
 #: app/routes/_admin+/marketing+/automations.new.tsx:159
 msgid "Saving new automation draft..."
 msgstr ""
@@ -3503,8 +3578,8 @@ msgstr ""
 
 #: app/components/admin-organizations-table.tsx:303
 #: app/components/admin-users-table.tsx:226
-#: app/components/admin/feature-flags.tsx:457
-#: app/components/admin/feature-flags.tsx:614
+#: app/components/admin/feature-flags.tsx:458
+#: app/components/admin/feature-flags.tsx:615
 #: app/routes/_admin+/audit-logs.tsx:122
 #: app/routes/_admin+/waitlist.tsx:245
 msgid "Search"
@@ -3530,7 +3605,7 @@ msgstr ""
 #~ msgid "Search details or action..."
 #~ msgstr ""
 
-#: app/components/admin/feature-flags.tsx:445
+#: app/components/admin/feature-flags.tsx:446
 msgid "Search Organization"
 msgstr ""
 
@@ -3538,11 +3613,11 @@ msgstr ""
 #~ msgid "Search organizations..."
 #~ msgstr ""
 
-#: app/components/admin/feature-flags.tsx:590
+#: app/components/admin/feature-flags.tsx:591
 msgid "Search User"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:434
+#: app/routes/_admin+/index.tsx:437
 msgid "Search Users"
 msgstr ""
 
@@ -3572,7 +3647,7 @@ msgstr ""
 msgid "Select audience"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:131
+#: app/components/admin/feature-flags.tsx:132
 msgid "Select flag type"
 msgstr ""
 
@@ -3648,6 +3723,10 @@ msgstr "Set system defaults and override them for an organization or a user."
 #: app/routes/_admin+/audit-logs.tsx:277
 msgid "Severity"
 msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:270
+msgid "Shipped prints across all organizations: pricing, vendors and orders."
+msgstr "Shipped prints across all organizations: pricing, vendors and orders."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:116
 msgid "Shorter retention periods permanently remove older messages on the next daily cleanup. Deleted messages cannot be recovered."
@@ -3745,8 +3824,8 @@ msgstr "Sort by"
 #~ msgid "Sort by Rank"
 #~ msgstr ""
 
-#: app/components/admin/feature-flags.tsx:480
-#: app/components/admin/feature-flags.tsx:651
+#: app/components/admin/feature-flags.tsx:481
+#: app/components/admin/feature-flags.tsx:652
 msgid "Source"
 msgstr ""
 
@@ -3822,6 +3901,7 @@ msgstr "Start with a template"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
 #: app/routes/_admin+/phone-numbers.tsx:350
+#: app/routes/_admin+/print-shop.tsx:291
 #: app/routes/_admin+/waitlist.tsx:351
 msgid "Status"
 msgstr ""
@@ -3838,7 +3918,11 @@ msgstr ""
 msgid "Stop Impersonation"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:138
+#: app/routes/_admin+/print-shop.tsx:215
+msgid "Stop shipping"
+msgstr "Stop shipping"
+
+#: app/components/admin/feature-flags.tsx:139
 msgid "String"
 msgstr ""
 
@@ -3874,7 +3958,7 @@ msgstr ""
 msgid "Subscription Started"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:269
+#: app/routes/_admin+/index.tsx:272
 msgid "Subscription Status"
 msgstr ""
 
@@ -3908,7 +3992,7 @@ msgstr ""
 msgid "Swap variable"
 msgstr "Swap variable"
 
-#: app/components/admin/feature-flags.tsx:741
+#: app/components/admin/feature-flags.tsx:750
 #: app/routes/resources+/theme-switch.tsx:80
 msgid "System"
 msgstr ""
@@ -3917,16 +4001,16 @@ msgstr ""
 msgid "System default"
 msgstr "System default"
 
-#: app/components/admin/feature-flags.tsx:521
-#: app/components/admin/feature-flags.tsx:698
+#: app/components/admin/feature-flags.tsx:522
+#: app/components/admin/feature-flags.tsx:699
 msgid "System Default"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:364
+#: app/components/admin/feature-flags.tsx:365
 msgid "System Flags"
 msgstr ""
 
-#: app/components/admin-sidebar.tsx:184
+#: app/components/admin-sidebar.tsx:190
 msgid "System Management"
 msgstr ""
 
@@ -3952,7 +4036,7 @@ msgstr ""
 msgid "System theme"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:276
+#: app/components/admin/feature-flags.tsx:277
 msgid "System value:"
 msgstr ""
 
@@ -4118,6 +4202,10 @@ msgstr ""
 msgid "Top Action"
 msgstr ""
 
+#: app/routes/_admin+/print-shop.tsx:292
+msgid "Total"
+msgstr "Total"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:242
 msgid "Total Audit Logs"
 msgstr ""
@@ -4134,7 +4222,7 @@ msgstr ""
 msgid "Total IPs"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:202
+#: app/routes/_admin+/index.tsx:205
 msgid "Total Notes"
 msgstr ""
 
@@ -4146,7 +4234,7 @@ msgstr ""
 msgid "Total SSO Users"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:137
+#: app/routes/_admin+/index.tsx:140
 msgid "Total Users"
 msgstr ""
 
@@ -4210,7 +4298,7 @@ msgstr "Turn times"
 msgid "Turn times against target"
 msgstr "Turn times against target"
 
-#: app/components/admin/feature-flags.tsx:134
+#: app/components/admin/feature-flags.tsx:135
 #: app/routes/_admin+/gdpr-requests.tsx:496
 msgid "Type"
 msgstr ""
@@ -4262,15 +4350,19 @@ msgstr "Unsaved changes"
 msgid "until"
 msgstr "until"
 
+#: app/routes/_admin+/print-shop.tsx:208
+msgid "Update"
+msgstr "Update"
+
 #: app/components/sso-configuration-form.tsx:453
 msgid "Update Configuration"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:188
+#: app/components/admin/feature-flags.tsx:189
 msgid "Update Flag"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:344
+#: app/components/admin/feature-flags.tsx:345
 msgid "Update Override"
 msgstr ""
 
@@ -4299,7 +4391,7 @@ msgid "Used when the value is empty"
 msgstr "Used when the value is empty"
 
 #: app/components/admin-users-table.tsx:92
-#: app/components/admin/feature-flags.tsx:747
+#: app/components/admin/feature-flags.tsx:756
 #: app/components/sso-user-management.tsx:162
 #: app/routes/_admin+/audit-logs.tsx:283
 #: app/routes/_admin+/gdpr-requests.tsx:332
@@ -4313,7 +4405,7 @@ msgstr ""
 msgid "User is not a member of any organizations"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:695
+#: app/components/admin/feature-flags.tsx:696
 msgid "User Override"
 msgstr ""
 
@@ -4321,7 +4413,7 @@ msgstr ""
 msgid "User Provisioning"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:693
+#: app/components/admin/feature-flags.tsx:694
 msgid "User+Org Override"
 msgstr ""
 
@@ -4334,7 +4426,7 @@ msgid "Username"
 msgstr ""
 
 #: app/components/admin-sidebar.tsx:50
-#: app/routes/_admin+/index.tsx:299
+#: app/routes/_admin+/index.tsx:302
 #: app/routes/_admin+/ip-addresses+/index.tsx:229
 #: app/routes/_admin+/roles+/index.tsx:403
 #: app/routes/_admin+/roles+/index.tsx:445
@@ -4358,13 +4450,27 @@ msgstr "Users will appear here once they sign up."
 msgid "Validation passed"
 msgstr ""
 
-#: app/components/admin/feature-flags.tsx:374
+#: app/components/admin/feature-flags.tsx:375
 msgid "Value"
 msgstr ""
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
 msgid "Variables"
 msgstr "Variables"
+
+#: app/routes/_admin+/print-shop.tsx:139
+#: app/routes/_admin+/print-shop.tsx:190
+msgid "Vendor"
+msgstr "Vendor"
+
+#: app/routes/_admin+/print-shop.tsx:124
+msgid "Vendor catalog"
+msgstr "Vendor catalog"
+
+#: app/routes/_admin+/print-shop.tsx:140
+#: app/routes/_admin+/print-shop.tsx:201
+msgid "Vendor SKU"
+msgstr "Vendor SKU"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:481
 msgid "Verification Status"
@@ -4378,15 +4484,15 @@ msgstr ""
 msgid "View details"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:358
+#: app/routes/_admin+/index.tsx:361
 msgid "View organization details and subscriptions"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:464
+#: app/routes/_admin+/index.tsx:467
 msgid "View Organizations"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:364
+#: app/routes/_admin+/index.tsx:367
 msgid "View Organizations →"
 msgstr ""
 
@@ -4394,11 +4500,11 @@ msgstr ""
 msgid "View User"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:328
+#: app/routes/_admin+/index.tsx:331
 msgid "View Users →"
 msgstr ""
 
-#: app/routes/_admin+/index.tsx:322
+#: app/routes/_admin+/index.tsx:325
 msgid "View, search, and manage user accounts"
 msgstr ""
 
@@ -4495,6 +4601,10 @@ msgstr "Who cancelled over the last 30 days: the guest, the restaurant or the sy
 #: ../../packages/reports/src/ui/report-labels.ts:49
 msgid "Who worked overtime over the last 30 days, and how much."
 msgstr "Who worked overtime over the last 30 days, and how much."
+
+#: app/routes/_admin+/print-shop.tsx:293
+msgid "Wholesale"
+msgstr "Wholesale"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322

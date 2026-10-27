@@ -50,15 +50,25 @@ export default function PrintShopIndexRoute() {
 							)
 				}
 				actions={
-					canWrite ? (
-						<Button
-							render={<Link to={`/${orgSlug}/marketing/print/new`} />}
-							className="shrink-0 gap-2"
-						>
-							<Icon name="plus" className="size-4" />
-							{_(msg`New print`)}
-						</Button>
-					) : null
+					<div className="flex flex-wrap gap-2">
+						{shipping ? (
+							<Button
+								variant="outline"
+								render={<Link to={`/${orgSlug}/marketing/print/orders`} />}
+							>
+								{_(msg`Print orders`)}
+							</Button>
+						) : null}
+						{canWrite ? (
+							<Button
+								render={<Link to={`/${orgSlug}/marketing/print/new`} />}
+								className="shrink-0 gap-2"
+							>
+								<Icon name="plus" className="size-4" />
+								{_(msg`New print`)}
+							</Button>
+						) : null}
+					</div>
 				}
 			/>
 			{designs.length === 0 ? (

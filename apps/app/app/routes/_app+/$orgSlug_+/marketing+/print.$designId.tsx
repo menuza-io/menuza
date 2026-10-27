@@ -199,6 +199,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	return {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
+		canOrder: access.canPay,
 		design,
 		locales,
 		defaultLocale,
@@ -742,6 +743,32 @@ export default function PrintDesignRoute() {
 						designId={design.id}
 						approved={isApproved}
 					/>
+
+					{data.canOrder && product.shippable ? (
+						<Card>
+							<CardHeader>
+								<CardTitle>{_(msg`Have it printed`)}</CardTitle>
+								<CardDescription>
+									{isApproved
+										? _(msg`We print and ship it to your door.`)
+										: _(msg`Approve the proof to order prints.`)}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								{isApproved ? (
+									<Button
+										render={
+											<Link to={`/${orgSlug}/marketing/print/orders/new`} />
+										}
+									>
+										{_(msg`Order prints`)}
+									</Button>
+								) : (
+									<Button disabled>{_(msg`Order prints`)}</Button>
+								)}
+							</CardContent>
+						</Card>
+					) : null}
 
 					{canWrite ? (
 						<Form method="post">
