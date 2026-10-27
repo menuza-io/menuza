@@ -1,8 +1,10 @@
+import crypto from 'node:crypto'
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
 
 import {
 	QR_MAX_TABLES_PER_LOCATION,
 	readQrOrderingFeatures,
+	tabOrderRef,
 	type QrPublicTab,
 	type QrSettingsPatch,
 	type QrSettingsView,
@@ -30,9 +32,11 @@ import {
 
 import {
 	deriveTableToken,
+	deriveTabPaymentToken,
 	deriveTabToken,
 	readTabToken,
 } from '../lib/qr-tokens.ts'
+import { timingSafeEqualString } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { runExclusive } from './order-service.ts'
 import {
@@ -786,5 +790,360 @@ export async function lockTab(
 			.returning()
 		const rounds = await listTabRounds(tx, [tab.id])
 		return { ok: true as const, data: operatorTabView(updated ?? tab, rounds) }
+	})
+}
+
+// ---------------------------------------------------------------------------
+// Paying from the phone (online close). The App bridge sees the tab as the
+// order `tab:<id>`; amounts and state stay here.
+// ---------------------------------------------------------------------------
+
+function sha256Hex(value: string) {
+	return crypto.createHash('sha256').update(value).digest('hex')
+}
+
+export type TabPayIntent = {
+	orderRef: string
+	tabPaymentToken: string
+	amountCents: number
+	tipCents: number
+	currency: string
+}
+
+/**
+ * The guest asks to pay: the venue must allow it, every round must have left
+ * the kitchen's queue, and name and phone are required. The tip is a share of
+ * the subtotal. While a payment session is bound the amount is frozen.
+ */
+export async function prepareTabPayment(
+	orgId: string,
+	tabToken: string,
+	input: {
+		tipPercent: number
+		contact: { name: string; phone: string }
+		features: { online: boolean }
+		onlinePayment: { enabled: boolean; processor: string | null }
+	},
+): Promise<QrResult<TabPayIntent>> {
+	const parsed = readTabToken(orgId, tabToken)
+	if (!parsed)
+		return fail(404, 'tab_not_found', 'This tab is no longer available.')
+	if (
+		!input.features.online ||
+		!input.onlinePayment.enabled ||
+		!input.onlinePayment.processor
+	) {
+		return fail(
+			409,
+			'online_pay_unavailable',
+			'Paying from the phone is not available. Please pay at the counter.',
+		)
+	}
+	return writeTx(orgId, async (tx) => {
+		const [tab] = await tx
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, parsed.id))
+			.limit(1)
+		if (!tab || tab.tabTokenVersion !== parsed.version) {
+			return fail(404, 'tab_not_found', 'This tab is no longer available.')
+		}
+		if (tab.status !== 'open')
+			return fail(409, 'tab_closed', 'This tab is already closed.')
+		if (tab.lockedAt != null) {
+			return fail(
+				423,
+				'tab_locked',
+				'A team member is settling this tab. Please ask them for help.',
+			)
+		}
+		const settings = await readQrSettings(tx)
+		if (!settings.allowOnlineTabPay) {
+			return fail(
+				409,
+				'online_pay_unavailable',
+				'Paying from the phone is not available. Please pay at the counter.',
+			)
+		}
+		const rounds = await listTabRounds(tx, [tab.id])
+		if (roundsPending(rounds)) {
+			return fail(
+				409,
+				'rounds_pending',
+				'Part of your order is still being prepared. You can pay once it has been served.',
+			)
+		}
+		const totals = tabTotals(tab, rounds)
+		if (totals.totalCents <= 0) {
+			return fail(409, 'tab_empty', 'There is nothing to pay on this tab yet.')
+		}
+		const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)
+		if (
+			tab.paymentStatus === 'pending' &&
+			tab.paymentSessionId &&
+			tab.paymentAmountCents != null
+		) {
+			// A session is live: keep its amount, the bridge re-serves it.
+			return {
+				ok: true as const,
+				data: {
+					orderRef: tabOrderRef(tab.id),
+					tabPaymentToken,
+					amountCents: tab.paymentAmountCents,
+					tipCents: tab.paymentTipCents ?? 0,
+					currency: tab.currency,
+				},
+			}
+		}
+		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
+			return fail(409, 'tab_closed', 'This tab is already paid.')
+		}
+		const tipCents = Math.round((totals.subtotalCents * input.tipPercent) / 100)
+		const amountCents = totals.totalCents + tipCents
+		await tx
+			.update(qrTabs)
+			.set({
+				guestName: input.contact.name,
+				guestPhone: input.contact.phone,
+				paymentTipCents: tipCents,
+				paymentAmountCents: amountCents,
+				paymentTokenHash: sha256Hex(tabPaymentToken),
+				updatedAt: Date.now(),
+			})
+			.where(eq(qrTabs.id, tab.id))
+		return {
+			ok: true as const,
+			data: {
+				orderRef: tabOrderRef(tab.id),
+				tabPaymentToken,
+				amountCents,
+				tipCents,
+				currency: tab.currency,
+			},
+		}
+	})
+}
+
+async function loadPayableTab(
+	db:
+		| Parameters<Parameters<typeof runTenantTransaction>[1]>[0]
+		| Awaited<ReturnType<typeof getTenantDb>>,
+	tabId: string,
+) {
+	const [tab] = await db
+		.select()
+		.from(qrTabs)
+		.where(eq(qrTabs.id, tabId))
+		.limit(1)
+	return tab ?? null
+}
+
+/** `POST /api/orders/quote` for `tab:<id>`: amounts and state only. */
+export async function getTabQuote(
+	orgId: string,
+	tabId: string,
+	paymentToken: string,
+) {
+	const db = await getTenantDb(orgId)
+	const tab = await loadPayableTab(db, tabId)
+	if (!tab || !tab.paymentTokenHash) {
+		return fail(404, 'order_not_found', 'Order not found.')
+	}
+	if (!timingSafeEqualString(sha256Hex(paymentToken), tab.paymentTokenHash)) {
+		return fail(403, 'invalid_payment_token', 'This payment link is not valid.')
+	}
+	if (tab.paymentAmountCents == null) {
+		return fail(409, 'not_online_order', 'This tab has no payment in progress.')
+	}
+	return {
+		ok: true as const,
+		data: {
+			orgId,
+			orderId: tabOrderRef(tab.id),
+			totalCents: tab.paymentAmountCents,
+			currency: tab.currency,
+			holdExpiresAt: null,
+			status: tab.status === 'open' ? 'accepted' : tab.status,
+			paymentStatus:
+				tab.paymentStatus === 'paid' || tab.paymentStatus === 'review'
+					? 'paid'
+					: tab.paymentStatus === 'pending'
+						? 'pending'
+						: 'pending',
+			...(tab.paymentSessionId && tab.paymentProcessor
+				? { sessionId: tab.paymentSessionId, processor: tab.paymentProcessor }
+				: {}),
+		},
+	}
+}
+
+/** Binds one provider session to the tab, exactly once. */
+export async function bindTabPaymentSession(input: {
+	orgId: string
+	tabId: string
+	sessionId: string
+	processor: 'connect' | 'checkout'
+}) {
+	return writeTx(input.orgId, async (tx) => {
+		const tab = await loadPayableTab(tx, input.tabId)
+		if (!tab || tab.paymentAmountCents == null) {
+			return fail(404, 'order_not_found', 'Order not found.')
+		}
+		if (
+			tab.status !== 'open' ||
+			tab.paymentStatus === 'paid' ||
+			tab.paymentStatus === 'review'
+		) {
+			return fail(
+				409,
+				'payment_terminal',
+				'This tab already has a terminal payment state.',
+			)
+		}
+		if (tab.paymentSessionId && tab.paymentSessionId !== input.sessionId) {
+			return fail(
+				409,
+				'session_conflict',
+				'This tab already has a bound payment session.',
+			)
+		}
+		if (tab.paymentSessionId !== input.sessionId) {
+			await tx
+				.update(qrTabs)
+				.set({
+					paymentSessionId: input.sessionId,
+					paymentProcessor: input.processor,
+					paymentStatus: 'pending',
+					paymentEventAt: Date.now(),
+					updatedAt: Date.now(),
+				})
+				.where(eq(qrTabs.id, tab.id))
+		}
+		return {
+			ok: true as const,
+			data: {
+				orgId: input.orgId,
+				orderId: tabOrderRef(tab.id),
+				sessionId: input.sessionId,
+				status: 'accepted',
+				paymentStatus: 'pending',
+			},
+		}
+	})
+}
+
+/**
+ * A verified payment event for a tab. Paid closes the tab and settles every
+ * counting round; a payment that lands on a tab staff already closed or
+ * voided is kept as `review` for manual handling (runbook). Failed or
+ * expired sessions unbind, so the guest can try again or pay at the counter.
+ */
+export async function applyTabPaymentEvent(input: {
+	orgId: string
+	tabId: string
+	sessionId: string
+	processor: 'connect' | 'checkout'
+	status: 'paid' | 'failed' | 'expired'
+	amountCents: number
+	currency: string
+}) {
+	return writeTx(input.orgId, async (tx) => {
+		const tab = await loadPayableTab(tx, input.tabId)
+		if (!tab) return fail(404, 'order_not_found', 'Order not found.')
+		if (!tab.paymentSessionId || tab.paymentSessionId !== input.sessionId) {
+			return fail(
+				403,
+				'session_mismatch',
+				'This payment event does not match the bound payment session.',
+			)
+		}
+		if (tab.paymentProcessor !== input.processor) {
+			return fail(
+				409,
+				'processor_mismatch',
+				'This payment event does not match the bound payment processor.',
+			)
+		}
+		if (tab.paymentAmountCents !== input.amountCents) {
+			return fail(
+				422,
+				'amount_mismatch',
+				'The payment amount does not match this tab.',
+			)
+		}
+		if (tab.currency.toLowerCase() !== input.currency.toLowerCase()) {
+			return fail(
+				422,
+				'currency_mismatch',
+				'The payment currency does not match this tab.',
+			)
+		}
+		const result = (paymentStatus: string) => ({
+			ok: true as const,
+			data: {
+				orgId: input.orgId,
+				orderId: tabOrderRef(tab.id),
+				sessionId: input.sessionId,
+				status: tab.status,
+				paymentStatus,
+			},
+		})
+		const now = new Date()
+		if (input.status === 'paid') {
+			if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
+				return result(tab.paymentStatus)
+			}
+			if (tab.status !== 'open') {
+				await tx
+					.update(qrTabs)
+					.set({
+						paymentStatus: 'review',
+						paidAt: now.getTime(),
+						paymentEventAt: now.getTime(),
+						updatedAt: now.getTime(),
+					})
+					.where(eq(qrTabs.id, tab.id))
+				return result('review')
+			}
+			const rounds = await listTabRounds(tx, [tab.id])
+			const totals = tabTotals(tab, rounds)
+			const tipCents = tab.paymentTipCents ?? 0
+			await markTabRoundsPaid(tx, tab.id, now)
+			await tx
+				.update(qrTabs)
+				.set({
+					status: 'closed',
+					paymentMethod: 'online',
+					paymentStatus: 'paid',
+					subtotalCents: totals.subtotalCents,
+					taxCents: totals.taxCents,
+					tipCents,
+					totalCents: input.amountCents,
+					closedBy: 'guest',
+					closedAt: now.getTime(),
+					paidAt: now.getTime(),
+					paymentEventAt: now.getTime(),
+					version: tab.version + 1,
+					updatedAt: now.getTime(),
+				})
+				.where(eq(qrTabs.id, tab.id))
+			return result('paid')
+		}
+		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
+			return result(tab.paymentStatus)
+		}
+		await tx
+			.update(qrTabs)
+			.set({
+				paymentStatus: 'unpaid',
+				paymentSessionId: null,
+				paymentProcessor: null,
+				paymentAmountCents: null,
+				paymentTipCents: null,
+				paymentEventAt: now.getTime(),
+				updatedAt: now.getTime(),
+			})
+			.where(eq(qrTabs.id, tab.id))
+		return result(input.status === 'failed' ? 'failed' : 'expired')
 	})
 }

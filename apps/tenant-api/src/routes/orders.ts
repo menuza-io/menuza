@@ -4,6 +4,8 @@ import { ENV } from 'varlock/env'
 import {
 	QR_TAB_TOKEN_HEADER,
 	QR_TABLE_TOKEN_HEADER,
+	qrTabPayRequestSchema,
+	readQrOrderingFeatures,
 } from '@repo/common/qr-ordering'
 import {
 	RESTAURANT_TURNSTILE_ACTION,
@@ -26,6 +28,7 @@ import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import {
 	buildOrderingOptionsWithContext,
+	fetchOrderContext,
 	getOrderReceipt,
 	placeOrder,
 	publicOrderSummary,
@@ -33,7 +36,11 @@ import {
 	type OrderServiceFailure,
 } from '../services/order-service.ts'
 import type { DineInCapability } from '../services/qr-dine-in.ts'
-import { getPublicTab, getTableContext } from '../services/qr-tab-service.ts'
+import {
+	getPublicTab,
+	getTableContext,
+	prepareTabPayment,
+} from '../services/qr-tab-service.ts'
 import { authenticateCustomer } from './auth.ts'
 
 export const publicOrderRoutes = new Hono()
@@ -360,6 +367,73 @@ publicOrderRoutes.get('/tab', async (c) => {
 		)
 		return c.json(
 			{ error: 'internal_error', message: 'We could not load this tab.' },
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// POST /orders/tab/pay — the guest pays the tab from the phone
+// ---------------------------------------------------------------------------
+
+publicOrderRoutes.post('/tab/pay', async (c) => {
+	if (isQrDineInDisabled()) return dineInUnavailable()
+	const parsed = qrTabPayRequestSchema.safeParse(
+		await c.req.json().catch(() => null),
+	)
+	if (!parsed.success) {
+		return c.json(
+			{
+				error: 'invalid_request',
+				message: parsed.error.issues[0]?.message ?? 'Invalid request',
+			},
+			400,
+			noStoreHeaders(),
+		)
+	}
+	const organization = await resolveOrderingOrganization(c, {
+		slug: parsed.data.slug,
+		host: parsed.data.host,
+	})
+	if ('error' in organization) return organization.error
+	const tabToken = c.req.header(QR_TAB_TOKEN_HEADER)?.trim()
+	if (!tabToken) {
+		return c.json(
+			{ error: 'unauthorized', message: 'A tab code is required.' },
+			401,
+			noStoreHeaders(),
+		)
+	}
+	const orgId = organization.organization.id
+	try {
+		// The tab's own location decides whether online payment is on.
+		const tab = await getPublicTab(orgId, tabToken)
+		if (!tab.ok) return orderFailureResponse(tab.failure)
+		const context = await fetchOrderContext(
+			orgId,
+			tab.data.table.locationId,
+			null,
+		)
+		if (!context.ok) return orderFailureResponse(context.failure)
+		const features = readQrOrderingFeatures(
+			(context.data as { qrOrdering?: unknown }).qrOrdering,
+		)
+		const result = await prepareTabPayment(orgId, tabToken, {
+			tipPercent: parsed.data.tipPercent,
+			contact: parsed.data.contact,
+			features,
+			onlinePayment: context.data.onlinePayment,
+		})
+		if (!result.ok) return orderFailureResponse(result.failure)
+		return c.json(result.data, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to start tab payment for org ${orgId}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not start the payment.' },
 			500,
 			noStoreHeaders(),
 		)

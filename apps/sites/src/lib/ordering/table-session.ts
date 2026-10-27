@@ -348,3 +348,118 @@ export function isDeadTableError(code: string) {
 		code === 'dine_in_unavailable'
 	)
 }
+
+// ---------------------------------------------------------------------------
+// Paying the tab from the phone
+// ---------------------------------------------------------------------------
+
+const payKey = (orgId: string) => `menuza_tab_payment_${orgId}`
+
+type TabPayment = { orderRef: string; paymentToken: string }
+
+export function loadTabPayment(orgId: string): TabPayment | null {
+	try {
+		const raw = sessionStorage.getItem(payKey(orgId))
+		const value: unknown = raw ? JSON.parse(raw) : null
+		if (
+			isRecord(value) &&
+			isText(value.orderRef) &&
+			value.orderRef.startsWith('tab:') &&
+			isText(value.paymentToken)
+		) {
+			return { orderRef: value.orderRef, paymentToken: value.paymentToken }
+		}
+	} catch {
+		// Fall through.
+	}
+	return null
+}
+
+export function clearTabPayment(orgId: string) {
+	try {
+		sessionStorage.removeItem(payKey(orgId))
+	} catch {
+		// Nothing stored.
+	}
+}
+
+/**
+ * Starts the hosted checkout for the tab: the region fixes the amount (tab
+ * total plus tip) and hands back a payment capability, which only travels to
+ * the Sites payment broker as an opaque reference.
+ */
+export async function startTabPayment(
+	orgId: string,
+	session: TableSession,
+	input: {
+		tipPercent: number
+		contact: { name: string; phone: string }
+		locale: string
+	},
+): Promise<string> {
+	if (!session.tabToken) throw new TableRequestError('tab_not_found', 404)
+	const response = await fetch(`${regionalUrl()}/orders/tab/pay`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			[QR_TAB_TOKEN_HEADER]: session.tabToken,
+		},
+		body: JSON.stringify({
+			...getOrgBinding(),
+			tipPercent: input.tipPercent,
+			contact: input.contact,
+		}),
+	})
+	const value = await readJson(response)
+	if (
+		!isRecord(value) ||
+		!isText(value.orderRef) ||
+		!isText(value.tabPaymentToken)
+	) {
+		throw new TableRequestError('payment_unavailable', 502)
+	}
+	const payment = {
+		orderRef: value.orderRef,
+		paymentToken: value.tabPaymentToken,
+	}
+	try {
+		sessionStorage.setItem(payKey(orgId), JSON.stringify(payment))
+	} catch {
+		// The receipt still shows from the tab itself.
+	}
+	const checkout = await fetch('/api/orders/payment', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			...getOrgBinding(),
+			orderId: payment.orderRef,
+			paymentToken: payment.paymentToken,
+			locale: input.locale,
+		}),
+	})
+	const result = await readJson(checkout)
+	if (!isRecord(result) || !isText(result.checkoutUrl)) {
+		throw new TableRequestError('payment_unavailable', 502)
+	}
+	return result.checkoutUrl
+}
+
+/**
+ * After the hosted page: asks the App to reconcile with the provider (the
+ * redirect alone never marks a tab paid). Returns the reported status.
+ */
+export async function checkTabPayment(orgId: string): Promise<string | null> {
+	const payment = loadTabPayment(orgId)
+	if (!payment) return null
+	const response = await fetch('/api/orders/payment-status', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			...getOrgBinding(),
+			orderId: payment.orderRef,
+			paymentToken: payment.paymentToken,
+		}),
+	})
+	const value = await response.json().catch(() => null)
+	return isRecord(value) && isText(value.status) ? value.status : null
+}

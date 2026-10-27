@@ -185,6 +185,10 @@ msgstr "Añade {amount} más para alcanzar el mínimo de entrega de {minimum}."
 msgid "Add a delivery address we deliver to before placing your order."
 msgstr "Añade una dirección dentro de nuestra zona de entrega antes de realizar tu pedido."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Add a tip"
+msgstr "Añadir propina"
+
 #: src/lib/ordering-labels.ts:146
 msgid "Add delivery address"
 msgstr "Añadir dirección de entrega"
@@ -486,6 +490,7 @@ msgstr "Revisa tu teléfono"
 msgid "Checking delivery to this address…"
 msgstr "Comprobando la entrega a esta dirección…"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:387
 msgid "Checking your payment…"
 msgstr "Comprobando tu pago…"
@@ -826,6 +831,10 @@ msgstr "Introduce un teléfono con su prefijo de país, como +1 415 555 0123."
 #: src/lib/reservations/labels.ts:122
 msgid "Enter a valid email address."
 msgstr "Introduce un correo electrónico válido."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Enter your name and phone number."
+msgstr "Introduce tu nombre y número de teléfono."
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -1369,6 +1378,7 @@ msgstr "No hay turnos disponibles en esta fecha."
 msgid "No tables available for that search"
 msgstr "No hay mesas disponibles para esta búsqueda"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "No tip"
 msgstr "Sin propina"
@@ -1476,6 +1486,10 @@ msgstr "Abre el enlace de tu confirmación para gestionar una reserva."
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "Abierto hasta las {time}"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Opening secure payment…"
+msgstr "Abriendo el pago seguro…"
 
 #: src/lib/ordering-labels.ts:128
 msgid "Opens {time}"
@@ -1598,6 +1612,10 @@ msgstr "Página no encontrada"
 msgid "Paid"
 msgstr "Pagado"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Paid. Thank you!"
+msgstr "Pagado. ¡Gracias!"
+
 #: src/lib/careers/labels.ts:16
 msgid "Part time"
 msgstr "Medio tiempo"
@@ -1622,10 +1640,15 @@ msgstr "Número de personas"
 msgid "Past drops"
 msgstr "Lanzamientos anteriores"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Pay {amount}"
+msgstr "Pagar {amount}"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pay at pickup"
 msgstr "Pagar al recoger"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "Pagar ahora"
@@ -1650,6 +1673,18 @@ msgstr "Paga al recibir tu pedido"
 msgid "Pay within {time}"
 msgstr "Paga en {time}"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Pay your tab"
+msgstr "Paga tu cuenta"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Paying from the phone is not available right now. Please pay at the counter."
+msgstr "Pagar desde el móvil no está disponible ahora. Paga en el mostrador."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Paying from the phone opens once everything has been served."
+msgstr "Podrás pagar desde el móvil cuando se haya servido todo."
+
 #: src/lib/reservations/labels.ts:430
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Payment"
@@ -1670,6 +1705,10 @@ msgstr "Métodos de pago"
 #: src/lib/reservations/labels.ts:395
 msgid "Payment received"
 msgstr "Pago recibido"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Payment was not finished. Nothing was charged."
+msgstr "El pago no se completó. No se ha cobrado nada."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:86
@@ -1910,10 +1949,6 @@ msgstr "Los recibos de las compras completadas aparecen aquí con el estado y el
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Received"
 msgstr "Recibido"
-
-#: src/components/ordering/TableTab.astro.ts:3
-msgid "Refresh"
-msgstr "Actualizar"
 
 #: src/lib/reservations/labels.ts:434
 msgid "Refund on its way"
@@ -2864,6 +2899,10 @@ msgstr "No tienes reservas próximas."
 #: src/lib/reservations/labels.ts:263
 msgid "You left the waitlist"
 msgstr "Has salido de la lista de espera"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "You pay on a secure payment page. Your receipt shows here when you come back."
+msgstr "Pagas en una página de pago segura. Tu recibo aparece aquí cuando vuelvas."
 
 #: src/lib/reservations/labels.ts:196
 msgid "You told us you are about {count} minutes late."

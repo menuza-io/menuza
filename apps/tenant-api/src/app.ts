@@ -160,7 +160,11 @@ export function createTenantApiApp() {
 		maxRequests: 240,
 	})
 	const orderRateLimitGate = async (c: Context, next: () => Promise<void>) => {
-		if (c.req.method === 'POST' && c.req.path === '/orders') {
+		// Starting a tab payment is a write on the money path too.
+		if (
+			c.req.method === 'POST' &&
+			(c.req.path === '/orders' || c.req.path === '/orders/tab/pay')
+		) {
 			return orderCreateRateLimit(c, next)
 		}
 		if (c.req.method === 'GET') {

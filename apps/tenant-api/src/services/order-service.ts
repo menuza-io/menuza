@@ -627,6 +627,14 @@ export async function placeOrder(input: {
 						)
 					}
 					tableRow = resolved.data.table
+					if (existingTab?.paymentStatus === 'pending') {
+						// The guest is at the payment page: the total is frozen.
+						return orderFailure(
+							409,
+							'tab_paying',
+							'This tab is being paid. Order again after payment, or ask a team member.',
+						)
+					}
 					if (existingTab) {
 						tabRow = existingTab
 						const fill: Partial<typeof qrTabs.$inferInsert> = {}

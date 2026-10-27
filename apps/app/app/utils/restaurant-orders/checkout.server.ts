@@ -18,6 +18,7 @@
  *   locale path; the receipt capability stays in browser sessionStorage.
  */
 
+import { parseTabOrderRef } from '@repo/common/qr-ordering'
 import {
 	getLocaleHref,
 	isSiteContentLocale,
@@ -190,6 +191,15 @@ function buildSitePaymentUrls(
 		defaultLocale,
 	)
 	const cancelPath = getLocaleHref('/menu', locale, locale, defaultLocale)
+	if (parseTabOrderRef(orderId)) {
+		// A QR table tab returns to the menu, where the tab drawer shows the
+		// receipt (the tab capability lives in the guest's browser storage).
+		const menuPath = getLocaleHref('/menu', locale, locale, defaultLocale)
+		return {
+			successUrl: `${siteBase}${menuPath}?tab=paid`,
+			cancelUrl: `${siteBase}${menuPath}?tab=cancelled`,
+		}
+	}
 	return {
 		// Only the opaque order id rides on the success URL.
 		successUrl: `${siteBase}${successPath}?order=${encodeURIComponent(orderId)}`,

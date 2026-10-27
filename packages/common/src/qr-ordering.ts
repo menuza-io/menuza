@@ -310,3 +310,44 @@ export type QrPublicTab = {
 	/** True while a round is still `accepted` or `preparing`. */
 	roundsPending: boolean
 }
+
+// ---------------------------------------------------------------------------
+// Paying a tab from the phone (hosted checkout through the order bridge)
+// ---------------------------------------------------------------------------
+
+/**
+ * A tab rides the restaurant-order payment bridge under a namespaced id, so
+ * provider metadata, idempotency, bind-race recovery and reconciliation are
+ * the same code paths as for online orders. The region resolves `tab:` ids
+ * to the tab; the amount is the tab total plus the guest's tip.
+ */
+export const QR_TAB_ORDER_PREFIX = 'tab:'
+
+export function tabOrderRef(tabId: string) {
+	return `${QR_TAB_ORDER_PREFIX}${tabId}`
+}
+
+export function parseTabOrderRef(orderId: string): string | null {
+	if (!orderId.startsWith(QR_TAB_ORDER_PREFIX)) return null
+	const tabId = orderId.slice(QR_TAB_ORDER_PREFIX.length)
+	return /^[A-Za-z0-9-]{1,64}$/.test(tabId) ? tabId : null
+}
+
+export const QR_TAB_TIP_PERCENTS = [0, 10, 15, 20] as const
+
+export const qrTabPayRequestSchema = z.strictObject({
+	slug: z.string().trim().min(1).max(100).optional(),
+	host: z.string().trim().min(1).max(253).optional(),
+	tipPercent: z.number().int().min(0).max(30),
+	contact: z.strictObject({
+		name: z.string().trim().min(1, 'Enter your name').max(120),
+		phone: z
+			.string()
+			.trim()
+			.transform((value) => value.replace(/[\s\-().]/g, ''))
+			.refine((value) => /^\+?\d{7,20}$/.test(value), {
+				message: 'Enter a valid phone number',
+			}),
+	}),
+})
+export type QrTabPayRequest = z.infer<typeof qrTabPayRequestSchema>

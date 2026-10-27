@@ -43,7 +43,19 @@ const labels = {
 	name: i18n._(msg`Your name`),
 	phone: i18n._(msg`Phone number`),
 	close: i18n._(msg`Close`),
-	refresh: i18n._(msg`Refresh`),
+	payNow: i18n._(msg`Pay now`),
+	payTitle: i18n._(msg`Pay your tab`),
+	payIntro: i18n._(msg`You pay on a secure payment page. Your receipt shows here when you come back.`),
+	tip: i18n._(msg`Add a tip`),
+	noTip: i18n._(msg`No tip`),
+	payAmount: i18n._(msg`Pay {amount}`),
+	paying: i18n._(msg`Opening secure payment…`),
+	checkingPayment: i18n._(msg`Checking your payment…`),
+	paidThanks: i18n._(msg`Paid. Thank you!`),
+	payLater: i18n._(msg`Paying from the phone opens once everything has been served.`),
+	payUnavailable: i18n._(msg`Paying from the phone is not available right now. Please pay at the counter.`),
+	payCancelled: i18n._(msg`Payment was not finished. Nothing was charged.`),
+	contactMissing: i18n._(msg`Enter your name and phone number.`),
 }
 ---
 
@@ -176,6 +188,63 @@ const labels = {
 		</label>
 		<p id="table-contact-error" class="hidden text-sm font-medium text-destructive" role="alert"></p>
 		<button type="submit" class="btn-cta w-full">{labels.sendToKitchen}</button>
+	</form>
+</div>
+
+<div
+	id="tab-pay-backdrop"
+	class="site-overlay site-drawer-overlay fixed inset-0 z-50 hidden bg-foreground/40 backdrop-blur-xs dark:bg-background/80"
+>
+	<form
+		id="tab-pay"
+		class="site-drawer surface-overlay fixed inset-x-0 bottom-0 mx-auto flex w-full max-w-md flex-col gap-4 rounded-t-2xl p-5 pb-safe outline-none sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="tab-pay-title"
+		aria-describedby="tab-pay-intro"
+		tabindex="-1"
+		novalidate
+	>
+		<div class="flex items-start justify-between gap-3">
+			<div>
+				<h2 id="tab-pay-title" class="text-lg font-bold text-foreground">{labels.payTitle}</h2>
+				<p id="tab-pay-intro" class="text-sm text-muted-foreground">{labels.payIntro}</p>
+			</div>
+			<button type="button" id="tab-pay-close" class="icon-btn size-9" aria-label={labels.close}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="size-4"
+					aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg
+				>
+			</button>
+		</div>
+		<fieldset class="flex flex-col gap-2">
+			<legend class="mb-2 text-sm font-medium text-foreground">{labels.tip}</legend>
+			<div class="segmented">
+				{[0, 10, 15, 20].map((percent) => (
+					<label class="segmented-item min-h-11 flex-1">
+						<input type="radio" name="tipPercent" value={percent} class="sr-only peer" checked={percent === 0} />
+						<span>{percent === 0 ? labels.noTip : `${percent}%`}</span>
+					</label>
+				))}
+			</div>
+		</fieldset>
+		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+			{labels.name}
+			<input name="name" type="text" autocomplete="name" maxlength="120" class="field" required />
+		</label>
+		<label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+			{labels.phone}
+			<input name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" class="field" dir="ltr" required />
+		</label>
+		<p id="tab-pay-error" class="hidden rounded-lg border tone-danger px-3 py-2 text-sm" role="alert"></p>
+		<button type="submit" id="tab-pay-submit" class="btn-cta w-full"></button>
 	</form>
 </div>
 

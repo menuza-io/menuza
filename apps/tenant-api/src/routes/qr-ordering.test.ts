@@ -24,6 +24,7 @@ import {
 import { deriveTableToken } from '../lib/qr-tokens.ts'
 import { updateOperatorOrder } from '../services/order-service.ts'
 import { operatorQrRoutes } from './operator-qr.ts'
+import { orderSystemRoutes } from './order-system.ts'
 import { publicOrderRoutes } from './orders.ts'
 
 vi.mock('../lib/origin.ts', () => ({
@@ -250,6 +251,7 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		app = new Hono()
 		app.route('/orders', publicOrderRoutes)
 		app.route('/operator/qr', operatorQrRoutes)
+		app.route('/api/orders', orderSystemRoutes)
 	})
 
 	afterEach(async () => {
@@ -796,5 +798,228 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			headers,
 		})
 		expect(patch.status).toBe(404)
+	})
+
+	// -----------------------------------------------------------------------
+	// Paying from the phone (through the order payment bridge)
+	// -----------------------------------------------------------------------
+
+	async function system(path: string, body: unknown) {
+		return app.request(`/api/orders${path}`, {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				authorization: `Bearer ${internalToken}`,
+			},
+			body: JSON.stringify(body),
+		})
+	}
+
+	async function pay(tabToken: string, tipPercent = 10) {
+		return request('/orders/tab/pay', {
+			method: 'POST',
+			headers: { 'X-Tab-Token': tabToken },
+			body: {
+				slug: 'test-org',
+				tipPercent,
+				contact: { name: 'Lina Haddad', phone: '+1 555 222 3333' },
+			},
+		})
+	}
+
+	async function serveAll(tabId: string) {
+		const db = await getTenantDb(orgId)
+		await db
+			.update(restaurantOrders)
+			.set({ status: 'completed' })
+			.where(eq(restaurantOrders.tabId, tabId))
+	}
+
+	it('pays a served tab online once, with a tip, and settles every round', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+
+		const early = await pay(first.tab.tabToken)
+		expect(early.status).toBe(409)
+		expect((await early.json()).error).toBe('rounds_pending')
+
+		await serveAll(first.tab.id)
+		const intent = await pay(first.tab.tabToken, 10)
+		expect(intent.status).toBe(200)
+		const body = await intent.json()
+		// Two rounds of 2 teas at $4 + 10% tax; tip is 10% of the subtotal.
+		expect(body).toMatchObject({
+			orderRef: `tab:${first.tab.id}`,
+			tipCents: 160,
+			amountCents: 1920,
+		})
+
+		const forged = await system('/quote', {
+			orgId,
+			orderId: body.orderRef,
+			paymentToken: 'x'.repeat(64),
+		})
+		expect(forged.status).toBe(403)
+
+		const quote = await (
+			await system('/quote', {
+				orgId,
+				orderId: body.orderRef,
+				paymentToken: body.tabPaymentToken,
+			})
+		).json()
+		expect(quote).toMatchObject({ totalCents: 1920, currency: 'USD' })
+
+		expect(
+			(
+				await system('/payment-session', {
+					orgId,
+					orderId: body.orderRef,
+					sessionId: 'cs_test_tab_1',
+					processor: 'connect',
+				})
+			).status,
+		).toBe(200)
+
+		// The total is frozen while the guest is paying.
+		const blocked = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+		expect((await blocked.json()).error).toBe('tab_paying')
+
+		const wrongAmount = await system('/payment-status', {
+			orgId,
+			orderId: body.orderRef,
+			sessionId: 'cs_test_tab_1',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: 1,
+			currency: 'usd',
+		})
+		expect(wrongAmount.status).toBe(422)
+
+		const paid = await system('/payment-status', {
+			orgId,
+			orderId: body.orderRef,
+			sessionId: 'cs_test_tab_1',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: 1920,
+			currency: 'usd',
+		})
+		expect(paid.status).toBe(200)
+		expect((await paid.json()).paymentStatus).toBe('paid')
+
+		const tab = (
+			await (
+				await request('/orders/tab?slug=test-org', {
+					headers: { 'X-Tab-Token': first.tab.tabToken },
+				})
+			).json()
+		).tab
+		expect(tab).toMatchObject({ status: 'closed', paymentStatus: 'paid' })
+		expect(tab.totals).toMatchObject({ tipCents: 160, totalCents: 1920 })
+		const db = await getTenantDb(orgId)
+		const rounds = await db
+			.select()
+			.from(restaurantOrders)
+			.where(eq(restaurantOrders.tabId, first.tab.id))
+		expect(rounds.every((round) => round.paymentStatus === 'paid')).toBe(true)
+		const [row] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(row).toMatchObject({
+			guestName: 'Lina Haddad',
+			paymentMethod: 'online',
+		})
+	})
+
+	it('unbinds an expired session and keeps a late payment on a voided tab for review', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const body = await (await pay(first.tab.tabToken, 0)).json()
+		await system('/payment-session', {
+			orgId,
+			orderId: body.orderRef,
+			sessionId: 'cs_test_a',
+			processor: 'connect',
+		})
+		await system('/payment-status', {
+			orgId,
+			orderId: body.orderRef,
+			sessionId: 'cs_test_a',
+			processor: 'connect',
+			status: 'expired',
+			amountCents: body.amountCents,
+			currency: 'usd',
+		})
+		const again = await (await pay(first.tab.tabToken, 0)).json()
+		await system('/payment-session', {
+			orgId,
+			orderId: again.orderRef,
+			sessionId: 'cs_test_b',
+			processor: 'connect',
+		})
+		// Staff cannot close or void a tab while the guest is paying...
+		const busy = await operator(`/tabs/${first.tab.id}/void`, {
+			method: 'POST',
+			body: { reason: 'Walked out' },
+		})
+		expect(busy.status).toBe(409)
+		// ...but if money lands after the tab was settled elsewhere it is kept for review.
+		const db = await getTenantDb(orgId)
+		await db
+			.update(qrTabs)
+			.set({ status: 'cancelled' })
+			.where(eq(qrTabs.id, first.tab.id))
+		const late = await system('/payment-status', {
+			orgId,
+			orderId: again.orderRef,
+			sessionId: 'cs_test_b',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: again.amountCents,
+			currency: 'usd',
+		})
+		expect((await late.json()).paymentStatus).toBe('review')
+	})
+
+	it('refuses online payment when the venue turned it off or the flag is off', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		await operator('/settings', {
+			method: 'PATCH',
+			body: { allowOnlineTabPay: false },
+		})
+		expect((await (await pay(first.tab.tabToken)).json()).error).toBe(
+			'online_pay_unavailable',
+		)
+		await operator('/settings', {
+			method: 'PATCH',
+			body: { allowOnlineTabPay: true },
+		})
+		activeContext = context({ enabled: true, dineIn: true, online: false })
+		expect((await (await pay(first.tab.tabToken)).json()).error).toBe(
+			'online_pay_unavailable',
+		)
+		vi.stubEnv('QR_DINE_IN_ENABLED', 'false')
+		expect((await pay(first.tab.tabToken)).status).toBe(503)
+		expect(
+			(
+				await system('/quote', {
+					orgId,
+					orderId: `tab:${first.tab.id}`,
+					paymentToken: 'x'.repeat(32),
+				})
+			).status,
+		).toBe(503)
 	})
 })

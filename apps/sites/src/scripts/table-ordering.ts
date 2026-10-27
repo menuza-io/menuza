@@ -2,12 +2,15 @@ import { type QrPublicTab } from '@repo/common/qr-ordering'
 import { type CartStore } from '~/lib/ordering/cart-store'
 import { el, lockScroll, trapFocus } from '~/lib/ordering/dom'
 import {
+	acceptCheckoutUrl,
 	checkoutAttemptKey,
 	clearCheckoutAttempt,
 	orderLines,
 	saveOrderCapability,
 } from '~/lib/ordering/order-client'
 import {
+	checkTabPayment,
+	clearTabPayment,
 	clearTableSession,
 	fetchTab,
 	fetchTableContext,
@@ -16,6 +19,7 @@ import {
 	readTableFragment,
 	rememberPosterVisit,
 	saveTableSession,
+	startTabPayment,
 	stripTableFragment,
 	submitTableRound,
 	TableRequestError,
@@ -54,7 +58,16 @@ type Labels = Record<
 	| 'errorLocked'
 	| 'errorClosed'
 	| 'errorRateLimited'
-	| 'errorUnavailable',
+	| 'errorUnavailable'
+	| 'payNow'
+	| 'payAmount'
+	| 'paying'
+	| 'checkingPayment'
+	| 'paidThanks'
+	| 'payLater'
+	| 'payUnavailable'
+	| 'payCancelled'
+	| 'contactMissing',
 	string
 >
 
@@ -65,8 +78,6 @@ export type TableOrderingDeps = {
 	formatMoney: (amount: number) => string
 	store: CartStore
 	cart: { open(): void; close(): void; refresh(): void }
-	/** Present when the page also renders a pay-from-phone button (M5). */
-	onPayNow?: (session: TableSession, tab: QrPublicTab) => HTMLElement | null
 }
 
 function fill(template: string, values: Record<string, string>) {
@@ -263,11 +274,23 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		)
 		const slot = document.getElementById('tab-pay-slot')
 		if (slot) {
-			const pay =
-				tab.status === 'open' && session && deps.onPayNow
-					? deps.onPayNow(session, tab)
-					: null
-			slot.replaceChildren(...(pay ? [pay] : []))
+			const canPayOnline =
+				tab.status === 'open' &&
+				tab.paymentStatus !== 'paid' &&
+				session?.policy.onlineTabPayAvailable === true &&
+				tab.totals.totalCents > 0
+			if (!canPayOnline) {
+				slot.replaceChildren()
+			} else if (tab.roundsPending) {
+				slot.replaceChildren(
+					el('p', 'text-sm text-muted-foreground', labels.payLater),
+				)
+			} else {
+				const button = el('button', 'btn-cta w-full', labels.payNow)
+				button.type = 'button'
+				button.addEventListener('click', () => openPay(tab))
+				slot.replaceChildren(button)
+			}
 		}
 		paintBanner(tab.totals.totalCents)
 	}
@@ -437,6 +460,142 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		if (event.key === 'Escape') finishContact(null)
 	})
 
+	// ---- Paying from the phone ----------------------------------------------
+
+	const payBackdrop = document.getElementById('tab-pay-backdrop')
+	const payForm = document.getElementById('tab-pay') as HTMLFormElement | null
+	const payMotion =
+		payBackdrop && payForm ? createOverlayMotion(payBackdrop, payForm) : null
+	const paySubmit = document.getElementById(
+		'tab-pay-submit',
+	) as HTMLButtonElement | null
+	const payError = document.getElementById('tab-pay-error')
+	let releasePay: (() => void) | null = null
+	let payTab: QrPublicTab | null = null
+
+	function tipPercent(): number {
+		const checked = payForm?.querySelector<HTMLInputElement>(
+			'input[name="tipPercent"]:checked',
+		)
+		return Number(checked?.value ?? 0) || 0
+	}
+
+	function paintPayAmount() {
+		if (!payTab || !paySubmit) return
+		const tip = Math.round((payTab.totals.subtotalCents * tipPercent()) / 100)
+		paySubmit.textContent = fill(labels.payAmount, {
+			amount: deps.formatMoney((payTab.totals.totalCents + tip) / 100),
+		})
+	}
+
+	function openPay(tab: QrPublicTab) {
+		if (!payMotion || !payForm) return
+		payTab = tab
+		payError?.classList.add('hidden')
+		paintPayAmount()
+		closeTab()
+		payMotion.open()
+		const releaseScroll = lockScroll()
+		const releaseTrap = trapFocus(payForm)
+		releasePay = () => {
+			releaseScroll()
+			releaseTrap()
+		}
+		;(payForm.elements.namedItem('name') as HTMLInputElement).focus({
+			preventScroll: true,
+		})
+	}
+
+	function closePay() {
+		releasePay?.()
+		releasePay = null
+		payMotion?.close()
+	}
+
+	payForm?.addEventListener('change', paintPayAmount)
+	payForm?.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape') closePay()
+	})
+	payBackdrop?.addEventListener('click', (event) => {
+		if (event.target === payBackdrop) closePay()
+	})
+	document.getElementById('tab-pay-close')?.addEventListener('click', closePay)
+	payForm?.addEventListener('submit', (event) => {
+		event.preventDefault()
+		if (!session || !payForm) return
+		const name = (
+			payForm.elements.namedItem('name') as HTMLInputElement
+		).value.trim()
+		const phone = (
+			payForm.elements.namedItem('phone') as HTMLInputElement
+		).value.trim()
+		const showError = (message: string) => {
+			if (!payError) return
+			payError.textContent = message
+			payError.classList.remove('hidden')
+		}
+		if (!name || !/^\+?[\d\s\-().]{7,25}$/.test(phone)) {
+			showError(labels.contactMissing)
+			return
+		}
+		if (paySubmit) {
+			paySubmit.textContent = labels.paying
+			paySubmit.setAttribute('aria-busy', 'true')
+			paySubmit.disabled = true
+		}
+		void startTabPayment(orgId, session, {
+			tipPercent: tipPercent(),
+			contact: { name, phone },
+			locale: deps.locale,
+		})
+			.then((url) => {
+				window.location.assign(acceptCheckoutUrl(url))
+			})
+			.catch((error: unknown) => {
+				const code =
+					error instanceof TableRequestError
+						? error.code
+						: 'payment_unavailable'
+				showError(
+					code === 'rounds_pending'
+						? labels.payLater
+						: code === 'online_pay_unavailable'
+							? labels.payUnavailable
+							: errorText(code),
+				)
+				if (paySubmit) {
+					paySubmit.removeAttribute('aria-busy')
+					paySubmit.disabled = false
+				}
+				paintPayAmount()
+			})
+	})
+
+	/** Back from the hosted page: reconcile, then show the tab receipt. */
+	async function afterPayment(outcome: string) {
+		const url = new URL(window.location.href)
+		url.searchParams.delete('tab')
+		history.replaceState(history.state, '', url.toString())
+		if (outcome === 'cancelled') {
+			say(labels.payCancelled)
+			return
+		}
+		say(labels.checkingPayment)
+		// The redirect alone never marks a tab paid: ask the App to check with
+		// the provider, a few times while the webhook may still be on its way.
+		let paid = false
+		for (let attempt = 0; attempt < 8 && !paid; attempt += 1) {
+			paid = (await checkTabPayment(orgId).catch(() => null)) === 'paid'
+			if (!paid) await new Promise((resolve) => setTimeout(resolve, 1500))
+		}
+		if (paid) {
+			clearTabPayment(orgId)
+			say(labels.paidThanks)
+		}
+		// Still confirming: the drawer shows the tab's real state either way.
+		openTab()
+	}
+
 	// ---- Sending a round ----------------------------------------------------
 
 	async function sendRound(contact: { name?: string; phone?: string } = {}) {
@@ -549,6 +708,14 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			)
 		}
 		const stored = loadTableSession(orgId)
+		const returning = new URL(window.location.href).searchParams.get('tab')
+		if (returning && stored && stored.locationId !== locationId) {
+			// The hosted page returns to the menu: reopen the table's location.
+			const url = new URL(window.location.href)
+			url.searchParams.set('location', stored.locationId)
+			window.location.replace(url.toString())
+			return
+		}
 		const tableToken =
 			scanned ?? (stored?.locationId === locationId ? stored.tableToken : null)
 		if (!tableToken) return
@@ -576,10 +743,27 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 				},
 				savedAt: Date.now(),
 			}
+			// A tab paid a moment ago is no longer open: keep its token for the
+			// receipt drawer until the guest starts a new one.
+			if (
+				!session.tabToken &&
+				stored?.tableToken === tableToken &&
+				returning === 'paid'
+			) {
+				session = {
+					...session,
+					tabId: stored.tabId,
+					tabToken: stored.tabToken,
+					tabNumber: stored.tabNumber,
+				}
+			}
 			saveTableSession(session)
 			enterTableMode()
 			paintBanner(context.openTab?.totalCents ?? null)
 			deps.cart.refresh()
+			if (returning === 'paid' || returning === 'cancelled') {
+				void afterPayment(returning)
+			}
 		} catch (error) {
 			const code =
 				error instanceof TableRequestError ? error.code : 'request_failed'

@@ -185,6 +185,10 @@ msgstr "أضف {amount} للوصول إلى الحد الأدنى للتوصيل
 msgid "Add a delivery address we deliver to before placing your order."
 msgstr "أضف عنوان توصيل ضمن منطقة التوصيل قبل إتمام طلبك."
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Add a tip"
+msgstr "أضف إكرامية"
+
 #: src/lib/ordering-labels.ts:146
 msgid "Add delivery address"
 msgstr "أضف عنوان التوصيل"
@@ -486,6 +490,7 @@ msgstr "تحقق من هاتفك"
 msgid "Checking delivery to this address…"
 msgstr "جارٍ التحقق من التوصيل إلى هذا العنوان…"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/lib/reservations/labels.ts:387
 msgid "Checking your payment…"
 msgstr "جارٍ التحقق من دفعتك…"
@@ -826,6 +831,10 @@ msgstr "أدخل رقم هاتف مع رمز الدولة، مثل 0123 555 415 
 #: src/lib/reservations/labels.ts:122
 msgid "Enter a valid email address."
 msgstr "أدخل عنوان بريد إلكتروني صالحًا."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Enter your name and phone number."
+msgstr "أدخل اسمك ورقم هاتفك."
 
 #: src/pages/login.astro.ts:3
 msgid "Enter your phone number. We'll send a verification code."
@@ -1369,6 +1378,7 @@ msgstr "لا توجد مواعيد متاحة في هذا التاريخ."
 msgid "No tables available for that search"
 msgstr "لا توجد طاولات متاحة لهذا البحث"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/menu/checkout.astro.ts:3
 msgid "No tip"
 msgstr "بدون إكرامية"
@@ -1476,6 +1486,10 @@ msgstr "افتح الرابط الوارد في رسالة التأكيد لإد
 #: src/pages/menu.astro.ts:3
 msgid "Open until {time}"
 msgstr "مفتوح حتى {time}"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Opening secure payment…"
+msgstr "جارٍ فتح صفحة الدفع الآمنة…"
 
 #: src/lib/ordering-labels.ts:128
 msgid "Opens {time}"
@@ -1598,6 +1612,10 @@ msgstr "الصفحة غير موجودة"
 msgid "Paid"
 msgstr "مدفوع"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Paid. Thank you!"
+msgstr "تم الدفع. شكرًا لك!"
+
 #: src/lib/careers/labels.ts:16
 msgid "Part time"
 msgstr "دوام جزئي"
@@ -1622,10 +1640,15 @@ msgstr "عدد الأشخاص"
 msgid "Past drops"
 msgstr "الطروحات السابقة"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Pay {amount}"
+msgstr "ادفع {amount}"
+
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Pay at pickup"
 msgstr "ادفع عند الاستلام"
 
+#: src/components/ordering/TableTab.astro.ts:3
 #: src/pages/shop.astro.ts:3
 msgid "Pay now"
 msgstr "ادفع الآن"
@@ -1650,6 +1673,18 @@ msgstr "ادفع عند استلام طلبك"
 msgid "Pay within {time}"
 msgstr "ادفع خلال {time}"
 
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Pay your tab"
+msgstr "ادفع حسابك"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Paying from the phone is not available right now. Please pay at the counter."
+msgstr "الدفع من الهاتف غير متاح الآن. يُرجى الدفع عند الكاونتر."
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Paying from the phone opens once everything has been served."
+msgstr "يُتاح الدفع من الهاتف بعد تقديم كل الطلبات."
+
 #: src/lib/reservations/labels.ts:430
 #: src/pages/menu/checkout.astro.ts:3
 msgid "Payment"
@@ -1670,6 +1705,10 @@ msgstr "طرق الدفع"
 #: src/lib/reservations/labels.ts:395
 msgid "Payment received"
 msgstr "تم استلام الدفعة"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "Payment was not finished. Nothing was charged."
+msgstr "لم يكتمل الدفع. لم يُحصَّل أي مبلغ."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:86
@@ -1910,10 +1949,6 @@ msgstr "تظهر إيصالات المشتريات المكتملة هنا مع 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "Received"
 msgstr "تم الاستلام"
-
-#: src/components/ordering/TableTab.astro.ts:3
-msgid "Refresh"
-msgstr "تحديث"
 
 #: src/lib/reservations/labels.ts:434
 msgid "Refund on its way"
@@ -2864,6 +2899,10 @@ msgstr "ليس لديك حجوزات قادمة."
 #: src/lib/reservations/labels.ts:263
 msgid "You left the waitlist"
 msgstr "غادرت قائمة الانتظار"
+
+#: src/components/ordering/TableTab.astro.ts:3
+msgid "You pay on a secure payment page. Your receipt shows here when you come back."
+msgstr "تدفع في صفحة دفع آمنة. يظهر إيصالك هنا عند عودتك."
 
 #: src/lib/reservations/labels.ts:196
 msgid "You told us you are about {count} minutes late."
