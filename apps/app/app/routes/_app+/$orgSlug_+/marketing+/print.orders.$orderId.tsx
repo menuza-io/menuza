@@ -153,9 +153,12 @@ export default function PrintOrderRoute() {
 	const busy = useNavigation().state !== 'idle'
 	const { order } = data
 	const revalidator = useRevalidator()
-	// Back from Stripe: the webhook confirms the payment a moment later. Reload
-	// the order every few seconds for up to a minute, then leave a Refresh.
-	const waitingForBank = data.justPaid && order.status === 'awaiting_payment'
+	// Back from Stripe: the webhook confirms the payment a moment later, and
+	// the order goes to the printer after that. Reload the order every few
+	// seconds for up to a minute, then leave a Refresh.
+	const waitingForBank =
+		data.justPaid &&
+		['awaiting_payment', 'paid', 'submitting'].includes(order.status)
 	const [pollsLeft, setPollsLeft] = useState(15)
 	useEffect(() => {
 		if (!waitingForBank || pollsLeft <= 0) return
