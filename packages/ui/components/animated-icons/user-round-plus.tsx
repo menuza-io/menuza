@@ -1,130 +1,38 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface UserRoundPlusIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type UserRoundPlusIconHandle = AnimatedIconHandle
 
-interface UserRoundPlusIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const verticalBarVariants: Variants = {
-	normal: {
-		opacity: 1,
-	},
-	animate: {
+const BAR_VARIANTS: Variants = {
+	normal: { opacity: 1, pathLength: 1 },
+	animate: (delay: number) => ({
 		opacity: [0, 1],
 		pathLength: [0, 1],
-		transition: {
-			delay: 0.3,
-			duration: 0.2,
-			opacity: { duration: 0.1, delay: 0.3 },
-		},
-	},
+		transition: { delay, duration: 0.2, opacity: { duration: 0.1, delay } },
+	}),
 }
 
-const horizontalBarVariants: Variants = {
-	normal: {
-		opacity: 1,
-	},
-	animate: {
-		opacity: [0, 1],
-		pathLength: [0, 1],
-		transition: {
-			delay: 0.6,
-			duration: 0.2,
-			opacity: { duration: 0.1, delay: 0.6 },
-		},
-	},
-}
-
-const UserRoundPlusIcon = forwardRef<
-	UserRoundPlusIconHandle,
-	UserRoundPlusIconProps
->(({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-	const controls = useAnimation()
-	const isControlledRef = useRef(false)
-
-	useImperativeHandle(ref, () => {
-		isControlledRef.current = true
-
-		return {
-			startAnimation: () => void controls.start('animate'),
-			stopAnimation: () => void controls.start('normal'),
-		}
-	})
-
-	const handleMouseEnter = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!isControlledRef.current) {
-				void controls.start('animate')
-			} else {
-				onMouseEnter?.(e)
-			}
-		},
-		[controls, onMouseEnter],
-	)
-
-	const handleMouseLeave = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!isControlledRef.current) {
-				void controls.start('normal')
-			} else {
-				onMouseLeave?.(e)
-			}
-		},
-		[controls, onMouseLeave],
-	)
-
-	return (
-		<div
-			className={cn(className)}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-			{...props}
-		>
-			<motion.svg
-				xmlns="http://www.w3.org/2000/svg"
-				width={size}
-				height={size}
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				initial="normal"
-			>
-				<path d="M2 21a8 8 0 0 1 13.292-6" />
-				<circle cx="10" cy="8" r="5" />
-				<motion.path
-					d="M19 16v6"
-					variants={verticalBarVariants}
-					initial="normal"
-					animate={controls}
-				/>
-				<motion.path
-					d="M22 19h-6"
-					variants={horizontalBarVariants}
-					initial="normal"
-					animate={controls}
-				/>
-			</motion.svg>
-		</div>
-	)
-})
-
-UserRoundPlusIcon.displayName = 'UserRoundPlusIcon'
-
-export { UserRoundPlusIcon }
+/** Hugeicons `user-add-01`: the plus is drawn stroke by stroke. */
+export const UserRoundPlusIcon = createAnimatedIcon(
+	'UserRoundPlusIcon',
+	(controls) => (
+		<>
+			<path d="M3 20.5002C3.28417 16.8058 6.3 13.7193 10.0008 13.5379C10.3134 13.5226 10.6446 13.5097 11 13.5L11.995 13.5663C12.6939 13.6129 13.3665 13.7543 14 13.9777" />
+			<circle cx="11" cy="6.5" r="4" />
+			<motion.path
+				d="M18 15.5V21.5"
+				custom={0.3}
+				variants={BAR_VARIANTS}
+				animate={controls}
+			/>
+			<motion.path
+				d="M21 18.5L15 18.5"
+				custom={0.6}
+				variants={BAR_VARIANTS}
+				animate={controls}
+			/>
+		</>
+	),
+)

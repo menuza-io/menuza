@@ -1,108 +1,23 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface LogoutIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
+export type LogoutIconHandle = AnimatedIconHandle
+
+const ARROW_VARIANTS: Variants = {
+	normal: { x: 0 },
+	animate: { x: [0, 2, 0], transition: { duration: 0.4 } },
 }
 
-interface LogoutIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const pathVariants: Variants = {
-	animate: {
-		x: 2,
-		translateX: [0, -3, 0],
-		transition: {
-			duration: 0.4,
-		},
-	},
-}
-
-const LogoutIcon = forwardRef<LogoutIconHandle, LogoutIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-					<motion.polyline
-						points="16 17 21 12 16 7"
-						variants={pathVariants}
-						animate={controls}
-					/>
-					<motion.line
-						x1="21"
-						x2="9"
-						y1="12"
-						y2="12"
-						variants={pathVariants}
-						animate={controls}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-LogoutIcon.displayName = 'LogoutIcon'
-
-export { LogoutIcon }
+/** Hugeicons `logout-01`: the arrow nudges out of the door. */
+export const LogoutIcon = createAnimatedIcon('LogoutIcon', (controls) => (
+	<>
+		<path d="M15.5 8.04045C15.4588 6.87972 15.3216 6.15451 14.8645 5.58671C14.2114 4.77536 13.0944 4.52064 10.8605 4.01121L9.85915 3.78286C6.4649 3.00882 4.76777 2.6218 3.63388 3.51317C2.5 4.40454 2.5 6.1257 2.5 9.56803V14.432C2.5 17.8743 2.5 19.5955 3.63388 20.4868C4.76777 21.3782 6.4649 20.9912 9.85915 20.2171L10.8605 19.9888C13.0944 19.4794 14.2114 19.2246 14.8645 18.4133C15.3216 17.8455 15.4588 17.1203 15.5 15.9595" />
+		<motion.path
+			d="M18.5 9.01172C18.5 9.01172 21.5 11.2212 21.5 12.0117C21.5 12.8023 18.5 15.0117 18.5 15.0117M21 12.0117H8.49998"
+			variants={ARROW_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

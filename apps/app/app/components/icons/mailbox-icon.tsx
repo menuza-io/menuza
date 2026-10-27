@@ -1,94 +1,33 @@
-'use client'
-
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
 import {
-	type Variants,
-	motion,
-	useAnimation,
-	useReducedMotion,
-} from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface MailboxIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type MailboxIconHandle = AnimatedIconHandle
 
-interface MailboxIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
+// The flag pivots on the top of its post, at (17.5, 8).
 const FLAG_VARIANTS: Variants = {
-	normal: {
-		rotate: 0,
-		transition: { type: 'spring', stiffness: 300, damping: 18 },
-	},
+	normal: { rotate: 0, originX: '0%', originY: '100%' },
 	animate: {
-		rotate: -90,
-		transition: { type: 'spring', stiffness: 280, damping: 12, mass: 1 },
+		rotate: [0, 18, -10, 6, 0],
+		originX: '0%',
+		originY: '100%',
+		transition: { duration: 0.7, ease: 'easeInOut' },
 	},
 }
 
-export const MailboxIcon = forwardRef<MailboxIconHandle, MailboxIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const reducedMotion = useReducedMotion()
-		const controlled = useRef(false)
-		const start = useCallback(() => {
-			if (!reducedMotion) void controls.start('animate')
-		}, [controls, reducedMotion])
-		const stop = useCallback(() => {
-			if (!reducedMotion) void controls.start('normal')
-		}, [controls, reducedMotion])
-		useImperativeHandle(ref, () => {
-			controlled.current = true
-			return { startAnimation: start, stopAnimation: stop }
-		}, [start, stop])
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={(event) => {
-					if (!controlled.current) start()
-					onMouseEnter?.(event)
-				}}
-				onMouseLeave={(event) => {
-					if (!controlled.current) stop()
-					onMouseLeave?.(event)
-				}}
-				{...props}
-			>
-				<svg
-					aria-hidden="true"
-					className="overflow-visible"
-					fill="none"
-					height={size}
-					width={size}
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth="2"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z" />
-					<motion.path
-						animate={reducedMotion ? 'normal' : controls}
-						d="M18 11V9H15"
-						initial="normal"
-						style={{ transformOrigin: '18px 11px' }}
-						variants={FLAG_VARIANTS}
-					/>
-					<path d="M6.5 5C9 5 11 7 11 9.5V17a2 2 0 0 1-2 2" />
-					<line x1="6" x2="7" y1="10" y2="10" />
-				</svg>
-			</div>
-		)
-	},
-)
-MailboxIcon.displayName = 'MailboxIcon'
+/** Hugeicons `mailbox-01`: the flag waves on its post. */
+export const MailboxIcon = createAnimatedIcon('MailboxIcon', (controls) => (
+	<>
+		<path d="M6.5 9H8.5" />
+		<motion.path
+			d="M17.5 8V4C17.5 2.89543 18.3954 2 19.5 2"
+			variants={FLAG_VARIANTS}
+			animate={controls}
+		/>
+		<path d="M12.5 18L12.5 22" />
+		<path d="M17.5 5.15889C16.5351 5 15.2591 5 13.375 5H10.625C7.70671 5 6.24757 5 5.14302 5.59039C4.27088 6.05656 3.55656 6.77088 3.09039 7.64302C2.5 8.74757 2.5 10.2067 2.5 13.125C2.5 14.876 2.5 15.7515 2.85424 16.4142C3.13394 16.9375 3.56253 17.3661 4.08581 17.6458C4.74854 18 5.62403 18 7.375 18H16.625C18.376 18 19.2515 18 19.9142 17.6458C20.4375 17.3661 20.8661 16.9375 21.1458 16.4142C21.5 15.7515 21.5 14.876 21.5 13.125C21.5 10.2067 21.5 8.74757 20.9096 7.64302C20.7356 7.31755 20.5271 7.01406 20.2887 6.73725" />
+		<path d="M12.5006 18V11C12.5006 10.071 12.5006 9.60649 12.439 9.21782C12.1002 7.07836 10.4222 5.40041 8.28276 5.06155C8.2009 5.04859 8.11566 5.03835 8.02344 5.03027" />
+	</>
+))

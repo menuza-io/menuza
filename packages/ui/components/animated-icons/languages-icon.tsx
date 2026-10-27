@@ -1,161 +1,55 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface LanguagesIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type LanguagesIconHandle = AnimatedIconHandle
 
-interface LanguagesIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const PATH_VARIANTS: Variants = {
-	normal: { opacity: 1, pathLength: 1, pathOffset: 0 },
-	animate: (custom: number) => ({
-		opacity: [0, 1],
+const STROKE_VARIANTS: Variants = {
+	normal: { pathLength: 1, opacity: 1 },
+	animate: (order: number) => ({
 		pathLength: [0, 1],
-		pathOffset: [1, 0],
+		opacity: [0, 1],
 		transition: {
-			opacity: { duration: 0.01, delay: custom * 0.1 },
 			pathLength: {
 				type: 'spring',
 				duration: 0.5,
 				bounce: 0,
-				delay: custom * 0.1,
+				delay: 0.2 + order * 0.1,
 			},
+			opacity: { duration: 0.01, delay: 0.2 + order * 0.1 },
 		},
 	}),
 }
 
-const SVG_VARIANTS: Variants = {
-	normal: { opacity: 1 },
-	animate: {
-		opacity: 1,
-		transition: {
-			staggerChildren: 0.1,
-			delayChildren: 0.2,
-		},
-	},
-}
-
-const LanguagesIcon = forwardRef<LanguagesIconHandle, LanguagesIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const svgControls = useAnimation()
-		const pathControls = useAnimation()
-
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => {
-					void svgControls.start('animate')
-					void pathControls.start('animate')
-				},
-				stopAnimation: () => {
-					void svgControls.start('normal')
-					void pathControls.start('normal')
-				},
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (isControlledRef.current) {
-					onMouseEnter?.(e)
-				} else {
-					void svgControls.start('animate')
-					void pathControls.start('animate')
-				}
-			},
-			[onMouseEnter, pathControls, svgControls],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (isControlledRef.current) {
-					onMouseLeave?.(e)
-				} else {
-					void svgControls.start('normal')
-					void pathControls.start('normal')
-				}
-			},
-			[svgControls, pathControls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<motion.svg
-					animate={svgControls}
-					fill="none"
-					height={size}
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth="2"
-					variants={SVG_VARIANTS}
-					viewBox="0 0 24 24"
-					width={size}
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<motion.path
-						animate={pathControls}
-						custom={3}
-						d="m5 8 6 6"
-						variants={PATH_VARIANTS}
-					/>
-					<motion.path
-						animate={pathControls}
-						custom={2}
-						d="m4 14 6-6 3-3"
-						variants={PATH_VARIANTS}
-					/>
-					<motion.path
-						animate={pathControls}
-						custom={1}
-						d="M2 5h12"
-						variants={PATH_VARIANTS}
-					/>
-					<motion.path
-						animate={pathControls}
-						custom={0}
-						d="M7 2h1"
-						variants={PATH_VARIANTS}
-					/>
-					<motion.path
-						animate={pathControls}
-						custom={3}
-						d="m22 22-5-10-5 10"
-						variants={PATH_VARIANTS}
-					/>
-					<motion.path
-						animate={pathControls}
-						custom={3}
-						d="M14 18h6"
-						variants={PATH_VARIANTS}
-					/>
-				</motion.svg>
-			</div>
-		)
-	},
-)
-
-LanguagesIcon.displayName = 'LanguagesIcon'
-
-export { LanguagesIcon }
+/** Hugeicons `translate`: both glyphs and the swap arrows are redrawn. */
+export const LanguagesIcon = createAnimatedIcon('LanguagesIcon', (controls) => (
+	<>
+		<path d="M14 10V8C14 5.17157 14 3.75736 13.1213 2.87868C12.2426 2 10.8284 2 8 2C5.17157 2 3.75736 2 2.87868 2.87868C2 3.75736 2 5.17157 2 8C2 10.8284 2 12.2426 2.87868 13.1213C3.75736 14 5.17157 14 8 14H10" />
+		<path d="M10 16C10 13.1716 10 11.7574 10.8787 10.8787C11.7574 10 13.1716 10 16 10C18.8284 10 20.2426 10 21.1213 10.8787C22 11.7574 22 13.1716 22 16C22 18.8284 22 20.2426 21.1213 21.1213C20.2426 22 18.8284 22 16 22C13.1716 22 11.7574 22 10.8787 21.1213C10 20.2426 10 18.8284 10 16Z" />
+		<motion.path
+			d="M5 5.82759H7.7M11 5.82759H9.5M7.7 5.82759H9.5M7.7 5.82759V5M9.5 5.82759C9.18351 6.95937 8.52075 8.02923 7.76429 8.96946M5.83571 11C6.44723 10.4377 7.13788 9.74802 7.76429 8.96946M7.76429 8.96946C7.37857 8.51724 6.83857 7.78558 6.68429 7.45455M7.76429 8.96946L8.92143 10.1724"
+			custom={0}
+			variants={STROKE_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M13.5 19L14.3333 17M18.5 19L17.6667 17M14.3333 17L16 13L17.6667 17M14.3333 17H17.6667"
+			custom={1}
+			variants={STROKE_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M4 16.5C4 17.9045 4 18.6067 4.33706 19.1111C4.48298 19.3295 4.67048 19.517 4.88886 19.6629C5.39331 20 6.09554 20 7.5 20"
+			custom={2}
+			variants={STROKE_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M20 7.5C20 6.09554 20 5.39331 19.6629 4.88886C19.517 4.67048 19.3295 4.48298 19.1111 4.33706C18.6067 4 17.9045 4 16.5 4"
+			custom={2}
+			variants={STROKE_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

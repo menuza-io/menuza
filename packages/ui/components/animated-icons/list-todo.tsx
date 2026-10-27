@@ -1,144 +1,42 @@
 'use client'
 
-import { motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface ListTodoIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type ListTodoIconHandle = AnimatedIconHandle
 
-interface ListTodoIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const ListTodoIcon = forwardRef<ListTodoIconHandle, ListTodoIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				}
-				onMouseEnter?.(e)
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				}
-				onMouseLeave?.(e)
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<motion.g
-						variants={{
-							normal: { scale: 1, opacity: 1 },
-							animate: { scale: 0.8, opacity: 0.2 },
-						}}
-						transition={{ duration: 0.2, ease: 'easeInOut' }}
-						initial="normal"
-						animate={controls}
-					>
-						<rect x="3" y="5" width="6" height="6" rx="1" />
-					</motion.g>
-					<motion.g
-						variants={{
-							normal: { scale: 0, opacity: 0 },
-							animate: { scale: 1, opacity: 1 },
-						}}
-						transition={{ duration: 0.3, ease: 'easeInOut', delay: 0.1 }}
-						initial="normal"
-						animate={controls}
-						style={{ transformOrigin: '6px 8px' }}
-					>
-						<path d="m3 8 2 2 4-4" />
-					</motion.g>
-					<motion.g
-						variants={{
-							normal: { scale: 0, opacity: 0 },
-							animate: { scale: 1, opacity: 1 },
-						}}
-						transition={{ duration: 0.3, ease: 'easeInOut', delay: 0.1 }}
-						initial="normal"
-						animate={controls}
-						style={{ transformOrigin: '6px 8px' }}
-					>
-						<path d="m3 8 2 2 4-4" />
-					</motion.g>
-					<motion.g
-						variants={{
-							normal: { scale: 0, opacity: 0 },
-							animate: { scale: 1, opacity: 1 },
-						}}
-						transition={{ duration: 0.2, ease: 'easeInOut', delay: 0.2 }}
-						initial="normal"
-						animate={controls}
-						style={{ transformOrigin: '6px 8px' }}
-					>
-						<path d="m3 17 2 2 4-4" />
-					</motion.g>
-					<motion.g
-						variants={{
-							normal: { scale: 1, opacity: 1 },
-							animate: { scale: 0, opacity: 0 },
-						}}
-						transition={{ duration: 0.1, delay: 0, ease: 'linear' }}
-						initial="normal"
-						animate={controls}
-						style={{ transformOrigin: '6px 8px' }}
-					>
-						<path d="m3 17 2 2 4-4" />
-					</motion.g>
-					<path d="M13 6h8" />
-					<path d="M13 12h8" />
-					<path d="M13 18h8" />
-				</svg>
-			</div>
-		)
+const CHECK_VARIANTS: Variants = {
+	normal: { pathLength: 1, opacity: 1 },
+	animate: {
+		pathLength: [0, 1],
+		opacity: [0, 1],
+		transition: { duration: 0.4, ease: 'easeInOut' },
 	},
-)
+}
 
-ListTodoIcon.displayName = 'ListTodoIcon'
+const BOX_VARIANTS: Variants = {
+	normal: { scale: 1 },
+	animate: {
+		scale: [1, 0.8, 1],
+		transition: { duration: 0.4, delay: 0.2, ease: 'easeInOut' },
+	},
+}
 
-export { ListTodoIcon }
+/** Hugeicons `list-todo`: the done item is re-checked, the open box pulses. */
+export const ListTodoIcon = createAnimatedIcon('ListTodoIcon', (controls) => (
+	<>
+		<path d="M12.9961 6L20.9961 6" />
+		<path d="M12.9961 12L20.9961 12" />
+		<path d="M12.9961 18L20.9961 18" />
+		<motion.path
+			d="M4.23073 19.3478C4.59827 19.5 5.06421 19.5 5.99609 19.5C6.92798 19.5 7.39392 19.5 7.76146 19.3478C8.25152 19.1448 8.64086 18.7554 8.84385 18.2654C8.99609 17.8978 8.99609 17.4319 8.99609 16.5C8.99609 15.5681 8.99609 15.1022 8.84385 14.7346C8.64086 14.2446 8.25152 13.8552 7.76146 13.6522C7.39392 13.5 6.92798 13.5 5.99609 13.5C5.06421 13.5 4.59827 13.5 4.23073 13.6522C3.74067 13.8552 3.35132 14.2446 3.14833 14.7346C2.99609 15.1022 2.99609 15.5681 2.99609 16.5C2.99609 17.4319 2.99609 17.8978 3.14833 18.2654C3.35132 18.7554 3.74067 19.1448 4.23073 19.3478Z"
+			variants={BOX_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M2.99609 7.16667C2.99609 7.16667 3.74609 7.16667 4.49609 8.5C4.49609 8.5 6.87845 5.16667 8.99609 4.5"
+			variants={CHECK_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

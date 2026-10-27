@@ -1,80 +1,37 @@
-'use client'
-
-import { cn } from '@repo/ui'
 import { type Variants, motion } from 'motion/react'
-import { type HTMLAttributes, forwardRef } from 'react'
 import {
-	type IconAnimationHandle,
-	useIconAnimation,
-} from './use-icon-animation.tsx'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface UsersRoundIconHandle extends IconAnimationHandle {}
+export type UsersRoundIconHandle = AnimatedIconHandle
 
-interface UsersRoundIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
+const spring = { type: 'spring', stiffness: 200, damping: 13 } as const
 
-const pathVariants: Variants = {
-	normal: {
-		translateX: 0,
-		opacity: 1,
-		transition: {
-			type: 'spring',
-			stiffness: 200,
-			damping: 13,
-		},
-	},
+const BACK_PERSON_VARIANTS: Variants = {
+	normal: { x: 0, opacity: 1, transition: spring },
 	animate: {
-		translateX: [-4, 0],
+		x: [-4, 0],
 		opacity: [0, 1],
-		transition: {
-			delay: 0.1,
-			type: 'spring',
-			stiffness: 200,
-			damping: 13,
-		},
+		transition: { ...spring, delay: 0.1 },
 	},
 }
 
-const UsersRoundIcon = forwardRef<UsersRoundIconHandle, UsersRoundIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const { controls, handleMouseEnter, handleMouseLeave } = useIconAnimation(
-			ref,
-			{ onMouseEnter, onMouseLeave },
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
+/** Hugeicons `user-multiple`: the person behind slides in. */
+export const UsersRoundIcon = createAnimatedIcon(
+	'UsersRoundIcon',
+	(controls) => (
+		<>
+			<path d="M16 21C15.7668 18.0685 13.3422 15.7477 10.3085 15.5521L9.49999 15.5C9.21121 15.5076 8.94209 15.5178 8.68816 15.5298C5.68124 15.6723 3.23089 18.0974 3 21" />
+			<path d="M12.75 9.75C12.75 11.5449 11.2949 13 9.5 13C7.70508 13 6.25 11.5449 6.25 9.75C6.25 7.95507 7.70508 6.5 9.5 6.5C11.2949 6.5 12.75 7.95507 12.75 9.75Z" />
+			<motion.g
+				initial="normal"
+				variants={BACK_PERSON_VARIANTS}
+				animate={controls}
 			>
-				<svg
-					fill="none"
-					height={size}
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					strokeWidth="2"
-					viewBox="0 0 24 24"
-					width={size}
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path d="M18 21a8 8 0 0 0-16 0" />
-					<circle cx="10" cy="8" r="5" />
-					<motion.path
-						animate={controls}
-						d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"
-						initial="normal"
-						variants={pathVariants}
-					/>
-				</svg>
-			</div>
-		)
-	},
+				<path d="M21 17.501C20.7709 14.6314 18.4541 12.2748 15.5 11.9961" />
+				<path d="M15.9877 9C16.8965 8.42434 17.5001 7.40788 17.5001 6.25C17.5001 4.45507 16.0496 3 14.2602 3C13.3811 3 12.5838 3.35121 12.0001 3.92139" />
+			</motion.g>
+		</>
+	),
 )
-
-UsersRoundIcon.displayName = 'UsersRoundIcon'
-
-export { UsersRoundIcon }
