@@ -320,6 +320,14 @@ export default function PrintDesignRoute() {
 	// Approving must approve what the proof shows: unsaved edits first.
 	const [dirty, setDirty] = useState(false)
 	useEffect(() => setDirty(false), [design.updatedAt])
+	// The download problem is shown once: drop it from the address, so a save
+	// (which posts to this URL) or a reload does not bring it back.
+	useEffect(() => {
+		if (!data.downloadProblem) return
+		const url = new URL(window.location.href)
+		url.searchParams.delete('download')
+		window.history.replaceState(window.history.state, '', url)
+	}, [data.downloadProblem])
 
 	const [form] = useForm({
 		id: `print-${design.id}`,
@@ -861,7 +869,8 @@ export default function PrintDesignRoute() {
 					<DownloadCard
 						orgSlug={orgSlug}
 						designId={design.id}
-						approved={isApproved && !data.tableCodesHidden}
+						approved={isApproved}
+						hidden={data.tableCodesHidden}
 					/>
 
 					{data.canOrder && product.shippable ? (
@@ -936,10 +945,13 @@ function DownloadCard({
 	orgSlug,
 	designId,
 	approved,
+	hidden,
 }: {
 	orgSlug: string
 	designId: string
 	approved: boolean
+	/** Table codes on this print are not for this user (menu edit needed). */
+	hidden: boolean
 }) {
 	const { _ } = useLingui()
 	const base = `/${orgSlug}/marketing/print/${designId}/download`
@@ -948,25 +960,29 @@ function DownloadCard({
 			<CardHeader>
 				<CardTitle>{_(msg`Download`)}</CardTitle>
 				<CardDescription>
-					{approved
-						? _(msg`Free PDFs of the approved proof.`)
-						: _(msg`Approve the proof to download it.`)}
+					{hidden
+						? _(
+								msg`Only people who can edit the menu can download table cards, because they carry each table's ordering code.`,
+							)
+						: approved
+							? _(msg`Free PDFs of the approved proof.`)
+							: _(msg`Approve the proof to download it.`)}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-3">
 				<DownloadLink
 					href={`${base}?format=home&sheet=letter`}
-					disabled={!approved}
+					disabled={!approved || hidden}
 					label={_(msg`Print at home (US Letter)`)}
 				/>
 				<DownloadLink
 					href={`${base}?format=home&sheet=a4`}
-					disabled={!approved}
+					disabled={!approved || hidden}
 					label={_(msg`Print at home (A4)`)}
 				/>
 				<DownloadLink
 					href={`${base}?format=pro`}
-					disabled={!approved}
+					disabled={!approved || hidden}
 					label={_(msg`For a print shop (with bleed)`)}
 				/>
 			</CardContent>

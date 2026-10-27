@@ -14,7 +14,7 @@ import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { OrderStatusLabel } from '#app/components/orders/order-status.tsx'
@@ -124,7 +124,8 @@ export function OpenTabs({
 		path: string,
 		body: unknown,
 		done: string,
-		after?: (response: unknown) => Promise<void>,
+		/** Returns a warning to show instead of the success message. */
+		after?: (response: unknown) => Promise<string | null>,
 	) => {
 		acting.current = true
 		try {
@@ -132,8 +133,11 @@ export function OpenTabs({
 				method: 'POST',
 				body: JSON.stringify(body),
 			})
-			toast.success(done)
-			await after?.(response)
+			// Follow-up first (closing the guest's page), so a single message
+			// tells the outcome: success, or what still needs attention.
+			const warning = await after?.(response)
+			if (warning) toast.warning(warning)
+			else toast.success(done)
 			settledFocus.current = true
 			await load()
 			return true
@@ -157,7 +161,10 @@ export function OpenTabs({
 	 * The region unbound the session; the App (the only caller of the
 	 * processors) now closes the guest's Stripe page. Ids only.
 	 */
-	const closeReleasedPage = async (tabId: string, response: unknown) => {
+	const closeReleasedPage = async (
+		tabId: string,
+		response: unknown,
+	): Promise<string | null> => {
 		const parsed = z
 			.object({
 				release: z.object({
@@ -168,19 +175,17 @@ export function OpenTabs({
 			})
 			.safeParse(response)
 		const session = parsed.success ? parsed.data.release.releasedSession : null
-		if (!session || session.processor !== 'connect') return
+		if (!session || session.processor !== 'connect') return null
 		const closed = await fetch(`/${orgSlug}/qr/release-session`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ tabId, ...session }),
 		}).catch(() => null)
-		if (!closed?.ok) {
-			toast.warning(
-				_(
-					msg`The guest's payment page could not be closed. If they still pay, the tab is marked for review.`,
-				),
-			)
-		}
+		return closed?.ok
+			? null
+			: _(
+					msg`Online payment stopped, but the guest's payment page could not be closed. If they still pay, the tab is marked for review.`,
+				)
 	}
 
 	const failedBanner = failed ? (
@@ -399,7 +404,11 @@ export function OpenTabs({
 				<AlertDialogContent finalFocus={finalFocus}>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							<Trans>Lock this tab?</Trans>
+							{(() => {
+								const number = locking?.tabNumber ?? ''
+								const label = locking?.table.label ?? ''
+								return _(msg`Lock tab ${number} (table ${label})?`)
+							})()}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							<Trans>
@@ -442,7 +451,13 @@ export function OpenTabs({
 				<AlertDialogContent finalFocus={finalFocus}>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							<Trans>Stop the online payment?</Trans>
+							{(() => {
+								const number = releasing?.tabNumber ?? ''
+								const label = releasing?.table.label ?? ''
+								return _(
+									msg`Stop the online payment for tab ${number} (table ${label})?`,
+								)
+							})()}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							<Trans>
@@ -523,6 +538,7 @@ function CloseTabDialog({
 }) {
 	const { _, i18n } = useLingui()
 	const seenTotal = useSeenTotal(tab)
+	const billRef = useRef<HTMLParagraphElement>(null)
 	const [tip, setTip] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [acknowledged, setAcknowledged] = useState(false)
@@ -548,7 +564,13 @@ function CloseTabDialog({
 			<AlertDialogContent finalFocus={finalFocus}>
 				<AlertDialogHeader>
 					<AlertDialogTitle>
-						<Trans>Close this tab at the counter?</Trans>
+						{(() => {
+							const number = tab?.tabNumber ?? ''
+							const label = tab?.table.label ?? ''
+							return _(
+								msg`Close tab ${number} (table ${label}) at the counter?`,
+							)
+						})()}
 					</AlertDialogTitle>
 					<AlertDialogDescription>
 						{needsReview ? (
@@ -567,10 +589,15 @@ function CloseTabDialog({
 						)}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
-				<p className="text-sm">{_(msg`Tab total: ${bill}`)}</p>
-				{tab && seenTotal.changed ? (
-					<TotalChanged tab={tab} onAccept={seenTotal.accept} />
-				) : null}
+				<p ref={billRef} tabIndex={-1} className="text-sm outline-none">
+					{_(msg`Tab total: ${bill}`)}
+				</p>
+				<TotalChanged
+					tab={tab}
+					changed={seenTotal.changed}
+					onAccept={seenTotal.accept}
+					focusAfter={billRef}
+				/>
 				<Field>
 					<FieldLabel htmlFor="tab-tip">
 						{(() => {
@@ -651,6 +678,7 @@ function VoidTabDialog({
 }) {
 	const { _ } = useLingui()
 	const seenTotal = useSeenTotal(tab)
+	const reasonRef = useRef<HTMLInputElement>(null)
 	const [reason, setReason] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [acknowledged, setAcknowledged] = useState(false)
@@ -667,7 +695,11 @@ function VoidTabDialog({
 			<AlertDialogContent finalFocus={finalFocus}>
 				<AlertDialogHeader>
 					<AlertDialogTitle>
-						<Trans>Void this tab?</Trans>
+						{(() => {
+							const number = tab?.tabNumber ?? ''
+							const label = tab?.table.label ?? ''
+							return _(msg`Void tab ${number} (table ${label})?`)
+						})()}
 					</AlertDialogTitle>
 					<AlertDialogDescription>
 						{needsReview ? (
@@ -684,20 +716,30 @@ function VoidTabDialog({
 						)}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
-				{tab && seenTotal.changed ? (
-					<TotalChanged tab={tab} onAccept={seenTotal.accept} />
-				) : null}
+				<TotalChanged
+					tab={tab}
+					changed={seenTotal.changed}
+					onAccept={seenTotal.accept}
+					focusAfter={reasonRef}
+				/>
 				<Field>
 					<FieldLabel htmlFor="tab-void-reason">
 						<Trans>Reason</Trans>
 					</FieldLabel>
 					<Input
+						ref={reasonRef}
 						id="tab-void-reason"
 						value={reason}
 						maxLength={200}
+						required
+						aria-required
+						aria-describedby="tab-void-reason-help"
 						onChange={(event) => setReason(event.target.value)}
 						placeholder={_(msg`For example: the guest left`)}
 					/>
+					<FieldDescription id="tab-void-reason-help">
+						<Trans>Required. Kept on the tab for your records.</Trans>
+					</FieldDescription>
 				</Field>
 				{needsReview ? (
 					<ReviewAcknowledgement
@@ -781,23 +823,51 @@ function useSeenTotal(tab: QrTab | null) {
 	}
 }
 
-function TotalChanged({ tab, onAccept }: { tab: QrTab; onAccept: () => void }) {
+/**
+ * The status region stays mounted (empty until the total changes) so the
+ * change is announced; accepting moves focus to the element that now shows
+ * the new total, since the button itself goes away.
+ */
+function TotalChanged({
+	tab,
+	changed,
+	onAccept,
+	focusAfter,
+}: {
+	tab: QrTab | null
+	changed: boolean
+	onAccept: () => void
+	focusAfter: RefObject<HTMLElement | null>
+}) {
 	const { _, i18n } = useLingui()
-	const amount = formatMoney(
-		tab.totals.totalCents,
-		tab.totals.currency,
-		i18n.locale,
-	)
+	const amount = tab
+		? formatMoney(tab.totals.totalCents, tab.totals.currency, i18n.locale)
+		: ''
+	const text = changed
+		? _(msg`The tab total changed: it is now ${amount}.`)
+		: ''
 	return (
-		<div
-			role="status"
-			className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
-		>
-			<span>{_(msg`A new round arrived: the total is now ${amount}.`)}</span>
-			<Button size="sm" variant="outline" onClick={onAccept}>
-				<Trans>Use the new total</Trans>
-			</Button>
-		</div>
+		<>
+			{/* Always mounted, so the change is announced; out of the layout. */}
+			<p role="status" className="sr-only">
+				{text}
+			</p>
+			{changed ? (
+				<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+					<span aria-hidden="true">{text}</span>
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={() => {
+							onAccept()
+							requestAnimationFrame(() => focusAfter.current?.focus())
+						}}
+					>
+						<Trans>Use the new total</Trans>
+					</Button>
+				</div>
+			) : null}
+		</>
 	)
 }
 

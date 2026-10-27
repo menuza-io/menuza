@@ -31,7 +31,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { type ReactNode, useEffect, useId, useState } from 'react'
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import {
 	action,
@@ -186,6 +186,33 @@ function ConfirmedAction({
 	)
 }
 
+/** Refusals from the App and this route, in the admin's language. */
+const ERROR_MESSAGES: Record<string, MessageDescriptor> = {
+	app_not_configured: msg`The App link is not set up (APP_URL or INTERNAL_COMMAND_TOKEN).`,
+	app_unreachable: msg`The App did not answer. Try again.`,
+	app_error: msg`The App could not do that. Try again.`,
+	invalid_form: msg`Check the form values.`,
+	invalid_request: msg`Check the form values.`,
+	not_shippable: msg`That product and size cannot ship.`,
+	missing_vendor_order_id: msg`Enter the vendor order id.`,
+	check_vendor: msg`The vendor may already have this order. Search the vendor dashboard for its references first.`,
+	vendor_printing: msg`A vendor already started printing this order, so nothing was refunded. Use "Refund, vendor keeps printing" if the vendor should still ship it.`,
+	invalid_amount: msg`Enter an amount above zero and no more than what is left to refund.`,
+	not_partial: msg`Only an order held after a partial cancel can be refunded in part.`,
+	not_refundable: msg`Only a paid order can be refunded.`,
+	order_busy: msg`This order is changing right now. Refresh and try again.`,
+	partial_cancel: msg`Part of this order was already printing. Refund what was cancelled.`,
+	refund_needed: msg`Vendors were cancelled for this order: refund it instead of retrying.`,
+	not_held: msg`Only a held order can be retried or updated.`,
+	not_pending: msg`That vendor order is not waiting to be sent.`,
+}
+
+function ErrorMessage({ code, fallback }: { code: string; fallback: string }) {
+	const { _ } = useLingui()
+	const message = ERROR_MESSAGES[code]
+	return <>{message ? _(message) : fallback}</>
+}
+
 function Result({
 	data,
 	item,
@@ -198,7 +225,7 @@ function Result({
 	if (!data.ok) {
 		return (
 			<p role="alert" className="text-destructive text-sm">
-				{data.message}
+				<ErrorMessage code={data.code} fallback={data.message} />
 			</p>
 		)
 	}
@@ -482,7 +509,23 @@ function OrderActions({
 	}
 }) {
 	const fetcher = useFetcher<PrintAdminResult>()
+	const retryFetcher = useFetcher<PrintAdminResult>()
 	const partId = useId()
+	const rowRef = useRef<HTMLDivElement>(null)
+	// A successful action can remove the button (and the dialog) that had
+	// focus: land on this order's actions instead of the top of the page.
+	useEffect(() => {
+		const data = fetcher.data ?? retryFetcher.data
+		if (fetcher.state !== 'idle' || retryFetcher.state !== 'idle') return
+		if (!data?.ok) return
+		const timer = window.setTimeout(() => {
+			const active = document.activeElement
+			if (!active || active === document.body || !active.isConnected) {
+				rowRef.current?.focus()
+			}
+		}, 200)
+		return () => window.clearTimeout(timer)
+	}, [fetcher.state, fetcher.data, retryFetcher.state, retryFetcher.data])
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
 	// then means Menuza still pays the vendor, so it is its own action.
@@ -527,14 +570,20 @@ function OrderActions({
 			)
 		: ''
 	return (
-		<div className="flex flex-wrap gap-2">
+		<div
+			ref={rowRef}
+			tabIndex={-1}
+			role="group"
+			aria-label={orderName}
+			className="flex flex-wrap gap-2 outline-none"
+		>
 			{order.status === 'held' &&
 			VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ? (
 				<ConfirmedAction
 					fetcher={fetcher}
 					fields={{ _action: 'retry-checked', orderId: order.id }}
 					label={_(msg`Retry`)}
-					accessibleLabel={_(msg`Retry ${orderName}`)}
+					accessibleLabel={_(msg`Retry, ${orderName}`)}
 					title={_(msg`Did the vendor get this order?`)}
 					description={
 						references.length > 0
@@ -561,7 +610,7 @@ function OrderActions({
 					fetcher={fetcher}
 					fields={{ _action: 'record-vendor-order', orderId: order.id }}
 					label={_(msg`Found it at the vendor`)}
-					accessibleLabel={_(msg`Record the vendor order for ${orderName}`)}
+					accessibleLabel={_(msg`Found it at the vendor, ${orderName}`)}
 					title={_(msg`Record the vendor's order`)}
 					description={_(
 						msg`Enter the order id the vendor shows for each reference. Nothing is sent again; tracking, cancelling and refunds then follow the vendor's order.`,
@@ -583,23 +632,25 @@ function OrderActions({
 			{order.status === 'held' && vendorCheck ? null : order.status ===
 			  'held' ? (
 				<>
-					<fetcher.Form method="POST">
+					<retryFetcher.Form method="POST">
 						<input type="hidden" name="_action" value="retry" />
 						<input type="hidden" name="orderId" value={order.id} />
 						<Button
 							type="submit"
 							size="sm"
-							disabled={fetcher.state !== 'idle'}
-							aria-label={_(msg`Retry ${orderName}`)}
+							disabled={
+								fetcher.state !== 'idle' || retryFetcher.state !== 'idle'
+							}
+							aria-label={_(msg`Retry, ${orderName}`)}
 						>
 							{_(msg`Retry`)}
 						</Button>
-					</fetcher.Form>
+					</retryFetcher.Form>
 					<ConfirmedAction
 						fetcher={fetcher}
 						fields={{ _action: 'retry-accept', orderId: order.id }}
 						label={_(msg`Accept new price`)}
-						accessibleLabel={_(msg`Accept the new price for ${orderName}`)}
+						accessibleLabel={_(msg`Accept new price, ${orderName}`)}
 						title={_(msg`Accept the new wholesale price?`)}
 						description={_(
 							msg`The order goes to the vendor at today's price. The organization already paid ${amount}; Menuza absorbs the difference.`,
@@ -614,7 +665,7 @@ function OrderActions({
 					fetcher={fetcher}
 					fields={{ _action: 'refund', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund in full`)}
-					accessibleLabel={_(msg`Refund ${orderName} in full`)}
+					accessibleLabel={_(msg`Refund in full, ${orderName}`)}
 					title={_(msg`Refund ${amount} to ${organization}?`)}
 					description={
 						_(
@@ -630,9 +681,7 @@ function OrderActions({
 					fetcher={fetcher}
 					fields={{ _action: 'refund-keep', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund, vendor keeps printing`)}
-					accessibleLabel={_(
-						msg`Refund ${orderName} in full while the vendor keeps printing`,
-					)}
+					accessibleLabel={_(msg`Refund, vendor keeps printing, ${orderName}`)}
 					title={_(msg`Refund ${amount} and keep the vendor order?`)}
 					description={
 						_(
@@ -648,7 +697,7 @@ function OrderActions({
 					fetcher={fetcher}
 					fields={{ _action: 'refund-part', orderId: order.id }}
 					label={_(msg`Refund part`)}
-					accessibleLabel={_(msg`Refund part of ${orderName}`)}
+					accessibleLabel={_(msg`Refund part, ${orderName}`)}
 					title={_(msg`Refund part of this order to ${organization}?`)}
 					description={_(
 						msg`Refund what the vendors cancelled. The order leaves hold and the rest keeps printing and is tracked again. This cannot be undone.`,
@@ -671,7 +720,9 @@ function OrderActions({
 					</div>
 				</ConfirmedAction>
 			) : null}
-			<Result data={fetcher.data} />
+			{/* Dialog refusals show inside their dialog; the row reports successes. */}
+			{fetcher.data?.ok ? <Result data={fetcher.data} /> : null}
+			<Result data={retryFetcher.data} />
 		</div>
 	)
 }

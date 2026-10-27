@@ -590,6 +590,14 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			const phone = contactForm.elements.namedItem('phone') as HTMLInputElement
 			name.required = need.name
 			phone.required = need.phone
+			// A fresh sheet: no error left over from an earlier attempt.
+			setInvalid(name, false, 'table-contact-error')
+			setInvalid(phone, false, 'table-contact-error')
+			const error = document.getElementById('table-contact-error')
+			if (error) {
+				error.textContent = ''
+				error.classList.add('hidden')
+			}
 			contactMotion.open()
 			const releaseScroll = lockScroll()
 			const releaseTrap = trapFocus(contactForm)
@@ -678,7 +686,17 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	function openPay(tab: QrPublicTab) {
 		if (!payMotion || !payForm) return
 		payTab = tab
-		payError?.classList.add('hidden')
+		if (payError) {
+			payError.textContent = ''
+			payError.classList.add('hidden')
+		}
+		for (const field of ['name', 'phone']) {
+			setInvalid(
+				payForm.elements.namedItem(field) as HTMLInputElement,
+				false,
+				'tab-pay-error',
+			)
+		}
 		paintPayAmount()
 		closeTab()
 		payMotion.open()

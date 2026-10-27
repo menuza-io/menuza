@@ -162,7 +162,8 @@ const ActionSchema = z.discriminatedUnion('_action', [
 
 export type PrintAdminResult =
 	| { ok: true; done?: 'refunded' | 'sent' | 'recorded' }
-	| { ok: false; message: string }
+	/** `code` maps to a translated message in the route; `message` is the fallback. */
+	| { ok: false; code: string; message: string }
 
 /** Says what happened, so the row reads "Refund sent", not "Saved". */
 async function command(
@@ -181,6 +182,7 @@ async function appCommand(
 	if (!base || !token)
 		return {
 			ok: false,
+			code: 'app_not_configured',
 			message: 'APP_URL or INTERNAL_COMMAND_TOKEN is not set.',
 		}
 	const response = await fetch(`${base}/resources/print/admin-command`, {
@@ -192,13 +194,21 @@ async function appCommand(
 		body: JSON.stringify(body),
 		signal: AbortSignal.timeout(30_000),
 	}).catch(() => null)
-	if (!response) return { ok: false, message: 'The App did not answer.' }
+	if (!response) {
+		return {
+			ok: false,
+			code: 'app_unreachable',
+			message: 'The App did not answer.',
+		}
+	}
 	if (response.ok) return { ok: true }
 	const error = (await response.json().catch(() => null)) as {
+		error?: string
 		message?: string
 	} | null
 	return {
 		ok: false,
+		code: error?.error ?? 'app_error',
 		message: error?.message ?? `The App answered ${response.status}.`,
 	}
 }
@@ -209,7 +219,13 @@ export async function action({
 	await requireUserWithRole(request, 'admin')
 	const form = await request.formData()
 	const parsed = ActionSchema.safeParse(Object.fromEntries(form))
-	if (!parsed.success) return { ok: false, message: 'Check the form values.' }
+	if (!parsed.success) {
+		return {
+			ok: false,
+			code: 'invalid_form',
+			message: 'Check the form values.',
+		}
+	}
 	const input = parsed.data
 	switch (input._action) {
 		case 'settings': {
@@ -230,7 +246,11 @@ export async function action({
 				!product.shippable ||
 				!product.sizes.some((size) => size.key === input.sizeKey)
 			) {
-				return { ok: false, message: 'That product and size cannot ship.' }
+				return {
+					ok: false,
+					code: 'not_shippable',
+					message: 'That product and size cannot ship.',
+				}
 			}
 			// One active vendor per product and size: the new mapping replaces it.
 			await db
@@ -288,7 +308,11 @@ export async function action({
 				}))
 				.filter((entry) => entry.vendorOrderId)
 			if (vendorOrders.length === 0) {
-				return { ok: false, message: 'Enter the vendor order id.' }
+				return {
+					ok: false,
+					code: 'missing_vendor_order_id',
+					message: 'Enter the vendor order id.',
+				}
 			}
 			return command(
 				{ action: 'record-vendor-order', orderId: input.orderId, vendorOrders },
