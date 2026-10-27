@@ -231,6 +231,7 @@ orderSystemRoutes.post('/payment-status', async (c) => {
 					status: parsed.data.status,
 					amountCents: parsed.data.amountCents,
 					currency: parsed.data.currency,
+					paymentId: parsed.data.paymentId,
 				})
 			: await applyPaymentEvent({
 					orgId: parsed.data.orgId,

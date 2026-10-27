@@ -56,6 +56,8 @@ export class VendorError extends Error {
 		readonly vendor: PrintVendorName,
 		readonly code: 'unavailable' | 'rejected' | 'not_configured',
 		message: string,
+		/** The vendor's HTTP status, when it answered. */
+		readonly status?: number,
 	) {
 		super(message)
 		this.name = 'VendorError'

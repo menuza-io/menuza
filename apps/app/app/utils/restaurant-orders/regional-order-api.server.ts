@@ -247,6 +247,7 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 	status: 'paid' | 'failed' | 'expired'
 	amountCents: number
 	currency: string
+	paymentId?: string
 }): Promise<void> {
 	await callRegionalOrderCommand({
 		dataRegion: options.dataRegion,
@@ -259,6 +260,7 @@ export async function notifyRestaurantOrderPaymentStatus(options: {
 			status: options.status,
 			amountCents: options.amountCents,
 			currency: options.currency,
+			...(options.paymentId ? { paymentId: options.paymentId } : {}),
 		},
 	})
 }

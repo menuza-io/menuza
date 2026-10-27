@@ -208,6 +208,8 @@ function Result({
 				<Trans>Refund sent.</Trans>
 			) : data.done === 'sent' ? (
 				<Trans>Sent to the vendor again.</Trans>
+			) : data.done === 'recorded' ? (
+				<Trans>Vendor order recorded. Tracking resumes.</Trans>
 			) : item ? (
 				<Trans>Saved: {item}</Trans>
 			) : (
@@ -448,6 +450,23 @@ function CatalogRow({
 	)
 }
 
+function VendorOrderField({
+	reference,
+	name,
+}: {
+	reference: string
+	name: string
+}) {
+	const { _ } = useLingui()
+	const id = useId()
+	return (
+		<div className="flex flex-col gap-1">
+			<Label htmlFor={id}>{_(msg`Vendor order id for ${reference}`)}</Label>
+			<Input id={id} name={name} required maxLength={200} />
+		</div>
+	)
+}
+
 function OrderActions({
 	order,
 }: {
@@ -458,7 +477,7 @@ function OrderActions({
 		totalCents: number
 		refundCents: number
 		holdReason: string | null
-		vendorReferences: string[]
+		vendorReferences: Array<{ id: string; vendor: string; pending: boolean }>
 		createdAt: string
 	}
 }) {
@@ -489,7 +508,24 @@ function OrderActions({
 	const orderName = _(
 		msg`the ${amount} order of ${organization} placed ${placed}`,
 	)
-	const references = order.vendorReferences
+	const references = order.vendorReferences.map(
+		(reference) => `${reference.vendor}: ${reference.id}`,
+	)
+	const pendingReferences = order.vendorReferences.filter(
+		(reference) => reference.pending,
+	)
+	// After a send that may have reached the vendor, a refund needs the same
+	// look at the vendor as a retry.
+	const vendorCheck = VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
+	const checkFields: Record<string, string> = vendorCheck
+		? { checkedVendor: 'true' }
+		: {}
+	const checkNote = vendorCheck
+		? ' ' +
+			_(
+				msg`The vendor may already have this order: search the vendor dashboard first and cancel it there if you find it.`,
+			)
+		: ''
 	return (
 		<div className="flex flex-wrap gap-2">
 			{order.status === 'held' &&
@@ -517,7 +553,35 @@ function OrderActions({
 					confirmLabel={_(msg`I found nothing, retry`)}
 					variant="outline"
 				/>
-			) : order.status === 'held' ? (
+			) : null}
+			{order.status === 'held' &&
+			vendorCheck &&
+			pendingReferences.length > 0 ? (
+				<ConfirmedAction
+					fetcher={fetcher}
+					fields={{ _action: 'record-vendor-order', orderId: order.id }}
+					label={_(msg`Found it at the vendor`)}
+					accessibleLabel={_(msg`Record the vendor order for ${orderName}`)}
+					title={_(msg`Record the vendor's order`)}
+					description={_(
+						msg`Enter the order id the vendor shows for each reference. Nothing is sent again; tracking, cancelling and refunds then follow the vendor's order.`,
+					)}
+					confirmLabel={_(msg`Record and track`)}
+					variant="outline"
+				>
+					<div className="flex flex-col gap-3">
+						{pendingReferences.map((reference) => (
+							<VendorOrderField
+								key={reference.id}
+								reference={`${reference.vendor}: ${reference.id}`}
+								name={`vendorOrder.${reference.id}`}
+							/>
+						))}
+					</div>
+				</ConfirmedAction>
+			) : null}
+			{order.status === 'held' && vendorCheck ? null : order.status ===
+			  'held' ? (
 				<>
 					<fetcher.Form method="POST">
 						<input type="hidden" name="_action" value="retry" />
@@ -548,13 +612,15 @@ function OrderActions({
 			{refundable ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					fields={{ _action: 'refund', orderId: order.id }}
+					fields={{ _action: 'refund', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund in full`)}
 					accessibleLabel={_(msg`Refund ${orderName} in full`)}
 					title={_(msg`Refund ${amount} to ${organization}?`)}
-					description={_(
-						msg`Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone.`,
-					)}
+					description={
+						_(
+							msg`Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone.`,
+						) + checkNote
+					}
 					confirmLabel={_(msg`Refund in full`)}
 					destructive
 				/>
@@ -562,15 +628,17 @@ function OrderActions({
 			{refundable && vendorMayPrint ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					fields={{ _action: 'refund-keep', orderId: order.id }}
+					fields={{ _action: 'refund-keep', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund, vendor keeps printing`)}
 					accessibleLabel={_(
 						msg`Refund ${orderName} in full while the vendor keeps printing`,
 					)}
 					title={_(msg`Refund ${amount} and keep the vendor order?`)}
-					description={_(
-						msg`For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at Menuza's cost. This cannot be undone.`,
-					)}
+					description={
+						_(
+							msg`For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at Menuza's cost. This cannot be undone.`,
+						) + checkNote
+					}
 					confirmLabel={_(msg`Refund in full`)}
 					destructive
 				/>

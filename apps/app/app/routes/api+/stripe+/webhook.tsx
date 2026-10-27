@@ -80,6 +80,19 @@ export async function action({ request }: ActionFunctionArgs) {
 		return new Response('Invalid signature', { status: 400 })
 	}
 
+	// Every checkout session and payment intent this App creates lives on the
+	// platform account (destination charges). The same objects from a
+	// connected account are that account's own, whatever their metadata
+	// claims: never act on them. Connected accounts only report
+	// `account.updated` here.
+	if (
+		event.account &&
+		(event.type.startsWith('checkout.session.') ||
+			event.type.startsWith('payment_intent.'))
+	) {
+		return new Response('Ignored', { status: 200 })
+	}
+
 	try {
 		switch (event.type) {
 			case 'customer.subscription.created':
@@ -130,17 +143,6 @@ export async function action({ request }: ActionFunctionArgs) {
 			case 'checkout.session.async_payment_failed':
 			case 'checkout.session.expired': {
 				const session = event.data.object as Stripe.Checkout.Session
-				// Reservation, print and restaurant sessions are created on the
-				// platform account (destination charges). The same metadata on an
-				// event from a connected account is not ours: never act on it.
-				if (
-					event.account &&
-					(isReservationStripeMetadata(session.metadata) ||
-						isPrintStripeMetadata(session.metadata) ||
-						isRestaurantStripeMetadata(session.metadata))
-				) {
-					break
-				}
 				if (isReservationStripeMetadata(session.metadata)) {
 					// Reservation payments: ids and amounts go to the org's region;
 					// a regional failure throws so Stripe retries.

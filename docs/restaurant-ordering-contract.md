@@ -76,15 +76,17 @@ Bind provider session exactly once. A second bind for the same order fails with
 `409 { error: 'already_bound' }`.
 
 `POST /api/orders/payment-status`:
-`{ orgId, orderId, sessionId, processor, status: 'paid' | 'failed' | 'expired', amountCents, currency }`.
-Verify provider/session, immutable amount and currency. `currency` arrives as a
-lowercase ISO code ('usd', 'cad', 'sar') from provider events; compare
-case-insensitively. Duplicate events are idempotent. Terminal states cannot
-regress. A late paid event must never resurrect an expired reservation or
-overbook stock; expose `payment_review` for operator intervention instead. A
-bound session the provider reports `expired` should clear the binding (or move
-the order to `payment_review`) so a retry can bind a fresh session; App reports
-provider session expiry with `status: 'expired'`.
+`{ orgId, orderId, sessionId, processor, status: 'paid' | 'failed' | 'expired', amountCents, currency, paymentId? }`.
+`paymentId` (optional, additive) is the provider's id for this one payment:
+Checkout.com binds the order reference as its session, so it is what tells two
+payments on one QR tab apart. Verify provider/session, immutable amount and
+currency. `currency` arrives as a lowercase ISO code ('usd', 'cad', 'sar') from
+provider events; compare case-insensitively. Duplicate events are idempotent.
+Terminal states cannot regress. A late paid event must never resurrect an
+expired reservation or overbook stock; expose `payment_review` for operator
+intervention instead. A bound session the provider reports `expired` should
+clear the binding (or move the order to `payment_review`) so a retry can bind a
+fresh session; App reports provider session expiry with `status: 'expired'`.
 
 Transient regional failures surface as 5xx so providers retry; permanent
 rejections (unknown order, unbound session, amount/currency mismatch) may be 4xx

@@ -2,6 +2,7 @@ import { type ActionFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { requireInternalCommandAuth } from '#app/utils/internal-command-auth.server.ts'
 import {
+	adminRecordVendorOrder,
 	adminRefundPrintOrder,
 	adminRetryPrintOrder,
 	PrintOrderError,
@@ -15,6 +16,21 @@ const CommandSchema = z.discriminatedUnion('action', [
 		keepPrinting: z.boolean().optional(),
 		/** Refund only this much (what was cancelled after a partial cancel). */
 		amountCents: z.number().int().positive().max(100_000_00).optional(),
+		/** Admin searched the vendor for an order we never recorded. */
+		checkedVendor: z.boolean().optional(),
+	}),
+	z.strictObject({
+		action: z.literal('record-vendor-order'),
+		orderId: z.string().min(1).max(100),
+		vendorOrders: z
+			.array(
+				z.strictObject({
+					id: z.string().min(1).max(100),
+					vendorOrderId: z.string().trim().min(1).max(200),
+				}),
+			)
+			.min(1)
+			.max(10),
 	}),
 	z.strictObject({
 		action: z.literal('retry'),
@@ -51,7 +67,13 @@ export async function action({ request }: ActionFunctionArgs) {
 			await adminRefundPrintOrder(parsed.data.orderId, {
 				keepPrinting: parsed.data.keepPrinting,
 				amountCents: parsed.data.amountCents,
+				checkedVendor: parsed.data.checkedVendor,
 			})
+		} else if (parsed.data.action === 'record-vendor-order') {
+			await adminRecordVendorOrder(
+				parsed.data.orderId,
+				parsed.data.vendorOrders,
+			)
 		} else {
 			await adminRetryPrintOrder(parsed.data.orderId, parsed.data.acceptPrice, {
 				checkedVendor: parsed.data.checkedVendor,

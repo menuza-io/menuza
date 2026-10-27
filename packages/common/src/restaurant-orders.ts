@@ -403,6 +403,8 @@ export const orderPaymentStatusRequestSchema = z.strictObject({
 	status: z.enum(['paid', 'failed', 'expired']),
 	amountCents: z.number().int().min(0),
 	currency: z.string().length(3),
+	/** One payment's provider id (Checkout.com shares the session per order). */
+	paymentId: z.string().min(1).max(200).optional(),
 })
 
 /**

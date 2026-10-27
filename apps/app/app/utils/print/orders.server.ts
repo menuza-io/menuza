@@ -1189,15 +1189,24 @@ async function cancelAtVendors(vendorOrders: VendorOrderRow[]) {
 		if (status.state === 'cancelled' || status.state === 'failed') continue
 		if (status.state !== 'submitted') return false
 	}
+	let cancelledAny = false
 	for (const vendorOrder of vendorOrders) {
 		if (
 			!vendorOrder.vendorOrderId ||
 			['cancelled', 'failed'].includes(vendorOrder.status)
 		)
 			continue
-		const result = await getPrintVendor(
-			vendorOrder.vendor as PrintVendorName,
-		).cancel(vendorOrder.vendorOrderId)
+		let result: 'cancelled' | 'too_late'
+		try {
+			result = await getPrintVendor(
+				vendorOrder.vendor as PrintVendorName,
+			).cancel(vendorOrder.vendorOrderId)
+		} catch (error) {
+			// Nothing cancelled yet: the caller may restore and retry. Once one
+			// vendor is cancelled, any failure leaves a half-cancelled order.
+			if (!cancelledAny) throw error
+			result = 'too_late'
+		}
 		if (result === 'too_late') {
 			// Production began between the check and the cancel: some vendors
 			// may be cancelled already, so this needs a person (and a partial
@@ -1212,6 +1221,7 @@ async function cancelAtVendors(vendorOrders: VendorOrderRow[]) {
 			.update(PrintVendorOrder)
 			.set({ status: 'cancelled' })
 			.where(eq(PrintVendorOrder.id, vendorOrder.id))
+		cancelledAny = true
 	}
 	return true
 }
@@ -1365,7 +1375,11 @@ const ADMIN_REFUND_REFUSED = [
  */
 export async function adminRefundPrintOrder(
 	orderId: string,
-	options: { keepPrinting?: boolean; amountCents?: number } = {},
+	options: {
+		keepPrinting?: boolean
+		amountCents?: number
+		checkedVendor?: boolean
+	} = {},
 ) {
 	const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
 	if (ADMIN_REFUND_REFUSED.includes(order.status)) {
@@ -1385,8 +1399,27 @@ export async function adminRefundPrintOrder(
 			'This order has no payment to refund.',
 		)
 	}
+	if (
+		VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
+		!options.checkedVendor
+	) {
+		// A vendor may hold an order we never recorded: refunding without a
+		// look would leave Menuza paying for prints nobody pays for.
+		throw new PrintOrderError(
+			409,
+			'check_vendor',
+			'The vendor may already have this order. Search the vendor dashboard for its references first, and cancel it there if found.',
+		)
+	}
 	if (options.amountCents !== undefined) {
-		await adminPartialRefund(order, options.amountCents)
+		if (order.holdReason !== 'partial_cancel') {
+			throw new PrintOrderError(
+				409,
+				'not_partial',
+				'Only an order held after a partial cancel can be refunded in part.',
+			)
+		}
+		await adminPartialRefund(order, vendorOrders, options.amountCents)
 		return
 	}
 	// Claim from the state we saw, so a submission cannot start meanwhile.
@@ -1405,6 +1438,7 @@ export async function adminRefundPrintOrder(
 			.where(
 				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'cancelling')),
 			)
+	let vendorsCancelled = false
 	try {
 		const cancelled = await cancelAtVendors(vendorOrders)
 		if (!cancelled && !options.keepPrinting) {
@@ -1414,9 +1448,20 @@ export async function adminRefundPrintOrder(
 				"A vendor already started printing this order. Refund anyway only if the vendor should keep printing and shipping at Menuza's cost.",
 			)
 		}
+		vendorsCancelled = cancelled
 		await refundInFull(order)
 	} catch (error) {
-		if (error instanceof PrintOrderError && error.code === 'partial_cancel') {
+		if (vendorsCancelled) {
+			// Vendors are cancelled but the money did not move: never put the
+			// order back as if it were still printing.
+			await db
+				.update(PrintOrder)
+				.set({ status: 'held', holdReason: 'refund_failed' })
+				.where(eq(PrintOrder.id, order.id))
+		} else if (
+			error instanceof PrintOrderError &&
+			error.code === 'partial_cancel'
+		) {
 			await db
 				.update(PrintOrder)
 				.set({ status: 'held', holdReason: 'partial_cancel' })
@@ -1437,7 +1482,11 @@ export async function adminRefundPrintOrder(
 	await notifyPrintOrder(order.id, 'failed')
 }
 
-async function adminPartialRefund(order: OrderRow, amountCents: number) {
+async function adminPartialRefund(
+	order: OrderRow,
+	vendorOrders: VendorOrderRow[],
+	amountCents: number,
+) {
 	const remaining = order.totalCents - order.refundCents
 	if (
 		!Number.isInteger(amountCents) ||
@@ -1487,13 +1536,73 @@ async function adminPartialRefund(order: OrderRow, amountCents: number) {
 			)
 		throw error
 	}
-	if (order.status === 'held') {
-		// The rest keeps printing: track it again instead of holding it.
+	// The rest keeps printing: track it again instead of holding it, but only
+	// when nothing is still waiting to be sent (that stays held for Admin).
+	if (
+		order.status === 'held' &&
+		!vendorOrders.some((vendorOrder) => vendorOrder.status === 'pending')
+	) {
 		await db
 			.update(PrintOrder)
 			.set({ status: 'submitted', holdReason: null })
 			.where(and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'held')))
 		await rollUp(order.id)
+	}
+}
+
+/**
+ * Admin found the order on the vendor's dashboard after a `vendor_unknown`
+ * (or stale) hold: record the vendor's order id instead of placing it again,
+ * so tracking, cancel and refunds see it. The order goes back to tracking
+ * once nothing is left to send.
+ */
+export async function adminRecordVendorOrder(
+	orderId: string,
+	vendorOrders: Array<{ id: string; vendorOrderId: string }>,
+) {
+	const detail = await getPrintOrderDetail(null, orderId)
+	if (detail.order.status !== 'held') {
+		throw new PrintOrderError(
+			409,
+			'not_held',
+			'Only a held order can be updated this way.',
+		)
+	}
+	for (const entry of vendorOrders) {
+		const row = detail.vendorOrders.find(
+			(vendorOrder) => vendorOrder.id === entry.id,
+		)
+		if (!row || row.status !== 'pending') {
+			throw new PrintOrderError(
+				409,
+				'not_pending',
+				'That vendor order is not waiting to be sent.',
+			)
+		}
+	}
+	for (const entry of vendorOrders) {
+		await db
+			.update(PrintVendorOrder)
+			.set({
+				vendorOrderId: entry.vendorOrderId,
+				status: 'submitted',
+				submittedAt: new Date(),
+				error: null,
+			})
+			.where(
+				and(
+					eq(PrintVendorOrder.id, entry.id),
+					eq(PrintVendorOrder.status, 'pending'),
+				),
+			)
+	}
+	const { vendorOrders: fresh } = await getPrintOrderDetail(null, orderId)
+	if (!fresh.some((vendorOrder) => vendorOrder.status === 'pending')) {
+		await db
+			.update(PrintOrder)
+			.set({ status: 'submitted', holdReason: null })
+			.where(and(eq(PrintOrder.id, orderId), eq(PrintOrder.status, 'held')))
+		await rollUp(orderId)
 	}
 }
 

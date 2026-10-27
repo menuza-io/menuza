@@ -7,6 +7,7 @@ import {
 	destroyTenantDb,
 	getTenantDb,
 	provisionTenantDb,
+	qrTabPayments,
 	qrTabs,
 	restaurantOrders,
 	rsvAreas,
@@ -1337,6 +1338,104 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			currency: 'usd',
 		})
 		expect((await paid.json()).paymentStatus).toBe('paid')
+	})
+
+	it('keeps money that arrives on an old page after a counter close', async () => {
+		const { first, intent } = await boundPayment(0, 'cs_test_late_counter')
+		const db = await getTenantDb(orgId)
+		await db
+			.update(qrTabs)
+			.set({ paymentEventAt: Date.now() - 46 * 60_000 })
+			.where(eq(qrTabs.id, first.tab.id))
+		const closed = await operator(`/tabs/${first.tab.id}/close`, {
+			method: 'POST',
+			body: { paymentMethod: 'counter' },
+		})
+		expect(closed.status).toBe(200)
+		const late = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_late_counter',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await late.json()).paymentStatus).toBe('review')
+		const rows = await db
+			.select()
+			.from(qrTabPayments)
+			.where(eq(qrTabPayments.tabId, first.tab.id))
+		expect(rows).toHaveLength(1)
+		// The counter settlement itself is kept.
+		const [tab] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(tab).toMatchObject({
+			paymentStatus: 'paid',
+			paymentMethod: 'counter',
+		})
+	})
+
+	it('tells two Checkout.com payments on one tab apart, and replays from new money', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, 0)).json()
+		const ref = 'restaurant_order:ref-checkout-2'
+		await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: ref,
+			processor: 'checkout',
+		})
+		const event = (paymentId: string) =>
+			system('/payment-status', {
+				orgId,
+				orderId: intent.orderRef,
+				sessionId: ref,
+				processor: 'checkout',
+				status: 'paid',
+				amountCents: intent.amountCents,
+				currency: 'usd',
+				paymentId,
+			})
+		expect((await (await event('pay_one')).json()).paymentStatus).toBe('paid')
+		// The same payment again is a replay.
+		expect((await (await event('pay_one')).json()).paymentStatus).toBe('paid')
+		// A second payment on the same reference is new money.
+		expect((await (await event('pay_two')).json()).paymentStatus).toBe('review')
+		expect((await (await event('pay_two')).json()).paymentStatus).toBe('review')
+		const db = await getTenantDb(orgId)
+		const rows = await db
+			.select()
+			.from(qrTabPayments)
+			.where(eq(qrTabPayments.tabId, first.tab.id))
+		expect(rows.map((row) => row.sessionId)).toEqual(['pay_two'])
+	})
+
+	it('never restarts the payment freeze when the tip is asked again', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		await pay(first.tab.tabToken, 0)
+		const db = await getTenantDb(orgId)
+		const startedAt = Date.now() - 29 * 60_000
+		await db
+			.update(qrTabs)
+			.set({ paymentEventAt: startedAt })
+			.where(eq(qrTabs.id, first.tab.id))
+		await pay(first.tab.tabToken, 10)
+		const [tab] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(tab?.paymentEventAt).toBe(startedAt)
 	})
 
 	it('creates no table when one label of a batch is taken', async () => {

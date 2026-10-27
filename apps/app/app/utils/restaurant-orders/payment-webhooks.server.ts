@@ -59,6 +59,7 @@ async function dispatchTerminalRestaurantPayment(
 			status: event.status,
 			amountCents: event.amountCents,
 			currency: event.currency,
+			paymentId: event.paymentId,
 		})
 	} catch (error) {
 		if (error instanceof RegionalOrderApiError && !error.retryable) {

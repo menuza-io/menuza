@@ -222,6 +222,8 @@ describe('mapCheckoutWebhookToRestaurantOrder', () => {
 			status: 'paid',
 			amountCents: 4250,
 			currency: 'usd',
+			// Tells two payments on one reference apart (QR tabs).
+			paymentId: 'pay_1',
 		})
 	})
 
@@ -334,7 +336,8 @@ describe('mapCheckoutPaymentToRestaurantOrder', () => {
 			mapCheckoutPaymentToRestaurantOrder({ ...base, paid: true })?.status,
 		).toBe('paid')
 		expect(
-			mapCheckoutPaymentToRestaurantOrder({ ...base, status: 'Declined' })?.status,
+			mapCheckoutPaymentToRestaurantOrder({ ...base, status: 'Declined' })
+				?.status,
 		).toBe('failed')
 		expect(mapCheckoutPaymentToRestaurantOrder(base)?.status).toBe('pending')
 		expect(

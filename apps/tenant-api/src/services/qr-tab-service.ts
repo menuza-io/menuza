@@ -727,6 +727,15 @@ export async function getOperatorTab(
 	}
 }
 
+/** Clears a tab's online payment binding (not its review rows). */
+const UNBIND = {
+	paymentSessionId: null,
+	paymentProcessor: null,
+	paymentAmountCents: null,
+	paymentTipCents: null,
+	paymentTokenHash: null,
+} as const
+
 async function loadOpenTab(
 	tx: Parameters<Parameters<typeof runTenantTransaction>[1]>[0],
 	tabId: string,
@@ -806,6 +815,10 @@ export async function closeTabAtCounter(
 				// An online payment under review stays flagged: it still needs a
 				// refund or a note, and must never be overwritten.
 				paymentStatus: tab.paymentStatus === 'review' ? 'review' : 'paid',
+				// Paid at the counter: drop any online binding, so money that still
+				// arrives on an old payment page is kept for review, never taken
+				// for a replay of a payment that settled this tab.
+				...UNBIND,
 				subtotalCents: totals.subtotalCents,
 				taxCents: totals.taxCents,
 				tipCents,
@@ -861,6 +874,7 @@ export async function voidTab(
 			.set({
 				status: 'cancelled',
 				voidReason: input.reason,
+				...UNBIND,
 				closedBy: input.closedBy,
 				closedAt: now.getTime(),
 				version: tab.version + 1,
@@ -1109,13 +1123,13 @@ export async function prepareTabPayment(
 		}
 		const tipCents = Math.round((totals.subtotalCents * input.tipPercent) / 100)
 		const amountCents = totals.totalCents + tipCents
-		// Asking again for the same payment re-serves it without restarting the
-		// freeze, so repeated requests cannot keep the table from ordering.
+		// The freeze runs from the first ask: a re-ask (or a different tip)
+		// re-prices the payment but never restarts it, so nobody can keep the
+		// table frozen by asking again and again.
 		const sameRequest =
 			holdOpen &&
 			tab.paymentStatus === 'unpaid' &&
-			tab.paymentAmountCents === amountCents &&
-			tab.paymentTipCents === tipCents
+			tab.paymentAmountCents != null
 		await tx
 			.update(qrTabs)
 			.set({
@@ -1330,10 +1344,32 @@ export async function applyTabPaymentEvent(input: {
 	status: 'paid' | 'failed' | 'expired'
 	amountCents: number
 	currency: string
+	/** One payment's provider id, when the session id is shared (Checkout.com). */
+	paymentId?: string
 }) {
 	return writeTx(input.orgId, async (tx) => {
 		const tab = await loadPayableTab(tx, input.tabId)
 		if (!tab) return fail(404, 'order_not_found', 'Order not found.')
+		if (
+			tab.paymentStatus === 'paid' &&
+			(input.status !== 'paid' ||
+				(tab.paymentMethod === 'online' &&
+					tab.paymentProcessor === input.processor &&
+					tab.paymentSessionId === (input.paymentId ?? input.sessionId)))
+		) {
+			// A redelivered event for the payment that settled this tab online,
+			// or a failed or expired page on a settled tab: nothing to change.
+			return {
+				ok: true as const,
+				data: {
+					orgId: input.orgId,
+					orderId: tabOrderRef(tab.id),
+					sessionId: input.sessionId,
+					status: tab.status,
+					paymentStatus: 'paid',
+				},
+			}
+		}
 		const matches =
 			tab.paymentSessionId === input.sessionId &&
 			tab.paymentProcessor === input.processor &&
@@ -1362,7 +1398,9 @@ export async function applyTabPaymentEvent(input: {
 				.values({
 					id: crypto.randomUUID(),
 					tabId: tab.id,
-					sessionId: input.sessionId,
+					// Checkout.com binds one reference per tab, so its payment id is
+					// what tells a second payment from a redelivered event.
+					sessionId: input.paymentId ?? input.sessionId,
 					processor: input.processor,
 					amountCents: input.amountCents,
 					currency: input.currency.toUpperCase(),
@@ -1370,19 +1408,21 @@ export async function applyTabPaymentEvent(input: {
 				})
 				.onConflictDoNothing()
 				.returning({ id: qrTabPayments.id })
-			// A late payment on a tab already paid flags it too: it is extra money.
-			if (inserted.length > 0) {
+			// The row is the record. An unsettled tab is flagged so staff must
+			// look before charging; a settled one keeps its own settlement
+			// (status and time) and shows the extra money through its rows.
+			if (inserted.length > 0 && tab.paymentStatus !== 'paid') {
 				await tx
 					.update(qrTabs)
 					.set({
 						paymentStatus: 'review',
-						paidAt: now.getTime(),
 						paymentEventAt: now.getTime(),
 						updatedAt: now.getTime(),
 					})
 					.where(eq(qrTabs.id, tab.id))
 			}
-			return result(inserted.length > 0 ? 'review' : tab.paymentStatus)
+			// Kept (now or by an earlier delivery of the same payment).
+			return result('review')
 		}
 		if (!matches) {
 			if (input.status === 'paid') return keepForReview()
@@ -1400,7 +1440,9 @@ export async function applyTabPaymentEvent(input: {
 			}
 		}
 		if (input.status === 'paid') {
-			if (tab.paymentStatus === 'paid') return result('paid')
+			// Settled already (a replay of the settling payment returned above):
+			// this is more money, kept for review.
+			if (tab.paymentStatus === 'paid') return keepForReview()
 			// Settled elsewhere meanwhile, under review already, or the tab no
 			// longer costs what was paid: keep the money for a person to look
 			// at, never close blind.
@@ -1421,6 +1463,9 @@ export async function applyTabPaymentEvent(input: {
 					status: 'closed',
 					paymentMethod: 'online',
 					paymentStatus: 'paid',
+					// The settling payment itself, so only its exact replay is
+					// treated as one (Checkout.com shares the session per tab).
+					paymentSessionId: input.paymentId ?? input.sessionId,
 					subtotalCents: totals.subtotalCents,
 					taxCents: totals.taxCents,
 					tipCents,

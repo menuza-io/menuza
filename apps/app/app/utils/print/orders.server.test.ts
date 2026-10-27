@@ -51,6 +51,7 @@ const {
 	syncOpenPrintOrders,
 	adminRetryPrintOrder,
 	adminRefundPrintOrder,
+	adminRecordVendorOrder,
 } = await import('./orders.server.ts')
 
 function snapshot(pieces = 2): PrintSnapshot {
@@ -595,13 +596,18 @@ describe('shipped print orders', () => {
 			.update(PrintOrder)
 			.set({ status: 'held', holdReason: 'partial_cancel' })
 			.where(eq(PrintOrder.id, orderId))
+		const { order: before } = await getPrintOrderDetail(null, orderId)
+		await expect(
+			adminRefundPrintOrder(orderId, { amountCents: before.totalCents + 1 }),
+		).rejects.toMatchObject({ code: 'invalid_amount' })
 		await adminRefundPrintOrder(orderId, { amountCents: 100 })
 		const { order } = await getPrintOrderDetail(null, orderId)
 		expect(order).toMatchObject({ refundCents: 100, holdReason: null })
 		expect(order.status).not.toBe('held')
+		// Tracking again: a second part needs a new partial-cancel hold.
 		await expect(
-			adminRefundPrintOrder(orderId, { amountCents: order.totalCents }),
-		).rejects.toMatchObject({ code: 'invalid_amount' })
+			adminRefundPrintOrder(orderId, { amountCents: 100 }),
+		).rejects.toMatchObject({ code: 'not_partial' })
 	})
 
 	it('asks Admin to check the vendor before retrying an order that may exist there', async () => {
@@ -613,5 +619,37 @@ describe('shipped print orders', () => {
 		await expect(adminRetryPrintOrder(orderId, false)).rejects.toMatchObject({
 			code: 'check_vendor',
 		})
+	})
+
+	it('refunds or records a maybe-sent order only after Admin checked the vendor', async () => {
+		const { orderId } = await paidOrder()
+		const [vendorOrder] = await db
+			.select()
+			.from(PrintVendorOrder)
+			.where(eq(PrintVendorOrder.orderId, orderId))
+		await db
+			.update(PrintVendorOrder)
+			.set({ status: 'pending', vendorOrderId: null })
+			.where(eq(PrintVendorOrder.id, vendorOrder!.id))
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'vendor_unknown' })
+			.where(eq(PrintOrder.id, orderId))
+		await expect(adminRefundPrintOrder(orderId)).rejects.toMatchObject({
+			code: 'check_vendor',
+		})
+		await expect(
+			adminRefundPrintOrder(orderId, { amountCents: 100, checkedVendor: true }),
+		).rejects.toMatchObject({ code: 'not_partial' })
+
+		await adminRecordVendorOrder(orderId, [
+			{ id: vendorOrder!.id, vendorOrderId: `mock_${Date.now()}` },
+		])
+		const detail = await getPrintOrderDetail(null, orderId)
+		expect(detail.order).toMatchObject({
+			status: 'submitted',
+			holdReason: null,
+		})
+		expect(detail.vendorOrders[0]).toMatchObject({ status: 'submitted' })
 	})
 })

@@ -184,6 +184,24 @@ describe('restaurant order hosted checkout', () => {
 		commerce.isProcessorConfigured.mockReset().mockReturnValue(true)
 	})
 
+	it('replaces a cached session that expired instead of failing until the hold moves', async () => {
+		commerce.createCheckout
+			.mockResolvedValueOnce({ id: 'cs_dead', url: null, processor: 'connect' })
+			.mockResolvedValueOnce({
+				id: 'cs_live',
+				url: 'https://checkout.stripe.com/c/pay/cs_live',
+				processor: 'connect',
+			})
+		const result = await createRestaurantOrderHostedCheckout(checkoutOptions())
+		expect(result).toMatchObject({ sessionId: 'cs_live' })
+		const [first, second] = commerce.createCheckout.mock.calls.map(
+			(call) => (call as unknown as [{ idempotencyKey: string }])[0],
+		)
+		expect(second?.idempotencyKey).toBe(
+			`${first?.idempotencyKey}:after:cs_dead`,
+		)
+	})
+
 	it('creates a session from the authoritative regional quote and binds before returning', async () => {
 		const result = await createRestaurantOrderHostedCheckout(checkoutOptions())
 
@@ -231,7 +249,10 @@ describe('restaurant order hosted checkout', () => {
 				orderId: ORDER_ID,
 				amountCents: 4250,
 				currency: 'USD',
-				holdExpiresAt: quote().holdExpiresAt,
+				// The key carries the exact expiry sent to Stripe.
+				holdExpiresAt: new Date(
+					NOW.getTime() + (10 + 31) * 60_000,
+				).toISOString(),
 			}),
 		)
 

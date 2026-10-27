@@ -85,13 +85,20 @@ the browser's print dialog saves it.
   never sent (after 5 minutes) and holds orders stuck sending or cancelling for
   15 minutes (`stale_claim`), since a vendor call may have gone through. A
   timeout or an error once the order was sent holds it as `vendor_unknown`. For
-  these (and `submission_error`) Admin's **Retry** shows the vendor references
-  and asks to search the vendor first; Prodigi also gets an idempotency key.
-  Held refund cases (`refund_failed`, `partial_cancel`) can only be refunded.
-  Paid orders are not counted against the hourly render limit.
-- **Vendor errors:** only 400 and 422 (Gelato also 409) count as the vendor
-  refusing the order (automatic refund). A key, account or endpoint problem
-  (401, 403, 404) and every 5xx or 429 hold the order for Admin.
+  these (and `submission_error`) Admin's **Retry** and refunds show the vendor
+  references and ask to search the vendor first; **Found it at the vendor**
+  records the vendor's order id instead of sending again. Prodigi also gets an
+  idempotency key. A cancel that fails after another vendor was cancelled holds
+  the order as `partial_cancel`; a refund that fails after vendors were
+  cancelled holds it as `refund_failed`. Held refund cases (`refund_failed`,
+  `partial_cancel`) can only be refunded. Paid orders are not counted against
+  the hourly render limit.
+- **Vendor errors:** only 400 and 422 count as the vendor refusing the order
+  (automatic refund). A 409 on create can mean the order already exists (a
+  retry), so it holds as `vendor_unknown`; Gelato's 409 on cancel means too
+  late. A key, account or endpoint problem (401, 403, 404) and every 5xx or 429
+  hold the order for Admin. Looking a Gelato order up by our reference is not
+  wired yet: Admin searches the dashboard.
 - **Tracking:** vendor webhooks
   (`/resources/print/webhook/<vendor>?token=PRINT_WEBHOOK_TOKEN`) only trigger a
   status fetch from the vendor's API; the hourly `print-sync` job in
@@ -110,8 +117,9 @@ how held orders are rerouted), and the last 100 orders with margin, **Retry**,
   already started, it refunds nothing and says so.
 - **Refund, vendor keeps printing** (in production, shipped, delivered or held
   orders): a defect claim or a lost parcel, Menuza still pays the vendor.
-- **Refund part** (held `partial_cancel` orders): the amount that was cancelled;
-  the rest keeps printing and is tracked again.
+- **Refund part** (held `partial_cancel` orders only, enforced by the App): the
+  amount that was cancelled; the rest keeps printing and is tracked again,
+  unless a vendor order is still waiting to be sent (then it stays held).
 
 Only paid orders can be refunded. Refunds and retries run in the App through
 `/resources/print/admin-command` (internal token), so Stripe and vendor keys

@@ -70,6 +70,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 						orderId: PrintVendorOrder.orderId,
 						id: PrintVendorOrder.id,
 						vendor: PrintVendorOrder.vendor,
+						status: PrintVendorOrder.status,
 					})
 					.from(PrintVendorOrder)
 					.where(inArray(PrintVendorOrder.orderId, heldIds))
@@ -103,7 +104,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			createdAt: order.createdAt.toISOString(),
 			vendorReferences: references
 				.filter((reference) => reference.orderId === order.id)
-				.map((reference) => `${reference.vendor}: ${reference.id}`),
+				.map((reference) => ({
+					id: reference.id,
+					vendor: reference.vendor,
+					pending: reference.status === 'pending',
+				})),
 			// Kept after tax: what Menuza earns over the vendor's wholesale.
 			// Only money actually collected and kept counts.
 			marginCents: MARGIN_STATUSES.has(order.status)
@@ -141,6 +146,12 @@ const ActionSchema = z.discriminatedUnion('_action', [
 			'retry-checked',
 		]),
 		orderId: z.string().min(1).max(100),
+		/** Set when Admin confirmed searching the vendor first. */
+		checkedVendor: z.literal('true').optional(),
+	}),
+	z.object({
+		_action: z.literal('record-vendor-order'),
+		orderId: z.string().min(1).max(100),
 	}),
 	z.object({
 		_action: z.literal('refund-part'),
@@ -150,12 +161,13 @@ const ActionSchema = z.discriminatedUnion('_action', [
 ])
 
 export type PrintAdminResult =
-	{ ok: true; done?: 'refunded' | 'sent' } | { ok: false; message: string }
+	| { ok: true; done?: 'refunded' | 'sent' | 'recorded' }
+	| { ok: false; message: string }
 
 /** Says what happened, so the row reads "Refund sent", not "Saved". */
 async function command(
 	body: Record<string, unknown>,
-	done: 'refunded' | 'sent',
+	done: 'refunded' | 'sent' | 'recorded',
 ): Promise<PrintAdminResult> {
 	const result = await appCommand(body)
 	return result.ok ? { ok: true, done } : result
@@ -195,9 +207,8 @@ export async function action({
 	request,
 }: ActionFunctionArgs): Promise<PrintAdminResult> {
 	await requireUserWithRole(request, 'admin')
-	const parsed = ActionSchema.safeParse(
-		Object.fromEntries(await request.formData()),
-	)
+	const form = await request.formData()
+	const parsed = ActionSchema.safeParse(Object.fromEntries(form))
 	if (!parsed.success) return { ok: false, message: 'Check the form values.' }
 	const input = parsed.data
 	switch (input._action) {
@@ -249,12 +260,41 @@ export async function action({
 				.where(eq(PrintVendorProduct.id, input.id))
 			return { ok: true }
 		case 'refund':
-			return command({ action: 'refund', orderId: input.orderId }, 'refunded')
-		case 'refund-keep':
 			return command(
-				{ action: 'refund', orderId: input.orderId, keepPrinting: true },
+				{
+					action: 'refund',
+					orderId: input.orderId,
+					checkedVendor: input.checkedVendor === 'true',
+				},
 				'refunded',
 			)
+		case 'refund-keep':
+			return command(
+				{
+					action: 'refund',
+					orderId: input.orderId,
+					keepPrinting: true,
+					checkedVendor: input.checkedVendor === 'true',
+				},
+				'refunded',
+			)
+		case 'record-vendor-order': {
+			// One field per vendor order waiting to be sent: `vendorOrder.<id>`.
+			const vendorOrders = [...form.entries()]
+				.filter(([name]) => name.startsWith('vendorOrder.'))
+				.map(([name, value]) => ({
+					id: name.slice('vendorOrder.'.length),
+					vendorOrderId: String(value).trim(),
+				}))
+				.filter((entry) => entry.vendorOrderId)
+			if (vendorOrders.length === 0) {
+				return { ok: false, message: 'Enter the vendor order id.' }
+			}
+			return command(
+				{ action: 'record-vendor-order', orderId: input.orderId, vendorOrders },
+				'recorded',
+			)
+		}
 		case 'refund-part':
 			return command(
 				{

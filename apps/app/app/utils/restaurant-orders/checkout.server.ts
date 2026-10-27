@@ -317,6 +317,7 @@ async function recoverBoundSession(
 				status: event.status,
 				amountCents: event.amountCents,
 				currency: event.currency,
+				paymentId: event.paymentId,
 			})
 		} catch (error) {
 			console.error(
@@ -435,41 +436,53 @@ export async function createRestaurantOrderHostedCheckout(options: {
 			? restaurantOrderCheckoutReference(organization.id, options.orderId)
 			: null
 
-	const session = await commerce.createCheckout({
-		processor,
-		// Fixed generic label: never customer data, cart contents, or notes.
-		productName: RESTAURANT_ORDER_PRODUCT_NAME,
-		productDescription: null,
-		amountCents: quote.totalCents,
-		currency,
-		connectAccountId:
-			processor === 'connect' ? organization.stripeConnectAccountId : null,
-		checkoutSubEntityId:
-			processor === 'checkout' ? organization.checkoutSubEntityId : null,
-		successUrl,
-		cancelUrl,
-		metadata: buildRestaurantOrderMetadata(organization.id, options.orderId),
-		customerEmail: null,
-		externalCustomerId: null,
-		embedOrigin: null,
-		expiresAt:
-			processor === 'connect' ? stripeSessionExpiry(quote.holdExpiresAt) : null,
-		idempotencyKey:
-			processor === 'connect'
-				? buildRestaurantOrderSessionIdempotencyKey({
-						orgId: organization.id,
-						orderId: options.orderId,
-						amountCents: quote.totalCents,
-						currency: quote.currency,
-						holdExpiresAt: quote.holdExpiresAt,
-					})
-				: null,
-		reference: checkoutReference,
-		billingCountry:
-			processor === 'checkout'
-				? billingCountryForCurrency(quote.currency)
-				: null,
-	})
+	const expiresAt =
+		processor === 'connect' ? stripeSessionExpiry(quote.holdExpiresAt) : null
+	// The key carries the exact expiry sent (as reservations do), so a replay
+	// that computes a different expiry never trips Stripe's parameter check.
+	const baseKey =
+		processor === 'connect'
+			? buildRestaurantOrderSessionIdempotencyKey({
+					orgId: organization.id,
+					orderId: options.orderId,
+					amountCents: quote.totalCents,
+					currency: quote.currency,
+					holdExpiresAt: expiresAt?.toISOString() ?? quote.holdExpiresAt,
+				})
+			: null
+	const createSession = (idempotencyKey: string | null) =>
+		commerce.createCheckout({
+			processor,
+			// Fixed generic label: never customer data, cart contents, or notes.
+			productName: RESTAURANT_ORDER_PRODUCT_NAME,
+			productDescription: null,
+			amountCents: quote.totalCents,
+			currency,
+			connectAccountId:
+				processor === 'connect' ? organization.stripeConnectAccountId : null,
+			checkoutSubEntityId:
+				processor === 'checkout' ? organization.checkoutSubEntityId : null,
+			successUrl,
+			cancelUrl,
+			metadata: buildRestaurantOrderMetadata(organization.id, options.orderId),
+			customerEmail: null,
+			externalCustomerId: null,
+			embedOrigin: null,
+			expiresAt,
+			idempotencyKey,
+			reference: checkoutReference,
+			billingCountry:
+				processor === 'checkout'
+					? billingCountryForCurrency(quote.currency)
+					: null,
+		})
+	let session = await createSession(baseKey)
+	// Stripe replays a cached session for the same key, even one that has
+	// expired since (no URL): chain a new key off the dead session so the
+	// guest gets a live page instead of an error until the hold moves.
+	for (let attempt = 0; !session.url && baseKey && attempt < 2; attempt += 1) {
+		session = await createSession(`${baseKey}:after:${session.id}`)
+	}
 
 	if (!session.url) {
 		throw jsonError(502, 'checkout_session_unavailable', true)
@@ -622,6 +635,7 @@ export async function getRestaurantOrderPaymentStatus(options: {
 						status: event.status,
 						amountCents: event.amountCents,
 						currency: event.currency,
+						paymentId: event.paymentId,
 					})
 					// The regional service owns order state; for the browser's
 					// poll a dead provider session (failed or expired) means this
@@ -688,21 +702,28 @@ async function reconcileCheckoutOrderPayment(
 					event.orderId === orderId &&
 					isTerminalRestaurantPaymentStatus(event.status),
 			)
+		// Every paid payment is reported (a tab can be paid twice on one
+		// reference); the region keeps each by its payment id.
+		const paid = events.filter((event) => event.status === 'paid')
 		const decided =
-			events.find((event) => event.status === 'paid') ??
-			events.find((event) => event.status === 'failed')
-		if (!decided) return null
-		await notifyRestaurantOrderPaymentStatus({
-			dataRegion: organization.dataRegion,
-			orgId: decided.orgId,
-			orderId: decided.orderId,
-			sessionId: decided.sessionId,
-			processor: 'checkout',
-			status: decided.status as 'paid' | 'failed',
-			amountCents: decided.amountCents,
-			currency: decided.currency,
-		})
-		return decided.status === 'paid' ? 'paid' : 'failed'
+			paid.length > 0
+				? paid
+				: events.filter((event) => event.status === 'failed').slice(0, 1)
+		if (decided.length === 0) return null
+		for (const event of decided) {
+			await notifyRestaurantOrderPaymentStatus({
+				dataRegion: organization.dataRegion,
+				orgId: event.orgId,
+				orderId: event.orderId,
+				sessionId: event.sessionId,
+				processor: 'checkout',
+				status: event.status as 'paid' | 'failed',
+				amountCents: event.amountCents,
+				currency: event.currency,
+				paymentId: event.paymentId,
+			})
+		}
+		return paid.length > 0 ? 'paid' : 'failed'
 	} catch (error) {
 		console.error(
 			'Restaurant order Checkout.com payment lookup failed:',

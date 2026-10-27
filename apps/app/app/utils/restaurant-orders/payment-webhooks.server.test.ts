@@ -179,6 +179,7 @@ describe('restaurant order webhook dispatch', () => {
 			status: 'paid',
 			amountCents: 15000,
 			currency: 'sar',
+			paymentId: 'pay_1',
 		})
 	})
 

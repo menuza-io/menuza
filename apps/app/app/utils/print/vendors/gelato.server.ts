@@ -68,6 +68,7 @@ async function call(path: string, init: RequestInit = {}) {
 			'gelato',
 			'rejected',
 			`Gelato refused the request (${response.status})`,
+			response.status,
 		)
 	}
 	return body as Record<string, unknown>
@@ -160,23 +161,39 @@ export const gelatoVendor: PrintVendor = {
 	},
 
 	async createOrder({ reference, items, address, shippingMethod }) {
-		const body = await call('/orders', {
-			method: 'POST',
-			body: JSON.stringify({
-				orderType: 'order',
-				orderReferenceId: reference,
-				customerReferenceId: 'print-shop',
-				currency: 'USD',
-				shipmentMethodUid: shippingMethod,
-				shippingAddress: recipient(address),
-				items: items.map((item) => ({
-					itemReferenceId: item.reference,
-					productUid: item.sku,
-					quantity: item.quantity,
-					files: [{ type: 'default', url: item.fileUrl }],
-				})),
-			}),
-		})
+		let body: Record<string, unknown>
+		try {
+			body = await call('/orders', {
+				method: 'POST',
+				body: JSON.stringify({
+					orderType: 'order',
+					orderReferenceId: reference,
+					customerReferenceId: 'print-shop',
+					currency: 'USD',
+					shipmentMethodUid: shippingMethod,
+					shippingAddress: recipient(address),
+					items: items.map((item) => ({
+						itemReferenceId: item.reference,
+						productUid: item.sku,
+						quantity: item.quantity,
+						files: [{ type: 'default', url: item.fileUrl }],
+					})),
+				}),
+			})
+		} catch (error) {
+			// Gelato has no idempotency key: a 409 on create can mean this
+			// reference already exists (a retry after a timeout), so it is
+			// held for a person instead of refunded as a refusal.
+			if (error instanceof VendorError && error.status === 409) {
+				throw new VendorError(
+					'gelato',
+					'unavailable',
+					'Gelato reports a conflict: the order may already exist',
+					409,
+				)
+			}
+			throw error
+		}
 		const id = typeof body.id === 'string' ? body.id : null
 		if (!id)
 			throw new VendorError(
