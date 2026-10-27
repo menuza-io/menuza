@@ -117,9 +117,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		return { error: i18n._(t`runId is required`) }
 	}
 
-	const res = await fetchTenant(
-		`/operator/journeys/runs/${encodeURIComponent(runId)}`,
-	)
+	const res = await fetchTenant(`/operator/journeys/runs/${encodeURIComponent(runId)}`)
 	if (!res.ok) {
 		return { error: i18n._(t`Failed to load timeline`) }
 	}
