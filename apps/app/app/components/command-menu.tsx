@@ -20,6 +20,10 @@ import {
 	type PrintShopNavAccess,
 } from '#app/utils/print/nav.ts'
 import {
+	HIDDEN_QR_ORDERING_NAV,
+	type QrOrderingNavAccess,
+} from '#app/utils/qr/nav.ts'
+import {
 	HIDDEN_STAFFING_NAV,
 	type StaffingNavAccess,
 } from '#app/utils/staffing/nav.ts'
@@ -57,11 +61,13 @@ export function getNavigationCommands({
 	permissions,
 	staffingNav,
 	printShopNav = HIDDEN_PRINT_SHOP_NAV,
+	qrOrderingNav = HIDDEN_QR_ORDERING_NAV,
 }: {
 	orgSlug: string
 	permissions: ReadonlyArray<{ action: string; entity: string }>
 	staffingNav: StaffingNavAccess
 	printShopNav?: PrintShopNavAccess
+	qrOrderingNav?: QrOrderingNavAccess
 }): NavigationCommand[] {
 	const can = (action: string, entity: string) =>
 		permissions.some(
@@ -105,6 +111,11 @@ export function getNavigationCommands({
 				[msg`Automations`, canReadAutomations],
 				[msg`Print shop`, printShopNav.visible],
 			]),
+		},
+		qrOrderingNav.visible && {
+			label: msg`QR tables`,
+			url: `/${orgSlug}/qr/tables`,
+			icon: 'utensils',
 		},
 		printShopNav.visible && {
 			label: msg`Print shop`,
@@ -199,6 +210,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
 						?.permissions ?? [],
 				staffingNav: rootData?.staffingNav ?? HIDDEN_STAFFING_NAV,
 				printShopNav: rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV,
+				qrOrderingNav: rootData?.qrOrderingNav ?? HIDDEN_QR_ORDERING_NAV,
 			})
 		: []
 

@@ -52,6 +52,10 @@ export const orderSchema = z.object({
 		})
 		.nullable(),
 	drop: z.object({ slug: z.string() }).nullable(),
+	/** QR dine-in round: the table and the tab it belongs to. */
+	table: z.object({ id: z.string(), label: z.string() }).nullable().optional(),
+	tabId: z.string().nullable().optional(),
+	source: z.string().nullable().optional(),
 	delivery: z
 		.object({
 			address: z.string(),

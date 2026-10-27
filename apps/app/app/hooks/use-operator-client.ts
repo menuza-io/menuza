@@ -13,7 +13,12 @@ export type OperatorCredentials = z.infer<typeof credentialsSchema>
  * credentials only: order and contact data never transit App SSR. `base` is the
  * regional route family (`/operator/orders`, `/operator/pos`).
  */
-export function useOperatorClient(orgSlug: string, base: string) {
+export function useOperatorClient(
+	orgSlug: string,
+	base: string,
+	/** App route that mints the token (QR ordering has its own scope). */
+	tokenRoute: 'orders-token' | 'qr-token' = 'orders-token',
+) {
 	const cached = useRef(
 		new Map<
 			string,
@@ -23,11 +28,11 @@ export function useOperatorClient(orgSlug: string, base: string) {
 
 	const credentialsFor = useCallback(
 		(write: boolean) => {
-			const key = `${orgSlug}:${write ? 'write' : 'read'}`
+			const key = `${tokenRoute}:${orgSlug}:${write ? 'write' : 'read'}`
 			let entry = cached.current.get(key)
 			if (!entry || entry.expires <= Date.now()) {
 				const credentials = fetch(
-					`/${encodeURIComponent(orgSlug)}/orders-token${write ? '?write=1' : ''}`,
+					`/${encodeURIComponent(orgSlug)}/${tokenRoute}${write ? '?write=1' : ''}`,
 					{ headers: { Accept: 'application/json' } },
 				).then(async (response) => {
 					if (!response.ok) throw new Error('Unable to authorize this request.')
@@ -39,7 +44,7 @@ export function useOperatorClient(orgSlug: string, base: string) {
 			}
 			return { key, credentials: entry.credentials }
 		},
-		[orgSlug],
+		[orgSlug, tokenRoute],
 	)
 
 	const request = useCallback(

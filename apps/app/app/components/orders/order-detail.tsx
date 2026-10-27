@@ -128,8 +128,10 @@ export function OrderDetail({
 	const next = nextOrderStatus(order.status)
 	const closed = CLOSED_ORDER_STATUSES.includes(order.status)
 	const paid = order.paymentStatus === 'paid'
+	// A table round is paid once, when its tab closes (QR ordering).
+	const onTab = Boolean(order.tabId)
 	const needsHandoffPayment =
-		order.paymentMethod === 'handoff' && !paid && next === 'completed'
+		!onTab && order.paymentMethod === 'handoff' && !paid && next === 'completed'
 	const created = formatDateTime(order.createdAt, locale)
 	const createdAgo = relativeTime(order.createdAt, locale)
 	const profileHref = order.customerKey
@@ -361,8 +363,22 @@ export function OrderDetail({
 									/>
 									{order.fulfillment === 'delivery'
 										? _(msg`Delivery`)
-										: _(msg`Pickup`)}
+										: order.fulfillment === 'dine_in'
+											? _(msg`At the table`)
+											: _(msg`Pickup`)}
 								</p>
+								{order.table ? (
+									<p data-testid="order-table">
+										{(() => {
+											const label = order.table.label
+											return _(msg`Table ${label}`)
+										})()}
+										<span className="text-muted-foreground">
+											{' · '}
+											<Trans>Paid when the tab closes</Trans>
+										</span>
+									</p>
+								) : null}
 								{order.pickup ? (
 									<p>
 										<span className="tabular-nums">
@@ -615,7 +631,9 @@ export function OrderDetail({
 							<Button
 								type="button"
 								onClick={() => onUpdate(next, markPaid)}
-								disabled={busy || (next === 'completed' && !paid && !markPaid)}
+								disabled={
+									busy || (next === 'completed' && !paid && !markPaid && !onTab)
+								}
 							>
 								{primaryLabel}
 							</Button>

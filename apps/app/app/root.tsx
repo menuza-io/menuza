@@ -88,6 +88,10 @@ import {
 	type PrintShopNavAccess,
 } from './utils/print/nav.ts'
 import {
+	HIDDEN_QR_ORDERING_NAV,
+	type QrOrderingNavAccess,
+} from './utils/qr/nav.ts'
+import {
 	HIDDEN_RESERVATIONS_NAV,
 	type ReservationsNavAccess,
 } from './utils/reservations/nav.ts'
@@ -486,6 +490,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 		)
 	}
 
+	let qrOrderingNav: QrOrderingNavAccess = HIDDEN_QR_ORDERING_NAV
+	if (currentOrgId && userId) {
+		const qrAccess = await import('./utils/qr/access.server.ts')
+		qrOrderingNav = await time(
+			async () => {
+				try {
+					return await cachified({
+						key: `qr-ordering-nav:${currentOrgId}:${userId}`,
+						cache,
+						ttl: 1000 * 30,
+						getFreshValue: () =>
+							qrAccess.getQrOrderingNavAccess(userId, currentOrgId),
+					})
+				} catch {
+					return HIDDEN_QR_ORDERING_NAV
+				}
+			},
+			{ timings, type: 'qr ordering nav', desc: 'qr ordering nav access' },
+		)
+	}
+
 	const utmHeaders = utmResponse?.headers || {}
 	const hasConfiguredProvider = ({
 		clientId,
@@ -541,6 +566,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 			staffingNav,
 			reservationsNav,
 			printShopNav,
+			qrOrderingNav,
 			env: {
 				NODE_ENV: ENV.NODE_ENV,
 				ALLOW_INDEXING: ENV.ALLOW_INDEXING,

@@ -43,6 +43,10 @@ import {
 	type PrintShopNavAccess,
 } from '#app/utils/print/nav.ts'
 import {
+	HIDDEN_QR_ORDERING_NAV,
+	type QrOrderingNavAccess,
+} from '#app/utils/qr/nav.ts'
+import {
 	HIDDEN_RESERVATIONS_NAV,
 	type ReservationsNavAccess,
 } from '#app/utils/reservations/nav.ts'
@@ -268,6 +272,8 @@ function OrganizationSidebar({
 		rootData?.reservationsNav ?? HIDDEN_RESERVATIONS_NAV
 	const printShopNav: PrintShopNavAccess =
 		rootData?.printShopNav ?? HIDDEN_PRINT_SHOP_NAV
+	const qrOrderingNav: QrOrderingNavAccess =
+		rootData?.qrOrderingNav ?? HIDDEN_QR_ORDERING_NAV
 
 	useEffect(() => {
 		if (!extensionId) return
@@ -368,6 +374,11 @@ function OrganizationSidebar({
 					title: _(msg`Drops`),
 					url: `/${orgSlug}/menu/drops`,
 					isActive: location.pathname.includes(`/${orgSlug}/menu/drops`),
+				},
+				{
+					title: _(msg`QR tables`),
+					url: `/${orgSlug}/qr/tables`,
+					isActive: location.pathname.includes(`/${orgSlug}/qr/`),
 				},
 			],
 		},
@@ -697,6 +708,16 @@ function OrganizationSidebar({
 		})
 		.map((item) => {
 			if (!('items' in item) || !item.items) return item
+			if (item.url === `/${orgSlug}/menu`) {
+				return {
+					...item,
+					isActive:
+						item.isActive || location.pathname.includes(`/${orgSlug}/qr/`),
+					items: item.items.filter((subItem) =>
+						subItem.url.includes('/qr/') ? qrOrderingNav.visible : true,
+					),
+				}
+			}
 			if (item.url === `/${orgSlug}/marketing`) {
 				return {
 					...item,
