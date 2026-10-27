@@ -1,4 +1,7 @@
-import { type PrintSnapshot } from '@repo/common/print-shop'
+import {
+	PRINT_MAX_PIECES_PER_DESIGN,
+	type PrintSnapshot,
+} from '@repo/common/print-shop'
 import {
 	db,
 	eq,
@@ -10,6 +13,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { insertTestUser } from '#tests/dashboard-utils.ts'
 import { createTestOrganization } from '#tests/test-utils.ts'
+import type * as vendorsModule from './vendors/index.server.ts'
 
 const sessionCount = vi.hoisted(() => ({ value: 0 }))
 const stripeMock = vi.hoisted(() => ({
@@ -34,6 +38,31 @@ const stripeMock = vi.hoisted(() => ({
 	},
 	refunds: { create: vi.fn(async () => ({ id: 're_1' })) },
 }))
+
+const vendorState = vi.hoisted(() => ({
+	value: null as null | 'returned' | 'failed' | 'cancelled',
+}))
+vi.mock('./vendors/index.server.ts', async (importOriginal) => {
+	const actual = await importOriginal<typeof vendorsModule>()
+	return {
+		...actual,
+		getPrintVendor: (name: Parameters<typeof actual.getPrintVendor>[0]) => {
+			const vendor = actual.getPrintVendor(name)
+			return {
+				...vendor,
+				status: async (id: string) =>
+					vendorState.value
+						? {
+								state: vendorState.value,
+								carrier: null,
+								trackingNumber: null,
+								trackingUrl: null,
+							}
+						: vendor.status(id),
+			}
+		},
+	}
+})
 
 vi.mock('@repo/common/print-shop-catalog', async () => ({
 	printCatalog: (await import('./test-catalog.ts')).testPrintCatalog,
@@ -167,6 +196,7 @@ describe('shipped print orders', () => {
 	afterEach(() => {
 		vi.unstubAllEnvs()
 		vi.clearAllMocks()
+		vendorState.value = null
 	})
 
 	it('quotes with the markup, takes payment and submits to the vendor', async () => {
@@ -503,10 +533,12 @@ describe('shipped print orders', () => {
 				scopeId: null,
 			},
 		)
+		// Cut short during a vendor call: it may have reached the vendor.
 		await db
 			.update(PrintOrder)
 			.set({
 				status: 'submitting',
+				holdReason: 'vendor_sending',
 				updatedAt: new Date(Date.now() - 60 * 60_000),
 			})
 			.where(eq(PrintOrder.id, orderId))
@@ -556,6 +588,209 @@ describe('shipped print orders', () => {
 				payment_intent: `pi_${orderId}`,
 			} as never,
 			'checkout.session.completed',
+		)
+		return { access, orderId }
+	}
+
+	it('submits after the webhook has answered when given a way to', async () => {
+		const { access, design } = await setup()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [{ designId: design.id, quantity: 1 }],
+			address,
+			scopeId: null,
+		})
+		const url = await startPrintCheckout(
+			request,
+			access,
+			orderId,
+			'https://app.test/x',
+		)
+		const { order } = await getPrintOrderDetail(null, orderId)
+		const tasks: Array<() => Promise<unknown>> = []
+		await handlePrintStripeSession(
+			{
+				id: url.split('/').pop()!,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: `pi_${orderId}`,
+			} as never,
+			'checkout.session.completed',
+			{ later: (task) => tasks.push(task) },
+		)
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe('paid')
+		expect(tasks).toHaveLength(1)
+		await tasks[0]!()
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
+			'submitted',
+		)
+	})
+
+	it('hands a large set back when its rendering time runs out, and the sweep finishes it', async () => {
+		const { orderId } = await paidOrderLater()
+		expect(await submitPrintOrder(orderId, { budgetMs: -1 })).toBe('deferred')
+		const deferred = (await getPrintOrderDetail(null, orderId)).order
+		expect(deferred).toMatchObject({ status: 'paid', holdReason: null })
+
+		// A claim cut short before any vendor call is simply resumed.
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'submitting',
+				updatedAt: new Date(Date.now() - 60 * 60_000),
+			})
+			.where(eq(PrintOrder.id, orderId))
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, orderId)).order.status).toBe(
+			'submitted',
+		)
+	})
+
+	it('holds a paid order that is still not sent a day later', async () => {
+		const { orderId } = await paidOrderLater()
+		await db
+			.update(PrintOrder)
+			.set({ paidAt: new Date(Date.now() - 25 * 60 * 60_000) })
+			.where(eq(PrintOrder.id, orderId))
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, orderId)).order).toMatchObject({
+			status: 'held',
+			holdReason: 'render_unavailable',
+		})
+	})
+
+	it('holds a returned parcel for Admin instead of refunding it', async () => {
+		const { orderId } = await paidOrder()
+		vendorState.value = 'returned'
+		await syncOpenPrintOrders()
+		const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
+		expect(order).toMatchObject({
+			status: 'held',
+			holdReason: 'vendor_returned',
+		})
+		expect(vendorOrders[0]!.status).toBe('returned')
+		expect(stripeMock.refunds.create).not.toHaveBeenCalled()
+	})
+
+	it('refunds a vendor failure before shipping, but holds one after it', async () => {
+		const early = await paidOrder()
+		vendorState.value = 'failed'
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, early.orderId)).order.status).toBe(
+			'refunded',
+		)
+		expect(stripeMock.refunds.create).toHaveBeenCalledTimes(1)
+
+		vendorState.value = null
+		const late = await paidOrder()
+		await db
+			.update(PrintVendorOrder)
+			.set({ shippedAt: new Date() })
+			.where(eq(PrintVendorOrder.orderId, late.orderId))
+		vendorState.value = 'cancelled'
+		await syncOpenPrintOrders()
+		expect((await getPrintOrderDetail(null, late.orderId)).order).toMatchObject(
+			{ status: 'held', holdReason: 'vendor_after_shipping' },
+		)
+		expect(stripeMock.refunds.create).toHaveBeenCalledTimes(1)
+	})
+
+	it('reuses checkout parameters on a retry and never starts a second session blind', async () => {
+		const { access, design } = await setup()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [{ designId: design.id, quantity: 1 }],
+			address,
+			scopeId: null,
+		})
+		await startPrintCheckout(request, access, orderId, 'https://app.test/x')
+		const { order } = await getPrintOrderDetail(null, orderId)
+		const [first, firstOptions] = stripeMock.checkout.sessions.create.mock
+			.calls[0] as unknown as [
+			{ expires_at: number },
+			{ idempotencyKey: string },
+		]
+		expect(first.expires_at).toBe(
+			Math.floor(order.quoteExpiresAt.getTime() / 1000) + 31 * 60,
+		)
+
+		// Stripe cannot say what became of the session: no second one.
+		stripeMock.checkout.sessions.retrieve.mockRejectedValueOnce(
+			new Error('Stripe is down'),
+		)
+		await expect(
+			startPrintCheckout(request, access, orderId, 'https://app.test/x'),
+		).rejects.toMatchObject({ code: 'checkout_unavailable' })
+		expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1)
+
+		// An expired session gets a new one under a new key.
+		stripeMock.checkout.sessions.retrieve.mockResolvedValueOnce({
+			id: order.stripeCheckoutSessionId!,
+			status: 'expired',
+			payment_status: 'unpaid',
+			url: null,
+		} as never)
+		await startPrintCheckout(request, access, orderId, 'https://app.test/x')
+		const [, secondOptions] = stripeMock.checkout.sessions.create.mock
+			.calls[1] as unknown as [unknown, { idempotencyKey: string }]
+		expect(secondOptions.idempotencyKey).not.toBe(firstOptions.idempotencyKey)
+	})
+
+	it('refuses to price a print with more pieces than one order may have', async () => {
+		const { access, design } = await setup()
+		const big = snapshot(PRINT_MAX_PIECES_PER_DESIGN + 1)
+		await db
+			.update(PrintDesign)
+			.set({ snapshot: big })
+			.where(eq(PrintDesign.id, design.id))
+		await expect(
+			createPrintQuote(new Request('https://app.test/'), access, {
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				scopeId: null,
+			}),
+		).rejects.toMatchObject({ code: 'too_many_pieces' })
+	})
+
+	/** Paid, with the submission left for later (as the webhook does). */
+	async function paidOrderLater() {
+		const { access, design } = await setup()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [{ designId: design.id, quantity: 1 }],
+			address,
+			scopeId: null,
+		})
+		const url = await startPrintCheckout(
+			request,
+			access,
+			orderId,
+			'https://app.test/x',
+		)
+		const { order } = await getPrintOrderDetail(null, orderId)
+		await handlePrintStripeSession(
+			{
+				id: url.split('/').pop()!,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: `pi_${orderId}`,
+			} as never,
+			'checkout.session.completed',
+			{ later: () => {} },
 		)
 		return { access, orderId }
 	}

@@ -76,7 +76,15 @@ the browser's print dialog saves it.
   price is held for the quote window (default 30 minutes).
 - **Payment:** a one-off Stripe Checkout on the organization's Stripe customer
   (created on the first order and reused by subscriptions). The order goes to
-  the vendor only after Stripe confirms payment.
+  the vendor only after Stripe confirms payment. The Stripe webhook only records
+  the payment: the vendor submission runs after it answers (Workers
+  `waitUntil`), so rendering a large set never holds Stripe's request. A
+  checkout retry reuses the same parameters (the session's expiry comes from the
+  quote); when Stripe cannot say what became of the last session, no second one
+  is started.
+- **Pieces:** a print has at most `PRINT_MAX_PIECES_PER_DESIGN` (200) pieces:
+  approval refuses a larger set (a vertical's "every one" target included), and
+  so does the price.
 - **Vendors:** each product and size prints at one vendor (Gelato or Prodigi),
   set in Admin. A cart with products at both vendors becomes one vendor order
   each, with its own tracking. Each piece is sent as its own PDF with the
@@ -89,20 +97,30 @@ the browser's print dialog saves it.
   started; if production starts mid-cancel, the order is held (`partial_cancel`)
   for Admin to refund what was cancelled. A vendor refusal or a vendor-side
   cancellation refunds in full automatically. A payment that lands after a
-  cancel is refunded automatically (`late_payment`). Defects after delivery go
-  through Admin (reprint by vendor claim, or refund). An order held while the
-  vendor may already have it (`vendor_unknown`, `stale_claim`,
-  `submission_error`) cannot be cancelled by the operator (`needs_support`):
-  Admin checks the vendor first.
+  cancel is refunded automatically (`late_payment`). Once a vendor order has
+  shipped, nothing refunds automatically: a parcel that went back to the vendor
+  (`vendor_returned`, often a wrong address) or a vendor failure or cancel after
+  shipping (`vendor_after_shipping`) holds the order for Admin, since the prints
+  were made and paid for. Defects after delivery go through Admin (reprint by
+  vendor claim, or refund). An order held while the vendor may already have it
+  (`vendor_unknown`, `stale_claim`, `submission_error`) cannot be cancelled by
+  the operator (`needs_support`): Admin checks the vendor first.
+- **Large sets:** a submission renders for at most 20 seconds, then hands the
+  order back (`paid`); rendered files are cached, so the next run continues
+  where it stopped. The hourly `print-sync` job continues such orders (up to a
+  minute each, ten minutes in all), and holds one still not sent a day after
+  payment (`render_unavailable`).
 - **Crash safety:** the hourly `print-sync` job submits paid orders that were
-  never sent (after 5 minutes) and holds orders stuck sending or cancelling for
-  15 minutes (`stale_claim`), since a vendor call may have gone through. A
-  timeout or an error once the order was sent holds it as `vendor_unknown`. For
-  these (and `submission_error`) Admin's **Retry** and refunds show the vendor
-  references and ask to search the vendor first; **Found it at the vendor**
-  records the vendor's order id instead of sending again (the id is checked at
-  the vendor first, and only for these holds). Prodigi also gets an idempotency
-  key. A cancel that fails after another vendor was cancelled holds the order as
+  never sent (after 5 minutes). A submission cut short before any vendor call
+  goes back to `paid` and continues; one cut short during a vendor call (the
+  order carries `vendor_sending` meanwhile), or a cancel stuck for 15 minutes,
+  is held (`stale_claim`), since that call may have gone through. A timeout or
+  an error once the order was sent holds it as `vendor_unknown`. For these (and
+  `submission_error`) Admin's **Retry** and refunds show the vendor references
+  and ask to search the vendor first; **Found it at the vendor** records the
+  vendor's order id instead of sending again (the id is checked at the vendor
+  first, and only for these holds). Prodigi also gets an idempotency key. A
+  cancel that fails after another vendor was cancelled holds the order as
   `partial_cancel`; a refund that fails after vendors were cancelled holds it as
   `refund_failed`. Held refund cases (`refund_failed`, `partial_cancel`) can
   only be refunded. Paid orders are not counted against the hourly render limit.

@@ -31,6 +31,7 @@ import {
 	type LoaderFunctionArgs,
 } from 'react-router'
 import { z } from 'zod'
+import { printFormErrors } from '#app/components/print/print-form-errors.ts'
 import {
 	printProductLabel,
 	PRINT_STYLE_LABELS,
@@ -39,10 +40,11 @@ import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
 import { createPrintDesign } from '#app/utils/print/designs.server.ts'
 
 const NewPrintSchema = z.object({
-	name: z.string().trim().min(1).max(120),
+	// Codes, translated by `printFormErrors`.
+	name: z.string({ required_error: 'name' }).trim().min(1, 'name').max(120),
 	product: z
-		.string()
-		.refine((key) => printCatalog.isProduct(key), 'Choose what to print'),
+		.string({ required_error: 'product' })
+		.refine((key) => printCatalog.isProduct(key), 'product'),
 	sizeKey: z.string().trim().min(1).max(20),
 	style: z.enum(PRINT_TEMPLATE_STYLES),
 })
@@ -70,7 +72,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const product = printCatalog.products[submission.value.product]!
 	if (!product.sizes.some((size) => size.key === submission.value.sizeKey)) {
 		return {
-			result: submission.reply({ fieldErrors: { sizeKey: ['Choose a size'] } }),
+			result: submission.reply({ fieldErrors: { sizeKey: ['size'] } }),
 		}
 	}
 	const design = await createPrintDesign(access, submission.value)
@@ -159,9 +161,7 @@ export default function NewPrintRoute() {
 							</Label>
 						))}
 					</RadioGroup>
-					<FieldError
-						errors={fields.sizeKey.errors?.map((message) => ({ message }))}
-					/>
+					<FieldError errors={printFormErrors(_, fields.sizeKey.errors)} />
 				</FieldSet>
 
 				<FieldSet>
@@ -194,9 +194,7 @@ export default function NewPrintRoute() {
 						}}
 						className="max-w-md"
 					/>
-					<FieldError
-						errors={fields.name.errors?.map((message) => ({ message }))}
-					/>
+					<FieldError errors={printFormErrors(_, fields.name.errors)} />
 				</Field>
 
 				<div className="flex flex-wrap gap-3">

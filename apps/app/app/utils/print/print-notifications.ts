@@ -32,3 +32,29 @@ export const PRINT_ALERT_COPY: Record<
 		body: msg`The order could not be completed, so we refunded it in full.`,
 	},
 }
+
+/**
+ * The email for the same events. Users have no stored language, so it uses
+ * the language of the request that sends it (the operator's own action), and
+ * the source language from webhooks and jobs, like the App's other emails.
+ */
+export const PRINT_EMAIL_COPY: Record<
+	PrintAlertKind,
+	{ headline: MessageDescriptor; detail: MessageDescriptor }
+> = {
+	paid: {
+		headline: msg`Your print order is paid`,
+		detail: msg`We sent it to the printer. You can cancel it until production starts.`,
+	},
+	shipped: {
+		headline: msg`Your prints are on the way`,
+		detail: msg`The parcel has shipped. Tracking is on the order page.`,
+	},
+	failed: {
+		headline: msg`Your print order was refunded`,
+		detail: msg`The order could not be completed, so we refunded it in full.`,
+	},
+}
+
+export const PRINT_EMAIL_EYEBROW = msg`Print shop`
+export const PRINT_EMAIL_ACTION = msg`Open the order`

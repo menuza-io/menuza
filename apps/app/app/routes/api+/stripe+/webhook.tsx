@@ -1,6 +1,7 @@
 import { getStripeWebhookSecrets } from '@repo/payments'
 import { type ActionFunctionArgs } from 'react-router'
 import type Stripe from 'stripe'
+import { runAfterResponse } from '#app/utils/after-response.server.ts'
 import {
 	stripe,
 	handleSubscriptionChange,
@@ -43,7 +44,7 @@ function processSubscriptionEvent(subscription: Stripe.Subscription) {
 	})
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, context }: ActionFunctionArgs) {
 	if (request.method !== 'POST') {
 		return new Response('Method not allowed', { status: 405 })
 	}
@@ -150,9 +151,12 @@ export async function action({ request }: ActionFunctionArgs) {
 					break
 				}
 				if (isPrintStripeMetadata(session.metadata)) {
-					// Print shop orders (platform account): a paid session submits
-					// the order to its vendors.
-					await handlePrintStripeSession(session, event.type)
+					// Print shop orders (platform account): Stripe gets its answer at
+					// once; the vendor submission (which renders a PDF per piece) runs
+					// after it, and the print-sync sweep picks up anything unfinished.
+					await handlePrintStripeSession(session, event.type, {
+						later: (task) => runAfterResponse(context, task),
+					})
 					break
 				}
 				if (isRestaurantStripeMetadata(session.metadata)) {

@@ -1,4 +1,5 @@
 import {
+	PRINT_MAX_PIECES_PER_DESIGN,
 	PRINT_TEMPLATE_VERSION,
 	type PrintDesignContent,
 	type PrintProductKey,
@@ -223,6 +224,11 @@ export async function approvePrintDesign(
 	const snapshot = await currentSnapshot(request, access, row)
 	if (snapshot.pieces.length === 0) {
 		throw new Response('Nothing to print yet', { status: 422 })
+	}
+	// One file and one price per piece: a vertical's "every one" target must
+	// not grow a set past the cap (downloads and orders print the snapshot).
+	if (snapshot.pieces.length > PRINT_MAX_PIECES_PER_DESIGN) {
+		throw new Response('Too many pieces', { status: 413 })
 	}
 	// Only the version the snapshot was built from: a save in between (another
 	// editor) must not be marked approved with older words.

@@ -5,6 +5,7 @@ import { useLingui } from '@lingui/react'
 import {
 	localeDirection,
 	PRINT_MAX_FEATURED_ITEMS,
+	PRINT_MAX_PIECES_PER_DESIGN,
 	PRINT_TEMPLATE_STYLES,
 	PRINT_TEXT_MAX,
 	printSitePath,
@@ -269,6 +270,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			if (error instanceof Response && error.status === 422) {
 				return { result: submission.reply(), error: 'qr_empty' as const }
 			}
+			// More pieces than one print may have (a vertical's "every one").
+			if (error instanceof Response && error.status === 413) {
+				return { result: submission.reply(), error: 'too_many_pieces' as const }
+			}
 			// Someone saved between the snapshot and the approval: approve again.
 			if (error instanceof Response && error.status === 409) {
 				return { result: submission.reply(), error: 'changed' as const }
@@ -353,7 +358,8 @@ export default function PrintDesignRoute() {
 				<Alert variant="destructive" role="alert">
 					<AlertTitle>
 						{actionData.error === 'qr_unavailable' ||
-						actionData.error === 'changed'
+						actionData.error === 'changed' ||
+						actionData.error === 'too_many_pieces'
 							? _(msg`We could not approve this print`)
 							: _(msg`We could not save this print`)}
 					</AlertTitle>
@@ -371,11 +377,18 @@ export default function PrintDesignRoute() {
 									? _(
 											msg`Someone else changed this print while you approved it. Check the proof, then approve again.`,
 										)
-									: actionData.error === 'invalid_qr'
-										? _(
-												msg`Check the QR code: use a page on your own website, like /contact.`,
-											)
-										: _(msg`Check the words and choices, then save again.`)}
+									: actionData.error === 'too_many_pieces'
+										? (() => {
+												const max = PRINT_MAX_PIECES_PER_DESIGN
+												return _(
+													msg`A print can have at most ${max} pieces. Choose fewer, then approve again.`,
+												)
+											})()
+										: actionData.error === 'invalid_qr'
+											? _(
+													msg`Check the QR code: use a page on your own website, like /contact.`,
+												)
+											: _(msg`Check the words and choices, then save again.`)}
 					</AlertDescription>
 				</Alert>
 			) : null}

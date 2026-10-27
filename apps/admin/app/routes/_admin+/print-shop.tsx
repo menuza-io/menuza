@@ -74,6 +74,7 @@ const STATUS_LABELS: Record<string, MessageDescriptor> = {
 	failed: msg`Failed`,
 	cancelled: msg`Cancelled`,
 	refunded: msg`Refunded`,
+	returned: msg`Returned`,
 }
 
 const HOLD_LABELS: Record<string, MessageDescriptor> = {
@@ -92,6 +93,8 @@ const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	partial_cancel: msg`Some vendor orders were cancelled and others are printing: refund what was cancelled`,
 	stale_claim: msg`A submission or cancellation stopped halfway: check the vendor before retrying`,
 	late_payment: msg`Paid after it was cancelled, refunded automatically`,
+	vendor_returned: msg`The parcel went back to the vendor: reship or refund (the prints were made)`,
+	vendor_after_shipping: msg`The vendor cancelled or failed the order after it shipped: check before refunding`,
 }
 
 /**
