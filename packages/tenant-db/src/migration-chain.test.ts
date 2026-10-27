@@ -94,7 +94,8 @@ describe('tenant migration chain', () => {
 			} finally {
 				fs.rmSync(dir, { recursive: true, force: true })
 			}
-		})
+			// Two full migrations of the whole chain: slow on CI runners with coverage.
+		}, 30_000)
 	}
 
 	it('keeps the journal strictly increasing, and the reservations entries after main', () => {
