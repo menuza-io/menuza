@@ -110,7 +110,7 @@ function ConfirmedAction({
 	variant = 'ghost',
 	destructive = false,
 	children,
-	onClosed,
+	onDone,
 }: {
 	fetcher: ReturnType<typeof useFetcher<PrintAdminResult>>
 	fields: Record<string, string>
@@ -122,8 +122,8 @@ function ConfirmedAction({
 	variant?: 'ghost' | 'outline' | 'default'
 	destructive?: boolean
 	children?: ReactNode
-	/** After the dialog closed (focus may have lost its button). */
-	onClosed?: () => void
+	/** After this action's request finished (its button may be gone). */
+	onDone?: () => void
 }) {
 	const { _ } = useLingui()
 	const formId = useId()
@@ -135,16 +135,18 @@ function ConfirmedAction({
 	)
 	const answered =
 		sentOver !== null && fetcher.state === 'idle' && fetcher.data !== sentOver
-	const open = wantsOpen && !(answered && fetcher.data?.ok === true)
+	// Its own answer was a success: close for good (adjusted during render),
+	// so a later action on the shared fetcher does not bring this dialog back.
+	if (wantsOpen && answered && fetcher.data?.ok === true) {
+		setWantsOpen(false)
+		setSentOver(null)
+	}
 	return (
 		<AlertDialog
-			open={open}
+			open={wantsOpen}
 			onOpenChange={(next) => {
 				setWantsOpen(next)
 				setSentOver(null)
-			}}
-			onOpenChangeComplete={(isOpen) => {
-				if (!isOpen) onClosed?.()
 			}}
 		>
 			<AlertDialogTrigger
@@ -167,7 +169,13 @@ function ConfirmedAction({
 				<fetcher.Form
 					id={formId}
 					method="POST"
-					onSubmit={() => setSentOver(fetcher.data)}
+					onSubmit={(event) => {
+						event.preventDefault()
+						setSentOver(fetcher.data)
+						// The promise settles after the reload, even when that removed
+						// this control: the row then puts focus back where it belongs.
+						void fetcher.submit(event.currentTarget).then(() => onDone?.())
+					}}
 				>
 					{Object.entries(fields).map(([name, value]) => (
 						<input key={name} type="hidden" name={name} value={value} />
@@ -522,13 +530,18 @@ function OrderActions({
 	const rowRef = useRef<HTMLDivElement>(null)
 	// A successful action can remove the button (and the dialog) that had
 	// focus: land on this order's actions instead of the top of the page.
-	const returnFocus = () =>
-		window.requestAnimationFrame(() => {
+	const returnFocus = () => {
+		const check = () => {
 			const active = document.activeElement
 			if (!active || active === document.body || !active.isConnected) {
 				rowRef.current?.focus()
 			}
-		})
+		}
+		// Once now, and once after a closing dialog has handed focus back
+		// (possibly to a button the reload removed).
+		window.requestAnimationFrame(check)
+		window.setTimeout(check, 300)
+	}
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
 	// then means the platform still pays the vendor, so it is its own action.
@@ -584,7 +597,7 @@ function OrderActions({
 			PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					onClosed={returnFocus}
+					onDone={returnFocus}
 					fields={{ _action: 'retry-checked', orderId: order.id }}
 					label={_(msg`Retry`)}
 					accessibleLabel={_(msg`Retry, ${orderName}`)}
@@ -612,7 +625,7 @@ function OrderActions({
 			pendingReferences.length > 0 ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					onClosed={returnFocus}
+					onDone={returnFocus}
 					fields={{ _action: 'record-vendor-order', orderId: order.id }}
 					label={_(msg`Found it at the vendor`)}
 					accessibleLabel={_(msg`Found it at the vendor, ${orderName}`)}
@@ -659,7 +672,7 @@ function OrderActions({
 					</retryFetcher.Form>
 					<ConfirmedAction
 						fetcher={fetcher}
-						onClosed={returnFocus}
+						onDone={returnFocus}
 						fields={{ _action: 'retry-accept', orderId: order.id }}
 						label={_(msg`Accept new price`)}
 						accessibleLabel={_(msg`Accept new price, ${orderName}`)}
@@ -675,7 +688,7 @@ function OrderActions({
 			{refundable ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					onClosed={returnFocus}
+					onDone={returnFocus}
 					fields={{ _action: 'refund', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund in full`)}
 					accessibleLabel={_(msg`Refund in full, ${orderName}`)}
@@ -692,7 +705,7 @@ function OrderActions({
 			{refundable && vendorMayPrint ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					onClosed={returnFocus}
+					onDone={returnFocus}
 					fields={{ _action: 'refund-keep', orderId: order.id, ...checkFields }}
 					label={_(msg`Refund, vendor keeps printing`)}
 					accessibleLabel={_(msg`Refund, vendor keeps printing, ${orderName}`)}
@@ -709,7 +722,7 @@ function OrderActions({
 			{refundable && order.holdReason === 'partial_cancel' ? (
 				<ConfirmedAction
 					fetcher={fetcher}
-					onClosed={returnFocus}
+					onDone={returnFocus}
 					fields={{ _action: 'refund-part', orderId: order.id }}
 					label={_(msg`Refund part`)}
 					accessibleLabel={_(msg`Refund part, ${orderName}`)}
