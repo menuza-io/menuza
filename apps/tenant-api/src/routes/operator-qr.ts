@@ -27,6 +27,7 @@ import {
 	lockTab,
 	patchQrSettings,
 	patchQrTable,
+	releaseTabPayment,
 	voidTab,
 	type QrResult,
 } from '../services/qr-tab-service.ts'
@@ -320,6 +321,7 @@ operatorQrRoutes.post('/tabs/:id/close', async (c) => {
 			await closeTabAtCounter(auth.auth.orgId, c.req.param('id'), {
 				tipCents: parsed.data.tipCents,
 				closedBy: auth.auth.userId,
+				acknowledgeReview: parsed.data.acknowledgeReview,
 			}),
 			'tab',
 		),
@@ -337,7 +339,20 @@ operatorQrRoutes.post('/tabs/:id/void', async (c) => {
 			await voidTab(auth.auth.orgId, c.req.param('id'), {
 				reason: parsed.data.reason,
 				closedBy: auth.auth.userId,
+				acknowledgeReview: parsed.data.acknowledgeReview,
 			}),
+			'tab',
+		),
+	)
+})
+
+operatorQrRoutes.post('/tabs/:id/release-payment', async (c) => {
+	const auth = await guard(c, 'qr:write')
+	if ('error' in auth) return auth.error
+	return safely(c, auth.auth.orgId, async () =>
+		respond(
+			c,
+			await releaseTabPayment(auth.auth.orgId, c.req.param('id')),
 			'tab',
 		),
 	)

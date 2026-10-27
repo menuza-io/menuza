@@ -48,6 +48,8 @@ const {
 	startPrintCheckout,
 	getPrintOrderDetail,
 	submitPrintOrder,
+	syncOpenPrintOrders,
+	adminRetryPrintOrder,
 } = await import('./orders.server.ts')
 
 function snapshot(pieces = 2): PrintSnapshot {
@@ -161,11 +163,15 @@ describe('shipped print orders', () => {
 
 	it('quotes with the markup, takes payment and submits to the vendor', async () => {
 		const { access, design } = await setup()
-		const orderId = await createPrintQuote(access, {
-			lines: [{ designId: design.id, quantity: 3 }],
-			address,
-			locationId: null,
-		})
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 3 }],
+				address,
+				locationId: null,
+			},
+		)
 		const { order, vendorOrders, items } = await getPrintOrderDetail(
 			access.organization.id,
 			orderId,
@@ -242,11 +248,15 @@ describe('shipped print orders', () => {
 
 	it('ignores a session that is not bound to the order', async () => {
 		const { access, design } = await setup()
-		const orderId = await createPrintQuote(access, {
-			lines: [{ designId: design.id, quantity: 1 }],
-			address,
-			locationId: null,
-		})
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				locationId: null,
+			},
+		)
 		await startPrintCheckout(access, orderId, 'https://app.menuza.test/x')
 		await handlePrintStripeSession(
 			{
@@ -275,7 +285,7 @@ describe('shipped print orders', () => {
 			.set({ status: 'draft' })
 			.where(eq(PrintDesign.id, design.id))
 		await expect(
-			createPrintQuote(access, {
+			createPrintQuote(new Request('https://app.test/'), access, {
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
 				locationId: null,
@@ -284,7 +294,7 @@ describe('shipped print orders', () => {
 
 		const other = await setup()
 		await expect(
-			createPrintQuote(other.access, {
+			createPrintQuote(new Request('https://app.test/'), other.access, {
 				lines: [{ designId: design.id, quantity: 1 }],
 				address,
 				locationId: null,
@@ -293,7 +303,7 @@ describe('shipped print orders', () => {
 
 		await db.delete(PrintVendorProduct)
 		await expect(
-			createPrintQuote(other.access, {
+			createPrintQuote(new Request('https://app.test/'), other.access, {
 				lines: [{ designId: other.design.id, quantity: 1 }],
 				address,
 				locationId: null,
@@ -303,11 +313,15 @@ describe('shipped print orders', () => {
 
 	it('prints the snapshot that was priced, even if the design changes before payment', async () => {
 		const { access, design } = await setup()
-		const orderId = await createPrintQuote(access, {
-			lines: [{ designId: design.id, quantity: 2 }],
-			address,
-			locationId: null,
-		})
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 2 }],
+				address,
+				locationId: null,
+			},
+		)
 		// The operator re-approves the design with many more tables.
 		await db
 			.update(PrintDesign)
@@ -348,11 +362,15 @@ describe('shipped print orders', () => {
 
 	it('refuses a cancel while the order is being sent, and never overwrites a cancel', async () => {
 		const { access, design } = await setup()
-		const orderId = await createPrintQuote(access, {
-			lines: [{ designId: design.id, quantity: 1 }],
-			address,
-			locationId: null,
-		})
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				locationId: null,
+			},
+		)
 		await db
 			.update(PrintOrder)
 			.set({ status: 'submitting' })
@@ -377,5 +395,109 @@ describe('shipped print orders', () => {
 			.from(PrintVendorOrder)
 			.where(eq(PrintVendorOrder.orderId, orderId))
 		expect(vendorOrder?.vendorOrderId).toBeNull()
+	})
+
+	it('refunds a payment that lands after the order was cancelled', async () => {
+		const { access, design } = await setup()
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				locationId: null,
+			},
+		)
+		const url = await startPrintCheckout(access, orderId, 'https://app.test/x')
+		const sessionId = url.split('/').pop()!
+		await cancelPrintOrder(access, orderId)
+		const { order } = await getPrintOrderDetail(null, orderId)
+		expect(order.status).toBe('cancelled')
+
+		await handlePrintStripeSession(
+			{
+				id: sessionId,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: 'pi_late_1',
+			} as never,
+			'checkout.session.completed',
+		)
+		const [after] = await db
+			.select()
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, orderId))
+		expect(after).toMatchObject({
+			status: 'refunded',
+			failureReason: 'late_payment',
+			refundCents: order.totalCents,
+		})
+		expect(stripeMock.refunds.create).toHaveBeenCalledTimes(1)
+	})
+
+	it('will not cancel an order whose checkout already completed', async () => {
+		const { access, design } = await setup()
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				locationId: null,
+			},
+		)
+		await startPrintCheckout(access, orderId, 'https://app.test/x')
+		stripeMock.checkout.sessions.retrieve.mockResolvedValueOnce({
+			id: 'cs_done',
+			status: 'complete',
+			payment_status: 'paid',
+			url: '',
+		})
+		await expect(cancelPrintOrder(access, orderId)).rejects.toMatchObject({
+			code: 'order_busy',
+		})
+		const { order } = await getPrintOrderDetail(null, orderId)
+		expect(order.status).toBe('awaiting_payment')
+	})
+
+	it('holds claims a crashed request left behind, and never retries a refund case', async () => {
+		const { access, design } = await setup()
+		const orderId = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				locationId: null,
+			},
+		)
+		await db
+			.update(PrintOrder)
+			.set({
+				status: 'submitting',
+				updatedAt: new Date(Date.now() - 60 * 60_000),
+			})
+			.where(eq(PrintOrder.id, orderId))
+		await syncOpenPrintOrders()
+		const [held] = await db
+			.select()
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, orderId))
+		expect(held).toMatchObject({ status: 'held', holdReason: 'stale_claim' })
+
+		await db
+			.update(PrintOrder)
+			.set({ holdReason: 'refund_failed' })
+			.where(eq(PrintOrder.id, orderId))
+		await expect(adminRetryPrintOrder(orderId, false)).rejects.toMatchObject({
+			code: 'refund_needed',
+		})
 	})
 })

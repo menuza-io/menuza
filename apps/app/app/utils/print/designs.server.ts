@@ -17,7 +17,7 @@ import {
 	orgLocales,
 	snapshotHash,
 } from './print-snapshot.server.ts'
-import { isQrDineInOn } from './qr-tables.server.ts'
+import { canPrintQrTables, isQrDineInOn } from './qr-tables.server.ts'
 
 export type PrintDesignRow = typeof PrintDesign.$inferSelect
 
@@ -97,7 +97,9 @@ async function defaultContent(
 		locations.find((candidate) => candidate.isDefault) ?? locations[0] ?? null
 	const targets = printTargetsFor(product)
 	const tableTarget =
-		targets.includes('table') && (await isQrDineInOn(access.organization.id))
+		targets.includes('table') &&
+		(await isQrDineInOn(access.organization.id)) &&
+		(await canPrintQrTables(access.userId, access.organization.id))
 	return {
 		locales: [defaultLocale],
 		headline: {},

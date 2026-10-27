@@ -362,8 +362,16 @@ export async function markTabRoundsPaid(
 export const QR_TAB_PAYMENT_FREEZE_MS = 30 * 60 * 1000
 
 /**
- * True while a tab payment is in progress: a provider session is bound, or
- * the guest asked to pay recently (the amount is fixed from that moment).
+ * How long a bound provider session holds the tab. Tab sessions are created to
+ * expire after about 40 minutes; past this a silent session (a closed payment
+ * page, a provider that never reports) no longer blocks the table.
+ */
+export const QR_TAB_SESSION_HOLD_MS = 45 * 60 * 1000
+
+/**
+ * True while a tab payment is in progress: a provider session is bound (until
+ * it goes stale), or the guest asked to pay recently (the amount is fixed from
+ * that moment).
  */
 export function isTabPaymentOpen(
 	tab: Pick<
@@ -372,10 +380,11 @@ export function isTabPaymentOpen(
 	>,
 	now: Date,
 ): boolean {
-	if (tab.paymentStatus === 'pending') return true
+	const age = now.getTime() - (tab.paymentEventAt ?? 0)
+	if (tab.paymentStatus === 'pending') return age < QR_TAB_SESSION_HOLD_MS
 	return (
 		tab.paymentAmountCents != null &&
 		tab.paymentEventAt != null &&
-		now.getTime() - tab.paymentEventAt < QR_TAB_PAYMENT_FREEZE_MS
+		age < QR_TAB_PAYMENT_FREEZE_MS
 	)
 }

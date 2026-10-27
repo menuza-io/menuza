@@ -2162,6 +2162,14 @@ msgstr "A page on your website"
 msgid "A patio, terrace or garden."
 msgstr "A patio, terrace or garden."
 
+#: app/components/qr/open-tabs.tsx:184
+msgid "A payment arrived online that does not match this tab. Check it in your payment dashboard before you close or void."
+msgstr "A payment arrived online that does not match this tab. Check it in your payment dashboard before you close or void."
+
+#: app/components/qr/open-tabs.tsx:180
+msgid "A payment of {amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void."
+msgstr "A payment of {amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void."
+
 #: app/utils/reservations/setup-progress.ts:171
 msgid "A payment policy has a largest party below its smallest."
 msgstr "A payment policy has a largest party below its smallest."
@@ -3274,7 +3282,7 @@ msgstr "Add table"
 msgid "Add tables"
 msgstr "Add tables"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:575
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:577
 msgid "Add tables in QR ordering first. Each table gets its own card."
 msgstr "Add tables in QR ordering first. Each table gets its own card."
 
@@ -3498,7 +3506,7 @@ msgstr ""
 msgid "Address"
 msgstr "Address"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:711
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:713
 msgid "Address and prices from"
 msgstr "Address and prices from"
 
@@ -3814,7 +3822,7 @@ msgstr ""
 msgid "All positions"
 msgstr "All positions"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:345
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:347
 msgid "All prints"
 msgstr "All prints"
 
@@ -4379,15 +4387,15 @@ msgstr "Approve a table card, poster or flyer first. Only approved prints in a s
 msgid "Approve each print before ordering it."
 msgstr "Approve each print before ordering it."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:770
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:772
 msgid "Approve proof"
 msgstr "Approve proof"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:917
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:919
 msgid "Approve the proof to download it."
 msgstr "Approve the proof to download it."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:838
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:840
 msgid "Approve the proof to order prints."
 msgstr "Approve the proof to order prints."
 
@@ -4406,7 +4414,7 @@ msgstr "Approve, lock, and unlock time cards. Includes View time cards."
 #: app/components/staff/timesheets/card-history.tsx:51
 #: app/components/staff/timesheets/issue-copy.ts:57
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:115
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:792
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:794
 msgid "Approved"
 msgstr "Approved"
 
@@ -4441,7 +4449,7 @@ msgstr ""
 #: app/components/reservations/experiences/experience-editor.tsx:536
 #: app/components/reservations/experiences/experience-editor.tsx:1040
 #: app/components/reservations/policies/policies-screen.tsx:558
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:886
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:888
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:254
 msgid "Archive"
 msgstr "Archive"
@@ -4475,11 +4483,11 @@ msgstr "Archive this experience?"
 msgid "Archive this policy?"
 msgstr "Archive this policy?"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:862
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:864
 msgid "Archive this print"
 msgstr "Archive this print"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:869
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:871
 msgid "Archive this print?"
 msgstr "Archive this print?"
 
@@ -5216,7 +5224,7 @@ msgstr "Base Price Delta ($)"
 msgid "Basic identifiers, URL slug, and regional settings."
 msgstr "Basic identifiers, URL slug, and regional settings."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:388
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:390
 msgid "Basics"
 msgstr "Basics"
 
@@ -5903,7 +5911,7 @@ msgstr "Call recording"
 msgid "Call time limit"
 msgstr "Call time limit"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:524
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:526
 msgid "Call to action"
 msgstr "Call to action"
 
@@ -6075,9 +6083,9 @@ msgstr "Can't text that number"
 #: app/components/pos/terminals-manager.tsx:684
 #: app/components/pos/terminals-manager.tsx:1560
 #: app/components/pos/zatca-settings.tsx:562
-#: app/components/qr/open-tabs.tsx:262
-#: app/components/qr/open-tabs.tsx:372
-#: app/components/qr/open-tabs.tsx:433
+#: app/components/qr/open-tabs.tsx:307
+#: app/components/qr/open-tabs.tsx:478
+#: app/components/qr/open-tabs.tsx:551
 #: app/components/qr/tables-manager.tsx:328
 #: app/components/qr/tables-manager.tsx:380
 #: app/components/qr/tables-manager.tsx:418
@@ -6784,7 +6792,7 @@ msgstr "Check the highlighted fields and try again."
 msgid "Check the highlighted fields."
 msgstr "Check the highlighted fields."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:358
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:360
 msgid "Check the QR code: use a page on your own website, like /menu."
 msgstr "Check the QR code: use a page on your own website, like /menu."
 
@@ -6796,7 +6804,7 @@ msgstr "Check the rules"
 msgid "Check the time cards before the limit is reached."
 msgstr "Check the time cards before the limit is reached."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:360
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:362
 msgid "Check the words and choices, then save again."
 msgstr "Check the words and choices, then save again."
 
@@ -7054,7 +7062,7 @@ msgstr "Choose at least one location."
 msgid "Choose at least one print and how many copies."
 msgstr "Choose at least one print and how many copies."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:355
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:357
 msgid "Choose at least one table for the cards."
 msgstr "Choose at least one table for the cards."
 
@@ -7491,11 +7499,11 @@ msgstr ""
 msgid "Close a live job before deleting it."
 msgstr "Close a live job before deleting it."
 
-#: app/components/qr/open-tabs.tsx:190
+#: app/components/qr/open-tabs.tsx:216
 msgid "Close at counter"
 msgstr "Close at counter"
 
-#: app/components/qr/open-tabs.tsx:187
+#: app/components/qr/open-tabs.tsx:213
 msgid "Close at counter, tab {number}, table {label}"
 msgstr "Close at counter, tab {number}, table {label}"
 
@@ -7503,14 +7511,14 @@ msgstr "Close at counter, tab {number}, table {label}"
 msgid "Close email design"
 msgstr "Close email design"
 
-#: app/components/qr/open-tabs.tsx:345
+#: app/components/qr/open-tabs.tsx:444
 msgid "Close it once the guest has paid the total below."
 msgstr "Close it once the guest has paid the total below."
 
 #~ msgid "Close order details"
 #~ msgstr "Close order details"
 
-#: app/components/qr/open-tabs.tsx:381
+#: app/components/qr/open-tabs.tsx:487
 msgid "Close tab"
 msgstr "Close tab"
 
@@ -7530,7 +7538,7 @@ msgstr "Close this job"
 msgid "Close this job?"
 msgstr "Close this job?"
 
-#: app/components/qr/open-tabs.tsx:336
+#: app/components/qr/open-tabs.tsx:435
 msgid "Close this tab at the counter?"
 msgstr "Close this tab at the counter?"
 
@@ -10504,7 +10512,7 @@ msgstr ""
 #: app/components/staff/onboarding/template-editor.tsx:333
 #: app/components/staff/staff-profile-page.tsx:98
 #: app/components/workspace-breadcrumb.tsx:154
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:705
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:707
 #: app/routes/_app+/$orgSlug_+/menu+/_index.tsx:498
 #: app/routes/_app+/$orgSlug_+/reservations+/book.tsx:628
 #: app/routes/_app+/$orgSlug_+/reservations+/floor.tsx:1251
@@ -10942,7 +10950,7 @@ msgid "Down by {absTrend}% this period"
 msgstr ""
 
 #: app/components/settings/backup-codes-display.tsx:99
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:913
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:915
 msgid "Download"
 msgstr ""
 
@@ -10979,7 +10987,7 @@ msgstr ""
 #: app/routes/_app+/$orgSlug_+/marketing+/automations._index.tsx:260
 #: app/routes/_app+/$orgSlug_+/marketing+/automations.$journeyId.runs.tsx:137
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:117
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:794
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:796
 #: app/routes/_app+/$orgSlug_+/website+/forms.$formId.tsx:412
 #: app/routes/_app+/$orgSlug_+/website+/forms.tsx:250
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:404
@@ -12509,7 +12517,7 @@ msgstr "Every review, in one place"
 msgid "Every schedule has ended. Add or extend a schedule before publishing."
 msgstr "Every schedule has ended. Add or extend a schedule before publishing."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:587
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:589
 msgid "Every table (new tables are added when you approve)"
 msgstr "Every table (new tables are added when you approve)"
 
@@ -13167,7 +13175,7 @@ msgstr ""
 msgid "Feature this item prominently in ordering flows."
 msgstr "Feature this item prominently in ordering flows."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:661
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:663
 msgid "Featured dishes"
 msgstr "Featured dishes"
 
@@ -13574,7 +13582,7 @@ msgstr "Food handler card"
 msgid "For"
 msgstr "For"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:934
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:936
 msgid "For a print shop (with bleed)"
 msgstr "For a print shop (with bleed)"
 
@@ -13590,7 +13598,7 @@ msgstr "For example, add Size with Small and Medium, then Color with Black and B
 msgid "For example, every 15 minutes."
 msgstr "For example, every 15 minutes."
 
-#: app/components/qr/open-tabs.tsx:428
+#: app/components/qr/open-tabs.tsx:539
 msgid "For example: the guest left"
 msgstr "For example: the guest left"
 
@@ -13719,7 +13727,7 @@ msgstr "Free cancellation until {hours} h before; after that a {fee} fee may be 
 msgid "Free cancellation until {hours} h before; after that the payment is kept."
 msgstr "Free cancellation until {hours} h before; after that the payment is kept."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:916
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:918
 msgid "Free PDFs of the approved proof."
 msgstr "Free PDFs of the approved proof."
 
@@ -14487,7 +14495,7 @@ msgstr "Has allergy"
 msgid "Has approved time off"
 msgstr "Has approved time off"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:834
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:836
 msgid "Have it printed"
 msgstr "Have it printed"
 
@@ -14504,7 +14512,7 @@ msgstr "Heading"
 msgid "Headings"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:498
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:500
 msgid "Headline"
 msgstr "Headline"
 
@@ -15042,6 +15050,10 @@ msgstr ""
 #: app/components/my-schedule/shift-change-sheet.tsx:162
 msgid "I cannot work it"
 msgstr "I cannot work it"
+
+#: app/components/qr/open-tabs.tsx:586
+msgid "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
+msgstr "I checked the online payment for this tab in the payment dashboard and will refund or keep it."
 
 #: app/components/orders/order-detail.tsx:618
 msgid "I have received payment at handoff"
@@ -15606,7 +15618,7 @@ msgstr "It is too early to clock in for your shift."
 msgid "It is too late to change this booking that way."
 msgstr "It is too late to change this booking that way."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:873
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:875
 msgid "It leaves the Print shop list. Orders already placed keep printing it."
 msgstr "It leaves the Print shop list. Orders already placed keep printing it."
 
@@ -15811,7 +15823,7 @@ msgstr "Keep editing"
 #: app/components/reservations/experiences/experience-editor.tsx:1031
 #: app/components/staff/kiosk-manager.tsx:970
 #: app/components/staff/schedule/shift-editor-sheet.tsx:737
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:878
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:880
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.sections.tsx:835
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1426
 msgid "Keep it"
@@ -15858,6 +15870,7 @@ msgstr "Keep track of licences and certificates, and get a reminder before one e
 msgid "Keep transferred calls open"
 msgstr "Keep transferred calls open"
 
+#: app/components/qr/open-tabs.tsx:351
 #: app/components/staff/schedule/availability-page.tsx:363
 #: app/components/staff/schedule/time-off-page.tsx:484
 msgid "Keep waiting"
@@ -16307,7 +16320,7 @@ msgstr ""
 msgid "Leave"
 msgstr "Leave"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:445
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:447
 msgid "Leave a field empty to use the suggested words. Add a second language for a bilingual print."
 msgstr "Leave a field empty to use the suggested words. Add a second language for a bilingual print."
 
@@ -16947,7 +16960,7 @@ msgstr "Loading…"
 #: app/components/pos/terminals-manager.tsx:1426
 #: app/components/qr/tables-manager.tsx:139
 #: app/components/reservations/header-controls.tsx:39
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:617
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:619
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:292
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:611
@@ -17010,7 +17023,7 @@ msgstr "Location: {locationName}"
 msgid "Locations"
 msgstr "Locations"
 
-#: app/components/qr/open-tabs.tsx:208
+#: app/components/qr/open-tabs.tsx:234
 #: app/components/staff/timesheets/timesheets-page.tsx:948
 msgid "Lock"
 msgstr "Lock"
@@ -17019,7 +17032,7 @@ msgstr "Lock"
 msgid "Lock ({lockCount})"
 msgstr "Lock ({lockCount})"
 
-#: app/components/qr/open-tabs.tsx:281
+#: app/components/qr/open-tabs.tsx:326
 msgid "Lock tab"
 msgstr "Lock tab"
 
@@ -17033,16 +17046,16 @@ msgstr "Lock tab"
 msgid "Lock table assignment"
 msgstr "Lock table assignment"
 
-#: app/components/qr/open-tabs.tsx:250
+#: app/components/qr/open-tabs.tsx:295
 msgid "Lock this tab?"
 msgstr "Lock this tab?"
 
-#: app/components/qr/open-tabs.tsx:206
+#: app/components/qr/open-tabs.tsx:232
 msgid "Lock, tab {number}, table {label}"
 msgstr "Lock, tab {number}, table {label}"
 
 #: app/components/my-schedule/time-cards-view.tsx:103
-#: app/components/qr/open-tabs.tsx:156
+#: app/components/qr/open-tabs.tsx:159
 #: app/components/staff/timesheets/card-history.tsx:52
 #: app/components/staff/timesheets/issue-copy.ts:58
 msgid "Locked"
@@ -17195,7 +17208,7 @@ msgstr "Mailbox sources"
 msgid "Main"
 msgstr "Main"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:453
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:455
 msgid "Main language"
 msgstr "Main language"
 
@@ -17910,7 +17923,7 @@ msgstr "Merge duplicate"
 #: app/components/phone-agent/flow-editor/node-inspector.tsx:415
 #: app/components/reservations/messages/message-settings.tsx:689
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:582
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:511
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:513
 msgid "Message"
 msgstr ""
 
@@ -18466,7 +18479,7 @@ msgstr "My schedule link"
 #: app/components/staff/staff-roster.tsx:134
 #: app/components/website/create-form-dialog.tsx:85
 #: app/components/website/form-builder-sidebar.tsx:673
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:392
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:394
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:185
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:682
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:683
@@ -19834,7 +19847,7 @@ msgstr "No payroll ID"
 #~ msgid "No per-service availability overrides configured."
 #~ msgstr "No per-service availability overrides configured."
 
-#: app/components/qr/open-tabs.tsx:253
+#: app/components/qr/open-tabs.tsx:298
 msgid "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 msgstr "No phone can add to it or pay it any more, and scanning the table code is refused too. Close or void it at the counter to finish."
 
@@ -20418,7 +20431,7 @@ msgstr "none"
 #: app/components/staff/schedule/publish-dialog.tsx:160
 #: app/components/website/link-inspector.tsx:615
 #: app/components/website/link-inspector.tsx:634
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:480
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:482
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3421
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3451
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3913
@@ -20749,7 +20762,7 @@ msgstr "Nothing in this file can be imported yet."
 msgid "Nothing in this timeframe matches the report's filters."
 msgstr "Nothing in this timeframe matches the report's filters."
 
-#: app/components/qr/open-tabs.tsx:413
+#: app/components/qr/open-tabs.tsx:524
 msgid "Nothing is charged. Orders the kitchen has not finished are cancelled."
 msgstr "Nothing is charged. Orders the kitchen has not finished are cancelled."
 
@@ -21249,6 +21262,10 @@ msgstr "Online orders only, not all sales"
 msgid "Online orders, and this workplace sells nothing else"
 msgstr "Online orders, and this workplace sells nothing else"
 
+#: app/components/qr/open-tabs.tsx:362
+msgid "Online payment stopped. You can close the tab now."
+msgstr "Online payment stopped. You can close the tab now."
+
 #: app/components/settings/cards/organization/shop-card.tsx:99
 msgid "Online payments"
 msgstr "Online payments"
@@ -21561,15 +21578,15 @@ msgstr "Open shifts"
 msgid "Open shifts are left out when you copy only some people."
 msgstr "Open shifts are left out when you copy only some people."
 
-#: app/components/qr/open-tabs.tsx:108
+#: app/components/qr/open-tabs.tsx:111
 msgid "Open table tabs could not be loaded."
 msgstr "Open table tabs could not be loaded."
 
-#: app/components/qr/open-tabs.tsx:106
+#: app/components/qr/open-tabs.tsx:109
 msgid "Open table tabs could not be refreshed. This list may be out of date."
 msgstr "Open table tabs could not be refreshed. This list may be out of date."
 
-#: app/components/qr/open-tabs.tsx:120
+#: app/components/qr/open-tabs.tsx:123
 msgid "Open tabs"
 msgstr "Open tabs"
 
@@ -21871,8 +21888,8 @@ msgstr "Order of {date}"
 msgid "Order Preparation Time"
 msgstr "Order Preparation Time"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:848
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:851
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:850
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:853
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:70
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders._index.tsx:85
 #: app/routes/_app+/$orgSlug_+/marketing+/print.orders.new.tsx:189
@@ -21891,6 +21908,10 @@ msgstr "Ordering link sent"
 #: app/components/menu/drop-wizard/drop-preview.tsx:75
 msgid "Ordering now"
 msgstr "Ordering now"
+
+#: app/components/print/print-order-labels.ts:51
+msgid "Ordering table cards also needs permission to view the menu."
+msgstr "Ordering table cards also needs permission to view the menu."
 
 #: app/components/menu/drop-wizard/drop-form.tsx:1176
 msgid "Ordering Window"
@@ -22279,7 +22300,7 @@ msgstr "Pacing rule deleted."
 #: app/components/website/link-inspector.tsx:366
 #: app/components/website/link-inspector.tsx:419
 #: app/components/workspace-breadcrumb.tsx:102
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:643
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:645
 #: app/routes/_app+/$orgSlug_+/website+/pages._index.tsx:610
 msgid "Page"
 msgstr ""
@@ -22369,6 +22390,10 @@ msgstr "Paid hours worked each day across your team."
 #: app/routes/_app+/$orgSlug_+/menu+/orders._index.tsx:366
 #~ msgid "Paid online or at handoff"
 #~ msgstr "Paid online or at handoff"
+
+#: app/components/qr/open-tabs.tsx:166
+msgid "Paid online, needs review"
+msgstr "Paid online, needs review"
 
 #: app/components/my-schedule/time-cards-view.tsx:69
 msgid "Paid time <0>{totalLabel}</0>"
@@ -22462,6 +22487,10 @@ msgstr "Part of a day covers one date."
 #: app/components/my-schedule/time-off-sheet.tsx:106
 msgid "Part of a day is for one date only."
 msgstr "Part of a day is for one date only."
+
+#: app/components/print/print-order-labels.ts:48
+msgid "Part of this order was already printing. Our team will refund what was cancelled."
+msgstr "Part of this order was already printing. Our team will refund what was cancelled."
 
 #: app/components/hiring/job-labels.ts:20
 msgid "Part time"
@@ -22704,7 +22733,7 @@ msgstr "Pay week"
 msgid "Paying from the phone always asks for a name and phone number."
 msgstr "Paying from the phone always asks for a name and phone number."
 
-#: app/components/qr/open-tabs.tsx:159
+#: app/components/qr/open-tabs.tsx:162
 msgid "Paying online"
 msgstr "Paying online"
 
@@ -23258,7 +23287,7 @@ msgstr "Pick the first day of any one period. Every second week after it starts 
 msgid "Pick the party size. The best open table is assigned unless you choose one."
 msgstr "Pick the party size. The best open table is assigned unless you choose one."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:664
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:666
 msgid "Pick up to 4 dishes. Names, prices and photos come from your menu."
 msgstr "Pick up to 4 dishes. Names, prices and photos come from your menu."
 
@@ -23968,7 +23997,7 @@ msgstr "Price ready"
 msgid "Prices include tax"
 msgstr "Prices include tax"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:372
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:374
 msgid "Prices, dish names or table codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version."
 msgstr "Prices, dish names or table codes on this print are out of date. Approve the proof again to refresh it, or keep printing the approved version."
 
@@ -24003,11 +24032,11 @@ msgstr ""
 msgid "Print"
 msgstr "Print"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:929
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:931
 msgid "Print at home (A4)"
 msgstr "Print at home (A4)"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:924
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:926
 msgid "Print at home (US Letter)"
 msgstr "Print at home (US Letter)"
 
@@ -24022,7 +24051,7 @@ msgstr "Print order"
 msgid "Print orders"
 msgstr "Print orders"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:816
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:818
 msgid "Print proof"
 msgstr "Print proof"
 
@@ -24162,7 +24191,7 @@ msgstr "Prompt"
 msgid "Pronunciations"
 msgstr "Pronunciations"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:790
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:792
 msgid "Proof"
 msgstr "Proof"
 
@@ -24328,7 +24357,7 @@ msgstr "Push two or more combinable tables together to seat larger parties. The 
 
 #: app/components/hiring/applicant-labels.ts:31
 #: app/components/settings/two-factor-form.tsx:176
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:544
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:546
 msgid "QR code"
 msgstr ""
 
@@ -24591,7 +24620,7 @@ msgstr "Ready to take bookings"
 msgid "Ready, {suggestions}"
 msgstr "Ready, {suggestions}"
 
-#: app/components/qr/open-tabs.tsx:421
+#: app/components/qr/open-tabs.tsx:532
 #: app/components/reservations/detail-sheet.tsx:1502
 #: app/components/reservations/payment-panel.tsx:690
 #: app/components/reservations/waitlist/seat-dialog.tsx:236
@@ -26476,7 +26505,7 @@ msgstr ""
 msgid "Save and test"
 msgstr "Save and test"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:760
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:762
 msgid "Save and update proof"
 msgstr "Save and update proof"
 
@@ -26540,7 +26569,7 @@ msgstr "Save Changes"
 msgid "Save draft"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:778
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:780
 msgid "Save first, so the proof shows your changes before you approve it."
 msgstr "Save first, so the proof shows your changes before you approve it."
 
@@ -27300,7 +27329,7 @@ msgstr "Seats"
 msgid "Seats used / capacity: {coversInSlot} / {maxCovers}"
 msgstr "Seats used / capacity: {coversInSlot} / {maxCovers}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:471
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:473
 msgid "Second language"
 msgstr "Second language"
 
@@ -28609,7 +28638,7 @@ msgstr "Show requests"
 msgid "Show specific examples"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:738
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:740
 msgid "Show the address"
 msgstr "Show the address"
 
@@ -28619,7 +28648,7 @@ msgstr "Show the address"
 #~ msgid "Show the last 90 days"
 #~ msgstr "Show the last 90 days"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:745
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:747
 msgid "Show the website"
 msgstr "Show the website"
 
@@ -28650,7 +28679,7 @@ msgstr "Showing {filteredOptionsCount} of {totalCount} options"
 msgid "Showing {shownCount} of {total}"
 msgstr "Showing {shownCount} of {total}"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:809
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:811
 msgid "Showing 3 of {total} cards. Every card uses the same layout."
 msgstr "Showing 3 of {total} cards. Every card uses the same layout."
 
@@ -28800,7 +28829,7 @@ msgstr ""
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:169
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:171
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:402
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:404
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:143
 msgid "Size"
 msgstr "Size"
@@ -29586,6 +29615,15 @@ msgstr ""
 msgid "Stop impersonation"
 msgstr "Stop impersonation"
 
+#: app/components/qr/open-tabs.tsx:246
+#: app/components/qr/open-tabs.tsx:370
+msgid "Stop online payment"
+msgstr "Stop online payment"
+
+#: app/components/qr/open-tabs.tsx:243
+msgid "Stop online payment, tab {number}, table {label}"
+msgstr "Stop online payment, tab {number}, table {label}"
+
 #: app/components/phone-agent/voice-picker.tsx:180
 msgid "Stop preview"
 msgstr "Stop preview"
@@ -29593,6 +29631,10 @@ msgstr "Stop preview"
 #: app/components/pos/terminals-manager.tsx:878
 msgid "Stop requiring cash drawer shifts on {label}"
 msgstr "Stop requiring cash drawer shifts on {label}"
+
+#: app/components/qr/open-tabs.tsx:338
+msgid "Stop the online payment?"
+msgstr "Stop the online payment?"
 
 #: app/components/hiring/applicant-labels.ts:58
 msgid "Stopped replying"
@@ -29662,7 +29704,7 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:313
 #: app/components/website/link-inspector.tsx:381
 #: app/components/website/link-inspector.tsx:383
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:420
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:422
 #: app/routes/_app+/$orgSlug_+/marketing+/print.new.tsx:166
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3700
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:3769
@@ -29917,19 +29959,19 @@ msgstr ""
 msgid "T1-T12, Patio 1"
 msgstr "T1-T12, Patio 1"
 
-#: app/components/qr/open-tabs.tsx:137
+#: app/components/qr/open-tabs.tsx:140
 msgid "Tab {number}"
 msgstr "Tab {number}"
 
-#: app/components/qr/open-tabs.tsx:236
+#: app/components/qr/open-tabs.tsx:281
 msgid "Tab {number} closed"
 msgstr "Tab {number} closed"
 
-#: app/components/qr/open-tabs.tsx:296
+#: app/components/qr/open-tabs.tsx:390
 msgid "Tab {number} voided"
 msgstr "Tab {number} voided"
 
-#: app/components/qr/open-tabs.tsx:273
+#: app/components/qr/open-tabs.tsx:318
 msgid "Tab locked. Guests can no longer add to it."
 msgstr "Tab locked. Guests can no longer add to it."
 
@@ -29967,7 +30009,7 @@ msgid "Table {createdTableLabel} created."
 msgstr "Table {createdTableLabel} created."
 
 #: app/components/orders/order-detail.tsx:374
-#: app/components/qr/open-tabs.tsx:135
+#: app/components/qr/open-tabs.tsx:138
 #: app/routes/_app+/$orgSlug_+/orders.tsx:209
 #: app/routes/_app+/$orgSlug_+/orders.tsx:242
 msgid "Table {label}"
@@ -30055,6 +30097,14 @@ msgstr "Table booking"
 #: app/utils/reservations/labels.ts:182
 msgid "Table changed"
 msgstr "Table changed"
+
+#: app/components/print/print-order-labels.ts:50
+msgid "Table codes could not be checked right now. Try again in a minute."
+msgstr "Table codes could not be checked right now. Try again in a minute."
+
+#: app/components/print/print-order-labels.ts:49
+msgid "Table codes or labels changed since this card was approved. Approve the proof again, then order."
+msgstr "Table codes or labels changed since this card was approved. Approve the proof again, then order."
 
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:692
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.services.tsx:1293
@@ -30738,8 +30788,8 @@ msgstr "That date is already listed."
 msgid "That did not work"
 msgstr "That did not work"
 
-#: app/components/print/print-order-labels.ts:50
-#: app/components/qr/open-tabs.tsx:92
+#: app/components/print/print-order-labels.ts:54
+#: app/components/qr/open-tabs.tsx:95
 #: app/components/qr/tables-manager.tsx:98
 #: app/components/reservations/experiences/experience-editor.tsx:365
 #: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:82
@@ -31373,9 +31423,13 @@ msgstr "The guest gets a new confirmation with a new manage link. The link in ev
 msgid "The guest has no email address or opted-in phone number to send to."
 msgstr "The guest has no email address or opted-in phone number to send to."
 
+#: app/components/qr/open-tabs.tsx:251
+msgid "The guest is paying online. Close and void wait until the payment finishes, or stop the online payment if it is stuck."
+msgstr "The guest is paying online. Close and void wait until the payment finishes, or stop the online payment if it is stuck."
+
 #: app/components/qr/open-tabs.tsx:213
-msgid "The guest is paying online. Close and void wait until the payment finishes."
-msgstr "The guest is paying online. Close and void wait until the payment finishes."
+#~ msgid "The guest is paying online. Close and void wait until the payment finishes."
+#~ msgstr "The guest is paying online. Close and void wait until the payment finishes."
 
 #: app/components/reservations/detail-sheet.tsx:1401
 msgid "The guest is told about a cancellation. Both are recorded in the history."
@@ -31391,7 +31445,7 @@ msgstr "The guest is told it was cancelled. A reason is optional and stays in yo
 #~ msgid "The guest list could not be loaded."
 #~ msgstr "The guest list could not be loaded."
 
-#: app/components/qr/open-tabs.tsx:366
+#: app/components/qr/open-tabs.tsx:465
 msgid "The guest pays {amount} in total, tip included."
 msgstr "The guest pays {amount} in total, tip included."
 
@@ -31454,7 +31508,7 @@ msgstr "The job is live."
 msgid "The jobs people do here. Assign them from a person's profile."
 msgstr "The jobs people do here. Assign them from a person's profile."
 
-#: app/components/qr/open-tabs.tsx:340
+#: app/components/qr/open-tabs.tsx:439
 msgid "The kitchen is still working on part of this tab. Close it only when the guest has paid."
 msgstr "The kitchen is still working on part of this tab. Close it only when the guest has paid."
 
@@ -31666,7 +31720,7 @@ msgstr "The preview shows the saved settings. Save your changes to see them here
 msgid "The provider could not issue the refund."
 msgstr "The provider could not issue the refund."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:799
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:801
 msgid "The red dashed line is where the print is cut. Keep words away from the edge."
 msgstr "The red dashed line is where the print is cut. Keep words away from the edge."
 
@@ -33125,7 +33179,7 @@ msgstr "Tip ({tipPercent}%)"
 #~ msgid "Tip (optional)"
 #~ msgstr "Tip (optional)"
 
-#: app/components/qr/open-tabs.tsx:353
+#: app/components/qr/open-tabs.tsx:452
 msgid "Tip in {currency} (optional)"
 msgstr "Tip in {currency} (optional)"
 
@@ -33650,7 +33704,7 @@ msgstr ""
 #: app/components/phone-agent/call-recording-player.tsx:154
 #: app/components/phone-agent/voice-picker.tsx:456
 #: app/components/pos/terminals-manager.tsx:433
-#: app/components/qr/open-tabs.tsx:111
+#: app/components/qr/open-tabs.tsx:114
 #: app/components/reservations/experiences/experience-editor.tsx:256
 #: app/components/reservations/experiences/experiences-screen.tsx:247
 #: app/components/reservations/messages/message-settings.tsx:377
@@ -34736,6 +34790,10 @@ msgstr "Use this rule on calls"
 msgid "Use this voice"
 msgstr "Use this voice"
 
+#: app/components/qr/open-tabs.tsx:341
+msgid "Use this when the guest gave up on the payment page or it is stuck. The guest's payment page stops working and you can close the tab at the counter. If money still arrives, the tab is marked for review."
+msgstr "Use this when the guest gave up on the payment page or it is stuck. The guest's payment page stops working and you can close the tab at the counter. If money still arrives, the tab is marked for review."
+
 #: app/components/settings/cards/organization/s3-storage-card.tsx:211
 msgid "Use your own S3-compatible storage instead of the default storage"
 msgstr ""
@@ -35197,11 +35255,11 @@ msgstr "Voicemail saved"
 msgid "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 msgstr "Voicemails, callback requests, missed transfers, complaints, and low ratings stay open on the Calls page until someone marks them complete."
 
-#: app/components/qr/open-tabs.tsx:199
+#: app/components/qr/open-tabs.tsx:225
 msgid "Void"
 msgstr "Void"
 
-#: app/components/qr/open-tabs.tsx:443
+#: app/components/qr/open-tabs.tsx:561
 msgid "Void tab"
 msgstr "Void tab"
 
@@ -35209,11 +35267,11 @@ msgstr "Void tab"
 #~ msgid "Void tab {number} for table {label}"
 #~ msgstr "Void tab {number} for table {label}"
 
-#: app/components/qr/open-tabs.tsx:410
+#: app/components/qr/open-tabs.tsx:521
 msgid "Void this tab?"
 msgstr "Void this tab?"
 
-#: app/components/qr/open-tabs.tsx:197
+#: app/components/qr/open-tabs.tsx:223
 msgid "Void, tab {number}, table {label}"
 msgstr "Void, tab {number}, table {label}"
 
@@ -35599,7 +35657,7 @@ msgstr "We could not read that file."
 msgid "We could not save the time zone. Try again."
 msgstr "We could not save the time zone. Try again."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:352
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:354
 msgid "We could not save this print"
 msgstr "We could not save this print"
 
@@ -35624,7 +35682,7 @@ msgstr "We just sent you a text with a link to our website."
 msgid "We only deliver within 5 miles. Offer pickup otherwise."
 msgstr "We only deliver within 5 miles. Offer pickup otherwise."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:837
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:839
 msgid "We print and ship it to your door."
 msgstr "We print and ship it to your door."
 
@@ -36067,7 +36125,7 @@ msgstr "When you're closed"
 msgid "Where"
 msgstr "Where"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:547
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:549
 msgid "Where a guest lands when they scan. Links point at your own website only."
 msgstr "Where a guest lands when they scan. Links point at your own website only."
 
@@ -36320,7 +36378,7 @@ msgstr "Word"
 msgid "Word, e.g. Nguyen"
 msgstr "Word, e.g. Nguyen"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:442
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:444
 msgid "Words"
 msgstr "Words"
 
@@ -36998,11 +37056,11 @@ msgstr ""
 msgid "Your media library is empty"
 msgstr "Your media library is empty"
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:671
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:673
 msgid "Your menu has no dishes to feature yet."
 msgstr "Your menu has no dishes to feature yet."
 
-#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:368
+#: app/routes/_app+/$orgSlug_+/marketing+/print.$designId.tsx:370
 msgid "Your menu or tables changed since approval"
 msgstr "Your menu or tables changed since approval"
 

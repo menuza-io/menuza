@@ -13,6 +13,7 @@ import {
 	desc,
 	eq,
 	inArray,
+	lt,
 	Notification,
 	Organization,
 	PrintDesign,
@@ -33,6 +34,8 @@ import { getPrintFileUrl } from '#app/utils/storage.server.ts'
 import { type PrintShopAccess } from './access.server.ts'
 import { exceedsDrift, retailCents } from './pricing.ts'
 import { getPrintFile } from './print-files.server.ts'
+import { staleFacts } from './print-snapshot.server.ts'
+import { fetchQrTablesForPrint, type PrintTable } from './qr-tables.server.ts'
 import { getPrintVendor, isPrintMock } from './vendors/index.server.ts'
 import {
 	PRINT_VENDORS,
@@ -175,7 +178,56 @@ function allocate(total: number, weights: number[]): number[] {
 	return shares
 }
 
+/**
+ * Table cards print each table's code as of approval. A code renewed (or a
+ * table renamed or archived) since then would ship cards that no longer
+ * work, so such a design has to be approved again before it is sold.
+ */
+async function requireFreshTables(
+	request: Request,
+	access: PrintShopAccess,
+	snapshot: PrintSnapshot,
+) {
+	if (snapshot.facts.tables.length === 0) return
+	let live: PrintTable[]
+	try {
+		live = await fetchQrTablesForPrint(request, access.organization.slug)
+	} catch (error) {
+		if (error instanceof Response && error.status === 403) {
+			throw new PrintOrderError(
+				403,
+				'tables_forbidden',
+				'Ordering table cards also needs permission to view the menu.',
+			)
+		}
+		throw new PrintOrderError(
+			503,
+			'tables_unavailable',
+			'Table codes could not be checked right now. Try again in a minute.',
+		)
+	}
+	const changes = staleFacts(snapshot, {
+		...snapshot,
+		facts: {
+			...snapshot.facts,
+			tables: live.map((table) => ({
+				id: table.id,
+				label: table.label,
+				tokenVersion: table.tokenVersion,
+			})),
+		},
+	})
+	if (changes.length > 0) {
+		throw new PrintOrderError(
+			409,
+			'design_stale',
+			'Table codes or labels changed since this card was approved. Approve the proof again, then order.',
+		)
+	}
+}
+
 export async function createPrintQuote(
+	request: Request,
 	access: PrintShopAccess,
 	input: {
 		lines: Array<{ designId: string; quantity: number }>
@@ -241,6 +293,7 @@ export async function createPrintQuote(
 				'This size cannot be shipped right now.',
 			)
 		}
+		await requireFreshTables(request, access, design.snapshot as PrintSnapshot)
 		drafts.push({
 			designId: design.id,
 			snapshotHash: design.snapshotHash ?? '',
@@ -670,8 +723,49 @@ export async function handlePrintStripeSession(
 			),
 		)
 		.returning({ id: PrintOrder.id })
-	// A repeated delivery of the same event changes nothing.
-	if (updated.length === 0) return
+	if (updated.length === 0) {
+		// Paid after the order was cancelled (two tabs, or a session that could
+		// not be expired): give the money back instead of keeping it silently.
+		const [current] = await db
+			.select()
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, order.id))
+			.limit(1)
+		if (current?.status === 'cancelled' && !current.stripePaymentIntentId) {
+			const paymentIntent =
+				typeof session.payment_intent === 'string'
+					? session.payment_intent
+					: (session.payment_intent?.id ?? null)
+			if (paymentIntent && session.amount_total) {
+				await stripe.refunds.create(
+					{
+						payment_intent: paymentIntent,
+						amount: session.amount_total,
+						metadata: { type: PRINT_STRIPE_METADATA_TYPE, orderId: order.id },
+					},
+					{ idempotencyKey: `print-late-refund-${order.id}` },
+				)
+				await db
+					.update(PrintOrder)
+					.set({
+						status: 'refunded',
+						stripePaymentIntentId: paymentIntent,
+						totalCents: session.amount_total,
+						refundCents: session.amount_total,
+						refundedAt: new Date(),
+						failureReason: 'late_payment',
+					})
+					.where(
+						and(
+							eq(PrintOrder.id, order.id),
+							eq(PrintOrder.status, 'cancelled'),
+						),
+					)
+			}
+		}
+		// Otherwise a repeated delivery of the same event changes nothing.
+		return
+	}
 	await notifyPrintOrder(order.id, 'paid')
 	await submitPrintOrder(order.id)
 }
@@ -705,12 +799,15 @@ async function pieceFileUrls(
 	if (!snapshot || snapshot.pieces.length !== item.pieces) return null
 	const urls: string[] = []
 	for (const piece of snapshot.pieces) {
-		const file = await getPrintFile({
-			organizationId,
-			snapshot: { ...snapshot, pieces: [piece] },
-			format: 'pro',
-			bleedMm,
-		})
+		const file = await getPrintFile(
+			{
+				organizationId,
+				snapshot: { ...snapshot, pieces: [piece] },
+				format: 'pro',
+				bleedMm,
+			},
+			{ skipLimit: true },
+		)
 		if (file.kind !== 'pdf') {
 			if (isPrintMock()) {
 				urls.push(`https://example.invalid/mock-print/${item.id}`)
@@ -796,11 +893,15 @@ async function submitClaimedOrder(
 					return
 				}
 			}
-			const mapping = await vendorProductFor(mine[0]!.product, mine[0]!.sizeKey)
-			const bleedMm = mapping?.bleedMm ?? 3
 			const files: VendorItem[] = []
 			for (const item of mine) {
-				const urls = await pieceFileUrls(order.organizationId, item, bleedMm)
+				// Each product and size has its own bleed at the vendor.
+				const mapping = await vendorProductFor(item.product, item.sizeKey)
+				const urls = await pieceFileUrls(
+					order.organizationId,
+					item,
+					mapping?.bleedMm ?? 3,
+				)
 				if (!urls) {
 					await hold(order.id, 'render_unavailable')
 					return
@@ -954,7 +1055,43 @@ export async function handlePrintVendorWebhook(
 }
 
 /** Cron safety net for missed webhooks: open vendor orders, oldest first. */
+const STALE_PAID_MS = 5 * 60_000
+const STALE_CLAIM_MS = 15 * 60_000
+
+/**
+ * Picks up orders a crashed request left behind: a paid order whose submission
+ * never started is submitted now, and a claim (`submitting` / `cancelling`)
+ * older than any request is held for Admin, since a vendor call may or may not
+ * have gone through.
+ */
+async function sweepStalePrintOrders(limit: number) {
+	const now = Date.now()
+	const stalePaid = await db
+		.select({ id: PrintOrder.id })
+		.from(PrintOrder)
+		.where(
+			and(
+				eq(PrintOrder.status, 'paid'),
+				lt(PrintOrder.updatedAt, new Date(now - STALE_PAID_MS)),
+			),
+		)
+		.limit(limit)
+	for (const { id } of stalePaid) {
+		await submitPrintOrder(id).catch(() => null)
+	}
+	await db
+		.update(PrintOrder)
+		.set({ status: 'held', holdReason: 'stale_claim' })
+		.where(
+			and(
+				inArray(PrintOrder.status, ['submitting', 'cancelling']),
+				lt(PrintOrder.updatedAt, new Date(now - STALE_CLAIM_MS)),
+			),
+		)
+}
+
 export async function syncOpenPrintOrders(limit = 50) {
+	await sweepStalePrintOrders(limit).catch(() => null)
 	const open = await db
 		.select()
 		.from(PrintVendorOrder)
@@ -1001,6 +1138,20 @@ async function refundInFull(order: OrderRow) {
 }
 
 async function cancelAtVendors(vendorOrders: VendorOrderRow[]) {
+	const live = vendorOrders.filter(
+		(vendorOrder) =>
+			vendorOrder.vendorOrderId &&
+			!['cancelled', 'failed'].includes(vendorOrder.status),
+	)
+	// All or nothing: if any vendor already started, cancel none, so a cart
+	// split across vendors is never half cancelled and fully charged.
+	for (const vendorOrder of live) {
+		const status = await getPrintVendor(
+			vendorOrder.vendor as PrintVendorName,
+		).status(vendorOrder.vendorOrderId!)
+		if (status.state === 'cancelled' || status.state === 'failed') continue
+		if (status.state !== 'submitted') return false
+	}
 	for (const vendorOrder of vendorOrders) {
 		if (
 			!vendorOrder.vendorOrderId ||
@@ -1010,7 +1161,16 @@ async function cancelAtVendors(vendorOrders: VendorOrderRow[]) {
 		const result = await getPrintVendor(
 			vendorOrder.vendor as PrintVendorName,
 		).cancel(vendorOrder.vendorOrderId)
-		if (result === 'too_late') return false
+		if (result === 'too_late') {
+			// Production began between the check and the cancel: some vendors
+			// may be cancelled already, so this needs a person (and a partial
+			// refund) rather than a retry.
+			throw new PrintOrderError(
+				409,
+				'partial_cancel',
+				'Part of this order was already in production. Our team will refund what was cancelled.',
+			)
+		}
 		await db
 			.update(PrintVendorOrder)
 			.set({ status: 'cancelled' })
@@ -1022,7 +1182,15 @@ async function cancelAtVendors(vendorOrders: VendorOrderRow[]) {
 async function failAndRefund(orderId: string, reason: string) {
 	const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
 	if (order.status === 'refunded' || order.status === 'cancelled') return
-	await cancelAtVendors(vendorOrders).catch(() => false)
+	const cancelled = await cancelAtVendors(vendorOrders).catch(() => false)
+	if (!cancelled) {
+		// Some vendor is printing it: a person decides what to refund.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'partial_cancel' })
+			.where(eq(PrintOrder.id, order.id))
+		return
+	}
 	await refundInFull(order)
 	await db
 		.update(PrintOrder)
@@ -1052,6 +1220,12 @@ export async function cancelPrintOrder(
 	}
 	if (order.status === 'quote' || order.status === 'awaiting_payment') {
 		if (order.stripeCheckoutSessionId && order.status === 'awaiting_payment') {
+			// A completed session is paid even if the webhook has not landed yet:
+			// let the paid path take it instead of cancelling paid money.
+			const session = await stripe.checkout.sessions
+				.retrieve(order.stripeCheckoutSessionId)
+				.catch(() => null)
+			if (session?.status === 'complete') throw busyError()
 			await stripe.checkout.sessions
 				.expire(order.stripeCheckoutSessionId)
 				.catch(() => null)
@@ -1091,7 +1265,14 @@ export async function cancelPrintOrder(
 	try {
 		cancelledAtVendors = await cancelAtVendors(vendorOrders)
 	} catch (error) {
-		await restore()
+		if (error instanceof PrintOrderError && error.code === 'partial_cancel') {
+			await db
+				.update(PrintOrder)
+				.set({ status: 'held', holdReason: 'partial_cancel' })
+				.where(eq(PrintOrder.id, order.id))
+		} else {
+			await restore()
+		}
 		throw error
 	}
 	if (!cancelledAtVendors) {
@@ -1136,7 +1317,26 @@ export async function adminRefundPrintOrder(orderId: string) {
 	if (order.status === 'submitting' || order.status === 'cancelling') {
 		throw busyError()
 	}
-	await refundInFull(order)
+	// Claim from the state we saw, so a submission cannot start meanwhile.
+	const claimed = await db
+		.update(PrintOrder)
+		.set({ status: 'cancelling' })
+		.where(
+			and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, order.status)),
+		)
+		.returning({ id: PrintOrder.id })
+	if (claimed.length === 0) throw busyError()
+	try {
+		await refundInFull(order)
+	} catch (error) {
+		await db
+			.update(PrintOrder)
+			.set({ status: order.status })
+			.where(
+				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'cancelling')),
+			)
+		throw error
+	}
 	await db
 		.update(PrintOrder)
 		.set({
@@ -1165,6 +1365,16 @@ export async function adminRetryPrintOrder(
 			409,
 			'not_held',
 			'Only a held order can be retried.',
+		)
+	}
+	if (
+		order.holdReason === 'refund_failed' ||
+		order.holdReason === 'partial_cancel'
+	) {
+		throw new PrintOrderError(
+			409,
+			'refund_needed',
+			'Vendors were cancelled for this order: refund it instead of retrying.',
 		)
 	}
 	for (const { item } of items) {

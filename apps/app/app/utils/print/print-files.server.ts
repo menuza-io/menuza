@@ -70,6 +70,8 @@ export async function printDocumentHtml(
 
 export async function getPrintFile(
 	input: PrintFileRequest,
+	/** Paid orders: already bounded by the pieces paid for, so no hourly cap. */
+	options: { skipLimit?: boolean } = {},
 ): Promise<PrintFileResult> {
 	const hash = printFileHash(input)
 	const [cached] = await db
@@ -106,7 +108,10 @@ export async function getPrintFile(
 				gte(PrintRender.createdAt, new Date(Date.now() - 3_600_000)),
 			),
 		)
-	if (Number(recent?.value ?? 0) >= renderLimitPerHour()) {
+	if (
+		!options.skipLimit &&
+		Number(recent?.value ?? 0) >= renderLimitPerHour()
+	) {
 		return { kind: 'limited' }
 	}
 

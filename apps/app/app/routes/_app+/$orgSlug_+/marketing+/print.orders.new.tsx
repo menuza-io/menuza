@@ -141,7 +141,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 	}
 	try {
-		const orderId = await createPrintQuote(access, {
+		const orderId = await createPrintQuote(request, access, {
 			lines,
 			address: { ...address, country: 'US' },
 			locationId: locationId || null,

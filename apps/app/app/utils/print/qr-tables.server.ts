@@ -1,17 +1,29 @@
+import { requireUserId, userHasOrganizationPermission } from '@repo/auth'
 import { getFeatureFlag } from '@repo/common/feature-flags'
 import {
 	foldQrOrderingFeatures,
 	QR_ORDERING_FLAG_KEYS,
 	type QrTableView,
 } from '@repo/common/qr-ordering'
+import { ORG_PERMISSIONS } from '#app/utils/organization/permissions.server.ts'
 import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
 
 /**
  * Table codes for printing. The table token lives only in the regional
  * tenant-api (HMAC of its secret), so the App server asks for it with a
  * short-lived writer token it never hands to the browser. Labels and tokens
- * carry no guest data. Table cards need QR dine-in on for the org.
+ * carry no guest data. Table cards need QR dine-in on for the org, and the
+ * user needs menu read: a table code is a way in to order at that table, so
+ * the marketing permissions alone never reach it.
  */
+
+export async function canPrintQrTables(userId: string, organizationId: string) {
+	return userHasOrganizationPermission(
+		userId,
+		organizationId,
+		ORG_PERMISSIONS.READ_MENU_ANY,
+	)
+}
 
 export async function isQrDineInOn(organizationId: string) {
 	const [enabled, dineIn] = await Promise.all([
@@ -32,6 +44,9 @@ export async function fetchQrTablesForPrint(
 		scope: 'qr:write',
 		expiresIn: '5m',
 	})
+	if (!(await canPrintQrTables(await requireUserId(request), client.orgId))) {
+		throw new Response('Forbidden', { status: 403 })
+	}
 	if (!(await isQrDineInOn(client.orgId))) return []
 	const response = await client.fetchTenant('/operator/qr/tables')
 	if (!response.ok) {

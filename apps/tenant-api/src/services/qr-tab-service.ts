@@ -40,6 +40,7 @@ import { timingSafeEqualString } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { runExclusive } from './order-service.ts'
 import {
+	isTabPaymentOpen,
 	listTabRounds,
 	markTabRoundsPaid,
 	QR_ROUND_PENDING_STATUSES,
@@ -138,6 +139,8 @@ export type OperatorQrTab = QrPublicTab & {
 	paymentMethod: 'counter' | 'online' | null
 	voidReason: string | null
 	lockedAt: string | null
+	/** Online amount received for review, or the amount being paid now. */
+	onlineAmountCents: number | null
 	version: number
 }
 
@@ -152,6 +155,7 @@ function operatorTabView(
 		paymentMethod: tab.paymentMethod,
 		voidReason: tab.voidReason,
 		lockedAt: iso(tab.lockedAt),
+		onlineAmountCents: tab.paymentAmountCents,
 		version: tab.version,
 	}
 }
@@ -367,6 +371,25 @@ export async function createQrTables(
 				422,
 				'table_limit',
 				`A location can have at most ${QR_MAX_TABLES_PER_LOCATION} tables.`,
+			)
+		}
+		// Check every label first: a conflict halfway would otherwise keep the
+		// tables inserted before it (the transaction commits on a return).
+		const taken = await tx
+			.select({ label: qrTables.label })
+			.from(qrTables)
+			.where(
+				and(
+					eq(qrTables.locationId, input.locationId),
+					isNull(qrTables.archivedAt),
+				),
+			)
+		const takenLabels = new Set(taken.map((row) => row.label))
+		if (labels.some((label) => takenLabels.has(label))) {
+			return fail(
+				409,
+				'table_label_taken',
+				'A table with this label already exists at this location.',
 			)
 		}
 		const now = Date.now()
@@ -656,6 +679,7 @@ export async function getOperatorTab(
 async function loadOpenTab(
 	tx: Parameters<Parameters<typeof runTenantTransaction>[1]>[0],
 	tabId: string,
+	options: { acknowledgeReview?: boolean } = {},
 ): Promise<QrResult<QrTabRow>> {
 	const [tab] = await tx
 		.select()
@@ -666,11 +690,19 @@ async function loadOpenTab(
 	if (tab.status !== 'open') {
 		return fail(409, 'tab_closed', 'This tab is already closed.')
 	}
-	if (tab.paymentStatus === 'pending') {
+	if (tab.paymentStatus === 'pending' && isTabPaymentOpen(tab, new Date())) {
 		return fail(
 			409,
 			'payment_pending',
-			'The guest is paying this tab online. Wait a moment and refresh.',
+			'The guest is paying this tab online. Wait a moment and refresh, or stop the online payment.',
+		)
+	}
+	if (tab.paymentStatus === 'review' && !options.acknowledgeReview) {
+		// Money already arrived online: staff must look before charging again.
+		return fail(
+			409,
+			'payment_review',
+			'This tab was paid online. Check the payment before you close it.',
 		)
 	}
 	return { ok: true, data: tab }
@@ -684,10 +716,12 @@ async function loadOpenTab(
 export async function closeTabAtCounter(
 	orgId: string,
 	tabId: string,
-	input: { tipCents?: number; closedBy: string },
+	input: { tipCents?: number; closedBy: string; acknowledgeReview?: boolean },
 ): Promise<QrResult<OperatorQrTab>> {
 	return writeTx(orgId, async (tx) => {
-		const loaded = await loadOpenTab(tx, tabId)
+		const loaded = await loadOpenTab(tx, tabId, {
+			acknowledgeReview: input.acknowledgeReview,
+		})
 		if (!loaded.ok) return loaded
 		const tab = loaded.data
 		const rounds = await listTabRounds(tx, [tab.id])
@@ -700,7 +734,9 @@ export async function closeTabAtCounter(
 			.set({
 				status: 'closed',
 				paymentMethod: 'counter',
-				paymentStatus: 'paid',
+				// An online payment under review stays flagged: it still needs a
+				// refund or a note, and must never be overwritten.
+				paymentStatus: tab.paymentStatus === 'review' ? 'review' : 'paid',
 				subtotalCents: totals.subtotalCents,
 				taxCents: totals.taxCents,
 				tipCents,
@@ -725,10 +761,12 @@ export async function closeTabAtCounter(
 export async function voidTab(
 	orgId: string,
 	tabId: string,
-	input: { reason: string; closedBy: string },
+	input: { reason: string; closedBy: string; acknowledgeReview?: boolean },
 ): Promise<QrResult<OperatorQrTab>> {
 	return writeTx(orgId, async (tx) => {
-		const loaded = await loadOpenTab(tx, tabId)
+		const loaded = await loadOpenTab(tx, tabId, {
+			acknowledgeReview: input.acknowledgeReview,
+		})
 		if (!loaded.ok) return loaded
 		const tab = loaded.data
 		const now = new Date()
@@ -750,6 +788,53 @@ export async function voidTab(
 				closedAt: now.getTime(),
 				version: tab.version + 1,
 				updatedAt: now.getTime(),
+			})
+			.where(eq(qrTabs.id, tab.id))
+			.returning()
+		const rounds = await listTabRounds(tx, [tab.id])
+		return { ok: true as const, data: operatorTabView(updated ?? tab, rounds) }
+	})
+}
+
+/**
+ * Staff stop an online payment that is stuck (a closed payment page, a
+ * provider that never reports): the session is unbound and the tab can be
+ * closed at the counter. Money that still arrives for it is kept for review.
+ */
+export async function releaseTabPayment(
+	orgId: string,
+	tabId: string,
+): Promise<QrResult<OperatorQrTab>> {
+	return writeTx(orgId, async (tx) => {
+		const [tab] = await tx
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, tabId))
+			.limit(1)
+		if (!tab) return fail(404, 'tab_not_found', 'Tab not found.')
+		if (tab.status !== 'open') {
+			return fail(409, 'tab_closed', 'This tab is already closed.')
+		}
+		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
+			return fail(
+				409,
+				'payment_review',
+				'This tab was paid online. Check the payment.',
+			)
+		}
+		const now = Date.now()
+		const [updated] = await tx
+			.update(qrTabs)
+			.set({
+				paymentStatus: 'unpaid',
+				paymentSessionId: null,
+				paymentProcessor: null,
+				paymentAmountCents: null,
+				paymentTipCents: null,
+				paymentTokenHash: null,
+				paymentEventAt: now,
+				version: tab.version + 1,
+				updatedAt: now,
 			})
 			.where(eq(qrTabs.id, tab.id))
 			.returning()
@@ -783,6 +868,14 @@ export async function lockTab(
 			.set({
 				tabTokenVersion: tab.tabTokenVersion + 1,
 				lockedAt: tab.lockedAt ?? now,
+				// A pay request that has not reached the provider dies with the lock.
+				...(tab.paymentStatus === 'unpaid'
+					? {
+							paymentAmountCents: null,
+							paymentTipCents: null,
+							paymentTokenHash: null,
+						}
+					: {}),
 				version: tab.version + 1,
 				updatedAt: now,
 			})
@@ -883,7 +976,18 @@ export async function prepareTabPayment(
 			tab.paymentSessionId &&
 			tab.paymentAmountCents != null
 		) {
-			// A session is live: keep its amount, the bridge re-serves it.
+			// A session is live. Re-serve it only to someone asking for the same
+			// payment; a different tip means another guest is paying right now.
+			const askedTip = Math.round(
+				(totals.subtotalCents * input.tipPercent) / 100,
+			)
+			if (askedTip !== (tab.paymentTipCents ?? 0)) {
+				return fail(
+					409,
+					'tab_paying',
+					'Someone at the table is paying this tab right now. Please wait a moment.',
+				)
+			}
 			return {
 				ok: true as const,
 				data: {
@@ -953,6 +1057,9 @@ async function currentPayableCents(
 	return tabTotals(tab, rounds).totalCents + (tab.paymentTipCents ?? 0)
 }
 
+/** Hosted session lifetime for a tab: Stripe's 30-minute minimum plus room. */
+const QR_TAB_HOSTED_SESSION_MS = 40 * 60 * 1000
+
 /** `POST /api/orders/quote` for `tab:<id>`: amounts and state only. */
 export async function getTabQuote(
 	orgId: string,
@@ -972,6 +1079,17 @@ export async function getTabQuote(
 	}
 	if (
 		tab.status === 'open' &&
+		tab.paymentStatus === 'unpaid' &&
+		(tab.lockedAt != null || !(await readQrSettings(db)).allowOnlineTabPay)
+	) {
+		return fail(
+			409,
+			'online_pay_unavailable',
+			'Paying from the phone is not available. Please pay at the counter.',
+		)
+	}
+	if (
+		tab.status === 'open' &&
 		tab.paymentStatus !== 'paid' &&
 		(await currentPayableCents(db, tab)) !== tab.paymentAmountCents
 	) {
@@ -988,7 +1106,14 @@ export async function getTabQuote(
 			orderId: tabOrderRef(tab.id),
 			totalCents: tab.paymentAmountCents,
 			currency: tab.currency,
-			holdExpiresAt: null,
+			// Bounds the provider session (about 40 minutes), so a payment page
+			// left open cannot hold the table for a day.
+			holdExpiresAt:
+				tab.paymentEventAt != null
+					? new Date(
+							tab.paymentEventAt + QR_TAB_HOSTED_SESSION_MS,
+						).toISOString()
+					: null,
 			status: tab.status === 'open' ? 'accepted' : tab.status,
 			paymentStatus:
 				tab.paymentStatus === 'paid' || tab.paymentStatus === 'review'
@@ -1031,6 +1156,13 @@ export async function bindTabPaymentSession(input: {
 				409,
 				'session_conflict',
 				'This tab already has a bound payment session.',
+			)
+		}
+		if (tab.lockedAt != null || !(await readQrSettings(tx)).allowOnlineTabPay) {
+			return fail(
+				409,
+				'online_pay_unavailable',
+				'Paying from the phone is not available. Please pay at the counter.',
 			)
 		}
 		if ((await currentPayableCents(tx, tab)) !== tab.paymentAmountCents) {
@@ -1083,32 +1215,59 @@ export async function applyTabPaymentEvent(input: {
 	return writeTx(input.orgId, async (tx) => {
 		const tab = await loadPayableTab(tx, input.tabId)
 		if (!tab) return fail(404, 'order_not_found', 'Order not found.')
-		if (!tab.paymentSessionId || tab.paymentSessionId !== input.sessionId) {
+		const matches =
+			tab.paymentSessionId === input.sessionId &&
+			tab.paymentProcessor === input.processor &&
+			tab.paymentAmountCents === input.amountCents &&
+			tab.currency.toLowerCase() === input.currency.toLowerCase()
+		if (!matches && input.status === 'paid') {
+			// Money moved for a session this tab no longer expects (unbound,
+			// re-priced, or a retried page). Never refuse it: record it for a
+			// person to reconcile, unless this exact payment is already kept.
+			if (
+				tab.paymentSessionId === input.sessionId &&
+				(tab.paymentStatus === 'review' || tab.paymentStatus === 'paid')
+			) {
+				return {
+					ok: true as const,
+					data: {
+						orgId: input.orgId,
+						orderId: tabOrderRef(tab.id),
+						sessionId: input.sessionId,
+						status: tab.status,
+						paymentStatus: tab.paymentStatus,
+					},
+				}
+			}
+			const at = Date.now()
+			await tx
+				.update(qrTabs)
+				.set({
+					paymentStatus: 'review',
+					paymentSessionId: input.sessionId,
+					paymentProcessor: input.processor,
+					paymentAmountCents: input.amountCents,
+					paidAt: at,
+					paymentEventAt: at,
+					updatedAt: at,
+				})
+				.where(eq(qrTabs.id, tab.id))
+			return {
+				ok: true as const,
+				data: {
+					orgId: input.orgId,
+					orderId: tabOrderRef(tab.id),
+					sessionId: input.sessionId,
+					status: tab.status,
+					paymentStatus: 'review',
+				},
+			}
+		}
+		if (!matches) {
 			return fail(
 				403,
 				'session_mismatch',
 				'This payment event does not match the bound payment session.',
-			)
-		}
-		if (tab.paymentProcessor !== input.processor) {
-			return fail(
-				409,
-				'processor_mismatch',
-				'This payment event does not match the bound payment processor.',
-			)
-		}
-		if (tab.paymentAmountCents !== input.amountCents) {
-			return fail(
-				422,
-				'amount_mismatch',
-				'The payment amount does not match this tab.',
-			)
-		}
-		if (tab.currency.toLowerCase() !== input.currency.toLowerCase()) {
-			return fail(
-				422,
-				'currency_mismatch',
-				'The payment currency does not match this tab.',
 			)
 		}
 		const result = (paymentStatus: string) => ({
@@ -1169,6 +1328,11 @@ export async function applyTabPaymentEvent(input: {
 		}
 		if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
 			return result(tab.paymentStatus)
+		}
+		if (input.status === 'failed' && input.processor === 'checkout') {
+			// A declined card on a Checkout.com page can be retried on the same
+			// page: keep the binding (and the frozen amount) until it expires.
+			return result('pending')
 		}
 		await tx
 			.update(qrTabs)

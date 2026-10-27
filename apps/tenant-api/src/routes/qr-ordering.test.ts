@@ -888,17 +888,6 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		const blocked = await placeRound({ 'X-Tab-Token': first.tab.tabToken })
 		expect((await blocked.json()).error).toBe('tab_paying')
 
-		const wrongAmount = await system('/payment-status', {
-			orgId,
-			orderId: body.orderRef,
-			sessionId: 'cs_test_tab_1',
-			processor: 'connect',
-			status: 'paid',
-			amountCents: 1,
-			currency: 'usd',
-		})
-		expect(wrongAmount.status).toBe(422)
-
 		const paid = await system('/payment-status', {
 			orgId,
 			orderId: body.orderRef,
@@ -1130,5 +1119,150 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		const body = JSON.stringify(await receipt.json())
 		expect(body).not.toContain('Guest A')
 		expect(body).not.toContain('5550001111')
+	})
+
+	async function boundPayment(
+		tipPercent = 0,
+		sessionId = 'cs_test_bound',
+		label = 'T1',
+	) {
+		const table = await createTable(label)
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, tipPercent)).json()
+		await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId,
+			processor: 'connect',
+		})
+		return { first, intent }
+	}
+
+	it('records an unexpected online payment for review instead of refusing it', async () => {
+		const { first, intent } = await boundPayment()
+		const odd = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_bound',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: 1,
+			currency: 'usd',
+		})
+		expect(odd.status).toBe(200)
+		expect((await odd.json()).paymentStatus).toBe('review')
+
+		// Staff must look before charging again; the review flag survives a close.
+		const blind = await operator(`/tabs/${first.tab.id}/close`, {
+			method: 'POST',
+			body: { paymentMethod: 'counter' },
+		})
+		expect((await blind.json()).error).toBe('payment_review')
+		const checked = await operator(`/tabs/${first.tab.id}/close`, {
+			method: 'POST',
+			body: { paymentMethod: 'counter', acknowledgeReview: true },
+		})
+		const tab = (await checked.json()).tab
+		expect(tab).toMatchObject({
+			status: 'closed',
+			paymentStatus: 'review',
+			onlineAmountCents: 1,
+		})
+	})
+
+	it('lets staff stop a stuck online payment, and stops blocking after the session window', async () => {
+		const { first, intent } = await boundPayment()
+		const busy = await operator(`/tabs/${first.tab.id}/void`, {
+			method: 'POST',
+			body: { reason: 'Left' },
+		})
+		expect((await busy.json()).error).toBe('payment_pending')
+		const released = await operator(`/tabs/${first.tab.id}/release-payment`, {
+			method: 'POST',
+		})
+		expect((await released.json()).tab.paymentStatus).toBe('unpaid')
+		// Money that still arrives for the released session is kept for review.
+		const late = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_bound',
+			processor: 'connect',
+			status: 'paid',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await late.json()).paymentStatus).toBe('review')
+
+		const second = await boundPayment(0, 'cs_test_stale', 'T2')
+		const db = await getTenantDb(orgId)
+		await db
+			.update(qrTabs)
+			.set({ paymentEventAt: Date.now() - 46 * 60_000 })
+			.where(eq(qrTabs.id, second.first.tab.id))
+		const closed = await operator(`/tabs/${second.first.tab.id}/close`, {
+			method: 'POST',
+			body: { paymentMethod: 'counter' },
+		})
+		expect(closed.status).toBe(200)
+	})
+
+	it("does not hand a guest someone else's live payment at another tip", async () => {
+		const { first } = await boundPayment(20)
+		const other = await pay(first.tab.tabToken, 10)
+		expect((await other.json()).error).toBe('tab_paying')
+		const same = await pay(first.tab.tabToken, 20)
+		expect(same.status).toBe(200)
+	})
+
+	it('keeps a declined Checkout.com page bound so a retry on it still settles', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		await serveAll(first.tab.id)
+		const intent = await (await pay(first.tab.tabToken, 0)).json()
+		const ref = 'restaurant_order:ref-checkout-1'
+		await system('/payment-session', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: ref,
+			processor: 'checkout',
+		})
+		const declined = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: ref,
+			processor: 'checkout',
+			status: 'failed',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await declined.json()).paymentStatus).toBe('pending')
+		const paid = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: ref,
+			processor: 'checkout',
+			status: 'paid',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await paid.json()).paymentStatus).toBe('paid')
+	})
+
+	it('creates no table when one label of a batch is taken', async () => {
+		await createTable('T3')
+		const response = await operator('/tables/bulk', {
+			method: 'POST',
+			body: { locationId: 'loc-1', labels: ['T1', 'T2', 'T3'] },
+		})
+		expect(response.status).toBe(409)
+		const tables = (await (await operator('/tables')).json()).tables
+		expect(tables.map((table: { label: string }) => table.label)).toEqual([
+			'T3',
+		])
 	})
 })

@@ -83,6 +83,9 @@ const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	payment_failed: msg`The payment failed`,
 	submission_error: msg`Sending to the vendor failed unexpectedly`,
 	refund_failed: msg`The vendor order was cancelled but the refund failed`,
+	partial_cancel: msg`Some vendor orders were cancelled and others are printing: refund what was cancelled`,
+	stale_claim: msg`A submission or cancellation stopped halfway: check the vendor before retrying`,
+	late_payment: msg`Paid after it was cancelled, refunded automatically`,
 }
 
 /** A fetcher action that asks first: money and catalog changes are not undone. */

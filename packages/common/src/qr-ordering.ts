@@ -237,10 +237,13 @@ export type QrSettingsPatch = z.infer<typeof qrSettingsPatchSchema>
 export const qrTabCloseSchema = z.strictObject({
 	paymentMethod: z.literal('counter'),
 	tipCents: z.number().int().min(0).max(10_000_000).optional(),
+	/** Staff checked an online payment that landed for review. */
+	acknowledgeReview: z.literal(true).optional(),
 })
 
 export const qrTabVoidSchema = z.strictObject({
 	reason: z.string().trim().min(1, 'Give a reason').max(QR_VOID_REASON_MAX),
+	acknowledgeReview: z.literal(true).optional(),
 })
 
 export type QrTableView = {

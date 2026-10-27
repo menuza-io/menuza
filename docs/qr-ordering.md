@@ -95,12 +95,22 @@ organization's processor (Stripe Connect in the US, Checkout.com anywhere). The
 tab rides the restaurant-order payment bridge as the order `tab:<id>`, with the
 same metadata, idempotency, single bind and provider reconciliation as online
 orders. While a payment is open the tab total is frozen: new rounds and counter
-close or void are refused until the session ends.
+close or void are refused until the session ends, or for at most 45 minutes (the
+hosted page itself expires after 40). A tip change while paying is refused.
 
 - Only a verified provider event (or the App's provider lookup) closes a tab; a
   redirect never does.
 - A failed or expired session unbinds; the guest can try again or pay at the
   counter.
+- **Stop online payment:** when the guest gave up on the payment page, staff tap
+  **Stop online payment** on the open tab
+  (`POST /operator/qr/tabs/:id/release-payment`). The session is unbound and the
+  tab can be closed at the counter. Lock does the same.
+- **Needs review:** money that does not match the tab (a different amount, or a
+  payment for a session that was stopped) never closes it. The tab shows **Paid
+  online, needs review** with the amount; close and void then ask staff to
+  confirm they checked the payment (`acknowledgeReview: true`), and the tab
+  keeps `paymentStatus: 'review'`.
 - **Late payment on a settled tab:** if staff closed or voided the tab and the
   money still arrives, the tab keeps `paymentStatus: 'review'`. Refund it from
   the processor dashboard or keep it as the payment, and note it on the bill.

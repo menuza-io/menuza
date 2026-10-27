@@ -28,7 +28,12 @@ for shipped prints also needs the settings (billing) permission.
 3. **Proof:** the live proof shows the cut line and bleed. **Approve proof**
    freezes a snapshot (copy, prices, table labels and code versions, images);
    downloads and orders print that snapshot until the next approval.
-4. The page warns when the menu or the tables changed since approval.
+4. The page warns when the menu or the tables changed since approval. A table
+   card whose codes or labels changed cannot be ordered until it is approved
+   again.
+
+Table cards also need the menu read permission: a table code lets anyone order
+at that table, so the marketing permissions alone do not reach it.
 
 QR codes encode the destination directly with
 `utm_source=print&utm_medium=qr&utm_campaign=<design id>`: there is no redirect
@@ -66,9 +71,18 @@ the browser's print dialog saves it.
   price rose by more than the Admin drift limit (default 10%), the order is held
   for Admin instead of being sold at a loss.
 - **Cancel:** operators can cancel until the vendor starts production (full
-  refund). A vendor refusal or a vendor-side cancellation refunds in full
-  automatically. Defects after delivery go through Admin (reprint by vendor
-  claim, or refund).
+  refund). A cart split across vendors is cancelled only if no vendor has
+  started; if production starts mid-cancel, the order is held (`partial_cancel`)
+  for Admin to refund what was cancelled. A vendor refusal or a vendor-side
+  cancellation refunds in full automatically. A payment that lands after a
+  cancel is refunded automatically (`late_payment`). Defects after delivery go
+  through Admin (reprint by vendor claim, or refund).
+- **Crash safety:** the hourly `print-sync` job submits paid orders that were
+  never sent (after 5 minutes) and holds orders stuck sending or cancelling for
+  15 minutes (`stale_claim`), since a vendor call may have gone through. Check
+  the vendor before **Retry**; held refund cases (`refund_failed`,
+  `partial_cancel`) can only be refunded. Paid orders are not counted against
+  the hourly render limit.
 - **Tracking:** vendor webhooks
   (`/resources/print/webhook/<vendor>?token=PRINT_WEBHOOK_TOKEN`) only trigger a
   status fetch from the vendor's API; the hourly `print-sync` job in

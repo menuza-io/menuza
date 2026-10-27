@@ -11,6 +11,7 @@ import {
 } from '@repo/ui/alert-dialog'
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
+import { Checkbox } from '@repo/ui/checkbox'
 import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
 import { useCallback, useEffect, useState } from 'react'
@@ -49,6 +50,8 @@ export function OpenTabs({
 	const [voiding, setVoiding] = useState<QrTab | null>(null)
 	const [locking, setLocking] = useState<QrTab | null>(null)
 	const [lockBusy, setLockBusy] = useState(false)
+	const [releasing, setReleasing] = useState<QrTab | null>(null)
+	const [releaseBusy, setReleaseBusy] = useState(false)
 
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
@@ -158,7 +161,30 @@ export function OpenTabs({
 								{tab.paymentStatus === 'pending' ? (
 									<Badge variant="warning">{_(msg`Paying online`)}</Badge>
 								) : null}
+								{tab.paymentStatus === 'review' ? (
+									<Badge variant="destructive">
+										{_(msg`Paid online, needs review`)}
+									</Badge>
+								) : null}
 							</div>
+							{tab.paymentStatus === 'review' ? (
+								<p className="text-sm" role="note">
+									{tab.onlineAmountCents != null
+										? (() => {
+												const amount = formatMoney(
+													tab.onlineAmountCents,
+													tab.totals.currency,
+													i18n.locale,
+												)
+												return _(
+													msg`A payment of ${amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
+												)
+											})()
+										: _(
+												msg`A payment arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
+											)}
+								</p>
+							) : null}
 							<ol className="flex flex-col gap-1 text-sm">
 								{tab.rounds.map((round) => (
 									<li
@@ -209,10 +235,23 @@ export function OpenTabs({
 										</Button>
 									) : null}
 									{tab.paymentStatus === 'pending' ? (
+										<Button
+											size="sm"
+											variant="ghost"
+											onClick={() => setReleasing(tab)}
+											aria-label={_(
+												msg`Stop online payment, tab ${number}, table ${label}`,
+											)}
+										>
+											<Trans>Stop online payment</Trans>
+										</Button>
+									) : null}
+									{tab.paymentStatus === 'pending' ? (
 										<p className="text-muted-foreground w-full text-xs">
 											<Trans>
 												The guest is paying online. Close and void wait until
-												the payment finishes.
+												the payment finishes, or stop the online payment if it
+												is stuck.
 											</Trans>
 										</p>
 									) : null}
@@ -232,7 +271,13 @@ export function OpenTabs({
 					if (
 						await act(
 							`/tabs/${closing.id}/close`,
-							{ paymentMethod: 'counter', ...(tipCents ? { tipCents } : {}) },
+							{
+								paymentMethod: 'counter',
+								...(tipCents ? { tipCents } : {}),
+								...(closing.paymentStatus === 'review'
+									? { acknowledgeReview: true }
+									: {}),
+							},
 							_(msg`Tab ${number} closed`),
 						)
 					) {
@@ -283,6 +328,50 @@ export function OpenTabs({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+			<AlertDialog
+				open={Boolean(releasing)}
+				onOpenChange={(open) => !open && setReleasing(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							<Trans>Stop the online payment?</Trans>
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							<Trans>
+								Use this when the guest gave up on the payment page or it is
+								stuck. The guest's payment page stops working and you can close
+								the tab at the counter. If money still arrives, the tab is
+								marked for review.
+							</Trans>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>
+							<Trans>Keep waiting</Trans>
+						</AlertDialogCancel>
+						<Button
+							disabled={releaseBusy}
+							onClick={() => {
+								if (!releasing) return
+								const tab = releasing
+								setReleaseBusy(true)
+								void act(
+									`/tabs/${tab.id}/release-payment`,
+									{},
+									_(msg`Online payment stopped. You can close the tab now.`),
+								)
+									.then((ok) => {
+										if (ok) setReleasing(null)
+									})
+									.finally(() => setReleaseBusy(false))
+							}}
+						>
+							<Trans>Stop online payment</Trans>
+						</Button>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 			<VoidTabDialog
 				tab={voiding}
 				onClose={() => setVoiding(null)}
@@ -292,7 +381,12 @@ export function OpenTabs({
 					if (
 						await act(
 							`/tabs/${voiding.id}/void`,
-							{ reason },
+							{
+								reason,
+								...(voiding.paymentStatus === 'review'
+									? { acknowledgeReview: true }
+									: {}),
+							},
 							_(msg`Tab ${number} voided`),
 						)
 					) {
@@ -316,7 +410,12 @@ function CloseTabDialog({
 	const { _, i18n } = useLingui()
 	const [tip, setTip] = useState('')
 	const [busy, setBusy] = useState(false)
-	useEffect(() => setTip(''), [tab?.id])
+	const [acknowledged, setAcknowledged] = useState(false)
+	useEffect(() => {
+		setTip('')
+		setAcknowledged(false)
+	}, [tab?.id])
+	const needsReview = tab?.paymentStatus === 'review'
 	const tipCents = parseTipCents(tip)
 	const total = tab
 		? formatMoney(
@@ -367,12 +466,19 @@ function CloseTabDialog({
 						})()}
 					</FieldDescription>
 				</Field>
+				{needsReview ? (
+					<ReviewAcknowledgement
+						id="tab-close-review"
+						checked={acknowledged}
+						onCheckedChange={setAcknowledged}
+					/>
+				) : null}
 				<AlertDialogFooter>
 					<AlertDialogCancel>
 						<Trans>Cancel</Trans>
 					</AlertDialogCancel>
 					<Button
-						disabled={busy}
+						disabled={busy || (needsReview && !acknowledged)}
 						onClick={() => {
 							setBusy(true)
 							void onConfirm(tipCents).finally(() => setBusy(false))
@@ -398,7 +504,12 @@ function VoidTabDialog({
 	const { _ } = useLingui()
 	const [reason, setReason] = useState('')
 	const [busy, setBusy] = useState(false)
-	useEffect(() => setReason(''), [tab?.id])
+	const [acknowledged, setAcknowledged] = useState(false)
+	useEffect(() => {
+		setReason('')
+		setAcknowledged(false)
+	}, [tab?.id])
+	const needsReview = tab?.paymentStatus === 'review'
 	return (
 		<AlertDialog
 			open={Boolean(tab)}
@@ -428,13 +539,20 @@ function VoidTabDialog({
 						placeholder={_(msg`For example: the guest left`)}
 					/>
 				</Field>
+				{needsReview ? (
+					<ReviewAcknowledgement
+						id="tab-void-review"
+						checked={acknowledged}
+						onCheckedChange={setAcknowledged}
+					/>
+				) : null}
 				<AlertDialogFooter>
 					<AlertDialogCancel>
 						<Trans>Cancel</Trans>
 					</AlertDialogCancel>
 					<Button
 						variant="destructive"
-						disabled={busy || !reason.trim()}
+						disabled={busy || !reason.trim() || (needsReview && !acknowledged)}
 						onClick={() => {
 							setBusy(true)
 							void onConfirm(reason.trim()).finally(() => setBusy(false))
@@ -445,6 +563,32 @@ function VoidTabDialog({
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
+	)
+}
+
+/** A tab paid online with a mismatch: staff confirm they checked the money. */
+function ReviewAcknowledgement({
+	id,
+	checked,
+	onCheckedChange,
+}: {
+	id: string
+	checked: boolean
+	onCheckedChange: (checked: boolean) => void
+}) {
+	return (
+		<label
+			htmlFor={id}
+			className="flex min-h-11 items-start gap-2.5 text-sm md:min-h-8"
+		>
+			<Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
+			<span>
+				<Trans>
+					I checked the online payment for this tab in the payment dashboard and
+					will refund or keep it.
+				</Trans>
+			</span>
+		</label>
 	)
 }
 

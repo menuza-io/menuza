@@ -79,6 +79,7 @@ import {
 	staleFacts,
 } from '#app/utils/print/print-snapshot.server.ts'
 import {
+	canPrintQrTables,
 	fetchQrTablesForPrint,
 	isQrDineInOn,
 } from '#app/utils/print/qr-tables.server.ts'
@@ -169,7 +170,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	let tables: Array<{ id: string; label: string; locationId: string }> = []
 	if (
 		printTargetsFor(design.product).includes('table') &&
-		(await isQrDineInOn(access.organization.id))
+		(await isQrDineInOn(access.organization.id)) &&
+		(await canPrintQrTables(access.userId, access.organization.id))
 	) {
 		targets.unshift('table')
 		tables = (
