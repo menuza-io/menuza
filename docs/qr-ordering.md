@@ -36,7 +36,7 @@ Organization flags (Admin, Feature Flags), all default off; only a literal
 
 | Flag                  | What it does                                                                                |
 | --------------------- | ------------------------------------------------------------------------------------------- |
-| `qr_ordering.enabled` | Menu, QR tables in the App; order-ahead poster tagging                                      |
+| `qr_ordering.enabled` | Settings, QR tables in the App; order-ahead poster tagging                                  |
 | `qr_ordering.dine_in` | Guests can order at the table; open tabs in the Orders page                                 |
 | `qr_ordering.online`  | Guests can pay the tab from the phone (also needs online payments set up in Settings, Shop) |
 
@@ -46,11 +46,11 @@ tables T1 to T8 and prints one table URL).
 
 ## Tables
 
-**Menu, QR tables.** Add one label, a range (`T1-T12`) or a comma list. With
-reservations on, **Import floor plan** creates a QR table per floor-plan table,
-links tables that already have the same label, follows renames and archives
-tables removed from the floor plan. Importing again is safe; codes never change
-on import.
+**Settings, QR tables** (`/settings/qr-tables`; the old `/qr/tables` link
+redirects). Add one label, a range (`T1-T12`) or a comma list. With reservations
+on, **Import floor plan** creates a QR table per floor-plan table, links tables
+that already have the same label, follows renames and archives tables removed
+from the floor plan. Importing again is safe; codes never change on import.
 
 - **New QR code** burns every printed card for that table (confirm dialog). Use
   it when a card was copied or stolen, then print the new card. It also burns
@@ -64,10 +64,11 @@ on import.
 
 ## Settings
 
-**QR tables, Settings.** Ask for the guest's name and/or phone (asked once, on
-the first round of a tab), allow paying from the phone, and the per-table limit
-of rounds per hour (default 12; a durable count from the rounds themselves).
-Paying from the phone always asks for a name and phone number.
+**Settings, QR tables, Ordering options** (`/settings/qr-ordering`). Ask for the
+guest's name and/or phone (asked once, on the first round of a tab), allow
+paying from the phone, and the per-table limit of rounds per hour (default 12; a
+durable count from the rounds themselves). Paying from the phone always asks for
+a name and phone number.
 
 ## Running a service
 

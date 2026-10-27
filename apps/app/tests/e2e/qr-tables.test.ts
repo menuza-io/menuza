@@ -195,6 +195,10 @@ async function setup(
 	return { user, org, locations }
 }
 
+/** A Base UI `Button` rendered as a link exposes the button role. */
+const linkOrButton = (page: Page, name: string) =>
+	page.getByRole('link', { name }).or(page.getByRole('button', { name }))
+
 const addField = (page: Page) => page.getByLabel('Add tables')
 const addButton = (page: Page) =>
 	page.getByRole('button', { name: 'Add', exact: true })
@@ -205,12 +209,22 @@ test.describe('QR tables: access', () => {
 		login,
 	}) => {
 		const { org } = await setup(login, { flags: [] })
-		for (const path of ['qr', 'qr/tables', 'qr/settings', 'qr-token']) {
+		for (const path of [
+			'qr',
+			'qr/tables',
+			'qr/settings',
+			'settings/qr-tables',
+			'settings/qr-ordering',
+			'qr-token',
+		]) {
 			const response = await page.request.get(`/${org.slug}/${path}`)
 			expect(response.status(), path).toBe(404)
 		}
 		await page.goto(`/${org.slug}`)
 		await expect(page.locator(`a[href^="/${org.slug}/qr/"]`)).toHaveCount(0)
+		await expect(
+			page.locator(`a[href="/${org.slug}/settings/qr-tables"]`),
+		).toHaveCount(0)
 	})
 
 	test('the dine-in flag alone does not turn QR ordering on', async ({
@@ -220,21 +234,37 @@ test.describe('QR tables: access', () => {
 		const { org } = await setup(login, {
 			flags: [QR_ORDERING_FLAG_KEYS.dineIn],
 		})
-		const response = await page.goto(`/${org.slug}/qr/tables`)
+		const response = await page.goto(`/${org.slug}/settings/qr-tables`)
 		expect(response?.status()).toBe(404)
 	})
 
-	test('the QR index sends operators to the tables page', async ({
+	test('QR tables live in Settings, and old links land there', async ({
 		page,
 		login,
 	}) => {
 		const { org } = await setup(login)
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr`)
-		await expect(page).toHaveURL(new RegExp(`/${org.slug}/qr/tables$`))
+		for (const [from, to] of [
+			['qr', 'settings/qr-tables'],
+			['qr/tables', 'settings/qr-tables'],
+			['qr/settings', 'settings/qr-ordering'],
+		]) {
+			await page.goto(`/${org.slug}/${from}`)
+			await expect(page, from).toHaveURL(new RegExp(`/${org.slug}/${to}$`))
+		}
+		// The sidebar lists it under Settings, not under Menu.
 		await expect(
-			page.locator(`a[href="/${org.slug}/qr/tables"]`).first(),
+			page.locator(`a[href="/${org.slug}/settings/qr-tables"]`).first(),
 		).toBeAttached()
+		await expect(page.locator(`a[href^="/${org.slug}/qr/"]`)).toHaveCount(0)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
+		await expect(
+			page.getByRole('heading', { name: 'QR tables', level: 2 }),
+		).toBeVisible()
+		await linkOrButton(page, 'Ordering options').click()
+		await expect(page).toHaveURL(
+			new RegExp(`/${org.slug}/settings/qr-ordering$`),
+		)
 	})
 
 	test('tables can be set up before ordering at the table is on', async ({
@@ -245,7 +275,7 @@ test.describe('QR tables: access', () => {
 			flags: [QR_ORDERING_FLAG_KEYS.enabled],
 		})
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(
 			page.getByText(
 				'Set up your tables now. Ordering at the table turns on when it is enabled for your organization.',
@@ -260,7 +290,7 @@ test.describe('QR tables: access', () => {
 	}) => {
 		const { org } = await setup(login, { locations: [] })
 		const requests = await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(
 			page.getByText('Add a location before you add tables.'),
 		).toBeVisible()
@@ -270,7 +300,11 @@ test.describe('QR tables: access', () => {
 
 	test('a guest without menu access is refused', async ({ page, login }) => {
 		const { org } = await setup(login, { role: 'guest' })
-		for (const path of ['qr/tables', 'qr/settings', 'qr-token']) {
+		for (const path of [
+			'settings/qr-tables',
+			'settings/qr-ordering',
+			'qr-token',
+		]) {
 			const response = await page.request.get(`/${org.slug}/${path}`)
 			expect(response.status(), path).toBe(403)
 		}
@@ -285,7 +319,7 @@ test.describe('QR tables: access', () => {
 			tables: [table(locations[0]!.id, 'qt_1', 'T1')],
 		})
 
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('T1', { exact: true })).toBeVisible()
 		await expect(addField(page)).toHaveCount(0)
 		for (const name of ['Rename, table T1', 'New QR code, table T1']) {
@@ -311,7 +345,7 @@ test.describe('QR tables: adding tables', () => {
 	}) => {
 		const { org } = await setup(login)
 		const requests = await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('No tables yet')).toBeVisible()
 
 		const field = addField(page)
@@ -365,7 +399,7 @@ test.describe('QR tables: adding tables', () => {
 	}) => {
 		const { org, locations } = await setup(login)
 		const requests = await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		// Typing before hydration would be lost: wait for the list first.
 		await expect(page.getByText('No tables yet')).toBeVisible()
 		await addField(page).fill('T1-T3')
@@ -409,7 +443,7 @@ test.describe('QR tables: adding tables', () => {
 						}
 					: undefined,
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('No tables yet')).toBeVisible()
 		await addField(page).fill('T1')
 		await addButton(page).click()
@@ -430,7 +464,7 @@ test.describe('QR tables: adding tables', () => {
 					? { status: 500, body: { error: 'internal' } }
 					: undefined,
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByRole('alert')).toContainText(
 			'Unable to load tables. Try again.',
 		)
@@ -455,7 +489,7 @@ test.describe('QR tables: adding tables', () => {
 		page.on('request', (request) => {
 			if (request.url().includes('/qr-token')) minted.push(request.url())
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('T1', { exact: true })).toBeVisible()
 		expect(requests.filter((r) => r.path === '/tables')).toHaveLength(2)
 		expect(minted.length).toBeGreaterThanOrEqual(2)
@@ -471,7 +505,7 @@ test.describe('QR tables: changing tables', () => {
 		const requests = await stubQrApi(page, {
 			tables: [table(locations[0]!.id, 'qt_1', 'T1')],
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 
 		const rename = page.getByRole('button', { name: 'Rename, table T1' })
 		await rename.click()
@@ -506,7 +540,7 @@ test.describe('QR tables: changing tables', () => {
 		const requests = await stubQrApi(page, {
 			tables: [table(locations[0]!.id, 'qt_1', 'T1')],
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 
 		const trigger = page.getByRole('button', { name: 'New QR code, table T1' })
 		await trigger.click()
@@ -551,7 +585,7 @@ test.describe('QR tables: changing tables', () => {
 				table(locations[0]!.id, 'qt_2', 'T2'),
 			],
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 
 		await page.getByRole('button', { name: 'Archive, table T2' }).click()
 		const dialog = page.getByRole('alertdialog')
@@ -595,7 +629,7 @@ test.describe('QR tables: changing tables', () => {
 						}
 					: undefined,
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await page.getByRole('button', { name: 'Archive, table T1' }).click()
 		await page
 			.getByRole('alertdialog')
@@ -617,7 +651,7 @@ test.describe('QR tables: changing tables', () => {
 		await stubQrApi(page, {
 			tables: [table(locations[0]!.id, 'qt_1', 'T1', { openTabId: 'tab_1' })],
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('Tab open')).toBeVisible()
 		await expect(
 			page.getByText('Close the open tab before archiving.'),
@@ -638,7 +672,7 @@ test.describe('QR tables: changing tables', () => {
 		await stubQrApi(page, {
 			tables: [table(locations[0]!.id, 'qt_1', 'طاولة 1')],
 		})
-		await page.goto(`/${org.slug}/qr/tables?lng=ar`)
+		await page.goto(`/${org.slug}/settings/qr-tables?lng=ar`)
 		expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl')
 		const label = page.getByText('طاولة 1', { exact: true })
 		await expect(label).toBeVisible()
@@ -658,7 +692,7 @@ test.describe('QR tables: locations, floor plan and printing', () => {
 				table(downtown!.id, 'qt_d', 'Window 1'),
 			],
 		})
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		const select = page.getByLabel('Location')
 		// Sorted by name: Airport first.
 		await expect(select).toHaveValue(airport!.id)
@@ -683,7 +717,7 @@ test.describe('QR tables: locations, floor plan and printing', () => {
 	test('one location shows no location picker', async ({ page, login }) => {
 		const { org } = await setup(login)
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('No tables yet')).toBeVisible()
 		await expect(page.getByLabel('Location')).toHaveCount(0)
 	})
@@ -694,7 +728,7 @@ test.describe('QR tables: locations, floor plan and printing', () => {
 	}) => {
 		const { org, locations } = await setup(login)
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('No tables yet')).toBeVisible()
 		await expect(
 			page.getByRole('button', { name: 'Import floor plan' }),
@@ -717,7 +751,7 @@ test.describe('QR tables: locations, floor plan and printing', () => {
 	}) => {
 		const { org, locations } = await setup(login)
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/tables`)
+		await page.goto(`/${org.slug}/settings/qr-tables`)
 		await expect(page.getByText('No tables yet')).toBeVisible()
 		await expect(page.getByText('Print table cards')).toHaveCount(0)
 
@@ -746,9 +780,9 @@ test.describe('QR ordering settings', () => {
 	}) => {
 		const { org } = await setup(login)
 		const requests = await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/settings`)
+		await page.goto(`/${org.slug}/settings/qr-ordering`)
 		await expect(
-			page.getByRole('heading', { name: 'QR ordering settings', level: 1 }),
+			page.getByRole('heading', { name: 'QR ordering settings', level: 2 }),
 		).toBeVisible()
 
 		const name = page.getByRole('switch', { name: /Ask for the guest’s name/ })
@@ -787,7 +821,7 @@ test.describe('QR ordering settings', () => {
 			flags: [...QR_ON, QR_ORDERING_FLAG_KEYS.online],
 		})
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/settings`)
+		await page.goto(`/${org.slug}/settings/qr-ordering`)
 		await expect(
 			page.getByRole('switch', {
 				name: /Let guests pay the tab from their phone/,
@@ -798,7 +832,7 @@ test.describe('QR ordering settings', () => {
 	test('a member sees the settings read-only', async ({ page, login }) => {
 		const { org } = await setup(login, { role: 'member' })
 		await stubQrApi(page)
-		await page.goto(`/${org.slug}/qr/settings`)
+		await page.goto(`/${org.slug}/settings/qr-ordering`)
 		await expect(
 			page.getByRole('switch', { name: /Ask for the guest’s name/ }),
 		).toBeDisabled()
@@ -824,7 +858,7 @@ test.describe('QR ordering settings', () => {
 				}
 			},
 		})
-		await page.goto(`/${org.slug}/qr/settings`)
+		await page.goto(`/${org.slug}/settings/qr-ordering`)
 		await expect(page.getByRole('alert')).toContainText(
 			'Unable to load settings. Try again.',
 		)

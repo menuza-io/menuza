@@ -187,6 +187,9 @@ export const restaurantPrintVertical: PrintShopServerVertical = {
 					? { kind: 'table', tableIds: ['all'] }
 					: null,
 			editorData: async (request, access) => ({
+				// Where tables are added (Settings, QR tables): the picker links
+				// there when there are none yet.
+				setupHref: `/${access.organization.slug}/settings/qr-tables`,
 				tables: (
 					await fetchQrTablesForPrint(request, access.organization.slug).catch(
 						() => [],

@@ -67,9 +67,13 @@ test.describe('Print shop: table cards', () => {
 		).toBeChecked()
 		await expect(
 			page.getByText(
-				'Add tables in QR ordering first. Each table gets its own card.',
+				'You have no QR tables yet. Add them in Settings, then come back: each table gets its own card.',
 			),
 		).toBeVisible()
+		// The picker links to where tables are added.
+		await expect(
+			page.getByRole('link', { name: 'Set up QR tables' }),
+		).toHaveAttribute('href', `/${org.slug}/settings/qr-tables`)
 		await page.getByRole('button', { name: 'Save and update proof' }).click()
 		await expect(
 			page.getByText('Choose at least one table for the cards.'),

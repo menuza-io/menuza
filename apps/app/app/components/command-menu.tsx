@@ -114,7 +114,7 @@ export function getNavigationCommands({
 		},
 		qrOrderingNav.visible && {
 			label: msg`QR tables`,
-			url: `/${orgSlug}/qr/tables`,
+			url: `/${orgSlug}/settings/qr-tables`,
 			icon: 'utensils',
 		},
 		printShopNav.visible && {

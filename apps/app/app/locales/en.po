@@ -1107,7 +1107,7 @@ msgstr "{lo}–{hi} min"
 msgid "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
 msgstr "{lockedGuestName} is locked to its table. Confirm Unlock and move to proceed."
 
-#: app/components/app-sidebar.tsx:400
+#: app/components/app-sidebar.tsx:395
 msgid "{mailboxUnreadLabelCount} unread"
 msgstr "{mailboxUnreadLabelCount} unread"
 
@@ -2040,7 +2040,7 @@ msgstr "A fee is already being charged for this booking."
 msgid "A fee was already charged for this booking."
 msgstr "A fee was already charged for this booking."
 
-#: app/components/print/restaurant/vertical-ui.tsx:102
+#: app/components/print/restaurant/vertical-ui.tsx:119
 msgid "A folded card that stands on the table. Print it yourself."
 msgstr "A folded card that stands on the table. Print it yourself."
 
@@ -2071,7 +2071,7 @@ msgstr "A guest is checking out with a table at this time. Booking it overrides 
 msgid "A handout for bags, counters and the neighborhood."
 msgstr "A handout for bags, counters and the neighborhood."
 
-#: app/components/print/restaurant/vertical-ui.tsx:106
+#: app/components/print/restaurant/vertical-ui.tsx:123
 msgid "A large print for windows and walls, with featured dishes."
 msgstr "A large print for windows and walls, with featured dishes."
 
@@ -2274,7 +2274,7 @@ msgstr "A restaurant is your workspace to manage locations, menus, online orderi
 msgid "A role is required"
 msgstr "A role is required"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:195
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:196
 msgid "A safety limit against misuse of a table code."
 msgstr "A safety limit against misuse of a table code."
 
@@ -2732,7 +2732,7 @@ msgstr "Add a last name."
 msgid "Add a link"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/qr+/tables.tsx:74
+#: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:75
 msgid "Add a location before you add tables."
 msgstr "Add a location before you add tables."
 
@@ -3096,7 +3096,7 @@ msgstr "Add Location"
 msgid "Add meal break"
 msgstr "Add meal break"
 
-#: app/components/app-sidebar.tsx:812
+#: app/components/app-sidebar.tsx:808
 msgid "Add members"
 msgstr ""
 
@@ -3339,8 +3339,8 @@ msgid "Add tables"
 msgstr "Add tables"
 
 #: app/components/print/restaurant/vertical-ui.tsx:31
-msgid "Add tables in QR ordering first. Each table gets its own card."
-msgstr "Add tables in QR ordering first. Each table gets its own card."
+#~ msgid "Add tables in QR ordering first. Each table gets its own card."
+#~ msgstr "Add tables in QR ordering first. Each table gets its own card."
 
 #: app/routes/_app+/$orgSlug_+/phone-agent+/handling.tsx:1607
 msgid "Add tag"
@@ -3562,7 +3562,7 @@ msgstr ""
 msgid "Address"
 msgstr "Address"
 
-#: app/components/print/restaurant/vertical-ui.tsx:124
+#: app/components/print/restaurant/vertical-ui.tsx:141
 msgid "Address and prices from"
 msgstr "Address and prices from"
 
@@ -4162,7 +4162,7 @@ msgstr "An online payment arrived that does not match this tab. Closing does not
 #~ msgid "An organization is a workspace where teams collect, organize, and work together."
 #~ msgstr ""
 
-#: app/components/app-sidebar.tsx:557
+#: app/components/app-sidebar.tsx:552
 #: app/components/workspace-breadcrumb.tsx:59
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:38
 msgid "Analytics"
@@ -4186,7 +4186,7 @@ msgstr "Anniversary"
 msgid "Announcement actions"
 msgstr "Announcement actions"
 
-#: app/components/app-sidebar.tsx:573
+#: app/components/app-sidebar.tsx:568
 #: app/components/command-menu.tsx:160
 #: app/components/workspace-breadcrumb.tsx:60
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:49
@@ -4326,7 +4326,7 @@ msgstr ""
 msgid "API Keys"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:839
+#: app/components/app-sidebar.tsx:835
 msgid "App header"
 msgstr "App header"
 
@@ -4459,7 +4459,7 @@ msgstr "Approve a print first. Only approved prints in a shippable size can be o
 msgid "Approve a print, then order copies shipped to any US address."
 msgstr "Approve a print, then order copies shipped to any US address."
 
-#: app/components/print/restaurant/vertical-ui.tsx:129
+#: app/components/print/restaurant/vertical-ui.tsx:146
 msgid "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 msgstr "Approve a table card, poster or flyer first. Only approved prints in a shippable size can be ordered."
 
@@ -4731,11 +4731,11 @@ msgstr "Ask for a rating"
 msgid "Ask for reconfirmation this many hours before"
 msgstr "Ask for reconfirmation this many hours before"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:129
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:130
 msgid "Ask for the guest’s name"
 msgstr "Ask for the guest’s name"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:142
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:143
 msgid "Ask for the guest’s phone number"
 msgstr "Ask for the guest’s phone number"
 
@@ -4763,7 +4763,7 @@ msgstr "Asked at the end of the call when call ratings are on."
 msgid "Asked before a transfer when texting the caller back is on."
 msgstr "Asked before a transfer when texting the caller back is on."
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:131
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:132
 msgid "Asked once, on the first order of a tab."
 msgstr "Asked once, on the first order of a tab."
 
@@ -5001,7 +5001,7 @@ msgstr ""
 msgid "Automation saved successfully"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:423
+#: app/components/app-sidebar.tsx:418
 #: app/components/command-menu.tsx:111
 #: app/components/workspace-breadcrumb.tsx:45
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:110
@@ -5343,7 +5343,7 @@ msgstr ""
 msgid "Billed monthly"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:664
+#: app/components/app-sidebar.tsx:670
 #: app/components/command-menu.tsx:378
 #: app/components/workspace-breadcrumb.tsx:68
 msgid "Billing"
@@ -5444,7 +5444,7 @@ msgstr "Bold"
 msgid "Book"
 msgstr "Book"
 
-#: app/components/print/restaurant/vertical-ui.tsx:117
+#: app/components/print/restaurant/vertical-ui.tsx:134
 msgid "Book a table"
 msgstr "Book a table"
 
@@ -5621,7 +5621,7 @@ msgstr "Branch name"
 msgid "Branch on whether you're open right now."
 msgstr "Branch on whether you're open right now."
 
-#: app/components/app-sidebar.tsx:564
+#: app/components/app-sidebar.tsx:559
 #: app/components/website/branding-panel.tsx:244
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5304
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5305
@@ -5720,7 +5720,7 @@ msgstr ""
 msgid "Broadcast preview"
 msgstr "Broadcast preview"
 
-#: app/components/app-sidebar.tsx:416
+#: app/components/app-sidebar.tsx:411
 #: app/components/command-menu.tsx:110
 #: app/components/workspace-breadcrumb.tsx:44
 #: app/routes/_app+/$orgSlug_+/marketing+/_index.tsx:100
@@ -5928,7 +5928,7 @@ msgstr "By position percentage"
 msgid "by the time clock"
 msgstr "by the time clock"
 
-#: app/components/app-sidebar.tsx:473
+#: app/components/app-sidebar.tsx:468
 #: app/components/reservations/reservations-chrome.tsx:82
 #: app/components/reservations/reservations-chrome.tsx:135
 #: app/components/workspace-breadcrumb.tsx:80
@@ -6039,7 +6039,7 @@ msgstr "Callers hear each step in order. A keypad menu waits for them to press a
 msgid "Calling…"
 msgstr "Calling…"
 
-#: app/components/app-sidebar.tsx:443
+#: app/components/app-sidebar.tsx:438
 #: app/components/command-menu.tsx:133
 #: app/components/workspace-breadcrumb.tsx:47
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:49
@@ -6805,7 +6805,7 @@ msgstr "Charging"
 msgid "Chat"
 msgstr "Chat"
 
-#: app/components/app-sidebar.tsx:623
+#: app/components/app-sidebar.tsx:618
 #: app/routes/_app+/$orgSlug_+/settings+/chat.tsx:79
 msgid "Chat channels"
 msgstr "Chat channels"
@@ -7146,7 +7146,7 @@ msgstr "Choose at least one location."
 msgid "Choose at least one print and how many copies."
 msgstr "Choose at least one print and how many copies."
 
-#: app/components/print/restaurant/vertical-ui.tsx:112
+#: app/components/print/restaurant/vertical-ui.tsx:129
 msgid "Choose at least one table for the cards."
 msgstr "Choose at least one table for the cards."
 
@@ -10560,11 +10560,11 @@ msgstr "Design branded posters, flyers and signs, and download a print-ready PDF
 msgid "Design branded posters, flyers and signs. Download a print-ready PDF for free, or have them printed and shipped."
 msgstr "Design branded posters, flyers and signs. Download a print-ready PDF for free, or have them printed and shipped."
 
-#: app/components/print/restaurant/vertical-ui.tsx:126
+#: app/components/print/restaurant/vertical-ui.tsx:143
 msgid "Design branded table cards, posters and flyers, and download a print-ready PDF for free."
 msgstr "Design branded table cards, posters and flyers, and download a print-ready PDF for free."
 
-#: app/components/print/restaurant/vertical-ui.tsx:127
+#: app/components/print/restaurant/vertical-ui.tsx:144
 msgid "Design branded table cards, posters and flyers. Download a print-ready PDF for free, or have them printed and shipped."
 msgstr "Design branded table cards, posters and flyers. Download a print-ready PDF for free, or have them printed and shipped."
 
@@ -12634,7 +12634,7 @@ msgstr "Every review, in one place"
 msgid "Every schedule has ended. Add or extend a schedule before publishing."
 msgstr "Every schedule has ended. Add or extend a schedule before publishing."
 
-#: app/components/print/restaurant/vertical-ui.tsx:43
+#: app/components/print/restaurant/vertical-ui.tsx:60
 msgid "Every table (new tables are added when you approve)"
 msgstr "Every table (new tables are added when you approve)"
 
@@ -12800,7 +12800,7 @@ msgstr "Experience published."
 msgid "Experience saved."
 msgstr "Experience saved."
 
-#: app/components/app-sidebar.tsx:487
+#: app/components/app-sidebar.tsx:482
 #: app/components/reservations/experiences/experience-editor.tsx:236
 #: app/components/reservations/experiences/experience-editor.tsx:483
 #: app/components/reservations/reservations-chrome.tsx:94
@@ -13292,7 +13292,7 @@ msgstr ""
 msgid "Feature this item prominently in ordering flows."
 msgstr "Feature this item prominently in ordering flows."
 
-#: app/components/print/restaurant/vertical-ui.tsx:120
+#: app/components/print/restaurant/vertical-ui.tsx:137
 msgid "Featured dishes"
 msgstr "Featured dishes"
 
@@ -13788,7 +13788,7 @@ msgstr "Formatting"
 msgid "Former member"
 msgstr "Former member"
 
-#: app/components/app-sidebar.tsx:552
+#: app/components/app-sidebar.tsx:547
 #: app/components/command-menu.tsx:159
 #: app/components/workspace-breadcrumb.tsx:58
 #: app/routes/_app+/$orgSlug_+/mailbox.tsx:47
@@ -13974,7 +13974,7 @@ msgstr "Full width"
 msgid "Future reservations affected by table capacity reductions, archived tables, shortened service windows, or closed special days."
 msgstr "Future reservations affected by table capacity reductions, archived tables, shortened service windows, or closed special days."
 
-#: app/components/app-sidebar.tsx:595
+#: app/components/app-sidebar.tsx:590
 #: app/components/phone-agent/vertical-labels.ts:27
 #: app/components/phone-agent/vertical-labels.ts:39
 #: app/components/workspace-breadcrumb.tsx:63
@@ -13992,7 +13992,7 @@ msgstr "General manager"
 msgid "General reservation settings saved."
 msgstr "General reservation settings saved."
 
-#: app/components/app-sidebar.tsx:542
+#: app/components/app-sidebar.tsx:537
 #: app/components/settings/cards/organization/general-settings-card.tsx:65
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:21
 msgid "General Settings"
@@ -14031,12 +14031,12 @@ msgstr ""
 msgid "Get a new price"
 msgstr "Get a new price"
 
-#: app/components/app-sidebar.tsx:804
+#: app/components/app-sidebar.tsx:800
 msgid "Get chrome extension"
 msgstr ""
 
 #: app/components/app-sidebar.tsx:177
-#: app/components/app-sidebar.tsx:819
+#: app/components/app-sidebar.tsx:815
 msgid "Get help"
 msgstr ""
 
@@ -14068,7 +14068,7 @@ msgid "Give away {when}"
 msgstr "Give away {when}"
 
 #: app/components/app-sidebar.tsx:185
-#: app/components/app-sidebar.tsx:827
+#: app/components/app-sidebar.tsx:823
 #: app/components/core/feedback-modal.tsx:69
 msgid "Give feedback"
 msgstr ""
@@ -14555,7 +14555,7 @@ msgstr "Guests prepay {amount} per guest to book."
 msgid "Guests read these terms and accept them before they book. Write them in each language your website offers."
 msgstr "Guests read these terms and accept them before they book. Write them in each language your website offers."
 
-#: app/routes/_app+/$orgSlug_+/qr+/tables.tsx:57
+#: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:57
 msgid "Guests scan the code on their table to order rounds and pay once when they leave."
 msgstr "Guests scan the code on their table to order rounds and pay once when they leave."
 
@@ -14839,7 +14839,7 @@ msgid "Hired."
 msgstr "Hired."
 
 #: ../../packages/reports/src/ui/report-labels.ts:147
-#: app/components/app-sidebar.tsx:529
+#: app/components/app-sidebar.tsx:524
 #: app/components/command-menu.tsx:148
 #: app/components/roles/tenant-role-access-manager.tsx:366
 #: app/components/workspace-breadcrumb.tsx:38
@@ -15493,7 +15493,7 @@ msgstr "Instantly enable Checkout.com (mock)"
 msgid "Instantly enable Stripe (mock)"
 msgstr "Instantly enable Stripe (mock)"
 
-#: app/components/app-sidebar.tsx:630
+#: app/components/app-sidebar.tsx:625
 #: app/components/settings/cards/organization/integrations-card.tsx:181
 #: app/components/workspace-breadcrumb.tsx:66
 #: app/routes/_app+/$orgSlug_+/notes.$noteId.tsx:1035
@@ -16104,7 +16104,7 @@ msgid "Label calls to find them later. With automatic tagging on, the agent appl
 msgstr "Label calls to find them later. With automatic tagging on, the agent applies the tag when the description fits the call."
 
 #: ../../packages/reports/src/ui/report-labels.ts:146
-#: app/components/app-sidebar.tsx:524
+#: app/components/app-sidebar.tsx:519
 #: app/components/command-menu.tsx:147
 #: app/components/staff/labor/labor-page.tsx:211
 #: app/components/staff/labor/labor-page.tsx:240
@@ -16608,7 +16608,7 @@ msgstr "Less than the minimum rest since their last shift"
 msgid "Let guests choose"
 msgstr "Let guests choose"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:158
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:159
 msgid "Let guests pay the tab from their phone"
 msgstr "Let guests pay the tab from their phone"
 
@@ -16987,7 +16987,7 @@ msgstr "Loading section layouts…"
 #~ msgid "Loading services…"
 #~ msgstr "Loading services…"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:117
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:118
 msgid "Loading settings…"
 msgstr "Loading settings…"
 
@@ -17079,8 +17079,8 @@ msgstr "Loading…"
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:43
 #: app/components/pos/terminals-manager.tsx:1418
 #: app/components/pos/terminals-manager.tsx:1426
-#: app/components/print/restaurant/vertical-ui.tsx:73
-#: app/components/print/restaurant/vertical-ui.tsx:124
+#: app/components/print/restaurant/vertical-ui.tsx:90
+#: app/components/print/restaurant/vertical-ui.tsx:141
 #: app/components/qr/tables-manager.tsx:174
 #: app/components/reservations/header-controls.tsx:39
 #: app/routes/_app+/$orgSlug_+/media.tsx:1419
@@ -17137,7 +17137,7 @@ msgstr "Location time zone is used to compute reservation seating slots. Changin
 msgid "Location: {locationName}"
 msgstr "Location: {locationName}"
 
-#: app/components/app-sidebar.tsx:600
+#: app/components/app-sidebar.tsx:595
 #: app/components/member-location-scope.tsx:160
 #: app/components/team-switcher.tsx:182
 #: app/routes/_app+/$orgSlug_+/settings+/locations._index.tsx:548
@@ -17319,7 +17319,7 @@ msgstr "m"
 msgid "m@example.com"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:392
+#: app/components/app-sidebar.tsx:387
 #: app/components/command-menu.tsx:101
 #: app/components/workspace-breadcrumb.tsx:19
 msgid "Mailbox"
@@ -17738,7 +17738,7 @@ msgstr "Marked as reviewed."
 msgid "Marked unavailable"
 msgstr "Marked unavailable"
 
-#: app/components/app-sidebar.tsx:403
+#: app/components/app-sidebar.tsx:398
 #: app/components/command-menu.tsx:106
 #: app/components/roles/tenant-role-access-manager.tsx:184
 #: app/components/workspace-breadcrumb.tsx:15
@@ -17850,7 +17850,7 @@ msgstr ""
 msgid "MCP server"
 msgstr "MCP server"
 
-#: app/components/app-sidebar.tsx:650
+#: app/components/app-sidebar.tsx:656
 #: app/routes/_app+/$orgSlug_+/mcp.tsx:1359
 msgid "MCP Server"
 msgstr ""
@@ -17916,7 +17916,7 @@ msgstr ""
 msgid "members"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:607
+#: app/components/app-sidebar.tsx:602
 #: app/components/chat/chat-group-settings-dialog.tsx:83
 #: app/components/organization-members.tsx:182
 #: app/components/roles/tenant-role-access-manager.tsx:1285
@@ -18729,7 +18729,7 @@ msgstr "Needs card confirmation"
 msgid "Needs follow-up"
 msgstr "Needs follow-up"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:161
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:162
 msgid "Needs online payments to be set up. Guests can always pay at the counter."
 msgstr "Needs online payments to be set up. Guests can always pay at the counter."
 
@@ -20968,7 +20968,7 @@ msgstr "Notification Message"
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:655
+#: app/components/app-sidebar.tsx:661
 #: app/components/workspace-breadcrumb.tsx:67
 msgid "Notifications"
 msgstr ""
@@ -21240,7 +21240,7 @@ msgstr "Once it is paired, your team can clock in with a PIN. This takes about a
 msgid "Once you connect an AI client using the setup instructions below, it will appear here."
 msgstr ""
 
-#: app/components/print/restaurant/vertical-ui.tsx:98
+#: app/components/print/restaurant/vertical-ui.tsx:115
 msgid "One card per table, so guests order and pay from their phone."
 msgstr "One card per table, so guests order and pay from their phone."
 
@@ -21994,11 +21994,11 @@ msgstr "Orange"
 msgid "Order"
 msgstr "Order"
 
-#: app/components/print/restaurant/vertical-ui.tsx:116
+#: app/components/print/restaurant/vertical-ui.tsx:133
 msgid "Order ahead (menu)"
 msgstr "Order ahead (menu)"
 
-#: app/components/print/restaurant/vertical-ui.tsx:111
+#: app/components/print/restaurant/vertical-ui.tsx:128
 msgid "Order at the table"
 msgstr "Order at the table"
 
@@ -22054,6 +22054,10 @@ msgstr "Ordering link sent"
 msgid "Ordering now"
 msgstr "Ordering now"
 
+#: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:69
+msgid "Ordering options"
+msgstr "Ordering options"
+
 #: app/components/print/print-order-labels.ts:51
 #~ msgid "Ordering table cards also needs permission to edit the menu."
 #~ msgstr "Ordering table cards also needs permission to edit the menu."
@@ -22070,7 +22074,7 @@ msgstr "Ordering this print also needs permission to see its QR codes."
 msgid "Ordering Window"
 msgstr "Ordering Window"
 
-#: app/components/app-sidebar.tsx:386
+#: app/components/app-sidebar.tsx:381
 #: app/components/customers/people-list-screen.tsx:411
 #: app/components/customers/person-orders-panel.tsx:111
 #: app/components/customers/person-profile-screen.tsx:442
@@ -22118,7 +22122,7 @@ msgstr "Orders open"
 msgid "orders per slot"
 msgstr "orders per slot"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:169
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:170
 msgid "Orders per table per hour"
 msgstr "Orders per table per hour"
 
@@ -22413,7 +22417,7 @@ msgid "Overtime rules used to estimate hours and cost. Leave them off if you do 
 msgstr "Overtime rules used to estimate hours and cost. Leave them off if you do not use them."
 
 #: app/components/app-sidebar.tsx:342
-#: app/components/app-sidebar.tsx:409
+#: app/components/app-sidebar.tsx:404
 #: app/components/reservations/detail-sheet.tsx:857
 #: app/components/reservations/host-subnav.tsx:130
 #: app/components/reservations/reservations-chrome.tsx:139
@@ -22491,7 +22495,7 @@ msgstr ""
 msgid "Page URL"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:547
+#: app/components/app-sidebar.tsx:542
 #: app/components/command-menu.tsx:158
 #: app/components/workspace-breadcrumb.tsx:57
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:28
@@ -22886,7 +22890,7 @@ msgstr "Pay type"
 msgid "Pay week"
 msgstr "Pay week"
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:145
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:146
 msgid "Paying from the phone always asks for a name and phone number."
 msgstr "Paying from the phone always asks for a name and phone number."
 
@@ -23222,7 +23226,7 @@ msgstr ""
 #~ msgid "Phone (Optional)"
 #~ msgstr "Phone (Optional)"
 
-#: app/components/app-sidebar.tsx:437
+#: app/components/app-sidebar.tsx:432
 #: app/components/command-menu.tsx:126
 #: app/components/phone-agent/settings-nav.tsx:68
 #: app/components/workspace-breadcrumb.tsx:16
@@ -23444,7 +23448,7 @@ msgstr "Pick the first day of any one period. Every second week after it starts 
 msgid "Pick the party size. The best open table is assigned unless you choose one."
 msgstr "Pick the party size. The best open table is assigned unless you choose one."
 
-#: app/components/print/restaurant/vertical-ui.tsx:121
+#: app/components/print/restaurant/vertical-ui.tsx:138
 msgid "Pick up to 4 dishes. Names, prices and photos come from your menu."
 msgstr "Pick up to 4 dishes. Names, prices and photos come from your menu."
 
@@ -23966,7 +23970,7 @@ msgid "Posted {selectedReplyDate}"
 msgstr "Posted {selectedReplyDate}"
 
 #: app/components/print/print-labels.ts:11
-#: app/components/print/restaurant/vertical-ui.tsx:105
+#: app/components/print/restaurant/vertical-ui.tsx:122
 msgid "Poster"
 msgstr "Poster"
 
@@ -24222,7 +24226,7 @@ msgstr "Print orders"
 msgid "Print proof"
 msgstr "Print proof"
 
-#: app/components/app-sidebar.tsx:430
+#: app/components/app-sidebar.tsx:425
 #: app/components/command-menu.tsx:112
 #: app/components/command-menu.tsx:121
 #: app/routes/_app+/$orgSlug_+/marketing+/print._index.tsx:43
@@ -24549,13 +24553,14 @@ msgstr "QR code that pairs the terminal"
 msgid "QR codes or labels changed since this print was approved. Approve the proof again, then order."
 msgstr "QR codes or labels changed since this print was approved. Approve the proof again, then order."
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:99
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:99
 msgid "QR ordering settings"
 msgstr "QR ordering settings"
 
-#: app/components/app-sidebar.tsx:379
+#: app/components/app-sidebar.tsx:647
 #: app/components/command-menu.tsx:116
-#: app/routes/_app+/$orgSlug_+/qr+/tables.tsx:53
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:109
+#: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:53
 msgid "QR tables"
 msgstr "QR tables"
 
@@ -24985,7 +24990,7 @@ msgstr "Redirect type"
 msgid "Redirected"
 msgstr "Redirected"
 
-#: app/components/app-sidebar.tsx:580
+#: app/components/app-sidebar.tsx:575
 #: app/components/command-menu.tsx:161
 #: app/components/workspace-breadcrumb.tsx:61
 #: app/routes/_app+/$orgSlug_+/website+/_layout.tsx:60
@@ -25872,7 +25877,7 @@ msgid "Reservation records will be deleted too"
 msgstr "Reservation records will be deleted too"
 
 #: ../../packages/reports/src/ui/report-labels.ts:148
-#: app/components/app-sidebar.tsx:457
+#: app/components/app-sidebar.tsx:452
 #: app/components/customers/person-profile-screen.tsx:114
 #: app/components/phone-agent/restaurant/vertical-ui.tsx:40
 #: app/components/pos/terminals-manager.tsx:1530
@@ -26302,7 +26307,7 @@ msgstr "Role name"
 msgid "Roles"
 msgstr "Roles"
 
-#: app/components/app-sidebar.tsx:614
+#: app/components/app-sidebar.tsx:609
 #: app/components/workspace-breadcrumb.tsx:65
 msgid "Roles & access"
 msgstr "Roles & access"
@@ -26663,7 +26668,7 @@ msgstr ""
 #: app/components/ui/photo-crop-form.tsx:236
 #: app/routes/_app+/$orgSlug_+/media.tsx:1619
 #: app/routes/_app+/$orgSlug_+/notes-kanban-board.tsx:863
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:202
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:203
 #: app/routes/_app+/$orgSlug_+/staff+/positions.tsx:458
 msgid "Save"
 msgstr ""
@@ -27040,7 +27045,7 @@ msgstr "Scan the code with the tablet's camera, or open the link below in its br
 msgid "Scan the code with this tablet's camera, or paste the link below."
 msgstr "Scan the code with this tablet's camera, or paste the link below."
 
-#: app/components/app-sidebar.tsx:519
+#: app/components/app-sidebar.tsx:514
 #: app/components/command-menu.tsx:146
 #: app/components/hiring/interview-dialog.tsx:287
 #: app/components/my-schedule/my-schedule-page.tsx:187
@@ -27339,7 +27344,7 @@ msgstr "Search voices"
 msgid "Search..."
 msgstr ""
 
-#: app/components/app-sidebar.tsx:878
+#: app/components/app-sidebar.tsx:874
 msgid "Search…"
 msgstr "Search…"
 
@@ -28420,6 +28425,10 @@ msgstr ""
 msgid "Set up payouts"
 msgstr "Set up payouts"
 
+#: app/components/print/restaurant/vertical-ui.tsx:46
+msgid "Set up QR tables"
+msgstr "Set up QR tables"
+
 #: app/components/reservations/settings/setup-checklist.tsx:111
 msgid "Set up reservations"
 msgstr "Set up reservations"
@@ -28432,7 +28441,7 @@ msgstr "Set up their clock-in PIN"
 msgid "Set up this tablet"
 msgstr "Set up this tablet"
 
-#: app/routes/_app+/$orgSlug_+/qr+/tables.tsx:60
+#: app/routes/_app+/$orgSlug_+/settings+/qr-tables.tsx:60
 msgid "Set up your tables now. Ordering at the table turns on when it is enabled for your organization."
 msgstr "Set up your tables now. Ordering at the table turns on when it is enabled for your organization."
 
@@ -28446,9 +28455,9 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #~ msgid "Setting a limit helps you sell out"
 #~ msgstr "Setting a limit helps you sell out"
 
-#: app/components/app-sidebar.tsx:448
-#: app/components/app-sidebar.tsx:494
-#: app/components/app-sidebar.tsx:587
+#: app/components/app-sidebar.tsx:443
+#: app/components/app-sidebar.tsx:489
+#: app/components/app-sidebar.tsx:582
 #: app/components/command-menu.tsx:357
 #: app/components/command-menu.tsx:390
 #: app/components/phone-agent/agent-details.tsx:315
@@ -28456,14 +28465,13 @@ msgstr "Set when online ordering, pickup, and delivery are accepted for this loc
 #: app/components/reservations/reservations-chrome.tsx:151
 #: app/components/staff/labor/labor-page.tsx:199
 #: app/components/workspace-breadcrumb.tsx:13
-#: app/routes/_app+/$orgSlug_+/qr+/tables.tsx:68
 #: app/routes/_app+/$orgSlug_+/settings+/_layout.tsx:13
 #: app/routes/_app+/$orgSlug_+/website+/pages.$pageId.tsx:5310
 msgid "Settings"
 msgstr ""
 
 #: app/components/phone-agent/settings-page.tsx:391
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:77
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:77
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -28686,7 +28694,7 @@ msgstr "Shipped to a US address. You see the price with shipping before you pay;
 msgid "Shipping"
 msgstr "Shipping"
 
-#: app/components/app-sidebar.tsx:635
+#: app/components/app-sidebar.tsx:630
 #: app/components/workspace-breadcrumb.tsx:69
 msgid "Shop"
 msgstr ""
@@ -29363,7 +29371,7 @@ msgstr "Split your tables into colored sections, one per server. Hosts see them 
 msgid "Square"
 msgstr ""
 
-#: app/components/app-sidebar.tsx:503
+#: app/components/app-sidebar.tsx:498
 #: app/components/command-menu.tsx:140
 #: app/components/roles/tenant-role-access-manager.tsx:263
 #: app/components/workspace-breadcrumb.tsx:17
@@ -29643,7 +29651,7 @@ msgstr "Start with a template"
 msgid "Start with an example and change it to match your business."
 msgstr "Start with an example and change it to match your business."
 
-#: app/components/print/restaurant/vertical-ui.tsx:128
+#: app/components/print/restaurant/vertical-ui.tsx:145
 msgid "Start with table QR cards so guests can order from their phone."
 msgstr "Start with table QR cards so guests can order from their phone."
 
@@ -30304,7 +30312,7 @@ msgstr "Table blocked"
 msgid "Table booking"
 msgstr "Table booking"
 
-#: app/components/print/restaurant/vertical-ui.tsx:113
+#: app/components/print/restaurant/vertical-ui.tsx:130
 msgid "Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it."
 msgstr "Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it."
 
@@ -30376,7 +30384,7 @@ msgstr "Table overlap"
 msgid "Table preference"
 msgstr "Table preference"
 
-#: app/components/print/restaurant/vertical-ui.tsx:97
+#: app/components/print/restaurant/vertical-ui.tsx:114
 msgid "Table QR cards"
 msgstr "Table QR cards"
 
@@ -30384,7 +30392,7 @@ msgstr "Table QR cards"
 msgid "Table renamed"
 msgstr "Table renamed"
 
-#: app/components/print/restaurant/vertical-ui.tsx:101
+#: app/components/print/restaurant/vertical-ui.tsx:118
 msgid "Table tent"
 msgstr "Table tent"
 
@@ -30405,7 +30413,6 @@ msgstr "Table/area block created."
 
 #: app/components/reservations/settings/setup-checklist.tsx:21
 #: app/components/workspace-breadcrumb.tsx:84
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:108
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:883
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1090
 #: app/routes/_app+/$orgSlug_+/reservations+/settings.tables.tsx:1382
@@ -30587,7 +30594,7 @@ msgid "Teal"
 msgstr "Teal"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:115
-#: app/components/app-sidebar.tsx:509
+#: app/components/app-sidebar.tsx:504
 #: app/components/command-menu.tsx:144
 #: app/components/staff/schedule/day-timeline.tsx:475
 #: app/components/staff/schedule/week-grid.tsx:363
@@ -30755,7 +30762,7 @@ msgstr "Terminal code"
 msgid "Terminal paired"
 msgstr "Terminal paired"
 
-#: app/components/app-sidebar.tsx:642
+#: app/components/app-sidebar.tsx:637
 #: app/components/workspace-breadcrumb.tsx:70
 msgid "Terminals"
 msgstr "Terminals"
@@ -31006,7 +31013,7 @@ msgstr "That did not work"
 #: app/components/qr/open-tabs.tsx:153
 #: app/components/qr/tables-manager.tsx:98
 #: app/components/reservations/experiences/experience-editor.tsx:365
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:82
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:82
 #: app/utils/my-schedule/my-schedule-messages.ts:45
 msgid "That did not work. Try again."
 msgstr "That did not work. Try again."
@@ -33286,7 +33293,7 @@ msgstr "Time cards (CSV)"
 msgid "Time cards: {timeCardCount} (not included in the backup)"
 msgstr "Time cards: {timeCardCount} (not included in the backup)"
 
-#: app/components/app-sidebar.tsx:514
+#: app/components/app-sidebar.tsx:509
 #: app/components/command-menu.tsx:145
 #: app/components/pos/terminals-manager.tsx:1498
 #: app/components/workspace-breadcrumb.tsx:30
@@ -33546,7 +33553,7 @@ msgstr "To the nearest"
 msgid "To: {recipient}"
 msgstr "To: {recipient}"
 
-#: app/components/app-sidebar.tsx:465
+#: app/components/app-sidebar.tsx:460
 #: app/components/chat/chat-view.tsx:932
 #: app/components/my-schedule/shifts-view.tsx:123
 #: app/components/my-schedule/shifts-view.tsx:178
@@ -34262,7 +34269,7 @@ msgstr "Unable to load requests. Try again."
 msgid "Unable to load reviews."
 msgstr "Unable to load reviews."
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:49
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:49
 msgid "Unable to load settings. Try again."
 msgstr "Unable to load settings. Try again."
 
@@ -35630,7 +35637,7 @@ msgstr "Waiting to be paired"
 msgid "Waiting to send"
 msgstr "Waiting to send"
 
-#: app/components/app-sidebar.tsx:480
+#: app/components/app-sidebar.tsx:475
 #: app/components/reservations/reservations-chrome.tsx:88
 #: app/components/reservations/reservations-chrome.tsx:143
 #: app/components/reservations/waitlist/floor-waitlist-panel.tsx:77
@@ -36009,7 +36016,7 @@ msgstr "Web"
 msgid "Webhooks: {webhookMode}"
 msgstr "Webhooks: {webhookMode}"
 
-#: app/components/app-sidebar.tsx:536
+#: app/components/app-sidebar.tsx:531
 #: app/components/command-menu.tsx:152
 #: app/components/workspace-breadcrumb.tsx:14
 #: app/routes/_app+/$orgSlug_+/media.tsx:1230
@@ -36147,7 +36154,7 @@ msgstr "What does it pay?"
 msgid "What else should I know?"
 msgstr ""
 
-#: app/routes/_app+/$orgSlug_+/qr+/settings.tsx:101
+#: app/routes/_app+/$orgSlug_+/settings+/qr-ordering.tsx:101
 msgid "What guests are asked for when they order at the table."
 msgstr "What guests are asked for when they order at the table."
 
@@ -37114,6 +37121,10 @@ msgstr "You have {MAX_TRAINING_RULES} rules, the most allowed. Delete one to add
 msgid "You have been invited to join the following organizations. Choose to accept or decline each invitation."
 msgstr ""
 
+#: app/components/print/restaurant/vertical-ui.tsx:38
+msgid "You have no QR tables yet. Add them in Settings, then come back: each table gets its own card."
+msgstr "You have no QR tables yet. Add them in Settings, then come back: each table gets its own card."
+
 #: app/components/hiring/hire-dialog.tsx:213
 msgid "You have not set up any positions yet. <0>Add a position</0> first, then come back to hire."
 msgstr "You have not set up any positions yet. <0>Add a position</0> first, then come back to hire."
@@ -37342,7 +37353,7 @@ msgstr ""
 msgid "Your media library is empty"
 msgstr "Your media library is empty"
 
-#: app/components/print/restaurant/vertical-ui.tsx:122
+#: app/components/print/restaurant/vertical-ui.tsx:139
 msgid "Your menu has no dishes to feature yet."
 msgstr "Your menu has no dishes to feature yet."
 

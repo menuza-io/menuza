@@ -27,3 +27,6 @@ approved the card. The App server fetches codes from the region with a
 short-lived `qr:write` token that never reaches the browser. **New QR code** on
 a table invalidates its printed cards; renew codes only after shipped cards
 arrive.
+
+A table card with no tables yet links to **Settings, QR tables**
+(`/settings/qr-tables`), where tables are added.

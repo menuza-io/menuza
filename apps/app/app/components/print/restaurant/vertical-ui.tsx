@@ -6,6 +6,7 @@ import { Field, FieldLabel, FieldSet } from '@repo/ui/field'
 import { Label } from '@repo/ui/label'
 import { Switch } from '@repo/ui/switch'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import {
 	type PrintQrTargetFieldsProps,
 	type PrintShopUiVertical,
@@ -22,14 +23,30 @@ type TableChoice = { id: string; label: string; locationId: string }
 
 function TableFields({ target, data }: PrintQrTargetFieldsProps) {
 	const { _ } = useLingui()
-	const tables = (data as { tables?: TableChoice[] } | null)?.tables ?? []
+	const editorData = data as {
+		tables?: TableChoice[]
+		setupHref?: string
+	} | null
+	const tables = editorData?.tables ?? []
 	const chosen = isTableTarget(target) ? target.tableIds : ['all']
 	const [allTables, setAllTables] = useState(chosen.includes('all'))
 	if (tables.length === 0) {
 		return (
-			<p className="text-muted-foreground text-sm">
-				{_(msg`Add tables in QR ordering first. Each table gets its own card.`)}
-			</p>
+			<div className="space-y-2">
+				<p className="text-muted-foreground text-sm">
+					{_(
+						msg`You have no QR tables yet. Add them in Settings, then come back: each table gets its own card.`,
+					)}
+				</p>
+				{editorData?.setupHref ? (
+					<Link
+						to={editorData.setupHref}
+						className="text-primary inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 hover:underline"
+					>
+						{_(msg`Set up QR tables`)}
+					</Link>
+				) : null}
+			</div>
 		)
 	}
 	return (

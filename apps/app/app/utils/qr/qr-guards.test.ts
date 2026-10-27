@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * QR ordering security sweep (App side): every loader and action under
- * `qr+/` and the `qr-token` route call `requireQrOrderingAccess` before they
- * await anything else, so the flag (404), the menu permission (403) and
- * sign-in (401) answer first. The token route asks for write access exactly
+ * `qr+/`, the QR pages under `settings+/` and the `qr-token` route call
+ * `requireQrOrderingAccess` before they await anything else, so the flag
+ * (404), the menu permission (403) and sign-in (401) answer first. The token route asks for write access exactly
  * when it mints `qr:write`.
  */
 
@@ -40,6 +40,9 @@ const files = [
 		.filter((file) => /\.tsx?$/.test(file) && !file.includes('.test.'))
 		.map((file) => path.join(QR_ROUTES, file)),
 	path.join(ORG_ROUTES, 'qr-token.ts'),
+	// The QR pages live under Settings.
+	path.join(ORG_ROUTES, 'settings+', 'qr-tables.tsx'),
+	path.join(ORG_ROUTES, 'settings+', 'qr-ordering.tsx'),
 ].sort()
 
 describe('QR ordering guards', () => {
@@ -52,6 +55,8 @@ describe('QR ordering guards', () => {
 				'tables.tsx',
 				'settings.tsx',
 				'qr-token.ts',
+				'qr-tables.tsx',
+				'qr-ordering.tsx',
 			]),
 		)
 	})

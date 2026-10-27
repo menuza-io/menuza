@@ -375,11 +375,6 @@ function OrganizationSidebar({
 					url: `/${orgSlug}/menu/drops`,
 					isActive: location.pathname.includes(`/${orgSlug}/menu/drops`),
 				},
-				{
-					title: _(msg`QR tables`),
-					url: `/${orgSlug}/qr/tables`,
-					isActive: location.pathname.includes(`/${orgSlug}/qr/`),
-				},
 			],
 		},
 		{
@@ -646,6 +641,17 @@ function OrganizationSidebar({
 							},
 						]
 					: []),
+				...(qrOrderingNav.visible
+					? [
+							{
+								title: _(msg`QR tables`),
+								url: `/${orgSlug}/settings/qr-tables`,
+								isActive:
+									location.pathname.startsWith(`/${orgSlug}/settings/qr-`) ||
+									location.pathname.startsWith(`/${orgSlug}/qr/`),
+							},
+						]
+					: []),
 				{
 					title: _(msg`MCP Server`),
 					url: `/${orgSlug}/mcp`,
@@ -708,16 +714,6 @@ function OrganizationSidebar({
 		})
 		.map((item) => {
 			if (!('items' in item) || !item.items) return item
-			if (item.url === `/${orgSlug}/menu`) {
-				return {
-					...item,
-					isActive:
-						item.isActive || location.pathname.includes(`/${orgSlug}/qr/`),
-					items: item.items.filter((subItem) =>
-						subItem.url.includes('/qr/') ? qrOrderingNav.visible : true,
-					),
-				}
-			}
 			if (item.url === `/${orgSlug}/marketing`) {
 				return {
 					...item,
