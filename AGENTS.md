@@ -631,6 +631,22 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
 - `RESERVATIONS_SMS_ENABLED` - Tenant-api only, optional (unset or `true` is
   on). Kill switch for guest reservation SMS (US node only; the KSA node never
   sends it): `false` drops texts instead of holding them.
+- `QR_DINE_IN_ENABLED` - Tenant-api only, optional (unset or `true` is on). Kill
+  switch for QR table ordering: `false` (also `0`, `off`, `no`, `disabled`)
+  answers 503 on dine-in placement, the table and tab context, starting a tab
+  payment and the bridge's quote and bind for `tab:` ids. Pickup, delivery and
+  operator routes are unaffected; payment events still apply. See
+  `docs/qr-ordering.md`.
+- `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
+  Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
+  open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new
+  renders per organization (default 30).
+- `PRINT_SHIPPING_ENABLED` / `PRINT_MOCK` / `GELATO_API_KEY` / `PRODIGI_API_KEY`
+  / `PRODIGI_SANDBOX` / `PRINT_WEBHOOK_TOKEN` - App only. Shipped prints: kill
+  switch for new paid orders, the local vendor emulator (ignored unless
+  `BASE_URL` is local), vendor keys, and the secret in vendor webhook URLs (32+
+  characters). Admin needs `APP_URL` for refunds and retries. See
+  `docs/print-shop.md`.
 - `RESERVATIONS_TICK_INTERVAL_SECONDS` - Tenant-api Node (OCI) runtime only,
   optional. Seconds between in-process reservation ticks (default 120, minimum
   60, `0` off). The hourly cron fan-out always runs; the Workers runtime uses
@@ -990,6 +1006,47 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - Canonical docs: `docs/reservations.md` (operator guide, runbook, known
   issues), `docs/reservations-contract.md`, `docs/reservations-plan.md` and
   `docs/decisions/048-reservations-data-residency.md`.
+
+**QR ordering (table tabs and order-ahead posters):**
+
+- A tab's rounds are `restaurant_orders` rows (`fulfillment: 'dine_in'`,
+  `paymentMethod: 'handoff'`, `tabId` / `tableId` / `tableLabel` / `source`)
+  grouped by the regional `qr_tabs` aggregate; tables are `qr_tables`, the org's
+  policy `qr_settings` (tenant-db migration `0023_qr_ordering`). No
+  control-plane tables.
+- Table and tab codes are HMACs of `AUTH_HMAC_SECRET` over the org, the row id
+  and its version: never stored, burned by bumping the version. They ride in the
+  URL fragment and the `X-Table-Token` / `X-Tab-Token` headers only.
+- Flags `qr_ordering.enabled` / `.dine_in` / `.online` (default off) reach the
+  region in the order context (`qrOrdering`, fail closed). App gates nav,
+  `qr-token` and every `qr+/` loader with `requireQrOrderingAccess`
+  (`apps/app/app/utils/qr/qr-guards.test.ts`); menu permissions, no new ones.
+- Tab payment reuses the restaurant-order payment bridge under
+  `orderId = 'tab:<id>'` (`parseTabOrderRef`). Writes go through `runExclusive`
+  - `runTenantTransaction`. Person erasure covers `qr_tabs.guest_name` /
+    `guest_phone`.
+- Tests: `apps/tenant-api/src/routes/qr-ordering.test.ts` (guest flow, codes,
+  flags, kill switch, tabs, payment bridge and the `/operator/qr` sweep). Demo
+  data: `npm run seed:qr -w tenant-api -- acme`. Docs: `docs/qr-ordering.md`.
+
+**Print shop (Marketing, Print shop):**
+
+- Operator B2B data in the control plane (`PrintDesign`, `PrintRender`,
+  `PrintOrder`, `PrintVendorOrder`, `PrintOrderItem`, `PrintVendorProduct`,
+  `PrintSettings`, `PrintVendorEvent`; migration `0027_print_shop`). Catalog,
+  flags and schemas in `@repo/common/print-shop`; templates in
+  `apps/app/app/components/print/`, rendering and orders in
+  `apps/app/app/utils/print/`.
+- Flags `print_shop.enabled` (designs, free PDFs) and `print_shop.shipping`
+  (paid orders). Campaign permissions design; paying also needs
+  `update:settings:any`. Every print route awaits `requirePrintShopAccess` first
+  (`print-guards.test.ts`).
+- Table cards fetch table codes server-side with a short-lived `qr:write` token
+  that never reaches the browser.
+- Shipped prints: Menuza is the merchant (Stripe Checkout on the platform
+  account, metadata `type: 'print_order'`); vendor orders are placed only after
+  payment; vendor webhooks only trigger a status fetch. Docs:
+  `docs/print-shop.md`.
 
 ## Known issues
 

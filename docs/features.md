@@ -21,6 +21,10 @@ Here are a few things you get today:
 - Tenant Sites locale-prefixed internationalization (e.g. `/ar/about`) for
   published organization websites, independent of the App/Admin Lingui locales
   (see `apps/sites/src/middleware.ts` and `packages/common/src/site-locales.ts`)
+- QR table ordering with open tabs: guests order rounds from their phone and pay
+  once, at the counter or online (see [QR ordering](./qr-ordering.md))
+- Print shop: branded table cards, posters and flyers as free print-ready PDFs,
+  or printed and shipped (see [Print shop](./print-shop.md))
 - Two-Factor Authentication (2fa) with support for authenticator apps
 - Transactional email with [Resend](https://resend.com/) and forgot
   password/password reset support
