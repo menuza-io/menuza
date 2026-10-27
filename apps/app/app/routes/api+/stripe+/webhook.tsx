@@ -7,6 +7,10 @@ import {
 	handleTrialEnd,
 } from '#app/utils/payments.server.ts'
 import {
+	handlePrintStripeSession,
+	isPrintStripeMetadata,
+} from '#app/utils/print/orders.server.ts'
+import {
 	handleConnectAccountUpdated,
 	recordShopOrderFromConnectWebhook,
 } from '#app/utils/shop.server.ts'
@@ -111,14 +115,36 @@ export async function action({ request }: ActionFunctionArgs) {
 				break
 			}
 
-			case 'checkout.session.completed': {
+			case 'checkout.session.completed':
+			case 'checkout.session.async_payment_succeeded':
+			case 'checkout.session.async_payment_failed':
+			case 'checkout.session.expired': {
 				const session = event.data.object as Stripe.Checkout.Session
-				await recordShopOrderFromConnectWebhook(session, event.type)
+				if (isPrintStripeMetadata(session.metadata)) {
+					// Print shop orders live on the platform account: a paid session
+					// submits the order to its vendors. The same metadata on a
+					// connected account's event is that account's own: ignore it.
+					if (event.account) {
+						console.warn(
+							`Ignored print metadata on a connected account's ${event.type} (${event.account})`,
+						)
+					} else {
+						await handlePrintStripeSession(session, event.type)
+					}
+					break
+				}
+				if (event.type === 'checkout.session.completed') {
+					await recordShopOrderFromConnectWebhook(session, event.type)
+				}
 				break
 			}
 
 			case 'payment_intent.succeeded': {
 				const paymentIntent = event.data.object as Stripe.PaymentIntent
+				if (isPrintStripeMetadata(paymentIntent.metadata)) {
+					// Print orders settle on the session event.
+					break
+				}
 				await recordShopOrderFromConnectWebhook(paymentIntent, event.type)
 				break
 			}

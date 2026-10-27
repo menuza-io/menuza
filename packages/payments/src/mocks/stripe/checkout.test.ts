@@ -46,6 +46,26 @@ async function paymentSession(
 }
 
 describe('Stripe Checkout payment mode', () => {
+	it('accepts tax codes and tax behavior on line items', async () => {
+		const harness = createTestHarness()
+		const session = await harness.stripe.checkout.sessions.create({
+			mode: 'payment',
+			line_items: [
+				{
+					quantity: 1,
+					price_data: {
+						currency: 'usd',
+						unit_amount: 1200,
+						tax_behavior: 'exclusive',
+						product_data: { name: 'Prints', tax_code: 'txcd_99999999' },
+					},
+				},
+			],
+			success_url: 'http://localhost:3001/done',
+		})
+		expect(session).toMatchObject({ status: 'open', amount_total: 1200 })
+	})
+
 	it('creates an open session whose url is the mock hosted page', async () => {
 		const harness = createTestHarness()
 		const { session } = await paymentSession(harness)

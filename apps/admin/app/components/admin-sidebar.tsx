@@ -137,6 +137,12 @@ export function AdminSidebar({
 			isActive: location.pathname.startsWith('/feature-flags'),
 			icon: FlaskIcon,
 		},
+		{
+			title: _(msg`Print shop`),
+			url: '/print-shop',
+			isActive: location.pathname.startsWith('/print-shop'),
+			icon: FileTextIcon,
+		},
 	]
 
 	// User data for NavUser component

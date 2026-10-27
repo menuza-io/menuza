@@ -38,11 +38,11 @@ msgstr "{0} أرقام"
 
 #. placeholder {0}: campaign.recipients.length
 #. placeholder {1}: campaign.targetAudienceCount
-#: ../../packages/marketing/src/components/campaign-detail.tsx:119
+#: ../../packages/marketing/src/components/campaign-detail.tsx:121
 msgid "{0} of {1} targeted"
 msgstr "{0} من {1} مستهدف"
 
-#: app/routes/_admin+/index.tsx:192
+#: app/routes/_admin+/index.tsx:195
 msgid "{active} active • +{recent} new this week"
 msgstr "{active} نشط • +{recent} جديد هذا الأسبوع"
 
@@ -73,7 +73,7 @@ msgstr "{days} يومًا"
 msgid "{errorCount, plural, one {# validation error} other {# validation errors}}"
 msgstr "{errorCount, plural, one {خطأ تحقق واحد} other {# أخطاء تحقق}}"
 
-#: ../../packages/reports/src/ui/report-chart.tsx:149
+#: ../../packages/reports/src/ui/report-chart.tsx:156
 msgid "{excluded, plural, one {# record is left out of this ratio because it has nothing to compare against, such as a day with wages and no sales entered, or wages in a different currency from the sales.} other {# records are left out of this ratio because they have nothing to compare against, such as days with wages and no sales entered, or wages in a different currency from the sales.}}"
 msgstr "{excluded, plural, zero {لا سجلات مستبعدة} one {تم استبعاد سجل واحد من هذه النسبة لأنه لا يوجد ما يقارن به، مثل يوم فيه أجور ولم تُدخل له مبيعات، أو أجور بعملة مختلفة عن المبيعات.} two {تم استبعاد سجلين من هذه النسبة لأنه لا يوجد ما يقارن بهما، مثل يومين فيهما أجور ولم تُدخل لهما مبيعات، أو أجور بعملة مختلفة عن المبيعات.} few {تم استبعاد # سجلات من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} many {تم استبعاد # سجلًا من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.} other {تم استبعاد # سجل من هذه النسبة لأنه لا يوجد ما تقارن به، مثل أيام فيها أجور ولم تُدخل لها مبيعات، أو أجور بعملة مختلفة عن المبيعات.}}"
 
@@ -149,7 +149,7 @@ msgstr "+ دور جديد"
 msgid "+{moreCount} more users"
 msgstr "+{moreCount} مستخدم آخر"
 
-#: app/routes/_admin+/index.tsx:161
+#: app/routes/_admin+/index.tsx:164
 msgid "+{recentUsers} new this week"
 msgstr "+{recentUsers} جديد هذا الأسبوع"
 
@@ -212,9 +212,33 @@ msgstr "رابط مُنسَّق كدعوة لاتخاذ إجراء."
 msgid "A picture, logo, or product shot."
 msgstr "صورة أو شعار أو لقطة منتج."
 
+#: app/routes/_admin+/print-shop.tsx:93
+msgid "A submission or cancellation stopped halfway: check the vendor before retrying"
+msgstr "توقف الإرسال أو الإلغاء في منتصفه: تحقق لدى المورد قبل إعادة المحاولة"
+
+#: app/routes/_admin+/print-shop.tsx:206
+msgid "A vendor already started printing this order, so nothing was refunded. Use \"Refund, vendor keeps printing\" if the vendor should still ship it."
+msgstr "بدأ مورد بالفعل في طباعة هذا الطلب، لذا لم يُسترد شيء. استخدم «استرداد، والمورد يواصل الطباعة» إذا كان على المورد أن يشحنه رغم ذلك."
+
 #: app/components/privacy-banner.tsx:60
 msgid "Accept"
 msgstr "قبول"
+
+#: app/routes/_admin+/print-shop.tsx:670
+msgid "Accept and send"
+msgstr "قبول وإرسال"
+
+#: app/routes/_admin+/print-shop.tsx:664
+msgid "Accept new price"
+msgstr "قبول السعر الجديد"
+
+#: app/routes/_admin+/print-shop.tsx:665
+msgid "Accept new price, {orderName}"
+msgstr "قبول السعر الجديد، {orderName}"
+
+#: app/routes/_admin+/print-shop.tsx:666
+msgid "Accept the new wholesale price?"
+msgstr "قبول سعر الجملة الجديد؟"
 
 #: app/routes/_admin+/waitlist.tsx:254
 msgid "Access"
@@ -246,9 +270,9 @@ msgstr "إجراء"
 msgid "Action failed"
 msgstr "فشل الإجراء"
 
-#: app/components/admin/feature-flags.tsx:377
-#: app/components/admin/feature-flags.tsx:483
-#: app/components/admin/feature-flags.tsx:654
+#: app/components/admin/feature-flags.tsx:378
+#: app/components/admin/feature-flags.tsx:484
+#: app/components/admin/feature-flags.tsx:655
 #: app/components/sso-user-management.tsx:177
 #: app/routes/_admin+/cache.tsx:619
 #: app/routes/_admin+/gdpr-requests.tsx:508
@@ -256,6 +280,8 @@ msgstr "فشل الإجراء"
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
 #: app/routes/_admin+/phone-numbers.tsx:356
+#: app/routes/_admin+/print-shop.tsx:365
+#: app/routes/_admin+/print-shop.tsx:782
 #: app/routes/_admin+/roles+/index.tsx:412
 #: app/routes/_admin+/roles+/index.tsx:454
 #: app/routes/_admin+/waitlist.tsx:354
@@ -291,7 +317,7 @@ msgstr "الحملات النشطة"
 msgid "Active Sessions"
 msgstr "الجلسات النشطة"
 
-#: app/routes/_admin+/index.tsx:236
+#: app/routes/_admin+/index.tsx:238
 msgid "Active Users"
 msgstr "المستخدمون النشطون"
 
@@ -346,8 +372,8 @@ msgstr "إضافة كتلة"
 msgid "Add feature"
 msgstr "إضافة ميزة"
 
-#: app/components/admin/feature-flags.tsx:94
-#: app/components/admin/feature-flags.tsx:752
+#: app/components/admin/feature-flags.tsx:95
+#: app/components/admin/feature-flags.tsx:761
 msgid "Add Flag"
 msgstr "إضافة مؤشر"
 
@@ -359,8 +385,8 @@ msgstr "إضافة الرقم"
 msgid "Add numbers bought in Twilio and routed to the LiveKit SIP trunk."
 msgstr "أضف الأرقام المشتراة من Twilio والموجَّهة إلى خط SIP الخاص بـ LiveKit."
 
-#: app/components/admin/feature-flags.tsx:536
-#: app/components/admin/feature-flags.tsx:714
+#: app/components/admin/feature-flags.tsx:537
+#: app/components/admin/feature-flags.tsx:715
 msgid "Add Override"
 msgstr "إضافة تجاوز"
 
@@ -385,8 +411,8 @@ msgstr "أضف نقاطاً إلى إجمالي {0} الحالي البالغ {1
 msgid "Add waitlist points"
 msgstr "إضافة نقاط قائمة الانتظار"
 
-#: app/components/admin-sidebar.tsx:145
-#: app/components/admin-sidebar.tsx:153
+#: app/components/admin-sidebar.tsx:151
+#: app/components/admin-sidebar.tsx:159
 #: app/components/sso-configuration-form.tsx:392
 #: app/components/sso-user-management.tsx:98
 #: app/routes/_admin+/roles+/$roleId.tsx:465
@@ -394,8 +420,8 @@ msgstr "إضافة نقاط قائمة الانتظار"
 msgid "Admin"
 msgstr "مدير"
 
-#: app/components/admin-sidebar.tsx:171
-#: app/routes/_admin+/index.tsx:126
+#: app/components/admin-sidebar.tsx:177
+#: app/routes/_admin+/index.tsx:129
 msgid "Admin Dashboard"
 msgstr "لوحة تحكم المدير"
 
@@ -436,7 +462,7 @@ msgstr "جميع المؤسسات"
 #~ msgid "All plans"
 #~ msgstr "جميع الخطط"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:32
+#: ../../packages/marketing/src/components/campaign-detail.tsx:34
 msgid "All recipients"
 msgstr "جميع المستلمين"
 
@@ -472,6 +498,10 @@ msgstr "السماح للمستخدمين بتصدير سجلات المراجع
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 msgid "Alt text"
 msgstr "النص البديل"
+
+#: app/routes/_admin+/print-shop.tsx:726
+msgid "Amount in US dollars, up to {left}"
+msgstr "المبلغ بالدولار الأمريكي، حتى {left}"
 
 #: app/routes/_admin+/phone-numbers.tsx:167
 msgid "Answering"
@@ -633,7 +663,7 @@ msgstr "العودة إلى الأتمتة"
 msgid "Back to blocks"
 msgstr "العودة إلى الكتل"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:29
+#: ../../packages/marketing/src/components/campaign-detail.tsx:31
 msgid "Back to broadcasts"
 msgstr "العودة إلى البثّات"
 
@@ -718,6 +748,14 @@ msgstr "أدرج في القائمة السوداء بواسطة"
 msgid "Blacklisted IPs"
 msgstr "عناوين IP المدرجة في القائمة السوداء"
 
+#: app/routes/_admin+/print-shop.tsx:363
+msgid "Bleed (mm)"
+msgstr "هامش النزف (مم)"
+
+#: app/routes/_admin+/print-shop.tsx:453
+msgid "Bleed in millimetres, {item}"
+msgstr "هامش النزف بالمليمتر، {item}"
+
 #: ../../packages/marketing/src/components/email/add-email-block-dialog.tsx:83
 msgid "Block types"
 msgstr "أنواع الكتل"
@@ -734,7 +772,7 @@ msgstr "الكتل"
 msgid "Body text"
 msgstr "نص المحتوى"
 
-#: app/components/admin/feature-flags.tsx:144
+#: app/components/admin/feature-flags.tsx:145
 msgid "Boolean"
 msgstr "منطقي"
 
@@ -742,7 +780,7 @@ msgstr "منطقي"
 msgid "Broadcast not found"
 msgstr "لم يتم العثور على البث"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:96
+#: ../../packages/marketing/src/components/campaign-detail.tsx:98
 msgid "Broadcast preview"
 msgstr "معاينة البث"
 
@@ -772,12 +810,12 @@ msgid "Button label"
 msgstr "نص الزر"
 
 #: app/components/admin-sidebar.tsx:111
-#: app/routes/_admin+/index.tsx:372
+#: app/routes/_admin+/index.tsx:375
 msgid "Cache"
 msgstr "ذاكرة التخزين المؤقت"
 
 #: app/routes/_admin+/cache.tsx:275
-#: app/routes/_admin+/index.tsx:391
+#: app/routes/_admin+/index.tsx:394
 msgid "Cache Management"
 msgstr "إدارة ذاكرة التخزين المؤقت"
 
@@ -796,6 +834,7 @@ msgstr "اسم الحملة"
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:587
+#: app/routes/_admin+/print-shop.tsx:181
 #: app/routes/_admin+/roles+/index.tsx:352
 #: app/routes/_admin+/waitlist.tsx:474
 msgid "Cancel"
@@ -806,8 +845,17 @@ msgid "Canceled"
 msgstr "ملغي"
 
 #: app/routes/_admin+/gdpr-requests.tsx:365
+#: app/routes/_admin+/print-shop.tsx:75
 msgid "Cancelled"
 msgstr "ملغي"
+
+#: app/routes/_admin+/print-shop.tsx:87
+msgid "Cancelled by the organization"
+msgstr "ألغته المؤسسة"
+
+#: app/routes/_admin+/print-shop.tsx:68
+msgid "Cancelling"
+msgstr "جارٍ الإلغاء"
 
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:94
 msgid "Center"
@@ -821,6 +869,11 @@ msgstr "القناة"
 msgid "Check out our new summer menu"
 msgstr "اطّلع على قائمة الصيف الجديدة"
 
+#: app/routes/_admin+/print-shop.tsx:201
+#: app/routes/_admin+/print-shop.tsx:202
+msgid "Check the form values."
+msgstr "تحقق من قيم النموذج."
+
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:123
 msgid "Choose a valid retention period."
 msgstr "اختر فترة احتفاظ صالحة."
@@ -833,7 +886,7 @@ msgstr "اختر من المكتبة"
 msgid "Clear {typeUpper}"
 msgstr "مسح {typeUpper}"
 
-#: app/routes/_admin+/index.tsx:494
+#: app/routes/_admin+/index.tsx:497
 msgid "Clear Cache"
 msgstr "مسح ذاكرة التخزين المؤقت"
 
@@ -851,7 +904,7 @@ msgid "Click rate"
 msgstr "معدل النقر"
 
 #. placeholder {0}: new Date(recipient.clickedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:48
+#: ../../packages/marketing/src/components/campaign-detail.tsx:50
 msgid "Clicked {0}"
 msgstr "نُقِر {0}"
 
@@ -998,7 +1051,7 @@ msgstr "يحتوي (تطابق جزئي)"
 msgid "Core System Role"
 msgstr "دور النظام الأساسي"
 
-#: app/components/admin/feature-flags.tsx:100
+#: app/components/admin/feature-flags.tsx:101
 msgid "Create a new feature flag at system level."
 msgstr "إنشاء مؤشر ميزة جديد على مستوى النظام."
 
@@ -1006,11 +1059,11 @@ msgstr "إنشاء مؤشر ميزة جديد على مستوى النظام."
 msgid "Create a new role with custom permissions"
 msgstr "إنشاء دور جديد بصلاحيات مخصصة"
 
-#: app/components/admin/feature-flags.tsx:249
+#: app/components/admin/feature-flags.tsx:250
 msgid "Create an override at organization level."
 msgstr "إنشاء تجاوز على مستوى المؤسسة."
 
-#: app/components/admin/feature-flags.tsx:251
+#: app/components/admin/feature-flags.tsx:252
 msgid "Create an override at user level."
 msgstr "إنشاء تجاوز على مستوى المستخدم."
 
@@ -1022,7 +1075,7 @@ msgstr "إنشاء أتمتة"
 msgid "Create Broadcast"
 msgstr "إنشاء بث"
 
-#: app/components/admin/feature-flags.tsx:188
+#: app/components/admin/feature-flags.tsx:189
 msgid "Create Flag"
 msgstr "إنشاء مؤشر"
 
@@ -1030,11 +1083,11 @@ msgstr "إنشاء مؤشر"
 msgid "Create New Role"
 msgstr "إنشاء دور جديد"
 
-#: app/components/admin/feature-flags.tsx:346
+#: app/components/admin/feature-flags.tsx:347
 msgid "Create Override"
 msgstr "إنشاء تجاوز"
 
-#: app/components/admin/feature-flags.tsx:242
+#: app/components/admin/feature-flags.tsx:243
 msgid "Create Override for \"{flagKey}\""
 msgstr "إنشاء تجاوز لـ \"{flagKey}\""
 
@@ -1089,7 +1142,7 @@ msgstr "حرج"
 msgid "Current active login sessions"
 msgstr "جلسات تسجيل الدخول النشطة الحالية"
 
-#: app/routes/_admin+/index.tsx:259
+#: app/routes/_admin+/index.tsx:261
 msgid "Currently logged in users"
 msgstr "المستخدمون المسجلون حالياً"
 
@@ -1155,7 +1208,7 @@ msgstr "لوحة التحكم"
 #~ msgid "Data Subject Requests"
 #~ msgstr "طلبات أصحاب البيانات"
 
-#: app/components/admin/feature-flags.tsx:147
+#: app/components/admin/feature-flags.tsx:148
 #: app/routes/_admin+/waitlist.tsx:276
 msgid "Date"
 msgstr "التاريخ"
@@ -1188,7 +1241,7 @@ msgstr "يجب أن تكون مدة التأخير 1 على الأقل."
 msgid "Delay unit is required."
 msgstr "وحدة التأخير مطلوبة."
 
-#: app/components/admin/feature-flags.tsx:408
+#: app/components/admin/feature-flags.tsx:409
 #: app/routes/_admin+/marketing+/automations._index.tsx:289
 msgid "Delete"
 msgstr "حذف"
@@ -1222,6 +1275,10 @@ msgstr "حذف العقدة"
 #: app/routes/_admin+/roles+/system.$roleId.tsx:281
 msgid "Delete role"
 msgstr "حذف الدور"
+
+#: app/routes/_admin+/print-shop.tsx:72
+msgid "Delivered"
+msgstr "تم التسليم"
 
 #: app/routes/_admin+/roles+/index.tsx:319
 msgid "Describe what this role can do..."
@@ -1257,6 +1314,10 @@ msgstr "التفاصيل أو الإجراء"
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:312
 msgid "Detected"
 msgstr "مُكتشَف"
+
+#: app/routes/_admin+/print-shop.tsx:591
+msgid "Did the vendor get this order?"
+msgstr "هل استلم المورد هذا الطلب؟"
 
 #: app/components/sso-configuration-overview.tsx:130
 msgid "Disable"
@@ -1312,6 +1373,10 @@ msgstr "مسودة"
 #: ../../packages/marketing/src/components/email/email-block-editor.tsx:120
 msgid "Drag to reorder"
 msgstr "اسحب لإعادة الترتيب"
+
+#: app/routes/_admin+/print-shop.tsx:295
+msgid "Drift limit (%)"
+msgstr "حد تغيّر السعر (%)"
 
 #: app/routes/_admin+/marketing+/automations._index.tsx:275
 msgid "Duplicate"
@@ -1369,7 +1434,11 @@ msgstr "مثل: Okta، Azure AD، Auth0"
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "ساعات ومناوبات كل يوم المنشورة بجانب الساعات المعمول بها وبطاقات الوقت التي بدأت، مع الفرق."
 
-#: app/components/admin/feature-flags.tsx:401
+#: app/routes/_admin+/print-shop.tsx:349
+msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
+msgstr "يُطبع كل منتج ومقاس قابل للشحن لدى مورّد واحد. تغيير المورّد هنا هو طريقة إعادة توجيه الطلبات: إعادة محاولة طلب معلّق تستخدم الربط الجديد."
+
+#: app/components/admin/feature-flags.tsx:402
 #: app/components/roles/roles-table-rows.tsx:59
 #: app/components/sso-configuration-overview.tsx:118
 #: app/routes/_admin+/marketing+/automations._index.tsx:231
@@ -1380,25 +1449,25 @@ msgstr "تحرير"
 msgid "Edit design"
 msgstr "تعديل التصميم"
 
-#: app/components/admin/feature-flags.tsx:94
+#: app/components/admin/feature-flags.tsx:95
 msgid "Edit Flag"
 msgstr "تحرير المؤشر"
 
-#: app/components/admin/feature-flags.tsx:534
-#: app/components/admin/feature-flags.tsx:712
+#: app/components/admin/feature-flags.tsx:535
+#: app/components/admin/feature-flags.tsx:713
 msgid "Edit Override"
 msgstr "تحرير التجاوز"
 
-#: app/components/admin/feature-flags.tsx:240
+#: app/components/admin/feature-flags.tsx:241
 msgid "Edit Override for \"{flagKey}\""
 msgstr "تحرير التجاوز لـ \"{flagKey}\""
 
-#: app/components/admin/feature-flags.tsx:98
+#: app/components/admin/feature-flags.tsx:99
 msgid "Edit the details of the feature flag."
 msgstr "تحرير تفاصيل مؤشر الميزة."
 
-#: app/components/admin/feature-flags.tsx:477
-#: app/components/admin/feature-flags.tsx:648
+#: app/components/admin/feature-flags.tsx:478
+#: app/components/admin/feature-flags.tsx:649
 msgid "Effective Value"
 msgstr "القيمة الفعالة"
 
@@ -1463,8 +1532,13 @@ msgid "Empty subject"
 msgstr "موضوع فارغ"
 
 #: app/components/sso-configuration-overview.tsx:132
+#: app/routes/_admin+/print-shop.tsx:465
 msgid "Enable"
 msgstr "تفعيل"
+
+#: app/routes/_admin+/print-shop.tsx:463
+msgid "Enable {item}"
+msgstr "تفعيل {item}"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:404
 msgid "Enable Archiving"
@@ -1474,7 +1548,7 @@ msgstr "تفعيل الأرشفة"
 msgid "Enable SSO"
 msgstr "تفعيل SSO"
 
-#: app/components/admin/feature-flags.tsx:305
+#: app/components/admin/feature-flags.tsx:306
 #: app/components/sso-configuration-overview.tsx:101
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:415
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:440
@@ -1493,6 +1567,10 @@ msgstr "تاريخ النهاية"
 msgid "Enter a whole number from 1 to {MAX_ADMIN_POINTS_ADJUSTMENT}."
 msgstr "أدخل عدداً صحيحاً من 1 إلى {MAX_ADMIN_POINTS_ADJUSTMENT}."
 
+#: app/routes/_admin+/print-shop.tsx:207
+msgid "Enter an amount above zero and no more than what is left to refund."
+msgstr "أدخل مبلغًا أكبر من صفر ولا يتجاوز المتبقي للاسترداد."
+
 #: app/routes/_admin+/roles+/$roleId.tsx:800
 msgid "Enter feature description"
 msgstr "أدخل وصف الميزة"
@@ -1505,11 +1583,11 @@ msgstr "أدخل مفتاح الميزة"
 msgid "Enter feature name"
 msgstr "أدخل اسم الميزة"
 
-#: app/components/admin/feature-flags.tsx:451
+#: app/components/admin/feature-flags.tsx:452
 msgid "Enter Organization ID"
 msgstr "أدخل معرف المؤسسة"
 
-#: app/components/admin/feature-flags.tsx:606
+#: app/components/admin/feature-flags.tsx:607
 msgid "Enter Organization ID (optional - for per-org overrides)"
 msgstr "أدخل معرف المؤسسة (اختياري - للتجاوزات لكل مؤسسة)"
 
@@ -1525,11 +1603,19 @@ msgstr "أدخل اسم الصلاحية"
 msgid "Enter reason for blacklisting this IP address..."
 msgstr "أدخل سبب إدراج عنوان IP هذا في القائمة السوداء..."
 
+#: app/routes/_admin+/print-shop.tsx:621
+msgid "Enter the order id the vendor shows for each reference. Nothing is sent again; tracking, cancelling and refunds then follow the vendor's order."
+msgstr "أدخل رقم الطلب الذي يعرضه المورد لكل مرجع. لا يُرسل شيء مرة أخرى؛ ويتم بعدها تتبّع الشحنة والإلغاء والاسترداد عبر طلب المورد."
+
 #: app/components/admin-ban-user-dialog.tsx:105
 msgid "Enter the reason for banning this user..."
 msgstr "أدخل سبب حظر هذا المستخدم..."
 
-#: app/components/admin/feature-flags.tsx:597
+#: app/routes/_admin+/print-shop.tsx:204
+msgid "Enter the vendor order id."
+msgstr "أدخل رقم طلب المورد."
+
+#: app/components/admin/feature-flags.tsx:598
 msgid "Enter User ID (required)"
 msgstr "أدخل معرف المستخدم (مطلوب)"
 
@@ -1608,6 +1694,7 @@ msgstr "تصدير JSON"
 #: ../../packages/marketing/src/i18n/campaign-labels.ts:10
 #: app/routes/_admin+/gdpr-requests.tsx:366
 #: app/routes/_admin+/marketing+/campaigns._index.tsx:26
+#: app/routes/_admin+/print-shop.tsx:74
 msgid "Failed"
 msgstr "فشل"
 
@@ -1675,7 +1762,7 @@ msgstr "تصفية حسب نوع ذاكرة التخزين المؤقت"
 #~ msgid "Filters"
 #~ msgstr "المرشحات"
 
-#: app/routes/_admin+/index.tsx:437
+#: app/routes/_admin+/index.tsx:440
 msgid "Find and manage user accounts"
 msgstr "البحث عن حسابات المستخدمين وإدارتها"
 
@@ -1693,26 +1780,34 @@ msgstr "ملاءمة عرض اللوحة"
 msgid "Fix validation errors before publishing"
 msgstr "أصلح أخطاء التحقق قبل النشر"
 
-#: app/components/admin/feature-flags.tsx:122
+#: app/components/admin/feature-flags.tsx:123
 msgid "Flag Key"
 msgstr "مفتاح المؤشر"
 
-#: app/components/admin/feature-flags.tsx:154
-#: app/components/admin/feature-flags.tsx:163
+#: app/components/admin/feature-flags.tsx:155
+#: app/components/admin/feature-flags.tsx:164
 msgid "Flag Value"
 msgstr "قيمة المؤشر"
 
-#: app/components/admin/feature-flags.tsx:467
+#: app/components/admin/feature-flags.tsx:468
 msgid "Flags for Organization: {searchedOrgId}"
 msgstr "المؤشرات للمؤسسة: {searchedOrgId}"
 
-#: app/components/admin/feature-flags.tsx:636
+#: app/components/admin/feature-flags.tsx:637
 msgid "Flags for User: {searchedUserId} (Global)"
 msgstr "المؤشرات للمستخدم: {searchedUserId} (عام)"
 
-#: app/components/admin/feature-flags.tsx:632
+#: app/components/admin/feature-flags.tsx:633
 msgid "Flags for User: {searchedUserId} (Org: {searchedOrgId})"
 msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {searchedOrgId})"
+
+#: app/routes/_admin+/print-shop.tsx:55
+msgid "Flyer"
+msgstr "منشور"
+
+#: app/routes/_admin+/print-shop.tsx:702
+msgid "For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at {platform}'s cost. This cannot be undone."
+msgstr "لمطالبة بعيب أو طرد مفقود: يُعاد المبلغ كاملًا إلى البطاقة، ويواصل المورّد الطباعة والشحن على نفقة {platform}. لا يمكن التراجع عن ذلك."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:169
 #~ msgid "Form Identifier / Slug"
@@ -1722,6 +1817,14 @@ msgstr "المؤشرات للمستخدم: {searchedUserId} (المؤسسة: {se
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:50
 #~ msgid "Form Submitted"
 #~ msgstr "تم إرسال النموذج"
+
+#: app/routes/_admin+/print-shop.tsx:617
+msgid "Found it at the vendor"
+msgstr "وجدته لدى المورد"
+
+#: app/routes/_admin+/print-shop.tsx:618
+msgid "Found it at the vendor, {orderName}"
+msgstr "وجدته لدى المورد، {orderName}"
 
 #: app/routes/_admin+/audit-logs.tsx:134
 msgid "from"
@@ -1879,6 +1982,10 @@ msgstr "https://your-domain.okta.com/oauth2/v1/token"
 msgid "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgstr "https://your-domain.okta.com/oauth2/v1/userinfo"
 
+#: app/routes/_admin+/print-shop.tsx:606
+msgid "I found nothing, retry"
+msgstr "لم أجد شيئًا، أعد المحاولة"
+
 #: app/components/sso-configuration-form.tsx:137
 msgid "Identity Provider Configuration"
 msgstr "إعداد موفر الهوية"
@@ -2009,9 +2116,9 @@ msgstr "متابعة التعديل"
 msgid "Keep forever"
 msgstr "الاحتفاظ للأبد"
 
-#: app/components/admin/feature-flags.tsx:371
-#: app/components/admin/feature-flags.tsx:474
-#: app/components/admin/feature-flags.tsx:645
+#: app/components/admin/feature-flags.tsx:372
+#: app/components/admin/feature-flags.tsx:475
+#: app/components/admin/feature-flags.tsx:646
 #: app/routes/_admin+/cache.tsx:607
 #: app/routes/_admin+/roles+/$roleId.tsx:492
 #: app/routes/_admin+/roles+/$roleId.tsx:541
@@ -2106,7 +2213,7 @@ msgstr "بدء التشغيل"
 msgid "Launch status is currently <0>{launchStatus}</0>. The waitlist is only active when LAUNCH_STATUS is set to CLOSED_BETA."
 msgstr "حالة الإطلاق حالياً <0>{launchStatus}</0>. قائمة الانتظار نشطة فقط عندما يتم تعيين LAUNCH_STATUS إلى CLOSED_BETA."
 
-#: app/components/admin/feature-flags.tsx:618
+#: app/components/admin/feature-flags.tsx:619
 msgid "Leave Organization ID empty to view/set global user overrides. Enter an Organization ID to view/set overrides for that specific organization."
 msgstr "اترك معرف المؤسسة فارغاً لعرض/تعيين التجاوزات العامة للمستخدم. أدخل معرف المؤسسة لعرض/تعيين التجاوزات لتلك المؤسسة المحددة."
 
@@ -2164,7 +2271,7 @@ msgstr "إدارة جميع المؤسسات في النظام"
 msgid "Manage all users in the system"
 msgstr "إدارة جميع المستخدمين في النظام"
 
-#: app/routes/_admin+/index.tsx:400
+#: app/routes/_admin+/index.tsx:403
 msgid "Manage Cache →"
 msgstr "إدارة ذاكرة التخزين المؤقت →"
 
@@ -2176,11 +2283,11 @@ msgstr "إدارة طلبات تصدير البيانات وحذفها للام�
 msgid "Manage organization and system roles and permissions"
 msgstr "إدارة أدوار المؤسسة والنظام والصلاحيات"
 
-#: app/routes/_admin+/index.tsx:355
+#: app/routes/_admin+/index.tsx:358
 msgid "Manage Organizations"
 msgstr "إدارة المؤسسات"
 
-#: app/routes/_admin+/index.tsx:497
+#: app/routes/_admin+/index.tsx:500
 msgid "Manage system performance"
 msgstr "إدارة أداء النظام"
 
@@ -2188,7 +2295,7 @@ msgstr "إدارة أداء النظام"
 msgid "Manage team chat retention for {organizationName}."
 msgstr "إدارة الاحتفاظ برسائل محادثات الفريق في {organizationName}."
 
-#: app/routes/_admin+/index.tsx:319
+#: app/routes/_admin+/index.tsx:322
 msgid "Manage Users"
 msgstr "إدارة المستخدمين"
 
@@ -2196,7 +2303,7 @@ msgstr "إدارة المستخدمين"
 msgid "Manage users who authenticate through SSO for {organizationName}"
 msgstr "إدارة المستخدمين الذين يصادقون من خلال SSO لـ {organizationName}"
 
-#: app/routes/_admin+/index.tsx:128
+#: app/routes/_admin+/index.tsx:131
 msgid "Manage users, organizations, and system settings"
 msgstr "إدارة المستخدمين والمؤسسات وإعدادات النظام"
 
@@ -2227,9 +2334,25 @@ msgstr "تشغيل أرشفة السجلات الأقدم من فترة التخ
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr "تعيين مطالبات OIDC إلى سمات المستخدم. اترك فارغاً للتعيين الافتراضي."
 
+#: app/routes/_admin+/print-shop.tsx:779
+msgid "Margin"
+msgstr "الهامش"
+
+#: app/routes/_admin+/print-shop.tsx:757
+#~ msgid "Margin on the last 100 orders: {total}"
+#~ msgstr "الهامش على آخر 100 طلب: {total}"
+
+#: app/routes/_admin+/print-shop.tsx:767
+msgid "Margin on the orders below: {total}"
+msgstr "الهامش على الطلبات أدناه: {total}"
+
 #: app/components/admin-sidebar.tsx:68
 msgid "Marketing"
 msgstr "التسويق"
+
+#: app/routes/_admin+/print-shop.tsx:283
+msgid "Markup (%)"
+msgstr "نسبة الزيادة (%)"
 
 #: app/components/sso-configuration-form.tsx:395
 #: app/components/sso-user-management.tsx:104
@@ -2244,7 +2367,7 @@ msgstr "الأعضاء"
 #~ msgid "Merge tags are replaced per recipient when the email is sent."
 #~ msgstr "تُستبدل وسوم الدمج بقيم خاصة بكل مستلم عند إرسال البريد الإلكتروني."
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:88
+#: ../../packages/marketing/src/components/campaign-detail.tsx:90
 #: ../../packages/marketing/src/components/campaign-form.tsx:118
 msgid "Message"
 msgstr "الرسالة"
@@ -2270,7 +2393,7 @@ msgstr "دقائق"
 msgid "Minutes"
 msgstr "دقائق"
 
-#: app/components/admin/feature-flags.tsx:247
+#: app/components/admin/feature-flags.tsx:248
 msgid "Modify the override value."
 msgstr "تعديل قيمة التجاوز."
 
@@ -2278,7 +2401,7 @@ msgstr "تعديل قيمة التجاوز."
 msgid "Monitor and manage IP addresses accessing your website"
 msgstr "مراقبة وإدارة عناوين IP التي تصل إلى موقعك"
 
-#: app/routes/_admin+/index.tsx:394
+#: app/routes/_admin+/index.tsx:397
 msgid "Monitor and manage system cache"
 msgstr "مراقبة وإدارة ذاكرة تخزين النظام المؤقتة"
 
@@ -2286,7 +2409,7 @@ msgstr "مراقبة وإدارة ذاكرة تخزين النظام المؤق�
 msgid "Monitor and manage system cache performance"
 msgstr "مراقبة وإدارة أداء ذاكرة تخزين النظام المؤقتة"
 
-#: app/routes/_admin+/index.tsx:467
+#: app/routes/_admin+/index.tsx:470
 msgid "Monitor organization activity"
 msgstr "مراقبة نشاط المؤسسة"
 
@@ -2403,11 +2526,11 @@ msgstr "لا توجد حملات بعد."
 msgid "No connected accounts"
 msgstr "لا توجد حسابات متصلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:41
+#: ../../packages/marketing/src/components/campaign-detail.tsx:43
 msgid "No contact on file"
 msgstr "لا يوجد جهة اتصال مسجّلة"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:127
+#: ../../packages/marketing/src/components/campaign-detail.tsx:129
 msgid "No delivery records yet."
 msgstr "لا توجد سجلات تسليم بعد."
 
@@ -2416,8 +2539,8 @@ msgstr "لا توجد سجلات تسليم بعد."
 msgid "No description"
 msgstr "لا يوجد وصف"
 
-#: app/components/admin/feature-flags.tsx:494
-#: app/components/admin/feature-flags.tsx:665
+#: app/components/admin/feature-flags.tsx:495
+#: app/components/admin/feature-flags.tsx:666
 msgid "No flags configured"
 msgstr "لم يتم تكوين أي مؤشرات"
 
@@ -2444,6 +2567,10 @@ msgstr "لم يتم إنشاء ملاحظات"
 #: app/routes/_admin+/phone-numbers.tsx:337
 msgid "No numbers yet"
 msgstr "لا توجد أرقام بعد"
+
+#: app/routes/_admin+/print-shop.tsx:477
+msgid "No organization can order it shipped until it is enabled again. Downloads keep working."
+msgstr "لن تتمكن أي مؤسسة من طلب شحنه حتى يُفعَّل مجددًا. تستمر التنزيلات في العمل."
 
 #: app/routes/_admin+/roles+/index.tsx:420
 msgid "No organization roles found"
@@ -2482,11 +2609,11 @@ msgid "No SSO Users"
 msgstr "لا يوجد مستخدمو SSO"
 
 #: app/components/admin-organizations-table.tsx:86
-#: app/routes/_admin+/index.tsx:284
+#: app/routes/_admin+/index.tsx:287
 msgid "No Subscription"
 msgstr "لا توجد اشتراكات"
 
-#: app/components/admin/feature-flags.tsx:388
+#: app/components/admin/feature-flags.tsx:389
 msgid "No system flags configured"
 msgstr "لم يتم تكوين أي مؤشرات نظام"
 
@@ -2550,7 +2677,7 @@ msgstr "الملاحظات"
 msgid "Notes Created"
 msgstr "الملاحظات المنشأة"
 
-#: app/components/admin/feature-flags.tsx:141
+#: app/components/admin/feature-flags.tsx:142
 #: app/routes/_admin+/phone-numbers.tsx:347
 msgid "Number"
 msgstr "رقم"
@@ -2571,9 +2698,25 @@ msgstr "إعداد OAuth2"
 msgid "Oldest Log"
 msgstr "أقدم سجل"
 
+#: app/routes/_admin+/print-shop.tsx:73
+msgid "On hold"
+msgstr "معلّق"
+
 #: ../../packages/reports/src/ui/report-labels.ts:56
 msgid "On-time arrival"
 msgstr "الحضور في الوقت المحدد"
+
+#: app/routes/_admin+/print-shop.tsx:213
+msgid "Only a held order can be retried or updated."
+msgstr "لا يمكن إعادة محاولة أو تحديث إلا الطلب الموقوف."
+
+#: app/routes/_admin+/print-shop.tsx:209
+msgid "Only a paid order can be refunded."
+msgstr "لا يمكن استرداد إلا الطلب المدفوع."
+
+#: app/routes/_admin+/print-shop.tsx:208
+msgid "Only an order held after a partial cancel can be refunded in part."
+msgstr "لا يُسترد جزئيًا إلا الطلب الموقوف بعد إلغاء جزئي."
 
 #: ../../packages/marketing-workflow/src/workflow-toolbar.tsx:395
 msgid "Only the customer ID is sent. Regional tenant-api resolves PII locally."
@@ -2584,7 +2727,7 @@ msgid "Open rate"
 msgstr "معدل الفتح"
 
 #. placeholder {0}: new Date(recipient.openedAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:51
+#: ../../packages/marketing/src/components/campaign-detail.tsx:53
 msgid "Opened {0}"
 msgstr "فُتِح {0}"
 
@@ -2606,14 +2749,19 @@ msgstr "تمت دعوة المشغّل"
 msgid "Optional"
 msgstr "اختياري"
 
+#: app/routes/_admin+/print-shop.tsx:762
+msgid "Orders"
+msgstr "الطلبات"
+
 #: app/routes/_admin+/roles+/$roleId.tsx:894
 msgid "org - Organization resources"
 msgstr "org - موارد المؤسسة"
 
 #: app/components/admin-organizations-table.tsx:139
 #: app/components/admin-users-table.tsx:235
-#: app/components/admin/feature-flags.tsx:744
+#: app/components/admin/feature-flags.tsx:753
 #: app/routes/_admin+/phone-numbers.tsx:353
+#: app/routes/_admin+/print-shop.tsx:775
 msgid "Organization"
 msgstr "المؤسسة"
 
@@ -2626,7 +2774,7 @@ msgstr "المنظمة (اختياري)"
 msgid "Organization Created"
 msgstr "تم إنشاء المنظمة"
 
-#: app/components/admin/feature-flags.tsx:519
+#: app/components/admin/feature-flags.tsx:520
 msgid "Organization Override"
 msgstr "تجاوز المؤسسة"
 
@@ -2654,8 +2802,8 @@ msgstr "المعرّف المختصر للمؤسسة أو معرّفها للر�
 #: app/components/admin-user-detail.tsx:255
 #: app/components/admin-user-detail.tsx:324
 #: app/components/admin-users-table.tsx:124
-#: app/routes/_admin+/index.tsx:169
-#: app/routes/_admin+/index.tsx:336
+#: app/routes/_admin+/index.tsx:172
+#: app/routes/_admin+/index.tsx:339
 #: app/routes/_admin+/organizations+/index.tsx:115
 msgid "Organizations"
 msgstr "المؤسسات"
@@ -2668,8 +2816,8 @@ msgstr "ستظهر المؤسسات هنا بمجرد إنشائها."
 msgid "Outline"
 msgstr "محدد"
 
-#: app/components/admin/feature-flags.tsx:284
-#: app/components/admin/feature-flags.tsx:293
+#: app/components/admin/feature-flags.tsx:285
+#: app/components/admin/feature-flags.tsx:294
 msgid "Override Value"
 msgstr "قيمة التجاوز"
 
@@ -2716,6 +2864,14 @@ msgstr "صفحة {page} من {lastPage}"
 msgid "Page Not Found"
 msgstr "الصفحة غير موجودة"
 
+#: app/routes/_admin+/print-shop.tsx:66
+msgid "Paid"
+msgstr "مدفوع"
+
+#: app/routes/_admin+/print-shop.tsx:94
+msgid "Paid after it was cancelled, refunded automatically"
+msgstr "دُفع بعد إلغائه، واستُرد تلقائيًا"
+
 #: ../../packages/reports/src/ui/report-labels.ts:37
 msgid "Paid hours worked by each person over the last 30 days."
 msgstr "الساعات المدفوعة لكل شخص خلال آخر 30 يومًا."
@@ -2727,6 +2883,10 @@ msgstr "الساعات المدفوعة كل يوم لفريقك بالكامل.
 #: ../../packages/marketing/src/components/email/block-meta.ts:28
 msgid "Paragraph text"
 msgstr "نص فقرة"
+
+#: app/routes/_admin+/print-shop.tsx:211
+msgid "Part of this order was already printing. Refund what was cancelled."
+msgstr "كان جزء من هذا الطلب قيد الطباعة بالفعل. استرد قيمة ما أُلغي."
 
 #: app/components/admin-user-detail.tsx:683
 msgid "Passkeys"
@@ -2788,7 +2948,7 @@ msgstr "الصلاحيات"
 msgid "Persistent cache stored in SQLite database"
 msgstr "ذاكرة التخزين المؤقت الدائمة المخزنة في قاعدة بيانات SQLite"
 
-#: app/routes/_admin+/index.tsx:227
+#: app/routes/_admin+/index.tsx:230
 msgid "Personal + Organization notes"
 msgstr "الملاحظات الشخصية + المؤسسة"
 
@@ -2831,6 +2991,10 @@ msgstr "اختر تخطيطًا ثم خصّص الكتل."
 #: app/components/sso-configuration-overview.tsx:208
 msgid "PKCE Enabled"
 msgstr "PKCE مفعل"
+
+#: app/routes/_admin+/print-shop.tsx:780
+msgid "Placed"
+msgstr "تاريخ الطلب"
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:359
 msgid "Plaintext Fallback (Optional)"
@@ -2881,11 +3045,32 @@ msgstr "النقاط"
 msgid "Points to add"
 msgstr "النقاط المُضافة"
 
+#: app/routes/_admin+/print-shop.tsx:54
+msgid "Poster"
+msgstr "ملصق"
+
 #: app/routes/_admin+/audit-logs.tsx:437
 #: app/routes/_admin+/gdpr-requests.tsx:716
 #: app/routes/_admin+/waitlist.tsx:580
 #~ msgid "Previous"
 #~ msgstr "السابق"
+
+#: app/routes/_admin+/print-shop.tsx:64
+msgid "Price ready"
+msgstr "السعر جاهز"
+
+#: app/routes/_admin+/print-shop.tsx:268
+msgid "Pricing rules"
+msgstr "قواعد التسعير"
+
+#: app/components/admin-sidebar.tsx:141
+#: app/routes/_admin+/print-shop.tsx:752
+msgid "Print shop"
+msgstr "المطبعة"
+
+#: app/routes/_admin+/print-shop.tsx:70
+msgid "Printing"
+msgstr "قيد الطباعة"
 
 #: ../../packages/marketing-workflow/src/node-palette.tsx:40
 #: ../../packages/marketing/src/components/campaign-form.tsx:77
@@ -2901,6 +3086,10 @@ msgstr "قيد المعالجة"
 #: app/components/admin-cache-confirmation-dialog.tsx:122
 msgid "Processing..."
 msgstr "جاري المعالجة..."
+
+#: app/routes/_admin+/print-shop.tsx:360
+msgid "Product and size"
+msgstr "المنتج والمقاس"
 
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:20
 msgid "Profile Completed"
@@ -2943,13 +3132,17 @@ msgstr "جارٍ نشر الأتمتة الجديدة..."
 msgid "Publishing..."
 msgstr "جارٍ النشر..."
 
-#: app/routes/_admin+/index.tsx:409
+#: app/routes/_admin+/index.tsx:412
 msgid "Quick Actions"
 msgstr "الإجراءات السريعة"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:294
 msgid "Quick apply industry-standard retention policies"
 msgstr "تطبيق سريع لسياسات الاحتفاظ بمعايير الصناعة"
+
+#: app/routes/_admin+/print-shop.tsx:307
+msgid "Quote valid (minutes)"
+msgstr "صلاحية عرض السعر (دقائق)"
 
 #: app/routes/_admin+/waitlist.tsx:274
 #: app/routes/_admin+/waitlist.tsx:330
@@ -3017,13 +3210,79 @@ msgstr "أُعيد مؤخرًا"
 msgid "recipients"
 msgstr "مستلمين"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:115
+#: ../../packages/marketing/src/components/campaign-detail.tsx:117
 msgid "Recipients"
 msgstr "المستلمون"
+
+#: app/routes/_admin+/print-shop.tsx:623
+msgid "Record and track"
+msgstr "تسجيل ومتابعة"
+
+#: app/routes/_admin+/print-shop.tsx:619
+msgid "Record the vendor's order"
+msgstr "تسجيل طلب المورد"
 
 #: app/routes/_admin+/waitlist.tsx:342
 msgid "Referrals"
 msgstr "الإحالات"
+
+#: app/routes/_admin+/print-shop.tsx:699
+msgid "Refund {amount} and keep the vendor order?"
+msgstr "استرداد {amount} مع الإبقاء على طلب المورد؟"
+
+#: app/routes/_admin+/print-shop.tsx:682
+msgid "Refund {amount} to {organization}?"
+msgstr "استرداد {amount} إلى {organization}؟"
+
+#: app/routes/_admin+/print-shop.tsx:680
+#: app/routes/_admin+/print-shop.tsx:688
+#: app/routes/_admin+/print-shop.tsx:705
+msgid "Refund in full"
+msgstr "استرداد المبلغ كاملًا"
+
+#: app/routes/_admin+/print-shop.tsx:681
+msgid "Refund in full, {orderName}"
+msgstr "استرداد بالكامل، {orderName}"
+
+#: app/routes/_admin+/print-shop.tsx:714
+msgid "Refund part"
+msgstr "استرداد جزء"
+
+#: app/routes/_admin+/print-shop.tsx:716
+msgid "Refund part of this order to {organization}?"
+msgstr "استرداد جزء من هذا الطلب إلى {organization}؟"
+
+#: app/routes/_admin+/print-shop.tsx:715
+msgid "Refund part, {orderName}"
+msgstr "استرداد جزء، {orderName}"
+
+#: app/routes/_admin+/print-shop.tsx:243
+msgid "Refund sent."
+msgstr "تم إرسال الاسترداد."
+
+#: app/routes/_admin+/print-shop.tsx:720
+msgid "Refund this amount"
+msgstr "استرداد هذا المبلغ"
+
+#: app/routes/_admin+/print-shop.tsx:718
+msgid "Refund what the vendors cancelled. The order leaves hold and the rest keeps printing and is tracked again. This cannot be undone."
+msgstr "استرد قيمة ما ألغاه الموردون. يخرج الطلب من الانتظار، ويستمر طبع الباقي وتُستأنف متابعته. لا يمكن التراجع عن ذلك."
+
+#: app/routes/_admin+/print-shop.tsx:697
+msgid "Refund, vendor keeps printing"
+msgstr "استرداد، والمورد يواصل الطباعة"
+
+#: app/routes/_admin+/print-shop.tsx:698
+msgid "Refund, vendor keeps printing, {orderName}"
+msgstr "استرداد، والمورد يواصل الطباعة، {orderName}"
+
+#: app/routes/_admin+/print-shop.tsx:76
+msgid "Refunded"
+msgstr "مُسترد"
+
+#: app/routes/_admin+/print-shop.tsx:88
+msgid "Refunded by an admin"
+msgstr "استرده أحد المسؤولين"
 
 #: app/components/privacy-banner.tsx:48
 msgid "Reject"
@@ -3038,7 +3297,7 @@ msgstr "إزالة الكتلة"
 msgid "Remove design"
 msgstr "إزالة التصميم"
 
-#: app/components/admin/feature-flags.tsx:339
+#: app/components/admin/feature-flags.tsx:340
 msgid "Remove Override"
 msgstr "إزالة التجاوز"
 
@@ -3084,6 +3343,10 @@ msgstr "إعادة تعيين"
 msgid "Resource"
 msgstr "المصدر"
 
+#: app/routes/_admin+/print-shop.tsx:271
+msgid "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
+msgstr "سعر البيع هو سعر الجملة لدى المورّد مضافًا إليه نسبة الزيادة، ويُمرَّر الشحن كما هو. يُعلَّق هنا الطلب المدفوع إذا ارتفع سعر الجملة بأكثر من حد التغيّر."
+
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:75
 msgid "Retention period"
 msgstr "فترة الاحتفاظ"
@@ -3111,6 +3374,16 @@ msgstr "إيقاف {e164} نهائيًا؟ لن يمكن تعيينه مرة أ�
 #: app/routes/_admin+/phone-numbers.tsx:125
 msgid "Retired"
 msgstr "موقوف نهائيًا"
+
+#: app/routes/_admin+/print-shop.tsx:589
+#: app/routes/_admin+/print-shop.tsx:657
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+#: app/routes/_admin+/print-shop.tsx:590
+#: app/routes/_admin+/print-shop.tsx:655
+msgid "Retry, {orderName}"
+msgstr "إعادة المحاولة، {orderName}"
 
 #: app/routes/_admin+/_layout.tsx:103
 #: app/routes/_admin+/cache.tsx:941
@@ -3238,6 +3511,7 @@ msgstr "المبيعات لكل ساعة عمل"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
+#: app/routes/_admin+/print-shop.tsx:318
 msgid "Save"
 msgstr "حفظ"
 
@@ -3269,6 +3543,14 @@ msgstr "احفظ الأتمتة أولاً قبل تشغيل محفّزات ال
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:148
 msgid "Saved"
 msgstr "تم الحفظ"
+
+#: app/routes/_admin+/print-shop.tsx:249
+msgid "Saved: {item}"
+msgstr "تم الحفظ: {item}"
+
+#: app/routes/_admin+/print-shop.tsx:251
+msgid "Saved."
+msgstr "تم الحفظ."
 
 #: app/routes/_admin+/marketing+/automations.new.tsx:159
 msgid "Saving new automation draft..."
@@ -3307,8 +3589,8 @@ msgstr "النطاقات:"
 
 #: app/components/admin-organizations-table.tsx:303
 #: app/components/admin-users-table.tsx:226
-#: app/components/admin/feature-flags.tsx:457
-#: app/components/admin/feature-flags.tsx:614
+#: app/components/admin/feature-flags.tsx:458
+#: app/components/admin/feature-flags.tsx:615
 #: app/routes/_admin+/audit-logs.tsx:122
 #: app/routes/_admin+/waitlist.tsx:245
 msgid "Search"
@@ -3334,7 +3616,7 @@ msgstr "البحث في الحملات..."
 #~ msgid "Search details or action..."
 #~ msgstr "البحث عن التفاصيل أو الإجراء..."
 
-#: app/components/admin/feature-flags.tsx:445
+#: app/components/admin/feature-flags.tsx:446
 msgid "Search Organization"
 msgstr "البحث عن المؤسسة"
 
@@ -3342,11 +3624,11 @@ msgstr "البحث عن المؤسسة"
 #~ msgid "Search organizations..."
 #~ msgstr "البحث عن المؤسسات..."
 
-#: app/components/admin/feature-flags.tsx:590
+#: app/components/admin/feature-flags.tsx:591
 msgid "Search User"
 msgstr "البحث عن المستخدم"
 
-#: app/routes/_admin+/index.tsx:434
+#: app/routes/_admin+/index.tsx:437
 msgid "Search Users"
 msgstr "البحث عن المستخدمين"
 
@@ -3376,7 +3658,7 @@ msgstr "اختر السمة"
 msgid "Select audience"
 msgstr "اختر الجمهور"
 
-#: app/components/admin/feature-flags.tsx:131
+#: app/components/admin/feature-flags.tsx:132
 msgid "Select flag type"
 msgstr "اختر نوع المؤشر"
 
@@ -3421,16 +3703,32 @@ msgstr "أرسل رسائل بريد إلكتروني لمرة واحدة إلى
 msgid "Send SMS"
 msgstr "إرسال رسالة نصية"
 
+#: app/routes/_admin+/print-shop.tsx:67
+msgid "Sending to the printer"
+msgstr "جارٍ الإرسال إلى المطبعة"
+
+#: app/routes/_admin+/print-shop.tsx:90
+msgid "Sending to the vendor failed unexpectedly"
+msgstr "فشل الإرسال إلى المورّد بشكل غير متوقع"
+
 #: ../../packages/marketing/src/components/campaign-form.tsx:51
 msgid "Sending..."
 msgstr "جارٍ الإرسال..."
 
 #. placeholder {0}: new Date(campaign.createdAt).toLocaleString()
 #. placeholder {0}: new Date(recipient.sentAt).toLocaleString()
-#: ../../packages/marketing/src/components/campaign-detail.tsx:80
-#: ../../packages/marketing/src/components/campaign-detail.tsx:143
+#: ../../packages/marketing/src/components/campaign-detail.tsx:81
+#: ../../packages/marketing/src/components/campaign-detail.tsx:145
 msgid "Sent {0}"
 msgstr "أُرسل {0}"
+
+#: app/routes/_admin+/print-shop.tsx:69
+msgid "Sent to the printer"
+msgstr "أُرسل إلى المطبعة"
+
+#: app/routes/_admin+/print-shop.tsx:245
+msgid "Sent to the vendor again."
+msgstr "أُرسل إلى المورد مرة أخرى."
 
 #: app/components/admin-user-detail.tsx:754
 msgid "Session {sessionId}..."
@@ -3452,6 +3750,14 @@ msgstr "عيّن القيم الافتراضية للنظام وتجاوزها �
 #: app/routes/_admin+/audit-logs.tsx:277
 msgid "Severity"
 msgstr "مستوى الخطورة"
+
+#: app/routes/_admin+/print-shop.tsx:71
+msgid "Shipped"
+msgstr "تم الشحن"
+
+#: app/routes/_admin+/print-shop.tsx:754
+msgid "Shipped prints across all organizations: pricing, vendors and orders."
+msgstr "المطبوعات المشحونة لكل المؤسسات: التسعير والموردون والطلبات."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:116
 msgid "Shorter retention periods permanently remove older messages on the next daily cleanup. Deleted messages cannot be recovered."
@@ -3533,6 +3839,10 @@ msgstr "ستُقسَّم الرسائل النصية التي تتجاوز 160 �
 msgid "Solid"
 msgstr "ممتلئ"
 
+#: app/routes/_admin+/print-shop.tsx:92
+msgid "Some vendor orders were cancelled and others are printing: refund what was cancelled"
+msgstr "أُلغيت بعض طلبات الموردين وبعضها قيد الطباعة: استرد قيمة ما أُلغي"
+
 #: app/routes/_admin+/waitlist.tsx:267
 msgid "Sort by"
 msgstr "الترتيب حسب"
@@ -3549,8 +3859,8 @@ msgstr "الترتيب حسب"
 #~ msgid "Sort by Rank"
 #~ msgstr "الترتيب حسب الترتيب"
 
-#: app/components/admin/feature-flags.tsx:480
-#: app/components/admin/feature-flags.tsx:651
+#: app/components/admin/feature-flags.tsx:481
+#: app/components/admin/feature-flags.tsx:652
 msgid "Source"
 msgstr "المصدر"
 
@@ -3626,6 +3936,7 @@ msgstr "ابدأ بقالب"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
 #: app/routes/_admin+/phone-numbers.tsx:350
+#: app/routes/_admin+/print-shop.tsx:776
 #: app/routes/_admin+/waitlist.tsx:351
 msgid "Status"
 msgstr "الحالة"
@@ -3642,7 +3953,20 @@ msgstr "خطوات"
 msgid "Stop Impersonation"
 msgstr "إيقاف انتحال الشخصية"
 
-#: app/components/admin/feature-flags.tsx:138
+#: app/routes/_admin+/print-shop.tsx:471
+#: app/routes/_admin+/print-shop.tsx:479
+msgid "Stop shipping"
+msgstr "إيقاف الشحن"
+
+#: app/routes/_admin+/print-shop.tsx:473
+msgid "Stop shipping {item}"
+msgstr "إيقاف شحن {item}"
+
+#: app/routes/_admin+/print-shop.tsx:475
+msgid "Stop shipping this size?"
+msgstr "إيقاف شحن هذا المقاس؟"
+
+#: app/components/admin/feature-flags.tsx:139
 msgid "String"
 msgstr "نص"
 
@@ -3678,7 +4002,7 @@ msgstr "تم إلغاء الاشتراك"
 msgid "Subscription Started"
 msgstr "بدأ الاشتراك"
 
-#: app/routes/_admin+/index.tsx:269
+#: app/routes/_admin+/index.tsx:272
 msgid "Subscription Status"
 msgstr "حالة الاشتراك"
 
@@ -3712,21 +4036,21 @@ msgstr "درجة الشبهة"
 msgid "Swap variable"
 msgstr "تبديل المتغير"
 
-#: app/components/admin/feature-flags.tsx:741
+#: app/components/admin/feature-flags.tsx:750
 #: app/routes/resources+/theme-switch.tsx:80
 msgid "System"
 msgstr "النظام"
 
-#: app/components/admin/feature-flags.tsx:521
-#: app/components/admin/feature-flags.tsx:698
+#: app/components/admin/feature-flags.tsx:522
+#: app/components/admin/feature-flags.tsx:699
 msgid "System Default"
 msgstr "الافتراضي للنظام"
 
-#: app/components/admin/feature-flags.tsx:364
+#: app/components/admin/feature-flags.tsx:365
 msgid "System Flags"
 msgstr "مؤشرات النظام"
 
-#: app/components/admin-sidebar.tsx:174
+#: app/components/admin-sidebar.tsx:180
 msgid "System Management"
 msgstr "إدارة النظام"
 
@@ -3752,7 +4076,7 @@ msgstr "أدوار النظام"
 msgid "System theme"
 msgstr "مظهر النظام"
 
-#: app/components/admin/feature-flags.tsx:276
+#: app/components/admin/feature-flags.tsx:277
 msgid "System value:"
 msgstr "قيمة النظام:"
 
@@ -3808,9 +4132,33 @@ msgstr "نص"
 msgid "That organization had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
 msgstr "كانت تلك المؤسسة قد تحققت من تحويل المكالمات إلى هذا الرقم. من المرجح جدًا أن يصل متصلوها إلى وكيل المؤسسة الجديدة حتى توقف التحويل لدى مشغل الاتصالات."
 
+#: app/routes/_admin+/print-shop.tsx:203
+msgid "That product and size cannot ship."
+msgstr "لا يمكن شحن هذا المنتج بهذا المقاس."
+
+#: app/routes/_admin+/print-shop.tsx:214
+msgid "That vendor order is not waiting to be sent."
+msgstr "طلب المورد هذا ليس في انتظار الإرسال."
+
+#: app/routes/_admin+/print-shop.tsx:555
+msgid "the {amount} order of {organization} placed {placed}"
+msgstr "طلب {organization} بقيمة {amount} المقدَّم في {placed}"
+
 #: app/routes/_admin+/_layout.tsx:95
 msgid "The admin page you're looking for doesn't exist."
 msgstr "صفحة المدير التي تبحث عنها غير موجودة."
+
+#: app/routes/_admin+/print-shop.tsx:200
+msgid "The App could not do that. Try again."
+msgstr "تعذّر على التطبيق تنفيذ ذلك. حاول مرة أخرى."
+
+#: app/routes/_admin+/print-shop.tsx:199
+msgid "The App did not answer. Try again."
+msgstr "لم يستجب التطبيق. حاول مرة أخرى."
+
+#: app/routes/_admin+/print-shop.tsx:198
+msgid "The App link is not set up (APP_URL or INTERNAL_COMMAND_TOKEN)."
+msgstr "لم يُضبط الربط بالتطبيق (APP_URL أو INTERNAL_COMMAND_TOKEN)."
 
 #: app/components/admin-ban-user-dialog.tsx:150
 msgid "The ban will be automatically lifted on this date. Leave empty for permanent ban."
@@ -3826,9 +4174,25 @@ msgstr "ذاكرة التخزين المؤقت فارغة"
 msgid "The execution engine will durably sleep for {0} {1} before continuing to the next node."
 msgstr "سينتظر محرك التنفيذ لمدة {0} {1} قبل الانتقال إلى العقدة التالية."
 
+#: app/routes/_admin+/print-shop.tsx:603
+msgid "The last attempt stopped after the order was sent, so the vendor may already have it, and no reference was recorded. Search the vendor dashboard by date and recipient. If the vendor has it, do not retry (it would print twice). Retry only if you find nothing."
+msgstr "توقفت المحاولة الأخيرة بعد إرسال الطلب، لذا قد يكون لدى المورد بالفعل، ولم يُسجَّل أي مرجع. ابحث في لوحة المورد بالتاريخ والمستلم. إذا كان لدى المورد، فلا تُعد المحاولة (سيُطبع مرتين). أعد المحاولة فقط إن لم تجد شيئًا."
+
+#: app/routes/_admin+/print-shop.tsx:599
+msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
+msgstr "توقفت المحاولة الأخيرة بعد إرسال الطلب، لذا قد يكون لدى المورد بالفعل. ابحث في لوحة المورد عن: {list}. إذا كان لدى المورد، فلا تُعد المحاولة (سيُطبع مرتين): استرد المبلغ أو انتظر حالته. أعد المحاولة فقط إن لم تجد شيئًا."
+
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
 msgstr "الفقرة الرئيسية في بريدك الإلكتروني."
+
+#: app/routes/_admin+/print-shop.tsx:668
+msgid "The order goes to the vendor at today's price. The organization already paid {amount}; {platform} absorbs the difference."
+msgstr "يُرسل الطلب إلى المورّد بسعر اليوم. دفعت المؤسسة {amount} مسبقًا؛ ويتحمّل {platform} الفرق."
+
+#: app/routes/_admin+/print-shop.tsx:89
+msgid "The payment failed"
+msgstr "فشل الدفع"
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.server.ts:94
 msgid "The policy will apply on the next daily chat cleanup."
@@ -3837,6 +4201,46 @@ msgstr "ستُطبّق السياسة في عملية التنظيف اليوم�
 #: app/routes/_admin+/phone-numbers.tsx:216
 msgid "The previous organization may still forward its line to this number, so its callers could reach the new organization's agent."
 msgstr "قد تظل المؤسسة السابقة تحوّل خطها إلى هذا الرقم، لذا قد يصل متصلوها إلى وكيل المؤسسة الجديدة."
+
+#: app/routes/_admin+/print-shop.tsx:81
+msgid "The print file could not be made"
+msgstr "تعذّر إنشاء ملف الطباعة"
+
+#: app/routes/_admin+/print-shop.tsx:86
+msgid "The vendor cancelled the order"
+msgstr "ألغى المورّد الطلب"
+
+#: app/routes/_admin+/print-shop.tsx:82
+msgid "The vendor did not answer"
+msgstr "لم يستجب المورّد"
+
+#: app/routes/_admin+/print-shop.tsx:215
+msgid "The vendor does not know that order id. Check it and try again."
+msgstr "لا يعرف المورد رقم الطلب هذا. تحقق منه وحاول مرة أخرى."
+
+#: app/routes/_admin+/print-shop.tsx:85
+msgid "The vendor failed the order"
+msgstr "أخفق المورّد في الطلب"
+
+#: app/routes/_admin+/print-shop.tsx:572
+msgid "The vendor may already have this order: search the vendor dashboard first and cancel it there if you find it."
+msgstr "قد يكون هذا الطلب لدى المورد بالفعل: ابحث في لوحة المورد أولًا وألغِه هناك إن وجدته."
+
+#: app/routes/_admin+/print-shop.tsx:205
+msgid "The vendor may already have this order. Search the vendor dashboard for its references first."
+msgstr "قد يكون هذا الطلب لدى المورد بالفعل. ابحث أولًا في لوحة المورد عن مراجعه."
+
+#: app/routes/_admin+/print-shop.tsx:83
+msgid "The vendor may have the order: check before retrying"
+msgstr "قد يكون الطلب لدى المورد: تحقق قبل إعادة المحاولة"
+
+#: app/routes/_admin+/print-shop.tsx:91
+msgid "The vendor order was cancelled but the refund failed"
+msgstr "أُلغي طلب المورّد لكن فشل الاسترداد"
+
+#: app/routes/_admin+/print-shop.tsx:84
+msgid "The vendor refused the order"
+msgstr "رفض المورّد الطلب"
 
 #: app/components/nav-user.tsx:121
 msgid "Theme"
@@ -3853,6 +4257,10 @@ msgstr "أُعيد هذا الرقم من {previousName} في {releasedOn}."
 #: app/routes/_admin+/phone-numbers.tsx:200
 msgid "This number was released on {releasedOn} by an organization that no longer exists."
 msgstr "أُعيد هذا الرقم في {releasedOn} من مؤسسة لم تعد موجودة."
+
+#: app/routes/_admin+/print-shop.tsx:210
+msgid "This order is changing right now. Refresh and try again."
+msgstr "يجري تغيير هذا الطلب الآن. حدّث الصفحة وحاول مرة أخرى."
 
 #: app/routes/_admin+/organizations+/$organizationId_+/chat-retention.tsx:64
 msgid "This policy applies to all channels, direct messages, and group chats in this organization. Only platform admins can change it."
@@ -3890,6 +4298,10 @@ msgstr "رابط الرمز"
 msgid "Top Action"
 msgstr "الإجراء الأعلى"
 
+#: app/routes/_admin+/print-shop.tsx:777
+msgid "Total"
+msgstr "الإجمالي"
+
 #: app/routes/_admin+/organizations+/$organizationId_+/audit-retention.tsx:242
 msgid "Total Audit Logs"
 msgstr "إجمالي سجلات المراجعة"
@@ -3906,7 +4318,7 @@ msgstr "إجمالي الأحداث"
 msgid "Total IPs"
 msgstr "إجمالي عناوين IP"
 
-#: app/routes/_admin+/index.tsx:202
+#: app/routes/_admin+/index.tsx:205
 msgid "Total Notes"
 msgstr "إجمالي الملاحظات"
 
@@ -3918,7 +4330,7 @@ msgstr "إجمالي الطلبات"
 msgid "Total SSO Users"
 msgstr "إجمالي مستخدمي SSO"
 
-#: app/routes/_admin+/index.tsx:137
+#: app/routes/_admin+/index.tsx:140
 msgid "Total Users"
 msgstr "إجمالي المستخدمين"
 
@@ -3974,7 +4386,7 @@ msgstr "جرّب مرشحات مختلفة أو أزلها."
 msgid "TTL"
 msgstr "TTL"
 
-#: app/components/admin/feature-flags.tsx:134
+#: app/components/admin/feature-flags.tsx:135
 #: app/routes/_admin+/gdpr-requests.tsx:496
 msgid "Type"
 msgstr "النوع"
@@ -4006,7 +4418,7 @@ msgstr "الوحدة"
 msgid "Unknown"
 msgstr "غير معروف"
 
-#: ../../packages/marketing/src/components/campaign-detail.tsx:138
+#: ../../packages/marketing/src/components/campaign-detail.tsx:140
 msgid "Unnamed recipient"
 msgstr "مستلم بدون اسم"
 
@@ -4022,15 +4434,23 @@ msgstr "تغييرات غير محفوظة"
 msgid "until"
 msgstr "حتى"
 
+#: app/routes/_admin+/print-shop.tsx:465
+msgid "Update"
+msgstr "تحديث"
+
+#: app/routes/_admin+/print-shop.tsx:463
+msgid "Update {item}"
+msgstr "تحديث {item}"
+
 #: app/components/sso-configuration-form.tsx:453
 msgid "Update Configuration"
 msgstr "تحديث الإعداد"
 
-#: app/components/admin/feature-flags.tsx:188
+#: app/components/admin/feature-flags.tsx:189
 msgid "Update Flag"
 msgstr "تحديث المؤشر"
 
-#: app/components/admin/feature-flags.tsx:344
+#: app/components/admin/feature-flags.tsx:345
 msgid "Update Override"
 msgstr "تحديث التجاوز"
 
@@ -4059,7 +4479,7 @@ msgid "Used when the value is empty"
 msgstr "يُستخدم عندما تكون القيمة فارغة"
 
 #: app/components/admin-users-table.tsx:92
-#: app/components/admin/feature-flags.tsx:747
+#: app/components/admin/feature-flags.tsx:756
 #: app/components/sso-user-management.tsx:162
 #: app/routes/_admin+/audit-logs.tsx:283
 #: app/routes/_admin+/gdpr-requests.tsx:332
@@ -4073,7 +4493,7 @@ msgstr "المستخدم"
 msgid "User is not a member of any organizations"
 msgstr "المستخدم ليس عضواً في أي منظمات"
 
-#: app/components/admin/feature-flags.tsx:695
+#: app/components/admin/feature-flags.tsx:696
 msgid "User Override"
 msgstr "تجاوز المستخدم"
 
@@ -4081,7 +4501,7 @@ msgstr "تجاوز المستخدم"
 msgid "User Provisioning"
 msgstr "توفير المستخدم"
 
-#: app/components/admin/feature-flags.tsx:693
+#: app/components/admin/feature-flags.tsx:694
 msgid "User+Org Override"
 msgstr "تجاوز المستخدم+المؤسسة"
 
@@ -4094,7 +4514,7 @@ msgid "Username"
 msgstr "اسم المستخدم"
 
 #: app/components/admin-sidebar.tsx:50
-#: app/routes/_admin+/index.tsx:299
+#: app/routes/_admin+/index.tsx:302
 #: app/routes/_admin+/ip-addresses+/index.tsx:229
 #: app/routes/_admin+/roles+/index.tsx:403
 #: app/routes/_admin+/roles+/index.tsx:445
@@ -4118,13 +4538,49 @@ msgstr "سيظهر المستخدمون هنا بمجرد تسجيلهم."
 msgid "Validation passed"
 msgstr "اجتاز التحقق"
 
-#: app/components/admin/feature-flags.tsx:374
+#: app/components/admin/feature-flags.tsx:375
 msgid "Value"
 msgstr "القيمة"
 
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:359
 msgid "Variables"
 msgstr "المتغيرات"
+
+#: app/routes/_admin+/print-shop.tsx:361
+msgid "Vendor"
+msgstr "المورّد"
+
+#: app/routes/_admin+/print-shop.tsx:346
+msgid "Vendor catalog"
+msgstr "كتالوج المورّدين"
+
+#: app/routes/_admin+/print-shop.tsx:499
+msgid "Vendor order id for {reference}"
+msgstr "رقم طلب المورد لـ{reference}"
+
+#: app/routes/_admin+/print-shop.tsx:247
+msgid "Vendor order recorded. Tracking resumes."
+msgstr "سُجّل طلب المورد. تُستأنف المتابعة."
+
+#: app/routes/_admin+/print-shop.tsx:685
+msgid "Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone."
+msgstr "تُلغى أولًا طلبات الموردين التي لم تبدأ طباعتها، ثم يعود المبلغ كاملًا إلى البطاقة المستخدمة في الدفع. إذا بدأ مورد بالفعل، فلا يُسترد شيء. لا يمكن التراجع عن ذلك."
+
+#: app/routes/_admin+/print-shop.tsx:362
+msgid "Vendor SKU"
+msgstr "رمز المنتج لدى المورّد"
+
+#: app/routes/_admin+/print-shop.tsx:443
+msgid "Vendor SKU, {item}"
+msgstr "رمز المنتج لدى المورد، {item}"
+
+#: app/routes/_admin+/print-shop.tsx:428
+msgid "Vendor, {item}"
+msgstr "المورد، {item}"
+
+#: app/routes/_admin+/print-shop.tsx:212
+msgid "Vendors were cancelled for this order: refund it instead of retrying."
+msgstr "أُلغيت طلبات الموردين لهذا الطلب: استرده بدلًا من إعادة المحاولة."
 
 #: ../../packages/marketing-workflow/src/node-inspector.tsx:475
 msgid "Verification Status"
@@ -4138,15 +4594,15 @@ msgstr "عرض الكل"
 msgid "View details"
 msgstr "عرض التفاصيل"
 
-#: app/routes/_admin+/index.tsx:358
+#: app/routes/_admin+/index.tsx:361
 msgid "View organization details and subscriptions"
 msgstr "عرض تفاصيل المؤسسة والاشتراكات"
 
-#: app/routes/_admin+/index.tsx:464
+#: app/routes/_admin+/index.tsx:467
 msgid "View Organizations"
 msgstr "عرض المؤسسات"
 
-#: app/routes/_admin+/index.tsx:364
+#: app/routes/_admin+/index.tsx:367
 msgid "View Organizations →"
 msgstr "عرض المؤسسات →"
 
@@ -4154,11 +4610,11 @@ msgstr "عرض المؤسسات →"
 msgid "View User"
 msgstr "عرض المستخدم"
 
-#: app/routes/_admin+/index.tsx:328
+#: app/routes/_admin+/index.tsx:331
 msgid "View Users →"
 msgstr "عرض المستخدمين →"
 
-#: app/routes/_admin+/index.tsx:322
+#: app/routes/_admin+/index.tsx:325
 msgid "View, search, and manage user accounts"
 msgstr "عرض والبحث وإدارة حسابات المستخدمين"
 
@@ -4170,7 +4626,7 @@ msgstr "عارض"
 msgid "Visitor IP addresses will appear here."
 msgstr "ستظهر عناوين IP للزوار هنا."
 
-#: ../../packages/reports/src/ui/report-chart.tsx:161
+#: ../../packages/reports/src/ui/report-chart.tsx:168
 msgid "Wages are estimates from pay rates, not payroll. Sales are the online orders that count toward sales, or the sales your team entered, depending on each workplace’s sales source. A workplace that counts online orders only will read higher than its true labor share."
 msgstr "الأجور تقديرات مبنية على معدلات الأجر وليست كشف رواتب. المبيعات هي الطلبات عبر الإنترنت المحتسبة ضمن المبيعات، أو المبيعات التي أدخلها فريقك، بحسب مصدر المبيعات في كل مكان عمل. مكان العمل الذي يحتسب الطلبات عبر الإنترنت فقط ستظهر نسبته أعلى من حصة العمالة الفعلية."
 
@@ -4191,6 +4647,10 @@ msgstr "انتظر {0} {1}"
 #: ../../packages/marketing-workflow/src/workflow-labels.ts:73
 msgid "Wait for a specified duration before next step"
 msgstr "انتظر مدة محددة قبل الخطوة التالية"
+
+#: app/routes/_admin+/print-shop.tsx:65
+msgid "Waiting for payment"
+msgstr "بانتظار الدفع"
 
 #: app/components/admin-sidebar.tsx:56
 msgid "Waitlist"
@@ -4240,11 +4700,23 @@ msgstr "أين عثر المتقدمون على الوظيفة."
 msgid "Who worked overtime over the last 30 days, and how much."
 msgstr "من عمل ساعات إضافية خلال آخر 30 يومًا، وكم عمل."
 
+#: app/routes/_admin+/print-shop.tsx:778
+msgid "Wholesale"
+msgstr "سعر الجملة"
+
+#: app/routes/_admin+/print-shop.tsx:80
+msgid "Wholesale price rose past the drift limit"
+msgstr "ارتفع سعر الجملة فوق حد التغيّر"
+
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:262
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:322
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:324
 msgid "Width"
 msgstr "العرض"
+
+#: app/routes/_admin+/print-shop.tsx:56
+msgid "Window sticker"
+msgstr "ملصق نافذة"
 
 #: ../../packages/marketing-workflow/src/validation.ts:14
 msgid "Workflow must contain at least one Trigger node."

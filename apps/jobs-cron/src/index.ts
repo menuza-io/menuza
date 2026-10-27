@@ -32,6 +32,9 @@ export const JOB_ROUTES: Record<string, readonly string[]> = {
 // The hourly trigger fans out to the regional nodes: engagement sync and the
 // staff tick. They are independent, so one failing never blocks the other.
 const TENANT_HOURLY_CRON = '0 * * * *'
+// Hourly App job: fetches the status of shipped print orders whose vendor
+// webhook may have been missed.
+const PRINT_SYNC_PATH = '/resources/jobs/print-sync'
 
 async function safeCompareAsync(
 	a: string | null | undefined,
@@ -362,6 +365,10 @@ export default {
 			for (const [name, run] of [
 				['Tenant engagement sync', invokeTenantEngagementSync],
 				['Tenant staff tick', invokeTenantStaffTick],
+				[
+					'Print order sync',
+					(jobEnv: Env) => invokeJob(jobEnv, PRINT_SYNC_PATH),
+				],
 			] as const) {
 				ctx.waitUntil(
 					run(env).catch((error) => {

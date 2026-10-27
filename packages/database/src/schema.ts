@@ -3039,3 +3039,295 @@ export const JobPosting = sqliteTable(
 		index('JobPosting_status_expiresAt_idx').on(table.status, table.expiresAt),
 	],
 )
+
+// --- Print shop (operator B2B prints: designs, renders, shipped orders) ---
+// Operator business data only: no customer PII. Artwork may embed a print
+// vertical's QR codes (capabilities that are printed in public anyway).
+
+export const PrintDesign = sqliteTable(
+	'PrintDesign',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		createdById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		name: text().notNull(),
+		product: text().notNull(), // PrintProductKey
+		sizeKey: text().notNull(),
+		style: text().notNull(), // classic | bold | minimal
+		templateVersion: integer().notNull(),
+		content: text({ mode: 'json' }).notNull(), // PrintDesignContent
+		status: text().default('draft').notNull(), // draft | approved
+		// The frozen PrintSnapshot the operator approved; orders print this.
+		snapshot: text({ mode: 'json' }),
+		snapshotHash: text(),
+		approvedAt: integer({ mode: 'timestamp_ms' }),
+		approvedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		archivedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('PrintDesign_organizationId_updatedAt_idx').on(
+			table.organizationId,
+			table.updatedAt,
+		),
+	],
+)
+
+// Rendered PDFs in object storage, keyed by a hash of everything that shapes
+// the file, so the same input is never rendered twice. Rows also count
+// renders per organization for the hourly render limit.
+export const PrintRender = sqliteTable(
+	'PrintRender',
+	{
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		// Hash of the render input; the same input of two orgs is two files.
+		hash: text().notNull(),
+		objectKey: text().notNull(),
+		// 0 while the render is in progress (the row reserves the slot).
+		byteLength: integer().default(0).notNull(),
+		// Free downloads count against the hourly limit; paid orders do not.
+		countsTowardLimit: integer({ mode: 'boolean' }).default(true).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.organizationId, table.hash] }),
+		index('PrintRender_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+	],
+)
+
+// Admin-managed catalog: each shippable product and size maps to one vendor
+// SKU. Switching the vendor is an Admin change, never automatic failover.
+export const PrintVendorProduct = sqliteTable(
+	'PrintVendorProduct',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		product: text().notNull(),
+		sizeKey: text().notNull(),
+		vendor: text().notNull(), // gelato | prodigi
+		vendorSku: text().notNull(),
+		bleedMm: integer().default(3).notNull(),
+		active: integer({ mode: 'boolean' }).default(true).notNull(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex('PrintVendorProduct_product_size_active_key')
+			.on(table.product, table.sizeKey)
+			.where(sql`${table.active} = 1`),
+	],
+)
+
+// One row (`id = 'default'`): markup and quote rules for shipped prints.
+export const PrintSettings = sqliteTable('PrintSettings', {
+	id: text().primaryKey().notNull(),
+	markupBp: integer().default(3000).notNull(),
+	driftHoldBp: integer().default(1000).notNull(),
+	quoteTtlMinutes: integer().default(30).notNull(),
+	updatedAt: integer({ mode: 'timestamp_ms' })
+		.$defaultFn(() => new Date())
+		.$onUpdate(() => new Date())
+		.notNull(),
+})
+
+export const PrintOrder = sqliteTable(
+	'PrintOrder',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		organizationId: text()
+			.notNull()
+			.references(() => Organization.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		placedById: text().references(() => User.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		// quote | awaiting_payment | paid | submitting | submitted | in_production
+		// | shipped | delivered | held | failed | cancelled | refunded
+		status: text().default('quote').notNull(),
+		currency: text().default('USD').notNull(),
+		itemsCents: integer().notNull(),
+		shippingCents: integer().notNull(),
+		taxCents: integer().default(0).notNull(),
+		totalCents: integer().notNull(),
+		wholesaleCents: integer().notNull(),
+		markupBp: integer().notNull(),
+		quoteExpiresAt: integer({ mode: 'timestamp_ms' }).notNull(),
+		// The vertical's scope whose address prefilled the ship-to (opaque).
+		scopeId: text(),
+		recipientName: text().notNull(),
+		recipientPhone: text().notNull(),
+		addressLine1: text().notNull(),
+		addressLine2: text(),
+		city: text().notNull(),
+		state: text().notNull(),
+		postalCode: text().notNull(),
+		country: text().default('US').notNull(),
+		stripeCheckoutSessionId: text(),
+		stripePaymentIntentId: text(),
+		holdReason: text(),
+		failureReason: text(),
+		refundCents: integer().default(0).notNull(),
+		paidAt: integer({ mode: 'timestamp_ms' }),
+		cancelledAt: integer({ mode: 'timestamp_ms' }),
+		refundedAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('PrintOrder_organizationId_createdAt_idx').on(
+			table.organizationId,
+			table.createdAt,
+		),
+		index('PrintOrder_status_updatedAt_idx').on(table.status, table.updatedAt),
+		uniqueIndex('PrintOrder_stripeCheckoutSessionId_key').on(
+			table.stripeCheckoutSessionId,
+		),
+	],
+)
+
+export const PrintVendorOrder = sqliteTable(
+	'PrintVendorOrder',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		orderId: text()
+			.notNull()
+			.references(() => PrintOrder.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		vendor: text().notNull(),
+		vendorOrderId: text(),
+		// pending | submitted | in_production | shipped | delivered | cancelled
+		// | failed
+		status: text().default('pending').notNull(),
+		shippingMethod: text(),
+		wholesaleItemsCents: integer().notNull(),
+		wholesaleShippingCents: integer().notNull(),
+		carrier: text(),
+		trackingNumber: text(),
+		trackingUrl: text(),
+		error: text(),
+		submittedAt: integer({ mode: 'timestamp_ms' }),
+		shippedAt: integer({ mode: 'timestamp_ms' }),
+		deliveredAt: integer({ mode: 'timestamp_ms' }),
+		lastEventAt: integer({ mode: 'timestamp_ms' }),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.$onUpdate(() => new Date())
+			.notNull(),
+	},
+	(table) => [
+		index('PrintVendorOrder_orderId_idx').on(table.orderId),
+		uniqueIndex('PrintVendorOrder_vendor_vendorOrderId_key').on(
+			table.vendor,
+			table.vendorOrderId,
+		),
+	],
+)
+
+export const PrintOrderItem = sqliteTable(
+	'PrintOrderItem',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId())
+			.notNull(),
+		orderId: text()
+			.notNull()
+			.references(() => PrintOrder.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		vendorOrderId: text().references(() => PrintVendorOrder.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade',
+		}),
+		designId: text()
+			.notNull()
+			.references(() => PrintDesign.id, {
+				onDelete: 'restrict',
+				onUpdate: 'cascade',
+			}),
+		snapshotHash: text().notNull(),
+		// The approved snapshot as quoted: files are printed from this copy,
+		// never from the design row, which the operator may edit later.
+		snapshot: text({ mode: 'json' }).notNull(),
+		product: text().notNull(),
+		sizeKey: text().notNull(),
+		vendor: text().notNull(),
+		vendorSku: text().notNull(),
+		// Copies of each piece (a set of cards has one piece per card).
+		quantity: integer().notNull(),
+		pieces: integer().notNull(),
+		wholesaleCents: integer().notNull(),
+		retailCents: integer().notNull(),
+		pdfObjectKey: text(),
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(table) => [index('PrintOrderItem_orderId_idx').on(table.orderId)],
+)
+
+// Vendor webhook deliveries already processed (idempotency).
+export const PrintVendorEvent = sqliteTable('PrintVendorEvent', {
+	id: text().primaryKey().notNull(), // `${vendor}:${eventId}`
+	vendor: text().notNull(),
+	receivedAt: integer({ mode: 'timestamp_ms' })
+		.$defaultFn(() => new Date())
+		.notNull(),
+})

@@ -588,6 +588,16 @@ git commit --no-verify -m "fix: resolve ESLint warnings (verified manually)"
   on that node; revoking a device always still works. A paired tablet keeps its
   device secret locally, so no organization flag can stop it. Runbook: revoke
   devices first, then use the switch. See `docs/staffing.md`.
+- `PRINT_BROWSER_ACCOUNT_ID` / `PRINT_BROWSER_API_TOKEN` - App only. Cloudflare
+  Browser Rendering (REST `/pdf`) for Print shop PDFs. Empty in dev: downloads
+  open a print-ready page instead. `PRINT_RENDER_LIMIT_PER_HOUR` caps new
+  renders per organization (default 30).
+- `PRINT_SHIPPING_ENABLED` / `PRINT_MOCK` / `GELATO_API_KEY` / `PRODIGI_API_KEY`
+  / `PRODIGI_SANDBOX` / `PRINT_WEBHOOK_TOKEN` - App only. Shipped prints: kill
+  switch for new paid orders, the local vendor emulator (ignored unless
+  `BASE_URL` is local), vendor keys, and the secret in vendor webhook URLs (32+
+  characters). Admin needs `APP_URL` for refunds and retries. See
+  `docs/print-shop.md`.
 - `STAFFING_EMAIL_ENABLED` - Tenant-api and App, optional (unset or `true` is
   on). Kill switch for staffing email: on tenant-api it drops staff reminders
   and notices (dropped, not held, so re-enabling sends no backlog); in the App
@@ -852,6 +862,29 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
   both.
 - Canonical docs: `docs/staffing.md` (operator guide and runbook),
   `docs/decisions/047-staffing-data-residency.md` and `docs/staffing-plan.md`.
+
+**Print shop (Marketing, Print shop):**
+
+- Operator B2B data in the control plane (`PrintDesign`, `PrintRender`,
+  `PrintOrder`, `PrintVendorOrder`, `PrintOrderItem`, `PrintVendorProduct`,
+  `PrintSettings`, `PrintVendorEvent`; migration `0020_print_shop`). Catalog,
+  flags and schemas in `@repo/common/print-shop`; templates in
+  `apps/app/app/components/print/`, rendering and orders in
+  `apps/app/app/utils/print/`.
+- Generic core plus an optional vertical (business type), like the phone agent:
+  a fork registers its products, QR targets, places and items in
+  `@repo/common/print-shop-catalog`, `utils/print/vertical.server.ts`,
+  `components/print/vertical-ui.tsx` and Admin's
+  `components/print/vertical-labels.ts`. Keep business-type words out of the
+  core (`utils/print/vocabulary.test.ts`). See `docs/print-shop-verticals.md`.
+- Flags `print_shop.enabled` (designs, free PDFs) and `print_shop.shipping`
+  (paid orders). Campaign permissions design; paying also needs
+  `update:settings:any`. Every print route awaits `requirePrintShopAccess` first
+  (`print-guards.test.ts`).
+- Shipped prints: the platform is the merchant (Stripe Checkout on the platform
+  account, metadata `type: 'print_order'`); vendor orders are placed only after
+  payment; vendor webhooks only trigger a status fetch. Docs:
+  `docs/print-shop.md`.
 
 ## Known issues
 

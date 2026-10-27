@@ -34,6 +34,9 @@ Here are a few things you get today:
 - On-demand video posters and hover clips via Cloudflare Media Transformations
   (see
   [scheduled jobs](./scheduled-jobs.md#video-note-media-no-background-jobs))
+- Print shop: branded posters, flyers and window stickers as free print-ready
+  PDFs, or printed and shipped, with a vertical contract for business types (see
+  [Print shop](./print-shop.md))
 - Scheduled control-plane maintenance via Cloudflare Cron Worker
   (`apps/jobs-cron`) — audit archival, MCP token cleanup, GDPR erasure (see
   [scheduled jobs](./scheduled-jobs.md))

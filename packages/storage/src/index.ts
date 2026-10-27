@@ -15,6 +15,7 @@ export {
 	testS3Connection,
 	getSignedGetRequestInfo,
 	getSignedGetRequestInfoAsync,
+	getPresignedGetUrl,
 } from './client'
 
 // Export upload helpers

@@ -141,6 +141,13 @@
 			"when": 1791982187083,
 			"tag": "0019_dashboards",
 			"breakpoints": true
+		},
+		{
+			"idx": 20,
+			"version": "6",
+			"when": 1793122555645,
+			"tag": "0020_print_shop",
+			"breakpoints": true
 		}
 	]
 }

@@ -30,6 +30,10 @@ import { useNavigate, useFetcher, useParams } from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { useEventSource } from 'remix-utils/sse/react'
 import { BellIcon } from '#app/components/icons/bell-icon.tsx'
+import {
+	PRINT_ALERT_COPY,
+	printAlertKindFromNotificationType,
+} from '#app/utils/print/print-notifications.ts'
 import { staffingAlertCopy } from '#app/utils/staffing/alert-copy.ts'
 
 interface Notification {
@@ -95,18 +99,36 @@ function NotificationItem({
 		? staffingAlertCopy(staffingKind, Number(payload?.count), _)
 		: null
 
+	const printKind = printAlertKindFromNotificationType(notification.type)
+	const printAlert = printKind
+		? {
+				subject: _(PRINT_ALERT_COPY[printKind].subject),
+				body: _(PRINT_ALERT_COPY[printKind].body),
+			}
+		: null
+
 	const subject =
+		printAlert?.subject ??
 		staffing?.subject ??
 		(notification.type === 'mention'
 			? `**${payload?.commenterName || 'Someone'}** mentioned you`
 			: `**${payload?.commenterName || 'Someone'}** commented on your note`)
-	const body = staffing?.body ?? payload?.commentContent ?? ''
+	const body =
+		printAlert?.body ?? staffing?.body ?? payload?.commentContent ?? ''
 
 	const handlePress = () => {
 		if (!notification.isRead) {
 			onMarkRead(notification.id)
 		}
-		if (staffingKind && typeof payload?.orgSlug === 'string') {
+		if (
+			printKind &&
+			typeof payload?.orgSlug === 'string' &&
+			typeof payload?.orderId === 'string'
+		) {
+			void navigate(
+				`/${payload.orgSlug}/marketing/print/orders/${encodeURIComponent(payload.orderId)}`,
+			)
+		} else if (staffingKind && typeof payload?.orgSlug === 'string') {
 			const scopeId =
 				typeof payload.scopeId === 'string' ? payload.scopeId : null
 			void navigate(
@@ -142,7 +164,9 @@ function NotificationItem({
 			<div className="flex items-start border-b border-dashed p-2">
 				<Avatar className="mr-2 h-8 w-8">
 					<AvatarFallback>
-						{staffingKind ? (
+						{printKind ? (
+							<Icon name="printer" className="h-4 w-4" />
+						) : staffingKind ? (
 							<Icon name="clock" className="h-4 w-4" />
 						) : (
 							payload.commenterName?.[0] || 'N'

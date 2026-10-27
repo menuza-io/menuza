@@ -116,6 +116,16 @@
       "import": "./src/merge-tags.ts",
       "default": "./src/merge-tags.ts"
     },
+    "./print-shop": {
+      "types": "./src/print-shop.ts",
+      "import": "./src/print-shop.ts",
+      "default": "./src/print-shop.ts"
+    },
+    "./print-shop-catalog": {
+      "types": "./src/print-shop-catalog.ts",
+      "import": "./src/print-shop-catalog.ts",
+      "default": "./src/print-shop-catalog.ts"
+    },
     "./email-theme": {
       "types": "./src/email-theme.ts",
       "import": "./src/email-theme.ts",

@@ -509,7 +509,11 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				await worker.scheduled({ cron: '0 * * * *' } as any, regionalEnv(), ctx)
 				const results = await Promise.allSettled(promises)
 
-				expect(results.map((r) => r.status)).toEqual(['fulfilled', 'fulfilled'])
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'fulfilled',
+					'fulfilled',
+				])
 				const calls = fetchMock.mock.calls.map(([url, init]: any) => [
 					url,
 					init.method,
@@ -530,9 +534,14 @@ describe('Jobs-Cron Worker Endpoints', () => {
 							'POST',
 							token,
 						],
+						[
+							'https://app.example.com/resources/jobs/print-sync',
+							'POST',
+							token,
+						],
 					]),
 				)
-				expect(calls).toHaveLength(4)
+				expect(calls).toHaveLength(5)
 			})
 
 			it('sends the staff tick an empty body so each node runs every organization', async () => {
@@ -564,7 +573,11 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				const results = await Promise.allSettled(promises)
 
 				// Engagement sync fulfilled; the staff tick failed on one node.
-				expect(results.map((r) => r.status)).toEqual(['fulfilled', 'rejected'])
+				expect(results.map((r) => r.status)).toEqual([
+					'fulfilled',
+					'rejected',
+					'fulfilled',
+				])
 				// The healthy node still ran its tick.
 				expect(fetchMock.mock.calls.map(([url]) => url)).toContain(
 					'https://tenant-us.example.com/api/staff/tick',
@@ -575,7 +588,7 @@ describe('Jobs-Cron Worker Endpoints', () => {
 				errorSpy.mockRestore()
 			})
 
-			it('does nothing for a node that is not configured', async () => {
+			it('calls no node that is not configured (App jobs still run)', async () => {
 				const fetchMock = vi.fn()
 				globalThis.fetch = fetchMock as any
 				const { ctx, promises } = waited()
@@ -585,7 +598,9 @@ describe('Jobs-Cron Worker Endpoints', () => {
 					ctx,
 				)
 				await Promise.allSettled(promises)
-				expect(fetchMock).not.toHaveBeenCalled()
+				expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+					'https://app.example.com/resources/jobs/print-sync',
+				])
 			})
 		})
 
