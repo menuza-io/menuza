@@ -144,6 +144,8 @@ export type RestaurantOrderErrorCode =
 	| 'instructions_not_allowed'
 	| 'per_order_limit'
 	| 'total_quantity_limit'
+	| 'dine_in_disabled'
+	| 'dine_in_not_allowed'
 
 export type RestaurantOrderError = {
 	status: 400 | 403 | 404 | 422
@@ -210,13 +212,20 @@ export const restaurantOrderRequestSchema = z
 				time: z.string().regex(HH_MM_REGEX, 'Pickup time must be HH:MM'),
 			})
 			.optional(),
-		fulfillment: z.enum(['pickup', 'delivery']),
+		/**
+		 * `dine_in` is a QR table round: it needs an `X-Table-Token` or
+		 * `X-Tab-Token` header, pays at tab close, and carries contact only as
+		 * the organization's QR settings require.
+		 */
+		fulfillment: z.enum(['pickup', 'delivery', 'dine_in']),
 		paymentMethod: z.enum(['handoff', 'online']),
 		contact: z.strictObject({
-			name: z.string().trim().min(1).max(120),
-			phone: phoneSchema,
+			name: z.string().trim().min(1).max(120).optional(),
+			phone: phoneSchema.optional(),
 			email: z.string().trim().email().max(254).optional(),
 		}),
+		/** Set by Sites when the menu was opened from an order-ahead QR poster. */
+		source: z.enum(['qr_poster']).nullable().optional(),
 		delivery: z
 			.strictObject({
 				// Free-text address + city are required only without a quote
@@ -245,6 +254,24 @@ export const restaurantOrderRequestSchema = z
 		turnstileToken: z.string().min(1).max(2048).optional(),
 	})
 	.superRefine((value, context) => {
+		if (value.fulfillment === 'dine_in') {
+			refineDineInRequest(value, context)
+		} else {
+			if (!value.contact.name) {
+				context.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['contact', 'name'],
+					message: 'Enter your name',
+				})
+			}
+			if (!value.contact.phone) {
+				context.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['contact', 'phone'],
+					message: 'Enter a valid phone number',
+				})
+			}
+		}
 		if (value.fulfillment === 'delivery' && !value.delivery) {
 			context.addIssue({
 				code: z.ZodIssueCode.custom,
@@ -275,7 +302,7 @@ export const restaurantOrderRequestSchema = z
 				message: 'Drops use pickup windows instead of scheduled times',
 			})
 		}
-		if (value.fulfillment !== 'delivery' && value.delivery) {
+		if (value.fulfillment === 'pickup' && value.delivery) {
 			context.addIssue({
 				code: z.ZodIssueCode.custom,
 				path: ['delivery'],
@@ -312,6 +339,39 @@ export const restaurantOrderRequestSchema = z
 export type RestaurantOrderRequest = z.infer<
 	typeof restaurantOrderRequestSchema
 >
+
+/**
+ * A dine-in round: the table (or the open tab) is proven by a header token,
+ * so the body carries only what the guest ordered. Drops, pickup windows,
+ * delivery, scheduling, tips and online prepay belong to other flows: the tab
+ * is paid once, at close.
+ */
+function refineDineInRequest(
+	value: {
+		dropSlug?: string
+		pickup?: unknown
+		delivery?: unknown
+		scheduledFor?: string | null
+		tipPercent: number
+		paymentMethod: 'handoff' | 'online'
+		source?: 'qr_poster' | null
+	},
+	context: z.RefinementCtx,
+) {
+	const reject = (path: string, message: string) =>
+		context.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
+	if (value.dropSlug) reject('dropSlug', 'Drops are not available at the table')
+	if (value.pickup) reject('pickup', 'Pickup times are not valid at the table')
+	if (value.delivery) reject('delivery', 'Delivery is not valid at the table')
+	if (value.scheduledFor) {
+		reject('scheduledFor', 'Table orders are sent to the kitchen now')
+	}
+	if (value.tipPercent !== 0) reject('tipPercent', 'Add a tip when you pay')
+	if (value.paymentMethod !== 'handoff') {
+		reject('paymentMethod', 'Table orders are paid when you close the tab')
+	}
+	if (value.source) reject('source', 'Table orders have their own source')
+}
 export type RestaurantOrderLineRequest = z.infer<
 	typeof restaurantOrderLineSchema
 >
@@ -375,10 +435,12 @@ export function canonicalOrderRequest(request: RestaurantOrderRequest): string {
 		paymentMethod: request.paymentMethod,
 		tipPercent: request.tipPercent,
 		contact: {
-			name: request.contact.name,
-			phone: request.contact.phone,
+			name: request.contact.name ?? null,
+			phone: request.contact.phone ?? null,
 			email: request.contact.email ?? null,
 		},
+		// Only when present, so hashes of requests without it never change.
+		...(request.source ? { source: request.source } : {}),
 		delivery: request.delivery
 			? {
 					address: request.delivery.address ?? null,
@@ -1813,6 +1875,34 @@ export function priceRestaurantOrder(
 				'delivery_not_allowed',
 				'Delivery details are not valid for pickup orders.',
 			),
+		}
+	}
+	if (request.fulfillment === 'dine_in') {
+		if (
+			walkIn ||
+			dropSlug ||
+			request.scheduledFor ||
+			request.tipPercent !== 0 ||
+			request.paymentMethod !== 'handoff'
+		) {
+			return {
+				ok: false,
+				error: orderError(
+					400,
+					'dine_in_not_allowed',
+					'This order cannot be placed at the table.',
+				),
+			}
+		}
+		if (!location.fulfillmentOptions.dineIn) {
+			return {
+				ok: false,
+				error: orderError(
+					422,
+					'dine_in_disabled',
+					'Ordering at the table is not available at this location.',
+				),
+			}
 		}
 	}
 	if (

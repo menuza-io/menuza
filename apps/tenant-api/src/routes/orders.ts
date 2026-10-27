@@ -2,6 +2,10 @@ import { Hono, type Context } from 'hono'
 import { ENV } from 'varlock/env'
 
 import {
+	QR_TAB_TOKEN_HEADER,
+	QR_TABLE_TOKEN_HEADER,
+} from '@repo/common/qr-ordering'
+import {
 	RESTAURANT_TURNSTILE_ACTION,
 	restaurantOrderRequestSchema,
 } from '@repo/common/restaurant-orders'
@@ -16,17 +20,20 @@ import {
 	resolveOrganizationForBrowserAuth,
 	type PublishedOrganization,
 } from '../lib/origin.ts'
+import { isQrDineInDisabled } from '../lib/qr-tokens.ts'
 import { rateLimitByKey } from '../lib/rate-limit.ts'
 import { orgMatchesNodeRegion } from '../lib/region.ts'
 import { getBearerToken, syncEnvFromProcess } from '../lib/secrets.ts'
 import {
-	buildOrderingOptions,
+	buildOrderingOptionsWithContext,
 	getOrderReceipt,
 	placeOrder,
 	publicOrderSummary,
 	receiptOrder,
 	type OrderServiceFailure,
 } from '../services/order-service.ts'
+import type { DineInCapability } from '../services/qr-dine-in.ts'
+import { getPublicTab, getTableContext } from '../services/qr-tab-service.ts'
 import { authenticateCustomer } from './auth.ts'
 
 export const publicOrderRoutes = new Hono()
@@ -42,6 +49,20 @@ function orderFailureResponse(failure: OrderServiceFailure) {
 
 function noStoreHeaders() {
 	return { 'Cache-Control': 'no-store' }
+}
+
+/** Table and tab capabilities ride in headers (from the URL fragment). */
+function dineInCapability(c: Context): DineInCapability | null {
+	const tableToken = c.req.header(QR_TABLE_TOKEN_HEADER)?.trim() || null
+	const tabToken = c.req.header(QR_TAB_TOKEN_HEADER)?.trim() || null
+	return tableToken || tabToken ? { tableToken, tabToken } : null
+}
+
+function dineInUnavailable() {
+	return Response.json(
+		{ error: 'unavailable' },
+		{ status: 503, headers: noStoreHeaders() },
+	)
 }
 
 function clientIp(c: Context) {
@@ -155,6 +176,10 @@ publicOrderRoutes.post('/', async (c) => {
 		)
 	}
 	const request = parsed.data
+	const dineIn = dineInCapability(c)
+	if ((request.fulfillment === 'dine_in' || dineIn) && isQrDineInDisabled()) {
+		return dineInUnavailable()
+	}
 
 	if (
 		!(await verifyOrderTurnstile(
@@ -178,14 +203,14 @@ publicOrderRoutes.post('/', async (c) => {
 	const customer = await optionalCustomerId(c, organization.organization)
 	if ('error' in customer) return customer.error
 
-	const phoneLimit = rateLimitByKey(
-		'order-create-phone',
-		request.contact.phone,
-		{
-			maxRequests: 10,
-			windowMs: 60 * 60 * 1000,
-		},
-	)
+	// Table rounds may come without a phone; the durable per-table limit
+	// covers them inside the placement transaction.
+	const phoneLimit = request.contact.phone
+		? rateLimitByKey('order-create-phone', request.contact.phone, {
+				maxRequests: 10,
+				windowMs: 60 * 60 * 1000,
+			})
+		: { limited: false as const, retryAfter: 0 }
 	if (phoneLimit.limited) {
 		return c.json(
 			{
@@ -206,6 +231,7 @@ publicOrderRoutes.post('/', async (c) => {
 			organization: organization.organization,
 			request,
 			customerId: customer.customerId,
+			dineIn,
 		})
 		if (!result.ok) return orderFailureResponse(result.failure)
 
@@ -215,6 +241,7 @@ publicOrderRoutes.post('/', async (c) => {
 			...(result.data.paymentToken
 				? { paymentToken: result.data.paymentToken }
 				: {}),
+			...(result.data.tab ? { tab: result.data.tab } : {}),
 		}
 		return c.json(body, result.data.status, noStoreHeaders())
 	} catch (error) {
@@ -256,14 +283,31 @@ publicOrderRoutes.get('/options', async (c) => {
 	})
 	if ('error' in organization) return organization.error
 
+	const dineIn = dineInCapability(c)
+	if (dineIn && isQrDineInDisabled()) return dineInUnavailable()
+
 	try {
-		const result = await buildOrderingOptions(organization.organization, {
-			slug: parsed.data.slug ?? null,
-			locationId: parsed.data.locationId,
-			dropSlug: parsed.data.dropSlug ?? null,
-		})
+		const result = await buildOrderingOptionsWithContext(
+			organization.organization,
+			{
+				slug: parsed.data.slug ?? null,
+				locationId: parsed.data.locationId,
+				dropSlug: parsed.data.dropSlug ?? null,
+			},
+		)
 		if (!result.ok) return orderFailureResponse(result.failure)
-		return c.json(result.data, 200, noStoreHeaders())
+		const { options, context } = result.data
+		if (!dineIn) return c.json(options, 200, noStoreHeaders())
+		// A scanned table adds its label, the dine-in policy and the open tab
+		// (so a re-scan resumes it). The QR flags come from the same fresh
+		// order context the placement path reads.
+		const table = await getTableContext(organization.organization.id, {
+			capability: dineIn,
+			locationId: parsed.data.locationId,
+			context,
+		})
+		if (!table.ok) return orderFailureResponse(table.failure)
+		return c.json({ ...options, ...table.data }, 200, noStoreHeaders())
 	} catch (error) {
 		console.error(
 			`Failed to build ordering options for org ${organization.organization.id}:`,
@@ -274,6 +318,48 @@ publicOrderRoutes.get('/options', async (c) => {
 				error: 'internal_error',
 				message: 'Ordering is unavailable right now.',
 			},
+			500,
+			noStoreHeaders(),
+		)
+	}
+})
+
+// ---------------------------------------------------------------------------
+// GET /orders/tab — the open (or settled) tab behind an X-Tab-Token
+// ---------------------------------------------------------------------------
+
+publicOrderRoutes.get('/tab', async (c) => {
+	const identitySchema = z.object({
+		slug: z.string().trim().min(1).max(100).optional(),
+		host: z.string().trim().min(1).max(253).optional(),
+	})
+	const identity = identitySchema.safeParse(c.req.query())
+	if (!identity.success) {
+		return c.json({ error: 'Organization not found' }, 404, noStoreHeaders())
+	}
+	if (isQrDineInDisabled()) return dineInUnavailable()
+	const organization = await resolveOrderingOrganization(c, identity.data)
+	if ('error' in organization) return organization.error
+
+	const tabToken = c.req.header(QR_TAB_TOKEN_HEADER)?.trim()
+	if (!tabToken) {
+		return c.json(
+			{ error: 'unauthorized', message: 'A tab code is required.' },
+			401,
+			noStoreHeaders(),
+		)
+	}
+	try {
+		const result = await getPublicTab(organization.organization.id, tabToken)
+		if (!result.ok) return orderFailureResponse(result.failure)
+		return c.json({ tab: result.data }, 200, noStoreHeaders())
+	} catch (error) {
+		console.error(
+			`Failed to load tab for org ${organization.organization.id}:`,
+			error instanceof Error ? error.message : error,
+		)
+		return c.json(
+			{ error: 'internal_error', message: 'We could not load this tab.' },
 			500,
 			noStoreHeaders(),
 		)

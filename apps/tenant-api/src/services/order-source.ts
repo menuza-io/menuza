@@ -15,7 +15,7 @@ import { type StaffDb } from './staff-audit.ts'
 export type OrderBucketRow = {
 	bucket: number
 	currency: string
-	fulfillment: 'pickup' | 'delivery'
+	fulfillment: 'pickup' | 'delivery' | 'dine_in'
 	orders: number
 	subtotalMinor: number
 	tipMinor: number

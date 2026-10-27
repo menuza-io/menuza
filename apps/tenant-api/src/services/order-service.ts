@@ -16,8 +16,10 @@ import {
 	type RestaurantOrderRequest,
 	type VerifiedDeliveryQuote,
 } from '@repo/common/restaurant-orders'
+import { readQrOrderingFeatures } from '@repo/common/qr-ordering'
 import {
 	getTenantDb,
+	qrTabs,
 	RESTAURANT_ORDER_ACTIVE_STATUSES,
 	runTenantTransaction,
 	restaurantOrders,
@@ -35,8 +37,16 @@ import {
 	syncEnvFromProcess,
 	timingSafeEqualString,
 } from '../lib/secrets.ts'
+import { deriveTabToken } from '../lib/qr-tokens.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { insertRowsInChunks, inJsonList } from '../lib/chunked-in.ts'
+import {
+	openTab,
+	readQrSettings,
+	resolveDineIn,
+	tableRoundsInLastHour,
+	type DineInCapability,
+} from './qr-dine-in.ts'
 
 /** Tenant database + transaction handle types. */
 type TenantDatabase = Awaited<ReturnType<typeof getTenantDb>>
@@ -232,7 +242,9 @@ async function expireHolds(db: OrderTx, now: Date): Promise<void> {
 export async function sweepExpiredHolds(orgId: string, now = new Date()) {
 	const db = await getTenantDb(orgId)
 	return runExclusive(orgId, () =>
-		retryOnSqliteBusy(() => runTenantTransaction(db, async (tx) => expireHolds(tx, now))),
+		retryOnSqliteBusy(() =>
+			runTenantTransaction(db, async (tx) => expireHolds(tx, now)),
+		),
 	)
 }
 
@@ -381,6 +393,8 @@ export type PlaceOrderSuccess = {
 	order: RestaurantOrder
 	receiptToken: string
 	paymentToken: string | null
+	/** Dine-in rounds only: the tab the round joined or opened. */
+	tab: { id: string; tabNumber: string; tabToken: string } | null
 }
 
 export type PlaceOrderResult =
@@ -391,11 +405,25 @@ export async function placeOrder(input: {
 	organization: PublishedOrganization
 	request: RestaurantOrderRequest
 	customerId: string | null
+	/** Dine-in only: the `X-Table-Token` / `X-Tab-Token` the browser sent. */
+	dineIn?: DineInCapability | null
 	now?: Date
 }): Promise<PlaceOrderResult> {
 	const { organization, request, customerId } = input
 	const now = input.now ?? new Date()
 	const orgId = organization.id
+	const isDineIn = request.fulfillment === 'dine_in'
+	const dineIn = input.dineIn ?? null
+	const hasDineInToken = Boolean(dineIn?.tableToken || dineIn?.tabToken)
+	if (isDineIn !== hasDineInToken) {
+		return orderFailure(
+			400,
+			'invalid_request',
+			isDineIn
+				? 'Scan the table code to order at the table.'
+				: 'Table codes are only valid for table orders.',
+		)
+	}
 
 	const contextResult = await fetchOrderContext(
 		orgId,
@@ -412,6 +440,24 @@ export async function placeOrder(input: {
 			'Ordering is temporarily unavailable. Please try again shortly.',
 		)
 	}
+
+	// The App folds the org's QR flags into the context; anything missing or
+	// malformed reads as off, so a dine-in round fails closed.
+	const qrFeatures = readQrOrderingFeatures(
+		(context as { qrOrdering?: unknown }).qrOrdering,
+	)
+	if (isDineIn && !qrFeatures.dineIn) {
+		return orderFailure(
+			404,
+			'dine_in_unavailable',
+			'Ordering at the table is not available.',
+		)
+	}
+	const orderSource: RestaurantOrder['source'] = isDineIn
+		? 'qr_table'
+		: request.source === 'qr_poster' && qrFeatures.enabled
+			? 'qr_poster'
+			: null
 
 	if (
 		request.paymentMethod === 'online' &&
@@ -467,13 +513,31 @@ export async function placeOrder(input: {
 
 	const db = await getTenantDb(orgId)
 
-	const replayOrConflict = (existing: RestaurantOrder): PlaceOrderResult => {
+	const replayOrConflict = async (
+		existing: RestaurantOrder,
+		reader: Pick<TenantDatabase, 'select'> | OrderTx = db,
+	): Promise<PlaceOrderResult> => {
 		if (existing.requestHash !== requestHash) {
 			return orderFailure(
 				409,
 				'idempotency_conflict',
 				'This checkout was already completed with different details.',
 			)
+		}
+		let tab: PlaceOrderSuccess['tab'] = null
+		if (existing.tabId) {
+			const [row] = await reader
+				.select()
+				.from(qrTabs)
+				.where(eq(qrTabs.id, existing.tabId))
+				.limit(1)
+			if (row) {
+				tab = {
+					id: row.id,
+					tabNumber: row.tabNumber,
+					tabToken: deriveTabToken(orgId, row.id, row.tabTokenVersion),
+				}
+			}
 		}
 		return {
 			ok: true,
@@ -485,6 +549,7 @@ export async function placeOrder(input: {
 					existing.paymentMethod === 'online'
 						? derivePaymentToken(orgId, existing.id)
 						: null,
+				tab,
 			},
 		}
 	}
@@ -496,6 +561,13 @@ export async function placeOrder(input: {
 		.limit(1)
 	if (existing) return replayOrConflict(existing)
 
+	// Fail fast on a bad table code before taking the org lock; the same
+	// checks run again inside the transaction against fresh rows.
+	if (isDineIn) {
+		const precheck = await resolveDineIn(db, orgId, dineIn!, request.locationId)
+		if (!precheck.ok) return { ok: false, failure: precheck.failure }
+	}
+
 	return runExclusive(orgId, () =>
 		retryOnSqliteBusy(() =>
 			runTenantTransaction(db, async (tx) => {
@@ -504,9 +576,91 @@ export async function placeOrder(input: {
 					.from(restaurantOrders)
 					.where(eq(restaurantOrders.idempotencyKey, request.idempotencyKey))
 					.limit(1)
-				if (existingInTx) return replayOrConflict(existingInTx)
+				if (existingInTx) return replayOrConflict(existingInTx, tx)
 
 				await expireHolds(tx, now)
+
+				let tabRow: typeof qrTabs.$inferSelect | null = null
+				let tableRow: { id: string; label: string } | null = null
+				if (isDineIn) {
+					const resolved = await resolveDineIn(
+						tx,
+						orgId,
+						dineIn!,
+						request.locationId,
+					)
+					if (!resolved.ok) return { ok: false, failure: resolved.failure }
+					const settings = await readQrSettings(tx)
+					const existingTab = resolved.data.tab
+					if (
+						settings.requireGuestName &&
+						!request.contact.name &&
+						!existingTab?.guestName
+					) {
+						return orderFailure(
+							422,
+							'contact_name_required',
+							'Enter your name to order at the table.',
+						)
+					}
+					if (
+						settings.requireGuestPhone &&
+						!request.contact.phone &&
+						!existingTab?.guestPhone
+					) {
+						return orderFailure(
+							422,
+							'contact_phone_required',
+							'Enter your phone number to order at the table.',
+						)
+					}
+					const recent = await tableRoundsInLastHour(
+						tx,
+						resolved.data.table.id,
+						now,
+					)
+					if (recent >= settings.perTableLimitPerHour) {
+						return orderFailure(
+							429,
+							'table_rate_limited',
+							'This table has sent many orders. Please ask a team member for help.',
+						)
+					}
+					tableRow = resolved.data.table
+					if (existingTab) {
+						tabRow = existingTab
+						const fill: Partial<typeof qrTabs.$inferInsert> = {}
+						if (!existingTab.guestName && request.contact.name) {
+							fill.guestName = request.contact.name
+						}
+						if (!existingTab.guestPhone && request.contact.phone) {
+							fill.guestPhone = request.contact.phone
+						}
+						if (Object.keys(fill).length > 0) {
+							const [updated] = await tx
+								.update(qrTabs)
+								.set({ ...fill, updatedAt: now.getTime() })
+								.where(eq(qrTabs.id, existingTab.id))
+								.returning()
+							tabRow = updated ?? existingTab
+						}
+					} else {
+						tabRow = await openTab(tx, {
+							table: resolved.data.table,
+							currency: result.currency,
+							guestName: request.contact.name ?? null,
+							guestPhone: request.contact.phone ?? null,
+							now,
+						})
+						if (!tabRow) {
+							return orderFailure(
+								409,
+								'tab_conflict',
+								'Another order at this table just opened the tab. Please try again.',
+							)
+						}
+					}
+				}
 
 				if (result.capacity) {
 					const slotFailure = await assertSlotCapacity(tx, result.capacity)
@@ -549,9 +703,13 @@ export async function placeOrder(input: {
 								pickupDate: result.pickup?.date ?? null,
 								pickupTime: result.pickup?.time ?? null,
 								pickupTimezone: result.pickup?.timezone ?? null,
-								contactName: request.contact.name,
-								contactPhone: request.contact.phone,
+								contactName: request.contact.name ?? tabRow?.guestName ?? '',
+								contactPhone: request.contact.phone ?? tabRow?.guestPhone ?? '',
 								contactEmail: request.contact.email ?? null,
+								tabId: tabRow?.id ?? null,
+								tableId: tableRow?.id ?? null,
+								tableLabel: tableRow?.label ?? null,
+								source: orderSource,
 								deliveryAddress: result.delivery?.address ?? null,
 								deliveryCity: result.delivery?.city ?? null,
 								deliveryUnit: result.delivery?.unit ?? null,
@@ -614,6 +772,17 @@ export async function placeOrder(input: {
 						order: inserted,
 						receiptToken,
 						paymentToken,
+						tab: tabRow
+							? {
+									id: tabRow.id,
+									tabNumber: tabRow.tabNumber,
+									tabToken: deriveTabToken(
+										orgId,
+										tabRow.id,
+										tabRow.tabTokenVersion,
+									),
+								}
+							: null,
 					},
 				}
 			}),
@@ -1112,6 +1281,15 @@ export async function updateOperatorOrder(
 				}
 
 				if (input.markPaid) {
+					// A tab is paid once, at close: settling one round alone would
+					// leave the tab total and the rounds disagreeing.
+					if (order.tabId) {
+						return orderFailure(
+							409,
+							'tab_settlement_required',
+							'This order is on a table tab. Close the tab to take payment.',
+						)
+					}
 					if (order.paymentMethod !== 'online') {
 						if (
 							order.paymentStatus !== 'unpaid' &&
@@ -1196,6 +1374,21 @@ export async function buildOrderingOptions(
 	organization: PublishedOrganization,
 	input: { slug: string | null; locationId: string; dropSlug: string | null },
 ): Promise<OrderServiceResult<PublicOrderingOptions>> {
+	const result = await buildOrderingOptionsWithContext(organization, input)
+	if (!result.ok) return result
+	return { ok: true, data: result.data.options }
+}
+
+/** Ordering options plus the fresh order context they were built from. */
+export async function buildOrderingOptionsWithContext(
+	organization: PublishedOrganization,
+	input: { slug: string | null; locationId: string; dropSlug: string | null },
+): Promise<
+	OrderServiceResult<{
+		options: PublicOrderingOptions
+		context: RestaurantOrderContext
+	}>
+> {
 	const contextResult = await fetchOrderContext(
 		organization.id,
 		input.locationId,
@@ -1288,7 +1481,7 @@ export async function buildOrderingOptions(
 		geocoderAvailable: isGeocodingAvailable(),
 	})
 	if (!built.ok) return { ok: false, failure: fromEngineError(built.error) }
-	return { ok: true, data: built.options }
+	return { ok: true, data: { options: built.options, context } }
 }
 
 // ---------------------------------------------------------------------------
@@ -1332,6 +1525,12 @@ export function receiptOrder(order: RestaurantOrder) {
 					}
 				: null,
 		drop: order.dropSlug ? { slug: order.dropSlug } : null,
+		table:
+			order.tableId && order.tableLabel
+				? { id: order.tableId, label: order.tableLabel }
+				: null,
+		tabId: order.tabId ?? null,
+		source: order.source ?? null,
 		lines: order.lines as PricedOrderLine[],
 		contact: {
 			name: order.contactName,

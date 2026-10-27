@@ -36,6 +36,7 @@ import { publicDeliveryRoutes } from './routes/delivery.ts'
 import { orderSystemRoutes } from './routes/order-system.ts'
 import { subscriptionRoutes } from './routes/subscriptions.ts'
 import { operatorOrderRoutes } from './routes/operator-orders.ts'
+import { operatorQrRoutes } from './routes/operator-qr.ts'
 import { operatorPeopleRoutes } from './routes/operator-people.ts'
 import { operatorPosRoutes } from './routes/operator-pos.ts'
 import { posRoutes } from './routes/pos.ts'
@@ -267,6 +268,7 @@ export function createTenantApiApp() {
 	app.route('/operator/mailbox', mailboxRoutes)
 	app.route('/operator/journeys', journeyOperatorRoutes)
 	app.route('/operator/orders', operatorOrderRoutes)
+	app.route('/operator/qr', operatorQrRoutes)
 	app.route('/operator/people', operatorPeopleRoutes)
 	app.route('/operator/pos', operatorPosRoutes)
 	app.route('/operator/calls', voiceOperatorRoutes)

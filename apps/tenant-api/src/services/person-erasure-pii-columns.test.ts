@@ -91,6 +91,11 @@ const COVERED: Record<string, string> = {
 		'card metadata, with the nulled card brand and last4 it identifies no one',
 	'customers.refresh_token_expires_at': 'row deleted',
 	'restaurant_orders.delivery_notes': 'scrubbed with the order contact',
+	'qr_tabs.guest_name':
+		'nulled with the scrubbed rounds of the tab, or by normalised phone',
+	'qr_tabs.guest_phone':
+		'nulled with the scrubbed rounds of the tab, or by normalised phone',
+	'qr_tabs.payment_token_hash': 'nulled with the tab guest',
 }
 
 /** Whole domains that are not a customer's data, with the reason. */
@@ -111,6 +116,12 @@ const ALLOWED_COLUMNS: Record<string, string> = {
 	'website_forms.name': 'form title written by the operator',
 	'restaurant_orders.payment_method':
 		'cash or card, not personal data; the order totals are kept',
+	'qr_tabs.payment_method':
+		'counter or online, not personal data; the tab totals are kept',
+	'qr_settings.require_guest_name':
+		'organization setting (a yes/no switch), holds no one’s name',
+	'qr_settings.require_guest_phone':
+		'organization setting (a yes/no switch), holds no one’s phone',
 	'voice_line_verifications.to_phone':
 		"the organization's own phone line being verified, not a customer",
 	'rsv_areas.name': 'room name written by the operator',

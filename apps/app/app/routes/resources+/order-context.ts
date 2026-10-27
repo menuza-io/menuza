@@ -12,6 +12,12 @@
  * refuse orders against it.
  */
 
+import { getFeatureFlag } from '@repo/common/feature-flags'
+import {
+	foldQrOrderingFeatures,
+	QR_ORDERING_FLAG_KEYS,
+	type QrOrderingFeatures,
+} from '@repo/common/qr-ordering'
 import { and, db, eq, Organization } from '@repo/database'
 import { TENANT_ORG_ID_PATTERN } from '@repo/tenant-db'
 import { type LoaderFunctionArgs } from 'react-router'
@@ -42,6 +48,19 @@ export type OrderContextResponse = {
 	menu: PublicSiteMenuPayload
 	drop: PublicSiteDropPayload | null
 	onlinePayment: RestaurantOnlinePayment
+	/** QR ordering flags; the region treats anything missing as off. */
+	qrOrdering: QrOrderingFeatures
+}
+
+async function readQrOrderingFeatures(
+	organizationId: string,
+): Promise<QrOrderingFeatures> {
+	const [enabled, dineIn, online] = await Promise.all([
+		getFeatureFlag(QR_ORDERING_FLAG_KEYS.enabled, { organizationId }),
+		getFeatureFlag(QR_ORDERING_FLAG_KEYS.dineIn, { organizationId }),
+		getFeatureFlag(QR_ORDERING_FLAG_KEYS.online, { organizationId }),
+	])
+	return foldQrOrderingFeatures({ enabled, dineIn, online })
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -129,6 +148,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		menu,
 		drop,
 		onlinePayment: resolveRestaurantOnlinePayment(org),
+		qrOrdering: await readQrOrderingFeatures(org.id),
 	}
 
 	return Response.json(response, {
