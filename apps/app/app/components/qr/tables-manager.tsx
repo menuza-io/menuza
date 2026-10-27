@@ -329,6 +329,10 @@ function TableRow({
 	const [label, setLabel] = useState(table.label)
 	const renameButton = useRef<HTMLButtonElement>(null)
 	const [returnFocus, setReturnFocus] = useState(false)
+	// The action button does not close an alert dialog by itself.
+	const [confirming, setConfirming] = useState<'regenerate' | 'archive' | null>(
+		null,
+	)
 	useEffect(() => {
 		// Back from the inline editor: focus the Rename button again.
 		if (!editing && returnFocus) {
@@ -400,7 +404,10 @@ function TableRow({
 						<Icon name="pencil" className="size-4" />
 						{_(msg`Rename`)}
 					</Button>
-					<AlertDialog>
+					<AlertDialog
+						open={confirming === 'regenerate'}
+						onOpenChange={(open) => setConfirming(open ? 'regenerate' : null)}
+					>
 						<AlertDialogTrigger
 							render={
 								<Button
@@ -428,7 +435,10 @@ function TableRow({
 								<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
 								<AlertDialogAction
 									variant="destructive"
-									onClick={() => void onRegenerate()}
+									onClick={() => {
+										setConfirming(null)
+										void onRegenerate()
+									}}
 								>
 									{_(msg`Make a new code`)}
 								</AlertDialogAction>
@@ -440,7 +450,10 @@ function TableRow({
 							{_(msg`Close the open tab before archiving.`)}
 						</p>
 					) : (
-						<AlertDialog>
+						<AlertDialog
+							open={confirming === 'archive'}
+							onOpenChange={(open) => setConfirming(open ? 'archive' : null)}
+						>
 							<AlertDialogTrigger
 								render={
 									<Button
@@ -471,7 +484,10 @@ function TableRow({
 									<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
 									<AlertDialogAction
 										variant="destructive"
-										onClick={() => void onArchive()}
+										onClick={() => {
+											setConfirming(null)
+											void onArchive()
+										}}
 									>
 										{_(msg`Archive table`)}
 									</AlertDialogAction>
