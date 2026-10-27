@@ -120,11 +120,20 @@ export function OpenTabs({
 		}
 	}, [load, refreshKey])
 
-	const act = async (path: string, body: unknown, done: string) => {
+	const act = async (
+		path: string,
+		body: unknown,
+		done: string,
+		after?: (response: unknown) => Promise<void>,
+	) => {
 		acting.current = true
 		try {
-			await request(path, { method: 'POST', body: JSON.stringify(body) })
+			const response = await request(path, {
+				method: 'POST',
+				body: JSON.stringify(body),
+			})
 			toast.success(done)
+			await after?.(response)
 			settledFocus.current = true
 			await load()
 			return true
@@ -134,9 +143,43 @@ export function OpenTabs({
 					? cause.message
 					: _(msg`That did not work. Try again.`),
 			)
+			// The tab changed under the open dialog: show the new total.
+			if (cause instanceof OperatorRequestError && cause.code === 'stale_tab') {
+				await load()
+			}
 			return false
 		} finally {
 			acting.current = false
+		}
+	}
+
+	/**
+	 * The region unbound the session; the App (the only caller of the
+	 * processors) now closes the guest's Stripe page. Ids only.
+	 */
+	const closeReleasedPage = async (tabId: string, response: unknown) => {
+		const parsed = z
+			.object({
+				release: z.object({
+					releasedSession: z
+						.object({ sessionId: z.string(), processor: z.string() })
+						.nullable(),
+				}),
+			})
+			.safeParse(response)
+		const session = parsed.success ? parsed.data.release.releasedSession : null
+		if (!session || session.processor !== 'connect') return
+		const closed = await fetch(`/${orgSlug}/qr/release-session`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ tabId, ...session }),
+		}).catch(() => null)
+		if (!closed?.ok) {
+			toast.warning(
+				_(
+					msg`The guest's payment page could not be closed. If they still pay, the tab is marked for review.`,
+				),
+			)
 		}
 	}
 
@@ -223,9 +266,14 @@ export function OpenTabs({
 													tab.totals.currency,
 													i18n.locale,
 												)
-												return _(
-													msg`A payment of ${amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
-												)
+												const count = tab.reviewPaymentCount ?? 1
+												return count > 1
+													? _(
+															msg`${count} online payments totalling ${amount} arrived that do not match this tab. Check each one in your payment dashboard before you close or void.`,
+														)
+													: _(
+															msg`A payment of ${amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
+														)
 											})()
 										: _(
 												msg`A payment arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
@@ -322,6 +370,9 @@ export function OpenTabs({
 							{
 								paymentMethod: 'counter',
 								...(tipCents ? { tipCents } : {}),
+								// The total shown in the dialog: a round that lands meanwhile
+								// is refused (409 stale_tab), never marked paid unseen.
+								expectedTotalCents: closing.totals.totalCents,
 								...(closing.paymentStatus === 'review'
 									? { acknowledgeReview: true }
 									: {}),
@@ -388,9 +439,9 @@ export function OpenTabs({
 						<AlertDialogDescription>
 							<Trans>
 								Use this when the guest gave up on the payment page or it is
-								stuck. The guest's payment page stops working and you can close
-								the tab at the counter. If money still arrives, the tab is
-								marked for review.
+								stuck. You can then close the tab at the counter. Card pages are
+								closed where the payment provider allows it; if money still
+								arrives, the tab is marked for review.
 							</Trans>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
@@ -408,6 +459,7 @@ export function OpenTabs({
 									`/tabs/${tab.id}/release-payment`,
 									{},
 									_(msg`Online payment stopped. You can close the tab now.`),
+									(response) => closeReleasedPage(tab.id, response),
 								)
 									.then((ok) => {
 										if (ok) setReleasingId(null)
@@ -432,6 +484,7 @@ export function OpenTabs({
 							`/tabs/${voiding.id}/void`,
 							{
 								reason,
+								expectedTotalCents: voiding.totals.totalCents,
 								...(voiding.paymentStatus === 'review'
 									? { acknowledgeReview: true }
 									: {}),

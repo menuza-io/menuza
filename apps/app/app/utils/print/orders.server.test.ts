@@ -50,6 +50,7 @@ const {
 	submitPrintOrder,
 	syncOpenPrintOrders,
 	adminRetryPrintOrder,
+	adminRefundPrintOrder,
 } = await import('./orders.server.ts')
 
 function snapshot(pieces = 2): PrintSnapshot {
@@ -185,6 +186,7 @@ describe('shipped print orders', () => {
 		expect(items[0]!.item.pieces).toBe(2)
 
 		const url = await startPrintCheckout(
+			new Request('https://app.test/'),
 			access,
 			orderId,
 			'https://app.menuza.test/x',
@@ -257,7 +259,12 @@ describe('shipped print orders', () => {
 				locationId: null,
 			},
 		)
-		await startPrintCheckout(access, orderId, 'https://app.menuza.test/x')
+		await startPrintCheckout(
+			new Request('https://app.test/'),
+			access,
+			orderId,
+			'https://app.menuza.test/x',
+		)
 		await handlePrintStripeSession(
 			{
 				id: 'cs_forged',
@@ -328,6 +335,7 @@ describe('shipped print orders', () => {
 			.set({ snapshot: snapshot(30), snapshotHash: 'hash-30' })
 			.where(eq(PrintDesign.id, design.id))
 		const url = await startPrintCheckout(
+			new Request('https://app.test/'),
 			access,
 			orderId,
 			'https://app.menuza.test/x',
@@ -408,7 +416,12 @@ describe('shipped print orders', () => {
 				locationId: null,
 			},
 		)
-		const url = await startPrintCheckout(access, orderId, 'https://app.test/x')
+		const url = await startPrintCheckout(
+			new Request('https://app.test/'),
+			access,
+			orderId,
+			'https://app.test/x',
+		)
 		const sessionId = url.split('/').pop()!
 		await cancelPrintOrder(access, orderId)
 		const { order } = await getPrintOrderDetail(null, orderId)
@@ -453,7 +466,12 @@ describe('shipped print orders', () => {
 				locationId: null,
 			},
 		)
-		await startPrintCheckout(access, orderId, 'https://app.test/x')
+		await startPrintCheckout(
+			new Request('https://app.test/'),
+			access,
+			orderId,
+			'https://app.test/x',
+		)
 		stripeMock.checkout.sessions.retrieve.mockResolvedValueOnce({
 			id: 'cs_done',
 			status: 'complete',
@@ -498,6 +516,102 @@ describe('shipped print orders', () => {
 			.where(eq(PrintOrder.id, orderId))
 		await expect(adminRetryPrintOrder(orderId, false)).rejects.toMatchObject({
 			code: 'refund_needed',
+		})
+	})
+
+	async function paidOrder() {
+		const { access, design } = await setup()
+		const request = new Request('https://app.test/')
+		const orderId = await createPrintQuote(request, access, {
+			lines: [{ designId: design.id, quantity: 1 }],
+			address,
+			locationId: null,
+		})
+		const url = await startPrintCheckout(
+			request,
+			access,
+			orderId,
+			'https://app.test/x',
+		)
+		const { order } = await getPrintOrderDetail(null, orderId)
+		await handlePrintStripeSession(
+			{
+				id: url.split('/').pop()!,
+				metadata: {
+					type: 'print_order',
+					orderId,
+					organizationId: access.organization.id,
+				},
+				payment_status: 'paid',
+				currency: 'usd',
+				amount_total: order.totalCents,
+				total_details: { amount_tax: 0 },
+				payment_intent: `pi_${orderId}`,
+			} as never,
+			'checkout.session.completed',
+		)
+		return { access, orderId }
+	}
+
+	it('refunds only paid orders, and never in full by accident while a vendor prints', async () => {
+		const { access, design } = await setup()
+		const unpaid = await createPrintQuote(
+			new Request('https://app.test/'),
+			access,
+			{
+				lines: [{ designId: design.id, quantity: 1 }],
+				address,
+				locationId: null,
+			},
+		)
+		await expect(adminRefundPrintOrder(unpaid)).rejects.toMatchObject({
+			code: 'not_refundable',
+		})
+
+		const { orderId } = await paidOrder()
+		// The vendor started long ago (the emulator reads the id's timestamp).
+		await db
+			.update(PrintVendorOrder)
+			.set({ vendorOrderId: 'mock_1' })
+			.where(eq(PrintVendorOrder.orderId, orderId))
+		await expect(adminRefundPrintOrder(orderId)).rejects.toMatchObject({
+			code: 'vendor_printing',
+		})
+		const { order: kept } = await getPrintOrderDetail(null, orderId)
+		expect(kept.status).toBe('submitted')
+		expect(stripeMock.refunds.create).not.toHaveBeenCalled()
+
+		await adminRefundPrintOrder(orderId, { keepPrinting: true })
+		const { order: refunded } = await getPrintOrderDetail(null, orderId)
+		expect(refunded).toMatchObject({
+			status: 'refunded',
+			refundCents: refunded.totalCents,
+		})
+	})
+
+	it('refunds a part of a held order and keeps tracking the rest', async () => {
+		const { orderId } = await paidOrder()
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'partial_cancel' })
+			.where(eq(PrintOrder.id, orderId))
+		await adminRefundPrintOrder(orderId, { amountCents: 100 })
+		const { order } = await getPrintOrderDetail(null, orderId)
+		expect(order).toMatchObject({ refundCents: 100, holdReason: null })
+		expect(order.status).not.toBe('held')
+		await expect(
+			adminRefundPrintOrder(orderId, { amountCents: order.totalCents }),
+		).rejects.toMatchObject({ code: 'invalid_amount' })
+	})
+
+	it('asks Admin to check the vendor before retrying an order that may exist there', async () => {
+		const { orderId } = await paidOrder()
+		await db
+			.update(PrintOrder)
+			.set({ status: 'held', holdReason: 'vendor_unknown' })
+			.where(eq(PrintOrder.id, orderId))
+		await expect(adminRetryPrintOrder(orderId, false)).rejects.toMatchObject({
+			code: 'check_vendor',
 		})
 	})
 })

@@ -1183,7 +1183,13 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		const released = await operator(`/tabs/${first.tab.id}/release-payment`, {
 			method: 'POST',
 		})
-		expect((await released.json()).tab.paymentStatus).toBe('unpaid')
+		const release = (await released.json()).release
+		expect(release.tab.paymentStatus).toBe('unpaid')
+		// The App expires this session at the provider.
+		expect(release.releasedSession).toEqual({
+			sessionId: 'cs_test_bound',
+			processor: 'connect',
+		})
 		// Money that still arrives for the released session is kept for review.
 		const late = await system('/payment-status', {
 			orgId,
@@ -1207,6 +1213,86 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			body: { paymentMethod: 'counter' },
 		})
 		expect(closed.status).toBe(200)
+	})
+
+	it('keeps every unexpected payment, and never lets one overwrite another', async () => {
+		const { first, intent } = await boundPayment()
+		await operator(`/tabs/${first.tab.id}/release-payment`, { method: 'POST' })
+		// Another guest starts a new payment on the same tab.
+		const again = await (await pay(first.tab.tabToken, 0)).json()
+		await system('/payment-session', {
+			orgId,
+			orderId: again.orderRef,
+			sessionId: 'cs_test_second',
+			processor: 'connect',
+		})
+		// The stopped page is paid anyway, then the live one.
+		for (const sessionId of ['cs_test_bound', 'cs_test_second']) {
+			const event = await system('/payment-status', {
+				orgId,
+				orderId: intent.orderRef,
+				sessionId,
+				processor: 'connect',
+				status: 'paid',
+				amountCents: intent.amountCents,
+				currency: 'usd',
+			})
+			expect((await event.json()).paymentStatus).toBe('review')
+		}
+		const tabs = await (await operator('/tabs?status=open')).json()
+		const tab = tabs.tabs.find((row: { id: string }) => row.id === first.tab.id)
+		expect(tab).toMatchObject({
+			paymentStatus: 'review',
+			reviewPaymentCount: 2,
+			onlineAmountCents: intent.amountCents * 2,
+		})
+	})
+
+	it('refuses a counter close for a total staff did not see', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		const seen = first.order.totalCents as number
+		await placeRound({ 'X-Tab-Token': first.tab.tabToken })
+		const stale = await operator(`/tabs/${first.tab.id}/close`, {
+			method: 'POST',
+			body: { paymentMethod: 'counter', expectedTotalCents: seen },
+		})
+		expect(stale.status).toBe(409)
+		expect((await stale.json()).error).toBe('stale_tab')
+		const voided = await operator(`/tabs/${first.tab.id}/void`, {
+			method: 'POST',
+			body: { reason: 'Left', expectedTotalCents: seen },
+		})
+		expect((await voided.json()).error).toBe('stale_tab')
+	})
+
+	it('unbinds an expired session even after the tab was re-priced', async () => {
+		const { first, intent } = await boundPayment()
+		const db = await getTenantDb(orgId)
+		await db
+			.update(qrTabs)
+			.set({ paymentAmountCents: intent.amountCents + 100 })
+			.where(eq(qrTabs.id, first.tab.id))
+		const expired = await system('/payment-status', {
+			orgId,
+			orderId: intent.orderRef,
+			sessionId: 'cs_test_bound',
+			processor: 'connect',
+			status: 'expired',
+			amountCents: intent.amountCents,
+			currency: 'usd',
+		})
+		expect((await expired.json()).paymentStatus).toBe('expired')
+		const [row] = await db
+			.select()
+			.from(qrTabs)
+			.where(eq(qrTabs.id, first.tab.id))
+		expect(row).toMatchObject({
+			paymentStatus: 'unpaid',
+			paymentSessionId: null,
+		})
 	})
 
 	it("does not hand a guest someone else's live payment at another tip", async () => {

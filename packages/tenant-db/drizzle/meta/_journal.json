@@ -169,6 +169,13 @@
 			"when": 1793070477127,
 			"tag": "0023_qr_ordering",
 			"breakpoints": true
+		},
+		{
+			"idx": 24,
+			"version": "6",
+			"when": 1793079142638,
+			"tag": "0024_qr_tab_payments",
+			"breakpoints": true
 		}
 	]
 }

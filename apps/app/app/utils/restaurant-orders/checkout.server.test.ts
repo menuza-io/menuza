@@ -220,8 +220,11 @@ describe('restaurant order hosted checkout', () => {
 			externalCustomerId: null,
 			embedOrigin: null,
 		})
-		// A 10-minute hold is inside Stripe's 30-minute minimum: no expires_at.
-		expect(options.expiresAt).toBeNull()
+		// A 10-minute hold is inside Stripe's 30-minute minimum: the session
+		// ends that minimum after the hold, never Stripe's 24-hour default.
+		expect(options.expiresAt).toEqual(
+			new Date(NOW.getTime() + (10 + 31) * 60_000),
+		)
 		expect(options.idempotencyKey).toBe(
 			buildRestaurantOrderSessionIdempotencyKey({
 				orgId: ORG_ID,

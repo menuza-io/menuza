@@ -1012,8 +1012,9 @@ npm install <pkg> -w <workspace>             # Add a dependency, then review pac
 - A tab's rounds are `restaurant_orders` rows (`fulfillment: 'dine_in'`,
   `paymentMethod: 'handoff'`, `tabId` / `tableId` / `tableLabel` / `source`)
   grouped by the regional `qr_tabs` aggregate; tables are `qr_tables`, the org's
-  policy `qr_settings` (tenant-db migration `0023_qr_ordering`). No
-  control-plane tables.
+  policy `qr_settings` (tenant-db migration `0023_qr_ordering`); online money
+  that did not settle a tab is one append-only `qr_tab_payments` row each
+  (`0024_qr_tab_payments`). No control-plane tables.
 - Table and tab codes are HMACs of `AUTH_HMAC_SECRET` over the org, the row id
   and its version: never stored, burned by bumping the version. They ride in the
   URL fragment and the `X-Table-Token` / `X-Tab-Token` headers only.

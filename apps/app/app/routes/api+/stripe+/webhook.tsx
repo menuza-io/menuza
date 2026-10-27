@@ -130,6 +130,17 @@ export async function action({ request }: ActionFunctionArgs) {
 			case 'checkout.session.async_payment_failed':
 			case 'checkout.session.expired': {
 				const session = event.data.object as Stripe.Checkout.Session
+				// Reservation, print and restaurant sessions are created on the
+				// platform account (destination charges). The same metadata on an
+				// event from a connected account is not ours: never act on it.
+				if (
+					event.account &&
+					(isReservationStripeMetadata(session.metadata) ||
+						isPrintStripeMetadata(session.metadata) ||
+						isRestaurantStripeMetadata(session.metadata))
+				) {
+					break
+				}
 				if (isReservationStripeMetadata(session.metadata)) {
 					// Reservation payments: ids and amounts go to the org's region;
 					// a regional failure throws so Stripe retries.

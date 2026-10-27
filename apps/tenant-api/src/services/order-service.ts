@@ -638,12 +638,21 @@ export async function placeOrder(input: {
 						)
 					}
 					let openTabRow = existingTab
-					if (existingTab && existingTab.paymentAmountCents != null) {
-						// A payment started long ago and never reached the provider:
-						// forget it so the table can keep ordering.
+					if (
+						existingTab &&
+						existingTab.paymentAmountCents != null &&
+						(existingTab.paymentStatus === 'unpaid' ||
+							existingTab.paymentStatus === 'pending')
+					) {
+						// A payment started long ago and never finished: forget it,
+						// binding included, so the table can keep ordering and pay
+						// again. Money that still arrives for it is kept for review.
 						const [cleared] = await tx
 							.update(qrTabs)
 							.set({
+								paymentStatus: 'unpaid',
+								paymentSessionId: null,
+								paymentProcessor: null,
 								paymentAmountCents: null,
 								paymentTipCents: null,
 								paymentTokenHash: null,

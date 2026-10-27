@@ -224,6 +224,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
 		canOrder: access.canPay,
+		// Table cards carry live table codes: only menu editors see them.
+		tableCodesHidden:
+			design.content.qr.kind === 'table' &&
+			!(await canPrintQrTables(access.userId, access.organization.id)),
 		design,
 		locales,
 		defaultLocale,
@@ -803,7 +807,13 @@ export default function PrintDesignRoute() {
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							{data.proofPieces > 3 ? (
+							{data.tableCodesHidden ? (
+								<p className="text-muted-foreground text-sm" role="note">
+									{_(
+										msg`Table cards carry each table's ordering code, so only people who can edit the menu can see the proof and download it.`,
+									)}
+								</p>
+							) : data.proofPieces > 3 ? (
 								<p className="text-muted-foreground mb-2 text-sm">
 									{(() => {
 										const total = data.proofPieces
@@ -813,21 +823,23 @@ export default function PrintDesignRoute() {
 									})()}
 								</p>
 							) : null}
-							<iframe
-								key={proofSrc}
-								title={_(msg`Print proof`)}
-								src={proofSrc}
-								className="bg-muted w-full rounded-md border"
-								height={proofHeight}
-								sandbox=""
-							/>
+							{data.tableCodesHidden ? null : (
+								<iframe
+									key={proofSrc}
+									title={_(msg`Print proof`)}
+									src={proofSrc}
+									className="bg-muted w-full rounded-md border"
+									height={proofHeight}
+									sandbox=""
+								/>
+							)}
 						</CardContent>
 					</Card>
 
 					<DownloadCard
 						orgSlug={orgSlug}
 						designId={design.id}
-						approved={isApproved}
+						approved={isApproved && !data.tableCodesHidden}
 					/>
 
 					{data.canOrder && product.shippable ? (

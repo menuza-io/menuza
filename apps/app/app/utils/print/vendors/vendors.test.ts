@@ -86,6 +86,20 @@ describe('Gelato adapter', () => {
 		await expect(gelatoVendor.cancel('o1')).rejects.toBeInstanceOf(VendorError)
 	})
 
+	it('holds instead of refunding when the key or account is the problem', async () => {
+		vi.stubEnv('GELATO_API_KEY', 'gelato-test-key')
+		for (const status of [401, 403, 404]) {
+			stubFetch({ message: 'no' }, status)
+			await expect(gelatoVendor.status('o1')).rejects.toMatchObject({
+				code: 'unavailable',
+			})
+		}
+		stubFetch({ message: 'bad address' }, 422)
+		await expect(gelatoVendor.status('o1')).rejects.toMatchObject({
+			code: 'rejected',
+		})
+	})
+
 	it('refuses to run without a key', async () => {
 		vi.stubEnv('GELATO_API_KEY', '')
 		await expect(gelatoVendor.status('o1')).rejects.toMatchObject({

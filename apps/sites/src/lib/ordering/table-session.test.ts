@@ -8,6 +8,7 @@ import {
 	stripTableFragment,
 	submitTableRound,
 	tableHeaders,
+	takeStashedTableScan,
 	type TableSession,
 } from './table-session.ts'
 
@@ -52,6 +53,17 @@ describe('table codes in the fragment', () => {
 		expect(
 			readTableFragment('https://x.example/menu?table=' + token),
 		).toBeNull()
+	})
+
+	it('takes a code the head script stashed, once and only while fresh', () => {
+		const store = storage()
+		store.setItem('menuza_qr_scan', JSON.stringify({ code: token, at: 1000 }))
+		expect(takeStashedTableScan(store, 2000)).toBe(token)
+		expect(takeStashedTableScan(store, 2000)).toBeNull()
+		store.setItem('menuza_qr_scan', JSON.stringify({ code: token, at: 1000 }))
+		expect(takeStashedTableScan(store, 1000 + 6 * 60_000)).toBeNull()
+		store.setItem('menuza_qr_scan', JSON.stringify({ code: 'nope', at: 1000 }))
+		expect(takeStashedTableScan(store, 2000)).toBeNull()
 	})
 
 	it('strips only the table code from the address', () => {

@@ -9,9 +9,11 @@ import {
 } from '@repo/common/print-shop'
 import {
 	and,
+	asc,
 	db,
 	desc,
 	eq,
+	gt,
 	inArray,
 	lt,
 	Notification,
@@ -536,11 +538,15 @@ async function ensureStripeCustomer(organizationId: string): Promise<string> {
 }
 
 export async function startPrintCheckout(
+	request: Request,
 	access: PrintShopAccess,
 	orderId: string,
 	returnBase: string,
 ): Promise<string> {
-	const { order } = await getPrintOrderDetail(access.organization.id, orderId)
+	const { order, items } = await getPrintOrderDetail(
+		access.organization.id,
+		orderId,
+	)
 	if (order.status !== 'quote' && order.status !== 'awaiting_payment') {
 		throw new PrintOrderError(
 			409,
@@ -554,6 +560,13 @@ export async function startPrintCheckout(
 			'quote_expired',
 			'This price has expired. Get a new price.',
 		)
+	}
+	// A table code renewed since the quote would ship dead cards: check again
+	// right before money moves (the last step with a signed-in user).
+	for (const { item } of items) {
+		if (item.snapshot) {
+			await requireFreshTables(request, access, item.snapshot as PrintSnapshot)
+		}
 	}
 	// One live payment per order: re-serve the open session, and never start a
 	// second one for a session that is already paid (its webhook may be late).
@@ -877,6 +890,7 @@ async function submitClaimedOrder(
 			.map((row) => row.item)
 			.filter((item) => item.vendorOrderId === vendorOrder.id)
 		const quoteItems = mine.flatMap((item) => vendorItemsFor(item))
+		let sent = false
 		try {
 			if (!options.ignoreDrift) {
 				const quote = await vendor.quote(quoteItems, address)
@@ -915,6 +929,7 @@ async function submitClaimedOrder(
 					}),
 				)
 			}
+			sent = true
 			const { vendorOrderId } = await vendor.createOrder({
 				reference: vendorOrder.id,
 				items: files,
@@ -940,8 +955,10 @@ async function submitClaimedOrder(
 				await failAndRefund(order.id, 'vendor_rejected')
 				return
 			}
-			// Unavailable: keep it for Admin to retry; nothing is lost.
-			await hold(order.id, 'vendor_unavailable')
+			// Nothing reached the vendor: safe to retry. Once the order was sent,
+			// a timeout or an error after it may hide an order the vendor did
+			// place, so Admin checks the vendor before any retry.
+			await hold(order.id, sent ? 'vendor_unknown' : 'vendor_unavailable')
 			return
 		}
 	}
@@ -967,9 +984,10 @@ const ROLLUP_ORDER: VendorOrderState[] = [
 async function rollUp(orderId: string) {
 	const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
 	if (!['submitted', 'in_production', 'shipped'].includes(order.status)) return
-	const states = vendorOrders.map(
-		(vendorOrder) => vendorOrder.status as VendorOrderState,
-	)
+	// Vendor orders cancelled after a partial cancel no longer count.
+	const states = vendorOrders
+		.map((vendorOrder) => vendorOrder.status as VendorOrderState)
+		.filter((state) => state !== 'cancelled' && state !== 'failed')
 	if (states.length === 0) return
 	const least = states.reduce((min, state) =>
 		ROLLUP_ORDER.indexOf(state) < ROLLUP_ORDER.indexOf(min) ? state : min,
@@ -1090,20 +1108,37 @@ async function sweepStalePrintOrders(limit: number) {
 		)
 }
 
+const SHIPPED_FOLLOW_MS = 30 * 24 * 60 * 60_000
+
 export async function syncOpenPrintOrders(limit = 50) {
 	await sweepStalePrintOrders(limit).catch(() => null)
-	const open = await db
+	// Not yet shipped first: that is where a vendor-side cancel (and so a
+	// refund) can still happen. Shipped orders are followed for delivery for
+	// 30 days, never forever, so they cannot crowd out new orders.
+	const active = await db
 		.select()
 		.from(PrintVendorOrder)
-		.where(
-			inArray(PrintVendorOrder.status, [
-				'submitted',
-				'in_production',
-				'shipped',
-			]),
-		)
-		.orderBy(PrintVendorOrder.updatedAt)
+		.where(inArray(PrintVendorOrder.status, ['submitted', 'in_production']))
+		.orderBy(asc(PrintVendorOrder.lastEventAt))
 		.limit(limit)
+	const shipped =
+		active.length < limit
+			? await db
+					.select()
+					.from(PrintVendorOrder)
+					.where(
+						and(
+							eq(PrintVendorOrder.status, 'shipped'),
+							gt(
+								PrintVendorOrder.shippedAt,
+								new Date(Date.now() - SHIPPED_FOLLOW_MS),
+							),
+						),
+					)
+					.orderBy(asc(PrintVendorOrder.lastEventAt))
+					.limit(limit - active.length)
+			: []
+	const open = [...active, ...shipped]
 	let synced = 0
 	for (const vendorOrder of open) {
 		try {
@@ -1129,7 +1164,9 @@ async function refundInFull(order: OrderRow) {
 			amount: order.totalCents - order.refundCents,
 			metadata: { type: PRINT_STRIPE_METADATA_TYPE, orderId: order.id },
 		},
-		{ idempotencyKey: `print-refund-${order.id}` },
+		// Keyed on what was refunded before, so a part refunded earlier never
+		// collides with this one.
+		{ idempotencyKey: `print-refund-${order.id}-from-${order.refundCents}` },
 	)
 	await db
 		.update(PrintOrder)
@@ -1311,11 +1348,46 @@ function busyError() {
 	)
 }
 
-/** Admin: refund in full whatever the state (after a vendor defect claim, etc.). */
-export async function adminRefundPrintOrder(orderId: string) {
-	const { order } = await getPrintOrderDetail(null, orderId)
+const ADMIN_REFUND_REFUSED = [
+	'quote',
+	'awaiting_payment',
+	'cancelled',
+	'refunded',
+]
+
+/**
+ * Admin refunds. In full: vendor orders still waiting are cancelled first;
+ * if a vendor already started, Admin must say the vendor keeps printing
+ * (`keepPrinting`, e.g. a defect claim or a lost parcel), so Menuza never
+ * refunds in full by accident while still paying the vendor. A part
+ * (`amountCents`, e.g. what was cancelled after `partial_cancel`) leaves the
+ * order printing and clears its hold.
+ */
+export async function adminRefundPrintOrder(
+	orderId: string,
+	options: { keepPrinting?: boolean; amountCents?: number } = {},
+) {
+	const { order, vendorOrders } = await getPrintOrderDetail(null, orderId)
+	if (ADMIN_REFUND_REFUSED.includes(order.status)) {
+		throw new PrintOrderError(
+			409,
+			'not_refundable',
+			'Only a paid order can be refunded. An unpaid one is cancelled instead.',
+		)
+	}
 	if (order.status === 'submitting' || order.status === 'cancelling') {
 		throw busyError()
+	}
+	if (!order.stripePaymentIntentId) {
+		throw new PrintOrderError(
+			409,
+			'not_refundable',
+			'This order has no payment to refund.',
+		)
+	}
+	if (options.amountCents !== undefined) {
+		await adminPartialRefund(order, options.amountCents)
+		return
 	}
 	// Claim from the state we saw, so a submission cannot start meanwhile.
 	const claimed = await db
@@ -1326,35 +1398,112 @@ export async function adminRefundPrintOrder(orderId: string) {
 		)
 		.returning({ id: PrintOrder.id })
 	if (claimed.length === 0) throw busyError()
-	try {
-		await refundInFull(order)
-	} catch (error) {
-		await db
+	const restore = () =>
+		db
 			.update(PrintOrder)
 			.set({ status: order.status })
 			.where(
 				and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'cancelling')),
 			)
+	try {
+		const cancelled = await cancelAtVendors(vendorOrders)
+		if (!cancelled && !options.keepPrinting) {
+			throw new PrintOrderError(
+				409,
+				'vendor_printing',
+				"A vendor already started printing this order. Refund anyway only if the vendor should keep printing and shipping at Menuza's cost.",
+			)
+		}
+		await refundInFull(order)
+	} catch (error) {
+		if (error instanceof PrintOrderError && error.code === 'partial_cancel') {
+			await db
+				.update(PrintOrder)
+				.set({ status: 'held', holdReason: 'partial_cancel' })
+				.where(eq(PrintOrder.id, order.id))
+		} else {
+			await restore()
+		}
 		throw error
 	}
 	await db
 		.update(PrintOrder)
 		.set({
 			status: 'refunded',
+			refundedAt: new Date(),
 			failureReason: order.failureReason ?? 'refunded_by_admin',
 		})
 		.where(eq(PrintOrder.id, order.id))
 	await notifyPrintOrder(order.id, 'failed')
 }
 
-/**
- * Admin: retry a held order. Items are re-mapped to the catalog's current
- * vendor SKU (that is how an order is rerouted), then submitted; `acceptPrice`
- * skips the drift check after Admin accepted the new wholesale price.
- */
+async function adminPartialRefund(order: OrderRow, amountCents: number) {
+	const remaining = order.totalCents - order.refundCents
+	if (
+		!Number.isInteger(amountCents) ||
+		amountCents <= 0 ||
+		amountCents > remaining
+	) {
+		throw new PrintOrderError(
+			422,
+			'invalid_amount',
+			'Enter an amount above zero and no more than what is left to refund.',
+		)
+	}
+	// Claim the refunded total we saw: a second click (or a second admin)
+	// cannot refund the same part twice.
+	const claimed = await db
+		.update(PrintOrder)
+		.set({
+			refundCents: order.refundCents + amountCents,
+			refundedAt: new Date(),
+		})
+		.where(
+			and(
+				eq(PrintOrder.id, order.id),
+				eq(PrintOrder.refundCents, order.refundCents),
+			),
+		)
+		.returning({ id: PrintOrder.id })
+	if (claimed.length === 0) throw busyError()
+	try {
+		await stripe.refunds.create(
+			{
+				payment_intent: order.stripePaymentIntentId!,
+				amount: amountCents,
+				metadata: { type: PRINT_STRIPE_METADATA_TYPE, orderId: order.id },
+			},
+			{ idempotencyKey: `print-refund-${order.id}-from-${order.refundCents}` },
+		)
+	} catch (error) {
+		await db
+			.update(PrintOrder)
+			.set({ refundCents: order.refundCents })
+			.where(
+				and(
+					eq(PrintOrder.id, order.id),
+					eq(PrintOrder.refundCents, order.refundCents + amountCents),
+				),
+			)
+		throw error
+	}
+	if (order.status === 'held') {
+		// The rest keeps printing: track it again instead of holding it.
+		await db
+			.update(PrintOrder)
+			.set({ status: 'submitted', holdReason: null })
+			.where(and(eq(PrintOrder.id, order.id), eq(PrintOrder.status, 'held')))
+		await rollUp(order.id)
+	}
+}
+
+/** Holds where a vendor may hold an order we never recorded. */
+const VENDOR_CHECK_HOLDS = ['vendor_unknown', 'stale_claim', 'submission_error']
+
 export async function adminRetryPrintOrder(
 	orderId: string,
 	acceptPrice: boolean,
+	options: { checkedVendor?: boolean } = {},
 ) {
 	const { order, vendorOrders, items } = await getPrintOrderDetail(
 		null,
@@ -1375,6 +1524,16 @@ export async function adminRetryPrintOrder(
 			409,
 			'refund_needed',
 			'Vendors were cancelled for this order: refund it instead of retrying.',
+		)
+	}
+	if (
+		VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
+		!options.checkedVendor
+	) {
+		throw new PrintOrderError(
+			409,
+			'check_vendor',
+			'The vendor may already have this order. Search the vendor dashboard for its references first, then retry.',
 		)
 	}
 	for (const { item } of items) {

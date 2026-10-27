@@ -104,6 +104,32 @@ export function readTableFragment(href: string): string | null {
 	return TOKEN_PATTERN.test(token) ? token : null
 }
 
+const SCAN_STASH_KEY = 'menuza_qr_scan'
+const SCAN_STASH_MAX_AGE_MS = 5 * 60_000
+
+/**
+ * The table code the layout's head script moved out of the address bar
+ * (before analytics could see it). Read once: it is removed as it is taken.
+ */
+export function takeStashedTableScan(
+	storage: Pick<Storage, 'getItem' | 'removeItem'> | null,
+	now = Date.now(),
+): string | null {
+	if (!storage) return null
+	try {
+		const raw = storage.getItem(SCAN_STASH_KEY)
+		storage.removeItem(SCAN_STASH_KEY)
+		if (!raw) return null
+		const parsed = JSON.parse(raw) as { code?: unknown; at?: unknown }
+		const code = typeof parsed.code === 'string' ? parsed.code.trim() : ''
+		const at = typeof parsed.at === 'number' ? parsed.at : 0
+		if (now - at > SCAN_STASH_MAX_AGE_MS || now < at) return null
+		return TOKEN_PATTERN.test(code) ? code : null
+	} catch {
+		return null
+	}
+}
+
 /** The same address without the table code (other fragment parts stay). */
 export function stripTableFragment(href: string): string {
 	const url = new URL(href)

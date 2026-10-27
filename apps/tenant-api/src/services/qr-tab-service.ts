@@ -20,6 +20,7 @@ import {
 import {
 	getTenantDb,
 	qrSettings,
+	qrTabPayments,
 	qrTables,
 	qrTabs,
 	restaurantOrders,
@@ -36,6 +37,7 @@ import {
 	deriveTabToken,
 	readTabToken,
 } from '../lib/qr-tokens.ts'
+import { inJsonList } from '../lib/chunked-in.ts'
 import { timingSafeEqualString } from '../lib/secrets.ts'
 import { retryOnSqliteBusy } from '../lib/sqlite-retry.ts'
 import { runExclusive } from './order-service.ts'
@@ -139,14 +141,53 @@ export type OperatorQrTab = QrPublicTab & {
 	paymentMethod: 'counter' | 'online' | null
 	voidReason: string | null
 	lockedAt: string | null
-	/** Online amount received for review, or the amount being paid now. */
+	/** Online money received that did not settle the tab (needs review). */
 	onlineAmountCents: number | null
+	/** How many such payments arrived (each needs a refund or a note). */
+	reviewPaymentCount: number
 	version: number
+}
+
+type ReviewPayment = { tabId: string; amountCents: number }
+
+async function listReviewPayments(
+	db: Parameters<typeof listTabRounds>[0],
+	tabIds: string[],
+): Promise<Map<string, ReviewPayment[]>> {
+	const byTab = new Map<string, ReviewPayment[]>()
+	if (tabIds.length === 0) return byTab
+	const rows = await db
+		.select({
+			tabId: qrTabPayments.tabId,
+			amountCents: qrTabPayments.amountCents,
+		})
+		.from(qrTabPayments)
+		// One JSON parameter: Durable Object SQLite caps bound values at 100.
+		.where(inJsonList(qrTabPayments.tabId, tabIds))
+	for (const row of rows) {
+		const list = byTab.get(row.tabId) ?? []
+		list.push(row)
+		byTab.set(row.tabId, list)
+	}
+	return byTab
+}
+
+/** The operator view of one tab, with its rounds and review payments. */
+async function loadOperatorView(
+	db: Parameters<typeof listTabRounds>[0],
+	tab: QrTabRow,
+): Promise<OperatorQrTab> {
+	const [rounds, payments] = await Promise.all([
+		listTabRounds(db, [tab.id]),
+		listReviewPayments(db, [tab.id]),
+	])
+	return operatorTabView(tab, rounds, payments.get(tab.id) ?? [])
 }
 
 function operatorTabView(
 	tab: QrTabRow,
 	rounds: RestaurantOrder[],
+	reviewPayments: ReviewPayment[],
 ): OperatorQrTab {
 	return {
 		...publicTabView(tab, rounds),
@@ -155,7 +196,11 @@ function operatorTabView(
 		paymentMethod: tab.paymentMethod,
 		voidReason: tab.voidReason,
 		lockedAt: iso(tab.lockedAt),
-		onlineAmountCents: tab.paymentAmountCents,
+		onlineAmountCents:
+			reviewPayments.length > 0
+				? reviewPayments.reduce((sum, payment) => sum + payment.amountCents, 0)
+				: null,
+		reviewPaymentCount: reviewPayments.length,
 		version: tab.version,
 	}
 }
@@ -656,7 +701,13 @@ export async function listOperatorTabs(
 		list.push(round)
 		byTab.set(round.tabId, list)
 	}
-	return tabs.map((tab) => operatorTabView(tab, byTab.get(tab.id) ?? []))
+	const payments = await listReviewPayments(
+		db,
+		tabs.map((tab) => tab.id),
+	)
+	return tabs.map((tab) =>
+		operatorTabView(tab, byTab.get(tab.id) ?? [], payments.get(tab.id) ?? []),
+	)
 }
 
 export async function getOperatorTab(
@@ -672,14 +723,14 @@ export async function getOperatorTab(
 	if (!tab) return fail(404, 'tab_not_found', 'Tab not found.')
 	return {
 		ok: true,
-		data: operatorTabView(tab, await listTabRounds(db, [tab.id])),
+		data: await loadOperatorView(db, tab),
 	}
 }
 
 async function loadOpenTab(
 	tx: Parameters<Parameters<typeof runTenantTransaction>[1]>[0],
 	tabId: string,
-	options: { acknowledgeReview?: boolean } = {},
+	options: { acknowledgeReview?: boolean; expectedTotalCents?: number } = {},
 ): Promise<QrResult<QrTabRow>> {
 	const [tab] = await tx
 		.select()
@@ -705,6 +756,18 @@ async function loadOpenTab(
 			'This tab was paid online. Check the payment before you close it.',
 		)
 	}
+	if (options.expectedTotalCents !== undefined) {
+		// Staff confirm what they saw: a round that landed after the dialog
+		// opened must never be marked paid (or cancelled) unseen.
+		const rounds = await listTabRounds(tx, [tab.id])
+		if (tabTotals(tab, rounds).totalCents !== options.expectedTotalCents) {
+			return fail(
+				409,
+				'stale_tab',
+				'This tab changed since you opened it. Check the new total.',
+			)
+		}
+	}
 	return { ok: true, data: tab }
 }
 
@@ -716,11 +779,17 @@ async function loadOpenTab(
 export async function closeTabAtCounter(
 	orgId: string,
 	tabId: string,
-	input: { tipCents?: number; closedBy: string; acknowledgeReview?: boolean },
+	input: {
+		tipCents?: number
+		closedBy: string
+		acknowledgeReview?: boolean
+		expectedTotalCents?: number
+	},
 ): Promise<QrResult<OperatorQrTab>> {
 	return writeTx(orgId, async (tx) => {
 		const loaded = await loadOpenTab(tx, tabId, {
 			acknowledgeReview: input.acknowledgeReview,
+			expectedTotalCents: input.expectedTotalCents,
 		})
 		if (!loaded.ok) return loaded
 		const tab = loaded.data
@@ -749,8 +818,10 @@ export async function closeTabAtCounter(
 			})
 			.where(eq(qrTabs.id, tab.id))
 			.returning()
-		const fresh = await listTabRounds(tx, [tab.id])
-		return { ok: true as const, data: operatorTabView(updated ?? tab, fresh) }
+		return {
+			ok: true as const,
+			data: await loadOperatorView(tx, updated ?? tab),
+		}
 	})
 }
 
@@ -761,11 +832,17 @@ export async function closeTabAtCounter(
 export async function voidTab(
 	orgId: string,
 	tabId: string,
-	input: { reason: string; closedBy: string; acknowledgeReview?: boolean },
+	input: {
+		reason: string
+		closedBy: string
+		acknowledgeReview?: boolean
+		expectedTotalCents?: number
+	},
 ): Promise<QrResult<OperatorQrTab>> {
 	return writeTx(orgId, async (tx) => {
 		const loaded = await loadOpenTab(tx, tabId, {
 			acknowledgeReview: input.acknowledgeReview,
+			expectedTotalCents: input.expectedTotalCents,
 		})
 		if (!loaded.ok) return loaded
 		const tab = loaded.data
@@ -791,8 +868,10 @@ export async function voidTab(
 			})
 			.where(eq(qrTabs.id, tab.id))
 			.returning()
-		const rounds = await listTabRounds(tx, [tab.id])
-		return { ok: true as const, data: operatorTabView(updated ?? tab, rounds) }
+		return {
+			ok: true as const,
+			data: await loadOperatorView(tx, updated ?? tab),
+		}
 	})
 }
 
@@ -801,10 +880,20 @@ export async function voidTab(
  * provider that never reports): the session is unbound and the tab can be
  * closed at the counter. Money that still arrives for it is kept for review.
  */
+export type ReleasedTabPayment = {
+	tab: OperatorQrTab
+	/**
+	 * The hosted session that was bound, so the App can expire it at the
+	 * provider (Stripe). Checkout.com pages cannot be expired: money that still
+	 * arrives there is kept for review.
+	 */
+	releasedSession: { sessionId: string; processor: string } | null
+}
+
 export async function releaseTabPayment(
 	orgId: string,
 	tabId: string,
-): Promise<QrResult<OperatorQrTab>> {
+): Promise<QrResult<ReleasedTabPayment>> {
 	return writeTx(orgId, async (tx) => {
 		const [tab] = await tx
 			.select()
@@ -838,8 +927,19 @@ export async function releaseTabPayment(
 			})
 			.where(eq(qrTabs.id, tab.id))
 			.returning()
-		const rounds = await listTabRounds(tx, [tab.id])
-		return { ok: true as const, data: operatorTabView(updated ?? tab, rounds) }
+		return {
+			ok: true as const,
+			data: {
+				tab: await loadOperatorView(tx, updated ?? tab),
+				releasedSession:
+					tab.paymentSessionId && tab.paymentProcessor
+						? {
+								sessionId: tab.paymentSessionId,
+								processor: tab.paymentProcessor,
+							}
+						: null,
+			},
+		}
 	})
 }
 
@@ -881,8 +981,10 @@ export async function lockTab(
 			})
 			.where(eq(qrTabs.id, tab.id))
 			.returning()
-		const rounds = await listTabRounds(tx, [tab.id])
-		return { ok: true as const, data: operatorTabView(updated ?? tab, rounds) }
+		return {
+			ok: true as const,
+			data: await loadOperatorView(tx, updated ?? tab),
+		}
 	})
 }
 
@@ -971,10 +1073,13 @@ export async function prepareTabPayment(
 			return fail(409, 'tab_empty', 'There is nothing to pay on this tab yet.')
 		}
 		const tabPaymentToken = deriveTabPaymentToken(orgId, tab.id)
+		const now = new Date()
+		const holdOpen = isTabPaymentOpen(tab, now)
 		if (
 			tab.paymentStatus === 'pending' &&
 			tab.paymentSessionId &&
-			tab.paymentAmountCents != null
+			tab.paymentAmountCents != null &&
+			holdOpen
 		) {
 			// A session is live. Re-serve it only to someone asking for the same
 			// payment; a different tip means another guest is paying right now.
@@ -1004,17 +1109,31 @@ export async function prepareTabPayment(
 		}
 		const tipCents = Math.round((totals.subtotalCents * input.tipPercent) / 100)
 		const amountCents = totals.totalCents + tipCents
+		// Asking again for the same payment re-serves it without restarting the
+		// freeze, so repeated requests cannot keep the table from ordering.
+		const sameRequest =
+			holdOpen &&
+			tab.paymentStatus === 'unpaid' &&
+			tab.paymentAmountCents === amountCents &&
+			tab.paymentTipCents === tipCents
 		await tx
 			.update(qrTabs)
 			.set({
 				// The guest who opened the tab keeps their details on it.
 				guestName: tab.guestName ?? input.contact.name,
 				guestPhone: tab.guestPhone ?? input.contact.phone,
+				// A lapsed binding (a payment page abandoned past the hold, e.g.
+				// Checkout.com, which never reports expiry) is forgotten here.
+				paymentStatus: 'unpaid',
+				paymentSessionId: null,
+				paymentProcessor: null,
 				paymentTipCents: tipCents,
-				paymentEventAt: Date.now(),
+				paymentEventAt: sameRequest
+					? (tab.paymentEventAt ?? now.getTime())
+					: now.getTime(),
 				paymentAmountCents: amountCents,
 				paymentTokenHash: sha256Hex(tabPaymentToken),
-				updatedAt: Date.now(),
+				updatedAt: now.getTime(),
 			})
 			.where(eq(qrTabs.id, tab.id))
 		return {
@@ -1220,56 +1339,6 @@ export async function applyTabPaymentEvent(input: {
 			tab.paymentProcessor === input.processor &&
 			tab.paymentAmountCents === input.amountCents &&
 			tab.currency.toLowerCase() === input.currency.toLowerCase()
-		if (!matches && input.status === 'paid') {
-			// Money moved for a session this tab no longer expects (unbound,
-			// re-priced, or a retried page). Never refuse it: record it for a
-			// person to reconcile, unless this exact payment is already kept.
-			if (
-				tab.paymentSessionId === input.sessionId &&
-				(tab.paymentStatus === 'review' || tab.paymentStatus === 'paid')
-			) {
-				return {
-					ok: true as const,
-					data: {
-						orgId: input.orgId,
-						orderId: tabOrderRef(tab.id),
-						sessionId: input.sessionId,
-						status: tab.status,
-						paymentStatus: tab.paymentStatus,
-					},
-				}
-			}
-			const at = Date.now()
-			await tx
-				.update(qrTabs)
-				.set({
-					paymentStatus: 'review',
-					paymentSessionId: input.sessionId,
-					paymentProcessor: input.processor,
-					paymentAmountCents: input.amountCents,
-					paidAt: at,
-					paymentEventAt: at,
-					updatedAt: at,
-				})
-				.where(eq(qrTabs.id, tab.id))
-			return {
-				ok: true as const,
-				data: {
-					orgId: input.orgId,
-					orderId: tabOrderRef(tab.id),
-					sessionId: input.sessionId,
-					status: tab.status,
-					paymentStatus: 'review',
-				},
-			}
-		}
-		if (!matches) {
-			return fail(
-				403,
-				'session_mismatch',
-				'This payment event does not match the bound payment session.',
-			)
-		}
 		const result = (paymentStatus: string) => ({
 			ok: true as const,
 			data: {
@@ -1281,16 +1350,28 @@ export async function applyTabPaymentEvent(input: {
 			},
 		})
 		const now = new Date()
-		if (input.status === 'paid') {
-			if (tab.paymentStatus === 'paid' || tab.paymentStatus === 'review') {
-				return result(tab.paymentStatus)
-			}
-			// Settled elsewhere meanwhile, or the tab no longer costs what was
-			// paid: keep the money for a person to look at, never close blind.
-			if (
-				tab.status !== 'open' ||
-				(await currentPayableCents(tx, tab)) !== input.amountCents
-			) {
+		/**
+		 * Money that does not settle the tab (a stopped or replaced session, a
+		 * re-priced tab, a tab already settled): one append-only row per
+		 * payment, so a second one never hides the first. The live binding is
+		 * left alone; the tab is flagged for a person to refund or keep.
+		 */
+		const keepForReview = async () => {
+			const inserted = await tx
+				.insert(qrTabPayments)
+				.values({
+					id: crypto.randomUUID(),
+					tabId: tab.id,
+					sessionId: input.sessionId,
+					processor: input.processor,
+					amountCents: input.amountCents,
+					currency: input.currency.toUpperCase(),
+					receivedAt: now.getTime(),
+				})
+				.onConflictDoNothing()
+				.returning({ id: qrTabPayments.id })
+			// A late payment on a tab already paid flags it too: it is extra money.
+			if (inserted.length > 0) {
 				await tx
 					.update(qrTabs)
 					.set({
@@ -1300,7 +1381,35 @@ export async function applyTabPaymentEvent(input: {
 						updatedAt: now.getTime(),
 					})
 					.where(eq(qrTabs.id, tab.id))
-				return result('review')
+			}
+			return result(inserted.length > 0 ? 'review' : tab.paymentStatus)
+		}
+		if (!matches) {
+			if (input.status === 'paid') return keepForReview()
+			// An expired or failed event for the session that is bound right now
+			// unbinds it even if the tab was re-priced meanwhile.
+			if (
+				tab.paymentSessionId !== input.sessionId ||
+				tab.paymentProcessor !== input.processor
+			) {
+				return fail(
+					403,
+					'session_mismatch',
+					'This payment event does not match the bound payment session.',
+				)
+			}
+		}
+		if (input.status === 'paid') {
+			if (tab.paymentStatus === 'paid') return result('paid')
+			// Settled elsewhere meanwhile, under review already, or the tab no
+			// longer costs what was paid: keep the money for a person to look
+			// at, never close blind.
+			if (
+				tab.status !== 'open' ||
+				tab.paymentStatus === 'review' ||
+				(await currentPayableCents(tx, tab)) !== input.amountCents
+			) {
+				return keepForReview()
 			}
 			const rounds = await listTabRounds(tx, [tab.id])
 			const totals = tabTotals(tab, rounds)

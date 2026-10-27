@@ -11,11 +11,17 @@ const CommandSchema = z.discriminatedUnion('action', [
 	z.strictObject({
 		action: z.literal('refund'),
 		orderId: z.string().min(1).max(100),
+		/** Refund in full although a vendor keeps printing (defect claims). */
+		keepPrinting: z.boolean().optional(),
+		/** Refund only this much (what was cancelled after a partial cancel). */
+		amountCents: z.number().int().positive().max(100_000_00).optional(),
 	}),
 	z.strictObject({
 		action: z.literal('retry'),
 		orderId: z.string().min(1).max(100),
 		acceptPrice: z.boolean(),
+		/** Admin searched the vendor for these references and found nothing. */
+		checkedVendor: z.boolean().optional(),
 	}),
 ])
 
@@ -42,9 +48,14 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 	try {
 		if (parsed.data.action === 'refund') {
-			await adminRefundPrintOrder(parsed.data.orderId)
+			await adminRefundPrintOrder(parsed.data.orderId, {
+				keepPrinting: parsed.data.keepPrinting,
+				amountCents: parsed.data.amountCents,
+			})
 		} else {
-			await adminRetryPrintOrder(parsed.data.orderId, parsed.data.acceptPrice)
+			await adminRetryPrintOrder(parsed.data.orderId, parsed.data.acceptPrice, {
+				checkedVendor: parsed.data.checkedVendor,
+			})
 		}
 		return Response.json({ ok: true })
 	} catch (error) {

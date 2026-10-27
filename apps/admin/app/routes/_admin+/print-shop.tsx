@@ -71,10 +71,14 @@ const STATUS_LABELS: Record<string, MessageDescriptor> = {
 	refunded: msg`Refunded`,
 }
 
+/** Holds where the vendor may have an order we never recorded. */
+const VENDOR_CHECK_HOLDS = ['vendor_unknown', 'stale_claim', 'submission_error']
+
 const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	price_drift: msg`Wholesale price rose past the drift limit`,
 	render_unavailable: msg`The print file could not be made`,
 	vendor_unavailable: msg`The vendor did not answer`,
+	vendor_unknown: msg`The vendor may have the order: check before retrying`,
 	vendor_rejected: msg`The vendor refused the order`,
 	vendor_failed: msg`The vendor failed the order`,
 	vendor_cancelled: msg`The vendor cancelled the order`,
@@ -409,10 +413,24 @@ function OrderActions({
 		status: string
 		organization: string
 		totalCents: number
+		refundCents: number
+		holdReason: string | null
+		vendorReferences: string[]
 	}
 }) {
 	const fetcher = useFetcher<PrintAdminResult>()
+	const partFetcher = useFetcher<PrintAdminResult>()
+	const partId = useId()
 	const { _, i18n } = useLingui()
+	// A vendor may already be printing (or has shipped): refunding in full
+	// then means Menuza still pays the vendor, so it is its own action.
+	const vendorMayPrint = [
+		'in_production',
+		'shipped',
+		'delivered',
+		'held',
+	].includes(order.status)
+	const left = money(order.totalCents - order.refundCents, i18n.locale)
 	const refundable = ![
 		'refunded',
 		'cancelled',
@@ -423,7 +441,24 @@ function OrderActions({
 	const amount = money(order.totalCents, i18n.locale)
 	return (
 		<div className="flex flex-wrap gap-2">
-			{order.status === 'held' ? (
+			{order.status === 'held' &&
+			VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ? (
+				<ConfirmedAction
+					fetcher={fetcher}
+					fields={{ _action: 'retry-checked', orderId: order.id }}
+					label={_(msg`Retry`)}
+					accessibleLabel={_(msg`Retry the order of ${organization}`)}
+					title={_(msg`Did the vendor get this order?`)}
+					description={(() => {
+						const references = order.vendorReferences.join(', ')
+						return _(
+							msg`The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for these references first: ${references}. Retry only if none is there, or the vendor prints it twice.`,
+						)
+					})()}
+					confirmLabel={_(msg`Nothing there, retry`)}
+					variant="outline"
+				/>
+			) : order.status === 'held' ? (
 				<>
 					<fetcher.Form method="POST">
 						<input type="hidden" name="_action" value="retry" />
@@ -459,11 +494,58 @@ function OrderActions({
 					accessibleLabel={_(msg`Refund the order of ${organization} in full`)}
 					title={_(msg`Refund ${amount} to ${organization}?`)}
 					description={_(
-						msg`The full amount goes back to the card they paid with, and vendor orders still open are cancelled. This cannot be undone.`,
+						msg`Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone.`,
 					)}
 					confirmLabel={_(msg`Refund in full`)}
 					destructive
 				/>
+			) : null}
+			{refundable && vendorMayPrint ? (
+				<ConfirmedAction
+					fetcher={fetcher}
+					fields={{ _action: 'refund-keep', orderId: order.id }}
+					label={_(msg`Refund, vendor keeps printing`)}
+					accessibleLabel={_(
+						msg`Refund the order of ${organization} in full while the vendor keeps printing`,
+					)}
+					title={_(msg`Refund ${amount} and keep the vendor order?`)}
+					description={_(
+						msg`For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at Menuza's cost. This cannot be undone.`,
+					)}
+					confirmLabel={_(msg`Refund in full`)}
+					destructive
+				/>
+			) : null}
+			{refundable && order.holdReason === 'partial_cancel' ? (
+				<partFetcher.Form
+					method="POST"
+					className="flex flex-wrap items-end gap-2"
+				>
+					<input type="hidden" name="_action" value="refund-part" />
+					<input type="hidden" name="orderId" value={order.id} />
+					<div className="flex flex-col gap-1">
+						<Label htmlFor={partId}>
+							{_(msg`Refund part (USD, up to ${left})`)}
+						</Label>
+						<Input
+							id={partId}
+							name="amount"
+							inputMode="decimal"
+							required
+							className="w-28"
+						/>
+					</div>
+					<Button
+						type="submit"
+						size="sm"
+						variant="outline"
+						disabled={partFetcher.state !== 'idle'}
+						aria-label={_(msg`Refund part of the order of ${organization}`)}
+					>
+						{_(msg`Refund part`)}
+					</Button>
+					<Result data={partFetcher.data} />
+				</partFetcher.Form>
 			) : null}
 			<Result data={fetcher.data} />
 		</div>

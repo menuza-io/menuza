@@ -54,6 +54,8 @@ export const qrTabSchema = z.object({
 	voidReason: z.string().nullable(),
 	/** What the guest paid online; set while a payment is open or in review. */
 	onlineAmountCents: z.number().int().nullable().optional(),
+	/** How many such payments arrived. */
+	reviewPaymentCount: z.number().int().optional(),
 	rounds: z.array(roundSchema),
 	roundsPending: z.boolean(),
 	totals: z.object({

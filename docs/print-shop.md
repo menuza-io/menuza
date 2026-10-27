@@ -32,8 +32,12 @@ for shipped prints also needs the settings (billing) permission.
    card whose codes or labels changed cannot be ordered until it is approved
    again.
 
-Table cards also need the menu read permission: a table code lets anyone order
-at that table, so the marketing permissions alone do not reach it.
+Table cards also need the menu edit permission (the right that mints table codes
+on the QR tables page): a table code lets anyone order at that table, so the
+marketing permissions alone do not reach it, not even through a proof or a
+download of a card someone else approved. Codes are checked again when the price
+is made and when payment starts; a code renewed after that (an order held for
+days) is not caught, so renew codes only after shipped cards arrive.
 
 QR codes encode the destination directly with
 `utm_source=print&utm_medium=qr&utm_campaign=<design id>`: there is no redirect
@@ -79,24 +83,39 @@ the browser's print dialog saves it.
   through Admin (reprint by vendor claim, or refund).
 - **Crash safety:** the hourly `print-sync` job submits paid orders that were
   never sent (after 5 minutes) and holds orders stuck sending or cancelling for
-  15 minutes (`stale_claim`), since a vendor call may have gone through. Check
-  the vendor before **Retry**; held refund cases (`refund_failed`,
-  `partial_cancel`) can only be refunded. Paid orders are not counted against
-  the hourly render limit.
+  15 minutes (`stale_claim`), since a vendor call may have gone through. A
+  timeout or an error once the order was sent holds it as `vendor_unknown`. For
+  these (and `submission_error`) Admin's **Retry** shows the vendor references
+  and asks to search the vendor first; Prodigi also gets an idempotency key.
+  Held refund cases (`refund_failed`, `partial_cancel`) can only be refunded.
+  Paid orders are not counted against the hourly render limit.
+- **Vendor errors:** only 400 and 422 (Gelato also 409) count as the vendor
+  refusing the order (automatic refund). A key, account or endpoint problem
+  (401, 403, 404) and every 5xx or 429 hold the order for Admin.
 - **Tracking:** vendor webhooks
   (`/resources/print/webhook/<vendor>?token=PRINT_WEBHOOK_TOKEN`) only trigger a
   status fetch from the vendor's API; the hourly `print-sync` job in
-  `apps/jobs-cron` is the safety net. Operators get an email and an in-app
-  notification when an order is paid, shipped, or refunded.
+  `apps/jobs-cron` is the safety net. It checks orders not yet shipped first
+  (oldest check first) and follows shipped ones for 30 days. Operators get an
+  email and an in-app notification when an order is paid, shipped, or refunded.
 
 ## Admin
 
 **Admin, Print shop:** pricing rules (markup, drift limit, quote window), the
 vendor catalog (product and size to vendor SKU and bleed; changing the vendor is
 how held orders are rerouted), and the last 100 orders with margin, **Retry**,
-**Accept new price** and **Refund in full**. Refunds and retries run in the App
-through `/resources/print/admin-command` (internal token), so Stripe and vendor
-keys live in one app.
+**Accept new price** and three refunds:
+
+- **Refund in full** cancels vendor orders not yet printing first; if a vendor
+  already started, it refunds nothing and says so.
+- **Refund, vendor keeps printing** (in production, shipped, delivered or held
+  orders): a defect claim or a lost parcel, Menuza still pays the vendor.
+- **Refund part** (held `partial_cancel` orders): the amount that was cancelled;
+  the rest keeps printing and is tracked again.
+
+Only paid orders can be refunded. Refunds and retries run in the App through
+`/resources/print/admin-command` (internal token), so Stripe and vendor keys
+live in one app.
 
 ## Environment
 

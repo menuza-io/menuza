@@ -209,19 +209,50 @@ function buildSitePaymentUrls(
 
 /**
  * Stripe enforces a 30-minute minimum session lifetime. Align the session
- * expiry with the regional reservation hold when possible; otherwise let Stripe
- * apply its native minimum. The regional hold always remains authoritative: a
- * late payment on an outlived session lands in `payment_review`, never in
- * resurrected inventory.
+ * expiry with the regional hold when possible; when the hold ends sooner, use
+ * the hold plus that minimum rather than Stripe's 24-hour default, so a page
+ * left open never outlives the hold by more than about half an hour. The regional hold always
+ * remains authoritative: a late payment on an outlived session lands in
+ * review, never in resurrected inventory.
  */
 function stripeSessionExpiry(holdExpiresAt: string | null): Date | null {
 	if (!holdExpiresAt) return null
 	const holdMs = new Date(holdExpiresAt).getTime()
 	if (!Number.isFinite(holdMs)) return null
-	const minimumMs =
-		Date.now() +
+	const minimumSpanMs =
 		(STRIPE_MIN_SESSION_MINUTES + SESSION_EXPIRY_BUFFER_MINUTES) * 60_000
-	return holdMs > minimumMs ? new Date(holdMs) : null
+	// Anchored on the hold, not on now, so an idempotent replay sends the same
+	// expiry (the idempotency key is built from the hold too).
+	return holdMs > Date.now() + minimumSpanMs
+		? new Date(holdMs)
+		: new Date(holdMs + minimumSpanMs)
+}
+
+/**
+ * Staff stopped a stuck tab payment: the region already unbound the session;
+ * this closes the guest's Stripe page so it cannot take money any more. Only
+ * a session of this organization's tab is touched. Checkout.com hosted pages
+ * cannot be expired (money that still arrives there is kept for review).
+ */
+export async function expireReleasedTabSession(input: {
+	organizationId: string
+	tabId: string
+	sessionId: string
+	processor: string
+}): Promise<'expired' | 'not_open' | 'unsupported'> {
+	if (input.processor !== 'connect') return 'unsupported'
+	const commerce = getShopCommerce()
+	const session = await commerce.retrieveConnectCheckoutSession(input.sessionId)
+	if (
+		!isRestaurantOrderMetadata(session.metadata) ||
+		session.metadata?.orgId !== input.organizationId ||
+		session.metadata?.orderId !== `tab:${input.tabId}`
+	) {
+		throw new Response('Not Found', { status: 404 })
+	}
+	if (session.status !== 'open') return 'not_open'
+	await commerce.expireConnectCheckoutSession(input.sessionId)
+	return 'expired'
 }
 
 function quoteAllowsCheckout(

@@ -6,9 +6,11 @@ import {
 	db,
 	desc,
 	eq,
+	inArray,
 	Organization,
 	PrintOrder,
 	PrintSettings,
+	PrintVendorOrder,
 	PrintVendorProduct,
 } from '@repo/database'
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router'
@@ -56,6 +58,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.innerJoin(Organization, eq(Organization.id, PrintOrder.organizationId))
 		.orderBy(desc(PrintOrder.createdAt))
 		.limit(100)
+	// Held orders show their vendor references, so Admin can search the vendor
+	// before a retry that might otherwise place a second order.
+	const heldIds = orders
+		.filter((order) => order.status === 'held')
+		.map((order) => order.id)
+	const references =
+		heldIds.length > 0
+			? await db
+					.select({
+						orderId: PrintVendorOrder.orderId,
+						id: PrintVendorOrder.id,
+						vendor: PrintVendorOrder.vendor,
+					})
+					.from(PrintVendorOrder)
+					.where(inArray(PrintVendorOrder.orderId, heldIds))
+			: []
 	const sizes = PRINT_PRODUCT_KEYS.filter(
 		(key) => PRINT_PRODUCTS[key].shippable,
 	).flatMap((key) =>
@@ -83,6 +101,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		orders: orders.map((order) => ({
 			...order,
 			createdAt: order.createdAt.toISOString(),
+			vendorReferences: references
+				.filter((reference) => reference.orderId === order.id)
+				.map((reference) => `${reference.vendor}: ${reference.id}`),
 			// Kept after tax: what Menuza earns over the vendor's wholesale.
 			// Only money actually collected and kept counts.
 			marginCents: MARGIN_STATUSES.has(order.status)
@@ -112,8 +133,19 @@ const ActionSchema = z.discriminatedUnion('_action', [
 		id: z.string().min(1).max(100),
 	}),
 	z.object({
-		_action: z.enum(['refund', 'retry', 'retry-accept']),
+		_action: z.enum([
+			'refund',
+			'refund-keep',
+			'retry',
+			'retry-accept',
+			'retry-checked',
+		]),
 		orderId: z.string().min(1).max(100),
+	}),
+	z.object({
+		_action: z.literal('refund-part'),
+		orderId: z.string().min(1).max(100),
+		amount: z.coerce.number().positive().max(100_000),
 	}),
 ])
 
@@ -208,11 +240,24 @@ export async function action({
 			return { ok: true }
 		case 'refund':
 			return appCommand({ action: 'refund', orderId: input.orderId })
+		case 'refund-keep':
+			return appCommand({
+				action: 'refund',
+				orderId: input.orderId,
+				keepPrinting: true,
+			})
+		case 'refund-part':
+			return appCommand({
+				action: 'refund',
+				orderId: input.orderId,
+				amountCents: Math.round(input.amount * 100),
+			})
 		default:
 			return appCommand({
 				action: 'retry',
 				orderId: input.orderId,
 				acceptPrice: input._action === 'retry-accept',
+				checkedVendor: input._action === 'retry-checked',
 			})
 	}
 }

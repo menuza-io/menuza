@@ -130,7 +130,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				return { error: 'shipping_paused' }
 			}
 			const base = `${new URL(request.url).origin}/${access.organization.slug}/marketing/print/orders/${encodeURIComponent(orderId)}`
-			return redirect(await startPrintCheckout(access, orderId, base))
+			return redirect(await startPrintCheckout(request, access, orderId, base))
 		}
 		await cancelPrintOrder(access, orderId)
 		return { error: null }

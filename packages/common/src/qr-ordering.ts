@@ -239,11 +239,14 @@ export const qrTabCloseSchema = z.strictObject({
 	tipCents: z.number().int().min(0).max(10_000_000).optional(),
 	/** Staff checked an online payment that landed for review. */
 	acknowledgeReview: z.literal(true).optional(),
+	/** The total staff saw (before tip): a changed tab answers 409 `stale_tab`. */
+	expectedTotalCents: z.number().int().min(0).max(100_000_000).optional(),
 })
 
 export const qrTabVoidSchema = z.strictObject({
 	reason: z.string().trim().min(1, 'Give a reason').max(QR_VOID_REASON_MAX),
 	acknowledgeReview: z.literal(true).optional(),
+	expectedTotalCents: z.number().int().min(0).max(100_000_000).optional(),
 })
 
 export type QrTableView = {

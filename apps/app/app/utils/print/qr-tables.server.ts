@@ -13,16 +13,29 @@ import { getOperatorTenantClient } from '#app/utils/tenant-api.server.ts'
  * tenant-api (HMAC of its secret), so the App server asks for it with a
  * short-lived writer token it never hands to the browser. Labels and tokens
  * carry no guest data. Table cards need QR dine-in on for the org, and the
- * user needs menu read: a table code is a way in to order at that table, so
- * the marketing permissions alone never reach it.
+ * user needs menu write (the same right that mints `qr:write` for the QR
+ * tables page): a table code is a way in to order at that table, so the
+ * marketing permissions alone never reach it, not even through a snapshot
+ * approved by someone else.
  */
 
 export async function canPrintQrTables(userId: string, organizationId: string) {
 	return userHasOrganizationPermission(
 		userId,
 		organizationId,
-		ORG_PERMISSIONS.READ_MENU_ANY,
+		ORG_PERMISSIONS.UPDATE_MENU_ANY,
 	)
+}
+
+/** A snapshot with table codes (proof, download) needs the same right. */
+export async function requireTableCodeAccess(
+	access: { userId: string; organization: { id: string } },
+	snapshot: { facts: { tables: unknown[] } },
+) {
+	if (snapshot.facts.tables.length === 0) return
+	if (!(await canPrintQrTables(access.userId, access.organization.id))) {
+		throw new Response('Forbidden', { status: 403 })
+	}
 }
 
 export async function isQrDineInOn(organizationId: string) {

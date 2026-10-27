@@ -10,6 +10,7 @@ import {
 	renderPrintHtml,
 } from '#app/utils/print/print-document.server.tsx'
 import { qrSvgsFor } from '#app/utils/print/print-snapshot.server.ts'
+import { requireTableCodeAccess } from '#app/utils/print/qr-tables.server.ts'
 
 /**
  * The live proof the editor frames: the current content rendered with trim
@@ -24,6 +25,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const snapshot =
 		(wantsApproved ? approvedSnapshot(row) : null) ??
 		(await currentSnapshot(request, access, row))
+	await requireTableCodeAccess(access, snapshot)
 	const html = renderPrintHtml({
 		snapshot,
 		format: 'proof',

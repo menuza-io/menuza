@@ -20,10 +20,11 @@ and the runbook. The browser and region contract is in
 - **Capabilities, not logins.** A table code is an HMAC of the table id and its
   version under the region's `AUTH_HMAC_SECRET`; a tab code works the same way.
   Nothing is stored. Codes ride in the URL fragment (`/menu?location=…#table=…`,
-  never sent to any server), are removed from the address bar at once, and reach
-  tenant-api only in the `X-Table-Token` / `X-Tab-Token` headers. The tab code
-  is kept in the guest's `localStorage`, so a re-scan or a closed browser
-  resumes the tab.
+  never sent to any server), are moved out of the address bar by an inline head
+  script before any analytics tag loads (into this tab's `sessionStorage`, read
+  once by the menu script), and reach tenant-api only in the `X-Table-Token` /
+  `X-Tab-Token` headers. The tab code is kept in the guest's `localStorage`, so
+  a re-scan or a closed browser resumes the tab.
 - **Prices are the region's.** Every round is repriced from the live menu inside
   the placement transaction, exactly like a pickup order. Tips are only taken
   when the tab is paid online.
@@ -76,9 +77,11 @@ Paying from the phone always asks for a name and phone number.
   payment (paid at tab close).
 - **Close at counter:** take the money (optionally record a tip), then close.
   Every round that still counts is marked paid and the totals are kept on the
-  tab. Closing does not wait for the kitchen (your call).
+  tab. Closing does not wait for the kitchen (your call). The App sends the
+  total shown in the dialog (`expectedTotalCents`); a round that lands meanwhile
+  answers 409 `stale_tab` and the dialog shows the new total.
 - **Void:** nothing is charged; unfinished rounds are cancelled. A reason is
-  required.
+  required. Void checks the shown total the same way.
 - **Lock:** stops every phone from adding to or paying the tab (a re-scan is
   refused too) while staff settle it. Close or void ends it.
 - **A new party at the table:** close or void the previous tab first; the table
@@ -95,8 +98,12 @@ organization's processor (Stripe Connect in the US, Checkout.com anywhere). The
 tab rides the restaurant-order payment bridge as the order `tab:<id>`, with the
 same metadata, idempotency, single bind and provider reconciliation as online
 orders. While a payment is open the tab total is frozen: new rounds and counter
-close or void are refused until the session ends, or for at most 45 minutes (the
-hosted page itself expires after 40). A tip change while paying is refused.
+close or void are refused until the session ends, or for at most 45 minutes (a
+Stripe page expires 40 minutes after the pay request, or 31 minutes after the
+hold when that is later). After the hold, the next pay request or round forgets
+the dead binding (Checkout.com never reports expiry). Asking again for the same
+payment re-serves it without restarting the freeze, and a different tip while
+paying is refused.
 
 - Only a verified provider event (or the App's provider lookup) closes a tab; a
   redirect never does.
@@ -105,12 +112,17 @@ hosted page itself expires after 40). A tip change while paying is refused.
 - **Stop online payment:** when the guest gave up on the payment page, staff tap
   **Stop online payment** on the open tab
   (`POST /operator/qr/tabs/:id/release-payment`). The session is unbound and the
-  tab can be closed at the counter. Lock does the same.
-- **Needs review:** money that does not match the tab (a different amount, or a
-  payment for a session that was stopped) never closes it. The tab shows **Paid
-  online, needs review** with the amount; close and void then ask staff to
-  confirm they checked the payment (`acknowledgeReview: true`), and the tab
-  keeps `paymentStatus: 'review'`.
+  tab can be closed at the counter; the response names the released session and
+  the browser hands it to the App (`POST /<org>/qr/release-session`, ids only),
+  which expires a Stripe page after checking it belongs to that tab.
+  Checkout.com pages cannot be expired. Lock clears an unbound pay request.
+- **Needs review:** money that does not match the tab (a different amount, a
+  stopped or replaced session, a tab already settled) never closes it. Each such
+  payment is one append-only `qr_tab_payments` row (tenant migration
+  `0024_qr_tab_payments`), so a second payment never hides the first. The tab
+  shows **Paid online, needs review** with the count and sum; close and void
+  then ask staff to confirm they checked the payments
+  (`acknowledgeReview: true`), and the tab keeps `paymentStatus: 'review'`.
 - **Late payment on a settled tab:** if staff closed or voided the tab and the
   money still arrives, the tab keeps `paymentStatus: 'review'`. Refund it from
   the processor dashboard or keep it as the payment, and note it on the bill.

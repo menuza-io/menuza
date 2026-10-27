@@ -22,6 +22,7 @@ import {
 	startTabPayment,
 	stripTableFragment,
 	submitTableRound,
+	takeStashedTableScan,
 	TableRequestError,
 	type TableSession,
 } from '~/lib/ordering/table-session'
@@ -888,8 +889,17 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 	// ---- Start --------------------------------------------------------------
 
 	async function start() {
-		const scanned = readTableFragment(window.location.href)
-		if (scanned) {
+		const stash = (() => {
+			try {
+				return window.sessionStorage
+			} catch {
+				return null
+			}
+		})()
+		const fromAddress = readTableFragment(window.location.href)
+		// Usually the layout already moved the code out of the address bar.
+		const scanned = fromAddress ?? takeStashedTableScan(stash)
+		if (fromAddress) {
 			// The code must never linger in the address bar or history.
 			history.replaceState(
 				history.state,

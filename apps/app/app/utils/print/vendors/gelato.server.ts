@@ -27,6 +27,9 @@ function key() {
 	return value
 }
 
+/** Answers that mean the order itself was refused (content, address). */
+const REJECTION_STATUSES = new Set([400, 409, 422])
+
 async function call(path: string, init: RequestInit = {}) {
 	let response: Response
 	try {
@@ -45,6 +48,15 @@ async function call(path: string, init: RequestInit = {}) {
 	}
 	const body: unknown = await response.json().catch(() => null)
 	if (response.status >= 500 || response.status === 429) {
+		throw new VendorError(
+			'gelato',
+			'unavailable',
+			`Gelato answered ${response.status}`,
+		)
+	}
+	if (!response.ok && !REJECTION_STATUSES.has(response.status)) {
+		// A key, account or endpoint problem on our side (401, 403, 404...):
+		// hold for a person, never refund a paid order over it.
 		throw new VendorError(
 			'gelato',
 			'unavailable',

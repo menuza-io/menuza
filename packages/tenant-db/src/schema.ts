@@ -5473,6 +5473,31 @@ export const qrTabs = sqliteTable(
 	],
 )
 
+// Online money for a tab that did not settle it (a stopped or replaced
+// session, a changed total, a tab already closed). Append-only: every such
+// payment is kept for staff to refund or keep, never overwritten by the next.
+export const qrTabPayments = sqliteTable(
+	'qr_tab_payments',
+	{
+		id: text('id').primaryKey(),
+		tabId: text('tab_id')
+			.notNull()
+			.references(() => qrTabs.id, { onDelete: 'cascade' }),
+		sessionId: text('session_id').notNull(),
+		processor: text('processor').notNull(),
+		amountCents: integer('amount_cents').notNull(),
+		currency: text('currency').notNull(),
+		receivedAt: integer('received_at').notNull().default(nowMs),
+	},
+	(table) => [
+		uniqueIndex('qr_tab_payments_session_unique').on(
+			table.processor,
+			table.sessionId,
+		),
+		index('idx_qr_tab_payments_tab').on(table.tabId),
+	],
+)
+
 // One row per organization (`id = 'default'`); absent means the defaults in
 // `QR_SETTINGS_DEFAULTS`.
 export const qrSettings = sqliteTable('qr_settings', {

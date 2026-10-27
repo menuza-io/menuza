@@ -322,6 +322,7 @@ operatorQrRoutes.post('/tabs/:id/close', async (c) => {
 				tipCents: parsed.data.tipCents,
 				closedBy: auth.auth.userId,
 				acknowledgeReview: parsed.data.acknowledgeReview,
+				expectedTotalCents: parsed.data.expectedTotalCents,
 			}),
 			'tab',
 		),
@@ -340,6 +341,7 @@ operatorQrRoutes.post('/tabs/:id/void', async (c) => {
 				reason: parsed.data.reason,
 				closedBy: auth.auth.userId,
 				acknowledgeReview: parsed.data.acknowledgeReview,
+				expectedTotalCents: parsed.data.expectedTotalCents,
 			}),
 			'tab',
 		),
@@ -353,7 +355,7 @@ operatorQrRoutes.post('/tabs/:id/release-payment', async (c) => {
 		respond(
 			c,
 			await releaseTabPayment(auth.auth.orgId, c.req.param('id')),
-			'tab',
+			'release',
 		),
 	)
 })

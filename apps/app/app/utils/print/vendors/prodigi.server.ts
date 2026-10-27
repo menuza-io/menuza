@@ -33,6 +33,13 @@ function key() {
 	return value
 }
 
+/**
+ * Answers that mean the order itself was refused (content, address). A 409
+ * is not one: it can mean the idempotency key already placed this order, so
+ * it is held for a person rather than refunded.
+ */
+const REJECTION_STATUSES = new Set([400, 422])
+
 async function call(path: string, init: RequestInit = {}) {
 	let response: Response
 	try {
@@ -54,6 +61,15 @@ async function call(path: string, init: RequestInit = {}) {
 		unknown
 	> | null
 	if (response.status >= 500 || response.status === 429) {
+		throw new VendorError(
+			'prodigi',
+			'unavailable',
+			`Prodigi answered ${response.status}`,
+		)
+	}
+	if (!response.ok && !REJECTION_STATUSES.has(response.status)) {
+		// A key, account or endpoint problem on our side (401, 403, 404...):
+		// hold for a person, never refund a paid order over it.
 		throw new VendorError(
 			'prodigi',
 			'unavailable',
@@ -135,6 +151,9 @@ export const prodigiVendor: PrintVendor = {
 			method: 'POST',
 			body: JSON.stringify({
 				merchantReference: reference,
+				// Prodigi refuses a second order with the same key, so a retry
+				// after a timeout cannot place the order twice.
+				idempotencyKey: reference,
 				shippingMethod,
 				recipient: recipient(address),
 				...(callbackUrl ? { callbackUrl } : {}),
