@@ -1,125 +1,36 @@
 'use client'
 
-import { motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Transition, type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface FoldersIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
+export type FoldersIconHandle = AnimatedIconHandle
+
+const SPRING: Transition = { type: 'spring', stiffness: 250, damping: 25 }
+
+const FRONT_VARIANTS: Variants = {
+	normal: { y: 0 },
+	animate: { y: -2 },
 }
 
-interface FoldersIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
+const BACK_VARIANTS: Variants = {
+	normal: { y: 0, opacity: 1 },
+	animate: { y: 2, opacity: 0 },
 }
 
-const FoldersIcon = forwardRef<FoldersIconHandle, FoldersIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<motion.path
-						animate={controls}
-						variants={{
-							normal: {
-								translateX: 0,
-								translateY: 0,
-							},
-							animate: {
-								translateX: -2,
-								translateY: 2,
-							},
-						}}
-						transition={{
-							type: 'spring',
-							stiffness: 250,
-							damping: 25,
-						}}
-						d="M20 17a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.9a2 2 0 0 1-1.69-.9l-.81-1.2a2 2 0 0 0-1.67-.9H8a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"
-					/>
-					<motion.path
-						d="M2 8v11a2 2 0 0 0 2 2h14"
-						animate={controls}
-						variants={{
-							normal: {
-								translateX: 0,
-								translateY: 0,
-								opacity: 1,
-								scale: 1,
-							},
-							animate: {
-								translateX: 2,
-								translateY: -2,
-								opacity: 0,
-								scale: 0.9,
-							},
-						}}
-						transition={{
-							type: 'spring',
-							stiffness: 250,
-							damping: 25,
-						}}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-FoldersIcon.displayName = 'FoldersIcon'
-
-export { FoldersIcon }
+/** Hugeicons `folders`: the back folder slides into the front one. */
+export const FoldersIcon = createAnimatedIcon('FoldersIcon', (controls) => (
+	<>
+		<motion.path
+			d="M3 2.5001H8.5C9.47008 2.5001 10.4182 2.47179 11.2387 3.05532C12.29 3.80299 12.71 5.1972 13.7613 5.94487C14.5818 6.52841 15.5299 6.5001 16.5 6.5001H21"
+			transition={SPRING}
+			variants={BACK_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M7.5 9.05568H16.275C18.171 9.05568 19.119 9.05568 19.8 9.50509C20.0949 9.69965 20.348 9.94965 20.545 10.2408C21 10.9134 21 11.8497 21 13.7223C21 16.8434 21 18.4039 20.2416 19.5249C19.9133 20.0102 19.4914 20.4268 19.0001 20.7511C17.8651 21.5001 16.285 21.5001 13.125 21.5001H12C7.75736 21.5001 5.63604 21.5001 4.31802 20.1984C3 18.8966 3 16.8015 3 12.6112V9.89503C3 8.28039 3 7.47307 3.34228 6.86729C3.58628 6.43547 3.94704 6.07916 4.38426 5.83818C4.99761 5.50012 5.81502 5.50012 7.44984 5.50012C8.49722 5.50012 9.02091 5.50012 9.47933 5.66991C10.526 6.05756 10.9576 6.99663 11.4299 7.92957L12 9.05568"
+			transition={SPRING}
+			variants={FRONT_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

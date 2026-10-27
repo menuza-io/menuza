@@ -250,7 +250,8 @@ function SidebarTrigger({
 	onClick,
 	...props
 }: React.ComponentProps<typeof Button>) {
-	const { toggleSidebar } = useSidebar()
+	const { toggleSidebar, state, isMobile, openMobile } = useSidebar()
+	const isOpen = isMobile ? openMobile : state === 'expanded'
 
 	return (
 		<Button
@@ -265,7 +266,11 @@ function SidebarTrigger({
 			}}
 			{...props}
 		>
-			<Icon name="panel-left" />
+			{/* The two icons mirror each other, so RTL flips them. */}
+			<Icon
+				name={isOpen ? 'sidebar-left-01' : 'sidebar-right-01'}
+				className="rtl:-scale-x-100"
+			/>
 			<span className="sr-only">Toggle Sidebar</span>
 		</Button>
 	)

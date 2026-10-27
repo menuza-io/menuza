@@ -1,86 +1,39 @@
-'use client'
-
-import { cn } from '@repo/ui'
 import { type Variants, motion } from 'motion/react'
-import { type HTMLAttributes, forwardRef } from 'react'
 import {
-	type IconAnimationHandle,
-	useIconAnimation,
-} from './use-icon-animation.tsx'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from '@repo/ui/animated-icon'
 
-export interface GalleryHorizontalEndIconHandle extends IconAnimationHandle {}
+export type GalleryHorizontalEndIconHandle = AnimatedIconHandle
 
-interface GalleryHorizontalEndIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const PATH_VARIANTS: Variants = {
-	normal: {
-		translateX: 0,
-		opacity: 1,
-		transition: {
-			type: 'tween',
-			stiffness: 200,
-			damping: 13,
-		},
-	},
-	animate: (i: number) => ({
-		translateX: [2 * i, 0],
+/** `depth` 1 is the card furthest back; it slides in last. */
+const CARD_VARIANTS: Variants = {
+	normal: { x: 0, opacity: 1 },
+	animate: (depth: number) => ({
+		x: [2 * depth, 0],
 		opacity: [0, 1],
-		transition: {
-			delay: 0.25 * (2 - i),
-			type: 'tween',
-			stiffness: 200,
-			damping: 13,
-		},
+		transition: { delay: 0.25 * (2 - depth) },
 	}),
 }
 
-const GalleryHorizontalEndIcon = forwardRef<
-	GalleryHorizontalEndIconHandle,
-	GalleryHorizontalEndIconProps
->(({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-	const { controls, handleMouseEnter, handleMouseLeave } = useIconAnimation(
-		ref,
-		{ onMouseEnter, onMouseLeave },
-	)
-
-	return (
-		<div
-			className={cn(className)}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-			{...props}
-		>
-			<svg
-				fill="none"
-				height={size}
-				stroke="currentColor"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				strokeWidth="2"
-				viewBox="0 0 24 24"
-				width={size}
-				xmlns="http://www.w3.org/2000/svg"
-			>
-				<motion.path
-					animate={controls}
-					custom={2}
-					d="M6 5v14"
-					variants={PATH_VARIANTS}
-				/>
-				<motion.path
-					animate={controls}
-					custom={1}
-					d="M2 7v10"
-					variants={PATH_VARIANTS}
-				/>
-				<rect height="18" rx="2" width="12" x="10" y="3" />
-			</svg>
-		</div>
-	)
-})
-
-GalleryHorizontalEndIcon.displayName = 'GalleryHorizontalEndIcon'
-
-export { GalleryHorizontalEndIcon }
+/** Hugeicons `gallery-horizontal-end`: the cards behind slide back in. */
+export const GalleryHorizontalEndIcon = createAnimatedIcon(
+	'GalleryHorizontalEndIcon',
+	(controls) => (
+		<>
+			<path d="M11 15V9C11 7.13077 11 6.19615 11.4019 5.5C11.6652 5.04394 12.0439 4.66523 12.5 4.40192C13.1962 4 14.1308 4 16 4C17.8692 4 18.8038 4 19.5 4.40192C19.9561 4.66523 20.3348 5.04394 20.5981 5.5C21 6.19615 21 7.13077 21 9V15C21 16.8692 21 17.8038 20.5981 18.5C20.3348 18.9561 19.9561 19.3348 19.5 19.5981C18.8038 20 17.8692 20 16 20C14.1308 20 13.1962 20 12.5 19.5981C12.0439 19.3348 11.6652 18.9561 11.4019 18.5C11 17.8038 11 16.8692 11 15Z" />
+			<motion.path
+				d="M7 6V18"
+				custom={2}
+				variants={CARD_VARIANTS}
+				animate={controls}
+			/>
+			<motion.path
+				d="M3 8V16"
+				custom={1}
+				variants={CARD_VARIANTS}
+				animate={controls}
+			/>
+		</>
+	),
+)

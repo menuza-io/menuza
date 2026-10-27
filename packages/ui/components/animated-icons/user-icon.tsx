@@ -1,122 +1,39 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface UserIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
+export type UserIconHandle = AnimatedIconHandle
+
+const HEAD_VARIANTS: Variants = {
+	normal: { pathLength: 1, pathOffset: 0, scale: 1 },
+	animate: { pathLength: [0, 1], pathOffset: [1, 0], scale: [0.5, 1] },
 }
 
-interface UserIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const pathVariant: Variants = {
+const BODY_VARIANTS: Variants = {
 	normal: { pathLength: 1, opacity: 1, pathOffset: 0 },
 	animate: {
 		pathLength: [0, 1],
 		opacity: [0, 1],
 		pathOffset: [1, 0],
+		transition: { delay: 0.2, duration: 0.4 },
 	},
 }
 
-const circleVariant: Variants = {
-	normal: {
-		pathLength: 1,
-		pathOffset: 0,
-		scale: 1,
-	},
-	animate: {
-		pathLength: [0, 1],
-		pathOffset: [1, 0],
-		scale: [0.5, 1],
-	},
-}
-
-const UserIcon = forwardRef<UserIconHandle, UserIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<motion.circle
-						cx="12"
-						cy="8"
-						r="5"
-						animate={controls}
-						variants={circleVariant}
-					/>
-
-					<motion.path
-						d="M20 21a8 8 0 0 0-16 0"
-						variants={pathVariant}
-						transition={{
-							delay: 0.2,
-							duration: 0.4,
-						}}
-						animate={controls}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-UserIcon.displayName = 'UserIcon'
-
-export { UserIcon }
+/** Hugeicons `user`: head, then shoulders, are drawn in. */
+export const UserIcon = createAnimatedIcon('UserIcon', (controls) => (
+	<>
+		<motion.path
+			d="M20 21.0001C19.713 17.269 16.7289 14.3151 12.995 14.0662L12 13.9999C11.6446 14.0096 11.3134 14.0225 11.0008 14.0378C7.3 14.2192 4.28417 17.3057 4 21.0001"
+			variants={BODY_VARIANTS}
+			animate={controls}
+		/>
+		<motion.circle
+			cx="12"
+			cy="6.99988"
+			r="4"
+			variants={HEAD_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

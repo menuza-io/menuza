@@ -1,138 +1,49 @@
-import { motion, useAnimation, type Variants } from 'motion/react'
-import {
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-	type HTMLAttributes,
-} from 'react'
-import { cn } from '@repo/ui'
+'use client'
 
-export interface SunMoonIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-interface SunMoonIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
+export type SunMoonIconHandle = AnimatedIconHandle
 
-const sunVariants: Variants = {
-	normal: {
-		rotate: 0,
-	},
+const MOON_VARIANTS: Variants = {
+	normal: { rotate: 0 },
 	animate: {
 		rotate: [0, -5, 5, -2, 2, 0],
-		transition: {
-			duration: 1.5,
-			ease: 'easeInOut',
-		},
+		transition: { duration: 1.5, ease: 'easeInOut' },
 	},
 }
 
-const moonVariants: Variants = {
+const RAY_VARIANTS: Variants = {
 	normal: { opacity: 1 },
-	animate: (i: number) => ({
+	animate: (index: number) => ({
 		opacity: [0, 1],
-		transition: { delay: i * 0.1, duration: 0.3 },
+		transition: { delay: index * 0.1, duration: 0.3 },
 	}),
 }
 
-const SunMoonIcon = forwardRef<SunMoonIconHandle, SunMoonIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const sunControls = useAnimation()
-		const moonControls = useAnimation()
-		const isControlledRef = useRef(false)
+const RAYS = [
+	'M16.5 11.5C16.5 9.567 14.933 8 13 8',
+	'M13.5 2.5V4.5',
+	'M19.5018 4.5L18.0028 5.99902',
+	'M21.5018 10.5H19.502',
+]
 
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => {
-					void sunControls.start('animate')
-					void moonControls.start('animate')
-				},
-				stopAnimation: () => {
-					void sunControls.start('normal')
-					void moonControls.start('normal')
-				},
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void sunControls.start('animate')
-					void moonControls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[sunControls, moonControls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void sunControls.start('normal')
-					void moonControls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[sunControls, moonControls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<motion.g
-						variants={sunVariants}
-						animate={sunControls}
-						initial="normal"
-					>
-						<path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4" />
-					</motion.g>
-					{[
-						'M12 2v2',
-						'M12 20v2',
-						'm4.9 4.9 1.4 1.4',
-						'm17.7 17.7 1.4 1.4',
-						'M2 12h2',
-						'M20 12h2',
-						'm6.3 17.7-1.4 1.4',
-						'm19.1 4.9-1.4 1.4',
-					].map((d, index) => (
-						<motion.path
-							key={d}
-							d={d}
-							animate={moonControls}
-							variants={moonVariants}
-							custom={index + 1}
-							initial="normal"
-						/>
-					))}
-				</svg>
-			</div>
-		)
-	},
-)
-
-SunMoonIcon.displayName = 'SunMoonIcon'
-
-export { SunMoonIcon }
+/** Hugeicons `sun-moon`: the moon rocks while the sun's rays fade back in. */
+export const SunMoonIcon = createAnimatedIcon('SunMoonIcon', (controls) => (
+	<>
+		<motion.path
+			d="M17 16.5314C16.116 17.0034 15.1064 17.271 14.0343 17.271C10.552 17.271 7.72899 14.448 7.72899 10.9657C7.72899 9.89358 7.99657 8.88398 8.46857 8C5.33406 8.73462 3 11.548 3 14.9065C3 18.8241 6.17586 22 10.0935 22C13.452 22 16.2654 19.6659 17 16.5314Z"
+			variants={MOON_VARIANTS}
+			animate={controls}
+		/>
+		{RAYS.map((d, index) => (
+			<motion.path
+				key={d}
+				d={d}
+				custom={index + 1}
+				variants={RAY_VARIANTS}
+				animate={controls}
+			/>
+		))}
+	</>
+))

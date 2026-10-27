@@ -1,115 +1,35 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface ArrowLeftIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type ArrowLeftIconHandle = AnimatedIconHandle
 
-interface ArrowLeftIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const pathVariants: Variants = {
-	normal: { d: 'm12 19-7-7 7-7', translateX: 0 },
+const SHAFT_VARIANTS: Variants = {
+	normal: { d: 'M5.5 12.002H19' },
 	animate: {
-		d: 'm12 19-7-7 7-7',
-		translateX: [0, 3, 0],
-		transition: {
-			duration: 0.4,
-		},
+		d: ['M5.5 12.002H19', 'M10.5 12.002H19', 'M5.5 12.002H19'],
+		transition: { duration: 0.4 },
 	},
 }
 
-const secondPathVariants: Variants = {
-	normal: { d: 'M19 12H5' },
-	animate: {
-		d: ['M19 12H5', 'M19 12H10', 'M19 12H5'],
-		transition: {
-			duration: 0.4,
-		},
-	},
+const HEAD_VARIANTS: Variants = {
+	normal: { x: 0 },
+	animate: { x: [0, 3, 0], transition: { duration: 0.4 } },
 }
 
-const ArrowLeftIcon = forwardRef<ArrowLeftIconHandle, ArrowLeftIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => void controls.start('animate'),
-				stopAnimation: () => void controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			(e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					void controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				>
-					<motion.path
-						d="m12 19-7-7 7-7"
-						variants={pathVariants}
-						animate={controls}
-					/>
-					<motion.path
-						d="M19 12H5"
-						variants={secondPathVariants}
-						animate={controls}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-ArrowLeftIcon.displayName = 'ArrowLeftIcon'
-
-export { ArrowLeftIcon }
+/** Hugeicons `arrow-left-02`: the head pulls back along the shaft. */
+export const ArrowLeftIcon = createAnimatedIcon('ArrowLeftIcon', (controls) => (
+	<>
+		<motion.path
+			d="M5.5 12.002H19"
+			variants={SHAFT_VARIANTS}
+			animate={controls}
+		/>
+		<motion.path
+			d="M10.9999 18.002C10.9999 18.002 4.99998 13.583 4.99997 12.0019C4.99996 10.4208 11 6.00195 11 6.00195"
+			variants={HEAD_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))

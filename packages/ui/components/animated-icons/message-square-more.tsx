@@ -1,41 +1,25 @@
 'use client'
 
-import { type Variants, motion, useAnimation } from 'motion/react'
-import {
-	type HTMLAttributes,
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-} from 'react'
-import { cn } from '@repo/ui'
+import { type Variants, motion } from 'motion/react'
+import { type AnimatedIconHandle, createAnimatedIcon } from './animated-icon'
 
-export interface MessageSquareMoreIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type MessageSquareMoreIconHandle = AnimatedIconHandle
 
-interface MessageSquareMoreIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const dotVariants: Variants = {
-	normal: {
-		opacity: 1,
-	},
-	animate: (custom: number) => ({
+const DOT_VARIANTS: Variants = {
+	normal: { opacity: 1 },
+	animate: (index: number) => ({
 		opacity: [1, 0, 0, 1, 1, 0, 0, 1],
 		transition: {
 			opacity: {
 				times: [
 					0,
 					0.1,
-					0.1 + custom * 0.1,
-					0.1 + custom * 0.1 + 0.1,
+					0.1 + index * 0.1,
+					0.1 + index * 0.1 + 0.1,
 					0.5,
 					0.6,
-					0.6 + custom * 0.1,
-					0.6 + custom * 0.1 + 0.1,
+					0.6 + index * 0.1,
+					0.6 + index * 0.1 + 0.1,
 				],
 				duration: 1.5,
 			},
@@ -43,86 +27,27 @@ const dotVariants: Variants = {
 	}),
 }
 
-const MessageSquareMoreIcon = forwardRef<
-	MessageSquareMoreIconHandle,
-	MessageSquareMoreIconProps
->(({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-	const controls = useAnimation()
-	const isControlledRef = useRef(false)
+const DOTS = [
+	'M8.125 12H8M8.25 12C8.25 12.1381 8.13807 12.25 8 12.25C7.86193 12.25 7.75 12.1381 7.75 12C7.75 11.8619 7.86193 11.75 8 11.75C8.13807 11.75 8.25 11.8619 8.25 12Z',
+	'M12.1257 12H12.0007M12.2507 12C12.2507 12.1381 12.1388 12.25 12.0007 12.25C11.8627 12.25 11.7507 12.1381 11.7507 12C11.7507 11.8619 11.8627 11.75 12.0007 11.75C12.1388 11.75 12.2507 11.8619 12.2507 12Z',
+	'M16.125 12H16M16.25 12C16.25 12.1381 16.1381 12.25 16 12.25C15.8619 12.25 15.75 12.1381 15.75 12C15.75 11.8619 15.8619 11.75 16 11.75C16.1381 11.75 16.25 11.8619 16.25 12Z',
+]
 
-	useImperativeHandle(ref, () => {
-		isControlledRef.current = true
-
-		return {
-			startAnimation: () => void controls.start('animate'),
-			stopAnimation: () => void controls.start('normal'),
-		}
-	})
-
-	const handleMouseEnter = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!isControlledRef.current) {
-				void controls.start('animate')
-			} else {
-				onMouseEnter?.(e)
-			}
-		},
-		[controls, onMouseEnter],
-	)
-
-	const handleMouseLeave = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>) => {
-			if (!isControlledRef.current) {
-				void controls.start('normal')
-			} else {
-				onMouseLeave?.(e)
-			}
-		},
-		[controls, onMouseLeave],
-	)
-
-	return (
-		<div
-			className={cn(className)}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-			{...props}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width={size}
-				height={size}
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			>
-				<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+/** Hugeicons `bubble-chat`: the dots blink like someone typing. */
+export const MessageSquareMoreIcon = createAnimatedIcon(
+	'MessageSquareMoreIcon',
+	(controls) => (
+		<>
+			<path d="M21.5 12C21.5 17.2467 17.2467 21.5 12 21.5C10.3719 21.5 8.8394 21.0904 7.5 20.3687C5.63177 19.362 4.37462 20.2979 3.26592 20.4658C3.09774 20.4913 2.93024 20.4302 2.80997 20.31C2.62741 20.1274 2.59266 19.8451 2.6935 19.6074C3.12865 18.5818 3.5282 16.6382 2.98341 15C2.6698 14.057 2.5 13.0483 2.5 12C2.5 6.75329 6.75329 2.5 12 2.5C17.2467 2.5 21.5 6.75329 21.5 12Z" />
+			{DOTS.map((d, index) => (
 				<motion.path
-					d="M8 10h.01"
-					variants={dotVariants}
+					key={d}
+					d={d}
+					custom={index}
+					variants={DOT_VARIANTS}
 					animate={controls}
-					custom={0}
 				/>
-				<motion.path
-					d="M12 10h.01"
-					variants={dotVariants}
-					animate={controls}
-					custom={1}
-				/>
-				<motion.path
-					d="M16 10h.01"
-					variants={dotVariants}
-					animate={controls}
-					custom={2}
-				/>
-			</svg>
-		</div>
-	)
-})
-
-MessageSquareMoreIcon.displayName = 'MessageSquareMoreIcon'
-
-export { MessageSquareMoreIcon }
+			))}
+		</>
+	),
+)

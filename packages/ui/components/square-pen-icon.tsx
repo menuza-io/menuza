@@ -1,28 +1,15 @@
-import { motion, useAnimation, type Variants } from 'motion/react'
+'use client'
+
+import { type Variants, motion } from 'motion/react'
 import {
-	forwardRef,
-	useCallback,
-	useImperativeHandle,
-	useRef,
-	type HTMLAttributes,
-} from 'react'
-import { cn } from '../lib/utils'
+	type AnimatedIconHandle,
+	createAnimatedIcon,
+} from './animated-icons/animated-icon'
 
-export interface SquarePenIconHandle {
-	startAnimation: () => void
-	stopAnimation: () => void
-}
+export type SquarePenIconHandle = AnimatedIconHandle
 
-interface SquarePenIconProps extends HTMLAttributes<HTMLDivElement> {
-	size?: number
-}
-
-const penVariants: Variants = {
-	normal: {
-		rotate: 0,
-		x: 0,
-		y: 0,
-	},
+const PEN_VARIANTS: Variants = {
+	normal: { rotate: 0, x: 0, y: 0 },
 	animate: {
 		rotate: [-0.5, 0.5, -0.5],
 		x: [0, -1, 1.5, 0],
@@ -30,73 +17,14 @@ const penVariants: Variants = {
 	},
 }
 
-const SquarePenIcon = forwardRef<SquarePenIconHandle, SquarePenIconProps>(
-	({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-		const controls = useAnimation()
-		const isControlledRef = useRef(false)
-
-		useImperativeHandle(ref, () => {
-			isControlledRef.current = true
-
-			return {
-				startAnimation: () => controls.start('animate'),
-				stopAnimation: () => controls.start('normal'),
-			}
-		})
-
-		const handleMouseEnter = useCallback(
-			async (e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					await controls.start('animate')
-				} else {
-					onMouseEnter?.(e)
-				}
-			},
-			[controls, onMouseEnter],
-		)
-
-		const handleMouseLeave = useCallback(
-			async (e: React.MouseEvent<HTMLDivElement>) => {
-				if (!isControlledRef.current) {
-					await controls.start('normal')
-				} else {
-					onMouseLeave?.(e)
-				}
-			},
-			[controls, onMouseLeave],
-		)
-
-		return (
-			<div
-				className={cn(className)}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-				{...props}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width={size}
-					height={size}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					style={{ overflow: 'visible' }}
-				>
-					<path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-					<motion.path
-						d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"
-						variants={penVariants}
-						animate={controls}
-					/>
-				</svg>
-			</div>
-		)
-	},
-)
-
-SquarePenIcon.displayName = 'SquarePenIcon'
-
-export { SquarePenIcon }
+/** Hugeicons `pencil-edit-02`: the pencil scribbles. */
+export const SquarePenIcon = createAnimatedIcon('SquarePenIcon', (controls) => (
+	<>
+		<path d="M18.9999 13.5C18.9999 16.7875 18.9999 18.4312 18.092 19.5376C17.9258 19.7401 17.7401 19.9258 17.5375 20.092C16.4312 21 14.7874 21 11.4999 21H11C7.22876 21 5.34316 21 4.17159 19.8284C3.00003 18.6569 3 16.7712 3 13V12.5C3 9.21252 3 7.56879 3.90794 6.46244C4.07417 6.2599 4.2599 6.07417 4.46244 5.90794C5.56879 5 7.21252 5 10.5 5" />
+		<motion.path
+			d="M16.4249 4.60509L17.4149 3.6151C18.2351 2.79497 19.5648 2.79497 20.3849 3.6151C21.205 4.43524 21.205 5.76493 20.3849 6.58507L19.3949 7.57506M16.4249 4.60509L9.76558 11.2644C9.25807 11.772 8.89804 12.4078 8.72397 13.1041L8 16L10.8959 15.276C11.5922 15.102 12.228 14.7419 12.7356 14.2344L19.3949 7.57506M16.4249 4.60509L19.3949 7.57506"
+			variants={PEN_VARIANTS}
+			animate={controls}
+		/>
+	</>
+))
