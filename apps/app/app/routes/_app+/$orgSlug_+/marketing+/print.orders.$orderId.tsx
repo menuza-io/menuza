@@ -2,6 +2,7 @@ import { msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	PRINT_SELF_CANCEL_STATUSES,
+	PRINT_VENDOR_CHECK_HOLDS,
 	type PrintOrderStatus,
 	type PrintProductKey,
 } from '@repo/common/print-shop'
@@ -188,8 +189,14 @@ export default function PrintOrderRoute() {
 		(order.status === 'quote' || order.status === 'awaiting_payment') &&
 		!expired &&
 		!waitingForBank
+	// An order the printer may already have is settled by Menuza support.
 	const cancellable =
-		data.canPay && PRINT_SELF_CANCEL_STATUSES.includes(order.status)
+		data.canPay &&
+		PRINT_SELF_CANCEL_STATUSES.includes(order.status) &&
+		!(
+			order.status === 'held' &&
+			PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
+		)
 
 	return (
 		<div className="space-y-8">

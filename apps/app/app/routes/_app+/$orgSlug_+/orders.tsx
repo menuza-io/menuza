@@ -56,8 +56,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		{
 			orgSlug,
 			canWrite,
-			// Open table tabs show only while QR dine-in is on for the org.
-			showTabs: qr.dineIn,
+			// Tabs show while QR ordering is on, even with dine-in switched off,
+			// so tabs still open (and payments to check) can be settled. The
+			// list renders nothing when there is nothing to show.
+			showTabs: qr.enabled,
 			// Customers links show only to members who can open Customers.
 			canViewCustomers: link.linkCustomers || link.linkGuests,
 		},

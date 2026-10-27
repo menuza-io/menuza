@@ -1,6 +1,7 @@
 import { type MessageDescriptor } from '@lingui/core'
 import { Trans, msg } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
+import { PRINT_VENDOR_CHECK_HOLDS } from '@repo/common/print-shop'
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -70,9 +71,6 @@ const STATUS_LABELS: Record<string, MessageDescriptor> = {
 	cancelled: msg`Cancelled`,
 	refunded: msg`Refunded`,
 }
-
-/** Holds where the vendor may have an order we never recorded. */
-const VENDOR_CHECK_HOLDS = ['vendor_unknown', 'stale_claim', 'submission_error']
 
 const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	price_drift: msg`Wholesale price rose past the drift limit`,
@@ -205,6 +203,7 @@ const ERROR_MESSAGES: Record<string, MessageDescriptor> = {
 	refund_needed: msg`Vendors were cancelled for this order: refund it instead of retrying.`,
 	not_held: msg`Only a held order can be retried or updated.`,
 	not_pending: msg`That vendor order is not waiting to be sent.`,
+	vendor_order_not_found: msg`The vendor does not know that order id. Check it and try again.`,
 }
 
 function ErrorMessage({ code, fallback }: { code: string; fallback: string }) {
@@ -559,7 +558,7 @@ function OrderActions({
 	)
 	// After a send that may have reached the vendor, a refund needs the same
 	// look at the vendor as a retry.
-	const vendorCheck = VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
+	const vendorCheck = PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
 	const checkFields: Record<string, string> = vendorCheck
 		? { checkedVendor: 'true' }
 		: {}
@@ -578,7 +577,7 @@ function OrderActions({
 			className="flex flex-wrap gap-2 outline-none"
 		>
 			{order.status === 'held' &&
-			VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ? (
+			PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') ? (
 				<ConfirmedAction
 					fetcher={fetcher}
 					fields={{ _action: 'retry-checked', orderId: order.id }}

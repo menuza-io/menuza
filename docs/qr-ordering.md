@@ -53,7 +53,10 @@ tables removed from the floor plan. Importing again is safe; codes never change
 on import.
 
 - **New QR code** burns every printed card for that table (confirm dialog). Use
-  it when a card was copied or stolen, then print the new card.
+  it when a card was copied or stolen, then print the new card. It also burns
+  the code of the tab open at that table (someone who scanned the old card may
+  have joined it) and drops a pay request nobody has bound yet: guests at the
+  table re-scan the new card to rejoin their tab.
 - **Archive** is refused while a tab is open at the table.
 - **Print table cards** opens the Print shop (see
   [print-shop.md](./print-shop.md)), which renders one card per table with its
@@ -74,7 +77,10 @@ Paying from the phone always asks for a name and phone number.
 - **Orders page:** open tabs sit above the order list with the table, tab
   number, age, guest name, running total and each round's status. Rounds keep
   their own status buttons below; a table round completes without per-round
-  payment (paid at tab close).
+  payment (paid at tab close). The list shows while `qr_ordering.enabled` is on,
+  even with dine-in switched off, so tabs still open can be settled. Below it,
+  **Online payments to check** lists closed or voided tabs that received online
+  money in the last 14 days (`GET /operator/qr/tabs?status=review`).
 - **Close at counter:** take the money (optionally record a tip), then close.
   Every round that still counts is marked paid and the totals are kept on the
   tab. Closing does not wait for the kitchen (your call). The App sends the
@@ -128,12 +134,14 @@ has expired is replaced by a new one instead of failing.
   then ask staff to confirm they checked the payments
   (`acknowledgeReview: true`), and the tab keeps `paymentStatus: 'review'`.
 - **Late payment on a settled tab:** counter close and void drop the online
-  binding, and a tab paid online remembers the payment that settled it, so only
-  an exact replay of that payment is treated as one. Any other money is a
-  `qr_tab_payments` row; a tab already paid keeps its own settlement (status and
-  time) and shows the extra money through its rows, while a voided tab becomes
-  `review`. Refund it from the processor dashboard or keep it as the payment,
-  and note it on the bill.
+  binding and return it (`releasedSession`, like Stop online payment), so the
+  App expires the guest's Stripe page; a tab paid online remembers the payment
+  that settled it, so only an exact replay of that payment is treated as one.
+  Any other money is a `qr_tab_payments` row; a tab already paid keeps its own
+  settlement (status and time) and shows the extra money through its rows, while
+  a voided tab becomes `review`. Either way it shows under **Online payments to
+  check** for 14 days. Refund it from the processor dashboard or keep it as the
+  payment, and note it on the bill.
 
 ## Kill switch
 

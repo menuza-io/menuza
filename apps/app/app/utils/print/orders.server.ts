@@ -2,6 +2,7 @@ import {
 	getPrintSize,
 	PRINT_PRODUCTS,
 	PRINT_SELF_CANCEL_STATUSES,
+	PRINT_VENDOR_CHECK_HOLDS,
 	type PrintOrderStatus,
 	type PrintProductKey,
 	type PrintShippingAddress,
@@ -199,7 +200,7 @@ async function requireFreshTables(
 			throw new PrintOrderError(
 				403,
 				'tables_forbidden',
-				'Ordering table cards also needs permission to view the menu.',
+				'Ordering table cards also needs permission to edit the menu.',
 			)
 		}
 		throw new PrintOrderError(
@@ -1258,6 +1259,18 @@ export async function cancelPrintOrder(
 	if (order.status === 'submitting' || order.status === 'cancelling') {
 		throw busyError()
 	}
+	if (
+		order.status === 'held' &&
+		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '')
+	) {
+		// The vendor may hold an order we never recorded: Menuza support checks
+		// the vendor before anything is refunded.
+		throw new PrintOrderError(
+			409,
+			'needs_support',
+			'Our team is checking this order with the printer. It cannot be cancelled here right now.',
+		)
+	}
 	if (!PRINT_SELF_CANCEL_STATUSES.includes(order.status as PrintOrderStatus)) {
 		throw new PrintOrderError(
 			409,
@@ -1400,7 +1413,7 @@ export async function adminRefundPrintOrder(
 		)
 	}
 	if (
-		VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
+		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
 		!options.checkedVendor
 	) {
 		// A vendor may hold an order we never recorded: refunding without a
@@ -1561,11 +1574,15 @@ export async function adminRecordVendorOrder(
 	vendorOrders: Array<{ id: string; vendorOrderId: string }>,
 ) {
 	const detail = await getPrintOrderDetail(null, orderId)
-	if (detail.order.status !== 'held') {
+	if (
+		detail.order.status !== 'held' ||
+		!PRINT_VENDOR_CHECK_HOLDS.includes(detail.order.holdReason ?? '')
+	) {
+		// A refund case (refund_failed, partial_cancel) must not lose its hold.
 		throw new PrintOrderError(
 			409,
 			'not_held',
-			'Only a held order can be updated this way.',
+			'Only an order held while its vendor order is unknown can be updated this way.',
 		)
 	}
 	for (const entry of vendorOrders) {
@@ -1577,6 +1594,18 @@ export async function adminRecordVendorOrder(
 				409,
 				'not_pending',
 				'That vendor order is not waiting to be sent.',
+			)
+		}
+		// The id must exist at that vendor: a typo would track nothing.
+		const found = await getPrintVendor(row.vendor as PrintVendorName)
+			.status(entry.vendorOrderId)
+			.then(() => true)
+			.catch(() => false)
+		if (!found) {
+			throw new PrintOrderError(
+				422,
+				'vendor_order_not_found',
+				'The vendor does not know that order id. Check it and try again.',
 			)
 		}
 	}
@@ -1606,9 +1635,6 @@ export async function adminRecordVendorOrder(
 	}
 }
 
-/** Holds where a vendor may hold an order we never recorded. */
-const VENDOR_CHECK_HOLDS = ['vendor_unknown', 'stale_claim', 'submission_error']
-
 export async function adminRetryPrintOrder(
 	orderId: string,
 	acceptPrice: boolean,
@@ -1636,7 +1662,7 @@ export async function adminRetryPrintOrder(
 		)
 	}
 	if (
-		VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
+		PRINT_VENDOR_CHECK_HOLDS.includes(order.holdReason ?? '') &&
 		!options.checkedVendor
 	) {
 		throw new PrintOrderError(

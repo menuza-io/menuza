@@ -30,6 +30,7 @@ import {
 	releaseTabPayment,
 	voidTab,
 	type QrResult,
+	type ReleasedTabPayment,
 } from '../services/qr-tab-service.ts'
 import { assertOperatorOrg } from './operator-orders.ts'
 
@@ -126,6 +127,16 @@ function respond<T>(c: Context, result: QrResult<T>, key: string) {
 		)
 	}
 	return c.json({ [key]: result.data }, 200, noStoreHeaders())
+}
+
+/** Close, void and release: the tab plus the payment page they unbound. */
+function respondReleased(c: Context, result: QrResult<ReleasedTabPayment>) {
+	if (!result.ok) return respond(c, result, 'tab')
+	return c.json(
+		{ tab: result.data.tab, releasedSession: result.data.releasedSession },
+		200,
+		noStoreHeaders(),
+	)
 }
 
 async function readBody(c: Context) {
@@ -279,7 +290,7 @@ operatorQrRoutes.patch('/settings', async (c) => {
 // ---------------------------------------------------------------------------
 
 const tabListQuery = z.object({
-	status: z.enum([...QR_TAB_STATUS_VALUES, 'recent']).optional(),
+	status: z.enum([...QR_TAB_STATUS_VALUES, 'recent', 'review']).optional(),
 	limit: z.coerce.number().int().min(1).max(200).optional(),
 })
 
@@ -316,7 +327,7 @@ operatorQrRoutes.post('/tabs/:id/close', async (c) => {
 	const parsed = qrTabCloseSchema.safeParse(await readBody(c))
 	if (!parsed.success) return invalid(c, parsed.error)
 	return safely(c, auth.auth.orgId, async () =>
-		respond(
+		respondReleased(
 			c,
 			await closeTabAtCounter(auth.auth.orgId, c.req.param('id'), {
 				tipCents: parsed.data.tipCents,
@@ -324,7 +335,6 @@ operatorQrRoutes.post('/tabs/:id/close', async (c) => {
 				acknowledgeReview: parsed.data.acknowledgeReview,
 				expectedTotalCents: parsed.data.expectedTotalCents,
 			}),
-			'tab',
 		),
 	)
 })
@@ -335,7 +345,7 @@ operatorQrRoutes.post('/tabs/:id/void', async (c) => {
 	const parsed = qrTabVoidSchema.safeParse(await readBody(c))
 	if (!parsed.success) return invalid(c, parsed.error)
 	return safely(c, auth.auth.orgId, async () =>
-		respond(
+		respondReleased(
 			c,
 			await voidTab(auth.auth.orgId, c.req.param('id'), {
 				reason: parsed.data.reason,
@@ -343,7 +353,6 @@ operatorQrRoutes.post('/tabs/:id/void', async (c) => {
 				acknowledgeReview: parsed.data.acknowledgeReview,
 				expectedTotalCents: parsed.data.expectedTotalCents,
 			}),
-			'tab',
 		),
 	)
 })
@@ -352,10 +361,9 @@ operatorQrRoutes.post('/tabs/:id/release-payment', async (c) => {
 	const auth = await guard(c, 'qr:write')
 	if ('error' in auth) return auth.error
 	return safely(c, auth.auth.orgId, async () =>
-		respond(
+		respondReleased(
 			c,
 			await releaseTabPayment(auth.auth.orgId, c.req.param('id')),
-			'release',
 		),
 	)
 })

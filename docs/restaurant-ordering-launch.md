@@ -62,6 +62,11 @@ QR table ordering (see [qr-ordering.md](./qr-ordering.md)):
 - Tenant-api: optional `QR_DINE_IN_ENABLED` kill switch (unset means on).
 - Deploy App before tenant-api: the order context and the `qr-token` claims must
   exist before the region reads them (both fail closed).
+- The optional `paymentId` on `/api/orders/payment-status` is sent only for QR
+  tab orders (`tab:<id>`), so pickup and delivery events stay valid for a region
+  that predates it. A node that has not deployed it refuses tab payment events
+  with `paymentId` (strict schema): deploy tenant-api on every node before
+  turning on `qr_ordering.online` for an organization there.
 
 ## Processor onboarding per organization
 

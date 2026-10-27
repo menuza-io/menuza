@@ -80,19 +80,22 @@ the browser's print dialog saves it.
   for Admin to refund what was cancelled. A vendor refusal or a vendor-side
   cancellation refunds in full automatically. A payment that lands after a
   cancel is refunded automatically (`late_payment`). Defects after delivery go
-  through Admin (reprint by vendor claim, or refund).
+  through Admin (reprint by vendor claim, or refund). An order held while the
+  vendor may already have it (`vendor_unknown`, `stale_claim`,
+  `submission_error`) cannot be cancelled by the operator (`needs_support`):
+  Admin checks the vendor first.
 - **Crash safety:** the hourly `print-sync` job submits paid orders that were
   never sent (after 5 minutes) and holds orders stuck sending or cancelling for
   15 minutes (`stale_claim`), since a vendor call may have gone through. A
   timeout or an error once the order was sent holds it as `vendor_unknown`. For
   these (and `submission_error`) Admin's **Retry** and refunds show the vendor
   references and ask to search the vendor first; **Found it at the vendor**
-  records the vendor's order id instead of sending again. Prodigi also gets an
-  idempotency key. A cancel that fails after another vendor was cancelled holds
-  the order as `partial_cancel`; a refund that fails after vendors were
-  cancelled holds it as `refund_failed`. Held refund cases (`refund_failed`,
-  `partial_cancel`) can only be refunded. Paid orders are not counted against
-  the hourly render limit.
+  records the vendor's order id instead of sending again (the id is checked at
+  the vendor first, and only for these holds). Prodigi also gets an idempotency
+  key. A cancel that fails after another vendor was cancelled holds the order as
+  `partial_cancel`; a refund that fails after vendors were cancelled holds it as
+  `refund_failed`. Held refund cases (`refund_failed`, `partial_cancel`) can
+  only be refunded. Paid orders are not counted against the hourly render limit.
 - **Vendor errors:** only 400 and 422 count as the vendor refusing the order
   (automatic refund). A 409 on create can mean the order already exists (a
   retry), so it holds as `vendor_unknown`; Gelato's 409 on cancel means too
@@ -121,7 +124,9 @@ how held orders are rerouted), and the last 100 orders with margin, **Retry**,
   amount that was cancelled; the rest keeps printing and is tracked again,
   unless a vendor order is still waiting to be sent (then it stays held).
 
-Only paid orders can be refunded. Refunds and retries run in the App through
+Only paid orders can be refunded. Held, sending and cancelling orders are always
+listed, however old, on top of the last 100 orders; there is no alert yet, so
+check the list. Refunds and retries run in the App through
 `/resources/print/admin-command` (internal token), so Stripe and vendor keys
 live in one app.
 

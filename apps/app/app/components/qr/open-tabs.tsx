@@ -45,6 +45,8 @@ export function OpenTabs({
 	const { _, i18n } = useLingui()
 	const request = useQrClient(orgSlug)
 	const [tabs, setTabs] = useState<QrTab[]>([])
+	// Closed or voided tabs that later received online money (14 days).
+	const [reviewTabs, setReviewTabs] = useState<QrTab[]>([])
 	const [failed, setFailed] = useState(false)
 	// Dialogs hold the tab id, not a copy: the poll keeps the total, the
 	// payment state and the review prompt current while a dialog is open.
@@ -94,11 +96,14 @@ export function OpenTabs({
 	const load = useCallback(
 		async (signal?: AbortSignal) => {
 			try {
-				const body = z
-					.object({ tabs: z.array(qrTabSchema) })
-					.parse(await request('/tabs?status=open', { signal }))
+				const list = z.object({ tabs: z.array(qrTabSchema) })
+				const [open, review] = await Promise.all([
+					request('/tabs?status=open', { signal }),
+					request('/tabs?status=review', { signal }),
+				])
 				if (!signal?.aborted) {
-					setTabs(body.tabs)
+					setTabs(list.parse(open).tabs)
+					setReviewTabs(list.parse(review).tabs)
 					setFailed(false)
 				}
 			} catch {
@@ -164,28 +169,24 @@ export function OpenTabs({
 	const closeReleasedPage = async (
 		tabId: string,
 		response: unknown,
+		warning: string,
 	): Promise<string | null> => {
 		const parsed = z
 			.object({
-				release: z.object({
-					releasedSession: z
-						.object({ sessionId: z.string(), processor: z.string() })
-						.nullable(),
-				}),
+				releasedSession: z
+					.object({ sessionId: z.string(), processor: z.string() })
+					.nullable()
+					.optional(),
 			})
 			.safeParse(response)
-		const session = parsed.success ? parsed.data.release.releasedSession : null
+		const session = parsed.success ? parsed.data.releasedSession : null
 		if (!session || session.processor !== 'connect') return null
 		const closed = await fetch(`/${orgSlug}/qr/release-session`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ tabId, ...session }),
 		}).catch(() => null)
-		return closed?.ok
-			? null
-			: _(
-					msg`Online payment stopped, but the guest's payment page could not be closed. If they still pay, the tab is marked for review.`,
-				)
+		return closed?.ok ? null : warning
 	}
 
 	const failedBanner = failed ? (
@@ -205,7 +206,16 @@ export function OpenTabs({
 			</Button>
 		</div>
 	) : null
-	if (tabs.length === 0) return failedBanner
+	const reviewSection =
+		reviewTabs.length > 0 ? <PaymentsToCheck tabs={reviewTabs} /> : null
+	if (tabs.length === 0) {
+		return failedBanner || reviewSection ? (
+			<>
+				{failedBanner}
+				{reviewSection}
+			</>
+		) : null
+	}
 
 	return (
 		<section aria-labelledby="open-tabs-heading" className="space-y-3">
@@ -369,6 +379,7 @@ export function OpenTabs({
 					)
 				})}
 			</ul>
+			{reviewSection}
 
 			<CloseTabDialog
 				tab={closing}
@@ -377,6 +388,7 @@ export function OpenTabs({
 				onConfirm={async (tipCents, expectedTotalCents) => {
 					if (!closing) return
 					const number = closing.tabNumber
+					const tabId = closing.id
 					if (
 						await act(
 							`/tabs/${closing.id}/close`,
@@ -391,6 +403,14 @@ export function OpenTabs({
 									: {}),
 							},
 							_(msg`Tab ${number} closed`),
+							(response) =>
+								closeReleasedPage(
+									tabId,
+									response,
+									_(
+										msg`Tab ${number} closed, but the guest's online payment page could not be closed. If they still pay, it shows under online payments to check.`,
+									),
+								),
 						)
 					) {
 						setClosingId(null)
@@ -482,7 +502,14 @@ export function OpenTabs({
 									`/tabs/${tab.id}/release-payment`,
 									{},
 									_(msg`Online payment stopped. You can close the tab now.`),
-									(response) => closeReleasedPage(tab.id, response),
+									(response) =>
+										closeReleasedPage(
+											tab.id,
+											response,
+											_(
+												msg`Online payment stopped, but the guest's payment page could not be closed. If they still pay, the tab is marked for review.`,
+											),
+										),
 								)
 									.then((ok) => {
 										if (ok) setReleasingId(null)
@@ -502,6 +529,7 @@ export function OpenTabs({
 				onConfirm={async (reason, expectedTotalCents) => {
 					if (!voiding) return
 					const number = voiding.tabNumber
+					const tabId = voiding.id
 					if (
 						await act(
 							`/tabs/${voiding.id}/void`,
@@ -513,6 +541,14 @@ export function OpenTabs({
 									: {}),
 							},
 							_(msg`Tab ${number} voided`),
+							(response) =>
+								closeReleasedPage(
+									tabId,
+									response,
+									_(
+										msg`Tab ${number} voided, but the guest's online payment page could not be closed. If they still pay, it shows under online payments to check.`,
+									),
+								),
 						)
 					) {
 						setVoidingId(null)
@@ -798,6 +834,61 @@ function ReviewAcknowledgement({
 				</Trans>
 			</span>
 		</label>
+	)
+}
+
+/**
+ * Closed or voided tabs that received online money afterwards (or money that
+ * did not settle them), kept 14 days: staff refund or keep it in the payment
+ * dashboard. Ids and amounts only; nothing here changes the tab.
+ */
+function PaymentsToCheck({ tabs }: { tabs: QrTab[] }) {
+	const { _, i18n } = useLingui()
+	return (
+		<section aria-labelledby="payments-to-check-heading" className="space-y-2">
+			<h3 id="payments-to-check-heading" className="text-sm font-semibold">
+				<Trans>Online payments to check</Trans>
+			</h3>
+			<p className="text-muted-foreground text-sm">
+				<Trans>
+					These tabs were settled at the counter or voided, and money still
+					arrived online. Refund it or keep it in your payment dashboard.
+				</Trans>
+			</p>
+			<ul className="divide-border divide-y rounded-lg border text-sm">
+				{tabs.map((tab) => {
+					const label = tab.table.label
+					const number = tab.tabNumber
+					const count = tab.reviewPaymentCount ?? 1
+					const amount = formatMoney(
+						tab.onlineAmountCents ?? 0,
+						tab.totals.currency,
+						i18n.locale,
+					)
+					return (
+						<li
+							key={tab.id}
+							className="flex flex-wrap items-baseline justify-between gap-2 p-3"
+						>
+							<span>
+								<bdi>{_(msg`Table ${label}`)}</bdi>
+								<span className="text-muted-foreground ms-2 tabular-nums">
+									{_(msg`Tab ${number}`)}
+								</span>
+							</span>
+							<span className="tabular-nums">
+								{_(
+									plural(count, {
+										one: `One online payment of ${amount}`,
+										other: `# online payments totalling ${amount}`,
+									}),
+								)}
+							</span>
+						</li>
+					)
+				})}
+			</ul>
+		</section>
 	)
 }
 

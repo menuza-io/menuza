@@ -48,7 +48,8 @@ export const PRINT_ORDER_ERROR_LABELS: Record<string, MessageDescriptor> = {
 	partial_cancel: msg`Part of this order was already printing. Our team will refund what was cancelled.`,
 	design_stale: msg`Table codes or labels changed since this card was approved. Approve the proof again, then order.`,
 	tables_unavailable: msg`Table codes could not be checked right now. Try again in a minute.`,
-	tables_forbidden: msg`Ordering table cards also needs permission to view the menu.`,
+	tables_forbidden: msg`Ordering table cards also needs permission to edit the menu.`,
+	needs_support: msg`Our team is checking this order with the printer. It cannot be cancelled here right now.`,
 }
 
 export const PRINT_ORDER_ERROR_FALLBACK = msg`That did not work. Try again.`

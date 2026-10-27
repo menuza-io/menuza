@@ -1184,7 +1184,7 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 		const released = await operator(`/tabs/${first.tab.id}/release-payment`, {
 			method: 'POST',
 		})
-		const release = (await released.json()).release
+		const release = await released.json()
 		expect(release.tab.paymentStatus).toBe('unpaid')
 		// The App expires this session at the provider.
 		expect(release.releasedSession).toEqual({
@@ -1352,6 +1352,11 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			body: { paymentMethod: 'counter' },
 		})
 		expect(closed.status).toBe(200)
+		// The page the close unbound, for the App to expire.
+		expect((await closed.json()).releasedSession).toEqual({
+			sessionId: 'cs_test_late_counter',
+			processor: 'connect',
+		})
 		const late = await system('/payment-status', {
 			orgId,
 			orderId: intent.orderRef,
@@ -1367,6 +1372,15 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			.from(qrTabPayments)
 			.where(eq(qrTabPayments.tabId, first.tab.id))
 		expect(rows).toHaveLength(1)
+		// Staff see the extra money on the review list for closed tabs.
+		const review = await (await operator('/tabs?status=review')).json()
+		expect(review.tabs).toEqual([
+			expect.objectContaining({
+				id: first.tab.id,
+				reviewPaymentCount: 1,
+				onlineAmountCents: intent.amountCents,
+			}),
+		])
 		// The counter settlement itself is kept.
 		const [tab] = await db
 			.select()
@@ -1436,6 +1450,20 @@ describe('QR ordering: dine-in tabs and the operator surface', () => {
 			.from(qrTabs)
 			.where(eq(qrTabs.id, first.tab.id))
 		expect(tab?.paymentEventAt).toBe(startedAt)
+	})
+
+	it('burns the open tab code too when a table gets a new QR code', async () => {
+		const table = await createTable()
+		const first = await (
+			await placeRound({ 'X-Table-Token': table.token })
+		).json()
+		const copied = first.tab.tabToken as string
+		await operator(`/tables/${table.id}`, {
+			method: 'PATCH',
+			body: { regenerateToken: true },
+		})
+		const stale = await placeRound({ 'X-Tab-Token': copied })
+		expect(stale.status).toBe(404)
 	})
 
 	it('creates no table when one label of a batch is taken', async () => {

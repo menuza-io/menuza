@@ -638,6 +638,21 @@ describe('shipped print orders', () => {
 		await expect(adminRefundPrintOrder(orderId)).rejects.toMatchObject({
 			code: 'check_vendor',
 		})
+		// The operator cannot cancel it either: support checks the vendor.
+		const { access } = await setup()
+		const [row] = await db
+			.select()
+			.from(PrintOrder)
+			.where(eq(PrintOrder.id, orderId))
+		await expect(
+			cancelPrintOrder(
+				{
+					...access,
+					organization: { ...access.organization, id: row!.organizationId },
+				},
+				orderId,
+			),
+		).rejects.toMatchObject({ code: 'needs_support' })
 		await expect(
 			adminRefundPrintOrder(orderId, { amountCents: 100, checkedVendor: true }),
 		).rejects.toMatchObject({ code: 'not_partial' })

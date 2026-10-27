@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, ne } from 'drizzle-orm'
 
 import {
 	QR_MAX_TABLES_PER_LOCATION,
@@ -483,7 +483,7 @@ export async function patchQrTable(
 			.limit(1)
 		if (!table) return fail(404, 'table_not_found', 'Table not found.')
 		const [openTab] = await tx
-			.select({ id: qrTabs.id })
+			.select()
 			.from(qrTabs)
 			.where(and(eq(qrTabs.tableId, table.id), eq(qrTabs.status, 'open')))
 			.limit(1)
@@ -499,7 +499,23 @@ export async function patchQrTable(
 		if (patch.archived !== undefined) {
 			set.archivedAt = patch.archived ? Date.now() : null
 		}
-		if (patch.regenerateToken) set.tokenVersion = table.tokenVersion + 1
+		if (patch.regenerateToken) {
+			set.tokenVersion = table.tokenVersion + 1
+			if (openTab) {
+				// A copied card may already have joined the open tab: burn the
+				// tab code too (guests re-scan the new card to rejoin) and drop
+				// a pay request nobody has bound yet.
+				await tx
+					.update(qrTabs)
+					.set({
+						tabTokenVersion: openTab.tabTokenVersion + 1,
+						...(openTab.paymentStatus === 'unpaid' ? UNBIND : {}),
+						version: openTab.version + 1,
+						updatedAt: Date.now(),
+					})
+					.where(eq(qrTabs.id, openTab.id))
+			}
+		}
 		try {
 			const [updated] = await tx
 				.update(qrTables)
@@ -672,24 +688,60 @@ export async function patchQrSettings(
 // Tabs (operator)
 // ---------------------------------------------------------------------------
 
+/** Extra online money on a closed or voided tab stays listed this long. */
+const QR_REVIEW_LIST_MS = 14 * 24 * 60 * 60 * 1000
+
+/**
+ * Closed or voided tabs that received online money after (or besides) their
+ * settlement in the last 14 days: staff refund or keep it in the payment
+ * dashboard. Open tabs show it on their own card.
+ */
+async function listSettledTabsWithReview(
+	db: Awaited<ReturnType<typeof getTenantDb>>,
+	limit: number,
+): Promise<QrTabRow[]> {
+	const recent = await db
+		.selectDistinct({ tabId: qrTabPayments.tabId })
+		.from(qrTabPayments)
+		.where(gt(qrTabPayments.receivedAt, Date.now() - QR_REVIEW_LIST_MS))
+		.orderBy(desc(qrTabPayments.tabId))
+		.limit(limit)
+	if (recent.length === 0) return []
+	return db
+		.select()
+		.from(qrTabs)
+		.where(
+			and(
+				inJsonList(
+					qrTabs.id,
+					recent.map((row) => row.tabId),
+				),
+				ne(qrTabs.status, 'open'),
+			),
+		)
+		.orderBy(desc(qrTabs.closedAt))
+}
+
 export async function listOperatorTabs(
 	orgId: string,
-	options: { status: QrTabStatus | 'recent'; limit: number },
+	options: { status: QrTabStatus | 'recent' | 'review'; limit: number },
 ): Promise<OperatorQrTab[]> {
 	const db = await getTenantDb(orgId)
 	const tabs =
-		options.status === 'recent'
-			? await db
-					.select()
-					.from(qrTabs)
-					.orderBy(desc(qrTabs.openedAt))
-					.limit(options.limit)
-			: await db
-					.select()
-					.from(qrTabs)
-					.where(eq(qrTabs.status, options.status))
-					.orderBy(desc(qrTabs.openedAt))
-					.limit(options.limit)
+		options.status === 'review'
+			? await listSettledTabsWithReview(db, options.limit)
+			: options.status === 'recent'
+				? await db
+						.select()
+						.from(qrTabs)
+						.orderBy(desc(qrTabs.openedAt))
+						.limit(options.limit)
+				: await db
+						.select()
+						.from(qrTabs)
+						.where(eq(qrTabs.status, options.status))
+						.orderBy(desc(qrTabs.openedAt))
+						.limit(options.limit)
 	const rounds = await listTabRounds(
 		db,
 		tabs.map((tab) => tab.id),
@@ -725,6 +777,12 @@ export async function getOperatorTab(
 		ok: true,
 		data: await loadOperatorView(db, tab),
 	}
+}
+
+function releasedSessionOf(tab: QrTabRow) {
+	return tab.paymentSessionId && tab.paymentProcessor
+		? { sessionId: tab.paymentSessionId, processor: tab.paymentProcessor }
+		: null
 }
 
 /** Clears a tab's online payment binding (not its review rows). */
@@ -794,7 +852,7 @@ export async function closeTabAtCounter(
 		acknowledgeReview?: boolean
 		expectedTotalCents?: number
 	},
-): Promise<QrResult<OperatorQrTab>> {
+): Promise<QrResult<ReleasedTabPayment>> {
 	return writeTx(orgId, async (tx) => {
 		const loaded = await loadOpenTab(tx, tabId, {
 			acknowledgeReview: input.acknowledgeReview,
@@ -833,7 +891,11 @@ export async function closeTabAtCounter(
 			.returning()
 		return {
 			ok: true as const,
-			data: await loadOperatorView(tx, updated ?? tab),
+			data: {
+				tab: await loadOperatorView(tx, updated ?? tab),
+				// The page this close or void unbound, for the App to expire.
+				releasedSession: releasedSessionOf(tab),
+			},
 		}
 	})
 }
@@ -851,7 +913,7 @@ export async function voidTab(
 		acknowledgeReview?: boolean
 		expectedTotalCents?: number
 	},
-): Promise<QrResult<OperatorQrTab>> {
+): Promise<QrResult<ReleasedTabPayment>> {
 	return writeTx(orgId, async (tx) => {
 		const loaded = await loadOpenTab(tx, tabId, {
 			acknowledgeReview: input.acknowledgeReview,
@@ -884,7 +946,11 @@ export async function voidTab(
 			.returning()
 		return {
 			ok: true as const,
-			data: await loadOperatorView(tx, updated ?? tab),
+			data: {
+				tab: await loadOperatorView(tx, updated ?? tab),
+				// The page this close or void unbound, for the App to expire.
+				releasedSession: releasedSessionOf(tab),
+			},
 		}
 	})
 }
@@ -945,13 +1011,7 @@ export async function releaseTabPayment(
 			ok: true as const,
 			data: {
 				tab: await loadOperatorView(tx, updated ?? tab),
-				releasedSession:
-					tab.paymentSessionId && tab.paymentProcessor
-						? {
-								sessionId: tab.paymentSessionId,
-								processor: tab.paymentProcessor,
-							}
-						: null,
+				releasedSession: releasedSessionOf(tab),
 			},
 		}
 	})

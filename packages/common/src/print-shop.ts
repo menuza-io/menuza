@@ -533,3 +533,14 @@ export const PRINT_SELF_CANCEL_STATUSES: readonly PrintOrderStatus[] = [
 	'submitted',
 	'held',
 ]
+
+/**
+ * Holds where a vendor may have an order we never recorded (a send that
+ * timed out, a crashed request). Only Admin, after checking the vendor, may
+ * retry, refund or record them; the operator cannot cancel them.
+ */
+export const PRINT_VENDOR_CHECK_HOLDS: readonly string[] = [
+	'vendor_unknown',
+	'stale_claim',
+	'submission_error',
+]

@@ -41,40 +41,64 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.from(PrintVendorProduct)
 		.where(eq(PrintVendorProduct.active, true))
 		.orderBy(asc(PrintVendorProduct.product), asc(PrintVendorProduct.sizeKey))
-	const orders = await db
-		.select({
-			id: PrintOrder.id,
-			status: PrintOrder.status,
-			totalCents: PrintOrder.totalCents,
-			taxCents: PrintOrder.taxCents,
-			wholesaleCents: PrintOrder.wholesaleCents,
-			refundCents: PrintOrder.refundCents,
-			holdReason: PrintOrder.holdReason,
-			failureReason: PrintOrder.failureReason,
-			createdAt: PrintOrder.createdAt,
-			organization: Organization.name,
-		})
+	const orderFields = {
+		id: PrintOrder.id,
+		status: PrintOrder.status,
+		totalCents: PrintOrder.totalCents,
+		taxCents: PrintOrder.taxCents,
+		wholesaleCents: PrintOrder.wholesaleCents,
+		refundCents: PrintOrder.refundCents,
+		holdReason: PrintOrder.holdReason,
+		failureReason: PrintOrder.failureReason,
+		createdAt: PrintOrder.createdAt,
+		organization: Organization.name,
+	}
+	const recentOrders = await db
+		.select(orderFields)
 		.from(PrintOrder)
 		.innerJoin(Organization, eq(Organization.id, PrintOrder.organizationId))
 		.orderBy(desc(PrintOrder.createdAt))
 		.limit(100)
+	// Orders waiting on Admin never drop off the list, however old.
+	const waiting = await db
+		.select(orderFields)
+		.from(PrintOrder)
+		.innerJoin(Organization, eq(Organization.id, PrintOrder.organizationId))
+		.where(inArray(PrintOrder.status, ['held', 'submitting', 'cancelling']))
+		.orderBy(desc(PrintOrder.createdAt))
+		.limit(200)
+	const seen = new Set(recentOrders.map((order) => order.id))
+	const orders = [
+		...waiting.filter((order) => !seen.has(order.id)),
+		...recentOrders,
+	]
 	// Held orders show their vendor references, so Admin can search the vendor
 	// before a retry that might otherwise place a second order.
 	const heldIds = orders
 		.filter((order) => order.status === 'held')
 		.map((order) => order.id)
-	const references =
-		heldIds.length > 0
-			? await db
-					.select({
-						orderId: PrintVendorOrder.orderId,
-						id: PrintVendorOrder.id,
-						vendor: PrintVendorOrder.vendor,
-						status: PrintVendorOrder.status,
-					})
-					.from(PrintVendorOrder)
-					.where(inArray(PrintVendorOrder.orderId, heldIds))
-			: []
+	// D1 binds at most 100 values per statement: ask in chunks.
+	const references: Array<{
+		orderId: string
+		id: string
+		vendor: string
+		status: string
+	}> = []
+	for (let start = 0; start < heldIds.length; start += 90) {
+		references.push(
+			...(await db
+				.select({
+					orderId: PrintVendorOrder.orderId,
+					id: PrintVendorOrder.id,
+					vendor: PrintVendorOrder.vendor,
+					status: PrintVendorOrder.status,
+				})
+				.from(PrintVendorOrder)
+				.where(
+					inArray(PrintVendorOrder.orderId, heldIds.slice(start, start + 90)),
+				)),
+		)
+	}
 	const sizes = PRINT_PRODUCT_KEYS.filter(
 		(key) => PRINT_PRODUCTS[key].shippable,
 	).flatMap((key) =>
