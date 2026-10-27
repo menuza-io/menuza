@@ -20,8 +20,10 @@ describe('planTableLabels', () => {
 	it('says why an input would not do what it looks like', () => {
 		expect(planTableLabels('T1-T3')).toEqual({
 			labels: ['T1', 'T2', 'T3'],
+			singleRange: true,
 			problem: null,
 		})
+		expect(planTableLabels('Patio 1, Bar').singleRange).toBe(false)
 		expect(planTableLabels('T20-T5').problem).toBe('reversed_range')
 		expect(planTableLabels('T1-T500').problem).toBe('range_too_large')
 		expect(planTableLabels('A1-A150, B1-B150').problem).toBe('too_many')

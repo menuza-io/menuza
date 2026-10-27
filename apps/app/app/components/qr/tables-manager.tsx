@@ -44,7 +44,7 @@ export function TablesManager({
 	/** Print shop link for table cards, when the member can open it. */
 	printHref: string | null
 }) {
-	const { _ } = useLingui()
+	const { _, i18n } = useLingui()
 	const request = useQrClient(orgSlug)
 	const [locationId, setLocationId] = useState(locations[0]?.id ?? '')
 	const [tables, setTables] = useState<QrTable[]>([])
@@ -113,18 +113,29 @@ export function TablesManager({
 					? _(msg`Add at most 200 tables at once.`)
 					: null
 	const planPreview = (() => {
+		// Each label isolated (FSI…PDI) so a mixed-direction label keeps the
+		// sentence in order.
+		const isolate = (label: string) => `\u2068${label}\u2069`
 		const first = plan.labels[0]
 		const last = plan.labels.at(-1)
 		if (!first || !last) return null
 		const count = plan.labels.length
-		return count === 1
-			? _(msg`Adds table ${first}.`)
-			: _(
-					plural(count, {
-						one: `Adds # table: ${first} to ${last}.`,
-						other: `Adds # tables: ${first} to ${last}.`,
-					}),
-				)
+		if (count === 1) {
+			const label = isolate(first)
+			return _(msg`Adds table ${label}.`)
+		}
+		if (plan.singleRange) {
+			const from = isolate(first)
+			const to = isolate(last)
+			return _(plural(count, { other: `Adds # tables: ${from} to ${to}.` }))
+		}
+		if (count <= 5) {
+			const list = new Intl.ListFormat(i18n.locale, {
+				type: 'conjunction',
+			}).format(plan.labels.map(isolate))
+			return _(plural(count, { other: `Adds # tables: ${list}.` }))
+		}
+		return _(plural(count, { other: 'Adds # tables.' }))
 	})()
 
 	const addTables = (event: FormEvent) => {

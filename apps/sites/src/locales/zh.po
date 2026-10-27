@@ -828,8 +828,8 @@ msgid "Enter a phone number with its country code, like +1 415 555 0123."
 msgstr "请输入带国家区号的电话号码，例如 +1 415 555 0123。"
 
 #: src/components/ordering/TableTab.astro.ts:3
-msgid "Enter a phone number, like +1 555 123 4567."
-msgstr "请输入电话号码，例如 +1 555 123 4567。"
+msgid "Enter a phone number with its country code."
+msgstr "请输入带国家代码的电话号码。"
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:122
@@ -2467,8 +2467,8 @@ msgid "This tab is paid. Thank you!"
 msgstr "此账单已支付。谢谢！"
 
 #: src/components/ordering/TableTab.astro.ts:3
-msgid "This tab was cancelled and nothing was charged. Ask a team member if you have questions."
-msgstr "此账单已取消，未收取任何费用。如有疑问，请咨询工作人员。"
+msgid "This tab was cancelled. If you paid from your phone, ask a team member about your payment."
+msgstr "此账单已取消。如果您已用手机付款，请向工作人员咨询您的付款。"
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "This table code no longer works. Please ask a team member for help."

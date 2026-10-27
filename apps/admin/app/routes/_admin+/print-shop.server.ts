@@ -149,7 +149,17 @@ const ActionSchema = z.discriminatedUnion('_action', [
 	}),
 ])
 
-export type PrintAdminResult = { ok: true } | { ok: false; message: string }
+export type PrintAdminResult =
+	{ ok: true; done?: 'refunded' | 'sent' } | { ok: false; message: string }
+
+/** Says what happened, so the row reads "Refund sent", not "Saved". */
+async function command(
+	body: Record<string, unknown>,
+	done: 'refunded' | 'sent',
+): Promise<PrintAdminResult> {
+	const result = await appCommand(body)
+	return result.ok ? { ok: true, done } : result
+}
 
 async function appCommand(
 	body: Record<string, unknown>,
@@ -239,25 +249,30 @@ export async function action({
 				.where(eq(PrintVendorProduct.id, input.id))
 			return { ok: true }
 		case 'refund':
-			return appCommand({ action: 'refund', orderId: input.orderId })
+			return command({ action: 'refund', orderId: input.orderId }, 'refunded')
 		case 'refund-keep':
-			return appCommand({
-				action: 'refund',
-				orderId: input.orderId,
-				keepPrinting: true,
-			})
+			return command(
+				{ action: 'refund', orderId: input.orderId, keepPrinting: true },
+				'refunded',
+			)
 		case 'refund-part':
-			return appCommand({
-				action: 'refund',
-				orderId: input.orderId,
-				amountCents: Math.round(input.amount * 100),
-			})
+			return command(
+				{
+					action: 'refund',
+					orderId: input.orderId,
+					amountCents: Math.round(input.amount * 100),
+				},
+				'refunded',
+			)
 		default:
-			return appCommand({
-				action: 'retry',
-				orderId: input.orderId,
-				acceptPrice: input._action === 'retry-accept',
-				checkedVendor: input._action === 'retry-checked',
-			})
+			return command(
+				{
+					action: 'retry',
+					orderId: input.orderId,
+					acceptPrice: input._action === 'retry-accept',
+					checkedVendor: input._action === 'retry-checked',
+				},
+				'sent',
+			)
 	}
 }

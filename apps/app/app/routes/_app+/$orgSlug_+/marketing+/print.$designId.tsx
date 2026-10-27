@@ -224,6 +224,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		orgSlug: access.organization.slug,
 		canWrite: access.canWrite,
 		canOrder: access.canPay,
+		// A download that could not be made lands back here (new tab).
+		downloadProblem: (() => {
+			const value = new URL(request.url).searchParams.get('download')
+			return value === 'limited' || value === 'failed' ? value : null
+		})(),
 		// Table cards carry live table codes: only menu editors see them.
 		tableCodesHidden:
 			design.content.qr.kind === 'table' &&
@@ -364,6 +369,21 @@ export default function PrintDesignRoute() {
 										msg`Check the QR code: use a page on your own website, like /menu.`,
 									)
 								: _(msg`Check the words and choices, then save again.`)}
+					</AlertDescription>
+				</Alert>
+			) : null}
+
+			{data.downloadProblem ? (
+				<Alert variant="destructive" role="alert">
+					<AlertTitle>{_(msg`The download could not be made`)}</AlertTitle>
+					<AlertDescription>
+						{data.downloadProblem === 'limited'
+							? _(
+									msg`Your organization made many new print files this hour. Try again in about 15 minutes; files made before still download.`,
+								)
+							: _(
+									msg`Something went wrong making the file. Try again shortly.`,
+								)}
 					</AlertDescription>
 				</Alert>
 			) : null}
@@ -800,11 +820,13 @@ export default function PrintDesignRoute() {
 									<Badge variant="secondary">{_(msg`Draft`)}</Badge>
 								)}
 							</CardTitle>
-							<CardDescription>
-								{_(
-									msg`The dashed line is where the print is cut. Keep words away from the edge.`,
-								)}
-							</CardDescription>
+							{data.tableCodesHidden ? null : (
+								<CardDescription>
+									{_(
+										msg`The dashed line is where the print is cut. Keep words away from the edge.`,
+									)}
+								</CardDescription>
+							)}
 						</CardHeader>
 						<CardContent>
 							{data.tableCodesHidden ? (

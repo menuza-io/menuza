@@ -1,4 +1,4 @@
-import { msg, Trans } from '@lingui/macro'
+import { msg, plural, Trans } from '@lingui/macro'
 import { useLingui } from '@lingui/react'
 import {
 	AlertDialog,
@@ -12,7 +12,7 @@ import {
 import { Badge } from '@repo/ui/badge'
 import { Button } from '@repo/ui/button'
 import { Checkbox } from '@repo/ui/checkbox'
-import { Field, FieldDescription, FieldLabel } from '@repo/ui/field'
+import { Field, FieldDescription, FieldError, FieldLabel } from '@repo/ui/field'
 import { Input } from '@repo/ui/input'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -243,7 +243,7 @@ export function OpenTabs({
 							<div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
 								<span>{relativeTime(tab.openedAt, i18n.locale)}</span>
 								{tab.guestName ? (
-									<span className="wrap-anywhere">· {tab.guestName}</span>
+									<bdi className="wrap-anywhere">{tab.guestName}</bdi>
 								) : null}
 								{tab.lockedAt ? (
 									<Badge variant="warning">{_(msg`Locked`)}</Badge>
@@ -267,13 +267,12 @@ export function OpenTabs({
 													i18n.locale,
 												)
 												const count = tab.reviewPaymentCount ?? 1
-												return count > 1
-													? _(
-															msg`${count} online payments totalling ${amount} arrived that do not match this tab. Check each one in your payment dashboard before you close or void.`,
-														)
-													: _(
-															msg`A payment of ${amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
-														)
+												return _(
+													plural(count, {
+														one: `A payment of ${amount} arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
+														other: `# online payments totalling ${amount} arrived that do not match this tab. Check each one in your payment dashboard before you close or void.`,
+													}),
+												)
 											})()
 										: _(
 												msg`A payment arrived online that does not match this tab. Check it in your payment dashboard before you close or void.`,
@@ -287,12 +286,21 @@ export function OpenTabs({
 										className="flex items-center justify-between gap-2"
 									>
 										<span className="min-w-0 wrap-anywhere">
-											{round.lines
-												.map(
-													(line) =>
-														`${line.quantity}× ${localizedName(line.itemName, i18n.locale)}`,
+											{/* Each item isolated so a Latin name in Arabic keeps its place. */}
+											{new Intl.ListFormat(i18n.locale, { type: 'unit' })
+												.formatToParts(
+													round.lines.map(
+														(line) =>
+															`${line.quantity}× ${localizedName(line.itemName, i18n.locale)}`,
+													),
 												)
-												.join(', ')}
+												.map((part, index) =>
+													part.type === 'element' ? (
+														<bdi key={index}>{part.value}</bdi>
+													) : (
+														part.value
+													),
+												)}
 										</span>
 										<OrderStatusLabel status={round.status} />
 									</li>
@@ -361,7 +369,7 @@ export function OpenTabs({
 				tab={closing}
 				onClose={() => setClosingId(null)}
 				finalFocus={finalFocus}
-				onConfirm={async (tipCents) => {
+				onConfirm={async (tipCents, expectedTotalCents) => {
 					if (!closing) return
 					const number = closing.tabNumber
 					if (
@@ -370,9 +378,9 @@ export function OpenTabs({
 							{
 								paymentMethod: 'counter',
 								...(tipCents ? { tipCents } : {}),
-								// The total shown in the dialog: a round that lands meanwhile
-								// is refused (409 stale_tab), never marked paid unseen.
-								expectedTotalCents: closing.totals.totalCents,
+								// The total staff saw: a round that lands meanwhile is
+								// refused (409 stale_tab), never marked paid unseen.
+								expectedTotalCents,
 								...(closing.paymentStatus === 'review'
 									? { acknowledgeReview: true }
 									: {}),
@@ -476,7 +484,7 @@ export function OpenTabs({
 				tab={voiding}
 				onClose={() => setVoidingId(null)}
 				finalFocus={finalFocus}
-				onConfirm={async (reason) => {
+				onConfirm={async (reason, expectedTotalCents) => {
 					if (!voiding) return
 					const number = voiding.tabNumber
 					if (
@@ -484,7 +492,7 @@ export function OpenTabs({
 							`/tabs/${voiding.id}/void`,
 							{
 								reason,
-								expectedTotalCents: voiding.totals.totalCents,
+								expectedTotalCents,
 								...(voiding.paymentStatus === 'review'
 									? { acknowledgeReview: true }
 									: {}),
@@ -510,10 +518,11 @@ function CloseTabDialog({
 }: {
 	tab: QrTab | null
 	onClose: () => void
-	onConfirm: (tipCents: number) => Promise<void>
+	onConfirm: (tipCents: number, expectedTotalCents: number) => Promise<void>
 	finalFocus: FinalFocus
 }) {
 	const { _, i18n } = useLingui()
+	const seenTotal = useSeenTotal(tab)
 	const [tip, setTip] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [acknowledged, setAcknowledged] = useState(false)
@@ -522,14 +531,15 @@ function CloseTabDialog({
 		setAcknowledged(false)
 	}, [tab?.id])
 	const needsReview = tab?.paymentStatus === 'review'
-	const tipCents = parseTipCents(tip)
+	const parsedTip = parseTip(tip)
+	const tipCents = parsedTip.cents
 	const total = tab
-		? formatMoney(
-				tab.totals.totalCents + tipCents,
-				tab.totals.currency,
-				i18n.locale,
-			)
+		? formatMoney(seenTotal.seen + tipCents, tab.totals.currency, i18n.locale)
 		: ''
+	const bill = tab
+		? formatMoney(seenTotal.seen, tab.totals.currency, i18n.locale)
+		: ''
+	const bigTip = parsedTip.valid && tipCents > seenTotal.seen && tipCents > 0
 	return (
 		<AlertDialog
 			open={Boolean(tab)}
@@ -557,6 +567,10 @@ function CloseTabDialog({
 						)}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
+				<p className="text-sm">{_(msg`Tab total: ${bill}`)}</p>
+				{tab && seenTotal.changed ? (
+					<TotalChanged tab={tab} onAccept={seenTotal.accept} />
+				) : null}
 				<Field>
 					<FieldLabel htmlFor="tab-tip">
 						{(() => {
@@ -570,13 +584,26 @@ function CloseTabDialog({
 						value={tip}
 						onChange={(event) => setTip(event.target.value)}
 						className="w-32"
+						aria-invalid={parsedTip.valid ? undefined : true}
+						aria-describedby={
+							parsedTip.valid ? 'tab-tip-total' : 'tab-tip-error'
+						}
 					/>
-					<FieldDescription>
-						{(() => {
-							const amount = total
-							return _(msg`The guest pays ${amount} in total, tip included.`)
-						})()}
-					</FieldDescription>
+					{parsedTip.valid ? (
+						<FieldDescription id="tab-tip-total">
+							{bigTip
+								? _(
+										msg`The tip is more than the bill. Check it: the guest pays ${total} in total.`,
+									)
+								: _(msg`The guest pays ${total} in total, tip included.`)}
+						</FieldDescription>
+					) : (
+						<FieldError id="tab-tip-error">
+							{_(
+								msg`Enter the tip as a plain amount, like 5 or 5.50, without thousands separators.`,
+							)}
+						</FieldError>
+					)}
 				</Field>
 				{needsReview ? (
 					<ReviewAcknowledgement
@@ -590,10 +617,17 @@ function CloseTabDialog({
 						<Trans>Cancel</Trans>
 					</AlertDialogCancel>
 					<Button
-						disabled={busy || (needsReview && !acknowledged)}
+						disabled={
+							busy ||
+							(needsReview && !acknowledged) ||
+							!parsedTip.valid ||
+							seenTotal.changed
+						}
 						onClick={() => {
 							setBusy(true)
-							void onConfirm(tipCents).finally(() => setBusy(false))
+							void onConfirm(tipCents, seenTotal.seen).finally(() =>
+								setBusy(false),
+							)
 						}}
 					>
 						<Trans>Close tab</Trans>
@@ -612,10 +646,11 @@ function VoidTabDialog({
 }: {
 	tab: QrTab | null
 	onClose: () => void
-	onConfirm: (reason: string) => Promise<void>
+	onConfirm: (reason: string, expectedTotalCents: number) => Promise<void>
 	finalFocus: FinalFocus
 }) {
 	const { _ } = useLingui()
+	const seenTotal = useSeenTotal(tab)
 	const [reason, setReason] = useState('')
 	const [busy, setBusy] = useState(false)
 	const [acknowledged, setAcknowledged] = useState(false)
@@ -649,6 +684,9 @@ function VoidTabDialog({
 						)}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
+				{tab && seenTotal.changed ? (
+					<TotalChanged tab={tab} onAccept={seenTotal.accept} />
+				) : null}
 				<Field>
 					<FieldLabel htmlFor="tab-void-reason">
 						<Trans>Reason</Trans>
@@ -674,10 +712,17 @@ function VoidTabDialog({
 					</AlertDialogCancel>
 					<Button
 						variant="destructive"
-						disabled={busy || !reason.trim() || (needsReview && !acknowledged)}
+						disabled={
+							busy ||
+							!reason.trim() ||
+							(needsReview && !acknowledged) ||
+							seenTotal.changed
+						}
 						onClick={() => {
 							setBusy(true)
-							void onConfirm(reason.trim()).finally(() => setBusy(false))
+							void onConfirm(reason.trim(), seenTotal.seen).finally(() =>
+								setBusy(false),
+							)
 						}}
 					>
 						<Trans>Void tab</Trans>
@@ -715,16 +760,67 @@ function ReviewAcknowledgement({
 }
 
 /**
+ * The total staff saw when the dialog opened. The poll may add a round while
+ * the dialog is open: that change is announced and must be accepted before
+ * the tab can be closed or voided, and the seen total is what the region
+ * checks (409 `stale_tab` otherwise).
+ */
+function useSeenTotal(tab: QrTab | null) {
+	const [seen, setSeen] = useState<number | null>(null)
+	useEffect(() => {
+		setSeen(tab ? tab.totals.totalCents : null)
+		// Only a different tab resets it; a new total must be accepted.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tab?.id])
+	const live = tab?.totals.totalCents ?? null
+	const changed = seen !== null && live !== null && live !== seen
+	return {
+		seen: seen ?? live ?? 0,
+		changed,
+		accept: () => setSeen(live),
+	}
+}
+
+function TotalChanged({ tab, onAccept }: { tab: QrTab; onAccept: () => void }) {
+	const { _, i18n } = useLingui()
+	const amount = formatMoney(
+		tab.totals.totalCents,
+		tab.totals.currency,
+		i18n.locale,
+	)
+	return (
+		<div
+			role="status"
+			className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm"
+		>
+			<span>{_(msg`A new round arrived: the total is now ${amount}.`)}</span>
+			<Button size="sm" variant="outline" onClick={onAccept}>
+				<Trans>Use the new total</Trans>
+			</Button>
+		</div>
+	)
+}
+
+/**
  * A typed tip in major units: Arabic-Indic digits and a comma decimal ("٥",
  * "5,50") are accepted; anything unreadable counts as no tip.
  */
 export function parseTipCents(raw: string): number {
-	const digits = raw
+	return parseTip(raw).cents
+}
+
+/**
+ * Strict reading: digits with at most one decimal mark and two decimals.
+ * Anything else ("1,000", "5 000", "abc") is invalid rather than silently a
+ * different amount.
+ */
+export function parseTip(raw: string): { cents: number; valid: boolean } {
+	const text = raw
 		.trim()
 		.replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
 		.replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
 		.replace(/[\u066b,]/g, '.')
-		.replace(/[^\d.]/g, '')
-	const value = Number.parseFloat(digits)
-	return Number.isFinite(value) && value > 0 ? Math.round(value * 100) : 0
+	if (text === '') return { cents: 0, valid: true }
+	if (!/^\d{1,7}(\.\d{1,2})?$/.test(text)) return { cents: 0, valid: false }
+	return { cents: Math.round(Number.parseFloat(text) * 100), valid: true }
 }

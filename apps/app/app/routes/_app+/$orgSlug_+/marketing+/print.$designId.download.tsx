@@ -3,7 +3,7 @@ import {
 	PRINT_DOWNLOAD_FORMATS,
 	PRINT_HOME_SHEETS,
 } from '@repo/common/print-shop'
-import { type LoaderFunctionArgs } from 'react-router'
+import { redirect, type LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
 import { requirePrintShopAccess } from '#app/utils/print/access.server.ts'
 import {
@@ -76,14 +76,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 					'X-Content-Type-Options': 'nosniff',
 				},
 			})
+		// The download opens in a new tab: land it on the editor with a message
+		// in the operator's language instead of a bare error body.
 		case 'limited':
-			throw new Response('Too many downloads this hour. Try again later.', {
-				status: 429,
-				headers: { 'Retry-After': '900' },
-			})
+			throw redirect(
+				`/${access.organization.slug}/marketing/print/${row.id}?download=limited`,
+			)
 		default:
-			throw new Response('We could not make this file. Try again shortly.', {
-				status: 503,
-			})
+			throw redirect(
+				`/${access.organization.slug}/marketing/print/${row.id}?download=failed`,
+			)
 	}
 }

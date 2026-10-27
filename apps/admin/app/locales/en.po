@@ -220,19 +220,23 @@ msgstr "A submission or cancellation stopped halfway: check the vendor before re
 msgid "Accept"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:484
+#: app/routes/_admin+/print-shop.tsx:543
 msgid "Accept and send"
 msgstr "Accept and send"
 
-#: app/routes/_admin+/print-shop.tsx:478
+#: app/routes/_admin+/print-shop.tsx:537
 msgid "Accept new price"
 msgstr "Accept new price"
 
-#: app/routes/_admin+/print-shop.tsx:479
-msgid "Accept the new price for {organization}"
-msgstr "Accept the new price for {organization}"
+#: app/routes/_admin+/print-shop.tsx:538
+msgid "Accept the new price for {orderName}"
+msgstr "Accept the new price for {orderName}"
 
-#: app/routes/_admin+/print-shop.tsx:480
+#: app/routes/_admin+/print-shop.tsx:479
+#~ msgid "Accept the new price for {organization}"
+#~ msgstr "Accept the new price for {organization}"
+
+#: app/routes/_admin+/print-shop.tsx:539
 msgid "Accept the new wholesale price?"
 msgstr "Accept the new wholesale price?"
 
@@ -276,8 +280,8 @@ msgstr ""
 #: app/routes/_admin+/ip-addresses+/index.tsx:235
 #: app/routes/_admin+/marketing+/automations._index.tsx:219
 #: app/routes/_admin+/phone-numbers.tsx:356
-#: app/routes/_admin+/print-shop.tsx:285
-#: app/routes/_admin+/print-shop.tsx:592
+#: app/routes/_admin+/print-shop.tsx:328
+#: app/routes/_admin+/print-shop.tsx:648
 #: app/routes/_admin+/roles+/index.tsx:412
 #: app/routes/_admin+/roles+/index.tsx:454
 #: app/routes/_admin+/waitlist.tsx:354
@@ -498,6 +502,10 @@ msgstr ""
 #: ../../packages/marketing/src/components/email/email-block-inspector.tsx:241
 msgid "Alt text"
 msgstr "Alt text"
+
+#: app/routes/_admin+/print-shop.tsx:594
+msgid "Amount in US dollars, up to {left}"
+msgstr "Amount in US dollars, up to {left}"
 
 #: app/routes/_admin+/phone-numbers.tsx:167
 msgid "Answering"
@@ -757,11 +765,11 @@ msgstr ""
 msgid "Blacklisted IPs"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:283
+#: app/routes/_admin+/print-shop.tsx:326
 msgid "Bleed (mm)"
 msgstr "Bleed (mm)"
 
-#: app/routes/_admin+/print-shop.tsx:373
+#: app/routes/_admin+/print-shop.tsx:416
 msgid "Bleed in millimetres, {item}"
 msgstr "Bleed in millimetres, {item}"
 
@@ -851,7 +859,7 @@ msgstr ""
 #: app/components/admin-ban-user-dialog.tsx:166
 #: app/components/admin-cache-confirmation-dialog.tsx:111
 #: app/routes/_admin+/gdpr-requests.tsx:587
-#: app/routes/_admin+/print-shop.tsx:138
+#: app/routes/_admin+/print-shop.tsx:174
 #: app/routes/_admin+/roles+/index.tsx:352
 #: app/routes/_admin+/waitlist.tsx:474
 msgid "Cancel"
@@ -1359,7 +1367,7 @@ msgstr "Details or action"
 msgid "Detected"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:451
+#: app/routes/_admin+/print-shop.tsx:502
 msgid "Did the vendor get this order?"
 msgstr "Did the vendor get this order?"
 
@@ -1418,7 +1426,7 @@ msgstr ""
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
 
-#: app/routes/_admin+/print-shop.tsx:215
+#: app/routes/_admin+/print-shop.tsx:258
 msgid "Drift limit (%)"
 msgstr "Drift limit (%)"
 
@@ -1478,7 +1486,7 @@ msgstr ""
 msgid "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 msgstr "Each day’s published hours and shifts next to the hours worked and the time cards that started, with the difference."
 
-#: app/routes/_admin+/print-shop.tsx:269
+#: app/routes/_admin+/print-shop.tsx:312
 msgid "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 msgstr "Each shippable product and size prints at one vendor. Changing the vendor here is how orders are rerouted: retrying a held order picks up the new mapping."
 
@@ -1576,11 +1584,11 @@ msgid "Empty subject"
 msgstr ""
 
 #: app/components/sso-configuration-overview.tsx:132
-#: app/routes/_admin+/print-shop.tsx:385
+#: app/routes/_admin+/print-shop.tsx:428
 msgid "Enable"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:383
+#: app/routes/_admin+/print-shop.tsx:426
 msgid "Enable {item}"
 msgstr "Enable {item}"
 
@@ -1846,7 +1854,7 @@ msgstr ""
 msgid "Flyer"
 msgstr "Flyer"
 
-#: app/routes/_admin+/print-shop.tsx:513
+#: app/routes/_admin+/print-shop.tsx:572
 msgid "For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at Menuza's cost. This cannot be undone."
 msgstr "For a defect claim or a lost parcel: the full amount goes back to the card, and the vendor keeps printing and shipping at Menuza's cost. This cannot be undone."
 
@@ -2030,6 +2038,10 @@ msgstr ""
 #: app/components/sso-configuration-form.tsx:297
 msgid "https://your-domain.okta.com/oauth2/v1/userinfo"
 msgstr ""
+
+#: app/routes/_admin+/print-shop.tsx:517
+msgid "I found nothing, retry"
+msgstr "I found nothing, retry"
 
 #: app/components/sso-configuration-form.tsx:137
 msgid "Identity Provider Configuration"
@@ -2391,11 +2403,11 @@ msgstr ""
 msgid "Map OIDC claims to user attributes. Leave empty for default mapping."
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:589
+#: app/routes/_admin+/print-shop.tsx:645
 msgid "Margin"
 msgstr "Margin"
 
-#: app/routes/_admin+/print-shop.tsx:577
+#: app/routes/_admin+/print-shop.tsx:633
 msgid "Margin on the last 100 orders: {total}"
 msgstr "Margin on the last 100 orders: {total}"
 
@@ -2403,7 +2415,7 @@ msgstr "Margin on the last 100 orders: {total}"
 msgid "Marketing"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:203
+#: app/routes/_admin+/print-shop.tsx:246
 msgid "Markup (%)"
 msgstr "Markup (%)"
 
@@ -2625,7 +2637,7 @@ msgstr ""
 msgid "No numbers yet"
 msgstr "No numbers yet"
 
-#: app/routes/_admin+/print-shop.tsx:397
+#: app/routes/_admin+/print-shop.tsx:440
 msgid "No organization can order it shipped until it is enabled again. Downloads keep working."
 msgstr "No organization can order it shipped until it is enabled again. Downloads keep working."
 
@@ -2755,8 +2767,8 @@ msgid "Notes Created"
 msgstr ""
 
 #: app/routes/_admin+/print-shop.tsx:458
-msgid "Nothing there, retry"
-msgstr "Nothing there, retry"
+#~ msgid "Nothing there, retry"
+#~ msgstr "Nothing there, retry"
 
 #: app/components/admin/feature-flags.tsx:142
 #: app/routes/_admin+/phone-numbers.tsx:347
@@ -2818,7 +2830,7 @@ msgstr ""
 msgid "Optional"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:572
+#: app/routes/_admin+/print-shop.tsx:628
 msgid "Orders"
 msgstr "Orders"
 
@@ -2832,7 +2844,7 @@ msgstr ""
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:121
 #: app/routes/_admin+/feature-flags_.reservations-fees.tsx:199
 #: app/routes/_admin+/phone-numbers.tsx:353
-#: app/routes/_admin+/print-shop.tsx:585
+#: app/routes/_admin+/print-shop.tsx:641
 msgid "Organization"
 msgstr ""
 
@@ -3071,7 +3083,7 @@ msgstr "Pick an organization by name or slug. Saving again replaces its override
 msgid "PKCE Enabled"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:590
+#: app/routes/_admin+/print-shop.tsx:646
 msgid "Placed"
 msgstr "Placed"
 
@@ -3142,12 +3154,12 @@ msgstr "Poster"
 msgid "Price ready"
 msgstr "Price ready"
 
-#: app/routes/_admin+/print-shop.tsx:188
+#: app/routes/_admin+/print-shop.tsx:231
 msgid "Pricing rules"
 msgstr "Pricing rules"
 
 #: app/components/admin-sidebar.tsx:143
-#: app/routes/_admin+/print-shop.tsx:562
+#: app/routes/_admin+/print-shop.tsx:618
 msgid "Print shop"
 msgstr "Print shop"
 
@@ -3170,7 +3182,7 @@ msgstr ""
 msgid "Processing..."
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:280
+#: app/routes/_admin+/print-shop.tsx:323
 msgid "Product and size"
 msgstr "Product and size"
 
@@ -3223,7 +3235,7 @@ msgstr ""
 msgid "Quick apply industry-standard retention policies"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:227
+#: app/routes/_admin+/print-shop.tsx:270
 msgid "Quote valid (minutes)"
 msgstr "Quote valid (minutes)"
 
@@ -3301,41 +3313,69 @@ msgstr ""
 msgid "Referrals"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:511
+#: app/routes/_admin+/print-shop.tsx:570
 msgid "Refund {amount} and keep the vendor order?"
 msgstr "Refund {amount} and keep the vendor order?"
 
-#: app/routes/_admin+/print-shop.tsx:495
+#: app/routes/_admin+/print-shop.tsx:554
 msgid "Refund {amount} to {organization}?"
 msgstr "Refund {amount} to {organization}?"
 
-#: app/routes/_admin+/print-shop.tsx:493
-#: app/routes/_admin+/print-shop.tsx:499
-#: app/routes/_admin+/print-shop.tsx:515
+#: app/routes/_admin+/print-shop.tsx:553
+msgid "Refund {orderName} in full"
+msgstr "Refund {orderName} in full"
+
+#: app/routes/_admin+/print-shop.tsx:568
+msgid "Refund {orderName} in full while the vendor keeps printing"
+msgstr "Refund {orderName} in full while the vendor keeps printing"
+
+#: app/routes/_admin+/print-shop.tsx:552
+#: app/routes/_admin+/print-shop.tsx:558
+#: app/routes/_admin+/print-shop.tsx:574
 msgid "Refund in full"
 msgstr "Refund in full"
 
-#: app/routes/_admin+/print-shop.tsx:545
+#: app/routes/_admin+/print-shop.tsx:582
 msgid "Refund part"
 msgstr "Refund part"
 
 #: app/routes/_admin+/print-shop.tsx:528
-msgid "Refund part (USD, up to {left})"
-msgstr "Refund part (USD, up to {left})"
+#~ msgid "Refund part (USD, up to {left})"
+#~ msgstr "Refund part (USD, up to {left})"
+
+#: app/routes/_admin+/print-shop.tsx:583
+msgid "Refund part of {orderName}"
+msgstr "Refund part of {orderName}"
 
 #: app/routes/_admin+/print-shop.tsx:543
-msgid "Refund part of the order of {organization}"
-msgstr "Refund part of the order of {organization}"
+#~ msgid "Refund part of the order of {organization}"
+#~ msgstr "Refund part of the order of {organization}"
+
+#: app/routes/_admin+/print-shop.tsx:584
+msgid "Refund part of this order to {organization}?"
+msgstr "Refund part of this order to {organization}?"
+
+#: app/routes/_admin+/print-shop.tsx:208
+msgid "Refund sent."
+msgstr "Refund sent."
 
 #: app/routes/_admin+/print-shop.tsx:494
-msgid "Refund the order of {organization} in full"
-msgstr "Refund the order of {organization} in full"
+#~ msgid "Refund the order of {organization} in full"
+#~ msgstr "Refund the order of {organization} in full"
 
 #: app/routes/_admin+/print-shop.tsx:509
-msgid "Refund the order of {organization} in full while the vendor keeps printing"
-msgstr "Refund the order of {organization} in full while the vendor keeps printing"
+#~ msgid "Refund the order of {organization} in full while the vendor keeps printing"
+#~ msgstr "Refund the order of {organization} in full while the vendor keeps printing"
 
-#: app/routes/_admin+/print-shop.tsx:507
+#: app/routes/_admin+/print-shop.tsx:588
+msgid "Refund this amount"
+msgstr "Refund this amount"
+
+#: app/routes/_admin+/print-shop.tsx:586
+msgid "Refund what the vendors cancelled. The order leaves hold and the rest keeps printing and is tracked again. This cannot be undone."
+msgstr "Refund what the vendors cancelled. The order leaves hold and the rest keeps printing and is tracked again. This cannot be undone."
+
+#: app/routes/_admin+/print-shop.tsx:566
 msgid "Refund, vendor keeps printing"
 msgstr "Refund, vendor keeps printing"
 
@@ -3442,7 +3482,7 @@ msgstr ""
 msgid "Resource"
 msgstr "Resource"
 
-#: app/routes/_admin+/print-shop.tsx:191
+#: app/routes/_admin+/print-shop.tsx:234
 msgid "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
 msgstr "Retail is the vendor's wholesale price plus the markup; shipping is passed through. A paid order whose wholesale price rose by more than the drift limit is held here."
 
@@ -3474,15 +3514,20 @@ msgstr "Retire {e164}? It can't be assigned again, and any agent using it stops 
 msgid "Retired"
 msgstr "Retired"
 
-#: app/routes/_admin+/print-shop.tsx:449
-#: app/routes/_admin+/print-shop.tsx:472
+#: app/routes/_admin+/print-shop.tsx:500
+#: app/routes/_admin+/print-shop.tsx:531
 msgid "Retry"
 msgstr "Retry"
 
+#: app/routes/_admin+/print-shop.tsx:501
+#: app/routes/_admin+/print-shop.tsx:529
+msgid "Retry {orderName}"
+msgstr "Retry {orderName}"
+
 #: app/routes/_admin+/print-shop.tsx:450
 #: app/routes/_admin+/print-shop.tsx:470
-msgid "Retry the order of {organization}"
-msgstr "Retry the order of {organization}"
+#~ msgid "Retry the order of {organization}"
+#~ msgstr "Retry the order of {organization}"
 
 #: app/routes/_admin+/_layout.tsx:103
 #: app/routes/_admin+/cache.tsx:941
@@ -3626,7 +3671,7 @@ msgstr "Sales per labor hour"
 
 #: ../../packages/marketing/src/components/email/email-design-overlay.tsx:170
 #: ../../packages/marketing/src/components/email/merge-tag-field.tsx:347
-#: app/routes/_admin+/print-shop.tsx:238
+#: app/routes/_admin+/print-shop.tsx:281
 msgid "Save"
 msgstr "Save"
 
@@ -3667,11 +3712,11 @@ msgstr ""
 msgid "Saved"
 msgstr "Saved"
 
-#: app/routes/_admin+/print-shop.tsx:168
+#: app/routes/_admin+/print-shop.tsx:212
 msgid "Saved: {item}"
 msgstr "Saved: {item}"
 
-#: app/routes/_admin+/print-shop.tsx:168
+#: app/routes/_admin+/print-shop.tsx:214
 msgid "Saved."
 msgstr "Saved."
 
@@ -3849,6 +3894,10 @@ msgstr ""
 msgid "Sent to the printer"
 msgstr "Sent to the printer"
 
+#: app/routes/_admin+/print-shop.tsx:210
+msgid "Sent to the vendor again."
+msgstr "Sent to the vendor again."
+
 #: app/components/admin-user-detail.tsx:754
 msgid "Session {sessionId}..."
 msgstr ""
@@ -3874,7 +3923,7 @@ msgstr ""
 msgid "Shipped"
 msgstr "Shipped"
 
-#: app/routes/_admin+/print-shop.tsx:564
+#: app/routes/_admin+/print-shop.tsx:620
 msgid "Shipped prints across all organizations: pricing, vendors and orders."
 msgstr "Shipped prints across all organizations: pricing, vendors and orders."
 
@@ -4055,7 +4104,7 @@ msgstr "Start with a template"
 #: app/routes/_admin+/ip-addresses+/$ip.tsx:239
 #: app/routes/_admin+/ip-addresses+/index.tsx:217
 #: app/routes/_admin+/phone-numbers.tsx:350
-#: app/routes/_admin+/print-shop.tsx:586
+#: app/routes/_admin+/print-shop.tsx:642
 #: app/routes/_admin+/waitlist.tsx:351
 msgid "Status"
 msgstr ""
@@ -4072,8 +4121,8 @@ msgstr ""
 msgid "Stop Impersonation"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:391
-#: app/routes/_admin+/print-shop.tsx:399
+#: app/routes/_admin+/print-shop.tsx:434
+#: app/routes/_admin+/print-shop.tsx:442
 msgid "Stop shipping"
 msgstr "Stop shipping"
 
@@ -4081,7 +4130,7 @@ msgstr "Stop shipping"
 #~ msgid "Stop shipping {0}"
 #~ msgstr "Stop shipping {0}"
 
-#: app/routes/_admin+/print-shop.tsx:393
+#: app/routes/_admin+/print-shop.tsx:436
 msgid "Stop shipping {item}"
 msgstr "Stop shipping {item}"
 
@@ -4089,7 +4138,7 @@ msgstr "Stop shipping {item}"
 #~ msgid "Stop shipping {sizeLabel}"
 #~ msgstr "Stop shipping {sizeLabel}"
 
-#: app/routes/_admin+/print-shop.tsx:395
+#: app/routes/_admin+/print-shop.tsx:438
 msgid "Stop shipping this size?"
 msgstr "Stop shipping this size?"
 
@@ -4271,6 +4320,10 @@ msgstr "That organization had verified call forwarding to this number. Its calle
 #~ msgid "That restaurant had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
 #~ msgstr "That restaurant had verified call forwarding to this number. Its callers will very likely reach the new organization's agent until it turns forwarding off at its carrier."
 
+#: app/routes/_admin+/print-shop.tsx:490
+msgid "the {amount} order of {organization} placed {placed}"
+msgstr "the {amount} order of {organization} placed {placed}"
+
 #: app/routes/_admin+/_layout.tsx:95
 msgid "The admin page you're looking for doesn't exist."
 msgstr ""
@@ -4293,15 +4346,23 @@ msgstr ""
 #~ msgid "The full amount goes back to the card they paid with, and vendor orders still open are cancelled. This cannot be undone."
 #~ msgstr "The full amount goes back to the card they paid with, and vendor orders still open are cancelled. This cannot be undone."
 
+#: app/routes/_admin+/print-shop.tsx:514
+msgid "The last attempt stopped after the order was sent, so the vendor may already have it, and no reference was recorded. Search the vendor dashboard by date and recipient. If the vendor has it, do not retry (it would print twice). Retry only if you find nothing."
+msgstr "The last attempt stopped after the order was sent, so the vendor may already have it, and no reference was recorded. Search the vendor dashboard by date and recipient. If the vendor has it, do not retry (it would print twice). Retry only if you find nothing."
+
 #: app/routes/_admin+/print-shop.tsx:455
-msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for these references first: {references}. Retry only if none is there, or the vendor prints it twice."
-msgstr "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for these references first: {references}. Retry only if none is there, or the vendor prints it twice."
+#~ msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for these references first: {references}. Retry only if none is there, or the vendor prints it twice."
+#~ msgstr "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for these references first: {references}. Retry only if none is there, or the vendor prints it twice."
+
+#: app/routes/_admin+/print-shop.tsx:510
+msgid "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
+msgstr "The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: {list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing."
 
 #: ../../packages/marketing/src/components/email/block-meta.ts:24
 msgid "The main paragraph copy of your email."
 msgstr "The main paragraph copy of your email."
 
-#: app/routes/_admin+/print-shop.tsx:482
+#: app/routes/_admin+/print-shop.tsx:541
 msgid "The order goes to the vendor at today's price. The organization already paid {amount}; Menuza absorbs the difference."
 msgstr "The order goes to the vendor at today's price. The organization already paid {amount}; Menuza absorbs the difference."
 
@@ -4421,7 +4482,7 @@ msgstr ""
 msgid "Top Action"
 msgstr ""
 
-#: app/routes/_admin+/print-shop.tsx:587
+#: app/routes/_admin+/print-shop.tsx:643
 msgid "Total"
 msgstr "Total"
 
@@ -4569,11 +4630,11 @@ msgstr "Unsaved changes"
 msgid "until"
 msgstr "until"
 
-#: app/routes/_admin+/print-shop.tsx:385
+#: app/routes/_admin+/print-shop.tsx:428
 msgid "Update"
 msgstr "Update"
 
-#: app/routes/_admin+/print-shop.tsx:383
+#: app/routes/_admin+/print-shop.tsx:426
 msgid "Update {item}"
 msgstr "Update {item}"
 
@@ -4681,27 +4742,27 @@ msgstr ""
 msgid "Variables"
 msgstr "Variables"
 
-#: app/routes/_admin+/print-shop.tsx:281
+#: app/routes/_admin+/print-shop.tsx:324
 msgid "Vendor"
 msgstr "Vendor"
 
-#: app/routes/_admin+/print-shop.tsx:266
+#: app/routes/_admin+/print-shop.tsx:309
 msgid "Vendor catalog"
 msgstr "Vendor catalog"
 
-#: app/routes/_admin+/print-shop.tsx:497
+#: app/routes/_admin+/print-shop.tsx:556
 msgid "Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone."
 msgstr "Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone."
 
-#: app/routes/_admin+/print-shop.tsx:282
+#: app/routes/_admin+/print-shop.tsx:325
 msgid "Vendor SKU"
 msgstr "Vendor SKU"
 
-#: app/routes/_admin+/print-shop.tsx:363
+#: app/routes/_admin+/print-shop.tsx:406
 msgid "Vendor SKU, {item}"
 msgstr "Vendor SKU, {item}"
 
-#: app/routes/_admin+/print-shop.tsx:348
+#: app/routes/_admin+/print-shop.tsx:391
 msgid "Vendor, {item}"
 msgstr "Vendor, {item}"
 
@@ -4839,7 +4900,7 @@ msgstr "Who cancelled over the last 30 days: the guest, the restaurant or the sy
 msgid "Who worked overtime over the last 30 days, and how much."
 msgstr "Who worked overtime over the last 30 days, and how much."
 
-#: app/routes/_admin+/print-shop.tsx:588
+#: app/routes/_admin+/print-shop.tsx:644
 msgid "Wholesale"
 msgstr "Wholesale"
 

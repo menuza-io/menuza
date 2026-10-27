@@ -89,9 +89,31 @@ export type TableOrderingDeps = {
 }
 
 /** `aria-invalid` must read "true"; an empty attribute counts as false. */
-function setInvalid(input: HTMLElement, invalid: boolean) {
-	if (invalid) input.setAttribute('aria-invalid', 'true')
-	else input.removeAttribute('aria-invalid')
+/**
+ * Marks a field invalid and points only that field at the error, so a valid
+ * field next to it never reads out the other one's message.
+ */
+function setInvalid(input: HTMLElement, invalid: boolean, errorId: string) {
+	if (invalid) {
+		input.setAttribute('aria-invalid', 'true')
+		input.setAttribute('aria-describedby', errorId)
+	} else {
+		input.removeAttribute('aria-invalid')
+		input.removeAttribute('aria-describedby')
+	}
+}
+
+/**
+ * Shows an alert so screen readers announce it: the box is visible first and
+ * the text lands a frame later (text set together with un-hiding is often
+ * missed).
+ */
+function showAlert(element: HTMLElement, message: string) {
+	element.classList.remove('hidden')
+	element.textContent = ''
+	requestAnimationFrame(() => {
+		element.textContent = message
+	})
 }
 
 function fill(template: string, values: Record<string, string>) {
@@ -608,13 +630,10 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 		const nameMissing = nameInput.required && !name
 		const phoneMissing =
 			phoneInput.required && !/^\+?[\d\s\-().]{7,25}$/.test(phone)
-		setInvalid(nameInput, nameMissing)
-		setInvalid(phoneInput, phoneMissing)
+		setInvalid(nameInput, nameMissing, 'table-contact-error')
+		setInvalid(phoneInput, phoneMissing, 'table-contact-error')
 		if (nameMissing || phoneMissing) {
-			if (error) {
-				error.textContent = contactError(nameMissing, phoneMissing)
-				error.classList.remove('hidden')
-			}
+			if (error) showAlert(error, contactError(nameMissing, phoneMissing))
 			;(nameMissing ? nameInput : phoneInput).focus()
 			return
 		}
@@ -702,15 +721,13 @@ export function mountTableOrdering(deps: TableOrderingDeps) {
 			payForm.elements.namedItem('phone') as HTMLInputElement
 		).value.trim()
 		const showError = (message: string) => {
-			if (!payError) return
-			payError.textContent = message
-			payError.classList.remove('hidden')
+			if (payError) showAlert(payError, message)
 		}
 		const nameField = payForm.elements.namedItem('name') as HTMLInputElement
 		const phoneField = payForm.elements.namedItem('phone') as HTMLInputElement
 		const phoneBad = !/^\+?[\d\s\-().]{7,25}$/.test(phone)
-		setInvalid(nameField, !name)
-		setInvalid(phoneField, phoneBad)
+		setInvalid(nameField, !name, 'tab-pay-error')
+		setInvalid(phoneField, phoneBad, 'tab-pay-error')
 		if (!name || phoneBad) {
 			showError(contactError(!name, phoneBad))
 			;(!name ? nameField : phoneField).focus()

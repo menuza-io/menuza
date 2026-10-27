@@ -828,8 +828,8 @@ msgid "Enter a phone number with its country code, like +1 415 555 0123."
 msgstr "Geben Sie eine Telefonnummer mit Ländervorwahl ein, z. B. +1 415 555 0123."
 
 #: src/components/ordering/TableTab.astro.ts:3
-msgid "Enter a phone number, like +1 555 123 4567."
-msgstr "Geben Sie eine Telefonnummer ein, etwa +1 555 123 4567."
+msgid "Enter a phone number with its country code."
+msgstr "Geben Sie eine Telefonnummer mit Ländervorwahl ein."
 
 #: src/components/careers/ApplyPanel.astro.ts:3
 #: src/lib/reservations/labels.ts:122
@@ -2467,8 +2467,8 @@ msgid "This tab is paid. Thank you!"
 msgstr "Diese Rechnung ist bezahlt. Vielen Dank!"
 
 #: src/components/ordering/TableTab.astro.ts:3
-msgid "This tab was cancelled and nothing was charged. Ask a team member if you have questions."
-msgstr "Diese Rechnung wurde storniert, es wurde nichts berechnet. Bei Fragen wenden Sie sich bitte an das Team."
+msgid "This tab was cancelled. If you paid from your phone, ask a team member about your payment."
+msgstr "Diese Rechnung wurde storniert. Wenn Sie mit Ihrem Telefon bezahlt haben, wenden Sie sich wegen Ihrer Zahlung bitte an das Team."
 
 #: src/components/ordering/TableTab.astro.ts:3
 msgid "This table code no longer works. Please ask a team member for help."

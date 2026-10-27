@@ -31,7 +31,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@repo/ui/table'
-import { useId } from 'react'
+import { type ReactNode, useEffect, useId, useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import {
 	action,
@@ -92,7 +92,11 @@ const HOLD_LABELS: Record<string, MessageDescriptor> = {
 	late_payment: msg`Paid after it was cancelled, refunded automatically`,
 }
 
-/** A fetcher action that asks first: money and catalog changes are not undone. */
+/**
+ * A fetcher action that asks first: money and catalog changes are not undone.
+ * The dialog stays open until the action succeeds and shows a refusal inside
+ * itself (never behind the overlay); extra fields (an amount) go in children.
+ */
 function ConfirmedAction({
 	fetcher,
 	fields,
@@ -103,6 +107,7 @@ function ConfirmedAction({
 	confirmLabel,
 	variant = 'ghost',
 	destructive = false,
+	children,
 }: {
 	fetcher: ReturnType<typeof useFetcher<PrintAdminResult>>
 	fields: Record<string, string>
@@ -113,10 +118,28 @@ function ConfirmedAction({
 	confirmLabel: string
 	variant?: 'ghost' | 'outline' | 'default'
 	destructive?: boolean
+	children?: ReactNode
 }) {
 	const { _ } = useLingui()
+	const formId = useId()
+	const [open, setOpen] = useState(false)
+	// Several actions share a row's fetcher: only show what this one sent.
+	const [submitted, setSubmitted] = useState(false)
+	useEffect(() => {
+		if (!submitted || fetcher.state !== 'idle' || !fetcher.data) return
+		if (fetcher.data.ok) {
+			setOpen(false)
+			setSubmitted(false)
+		}
+	}, [submitted, fetcher.state, fetcher.data])
 	return (
-		<AlertDialog>
+		<AlertDialog
+			open={open}
+			onOpenChange={(next) => {
+				setOpen(next)
+				if (!next) setSubmitted(false)
+			}}
+		>
 			<AlertDialogTrigger
 				render={
 					<Button
@@ -134,20 +157,29 @@ function ConfirmedAction({
 					<AlertDialogTitle>{title}</AlertDialogTitle>
 					<AlertDialogDescription>{description}</AlertDialogDescription>
 				</AlertDialogHeader>
+				<fetcher.Form
+					id={formId}
+					method="POST"
+					onSubmit={() => setSubmitted(true)}
+				>
+					{Object.entries(fields).map(([name, value]) => (
+						<input key={name} type="hidden" name={name} value={value} />
+					))}
+					{children}
+				</fetcher.Form>
+				{submitted && fetcher.state === 'idle' && fetcher.data?.ok === false ? (
+					<Result data={fetcher.data} />
+				) : null}
 				<AlertDialogFooter>
 					<AlertDialogCancel>{_(msg`Cancel`)}</AlertDialogCancel>
-					<fetcher.Form method="POST">
-						{Object.entries(fields).map(([name, value]) => (
-							<input key={name} type="hidden" name={name} value={value} />
-						))}
-						<Button
-							type="submit"
-							variant={destructive ? 'destructive' : 'default'}
-							disabled={fetcher.state !== 'idle'}
-						>
-							{confirmLabel}
-						</Button>
-					</fetcher.Form>
+					<Button
+						type="submit"
+						form={formId}
+						variant={destructive ? 'destructive' : 'default'}
+						disabled={fetcher.state !== 'idle'}
+					>
+						{confirmLabel}
+					</Button>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
@@ -163,13 +195,24 @@ function Result({
 	item?: string
 }) {
 	if (!data) return null
-	return data.ok ? (
+	if (!data.ok) {
+		return (
+			<p role="alert" className="text-destructive text-sm">
+				{data.message}
+			</p>
+		)
+	}
+	return (
 		<p role="status" className="text-muted-foreground text-sm">
-			{item ? <Trans>Saved: {item}</Trans> : <Trans>Saved.</Trans>}
-		</p>
-	) : (
-		<p role="alert" className="text-destructive text-sm">
-			{data.message}
+			{data.done === 'refunded' ? (
+				<Trans>Refund sent.</Trans>
+			) : data.done === 'sent' ? (
+				<Trans>Sent to the vendor again.</Trans>
+			) : item ? (
+				<Trans>Saved: {item}</Trans>
+			) : (
+				<Trans>Saved.</Trans>
+			)}
 		</p>
 	)
 }
@@ -416,10 +459,10 @@ function OrderActions({
 		refundCents: number
 		holdReason: string | null
 		vendorReferences: string[]
+		createdAt: string
 	}
 }) {
 	const fetcher = useFetcher<PrintAdminResult>()
-	const partFetcher = useFetcher<PrintAdminResult>()
 	const partId = useId()
 	const { _, i18n } = useLingui()
 	// A vendor may already be printing (or has shipped): refunding in full
@@ -439,6 +482,14 @@ function OrderActions({
 	].includes(order.status)
 	const organization = order.organization
 	const amount = money(order.totalCents, i18n.locale)
+	const placed = new Intl.DateTimeFormat(i18n.locale, {
+		dateStyle: 'medium',
+	}).format(new Date(order.createdAt))
+	// One organization can have several orders: every label names this one.
+	const orderName = _(
+		msg`the ${amount} order of ${organization} placed ${placed}`,
+	)
+	const references = order.vendorReferences
 	return (
 		<div className="flex flex-wrap gap-2">
 			{order.status === 'held' &&
@@ -447,15 +498,23 @@ function OrderActions({
 					fetcher={fetcher}
 					fields={{ _action: 'retry-checked', orderId: order.id }}
 					label={_(msg`Retry`)}
-					accessibleLabel={_(msg`Retry the order of ${organization}`)}
+					accessibleLabel={_(msg`Retry ${orderName}`)}
 					title={_(msg`Did the vendor get this order?`)}
-					description={(() => {
-						const references = order.vendorReferences.join(', ')
-						return _(
-							msg`The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for these references first: ${references}. Retry only if none is there, or the vendor prints it twice.`,
-						)
-					})()}
-					confirmLabel={_(msg`Nothing there, retry`)}
+					description={
+						references.length > 0
+							? (() => {
+									const list = new Intl.ListFormat(i18n.locale, {
+										type: 'unit',
+									}).format(references)
+									return _(
+										msg`The last attempt stopped after the order was sent, so the vendor may already have it. Search the vendor dashboard for: ${list}. If the vendor has it, do not retry (it would print twice): refund or wait for its status. Retry only if you find nothing.`,
+									)
+								})()
+							: _(
+									msg`The last attempt stopped after the order was sent, so the vendor may already have it, and no reference was recorded. Search the vendor dashboard by date and recipient. If the vendor has it, do not retry (it would print twice). Retry only if you find nothing.`,
+								)
+					}
+					confirmLabel={_(msg`I found nothing, retry`)}
 					variant="outline"
 				/>
 			) : order.status === 'held' ? (
@@ -467,7 +526,7 @@ function OrderActions({
 							type="submit"
 							size="sm"
 							disabled={fetcher.state !== 'idle'}
-							aria-label={_(msg`Retry the order of ${organization}`)}
+							aria-label={_(msg`Retry ${orderName}`)}
 						>
 							{_(msg`Retry`)}
 						</Button>
@@ -476,7 +535,7 @@ function OrderActions({
 						fetcher={fetcher}
 						fields={{ _action: 'retry-accept', orderId: order.id }}
 						label={_(msg`Accept new price`)}
-						accessibleLabel={_(msg`Accept the new price for ${organization}`)}
+						accessibleLabel={_(msg`Accept the new price for ${orderName}`)}
 						title={_(msg`Accept the new wholesale price?`)}
 						description={_(
 							msg`The order goes to the vendor at today's price. The organization already paid ${amount}; Menuza absorbs the difference.`,
@@ -491,7 +550,7 @@ function OrderActions({
 					fetcher={fetcher}
 					fields={{ _action: 'refund', orderId: order.id }}
 					label={_(msg`Refund in full`)}
-					accessibleLabel={_(msg`Refund the order of ${organization} in full`)}
+					accessibleLabel={_(msg`Refund ${orderName} in full`)}
 					title={_(msg`Refund ${amount} to ${organization}?`)}
 					description={_(
 						msg`Vendor orders not yet printing are cancelled first, then the full amount goes back to the card they paid with. If a vendor already started, nothing is refunded. This cannot be undone.`,
@@ -506,7 +565,7 @@ function OrderActions({
 					fields={{ _action: 'refund-keep', orderId: order.id }}
 					label={_(msg`Refund, vendor keeps printing`)}
 					accessibleLabel={_(
-						msg`Refund the order of ${organization} in full while the vendor keeps printing`,
+						msg`Refund ${orderName} in full while the vendor keeps printing`,
 					)}
 					title={_(msg`Refund ${amount} and keep the vendor order?`)}
 					description={_(
@@ -517,35 +576,32 @@ function OrderActions({
 				/>
 			) : null}
 			{refundable && order.holdReason === 'partial_cancel' ? (
-				<partFetcher.Form
-					method="POST"
-					className="flex flex-wrap items-end gap-2"
+				<ConfirmedAction
+					fetcher={fetcher}
+					fields={{ _action: 'refund-part', orderId: order.id }}
+					label={_(msg`Refund part`)}
+					accessibleLabel={_(msg`Refund part of ${orderName}`)}
+					title={_(msg`Refund part of this order to ${organization}?`)}
+					description={_(
+						msg`Refund what the vendors cancelled. The order leaves hold and the rest keeps printing and is tracked again. This cannot be undone.`,
+					)}
+					confirmLabel={_(msg`Refund this amount`)}
+					variant="outline"
+					destructive
 				>
-					<input type="hidden" name="_action" value="refund-part" />
-					<input type="hidden" name="orderId" value={order.id} />
 					<div className="flex flex-col gap-1">
 						<Label htmlFor={partId}>
-							{_(msg`Refund part (USD, up to ${left})`)}
+							{_(msg`Amount in US dollars, up to ${left}`)}
 						</Label>
 						<Input
 							id={partId}
 							name="amount"
 							inputMode="decimal"
 							required
-							className="w-28"
+							className="w-32"
 						/>
 					</div>
-					<Button
-						type="submit"
-						size="sm"
-						variant="outline"
-						disabled={partFetcher.state !== 'idle'}
-						aria-label={_(msg`Refund part of the order of ${organization}`)}
-					>
-						{_(msg`Refund part`)}
-					</Button>
-					<Result data={partFetcher.data} />
-				</partFetcher.Form>
+				</ConfirmedAction>
 			) : null}
 			<Result data={fetcher.data} />
 		</div>

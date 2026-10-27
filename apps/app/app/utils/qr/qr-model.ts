@@ -72,6 +72,8 @@ export const MAX_TABLES_PER_ADD = 200
 
 export type TableLabelPlan = {
 	labels: string[]
+	/** The input is one range ("T1-T12"), so "first to last" describes it. */
+	singleRange: boolean
 	/** Why the input cannot be added as typed; null when it can. */
 	problem: 'reversed_range' | 'range_too_large' | 'too_many' | null
 }
@@ -83,11 +85,15 @@ export type TableLabelPlan = {
 export function planTableLabels(input: string): TableLabelPlan {
 	let problem: TableLabelPlan['problem'] = null
 	let count = 0
+	let parts = 0
+	let ranges = 0
 	for (const part of input.split(/[,\n]/)) {
 		const value = part.trim()
 		if (!value) continue
+		parts += 1
 		const range = /^(\D*)(\d{1,4})\s*-\s*\1?(\d{1,4})$/.exec(value)
 		if (range) {
+			ranges += 1
 			const start = Number(range[2])
 			const end = Number(range[3])
 			if (end < start) problem ??= 'reversed_range'
@@ -98,7 +104,11 @@ export function planTableLabels(input: string): TableLabelPlan {
 		count += 1
 	}
 	if (count > MAX_TABLES_PER_ADD) problem ??= 'too_many'
-	return { labels: problem ? [] : expandTableLabels(input), problem }
+	return {
+		labels: problem ? [] : expandTableLabels(input),
+		singleRange: parts === 1 && ranges === 1,
+		problem,
+	}
 }
 
 /** "T1-T12" or "1-12" → T1 … T12 (at most 200). Anything else is one label. */
